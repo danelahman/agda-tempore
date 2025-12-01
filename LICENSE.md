@@ -1,5 +1,9 @@
 MIT License
 
+Copyright (c) 2025 Danel Ahman
+
+Copyright (c) 2024 Danel Ahman and Gašper Žajdela
+
 Copyright (c) 2022 Danel Ahman
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

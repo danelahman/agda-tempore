@@ -34,8 +34,8 @@ The **main features** of this core language are:
 - A _graded monads-based modal effect system_ (with some added temporal 
   awareness) that modularly tracks the effects and resource usage.
 
-The formalisation is developed and tested with Agda version 2.6.4.1 and Agda
-Standard Library version 2.0.
+The formalisation is developed and tested with Agda version 2.8.0 and Agda
+Standard Library version 2.3.
 
 The formalisation consists of **three main parts**:
 
