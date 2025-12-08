@@ -43,8 +43,8 @@ The formalisation consists of **three main parts**:
 
 The main modules presenting the core language are:
 
-- `Syntax/Grades.agda` defines the notion of grades (for effects and resoruces). 
-  (TODO NEW)
+- `Syntax/Grades.agda` defines the notion of grades (for effects and resources). 
+  (TODO CHECK)
 
 - `Syntax/Types.agda` defines types. 
   (TODO ADAPT)

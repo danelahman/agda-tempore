@@ -2,7 +2,7 @@
 -- Signature of operation symbols over ground types --
 ------------------------------------------------------
 
-open import Util.Time
+open import Syntax.Grades
 
 module Util.Operations where
 
@@ -23,7 +23,7 @@ data GType : Set where
   Unit   : GType                           -- unit type
   Empty  : GType                           -- empty type
   _|×|ᵍ_ : GType → GType → GType           -- product type
-  [_]ᵍ_  : Time → GType → GType            -- temporal modality: values of type `[ t ] A`
+  [_]ᵍ_  : Timeₑ → GType → GType            -- temporal modality: values of type `[ t ] A`
                                            -- become available in at most `t` time steps
 infix 38 _|×|ᵍ_
 infix 37 [_]ᵍ_
@@ -34,4 +34,4 @@ postulate
   Op       : Set                          -- set of operation symbols
   param    : Op → GType                   -- parameter type of each operation
   arity    : Op → GType                   -- arity type of each operation
-  op-time  : Op → Time                    -- each operation's (maximal) time duration
+  op-time  : Op → Timeₑ                    -- each operation's (maximal) time duration
