@@ -2,35 +2,68 @@
 -- Grades for effects and resources --
 --------------------------------------
 
-open import Util.Ordered.Bundles
-
-open import Level
-
 module Syntax.Grades where
 
---Grade : Set₁
---Grade = CommutativePomonoid zero zero zero 
+open import Level
+open import Relation.Binary.Core
+open import Relation.Binary.Definitions
+open import Util.Equality
+open import Util.Ordered.Structures
 
 record Grade : Set₁ where
+  infixl 7 _·_
+  infix  4 _≈_
 
   field
 
     Carrier : Set₀
 
     -- monoid ops
+    _≈_ : Rel Carrier zero
+    _·_ : Carrier → Carrier → Carrier
+    u   : Carrier
 
     -- order
+    _≾_ : Rel Carrier zero
 
     -- monoid is ordered
+    isCommutativePomonoid : IsCommutativePomonoid _≈_ _≾_ _·_ u
+    
+    -- u is the neutral of the _·_ operation (right)
+    ·-identityʳ : (x : Carrier) → (x · u) ≡ x
 
-    -- ...
+    -- u is the neutral of the _·_ operation (left)
+    ·-identityˡ : (x : Carrier) → (u · x) ≡ x
 
+    -- u is the least element in Carrier
+    u≾c : ∀ {c} → u ≾ c
+
+    -- _·_ is associative
+    ·-assoc : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
+
+    -- _·_ is commutative
+    ·-comm : (x y : Carrier) → (x · y) ≡ (y · x)
+
+    -- _·_ is monotone w.r.t. _≾_ (right)
+    ·-monoʳ-≾ : (c : Carrier) → _Preserves_⟶_ (c ·_) _≾_ _≾_
+
+    -- _·_ is monotone w.r.t. _≾_ (left)
+    ·-monoˡ-≾ : (c : Carrier) → _Preserves_⟶_ (_· c) _≾_ _≾_
+
+-- _≾_ is reflexive and transitive
+    ≾-reflexive  : _≡_ ⇒ _≾_
+
+    ≾-refl  : Reflexive _≾_
+    ≾-trans : Transitive _≾_
+   
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
 
     -- ...
 
 
 open Grade
+
+
 
 record _→ᵍ_ (G G' : Grade) : Set₁ where
 
@@ -39,7 +72,8 @@ record _→ᵍ_ (G G' : Grade) : Set₁ where
     map : Carrier G → Carrier G'
 
     -- laws
-    
+
+
 
 record GradeSystem : Set₂ where
 
@@ -47,7 +81,8 @@ record GradeSystem : Set₂ where
 
     RGrade : Grade
     EGrade : Grade
-    ∣_∣ : EGrade →ᵍ RGrade
+    ∣_∣ᵉ : EGrade →ᵍ RGrade
+    ∣_∣ʳ : RGrade →ᵍ EGrade
   
 
 {-

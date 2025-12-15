@@ -7,7 +7,7 @@ module Syntax.Renamings where
 open import Data.Product
 
 open import Syntax.Contexts
-open import Syntax.Language
+--open import Syntax.Language
 open import Syntax.Renamings.Raw public
 open import Syntax.Types
 
@@ -17,7 +17,7 @@ open import Util.Time
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
 
 -- Variable renamings (with an extra condition that disallow discarding time captured by contexts)
-
+{-
 record Ren (Γ Γ' : Ctx) : Set where
   constructor ren
   field
@@ -238,3 +238,4 @@ mutual
   C-rename ρ (unbox {τ = τ} p V M) =
     unbox (≤-trans p (ctx-time-≤ ρ)) (V-rename (ρ -ʳ τ , p) V) (C-rename (cong-ren ρ) M)
   C-rename ρ (box V M)        = box (V-rename (cong-ren ρ) V) (C-rename (cong-ren ρ) M)
+-}

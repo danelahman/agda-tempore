@@ -5,99 +5,117 @@
 -- further refined in Syntax.Renamings to respect ctx-time --
 -------------------------------------------------------------
 
-module Syntax.Renamings.Raw where
+open import Syntax.Grades
+
+module Syntax.Renamings.Raw (Grades : GradeSystem) where
+
+open GradeSystem Grades
+open Grade RGrade renaming
+  (Carrier to R;
+   _≾_ to _≾ᵣ_;
+   ≾-refl to ≾-reflᵣ;
+   ≾-trans to ≾-transᵣ;
+   u≾c to uᵣ≾ᵣc;
+   u to uᵣ;
+   ≾-reflexive to ≾-reflexiveᵣ;
+   ·-identityˡ to ·ᵣ-identityˡ;
+   _·_ to _·ᵣ_;
+   ·-comm to ·-commᵣ;
+   ·-assoc to ·-assocᵣ;
+   ·-monoʳ-≾ to ·-monoʳ-≾ᵣ;
+   ·-monoˡ-≾ to ·-monoˡ-≾ᵣ
+  )
 
 open import Data.Product
 
 open import Relation.Nullary
 
-open import Syntax.Contexts
-open import Syntax.Language
-open import Syntax.Types
+open import Syntax.Contexts (Grades)
+open import Syntax.Types (Grades)
 
 open import Util.Equality
-open import Util.Time
+open import Util.Time -- Remove
 
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
 
 -- Subst for time annotations of variables (for convenience)
 
-var-τ-subst : ∀ {Γ A τ τ'} → τ ≡ τ' → A ∈[ τ ] Γ → A ∈[ τ' ] Γ
-var-τ-subst refl x = x
+var-ρ-subst : ∀ {Γ A ρ ρ'} → ρ ≡ ρ' → A ∈[ ρ ] Γ → A ∈[ ρ' ] Γ
+var-ρ-subst refl x = x
 
 -- Variable renamings (an extra condition on ctx-time will be imposed later)
 
 VRen : Ctx → Ctx → Set
-VRen Γ Γ' = ∀ {A τ} → A ∈[ τ ] Γ → Σ[ τ' ∈ Time ] (τ ≤ τ' × A ∈[ τ' ] Γ')
+VRen Γ Γ' = ∀ {A ρ} → A ∈[ ρ ] Γ → Σ[ ρ' ∈ R ] (ρ ≾ᵣ ρ' × A ∈[ ρ' ] Γ')
 
 -- Identity renaming
 
 id-vren : ∀ {Γ} → VRen Γ Γ
-id-vren {Γ} {A} {τ} x = τ , ≤-refl , x
+id-vren {Γ} {A} {ρ} x = ρ , (≾-reflᵣ , x)
 
 -- Composition of renamings
 
 _∘ᵛʳ_ : ∀ {Γ Γ' Γ''} → VRen Γ' Γ'' → VRen Γ Γ' → VRen Γ Γ''
-_∘ᵛʳ_ ρ' ρ x with ρ x
-... | τ' , p , y with ρ' y
-... | τ'' , q , z = τ'' , ≤-trans p q , z
+_∘ᵛʳ_ r' r x with r x
+... | ρ' , p , y with r' y
+... | ρ'' , q , z = ρ'' , ≾-transᵣ p q , z
 
 infixr 20 _∘ᵛʳ_
 
 -- Weakening renaming
 
 wk-vren : ∀ {Γ A} → VRen Γ (Γ ∷ A)
-wk-vren {Γ} {A} {B} {τ} x = τ , ≤-refl , Tl-∷ x
+wk-vren {Γ} {A} {B} {ρ} x = ρ , ≾-reflᵣ , Tl-∷ x
 
 -- Variable renaming
 
-var-vren : ∀ {Γ A τ} → A ∈[ τ ] Γ → VRen (Γ ∷ A) Γ
-var-vren {Γ} {A} {τ} x Hd =
-  τ , z≤n , x
-var-vren {Γ} {A} {τ} x (Tl-∷ {τ = τ'} y) =
-  τ' , ≤-refl , y
+var-vren : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → VRen (Γ ∷ A) Γ
+var-vren {Γ} {A} {ρ} x Hd =
+  ρ , uᵣ≾ᵣc , x
+var-vren {Γ} {A} {ρ} x (Tl-∷ {ρ = ρ'} y) =
+  ρ' , ≾-reflᵣ , y
 
 -- Strong monoidal functor renamings
 
-⟨⟩-η-vren : ∀ {Γ} → VRen (Γ ⟨ 0 ⟩) Γ
-⟨⟩-η-vren {Γ} (Tl-⟨⟩ {τ' = τ} x) =
-  τ , ≤-refl , x
+⟨⟩-η-vren : ∀ {Γ} → VRen (Γ ⟨ uᵣ ⟩) Γ
+⟨⟩-η-vren {Γ} (Tl-⟨⟩ {ρ' = ρ} x) =
+  ρ , ≾-reflexiveᵣ (·ᵣ-identityˡ ρ) , x
 
-⟨⟩-η⁻¹-vren : ∀ {Γ} → VRen Γ (Γ ⟨ 0 ⟩)
-⟨⟩-η⁻¹-vren {Γ} {A} {τ} x =
-  τ , ≤-refl , Tl-⟨⟩ x
+⟨⟩-η⁻¹-vren : ∀ {Γ} → VRen Γ (Γ ⟨ uᵣ ⟩)
+⟨⟩-η⁻¹-vren {Γ} {A} {ρ} x =
+  uᵣ ·ᵣ ρ , ≾-reflexiveᵣ (sym (·ᵣ-identityˡ ρ)) , Tl-⟨⟩ x
 
-⟨⟩-μ-vren : ∀ {Γ τ τ'} → VRen (Γ ⟨ τ + τ' ⟩) (Γ ⟨ τ ⟩ ⟨ τ' ⟩)
-⟨⟩-μ-vren {Γ} {τ} {τ'} {A} {.(τ + τ' + τ'')} (Tl-⟨⟩ {τ' = τ''} x) =
-  τ' + (τ + τ'') ,
-  ≤-reflexive
+⟨⟩-μ-vren : ∀ {Γ ρ ρ'} → VRen (Γ ⟨ ρ ·ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
+⟨⟩-μ-vren {Γ} {ρ} {ρ'} {A} {.(ρ ·ᵣ ρ' ·ᵣ ρ'')} (Tl-⟨⟩ {ρ' = ρ''} x) =
+  ρ' ·ᵣ (ρ ·ᵣ ρ'') ,
+  ≾-reflexiveᵣ
     (trans
-      (cong (_+ τ'') (+-comm τ τ'))
-      (+-assoc τ' τ τ'')) ,
+      (cong (_·ᵣ ρ'') (·-commᵣ ρ ρ'))
+      (·-assocᵣ ρ' ρ ρ'')) ,
   Tl-⟨⟩ (Tl-⟨⟩ x)
 
-⟨⟩-μ⁻¹-vren : ∀ {Γ τ τ'} → VRen (Γ ⟨ τ ⟩ ⟨ τ' ⟩) (Γ ⟨ τ + τ' ⟩)
-⟨⟩-μ⁻¹-vren {Γ} {τ} {τ'} {A} {.(τ' + (τ + _))} (Tl-⟨⟩ (Tl-⟨⟩ {τ' = τ''} x)) =
-  τ + τ' + τ'' ,
-  ≤-reflexive
+⟨⟩-μ⁻¹-vren : ∀ {Γ ρ ρ'} → VRen (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
+⟨⟩-μ⁻¹-vren {Γ} {ρ} {ρ'} {A} {.(ρ' ·ᵣ (ρ ·ᵣ _))} (Tl-⟨⟩ (Tl-⟨⟩ {ρ' = ρ''} x)) =
+  ρ ·ᵣ ρ' ·ᵣ ρ'' ,
+  ≾-reflexiveᵣ
     (trans
-      (sym (+-assoc τ' τ τ''))
-      (cong (_+ τ'') (+-comm τ' τ))) ,
+      (sym (·-assocᵣ ρ' ρ ρ''))
+      (cong (_·ᵣ ρ'') (·-commᵣ ρ' ρ))) ,
   Tl-⟨⟩ x
 
-⟨⟩-≤-vren : ∀ {Γ τ τ'} → τ ≤ τ' → VRen (Γ ⟨ τ ⟩) (Γ ⟨ τ' ⟩)
-⟨⟩-≤-vren {Γ} {.zero} {τ'} z≤n {A} {τ''} (Tl-⟨⟩ x) =
-  τ' + τ'' , m≤n+m τ'' τ' , Tl-⟨⟩ x
-⟨⟩-≤-vren {Γ} {suc τ} {suc τ'} (s≤s p) {A} (Tl-⟨⟩ x) =
-  suc (τ' + _) , +-monoʳ-≤ 1 (+-monoˡ-≤ _ p) , Tl-⟨⟩ x
+-- CHECK
+⟨⟩-≾-vren : ∀ {Γ ρ ρ'} → ρ ≾ᵣ ρ' → VRen (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
+⟨⟩-≾-vren {Γ} {ρ} {ρ'} rel {A} {.(ρ ·ᵣ _)} (Tl-⟨⟩ {ρ' = ρ''} x) =
+  ρ' ·ᵣ ρ'' , ·-monoˡ-≾ᵣ ρ'' rel , Tl-⟨⟩ x
 
 -- Derived modal weakening renaming
 
 wk-⟨⟩-vren : ∀ {Γ τ} → VRen Γ (Γ ⟨ τ ⟩)
 wk-⟨⟩-vren {Γ} {τ} =
-      ⟨⟩-≤-vren z≤n
+      ⟨⟩-≾-vren uᵣ≾ᵣc
   ∘ᵛʳ ⟨⟩-η⁻¹-vren
 
+{-
 -- Congruence renamings
 
 cong-∷-vren : ∀ {Γ Γ' A} → VRen Γ Γ' → VRen (Γ ∷ A) (Γ' ∷ A)
@@ -112,6 +130,7 @@ cong-⟨⟩-vren {Γ} {Γ'} {τ} ρ {A} {.(τ + τ')} (Tl-⟨⟩ {τ' = τ'} x) 
 ... | τ'' , p , y =
   τ + τ'' , +-monoʳ-≤ τ p , Tl-⟨⟩ y
 
+{-
 -- Interaction between time-indexes of variables and -ᶜ
 
 var-ᶜ : ∀ {Γ A τ τ'} → τ ≤ τ' → A ∈[ τ' ] Γ → A ∈[ τ' ∸ τ ] Γ -ᶜ τ
@@ -432,3 +451,5 @@ cong-vren-fun {Γ} {Γ'} {Γ''} {Γ''' ⟨ τ ⟩} ρ ρ' x =
       (λ (ρ : VRen (Γ ++ᶜ Γ''') (Γ'' ++ᶜ Γ''')) → cong-⟨⟩-vren ρ x)
       (ifun-ext λ {A} → ifun-ext (λ {τ} → fun-ext (λ x → cong-vren-fun ρ ρ' x))))
     (cong-⟨⟩-vren-fun (cong-vren ρ) (cong-vren ρ') x)
+-}
+-}

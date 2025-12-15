@@ -2,14 +2,23 @@
 -- Well-typed syntax of the language --
 ---------------------------------------
 
-module Syntax.Language where
+open import Syntax.Grades
 
-open import Syntax.Contexts
-open import Syntax.Types
+module Syntax.Language (Grades : GradeSystem) where
+
+open GradeSystem Grades
+open Grade RGrade renaming (Carrier to R; _·_ to _·ᵣ_; _≾_ to _≾ᵣ_)
+open Grade EGrade renaming (Carrier to E; u to uₑ; _·_ to _·ₑ_)
+open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ)
+open _→ᵍ_ ∣_∣ʳ renaming (map to mapʳ)
+
+open import Syntax.Contexts (Grades)
+open import Syntax.Types (Grades)
+open import Syntax.Renamings
 
 open import Util.Equality
-open import Util.Operations
-open import Util.Time
+open import Util.Operations (Grades)
+open import Util.Time -- Remove
 
 -- Well-typed terms (values and computations)
 
@@ -23,8 +32,8 @@ mutual
     -- variables
 
     var     : {A : VType}
-            → {τ : Time}
-            → A ∈[ τ ] Γ
+            → {ρ : R}
+            → A ∈[ ρ ] Γ
             ------------
             → Γ ⊢V⦂ A
 
@@ -65,17 +74,18 @@ mutual
     return  : {A : VType}
             → Γ ⊢V⦂ A
             -------------
-            → Γ ⊢C⦂ A ‼ 0
+            → Γ ⊢C⦂ A ‼ uₑ
 
     -- sequential composition
     
     _;_     : {A B : VType}      -- NOTE: use \;0 to get this unicode semicolon
-            → {τ τ' : Time}
-            → Γ ⊢C⦂ A ‼ τ
-            → Γ ⟨ τ ⟩ ∷ A ⊢C⦂ B ‼ τ'
+            → {ρ : R}
+            → {ε : E}
+            → Γ ⊢C⦂ A ‼ ε
+            → Γ ⟨ ρ ⟩ ∷ A ⊢C⦂ B ‼ ε
             ------------------------
-            → Γ ⊢C⦂ B ‼ (τ + τ')
-    
+            → Γ ⊢C⦂ B ‼ ((mapʳ ρ) ·ₑ ε)
+
     -- function application
     
     _·_     : {A : VType}
@@ -104,64 +114,67 @@ mutual
     -- performing algebraic operations
 
     perform : {A : VType}
-            → {τ : Time}
+            → {ε : E}
             → (op : Op)
             → Γ ⊢V⦂ type-of-gtype (param op)
-            → Γ ⟨ op-time op ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ τ
+            → Γ ⟨ mapᵉ (op-time op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε
             -------------------------------------------------------
-            → Γ ⊢C⦂ A ‼ (op-time op + τ)
+            → Γ ⊢C⦂ A ‼ ((op-time op) ·ₑ ε)
 
     -- explicit delaying of a computation
 
     delay   : {A : VType}
-            → {τ' : Time}
-            → (τ : Time)
-            → Γ ⟨ τ ⟩ ⊢C⦂ A ‼ τ'
+            → (ρ : R)
+            → {ε : E}
+            → Γ ⟨ ρ ⟩ ⊢C⦂ A ‼ ε
             --------------------
-            → Γ ⊢C⦂ A ‼ (τ + τ')
+            → Γ ⊢C⦂ A ‼ ((mapʳ ρ) ·ₑ ε)
 
     -- effect handling
 
     handle_`with_`in
             : {A B : VType}
-            → {τ τ' : Time}
-            → Γ ⊢C⦂ A ‼ τ
-            → ((op : Op) → (τ'' : Time) →
+            → {ε ε' : E}
+            → Γ ⊢C⦂ A ‼ ε
+            → ((op : Op) → (ε'' : E) →
                  Γ ∷ type-of-gtype (param op)
-                   ∷ [ op-time op ] (type-of-gtype (arity op) ⇒ B ‼ τ'')
-                 ⊢C⦂ B ‼ (op-time op + τ''))
-            → Γ ⟨ τ ⟩ ∷ A ⊢C⦂ B ‼ τ'
+                   ∷ [ mapᵉ (op-time op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 ⊢C⦂ B ‼ (op-time op ·ₑ ε''))
+            → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
             --------------------------------------------------
-            → Γ ⊢C⦂ B ‼ (τ + τ')
+            → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
+{-
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
     unbox   : {A : VType}
             → {C : CType}
-            → {τ : Time}
-            → τ ≤ ctx-time Γ
-            → Γ -ᶜ τ ⊢V⦂ [ τ ] A
+            → {ρ : R}
+            → ρ ≾ᵣ ctx-time Γ
+            → Ren Γ (Γ₁ ++ᶜ Γ₂)
+            → Γ₁ ⊢V⦂ [ ρ ] A
             → Γ ∷ A  ⊢C⦂ C
             --------------------
             → Γ ⊢C⦂ C
+-}
 
     -- boxing up a value/resource that is ready for use in at least `τ` time steps
 
     box     : {A : VType}
             → {C : CType}
-            → {τ : Time}
-            → Γ ⟨ τ ⟩ ⊢V⦂ A
-            → Γ ∷ [ τ ] A ⊢C⦂ C
+            → {ρ : R}
+            → Γ ⟨ ρ ⟩ ⊢V⦂ A
+            → Γ ∷ [ ρ ] A ⊢C⦂ C
             --------------------
             → Γ ⊢C⦂ C
 
 
--- Usefull Substitution
+-- Useful Substitution
 
-τ-subst : ∀ {Γ A τ τ'}
-        → τ ≡ τ'
-        → Γ ⊢C⦂ A ‼ τ
+ε-subst : ∀ {Γ A ε ε'}
+        → ε ≡ ε'
+        → Γ ⊢C⦂ A ‼ ε
         ---------------
-        → Γ ⊢C⦂ A ‼ τ'
+        → Γ ⊢C⦂ A ‼ ε'
 
-τ-subst refl M = M
+ε-subst refl M = M

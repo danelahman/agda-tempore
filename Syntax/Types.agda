@@ -2,27 +2,31 @@
 -- Types of the language --
 ---------------------------
 
-module Syntax.Types where
+open import Syntax.Grades
+
+module Syntax.Types (Grades : GradeSystem) where
+
+open GradeSystem Grades
+open Grade EGrade renaming (Carrier to E)
+open Grade RGrade renaming (Carrier to R)
 
 open import Util.Equality
-open import Util.Operations
--- open import Util.Time -- volar
-open import Syntax.Grades
+open import Util.Operations (Grades)
 
 -- Value and computation types
 
 mutual
 
-  data VType : Set where
+  data VType : Set  where
     Base  : BaseType → VType                 -- base types
     Unit  : VType                            -- unit type
     _|×|_ : VType → VType → VType            -- product type
     Empty : VType                            -- empty type
     _⇒_   : VType → CType → VType            -- function type
-    [_]_  : Timeᵣ → VType → VType             -- temporal modality: values of type `[ t ] A`
+    [_]_  : R → VType → VType             -- temporal modality: values of type `[ t ] A`
                                              -- become available in at most `t` time steps
   data CType : Set where
-    _‼_ : VType → Timeₑ → CType
+    _‼_ : VType → E → CType
 
   infix  37 [_]_
   infix  32 _|×|_
@@ -36,7 +40,7 @@ type-of-gtype (Base B)   = Base B
 type-of-gtype Unit       = Unit
 type-of-gtype Empty      = Empty
 type-of-gtype (A |×|ᵍ B) = type-of-gtype A |×| type-of-gtype B
-type-of-gtype ([ τ ]ᵍ A) = [ τ ] (type-of-gtype A)
+type-of-gtype ([ ρ ]ᵍ A) = [ ρ ] (type-of-gtype A)
 
 -- Type formation rules is injective
 
@@ -46,8 +50,8 @@ type-of-gtype ([ τ ]ᵍ A) = [ τ ] (type-of-gtype A)
 ⇒-injective-cod : ∀ {A B C D} → A ⇒ C ≡ B ⇒ D → C ≡ D
 ⇒-injective-cod refl = refl
 
-‼-injective-ty : ∀ {A B τ τ'} → (A ‼ τ) ≡ (B ‼ τ') → A ≡ B
+‼-injective-ty : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → A ≡ B
 ‼-injective-ty refl = refl
 
-‼-injective-time : ∀ {A B τ τ'} → (A ‼ τ) ≡ (B ‼ τ') → τ ≡ τ'
+‼-injective-time : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → ε ≡ ε'
 ‼-injective-time refl = refl

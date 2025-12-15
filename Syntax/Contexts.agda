@@ -2,26 +2,42 @@
 -- Variables and contexts of the language --
 --------------------------------------------
 
-module Syntax.Contexts where
+open import Syntax.Grades
 
-open import Data.Empty
+module Syntax.Contexts (Grades : GradeSystem) where
+
+open GradeSystem Grades
+open Grade RGrade renaming
+  (Carrier to R;
+   _·_ to _·ᵣ_;
+   u to uᵣ;
+   ·-identityʳ to ·-identityʳᵣ;
+   ·-assoc to ·-assocᵣ;
+   _≾_ to _≾ᵣ_;
+   ·-monoʳ-≾ to ·-monoʳ-≾ᵣ;
+   ·-comm to ·-commᵣ;
+   ≾-reflexive to ≾-reflexiveᵣ;
+   ≾-trans to ≾-transᵣ
+  )
+
+open import Data.Empty -- Remove?
 open import Data.Product
-open import Data.Sum
+open import Data.Sum -- Remove?
 
-open import Relation.Nullary
+open import Relation.Nullary -- Remove?
 
-open import Syntax.Types
+open import Syntax.Types (Grades)
 
 open import Util.Equality
-open import Util.Operations
-open import Util.Time
+open import Util.Operations (Grades)
+open import Util.Time -- Remove
 
 -- Structured contexts
 
 data Ctx : Set where
   []   : Ctx                       -- empty context
   _∷_  : Ctx → VType → Ctx         -- context extension with a variable
-  _⟨_⟩ : Ctx → Time → Ctx          -- using context after time-passage
+  _⟨_⟩ : Ctx → R → Ctx          -- using context after time-passage
 
 infixl 31 _∷_
 infix  32 _⟨_⟩
@@ -32,10 +48,10 @@ infix  32 _⟨_⟩
 ∷ᶜ-injective-ty : ∀ {Γ Γ' A B} → Γ ∷ A ≡ Γ' ∷ B → A ≡ B
 ∷ᶜ-injective-ty refl = refl
 
-⟨⟩-injective-ctx : ∀ {Γ Γ' τ τ'} → Γ ⟨ τ ⟩ ≡ Γ' ⟨ τ' ⟩ → Γ ≡ Γ'
+⟨⟩-injective-ctx : ∀ {Γ Γ' ρ ρ'} → Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ' ⟩ → Γ ≡ Γ'
 ⟨⟩-injective-ctx refl = refl
 
-⟨⟩-injective-time : ∀ {Γ Γ' τ τ'} → Γ ⟨ τ ⟩ ≡ Γ' ⟨ τ' ⟩ → τ ≡ τ'
+⟨⟩-injective-time : ∀ {Γ Γ' ρ ρ'} → Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ' ⟩ → ρ ≡ ρ'
 ⟨⟩-injective-time refl = refl
 
 -- Concatenation of contexts
@@ -43,7 +59,7 @@ infix  32 _⟨_⟩
 _++ᶜ_ : Ctx → Ctx → Ctx
 Γ ++ᶜ []         = Γ
 Γ ++ᶜ (Γ' ∷ X)   = (Γ ++ᶜ Γ') ∷ X
-Γ ++ᶜ (Γ' ⟨ τ ⟩) = (Γ ++ᶜ Γ') ⟨ τ ⟩
+Γ ++ᶜ (Γ' ⟨ ρ ⟩) = (Γ ++ᶜ Γ') ⟨ ρ ⟩
 
 infixl 30 _++ᶜ_
 
@@ -52,7 +68,7 @@ infixl 30 _++ᶜ_
 ++ᶜ-identityˡ : ∀ {Γ} → [] ++ᶜ Γ ≡ Γ
 ++ᶜ-identityˡ {[]}      = refl
 ++ᶜ-identityˡ {Γ ∷ A}   = cong (_∷ A) ++ᶜ-identityˡ
-++ᶜ-identityˡ {Γ ⟨ τ ⟩} = cong (_⟨ τ ⟩) ++ᶜ-identityˡ
+++ᶜ-identityˡ {Γ ⟨ ρ ⟩} = cong (_⟨ ρ ⟩) ++ᶜ-identityˡ
 
 ++ᶜ-identityʳ : ∀ {Γ} → Γ ++ᶜ [] ≡ Γ
 ++ᶜ-identityʳ = refl
@@ -60,7 +76,7 @@ infixl 30 _++ᶜ_
 ++ᶜ-assoc : (Γ Γ' Γ'' : Ctx) → (Γ ++ᶜ Γ') ++ᶜ Γ'' ≡ Γ ++ᶜ (Γ' ++ᶜ Γ'')
 ++ᶜ-assoc Γ Γ' []          = refl
 ++ᶜ-assoc Γ Γ' (Γ'' ∷ A)   = cong (_∷ A) (++ᶜ-assoc Γ Γ' Γ'')
-++ᶜ-assoc Γ Γ' (Γ'' ⟨ τ ⟩) = cong (_⟨ τ ⟩) (++ᶜ-assoc Γ Γ' Γ'')
+++ᶜ-assoc Γ Γ' (Γ'' ⟨ ρ ⟩) = cong (_⟨ ρ ⟩) (++ᶜ-assoc Γ Γ' Γ'')
 
 ++ᶜ-congʳ : (Γ Γ' Γ'' : Ctx) → Γ' ≡ Γ'' → (Γ ++ᶜ Γ') ≡ (Γ ++ᶜ Γ'')
 ++ᶜ-congʳ Γ Γ' Γ'' p = cong (Γ ++ᶜ_) p
@@ -70,7 +86,7 @@ infixl 30 _++ᶜ_
   sym p
 ++ᶜ-identityˡ-unique {Γ ∷ A} {Γ'} p =
   ++ᶜ-identityˡ-unique (∷ᶜ-injective-ctx p)
-++ᶜ-identityˡ-unique {Γ ⟨ τ ⟩} {Γ'} p =
+++ᶜ-identityˡ-unique {Γ ⟨ ρ ⟩} {Γ'} p =
   ++ᶜ-identityˡ-unique (⟨⟩-injective-ctx p)
 
 ++ᶜ-identityʳ-unique : ∀ {Γ Γ'} → Γ ≡ Γ ++ᶜ Γ' → Γ' ≡ []
@@ -82,128 +98,121 @@ infixl 30 _++ᶜ_
 ++ᶜ-identityʳ-unique {Γ ∷ A} {[] ∷ B} p | ()
 ++ᶜ-identityʳ-unique {Γ ∷ A} {Γ' ∷ _ ∷ B} p | ()
 ++ᶜ-identityʳ-unique {Γ ∷ A} {Γ' ⟨ _ ⟩ ∷ B} p | ()
-++ᶜ-identityʳ-unique {Γ ⟨ τ ⟩} {Γ' ⟨ τ' ⟩} p
-  with ++ᶜ-identityʳ-unique {Γ} {[] ⟨ τ ⟩ ++ᶜ Γ'}
-         (trans (⟨⟩-injective-ctx p) (++ᶜ-assoc Γ ([] ⟨ τ ⟩) Γ'))
-++ᶜ-identityʳ-unique {Γ ⟨ τ ⟩} {[] ⟨ τ' ⟩} p | ()
-++ᶜ-identityʳ-unique {Γ ⟨ τ ⟩} {(Γ' ∷ _) ⟨ τ' ⟩} p | ()
-++ᶜ-identityʳ-unique {Γ ⟨ τ ⟩} {(Γ' ⟨ _ ⟩) ⟨ τ' ⟩} p | ()
+++ᶜ-identityʳ-unique {Γ ⟨ ρ ⟩} {Γ' ⟨ ρ' ⟩} p
+  with ++ᶜ-identityʳ-unique {Γ} {[] ⟨ ρ ⟩ ++ᶜ Γ'}
+         (trans (⟨⟩-injective-ctx p) (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Γ'))
+++ᶜ-identityʳ-unique {Γ ⟨ ρ ⟩} {[] ⟨ ρ' ⟩} p | ()
+++ᶜ-identityʳ-unique {Γ ⟨ ρ ⟩} {(Γ' ∷ _) ⟨ ρ' ⟩} p | ()
+++ᶜ-identityʳ-unique {Γ ⟨ ρ ⟩} {(Γ' ⟨ _ ⟩) ⟨ ρ' ⟩} p | ()
 
 ++ᶜ-inj₁ : ∀ {Γ₁ Γ₂ Γ} → Γ₁ ++ᶜ Γ ≡ Γ₂ ++ᶜ Γ → Γ₁ ≡ Γ₂
 ++ᶜ-inj₁ {Γ₁} {Γ₂} {[]} p =
   p
 ++ᶜ-inj₁ {Γ₁} {Γ₂} {Γ ∷ A} p =
   ++ᶜ-inj₁ (∷ᶜ-injective-ctx p)
-++ᶜ-inj₁ {Γ₁} {Γ₂} {Γ ⟨ τ ⟩} p =
+++ᶜ-inj₁ {Γ₁} {Γ₂} {Γ ⟨ ρ ⟩} p =
   ++ᶜ-inj₁ (⟨⟩-injective-ctx p)
 
 ++ᶜ-inj₂ : ∀ {Γ Γ₁ Γ₂} → Γ ++ᶜ Γ₁ ≡ Γ ++ᶜ Γ₂ → Γ₁ ≡ Γ₂
 ++ᶜ-inj₂ {Γ} {[]} {[]} q = refl
 ++ᶜ-inj₂ {Γ} {[]} {Γ₂ ∷ B} q =
   sym (++ᶜ-identityʳ-unique q)
-++ᶜ-inj₂ {Γ} {[]} {Γ₂ ⟨ τ' ⟩} q =
+++ᶜ-inj₂ {Γ} {[]} {Γ₂ ⟨ ρ' ⟩} q =
   sym (++ᶜ-identityʳ-unique q)
 ++ᶜ-inj₂ {Γ} {Γ₁ ∷ A} {[]} q =
   ++ᶜ-identityʳ-unique (sym q)
 ++ᶜ-inj₂ {Γ} {Γ₁ ∷ A} {Γ₂ ∷ B} q =
   cong₂ _∷_ (++ᶜ-inj₂ (∷ᶜ-injective-ctx q)) (∷ᶜ-injective-ty q)
-++ᶜ-inj₂ {Γ} {Γ₁ ⟨ τ ⟩} {[]} q =
+++ᶜ-inj₂ {Γ} {Γ₁ ⟨ ρ ⟩} {[]} q =
   ++ᶜ-identityʳ-unique (sym q)
-++ᶜ-inj₂ {Γ} {Γ₁ ⟨ τ ⟩} {Γ₂ ⟨ τ' ⟩} q =
+++ᶜ-inj₂ {Γ} {Γ₁ ⟨ ρ ⟩} {Γ₂ ⟨ ρ' ⟩} q =
   cong₂ _⟨_⟩ (++ᶜ-inj₂ (⟨⟩-injective-ctx q)) (⟨⟩-injective-time q)
 
 -- Amount of time-passage modelled by a context 
 
-ctx-time : Ctx → Time
-ctx-time []        = 0
+ctx-time : Ctx → R
+ctx-time []        = uᵣ
 ctx-time (Γ ∷ A)   = ctx-time Γ
-ctx-time (Γ ⟨ τ ⟩) = ctx-time Γ + τ
+ctx-time (Γ ⟨ ρ ⟩) = ctx-time Γ ·ᵣ ρ
 
 -- Interaction of time-passage and ++ᶜ
 
 ctx-time-++ᶜ : (Γ Γ' : Ctx)
-              → ctx-time (Γ ++ᶜ Γ') ≡ ctx-time Γ + ctx-time Γ'
-ctx-time-++ᶜ Γ []         = sym (+-identityʳ (ctx-time Γ))
-ctx-time-++ᶜ Γ (Γ' ∷ A)   = ctx-time-++ᶜ Γ Γ'
-ctx-time-++ᶜ Γ (Γ' ⟨ τ ⟩) = trans
-                               (cong (_+ τ) (ctx-time-++ᶜ Γ Γ'))
-                               (+-assoc (ctx-time Γ) (ctx-time Γ') τ)
+              → ctx-time (Γ ++ᶜ Γ') ≡ (ctx-time Γ ·ᵣ ctx-time Γ')
+ctx-time-++ᶜ Γ [] = sym (·-identityʳᵣ (ctx-time Γ))
+ctx-time-++ᶜ Γ (Γ' ∷ x) = ctx-time-++ᶜ Γ Γ'
+ctx-time-++ᶜ Γ (Γ' ⟨ ρ ⟩) = trans (cong (_·ᵣ ρ) (ctx-time-++ᶜ Γ Γ'))
+                             (·-assocᵣ (ctx-time Γ) (ctx-time Γ') ρ)
 
 -- Proof that sub-contexts split a given context
 
 data _,_split_ : (Γ Γ' Γ'' : Ctx) → Set where
   split-[] : ∀ {Γ} → Γ , [] split Γ
   split-∷  : ∀ {Γ Γ' Γ'' A} → Γ , Γ' split Γ'' → Γ , Γ' ∷ A split Γ'' ∷ A
-  split-⟨⟩ : ∀ {Γ Γ' Γ'' τ} → Γ , Γ' split Γ'' → Γ , Γ' ⟨ τ ⟩ split Γ'' ⟨ τ ⟩
+  split-⟨⟩ : ∀ {Γ Γ' Γ'' ρ} → Γ , Γ' split Γ'' → Γ , Γ' ⟨ ρ ⟩ split Γ'' ⟨ ρ ⟩
 
 -- Interaction between context splitting and ++ᶜ 
 
 split-≡ : ∀ {Γ Γ₁ Γ₂} → Γ₁ , Γ₂ split Γ → Γ₁ ++ᶜ Γ₂ ≡ Γ
 split-≡ split-[]     = refl
-split-≡ (split-∷ p)  = cong (_∷ _) (split-≡ p)
-split-≡ (split-⟨⟩ p) = cong (_⟨ _ ⟩) (split-≡ p)
+split-≡ (split-∷ c)  = cong (_∷ _) (split-≡ c)
+split-≡ (split-⟨⟩ c) = cong (_⟨ _ ⟩) (split-≡ c)
 
 ≡-split : ∀ {Γ Γ₁ Γ₂} → Γ₁ ++ᶜ Γ₂ ≡ Γ → Γ₁ , Γ₂ split Γ
 ≡-split {Γ₂ = []}       refl = split-[]
 ≡-split {Γ₂ = Γ₂ ∷ A}   refl = split-∷ (≡-split refl)
-≡-split {Γ₂ = Γ₂ ⟨ τ ⟩} refl = split-⟨⟩ (≡-split refl)
+≡-split {Γ₂ = Γ₂ ⟨ ρ ⟩} refl = split-⟨⟩ (≡-split refl)
 
 split-≡-++ᶜ : ∀ {Γ₁ Γ₂} → Γ₁ , Γ₂ split (Γ₁ ++ᶜ Γ₂)
 split-≡-++ᶜ = ≡-split refl
 
--- Variable in a context (under τ-amount of time-passage)
+-- Variable in a context (under ρ-amount of time-passage)
 
-data _∈[_]_ (A : VType) : Time → Ctx → Set where
-  Hd    : ∀ {Γ}      → A ∈[ 0 ] Γ ∷ A
-  Tl-∷  : ∀ {Γ B τ}  → A ∈[ τ ] Γ → A ∈[ τ ] Γ ∷ B
-  Tl-⟨⟩ : ∀ {Γ τ τ'} → A ∈[ τ' ] Γ → A ∈[ τ + τ' ] Γ ⟨ τ ⟩
+data _∈[_]_ (A : VType) : R → Ctx → Set where
+  Hd    : ∀ {Γ}      → A ∈[ uᵣ ] Γ ∷ A
+  Tl-∷  : ∀ {Γ B ρ}  → A ∈[ ρ ] Γ → A ∈[ ρ ] Γ ∷ B
+  Tl-⟨⟩ : ∀ {Γ ρ ρ'} → A ∈[ ρ' ] Γ → A ∈[ ρ ·ᵣ ρ' ] Γ ⟨ ρ ⟩
 
 infix 27 _∈[_]_
 
 -- Every variable in a context is within time captured by that context
 
-∈-ctx-time : ∀ {Γ A τ} → A ∈[ τ ] Γ → τ ≤ ctx-time Γ
-
-∈-ctx-time {(Γ ∷ A)} {A} {.0} Hd =
-  z≤n
-∈-ctx-time {(Γ ∷ B)} {A} {τ} (Tl-∷ x) =
-  ∈-ctx-time x
-∈-ctx-time {(Γ ⟨ τ ⟩)} {A} {.(τ + τ')} (Tl-⟨⟩ {τ' = τ'} x) =
-  ≤-trans
-    (+-monoʳ-≤ τ (∈-ctx-time x))
-    (≤-reflexive (+-comm τ (ctx-time Γ)))
+∈-ctx-time : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-time Γ
+∈-ctx-time {(Γ ∷ A)} {A} {.(uᵣ)} Hd = u≾c
+∈-ctx-time (Tl-∷ x) = ∈-ctx-time x
+∈-ctx-time {(Γ ⟨ ρ ⟩)} {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) = ≾-transᵣ (·-monoʳ-≾ᵣ ρ (∈-ctx-time x)) (≾-reflexiveᵣ (·-commᵣ ρ (ctx-time Γ)))
 
 -- Context extension does not decrease variable's time annotation
 
-var-τ-++ᶜ : ∀ {Γ Γ' A τ} → A ∈[ τ ] Γ → A ∈[ τ + ctx-time Γ' ] Γ ++ᶜ Γ'
+var-τ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-time Γ' ] Γ ++ᶜ Γ'
 
 var-τ-++ᶜ {Γ} {[]} {A} {τ} x =
-  subst (A ∈[_] Γ) (sym (+-identityʳ _)) x
+  subst (A ∈[_] Γ) (sym (·-identityʳᵣ _)) x
 var-τ-++ᶜ {Γ} {Γ' ∷ B} {A} {τ} x =
   Tl-∷ (var-τ-++ᶜ {Γ} {Γ'} x)
-var-τ-++ᶜ {Γ} {Γ' ⟨ τ' ⟩} {A} {τ} x =
-  subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ τ' ⟩)
+var-τ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
+  subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩)
     (trans
-      (sym (+-assoc τ' τ (ctx-time Γ')))
+      (sym (·-assocᵣ ρ' ρ (ctx-time Γ')))
       (trans
-        (cong (_+ ctx-time Γ') (+-comm τ' τ))
+        (cong (_·ᵣ ctx-time Γ') (·-commᵣ ρ' ρ))
         (trans
-          (+-assoc τ τ' (ctx-time Γ'))
-          (cong (τ +_) (+-comm τ' (ctx-time Γ'))))))
+          (·-assocᵣ ρ ρ' (ctx-time Γ'))
+          (cong (ρ ·ᵣ_) (·-commᵣ ρ' (ctx-time Γ'))))))
     (Tl-⟨⟩ (var-τ-++ᶜ {Γ} {Γ'} x))
 
 -- Splitting a context according to a variable in it
 
-var-split : ∀ {Γ A τ}
-          → A ∈[ τ ] Γ
-          → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] Γ₁ ∷ A , Γ₂ split Γ × ctx-time Γ₂ ≡ τ
+var-split : ∀ {Γ A ρ}
+          → A ∈[ ρ ] Γ
+          → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] Γ₁ ∷ A , Γ₂ split Γ × ctx-time Γ₂ ≡ ρ
 
 var-split {Γ ∷ A} Hd = Γ , [] , split-[] , refl
 var-split {Γ ∷ B} (Tl-∷ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q = Γ₁ , Γ₂ ∷ B , split-∷ p , q
-var-split {Γ ⟨ τ ⟩} (Tl-⟨⟩ x) with var-split x
+var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q =
-  Γ₁ , Γ₂ ⟨ τ ⟩ , split-⟨⟩ p , trans (cong (_+ τ) q) (+-comm _ τ)
+  Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , trans (cong (_·ᵣ ρ) q) (·-commᵣ _ ρ)
 
 -- Variable splitting preserves time-passage modelled by a context
 
@@ -213,36 +222,37 @@ split-pres-ctx-time : ∀ {Γ Γ₁ Γ₂ A}
                            
 split-pres-ctx-time split-[] =
   refl
-split-pres-ctx-time (split-∷ p) =
-  split-pres-ctx-time p
-split-pres-ctx-time (split-⟨⟩ {τ = τ} p) =
-  cong (_+ τ) (split-pres-ctx-time p) 
+split-pres-ctx-time (split-∷ c) =
+  split-pres-ctx-time c
+split-pres-ctx-time (split-⟨⟩ {ρ = ρ} c) =
+  cong (_·ᵣ ρ) (split-pres-ctx-time c) 
 
 -- Variable in context is in one of the two contexts splitting it
 
-var-in-split-proj₁-subst : ∀ {Γ A τ τ'}
-                         → (x : A ∈[ τ ] Γ)
-                         → (p : τ ≡ τ')
+var-in-split-proj₁-subst : ∀ {Γ A ρ ρ'}
+                         → (x : A ∈[ ρ ] Γ)
+                         → (c : ρ ≡ ρ')
                          → proj₁ (var-split x)
-                         ≡ proj₁ (var-split (subst (A ∈[_] Γ) p x))
+                         ≡ proj₁ (var-split (subst (A ∈[_] Γ) c x))
 
 var-in-split-proj₁-subst x refl = refl
 
-var-in-split-proj₂-subst : ∀ {Γ A τ τ'}
-                         → (x : A ∈[ τ ] Γ)
-                         → (p : τ ≡ τ')
+var-in-split-proj₂-subst : ∀ {Γ A ρ ρ'}
+                         → (x : A ∈[ ρ ] Γ)
+                         → (c : ρ ≡ ρ')
                          → proj₁ (proj₂ (var-split x))
-                         ≡ proj₁ (proj₂ (var-split (subst (A ∈[_] Γ) p x)))
+                         ≡ proj₁ (proj₂ (var-split (subst (A ∈[_] Γ) c x)))
 
 var-in-split-proj₂-subst x refl = refl
 
-var-in-split : ∀ {Γ Γ₁ Γ₂ A τ}
+{-
+var-in-split : ∀ {Γ Γ₁ Γ₂ A ρ}
              → Γ₁ , Γ₂ split Γ
-             → (x : A ∈[ τ ] Γ)
-             → (Σ[ y ∈ A ∈[ τ ∸ ctx-time Γ₂ ] Γ₁ ]
+             → (x : A ∈[ ρ ] Γ)
+             → (Σ[ y ∈ A ∈[ ρ ∸ ctx-time Γ₂ ] Γ₁ ]
                    proj₁ (var-split x) ≡ proj₁ (var-split y)
                  × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)) ++ᶜ Γ₂)
-             ⊎ (Σ[ y ∈ A ∈[ τ ] Γ₂ ]
+             ⊎ (Σ[ y ∈ A ∈[ ρ ] Γ₂ ]
                    proj₁ (var-split x) ≡ Γ₁ ++ᶜ proj₁ (var-split y)
                  × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)))
 
@@ -277,6 +287,8 @@ var-in-split {Γ₁ = Γ₁} {Γ₂ = Γ₂ ⟨ τ ⟩} {A = A}
      cong (_⟨ τ ⟩) (trans r (cong (_++ᶜ Γ₂) (var-in-split-proj₂-subst y _))))
 ... | inj₂ (y , q , r) =
   inj₂ (Tl-⟨⟩ y , q , cong (_⟨ τ ⟩) r)
+
+-- To remove:
 
 -- Temporal minus operation on contexts
 
@@ -380,3 +392,5 @@ ctx-time-ᶜ-∸ (Γ ⟨ τ' ⟩) (suc τ) p with suc τ ≤? τ'
   trans
     (ctx-time-ᶜ-∸ Γ (suc τ ∸ τ') (m≤n+k⇒m∸k≤n (suc τ) (ctx-time Γ) τ' p))
     (sym (¬k≤m⇒k∸m≤n⇒n+m∸k≤n∸k∸m ¬q (m≤n+k⇒m∸k≤n (suc τ) (ctx-time Γ) τ' p)))
+
+-}
