@@ -6,19 +6,7 @@ open import Syntax.Grades
 
 module Syntax.Contexts (Grades : GradeSystem) where
 
-open GradeSystem Grades
-open Grade RGrade renaming
-  (Carrier to R;
-   _·_ to _·ᵣ_;
-   u to uᵣ;
-   ·-identityʳ to ·-identityʳᵣ;
-   ·-assoc to ·-assocᵣ;
-   _≾_ to _≾ᵣ_;
-   ·-monoʳ-≾ to ·-monoʳ-≾ᵣ;
-   ·-comm to ·-commᵣ;
-   ≾-reflexive to ≾-reflexiveᵣ;
-   ≾-trans to ≾-transᵣ
-  )
+open GradeSystemInterface Grades
 
 open import Data.Empty -- Remove?
 open import Data.Product

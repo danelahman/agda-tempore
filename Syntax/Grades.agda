@@ -83,7 +83,25 @@ record GradeSystem : Set₂ where
     EGrade : Grade
     ∣_∣ᵉ : EGrade →ᵍ RGrade
     ∣_∣ʳ : RGrade →ᵍ EGrade
-  
+
+
+module GradeSystemInterface (GS : GradeSystem) where
+
+  open GradeSystem GS public
+
+  open Grade RGrade renaming
+    (Carrier to R;
+     _·_ to _·ᵣ_;
+     u to uᵣ;
+     ·-identityʳ to ·-identityʳᵣ;
+     ·-assoc to ·-assocᵣ;
+     _≾_ to _≾ᵣ_;
+     ·-monoʳ-≾ to ·-monoʳ-≾ᵣ;
+     ·-comm to ·-commᵣ;
+     ≾-reflexive to ≾-reflexiveᵣ;
+     ≾-trans to ≾-transᵣ
+    ) public
+
 
 {-
 module Syntax.Grades
