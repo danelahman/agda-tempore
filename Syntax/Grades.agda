@@ -64,16 +64,16 @@ record Grade : Set₁ where
     ≾-irrelevant : Irrelevant _≾_
 
     -- Properties of _·_ and _≾_
-    c≾c·d : ∀ (c d : Carrier) → c ≾ (c · d)
+    c≾c·d : (c d : Carrier) → c ≾ (c · d)
 
-    c≾d⇒c≾d+b : ∀ {c d} → ∀ b → c ≾ d → c ≾ (d · b)
+    c≾d⇒c≾d+b : ∀ {c d} b → c ≾ d → c ≾ (d · b)
 
     γ-≾-substₗ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ' ≾ γ → γ'' ≾ γ
     
     γ-≾-substᵣ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ ≾ γ'' → γ ≾ γ'
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
-    mapℕ : ∀ (n : ℕ) → Carrier
+    mapℕ : ℕ → Carrier
 
     -- ...
 

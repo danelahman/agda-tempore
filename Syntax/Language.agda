@@ -80,9 +80,9 @@ mutual
             → {ε' : E}
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε
-            → Γ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε
+            → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
             ------------------------
-            → Γ ⊢C⦂ B ‼ (ε' ·ₑ ε)
+            → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
     -- function application
     
@@ -149,7 +149,7 @@ mutual
             → {Γ₁ Γ₂ : Ctx}
             → {ρ : R}
             → ρ ≾ᵣ ctx-time Γ₂
-            → Ren Γ (Γ₁ ++ᶜ Γ₂) 
+            → Ren (Γ₁ ++ᶜ Γ₂) Γ 
             → Γ₁ ⊢V⦂ [ ρ ] A
             → Γ ∷ A  ⊢C⦂ C
             --------------------
@@ -211,10 +211,10 @@ mutual
     `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
     `in (C-rename (cong-ren r) N)
   C-rename r (unbox {A} {C} {Γ₁} {Γ₂} {ρ} rel r' V M) =
-    unbox {A = A} {ρ = ρ}
-      {!!}
-      {!!}
-      (V-rename (ren {!!} {!!}) V)
+    unbox {A = A} {Γ₁ = Γ₁} {Γ₂ = Γ₂} {ρ = ρ}
+      rel
+      (r ∘ʳ r')
+      (V-rename id-ren V)
       (C-rename (cong-ren r) M)
 
 {-

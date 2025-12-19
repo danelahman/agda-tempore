@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 -------------------------------------------------------------
 -- Context renamings and their action on well-typed terms  --
 --                                                         --
