@@ -119,18 +119,18 @@ infixl 30 _++ᶜ_
 -- Amount of time-passage modelled by a context 
 
 ctx-time : Ctx → R
-ctx-time []        = uᵣ
-ctx-time (Γ ∷ A)   = ctx-time Γ
+ctx-time []       = uᵣ
+ctx-time (Γ ∷ A) = ctx-time Γ
 ctx-time (Γ ⟨ ρ ⟩) = ctx-time Γ ·ᵣ ρ
 
 -- Interaction of time-passage and ++ᶜ
 
 ctx-time-++ᶜ : (Γ Γ' : Ctx)
               → ctx-time (Γ ++ᶜ Γ') ≡ (ctx-time Γ ·ᵣ ctx-time Γ')
-ctx-time-++ᶜ Γ [] = sym (·-identityʳᵣ (ctx-time Γ))
+ctx-time-++ᶜ Γ [] = sym (·ᵣ-identityʳ (ctx-time Γ))
 ctx-time-++ᶜ Γ (Γ' ∷ x) = ctx-time-++ᶜ Γ Γ'
 ctx-time-++ᶜ Γ (Γ' ⟨ ρ ⟩) = trans (cong (_·ᵣ ρ) (ctx-time-++ᶜ Γ Γ'))
-                             (·-assocᵣ (ctx-time Γ) (ctx-time Γ') ρ)
+                             (·ᵣ-assoc (ctx-time Γ) (ctx-time Γ') ρ)
 
 -- Proof that sub-contexts split a given context
 
@@ -166,28 +166,28 @@ infix 27 _∈[_]_
 -- Every variable in a context is within time captured by that context
 
 ∈-ctx-time : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-time Γ
-∈-ctx-time {(Γ ∷ A)} {A} {.(uᵣ)} Hd = u≾c
+∈-ctx-time {(Γ ∷ A)} {A} {.(uᵣ)} Hd = uᵣ≾ᵣc
 ∈-ctx-time (Tl-∷ x) = ∈-ctx-time x
-∈-ctx-time {(Γ ⟨ ρ ⟩)} {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) = ≾-transᵣ (·-monoʳ-≾ᵣ ρ (∈-ctx-time x)) (≾-reflexiveᵣ (·-commᵣ ρ (ctx-time Γ)))
+∈-ctx-time {(Γ ⟨ ρ ⟩)} {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) = ≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ ρ (∈-ctx-time x)) (≾ᵣ-reflexive (·ᵣ-comm ρ (ctx-time Γ)))
 
 -- Context extension does not decrease variable's time annotation
 
-var-τ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-time Γ' ] Γ ++ᶜ Γ'
+var-ρ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-time Γ' ] Γ ++ᶜ Γ'
 
-var-τ-++ᶜ {Γ} {[]} {A} {τ} x =
-  subst (A ∈[_] Γ) (sym (·-identityʳᵣ _)) x
-var-τ-++ᶜ {Γ} {Γ' ∷ B} {A} {τ} x =
-  Tl-∷ (var-τ-++ᶜ {Γ} {Γ'} x)
-var-τ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
+var-ρ-++ᶜ {Γ} {[]} {A} {ρ} x =
+  subst (A ∈[_] Γ) (sym (·ᵣ-identityʳ _)) x
+var-ρ-++ᶜ {Γ} {Γ' ∷ B} {A} {ρ} x =
+  Tl-∷ (var-ρ-++ᶜ {Γ} {Γ'} x)
+var-ρ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
   subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩)
     (trans
-      (sym (·-assocᵣ ρ' ρ (ctx-time Γ')))
+      (sym (·ᵣ-assoc ρ' ρ (ctx-time Γ')))
       (trans
-        (cong (_·ᵣ ctx-time Γ') (·-commᵣ ρ' ρ))
+        (cong (_·ᵣ ctx-time Γ') (·ᵣ-comm ρ' ρ))
         (trans
-          (·-assocᵣ ρ ρ' (ctx-time Γ'))
-          (cong (ρ ·ᵣ_) (·-commᵣ ρ' (ctx-time Γ'))))))
-    (Tl-⟨⟩ (var-τ-++ᶜ {Γ} {Γ'} x))
+          (·ᵣ-assoc ρ ρ' (ctx-time Γ'))
+          (cong (ρ ·ᵣ_) (·ᵣ-comm ρ' (ctx-time Γ'))))))
+    (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x))
 
 -- Splitting a context according to a variable in it
 
@@ -200,7 +200,7 @@ var-split {Γ ∷ B} (Tl-∷ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q = Γ₁ , Γ₂ ∷ B , split-∷ p , q
 var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q =
-  Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , trans (cong (_·ᵣ ρ) q) (·-commᵣ _ ρ)
+  Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , trans (cong (_·ᵣ ρ) q) (·ᵣ-comm _ ρ)
 
 -- Variable splitting preserves time-passage modelled by a context
 
@@ -272,7 +272,7 @@ var-in-split {Γ₁ = Γ₁} {Γ₂ = Γ₂ ⟨ τ ⟩} {A = A}
         (cong (_∸ (ctx-time Γ₂ + τ)) (+-comm τ' τ)))
       y ,
      trans q (var-in-split-proj₁-subst y _) ,
-     cong (_⟨ τ ⟩) (trans r (cong (_++ᶜ Γ₂) (var-in-split-proj₂-subst y _))))
+     cong (_⟨ τ ⟩) (transctx r (cong (_++ᶜ Γ₂) (var-in-split-proj₂-subst y _))))
 ... | inj₂ (y , q , r) =
   inj₂ (Tl-⟨⟩ y , q , cong (_⟨ τ ⟩) r)
 

@@ -1,20 +1,18 @@
----------------------------------------
--- Well-typed syntax of the language --
----------------------------------------
+---------------------------------------------------------------------------------
+-- Well-typed syntax of the language and renamings actions on well-typed terms --
+---------------------------------------------------------------------------------
 
 open import Syntax.Grades
 
 module Syntax.Language (Grades : GradeSystem) where
 
-open GradeSystem Grades
-open Grade RGrade renaming (Carrier to R; _·_ to _·ᵣ_; _≾_ to _≾ᵣ_)
-open Grade EGrade renaming (Carrier to E; u to uₑ; _·_ to _·ₑ_)
-open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ)
-open _→ᵍ_ ∣_∣ʳ renaming (map to mapʳ)
+open GradeSystemInterface Grades
+
+open import Data.Product
 
 open import Syntax.Contexts (Grades)
 open import Syntax.Types (Grades)
-open import Syntax.Renamings
+open import Syntax.Renamings (Grades)
 
 open import Util.Equality
 open import Util.Operations (Grades)
@@ -79,12 +77,12 @@ mutual
     -- sequential composition
     
     _;_     : {A B : VType}      -- NOTE: use \;0 to get this unicode semicolon
-            → {ρ : R}
+            → {ε' : E}
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε
-            → Γ ⟨ ρ ⟩ ∷ A ⊢C⦂ B ‼ ε
+            → Γ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε
             ------------------------
-            → Γ ⊢C⦂ B ‼ ((mapʳ ρ) ·ₑ ε)
+            → Γ ⊢C⦂ B ‼ (ε' ·ₑ ε)
 
     -- function application
     
@@ -124,11 +122,11 @@ mutual
     -- explicit delaying of a computation
 
     delay   : {A : VType}
-            → (ρ : R)
+            → (τ : ℕ)
             → {ε : E}
-            → Γ ⟨ ρ ⟩ ⊢C⦂ A ‼ ε
+            → Γ ⟨ mapℕʳ τ ⟩ ⊢C⦂ A ‼ ε
             --------------------
-            → Γ ⊢C⦂ A ‼ ((mapʳ ρ) ·ₑ ε)
+            → Γ ⊢C⦂ A ‼ ((mapℕᵉ τ) ·ₑ ε)
 
     -- effect handling
 
@@ -144,19 +142,18 @@ mutual
             --------------------------------------------------
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
-{-
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
     unbox   : {A : VType}
             → {C : CType}
+            → {Γ₁ Γ₂ : Ctx}
             → {ρ : R}
-            → ρ ≾ᵣ ctx-time Γ
-            → Ren Γ (Γ₁ ++ᶜ Γ₂)
+            → ρ ≾ᵣ ctx-time Γ₂
+            → Ren Γ (Γ₁ ++ᶜ Γ₂) 
             → Γ₁ ⊢V⦂ [ ρ ] A
             → Γ ∷ A  ⊢C⦂ C
             --------------------
             → Γ ⊢C⦂ C
--}
 
     -- boxing up a value/resource that is ready for use in at least `τ` time steps
 
@@ -178,3 +175,53 @@ mutual
         → Γ ⊢C⦂ A ‼ ε'
 
 ε-subst refl M = M
+
+
+-- Action of renamings on well-typed values and computations
+
+mutual
+
+  V-rename : ∀ {Γ Γ' A}
+           → Ren Γ Γ'
+           → Γ ⊢V⦂ A
+           ------------
+           → Γ' ⊢V⦂ A
+
+  V-rename r (var x)    = var (proj₂ (proj₂ (var-rename r x)))
+  V-rename r (const c)  = const c
+  V-rename r ⋆          = ⋆
+  V-rename r (⦉ V , W ⦊) = ⦉ V-rename r V , V-rename r W ⦊
+  V-rename r (lam M)    = lam (C-rename (cong-ren r) M)
+
+  C-rename : ∀ {Γ Γ' C}
+           → Ren Γ Γ'
+           → Γ ⊢C⦂ C
+           ------------
+           → Γ' ⊢C⦂ C
+
+  C-rename r (return V)       = return (V-rename r V)
+  C-rename r (M ; N)          = C-rename r M ; C-rename (cong-ren r) N
+  C-rename r (V · W)          = V-rename r V · V-rename r W
+  C-rename r (match V `in M)  = match V-rename r V `in C-rename (cong-ren r) M
+  C-rename r (absurd V)       = absurd (V-rename r V)
+  C-rename r (perform op V M) = perform op (V-rename r V) (C-rename (cong-ren r) M)
+  C-rename r (delay τ M)      = delay τ (C-rename (cong-ren r) M)
+  C-rename r (handle M `with H `in N) =
+    handle C-rename r M
+    `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
+    `in (C-rename (cong-ren r) N)
+  C-rename r (unbox {A} {C} {Γ₁} {Γ₂} {ρ} rel r' V M) =
+    unbox {A = A} {ρ = ρ}
+      {!!}
+      {!!}
+      (V-rename (ren {!!} {!!}) V)
+      (C-rename (cong-ren r) M)
+
+{-
+      (≾ᵣ-trans ≾ᵣ-refl (≾ᵣ-trans rel (ctx-time-≾ r)))
+      ({!!})
+      (V-rename (ren ≾ᵣ-refl (λ {A = A₁} {ρ = ρ₁} z → ρ₁ , ≾ᵣ-refl , z)) V)
+      (C-rename (cong-ren r) M)
+-}
+--    unbox (≾ᵣ-trans r (ctx-time-≾ r)) (V-rename (r -ʳ τ , p) V) (C-rename (cong-ren ρ) M)
+  C-rename r (box V M)        = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)

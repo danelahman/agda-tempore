@@ -4,9 +4,13 @@
 
 module Syntax.Grades where
 
-open import Level
+open import Data.Nat.Base
+
+open import Level renaming (zero to lzero)
+
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
+
 open import Util.Equality
 open import Util.Ordered.Structures
 
@@ -19,12 +23,12 @@ record Grade : Set₁ where
     Carrier : Set₀
 
     -- monoid ops
-    _≈_ : Rel Carrier zero
+    _≈_ : Rel Carrier lzero
     _·_ : Carrier → Carrier → Carrier
     u   : Carrier
 
     -- order
-    _≾_ : Rel Carrier zero
+    _≾_ : Rel Carrier lzero
 
     -- monoid is ordered
     isCommutativePomonoid : IsCommutativePomonoid _≈_ _≾_ _·_ u
@@ -49,14 +53,27 @@ record Grade : Set₁ where
 
     -- _·_ is monotone w.r.t. _≾_ (left)
     ·-monoˡ-≾ : (c : Carrier) → _Preserves_⟶_ (_· c) _≾_ _≾_
-
--- _≾_ is reflexive and transitive
+ 
+    -- _≾_ is reflexive and transitive
     ≾-reflexive  : _≡_ ⇒ _≾_
 
     ≾-refl  : Reflexive _≾_
     ≾-trans : Transitive _≾_
-   
+
+    -- _≾_ is irrelevant
+    ≾-irrelevant : Irrelevant _≾_
+
+    -- Properties of _·_ and _≾_
+    c≾c·d : ∀ (c d : Carrier) → c ≾ (c · d)
+
+    c≾d⇒c≾d+b : ∀ {c d} → ∀ b → c ≾ d → c ≾ (d · b)
+
+    γ-≾-substₗ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ' ≾ γ → γ'' ≾ γ
+    
+    γ-≾-substᵣ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ ≾ γ'' → γ ≾ γ'
+
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
+    mapℕ : ∀ (n : ℕ) → Carrier
 
     -- ...
 
@@ -82,7 +99,7 @@ record GradeSystem : Set₂ where
     RGrade : Grade
     EGrade : Grade
     ∣_∣ᵉ : EGrade →ᵍ RGrade
-    ∣_∣ʳ : RGrade →ᵍ EGrade
+    ∣_∣ʳ : RGrade →ᵍ EGrade -- remove?
 
 
 module GradeSystemInterface (GS : GradeSystem) where
@@ -93,14 +110,40 @@ module GradeSystemInterface (GS : GradeSystem) where
     (Carrier to R;
      _·_ to _·ᵣ_;
      u to uᵣ;
-     ·-identityʳ to ·-identityʳᵣ;
-     ·-assoc to ·-assocᵣ;
+     ·-identityʳ to ·ᵣ-identityʳ;
+     ·-identityˡ to ·ᵣ-identityˡ;
+     ·-assoc to ·ᵣ-assoc;
      _≾_ to _≾ᵣ_;
-     ·-monoʳ-≾ to ·-monoʳ-≾ᵣ;
-     ·-comm to ·-commᵣ;
-     ≾-reflexive to ≾-reflexiveᵣ;
-     ≾-trans to ≾-transᵣ
+     ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
+     ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
+     ·-comm to ·ᵣ-comm;
+     ≾-reflexive to ≾ᵣ-reflexive;
+     ≾-trans to ≾ᵣ-trans;
+     ≾-refl to ≾ᵣ-refl;
+     u≾c to uᵣ≾ᵣc;
+     ≾-irrelevant to ≾ᵣ-irrelevant;
+     c≾c·d to c≾ᵣc·ᵣd;
+     γ-≾-substₗ to ρ-≾ᵣ-substₗ;
+     γ-≾-substᵣ to ρ-≾ᵣ-substᵣ;
+     c≾d⇒c≾d+b to c≾ᵣd⇒c≾ᵣd+b;
+     mapℕ to mapℕʳ
     ) public
+
+  open Grade EGrade renaming
+    (Carrier to E;
+     _·_ to _·ₑ_;
+     u to uₑ;
+     ·-identityʳ to ·ₑ-identityʳ;
+     ·-assoc to ·ₑ-assoc;
+     _≾_ to _≾ₑ_;
+     ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
+     ·-comm to ·ₑ-comm;
+     ≾-reflexive to ≾ₑ-reflexive;
+     ≾-trans to ≾ₑ-trans;
+     mapℕ to mapℕᵉ
+    ) public
+
+  open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public
 
 
 {-
