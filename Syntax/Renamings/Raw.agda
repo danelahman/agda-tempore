@@ -63,39 +63,27 @@ var-vren {Γ} {A} {ρ} x (Tl-∷ {ρ = ρ'} y) =
 -- Strong monoidal functor renamings
 
 ⟨⟩-η-vren : ∀ {Γ} → VRen (Γ ⟨ uᵣ ⟩) Γ
-⟨⟩-η-vren {Γ} (Tl-⟨⟩ {ρ' = ρ} x) = ρ , ≾ᵣ-reflexive (·ᵣ-identityˡ ρ) , x
+⟨⟩-η-vren {Γ} (Tl-⟨⟩ {ρ' = ρ} x) = ρ , ≾ᵣ-reflexive (·ᵣ-identityʳ ρ) , x
 
 ⟨⟩-η⁻¹-vren : ∀ {Γ} → VRen Γ (Γ ⟨ uᵣ ⟩)
-⟨⟩-η⁻¹-vren {Γ} {A} {ρ} x = uᵣ ·ᵣ ρ , ≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ)) , Tl-⟨⟩ x
+⟨⟩-η⁻¹-vren {Γ} {A} {ρ} x = ρ ·ᵣ uᵣ , ≾ᵣ-reflexive (sym (·ᵣ-identityʳ ρ)) , Tl-⟨⟩ x
 
 ⟨⟩-μ-vren : ∀ {Γ ρ ρ'} → VRen (Γ ⟨ ρ ·ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
-⟨⟩-μ-vren {Γ} {ρ} {ρ'} {A} {.(ρ ·ᵣ ρ' ·ᵣ ρ'')} (Tl-⟨⟩ {ρ' = ρ''} x) =
-  ρ' ·ᵣ (ρ ·ᵣ ρ'') ,
-  ≾ᵣ-reflexive
-    (trans
-      (cong (_·ᵣ ρ'') (·ᵣ-comm ρ ρ'))
-      (·ᵣ-assoc ρ' ρ ρ'')) ,
-  Tl-⟨⟩ (Tl-⟨⟩ x)
+⟨⟩-μ-vren {Γ} {ρ} {ρ'} {A} {.(ρ'' ·ᵣ (ρ ·ᵣ ρ'))} (Tl-⟨⟩ {ρ' = ρ''} x) =
+  ρ'' ·ᵣ ρ ·ᵣ ρ' , ≾ᵣ-reflexive (sym (·ᵣ-assoc ρ'' ρ ρ')) , Tl-⟨⟩ (Tl-⟨⟩ x)
 
 ⟨⟩-μ⁻¹-vren : ∀ {Γ ρ ρ'} → VRen (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
-⟨⟩-μ⁻¹-vren {Γ} {ρ} {ρ'} {A} {.(ρ' ·ᵣ (ρ ·ᵣ _))} (Tl-⟨⟩ (Tl-⟨⟩ {ρ' = ρ''} x)) =
-  ρ ·ᵣ ρ' ·ᵣ ρ'' ,
-  ≾ᵣ-reflexive
-    (trans
-      (sym (·ᵣ-assoc ρ' ρ ρ''))
-      (cong (_·ᵣ ρ'') (·ᵣ-comm ρ' ρ))) ,
-  Tl-⟨⟩ x
+⟨⟩-μ⁻¹-vren {Γ} {ρ} {ρ'} {A} {.(_ ·ᵣ ρ ·ᵣ ρ')} (Tl-⟨⟩ (Tl-⟨⟩ {ρ' = ρ''} x)) =
+  ρ'' ·ᵣ (ρ ·ᵣ ρ') , ≾ᵣ-reflexive (·ᵣ-assoc ρ'' ρ ρ') , Tl-⟨⟩ x
 
 ⟨⟩-≾-vren : ∀ {Γ ρ ρ'} → ρ ≾ᵣ ρ' → VRen (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
-⟨⟩-≾-vren {Γ} {ρ} {ρ'} rel {A} {.(ρ ·ᵣ _)} (Tl-⟨⟩ {ρ' = ρ''} x) =
-  ρ' ·ᵣ ρ'' , ·ᵣ-monoˡ-≾ᵣ ρ'' rel , Tl-⟨⟩ x
+⟨⟩-≾-vren {Γ} {ρ} {ρ'} rel {A} {.(_ ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ''} x) =
+  ρ'' ·ᵣ ρ' , ·ᵣ-monoʳ-≾ᵣ ρ'' rel , Tl-⟨⟩ x
 
 -- Derived modal weakening renaming
 
-wk-⟨⟩-vren : ∀ {Γ τ} → VRen Γ (Γ ⟨ τ ⟩)
-wk-⟨⟩-vren {Γ} {τ} =
-      ⟨⟩-≾-vren uᵣ≾ᵣc
-  ∘ᵛʳ ⟨⟩-η⁻¹-vren
+wk-⟨⟩-vren : ∀ {Γ ρ} → VRen Γ (Γ ⟨ ρ ⟩)
+wk-⟨⟩-vren {Γ} {ρ} = ⟨⟩-≾-vren uᵣ≾ᵣc ∘ᵛʳ ⟨⟩-η⁻¹-vren
 
 -- Congruence renamings
 
@@ -105,9 +93,8 @@ cong-∷-vren {Γ} {Γ'} {A} r {B} {ρ} (Tl-∷ x) with r x
 ...| ρ' , rel , y = ρ' , rel , Tl-∷ y
 
 cong-⟨⟩-vren : ∀ {Γ Γ' ρ} → VRen Γ Γ' → VRen (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
-cong-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) with r x
-... | ρ'' , r , y =
-  ρ ·ᵣ ρ'' , ·ᵣ-monoʳ-≾ᵣ ρ r , Tl-⟨⟩ y
+cong-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) with r x
+... | ρ'' , r , y = ρ'' ·ᵣ ρ , ·ᵣ-monoˡ-≾ᵣ ρ r , Tl-⟨⟩ y
 
 -- REMOVE
 {-
@@ -195,7 +182,7 @@ var-ᶜ-+ {Γ ⟨ τ'' ⟩} {A} {suc τ} {.(τ'' ∸ suc τ + τ')} (Tl-⟨⟩ {
 
 pra-⟨⟩-vren : ∀ {Γ Γ' ρ} → VRen (Γ ⟨ ρ ⟩) Γ' → VRen Γ Γ'
 pra-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {ρ'} x  with r (Tl-⟨⟩ x)
-... | ρ'' , rel , y = ρ'' , ≾ᵣ-trans (ρ-≾ᵣ-substᵣ (·ᵣ-comm ρ ρ') (c≾ᵣc·ᵣd ρ' ρ)) rel , y
+... | ρ'' , rel , y = ρ'' , ≾ᵣ-trans (c≾ᵣc·ᵣd ρ' ρ) rel , y
 
 {- This doesn't hold in the general case without the minus.
 pra-⟨⟩-vren⁻¹ : ∀ {Γ Γ' τ} → τ ≤ ctx-grade Γ' → VRen Γ (Γ' -ᶜ τ) → VRen (Γ ⟨ τ ⟩) Γ'
@@ -335,9 +322,8 @@ cong-⟨⟩-vren-id : ∀ {Γ A ρ ρ'}
                 → (x : A ∈[ ρ ] Γ ⟨ ρ' ⟩)
                 → cong-⟨⟩-vren id-vren x ≡ id-vren x
 
-cong-⟨⟩-vren-id {Γ} {A} {.(ρ' ·ᵣ _)} {ρ'} (Tl-⟨⟩ x) with id-vren x
-... | ρ'' , r , y =
-  dcong₂ _,_ refl (cong₂ _,_ (≾ᵣ-irrelevant _ _) refl)
+cong-⟨⟩-vren-id {Γ} {A} {.(_ ·ᵣ ρ)} {ρ} (Tl-⟨⟩ x) with id-vren x
+... | ρ'' , r , y = dcong₂ _,_ refl (cong₂ _,_ (≾ᵣ-irrelevant (·ᵣ-monoˡ-≾ᵣ ρ ≾ᵣ-refl) ≾ᵣ-refl) refl)
 
 cong-vren-id : ∀ {Γ Γ' A ρ}
              → (x : A ∈[ ρ ] Γ ++ᶜ Γ')
@@ -378,8 +364,7 @@ cong-⟨⟩-vren-fun : ∀ {Γ Γ' Γ'' A ρ ρ'}
                 ≡ (cong-⟨⟩-vren r' ∘ᵛʳ cong-⟨⟩-vren r) x
                 
 cong-⟨⟩-vren-fun r r' (Tl-⟨⟩ x) with r x
-... | ρ'' , r , y =
-  cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) (≾ᵣ-irrelevant _ _))
+... | ρ'' , r , y = cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) (≾ᵣ-irrelevant _ _))
 
 cong-vren-fun : ∀ {Γ Γ' Γ'' Γ''' A ρ}
             → (r : VRen Γ Γ')

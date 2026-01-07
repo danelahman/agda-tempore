@@ -4,7 +4,7 @@
 
 open import Syntax.Grades
 
-module Syntax.Renamings.Actions (Grades : GradeSystem) where
+module Syntax.RenActions (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 

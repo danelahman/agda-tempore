@@ -160,7 +160,7 @@ split-≡-++ᶜ = ≡-split refl
 data _∈[_]_ (A : VType) : R → Ctx → Set where
   Hd    : ∀ {Γ}      → A ∈[ uᵣ ] Γ ∷ A
   Tl-∷  : ∀ {Γ B ρ}  → A ∈[ ρ ] Γ → A ∈[ ρ ] Γ ∷ B
-  Tl-⟨⟩ : ∀ {Γ ρ ρ'} → A ∈[ ρ' ] Γ → A ∈[ ρ ·ᵣ ρ' ] Γ ⟨ ρ ⟩
+  Tl-⟨⟩ : ∀ {Γ ρ ρ'} → A ∈[ ρ' ] Γ → A ∈[ ρ' ·ᵣ ρ ] Γ ⟨ ρ ⟩
 
 infix 27 _∈[_]_
 
@@ -169,8 +169,8 @@ infix 27 _∈[_]_
 ∈-ctx-grade : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-grade Γ
 ∈-ctx-grade Hd        = uᵣ≾ᵣc
 ∈-ctx-grade (Tl-∷ x)  = ∈-ctx-grade x
-∈-ctx-grade {Γ ⟨ ρ ⟩} {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) with ∈-ctx-grade {Γ} {A} {ρ'} x
-... | rel = ≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ ρ (∈-ctx-grade x)) (≾ᵣ-reflexive (·ᵣ-comm ρ (ctx-grade Γ)))
+∈-ctx-grade {Γ ⟨ ρ ⟩} {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) with ∈-ctx-grade {Γ} {A} {ρ'} x
+... | rel = ·ᵣ-monoˡ-≾ᵣ ρ rel
 
 -- Context extension does not decrease variable's grade annotation
 
@@ -180,16 +180,8 @@ var-ρ-++ᶜ {Γ} {[]} {A} x =
 var-ρ-++ᶜ {Γ' = Γ' ∷ B} x =
   Tl-∷ (var-ρ-++ᶜ x)
 var-ρ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
-  subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩)
-    (trans 
-      (sym (·ᵣ-assoc ρ' ρ (ctx-grade Γ')))
-      (trans
-        (cong (_·ᵣ ctx-grade Γ') (·ᵣ-comm ρ' ρ))
-        (trans
-          (·ᵣ-assoc ρ ρ' (ctx-grade Γ'))
-          (cong (ρ ·ᵣ_) (·ᵣ-comm ρ' (ctx-grade Γ'))))))
-    (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x))
-    
+  subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x))
+
 -- Splitting a context according to a variable in it
 
 var-split : ∀ {Γ A ρ}
@@ -200,7 +192,7 @@ var-split {Γ ∷ B} (Tl-∷ x) with var-split x
 ... | Γ₁ , Γ₂ , p₁ , e = Γ₁ , Γ₂ ∷ B , split-∷ p₁ , e
 var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q =
-  Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , trans (cong (_·ᵣ ρ) q) (·ᵣ-comm _ ρ)
+  Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , cong (_·ᵣ ρ) q
   
 -- Variable splitting preserves time-passage modelled by a context
 

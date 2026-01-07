@@ -13,7 +13,7 @@ open import Data.Product
 
 open import Relation.Nullary
 
-open import Syntax.Renamings.Actions (Grades)
+open import Syntax.RenActions (Grades)
 
 open import Syntax.Contexts (Grades)
 open import Syntax.Language (Grades)

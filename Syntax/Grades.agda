@@ -31,7 +31,7 @@ record Grade : Set₁ where
     _≾_ : Rel Carrier lzero
 
     -- monoid is ordered
-    isCommutativePomonoid : IsCommutativePomonoid _≈_ _≾_ _·_ u
+    isPomonoid : IsPomonoid _≈_ _≾_ _·_ u
     
     -- u is the neutral of the _·_ operation (right)
     ·-identityʳ : (x : Carrier) → (x · u) ≡ x
@@ -44,9 +44,6 @@ record Grade : Set₁ where
 
     -- _·_ is associative
     ·-assoc : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
-
-    -- _·_ is commutative
-    ·-comm : (x y : Carrier) → (x · y) ≡ (y · x)
 
     -- _·_ is monotone w.r.t. _≾_ (right)
     ·-monoʳ-≾ : (c : Carrier) → _Preserves_⟶_ (c ·_) _≾_ _≾_
@@ -119,7 +116,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ᵣ_;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
-     ·-comm to ·ᵣ-comm;
      ≾-reflexive to ≾ᵣ-reflexive;
      ≾-trans to ≾ᵣ-trans;
      ≾-refl to ≾ᵣ-refl;
@@ -141,7 +137,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-assoc to ·ₑ-assoc;
      _≾_ to _≾ₑ_;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
-     ·-comm to ·ₑ-comm;
      ≾-reflexive to ≾ₑ-reflexive;
      ≾-trans to ≾ₑ-trans;
      embedNat to embedE;
