@@ -27,15 +27,15 @@ data GType : Set where
   Unit   : GType                           -- unit type
   Empty  : GType                           -- empty type
   _|×|ᵍ_ : GType → GType → GType           -- product type
-  [_]ᵍ_  : R → GType → GType               -- temporal modality: values of type `[ t ] A`
-                                           -- become available in at most `t` time steps
+  [_]ᵍ_  : R → GType → GType               -- temporal modality: values of type `[ ρ ] A`
+                                           -- become available in at most `r` steps
 infix 38 _|×|ᵍ_
 infix 37 [_]ᵍ_
 
 -- Signature of (ground-typed) operation symbols
 
 postulate
-  Op       : Set                          -- set of operation symbols
-  param    : Op → GType                   -- parameter type of each operation
-  arity    : Op → GType                   -- arity type of each operation
-  op-time  : Op → E                       -- each operation's (maximal) time duration
+  Op        : Set                          -- set of operation symbols
+  param     : Op → GType                   -- parameter type of each operation
+  arity     : Op → GType                   -- arity type of each operation
+  op-grade  : Op → E                       -- each operation's (maximal) duration

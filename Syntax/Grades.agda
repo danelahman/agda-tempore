@@ -63,17 +63,20 @@ record Grade : Set₁ where
     -- _≾_ is irrelevant
     ≾-irrelevant : Irrelevant _≾_
 
+    -- _≾_ is decidable
+    _≾?_ : Decidable _≾_
+
     -- Properties of _·_ and _≾_
     c≾c·d : (c d : Carrier) → c ≾ (c · d)
 
-    c≾d⇒c≾d+b : ∀ {c d} b → c ≾ d → c ≾ (d · b)
+    c≾d⇒c≾d·b : ∀ {c d} b → c ≾ d → c ≾ (d · b)
 
     γ-≾-substₗ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ' ≾ γ → γ'' ≾ γ
     
     γ-≾-substᵣ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ ≾ γ'' → γ ≾ γ'
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
-    mapℕ : ℕ → Carrier
+    embedNat : ℕ → Carrier
 
     -- ...
 
@@ -125,8 +128,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      c≾c·d to c≾ᵣc·ᵣd;
      γ-≾-substₗ to ρ-≾ᵣ-substₗ;
      γ-≾-substᵣ to ρ-≾ᵣ-substᵣ;
-     c≾d⇒c≾d+b to c≾ᵣd⇒c≾ᵣd+b;
-     mapℕ to mapℕʳ
+     c≾d⇒c≾d·b to c≾ᵣd⇒c≾ᵣd·ᵣb;
+     embedNat to embedR;
+     _≾?_ to _≾ᵣ?_
     ) public
 
   open Grade EGrade renaming
@@ -140,8 +144,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-comm to ·ₑ-comm;
      ≾-reflexive to ≾ₑ-reflexive;
      ≾-trans to ≾ₑ-trans;
-     mapℕ to mapℕᵉ
-    ) public
+     embedNat to embedE;
+     _≾?_ to _≾ₑ?_
+   ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public
 

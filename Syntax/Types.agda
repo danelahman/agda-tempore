@@ -23,8 +23,8 @@ mutual
     _|×|_ : VType → VType → VType            -- product type
     Empty : VType                            -- empty type
     _⇒_   : VType → CType → VType            -- function type
-    [_]_  : R → VType → VType             -- temporal modality: values of type `[ t ] A`
-                                             -- become available in at most `t` time steps
+    [_]_  : R → VType → VType                -- grade modality: values of type `[ ρ ] A`
+                                             -- become available in at most `ρ` steps
   data CType : Set where
     _‼_ : VType → E → CType
 
@@ -53,5 +53,5 @@ type-of-gtype ([ ρ ]ᵍ A) = [ ρ ] (type-of-gtype A)
 ‼-injective-ty : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → A ≡ B
 ‼-injective-ty refl = refl
 
-‼-injective-time : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → ε ≡ ε'
-‼-injective-time refl = refl
+‼-injective-egrade : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → ε ≡ ε'
+‼-injective-egrade refl = refl

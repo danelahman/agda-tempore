@@ -39,8 +39,8 @@ infix  32 _⟨_⟩
 ⟨⟩-injective-ctx : ∀ {Γ Γ' ρ ρ'} → Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ' ⟩ → Γ ≡ Γ'
 ⟨⟩-injective-ctx refl = refl
 
-⟨⟩-injective-time : ∀ {Γ Γ' ρ ρ'} → Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ' ⟩ → ρ ≡ ρ'
-⟨⟩-injective-time refl = refl
+⟨⟩-injective-rgrade : ∀ {Γ Γ' ρ ρ'} → Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ' ⟩ → ρ ≡ ρ'
+⟨⟩-injective-rgrade refl = refl
 
 -- Concatenation of contexts
 
@@ -102,7 +102,8 @@ infixl 30 _++ᶜ_
   ++ᶜ-inj₁ (⟨⟩-injective-ctx p)
 
 ++ᶜ-inj₂ : ∀ {Γ Γ₁ Γ₂} → Γ ++ᶜ Γ₁ ≡ Γ ++ᶜ Γ₂ → Γ₁ ≡ Γ₂
-++ᶜ-inj₂ {Γ} {[]} {[]} q = refl
+++ᶜ-inj₂ {Γ} {[]} {[]} q =
+  refl
 ++ᶜ-inj₂ {Γ} {[]} {Γ₂ ∷ B} q =
   sym (++ᶜ-identityʳ-unique q)
 ++ᶜ-inj₂ {Γ} {[]} {Γ₂ ⟨ ρ' ⟩} q =
@@ -114,23 +115,23 @@ infixl 30 _++ᶜ_
 ++ᶜ-inj₂ {Γ} {Γ₁ ⟨ ρ ⟩} {[]} q =
   ++ᶜ-identityʳ-unique (sym q)
 ++ᶜ-inj₂ {Γ} {Γ₁ ⟨ ρ ⟩} {Γ₂ ⟨ ρ' ⟩} q =
-  cong₂ _⟨_⟩ (++ᶜ-inj₂ (⟨⟩-injective-ctx q)) (⟨⟩-injective-time q)
+  cong₂ _⟨_⟩ (++ᶜ-inj₂ (⟨⟩-injective-ctx q)) (⟨⟩-injective-rgrade q)
 
 -- Amount of time-passage modelled by a context 
 
-ctx-time : Ctx → R
-ctx-time []       = uᵣ
-ctx-time (Γ ∷ A) = ctx-time Γ
-ctx-time (Γ ⟨ ρ ⟩) = ctx-time Γ ·ᵣ ρ
+ctx-grade : Ctx → R
+ctx-grade []        = uᵣ
+ctx-grade (Γ ∷ A)   = ctx-grade Γ
+ctx-grade (Γ ⟨ ρ ⟩) = ctx-grade Γ ·ᵣ ρ
 
 -- Interaction of time-passage and ++ᶜ
 
-ctx-time-++ᶜ : (Γ Γ' : Ctx)
-              → ctx-time (Γ ++ᶜ Γ') ≡ (ctx-time Γ ·ᵣ ctx-time Γ')
-ctx-time-++ᶜ Γ [] = sym (·ᵣ-identityʳ (ctx-time Γ))
-ctx-time-++ᶜ Γ (Γ' ∷ x) = ctx-time-++ᶜ Γ Γ'
-ctx-time-++ᶜ Γ (Γ' ⟨ ρ ⟩) = trans (cong (_·ᵣ ρ) (ctx-time-++ᶜ Γ Γ'))
-                             (·ᵣ-assoc (ctx-time Γ) (ctx-time Γ') ρ)
+ctx-grade-++ᶜ : (Γ Γ' : Ctx)
+              → ctx-grade (Γ ++ᶜ Γ') ≡ (ctx-grade Γ ·ᵣ ctx-grade Γ')
+ctx-grade-++ᶜ Γ [] = sym (·ᵣ-identityʳ (ctx-grade Γ))
+ctx-grade-++ᶜ Γ (Γ' ∷ x) = ctx-grade-++ᶜ Γ Γ'
+ctx-grade-++ᶜ Γ (Γ' ⟨ ρ ⟩) = trans (cong (_·ᵣ ρ) (ctx-grade-++ᶜ Γ Γ'))
+                             (·ᵣ-assoc (ctx-grade Γ) (ctx-grade Γ') ρ)
 
 -- Proof that sub-contexts split a given context
 
@@ -163,57 +164,56 @@ data _∈[_]_ (A : VType) : R → Ctx → Set where
 
 infix 27 _∈[_]_
 
--- Every variable in a context is within time captured by that context
+-- Every variable in a context is within the grade captured by that context
 
-∈-ctx-time : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-time Γ
-∈-ctx-time {(Γ ∷ A)} {A} {.(uᵣ)} Hd = uᵣ≾ᵣc
-∈-ctx-time (Tl-∷ x) = ∈-ctx-time x
-∈-ctx-time {(Γ ⟨ ρ ⟩)} {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) = ≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ ρ (∈-ctx-time x)) (≾ᵣ-reflexive (·ᵣ-comm ρ (ctx-time Γ)))
+∈-ctx-grade : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-grade Γ
+∈-ctx-grade Hd        = uᵣ≾ᵣc
+∈-ctx-grade (Tl-∷ x)  = ∈-ctx-grade x
+∈-ctx-grade {Γ ⟨ ρ ⟩} {A} {.(ρ ·ᵣ ρ')} (Tl-⟨⟩ {ρ' = ρ'} x) with ∈-ctx-grade {Γ} {A} {ρ'} x
+... | rel = ≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ ρ (∈-ctx-grade x)) (≾ᵣ-reflexive (·ᵣ-comm ρ (ctx-grade Γ)))
 
--- Context extension does not decrease variable's time annotation
+-- Context extension does not decrease variable's grade annotation
 
-var-ρ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-time Γ' ] Γ ++ᶜ Γ'
-
-var-ρ-++ᶜ {Γ} {[]} {A} {ρ} x =
+var-ρ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-grade Γ' ] Γ ++ᶜ Γ'
+var-ρ-++ᶜ {Γ} {[]} {A} x =
   subst (A ∈[_] Γ) (sym (·ᵣ-identityʳ _)) x
-var-ρ-++ᶜ {Γ} {Γ' ∷ B} {A} {ρ} x =
-  Tl-∷ (var-ρ-++ᶜ {Γ} {Γ'} x)
+var-ρ-++ᶜ {Γ' = Γ' ∷ B} x =
+  Tl-∷ (var-ρ-++ᶜ x)
 var-ρ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
   subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩)
-    (trans
-      (sym (·ᵣ-assoc ρ' ρ (ctx-time Γ')))
+    (trans 
+      (sym (·ᵣ-assoc ρ' ρ (ctx-grade Γ')))
       (trans
-        (cong (_·ᵣ ctx-time Γ') (·ᵣ-comm ρ' ρ))
+        (cong (_·ᵣ ctx-grade Γ') (·ᵣ-comm ρ' ρ))
         (trans
-          (·ᵣ-assoc ρ ρ' (ctx-time Γ'))
-          (cong (ρ ·ᵣ_) (·ᵣ-comm ρ' (ctx-time Γ'))))))
+          (·ᵣ-assoc ρ ρ' (ctx-grade Γ'))
+          (cong (ρ ·ᵣ_) (·ᵣ-comm ρ' (ctx-grade Γ'))))))
     (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x))
-
+    
 -- Splitting a context according to a variable in it
 
 var-split : ∀ {Γ A ρ}
           → A ∈[ ρ ] Γ
-          → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] Γ₁ ∷ A , Γ₂ split Γ × ctx-time Γ₂ ≡ ρ
-
-var-split {Γ ∷ A} Hd = Γ , [] , split-[] , refl
+           → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] Γ₁ ∷ A , Γ₂ split Γ × ctx-grade Γ₂ ≡ ρ
+var-split (Hd {Γ}) = Γ , [] , split-[] , refl
 var-split {Γ ∷ B} (Tl-∷ x) with var-split x
-... | Γ₁ , Γ₂ , p , q = Γ₁ , Γ₂ ∷ B , split-∷ p , q
+... | Γ₁ , Γ₂ , p₁ , e = Γ₁ , Γ₂ ∷ B , split-∷ p₁ , e
 var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q =
   Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , trans (cong (_·ᵣ ρ) q) (·ᵣ-comm _ ρ)
-
+  
 -- Variable splitting preserves time-passage modelled by a context
 
-split-pres-ctx-time : ∀ {Γ Γ₁ Γ₂ A}
+split-pres-ctx-grade : ∀ {Γ Γ₁ Γ₂ A}
                     → Γ₁ ∷ A , Γ₂ split Γ
-                    → ctx-time Γ ≡ ctx-time (Γ₁ ++ᶜ Γ₂)
+                    → ctx-grade Γ ≡ ctx-grade (Γ₁ ++ᶜ Γ₂)
                            
-split-pres-ctx-time split-[] =
+split-pres-ctx-grade split-[] =
   refl
-split-pres-ctx-time (split-∷ c) =
-  split-pres-ctx-time c
-split-pres-ctx-time (split-⟨⟩ {ρ = ρ} c) =
-  cong (_·ᵣ ρ) (split-pres-ctx-time c) 
+split-pres-ctx-grade (split-∷ c) =
+  split-pres-ctx-grade c
+split-pres-ctx-grade (split-⟨⟩ {ρ = ρ} c) =
+  cong (_·ᵣ ρ) (split-pres-ctx-grade c) 
 
 -- Variable in context is in one of the two contexts splitting it
 
@@ -233,49 +233,32 @@ var-in-split-proj₂-subst : ∀ {Γ A ρ ρ'}
 
 var-in-split-proj₂-subst x refl = refl
 
-{-
 var-in-split : ∀ {Γ Γ₁ Γ₂ A ρ}
              → Γ₁ , Γ₂ split Γ
              → (x : A ∈[ ρ ] Γ)
-             → (Σ[ y ∈ A ∈[ ρ ∸ ctx-time Γ₂ ] Γ₁ ]
+             → (Σ[ ρ' ∈ R ] (Σ[ y ∈ A ∈[ ρ' ] Γ₁ ]
                    proj₁ (var-split x) ≡ proj₁ (var-split y)
-                 × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)) ++ᶜ Γ₂)
+                 × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)) ++ᶜ Γ₂))
              ⊎ (Σ[ y ∈ A ∈[ ρ ] Γ₂ ]
                    proj₁ (var-split x) ≡ Γ₁ ++ᶜ proj₁ (var-split y)
                  × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)))
 
-var-in-split split-[] x =
-  inj₁ (x , refl , refl) 
-var-in-split (split-∷ p) Hd =
+var-in-split {ρ = ρ} split-[] x =
+  inj₁ (ρ , x , refl , refl)
+var-in-split (split-∷ p) Hd = 
   inj₂ (Hd , sym (split-≡ p) , refl)
 var-in-split (split-∷ p) (Tl-∷ {B = B} x) with var-in-split p x
-... | inj₁ (y , q , r) =
-  inj₁ (y , q , cong (_∷ B) r)
-... | inj₂ (y , q , r) =
-  inj₂ (Tl-∷ y , q , cong (_∷ B) r)
-var-in-split {Γ₁ = Γ₁} {Γ₂ = Γ₂ ⟨ τ ⟩} {A = A}
-  (split-⟨⟩ p) (Tl-⟨⟩ {τ' = τ'} x) with var-in-split p x
-... | inj₁ (y , q , r) =
-  inj₁
-    (subst (A ∈[_] Γ₁)
-      (trans
-        (trans
-          (trans
-            (cong (_∸ ctx-time Γ₂)
-              (trans
-                (trans
-                  (sym (+-identityʳ τ'))
-                  (cong (τ' +_) (sym (n∸n≡0 τ))))
-                (sym (+-∸-assoc τ' (≤-refl {τ})))))
-            (∸-+-assoc (τ' + τ) τ (ctx-time Γ₂)))
-          (cong (τ' + τ ∸_) (+-comm τ (ctx-time Γ₂))))
-        (cong (_∸ (ctx-time Γ₂ + τ)) (+-comm τ' τ)))
-      y ,
-     trans q (var-in-split-proj₁-subst y _) ,
-     cong (_⟨ τ ⟩) (transctx r (cong (_++ᶜ Γ₂) (var-in-split-proj₂-subst y _))))
-... | inj₂ (y , q , r) =
-  inj₂ (Tl-⟨⟩ y , q , cong (_⟨ τ ⟩) r)
+... | inj₁ (ρ' , y , rel , rel') =
+  inj₁ (ρ' , y , rel , cong (_∷ B) rel')
+... | inj₂ (y , rel , rel') =
+  inj₂ (Tl-∷ y , rel , cong (_∷ B) rel')
+var-in-split {Γ₂ = Γ₂ ⟨ ρ₂ ⟩} {ρ = ρ} (split-⟨⟩ p) (Tl-⟨⟩ {ρ' = ρ''} x) with var-in-split p x
+... | inj₁ (ρ' , y , rel , rel') =
+  inj₁ (ρ' , y , rel , cong (_⟨ ρ₂ ⟩) rel')
+... | inj₂ (y , rel , rel') =
+  inj₂ (Tl-⟨⟩ y , rel , cong (_⟨ ρ₂ ⟩) rel')
 
+{-
 -- To remove:
 
 -- Temporal minus operation on contexts
@@ -314,7 +297,7 @@ infixl 30 _-ᶜ_
   refl
 
 ++ᶜ-ᶜ : ∀ {Γ Γ' τ}
-      → τ ≤ ctx-time Γ'
+      → τ ≤ ctx-grade Γ'
       → Γ ++ᶜ (Γ' -ᶜ τ) ≡ (Γ ++ᶜ Γ') -ᶜ τ
 ++ᶜ-ᶜ {Γ} {Γ'} {zero} p =
   refl
@@ -327,7 +310,7 @@ infixl 30 _-ᶜ_
   ++ᶜ-ᶜ {Γ} {Γ'} {suc τ ∸ τ'}
     (≤-trans
       (∸-monoˡ-≤ τ' p)
-      (≤-reflexive (m+n∸n≡m (ctx-time Γ') τ')))
+      (≤-reflexive (m+n∸n≡m (ctx-grade Γ') τ')))
 
 ++ᶜ-ᶜ-+ : ∀ {Γ τ₁ τ₂}
        → Γ -ᶜ (τ₁ + τ₂) ≡ (Γ -ᶜ τ₁) -ᶜ τ₂
@@ -365,20 +348,20 @@ infixl 30 _-ᶜ_
       (+-∸-comm {suc τ₁} (suc τ₂) {τ} (<⇒≤ (≰⇒> ¬p))))
     (++ᶜ-ᶜ-+ {Γ} {suc τ₁ ∸ τ} {suc τ₂})
 
--- Relating ctx-time and -ᶜ
+-- Relating ctx-grade and -ᶜ
 
-ctx-time-ᶜ-∸ : (Γ : Ctx) → (τ : Time)
-             → τ ≤ ctx-time Γ
-             → ctx-time (Γ -ᶜ τ) ≡ ctx-time Γ ∸ τ
-ctx-time-ᶜ-∸ Γ zero p = refl
-ctx-time-ᶜ-∸ [] (suc τ) p = refl
-ctx-time-ᶜ-∸ (Γ ∷ A) (suc τ) p = ctx-time-ᶜ-∸ Γ (suc τ) p
-ctx-time-ᶜ-∸ (Γ ⟨ τ' ⟩) (suc τ) p with suc τ ≤? τ'
+ctx-grade-ᶜ-∸ : (Γ : Ctx) → (τ : Time)
+             → τ ≤ ctx-grade Γ
+             → ctx-grade (Γ -ᶜ τ) ≡ ctx-grade Γ ∸ τ
+ctx-grade-ᶜ-∸ Γ zero p = refl
+ctx-grade-ᶜ-∸ [] (suc τ) p = refl
+ctx-grade-ᶜ-∸ (Γ ∷ A) (suc τ) p = ctx-grade-ᶜ-∸ Γ (suc τ) p
+ctx-grade-ᶜ-∸ (Γ ⟨ τ' ⟩) (suc τ) p with suc τ ≤? τ'
 ... | yes q =
-  sym (+-∸-assoc (ctx-time Γ) q)
+  sym (+-∸-assoc (ctx-grade Γ) q)
 ... | no ¬q =
   trans
-    (ctx-time-ᶜ-∸ Γ (suc τ ∸ τ') (m≤n+k⇒m∸k≤n (suc τ) (ctx-time Γ) τ' p))
-    (sym (¬k≤m⇒k∸m≤n⇒n+m∸k≤n∸k∸m ¬q (m≤n+k⇒m∸k≤n (suc τ) (ctx-time Γ) τ' p)))
+    (ctx-grade-ᶜ-∸ Γ (suc τ ∸ τ') (m≤n+k⇒m∸k≤n (suc τ) (ctx-grade Γ) τ' p))
+    (sym (¬k≤m⇒k∸m≤n⇒n+m∸k≤n∸k∸m ¬q (m≤n+k⇒m∸k≤n (suc τ) (ctx-grade Γ) τ' p)))
 
 -}

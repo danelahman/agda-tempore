@@ -2,21 +2,28 @@
 -- Substitution of well-typed values for variables --
 -----------------------------------------------------
 
-module Syntax.Substitutions where
+open import Syntax.Grades
+
+module Syntax.Substitutions (Grades : GradeSystem) where
+
+open GradeSystemInterface Grades
 
 open import Data.Empty
 open import Data.Product
 
 open import Relation.Nullary
 
-open import Syntax.Contexts
-open import Syntax.Language
-open import Syntax.Renamings
-open import Syntax.Types
+open import Syntax.Renamings.Actions (Grades)
+
+open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
+open import Syntax.Renamings (Grades)
+open import Syntax.Types (Grades)
 
 open import Util.Equality
-open import Util.Time
+open import Util.Time -- remove
 
+{- Remove
 -- Deciding whether a variable is in the context after time travelling
 
 ---- When the variable is in the resulting context
@@ -25,7 +32,7 @@ var-in-ctx-after-ᶜ : ∀ {Γ A τ τ'}
                    → (x : A ∈[ τ ] Γ)
                    → τ' ≤ τ
                    → Σ[ y ∈ A ∈[ τ ∸ τ' ] Γ -ᶜ τ' ]
-                       (  proj₁ (var-split y) ≡ proj₁ (var-split x)
+                       ( proj₁ (var-split y) ≡ proj₁ (var-split x)
                         × proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) -ᶜ τ')
                           
 var-in-ctx-after-ᶜ {Γ} {A} {τ} {zero} x p =
@@ -69,34 +76,40 @@ var-not-in-ctx-after-ᶜ {Γ ⟨ τ'' ⟩} {A} {.(τ'' + _)} {suc τ'} (Tl-⟨�
         (+-monoʳ-≤ 1 (≤-reflexive (sym (m+n∸m≡n τ'' τ'''))))
         (≤-reflexive (sym (+-∸-assoc 1 {τ'' + τ'''} {τ''} (m≤n⇒m≤n+o τ''' ≤-refl)))))
       (∸-monoˡ-≤ τ'' (+-monoʳ-≤ 1 p)))
+-}
+
 
 -- Substituting a value for a variable in context
 
-_[_↦_]var : ∀ {Γ A B τ τ'}
-          → B ∈[ τ' ] Γ
-          → (x : A ∈[ τ ] Γ)
+_[_↦_]var : ∀ {Γ A B ρ ρ'}
+          → B ∈[ ρ' ] Γ
+          → (x : A ∈[ ρ ] Γ)
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
  
 Hd [ Hd ↦ W ]var = W
-Hd [ Tl-∷ x ↦ W ]var with var-split x
-... | Γ₁ , Γ₂ , p , q = var Hd
+Hd [ Tl-∷ x ↦ W ]var = var Hd
 Tl-∷ y [ Hd ↦ W ]var = var y
+Tl-∷ y [ Tl-∷ x ↦ W ]var = V-rename wk-ren (y [ x ↦ W ]var)
+Tl-⟨⟩ y [ Tl-⟨⟩ x ↦ W ]var = V-rename wk-⟨⟩-ren (y [ x ↦ W ]var)
+
+{-
 Tl-∷ y [ Tl-∷ x ↦ W ]var with var-split x | inspect var-split x
 ... | ._ , ._ , ._ , ._ | [| refl |] =
   V-rename wk-ren (y [ x ↦ W ]var)
 Tl-⟨⟩ y [ Tl-⟨⟩ x ↦ W ]var with var-split x | inspect var-split x
 ... | ._ , ._ , ._ , ._ | [| refl |] =
   V-rename wk-⟨⟩-ren (y [ x ↦ W ]var)
+-}
 
 -- Substituting a value for a variable in a well-typed term
 
 mutual
 
-  _[_↦_]v : ∀ {Γ A B τ}
+  _[_↦_]v : ∀ {Γ A B ρ}
           → Γ ⊢V⦂ B
-          → (x : A ∈[ τ ] Γ)
+          → (x : A ∈[ ρ ] Γ)
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
@@ -107,9 +120,9 @@ mutual
   ⋆          [ x ↦ W ]v = ⋆
   lam M      [ x ↦ W ]v = lam (M [ Tl-∷ x ↦ W ]c)
 
-  _[_↦_]c : ∀ {Γ A C τ}
+  _[_↦_]c : ∀ {Γ A C ρ}
           → Γ ⊢C⦂ C
-          → (x : A ∈[ τ ] Γ)
+          → (x : A ∈[ ρ ] Γ)
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢C⦂ C
@@ -130,9 +143,37 @@ mutual
     delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
   handle M `with H `in N [ x ↦ W ]c =
     handle M [ x ↦ W ]c
-    `with (λ op τ'' → (H op τ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
+    `with (λ op ρ'' → (H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-  _[_↦_]c {τ = τ} (unbox {τ = τ'} s V M) x W with τ' ≤? τ
+  _[_↦_]c {Γ = Γ} {A = A} {ρ = ρ}
+    (unbox {A = B} {Γ₁ = Γ₁} {Γ₂ = Γ₂} {ρ = ρ'} rel r V M) x W with ρ ≾ᵣ? ctx-grade Γ₁
+  ... | yes p = 
+    unbox {Γ₁ = proj₁ (var-split z)} {Γ₂ = proj₁ (proj₂ (var-split z))} {ρ = ρ'}
+      {!!}
+      ({!!} ∘ʳ {!!} ∘ʳ {!!})
+      (V-rename (eq-ren (sym pr₁) ∘ʳ eq-ren {!!}) (V [ z ↦ V-rename (eq-ren (sym pr₁) ∘ʳ eq-ren ({!!})) W ]v))
+      (M [ Tl-∷ x ↦ W ]c)
+    where
+      z : A ∈[ ρ ] Γ₁
+      x' : A ∈[ ρ ] (Γ₁ ++ᶜ Γ₂)
+      Γ'₂ : Ctx
+      vr' = wk-ctx-vren {Γ₁} {Γ₂} z
+      rwk = wk-ctx-renᵣ {Γ₁} {Γ₂}
+      pr₁ = var-split₁-wk-ctx-vren {Γ₁} {Γ₂} {A} {ρ} z
+      pr₂ = var-split₂-wk-ctx-vren {Γ₁} {Γ₂} {A} {ρ} z
+      pr₃ = var-split₁-wk-ctx-vren {Γ₁ ++ᶜ Γ₂} {Γ} {A} {ρ} x'
+      pr₄ = var-split₂-wk-ctx-vren {Γ₁ ++ᶜ Γ₂} {Γ} {A} {ρ} x'
+  ... | no ¬p =
+    unbox {Γ₁ = Γ₁} {Γ₂ = Γ₂}
+      rel
+      (ren (≾ᵣ-trans (ctx-grade-≾ r) (≾ᵣ-reflexive (split-pres-ctx-grade {Γ} {proj₁ (var-split x)} {proj₁ (proj₂ (var-split x))} {!!})))
+           ({!!} ∘ᵛʳ var-rename r))
+      V
+      (M [ Tl-∷ x ↦ W ]c)
+
+ 
+{-
+  _[_↦_]c {ρ = ρ} (unbox {ρ = ρ'} s V M) x W with ρ' ≾ᵣ? ρ
   _[_↦_]c {τ = τ} (unbox {τ = τ'} s V M) x W | yes p with var-in-ctx-after-ᶜ x p
   ... | y , q , r =
     unbox
@@ -149,5 +190,6 @@ mutual
       (≤-trans s (≤-reflexive (split-pres-ctx-time (proj₁ (proj₂ (proj₂ (var-split x)))))))
       (V-rename (eq-ren (var-not-in-ctx-after-ᶜ x (≰⇒> ¬p))) V)
       (M [ Tl-∷ x ↦ W ]c)
+-}
   box V M [ x ↦ W ]c  = 
     box (V [ Tl-⟨⟩ x ↦ W ]v) (M [ Tl-∷ x ↦ W ]c)
