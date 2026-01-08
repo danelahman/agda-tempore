@@ -23,7 +23,7 @@ mutual
            ------------
            → Γ' ⊢V⦂ A
 
-  V-rename r (var x)    = var (proj₂ (proj₂ (var-rename r x)))
+  V-rename r (var x)    = {!!}
   V-rename r (const c)  = const c
   V-rename r ⋆          = ⋆
   V-rename r (⦉ V , W ⦊) = ⦉ V-rename r V , V-rename r W ⦊

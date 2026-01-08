@@ -29,8 +29,7 @@ mutual
     -- variables
 
     var     : {A : VType}
-            → {ρ : R}
-            → A ∈[ ρ ] Γ
+            → A ∈[ uᵣ ] Γ
             ------------
             → Γ ⊢V⦂ A
 
@@ -147,7 +146,7 @@ mutual
             → {C : CType}
             → {Γ₁ Γ₂ : Ctx}
             → {ρ : R} 
-            → ρ ≾ᵣ ctx-grade Γ₂
+            → ctx-grade Γ₂ ≾ᵣ ρ 
             → Ren (Γ₁ ++ᶜ Γ₂) Γ
             → Γ₁ ⊢V⦂ [ ρ ] A
             → Γ ∷ A  ⊢C⦂ C

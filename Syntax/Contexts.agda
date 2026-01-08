@@ -23,8 +23,8 @@ open import Util.Time -- Remove
 -- Structured contexts
 
 data Ctx : Set where
-  []   : Ctx                       -- empty context
-  _∷_  : Ctx → VType → Ctx         -- context extension with a variable
+  []   : Ctx                    -- empty context
+  _∷_  : Ctx → VType → Ctx      -- context extension with a variable
   _⟨_⟩ : Ctx → R → Ctx          -- using context after time-passage
 
 infixl 31 _∷_
@@ -128,8 +128,8 @@ ctx-grade (Γ ⟨ ρ ⟩) = ctx-grade Γ ·ᵣ ρ
 
 ctx-grade-++ᶜ : (Γ Γ' : Ctx)
               → ctx-grade (Γ ++ᶜ Γ') ≡ (ctx-grade Γ ·ᵣ ctx-grade Γ')
-ctx-grade-++ᶜ Γ [] = sym (·ᵣ-identityʳ (ctx-grade Γ))
-ctx-grade-++ᶜ Γ (Γ' ∷ x) = ctx-grade-++ᶜ Γ Γ'
+ctx-grade-++ᶜ Γ []         = sym (·ᵣ-identityʳ (ctx-grade Γ))
+ctx-grade-++ᶜ Γ (Γ' ∷ x)   = ctx-grade-++ᶜ Γ Γ'
 ctx-grade-++ᶜ Γ (Γ' ⟨ ρ ⟩) = trans (cong (_·ᵣ ρ) (ctx-grade-++ᶜ Γ Γ'))
                              (·ᵣ-assoc (ctx-grade Γ) (ctx-grade Γ') ρ)
 
