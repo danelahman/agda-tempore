@@ -135,7 +135,7 @@ cong-vren {Γ'' = Γ'' ⟨ ρ ⟩} r =
 wk-ctx-vren : ∀ {Γ Γ'} → ctx-grade Γ' ≡ uᵣ → VRen Γ (Γ ++ᶜ Γ')
 wk-ctx-vren {Γ' = []}      _   = id-vren
 wk-ctx-vren {Γ' = Γ' ∷ A}  rel = wk-vren ∘ᵛʳ wk-ctx-vren rel
-wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel = eq-vren {Γ = Γ ++ᶜ Γ'} (cong (Γ ++ᶜ_) (subst {!!} rel {!!})) ∘ᵛʳ wk-ctx-vren {!!}
+wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel = {!!}
 
 {- Previous version: 
 -- Weakening by a context renaming
@@ -149,66 +149,63 @@ wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} =
   wk-⟨⟩-vren ∘ᵛʳ wk-ctx-vren
 -}
 
-{- Continue:
 -- Exchange renamings
 
 exch-vren : ∀ {Γ A B} → VRen (Γ ∷ A ∷ B) (Γ ∷ B ∷ A)
-exch-vren = extend-vren (extend-vren wk-ctx-vren Hd) (Tl-∷ Hd)
+exch-vren = extend-vren (extend-vren (wk-ctx-vren refl) Hd) (Tl-∷ Hd)
 
+-- This shouldn't hold anymore:
+{-
 exch-⟨⟩-var-vren : ∀ {Γ A ρ} → VRen (Γ ⟨ ρ ⟩ ∷ A) ((Γ ∷ A) ⟨ ρ ⟩)
 exch-⟨⟩-var-vren {A = A} {ρ = ρ} =
       var-vren (Tl-⟨⟩ Hd)
   ∘ᵛʳ cong-vren {Γ'' = [] ⟨ _ ⟩ ∷ _} wk-vren
 -}
 
-{-
 -- Contraction renaming
 
 contract-vren : ∀ {Γ A} → VRen (Γ ∷ A ∷ A) (Γ ∷ A)
 contract-vren = var-vren Hd
--}
 
+-- This shouldn't hold anymore:
 {-
 -- VRenaming from an empty context 
 
 empty-vren : ∀ {Γ} → VRen [] Γ 
-empty-vren {[]} =
-  id-vren
-empty-vren {Γ ∷ A} = 
-  wk-vren ∘ᵛʳ empty-vren
-empty-vren {Γ ⟨ ρ ⟩} =
-  wk-⟨⟩-vren ∘ᵛʳ empty-vren
+empty-vren {[]}      = id-vren
+empty-vren {Γ ∷ A}   = wk-vren ∘ᵛʳ empty-vren
+empty-vren {Γ ⟨ ρ ⟩} = wk-⟨⟩-vren ∘ᵛʳ empty-vren
 -}
 
-{-
 -- Interaction of var-split and wk-ctx-renᵣ
 
 var-split₁-wk-ctx-vren : ∀ {Γ Γ' A ρ}
                        → (x : A ∈[ ρ ] Γ)
+                       → (rel : ctx-grade Γ' ≡ uᵣ)
                        → proj₁ (var-split x)
                        ≡ proj₁ (var-split
-                           (proj₂ (proj₂ (wk-ctx-vren {Γ' = Γ'} x))))
+                           (proj₂ (proj₂ (wk-ctx-vren {Γ' = Γ'} rel x))))
 
-var-split₁-wk-ctx-vren {Γ' = []} x =
+var-split₁-wk-ctx-vren {Γ' = []} x rel =
   refl
-var-split₁-wk-ctx-vren {Γ' = Γ' ∷ A} x =
-  var-split₁-wk-ctx-vren {Γ' = Γ'} x
-var-split₁-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} x =
-  var-split₁-wk-ctx-vren {Γ' = Γ'} x
+var-split₁-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
+  var-split₁-wk-ctx-vren {Γ' = Γ'} x rel
+var-split₁-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} x rel =
+  var-split₁-wk-ctx-vren {Γ' = Γ'} x {!!}
 
 var-split₂-wk-ctx-vren : ∀ {Γ Γ' A ρ}
                        → (x : A ∈[ ρ ] Γ)
+                       → (rel : ctx-grade Γ' ≡ uᵣ)
                        → proj₁ (proj₂ (var-split x)) ++ᶜ Γ'
                        ≡ proj₁ (proj₂ (var-split
-                           (proj₂ (proj₂ (wk-ctx-vren {Γ' = Γ'} x)))))
+                           (proj₂ (proj₂ (wk-ctx-vren {Γ' = Γ'} rel x )))))
                           
-var-split₂-wk-ctx-vren {Γ' = []} x =
+var-split₂-wk-ctx-vren {Γ' = []} x rel =
   refl
-var-split₂-wk-ctx-vren {Γ' = Γ' ∷ A} x =
-  cong (_∷ A) (var-split₂-wk-ctx-vren x)
-var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} x =
-  cong (_⟨ ρ ⟩) (var-split₂-wk-ctx-vren x)
--}
+var-split₂-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
+  cong (_∷ A) (var-split₂-wk-ctx-vren x rel)
+var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} x rel =
+  cong (_⟨ ρ ⟩) (var-split₂-wk-ctx-vren x {!!})
 
 {-
 -- Rename a grade modality to a context capturing at least the same amount of time
@@ -230,7 +227,8 @@ vren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} r =
               → (x : A ∈[ ρ ] Γ)
               → (id-vren ∘ᵛʳ r) x ≡ r x
 
-∘ᵛʳ-identityˡ {Γ} {Γ'} {A} {ρ} r x = {!!}
+∘ᵛʳ-identityˡ {Γ} {Γ'} {A} {ρ} r x =
+  dcong₂ _,_ refl (cong₂ _,_ {!!} refl)
 --  dcong₂ _,_ refl (cong₂ _,_ (≾ᵣ-irrelevant _ _) refl)
 
 ∘ᵛʳ-identityʳ : ∀ {Γ Γ' A ρ}
@@ -238,8 +236,8 @@ vren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} r =
               → (x : A ∈[ ρ ] Γ)
               → (r ∘ᵛʳ id-vren) x ≡ r x
 
-∘ᵛʳ-identityʳ {Γ} {Γ'} {A} {ρ} r x = {!!}
---  dcong₂ _,_ refl refl
+∘ᵛʳ-identityʳ {Γ} {Γ'} {A} {ρ} r x = 
+  dcong₂ _,_ refl refl
 
 -- Relating congruence renamings with identity renamings (functoriality)
 
@@ -253,10 +251,8 @@ cong-⟨⟩-vren-id : ∀ {Γ A ρ ρ'}
                 → (x : A ∈[ ρ ] Γ ⟨ ρ' ⟩)
                 → cong-⟨⟩-vren id-vren x ≡ id-vren x
 
-{-
 cong-⟨⟩-vren-id {Γ} {A} {.(_ ·ᵣ ρ)} {ρ} (Tl-⟨⟩ x) with id-vren x
 ... | ρ'' , r , y = dcong₂ _,_ refl refl
--}
 
 cong-vren-id : ∀ {Γ Γ' A ρ}
              → (x : A ∈[ ρ ] Γ ++ᶜ Γ')
@@ -286,10 +282,9 @@ cong-∷-vren-fun : ∀ {Γ Γ' Γ'' A B ρ}
                 → cong-∷-vren {A = B} (r' ∘ᵛʳ r) x
                 ≡ (cong-∷-vren r' ∘ᵛʳ cong-∷-vren r) x
 
-cong-∷-vren-fun r r' Hd       = {!!} -- dcong₂ _,_ refl refl
+cong-∷-vren-fun r r' Hd       = dcong₂ _,_ refl refl
 cong-∷-vren-fun r r' (Tl-∷ x) = refl
 
-{-
 cong-⟨⟩-vren-fun : ∀ {Γ Γ' Γ'' A ρ ρ'}
                 → (r : VRen Γ Γ')
                 → (r' : VRen Γ' Γ'')
@@ -298,9 +293,8 @@ cong-⟨⟩-vren-fun : ∀ {Γ Γ' Γ'' A ρ ρ'}
                 ≡ (cong-⟨⟩-vren r' ∘ᵛʳ cong-⟨⟩-vren r) x
                 
 cong-⟨⟩-vren-fun r r' (Tl-⟨⟩ x) with r x
-... | ρ'' , r , y = cong (_ ,_) {!!}
+... | ρ'' , r , y = cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) {!!})
 --... | ρ'' , r , y = cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) (≾ᵣ-irrelevant _ _))
--}
 
 {-
 cong-vren-fun : ∀ {Γ Γ' Γ'' Γ''' A ρ}
