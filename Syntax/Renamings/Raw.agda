@@ -1,4 +1,4 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 --------------------------------------------------------------
 -- Context renamings                                        --
@@ -22,7 +22,7 @@ open import Syntax.Types (Grades)
 
 open import Util.Equality
 
-open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
+open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] ) 
 
 -- Subst for grade annotations of variables (for convenience)
 
@@ -112,6 +112,17 @@ cong-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} 
 pra-⟨⟩-vren : ∀ {Γ Γ' ρ} → VRen (Γ ⟨ ρ ⟩) Γ' → VRen Γ Γ'
 pra-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {ρ'} x  with r (Tl-⟨⟩ x)
 ... | ρ'' , rel , y = ρ'' , ≾ᵣ-trans (c≾ᵣc·ᵣd ρ' ρ) rel , y
+
+{- This doesn't hold in the general case without the minus.
+pra-⟨⟩-vren⁻¹ : ∀ {Γ Γ' τ} → τ ≤ ctx-grade Γ' → VRen Γ (Γ' -ᶜ τ) → VRen (Γ ⟨ τ ⟩) Γ'
+pra-⟨⟩-vren⁻¹ {Γ} {Γ'} {τ} p ρ {A} {.(τ + τ')} (Tl-⟨⟩ {τ' = τ'} x) with ρ x
+... | τ'' , q , y =
+  τ'' + τ ,
+  ≤-trans
+    (≤-reflexive (+-comm τ τ'))
+    (+-monoˡ-≤ τ q) ,
+  var-ᶜ-+ {Γ'} {A} {τ} y
+-}
 -}
 
 -- Extending a renaming with a variable
@@ -135,7 +146,8 @@ cong-vren {Γ'' = Γ'' ⟨ ρ ⟩} r =
 wk-ctx-vren : ∀ {Γ Γ'} → ctx-grade Γ' ≡ uᵣ → VRen Γ (Γ ++ᶜ Γ')
 wk-ctx-vren {Γ' = []}      _   = id-vren
 wk-ctx-vren {Γ' = Γ' ∷ A}  rel = wk-vren ∘ᵛʳ wk-ctx-vren rel
-wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel = {!!}
+wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel with wk-ctx-vren {Γ} {Γ'} (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel)
+... | r' = {!!} ∘ᵛʳ r'
 
 {- Previous version: 
 -- Weakening by a context renaming
@@ -190,8 +202,10 @@ var-split₁-wk-ctx-vren {Γ' = []} x rel =
   refl
 var-split₁-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   var-split₁-wk-ctx-vren {Γ' = Γ'} x rel
-var-split₁-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} x rel =
-  var-split₁-wk-ctx-vren {Γ' = Γ'} x {!!}
+var-split₁-wk-ctx-vren {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rel =
+  var-split₁-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ {ρ'} (ctx-grade Γ') rel)
+
+--  var-split₁-wk-ctx-vren {Γ} {Γ'} {A} {ρ} x (c·ᵣd≡uᵣ⇒c≡uᵣ {ρ'} (ctx-grade Γ') rel)
 
 var-split₂-wk-ctx-vren : ∀ {Γ Γ' A ρ}
                        → (x : A ∈[ ρ ] Γ)
@@ -204,21 +218,13 @@ var-split₂-wk-ctx-vren {Γ' = []} x rel =
   refl
 var-split₂-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   cong (_∷ A) (var-split₂-wk-ctx-vren x rel)
-var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} x rel =
-  cong (_⟨ ρ ⟩) (var-split₂-wk-ctx-vren x {!!})
+var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel =
+  cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren x (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
 
-{-
 -- Rename a grade modality to a context capturing at least the same amount of time
 
 vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
-vren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} r =
-  pra-⟨⟩-vren⁻¹ {Γ} {Γ ++ᶜ Γ'}
-    (≾ᵣ-trans
-      (m≤n⇒m≤o+n (ctx-grade Γ) r)
-      (≾ᵣ-reflexive (sym (ctx-grade-++ᶜ Γ Γ'))))
-    (    eq-vren (++ᶜ-ᶜ {Γ} {Γ'} r)
-     ∘ᵛʳ wk-ctx-vren)
--}
+vren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel = {!!}
 
 -- Identity laws
 
@@ -228,8 +234,7 @@ vren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} r =
               → (id-vren ∘ᵛʳ r) x ≡ r x
 
 ∘ᵛʳ-identityˡ {Γ} {Γ'} {A} {ρ} r x =
-  dcong₂ _,_ refl (cong₂ _,_ {!!} refl)
---  dcong₂ _,_ refl (cong₂ _,_ (≾ᵣ-irrelevant _ _) refl)
+  dcong₂ _,_ refl (cong₂ _,_ (trans-reflʳ (r x .proj₂ .proj₁)) refl)
 
 ∘ᵛʳ-identityʳ : ∀ {Γ Γ' A ρ}
               → (r : VRen Γ Γ')
@@ -293,10 +298,9 @@ cong-⟨⟩-vren-fun : ∀ {Γ Γ' Γ'' A ρ ρ'}
                 ≡ (cong-⟨⟩-vren r' ∘ᵛʳ cong-⟨⟩-vren r) x
                 
 cong-⟨⟩-vren-fun r r' (Tl-⟨⟩ x) with r x
-... | ρ'' , r , y = cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) {!!})
+... | ρ'' , r , y = cong (_ ,_) (cong (_, _) {!!})
 --... | ρ'' , r , y = cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) (≾ᵣ-irrelevant _ _))
 
-{-
 cong-vren-fun : ∀ {Γ Γ' Γ'' Γ''' A ρ}
             → (r : VRen Γ Γ')
             → (r' : VRen Γ' Γ'')
@@ -318,4 +322,3 @@ cong-vren-fun {Γ} {Γ'} {Γ''} {Γ''' ⟨ ρ ⟩} r r' x =
       (λ (r : VRen (Γ ++ᶜ Γ''') (Γ'' ++ᶜ Γ''')) → cong-⟨⟩-vren r x)
       (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun r r' x))))
     (cong-⟨⟩-vren-fun (cong-vren r) (cong-vren r') x)
--}

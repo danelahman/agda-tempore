@@ -72,6 +72,11 @@ record Grade : Set₁ where
     
     γ-≾-substᵣ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ ≾ γ'' → γ ≾ γ'
 
+    -- Properties of _·_ and _≡_
+    c·d≡u⇒c≡u : ∀ {d} → (c : Carrier) → c · d ≡ u → c ≡ u
+
+    c·d≡u⇒d≡u : ∀ {c} → (d : Carrier) → c · d ≡ u → d ≡ u
+
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
 
@@ -126,7 +131,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      γ-≾-substᵣ to ρ-≾ᵣ-substᵣ;
      c≾d⇒c≾d·b to c≾ᵣd⇒c≾ᵣd·ᵣb;
      embedNat to embedR;
-     _≾?_ to _≾ᵣ?_
+     _≾?_ to _≾ᵣ?_;
+     c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
+     c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ
     ) public
 
   open Grade EGrade renaming
