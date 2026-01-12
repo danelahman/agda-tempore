@@ -17,4 +17,4 @@ open import Syntax.Renamings (Grades)
 -- Substitutions in terms
 
 Sub : Ctx → Ctx → Set
-Sub Γ Γ' = ∀ {A ρ} → A ∈[ ρ ] Γ → Σ[ Γ₁ Γ₂ ∈ Ctx ] (Ren (Γ₁ ++ᶜ Γ₂) Γ' × Γ₁ ⊢V⦂ A × ρ ≾ᵣ ctx-grade Γ₂)
+Sub Γ Γ' = ∀ {A ρ} → A ∈[ ρ ] Γ → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] (Ren (Γ₁ ++ᶜ Γ₂) Γ' × Γ₁ ⊢V⦂ A ×  ctx-grade Γ₂ ≾ᵣ ρ)

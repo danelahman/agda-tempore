@@ -163,6 +163,10 @@ mutual
             --------------------
             → Γ ⊢C⦂ C
 
+    -- sub-effecting
+
+    -- TODO: coerce term
+
 
 -- Useful Substitution
 

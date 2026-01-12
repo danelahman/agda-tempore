@@ -11,9 +11,15 @@ open Eq public renaming ([_] to [|_|])
 open Eq.≡-Reasoning public
 
 open import Axiom.Extensionality.Propositional
+open import Axiom.UniquenessOfIdentityProofs
 
 -- Assuming function extensionality
 
 postulate
   fun-ext  : ∀ {l₁ l₂} → Extensionality l₁ l₂
   ifun-ext : ∀ {l₁ l₂} → ExtensionalityImplicit l₁ l₂
+
+-- Assuming UIP
+
+--postulate
+--  uip : ∀ {l} {X : Set l} → UIP X

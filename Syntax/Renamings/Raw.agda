@@ -146,8 +146,8 @@ cong-vren {Γ'' = Γ'' ⟨ ρ ⟩} r =
 wk-ctx-vren : ∀ {Γ Γ'} → ctx-grade Γ' ≡ uᵣ → VRen Γ (Γ ++ᶜ Γ')
 wk-ctx-vren {Γ' = []}      _   = id-vren
 wk-ctx-vren {Γ' = Γ' ∷ A}  rel = wk-vren ∘ᵛʳ wk-ctx-vren rel
-wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel with wk-ctx-vren {Γ} {Γ'} (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel)
-... | r' = {!!} ∘ᵛʳ r'
+wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel rewrite c·ᵣd≡uᵣ⇒d≡uᵣ ρ rel =
+  ⟨⟩-η⁻¹-vren ∘ᵛʳ (wk-ctx-vren {Γ} {Γ'} (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
 
 {- Previous version: 
 -- Weakening by a context renaming
@@ -202,10 +202,8 @@ var-split₁-wk-ctx-vren {Γ' = []} x rel =
   refl
 var-split₁-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   var-split₁-wk-ctx-vren {Γ' = Γ'} x rel
-var-split₁-wk-ctx-vren {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rel =
-  var-split₁-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ {ρ'} (ctx-grade Γ') rel)
-
---  var-split₁-wk-ctx-vren {Γ} {Γ'} {A} {ρ} x (c·ᵣd≡uᵣ⇒c≡uᵣ {ρ'} (ctx-grade Γ') rel)
+var-split₁-wk-ctx-vren {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rel with c·ᵣd≡uᵣ⇒d≡uᵣ ρ' rel
+... | refl = var-split₁-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ {ρ'} (ctx-grade Γ') rel)
 
 var-split₂-wk-ctx-vren : ∀ {Γ Γ' A ρ}
                        → (x : A ∈[ ρ ] Γ)
@@ -219,12 +217,17 @@ var-split₂-wk-ctx-vren {Γ' = []} x rel =
 var-split₂-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   cong (_∷ A) (var-split₂-wk-ctx-vren x rel)
 var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel =
-  cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren x (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
+  {!!} --cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren x (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
 
 -- Rename a grade modality to a context capturing at least the same amount of time
 
 vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
-vren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel = {!!}
+vren⟨ρ⟩-ctx {Γ} {[]} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
+  ρ' , {!!} , y
+vren⟨ρ⟩-ctx {Γ} {Γ' ∷ X} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
+  ρ' ·ᵣ (ctx-grade Γ') , {!!} , Tl-∷ (var-ρ-++ᶜ y)
+vren⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} rel (Tl-⟨⟩ {ρ' = ρ''} y) =
+  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' , {!!} , Tl-⟨⟩ (var-ρ-++ᶜ y)
 
 -- Identity laws
 
@@ -298,8 +301,7 @@ cong-⟨⟩-vren-fun : ∀ {Γ Γ' Γ'' A ρ ρ'}
                 ≡ (cong-⟨⟩-vren r' ∘ᵛʳ cong-⟨⟩-vren r) x
                 
 cong-⟨⟩-vren-fun r r' (Tl-⟨⟩ x) with r x
-... | ρ'' , r , y = cong (_ ,_) (cong (_, _) {!!})
---... | ρ'' , r , y = cong (_ ,_) (cong (_, Tl-⟨⟩ (proj₂ (proj₂ (r' y)))) (≾ᵣ-irrelevant _ _))
+... | ρ'' , r , y = cong (_ ,_) (cong (_, _) (sym (trans-cong r)))
 
 cong-vren-fun : ∀ {Γ Γ' Γ'' Γ''' A ρ}
             → (r : VRen Γ Γ')
