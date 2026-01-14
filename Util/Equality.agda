@@ -21,5 +21,5 @@ postulate
 
 -- Assuming UIP
 
---postulate
---  uip : ∀ {l} {X : Set l} → UIP X
+postulate
+  uip : ∀ {l} {X : Set l} → UIP X

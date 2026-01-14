@@ -13,6 +13,8 @@ open import Data.Product
 open import Syntax.Renamings (Grades)
 open import Syntax.Language (Grades)
 
+open import Util.Equality
+
 -- Action of renamings on well-typed values and computations
 
 mutual
@@ -23,7 +25,7 @@ mutual
            ------------
            → Γ' ⊢V⦂ A
 
-  V-rename r (var x)    = {!!}
+  V-rename r (var x)    = var (proj₂ (proj₂ (var-rename {!!} x)))
   V-rename r (const c)  = const c
   V-rename r ⋆          = ⋆
   V-rename r (⦉ V , W ⦊) = ⦉ V-rename r V , V-rename r W ⦊

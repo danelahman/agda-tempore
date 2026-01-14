@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+-- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 --------------------------------------------------------------
 -- Context renamings                                        --
@@ -86,14 +86,6 @@ var-vren {Γ} {A} x (Tl-∷ {ρ = ρ'} y) =
 ⟨⟩-≡-vren {Γ} {ρ} {ρ'} rel {A} {.(_ ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ''} x) =
   ρ'' ·ᵣ ρ' , cong (ρ'' ·ᵣ_) rel , Tl-⟨⟩ x
 
--- This shouldn't hold anymore:
-{-
--- Derived modal weakening renaming
-
-wk-⟨⟩-vren : ∀ {Γ ρ} → VRen Γ (Γ ⟨ ρ ⟩)
-wk-⟨⟩-vren {Γ} {ρ} = ⟨⟩-≾-vren uᵣ≾ᵣc ∘ᵛʳ ⟨⟩-η⁻¹-vren
--}
-
 -- Congruence renamings
 
 cong-∷-vren : ∀ {Γ Γ' A} → VRen Γ Γ' → VRen (Γ ∷ A) (Γ' ∷ A)
@@ -148,18 +140,6 @@ wk-ctx-vren {Γ' = []}      _   = id-vren
 wk-ctx-vren {Γ' = Γ' ∷ A}  rel = wk-vren ∘ᵛʳ wk-ctx-vren rel
 wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel rewrite c·ᵣd≡uᵣ⇒d≡uᵣ ρ rel =
   ⟨⟩-η⁻¹-vren ∘ᵛʳ (wk-ctx-vren {Γ} {Γ'} (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
-
-{- Previous version: 
--- Weakening by a context renaming
-
-wk-ctx-vren : ∀ {Γ Γ'} → VRen Γ (Γ ++ᶜ Γ')
-wk-ctx-vren {Γ' = []} =
-  id-vren
-wk-ctx-vren {Γ' = Γ' ∷ A} =
-  wk-vren ∘ᵛʳ wk-ctx-vren
-wk-ctx-vren {Γ' = Γ' ⟨ ρ ⟩} =
-  wk-⟨⟩-vren ∘ᵛʳ wk-ctx-vren
--}
 
 -- Exchange renamings
 
@@ -216,18 +196,18 @@ var-split₂-wk-ctx-vren {Γ' = []} x rel =
   refl
 var-split₂-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   cong (_∷ A) (var-split₂-wk-ctx-vren x rel)
-var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel =
-  {!!} --cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren x (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
+var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel with c·ᵣd≡uᵣ⇒d≡uᵣ ρ' rel
+... | refl = cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
 
 -- Rename a grade modality to a context capturing at least the same amount of time
 
 vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
-vren⟨ρ⟩-ctx {Γ} {[]} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
-  ρ' , {!!} , y
-vren⟨ρ⟩-ctx {Γ} {Γ' ∷ X} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
-  ρ' ·ᵣ (ctx-grade Γ') , {!!} , Tl-∷ (var-ρ-++ᶜ y)
-vren⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} rel (Tl-⟨⟩ {ρ' = ρ''} y) =
-  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' , {!!} , Tl-⟨⟩ (var-ρ-++ᶜ y)
+vren⟨ρ⟩-ctx {Γ} {[]} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) rewrite rel =
+  ρ' , ·ᵣ-identityʳ ρ' , y
+vren⟨ρ⟩-ctx {Γ} {Γ' ∷ X} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) rewrite rel =
+  ρ' ·ᵣ (ctx-grade Γ') , refl , Tl-∷ (var-ρ-++ᶜ y)
+vren⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} rel (Tl-⟨⟩ {ρ' = ρ''} y) rewrite rel =
+  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' , sym (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ') , Tl-⟨⟩ (var-ρ-++ᶜ y)
 
 -- Identity laws
 

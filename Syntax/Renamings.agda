@@ -60,15 +60,6 @@ wk-ren : ∀ {Γ A} → Ren Γ (Γ ∷ A)
 wk-ren {Γ} {A} =
   ren refl (wk-vren {Γ} {A})
 
--- This shouldn't hold anymore:
-{-
--- Grade weakening renaming
-
-wk-⟨⟩-ren : ∀ {Γ ρ} → Ren Γ (Γ ⟨ ρ ⟩)
-wk-⟨⟩-ren {Γ} {ρ} =
-  ren (c≾ᵣc·ᵣd (ctx-grade Γ) ρ) (wk-⟨⟩-vren {Γ} {ρ})
--}
-
 -- Strong monoidal structure of ⟨_⟩
 
 ⟨⟩-η-ren : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
@@ -155,16 +146,6 @@ wk-ctx-renₗ {Γ} {Γ'} rel =
     (cong (ctx-grade Γ ·ᵣ_) p)
     (⟨⟩-≡-vren p)
 
--- This shouldn't hold anymore:
-{-
--- Grade and variable exchange renaming
-
-exch-⟨⟩-var-ren : ∀ {Γ A ρ} → Ren (Γ ⟨ ρ ⟩ ∷ A) ((Γ ∷ A) ⟨ ρ ⟩)
-exch-⟨⟩-var-ren = 
-  ren 
-    ≾ᵣ-refl exch-⟨⟩-var-vren
--}
-
 -- Variable exchange renaming
 
 exch-ren : ∀ {Γ A B} → Ren (Γ ∷ A ∷ B) (Γ ∷ B ∷ A)
@@ -206,6 +187,7 @@ cong-ren-fun : ∀ {Γ Γ' Γ'' Γ'''}
              ≡ cong-ren r' ∘ʳ cong-ren r
 
 cong-ren-fun {Γ} {Γ'} {Γ''} {Γ'''} r r' =
-  cong₂ ren
-    (trans {!!} {!!}) --(≾ᵣ-irrelevant _ _)
+  cong₂
+    ren
+    (uip _ _)
     (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun (var-rename r) (var-rename r') x)))
