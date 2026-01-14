@@ -25,11 +25,12 @@ mutual
            ------------
            → Γ' ⊢V⦂ A
 
-  V-rename r (var x)    = var (proj₂ (proj₂ (var-rename {!!} x)))
-  V-rename r (const c)  = const c
-  V-rename r ⋆          = ⋆
-  V-rename r (⦉ V , W ⦊) = ⦉ V-rename r V , V-rename r W ⦊
-  V-rename r (lam M)    = lam (C-rename (cong-ren r) M)
+  V-rename r (var rel x) rewrite proj₁ (proj₂ (var-rename r x)) =
+    var rel (proj₂ (proj₂ (var-rename r x)))
+  V-rename r (const c)   = const c
+  V-rename r ⋆           = ⋆
+  V-rename r (⦉ V , W ⦊)  = ⦉ V-rename r V , V-rename r W ⦊
+  V-rename r (lam M)     = lam (C-rename (cong-ren r) M)
 
   C-rename : ∀ {Γ Γ' C}
            → Ren Γ Γ'
