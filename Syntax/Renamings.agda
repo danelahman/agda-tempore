@@ -26,7 +26,7 @@ open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] )
 record Ren (Γ Γ' : Ctx) : Set where
   constructor ren
   field
-    ctx-grade-≡ : ctx-grade Γ ≡ ctx-grade Γ'
+    ctx-grade-≾ : ctx-grade Γ' ≾ᵣ ctx-grade Γ
     var-rename : VRen Γ Γ'
 
 open Ren public
@@ -34,14 +34,14 @@ open Ren public
 -- Lifting the operations on VRen to Ren
 
 id-ren : ∀ {Γ} → Ren Γ Γ
-id-ren {Γ} = ren refl id-vren
+id-ren {Γ} = ren ≾ᵣ-refl id-vren
 
 -- Composition of renamings
 
 _∘ʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
 r' ∘ʳ r =
   ren
-    (trans (ctx-grade-≡ r) (ctx-grade-≡ r'))
+    (≾ᵣ-trans (r' .ctx-grade-≾) (r .ctx-grade-≾))
     ((var-rename r') ∘ᵛʳ (var-rename r))
 
 infixr 20 _∘ʳ_
@@ -51,39 +51,39 @@ infixr 20 _∘ʳ_
 eq-ren : ∀ {Γ Γ'} → Γ ≡ Γ' → Ren Γ Γ'
 eq-ren p =
   ren
-    (cong ctx-grade p)
+    (≾ᵣ-reflexive (cong ctx-grade (sym p)))
     (eq-vren p)
 
 -- Variable weakening renaming
 
 wk-ren : ∀ {Γ A} → Ren Γ (Γ ∷ A)
 wk-ren {Γ} {A} =
-  ren refl (wk-vren {Γ} {A})
+  ren ≾ᵣ-refl (wk-vren {Γ} {A})
 
 -- Strong monoidal structure of ⟨_⟩
 
 ⟨⟩-η-ren : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
 ⟨⟩-η-ren {Γ} = 
   ren 
-    (·ᵣ-identityʳ (ctx-grade Γ)) 
+    (c≾ᵣc·ᵣd (ctx-grade Γ) uᵣ)
     ⟨⟩-η-vren
 
 ⟨⟩-η⁻¹-ren : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
 ⟨⟩-η⁻¹-ren {Γ} =
   ren
-    (sym (·ᵣ-identityʳ (ctx-grade Γ)))
+    (≾ᵣ-reflexive (·ᵣ-identityʳ (ctx-grade Γ)))
     ⟨⟩-η⁻¹-vren
 
 ⟨⟩-μ-ren : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ·ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
 ⟨⟩-μ-ren {Γ} {ρ} {ρ'} = 
   ren 
-    (sym (·ᵣ-assoc (ctx-grade Γ) ρ ρ')) 
+    (≾ᵣ-reflexive (·ᵣ-assoc (ctx-grade Γ) ρ ρ'))
     ⟨⟩-μ-vren
 
 ⟨⟩-μ⁻¹-ren : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
 ⟨⟩-μ⁻¹-ren {Γ} {ρ} {ρ'} = 
   ren 
-    (·ᵣ-assoc (ctx-grade Γ) ρ ρ')
+    (ρ-≾ᵣ-substᵣ (·ᵣ-assoc (ctx-grade Γ) ρ ρ') ≾ᵣ-refl)
     ⟨⟩-μ⁻¹-vren
 
 -- Variable congruence renaming
@@ -91,35 +91,32 @@ wk-ren {Γ} {A} =
 cong-∷-ren : ∀ {Γ Γ' A} → Ren Γ Γ' → Ren (Γ ∷ A) (Γ' ∷ A)
 cong-∷-ren ρ =
   ren
-    (ctx-grade-≡ ρ)
+    (ctx-grade-≾ ρ)
     (cong-∷-vren (var-rename ρ))
 
 -- Grade congruence renaming
 
 cong-⟨⟩-ren : ∀ {Γ Γ' ρ} → Ren Γ Γ' → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
-cong-⟨⟩-ren {ρ = ρ} r =
-  ren
-    (cong (_·ᵣ ρ)
-    (ctx-grade-≡ r)) (cong-⟨⟩-vren (var-rename r))
+cong-⟨⟩-ren {ρ = ρ} r = ren (·ᵣ-monoˡ-≾ᵣ ρ (ctx-grade-≾ r)) (cong-⟨⟩-vren (var-rename r))
 
 -- General congruence renaming
 
 cong-ren : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Ren (Γ ++ᶜ Γ'') (Γ' ++ᶜ Γ'')
 cong-ren {Γ} {Γ'} {Γ''} r =
   ren
-    (trans
-      (ctx-grade-++ᶜ Γ Γ'')
-      (trans
-        (cong (_·ᵣ ctx-grade Γ'') (ctx-grade-≡ r))
-        (sym (ctx-grade-++ᶜ Γ' Γ''))))
+    (≾ᵣ-trans
+      (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ' Γ''))
+      (≾ᵣ-trans
+        (·ᵣ-monoˡ-≾ᵣ (ctx-grade Γ'') (ctx-grade-≾ r))
+        (≾ᵣ-reflexive (sym (ctx-grade-++ᶜ Γ Γ'')))))
     (cong-vren (var-rename r))
 
 -- General weakening renamings
 
 wk-ctx-renᵣ : ∀ {Γ Γ'} → ctx-grade Γ' ≡ uᵣ → Ren Γ (Γ ++ᶜ Γ')
-wk-ctx-renᵣ {Γ} {Γ'} rel = 
-  ren 
-    (trans (sym (·ᵣ-identityʳ (ctx-grade Γ))) (trans (cong (ctx-grade Γ ·ᵣ_) (sym rel)) (sym (ctx-grade-++ᶜ Γ Γ'))))
+wk-ctx-renᵣ {Γ} {Γ'} rel =
+  ren
+    (≾ᵣ-reflexive (trans (ctx-grade-++ᶜ Γ Γ') (trans (cong (ctx-grade Γ ·ᵣ_) rel) (·ᵣ-identityʳ (ctx-grade Γ)))))
     (wk-ctx-vren rel)
 
 wk-ctx-renₗ : ∀ {Γ Γ'} → ctx-grade Γ' ≡ uᵣ → Ren Γ (Γ' ++ᶜ Γ)
@@ -127,31 +124,20 @@ wk-ctx-renₗ {Γ} {Γ'} rel =
   cong-ren {Γ' = Γ'} (eq-ren ++ᶜ-identityˡ ∘ʳ wk-ctx-renᵣ rel) 
     ∘ʳ (eq-ren (sym ++ᶜ-identityˡ))
 
--- This lemma is adapted to the expiring setting in the lemma below
-{-
--- Monotonicity renaming for ⟨_⟩
-
-⟨⟩-≤-ren : ∀ {Γ ρ ρ'} → ρ ≾ᵣ ρ' → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
-⟨⟩-≤-ren {Γ} p = 
-  ren 
-    (cong (ctx-grade Γ ·ᵣ_) p)
-    (⟨⟩-≾-vren p)
--}
-
 -- Grades substitutions
 
-⟨⟩-≡-ren : ∀ {Γ ρ ρ'} → ρ ≡ ρ' → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
-⟨⟩-≡-ren {Γ} p = 
+⟨⟩-≾-ren : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
+⟨⟩-≾-ren {Γ} p = 
   ren 
-    (cong (ctx-grade Γ ·ᵣ_) p)
-    (⟨⟩-≡-vren p)
+    (·ᵣ-monoʳ-≾ᵣ (ctx-grade Γ) p) 
+    (⟨⟩-≾-vren p)
 
 -- Variable exchange renaming
 
 exch-ren : ∀ {Γ A B} → Ren (Γ ∷ A ∷ B) (Γ ∷ B ∷ A)
 exch-ren = 
   ren 
-    refl 
+    ≾ᵣ-refl
     exch-vren
 
 -- Weakening a time to a context renaming
@@ -159,13 +145,13 @@ exch-ren =
 ren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
 ren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel = 
   ren
-    (trans (cong (ctx-grade Γ ·ᵣ_) rel) (sym (ctx-grade-++ᶜ Γ Γ')))
+    (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (≾ᵣ-reflexive (cong (ctx-grade Γ ·ᵣ_) (sym rel))))
     (vren⟨ρ⟩-ctx rel)
 
 -- Reflexivity equality renamings' interaction with identity renamings
 
 eq-ren-refl-id : ∀ {Γ} → eq-ren refl ≡ id-ren {Γ}
-eq-ren-refl-id {Γ} = refl
+eq-ren-refl-id {Γ} = cong₂ ren (≾ᵣ-irrelevant _ _) refl
 
 -- Congruence renamings' interaction with identities (functoriality)
 
@@ -175,7 +161,7 @@ cong-ren-id : ∀ {Γ Γ'}
 cong-ren-id {Γ} {Γ'} =
   cong₂
     ren
-    (trans-symʳ (ctx-grade-++ᶜ Γ Γ'))
+    (≾ᵣ-irrelevant _ _)
     (ifun-ext λ {A} → (ifun-ext λ {ρ} → fun-ext (λ x → cong-vren-id {Γ} {Γ'} x)))
 
 -- Congruence renamings' interaction with composition (functoriality)
@@ -189,5 +175,5 @@ cong-ren-fun : ∀ {Γ Γ' Γ'' Γ'''}
 cong-ren-fun {Γ} {Γ'} {Γ''} {Γ'''} r r' =
   cong₂
     ren
-    (uip _ _)
+    (≾ᵣ-irrelevant _ _)
     (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun (var-rename r) (var-rename r') x)))
