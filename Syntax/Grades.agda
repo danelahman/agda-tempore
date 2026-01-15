@@ -63,6 +63,9 @@ record Grade : Set₁ where
     -- _≾_ is decidable
     _≾?_ : Decidable _≾_
 
+    --
+    c≾u⇒c≡u : (c : Carrier) → c ≾ u → c ≡ u
+
     -- Properties of _·_ and _≾_
     c≾c·d : (c d : Carrier) → c ≾ (c · d)
 
@@ -133,7 +136,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      embedNat to embedR;
      _≾?_ to _≾ᵣ?_;
      c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
-     c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ
+     c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ;
+     c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ
     ) public
 
   open Grade EGrade renaming

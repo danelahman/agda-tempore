@@ -29,9 +29,7 @@ mutual
     -- variables
 
     var     : {A : VType}
-            → {ρ : R}
-            → ρ ≡ uᵣ
-            → A ∈[ ρ ] Γ
+            → A ∈[ uᵣ ] Γ
             ------------
             → Γ ⊢V⦂ A
 
