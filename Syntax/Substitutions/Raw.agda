@@ -47,14 +47,11 @@ _∘ˢʳ_ r s x with s x
 -- Congruence substitutions
 
 cong-∷-vsub : ∀ {Γ Γ' A} → VSub Γ Γ' → VSub (Γ ∷ A) (Γ' ∷ A)
-cong-∷-vsub {Γ = Γ} {A = A} s Hd =
-  proj₁ (s {ρ = uᵣ} _) ,
-  proj₁ (proj₂ (s _)) ∷ A ,
-  cong-∷-ren (proj₁ (proj₂ (proj₂ (s _)))) ,
-  proj₁ (proj₂ (proj₂ (proj₂ (s _)))) ,
-  proj₂ (proj₂ (proj₂ (proj₂ (s {ρ = uᵣ} _))))
+cong-∷-vsub {Γ = Γ} {Γ' = Γ'} {A = A} s Hd =
+  Γ' ∷ A , [] , id-ren , var Hd , ≾ᵣ-refl
 cong-∷-vsub {Γ} {Γ'} {A} s (Tl-∷ x) with s x
-... | Γ₁ , Γ₂ , r , t , rel = Γ₁ , Γ₂ ∷ A , cong-ren r , t , rel
+... | Γ₁ , Γ₂ , r , t , rel =
+  Γ₁ , Γ₂ ∷ A , cong-ren r , t , rel
 
 cong-⟨⟩-vsub : ∀ {Γ Γ' ρ} → VSub Γ Γ' → VSub (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
 cong-⟨⟩-vsub {ρ = ρ} s (Tl-⟨⟩ x) with s x
