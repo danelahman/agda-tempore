@@ -48,5 +48,12 @@ _∘ˢʳ_ r s x with s x
               → (s : Sub Γ Γ')
               → (x : A ∈[ ρ ] Γ)
               → (s ∘ʳˢ id-ren) x ≡ s x
-∘ʳˢ-identityʳ {Γ'} {Γ''} {A} {ρ} s x =
+∘ʳˢ-identityʳ {Γ} {Γ'} {A} {ρ} s x =
   dcong₂ _,_ refl (dcong₂ _,_ refl (dcong₂ _,_ refl (cong₂ _,_ refl (≾ᵣ-irrelevant _ _))))
+
+
+∘ˢʳ-identityˡ : ∀ {Γ Γ' A ρ}
+              → (s : Sub Γ Γ')
+              → (x : A ∈[ ρ ] Γ)
+              → (id-ren ∘ˢʳ s) x ≡ s x
+∘ˢʳ-identityˡ {Γ} {Γ'} {A} {ρ} s x = ?
