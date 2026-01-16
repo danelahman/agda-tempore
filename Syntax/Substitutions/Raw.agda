@@ -23,31 +23,31 @@ open import Util.Equality
 
 VSub : Ctx → Ctx → Set
 VSub Γ Γ' = ∀ {A ρ} → A ∈[ ρ ] Γ → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] (Ren (Γ₁ ++ᶜ Γ₂) Γ' × Γ₁ ⊢V⦂ A × ctx-grade Γ₂ ≾ᵣ ρ)
--- Identity substitution
+-- Identity variable substitution
 
-id-sub : ∀ {Γ} → VSub Γ Γ
-id-sub {Γ} {A = A} x =
+id-vsub : ∀ {Γ} → VSub Γ Γ
+id-vsub {Γ} {A = A} x = 
   (proj₁ (var-split x)) ∷ A ,
   proj₁ (proj₂ (var-split x)) ,
   eq-ren (split-≡ ((proj₁ (proj₂ (proj₂ (var-split x)))))) ,
   var Hd ,
   ≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split x))))
 
--- Composition of substitutions and renamings
+-- Composition of variable substitutions and renamings
 
-_∘ʳˢ_ : ∀ {Γ Γ' Γ''} → VSub Γ' Γ'' → Ren Γ Γ' → VSub Γ Γ''
-_∘ʳˢ_ s r x with var-rename r x
+_ᵛ∘ʳˢ_ : ∀ {Γ Γ' Γ''} → VSub Γ' Γ'' → Ren Γ Γ' → VSub Γ Γ''
+_ᵛ∘ʳˢ_ s r x with var-rename r x
 ... | ρ' , rel , y with s y
 ... | Γ₁'' , Γ₂'' , r' , t , rel' = Γ₁'' , Γ₂'' , r' , t , ≾ᵣ-trans rel' rel
 
-_∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → VSub Γ Γ' → VSub Γ Γ''
-_∘ˢʳ_ r s x with s x
+_ᵛ∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → VSub Γ Γ' → VSub Γ Γ''
+_ᵛ∘ˢʳ_ r s x with s x
 ... | Γ₁' , Γ₂' , r' , t , rel = Γ₁' , Γ₂' , r ∘ʳ r' , t , rel
 
 -- Congruence substitutions
 
 cong-∷-vsub : ∀ {Γ Γ' A} → VSub Γ Γ' → VSub (Γ ∷ A) (Γ' ∷ A)
-cong-∷-vsub {Γ = Γ} {Γ' = Γ'} {A = A} s Hd =
+cong-∷-vsub {Γ' = Γ'} {A = A} s Hd =
   Γ' ∷ A , [] , id-ren , var Hd , ≾ᵣ-refl
 cong-∷-vsub {Γ} {Γ'} {A} s (Tl-∷ x) with s x
 ... | Γ₁ , Γ₂ , r , t , rel =
@@ -67,17 +67,17 @@ cong-vsub {Γ'' = Γ'' ⟨ ρ ⟩} s = cong-⟨⟩-vsub (cong-vsub s)
 
 -- TODO: complete
 -- Identity laws
-∘ʳˢ-identityʳ : ∀ {Γ Γ' A ρ}
+ᵛ∘ʳˢ-identityʳ : ∀ {Γ Γ' A ρ}
               → (s : VSub Γ Γ')
               → (x : A ∈[ ρ ] Γ)
-              → (s ∘ʳˢ id-ren) x ≡ s x
-∘ʳˢ-identityʳ {Γ} {Γ'} {A} {ρ} s x =
+              → (s ᵛ∘ʳˢ id-ren) x ≡ s x
+ᵛ∘ʳˢ-identityʳ {Γ} {Γ'} {A} {ρ} s x =
   dcong₂ _,_ refl (dcong₂ _,_ refl (dcong₂ _,_ refl (cong₂ _,_ refl (≾ᵣ-irrelevant _ _))))
 
 {-
-∘ˢʳ-identityˡ : ∀ {Γ Γ' A ρ}
+ᵛ∘ˢʳ-identityˡ : ∀ {Γ Γ' A ρ}
               → (s : VSub Γ Γ')
               → (x : A ∈[ ρ ] Γ)
-              → (id-ren ∘ˢʳ s) x ≡ s x
-∘ˢʳ-identityˡ {Γ} {Γ'} {A} {ρ} s x = dcong₂ _,_ refl (dcong₂ _,_ refl (cong₂ _,_ {!!} (dcong₂ _,_ refl refl)))
+              → (id-ren ᵛ∘ˢʳ s) x ≡ s x
+ᵛ∘ˢʳ-identityˡ {Γ} {Γ'} {A} {ρ} s x = dcong₂ _,_ refl (dcong₂ _,_ refl (cong₂ _,_ {!!} (dcong₂ _,_ refl refl)))
 -}
