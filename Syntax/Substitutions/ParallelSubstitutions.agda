@@ -30,25 +30,23 @@ id-sub {Γ} {A = A} x =
   var Hd ,
   ≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split x))))
 
--- Substitutions and renamings compositions
+-- Composition of substitutions and renamings
 
 _∘ʳˢ_ : ∀ {Γ Γ' Γ''} → Sub Γ' Γ'' → Ren Γ Γ' → Sub Γ Γ''
 _∘ʳˢ_ s r x with var-rename r x
 ... | ρ' , rel , y with s y
 ... | Γ₁'' , Γ₂'' , r' , t , rel' = Γ₁'' , Γ₂'' , r' , t , ≾ᵣ-trans rel' rel
 
-_∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Sub Γ Γ' → Ren Γ Γ''
-_∘ˢʳ_ r s = r ∘ʳ (proj₁ (proj₂ (proj₂ (s _))) ∘ʳ {!!})
+_∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Sub Γ Γ' → Sub Γ Γ''
+_∘ˢʳ_ r s x with s x
+... | Γ₁' , Γ₂' , r' , t , rel = Γ₁' , Γ₂' , r ∘ʳ r' , t , rel
 
-{-
-_∘ˢʳ_ {Γ} r s = 
-  ren
-    (≾ᵣ-trans
-      (ctx-grade-≾ r)
-      (≾ᵣ-trans
-        (ctx-grade-≾ (proj₁ (proj₂ (proj₂ (s _)))))
-        (≾ᵣ-trans
-          {!!}
-          {!!})))
-    (var-rename r ∘ᵛʳ {!!})
--}
+
+-- TODO: complete
+-- Identity laws
+∘ʳˢ-identityʳ : ∀ {Γ Γ' A ρ}
+              → (s : Sub Γ Γ')
+              → (x : A ∈[ ρ ] Γ)
+              → (s ∘ʳˢ id-ren) x ≡ s x
+∘ʳˢ-identityʳ {Γ'} {Γ''} {A} {ρ} s x =
+  dcong₂ _,_ refl (dcong₂ _,_ refl (dcong₂ _,_ refl (cong₂ _,_ refl (≾ᵣ-irrelevant _ _))))
