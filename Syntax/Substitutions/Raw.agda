@@ -1,3 +1,5 @@
+-- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+
 ------------------------------------------------------------------
 -- Parallel substitutions                                       --
 --                                                              --
@@ -23,13 +25,14 @@ open import Util.Equality
 
 VSub : Ctx → Ctx → Set
 VSub Γ Γ' = ∀ {A ρ} → A ∈[ ρ ] Γ → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] (Ren (Γ₁ ++ᶜ Γ₂) Γ' × Γ₁ ⊢V⦂ A × ctx-grade Γ₂ ≾ᵣ ρ)
+
 -- Identity variable substitution
 
 id-vsub : ∀ {Γ} → VSub Γ Γ
 id-vsub {Γ} {A = A} x = 
   (proj₁ (var-split x)) ∷ A ,
   proj₁ (proj₂ (var-split x)) ,
-  eq-ren (split-≡ ((proj₁ (proj₂ (proj₂ (var-split x)))))) ,
+  eq-ren (split-≡ (proj₁ (proj₂ (proj₂ (var-split x))))) ,
   var Hd ,
   ≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split x))))
 
@@ -78,6 +81,15 @@ cong-vsub {Γ'' = Γ'' ⟨ ρ ⟩} s = cong-⟨⟩-vsub (cong-vsub s)
 ᵛ∘ˢʳ-identityˡ : ∀ {Γ Γ' A ρ}
               → (s : VSub Γ Γ')
               → (x : A ∈[ ρ ] Γ)
-              → (id-ren ᵛ∘ˢʳ s) x ≡ s x
-ᵛ∘ˢʳ-identityˡ {Γ} {Γ'} {A} {ρ} s x = dcong₂ _,_ refl (dcong₂ _,_ refl (cong₂ _,_ {!!} (dcong₂ _,_ refl refl)))
+              → (_ᵛ∘ˢʳ_ id-ren s) x ≡ s x
 -}
+
+-- Variable substitution implies renaming
+
+ren⇒vsub : ∀ {Γ Γ'} → Ren Γ Γ' → VSub Γ Γ'
+ren⇒vsub {Γ} {Γ'} r {A} {ρ} x =
+  proj₁ (var-split x) ∷ A ,
+  proj₁ (proj₂ (var-split x)) ,
+  r ∘ʳ eq-ren (split-≡ (proj₁ (proj₂ (proj₂ (var-split x))))) ,
+  var Hd ,
+  ≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split x))))

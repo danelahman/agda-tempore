@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
 ----------------------------
 -- Parallel substitutions --
 ----------------------------
@@ -8,12 +10,20 @@ module Syntax.Substitutions (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
+open import Data.Product
+
 open import Syntax.Substitutions.Raw (Grades) public
 
 open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
 open import Syntax.Renamings (Grades)
 
 open import Util.Equality
+
+open import Relation.Nullary
+open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] ) 
+
+
 
 record Sub (Γ Γ' : Ctx) : Set where
   constructor sub
@@ -36,6 +46,17 @@ s ∘ʳˢ r =
     (≾ᵣ-trans (ctx-grade-≾ s) (ctx-grade-≾ r))
     (var-sub s ᵛ∘ʳˢ r)
 
+_∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Sub Γ Γ' → Sub Γ Γ''
+_∘ˢʳ_ r s =
+  sub
+    (≾ᵣ-trans (ctx-grade-≾ r) (ctx-grade-≾ s))
+    λ x →
+      proj₁ (var-sub s x) ,
+      proj₁ (proj₂ (var-sub s x)) ,
+      r ∘ʳ proj₁ (proj₂ (proj₂ (var-sub s x))) ,
+      proj₁ (proj₂ (proj₂ (proj₂ (var-sub s x)))) ,
+      proj₂ (proj₂ (proj₂ (proj₂ (var-sub s x))))
+
 -- General congruence substitution
 
 cong-sub : ∀ {Γ Γ' Γ''} → Sub Γ Γ' → Sub (Γ ++ᶜ Γ'') (Γ' ++ᶜ Γ'')
@@ -47,3 +68,4 @@ cong-sub {Γ} {Γ'} {Γ''} s =
         (·ᵣ-monoˡ-≾ᵣ (ctx-grade Γ'') (ctx-grade-≾ s))
         (≾ᵣ-reflexive (sym (ctx-grade-++ᶜ Γ Γ'')))))
     (cong-vsub (var-sub s))
+

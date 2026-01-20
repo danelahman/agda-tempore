@@ -275,3 +275,12 @@ cong-vren-fun {Γ} {Γ'} {Γ''} {Γ''' ⟨ ρ ⟩} r r' x =
       (λ (r : VRen (Γ ++ᶜ Γ''') (Γ'' ++ᶜ Γ''')) → cong-⟨⟩-vren r x)
       (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun r r' x))))
     (cong-⟨⟩-vren-fun (cong-vren r) (cong-vren r') x)
+
+-- One can rename any context into another typing context of neutral grade
+-- Can be removed as it's not necessary for Renamings
+vren-ctx-u : (Γ : Ctx) → Σ[ Γ' ∈ Ctx ] (ctx-grade Γ' ≡ uᵣ × VRen Γ Γ')
+vren-ctx-u [] = [] , refl , id-vren
+vren-ctx-u (Γ ∷ A) with vren-ctx-u Γ
+... | Γ' , rel , vr = Γ' ∷ A , rel , cong-∷-vren vr
+vren-ctx-u (Γ ⟨ ρ ⟩) with vren-ctx-u Γ
+... | Γ' , rel , vr = Γ' , rel , ((vr ∘ᵛʳ ⟨⟩-η-vren) ∘ᵛʳ ⟨⟩-≾-vren {Γ} {ρ} {uᵣ} uᵣ≾ᵣc)

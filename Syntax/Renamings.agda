@@ -1,5 +1,3 @@
-{-# OPTIONS --allow-unsolved-metas #-}
-
 -----------------------
 -- Context renamings --
 -----------------------
@@ -177,3 +175,21 @@ cong-ren-fun {Γ} {Γ'} {Γ''} {Γ'''} r r' =
     ren
     (≾ᵣ-irrelevant _ _)
     (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun (var-rename r) (var-rename r') x)))
+
+∘ʳ-identityˡ : ∀ {Γ Γ'}
+             → (r : Ren Γ Γ')
+             → id-ren ∘ʳ r ≡ r
+∘ʳ-identityˡ r =
+  cong₂
+    ren
+    (≾ᵣ-irrelevant _ _)
+    (ifun-ext λ {A} → ifun-ext λ {ρ} → fun-ext λ x → ∘ᵛʳ-identityˡ (var-rename r) x)
+
+-- One can rename any context into another typing context of neutral grade
+ren-ctx-u : (Γ : Ctx) → Σ[ Γ' ∈ Ctx ] (ctx-grade Γ' ≡ uᵣ × Ren Γ Γ')
+ren-ctx-u [] = [] , refl , id-ren
+ren-ctx-u (Γ ∷ A) with ren-ctx-u Γ
+... | Γ' , rel , r = Γ' ∷ A , rel , cong-ren r
+ren-ctx-u (Γ ⟨ ρ ⟩) with ren-ctx-u Γ
+... | Γ' , rel , r =
+  Γ' , rel , ren (c≾ᵣd⇒c≾ᵣd·ᵣb ρ (ctx-grade-≾ r)) ((var-rename r ∘ᵛʳ ⟨⟩-η-vren) ∘ᵛʳ ⟨⟩-≾-vren uᵣ≾ᵣc)
