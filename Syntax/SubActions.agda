@@ -8,6 +8,7 @@ module Syntax.SubActions (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
+open import Data.List renaming ([] to [[]]; _∷_ to _∶_)
 open import Data.Product
 
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
@@ -56,39 +57,9 @@ mutual
     `with (λ op τ → C-substitute (cong-sub s) (H op τ))
     `in (C-substitute (cong-sub s) N)
   C-substitute {Γ} {Γ'} s (unbox {A} {C} {Γ₁} {Γ₂} {ρ} rel r V M) =
-    unbox {A = A} {C = C} {Γ₁ = Γ₁ ++ᶜ proj₁ (ren-ctx-u Γ₂)} {Γ₂ = [] ⟨ ctx-grade Γ₂ ⟩} {ρ = ρ}
-      (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ (ctx-grade Γ₂))) rel)
+    unbox {A = A} {C = C} {Γ₁ = {!!}} {Γ₂ = {!!}} {ρ = ρ}
       {!!}
-      (V-substitute (id-sub ∘ʳˢ wk-ctx-renᵣ {Γ₁} {proj₁ (ren-ctx-u Γ₂)} (proj₁ (proj₂ (ren-ctx-u Γ₂)))) V)
+      {!!}
+      {!!}
       (C-substitute (cong-sub s) M)
   C-substitute s (box V M) = box (V-substitute (cong-sub s) V) (C-substitute (cong-sub s) M)
-
-
-{-
-      (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ (ctx-grade Γ₂))) rel)
-      (ren
-        (≾ᵣ-trans
-          (ctx-grade-≾ s)
-          (≾ᵣ-trans
-            (ctx-grade-≾ r)
-            (≾ᵣ-reflexive
-              (trans
-                (ctx-grade-++ᶜ Γ₁ Γ₂)
-                (sym (trans
-                (ctx-grade-++ᶜ (Γ₁ ++ᶜ proj₁ (ren-ctx-u Γ₂)) ([] ⟨ ctx-grade Γ₂ ⟩))
-                (trans
-                  (sym (·ᵣ-assoc (ctx-grade (Γ₁ ++ᶜ proj₁ (ren-ctx-u Γ₂))) uᵣ (ctx-grade Γ₂)))
-                  (trans
-                    (·ᵣ-assoc (ctx-grade (Γ₁ ++ᶜ proj₁ (ren-ctx-u Γ₂))) uᵣ (ctx-grade Γ₂))
-                    (cong₂ _·ᵣ_
-                      (trans
-                        (ctx-grade-++ᶜ Γ₁ (proj₁ (ren-ctx-u Γ₂)))
-                        (trans
-                          (cong (_·ᵣ_ (ctx-grade Γ₁)) (proj₁ (proj₂ (ren-ctx-u Γ₂))))
-                          (·ᵣ-identityʳ (ctx-grade Γ₁))))
-                      (·ᵣ-identityˡ (ctx-grade Γ₂)))) ) ))))))
-        (λ x → {!!} , {!!}))
-      (V-substitute (id-sub ∘ʳˢ wk-ctx-renᵣ {Γ₁} {proj₁ (ren-ctx-u Γ₂)} (proj₁ (proj₂ (ren-ctx-u Γ₂)))) V)
-      (C-substitute (cong-sub s) M)
-
--}

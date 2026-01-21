@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+-- {-# OPTIONS --allow-unsolved-metas #-}
 
 ----------------------------
 -- Parallel substitutions --
@@ -15,14 +15,9 @@ open import Data.Product
 open import Syntax.Substitutions.Raw (Grades) public
 
 open import Syntax.Contexts (Grades)
-open import Syntax.Language (Grades)
 open import Syntax.Renamings (Grades)
 
-open import Util.Equality
-
-open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] ) 
-
 
 
 record Sub (Γ Γ' : Ctx) : Set where
@@ -68,4 +63,3 @@ cong-sub {Γ} {Γ'} {Γ''} s =
         (·ᵣ-monoˡ-≾ᵣ (ctx-grade Γ'') (ctx-grade-≾ s))
         (≾ᵣ-reflexive (sym (ctx-grade-++ᶜ Γ Γ'')))))
     (cong-vsub (var-sub s))
-
