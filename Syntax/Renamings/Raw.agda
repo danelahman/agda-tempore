@@ -69,7 +69,7 @@ var-vren {Γ} {A} x (Tl-∷ {ρ = ρ'} y) =
 -- Strong monoidal functor renamings
 
 ⟨⟩-η-vren : ∀ {Γ} → VRen (Γ ⟨ uᵣ ⟩) Γ
-⟨⟩-η-vren {Γ} (Tl-⟨⟩ {ρ' = ρ} x) = ρ , c≾ᵣc·ᵣd ρ uᵣ , x
+⟨⟩-η-vren (Tl-⟨⟩ {ρ' = ρ} x) = ρ , ≾ᵣ-reflexive (sym (·ᵣ-identityʳ ρ)) , x
 
 ⟨⟩-η⁻¹-vren : ∀ {Γ} → VRen Γ (Γ ⟨ uᵣ ⟩)
 ⟨⟩-η⁻¹-vren {Γ} {A} {ρ} x = ρ ·ᵣ uᵣ , ≾ᵣ-reflexive (·ᵣ-identityʳ ρ) , Tl-⟨⟩ x
@@ -174,7 +174,7 @@ var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel with c·ᵣd≡uᵣ⇒d�
 
 vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
 vren⟨ρ⟩-ctx {Γ} {[]} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) rewrite rel =
-  ρ' , c≾ᵣc·ᵣd ρ' uᵣ , y
+  ρ' , ≾ᵣ-reflexive (sym (·ᵣ-identityʳ ρ')) , y
 vren⟨ρ⟩-ctx {Γ} {Γ' ∷ X} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) rewrite rel =
   ρ' ·ᵣ (ctx-grade Γ') , ≾ᵣ-refl , Tl-∷ (var-ρ-++ᶜ y)
 vren⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} rel (Tl-⟨⟩ {ρ' = ρ''} y) rewrite rel =

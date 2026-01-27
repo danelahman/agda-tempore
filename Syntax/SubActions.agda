@@ -8,12 +8,16 @@ module Syntax.SubActions (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
-open import Data.List renaming ([] to [[]]; _∷_ to _∶_)
 open import Data.Product
 
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
 
+open import Relation.Nullary
+
+open import Syntax.Extensions.Raw (Grades)
+
 open import Syntax.Contexts (Grades)
+open import Syntax.Extensions (Grades)
 open import Syntax.Language (Grades)
 open import Syntax.Renamings (Grades)
 open import Syntax.RenActions (Grades)
@@ -29,10 +33,12 @@ mutual
                ------------
                → Γ' ⊢V⦂ A
 
-  V-substitute s (var x) =
+  V-substitute {Γ} {Γ'} s (var x) =
     V-rename
-      (proj₁ (proj₂ (proj₂ (var-sub s x))) ∘ʳ wk-ctx-renᵣ
-        (c≾ᵣuᵣ⇒c≡uᵣ (ctx-grade (proj₁ (proj₂ (var-sub s x)))) (proj₂ (proj₂ (proj₂ (proj₂ (var-sub s x)))))))
+      (proj₁ (proj₂ (proj₂ (var-sub s x))) ∘ʳ
+        wk-ctx-renᵣ
+          (c≾ᵣuᵣ⇒c≡uᵣ (ctx-grade (proj₁ (proj₂ (var-sub s x))))
+          (proj₂ (proj₂ (proj₂ (proj₂ (var-sub s x)))))))
       (proj₁ (proj₂ (proj₂ (proj₂ (var-sub s x)))))
   V-substitute s (const c) = const c
   V-substitute s ⋆         = ⋆
@@ -56,10 +62,14 @@ mutual
     handle C-substitute s M
     `with (λ op τ → C-substitute (cong-sub s) (H op τ))
     `in (C-substitute (cong-sub s) N)
-  C-substitute {Γ} {Γ'} s (unbox {A} {C} {Γ₁} {Γ₂} {ρ} rel r V M) =
-    unbox {A = A} {C = C} {Γ₁ = {!!}} {Γ₂ = {!!}} {ρ = ρ}
-      {!!}
-      {!!}
-      {!!}
+  C-substitute {Γ} {Γ'} s (unbox {A} {C} {Γ''} {ρ} e relGrades rel V M) =
+    unbox {A = A} {C = C} {ρ = ρ}
+      id-ext
+      (c·ᵣd≾ᵣc (ctx-grade Γ') ρ)
+      (≾ᵣ-trans (ctx-grade-≾ s) rel)
+      (V-substitute (s ∘ᵉˢ e) V)
       (C-substitute (cong-sub s) M)
   C-substitute s (box V M) = box (V-substitute (cong-sub s) V) (C-substitute (cong-sub s) M)
+
+  -- sub-effecting
+  C-substitute s (coerce M relEff) = coerce (C-substitute s M) relEff

@@ -67,9 +67,11 @@ record Grade : Set₁ where
     c≾u⇒c≡u : (c : Carrier) → c ≾ u → c ≡ u
 
     -- Properties of _·_ and _≾_
-    c≾c·d : (c d : Carrier) → c ≾ (c · d)
+--    c≾c·d : (c d : Carrier) → c ≾ (c · d)
+    c·d≾c : (c d : Carrier) → (c · d) ≾ c
 
-    c≾d⇒c≾d·b : ∀ {c d} b → c ≾ d → c ≾ (d · b)
+--    c≾d⇒c≾d·b : ∀ {c d} b → c ≾ d → c ≾ (d · b)
+    c≾d⇒c·b≾d : ∀ {c d} b → c ≾ d → (c · b) ≾ d
 
     γ-≾-substₗ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ' ≾ γ → γ'' ≾ γ
     
@@ -129,10 +131,12 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-refl to ≾ᵣ-refl;
      u≾c to uᵣ≾ᵣc;
      ≾-irrelevant to ≾ᵣ-irrelevant;
-     c≾c·d to c≾ᵣc·ᵣd;
+--     c≾c·d to c≾ᵣc·ᵣd;
+     c·d≾c to c·ᵣd≾ᵣc;
      γ-≾-substₗ to ρ-≾ᵣ-substₗ;
      γ-≾-substᵣ to ρ-≾ᵣ-substᵣ;
-     c≾d⇒c≾d·b to c≾ᵣd⇒c≾ᵣd·ᵣb;
+--     c≾d⇒c≾d·b to c≾ᵣd⇒c≾ᵣd·ᵣb;
+     c≾d⇒c·b≾d to c≾ᵣd⇒c·ᵣb≾ᵣd;
      embedNat to embedR;
      _≾?_ to _≾ᵣ?_;
      c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;

@@ -10,8 +10,12 @@ open GradeSystemInterface Grades
 
 open import Data.Product
 
+open import Syntax.Extensions.Raw (Grades)
+
+open import Syntax.Extensions (Grades)
 open import Syntax.Renamings (Grades)
 open import Syntax.Language (Grades)
+open import Syntax.Contexts (Grades)
 
 open import Util.Equality
 
@@ -52,10 +56,22 @@ mutual
     handle C-rename r M
     `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
     `in (C-rename (cong-ren r) N)
+  C-rename r (unbox {A} {C} {Γ'} {ρ} ex relGrades rel V M) =
+    unbox {A = A} {Γ' = Γ'} {ρ = ρ} 
+      (r ∘ᵉʳ ex)
+      (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ ρ (ctx-grade-≾ r)) relGrades)
+      (≾ᵣ-trans (ctx-grade-≾ r) rel)
+      (V-rename id-ren V)
+      (C-rename (cong-ren r) M)
+  {- Previous version:
   C-rename r (unbox {A} {C} {Γ₁} {Γ₂} {ρ} rel r' V M) =
     unbox {A = A} {Γ₁ = Γ₁} {Γ₂ = Γ₂} {ρ = ρ}
       rel
       (r ∘ʳ r')
       (V-rename id-ren V)
       (C-rename (cong-ren r) M)
+  -}
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
+
+  -- sub-effecting
+  C-rename r (coerce M relEff) = coerce (C-rename r M) relEff

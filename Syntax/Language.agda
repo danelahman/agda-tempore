@@ -9,8 +9,10 @@ module Syntax.Language (Grades : GradeSystem) where
 open GradeSystemInterface Grades
 
 open import Data.Nat public
+open import Data.Product 
 
 open import Syntax.Contexts (Grades)
+open import Syntax.Extensions (Grades)
 open import Syntax.Types (Grades)
 open import Syntax.Renamings (Grades)
 
@@ -144,6 +146,19 @@ mutual
 
     unbox   : {A : VType}
             → {C : CType}
+            → {Γ' : Ctx}
+            → {ρ : R}
+            → Ext Γ' Γ
+            → (ctx-grade Γ ·ᵣ ρ) ≾ᵣ ctx-grade Γ'
+            → ctx-grade Γ ≾ᵣ ρ
+            → Γ' ⊢V⦂ [ ρ ] A
+            → Γ ∷ A ⊢C⦂ C
+            ------------------
+            → Γ ⊢C⦂ C
+
+  {- Previous version:
+    unbox   : {A : VType}
+            → {C : CType}
             → {Γ₁ Γ₂ : Ctx}
             → {ρ : R} 
             → ctx-grade Γ₂ ≾ᵣ ρ 
@@ -152,7 +167,7 @@ mutual
             → Γ ∷ A  ⊢C⦂ C
             --------------------
             → Γ ⊢C⦂ C
-
+  -}
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
 
     box     : {A : VType}
@@ -165,7 +180,14 @@ mutual
 
     -- sub-effecting
 
-    -- TODO: coerce term
+    -- coerce term
+
+    coerce : {A : VType}
+           → {ε ε' : E}
+           → Γ ⊢C⦂ A ‼ ε
+           → ε ≾ₑ ε'
+           --------------
+           → Γ ⊢C⦂ A ‼ ε'
 
 
 -- Useful Substitution
