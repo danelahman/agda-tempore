@@ -39,8 +39,8 @@ ex ∘ʳᵉ re = ext ((≾ᵣ-trans (ctx-grade-≾ ex) (ctx-grade-≾ re))) (var
 _∘ᵉʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Ext Γ Γ' → Ext Γ Γ''
 re ∘ᵉʳ ex = ext (≾ᵣ-trans (ctx-grade-≾ re) (ctx-grade-≾ ex)) (var-rename re ᵛ∘ᵉʳ var-extension ex)
 
--- id-ext : ∀ {Γ} → Ext Γ Γ
--- id-ext = ext id-vext {!!}
+id-ext : ∀ {Γ} → Ext Γ Γ
+id-ext = ext ≾ᵣ-refl id-vext
 
 -- -- Equality extension
 
