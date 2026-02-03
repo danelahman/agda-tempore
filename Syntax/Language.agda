@@ -148,8 +148,7 @@ mutual
             → {C : CType}
             → {Γ' : Ctx}
             → {ρ : R}
-            → Ext Γ' Γ
-            → (ctx-grade Γ ·ᵣ ρ) ≾ᵣ ctx-grade Γ'
+            → Ext Γ' Γ ρ
             → ctx-grade Γ ≾ᵣ ρ
             → Γ' ⊢V⦂ [ ρ ] A
             → Γ ∷ A ⊢C⦂ C

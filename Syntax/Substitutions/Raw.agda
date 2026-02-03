@@ -39,24 +39,40 @@ id-vsub {Γ} {A} x =
   var Hd ,
   ≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split x))))
 
+-- Composition of variable substitutions
+
+{-
+_∘ᵛˢ_ : ∀ {Γ Γ' Γ''} → VSub Γ' Γ'' → VSub Γ Γ' → VSub Γ Γ''
+_∘ᵛˢ_ vs' vs x with vs x
+... | Γ₁ , Γ₂ , re , V , rel = vs' {!!}
+-}
+
 -- Composition of variable substitutions and renamings
 
---_ᵛ∘ʳˢ_ : ∀ {Γ Γ' Γ''} → VSub Γ' Γ'' → Ren Γ Γ' → VSub Γ Γ''
---_ᵛ∘ʳˢ_ vsub re x with var-rename re x
---... | ρ' , rel , y with vsub y
---... | Γ₁ , Γ₂ , re' , V , ex = Γ₁ , Γ₂ , re' , V , {!? ∘ʳᵉ ?!}
+_ᵛ∘ʳˢ_ : ∀ {Γ Γ' Γ''} → VSub Γ' Γ'' → Ren Γ Γ' → VSub Γ Γ''
+_ᵛ∘ʳˢ_ vsub re x with var-rename re x
+... | ρ' , rel , y with vsub y
+... | Γ₁ , Γ₂ , re' , V , rel' = Γ₁ , Γ₂ , re' , V , ≾ᵣ-trans rel' rel
 
 _ᵛ∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → VSub Γ Γ' → VSub Γ Γ''
 _ᵛ∘ˢʳ_ re vs x with vs x
 ... | Γ₁ , Γ₂ , re' , V = Γ₁ , Γ₂ , re ∘ʳ re' , V
 
--- -- Composition of variable substitutions and extensions
+-- Composition of variable substitutions and extensions
 
+{-
+_ᵛ∘ᵉˢ_ : ∀ {Γ Γ' Γ'' ρ} → VSub Γ' Γ'' → Ext Γ Γ' ρ → VSub Γ Γ''
+(vsu ᵛ∘ᵉˢ id-ext rel) = {!!}
+(vsu ᵛ∘ᵉˢ ∷-ext ex) x = {!!}
+(vsu ᵛ∘ᵉˢ ren-ext r relL relU) x = {!!}
+-}
+{-
 _ᵛ∘ᵉˢ_ : ∀ {Γ Γ' Γ''} → VSub Γ' Γ'' → VExt Γ Γ' → VSub Γ Γ''
 _ᵛ∘ᵉˢ_ vs ve x with ve x
 ... | ρ , y with vs y
 ... | Γ₁ , Γ₂ , re , V , rel = Γ₁ , Γ₂ , re , V , ≾ᵣ-trans rel (ρ-≾ᵣ-substₗ (·ᵣ-identityˡ ρ) (c≾ᵣd⇒c·ᵣb≾ᵣd ρ uᵣ≾ᵣc))
 --... | Γ₁ , Γ₂ , re , V = Γ₁ , Γ₂ , re , V
+-}
 
 -- Congruence substitutions
 

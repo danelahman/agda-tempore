@@ -20,7 +20,6 @@ open import Syntax.Renamings (Grades)
 
 open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] ) 
 
-
 record Sub (Γ Γ' : Ctx) : Set where
   constructor sub
   field
@@ -34,13 +33,13 @@ open Sub public
 id-sub : ∀ {Γ} → Sub Γ Γ
 id-sub {Γ} = sub ≾ᵣ-refl id-vsub
 
--- -- Composition of substitutions and renamings
+-- Composition of substitutions and renamings
 
--- _∘ʳˢ_ : ∀ {Γ Γ' Γ''} → Sub Γ' Γ'' → Ren Γ Γ' → Sub Γ Γ''
--- s ∘ʳˢ r =
---   sub
---     (≾ᵣ-trans (ctx-grade-≾ s) (ctx-grade-≾ r))
---     (var-sub s ᵛ∘ʳˢ r)
+_∘ʳˢ_ : ∀ {Γ Γ' Γ''} → Sub Γ' Γ'' → Ren Γ Γ' → Sub Γ Γ''
+s ∘ʳˢ r =
+  sub
+   (≾ᵣ-trans (ctx-grade-≾ s) (ctx-grade-≾ r))
+   (var-sub s ᵛ∘ʳˢ r)
 
 _∘ˢʳ_ : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Sub Γ Γ' → Sub Γ Γ''
 _∘ˢʳ_ r s =
@@ -48,11 +47,30 @@ _∘ˢʳ_ r s =
     (≾ᵣ-trans (ctx-grade-≾ r) (ctx-grade-≾ s))
     (r ᵛ∘ˢʳ var-sub s)
 
+-- Composition of substitutions and extensions
+
+_∘ᵉˢ_ : ∀ {Γ Γ' Γ'' ρ} → Sub Γ' Γ'' → Ext Γ Γ' ρ → Sub Γ Γ''
+su ∘ᵉˢ id-ext rel = su
+su ∘ᵉˢ ∷-ext ex = (su ∘ʳˢ wk-ren) ∘ᵉˢ ex
+-- su ∘ᵉˢ ⟨⟩-ext ex rel = {!!}
+su ∘ᵉˢ ren-ext r rel = su ∘ʳˢ r
+su ∘ᵉˢ (ex' ∘ᵉ ex) = (su ∘ᵉˢ ex') ∘ᵉˢ ex
+su ∘ᵉˢ (r ∘ᵉʳ ex) = (su ∘ʳˢ r) ∘ᵉˢ ex
+
+{-
+su ∘ᵉˢ ex =
+  sub
+    (≾ᵣ-trans (ctx-grade-≾ su) (≾ᵣ-trans (grade-lt-ρ ex) (grade-gt-ρ ex)))
+    {!var-sub su ᵛ∘ᵉˢ ex!}
+-}
+
+{-
 _∘ᵉˢ_ : ∀ {Γ Γ' Γ''} → Sub Γ' Γ'' → Ext Γ Γ' → Sub Γ Γ''
 _∘ᵉˢ_ su ex =
   sub
     (≾ᵣ-trans (ctx-grade-≾ su) ((ctx-grade-≾ ex)))
     (var-sub su ᵛ∘ᵉˢ var-extension ex )
+-}
 
 -- General congruence substitution
 

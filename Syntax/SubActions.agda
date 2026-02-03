@@ -62,11 +62,10 @@ mutual
     handle C-substitute s M
     `with (λ op τ → C-substitute (cong-sub s) (H op τ))
     `in (C-substitute (cong-sub s) N)
-  C-substitute {Γ} {Γ'} s (unbox {A} {C} {Γ''} {ρ} e relGrades rel V M) =
+  C-substitute {Γ} {Γ'} s (unbox {A} {C} {Γ''} {ρ} e rel V M) =
     unbox {A = A} {C = C} {ρ = ρ}
-      id-ext
-      (c·ᵣd≾ᵣc (ctx-grade Γ') ρ)
-      (≾ᵣ-trans (ctx-grade-≾ s) rel)
+      (id-ext (≾ᵣ-trans (ctx-grade-≾ s) rel)) --id-ext
+      (≾ᵣ-trans (ctx-grade-≾ s) rel) --(c·ᵣd≾ᵣc (ctx-grade Γ') ρ)
       (V-substitute (s ∘ᵉˢ e) V)
       (C-substitute (cong-sub s) M)
   C-substitute s (box V M) = box (V-substitute (cong-sub s) V) (C-substitute (cong-sub s) M)
