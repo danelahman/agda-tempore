@@ -47,15 +47,15 @@ _∘ˢʳ_ r s =
     (≾ᵣ-trans (ctx-grade-≾ r) (ctx-grade-≾ s))
     (r ᵛ∘ˢʳ var-sub s)
 
+{-
 -- Composition of substitutions and extensions
 
-_∘ᵉˢ_ : ∀ {Γ Γ' Γ'' ρ} → Sub Γ' Γ'' → Ext Γ Γ' ρ → Sub Γ Γ''
-su ∘ᵉˢ id-ext rel = su
+_∘ᵉˢ_ : ∀ {Γ Γ' Γ'' ρ} → Sub Γ' Γ'' → Ext Γ ρ Γ' → Sub Γ Γ''
+su ∘ᵉˢ id-ext = su
 su ∘ᵉˢ ∷-ext ex = (su ∘ʳˢ wk-ren) ∘ᵉˢ ex
--- su ∘ᵉˢ ⟨⟩-ext ex rel = {!!}
-su ∘ᵉˢ ren-ext r rel = su ∘ʳˢ r
-su ∘ᵉˢ (ex' ∘ᵉ ex) = (su ∘ᵉˢ ex') ∘ᵉˢ ex
+su ∘ᵉˢ ⟨⟩-ext ex = {!!}
 su ∘ᵉˢ (r ∘ᵉʳ ex) = (su ∘ʳˢ r) ∘ᵉˢ ex
+-}
 
 {-
 su ∘ᵉˢ ex =

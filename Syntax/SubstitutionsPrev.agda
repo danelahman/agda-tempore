@@ -26,25 +26,25 @@ open import Util.Time -- remove
 
 -- Deciding whether a variable was in the context before the extension
 
-{-
 var-in-ctx-prev-ext : ∀ {Γ Γ' A ρ ρ'}
-                    → Ext Γ' Γ ρ'
-                    → (x : A ∈[ ρ ] Γ)
-                    → ρ' ≾ᵣ ctx-grade Γ' -- This condition is not correct.
-                    → Σ[ y ∈ A ∈[ (ρ ·ᵣ ρ') ] Γ' ]
+                    → Ext Γ ρ' Γ'
+                    → (x : A ∈[ ρ ] Γ')
+                    → ρ' ≾ᵣ ρ
+                    → Σ[ y ∈ A ∈[ (ρ ·ᵣ ρ') ] Γ ]
                        (  (Ren (proj₁ (var-split y)) (proj₁ (var-split x) ))
-                        × Ren (proj₁ (proj₂ (var-split y))) (proj₁ (proj₂ (var-split x))))
--}
+                        × Ren (proj₁ (proj₂ (var-split y))) (proj₁ (proj₂ (var-split x)))) -- Change
+
+var-in-ctx-prev-ext e x rel = {!!}
 
 -- If the variable is not in the context before the extension
 
-{-
 var-not-in-ctx-prev-ext : ∀ {Γ Γ' A ρ ρ'}
-                       → Ext Γ Γ' ρ'
+                       → Ext Γ ρ' Γ'
                        → (x : A ∈[ ρ ] Γ')
-                       → ctx-grade Γ ≾ᵣ ρ' -- check condition: x occurs "after" the blocking time
-                       → Ren Γ (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)))
--}
+                       → ρ ≾ᵣ ρ'
+                       → Ren Γ (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x))) -- Change
+
+var-not-in-ctx-prev-ext e x rel = {!!}
 
 -- Substituting a value for a variable in context
 
@@ -97,7 +97,20 @@ mutual
     `with  (λ op ρ'' → (H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
     `in    (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   _[_↦_]c {Γ = Γ} {A = A} {ρ = ρ}
-    (unbox {Γ' = Γ'} {ρ = ρ'} e rel V M) x W = {!!}
+    (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W with ρ'' ≾ᵣ? ρ
+  _[_↦_]c (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W | yes p with var-in-ctx-prev-ext e x p
+  ... | r =
+    unbox
+      {!!}
+      {!!}
+      (V-rename {!!} V)
+      (M [ Tl-∷ x ↦ W ]c)
+  _[_↦_]c (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W | no ¬p =
+    unbox
+      {!!}
+      {!!}
+      (V-rename {!!} V)
+      (M [ Tl-∷ x ↦ W ]c)
 
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
   coerce M rel [ x ↦ W ]c = coerce (M [ x ↦ W ]c) rel

@@ -56,11 +56,12 @@ mutual
     handle C-rename r M
     `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
     `in (C-rename (cong-ren r) N)
-  C-rename r (unbox {A} {C} {Γ''} {ρ} ex relU V M) =
-    unbox {A = A} {Γ' = Γ''} {ρ = ρ}
+  C-rename r (unbox {A} {C} {Γ''} {ρ} {ρ'} ex rel V M) =
+    unbox {A = A} {Γ' = Γ''} {ρ = ρ} {ρ' = ρ'}
       (r ∘ᵉʳ ex)
-      (≾ᵣ-trans (ctx-grade-≾ r) relU)
-      (V-rename id-ren V)
+      rel      
+      -- (≾ᵣ-trans (ctx-grade-≾ r) relU)
+      (V-rename id-ren V) -- (V-rename id-ren V)
       (C-rename (cong-ren r) M)
   {-
   C-rename r (unbox {A} {C} {Γ'} {ρ} ex relGrades rel V M) =

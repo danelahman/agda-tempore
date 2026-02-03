@@ -147,9 +147,9 @@ mutual
     unbox   : {A : VType}
             → {C : CType}
             → {Γ' : Ctx}
-            → {ρ : R}
-            → Ext Γ' Γ ρ
-            → ctx-grade Γ ≾ᵣ ρ
+            → {ρ ρ' : R}
+            → Ext Γ' ρ' Γ
+            → ρ' ≾ᵣ ρ
             → Γ' ⊢V⦂ [ ρ ] A
             → Γ ∷ A ⊢C⦂ C
             ------------------
