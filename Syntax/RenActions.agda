@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-} -- remove
+
 ------------------------------------------
 -- Renaming actions on well-typed terms --
 ------------------------------------------
@@ -58,9 +60,8 @@ mutual
     `in (C-rename (cong-ren r) N)
   C-rename r (unbox {A} {C} {Γ''} {ρ} {ρ'} ex rel V M) =
     unbox {A = A} {Γ' = Γ''} {ρ = ρ} {ρ' = ρ'}
-      (r ∘ᵉʳ ex)
-      rel      
-      -- (≾ᵣ-trans (ctx-grade-≾ r) relU)
+      {!!} 
+      rel
       (V-rename id-ren V) -- (V-rename id-ren V)
       (C-rename (cong-ren r) M)
   {-

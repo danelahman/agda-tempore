@@ -4,12 +4,15 @@
 
 module Syntax.Grades where
 
+open import Data.Empty
 open import Data.Nat.Base
+open import Data.Product using (Σ-syntax)
 
 open import Level renaming (zero to lzero)
 
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
+open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 open import Util.Ordered.Structures
@@ -29,6 +32,7 @@ record Grade : Set₁ where
 
     -- order
     _≾_ : Rel Carrier lzero
+    _≺_ : Rel Carrier lzero
 
     -- monoid is ordered
     isPomonoid : IsPomonoid _≈_ _≾_ _·_ u
@@ -45,17 +49,20 @@ record Grade : Set₁ where
     -- _·_ is associative
     ·-assoc : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
 
-    -- _·_ is monotone w.r.t. _≾_ (right)
+    -- _·_ is monotone w.r.t. _≾_ and _≺_ (right)
     ·-monoʳ-≾ : (c : Carrier) → _Preserves_⟶_ (c ·_) _≾_ _≾_
+    ·-monoʳ-≺ : (c : Carrier) → _Preserves_⟶_ (c ·_) _≺_ _≺_
 
     -- _·_ is monotone w.r.t. _≾_ (left)
     ·-monoˡ-≾ : (c : Carrier) → _Preserves_⟶_ (_· c) _≾_ _≾_
  
-    -- _≾_ is reflexive and transitive
+    -- _≾_ and _≺_ are reflexive and transitive
     ≾-reflexive  : _≡_ ⇒ _≾_
+    ≺-reflexive  : _≡_ ⇒ _≺_
 
     ≾-refl  : Reflexive _≾_
     ≾-trans : Transitive _≾_
+    ≺-trans : Transitive _≺_
 
     -- _≾_ is irrelevant
     ≾-irrelevant : Irrelevant _≾_
@@ -63,9 +70,14 @@ record Grade : Set₁ where
     -- _≾_ is decidable
     _≾?_ : Decidable _≾_
 
+    -- relation between ≾ and ≺
+    ¬≾⇒≻flip : ∀ {a b} → ¬ (a ≾ b) → (b ≺ a)
+
     --
     c≾u⇒c≡u : (c : Carrier) → c ≾ u → c ≡ u
 
+    c·d≾e·d⇒c≾e : ∀ {c d e} → (c · d) ≾ (e · d) → c ≾ e
+    
     -- Properties of _·_ and _≾_
 --    c≾c·d : (c d : Carrier) → c ≾ (c · d)
 --    c·d≾c : (c d : Carrier) → (c · d) ≾ c
@@ -124,7 +136,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-identityˡ to ·ᵣ-identityˡ;
      ·-assoc to ·ᵣ-assoc;
      _≾_ to _≾ᵣ_;
+     _≺_ to _≺ᵣ_;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
+     ·-monoʳ-≺ to ·ᵣ-monoʳ-≺ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-reflexive to ≾ᵣ-reflexive;
      ≾-trans to ≾ᵣ-trans;
@@ -141,7 +155,10 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ᵣ?_;
      c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
      c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ;
-     c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ
+     c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ;
+     ¬≾⇒≻flip to ¬≾ᵣ⇒≻ᵣflip;
+     ≺-trans to ≺ᵣ-trans;
+     c·d≾e·d⇒c≾e to c·ᵣd≾ᵣe·d⇒c≾ᵣe
     ) public
 
   open Grade EGrade renaming

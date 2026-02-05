@@ -139,12 +139,20 @@ exch-ren =
     exch-vren
 
 -- Weakening a time to a context renaming
-
+{-
 ren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
 ren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel = 
   ren
     (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (≾ᵣ-reflexive (cong (ctx-grade Γ ·ᵣ_) (sym rel))))
     (vren⟨ρ⟩-ctx rel)
+-}
+
+ren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ctx-grade Γ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
+ren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel = 
+  ren
+    (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (·ᵣ-monoʳ-≾ᵣ (ctx-grade Γ) rel))
+    (vren⟨ρ⟩-ctx rel)
+
 
 -- Reflexivity equality renamings' interaction with identity renamings
 

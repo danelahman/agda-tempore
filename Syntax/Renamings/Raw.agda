@@ -172,13 +172,15 @@ var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel with c·ᵣd≡uᵣ⇒d�
 
 -- Rename a grade modality to a context capturing at least the same amount of time
 
-vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ρ ≡ ctx-grade Γ' → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
-vren⟨ρ⟩-ctx {Γ} {[]} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) rewrite rel =
-  ρ' , ≾ᵣ-reflexive (sym (·ᵣ-identityʳ ρ')) , y
-vren⟨ρ⟩-ctx {Γ} {Γ' ∷ X} {ρ} rel (Tl-⟨⟩ {ρ' = ρ'} y) rewrite rel =
-  ρ' ·ᵣ (ctx-grade Γ') , ≾ᵣ-refl , Tl-∷ (var-ρ-++ᶜ y)
-vren⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} rel (Tl-⟨⟩ {ρ' = ρ''} y) rewrite rel =
-  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' , ≾ᵣ-reflexive (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ') , Tl-⟨⟩ (var-ρ-++ᶜ y)
+vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ctx-grade Γ' ≾ᵣ ρ → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
+vren⟨ρ⟩-ctx {Γ' = []} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
+  ρ' , ρ-≾ᵣ-substₗ (·ᵣ-identityʳ ρ') (·ᵣ-monoʳ-≾ᵣ ρ' rel) , y
+vren⟨ρ⟩-ctx {Γ' = Γ' ∷ A} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
+  ρ' ·ᵣ (ctx-grade Γ') , ·ᵣ-monoʳ-≾ᵣ ρ' rel , Tl-∷ (var-ρ-++ᶜ y)
+vren⟨ρ⟩-ctx {Γ' = Γ' ⟨ ρ' ⟩} rel (Tl-⟨⟩ {ρ' = ρ''} y) =
+  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' ,
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ')) (·ᵣ-monoʳ-≾ᵣ ρ'' rel) ,
+  Tl-⟨⟩ (var-ρ-++ᶜ y)
 
 -- Identity laws
 
