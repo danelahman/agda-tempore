@@ -50,3 +50,10 @@ _∘ᵉʳ_,_ : ∀ {Γ Γ' Γ'' ρ}
         → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ Γ')
 
 e ∘ᵉʳ r , rel = {!!}
+
+-- Concatenation of extensions
+
+++ᶜ-ext : ∀ {Γ Γ' Γ'' ρ} → Ext Γ ρ Γ' → Ext (Γ'' ++ᶜ Γ) ρ (Γ'' ++ᶜ Γ')
+++ᶜ-ext id-ext     = id-ext
+++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
+++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
