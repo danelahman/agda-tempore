@@ -118,6 +118,7 @@ mutual
     handle M [ x ↦ W ]c
     `with  (λ op ρ'' → (H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
     `in    (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
+    
   _[_↦_]c {Γ = Γ} {A = A} {ρ = ρ}
     (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W with ρ ≾ᵣ? ρ''
   _[_↦_]c (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W | yes p with var-in-ctx-prev-ext e x p

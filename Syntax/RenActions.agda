@@ -58,33 +58,15 @@ mutual
     handle C-rename r M
     `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
     `in (C-rename (cong-ren r) N)
-  C-rename r (unbox {A} {C} {Γ''} {ρ} {ρ'} ex rel V M) =
-    {!!} -- TODO: first need to split the renaming r with the extension ex, this gives you the context in which to type V after renaming
-    {-
-    unbox {A = A} {Γ' = Γ''} {ρ = ρ} {ρ' = ρ'}
-      {!!} 
-      rel
-      (V-rename id-ren V) -- (V-rename id-ren V)
-      (C-rename (cong-ren r) M)
-    -}
     
-  {-
-  C-rename r (unbox {A} {C} {Γ'} {ρ} ex relGrades rel V M) =
-    unbox {A = A} {Γ' = Γ'} {ρ = ρ} 
-      (r ∘ᵉʳ ex)
-      (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ ρ (ctx-grade-≾ r)) relGrades)
-      (≾ᵣ-trans (ctx-grade-≾ r) rel)
-      (V-rename id-ren V)
+  C-rename r (unbox {A} {C} {Γ''} {ρ} {ρ'} ex rel V M) with split-ren ex r
+  ... | Γ''' , r' , ρ'' , rel' , ex' =
+    unbox {A = A} {Γ' = Γ'''} {ρ = ρ} {ρ' = ρ''}
+      ex' 
+      (≾ᵣ-trans rel' rel)
+      (V-rename r' V)
       (C-rename (cong-ren r) M)
-  -}
-  {- Previous version:
-  C-rename r (unbox {A} {C} {Γ₁} {Γ₂} {ρ} rel r' V M) =
-    unbox {A = A} {Γ₁ = Γ₁} {Γ₂ = Γ₂} {ρ = ρ}
-      rel
-      (r ∘ʳ r')
-      (V-rename id-ren V)
-      (C-rename (cong-ren r) M)
-  -}
+      
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
 
   -- sub-effecting
