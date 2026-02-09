@@ -59,11 +59,15 @@ mutual
     `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
     `in (C-rename (cong-ren r) N)
   C-rename r (unbox {A} {C} {Γ''} {ρ} {ρ'} ex rel V M) =
+    {!!} -- TODO: first need to split the renaming r with the extension ex, this gives you the context in which to type V after renaming
+    {-
     unbox {A = A} {Γ' = Γ''} {ρ = ρ} {ρ' = ρ'}
       {!!} 
       rel
       (V-rename id-ren V) -- (V-rename id-ren V)
       (C-rename (cong-ren r) M)
+    -}
+    
   {-
   C-rename r (unbox {A} {C} {Γ'} {ρ} ex relGrades rel V M) =
     unbox {A = A} {Γ' = Γ'} {ρ = ρ} 

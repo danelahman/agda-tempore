@@ -41,15 +41,18 @@ _∘ᵉ_ {ρ' = ρ'} (∷-ext e') e = ∷-ext (e' ∘ᵉ e)
 _∘ᵉ_ {ρ = ρ} {ρ' = .(ρ₁ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₁} {ρ' = ρ₂} e') e with e' ∘ᵉ e
 ... | e'' rewrite (sym (·ᵣ-assoc ρ ρ₁ ρ₂)) = ⟨⟩-ext e''
 
--- Composition of renamings and extensions
+-- Splitting a renaming by an extension
 
-_∘ᵉʳ_,_ : ∀ {Γ Γ' Γ'' ρ}
-        → Ext Γ'' ρ Γ
-        → Ren Γ Γ'
-        → ctx-grade Γ' ≾ᵣ ρ
-        → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ Γ')
+split-ren : ∀ {Γ Γ' Γ'' ρ}
+          → Ext Γ'' ρ Γ
+          → Ren Γ Γ'
+          → ctx-grade Γ' ≾ᵣ ρ
+          → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ' Γ')
 
-e ∘ᵉʳ r , rel = {!!}
+split-ren {Γ} {Γ'} {Γ''} {ρ} id-ext r rel =
+  Γ' , r , ctx-grade Γ' , rel , subst (λ r' → Ext Γ' r' Γ') (sym (c≾ᵣuᵣ⇒c≡uᵣ (ctx-grade Γ') rel)) id-ext
+split-ren {Γ} {Γ'} {Γ''} {ρ} (∷-ext e) r rel = {!!}
+split-ren {Γ} {Γ'} {Γ''} {ρ} (⟨⟩-ext e) r rel = {!!}
 
 -- Concatenation of extensions
 
