@@ -34,7 +34,7 @@ mutual
   V-rename r (var x) =
     var
     (var-ρ-subst
-      (c≾ᵣuᵣ⇒c≡uᵣ (proj₁ (var-rename r x)) (proj₁ (proj₂ (var-rename r x))))
+      (c≾ᵣuᵣ⇒c≡uᵣ (proj₁ (proj₂ (var-rename r x))))
       (proj₂ (proj₂ (var-rename r x))))
   V-rename r (const c)   = const c
   V-rename r ⋆           = ⋆

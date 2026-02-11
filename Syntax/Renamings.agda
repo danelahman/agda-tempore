@@ -63,7 +63,7 @@ wk-ren {Γ} {A} =
 ⟨⟩-η-ren : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
 ⟨⟩-η-ren {Γ} = 
   ren
-    (ρ-≾ᵣ-substᵣ (·ᵣ-identityʳ (ctx-grade Γ)) ≾ᵣ-refl)
+    (c-≾ᵣ-substᵣ (·ᵣ-identityʳ (ctx-grade Γ)) ≾ᵣ-refl)
     ⟨⟩-η-vren
 
 ⟨⟩-η⁻¹-ren : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
@@ -81,7 +81,7 @@ wk-ren {Γ} {A} =
 ⟨⟩-μ⁻¹-ren : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
 ⟨⟩-μ⁻¹-ren {Γ} {ρ} {ρ'} = 
   ren 
-    (ρ-≾ᵣ-substᵣ (·ᵣ-assoc (ctx-grade Γ) ρ ρ') ≾ᵣ-refl)
+    (c-≾ᵣ-substᵣ (·ᵣ-assoc (ctx-grade Γ) ρ ρ') ≾ᵣ-refl)
     ⟨⟩-μ⁻¹-vren
 
 -- Variable congruence renaming
@@ -95,7 +95,7 @@ cong-∷-ren ρ =
 -- Grade congruence renaming
 
 cong-⟨⟩-ren : ∀ {Γ Γ' ρ} → Ren Γ Γ' → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
-cong-⟨⟩-ren {ρ = ρ} r = ren (·ᵣ-monoˡ-≾ᵣ ρ (ctx-grade-≾ r)) (cong-⟨⟩-vren (var-rename r))
+cong-⟨⟩-ren {ρ = ρ} r = ren (·ᵣ-monoˡ-≾ᵣ (ctx-grade-≾ r)) (cong-⟨⟩-vren (var-rename r))
 
 -- General congruence renaming
 
@@ -105,7 +105,7 @@ cong-ren {Γ} {Γ'} {Γ''} r =
     (≾ᵣ-trans
       (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ' Γ''))
       (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (ctx-grade Γ'') (ctx-grade-≾ r))
+        (·ᵣ-monoˡ-≾ᵣ (ctx-grade-≾ r))
         (≾ᵣ-reflexive (sym (ctx-grade-++ᶜ Γ Γ'')))))
     (cong-vren (var-rename r))
 
@@ -126,9 +126,7 @@ wk-ctx-renₗ {Γ} {Γ'} rel =
 
 ⟨⟩-≾-ren : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
 ⟨⟩-≾-ren {Γ} p = 
-  ren 
-    (·ᵣ-monoʳ-≾ᵣ (ctx-grade Γ) p) 
-    (⟨⟩-≾-vren p)
+  ren (·ᵣ-monoʳ-≾ᵣ p) (⟨⟩-≾-vren p)
 
 -- Variable exchange renaming
 
@@ -143,7 +141,7 @@ exch-ren =
 ren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ctx-grade Γ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
 ren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel = 
   ren
-    (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (·ᵣ-monoʳ-≾ᵣ (ctx-grade Γ) rel))
+    (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (·ᵣ-monoʳ-≾ᵣ rel))
     (vren⟨ρ⟩-ctx rel)
 
 -- Reflexivity equality renamings' interaction with identity renamings

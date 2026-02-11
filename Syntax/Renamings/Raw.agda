@@ -61,9 +61,9 @@ wk-vren {ρ = ρ} x = ρ , ≾ᵣ-refl , Tl-∷ x
 -- Variable renaming
 
 var-vren : ∀ {Γ A} → A ∈[ uᵣ ] Γ → VRen (Γ ∷ A) Γ
-var-vren {Γ} {A} x Hd =
+var-vren x Hd =
   uᵣ , ≾ᵣ-refl , x
-var-vren {Γ} {A} x (Tl-∷ {ρ = ρ'} y) =
+var-vren x (Tl-∷ {ρ = ρ'} y) =
   ρ' , ≾ᵣ-refl , y
 
 -- Strong monoidal functor renamings
@@ -80,22 +80,22 @@ var-vren {Γ} {A} x (Tl-∷ {ρ = ρ'} y) =
 
 ⟨⟩-μ⁻¹-vren : ∀ {Γ ρ ρ'} → VRen (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
 ⟨⟩-μ⁻¹-vren {Γ} {ρ} {ρ'} {A} {.(_ ·ᵣ ρ ·ᵣ ρ')} (Tl-⟨⟩ (Tl-⟨⟩ {ρ' = ρ''} x)) =
-  ρ'' ·ᵣ (ρ ·ᵣ ρ') , ρ-≾ᵣ-substᵣ (·ᵣ-assoc ρ'' ρ ρ') ≾ᵣ-refl , Tl-⟨⟩ x
+  ρ'' ·ᵣ (ρ ·ᵣ ρ') , c-≾ᵣ-substᵣ (·ᵣ-assoc ρ'' ρ ρ') ≾ᵣ-refl , Tl-⟨⟩ x
 
 ⟨⟩-≾-vren : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → VRen (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
 ⟨⟩-≾-vren {Γ} {ρ} {ρ'} rel {A} {.(_ ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ''} x) =
-  ρ'' ·ᵣ ρ' , ·ᵣ-monoʳ-≾ᵣ ρ'' rel , Tl-⟨⟩ x
+  ρ'' ·ᵣ ρ' , ·ᵣ-monoʳ-≾ᵣ rel , Tl-⟨⟩ x
 
 -- Congruence renamings
 
 cong-∷-vren : ∀ {Γ Γ' A} → VRen Γ Γ' → VRen (Γ ∷ A) (Γ' ∷ A)
-cong-∷-vren {Γ} {Γ'} {A} r {B} {ρ} Hd       = uᵣ , ≾ᵣ-refl , Hd
-cong-∷-vren {Γ} {Γ'} {A} r {B} {ρ} (Tl-∷ x) with r x
+cong-∷-vren _ Hd = uᵣ , ≾ᵣ-refl , Hd
+cong-∷-vren vr (Tl-∷ x) with vr x
 ... | ρ' , rel , y = ρ' , rel , Tl-∷ y
 
 cong-⟨⟩-vren : ∀ {Γ Γ' ρ} → VRen Γ Γ' → VRen (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
-cong-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) with r x
-... | ρ'' , r , y = ρ'' ·ᵣ ρ , ·ᵣ-monoˡ-≾ᵣ ρ r , Tl-⟨⟩ y
+cong-⟨⟩-vren {Γ} {Γ'} {ρ} vr {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) with vr x
+... | ρ'' , rel , y = ρ'' ·ᵣ ρ , ·ᵣ-monoˡ-≾ᵣ rel , Tl-⟨⟩ y
 
 -- This shouldn't hold anymore:
 {-
@@ -127,8 +127,8 @@ cong-vren {Γ'' = Γ'' ⟨ ρ ⟩} r =
 wk-ctx-vren : ∀ {Γ Γ'} → ctx-grade Γ' ≡ uᵣ → VRen Γ (Γ ++ᶜ Γ')
 wk-ctx-vren {Γ' = []}      _   = id-vren
 wk-ctx-vren {Γ' = Γ' ∷ A}  rel = wk-vren ∘ᵛʳ wk-ctx-vren rel
-wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel rewrite c·ᵣd≡uᵣ⇒d≡uᵣ ρ rel =
-  ⟨⟩-η⁻¹-vren ∘ᵛʳ (wk-ctx-vren {Γ} {Γ'} (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
+wk-ctx-vren {Γ} {Γ' ⟨ ρ ⟩} rel rewrite c·ᵣd≡uᵣ⇒d≡uᵣ rel =
+  ⟨⟩-η⁻¹-vren ∘ᵛʳ (wk-ctx-vren {Γ} {Γ'} (c·ᵣd≡uᵣ⇒c≡uᵣ rel))
 
 -- Exchange renamings
 
@@ -153,8 +153,8 @@ var-split₁-wk-ctx-vren {Γ' = []} x rel =
   refl
 var-split₁-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   var-split₁-wk-ctx-vren {Γ' = Γ'} x rel
-var-split₁-wk-ctx-vren {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rel with c·ᵣd≡uᵣ⇒d≡uᵣ ρ' rel
-... | refl = var-split₁-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ {ρ'} (ctx-grade Γ') rel)
+var-split₁-wk-ctx-vren {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rel with c·ᵣd≡uᵣ⇒d≡uᵣ rel
+... | refl = var-split₁-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ rel)
 
 var-split₂-wk-ctx-vren : ∀ {Γ Γ' A ρ}
                        → (x : A ∈[ ρ ] Γ)
@@ -167,19 +167,19 @@ var-split₂-wk-ctx-vren {Γ' = []} x rel =
   refl
 var-split₂-wk-ctx-vren {Γ' = Γ' ∷ A} x rel =
   cong (_∷ A) (var-split₂-wk-ctx-vren x rel)
-var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel with c·ᵣd≡uᵣ⇒d≡uᵣ ρ' rel
-... | refl = cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ (ctx-grade Γ') rel))
+var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel with c·ᵣd≡uᵣ⇒d≡uᵣ rel
+... | refl = cong (_⟨ ρ' ⟩) (var-split₂-wk-ctx-vren {Γ' = Γ'} x (c·ᵣd≡uᵣ⇒c≡uᵣ rel))
 
 -- Rename a grade modality to a context capturing at least the same amount of time
 
 vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ctx-grade Γ' ≾ᵣ ρ → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
 vren⟨ρ⟩-ctx {Γ' = []} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
-  ρ' , ρ-≾ᵣ-substₗ (·ᵣ-identityʳ ρ') (·ᵣ-monoʳ-≾ᵣ ρ' rel) , y
+  ρ' , c-≾ᵣ-substₗ (·ᵣ-identityʳ ρ') (·ᵣ-monoʳ-≾ᵣ rel) , y
 vren⟨ρ⟩-ctx {Γ' = Γ' ∷ A} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
-  ρ' ·ᵣ (ctx-grade Γ') , ·ᵣ-monoʳ-≾ᵣ ρ' rel , Tl-∷ (var-ρ-++ᶜ y)
+  ρ' ·ᵣ (ctx-grade Γ') , ·ᵣ-monoʳ-≾ᵣ rel , Tl-∷ (var-ρ-++ᶜ y)
 vren⟨ρ⟩-ctx {Γ' = Γ' ⟨ ρ' ⟩} rel (Tl-⟨⟩ {ρ' = ρ''} y) =
   ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' ,
-  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ')) (·ᵣ-monoʳ-≾ᵣ ρ'' rel) ,
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ')) (·ᵣ-monoʳ-≾ᵣ rel) ,
   Tl-⟨⟩ (var-ρ-++ᶜ y)
 
 -- Identity laws

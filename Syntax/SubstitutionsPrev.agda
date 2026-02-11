@@ -9,8 +9,12 @@ module Syntax.SubstitutionsPrev (Grades : GradeSystem) where
 open GradeSystemInterface Grades
 
 open import Data.Empty
+open import Data.Irrelevant
 open import Data.Product
+open import Data.Unit.Base using (⊤)
 
+open import Relation.Binary.Core
+open import Relation.Binary.Definitions
 open import Relation.Nullary
 
 open import Syntax.Contexts (Grades)
@@ -24,36 +28,40 @@ open import Syntax.RenActions (Grades)
 open import Util.Equality
 open import Util.Time -- remove
 
--- TODO move to another file
-
-c≺u-contradiction : ∀ {ρ} → (ρ ≺ᵣ uᵣ) → ⊥
-c≺u-contradiction r = {!!}
-
----- Deciding whether a variable was in the context before the extension
+---- Consequences of a variable being (or not) in the context before the extension
 
 -- If the variable is in the context before its extension
+var-in-ctx-prev-ext :
+  ∀ {Γ Γ' A ρ' ρ}
+  → Ext Γ ρ' Γ'
+  → (x : A ∈[ ρ ] Γ')
+  → Dec
+      (Σ[ ρ₁ ∈ R ]
+        Σ[ y ∈ A ∈[ ρ₁ ] Γ ]
+          ( ρ₁ ≾ᵣ ρ
+          × proj₁ (var-split y) ≡ proj₁ (var-split x)
+          × Ext (proj₁ (proj₂ (var-split y))) ρ'
+                (proj₁ (proj₂ (var-split x)))
+          )
+      )
 
-var-in-ctx-prev-ext : ∀ {Γ Γ' A ρ' ρ}
-                    → Ext Γ ρ' Γ'
-                    → (x : A ∈[ ρ ] Γ')
-                    → ρ ≾ᵣ ρ'
-                    → Σ[ ρ'' ∈ R ] (
-                         ρ'' ≾ᵣ ρ
-                       × Σ[ y ∈ A ∈[ ρ'' ] Γ ]
-                           (proj₁ (var-split y)) ≡ (proj₁ (var-split x))
-                         × Ext (proj₁ (proj₂ (var-split y))) ρ' (proj₁ (proj₂ (var-split x))) )
+var-in-ctx-prev-ext {[]} e x =
+  no λ()
+var-in-ctx-prev-ext {Γ' ∷ B} {Γ' ∷ B} {A} {.(uᵣ)} {ρ} id-ext x =
+  yes (ρ , x , ≾ᵣ-refl , refl , id-ext)
+var-in-ctx-prev-ext {Γ} {Γ' ∷ A} {A} {ρ'} {.(uᵣ)} (∷-ext e) Hd = {!!}
+var-in-ctx-prev-ext {Γ ∷ C} {Γ' ∷ B} {A} {ρ'} {ρ} (∷-ext e) (Tl-∷ x)
+  with var-in-ctx-prev-ext {Γ ∷ C} {Γ'} e x
+... | yes (ρ₁ , y , rel , eq , e') = yes (ρ₁ , y , rel , eq , ∷-ext e')
+... | no ¬p with C ≡? A
+... | yes q rewrite (sym q) = yes (uᵣ , Hd , uᵣ≾ᵣc , {!!} , ∷-ext {!!})
+var-in-ctx-prev-ext {Γ ⟨ ρ₂ ⟩} {Γ' ∷ B} {A} {ρ'} {ρ} (∷-ext e) (Tl-∷ x)
+  with var-in-ctx-prev-ext {Γ ⟨ ρ₂ ⟩} {Γ'} e x
+... | yes (ρ₁ , y , rel , eq , e') = yes (ρ₁ , y , rel , eq , ∷-ext e')
+... | no ¬p = {!!}
+var-in-ctx-prev-ext {Γ} {Γ' ⟨ ρ₂ ⟩} {A} {ρ'} {ρ} e x = {!!}
 
-var-in-ctx-prev-ext {ρ = ρ} id-ext x rel rewrite (c≾ᵣuᵣ⇒c≡uᵣ ρ rel) =
-  uᵣ , uᵣ≾ᵣc , x , refl , id-ext
-var-in-ctx-prev-ext (∷-ext e) Hd rel =       -- this case is impossible, as it means that x is immediately
-  ⊥-elim {!!}                                -- available in Γ', implying it should be part of the extension of Γ.
-var-in-ctx-prev-ext (∷-ext e) (Tl-∷ x) rel with var-in-ctx-prev-ext e x rel
-... | ρ'' , rel' , y , eq , e' = ρ'' , rel' , y , eq , ∷-ext e'
-var-in-ctx-prev-ext {Γ' = Γ' ⟨ ρ₂ ⟩} {ρ' = .(ρ₁ ·ᵣ ρ₂)} {ρ = .(ρ₃ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₁} {ρ' = ρ₂} e) (Tl-⟨⟩ {ρ' = ρ₃} x) rel
-  with var-in-ctx-prev-ext e x (c·ᵣd≾ᵣe·d⇒c≾ᵣe rel)
-... | ρ'' , rel' , y , eq , e' =
-  ρ'' , ≾ᵣ-trans rel' (ρ-≾ᵣ-substₗ (·ᵣ-identityʳ ρ₃) (·ᵣ-monoʳ-≾ᵣ ρ₃ uᵣ≾ᵣc)) , y , eq , ⟨⟩-ext e'
-
+{-
 -- If the variable is not in the context before the extension
 
 var-not-in-ctx-prev-ext : ∀ {Γ Γ' A ρ ρ'}
@@ -67,6 +75,7 @@ var-not-in-ctx-prev-ext id-ext (Tl-∷ x) rel = {!!}
 var-not-in-ctx-prev-ext id-ext (Tl-⟨⟩ {Γ} x) rel = {!!}
 var-not-in-ctx-prev-ext (∷-ext e) x rel = {!!}
 var-not-in-ctx-prev-ext (⟨⟩-ext e) x rel = {!!}
+-}
 
 -- Substituting a value for a variable in context
 
@@ -120,11 +129,10 @@ mutual
     `in    (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
     
   _[_↦_]c {Γ = Γ} {A = A} {ρ = ρ}
-    (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W with ρ ≾ᵣ? ρ''
-  _[_↦_]c (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W | yes p with var-in-ctx-prev-ext e x p
-  ... | ̂p , rel' , y , eq , e' =
+    (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W with var-in-ctx-prev-ext e x
+  ... | yes (ρ₁ , y , rel' , eq , ex') =
     unbox
-      (++ᶜ-ext e')
+      (++ᶜ-ext ex')
       rel
       (V-rename
         (cong-ren {Γ = proj₁ (var-split y)} {Γ' = proj₁ (var-split x)} {Γ'' = proj₁ (proj₂ (var-split y))}
@@ -133,7 +141,7 @@ mutual
       (M [ Tl-∷ x ↦ W ]c)
   _[_↦_]c (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W | no ¬p =
     unbox
-      (var-not-in-ctx-prev-ext e x (¬≾ᵣ⇒≻ᵣflip ¬p))
+      {!!} --(var-not-in-ctx-prev-ext e x (¬≾ᵣ⇒≻ᵣflip ¬p))
       rel
       V -- (V-rename (proj₂ (proj₂ (var-not-in-ctx-prev-ext e x (¬≾ᵣ⇒≻ᵣflip ¬p)))) V)
       (M [ Tl-∷ x ↦ W ]c)

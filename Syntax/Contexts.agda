@@ -12,6 +12,7 @@ open import Data.Empty -- Remove?
 open import Data.Product
 open import Data.Sum
 
+open import Relation.Binary.Definitions
 open import Relation.Nullary -- Remove?
 
 open import Syntax.Types (Grades)
@@ -46,7 +47,7 @@ infix  32 _⟨_⟩
 
 _++ᶜ_ : Ctx → Ctx → Ctx
 Γ ++ᶜ []         = Γ
-Γ ++ᶜ (Γ' ∷ X)   = (Γ ++ᶜ Γ') ∷ X
+Γ ++ᶜ (Γ' ∷ A)   = (Γ ++ᶜ Γ') ∷ A
 Γ ++ᶜ (Γ' ⟨ ρ ⟩) = (Γ ++ᶜ Γ') ⟨ ρ ⟩
 
 infixl 30 _++ᶜ_
@@ -167,10 +168,9 @@ infix 27 _∈[_]_
 -- Every variable in a context is within the grade captured by that context
 
 ∈-ctx-grade : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-grade Γ
-∈-ctx-grade Hd        = uᵣ≾ᵣc
-∈-ctx-grade (Tl-∷ x)  = ∈-ctx-grade x
-∈-ctx-grade {Γ ⟨ ρ ⟩} {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) with ∈-ctx-grade {Γ} {A} {ρ'} x
-... | rel = ·ᵣ-monoˡ-≾ᵣ ρ rel
+∈-ctx-grade Hd       = uᵣ≾ᵣc
+∈-ctx-grade (Tl-∷ x) = ∈-ctx-grade x
+∈-ctx-grade {Γ ⟨ ρ ⟩} {ρ = .(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) = ·ᵣ-monoˡ-≾ᵣ (∈-ctx-grade x)
 
 -- Context extension does not decrease variable's grade annotation
 
@@ -199,7 +199,6 @@ var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 split-pres-ctx-grade : ∀ {Γ Γ₁ Γ₂ A}
                     → Γ₁ ∷ A , Γ₂ split Γ
                     → ctx-grade Γ ≡ ctx-grade (Γ₁ ++ᶜ Γ₂)
-                           
 split-pres-ctx-grade split-[] =
   refl
 split-pres-ctx-grade (split-∷ c) =
@@ -249,6 +248,60 @@ var-in-split {Γ₂ = Γ₂ ⟨ ρ₂ ⟩} {ρ = ρ} (split-⟨⟩ p) (Tl-⟨⟩
   inj₁ (ρ' , y , rel , cong (_⟨ ρ₂ ⟩) rel')
 ... | inj₂ (y , rel , rel') =
   inj₂ (Tl-⟨⟩ y , rel , cong (_⟨ ρ₂ ⟩) rel')
+
+postulate 
+  _≡?_ : Decidable (_≡_ {Agda.Primitive.lzero} {VType})
+
+-- No variable belongs to the empty context
+
+var-not-in-empty-ctx : ∀ {A} → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] []))
+var-not-in-empty-ctx = λ ()
+
+-- If a variable is not in a context Γ and its type doesn't coincide with the type of the head of Γ,
+-- then it's not in Γ
+
+var-not-in-ctx-∷ : ∀ {Γ A B}
+                 → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] Γ))
+                 → ¬ (B ≡ A)
+                 → ¬ (Σ[ ρ' ∈ R ] (A ∈[ ρ' ] Γ ∷ B))
+var-not-in-ctx-∷ ¬p ¬q (_ , Hd)     = ¬q refl
+var-not-in-ctx-∷ ¬p ¬q (_ , Tl-∷ x) = ¬p (_ , x)
+
+-- If a variable is not in a context Γ then it's not in Γ ⟨ ρ ⟩
+
+var-not-in-ctx-⟨⟩ : ∀ {Γ A ρ}
+                  → (¬ (Σ[ ρ' ∈ R ] (A ∈[ ρ' ] Γ)))
+                  → ¬ (Σ[ ρ'' ∈ R ] (A ∈[ ρ'' ] Γ ⟨ ρ ⟩))
+var-not-in-ctx-⟨⟩ {ρ = ρ} ¬p (_ , Tl-⟨⟩ x) = ¬p (_ , x)
+
+-- Checking whether a variable is in the context before the extension
+
+var-in-ctx? : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → Dec (Σ[ ρ' ∈ R ] (A ∈[ ρ' ] Γ'))
+var-in-ctx? {Γ} {[]} x = no var-not-in-empty-ctx
+var-in-ctx? {Γ ∷ B} {Γ' ∷ A} Hd with var-in-ctx? {Γ ∷ B} {Γ'} Hd
+... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
+... | no ¬p with A ≡? B
+... | yes q rewrite (sym q) = yes (uᵣ , Hd)
+... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
+var-in-ctx? {Γ ∷ B} {Γ' ∷ A} {A = C} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'} x
+... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
+... | no ¬p with A ≡? C
+... | yes q rewrite (sym q) = yes (uᵣ , Hd)
+... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
+var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ∷ A} {A = B} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
+... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
+... | no ¬p with A ≡? B
+... | yes q rewrite (sym q) = yes (uᵣ , Hd)
+... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
+var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} Hd with var-in-ctx? {Γ ∷ A} {Γ'} Hd
+... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
+... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
+var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'} x
+... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
+... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
+var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
+... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
+... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
 
 {-
 -- To remove:

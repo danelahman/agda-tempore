@@ -47,18 +47,15 @@ record Grade : Set₁ where
     u≾c : ∀ {c} → u ≾ c
     c≺u-contradiction : ∀ {c} → (c ≺ u) → ⊥
 
-    --
-    c≺d→d≾c-contradiction : ∀ {c d} → c ≺ d → d ≾ c → ⊥
-
     -- _·_ is associative
     ·-assoc : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
 
     -- _·_ is monotone w.r.t. _≾_ and _≺_ (right)
-    ·-monoʳ-≾ : (c : Carrier) → _Preserves_⟶_ (c ·_) _≾_ _≾_
-    ·-monoʳ-≺ : (c : Carrier) → _Preserves_⟶_ (c ·_) _≺_ _≺_
+    ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
+    ·-monoʳ-≺ : ∀ {c} →  _Preserves_⟶_ (c ·_) _≺_ _≺_
 
     -- _·_ is monotone w.r.t. _≾_ (left)
-    ·-monoˡ-≾ : (c : Carrier) → _Preserves_⟶_ (_· c) _≾_ _≾_
+    ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
  
     -- _≾_ is reflexive and transitive
     ≾-reflexive  : _≡_ ⇒ _≾_
@@ -75,39 +72,31 @@ record Grade : Set₁ where
     _≈?_ : Decidable _≈_
     _≺?_ : Decidable _≺_
 
--- relation between ≾ and ≺
+    -- a grade cannot be strictly smaller and greater or equal than another grade 
+    c≺d→d≾c-contradiction : ∀ {c d} → c ≺ d → d ≾ c → ⊥
+
+    -- relation between ≾ and ≺
     ¬≾⇒≻flip : ∀ {a b} → ¬ (a ≾ b) → (b ≺ a)
     ¬≺⇒≿flip : ∀ {a b} → ¬ (a ≺ b) → (b ≾ a)
 
-    --
-    c≾u⇒c≡u : (c : Carrier) → c ≾ u → c ≡ u
-
+    -- relation between grades
+    c≾u⇒c≡u : ∀ {c} → c ≾ u → c ≡ u
     c≉u⇒u≺c : ∀ {c} → ¬ (c ≈ u) → u ≺ c
+    u≺c⇒u≢c : ∀ {c} → u ≺ c → ¬ (u ≡ c)
 
     c≈d⇒c≡d : ∀ {c d} → c ≈ d → c ≡ d
-
-   
-    -- Properties of _·_ and _≾_ and _≺_
-    
-    c≾c·d : ∀ {c d} → c ≾ (c · d)
---    c·d≾c : (c d : Carrier) → (c · d) ≾ c
-
---    c≾d⇒c≾d·b : ∀ {c d} b → c ≾ d → c ≾ (d · b)
---    c≾d⇒c·b≾d : ∀ {c d} b → c ≾ d → (c · b) ≾ d
 
     c·d≾e·d⇒c≾e : ∀ {c d e} → (c · d) ≾ (e · d) → c ≾ e
     c·d≺e·d⇒c≺e : ∀ {c d e} → (c · d) ≺ (e · d) → c ≺ e
 
-    γ-≾-substₗ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ' ≾ γ → γ'' ≾ γ
+    c-≾-substₗ : ∀ {c d e} → d ≡ e → d ≾ c → e ≾ c
     
-    γ-≾-substᵣ : ∀ {γ γ' γ''} → γ' ≡ γ'' → γ ≾ γ'' → γ ≾ γ'
-
-    u≺c⇒u≢c : ∀ {c} → u ≺ c → ¬ (u ≡ c)
+    c-≾-substᵣ : ∀ {c d e} → d ≡ e → c ≾ e → c ≾ d
 
     -- Properties of _·_ and _≡_
-    c·d≡u⇒c≡u : ∀ {d} → (c : Carrier) → c · d ≡ u → c ≡ u
+    c·d≡u⇒c≡u : ∀ {c d} → c · d ≡ u → c ≡ u
 
-    c·d≡u⇒d≡u : ∀ {c} → (d : Carrier) → c · d ≡ u → d ≡ u
+    c·d≡u⇒d≡u : ∀ {c d} → c · d ≡ u → d ≡ u
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
@@ -162,13 +151,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      u≾c to uᵣ≾ᵣc;
      c≈d⇒c≡d to c≈ᵣd⇒c≡d;
      ≾-irrelevant to ≾ᵣ-irrelevant;
-     c≾c·d to c≾ᵣc·ᵣd;
---     c·d≾c to c·ᵣd≾ᵣc;
-     γ-≾-substₗ to ρ-≾ᵣ-substₗ;
-     γ-≾-substᵣ to ρ-≾ᵣ-substᵣ;
---     c≾d⇒c≾d·b to c≾ᵣd⇒c≾ᵣd·ᵣb;
---     c≾d⇒c·b≾d to c≾ᵣd⇒c·ᵣb≾ᵣd;
      embedNat to embedR;
+     c-≾-substᵣ to c-≾ᵣ-substᵣ;
+     c-≾-substₗ to c-≾ᵣ-substₗ;
      _≾?_ to _≾ᵣ?_;
      _≈?_ to _≈ᵣ?_; 
      _≺?_ to _≺ᵣ?_;

@@ -1,4 +1,4 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 ------------------------
 -- Context extensions --
@@ -14,6 +14,7 @@ open import Data.Product
 open import Data.Empty
 
 open import Relation.Binary.Core
+open import Relation.Binary.Definitions
 open import Relation.Nullary -- Remove?
 open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] )
 open Eq.≡-Reasoning
@@ -95,7 +96,7 @@ left-split-ren {Γ} {Γ'} {Γ'' ⟨ ρ ⟩} r
 {-
 left-split-ren : ∀ {Γ Γ' Γ''} → Ren (Γ ++ᶜ Γ') Γ'' → Σ[ Γ₁ ∈ Ctx ] (Σ[ Γ₂ ∈ Ctx ] (Ren Γ Γ₁ × Γ'' ≡ Γ₁  ++ᶜ Γ₂ ))
 left-split-ren {Γ} {[]} {Γ''} r =
-  Γ'' , [] , r , refl
+Γ'' , [] , r , refl
 left-split-ren {Γ} {Γ' ∷ A} {Γ''} r = {!!}
 left-split-ren {Γ} {Γ' ⟨ ρ ⟩} {Γ''} r = {!!}
 -}
@@ -113,36 +114,24 @@ ext-var (∷-ext e) x with ext-var e x
 ext-var (⟨⟩-ext {ρ' = ρ'} e) x with ext-var e x
 ... | ρ'' , y = _ , Tl-⟨⟩ y
 
--- Splitting a renaming by an extension
-
-split-ren : ∀ {Γ Γ' Γ'' ρ}
-          → Ext Γ'' ρ Γ
-          → Ren Γ Γ'
-          → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ' Γ')
-
-split-ren {Γ} {Γ'} {Γ} {ρ} id-ext r =
-  Γ' , r , uᵣ , ≾ᵣ-refl , id-ext
-split-ren {Γ ∷ A} {Γ'} {Γ''} {ρ} (∷-ext e) r =
-  split-ren {Γ} e (r ∘ʳ wk-ren)
-split-ren {Γ ⟨ ρ₂ ⟩} {Γ'} {Γ''} {.(ρ₁ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₁} e) r
-  with split-ren e {!r ∘ʳ ?!}
-... | Γ''' , r' , ρ' , rel , e' = {!!}
-
---{!!} , {!!} , {!!} , ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ ρ₁))) (·ᵣ-monoʳ-≾ᵣ ρ₁ uᵣ≾ᵣc) , {!!}
+--
+wk-ctx-ext : ∀ {Γ Γ' A ρ ρ'} → Ext Γ ρ Γ' → A ∈[ ρ' ] Γ' → Ext (Γ ∷ A) ρ Γ'
+wk-ctx-ext {Γ} {Γ} id-ext x = {!!}
+wk-ctx-ext {Γ} {Γ'} (∷-ext e) x = {!!}
+wk-ctx-ext {Γ} {Γ'} (⟨⟩-ext e) x = {!!}
 
 -- Splitting a renaming by an extension (second attempt, by induction on the extended context and its variables)
 
-split-ren' : ∀ {Γ Γ' Γ'' ρ}
+split-ren : ∀ {Γ Γ' Γ'' ρ}
            → Ext Γ'' ρ Γ
            → Ren Γ Γ'
            → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ' Γ')
 
-split-ren' {Γ} {Γ'} {[]} {ρ} e r rewrite sym (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ)) =
+split-ren {Γ} {Γ'} {[]} {ρ} e r rewrite sym (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ)) =
   [] , id-ren , ctx-grade Γ' , ctx-grade-≾ r , ext-[]
-split-ren' {Γ} {Γ'} {Γ'' ∷ A} {ρ} e r with split-ren' (ext-++ᶜ-fst {Γ' = Γ''} e) r
-... | Γ''' , r' , ρ'' , rel , e' =
-  {!!} --{!!} , {!!} , {!!} , {!!} , {!!}
-split-ren' {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r with split-ren' (ext-++ᶜ-fst {Γ' = Γ''} e) r
+split-ren {Γ} {Γ'} {Γ'' ∷ A} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
+... | Γ''' , r' , ρ'' , rel , e' = {!!}
+split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
 ... | Γ''' , r' , ρ'' , rel , e' =
   {!!} , {!!} , {!!} , {!!} , {!!}
 

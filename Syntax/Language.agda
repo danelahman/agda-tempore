@@ -157,18 +157,6 @@ mutual
             ------------------
             → Γ ⊢C⦂ C
 
-  {- Previous version:
-    unbox   : {A : VType}
-            → {C : CType}
-            → {Γ₁ Γ₂ : Ctx}
-            → {ρ : R} 
-            → ctx-grade Γ₂ ≾ᵣ ρ 
-            → Ren (Γ₁ ++ᶜ Γ₂) Γ
-            → Γ₁ ⊢V⦂ [ ρ ] A
-            → Γ ∷ A  ⊢C⦂ C
-            --------------------
-            → Γ ⊢C⦂ C
-  -}
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
 
     box     : {A : VType}
