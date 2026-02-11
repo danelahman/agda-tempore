@@ -62,7 +62,7 @@ mutual
   C-rename r (unbox {A} {C} {Γ''} {ρ} {ρ'} ex rel V M) with split-ren ex r
   ... | Γ''' , r' , ρ'' , rel' , ex' =
     unbox {A = A} {Γ' = Γ'''} {ρ = ρ} {ρ' = ρ''}
-      ex' 
+      ex'
       (≾ᵣ-trans rel' rel)
       (V-rename r' V)
       (C-rename (cong-ren r) M)

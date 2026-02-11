@@ -9,7 +9,9 @@ module Syntax.Language (Grades : GradeSystem) where
 open GradeSystemInterface Grades
 
 open import Data.Nat public
-open import Data.Product 
+open import Data.Product
+
+open import Relation.Nullary using (¬_)
 
 open import Syntax.Contexts (Grades)
 open import Syntax.Extensions (Grades)

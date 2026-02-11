@@ -153,7 +153,6 @@ ren⟨ρ⟩-ctx {Γ} {Γ'} {ρ} rel =
     (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (·ᵣ-monoʳ-≾ᵣ (ctx-grade Γ) rel))
     (vren⟨ρ⟩-ctx rel)
 
-
 -- Reflexivity equality renamings' interaction with identity renamings
 
 eq-ren-refl-id : ∀ {Γ} → eq-ren refl ≡ id-ren {Γ}

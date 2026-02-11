@@ -10,7 +10,7 @@ open GradeSystemInterface Grades
 
 open import Data.Empty -- Remove?
 open import Data.Product
-open import Data.Sum -- Remove?
+open import Data.Sum
 
 open import Relation.Nullary -- Remove?
 
