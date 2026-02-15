@@ -9,24 +9,54 @@ module Syntax.SubstitutionsPrev (Grades : GradeSystem) where
 open GradeSystemInterface Grades
 
 open import Data.Empty
-open import Data.Irrelevant
 open import Data.Product
-open import Data.Unit.Base using (⊤)
+open import Data.Sum
 
-open import Relation.Binary.Core
-open import Relation.Binary.Definitions
+open import Function using (case_of_)
+
 open import Relation.Nullary
 
 open import Syntax.Contexts (Grades)
+open import Syntax.Extensions (Grades)
 open import Syntax.Language (Grades)
+open import Syntax.RenActions (Grades)
 open import Syntax.Renamings (Grades)
 open import Syntax.Types (Grades)
-open import Syntax.Extensions (Grades)
-
-open import Syntax.RenActions (Grades)
 
 open import Util.Equality
-open import Util.Time -- remove
+
+---- Move to extensions:
+-- extensions don't decrease contexts
+postulate
+  ext-decrease-contradiction-∷ : ∀ {Γ A ρ} → Ext (Γ ∷ A) ρ Γ → ⊥
+
+ext-≡-grade : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → ρ ≡ ρ' → Ext Γ ρ' Γ'
+ext-≡-grade id-ext eq rewrite (sym eq) =
+  id-ext
+ext-≡-grade (∷-ext e) eq =
+  ∷-ext (ext-≡-grade e eq)
+ext-≡-grade (⟨⟩-ext e) eq rewrite (sym eq) =
+  ⟨⟩-ext (ext-≡-grade e (c·ᵣd≡e·ᵣd⇒c≡e (trans eq (sym eq))))
+
+-- Inversion lemmas
+
+inv-ext-∷ : ∀ {Γ ρ Γ' A} 
+          → Ext Γ ρ (Γ' ∷ A) 
+          → (Σ[ ρ ∈ R ] (ρ ≡ uᵣ) × (Γ ≡ Γ' ∷ A)) ⊎ (Ext Γ ρ Γ')
+inv-ext-∷ id-ext    = inj₁ (uᵣ , refl , refl)
+inv-ext-∷ (∷-ext e) = inj₂ e
+
+inv-ext-⟨⟩ : ∀ {Γ ρ Γ' ρ'} 
+           → Ext Γ ρ (Γ' ⟨ ρ' ⟩) 
+           →   (Σ[ ρ ∈ R ] ρ ≡ uᵣ × (Γ ≡ Γ' ⟨ ρ' ⟩))
+             ⊎ (Σ[ ρ'' ∈ R ] (Ext Γ ρ'' Γ' × (ρ ≡ ρ'' ·ᵣ ρ' )))
+inv-ext-⟨⟩ id-ext     = inj₁ (uᵣ , refl , refl)
+inv-ext-⟨⟩ (⟨⟩-ext e) = inj₂ (_ , e , refl)
+
+-- Remove?
+
+ext-diff-sizes-contradiction : ∀ {Γ ρ} → Ext Γ ρ [] → ¬ (Γ ≡ []) → ⊥
+ext-diff-sizes-contradiction id-ext neq = neq refl
 
 ---- Checking whether a variable in a context Γ belongs to the context Γ extends
 
@@ -36,74 +66,73 @@ var-in-ctx-prev-ext? :
   → Ext Γ ρ' Γ'
   → (x : A ∈[ ρ ] Γ')
   → Dec
-      (Σ[ ρ₁ ∈ R ]
+    (Σ[ ρ₁ ∈ R ]
         Σ[ y ∈ A ∈[ ρ₁ ] Γ ]
-          ( proj₁ (var-split y) ≡ proj₁ (var-split x)
-          × Ext (proj₁ (proj₂ (var-split y))) ρ'
-                (proj₁ (proj₂ (var-split x)))
-          )
-      )
+           ( proj₁ (var-split y) ≡ proj₁ (var-split x)
+           × Ext (proj₁ (proj₂ (var-split y))) ρ'
+                 (proj₁ (proj₂ (var-split x)))
+           )
+        )
 
-var-in-ctx-prev-ext? {ρ = ρ} id-ext x = yes (ρ , x , refl , id-ext)
-var-in-ctx-prev-ext? {Γ' = Γ' ∷ A} {A} {ρ'} {.(uᵣ)} (∷-ext e) Hd with var-in-ctx? {Γ' ∷ A} {Γ'} Hd
-... | yes (ρ₁ , z) = no λ { (.(uᵣ) , Hd , eq , e') → {!!} }
-... | no ¬p = no λ where
-  (_ , y , _ , _) → ¬p (proj₁ (ext-var e y) , proj₂ (ext-var e y))
-var-in-ctx-prev-ext? {Γ} {Γ' = Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) with var-in-ctx-prev-ext? e x
-var-in-ctx-prev-ext? {Γ ∷ A} {Γ' = Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x)
-  | yes (.(uᵣ) , Hd , eq , e') with var-split {Γ ∷ A} Hd
-... | _ = yes (uᵣ , Hd , eq , ∷-ext e')
-var-in-ctx-prev-ext? {Γ ∷ C} {Γ' = Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x)
-  | yes (ρ₁ , Tl-∷ y , eq , e') with var-split {Γ ∷ C} (Tl-∷ y)
-... | _ = yes (ρ₁ , Tl-∷ y , eq , ∷-ext e')
-var-in-ctx-prev-ext? {Γ ⟨ ρ₂ ⟩} {Γ' = Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x)
-  | yes (ρ₁ , Tl-⟨⟩ y , eq , e') with var-split {Γ ⟨ ρ₂ ⟩} (Tl-⟨⟩ y)
-... | _ = yes (ρ₁ , Tl-⟨⟩ y , eq , ∷-ext e')
+var-in-ctx-prev-ext? id-ext x = yes (_ , x , refl , id-ext)
+var-in-ctx-prev-ext? (∷-ext e) Hd = no (λ { (_ , Hd , refl , id-ext) → ext-decrease-contradiction-∷ e })
+var-in-ctx-prev-ext? (∷-ext e) (Tl-∷ x) with var-in-ctx-prev-ext? e x
+... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ∷-ext e')
 var-in-ctx-prev-ext? {[]} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
   no λ ()
 var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
   no λ where
-    (.(uᵣ) , Hd , eq , ∷-ext e') → ¬p (uᵣ , Hd , eq , e')
-    (ρ₁ , Tl-∷ y , eq , e') → {!!}
+       (.(uᵣ) , Hd , eq , ∷-ext e') → ¬p (uᵣ , Hd , eq , e')
+       (ρ₁ , Tl-∷ y , eq , e') →
+         case inv-ext-∷ e' of λ where
+           (inj₁ (.(uᵣ) , refl , eq')) →
+             let eq-ctx = ∷ᶜ-injective-ctx eq' in
+                 ext-decrease-contradiction-∷ {!!}
+           (inj₂ e'') → ¬p (ρ₁ , Tl-∷ y , eq , e'')
 var-in-ctx-prev-ext? {Γ ⟨ ρ₂ ⟩} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
   no λ where
-    (ρ₁ , Tl-⟨⟩ y , eq , ∷-ext e') → ¬p (ρ₁ , Tl-⟨⟩ y , eq , e')
+     (ρ₁ , Tl-⟨⟩ y , eq , ∷-ext e') → ¬p (ρ₁ , Tl-⟨⟩ y , eq , e')
 var-in-ctx-prev-ext? {Γ} {Γ' ⟨ ρ₂ ⟩} {A} {ρ'} {ρ} (⟨⟩-ext {ρ = ρ₄} e) (Tl-⟨⟩ x)
   with var-in-ctx-prev-ext? e x
-var-in-ctx-prev-ext? {Γ ∷ A} {Γ' ⟨ ρ₂ ⟩} {A} {.(ρ₄ ·ᵣ ρ₂)} {.(ρ₃ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₄} e) (Tl-⟨⟩ {ρ' = ρ₃} x)
-  | yes (.(uᵣ) , Hd , eq , e') with var-split {Γ ∷ A} Hd
-... | _ = yes (uᵣ , Hd , eq , ⟨⟩-ext e')
-var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ⟨ ρ₂ ⟩} {A} {.(ρ₄ ·ᵣ ρ₂)} {.(ρ₃ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₄} e) (Tl-⟨⟩ {ρ' = ρ₃} x)
-  | yes (ρ₁ , (Tl-∷ y) , eq , e') with var-split {Γ ∷ C} (Tl-∷ y)
-... | _ = yes (ρ₁ , Tl-∷ y , eq , ⟨⟩-ext e')
-var-in-ctx-prev-ext? {Γ ⟨ ρ₅ ⟩} {Γ' ⟨ ρ₂ ⟩} {A} {.(ρ₄ ·ᵣ ρ₂)} {.(ρ₃ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₄} e) (Tl-⟨⟩ {ρ' = ρ₃} x)
-  | yes (ρ₁ , (Tl-⟨⟩ y) , eq , e') with var-split {Γ ⟨ ρ₅ ⟩} (Tl-⟨⟩ y)
-... | _ = yes (ρ₁ , Tl-⟨⟩ y , eq , ⟨⟩-ext e')
+... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ⟨⟩-ext e')
 var-in-ctx-prev-ext? {[]} {Γ' ⟨ ρ₂ ⟩} {A} {.((_ ·ᵣ_) ρ₂)} {.((_ ·ᵣ_) ρ₂)} (⟨⟩-ext {ρ = _} e) (Tl-⟨⟩ x) | no ¬p =
   no λ ()
 var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ⟨ ρ₂ ⟩} {A} {.(ρ₃ ·ᵣ ρ₂)} {.(ρ₄ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₃} e) (Tl-⟨⟩ {ρ' = ρ₄} x) | no ¬p = 
   no λ where
-    (.(uᵣ) , Hd , eq , e') → ¬p (uᵣ , Hd , eq , {!!})
-    (ρ₁ , Tl-∷ y , eq , e') → ¬p ({!!} , {!!} , {!!} , {!e'!})
+     (.(uᵣ) , Hd , eq , e') →
+       case inv-ext-⟨⟩ e' of λ where
+            (inj₂ (ρ , e'' , eq')) →
+                  ¬p (uᵣ , Hd , eq , ext-≡-grade e'' (sym (c·ᵣd≡e·ᵣd⇒c≡e eq')))
+     (ρ₁ , Tl-∷ y , eq , e') →
+       case inv-ext-⟨⟩ e' of λ where
+            (inj₂ (ρ₇ , e'' , eq')) →
+              ¬p (ρ₁ , Tl-∷ y  , eq , ext-≡-grade e'' (sym (c·ᵣd≡e·ᵣd⇒c≡e eq')))
 var-in-ctx-prev-ext? {Γ ⟨ ρ₅ ⟩} {Γ' ⟨ ρ₂ ⟩} {A} {.(ρ₃ ·ᵣ ρ₂)} {.(ρ₄ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₃} e) (Tl-⟨⟩ {ρ' = ρ₄} x) | no ¬p =
   no λ where
-    (ρ₁ , Tl-⟨⟩ y , eq , e') → ¬p (ρ₁ , Tl-⟨⟩ y , eq , {!e'!})
+     (ρ₁ , Tl-⟨⟩ y , eq , e') →
+       case inv-ext-⟨⟩ e' of λ where
+         (inj₁ (.(uᵣ) , refl , eqSplit)) → {!!}
+         (inj₂ (ρ , e'' , eq')) →
+               ¬p (ρ₁ , Tl-⟨⟩ y , eq , ext-≡-grade e'' (sym (c·ᵣd≡e·ᵣd⇒c≡e eq')))
 
-{-
 -- If the variable is not in the context before the extension
 
 var-not-in-ctx-prev-ext : ∀ {Γ Γ' A ρ ρ'}
-                       → Ext Γ ρ' Γ'
-                       → (x : A ∈[ ρ ] Γ')
-                       → ρ' ≺ᵣ ρ
-                       → Ext Γ ρ' (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)))
+                        → Ext Γ ρ Γ'
+                        → (x : A ∈[ ρ' ] Γ')
+                        → ¬ (Σ[ ρ'' ∈ R ] Σ[ y ∈ A ∈[ ρ'' ] Γ ]
+                              ( proj₁ (var-split y) ≡ proj₁ (var-split x)
+                              × Ext (proj₁ (proj₂ (var-split y))) ρ (proj₁ (proj₂ (var-split x)))
+                              )
+                            )
+                        → Ext Γ ρ (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)))
 
-var-not-in-ctx-prev-ext id-ext Hd rel = ⊥-elim (c≺u-contradiction rel)
-var-not-in-ctx-prev-ext id-ext (Tl-∷ x) rel = {!!}
-var-not-in-ctx-prev-ext id-ext (Tl-⟨⟩ {Γ} x) rel = {!!}
-var-not-in-ctx-prev-ext (∷-ext e) x rel = {!!}
-var-not-in-ctx-prev-ext (⟨⟩-ext e) x rel = {!!}
--}
+var-not-in-ctx-prev-ext {ρ' = ρ'} id-ext x   ¬p = ⊥-elim (¬p (ρ' , x , refl , id-ext))
+var-not-in-ctx-prev-ext (∷-ext e) Hd         ¬p = e
+var-not-in-ctx-prev-ext (∷-ext e) (Tl-∷ x)   ¬p =
+  ∷-ext (var-not-in-ctx-prev-ext e x (λ where (ρ₁ , y , eq , e') → ¬p (ρ₁ , y , eq , ∷-ext e')))
+var-not-in-ctx-prev-ext (⟨⟩-ext e) (Tl-⟨⟩ x) ¬p =
+  ⟨⟩-ext (var-not-in-ctx-prev-ext e x (λ where (ρ₁ , y , eq , e') → ¬p (ρ₁ , y , eq , ⟨⟩-ext e')))
 
 -- Substituting a value for a variable in context
 
@@ -118,7 +147,7 @@ Hd [ Hd ↦ W ]var = W
 Hd [ Tl-∷ x ↦ W ]var = var Hd
 Tl-∷ y [ Hd ↦ W ]var = var y
 Tl-∷ y [ Tl-∷ x ↦ W ]var = V-rename wk-ren (y [ x ↦ W ]var)
-Tl-⟨⟩ y [ x ↦ W ]var = {!!}
+Tl-⟨⟩ y [ Tl-⟨⟩ x ↦ W ]var = {!!}
 
 -- Substituting a value for a variable in a well-typed term
 
@@ -158,7 +187,7 @@ mutual
     
   _[_↦_]c {Γ = Γ} {A = A} {ρ = ρ}
     (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W with var-in-ctx-prev-ext? e x
-  ... | yes (ρ₁ , y , eq , ex') =
+  ... | yes (_ , y , eq , ex') =
     unbox
       (++ᶜ-ext ex')
       rel
@@ -169,9 +198,9 @@ mutual
       (M [ Tl-∷ x ↦ W ]c)
   ... | no ¬p =
     unbox
-      {!!} --(var-not-in-ctx-prev-ext e x (¬≾ᵣ⇒≻ᵣflip ¬p))
+      (var-not-in-ctx-prev-ext e x ¬p)
       rel
-      V -- (V-rename (proj₂ (proj₂ (var-not-in-ctx-prev-ext e x (¬≾ᵣ⇒≻ᵣflip ¬p)))) V)
+      V
       (M [ Tl-∷ x ↦ W ]c)
 
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)

@@ -86,8 +86,12 @@ record Grade : Set₁ where
 
     c≈d⇒c≡d : ∀ {c d} → c ≈ d → c ≡ d
 
+    c-decomp-· : ∀ {c} → Σ[ d ∈ Carrier ] Σ[ e ∈ Carrier ] c ≡ d · e
+
     c·d≾e·d⇒c≾e : ∀ {c d e} → (c · d) ≾ (e · d) → c ≾ e
     c·d≺e·d⇒c≺e : ∀ {c d e} → (c · d) ≺ (e · d) → c ≺ e
+
+    c·d≡e·d⇒c≡e : ∀ {c d e} → (c · d) ≡ (e · d) → c ≡ e
 
     c-≾-substₗ : ∀ {c d e} → d ≡ e → d ≾ c → e ≾ c
     
@@ -168,7 +172,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      c≉u⇒u≺c to c≉ᵣuᵣ⇒uᵣ≺ᵣc;
      c≺d→d≾c-contradiction to c≺ᵣd→d≾ᵣc-contradiction;
      c·d≺e·d⇒c≺e to c·ᵣd≺ᵣe·ᵣd⇒c≺ᵣe;
-     u≺c⇒u≢c to uᵣ≺ᵣc⇒uᵣ≢c
+     u≺c⇒u≢c to uᵣ≺ᵣc⇒uᵣ≢c;
+     c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
+     c-decomp-· to c-decomp-·ᵣ
     ) public
 
   open Grade EGrade renaming
