@@ -86,10 +86,20 @@ var-in-ctx-prev-ext? id-ext x = yes (_ , x , refl , id-ext)
 var-in-ctx-prev-ext? (∷-ext e) Hd = no (λ { (_ , Hd , refl , id-ext) → ext-decrease-contradiction-∷ e })
 var-in-ctx-prev-ext? (∷-ext e) (Tl-∷ x) with var-in-ctx-prev-ext? e x
 ... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ∷-ext e')
+var-in-ctx-prev-ext? {Γ} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
+  no (λ { (ρ₁ , y , eq , e') →
+        case inv-ext-∷ e' of λ {
+          (inj₁ (refl , eq'')) → {!!} ;
+          (inj₂ e'') → ¬p (ρ₁ , y , eq , e'') } })
+
+
+{-
 var-in-ctx-prev-ext? {[]} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
-  no λ ()
+  no (λ ())
 var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ∷ B} {A} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
-  no λ where
+  {!!}
+{-
+  no (λ where
        (.(uᵣ) , Hd , eq , ∷-ext e') → ¬p (uᵣ , Hd , eq , e')
        (ρ₁ , Tl-∷ y , eq , e') →
          case inv-ext-∷ e' of λ where
@@ -98,10 +108,12 @@ var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ∷ B} {A} {ρ' = ρ'} {ρ = ρ} (∷-ext e
                let eq-types = ∷ᶜ-injective-ty eq' in
                  {!!}
                    
-           (inj₂ e'') → ¬p (ρ₁ , Tl-∷ y , eq , e'')
+           (inj₂ e'') → ¬p (ρ₁ , Tl-∷ y , eq , e''))
+-}
 var-in-ctx-prev-ext? {Γ ⟨ ρ₂ ⟩} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
-  no λ where
-     (ρ₁ , Tl-⟨⟩ y , eq , ∷-ext e') → ¬p (ρ₁ , Tl-⟨⟩ y , eq , e')
+  no (λ where
+     (ρ₁ , Tl-⟨⟩ y , eq , ∷-ext e') → ¬p (ρ₁ , Tl-⟨⟩ y , eq , e'))
+-}     
 var-in-ctx-prev-ext? {Γ} {Γ' ⟨ ρ₂ ⟩} {A} {ρ'} {ρ} (⟨⟩-ext {ρ = ρ₄} e) (Tl-⟨⟩ x)
   with var-in-ctx-prev-ext? e x
 ... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ⟨⟩-ext e')
