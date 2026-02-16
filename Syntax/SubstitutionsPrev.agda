@@ -42,16 +42,24 @@ ext-≡-grade (⟨⟩-ext e) eq rewrite (sym eq) =
 
 inv-ext-∷ : ∀ {Γ ρ Γ' A} 
           → Ext Γ ρ (Γ' ∷ A) 
-          → (Σ[ ρ ∈ R ] (ρ ≡ uᵣ) × (Γ ≡ Γ' ∷ A)) ⊎ (Ext Γ ρ Γ')
-inv-ext-∷ id-ext    = inj₁ (uᵣ , refl , refl)
+          → (ρ ≡ uᵣ) × (Γ ≡ Γ' ∷ A) ⊎ (Ext Γ ρ Γ')
+inv-ext-∷ id-ext    = inj₁ (refl , refl)
 inv-ext-∷ (∷-ext e) = inj₂ e
 
 inv-ext-⟨⟩ : ∀ {Γ ρ Γ' ρ'} 
            → Ext Γ ρ (Γ' ⟨ ρ' ⟩) 
-           →   (Σ[ ρ ∈ R ] ρ ≡ uᵣ × (Γ ≡ Γ' ⟨ ρ' ⟩))
+           →   (ρ ≡ uᵣ × (Γ ≡ Γ' ⟨ ρ' ⟩))
              ⊎ (Σ[ ρ'' ∈ R ] (Ext Γ ρ'' Γ' × (ρ ≡ ρ'' ·ᵣ ρ' )))
-inv-ext-⟨⟩ id-ext     = inj₁ (uᵣ , refl , refl)
+inv-ext-⟨⟩ id-ext     = inj₁ (refl , refl)
 inv-ext-⟨⟩ (⟨⟩-ext e) = inj₂ (_ , e , refl)
+
+var-in-ctx-not-in-ctx-contradiction :
+  ∀ {Γ A B ρ}
+  → (x : A ∈[ ρ ] Γ ∷ B)
+  → ¬(Σ[ ρ' ∈ R ] Σ[ y ∈ (A ∈[ ρ' ] Γ ∷ B) ]
+       (proj₁ (var-split y) ≡ proj₁ (var-split x))
+     × (Ext (proj₁ (proj₂ (var-split y))) uᵣ (proj₁ (proj₂ (var-split x))))) → ⊥
+var-in-ctx-not-in-ctx-contradiction {ρ = ρ} x ¬p = ¬p (ρ , x , refl , id-ext)
 
 -- Remove?
 
@@ -80,14 +88,16 @@ var-in-ctx-prev-ext? (∷-ext e) (Tl-∷ x) with var-in-ctx-prev-ext? e x
 ... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ∷-ext e')
 var-in-ctx-prev-ext? {[]} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
   no λ ()
-var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
+var-in-ctx-prev-ext? {Γ ∷ C} {Γ' ∷ B} {A} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
   no λ where
        (.(uᵣ) , Hd , eq , ∷-ext e') → ¬p (uᵣ , Hd , eq , e')
        (ρ₁ , Tl-∷ y , eq , e') →
          case inv-ext-∷ e' of λ where
-           (inj₁ (.(uᵣ) , refl , eq')) →
-             let eq-ctx = ∷ᶜ-injective-ctx eq' in
-                 ext-decrease-contradiction-∷ {!!}
+           (inj₁ (refl , eq')) →
+             let eq-ctxs = ∷ᶜ-injective-ctx eq' in
+               let eq-types = ∷ᶜ-injective-ty eq' in
+                 {!!}
+                   
            (inj₂ e'') → ¬p (ρ₁ , Tl-∷ y , eq , e'')
 var-in-ctx-prev-ext? {Γ ⟨ ρ₂ ⟩} {Γ' ∷ B} {ρ' = ρ'} {ρ = ρ} (∷-ext e) (Tl-∷ x) | no ¬p =
   no λ where
@@ -111,7 +121,7 @@ var-in-ctx-prev-ext? {Γ ⟨ ρ₅ ⟩} {Γ' ⟨ ρ₂ ⟩} {A} {.(ρ₃ ·ᵣ �
   no λ where
      (ρ₁ , Tl-⟨⟩ y , eq , e') →
        case inv-ext-⟨⟩ e' of λ where
-         (inj₁ (.(uᵣ) , refl , eqSplit)) → {!!}
+         (inj₁ (eq' , eqSplit)) → {!!}
          (inj₂ (ρ , e'' , eq')) →
                ¬p (ρ₁ , Tl-⟨⟩ y , eq , ext-≡-grade e'' (sym (c·ᵣd≡e·ᵣd⇒c≡e eq')))
 
