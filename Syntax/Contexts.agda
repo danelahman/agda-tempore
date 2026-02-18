@@ -71,8 +71,7 @@ infixl 30 _++ᶜ_
 ++ᶜ-congʳ Γ Γ' Γ'' p = cong (Γ ++ᶜ_) p
 
 ++ᶜ-identityˡ-unique : ∀ {Γ Γ'} → Γ ≡ Γ' ++ᶜ Γ → Γ' ≡ []
-++ᶜ-identityˡ-unique {[]} {Γ'} p =
-  sym p
+++ᶜ-identityˡ-unique {[]} {Γ'} p = sym p
 ++ᶜ-identityˡ-unique {Γ ∷ A} {Γ'} p =
   ++ᶜ-identityˡ-unique (∷ᶜ-injective-ctx p)
 ++ᶜ-identityˡ-unique {Γ ⟨ ρ ⟩} {Γ'} p =
@@ -281,17 +280,17 @@ var-in-ctx? {Γ} {[]} x = no var-not-in-empty-ctx
 var-in-ctx? {Γ ∷ B} {Γ' ∷ A} Hd with var-in-ctx? {Γ ∷ B} {Γ'} Hd
 ... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
 ... | no ¬p with A ≡? B
-... | yes q rewrite (sym q) = yes (uᵣ , Hd)
+... | yes refl = yes (uᵣ , Hd)
 ... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
 var-in-ctx? {Γ ∷ B} {Γ' ∷ A} {A = C} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'} x
 ... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
 ... | no ¬p with A ≡? C
-... | yes q rewrite (sym q) = yes (uᵣ , Hd)
+... | yes refl = yes (uᵣ , Hd)
 ... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
 var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ∷ A} {A = B} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
 ... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
 ... | no ¬p with A ≡? B
-... | yes q rewrite (sym q) = yes (uᵣ , Hd)
+... | yes refl = yes (uᵣ , Hd)
 ... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
 var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} Hd with var-in-ctx? {Γ ∷ A} {Γ'} Hd
 ... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
@@ -410,3 +409,25 @@ ctx-grade-ᶜ-∸ (Γ ⟨ τ' ⟩) (suc τ) p with suc τ ≤? τ'
     (sym (¬k≤m⇒k∸m≤n⇒n+m∸k≤n∸k∸m ¬q (m≤n+k⇒m∸k≤n (suc τ) (ctx-grade Γ) τ' p)))
 
 -}
+
+split-struct-≡ : ∀ {Γ Γ' Γ'' A ρ₁ ρ₂}
+               → (x : A ∈[ ρ₁ ] Γ')
+               → (y : A ∈[ ρ₂ ] Γ)
+               → proj₁ (var-split y) ≡ proj₁ (var-split x)
+               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
+               → Γ' ++ᶜ Γ'' ≡ Γ
+split-struct-≡ {Γ} {Γ'} {Γ''} {A} x y eq₁ eq₂ =
+  begin
+    Γ' ++ᶜ Γ''
+  ≡⟨ cong (_++ᶜ Γ'') (sym (split-≡ (proj₁ (proj₂ (proj₂ (var-split x)))))) ⟩
+    proj₁ (var-split x) ∷ A ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
+  ≡⟨ ++ᶜ-assoc (proj₁ (var-split x) ∷ A) (proj₁ (proj₂ (var-split x))) Γ'' ⟩
+    proj₁ (var-split x) ∷ A ++ᶜ (proj₁ (proj₂ (var-split x)) ++ᶜ Γ'')
+  ≡⟨ cong (proj₁ (var-split x) ∷ A ++ᶜ_) (sym eq₂) ⟩ 
+    proj₁ (var-split x) ∷ A ++ᶜ ((proj₁ (proj₂ (var-split y))))
+  ≡⟨ (cong (_++ᶜ proj₁ (proj₂ (var-split y))) (cong (_∷ A) (sym eq₁))) ⟩
+    proj₁ (var-split y) ∷ A ++ᶜ proj₁ (proj₂ (var-split y))
+  ≡⟨ split-≡ (proj₁ (proj₂ (proj₂ (var-split y)))) ⟩ 
+    Γ
+  ∎
+

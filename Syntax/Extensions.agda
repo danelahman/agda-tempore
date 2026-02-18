@@ -12,6 +12,7 @@ open GradeSystemInterface Grades
 
 open import Data.Product
 open import Data.Empty
+open import Data.Sum
 
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
@@ -141,3 +142,53 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst {
 ++ᶜ-ext id-ext     = id-ext
 ++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
 ++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
+
+---- Move to extensions:
+
+-- Extensions don't decrease contexts
+postulate
+  ext-decrease-contradiction-∷ : ∀ {Γ A ρ} → Ext (Γ ∷ A) ρ Γ → ⊥
+  ext-decrease-contradiction-⟨⟩ : ∀ {Γ ρ ρ'} → Ext (Γ ⟨ ρ' ⟩) ρ Γ → ⊥
+
+ext-≡-grade : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → ρ ≡ ρ' → Ext Γ ρ' Γ'
+ext-≡-grade e refl = e
+
+-- Inversion lemmas
+
+inv-ext-∷ : ∀ {Γ ρ Γ' A}
+          → (e : Ext Γ ρ (Γ' ∷ A))
+          → ( Σ[ eq-grades ∈ (uᵣ ≡ ρ) ]
+                 Σ[ eq-ctxs ∈ (Γ ≡ (Γ' ∷ A)) ]
+                   (subst₂ (λ gr ctx → Ext Γ gr ctx) eq-grades eq-ctxs id-ext ≡ e))
+          ⊎ (Ext Γ ρ Γ')
+inv-ext-∷ id-ext    = inj₁ (refl , refl , refl)
+inv-ext-∷ (∷-ext e) = inj₂ e
+
+inv-ext-⟨⟩ : ∀ {Γ ρ Γ' ρ'} 
+           → (e : Ext Γ ρ (Γ' ⟨ ρ' ⟩)) 
+           → (Σ[ eq-grades ∈ (uᵣ ≡ ρ) ]
+                 Σ[ eq-ctxs ∈ (Γ ≡ Γ' ⟨ ρ' ⟩) ]
+                   (subst₂ (λ gr ctx → Ext Γ gr ctx) eq-grades eq-ctxs id-ext ≡ e))
+             ⊎ (Σ[ ρ'' ∈ R ] (Ext Γ ρ'' Γ' × (ρ ≡ ρ'' ·ᵣ ρ' )))
+inv-ext-⟨⟩ id-ext     = inj₁ (refl , refl , refl)
+inv-ext-⟨⟩ (⟨⟩-ext e) = inj₂ (_ , e , refl)
+
+id-ext-split-≢-contradiction-∷ : ∀ {Γ Γ' A B ρ₁ ρ₂}
+                               → (x : A ∈[ ρ₁ ] Γ')
+                               → (y : A ∈[ ρ₂ ] Γ)
+                               → proj₁ (var-split y) ≡ proj₁ (var-split x)
+                               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ∷ B
+                               → Ext Γ uᵣ Γ'
+                               → ⊥
+id-ext-split-≢-contradiction-∷ {Γ} {Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
+  ext-decrease-contradiction-∷ {Γ = Γ'} e
+
+id-ext-split-≢-contradiction-⟨⟩ : ∀ {Γ Γ' A ρ' ρ₁ ρ₂}
+                            → (x : A ∈[ ρ₁ ] Γ')
+                            → (y : A ∈[ ρ₂ ] Γ)
+                            → proj₁ (var-split y) ≡ proj₁ (var-split x)
+                            → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ⟨ ρ' ⟩
+                            → Ext Γ uᵣ Γ'
+                            → ⊥
+id-ext-split-≢-contradiction-⟨⟩ {Γ' = Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
+ ext-decrease-contradiction-⟨⟩ {Γ = Γ'} e
