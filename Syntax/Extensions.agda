@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+-- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 ------------------------
 -- Context extensions --
@@ -31,6 +31,12 @@ data Ext : Ctx → R → Ctx → Set where
   id-ext : ∀ {Γ} → Ext Γ uᵣ Γ
   ∷-ext : ∀ {Γ Γ' A ρ} → Ext Γ ρ Γ' → Ext Γ ρ (Γ' ∷ A)
   ⟨⟩-ext : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → Ext Γ (ρ ·ᵣ ρ') (Γ' ⟨ ρ' ⟩)
+
+-- Extensions don't decrease contexts
+
+postulate
+  ext-decrease-contradiction-∷ : ∀ {Γ A ρ} → Ext (Γ ∷ A) ρ Γ → ⊥
+  ext-decrease-contradiction-⟨⟩ : ∀ {Γ ρ ρ'} → Ext (Γ ⟨ ρ' ⟩) ρ Γ → ⊥
 
 -- Concatenation extends a context
 
@@ -117,9 +123,17 @@ ext-var (⟨⟩-ext {ρ' = ρ'} e) x with ext-var e x
 
 --
 wk-ctx-ext : ∀ {Γ Γ' A ρ ρ'} → Ext Γ ρ Γ' → A ∈[ ρ' ] Γ' → Ext (Γ ∷ A) ρ Γ'
-wk-ctx-ext {Γ} {Γ} id-ext x = {!!}
-wk-ctx-ext {Γ} {Γ'} (∷-ext e) x = {!!}
-wk-ctx-ext {Γ} {Γ'} (⟨⟩-ext e) x = {!!}
+wk-ctx-ext e x = {!!}
+
+-- Adding part of the grade difference to the extended contexts
+-- keeps the extension, changing the grade difference
+
+ext-shift-grade : ∀ {Γ Γ' ρ ρ' ρ''}
+                → Ext Γ (uᵣ ·ᵣ ρ) (Γ ⟨ ρ ⟩)
+                → Ext Γ ρ' Γ'
+                → ρ' ≾ᵣ (ρ ·ᵣ ρ'')
+                → Ext (Γ ⟨ ρ ⟩) ρ'' Γ'
+ext-shift-grade {Γ} e₁ e₂ rel = {!!}
 
 -- Splitting a renaming by an extension (second attempt, by induction on the extended context and its variables)
 
@@ -131,10 +145,19 @@ split-ren : ∀ {Γ Γ' Γ'' ρ}
 split-ren {Γ} {Γ'} {[]} {ρ} e r rewrite sym (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ)) =
   [] , id-ren , ctx-grade Γ' , ctx-grade-≾ r , ext-[]
 split-ren {Γ} {Γ'} {Γ'' ∷ A} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
-... | Γ''' , r' , ρ'' , rel , e' = {!!}
-split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
-... | Γ''' , r' , ρ'' , rel , e' =
-  {!!} , {!!} , {!!} , {!!} , {!!}
+... | Γ''' , r' , ρ' , rel , e' =
+  Γ''' ∷ A ,
+  cong-∷-ren r' ,
+  ρ' ,
+  ≾ᵣ-trans rel (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ,
+  wk-ctx-ext e' (proj₂ (proj₂ (var-rename r (proj₂ (ext-var e Hd)))))
+split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
+... | Γ''' , r' , ρ' , rel , e' =
+  Γ''' ⟨ ρ'' ⟩ ,
+  cong-⟨⟩-ren r' ,
+  ρ ,
+  ≾ᵣ-refl ,
+  ext-shift-grade (⟨⟩-ext id-ext) e' (≾ᵣ-trans rel (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ''))))
 
 -- Concatenation of extensions
 
@@ -142,13 +165,6 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst {
 ++ᶜ-ext id-ext     = id-ext
 ++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
 ++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
-
----- Move to extensions:
-
--- Extensions don't decrease contexts
-postulate
-  ext-decrease-contradiction-∷ : ∀ {Γ A ρ} → Ext (Γ ∷ A) ρ Γ → ⊥
-  ext-decrease-contradiction-⟨⟩ : ∀ {Γ ρ ρ'} → Ext (Γ ⟨ ρ' ⟩) ρ Γ → ⊥
 
 ext-≡-grade : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → ρ ≡ ρ' → Ext Γ ρ' Γ'
 ext-≡-grade e refl = e
@@ -172,6 +188,8 @@ inv-ext-⟨⟩ : ∀ {Γ ρ Γ' ρ'}
              ⊎ (Σ[ ρ'' ∈ R ] (Ext Γ ρ'' Γ' × (ρ ≡ ρ'' ·ᵣ ρ' )))
 inv-ext-⟨⟩ id-ext     = inj₁ (refl , refl , refl)
 inv-ext-⟨⟩ (⟨⟩-ext e) = inj₂ (_ , e , refl)
+
+-- If Γ is extended by Γ' but Γ is "bigger" than Γ', then we reach a contradiction
 
 id-ext-split-≢-contradiction-∷ : ∀ {Γ Γ' A B ρ₁ ρ₂}
                                → (x : A ∈[ ρ₁ ] Γ')
