@@ -1,4 +1,4 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 ------------------------
 -- Context extensions --
@@ -14,13 +14,13 @@ open import Data.Product
 open import Data.Empty
 open import Data.Sum
 
-open import Relation.Binary.Core
-open import Relation.Binary.Definitions
+open import Relation.Binary.Core -- Remove?
+open import Relation.Binary.Definitions -- Remove?
 open import Relation.Nullary -- Remove?
 open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] )
 open Eq.≡-Reasoning
 
-open import Syntax.Extensions.Raw (Grades)
+--open import Syntax.Extensions.Raw (Grades) -- Remove
 
 open import Syntax.Contexts (Grades)
 open import Syntax.Renamings (Grades)
@@ -29,14 +29,19 @@ open import Syntax.Renamings (Grades)
 
 data Ext : Ctx → R → Ctx → Set where
   id-ext : ∀ {Γ} → Ext Γ uᵣ Γ
-  ∷-ext : ∀ {Γ Γ' A ρ} → Ext Γ ρ Γ' → Ext Γ ρ (Γ' ∷ A)
+  ∷-ext  : ∀ {Γ Γ' A ρ} → Ext Γ ρ Γ' → Ext Γ ρ (Γ' ∷ A)
   ⟨⟩-ext : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → Ext Γ (ρ ·ᵣ ρ') (Γ' ⟨ ρ' ⟩)
 
--- Extensions don't decrease contexts
+-- Subcontexts cannot extend their supercontexts
 
 postulate
   ext-decrease-contradiction-∷ : ∀ {Γ A ρ} → Ext (Γ ∷ A) ρ Γ → ⊥
   ext-decrease-contradiction-⟨⟩ : ∀ {Γ ρ ρ'} → Ext (Γ ⟨ ρ' ⟩) ρ Γ → ⊥
+
+--
+
+ext-≡-grade : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → ρ ≡ ρ' → Ext Γ ρ' Γ'
+ext-≡-grade e refl = e
 
 -- Concatenation extends a context
 
@@ -122,6 +127,15 @@ ext-var (⟨⟩-ext {ρ' = ρ'} e) x with ext-var e x
 ... | ρ'' , y = _ , Tl-⟨⟩ y
 
 --
+
+ext-remove-one : ∀ {Γ Γ' A ρ ρ'}
+               → Ext (Γ ∷ A) ρ Γ'
+               → (x : A ∈[ ρ' ] Γ')
+               → Ext Γ ρ (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)))
+               × Ren (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x))) Γ'
+ext-remove-one e x = {!!}
+
+--
 wk-ctx-ext : ∀ {Γ Γ' A ρ ρ'} → Ext Γ ρ Γ' → A ∈[ ρ' ] Γ' → Ext (Γ ∷ A) ρ Γ'
 wk-ctx-ext e x = {!!}
 
@@ -133,10 +147,28 @@ ext-shift-grade : ∀ {Γ Γ' ρ ρ' ρ''}
                 → Ext Γ ρ' Γ'
                 → ρ' ≾ᵣ (ρ ·ᵣ ρ'')
                 → Ext (Γ ⟨ ρ ⟩) ρ'' Γ'
-ext-shift-grade {Γ} e₁ e₂ rel = {!!}
+ext-shift-grade {Γ} {Γ'} e₁ e₂ rel = {!!}
 
 -- Splitting a renaming by an extension (second attempt, by induction on the extended context and its variables)
+split-ren : ∀ {Γ Γ' Γ'' ρ}
+           → Ext Γ'' ρ Γ
+           → Ren Γ Γ'
+           → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ' Γ')
 
+split-ren {Γ} {Γ'} {[]} {ρ} e r rewrite sym (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ)) =
+  [] , id-ren , ctx-grade Γ' , ctx-grade-≾ r , ext-[]
+split-ren {Γ} {Γ'} {Γ'' ∷ A} {ρ} e r with ext-remove-one e (proj₂ (ext-var e (Hd {Γ = Γ''})))
+... | e' , r' with split-ren e' (r ∘ʳ r')
+... | Γ'''' , r'' , ρ' , rel , e'' = Γ'''' ∷ A , cong-∷-ren r'' , ρ' , rel , {!!}
+split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
+... | Γ''' , r' , ρ' , rel , e' =
+  Γ''' ⟨ ρ'' ⟩ ,
+  cong-⟨⟩-ren r' ,
+  ρ ,
+  ≾ᵣ-refl ,
+  ext-shift-grade (⟨⟩-ext id-ext) e' (≾ᵣ-trans rel (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ''))))
+
+{-
 split-ren : ∀ {Γ Γ' Γ'' ρ}
            → Ext Γ'' ρ Γ
            → Ren Γ Γ'
@@ -158,6 +190,7 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst 
   ρ ,
   ≾ᵣ-refl ,
   ext-shift-grade (⟨⟩-ext id-ext) e' (≾ᵣ-trans rel (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ''))))
+-}
 
 -- Concatenation of extensions
 
@@ -166,8 +199,6 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst 
 ++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
 ++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
 
-ext-≡-grade : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → ρ ≡ ρ' → Ext Γ ρ' Γ'
-ext-≡-grade e refl = e
 
 -- Inversion lemmas
 
