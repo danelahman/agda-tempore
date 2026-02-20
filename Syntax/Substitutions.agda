@@ -44,7 +44,8 @@ var-in-ctx-prev-ext? :
         )
 
 var-in-ctx-prev-ext? id-ext x = yes (_ , x , refl , id-ext)
-var-in-ctx-prev-ext? (∷-ext e) Hd = no (λ { (_ , Hd , refl , id-ext) → ext-decrease-contradiction-∷ e })
+var-in-ctx-prev-ext? (∷-ext e) Hd =
+  no (λ { (_ , Hd , refl , id-ext) → ext-decrease-contradiction (λ { () }) e })
 var-in-ctx-prev-ext? (∷-ext e) (Tl-∷ x) with var-in-ctx-prev-ext? e x
 ... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ∷-ext e')
 ... | no ¬p =
@@ -109,7 +110,7 @@ mutual
 
   var y       [ x ↦ W ]v = y [ x ↦ W ]var
   const c     [ x ↦ W ]v = const c
-  ⦉ V₁ , V₂ ⦊ [ x ↦ W ]v = ⦉ V₁ [ x ↦ W ]v , V₂ [ x ↦ W ]v ⦊
+  ⦉ V₁ , V₂ ⦊  [ x ↦ W ]v = ⦉ V₁ [ x ↦ W ]v , V₂ [ x ↦ W ]v ⦊
   ⋆           [ x ↦ W ]v = ⋆
   lam M       [ x ↦ W ]v = lam (M [ Tl-∷ x ↦ W ]c)
 

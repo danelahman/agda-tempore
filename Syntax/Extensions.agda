@@ -32,11 +32,44 @@ data Ext : Ctx → R → Ctx → Set where
   ∷-ext  : ∀ {Γ Γ' A ρ} → Ext Γ ρ Γ' → Ext Γ ρ (Γ' ∷ A)
   ⟨⟩-ext : ∀ {Γ Γ' ρ ρ'} → Ext Γ ρ Γ' → Ext Γ (ρ ·ᵣ ρ') (Γ' ⟨ ρ' ⟩)
 
+-- Inversion lemmas
+
+inv-ext-∷ : ∀ {Γ ρ Γ' A}
+          → (e : Ext Γ ρ (Γ' ∷ A))
+          → ( Σ[ eq-grades ∈ (uᵣ ≡ ρ) ]
+                 Σ[ eq-ctxs ∈ (Γ ≡ (Γ' ∷ A)) ]
+                   (subst₂ (λ gr ctx → Ext Γ gr ctx) eq-grades eq-ctxs id-ext ≡ e))
+          ⊎ (Ext Γ ρ Γ')
+inv-ext-∷ id-ext    = inj₁ (refl , refl , refl)
+inv-ext-∷ (∷-ext e) = inj₂ e
+
+inv-ext-⟨⟩ : ∀ {Γ ρ Γ' ρ'} 
+           → (e : Ext Γ ρ (Γ' ⟨ ρ' ⟩)) 
+           → (Σ[ eq-grades ∈ (uᵣ ≡ ρ) ]
+                 Σ[ eq-ctxs ∈ (Γ ≡ Γ' ⟨ ρ' ⟩) ]
+                   (subst₂ (λ gr ctx → Ext Γ gr ctx) eq-grades eq-ctxs id-ext ≡ e))
+             ⊎ (Σ[ ρ'' ∈ R ] (Ext Γ ρ'' Γ' × (ρ ≡ ρ'' ·ᵣ ρ' )))
+inv-ext-⟨⟩ id-ext     = inj₁ (refl , refl , refl)
+inv-ext-⟨⟩ (⟨⟩-ext e) = inj₂ (_ , e , refl)
+
 -- Subcontexts cannot extend their supercontexts
 
-postulate
-  ext-decrease-contradiction-∷ : ∀ {Γ A ρ} → Ext (Γ ∷ A) ρ Γ → ⊥
-  ext-decrease-contradiction-⟨⟩ : ∀ {Γ ρ ρ'} → Ext (Γ ⟨ ρ' ⟩) ρ Γ → ⊥
+ext-decrease-contradiction-[] : ∀ {Γ ρ} → Γ ≢ [] → Ext Γ ρ [] → ⊥
+ext-decrease-contradiction-[] {Γ} {ρ} p id-ext = p refl
+
+ext-decrease-contradiction : ∀ {Γ Γ' ρ} → Γ' ≢ [] → Ext (Γ ++ᶜ Γ') ρ Γ → ⊥
+ext-decrease-contradiction {[]} {Γ'} {ρ} p e rewrite ++ᶜ-identityˡ {Γ'} =
+  ext-decrease-contradiction-[] p e
+ext-decrease-contradiction {Γ ∷ A} {Γ'} {ρ} p e with inv-ext-∷ e
+... | inj₁ (q , r , u) =
+  p (++ᶜ-identityʳ-unique (sym r))
+... | inj₂ e' rewrite ++ᶜ-assoc Γ ([] ∷ A) Γ' =
+  ext-decrease-contradiction (λ q → {!!}) e'
+ext-decrease-contradiction {Γ ⟨ ρ' ⟩} {Γ'} {ρ} p e with inv-ext-⟨⟩ e
+... | inj₁ (q , r , u) =
+  p (++ᶜ-identityʳ-unique (sym r))
+... | inj₂ (ρ'' , e' , q) rewrite ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) Γ' =
+  ext-decrease-contradiction {!!} e'
 
 --
 
@@ -199,27 +232,6 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst 
 ++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
 ++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
 
-
--- Inversion lemmas
-
-inv-ext-∷ : ∀ {Γ ρ Γ' A}
-          → (e : Ext Γ ρ (Γ' ∷ A))
-          → ( Σ[ eq-grades ∈ (uᵣ ≡ ρ) ]
-                 Σ[ eq-ctxs ∈ (Γ ≡ (Γ' ∷ A)) ]
-                   (subst₂ (λ gr ctx → Ext Γ gr ctx) eq-grades eq-ctxs id-ext ≡ e))
-          ⊎ (Ext Γ ρ Γ')
-inv-ext-∷ id-ext    = inj₁ (refl , refl , refl)
-inv-ext-∷ (∷-ext e) = inj₂ e
-
-inv-ext-⟨⟩ : ∀ {Γ ρ Γ' ρ'} 
-           → (e : Ext Γ ρ (Γ' ⟨ ρ' ⟩)) 
-           → (Σ[ eq-grades ∈ (uᵣ ≡ ρ) ]
-                 Σ[ eq-ctxs ∈ (Γ ≡ Γ' ⟨ ρ' ⟩) ]
-                   (subst₂ (λ gr ctx → Ext Γ gr ctx) eq-grades eq-ctxs id-ext ≡ e))
-             ⊎ (Σ[ ρ'' ∈ R ] (Ext Γ ρ'' Γ' × (ρ ≡ ρ'' ·ᵣ ρ' )))
-inv-ext-⟨⟩ id-ext     = inj₁ (refl , refl , refl)
-inv-ext-⟨⟩ (⟨⟩-ext e) = inj₂ (_ , e , refl)
-
 -- If Γ is extended by Γ' but Γ is "bigger" than Γ', then we reach a contradiction
 
 id-ext-split-≢-contradiction-∷ : ∀ {Γ Γ' A B ρ₁ ρ₂}
@@ -230,7 +242,7 @@ id-ext-split-≢-contradiction-∷ : ∀ {Γ Γ' A B ρ₁ ρ₂}
                                → Ext Γ uᵣ Γ'
                                → ⊥
 id-ext-split-≢-contradiction-∷ {Γ} {Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
-  ext-decrease-contradiction-∷ {Γ = Γ'} e
+  ext-decrease-contradiction (λ { () }) e
 
 id-ext-split-≢-contradiction-⟨⟩ : ∀ {Γ Γ' A ρ' ρ₁ ρ₂}
                             → (x : A ∈[ ρ₁ ] Γ')
@@ -240,4 +252,4 @@ id-ext-split-≢-contradiction-⟨⟩ : ∀ {Γ Γ' A ρ' ρ₁ ρ₂}
                             → Ext Γ uᵣ Γ'
                             → ⊥
 id-ext-split-≢-contradiction-⟨⟩ {Γ' = Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
- ext-decrease-contradiction-⟨⟩ {Γ = Γ'} e
+ ext-decrease-contradiction (λ {()}) e
