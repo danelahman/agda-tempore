@@ -117,11 +117,12 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ᵣ_;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
-     ≾-trans to ≾ᵣ-trans;
      ≾-refl to ≾ᵣ-refl;
+     ≾-trans to ≾ᵣ-trans;
      u≾c to uᵣ≾ᵣc;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≾?_ to _≾ᵣ?_;
+     _≡?_ to _≡ᵣ?_;
      c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
      c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ;
      c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ;
@@ -136,12 +137,15 @@ module GradeSystemInterface (GS : GradeSystem) where
      _·_ to _·ₑ_;
      u to uₑ;
      ·-identityʳ to ·ₑ-identityʳ;
+     ·-identityˡ to ·ₑ-identityˡ;
      ·-assoc to ·ₑ-assoc;
      _≾_ to _≾ₑ_;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
+     ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-trans to ≾ₑ-trans;
-     embedNat to embedE;
      _≾?_ to _≾ₑ?_;
+     _≡?_ to _≡ₑ?_;
+     embedNat to embedE;
      ≾-reflexive to ≾ₑ-reflexive
    ) public
 

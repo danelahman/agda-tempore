@@ -2,18 +2,22 @@
 -- Signature of operation symbols over ground types --
 ------------------------------------------------------
 
+open import Relation.Binary.Definitions using (Decidable)
+
 open import Syntax.Grades
 
+open import Util.Equality
 module Util.Operations (Grades : GradeSystem) where
 
 open GradeSystem Grades
 open Grade EGrade renaming (Carrier to E)
 open Grade RGrade renaming (Carrier to R)
 
--- Base types
+-- Decidable set of base types
 
 postulate
   BaseType : Set
+  _≡ᵇ?_ : Decidable (_≡_ {A = BaseType})
 
 -- Set of (constant) elements for each base type
 

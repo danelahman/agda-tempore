@@ -13,7 +13,7 @@ open import Data.Product
 open import Data.Sum
 
 open import Relation.Binary.Definitions
-open import Relation.Nullary -- Remove?
+open import Relation.Nullary
 
 open import Syntax.Types (Grades)
 
@@ -248,8 +248,61 @@ var-in-split {Γ₂ = Γ₂ ⟨ ρ₂ ⟩} {ρ = ρ} (split-⟨⟩ p) (Tl-⟨⟩
 ... | inj₂ (y , rel , rel') =
   inj₂ (Tl-⟨⟩ y , rel , cong (_⟨ ρ₂ ⟩) rel')
 
-postulate 
-  _≡ᵥ?_ : Decidable (_≡_ {Agda.Primitive.lzero} {VType})
+_≡ᵥ?_ : Decidable (_≡_ {A = VType})
+Base b ≡ᵥ? Base b' with b ≡ᵇ? b'
+... | yes refl = yes refl
+... | no ¬p = no (λ { refl → ¬p refl })
+Base b ≡ᵥ? Unit = no (λ { () })
+Base b ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Base b ≡ᵥ? Empty = no (λ { () })
+Base b ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Base b ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+Unit ≡ᵥ? Base b' = no (λ { () })
+Unit ≡ᵥ? Unit = yes refl
+Unit ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Unit ≡ᵥ? Empty = no (λ { () })
+Unit ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Unit ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? Base b' = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? Unit = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? (B₁ |×| B₂) with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂
+... | yes p | yes q = yes (cong₂ _|×|_ p q)
+... | yes p | no ¬q = no (λ { refl → ¬q refl })
+... | no ¬p | yes q = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q = no λ { refl → ¬p refl }
+(A₁ |×| A₂) ≡ᵥ? Empty = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+Empty ≡ᵥ? Base b' = no (λ { () })
+Empty ≡ᵥ? Unit = no (λ { () })
+Empty ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Empty ≡ᵥ? Empty = yes refl
+Empty ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Base b' = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Unit = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Empty = no (λ { () })
+(A₁ ⇒ A₂ ‼ ε) ≡ᵥ? (B₁ ⇒ B₂ ‼ ε') with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂ | ε ≡ₑ? ε'
+... | yes p | yes q | yes r = yes (cong₂ _⇒_ p (cong₂ _‼_ q r))
+... | yes p | yes q | no ¬r = no (λ { refl → ¬r refl })
+... | yes p | no ¬q | yes r = no (λ { refl → ¬q refl })
+... | yes p | no ¬q | no ¬r = no (λ { refl → ¬q refl })
+... | no ¬p | yes q | yes r = no (λ { refl → ¬p refl })
+... | no ¬p | yes q | no ¬r = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q | yes r = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q | no ¬r = no (λ { refl → ¬p refl })
+(A₁ ⇒ A₂) ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+([ ρ ] A) ≡ᵥ? Base b' = no (λ { () })
+([ ρ ] A) ≡ᵥ? Unit = no (λ { () })
+([ ρ ] A) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+([ ρ ] A) ≡ᵥ? Empty = no (λ { () })
+([ ρ ] A) ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+([ ρ ] A) ≡ᵥ? ([ ρ' ] B) with A ≡ᵥ? B | ρ ≡ᵣ? ρ'
+... | yes p | yes q = yes (cong₂ [_]_ q p)
+... | yes p | no ¬q = no (λ { refl → ¬q refl })
+... | no ¬p | yes q = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q = no (λ { refl → ¬p refl })
 
 -- No variable belongs to the empty context
 
