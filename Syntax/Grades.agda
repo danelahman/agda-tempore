@@ -26,7 +26,7 @@ record Grade : Set₁ where
     Carrier : Set₀
 
     -- monoid ops
-    _≈_ : Rel Carrier lzero
+    _≈_ : Rel Carrier lzero  -- TODO: I would myself just use propositional equality for equality of monoid elements, and then enough extensionality principles for reasoning
     _·_ : Carrier → Carrier → Carrier
     u   : Carrier
 

@@ -27,9 +27,9 @@ open import Syntax.Types (Grades)
 
 open import Util.Equality
 
----- Checking whether a variable in a context Γ belongs to the context Γ extends
+-- Checking whether a variable in a context Γ belongs to the context Γ extends
 
--- If the variable is in the context before its extension
+---- If the variable is in the context before its extension
 var-in-ctx-prev-ext? :
   ∀ {Γ Γ' A ρ' ρ}
   → Ext Γ ρ' Γ'
@@ -63,7 +63,7 @@ var-in-ctx-prev-ext? {Γ} {Γ' ⟨ ρ₂ ⟩} {A} {ρ'} {ρ} (⟨⟩-ext {ρ = �
             → id-ext-split-≢-contradiction-⟨⟩ x y eq eq-ctxs (ext-≡-grade e (c·ᵣd≡uᵣ⇒c≡uᵣ (sym eq-grades)));
           (inj₂ (_ , e'' , eq-grades)) → ¬p (ρ₁ , y , eq , ext-≡-grade e'' (sym (c·ᵣd≡e·ᵣd⇒c≡e eq-grades))) }})
 
--- If the variable is not in the context before the extension
+---- If the variable is not in the context before the extension
 
 var-not-in-ctx-prev-ext : ∀ {Γ Γ' A ρ ρ'}
                         → Ext Γ ρ Γ'
@@ -84,18 +84,20 @@ var-not-in-ctx-prev-ext (⟨⟩-ext e) (Tl-⟨⟩ x) ¬p =
 
 -- Substituting a value for a variable in context
 
-_[_↦_]var : ∀ {Γ A B ρ}
-          → B ∈[ uᵣ ] Γ
+⟨_,_⟩[_↦_]var : ∀ {Γ A B ρ ρ'}
+          → B ∈[ ρ' ] Γ
+          → ρ' ≡ uᵣ
           → (x : A ∈[ ρ ] Γ)
           → proj₁ (var-split x) ⊢V⦂ A
-          ---------------------------------------------------------------
+          -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
 
-Hd [ Hd ↦ W ]var = W
-Hd [ Tl-∷ x ↦ W ]var = var Hd
-Tl-∷ y [ Hd ↦ W ]var = var y
-Tl-∷ y [ Tl-∷ x ↦ W ]var = V-rename wk-ren (y [ x ↦ W ]var)
-Tl-⟨⟩ y [ Tl-⟨⟩ x ↦ W ]var = {!!}
+⟨ Hd , p ⟩[ Hd ↦ W ]var = W
+⟨ Hd , p ⟩[ Tl-∷ x ↦ W ]var = var Hd
+⟨ Tl-∷ y , refl ⟩[ Hd ↦ W ]var = var y
+⟨ Tl-∷ y , p ⟩[ Tl-∷ x ↦ W ]var = V-rename wk-ren ⟨ y , p ⟩[ x ↦ W ]var
+⟨ Tl-⟨⟩ y , p ⟩[ Tl-⟨⟩ x ↦ W ]var with c·ᵣd≡uᵣ⇒c≡uᵣ p | c·ᵣd≡uᵣ⇒d≡uᵣ p
+... | refl | refl = V-rename ⟨⟩-η⁻¹-ren ⟨ y , refl ⟩[ x ↦ W ]var
 
 -- Substituting a value for a variable in a well-typed term
 
@@ -108,7 +110,7 @@ mutual
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
 
-  var y       [ x ↦ W ]v = y [ x ↦ W ]var
+  var y       [ x ↦ W ]v = ⟨ y , refl ⟩[ x ↦ W ]var
   const c     [ x ↦ W ]v = const c
   ⦉ V₁ , V₂ ⦊  [ x ↦ W ]v = ⦉ V₁ [ x ↦ W ]v , V₂ [ x ↦ W ]v ⦊
   ⋆           [ x ↦ W ]v = ⋆
