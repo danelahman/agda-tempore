@@ -17,89 +17,54 @@ open import Relation.Nullary using (¬_)
 open import Util.Equality
 open import Util.Ordered.Structures
 
+-- Ordered effect and resource monoids
+
 record Grade : Set₁ where
   infixl 7 _·_
-  infix  4 _≈_
 
   field
 
     Carrier : Set₀
 
-    -- monoid ops
-    _≈_ : Rel Carrier lzero  -- TODO: I would myself just use propositional equality for equality of monoid elements, and then enough extensionality principles for reasoning
+    -- monoid operations
     _·_ : Carrier → Carrier → Carrier
     u   : Carrier
-
-    -- order
-    _≾_ : Rel Carrier lzero
-    _≺_ : Rel Carrier lzero
-
-    -- monoid is ordered
-    isPomonoid : IsPomonoid _≈_ _≾_ _·_ u
     
-    -- u is the neutral of the _·_ operation (right)
+    -- monoid laws
     ·-identityʳ : (x : Carrier) → (x · u) ≡ x
-
-    -- u is the neutral of the _·_ operation (left)
     ·-identityˡ : (x : Carrier) → (u · x) ≡ x
+    ·-assoc     : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
 
-    -- u is the least element in Carrier
-    u≾c : ∀ {c} → u ≾ c
-    c≺u-contradiction : ∀ {c} → (c ≺ u) → ⊥
+    -- order on the carrier
+    _≾_ : Rel Carrier lzero
 
-    -- _·_ is associative
-    ·-assoc : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
-
-    -- _·_ is monotone w.r.t. _≾_ and _≺_ (right)
+    -- unit is the least element
+    u≾c  : ∀ {c} → u ≾ c
+    c≾u⇒c≡u : ∀ {c} → c ≾ u → c ≡ u
+    
+    -- _·_ is monotone with respect to _≾_
     ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
-    ·-monoʳ-≺ : ∀ {c} →  _Preserves_⟶_ (c ·_) _≺_ _≺_
-
-    -- _·_ is monotone w.r.t. _≾_ (left)
     ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
  
     -- _≾_ is reflexive and transitive
-    ≾-reflexive  : _≡_ ⇒ _≾_
-
     ≾-refl  : Reflexive _≾_
     ≾-trans : Transitive _≾_
-    ≺-trans : Transitive _≺_
 
     -- _≾_ is irrelevant
     ≾-irrelevant : Irrelevant _≾_
 
-    -- _≾_ and _≈_ and _≺_ are decidable
+    -- _≾_ and _≡_ (on Carrier) are decidable
     _≾?_ : Decidable _≾_
-    _≈?_ : Decidable _≈_
-    _≺?_ : Decidable _≺_
+    _≡?_ : Decidable (_≡_ {A = Carrier})
 
-    -- a grade cannot be strictly smaller and greater or equal than another grade 
-    c≺d→d≾c-contradiction : ∀ {c d} → c ≺ d → d ≾ c → ⊥
-
-    -- relation between ≾ and ≺
-    ¬≾⇒≻flip : ∀ {a b} → ¬ (a ≾ b) → (b ≺ a)
-    ¬≺⇒≿flip : ∀ {a b} → ¬ (a ≺ b) → (b ≾ a)
-
-    -- relation between grades
-    c≾u⇒c≡u : ∀ {c} → c ≾ u → c ≡ u
-    c≉u⇒u≺c : ∀ {c} → ¬ (c ≈ u) → u ≺ c
-    u≺c⇒u≢c : ∀ {c} → u ≺ c → ¬ (u ≡ c)
-
-    c≈d⇒c≡d : ∀ {c d} → c ≈ d → c ≡ d
-
-    c-decomp-· : ∀ {c} → Σ[ d ∈ Carrier ] Σ[ e ∈ Carrier ] c ≡ d · e
-
+    -- _≾_ and _≡_ are cancellative
     c·d≾e·d⇒c≾e : ∀ {c d e} → (c · d) ≾ (e · d) → c ≾ e
-    c·d≺e·d⇒c≺e : ∀ {c d e} → (c · d) ≺ (e · d) → c ≺ e
-
+    d·c≾d·e⇒c≾e : ∀ {c d e} → (d · c) ≾ (d · e) → c ≾ e
     c·d≡e·d⇒c≡e : ∀ {c d e} → (c · d) ≡ (e · d) → c ≡ e
+    d·c≡d·e⇒c≡e : ∀ {c d e} → (c · d) ≡ (e · d) → c ≡ e
 
-    c-≾-substₗ : ∀ {c d e} → d ≡ e → d ≾ c → e ≾ c
-    
-    c-≾-substᵣ : ∀ {c d e} → d ≡ e → c ≾ e → c ≾ d
-
-    -- Properties of _·_ and _≡_
+    -- non-zero-divisor property of _·_
     c·d≡u⇒c≡u : ∀ {c d} → c · d ≡ u → c ≡ u
-
     c·d≡u⇒d≡u : ∀ {c d} → c · d ≡ u → d ≡ u
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
@@ -107,10 +72,14 @@ record Grade : Set₁ where
 
     -- ...
 
+  -- helpful axiliary lemma: _≡_ is included in _≾_
+  ≾-reflexive  : _≡_ ⇒ _≾_
+  ≾-reflexive refl = ≾-refl
 
 open Grade
 
 
+-- Morphisms of effect and resource monoids
 
 record _→ᵍ_ (G G' : Grade) : Set₁ where
 
@@ -121,6 +90,7 @@ record _→ᵍ_ (G G' : Grade) : Set₁ where
     -- laws
 
 
+-- Grade systems
 
 record GradeSystem : Set₂ where
 
@@ -129,8 +99,9 @@ record GradeSystem : Set₂ where
     RGrade : Grade
     EGrade : Grade
     ∣_∣ᵉ : EGrade →ᵍ RGrade
-    ∣_∣ʳ : RGrade →ᵍ EGrade -- remove?
 
+
+-- Helpful module exporting effect and resource grade fields with different names
 
 module GradeSystemInterface (GS : GradeSystem) where
 
@@ -143,38 +114,21 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-identityʳ to ·ᵣ-identityʳ;
      ·-identityˡ to ·ᵣ-identityˡ;
      ·-assoc to ·ᵣ-assoc;
-     _≈_ to _≈ᵣ_;
      _≾_ to _≾ᵣ_;
-     _≺_ to _≺ᵣ_;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
-     ·-monoʳ-≺ to ·ᵣ-monoʳ-≺ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
-     ≾-reflexive to ≾ᵣ-reflexive;
      ≾-trans to ≾ᵣ-trans;
      ≾-refl to ≾ᵣ-refl;
      u≾c to uᵣ≾ᵣc;
-     c≈d⇒c≡d to c≈ᵣd⇒c≡d;
      ≾-irrelevant to ≾ᵣ-irrelevant;
-     embedNat to embedR;
-     c-≾-substᵣ to c-≾ᵣ-substᵣ;
-     c-≾-substₗ to c-≾ᵣ-substₗ;
      _≾?_ to _≾ᵣ?_;
-     _≈?_ to _≈ᵣ?_; 
-     _≺?_ to _≺ᵣ?_;
      c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
      c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ;
      c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ;
-     ¬≾⇒≻flip to ¬≾ᵣ⇒≻ᵣflip;
-     ¬≺⇒≿flip to ¬≺ᵣ⇒≿ᵣflip;
-     ≺-trans to ≺ᵣ-trans;
      c·d≾e·d⇒c≾e to c·ᵣd≾ᵣe·d⇒c≾ᵣe;
-     c≺u-contradiction to c≺ᵣuᵣ-contradiction;
-     c≉u⇒u≺c to c≉ᵣuᵣ⇒uᵣ≺ᵣc;
-     c≺d→d≾c-contradiction to c≺ᵣd→d≾ᵣc-contradiction;
-     c·d≺e·d⇒c≺e to c·ᵣd≺ᵣe·ᵣd⇒c≺ᵣe;
-     u≺c⇒u≢c to uᵣ≺ᵣc⇒uᵣ≢c;
      c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
-     c-decomp-· to c-decomp-·ᵣ
+     embedNat to embedR;
+     ≾-reflexive to ≾ᵣ-reflexive
     ) public
 
   open Grade EGrade renaming
@@ -185,39 +139,11 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-assoc to ·ₑ-assoc;
      _≾_ to _≾ₑ_;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
-     ≾-reflexive to ≾ₑ-reflexive;
      ≾-trans to ≾ₑ-trans;
      embedNat to embedE;
-     _≾?_ to _≾ₑ?_
+     _≾?_ to _≾ₑ?_;
+     ≾-reflexive to ≾ₑ-reflexive
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public
 
-
-{-
-module Syntax.Grades
-  {cₑ ℓ₁ ℓ₂} {E : Set cₑ} -- The underlying set (effects)
-  {cᵣ ℓ₃ ℓ₄} {R : Set cᵣ} -- The underlying set (resources)
-  {cpomₑ : CommutativePomonoid cₑ ℓ₁ ℓ₂}
-  {cpomᵣ : CommutativePomonoid cᵣ ℓ₃ ℓ₄}
-  where
-
-open import Relation.Binary
-open import Util.Ordered.Structures
-open import Agda.Primitive
-open import Algebra.Core
-
--- Grades for effects
-Timeₑ : Set cₑ
-Timeₑ = Carrierₑ
-  where open CommutativePomonoid cpomₑ renaming (Carrier to Carrierₑ)
-  
--- Grades for resources
-Timeᵣ : Set cᵣ
-Timeᵣ = Carrierᵣ
-  where open CommutativePomonoid cpomᵣ renaming (Carrier to Carrierᵣ)
-
--- Old version:
--- Timeᵣ : Set (lsuc (cᵣ ⊔ ℓ₃ ⊔ ℓ₄))
--- Timeᵣ = CommutativePomonoid cᵣ ℓ₃ ℓ₄
--}

@@ -249,7 +249,7 @@ var-in-split {Γ₂ = Γ₂ ⟨ ρ₂ ⟩} {ρ = ρ} (split-⟨⟩ p) (Tl-⟨⟩
   inj₂ (Tl-⟨⟩ y , rel , cong (_⟨ ρ₂ ⟩) rel')
 
 postulate 
-  _≡?_ : Decidable (_≡_ {Agda.Primitive.lzero} {VType})
+  _≡ᵥ?_ : Decidable (_≡_ {Agda.Primitive.lzero} {VType})
 
 -- No variable belongs to the empty context
 
@@ -279,17 +279,17 @@ var-in-ctx? : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → Dec (Σ[ ρ' ∈ R ] (A �
 var-in-ctx? {Γ} {[]} x = no var-not-in-empty-ctx
 var-in-ctx? {Γ ∷ B} {Γ' ∷ A} Hd with var-in-ctx? {Γ ∷ B} {Γ'} Hd
 ... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
-... | no ¬p with A ≡? B
+... | no ¬p with A ≡ᵥ? B
 ... | yes refl = yes (uᵣ , Hd)
 ... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
 var-in-ctx? {Γ ∷ B} {Γ' ∷ A} {A = C} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'} x
 ... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
-... | no ¬p with A ≡? C
+... | no ¬p with A ≡ᵥ? C
 ... | yes refl = yes (uᵣ , Hd)
 ... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
 var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ∷ A} {A = B} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
 ... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
-... | no ¬p with A ≡? B
+... | no ¬p with A ≡ᵥ? B
 ... | yes refl = yes (uᵣ , Hd)
 ... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
 var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} Hd with var-in-ctx? {Γ ∷ A} {Γ'} Hd

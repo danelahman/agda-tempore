@@ -63,7 +63,7 @@ wk-ren {Γ} {A} =
 ⟨⟩-η-ren : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
 ⟨⟩-η-ren {Γ} = 
   ren
-    (c-≾ᵣ-substᵣ (·ᵣ-identityʳ (ctx-grade Γ)) ≾ᵣ-refl)
+    (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (ctx-grade Γ))))
     ⟨⟩-η-vren
 
 ⟨⟩-η⁻¹-ren : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
@@ -81,7 +81,7 @@ wk-ren {Γ} {A} =
 ⟨⟩-μ⁻¹-ren : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
 ⟨⟩-μ⁻¹-ren {Γ} {ρ} {ρ'} = 
   ren 
-    (c-≾ᵣ-substᵣ (·ᵣ-assoc (ctx-grade Γ) ρ ρ') ≾ᵣ-refl)
+    (≾ᵣ-reflexive (sym (·ᵣ-assoc (ctx-grade Γ) ρ ρ')))
     ⟨⟩-μ⁻¹-vren
 
 -- Variable congruence renaming

@@ -80,7 +80,7 @@ var-vren x (Tl-∷ {ρ = ρ'} y) =
 
 ⟨⟩-μ⁻¹-vren : ∀ {Γ ρ ρ'} → VRen (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ' ⟩)
 ⟨⟩-μ⁻¹-vren {Γ} {ρ} {ρ'} {A} {.(_ ·ᵣ ρ ·ᵣ ρ')} (Tl-⟨⟩ (Tl-⟨⟩ {ρ' = ρ''} x)) =
-  ρ'' ·ᵣ (ρ ·ᵣ ρ') , c-≾ᵣ-substᵣ (·ᵣ-assoc ρ'' ρ ρ') ≾ᵣ-refl , Tl-⟨⟩ x
+  ρ'' ·ᵣ (ρ ·ᵣ ρ') , ≾ᵣ-reflexive (sym (·ᵣ-assoc ρ'' ρ ρ')) , Tl-⟨⟩ x
 
 ⟨⟩-≾-vren : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → VRen (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
 ⟨⟩-≾-vren {Γ} {ρ} {ρ'} rel {A} {.(_ ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ''} x) =
@@ -174,7 +174,7 @@ var-split₂-wk-ctx-vren {Γ' = Γ' ⟨ ρ' ⟩} x rel with c·ᵣd≡uᵣ⇒d�
 
 vren⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ctx-grade Γ' ≾ᵣ ρ → VRen (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
 vren⟨ρ⟩-ctx {Γ' = []} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
-  ρ' , c-≾ᵣ-substₗ (·ᵣ-identityʳ ρ') (·ᵣ-monoʳ-≾ᵣ rel) , y
+  ρ' , ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ ρ'))) (·ᵣ-monoʳ-≾ᵣ rel) , y
 vren⟨ρ⟩-ctx {Γ' = Γ' ∷ A} rel (Tl-⟨⟩ {ρ' = ρ'} y) =
   ρ' ·ᵣ (ctx-grade Γ') , ·ᵣ-monoʳ-≾ᵣ rel , Tl-∷ (var-ρ-++ᶜ y)
 vren⟨ρ⟩-ctx {Γ' = Γ' ⟨ ρ' ⟩} rel (Tl-⟨⟩ {ρ' = ρ''} y) =
