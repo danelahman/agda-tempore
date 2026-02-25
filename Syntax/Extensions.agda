@@ -131,28 +131,67 @@ _∘ᵉ_ {ρ = ρ} {ρ' = .(ρ₁ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₁} {ρ' = 
 ext-var : ∀ {Γ Γ' A ρ ρ'}
         → Ext Γ' ρ Γ
         → A ∈[ ρ' ] Γ'
-        → Σ[ ρ'' ∈ R ] A ∈[ ρ'' ] Γ
-        
-ext-var id-ext x = _ , x
-ext-var (∷-ext e) x with ext-var e x
-... | ρ'' , y = _ , Tl-∷ y
-ext-var (⟨⟩-ext {ρ' = ρ'} e) x with ext-var e x
-... | ρ'' , y = _ , Tl-⟨⟩ y
+        → A ∈[ ρ' ·ᵣ ρ ] Γ
+         
+ext-var {Γ} {Γ'} {A} {ρ} {ρ'} id-ext x
+  rewrite ·ᵣ-identityʳ ρ' = x
+ext-var (∷-ext e) x =
+  Tl-∷ (ext-var e x)
+ext-var {Γ} {Γ'} {A} {ρ} {ρ'} (⟨⟩-ext {ρ = ρ''} {ρ' = ρ'''} e) x
+  rewrite sym (·ᵣ-assoc ρ' ρ'' ρ''') = Tl-⟨⟩ (ext-var e x)
 
 -- Variable-split contexts induce extensions
 
-var-split-ext : {Γ Γ' Γ'' : Ctx} → Γ , Γ' split Γ'' → Σ[ ρ ∈ R ] Ext Γ ρ Γ''
+var-split-ext : {Γ Γ' Γ'' : Ctx}
+              → Γ , Γ' split Γ''
+              → Σ[ ρ ∈ R ] Ext Γ ρ Γ''
+
 var-split-ext = {!!}
 
 -- Extensions to the same context have to extend one another
 
-ext? : {Γ Γ' Γ'' : Ctx} {ρ ρ' : R} → Ext Γ ρ Γ'' → Ext Γ' ρ' Γ'' → (Σ[ ρ'' ∈ R ] Ext Γ ρ'' Γ') ⊎ (Σ[ ρ'' ∈ R ] Ext Γ' ρ'' Γ)
+ext? : {Γ Γ' Γ'' : Ctx} {ρ ρ' : R}
+     → Ext Γ ρ Γ''
+     → Ext Γ' ρ' Γ''
+     → (Σ[ ρ'' ∈ R ] Ext Γ ρ'' Γ') ⊎ (Σ[ ρ'' ∈ R ] Ext Γ' ρ'' Γ)
+     
 ext? {Γ} {Γ'} {Γ''} {ρ} {ρ'} e e' = {!!}
 
 -- Splitting a renaming by an extension (second attempt, by induction on the extended context and its variables)
 
--- TODO: need to also specify that Ren Γ'' Γ''' is a restriction of Ren Γ Γ' (they behave the same when former is applied to ext-var)
+split-ren : ∀ {Γ Γ' Γ'' ρ}
+          → (e : Ext Γ'' ρ Γ)
+          → (r : Ren Γ Γ')
+          → Σ[ Γ''' ∈ Ctx ]
+            Σ[ r' ∈ Ren Γ'' Γ''' ]
+            Σ[ ρ' ∈ R ]
+            Σ[ e' ∈ Ext Γ''' ρ' Γ' ]
+            ρ' ≾ᵣ ρ ×
+            (∀ {A} {ρ''} (x : A ∈[ ρ'' ] Γ'') →
+              Σ[ p ∈ proj₁ (var-rename r (ext-var e x)) ≡ proj₁ (var-rename r' x) ·ᵣ ρ' ]
+                subst (A ∈[_] Γ') p (proj₂ (proj₂ (var-rename r (ext-var e x)))) ≡ ext-var e' (proj₂ (proj₂ (var-rename r' x))))
 
+split-ren {Γ} {Γ'} {[]} {ρ} e r =
+  [] ,
+  id-ren ,
+  ctx-grade Γ' ,
+  ext-[] ,
+  ≾ᵣ-trans (ctx-grade-≾ r) (≾ᵣ-reflexive (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ))) ,
+  λ { () }
+split-ren {Γ} {Γ'} {Γ'' ∷ A} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
+... | Γ''' , r' , ρ' , e' , rel , p with ext? e' (proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (ext-var e Hd))))))))))
+... | inj₁ (ρ'' , e'') = {!!}
+... | inj₂ (ρ'' , e'') =
+  Γ''' ,
+  ren (ctx-grade-≾ r') (λ { Hd → {!(var-rename r) (ext-var e Hd)!} ;
+                            (Tl-∷ x) → var-rename r' x }) ,
+  ρ' ,
+  e' ,
+  ≾ᵣ-trans rel (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ,
+  {!!}
+split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r = {!!}
+
+{-
 split-ren : ∀ {Γ Γ' Γ'' ρ}
            → Ext Γ'' ρ Γ
            → Ren Γ Γ'
@@ -161,22 +200,16 @@ split-ren : ∀ {Γ Γ' Γ'' ρ}
 split-ren {Γ} {Γ'} {[]} {ρ} e r rewrite sym (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ)) =
   [] , id-ren , ctx-grade Γ' , ctx-grade-≾ r , ext-[]
 split-ren {Γ} {Γ'} {Γ'' ∷ B} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
-... | Γ''' , r' , ρ' , rel , e' with ext? e' (proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (proj₂ (ext-var e Hd)))))))))))
+... | Γ''' , r' , ρ' , rel , e' with ext? e' (proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (ext-var e Hd))))))))))
 ... | inj₁ (ρ'' , e'') =
-  proj₁ (var-split (proj₂ (proj₂ ((var-rename r) (proj₂ (ext-var e Hd)))))) ∷ B ,
+  proj₁ (var-split (proj₂ (proj₂ ((var-rename r) (ext-var e Hd))))) ∷ B ,
   {!!} ,
   {!!} ,
   {!!} ,
-  proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (proj₂ (ext-var e Hd))))))))))
-... | inj₂ (ρ'' , e'') rewrite ·ᵣ-identityˡ ρ =
-  Γ''' ,
-  ren (ctx-grade-≾ r') (λ { Hd → {!!} ;
-                            (Tl-∷ x) → var-rename r' x }) ,
-  ρ' ,
-  rel ,
-  e'
+  proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (ext-var e Hd)))))))))
+... | inj₂ (ρ'' , e'') = {!!}
 split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r = {!!}
-
+-}
 
 -- Concatenation of extensions
 
