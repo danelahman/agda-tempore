@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+-- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 ------------------------
 -- Context extensions --
@@ -126,8 +126,98 @@ _∘ᵉ_ {ρ' = ρ'} (∷-ext e') e = ∷-ext (e' ∘ᵉ e)
 _∘ᵉ_ {ρ = ρ} {ρ' = .(ρ₁ ·ᵣ ρ₂)} (⟨⟩-ext {ρ = ρ₁} {ρ' = ρ₂} e') e with e' ∘ᵉ e
 ... | e'' rewrite (sym (·ᵣ-assoc ρ ρ₁ ρ₂)) = ⟨⟩-ext e''
 
---
+-- Converting variable through extension
 
+ext-var : ∀ {Γ Γ' A ρ ρ'}
+        → Ext Γ' ρ Γ
+        → A ∈[ ρ' ] Γ'
+        → Σ[ ρ'' ∈ R ] A ∈[ ρ'' ] Γ
+        
+ext-var id-ext x = _ , x
+ext-var (∷-ext e) x with ext-var e x
+... | ρ'' , y = _ , Tl-∷ y
+ext-var (⟨⟩-ext {ρ' = ρ'} e) x with ext-var e x
+... | ρ'' , y = _ , Tl-⟨⟩ y
+
+-- Variable-split contexts induce extensions
+
+var-split-ext : {Γ Γ' Γ'' : Ctx} → Γ , Γ' split Γ'' → Σ[ ρ ∈ R ] Ext Γ ρ Γ''
+var-split-ext = {!!}
+
+-- Extensions to the same context have to extend one another
+
+ext? : {Γ Γ' Γ'' : Ctx} {ρ ρ' : R} → Ext Γ ρ Γ'' → Ext Γ' ρ' Γ'' → (Σ[ ρ'' ∈ R ] Ext Γ ρ'' Γ') ⊎ (Σ[ ρ'' ∈ R ] Ext Γ' ρ'' Γ)
+ext? {Γ} {Γ'} {Γ''} {ρ} {ρ'} e e' = {!!}
+
+-- Splitting a renaming by an extension (second attempt, by induction on the extended context and its variables)
+
+-- TODO: need to also specify that Ren Γ'' Γ''' is a restriction of Ren Γ Γ' (they behave the same when former is applied to ext-var)
+
+split-ren : ∀ {Γ Γ' Γ'' ρ}
+           → Ext Γ'' ρ Γ
+           → Ren Γ Γ'
+           → Σ[ Γ''' ∈ Ctx ] (Ren Γ'' Γ''' × Σ[ ρ' ∈ R ] ρ' ≾ᵣ ρ × Ext Γ''' ρ' Γ')
+
+split-ren {Γ} {Γ'} {[]} {ρ} e r rewrite sym (trans (grade-lt-ρ e) (·ᵣ-identityˡ ρ)) =
+  [] , id-ren , ctx-grade Γ' , ctx-grade-≾ r , ext-[]
+split-ren {Γ} {Γ'} {Γ'' ∷ B} {ρ} e r with split-ren (ext-++ᶜ-fst {Γ' = Γ''} e) r
+... | Γ''' , r' , ρ' , rel , e' with ext? e' (proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (proj₂ (ext-var e Hd)))))))))))
+... | inj₁ (ρ'' , e'') =
+  proj₁ (var-split (proj₂ (proj₂ ((var-rename r) (proj₂ (ext-var e Hd)))))) ∷ B ,
+  {!!} ,
+  {!!} ,
+  {!!} ,
+  proj₂ (var-split-ext (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ ((var-rename r) (proj₂ (ext-var e Hd))))))))))
+... | inj₂ (ρ'' , e'') rewrite ·ᵣ-identityˡ ρ =
+  Γ''' ,
+  ren (ctx-grade-≾ r') (λ { Hd → {!!} ;
+                            (Tl-∷ x) → var-rename r' x }) ,
+  ρ' ,
+  rel ,
+  e'
+split-ren {Γ} {Γ'} {Γ'' ⟨ ρ' ⟩} {ρ} e r = {!!}
+
+
+-- Concatenation of extensions
+
+++ᶜ-ext : ∀ {Γ Γ' Γ'' ρ} → Ext Γ ρ Γ' → Ext (Γ'' ++ᶜ Γ) ρ (Γ'' ++ᶜ Γ')
+++ᶜ-ext id-ext     = id-ext
+++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
+++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
+
+-- If Γ is extended by Γ' but Γ is "bigger" than Γ', then we reach a contradiction
+
+id-ext-split-≢-contradiction-∷ : ∀ {Γ Γ' A B ρ₁ ρ₂}
+                               → (x : A ∈[ ρ₁ ] Γ')
+                               → (y : A ∈[ ρ₂ ] Γ)
+                               → proj₁ (var-split y) ≡ proj₁ (var-split x)
+                               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ∷ B
+                               → Ext Γ uᵣ Γ'
+                               → ⊥
+                               
+id-ext-split-≢-contradiction-∷ {Γ} {Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
+  ext-decrease-contradiction (λ { () }) e
+
+id-ext-split-≢-contradiction-⟨⟩ : ∀ {Γ Γ' A ρ' ρ₁ ρ₂}
+                            → (x : A ∈[ ρ₁ ] Γ')
+                            → (y : A ∈[ ρ₂ ] Γ)
+                            → proj₁ (var-split y) ≡ proj₁ (var-split x)
+                            → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ⟨ ρ' ⟩
+                            → Ext Γ uᵣ Γ'
+                            → ⊥
+                            
+id-ext-split-≢-contradiction-⟨⟩ {Γ' = Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
+ ext-decrease-contradiction (λ {()}) e
+
+
+
+
+
+
+
+
+
+{-
 {-
 left-split-ren : ∀ {Γ Γ' Γ''} → Ren (Γ ++ᶜ Γ') Γ'' → Σ[ Γ₁ ∈ Ctx ] (Σ[ Γ₂ ∈ Ctx ] (Ren Γ Γ₁ × (Γ₁ , Γ₂ split Γ'') ))
 left-split-ren {Γ'' = []} r = [] , [] , {!!} , split-[]
@@ -201,6 +291,8 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst 
   ≾ᵣ-refl ,
   ext-shift-grade (⟨⟩-ext id-ext) e' (≾ᵣ-trans rel (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ''))))
 
+-}
+
 {-
 split-ren : ∀ {Γ Γ' Γ'' ρ}
            → Ext Γ'' ρ Γ
@@ -224,32 +316,3 @@ split-ren {Γ} {Γ'} {Γ'' ⟨ ρ'' ⟩} {ρ} e r with split-ren (ext-++ᶜ-fst 
   ≾ᵣ-refl ,
   ext-shift-grade (⟨⟩-ext id-ext) e' (≾ᵣ-trans rel (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ''))))
 -}
-
--- Concatenation of extensions
-
-++ᶜ-ext : ∀ {Γ Γ' Γ'' ρ} → Ext Γ ρ Γ' → Ext (Γ'' ++ᶜ Γ) ρ (Γ'' ++ᶜ Γ')
-++ᶜ-ext id-ext     = id-ext
-++ᶜ-ext (∷-ext e)  = ∷-ext (++ᶜ-ext e)
-++ᶜ-ext (⟨⟩-ext e) = ⟨⟩-ext (++ᶜ-ext e)
-
--- If Γ is extended by Γ' but Γ is "bigger" than Γ', then we reach a contradiction
-
-id-ext-split-≢-contradiction-∷ : ∀ {Γ Γ' A B ρ₁ ρ₂}
-                               → (x : A ∈[ ρ₁ ] Γ')
-                               → (y : A ∈[ ρ₂ ] Γ)
-                               → proj₁ (var-split y) ≡ proj₁ (var-split x)
-                               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ∷ B
-                               → Ext Γ uᵣ Γ'
-                               → ⊥
-id-ext-split-≢-contradiction-∷ {Γ} {Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
-  ext-decrease-contradiction (λ { () }) e
-
-id-ext-split-≢-contradiction-⟨⟩ : ∀ {Γ Γ' A ρ' ρ₁ ρ₂}
-                            → (x : A ∈[ ρ₁ ] Γ')
-                            → (y : A ∈[ ρ₂ ] Γ)
-                            → proj₁ (var-split y) ≡ proj₁ (var-split x)
-                            → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ⟨ ρ' ⟩
-                            → Ext Γ uᵣ Γ'
-                            → ⊥
-id-ext-split-≢-contradiction-⟨⟩ {Γ' = Γ'} x y eq₁ eq₂ e rewrite (sym (split-struct-≡ x y eq₁ eq₂)) =
- ext-decrease-contradiction (λ {()}) e

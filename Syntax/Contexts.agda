@@ -185,7 +185,7 @@ var-ρ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
 
 var-split : ∀ {Γ A ρ}
           → A ∈[ ρ ] Γ
-           → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] Γ₁ ∷ A , Γ₂ split Γ × ctx-grade Γ₂ ≡ ρ
+          → Σ[ Γ₁ ∈ Ctx ] Σ[ Γ₂ ∈ Ctx ] Γ₁ ∷ A , Γ₂ split Γ × ctx-grade Γ₂ ≡ ρ
 var-split (Hd {Γ}) = Γ , [] , split-[] , refl
 var-split {Γ ∷ B} (Tl-∷ x) with var-split x
 ... | Γ₁ , Γ₂ , p₁ , e = Γ₁ , Γ₂ ∷ B , split-∷ p₁ , e
