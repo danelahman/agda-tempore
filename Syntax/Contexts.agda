@@ -117,6 +117,12 @@ infixl 30 _++ᶜ_
 ++ᶜ-inj₂ {Γ} {Γ₁ ⟨ ρ ⟩} {Γ₂ ⟨ ρ' ⟩} q =
   cong₂ _⟨_⟩ (++ᶜ-inj₂ (⟨⟩-injective-ctx q)) (⟨⟩-injective-rgrade q)
 
+++ᶜ-left-zero-divisor : ∀ {Γ Γ'} → Γ ++ᶜ Γ' ≡ [] → Γ ≡ []
+++ᶜ-left-zero-divisor {Γ} {[]} p = p
+
+++ᶜ-right-zero-divisor : ∀ {Γ Γ'} → Γ ++ᶜ Γ' ≡ [] → Γ' ≡ []
+++ᶜ-right-zero-divisor {Γ} {[]} p = refl
+
 -- Amount of time-passage modelled by a context 
 
 ctx-grade : Ctx → R
