@@ -14,9 +14,7 @@ open import Data.Product
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Contexts (Grades)
-open import Syntax.Extensions (Grades)
 open import Syntax.Types (Grades)
-open import Syntax.Renamings (Grades)
 
 open import Util.Equality
 open import Util.Operations (Grades)
@@ -146,12 +144,11 @@ mutual
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
-    unbox   : {A : VType}
+    unbox   : {Γ' : Ctx}
+            → {A : VType}
             → {C : CType}
-            → {Γ' : Ctx}
-            → {ρ ρ' : R}
-            → Ext Γ' ρ' Γ
-            → ρ' ≾ᵣ ρ
+            → {ρ : R}
+            → Γ -ᶜ ρ ≈ Γ'
             → Γ' ⊢V⦂ [ ρ ] A
             → Γ ∷ A ⊢C⦂ C
             ------------------
@@ -167,9 +164,7 @@ mutual
             --------------------
             → Γ ⊢C⦂ C
 
-    -- sub-effecting
-
-    -- coerce term
+    -- (shallow) sub-effecting
 
     coerce : {A : VType}
            → {ε ε' : E}

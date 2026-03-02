@@ -361,95 +361,71 @@ var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx?
 ... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
 ... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
 
-{-
--- To remove:
+-- Monus operation on contexts and its grades, declarative
 
--- Temporal minus operation on contexts
+data _-ᶜ_≈_ : Ctx → R → Ctx → Set where
 
-_-ᶜ_ : Ctx → Time → Ctx
-Γ        -ᶜ zero  = Γ
-[]       -ᶜ suc τ = []
-Γ ∷ A    -ᶜ suc τ = Γ -ᶜ suc τ
-Γ ⟨ τ' ⟩ -ᶜ suc τ with suc τ ≤? τ'
-... | yes p = Γ ⟨ τ' ∸ suc τ ⟩
-... | no ¬p = Γ -ᶜ (suc τ ∸ τ')
+  -ᶜ-uᵣ : ∀ {Γ}
+            -------------
+            → Γ -ᶜ uᵣ ≈ Γ
 
-infixl 30 _-ᶜ_
+  -ᶜ-∷     : ∀ {Γ Γ' A ρ}
+           → ρ ≢ uᵣ
+           → Γ -ᶜ ρ ≈ Γ'
+           -----------------
+           → Γ ∷ A -ᶜ ρ ≈ Γ'
+            
+  -ᶜ-⟨⟩-lt : ∀ {Γ ρ ρ' ρ''}
+             → ρ ≡ ρ' ·ᵣ ρ''
+             ---------------------------
+             → Γ ⟨ ρ ⟩ -ᶜ ρ' ≈ Γ ⟨ ρ'' ⟩
+             
+  -ᶜ-⟨⟩-gt : ∀ {Γ Γ' ρ ρ' ρ''}
+             → ρ'' ≢ uᵣ
+             → ρ' ≡ ρ ·ᵣ ρ''
+             → Γ -ᶜ ρ'' ≈ Γ'
+             --------------------
+             → Γ ⟨ ρ ⟩ -ᶜ ρ' ≈ Γ'
 
--- Action of -ᶜ on extended contexts 
-
--ᶜ-∷ : ∀ {Γ A τ}
-     → τ > 0
-     →  Γ ∷ A -ᶜ τ ≡ Γ -ᶜ τ
--ᶜ-∷ {Γ} {A} {suc τ} p = refl
-
--ᶜ-⟨⟩ : ∀ {Γ τ τ'}
-      → τ' ≤ τ
-      → τ' > 0
-      → Γ ⟨ τ ⟩ -ᶜ τ' ≡ Γ ⟨ τ ∸ τ' ⟩
--ᶜ-⟨⟩ {Γ} {τ} {suc τ'} p q with suc τ' ≤? τ
-... | yes r = refl
-... | no ¬r = ⊥-elim (¬r p)
+infixl 29 _-ᶜ_≈_
 
 -- Action laws for -ᶜ
 
--ᶜ-[]-id : ∀ {τ} → [] -ᶜ τ ≡ []
--ᶜ-[]-id {zero} =
-  refl
--ᶜ-[]-id {suc τ} =
-  refl
+++ᶜ-ᶜ : ∀ {Γ Γ' Γ'' ρ}
+      → Γ' -ᶜ ρ ≈ Γ''
+      → (Γ ++ᶜ Γ') -ᶜ ρ ≈ Γ ++ᶜ Γ''
 
-++ᶜ-ᶜ : ∀ {Γ Γ' τ}
-      → τ ≤ ctx-grade Γ'
-      → Γ ++ᶜ (Γ' -ᶜ τ) ≡ (Γ ++ᶜ Γ') -ᶜ τ
-++ᶜ-ᶜ {Γ} {Γ'} {zero} p =
-  refl
-++ᶜ-ᶜ {Γ} {Γ' ∷ A} {suc τ} p =
-  ++ᶜ-ᶜ {Γ} {Γ'} {suc τ} p
-++ᶜ-ᶜ {Γ} {Γ' ⟨ τ' ⟩} {suc τ} p with suc τ ≤? τ'
-... | yes q =
-  refl
-... | no ¬q =
-  ++ᶜ-ᶜ {Γ} {Γ'} {suc τ ∸ τ'}
-    (≤-trans
-      (∸-monoˡ-≤ τ' p)
-      (≤-reflexive (m+n∸n≡m (ctx-grade Γ') τ')))
+++ᶜ-ᶜ -ᶜ-uᵣ = -ᶜ-uᵣ
+++ᶜ-ᶜ (-ᶜ-∷ p q) = -ᶜ-∷ p (++ᶜ-ᶜ q)
+++ᶜ-ᶜ (-ᶜ-⟨⟩-lt p) = -ᶜ-⟨⟩-lt p
+++ᶜ-ᶜ (-ᶜ-⟨⟩-gt p q r) = -ᶜ-⟨⟩-gt p q (++ᶜ-ᶜ r)
 
-++ᶜ-ᶜ-+ : ∀ {Γ τ₁ τ₂}
-       → Γ -ᶜ (τ₁ + τ₂) ≡ (Γ -ᶜ τ₁) -ᶜ τ₂
-++ᶜ-ᶜ-+ {Γ} {zero} {τ₂} =
-  refl
-++ᶜ-ᶜ-+ {[]} {suc τ₁} {τ₂} =
-  sym (-ᶜ-[]-id {τ₂})
-++ᶜ-ᶜ-+ {Γ ∷ A} {suc τ₁} {τ₂} =
-  ++ᶜ-ᶜ-+ {Γ} {suc τ₁} {τ₂}
-++ᶜ-ᶜ-+ {Γ ⟨ τ ⟩} {suc τ₁} {zero} rewrite +-identityʳ τ₁ =
-  refl
-++ᶜ-ᶜ-+ {Γ ⟨ τ ⟩} {suc τ₁} {suc τ₂} with suc τ₁ ≤? τ | suc (τ₁ + suc τ₂) ≤? τ
-++ᶜ-ᶜ-+ {Γ ⟨ τ ⟩} {suc τ₁} {suc τ₂} | yes p | yes q with suc τ₂ ≤? τ ∸ suc τ₁
-... | yes r =
-  cong
-    (λ τ' → Γ ⟨ τ' ⟩) {τ ∸ suc (τ₁ + suc τ₂)} {τ ∸ suc τ₁ ∸ suc τ₂}
-    (sym (∸-+-assoc τ (suc τ₁) (suc τ₂)))
-... | no ¬r =
-  ⊥-elim (¬r (≤-trans (≤-reflexive (sym (m+n∸m≡n τ₁ (suc τ₂)))) (∸-monoˡ-≤ (suc τ₁) q)))
-++ᶜ-ᶜ-+ {Γ ⟨ τ ⟩} {suc τ₁} {suc τ₂} | yes p | no ¬q with suc τ₂ ≤? τ ∸ suc τ₁
-... | yes r =
-  ⊥-elim (¬q (≤-trans (+-monoʳ-≤ (suc τ₁) r) (≤-reflexive
-    (trans (sym (+-∸-assoc (suc τ₁) {τ} {suc τ₁} p)) (m+n∸m≡n τ₁ τ)))))
-... | no ¬r =
-  cong (λ τ' → Γ -ᶜ τ') {suc (τ₁ + suc τ₂) ∸ τ} {suc τ₂ ∸ (τ ∸ suc τ₁)}
-    (trans
-      (cong (_∸ τ) (+-comm (suc τ₁) (suc τ₂)))
-      (m≤k⇒¬n+m≤k⇒n+m∸k≡n∸[k∸m] p (λ s → ¬q
-        (≤-trans (≤-reflexive (+-comm (suc τ₁) (suc τ₂))) s))))
-++ᶜ-ᶜ-+ {Γ ⟨ τ ⟩} {suc τ₁} {suc τ₂} | no ¬p | yes q =
-  ⊥-elim (¬p (m+n≤o⇒m≤o (suc τ₁) q))
-++ᶜ-ᶜ-+ {Γ ⟨ τ ⟩} {suc τ₁} {suc τ₂} | no ¬p | no ¬q = 
-  trans
-    (cong (λ τ → Γ -ᶜ τ) {suc (τ₁ + suc τ₂) ∸ τ} {suc τ₁ ∸ τ + suc τ₂}
-      (+-∸-comm {suc τ₁} (suc τ₂) {τ} (<⇒≤ (≰⇒> ¬p))))
-    (++ᶜ-ᶜ-+ {Γ} {suc τ₁ ∸ τ} {suc τ₂})
+++ᶜ-ᶜ-+ : ∀ {Γ Γ' Γ'' ρ₁ ρ₂}
+        → Γ -ᶜ ρ₁ ≈ Γ'
+        → Γ' -ᶜ ρ₂ ≈ Γ''
+        → Γ -ᶜ (ρ₁ ·ᵣ ρ₂) ≈ Γ''
+
+++ᶜ-ᶜ-+ {ρ₂ = ρ₂} -ᶜ-uᵣ q rewrite ·ᵣ-identityˡ ρ₂ =
+  q
+++ᶜ-ᶜ-+ (-ᶜ-∷ p q) r =
+  -ᶜ-∷ (λ z → p (c·ᵣd≡uᵣ⇒c≡uᵣ z)) (++ᶜ-ᶜ-+ q r)
+++ᶜ-ᶜ-+ {ρ₁ = ρ₁} (-ᶜ-⟨⟩-lt p) -ᶜ-uᵣ rewrite p | ·ᵣ-identityʳ ρ₁ =
+  {!!} -- TODO: analyse non-unitness
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-lt p) (-ᶜ-⟨⟩-lt q) rewrite p | q =
+  {!!} -- TODO: analyse non-unitness
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-lt p) (-ᶜ-⟨⟩-gt q r s) rewrite p | r =
+  -ᶜ-⟨⟩-gt q (sym (·ᵣ-assoc _ _ _)) s
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) -ᶜ-uᵣ rewrite q =
+  -ᶜ-⟨⟩-gt p (·ᵣ-identityʳ _) r
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) (-ᶜ-∷ s t) = {!!}
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) (-ᶜ-⟨⟩-lt s) = {!!}
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) (-ᶜ-⟨⟩-gt s t u) = {!!}
+
+
+
+
+{-
+-- TODO: to adapt to the declarative definition of monus above
 
 -- Relating ctx-grade and -ᶜ
 
