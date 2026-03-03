@@ -13,6 +13,7 @@ module Syntax.Renamings.Raw (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
+open import Data.Empty
 open import Data.Product
 
 open import Relation.Nullary
@@ -277,3 +278,28 @@ cong-vren-fun {Γ} {Γ'} {Γ''} {Γ''' ⟨ ρ ⟩} r r' x =
       (λ (r : VRen (Γ ++ᶜ Γ''') (Γ'' ++ᶜ Γ''')) → cong-⟨⟩-vren r x)
       (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun r r' x))))
     (cong-⟨⟩-vren-fun (cong-vren r) (cong-vren r') x)
+
+-- Action of minus on renamings
+
+ren-ᶜ : ∀ {Γ Γ' Γ'' Γ''' ρ}
+      → VRen Γ Γ'
+      → Γ -ᶜ ρ ≈ Γ''
+      → Γ' -ᶜ ρ ≈ Γ'''
+      → VRen Γ'' Γ'''
+
+ren-ᶜ r -ᶜ-uᵣ -ᶜ-uᵣ = r
+ren-ᶜ r -ᶜ-uᵣ (-ᶜ-∷ p q) = ⊥-elim (p refl)
+ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-lt p q) = ⊥-elim (p refl)
+ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-gt p q s) = ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
+ren-ᶜ r (-ᶜ-∷ p q) -ᶜ-uᵣ = ⊥-elim (p refl)
+ren-ᶜ r (-ᶜ-∷ p q) (-ᶜ-∷ s t) = {!!}
+ren-ᶜ r (-ᶜ-∷ p q) (-ᶜ-⟨⟩-lt s t) = {!!}
+ren-ᶜ r (-ᶜ-∷ p q) (-ᶜ-⟨⟩-gt s t u) = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-lt x x₁) -ᶜ-uᵣ = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-lt x x₁) (-ᶜ-∷ x₂ q) = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-lt x x₁) (-ᶜ-⟨⟩-lt x₂ x₃) = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-lt x x₁) (-ᶜ-⟨⟩-gt x₂ x₃ q) = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-gt x x₁ p) -ᶜ-uᵣ = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-gt x x₁ p) (-ᶜ-∷ x₂ q) = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-gt x x₁ p) (-ᶜ-⟨⟩-lt x₂ x₃) = {!!}
+ren-ᶜ r (-ᶜ-⟨⟩-gt x x₁ p) (-ᶜ-⟨⟩-gt x₂ x₃ q) = {!!}
