@@ -33,7 +33,7 @@ record Grade : Set₁ where
     -- monoid laws
     ·-identityʳ : (c : Carrier) → (c · u) ≡ c
     ·-identityˡ : (c : Carrier) → (u · c) ≡ c
-    ·-assoc     : (c d e : Carrier) → ((c · d) · e) ≡ (c · (d · e))
+    ·-assoc     : (c d e : Carrier) → (c · d) · e ≡ c · (d · e)
 
     -- order on the carrier
     _≾_ : Rel Carrier lzero
@@ -56,11 +56,12 @@ record Grade : Set₁ where
     _≾?_ : Decidable _≾_
     _≡?_ : Decidable (_≡_ {A = Carrier})
 
-    -- _≾_ and _≡_ are cancellative
+    -- _≾_ is cancellative
     c·d≾e·d⇒c≾e : ∀ {c d e} → (c · d) ≾ (e · d) → c ≾ e
     d·c≾d·e⇒c≾e : ∀ {c d e} → (d · c) ≾ (d · e) → c ≾ e
-    c·d≡e·d⇒c≡e : ∀ {c d e} → (c · d) ≡ (e · d) → c ≡ e
-    d·c≡d·e⇒c≡e : ∀ {c d e} → (c · d) ≡ (e · d) → c ≡ e
+
+    -- _≡_ is cancellative
+    ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
 
     -- non-zero-divisor property of _·_
     c·d≡u⇒c≡u : ∀ {c d} → c · d ≡ u → c ≡ u
@@ -75,6 +76,32 @@ record Grade : Set₁ where
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
 
+  c·d≡e·d⇒c≡e : ∀ {c d e} → c · d ≡ e · d → c ≡ e
+  c·d≡e·d⇒c≡e {c} {d} {e} p =
+    begin
+      c
+      ≡⟨ sym (·-identityʳ c) ⟩
+      c · u
+      ≡⟨ ·-≡-cancellative (trans (·-identityʳ (c · d)) (trans p (sym (·-identityʳ (e · d))))) ⟩
+      e · u
+      ≡⟨ ·-identityʳ e ⟩
+      e
+    ∎
+  
+  d·c≡d·e⇒c≡e : ∀ {c d e} → d · c ≡ d · e → c ≡ e
+  d·c≡d·e⇒c≡e {c} {d} {e} p =
+    begin
+      c
+    ≡⟨ sym (·-identityˡ c) ⟩
+      u · c
+    ≡⟨ ·-≡-cancellative
+         (trans (trans (·-assoc u d c) (·-identityˡ (d · c)))
+         (trans p (trans (sym (·-identityˡ (d · e))) (sym (·-assoc u d e))))) ⟩
+      u · e
+    ≡⟨ ·-identityˡ e ⟩
+      e
+    ∎
+  
   -- contrapositive version of the non-zero-divisor property of _·_
   c≢u⇒c·d≢u : ∀ {c d} → c ≢ u → c · d ≢ u
   c≢u⇒c·d≢u p q = p (c·d≡u⇒c≡u q)
@@ -128,13 +155,15 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
+     ·-≡-cancellative to ·ᵣ-≡-cancellative;
      c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
      c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ;
      c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ;
      c·d≾e·d⇒c≾e to c·ᵣd≾ᵣe·d⇒c≾ᵣe;
-     c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
      embedNat to embedR;
      ≾-reflexive to ≾ᵣ-reflexive;
+     c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
+     d·c≡d·e⇒c≡e to d·ᵣc≡d·ᵣe⇒c≡e;     
      c≢u⇒c·d≢u to c≢u⇒c·ᵣd≢u;
      d≢u⇒c·d≢u to d≢u⇒c·ᵣd≢u
     ) public
@@ -152,8 +181,11 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-trans to ≾ₑ-trans;
      _≾?_ to _≾ₑ?_;
      _≡?_ to _≡ₑ?_;
+     ·-≡-cancellative to ·ₑ-≡-cancellative;
      embedNat to embedE;
      ≾-reflexive to ≾ₑ-reflexive;
+     c·d≡e·d⇒c≡e to c·ₑd≡e·ₑd⇒c≡e;
+     d·c≡d·e⇒c≡e to d·ₑc≡d·ₑe⇒c≡e;     
      c≢u⇒c·d≢u to c≢u⇒c·ₑd≢u;
      d≢u⇒c·d≢u to d≢u⇒c·ₑd≢u
    ) public

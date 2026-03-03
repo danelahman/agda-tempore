@@ -289,6 +289,24 @@ cong-vren-fun {Γ} {Γ'} {Γ''} {Γ''' ⟨ ρ ⟩} r r' x =
 --  {!-ᶜ-⟨⟩ r x!} -- TODO: either need commutativity, or some kind of braiding on ρs
 -}
 
+--
+
+var-ᶜ : ∀ {Γ Γ' A ρ ρ' ρ''}
+      → Γ -ᶜ ρ' ≈ Γ'
+      → ρ ≡ ρ'' ·ᵣ ρ'
+      → A ∈[ ρ ] Γ
+      → A ∈[ ρ'' ] Γ'
+
+var-ᶜ {ρ = ρ} {ρ' = ρ'} {ρ'' = ρ''} (-ᶜ-uᵣ refl) q x
+  rewrite ·ᵣ-identityʳ ρ'' | q = x
+var-ᶜ (-ᶜ-∷ p q) r Hd =
+  ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym r)))
+var-ᶜ (-ᶜ-∷ p q) r (Tl-∷ x) =
+  var-ᶜ q r x
+var-ᶜ {Γ} {Γ'} {A} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) r (Tl-⟨⟩ x) = {!!}
+var-ᶜ (-ᶜ-⟨⟩-gt p q r) s (Tl-⟨⟩ x) rewrite q =
+  var-ᶜ r (trans (sym (·ᵣ-identityʳ _)) (·ᵣ-≡-cancellative (trans (·ᵣ-identityʳ _) (trans s (sym (·ᵣ-assoc _ _ _)))))) x
+
 -- Action of context minus on renamings
 
 vren-ᶜ : ∀ {Γ Γ' Γ'' Γ''' ρ}
@@ -299,15 +317,11 @@ vren-ᶜ : ∀ {Γ Γ' Γ'' Γ''' ρ}
 
 vren-ᶜ r (-ᶜ-uᵣ refl) q rewrite -ᶜ-u q =
   r
+  
 vren-ᶜ r (-ᶜ-∷ p q) s =
   vren-ᶜ (r ∘ᵛʳ wk-vren) q s
 
-vren-ᶜ {ρ = ρ} r (-ᶜ-⟨⟩-lt {ρ = ρ'} {ρ'' = ρ''} p q) s = {!!}
+vren-ᶜ {ρ = ρ} r (-ᶜ-⟨⟩-lt {ρ = ρ'} {ρ'' = ρ''} p q) s (Tl-⟨⟩ x) with r (Tl-⟨⟩ x)
+... | ρ''' , t , y = {!!} , {!!} , {!!}
 
-vren-ᶜ {ρ = ρ} r (-ᶜ-⟨⟩-gt {ρ = ρ'} {ρ'' = ρ''} p q s) t rewrite q = {!!}
-
-{-
-
-  Γ ⟨ ρ' ⟩ - ρ' ·ᵣ ρ'' = Γ - ρ''
-
--}
+vren-ᶜ {ρ = ρ} r (-ᶜ-⟨⟩-gt {ρ = ρ'} {ρ'' = ρ''} p q s) t = {!!}
