@@ -98,15 +98,6 @@ cong-⟨⟩-vren : ∀ {Γ Γ' ρ} → VRen Γ Γ' → VRen (Γ ⟨ ρ ⟩) (Γ'
 cong-⟨⟩-vren {Γ} {Γ'} {ρ} vr {A} {.(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) with vr x
 ... | ρ'' , rel , y = ρ'' ·ᵣ ρ , ·ᵣ-monoˡ-≾ᵣ rel , Tl-⟨⟩ y
 
--- This shouldn't hold anymore:
-{-
--- Overapproximations (former property involving the minus operation on contexts)
-
-pra-⟨⟩-vren : ∀ {Γ Γ' ρ} → VRen (Γ ⟨ ρ ⟩) Γ' → VRen Γ Γ'
-pra-⟨⟩-vren {Γ} {Γ'} {ρ} r {A} {ρ'} x  with r (Tl-⟨⟩ x)
-... | ρ'' , rel , y = ρ'' , ≾ᵣ-trans (c≾ᵣc·ᵣd ρ' ρ) rel , y
--}
-
 -- Extending a renaming with a variable
 
 extend-vren : ∀ {Γ Γ' A} → VRen Γ Γ' → A ∈[ uᵣ ] Γ' → VRen (Γ ∷ A) Γ'
@@ -279,32 +270,44 @@ cong-vren-fun {Γ} {Γ'} {Γ''} {Γ''' ⟨ ρ ⟩} r r' x =
       (ifun-ext λ {A} → ifun-ext (λ {ρ} → fun-ext (λ x → cong-vren-fun r r' x))))
     (cong-⟨⟩-vren-fun (cong-vren r) (cong-vren r') x)
 
--- Action of minus on renamings
+-- Interaction of context minus with context modalities
 
-ren-ᶜ : ∀ {Γ Γ' Γ'' Γ''' ρ}
-      → VRen Γ Γ'
-      → Γ -ᶜ ρ ≈ Γ''
-      → Γ' -ᶜ ρ ≈ Γ'''
-      → VRen Γ'' Γ'''
+{-
+-ᶜ-⟨⟩ : ∀ {Γ Γ' A ρ ρ'}
+      → Γ -ᶜ ρ ≈ Γ'
+      → A ∈[ ρ' ] Γ'
+      → A ∈[ ρ' ·ᵣ ρ ] Γ
 
-ren-ᶜ r -ᶜ-uᵣ -ᶜ-uᵣ =
+-ᶜ-⟨⟩ {ρ = ρ} {ρ' = ρ'} -ᶜ-uᵣ x
+  rewrite ·ᵣ-identityʳ ρ' =
+    x
+-ᶜ-⟨⟩ (-ᶜ-∷ p q) x =
+  Tl-∷ (-ᶜ-⟨⟩ q x)
+-ᶜ-⟨⟩ (-ᶜ-⟨⟩-lt p q) x = {!!}
+-ᶜ-⟨⟩ {ρ = ρ} {ρ' = ρ'} (-ᶜ-⟨⟩-gt {ρ = ρ''} {ρ'' = ρ'''} p q r) x = {!!}
+--rewrite q | sym (·ᵣ-assoc ρ' ρ'' ρ''') =
+--  {!-ᶜ-⟨⟩ r x!} -- TODO: either need commutativity, or some kind of braiding on ρs
+-}
+
+-- Action of context minus on renamings
+
+vren-ᶜ : ∀ {Γ Γ' Γ'' Γ''' ρ}
+       → VRen Γ Γ'
+       → Γ -ᶜ ρ ≈ Γ''
+       → Γ' -ᶜ ρ ≈ Γ'''
+       → VRen Γ'' Γ'''
+
+vren-ᶜ r (-ᶜ-uᵣ refl) q rewrite -ᶜ-u q =
   r
-ren-ᶜ r -ᶜ-uᵣ (-ᶜ-∷ p q) =
-  ⊥-elim (p refl)
-ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-lt p q) =
-  ⊥-elim (p refl)
-ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-gt p q s) =
-  ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
-ren-ᶜ r (-ᶜ-∷ p q) s =
-  ren-ᶜ (r ∘ᵛʳ wk-vren) q s
-ren-ᶜ r (-ᶜ-⟨⟩-lt p q) -ᶜ-uᵣ =
-  ⊥-elim (p refl)
-ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-∷ s t) (Tl-⟨⟩ x) with r (Tl-⟨⟩ x)
-... | ρ' , u , y = {!!}
-ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-lt s t) = {!!}
-ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt s t u) = {!!}
-ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) -ᶜ-uᵣ =
-  ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
-ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) (-ᶜ-∷ t u) = {!!}
-ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) (-ᶜ-⟨⟩-lt t u) = {!!}
-ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) (-ᶜ-⟨⟩-gt t u v) = {!!}
+vren-ᶜ r (-ᶜ-∷ p q) s =
+  vren-ᶜ (r ∘ᵛʳ wk-vren) q s
+
+vren-ᶜ {ρ = ρ} r (-ᶜ-⟨⟩-lt {ρ = ρ'} {ρ'' = ρ''} p q) s = {!!}
+
+vren-ᶜ {ρ = ρ} r (-ᶜ-⟨⟩-gt {ρ = ρ'} {ρ'' = ρ''} p q s) t rewrite q = {!!}
+
+{-
+
+  Γ ⟨ ρ' ⟩ - ρ' ·ᵣ ρ'' = Γ - ρ''
+
+-}
