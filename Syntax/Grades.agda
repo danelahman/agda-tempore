@@ -31,15 +31,14 @@ record Grade : Set₁ where
     u   : Carrier
     
     -- monoid laws
-    ·-identityʳ : (x : Carrier) → (x · u) ≡ x
-    ·-identityˡ : (x : Carrier) → (u · x) ≡ x
-    ·-assoc     : (x y z : Carrier) → ((x · y) · z) ≡ (x · (y · z))
+    ·-identityʳ : (c : Carrier) → (c · u) ≡ c
+    ·-identityˡ : (c : Carrier) → (u · c) ≡ c
+    ·-assoc     : (c d e : Carrier) → ((c · d) · e) ≡ (c · (d · e))
 
     -- order on the carrier
     _≾_ : Rel Carrier lzero
 
-    -- unit is the least element
-    u≾c  : ∀ {c} → u ≾ c
+    -- no elements are below the unit
     c≾u⇒c≡u : ∀ {c} → c ≾ u → c ≡ u
     
     -- _·_ is monotone with respect to _≾_
@@ -77,11 +76,11 @@ record Grade : Set₁ where
   ≾-reflexive refl = ≾-refl
 
   -- contrapositive version of the non-zero-divisor property of _·_
-  ¬c≡u⇒¬c·d≡u : ∀ {c d} → ¬ c ≡ u → ¬ c · d ≡ u
-  ¬c≡u⇒¬c·d≡u p q = p (c·d≡u⇒c≡u q)
+  c≢u⇒c·d≢u : ∀ {c d} → c ≢ u → c · d ≢ u
+  c≢u⇒c·d≢u p q = p (c·d≡u⇒c≡u q)
   
-  ¬d≡u⇒¬c·d≡u : ∀ {c d} → ¬ d ≡ u → ¬ c · d ≡ u
-  ¬d≡u⇒¬c·d≡u p q = p (c·d≡u⇒d≡u q)
+  d≢u⇒c·d≢u : ∀ {c d} → d ≢ u → c · d ≢ u
+  d≢u⇒c·d≢u p q = p (c·d≡u⇒d≡u q)
 
 open Grade
 
@@ -126,7 +125,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
-     u≾c to uᵣ≾ᵣc;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
@@ -137,8 +135,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
      embedNat to embedR;
      ≾-reflexive to ≾ᵣ-reflexive;
-     ¬c≡u⇒¬c·d≡u to ¬c≡u⇒¬c·ᵣd≡u;
-     ¬d≡u⇒¬c·d≡u to ¬d≡u⇒¬c·ᵣd≡u
+     c≢u⇒c·d≢u to c≢u⇒c·ᵣd≢u;
+     d≢u⇒c·d≢u to d≢u⇒c·ᵣd≢u
     ) public
 
   open Grade EGrade renaming
@@ -156,8 +154,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≡?_ to _≡ₑ?_;
      embedNat to embedE;
      ≾-reflexive to ≾ₑ-reflexive;
-     ¬c≡u⇒¬c·d≡u to ¬c≡u⇒¬c·ₑd≡u;
-     ¬d≡u⇒¬c·d≡u to ¬d≡u⇒¬c·ₑd≡u
+     c≢u⇒c·d≢u to c≢u⇒c·ₑd≢u;
+     d≢u⇒c·d≢u to d≢u⇒c·ₑd≢u
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public

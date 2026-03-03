@@ -287,16 +287,24 @@ ren-ᶜ : ∀ {Γ Γ' Γ'' Γ''' ρ}
       → Γ' -ᶜ ρ ≈ Γ'''
       → VRen Γ'' Γ'''
 
-ren-ᶜ r -ᶜ-uᵣ -ᶜ-uᵣ = r
-ren-ᶜ r -ᶜ-uᵣ (-ᶜ-∷ p q) = ⊥-elim (p refl)
-ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-lt p q) = ⊥-elim (p refl)
-ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-gt p q s) = ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
-ren-ᶜ r (-ᶜ-∷ p q) s = ren-ᶜ (r ∘ᵛʳ wk-vren) q s
-ren-ᶜ r (-ᶜ-⟨⟩-lt p q) -ᶜ-uᵣ = ⊥-elim (p refl)
-ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-∷ s t) = {!!}
+ren-ᶜ r -ᶜ-uᵣ -ᶜ-uᵣ =
+  r
+ren-ᶜ r -ᶜ-uᵣ (-ᶜ-∷ p q) =
+  ⊥-elim (p refl)
+ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-lt p q) =
+  ⊥-elim (p refl)
+ren-ᶜ r -ᶜ-uᵣ (-ᶜ-⟨⟩-gt p q s) =
+  ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
+ren-ᶜ r (-ᶜ-∷ p q) s =
+  ren-ᶜ (r ∘ᵛʳ wk-vren) q s
+ren-ᶜ r (-ᶜ-⟨⟩-lt p q) -ᶜ-uᵣ =
+  ⊥-elim (p refl)
+ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-∷ s t) (Tl-⟨⟩ x) with r (Tl-⟨⟩ x)
+... | ρ' , u , y = {!!}
 ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-lt s t) = {!!}
 ren-ᶜ r (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt s t u) = {!!}
-ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) -ᶜ-uᵣ = ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
+ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) -ᶜ-uᵣ =
+  ⊥-elim (p (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
 ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) (-ᶜ-∷ t u) = {!!}
 ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) (-ᶜ-⟨⟩-lt t u) = {!!}
 ren-ᶜ r (-ᶜ-⟨⟩-gt p q s) (-ᶜ-⟨⟩-gt t u v) = {!!}

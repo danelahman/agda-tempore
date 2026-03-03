@@ -170,13 +170,6 @@ data _∈[_]_ (A : VType) : R → Ctx → Set where
 
 infix 27 _∈[_]_
 
--- Every variable in a context is within the grade captured by that context
-
-∈-ctx-grade : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ρ ≾ᵣ ctx-grade Γ
-∈-ctx-grade Hd       = uᵣ≾ᵣc
-∈-ctx-grade (Tl-∷ x) = ∈-ctx-grade x
-∈-ctx-grade {Γ ⟨ ρ ⟩} {ρ = .(ρ' ·ᵣ ρ)} (Tl-⟨⟩ {ρ' = ρ'} x) = ·ᵣ-monoˡ-≾ᵣ (∈-ctx-grade x)
-
 -- Context extension does not decrease variable's grade annotation
 
 var-ρ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-grade Γ' ] Γ ++ᶜ Γ'
@@ -381,9 +374,9 @@ infixl 29 _-ᶜ_≈_
 ... | no ¬q = -ᶜ-⟨⟩-lt ¬q refl
 ++ᶜ-ᶜ-+ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) (-ᶜ-⟨⟩-lt {ρ'' = ρ'''} r s)
   rewrite q | s | sym (·ᵣ-assoc ρ₁ ρ₂ ρ''') =
-    -ᶜ-⟨⟩-lt (¬c≡u⇒¬c·ᵣd≡u p) refl
+    -ᶜ-⟨⟩-lt (c≢u⇒c·ᵣd≢u p) refl
 ++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t) rewrite q | s =
   -ᶜ-⟨⟩-gt r (sym (·ᵣ-assoc _ _ _)) t
 ++ᶜ-ᶜ-+ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-gt {ρ = ρ} {ρ'' = ρ''} p q r) t =
-  -ᶜ-⟨⟩-gt (¬c≡u⇒¬c·ᵣd≡u p) (trans (cong (_·ᵣ ρ₂) q) (·ᵣ-assoc ρ ρ'' ρ₂)) (++ᶜ-ᶜ-+ r t)
+  -ᶜ-⟨⟩-gt (c≢u⇒c·ᵣd≢u p) (trans (cong (_·ᵣ ρ₂) q) (·ᵣ-assoc ρ ρ'' ρ₂)) (++ᶜ-ᶜ-+ r t)
 
