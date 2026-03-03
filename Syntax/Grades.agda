@@ -76,6 +76,13 @@ record Grade : Set₁ where
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
 
+  -- contrapositive version of the non-zero-divisor property of _·_
+  ¬c≡u⇒¬c·d≡u : ∀ {c d} → ¬ c ≡ u → ¬ c · d ≡ u
+  ¬c≡u⇒¬c·d≡u p q = p (c·d≡u⇒c≡u q)
+  
+  ¬d≡u⇒¬c·d≡u : ∀ {c d} → ¬ d ≡ u → ¬ c · d ≡ u
+  ¬d≡u⇒¬c·d≡u p q = p (c·d≡u⇒d≡u q)
+
 open Grade
 
 
@@ -129,7 +136,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      c·d≾e·d⇒c≾e to c·ᵣd≾ᵣe·d⇒c≾ᵣe;
      c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
      embedNat to embedR;
-     ≾-reflexive to ≾ᵣ-reflexive
+     ≾-reflexive to ≾ᵣ-reflexive;
+     ¬c≡u⇒¬c·d≡u to ¬c≡u⇒¬c·ᵣd≡u;
+     ¬d≡u⇒¬c·d≡u to ¬d≡u⇒¬c·ᵣd≡u
     ) public
 
   open Grade EGrade renaming
@@ -146,7 +155,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ₑ?_;
      _≡?_ to _≡ₑ?_;
      embedNat to embedE;
-     ≾-reflexive to ≾ₑ-reflexive
+     ≾-reflexive to ≾ₑ-reflexive;
+     ¬c≡u⇒¬c·d≡u to ¬c≡u⇒¬c·ₑd≡u;
+     ¬d≡u⇒¬c·d≡u to ¬d≡u⇒¬c·ₑd≡u
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public

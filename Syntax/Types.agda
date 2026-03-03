@@ -6,9 +6,10 @@ open import Syntax.Grades
 
 module Syntax.Types (Grades : GradeSystem) where
 
-open GradeSystem Grades
-open Grade EGrade renaming (Carrier to E)
-open Grade RGrade renaming (Carrier to R)
+open GradeSystemInterface Grades
+
+open import Relation.Binary.Definitions hiding (Empty)
+open import Relation.Nullary
 
 open import Util.Equality
 open import Util.Operations (Grades)
@@ -55,3 +56,61 @@ type-of-gtype ([ ρ ]ᵍ A) = [ ρ ] (type-of-gtype A)
 
 ‼-injective-egrade : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → ε ≡ ε'
 ‼-injective-egrade refl = refl
+
+-- (Value) types are decidable
+
+_≡ᵥ?_ : Decidable (_≡_ {A = VType})
+Base b ≡ᵥ? Base b' with b ≡ᵇ? b'
+... | yes refl = yes refl
+... | no ¬p = no (λ { refl → ¬p refl })
+Base b ≡ᵥ? Unit = no (λ { () })
+Base b ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Base b ≡ᵥ? Empty = no (λ { () })
+Base b ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Base b ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+Unit ≡ᵥ? Base b' = no (λ { () })
+Unit ≡ᵥ? Unit = yes refl
+Unit ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Unit ≡ᵥ? Empty = no (λ { () })
+Unit ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Unit ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? Base b' = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? Unit = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? (B₁ |×| B₂) with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂
+... | yes p | yes q = yes (cong₂ _|×|_ p q)
+... | yes p | no ¬q = no (λ { refl → ¬q refl })
+... | no ¬p | yes q = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q = no λ { refl → ¬p refl }
+(A₁ |×| A₂) ≡ᵥ? Empty = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+(A₁ |×| A₂) ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+Empty ≡ᵥ? Base b' = no (λ { () })
+Empty ≡ᵥ? Unit = no (λ { () })
+Empty ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+Empty ≡ᵥ? Empty = yes refl
+Empty ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Base b' = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Unit = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+(A₁ ⇒ A₂) ≡ᵥ? Empty = no (λ { () })
+(A₁ ⇒ A₂ ‼ ε) ≡ᵥ? (B₁ ⇒ B₂ ‼ ε') with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂ | ε ≡ₑ? ε'
+... | yes p | yes q | yes r = yes (cong₂ _⇒_ p (cong₂ _‼_ q r))
+... | yes p | yes q | no ¬r = no (λ { refl → ¬r refl })
+... | yes p | no ¬q | yes r = no (λ { refl → ¬q refl })
+... | yes p | no ¬q | no ¬r = no (λ { refl → ¬q refl })
+... | no ¬p | yes q | yes r = no (λ { refl → ¬p refl })
+... | no ¬p | yes q | no ¬r = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q | yes r = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q | no ¬r = no (λ { refl → ¬p refl })
+(A₁ ⇒ A₂) ≡ᵥ? ([ ρ' ] B) = no (λ { () })
+([ ρ ] A) ≡ᵥ? Base b' = no (λ { () })
+([ ρ ] A) ≡ᵥ? Unit = no (λ { () })
+([ ρ ] A) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
+([ ρ ] A) ≡ᵥ? Empty = no (λ { () })
+([ ρ ] A) ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
+([ ρ ] A) ≡ᵥ? ([ ρ' ] B) with A ≡ᵥ? B | ρ ≡ᵣ? ρ'
+... | yes p | yes q = yes (cong₂ [_]_ q p)
+... | yes p | no ¬q = no (λ { refl → ¬q refl })
+... | no ¬p | yes q = no (λ { refl → ¬p refl })
+... | no ¬p | no ¬q = no (λ { refl → ¬p refl })

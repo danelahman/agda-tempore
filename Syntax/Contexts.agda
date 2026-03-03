@@ -254,61 +254,26 @@ var-in-split {Γ₂ = Γ₂ ⟨ ρ₂ ⟩} {ρ = ρ} (split-⟨⟩ p) (Tl-⟨⟩
 ... | inj₂ (y , rel , rel') =
   inj₂ (Tl-⟨⟩ y , rel , cong (_⟨ ρ₂ ⟩) rel')
 
-_≡ᵥ?_ : Decidable (_≡_ {A = VType})
-Base b ≡ᵥ? Base b' with b ≡ᵇ? b'
-... | yes refl = yes refl
-... | no ¬p = no (λ { refl → ¬p refl })
-Base b ≡ᵥ? Unit = no (λ { () })
-Base b ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
-Base b ≡ᵥ? Empty = no (λ { () })
-Base b ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
-Base b ≡ᵥ? ([ ρ' ] B) = no (λ { () })
-Unit ≡ᵥ? Base b' = no (λ { () })
-Unit ≡ᵥ? Unit = yes refl
-Unit ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
-Unit ≡ᵥ? Empty = no (λ { () })
-Unit ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
-Unit ≡ᵥ? ([ ρ' ] B) = no (λ { () })
-(A₁ |×| A₂) ≡ᵥ? Base b' = no (λ { () })
-(A₁ |×| A₂) ≡ᵥ? Unit = no (λ { () })
-(A₁ |×| A₂) ≡ᵥ? (B₁ |×| B₂) with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂
-... | yes p | yes q = yes (cong₂ _|×|_ p q)
-... | yes p | no ¬q = no (λ { refl → ¬q refl })
-... | no ¬p | yes q = no (λ { refl → ¬p refl })
-... | no ¬p | no ¬q = no λ { refl → ¬p refl }
-(A₁ |×| A₂) ≡ᵥ? Empty = no (λ { () })
-(A₁ |×| A₂) ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
-(A₁ |×| A₂) ≡ᵥ? ([ ρ' ] B) = no (λ { () })
-Empty ≡ᵥ? Base b' = no (λ { () })
-Empty ≡ᵥ? Unit = no (λ { () })
-Empty ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
-Empty ≡ᵥ? Empty = yes refl
-Empty ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
-Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
-(A₁ ⇒ A₂) ≡ᵥ? Base b' = no (λ { () })
-(A₁ ⇒ A₂) ≡ᵥ? Unit = no (λ { () })
-(A₁ ⇒ A₂) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
-(A₁ ⇒ A₂) ≡ᵥ? Empty = no (λ { () })
-(A₁ ⇒ A₂ ‼ ε) ≡ᵥ? (B₁ ⇒ B₂ ‼ ε') with A₁ ≡ᵥ? B₁ | A₂ ≡ᵥ? B₂ | ε ≡ₑ? ε'
-... | yes p | yes q | yes r = yes (cong₂ _⇒_ p (cong₂ _‼_ q r))
-... | yes p | yes q | no ¬r = no (λ { refl → ¬r refl })
-... | yes p | no ¬q | yes r = no (λ { refl → ¬q refl })
-... | yes p | no ¬q | no ¬r = no (λ { refl → ¬q refl })
-... | no ¬p | yes q | yes r = no (λ { refl → ¬p refl })
-... | no ¬p | yes q | no ¬r = no (λ { refl → ¬p refl })
-... | no ¬p | no ¬q | yes r = no (λ { refl → ¬p refl })
-... | no ¬p | no ¬q | no ¬r = no (λ { refl → ¬p refl })
-(A₁ ⇒ A₂) ≡ᵥ? ([ ρ' ] B) = no (λ { () })
-([ ρ ] A) ≡ᵥ? Base b' = no (λ { () })
-([ ρ ] A) ≡ᵥ? Unit = no (λ { () })
-([ ρ ] A) ≡ᵥ? (B₁ |×| B₂) = no (λ { () })
-([ ρ ] A) ≡ᵥ? Empty = no (λ { () })
-([ ρ ] A) ≡ᵥ? (B₁ ⇒ B₂) = no (λ { () })
-([ ρ ] A) ≡ᵥ? ([ ρ' ] B) with A ≡ᵥ? B | ρ ≡ᵣ? ρ'
-... | yes p | yes q = yes (cong₂ [_]_ q p)
-... | yes p | no ¬q = no (λ { refl → ¬q refl })
-... | no ¬p | yes q = no (λ { refl → ¬p refl })
-... | no ¬p | no ¬q = no (λ { refl → ¬p refl })
+split-struct-≡ : ∀ {Γ Γ' Γ'' A ρ₁ ρ₂}
+               → (x : A ∈[ ρ₁ ] Γ')
+               → (y : A ∈[ ρ₂ ] Γ)
+               → proj₁ (var-split y) ≡ proj₁ (var-split x)
+               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
+               → Γ' ++ᶜ Γ'' ≡ Γ
+split-struct-≡ {Γ} {Γ'} {Γ''} {A} x y eq₁ eq₂ =
+  begin
+    Γ' ++ᶜ Γ''
+  ≡⟨ cong (_++ᶜ Γ'') (sym (split-≡ (proj₁ (proj₂ (proj₂ (var-split x)))))) ⟩
+    proj₁ (var-split x) ∷ A ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
+  ≡⟨ ++ᶜ-assoc (proj₁ (var-split x) ∷ A) (proj₁ (proj₂ (var-split x))) Γ'' ⟩
+    proj₁ (var-split x) ∷ A ++ᶜ (proj₁ (proj₂ (var-split x)) ++ᶜ Γ'')
+  ≡⟨ cong (proj₁ (var-split x) ∷ A ++ᶜ_) (sym eq₂) ⟩ 
+    proj₁ (var-split x) ∷ A ++ᶜ ((proj₁ (proj₂ (var-split y))))
+  ≡⟨ (cong (_++ᶜ proj₁ (proj₂ (var-split y))) (cong (_∷ A) (sym eq₁))) ⟩
+    proj₁ (var-split y) ∷ A ++ᶜ proj₁ (proj₂ (var-split y))
+  ≡⟨ split-≡ (proj₁ (proj₂ (proj₂ (var-split y)))) ⟩ 
+    Γ
+  ∎
 
 -- No variable belongs to the empty context
 
@@ -361,7 +326,7 @@ var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx?
 ... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
 ... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
 
--- Monus operation on contexts and its grades, declarative
+-- Minus operation on contexts and its grades, declarative
 
 data _-ᶜ_≈_ : Ctx → R → Ctx → Set where
 
@@ -376,6 +341,7 @@ data _-ᶜ_≈_ : Ctx → R → Ctx → Set where
            → Γ ∷ A -ᶜ ρ ≈ Γ'
             
   -ᶜ-⟨⟩-lt : ∀ {Γ ρ ρ' ρ''}
+             → ρ' ≢ uᵣ
              → ρ ≡ ρ' ·ᵣ ρ''
              ---------------------------
              → Γ ⟨ ρ ⟩ -ᶜ ρ' ≈ Γ ⟨ ρ'' ⟩
@@ -397,8 +363,9 @@ infixl 29 _-ᶜ_≈_
 
 ++ᶜ-ᶜ -ᶜ-uᵣ = -ᶜ-uᵣ
 ++ᶜ-ᶜ (-ᶜ-∷ p q) = -ᶜ-∷ p (++ᶜ-ᶜ q)
-++ᶜ-ᶜ (-ᶜ-⟨⟩-lt p) = -ᶜ-⟨⟩-lt p
+++ᶜ-ᶜ (-ᶜ-⟨⟩-lt p q) = -ᶜ-⟨⟩-lt p q
 ++ᶜ-ᶜ (-ᶜ-⟨⟩-gt p q r) = -ᶜ-⟨⟩-gt p q (++ᶜ-ᶜ r)
+
 
 ++ᶜ-ᶜ-+ : ∀ {Γ Γ' Γ'' ρ₁ ρ₂}
         → Γ -ᶜ ρ₁ ≈ Γ'
@@ -409,60 +376,14 @@ infixl 29 _-ᶜ_≈_
   q
 ++ᶜ-ᶜ-+ (-ᶜ-∷ p q) r =
   -ᶜ-∷ (λ z → p (c·ᵣd≡uᵣ⇒c≡uᵣ z)) (++ᶜ-ᶜ-+ q r)
-++ᶜ-ᶜ-+ {ρ₁ = ρ₁} (-ᶜ-⟨⟩-lt p) -ᶜ-uᵣ rewrite p | ·ᵣ-identityʳ ρ₁ =
-  {!!} -- TODO: analyse non-unitness
-++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-lt p) (-ᶜ-⟨⟩-lt q) rewrite p | q =
-  {!!} -- TODO: analyse non-unitness
-++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-lt p) (-ᶜ-⟨⟩-gt q r s) rewrite p | r =
-  -ᶜ-⟨⟩-gt q (sym (·ᵣ-assoc _ _ _)) s
-++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) -ᶜ-uᵣ rewrite q =
-  -ᶜ-⟨⟩-gt p (·ᵣ-identityʳ _) r
-++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) (-ᶜ-∷ s t) = {!!}
-++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) (-ᶜ-⟨⟩-lt s) = {!!}
-++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-gt p q r) (-ᶜ-⟨⟩-gt s t u) = {!!}
-
-
-
-
-{-
--- TODO: to adapt to the declarative definition of monus above
-
--- Relating ctx-grade and -ᶜ
-
-ctx-grade-ᶜ-∸ : (Γ : Ctx) → (τ : Time)
-             → τ ≤ ctx-grade Γ
-             → ctx-grade (Γ -ᶜ τ) ≡ ctx-grade Γ ∸ τ
-ctx-grade-ᶜ-∸ Γ zero p = refl
-ctx-grade-ᶜ-∸ [] (suc τ) p = refl
-ctx-grade-ᶜ-∸ (Γ ∷ A) (suc τ) p = ctx-grade-ᶜ-∸ Γ (suc τ) p
-ctx-grade-ᶜ-∸ (Γ ⟨ τ' ⟩) (suc τ) p with suc τ ≤? τ'
-... | yes q =
-  sym (+-∸-assoc (ctx-grade Γ) q)
-... | no ¬q =
-  trans
-    (ctx-grade-ᶜ-∸ Γ (suc τ ∸ τ') (m≤n+k⇒m∸k≤n (suc τ) (ctx-grade Γ) τ' p))
-    (sym (¬k≤m⇒k∸m≤n⇒n+m∸k≤n∸k∸m ¬q (m≤n+k⇒m∸k≤n (suc τ) (ctx-grade Γ) τ' p)))
-
--}
-
-split-struct-≡ : ∀ {Γ Γ' Γ'' A ρ₁ ρ₂}
-               → (x : A ∈[ ρ₁ ] Γ')
-               → (y : A ∈[ ρ₂ ] Γ)
-               → proj₁ (var-split y) ≡ proj₁ (var-split x)
-               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
-               → Γ' ++ᶜ Γ'' ≡ Γ
-split-struct-≡ {Γ} {Γ'} {Γ''} {A} x y eq₁ eq₂ =
-  begin
-    Γ' ++ᶜ Γ''
-  ≡⟨ cong (_++ᶜ Γ'') (sym (split-≡ (proj₁ (proj₂ (proj₂ (var-split x)))))) ⟩
-    proj₁ (var-split x) ∷ A ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
-  ≡⟨ ++ᶜ-assoc (proj₁ (var-split x) ∷ A) (proj₁ (proj₂ (var-split x))) Γ'' ⟩
-    proj₁ (var-split x) ∷ A ++ᶜ (proj₁ (proj₂ (var-split x)) ++ᶜ Γ'')
-  ≡⟨ cong (proj₁ (var-split x) ∷ A ++ᶜ_) (sym eq₂) ⟩ 
-    proj₁ (var-split x) ∷ A ++ᶜ ((proj₁ (proj₂ (var-split y))))
-  ≡⟨ (cong (_++ᶜ proj₁ (proj₂ (var-split y))) (cong (_∷ A) (sym eq₁))) ⟩
-    proj₁ (var-split y) ∷ A ++ᶜ proj₁ (proj₂ (var-split y))
-  ≡⟨ split-≡ (proj₁ (proj₂ (proj₂ (var-split y)))) ⟩ 
-    Γ
-  ∎
+++ᶜ-ᶜ-+ {ρ₁ = ρ₁} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) -ᶜ-uᵣ rewrite q | ·ᵣ-identityʳ ρ₁ with ρ₁ ≡ᵣ? uᵣ
+... | yes refl rewrite ·ᵣ-identityˡ ρ'' = -ᶜ-uᵣ
+... | no ¬q = -ᶜ-⟨⟩-lt ¬q refl
+++ᶜ-ᶜ-+ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) (-ᶜ-⟨⟩-lt {ρ'' = ρ'''} r s)
+  rewrite q | s | sym (·ᵣ-assoc ρ₁ ρ₂ ρ''') =
+    -ᶜ-⟨⟩-lt (¬c≡u⇒¬c·ᵣd≡u p) refl
+++ᶜ-ᶜ-+ (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t) rewrite q | s =
+  -ᶜ-⟨⟩-gt r (sym (·ᵣ-assoc _ _ _)) t
+++ᶜ-ᶜ-+ {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-gt {ρ = ρ} {ρ'' = ρ''} p q r) t =
+  -ᶜ-⟨⟩-gt (¬c≡u⇒¬c·ᵣd≡u p) (trans (cong (_·ᵣ ρ₂) q) (·ᵣ-assoc ρ ρ'' ρ₂)) (++ᶜ-ᶜ-+ r t)
 
