@@ -319,7 +319,7 @@ var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx?
 ... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
 ... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
 
--- Minus operation on contexts and its grades, declarative
+-- "Time-travelling" operation on contexts, declaratively
 
 data _-ᶜ_≈_ : Ctx → R → Ctx → Set where
 
@@ -336,13 +336,14 @@ data _-ᶜ_≈_ : Ctx → R → Ctx → Set where
             
   -ᶜ-⟨⟩-lt : ∀ {Γ ρ ρ' ρ''}
            → ρ' ≢ uᵣ
-           → ρ ≡ ρ' ·ᵣ ρ''
+           → ρ ≡ ρ'' ·ᵣ ρ'
            ---------------------------
            → Γ ⟨ ρ ⟩ -ᶜ ρ' ≈ Γ ⟨ ρ'' ⟩
              
   -ᶜ-⟨⟩-gt : ∀ {Γ Γ' ρ ρ' ρ''}
            → ρ' ≢ uᵣ
-           → ρ' ≡ ρ ·ᵣ ρ''
+           → ¬(Σ[ ρ''' ∈ R ] ρ ≡ ρ''' ·ᵣ ρ')
+           → ρ' ≡ ρ'' ·ᵣ ρ
            → Γ -ᶜ ρ'' ≈ Γ'
            --------------------
            → Γ ⟨ ρ ⟩ -ᶜ ρ' ≈ Γ'
@@ -355,10 +356,14 @@ infixl 29 _-ᶜ_≈_
       → Γ' -ᶜ ρ ≈ Γ''
       → (Γ ++ᶜ Γ') -ᶜ ρ ≈ Γ ++ᶜ Γ''
 
-++ᶜ-ᶜ (-ᶜ-uᵣ p) = -ᶜ-uᵣ p
-++ᶜ-ᶜ (-ᶜ-∷ p q) = -ᶜ-∷ p (++ᶜ-ᶜ q)
-++ᶜ-ᶜ (-ᶜ-⟨⟩-lt p q) = -ᶜ-⟨⟩-lt p q
-++ᶜ-ᶜ (-ᶜ-⟨⟩-gt p q r) = -ᶜ-⟨⟩-gt p q (++ᶜ-ᶜ r)
+++ᶜ-ᶜ (-ᶜ-uᵣ p) =
+  -ᶜ-uᵣ p
+++ᶜ-ᶜ (-ᶜ-∷ p q) =
+  -ᶜ-∷ p (++ᶜ-ᶜ q)
+++ᶜ-ᶜ (-ᶜ-⟨⟩-lt p q) =
+  -ᶜ-⟨⟩-lt p q
+++ᶜ-ᶜ (-ᶜ-⟨⟩-gt p q r s) =
+  -ᶜ-⟨⟩-gt p q r (++ᶜ-ᶜ s)
 
 -ᶜ-u : ∀ {Γ Γ'}
         → Γ -ᶜ uᵣ ≈ Γ'
@@ -367,59 +372,66 @@ infixl 29 _-ᶜ_≈_
 -ᶜ-u (-ᶜ-uᵣ p) = refl
 -ᶜ-u (-ᶜ-∷ p q) = ⊥-elim (p refl)
 -ᶜ-u (-ᶜ-⟨⟩-lt p q) = ⊥-elim (p refl)
--ᶜ-u (-ᶜ-⟨⟩-gt p q r) = ⊥-elim (p refl)
-
+-ᶜ-u (-ᶜ-⟨⟩-gt p q r s) = ⊥-elim (p refl)
 
 -ᶜ-· : ∀ {Γ Γ' Γ'' ρ₁ ρ₂}
-        → Γ -ᶜ ρ₁ ≈ Γ'
-        → Γ' -ᶜ ρ₂ ≈ Γ''
+        → Γ -ᶜ ρ₂ ≈ Γ'
+        → Γ' -ᶜ ρ₁ ≈ Γ''
         → Γ -ᶜ (ρ₁ ·ᵣ ρ₂) ≈ Γ''
 
--ᶜ-· {ρ₂ = ρ₂} (-ᶜ-uᵣ refl) q rewrite ·ᵣ-identityˡ ρ₂ =
+-ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-uᵣ refl) q rewrite ·ᵣ-identityʳ ρ₁ =
   q
--ᶜ-· (-ᶜ-∷ p q) r =
-  -ᶜ-∷ (λ z → p (c·ᵣd≡uᵣ⇒c≡uᵣ z)) (-ᶜ-· q r)
--ᶜ-· {ρ₁ = ρ₁} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) (-ᶜ-uᵣ refl) rewrite q | ·ᵣ-identityʳ ρ₁ with ρ₁ ≡ᵣ? uᵣ
-... | yes refl rewrite ·ᵣ-identityˡ ρ'' = -ᶜ-uᵣ refl
-... | no ¬q = -ᶜ-⟨⟩-lt ¬q refl
--ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) (-ᶜ-⟨⟩-lt {ρ'' = ρ'''} r s)
-  rewrite q | s | sym (·ᵣ-assoc ρ₁ ρ₂ ρ''') =
-    -ᶜ-⟨⟩-lt (c≢u⇒c·ᵣd≢u p) refl
--ᶜ-· (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t) rewrite q | s =
-  -ᶜ-⟨⟩-gt (c≢u⇒c·ᵣd≢u p) (sym (·ᵣ-assoc _ _ _)) t
--ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-gt {ρ = ρ} {ρ'' = ρ''} p q r) t =
-  -ᶜ-⟨⟩-gt (c≢u⇒c·ᵣd≢u p) (trans (cong (_·ᵣ ρ₂) q) (·ᵣ-assoc ρ ρ'' ρ₂)) (-ᶜ-· r t)
+-ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-∷ p q) r =
+  -ᶜ-∷ (λ z → p (c·ᵣd≡uᵣ⇒d≡uᵣ z)) (-ᶜ-· q r)
+-ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) (-ᶜ-uᵣ refl) with ρ₂ ≡ᵣ? uᵣ
+... | yes refl rewrite q | ·ᵣ-identityʳ ρ'' | ·ᵣ-identityʳ uᵣ =
+  -ᶜ-uᵣ refl
+... | no ¬r rewrite ·ᵣ-identityˡ ρ₂ =
+  -ᶜ-⟨⟩-lt ¬r q
+-ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-lt r s) rewrite q | s =
+  -ᶜ-⟨⟩-lt (λ z → r (c·ᵣd≡uᵣ⇒c≡uᵣ z)) (·ᵣ-assoc _ ρ₁ ρ₂)
+-ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t u) rewrite q | t =
+  -ᶜ-⟨⟩-gt
+    (λ z → r (c·ᵣd≡uᵣ⇒c≡uᵣ z))
+    (λ { (ρ''' , u) → s (ρ''' , (c·ᵣd≡e·ᵣd⇒c≡e (trans u (sym (·ᵣ-assoc _ _ _))))) })
+    (·ᵣ-assoc _ _ ρ₂) u
+-ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-gt {ρ = ρ} {ρ'' = ρ''} p q r s) t rewrite r =
+  -ᶜ-⟨⟩-gt
+    (λ z → p (c·ᵣd≡uᵣ⇒d≡uᵣ z))
+    (λ { (ρ''' , u) → q (ρ''' ·ᵣ ρ₁ , trans u (sym (·ᵣ-assoc _ _ _))) })
+    (sym (·ᵣ-assoc _ _ _))
+    (-ᶜ-· s t)
 
+-- "Time-travelling" operation is functional
 
-{-
--ᶜ-·⁻¹ : ∀ {Γ Γ'' ρ₁ ρ₂}
-       → Γ -ᶜ ρ₁ ·ᵣ ρ₂ ≈ Γ''
-       → Σ[ Γ' ∈ Ctx ] Γ -ᶜ ρ₁ ≈ Γ' × Γ' -ᶜ ρ₂ ≈ Γ''
+-ᶜ-functional : ∀ {Γ Γ' Γ'' ρ}
+              → Γ -ᶜ ρ ≈ Γ'
+              → Γ -ᶜ ρ ≈ Γ''
+              → Γ' ≡ Γ''
 
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-uᵣ p)  =
-  Γ , -ᶜ-uᵣ (c·ᵣd≡uᵣ⇒c≡uᵣ p) , -ᶜ-uᵣ (c·ᵣd≡uᵣ⇒d≡uᵣ p)
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-∷ p q) with ρ₁ ≡ᵣ? uᵣ
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-∷ {Γ = Γ'} {A = A} p q) | yes refl
-  rewrite ·ᵣ-identityˡ ρ₂ =
-    Γ' ∷ A , -ᶜ-uᵣ refl , -ᶜ-∷ p q
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-∷ p q) | no ¬s with -ᶜ-·⁻¹ q
-... | Γ' , u , v = Γ' , -ᶜ-∷ ¬s u , v
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-⟨⟩-lt p q) with ρ₁ ≡ᵣ? uᵣ
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-⟨⟩-lt {Γ = Γ'} {ρ = ρ} p q) | yes refl
-  rewrite ·ᵣ-identityˡ ρ₂ =
-    Γ' ⟨ ρ ⟩ , -ᶜ-uᵣ refl , -ᶜ-⟨⟩-lt p q
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-⟨⟩-lt {Γ = Γ'} {ρ'' = ρ''} p q) | no ¬s
-  rewrite ·ᵣ-assoc ρ₁ ρ₂ ρ'' with ρ₂ ≡ᵣ? uᵣ
-... | yes refl rewrite ·ᵣ-identityˡ ρ'' =
-  Γ' ⟨ ρ'' ⟩ , -ᶜ-⟨⟩-lt ¬s q , -ᶜ-uᵣ refl
-... | no ¬t =
-  Γ' ⟨ ρ₂ ·ᵣ ρ'' ⟩ , -ᶜ-⟨⟩-lt ¬s q , -ᶜ-⟨⟩-lt ¬t refl
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-⟨⟩-gt {Γ = Γ'} {ρ = ρ} p q r) with ρ₁ ≡ᵣ? uᵣ
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-⟨⟩-gt {Γ = Γ'} {ρ = ρ} p q r) | yes refl rewrite ·ᵣ-identityˡ ρ₂ =
-  Γ' ⟨ ρ ⟩ , -ᶜ-uᵣ refl , -ᶜ-⟨⟩-gt p q r
--ᶜ-·⁻¹ {Γ} {Γ''} {ρ₁} {ρ₂} (-ᶜ-⟨⟩-gt {Γ = Γ'} {ρ = ρ} p q r) | no ¬t with ρ₂ ≡ᵣ? uᵣ
-... | yes refl rewrite ·ᵣ-identityʳ ρ₁ =
-  Γ'' , -ᶜ-⟨⟩-gt p q r , -ᶜ-uᵣ refl
-... | no ¬s = {!!}
--}
-
+-ᶜ-functional (-ᶜ-uᵣ p) (-ᶜ-uᵣ q) =
+  refl
+-ᶜ-functional (-ᶜ-uᵣ p) (-ᶜ-∷ q r) =
+  ⊥-elim (q p)
+-ᶜ-functional (-ᶜ-uᵣ p) (-ᶜ-⟨⟩-lt q r) =
+  ⊥-elim (q p)
+-ᶜ-functional (-ᶜ-uᵣ p) (-ᶜ-⟨⟩-gt q r s t) =
+  ⊥-elim (q p)
+-ᶜ-functional (-ᶜ-∷ p q) (-ᶜ-uᵣ r) =
+  ⊥-elim (p r)
+-ᶜ-functional (-ᶜ-∷ p q) (-ᶜ-∷ r s) =
+  -ᶜ-functional q s
+-ᶜ-functional (-ᶜ-⟨⟩-lt p q) (-ᶜ-uᵣ r) =
+  ⊥-elim (p r)
+-ᶜ-functional (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-lt r s)
+  rewrite c·ᵣd≡e·ᵣd⇒c≡e (trans (sym q) s) =
+    refl
+-ᶜ-functional (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t u) =
+  ⊥-elim (s (_ , q))
+-ᶜ-functional (-ᶜ-⟨⟩-gt p q r s) (-ᶜ-uᵣ t) =
+  ⊥-elim (p t)
+-ᶜ-functional (-ᶜ-⟨⟩-gt p q r s) (-ᶜ-⟨⟩-lt t u) =
+  ⊥-elim (q (_ , u))
+-ᶜ-functional (-ᶜ-⟨⟩-gt p q r s) (-ᶜ-⟨⟩-gt t u v w)
+  rewrite c·ᵣd≡e·ᵣd⇒c≡e (trans (sym r) v) =
+    -ᶜ-functional s w
