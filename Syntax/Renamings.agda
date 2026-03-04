@@ -51,10 +51,42 @@ data Ren : Ctx → Ctx → Set where
 
 infixr 20 _∘ʳ_
 
--- TODO: natural concrete renamings
+-- TODO: definitions of natural concrete renamings (see original development)
+
+-- ...
 
 -- "Time-travelling" operation on renamings
 
+_-ʳ_,_ : ∀ {Γ Γ' Γ''}
+       → Ren Γ Γ'
+       → (ρ : R)
+       → Γ -ᶜ ρ ≈ Γ''
+       → Σ[ Γ''' ∈ Ctx ] Γ' -ᶜ ρ ≈ Γ''' × Ren Γ'' Γ'''
+
+id-ren -ʳ ρ , p =
+  _ , p , id-ren
+(r₂ ∘ʳ r₁) -ʳ ρ , p with r₁ -ʳ ρ , p
+... | Γ''' , q , r' with r₂ -ʳ ρ , q
+... | Γ'''' , s , r'' =
+  Γ'''' , s , r'' ∘ʳ r'
+wk-ren -ʳ ρ , p with ρ ≡ᵣ? uᵣ
+... | yes refl rewrite -ᶜ-u p =
+  _ , -ᶜ-uᵣ refl , wk-ren
+... | no ¬q =
+  _ , -ᶜ-∷ ¬q p , id-ren
+var-ren x -ʳ ρ , p = {!!}
+⟨⟩-η-ren -ʳ ρ , p = {!!}
+⟨⟩-η⁻¹-ren -ʳ ρ , p = {!!}
+⟨⟩-μ-ren -ʳ ρ , p = {!!}
+⟨⟩-μ⁻¹-ren -ʳ ρ , p = {!!}
+⟨⟩-≤-ren q -ʳ ρ , p = {!!}
+cong-∷-ren r -ʳ ρ , p = {!!}
+cong-⟨⟩-ren r -ʳ ρ , p = {!!}
+
+infixl 30 _-ʳ_,_
+
+
+{-
 _-ʳ_,_,_ : ∀ {Γ Γ' Γ'' Γ'''}
        → Ren Γ Γ'
        → (ρ : R)
@@ -64,9 +96,22 @@ _-ʳ_,_,_ : ∀ {Γ Γ' Γ'' Γ'''}
 
 id-ren -ʳ ρ , p , q rewrite -ᶜ-functional p q =
   id-ren
-(r₂ ∘ʳ r₁) -ʳ ρ , p , q = {!!}
-wk-ren -ʳ ρ , p , q = {!!}
-var-ren x -ʳ ρ , p , q = {!!}
+(r₂ ∘ʳ r₁) -ʳ ρ , p , q with -ᶜ-push-ren r₁ p
+... | Γ''' , s =
+  (r₂ -ʳ ρ , s , q) ∘ʳ (r₁ -ʳ ρ , p , s)
+wk-ren -ʳ ρ , p , q with ρ ≡ᵣ? uᵣ
+wk-ren -ʳ ρ , p , q | yes refl rewrite -ᶜ-u p | sym (-ᶜ-u q) =
+  wk-ren
+(wk-ren -ʳ ρ , p , -ᶜ-uᵣ q) | no ¬s =
+  ⊥-elim (¬s q)
+(wk-ren -ʳ ρ , p , -ᶜ-∷ q r) | no ¬s rewrite -ᶜ-functional p r =
+  id-ren
+var-ren x -ʳ ρ , p , q with ρ ≡ᵣ? uᵣ
+var-ren x -ʳ ρ , p , q | yes refl rewrite sym (-ᶜ-u p) | -ᶜ-u q =
+  var-ren x
+(var-ren x -ʳ ρ , -ᶜ-uᵣ p , q) | no ¬s = ⊥-elim (¬s p)
+(var-ren x -ʳ ρ , -ᶜ-∷ p q , r) | no ¬s rewrite -ᶜ-functional q r =
+  id-ren
 ⟨⟩-η-ren -ʳ ρ , p , q = {!!}
 ⟨⟩-η⁻¹-ren -ʳ ρ , p , q = {!!}
 ⟨⟩-μ-ren -ʳ ρ , p , q = {!!}
@@ -76,3 +121,5 @@ cong-∷-ren r -ʳ ρ , p , q = {!!}
 cong-⟨⟩-ren r -ʳ ρ , p , q = {!!}
 
 infixl 30 _-ʳ_,_,_
+
+-}
