@@ -63,28 +63,41 @@ _-ʳ_,_ : ∀ {Γ Γ' Γ''}
        → Γ -ᶜ ρ ≈ Γ''
        → Σ[ Γ''' ∈ Ctx ] Γ' -ᶜ ρ ≈ Γ''' × Ren Γ'' Γ'''
 
-id-ren -ʳ ρ , p =
+r -ʳ ρ , p with ρ ≡ᵣ? uᵣ
+r -ʳ ρ , p | yes refl rewrite -ᶜ-u p =
+  _ , -ᶜ-uᵣ refl , r
+id-ren -ʳ ρ , p | no ρ≢ᵣuᵣ =
   _ , p , id-ren
-(r₂ ∘ʳ r₁) -ʳ ρ , p with r₁ -ʳ ρ , p
+(r₂ ∘ʳ r₁) -ʳ ρ , p | no ρ≢ᵣuᵣ with r₁ -ʳ ρ , p
 ... | Γ''' , q , r' with r₂ -ʳ ρ , q
 ... | Γ'''' , s , r'' =
   Γ'''' , s , r'' ∘ʳ r'
-wk-ren -ʳ ρ , p with ρ ≡ᵣ? uᵣ
-... | yes refl rewrite -ᶜ-u p =
-  _ , -ᶜ-uᵣ refl , wk-ren
-... | no ¬q =
-  _ , -ᶜ-∷ ¬q p , id-ren
-var-ren x -ʳ ρ , p = {!!}
-⟨⟩-η-ren -ʳ ρ , p = {!!}
-⟨⟩-η⁻¹-ren -ʳ ρ , p = {!!}
-⟨⟩-μ-ren -ʳ ρ , p = {!!}
-⟨⟩-μ⁻¹-ren -ʳ ρ , p = {!!}
-⟨⟩-≤-ren q -ʳ ρ , p = {!!}
-cong-∷-ren r -ʳ ρ , p = {!!}
-cong-⟨⟩-ren r -ʳ ρ , p = {!!}
+wk-ren -ʳ ρ , p | no ρ≢ᵣuᵣ =
+  _ , -ᶜ-∷ ρ≢ᵣuᵣ p , id-ren
+(var-ren x -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ p)
+(var-ren x -ʳ ρ , -ᶜ-∷ p q) | no ρ≢ᵣuᵣ =
+  _ , q , id-ren
+(⟨⟩-η-ren -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ p)
+(⟨⟩-η-ren -ʳ ρ , -ᶜ-⟨⟩-lt p q) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
+(⟨⟩-η-ren -ʳ ρ , -ᶜ-⟨⟩-gt {ρ'' = ρ''} p q s t) | no ρ≢ᵣuᵣ rewrite ·ᵣ-identityʳ ρ'' | s =
+  _ , t , id-ren
+⟨⟩-η⁻¹-ren -ʳ ρ , p | no ρ≢ᵣuᵣ =
+  _ , -ᶜ-⟨⟩-gt ρ≢ᵣuᵣ (λ { (ρ''' , q) → ⊥-elim (ρ≢ᵣuᵣ (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q))) }) (sym (·ᵣ-identityʳ ρ)) p , id-ren
+(⟨⟩-μ-ren -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ p)
+(⟨⟩-μ-ren -ʳ ρ , -ᶜ-⟨⟩-lt p q) | no ρ≢ᵣuᵣ =
+  {!!} -- TODO: def. of minus needs to be generalised to account for Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩ -ᶜ ρ from Γ ⟨ ρ₁ ·ᵣ ρ₂ ⟩ -ᶜ ρ
+(⟨⟩-μ-ren -ʳ ρ , -ᶜ-⟨⟩-gt p q s t) | no ρ≢ᵣuᵣ =
+  {!!}
+⟨⟩-μ⁻¹-ren -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
+⟨⟩-≤-ren x -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
+cong-∷-ren r -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
+cong-⟨⟩-ren r -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
 
 infixl 30 _-ʳ_,_
-
 
 {-
 _-ʳ_,_,_ : ∀ {Γ Γ' Γ'' Γ'''}

@@ -402,6 +402,18 @@ infixl 29 _-ᶜ_≈_
     (sym (·ᵣ-assoc _ _ _))
     (-ᶜ-· s t)
 
+{-
+·-ᶜ : ∀ {Γ Γ' ρ ρ' ρ''}
+    → ρ'' ≢ uᵣ
+    → Γ ⟨ ρ ⟩ ⟨ ρ' ⟩ -ᶜ ρ'' ≈ Γ'
+    → Γ ⟨ ρ ·ᵣ ρ' ⟩ -ᶜ ρ'' ≈ Γ'
+
+·-ᶜ p (-ᶜ-uᵣ q) =
+  ⊥-elim (p q)
+·-ᶜ p (-ᶜ-⟨⟩-lt q r) rewrite r = {!!}
+·-ᶜ p (-ᶜ-⟨⟩-gt q r s t) = {!!}
+-}
+
 -- "Time-travelling" operation is functional
 
 -ᶜ-functional : ∀ {Γ Γ' Γ'' ρ}
