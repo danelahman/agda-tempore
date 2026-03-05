@@ -15,6 +15,7 @@ open GradeSystemInterface Grades
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum
 
 open import Relation.Nullary
 
@@ -81,15 +82,26 @@ wk-ren -ʳ ρ , p | no ρ≢ᵣuᵣ =
 (⟨⟩-η-ren -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
   ⊥-elim (ρ≢ᵣuᵣ p)
 (⟨⟩-η-ren -ʳ ρ , -ᶜ-⟨⟩-lt p q) | no ρ≢ᵣuᵣ =
-  ⊥-elim (ρ≢ᵣuᵣ (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q)))
+  ⊥-elim (ρ≢ᵣuᵣ (·ᵣ-zero-productʳ (sym q)))
 (⟨⟩-η-ren -ʳ ρ , -ᶜ-⟨⟩-gt {ρ'' = ρ''} p q s t) | no ρ≢ᵣuᵣ rewrite ·ᵣ-identityʳ ρ'' | s =
   _ , t , id-ren
 ⟨⟩-η⁻¹-ren -ʳ ρ , p | no ρ≢ᵣuᵣ =
-  _ , -ᶜ-⟨⟩-gt ρ≢ᵣuᵣ (λ { (ρ''' , q) → ⊥-elim (ρ≢ᵣuᵣ (c·ᵣd≡uᵣ⇒d≡uᵣ (sym q))) }) (sym (·ᵣ-identityʳ ρ)) p , id-ren
+  _ , -ᶜ-⟨⟩-gt ρ≢ᵣuᵣ (λ { (ρ''' , q) → ⊥-elim (ρ≢ᵣuᵣ (·ᵣ-zero-productʳ (sym q))) }) (sym (·ᵣ-identityʳ ρ)) p , id-ren
 (⟨⟩-μ-ren -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
   ⊥-elim (ρ≢ᵣuᵣ p)
-(⟨⟩-μ-ren -ʳ ρ , -ᶜ-⟨⟩-lt p q) | no ρ≢ᵣuᵣ =
-  {!!} -- TODO: def. of minus needs to be generalised to account for Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩ -ᶜ ρ from Γ ⟨ ρ₁ ·ᵣ ρ₂ ⟩ -ᶜ ρ
+(⟨⟩-μ-ren -ʳ ρ , -ᶜ-⟨⟩-lt p q) | no ρ≢ᵣuᵣ with ·ᵣ-equidivisible q
+... | inj₁ (ρ'' , s , t , u) rewrite sym t =
+  _ , -ᶜ-⟨⟩-lt ρ≢ᵣuᵣ u , ⟨⟩-μ-ren
+... | inj₂ (inj₁ (refl , refl)) =
+  _ , -ᶜ-⟨⟩-lt ρ≢ᵣuᵣ (sym (·ᵣ-identityˡ ρ)) , ⟨⟩-η⁻¹-ren
+... | inj₂ (inj₂ (ρ'' , s , t , u)) =
+  _ ,
+  -ᶜ-⟨⟩-gt
+    ρ≢ᵣuᵣ
+    (λ { (ρ'' , v) → s (·ᵣ-zero-productʳ (·ᵣ-cancellativeˡ
+      (sym (trans (·ᵣ-identityˡ _) (trans (trans v (cong (ρ'' ·ᵣ_) (sym u))) (sym (·ᵣ-assoc _ _ _))))))) })
+    (sym u) (-ᶜ-⟨⟩-lt s t) ,
+  id-ren  
 (⟨⟩-μ-ren -ʳ ρ , -ᶜ-⟨⟩-gt p q s t) | no ρ≢ᵣuᵣ =
   {!!}
 ⟨⟩-μ⁻¹-ren -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
@@ -98,41 +110,3 @@ cong-∷-ren r -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
 cong-⟨⟩-ren r -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
 
 infixl 30 _-ʳ_,_
-
-{-
-_-ʳ_,_,_ : ∀ {Γ Γ' Γ'' Γ'''}
-       → Ren Γ Γ'
-       → (ρ : R)
-       → Γ -ᶜ ρ ≈ Γ''
-       → Γ' -ᶜ ρ ≈ Γ'''
-       → Ren Γ'' Γ'''
-
-id-ren -ʳ ρ , p , q rewrite -ᶜ-functional p q =
-  id-ren
-(r₂ ∘ʳ r₁) -ʳ ρ , p , q with -ᶜ-push-ren r₁ p
-... | Γ''' , s =
-  (r₂ -ʳ ρ , s , q) ∘ʳ (r₁ -ʳ ρ , p , s)
-wk-ren -ʳ ρ , p , q with ρ ≡ᵣ? uᵣ
-wk-ren -ʳ ρ , p , q | yes refl rewrite -ᶜ-u p | sym (-ᶜ-u q) =
-  wk-ren
-(wk-ren -ʳ ρ , p , -ᶜ-uᵣ q) | no ¬s =
-  ⊥-elim (¬s q)
-(wk-ren -ʳ ρ , p , -ᶜ-∷ q r) | no ¬s rewrite -ᶜ-functional p r =
-  id-ren
-var-ren x -ʳ ρ , p , q with ρ ≡ᵣ? uᵣ
-var-ren x -ʳ ρ , p , q | yes refl rewrite sym (-ᶜ-u p) | -ᶜ-u q =
-  var-ren x
-(var-ren x -ʳ ρ , -ᶜ-uᵣ p , q) | no ¬s = ⊥-elim (¬s p)
-(var-ren x -ʳ ρ , -ᶜ-∷ p q , r) | no ¬s rewrite -ᶜ-functional q r =
-  id-ren
-⟨⟩-η-ren -ʳ ρ , p , q = {!!}
-⟨⟩-η⁻¹-ren -ʳ ρ , p , q = {!!}
-⟨⟩-μ-ren -ʳ ρ , p , q = {!!}
-⟨⟩-μ⁻¹-ren -ʳ ρ , p , q = {!!}
-⟨⟩-≤-ren s -ʳ ρ , p , q = {!!}
-cong-∷-ren r -ʳ ρ , p , q = {!!}
-cong-⟨⟩-ren r -ʳ ρ , p , q = {!!}
-
-infixl 30 _-ʳ_,_,_
-
--}

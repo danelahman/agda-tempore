@@ -6,7 +6,8 @@ module Syntax.Grades where
 
 open import Data.Empty
 open import Data.Nat.Base
-open import Data.Product using (Σ-syntax)
+open import Data.Product hiding (map)
+open import Data.Sum hiding (map)
 
 open import Level renaming (zero to lzero)
 
@@ -21,6 +22,7 @@ open import Util.Ordered.Structures
 
 record Grade : Set₁ where
   infixl 7 _·_
+  infixl 5 _≾_
 
   field
 
@@ -35,11 +37,11 @@ record Grade : Set₁ where
     ·-identityˡ : (c : Carrier) → (u · c) ≡ c
     ·-assoc     : (c d e : Carrier) → (c · d) · e ≡ c · (d · e)
 
-    -- order on the carrier
+    -- order
     _≾_ : Rel Carrier lzero
 
-    -- no elements are below the unit
-    c≾u⇒c≡u : ∀ {c} → c ≾ u → c ≡ u
+    -- u is minimal
+    u-minimal : ∀ {c} → c ≾ u → c ≡ u
     
     -- _·_ is monotone with respect to _≾_
     ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
@@ -56,28 +58,33 @@ record Grade : Set₁ where
     _≾?_ : Decidable _≾_
     _≡?_ : Decidable (_≡_ {A = Carrier})
 
-    -- _≾_ is cancellative
-    c·d≾e·d⇒c≾e : ∀ {c d e} → (c · d) ≾ (e · d) → c ≾ e
-    d·c≾d·e⇒c≾e : ∀ {c d e} → (d · c) ≾ (d · e) → c ≾ e
-
     -- _≡_ is cancellative
     ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
 
-    -- non-zero-divisor property of _·_
-    c·d≡u⇒c≡u : ∀ {c d} → c · d ≡ u → c ≡ u
-    c·d≡u⇒d≡u : ∀ {c d} → c · d ≡ u → d ≡ u
+    -- _·_ and u have zero-product property
+    ·-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
+    ·-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
+
+    -- _·_ is equidivisible
+    ·-equidivisible : ∀ {c d e f} → c · d ≡ e · f
+                    → Σ[ g ∈ Carrier ] (g ≢ u × c · g ≡ e × d ≡ g · f)
+                      ⊎
+                      c ≡ e × d ≡ f
+                      ⊎
+                      Σ[ h ∈ Carrier ] (h ≢ u × c ≡ e · h × h · d ≡ f)
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
 
     -- ...
 
-  -- helpful axiliary lemma: _≡_ is included in _≾_
+  -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
 
-  c·d≡e·d⇒c≡e : ∀ {c d e} → c · d ≡ e · d → c ≡ e
-  c·d≡e·d⇒c≡e {c} {d} {e} p =
+  -- binary cancellation lemmas  
+  ·-cancellativeˡ : ∀ {c d e} → c · d ≡ e · d → c ≡ e
+  ·-cancellativeˡ {c} {d} {e} p =
     begin
       c
       ≡⟨ sym (·-identityʳ c) ⟩
@@ -87,9 +94,9 @@ record Grade : Set₁ where
       ≡⟨ ·-identityʳ e ⟩
       e
     ∎
-  
-  d·c≡d·e⇒c≡e : ∀ {c d e} → d · c ≡ d · e → c ≡ e
-  d·c≡d·e⇒c≡e {c} {d} {e} p =
+
+  ·-cancellativeʳ : ∀ {c d e} → d · c ≡ d · e → c ≡ e
+  ·-cancellativeʳ {c} {d} {e} p =
     begin
       c
     ≡⟨ sym (·-identityˡ c) ⟩
@@ -102,12 +109,12 @@ record Grade : Set₁ where
       e
     ∎
   
-  -- contrapositive version of the non-zero-divisor property of _·_
-  c≢u⇒c·d≢u : ∀ {c d} → c ≢ u → c · d ≢ u
-  c≢u⇒c·d≢u p q = p (c·d≡u⇒c≡u q)
+  -- contrapositive version of the zero-product property of _·_
+  ·-zero-productˡ-≢ : ∀ {c d} → c ≢ u → c · d ≢ u
+  ·-zero-productˡ-≢ p q = p (·-zero-productˡ q)
   
-  d≢u⇒c·d≢u : ∀ {c d} → d ≢ u → c · d ≢ u
-  d≢u⇒c·d≢u p q = p (c·d≡u⇒d≡u q)
+  ·-zero-productʳ-≢ : ∀ {c d} → d ≢ u → c · d ≢ u
+  ·-zero-productʳ-≢ p q = p (·-zero-productʳ q)
 
 open Grade
 
@@ -156,16 +163,16 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
      ·-≡-cancellative to ·ᵣ-≡-cancellative;
-     c·d≡u⇒c≡u to c·ᵣd≡uᵣ⇒c≡uᵣ;
-     c·d≡u⇒d≡u to c·ᵣd≡uᵣ⇒d≡uᵣ;
-     c≾u⇒c≡u to c≾ᵣuᵣ⇒c≡uᵣ;
-     c·d≾e·d⇒c≾e to c·ᵣd≾ᵣe·d⇒c≾ᵣe;
+     ·-zero-productˡ to ·ᵣ-zero-productˡ;
+     ·-zero-productʳ to ·ᵣ-zero-productʳ;
+     ·-equidivisible to ·ᵣ-equidivisible;
+     u-minimal to uᵣ-minimal;
      embedNat to embedR;
      ≾-reflexive to ≾ᵣ-reflexive;
-     c·d≡e·d⇒c≡e to c·ᵣd≡e·ᵣd⇒c≡e;
-     d·c≡d·e⇒c≡e to d·ᵣc≡d·ᵣe⇒c≡e;     
-     c≢u⇒c·d≢u to c≢u⇒c·ᵣd≢u;
-     d≢u⇒c·d≢u to d≢u⇒c·ᵣd≢u
+     ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
+     ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     
+     ·-zero-productˡ-≢ to ·ᵣ-zero-productˡ-≢;
+     ·-zero-productʳ-≢ to ·ᵣ-zero-productʳ-≢
     ) public
 
   open Grade EGrade renaming
@@ -184,10 +191,10 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-≡-cancellative to ·ₑ-≡-cancellative;
      embedNat to embedE;
      ≾-reflexive to ≾ₑ-reflexive;
-     c·d≡e·d⇒c≡e to c·ₑd≡e·ₑd⇒c≡e;
-     d·c≡d·e⇒c≡e to d·ₑc≡d·ₑe⇒c≡e;     
-     c≢u⇒c·d≢u to c≢u⇒c·ₑd≢u;
-     d≢u⇒c·d≢u to d≢u⇒c·ₑd≢u
+     ·-cancellativeˡ to ·ₑ-cancellativeˡ;
+     ·-cancellativeʳ to ·ₑ-cancellativeʳ;     
+     ·-zero-productˡ-≢ to ·ₑ-zero-productˡ-≢;
+     ·-zero-productʳ-≢ to ·ₑ-zero-productʳ-≢
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public

@@ -382,37 +382,25 @@ infixl 29 _-ᶜ_≈_
 -ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-uᵣ refl) q rewrite ·ᵣ-identityʳ ρ₁ =
   q
 -ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-∷ p q) r =
-  -ᶜ-∷ (λ z → p (c·ᵣd≡uᵣ⇒d≡uᵣ z)) (-ᶜ-· q r)
+  -ᶜ-∷ (λ z → p (·ᵣ-zero-productʳ z)) (-ᶜ-· q r)
 -ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt {ρ'' = ρ''} p q) (-ᶜ-uᵣ refl) with ρ₂ ≡ᵣ? uᵣ
 ... | yes refl rewrite q | ·ᵣ-identityʳ ρ'' | ·ᵣ-identityʳ uᵣ =
   -ᶜ-uᵣ refl
 ... | no ¬r rewrite ·ᵣ-identityˡ ρ₂ =
   -ᶜ-⟨⟩-lt ¬r q
 -ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-lt r s) rewrite q | s =
-  -ᶜ-⟨⟩-lt (λ z → r (c·ᵣd≡uᵣ⇒c≡uᵣ z)) (·ᵣ-assoc _ ρ₁ ρ₂)
+  -ᶜ-⟨⟩-lt (λ z → r (·ᵣ-zero-productˡ z)) (·ᵣ-assoc _ ρ₁ ρ₂)
 -ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t u) rewrite q | t =
   -ᶜ-⟨⟩-gt
-    (λ z → r (c·ᵣd≡uᵣ⇒c≡uᵣ z))
-    (λ { (ρ''' , u) → s (ρ''' , (c·ᵣd≡e·ᵣd⇒c≡e (trans u (sym (·ᵣ-assoc _ _ _))))) })
+    (λ z → r (·ᵣ-zero-productˡ z))
+    (λ { (ρ''' , u) → s (ρ''' , ·ᵣ-cancellativeˡ (trans u (sym (·ᵣ-assoc _ _ _))) ) })
     (·ᵣ-assoc _ _ ρ₂) u
 -ᶜ-· {ρ₁ = ρ₁} {ρ₂ = ρ₂} (-ᶜ-⟨⟩-gt {ρ = ρ} {ρ'' = ρ''} p q r s) t rewrite r =
   -ᶜ-⟨⟩-gt
-    (λ z → p (c·ᵣd≡uᵣ⇒d≡uᵣ z))
+    (λ z → p (·ᵣ-zero-productʳ z))
     (λ { (ρ''' , u) → q (ρ''' ·ᵣ ρ₁ , trans u (sym (·ᵣ-assoc _ _ _))) })
     (sym (·ᵣ-assoc _ _ _))
     (-ᶜ-· s t)
-
-{-
-·-ᶜ : ∀ {Γ Γ' ρ ρ' ρ''}
-    → ρ'' ≢ uᵣ
-    → Γ ⟨ ρ ⟩ ⟨ ρ' ⟩ -ᶜ ρ'' ≈ Γ'
-    → Γ ⟨ ρ ·ᵣ ρ' ⟩ -ᶜ ρ'' ≈ Γ'
-
-·-ᶜ p (-ᶜ-uᵣ q) =
-  ⊥-elim (p q)
-·-ᶜ p (-ᶜ-⟨⟩-lt q r) rewrite r = {!!}
-·-ᶜ p (-ᶜ-⟨⟩-gt q r s t) = {!!}
--}
 
 -- "Time-travelling" operation is functional
 
@@ -436,7 +424,7 @@ infixl 29 _-ᶜ_≈_
 -ᶜ-functional (-ᶜ-⟨⟩-lt p q) (-ᶜ-uᵣ r) =
   ⊥-elim (p r)
 -ᶜ-functional (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-lt r s)
-  rewrite c·ᵣd≡e·ᵣd⇒c≡e (trans (sym q) s) =
+  rewrite ·ᵣ-cancellativeˡ (trans (sym q) s) =
     refl
 -ᶜ-functional (-ᶜ-⟨⟩-lt p q) (-ᶜ-⟨⟩-gt r s t u) =
   ⊥-elim (s (_ , q))
@@ -445,5 +433,5 @@ infixl 29 _-ᶜ_≈_
 -ᶜ-functional (-ᶜ-⟨⟩-gt p q r s) (-ᶜ-⟨⟩-lt t u) =
   ⊥-elim (q (_ , u))
 -ᶜ-functional (-ᶜ-⟨⟩-gt p q r s) (-ᶜ-⟨⟩-gt t u v w)
-  rewrite c·ᵣd≡e·ᵣd⇒c≡e (trans (sym r) v) =
+  rewrite ·ᵣ-cancellativeˡ (trans (sym r) v) =
     -ᶜ-functional s w
