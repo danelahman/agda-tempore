@@ -101,12 +101,37 @@ wk-ren -ʳ ρ , p | no ρ≢ᵣuᵣ =
     (λ { (ρ'' , v) → s (·ᵣ-zero-productʳ (·ᵣ-cancellativeˡ
       (sym (trans (·ᵣ-identityˡ _) (trans (trans v (cong (ρ'' ·ᵣ_) (sym u))) (sym (·ᵣ-assoc _ _ _))))))) })
     (sym u) (-ᶜ-⟨⟩-lt s t) ,
-  id-ren  
-(⟨⟩-μ-ren -ʳ ρ , -ᶜ-⟨⟩-gt p q s t) | no ρ≢ᵣuᵣ =
-  {!!}
-⟨⟩-μ⁻¹-ren -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
-⟨⟩-≤-ren x -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
-cong-∷-ren r -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
-cong-⟨⟩-ren r -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!}
+  id-ren
+(⟨⟩-μ-ren {ρ = ρ'} {ρ' = ρ''} -ʳ ρ , -ᶜ-⟨⟩-gt {ρ'' = ρ'''} p q s t) | no ρ≢ᵣuᵣ with ρ''' ≡ᵣ? uᵣ
+... | yes refl =
+  ⊥-elim (q (uᵣ , trans (trans (sym (·ᵣ-identityˡ _)) (sym s)) (sym (·ᵣ-identityˡ _))))
+... | no ¬w'' =
+  _ ,
+  -ᶜ-⟨⟩-gt ρ≢ᵣuᵣ
+    (λ { (ρ'''' , z) → q (ρ' ·ᵣ ρ'''' , trans (cong (ρ' ·ᵣ_) z) (sym (·ᵣ-assoc _ _ _))) })
+    (trans s (sym (·ᵣ-assoc _ _ _)))
+    (-ᶜ-⟨⟩-gt
+      (λ z → ¬w'' (·ᵣ-zero-productˡ z))
+      (λ { (ρ'''' , z) →
+        ¬w'' (·ᵣ-zero-productʳ (sym (·ᵣ-cancellativeˡ (trans (·ᵣ-identityˡ _) (trans z (sym (·ᵣ-assoc _ _ _))))))) })
+      refl t) ,
+  id-ren
+⟨⟩-μ⁻¹-ren -ʳ ρ , p | no ρ≢ᵣuᵣ = {!!} -- TODO: symmetric to previous case
+(⟨⟩-≤-ren p -ʳ ρ , -ᶜ-uᵣ q) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ q)
+(⟨⟩-≤-ren p -ʳ ρ , -ᶜ-⟨⟩-lt q s) | no ρ≢ᵣuᵣ = {!!}
+(⟨⟩-≤-ren p -ʳ ρ , -ᶜ-⟨⟩-gt q s t u) | no ρ≢ᵣuᵣ = {!!}
+(cong-∷-ren r -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ p)
+(cong-∷-ren r -ʳ ρ , -ᶜ-∷ p q) | no ρ≢ᵣuᵣ with r -ʳ ρ , q
+... | Γ''' , s , r' =
+  Γ''' , -ᶜ-∷ ρ≢ᵣuᵣ s , r'
+(cong-⟨⟩-ren r -ʳ ρ , -ᶜ-uᵣ p) | no ρ≢ᵣuᵣ =
+  ⊥-elim (ρ≢ᵣuᵣ p)
+(cong-⟨⟩-ren r -ʳ ρ , -ᶜ-⟨⟩-lt p q) | no ρ≢ᵣuᵣ =
+  _ , -ᶜ-⟨⟩-lt ρ≢ᵣuᵣ q , cong-⟨⟩-ren r
+(cong-⟨⟩-ren r -ʳ ρ , -ᶜ-⟨⟩-gt {ρ'' = ρ''} p q s t) | no ρ≢ᵣuᵣ with r -ʳ ρ'' , t
+... | Γ''' , u , r' =
+  _ , -ᶜ-⟨⟩-gt ρ≢ᵣuᵣ q s u , r'
 
 infixl 30 _-ʳ_,_
