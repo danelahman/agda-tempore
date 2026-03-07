@@ -66,6 +66,9 @@ record Grade : Set₁ where
     ·-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
 
     -- _·_ is equidivisible
+    -- Note 07-mar-2026: This property does not hold for two-sided intervals
+    -- Example: [1 , 2] ·ᵢ [3 , 4] ≡ [3 , 3] ·ᵢ [1 , 3]
+    -- and we have that [1 , 2] · [2 , 1] ≡ [3 , 3], but [2 , 1] is not an interval.
     ·-equidivisible : ∀ {c d e f} → c · d ≡ e · f
                     → Σ[ g ∈ Carrier ] (g ≢ u × c · g ≡ e × d ≡ g · f)
                       ⊎
