@@ -32,7 +32,7 @@ mutual
 
     var     : {A : VType}
             → A ∈[ uᵣ ] Γ
-            ------------
+            -------------
             → Γ ⊢V⦂ A
 
     -- base-typed constants
@@ -45,7 +45,7 @@ mutual
     -- unit type
 
     ⋆       :
-            ------------
+              -----------
               Γ ⊢V⦂ Unit
 
     -- pairing
@@ -81,7 +81,7 @@ mutual
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε
             → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
-            ------------------------
+            -----------------------------
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
     -- function application
@@ -144,14 +144,15 @@ mutual
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
-    unbox   : {Γ' : Ctx}
-            → {A : VType}
+    unbox   : {A : VType}
             → {C : CType}
-            → {ρ : R}
-            → Γ -ᶜ ρ ≈ Γ'
-            → Γ' ⊢V⦂ [ ρ ] A
+            → {ρ ρ' : R}
+            → {v : [ ρ ] A ∈[ ρ' ] Γ}
+            → ρ ≾ᵣ ctx-grade (proj₁ (proj₂ (var-split v)))
+            → ρ ≢ ctx-grade (proj₁ (proj₂ (var-split v)))
+            → Γ ≡ proj₁ (var-split v) ∷ [ ρ ] A ++ᶜ proj₁ (proj₂ (var-split v))
             → Γ ∷ A ⊢C⦂ C
-            ------------------
+            -------------------------------------------------------------------
             → Γ ⊢C⦂ C
 
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
@@ -183,3 +184,9 @@ mutual
           → Γ ⊢C⦂ A ‼ ε'
 
 ε-subst refl M = M
+
+-- values with graded modal types are variables
+
+grad-typ⇒var : ∀ {Γ A ρ} → (V : Γ ⊢V⦂ [ ρ ] A) → Σ[ ρ' ∈ R ] (Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] V ≡ var x)
+grad-typ⇒var (var x) = uᵣ , x , refl
+
