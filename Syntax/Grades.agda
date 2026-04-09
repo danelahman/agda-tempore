@@ -4,6 +4,8 @@
 
 module Syntax.Grades where
 
+open import Algebra.Definitions
+
 open import Data.Empty
 open import Data.Nat.Base
 open import Data.Product hiding (map)
@@ -61,20 +63,12 @@ record Grade : Set₁ where
     -- _≡_ is cancellative
     ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
 
+    -- _≾_ is right cancellative
+    ·-≾-cancelʳ : RightCancellative _≾_ _·_
+
     -- _·_ and u have zero-product property
     ·-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
     ·-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
-
-    -- _·_ is equidivisible
-    -- Note 07-mar-2026: This property does not hold for two-sided intervals
-    -- Example: [1 , 2] ·ᵢ [3 , 4] ≡ [3 , 3] ·ᵢ [1 , 3]
-    -- and we have that [1 , 2] · [2 , 1] ≡ [3 , 3], but [2 , 1] is not an interval.
-    ·-equidivisible : ∀ {c d e f} → c · d ≡ e · f
-                    → Σ[ g ∈ Carrier ] (g ≢ u × c · g ≡ e × d ≡ g · f)
-                      ⊎
-                      c ≡ e × d ≡ f
-                      ⊎
-                      Σ[ h ∈ Carrier ] (h ≢ u × c ≡ e · h × h · d ≡ f)
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
@@ -166,9 +160,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
      ·-≡-cancellative to ·ᵣ-≡-cancellative;
+     ·-≾-cancelʳ to ·ᵣ-≾ᵣ-cancelʳ;
      ·-zero-productˡ to ·ᵣ-zero-productˡ;
      ·-zero-productʳ to ·ᵣ-zero-productʳ;
-     ·-equidivisible to ·ᵣ-equidivisible;
      u-minimal to uᵣ-minimal;
      embedNat to embedR;
      ≾-reflexive to ≾ᵣ-reflexive;

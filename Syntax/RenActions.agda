@@ -11,6 +11,7 @@ module Syntax.RenActions (Grades : GradeSystem) where
 open GradeSystemInterface Grades
 
 open import Data.Product
+open import Data.Sum
 
 open import Relation.Nullary
 
@@ -59,17 +60,64 @@ var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) =
   var-rename r x .proj₁ ·ᵣ _ ,
   ·ᵣ-monoˡ-≾ᵣ (var-rename r x .proj₂ .proj₁) ,
   Tl-⟨⟩ (var-rename r x .proj₂ .proj₂)
-
+         
 -- renaming preserves blocking behaviour
 
 ren-pres-blck : ∀ {Γ Γ' A ρ ρ'}
               → (r : Ren Γ Γ')
               → (x : [ ρ ] A ∈[ ρ' ] Γ)
-              → Beh-pres
-                  (ctx-grade (proj₁ (proj₂ (var-split x))))
-                  (ctx-grade (proj₁ (proj₂ (var-split (proj₂ (proj₂ (var-rename r x)))))))
-                  Γ
-ren-pres-blck r x = {!!}
+              → (ρ ≾ᵣ ρ' ⊎ ρ' ≡ uᵣ)
+              -----------------------------
+              → ρ ≾ᵣ proj₁ (var-rename r x) ⊎ (proj₁ (var-rename r x) ≡ uᵣ)
+
+ren-pres-blck id-ren _ (inj₁ rel) = inj₁ rel
+ren-pres-blck id-ren x (inj₂ refl) = inj₂ refl
+ren-pres-blck (r₂ ∘ʳ r₁) x rel =
+  ren-pres-blck r₂ (var-rename r₁ x .proj₂ .proj₂) (ren-pres-blck r₁ x rel)
+ren-pres-blck wk-ren _ rel =
+  rel
+ren-pres-blck (var-ren _) Hd rel =
+  rel
+ren-pres-blck (var-ren _) (Tl-∷ _) rel =
+  rel
+ren-pres-blck {ρ' = .(ρ' ·ᵣ uᵣ)} ⟨⟩-η-ren (Tl-⟨⟩ {ρ = .(uᵣ)} {ρ' = ρ'} x) (inj₁ ρ≾ρ'·u) =
+  inj₁ (≾ᵣ-trans ρ≾ρ'·u (≾ᵣ-reflexive (·ᵣ-identityʳ ρ')))
+ren-pres-blck {ρ' = ρ'} ⟨⟩-η-ren (Tl-⟨⟩ x) (inj₂ eq) =
+  inj₂ (·ᵣ-zero-productˡ eq)
+ren-pres-blck ⟨⟩-η⁻¹-ren Hd rel rewrite ·ᵣ-identityʳ uᵣ =
+  rel
+ren-pres-blck ⟨⟩-η⁻¹-ren (Tl-∷ x) (inj₁ ρ≾ρ') =
+  inj₁ (≾ᵣ-trans ρ≾ρ' (≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))))
+ren-pres-blck ⟨⟩-η⁻¹-ren (Tl-∷ x) (inj₂ refl) =
+  inj₂ (·ᵣ-identityʳ uᵣ)
+ren-pres-blck ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) (inj₁ ρ≾ρ'·ρ₁) =
+  inj₁ (≾ᵣ-trans ρ≾ρ'·ρ₁ (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (_ ·ᵣ _)))))
+ren-pres-blck ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) (inj₂ eq) =
+  inj₂ (trans (·ᵣ-identityʳ (_ ·ᵣ _)) eq)
+ren-pres-blck ⟨⟩-μ-ren (Tl-⟨⟩ x) (inj₁ rel) =
+  inj₁ (≾ᵣ-trans rel (≾ᵣ-reflexive (sym (·ᵣ-assoc _ _ _))))
+ren-pres-blck ⟨⟩-μ-ren (Tl-⟨⟩ x) (inj₂ eq) =
+  inj₂ (trans (·ᵣ-assoc _ _ _) eq)
+ren-pres-blck ⟨⟩-μ⁻¹-ren (Tl-⟨⟩ (Tl-⟨⟩ x)) (inj₁ rel) =
+  inj₁ (≾ᵣ-trans rel (≾ᵣ-reflexive (·ᵣ-assoc _ _ _)) )
+ren-pres-blck ⟨⟩-μ⁻¹-ren (Tl-⟨⟩ (Tl-⟨⟩ x)) (inj₂ refl) =
+  inj₂ (sym (·ᵣ-assoc _ _ _))
+ren-pres-blck (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ'≾ρ bprel) (Tl-⟨⟩ x) (inj₁ rel) =
+  inj₁ (bprel x rel ρ'≾ρ)
+ren-pres-blck (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ'≾ρ bprel) (Tl-⟨⟩ x) (inj₂ eq)
+  rewrite ·ᵣ-zero-productˡ eq | ·ᵣ-zero-productʳ eq =
+  inj₂ (trans (·ᵣ-identityˡ ρ₂) (uᵣ-minimal ρ'≾ρ))
+ren-pres-blck (cong-∷-ren _) Hd rel =
+  rel
+ren-pres-blck (cong-∷-ren r) (Tl-∷ x) rel =
+  ren-pres-blck r x rel
+ren-pres-blck {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ₁ ⟩} {A} {ρ} (cong-⟨⟩-ren {ρ = ρ₁} r) (Tl-⟨⟩ {ρ = ρ₁} {ρ' = ρ'} x) (inj₁ rel)
+  with ren-pres-blck r x (inj₁ {!!})
+... | a = {!!}
+ren-pres-blck {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ₁ ⟩} {A} {ρ} (cong-⟨⟩-ren {ρ = ρ₁} r) (Tl-⟨⟩ {ρ = ρ₁} {ρ' = ρ'} x) (inj₂ eq)
+  rewrite ·ᵣ-zero-productˡ eq | ·ᵣ-zero-productʳ eq with ren-pres-blck r x (inj₂ refl)
+... | inj₁ rel = inj₁ (≾ᵣ-trans rel (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (var-rename r x .proj₁)))))
+... | inj₂ eq rewrite eq = inj₂ (·ᵣ-identityʳ uᵣ)
 
 -- Action of renamings on well-typed values and computations
 
@@ -110,20 +158,16 @@ mutual
     `in (C-rename (cong-ren r) N)
     
   C-rename {Γ' = Γ'} r (unbox {A} {C} {ρ} {ρ'} {v = v} rel neq eq M) with var-rename r v
-  ... | ρ'' , ρ''≾ρ' , y =
-    unbox {ρ = ρ} {ρ' = ρ''} {v = y}
-      (ren-pres-blck {!!} {!!} {!!} {!!})
+  ... | ρ'' , ρ''≾ρ' , y rewrite (proj₂ (proj₂ (proj₂ (var-split v))))  =
+    unbox {ρ = ρ} {ρ' = proj₁ (var-rename r v)} {v = proj₂ (proj₂ (var-rename r v))}
       {!!}
-      (sym (split-≡ (proj₁ (proj₂ (proj₂ (var-split y))))))
+      {- (subst
+        (λ ρ'' → ρ ≾ᵣ ρ'')
+        (sym (proj₂ (proj₂ (proj₂ (var-split (proj₂ (proj₂ (var-rename r v))))))))
+        (ren-pres-blck r v rel)) -}
+      {!!}
+      (sym (split-≡ (proj₁ (proj₂ (proj₂ (var-split (proj₂ (proj₂ (var-rename r v)))))))))
       (C-rename (cong-ren r) M) 
-  {-
-  ... | Γ''' , r' , ρ'' , ex' , rel' =
-    unbox {A = A} {Γ' = Γ'''} {ρ = ρ} {ρ' = ρ''}
-      ex'
-      (≾ᵣ-trans rel' rel)
-      (V-rename r' V)
-      (C-rename (cong-ren r) M)
-  -}
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
 
   -- sub-effecting

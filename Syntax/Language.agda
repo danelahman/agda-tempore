@@ -10,6 +10,7 @@ open GradeSystemInterface Grades
 
 open import Data.Nat public
 open import Data.Product
+open import Data.Sum
 
 open import Relation.Nullary using (¬_)
 
@@ -148,7 +149,7 @@ mutual
             → {C : CType}
             → {ρ ρ' : R}
             → {v : [ ρ ] A ∈[ ρ' ] Γ}
-            → ρ ≾ᵣ ctx-grade (proj₁ (proj₂ (var-split v)))
+            → (ρ ≾ᵣ ctx-grade (proj₁ (proj₂ (var-split v))) ⊎ ctx-grade (proj₁ (proj₂ (var-split v))) ≡ uᵣ)
             → ρ ≢ ctx-grade (proj₁ (proj₂ (var-split v)))
             → Γ ≡ proj₁ (var-split v) ∷ [ ρ ] A ++ᶜ proj₁ (proj₂ (var-split v))
             → Γ ∷ A ⊢C⦂ C
