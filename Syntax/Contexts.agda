@@ -180,6 +180,12 @@ var-ρ-++ᶜ {Γ' = Γ' ∷ B} x =
 var-ρ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
   subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x))
 
+∈-ctx-extensionˡ : ∀ {A ρ} → (Γ : Ctx) → (Γ' : Ctx) → A ∈[ ρ ] Γ' → A ∈[ ρ ] Γ ++ᶜ Γ'
+∈-ctx-extensionˡ _ _ Hd = Hd
+∈-ctx-extensionˡ Γ _ (Tl-∷ x) = Tl-∷ (∈-ctx-extensionˡ Γ _ x)
+∈-ctx-extensionˡ Γ _ (Tl-⟨⟩ x) = Tl-⟨⟩ (∈-ctx-extensionˡ Γ _ x)
+
+
 -- Splitting a context according to a variable in it
 
 var-split : ∀ {Γ A ρ}

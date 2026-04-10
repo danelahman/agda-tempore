@@ -25,16 +25,6 @@ open import Syntax.Types (Grades)
 open import Util.Equality
 
 open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] )
-
--- Type describing that a renaming must preserve the blocking behaviour of resources.
-Beh-pres : R → R → Ctx → Set
-Beh-pres ρ ρ' Γ =
-  ∀ {A ρ'' ρ'''}
-  → (x : [ ρ'' ] A ∈[ ρ''' ] Γ)
-  → ρ'' ≾ᵣ ρ''' ·ᵣ ρ  -- ctx-grade (proj₁ (proj₂ (var-split x))) ·ᵣ ρ
-  → ρ' ≾ᵣ ρ
-  -------------------------------------------------------
-  → ρ'' ≾ᵣ ρ''' ·ᵣ ρ' -- ctx-grade (proj₁ (proj₂ (var-split x))) ·ᵣ ρ'
   
 -- Variable renamings (as the smallest relation closed under
 -- identities, composition, congruences, ordinary variable 
@@ -55,7 +45,7 @@ data Ren : Ctx → Ctx → Set where
   ⟨⟩-μ-ren    : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ·ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
   ⟨⟩-μ⁻¹-ren  : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ'  ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
-  ⟨⟩-≤-ren    : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → Beh-pres ρ ρ' Γ → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
+  ⟨⟩-≤-ren    : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
   -- congruence renamings
   cong-∷-ren  : ∀ {Γ Γ' A} → Ren Γ Γ' → Ren (Γ ∷ A) (Γ' ∷ A)
   cong-⟨⟩-ren : ∀ {Γ Γ' ρ} → Ren Γ Γ' → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
