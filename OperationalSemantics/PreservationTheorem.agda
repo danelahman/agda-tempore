@@ -1,17 +1,23 @@
-module OperationalSemantics.PreservationTheorem where
+open import Syntax.Grades
 
-open import OperationalSemantics.State
+module OperationalSemantics.PreservationTheorem (Grades : GradeSystem) where
 
-open import Syntax.Contexts
-open import Syntax.Language
-open import Syntax.Renamings
-open import Syntax.Substitutions
-open import Syntax.Types
+open GradeSystemInterface Grades
+
+open import OperationalSemantics.State (Grades)
+
+open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
+open import Syntax.Renamings (Grades)
+open import Syntax.Substitutions (Grades)
+open import Syntax.Types (Grades)
 
 open import Data.Product
-open import Util.Operations
+
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
-open import Util.Time
+
+open import Util.Operations
+open import Util.Time -- TODO: remove
 
 -- record type for Configuratin that encapsulates time, state and computation
 
@@ -21,6 +27,7 @@ record Config (C : CType) : Set where
         state       : 𝕊 []
         computation : toCtx state  ⊢C⦂ C
 
+{-
 mutual 
     
     -- small-step operational semantics
@@ -48,7 +55,7 @@ mutual
                 {M : toCtx S ⊢C⦂ A ‼ τ₂} → 
                 {N : ((toCtx S) ⟨ τ₂ ⟩ ∷ A) ⊢C⦂ B ‼ τ₃} → 
                 {M₁ : toCtx S₁ ⊢C⦂ A ‼ τ₄} →
-                (Sτ+τ₂≡Sτ₁+τ₄ : state-time S + τ₂ ≡ state-time S₁ + τ₄) →   
+                (Sτ+τ₂≡Sτ₁+τ₄ : state-grade S + τ₂ ≡ state-grade S₁ + τ₄) →   
                 (M↝M₁ : ⟨ S , M ⟩ ↝ ⟨ S₁ , M₁ ⟩) →
                 --------------------------------------------------------------------
                 ⟨ S , M ; N ⟩ ↝ 
@@ -109,7 +116,7 @@ mutual
                      ⊢C⦂ B ‼ (op-time op + τ₃)} → 
                 {N : toCtx S ⟨ τ₂ ⟩ ∷ A ⊢C⦂ B ‼ τ₁} → 
                 {M₁ : toCtx S₁  ⊢C⦂ A ‼ τ₃ } →  
-                (Sτ+τ₂≡Sτ₁+τ₃ : state-time S + τ₂ ≡ state-time S₁ + τ₃) → 
+                (Sτ+τ₂≡Sτ₁+τ₃ : state-grade S + τ₂ ≡ state-grade S₁ + τ₃) → 
                 (M↝M₁ : ⟨ S , M ⟩ ↝ ⟨ S₁ , M₁ ⟩) →
                 -----------------------------------------------------------------------
                 ⟨ S , handle M `with H `in N ⟩ ↝ 
@@ -170,7 +177,7 @@ mutual
                                 S 
                                 y 
                                 (τ-≤-substᵣ 
-                                    (sym (time-≡ (split-state-snd S y))) 
+                                    (sym (grades-≡ (split-state-snd S y))) 
                                     (τ'≤snd-state V)) 
                                 (resource-lookup S y)) ]c ⟩
  
@@ -202,19 +209,20 @@ preservation-theorem : ∀ {A B τ'' τ'''}
                 → {M : toCtx S ⊢C⦂ A ‼ τ''}
                 → {M' : toCtx S' ⊢C⦂ B ‼ τ'''}
                 → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                → A ≡ B × state-time S + τ'' ≡ state-time S' + τ'''
+                → A ≡ B × state-grade S + τ'' ≡ state-grade S' + τ'''
 preservation-theorem APP = refl , refl
 preservation-theorem MATCH = refl , refl
 preservation-theorem {S = S} {S' = S'} (SEQ-FST {τ₂ = τ₂} {τ₃} {τ₄} τ+τ₂≡τ₁+τ₄ M↝M') = 
-    refl , τ+τ₂≡τ₁+τ₄⇒τ+[τ₂+τ₃]≡τ₁+[τ₄+τ₃] (state-time S) (state-time S') τ₂ τ₃ τ₄ τ+τ₂≡τ₁+τ₄
+    refl , τ+τ₂≡τ₁+τ₄⇒τ+[τ₂+τ₃]≡τ₁+[τ₄+τ₃] (state-grade S) (state-grade S') τ₂ τ₃ τ₄ τ+τ₂≡τ₁+τ₄
 preservation-theorem SEQ-RET = refl , refl
 preservation-theorem SEQ-OP = refl , refl
 preservation-theorem {τ''' = τ'''} {S = S} (DELAY {τ' = τ'}) = 
-    refl , sym (+-assoc (state-time S) τ' τ''')
+    refl , sym (+-assoc (state-grade S) τ' τ''')
 preservation-theorem HANDLE-RET = refl , refl
 preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {τ₁ = τ₁} {τ₂} {τ₃} τ+τ₂≡τ₄+τ₃ M↝M') = 
-    refl , τ+τ₂≡τ₁+τ₄⇒τ+[τ₂+τ₃]≡τ₁+[τ₄+τ₃] (state-time S) (state-time S') τ₂ τ₁ τ₃ τ+τ₂≡τ₄+τ₃
+    refl , τ+τ₂≡τ₁+τ₄⇒τ+[τ₂+τ₃]≡τ₁+[τ₄+τ₃] (state-grade S) (state-grade S') τ₂ τ₁ τ₃ τ+τ₂≡τ₄+τ₃
 preservation-theorem {S = S} (HANDLE-OP {τ' = τ'} {τ'' = τ''} {op = op}) = 
-    refl , cong ((state-time S) +_) (+-assoc (op-time op) τ'' τ')
+    refl , cong ((state-grade S) +_) (+-assoc (op-time op) τ'' τ')
 preservation-theorem BOX = refl , refl
 preservation-theorem (UNBOX p) = refl , refl 
+-}

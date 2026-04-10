@@ -66,7 +66,7 @@ mutual
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢C⦂ C
 
-  return V        [ x ↦ W ]c = return (V [ x ↦ W ]v)
+  return V rel    [ x ↦ W ]c = return (V [ x ↦ W ]v) rel
   (M ; N)         [ x ↦ W ]c  = (M [ x ↦ W ]c) ; (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   (V₁ · V₂)       [ x ↦ W ]c = (V₁ [ x ↦ W ]v) · (V₂ [ x ↦ W ]v)
   (match V `in N) [ x ↦ W ]c = match V [ x ↦ W ]v `in (N [ Tl-∷ (Tl-∷ x) ↦ W ]c)

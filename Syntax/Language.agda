@@ -71,9 +71,11 @@ mutual
     -- returning a value
 
     return  : {A : VType}
+            → {ε : E}
             → Γ ⊢V⦂ A
+            → uₑ ≾ₑ ε     -- new condition. ε should include the unit.
             -------------
-            → Γ ⊢C⦂ A ‼ uₑ
+            → Γ ⊢C⦂ A ‼ ε -- used to be uₑ
 
     -- sequential composition
     

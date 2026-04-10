@@ -1,9 +1,14 @@
-module OperationalSemantics.State where
+open import Syntax.Grades
 
-open import Syntax.Contexts
-open import Syntax.Language
-open import Syntax.Renamings
-open import Syntax.Types
+module OperationalSemantics.State (Grades : GradeSystem) where
+
+open GradeSystemInterface Grades
+
+open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
+open import Syntax.Renamings (Grades)
+open import Syntax.RenActions (Grades)
+open import Syntax.Types (Grades)
 
 open import Data.Empty
 open import Util.Equality
@@ -15,40 +20,40 @@ open import Util.Time
 mutual
   data 𝕊 (Γ : Ctx) : Set where
     ∅     : 𝕊 Γ
-    _⟨_⟩ₛ : 𝕊 Γ → (τ : Time) → 𝕊 Γ  
-    _∷ₛ_  : ∀ {A τ} → (S : 𝕊 Γ) → ((Γ ++ᶜ (toCtx S) ⟨ τ ⟩) ⊢V⦂ A) → 𝕊 Γ
+    _⟨_⟩ₛ : 𝕊 Γ → (ρ : R) → 𝕊 Γ  
+    _∷ₛ_  : ∀ {A ρ} → (S : 𝕊 Γ) → ((Γ ++ᶜ (toCtx S) ⟨ ρ ⟩) ⊢V⦂ A) → 𝕊 Γ
 
   toCtx : ∀ {Γ} → 𝕊 Γ → Ctx
   toCtx ∅ = []
-  toCtx (S ⟨ τ ⟩ₛ) = (toCtx S) ⟨ τ ⟩
-  toCtx (_∷ₛ_ {A = A} {τ = τ} S V) = (toCtx S ∷ [ τ ] A)
+  toCtx (S ⟨ ρ ⟩ₛ) = (toCtx S) ⟨ ρ ⟩
+  toCtx (_∷ₛ_ {A} {ρ} S V) = (toCtx S ∷ [ ρ ] A)
 
   infixl 31 _∷ₛ_
   infix  32 _⟨_⟩ₛ
 
-
 -- Operations on state - for better readability in preservation theorem
 
-time-pass : ∀ {Γ} → (S : 𝕊 Γ) → (τ' : Time) → 𝕊 Γ
-time-pass S τ = S ⟨ τ ⟩ₛ 
+grade-pass : ∀ {Γ} → (S : 𝕊 Γ) → (ρ : R) → 𝕊 Γ
+grade-pass S ρ = S ⟨ ρ ⟩ₛ 
 
-extend-state : ∀ {Γ A τ} → (S : 𝕊 Γ) → ((Γ ++ᶜ (toCtx S) ⟨ τ ⟩) ⊢V⦂ A) → 𝕊 Γ
+extend-state : ∀ {Γ A ρ} → (S : 𝕊 Γ) → ((Γ ++ᶜ (toCtx S) ⟨ ρ ⟩) ⊢V⦂ A) → 𝕊 Γ
 extend-state S V = S ∷ₛ V 
 
--- Sum of the time passings in the state
+-- Sum of the grade passings in the state
 
-state-time : ∀ {Γ} → (S : 𝕊 Γ) → Time
-state-time ∅ = 0
-state-time (S ⟨ τ ⟩ₛ) = state-time S + τ
-state-time (S ∷ₛ A) = state-time S
+state-grade : ∀ {Γ} → (S : 𝕊 Γ) → R
+state-grade ∅ = uᵣ
+state-grade (S ⟨ ρ ⟩ₛ) = state-grade S ·ᵣ ρ
+state-grade (S ∷ₛ A) = state-grade S
 
--- State time is the same as the context time of toCtx S 
+-- State grade is the same as the context grade of toCtx S 
 
-time-≡ : ∀ {Γ} → (S : 𝕊 Γ) → state-time S ≡ ctx-time (toCtx S)
-time-≡ ∅ = refl
-time-≡ (S ⟨ τ ⟩ₛ) = cong (_+ τ) (time-≡ S)
-time-≡ (S ∷ₛ A) = time-≡ S
+grades-≡ : ∀ {Γ} → (S : 𝕊 Γ) → state-grade S ≡ ctx-grade (toCtx S)
+grades-≡ ∅ = refl
+grades-≡ (S ⟨ ρ ⟩ₛ) = cong (_·ᵣ ρ) (grades-≡ S)
+grades-≡ (S ∷ₛ A) = grades-≡ S
 
+{-
 -- Definition of successor of a state
 
 data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
@@ -60,39 +65,39 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
     ⟨⟩-suc : ∀ {Γ Γ'}
             → {S : 𝕊 Γ} 
             → {S' : 𝕊 Γ'} 
-            → (τ'' : Time) 
+            → (ρ : R) 
             → S ≤ₛ S' 
-            --------------------
-            → S ≤ₛ (S' ⟨ τ'' ⟩ₛ)
+            -------------------
+            → S ≤ₛ (S' ⟨ ρ ⟩ₛ)
 
-    ∷-suc : ∀ {Γ Γ' τ A} 
+    ∷-suc : ∀ {Γ Γ' ρ A} 
             → {S : 𝕊 Γ} 
             → {S' : 𝕊 Γ'} 
-            → (V : (Γ' ++ᶜ (toCtx S') ⟨ τ ⟩) ⊢V⦂ A) 
+            → (V : (Γ' ++ᶜ (toCtx S') ⟨ ρ ⟩) ⊢V⦂ A) 
             → S ≤ₛ S' 
-            ----------------
+            ---------------------------------------
             → S ≤ₛ (S' ∷ₛ V)
 
 -- If a state is a successor of another state they can be renamed as contexts
 
 ≤ₛ⇒Ren : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → Ren (toCtx S) (toCtx S')
 ≤ₛ⇒Ren id-suc = id-ren
-≤ₛ⇒Ren (⟨⟩-suc τ'' S≤ₛS') = wk-⟨⟩-ren ∘ʳ (≤ₛ⇒Ren S≤ₛS')
+≤ₛ⇒Ren (⟨⟩-suc ρ S≤ₛS') = {!!} --wk-⟨⟩-ren ∘ʳ (≤ₛ⇒Ren S≤ₛS')
 ≤ₛ⇒Ren (∷-suc V S≤ₛS') = wk-ren ∘ʳ (≤ₛ⇒Ren S≤ₛS')
 
 -- ≤ₛ increases time
 
-S≤ₛS'⇒τ≤τ' : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → (state-time S) ≤ (state-time S')
+S≤ₛS'⇒τ≤τ' : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → (state-grade S) ≤ (state-grade S')
 S≤ₛS'⇒τ≤τ' {S = S} {S' = .S} id-suc = ≤-refl
 S≤ₛS'⇒τ≤τ' {S = S} {S' = .(S' ⟨ τ'' ⟩ₛ)} (⟨⟩-suc {S' = S'} τ'' S≤ₛS') = 
     m≤n⇒m≤n+o τ'' 
-        (τ-≤-substᵣ (time-≡ S')
-        (τ-≤-substₗ (sym (time-≡ S)) 
-    (Ren.ctx-time-≤ (≤ₛ⇒Ren S≤ₛS'))))
+        (τ-≤-substᵣ (grades-≡ S')
+        (τ-≤-substₗ (sym (grades-≡ S)) 
+    ?)) --(Ren.ctx-time-≤ (≤ₛ⇒Ren S≤ₛS'))))
 S≤ₛS'⇒τ≤τ' {S = S} {S' = .(S' ∷ₛ V)} (∷-suc {S' = S'} V S≤ₛS') = 
-    τ-≤-substᵣ (time-≡ S') 
-    (τ-≤-substₗ (sym (time-≡ S)) 
-    (Ren.ctx-time-≤ (≤ₛ⇒Ren S≤ₛS')))
+    τ-≤-substᵣ (grades-≡ S') 
+    (τ-≤-substₗ (sym (grades-≡ S)) 
+    ?) --(Ren.ctx-time-≤ (≤ₛ⇒Ren S≤ₛS')))
 
 
 -- Lemma: If one state is a successor of another and overall time inreases we 
@@ -103,13 +108,13 @@ suc-comp-ren : ∀ {Γ Γ'}
         → {S : 𝕊 Γ} 
         → {S' : 𝕊 Γ'} 
         → S ≤ₛ S' 
-        → state-time S + τ'' ≤ state-time S' + τ'''
+        → state-grade S + τ'' ≤ state-grade S' + τ'''
         → Ren (toCtx S ⟨ τ'' ⟩) (toCtx S' ⟨ τ''' ⟩)
 suc-comp-ren {S = S} id-suc q = 
   ⟨⟩-≤-ren (+-cancelˡ-≤ _ _ _ q)
 suc-comp-ren {τ'' = τ} {τ'''} (⟨⟩-suc {S' = S'} τ'' S≤ₛS') q = 
   ⟨⟩-μ-ren 
-    ∘ʳ suc-comp-ren S≤ₛS' (τ-≤-substᵣ (sym (+-assoc (state-time S') τ'' τ''')) q)
+    ∘ʳ suc-comp-ren S≤ₛS' (τ-≤-substᵣ (sym (+-assoc (state-grade S') τ'' τ''')) q)
 suc-comp-ren {S = S} (∷-suc V S≤ₛS') q = 
   (cong-⟨⟩-ren wk-ren) 
     ∘ʳ suc-comp-ren S≤ₛS' q
@@ -226,12 +231,12 @@ snd-split-state≡split-ctx {A = A} {τ = τ} S x =
 snd-split-time≡time-from-head : ∀ {Γ A τ τ'}
                   → (S : 𝕊 Γ)
                   → (x : [ τ ] A ∈[ τ' ] (toCtx S))
-                  → state-time (split-state-snd S x) ≡ τ'
+                  → state-grade (split-state-snd S x) ≡ τ'
                   
 snd-split-time≡time-from-head S x = 
   trans (
     trans 
-      (time-≡ (split-state-snd S x)) 
+      (grades-≡ (split-state-snd S x)) 
       (cong ctx-time (snd-split-state≡split-ctx S x))) 
     (proj₂ (proj₂ (proj₂ (var-split x))))
 
@@ -296,7 +301,7 @@ var-in-ctx (var {τ = τ} x) = τ , x
         → {S : 𝕊 []}
         → (V : toCtx S -ᶜ τ' ⊢V⦂ [ τ' ] A)
         → τ' ≤
-    state-time (split-state-snd S (var-ᶜ-+ {τ = τ'} (proj₂ (var-in-ctx V))))
+    state-grade (split-state-snd S (var-ᶜ-+ {τ = τ'} (proj₂ (var-in-ctx V))))
 τ'≤snd-state {τ' = τ'} {S = S} (var {τ = τ} x) = 
   let y = var-ᶜ-+ {τ = τ'} x in 
   τ-≤-substᵣ (snd-split-time≡time-from-head S y) (m≤n⇒m≤o+n τ ≤-refl)
@@ -329,3 +334,4 @@ resource-pass-to-ctx {Γ} {τ} {τ'} {A} S x p V =
      ∘ʳ cong-ren wk-ren
      ∘ʳ ren⟨τ⟩-ctx {Γ' = toCtx (split-state-snd S x)} p)
     V
+-}
