@@ -149,7 +149,7 @@ mutual
             → {C : CType}
             → {ρ ρ' : R}
             → (x : [ ρ ] A ∈[ ρ' ] Γ)
-            → ρ ≾ᵣ ctx-grade (proj₁ (proj₂ (var-split x)))
+            → ctx-grade (proj₁ (proj₂ (var-split x))) ≾ᵣ ρ 
             → Γ ∷ A ⊢C⦂ C
             -------------------------------------------------------------------
             → Γ ⊢C⦂ C
