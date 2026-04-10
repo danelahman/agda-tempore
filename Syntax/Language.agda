@@ -149,7 +149,8 @@ mutual
             → {C : CType}
             → {ρ ρ' : R}
             → (x : [ ρ ] A ∈[ ρ' ] Γ)
-            → ctx-grade (proj₁ (proj₂ (var-split x))) ≾ᵣ ρ 
+            → ρ' ≾ᵣ ρ                                              -- Should be the same as the condition below because ρ' ≡ ctx-grade (proj₁ (proj₂ (var-split x))) should be provable
+            -- → ctx-grade (proj₁ (proj₂ (var-split x))) ≾ᵣ ρ 
             → Γ ∷ A ⊢C⦂ C
             -------------------------------------------------------------------
             → Γ ⊢C⦂ C
