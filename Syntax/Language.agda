@@ -148,10 +148,8 @@ mutual
     unbox   : {A : VType}
             → {C : CType}
             → {ρ ρ' : R}
-            → {v : [ ρ ] A ∈[ ρ' ] Γ}
-            → (ρ ≾ᵣ ctx-grade (proj₁ (proj₂ (var-split v))) ⊎ ctx-grade (proj₁ (proj₂ (var-split v))) ≡ uᵣ)
-            → ρ ≢ ctx-grade (proj₁ (proj₂ (var-split v)))
-            → Γ ≡ proj₁ (var-split v) ∷ [ ρ ] A ++ᶜ proj₁ (proj₂ (var-split v))
+            → (x : [ ρ ] A ∈[ ρ' ] Γ)
+            → ρ ≾ᵣ ctx-grade (proj₁ (proj₂ (var-split x)))
             → Γ ∷ A ⊢C⦂ C
             -------------------------------------------------------------------
             → Γ ⊢C⦂ C
