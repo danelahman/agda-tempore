@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-} -- remove
+-- {-# OPTIONS --allow-unsolved-metas #-} -- remove
 
 ------------------------------------------
 -- Renaming actions on well-typed terms --

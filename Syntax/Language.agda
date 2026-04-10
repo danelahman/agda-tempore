@@ -149,10 +149,9 @@ mutual
             → {C : CType}
             → {ρ ρ' : R}
             → (x : [ ρ ] A ∈[ ρ' ] Γ)
-            → ρ' ≾ᵣ ρ                                              -- Should be the same as the condition below because ρ' ≡ ctx-grade (proj₁ (proj₂ (var-split x))) should be provable
-            -- → ctx-grade (proj₁ (proj₂ (var-split x))) ≾ᵣ ρ 
+            → ρ' ≾ᵣ ρ
             → Γ ∷ A ⊢C⦂ C
-            -------------------------------------------------------------------
+            ---------------------------
             → Γ ⊢C⦂ C
 
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
@@ -187,6 +186,6 @@ mutual
 
 -- values with graded modal types are variables
 
-grad-typ⇒var : ∀ {Γ A ρ} → (V : Γ ⊢V⦂ [ ρ ] A) → Σ[ ρ' ∈ R ] (Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] V ≡ var x)
-grad-typ⇒var (var x) = uᵣ , x , refl
+grad-typ⇒var : ∀ {Γ A ρ} → (V : Γ ⊢V⦂ [ ρ ] A) → Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] (V ≡ var x)
+grad-typ⇒var (var x) = x , refl
 

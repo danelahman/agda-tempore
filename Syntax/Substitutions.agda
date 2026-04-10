@@ -19,68 +19,12 @@ open Eq.≡-Reasoning
 open import Relation.Nullary
 
 open import Syntax.Contexts (Grades)
-open import Syntax.Extensions (Grades)
 open import Syntax.Language (Grades)
 open import Syntax.RenActions (Grades)
 open import Syntax.Renamings (Grades)
 open import Syntax.Types (Grades)
 
 open import Util.Equality
-
--- Checking whether a variable in a context Γ belongs to the context Γ extends
-
----- If the variable is in the context before its extension
-var-in-ctx-prev-ext? :
-  ∀ {Γ Γ' A ρ' ρ}
-  → Ext Γ ρ' Γ'
-  → (x : A ∈[ ρ ] Γ')
-  → Dec
-    (Σ[ ρ₁ ∈ R ]
-        Σ[ y ∈ A ∈[ ρ₁ ] Γ ]
-           ( proj₁ (var-split y) ≡ proj₁ (var-split x)
-           × Ext (proj₁ (proj₂ (var-split y))) ρ'
-                 (proj₁ (proj₂ (var-split x)))
-           )
-        )
-
-var-in-ctx-prev-ext? id-ext x = yes (_ , x , refl , id-ext)
-var-in-ctx-prev-ext? (∷-ext e) Hd =
-  no (λ { (_ , Hd , refl , id-ext) → ext-decrease-contradiction (λ { () }) e })
-var-in-ctx-prev-ext? (∷-ext e) (Tl-∷ x) with var-in-ctx-prev-ext? e x
-... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ∷-ext e')
-... | no ¬p =
-  no (λ { (ρ₁ , y , eq , e') →
-        case inv-ext-∷ e' of λ {
-          (inj₁ (refl , eq-ctx , refl)) → id-ext-split-≢-contradiction-∷ x y eq eq-ctx e;
-          (inj₂ e'') → ¬p (ρ₁ , y , eq , e'') } })
-var-in-ctx-prev-ext? {Γ} {Γ' ⟨ ρ₂ ⟩} {A} {ρ'} {ρ} (⟨⟩-ext {ρ = ρ₄} e) (Tl-⟨⟩ x)
-  with var-in-ctx-prev-ext? e x
-... | yes (ρ₁ , y , eq , e') = yes (ρ₁ , y , eq , ⟨⟩-ext e')
-... | no ¬p =
-  no (λ { (ρ₁ , y , eq , e') →
-        case inv-ext-⟨⟩ e' of λ {
-          (inj₁ (eq-grades , eq-ctxs , eq-exts))
-            → id-ext-split-≢-contradiction-⟨⟩ x y eq eq-ctxs (ext-≡-grade e (c·ᵣd≡uᵣ⇒c≡uᵣ (sym eq-grades)));
-          (inj₂ (_ , e'' , eq-grades)) → ¬p (ρ₁ , y , eq , ext-≡-grade e'' (sym (c·ᵣd≡e·ᵣd⇒c≡e eq-grades))) }})
-
----- If the variable is not in the context before the extension
-
-var-not-in-ctx-prev-ext : ∀ {Γ Γ' A ρ ρ'}
-                        → Ext Γ ρ Γ'
-                        → (x : A ∈[ ρ' ] Γ')
-                        → ¬ (Σ[ ρ'' ∈ R ] Σ[ y ∈ A ∈[ ρ'' ] Γ ]
-                              ( proj₁ (var-split y) ≡ proj₁ (var-split x)
-                              × Ext (proj₁ (proj₂ (var-split y))) ρ (proj₁ (proj₂ (var-split x)))
-                              )
-                            )
-                        → Ext Γ ρ (proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)))
-
-var-not-in-ctx-prev-ext {ρ' = ρ'} id-ext x   ¬p = ⊥-elim (¬p (ρ' , x , refl , id-ext))
-var-not-in-ctx-prev-ext (∷-ext e) Hd         ¬p = e
-var-not-in-ctx-prev-ext (∷-ext e) (Tl-∷ x)   ¬p =
-  ∷-ext (var-not-in-ctx-prev-ext e x (λ where (ρ₁ , y , eq , e') → ¬p (ρ₁ , y , eq , ∷-ext e')))
-var-not-in-ctx-prev-ext (⟨⟩-ext e) (Tl-⟨⟩ x) ¬p =
-  ⟨⟩-ext (var-not-in-ctx-prev-ext e x (λ where (ρ₁ , y , eq , e') → ¬p (ρ₁ , y , eq , ⟨⟩-ext e')))
 
 -- Substituting a value for a variable in context
 
@@ -91,13 +35,12 @@ var-not-in-ctx-prev-ext (⟨⟩-ext e) (Tl-⟨⟩ x) ¬p =
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
-
 ⟨ Hd , p ⟩[ Hd ↦ W ]var = W
 ⟨ Hd , p ⟩[ Tl-∷ x ↦ W ]var = var Hd
 ⟨ Tl-∷ y , refl ⟩[ Hd ↦ W ]var = var y
-⟨ Tl-∷ y , p ⟩[ Tl-∷ x ↦ W ]var = V-rename wk-ren ⟨ y , p ⟩[ x ↦ W ]var
-⟨ Tl-⟨⟩ y , p ⟩[ Tl-⟨⟩ x ↦ W ]var with c·ᵣd≡uᵣ⇒c≡uᵣ p | c·ᵣd≡uᵣ⇒d≡uᵣ p
-... | refl | refl = V-rename ⟨⟩-η⁻¹-ren ⟨ y , refl ⟩[ x ↦ W ]var
+⟨ Tl-∷ y , refl ⟩[ Tl-∷ x ↦ W ]var = V-rename wk-ren ⟨ y , refl ⟩[ x ↦ W ]var
+⟨ Tl-⟨⟩ y , p ⟩[ Tl-⟨⟩ x ↦ W ]var rewrite ·ᵣ-zero-productˡ p | ·ᵣ-zero-productʳ p =
+  V-rename ⟨⟩-η⁻¹-ren ⟨ y , refl ⟩[ x ↦ W ]var
 
 -- Substituting a value for a variable in a well-typed term
 
@@ -135,23 +78,47 @@ mutual
     `with  (λ op ρ'' → (H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
     `in    (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
     
-  _[_↦_]c {Γ = Γ} {A = A} {ρ = ρ}
-    (unbox {Γ' = Γ'} {ρ = ρ'} {ρ' = ρ''} e rel V M) x W with var-in-ctx-prev-ext? e x
-  ... | yes (_ , y , eq , ex') =
+  _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
+  ... | inj₁ (.(uᵣ) , Hd , _ , eq') =              -- x ≡ y
     unbox
-      (++ᶜ-ext ex')
+      (var-ρ-subst
+        (begin
+          uᵣ ·ᵣ ctx-grade (proj₂ (var-split x) .proj₁)
+        ≡⟨ sym (ctx-grade-++ᶜ [] (proj₁ (proj₂ (var-split x)))) ⟩
+          ctx-grade
+           ([] ++ᶜ proj₂ (var-split x) .proj₁)
+        ≡⟨ cong ctx-grade (sym eq') ⟩
+          ctx-grade (proj₁ (proj₂ (var-split y)))
+        ≡⟨ proj₂ (proj₂ (proj₂ (var-split y))) ⟩
+          ρ₂
+        ∎)
+        (var-ρ-++ᶜ (proj₁ (grad-typ⇒var W))))
       rel
-      (V-rename
-        (cong-ren {Γ = proj₁ (var-split y)} {Γ' = proj₁ (var-split x)} {Γ'' = proj₁ (proj₂ (var-split y))}
-          (eq-ren eq))
-        (V [ y ↦ V-rename (eq-ren (sym eq)) W ]v))
       (M [ Tl-∷ x ↦ W ]c)
-  ... | no ¬p =
+  ... | inj₁ (ρ' , Tl-∷ z , eq , eq') =
+    unbox {ρ = ρ₁} {ρ' = ρ₂}
+      (var-ρ-subst
+      (begin
+        ρ' ·ᵣ ctx-grade (proj₁ (proj₂ (var-split x)))
+      ≡⟨ cong
+         (_·ᵣ ctx-grade (proj₁ (proj₂ (var-split x))))
+         (sym (proj₂ (proj₂ (proj₂ (var-split (Tl-∷ {B = [ ρ₁ ] B} z)))))) ⟩
+        ctx-grade (proj₁ (proj₂ (var-split (Tl-∷ {B = [ ρ₁ ] B} z)))) ·ᵣ ctx-grade (proj₂ (var-split x) .proj₁)
+      ≡⟨ sym (ctx-grade-++ᶜ ((proj₁ (proj₂ (var-split (Tl-∷ z))))) (proj₂ (var-split x) .proj₁)) ⟩
+        ctx-grade (proj₁ (proj₂ (var-split (Tl-∷ z))) ++ᶜ proj₂ (var-split x) .proj₁)
+      ≡⟨ cong ctx-grade (sym eq') ⟩
+        ctx-grade (proj₁ (proj₂ (var-split y)))
+      ≡⟨ proj₂ (proj₂ (proj₂ (var-split y))) ⟩
+        ρ₂
+      ∎)
+        (var-ρ-++ᶜ z))
+      rel
+      (M [ Tl-∷ x ↦ W ]c)
+  ... | inj₂ (z , _ , _) =
     unbox
-      (var-not-in-ctx-prev-ext e x ¬p)
+      (∈-ctx-extensionˡ (proj₁ (var-split x)) (proj₁ (proj₂ (var-split x))) z)
       rel
-      V
       (M [ Tl-∷ x ↦ W ]c)
-
+      
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
   coerce M rel [ x ↦ W ]c = coerce (M [ x ↦ W ]c) rel
