@@ -11,7 +11,6 @@ open GradeSystemInterface Grades
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Product
---open import Data.Sum -- remove
 
 open import Level renaming (zero to lzero)
 
@@ -151,11 +150,12 @@ minmax-≡-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} eq =
     (m+n≡0⇒n≡0 (min i₁) {min i₂} (cong min eq))
     (m+n≡0⇒n≡0 (max i₁) {max i₂} (cong max eq))
 
+
 intervals : Grade
 intervals = record
-             { Carrier = Interval
-             ; _·_ = _·ᵢ_
-             ; u = [ 0 , 0 ]tsi z≤n
+             { Carrier          = Interval
+             ; _·_              = _·ᵢ_
+             ; u                = [ 0 , 0 ]tsi z≤n
              ; ·-identityʳ      = ·ᵢ-identityʳ
              ; ·-identityˡ      = ·ᵢ-identityˡ
              ; ·-assoc          = ·ᵢ-assoc
@@ -178,6 +178,5 @@ intervals = record
                                     → ·ᵢ-≡-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} eq
              ; ·-zero-productˡ  = ·ᵢ-zero-productˡ
              ; ·-zero-productʳ  = λ {i₁} {i₂} eq → ·ᵢ-zero-productʳ {i₁} {i₂} eq
-             ; ·-equidivisible  = {!!}  -- TODO : Remove
              ; embedNat         = λ n → [ n , n ]tsi ≤-refl
              }
