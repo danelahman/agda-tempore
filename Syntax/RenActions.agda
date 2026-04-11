@@ -22,10 +22,22 @@ open import Syntax.Types (Grades)
 
 open import Util.Equality
 
-var-ρ-subst : ∀ {Γ A ρ ρ'} → ρ ≡ ρ' → A ∈[ ρ ] Γ → A ∈[ ρ' ] Γ
+-- Useful substitution of resource annotations
+
+var-ρ-subst : ∀ {Γ A ρ ρ'}
+            → ρ ≡ ρ'
+            → A ∈[ ρ ] Γ
+            → A ∈[ ρ' ] Γ
+            
 var-ρ-subst refl x = x
 
-var-rename : ∀ {Γ Γ' A ρ} → Ren Γ Γ' → A ∈[ ρ ] Γ → Σ[ ρ' ∈ R ] (ρ' ≾ᵣ ρ × A ∈[ ρ' ] Γ')
+-- Renaming of variables
+
+var-rename : ∀ {Γ Γ' A ρ}
+           → Ren Γ Γ'
+           → A ∈[ ρ ] Γ
+           → Σ[ ρ' ∈ R ] (ρ' ≾ᵣ ρ × A ∈[ ρ' ] Γ')
+           
 var-rename id-ren x =
   _ , ≾ᵣ-refl , x
 var-rename (r₂ ∘ʳ r₁) x with var-rename r₁ x
@@ -60,7 +72,6 @@ var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) =
   var-rename r x .proj₁ ·ᵣ _ ,
   ·ᵣ-monoˡ-≾ᵣ (var-rename r x .proj₂ .proj₁) ,
   Tl-⟨⟩ (var-rename r x .proj₂ .proj₂)
-
 
 -- Action of renamings on well-typed values and computations
 
@@ -99,13 +110,10 @@ mutual
     handle C-rename r M
     `with (λ op τ'' → C-rename (cong-ren r) (H op τ'') )
     `in (C-rename (cong-ren r) N)
-    
   C-rename {Γ' = Γ'} r (unbox {A} {C} {ρ} {ρ'} x rel M) =
     unbox {ρ = ρ} {ρ' = proj₁ (var-rename r x)}
       (proj₂ (proj₂ (var-rename r x)))
       (≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) rel)
       (C-rename (cong-ren r) M) 
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
-
-  -- sub-effecting
   C-rename r (coerce M relEff) = coerce (C-rename r M) relEff

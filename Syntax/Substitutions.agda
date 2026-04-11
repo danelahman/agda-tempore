@@ -35,6 +35,7 @@ open import Util.Equality
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
+          
 ⟨ Hd , p ⟩[ Hd ↦ W ]var = W
 ⟨ Hd , p ⟩[ Tl-∷ x ↦ W ]var = var Hd
 ⟨ Tl-∷ y , refl ⟩[ Hd ↦ W ]var = var y
@@ -67,7 +68,7 @@ mutual
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢C⦂ C
 
   return V rel    [ x ↦ W ]c = return (V [ x ↦ W ]v) rel
-  (M ; N)         [ x ↦ W ]c  = (M [ x ↦ W ]c) ; (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
+  (M ; N)         [ x ↦ W ]c = (M [ x ↦ W ]c) ; (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   (V₁ · V₂)       [ x ↦ W ]c = (V₁ [ x ↦ W ]v) · (V₂ [ x ↦ W ]v)
   (match V `in N) [ x ↦ W ]c = match V [ x ↦ W ]v `in (N [ Tl-∷ (Tl-∷ x) ↦ W ]c)
   absurd V        [ x ↦ W ]c = absurd (V [ x ↦ W ]v)
@@ -77,9 +78,8 @@ mutual
     handle M [ x ↦ W ]c
     `with  (λ op ρ'' → (H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
     `in    (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-    
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
-  ... | inj₁ (.(uᵣ) , Hd , _ , eq') =              -- x ≡ y
+  ... | inj₁ (.(uᵣ) , Hd , _ , eq') =
     unbox
       (var-ρ-subst
         (begin
@@ -119,6 +119,5 @@ mutual
       (∈-ctx-extensionˡ (proj₁ (var-split x)) (proj₁ (proj₂ (var-split x))) z)
       rel
       (M [ Tl-∷ x ↦ W ]c)
-      
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
   coerce M rel [ x ↦ W ]c = coerce (M [ x ↦ W ]c) rel

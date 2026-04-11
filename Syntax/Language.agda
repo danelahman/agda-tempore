@@ -175,8 +175,7 @@ mutual
            --------------
            → Γ ⊢C⦂ A ‼ ε'
 
-
--- Useful Substitution
+-- Useful substitution of effect annotations
 
 ε-subst : ∀ {Γ A ε ε'}
           → ε ≡ ε'
@@ -186,8 +185,11 @@ mutual
 
 ε-subst refl M = M
 
--- values with graded modal types are variables
+-- Values with graded modal types are variables
 
-grad-typ⇒var : ∀ {Γ A ρ} → (V : Γ ⊢V⦂ [ ρ ] A) → Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] (V ≡ var x)
+grad-typ⇒var : ∀ {Γ A ρ}
+             → (V : Γ ⊢V⦂ [ ρ ] A)
+             → Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] (V ≡ var x)
+             
 grad-typ⇒var (var x) = x , refl
 

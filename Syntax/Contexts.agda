@@ -259,6 +259,7 @@ split-struct-≡ : ∀ {Γ Γ' Γ'' A ρ₁ ρ₂}
                → proj₁ (var-split y) ≡ proj₁ (var-split x)
                → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
                → Γ' ++ᶜ Γ'' ≡ Γ
+               
 split-struct-≡ {Γ} {Γ'} {Γ''} {A} x y eq₁ eq₂ =
   begin
     Γ' ++ᶜ Γ''

@@ -38,7 +38,7 @@ data Ren : Ctx → Ctx → Set where
   -- weakening renaming
   wk-ren      : ∀ {Γ A} → Ren Γ (Γ ∷ A)
   -- variable renaming (corresponds to contraction)
-  var-ren     : ∀ {Γ A} → A ∈[ uᵣ ] Γ → Ren (Γ ∷ A) Γ                -- TODO: in non-expring setting this was for general ρ
+  var-ren     : ∀ {Γ A} → A ∈[ uᵣ ] Γ → Ren (Γ ∷ A) Γ
   -- strong monoidal functor renamings for ⟨_⟩ modality
   ⟨⟩-η-ren    : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
   ⟨⟩-η⁻¹-ren  : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
@@ -51,6 +51,7 @@ data Ren : Ctx → Ctx → Set where
   cong-⟨⟩-ren : ∀ {Γ Γ' ρ} → Ren Γ Γ' → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
 
 infixr 20 _∘ʳ_
+
 
 -- TODO: definitions of natural concrete renamings (see original development)
 
