@@ -280,6 +280,7 @@ split-struct-≡ {Γ} {Γ'} {Γ''} {A} x y eq₁ eq₂ =
 var-not-in-empty-ctx : ∀ {A} → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] []))
 var-not-in-empty-ctx = λ ()
 
+
 -- If a variable is not in a context Γ and its type doesn't coincide with the type of the head of Γ,
 -- then it's not in Γ
 

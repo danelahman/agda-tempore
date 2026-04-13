@@ -125,8 +125,8 @@ mutual
     -- explicit delaying of a computation
 
     delay   : {A : VType}
-            → (τ : ℕ)
             → {ε : E}
+            → (τ : ℕ)
             → Γ ⟨ embedR τ ⟩ ⊢C⦂ A ‼ ε
             ------------------------------
             → Γ ⊢C⦂ A ‼ ((embedE τ) ·ₑ ε)

@@ -61,3 +61,6 @@ cong-ren : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Ren (Γ ++ᶜ Γ'') (Γ' ++ᶜ �
 cong-ren {Γ'' = []} r         = r
 cong-ren {Γ'' = Γ'' ∷ A} r    = cong-∷-ren (cong-ren r)
 cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
+
+eq-ren : ∀ {Γ Γ'} → Γ ≡ Γ' → Ren Γ Γ'
+eq-ren refl = id-ren

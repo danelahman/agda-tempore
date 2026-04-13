@@ -63,6 +63,9 @@ record Grade : Set₁ where
     -- _≡_ is cancellative
     ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
 
+    -- _≾_ is right-cancellative
+    ·-≾-cancellative : ∀ {c d e} → d · c ≾ d · e → c ≾ e
+
     -- _·_ and u have zero-product property
     ·-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
     ·-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
@@ -115,11 +118,16 @@ open Grade
 
 -- Morphisms of effect and resource monoids
 
-record _→ᵍ_ (G G' : Grade) : Set₁ where
-
+record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_)
+  
   field
 
-    map : Carrier G → Carrier G'
+    map    : C₁ → C₂
+    pres-≾ : ∀ {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
+    u₁≡₂u₂ : map u₁ ≡ u₂
+    ·-map  : ∀ {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁' 
 
     -- laws
 
@@ -133,6 +141,7 @@ record GradeSystem : Set₂ where
     RGrade : Grade
     EGrade : Grade
     ∣_∣ᵉ : EGrade →ᵍ RGrade
+
 
 
 -- Helpful module exporting effect and resource grade fields with different names
@@ -161,6 +170,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-zero-productʳ to ·ᵣ-zero-productʳ;
      u-minimal to uᵣ-minimal;
      embedNat to embedR;
+     ·-≾-cancellative to ·ᵣ-≾ᵣ-cancellative;
      ≾-reflexive to ≾ᵣ-reflexive;
      ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
      ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     
@@ -190,5 +200,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-zero-productʳ-≢ to ·ₑ-zero-productʳ-≢
    ) public
 
-  open _→ᵍ_ ∣_∣ᵉ renaming (map to mapᵉ) public
-
+  open _→ᵍ_ ∣_∣ᵉ renaming
+    (map to mapᵉ;
+     pres-≾ to pres-≾ᵉ;
+     u₁≡₂u₂ to uₑ≡ᵣuᵣ;
+     ·-map to ·-mapᵉ
+    ) public
