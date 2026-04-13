@@ -326,3 +326,9 @@ var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'}
 var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
 ... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
 ... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
+
+-- Grade-only contexts
+
+data ⟨⟩-Ctx : Ctx → Set where
+  is-[] : ⟨⟩-Ctx []
+  is-⟨⟩ : ∀ {Γ ρ} → ⟨⟩-Ctx Γ → ⟨⟩-Ctx (Γ ⟨ ρ ⟩)

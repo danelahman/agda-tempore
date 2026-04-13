@@ -76,7 +76,8 @@ mutual
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
   handle M `with H `in N [ x ↦ W ]c =
     handle M [ x ↦ W ]c
-    `with  (λ op ρ'' → (H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
+    `with  (λ op ε Γ'' → (H op ε Γ'') [ {!!} ↦ {!!} ]c)
+      -- [  Tl-∷ (Tl-∷ x)  ↦ W ]c)
     `in    (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
   ... | inj₁ (.(uᵣ) , Hd , _ , eq') =
