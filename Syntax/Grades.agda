@@ -65,6 +65,7 @@ record Grade : Set₁ where
 
     -- _≾_ is right-cancellative
     ·-≾-cancellative : ∀ {c d e} → d · c ≾ d · e → c ≾ e
+    ·-≡-≾-cancellative : ∀ {c d e f} → c · d ≡ e · f → e ≾ c → d ≾ f
 
     -- _·_ and u have zero-product property
     ·-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
@@ -73,6 +74,8 @@ record Grade : Set₁ where
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
 
+    ≾-c·d·e⇒≾-c·d : ∀ {c d e f g h} → c · d · e ≾ f · g · h → c · d ≾ f · g
+    ≾-c·d·e⇒≾-e   : ∀ {c d e f g h} → c · d · e ≾ f · g · h → c ≾ f → d ≾ g → e ≾ h
     -- ...
 
   -- _≡_ is included in _≾_
@@ -171,6 +174,9 @@ module GradeSystemInterface (GS : GradeSystem) where
      u-minimal to uᵣ-minimal;
      embedNat to embedR;
      ·-≾-cancellative to ·ᵣ-≾ᵣ-cancellative;
+     ·-≡-≾-cancellative to ·ᵣ-≡-≾ᵣ-cancellative;
+     ≾-c·d·e⇒≾-c·d to ≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-c·ᵣd;
+     ≾-c·d·e⇒≾-e to ≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-e;
      ≾-reflexive to ≾ᵣ-reflexive;
      ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
      ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     
@@ -193,6 +199,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≡?_ to _≡ₑ?_;
      ·-≡-cancellative to ·ₑ-≡-cancellative;
      embedNat to embedE;
+     ·-≡-≾-cancellative to ·ₑ-≡-≾ₑ-cancellative;
      ≾-reflexive to ≾ₑ-reflexive;
      ·-cancellativeˡ to ·ₑ-cancellativeˡ;
      ·-cancellativeʳ to ·ₑ-cancellativeʳ;     

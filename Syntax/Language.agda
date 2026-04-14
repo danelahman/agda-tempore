@@ -135,12 +135,11 @@ mutual
 
     handle_`with_`in
             : {A B : VType}
-            → {Γ' : Ctx}
             → {ε ε' : E}
             → Γ ⊢C⦂ A ‼ ε
-            → ((op : Op) → (ε'' : E) → ⟨⟩-Ctx Γ' →
-                 Γ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+            → ((op : Op) → (ε'' : E) →
+                 Γ ∷ type-of-gtype (param op)
+                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
             → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
             ---------------------------------------------------------------------

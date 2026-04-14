@@ -58,16 +58,13 @@ mutual
                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                    → {N : ((toCtx S) ⟨ mapᵉ ε₁ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
-                   → (S·ε₁≡S'·ε₃ : state-grade S ·ᵣ mapᵉ ε₁ ≡ state-grade S' ·ᵣ mapᵉ ε₃)
+                   → (S·ε₁≡S'·ε₃ : state-grade S' ·ᵣ mapᵉ ε₃ ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                     --------------------------------------------------------------------
                    → ⟨ S , M ; N ⟩ ↝ 
-                     ⟨ S' , M' ; C-rename (cong-∷-ren {!!}) N ⟩
-                  {-
-                    C-rename 
-                        (cong-∷-ren (suc-comp-ren (step-extends-state M↝M₁) (m≡n⇒m≤n Sτ+τ₂≡Sτ₁+τ₄))) 
-                        N
-                  -}
+                     ⟨ S' , M' ; C-rename
+                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S·ε₁≡S'·ε₃))
+                                   N ⟩
 
         -- usual step for return in sequencing
         SEQ-RET    : ∀ {A B ε ε'}
@@ -85,14 +82,12 @@ mutual
                    → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
                    → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'} 
                     -----------------------------------------------------------------------------------
-                   → ⟨ S , perform op V M ; N  ⟩ ↝
-                     ⟨ S , {!!} ⟩
-                {-
-                  var-ρ-subst (sym (+-assoc (op-grade op) ε ε'))
-                             (perform op V
-                                (M ;
-                                 C-rename (cong-∷-ren (exch-⟨⟩-var-ren ∘ʳ wk-ren ∘ʳ ⟨⟩-μ-ren)) N))  ⟩
-                -}
+                   → ⟨ S , (perform op V M) ; N  ⟩ ↝
+                     ⟨ S , ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+                     (perform op V
+                       (M ; C-rename
+                              (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) ·-mapᵉ)))
+                              N)) ⟩
 
         -- delay just pass time further
         DELAY      : ∀ {A τ ε}
@@ -119,7 +114,7 @@ mutual
                              (cong-∷-ren
                                (⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε))))
                              N) [ Hd ↦ V ]c ⟩
-
+                     
         -- step on computation in handle. time and state must go on
         HANDLE-STEP : ∀ {A B ε₁ ε₂ ε₁'}
                     → {S S' : 𝕊 []}
@@ -130,7 +125,7 @@ mutual
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)} 
                     → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
                     → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
-                    --→ (Sτ+τ₂≡Sτ₁+τ₃ : state-grade S ·ᵣ mapᵉ τ₂ ≡ state-grade S₁ ·ᵣ mapᵉ τ₃)
+                    → (S'·ε₁'≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₁' ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                       -----------------------------------------------------------------------
                     → ⟨ S , handle M `with H `in N ⟩ ↝ 
@@ -141,8 +136,7 @@ mutual
                                         (cong-∷-ren (cong-∷-ren (≤ₛ⇒Ren (step-extends-state M↝M')))) 
                                     (H op τ'')) 
                             `in (C-rename 
-                                    (cong-∷-ren {!≤ₛ⇒Ren (step-extends-state M↝M')!})
-                                    --(cong-∷-ren (suc-comp-ren (step-extends-state M↝M₁) (m≡n⇒m≤n Sτ+τ₂≡Sτ₁+τ₃))) 
+                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₁'≾S·ε₁))
                                 N) ⟩
 
         -- operation handle where we box up result so that the resources
@@ -158,14 +152,16 @@ mutual
                     → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε''} 
                       --------------------------------------------------------------------------
                     → ⟨ S , handle perform op V M `with H `in N ⟩ ↝
-                      ⟨ S , box (lam (
-                                  handle M
-                                  `with (λ op' ε'
-                                        → C-rename (cong-∷-ren (cong-∷-ren {!!})) (H op' ε'))
-                                  `in (C-rename
-                                        (cong-∷-ren ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren)
-                                                 ∘ʳ eq-ren (cong (toCtx S ++ᶜ_) (cong ([] ⟨_⟩) ·-mapᵉ)))) N))) 
-                                (H op (ε ·ₑ ε'') [ Tl-∷ Hd ↦ V ]c) ⟩
+                      ⟨ S , box
+                             (lam
+                              (handle M
+                              `with (λ op₁ ε''' → C-rename (cong-∷-ren (cong-∷-ren {!!})) (H op₁ ε'''))
+                              `in (C-rename
+                                    (cong-∷-ren (cong-⟨⟩-ren wk-ren
+                                    ∘ʳ ⟨⟩-μ-ren
+                                    ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) ·-mapᵉ)))
+                                    N)))
+                             (H op (ε ·ₑ ε'') [ Tl-∷ Hd ↦ V ]c) ⟩
 
         -- step for box: we just extend our state with new resource
         BOX         : ∀ {A B ρ' ε} → {S : 𝕊 []}
@@ -183,7 +179,7 @@ mutual
                     → {M : toCtx S ∷ A ⊢C⦂ C} 
                       ----------------------------------------------------------
                     → ⟨ S , unbox x ρ'≾ρ M ⟩ ↝
-                      ⟨ S , M [ Hd ↦ V-rename {!!} {!!} ]c ⟩ 
+                      ⟨ S , M [ Hd ↦ {!!} ]c ⟩ 
                 {-
                 let v-in-c = var-in-ctx V in 
                 let x = proj₂ v-in-c in 
@@ -223,15 +219,17 @@ mutual
     step-extends-state (SEQ-FST {M = M} {M₁ = M'} τ+τ₂≡τ₁+τ₄ M↝M') = step-extends-state  M↝M'
     step-extends-state (HANDLE-STEP {M = M} {M₁ = M'} τ+τ₄≡τ₇+τ₆ M↝M') = step-extends-state M↝M'
 
-{-
 -- preservation theorem
 
-preservation-theorem : ∀ {A B τ'' τ'''}
-                → {S S' : 𝕊 []}
-                → {M : toCtx S ⊢C⦂ A ‼ τ''}
-                → {M' : toCtx S' ⊢C⦂ B ‼ τ'''}
-                → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                → A ≡ B × state-grade S + τ'' ≡ state-grade S' + τ'''
+preservation-theorem : ∀ {A B ε'' ε'''}
+                     → {S S' : 𝕊 []}
+                     → {M : toCtx S ⊢C⦂ A ‼ ε''}
+                     → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
+                     → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
+                     → A ≡ B × state-grade S ·ᵣ (mapᵉ ε'') ≡ state-grade S' ·ᵣ (mapᵉ ε''')
+
+preservation-theorem step = {!!}
+{-
 preservation-theorem APP = refl , refl
 preservation-theorem MATCH = refl , refl
 preservation-theorem {S = S} {S' = S'} (SEQ-FST {τ₂ = τ₂} {τ₃} {τ₄} τ+τ₂≡τ₁+τ₄ M↝M') = 

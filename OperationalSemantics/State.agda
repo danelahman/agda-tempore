@@ -101,8 +101,6 @@ S≤ₛS'⇒ρ'≤ρ (⟨⟩-suc ρ ρ' S≤ₛS' ρ'≾ρ) =
 S≤ₛS'⇒ρ'≤ρ (∷-suc V S≤ₛS') =
   S≤ₛS'⇒ρ'≤ρ S≤ₛS'
 
-{-
--- TODO: in PreservationTheorem.agda, check if there is a way to avoid using this lemma.
 -- Lemma: If one state 𝕊' is a successor of another 𝕊 and overall grade decreases,
 -- then 𝕊' is a renaming of 𝕊.
 suc-comp-ren : ∀ {Γ Γ'} 
@@ -113,15 +111,15 @@ suc-comp-ren : ∀ {Γ Γ'}
              → state-grade S' ·ᵣ ρ''' ≾ᵣ state-grade S ·ᵣ ρ''
              → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
-suc-comp-ren {S = S} id-suc q = 
-  ⟨⟩-≤-ren (+-cancelˡ-≤ _ _ _ q)
-suc-comp-ren {τ'' = τ} {τ'''} (⟨⟩-suc {S' = S'} τ'' S≤ₛS') q = 
-  ⟨⟩-μ-ren 
-    ∘ʳ suc-comp-ren S≤ₛS' (τ-≤-substᵣ (sym (+-assoc (state-grade S') τ'' τ''')) q)
-suc-comp-ren {S = S} (∷-suc V S≤ₛS') q = 
-  (cong-⟨⟩-ren wk-ren) 
-    ∘ʳ suc-comp-ren S≤ₛS' q
--}
+suc-comp-ren id-suc S'·ρ'≾S·ρ =
+  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellative S'·ρ'≾S·ρ)
+suc-comp-ren {Γ} {Γ'} {ρ''} {ρ'''} {S = S ⟨ ρ ⟩ₛ} {S' = S' ⟨ ρ' ⟩ₛ}
+  (⟨⟩-suc {S = S} {S' = S'} ρ ρ' S≤ₛS' ρ'≾ρ) S'·ρ'≾S·ρ =
+  cong-⟨⟩-≤-ren
+    (suc-comp-ren S≤ₛS' (≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-c·ᵣd S'·ρ'≾S·ρ))
+    (≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-e S'·ρ'≾S·ρ (S≤ₛS'⇒ρ'≤ρ S≤ₛS') ρ'≾ρ)
+suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'≾S·ρ =
+  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' S'·ρ'≾S·ρ
 
 -- Concatenation/composition of states
 

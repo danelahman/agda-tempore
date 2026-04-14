@@ -64,3 +64,27 @@ cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
 
 eq-ren : ∀ {Γ Γ'} → Γ ≡ Γ' → Ren Γ Γ'
 eq-ren refl = id-ren
+ 
+cong-⟨⟩-≤-ren : ∀ {Γ Γ' ρ ρ'} → Ren Γ Γ' → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ' ⟩)
+cong-⟨⟩-≤-ren id-ren ρ'≾ρ =
+  ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (r₂ ∘ʳ r₁) ρ'≾ρ =
+  cong-⟨⟩-≤-ren r₂ ρ'≾ρ ∘ʳ cong-⟨⟩-ren r₁
+cong-⟨⟩-≤-ren wk-ren ρ'≾ρ =
+  cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (var-ren x) ρ'≾ρ =
+  cong-⟨⟩-ren (var-ren x) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren ⟨⟩-η-ren ρ'≾ρ =
+  cong-⟨⟩-ren ⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren ⟨⟩-η⁻¹-ren ρ'≾ρ =
+  cong-⟨⟩-ren ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren ⟨⟩-μ-ren ρ'≾ρ =
+  cong-⟨⟩-ren ⟨⟩-μ-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren ⟨⟩-μ⁻¹-ren ρ'≾ρ =
+  cong-⟨⟩-ren ⟨⟩-μ⁻¹-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (⟨⟩-≤-ren rel) ρ'≾ρ =
+  cong-⟨⟩-ren (⟨⟩-≤-ren rel) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
+  cong-⟨⟩-ren (cong-∷-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (cong-⟨⟩-ren r) ρ'≾ρ =
+  cong-⟨⟩-ren (cong-⟨⟩-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
