@@ -173,6 +173,7 @@ infix 27 _∈[_]_
 -- Context extension does not decrease variable's grade annotation
 
 var-ρ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-grade Γ' ] Γ ++ᶜ Γ'
+
 var-ρ-++ᶜ {Γ} {[]} {A} x =
   subst (A ∈[_] Γ) (sym (·ᵣ-identityʳ _)) x
 var-ρ-++ᶜ {Γ' = Γ' ∷ B} x =
@@ -332,3 +333,48 @@ var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx?
 data ⟨⟩-Ctx : Ctx → Set where
   is-[] : ⟨⟩-Ctx []
   is-⟨⟩ : ∀ {Γ ρ} → ⟨⟩-Ctx Γ → ⟨⟩-Ctx (Γ ⟨ ρ ⟩)
+
+
+-- The left split of a context Γ according to a variable x is the same as
+-- the left split of a Γ extended with a grade modality.
+
+var-split-≡-var-split-Tl-⟨⟩ : ∀ {Γ A ρ ρ'}
+                            → (x : A ∈[ ρ ] Γ)
+                            → proj₁ (var-split x) ≡ proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} x))
+var-split-≡-var-split-Tl-⟨⟩ x = refl
+
+-- Generalisation of the above lemma:
+-- The left split of a context Γ according to a variable x is the same as
+-- the left split of a concatenation of Γ with another context.
+
+split-var-eq : ∀ {Γ Γ' A ρ}
+             → (x : A ∈[ ρ ] Γ)
+             → proj₁ (var-split x) ≡ proj₁ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x))
+
+split-var-eq {Γ' = []} {ρ = ρ} _ rewrite ·ᵣ-identityʳ ρ =
+  refl
+split-var-eq {Γ} {Γ' ∷ B} x =
+  split-var-eq {Γ} {Γ'} x
+split-var-eq {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eq {Γ} {Γ'} x) =
+  begin
+    proj₁ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x))
+  ≡⟨ var-split-≡-var-split-Tl-⟨⟩ {Γ ++ᶜ Γ'} {ρ' = ρ'} (var-ρ-++ᶜ x) ⟩
+    proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} (var-ρ-++ᶜ {Γ} {Γ' = Γ'} x)))
+  ≡⟨ var-in-split-proj₁-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') ⟩
+    proj₁ (var-split (subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') (Tl-⟨⟩ (var-ρ-++ᶜ x))))
+  ∎
+
+-- The right split of a context Γ according to a variable x concatenated with another context Γ'
+-- is the same as
+-- the right split of Γ ++ᶜ Γ'.
+
+split-var-eq₂ : ∀ {Γ Γ' A ρ}
+              → (x : A ∈[ ρ ] Γ)
+              → proj₁ (proj₂ (var-split x)) ++ᶜ Γ' ≡ proj₁ (proj₂ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x)))
+
+split-var-eq₂ {Γ' = []} {ρ = ρ} x rewrite ·ᵣ-identityʳ ρ =
+  refl
+split-var-eq₂ {Γ' = Γ' ∷ B} x =
+  cong (_∷ B) (split-var-eq₂ {Γ' = Γ'} x)
+split-var-eq₂ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eq₂ {Γ} {Γ'} x) =
+   var-in-split-proj₂-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ')

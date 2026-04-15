@@ -27,6 +27,7 @@ open import Syntax.Renamings (Grades)
 open import Syntax.Types (Grades)
 
 open import Util.Equality
+open import Util.Operations (Grades)
 
 -- Substituting a value for a variable in context
 
@@ -76,9 +77,29 @@ mutual
   absurd V        [ x ↦ W ]c = absurd (V [ x ↦ W ]v)
   perform op V M  [ x ↦ W ]c = perform op (V [ x ↦ W ]v) (M [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
-  handle M `with H `in N [ x ↦ W ]c =
+  handle_`with_`in {B = B} {Γ' = Γ''} M H N [ x ↦ W ]c =
     handle M [ x ↦ W ]c
-    `with (λ op ρ'' → {!!}) --(H op ρ'') [ Tl-∷ (Tl-∷ x) ↦ W ]c)
+    `with (λ op ε'' Γ' →
+            C-rename
+              (eq-ren (
+                begin
+                  proj₁ (var-split (var-ρ-++ᶜ {Γ' = Γ''} x)) ++ᶜ
+                   proj₁ (proj₂ (var-split (Tl-∷ (Tl-∷ (var-ρ-++ᶜ {Γ' = Γ''} x)))))
+
+                ≡⟨ cong₂ _∷_ (cong₂ _∷_ (cong₂ _++ᶜ_ (sym (split-var-eq {Γ' = Γ''} x)) refl ) refl ) refl ⟩
+
+                  proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split (var-ρ-++ᶜ {Γ' = Γ''} x))) ∷ _ ∷ _
+
+                ≡⟨ cong₂ _∷_ (cong₂ _∷_ (cong₂ _++ᶜ_ refl (sym (split-var-eq₂ {Γ' = Γ''} x))) refl) refl ⟩
+
+                  proj₁ (var-split x) ++ᶜ (proj₁ (proj₂ (var-split x)) ++ᶜ Γ'' ∷ _ ∷ _)
+
+                ≡⟨ sym (++ᶜ-assoc (proj₁ (var-split x)) (proj₁ (proj₂ (var-split x))) ((Γ'' ∷ _) ∷ _)) ⟩
+                    
+                  proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ ((Γ'' ∷ _) ∷ _)                    
+                ∎
+              ))
+              ((H op ε'' Γ') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eq {Γ' = Γ''} x)) W ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
   ... | inj₁ (.(uᵣ) , Hd , _ , eq') =
