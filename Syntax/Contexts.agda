@@ -334,6 +334,14 @@ data ⟨⟩-Ctx : Ctx → Set where
   is-[] : ⟨⟩-Ctx []
   is-⟨⟩ : ∀ {Γ ρ} → ⟨⟩-Ctx Γ → ⟨⟩-Ctx (Γ ⟨ ρ ⟩)
 
+-- The concatenation of two grade-only contexts is a grade-only context
+
+++ᶜ-⟨⟩ : ∀ {Γ₁ Γ₂} → ⟨⟩-Ctx Γ₁ → ⟨⟩-Ctx Γ₂ → ⟨⟩-Ctx (Γ₁ ++ᶜ Γ₂)
+++ᶜ-⟨⟩ {Γ₂ = []} Γ₁' _ =
+  Γ₁'
+++ᶜ-⟨⟩ {Γ₂ = Γ₂ ⟨ ρ ⟩} Γ₁' (is-⟨⟩ Γ₂') =
+  is-⟨⟩ (++ᶜ-⟨⟩ Γ₁' Γ₂')
+
 
 -- The left split of a context Γ according to a variable x is the same as
 -- the left split of a Γ extended with a grade modality.
@@ -347,20 +355,20 @@ var-split-≡-var-split-Tl-⟨⟩ x = refl
 -- The left split of a context Γ according to a variable x is the same as
 -- the left split of a concatenation of Γ with another context.
 
-split-var-eq : ∀ {Γ Γ' A ρ}
-             → (x : A ∈[ ρ ] Γ)
-             → proj₁ (var-split x) ≡ proj₁ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x))
+split-var-eqₗ : ∀ {Γ Γ' A ρ}
+              → (x : A ∈[ ρ ] Γ)
+              → proj₁ (var-split x) ≡ proj₁ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x))
 
-split-var-eq {Γ' = []} {ρ = ρ} _ rewrite ·ᵣ-identityʳ ρ =
+split-var-eqₗ {Γ' = []} {ρ = ρ} _ rewrite ·ᵣ-identityʳ ρ =
   refl
-split-var-eq {Γ} {Γ' ∷ B} x =
-  split-var-eq {Γ} {Γ'} x
-split-var-eq {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eq {Γ} {Γ'} x) =
+split-var-eqₗ {Γ} {Γ' ∷ _} x =
+  split-var-eqₗ {Γ} {Γ'} x
+split-var-eqₗ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eqₗ {Γ' = Γ'} x) =
   begin
-    proj₁ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x))
+    proj₁ (var-split (var-ρ-++ᶜ {Γ' = Γ'} x))
   ≡⟨ var-split-≡-var-split-Tl-⟨⟩ {Γ ++ᶜ Γ'} {ρ' = ρ'} (var-ρ-++ᶜ x) ⟩
-    proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} (var-ρ-++ᶜ {Γ} {Γ' = Γ'} x)))
-  ≡⟨ var-in-split-proj₁-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') ⟩
+    proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} (var-ρ-++ᶜ {Γ' = Γ'} x)))
+  ≡⟨ var-in-split-proj₁-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ' = Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') ⟩
     proj₁ (var-split (subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') (Tl-⟨⟩ (var-ρ-++ᶜ x))))
   ∎
 
@@ -368,13 +376,13 @@ split-var-eq {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eq {Γ} {Γ'} 
 -- is the same as
 -- the right split of Γ ++ᶜ Γ'.
 
-split-var-eq₂ : ∀ {Γ Γ' A ρ}
+split-var-eqᵣ : ∀ {Γ Γ' A ρ}
               → (x : A ∈[ ρ ] Γ)
               → proj₁ (proj₂ (var-split x)) ++ᶜ Γ' ≡ proj₁ (proj₂ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x)))
 
-split-var-eq₂ {Γ' = []} {ρ = ρ} x rewrite ·ᵣ-identityʳ ρ =
+split-var-eqᵣ {Γ' = []} {ρ = ρ} x rewrite ·ᵣ-identityʳ ρ =
   refl
-split-var-eq₂ {Γ' = Γ' ∷ B} x =
-  cong (_∷ B) (split-var-eq₂ {Γ' = Γ'} x)
-split-var-eq₂ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eq₂ {Γ} {Γ'} x) =
+split-var-eqᵣ {Γ' = Γ' ∷ B} x =
+  cong (_∷ B) (split-var-eqᵣ {Γ' = Γ'} x)
+split-var-eqᵣ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eqᵣ {Γ} {Γ'} x) =
    var-in-split-proj₂-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ')

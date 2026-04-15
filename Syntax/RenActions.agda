@@ -108,7 +108,7 @@ mutual
   C-rename r (delay τ M)      = delay τ (C-rename (cong-ren r) M)
   C-rename r (handle M `with H `in N) =
     handle C-rename r M
-    `with (λ op ε'' Γ' → C-rename (cong-ren r) (H op ε'' Γ') ) --C-rename (cong-ren r) (H op ε'')
+    `with (λ op ε'' Γ' Γ'' → C-rename (cong-ren r) (H op ε'' Γ' Γ'') )
     `in (C-rename (cong-ren r) N)
   C-rename {Γ' = Γ'} r (unbox {A} {C} {ρ} {ρ'} x rel M) =
     unbox {ρ = ρ} {ρ' = proj₁ (var-rename r x)}
