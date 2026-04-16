@@ -181,7 +181,7 @@ mutual
   split-state-snd : ∀ {Γ A ρ ρ'}
                   → (S : 𝕊 Γ)
                   → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
-                  → 𝕊 (Γ ++ᶜ toCtx (split-state-fst S x) ∷ [ ρ ] A)
+                   → 𝕊 (Γ ++ᶜ toCtx (split-state-fst S x) ∷ [ ρ ] A)
   
   split-state-snd (S ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) =
     split-state-snd S x ⟨ ρ ⟩ₛ
@@ -352,13 +352,28 @@ resource-lookup (S ∷ₛ _) (Tl-∷ x)    = resource-lookup S x
 resource-pass-to-ctx : ∀ {Γ ρ ρ' A}
                      → (S : 𝕊 Γ)
                      → (x : [ ρ ] A ∈[ ρ' ] toCtx S)
+                     → (u≾ρ : uᵣ ≾ᵣ ρ)
                      → (p : ctx-grade (toCtx (split-state-snd S x)) ≾ᵣ ρ)
                      → (V : (Γ ++ᶜ toCtx (split-state-fst S x)) ⟨ ρ ⟩ ⊢V⦂ A)
                      → Γ ++ᶜ toCtx S ⊢V⦂ A
-resource-pass-to-ctx {Γ} {ρ} {ρ'} {A} S x p V =
+
+resource-pass-to-ctx {Γ} {ρ} {ρ'} {A} S x u≾ρ p V =
+  V-rename (eq-ren (cong (Γ ++ᶜ_) (split-state-++ᶜ S x))
+    ∘ʳ cong-renˡ (wk-ren-⟨ρ⟩-ctx {Γ' = toCtx (split-state-snd S x)} u≾ρ p)
+    ∘ʳ eq-ren (++ᶜ-assoc Γ (toCtx (split-state-fst S x) ∷ [ ρ ] A) ([] ⟨ ρ ⟩))
+    ∘ʳ cong-⟨⟩-ren wk-ren) V
+
+{-
+  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' ,
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ')) (·ᵣ-monoʳ-≾ᵣ rel) ,
+  Tl-⟨⟩ (var-ρ-++ᶜ y)
+-}
+
+{-
   V-rename
     (   eq-ren (cong (Γ ++ᶜ_) (split-state-++ᶜ S x)) 
      ∘ʳ eq-ren (++ᶜ-assoc Γ (toCtx (split-state-fst S x) ∷ [ ρ ] A) (toCtx (split-state-snd S x))) 
      ∘ʳ cong-ren wk-ren
      ∘ʳ {!!}) --ren⟨τ⟩-ctx {Γ' = toCtx (split-state-snd S x)} p)
     V
+-}

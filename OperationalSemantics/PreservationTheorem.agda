@@ -181,15 +181,28 @@ mutual
                     → ⟨ S , (box V M) ⟩ ↝
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
 
-        -- step for unbox: we just substitute in M with unboxed resource
+
+-- step for unbox: we just substitute in M with unboxed resource
         UNBOX       : ∀ {A C ρ ρ'} 
                     → {S : 𝕊 []}
-                    → (x : [ ρ ] A ∈[ ρ' ] (toCtx S))
+                    → {x : [ ρ ] A ∈[ ρ' ] (toCtx S)}
                     → (ρ'≾ρ : ρ' ≾ᵣ ρ)
+                    → (u≾ρ : uᵣ ≾ᵣ ρ) -- required condition to have the renaming
                     → {M : toCtx S ∷ A ⊢C⦂ C} 
                       ----------------------------------------------------------
                     → ⟨ S , unbox x ρ'≾ρ M ⟩ ↝
-                      ⟨ S , M [ Hd ↦ {!!} ]c ⟩ 
+                      ⟨ S , M [ Hd ↦
+                                V-rename
+                                  (eq-ren ++ᶜ-identityˡ)
+                                  (resource-pass-to-ctx
+                                    S
+                                    x
+                                    u≾ρ
+                                    (≾ᵣ-trans (≾ᵣ-reflexive
+                                      (trans
+                                        (cong ctx-grade (snd-split-state≡split-ctx S x))
+                                        (proj₂ (proj₂ (proj₂ (var-split x)))))) ρ'≾ρ)
+                                    (resource-lookup S x)) ]c ⟩ 
                 {-
                 let v-in-c = var-in-ctx V in 
                 let x = proj₂ v-in-c in 
@@ -205,7 +218,16 @@ mutual
                                     ?) --(τ'≤snd-state V)) 
                                 (resource-lookup S y)) ]c ⟩ -}
 
-    -- TODO: add coerce rules
+-- step for coerce terms in a sequence of computations
+        COERCE-RET  : ∀ {A B ε ε' ε''} 
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ A}
+                    → {uₑ≾ε : uₑ ≾ₑ ε}
+                    → (ε·ε'≾ε'' : ε ·ₑ ε' ≾ₑ ε'')
+                    → {M : ((toCtx S) ⟨ mapᵉ ε ⟩ ∷ A) ⊢C⦂ B ‼ ε'}
+                      ----------------------------------------------------------
+                    → ⟨ S , coerce (return V uₑ≾ε ; M) ε·ε'≾ε'' ⟩ ↝
+                      ⟨ S , (coerce (return V uₑ≾ε) ≾-refl) ; M ⟩
 
     -- Theorem: Step only extends state
     step-extends-state : ∀ {ε ε'}
@@ -217,17 +239,30 @@ mutual
                        -----------------------------------
                        → S ≤ₛ S'
                        
-    step-extends-state APP = id-suc
-    step-extends-state MATCH = id-suc
-    step-extends-state SEQ-RET = id-suc
-    step-extends-state SEQ-OP = id-suc
-    step-extends-state HANDLE-RET = id-suc
-    step-extends-state (UNBOX p) = id-suc 
-    step-extends-state HANDLE-OP = id-suc
-    step-extends-state DELAY = ⟨⟩-suc _ id-suc
-    step-extends-state BOX = ∷-suc _ id-suc
-    step-extends-state (SEQ-FST {M = M} {M₁ = M'} τ+τ₂≡τ₁+τ₄ M↝M') = step-extends-state  M↝M'
-    step-extends-state (HANDLE-STEP {M = M} {M₁ = M'} τ+τ₄≡τ₇+τ₆ M↝M') = step-extends-state M↝M'
+    step-extends-state APP =
+      id-suc
+    step-extends-state MATCH =
+      id-suc
+    step-extends-state (SEQ-FST _ x) =
+      step-extends-state x
+    step-extends-state SEQ-RET =
+      id-suc
+    step-extends-state SEQ-OP =
+      id-suc
+    step-extends-state {S = S} {S' = .(S ⟨ embedR τ ⟩ₛ)} {A} (DELAY {τ = τ}) =
+      {!!}
+    step-extends-state HANDLE-RET =
+      id-suc
+    step-extends-state (HANDLE-STEP _ x) =
+      step-extends-state x
+    step-extends-state HANDLE-OP =
+      id-suc
+    step-extends-state BOX =
+      ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
+    step-extends-state (UNBOX ρ'≾ρ u≾ρ) =
+      id-suc
+    step-extends-state (COERCE-RET ε·ε'≾ε'') =
+      id-suc
 
 -- preservation theorem
 
@@ -239,6 +274,7 @@ preservation-theorem : ∀ {A B ε'' ε'''}
                      → A ≡ B × state-grade S ·ᵣ (mapᵉ ε'') ≡ state-grade S' ·ᵣ (mapᵉ ε''')
 
 preservation-theorem step = {!!}
+
 {-
 preservation-theorem APP = refl , refl
 preservation-theorem MATCH = refl , refl

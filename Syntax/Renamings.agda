@@ -1,4 +1,4 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 --------------------------------------------------------------
 -- Context renamings                                        --
@@ -88,3 +88,43 @@ cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
   cong-⟨⟩-ren (cong-∷-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren (cong-⟨⟩-ren r) ρ'≾ρ =
   cong-⟨⟩-ren (cong-⟨⟩-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+
+cong-renˡ : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Ren (Γ'' ++ᶜ Γ) (Γ'' ++ᶜ Γ')
+cong-renˡ id-ren =
+  id-ren
+cong-renˡ (r₂ ∘ʳ r₁) =
+  cong-renˡ r₂ ∘ʳ cong-renˡ r₁
+cong-renˡ wk-ren =
+  wk-ren
+cong-renˡ {Γ' = Γ'} {Γ'' = Γ''} (var-ren x) =
+  var-ren (∈-ctx-extensionˡ Γ'' Γ' x)
+cong-renˡ ⟨⟩-η-ren =
+  ⟨⟩-η-ren
+cong-renˡ ⟨⟩-η⁻¹-ren =
+  ⟨⟩-η⁻¹-ren
+cong-renˡ ⟨⟩-μ-ren =
+  ⟨⟩-μ-ren
+cong-renˡ ⟨⟩-μ⁻¹-ren =
+  ⟨⟩-μ⁻¹-ren
+cong-renˡ (⟨⟩-≤-ren x) =
+  ⟨⟩-≤-ren x
+cong-renˡ (cong-∷-ren r) =
+  cong-∷-ren (cong-renˡ r)
+cong-renˡ (cong-⟨⟩-ren r) =
+  cong-⟨⟩-ren (cong-renˡ r)
+
+-- Weakening a grade to a context renaming
+
+wk-ren-⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → uᵣ ≾ᵣ ρ → ctx-grade Γ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')
+wk-ren-⟨ρ⟩-ctx {Γ' = []} _ Γ'≾ρ =
+  ⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren Γ'≾ρ
+wk-ren-⟨ρ⟩-ctx {Γ' = Γ' ∷ _} uᵣ≾ρ Γ'≾ρ =
+  wk-ren ∘ʳ wk-ren-⟨ρ⟩-ctx uᵣ≾ρ Γ'≾ρ
+wk-ren-⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} uᵣ≾ρ Γ'≾ρ =
+  ?
+{-
+  ren
+    (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (·ᵣ-monoʳ-≾ᵣ rel))
+    (vren⟨ρ⟩-ctx rel)
+-}
+
