@@ -121,7 +121,7 @@ wk-ren-⟨ρ⟩-ctx {Γ' = []} _ Γ'≾ρ =
 wk-ren-⟨ρ⟩-ctx {Γ' = Γ' ∷ _} uᵣ≾ρ Γ'≾ρ =
   wk-ren ∘ʳ wk-ren-⟨ρ⟩-ctx uᵣ≾ρ Γ'≾ρ
 wk-ren-⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} uᵣ≾ρ Γ'≾ρ =
-  ?
+  {!!}
 {-
   ren
     (≾ᵣ-trans (≾ᵣ-reflexive (ctx-grade-++ᶜ Γ Γ')) (·ᵣ-monoʳ-≾ᵣ rel))
