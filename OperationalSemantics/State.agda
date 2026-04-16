@@ -108,9 +108,20 @@ suc-comp-ren : ∀ {Γ Γ'}
              → {S : 𝕊 Γ} 
              → {S' : 𝕊 Γ'} 
              → S ≤ₛ S' 
-             → state-grade S' ·ᵣ ρ''' ≾ᵣ state-grade S ·ᵣ ρ''
+             → state-grade S ·ᵣ ρ'' ≡ state-grade S' ·ᵣ ρ'''
              → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
+suc-comp-ren {S = S} id-suc eq =
+  eq-ren (cong (toCtx S ⟨_⟩) (·ᵣ-cancellativeʳ eq))
+suc-comp-ren {ρ'' = ρ''} {ρ''' = ρ'''} {S = S ⟨ ρ ⟩ₛ} {S' = S' ⟨ ρ' ⟩ₛ} (⟨⟩-suc {S = S} {S' = S'}
+  ρ ρ' S≤ₛS' ρ'≾ρ) eq =
+  ⟨⟩-μ-ren
+  ∘ʳ (suc-comp-ren S≤ₛS' (trans (trans (sym (·ᵣ-assoc (state-grade S) ρ ρ'')) eq) (·ᵣ-assoc (state-grade S') ρ' ρ''')))
+  ∘ʳ ⟨⟩-μ⁻¹-ren {Γ = toCtx S} {ρ = ρ} {ρ' = ρ''}
+suc-comp-ren (∷-suc V S≤ₛS') eq =
+  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' eq
+
+{-
 suc-comp-ren id-suc S'·ρ'≾S·ρ =
   ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellative S'·ρ'≾S·ρ)
 suc-comp-ren {Γ} {Γ'} {ρ''} {ρ'''} {S = S ⟨ ρ ⟩ₛ} {S' = S' ⟨ ρ' ⟩ₛ}
@@ -120,6 +131,7 @@ suc-comp-ren {Γ} {Γ'} {ρ''} {ρ'''} {S = S ⟨ ρ ⟩ₛ} {S' = S' ⟨ ρ' �
     (≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-e S'·ρ'≾S·ρ (S≤ₛS'⇒ρ'≤ρ S≤ₛS') ρ'≾ρ)
 suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'≾S·ρ =
   cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' S'·ρ'≾S·ρ
+-}
 
 -- Concatenation/composition of states
 
@@ -159,7 +171,7 @@ mutual
                   → [ ρ ] A ∈[ ρ' ] (toCtx S)
                   → 𝕊 Γ
    
-  split-state-fst (S ⟨ ρ ⟩ₛ) (Tl-⟨⟩ x) =
+  split-state-fst (S ⟨ ρ'' ⟩ₛ) (Tl-⟨⟩ x) =
     split-state-fst S x
   split-state-fst (S ∷ₛ V) Hd =
     S

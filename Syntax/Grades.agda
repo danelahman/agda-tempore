@@ -74,8 +74,6 @@ record Grade : Set₁ where
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
 
-    ≾-c·d·e⇒≾-c·d : ∀ {c d e f g h} → c · d · e ≾ f · g · h → c · d ≾ f · g
-    ≾-c·d·e⇒≾-e   : ∀ {c d e f g h} → c · d · e ≾ f · g · h → c ≾ f → d ≾ g → e ≾ h
     -- ...
 
   -- _≡_ is included in _≾_
@@ -175,8 +173,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      embedNat to embedR;
      ·-≾-cancellative to ·ᵣ-≾ᵣ-cancellative;
      ·-≡-≾-cancellative to ·ᵣ-≡-≾ᵣ-cancellative;
-     ≾-c·d·e⇒≾-c·d to ≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-c·ᵣd;
-     ≾-c·d·e⇒≾-e to ≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-e;
      ≾-reflexive to ≾ᵣ-reflexive;
      ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
      ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     

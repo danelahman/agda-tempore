@@ -58,7 +58,7 @@ mutual
                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                    → {N : ((toCtx S) ⟨ mapᵉ ε₁ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
-                   → (S·ε₁≡S'·ε₃ : state-grade S' ·ᵣ mapᵉ ε₃ ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
+                   → (S·ε₁≡S'·ε₃ : state-grade S ·ᵣ mapᵉ ε₁ ≡ state-grade S' ·ᵣ mapᵉ ε₃)
                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                     --------------------------------------------------------------------
                    → ⟨ S , M ; N ⟩ ↝ 
@@ -129,7 +129,7 @@ mutual
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)} 
                     → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
                     → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
-                    → (S'·ε₁'≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₁' ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
+                    → (S·ε₁≡S'·ε₁' : state-grade S ·ᵣ mapᵉ ε₁ ≡ state-grade S' ·ᵣ mapᵉ ε₁')
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                       -----------------------------------------------------------------------
                     → ⟨ S , handle M `with H `in N ⟩ ↝ 
@@ -140,7 +140,7 @@ mutual
                                       (cong-∷-ren (cong-∷-ren (cong-ren ((≤ₛ⇒Ren (step-extends-state M↝M'))))))
                                       (H op τ'' Γ' Γ'') )
                             `in (C-rename 
-                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₁'≾S·ε₁))
+                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S·ε₁≡S'·ε₁'))
                                 N) ⟩
 
         -- operation handle where we box up result so that the resources
