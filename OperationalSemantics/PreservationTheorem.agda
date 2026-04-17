@@ -182,43 +182,24 @@ mutual
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
 
 
--- step for unbox: we just substitute in M with unboxed resource
+        -- step for unbox: we just substitute in M with unboxed resource
         UNBOX       : ∀ {A C ρ ρ'} 
                     → {S : 𝕊 []}
                     → {x : [ ρ ] A ∈[ ρ' ] (toCtx S)}
                     → (ρ'≾ρ : ρ' ≾ᵣ ρ)
-                    → (u≾ρ : uᵣ ≾ᵣ ρ) -- required condition to have the renaming
+                    --→ (u≾ρ : uᵣ ≾ᵣ ρ) -- required condition to have the renaming
                     → {M : toCtx S ∷ A ⊢C⦂ C} 
                       ----------------------------------------------------------
                     → ⟨ S , unbox x ρ'≾ρ M ⟩ ↝
-                      ⟨ S , M [ Hd ↦
-                                V-rename
-                                  (eq-ren ++ᶜ-identityˡ)
-                                  (resource-pass-to-ctx
-                                    S
-                                    x
-                                    u≾ρ
-                                    (≾ᵣ-trans (≾ᵣ-reflexive
-                                      (trans
-                                        (cong ctx-grade (snd-split-state≡split-ctx S x))
-                                        (proj₂ (proj₂ (proj₂ (var-split x)))))) ρ'≾ρ)
-                                    (resource-lookup S x)) ]c ⟩ 
-                {-
-                let v-in-c = var-in-ctx V in 
-                let x = proj₂ v-in-c in 
-                let y = ? in --var-ᶜ-+ {τ = τ'} x in 
-                ⟨ S , unbox p V M ⟩ 
-                    ↝ ⟨ S , 
-                        M [ Hd ↦ V-rename (eq-ren ++ᶜ-identityˡ)
-                            (resource-pass-to-ctx
-                                S 
-                                y 
-                                (τ-≤-substᵣ 
-                                    (sym (grades-≡ (split-state-snd S y))) 
-                                    ?) --(τ'≤snd-state V)) 
-                                (resource-lookup S y)) ]c ⟩ -}
+                      ⟨ S , M [ Hd ↦ V-rename
+                                       (   eq-ren (split-state-++ᶜ S x)
+                                        ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
+                                        ∘ʳ wk-ren-⟨ρ⟩-ctx {!!} -- TODO: prove that `ρ'` equals `ctx-grade ([] ∷ [ ρ ] A ++ᶜ toCtx (split-state-snd S x))`
+                                        ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+                                        ∘ʳ eq-ren ++ᶜ-identityˡ)
+                                       (resource-lookup S x) ]c ⟩
 
--- step for coerce terms in a sequence of computations
+        -- step for coerce terms in a sequence of computations
         COERCE-RET  : ∀ {A ε ε'} 
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ A}

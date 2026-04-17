@@ -349,6 +349,7 @@ resource-lookup (S ∷ₛ _) (Tl-∷ x)    = resource-lookup S x
 
 -- Renaming of the result of previous lemma to context for state S
 
+{-
 resource-pass-to-ctx : ∀ {Γ ρ ρ' A}
                      → (S : 𝕊 Γ)
                      → (x : [ ρ ] A ∈[ ρ' ] toCtx S)
@@ -362,6 +363,7 @@ resource-pass-to-ctx {Γ} {ρ} {ρ'} {A} S x u≾ρ p V =
     ∘ʳ cong-renˡ (wk-ren-⟨ρ⟩-ctx {Γ' = toCtx (split-state-snd S x)} u≾ρ p)
     ∘ʳ eq-ren (++ᶜ-assoc Γ (toCtx (split-state-fst S x) ∷ [ ρ ] A) ([] ⟨ ρ ⟩))
     ∘ʳ cong-⟨⟩-ren wk-ren) V
+-}
 
 {-
   ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' ,
