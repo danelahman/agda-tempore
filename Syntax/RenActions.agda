@@ -99,7 +99,7 @@ mutual
            ------------
            → Γ' ⊢C⦂ C
 
-  C-rename r (return V rel)   = return (V-rename r V) rel
+  C-rename r (return rel V)   = return rel (V-rename r V)
   C-rename r (M ; N)          = C-rename r M ; C-rename (cong-ren r) N
   C-rename r (V · W)          = V-rename r V · V-rename r W
   C-rename r (match V `in M)  = match V-rename r V `in C-rename (cong-ren r) M
@@ -116,4 +116,4 @@ mutual
       (≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) rel)
       (C-rename (cong-ren r) M) 
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
-  C-rename r (coerce M relEff) = coerce (C-rename r M) relEff
+  C-rename r (coerce rel M) = coerce rel (C-rename r M)

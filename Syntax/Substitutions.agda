@@ -70,7 +70,7 @@ mutual
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢C⦂ C
 
-  return V rel    [ x ↦ W ]c = return (V [ x ↦ W ]v) rel
+  return rel V    [ x ↦ W ]c = return rel (V [ x ↦ W ]v)
   (M ; N)         [ x ↦ W ]c = (M [ x ↦ W ]c) ; (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   (V₁ · V₂)       [ x ↦ W ]c = (V₁ [ x ↦ W ]v) · (V₂ [ x ↦ W ]v)
   (match V `in N) [ x ↦ W ]c = match V [ x ↦ W ]v `in (N [ Tl-∷ (Tl-∷ x) ↦ W ]c)
@@ -143,4 +143,4 @@ mutual
       rel
       (M [ Tl-∷ x ↦ W ]c)
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
-  coerce M rel [ x ↦ W ]c = coerce (M [ x ↦ W ]c) rel
+  coerce rel M [ x ↦ W ]c = coerce rel (M [ x ↦ W ]c)

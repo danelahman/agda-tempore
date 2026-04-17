@@ -72,8 +72,8 @@ mutual
 
     return  : {A : VType}
             → {ε : E}
-            → Γ ⊢V⦂ A
             → uₑ ≾ₑ ε     -- new condition. ε should include the unit.
+            → Γ ⊢V⦂ A
             -------------
             → Γ ⊢C⦂ A ‼ ε -- used to be uₑ
 
@@ -170,8 +170,8 @@ mutual
 
     coerce : {A : VType}
            → {ε ε' : E}
-           → Γ ⊢C⦂ A ‼ ε
            → ε ≾ₑ ε'
+           → Γ ⊢C⦂ A ‼ ε
            --------------
            → Γ ⊢C⦂ A ‼ ε'
 

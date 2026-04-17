@@ -73,7 +73,7 @@ mutual
                    → {u≾ε : uₑ ≾ₑ ε}
                    → {N : ((toCtx S) ∷ A) ⊢C⦂ B ‼ ε'}
                      --------------------------------------------
-                   → ⟨ S , return V u≾ε ⟩ ↝ ⟨ S , N [ Hd ↦ V ]c ⟩
+                   → ⟨ S , return u≾ε V ⟩ ↝ ⟨ S , N [ Hd ↦ V ]c ⟩
 
         -- usual performing operation in sequencing
         SEQ-OP     : ∀ {A B ε ε' op} 
@@ -112,7 +112,7 @@ mutual
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
                    → {N : toCtx S ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
                      --------------------------------------------------------------------------
-                   → ⟨ S , handle return V u≾ε `with H `in N ⟩ ↝
+                   → ⟨ S , handle return u≾ε V `with H `in N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
                                (⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε))))
@@ -219,15 +219,14 @@ mutual
                                 (resource-lookup S y)) ]c ⟩ -}
 
 -- step for coerce terms in a sequence of computations
-        COERCE-RET  : ∀ {A B ε ε' ε''} 
+        COERCE-RET  : ∀ {A ε ε'} 
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ A}
                     → {uₑ≾ε : uₑ ≾ₑ ε}
-                    → (ε·ε'≾ε'' : ε ·ₑ ε' ≾ₑ ε'')
-                    → {M : ((toCtx S) ⟨ mapᵉ ε ⟩ ∷ A) ⊢C⦂ B ‼ ε'}
+                    → {ε≾ε' : ε ≾ₑ ε'}
                       ----------------------------------------------------------
-                    → ⟨ S , coerce (return V uₑ≾ε ; M) ε·ε'≾ε'' ⟩ ↝
-                      ⟨ S , (coerce (return V uₑ≾ε) ≾-refl) ; M ⟩
+                    → ⟨ S , coerce ε≾ε' (return uₑ≾ε V) ⟩ ↝
+                      ⟨ S , return (≾ₑ-trans uₑ≾ε ε≾ε') V ⟩
 
     -- Theorem: Step only extends state
     step-extends-state : ∀ {ε ε'}
@@ -261,8 +260,8 @@ mutual
       ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state (UNBOX ρ'≾ρ u≾ρ) =
       id-suc
-    step-extends-state (COERCE-RET ε·ε'≾ε'') =
-      id-suc
+    step-extends-state COERCE-RET =
+      {!!}
 
 -- preservation theorem
 
