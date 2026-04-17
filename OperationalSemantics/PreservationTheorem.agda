@@ -224,6 +224,10 @@ mutual
                     → ⟨ S , coerce ε≾ε' (return uₑ≾ε V) ⟩ ↝
                       ⟨ S , return (≾ₑ-trans uₑ≾ε ε≾ε') V ⟩
 
+        -- TODO: also needs rules for how coerce interacts with algebraic operations, box, and unbox
+        --       also needs a step/congruence rule for coerce
+
+
     -- Theorem: Step only extends state
     step-extends-state : ∀ {ε ε'}
                        → {S S' : 𝕊 []}
