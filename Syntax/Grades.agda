@@ -120,15 +120,16 @@ open Grade
 -- Morphisms of effect and resource monoids
 
 record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
-  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_)
-  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_)
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_; embedNat to embedC₁)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_; embedNat to embedC₂)
   
   field
 
     map    : C₁ → C₂
-    pres-≾ : ∀ {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
+    pres-≾ : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
     u₁≡₂u₂ : map u₁ ≡ u₂
-    ·-map  : ∀ {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁' 
+    ·-map  : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁'
+    mapEmbed≡embed : ∀ {n} → map (embedC₁ n) ≡ embedC₂ n
 
     -- laws
 
@@ -207,5 +208,6 @@ module GradeSystemInterface (GS : GradeSystem) where
     (map to mapᵉ;
      pres-≾ to pres-≾ᵉ;
      u₁≡₂u₂ to uₑ≡ᵣuᵣ;
-     ·-map to ·-mapᵉ
+     ·-map to ·-mapᵉ;
+     mapEmbed≡embed to mapEmbedE≡embedR
     ) public

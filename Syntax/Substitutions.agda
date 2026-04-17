@@ -79,7 +79,7 @@ mutual
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
   handle_`with_`in {B = B} M H N [ x ↦ W ]c =
     handle M [ x ↦ W ]c
-    `with (λ op ε'' Γ' Γ'' →
+    `with (λ op ε'' Γ' →
             C-rename
               (eq-ren (
                 begin
@@ -99,7 +99,7 @@ mutual
                   proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ ((Γ' ∷ _) ∷ _)                    
                 ∎
               ))
-              ((H op ε'' Γ' Γ'') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eqₗ {Γ' = Γ'} x)) W ]c))
+              ((H op ε'' Γ') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eqₗ {Γ' = Γ'} x)) W ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
   ... | inj₁ (.(uᵣ) , Hd , _ , eq') =

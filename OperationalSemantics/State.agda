@@ -87,9 +87,15 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
 
 ≤ₛ⇒Ren : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → Ren (toCtx S) (toCtx S')
 ≤ₛ⇒Ren id-suc = id-ren
-≤ₛ⇒Ren (⟨⟩-suc ρ'' S≤ₛS') = cong-⟨⟩-ren (≤ₛ⇒Ren S≤ₛS') ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+≤ₛ⇒Ren (⟨⟩-suc ρ'' S≤ₛS') = {!!} -- Nothing ensures that S' ⟨ ρ'' ⟩ is a renaming of S.
 ≤ₛ⇒Ren (∷-suc V S≤ₛS') = wk-ren ∘ʳ ≤ₛ⇒Ren S≤ₛS'
 
+{-
+≤ₛ⇒Ren (⟨⟩-suc ρ'' S≤ₛS') = cong-⟨⟩-ren (≤ₛ⇒Ren S≤ₛS') ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+-}
+
+{-
+-- TODO: remove, as it is not used anywhere
 -- ≤ₛ decreases the grades
 
 S≤ₛS'⇒ρ'≤ρ : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → (state-grade S') ≾ᵣ (state-grade S)
@@ -99,6 +105,7 @@ S≤ₛS'⇒ρ'≤ρ (⟨⟩-suc ρ ρ' S≤ₛS' ρ'≾ρ) =
   ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (S≤ₛS'⇒ρ'≤ρ S≤ₛS')) (·ᵣ-monoʳ-≾ᵣ ρ'≾ρ) 
 S≤ₛS'⇒ρ'≤ρ (∷-suc V S≤ₛS') =
   S≤ₛS'⇒ρ'≤ρ S≤ₛS'
+-}
 
 -- Lemma: If one state 𝕊' is a successor of another 𝕊 and overall grade decreases,
 -- then 𝕊' is a renaming of 𝕊.
@@ -112,25 +119,10 @@ suc-comp-ren : ∀ {Γ Γ'}
 
 suc-comp-ren {S = S} id-suc eq =
   eq-ren (cong (toCtx S ⟨_⟩) (·ᵣ-cancellativeʳ eq))
-suc-comp-ren {ρ'' = ρ''} {ρ''' = ρ'''} {S = S ⟨ ρ ⟩ₛ} {S' = S' ⟨ ρ' ⟩ₛ} (⟨⟩-suc {S = S} {S' = S'}
-  ρ ρ' S≤ₛS' ρ'≾ρ) eq =
-  ⟨⟩-μ-ren
-  ∘ʳ (suc-comp-ren S≤ₛS' (trans (trans (sym (·ᵣ-assoc (state-grade S) ρ ρ'')) eq) (·ᵣ-assoc (state-grade S') ρ' ρ''')))
-  ∘ʳ ⟨⟩-μ⁻¹-ren {Γ = toCtx S} {ρ = ρ} {ρ' = ρ''}
+suc-comp-ren {S' = S' ⟨ ρ'' ⟩ₛ} (⟨⟩-suc ρ'' S≤ₛS') eq =
+  ⟨⟩-μ-ren ∘ʳ suc-comp-ren S≤ₛS' (trans eq (·ᵣ-assoc (state-grade S') ρ'' _))
 suc-comp-ren (∷-suc V S≤ₛS') eq =
   cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' eq
-
-{-
-suc-comp-ren id-suc S'·ρ'≾S·ρ =
-  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellative S'·ρ'≾S·ρ)
-suc-comp-ren {Γ} {Γ'} {ρ''} {ρ'''} {S = S ⟨ ρ ⟩ₛ} {S' = S' ⟨ ρ' ⟩ₛ}
-  (⟨⟩-suc {S = S} {S' = S'} ρ ρ' S≤ₛS' ρ'≾ρ) S'·ρ'≾S·ρ =
-  cong-⟨⟩-≤-ren
-    (suc-comp-ren S≤ₛS' (≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-c·ᵣd S'·ρ'≾S·ρ))
-    (≾ᵣ-c·ᵣd·ᵣe⇒≾ᵣ-e S'·ρ'≾S·ρ (S≤ₛS'⇒ρ'≤ρ S≤ₛS') ρ'≾ρ)
-suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'≾S·ρ =
-  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' S'·ρ'≾S·ρ
--}
 
 -- Concatenation/composition of states
 
@@ -378,3 +370,12 @@ resource-pass-to-ctx {Γ} {ρ} {ρ'} {A} S x u≾ρ p V =
      ∘ʳ {!!}) --ren⟨τ⟩-ctx {Γ' = toCtx (split-state-snd S x)} p)
     V
 -}
+
+≤ₛ-comp : ∀ {Γ} → {S S' : 𝕊 Γ} → S ≤ₛ S' → Σ[ Γ' ∈ Ctx ] toCtx S' ≡ toCtx S ++ᶜ Γ'
+≤ₛ-comp id-suc = [] , refl
+≤ₛ-comp {S' = S' ⟨ ρ ⟩ₛ} (⟨⟩-suc .ρ S≤ₛS') with ≤ₛ-comp {S' = S'} S≤ₛS'
+... | Γ' , eq =
+  Γ' ⟨ ρ ⟩ , cong (_⟨ ρ ⟩) eq
+≤ₛ-comp {S' = S' ∷ₛ V} (∷-suc .V S≤ₛS') with ≤ₛ-comp {S' = S'} S≤ₛS'
+≤ₛ-comp {S = _} {_∷ₛ_ {A} {ρ} S' V} (∷-suc .V S≤ₛS') | Γ' , eq =
+  Γ' ∷ [ ρ ] A , cong (_∷ [ ρ ] A) eq

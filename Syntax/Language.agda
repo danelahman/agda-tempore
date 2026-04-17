@@ -137,7 +137,7 @@ mutual
             : {A B : VType}
             → {ε ε' : E}
             → Γ ⊢C⦂ A ‼ ε
-            → ((op : Op) → (ε'' : E) → (Γ' : Ctx) → ⟨⟩-Ctx Γ' →
+            → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
                  (Γ ++ᶜ Γ') ∷ type-of-gtype (param op)
                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
@@ -192,4 +192,3 @@ grad-typ⇒var : ∀ {Γ A ρ}
              → Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] (V ≡ var x)
              
 grad-typ⇒var (var x) = x , refl
-
