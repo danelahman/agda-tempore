@@ -70,11 +70,10 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
     ⟨⟩-suc : ∀ {Γ Γ'}
             → {S : 𝕊 Γ} 
             → {S' : 𝕊 Γ'} 
-            → (ρ ρ' : R)
+            → (ρ'' : R)
             → S ≤ₛ S'
-            → ρ' ≾ᵣ ρ
             --------------------------
-            → S ⟨ ρ ⟩ₛ ≤ₛ (S' ⟨ ρ' ⟩ₛ)
+            → S ≤ₛ (S' ⟨ ρ'' ⟩ₛ)
 
     ∷-suc : ∀ {Γ Γ' ρ A} 
             → {S : 𝕊 Γ} 
@@ -88,7 +87,7 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
 
 ≤ₛ⇒Ren : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → Ren (toCtx S) (toCtx S')
 ≤ₛ⇒Ren id-suc = id-ren
-≤ₛ⇒Ren (⟨⟩-suc ρ ρ' S≤ₛS' ρ'≾ρ) = cong-⟨⟩-ren (≤ₛ⇒Ren S≤ₛS') ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+≤ₛ⇒Ren (⟨⟩-suc ρ'' S≤ₛS') = cong-⟨⟩-ren (≤ₛ⇒Ren S≤ₛS') ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 ≤ₛ⇒Ren (∷-suc V S≤ₛS') = wk-ren ∘ʳ ≤ₛ⇒Ren S≤ₛS'
 
 -- ≤ₛ decreases the grades
