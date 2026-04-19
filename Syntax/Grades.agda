@@ -41,9 +41,6 @@ record Grade : Set₁ where
 
     -- order
     _≾_ : Rel Carrier lzero
-
-    -- u is minimal
-    u-minimal : ∀ {c} → c ≾ u → c ≡ u
     
     -- _·_ is monotone with respect to _≾_
     ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
@@ -68,8 +65,12 @@ record Grade : Set₁ where
     ·-≡-≾-cancellative : ∀ {c d e f} → c · d ≡ e · f → e ≾ c → d ≾ f
 
     -- _·_ and u have zero-product property
-    ·-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
-    ·-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
+    ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
+    ≡-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
+
+    -- _≾_ and u have zero-product property
+    ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
+    ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
     embedNat : ℕ → Carrier
@@ -108,11 +109,11 @@ record Grade : Set₁ where
     ∎
   
   -- contrapositive version of the zero-product property of _·_
-  ·-zero-productˡ-≢ : ∀ {c d} → c ≢ u → c · d ≢ u
-  ·-zero-productˡ-≢ p q = p (·-zero-productˡ q)
+  ≡-zero-productˡ-≢ : ∀ {c d} → c ≢ u → c · d ≢ u
+  ≡-zero-productˡ-≢ p q = p (≡-zero-productˡ q)
   
-  ·-zero-productʳ-≢ : ∀ {c d} → d ≢ u → c · d ≢ u
-  ·-zero-productʳ-≢ p q = p (·-zero-productʳ q)
+  ≡-zero-productʳ-≢ : ∀ {c d} → d ≢ u → c · d ≢ u
+  ≡-zero-productʳ-≢ p q = p (≡-zero-productʳ q)
 
 open Grade
 
@@ -168,17 +169,18 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
      ·-≡-cancellative to ·ᵣ-≡-cancellative;
-     ·-zero-productˡ to ·ᵣ-zero-productˡ;
-     ·-zero-productʳ to ·ᵣ-zero-productʳ;
-     u-minimal to uᵣ-minimal;
+     ≡-zero-productˡ to ≡ᵣ-zero-productˡ;
+     ≡-zero-productʳ to ≡ᵣ-zero-productʳ;
+     ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
+     ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      embedNat to embedR;
      ·-≾-cancellative to ·ᵣ-≾ᵣ-cancellative;
      ·-≡-≾-cancellative to ·ᵣ-≡-≾ᵣ-cancellative;
      ≾-reflexive to ≾ᵣ-reflexive;
      ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
      ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     
-     ·-zero-productˡ-≢ to ·ᵣ-zero-productˡ-≢;
-     ·-zero-productʳ-≢ to ·ᵣ-zero-productʳ-≢
+     ≡-zero-productˡ-≢ to ≡ᵣ-zero-productˡ-≢;
+     ≡-zero-productʳ-≢ to ≡ᵣ-zero-productʳ-≢
     ) public
 
   open Grade EGrade renaming
@@ -200,8 +202,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-reflexive to ≾ₑ-reflexive;
      ·-cancellativeˡ to ·ₑ-cancellativeˡ;
      ·-cancellativeʳ to ·ₑ-cancellativeʳ;     
-     ·-zero-productˡ-≢ to ·ₑ-zero-productˡ-≢;
-     ·-zero-productʳ-≢ to ·ₑ-zero-productʳ-≢
+     ≡-zero-productˡ-≢ to ≡ₑ-zero-productˡ-≢;
+     ≡-zero-productʳ-≢ to ≡ₑ-zero-productʳ-≢
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming

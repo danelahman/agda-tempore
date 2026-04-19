@@ -32,7 +32,9 @@ mutual
     -- variables
 
     var     : {A : VType}
-            → A ∈[ uᵣ ] Γ
+            → {ρ : R}
+            → (ρ ≾ᵣ uᵣ)
+            → A ∈[ ρ ] Γ
             -------------
             → Γ ⊢V⦂ A
 
@@ -189,6 +191,6 @@ mutual
 
 grad-typ⇒var : ∀ {Γ A ρ}
              → (V : Γ ⊢V⦂ [ ρ ] A)
-             → Σ[ x ∈ ([ ρ ] A ∈[ uᵣ ] Γ)] (V ≡ var x)
+             → Σ[ ρ' ∈ R ] Σ[ rel ∈ ρ' ≾ᵣ uᵣ ] Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ)] (V ≡ var rel x)
              
-grad-typ⇒var (var x) = x , refl
+grad-typ⇒var (var rel x) = _ , rel , x , refl

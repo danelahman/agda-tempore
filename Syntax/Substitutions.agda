@@ -33,18 +33,25 @@ open import Util.Operations (Grades)
 
 ⟨_,_⟩[_↦_]var : ∀ {Γ A B ρ ρ'}
           → B ∈[ ρ' ] Γ
-          → ρ' ≡ uᵣ
+          → ρ' ≾ᵣ uᵣ
           → (x : A ∈[ ρ ] Γ)
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
           
-⟨ Hd , p ⟩[ Hd ↦ W ]var = W
-⟨ Hd , p ⟩[ Tl-∷ x ↦ W ]var = var Hd
-⟨ Tl-∷ y , refl ⟩[ Hd ↦ W ]var = var y
-⟨ Tl-∷ y , refl ⟩[ Tl-∷ x ↦ W ]var = V-rename wk-ren ⟨ y , refl ⟩[ x ↦ W ]var
-⟨ Tl-⟨⟩ y , p ⟩[ Tl-⟨⟩ x ↦ W ]var rewrite ·ᵣ-zero-productˡ p | ·ᵣ-zero-productʳ p =
-  V-rename ⟨⟩-η⁻¹-ren ⟨ y , refl ⟩[ x ↦ W ]var
+⟨ Hd , p ⟩[ Hd ↦ W ]var =
+  W
+⟨ Hd , p ⟩[ Tl-∷ x ↦ W ]var =
+  var ≾ᵣ-refl Hd
+⟨ Tl-∷ y , rel ⟩[ Hd ↦ W ]var =
+  var rel y
+⟨ Tl-∷ y , rel ⟩[ Tl-∷ x ↦ W ]var =
+  V-rename wk-ren ⟨ y , rel ⟩[ x ↦ W ]var
+⟨ Tl-⟨⟩ y , rel ⟩[ Tl-⟨⟩ x ↦ W ]var =
+  V-rename (⟨⟩-≤-ren (≾ᵣ-zero-productʳ rel) ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , ≾ᵣ-zero-productˡ rel ⟩[ x ↦ W ]var
+
+--rewrite ·ᵣ-zero-productˡ p | ·ᵣ-zero-productʳ p =
+--  V-rename ⟨⟩-η⁻¹-ren ⟨ y , refl ⟩[ x ↦ W ]var
 
 -- Substituting a value for a variable in a well-typed term
 
@@ -57,7 +64,7 @@ mutual
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
 
-  var y       [ x ↦ W ]v = ⟨ y , refl ⟩[ x ↦ W ]var
+  var rel y   [ x ↦ W ]v = ⟨ y , rel ⟩[ x ↦ W ]var
   const c     [ x ↦ W ]v = const c
   ⦉ V₁ , V₂ ⦊  [ x ↦ W ]v = ⦉ V₁ [ x ↦ W ]v , V₂ [ x ↦ W ]v ⦊
   ⋆           [ x ↦ W ]v = ⋆
@@ -104,6 +111,8 @@ mutual
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
   ... | inj₁ (.(uᵣ) , Hd , _ , eq') =
     unbox
+      {!!}
+      {-
       (var-ρ-subst
         (begin
           uᵣ ·ᵣ ctx-grade (proj₂ (var-split x) .proj₁)
@@ -116,6 +125,7 @@ mutual
           ρ₂
         ∎)
         (var-ρ-++ᶜ (proj₁ (grad-typ⇒var W))))
+        -}
       rel
       (M [ Tl-∷ x ↦ W ]c)
   ... | inj₁ (ρ' , Tl-∷ z , eq , eq') =
