@@ -90,15 +90,15 @@ suc-comp-ren : ∀ {Γ Γ'}
              → {S : 𝕊 Γ} 
              → {S' : 𝕊 Γ'} 
              → S ≤ₛ S' 
-             → state-grade S ·ᵣ ρ'' ≡ state-grade S' ·ᵣ ρ'''
+             → state-grade S' ·ᵣ ρ''' ≾ᵣ state-grade S ·ᵣ ρ''
              → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
-suc-comp-ren {S = S} id-suc eq =
-  eq-ren (cong (toCtx S ⟨_⟩) (·ᵣ-cancellativeʳ eq))
-suc-comp-ren {S' = S' ⟨ ρ'' ⟩ₛ} (⟨⟩-suc ρ'' S≤ₛS') eq =
-  ⟨⟩-μ-ren ∘ʳ suc-comp-ren S≤ₛS' (trans eq (·ᵣ-assoc (state-grade S') ρ'' _))
-suc-comp-ren (∷-suc V S≤ₛS') eq =
-  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' eq
+suc-comp-ren {S = S} id-suc S'·ρ'''≾S·ρ'' =
+  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellative S'·ρ'''≾S·ρ'')
+suc-comp-ren {S' = S' ⟨ ρ'' ⟩ₛ} (⟨⟩-suc ρ'' S≤ₛS') S'·ρ'''≾S·ρ'' =
+  ⟨⟩-μ-ren ∘ʳ suc-comp-ren S≤ₛS' (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (state-grade S') ρ'' _))) S'·ρ'''≾S·ρ'') 
+suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'''≾S·ρ'' =
+  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' S'·ρ'''≾S·ρ''
 
 -- Concatenation/composition of states
 

@@ -54,18 +54,18 @@ mutual
                      ⟨ S , (M [ Hd ↦ V-rename wk-ren W ]c) [ Hd ↦ V ]c ⟩
 
         -- step for sequencing (time and state must go on)
-        SEQ-FST    : ∀ {ε₁ ε₂ ε₃}
+        SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
                    → {A B : VType}
                    → {S S' : 𝕊 []}
                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                    → {N : ((toCtx S) ⟨ mapᵉ ε₁ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
-                   → (S·ε₁≡S'·ε₃ : state-grade S ·ᵣ mapᵉ ε₁ ≡ state-grade S' ·ᵣ mapᵉ ε₃)
+                   → (S'·ε₃≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₃ ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                     --------------------------------------------------------------------
                    → ⟨ S , M ; N ⟩ ↝ 
                      ⟨ S' , M' ; C-rename
-                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S·ε₁≡S'·ε₃))
+                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₃≾S·ε₁))
                                    N ⟩
 
         -- usual step for return in sequencing
@@ -134,7 +134,7 @@ mutual
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)} 
                     → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
                     → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
-                    → (S·ε₁≡S'·ε₁' : state-grade S ·ᵣ mapᵉ ε₁ ≡ state-grade S' ·ᵣ mapᵉ ε₁')
+                    → (S'·ε₁'≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₁' ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                       -----------------------------------------------------------------------
                     → ⟨ S  , handle M `with H `in N ⟩ ↝ 
@@ -151,9 +151,9 @@ mutual
                                               (sym (++ᶜ-assoc (toCtx S) (proj₁ S'eqS·S'') Γ''))
                                               (cong (_++ᶜ Γ'') (sym (proj₂ S'eqS·S'')))))))
                                       (H op' ε₃' (proj₁ S'eqS·S'' ++ᶜ Γ'')))
-                            `in (C-rename 
-                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S·ε₁≡S'·ε₁'))
-                                N) ⟩
+                            `in (C-rename
+                                  (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₁'≾S·ε₁))
+                                  N)⟩
 
         -- operation handle where we box up result so that the resources
         -- in the result are not used before enough time has passed
@@ -262,7 +262,7 @@ mutual
                        
     step-extends-state APP                  = id-suc
     step-extends-state MATCH                = id-suc
-    step-extends-state (SEQ-FST _ M↝M')     = step-extends-state M↝M'
+    step-extends-state (SEQ-STEP _ M↝M')    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
     step-extends-state DELAY                = ⟨⟩-suc (embedR _) id-suc
@@ -282,52 +282,64 @@ preservation-theorem : ∀ {A B ε'' ε'''}
                      → {M : toCtx S ⊢C⦂ A ‼ ε''}
                      → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
                      → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                     → A ≡ B × state-grade S ·ᵣ (mapᵉ ε'') ≡ state-grade S' ·ᵣ (mapᵉ ε''') -- TODO: >=
+                     → A ≡ B × state-grade S' ·ᵣ mapᵉ ε''' ≾ᵣ state-grade S ·ᵣ mapᵉ ε''
                      
-preservation-theorem APP   = refl , refl
-preservation-theorem MATCH = refl , refl
-preservation-theorem {S = S} {S' = S'} (SEQ-FST {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S·ε₁≡S'·ε₃ step) =
+preservation-theorem APP   = refl , ≾ᵣ-refl
+preservation-theorem MATCH = refl , ≾ᵣ-refl
+preservation-theorem {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S'·ε₃≾S·ε₁ step) =
   refl ,
-  trans
-    (cong (state-grade S ·ᵣ_) (·-mapᵉ {ε₁} {ε₂}))
-    (trans
-      (sym (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂)))
-      (trans
-        (cong (_·ᵣ mapᵉ ε₂) S·ε₁≡S'·ε₃)
+  ≾ᵣ-trans
+    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) ·-mapᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂)))))
+    (≾ᵣ-trans
+      (·ᵣ-monoˡ-≾ᵣ S'·ε₃≾S·ε₁)
+      (≾ᵣ-reflexive
         (trans
-          (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂))
-          (cong (state-grade S' ·ᵣ_) (sym ·-mapᵉ)))))
-preservation-theorem SEQ-RET =
-  refl , {!!} -- Now the execution grade of the return computation is uₑ≾ₑ_, instead of _≡uₑ
-preservation-theorem SEQ-OP = refl , refl
+          (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
+          (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
+preservation-theorem {ε''' = ε'''} (SEQ-RET {u≾ε = u≾ε}) =
+  refl ,
+  ·ᵣ-monoʳ-≾ᵣ
+    (≾ᵣ-trans
+      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
+      (≾ᵣ-trans
+        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε)))
+        (≾ᵣ-reflexive (sym ·-mapᵉ))))
+preservation-theorem SEQ-OP = refl , ≾ᵣ-refl
 preservation-theorem {ε''' = ε'''} {S = S} DELAY =
   refl ,
-  trans
-    (cong (state-grade S ·ᵣ_) ·-mapᵉ)
-    (trans
-      (cong (state-grade S ·ᵣ_) (cong (_·ᵣ mapᵉ ε''') mapEmbedE≡embedR))
-      (sym (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))))
-preservation-theorem HANDLE-RET =
-  refl , {!!} -- Now the execution grade of the return computation is uₑ≾ₑ_, instead of _≡uₑ
-preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S·ε₁≡S'·ε₁' step) =
-  refl ,
-  trans
-    (cong (state-grade S ·ᵣ_) ·-mapᵉ)
-    (trans
-      (sym (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂)))
+  ≾ᵣ-trans
+    (≾ᵣ-reflexive
       (trans
-        (cong (_·ᵣ mapᵉ ε₂) S·ε₁≡S'·ε₁')
+        (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))
+        (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε''')) (sym mapEmbedE≡embedR)))))
+    (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym ·-mapᵉ)))
+preservation-theorem {ε''' = ε'''} (HANDLE-RET {u≾ε = u≾ε}) =
+  refl ,
+  ·ᵣ-monoʳ-≾ᵣ
+    (≾ᵣ-trans
+      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
+      (≾ᵣ-trans
+        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε)))
+        (≾ᵣ-reflexive (sym ·-mapᵉ))))
+preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S'·ε₁'≾S·ε₁ step) =
+  refl ,
+    ≾ᵣ-trans
+    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) ·-mapᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂)))))
+    (≾ᵣ-trans
+      (·ᵣ-monoˡ-≾ᵣ S'·ε₁'≾S·ε₁)
+      (≾ᵣ-reflexive
         (trans
-          (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂))
-          (cong (state-grade S' ·ᵣ_) (sym ·-mapᵉ)))))
+          (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
+          (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
 preservation-theorem {S = S} HANDLE-OP =
-  refl , cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (·ₑ-assoc (op-grade _) _ _))
-preservation-theorem BOX        = refl , refl
-preservation-theorem UNBOX      = refl , refl
-preservation-theorem COERCE-RET = refl , refl
-preservation-theorem {ε'' = ε''} {ε'''} (COERCE-STEP {ε₁ = ε₁} {ε₂ = ε₂} M↝M') =
-  {!!} --refl , S·ε''≡S'·ε''' -- TODO: check COERCE-STEP rule, the S·ε''≡S'·ε''' condition should talk about ε₁ and ε₂.
-preservation-theorem COERCE-OP  = refl , refl
+  refl ,
+  ≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (sym (·ₑ-assoc (op-grade _) _ _))))
+preservation-theorem BOX        = refl , ≾ᵣ-refl
+preservation-theorem UNBOX      = refl , ≾ᵣ-refl
+preservation-theorem COERCE-RET = refl , ≾ᵣ-refl
+preservation-theorem {ε'' = ε''} {ε'''} (COERCE-STEP {ε₁ = ε₁} {ε₂ = ε₂} M↝M') with preservation-theorem M↝M'
+... | refl , S'·ε₂≾S·ε₁ = refl , {!!}
+preservation-theorem COERCE-OP  = refl , ≾ᵣ-refl
 
 {-
 preservation-theorem APP = refl , refl
