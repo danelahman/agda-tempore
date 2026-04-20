@@ -233,7 +233,6 @@ mutual
                     → {ε₁≾ε₁' : ε₁ ≾ₑ ε₁'}
                     → {ε₂≾ε₂' : ε₂ ≾ₑ ε₂'}
                     → {M' : toCtx S' ⊢C⦂ A ‼ ε₂}
-                    → (S·ε₁'≡S'·ε₂' : state-grade S ·ᵣ mapᵉ ε₁' ≡ state-grade S' ·ᵣ mapᵉ ε₂')
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                       -------------------------------------------------------------------
                     → ⟨ S , coerce ε₁≾ε₁' M ⟩ ↝ ⟨ S' , coerce ε₂≾ε₂' M' ⟩
@@ -273,7 +272,7 @@ mutual
     step-extends-state BOX                  = ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state UNBOX                = id-suc
     step-extends-state COERCE-RET           = id-suc
-    step-extends-state (COERCE-STEP _ M↝M') = step-extends-state M↝M'
+    step-extends-state (COERCE-STEP M↝M') = step-extends-state M↝M'
     step-extends-state COERCE-OP            = id-suc
 
 -- preservation theorem
@@ -283,8 +282,8 @@ preservation-theorem : ∀ {A B ε'' ε'''}
                      → {M : toCtx S ⊢C⦂ A ‼ ε''}
                      → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
                      → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                     → A ≡ B × state-grade S ·ᵣ (mapᵉ ε'') ≡ state-grade S' ·ᵣ (mapᵉ ε''')
-
+                     → A ≡ B × state-grade S ·ᵣ (mapᵉ ε'') ≡ state-grade S' ·ᵣ (mapᵉ ε''') -- TODO: >=
+                     
 preservation-theorem APP   = refl , refl
 preservation-theorem MATCH = refl , refl
 preservation-theorem {S = S} {S' = S'} (SEQ-FST {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S·ε₁≡S'·ε₃ step) =
@@ -326,8 +325,8 @@ preservation-theorem {S = S} HANDLE-OP =
 preservation-theorem BOX        = refl , refl
 preservation-theorem UNBOX      = refl , refl
 preservation-theorem COERCE-RET = refl , refl
-preservation-theorem {ε'' = ε''} {ε'''} (COERCE-STEP {ε₁ = ε₁} {ε₂ = ε₂} S·ε''≡S'·ε''' M↝M') =
-  refl , S·ε''≡S'·ε''' -- TODO: check COERCE-STEP rule, the S·ε''≡S'·ε''' condition should talk about ε₁ and ε₂.
+preservation-theorem {ε'' = ε''} {ε'''} (COERCE-STEP {ε₁ = ε₁} {ε₂ = ε₂} M↝M') =
+  {!!} --refl , S·ε''≡S'·ε''' -- TODO: check COERCE-STEP rule, the S·ε''≡S'·ε''' condition should talk about ε₁ and ε₂.
 preservation-theorem COERCE-OP  = refl , refl
 
 {-
