@@ -50,9 +50,6 @@ open import Util.Operations (Grades)
 ⟨ Tl-⟨⟩ y , rel ⟩[ Tl-⟨⟩ x ↦ W ]var =
   V-rename (⟨⟩-≤-ren (≾ᵣ-zero-productʳ rel) ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , ≾ᵣ-zero-productˡ rel ⟩[ x ↦ W ]var
 
---rewrite ·ᵣ-zero-productˡ p | ·ᵣ-zero-productʳ p =
---  V-rename ⟨⟩-η⁻¹-ren ⟨ y , refl ⟩[ x ↦ W ]var
-
 -- Substituting a value for a variable in a well-typed term
 
 mutual

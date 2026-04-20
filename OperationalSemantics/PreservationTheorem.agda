@@ -214,7 +214,7 @@ mutual
                                         ∘ʳ eq-ren ++ᶜ-identityˡ)
                                        (resource-lookup S x) ]c ⟩
 
-        -- step for coerce terms in a sequence of computations
+        -- coerce of a return computation
         COERCE-RET  : ∀ {A ε ε'} 
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ A}
@@ -224,9 +224,30 @@ mutual
                     → ⟨ S , coerce ε≾ε' (return uₑ≾ε V) ⟩ ↝
                       ⟨ S , return (≾ₑ-trans uₑ≾ε ε≾ε') V ⟩
 
-        -- TODO: also needs rules for how coerce interacts with algebraic operations, box, and unbox
-        --       also needs a step/congruence rule for coerce
+        -- step for coerce terms
+        COERCE-STEP : ∀ {A ε₁ ε₁' ε₂ ε₂'}
+                    → {S S' : 𝕊 []}
+                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
+                    → {ε₁≾ε₁' : ε₁ ≾ₑ ε₁'}
+                    → {ε₂≾ε₂' : ε₂ ≾ₑ ε₂'}
+                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₂}
+                    → (S·ε₁'≡S'·ε₂' : state-grade S ·ᵣ mapᵉ ε₁' ≡ state-grade S' ·ᵣ mapᵉ ε₂')
+                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+                      -------------------------------------------------------------------
+                    → ⟨ S , coerce ε₁≾ε₁' M ⟩ ↝ ⟨ S' , coerce ε₂≾ε₂' M' ⟩
 
+        -- coerce of an algebraic operation call
+        COERCE-OP : ∀ {A ε ε'}
+                  → {S : 𝕊 []}
+                  → {op : Op}
+                  → {rel : op-grade op ·ₑ ε ≾ₑ op-grade op ·ₑ ε'}
+                  → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
+                  → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+                    -------------------------------------------------------------------------
+                  → ⟨ S , coerce rel (perform op V M) ⟩ ↝
+                    ⟨ S , perform op V (coerce (·ₑ-≾ₑ-cancellative rel) M) ⟩
+
+        -- TODO: also needs rules for how coerce interacts with algebraic operations, box, and unbox
 
     -- Theorem: Step only extends state
     step-extends-state : ∀ {ε ε'}
@@ -250,6 +271,8 @@ mutual
     step-extends-state BOX                  = ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state UNBOX                = id-suc
     step-extends-state COERCE-RET           = id-suc
+    step-extends-state (COERCE-STEP _ M↝M') = step-extends-state M↝M'
+    step-extends-state COERCE-OP            = id-suc
 
 -- preservation theorem
 
@@ -273,8 +296,9 @@ preservation-theorem {S = S} {S' = S'} (SEQ-FST {ε₁ = ε₁} {ε₂ = ε₂} 
         (trans
           (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂))
           (cong (state-grade S' ·ᵣ_) (sym ·-mapᵉ)))))
-preservation-theorem SEQ-RET    = refl , {!!}
-preservation-theorem SEQ-OP     = refl , refl
+preservation-theorem SEQ-RET =
+  refl , {!!} -- Now the execution grade of the return computation is _≾ₑuₑ, instead of _≡uₑ
+preservation-theorem SEQ-OP = refl , refl
 preservation-theorem {ε''' = ε'''} {S = S} DELAY =
   refl ,
   trans
@@ -282,7 +306,8 @@ preservation-theorem {ε''' = ε'''} {S = S} DELAY =
     (trans
       (cong (state-grade S ·ᵣ_) (cong (_·ᵣ mapᵉ ε''') mapEmbedE≡embedR))
       (sym (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))))
-preservation-theorem HANDLE-RET = refl , {!!}
+preservation-theorem HANDLE-RET =
+  refl , {!!} -- Now the execution grade of the return computation is _≾ₑuₑ, instead of _≡uₑ
 preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S·ε₁≡S'·ε₁' step) =
   refl ,
   trans
@@ -299,6 +324,9 @@ preservation-theorem {S = S} HANDLE-OP =
 preservation-theorem BOX        = refl , refl
 preservation-theorem UNBOX      = refl , refl
 preservation-theorem COERCE-RET = refl , refl
+preservation-theorem {ε'' = ε''} {ε'''} (COERCE-STEP {ε₁ = ε₁} {ε₂ = ε₂} S·ε''≡S'·ε''' M↝M') =
+  refl , S·ε''≡S'·ε''' -- TODO: check COERCE-STEP rule, the S·ε''≡S'·ε''' condition should talk about ε₁ and ε₂.
+preservation-theorem COERCE-OP  = refl , refl
 
 {-
 preservation-theorem APP = refl , refl

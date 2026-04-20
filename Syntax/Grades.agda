@@ -197,6 +197,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ₑ?_;
      _≡?_ to _≡ₑ?_;
      ·-≡-cancellative to ·ₑ-≡-cancellative;
+     ·-≾-cancellative to ·ₑ-≾ₑ-cancellative;
      embedNat to embedE;
      ·-≡-≾-cancellative to ·ₑ-≡-≾ₑ-cancellative;
      ≾-reflexive to ≾ₑ-reflexive;

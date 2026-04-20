@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+-- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
 
 -----------------------------------
 -- Operational Semantics' States --
@@ -82,30 +82,6 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
             → S ≤ₛ S' 
             ---------------------------------------
             → S ≤ₛ (S' ∷ₛ V)
-
--- If a state is a successor of another state they can be renamed as contexts
-
-≤ₛ⇒Ren : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → Ren (toCtx S) (toCtx S')
-≤ₛ⇒Ren id-suc = id-ren
-≤ₛ⇒Ren (⟨⟩-suc ρ'' S≤ₛS') = {!!} -- Nothing ensures that S' ⟨ ρ'' ⟩ is a renaming of S.
-≤ₛ⇒Ren (∷-suc V S≤ₛS') = wk-ren ∘ʳ ≤ₛ⇒Ren S≤ₛS'
-
-{-
-≤ₛ⇒Ren (⟨⟩-suc ρ'' S≤ₛS') = cong-⟨⟩-ren (≤ₛ⇒Ren S≤ₛS') ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
--}
-
-{-
--- TODO: remove, as it is not used anywhere
--- ≤ₛ decreases the grades
-
-S≤ₛS'⇒ρ'≤ρ : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → (state-grade S') ≾ᵣ (state-grade S)
-S≤ₛS'⇒ρ'≤ρ id-suc =
-  ≾ᵣ-refl
-S≤ₛS'⇒ρ'≤ρ (⟨⟩-suc ρ ρ' S≤ₛS' ρ'≾ρ) =
-  ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (S≤ₛS'⇒ρ'≤ρ S≤ₛS')) (·ᵣ-monoʳ-≾ᵣ ρ'≾ρ) 
-S≤ₛS'⇒ρ'≤ρ (∷-suc V S≤ₛS') =
-  S≤ₛS'⇒ρ'≤ρ S≤ₛS'
--}
 
 -- Lemma: If one state 𝕊' is a successor of another 𝕊 and overall grade decreases,
 -- then 𝕊' is a renaming of 𝕊.
@@ -245,53 +221,6 @@ snd-split-time≡time-from-head S x =
       (cong ctx-grade (snd-split-state≡split-ctx S x))) 
     (proj₂ (proj₂ (proj₂ (var-split x))))
 
-{-
--- TODO: remove
--- Returning the second part of state, when the state is successor of another state
-
-mutual
-  suc-part-state : ∀ {Γ Γ'}
-            → (S : 𝕊 Γ)
-            → (S' : 𝕊 Γ')
-            → S ≤ₛ S'
-            → 𝕊 (Γ' ++ᶜ (toCtx S))
-  suc-part-state _ _ id-suc =
-    ∅
-  suc-part-state .(S ⟨ ρ ⟩ₛ) .(S' ⟨ ρ' ⟩ₛ) (⟨⟩-suc {S = S} {S' = S'} ρ ρ' S≤ₛS' ρ≾ρ') =
-    {!!}
-  suc-part-state S S' (∷-suc V S≤ₛS') =
-    suc-part-state S _ S≤ₛS'
-{-
-suc-part-state S .S id-suc = 
-    ∅
-  suc-part-state S .(S' ⟨ τ'' ⟩ₛ) (⟨⟩-suc {S' = S'} τ'' S≤ₛS') = 
-    suc-part-state S S' S≤ₛS' ⟨ τ'' ⟩ₛ
-  suc-part-state {Γ' = Γ'} S .(S' ∷ₛ V) (∷-suc {τ = τ} {S' = S'} V S≤ₛS') = 
-    let recursive = suc-part-state S S' S≤ₛS' in 
-    recursive ∷ₛ 
-      V-rename (cong-⟨⟩-ren (eq-ren 
-        (trans 
-          (cong (Γ' ++ᶜ_) (sym (S++suc-partS≡S' S S' S≤ₛS'))) 
-          (sym (++ᶜ-assoc Γ' (toCtx S) (toCtx recursive)))))) 
-        V
--}
-
-  S++suc-partS≡S' : ∀ {Γ Γ'} 
-          → (S : 𝕊 Γ)
-          → (S' : 𝕊 Γ')
-          → (p : S ≤ₛ S') 
-          → toCtx S ++ᶜ toCtx (suc-part-state S S' p) ≡ toCtx S'
-  S++suc-partS≡S' = {!!}
-  {-
-  S++suc-partS≡S' S .S id-suc = 
-    refl
-  S++suc-partS≡S' S .(S' ⟨ τ'' ⟩ₛ) (⟨⟩-suc {S' = S'} τ'' S≤ₛS') = 
-    cong (_⟨ τ'' ⟩) (S++suc-partS≡S' S S' S≤ₛS')
-  S++suc-partS≡S' S .(S' ∷ₛ V) (∷-suc {τ = τ} {A = A} {S' = S'} V S≤ₛS') = 
-    cong (_∷ [ τ ] A) (S++suc-partS≡S' S S' S≤ₛS')
-  -}
--}
-
 -- Lemmas about which values can and which can't be in toCtx S (only var can be)
 
 ⇒-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} {A : VType} {C : CType} → A ⇒ C ∈[ ρ ] toCtx S → ⊥
@@ -309,25 +238,6 @@ Empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Empty-not-in-toCtx x
 not-in-empty-ctx : {ρ : R} {A : VType} → A ∈[ ρ ] [] → ⊥
 not-in-empty-ctx ()
 
-var-in-ctx : ∀ {Γ ρ A}
-           → (V : Γ ⊢V⦂ [ ρ ] A)
-           → ([ ρ ] A ∈[ uᵣ ] Γ )
-var-in-ctx (var x) = x
-
-{-
--- TODO: check if this lemma can be avoided
--- The grade of state can't be negative
-
-τ'≤snd-state : ∀ {A τ'} 
-        → {S : 𝕊 []}
-        → (V : toCtx S -ᶜ τ' ⊢V⦂ [ τ' ] A)
-        → τ' ≤
-    state-grade (split-state-snd S (var-ᶜ-+ {τ = τ'} (proj₂ (var-in-ctx V))))
-τ'≤snd-state {τ' = τ'} {S = S} (var {τ = τ} x) = 
-  let y = var-ᶜ-+ {τ = τ'} x in 
-  τ-≤-substᵣ (snd-split-time≡time-from-head S y) (m≤n⇒m≤o+n τ ≤-refl)
--}
-
 -- Looking up a resource in the state
 
 resource-lookup : ∀ {Γ ρ ρ' A}
@@ -337,39 +247,6 @@ resource-lookup : ∀ {Γ ρ ρ' A}
 resource-lookup (S ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) = resource-lookup S x
 resource-lookup (S ∷ₛ V) Hd          = V
 resource-lookup (S ∷ₛ _) (Tl-∷ x)    = resource-lookup S x
-
--- Renaming of the result of previous lemma to context for state S
-
-{-
-resource-pass-to-ctx : ∀ {Γ ρ ρ' A}
-                     → (S : 𝕊 Γ)
-                     → (x : [ ρ ] A ∈[ ρ' ] toCtx S)
-                     → (u≾ρ : uᵣ ≾ᵣ ρ)
-                     → (p : ctx-grade (toCtx (split-state-snd S x)) ≾ᵣ ρ)
-                     → (V : (Γ ++ᶜ toCtx (split-state-fst S x)) ⟨ ρ ⟩ ⊢V⦂ A)
-                     → Γ ++ᶜ toCtx S ⊢V⦂ A
-
-resource-pass-to-ctx {Γ} {ρ} {ρ'} {A} S x u≾ρ p V =
-  V-rename (eq-ren (cong (Γ ++ᶜ_) (split-state-++ᶜ S x))
-    ∘ʳ cong-renˡ (wk-ren-⟨ρ⟩-ctx {Γ' = toCtx (split-state-snd S x)} u≾ρ p)
-    ∘ʳ eq-ren (++ᶜ-assoc Γ (toCtx (split-state-fst S x) ∷ [ ρ ] A) ([] ⟨ ρ ⟩))
-    ∘ʳ cong-⟨⟩-ren wk-ren) V
--}
-
-{-
-  ρ'' ·ᵣ ctx-grade Γ' ·ᵣ ρ' ,
-  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-assoc ρ'' (ctx-grade Γ') ρ')) (·ᵣ-monoʳ-≾ᵣ rel) ,
-  Tl-⟨⟩ (var-ρ-++ᶜ y)
--}
-
-{-
-  V-rename
-    (   eq-ren (cong (Γ ++ᶜ_) (split-state-++ᶜ S x)) 
-     ∘ʳ eq-ren (++ᶜ-assoc Γ (toCtx (split-state-fst S x) ∷ [ ρ ] A) (toCtx (split-state-snd S x))) 
-     ∘ʳ cong-ren wk-ren
-     ∘ʳ {!!}) --ren⟨τ⟩-ctx {Γ' = toCtx (split-state-snd S x)} p)
-    V
--}
 
 ≤ₛ-comp : ∀ {Γ} → {S S' : 𝕊 Γ} → S ≤ₛ S' → Σ[ Γ' ∈ Ctx ] toCtx S' ≡ toCtx S ++ᶜ Γ'
 ≤ₛ-comp id-suc = [] , refl
