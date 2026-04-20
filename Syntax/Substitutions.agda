@@ -109,24 +109,17 @@ mutual
               ((H op ε'' Γ') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eqₗ {Γ' = Γ'} x)) W ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
-  ... | inj₁ (.(uᵣ) , Hd , _ , eq') =
+  ... | inj₁ (.(uᵣ) , Hd , eq , eq') =
     unbox
-      {!!}
-      {-
-      (var-ρ-subst
-        (begin
-          uᵣ ·ᵣ ctx-grade (proj₂ (var-split x) .proj₁)
-        ≡⟨ sym (ctx-grade-++ᶜ [] (proj₁ (proj₂ (var-split x)))) ⟩
-          ctx-grade
-           ([] ++ᶜ proj₂ (var-split x) .proj₁)
-        ≡⟨ cong ctx-grade (sym eq') ⟩
-          ctx-grade (proj₁ (proj₂ (var-split y)))
-        ≡⟨ proj₂ (proj₂ (proj₂ (var-split y))) ⟩
-          ρ₂
-        ∎)
-        (var-ρ-++ᶜ (proj₁ (grad-typ⇒var W))))
-        -}
-      rel
+      (var-ρ-++ᶜ {Γ' = proj₁ (proj₂ (var-split x))} (proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))))
+      (≾ᵣ-trans
+        (≾ᵣ-trans
+          (·ᵣ-monoˡ-≾ᵣ (proj₁ (proj₂ (grad-typ⇒var W))))
+          (≾ᵣ-reflexive
+            (trans
+              (·ᵣ-identityˡ (ctx-grade (proj₁ (proj₂ (var-split x)))))
+              (cong ctx-grade (trans (sym (++ᶜ-identityˡ {Γ = proj₁ (proj₂ (var-split x))})) (sym eq'))))))
+        (≾ᵣ-trans (≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split y))))) rel))
       (M [ Tl-∷ x ↦ W ]c)
   ... | inj₁ (ρ' , Tl-∷ z , eq , eq') =
     unbox {ρ = ρ₁} {ρ' = ρ₂}
