@@ -1,3 +1,5 @@
+-- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
+
 open import Syntax.Grades
 
 module OperationalSemantics.PreservationTheorem (Grades : GradeSystem) where
@@ -297,7 +299,7 @@ preservation-theorem {S = S} {S' = S'} (SEQ-FST {ε₁ = ε₁} {ε₂ = ε₂} 
           (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂))
           (cong (state-grade S' ·ᵣ_) (sym ·-mapᵉ)))))
 preservation-theorem SEQ-RET =
-  refl , {!!} -- Now the execution grade of the return computation is _≾ₑuₑ, instead of _≡uₑ
+  refl , {!!} -- Now the execution grade of the return computation is uₑ≾ₑ_, instead of _≡uₑ
 preservation-theorem SEQ-OP = refl , refl
 preservation-theorem {ε''' = ε'''} {S = S} DELAY =
   refl ,
@@ -307,7 +309,7 @@ preservation-theorem {ε''' = ε'''} {S = S} DELAY =
       (cong (state-grade S ·ᵣ_) (cong (_·ᵣ mapᵉ ε''') mapEmbedE≡embedR))
       (sym (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))))
 preservation-theorem HANDLE-RET =
-  refl , {!!} -- Now the execution grade of the return computation is _≾ₑuₑ, instead of _≡uₑ
+  refl , {!!} -- Now the execution grade of the return computation is uₑ≾ₑ_, instead of _≡uₑ
 preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S·ε₁≡S'·ε₁' step) =
   refl ,
   trans

@@ -1,4 +1,4 @@
-{-# OPTIONS --allow-unsolved-metas #-} -- remove
+-- {-# OPTIONS --allow-unsolved-metas #-} -- remove
 
 -----------------------------------------------------
 -- Substitution of well-typed values for variables --
