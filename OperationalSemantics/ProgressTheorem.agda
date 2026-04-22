@@ -24,13 +24,11 @@ data Progresses : {ε : E}
                 → (M : toCtx S ⊢C⦂ A ‼ ε)
                 →  Set where
                             
-    is-value : {ε : E}
-             → {S : 𝕊 []}
+    is-value : {S : 𝕊 []}
              → {A : VType}
-             → {uₑ≾ε : uₑ ≾ₑ ε}
              → {V : toCtx S ⊢V⦂ A} 
                --------------------------
-             → Progresses (return uₑ≾ε V) 
+             → Progresses (return V) 
 
     is-op    : {ε : E}
              → {S : 𝕊 []}
@@ -46,7 +44,7 @@ data Progresses : {ε : E}
              → {S S' : 𝕊 []} {A : VType}
              → {M : toCtx S ⊢C⦂ A ‼ ε''} 
              → {M' : toCtx S' ⊢C⦂  A ‼ ε''' }
-             → (p : state-grade S ·ᵣ mapᵉ ε'' ≡ state-grade S' ·ᵣ mapᵉ ε''')
+             → (p : state-grade S' ·ᵣ mapᵉ ε''' ≾ᵣ state-grade S ·ᵣ mapᵉ ε'')
              → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
                --------------------------------------------------------------
              → Progresses M 
@@ -55,31 +53,64 @@ data Progresses : {ε : E}
 
 progress : ∀ {A ε'} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ‼ ε') → Progresses M
 
-progress (return uₑ≾ε V) = is-value
-progress (M ; N) with progress M
-... | is-value     = steps {!!} SEQ-RET
-... | is-op        = steps refl SEQ-OP
-... | steps p M↝M' = steps {!!} (SEQ-FST p M↝M')
+progress (return V) = is-value
+progress {ε' = ε'} {S = S} (M ; N) with progress M
+progress {S = S} (_;_ {ε' = ε'} (return V) N) | is-value =
+  steps
+    (≾ᵣ-trans
+      (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (sym (·ᵣ-identityˡ (mapᵉ ε')))))
+      (≾ᵣ-trans
+        (·ᵣ-monoʳ-≾ᵣ (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ))))
+        (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (sym (·-mapᵉ))))))
+    SEQ-RET
+... | is-op            = steps ≾ᵣ-refl SEQ-OP
+progress (_;_ {ε' = ε'} M N) | steps {ε''} {ε'''} {S = S} {S' = S'} p M↝M' =
+  steps
+    (≾ᵣ-trans
+      (≾ᵣ-trans
+        (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) (·-mapᵉ {ε'''} {ε'})) (sym (·ᵣ-assoc _ _ _))))
+        (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ p) (≾ᵣ-reflexive (·ᵣ-assoc _ _ _))))
+      (≾ᵣ-reflexive (sym (cong ((state-grade S) ·ᵣ_) (·-mapᵉ {ε''} {ε'})))))
+    (SEQ-STEP p M↝M')
 progress (var ρ≾uᵣ x · W)         = ⊥-elim (⇒-not-in-toCtx x)
-progress (lam M · W)              = steps refl APP
+progress (lam M · W)              = steps ≾ᵣ-refl APP
 progress (match var ρ≾uᵣ x `in M) = ⊥-elim (⦉⦊-not-in-toCtx x)
-progress (match ⦉ V₁ , V₂ ⦊ `in M) = steps refl MATCH
+progress (match ⦉ V₁ , V₂ ⦊ `in M) = steps ≾ᵣ-refl MATCH
 progress (absurd (var ρ≾uᵣ x))    = ⊥-elim (Empty-not-in-toCtx x)
 progress (perform op V M)         = is-op
-progress (delay τ M) =
+progress {S = S} (delay {ε = ε} τ M) =
   steps
-    {!!}
+    (≾ᵣ-reflexive
+      (trans
+        (trans
+          (cong (_·ᵣ mapᵉ ε) (cong (state-grade S ·ᵣ_) (sym (mapEmbedE≡embedR)))) (·ᵣ-assoc _ _ _))
+        (cong (state-grade S ·ᵣ_) (sym ·-mapᵉ) )))
     DELAY
-progress (handle M `with H `in N) with progress M
-... | is-value     = steps {!!} HANDLE-RET
-... | is-op        = steps {!!} HANDLE-OP
-... | steps p M↝M' = steps {!!} {!!}
-progress (unbox x ρ'≾ρ M) = steps refl UNBOX
-progress (box V M) = steps refl BOX
-progress (coerce ε≾ε' M) with progress M
-... | is-value     = steps refl COERCE-RET
-... | is-op        = steps {!!} {!!}
-... | steps p M↝M' = {!!}
+progress {S = S} (handle_`with_`in {ε' = ε'} M H N) with progress M
+progress {S = S} (handle_`with_`in {ε' = ε'} (return V) H N) | is-value
+  = steps
+      ((≾ᵣ-trans
+        (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (sym (·ᵣ-identityˡ (mapᵉ ε')))))
+        (≾ᵣ-trans
+          (·ᵣ-monoʳ-≾ᵣ (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ))))
+          (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (sym (·-mapᵉ)))))))
+      HANDLE-RET
+... | is-op =
+  steps
+    (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (sym (·ₑ-assoc (op-grade _) _ ε')))))
+    HANDLE-OP
+... | steps {ε'' = ε''} {ε''' = ε'''} {S' = S'} p M↝M' =
+  steps
+    ((≾ᵣ-trans
+      (≾ᵣ-trans
+        (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) (·-mapᵉ {ε'''} {ε'})) (sym (·ᵣ-assoc _ _ _))))
+        (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ p) (≾ᵣ-reflexive (·ᵣ-assoc _ _ _))))
+      (≾ᵣ-reflexive (sym (cong ((state-grade S) ·ᵣ_) (·-mapᵉ {ε''} {ε'}))))))
+    (HANDLE-STEP p M↝M')
+progress (unbox _ _ _)   = steps ≾ᵣ-refl UNBOX
+progress (box _ _)       = steps ≾ᵣ-refl BOX
+progress (coerce ε≾ε' _) = steps (·ᵣ-monoʳ-≾ᵣ (pres-≾ᵉ ε≾ε')) COERCE
+
 {-
 progress (return uₑ≾ε V) = is-value
 progress {A = A} {τ' = τ'} {S = S} ((_;_) {ε' = ε₁} M N) with progress M
@@ -104,7 +135,7 @@ progress (absurd (var V)) = ⊥-elim (Empty-not-in-toCtx V)
 progress (var V · N) = ⊥-elim (⇒-not-in-toCtx V)
 progress (match var V `in M) = ⊥-elim (⦉⦊-not-in-toCtx V)
 -}
-{-
+
 -- Theorem: is-value is indeed final state (make no further steps)
 
 finality-value : ∀ {A B τ₂}
@@ -112,6 +143,7 @@ finality-value : ∀ {A B τ₂}
                 → {S₁ : 𝕊 []}
                 → {V : toCtx S ⊢V⦂ A}
                 → {M₁ : toCtx S₁ ⊢C⦂ B ‼ τ₂}
+                → {uₑ≾ε : uₑ ≾ₑ τ₂}
                 → ⟨ S , return V ⟩ ↝ ⟨ S₁ , M₁ ⟩
                 → ⊥
 finality-value ()
@@ -122,9 +154,8 @@ finality-value ()
 finality-op : ∀ {A B op τ₂ τ₃}
                 → {S S₁ : 𝕊 []}
                 → {V : toCtx S ⊢V⦂ type-of-gtype (param op) }
-                → {M : toCtx S ⟨ op-grade op ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ τ₂}
+                → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ τ₂}
                 → {M₁ : toCtx S₁ ⊢C⦂ B ‼ τ₃}
                 → ⟨ S , perform op V M ⟩ ↝ ⟨ S₁ , M₁ ⟩
                 → ⊥
 finality-op ()
--}

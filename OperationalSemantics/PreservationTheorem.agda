@@ -69,16 +69,15 @@ mutual
                                    N ⟩
 
         -- usual step for return in sequencing
-        SEQ-RET    : ∀ {A B ε ε'}
+        SEQ-RET    : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A}
-                   → {u≾ε : uₑ ≾ₑ ε}
-                   → {N : (toCtx S ⟨ mapᵉ ε ⟩ ∷ A) ⊢C⦂ B ‼ ε'}
+                   → {N : (toCtx S ⟨ mapᵉ uₑ ⟩ ∷ A) ⊢C⦂ B ‼ ε}
                      --------------------------------------------
-                   → ⟨ S , return u≾ε V ; N ⟩ ↝
+                   → ⟨ S , return V ; N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               ((⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) uₑ≡ᵣuᵣ) ∘ʳ ⟨⟩-≤-ren (pres-≾ᵉ u≾ε))))
+                               ((⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) uₑ≡ᵣuᵣ))))
                               N) [ Hd ↦ V ]c ⟩
 
         -- usual performing operation in sequencing
@@ -100,27 +99,26 @@ mutual
                    → {S : 𝕊 []}
                    → {M : toCtx S ⟨ embedR τ ⟩ ⊢C⦂ A ‼ ε} → 
                      -------------------------------------------------------------
-                     ⟨ S , (delay {ε = ε} τ M) ⟩ ↝ ⟨ grade-pass S (embedR τ) , M ⟩
+                     ⟨ S , (delay τ M) ⟩ ↝ ⟨ grade-pass S (embedR τ) , M ⟩
 
         -- usual step for handle return
-        HANDLE-RET : ∀ {A B ε ε'}
+        HANDLE-RET : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A}
-                   → {u≾ε : uₑ ≾ₑ ε}
                    →
                      {H : (op : Op)
-                        → (ε'' : E)
+                        → (ε' : E)
                         → (Γ' : Ctx)
                         → toCtx S ++ᶜ Γ'
                                   ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
-                   → {N : toCtx S ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε')
+                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
+                   → {N : toCtx S ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε}
                      --------------------------------------------------------------------------
-                   → ⟨ S , handle return u≾ε V `with H `in N ⟩ ↝
+                   → ⟨ S , handle return V `with H `in N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               (⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε))))
+                               (⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) uₑ≡ᵣuᵣ)))
                              N) [ Hd ↦ V ]c ⟩
                      
         -- step on computation in handle. time and state must go on
@@ -157,8 +155,7 @@ mutual
 
         -- operation handle where we box up result so that the resources
         -- in the result are not used before enough time has passed
-        HANDLE-OP   : ∀ {A B ε ε'' op Γ'}
-                    → {Γ''' : ⟨⟩-Ctx Γ'}
+        HANDLE-OP   : ∀ {A B ε ε'' op}
                     → {S : 𝕊 []} 
                     → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
                     → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
@@ -216,38 +213,14 @@ mutual
                                         ∘ʳ eq-ren ++ᶜ-identityˡ)
                                        (resource-lookup S x) ]c ⟩
 
-        -- coerce of a return computation
-        COERCE-RET  : ∀ {A ε ε'} 
+        -- coerce terms just go on
+        COERCE      : ∀ {A ε ε'}
                     → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ A}
-                    → {uₑ≾ε : uₑ ≾ₑ ε}
+                    → {M : toCtx S ⊢C⦂ A ‼ ε}
                     → {ε≾ε' : ε ≾ₑ ε'}
-                      ----------------------------------------------------------
-                    → ⟨ S , coerce ε≾ε' (return uₑ≾ε V) ⟩ ↝
-                      ⟨ S , return (≾ₑ-trans uₑ≾ε ε≾ε') V ⟩
-
-        -- step for coerce terms
-        COERCE-STEP : ∀ {A ε₁ ε₁' ε₂ ε₂'}
-                    → {S S' : 𝕊 []}
-                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
-                    → {ε₁≾ε₁' : ε₁ ≾ₑ ε₁'}
-                    → {ε₂≾ε₂' : ε₂ ≾ₑ ε₂'}
-                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₂}
-                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-                      -------------------------------------------------------------------
-                    → ⟨ S , coerce ε₁≾ε₁' M ⟩ ↝ ⟨ S' , coerce ε₂≾ε₂' M' ⟩
-
-        -- coerce of an algebraic operation call
-        COERCE-OP : ∀ {A ε ε'}
-                  → {S : 𝕊 []}
-                  → {op : Op}
-                  → {rel : op-grade op ·ₑ ε ≾ₑ op-grade op ·ₑ ε'}
-                  → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
-                  → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
-                    -------------------------------------------------------------------------
-                  → ⟨ S , coerce rel (perform op V M) ⟩ ↝
-                    ⟨ S , perform op V (coerce (·ₑ-≾ₑ-cancellative rel) M) ⟩
-
+                      --------------------------------------------------------------------
+                    → ⟨ S , coerce ε≾ε' M ⟩ ↝ ⟨ S , M ⟩
+ 
         -- TODO: also needs rules for how coerce interacts with algebraic operations, box, and unbox
 
     -- Theorem: Step only extends state
@@ -271,9 +244,7 @@ mutual
     step-extends-state HANDLE-OP            = id-suc
     step-extends-state BOX                  = ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state UNBOX                = id-suc
-    step-extends-state COERCE-RET           = id-suc
-    step-extends-state (COERCE-STEP M↝M') = step-extends-state M↝M'
-    step-extends-state COERCE-OP            = id-suc
+    step-extends-state COERCE               = id-suc
 
 -- preservation theorem
 
@@ -296,13 +267,13 @@ preservation-theorem {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂}
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
           (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
-preservation-theorem {ε''' = ε'''} (SEQ-RET {u≾ε = u≾ε}) =
+preservation-theorem {ε''' = ε'''} SEQ-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
       (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
       (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε)))
+        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)))
         (≾ᵣ-reflexive (sym ·-mapᵉ))))
 preservation-theorem SEQ-OP = refl , ≾ᵣ-refl
 preservation-theorem {ε''' = ε'''} {S = S} DELAY =
@@ -313,13 +284,13 @@ preservation-theorem {ε''' = ε'''} {S = S} DELAY =
         (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))
         (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε''')) (sym mapEmbedE≡embedR)))))
     (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym ·-mapᵉ)))
-preservation-theorem {ε''' = ε'''} (HANDLE-RET {u≾ε = u≾ε}) =
+preservation-theorem {ε''' = ε'''} HANDLE-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
       (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
       (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-trans (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)) (pres-≾ᵉ u≾ε)))
+        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)))
         (≾ᵣ-reflexive (sym ·-mapᵉ))))
 preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S'·ε₁'≾S·ε₁ step) =
   refl ,
@@ -334,12 +305,9 @@ preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε�
 preservation-theorem {S = S} HANDLE-OP =
   refl ,
   ≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (sym (·ₑ-assoc (op-grade _) _ _))))
-preservation-theorem BOX        = refl , ≾ᵣ-refl
-preservation-theorem UNBOX      = refl , ≾ᵣ-refl
-preservation-theorem COERCE-RET = refl , ≾ᵣ-refl
-preservation-theorem {ε'' = ε''} {ε'''} (COERCE-STEP {ε₁ = ε₁} {ε₂ = ε₂} M↝M') with preservation-theorem M↝M'
-... | refl , S'·ε₂≾S·ε₁ = refl , {!!}
-preservation-theorem COERCE-OP  = refl , ≾ᵣ-refl
+preservation-theorem BOX                    = refl , ≾ᵣ-refl
+preservation-theorem UNBOX                  = refl , ≾ᵣ-refl
+preservation-theorem (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (pres-≾ᵉ ε≾ε')
 
 {-
 preservation-theorem APP = refl , refl
