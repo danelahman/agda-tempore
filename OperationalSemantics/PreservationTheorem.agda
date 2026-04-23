@@ -1,5 +1,3 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
-
 open import Syntax.Grades
 
 module OperationalSemantics.PreservationTheorem (Grades : GradeSystem) where
@@ -20,9 +18,8 @@ open import Data.Product
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
 
 open import Util.Operations (Grades)
-open import Util.Time -- TODO: remove
 
--- record type for Configuration that encapsulates time, state and computation
+-- Configurations that encapsulate time, state and computation
 
 record Config (C : CType) : Set where
   constructor ⟨_,_⟩
@@ -32,7 +29,7 @@ record Config (C : CType) : Set where
 
 mutual 
     
-    -- small-step operational semantics
+    -- Small-step operational semantics aka Preservation theorem
     data _↝_ :  {C D : CType} → Config C → Config D → Set where
 
         -- usual step for function aplication
@@ -213,7 +210,8 @@ mutual
                                         ∘ʳ eq-ren ++ᶜ-identityˡ)
                                        (resource-lookup S x) ]c ⟩
 
-        -- coerce terms just go on
+        -- during execution coerces are peeled off and
+        -- the computation's effect becomes more precise
         COERCE      : ∀ {A ε ε'}
                     → {S : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε}
@@ -221,9 +219,7 @@ mutual
                       --------------------------------------------------------------------
                     → ⟨ S , coerce ε≾ε' M ⟩ ↝ ⟨ S , M ⟩
  
-        -- TODO: also needs rules for how coerce interacts with algebraic operations, box, and unbox
-
-    -- Theorem: Step only extends state
+    -- reduction steps only extend states
     step-extends-state : ∀ {ε ε'}
                        → {S S' : 𝕊 []}
                        → {A : VType}
@@ -246,18 +242,18 @@ mutual
     step-extends-state UNBOX                = id-suc
     step-extends-state COERCE               = id-suc
 
--- preservation theorem
-
-preservation-theorem : ∀ {A B ε'' ε'''}
-                     → {S S' : 𝕊 []}
-                     → {M : toCtx S ⊢C⦂ A ‼ ε''}
-                     → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
-                     → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                     → A ≡ B × state-grade S' ·ᵣ mapᵉ ε''' ≾ᵣ state-grade S ·ᵣ mapᵉ ε''
+-- invariants preserved by the small-step operational semantics
+step-invariants : ∀ {A B ε'' ε'''}
+                → {S S' : 𝕊 []}
+                → {M : toCtx S ⊢C⦂ A ‼ ε''}
+                → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
+                → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
+                → A ≡ B                                                     -- return types are preserved
+                × state-grade S' ·ᵣ mapᵉ ε''' ≾ᵣ state-grade S ·ᵣ mapᵉ ε''  -- effects become more precise
                      
-preservation-theorem APP   = refl , ≾ᵣ-refl
-preservation-theorem MATCH = refl , ≾ᵣ-refl
-preservation-theorem {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S'·ε₃≾S·ε₁ step) =
+step-invariants APP   = refl , ≾ᵣ-refl
+step-invariants MATCH = refl , ≾ᵣ-refl
+step-invariants {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S'·ε₃≾S·ε₁ step) =
   refl ,
   ≾ᵣ-trans
     (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) ·-mapᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂)))))
@@ -267,7 +263,7 @@ preservation-theorem {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂}
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
           (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
-preservation-theorem {ε''' = ε'''} SEQ-RET =
+step-invariants {ε''' = ε'''} SEQ-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
@@ -275,8 +271,8 @@ preservation-theorem {ε''' = ε'''} SEQ-RET =
       (≾ᵣ-trans
         (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)))
         (≾ᵣ-reflexive (sym ·-mapᵉ))))
-preservation-theorem SEQ-OP = refl , ≾ᵣ-refl
-preservation-theorem {ε''' = ε'''} {S = S} DELAY =
+step-invariants SEQ-OP = refl , ≾ᵣ-refl
+step-invariants {ε''' = ε'''} {S = S} DELAY =
   refl ,
   ≾ᵣ-trans
     (≾ᵣ-reflexive
@@ -284,7 +280,7 @@ preservation-theorem {ε''' = ε'''} {S = S} DELAY =
         (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))
         (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε''')) (sym mapEmbedE≡embedR)))))
     (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym ·-mapᵉ)))
-preservation-theorem {ε''' = ε'''} HANDLE-RET =
+step-invariants {ε''' = ε'''} HANDLE-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
@@ -292,7 +288,7 @@ preservation-theorem {ε''' = ε'''} HANDLE-RET =
       (≾ᵣ-trans
         (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)))
         (≾ᵣ-reflexive (sym ·-mapᵉ))))
-preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S'·ε₁'≾S·ε₁ step) =
+step-invariants {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S'·ε₁'≾S·ε₁ step) =
   refl ,
     ≾ᵣ-trans
     (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) ·-mapᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂)))))
@@ -302,27 +298,9 @@ preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε�
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
           (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
-preservation-theorem {S = S} HANDLE-OP =
+step-invariants {S = S} HANDLE-OP =
   refl ,
   ≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (sym (·ₑ-assoc (op-grade _) _ _))))
-preservation-theorem BOX                    = refl , ≾ᵣ-refl
-preservation-theorem UNBOX                  = refl , ≾ᵣ-refl
-preservation-theorem (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (pres-≾ᵉ ε≾ε')
-
-{-
-preservation-theorem APP = refl , refl
-preservation-theorem MATCH = refl , refl
-preservation-theorem {S = S} {S' = S'} (SEQ-FST {τ₂ = τ₂} {τ₃} {τ₄} τ+τ₂≡τ₁+τ₄ M↝M') = 
-    refl , τ+τ₂≡τ₁+τ₄⇒τ+[τ₂+τ₃]≡τ₁+[τ₄+τ₃] (state-grade S) (state-grade S') τ₂ τ₃ τ₄ τ+τ₂≡τ₁+τ₄
-preservation-theorem SEQ-RET = refl , refl
-preservation-theorem SEQ-OP = refl , refl
-preservation-theorem {τ''' = τ'''} {S = S} (DELAY {τ' = τ'}) = 
-    refl , sym (+-assoc (state-grade S) τ' τ''')
-preservation-theorem HANDLE-RET = refl , refl
-preservation-theorem {S = S} {S' = S'} (HANDLE-STEP {τ₁ = τ₁} {τ₂} {τ₃} τ+τ₂≡τ₄+τ₃ M↝M') = 
-    refl , τ+τ₂≡τ₁+τ₄⇒τ+[τ₂+τ₃]≡τ₁+[τ₄+τ₃] (state-grade S) (state-grade S') τ₂ τ₁ τ₃ τ+τ₂≡τ₄+τ₃
-preservation-theorem {S = S} (HANDLE-OP {τ' = τ'} {τ'' = τ''} {op = op}) = 
-    refl , cong ((state-grade S) +_) (+-assoc (op-time op) τ'' τ')
-preservation-theorem BOX = refl , refl
-preservation-theorem (UNBOX p) = refl , refl 
--}
+step-invariants BOX                    = refl , ≾ᵣ-refl
+step-invariants UNBOX                  = refl , ≾ᵣ-refl
+step-invariants (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (pres-≾ᵉ ε≾ε')

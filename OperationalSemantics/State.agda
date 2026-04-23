@@ -1,5 +1,3 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- (remove)
-
 -----------------------------------
 -- Operational Semantics' States --
 -----------------------------------
@@ -19,7 +17,6 @@ open import Syntax.Types (Grades)
 open import Data.Empty
 open import Util.Equality
 open import Data.Product
-open import Util.Time
 
 -- Definition of state
 
@@ -94,7 +91,7 @@ suc-comp-ren : ∀ {Γ Γ'}
              → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
 suc-comp-ren {S = S} id-suc S'·ρ'''≾S·ρ'' =
-  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellative S'·ρ'''≾S·ρ'')
+  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellativeˡ S'·ρ'''≾S·ρ'')
 suc-comp-ren {S' = S' ⟨ ρ'' ⟩ₛ} (⟨⟩-suc ρ'' S≤ₛS') S'·ρ'''≾S·ρ'' =
   ⟨⟩-μ-ren ∘ʳ suc-comp-ren S≤ₛS' (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (state-grade S') ρ'' _))) S'·ρ'''≾S·ρ'') 
 suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'''≾S·ρ'' =

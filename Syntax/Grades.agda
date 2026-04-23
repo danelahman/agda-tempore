@@ -43,8 +43,8 @@ record Grade : Set₁ where
     _≾_ : Rel Carrier lzero
     
     -- _·_ is monotone with respect to _≾_
-    ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
     ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
+    ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
  
     -- _≾_ is reflexive and transitive
     ≾-refl  : Reflexive _≾_
@@ -60,8 +60,8 @@ record Grade : Set₁ where
     -- _≡_ is cancellative
     ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
 
-    -- _≾_ is right-cancellative
-    ·-≾-cancellative : ∀ {c d e} → d · c ≾ d · e → c ≾ e
+    -- _≾_ is left-cancellative
+    ·-≾-cancellative : ∀ {c d e f g} → c · e · d ≾ f · e · g  → c · d ≾ f · g
 
     -- _·_ and u have zero-product property
     ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
@@ -80,21 +80,8 @@ record Grade : Set₁ where
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
 
-  -- binary cancellation lemmas  
-  ·-cancellativeˡ : ∀ {c d e} → c · d ≡ e · d → c ≡ e
-  ·-cancellativeˡ {c} {d} {e} p =
-    begin
-      c
-      ≡⟨ sym (·-identityʳ c) ⟩
-      c · u
-      ≡⟨ ·-≡-cancellative (trans (·-identityʳ (c · d)) (trans p (sym (·-identityʳ (e · d))))) ⟩
-      e · u
-      ≡⟨ ·-identityʳ e ⟩
-      e
-    ∎
-
-  ·-cancellativeʳ : ∀ {c d e} → d · c ≡ d · e → c ≡ e
-  ·-cancellativeʳ {c} {d} {e} p =
+  ·-≡-cancellativeˡ : ∀ {c d e} → d · c ≡ d · e → c ≡ e
+  ·-≡-cancellativeˡ {c} {d} {e} p =
     begin
       c
     ≡⟨ sym (·-identityˡ c) ⟩
@@ -106,7 +93,41 @@ record Grade : Set₁ where
     ≡⟨ ·-identityˡ e ⟩
       e
     ∎
-  
+
+  -- binary cancellation lemmas  
+  ·-≡-cancellativeʳ : ∀ {c d e} → c · d ≡ e · d → c ≡ e
+  ·-≡-cancellativeʳ {c} {d} {e} p =
+    begin
+      c
+      ≡⟨ sym (·-identityʳ c) ⟩
+      c · u
+      ≡⟨ ·-≡-cancellative (trans (·-identityʳ (c · d)) (trans p (sym (·-identityʳ (e · d))))) ⟩
+      e · u
+      ≡⟨ ·-identityʳ e ⟩
+      e
+    ∎
+
+  ·-≾-cancellativeˡ : ∀ {c d e} → d · c ≾ d · e → c ≾ e
+  ·-≾-cancellativeˡ {c} {d} {e} p =
+    ≾-trans
+      (≾-reflexive (sym (·-identityˡ c)))
+      (≾-trans
+        (·-≾-cancellative
+          (≾-trans
+            (≾-reflexive (·-assoc u d c))
+            (≾-trans
+              (·-monoʳ-≾ p)
+              (≾-reflexive (sym (·-assoc u d e))))))
+        (≾-reflexive (·-identityˡ e)))
+
+  ·-≾-cancellativeʳ : ∀ {c d e} → c · d ≾ e · d → c ≾ e
+  ·-≾-cancellativeʳ {c} {d} {e} p =
+    ≾-trans
+      (≾-reflexive (sym (·-identityʳ c)))
+      (≾-trans
+        (·-≾-cancellative (·-monoˡ-≾ p))
+        (≾-reflexive (·-identityʳ e)))
+
   -- contrapositive version of the zero-product property of _·_
   ≡-zero-productˡ-≢ : ∀ {c d} → c ≢ u → c · d ≢ u
   ≡-zero-productˡ-≢ p q = p (≡-zero-productˡ q)
@@ -168,15 +189,17 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
      ·-≡-cancellative to ·ᵣ-≡-cancellative;
+     ·-≾-cancellative to ·ᵣ-≾-cancellative;
      ≡-zero-productˡ to ≡ᵣ-zero-productˡ;
      ≡-zero-productʳ to ≡ᵣ-zero-productʳ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      embedNat to embedR;
-     ·-≾-cancellative to ·ᵣ-≾ᵣ-cancellative;
      ≾-reflexive to ≾ᵣ-reflexive;
-     ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
-     ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     
+     ·-≡-cancellativeˡ to ·ᵣ-≡-cancellativeˡ;
+     ·-≡-cancellativeʳ to ·ᵣ-≡-cancellativeʳ;     
+     ·-≾-cancellativeˡ to ·ᵣ-≾ᵣ-cancellativeˡ;
+     ·-≾-cancellativeʳ to ·ᵣ-≾ᵣ-cancellativeʳ;
      ≡-zero-productˡ-≢ to ≡ᵣ-zero-productˡ-≢;
      ≡-zero-productʳ-≢ to ≡ᵣ-zero-productʳ-≢
     ) public
@@ -198,8 +221,10 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-≾-cancellative to ·ₑ-≾ₑ-cancellative;
      embedNat to embedE;
      ≾-reflexive to ≾ₑ-reflexive;
-     ·-cancellativeˡ to ·ₑ-cancellativeˡ;
-     ·-cancellativeʳ to ·ₑ-cancellativeʳ;     
+     ·-≡-cancellativeˡ to ·ₑ-≡-cancellativeˡ;
+     ·-≡-cancellativeʳ to ·ₑ-≡-cancellativeʳ;     
+     ·-≾-cancellativeˡ to ·ₑ-≾ₑ-cancellativeˡ;
+     ·-≾-cancellativeʳ to ·ₑ-≾ₑ-cancellativeʳ;
      ≡-zero-productˡ-≢ to ≡ₑ-zero-productˡ-≢;
      ≡-zero-productʳ-≢ to ≡ₑ-zero-productʳ-≢
    ) public
