@@ -136,47 +136,62 @@ minmax-≡-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} eq =
     (minmax-≡-cancellative {min i₁} {min i₂} {min i₃} {min i₄} {min i₅} (cong min eq))
     (minmax-≡-cancellative {max i₁} {max i₂} {max i₃} {max i₄} {max i₅} (cong max eq))
 
+·ᵢ-≾ᵢ-cancellative : ∀ {i₁ i₂ i₃}
+                   → (i₂ ·ᵢ i₁) ≾ᵢ (i₂ ·ᵢ i₃)
+                   → i₁ ≾ᵢ i₃
+
+·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} rel =
+  +-cancelˡ-≤ (min i₂) (min i₃) (min i₁) (proj₁ rel) ,
+  +-cancelˡ-≤ (max i₂) (max i₁) (max i₃) (proj₂ rel)
+
 -- zero-product property
 
-·ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ [ 0 , 0 ]tsi z≤n → i₁ ≡ [ 0 , 0 ]tsi z≤n
-·ᵢ-zero-productˡ {i₁} {_} eq =
+≡ᵢ-zero-productˡ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ [ 0 , 0 ]tsi z≤n → i₁ ≡ [ 0 , 0 ]tsi z≤n
+≡ᵢ-zero-productˡ {i₁} {_} eq =
    eqᵢ
      (m+n≡0⇒m≡0 (min i₁) (cong min eq))
      (m+n≡0⇒m≡0 (max i₁) (cong max eq))
 
-·ᵢ-zero-productʳ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ [ 0 , 0 ]tsi z≤n → i₂ ≡ [ 0 , 0 ]tsi z≤n
-·ᵢ-zero-productʳ {i₁} {i₂} eq =
+≡ᵢ-zero-productʳ : ∀ {i₁ i₂} → i₁ ·ᵢ i₂ ≡ [ 0 , 0 ]tsi z≤n → i₂ ≡ [ 0 , 0 ]tsi z≤n
+≡ᵢ-zero-productʳ {i₁} {i₂} eq =
   eqᵢ
     (m+n≡0⇒n≡0 (min i₁) {min i₂} (cong min eq))
     (m+n≡0⇒n≡0 (max i₁) {max i₂} (cong max eq))
 
+≾ᵢ-zero-productˡ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ [ 0 , 0 ]tsi z≤n → i₁ ≾ᵢ [ 0 , 0 ]tsi z≤n
+≾ᵢ-zero-productˡ {i₁} rel = z≤n , m+n≤o⇒m≤o (max i₁) (proj₂ rel)
+
+≾ᵢ-zero-productʳ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ [ 0 , 0 ]tsi z≤n → i₂ ≾ᵢ [ 0 , 0 ]tsi z≤n
+≾ᵢ-zero-productʳ rel = z≤n , m+n≤o⇒n≤o _ (proj₂ rel)
+
 
 intervals : Grade
 intervals = record
-             { Carrier          = Interval
-             ; _·_              = _·ᵢ_
-             ; u                = [ 0 , 0 ]tsi z≤n
-             ; ·-identityʳ      = ·ᵢ-identityʳ
-             ; ·-identityˡ      = ·ᵢ-identityˡ
-             ; ·-assoc          = ·ᵢ-assoc
-             ; _≾_              = _≾ᵢ_
-             ; u-minimal        = [0,0]tsi-minimal
-             ; ·-monoʳ-≾        = λ {i} {i₁} {i₂} rel
-                                    → ·ᵢ-monoʳ-≾ᵢ {i} {i₁} {i₂} rel
-             ; ·-monoˡ-≾        = λ {i} {i₁} {i₂} rel
-                                    → ·ᵢ-monoˡ-≾ᵢ {i} {i₁} {i₂} rel
-             ; ≾-refl           = ≤-refl , ≤-refl
-             ; ≾-trans          = λ rel₁ rel₂ →
-                                    ≤-trans
-                                      (proj₁ rel₂) (proj₁ rel₁) ,
-                                      ≤-trans (proj₂ rel₁) (proj₂ rel₂)
-             ; ≾-irrelevant     = λ {i₁} {i₂} rel₁ rel₂
-                                    → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
-             ; _≾?_             = _≾ᵢ?_
-             ; _≡?_             = eqᵢ?
+             { Carrier = Interval
+             ; _·_ = _·ᵢ_
+             ; u = [ 0 , 0 ]tsi z≤n
+             ; ·-identityʳ = ·ᵢ-identityʳ
+             ; ·-identityˡ = ·ᵢ-identityˡ
+             ; ·-assoc = ·ᵢ-assoc
+             ; _≾_ = _≾ᵢ_
+             ; ·-monoʳ-≾ = λ {i} {i₁} {i₂} rel
+                             → ·ᵢ-monoʳ-≾ᵢ {i} {i₁} {i₂} rel
+             ; ·-monoˡ-≾ = λ {i} {i₁} {i₂} rel
+                             → ·ᵢ-monoˡ-≾ᵢ {i} {i₁} {i₂} rel
+             ; ≾-refl = ≤-refl , ≤-refl
+             ; ≾-trans = λ rel₁ rel₂
+                           → ≤-trans (proj₁ rel₂) (proj₁ rel₁) , ≤-trans (proj₂ rel₁) (proj₂ rel₂)
+             ; ≾-irrelevant = λ {i₁} {i₂} rel₁ rel₂
+                                → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
+             ; _≾?_ = _≾ᵢ?_
+             ; _≡?_ = eqᵢ?
              ; ·-≡-cancellative = λ {i₁} {i₂} {i₃} {i₄} {i₅} eq
                                     → ·ᵢ-≡-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} eq
-             ; ·-zero-productˡ  = ·ᵢ-zero-productˡ
-             ; ·-zero-productʳ  = λ {i₁} {i₂} eq → ·ᵢ-zero-productʳ {i₁} {i₂} eq
-             ; embedNat         = λ n → [ n , n ]tsi ≤-refl
+             ; ·-≾-cancellative = λ {i₁} {i₂} {i₃} rel
+                                    → ·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} rel
+             ; ≡-zero-productˡ = ≡ᵢ-zero-productˡ
+             ; ≡-zero-productʳ = λ {i₁} {i₂} → ≡ᵢ-zero-productʳ {i₁} {i₂}
+             ; ≾-zero-productˡ = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
+             ; ≾-zero-productʳ = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
+             ; embedNat = λ n → [ n , n ]tsi ≤-refl
              }

@@ -62,7 +62,6 @@ record Grade : Set₁ where
 
     -- _≾_ is right-cancellative
     ·-≾-cancellative : ∀ {c d e} → d · c ≾ d · e → c ≾ e
-    ·-≡-≾-cancellative : ∀ {c d e f} → c · d ≡ e · f → e ≾ c → d ≾ f
 
     -- _·_ and u have zero-product property
     ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
@@ -175,7 +174,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      embedNat to embedR;
      ·-≾-cancellative to ·ᵣ-≾ᵣ-cancellative;
-     ·-≡-≾-cancellative to ·ᵣ-≡-≾ᵣ-cancellative;
      ≾-reflexive to ≾ᵣ-reflexive;
      ·-cancellativeˡ to ·ᵣ-cancellativeˡ;
      ·-cancellativeʳ to ·ᵣ-cancellativeʳ;     
@@ -199,7 +197,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-≡-cancellative to ·ₑ-≡-cancellative;
      ·-≾-cancellative to ·ₑ-≾ₑ-cancellative;
      embedNat to embedE;
-     ·-≡-≾-cancellative to ·ₑ-≡-≾ₑ-cancellative;
      ≾-reflexive to ≾ₑ-reflexive;
      ·-cancellativeˡ to ·ₑ-cancellativeˡ;
      ·-cancellativeʳ to ·ₑ-cancellativeʳ;     
