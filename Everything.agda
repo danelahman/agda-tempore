@@ -30,7 +30,11 @@
 --   - equational theory based on standard presentations of local state --
 --------------------------------------------------------------------------
 
-module Everything where
+open import Syntax.Grades
+
+module Everything (Grades : GradeSystem) where
+
+open GradeSystemInterface Grades
 
 -- UTILS
 --------
@@ -39,13 +43,9 @@ module Everything where
 
 open import Util.Equality
 
----- Time
-
-open import Util.Time
-
 ---- Algebraic operations
 
-open import Util.Operations
+open import Util.Operations (Grades)
 
 
 -- SYNTAX
@@ -53,18 +53,18 @@ open import Util.Operations
 
 ---- Syntax of the language
 
-open import Syntax.Types
-open import Syntax.Contexts
-open import Syntax.Language
+open import Syntax.Types (Grades)
+open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
 
 ---- Renamings and substitutions
 
-open import Syntax.Renamings
-open import Syntax.Substitutions
+open import Syntax.Renamings (Grades)
+open import Syntax.Substitutions (Grades)
 
 ---- Computation term and evaluation contexts
 
-open import Syntax.CompContext
+open import Syntax.CompContext (Grades)
 
 
 -- OPERATIONAL SEMANTICS
@@ -72,22 +72,18 @@ open import Syntax.CompContext
 
 ---- States of operational semantics
 
-open import OperationalSemantics.State
+open import OperationalSemantics.State (Grades)
 
 ---- Small-step operational semantics and preservation theorem 
 
-open import OperationalSemantics.PreservationTheorem
-
----- Some auxiliary results about the reduction relation 
-
-open import OperationalSemantics.TheoremsAboutSteps
+open import OperationalSemantics.PreservationTheorem (Grades)
 
 ---- Progress theorem
 
-open import OperationalSemantics.ProgressTheorem
+open import OperationalSemantics.ProgressTheorem (Grades)
 
 
 -- EQUATIONAL THEORY 
 --------------------
 
-open import EquationalTheory.EquationalTheory
+open import EquationalTheory.EquationalTheory (Grades)

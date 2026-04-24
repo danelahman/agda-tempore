@@ -1,13 +1,19 @@
-module Syntax.CompContext where
+open import Syntax.Grades
 
-open import Syntax.Contexts
-open import Syntax.Language
-open import Syntax.Renamings
-open import Syntax.Types
+module Syntax.CompContext (Grades : GradeSystem) where
+
+open GradeSystemInterface Grades
+
+open import Data.Product
+
+open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
+open import Syntax.RenActions (Grades)
+open import Syntax.Renamings (Grades)
+open import Syntax.Types (Grades)
 
 open import Util.Equality
-open import Util.Operations
-open import Util.Time
+open import Util.Operations (Grades)
 
 -- Computation term context flags. They characterise whether
 -- it is an arbitrary term context, an evaluation context, or
@@ -76,62 +82,66 @@ infixl 32 _∨ᶠ_
 
 data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
 
+    -- holes in computation term contexts
+
     []ₖ :  
         --------------------
           Γ ⊢K[ f ◁ CH ]⦂ CH
 
+    -- TODO: should coerce also be part of these contexts?
+
     -- state specific computation term contexts
 
-    perform[_]ₖ : ∀ {A τ}
+    perform[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
         → (op : Op)
         → Γ ⊢V⦂ type-of-gtype (param op)
-        → Γ ⟨ op-time op ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ τ
-        ----------------------------------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (op-time op + τ)
+        → Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        -------------------------------------------------------------------------------
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (op-grade op ·ₑ ε)
     
-    delay[_]ₖ : ∀ {A τ'}
+    delay[_]ₖ : ∀ {A ε}
         → state ≤ᶠ f
-        → (τ : Time)
-        → Γ ⟨ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ τ'
-        -----------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (τ + τ')
+        → (τ : ℕ)
+        → Γ ⟨ of-natʳ τ ⟩ ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        -----------------------------------------
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-natᵉ τ ·ₑ ε)
 
-    unbox[_]ₖ : ∀ {A C τ}
+    unbox[_]ₖ : ∀ {A C ρ ρ'}
         → state ≤ᶠ f
-        → τ ≤ ctx-time Γ
-        → Γ -ᶜ τ ⊢V⦂ [ τ ] A
-        → Γ ∷ A  ⊢K[ f ◁ CH ]⦂ C
-        -----------------------
+        → (x : [ ρ ] A ∈[ ρ' ] Γ)
+        → ρ' ≾ᵣ ρ
+        → Γ ∷ A ⊢K[ f ◁ CH ]⦂ C
+        -------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
     
-    box[_]ₖ : ∀ {A C τ}
+    box[_]ₖ : ∀ {A C ρ}
         → state ≤ᶠ f
-        → Γ ⟨ τ ⟩ ⊢V⦂ A
-        → Γ ∷ [ τ ] A ⊢K[ f ◁ CH ]⦂ C
-        ----------------------------
+        → Γ ⟨ ρ ⟩ ⊢V⦂ A
+        → Γ ∷ [ ρ ] A ⊢K[ f ◁ CH ]⦂ C
+        --------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
 
     -- evaluation specific computation term contexts
 
-    _ₖ[_];_ : ∀ {Aₖ A τₖ τ}
-        → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ‼ τₖ
+    _ₖ[_];_ : ∀ {Aₖ A εₖ ε}
+        → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ‼ εₖ
         → eval ≤ᶠ f
-        → Γ ⟨ τₖ ⟩ ∷ Aₖ ⊢C⦂ A ‼ τ
-        -----------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (τₖ + τ)
+        → Γ ⟨ mapᵉ εₖ ⟩ ∷ Aₖ ⊢C⦂ A ‼ ε
+        ----------------------------------
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (εₖ ·ₑ ε)
     
     handle[_]ₖ_`with_`in
-        : ∀ {A B τ τ'}
+        : ∀ {A B ε ε'}
         → eval ≤ᶠ f
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ τ
-        → ((op : Op) → (τ'' : Time) →
-             Γ ∷ type-of-gtype (param op)
-               ∷ [ op-time op ] (type-of-gtype (arity op) ⇒ B ‼ τ'')
-             ⊢C⦂ B ‼ (op-time op + τ''))
-        → Γ ⟨ τ ⟩ ∷ A ⊢C⦂ B ‼ τ'
-        ------------------------------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ B ‼ (τ + τ')
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
+             (Γ ++ᶜ Γ') ∷ type-of-gtype (param op)
+               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+        → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
+        --------------------------------------------------------------
+        → Γ ⊢K[ f ◁ CH ]⦂ B ‼ (ε ·ₑ ε')
 
 
 -- Contexts of the hole in a computation term context
@@ -145,15 +155,15 @@ rel-hole-ctx []ₖ Γ' =
 rel-hole-ctx (K ₖ[ p ]; N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ op-time op ⟩ ∷ type-of-gtype (arity op))
+  rel-hole-ctx K (Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
 rel-hole-ctx (handle[ p ]ₖ K `with H `in N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ τ ⟩)
-rel-hole-ctx (unbox[_]ₖ {A = A} p q V K) Γ' =
+  rel-hole-ctx K (Γ' ⟨ of-natʳ τ ⟩)
+rel-hole-ctx (unbox[_]ₖ {A = A} p x rel K) Γ' =
   rel-hole-ctx K (Γ' ∷ A)
-rel-hole-ctx (box[_]ₖ {A = A} {τ = τ} p V K) Γ' =
-  rel-hole-ctx K (Γ' ∷ [ τ ] A)
+rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =
+  rel-hole-ctx K (Γ' ∷ [ ρ ] A)
 
 -- Contexts of the hole in a computation term context
 -- (the relative version, with only the vars bound in K)
@@ -183,7 +193,7 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (handle[ p ]ₖ K `with H `in N) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (delay[ p ]ₖ τ K) =
   rel-hole-ctx-++ᶜ K
-rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ q V K) =
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x rel K) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   rel-hole-ctx-++ᶜ K
@@ -223,8 +233,8 @@ eval-hole-ctx (handle[ p ]ₖ K `with H `in N) =
   handle[ ≤ᶠ-trans q p ]ₖ (◁-mon p K) `with H `in N
 ◁-mon {f = f} {f' = f'} p (delay[ q ]ₖ τ K) =
   delay[ ≤ᶠ-trans q p ]ₖ τ (◁-mon p K)
-◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ r V K) =
-  unbox[ ≤ᶠ-trans q p ]ₖ r V (◁-mon p K)
+◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ x rel K) =
+  unbox[ ≤ᶠ-trans q p ]ₖ x rel (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (box[ q ]ₖ V K) =
   box[ ≤ᶠ-trans q p ]ₖ V (◁-mon p K)
 
@@ -236,20 +246,20 @@ K-rename : ∀ {Γ Γ' CH C f}
          ---------------
          → Γ' ⊢K[ f ◁ CH ]⦂ C
 
-K-rename ρ []ₖ =
+K-rename r []ₖ =
   []ₖ
-K-rename ρ (K ₖ[ p ]; N) =
-  (K-rename ρ K) ₖ[ p ]; (C-rename (cong-ren ρ) N)
-K-rename ρ (perform[ p ]ₖ op V K) =
-  perform[ p ]ₖ op (V-rename ρ V) (K-rename (cong-ren ρ) K)
-K-rename ρ (handle[ p ]ₖ K `with H `in N) =
-  handle[ p ]ₖ K-rename ρ K `with (λ op τ'' → C-rename (cong-ren ρ) (H op τ'')) `in (C-rename (cong-ren ρ) N)
-K-rename ρ (delay[ p ]ₖ τ K) =
-  delay[ p ]ₖ τ (K-rename (cong-ren ρ) K)
-K-rename ρ (unbox[ p ]ₖ q V K) =
-  unbox[ p ]ₖ (≤-trans q (ctx-time-≤ ρ)) (V-rename (ρ -ʳ _ , q) V) (K-rename (cong-ren ρ) K)
-K-rename ρ (box[ p ]ₖ V K) =
-  box[ p ]ₖ (V-rename (cong-ren ρ) V) (K-rename (cong-ren ρ) K)
+K-rename r (K ₖ[ p ]; N) =
+  (K-rename r K) ₖ[ p ]; (C-rename (cong-ren r) N)
+K-rename r (perform[ p ]ₖ op V K) =
+  perform[ p ]ₖ op (V-rename r V) (K-rename (cong-ren r) K)
+K-rename r (handle[ p ]ₖ K `with H `in N) =
+  handle[ p ]ₖ K-rename r K `with (λ op ε'' Γ' → C-rename (cong-ren r) (H op ε'' Γ')) `in (C-rename (cong-ren r) N)
+K-rename r (delay[ p ]ₖ τ K) =
+  delay[ p ]ₖ τ (K-rename (cong-ren r) K)
+K-rename r (unbox[ p ]ₖ x rel K) =
+  unbox[ p ]ₖ (proj₂ (proj₂ (var-rename r x))) (≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) rel) (K-rename (cong-ren r) K)
+K-rename r (box[ p ]ₖ V K) =
+  box[ p ]ₖ (V-rename (cong-ren r) V) (K-rename (cong-ren r) K)
 
 -- Composition of computation term contexts
 
@@ -276,8 +286,8 @@ delay[ p ]ₖ τ K [ L ]ₖ =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) L ]ₖ)
-unbox[ p ]ₖ q V K [ L ]ₖ =
-  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ q V
+unbox[ p ]ₖ x rel K [ L ]ₖ =
+  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ x rel
     (K [ K-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
@@ -314,8 +324,8 @@ delay[ p ]ₖ τ K [ N ] =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) N ])
-unbox[ p ]ₖ q V K [ N ] =
-  unbox q V
+unbox[ p ]ₖ x rel K [ N ] =
+  unbox x rel
     (K [ C-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
