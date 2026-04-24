@@ -345,16 +345,14 @@ mutual
 
     -- eta-equation for pattern-matching
 
-    {-
     match-eta : ∀ {A B C}
               → (V : Γ ⊢V⦂ A |×| B)
               → (M : Γ ∷ A |×| B ⊢C⦂ C)
               -------------------------------------------------------------
               → Γ ⊢C⦂ match V `in
-                       (C-rename (exch-ren ∘ʳ wk-ren ∘ʳ exch-ren ∘ʳ wk-ren)
-                         M [ Hd ↦ ⦉ var (Tl-∷ Hd) , var Hd ⦊ ]c)
+                       ((C-rename (exch-ren ∘ʳ wk-ren ∘ʳ exch-ren ∘ʳ wk-ren)
+                         M) [ Hd ↦ ⦉ var ≾ᵣ-refl (Tl-∷ Hd) , var ≾ᵣ-refl Hd ⦊ ]c)
                   == M [ Hd ↦ V ]c
-    -}
 
     -- eta-equation for empty type elimination
 
