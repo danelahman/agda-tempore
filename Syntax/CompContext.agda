@@ -86,9 +86,9 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         → state ≤ᶠ f
         → (op : Op)
         → Γ ⊢V⦂ type-of-gtype (param op)
-        → Γ ⟨ op-grade op ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ τ
+        → Γ ⟨ op-time op ⟩ ∷ type-of-gtype (arity op) ⊢K[ f ◁ CH ]⦂ A ‼ τ
         ----------------------------------------------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (op-grade op + τ)
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (op-time op + τ)
     
     delay[_]ₖ : ∀ {A τ'}
         → state ≤ᶠ f
@@ -97,16 +97,14 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         -----------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (τ + τ')
 
-{-
     unbox[_]ₖ : ∀ {A C τ}
         → state ≤ᶠ f
-        → τ ≤ ctx-grade Γ
+        → τ ≤ ctx-time Γ
         → Γ -ᶜ τ ⊢V⦂ [ τ ] A
         → Γ ∷ A  ⊢K[ f ◁ CH ]⦂ C
         -----------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
--}
-
+    
     box[_]ₖ : ∀ {A C τ}
         → state ≤ᶠ f
         → Γ ⟨ τ ⟩ ⊢V⦂ A
@@ -129,8 +127,8 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ τ
         → ((op : Op) → (τ'' : Time) →
              Γ ∷ type-of-gtype (param op)
-               ∷ [ op-grade op ] (type-of-gtype (arity op) ⇒ B ‼ τ'')
-             ⊢C⦂ B ‼ (op-grade op + τ''))
+               ∷ [ op-time op ] (type-of-gtype (arity op) ⇒ B ‼ τ'')
+             ⊢C⦂ B ‼ (op-time op + τ''))
         → Γ ⟨ τ ⟩ ∷ A ⊢C⦂ B ‼ τ'
         ------------------------------------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ B ‼ (τ + τ')
@@ -140,7 +138,6 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
 -- (the relative version, against arbitrary ctx Γ')
 -- (turns a computation term contexts into a Hughes list)
 
-{-
 rel-hole-ctx : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Ctx → Ctx
 
 rel-hole-ctx []ₖ Γ' =
@@ -148,7 +145,7 @@ rel-hole-ctx []ₖ Γ' =
 rel-hole-ctx (K ₖ[ p ]; N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
-  rel-hole-ctx K (Γ' ⟨ op-grade op ⟩ ∷ type-of-gtype (arity op))
+  rel-hole-ctx K (Γ' ⟨ op-time op ⟩ ∷ type-of-gtype (arity op))
 rel-hole-ctx (handle[ p ]ₖ K `with H `in N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
@@ -250,7 +247,7 @@ K-rename ρ (handle[ p ]ₖ K `with H `in N) =
 K-rename ρ (delay[ p ]ₖ τ K) =
   delay[ p ]ₖ τ (K-rename (cong-ren ρ) K)
 K-rename ρ (unbox[ p ]ₖ q V K) =
-  unbox[ p ]ₖ (≤-trans q (ctx-grade-≤ ρ)) (V-rename (ρ -ʳ _ , q) V) (K-rename (cong-ren ρ) K)
+  unbox[ p ]ₖ (≤-trans q (ctx-time-≤ ρ)) (V-rename (ρ -ʳ _ , q) V) (K-rename (cong-ren ρ) K)
 K-rename ρ (box[ p ]ₖ V K) =
   box[ p ]ₖ (V-rename (cong-ren ρ) V) (K-rename (cong-ren ρ) K)
 
@@ -329,5 +326,3 @@ box[ p ]ₖ V K [ N ] =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ∷ _) (hole-ctx K))))) N ])
-
--}

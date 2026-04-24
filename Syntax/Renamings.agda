@@ -36,7 +36,7 @@ data Ren : Ctx → Ctx → Set where
   -- weakening renaming
   wk-ren      : ∀ {Γ A} → Ren Γ (Γ ∷ A)
   -- variable renaming (corresponds to contraction)
-  var-ren     : ∀ {Γ A} → A ∈[ uᵣ ] Γ → Ren (Γ ∷ A) Γ
+  var-ren     : ∀ {Γ A ρ} → ρ ≾ᵣ uᵣ → A ∈[ ρ ] Γ → Ren (Γ ∷ A) Γ
   -- strong monoidal functor renamings for ⟨_⟩ modality
   ⟨⟩-η-ren    : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
   ⟨⟩-η⁻¹-ren  : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
@@ -55,14 +55,18 @@ infixr 20 _∘ʳ_
 
 -- ...
 
-cong-ren : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Ren (Γ ++ᶜ Γ'') (Γ' ++ᶜ Γ'')
-cong-ren {Γ'' = []} r         = r
-cong-ren {Γ'' = Γ'' ∷ A} r    = cong-∷-ren (cong-ren r)
-cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
+-- Extending a renaming with a variable
+
+extend-ren : ∀ {Γ Γ' A ρ} → Ren Γ Γ' → ρ ≾ᵣ uᵣ → A ∈[ ρ ] Γ' → Ren (Γ ∷ A) Γ'
+extend-ren ρ p x = var-ren p x ∘ʳ cong-∷-ren ρ
+
+-- Equality renaming
 
 eq-ren : ∀ {Γ Γ'} → Γ ≡ Γ' → Ren Γ Γ'
 eq-ren refl = id-ren
- 
+
+-- Combination of congruence and monotonicity renamings
+
 cong-⟨⟩-≤-ren : ∀ {Γ Γ' ρ ρ'} → Ren Γ Γ' → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ' ⟩)
 cong-⟨⟩-≤-ren id-ren ρ'≾ρ =
   ⟨⟩-≤-ren ρ'≾ρ
@@ -70,8 +74,8 @@ cong-⟨⟩-≤-ren (r₂ ∘ʳ r₁) ρ'≾ρ =
   cong-⟨⟩-≤-ren r₂ ρ'≾ρ ∘ʳ cong-⟨⟩-ren r₁
 cong-⟨⟩-≤-ren wk-ren ρ'≾ρ =
   cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
-cong-⟨⟩-≤-ren (var-ren x) ρ'≾ρ =
-  cong-⟨⟩-ren (var-ren x) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (var-ren p x) ρ'≾ρ =
+  cong-⟨⟩-ren (var-ren p x) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren ⟨⟩-η-ren ρ'≾ρ =
   cong-⟨⟩-ren ⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren ⟨⟩-η⁻¹-ren ρ'≾ρ =
@@ -87,6 +91,13 @@ cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
 cong-⟨⟩-≤-ren (cong-⟨⟩-ren r) ρ'≾ρ =
   cong-⟨⟩-ren (cong-⟨⟩-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 
+-- Congruence renamings for general context extension
+
+cong-ren : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Ren (Γ ++ᶜ Γ'') (Γ' ++ᶜ Γ'')
+cong-ren {Γ'' = []} r         = r
+cong-ren {Γ'' = Γ'' ∷ A} r    = cong-∷-ren (cong-ren r)
+cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
+
 cong-renˡ : ∀ {Γ Γ' Γ''} → Ren Γ Γ' → Ren (Γ'' ++ᶜ Γ) (Γ'' ++ᶜ Γ')
 cong-renˡ id-ren =
   id-ren
@@ -94,8 +105,8 @@ cong-renˡ (r₂ ∘ʳ r₁) =
   cong-renˡ r₂ ∘ʳ cong-renˡ r₁
 cong-renˡ wk-ren =
   wk-ren
-cong-renˡ {Γ' = Γ'} {Γ'' = Γ''} (var-ren x) =
-  var-ren (∈-ctx-extensionˡ Γ'' Γ' x)
+cong-renˡ {Γ' = Γ'} {Γ'' = Γ''} (var-ren p x) =
+  var-ren p (∈-ctx-extensionˡ Γ'' Γ' x)
 cong-renˡ ⟨⟩-η-ren =
   ⟨⟩-η-ren
 cong-renˡ ⟨⟩-η⁻¹-ren =
@@ -120,3 +131,8 @@ wk-ren-⟨ρ⟩-ctx {Γ' = Γ' ∷ _} refl =
   wk-ren ∘ʳ wk-ren-⟨ρ⟩-ctx refl
 wk-ren-⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} refl =
   cong-⟨⟩-ren (wk-ren-⟨ρ⟩-ctx refl) ∘ʳ ⟨⟩-μ-ren
+
+-- Exchange renaming
+
+exch-ren : ∀ {Γ A B} → Ren (Γ ∷ A ∷ B) (Γ ∷ B ∷ A)
+exch-ren = extend-ren (cong-∷-ren wk-ren) ≾ᵣ-refl (Tl-∷ Hd)

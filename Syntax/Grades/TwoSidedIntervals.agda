@@ -194,4 +194,6 @@ intervals = record
              ; ≾-zero-productˡ = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
              ; ≾-zero-productʳ = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
              ; embedNat = λ n → [ n , n ]tsi ≤-refl
+             ; embedNat-u = eqᵢ refl refl
+             ; embedNat-· = λ {m} {n} → eqᵢ refl refl
              }

@@ -28,6 +28,7 @@ record Grade : Set₁ where
 
   field
 
+    -- carrier type of grades
     Carrier : Set₀
 
     -- monoid operations
@@ -72,7 +73,13 @@ record Grade : Set₁ where
     ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
 
     -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
-    embedNat : ℕ → Carrier
+    of-nat : ℕ → Carrier
+
+    -- including ℕ preserves unit
+    of-nat-zero : of-nat 0 ≡ u
+
+    -- including ℕ preserves addition
+    of-nat-plus : ∀ {m n} → of-nat (m + n) ≡ of-nat m · of-nat n
 
     -- ...
 
@@ -141,18 +148,23 @@ open Grade
 -- Morphisms of effect and resource monoids
 
 record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
-  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_; embedNat to embedC₁)
-  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_; embedNat to embedC₂)
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_; of-nat to of-nat₁)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_; of-nat to of-nat₂)
   
   field
 
+    -- map between carriers of grades
     map    : C₁ → C₂
-    pres-≾ : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
-    u₁≡₂u₂ : map u₁ ≡ u₂
-    ·-map  : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁'
-    mapEmbed≡embed : ∀ {n} → map (embedC₁ n) ≡ embedC₂ n
 
-    -- laws
+    -- map is monotone
+    map-monotone : {c₁ c₁' : C₁} → (c₁ ≾₁ c₁') → (map c₁ ≾₂ map c₁')
+
+    -- map preserves the monoid structure
+    map-u        : map u₁ ≡ u₂
+    map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁'
+
+    -- map preserves inclusion of ℕ
+    map-of-nat   : ∀ {n} → map (of-nat₁ n) ≡ of-nat₂ n
 
 
 -- Grade systems
@@ -190,14 +202,16 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≡?_ to _≡ᵣ?_;
      ·-≡-cancellative to ·ᵣ-≡-cancellative;
      ·-≾-cancellative to ·ᵣ-≾-cancellative;
-     ≡-zero-productˡ to ≡ᵣ-zero-productˡ;
+     ≡-zero-productˡ to ≡ᵣ-zero-productclˡ;
      ≡-zero-productʳ to ≡ᵣ-zero-productʳ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
-     embedNat to embedR;
+     of-nat to of-natʳ;
+     of-nat-zero to of-natʳ-zero;
+     of-nat-plus to of-natʳ-plus;
      ≾-reflexive to ≾ᵣ-reflexive;
      ·-≡-cancellativeˡ to ·ᵣ-≡-cancellativeˡ;
-     ·-≡-cancellativeʳ to ·ᵣ-≡-cancellativeʳ;     
+     ·-≡-cancellativeʳ to ·ᵣ-≡-cancellativeʳ;
      ·-≾-cancellativeˡ to ·ᵣ-≾ᵣ-cancellativeˡ;
      ·-≾-cancellativeʳ to ·ᵣ-≾ᵣ-cancellativeʳ;
      ≡-zero-productˡ-≢ to ≡ᵣ-zero-productˡ-≢;
@@ -219,10 +233,12 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≡?_ to _≡ₑ?_;
      ·-≡-cancellative to ·ₑ-≡-cancellative;
      ·-≾-cancellative to ·ₑ-≾ₑ-cancellative;
-     embedNat to embedE;
+     of-nat to of-natᵉ;
+     of-nat-zero to of-natᵉ-zero;
+     of-nat-plus to of-natᵉ-plus;
      ≾-reflexive to ≾ₑ-reflexive;
      ·-≡-cancellativeˡ to ·ₑ-≡-cancellativeˡ;
-     ·-≡-cancellativeʳ to ·ₑ-≡-cancellativeʳ;     
+     ·-≡-cancellativeʳ to ·ₑ-≡-cancellativeʳ;
      ·-≾-cancellativeˡ to ·ₑ-≾ₑ-cancellativeˡ;
      ·-≾-cancellativeʳ to ·ₑ-≾ₑ-cancellativeʳ;
      ≡-zero-productˡ-≢ to ≡ₑ-zero-productˡ-≢;
@@ -231,8 +247,8 @@ module GradeSystemInterface (GS : GradeSystem) where
 
   open _→ᵍ_ ∣_∣ᵉ renaming
     (map to mapᵉ;
-     pres-≾ to pres-≾ᵉ;
-     u₁≡₂u₂ to uₑ≡ᵣuᵣ;
-     ·-map to ·-mapᵉ;
-     mapEmbed≡embed to mapEmbedE≡embedR
+     map-monotone to map-monotoneᵉ;
+     map-u to map-uᵉ;
+     map-· to map-·ᵉ;
+     map-of-nat to map-of-natᵉ
     ) public

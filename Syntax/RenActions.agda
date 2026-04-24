@@ -1,5 +1,3 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- remove
-
 ------------------------------------------
 -- Renaming actions on well-typed terms --
 ------------------------------------------
@@ -46,9 +44,9 @@ var-rename (r₂ ∘ʳ r₁) x with var-rename r₁ x
   ρ'' , ≾ᵣ-trans ρ''≾ρ' ρ'≾ρ , z
 var-rename wk-ren x =
   _ , ≾ᵣ-refl , Tl-∷ x
-var-rename (var-ren y) Hd =
-  uᵣ , ≾ᵣ-refl , y
-var-rename (var-ren y) (Tl-∷ x) =
+var-rename (var-ren p y) Hd =
+  _ , p , y
+var-rename (var-ren p y) (Tl-∷ x) =
   var-rename id-ren x
 var-rename ⟨⟩-η-ren (Tl-⟨⟩ x) =
   _ , ≾ᵣ-reflexive (sym (·ᵣ-identityʳ _)) , x

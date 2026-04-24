@@ -74,7 +74,7 @@ mutual
                    → ⟨ S , return V ; N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               ((⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) uₑ≡ᵣuᵣ))))
+                               ((⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ))))
                               N) [ Hd ↦ V ]c ⟩
 
         -- usual performing operation in sequencing
@@ -88,15 +88,15 @@ mutual
                      ⟨ S , ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                      (perform op V
                        (M ; C-rename
-                              (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) ·-mapᵉ)))
+                              (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
                               N)) ⟩
 
         -- delay just pass time further
         DELAY      : ∀ {A τ ε}
                    → {S : 𝕊 []}
-                   → {M : toCtx S ⟨ embedR τ ⟩ ⊢C⦂ A ‼ ε} → 
+                   → {M : toCtx S ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε} → 
                      -------------------------------------------------------------
-                     ⟨ S , (delay τ M) ⟩ ↝ ⟨ grade-pass S (embedR τ) , M ⟩
+                     ⟨ S , (delay τ M) ⟩ ↝ ⟨ grade-pass S (of-natʳ τ) , M ⟩
 
         -- usual step for handle return
         HANDLE-RET : ∀ {A B ε}
@@ -115,7 +115,7 @@ mutual
                    → ⟨ S , handle return V `with H `in N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               (⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) uₑ≡ᵣuᵣ)))
+                               (⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ)))
                              N) [ Hd ↦ V ]c ⟩
                      
         -- step on computation in handle. time and state must go on
@@ -174,7 +174,7 @@ mutual
                               `in (C-rename
                                     (  cong-∷-ren (cong-⟨⟩-ren wk-ren
                                     ∘ʳ ⟨⟩-μ-ren
-                                    ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) ·-mapᵉ)))
+                                    ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
                                     N)))
                              (H op (ε ·ₑ ε'') [] [ Tl-∷ Hd ↦ V ]c) ⟩ 
 
@@ -234,7 +234,7 @@ mutual
     step-extends-state (SEQ-STEP _ M↝M')    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
-    step-extends-state DELAY                = ⟨⟩-suc (embedR _) id-suc
+    step-extends-state DELAY                = ⟨⟩-suc (of-natʳ _) id-suc
     step-extends-state HANDLE-RET           = id-suc
     step-extends-state (HANDLE-STEP _ M↝M') = step-extends-state M↝M'
     step-extends-state HANDLE-OP            = id-suc
@@ -256,51 +256,51 @@ step-invariants MATCH = refl , ≾ᵣ-refl
 step-invariants {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S'·ε₃≾S·ε₁ step) =
   refl ,
   ≾ᵣ-trans
-    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) ·-mapᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂)))))
+    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) map-·ᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂)))))
     (≾ᵣ-trans
       (·ᵣ-monoˡ-≾ᵣ S'·ε₃≾S·ε₁)
       (≾ᵣ-reflexive
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
-          (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
+          (sym (cong (state-grade S ·ᵣ_) map-·ᵉ)))))
 step-invariants {ε''' = ε'''} SEQ-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
       (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
       (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)))
-        (≾ᵣ-reflexive (sym ·-mapᵉ))))
+        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
+        (≾ᵣ-reflexive (sym map-·ᵉ))))
 step-invariants SEQ-OP = refl , ≾ᵣ-refl
 step-invariants {ε''' = ε'''} {S = S} DELAY =
   refl ,
   ≾ᵣ-trans
     (≾ᵣ-reflexive
       (trans
-        (·ᵣ-assoc (state-grade S) (embedR _) (mapᵉ ε'''))
-        (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε''')) (sym mapEmbedE≡embedR)))))
-    (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym ·-mapᵉ)))
+        (·ᵣ-assoc (state-grade S) (of-natʳ _) (mapᵉ ε'''))
+        (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε''')) (sym map-of-natᵉ)))))
+    (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-·ᵉ)))
 step-invariants {ε''' = ε'''} HANDLE-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
       (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
       (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym uₑ≡ᵣuᵣ)))
-        (≾ᵣ-reflexive (sym ·-mapᵉ))))
+        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
+        (≾ᵣ-reflexive (sym map-·ᵉ))))
 step-invariants {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S'·ε₁'≾S·ε₁ step) =
   refl ,
     ≾ᵣ-trans
-    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) ·-mapᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂)))))
+    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) map-·ᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂)))))
     (≾ᵣ-trans
       (·ᵣ-monoˡ-≾ᵣ S'·ε₁'≾S·ε₁)
       (≾ᵣ-reflexive
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
-          (sym (cong (state-grade S ·ᵣ_) ·-mapᵉ)))))
+          (sym (cong (state-grade S ·ᵣ_) map-·ᵉ)))))
 step-invariants {S = S} HANDLE-OP =
   refl ,
   ≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (sym (·ₑ-assoc (op-grade _) _ _))))
 step-invariants BOX                    = refl , ≾ᵣ-refl
 step-invariants UNBOX                  = refl , ≾ᵣ-refl
-step-invariants (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (pres-≾ᵉ ε≾ε')
+step-invariants (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (map-monotoneᵉ ε≾ε')

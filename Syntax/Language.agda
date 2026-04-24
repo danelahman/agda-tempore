@@ -127,9 +127,9 @@ mutual
     delay   : {A : VType}
             → {ε : E}
             → (τ : ℕ)
-            → Γ ⟨ embedR τ ⟩ ⊢C⦂ A ‼ ε
+            → Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε
             ------------------------------
-            → Γ ⊢C⦂ A ‼ ((embedE τ) ·ₑ ε)
+            → Γ ⊢C⦂ A ‼ (of-natᵉ τ ·ₑ ε)
 
     -- effect handling
 

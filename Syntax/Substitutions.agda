@@ -1,5 +1,3 @@
--- {-# OPTIONS --allow-unsolved-metas #-} -- remove
-
 -----------------------------------------------------
 -- Substitution of well-typed values for variables --
 -----------------------------------------------------
