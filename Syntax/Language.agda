@@ -77,9 +77,9 @@ mutual
             -------------
             → Γ ⊢C⦂ A ‼ uₑ
 
-    -- sequential composition
+    -- sequential composition (omitting the bound variable due to using de Bruijn indices)
     
-    _⍮_     : {A B : VType}      -- NOTE: use \;0 to get this unicode semicolon
+    _⨟_     : {A B : VType}      -- NOTE: use \;2 to get this unicode semicolon
             → {ε' : E}
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε

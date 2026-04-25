@@ -53,8 +53,8 @@ data Progresses : {ε : E}
 progress : ∀ {A ε'} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ‼ ε') → Progresses M
 
 progress (return V) = is-value
-progress {ε' = ε'} {S = S} (M ⍮ N) with progress M
-progress {S = S} (_⍮_ {ε' = ε'} (return V) N) | is-value =
+progress {ε' = ε'} {S = S} (M ⨟ N) with progress M
+progress {S = S} (_⨟_ {ε' = ε'} (return V) N) | is-value =
   steps
     (≾ᵣ-trans
       (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (sym (·ᵣ-identityˡ (mapᵉ ε')))))
@@ -63,7 +63,7 @@ progress {S = S} (_⍮_ {ε' = ε'} (return V) N) | is-value =
         (≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (sym (map-·ᵉ))))))
     SEQ-RET
 ... | is-op            = steps ≾ᵣ-refl SEQ-OP
-progress (_⍮_ {ε' = ε'} M N) | steps {ε''} {ε'''} {S = S} {S' = S'} p M↝M' =
+progress (_⨟_ {ε' = ε'} M N) | steps {ε''} {ε'''} {S = S} {S' = S'} p M↝M' =
   steps
     (≾ᵣ-trans
       (≾ᵣ-trans

@@ -60,8 +60,8 @@ mutual
                    → (S'·ε₃≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₃ ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                     --------------------------------------------------------------------
-                   → ⟨ S , M ⍮ N ⟩ ↝ 
-                     ⟨ S' , M' ⍮ C-rename
+                   → ⟨ S , M ⨟ N ⟩ ↝ 
+                     ⟨ S' , M' ⨟ C-rename
                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₃≾S·ε₁))
                                    N ⟩
 
@@ -71,7 +71,7 @@ mutual
                    → {V : toCtx S ⊢V⦂ A}
                    → {N : (toCtx S ⟨ mapᵉ uₑ ⟩ ∷ A) ⊢C⦂ B ‼ ε}
                      --------------------------------------------
-                   → ⟨ S , return V ⍮ N ⟩ ↝
+                   → ⟨ S , return V ⨟ N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
                                ((⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ))))
@@ -84,12 +84,12 @@ mutual
                    → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
                    → {N : toCtx S ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'} 
                     -----------------------------------------------------------------------------------
-                   → ⟨ S , (perform op V M) ⍮ N  ⟩ ↝
+                   → ⟨ S , (perform op V M) ⨟ N  ⟩ ↝
                      ⟨ S , ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
-                     (perform op V
-                       (M ⍮ C-rename
-                              (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
-                              N)) ⟩
+                             (perform op V
+                               (M ⨟ C-rename
+                                      (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
+                                      N)) ⟩
 
         -- delay just pass time further
         DELAY      : ∀ {A τ ε}

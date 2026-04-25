@@ -97,7 +97,7 @@ mutual
            → Γ' ⊢C⦂ C
 
   C-rename r (return V)       = return (V-rename r V)
-  C-rename r (M ⍮ N)          = C-rename r M ⍮ C-rename (cong-ren r) N
+  C-rename r (M ⨟ N)          = C-rename r M ⨟ C-rename (cong-ren r) N
   C-rename r (V · W)          = V-rename r V · V-rename r W
   C-rename r (match V `in M)  = match V-rename r V `in C-rename (cong-ren r) M
   C-rename r (absurd V)       = absurd (V-rename r V)
