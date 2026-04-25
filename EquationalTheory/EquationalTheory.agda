@@ -10,6 +10,7 @@ open GradeSystemInterface Grades
 
 open import Data.Product
 
+open import Syntax.CompContext (Grades)
 open import Syntax.Contexts (Grades)
 open import Syntax.Language (Grades)
 open import Syntax.RenActions (Grades)
@@ -476,19 +477,16 @@ mutual
 
     -- beta rule for unbox
 
-    {-
-    unbox-beta : ∀ {A C D τ}
-               → (V : Γ ⟨ τ ⟩ ⊢V⦂ A )
-               → (K : Γ ∷ [ τ ] A ⊢K[ all ◁ D ]⦂ C)
-               → (p : τ ≤ ctx-time (hole-ctx K))
-               → (N : (Γ ∷ [ τ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
-               ------------------------------------------------------------------------------------------------------------------------
-               → Γ ⊢C⦂ box V (K [ unbox
-                                   (≤-trans (m≤n⇒m≤o+n _ p) (≤-reflexive (sym (ctx-time-++ᶜ (Γ ∷ [ τ ] A)  (hole-ctx K)))))
-                                   (var (var-ᶜ {Γ = Γ ∷ [ τ ] A ++ᶜ hole-ctx K} {τ = τ} {τ' = ctx-time (hole-ctx K)} p (var-τ-++ᶜ Hd)))
-                                   N ])
-                   == box V (K [ N [ Hd ↦ V-rename (ren⟨τ⟩-ctx p ∘ʳ cong-⟨⟩-ren (wk-ren {A = [ τ ] A})) V ]c ])
-    -}
+    unbox-beta : ∀ {A C D ρ}
+               → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+               → (K : Γ ∷ [ ρ ] A ⊢K[ all ◁ D ]⦂ C)
+               → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
+               → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
+               -----------------------------------------------------------------------
+               → Γ ⊢C⦂ box V (K [ unbox (var-ρ-++ᶜ Hd)
+                                        (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ (ctx-grade (hole-ctx K)))) p)
+                                        N ])
+                   == box V (K [ N [ Hd ↦ V-rename (wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren) V ]c ])
 
 
     -- unboxing non-related values commute
@@ -502,7 +500,7 @@ mutual
                ----------------------------------------------------
                → Γ ⊢C⦂ unbox x p₁
                         (unbox (Tl-∷ y) p₂ M)
-                   ==  unbox y p₂
+                   == unbox y p₂
                         (unbox (Tl-∷ x) p₁
                                (C-rename exch-ren M))
 
