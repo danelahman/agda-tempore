@@ -86,9 +86,6 @@ infix 6 _≾ₒ_
 
 -- decidability
 
-_≾ₒ?_ : Decidable _≾ₒ_
-[ m ,+∞⟩ ≾ₒ? [ n ,+∞⟩ = n ≤? m
-
 _≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
 [ m ,+∞⟩ ≡ₒ? [ n ,+∞⟩ with m ≟ n
 ... | yes p = yes (eq𝕀 p)
@@ -168,7 +165,6 @@ one-sided-intervals = record
   ; ≾-refl           = ≾ₒ-refl
   ; ≾-trans          = ≾ₒ-trans
   ; ≾-irrelevant     = ≾ₒ-irrelevant
-  ; _≾?_             = _≾ₒ?_
   ; _≡?_             = _≡ₒ?_
   ; ·-≡-cancellative = ·ₒ-≡-cancellative
   ; ·-≾-cancellative = ·ₒ-≾ₒ-cancellative
