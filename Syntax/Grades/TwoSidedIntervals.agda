@@ -108,6 +108,17 @@ eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟ max i₂
 
 -- cancellativity
 
+minmax-≤-cancellative : ∀ {m₁ m₂ m₃ m₄ m₅}
+                      → m₁ + m₃ + m₂ ≤ m₄ + m₃ + m₅
+                      → m₁ + m₂ ≤ m₄ + m₅
+minmax-≤-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} rel =
+  +-cancelˡ-≤ m₃ (m₁ + m₂) (m₄ + m₅)
+    (≤-trans
+      (≤-reflexive (trans (sym (+-assoc m₃ m₁ m₂)) (cong (_+ m₂) (+-comm m₃ m₁))))
+    (≤-trans
+      rel
+      (≤-reflexive (trans (cong (_+ m₅) (+-comm m₄ m₃)) (+-assoc m₃ m₄ m₅)))))
+
 minmax-≡-cancellative : ∀ {m₁ m₂ m₃ m₄ m₅}
                       → m₁ + m₃ + m₂ ≡ m₄ + m₃ + m₅
                       → m₁ + m₂ ≡ m₄ + m₅
@@ -136,13 +147,13 @@ minmax-≡-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} eq =
     (minmax-≡-cancellative {min i₁} {min i₂} {min i₃} {min i₄} {min i₅} (cong min eq))
     (minmax-≡-cancellative {max i₁} {max i₂} {max i₃} {max i₄} {max i₅} (cong max eq))
 
-·ᵢ-≾ᵢ-cancellative : ∀ {i₁ i₂ i₃}
-                   → (i₂ ·ᵢ i₁) ≾ᵢ (i₂ ·ᵢ i₃)
-                   → i₁ ≾ᵢ i₃
+·ᵢ-≾ᵢ-cancellative : ∀ {i₁ i₂ i₃ i₄ i₅}
+                  → (i₁ ·ᵢ i₃ ·ᵢ i₂) ≾ᵢ (i₄ ·ᵢ i₃ ·ᵢ i₅)
+                  → (i₁ ·ᵢ i₂) ≾ᵢ (i₄ ·ᵢ i₅)
 
-·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} rel =
-  +-cancelˡ-≤ (min i₂) (min i₃) (min i₁) (proj₁ rel) ,
-  +-cancelˡ-≤ (max i₂) (max i₁) (max i₃) (proj₂ rel)
+·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} rel =
+  minmax-≤-cancellative {min i₄} {min i₅} {min i₃} {min i₁} {min i₂} (proj₁ rel) ,
+  minmax-≤-cancellative {max i₁} {max i₂} {max i₃} {max i₄} {max i₅} (proj₂ rel)
 
 -- zero-product property
 
@@ -187,13 +198,13 @@ intervals = record
              ; _≡?_ = eqᵢ?
              ; ·-≡-cancellative = λ {i₁} {i₂} {i₃} {i₄} {i₅} eq
                                     → ·ᵢ-≡-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} eq
-             ; ·-≾-cancellative = λ {i₁} {i₂} {i₃} rel
-                                    → ·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} rel
+             ; ·-≾-cancellative = λ {i₁} {i₂} {i₃} {i₄} {i₅} rel
+                                    → ·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} rel
              ; ≡-zero-productˡ = ≡ᵢ-zero-productˡ
              ; ≡-zero-productʳ = λ {i₁} {i₂} → ≡ᵢ-zero-productʳ {i₁} {i₂}
              ; ≾-zero-productˡ = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
              ; ≾-zero-productʳ = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
-             ; embedNat = λ n → [ n , n ]tsi ≤-refl
-             ; embedNat-u = eqᵢ refl refl
-             ; embedNat-· = λ {m} {n} → eqᵢ refl refl
+             ; of-nat = λ n → [ n , n ]tsi ≤-refl
+             ; of-nat-zero = eqᵢ refl refl
+             ; of-nat-plus = λ {m} {n} → eqᵢ refl refl
              }
