@@ -410,27 +410,31 @@ mutual
                                          N)))
                                   ((H op (ε ·ₑ ε') [] [ Tl-∷ Hd ↦ V ]c)))
 
-     {-
-     handle-delay : ∀ {A B τ τ' τ''}
-                 → (M : Γ ⟨ τ ⟩ ⊢C⦂ A ‼ τ')
-                 → (H : (op : Op) → (τ''' : Time) →
-                          Γ ∷ type-of-gtype (param op)
-                            ∷ [ op-time op ] (type-of-gtype (arity op) ⇒ B ‼ τ''')
-                          ⊢C⦂ B ‼ (op-time op + τ'''))
-                 → (N : Γ ⟨ τ + τ' ⟩ ∷ A ⊢C⦂ B ‼ τ'')
+    handle-delay : ∀ {A B τ ε ε'}
+                 → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                 → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
+                          (Γ ++ᶜ Γ') ∷ type-of-gtype (param op)
+                                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                 → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                  ------------------------------------------------------------------------------
                  → Γ ⊢C⦂ handle delay τ M `with H `in N
-                     == τ-subst (sym (+-assoc τ τ' τ''))
+                     == ε-subst (sym (·ₑ-assoc (of-natᵉ τ) ε ε'))
                           (delay τ
                             (handle M
-                              `with (λ op τ''' →
+                            `with (λ op ε'' Γ' →
                                 C-rename
-                                  (cong-ren {Γ'' = [] ∷ _ ∷ _} (⟨⟩-≤-ren z≤n ∘ʳ ⟨⟩-η⁻¹-ren))
-                                  (H op τ'''))
-                              `in (C-rename
-                                    (cong-ren {Γ'' = [] ∷ A} ⟨⟩-μ-ren)
-                                    N)))
-    -}
+                                  (cong-∷-ren
+                                    (cong-∷-ren
+                                      (eq-ren (sym (++ᶜ-assoc Γ ([] ⟨ of-natʳ τ ⟩) Γ')))))
+                                  (H op ε'' ([] ⟨ of-natʳ τ ⟩ ++ᶜ Γ')))
+                            `in (C-rename
+                                  (cong-∷-ren
+                                    (⟨⟩-μ-ren
+                                     ∘ʳ eq-ren (cong (Γ ⟨_⟩)
+                                                     (trans map-·ᵉ
+                                                            (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))))
+                                  N)))
 
     handle-box : ∀ {A B C ρ ε ε'}
                  → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
@@ -488,37 +492,34 @@ mutual
 
 
     -- unboxing non-related values commute
-    {-
-    unbox-comm : ∀ {A B C τ τ' τ''}
-               → (p : τ ≤ ctx-time Γ)
-               → (q : τ' ≤ ctx-time Γ)
-               → (V : Γ -ᶜ τ ⊢V⦂ [ τ ] A)
-               → (W : Γ -ᶜ τ' ⊢V⦂ [ τ' ] B)
-               → (M : Γ ∷ A ∷ B ⊢C⦂ C ‼ τ'')
+
+    unbox-comm : ∀ {A B C ρ₁ ρ₁' ρ₂ ρ₂'}
+               → (x : [ ρ₁ ] A ∈[ ρ₁' ] Γ)
+               → (y : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
+               → (p₁ : ρ₁' ≾ᵣ ρ₁)
+               → (p₂ : ρ₂' ≾ᵣ ρ₂)
+               → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
-               → Γ ⊢C⦂ unbox p V
-                        (unbox q (V-rename (wk-ren -ʳ τ' , q) W) M) 
-                   ==  unbox q W
-                        (unbox p (V-rename (wk-ren -ʳ τ , p ) V) 
-                                 (C-rename exch-ren M))
-    -}
+               → Γ ⊢C⦂ unbox x p₁
+                        (unbox (Tl-∷ y) p₂ M)
+                   ==  unbox y p₂
+                        (unbox (Tl-∷ x) p₁
+                               (C-rename exch-ren M))
 
 
-    -- boxing resources commute 
+    -- boxing resources commute
 
-    {-
-    box-comm : ∀ {A B C τ τ' τ''}
-             → (V : Γ ⟨ τ ⟩ ⊢V⦂ A)
-             → (W : Γ ⟨ τ' ⟩ ⊢V⦂ B)
-             → (M : Γ ∷ [ τ ] A ∷ [ τ' ] B ⊢C⦂ C ‼ τ'')
+    box-comm : ∀ {A B C ρ ρ'}
+             → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+             → (W : Γ ⟨ ρ' ⟩ ⊢V⦂ B)
+             → (M : Γ ∷ [ ρ ] A ∷ [ ρ' ] B ⊢C⦂ C)
              -------------------------------------------------
-             → Γ ⊢C⦂ box V 
+             → Γ ⊢C⦂ box V
                      (box (V-rename (cong-⟨⟩-ren wk-ren) W) M)
-                 == box W 
-                     (box 
-                       (V-rename (cong-⟨⟩-ren wk-ren) V) 
+                 == box W
+                     (box
+                       (V-rename (cong-⟨⟩-ren wk-ren) V)
                        (C-rename exch-ren M))
-    -}
 
     -- eta rule for box
     
@@ -541,43 +542,39 @@ mutual
 
     -- boxing and unboxing unrelated resources commute
 
-    {-
-    box-unbox-comm : ∀ {A B C τ τ' τ''}
-                   → (p : τ' ≤ ctx-time Γ)
-                   → (V : Γ ⟨ τ ⟩ ⊢V⦂ A)
-                   → (W : Γ -ᶜ τ' ⊢V⦂ [ τ' ] B)
-                   → (M : Γ ∷ [ τ ] A ∷ B ⊢C⦂ C ‼ τ'')
+    box-unbox-comm : ∀ {A B C ρ ρ₂ ρ₂'}
+                   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+                   → (y : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
+                   → (p : ρ₂' ≾ᵣ ρ₂)
+                   → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
-                   → Γ ⊢C⦂ box V 
-                            (unbox p 
-                              (V-rename (wk-ren -ʳ τ' , p) W) 
-                              M) 
-                       == unbox p 
-                            W 
-                            (box 
-                              (V-rename (cong-⟨⟩-ren wk-ren) V) 
-                              (C-rename exch-ren M))    
-    -}
+                   → Γ ⊢C⦂ box V
+                            (unbox (Tl-∷ y) p M)
+                       == unbox y p
+                            (box
+                              (V-rename (cong-⟨⟩-ren wk-ren) V)
+                              (C-rename exch-ren M))
 
     -- equations for collapsing successive delays
 
-    {-
-    delay-zero : ∀ {A τ}
-               → (M : Γ ⟨ 0 ⟩ ⊢C⦂ A ‼ τ)
+    delay-zero : ∀ {A ε}
+               → (M : Γ ⟨ of-natʳ 0 ⟩ ⊢C⦂ A ‼ ε)
                --------------------------
                → Γ ⊢C⦂ delay 0 M
-                   == C-rename ⟨⟩-η-ren M
-               
-    delay-delay : ∀ {A τ τ₁ τ₂}
-                → (M : Γ ⟨ τ₁ ⟩ ⟨ τ₂ ⟩ ⊢C⦂ A ‼ τ)
+                   == ε-subst (sym (trans (cong (_·ₑ ε) of-natᵉ-zero) (·ₑ-identityˡ ε)))
+                        (C-rename
+                          (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero))
+                          M)
+
+    delay-delay : ∀ {A τ₁ τ₂ ε}
+                → (M : Γ ⟨ of-natʳ τ₁ ⟩ ⟨ of-natʳ τ₂ ⟩ ⊢C⦂ A ‼ ε)
                 ------------------------------------
                 → Γ ⊢C⦂ delay τ₁ (delay τ₂ M)
-                    == τ-subst
-                         (+-assoc τ₁ τ₂ τ)
-                         (delay
-                           (τ₁ + τ₂)
-                           (C-rename ⟨⟩-μ⁻¹-ren M))
-    -}
+                    == ε-subst (trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε))
+                         (delay (τ₁ + τ₂)
+                           (C-rename
+                             (eq-ren (cong (Γ ⟨_⟩) (sym of-natʳ-plus)) ∘ʳ ⟨⟩-μ⁻¹-ren)
+                             M))
 
     -- TODO: beta-like rule for coerce (any other rules for coerce?)
 
