@@ -191,7 +191,6 @@ grad-typ⇒var : ∀ {Γ A ρ}
              → (V : Γ ⊢V⦂ [ ρ ] A)
              → Σ[ ρ' ∈ R ]
                Σ[ rel ∈ ρ' ≾ᵣ uᵣ ]
-               Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ)]
-               (V ≡ var rel x)
+               Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ) ](V ≡ var rel x)
              
 grad-typ⇒var (var rel x) = _ , rel , x , refl

@@ -66,6 +66,11 @@ open import Syntax.Substitutions (Grades)
 
 open import Syntax.CompContext (Grades)
 
+-- GRADES
+---------
+
+open import Syntax.Grades.OneSidedIntervals (Grades)
+open import Syntax.Grades.TwoSidedIntervals (Grades)
 
 -- OPERATIONAL SEMANTICS
 ------------------------
