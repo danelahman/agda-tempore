@@ -79,7 +79,7 @@ mutual
 
     -- sequential composition
     
-    _;_     : {A B : VType}      -- NOTE: use \;0 to get this unicode semicolon
+    _⍮_     : {A B : VType}      -- NOTE: use \;0 to get this unicode semicolon
             → {ε' : E}
             → {ε : E}
             → Γ ⊢C⦂ A ‼ ε

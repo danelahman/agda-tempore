@@ -154,7 +154,7 @@ mutual
              → Γ ⊢C⦂ M == M'
              → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
              ---------------------------------
-             → Γ ⊢C⦂ M ; N == (M' ; N')
+             → Γ ⊢C⦂ M ⍮ N == M' ⍮ N'
 
     app-cong : ∀ {A C D}
              → {V : Γ ⊢V⦂ A ⇒ C}
@@ -243,7 +243,7 @@ mutual
                → (V : Γ ⊢V⦂ A)
                → (M : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                -----------------------------------------------------
-               → Γ ⊢C⦂ return V ; M
+               → Γ ⊢C⦂ return V ⍮ M
                    == ε-subst (sym (·ₑ-identityˡ ε))
                         ((C-rename
                            (cong-∷-ren
@@ -256,10 +256,10 @@ mutual
                 → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
                 → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 ---------------------------------------------------------------------
-                → Γ ⊢C⦂ (perform op V M) ; N
+                → Γ ⊢C⦂ (perform op V M) ⍮ N
                     == ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                          (perform op V
-                            (M ;
+                            (M ⍮
                              C-rename
                                (cong-∷-ren
                                  (cong-⟨⟩-ren wk-ren
@@ -271,10 +271,10 @@ mutual
               → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
               → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
               -------------------------------------------------------
-              → Γ ⊢C⦂ delay τ M ; N
+              → Γ ⊢C⦂ delay τ M ⍮ N
                   == ε-subst (sym (·ₑ-assoc (of-natᵉ τ) ε ε'))
                        (delay τ
-                         (M ;
+                         (M ⍮
                           C-rename
                             (cong-∷-ren
                               (⟨⟩-μ-ren
@@ -288,8 +288,8 @@ mutual
             → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
             → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
             -------------------------------------------------------
-            → Γ ⊢C⦂ box V M ; N
-                == box V (M ; C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+            → Γ ⊢C⦂ box V M ⍮ N
+                == box V (M ⍮ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     seq-unbox : ∀ {A B C ρ ρ' ε ε'}
               → (x : [ ρ ] A ∈[ ρ' ] Γ)
@@ -297,8 +297,8 @@ mutual
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
               -------------------------------------------------------
-              → Γ ⊢C⦂ unbox x p M ; N
-                  == unbox x p (M ; C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+              → Γ ⊢C⦂ unbox x p M ⍮ N
+                  == unbox x p (M ⍮ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     -- eta-equation for sequential composition
 
@@ -306,7 +306,7 @@ mutual
             → (M : Γ ⊢C⦂ A ‼ ε)
             ----------------------------------------------------------
             → Γ ⊢C⦂ M
-                == ε-subst (·ₑ-identityʳ ε) (M ; return (var ≾ᵣ-refl Hd))
+                == ε-subst (·ₑ-identityʳ ε) (M ⍮ return (var ≾ᵣ-refl Hd))
 
     -- associativity equation for sequential composition
 
@@ -315,9 +315,9 @@ mutual
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
               → (P : Γ ⟨ mapᵉ (ε ·ₑ ε') ⟩ ∷ B ⊢C⦂ C ‼ ε'')
               ---------------------------------------------------------------------
-              → Γ ⊢C⦂ (M ; N) ; P
+              → Γ ⊢C⦂ (M ⍮ N) ⍮ P
                   == ε-subst (sym (·ₑ-assoc ε ε' ε''))
-                       (M ; (N ; C-rename
+                       (M ⍮ (N ⍮ C-rename
                                    (cong-∷-ren
                                      (cong-⟨⟩-ren wk-ren
                                       ∘ʳ ⟨⟩-μ-ren

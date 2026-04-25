@@ -124,7 +124,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
 
     -- evaluation specific computation term contexts
 
-    _ₖ[_];_ : ∀ {Aₖ A εₖ ε}
+    _ₖ[_]⍮_ : ∀ {Aₖ A εₖ ε}
         → Γ ⊢K[ f ◁ CH ]⦂ Aₖ ‼ εₖ
         → eval ≤ᶠ f
         → Γ ⟨ mapᵉ εₖ ⟩ ∷ Aₖ ⊢C⦂ A ‼ ε
@@ -152,7 +152,7 @@ rel-hole-ctx : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Ctx → Ctx
 
 rel-hole-ctx []ₖ Γ' =
   Γ'
-rel-hole-ctx (K ₖ[ p ]; N) Γ' =
+rel-hole-ctx (K ₖ[ p ]⍮ N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
   rel-hole-ctx K (Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
@@ -185,7 +185,7 @@ rel-hole-ctx-++ᶜ : ∀ {Γ Γ' Γ'' f CH C}
 
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} []ₖ =
   refl
-rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (K ₖ[ p ]; N) =
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (K ₖ[ p ]⍮ N) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (perform[ p ]ₖ op V K) =
   rel-hole-ctx-++ᶜ K
@@ -211,7 +211,7 @@ eval-hole-ctx : ∀ {Γ CH C}
               → hole-ctx K ≡ []
 eval-hole-ctx []ₖ =
   refl
-eval-hole-ctx (K ₖ[ p ]; N) =
+eval-hole-ctx (K ₖ[ p ]⍮ N) =
   eval-hole-ctx K
 eval-hole-ctx (handle[ p ]ₖ K `with H `in N) =
   eval-hole-ctx K
@@ -225,8 +225,8 @@ eval-hole-ctx (handle[ p ]ₖ K `with H `in N) =
       
 ◁-mon {f = f} {f' = f'} p []ₖ =
   []ₖ
-◁-mon {f = f} {f' = f'} p (K ₖ[ q ]; N) =
-  (◁-mon p K) ₖ[ ≤ᶠ-trans q p ]; N
+◁-mon {f = f} {f' = f'} p (K ₖ[ q ]⍮ N) =
+  (◁-mon p K) ₖ[ ≤ᶠ-trans q p ]⍮ N
 ◁-mon {f = f} {f' = f'} p (perform[ q ]ₖ op V K) =
   perform[ ≤ᶠ-trans q p ]ₖ op V (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (handle[ q ]ₖ K `with H `in N) =
@@ -248,8 +248,8 @@ K-rename : ∀ {Γ Γ' CH C f}
 
 K-rename r []ₖ =
   []ₖ
-K-rename r (K ₖ[ p ]; N) =
-  (K-rename r K) ₖ[ p ]; (C-rename (cong-ren r) N)
+K-rename r (K ₖ[ p ]⍮ N) =
+  (K-rename r K) ₖ[ p ]⍮ (C-rename (cong-ren r) N)
 K-rename r (perform[ p ]ₖ op V K) =
   perform[ p ]ₖ op (V-rename r V) (K-rename (cong-ren r) K)
 K-rename r (handle[ p ]ₖ K `with H `in N) =
@@ -270,8 +270,8 @@ _[_]ₖ : ∀ {Γ CH CH' C f f'}
 
 []ₖ [ L ]ₖ =
   ◁-mon ∨ᶠ-inr L
-(K ₖ[ p ]; N) [ L ]ₖ =
-  (K [ L ]ₖ) ₖ[ ≤ᶠ-trans p ∨ᶠ-inl ]; N
+(K ₖ[ p ]⍮ N) [ L ]ₖ =
+  (K [ L ]ₖ) ₖ[ ≤ᶠ-trans p ∨ᶠ-inl ]⍮ N
 perform[ p ]ₖ op V K [ L ]ₖ =
   perform[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ op V
     (K [ K-rename (eq-ren
@@ -308,8 +308,8 @@ _[_] : ∀ {Γ CH C f}
 
 []ₖ [ N ] =
   N
-(K ₖ[ p ]; M) [ N ] =
-  (K [ N ]) ; M
+(K ₖ[ p ]⍮ M) [ N ] =
+  (K [ N ]) ⍮ M
 perform[ p ]ₖ op V K [ N ] =
   perform op V
     (K [ C-rename (eq-ren
