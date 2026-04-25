@@ -54,8 +54,7 @@ record Grade : Set₁ where
     -- _≾_ is irrelevant
     ≾-irrelevant : Irrelevant _≾_
 
-    -- _≾_ and _≡_ (on Carrier) are decidable
-    _≾?_ : Decidable _≾_
+    -- _≡_ (on Carrier) is decidable
     _≡?_ : Decidable (_≡_ {A = Carrier})
 
     -- _≡_ is cancellative
@@ -198,7 +197,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
      ≾-irrelevant to ≾ᵣ-irrelevant;
-     _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
      ·-≡-cancellative to ·ᵣ-≡-cancellative;
      ·-≾-cancellative to ·ᵣ-≾-cancellative;
@@ -229,7 +227,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-trans to ≾ₑ-trans;
-     _≾?_ to _≾ₑ?_;
      _≡?_ to _≡ₑ?_;
      ·-≡-cancellative to ·ₑ-≡-cancellative;
      ·-≾-cancellative to ·ₑ-≾ₑ-cancellative;
