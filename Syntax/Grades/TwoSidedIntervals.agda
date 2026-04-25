@@ -20,6 +20,8 @@ open import Relation.Binary.PropositionalEquality as Eq
 open Eq.≡-Reasoning
 open import Relation.Nullary.Decidable.Core
 
+-- type of intervals
+
 record Interval : Set₀ where
   constructor [_,_]tsi
   field
@@ -96,9 +98,6 @@ i₁ ≾ᵢ i₂ =
   cong₂ _,_ (≤-irrelevant relmin predmin) (≤-irrelevant relmax predmax)
 
 -- decidability
-
-_≾ᵢ?_ : Decidable _≾ᵢ_
-i₁ ≾ᵢ? i₂ = (min i₂ ≤? min i₁) ×-dec (max i₁ ≤? max i₂)
 
 eqᵢ? : Decidable {lzero} {Interval} _≡_
 eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟ max i₂
@@ -194,7 +193,6 @@ intervals = record
                            → ≤-trans (proj₁ rel₂) (proj₁ rel₁) , ≤-trans (proj₂ rel₁) (proj₂ rel₂)
              ; ≾-irrelevant = λ {i₁} {i₂} rel₁ rel₂
                                 → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
-             ; _≾?_ = _≾ᵢ?_
              ; _≡?_ = eqᵢ?
              ; ·-≡-cancellative = λ {i₁} {i₂} {i₃} {i₄} {i₅} eq
                                     → ·ᵢ-≡-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} eq
