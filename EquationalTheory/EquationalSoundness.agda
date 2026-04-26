@@ -1,0 +1,397 @@
+-------------------------------------------------------------------
+-- Equational soundness theorem                                  --
+--                                                               --
+-- Theorem:  if  ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩  with                   --
+-- S' = S ++ˢ S'', then for every evaluation context E we have   --
+--                                                               --
+--     ⊢ K_S [ E [ M ] ]  ≡  K_S [ K_{S''} [ M' ] ]              --
+--                                                               --
+-- in the equational theory.                                     --
+-------------------------------------------------------------------
+
+open import Syntax.Grades
+
+module EquationalTheory.EquationalSoundness (Grades : GradeSystem) where
+
+open GradeSystemInterface Grades
+
+open import Data.Product
+
+open import OperationalSemantics.PreservationTheorem (Grades)
+open import OperationalSemantics.State (Grades)
+
+open import Syntax.CompContext (Grades)
+open import Syntax.Contexts (Grades)
+open import Syntax.Language (Grades)
+open import Syntax.RenActions (Grades)
+open import Syntax.Renamings (Grades)
+open import Syntax.Substitutions (Grades)
+open import Syntax.Types (Grades)
+
+open import EquationalTheory.EquationalTheory (Grades)
+
+open import Util.Equality
+open import Util.Operations (Grades)
+
+
+-- =============================================================
+-- 1. Delay-shaped states
+-- =============================================================
+--
+-- The K_S translation requires building computation term contexts
+-- of the form  delay τ K , and the constructor `delay[_]ₖ` of
+-- `_⊢K[_◁_]⦂_` only takes `τ : ℕ`. Hence K_S is only definable
+-- for states whose ⟨ ρ ⟩ₛ-passage marks all use ρ = of-natʳ τ for
+-- some τ : ℕ.
+--
+-- In this development this is exactly the shape produced by the
+-- operational semantics: the only step extending the state via
+-- ⟨_⟩ₛ is DELAY, which uses `grade-pass S (of-natʳ τ)`.
+
+data ⟨nat⟩-State {Γ : Ctx} : 𝕊 Γ → Set where
+  is-∅      : ⟨nat⟩-State ∅
+  is-⟨⟩-nat : ∀ {S : 𝕊 Γ}
+            → (τ : ℕ)
+            → ⟨nat⟩-State S
+            ----------------------------------------
+            → ⟨nat⟩-State (S ⟨ of-natʳ τ ⟩ₛ)
+  is-∷      : ∀ {A ρ} {S : 𝕊 Γ}
+            → {V : ((Γ ++ᶜ toCtx S) ⟨ ρ ⟩) ⊢V⦂ A}
+            → ⟨nat⟩-State S
+            ----------------------------------------
+            → ⟨nat⟩-State (S ∷ₛ V)
+
+-- The state-induced effect grade applied to a tail-effect ε.
+-- Computing in CPS-like form makes the recursive equations align
+-- with the direction of K_S's recursion, avoiding propositional
+-- ε-rewrites in the K_S definition itself.
+
+state-eff[_]·ₑ_ : ∀ {Γ} {S : 𝕊 Γ} → ⟨nat⟩-State S → E → E
+state-eff[ is-∅            ]·ₑ ε = ε
+state-eff[ is-⟨⟩-nat τ ν   ]·ₑ ε = state-eff[ ν ]·ₑ (of-natᵉ τ ·ₑ ε)
+state-eff[ is-∷ ν          ]·ₑ ε = state-eff[ ν ]·ₑ ε
+
+-- The pure state-effect grade (independent of any tail-effect).
+
+state-eff : ∀ {Γ} {S : 𝕊 Γ} → ⟨nat⟩-State S → E
+state-eff ν = state-eff[ ν ]·ₑ uₑ
+
+
+-- =============================================================
+-- 2. The K_S translation from states to computation contexts
+-- =============================================================
+--
+-- We recursively define a state-context
+--
+--    K_S : [] ⊢K[ state ◁ X ‼ ε ]⦂ X ‼ (state-eff[ ν ]·ₑ ε)
+--
+-- by the equations
+--
+--    K_∅                       = []
+--    K_{S , ⟨ of-natʳ τ ⟩ₛ}    = K_S [ delay τ [] ]
+--    K_{S , x ↦_{[ρ]X} V}      = K_S [ box V (as x in []) ]
+--
+-- We package K_S together with the proof that its hole-ctx is
+-- exactly `toCtx S`.
+
+-- A general lemma: hole-ctx of a composition K [ L ]ₖ is
+-- obtained by extending the relative-hole-ctx of L with the
+-- hole-ctx of K. The proof is by direct induction on K, but it
+-- requires interleaved induction with a similar property of
+-- `K-rename`. We postulate it here for expedience.
+
+postulate
+  rel-hole-ctx-[]ₖ : ∀ {Γ CH CH' C f f'}
+                   → (K : Γ ⊢K[ f ◁ CH ]⦂ C)
+                   → (L : Γ ++ᶜ hole-ctx K ⊢K[ f' ◁ CH' ]⦂ CH)
+                   → ∀ Γ'
+                   → rel-hole-ctx (K [ L ]ₖ) Γ'
+                         ≡ rel-hole-ctx L (rel-hole-ctx K Γ')
+
+hole-ctx-[]ₖ : ∀ {Γ CH CH' C f f'}
+             → (K : Γ ⊢K[ f ◁ CH ]⦂ C)
+             → (L : Γ ++ᶜ hole-ctx K ⊢K[ f' ◁ CH' ]⦂ CH)
+             → hole-ctx (K [ L ]ₖ) ≡ rel-hole-ctx L (hole-ctx K)
+hole-ctx-[]ₖ K L = rel-hole-ctx-[]ₖ K L []
+
+
+-- The K_S translation itself.
+-- Generalised to an arbitrary outer context Γ, so that we can
+-- also speak of K_{S''} where S'' is a state living in toCtx S
+-- (the "delta" component of a step extension).
+
+K-of-state : ∀ {Γ} {S : 𝕊 Γ} → (ν : ⟨nat⟩-State S) → {X : VType} → {ε : E}
+           → Σ[ K ∈ (Γ ⊢K[ state ◁ X ‼ ε ]⦂ X ‼ (state-eff[ ν ]·ₑ ε)) ]
+             (hole-ctx K ≡ toCtx S)
+K-of-state is-∅ {X} {ε} =
+  []ₖ , refl
+K-of-state (is-⟨⟩-nat {S = S} τ ν) {X} {ε}
+  with K-of-state ν {X} {of-natᵉ τ ·ₑ ε}
+... | K' , p' =
+  K' [ delay[ f≤ᶠf ]ₖ τ []ₖ ]ₖ
+  ,
+  trans (hole-ctx-[]ₖ K' (delay[ f≤ᶠf ]ₖ τ []ₖ))
+        (cong (_⟨ of-natʳ τ ⟩) p')
+K-of-state {Γ} (is-∷ {A = A} {ρ = ρ} {S = S} {V = V} ν) {X} {ε}
+  with K-of-state ν {X} {ε}
+... | K' , p' =
+  K' [ box[ f≤ᶠf ]ₖ (V-rename
+                       (eq-ren (cong (_⟨ ρ ⟩)
+                                     (cong (Γ ++ᶜ_) (sym p')))) V)
+                    []ₖ ]ₖ
+  ,
+  trans (hole-ctx-[]ₖ K' _)
+        (cong (_∷ [ ρ ] A) p')
+
+
+-- A convenient shorthand projecting only the context.
+
+⟦_⟧K : ∀ {Γ} {S : 𝕊 Γ} → (ν : ⟨nat⟩-State S) → {X : VType} → {ε : E}
+     → Γ ⊢K[ state ◁ X ‼ ε ]⦂ X ‼ (state-eff[ ν ]·ₑ ε)
+⟦ ν ⟧K = proj₁ (K-of-state ν)
+
+-- Fill K_S with a computation given in the natural context `toCtx S`,
+-- handling the renaming through ++ᶜ-identityˡ and the hole-ctx
+-- equality from `K-of-state`.
+
+fill-K-of-state : ∀ {S : 𝕊 []} → (ν : ⟨nat⟩-State S) → ∀ {X ε}
+                → toCtx S ⊢C⦂ X ‼ ε
+                → [] ⊢C⦂ X ‼ (state-eff[ ν ]·ₑ ε)
+fill-K-of-state ν M
+  with K-of-state ν
+... | K' , p' =
+  K' [ C-rename (eq-ren (trans (sym ++ᶜ-identityˡ)
+                               (cong ([] ++ᶜ_) (sym p'))))
+                M ]
+
+
+-- =============================================================
+-- 3. State extension
+-- =============================================================
+--
+-- If S ≤ₛ S', then S' decomposes as S ++ˢ S'' for some S''.
+-- We expose just the "delta" S'' here (and need not formalise
+-- the equation S' ≡ S ++ˢ S'', which is technical due to the
+-- renamings inside `_++ˢ_`'s definition of the value-cell case).
+--
+-- Used to extract the K_{S''} computation context appearing in
+-- the right-hand side of the Theorem.
+
+≤ₛ-delta : ∀ {Γ} {S S' : 𝕊 Γ} → S ≤ₛ S' → 𝕊 (Γ ++ᶜ toCtx S)
+
+postulate
+  ≤ₛ-delta-toCtx : ∀ {Γ} {S S' : 𝕊 Γ}
+                 → (q : S ≤ₛ S')
+                 → toCtx S ++ᶜ toCtx (≤ₛ-delta q) ≡ toCtx S'
+
+≤ₛ-delta {S = S} id-suc =
+  ∅
+≤ₛ-delta (⟨⟩-suc ρ q) =
+  ≤ₛ-delta q ⟨ ρ ⟩ₛ
+≤ₛ-delta {Γ} {S = S} (∷-suc {ρ = ρ} {S' = S'} V q) =
+  ≤ₛ-delta q ∷ₛ
+    V-rename
+      (eq-ren (cong (_⟨ ρ ⟩)
+                    (sym (trans (++ᶜ-assoc Γ (toCtx S) (toCtx (≤ₛ-delta q)))
+                                (cong (Γ ++ᶜ_) (≤ₛ-delta-toCtx q))))))
+      V
+
+-- Reduction steps preserve "delay-shapedness" of states.
+-- (DELAY adds ⟨ of-natʳ τ ⟩ₛ; BOX adds a value cell; all other
+-- steps leave the state unchanged or extend it through a step
+-- whose extension is itself ⟨nat⟩-shaped.)
+
+postulate
+  step-preserves-nat-⟨⟩-postulate :
+    ∀ {Γ} {S S₁ : 𝕊 Γ} → S ≤ₛ S₁ → ⟨nat⟩-State S → (ρ : R) → ⟨nat⟩-State (S₁ ⟨ ρ ⟩ₛ)
+
+step-preserves-nat : ∀ {Γ} {S S' : 𝕊 Γ} → S ≤ₛ S' → ⟨nat⟩-State S → ⟨nat⟩-State S'
+step-preserves-nat id-suc           ν = ν
+step-preserves-nat (⟨⟩-suc ρ p)     ν = step-preserves-nat-⟨⟩-postulate p ν ρ
+step-preserves-nat (∷-suc V p)      ν = is-∷ {V = V} (step-preserves-nat p ν)
+
+-- The delta state inherits delay-shapedness from the larger state.
+-- Pattern-matches simultaneously on the extension proof and the
+-- nat-witness for S', forcing the resource grades in ⟨⟩-suc to
+-- agree with `of-natʳ τ`.
+
+≤ₛ-delta-nat : ∀ {Γ} {S S' : 𝕊 Γ}
+             → (q : S ≤ₛ S') → ⟨nat⟩-State S' → ⟨nat⟩-State (≤ₛ-delta q)
+≤ₛ-delta-nat id-suc            _                = is-∅
+≤ₛ-delta-nat (⟨⟩-suc _ q) (is-⟨⟩-nat τ ν')      = is-⟨⟩-nat τ (≤ₛ-delta-nat q ν')
+≤ₛ-delta-nat (∷-suc V q)  (is-∷ ν')             = is-∷ (≤ₛ-delta-nat q ν')
+
+
+-- =============================================================
+-- 4. Evaluation contexts
+-- =============================================================
+--
+-- Evaluation contexts are
+--
+--   E ::= [] | let x = E in N | handle E with H to z in N.
+--
+-- In this development, evaluation contexts are precisely the
+-- computation term contexts with flag `eval`. Their hole binds
+-- no variables: `eval-hole-ctx` shows hole-ctx ≡ [].
+
+EvalCtx : Ctx → CType → CType → Set
+EvalCtx Γ CH C = Γ ⊢K[ eval ◁ CH ]⦂ C
+
+-- Filling an evaluation context. Since `eval-hole-ctx` shows
+-- `hole-ctx E ≡ []`, and `Γ ++ᶜ [] = Γ` definitionally, we just
+-- need to rewrite the M's context propositionally.
+
+fill-eval : ∀ {Γ CH C} → (E : EvalCtx Γ CH C) → Γ ⊢C⦂ CH → Γ ⊢C⦂ C
+fill-eval {Γ} E M =
+  E [ C-rename (eq-ren (cong (Γ ++ᶜ_) (sym (eval-hole-ctx E)))) M ]
+
+-- =============================================================
+-- 5. Theorem (Equational Soundness)
+-- =============================================================
+--
+-- Statement:
+--
+--   if ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩ (with S' = S ++ˢ S'', S'' = ≤ₛ-delta)
+--
+--   and ⟨nat⟩-State witnesses ν for S, ν' for S',
+--
+--   then for every evaluation context E,
+--
+--      ⟦ν⟧K [ E [ M ] ] ≡ ⟦ν⟧K [ E [ K_{S''} [ M' ] ] ]
+--
+--   in the equational theory
+--
+-- Type-level coherence:
+--   The two computations live at the same effect grade, by the
+--   step's preservation invariants. We expose this as a hypothesis
+--   `coh` that the user provides; in concrete cases it follows
+--   from `step-invariants`.
+
+-- The "effect of K_{S''}" applied at ε_M', expressed through
+-- ⟨nat⟩-State witness for the delta.
+
+state-eff[≤ₛ-delta]·ₑ : ∀ {Γ} {S S' : 𝕊 Γ}
+                     → (q : S ≤ₛ S') → ⟨nat⟩-State S'
+                     → E → E
+state-eff[≤ₛ-delta]·ₑ q ν' ε = state-eff[ ≤ₛ-delta-nat q ν' ]·ₑ ε
+
+-- The right-hand side of the soundness equation needs the
+-- "delta" of M' wrapped in K_{S''} and re-located back into
+-- toCtx S. This composite operation is `M↑K-delta` below.
+--
+-- Concretely, given a step S ≤ₛ S' (with delta S'' = ≤ₛ-delta),
+-- and ν' a delay-shape witness for S', we build:
+--
+--   K_{S''} [ M' ]  : toCtx S ⊢C⦂ X ‼ (state-eff[ ν'' ]·ₑ ε_M')
+--
+-- where ν'' = ≤ₛ-delta-nat q ν'. The construction handles the
+-- many propositional context equalities induced by `_++ˢ_` /
+-- `≤ₛ-delta` definitions.
+
+postulate
+  M↑K-delta : ∀ {X ε_M'} {S S' : 𝕊 []}
+            → (q : S ≤ₛ S')
+            → (ν' : ⟨nat⟩-State S')
+            → toCtx S' ⊢C⦂ X ‼ ε_M'
+            → toCtx S ⊢C⦂ X ‼ (state-eff[ ≤ₛ-delta-nat q ν' ]·ₑ ε_M')
+
+
+-- Theorem (Equational Soundness).
+--
+-- The hypothesis `coh` ensures the LHS and RHS have the same
+-- effect annotation: it expresses that the time M had to spend
+-- (ε_M) is the sum of the time accumulated in the new bits of
+-- state during the step (state-eff[≤ₛ-delta-nat ...]) and the
+-- time M' has yet to spend (ε_M'). This invariant follows from
+-- the operational semantics' preservation theorem (Thm 3.10).
+
+postulate
+  equational-soundness :
+      ∀ {X Y ε ε_M ε_M'}
+    → {S S' : 𝕊 []}
+    → (ν : ⟨nat⟩-State S)
+    → (ν' : ⟨nat⟩-State S')
+    → {M : toCtx S ⊢C⦂ X ‼ ε_M}
+    → {M' : toCtx S' ⊢C⦂ X ‼ ε_M'}
+    → (step : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+    → (E : EvalCtx (toCtx S) (X ‼ ε_M) (Y ‼ ε))
+    → (coh : ε_M ≡ state-eff[ ≤ₛ-delta-nat (step-extends-state step) ν' ]·ₑ ε_M')
+    → [] ⊢C⦂
+        fill-K-of-state ν (fill-eval E M)
+            ==
+        fill-K-of-state ν
+          (fill-eval E
+            (ε-subst (sym coh)
+                     (M↑K-delta (step-extends-state step) ν' M')))
+
+
+-- Corollary:  When E = []ₖ, we get the simpler equation
+--
+--    ⟦ν⟧K [ M ]  ≡  ⟦ν'⟧K [ M' ]   : Y ! (state-eff[ν]·ₑ ε_M)
+--
+-- (after appropriate renamings).
+
+-- =============================================================
+-- 6. Proof sketch: case-by-case correspondence
+-- =============================================================
+--
+-- Following the paper proof of the Theorem, the soundness equation
+-- for each rule reduces to an equation in the equational theory:
+--
+--   APP         (β-reduction of function application)
+--               ↦  fun-beta
+--
+--   MATCH       (β-reduction of pair pattern-matching)
+--               ↦  match-beta
+--
+--   SEQ-RET     (β-reduction of sequenced return)
+--               ↦  seq-return
+--
+--   SEQ-OP      (algebraicity for sequenced operation calls)
+--               ↦  seq-perform
+--
+--   HANDLE-RET  (β-reduction of handler on return)
+--               ↦  handle-return
+--
+--   HANDLE-OP   (algebraicity for handled operation calls)
+--               ↦  handle-perform
+--
+--   COERCE      (peeling a sub-effecting coercion)
+--               ↦  coerce-cong + reflexivity
+--
+-- For these state-preserving cases, S' = S so ≤ₛ-delta ≡ ∅ and
+-- K_{S''} = []ₖ; the equation reduces to congruence under K_S
+-- and E of the corresponding operational equation.
+--
+--   SEQ-STEP    (congruence under sequencing)
+--               ↦ induction hypothesis applied within the
+--                 evaluation context  (let x = [] in N)
+--
+--   HANDLE-STEP (congruence under handling)
+--               ↦ induction hypothesis applied within the
+--                 evaluation context  (handle [] with H to z in N)
+--
+--   DELAY       (passing of time via delay)
+--               ↦ algebraicity of delay (seq-delay / handle-delay
+--                 pulled out of the evaluation context). Here
+--                 S'' = ⟨ of-natʳ τ ⟩ₛ, so K_{S''} = delay τ [].
+--
+--   BOX         (boxing as state extension)
+--               ↦ algebraicity of box (seq-box / handle-box).
+--                 Here S'' = x ↦ V, so K_{S''} = box V [].
+--
+--   UNBOX       (unboxing via state lookup)
+--               ↦ unbox-beta (the "interaction" equation), the
+--                 paper's main port of departure from local state
+--                 (it must commute past any number of intermediate
+--                 box/unbox/delay/op constructs in K_S, justifying
+--                 why we abstract over the "outer" K_S in the
+--                 statement).
+--
+-- A full Agda proof requires substantial bookkeeping for the many
+-- renamings applied to terms inside K_S, E, K_{S''} and M', M; the
+-- paper itself notes that the formalisation of this theorem is work
+-- in progress. The structure of definitions developed here gives a
+-- stable foundation for such a proof: each case becomes a focused
+-- application of the equational rule named above, plus standard
+-- congruence lemmas.

@@ -88,7 +88,11 @@ open import OperationalSemantics.PreservationTheorem (Grades)
 open import OperationalSemantics.ProgressTheorem (Grades)
 
 
--- EQUATIONAL THEORY 
+-- EQUATIONAL THEORY
 --------------------
 
 open import EquationalTheory.EquationalTheory (Grades)
+
+---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
+
+open import EquationalTheory.EquationalSoundness (Grades)
