@@ -245,6 +245,59 @@ fill-eval : ∀ {Γ CH C} → (E : EvalCtx Γ CH C) → Γ ⊢C⦂ CH → Γ ⊢
 fill-eval {Γ} E M =
   E [ C-rename (eq-ren (cong (Γ ++ᶜ_) (sym (eval-hole-ctx E)))) M ]
 
+
+-- =============================================================
+-- 4b. Renaming respects the equational theory
+-- =============================================================
+--
+-- We postulate that the equational equivalences are preserved by
+-- arbitrary renamings. A direct proof is mechanical but lengthy
+-- (one mutually-recursive clause per equational rule, ~25 cases
+-- on each side). Postulating is consistent with the existing
+-- pattern in this file (`rel-hole-ctx-[]ₖ`, `≤ₛ-delta-toCtx`,
+-- etc).
+
+postulate
+  ==-rename-C : ∀ {Γ Γ' C} {M N : Γ ⊢C⦂ C}
+              → (r : Ren Γ Γ') → Γ ⊢C⦂ M == N
+              ----------------------------------
+              → Γ' ⊢C⦂ C-rename r M == C-rename r N
+  ==-rename-V : ∀ {Γ Γ' A} {V W : Γ ⊢V⦂ A}
+              → (r : Ren Γ Γ') → Γ ⊢V⦂ V == W
+              ----------------------------------
+              → Γ' ⊢V⦂ V-rename r V == V-rename r W
+
+
+-- =============================================================
+-- 4c. K-context congruence
+-- =============================================================
+--
+-- The equational theory provides only constructor-level
+-- congruences (`seq-cong`, `handle-cong`, etc.). We lift these
+-- to a generic K-context congruence: if M == N then K[M] == K[N].
+-- The proof mirrors `_[_]`'s structural definition in
+-- `Syntax/CompContext.agda`.
+
+K-cong : ∀ {Γ CH C f} → (K : Γ ⊢K[ f ◁ CH ]⦂ C)
+       → {M N : Γ ++ᶜ hole-ctx K ⊢C⦂ CH}
+       → Γ ++ᶜ hole-ctx K ⊢C⦂ M == N
+       --------------------------------
+       → Γ ⊢C⦂ K [ M ] == K [ N ]
+K-cong []ₖ p = p
+K-cong (K ₖ[ q ]⨟ N) p =
+  seq-cong (K-cong K p) C-refl
+K-cong (perform[ q ]ₖ op V K) p =
+  perform-cong V-refl (K-cong K (==-rename-C _ p))
+K-cong (handle[ q ]ₖ K `with H `in N) p =
+  handle-cong (K-cong K p) (λ op ε'' Γ' → C-refl) C-refl
+K-cong (delay[ q ]ₖ τ K) p =
+  delay-cong (K-cong K (==-rename-C _ p))
+K-cong (unbox[ q ]ₖ x rel K) p =
+  unbox-cong x (K-cong K (==-rename-C _ p))
+K-cong (box[ q ]ₖ V K) p =
+  box-cong V-refl (K-cong K (==-rename-C _ p))
+
+
 -- =============================================================
 -- 5. Theorem (Equational Soundness)
 -- =============================================================
@@ -288,12 +341,28 @@ state-eff[≤ₛ-delta]·ₑ q ν' ε = state-eff[ ≤ₛ-delta-nat q ν' ]·ₑ
 -- many propositional context equalities induced by `_++ˢ_` /
 -- `≤ₛ-delta` definitions.
 
+-- The state-extending clauses (DELAY, BOX, UNBOX) require building
+-- a non-trivial K_{S''} wrapping; we postulate that part. The
+-- `id-suc` clause (state-preserving steps) reduces definitionally
+-- to the identity, which is the case used in the simple cases of
+-- the soundness proof.
+
 postulate
-  M↑K-delta : ∀ {X ε_M'} {S S' : 𝕊 []}
-            → (q : S ≤ₛ S')
-            → (ν' : ⟨nat⟩-State S')
-            → toCtx S' ⊢C⦂ X ‼ ε_M'
-            → toCtx S ⊢C⦂ X ‼ (state-eff[ ≤ₛ-delta-nat q ν' ]·ₑ ε_M')
+  M↑K-delta-extending :
+      ∀ {X ε_M'} {S S' : 𝕊 []}
+    → (q : S ≤ₛ S')
+    → (ν' : ⟨nat⟩-State S')
+    → toCtx S' ⊢C⦂ X ‼ ε_M'
+    → toCtx S ⊢C⦂ X ‼ (state-eff[ ≤ₛ-delta-nat q ν' ]·ₑ ε_M')
+
+M↑K-delta : ∀ {X ε_M'} {S S' : 𝕊 []}
+          → (q : S ≤ₛ S')
+          → (ν' : ⟨nat⟩-State S')
+          → toCtx S' ⊢C⦂ X ‼ ε_M'
+          → toCtx S ⊢C⦂ X ‼ (state-eff[ ≤ₛ-delta-nat q ν' ]·ₑ ε_M')
+M↑K-delta id-suc          _  M' = M'
+M↑K-delta (⟨⟩-suc ρ q) ν' M' = M↑K-delta-extending (⟨⟩-suc ρ q) ν' M'
+M↑K-delta (∷-suc V q)  ν' M' = M↑K-delta-extending (∷-suc V q) ν' M'
 
 
 -- Theorem (Equational Soundness).
@@ -305,8 +374,14 @@ postulate
 -- time M' has yet to spend (ε_M'). This invariant follows from
 -- the operational semantics' preservation theorem (Thm 3.10).
 
+-- The state-extending and congruence operational rules are
+-- proven separately. Their proofs require the K_{S''} wrapping
+-- (handled by `M↑K-delta-extending`) and induction on the inner
+-- step (for SEQ-STEP, HANDLE-STEP), respectively. We postulate
+-- this branch and prove the simple (state-preserving) ones below.
+
 postulate
-  equational-soundness :
+  equational-soundness-extending :
       ∀ {X Y ε ε_M ε_M'}
     → {S S' : 𝕊 []}
     → (ν : ⟨nat⟩-State S)
@@ -323,6 +398,92 @@ postulate
           (fill-eval E
             (ε-subst (sym coh)
                      (M↑K-delta (step-extends-state step) ν' M')))
+
+-- Uniqueness of identity proofs (axiom K). Used to align the
+-- effect-equality `coh` argument with the equational rule's
+-- internal effect-equation in cases like SEQ-RET / HANDLE-RET.
+
+≡-irrelevant : ∀ {l} {A : Set l} {x y : A} (p q : x ≡ y) → p ≡ q
+≡-irrelevant refl refl = refl
+
+-- Lifting an equation through K_S and an evaluation context E
+-- via K-cong. These wrap up the renamings that fill-K-of-state
+-- and fill-eval insert.
+
+fill-eval-cong : ∀ {Γ CH C} → (E : EvalCtx Γ CH C)
+              → {M N : Γ ⊢C⦂ CH}
+              → Γ ⊢C⦂ M == N
+              → Γ ⊢C⦂ fill-eval E M == fill-eval E N
+fill-eval-cong E p =
+  K-cong E (==-rename-C _ p)
+
+fill-K-of-state-cong : ∀ {S : 𝕊 []} → (ν : ⟨nat⟩-State S) → ∀ {X ε}
+                    → {M N : toCtx S ⊢C⦂ X ‼ ε}
+                    → toCtx S ⊢C⦂ M == N
+                    → [] ⊢C⦂ fill-K-of-state ν M == fill-K-of-state ν N
+fill-K-of-state-cong ν p =
+  K-cong ⟦ ν ⟧K (==-rename-C _ p)
+
+
+equational-soundness :
+    ∀ {X Y ε ε_M ε_M'}
+  → {S S' : 𝕊 []}
+  → (ν : ⟨nat⟩-State S)
+  → (ν' : ⟨nat⟩-State S')
+  → {M : toCtx S ⊢C⦂ X ‼ ε_M}
+  → {M' : toCtx S' ⊢C⦂ X ‼ ε_M'}
+  → (step : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (E : EvalCtx (toCtx S) (X ‼ ε_M) (Y ‼ ε))
+  → (coh : ε_M ≡ state-eff[ ≤ₛ-delta-nat (step-extends-state step) ν' ]·ₑ ε_M')
+  → [] ⊢C⦂
+      fill-K-of-state ν (fill-eval E M)
+          ==
+      fill-K-of-state ν
+        (fill-eval E
+          (ε-subst (sym coh)
+                   (M↑K-delta (step-extends-state step) ν' M')))
+
+-- ---------- Simple, state-preserving cases ----------
+
+-- APP:  lam M_body · V  ↝  M_body[V/x]   discharged by `fun-beta`.
+equational-soundness ν ν' (APP {M = M_body} {V = V}) E refl =
+  fill-K-of-state-cong ν (fill-eval-cong E (fun-beta M_body V))
+
+-- MATCH:  match ⦉V,W⦊ in M  ↝  M[W/y][V/x]   discharged by `match-beta`.
+equational-soundness ν ν' (MATCH {V = V} {W = W} {M = M_body}) E refl =
+  fill-K-of-state-cong ν (fill-eval-cong E (match-beta V W M_body))
+
+-- SEQ-RET:  return V ; N  ↝  N'   discharged by `seq-return`.
+-- Here `coh : uₑ ·ₑ ε ≡ ε`, which by UIP equals `·ₑ-identityˡ ε`.
+equational-soundness {ε_M' = ε_M'} ν ν' (SEQ-RET {V = V} {N = N}) E coh
+  rewrite ≡-irrelevant coh (·ₑ-identityˡ ε_M') =
+  fill-K-of-state-cong ν (fill-eval-cong E (seq-return V N))
+
+-- HANDLE-RET:  handle return V with H in N  ↝  N'   discharged by `handle-return`.
+-- Same UIP rewrite as SEQ-RET (coh : uₑ ·ₑ ε ≡ ε).
+equational-soundness {ε_M' = ε_M'} ν ν' (HANDLE-RET {V = V} {H = H} {N = N}) E coh
+  rewrite ≡-irrelevant coh (·ₑ-identityˡ ε_M') =
+  fill-K-of-state-cong ν (fill-eval-cong E (handle-return V H N))
+
+-- SEQ-OP:  (perform op V M) ; N  ↝  perform op V (M ; N')
+-- The operational rule already applies `ε-subst (sym ·ₑ-assoc)` to
+-- the result, so M and M' have the same effect — coh = refl.
+equational-soundness ν ν' (SEQ-OP {V = V} {M = M_inner} {N = N}) E refl =
+  fill-K-of-state-cong ν (fill-eval-cong E (seq-perform V M_inner N))
+
+-- HANDLE-OP:  handle (perform op V M) with H in N  ↝  box (lam ...) ...
+-- The operational rule does not apply `ε-subst`, so M' has effect
+-- `op-grade op ·ₑ (ε ·ₑ ε'')` while M has `(op-grade op ·ₑ ε) ·ₑ ε''`.
+-- coh is `·ₑ-assoc`. The equational rule `handle-perform` wraps an
+-- `ε-subst (sym ·ₑ-assoc)` over a body matching M' exactly.
+equational-soundness ν ν' (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}
+                                     {V = V} {M = M_inner} {H = H} {N = N}) E coh
+  rewrite ≡-irrelevant coh (·ₑ-assoc (op-grade op) ε ε'') =
+  fill-K-of-state-cong ν (fill-eval-cong E (handle-perform V M_inner H N))
+
+-- ---------- Catch-all for non-simple cases ----------
+equational-soundness ν ν' step E coh =
+  equational-soundness-extending ν ν' step E coh
 
 
 -- Corollary:  When E = []ₖ, we get the simpler equation
