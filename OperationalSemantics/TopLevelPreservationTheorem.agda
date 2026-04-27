@@ -44,6 +44,23 @@ data _⟿_ :  {C D : CType} → Config C → Config D → Set where
           → ⟨ S , perform op V M ⟩ ⟿
             ⟨ grade-pass S (mapᵉ (op-grade op)) , M [ Hd ↦ op-sem op V ]c ⟩
 
--- TODO: Needs an invariant lemma about how the states and effects are related before and after steps
+-- invariants preserved by the top-level small-step operational semantics
+-- in particular, running a top-level implementation of an algebraic operation
+-- results in an equality S' · ε' ≡ S · ε
 
--- TODO: Also needs a top-level version of the progress theorem (in a separate TopLevelProgress.agda file)
+top-level-step-invariants : ∀ {A B ε ε'}
+                          → {S S' : 𝕊 []}
+                          → {M : toCtx S ⊢C⦂ A ‼ ε}
+                          → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                          → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
+                          → A ≡ B
+                          × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε
+
+top-level-step-invariants (↝-STEP step) =
+  step-invariants step
+top-level-step-invariants {S = S} OP-STEP =
+  refl ,
+  ≾ᵣ-reflexive
+    (trans
+      (·ᵣ-assoc _ _ _)
+      (cong (state-grade S ·ᵣ_) (sym map-·ᵉ)))
