@@ -24,7 +24,7 @@ open import Util.Operations (Grades)
 
 -- Top-level small-step operational semantics aka Preservation theorem
 --
--- This top-level semantics uses the pure semantics 
+-- Note: This top-level semantics uses the pure semantics of algebraic operations
 
 data _⟿_ :  {C D : CType} → Config C → Config D → Set where
 
