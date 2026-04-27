@@ -8,6 +8,7 @@ open TopLevelOpSemantics OpSemantics
 
 open import OperationalSemantics.State (Grades)
 open import OperationalSemantics.PreservationTheorem (Grades)
+open import OperationalSemantics.ProgressTheorem (Grades)
 open import OperationalSemantics.TopLevelPreservationTheorem (Grades) (OpSemantics)
 
 open import Syntax.Contexts (Grades)
@@ -42,4 +43,15 @@ data TopLevelProgresses : {ε : E}
                        ------------------------------------------------------------
                      → TopLevelProgresses M
 
--- TODO: top-level progress theorem statement + proof
+-- Top-level progress theorem statement
+
+top-level-progress : ∀ {A ε} → {S : 𝕊 []} → (M : toCtx S ⊢C⦂ A ‼ ε) → TopLevelProgresses M
+top-level-progress {S = S} M with progress M
+... | is-value =
+  is-top-level-value
+... | is-op =
+  top-level-steps
+    (≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ))))
+    OP-STEP
+... | steps p M↝M' =
+  top-level-steps p (↝-STEP M↝M')
