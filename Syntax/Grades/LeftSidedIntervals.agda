@@ -1,10 +1,10 @@
---------------------------------------------
--- One-sided (closed) intervals as grades --
---------------------------------------------
+---------------------------------------------------
+-- (Left) One-sided (closed) intervals as grades --
+---------------------------------------------------
 
 open import Syntax.Grades
 
-module Syntax.Grades.OneSidedIntervals (Grades : GradeSystem) where
+module Syntax.Grades.LeftSidedIntervals (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
@@ -20,7 +20,7 @@ open import Relation.Binary.PropositionalEquality as Eq
 open Eq.≡-Reasoning
 open import Relation.Nullary.Decidable.Core
 
--- type of one-sided intervals
+-- type of (left) one-sided intervals
 
 data 𝕀 : Set where
   [_,+∞⟩ : ℕ → 𝕀
