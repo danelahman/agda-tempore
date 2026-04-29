@@ -91,49 +91,12 @@ _≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
 ... | yes p = yes (eq𝕀 p)
 ... | no ¬p = no (λ eq → ¬p (𝕀-inj eq))
 
--- cancellativity (ℕ-level auxiliaries)
+-- cancellativity
 
-·ₒ-≡-cancellative-aux : ∀ {m₁ m₂ m₃ m₄ m₅}
-                       → m₁ + m₃ + m₂ ≡ m₄ + m₃ + m₅
-                       → m₁ + m₂ ≡ m₄ + m₅
-·ₒ-≡-cancellative-aux {m₁} {m₂} {m₃} {m₄} {m₅} eq =
-  +-cancelˡ-≡ m₃ (m₁ + m₂) (m₄ + m₅)
-    (begin
-      m₃ + (m₁ + m₂)
-    ≡⟨ sym (+-assoc m₃ m₁ m₂) ⟩
-      (m₃ + m₁) + m₂
-    ≡⟨ cong (_+ m₂) (+-comm m₃ m₁) ⟩
-      (m₁ + m₃) + m₂
-    ≡⟨ eq ⟩
-      (m₄ + m₃) + m₅
-    ≡⟨ cong (_+ m₅) (+-comm m₄ m₃) ⟩
-      (m₃ + m₄) + m₅
-    ≡⟨ +-assoc m₃ m₄ m₅ ⟩
-      m₃ + (m₄ + m₅)
-    ∎)
+·ₒ-≾ₒ-cancellativeˡ : (i₁ i₂ i₃ : 𝕀) → (i₁ ·ₒ i₂) ≾ₒ (i₁ ·ₒ i₃) → i₂ ≾ₒ i₃
+·ₒ-≾ₒ-cancellativeˡ [ m₁ ,+∞⟩ [ m₂ ,+∞⟩ [ m₃ ,+∞⟩ rel =
+  +-cancelˡ-≤ m₁ m₃ m₂ rel
 
-·ₒ-≾ₒ-cancellative-aux : ∀ {m₁ m₂ m₃ m₄ m₅}
-                        → m₁ + m₃ + m₂ ≤ m₄ + m₃ + m₅
-                        → m₁ + m₂ ≤ m₄ + m₅
-·ₒ-≾ₒ-cancellative-aux {m₁} {m₂} {m₃} {m₄} {m₅} rel =
-  +-cancelˡ-≤ m₃ (m₁ + m₂) (m₄ + m₅)
-    (≤-trans
-      (≤-reflexive (trans (sym (+-assoc m₃ m₁ m₂)) (cong (_+ m₂) (+-comm m₃ m₁))))
-    (≤-trans
-      rel
-      (≤-reflexive (trans (cong (_+ m₅) (+-comm m₄ m₃)) (+-assoc m₃ m₄ m₅)))))
-
-·ₒ-≡-cancellative : ∀ {i₁ i₂ i₃ i₄ i₅ : 𝕀}
-                   → i₁ ·ₒ i₃ ·ₒ i₂ ≡ i₄ ·ₒ i₃ ·ₒ i₅
-                   → i₁ ·ₒ i₂ ≡ i₄ ·ₒ i₅
-·ₒ-≡-cancellative {[ m₁ ,+∞⟩} {[ m₂ ,+∞⟩} {[ m₃ ,+∞⟩} {[ m₄ ,+∞⟩} {[ m₅ ,+∞⟩} eq =
-  eq𝕀 (·ₒ-≡-cancellative-aux {m₁} {m₂} {m₃} {m₄} {m₅} (𝕀-inj eq))
-
-·ₒ-≾ₒ-cancellative : ∀ {i₁ i₂ i₃ i₄ i₅ : 𝕀}
-                    → i₁ ·ₒ i₃ ·ₒ i₂ ≾ₒ i₄ ·ₒ i₃ ·ₒ i₅
-                    → i₁ ·ₒ i₂ ≾ₒ i₄ ·ₒ i₅
-·ₒ-≾ₒ-cancellative {[ m₁ ,+∞⟩} {[ m₂ ,+∞⟩} {[ m₃ ,+∞⟩} {[ m₄ ,+∞⟩} {[ m₅ ,+∞⟩} =
-  ·ₒ-≾ₒ-cancellative-aux {m₄} {m₅} {m₃} {m₁} {m₂}
 
 -- zero-product properties
 
@@ -154,25 +117,24 @@ _≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
 one-sided-intervals : Grade
 one-sided-intervals = record
   { Carrier          = 𝕀
-  ; _·_              = _·ₒ_
-  ; u                = uₒ
-  ; ·-identityʳ      = ·ₒ-identityʳ
-  ; ·-identityˡ      = ·ₒ-identityˡ
-  ; ·-assoc          = ·ₒ-assoc
-  ; _≾_              = _≾ₒ_
-  ; ·-monoʳ-≾        = ·ₒ-monoʳ-≾ₒ
-  ; ·-monoˡ-≾        = ·ₒ-monoˡ-≾ₒ
-  ; ≾-refl           = ≾ₒ-refl
-  ; ≾-trans          = ≾ₒ-trans
-  ; ≾-irrelevant     = ≾ₒ-irrelevant
-  ; _≡?_             = _≡ₒ?_
-  ; ·-≡-cancellative = ·ₒ-≡-cancellative
-  ; ·-≾-cancellative = ·ₒ-≾ₒ-cancellative
-  ; ≡-zero-productˡ  = ≡ₒ-zero-productˡ
-  ; ≡-zero-productʳ  = ≡ₒ-zero-productʳ
-  ; ≾-zero-productˡ  = ≾ₒ-zero-productˡ
-  ; ≾-zero-productʳ  = ≾ₒ-zero-productʳ
-  ; of-nat           = [_,+∞⟩
-  ; of-nat-zero      = refl
-  ; of-nat-plus      = refl
+  ; _·_               = _·ₒ_
+  ; u                 = uₒ
+  ; ·-identityʳ       = ·ₒ-identityʳ
+  ; ·-identityˡ       = ·ₒ-identityˡ
+  ; ·-assoc           = ·ₒ-assoc
+  ; _≾_               = _≾ₒ_
+  ; ·-monoʳ-≾         = ·ₒ-monoʳ-≾ₒ
+  ; ·-monoˡ-≾         = ·ₒ-monoˡ-≾ₒ
+  ; ≾-refl            = ≾ₒ-refl
+  ; ≾-trans           = ≾ₒ-trans
+  ; ≾-irrelevant      = ≾ₒ-irrelevant
+  ; _≡?_              = _≡ₒ?_
+  ; ·-≾-cancellativeˡ = ·ₒ-≾ₒ-cancellativeˡ
+  ; ≡-zero-productˡ   = ≡ₒ-zero-productˡ
+  ; ≡-zero-productʳ   = ≡ₒ-zero-productʳ
+  ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
+  ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
+  ; of-nat            = [_,+∞⟩
+  ; of-nat-zero       = refl
+  ; of-nat-plus       = refl
   }

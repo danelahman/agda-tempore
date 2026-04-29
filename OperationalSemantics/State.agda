@@ -91,7 +91,7 @@ suc-comp-ren : ∀ {Γ Γ'}
              → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
 suc-comp-ren {S = S} id-suc S'·ρ'''≾S·ρ'' =
-  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellativeˡ S'·ρ'''≾S·ρ'')
+  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellativeˡ (state-grade S) _ _ S'·ρ'''≾S·ρ'')
 suc-comp-ren {S' = S' ⟨ ρ'' ⟩ₛ} (⟨⟩-suc ρ'' S≤ₛS') S'·ρ'''≾S·ρ'' =
   ⟨⟩-μ-ren ∘ʳ suc-comp-ren S≤ₛS' (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (state-grade S') ρ'' _))) S'·ρ'''≾S·ρ'') 
 suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'''≾S·ρ'' =

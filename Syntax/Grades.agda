@@ -57,11 +57,14 @@ record Grade : Set₁ where
     -- _≡_ (on Carrier) is decidable
     _≡?_ : Decidable (_≡_ {A = Carrier})
 
+    {-
     -- _≡_ is cancellative
     ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
+    -}
 
     -- _≾_ is left-cancellative
-    ·-≾-cancellative : ∀ {c d e f g} → c · e · d ≾ f · e · g  → c · d ≾ f · g
+    ·-≾-cancellativeˡ : LeftCancellative {A = Carrier} _≾_ _·_
+-- ·-≾-cancellative : ∀ {c d e f g} → c · e · d ≾ f · e · g  → c · d ≾ f · g
 
     -- _·_ and u have zero-product property
     ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
@@ -85,54 +88,6 @@ record Grade : Set₁ where
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
-
-  ·-≡-cancellativeˡ : ∀ {c d e} → d · c ≡ d · e → c ≡ e
-  ·-≡-cancellativeˡ {c} {d} {e} p =
-    begin
-      c
-    ≡⟨ sym (·-identityˡ c) ⟩
-      u · c
-    ≡⟨ ·-≡-cancellative
-         (trans (trans (·-assoc u d c) (·-identityˡ (d · c)))
-         (trans p (trans (sym (·-identityˡ (d · e))) (sym (·-assoc u d e))))) ⟩
-      u · e
-    ≡⟨ ·-identityˡ e ⟩
-      e
-    ∎
-
-  -- binary cancellation lemmas  
-  ·-≡-cancellativeʳ : ∀ {c d e} → c · d ≡ e · d → c ≡ e
-  ·-≡-cancellativeʳ {c} {d} {e} p =
-    begin
-      c
-      ≡⟨ sym (·-identityʳ c) ⟩
-      c · u
-      ≡⟨ ·-≡-cancellative (trans (·-identityʳ (c · d)) (trans p (sym (·-identityʳ (e · d))))) ⟩
-      e · u
-      ≡⟨ ·-identityʳ e ⟩
-      e
-    ∎
-
-  ·-≾-cancellativeˡ : ∀ {c d e} → d · c ≾ d · e → c ≾ e
-  ·-≾-cancellativeˡ {c} {d} {e} p =
-    ≾-trans
-      (≾-reflexive (sym (·-identityˡ c)))
-      (≾-trans
-        (·-≾-cancellative
-          (≾-trans
-            (≾-reflexive (·-assoc u d c))
-            (≾-trans
-              (·-monoʳ-≾ p)
-              (≾-reflexive (sym (·-assoc u d e))))))
-        (≾-reflexive (·-identityˡ e)))
-
-  ·-≾-cancellativeʳ : ∀ {c d e} → c · d ≾ e · d → c ≾ e
-  ·-≾-cancellativeʳ {c} {d} {e} p =
-    ≾-trans
-      (≾-reflexive (sym (·-identityʳ c)))
-      (≾-trans
-        (·-≾-cancellative (·-monoˡ-≾ p))
-        (≾-reflexive (·-identityʳ e)))
 
   -- contrapositive version of the zero-product property of _·_
   ≡-zero-productˡ-≢ : ∀ {c d} → c ≢ u → c · d ≢ u
@@ -197,8 +152,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-trans to ≾ᵣ-trans;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≡?_ to _≡ᵣ?_;
-     ·-≡-cancellative to ·ᵣ-≡-cancellative;
-     ·-≾-cancellative to ·ᵣ-≾-cancellative;
+     ·-≾-cancellativeˡ to ·ᵣ-≾ᵣ-cancellativeˡ;
      ≡-zero-productˡ to ≡ᵣ-zero-productclˡ;
      ≡-zero-productʳ to ≡ᵣ-zero-productʳ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
@@ -207,10 +161,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      of-nat-zero to of-natʳ-zero;
      of-nat-plus to of-natʳ-plus;
      ≾-reflexive to ≾ᵣ-reflexive;
-     ·-≡-cancellativeˡ to ·ᵣ-≡-cancellativeˡ;
-     ·-≡-cancellativeʳ to ·ᵣ-≡-cancellativeʳ;
-     ·-≾-cancellativeˡ to ·ᵣ-≾ᵣ-cancellativeˡ;
-     ·-≾-cancellativeʳ to ·ᵣ-≾ᵣ-cancellativeʳ;
      ≡-zero-productˡ-≢ to ≡ᵣ-zero-productˡ-≢;
      ≡-zero-productʳ-≢ to ≡ᵣ-zero-productʳ-≢
     ) public
@@ -227,16 +177,10 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-trans to ≾ₑ-trans;
      _≡?_ to _≡ₑ?_;
-     ·-≡-cancellative to ·ₑ-≡-cancellative;
-     ·-≾-cancellative to ·ₑ-≾ₑ-cancellative;
      of-nat to of-natᵉ;
      of-nat-zero to of-natᵉ-zero;
      of-nat-plus to of-natᵉ-plus;
      ≾-reflexive to ≾ₑ-reflexive;
-     ·-≡-cancellativeˡ to ·ₑ-≡-cancellativeˡ;
-     ·-≡-cancellativeʳ to ·ₑ-≡-cancellativeʳ;
-     ·-≾-cancellativeˡ to ·ₑ-≾ₑ-cancellativeˡ;
-     ·-≾-cancellativeʳ to ·ₑ-≾ₑ-cancellativeʳ;
      ≡-zero-productˡ-≢ to ≡ₑ-zero-productˡ-≢;
      ≡-zero-productʳ-≢ to ≡ₑ-zero-productʳ-≢
    ) public

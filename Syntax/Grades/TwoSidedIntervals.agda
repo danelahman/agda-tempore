@@ -107,52 +107,10 @@ eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟ max i₂
 
 -- cancellativity
 
-minmax-≤-cancellative : ∀ {m₁ m₂ m₃ m₄ m₅}
-                      → m₁ + m₃ + m₂ ≤ m₄ + m₃ + m₅
-                      → m₁ + m₂ ≤ m₄ + m₅
-minmax-≤-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} rel =
-  +-cancelˡ-≤ m₃ (m₁ + m₂) (m₄ + m₅)
-    (≤-trans
-      (≤-reflexive (trans (sym (+-assoc m₃ m₁ m₂)) (cong (_+ m₂) (+-comm m₃ m₁))))
-    (≤-trans
-      rel
-      (≤-reflexive (trans (cong (_+ m₅) (+-comm m₄ m₃)) (+-assoc m₃ m₄ m₅)))))
-
-minmax-≡-cancellative : ∀ {m₁ m₂ m₃ m₄ m₅}
-                      → m₁ + m₃ + m₂ ≡ m₄ + m₃ + m₅
-                      → m₁ + m₂ ≡ m₄ + m₅
-minmax-≡-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} eq =
-  +-cancelˡ-≡ m₃ (m₁ + m₂) (m₄ + m₅)
-    (begin
-      m₃ + (m₁ + m₂)
-    ≡⟨ sym (+-assoc m₃ m₁ m₂) ⟩
-      (m₃ + m₁) + m₂
-    ≡⟨ cong (_+ m₂) (+-comm m₃ m₁) ⟩
-      (m₁ + m₃) + m₂
-    ≡⟨ eq ⟩
-      (m₄ + m₃) + m₅
-    ≡⟨ cong (_+ m₅) (+-comm m₄ m₃) ⟩
-      (m₃ + m₄) + m₅
-    ≡⟨ (+-assoc m₃ m₄ m₅) ⟩
-      m₃ + (m₄ + m₅)
-    ∎)
-
-·ᵢ-≡-cancellative : ∀ {i₁ i₂ i₃ i₄ i₅}
-                  → i₁ ·ᵢ i₃ ·ᵢ i₂ ≡ i₄ ·ᵢ i₃ ·ᵢ i₅
-                  → i₁ ·ᵢ i₂ ≡ i₄ ·ᵢ i₅
-
-·ᵢ-≡-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} eq =
-  eqᵢ
-    (minmax-≡-cancellative {min i₁} {min i₂} {min i₃} {min i₄} {min i₅} (cong min eq))
-    (minmax-≡-cancellative {max i₁} {max i₂} {max i₃} {max i₄} {max i₅} (cong max eq))
-
-·ᵢ-≾ᵢ-cancellative : ∀ {i₁ i₂ i₃ i₄ i₅}
-                  → (i₁ ·ᵢ i₃ ·ᵢ i₂) ≾ᵢ (i₄ ·ᵢ i₃ ·ᵢ i₅)
-                  → (i₁ ·ᵢ i₂) ≾ᵢ (i₄ ·ᵢ i₅)
-
-·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} rel =
-  minmax-≤-cancellative {min i₄} {min i₅} {min i₃} {min i₁} {min i₂} (proj₁ rel) ,
-  minmax-≤-cancellative {max i₁} {max i₂} {max i₃} {max i₄} {max i₅} (proj₂ rel)
+·ᵢ-≾ᵢ-cancellativeˡ : (i₁ i₂ i₃ : Interval) → (i₁ ·ᵢ i₂) ≾ᵢ (i₁ ·ᵢ i₃) → i₂ ≾ᵢ i₃
+·ᵢ-≾ᵢ-cancellativeˡ i₁ i₂ i₃ rel =
+  +-cancelˡ-≤ (min i₁) (min i₃) (min i₂) (proj₁ rel) ,
+  +-cancelˡ-≤ (max i₁) (max i₂) (max i₃) (proj₂ rel)
 
 -- zero-product property
 
@@ -178,31 +136,29 @@ minmax-≡-cancellative {m₁} {m₂} {m₃} {m₄} {m₅} eq =
 intervals : Grade
 intervals = record
              { Carrier = Interval
-             ; _·_ = _·ᵢ_
-             ; u = [ 0 , 0 ]tsi z≤n
-             ; ·-identityʳ = ·ᵢ-identityʳ
-             ; ·-identityˡ = ·ᵢ-identityˡ
-             ; ·-assoc = ·ᵢ-assoc
-             ; _≾_ = _≾ᵢ_
-             ; ·-monoʳ-≾ = λ {i} {i₁} {i₂} rel
-                             → ·ᵢ-monoʳ-≾ᵢ {i} {i₁} {i₂} rel
-             ; ·-monoˡ-≾ = λ {i} {i₁} {i₂} rel
-                             → ·ᵢ-monoˡ-≾ᵢ {i} {i₁} {i₂} rel
-             ; ≾-refl = ≤-refl , ≤-refl
-             ; ≾-trans = λ rel₁ rel₂
-                           → ≤-trans (proj₁ rel₂) (proj₁ rel₁) , ≤-trans (proj₂ rel₁) (proj₂ rel₂)
-             ; ≾-irrelevant = λ {i₁} {i₂} rel₁ rel₂
-                                → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
-             ; _≡?_ = eqᵢ?
-             ; ·-≡-cancellative = λ {i₁} {i₂} {i₃} {i₄} {i₅} eq
-                                    → ·ᵢ-≡-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} eq
-             ; ·-≾-cancellative = λ {i₁} {i₂} {i₃} {i₄} {i₅} rel
-                                    → ·ᵢ-≾ᵢ-cancellative {i₁} {i₂} {i₃} {i₄} {i₅} rel
-             ; ≡-zero-productˡ = ≡ᵢ-zero-productˡ
-             ; ≡-zero-productʳ = λ {i₁} {i₂} → ≡ᵢ-zero-productʳ {i₁} {i₂}
-             ; ≾-zero-productˡ = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
-             ; ≾-zero-productʳ = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
-             ; of-nat = λ n → [ n , n ]tsi ≤-refl
-             ; of-nat-zero = eqᵢ refl refl
-             ; of-nat-plus = λ {m} {n} → eqᵢ refl refl
+             ; _·_              = _·ᵢ_
+             ; u                = [ 0 , 0 ]tsi z≤n
+             ; ·-identityʳ      = ·ᵢ-identityʳ
+             ; ·-identityˡ      = ·ᵢ-identityˡ
+             ; ·-assoc          = ·ᵢ-assoc
+             ; _≾_              = _≾ᵢ_
+             ; ·-monoʳ-≾        = λ {i} {i₁} {i₂} rel
+                                    → ·ᵢ-monoʳ-≾ᵢ {i} {i₁} {i₂} rel
+             ; ·-monoˡ-≾        = λ {i} {i₁} {i₂} rel
+                                    → ·ᵢ-monoˡ-≾ᵢ {i} {i₁} {i₂} rel
+             ; ≾-refl           = ≤-refl , ≤-refl
+             ; ≾-trans          = λ rel₁ rel₂
+                                    → ≤-trans (proj₁ rel₂) (proj₁ rel₁) ,
+                                      ≤-trans (proj₂ rel₁) (proj₂ rel₂)
+             ; ≾-irrelevant      = λ {i₁} {i₂} rel₁ rel₂
+                                     → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
+             ; _≡?_              = eqᵢ?
+             ; ·-≾-cancellativeˡ = ·ᵢ-≾ᵢ-cancellativeˡ
+             ; ≡-zero-productˡ   = ≡ᵢ-zero-productˡ
+             ; ≡-zero-productʳ   = λ {i₁} {i₂} → ≡ᵢ-zero-productʳ {i₁} {i₂}
+             ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
+             ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
+             ; of-nat            = λ n → [ n , n ]tsi ≤-refl
+             ; of-nat-zero       = eqᵢ refl refl
+             ; of-nat-plus       = eqᵢ refl refl
              }
