@@ -4,6 +4,8 @@ module OperationalSemantics.TopLevelOpSemantics (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
+open import Effect.Monad using (RawMonad)
+
 open import OperationalSemantics.State (Grades)
 open import OperationalSemantics.PreservationTheorem (Grades)
 
@@ -19,4 +21,14 @@ record TopLevelOpSemantics : Set where
   field 
     op-sem : (op : Op)
            → {S : 𝕊 []} -- TODO: formally requires a naturality condition; needs to be parametric in S
-           → toCtx S ⊢V⦂ type-of-gtype (param op) → toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op)
+           → toCtx S ⊢V⦂ type-of-gtype (param op)
+           → toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op)
+
+-- TopLevel monadic semantics of algebraic operations
+
+record TopLevelMonadicOpSemantics (T : Set → Set) (monad : RawMonad T) : Set₁ where
+  field
+    mon-op-sem : (op : Op)
+               → {S : 𝕊 []} -- TODO: formally requires a naturality condition; needs to be parametric in S
+               → toCtx S ⊢V⦂ type-of-gtype (param op)
+               → T (toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op))
