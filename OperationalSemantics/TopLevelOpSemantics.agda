@@ -4,8 +4,6 @@ module OperationalSemantics.TopLevelOpSemantics (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
-open import Effect.Monad using (RawMonad)
-
 open import OperationalSemantics.State (Grades)
 open import OperationalSemantics.PreservationTheorem (Grades)
 
@@ -13,6 +11,7 @@ open import Syntax.Contexts (Grades)
 open import Syntax.Language (Grades)
 open import Syntax.Types (Grades)
 
+open import Util.Monad
 open import Util.Operations (Grades)
 
 -- TopLevel pure semantics of algebraic operations
@@ -26,7 +25,9 @@ record TopLevelOpSemantics : Set where
 
 -- TopLevel monadic semantics of algebraic operations
 
-record TopLevelMonadicOpSemantics (T : Set → Set) (monad : RawMonad T) : Set₁ where
+record TopLevelMonadicOpSemantics (monad : Monad) : Set₁ where
+  open Monad monad
+  
   field
     mon-op-sem : (op : Op)
                → {S : 𝕊 []} -- TODO: formally requires a naturality condition; needs to be parametric in S
