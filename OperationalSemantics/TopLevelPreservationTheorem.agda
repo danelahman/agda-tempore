@@ -2,7 +2,7 @@ open import Syntax.Grades
 
 module OperationalSemantics.TopLevelPreservationTheorem (Grades : GradeSystem) where
 
-open import OperationalSemantics.TopLevelOpSemantics
+open import OperationalSemantics.TopLevelOpSemantics (Grades)
 
 open GradeSystemInterface Grades
 
@@ -27,7 +27,7 @@ open import Util.Operations (Grades)
 --
 -- Note: This top-level semantics uses the pure semantics of algebraic operations
 
-module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics Grades) where
+module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
 
   open TopLevelOpSemantics OpSemantics
 
@@ -75,7 +75,7 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics Grades
 
 open import Util.Monad
 
-module MonadicTopLevelPreservationTheorem {monad : Monad} (MonadicOpSemantics : TopLevelMonadicOpSemantics Grades monad) where
+module MonadicTopLevelPreservationTheorem {monad : Monad} (MonadicOpSemantics : TopLevelMonadicOpSemantics monad) where
 
   open Monad monad
 
@@ -99,5 +99,22 @@ module MonadicTopLevelPreservationTheorem {monad : Monad} (MonadicOpSemantics : 
              → ⟨ S , perform op V M ⟩ ⟿ₘ
                (mon-op-sem op V >>= λ V' → returnM (⟨ grade-pass S (mapᵉ (op-grade op)) , M [ Hd ↦ V' ]c ⟩))
 
-  -- TODO: invariants preserved by the monadic top-level small-step operational semantics
-  
+  -- Invariants preserved by the monadic top-level small-step operational semantics
+  m-top-level-step-invariants : ∀ {A B ε ε'}
+                              → {S : 𝕊 []}
+                              → {M : toCtx S  ⊢C⦂ A ‼ ε}
+                              → {target : T (Config (B ‼ ε'))}
+                              → ⟨ S , M ⟩ ⟿ₘ target
+                              → T (A ≡ B)
+                              × T (Σ[ S' ∈ 𝕊 [] ]
+                                      (state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε))
+
+  m-top-level-step-invariants {S = S} (↝-STEPₘ {S' = S'} step) =
+    let inv = step-invariants step
+    in returnM (proj₁ inv) , returnM (S' , proj₂ inv)
+  m-top-level-step-invariants {S = S} (OP-STEPₘ {op = op} {V = V} {M = M}) =
+    returnM refl ,
+    (mon-op-sem op V >>=
+      λ V' → returnM (
+        (grade-pass S (mapᵉ (op-grade op))) ,
+        ≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ)))))
