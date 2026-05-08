@@ -2,11 +2,9 @@
 -- (Right) One-sided (closed) intervals as grades --
 ----------------------------------------------------
 
+module Syntax.Grades.RightSidedIntervals where
+
 open import Syntax.Grades
-
-module Syntax.Grades.RightSidedIntervals (Grades : GradeSystem) where
-
-open GradeSystemInterface Grades
 
 open import Data.Nat
 open import Data.Nat.Properties

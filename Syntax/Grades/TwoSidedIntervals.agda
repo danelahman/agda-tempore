@@ -2,11 +2,7 @@
 -- Two-sided (closed) intervals as grades --
 --------------------------------------------
 
-open import Syntax.Grades
-
-module Syntax.Grades.TwoSidedIntervals (Grades : GradeSystem) where
-
-open GradeSystemInterface Grades
+module Syntax.Grades.TwoSidedIntervals where
 
 open import Data.Nat
 open import Data.Nat.Properties
@@ -16,9 +12,11 @@ open import Level renaming (zero to lzero)
 
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
-open import Relation.Binary.PropositionalEquality as Eq
-open Eq.≡-Reasoning
 open import Relation.Nullary.Decidable.Core
+
+open import Syntax.Grades
+
+open import Util.Equality
 
 -- type of intervals
 
