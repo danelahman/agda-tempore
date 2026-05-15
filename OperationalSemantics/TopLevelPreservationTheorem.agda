@@ -103,18 +103,16 @@ module MonadicTopLevelPreservationTheorem {monad : Monad} (MonadicOpSemantics : 
   m-top-level-step-invariants : ∀ {A B ε ε'}
                               → {S : 𝕊 []}
                               → {M : toCtx S  ⊢C⦂ A ‼ ε}
-                              → {target : T (Config (B ‼ ε'))}
-                              → ⟨ S , M ⟩ ⟿ₘ target
-                              → T (A ≡ B)
-                              × T (Σ[ S' ∈ 𝕊 [] ]
+                              → {tconf : T (Config (B ‼ ε'))}
+                              → ⟨ S , M ⟩ ⟿ₘ tconf
+                              → T (A ≡ B
+                                  × Σ[ S' ∈ 𝕊 [] ]
                                       (state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε))
 
-  m-top-level-step-invariants {S = S} (↝-STEPₘ {S' = S'} step) =
+  m-top-level-step-invariants (↝-STEPₘ {S' = S'} step) =
     let inv = step-invariants step
-    in returnM (proj₁ inv) , returnM (S' , proj₂ inv)
-  m-top-level-step-invariants {S = S} (OP-STEPₘ {op = op} {V = V} {M = M}) =
-    returnM refl ,
-    (mon-op-sem op V >>=
-      λ V' → returnM (
-        (grade-pass S (mapᵉ (op-grade op))) ,
-        ≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ)))))
+    in returnM (proj₁ inv , S' , proj₂ inv)
+  m-top-level-step-invariants {S = S} (OP-STEPₘ {op = op} {V = V}) =
+    mon-op-sem op V >>=
+      λ V' → returnM (refl ,
+                      grade-pass S (mapᵉ (op-grade op)) , ≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ))))
