@@ -81,9 +81,9 @@ mutual
            ------------
            → Γ' ⊢V⦂ A
 
-  V-rename r (var rel x) =
+  V-rename r (var f x) =
     var
-    (≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) rel)
+    (λ p → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) (f p))
     (proj₂ (proj₂ (var-rename r x)))
   V-rename r (const c)   = const c
   V-rename r ⋆           = ⋆

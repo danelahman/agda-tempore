@@ -33,10 +33,18 @@ mutual
 
     var     : {A : VType}
             → {ρ : R}
+            → (¬ Eternal A → ρ ≾ᵣ uᵣ)
+            → A ∈[ ρ ] Γ
+            -------------------------
+            → Γ ⊢V⦂ A           
+  {-
+    var     : {A : VType}
+            → {ρ : R}
             → (ρ ≾ᵣ uᵣ)
             → A ∈[ ρ ] Γ
             -------------
             → Γ ⊢V⦂ A
+  -}
 
     -- base-typed constants
 
@@ -189,8 +197,6 @@ mutual
 
 grad-typ⇒var : ∀ {Γ A ρ}
              → (V : Γ ⊢V⦂ [ ρ ] A)
-             → Σ[ ρ' ∈ R ]
-               Σ[ rel ∈ ρ' ≾ᵣ uᵣ ]
-               Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ) ](V ≡ var rel x)
-             
-grad-typ⇒var (var rel x) = _ , rel , x , refl
+             → Σ[ ρ' ∈ R ] Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ) ] Σ[ f ∈ (¬ Eternal ([ ρ ] A) → ρ' ≾ᵣ uᵣ) ] (V ≡ var f x)
+
+grad-typ⇒var (var f x) = _ , x , f , refl

@@ -31,7 +31,7 @@ open import Util.Operations (Grades)
 
 ⟨_,_⟩[_↦_]var : ∀ {Γ A B ρ ρ'}
           → B ∈[ ρ' ] Γ
-          → ρ' ≾ᵣ uᵣ
+          → (¬ Eternal B → ρ' ≾ᵣ uᵣ)
           → (x : A ∈[ ρ ] Γ)
           → proj₁ (var-split x) ⊢V⦂ A
           -----------------------------------------------------------
@@ -39,14 +39,17 @@ open import Util.Operations (Grades)
           
 ⟨ Hd , p ⟩[ Hd ↦ W ]var =
   W
-⟨ Hd , p ⟩[ Tl-∷ x ↦ W ]var =
-  var ≾ᵣ-refl Hd
-⟨ Tl-∷ y , rel ⟩[ Hd ↦ W ]var =
-  var rel y
-⟨ Tl-∷ y , rel ⟩[ Tl-∷ x ↦ W ]var =
-  V-rename wk-ren ⟨ y , rel ⟩[ x ↦ W ]var
-⟨ Tl-⟨⟩ y , rel ⟩[ Tl-⟨⟩ x ↦ W ]var =
-  V-rename (⟨⟩-≤-ren (≾ᵣ-zero-productʳ rel) ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , ≾ᵣ-zero-productˡ rel ⟩[ x ↦ W ]var
+⟨ Hd , f ⟩[ Tl-∷ x ↦ W ]var =
+  var f Hd
+⟨ Tl-∷ y , f ⟩[ Hd ↦ W ]var =
+  var f y
+⟨ Tl-∷ y , f ⟩[ Tl-∷ x ↦ W ]var =
+  V-rename wk-ren ⟨ y , f ⟩[ x ↦ W ]var
+⟨_,_⟩[_↦_]var {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W with eternal? B
+... | yes p =
+  V-rename ({!!} ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , (λ ¬p → ≾ᵣ-zero-productˡ (f (λ z → ¬p p))) ⟩[ x ↦ W ]var
+... | no ¬p =
+  V-rename (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p)) ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f z)) ⟩[ x ↦ W ]var
 
 -- Substituting a value for a variable in a well-typed term
 
@@ -59,7 +62,7 @@ mutual
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
 
-  var rel y   [ x ↦ W ]v = ⟨ y , rel ⟩[ x ↦ W ]var
+  var f y     [ x ↦ W ]v = ⟨ y , f ⟩[ x ↦ W ]var
   const c     [ x ↦ W ]v = const c
   ⦉ V₁ , V₂ ⦊  [ x ↦ W ]v = ⦉ V₁ [ x ↦ W ]v , V₂ [ x ↦ W ]v ⦊
   ⋆           [ x ↦ W ]v = ⋆
@@ -106,10 +109,10 @@ mutual
   _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
   ... | inj₁ (.(uᵣ) , Hd , eq , eq') =
     unbox
-      (var-ρ-++ᶜ {Γ' = proj₁ (proj₂ (var-split x))} (proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))))
+      (var-ρ-++ᶜ (proj₁ (proj₂ (grad-typ⇒var W))))
       (≾ᵣ-trans
         (≾ᵣ-trans
-          (·ᵣ-monoˡ-≾ᵣ (proj₁ (proj₂ (grad-typ⇒var W))))
+          (·ᵣ-monoˡ-≾ᵣ ((proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))) λ ())) -- TODO check
           (≾ᵣ-reflexive
             (trans
               (·ᵣ-identityˡ (ctx-grade (proj₁ (proj₂ (var-split x)))))

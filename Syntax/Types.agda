@@ -34,6 +34,12 @@ mutual
   infixr 30 _⇒_
   infix  31 _‼_
 
+data Eternal : VType → Set where
+  Baseₑ  : (b : BaseType) → Eternal (Base b)
+  Unitₑ  : Eternal Unit
+  _|×|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |×| A₂)
+  Emptyₑ : Eternal Empty
+
 -- Embedding ground types into types
 
 type-of-gtype : GType → VType
@@ -114,3 +120,15 @@ Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 ... | yes p | no ¬q = no (λ { refl → ¬q refl })
 ... | no ¬p | yes q = no (λ { refl → ¬p refl })
 ... | no ¬p | no ¬q = no (λ { refl → ¬p refl })
+
+-- Checking whether a type is eternal is decidable
+eternal? : (A : VType) → Dec (Eternal A)
+eternal? (Base b)    = yes (Baseₑ b)
+eternal? Unit        = yes Unitₑ
+eternal? (A₁ |×| A₂) with eternal? A₁ | eternal? A₂
+... | yes p | yes q = yes (p |×|ₑ q)
+... | yes _ | no ¬q = no λ { (_ |×|ₑ x₂) → ¬q x₂}
+... | no ¬p | _     = no λ { (x₁ |×|ₑ _) → ¬p x₁}
+eternal? Empty       = yes Emptyₑ
+eternal? (_ ⇒ _)     = no λ ()
+eternal? ([ _ ] _)   = no λ ()
