@@ -8,6 +8,7 @@ module Syntax.Language (Grades : GradeSystem) where
 
 open GradeSystemInterface Grades
 
+open import Data.Empty
 open import Data.Nat public
 open import Data.Product
 open import Data.Sum
@@ -200,3 +201,15 @@ grad-typ⇒var : ∀ {Γ A ρ}
              → Σ[ ρ' ∈ R ] Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ) ] Σ[ f ∈ (¬ Eternal ([ ρ ] A) → ρ' ≾ᵣ uᵣ) ] (V ≡ var f x)
 
 grad-typ⇒var (var f x) = _ , x , f , refl
+
+-- Values typing with eternal types can type under any grade extension of its typing context
+
+eternal-val-ext : ∀ {Γ A ρ} → Eternal A → Γ ⊢V⦂ A → Γ ⟨ ρ ⟩ ⊢V⦂ A
+eternal-val-ext et (var _ x) =
+  var (λ ¬et → ⊥-elim (¬et et)) (Tl-⟨⟩ x)
+eternal-val-ext _ (const b) =
+  const b
+eternal-val-ext _ ⋆ =
+  ⋆
+eternal-val-ext (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
+  ⦉ eternal-val-ext et₁ V₁ , eternal-val-ext et₂ V₂ ⦊

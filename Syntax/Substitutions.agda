@@ -37,18 +37,18 @@ open import Util.Operations (Grades)
           -----------------------------------------------------------
           → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
           
-⟨ Hd , p ⟩[ Hd ↦ W ]var =
+⟨ Hd , _ ⟩[ Hd ↦ W ]var =
   W
-⟨ Hd , f ⟩[ Tl-∷ x ↦ W ]var =
+⟨ Hd , f ⟩[ Tl-∷ _ ↦ _ ]var =
   var f Hd
-⟨ Tl-∷ y , f ⟩[ Hd ↦ W ]var =
+⟨ Tl-∷ y , f ⟩[ Hd ↦ _ ]var =
   var f y
 ⟨ Tl-∷ y , f ⟩[ Tl-∷ x ↦ W ]var =
   V-rename wk-ren ⟨ y , f ⟩[ x ↦ W ]var
 ⟨_,_⟩[_↦_]var {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W with eternal? B
-... | yes p =
-  V-rename ({!!} ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , (λ ¬p → ≾ᵣ-zero-productˡ (f (λ z → ¬p p))) ⟩[ x ↦ W ]var
-... | no ¬p =
+⟨ Tl-⟨⟩ y , f ⟩[ Tl-⟨⟩ x ↦ W ]var | yes p = -- TODO: check this case (if eternal, we can weaken the grade of Γ)
+  eternal-val-ext p ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f (λ z₁ → z p))) ⟩[ x ↦ W ]var
+⟨ Tl-⟨⟩ y , f ⟩[ Tl-⟨⟩ x ↦ W ]var | no ¬p = 
   V-rename (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p)) ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f z)) ⟩[ x ↦ W ]var
 
 -- Substituting a value for a variable in a well-typed term
