@@ -7,6 +7,7 @@ open import Syntax.Grades
 module Util.Operations (Grades : GradeSystem) where
 
 open import Relation.Binary.Definitions using (Decidable)
+open import Relation.Nullary
 
 open import Util.Equality
 
@@ -17,6 +18,8 @@ open GradeSystemInterface Grades
 postulate
   BaseType : Set
   _≡ᵇ?_ : Decidable (_≡_ {A = BaseType})
+  EternalBaseType : BaseType → Set
+  eternalBaseType? : (b : BaseType) → Dec (EternalBaseType b)
 
 -- Set of (constant) elements for each base type
 

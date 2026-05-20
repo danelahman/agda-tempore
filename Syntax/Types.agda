@@ -35,7 +35,7 @@ mutual
   infix  31 _‼_
 
 data Eternal : VType → Set where
-  Baseₑ  : (b : BaseType) → Eternal (Base b)
+  Baseₑ  : (b : BaseType) → EternalBaseType b → Eternal (Base b)
   Unitₑ  : Eternal Unit
   _|×|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |×| A₂)
   Emptyₑ : Eternal Empty
@@ -121,9 +121,12 @@ Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 ... | no ¬p | yes q = no (λ { refl → ¬p refl })
 ... | no ¬p | no ¬q = no (λ { refl → ¬p refl })
 
--- Checking whether a type is eternal is decidable
+-- Checking if a type is eternal is decidable
+
 eternal? : (A : VType) → Dec (Eternal A)
-eternal? (Base b)    = yes (Baseₑ b)
+eternal? (Base b) with eternalBaseType? b
+... | yes p = yes (Baseₑ b p)
+... | no ¬p = no λ { (Baseₑ _ p') → ¬p p' }
 eternal? Unit        = yes Unitₑ
 eternal? (A₁ |×| A₂) with eternal? A₁ | eternal? A₂
 ... | yes p | yes q = yes (p |×|ₑ q)
