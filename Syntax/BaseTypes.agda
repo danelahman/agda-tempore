@@ -2,7 +2,7 @@
 -- Signature of base types over which the language is built  --
 ---------------------------------------------------------------
 
-module Util.BaseTypes where
+module Syntax.BaseTypes where
 
 open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary
@@ -19,6 +19,8 @@ record BaseTypes : Set₁ where
   field
     BaseType         : Set
     _≡ᵇ?_            : Decidable (_≡_ {A = BaseType})
+    
     EternalBaseType  : BaseType → Set
     eternalBaseType? : (b : BaseType) → Dec (EternalBaseType b)
-    BaseSet          : BaseType → Set
+    
+    BaseConstants    : BaseType → Set

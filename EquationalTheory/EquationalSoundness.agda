@@ -10,29 +10,34 @@
 -------------------------------------------------------------------
 
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
+open import Syntax.Operations
 
-module EquationalTheory.EquationalSoundness (Grades : GradeSystem) (BTs : BaseTypes) where
+module EquationalTheory.EquationalSoundness
+  (Grades : GradeSystem)
+  (BTs    : BaseTypes)
+  (Ops    : Operations Grades BTs)
+  where
 
 open GradeSystemInterface Grades
 
 open import Data.Product
 
-open import OperationalSemantics.PreservationTheorem (Grades) (BTs)
-open import OperationalSemantics.State (Grades) (BTs)
+open import OperationalSemantics.PreservationTheorem (Grades) (BTs) (Ops)
+open import OperationalSemantics.State (Grades) (BTs) (Ops)
 
-open import Syntax.CompContext (Grades) (BTs)
+open import Syntax.CompContext (Grades) (BTs) (Ops)
 open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs)
-open import Syntax.RenActions (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs) (Ops)
+open import Syntax.RenActions (Grades) (BTs) (Ops)
 open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.Substitutions (Grades) (BTs)
+open import Syntax.Substitutions (Grades) (BTs) (Ops)
 open import Syntax.Types (Grades) (BTs)
 
-open import EquationalTheory.EquationalTheory (Grades) (BTs)
+open import EquationalTheory.EquationalTheory (Grades) (BTs) (Ops)
 
 open import Util.Equality
-open import Util.Operations (Grades) (BTs)
+open Operations Ops
 
 
 -- =============================================================

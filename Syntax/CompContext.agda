@@ -1,20 +1,25 @@
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
+open import Syntax.Operations
 
-module Syntax.CompContext (Grades : GradeSystem) (BTs : BaseTypes) where
+module Syntax.CompContext
+  (Grades : GradeSystem)
+  (BTs    : BaseTypes)
+  (Ops    : Operations Grades BTs)
+  where
 
 open GradeSystemInterface Grades
 
 open import Data.Product
 
 open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs)
-open import Syntax.RenActions (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs) (Ops)
+open import Syntax.RenActions (Grades) (BTs) (Ops)
 open import Syntax.Renamings (Grades) (BTs)
 open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades) (BTs)
+open Operations Ops
 
 -- Computation term context flags. They characterise whether
 -- it is an arbitrary term context, an evaluation context, or

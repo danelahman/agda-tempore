@@ -9,7 +9,7 @@ open import OperationalSemantics.PreservationTheorem
 open import OperationalSemantics.State
 
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] ) 
-open import Util.Operations
+open import Syntax.Operations
 open import Util.Time
 
 open Eq.≡-Reasoning

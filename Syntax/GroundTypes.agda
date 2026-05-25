@@ -4,9 +4,9 @@
 -------------------------------------------------------------
 
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
 
-module Util.GroundTypes (Grades : GradeSystem) (BTs : BaseTypes) where
+module Syntax.GroundTypes (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 open BaseTypes BTs

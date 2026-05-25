@@ -1,27 +1,32 @@
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
+open import Syntax.Operations
 
-module OperationalSemantics.TopLevelPreservationTheorem (Grades : GradeSystem) (BTs : BaseTypes) where
+module OperationalSemantics.TopLevelPreservationTheorem
+  (Grades : GradeSystem)
+  (BTs    : BaseTypes)
+  (Ops    : Operations Grades BTs)
+  where
 
-open import OperationalSemantics.TopLevelOpSemantics (Grades) (BTs)
+open import OperationalSemantics.TopLevelOpSemantics (Grades) (BTs) (Ops)
 
 open GradeSystemInterface Grades
 
-open import OperationalSemantics.State (Grades) (BTs)
-open import OperationalSemantics.PreservationTheorem (Grades) (BTs)
+open import OperationalSemantics.State (Grades) (BTs) (Ops)
+open import OperationalSemantics.PreservationTheorem (Grades) (BTs) (Ops)
 
 open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs) (Ops)
 open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.RenActions (Grades) (BTs)
-open import Syntax.Substitutions (Grades) (BTs)
+open import Syntax.RenActions (Grades) (BTs) (Ops)
+open import Syntax.Substitutions (Grades) (BTs) (Ops)
 open import Syntax.Types (Grades) (BTs)
 
 open import Data.Product
 
 open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] )
 
-open import Util.Operations (Grades) (BTs)
+open Operations Ops
 
 
 -- Top-level small-step operational semantics aka Preservation theorem

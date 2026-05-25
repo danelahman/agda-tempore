@@ -6,7 +6,7 @@
 --------------------------------------------------------------
 
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
 
 module Syntax.Renamings (Grades : GradeSystem) (BTs : BaseTypes) where
 

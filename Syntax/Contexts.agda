@@ -3,7 +3,7 @@
 --------------------------------------------
 
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
 
 module Syntax.Contexts (Grades : GradeSystem) (BTs : BaseTypes) where
 
@@ -19,7 +19,6 @@ open import Relation.Nullary
 open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades) (BTs)
 open import Util.Time -- Remove
 
 -- Structured contexts

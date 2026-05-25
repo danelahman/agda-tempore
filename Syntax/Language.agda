@@ -3,9 +3,14 @@
 ---------------------------------------
 
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
+open import Syntax.Operations
 
-module Syntax.Language (Grades : GradeSystem) (BTs : BaseTypes) where
+module Syntax.Language
+  (Grades : GradeSystem)
+  (BTs    : BaseTypes)
+  (Ops    : Operations Grades BTs)
+  where
 
 open GradeSystemInterface Grades
 
@@ -20,7 +25,7 @@ open import Syntax.Contexts (Grades) (BTs)
 open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades) (BTs)
+open Operations Ops
 
 -- Well-typed terms (values and computations)
 
@@ -43,8 +48,8 @@ mutual
     -- base-typed constants
 
     const   : {B : BaseType}
-            → BaseSet B
-            ----------------
+            → BaseConstants B
+            -----------------
             → Γ ⊢V⦂ Base B
 
     -- unit type

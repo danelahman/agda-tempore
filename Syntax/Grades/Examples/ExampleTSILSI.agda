@@ -11,7 +11,7 @@ open import Syntax.Grades
 open import Syntax.Grades.IntGradeSystem
 open import Syntax.Grades.TwoSidedIntervals
 
-open import Util.BaseTypes
+open import Syntax.BaseTypes
 open import Util.Equality
 
 -- The example does not need any concrete base types, so we
@@ -21,8 +21,18 @@ open import Util.Equality
 postulate
   baseTypes : BaseTypes
 
-open import Syntax.Grades.Traces (intGradeSystem) (baseTypes)
-open import Util.Operations (intGradeSystem) (baseTypes)
+open import Syntax.Operations (intGradeSystem) (baseTypes)
+
+-- The example uses an abstract `Operations` instance: the
+-- concrete operation symbols and their grades are postulated
+-- below via the record fields.
+
+postulate
+  ops : Operations
+
+open Operations ops
+
+open import Syntax.Grades.Traces (intGradeSystem) (baseTypes) (ops)
 
 -- Operations:
 postulate

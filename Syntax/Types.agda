@@ -3,7 +3,7 @@
 ---------------------------
 
 open import Syntax.Grades
-open import Util.BaseTypes
+open import Syntax.BaseTypes
 
 module Syntax.Types (Grades : GradeSystem) (BTs : BaseTypes) where
 
@@ -19,13 +19,12 @@ open BaseTypes BTs public
 -- semantics modules see `GType` and its constructors directly
 -- via `Syntax.Types`.
 
-open import Util.GroundTypes (Grades) (BTs) public
+open import Syntax.GroundTypes (Grades) (BTs) public
 
 open import Relation.Binary.Definitions hiding (Empty)
 open import Relation.Nullary
 
 open import Util.Equality
-open import Util.Operations (Grades) (BTs)
 
 -- Value and computation types
 
