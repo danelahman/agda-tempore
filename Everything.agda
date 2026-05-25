@@ -94,15 +94,15 @@ open import OperationalSemantics.ProgressTheorem S
 
 ---- Top-level operational semantics
 
-open import OperationalSemantics.TopLevelOpSemantics
+open import OperationalSemantics.TopLevelOpSemantics S
 
 ---- Top-level preservation theorem
 
-open import OperationalSemantics.TopLevelPreservationTheorem
+open import OperationalSemantics.TopLevelPreservationTheorem S
 
 ---- Top-level progress theorem
 
-open import OperationalSemantics.TopLevelProgressTheorem
+open import OperationalSemantics.TopLevelProgressTheorem S
 
 
 -- EQUATIONAL THEORY
