@@ -65,6 +65,12 @@ open import Syntax.CompContext S
 -- GRADES
 ---------
 
+---- Grades and grade morphisms
+
+open import Syntax.Grades
+
+---- Examples of grades
+
 open import Syntax.Grades.LeftSidedIntervals
 open import Syntax.Grades.RightSidedIntervals
 open import Syntax.Grades.TwoSidedIntervals
@@ -85,6 +91,18 @@ open import OperationalSemantics.PreservationTheorem S
 ---- Progress theorem
 
 open import OperationalSemantics.ProgressTheorem S
+
+---- Top-level operational semantics
+
+open import OperationalSemantics.TopLevelOpSemantics
+
+---- Top-level preservation theorem
+
+open import OperationalSemantics.TopLevelPreservationTheorem
+
+---- Top-level progress theorem
+
+open import OperationalSemantics.TopLevelProgressTheorem
 
 
 -- EQUATIONAL THEORY
