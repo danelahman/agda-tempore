@@ -2,16 +2,23 @@
 -- Types of the language --
 ---------------------------
 
-open import Syntax.Grades
+open import Relation.Binary.Definitions hiding (Empty)
+open import Relation.Nullary
+
 open import Syntax.BaseTypes
+open import Syntax.Grades
+open import Syntax.LanguageSpec
 
-module Syntax.Types (Grades : GradeSystem) (BTs : BaseTypes) where
+open import Util.Equality
 
+module Syntax.Types (S : LanguageSpec) where
+
+open LanguageSpec S
 open GradeSystemInterface Grades
 
 -- Re-export the base types data so that downstream syntax and
 -- semantics modules see `BaseType`, `_≡ᵇ?_`, `EternalBaseType`,
--- `eternalBaseType?`, and `BaseSet` directly via `Syntax.Types`.
+-- `eternalBaseType?`, and `BaseConstants` directly via `Syntax.Types`.
 
 open BaseTypes BTs public
 
@@ -19,12 +26,7 @@ open BaseTypes BTs public
 -- semantics modules see `GType` and its constructors directly
 -- via `Syntax.Types`.
 
-open import Syntax.GroundTypes (Grades) (BTs) public
-
-open import Relation.Binary.Definitions hiding (Empty)
-open import Relation.Nullary
-
-open import Util.Equality
+open import Syntax.GroundTypes Grades BTs public
 
 -- Value and computation types
 

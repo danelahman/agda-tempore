@@ -1,29 +1,25 @@
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
-
-module OperationalSemantics.PreservationTheorem
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
-open import OperationalSemantics.State (Grades) (BTs) (Ops)
-
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
-open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.RenActions (Grades) (BTs) (Ops)
-open import Syntax.Substitutions (Grades) (BTs) (Ops)
-open import Syntax.Types (Grades) (BTs)
-
 open import Data.Product
 
-open import Relation.Binary.PropositionalEquality  as Eq hiding ( [_] )
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
+open import Util.Equality
+
+module OperationalSemantics.PreservationTheorem (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import OperationalSemantics.State S
+
+open import Syntax.Contexts      S
+open import Syntax.Language      S
+open import Syntax.RenActions    S
+open import Syntax.Renamings     S
+open import Syntax.Substitutions S
+open import Syntax.Types         S
 
 -- Configurations that encapsulate time, state and computation
 

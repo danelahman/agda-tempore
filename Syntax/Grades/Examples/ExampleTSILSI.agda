@@ -7,32 +7,30 @@ module Syntax.Grades.Examples.ExampleTSILSI where
 
 open import Data.Nat.Base
 
+open import Syntax.BaseTypes
 open import Syntax.Grades
 open import Syntax.Grades.IntGradeSystem
 open import Syntax.Grades.TwoSidedIntervals
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
-open import Syntax.BaseTypes
 open import Util.Equality
 
--- The example does not need any concrete base types, so we
--- provide a trivial `BaseTypes` instance to instantiate the
--- parameterised modules.
+-- The example does not need any concrete base types nor any
+-- specific operation signature, so we postulate a `LanguageSpec`
+-- bundling the integer grade system with abstract instances of
+-- both records.
 
 postulate
   baseTypes : BaseTypes
+  ops       : Operations intGradeSystem baseTypes
 
-open import Syntax.Operations (intGradeSystem) (baseTypes)
-
--- The example uses an abstract `Operations` instance: the
--- concrete operation symbols and their grades are postulated
--- below via the record fields.
-
-postulate
-  ops : Operations
+spec : LanguageSpec
+spec = record { Grades = intGradeSystem ; BTs = baseTypes ; Ops = ops }
 
 open Operations ops
 
-open import Syntax.Grades.Traces (intGradeSystem) (baseTypes) (ops)
+open import Syntax.Grades.Traces spec
 
 -- Operations:
 postulate

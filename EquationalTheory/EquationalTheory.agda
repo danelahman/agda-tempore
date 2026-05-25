@@ -2,30 +2,27 @@
 -- Equational theory of the language --
 ---------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
-
-module EquationalTheory.EquationalTheory
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
 open import Data.Product
 
-open import Syntax.CompContext (Grades) (BTs) (Ops)
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
-open import Syntax.RenActions (Grades) (BTs) (Ops)
-open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.Substitutions (Grades) (BTs) (Ops)
-open import Syntax.Types (Grades) (BTs)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
+
+module EquationalTheory.EquationalTheory (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import Syntax.CompContext   S
+open import Syntax.Contexts      S
+open import Syntax.Language      S
+open import Syntax.RenActions    S
+open import Syntax.Renamings     S
+open import Syntax.Substitutions S
+open import Syntax.Types         S
 
 -- Equations between well-typed values and computations
 
@@ -65,8 +62,8 @@ mutual
             → {W : Γ' ⊢V⦂ B'}
             → (p : Γ' ⊢V⦂ V == W)
             → (x : A ∈[ ρ ] Γ')
-            → (q : proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ≡ Γ)
-            → (U : proj₁ (var-split x) ⊢V⦂ A)
+            → (q : split-l x ++ᶜ split-r x ≡ Γ)
+            → (U : split-l x ⊢V⦂ A)
             ---------------------------------------------------------------
             → Γ ⊢V⦂ subst (_⊢V⦂ B) q (V [ x ↦ U ]v)
                 == subst (_⊢V⦂ B') q (W [ x ↦ U ]v)
@@ -138,8 +135,8 @@ mutual
             → {N : Γ' ⊢C⦂ D}
             → (p : Γ' ⊢C⦂ M == N)
             → (x : A ∈[ ρ ] Γ')
-            → (q : proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ≡ Γ)
-            → (V : proj₁ (var-split x) ⊢V⦂ A)
+            → (q : split-l x ++ᶜ split-r x ≡ Γ)
+            → (V : split-l x ⊢V⦂ A)
             ---------------------------------------------------------------
             → Γ ⊢C⦂ subst (_⊢C⦂ C) q (M [ x ↦ V ]c)
                 == subst (_⊢C⦂ D) q (N [ x ↦ V ]c)

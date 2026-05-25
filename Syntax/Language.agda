@@ -2,30 +2,28 @@
 -- Well-typed syntax of the language --
 ---------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
-
-module Syntax.Language
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
 open import Data.Empty
-open import Data.Nat public
 open import Data.Product
 open import Data.Sum
 
 open import Relation.Nullary using (¬_)
 
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Types (Grades) (BTs)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
+
+module Syntax.Language (S : LanguageSpec) where
+
+open import Data.Nat public
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import Syntax.Contexts S
+open import Syntax.Types     S
 
 -- Well-typed terms (values and computations)
 

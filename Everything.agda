@@ -30,17 +30,9 @@
 --   - equational theory based on standard presentations of local state --
 --------------------------------------------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
+open import Syntax.LanguageSpec
 
-module Everything
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
+module Everything (S : LanguageSpec) where
 
 -- UTILS
 --------
@@ -49,35 +41,34 @@ open GradeSystemInterface Grades
 
 open import Util.Equality
 
----- Algebraic operations
-
-open import Syntax.Operations (Grades) (BTs)
-
 
 -- SYNTAX
 ---------
 
 ---- Syntax of the language
 
-open import Syntax.Types (Grades) (BTs)
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
+open import Syntax.Types    S
+open import Syntax.Contexts S
+open import Syntax.Language S
 
 ---- Renamings and substitutions
 
-open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.Substitutions (Grades) (BTs) (Ops)
+open import Syntax.Renamings     S
+open import Syntax.RenActions    S
+open import Syntax.Substitutions S
 
 ---- Computation term and evaluation contexts
 
-open import Syntax.CompContext (Grades) (BTs) (Ops)
+open import Syntax.CompContext S
 
 
 -- GRADES
 ---------
 
 open import Syntax.Grades.LeftSidedIntervals
+open import Syntax.Grades.RightSidedIntervals
 open import Syntax.Grades.TwoSidedIntervals
+open import Syntax.Grades.IntGradeSystem
 
 
 -- OPERATIONAL SEMANTICS
@@ -85,22 +76,22 @@ open import Syntax.Grades.TwoSidedIntervals
 
 ---- States of operational semantics
 
-open import OperationalSemantics.State (Grades) (BTs) (Ops)
+open import OperationalSemantics.State S
 
 ---- Small-step operational semantics and preservation theorem
 
-open import OperationalSemantics.PreservationTheorem (Grades) (BTs) (Ops)
+open import OperationalSemantics.PreservationTheorem S
 
 ---- Progress theorem
 
-open import OperationalSemantics.ProgressTheorem (Grades) (BTs) (Ops)
+open import OperationalSemantics.ProgressTheorem S
 
 
 -- EQUATIONAL THEORY
 --------------------
 
-open import EquationalTheory.EquationalTheory (Grades) (BTs) (Ops)
+open import EquationalTheory.EquationalTheory S
 
 ---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
 
-open import EquationalTheory.EquationalSoundness (Grades) (BTs) (Ops)
+open import EquationalTheory.EquationalSoundness S

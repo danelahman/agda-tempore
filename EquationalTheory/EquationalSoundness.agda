@@ -9,35 +9,32 @@
 -- in the equational theory.                                     --
 -------------------------------------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
-
-module EquationalTheory.EquationalSoundness
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
 open import Data.Product
 
-open import OperationalSemantics.PreservationTheorem (Grades) (BTs) (Ops)
-open import OperationalSemantics.State (Grades) (BTs) (Ops)
-
-open import Syntax.CompContext (Grades) (BTs) (Ops)
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
-open import Syntax.RenActions (Grades) (BTs) (Ops)
-open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.Substitutions (Grades) (BTs) (Ops)
-open import Syntax.Types (Grades) (BTs)
-
-open import EquationalTheory.EquationalTheory (Grades) (BTs) (Ops)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
+
+module EquationalTheory.EquationalSoundness (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import EquationalTheory.EquationalTheory S
+
+open import OperationalSemantics.PreservationTheorem S
+open import OperationalSemantics.State                S
+
+open import Syntax.CompContext   S
+open import Syntax.Contexts      S
+open import Syntax.Language      S
+open import Syntax.RenActions    S
+open import Syntax.Renamings     S
+open import Syntax.Substitutions S
+open import Syntax.Types         S
 
 
 -- =============================================================

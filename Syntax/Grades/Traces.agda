@@ -3,20 +3,16 @@
 --------------------------
 
 open import Syntax.Grades
-open import Syntax.BaseTypes
+open import Syntax.Grades.TwoSidedIntervals
+open import Syntax.LanguageSpec
 open import Syntax.Operations
 
-module Syntax.Grades.Traces
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
-open import Syntax.Grades.TwoSidedIntervals
-
 open import Util.Equality
+
+module Syntax.Grades.Traces (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
 
 data Trace : E → Set where

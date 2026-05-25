@@ -2,36 +2,31 @@
 -- Substitution of well-typed values for variables --
 -----------------------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
-
-module Syntax.Substitutions
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
 open import Data.Empty
 open import Data.Product
 open import Data.Sum
 
 open import Function using (case_of_)
 
-open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] )
-open Eq.≡-Reasoning
 open import Relation.Nullary
 
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
-open import Syntax.RenActions (Grades) (BTs) (Ops)
-open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.Types (Grades) (BTs)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
+
+module Syntax.Substitutions (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import Syntax.Contexts   S
+open import Syntax.Language   S
+open import Syntax.RenActions S
+open import Syntax.Renamings  S
+open import Syntax.Types      S
 
 -- Substituting a value for a variable in context
 
@@ -39,9 +34,9 @@ open Operations Ops
           → B ∈[ ρ' ] Γ
           → (¬ Eternal B → ρ' ≾ᵣ uᵣ)
           → (x : A ∈[ ρ ] Γ)
-          → proj₁ (var-split x) ⊢V⦂ A
+          → split-l x ⊢V⦂ A
           -----------------------------------------------------------
-          → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
+          → split-l x ++ᶜ split-r x ⊢V⦂ B
           
 ⟨ Hd , _ ⟩[ Hd ↦ W ]var =
   W
@@ -64,9 +59,9 @@ mutual
   _[_↦_]v : ∀ {Γ A B ρ}
           → Γ ⊢V⦂ B
           → (x : A ∈[ ρ ] Γ)
-          → proj₁ (var-split x) ⊢V⦂ A
+          → split-l x ⊢V⦂ A
           -----------------------------------------------------------
-          → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢V⦂ B
+          → split-l x ++ᶜ split-r x ⊢V⦂ B
 
   var f y     [ x ↦ W ]v = ⟨ y , f ⟩[ x ↦ W ]var
   const c     [ x ↦ W ]v = const c
@@ -77,9 +72,9 @@ mutual
   _[_↦_]c : ∀ {Γ A C ρ}
           → Γ ⊢C⦂ C
           → (x : A ∈[ ρ ] Γ)
-          → proj₁ (var-split x) ⊢V⦂ A
+          → split-l x ⊢V⦂ A
           -----------------------------------------------------------
-          → proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ⊢C⦂ C
+          → split-l x ++ᶜ split-r x ⊢C⦂ C
 
   return V        [ x ↦ W ]c = return (V [ x ↦ W ]v)
   (M ⨟ N)         [ x ↦ W ]c = (M [ x ↦ W ]c) ⨟ (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
@@ -94,25 +89,25 @@ mutual
             C-rename
               (eq-ren (
                 begin
-                  proj₁ (var-split (var-ρ-++ᶜ {Γ' = Γ'} x)) ++ᶜ
-                   proj₁ (proj₂ (var-split (Tl-∷ (Tl-∷ (var-ρ-++ᶜ {Γ' = Γ'} x)))))
+                  split-l (var-ρ-++ᶜ {Γ' = Γ'} x) ++ᶜ
+                   split-r (Tl-∷ (Tl-∷ (var-ρ-++ᶜ {Γ' = Γ'} x)))
 
                 ≡⟨ cong₂ _∷_ (cong₂ _∷_ (cong₂ _++ᶜ_ (sym (split-var-eqₗ {Γ' = Γ'} x)) refl ) refl ) refl ⟩
 
-                  proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split (var-ρ-++ᶜ {Γ' = Γ'} x))) ∷ _ ∷ _
+                  split-l x ++ᶜ split-r (var-ρ-++ᶜ {Γ' = Γ'} x) ∷ _ ∷ _
 
                 ≡⟨ cong₂ _∷_ (cong₂ _∷_ (cong₂ _++ᶜ_ refl (sym (split-var-eqᵣ {Γ' = Γ'} x))) refl) refl ⟩
 
-                  proj₁ (var-split x) ++ᶜ (proj₁ (proj₂ (var-split x)) ++ᶜ Γ' ∷ _ ∷ _)
+                  split-l x ++ᶜ (split-r x ++ᶜ Γ' ∷ _ ∷ _)
 
-                ≡⟨ sym (++ᶜ-assoc (proj₁ (var-split x)) (proj₁ (proj₂ (var-split x))) ((Γ' ∷ _) ∷ _)) ⟩
+                ≡⟨ sym (++ᶜ-assoc (split-l x) (split-r x) ((Γ' ∷ _) ∷ _)) ⟩
                     
-                  proj₁ (var-split x) ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ ((Γ' ∷ _) ∷ _)                    
+                  split-l x ++ᶜ split-r x ++ᶜ ((Γ' ∷ _) ∷ _)                    
                 ∎
               ))
               ((H op ε'' Γ') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eqₗ {Γ' = Γ'} x)) W ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-  _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (proj₁ (proj₂ (proj₂ (var-split x)))) y
+  _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (split-pf x) y
   ... | inj₁ (.(uᵣ) , Hd , eq , eq') =
     unbox
       (var-ρ-++ᶜ (proj₁ (proj₂ (grad-typ⇒var W))))
@@ -121,24 +116,24 @@ mutual
           (·ᵣ-monoˡ-≾ᵣ ((proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))) λ ())) -- TODO check
           (≾ᵣ-reflexive
             (trans
-              (·ᵣ-identityˡ (ctx-grade (proj₁ (proj₂ (var-split x)))))
-              (cong ctx-grade (trans (sym (++ᶜ-identityˡ {Γ = proj₁ (proj₂ (var-split x))})) (sym eq'))))))
-        (≾ᵣ-trans (≾ᵣ-reflexive (proj₂ (proj₂ (proj₂ (var-split y))))) rel))
+              (·ᵣ-identityˡ (ctx-grade (split-r x)))
+              (cong ctx-grade (trans (sym (++ᶜ-identityˡ {Γ = split-r x})) (sym eq'))))))
+        (≾ᵣ-trans (≾ᵣ-reflexive (split-grade-≡ y)) rel))
       (M [ Tl-∷ x ↦ W ]c)
   ... | inj₁ (ρ' , Tl-∷ z , eq , eq') =
     unbox {ρ = ρ₁} {ρ' = ρ₂}
       (var-ρ-subst
       (begin
-        ρ' ·ᵣ ctx-grade (proj₁ (proj₂ (var-split x)))
+        ρ' ·ᵣ ctx-grade (split-r x)
       ≡⟨ cong
-         (_·ᵣ ctx-grade (proj₁ (proj₂ (var-split x))))
-         (sym (proj₂ (proj₂ (proj₂ (var-split (Tl-∷ {B = [ ρ₁ ] B} z)))))) ⟩
-        ctx-grade (proj₁ (proj₂ (var-split (Tl-∷ {B = [ ρ₁ ] B} z)))) ·ᵣ ctx-grade (proj₂ (var-split x) .proj₁)
-      ≡⟨ sym (ctx-grade-++ᶜ ((proj₁ (proj₂ (var-split (Tl-∷ z))))) (proj₂ (var-split x) .proj₁)) ⟩
-        ctx-grade (proj₁ (proj₂ (var-split (Tl-∷ z))) ++ᶜ proj₂ (var-split x) .proj₁)
+         (_·ᵣ ctx-grade (split-r x))
+         (sym (split-grade-≡ (Tl-∷ {B = [ ρ₁ ] B} z))) ⟩
+        ctx-grade (split-r (Tl-∷ {B = [ ρ₁ ] B} z)) ·ᵣ ctx-grade (split-r x)
+      ≡⟨ sym (ctx-grade-++ᶜ (split-r (Tl-∷ z)) (split-r x)) ⟩
+        ctx-grade (split-r (Tl-∷ z) ++ᶜ split-r x)
       ≡⟨ cong ctx-grade (sym eq') ⟩
-        ctx-grade (proj₁ (proj₂ (var-split y)))
-      ≡⟨ proj₂ (proj₂ (proj₂ (var-split y))) ⟩
+        ctx-grade (split-r y)
+      ≡⟨ split-grade-≡ y ⟩
         ρ₂
       ∎)
         (var-ρ-++ᶜ z))
@@ -146,7 +141,7 @@ mutual
       (M [ Tl-∷ x ↦ W ]c)
   ... | inj₂ (z , _ , _) =
     unbox
-      (∈-ctx-extensionˡ (proj₁ (var-split x)) (proj₁ (proj₂ (var-split x))) z)
+      (∈-ctx-extensionˡ (split-l x) (split-r x) z)
       rel
       (M [ Tl-∷ x ↦ W ]c)
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)

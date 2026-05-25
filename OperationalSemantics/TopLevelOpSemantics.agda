@@ -1,24 +1,21 @@
 open import Syntax.Grades
-open import Syntax.BaseTypes
+open import Syntax.LanguageSpec
 open import Syntax.Operations
 
-module OperationalSemantics.TopLevelOpSemantics
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
-open import OperationalSemantics.State (Grades) (BTs) (Ops)
-open import OperationalSemantics.PreservationTheorem (Grades) (BTs) (Ops)
-
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
-open import Syntax.Types (Grades) (BTs)
-
 open import Util.Monad
+
+module OperationalSemantics.TopLevelOpSemantics (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import OperationalSemantics.PreservationTheorem S
+open import OperationalSemantics.State                S
+
+open import Syntax.Contexts S
+open import Syntax.Language S
+open import Syntax.Types    S
 
 -- TopLevel pure semantics of algebraic operations
 

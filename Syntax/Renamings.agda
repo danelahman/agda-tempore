@@ -5,25 +5,24 @@
 -- further refined in Syntax.Renamings to respect ctx-grade --
 --------------------------------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-
-module Syntax.Renamings (Grades : GradeSystem) (BTs : BaseTypes) where
-
-open GradeSystemInterface Grades
-
 open import Data.Empty
 open import Data.Product
 open import Data.Sum
 
 open import Relation.Nullary
 
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Types (Grades) (BTs)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
 
 open import Util.Equality
 
-open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] )
+module Syntax.Renamings (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+
+open import Syntax.Contexts S
+open import Syntax.Types     S
   
 -- Variable renamings (as the smallest relation closed under
 -- identities, composition, congruences, ordinary variable 

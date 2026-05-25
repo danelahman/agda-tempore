@@ -2,24 +2,23 @@
 -- Variables and contexts of the language --
 --------------------------------------------
 
-open import Syntax.Grades
-open import Syntax.BaseTypes
-
-module Syntax.Contexts (Grades : GradeSystem) (BTs : BaseTypes) where
-
-open GradeSystemInterface Grades
-
-open import Data.Empty -- Remove?
 open import Data.Product
 open import Data.Sum
 
 open import Relation.Binary.Definitions
 open import Relation.Nullary
 
-open import Syntax.Types (Grades) (BTs)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
 
 open import Util.Equality
-open import Util.Time -- Remove
+
+module Syntax.Contexts (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+
+open import Syntax.Types S
 
 -- Structured contexts
 
@@ -198,6 +197,21 @@ var-split {Γ ∷ B} (Tl-∷ x) with var-split x
 var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q =
   Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , cong (_·ᵣ ρ) q
+
+-- Named accessors for the components of `var-split`. Using these
+-- avoids the deep `proj₁ (proj₂ (proj₂ ...))` chains at call sites.
+
+split-l : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → Ctx
+split-l x = proj₁ (var-split x)
+
+split-r : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → Ctx
+split-r x = proj₁ (proj₂ (var-split x))
+
+split-pf : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → split-l x ∷ A , split-r x split Γ
+split-pf x = proj₁ (proj₂ (proj₂ (var-split x)))
+
+split-grade-≡ : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → ctx-grade (split-r x) ≡ ρ
+split-grade-≡ x = proj₂ (proj₂ (proj₂ (var-split x)))
   
 -- Variable splitting preserves time-passage modelled by a context
 

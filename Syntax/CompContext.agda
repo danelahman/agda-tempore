@@ -1,25 +1,22 @@
-open import Syntax.Grades
-open import Syntax.BaseTypes
-open import Syntax.Operations
-
-module Syntax.CompContext
-  (Grades : GradeSystem)
-  (BTs    : BaseTypes)
-  (Ops    : Operations Grades BTs)
-  where
-
-open GradeSystemInterface Grades
-
 open import Data.Product
 
-open import Syntax.Contexts (Grades) (BTs)
-open import Syntax.Language (Grades) (BTs) (Ops)
-open import Syntax.RenActions (Grades) (BTs) (Ops)
-open import Syntax.Renamings (Grades) (BTs)
-open import Syntax.Types (Grades) (BTs)
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
+
+module Syntax.CompContext (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
 open Operations Ops
+
+open import Syntax.Contexts   S
+open import Syntax.Language   S
+open import Syntax.RenActions S
+open import Syntax.Renamings  S
+open import Syntax.Types      S
 
 -- Computation term context flags. They characterise whether
 -- it is an arbitrary term context, an evaluation context, or
@@ -262,8 +259,9 @@ K-rename r (handle[ p ]ₖ K `with H `in N) =
   handle[ p ]ₖ K-rename r K `with (λ op ε'' Γ' → C-rename (cong-ren r) (H op ε'' Γ')) `in (C-rename (cong-ren r) N)
 K-rename r (delay[ p ]ₖ τ K) =
   delay[ p ]ₖ τ (K-rename (cong-ren r) K)
-K-rename r (unbox[ p ]ₖ x rel K) =
-  unbox[ p ]ₖ (proj₂ (proj₂ (var-rename r x))) (≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) rel) (K-rename (cong-ren r) K)
+K-rename r (unbox[ p ]ₖ x rel K) with var-rename r x
+... | _ , ρ'≾ρ , y =
+  unbox[ p ]ₖ y (≾ᵣ-trans ρ'≾ρ rel) (K-rename (cong-ren r) K)
 K-rename r (box[ p ]ₖ V K) =
   box[ p ]ₖ (V-rename (cong-ren r) V) (K-rename (cong-ren r) K)
 
