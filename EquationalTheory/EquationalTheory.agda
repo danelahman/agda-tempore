@@ -3,23 +3,24 @@
 ---------------------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module EquationalTheory.EquationalTheory (Grades : GradeSystem) where
+module EquationalTheory.EquationalTheory (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
 open import Data.Product
 
-open import Syntax.CompContext (Grades)
-open import Syntax.Contexts (Grades)
-open import Syntax.Language (Grades)
-open import Syntax.RenActions (Grades)
-open import Syntax.Renamings (Grades)
-open import Syntax.Substitutions (Grades)
-open import Syntax.Types (Grades)
+open import Syntax.CompContext (Grades) (BTs)
+open import Syntax.Contexts (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs)
+open import Syntax.RenActions (Grades) (BTs)
+open import Syntax.Renamings (Grades) (BTs)
+open import Syntax.Substitutions (Grades) (BTs)
+open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 -- Equations between well-typed values and computations
 
@@ -94,7 +95,7 @@ mutual
             → (V : Γ ⊢V⦂ A ⇒ C)
             -----------------------------------------------
             → Γ ⊢V⦂ V
-                == lam (V-rename wk-ren V · var ≾ᵣ-refl Hd)
+                == lam (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
 
   infix 18 _⊢V⦂_==_
 
@@ -306,7 +307,7 @@ mutual
             → (M : Γ ⊢C⦂ A ‼ ε)
             ----------------------------------------------------------
             → Γ ⊢C⦂ M
-                == ε-subst (·ₑ-identityʳ ε) (M ⨟ return (var ≾ᵣ-refl Hd))
+                == ε-subst (·ₑ-identityʳ ε) (M ⨟ return (var (λ _ → ≾ᵣ-refl) Hd))
 
     -- associativity equation for sequential composition
 
@@ -352,7 +353,7 @@ mutual
               -------------------------------------------------------------
               → Γ ⊢C⦂ match V `in
                        ((C-rename (exch-ren ∘ʳ wk-ren ∘ʳ exch-ren ∘ʳ wk-ren)
-                         M) [ Hd ↦ ⦉ var ≾ᵣ-refl (Tl-∷ Hd) , var ≾ᵣ-refl Hd ⦊ ]c)
+                         M) [ Hd ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
                   == M [ Hd ↦ V ]c
 
     -- eta-equation for empty type elimination

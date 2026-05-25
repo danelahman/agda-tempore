@@ -3,15 +3,16 @@
 --------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module Syntax.Grades.Traces (Grades : GradeSystem) where
+module Syntax.Grades.Traces (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
 open import Syntax.Grades.TwoSidedIntervals
 
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 data Trace : E → Set where
   [_]    : (op : Op) → Trace (op-grade op)

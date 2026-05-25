@@ -1,19 +1,20 @@
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module OperationalSemantics.ProgressTheorem (Grades : GradeSystem) where
+module OperationalSemantics.ProgressTheorem (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
-open import OperationalSemantics.PreservationTheorem (Grades)
-open import OperationalSemantics.State (Grades)
+open import OperationalSemantics.PreservationTheorem (Grades) (BTs)
+open import OperationalSemantics.State (Grades) (BTs)
 
-open import Syntax.Contexts (Grades)
-open import Syntax.Language (Grades)
-open import Syntax.Types (Grades)
+open import Syntax.Contexts (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs)
+open import Syntax.Types (Grades) (BTs)
 
 open import Data.Empty
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 -- Progress theorem. A term is either returned value, operation or makes step
 

@@ -3,8 +3,9 @@
 ---------------------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module Syntax.Language (Grades : GradeSystem) where
+module Syntax.Language (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
@@ -15,11 +16,11 @@ open import Data.Sum
 
 open import Relation.Nullary using (¬_)
 
-open import Syntax.Contexts (Grades)
-open import Syntax.Types (Grades)
+open import Syntax.Contexts (Grades) (BTs)
+open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 -- Well-typed terms (values and computations)
 

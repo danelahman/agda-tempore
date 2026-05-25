@@ -3,16 +3,17 @@
 -----------------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module OperationalSemantics.State (Grades : GradeSystem) where
+module OperationalSemantics.State (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
-open import Syntax.Contexts (Grades)
-open import Syntax.Language (Grades)
-open import Syntax.Renamings (Grades)
-open import Syntax.RenActions (Grades)
-open import Syntax.Types (Grades)
+open import Syntax.Contexts (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs)
+open import Syntax.Renamings (Grades) (BTs)
+open import Syntax.RenActions (Grades) (BTs)
+open import Syntax.Types (Grades) (BTs)
 
 open import Data.Empty
 open import Util.Equality

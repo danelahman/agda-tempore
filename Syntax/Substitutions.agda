@@ -3,8 +3,9 @@
 -----------------------------------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module Syntax.Substitutions (Grades : GradeSystem) where
+module Syntax.Substitutions (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
@@ -18,14 +19,14 @@ open import Relation.Binary.PropositionalEquality as Eq hiding ( [_] )
 open Eq.≡-Reasoning
 open import Relation.Nullary
 
-open import Syntax.Contexts (Grades)
-open import Syntax.Language (Grades)
-open import Syntax.RenActions (Grades)
-open import Syntax.Renamings (Grades)
-open import Syntax.Types (Grades)
+open import Syntax.Contexts (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs)
+open import Syntax.RenActions (Grades) (BTs)
+open import Syntax.Renamings (Grades) (BTs)
+open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 -- Substituting a value for a variable in context
 

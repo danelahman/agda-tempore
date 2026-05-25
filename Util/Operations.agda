@@ -3,40 +3,14 @@
 ------------------------------------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module Util.Operations (Grades : GradeSystem) where
-
-open import Relation.Binary.Definitions using (Decidable)
-open import Relation.Nullary
+module Util.Operations (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open import Util.Equality
+open import Util.GroundTypes (Grades) (BTs)
 
 open GradeSystemInterface Grades
-
--- Decidable set of base types
-
-postulate
-  BaseType : Set
-  _≡ᵇ?_ : Decidable (_≡_ {A = BaseType})
-  EternalBaseType : BaseType → Set
-  eternalBaseType? : (b : BaseType) → Dec (EternalBaseType b)
-
--- Set of (constant) elements for each base type
-
-postulate
-  BaseSet  : BaseType → Set
-
--- Ground types (for operation signatures)
-
-data GType : Set where
-  Base   : BaseType → GType                -- base types
-  Unit   : GType                           -- unit type
-  Empty  : GType                           -- empty type
-  _|×|ᵍ_ : GType → GType → GType           -- product type
-  [_]ᵍ_  : R → GType → GType               -- temporal modality: values of type `[ ρ ] A`
-                                           -- become available in at most `r` steps
-infix 38 _|×|ᵍ_
-infix 37 [_]ᵍ_
 
 -- Signature of (ground-typed) operation symbols
 

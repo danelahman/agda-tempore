@@ -1,22 +1,23 @@
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module OperationalSemantics.TopLevelProgressTheorem (Grades : GradeSystem) where
+module OperationalSemantics.TopLevelProgressTheorem (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
-open import OperationalSemantics.PreservationTheorem (Grades)
-open import OperationalSemantics.State (Grades)
-open import OperationalSemantics.TopLevelOpSemantics (Grades)
-open import OperationalSemantics.TopLevelPreservationTheorem (Grades)
-open import OperationalSemantics.ProgressTheorem (Grades)
+open import OperationalSemantics.PreservationTheorem (Grades) (BTs)
+open import OperationalSemantics.State (Grades) (BTs)
+open import OperationalSemantics.TopLevelOpSemantics (Grades) (BTs)
+open import OperationalSemantics.TopLevelPreservationTheorem (Grades) (BTs)
+open import OperationalSemantics.ProgressTheorem (Grades) (BTs)
 
-open import Syntax.Contexts (Grades)
-open import Syntax.Language (Grades)
-open import Syntax.Types (Grades)
+open import Syntax.Contexts (Grades) (BTs)
+open import Syntax.Language (Grades) (BTs)
+open import Syntax.Types (Grades) (BTs)
 
 open import Data.Empty
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 -- Progress theorem at the top-level: a term is just a returned value or makes a reduction step.
 

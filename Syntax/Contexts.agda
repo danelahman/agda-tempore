@@ -3,8 +3,9 @@
 --------------------------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module Syntax.Contexts (Grades : GradeSystem) where
+module Syntax.Contexts (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
 
@@ -15,10 +16,10 @@ open import Data.Sum
 open import Relation.Binary.Definitions
 open import Relation.Nullary
 
-open import Syntax.Types (Grades)
+open import Syntax.Types (Grades) (BTs)
 
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 open import Util.Time -- Remove
 
 -- Structured contexts

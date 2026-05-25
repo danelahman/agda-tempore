@@ -3,16 +3,29 @@
 ---------------------------
 
 open import Syntax.Grades
+open import Util.BaseTypes
 
-module Syntax.Types (Grades : GradeSystem) where
+module Syntax.Types (Grades : GradeSystem) (BTs : BaseTypes) where
 
 open GradeSystemInterface Grades
+
+-- Re-export the base types data so that downstream syntax and
+-- semantics modules see `BaseType`, `_≡ᵇ?_`, `EternalBaseType`,
+-- `eternalBaseType?`, and `BaseSet` directly via `Syntax.Types`.
+
+open BaseTypes BTs public
+
+-- Re-export the ground types so that downstream syntax and
+-- semantics modules see `GType` and its constructors directly
+-- via `Syntax.Types`.
+
+open import Util.GroundTypes (Grades) (BTs) public
 
 open import Relation.Binary.Definitions hiding (Empty)
 open import Relation.Nullary
 
 open import Util.Equality
-open import Util.Operations (Grades)
+open import Util.Operations (Grades) (BTs)
 
 -- Value and computation types
 

@@ -9,11 +9,20 @@ open import Data.Nat.Base
 
 open import Syntax.Grades
 open import Syntax.Grades.IntGradeSystem
-open import Syntax.Grades.Traces (intGradeSystem)
 open import Syntax.Grades.TwoSidedIntervals
 
+open import Util.BaseTypes
 open import Util.Equality
-open import Util.Operations (intGradeSystem)
+
+-- The example does not need any concrete base types, so we
+-- provide a trivial `BaseTypes` instance to instantiate the
+-- parameterised modules.
+
+postulate
+  baseTypes : BaseTypes
+
+open import Syntax.Grades.Traces (intGradeSystem) (baseTypes)
+open import Util.Operations (intGradeSystem) (baseTypes)
 
 -- Operations:
 postulate
