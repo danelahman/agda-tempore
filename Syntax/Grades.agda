@@ -57,14 +57,8 @@ record Grade : Set₁ where
     -- _≡_ (on Carrier) is decidable
     _≡?_ : Decidable (_≡_ {A = Carrier})
 
-    {-
-    -- _≡_ is cancellative
-    ·-≡-cancellative : ∀ {c d e f g} → c · e · d ≡ f · e · g → c · d ≡ f · g
-    -}
-
     -- _≾_ is left-cancellative
     ·-≾-cancellativeˡ : LeftCancellative {A = Carrier} _≾_ _·_
--- ·-≾-cancellative : ∀ {c d e f g} → c · e · d ≾ f · e · g  → c · d ≾ f · g
 
     -- _·_ and u have zero-product property
     ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
