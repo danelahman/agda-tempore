@@ -1,9 +1,6 @@
---------------------------------------------------------------
--- Context renamings                                        --
---                                                          --
--- Note: These are raw (underlying) renamings that are      --
--- further refined in Syntax.Renamings to respect ctx-grade --
---------------------------------------------------------------
+-----------------------
+-- Context renamings --
+-----------------------
 
 open import Data.Empty
 open import Data.Product

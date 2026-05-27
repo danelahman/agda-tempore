@@ -13,7 +13,7 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import OperationalSemantics.PreservationTheorem S
-open import OperationalSemantics.State                S
+open import OperationalSemantics.State               S
 
 open import Syntax.Contexts S
 open import Syntax.Language S
