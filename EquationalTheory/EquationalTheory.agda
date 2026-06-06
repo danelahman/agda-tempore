@@ -577,15 +577,12 @@ mutual
                              (eq-ren (cong (Γ ⟨_⟩) (sym of-natʳ-plus)) ∘ʳ ⟨⟩-μ⁻¹-ren)
                              M))
 
-    -- TODO: beta-like rule for coerce (any other rules for coerce?)
-
   infix 18 _⊢C⦂_==_
 
 
-{-
--- TODO: This lemma should change similarly to how the preservation theorem was relaxed
-
--- The heterogeneously defined equational theory is no more powerful than an homogeneous one
+-- The heterogeneously defined equational theory is no more powerful
+-- than a homogeneous one: equated values have equal types, and equated
+-- computations have equal types.
 
 mutual
 
@@ -643,7 +640,7 @@ mutual
       (‼-injective-ty (⊢C⦂==-is-homogeneous q))
       (‼-injective-egrade (⊢C⦂==-is-homogeneous q))
   ⊢C⦂==-is-homogeneous (delay-cong {τ = τ} p) =
-    cong₂ (λ A ε' → A ‼ (embedE τ ·ₑ ε'))
+    cong₂ (λ A ε' → A ‼ (of-natᵉ τ ·ₑ ε'))
       (‼-injective-ty (⊢C⦂==-is-homogeneous p))
       (‼-injective-egrade (⊢C⦂==-is-homogeneous p))
   ⊢C⦂==-is-homogeneous (handle-cong {ε = ε} p q r) =
@@ -674,18 +671,33 @@ mutual
     refl
   ⊢C⦂==-is-homogeneous (match-beta V W M) =
     refl
+  ⊢C⦂==-is-homogeneous (match-eta V M) =
+    refl
   ⊢C⦂==-is-homogeneous (absurd-eta V M) =
     refl
   ⊢C⦂==-is-homogeneous (handle-return V H N) =
     refl
   ⊢C⦂==-is-homogeneous (handle-perform V M H N) =
     refl
+  ⊢C⦂==-is-homogeneous (handle-delay M H N) =
+    refl
   ⊢C⦂==-is-homogeneous (handle-box V M H N) =
     refl
   ⊢C⦂==-is-homogeneous (handle-unbox x p M H N) =
+    refl
+  ⊢C⦂==-is-homogeneous (unbox-beta V K p N) =
+    refl
+  ⊢C⦂==-is-homogeneous (unbox-comm x y p₁ p₂ M) =
+    refl
+  ⊢C⦂==-is-homogeneous (box-comm V W M) =
     refl
   ⊢C⦂==-is-homogeneous (boxed-not-used V M) =
     refl
   ⊢C⦂==-is-homogeneous (unbox-not-used x p _) =
     refl
--}
+  ⊢C⦂==-is-homogeneous (box-unbox-comm V y p M) =
+    refl
+  ⊢C⦂==-is-homogeneous (delay-zero M) =
+    refl
+  ⊢C⦂==-is-homogeneous (delay-delay M) =
+    refl
