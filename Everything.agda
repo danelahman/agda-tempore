@@ -75,6 +75,7 @@ open import Syntax.Grades.LeftSidedIntervals
 open import Syntax.Grades.RightSidedIntervals
 open import Syntax.Grades.TwoSidedIntervals
 open import Syntax.Grades.IntGradeSystem
+open import Syntax.Grades.Traces S
 
 
 -- OPERATIONAL SEMANTICS
