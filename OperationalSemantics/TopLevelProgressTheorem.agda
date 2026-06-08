@@ -61,8 +61,8 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
     top-level-steps
       (≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ))))
       OP-STEP
-  ... | steps p M↝M' =
-    top-level-steps p (↝-STEP M↝M')
+  ... | steps M↝M' p =
+    top-level-steps (cancelled⇒total (step-extends-state M↝M') p) (↝-STEP M↝M')
 
 
 -- Note: These results work with the monadic semantics of algebraic operations
@@ -111,4 +111,4 @@ module MonadicTopLevelProgressTheorem {monad : Monad} (MonadicOpSemantics : TopL
   top-level-progressₘ {S = S} M with progress M
   ... | is-value     = is-top-level-valueₘ
   ... | is-op        = top-level-steps-opₘ
-  ... | steps p M↝M' = top-level-stepsₘ p (↝-STEPₘ M↝M')
+  ... | steps M↝M' p = top-level-stepsₘ (cancelled⇒total (step-extends-state M↝M') p) (↝-STEPₘ M↝M')

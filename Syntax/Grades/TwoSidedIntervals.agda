@@ -151,7 +151,6 @@ intervals = record
              ; ≾-irrelevant      = λ {i₁} {i₂} rel₁ rel₂
                                      → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
              ; _≡?_              = eqᵢ?
-             ; ·-≾-cancellativeˡ = ·ᵢ-≾ᵢ-cancellativeˡ
              ; ≡-zero-productˡ   = ≡ᵢ-zero-productˡ
              ; ≡-zero-productʳ   = λ {i₁} {i₂} → ≡ᵢ-zero-productʳ {i₁} {i₂}
              ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}

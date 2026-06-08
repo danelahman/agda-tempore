@@ -4,8 +4,6 @@
 
 module Syntax.Grades where
 
-open import Algebra.Definitions
-
 open import Data.Empty
 open import Data.Nat.Base
 open import Data.Product hiding (map)
@@ -56,9 +54,6 @@ record Grade : Set₁ where
 
     -- _≡_ (on Carrier) is decidable
     _≡?_ : Decidable (_≡_ {A = Carrier})
-
-    -- _≾_ is left-cancellative
-    ·-≾-cancellativeˡ : LeftCancellative {A = Carrier} _≾_ _·_
 
     -- _·_ and u have zero-product property
     ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
@@ -146,7 +141,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-trans to ≾ᵣ-trans;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≡?_ to _≡ᵣ?_;
-     ·-≾-cancellativeˡ to ·ᵣ-≾ᵣ-cancellativeˡ;
      ≡-zero-productˡ to ≡ᵣ-zero-productclˡ;
      ≡-zero-productʳ to ≡ᵣ-zero-productʳ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;

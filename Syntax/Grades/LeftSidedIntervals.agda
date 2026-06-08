@@ -127,7 +127,6 @@ one-sided-intervals = record
   ; ≾-trans           = ≾ₒ-trans
   ; ≾-irrelevant      = ≾ₒ-irrelevant
   ; _≡?_              = _≡ₒ?_
-  ; ·-≾-cancellativeˡ = ·ₒ-≾ₒ-cancellativeˡ
   ; ≡-zero-productˡ   = ≡ₒ-zero-productˡ
   ; ≡-zero-productʳ   = ≡ₒ-zero-productʳ
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ

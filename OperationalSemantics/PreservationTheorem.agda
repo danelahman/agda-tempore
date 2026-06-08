@@ -59,12 +59,12 @@ mutual
                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                    → {N : ((toCtx S) ⟨ mapᵉ ε₁ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
-                   → (S'·ε₃≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₃ ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+                   → (δε₃≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
                     --------------------------------------------------------------------
-                   → ⟨ S , M ⨟ N ⟩ ↝ 
+                   → ⟨ S , M ⨟ N ⟩ ↝
                      ⟨ S' , M' ⨟ C-rename
-                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₃≾S·ε₁))
+                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₃≾ε₁))
                                    N ⟩
 
         -- usual step for return in sequencing
@@ -131,10 +131,10 @@ mutual
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)} 
                     → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
                     → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
-                    → (S'·ε₁'≾S·ε₁ : state-grade S' ·ᵣ mapᵉ ε₁' ≾ᵣ state-grade S ·ᵣ mapᵉ ε₁)
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+                    → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁)
                       -----------------------------------------------------------------------
-                    → ⟨ S  , handle M `with H `in N ⟩ ↝ 
+                    → ⟨ S  , handle M `with H `in N ⟩ ↝
                       ⟨ S' , handle M' 
                             `with 
                                 (λ op' ε₃' Γ'' →
@@ -149,7 +149,7 @@ mutual
                                               (cong (_++ᶜ Γ'') (sym (proj₂ S'eqS·S'')))))))
                                       (H op' ε₃' (proj₁ S'eqS·S'' ++ᶜ Γ'')))
                             `in (C-rename
-                                  (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') S'·ε₁'≾S·ε₁))
+                                  (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
                                   N)⟩
 
         -- operation handle where we box up result so that the resources
@@ -233,12 +233,12 @@ mutual
                        
     step-extends-state APP                  = id-suc
     step-extends-state MATCH                = id-suc
-    step-extends-state (SEQ-STEP _ M↝M')    = step-extends-state M↝M'
+    step-extends-state (SEQ-STEP M↝M' _)    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
     step-extends-state DELAY                = ⟨⟩-suc (of-natʳ _) id-suc
     step-extends-state HANDLE-RET           = id-suc
-    step-extends-state (HANDLE-STEP _ M↝M') = step-extends-state M↝M'
+    step-extends-state (HANDLE-STEP M↝M' _) = step-extends-state M↝M'
     step-extends-state HANDLE-OP            = id-suc
     step-extends-state BOX                  = ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state UNBOX                = id-suc
@@ -255,12 +255,12 @@ step-invariants : ∀ {A B ε'' ε'''}
                      
 step-invariants APP   = refl , ≾ᵣ-refl
 step-invariants MATCH = refl , ≾ᵣ-refl
-step-invariants {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} S'·ε₃≾S·ε₁ step) =
+step-invariants {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step δε₃≾ε₁) =
   refl ,
   ≾ᵣ-trans
     (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) map-·ᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂)))))
     (≾ᵣ-trans
-      (·ᵣ-monoˡ-≾ᵣ S'·ε₃≾S·ε₁)
+      (·ᵣ-monoˡ-≾ᵣ (cancelled⇒total (step-extends-state step) δε₃≾ε₁))
       (≾ᵣ-reflexive
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
@@ -290,12 +290,12 @@ step-invariants {ε''' = ε'''} HANDLE-RET =
       (≾ᵣ-trans
         (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
         (≾ᵣ-reflexive (sym map-·ᵉ))))
-step-invariants {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} S'·ε₁'≾S·ε₁ step) =
+step-invariants {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} step δε₁'≾ε₁) =
   refl ,
     ≾ᵣ-trans
     (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) map-·ᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂)))))
     (≾ᵣ-trans
-      (·ᵣ-monoˡ-≾ᵣ S'·ε₁'≾S·ε₁)
+      (·ᵣ-monoˡ-≾ᵣ (cancelled⇒total (step-extends-state step) δε₁'≾ε₁))
       (≾ᵣ-reflexive
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))

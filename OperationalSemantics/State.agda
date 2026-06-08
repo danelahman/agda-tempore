@@ -83,22 +83,62 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
             ---------------------------------------
             → S ≤ₛ (S' ∷ₛ V)
 
--- Lemma: If one state 𝕊' is a successor of another 𝕊 and overall grade decreases,
--- then 𝕊' is a renaming of 𝕊.
-suc-comp-ren : ∀ {Γ Γ'} 
-             → {ρ'' ρ''' : R} 
-             → {S : 𝕊 Γ} 
-             → {S' : 𝕊 Γ'} 
-             → S ≤ₛ S' 
-             → state-grade S' ·ᵣ ρ''' ≾ᵣ state-grade S ·ᵣ ρ''
+-- The extra grade accumulated when passing from a state 𝕊 to a successor
+-- state 𝕊'. This is exactly the "delta" δ such that
+-- state-grade S' ≡ state-grade S ·ᵣ δ (see state-grade-≤ₛ below).
+--
+-- Tracking δ explicitly lets us state the grade-decrease condition in
+-- *already-cancelled* form (δ ·ᵣ ρ''' ≾ᵣ ρ''), avoiding the need to
+-- left-cancel state-grade S — i.e. it removes the reliance on a
+-- left-cancellativity property in the grades interface.
+
+≤ₛ-grade : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → R
+≤ₛ-grade id-suc       = uᵣ
+≤ₛ-grade (⟨⟩-suc ρ q) = ≤ₛ-grade q ·ᵣ ρ
+≤ₛ-grade (∷-suc V q)  = ≤ₛ-grade q
+
+-- The overall grade of a successor state factors through ≤ₛ-grade.
+
+state-grade-≤ₛ : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'}
+               → (q : S ≤ₛ S')
+               → state-grade S' ≡ state-grade S ·ᵣ ≤ₛ-grade q
+state-grade-≤ₛ {S = S} id-suc =
+  sym (·ᵣ-identityʳ (state-grade S))
+state-grade-≤ₛ {S = S} (⟨⟩-suc ρ q) =
+  trans (cong (_·ᵣ ρ) (state-grade-≤ₛ q)) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) ρ)
+state-grade-≤ₛ (∷-suc V q) =
+  state-grade-≤ₛ q
+
+-- Lemma: If one state 𝕊' is a successor of another 𝕊 and the extra grade
+-- accumulated together with ρ''' stays below ρ'', then 𝕊' is a renaming of 𝕊.
+--
+-- Note: the grade-decrease hypothesis is stated in cancelled form, so the
+-- construction below does not rely on left-cancellativity of grades.
+suc-comp-ren : ∀ {Γ Γ'}
+             → {ρ'' ρ''' : R}
+             → {S : 𝕊 Γ}
+             → {S' : 𝕊 Γ'}
+             → (q : S ≤ₛ S')
+             → ≤ₛ-grade q ·ᵣ ρ''' ≾ᵣ ρ''
              → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
-suc-comp-ren {S = S} id-suc S'·ρ'''≾S·ρ'' =
-  ⟨⟩-≤-ren (·ᵣ-≾ᵣ-cancellativeˡ (state-grade S) _ _ S'·ρ'''≾S·ρ'')
-suc-comp-ren {S' = S' ⟨ ρ'' ⟩ₛ} (⟨⟩-suc ρ'' S≤ₛS') S'·ρ'''≾S·ρ'' =
-  ⟨⟩-μ-ren ∘ʳ suc-comp-ren S≤ₛS' (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (state-grade S') ρ'' _))) S'·ρ'''≾S·ρ'') 
-suc-comp-ren (∷-suc V S≤ₛS') S'·ρ'''≾S·ρ'' =
-  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren S≤ₛS' S'·ρ'''≾S·ρ''
+suc-comp-ren {ρ''' = ρ'''} id-suc δρ'''≾ρ'' =
+  ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ'''))) δρ'''≾ρ'')
+suc-comp-ren {ρ''' = ρ'''} (⟨⟩-suc ρ q) δρ'''≾ρ'' =
+  ⟨⟩-μ-ren ∘ʳ suc-comp-ren q (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (≤ₛ-grade q) ρ ρ'''))) δρ'''≾ρ'')
+suc-comp-ren (∷-suc V q) δρ'''≾ρ'' =
+  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren q δρ'''≾ρ''
+
+-- Recovering the total ("uncancelled") grade-decrease statement from the
+-- cancelled one, via monotonicity of _·ᵣ_ (no cancellativity required).
+cancelled⇒total : ∀ {Γ Γ'} → {a b : R} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'}
+                → (q : S ≤ₛ S')
+                → ≤ₛ-grade q ·ᵣ a ≾ᵣ b
+                → state-grade S' ·ᵣ a ≾ᵣ state-grade S ·ᵣ b
+cancelled⇒total {a = a} {S = S} q δa≾b =
+  ≾ᵣ-trans
+    (≾ᵣ-reflexive (trans (cong (_·ᵣ a) (state-grade-≤ₛ q)) (·ᵣ-assoc (state-grade S) (≤ₛ-grade q) a)))
+    (·ᵣ-monoʳ-≾ᵣ δa≾b)
 
 -- Concatenation/composition of states
 
