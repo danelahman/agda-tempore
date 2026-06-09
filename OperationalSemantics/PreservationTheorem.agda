@@ -29,6 +29,36 @@ record Config (C : CType) : Set where
         state       : 𝕊 []
         computation : toCtx state  ⊢C⦂ C
 
+-- Looking up the resource that an (arbitrary, value-based) unboxing refers to.
+--
+-- The value `V : Δ ⊢V⦂ [ ρ ] A` being unboxed is necessarily a variable, which
+-- we transport (via `unbox⇒var`) through the witnessing renaming `w` to obtain
+-- a variable `z` in the state's context, with `ρ' ≾ᵣ ρ`. We then look up the
+-- corresponding resource in the state and rename it into `toCtx S`, using the
+-- very renaming (`wk-ren-⟨ρ⟩-ctx ∘ʳ ⟨⟩-≤-ren ρ'≾ρ`) that realises `Γ − ρ`.
+
+unbox-lookup : ∀ {A ρ Δ}
+             → (S : 𝕊 [])
+             → (w : Ren (Δ ⟨ ρ ⟩) (toCtx S))
+             → (V : Δ ⊢V⦂ [ ρ ] A)
+             → toCtx S ⊢V⦂ A
+unbox-lookup {A} {ρ} S w V with unbox⇒var w V
+... | ρ' , z , ρ'≾ρ =
+  V-rename
+    (   eq-ren (split-state-++ᶜ S z)
+     ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
+     ∘ʳ wk-ren-⟨ρ⟩-ctx
+          (trans
+            (trans
+              (trans
+                (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd S z)))
+                (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd S z)))))
+              (sym (grades-≡ (split-state-snd S z))))
+            (snd-split-time≡time-from-head S z))
+     ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+     ∘ʳ eq-ren ++ᶜ-identityˡ)
+    (resource-lookup S z)
+
 mutual 
     
     -- Small-step operational semantics aka Preservation theorem
@@ -189,28 +219,16 @@ mutual
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
 
 
-        -- step for unbox: we just substitute in M with unboxed resource
-        UNBOX       : ∀ {A C ρ ρ'} 
+        -- step for unbox: we look up the (arbitrary, value-based) unboxed
+        -- resource in the state and substitute it into the continuation M
+        UNBOX       : ∀ {A C ρ Δ}
                     → {S : 𝕊 []}
-                    → {x : [ ρ ] A ∈[ ρ' ] (toCtx S)}
-                    → {ρ'≾ρ : ρ' ≾ᵣ ρ}
+                    → {w : Ren (Δ ⟨ ρ ⟩) (toCtx S)}
+                    → {V : Δ ⊢V⦂ [ ρ ] A}
                     → {M : toCtx S ∷ A ⊢C⦂ C}
                       ----------------------------------------------------------
-                    → ⟨ S , unbox x ρ'≾ρ M ⟩ ↝
-                      ⟨ S , M [ Hd ↦ V-rename
-                                       (   eq-ren (split-state-++ᶜ S x)
-                                        ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
-                                        ∘ʳ wk-ren-⟨ρ⟩-ctx
-                                             (trans
-                                               (trans
-                                                 (trans
-                                                   (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd S x)))
-                                                   (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd S x)))))
-                                                 (sym (grades-≡ (split-state-snd S x))))
-                                               (snd-split-time≡time-from-head S x))
-                                        ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
-                                        ∘ʳ eq-ren ++ᶜ-identityˡ)
-                                       (resource-lookup S x) ]c ⟩
+                    → ⟨ S , unbox w V M ⟩ ↝
+                      ⟨ S , M [ Hd ↦ unbox-lookup S w V ]c ⟩
 
         -- during execution coerces are peeled off and
         -- the computation's effect becomes more precise

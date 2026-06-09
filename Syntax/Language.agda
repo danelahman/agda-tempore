@@ -22,8 +22,9 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Syntax.Contexts S
-open import Syntax.Types     S
+open import Syntax.Contexts  S
+open import Syntax.Types      S
+open import Syntax.Renamings  S
 
 -- Well-typed terms (values and computations)
 
@@ -151,12 +152,24 @@ mutual
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
+    --
+    -- Following the calculus of Ahman & Žajdela (MFPS 2024), the value being
+    -- unboxed is an *arbitrary* value `V` of a graded modal type `[ ρ ] A`,
+    -- not just a variable. The value is typed in an earlier context `Δ`, and
+    -- the renaming `Ren (Δ ⟨ ρ ⟩) Γ` witnesses that the current context `Γ`
+    -- extends `Δ` by at least `ρ`-worth of time-passage (i.e. that `Δ` is the
+    -- general-graded analogue of the paper's `Γ − τ`). In the paper's ℕ-graded
+    -- setting this renaming amounts to `Γ − ρ ⊢ V : [ ρ ] A` with `ρ ≤ τ_Γ`;
+    -- with general grades subtraction need not exist, so we record the
+    -- relationship as a renaming. Specialising `V` to a variable recovers the
+    -- earlier variable-only rule (see `unbox-var` in `Syntax.RenActions`).
 
     unbox   : {A : VType}
             → {C : CType}
-            → {ρ ρ' : R}
-            → (x : [ ρ ] A ∈[ ρ' ] Γ)
-            → ρ' ≾ᵣ ρ
+            → {ρ : R}
+            → {Δ : Ctx}
+            → Ren (Δ ⟨ ρ ⟩) Γ
+            → Δ ⊢V⦂ [ ρ ] A
             → Γ ∷ A ⊢C⦂ C
             ---------------------------
             → Γ ⊢C⦂ C

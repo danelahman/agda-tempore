@@ -107,21 +107,26 @@ mutual
               ))
               ((H op ε'' Γ') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eqₗ {Γ' = Γ'} x)) W ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-  _[_↦_]c (unbox {A = B} {ρ = ρ₁} {ρ' = ρ₂} y rel M) x W with var-in-split (split-pf x) y
-  ... | inj₁ (.(uᵣ) , Hd , eq , eq') =
-    unbox
+  -- For the value-based unboxing we first recover the underlying variable `y`
+  -- (and grade bound `rel`) being unboxed via `unbox⇒var`, and then proceed
+  -- exactly as in the variable case, rebuilding a value-based unboxing from the
+  -- (possibly substituted) variable via the `unbox-var` smart constructor.
+  _[_↦_]c (unbox {A = B} {ρ = ρ₁} w V M) x W with unbox⇒var w V
+  ... | ρ₂ , y , rel with var-in-split (split-pf x) y
+  ...   | inj₁ (.(uᵣ) , Hd , eq , eq') =
+    unbox-var
       (var-ρ-++ᶜ (proj₁ (proj₂ (grad-typ⇒var W))))
       (≾ᵣ-trans
         (≾ᵣ-trans
-          (·ᵣ-monoˡ-≾ᵣ ((proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))) λ ())) -- TODO check
+          (·ᵣ-monoˡ-≾ᵣ ((proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))) λ ()))
           (≾ᵣ-reflexive
             (trans
               (·ᵣ-identityˡ (ctx-grade (split-r x)))
               (cong ctx-grade (trans (sym (++ᶜ-identityˡ {Γ = split-r x})) (sym eq'))))))
         (≾ᵣ-trans (≾ᵣ-reflexive (split-grade-≡ y)) rel))
       (M [ Tl-∷ x ↦ W ]c)
-  ... | inj₁ (ρ' , Tl-∷ z , eq , eq') =
-    unbox {ρ = ρ₁} {ρ' = ρ₂}
+  ...   | inj₁ (ρ' , Tl-∷ z , eq , eq') =
+    unbox-var {ρ = ρ₁} {ρ' = ρ₂}
       (var-ρ-subst
       (begin
         ρ' ·ᵣ ctx-grade (split-r x)
@@ -139,8 +144,8 @@ mutual
         (var-ρ-++ᶜ z))
       rel
       (M [ Tl-∷ x ↦ W ]c)
-  ... | inj₂ (z , _ , _) =
-    unbox
+  ...   | inj₂ (z , _ , _) =
+    unbox-var
       (∈-ctx-extensionˡ (split-l x) (split-r x) z)
       rel
       (M [ Tl-∷ x ↦ W ]c)

@@ -71,6 +71,45 @@ var-rename (cong-∷-ren r) (Tl-∷ x) with var-rename r x
 var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' ·ᵣ _ , ·ᵣ-monoˡ-≾ᵣ ρ'≾ρ , Tl-⟨⟩ y
 
+-- Recovering the earlier variable-only unboxing rule as a special case of the
+-- general value-based `unbox`: a variable `x : [ ρ ] A ∈[ ρ' ] Γ` for which
+-- enough time has passed (`ρ' ≾ᵣ ρ`) is unboxed by viewing it as the value
+-- `var _ Hd` typed in the earlier context `split-l x ∷ [ ρ ] A`, with the
+-- witnessing renaming `Ren ((split-l x ∷ [ ρ ] A) ⟨ ρ ⟩) Γ` assembled from the
+-- context splitting induced by `x`. In the paper's ℕ-graded setting this is
+-- exactly the renaming `wk-ren-⟨ρ⟩-ctx ∘ʳ ⟨⟩-≤-ren` realising `Γ − ρ`.
+
+unbox-var : ∀ {Γ A C ρ ρ'}
+          → (x : [ ρ ] A ∈[ ρ' ] Γ)
+          → ρ' ≾ᵣ ρ
+          → Γ ∷ A ⊢C⦂ C
+          → Γ ⊢C⦂ C
+unbox-var x rel M =
+  unbox
+    (eq-ren (split-≡ (split-pf x))
+     ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)
+     ∘ʳ ⟨⟩-≤-ren rel)
+    (var (λ _ → ≾ᵣ-refl) Hd)
+    M
+
+-- Extracting the underlying variable (and grade bound) from a value-based
+-- unboxing. As graded modal types have no value introduction form, any value
+-- of type `[ ρ ] A` is a variable; transporting it through the witnessing
+-- renaming yields a variable in `Γ` together with the bound `ρ' ≾ᵣ ρ`. The
+-- bound follows from the variable's own usage condition (`ρ_y ≾ᵣ uᵣ`, since
+-- modal types are never eternal) combined with monotonicity of `_·ᵣ_`.
+
+unbox⇒var : ∀ {Γ A ρ Δ}
+          → Ren (Δ ⟨ ρ ⟩) Γ
+          → Δ ⊢V⦂ [ ρ ] A
+          → Σ[ ρ' ∈ R ] (([ ρ ] A ∈[ ρ' ] Γ) × ρ' ≾ᵣ ρ)
+unbox⇒var {ρ = ρ} w V with grad-typ⇒var V
+... | _ , y , f , _ with var-rename w (Tl-⟨⟩ y)
+... | ρ' , ρ'≾ρy·ρ , z =
+  ρ' , z ,
+  ≾ᵣ-trans ρ'≾ρy·ρ
+    (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)))
+
 -- Action of renamings on well-typed values and computations
 
 mutual
@@ -105,8 +144,7 @@ mutual
     handle C-rename r M
     `with (λ op ε'' Γ' → C-rename (cong-ren r) (H op ε'' Γ') )
     `in (C-rename (cong-ren r) N)
-  C-rename {Γ' = Γ'} r (unbox {A} {C} {ρ} {ρ'} x rel M) with var-rename r x
-  ... | ρ'' , ρ''≾ρ' , y =
-    unbox {ρ = ρ} {ρ' = ρ''} y (≾ᵣ-trans ρ''≾ρ' rel) (C-rename (cong-ren r) M)
+  C-rename r (unbox w V M) =
+    unbox (r ∘ʳ w) V (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (coerce rel M) = coerce rel (C-rename r M)
