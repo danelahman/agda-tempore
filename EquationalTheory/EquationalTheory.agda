@@ -215,14 +215,14 @@ mutual
                 --------------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
-    unbox-cong : ∀ {A C D ρ ρ'}
-               → (x : [ ρ ] A ∈[ ρ' ] Γ)
+    unbox-cong : ∀ {A C D ρ Δ}
+               → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+               → (V : Δ ⊢V⦂ [ ρ ] A)
                → {M : Γ ∷ A  ⊢C⦂ C}
                → {N : Γ ∷ A  ⊢C⦂ D}
-               → {p q : ρ' ≾ᵣ ρ}
                → Γ ∷ A ⊢C⦂ M == N
                ------------------------------------
-               → Γ ⊢C⦂ unbox x p M == unbox x q N
+               → Γ ⊢C⦂ unbox w V M == unbox w V N
 
     box-cong : ∀ {A C D ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}
@@ -300,8 +300,8 @@ mutual
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
               -------------------------------------------------------
-              → Γ ⊢C⦂ unbox x p M ⨟ N
-                  == unbox x p (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+              → Γ ⊢C⦂ unbox-var x p M ⨟ N
+                  == unbox-var x p (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     -- eta-equation for sequential composition
 
@@ -469,8 +469,8 @@ mutual
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  -----------------------------------------------------------------
-                 → Γ ⊢C⦂ handle unbox x p M `with H `in N
-                     == unbox x p
+                 → Γ ⊢C⦂ handle unbox-var x p M `with H `in N
+                     == unbox-var x p
                         (handle M `with
                           (λ op ε'' Γ' →
                             C-rename
@@ -486,7 +486,7 @@ mutual
                → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
                → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
                -----------------------------------------------------------------------
-               → Γ ⊢C⦂ box V (K [ unbox (var-ρ-++ᶜ Hd)
+               → Γ ⊢C⦂ box V (K [ unbox-var (var-ρ-++ᶜ Hd)
                                         (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ (ctx-grade (hole-ctx K)))) p)
                                         N ])
                    == box V (K [ N [ Hd ↦ V-rename (wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren) V ]c ])
@@ -501,10 +501,10 @@ mutual
                → (p₂ : ρ₂' ≾ᵣ ρ₂)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
-               → Γ ⊢C⦂ unbox x p₁
-                        (unbox (Tl-∷ y) p₂ M)
-                   == unbox y p₂
-                        (unbox (Tl-∷ x) p₁
+               → Γ ⊢C⦂ unbox-var x p₁
+                        (unbox-var (Tl-∷ y) p₂ M)
+                   == unbox-var y p₂
+                        (unbox-var (Tl-∷ x) p₁
                                (C-rename exch-ren M))
 
 
@@ -538,7 +538,7 @@ mutual
                    → (p : ρ' ≾ᵣ ρ)
                    → (M : Γ ⊢C⦂ C)
                    -------------------------------------
-                   → Γ ⊢C⦂ unbox x p (C-rename wk-ren M)
+                   → Γ ⊢C⦂ unbox-var x p (C-rename wk-ren M)
                        == M
 
     -- boxing and unboxing unrelated resources commute
@@ -550,8 +550,8 @@ mutual
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
                    → Γ ⊢C⦂ box V
-                            (unbox (Tl-∷ y) p M)
-                       == unbox y p
+                            (unbox-var (Tl-∷ y) p M)
+                       == unbox-var y p
                             (box
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))
@@ -647,7 +647,7 @@ mutual
     cong₂ (λ A ε' → A ‼ (ε ·ₑ ε'))
       (‼-injective-ty (⊢C⦂==-is-homogeneous r))
       (‼-injective-egrade (⊢C⦂==-is-homogeneous r))
-  ⊢C⦂==-is-homogeneous (unbox-cong x p) =
+  ⊢C⦂==-is-homogeneous (unbox-cong w V p) =
     ⊢C⦂==-is-homogeneous p
   ⊢C⦂==-is-homogeneous (box-cong p q) =
     ⊢C⦂==-is-homogeneous q

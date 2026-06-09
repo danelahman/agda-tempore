@@ -295,8 +295,8 @@ K-cong (handle[ q ]ₖ K `with H `in N) p =
   handle-cong (K-cong K p) (λ op ε'' Γ' → C-refl) C-refl
 K-cong (delay[ q ]ₖ τ K) p =
   delay-cong (K-cong K (==-rename-C _ p))
-K-cong (unbox[ q ]ₖ x rel K) p =
-  unbox-cong x (K-cong K (==-rename-C _ p))
+K-cong (unbox[ q ]ₖ w V K) p =
+  unbox-cong w V (K-cong K (==-rename-C _ p))
 K-cong (box[ q ]ₖ V K) p =
   box-cong V-refl (K-cong K (==-rename-C _ p))
 

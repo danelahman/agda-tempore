@@ -110,10 +110,10 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         -----------------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-natᵉ τ ·ₑ ε)
 
-    unbox[_]ₖ : ∀ {A C ρ ρ'}
+    unbox[_]ₖ : ∀ {A C ρ Δ}
         → state ≤ᶠ f
-        → (x : [ ρ ] A ∈[ ρ' ] Γ)
-        → ρ' ≾ᵣ ρ
+        → Ren (Δ ⟨ ρ ⟩) Γ
+        → Δ ⊢V⦂ [ ρ ] A
         → Γ ∷ A ⊢K[ f ◁ CH ]⦂ C
         -------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
@@ -163,7 +163,7 @@ rel-hole-ctx (handle[ p ]ₖ K `with H `in N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
   rel-hole-ctx K (Γ' ⟨ of-natʳ τ ⟩)
-rel-hole-ctx (unbox[_]ₖ {A = A} p x rel K) Γ' =
+rel-hole-ctx (unbox[_]ₖ {A = A} p w V K) Γ' =
   rel-hole-ctx K (Γ' ∷ A)
 rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =
   rel-hole-ctx K (Γ' ∷ [ ρ ] A)
@@ -196,7 +196,7 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (handle[ p ]ₖ K `with H `in N) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (delay[ p ]ₖ τ K) =
   rel-hole-ctx-++ᶜ K
-rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x rel K) =
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ w V K) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   rel-hole-ctx-++ᶜ K
@@ -236,8 +236,8 @@ eval-hole-ctx (handle[ p ]ₖ K `with H `in N) =
   handle[ ≤ᶠ-trans q p ]ₖ (◁-mon p K) `with H `in N
 ◁-mon {f = f} {f' = f'} p (delay[ q ]ₖ τ K) =
   delay[ ≤ᶠ-trans q p ]ₖ τ (◁-mon p K)
-◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ x rel K) =
-  unbox[ ≤ᶠ-trans q p ]ₖ x rel (◁-mon p K)
+◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ w V K) =
+  unbox[ ≤ᶠ-trans q p ]ₖ w V (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (box[ q ]ₖ V K) =
   box[ ≤ᶠ-trans q p ]ₖ V (◁-mon p K)
 
@@ -259,9 +259,8 @@ K-rename r (handle[ p ]ₖ K `with H `in N) =
   handle[ p ]ₖ K-rename r K `with (λ op ε'' Γ' → C-rename (cong-ren r) (H op ε'' Γ')) `in (C-rename (cong-ren r) N)
 K-rename r (delay[ p ]ₖ τ K) =
   delay[ p ]ₖ τ (K-rename (cong-ren r) K)
-K-rename r (unbox[ p ]ₖ x rel K) with var-rename r x
-... | _ , ρ'≾ρ , y =
-  unbox[ p ]ₖ y (≾ᵣ-trans ρ'≾ρ rel) (K-rename (cong-ren r) K)
+K-rename r (unbox[ p ]ₖ w V K) =
+  unbox[ p ]ₖ (r ∘ʳ w) V (K-rename (cong-ren r) K)
 K-rename r (box[ p ]ₖ V K) =
   box[ p ]ₖ (V-rename (cong-ren r) V) (K-rename (cong-ren r) K)
 
@@ -290,8 +289,8 @@ delay[ p ]ₖ τ K [ L ]ₖ =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) L ]ₖ)
-unbox[ p ]ₖ x rel K [ L ]ₖ =
-  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ x rel
+unbox[ p ]ₖ w V K [ L ]ₖ =
+  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ w V
     (K [ K-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
@@ -328,8 +327,8 @@ delay[ p ]ₖ τ K [ N ] =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) N ])
-unbox[ p ]ₖ x rel K [ N ] =
-  unbox x rel
+unbox[ p ]ₖ w V K [ N ] =
+  unbox w V
     (K [ C-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
