@@ -29,13 +29,7 @@ record Config (C : CType) : Set where
         state       : 𝕊 []
         computation : toCtx state  ⊢C⦂ C
 
--- Looking up the resource that an (arbitrary, value-based) unboxing refers to.
---
--- The value `V : Δ ⊢V⦂ [ ρ ] A` being unboxed is necessarily a variable, which
--- we transport (via `unbox⇒var`) through the witnessing renaming `w` to obtain
--- a variable `z` in the state's context, with `ρ' ≾ᵣ ρ`. We then look up the
--- corresponding resource in the state and rename it into `toCtx S`, using the
--- very renaming (`wk-ren-⟨ρ⟩-ctx ∘ʳ ⟨⟩-≤-ren ρ'≾ρ`) that realises `Γ − ρ`.
+-- Looking up the resource that an unboxing computation refers to
 
 unbox-lookup : ∀ {A ρ Δ}
              → (S : 𝕊 [])

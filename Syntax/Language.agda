@@ -152,18 +152,15 @@ mutual
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
-    --
-    -- Following the calculus of Ahman & Žajdela (MFPS 2024), the value being
-    -- unboxed is an *arbitrary* value `V` of a graded modal type `[ ρ ] A`,
-    -- not just a variable. The value is typed in an earlier context `Δ`, and
-    -- the renaming `Ren (Δ ⟨ ρ ⟩) Γ` witnesses that the current context `Γ`
-    -- extends `Δ` by at least `ρ`-worth of time-passage (i.e. that `Δ` is the
-    -- general-graded analogue of the paper's `Γ − τ`). In the paper's ℕ-graded
-    -- setting this renaming amounts to `Γ − ρ ⊢ V : [ ρ ] A` with `ρ ≤ τ_Γ`;
-    -- with general grades subtraction need not exist, so we record the
-    -- relationship as a renaming. Specialising `V` to a variable recovers the
-    -- earlier variable-only rule (see `unbox-var` in `Syntax.RenActions`).
-
+    
+    -- That enough time has passed since the box-typed value was brought into scope
+    -- is captured by the renaming assumption from context `Δ ⟨ ρ ⟩` to context `Γ`.
+    -- See the lemma `unbox⇒var` in `RenActions` that proves that the value has to
+    -- be a variable with the resources `ρ'` to the right of it satisfying `ρ' ≾ᵣ ρ`.
+    -- This achieves the same kind of temporal rewinding of the context that the
+    -- original calculus and its formalisation (Ahman & Žajdela MFPS 2024) achieved
+    -- via a recursively defined subtraction operation on contexts on ℕ-grades.
+    
     unbox   : {A : VType}
             → {C : CType}
             → {ρ : R}

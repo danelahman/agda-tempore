@@ -216,13 +216,14 @@ mutual
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
     unbox-cong : ∀ {A C D ρ Δ}
-               → (w : Ren (Δ ⟨ ρ ⟩) Γ)
-               → (V : Δ ⊢V⦂ [ ρ ] A)
+               → {w : Ren (Δ ⟨ ρ ⟩) Γ}
+               → {V W : Δ ⊢V⦂ [ ρ ] A}
                → {M : Γ ∷ A  ⊢C⦂ C}
                → {N : Γ ∷ A  ⊢C⦂ D}
+               → Δ ⊢V⦂ V == W
                → Γ ∷ A ⊢C⦂ M == N
                ------------------------------------
-               → Γ ⊢C⦂ unbox w V M == unbox w V N
+               → Γ ⊢C⦂ unbox w V M == unbox w W N
 
     box-cong : ∀ {A C D ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}
@@ -294,14 +295,14 @@ mutual
             → Γ ⊢C⦂ box V M ⨟ N
                 == box V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
-    seq-unbox : ∀ {A B C ρ ρ' ε ε'}
-              → (x : [ ρ ] A ∈[ ρ' ] Γ)
-              → (p : ρ' ≾ᵣ ρ)
+    seq-unbox : ∀ {A B C ρ Δ ε ε'}
+              → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+              → (V : Δ ⊢V⦂ [ ρ ] A)
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
               -------------------------------------------------------
-              → Γ ⊢C⦂ unbox-var x p M ⨟ N
-                  == unbox-var x p (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+              → Γ ⊢C⦂ unbox w V M ⨟ N
+                  == unbox w V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     -- eta-equation for sequential composition
 
@@ -459,9 +460,9 @@ mutual
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
 
-    handle-unbox : ∀ {A B C ρ ρ' ε ε'}
-                 → (x : [ ρ ] A ∈[ ρ' ] Γ)
-                 → (p : ρ' ≾ᵣ ρ)
+    handle-unbox : ∀ {A B C ρ Δ ε ε'}
+                 → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+                 → (V : Δ ⊢V⦂ [ ρ ] A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
                           (Γ ++ᶜ Γ') ∷ type-of-gtype (param op)
@@ -469,8 +470,8 @@ mutual
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  -----------------------------------------------------------------
-                 → Γ ⊢C⦂ handle unbox-var x p M `with H `in N
-                     == unbox-var x p
+                 → Γ ⊢C⦂ handle unbox w V M `with H `in N
+                     == unbox w V
                         (handle M `with
                           (λ op ε'' Γ' →
                             C-rename
@@ -486,25 +487,25 @@ mutual
                → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
                → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
                -----------------------------------------------------------------------
-               → Γ ⊢C⦂ box V (K [ unbox-var (var-ρ-++ᶜ Hd)
-                                        (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ (ctx-grade (hole-ctx K)))) p)
+               → Γ ⊢C⦂ box V (K [ unbox (wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p)
+                                        (var (λ _ → ≾ᵣ-refl) Hd)
                                         N ])
                    == box V (K [ N [ Hd ↦ V-rename (wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren) V ]c ])
 
 
     -- unboxing non-related values commute
 
-    unbox-comm : ∀ {A B C ρ₁ ρ₁' ρ₂ ρ₂'}
-               → (x : [ ρ₁ ] A ∈[ ρ₁' ] Γ)
-               → (y : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
-               → (p₁ : ρ₁' ≾ᵣ ρ₁)
-               → (p₂ : ρ₂' ≾ᵣ ρ₂)
+    unbox-comm : ∀ {A B C ρ₁ Δ₁ ρ₂ Δ₂}
+               → (w₁ : Ren (Δ₁ ⟨ ρ₁ ⟩) Γ)
+               → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
+               → (w₂ : Ren (Δ₂ ⟨ ρ₂ ⟩) Γ)
+               → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
-               → Γ ⊢C⦂ unbox-var x p₁
-                        (unbox-var (Tl-∷ y) p₂ M)
-                   == unbox-var y p₂
-                        (unbox-var (Tl-∷ x) p₁
+               → Γ ⊢C⦂ unbox w₁ V₁
+                        (unbox (wk-ren ∘ʳ w₂) V₂ M)
+                   == unbox w₂ V₂
+                        (unbox (wk-ren ∘ʳ w₁) V₁
                                (C-rename exch-ren M))
 
 
@@ -533,25 +534,25 @@ mutual
 
     -- eta rule for unbox
 
-    unbox-not-used : ∀ {A C ρ ρ'}
-                   → (x : [ ρ ] A ∈[ ρ' ] Γ)
-                   → (p : ρ' ≾ᵣ ρ)
+    unbox-not-used : ∀ {A C ρ Δ}
+                   → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+                   → (V : Δ ⊢V⦂ [ ρ ] A)
                    → (M : Γ ⊢C⦂ C)
                    -------------------------------------
-                   → Γ ⊢C⦂ unbox-var x p (C-rename wk-ren M)
+                   → Γ ⊢C⦂ unbox w V (C-rename wk-ren M)
                        == M
 
     -- boxing and unboxing unrelated resources commute
 
-    box-unbox-comm : ∀ {A B C ρ ρ₂ ρ₂'}
+    box-unbox-comm : ∀ {A B C ρ ρ₂ Δ₂}
                    → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                   → (y : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
-                   → (p : ρ₂' ≾ᵣ ρ₂)
+                   → (w₂ : Ren (Δ₂ ⟨ ρ₂ ⟩) Γ)
+                   → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
                    → Γ ⊢C⦂ box V
-                            (unbox-var (Tl-∷ y) p M)
-                       == unbox-var y p
+                            (unbox (wk-ren ∘ʳ w₂) V₂ M)
+                       == unbox w₂ V₂
                             (box
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))
@@ -647,7 +648,7 @@ mutual
     cong₂ (λ A ε' → A ‼ (ε ·ₑ ε'))
       (‼-injective-ty (⊢C⦂==-is-homogeneous r))
       (‼-injective-egrade (⊢C⦂==-is-homogeneous r))
-  ⊢C⦂==-is-homogeneous (unbox-cong w V p) =
+  ⊢C⦂==-is-homogeneous (unbox-cong vp p) =
     ⊢C⦂==-is-homogeneous p
   ⊢C⦂==-is-homogeneous (box-cong p q) =
     ⊢C⦂==-is-homogeneous q
@@ -661,7 +662,7 @@ mutual
     refl
   ⊢C⦂==-is-homogeneous (seq-box V M N) =
     refl
-  ⊢C⦂==-is-homogeneous (seq-unbox x p M N) =
+  ⊢C⦂==-is-homogeneous (seq-unbox w V M N) =
     refl
   ⊢C⦂==-is-homogeneous (seq-eta _) =
     refl
@@ -683,19 +684,19 @@ mutual
     refl
   ⊢C⦂==-is-homogeneous (handle-box V M H N) =
     refl
-  ⊢C⦂==-is-homogeneous (handle-unbox x p M H N) =
+  ⊢C⦂==-is-homogeneous (handle-unbox w V M H N) =
     refl
   ⊢C⦂==-is-homogeneous (unbox-beta V K p N) =
     refl
-  ⊢C⦂==-is-homogeneous (unbox-comm x y p₁ p₂ M) =
+  ⊢C⦂==-is-homogeneous (unbox-comm w₁ V₁ w₂ V₂ M) =
     refl
   ⊢C⦂==-is-homogeneous (box-comm V W M) =
     refl
   ⊢C⦂==-is-homogeneous (boxed-not-used V M) =
     refl
-  ⊢C⦂==-is-homogeneous (unbox-not-used x p _) =
+  ⊢C⦂==-is-homogeneous (unbox-not-used w V _) =
     refl
-  ⊢C⦂==-is-homogeneous (box-unbox-comm V y p M) =
+  ⊢C⦂==-is-homogeneous (box-unbox-comm V w₂ V₂ M) =
     refl
   ⊢C⦂==-is-homogeneous (delay-zero M) =
     refl

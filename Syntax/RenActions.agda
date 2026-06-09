@@ -71,13 +71,8 @@ var-rename (cong-∷-ren r) (Tl-∷ x) with var-rename r x
 var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' ·ᵣ _ , ·ᵣ-monoˡ-≾ᵣ ρ'≾ρ , Tl-⟨⟩ y
 
--- Recovering the earlier variable-only unboxing rule as a special case of the
--- general value-based `unbox`: a variable `x : [ ρ ] A ∈[ ρ' ] Γ` for which
--- enough time has passed (`ρ' ≾ᵣ ρ`) is unboxed by viewing it as the value
--- `var _ Hd` typed in the earlier context `split-l x ∷ [ ρ ] A`, with the
--- witnessing renaming `Ren ((split-l x ∷ [ ρ ] A) ⟨ ρ ⟩) Γ` assembled from the
--- context splitting induced by `x`. In the paper's ℕ-graded setting this is
--- exactly the renaming `wk-ren-⟨ρ⟩-ctx ∘ʳ ⟨⟩-≤-ren` realising `Γ − ρ`.
+-- A FGCBV-specific variable-based variant of `unbox` based on every value of 
+-- box-type being forced to be a variable (as proved below in unbox⇒var). 
 
 unbox-var : ∀ {Γ A C ρ ρ'}
           → (x : [ ρ ] A ∈[ ρ' ] Γ)
@@ -92,12 +87,7 @@ unbox-var x rel M =
     (var (λ _ → ≾ᵣ-refl) Hd)
     M
 
--- Extracting the underlying variable (and grade bound) from a value-based
--- unboxing. As graded modal types have no value introduction form, any value
--- of type `[ ρ ] A` is a variable; transporting it through the witnessing
--- renaming yields a variable in `Γ` together with the bound `ρ' ≾ᵣ ρ`. The
--- bound follows from the variable's own usage condition (`ρ_y ≾ᵣ uᵣ`, since
--- modal types are never eternal) combined with monotonicity of `_·ᵣ_`.
+-- Extracting the underlying variable (and grade bound) from a box-typed value
 
 unbox⇒var : ∀ {Γ A ρ Δ}
           → Ren (Δ ⟨ ρ ⟩) Γ
