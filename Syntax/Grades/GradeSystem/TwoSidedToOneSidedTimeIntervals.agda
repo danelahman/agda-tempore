@@ -2,13 +2,13 @@
 -- Grade System of TSI as effect grades and LSI as resource grades --
 ---------------------------------------------------------------------
 
-module Syntax.Grades.IntGradeSystem where
+module Syntax.Grades.GradeSystem.TwoSidedToOneSidedTimeIntervals where
 
 open import Data.Product
 
 open import Syntax.Grades
-open import Syntax.Grades.LeftSidedIntervals
-open import Syntax.Grades.TwoSidedIntervals
+open import Syntax.Grades.Time.LeftSidedIntervals
+open import Syntax.Grades.Time.TwoSidedIntervals
 
 open import Util.Equality
 

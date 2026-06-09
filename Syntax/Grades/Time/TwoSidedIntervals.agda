@@ -2,7 +2,7 @@
 -- Two-sided (closed) intervals as grades --
 --------------------------------------------
 
-module Syntax.Grades.TwoSidedIntervals where
+module Syntax.Grades.Time.TwoSidedIntervals where
 
 open import Data.Nat
 open import Data.Nat.Properties
@@ -148,11 +148,7 @@ intervals = record
              ; ≾-trans          = λ rel₁ rel₂
                                     → ≤-trans (proj₁ rel₂) (proj₁ rel₁) ,
                                       ≤-trans (proj₂ rel₁) (proj₂ rel₂)
-             ; ≾-irrelevant      = λ {i₁} {i₂} rel₁ rel₂
-                                     → ≾ᵢ-irrelevant {i₁} {i₂} rel₁ rel₂
              ; _≡?_              = eqᵢ?
-             ; ≡-zero-productˡ   = ≡ᵢ-zero-productˡ
-             ; ≡-zero-productʳ   = λ {i₁} {i₂} → ≡ᵢ-zero-productʳ {i₁} {i₂}
              ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
              ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
              ; of-nat            = λ n → [ n , n ]tsi ≤-refl

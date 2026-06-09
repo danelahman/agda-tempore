@@ -2,9 +2,7 @@
 -- (Right) One-sided (closed) intervals as grades --
 ----------------------------------------------------
 
-module Syntax.Grades.RightSidedIntervals where
-
-open import Syntax.Grades
+module Syntax.Grades.Time.RightSidedIntervals where
 
 open import Data.Nat
 open import Data.Nat.Properties
@@ -17,6 +15,8 @@ open import Relation.Binary.Definitions
 open import Relation.Binary.PropositionalEquality as Eq
 open Eq.≡-Reasoning
 open import Relation.Nullary.Decidable.Core
+
+open import Syntax.Grades
 
 -- type of one-sided intervals
 
@@ -124,10 +124,7 @@ right-sided-intervals = record
   ; ·-monoˡ-≾         = ·ₒ-monoˡ-≾ₒ
   ; ≾-refl            = ≾ₒ-refl
   ; ≾-trans           = ≾ₒ-trans
-  ; ≾-irrelevant      = ≾ₒ-irrelevant
   ; _≡?_              = _≡ₒ?_
-  ; ≡-zero-productˡ   = ≡ₒ-zero-productˡ
-  ; ≡-zero-productʳ   = ≡ₒ-zero-productʳ
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
   ; of-nat            = [0,_]

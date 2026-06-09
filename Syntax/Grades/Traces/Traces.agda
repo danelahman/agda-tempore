@@ -34,6 +34,12 @@
 -- `c ≾ u` when `d` is the empty set).                                 --
 ------------------------------------------------------------------------
 
+open import Syntax.LanguageSpec
+
+open import Util.Equality
+
+module Syntax.Grades.Traces.Traces (S : LanguageSpec) where
+
 open import Data.Empty using (⊥)
 open import Data.List.Base
   using (List; []; _∷_; [_]; _++_; map; cartesianProductWith)
@@ -55,12 +61,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades
-open import Syntax.LanguageSpec
 open import Syntax.Operations
-
-open import Util.Equality
-
-module Syntax.Grades.Traces (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -431,10 +432,7 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
     ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
     ; ≾-refl          = λ {x} → ≾ᵗ-refl {x}
     ; ≾-trans         = λ {i} {j} {k} → ≾ᵗ-trans {i} {j} {k}
-    ; ≾-irrelevant    = λ {x} {y} → ≾ᵗ-irrelevant {x} {y}
     ; _≡?_            = _≟ᴺ_
-    ; ≡-zero-productˡ = λ {c} {d} → ·-zero-productˡ {c} {d}
-    ; ≡-zero-productʳ = λ {c} {d} → ·-zero-productʳ {c} {d}
     ; ≾-zero-productˡ = λ {c} {d} → ≾ᵗ-zero-productˡ {c} {d}
     ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗ-zero-productʳ {c} {d}
     ; of-nat          = of-nat

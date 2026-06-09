@@ -2,7 +2,7 @@
 -- (Left) One-sided (closed) intervals as grades --
 ---------------------------------------------------
 
-module Syntax.Grades.LeftSidedIntervals where
+module Syntax.Grades.Time.LeftSidedIntervals where
 
 open import Data.Nat
 open import Data.Nat.Properties
@@ -125,10 +125,7 @@ one-sided-intervals = record
   ; ·-monoˡ-≾         = ·ₒ-monoˡ-≾ₒ
   ; ≾-refl            = ≾ₒ-refl
   ; ≾-trans           = ≾ₒ-trans
-  ; ≾-irrelevant      = ≾ₒ-irrelevant
   ; _≡?_              = _≡ₒ?_
-  ; ≡-zero-productˡ   = ≡ₒ-zero-productˡ
-  ; ≡-zero-productʳ   = ≡ₒ-zero-productʳ
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
   ; of-nat            = [_,+∞⟩

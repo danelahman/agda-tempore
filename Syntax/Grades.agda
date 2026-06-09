@@ -49,15 +49,8 @@ record Grade : Set₁ where
     ≾-refl  : Reflexive _≾_
     ≾-trans : Transitive _≾_
 
-    -- _≾_ is irrelevant
-    ≾-irrelevant : Irrelevant _≾_
-
     -- _≡_ (on Carrier) is decidable
     _≡?_ : Decidable (_≡_ {A = Carrier})
-
-    -- _·_ and u have zero-product property
-    ≡-zero-productˡ : ∀ {c d} → c · d ≡ u → c ≡ u
-    ≡-zero-productʳ : ∀ {c d} → c · d ≡ u → d ≡ u
 
     -- _≾_ and u have zero-product property
     ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
@@ -77,13 +70,6 @@ record Grade : Set₁ where
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
-
-  -- contrapositive version of the zero-product property of _·_
-  ≡-zero-productˡ-≢ : ∀ {c d} → c ≢ u → c · d ≢ u
-  ≡-zero-productˡ-≢ p q = p (≡-zero-productˡ q)
-  
-  ≡-zero-productʳ-≢ : ∀ {c d} → d ≢ u → c · d ≢ u
-  ≡-zero-productʳ-≢ p q = p (≡-zero-productʳ q)
 
 open Grade
 
@@ -139,18 +125,13 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
-     ≾-irrelevant to ≾ᵣ-irrelevant;
      _≡?_ to _≡ᵣ?_;
-     ≡-zero-productˡ to ≡ᵣ-zero-productclˡ;
-     ≡-zero-productʳ to ≡ᵣ-zero-productʳ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
      of-nat to of-natʳ;
      of-nat-zero to of-natʳ-zero;
      of-nat-plus to of-natʳ-plus;
-     ≾-reflexive to ≾ᵣ-reflexive;
-     ≡-zero-productˡ-≢ to ≡ᵣ-zero-productˡ-≢;
-     ≡-zero-productʳ-≢ to ≡ᵣ-zero-productʳ-≢
+     ≾-reflexive to ≾ᵣ-reflexive
     ) public
 
   open Grade EGrade renaming
@@ -168,9 +149,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      of-nat to of-natᵉ;
      of-nat-zero to of-natᵉ-zero;
      of-nat-plus to of-natᵉ-plus;
-     ≾-reflexive to ≾ₑ-reflexive;
-     ≡-zero-productˡ-≢ to ≡ₑ-zero-productˡ-≢;
-     ≡-zero-productʳ-≢ to ≡ₑ-zero-productʳ-≢
+     ≾-reflexive to ≾ₑ-reflexive
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming

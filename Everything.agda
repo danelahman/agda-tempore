@@ -71,12 +71,13 @@ open import Syntax.Grades
 
 ---- Examples of grades
 
-open import Syntax.Grades.LeftSidedIntervals
-open import Syntax.Grades.RightSidedIntervals
-open import Syntax.Grades.TwoSidedIntervals
-open import Syntax.Grades.IntGradeSystem
-open import Syntax.Grades.Traces S
+open import Syntax.Grades.Time.LeftSidedIntervals
+open import Syntax.Grades.Time.RightSidedIntervals
+open import Syntax.Grades.Time.TwoSidedIntervals
 
+open import Syntax.Grades.Traces.Traces S
+
+open import Syntax.Grades.GradeSystem.TwoSidedToOneSidedTimeIntervals
 
 -- OPERATIONAL SEMANTICS
 ------------------------
