@@ -1,92 +1,113 @@
-# Agda formalisation for a generally graded core language for temporal resources
+# Agda formalisation of a generally graded core language for temporal resources
 
-A (work in progress) Agda formalisation of a (Fitch-style) **generally graded, 
-modally typed, effectful core language for safe and correct programming with
-temporal resources**, i.e., resources that become available only after some 
-amount of time, events, etc after being brought into scope, e.g., when an 
-assembly operation needs to wait for (car) parts to dry after executing a paint
+An Agda formalisation of a (Fitch-style) **generally graded, modally typed,
+effectful core language for safe and correct programming with temporal
+resources**, i.e., resources that become available only after some amount of
+time, events, etc. after being brought into scope, e.g., when an assembly
+operation needs to wait for (car) parts to dry after executing a paint
 operation, or for some other actions to happen before executing new operations.
 
 This repository builds on two prior formalisations that only modelled discrete
 time passage as the means to specify and verify temporal properties of resources:
-[danelahman/temporal-resources](https://github.com/danelahman/temporal-resources) 
+[danelahman/temporal-resources](https://github.com/danelahman/temporal-resources)
 and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 
-In contrast, the core language formalised in this repository can use arbitrary 
-(commutative) ordered monoids to verify temporal properties of resources. 
-Furthermore, one can use different monoids for grading effects and resources.
+In contrast, the core language formalised in this repository can use arbitrary
+(commutative) ordered monoids to specify effects and verify temporal properties 
+of resources. Furthermore, one can use *different* monoids for grading effects 
+and resources, related by a grade morphism, so that an effect grade (e.g., a 
+trace or interval of possible execution costs) can be reinterpreted as a resource 
+grade (e.g., the amount of time after which a resource becomes available).
 
 The **main features** of this core language are:
 
-- Fitch-style, _temporally-graded modal types_ `[ rho ] X` are used to capture
-  temporal resources, expressing that an `X`-typed value will be available in at
-  most `rho` time steps, after at most `rho` events, or other similar property.
+- Fitch-style, _temporally-graded modal types_ `[ ρ ]ᵍ A` (on ground types) and
+  `[ ρ ] X` (on value types) are used to capture temporal resources, expressing
+  that an `A`/`X`-typed value will be available in at most `ρ` time steps, after
+  at most `ρ` events, or after some similar resource grade has elapsed.
 
 - A novel notion of _temporally-aware algebraic effects_, where operations'
-  specifications include their effect specification, and their continuations 
-  know that an operation's worth of additional time, events, etc has happened
-  before they start executing, making it possible to safely access further 
-  temporal resources in the continuation.
+  specifications include their effect grade, and their continuations know that
+  an operation's worth of additional time, events, etc. has happened before
+  they start executing, making it possible to safely access further temporal
+  resources in the continuation.
 
 - _Effect handlers_, also temporally-aware, that have to respect the temporal
   discipline of algebraic operations.
 
-- A _graded monads-based modal effect system_ (with some added temporal 
-  awareness) that modularly tracks the effects and resource usage.
+- A _graded monads-based modal effect system_ (with added temporal awareness)
+  that modularly tracks the effects and resource usage, parameterised over a
+  **grade system**: a pair of ordered monoids (one for effect grades, one for
+  resource grades) together with a grade morphism between them.
 
 The formalisation is developed and tested with Agda version 2.8.0 and Agda
-Standard Library version 2.3.
+Standard Library version 2.3. To check the whole development, run `make` (which
+invokes `agda Everything.agda`); `Everything.agda` imports every module.
 
-The formalisation consists of **three main parts**:
+## Structure of the formalisation
+
+The syntax and semantics are parameterised over a `LanguageSpec`, which bundles 
+the three pieces of data that a concrete instance of the language is built over: 
+a grade system, a signature of base types, and operations' signatures.
+
+### Utilities
+
+- `Util/Equality.agda` collects equality-related auxiliary proofs and postulates
+  function extensionality.
+- `Util/Time.agda` defines time (as natural numbers) and auxiliary lemmas.
+- `Util/Monad.agda` defines monads, used in the top-level operational semantics.
+
+### Grades and grade systems
+
+- `Syntax/Grades.agda` defines the notion of a `Grade` (a commutative ordered
+  monoid), grade morphisms `_→ᵍ_`, and a `GradeSystem` (effect grades `EGrade`,
+  resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the
+  latter), together with a convenience interface `GradeSystemInterface`.
+
+- Concrete examples of time-based grades live in `Syntax/Grades/Time/`.
+
+- Trace-based grades live in `Syntax/Grades/Traces/`.
+
+- `Syntax/Grades/GradeSystem/` assembles full example grade systems, including
+  trace-interval effect grades over time-interval resource grades, in both
+  best-case and worst-case readings, and grade morphisms between them.
 
 ### Core language, type system
 
-The main modules presenting the core language are:
-
-- `Syntax/Grades.agda` defines the notion of grades (for effects and resources). 
-  (TODO CHECK)
-
-- `Syntax/Types.agda` defines types. 
-  (TODO ADAPT)
-
-- `Syntax/Contexts.agda` defines contexts and operations on them. 
-  (TODO ADAPT)
-
-- `Syntax/Language.agda` defines well-typed values and computations. 
-  (TODO ADAPT)
-
-- `Syntax/Renamings.agda` defines renamings and their action on well-typed
-  terms. 
-  (TODO ADAPT)
-
-- `Syntax/Substitutions.agda` defines the action of substitution on well-typed
-  terms. 
-  (TODO ADAPT)
-
+- `Syntax/BaseTypes.agda` defines the signature of base types (with decidable
+  equality, eternal base types, and constants).
+- `Syntax/GroundTypes.agda` defines ground types (used as operation parameter
+  and arity types), including the temporal modality `[ ρ ]ᵍ A` on ground types.
+- `Syntax/Operations.agda` defines operation signatures, including each
+  operation's parameter and arity ground types and its (maximal) execution grade.
+- `Syntax/Types.agda` defines value and computation types.
+- `Syntax/Contexts.agda` defines variables and structured contexts, including
+  the time-passage context former `Γ ⟨ ρ ⟩`.
+- `Syntax/Language.agda` defines well-typed values and computations.
+- `Syntax/Renamings.agda` defines context renamings, and
+  `Syntax/RenActions.agda` their action on well-typed terms.
+- `Syntax/Substitutions.agda` defines the action of substituting.
 - `Syntax/CompContext.agda` defines computation term and evaluation contexts.
-  (TODO ADAPT)
 
-### Operational semantics, progress theorem
+### Operational semantics, progress and preservation theorems
 
-- `OperationalSemantics/State.agda` defines state for the stateful temporally 
-  aware operational semantics, and proves some auxiliary results about states.
-  (TODO ADAPT)
-
-- `OperationalSemantics/PreservationTheorem.agda` defines a reduction relation
-  for well-typed computations; as the semantics is defined on well-typed
-  computations, it simultaneously also proves preservation theorem.
-  (TODO ADAPT)
-
-- `OperationalSemantics/ProgressTheorem.agda` proves progress theorem.
-  (TODO ADAPT)
+- `OperationalSemantics/State.agda` defines the states of the stateful,
+  temporally-aware operational semantics and auxiliary results about them.
+- `OperationalSemantics/PreservationTheorem.agda` defines the small-step
+  reduction relation on well-typed computations; as the semantics is defined on
+  well-typed computations, it simultaneously proves the preservation theorem.
+- `OperationalSemantics/ProgressTheorem.agda` proves the progress theorem.
+- `OperationalSemantics/TopLevelOpSemantics.agda`,
+  `TopLevelPreservationTheorem.agda`, and `TopLevelProgressTheorem.agda` give a
+  top-level operational semantics (interpreting unhandled algebraic operations) 
+  together with the corresponding preservation and progress theorems.
 
 ### Equational theory
 
 - `EquationalTheory/EquationalTheory.agda` defines an equational theory for the
   language inspired by the standard equational presentations of local state.
-  (TODO ADAPT)
 
 ## Work in progress
 
-Agda formalisation of the soundness proof is not yet finished, and remains work
-in progress. (TODO ADAPT AND FINISH)
+The equational soundness proof (`EquationalTheory/EquationalSoundness.agda`)
+and its formalisation remain currently a work in progress.
