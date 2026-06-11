@@ -3,7 +3,7 @@
 -- grades and left-sided time intervals as resource grades    --
 ----------------------------------------------------------------
 
-module Syntax.Grades.GradeSystem.TwoSidedToOneSidedTimeIntervals where
+module Syntax.Grades.GradeSystem.TwoSidedTimeIntervalsToOneSidedTimeIntervals where
 
 open import Data.Product
 
@@ -13,7 +13,7 @@ open import Syntax.Grades.Time.TwoSidedIntervals
 
 open import Util.Equality
 
-tsi→lsi : intervals →ᵍ one-sided-intervals
+tsi→lsi : two-sided-intervals →ᵍ left-sided-intervals
 tsi→lsi = record
   { map          = λ tsi → [ min tsi ,+∞⟩
   ; map-monotone = λ rel → proj₁ rel
@@ -24,7 +24,7 @@ tsi→lsi = record
 
 intGradeSystem : GradeSystem
 intGradeSystem = record
-  { RGrade = one-sided-intervals
-  ; EGrade = intervals
+  { RGrade = left-sided-intervals
+  ; EGrade = two-sided-intervals
   ; ∣_∣ᵉ   = tsi→lsi
   }

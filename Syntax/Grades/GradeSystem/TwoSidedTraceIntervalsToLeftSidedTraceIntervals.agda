@@ -14,7 +14,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-module Syntax.Grades.GradeSystem.TwoSidedToLeftSidedTraceIntervals (S : LanguageSpec) where
+module Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToLeftSidedTraceIntervals (S : LanguageSpec) where
 
 open Grade
 open LanguageSpec S

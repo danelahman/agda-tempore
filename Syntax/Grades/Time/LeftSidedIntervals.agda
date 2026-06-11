@@ -112,8 +112,8 @@ _≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
 
 -- the grade of one-sided intervals
 
-one-sided-intervals : Grade
-one-sided-intervals = record
+left-sided-intervals : Grade
+left-sided-intervals = record
   { Carrier          = 𝕀
   ; _·_               = _·ₒ_
   ; u                 = uₒ

@@ -130,9 +130,8 @@ eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟ max i₂
 ≾ᵢ-zero-productʳ : ∀ {i₁ i₂} → (i₁ ·ᵢ i₂) ≾ᵢ [ 0 , 0 , z≤n ] → i₂ ≾ᵢ [ 0 , 0 , z≤n ]
 ≾ᵢ-zero-productʳ rel = z≤n , m+n≤o⇒n≤o _ (proj₂ rel)
 
-
-intervals : Grade
-intervals = record
+two-sided-intervals : Grade
+two-sided-intervals = record
              { Carrier = Interval
              ; _·_              = _·ᵢ_
              ; u                = [ 0 , 0 , z≤n ]
