@@ -1,0 +1,193 @@
+------------------------------------------------------------------------
+-- Best-case durations: the *least* duration of a set of timed traces  --
+--                                                                      --
+-- This is the `⊓`-aggregation companion to `Duration.agda`'s `⊔`-based --
+-- `setDuration`. Where `setDuration` measures a set by its longest     --
+-- (worst-case) trace, `minSetDuration` measures it by its shortest     --
+-- (best-case) trace -- the time taken when the computation realises    --
+-- its fastest available trace. The per-trace `duration` is shared with --
+-- `Duration.agda`; only the set-level aggregation differs.             --
+------------------------------------------------------------------------
+
+open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Nullary.Decidable using (toWitness; fromWitness)
+
+open import Data.List.Base using (List; []; _∷_; map)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties
+  using (∈-map⁺; ∈-map⁻; ∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
+open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _⊓_; _≤_)
+open import Data.Nat.Properties
+  using (≤-refl; ≤-trans; ≤-reflexive; ≤-antisym; +-mono-≤;
+         m⊓n≤m; m⊓n≤n; ⊓-glb; ⊓-sel)
+open import Data.Product using (_×_; _,_; Σ)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
+
+open import Util.Equality
+
+module Syntax.Grades.Traces.MinDuration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+
+open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
+
+open WithDecEq _≟ₒ_
+
+------------------------------------------------------------------------
+-- The minimum of a seed and a list of naturals
+--
+-- `min` has no additive identity in `ℕ` (it would be `∞`), so rather
+-- than folding from a base element we thread the first element of a
+-- non-empty list as a running seed.
+
+minWith : ℕ → List ℕ → ℕ
+minWith a []       = a
+minWith a (x ∷ xs) = x ⊓ minWith a xs
+
+-- the result is below the seed and below every list element
+
+minWith-≤seed : (a : ℕ) (xs : List ℕ) → minWith a xs ≤ a
+minWith-≤seed a []       = ≤-refl
+minWith-≤seed a (x ∷ xs) = ≤-trans (m⊓n≤n x (minWith a xs)) (minWith-≤seed a xs)
+
+minWith-≤mem : (a v : ℕ) (xs : List ℕ) → v ∈ xs → minWith a xs ≤ v
+minWith-≤mem a v (x ∷ xs) (here refl) = m⊓n≤m x (minWith a xs)
+minWith-≤mem a v (x ∷ xs) (there mem) =
+  ≤-trans (m⊓n≤n x (minWith a xs)) (minWith-≤mem a v xs mem)
+
+-- it is the greatest such lower bound
+
+minWith-glb : (a b : ℕ) (xs : List ℕ)
+            → b ≤ a → (∀ v → v ∈ xs → b ≤ v) → b ≤ minWith a xs
+minWith-glb a b []       b≤a h = b≤a
+minWith-glb a b (x ∷ xs) b≤a h =
+  ⊓-glb (h x (here refl)) (minWith-glb a b xs b≤a (λ v mem → h v (there mem)))
+
+-- the minimum is attained, either at the seed or at a list element
+
+minWith-attained : (a : ℕ) (xs : List ℕ)
+                 → (minWith a xs ≡ a) ⊎ Σ ℕ (λ v → (v ∈ xs) × (minWith a xs ≡ v))
+minWith-attained a []       = inj₁ refl
+minWith-attained a (x ∷ xs) with ⊓-sel x (minWith a xs)
+... | inj₁ eq = inj₂ (x , here refl , eq)
+... | inj₂ eq with minWith-attained a xs
+...   | inj₁ eqa            = inj₁ (trans eq eqa)
+...   | inj₂ (v , mem , eqv) = inj₂ (v , there mem , trans eq eqv)
+
+------------------------------------------------------------------------
+-- The (least) duration of a non-empty list of traces
+
+bigMin : List ℕ → ℕ
+bigMin []       = zero
+bigMin (x ∷ xs) = minWith x xs
+
+-- every member's value is above the minimum
+
+bigMin-mem : (f : Trace → ℕ) (t : Trace) (xs : List Trace)
+           → t ∈ xs → bigMin (map f xs) ≤ f t
+bigMin-mem f t (x ∷ xs) (here refl) = minWith-≤seed (f x) (map f xs)
+bigMin-mem f t (x ∷ xs) (there mem) =
+  minWith-≤mem (f x) (f t) (map f xs) (∈-map⁺ f mem)
+
+-- the minimum is the greatest lower bound
+
+bigMin-bound : (f : Trace → ℕ) (xs : List Trace) (b : ℕ)
+             → NonEmpty xs → (∀ t → t ∈ xs → b ≤ f t) → b ≤ bigMin (map f xs)
+bigMin-bound f []       b () _
+bigMin-bound f (x ∷ xs) b _  h =
+  minWith-glb (f x) b (map f xs) (h x (here refl)) bound-tail
+  where
+    bound-tail : (v : ℕ) → v ∈ map f xs → b ≤ v
+    bound-tail v v∈ with ∈-map⁻ f v∈
+    ... | t , t∈xs , refl = h t (there t∈xs)
+
+-- the minimum is attained at some member
+
+bigMin-attained : (f : Trace → ℕ) (x : Trace) (xs : List Trace)
+                → Σ Trace (λ t → (t ∈ (x ∷ xs)) × (bigMin (map f (x ∷ xs)) ≡ f t))
+bigMin-attained f x xs with minWith-attained (f x) (map f xs)
+... | inj₁ eq            = x , here refl , eq
+... | inj₂ (v , v∈ , eq) with ∈-map⁻ f v∈
+...   | t , t∈xs , refl  = t , there t∈xs , eq
+
+-- the minimum is monotone in the measured function
+
+bigMin-mono : (f g : Trace → ℕ) (xs : List Trace)
+            → NonEmpty xs → (∀ t → f t ≤ g t)
+            → bigMin (map f xs) ≤ bigMin (map g xs)
+bigMin-mono f g xs ne h =
+  bigMin-bound g xs (bigMin (map f xs)) ne
+    (λ t t∈xs → ≤-trans (bigMin-mem f t xs t∈xs) (h t))
+
+------------------------------------------------------------------------
+-- Best-case durations relative to a fixed cost on operation symbols
+--
+-- We reuse the per-trace `duration` of `Duration.agda` and only change
+-- the set-level aggregation from `⊔` (worst case) to `⊓` (best case).
+
+module MinDurations (c : Op → ℕ) where
+
+  open Durations c public
+
+  -- the best-case duration of a set of traces is the least duration of
+  -- a member
+
+  minSetDuration : List Trace → ℕ
+  minSetDuration xs = bigMin (map duration xs)
+
+  -- `minSetDuration` is *anti*-monotone for the subset order: enlarging
+  -- a set can only lower (or keep) its minimum
+
+  minSetDuration-⊒ : (xs ys : List Trace)
+                   → NonEmpty xs → xs ⊑ ys → minSetDuration ys ≤ minSetDuration xs
+  minSetDuration-⊒ xs ys ne sub =
+    bigMin-bound duration xs (minSetDuration ys) ne
+      (λ t t∈xs → bigMin-mem duration t ys (toWitness (sub t (fromWitness t∈xs))))
+
+  -- `minSetDuration` is a monoid homomorphism for the language product
+  -- of (non-empty) sets of traces
+
+  minSetDuration-·ˢ : (xs ys : List Trace)
+                    → NonEmpty xs → NonEmpty ys
+                    → minSetDuration (xs ·ˢ ys) ≡ minSetDuration xs + minSetDuration ys
+  minSetDuration-·ˢ []       ys       () _
+  minSetDuration-·ˢ (x ∷ xs) []       _  ()
+  minSetDuration-·ˢ (x ∷ xs) (y ∷ ys) _  _ = ≤-antisym le ge
+    where
+      -- the minimum of the product is attained by the fastest member of
+      -- each factor sequenced together
+      le : minSetDuration ((x ∷ xs) ·ˢ (y ∷ ys))
+         ≤ minSetDuration (x ∷ xs) + minSetDuration (y ∷ ys)
+      le with bigMin-attained duration x xs | bigMin-attained duration y ys
+      ... | p , p∈ , peq | q , q∈ , qeq =
+        ≤-trans (bigMin-mem duration (p ∙ q) ((x ∷ xs) ·ˢ (y ∷ ys))
+                   (∈-cartesianProductWith⁺ _∙_ p∈ q∈))
+                (≤-reflexive (trans (duration-∙ p q)
+                                    (cong₂ _+_ (sym peq) (sym qeq))))
+
+      -- conversely every product member is at least the sum of the minima
+      ge : minSetDuration (x ∷ xs) + minSetDuration (y ∷ ys)
+         ≤ minSetDuration ((x ∷ xs) ·ˢ (y ∷ ys))
+      ge = bigMin-bound duration ((x ∷ xs) ·ˢ (y ∷ ys))
+             (minSetDuration (x ∷ xs) + minSetDuration (y ∷ ys))
+             (·ˢ-ne {x ∷ xs} {y ∷ ys} _ _) bound
+        where
+          bound : (r : Trace) → r ∈ ((x ∷ xs) ·ˢ (y ∷ ys))
+                → minSetDuration (x ∷ xs) + minSetDuration (y ∷ ys) ≤ duration r
+          bound r r∈ with ∈-cartesianProductWith⁻ _∙_ (x ∷ xs) (y ∷ ys) r∈
+          ... | a , b , a∈ , b∈ , refl =
+            ≤-trans (+-mono-≤ (bigMin-mem duration a (x ∷ xs) a∈)
+                              (bigMin-mem duration b (y ∷ ys) b∈))
+                    (≤-reflexive (sym (duration-∙ a b)))
+
+------------------------------------------------------------------------
+-- Comparing best-case durations across two different costs
+--
+-- `minSetDuration` is monotone in the cost: a pointwise larger cost can
+-- only raise the best-case duration.
+
+minSetDuration-cost : (c c' : Op → ℕ) (xs : List Trace)
+                    → NonEmpty xs → (∀ o → c o ≤ c' o)
+                    → MinDurations.minSetDuration c xs ≤ MinDurations.minSetDuration c' xs
+minSetDuration-cost c c' xs ne h =
+  bigMin-mono (Durations.duration c) (Durations.duration c') xs ne (duration-mono c c' h)

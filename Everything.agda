@@ -83,10 +83,12 @@ open import Syntax.Grades.Traces.LeftSidedTraces
 open import Syntax.Grades.Traces.TwoSidedTraces
 open import Syntax.Grades.Traces.Restriction
 open import Syntax.Grades.Traces.Duration
+open import Syntax.Grades.Traces.MinDuration
 
 open import Syntax.Grades.GradeSystem.TwoSidedTimeIntervalsToOneSidedTimeIntervals
 open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToLeftSidedTraceIntervals
 open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervals
+open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsBestCase
 
 -- OPERATIONAL SEMANTICS
 ------------------------

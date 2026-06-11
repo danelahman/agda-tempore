@@ -18,7 +18,7 @@ open import Data.Nat.Properties
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Duration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+module Syntax.Grades.Traces.MaxDuration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Syntax.Grades.Traces.Base Op
 open WithDecEq _≟ₒ_
