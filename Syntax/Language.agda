@@ -22,7 +22,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Syntax.Contexts  S
+open import Syntax.Contexts   S
 open import Syntax.Types      S
 open import Syntax.Renamings  S
 
