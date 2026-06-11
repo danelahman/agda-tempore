@@ -202,8 +202,8 @@ open NeTraces public
 -- two sets of traces are equal as soon as their underlying lists are
 -- (the non-emptiness proofs are irrelevant)
 
-eqNe : {P Q : NeTraces} → traces P ≡ traces Q → P ≡ Q
-eqNe {neTraces xs p} {neTraces .xs q} refl = cong (neTraces xs) (NonEmpty-irr xs p q)
+ne-ext : {P Q : NeTraces} → traces P ≡ traces Q → P ≡ Q
+ne-ext {neTraces xs p} {neTraces .xs q} refl = cong (neTraces xs) (NonEmpty-irr xs p q)
 
 ------------------------------------------------------------------------
 -- Monoid structure on sets of traces: the language product with unit { ε }
@@ -284,13 +284,13 @@ cpw-map x (y ∷ ys) zs =
 -- the monoid laws for sets of traces
 
 ·-identityʳ : (P : NeTraces) → (P · u) ≡ P
-·-identityʳ P = eqNe (·ˢ-identityʳ (traces P))
+·-identityʳ P = ne-ext (·ˢ-identityʳ (traces P))
 
 ·-identityˡ : (P : NeTraces) → (u · P) ≡ P
-·-identityˡ P = eqNe (·ˢ-identityˡ (traces P))
+·-identityˡ P = ne-ext (·ˢ-identityˡ (traces P))
 
 ·-assoc : (P Q R : NeTraces) → ((P · Q) · R) ≡ (P · (Q · R))
-·-assoc P Q R = eqNe (·ˢ-assoc (traces P) (traces Q) (traces R))
+·-assoc P Q R = ne-ext (·ˢ-assoc (traces P) (traces Q) (traces R))
 
 ------------------------------------------------------------------------
 -- Zero-product property of the unit (on the underlying lists)
@@ -331,11 +331,11 @@ map-emptyˡ {ys = _ ∷ _} ()
 
 ·-zero-productˡ : {P Q : NeTraces} → (P · Q) ≡ u → P ≡ u
 ·-zero-productˡ {P} {Q} eq =
-  eqNe (·ˢ-zero-productˡ (nonempty P) (nonempty Q) (cong traces eq))
+  ne-ext (·ˢ-zero-productˡ (nonempty P) (nonempty Q) (cong traces eq))
 
 ·-zero-productʳ : {P Q : NeTraces} → (P · Q) ≡ u → Q ≡ u
 ·-zero-productʳ {P} {Q} eq =
-  eqNe (·ˢ-zero-productʳ (nonempty P) (nonempty Q) (cong traces eq))
+  ne-ext (·ˢ-zero-productʳ (nonempty P) (nonempty Q) (cong traces eq))
 
 ------------------------------------------------------------------------
 -- Auxiliary facts about membership
@@ -371,7 +371,7 @@ of-nat-zero = refl
 
 of-nat-plus : {m n : ℕ} → of-nat (m + n) ≡ (of-nat m · of-nat n)
 of-nat-plus {m} {n} =
-  eqNe {of-nat (m + n)} {of-nat m · of-nat n} (cong [_] (⟨⟩-hom m n))
+  ne-ext {of-nat (m + n)} {of-nat m · of-nat n} (cong [_] (⟨⟩-hom m n))
 
 ------------------------------------------------------------------------
 -- Traces have decidable equality.
@@ -442,5 +442,5 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
   _≟ᴺ_ : DecidableEquality NeTraces
   P ≟ᴺ Q with ≡-dec _≟ᵀ_ (traces P) (traces Q)
-  ... | yes eq = yes (eqNe eq)
+  ... | yes eq = yes (ne-ext eq)
   ... | no ¬eq = no λ p → ¬eq (cong traces p)
