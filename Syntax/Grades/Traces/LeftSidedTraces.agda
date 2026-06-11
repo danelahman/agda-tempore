@@ -1,34 +1,6 @@
-------------------------------------------------------------------------
--- Sets of timed traces of operations as grades (left-sided variant)   --
---                                                                     --
--- Left-sided counterpart of `Syntax.Grades.Traces.RightSidedTraces`.  --
--- As there, a grade is a finite, non-empty set of timed traces, where --
--- a timed trace is an event sequence                                  --
--- `⟨ d₁ ⟩ ∙ ⌈ o₁ ⌉ ∙ … ∙ ⌈ oₖ ⌉ ∙ ⟨ dₖ₊₁ ⟩` built from pure delays    --
--- `⟨ d ⟩`, operation events `⌈ o ⌉`, and sequencing `_∙_`. The         --
--- timed-trace monoid, the language product on sets of traces, its unit --
--- `{ ε }`, and the inclusion of the natural numbers as pure delays are --
--- all shared with the right-sided variant and are re-used from         --
--- `Syntax.Grades.Traces.Base`.                                         --
---                                                                     --
--- The two examples differ in exactly one place: the order. This is the --
--- same distinction as between the time-based one-sided intervals,      --
--- where the right-sided intervals `[0, n ]` are ordered by `m ≤ n` and --
--- the left-sided intervals `[ n ,+∞⟩` are ordered by the reverse       --
--- `n ≤ m`. Concretely:                                                 --
---                                                                     --
---   * the right-sided example (`RightSidedTraces`) orders sets of     --
---     traces by the subset order `P ≾ Q  ⟺  P ⊆ Q`;                   --
---   * this left-sided example orders them by the superset order        --
---     `P ≾ Q  ⟺  Q ⊆ P`.                                              --
---                                                                     --
--- Whereas in the time-based intervals reversing the order made the     --
--- zero-product property trivial (the unit `[ 0 ,+∞⟩` becomes the top), --
--- here it stays interesting: `(P · Q) ≾ u` now reads `ε ∈ P · Q`, and  --
--- recovering `ε ∈ P` (resp. `ε ∈ Q`) relies on the conicality of the   --
--- timed-trace monoid, just as the right-sided example relied on it to  --
--- prove the dual `P · Q ⊆ { ε } ⇒ P ⊆ { ε }`.                         --
-------------------------------------------------------------------------
+-----------------------------------------------------------------------
+-- Sets of timed traces of operations as grades (left-sided variant) --
+-----------------------------------------------------------------------
 
 open import Util.Equality
 
@@ -38,9 +10,11 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.Any using (here)
+open import Data.Nat.Base using (ℕ; _+_)
 open import Data.Product using (_,_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Nullary using (yes; no)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
@@ -48,6 +22,52 @@ open import Syntax.Grades
 -- the timed-trace monoid and the set-of-traces monoid are shared
 
 open import Syntax.Grades.Traces.Base Op
+
+------------------------------------------------------------------------
+-- Left-sided trace intervals
+--
+-- A left-sided trace interval `[ P ,⊤⟩` has its lower endpoint the set
+-- of traces `P` and its upper endpoint fixed at the set of all traces
+-- `⊤` -- the analogue of the time interval `[ n ,+∞⟩`.
+
+data 𝕋ₗ : Set where
+  [_,⊤⟩ : NeTraces → 𝕋ₗ
+
+-- the constructor is injective
+
+inj𝕋ₗ : {P Q : NeTraces} → [ P ,⊤⟩ ≡ [ Q ,⊤⟩ → P ≡ Q
+inj𝕋ₗ refl = refl
+
+------------------------------------------------------------------------
+-- Monoid structure: the language product on the lower set
+
+infixl 7 _·ₗ_
+
+_·ₗ_ : 𝕋ₗ → 𝕋ₗ → 𝕋ₗ
+[ P ,⊤⟩ ·ₗ [ Q ,⊤⟩ = [ P · Q ,⊤⟩
+
+uₗ : 𝕋ₗ
+uₗ = [ u ,⊤⟩
+
+·ₗ-identityʳ : (I : 𝕋ₗ) → I ·ₗ uₗ ≡ I
+·ₗ-identityʳ [ P ,⊤⟩ = cong [_,⊤⟩ (·-identityʳ P)
+
+·ₗ-identityˡ : (I : 𝕋ₗ) → uₗ ·ₗ I ≡ I
+·ₗ-identityˡ [ P ,⊤⟩ = cong [_,⊤⟩ (·-identityˡ P)
+
+·ₗ-assoc : (I J K : 𝕋ₗ) → ((I ·ₗ J) ·ₗ K) ≡ (I ·ₗ (J ·ₗ K))
+·ₗ-assoc [ P ,⊤⟩ [ Q ,⊤⟩ [ R ,⊤⟩ = cong [_,⊤⟩ (·-assoc P Q R)
+
+-- inclusion of the natural numbers as (pure-delay) point intervals
+
+of-natₗ : ℕ → 𝕋ₗ
+of-natₗ n = [ of-nat n ,⊤⟩
+
+of-natₗ-zero : of-natₗ 0 ≡ uₗ
+of-natₗ-zero = cong [_,⊤⟩ of-nat-zero
+
+of-natₗ-plus : {m n : ℕ} → of-natₗ (m + n) ≡ (of-natₗ m ·ₗ of-natₗ n)
+of-natₗ-plus {m} {n} = cong [_,⊤⟩ (of-nat-plus {m} {n})
 
 ------------------------------------------------------------------------
 -- The superset order and the grade
@@ -60,36 +80,43 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
 
   open WithDecEq _≟ₒ_
 
-  -- the order on grades is the *superset* order (this is the only place
-  -- where this example differs from the right-sided one)
+  -- the order on grades is the *superset* order on the lower set (this is
+  -- the only place where this example differs from the right-sided one)
 
-  _≾_ : NeTraces → NeTraces → Set
-  P ≾ Q = traces Q ⊑ traces P
+  _≾_ : 𝕋ₗ → 𝕋ₗ → Set
+  [ P ,⊤⟩ ≾ [ Q ,⊤⟩ = traces Q ⊑ traces P
 
   infix 5 _≾_
 
-  ≾ᵗ-refl : {P : NeTraces} → P ≾ P
-  ≾ᵗ-refl s m = m
+  ≾ᵗ-refl : {I : 𝕋ₗ} → I ≾ I
+  ≾ᵗ-refl {[ P ,⊤⟩} s m = m
 
-  ≾ᵗ-trans : {P Q R : NeTraces} → P ≾ Q → Q ≾ R → P ≾ R
-  ≾ᵗ-trans pq qr s m = pq s (qr s m)
+  ≾ᵗ-trans : {I J K : 𝕋ₗ} → I ≾ J → J ≾ K → I ≾ K
+  ≾ᵗ-trans {[ P ,⊤⟩} {[ Q ,⊤⟩} {[ R ,⊤⟩} pq qr s m = pq s (qr s m)
+
+  -- decidable equality of grades
+
+  _≟ₗ_ : DecidableEquality 𝕋ₗ
+  [ P ,⊤⟩ ≟ₗ [ Q ,⊤⟩ with P ≟ᴺ Q
+  ... | yes p = yes (cong [_,⊤⟩ p)
+  ... | no ¬p = no λ e → ¬p (inj𝕋ₗ e)
 
   -- monotonicity of `_·_` for the superset order: a larger set on the
   -- left is below, so the inclusions run from the `y`-side to the
   -- `x`-side
 
-  ·-monoˡ : {c x y : NeTraces} → x ≾ y → (x · c) ≾ (y · c)
-  ·-monoˡ {c} {x} {y} rel =
-    ⊑-·ˢ {traces y} {traces x} {traces c} {traces c} rel (⊑-refl {traces c})
+  ·-monoˡ : {C I J : 𝕋ₗ} → I ≾ J → (I ·ₗ C) ≾ (J ·ₗ C)
+  ·-monoˡ {[ C ,⊤⟩} {[ x ,⊤⟩} {[ y ,⊤⟩} rel =
+    ⊑-·ˢ {traces y} {traces x} {traces C} {traces C} rel (⊑-refl {traces C})
 
-  ·-monoʳ : {c x y : NeTraces} → x ≾ y → (c · x) ≾ (c · y)
-  ·-monoʳ {c} {x} {y} rel =
-    ⊑-·ˢ {traces c} {traces c} {traces y} {traces x} (⊑-refl {traces c}) rel
+  ·-monoʳ : {C I J : 𝕋ₗ} → I ≾ J → (C ·ₗ I) ≾ (C ·ₗ J)
+  ·-monoʳ {[ C ,⊤⟩} {[ x ,⊤⟩} {[ y ,⊤⟩} rel =
+    ⊑-·ˢ {traces C} {traces C} {traces y} {traces x} (⊑-refl {traces C}) rel
 
   -- the order is proof-irrelevant
 
-  ≾ᵗ-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
-  ≾ᵗ-irrelevant {P} {Q} p q =
+  ≾ᵗ-irrelevant : {I J : 𝕋ₗ} → (p q : I ≾ J) → p ≡ q
+  ≾ᵗ-irrelevant {[ P ,⊤⟩} {[ Q ,⊤⟩} p q =
     fun-ext (λ s → fun-ext (λ m → True-irr (s ∈? traces P) (p s m) (q s m)))
 
   -- zero-product property of the order: for the superset order
@@ -97,8 +124,8 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
   -- `b ∈ Q` with `a ∙ b ≡ ε`; conicality of the timed-trace monoid then
   -- gives `a ≡ ε` (resp. `b ≡ ε`), so `ε ∈ P` (resp. `ε ∈ Q`)
 
-  ≾ᵗ-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
-  ≾ᵗ-zero-productˡ {P} {Q} hyp s mem rewrite ∈-[ε]⁻ (toWitness mem) =
+  ≾ᵗ-zero-productˡ : {I J : 𝕋ₗ} → (I ·ₗ J) ≾ uₗ → I ≾ uₗ
+  ≾ᵗ-zero-productˡ {[ P ,⊤⟩} {[ Q ,⊤⟩} hyp s mem rewrite ∈-[ε]⁻ (toWitness mem) =
     fromWitness ε∈P
     where
       ε∈u : ε ∈ traces u
@@ -112,8 +139,8 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
       ... | a , b , a∈P , _ , eq =
             subst (_∈ traces P) (∙-conicalˡ {a} {b} (sym eq)) a∈P
 
-  ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
-  ≾ᵗ-zero-productʳ {P} {Q} hyp s mem rewrite ∈-[ε]⁻ (toWitness mem) =
+  ≾ᵗ-zero-productʳ : {I J : 𝕋ₗ} → (I ·ₗ J) ≾ uₗ → J ≾ uₗ
+  ≾ᵗ-zero-productʳ {[ P ,⊤⟩} {[ Q ,⊤⟩} hyp s mem rewrite ∈-[ε]⁻ (toWitness mem) =
     fromWitness ε∈Q
     where
       ε∈u : ε ∈ traces u
@@ -132,21 +159,21 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
 
   left-sided-traces-grade : Grade
   left-sided-traces-grade = record
-    { Carrier         = NeTraces
-    ; _·_             = _·_
-    ; u               = u
-    ; ·-identityʳ     = ·-identityʳ
-    ; ·-identityˡ     = ·-identityˡ
-    ; ·-assoc         = ·-assoc
+    { Carrier         = 𝕋ₗ
+    ; _·_             = _·ₗ_
+    ; u               = uₗ
+    ; ·-identityʳ     = ·ₗ-identityʳ
+    ; ·-identityˡ     = ·ₗ-identityˡ
+    ; ·-assoc         = ·ₗ-assoc
     ; _≾_             = _≾_
     ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ {c} {x} {y}
     ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
     ; ≾-refl          = λ {x} → ≾ᵗ-refl {x}
     ; ≾-trans         = λ {i} {j} {k} → ≾ᵗ-trans {i} {j} {k}
-    ; _≡?_            = _≟ᴺ_
+    ; _≡?_            = _≟ₗ_
     ; ≾-zero-productˡ = λ {c} {d} → ≾ᵗ-zero-productˡ {c} {d}
     ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗ-zero-productʳ {c} {d}
-    ; of-nat          = of-nat
-    ; of-nat-zero     = of-nat-zero
-    ; of-nat-plus     = λ {m} {n} → of-nat-plus {m} {n}
+    ; of-nat          = of-natₗ
+    ; of-nat-zero     = of-natₗ-zero
+    ; of-nat-plus     = λ {m} {n} → of-natₗ-plus {m} {n}
     }

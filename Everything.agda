@@ -32,7 +32,7 @@
 
 open import Syntax.LanguageSpec
 
-module Everything (S : LanguageSpec) where
+module Everything where
 
 -- UTILS
 --------
@@ -47,19 +47,19 @@ open import Util.Equality
 
 ---- Syntax of the language
 
-open import Syntax.Types    S
-open import Syntax.Contexts S
-open import Syntax.Language S
+open import Syntax.Types
+open import Syntax.Contexts
+open import Syntax.Language
 
 ---- Renamings and substitutions
 
-open import Syntax.Renamings     S
-open import Syntax.RenActions    S
-open import Syntax.Substitutions S
+open import Syntax.Renamings
+open import Syntax.RenActions
+open import Syntax.Substitutions
 
 ---- Computation term and evaluation contexts
 
-open import Syntax.CompContext S
+open import Syntax.CompContext
 
 
 -- GRADES
@@ -78,13 +78,9 @@ open import Syntax.Grades.Time.TwoSidedIntervals
 -- trace-based grades take a bare set of operation symbols; here we
 -- instantiate the examples at the operation symbols of the ambient `S`
 
-open import Syntax.Operations
-open LanguageSpec S using (Ops)
-open Operations Ops using (Op)
-
-open import Syntax.Grades.Traces.RightSidedTraces Op
-open import Syntax.Grades.Traces.LeftSidedTraces Op
-open import Syntax.Grades.Traces.TwoSidedTraces Op
+open import Syntax.Grades.Traces.RightSidedTraces
+open import Syntax.Grades.Traces.LeftSidedTraces
+open import Syntax.Grades.Traces.TwoSidedTraces
 
 open import Syntax.Grades.GradeSystem.TwoSidedToOneSidedTimeIntervals
 
@@ -93,34 +89,34 @@ open import Syntax.Grades.GradeSystem.TwoSidedToOneSidedTimeIntervals
 
 ---- States of operational semantics
 
-open import OperationalSemantics.State S
+open import OperationalSemantics.State
 
 ---- Small-step operational semantics and preservation theorem
 
-open import OperationalSemantics.PreservationTheorem S
+open import OperationalSemantics.PreservationTheorem
 
 ---- Progress theorem
 
-open import OperationalSemantics.ProgressTheorem S
+open import OperationalSemantics.ProgressTheorem
 
 ---- Top-level operational semantics
 
-open import OperationalSemantics.TopLevelOpSemantics S
+open import OperationalSemantics.TopLevelOpSemantics
 
 ---- Top-level preservation theorem
 
-open import OperationalSemantics.TopLevelPreservationTheorem S
+open import OperationalSemantics.TopLevelPreservationTheorem
 
 ---- Top-level progress theorem
 
-open import OperationalSemantics.TopLevelProgressTheorem S
+open import OperationalSemantics.TopLevelProgressTheorem
 
 
 -- EQUATIONAL THEORY
 --------------------
 
-open import EquationalTheory.EquationalTheory S
+open import EquationalTheory.EquationalTheory
 
 ---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
 
-open import EquationalTheory.EquationalSoundness S
+open import EquationalTheory.EquationalSoundness
