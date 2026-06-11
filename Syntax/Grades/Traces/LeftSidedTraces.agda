@@ -30,30 +30,24 @@
 -- prove the dual `P · Q ⊆ { ε } ⇒ P ⊆ { ε }`.                         --
 ------------------------------------------------------------------------
 
-open import Syntax.LanguageSpec
-
 open import Util.Equality
 
-module Syntax.Grades.Traces.LeftSidedTraces (S : LanguageSpec) where
+module Syntax.Grades.Traces.LeftSidedTraces (Op : Set) where
 
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.Any using (here)
+open import Data.Product using (_,_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
-open import Syntax.Operations
-
-open LanguageSpec S
-open GradeSystemInterface Grades
-open Operations Ops
 
 -- the timed-trace monoid and the set-of-traces monoid are shared
 
-open import Syntax.Grades.Traces.Base S
+open import Syntax.Grades.Traces.Base Op
 
 ------------------------------------------------------------------------
 -- The superset order and the grade
@@ -107,25 +101,31 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
   ≾ᵗ-zero-productˡ {P} {Q} hyp s mem rewrite ∈-[ε]⁻ (toWitness mem) =
     fromWitness ε∈P
     where
+      ε∈u : ε ∈ traces u
+      ε∈u = here refl
+
       ε∈PQ : ε ∈ (traces P ·ˢ traces Q)
-      ε∈PQ = toWitness (hyp ε (fromWitness (here refl)))
+      ε∈PQ = toWitness (hyp ε (fromWitness {a? = ε ∈? traces u} ε∈u))
 
       ε∈P : ε ∈ traces P
       ε∈P with ∈-cartesianProductWith⁻ _∙_ (traces P) (traces Q) ε∈PQ
       ... | a , b , a∈P , _ , eq =
-            subst (_∈ traces P) (∙-conicalˡ (sym eq)) a∈P
+            subst (_∈ traces P) (∙-conicalˡ {a} {b} (sym eq)) a∈P
 
   ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
   ≾ᵗ-zero-productʳ {P} {Q} hyp s mem rewrite ∈-[ε]⁻ (toWitness mem) =
     fromWitness ε∈Q
     where
+      ε∈u : ε ∈ traces u
+      ε∈u = here refl
+
       ε∈PQ : ε ∈ (traces P ·ˢ traces Q)
-      ε∈PQ = toWitness (hyp ε (fromWitness (here refl)))
+      ε∈PQ = toWitness (hyp ε (fromWitness {a? = ε ∈? traces u} ε∈u))
 
       ε∈Q : ε ∈ traces Q
       ε∈Q with ∈-cartesianProductWith⁻ _∙_ (traces P) (traces Q) ε∈PQ
       ... | a , b , _ , b∈Q , eq =
-            subst (_∈ traces Q) (∙-conicalʳ (sym eq)) b∈Q
+            subst (_∈ traces Q) (∙-conicalʳ {a} {b} (sym eq)) b∈Q
 
   -- the grade of (non-empty) sets of timed traces, ordered by the
   -- superset (left-sided) order

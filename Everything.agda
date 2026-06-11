@@ -75,9 +75,16 @@ open import Syntax.Grades.Time.LeftSidedIntervals
 open import Syntax.Grades.Time.RightSidedIntervals
 open import Syntax.Grades.Time.TwoSidedIntervals
 
-open import Syntax.Grades.Traces.Base S
-open import Syntax.Grades.Traces.RightSidedTraces S
-open import Syntax.Grades.Traces.LeftSidedTraces S
+-- trace-based grades take a bare set of operation symbols; here we
+-- instantiate the examples at the operation symbols of the ambient `S`
+
+open import Syntax.Operations
+open LanguageSpec S using (Ops)
+open Operations Ops using (Op)
+
+open import Syntax.Grades.Traces.RightSidedTraces Op
+open import Syntax.Grades.Traces.LeftSidedTraces Op
+open import Syntax.Grades.Traces.TwoSidedTraces Op
 
 open import Syntax.Grades.GradeSystem.TwoSidedToOneSidedTimeIntervals
 

@@ -1,17 +1,17 @@
-------------------------------------------------------------------------
--- Timed traces and their monoid machinery (shared)                    --
---                                                                     --
--- This module collects the data and proofs that are common to both    --
+--------------------------------------------------------------------------
+-- Timed traces and their monoid structure                              --
+--                                                                      --
+-- This module collects the data and proofs that are common to both     --
 -- kinds of trace-based interval grades (the right-sided subset-ordered --
--- example `Syntax.Grades.Traces.RightSidedTraces` and the left-sided  --
--- superset-ordered example `Syntax.Grades.Traces.LeftSidedTraces`).   --
+-- example `Syntax.Grades.Traces.RightSidedTraces` and the left-sided   --
+-- superset-ordered example `Syntax.Grades.Traces.LeftSidedTraces`).    --
 -- The two examples share everything below and differ only in their     --
 -- order, so all of it lives here and is re-used from there.            --
---                                                                     --
+--                                                                      --
 -- A timed trace is a finite sequence of events that alternates time    --
 -- delays and operation symbols `Op`. It is represented by a custom     --
--- inductive type with four constructors:                              --
---                                                                     --
+-- inductive type with four constructors:                               --
+--                                                                      --
 --   ε             -- the empty trace                                   --
 --   op o t        -- an operation `o`, then the rest `t`               --
 --   del d o t     -- a (positive) delay `d`, an operation `o`, then    --
@@ -50,17 +50,13 @@
 -- the zero-product property of the order (`c · d ≾ u` does not imply   --
 -- `c ≾ u` when `d` is the empty set).                                  --
 --                                                                     --
--- The decidable structure (decidable equality of traces and of sets    --
--- of traces, and the membership-based subset preorder shared by both   --
--- orders) is collected in the parameterised submodule `WithDecEq`,     --
--- which assumes decidable equality of the operation symbols.           --
 ------------------------------------------------------------------------
-
-open import Syntax.LanguageSpec
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Base (S : LanguageSpec) where
+-- Trace-based grades are parameterised by a set `Op` of operation names.
+
+module Syntax.Grades.Traces.Base (Op : Set) where
 
 open import Data.Empty using (⊥)
 open import Data.List.Base
@@ -80,13 +76,6 @@ open import Data.Unit using (⊤; tt)
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
-
-open import Syntax.Grades
-open import Syntax.Operations
-
-open LanguageSpec S
-open GradeSystemInterface Grades
-open Operations Ops
 
 ------------------------------------------------------------------------
 -- Positive durations
@@ -117,16 +106,18 @@ suc⁺ m ≟⁺ suc⁺ n with m ≟⁺ n
 ... | yes refl = yes refl
 ... | no ¬p    = no λ { refl → ¬p refl }
 
--- the positive natural with value `suc n` (used to read a positive
--- duration off a natural number)
+-- the positive natural `1 + n` (used to read a positive duration off a
+-- natural number)
 
-fromℕ : ℕ → ℕ⁺
-fromℕ zero    = 𝟏
-fromℕ (suc n) = suc⁺ (fromℕ n)
+infix 8 1+_
 
-fromℕ-+⁺ : (m n : ℕ) → (fromℕ m +⁺ fromℕ n) ≡ fromℕ (m + suc n)
-fromℕ-+⁺ zero    n = refl
-fromℕ-+⁺ (suc m) n = cong suc⁺ (fromℕ-+⁺ m n)
+1+_ : ℕ → ℕ⁺
+1+ zero    = 𝟏
+1+ (suc n) = suc⁺ (1+ n)
+
+1+-+⁺ : (m n : ℕ) → ((1+ m) +⁺ (1+ n)) ≡ 1+ (m + suc n)
+1+-+⁺ zero    n = refl
+1+-+⁺ (suc m) n = cong suc⁺ (1+-+⁺ m n)
 
 ------------------------------------------------------------------------
 -- Timed traces and their monoid structure
@@ -147,15 +138,15 @@ data Trace : Set where
 
 ⟨_⟩ : ℕ → Trace
 ⟨ zero  ⟩ = ε
-⟨ suc n ⟩ = fin (fromℕ n)
+⟨ suc n ⟩ = fin (1+ n)
 
 -- a single operation event (no surrounding delay)
 
 ⌈_⌉ : Op → Trace
 ⌈ o ⌉ = op o ε
 
--- prepending a positive delay to a trace, merging it with the leading
--- delay of the trace
+-- prepending a positive delay to a trace,
+-- merging it with the leading delay of the trace
 
 pre : ℕ⁺ → Trace → Trace
 pre d ε           = fin d
@@ -185,7 +176,7 @@ fin d     ∙ t = pre d t
 ∙-identityʳ (del d o t) = cong (del d o) (∙-identityʳ t)
 ∙-identityʳ (fin d)     = refl
 
--- prepending commutes with the additive merging of delays …
+-- prepending commutes with the additive merging of delays
 
 pre-+⁺ : (d e : ℕ⁺) (u : Trace) → pre (d +⁺ e) u ≡ pre d (pre e u)
 pre-+⁺ d e ε           = refl
@@ -193,7 +184,7 @@ pre-+⁺ d e (op o u)    = refl
 pre-+⁺ d e (del f o u) = cong (λ z → del z o u) (+⁺-assoc d e f)
 pre-+⁺ d e (fin f)     = cong fin (+⁺-assoc d e f)
 
--- … and with sequencing on the right
+-- prepending commutes with sequencing on the right
 
 pre-∙ : (d : ℕ⁺) (t u : Trace) → ((pre d t) ∙ u) ≡ pre d (t ∙ u)
 pre-∙ d ε           u = refl
@@ -207,8 +198,8 @@ pre-∙ d (fin e)     u = pre-+⁺ d e u
 ∙-assoc (del d o s) t u = cong (del d o) (∙-assoc s t u)
 ∙-assoc (fin d)   t u = pre-∙ d t u
 
--- the timed-trace monoid is conical: a product is the empty trace only
--- if both factors are the empty trace
+-- the timed-trace monoid is conical: a product is the
+-- empty trace only if both factors are the empty trace
 
 ∙-conicalˡ : {s t : Trace} → (s ∙ t) ≡ ε → s ≡ ε
 ∙-conicalˡ {ε}                 _  = refl
@@ -370,7 +361,7 @@ map-emptyˡ {ys = _ ∷ _} ()
 ·ˢ-zero-productˡ {_ ∷ _}  {[]}  _  () _
 ·ˢ-zero-productˡ {x ∷ xs} {y ∷ ys} _ _ eq =
   cong₂ _∷_
-    (∙-conicalˡ (∷-injectiveˡ eq))
+    (∙-conicalˡ {x} {y} (∷-injectiveˡ eq))
     (cpw-emptyˡ {xs} {y} {ys}
       (++-conicalʳ (map (x ∙_) ys) (xs ·ˢ (y ∷ ys)) (∷-injectiveʳ eq)))
 
@@ -380,7 +371,7 @@ map-emptyˡ {ys = _ ∷ _} ()
 ·ˢ-zero-productʳ {_ ∷ _}  {[]}  _  () _
 ·ˢ-zero-productʳ {x ∷ xs} {y ∷ ys} _ _ eq =
   cong₂ _∷_
-    (∙-conicalʳ (∷-injectiveˡ eq))
+    (∙-conicalʳ {x} {y} (∷-injectiveˡ eq))
     (map-emptyˡ {x ∙_} {ys}
       (++-conicalˡ (map (x ∙_) ys) (xs ·ˢ (y ∷ ys)) (∷-injectiveʳ eq)))
 
@@ -415,8 +406,8 @@ neHead []      ()
 
 ⟨⟩-hom : (m n : ℕ) → ⟨ m + n ⟩ ≡ (⟨ m ⟩ ∙ ⟨ n ⟩)
 ⟨⟩-hom zero    n       = refl
-⟨⟩-hom (suc m) zero    = cong (λ z → fin (fromℕ z)) (+-identityʳ m)
-⟨⟩-hom (suc m) (suc n) = cong fin (sym (fromℕ-+⁺ m n))
+⟨⟩-hom (suc m) zero    = cong (λ z → fin (1+ z)) (+-identityʳ m)
+⟨⟩-hom (suc m) (suc n) = cong fin (sym (1+-+⁺ m n))
 
 of-nat : ℕ → NeTraces
 of-nat n = mkNe [ ⟨ n ⟩ ] tt
@@ -429,13 +420,7 @@ of-nat-plus {m} {n} =
   eqNe {of-nat (m + n)} {of-nat m · of-nat n} (cong [_] (⟨⟩-hom m n))
 
 ------------------------------------------------------------------------
--- Decidable structure shared by both orders
---
--- Decidable equality of timed traces and of sets of traces, together
--- with the membership-based subset preorder on lists of traces (and its
--- compatibility with the language product). Both the right- and the
--- left-sided order are built on top of this subset preorder, so it is
--- collected here. Everything relies on decidable equality of the events.
+-- Traces have decidable equality.
 
 module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
@@ -470,8 +455,7 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
   open import Data.List.Membership.DecPropositional _≟ᵀ_ public using (_∈?_)
 
-  -- the subset preorder on lists of traces (membership-based, so that it
-  -- is proof-irrelevant); both grade orders are defined from it
+  -- the subset preorder on lists of traces
 
   _⊑_ : List Trace → List Trace → Set
   xs ⊑ ys = (s : Trace) → True (s ∈? xs) → True (s ∈? ys)

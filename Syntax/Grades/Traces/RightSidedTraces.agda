@@ -15,34 +15,31 @@
 -- are ordered by the *subset* order `P ≾ Q  ⟺  P ⊆ Q`, just as the    --
 -- right-sided intervals `[0, n ]` are ordered by `m ≤ n`.             --
 --                                                                     --
--- The example is parameterised by a `LanguageSpec` (hence by the       --
--- operations and their signatures) together with an assumption that    --
--- the operation symbols have decidable equality. The latter is what    --
--- makes equality of finite sets of timed traces decidable.             --
+-- The example is parameterised by a set `Op` of operation symbols      --
+-- (so that it can be used to build the grade system of a               --
+-- `LanguageSpec` instance, rather than presupposing one), together     --
+-- with an assumption that `Op` has decidable equality. The latter is   --
+-- what makes equality of finite sets of timed traces decidable.        --
 ------------------------------------------------------------------------
-
-open import Syntax.LanguageSpec
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.RightSidedTraces (S : LanguageSpec) where
+module Syntax.Grades.Traces.RightSidedTraces (Op : Set) where
 
+open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
+open import Data.List.Relation.Unary.Any using (here)
+open import Data.Product using (_,_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
-open import Syntax.Operations
-
-open LanguageSpec S
-open GradeSystemInterface Grades
-open Operations Ops
 
 -- the timed-trace monoid and the set-of-traces monoid are shared
 
-open import Syntax.Grades.Traces.Base S
+open import Syntax.Grades.Traces.Base Op
 
 ------------------------------------------------------------------------
 -- The subset order and the grade
@@ -95,7 +92,7 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
       sy∈ = ∈-cartesianProductWith⁺ _∙_ (toWitness mem) y∈Q
 
       s≡ε : s ≡ ε
-      s≡ε = ∙-conicalˡ (∈-[ε]⁻ (toWitness (hyp (s ∙ y) (fromWitness sy∈))))
+      s≡ε = ∙-conicalˡ {s} {y} (∈-[ε]⁻ (toWitness (hyp (s ∙ y) (fromWitness sy∈))))
 
   ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
   ≾ᵗ-zero-productʳ {P} {Q} hyp s mem with neHead (traces P) (nonempty P)
@@ -105,7 +102,7 @@ module _ (_≟ₒ_ : DecidableEquality Op) where
       xs∈ = ∈-cartesianProductWith⁺ _∙_ x∈P (toWitness mem)
 
       s≡ε : s ≡ ε
-      s≡ε = ∙-conicalʳ (∈-[ε]⁻ (toWitness (hyp (x ∙ s) (fromWitness xs∈))))
+      s≡ε = ∙-conicalʳ {x} {s} (∈-[ε]⁻ (toWitness (hyp (x ∙ s) (fromWitness xs∈))))
 
   -- the grade of (non-empty) sets of timed traces, ordered by inclusion
 
