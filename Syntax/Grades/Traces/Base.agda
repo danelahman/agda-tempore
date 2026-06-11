@@ -8,17 +8,32 @@
 -- The two examples share everything below and differ only in their     --
 -- order, so all of it lives here and is re-used from there.            --
 --                                                                     --
--- A timed trace is a finite sequence of events, where an event is      --
--- either an operation symbol `Op` or a delay carrying a time duration  --
--- (a natural number). Concretely, a timed trace is represented as a    --
--- list of (delay , operation) pairs followed by a final trailing       --
--- delay, and written using the event-sequence notation                --
+-- A timed trace is a finite sequence of events that alternates time    --
+-- delays and operation symbols `Op`. It is represented by a custom     --
+-- inductive type with four constructors:                              --
+--                                                                     --
+--   ε             -- the empty trace                                   --
+--   op o t        -- an operation `o`, then the rest `t`               --
+--   del d o t     -- a (positive) delay `d`, an operation `o`, then    --
+--                 --   the rest `t`                                    --
+--   fin d         -- a final (positive) trailing delay `d`             --
+--                                                                     --
+-- Delays carry a *positive* duration `ℕ⁺`, so a zero-valued delay is   --
+-- never visible in a trace: waiting no time before an operation is the --
+-- bare `op` constructor, and the empty trace is `ε` rather than a      --
+-- delay of duration `0`. A delay is moreover always immediately        --
+-- followed by an operation (`del`) or is the final event (`fin`), so   --
+-- two delays never sit next to each other. Hence every timed trace has --
+-- a unique representation, which is what makes propositional (and      --
+-- decidable) equality of traces the right notion.                      --
+--                                                                     --
+-- Traces are written using the event-sequence notation                --
 --                                                                     --
 --   ⟨ d₁ ⟩ ∙ ⌈ o₁ ⌉ ∙ ⟨ d₂ ⟩ ∙ ⌈ o₂ ⌉ ∙ … ∙ ⌈ oₖ ⌉ ∙ ⟨ dₖ₊₁ ⟩       --
 --                                                                     --
--- built from the pure delays `⟨ d ⟩`, the operation events `⌈ o ⌉`,   --
--- and their sequencing `_∙_`, with the empty trace `ε` as the unit.    --
--- Consecutive delays add up and a delay of duration 0 is the unit.     --
+-- built from the pure delays `⟨ d ⟩` (where `⟨ 0 ⟩` is the empty       --
+-- trace `ε`), the operation events `⌈ o ⌉`, and their sequencing       --
+-- `_∙_`, under which consecutive delays add up and `ε` is the unit.    --
 --                                                                     --
 -- A grade is then a finite, non-empty set of such timed traces, with   --
 --                                                                     --
@@ -57,10 +72,9 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Nat.Base using (ℕ; _+_)
-open import Data.Nat.Properties using (_≟_; +-assoc; +-identityʳ; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
-open import Data.Product using (_×_; _,_; proj₁; proj₂; Σ)
-open import Data.Product.Properties using () renaming (≡-dec to ×-≡-dec)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_)
+open import Data.Nat.Properties using (+-identityʳ)
+open import Data.Product using (_,_; Σ)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -75,72 +89,144 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 ------------------------------------------------------------------------
+-- Positive durations
+--
+-- Delays carry a strictly positive duration, so that zero-valued delays
+-- cannot appear in a trace. We use a small dedicated type of positive
+-- naturals together with its addition.
+
+data ℕ⁺ : Set where
+  𝟏    : ℕ⁺
+  suc⁺ : ℕ⁺ → ℕ⁺
+
+infixl 6 _+⁺_
+
+_+⁺_ : ℕ⁺ → ℕ⁺ → ℕ⁺
+𝟏      +⁺ n = suc⁺ n
+suc⁺ m +⁺ n = suc⁺ (m +⁺ n)
+
++⁺-assoc : (m n o : ℕ⁺) → ((m +⁺ n) +⁺ o) ≡ (m +⁺ (n +⁺ o))
++⁺-assoc 𝟏        n o = refl
++⁺-assoc (suc⁺ m) n o = cong suc⁺ (+⁺-assoc m n o)
+
+_≟⁺_ : DecidableEquality ℕ⁺
+𝟏      ≟⁺ 𝟏      = yes refl
+𝟏      ≟⁺ suc⁺ _ = no λ ()
+suc⁺ _ ≟⁺ 𝟏      = no λ ()
+suc⁺ m ≟⁺ suc⁺ n with m ≟⁺ n
+... | yes refl = yes refl
+... | no ¬p    = no λ { refl → ¬p refl }
+
+-- the positive natural with value `suc n` (used to read a positive
+-- duration off a natural number)
+
+fromℕ : ℕ → ℕ⁺
+fromℕ zero    = 𝟏
+fromℕ (suc n) = suc⁺ (fromℕ n)
+
+fromℕ-+⁺ : (m n : ℕ) → (fromℕ m +⁺ fromℕ n) ≡ fromℕ (m + suc n)
+fromℕ-+⁺ zero    n = refl
+fromℕ-+⁺ (suc m) n = cong suc⁺ (fromℕ-+⁺ m n)
+
+------------------------------------------------------------------------
 -- Timed traces and their monoid structure
 --
--- A timed trace is a list of (delay , operation) pairs followed by a
--- final trailing delay.
+-- A timed trace alternates positive delays and operations (see the
+-- module header). The empty trace is `ε`; `op o t` prepends an
+-- operation (with no delay before it); `del d o t` prepends a positive
+-- delay followed by an operation; and `fin d` is a final trailing
+-- positive delay.
 
-Trace : Set
-Trace = List (ℕ × Op) × ℕ
+data Trace : Set where
+  ε   : Trace
+  op  : Op → Trace → Trace
+  del : ℕ⁺ → Op → Trace → Trace
+  fin : ℕ⁺ → Trace
 
--- the empty timed trace (a single delay of duration 0)
-
-ε : Trace
-ε = [] , 0
-
--- the pure delay of duration n
+-- the pure delay of duration n (a zero delay is just the empty trace)
 
 ⟨_⟩ : ℕ → Trace
-⟨ n ⟩ = [] , n
+⟨ zero  ⟩ = ε
+⟨ suc n ⟩ = fin (fromℕ n)
 
 -- a single operation event (no surrounding delay)
 
 ⌈_⌉ : Op → Trace
-⌈ o ⌉ = (0 , o) ∷ [] , 0
+⌈ o ⌉ = op o ε
 
--- sequencing of two timed traces; the trailing delay of the first
--- trace is added to the leading delay of the second trace
+-- prepending a positive delay to a trace, merging it with the leading
+-- delay of the trace
+
+pre : ℕ⁺ → Trace → Trace
+pre d ε           = fin d
+pre d (op o t)    = del d o t
+pre d (del e o t) = del (d +⁺ e) o t
+pre d (fin e)     = fin (d +⁺ e)
+
+-- sequencing of two timed traces; the trailing delay of the first trace
+-- is merged with the leading delay of the second trace
 
 infixl 7 _∙_
 
 _∙_ : Trace → Trace → Trace
-(xs , d) ∙ ([] , e)             = xs , d + e
-(xs , d) ∙ ((e₁ , o) ∷ ys , e)  = (xs ++ (d + e₁ , o) ∷ ys) , e
+ε         ∙ t = t
+op o s    ∙ t = op o (s ∙ t)
+del d o s ∙ t = del d o (s ∙ t)
+fin d     ∙ t = pre d t
 
 -- the monoid laws
 
 ∙-identityˡ : (t : Trace) → (ε ∙ t) ≡ t
-∙-identityˡ ([] , e)            = refl
-∙-identityˡ ((e₁ , o) ∷ ys , e) = refl
+∙-identityˡ t = refl
 
 ∙-identityʳ : (t : Trace) → (t ∙ ε) ≡ t
-∙-identityʳ (xs , d) = cong (xs ,_) (+-identityʳ d)
+∙-identityʳ ε           = refl
+∙-identityʳ (op o t)    = cong (op o) (∙-identityʳ t)
+∙-identityʳ (del d o t) = cong (del d o) (∙-identityʳ t)
+∙-identityʳ (fin d)     = refl
+
+-- prepending commutes with the additive merging of delays …
+
+pre-+⁺ : (d e : ℕ⁺) (u : Trace) → pre (d +⁺ e) u ≡ pre d (pre e u)
+pre-+⁺ d e ε           = refl
+pre-+⁺ d e (op o u)    = refl
+pre-+⁺ d e (del f o u) = cong (λ z → del z o u) (+⁺-assoc d e f)
+pre-+⁺ d e (fin f)     = cong fin (+⁺-assoc d e f)
+
+-- … and with sequencing on the right
+
+pre-∙ : (d : ℕ⁺) (t u : Trace) → ((pre d t) ∙ u) ≡ pre d (t ∙ u)
+pre-∙ d ε           u = refl
+pre-∙ d (op o t)    u = refl
+pre-∙ d (del e o t) u = refl
+pre-∙ d (fin e)     u = pre-+⁺ d e u
 
 ∙-assoc : (s t u : Trace) → ((s ∙ t) ∙ u) ≡ (s ∙ (t ∙ u))
-∙-assoc (xs , d) ([] , e)            ([] , g)            =
-  cong (xs ,_) (+-assoc d e g)
-∙-assoc (xs , d) ([] , e)            ((g₁ , p) ∷ zs , g) =
-  cong (λ k → (xs ++ (k , p) ∷ zs) , g) (+-assoc d e g₁)
-∙-assoc (xs , d) ((e₁ , o) ∷ ys , e) ([] , g)            = refl
-∙-assoc (xs , d) ((e₁ , o) ∷ ys , e) ((g₁ , p) ∷ zs , g) =
-  cong (_, g) (++-assoc xs ((d + e₁ , o) ∷ ys) ((e + g₁ , p) ∷ zs))
+∙-assoc ε         t u = refl
+∙-assoc (op o s)  t u = cong (op o) (∙-assoc s t u)
+∙-assoc (del d o s) t u = cong (del d o) (∙-assoc s t u)
+∙-assoc (fin d)   t u = pre-∙ d t u
 
 -- the timed-trace monoid is conical: a product is the empty trace only
 -- if both factors are the empty trace
 
 ∙-conicalˡ : {s t : Trace} → (s ∙ t) ≡ ε → s ≡ ε
-∙-conicalˡ {xs , d} {[] , e} eq =
-  cong₂ _,_ (cong proj₁ eq) (m+n≡0⇒m≡0 d (cong proj₂ eq))
-∙-conicalˡ {xs , d} {(e₁ , o) ∷ ys , e} eq
-  with ++-conicalʳ xs ((d + e₁ , o) ∷ ys) (cong proj₁ eq)
-... | ()
+∙-conicalˡ {ε}                 _  = refl
+∙-conicalˡ {op _ _}            ()
+∙-conicalˡ {del _ _ _}         ()
+∙-conicalˡ {fin _} {ε}         ()
+∙-conicalˡ {fin _} {op _ _}    ()
+∙-conicalˡ {fin _} {del _ _ _} ()
+∙-conicalˡ {fin _} {fin _}     ()
 
 ∙-conicalʳ : {s t : Trace} → (s ∙ t) ≡ ε → t ≡ ε
-∙-conicalʳ {xs , d} {[] , e} eq =
-  cong ([] ,_) (m+n≡0⇒n≡0 d (cong proj₂ eq))
-∙-conicalʳ {xs , d} {(e₁ , o) ∷ ys , e} eq
-  with ++-conicalʳ xs ((d + e₁ , o) ∷ ys) (cong proj₁ eq)
-... | ()
+∙-conicalʳ {ε}                 eq = eq
+∙-conicalʳ {op _ _}            ()
+∙-conicalʳ {del _ _ _}         ()
+∙-conicalʳ {fin _} {ε}         ()
+∙-conicalʳ {fin _} {op _ _}    ()
+∙-conicalʳ {fin _} {del _ _ _} ()
+∙-conicalʳ {fin _} {fin _}     ()
 
 ------------------------------------------------------------------------
 -- Non-empty sets of timed traces
@@ -324,6 +410,14 @@ neHead []      ()
 ------------------------------------------------------------------------
 -- Inclusion of the natural numbers as pure delays
 
+-- pure delays are a monoid homomorphism: adding durations corresponds
+-- to sequencing the pure delays
+
+⟨⟩-hom : (m n : ℕ) → ⟨ m + n ⟩ ≡ (⟨ m ⟩ ∙ ⟨ n ⟩)
+⟨⟩-hom zero    n       = refl
+⟨⟩-hom (suc m) zero    = cong (λ z → fin (fromℕ z)) (+-identityʳ m)
+⟨⟩-hom (suc m) (suc n) = cong fin (sym (fromℕ-+⁺ m n))
+
 of-nat : ℕ → NeTraces
 of-nat n = mkNe [ ⟨ n ⟩ ] tt
 
@@ -331,7 +425,8 @@ of-nat-zero : of-nat 0 ≡ u
 of-nat-zero = refl
 
 of-nat-plus : {m n : ℕ} → of-nat (m + n) ≡ (of-nat m · of-nat n)
-of-nat-plus {m} {n} = eqNe {of-nat (m + n)} {of-nat m · of-nat n} refl
+of-nat-plus {m} {n} =
+  eqNe {of-nat (m + n)} {of-nat m · of-nat n} (cong [_] (⟨⟩-hom m n))
 
 ------------------------------------------------------------------------
 -- Decidable structure shared by both orders
@@ -344,10 +439,34 @@ of-nat-plus {m} {n} = eqNe {of-nat (m + n)} {of-nat m · of-nat n} refl
 
 module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
-  -- decidable equality of timed traces
+  -- decidable (structural) equality of timed traces
 
   _≟ᵀ_ : DecidableEquality Trace
-  _≟ᵀ_ = ×-≡-dec (≡-dec (×-≡-dec _≟_ (λ {_} → _≟ₒ_))) (λ {_} → _≟_)
+  ε         ≟ᵀ ε           = yes refl
+  ε         ≟ᵀ op _ _      = no λ ()
+  ε         ≟ᵀ del _ _ _   = no λ ()
+  ε         ≟ᵀ fin _       = no λ ()
+  op _ _    ≟ᵀ ε           = no λ ()
+  op o s    ≟ᵀ op o' s'    with o ≟ₒ o' | s ≟ᵀ s'
+  ... | yes refl | yes refl = yes refl
+  ... | no ¬p    | _        = no λ { refl → ¬p refl }
+  ... | _        | no ¬q    = no λ { refl → ¬q refl }
+  op _ _    ≟ᵀ del _ _ _   = no λ ()
+  op _ _    ≟ᵀ fin _       = no λ ()
+  del _ _ _ ≟ᵀ ε           = no λ ()
+  del _ _ _ ≟ᵀ op _ _      = no λ ()
+  del d o s ≟ᵀ del d' o' s' with d ≟⁺ d' | o ≟ₒ o' | s ≟ᵀ s'
+  ... | yes refl | yes refl | yes refl = yes refl
+  ... | no ¬p    | _        | _        = no λ { refl → ¬p refl }
+  ... | _        | no ¬q    | _        = no λ { refl → ¬q refl }
+  ... | _        | _        | no ¬r    = no λ { refl → ¬r refl }
+  del _ _ _ ≟ᵀ fin _       = no λ ()
+  fin _     ≟ᵀ ε           = no λ ()
+  fin _     ≟ᵀ op _ _      = no λ ()
+  fin _     ≟ᵀ del _ _ _   = no λ ()
+  fin d     ≟ᵀ fin d'      with d ≟⁺ d'
+  ... | yes refl = yes refl
+  ... | no ¬p    = no λ { refl → ¬p refl }
 
   open import Data.List.Membership.DecPropositional _≟ᵀ_ public using (_∈?_)
 
