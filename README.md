@@ -77,10 +77,6 @@ The main modules presenting the core language are:
   computations, it simultaneously also proves preservation theorem.
   (TODO ADAPT)
 
-- `OperationalSemantics/TheoremsAboutSteps.agda` proves some basic results
-  about the reduction relation.
-  (TODO ADAPT)
-
 - `OperationalSemantics/ProgressTheorem.agda` proves progress theorem.
   (TODO ADAPT)
 

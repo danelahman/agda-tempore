@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
 -- Best-case durations: the *least* duration of a set of timed traces  --
 --                                                                      --
--- This is the `⊓`-aggregation companion to `Duration.agda`'s `⊔`-based --
--- `setDuration`. Where `setDuration` measures a set by its longest     --
--- (worst-case) trace, `minSetDuration` measures it by its shortest     --
--- (best-case) trace -- the time taken when the computation realises    --
--- its fastest available trace. The per-trace `duration` is shared with --
--- `Duration.agda`; only the set-level aggregation differs.             --
+-- This is the `⊓`-aggregation companion to `MaxDuration.agda`'s        --
+-- `⊔`-based `setDuration`. Where `setDuration` measures a set by its    --
+-- longest (worst-case) trace, `minSetDuration` measures it by its       --
+-- shortest (best-case) trace -- the time taken when the computation     --
+-- realises its fastest available trace. The per-trace `duration` is     --
+-- shared via `Durations.agda`; only the set-level aggregation differs.  --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -29,7 +29,7 @@ open import Util.Equality
 module Syntax.Grades.Traces.MinDuration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
+open import Syntax.Grades.Traces.Durations Op
 
 open WithDecEq _≟ₒ_
 
@@ -122,7 +122,7 @@ bigMin-mono f g xs ne h =
 ------------------------------------------------------------------------
 -- Best-case durations relative to a fixed cost on operation symbols
 --
--- We reuse the per-trace `duration` of `Duration.agda` and only change
+-- We reuse the per-trace `duration` of `Durations.agda` and only change
 -- the set-level aggregation from `⊔` (worst case) to `⊓` (best case).
 
 module MinDurations (c : Op → ℕ) where

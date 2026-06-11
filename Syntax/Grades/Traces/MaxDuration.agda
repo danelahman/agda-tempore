@@ -1,6 +1,11 @@
------------------------------------------------------------------------
--- Durations of timed traces relative to a cost on operation symbols --
------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Worst-case durations: the *greatest* duration of a set of timed    --
+-- traces, relative to a cost on operation symbols.                    --
+--                                                                     --
+-- The per-trace `duration` is shared with `MinDuration.agda` and      --
+-- lives in `Durations.agda`; only the set-level aggregation -- here   --
+-- the `⊔`-based worst case -- is specific to this module.             --
+------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
@@ -10,35 +15,18 @@ open import Data.List.Base
 open import Data.List.Properties using (map-++; ++-identityʳ)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_; _⊔_; _≤_; z≤n)
+open import Data.Nat.Base using (ℕ; zero; _+_; _⊔_; _≤_; z≤n)
 open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-identityʳ; +-mono-≤;
-         +-distribˡ-⊔; +-distribʳ-⊔; ⊔-assoc; ⊔-identityʳ; ⊔-lub; ⊔-mono-≤;
-         m≤m⊔n; m≤n⊔m)
+  using (≤-trans; ≤-reflexive; +-distribˡ-⊔; +-distribʳ-⊔; ⊔-assoc;
+         ⊔-identityʳ; ⊔-lub; ⊔-mono-≤; m≤m⊔n; m≤n⊔m)
 
 open import Util.Equality
 
 module Syntax.Grades.Traces.MaxDuration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Durations Op
 open WithDecEq _≟ₒ_
-
-------------------------------------------------------------------------
--- The length of a positive duration as a natural number
-
-∣_∣⁺ : ℕ⁺ → ℕ
-∣ 𝟏      ∣⁺ = suc zero
-∣ suc⁺ n ∣⁺ = suc ∣ n ∣⁺
-
--- taking the length is a monoid homomorphism `(ℕ⁺, +⁺) → (ℕ, +)`
-
-∣∣⁺-+⁺ : (d e : ℕ⁺) → ∣ d +⁺ e ∣⁺ ≡ ∣ d ∣⁺ + ∣ e ∣⁺
-∣∣⁺-+⁺ 𝟏        e = refl
-∣∣⁺-+⁺ (suc⁺ d) e = cong suc (∣∣⁺-+⁺ d e)
-
-∣1+∣⁺ : (n : ℕ) → ∣ 1+ n ∣⁺ ≡ suc n
-∣1+∣⁺ zero    = refl
-∣1+∣⁺ (suc n) = cong suc (∣1+∣⁺ n)
 
 ------------------------------------------------------------------------
 -- The (greatest) of a list of durations
@@ -90,60 +78,16 @@ bigMax-mono f g []       h = z≤n
 bigMax-mono f g (x ∷ xs) h = ⊔-mono-≤ (h x) (bigMax-mono f g xs h)
 
 ------------------------------------------------------------------------
--- Durations relative to a fixed cost on operation symbols
+-- Worst-case durations relative to a fixed cost on operation symbols
 --
--- The whole development below is parameterised by the map `c` assigning
--- to each operation symbol its cost (its contribution to a duration).
+-- We reuse the per-trace `duration` of `Durations.agda` and aggregate
+-- a set of traces by its greatest (worst-case) member.
 
-module Durations (c : Op → ℕ) where
+module MaxDurations (c : Op → ℕ) where
 
-  ----------------------------------------------------------------------
-  -- The duration of a trace
-  --
-  -- A delay contributes its length, an operation `o` its cost `c o`.
+  open Durations c public
 
-  mutual
-    duration : Trace → ℕ
-    duration ε               = zero
-    duration (operation o t) = c o + duration t
-    duration (delay d t)     = ∣ d ∣⁺ + duration⁻ t
-
-    duration⁻ : Trace⁻ → ℕ
-    duration⁻ ε⁻               = zero
-    duration⁻ (operation⁻ o t) = c o + duration t
-
-  -- prepending a delay adds its length
-
-  duration-prepend : (d : ℕ⁺) (t : Trace)
-                   → duration (prepend d t) ≡ ∣ d ∣⁺ + duration t
-  duration-prepend d ε               = refl
-  duration-prepend d (operation o t) = refl
-  duration-prepend d (delay e t)     =
-    trans (cong (_+ duration⁻ t) (∣∣⁺-+⁺ d e))
-          (+-assoc ∣ d ∣⁺ ∣ e ∣⁺ (duration⁻ t))
-
-  -- the duration is a monoid homomorphism for sequencing of traces
-
-  duration-∙ : (s t : Trace) → duration (s ∙ t) ≡ duration s + duration t
-  duration-∙ ε               t = refl
-  duration-∙ (operation o s) t =
-    trans (cong (c o +_) (duration-∙ s t))
-          (sym (+-assoc (c o) (duration s) (duration t)))
-  duration-∙ (delay d ε⁻)    t =
-    trans (duration-prepend d t)
-          (cong (_+ duration t) (sym (+-identityʳ ∣ d ∣⁺)))
-  duration-∙ (delay d (operation⁻ o s)) t =
-    trans (cong (λ z → ∣ d ∣⁺ + (c o + z)) (duration-∙ s t))
-          (trans (cong (∣ d ∣⁺ +_) (sym (+-assoc (c o) (duration s) (duration t))))
-                 (sym (+-assoc ∣ d ∣⁺ (c o + duration s) (duration t))))
-
-  -- a pure delay of `n` has duration `n`
-
-  duration-⟨⟩ : (n : ℕ) → duration ⟨ n ⟩ ≡ n
-  duration-⟨⟩ zero    = refl
-  duration-⟨⟩ (suc n) = trans (+-identityʳ ∣ 1+ n ∣⁺) (∣1+∣⁺ n)
-
-  ----------------------------------------------------------------------
+  --------------------------------------------------------------------
   -- The duration of a set of traces is the greatest duration of a member
 
   setDuration : List Trace → ℕ
@@ -198,23 +142,9 @@ module Durations (c : Op → ℕ) where
       (λ t t∈xs → bigMax-mem duration t ys (toWitness (sub t (fromWitness t∈xs))))
 
 ------------------------------------------------------------------------
--- Comparing durations across two different costs
+-- Comparing worst-case durations across two different costs
 
-open Durations
-
--- the duration is monotone in the cost
-
-mutual
-  duration-mono : (c c' : Op → ℕ) → (∀ o → c o ≤ c' o) → (t : Trace)
-                → duration c t ≤ duration c' t
-  duration-mono c c' h ε               = z≤n
-  duration-mono c c' h (operation o t) = +-mono-≤ (h o) (duration-mono c c' h t)
-  duration-mono c c' h (delay d t)     = +-mono-≤ ≤-refl (duration⁻-mono c c' h t)
-
-  duration⁻-mono : (c c' : Op → ℕ) → (∀ o → c o ≤ c' o) → (t : Trace⁻)
-                 → duration⁻ c t ≤ duration⁻ c' t
-  duration⁻-mono c c' h ε⁻               = z≤n
-  duration⁻-mono c c' h (operation⁻ o t) = +-mono-≤ (h o) (duration-mono c c' h t)
+open MaxDurations
 
 -- `setDuration` is monotone in the cost
 

@@ -45,8 +45,8 @@ module _ (time : Op → Interval) where
   -- the durations module is parameterised by the cost map, so we
   -- instantiate it once at the lower costs and once at the upper costs
 
-  module Lo = Durations loCost
-  module Hi = Durations hiCost
+  module Lo = MaxDurations loCost
+  module Hi = MaxDurations hiCost
 
   -- the endpoint projections of a trace interval are not re-exported by
   -- `TwoSidedTraces`, so we bring them into scope here

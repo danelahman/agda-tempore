@@ -16,7 +16,6 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary using (¬_)
 
 open import Util.Equality
-open import Util.Ordered.Structures
 
 -- Ordered effect and resource monoids
 

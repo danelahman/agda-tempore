@@ -69,26 +69,33 @@ open import Syntax.CompContext
 
 open import Syntax.Grades
 
----- Examples of grades
+---- Examples of time-based grades
 
 open import Syntax.Grades.Time.LeftSidedIntervals
 open import Syntax.Grades.Time.RightSidedIntervals
 open import Syntax.Grades.Time.TwoSidedIntervals
 
--- trace-based grades take a bare set of operation symbols; here we
--- instantiate the examples at the operation symbols of the ambient `S`
+---- Utilities for trace-based grades
+
+open import Syntax.Grades.Traces.Restriction
+open import Syntax.Grades.Traces.Durations
+open import Syntax.Grades.Traces.MaxDuration
+open import Syntax.Grades.Traces.MinDuration
+
+---- Examples of trace-based grades
 
 open import Syntax.Grades.Traces.RightSidedTraces
 open import Syntax.Grades.Traces.LeftSidedTraces
 open import Syntax.Grades.Traces.TwoSidedTraces
-open import Syntax.Grades.Traces.Restriction
-open import Syntax.Grades.Traces.Duration
-open import Syntax.Grades.Traces.MinDuration
+
+---- Examples of grade systems
 
 open import Syntax.Grades.GradeSystem.TwoSidedTimeIntervalsToOneSidedTimeIntervals
+
 open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToLeftSidedTraceIntervals
+
 open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervals
-open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsBestCase
+open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsWorstCase
 
 -- OPERATIONAL SEMANTICS
 ------------------------
