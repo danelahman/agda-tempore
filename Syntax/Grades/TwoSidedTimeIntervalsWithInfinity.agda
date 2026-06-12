@@ -3,7 +3,7 @@
 -- right-hand endpoint as grades                         --
 -----------------------------------------------------------
 
-module Syntax.Grades.Time.TwoSidedIntervalsWithInfinity where
+module Syntax.Grades.TwoSidedTimeIntervalsWithInfinity where
 
 open import Data.Empty
 open import Data.Nat

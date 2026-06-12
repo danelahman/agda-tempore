@@ -64,13 +64,19 @@ a grade system, a signature of base types, and operations' signatures.
   resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the
   latter), together with a convenience interface `GradeSystemInterface`.
 
-- Concrete examples of time-based grades live in `Syntax/Grades/Time/`.
+- Concrete examples of time-based grades (left-, right-, and two-sided time
+  intervals, and two-sided intervals with infinity) live directly under
+  `Syntax/Grades/`, e.g. `Syntax/Grades/TwoSidedTimeIntervals.agda`.
 
-- Trace-based grades live in `Syntax/Grades/Traces/`.
+- The trace-based grade of (non-empty) sets of timed traces lives in
+  `Syntax/Grades/SetOfTraces.agda`, built on the timed-trace monoid and
+  auxiliary trace constructions in `Syntax/Grades/Traces/`
 
-- `Syntax/Grades/GradeSystem/` assembles full example grade systems, including
-  trace-interval effect grades over time-interval resource grades, in both
-  best-case and worst-case readings, and grade morphisms between them.
+- `Syntax/Grades/GradeSystem/` assembles full example grade systems and grade
+  morphisms between their effect and resource grades:
+  `TwoSidedIntervalsToLeftSidedIntervals`, `TracesToRestrictedTraces` (sets of
+  traces over all operations to sets of traces over a sub-alphabet), and
+  `TracesToTimeIntervals` (sets of traces to two-sided time intervals).
 
 ### Core language, type system
 

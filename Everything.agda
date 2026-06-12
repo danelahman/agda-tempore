@@ -71,10 +71,10 @@ open import Syntax.Grades
 
 ---- Examples of time-based grades
 
-open import Syntax.Grades.Time.LeftSidedIntervals
-open import Syntax.Grades.Time.RightSidedIntervals
-open import Syntax.Grades.Time.TwoSidedIntervals
-open import Syntax.Grades.Time.TwoSidedIntervalsWithInfinity
+open import Syntax.Grades.LeftSidedTimeIntervals
+open import Syntax.Grades.RightSidedTimeIntervals
+open import Syntax.Grades.TwoSidedTimeIntervals
+open import Syntax.Grades.TwoSidedTimeIntervalsWithInfinity
 
 ---- Utilities for trace-based grades
 
@@ -85,18 +85,15 @@ open import Syntax.Grades.Traces.MinDuration
 
 ---- Examples of trace-based grades
 
-open import Syntax.Grades.Traces.RightSidedTraces
-open import Syntax.Grades.Traces.LeftSidedTraces
-open import Syntax.Grades.Traces.TwoSidedTraces
+open import Syntax.Grades.SetOfTraces
 
 ---- Examples of grade systems
 
-open import Syntax.Grades.GradeSystem.TwoSidedTimeIntervalsToOneSidedTimeIntervals
+open import Syntax.Grades.GradeSystem.TwoSidedIntervalsToLeftSidedIntervals
 
-open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToLeftSidedTraceIntervals
+open import Syntax.Grades.GradeSystem.TracesToRestrictedTraces
 
-open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervals
-open import Syntax.Grades.GradeSystem.Old.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsWorstCase
+open import Syntax.Grades.GradeSystem.TracesToTimeIntervals
 
 -- OPERATIONAL SEMANTICS
 ------------------------

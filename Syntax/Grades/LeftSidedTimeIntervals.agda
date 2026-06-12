@@ -2,7 +2,7 @@
 -- (Left) One-sided (closed) intervals as grades --
 ---------------------------------------------------
 
-module Syntax.Grades.Time.LeftSidedIntervals where
+module Syntax.Grades.LeftSidedTimeIntervals where
 
 open import Data.Nat
 open import Data.Nat.Properties

@@ -3,13 +3,13 @@
 -- grades and left-sided time intervals as resource grades    --
 ----------------------------------------------------------------
 
-module Syntax.Grades.GradeSystem.TwoSidedTimeIntervalsToOneSidedTimeIntervals where
+module Syntax.Grades.GradeSystem.TwoSidedIntervalsToLeftSidedIntervals where
 
 open import Data.Product
 
 open import Syntax.Grades
-open import Syntax.Grades.Time.LeftSidedIntervals
-open import Syntax.Grades.Time.TwoSidedIntervals
+open import Syntax.Grades.LeftSidedTimeIntervals
+open import Syntax.Grades.TwoSidedTimeIntervals
 
 open import Util.Equality
 
@@ -22,8 +22,8 @@ tsi→lsi = record
   ; map-of-nat   = refl
   }
 
-intGradeSystem : GradeSystem
-intGradeSystem = record
+twoSidedIntervalsToLeftSidedIntervalsGradeSystem : GradeSystem
+twoSidedIntervalsToLeftSidedIntervalsGradeSystem = record
   { RGrade = left-sided-intervals
   ; EGrade = two-sided-intervals
   ; ∣_∣ᵉ   = tsi→lsi
