@@ -95,7 +95,7 @@ open import Syntax.Grades.GradeSystem.TwoSidedTimeIntervalsToOneSidedTimeInterva
 open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToLeftSidedTraceIntervals
 
 open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervals
-open import Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsWorstCase
+open import Syntax.Grades.GradeSystem.Old.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsWorstCase
 
 -- OPERATIONAL SEMANTICS
 ------------------------

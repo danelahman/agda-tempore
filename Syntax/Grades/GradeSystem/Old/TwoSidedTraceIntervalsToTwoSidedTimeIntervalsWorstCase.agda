@@ -14,7 +14,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-module Syntax.Grades.GradeSystem.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsWorstCase (S : LanguageSpec) where
+module Syntax.Grades.GradeSystem.Old.TwoSidedTraceIntervalsToTwoSidedTimeIntervalsWorstCase (S : LanguageSpec) where
 
 open Grade
 open LanguageSpec S
