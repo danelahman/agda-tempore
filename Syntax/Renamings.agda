@@ -47,11 +47,6 @@ data Ren : Ctx → Ctx → Set where
 
 infixr 20 _∘ʳ_
 
-
--- TODO: definitions of natural concrete renamings (see original development)
-
--- ...
-
 -- Extending a renaming with a variable
 
 extend-ren : ∀ {Γ Γ' A ρ} → Ren Γ Γ' → ρ ≾ᵣ uᵣ → A ∈[ ρ ] Γ' → Ren (Γ ∷ A) Γ'
