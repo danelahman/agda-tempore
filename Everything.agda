@@ -82,10 +82,12 @@ open import Syntax.Grades.Traces.Restriction
 open import Syntax.Grades.Traces.Durations
 open import Syntax.Grades.Traces.MaxDuration
 open import Syntax.Grades.Traces.MinDuration
+open import Syntax.Grades.Traces.Subtrace
 
 ---- Examples of trace-based grades
 
 open import Syntax.Grades.SetOfTraces
+open import Syntax.Grades.SetOfTracesUpToSubtrace
 
 ---- Examples of grade systems
 
