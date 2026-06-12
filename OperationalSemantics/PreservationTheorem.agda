@@ -257,13 +257,13 @@ mutual
     step-extends-state COERCE               = id-suc
 
 -- invariants preserved by the small-step operational semantics
-step-invariants : ∀ {A B ε'' ε'''}
+step-invariants : ∀ {A B ε ε'}
                 → {S S' : 𝕊 []}
-                → {M : toCtx S ⊢C⦂ A ‼ ε''}
-                → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
+                → {M : toCtx S ⊢C⦂ A ‼ ε}
+                → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                 → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                → A ≡ B                                                     -- return types are preserved
-                × state-grade S' ·ᵣ mapᵉ ε''' ≾ᵣ state-grade S ·ᵣ mapᵉ ε''  -- effects become more precise
+                → A ≡ B                                                 -- return types are preserved
+                × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε  -- effects become more precise
                      
 step-invariants APP   = refl , ≾ᵣ-refl
 step-invariants MATCH = refl , ≾ᵣ-refl
@@ -277,28 +277,28 @@ step-invariants {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε�
         (trans
           (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
           (sym (cong (state-grade S ·ᵣ_) map-·ᵉ)))))
-step-invariants {ε''' = ε'''} SEQ-RET =
+step-invariants {ε' = ε'} SEQ-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
-      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
+      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'))))
       (≾ᵣ-trans
         (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
         (≾ᵣ-reflexive (sym map-·ᵉ))))
 step-invariants SEQ-OP = refl , ≾ᵣ-refl
-step-invariants {ε''' = ε'''} {S = S} DELAY =
+step-invariants {ε' = ε'} {S = S} DELAY =
   refl ,
   ≾ᵣ-trans
     (≾ᵣ-reflexive
       (trans
-        (·ᵣ-assoc (state-grade S) (of-natʳ _) (mapᵉ ε'''))
-        (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε''')) (sym map-of-natᵉ)))))
+        (·ᵣ-assoc (state-grade S) (of-natʳ _) (mapᵉ ε'))
+        (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε')) (sym map-of-natᵉ)))))
     (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-·ᵉ)))
-step-invariants {ε''' = ε'''} HANDLE-RET =
+step-invariants {ε' = ε'} HANDLE-RET =
   refl ,
   ·ᵣ-monoʳ-≾ᵣ
     (≾ᵣ-trans
-      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'''))))
+      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'))))
       (≾ᵣ-trans
         (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
         (≾ᵣ-reflexive (sym map-·ᵉ))))
