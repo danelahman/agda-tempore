@@ -74,6 +74,7 @@ open import Syntax.Grades
 open import Syntax.Grades.Time.LeftSidedIntervals
 open import Syntax.Grades.Time.RightSidedIntervals
 open import Syntax.Grades.Time.TwoSidedIntervals
+open import Syntax.Grades.Time.TwoSidedIntervalsWithInfinity
 
 ---- Utilities for trace-based grades
 
