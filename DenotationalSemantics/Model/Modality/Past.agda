@@ -1,0 +1,102 @@
+------------------------------------------------------------------------
+-- Semantics of the context modality `Γ ⟨ ρ ⟩`, as a functor graded by --
+-- a monoid of grades `(R , · , u , ≾)`. It is the analogue of the      --
+-- monadic lock-modality on contexts in Fitch-style modal calculi.      --
+--                                                                    --
+-- The modality is a *lax* graded monad: unit `η` and multiplication   --
+-- `μ`, but no inverses. Concretely it is realised as Kripke            --
+-- possibility (a Σ-type over accessible *past* worlds). Laws are        --
+-- stated up to propositional equality `≡`.                             --
+--                                                                    --
+-- Note on the grade order: `μ` reverses the multiplication order,     --
+--   μ : ⟨ ρ₁ ⟩ (⟨ ρ₂ ⟩ A) →ᵐ ⟨ ρ₂ · ρ₁ ⟩ A ,                          --
+-- so that, under `⟦ Γ ⟨ ρ ⟩ ⟧ = ⟨ ρ ⟩ ⟦ Γ ⟧`, folding a nested       --
+-- context `Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩` yields the grade `ρ₁ · ρ₂`, matching      --
+-- `ctx-grade (Γ ⟨ ρ₁ ⟩ ⟨ ρ₂ ⟩) = (… · ρ₁) · ρ₂` of the calculus.      --
+------------------------------------------------------------------------
+
+open import Syntax.Grades
+
+open import DenotationalSemantics.Model.Category
+
+module DenotationalSemantics.Model.Modality.Past (Cat : Category) (G : Grade) where
+
+open import Util.Equality
+
+open Category Cat
+open Grade G
+
+-- two-sided monotonicity of `·` derived from the one-sided ones
+
+·-mono-≾ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≾ ρ₁' → ρ₂ ≾ ρ₂' → ρ₁ · ρ₂ ≾ ρ₁' · ρ₂'
+·-mono-≾ p q = ≾-trans (·-monoˡ-≾ p) (·-monoʳ-≾ q)
+
+record Past : Set₁ where
+
+  field
+
+    -- STRUCTURE
+
+    -- Functor
+
+    ⟨_⟩ᵒ : Carrier → Obj → Obj
+    ⟨_⟩ᶠ : ∀ {A B} → (ρ : Carrier) → A →ᵐ B → ⟨ ρ ⟩ᵒ A →ᵐ ⟨ ρ ⟩ᵒ B
+
+    -- (Contravariant) monotonicity for gradings
+
+    ⟨⟩-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → ⟨ ρ₂ ⟩ᵒ A →ᵐ ⟨ ρ₁ ⟩ᵒ A
+
+    -- Unit
+
+    η : ∀ {A} → A →ᵐ ⟨ u ⟩ᵒ A
+
+    -- Multiplication (note the reversed grade order, see the header)
+
+    μ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A) →ᵐ ⟨ ρ₂ · ρ₁ ⟩ᵒ A
+
+    -- PROPERTIES
+
+    -- ⟨_⟩ is functorial
+
+    ⟨⟩-idᵐ : ∀ {A ρ} → ⟨ ρ ⟩ᶠ (idᵐ {A = A}) ≡ idᵐ
+    ⟨⟩-∘ᵐ : ∀ {A B C ρ} → (g : B →ᵐ C) → (f : A →ᵐ B)
+          → ⟨ ρ ⟩ᶠ (g ∘ᵐ f) ≡ ⟨ ρ ⟩ᶠ g ∘ᵐ ⟨ ρ ⟩ᶠ f
+
+    -- ⟨⟩-≤ is natural
+
+    ⟨⟩-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B) → (p : ρ₁ ≾ ρ₂)
+             → ⟨ ρ₁ ⟩ᶠ f ∘ᵐ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵐ ⟨ ρ₂ ⟩ᶠ f
+
+    -- ⟨_⟩ is functorial in the gradings
+
+    ⟨⟩-≤-refl : ∀ {A ρ} → ⟨⟩-≤ {A} (≾-refl {ρ}) ≡ idᵐ
+    ⟨⟩-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
+               → ⟨⟩-≤ {A} p ∘ᵐ ⟨⟩-≤ {A} q ≡ ⟨⟩-≤ (≾-trans p q)
+
+    -- η is natural
+
+    ⟨⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ u ⟩ᶠ f ∘ᵐ η ≡ η ∘ᵐ f
+
+    -- μ is natural
+
+    ⟨⟩-μ-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B)
+             → ⟨ ρ₂ · ρ₁ ⟩ᶠ f ∘ᵐ μ ≡ μ ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ f)
+
+    -- μ is compatible with the gradings
+
+    ⟨⟩-μ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
+           → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵐ μ {A} {ρ₁'} {ρ₂'}
+           ≡ μ {A} {ρ₁} {ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨⟩-≤ q) ∘ᵐ ⟨⟩-≤ p
+
+    -- Graded monad laws
+
+    ⟨⟩-μ∘η≡id : ∀ {A ρ}
+              → μ {A} {u} {ρ} ∘ᵐ η
+              ≡ ⟨⟩-≤ (≾-reflexive (·-identityʳ ρ))
+    ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
+               → μ {A} {ρ} {u} ∘ᵐ ⟨ ρ ⟩ᶠ η
+               ≡ ⟨⟩-≤ (≾-reflexive (·-identityˡ ρ))
+    ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
+                → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵐ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
+                ≡    ⟨⟩-≤ (≾-reflexive (sym (·-assoc ρ₃ ρ₂ ρ₁)))
+                  ∘ᵐ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
