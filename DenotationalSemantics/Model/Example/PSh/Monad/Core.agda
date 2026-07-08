@@ -83,7 +83,6 @@ Tᵒ A ε = psh (λ w → Tˢ A ε w)
 
 -- FUNCTOR
 
-{-# TERMINATING #-}
 Tˢᶠ : ∀ {A B ε w} → A →ᵖ B → Tˢ A ε w → Tˢ B ε w
 Tˢᶠ f (leaf x)          = leaf (app f x)
 Tˢᶠ f (op-node op p k)  = op-node op p (λ q y → Tˢᶠ f (k q y))
@@ -100,7 +99,6 @@ Tᶠ f = pmap (Tˢᶠ f)
 T-≤ : ∀ {A ε ε'} → ε ≾ₑ ε' → Tᵒ A ε →ᵖ Tᵒ A ε'
 T-≤ p = pmap (sub p)
 
-{-# TERMINATING #-}
 Tˢᶠ-id : ∀ {A ε w} → (t : Tˢ A ε w) → Tˢᶠ idᵖ t ≡ t
 Tˢᶠ-id (leaf x)         = refl
 Tˢᶠ-id (op-node op p k) =
@@ -113,7 +111,6 @@ Tˢᶠ-id (sub p t) =
 Tᶠ-id : ∀ {A ε} → Tᶠ {A} {A} {ε} idᵖ ≡ idᵖ
 Tᶠ-id = →ᵖ-ext (λ t → Tˢᶠ-id t)
 
-{-# TERMINATING #-}
 Tˢᶠ-∘ : ∀ {A B C ε w} → (g : B →ᵖ C) → (f : A →ᵖ B) → (t : Tˢ A ε w)
       → Tˢᶠ (g ∘ᵖ f) t ≡ Tˢᶠ g (Tˢᶠ f t)
 Tˢᶠ-∘ g f (leaf x)         = refl
@@ -150,7 +147,6 @@ T-≤-nat f p = →ᵖ-ext (λ t → refl)
 
 -- MULTIPLICATION
 
-{-# TERMINATING #-}
 μˢ : ∀ {A ε ε' w} → Tˢ (Tᵒ A ε') ε w → Tˢ A (ε ·ₑ ε') w
 μˢ {ε' = ε'} (leaf t) =
   ε-substˢ (sym (·ₑ-identityˡ ε')) t
@@ -164,7 +160,6 @@ T-≤-nat f p = →ᵖ-ext (λ t → refl)
 μᵀ : ∀ {A ε ε'} → Tᵒ (Tᵒ A ε') ε →ᵖ Tᵒ A (ε ·ₑ ε')
 μᵀ = pmap μˢ
 
-{-# TERMINATING #-}
 μˢ-nat : ∀ {A B ε ε' w} → (f : A →ᵖ B) → (t : Tˢ (Tᵒ A ε') ε w)
        → μˢ (Tˢᶠ (Tᶠ f) t) ≡ Tˢᶠ f (μˢ t)
 μˢ-nat f (leaf t) = ε-substˢ-Tˢᶠ (sym (·ₑ-identityˡ _)) f t
@@ -238,7 +233,6 @@ T-μ∘η≡id = →ᵖ-ext (λ t → refl)
 
 -- Second identity law
 
-{-# TERMINATING #-}
 μˢ-identity₂ : ∀ {A ε w} → (t : Tˢ A ε w)
              → μˢ (Tˢᶠ ηᵀ t) ≡ ε-substˢ (sym (·ₑ-identityʳ ε)) t
 μˢ-identity₂ (leaf x) =
@@ -284,7 +278,6 @@ T-μ∘Tη≡id = →ᵖ-ext (λ t → μˢ-identity₂ t)
 
 -- Associativity law
 
-{-# TERMINATING #-}
 μˢ-assoc : ∀ {A ε ε' ε'' w} → (t : Tˢ (Tᵒ (Tᵒ A ε'') ε') ε w)
          → μˢ {ε = ε} {ε' = ε' ·ₑ ε''} (Tˢᶠ (μᵀ {A} {ε'} {ε''}) t)
          ≡ ε-substˢ (·ₑ-assoc ε ε' ε'') (μˢ (μˢ t))
@@ -371,7 +364,6 @@ T-μ∘μ≡μ∘Tμ = →ᵖ-ext (λ t → μˢ-assoc t)
 -- effect step it advances the box (via `⊑ᵉ-resource` + `⊑ʳ-trans`), and
 -- pairs the extracted `A` with the returned `B` at the leaves.
 
-{-# TERMINATING #-}
 strˢ : ∀ {A B ε w}
      → carrier ([ mapᵉ ε ]ᵒ A) w → Tˢ B ε w → Tˢ (A ×ᵖ B) ε w
 strˢ box (leaf b) =
@@ -390,7 +382,6 @@ strᵀ = pmap (λ { (a , t) → strˢ a t })
 
 -- Strength is natural
 
-{-# TERMINATING #-}
 strˢ-nat : ∀ {A A' B B' ε w} → (f : A →ᵖ A') → (g : B →ᵖ B')
          → (box : carrier ([ mapᵉ ε ]ᵒ A) w) → (t : Tˢ B ε w)
          → strˢ (λ r → app f (box r)) (Tˢᶠ g t) ≡ Tˢᶠ (mapˣᵐ f g) (strˢ box t)
@@ -413,7 +404,6 @@ strᵀ-nat f g = →ᵖ-ext (λ { (a , t) → strˢ-nat f g a t })
 
 -- Strength projects away on the second component
 
-{-# TERMINATING #-}
 strˢ-snd : ∀ {A B ε w}
          → (box : carrier ([ mapᵉ ε ]ᵒ A) w) → (t : Tˢ B ε w)
          → Tˢᶠ sndᵐ (strˢ box t) ≡ t
@@ -448,7 +438,6 @@ strᵀ-ηᵀ = →ᵖ-ext (λ { (box , b) → refl })
 -- with strength-ing componentwise. The `[]-monoidal` box `λ p → (a p , b p)`
 -- reassociates to two nested strengths; a clean induction on the tree.
 
-{-# TERMINATING #-}
 strˢ-assoc : ∀ {A B C ε w}
            → (a : carrier ([ mapᵉ ε ]ᵒ A) w)
            → (b : carrier ([ mapᵉ ε ]ᵒ B) w)
@@ -507,7 +496,6 @@ strˢ-ε-substˢ refl a t = strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _)) 
 -- coercion (from `μˢ`) that `strˢ` commutes past (`strˢ-ε-substˢ`), and the
 -- box witnesses on the two sides agree up to `⊑ʳ-irrelevant` (`strˢ-cong`).
 
-{-# TERMINATING #-}
 strˢ-μˢ : ∀ {A B ε ε' w}
         → (a : carrier ([ mapᵉ (ε ·ₑ ε') ]ᵒ A) w)
         → (t : Tˢ (Tᵒ B ε') ε w)
