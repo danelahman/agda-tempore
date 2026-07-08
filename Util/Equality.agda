@@ -19,7 +19,7 @@ postulate
   fun-ext  : ∀ {l₁ l₂} → Extensionality l₁ l₂
   ifun-ext : ∀ {l₁ l₂} → ExtensionalityImplicit l₁ l₂
 
--- Assuming UIP
+-- UIP (provable, since the project does not use --without-K)
 
---postulate
---  uip : ∀ {l} {X : Set l} → UIP X
+uip : ∀ {l} {X : Set l} {x y : X} {p q : x ≡ y} → p ≡ q
+uip {p = refl} {q = refl} = refl

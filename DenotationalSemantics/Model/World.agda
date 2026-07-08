@@ -76,3 +76,12 @@ record World : Set₁ where
     -- effect accessibility projects to resource accessibility along `mapᵉ`
 
     ⊑ᵉ-resource : ∀ {ε w w'} → w ⊑ᵉ[ ε ] w' → w ⊑[ mapᵉ ε ] w'
+
+    -- the effect grade order is proof irrelevant. The effect monad's
+    -- sub-effecting (the semantics of `coerce`) carries a `≾ₑ`-witness
+    -- in its tree; this makes `coerce` a proof-irrelevant congruence
+    -- (the only law the equational theory imposes on it), and keeps the
+    -- monad laws holding in the presence of sub-effecting nodes. All the
+    -- concrete effect-grade instances (intervals, …) satisfy it.
+
+    ≾ₑ-irrelevant : ∀ {ε₁ ε₂} → (p q : ε₁ ≾ₑ ε₂) → p ≡ q
