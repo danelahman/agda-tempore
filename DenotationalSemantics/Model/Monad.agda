@@ -3,8 +3,8 @@
 --                                                                    --
 -- A graded monad `Tᵒ A ε`, graded by the *effect* grades `ε : E`,     --
 -- equipped with the algebraic operations of the signature and with    --
--- explicit delays. It is the analogue of the free-monad-like monad of  --
--- the earlier (time-graded) formalisation, now graded by effects.      --
+-- explicit delays. It is a free-monad-like monad built from those      --
+-- operations and delays.                                              --
 --                                                                    --
 -- The novelty is that the operations, delays, and the strength all     --
 -- mention the *box* modality graded by the *resource* projection       --
@@ -21,9 +21,11 @@
 -- carried by `ε-substᵀ` (transport along `≡`); genuine sub-effecting   --
 -- (the semantics of `coerce`) is `T-≤`, along the effect order `≾ₑ`.   --
 --                                                                    --
--- NOTE: effect handling, and the strength coherence laws that in the   --
--- earlier formalisation used the box *inverses* `ε⁻¹`/`δ⁻¹` (our box    --
--- is only lax), are deferred; see the TODO at the end.                 --
+-- The strength coherence laws are stated for the *lax* box (a counit    --
+-- `ε` and comultiplication `δ`, but no inverses `ε⁻¹`/`δ⁻¹`).           --
+-- Effect handling folds a handler — a family of clause *morphisms* — into --
+-- a `T`-algebra; the clauses being morphisms is what makes them usable   --
+-- at every world in the discrete presheaf model.                        --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -169,9 +171,9 @@ record Monad : Set₁ where
 
     -- Strength coherence laws. Because the box is only *lax* (no counit /
     -- comultiplication inverses `ε⁻¹` / `δ⁻¹`), the unit and multiplication
-    -- laws are reshaped relative to a strong-box formalisation: the box is
-    -- kept on the *input* and eliminated on the output via the counit `ε`
-    -- (unit law) or split via the comultiplication `δ` (multiplication law).
+    -- laws keep the box on the *input* and eliminate it on the output via
+    -- the counit `ε` (unit law) or split it via the comultiplication `δ`
+    -- (multiplication law).
 
     -- Unit: strength on a returned value extracts the boxed component (at
     -- the reflexive world) and returns the pair. The box grade is `mapᵉ uₑ`,
@@ -226,5 +228,46 @@ record Monad : Set₁ where
              ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ)
         ∘ᵐ ⟨ fstᵐ ∘ᵐ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ
 
--- TODO (deferred, see header):
---   * effect handling (`T-alg-of-handlerᵀ` and its laws).
+  -- EFFECT HANDLING
+
+  -- A handler assigns to every operation `op` and every residual effect
+  -- grade `ε''` a clause: given the parameter and the operation's boxed
+  -- continuation `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces
+  -- a computation. Note the clauses are *morphisms* (natural families),
+  -- hence usable at every world the handled computation reaches — this is
+  -- what lets the fold recurse under operations without moving the handler
+  -- (there is no functorial action on the discrete presheaves to move it).
+
+  Handlerᵀ : Obj → Set
+  Handlerᵀ A = (op : Op) → (ε'' : E)
+             → ⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε'')
+                 →ᵐ Tᵒ A (op-grade op ·ₑ ε'')
+
+  field
+
+    -- Folding a handler into a `T`-algebra: reinterpret every operation of
+    -- the tree by the corresponding clause, keeping delays as delays and
+    -- returning the leaf value (regraded).
+
+    T-alg-of-handlerᵀ : ∀ {A ε ε'} → Handlerᵀ A
+                      → Tᵒ (Tᵒ A ε') ε →ᵐ Tᵒ A (ε ·ₑ ε')
+
+    -- It is an algebra for the monad's structure: it computes `η`, `delay`,
+    -- and `op` by, respectively, returning, re-delaying, and applying the
+    -- matching clause.
+
+    T-alg-of-handlerᵀ-ηᵀ : ∀ {A ε'} → (h : Handlerᵀ A)
+                         → T-alg-of-handlerᵀ h ∘ᵐ ηᵀ {Tᵒ A ε'}
+                         ≡ ε-substᵀ (sym (·ₑ-identityˡ ε'))
+
+    T-alg-of-handlerᵀ-delayᵀ : ∀ {A ε' ε''} → (τ : ℕ) → (h : Handlerᵀ A)
+                             → T-alg-of-handlerᵀ h ∘ᵐ delayᵀ {Tᵒ A ε''} {ε'} τ
+                             ≡ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
+                               ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ h)
+
+    T-alg-of-handlerᵀ-opᵀ : ∀ {A ε' ε''} → (op : Op) → (h : Handlerᵀ A)
+                          → T-alg-of-handlerᵀ h ∘ᵐ opᵀ {Tᵒ A ε''} {ε'} op
+                          ≡ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
+                            ∘ᵐ h op (ε' ·ₑ ε'')
+                            ∘ᵐ mapˣᵐ idᵐ
+                                 ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ h)))

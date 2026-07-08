@@ -6,15 +6,20 @@
 -- values are wellfounded trees built from                             --
 --                                                                    --
 --   * `leaf`       : a returned value of `A` (grade `uₑ`);             --
---   * `op-node`    : an algebraic operation `op`, whose continuation   --
---                    receives the arity at every world reachable by    --
---                    the operation's effect `op-grade op`;             --
---   * `delay-node` : a delay by `τ` ticks, whose continuation lives at --
---                    every world reachable by the effect `of-natᵉ τ`.  --
+--   * `op-node`    : an algebraic operation `op`, storing its boxed    --
+--                    continuation `[ mapᵉ (op-grade op) ]` over every   --
+--                    world reachable by the resource `mapᵉ (op-grade   --
+--                    op)`;                                             --
+--   * `delay-node` : a delay by `τ` ticks, storing its boxed           --
+--                    continuation `[ mapᵉ (of-natᵉ τ) ]`.              --
 --                                                                    --
--- World movement uses the *effect* accessibility `_⊑ᵉ[_]_`. Because    --
--- the presheaves are discrete, there is no monotonicity side-condition --
--- on the continuations (unlike the earlier time-graded formalisation). --
+-- World movement uses the resource accessibility `_⊑ʳ[_]_` at the      --
+-- resource projection `mapᵉ` of the node's effect grade: the node      --
+-- stores the whole continuation box (nothing is discarded), which is   --
+-- what lets effect handlers fold the tree in any model, including      --
+-- those whose worlds keep history. Because the presheaves are          --
+-- discrete, there is no monotonicity side-condition on the             --
+-- continuations.                                                       --
 --                                                                    --
 -- This module provides the monad's *core* structure — functor, unit,   --
 -- multiplication, the monad laws, sub-effecting `T-≤` (the `coerce`     --
@@ -59,10 +64,10 @@ open Category PShCat using (mapˣᵐ; sndᵐ; ×ᵐ-assoc; ×ᵐ-assoc⁻¹)
 data Tˢ (A : PSh) : E → W → Set where
   leaf       : ∀ {w} → carrier A w → Tˢ A uₑ w
   op-node    : ∀ {ε w} → (op : Op) → carrier ⟦ param op ⟧ᵍ w
-             → (∀ {w'} → w ⊑ᵉ[ op-grade op ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+             → (∀ {w'} → w ⊑ʳ[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
              → Tˢ A (op-grade op ·ₑ ε) w
   delay-node : ∀ {ε w} → (τ : ℕ)
-             → (∀ {w'} → w ⊑ᵉ[ of-natᵉ τ ] w' → Tˢ A ε w')
+             → (∀ {w'} → w ⊑ʳ[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w')
              → Tˢ A (of-natᵉ τ ·ₑ ε) w
   -- sub-effecting node (the semantics of `coerce`): the exact grade is
   -- kept exact on `leaf`/`op-node`/`delay-node` — which is what makes
@@ -220,13 +225,13 @@ T-μ∘η≡id = →ᵖ-ext (λ t → refl)
 -- `ε-substˢ` pushes through the operation and delay nodes
 
 ε-substˢ-op : ∀ {A ε ε' w} → (op : Op) → (v : carrier ⟦ param op ⟧ᵍ w) → (p : ε ≡ ε')
-            → (k : ∀ {w'} → w ⊑ᵉ[ op-grade op ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+            → (k : ∀ {w'} → w ⊑ʳ[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
             → ε-substˢ (cong (op-grade op ·ₑ_) p) (op-node op v k)
             ≡ op-node op v (λ q y → ε-substˢ p (k q y))
 ε-substˢ-op op v refl k = refl
 
 ε-substˢ-delay : ∀ {A ε ε' w} → (τ : ℕ) → (p : ε ≡ ε')
-               → (k : ∀ {w'} → w ⊑ᵉ[ of-natᵉ τ ] w' → Tˢ A ε w')
+               → (k : ∀ {w'} → w ⊑ʳ[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w')
                → ε-substˢ (cong (of-natᵉ τ ·ₑ_) p) (delay-node τ k)
                ≡ delay-node τ (λ q → ε-substˢ p (k q))
 ε-substˢ-delay τ refl k = refl
@@ -361,7 +366,7 @@ T-μ∘μ≡μ∘Tμ = →ᵖ-ext (λ t → μˢ-assoc t)
 ⊑ʳ-coe e = ⊑ʳ-mono (≾ᵣ-reflexive e)
 
 -- The strength threads a box `[ mapᵉ ε ] A` along the tree: at every
--- effect step it advances the box (via `⊑ᵉ-resource` + `⊑ʳ-trans`), and
+-- effect step it advances the box (via `⊑ʳ-trans`), and
 -- pairs the extracted `A` with the returned `B` at the leaves.
 
 strˢ : ∀ {A B ε w}
@@ -370,10 +375,10 @@ strˢ box (leaf b) =
   leaf (box (⊑ʳ-coe (sym map-uᵉ) ⊑ʳ-refl) , b)
 strˢ box (op-node op v k) =
   op-node op v (λ q y →
-    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q y))
+    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q y))
 strˢ box (delay-node τ k) =
   delay-node τ (λ q →
-    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q))
+    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q))
 strˢ box (sub p t) =
   sub p (strˢ (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
 
@@ -389,11 +394,11 @@ strˢ-nat f g box (leaf b)          = refl
 strˢ-nat f g box (op-node op v k)  =
   cong (op-node op v)
     (ifun-ext (fun-ext (λ q → fun-ext (λ y →
-      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q y)))))
+      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q y)))))
 strˢ-nat f g box (delay-node τ k)  =
   cong (delay-node τ)
     (ifun-ext (fun-ext (λ q →
-      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q))))
+      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q))))
 strˢ-nat f g box (sub p t)         =
   cong (sub p) (strˢ-nat f g (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
 
@@ -411,11 +416,11 @@ strˢ-snd box (leaf b)          = refl
 strˢ-snd box (op-node op v k)  =
   cong (op-node op v)
     (ifun-ext (fun-ext (λ q → fun-ext (λ y →
-      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q y)))))
+      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q y)))))
 strˢ-snd box (delay-node τ k)  =
   cong (delay-node τ)
     (ifun-ext (fun-ext (λ q →
-      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q))))
+      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q))))
 strˢ-snd box (sub p t)         =
   cong (sub p) (strˢ-snd (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
 
@@ -448,15 +453,15 @@ strˢ-assoc a b (op-node op v k)  =
   cong (op-node op v)
     (ifun-ext (fun-ext (λ q → fun-ext (λ y →
       strˢ-assoc
-        (λ r → a (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r)))
-        (λ r → b (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r)))
+        (λ r → a (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
+        (λ r → b (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
         (k q y)))))
 strˢ-assoc a b (delay-node τ k)  =
   cong (delay-node τ)
     (ifun-ext (fun-ext (λ q →
       strˢ-assoc
-        (λ r → a (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r)))
-        (λ r → b (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r)))
+        (λ r → a (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
+        (λ r → b (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
         (k q))))
 strˢ-assoc a b (sub p t)         =
   cong (sub p)

@@ -19,6 +19,7 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Instance
 
 open import DenotationalSemantics.Model.Example.PSh.Monad.Core S Wld GTy
 open import DenotationalSemantics.Model.Example.PSh.Monad.Effects S Wld GTy
+open import DenotationalSemantics.Model.Example.PSh.Monad.Handling S Wld GTy
 
 open import DenotationalSemantics.Model.Monad S
              (B.PShCat (LanguageSpec.Grades S) Wld)
@@ -58,4 +59,8 @@ PShMonad = record
   ; strᵀ-assoc          = strᵀ-assoc
   ; strᵀ-delayᵀ-algebraicity = strᵀ-delayᵀ-algebraicity
   ; strᵀ-opᵀ-algebraicity    = strᵀ-opᵀ-algebraicity
+  ; T-alg-of-handlerᵀ        = T-alg-of-handlerᵀ
+  ; T-alg-of-handlerᵀ-ηᵀ     = T-alg-of-handlerᵀ-ηᵀ
+  ; T-alg-of-handlerᵀ-delayᵀ = T-alg-of-handlerᵀ-delayᵀ
+  ; T-alg-of-handlerᵀ-opᵀ    = T-alg-of-handlerᵀ-opᵀ
   }

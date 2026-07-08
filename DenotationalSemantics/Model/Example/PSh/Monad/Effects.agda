@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
 -- The algebraic operations and delays of the effect monad. Both        --
 -- mention the box modality graded by the *resource* projection `mapᵉ`  --
--- of the relevant effect grade; the effect accessibility `_⊑ᵉ[_]_`     --
--- used by the monad tree feeds the box via `⊑ᵉ-resource`.              --
+-- of the relevant effect grade, and simply *store* that box as the      --
+-- node's continuation (so no information is discarded).                --
 --                                                                    --
 -- (The monad's `[-]`-strength is core structure and lives in `Core`.)  --
 ------------------------------------------------------------------------
@@ -42,22 +42,23 @@ open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ; c
 
 -- OPERATIONS AND DELAYS
 
--- A delay: the box `[ of-natʳ τ ]` is entered by an effect step of
--- grade `of-natᵉ τ`, whose resource projection is `of-natʳ τ`.
+-- A delay: its continuation box `[ of-natʳ τ ]` is stored in the
+-- delay-node (whose continuation is indexed by `mapᵉ (of-natᵉ τ)`,
+-- equal to `of-natʳ τ` via `map-of-natᵉ`).
 
 delayᵀ : ∀ {A ε} → (τ : ℕ)
        → [ of-natʳ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (of-natᵉ τ ·ₑ ε)
 delayᵀ τ =
-  pmap (λ x → delay-node τ
-    (λ q → x (⊑ʳ-mono (≾ᵣ-reflexive map-of-natᵉ) (⊑ᵉ-resource q))))
+  pmap (λ x → delay-node τ (λ q → x (⊑ʳ-coe map-of-natᵉ q)))
 
--- An algebraic operation.
+-- An algebraic operation: its continuation box `[ mapᵉ (op-grade op) ]`
+-- is stored verbatim as the op-node's continuation.
 
 opᵀ : ∀ {A ε} → (op : Op)
     → ⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε)
     →ᵖ Tᵒ A (op-grade op ·ₑ ε)
 opᵀ op =
-  pmap (λ { (v , x) → op-node op v (λ q y → x (⊑ᵉ-resource q) y) })
+  pmap (λ { (v , x) → op-node op v x })
 
 -- Naturality
 
@@ -101,7 +102,7 @@ strᵀ-delayᵀ-algebraicity τ =
     cong (delay-node τ)
       (ifun-ext (fun-ext (λ q →
         strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _))
-          (x (⊑ʳ-mono (≾ᵣ-reflexive map-of-natᵉ) (⊑ᵉ-resource q)))))) })
+          (x (⊑ʳ-coe map-of-natᵉ q))))) })
 
 -- The operation is algebraic with respect to the strength. Both sides build
 -- the same `op-node`; under it each side strengths the sub-computation with
@@ -122,4 +123,4 @@ strᵀ-opᵀ-algebraicity op =
     cong (op-node op v)
       (ifun-ext (fun-ext (λ q → fun-ext (λ y →
         strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _))
-          (boxk (⊑ᵉ-resource q) y))))) })
+          (boxk q y))))) })

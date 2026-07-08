@@ -4,29 +4,31 @@
 --                                                                    --
 -- The frame carries *no* monoid structure on its carrier of worlds.   --
 -- A presheaf is discretely indexed by the worlds `W` (see              --
--- `DenotationalSemantics.Model.Example.PSh.Base`); the orders only     --
--- enter through the modalities and the monad. Accordingly, the only    --
--- structure the frame provides is two families of preorders on         --
+-- `DenotationalSemantics.Model.Example.PSh.Base`); the order only      --
+-- enters through the modalities and the monad. Accordingly, the only   --
+-- structure the frame provides is a single family of preorders on      --
 -- worlds:                                                              --
 --                                                                    --
---   * `_⊑ʳ[ ρ ]_`  , graded by the *resource* grades `ρ : R`, driving   --
---     the box and context modalities (Kripke necessity / possibility); --
+--   * `_⊑ʳ[ ρ ]_`, graded by the *resource* grades `ρ : R`, driving    --
+--     the box and context modalities (Kripke necessity / possibility)  --
+--     and the world-movement of the graded effect monad.               --
 --                                                                    --
---   * `_⊑ᵉ[ ε ]_` , graded by the *effect* grades `ε : E`, driving     --
---     the operations and delays of the graded effect monad.            --
+-- The monad is graded by the *effect* grades `ε : E`, but it moves     --
+-- through the worlds along the *resource projection* `mapᵉ ε` of its   --
+-- effect: an operation of grade `op-grade op` advances the worlds by   --
+-- `mapᵉ (op-grade op)` resources, matching the box `[ mapᵉ (op-grade   --
+-- op) ]` that the calculus's operations and handlers use. So no        --
+-- separate effect-graded accessibility is needed — the worlds may      --
+-- themselves carry as much history as desired, and `_⊑ʳ[_]_` relates   --
+-- those worlds.                                                        --
 --                                                                    --
--- Each family has the natural laws that make the (co)monad / monad     --
+-- The family has the natural laws that make the (co)monad / monad      --
 -- coherences hold on the nose (reflexivity at the unit grade,          --
 -- transitivity multiplying the grades, *covariance* in the grade —     --
 -- a larger grade gives a larger relation — and proof irrelevance of    --
 -- the witnesses). Covariance is what makes the box modality             --
 -- contravariantly graded (`∀`-shaped) and the context modality and     --
--- effect monad covariantly graded (`Σ`-shaped). Finally, `⊑ᵉ-resource` --
--- links the two: every effect-accessibility fact projects to a         --
--- resource-accessibility fact along the effect-to-resource morphism    --
--- `mapᵉ`. This is what lets the monad's strength thread a box          --
--- `[ mapᵉ ε ] A` (which quantifies over `_⊑ʳ[ mapᵉ ε ]_`) along the     --
--- worlds a computation of grade `ε` reaches (via `_⊑ᵉ[ ε ]_`).         --
+-- effect monad covariantly graded (`Σ`-shaped).                        --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -40,7 +42,6 @@ open GradeSystemInterface GS
 record World : Set₁ where
 
   infix 5 _⊑ʳ[_]_
-  infix 5 _⊑ᵉ[_]_
 
   field
 
@@ -52,9 +53,6 @@ record World : Set₁ where
     -- the resource-grade-indexed accessibility relation
     _⊑ʳ[_]_ : W → R → W → Set₀
 
-    -- the effect-grade-indexed accessibility relation
-    _⊑ᵉ[_]_ : W → E → W → Set₀
-
     -- PROPERTIES
 
     -- resource accessibility is a graded preorder
@@ -64,18 +62,6 @@ record World : Set₁ where
             → w ⊑ʳ[ ρ₁ ] w' → w' ⊑ʳ[ ρ₂ ] w'' → w ⊑ʳ[ ρ₁ ·ᵣ ρ₂ ] w''
     ⊑ʳ-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑ʳ[ ρ₁ ] w' → w ⊑ʳ[ ρ₂ ] w'
     ⊑ʳ-irrelevant : ∀ {ρ w w'} → (p q : w ⊑ʳ[ ρ ] w') → p ≡ q
-
-    -- effect accessibility is a graded preorder
-
-    ⊑ᵉ-refl : ∀ {w} → w ⊑ᵉ[ uₑ ] w
-    ⊑ᵉ-trans : ∀ {ε₁ ε₂ w w' w''}
-             → w ⊑ᵉ[ ε₁ ] w' → w' ⊑ᵉ[ ε₂ ] w'' → w ⊑ᵉ[ ε₁ ·ₑ ε₂ ] w''
-    ⊑ᵉ-mono : ∀ {ε₁ ε₂ w w'} → ε₁ ≾ₑ ε₂ → w ⊑ᵉ[ ε₁ ] w' → w ⊑ᵉ[ ε₂ ] w'
-    ⊑ᵉ-irrelevant : ∀ {ε w w'} → (p q : w ⊑ᵉ[ ε ] w') → p ≡ q
-
-    -- effect accessibility projects to resource accessibility along `mapᵉ`
-
-    ⊑ᵉ-resource : ∀ {ε w w'} → w ⊑ᵉ[ ε ] w' → w ⊑ʳ[ mapᵉ ε ] w'
 
     -- the effect grade order is proof irrelevant. The effect monad's
     -- sub-effecting (the semantics of `coerce`) carries a `≾ₑ`-witness
