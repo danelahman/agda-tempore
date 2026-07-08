@@ -41,9 +41,20 @@ module Everything where
 
 open import Util.Equality
 
+---- Monad helper
+
+open import Util.Monad
+
 
 -- SYNTAX
 ---------
+
+---- Base types, operations, and ground types
+---- (the language specification `Syntax.LanguageSpec` is imported above)
+
+open import Syntax.BaseTypes
+open import Syntax.Operations
+open import Syntax.GroundTypes
 
 ---- Syntax of the language
 
@@ -78,6 +89,7 @@ open import Syntax.Grades.TwoSidedTimeIntervalsWithInfinity
 
 ---- Utilities for trace-based grades
 
+open import Syntax.Grades.Traces.Base
 open import Syntax.Grades.Traces.Restriction
 open import Syntax.Grades.Traces.Durations
 open import Syntax.Grades.Traces.MaxDuration
@@ -133,3 +145,33 @@ open import EquationalTheory.EquationalTheory
 ---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
 
 open import EquationalTheory.EquationalSoundness
+
+
+-- DENOTATIONAL SEMANTICS
+-------------------------
+
+---- Abstract model interface: a Kripke frame of worlds, presheaf
+---- category with the future/past graded modalities, ground types,
+---- and the graded effect monad
+
+open import DenotationalSemantics.Model.Category
+open import DenotationalSemantics.Model.World
+open import DenotationalSemantics.Model.Modality.Future
+open import DenotationalSemantics.Model.Modality.Past
+open import DenotationalSemantics.Model.GroundTypes
+open import DenotationalSemantics.Model.Monad
+
+---- Concrete model on discretely-indexed presheaves
+
+open import DenotationalSemantics.Model.Example.PSh.Base
+open import DenotationalSemantics.Model.Example.PSh.Modality.Future
+open import DenotationalSemantics.Model.Example.PSh.Modality.Past
+open import DenotationalSemantics.Model.Example.PSh.Monad.Core
+open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
+open import DenotationalSemantics.Model.Example.PSh.Monad.Handling
+open import DenotationalSemantics.Model.Example.PSh.Monad.Instance
+
+---- Concrete time-ticks Kripke frames
+
+open import DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks
+open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTicks
