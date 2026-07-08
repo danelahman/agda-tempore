@@ -15,6 +15,11 @@
 -- World movement uses the *effect* accessibility `_⊑ᵉ[_]_`. Because    --
 -- the presheaves are discrete, there is no monotonicity side-condition --
 -- on the continuations (unlike the earlier time-graded formalisation). --
+--                                                                    --
+-- This module provides the monad's *core* structure — functor, unit,   --
+-- multiplication, the monad laws, sub-effecting `T-≤` (the `coerce`     --
+-- node), and the `[-]`-strength `strᵀ`. The algebraic operations and   --
+-- delays are in `…Monad.Effects`.                                      --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -23,17 +28,18 @@ open import Syntax.Operations
 
 open import DenotationalSemantics.Model.World
 open import DenotationalSemantics.Model.GroundTypes
-open import DenotationalSemantics.Model.Example.PSh.Base using (PShCat)
-open import DenotationalSemantics.Model.Example.PSh.Modality.Future using (PShFut)
+import DenotationalSemantics.Model.Example.PSh.Base as B
+import DenotationalSemantics.Model.Example.PSh.Modality.Future as F
 
 module DenotationalSemantics.Model.Example.PSh.Monad.Core
          (S : LanguageSpec)
          (Wld : World (LanguageSpec.Grades S))
-         (GTy : GroundTypes S (PShCat (LanguageSpec.Grades S) Wld)
-                              (PShFut (LanguageSpec.Grades S) Wld))
+         (GTy : GroundTypes S (B.PShCat (LanguageSpec.Grades S) Wld)
+                              (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
 open import Data.Nat using (ℕ)
+open import Data.Product using (_,_)
 
 open import Util.Equality
 
@@ -42,7 +48,11 @@ open GradeSystemInterface Grades
 open Operations Ops
 open World Wld
 open import DenotationalSemantics.Model.Example.PSh.Base Grades Wld
+open import DenotationalSemantics.Model.Example.PSh.Modality.Future Grades Wld
 open GroundTypes GTy
+
+open import DenotationalSemantics.Model.Category
+open Category PShCat using (mapˣᵐ; sndᵐ)
 
 -- The tree underlying the monad
 
@@ -345,3 +355,79 @@ T-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
            → μᵀ {A} {ε} {ε' ·ₑ ε''} ∘ᵖ Tᶠ (μᵀ {A} {ε'} {ε''})
            ≡ ε-substᵀ (·ₑ-assoc ε ε' ε'') ∘ᵖ μᵀ ∘ᵖ μᵀ
 T-μ∘μ≡μ∘Tμ = →ᵖ-ext (λ t → μˢ-assoc t)
+
+-- STRENGTH
+
+-- The `[-]`-strength of the monad. It is part of the monad's core
+-- structure (making it a *strong* graded monad); the box on the left is
+-- graded by the resource projection `mapᵉ ε` of the computation's effect.
+
+-- Coercion of a resource-accessibility witness along an equality of grades.
+
+⊑ʳ-coe : ∀ {ρ ρ' w w'} → ρ ≡ ρ' → w ⊑ʳ[ ρ ] w' → w ⊑ʳ[ ρ' ] w'
+⊑ʳ-coe e = ⊑ʳ-mono (≾ᵣ-reflexive e)
+
+-- The strength threads a box `[ mapᵉ ε ] A` along the tree: at every
+-- effect step it advances the box (via `⊑ᵉ-resource` + `⊑ʳ-trans`), and
+-- pairs the extracted `A` with the returned `B` at the leaves.
+
+{-# TERMINATING #-}
+strˢ : ∀ {A B ε w}
+     → (∀ {w'} → w ⊑ʳ[ mapᵉ ε ] w' → carrier A w') → Tˢ B ε w → Tˢ (A ×ᵖ B) ε w
+strˢ box (leaf b) =
+  leaf (box (⊑ʳ-coe (sym map-uᵉ) ⊑ʳ-refl) , b)
+strˢ box (op-node op v k) =
+  op-node op v (λ q y →
+    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q y))
+strˢ box (delay-node τ k) =
+  delay-node τ (λ q →
+    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q))
+strˢ box (sub p t) =
+  sub p (strˢ (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
+
+strᵀ : ∀ {A B ε} → [ mapᵉ ε ]ᵒ A ×ᵖ Tᵒ B ε →ᵖ Tᵒ (A ×ᵖ B) ε
+strᵀ = pmap (λ { (a , t) → strˢ a t })
+
+-- Strength is natural
+
+{-# TERMINATING #-}
+strˢ-nat : ∀ {A A' B B' ε w} → (f : A →ᵖ A') → (g : B →ᵖ B')
+         → (box : ∀ {w'} → w ⊑ʳ[ mapᵉ ε ] w' → carrier A w') → (t : Tˢ B ε w)
+         → strˢ (λ r → app f (box r)) (Tˢᶠ g t) ≡ Tˢᶠ (mapˣᵐ f g) (strˢ box t)
+strˢ-nat f g box (leaf b)          = refl
+strˢ-nat f g box (op-node op v k)  =
+  cong (op-node op v)
+    (ifun-ext (fun-ext (λ q → fun-ext (λ y →
+      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q y)))))
+strˢ-nat f g box (delay-node τ k)  =
+  cong (delay-node τ)
+    (ifun-ext (fun-ext (λ q →
+      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q))))
+strˢ-nat f g box (sub p t)         =
+  cong (sub p) (strˢ-nat f g (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
+
+strᵀ-nat : ∀ {A A' B B' ε} → (f : A →ᵖ A') → (g : B →ᵖ B')
+         → strᵀ {A'} {B'} ∘ᵖ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
+         ≡ Tᶠ (mapˣᵐ f g) ∘ᵖ strᵀ {A} {B}
+strᵀ-nat f g = →ᵖ-ext (λ { (a , t) → strˢ-nat f g a t })
+
+-- Strength projects away on the second component
+
+{-# TERMINATING #-}
+strˢ-snd : ∀ {A B ε w}
+         → (box : ∀ {w'} → w ⊑ʳ[ mapᵉ ε ] w' → carrier A w') → (t : Tˢ B ε w)
+         → Tˢᶠ sndᵐ (strˢ box t) ≡ t
+strˢ-snd box (leaf b)          = refl
+strˢ-snd box (op-node op v k)  =
+  cong (op-node op v)
+    (ifun-ext (fun-ext (λ q → fun-ext (λ y →
+      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q y)))))
+strˢ-snd box (delay-node τ k)  =
+  cong (delay-node τ)
+    (ifun-ext (fun-ext (λ q →
+      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (⊑ᵉ-resource q) r))) (k q))))
+strˢ-snd box (sub p t)         =
+  cong (sub p) (strˢ-snd (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
+
+strᵀ-sndᵐ : ∀ {A B ε} → Tᶠ sndᵐ ∘ᵖ strᵀ {A} {B} {ε} ≡ sndᵐ
+strᵀ-sndᵐ = →ᵖ-ext (λ { (a , t) → strˢ-snd a t })

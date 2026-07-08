@@ -3,7 +3,7 @@
 -- the *Kripke necessity* semantics over the graded accessibility       --
 -- relation on worlds:                                                  --
 --                                                                    --
---   carrier ([ ρ ]ᵒ A) w  =  ∀ {w'} → w ⊑[ ρ ] w' → carrier A w'       --
+--   carrier ([ ρ ]ᵒ A) w  =  ∀ {w'} → w ⊑ʳ[ ρ ] w' → carrier A w'       --
 --                                                                    --
 -- i.e. `[ ρ ] A` holds at `w` when `A` holds at every world reachable  --
 -- from `w` by spending the resource grade `ρ`. This is a lax graded    --
@@ -13,7 +13,7 @@
 -- Every coherence law reduces, via function extensionality, to the    --
 -- proof irrelevance of the accessibility relation: the two sides       --
 -- feed `A` two witnesses of the *same* accessibility fact, which are   --
--- equal by `⊑-irrelevant`.                                             --
+-- equal by `⊑ʳ-irrelevant`.                                             --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -38,7 +38,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 -- Functor
 
 [_]ᵒ : R → PSh → PSh
-[ ρ ]ᵒ A = psh (λ w → ∀ {w'} → w ⊑[ ρ ] w' → carrier A w')
+[ ρ ]ᵒ A = psh (λ w → ∀ {w'} → w ⊑ʳ[ ρ ] w' → carrier A w')
 
 [_]ᶠ : ∀ {A B} → (ρ : R) → A →ᵖ B → [ ρ ]ᵒ A →ᵖ [ ρ ]ᵒ B
 [ ρ ]ᶠ f = pmap (λ x p → app f (x p))
@@ -46,17 +46,17 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 -- Monotonicity for gradings (contravariant: the box is ∀-shaped)
 
 []-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ A
-[]-≤ p = pmap (λ x q → x (⊑-mono p q))
+[]-≤ p = pmap (λ x q → x (⊑ʳ-mono p q))
 
 -- Counit
 
 ε : ∀ {A} → [ u ]ᵒ A →ᵖ A
-ε = pmap (λ x → x ⊑-refl)
+ε = pmap (λ x → x ⊑ʳ-refl)
 
 -- Comultiplication
 
 δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
-δ = pmap (λ x p q → x (⊑-trans p q))
+δ = pmap (λ x p q → x (⊑ʳ-trans p q))
 
 
 -- PROPERTIES
@@ -79,11 +79,11 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 -- [_] is functorial in the gradings
 
 []-≤-refl : ∀ {A ρ} → []-≤ {A} (≾-refl {ρ}) ≡ idᵖ
-[]-≤-refl = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑-irrelevant _ _))))
+[]-≤-refl = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑ʳ-irrelevant _ _))))
 
 []-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
            → []-≤ {A} p ∘ᵖ []-≤ {A} q ≡ []-≤ {A} (≾-trans p q)
-[]-≤-trans p q = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ r → cong (λ s → x s) (⊑-irrelevant _ _))))
+[]-≤-trans p q = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ r → cong (λ s → x s) (⊑ʳ-irrelevant _ _))))
 
 -- ε is natural
 
@@ -105,19 +105,19 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
   →ᵖ-ext (λ x →
     ifun-ext (fun-ext (λ a →
     ifun-ext (fun-ext (λ b →
-      cong (λ r → x r) (⊑-irrelevant _ _))))))
+      cong (λ r → x r) (⊑ʳ-irrelevant _ _))))))
 
 -- Graded comonad laws
 
 []-ε∘δ≡id : ∀ {A ρ}
           → ε {[ ρ ]ᵒ A} ∘ᵖ δ {A} {u} {ρ}
           ≡ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
-[]-ε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑-irrelevant _ _))))
+[]-ε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑ʳ-irrelevant _ _))))
 
 []-Dε∘δ≡id : ∀ {A ρ}
            → [ ρ ]ᶠ (ε {A}) ∘ᵖ δ {A} {ρ} {u}
            ≡ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
-[]-Dε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ a → cong (λ r → x r) (⊑-irrelevant _ _))))
+[]-Dε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ a → cong (λ r → x r) (⊑ʳ-irrelevant _ _))))
 
 []-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
             → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵖ δ {A} {ρ₁ · ρ₂} {ρ₃}
@@ -128,7 +128,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
     ifun-ext (fun-ext (λ c →
     ifun-ext (fun-ext (λ d →
     ifun-ext (fun-ext (λ b →
-      cong (λ r → x r) (⊑-irrelevant _ _))))))))
+      cong (λ r → x r) (⊑ʳ-irrelevant _ _))))))))
 
 
 -- Packaging the box modality up as a `Future` instance

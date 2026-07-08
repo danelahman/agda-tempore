@@ -9,7 +9,7 @@
 -- structure the frame provides is two families of preorders on         --
 -- worlds:                                                              --
 --                                                                    --
---   * `_⊑[ ρ ]_`  , graded by the *resource* grades `ρ : R`, driving   --
+--   * `_⊑ʳ[ ρ ]_`  , graded by the *resource* grades `ρ : R`, driving   --
 --     the box and context modalities (Kripke necessity / possibility); --
 --                                                                    --
 --   * `_⊑ᵉ[ ε ]_` , graded by the *effect* grades `ε : E`, driving     --
@@ -25,7 +25,7 @@
 -- links the two: every effect-accessibility fact projects to a         --
 -- resource-accessibility fact along the effect-to-resource morphism    --
 -- `mapᵉ`. This is what lets the monad's strength thread a box          --
--- `[ mapᵉ ε ] A` (which quantifies over `_⊑[ mapᵉ ε ]_`) along the     --
+-- `[ mapᵉ ε ] A` (which quantifies over `_⊑ʳ[ mapᵉ ε ]_`) along the     --
 -- worlds a computation of grade `ε` reaches (via `_⊑ᵉ[ ε ]_`).         --
 ------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ open GradeSystemInterface GS
 
 record World : Set₁ where
 
-  infix 5 _⊑[_]_
+  infix 5 _⊑ʳ[_]_
   infix 5 _⊑ᵉ[_]_
 
   field
@@ -50,7 +50,7 @@ record World : Set₁ where
     W : Set₀
 
     -- the resource-grade-indexed accessibility relation
-    _⊑[_]_ : W → R → W → Set₀
+    _⊑ʳ[_]_ : W → R → W → Set₀
 
     -- the effect-grade-indexed accessibility relation
     _⊑ᵉ[_]_ : W → E → W → Set₀
@@ -59,11 +59,11 @@ record World : Set₁ where
 
     -- resource accessibility is a graded preorder
 
-    ⊑-refl : ∀ {w} → w ⊑[ uᵣ ] w
-    ⊑-trans : ∀ {ρ₁ ρ₂ w w' w''}
-            → w ⊑[ ρ₁ ] w' → w' ⊑[ ρ₂ ] w'' → w ⊑[ ρ₁ ·ᵣ ρ₂ ] w''
-    ⊑-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑[ ρ₁ ] w' → w ⊑[ ρ₂ ] w'
-    ⊑-irrelevant : ∀ {ρ w w'} → (p q : w ⊑[ ρ ] w') → p ≡ q
+    ⊑ʳ-refl : ∀ {w} → w ⊑ʳ[ uᵣ ] w
+    ⊑ʳ-trans : ∀ {ρ₁ ρ₂ w w' w''}
+            → w ⊑ʳ[ ρ₁ ] w' → w' ⊑ʳ[ ρ₂ ] w'' → w ⊑ʳ[ ρ₁ ·ᵣ ρ₂ ] w''
+    ⊑ʳ-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑ʳ[ ρ₁ ] w' → w ⊑ʳ[ ρ₂ ] w'
+    ⊑ʳ-irrelevant : ∀ {ρ w w'} → (p q : w ⊑ʳ[ ρ ] w') → p ≡ q
 
     -- effect accessibility is a graded preorder
 
@@ -75,7 +75,7 @@ record World : Set₁ where
 
     -- effect accessibility projects to resource accessibility along `mapᵉ`
 
-    ⊑ᵉ-resource : ∀ {ε w w'} → w ⊑ᵉ[ ε ] w' → w ⊑[ mapᵉ ε ] w'
+    ⊑ᵉ-resource : ∀ {ε w w'} → w ⊑ᵉ[ ε ] w' → w ⊑ʳ[ mapᵉ ε ] w'
 
     -- the effect grade order is proof irrelevant. The effect monad's
     -- sub-effecting (the semantics of `coerce`) carries a `≾ₑ`-witness
