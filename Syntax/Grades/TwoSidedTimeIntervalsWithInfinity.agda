@@ -298,6 +298,7 @@ two-sided-intervals-with-∞ = record
   ; _≡?_              = eqᵢ?
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
+  ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
   ; of-nat            = λ n → [ n , ↑ n , ≤-refl ]
   ; of-nat-zero       = eqᵢ refl refl
   ; of-nat-plus       = eqᵢ refl refl

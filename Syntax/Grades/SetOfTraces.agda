@@ -113,6 +113,7 @@ right-sided-traces = record
   ; _≡?_            = _≟ᴺ_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵗ-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗ-zero-productʳ {c} {d}
+  ; ≾-irrelevant    = λ {c} {d} → ≾ᵗ-irrelevant {c} {d}
   ; of-nat          = of-nat
   ; of-nat-zero     = of-nat-zero
   ; of-nat-plus     = λ {m} {n} → of-nat-plus {m} {n}

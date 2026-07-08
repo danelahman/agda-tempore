@@ -48,6 +48,9 @@ record Grade : Set₁ where
     ≾-refl  : Reflexive _≾_
     ≾-trans : Transitive _≾_
 
+    -- _≾_ is proof irrelevant
+    ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
+
     -- _≡_ (on Carrier) is decidable
     _≡?_ : Decidable (_≡_ {A = Carrier})
 
@@ -124,6 +127,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
+     ≾-irrelevant to ≾ᵣ-irrelevant;
      _≡?_ to _≡ᵣ?_;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
@@ -144,6 +148,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-trans to ≾ₑ-trans;
+     ≾-irrelevant to ≾ₑ-irrelevant;
      _≡?_ to _≡ₑ?_;
      of-nat to of-natᵉ;
      of-nat-zero to of-natᵉ-zero;

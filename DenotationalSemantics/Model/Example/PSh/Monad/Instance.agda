@@ -3,6 +3,7 @@
 -- instance of the abstract `Monad` interface.                          --
 ------------------------------------------------------------------------
 
+open import Syntax.Grades
 open import Syntax.LanguageSpec
 
 open import DenotationalSemantics.Model.World
@@ -12,7 +13,7 @@ import DenotationalSemantics.Model.Example.PSh.Modality.Future as F
 
 module DenotationalSemantics.Model.Example.PSh.Monad.Instance
          (S : LanguageSpec)
-         (Wld : World (LanguageSpec.Grades S))
+         (Wld : World (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (GTy : GroundTypes S (B.PShCat (LanguageSpec.Grades S) Wld)
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where

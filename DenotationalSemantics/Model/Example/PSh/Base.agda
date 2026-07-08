@@ -16,7 +16,7 @@
 open import Syntax.Grades
 open import DenotationalSemantics.Model.World
 
-module DenotationalSemantics.Model.Example.PSh.Base (GS : GradeSystem) (Wld : World GS) where
+module DenotationalSemantics.Model.Example.PSh.Base (GS : GradeSystem) (Wld : World (GradeSystem.RGrade GS)) where
 
 open import Data.Empty using (⊥)
 open import Data.Unit using (⊤; tt)

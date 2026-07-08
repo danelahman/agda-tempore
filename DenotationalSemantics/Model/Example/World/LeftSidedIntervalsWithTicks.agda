@@ -1,29 +1,25 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the grade system whose effect grades   --
--- are two-sided time intervals and whose resource grades are the       --
--- left-sided time intervals they project onto.                         --
+-- A time-ticks Kripke frame for the left-sided time intervals as the   --
+-- resource grades.                                                     --
 --                                                                    --
 -- Worlds are time points `ℕ`. A left-sided resource grade `[ n ,+∞⟩`   --
 -- ("at least `n` ticks") reaches every world at least `n` ticks ahead:  --
 --                                                                    --
 --   w ⊑ʳ[ [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                             --
 --                                                                    --
--- The monad, graded by a two-sided effect interval `[ min , max ]`,     --
--- advances the worlds by that interval's resource projection            --
--- `[ min ,+∞⟩`, i.e. by at least `min` ticks.                          --
+-- Multiplying grades (`·ₒ`) adds the lower bounds, so composing two     --
+-- accessibilities advances the world by the sum of their ticks.         --
 ------------------------------------------------------------------------
 
-module DenotationalSemantics.Model.Example.World.TwoSidedToLeftSidedTicks where
+module DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks where
 
 open import Data.Nat using (ℕ; _+_; _≤_)
 open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant;
          +-monoˡ-≤; +-monoʳ-≤; +-comm; +-assoc)
 
-open import Syntax.Grades.LeftSidedTimeIntervals using (𝕀; [_,+∞⟩; _·ₒ_; _≾ₒ_)
-open import Syntax.Grades.TwoSidedTimeIntervals using (≾ᵢ-irrelevant)
-open import Syntax.Grades.GradeSystem.TwoSidedIntervalsToLeftSidedIntervals
-  using (twoSidedIntervalsToLeftSidedIntervalsGradeSystem)
+open import Syntax.Grades.LeftSidedTimeIntervals
+  using (𝕀; [_,+∞⟩; _·ₒ_; _≾ₒ_; left-sided-intervals)
 
 open import Util.Equality
 
@@ -60,7 +56,7 @@ w ⊑ᵗ[ [ n ,+∞⟩ ] w' = n + w ≤ w'
 
 -- The frame.
 
-ticks : World twoSidedIntervalsToLeftSidedIntervalsGradeSystem
+ticks : World left-sided-intervals
 ticks = record
   { W             = ℕ
   ; _⊑ʳ[_]_       = _⊑ᵗ[_]_
@@ -68,5 +64,4 @@ ticks = record
   ; ⊑ʳ-trans      = ⊑ᵗ-trans
   ; ⊑ʳ-mono       = ⊑ᵗ-mono
   ; ⊑ʳ-irrelevant = ⊑ᵗ-irrelevant
-  ; ≾ₑ-irrelevant = λ {ε₁} {ε₂} p q → ≾ᵢ-irrelevant {ε₁} {ε₂} p q
   }

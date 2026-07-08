@@ -128,6 +128,7 @@ left-sided-intervals = record
   ; _≡?_              = _≡ₒ?_
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
+  ; ≾-irrelevant      = ≾ₒ-irrelevant
   ; of-nat            = [_,+∞⟩
   ; of-nat-zero       = refl
   ; of-nat-plus       = refl

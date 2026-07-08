@@ -19,7 +19,7 @@
 open import Syntax.Grades
 open import DenotationalSemantics.Model.World
 
-module DenotationalSemantics.Model.Example.PSh.Modality.Future (GS : GradeSystem) (Wld : World GS) where
+module DenotationalSemantics.Model.Example.PSh.Modality.Future (GS : GradeSystem) (Wld : World (GradeSystem.RGrade GS)) where
 
 open import Util.Equality
 

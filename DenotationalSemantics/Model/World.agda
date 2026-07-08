@@ -35,9 +35,13 @@ open import Syntax.Grades
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.World (GS : GradeSystem) where
+module DenotationalSemantics.Model.World (RG : Grade) where
 
-open GradeSystemInterface GS
+open Grade RG using () renaming
+  (Carrier to R;
+   u to uᵣ;
+   _·_ to _·ᵣ_;
+   _≾_ to _≾ᵣ_)
 
 record World : Set₁ where
 
@@ -62,12 +66,3 @@ record World : Set₁ where
             → w ⊑ʳ[ ρ₁ ] w' → w' ⊑ʳ[ ρ₂ ] w'' → w ⊑ʳ[ ρ₁ ·ᵣ ρ₂ ] w''
     ⊑ʳ-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑ʳ[ ρ₁ ] w' → w ⊑ʳ[ ρ₂ ] w'
     ⊑ʳ-irrelevant : ∀ {ρ w w'} → (p q : w ⊑ʳ[ ρ ] w') → p ≡ q
-
-    -- the effect grade order is proof irrelevant. The effect monad's
-    -- sub-effecting (the semantics of `coerce`) carries a `≾ₑ`-witness
-    -- in its tree; this makes `coerce` a proof-irrelevant congruence
-    -- (the only law the equational theory imposes on it), and keeps the
-    -- monad laws holding in the presence of sub-effecting nodes. All the
-    -- concrete effect-grade instances (intervals, …) satisfy it.
-
-    ≾ₑ-irrelevant : ∀ {ε₁ ε₂} → (p q : ε₁ ≾ₑ ε₂) → p ≡ q
