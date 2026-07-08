@@ -53,4 +53,9 @@ PShMonad = record
   ; strᵀ                = strᵀ
   ; strᵀ-nat            = strᵀ-nat
   ; strᵀ-sndᵐ           = strᵀ-sndᵐ
+  ; strᵀ-ηᵀ             = strᵀ-ηᵀ
+  ; strᵀ-μᵀ             = strᵀ-μᵀ
+  ; strᵀ-assoc          = strᵀ-assoc
+  ; strᵀ-delayᵀ-algebraicity = strᵀ-delayᵀ-algebraicity
+  ; strᵀ-opᵀ-algebraicity    = strᵀ-opᵀ-algebraicity
   }

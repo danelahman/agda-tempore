@@ -54,6 +54,13 @@ record Future : Set₁ where
 
     δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵐ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
 
+    -- Monoidality (lax): a boxed `A` and a boxed `B` at the same grade
+    -- combine into a boxed pair. This is what lets the monad's strength
+    -- distribute the box over a product in the associativity and the
+    -- operations-wrt-strength laws.
+
+    []-monoidal : ∀ {A B ρ} → [ ρ ]ᵒ A ×ᵐ [ ρ ]ᵒ B →ᵐ [ ρ ]ᵒ (A ×ᵐ B)
+
     -- PROPERTIES
 
     -- [_] is functorial
@@ -81,6 +88,12 @@ record Future : Set₁ where
 
     []-δ-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B)
              → [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ f) ∘ᵐ δ {A} ≡ δ {B} ∘ᵐ [ ρ₁ · ρ₂ ]ᶠ f
+
+    -- []-monoidal is natural
+
+    []-monoidal-nat : ∀ {A B C D ρ} → (f : A →ᵐ C) → (g : B →ᵐ D)
+                    → [ ρ ]ᶠ (mapˣᵐ f g) ∘ᵐ []-monoidal
+                    ≡ []-monoidal ∘ᵐ mapˣᵐ ([ ρ ]ᶠ f) ([ ρ ]ᶠ g)
 
     -- δ is compatible with the gradings
 

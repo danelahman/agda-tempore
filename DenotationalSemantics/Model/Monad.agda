@@ -167,9 +167,64 @@ record Monad : Set₁ where
 
     strᵀ-sndᵐ : ∀ {A B ε} → Tᶠ sndᵐ ∘ᵐ strᵀ {A} {B} {ε} ≡ sndᵐ
 
+    -- Strength coherence laws. Because the box is only *lax* (no counit /
+    -- comultiplication inverses `ε⁻¹` / `δ⁻¹`), the unit and multiplication
+    -- laws are reshaped relative to a strong-box formalisation: the box is
+    -- kept on the *input* and eliminated on the output via the counit `ε`
+    -- (unit law) or split via the comultiplication `δ` (multiplication law).
+
+    -- Unit: strength on a returned value extracts the boxed component (at
+    -- the reflexive world) and returns the pair. The box grade is `mapᵉ uₑ`,
+    -- coerced to `uᵣ` for the counit along `map-uᵉ`.
+
+    strᵀ-ηᵀ : ∀ {A B}
+            → strᵀ {A} {B} {uₑ} ∘ᵐ mapˣᵐ idᵐ ηᵀ
+            ≡ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ))) idᵐ
+
+    -- Multiplication: threading the box through two monad layers agrees with
+    -- threading it once at the combined grade, after splitting the box with
+    -- `δ` along `map-·ᵉ`.
+
+    strᵀ-μᵀ : ∀ {A B ε ε'}
+            → strᵀ {A} {B} {ε ·ₑ ε'} ∘ᵐ mapˣᵐ idᵐ (μᵀ {B} {ε} {ε'})
+            ≡ μᵀ {A ×ᵐ B} {ε} {ε'}
+              ∘ᵐ Tᶠ (strᵀ {A} {B} {ε'})
+              ∘ᵐ strᵀ {[ mapᵉ ε' ]ᵒ A} {Tᵒ B ε'} {ε}
+              ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ
+
+    -- Associativity with the product: box monoidality `[]-monoidal`
+    -- distributes the box over the pair.
+
+    strᵀ-assoc : ∀ {A B C ε}
+               → Tᶠ ×ᵐ-assoc ∘ᵐ strᵀ {A ×ᵐ B} {C} {ε}
+                 ∘ᵐ mapˣᵐ []-monoidal idᵐ ∘ᵐ ×ᵐ-assoc⁻¹
+               ≡ strᵀ {A} {B ×ᵐ C} {ε} ∘ᵐ mapˣᵐ idᵐ (strᵀ {B} {C} {ε})
+
+    -- Operations are algebraic with respect to the strength.
+
+    strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : ℕ)
+      → strᵀ {A} {B} {of-natᵉ τ ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (delayᵀ {B} {ε} τ)
+      ≡ delayᵀ τ
+        ∘ᵐ [ of-natʳ τ ]ᶠ (strᵀ {A} {B} {ε})
+        ∘ᵐ []-monoidal
+        ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive
+             (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))) idᵐ
+
+    -- The operation is algebraic with respect to the strength. The box
+    -- `[ mapᵉ (op-grade op) ] A` is split off the strengthened argument and
+    -- pushed into the operation's continuation, where it is paired with the
+    -- arity value before strengthening the sub-computation.
+
+    strᵀ-opᵀ-algebraicity : ∀ {A B ε} → (op : Op)
+      → strᵀ {A} {B} {op-grade op ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (opᵀ {B} {ε} op)
+      ≡ opᵀ op
+        ∘ᵐ mapˣᵐ idᵐ
+            ([ mapᵉ (op-grade op) ]ᶠ
+               (   map⇒ᵐ idᵐ (strᵀ {A} {B} {ε})
+                ∘ᵐ curryᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , uncurryᵐ sndᵐ ⟩ᵐ)
+             ∘ᵐ []-monoidal
+             ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ)
+        ∘ᵐ ⟨ fstᵐ ∘ᵐ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ
+
 -- TODO (deferred, see header):
---   * the strength unit / multiplication / associativity laws and the
---     algebraicity-of-operations-wrt-strength laws, reformulated for the
---     lax box (using `ε`, `δ`, `[]-≤`, and box monoidality instead of the
---     inverses `ε⁻¹`, `δ⁻¹` used in the time-graded formalisation);
 --   * effect handling (`T-alg-of-handlerᵀ` and its laws).

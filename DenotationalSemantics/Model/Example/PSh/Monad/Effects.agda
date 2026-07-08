@@ -38,7 +38,7 @@ open GroundTypes GTy
 open import DenotationalSemantics.Model.Example.PSh.Monad.Core S Wld GTy
 
 open import DenotationalSemantics.Model.Category
-open Category PShCat using (mapˣᵐ; map⇒ᵐ)
+open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ; curryᵐ; uncurryᵐ)
 
 -- OPERATIONS AND DELAYS
 
@@ -84,3 +84,42 @@ opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                    ∘ᵖ opᵀ op
                    ∘ᵖ mapˣᵐ idᵖ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (μᵀ {A} {ε} {ε'})))
 opᵀ-algebraicity op = →ᵖ-ext (λ { (v , x) → refl })
+
+-- The delay is algebraic with respect to the strength. Both sides build the
+-- same `delay-node`; under the delay each side strengths `x` at the reached
+-- world with box witnesses that agree by `⊑ʳ-irrelevant` (via `strˢ-cong`).
+
+strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : ℕ)
+  → strᵀ {A} {B} {of-natᵉ τ ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (delayᵀ {B} {ε} τ)
+  ≡ delayᵀ τ
+    ∘ᵖ [ of-natʳ τ ]ᶠ (strᵀ {A} {B} {ε})
+    ∘ᵖ []-monoidal
+    ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≾ᵣ-reflexive
+         (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))) idᵖ
+strᵀ-delayᵀ-algebraicity τ =
+  →ᵖ-ext (λ { (a , x) →
+    cong (delay-node τ)
+      (ifun-ext (fun-ext (λ q →
+        strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _))
+          (x (⊑ʳ-mono (≾ᵣ-reflexive map-of-natᵉ) (⊑ᵉ-resource q)))))) })
+
+-- The operation is algebraic with respect to the strength. Both sides build
+-- the same `op-node`; under it each side strengths the sub-computation with
+-- box witnesses that agree by `⊑ʳ-irrelevant` (via `strˢ-cong`).
+
+strᵀ-opᵀ-algebraicity : ∀ {A B ε} → (op : Op)
+  → strᵀ {A} {B} {op-grade op ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (opᵀ {B} {ε} op)
+  ≡ opᵀ op
+    ∘ᵖ mapˣᵐ idᵖ
+        ([ mapᵉ (op-grade op) ]ᶠ
+           (   map⇒ᵐ idᵖ (strᵀ {A} {B} {ε})
+            ∘ᵖ curryᵐ ⟨ fstᵐ ∘ᵖ fstᵐ , uncurryᵐ sndᵐ ⟩ᵐ)
+         ∘ᵖ []-monoidal
+         ∘ᵖ mapˣᵐ (δ ∘ᵖ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵖ)
+    ∘ᵖ ⟨ fstᵐ ∘ᵖ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵖ sndᵐ ⟩ᵐ ⟩ᵐ
+strᵀ-opᵀ-algebraicity op =
+  →ᵖ-ext (λ { (a , v , boxk) →
+    cong (op-node op v)
+      (ifun-ext (fun-ext (λ q → fun-ext (λ y →
+        strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _))
+          (boxk (⊑ᵉ-resource q) y))))) })

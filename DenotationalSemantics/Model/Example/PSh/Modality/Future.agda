@@ -58,6 +58,13 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
 δ = pmap (λ x p q → x (⊑ʳ-trans p q))
 
+-- Monoidality (lax): feed the shared accessibility witness to both boxes
+
+open import Data.Product using (_,_; proj₁; proj₂)
+
+[]-monoidal : ∀ {A B ρ} → [ ρ ]ᵒ A ×ᵖ [ ρ ]ᵒ B →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
+[]-monoidal = pmap (λ { (x , y) p → x p , y p })
+
 
 -- PROPERTIES
 
@@ -148,8 +155,10 @@ PShFut = record
   ; []-≤-nat    = []-≤-nat
   ; []-≤-refl   = λ {A} → []-≤-refl {A}
   ; []-≤-trans  = λ {A} p q → []-≤-trans {A} p q
+  ; []-monoidal = []-monoidal
   ; []-ε-nat    = []-ε-nat
   ; []-δ-nat    = []-δ-nat
+  ; []-monoidal-nat = λ f g → →ᵖ-ext (λ { (x , y) → refl })
   ; []-δ-≤      = λ {A} p q → []-δ-≤ {A} p q
   ; []-ε∘δ≡id   = λ {A} → []-ε∘δ≡id {A}
   ; []-Dε∘δ≡id  = λ {A} → []-Dε∘δ≡id {A}
