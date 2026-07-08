@@ -42,9 +42,10 @@ record Past : Set₁ where
     ⟨_⟩ᵒ : Carrier → Obj → Obj
     ⟨_⟩ᶠ : ∀ {A B} → (ρ : Carrier) → A →ᵐ B → ⟨ ρ ⟩ᵒ A →ᵐ ⟨ ρ ⟩ᵒ B
 
-    -- (Contravariant) monotonicity for gradings
+    -- Monotonicity for gradings. The context modality is `Σ`-shaped
+    -- (Kripke possibility), so it is *covariant* in the grade.
 
-    ⟨⟩-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → ⟨ ρ₂ ⟩ᵒ A →ᵐ ⟨ ρ₁ ⟩ᵒ A
+    ⟨⟩-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → ⟨ ρ₁ ⟩ᵒ A →ᵐ ⟨ ρ₂ ⟩ᵒ A
 
     -- Unit
 
@@ -65,13 +66,13 @@ record Past : Set₁ where
     -- ⟨⟩-≤ is natural
 
     ⟨⟩-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B) → (p : ρ₁ ≾ ρ₂)
-             → ⟨ ρ₁ ⟩ᶠ f ∘ᵐ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵐ ⟨ ρ₂ ⟩ᶠ f
+             → ⟨ ρ₂ ⟩ᶠ f ∘ᵐ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵐ ⟨ ρ₁ ⟩ᶠ f
 
     -- ⟨_⟩ is functorial in the gradings
 
     ⟨⟩-≤-refl : ∀ {A ρ} → ⟨⟩-≤ {A} (≾-refl {ρ}) ≡ idᵐ
     ⟨⟩-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-               → ⟨⟩-≤ {A} p ∘ᵐ ⟨⟩-≤ {A} q ≡ ⟨⟩-≤ (≾-trans p q)
+               → ⟨⟩-≤ {A} q ∘ᵐ ⟨⟩-≤ {A} p ≡ ⟨⟩-≤ (≾-trans p q)
 
     -- η is natural
 
@@ -85,18 +86,18 @@ record Past : Set₁ where
     -- μ is compatible with the gradings
 
     ⟨⟩-μ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
-           → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵐ μ {A} {ρ₁'} {ρ₂'}
-           ≡ μ {A} {ρ₁} {ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨⟩-≤ q) ∘ᵐ ⟨⟩-≤ p
+           → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵐ μ {A} {ρ₁} {ρ₂}
+           ≡ μ {A} {ρ₁'} {ρ₂'} ∘ᵐ ⟨ ρ₁' ⟩ᶠ (⟨⟩-≤ q) ∘ᵐ ⟨⟩-≤ p
 
     -- Graded monad laws
 
     ⟨⟩-μ∘η≡id : ∀ {A ρ}
               → μ {A} {u} {ρ} ∘ᵐ η
-              ≡ ⟨⟩-≤ (≾-reflexive (·-identityʳ ρ))
+              ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
     ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
                → μ {A} {ρ} {u} ∘ᵐ ⟨ ρ ⟩ᶠ η
-               ≡ ⟨⟩-≤ (≾-reflexive (·-identityˡ ρ))
+               ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
     ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵐ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
-                ≡    ⟨⟩-≤ (≾-reflexive (sym (·-assoc ρ₃ ρ₂ ρ₁)))
+                ≡    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
                   ∘ᵐ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})

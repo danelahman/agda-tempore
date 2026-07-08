@@ -19,15 +19,16 @@
 open import Syntax.Grades
 open import DenotationalSemantics.Model.World
 
-module DenotationalSemantics.Model.Example.PSh.Modality.Past (Rg : Grade) (Wld : World Rg) where
+module DenotationalSemantics.Model.Example.PSh.Modality.Past (GS : GradeSystem) (Wld : World GS) where
 
 open import Data.Product
 
 open import Util.Equality
 
-open Grade Rg renaming (Carrier to R)
+open GradeSystem GS using (RGrade)
+open Grade RGrade renaming (Carrier to R)
 open World Wld
-open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
+open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 
 -- two-sided monotonicity of `·`
 
@@ -44,9 +45,9 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 ⟨_⟩ᶠ : ∀ {A B} → (ρ : R) → A →ᵖ B → ⟨ ρ ⟩ᵒ A →ᵖ ⟨ ρ ⟩ᵒ B
 ⟨ ρ ⟩ᶠ f = pmap (λ { (w' , p , x) → w' , p , app f x })
 
--- (Contravariant) monotonicity for gradings
+-- Monotonicity for gradings (covariant: the context modality is Σ-shaped)
 
-⟨⟩-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → ⟨ ρ₂ ⟩ᵒ A →ᵖ ⟨ ρ₁ ⟩ᵒ A
+⟨⟩-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → ⟨ ρ₁ ⟩ᵒ A →ᵖ ⟨ ρ₂ ⟩ᵒ A
 ⟨⟩-≤ p = pmap (λ { (w' , q , x) → w' , ⊑-mono p q , x })
 
 -- Unit
@@ -74,7 +75,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 -- ⟨⟩-≤ is natural
 
 ⟨⟩-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B) → (p : ρ₁ ≾ ρ₂)
-         → ⟨ ρ₁ ⟩ᶠ f ∘ᵖ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵖ ⟨ ρ₂ ⟩ᶠ f
+         → ⟨ ρ₂ ⟩ᶠ f ∘ᵖ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵖ ⟨ ρ₁ ⟩ᶠ f
 ⟨⟩-≤-nat f p = →ᵖ-ext (λ { (w' , q , x) → refl })
 
 -- ⟨_⟩ is functorial in the gradings
@@ -83,7 +84,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 ⟨⟩-≤-refl = →ᵖ-ext (λ { (w' , p , x) → cong (λ r → w' , r , x) (⊑-irrelevant _ _) })
 
 ⟨⟩-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-           → ⟨⟩-≤ {A} p ∘ᵖ ⟨⟩-≤ {A} q ≡ ⟨⟩-≤ (≾-trans p q)
+           → ⟨⟩-≤ {A} q ∘ᵖ ⟨⟩-≤ {A} p ≡ ⟨⟩-≤ (≾-trans p q)
 ⟨⟩-≤-trans p q = →ᵖ-ext (λ { (w' , r , x) → cong (λ s → w' , s , x) (⊑-irrelevant _ _) })
 
 -- η is natural
@@ -100,8 +101,8 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 -- μ is compatible with the gradings
 
 ⟨⟩-μ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
-       → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵖ μ {A} {ρ₁'} {ρ₂'}
-       ≡ μ {A} {ρ₁} {ρ₂} ∘ᵖ ⟨ ρ₁ ⟩ᶠ (⟨⟩-≤ q) ∘ᵖ ⟨⟩-≤ p
+       → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵖ μ {A} {ρ₁} {ρ₂}
+       ≡ μ {A} {ρ₁'} {ρ₂'} ∘ᵖ ⟨ ρ₁' ⟩ᶠ (⟨⟩-≤ q) ∘ᵖ ⟨⟩-≤ p
 ⟨⟩-μ-≤ p q =
   →ᵖ-ext (λ { (w₁ , p₁ , w₂ , p₂ , x) →
     cong (λ r → w₂ , r , x) (⊑-irrelevant _ _) })
@@ -110,17 +111,17 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 
 ⟨⟩-μ∘η≡id : ∀ {A ρ}
           → μ {A} {u} {ρ} ∘ᵖ η
-          ≡ ⟨⟩-≤ (≾-reflexive (·-identityʳ ρ))
+          ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
 ⟨⟩-μ∘η≡id = →ᵖ-ext (λ { (w' , p , x) → cong (λ r → w' , r , x) (⊑-irrelevant _ _) })
 
 ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
            → μ {A} {ρ} {u} ∘ᵖ ⟨ ρ ⟩ᶠ η
-           ≡ ⟨⟩-≤ (≾-reflexive (·-identityˡ ρ))
+           ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
 ⟨⟩-μ∘Tη≡id = →ᵖ-ext (λ { (w' , p , x) → cong (λ r → w' , r , x) (⊑-irrelevant _ _) })
 
 ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
             → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵖ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
-            ≡    ⟨⟩-≤ (≾-reflexive (sym (·-assoc ρ₃ ρ₂ ρ₁)))
+            ≡    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
               ∘ᵖ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵖ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
 ⟨⟩-μ∘μ≡μ∘Tμ =
   →ᵖ-ext (λ { (w₁ , p₁ , w₂ , p₂ , w₃ , p₃ , x) →
@@ -130,7 +131,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 -- Packaging the context modality up as a `Past` instance
 
 open import DenotationalSemantics.Model.Category
-open import DenotationalSemantics.Model.Modality.Past PShCat Rg using (Past)
+open import DenotationalSemantics.Model.Modality.Past PShCat RGrade using (Past)
 
 PShPast : Past
 PShPast = record

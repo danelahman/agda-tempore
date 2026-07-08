@@ -40,9 +40,11 @@ record Future : Set₁ where
     [_]ᵒ : Carrier → Obj → Obj
     [_]ᶠ : ∀ {A B} → (ρ : Carrier) → A →ᵐ B → [ ρ ]ᵒ A →ᵐ [ ρ ]ᵒ B
 
-    -- Monotonicity for gradings (covariant: a larger budget is weaker)
+    -- Monotonicity for gradings. The box is `∀`-shaped (Kripke
+    -- necessity), so it is *contravariant* in the grade: a larger grade
+    -- (a larger accessibility relation) is a stronger obligation.
 
-    []-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₁ ]ᵒ A →ᵐ [ ρ₂ ]ᵒ A
+    []-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₂ ]ᵒ A →ᵐ [ ρ₁ ]ᵒ A
 
     -- Counit
 
@@ -63,13 +65,13 @@ record Future : Set₁ where
     -- []-≤ is natural
 
     []-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B) → (p : ρ₁ ≾ ρ₂)
-             → [ ρ₂ ]ᶠ f ∘ᵐ []-≤ {A = A} p ≡ []-≤ {A = B} p ∘ᵐ [ ρ₁ ]ᶠ f
+             → [ ρ₁ ]ᶠ f ∘ᵐ []-≤ {A = A} p ≡ []-≤ {A = B} p ∘ᵐ [ ρ₂ ]ᶠ f
 
     -- [_] is functorial in the gradings
 
     []-≤-refl : ∀ {A ρ} → []-≤ {A} (≾-refl {ρ}) ≡ idᵐ
     []-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-               → []-≤ {A} q ∘ᵐ []-≤ {A} p ≡ []-≤ {A} (≾-trans p q)
+               → []-≤ {A} p ∘ᵐ []-≤ {A} q ≡ []-≤ {A} (≾-trans p q)
 
     -- ε is natural
 
@@ -83,18 +85,18 @@ record Future : Set₁ where
     -- δ is compatible with the gradings
 
     []-δ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
-           → [ ρ₁' ]ᶠ ([]-≤ {A} q) ∘ᵐ []-≤ {[ ρ₂ ]ᵒ A} p ∘ᵐ δ {A = A}
-           ≡ δ {A} ∘ᵐ []-≤ {A} (·-mono-≾ p q)
+           → []-≤ {[ ρ₂ ]ᵒ A} p ∘ᵐ [ ρ₁' ]ᶠ ([]-≤ {A} q) ∘ᵐ δ {A} {ρ₁'} {ρ₂'}
+           ≡ δ {A} {ρ₁} {ρ₂} ∘ᵐ []-≤ {A} (·-mono-≾ p q)
 
     -- Graded comonad laws
 
     []-ε∘δ≡id : ∀ {A ρ}
               → ε {[ ρ ]ᵒ A} ∘ᵐ δ {A} {u} {ρ}
-              ≡ []-≤ {A = A} (≾-reflexive (·-identityˡ ρ))
+              ≡ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
     []-Dε∘δ≡id : ∀ {A ρ}
                → [ ρ ]ᶠ (ε {A}) ∘ᵐ δ {A} {ρ} {u}
-               ≡ []-≤ {A} (≾-reflexive (·-identityʳ ρ))
+               ≡ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
     []-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵐ δ {A} {ρ₁ · ρ₂} {ρ₃}
                 ≡    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵐ δ {A} {ρ₁} {ρ₂ · ρ₃}
-                  ∘ᵐ []-≤ {A} (≾-reflexive (·-assoc ρ₁ ρ₂ ρ₃))
+                  ∘ᵐ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))

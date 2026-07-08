@@ -19,13 +19,14 @@
 open import Syntax.Grades
 open import DenotationalSemantics.Model.World
 
-module DenotationalSemantics.Model.Example.PSh.Modality.Future (Rg : Grade) (Wld : World Rg) where
+module DenotationalSemantics.Model.Example.PSh.Modality.Future (GS : GradeSystem) (Wld : World GS) where
 
 open import Util.Equality
 
-open Grade Rg renaming (Carrier to R)
+open GradeSystem GS using (RGrade)
+open Grade RGrade renaming (Carrier to R)
 open World Wld
-open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
+open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 
 -- two-sided monotonicity of `·`
 
@@ -42,9 +43,9 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 [_]ᶠ : ∀ {A B} → (ρ : R) → A →ᵖ B → [ ρ ]ᵒ A →ᵖ [ ρ ]ᵒ B
 [ ρ ]ᶠ f = pmap (λ x p → app f (x p))
 
--- Monotonicity for gradings (covariant: a larger budget is weaker)
+-- Monotonicity for gradings (contravariant: the box is ∀-shaped)
 
-[]-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₁ ]ᵒ A →ᵖ [ ρ₂ ]ᵒ A
+[]-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ A
 []-≤ p = pmap (λ x q → x (⊑-mono p q))
 
 -- Counit
@@ -72,7 +73,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 -- []-≤ is natural
 
 []-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B) → (p : ρ₁ ≾ ρ₂)
-         → [ ρ₂ ]ᶠ f ∘ᵖ []-≤ {A = A} p ≡ []-≤ {A = B} p ∘ᵖ [ ρ₁ ]ᶠ f
+         → [ ρ₁ ]ᶠ f ∘ᵖ []-≤ {A = A} p ≡ []-≤ {A = B} p ∘ᵖ [ ρ₂ ]ᶠ f
 []-≤-nat f p = →ᵖ-ext (λ x → refl)
 
 -- [_] is functorial in the gradings
@@ -81,7 +82,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 []-≤-refl = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑-irrelevant _ _))))
 
 []-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-           → []-≤ {A} q ∘ᵖ []-≤ {A} p ≡ []-≤ {A} (≾-trans p q)
+           → []-≤ {A} p ∘ᵖ []-≤ {A} q ≡ []-≤ {A} (≾-trans p q)
 []-≤-trans p q = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ r → cong (λ s → x s) (⊑-irrelevant _ _))))
 
 -- ε is natural
@@ -98,8 +99,8 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 -- δ is compatible with the gradings
 
 []-δ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
-       → [ ρ₁' ]ᶠ ([]-≤ {A} q) ∘ᵖ []-≤ {[ ρ₂ ]ᵒ A} p ∘ᵖ δ {A = A}
-       ≡ δ {A} ∘ᵖ []-≤ {A} (·-mono-≾ p q)
+       → []-≤ {[ ρ₂ ]ᵒ A} p ∘ᵖ [ ρ₁' ]ᶠ ([]-≤ {A} q) ∘ᵖ δ {A} {ρ₁'} {ρ₂'}
+       ≡ δ {A} {ρ₁} {ρ₂} ∘ᵖ []-≤ {A} (·-mono-≾ p q)
 []-δ-≤ p q =
   →ᵖ-ext (λ x →
     ifun-ext (fun-ext (λ a →
@@ -110,18 +111,18 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 
 []-ε∘δ≡id : ∀ {A ρ}
           → ε {[ ρ ]ᵒ A} ∘ᵖ δ {A} {u} {ρ}
-          ≡ []-≤ {A = A} (≾-reflexive (·-identityˡ ρ))
+          ≡ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
 []-ε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑-irrelevant _ _))))
 
 []-Dε∘δ≡id : ∀ {A ρ}
            → [ ρ ]ᶠ (ε {A}) ∘ᵖ δ {A} {ρ} {u}
-           ≡ []-≤ {A} (≾-reflexive (·-identityʳ ρ))
+           ≡ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
 []-Dε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ a → cong (λ r → x r) (⊑-irrelevant _ _))))
 
 []-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
             → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵖ δ {A} {ρ₁ · ρ₂} {ρ₃}
             ≡    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵖ δ {A} {ρ₁} {ρ₂ · ρ₃}
-              ∘ᵖ []-≤ {A} (≾-reflexive (·-assoc ρ₁ ρ₂ ρ₃))
+              ∘ᵖ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))
 []-δ∘δ≡Dδ∘δ =
   →ᵖ-ext (λ x →
     ifun-ext (fun-ext (λ c →
@@ -133,7 +134,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base Rg Wld
 -- Packaging the box modality up as a `Future` instance
 
 open import DenotationalSemantics.Model.Category
-open import DenotationalSemantics.Model.Modality.Future PShCat Rg using (Future)
+open import DenotationalSemantics.Model.Modality.Future PShCat RGrade using (Future)
 
 PShFut : Future
 PShFut = record
