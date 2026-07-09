@@ -175,7 +175,11 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Instance
 
 open import DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks
 open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTicks
+open import DenotationalSemantics.Model.Example.World.SetOfTracesWithTicks
+open import DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTicks
 
 ---- Concrete trace-history Kripke frames
 
 open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTraceHistories
+open import DenotationalSemantics.Model.Example.World.SetOfTracesWithTraceHistories
+open import DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTraceHistories

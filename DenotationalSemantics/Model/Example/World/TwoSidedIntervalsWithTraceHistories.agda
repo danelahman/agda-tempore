@@ -18,7 +18,6 @@ open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 module DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTraceHistories
   (Op : Set) (c : Op → ℕ) where
 
-open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant; +-mono-≤)
 open import Data.Product using (_,_)
@@ -33,74 +32,6 @@ open Durations c
 open import Util.Equality
 
 open import DenotationalSemantics.Model.World
-
-------------------------------------------------------------------------
--- Left cancellation of trace sequencing
---
--- Prepending a fixed history `w` on the left of a continuation is
--- injective in the continuation.
-
--- injectivity of `suc⁺`
-
-suc⁺-inj : ∀ {m n} → suc⁺ m ≡ suc⁺ n → m ≡ n
-suc⁺-inj refl = refl
-
--- left cancellation of positive-duration addition
-
-+⁺-cancelˡ : (d : ℕ⁺) {e e' : ℕ⁺} → d +⁺ e ≡ d +⁺ e' → e ≡ e'
-+⁺-cancelˡ 𝟏        eq = suc⁺-inj eq
-+⁺-cancelˡ (suc⁺ d) eq = +⁺-cancelˡ d (suc⁺-inj eq)
-
--- a positive duration is never equal to a strictly larger one
-
-d≢d+⁺e : (d e : ℕ⁺) → d +⁺ e ≡ d → ⊥
-d≢d+⁺e 𝟏        e ()
-d≢d+⁺e (suc⁺ d) e eq = d≢d+⁺e d e (suc⁺-inj eq)
-
--- injectivity of the `delay` constructor
-
-delay-inj₁ : ∀ {d d' u u'} → delay d u ≡ delay d' u' → d ≡ d'
-delay-inj₁ refl = refl
-
-delay-inj₂ : ∀ {d d' u u'} → delay d u ≡ delay d' u' → u ≡ u'
-delay-inj₂ refl = refl
-
--- injectivity of the `operation` constructor (fixed head)
-
-op-inj : ∀ {o u v} → operation o u ≡ operation o v → u ≡ v
-op-inj refl = refl
-
--- injectivity of a delayed operation (fixed delay and head)
-
-delayop-inj : ∀ {d o u v}
-            → delay d (operation⁻ o u) ≡ delay d (operation⁻ o v) → u ≡ v
-delayop-inj refl = refl
-
--- prepending a fixed delay is injective in the continuation
-
-prepend-injʳ : (d : ℕ⁺) {t t' : Trace} → prepend d t ≡ prepend d t' → t ≡ t'
-prepend-injʳ d {ε}             {ε}             _  = refl
-prepend-injʳ d {ε}             {operation _ _} ()
-prepend-injʳ d {ε}             {delay e' u'}   eq =
-  ⊥-elim (d≢d+⁺e d e' (sym (delay-inj₁ eq)))
-prepend-injʳ d {operation _ _} {ε}             ()
-prepend-injʳ d {operation _ _} {operation _ _} refl = refl
-prepend-injʳ d {operation _ _} {delay e' u'}   eq =
-  ⊥-elim (d≢d+⁺e d e' (sym (delay-inj₁ eq)))
-prepend-injʳ d {delay e u}     {ε}             eq =
-  ⊥-elim (d≢d+⁺e d e (delay-inj₁ eq))
-prepend-injʳ d {delay e u}     {operation _ _} eq =
-  ⊥-elim (d≢d+⁺e d e (delay-inj₁ eq))
-prepend-injʳ d {delay e u}     {delay e' u'}   eq =
-  cong₂ delay (+⁺-cancelˡ d (delay-inj₁ eq)) (delay-inj₂ eq)
-
--- sequencing on the left is injective in the right factor
-
-∙-cancelˡ : (w : Trace) {t t' : Trace} → w ∙ t ≡ w ∙ t' → t ≡ t'
-∙-cancelˡ ε                          eq = eq
-∙-cancelˡ (operation o s)            eq = ∙-cancelˡ s (op-inj eq)
-∙-cancelˡ (delay d ε⁻)               eq = prepend-injʳ d eq
-∙-cancelˡ (delay d (operation⁻ o s)) eq = ∙-cancelˡ s (delayop-inj eq)
 
 ------------------------------------------------------------------------
 -- Accessibility on trace histories

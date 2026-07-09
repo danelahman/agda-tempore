@@ -8,7 +8,7 @@ open import Util.Equality
 
 module Syntax.Grades.Traces.Base (Op : Set) where
 
-open import Data.Empty using (⊥)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List.Base
   using (List; []; _∷_; [_]; _++_; map; cartesianProductWith)
 open import Data.List.Properties
@@ -172,6 +172,67 @@ prepend-∙ d (delay e (operation⁻ o t)) u = refl
 ∙-conicalʳ {delay _ ε⁻} {ε}             ()
 ∙-conicalʳ {delay _ ε⁻} {operation _ _} ()
 ∙-conicalʳ {delay _ ε⁻} {delay _ _}     ()
+
+-- the timed-trace monoid is left cancellative: sequencing a fixed prefix
+-- on the left is injective in the continuation
+
+-- injectivity of `suc⁺`
+
+suc⁺-inj : ∀ {m n} → suc⁺ m ≡ suc⁺ n → m ≡ n
+suc⁺-inj refl = refl
+
+-- left cancellation of positive-duration addition
+
++⁺-cancelˡ : (d : ℕ⁺) {e e' : ℕ⁺} → d +⁺ e ≡ d +⁺ e' → e ≡ e'
++⁺-cancelˡ 𝟏        eq = suc⁺-inj eq
++⁺-cancelˡ (suc⁺ d) eq = +⁺-cancelˡ d (suc⁺-inj eq)
+
+-- a positive duration is never equal to a strictly larger one
+
+d≢d+⁺e : (d e : ℕ⁺) → d +⁺ e ≡ d → ⊥
+d≢d+⁺e 𝟏        e ()
+d≢d+⁺e (suc⁺ d) e eq = d≢d+⁺e d e (suc⁺-inj eq)
+
+-- injectivity of the `delay`, `operation`, and delayed-operation heads
+
+delay-inj₁ : ∀ {d d' u u'} → delay d u ≡ delay d' u' → d ≡ d'
+delay-inj₁ refl = refl
+
+delay-inj₂ : ∀ {d d' u u'} → delay d u ≡ delay d' u' → u ≡ u'
+delay-inj₂ refl = refl
+
+operation-inj : ∀ {o u v} → operation o u ≡ operation o v → u ≡ v
+operation-inj refl = refl
+
+delay-operation-inj : ∀ {d o u v}
+                    → delay d (operation⁻ o u) ≡ delay d (operation⁻ o v) → u ≡ v
+delay-operation-inj refl = refl
+
+-- prepending a fixed delay is injective in the continuation
+
+prepend-injʳ : (d : ℕ⁺) {t t' : Trace} → prepend d t ≡ prepend d t' → t ≡ t'
+prepend-injʳ d {ε}             {ε}             _  = refl
+prepend-injʳ d {ε}             {operation _ _} ()
+prepend-injʳ d {ε}             {delay e' u'}   eq =
+  ⊥-elim (d≢d+⁺e d e' (sym (delay-inj₁ eq)))
+prepend-injʳ d {operation _ _} {ε}             ()
+prepend-injʳ d {operation _ _} {operation _ _} refl = refl
+prepend-injʳ d {operation _ _} {delay e' u'}   eq =
+  ⊥-elim (d≢d+⁺e d e' (sym (delay-inj₁ eq)))
+prepend-injʳ d {delay e u}     {ε}             eq =
+  ⊥-elim (d≢d+⁺e d e (delay-inj₁ eq))
+prepend-injʳ d {delay e u}     {operation _ _} eq =
+  ⊥-elim (d≢d+⁺e d e (delay-inj₁ eq))
+prepend-injʳ d {delay e u}     {delay e' u'}   eq =
+  cong₂ delay (+⁺-cancelˡ d (delay-inj₁ eq)) (delay-inj₂ eq)
+
+-- sequencing on the left is injective in the right factor
+
+∙-cancelˡ : (s : Trace) {t t' : Trace} → (s ∙ t) ≡ (s ∙ t') → t ≡ t'
+∙-cancelˡ ε                          eq = eq
+∙-cancelˡ (operation o s)            eq = ∙-cancelˡ s (operation-inj eq)
+∙-cancelˡ (delay d ε⁻)               eq = prepend-injʳ d eq
+∙-cancelˡ (delay d (operation⁻ o s)) eq = ∙-cancelˡ s (delay-operation-inj eq)
 
 ------------------------------------------------------------------------
 -- Non-empty sets of timed traces
