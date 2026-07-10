@@ -59,45 +59,49 @@ record Past : Set₁ where
 
     -- ⟨_⟩ is functorial
 
-    ⟨⟩-idᵐ : ∀ {A ρ} → ⟨ ρ ⟩ᶠ (idᵐ {A = A}) ≡ idᵐ
+    ⟨⟩-idᵐ : ∀ {A ρ} → ⟨ ρ ⟩ᶠ (idᵐ {A = A}) ≈ᵐ idᵐ
     ⟨⟩-∘ᵐ : ∀ {A B C ρ} → (g : B →ᵐ C) → (f : A →ᵐ B)
-          → ⟨ ρ ⟩ᶠ (g ∘ᵐ f) ≡ ⟨ ρ ⟩ᶠ g ∘ᵐ ⟨ ρ ⟩ᶠ f
+          → ⟨ ρ ⟩ᶠ (g ∘ᵐ f) ≈ᵐ ⟨ ρ ⟩ᶠ g ∘ᵐ ⟨ ρ ⟩ᶠ f
+
+    -- ⟨_⟩ᶠ is a congruence
+
+    ⟨⟩-congᶠ : ∀ {A B ρ} {f g : A →ᵐ B} → f ≈ᵐ g → ⟨ ρ ⟩ᶠ f ≈ᵐ ⟨ ρ ⟩ᶠ g
 
     -- ⟨⟩-≤ is natural
 
     ⟨⟩-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B) → (p : ρ₁ ≾ ρ₂)
-             → ⟨ ρ₂ ⟩ᶠ f ∘ᵐ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵐ ⟨ ρ₁ ⟩ᶠ f
+             → ⟨ ρ₂ ⟩ᶠ f ∘ᵐ ⟨⟩-≤ p ≈ᵐ ⟨⟩-≤ p ∘ᵐ ⟨ ρ₁ ⟩ᶠ f
 
     -- ⟨_⟩ is functorial in the gradings
 
-    ⟨⟩-≤-refl : ∀ {A ρ} → ⟨⟩-≤ {A} (≾-refl {ρ}) ≡ idᵐ
+    ⟨⟩-≤-refl : ∀ {A ρ} → ⟨⟩-≤ {A} (≾-refl {ρ}) ≈ᵐ idᵐ
     ⟨⟩-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-               → ⟨⟩-≤ {A} q ∘ᵐ ⟨⟩-≤ {A} p ≡ ⟨⟩-≤ (≾-trans p q)
+               → ⟨⟩-≤ {A} q ∘ᵐ ⟨⟩-≤ {A} p ≈ᵐ ⟨⟩-≤ (≾-trans p q)
 
     -- η is natural
 
-    ⟨⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ u ⟩ᶠ f ∘ᵐ η ≡ η ∘ᵐ f
+    ⟨⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ u ⟩ᶠ f ∘ᵐ η ≈ᵐ η ∘ᵐ f
 
     -- μ is natural
 
     ⟨⟩-μ-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B)
-             → ⟨ ρ₂ · ρ₁ ⟩ᶠ f ∘ᵐ μ ≡ μ ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ f)
+             → ⟨ ρ₂ · ρ₁ ⟩ᶠ f ∘ᵐ μ ≈ᵐ μ ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ f)
 
     -- μ is compatible with the gradings
 
     ⟨⟩-μ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
            → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵐ μ {A} {ρ₁} {ρ₂}
-           ≡ μ {A} {ρ₁'} {ρ₂'} ∘ᵐ ⟨ ρ₁' ⟩ᶠ (⟨⟩-≤ q) ∘ᵐ ⟨⟩-≤ p
+           ≈ᵐ μ {A} {ρ₁'} {ρ₂'} ∘ᵐ ⟨ ρ₁' ⟩ᶠ (⟨⟩-≤ q) ∘ᵐ ⟨⟩-≤ p
 
     -- Graded monad laws
 
     ⟨⟩-μ∘η≡id : ∀ {A ρ}
               → μ {A} {u} {ρ} ∘ᵐ η
-              ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
+              ≈ᵐ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
     ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
                → μ {A} {ρ} {u} ∘ᵐ ⟨ ρ ⟩ᶠ η
-               ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
+               ≈ᵐ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
     ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵐ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
-                ≡    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
+                ≈ᵐ    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
                   ∘ᵐ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})

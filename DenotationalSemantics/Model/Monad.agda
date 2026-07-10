@@ -74,9 +74,9 @@ record Monad : Set₁ where
     -- On-the-nose grade coercion (transport along ≡)
 
     ε-substᵀ : ∀ {A ε ε'} → ε ≡ ε' → Tᵒ A ε →ᵐ Tᵒ A ε'
-    ε-substᵀ-refl : ∀ {A ε} → ε-substᵀ {A} {ε} refl ≡ idᵐ
+    ε-substᵀ-refl : ∀ {A ε} → ε-substᵀ {A} {ε} refl ≈ᵐ idᵐ
     ε-substᵀ-trans : ∀ {A ε ε' ε''} → (p : ε ≡ ε') → (q : ε' ≡ ε'')
-                   → ε-substᵀ q ∘ᵐ ε-substᵀ p ≡ ε-substᵀ {A} (trans p q)
+                   → ε-substᵀ q ∘ᵐ ε-substᵀ p ≈ᵐ ε-substᵀ {A} (trans p q)
 
     -- Sub-effecting — the semantics of `coerce`. Covariant in the effect
     -- grade. It is *not* required to be a graded functor: the equational
@@ -91,32 +91,36 @@ record Monad : Set₁ where
 
     -- Functoriality
 
-    T-idᵐ : ∀ {A ε} → Tᶠ {A} {A} {ε} idᵐ ≡ idᵐ
+    T-idᵐ : ∀ {A ε} → Tᶠ {A} {A} {ε} idᵐ ≈ᵐ idᵐ
     T-∘ᵐ : ∀ {A B C ε} → (g : B →ᵐ C) → (f : A →ᵐ B)
-         → Tᶠ {A} {C} {ε} (g ∘ᵐ f) ≡ Tᶠ g ∘ᵐ Tᶠ f
+         → Tᶠ {A} {C} {ε} (g ∘ᵐ f) ≈ᵐ Tᶠ g ∘ᵐ Tᶠ f
+
+    -- Tᶠ is a congruence
+
+    T-congᶠ : ∀ {A B ε} {f g : A →ᵐ B} → f ≈ᵐ g → Tᶠ {A} {B} {ε} f ≈ᵐ Tᶠ g
 
     -- Unit and multiplication are natural
 
-    ηᵀ-nat : ∀ {A B} → (f : A →ᵐ B) → ηᵀ ∘ᵐ f ≡ Tᶠ f ∘ᵐ ηᵀ
+    ηᵀ-nat : ∀ {A B} → (f : A →ᵐ B) → ηᵀ ∘ᵐ f ≈ᵐ Tᶠ f ∘ᵐ ηᵀ
     μᵀ-nat : ∀ {A B ε ε'} → (f : A →ᵐ B)
-           → μᵀ {ε = ε} {ε' = ε'} ∘ᵐ Tᶠ (Tᶠ f) ≡ Tᶠ f ∘ᵐ μᵀ
+           → μᵀ {ε = ε} {ε' = ε'} ∘ᵐ Tᶠ (Tᶠ f) ≈ᵐ Tᶠ f ∘ᵐ μᵀ
 
     -- T-≤ is natural (this holds on the nose; no refl/trans laws — see above)
 
     T-≤-nat : ∀ {A B ε ε'} → (f : A →ᵐ B) → (p : ε ≾ₑ ε')
-            → Tᶠ f ∘ᵐ T-≤ {A} p ≡ T-≤ {B} p ∘ᵐ Tᶠ f
+            → Tᶠ f ∘ᵐ T-≤ {A} p ≈ᵐ T-≤ {B} p ∘ᵐ Tᶠ f
 
     -- Graded monad laws
 
     T-μ∘η≡id : ∀ {A ε}
              → μᵀ {A} {uₑ} {ε} ∘ᵐ ηᵀ {Tᵒ A ε}
-             ≡ ε-substᵀ (sym (·ₑ-identityˡ ε))
+             ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
     T-μ∘Tη≡id : ∀ {A ε}
               → μᵀ {A} {ε} {uₑ} ∘ᵐ Tᶠ (ηᵀ {A})
-              ≡ ε-substᵀ (sym (·ₑ-identityʳ ε))
+              ≈ᵐ ε-substᵀ (sym (·ₑ-identityʳ ε))
     T-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
                → μᵀ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᶠ (μᵀ {A} {ε'} {ε''})
-               ≡ ε-substᵀ (·ₑ-assoc ε ε' ε'') ∘ᵐ μᵀ ∘ᵐ μᵀ
+               ≈ᵐ ε-substᵀ (·ₑ-assoc ε ε' ε'') ∘ᵐ μᵀ ∘ᵐ μᵀ
 
     -- EFFECTS
 
@@ -133,23 +137,23 @@ record Monad : Set₁ where
 
     delayᵀ-nat : ∀ {A B ε} → (τ : ℕ) → (f : A →ᵐ B)
                → delayᵀ {ε = ε} τ ∘ᵐ [ of-natʳ τ ]ᶠ (Tᶠ f)
-               ≡ Tᶠ f ∘ᵐ delayᵀ τ
+               ≈ᵐ Tᶠ f ∘ᵐ delayᵀ τ
 
     opᵀ-nat : ∀ {A B ε} → (op : Op) → (f : A →ᵐ B)
             → opᵀ {ε = ε} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ f)))
-            ≡ Tᶠ f ∘ᵐ opᵀ op
+            ≈ᵐ Tᶠ f ∘ᵐ opᵀ op
 
     -- Operations and delays are algebraic
 
     delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : ℕ)
                         → μᵀ {A} {of-natᵉ τ ·ₑ ε'} {ε''} ∘ᵐ delayᵀ {ε = ε'} τ
-                        ≡ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
+                        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
                           ∘ᵐ delayᵀ τ
                           ∘ᵐ [ of-natʳ τ ]ᶠ (μᵀ {A} {ε'} {ε''})
 
     opᵀ-algebraicity : ∀ {A ε ε'} → (op : Op)
                      → μᵀ {A} {op-grade op ·ₑ ε} {ε'} ∘ᵐ opᵀ {ε = ε} op
-                     ≡ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+                     ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
                        ∘ᵐ opᵀ op
                        ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (μᵀ {A} {ε} {ε'})))
 
@@ -163,11 +167,11 @@ record Monad : Set₁ where
 
     strᵀ-nat : ∀ {A A' B B' ε} → (f : A →ᵐ A') → (g : B →ᵐ B')
              → strᵀ {A'} {B'} ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
-             ≡ Tᶠ (mapˣᵐ f g) ∘ᵐ strᵀ {A} {B}
+             ≈ᵐ Tᶠ (mapˣᵐ f g) ∘ᵐ strᵀ {A} {B}
 
     -- Strength projects away
 
-    strᵀ-sndᵐ : ∀ {A B ε} → Tᶠ sndᵐ ∘ᵐ strᵀ {A} {B} {ε} ≡ sndᵐ
+    strᵀ-sndᵐ : ∀ {A B ε} → Tᶠ sndᵐ ∘ᵐ strᵀ {A} {B} {ε} ≈ᵐ sndᵐ
 
     -- Strength coherence laws. Because the box is only *lax* (no counit /
     -- comultiplication inverses `ε⁻¹` / `δ⁻¹`), the unit and multiplication
@@ -181,7 +185,7 @@ record Monad : Set₁ where
 
     strᵀ-ηᵀ : ∀ {A B}
             → strᵀ {A} {B} {uₑ} ∘ᵐ mapˣᵐ idᵐ ηᵀ
-            ≡ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ))) idᵐ
+            ≈ᵐ ηᵀ {A ×ᵐ B} ∘ᵐ mapˣᵐ (ε ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ))) idᵐ
 
     -- Multiplication: threading the box through two monad layers agrees with
     -- threading it once at the combined grade, after splitting the box with
@@ -189,7 +193,7 @@ record Monad : Set₁ where
 
     strᵀ-μᵀ : ∀ {A B ε ε'}
             → strᵀ {A} {B} {ε ·ₑ ε'} ∘ᵐ mapˣᵐ idᵐ (μᵀ {B} {ε} {ε'})
-            ≡ μᵀ {A ×ᵐ B} {ε} {ε'}
+            ≈ᵐ μᵀ {A ×ᵐ B} {ε} {ε'}
               ∘ᵐ Tᶠ (strᵀ {A} {B} {ε'})
               ∘ᵐ strᵀ {[ mapᵉ ε' ]ᵒ A} {Tᵒ B ε'} {ε}
               ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ
@@ -200,13 +204,13 @@ record Monad : Set₁ where
     strᵀ-assoc : ∀ {A B C ε}
                → Tᶠ ×ᵐ-assoc ∘ᵐ strᵀ {A ×ᵐ B} {C} {ε}
                  ∘ᵐ mapˣᵐ []-monoidal idᵐ ∘ᵐ ×ᵐ-assoc⁻¹
-               ≡ strᵀ {A} {B ×ᵐ C} {ε} ∘ᵐ mapˣᵐ idᵐ (strᵀ {B} {C} {ε})
+               ≈ᵐ strᵀ {A} {B ×ᵐ C} {ε} ∘ᵐ mapˣᵐ idᵐ (strᵀ {B} {C} {ε})
 
     -- Operations are algebraic with respect to the strength.
 
     strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : ℕ)
       → strᵀ {A} {B} {of-natᵉ τ ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (delayᵀ {B} {ε} τ)
-      ≡ delayᵀ τ
+      ≈ᵐ delayᵀ τ
         ∘ᵐ [ of-natʳ τ ]ᶠ (strᵀ {A} {B} {ε})
         ∘ᵐ []-monoidal
         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive
@@ -219,7 +223,7 @@ record Monad : Set₁ where
 
     strᵀ-opᵀ-algebraicity : ∀ {A B ε} → (op : Op)
       → strᵀ {A} {B} {op-grade op ·ₑ ε} ∘ᵐ mapˣᵐ idᵐ (opᵀ {B} {ε} op)
-      ≡ opᵀ op
+      ≈ᵐ opᵀ op
         ∘ᵐ mapˣᵐ idᵐ
             ([ mapᵉ (op-grade op) ]ᶠ
                (   map⇒ᵐ idᵐ (strᵀ {A} {B} {ε})
@@ -258,16 +262,16 @@ record Monad : Set₁ where
 
     T-alg-of-handlerᵀ-ηᵀ : ∀ {A ε'} → (h : Handlerᵀ A)
                          → T-alg-of-handlerᵀ h ∘ᵐ ηᵀ {Tᵒ A ε'}
-                         ≡ ε-substᵀ (sym (·ₑ-identityˡ ε'))
+                         ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε'))
 
     T-alg-of-handlerᵀ-delayᵀ : ∀ {A ε' ε''} → (τ : ℕ) → (h : Handlerᵀ A)
                              → T-alg-of-handlerᵀ h ∘ᵐ delayᵀ {Tᵒ A ε''} {ε'} τ
-                             ≡ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
+                             ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
                                ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ h)
 
     T-alg-of-handlerᵀ-opᵀ : ∀ {A ε' ε''} → (op : Op) → (h : Handlerᵀ A)
                           → T-alg-of-handlerᵀ h ∘ᵐ opᵀ {Tᵒ A ε''} {ε'} op
-                          ≡ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
+                          ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
                             ∘ᵐ h op (ε' ·ₑ ε'')
                             ∘ᵐ mapˣᵐ idᵐ
                                  ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ h)))

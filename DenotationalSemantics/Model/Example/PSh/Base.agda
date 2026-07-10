@@ -1,16 +1,23 @@
 ------------------------------------------------------------------------
--- Discretely-indexed presheaves over the worlds `W`.                  --
+-- Setoid-valued unit-monotone presheaves over the worlds `W`.          --
 --                                                                    --
--- A presheaf is just a `W`-indexed family of sets — there is *no*     --
--- functorial (monotone) action, because the worlds are treated as a   --
--- discrete index. Consequently a morphism is just a `W`-indexed       --
--- family of functions (no naturality condition), and morphism         --
--- equality is plain propositional equality of such families           --
--- (recovered pointwise via function extensionality).                  --
+-- A presheaf is a covariant functor over the preorder of worlds       --
+-- `(W, ⊑ʳ[ uᵣ ])` given by unit-graded accessibility, valued in        --
+-- setoids: each world carries a set `carrier` together with a per-      --
+-- world equivalence `_≈_`. The functorial `transport` moves elements    --
+-- along unit-accessibility, respecting `_≈_` and satisfying the         --
+-- reflexivity and transitivity laws up to `_≈_` (a genuine preorder,     --
+-- since `uᵣ ·ᵣ uᵣ ≡ uᵣ`).                                               --
 --                                                                    --
--- The order on worlds is deliberately absent here: it only enters      --
--- through the box and context modalities (see the `Modality`          --
--- submodules), exactly as in the Kripke semantics of modal logic.     --
+-- A morphism is a natural transformation whose components respect        --
+-- `_≈_`. Morphism equality is pointwise target-`_≈_`; every categorical  --
+-- law is stated up to this equality, which is what lets later           --
+-- constructions (a possibility modality realised as a coend) satisfy     --
+-- their functor laws.                                                   --
+--                                                                    --
+-- Because unit-accessibility witnesses are proof irrelevant, transport   --
+-- along any witness is determined up to `_≈_` by the source and target   --
+-- worlds alone; this discharges the functor laws.                       --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -26,155 +33,325 @@ open import Util.Equality
 
 open import DenotationalSemantics.Model.Category
 
+open GradeSystemInterface GS
 open World Wld
 
--- Discretely-indexed presheaves over the worlds
+-- Composition of unit-accessibility, a genuine preorder since
+-- `uᵣ ·ᵣ uᵣ ≡ uᵣ`.
+
+⊑ᵘ-trans : ∀ {w w' w''} → w ⊑ʳ[ uᵣ ] w' → w' ⊑ʳ[ uᵣ ] w'' → w ⊑ʳ[ uᵣ ] w''
+⊑ᵘ-trans p q = ⊑ʳ-mono (≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)) (⊑ʳ-trans p q)
+
+-- Setoid-valued unit-monotone presheaves over the worlds
 
 record PSh : Set₁ where
   constructor psh
   field
     -- object map / carrier of the presheaf, per world
-    carrier : W → Set
+    carrier    : W → Set
+    -- per-world equivalence on the carrier
+    _≈_        : ∀ {w} → carrier w → carrier w → Set
+    ≈-refl     : ∀ {w} {x : carrier w} → x ≈ x
+    ≈-sym      : ∀ {w} {x y : carrier w} → x ≈ y → y ≈ x
+    ≈-trans    : ∀ {w} {x y z : carrier w} → x ≈ y → y ≈ z → x ≈ z
+    -- functorial transport along unit-accessibility, respecting `_≈_`
+    transport  : ∀ {w w'} → w ⊑ʳ[ uᵣ ] w' → carrier w → carrier w'
+    transport-cong  : ∀ {w w'} (p : w ⊑ʳ[ uᵣ ] w') {x y : carrier w}
+                    → x ≈ y → transport p x ≈ transport p y
+    transport-refl  : ∀ {w} (x : carrier w) → transport ⊑ʳ-refl x ≈ x
+    transport-trans : ∀ {w w' w''} (p : w ⊑ʳ[ uᵣ ] w') (q : w' ⊑ʳ[ uᵣ ] w'') (x : carrier w)
+                    → transport (⊑ᵘ-trans p q) x ≈ transport q (transport p x)
 
 open PSh public
 
--- Maps of presheaves: `W`-indexed families of functions. Wrapped in a
--- (single-field) record so that the field `app` has a genuine implicit
--- Pi type, which is what makes the function-extensionality reasoning in
--- `→ᵖ-ext` go through.
+-- Transport is independent of the accessibility witness (up to `≈`),
+-- since witnesses are proof irrelevant.
+
+transport-irr : ∀ {A : PSh} {w w'} (p q : w ⊑ʳ[ uᵣ ] w') (x : carrier A w)
+              → _≈_ A (transport A p x) (transport A q x)
+transport-irr {A} p q x with ⊑ʳ-irrelevant p q
+... | refl = ≈-refl A
+
+-- Maps of presheaves: natural transformations respecting `_≈_`.
 
 record _→ᵖ_ (A B : PSh) : Set where
   constructor pmap
   field
-    app : ∀ {w} → carrier A w → carrier B w
+    app      : ∀ {w} → carrier A w → carrier B w
+    app-cong : ∀ {w} {x y : carrier A w} → _≈_ A x y → _≈_ B (app x) (app y)
+    nat      : ∀ {w w'} (p : w ⊑ʳ[ uᵣ ] w') (x : carrier A w)
+             → _≈_ B (app (transport A p x)) (transport B p (app x))
 
 open _→ᵖ_ public
 
 infix 20 _→ᵖ_
 
--- Pointwise-to-propositional extensionality for presheaf maps.
+-- Equality of presheaf maps is pointwise target-`≈`.
 
-→ᵖ-ext : ∀ {A B} {f g : A →ᵖ B}
-       → (∀ {w} (x : carrier A w) → app f x ≡ app g x) → f ≡ g
-→ᵖ-ext p = cong pmap (ifun-ext (fun-ext p))
+_≈ᵖ_ : ∀ {A B} (f g : A →ᵖ B) → Set
+_≈ᵖ_ {A} {B} f g = ∀ {w} (x : carrier A w) → _≈_ B (app f x) (app g x)
+
+infix 4 _≈ᵖ_
+
+≈ᵖ-refl : ∀ {A B} {f : A →ᵖ B} → f ≈ᵖ f
+≈ᵖ-refl {B = B} x = ≈-refl B
+
+≈ᵖ-sym : ∀ {A B} {f g : A →ᵖ B} → f ≈ᵖ g → g ≈ᵖ f
+≈ᵖ-sym {B = B} p x = ≈-sym B (p x)
+
+≈ᵖ-trans : ∀ {A B} {f g h : A →ᵖ B} → f ≈ᵖ g → g ≈ᵖ h → f ≈ᵖ h
+≈ᵖ-trans {B = B} p q x = ≈-trans B (p x) (q x)
 
 -- Identity and composition of maps
 
 idᵖ : ∀ {A} → A →ᵖ A
-idᵖ = pmap (λ x → x)
+idᵖ {A} = pmap (λ x → x) (λ e → e) (λ p x → ≈-refl A)
 
 _∘ᵖ_ : ∀ {A B C} → B →ᵖ C → A →ᵖ B → A →ᵖ C
-g ∘ᵖ f = pmap (λ x → app g (app f x))
+_∘ᵖ_ {A} {B} {C} g f = pmap
+  (λ x → app g (app f x))
+  (λ e → app-cong g (app-cong f e))
+  (λ p x → ≈-trans C (app-cong g (nat f p x)) (nat g p (app f x)))
 
 infixr 9 _∘ᵖ_
 
--- Cartesian closed structure — everything pointwise, since the worlds
--- are a discrete index.
+∘ᵖ-congˡ : ∀ {A B C} {g g' : B →ᵖ C} {f : A →ᵖ B} → g ≈ᵖ g' → g ∘ᵖ f ≈ᵖ g' ∘ᵖ f
+∘ᵖ-congˡ {f = f} p x = p (app f x)
+
+∘ᵖ-congʳ : ∀ {A B C} {g : B →ᵖ C} {f f' : A →ᵖ B} → f ≈ᵖ f' → g ∘ᵖ f ≈ᵖ g ∘ᵖ f'
+∘ᵖ-congʳ {g = g} p x = app-cong g (p x)
+
+∘ᵖ-identityˡ : ∀ {A B} (f : A →ᵖ B) → idᵖ ∘ᵖ f ≈ᵖ f
+∘ᵖ-identityˡ {B = B} f x = ≈-refl B
+
+∘ᵖ-identityʳ : ∀ {A B} (f : A →ᵖ B) → f ∘ᵖ idᵖ ≈ᵖ f
+∘ᵖ-identityʳ {B = B} f x = ≈-refl B
+
+∘ᵖ-assoc : ∀ {A B C D} (h : C →ᵖ D) (g : B →ᵖ C) (f : A →ᵖ B)
+         → (h ∘ᵖ g) ∘ᵖ f ≈ᵖ h ∘ᵖ (g ∘ᵖ f)
+∘ᵖ-assoc {D = D} h g f x = ≈-refl D
+
+-- Cartesian closed structure
 
 -- Terminal object
 
 𝟙ᵖ : PSh
-𝟙ᵖ = psh (λ _ → ⊤)
+𝟙ᵖ = record
+  { carrier         = λ _ → ⊤
+  ; _≈_             = λ _ _ → ⊤
+  ; ≈-refl          = tt
+  ; ≈-sym           = λ _ → tt
+  ; ≈-trans         = λ _ _ → tt
+  ; transport       = λ _ _ → tt
+  ; transport-cong  = λ _ _ → tt
+  ; transport-refl  = λ _ → tt
+  ; transport-trans = λ _ _ _ → tt
+  }
 
 terminalᵖ : ∀ {A} → A →ᵖ 𝟙ᵖ
-terminalᵖ = pmap (λ _ → tt)
+terminalᵖ = pmap (λ _ → tt) (λ _ → tt) (λ p x → tt)
 
-terminalᵖ-unique : ∀ {A} {f : A →ᵖ 𝟙ᵖ} → f ≡ terminalᵖ
-terminalᵖ-unique = →ᵖ-ext (λ x → refl)
+terminalᵖ-unique : ∀ {A} {f : A →ᵖ 𝟙ᵖ} → f ≈ᵖ terminalᵖ
+terminalᵖ-unique x = tt
 
 -- Initial object
 
 𝟘ᵖ : PSh
-𝟘ᵖ = psh (λ _ → ⊥)
+𝟘ᵖ = record
+  { carrier         = λ _ → ⊥
+  ; _≈_             = λ _ _ → ⊥
+  ; ≈-refl          = λ {w} {x} → x
+  ; ≈-sym           = λ e → e
+  ; ≈-trans         = λ e _ → e
+  ; transport       = λ _ x → x
+  ; transport-cong  = λ _ e → e
+  ; transport-refl  = λ x → x
+  ; transport-trans = λ _ _ x → x
+  }
 
 initialᵖ : ∀ {A} → 𝟘ᵖ →ᵖ A
-initialᵖ = pmap (λ ())
+initialᵖ = pmap (λ ()) (λ ()) (λ p ())
 
-initialᵖ-unique : ∀ {A} {f : 𝟘ᵖ →ᵖ A} → f ≡ initialᵖ
-initialᵖ-unique = →ᵖ-ext (λ ())
+initialᵖ-unique : ∀ {A} {f : 𝟘ᵖ →ᵖ A} → f ≈ᵖ initialᵖ
+initialᵖ-unique ()
 
 -- Binary products
 
 infixr 23 _×ᵖ_
 
 _×ᵖ_ : PSh → PSh → PSh
-A ×ᵖ B = psh (λ w → carrier A w × carrier B w)
+A ×ᵖ B = record
+  { carrier         = λ w → carrier A w × carrier B w
+  ; _≈_             = λ x y → _≈_ A (proj₁ x) (proj₁ y) × _≈_ B (proj₂ x) (proj₂ y)
+  ; ≈-refl          = ≈-refl A , ≈-refl B
+  ; ≈-sym           = λ e → ≈-sym A (proj₁ e) , ≈-sym B (proj₂ e)
+  ; ≈-trans         = λ e e' → ≈-trans A (proj₁ e) (proj₁ e') , ≈-trans B (proj₂ e) (proj₂ e')
+  ; transport       = λ p x → transport A p (proj₁ x) , transport B p (proj₂ x)
+  ; transport-cong  = λ p e → transport-cong A p (proj₁ e) , transport-cong B p (proj₂ e)
+  ; transport-refl  = λ x → transport-refl A (proj₁ x) , transport-refl B (proj₂ x)
+  ; transport-trans = λ p q x → transport-trans A p q (proj₁ x) , transport-trans B p q (proj₂ x)
+  }
 
 fstᵖ : ∀ {A B} → A ×ᵖ B →ᵖ A
-fstᵖ = pmap proj₁
+fstᵖ {A} = pmap proj₁ (λ e → proj₁ e) (λ p x → ≈-refl A)
 
 sndᵖ : ∀ {A B} → A ×ᵖ B →ᵖ B
-sndᵖ = pmap proj₂
+sndᵖ {A} {B} = pmap proj₂ (λ e → proj₂ e) (λ p x → ≈-refl B)
 
 ⟨_,_⟩ᵖ : ∀ {A B C} → A →ᵖ B → A →ᵖ C → A →ᵖ B ×ᵖ C
-⟨ f , g ⟩ᵖ = pmap (λ x → app f x , app g x)
+⟨ f , g ⟩ᵖ = pmap
+  (λ x → app f x , app g x)
+  (λ e → app-cong f e , app-cong g e)
+  (λ p x → nat f p x , nat g p x)
 
-⟨⟩ᵖ-fstᵖ : ∀ {A B C} → (f : A →ᵖ B) → (g : A →ᵖ C) → fstᵖ ∘ᵖ ⟨ f , g ⟩ᵖ ≡ f
-⟨⟩ᵖ-fstᵖ f g = →ᵖ-ext (λ x → refl)
+⟨_,_⟩ᵖ-cong : ∀ {A B C} {f f' : A →ᵖ B} {g g' : A →ᵖ C}
+            → f ≈ᵖ f' → g ≈ᵖ g' → ⟨ f , g ⟩ᵖ ≈ᵖ ⟨ f' , g' ⟩ᵖ
+⟨ pf , pg ⟩ᵖ-cong x = pf x , pg x
 
-⟨⟩ᵖ-sndᵖ : ∀ {A B C} → (f : A →ᵖ B) → (g : A →ᵖ C) → sndᵖ ∘ᵖ ⟨ f , g ⟩ᵖ ≡ g
-⟨⟩ᵖ-sndᵖ f g = →ᵖ-ext (λ x → refl)
+⟨⟩ᵖ-fstᵖ : ∀ {A B C} → (f : A →ᵖ B) → (g : A →ᵖ C) → fstᵖ ∘ᵖ ⟨ f , g ⟩ᵖ ≈ᵖ f
+⟨⟩ᵖ-fstᵖ {B = B} f g x = ≈-refl B
+
+⟨⟩ᵖ-sndᵖ : ∀ {A B C} → (f : A →ᵖ B) → (g : A →ᵖ C) → sndᵖ ∘ᵖ ⟨ f , g ⟩ᵖ ≈ᵖ g
+⟨⟩ᵖ-sndᵖ {C = C} f g x = ≈-refl C
 
 ⟨⟩ᵖ-unique : ∀ {A B C} → (f : A →ᵖ B) → (g : A →ᵖ C) → (h : A →ᵖ B ×ᵖ C)
-           → fstᵖ ∘ᵖ h ≡ f → sndᵖ ∘ᵖ h ≡ g → h ≡ ⟨ f , g ⟩ᵖ
-⟨⟩ᵖ-unique f g h p q =
-  →ᵖ-ext (λ x → cong₂ _,_ (cong (λ m → app m x) p) (cong (λ m → app m x) q))
+           → fstᵖ ∘ᵖ h ≈ᵖ f → sndᵖ ∘ᵖ h ≈ᵖ g → h ≈ᵖ ⟨ f , g ⟩ᵖ
+⟨⟩ᵖ-unique f g h p q x = p x , q x
 
--- Exponentials (pointwise, since the index is discrete)
+-- Kripke exponentials
+--
+-- An element of the exponential `A ⇒ᵖ B` at a world `w` is a Kripke
+-- function: a family of maps `carrier A w' → carrier B w'` for every
+-- unit-accessible `w'`, respecting `_≈_` and commuting with the
+-- transports of `A` and `B` up to `_≈_`. Bundling the congruence and
+-- naturality witnesses is what makes `uncurryᵖ` a genuine map of
+-- presheaves.
+
+record _⇒ᶜ_ (A B : PSh) (w : W) : Set where
+  constructor mk⇒
+  field
+    fun      : ∀ {w'} → w ⊑ʳ[ uᵣ ] w' → carrier A w' → carrier B w'
+    fun-cong : ∀ {w'} (p : w ⊑ʳ[ uᵣ ] w') {a a' : carrier A w'}
+             → _≈_ A a a' → _≈_ B (fun p a) (fun p a')
+    fun-nat  : ∀ {w' w''} (q : w ⊑ʳ[ uᵣ ] w') (r : w' ⊑ʳ[ uᵣ ] w'') (a : carrier A w')
+             → _≈_ B (fun (⊑ᵘ-trans q r) (transport A r a)) (transport B r (fun q a))
+
+open _⇒ᶜ_ public
+
+infix 20 _⇒ᶜ_
+
+-- The value of a Kripke function is independent of the accessibility
+-- witness (up to `≈`), since witnesses are proof irrelevant.
+
+fun-irr : ∀ {A B w w'} (F : (A ⇒ᶜ B) w) (p q : w ⊑ʳ[ uᵣ ] w') (a : carrier A w')
+        → _≈_ B (fun F p a) (fun F q a)
+fun-irr {B = B} F p q a with ⊑ʳ-irrelevant p q
+... | refl = ≈-refl B
 
 infixr 22 _⇒ᵖ_
 
 _⇒ᵖ_ : PSh → PSh → PSh
-A ⇒ᵖ B = psh (λ w → carrier A w → carrier B w)
+A ⇒ᵖ B = record
+  { carrier         = A ⇒ᶜ B
+  ; _≈_             = λ {w} F G → ∀ {w'} (p : w ⊑ʳ[ uᵣ ] w') (a : carrier A w')
+                    → _≈_ B (fun F p a) (fun G p a)
+  ; ≈-refl          = λ p a → ≈-refl B
+  ; ≈-sym           = λ e p a → ≈-sym B (e p a)
+  ; ≈-trans         = λ e e' p a → ≈-trans B (e p a) (e' p a)
+  ; transport       = λ p F → mk⇒
+                        (λ q a → fun F (⊑ᵘ-trans p q) a)
+                        (λ q e → fun-cong F (⊑ᵘ-trans p q) e)
+                        (λ q r a → ≈-trans B
+                          (fun-irr F (⊑ᵘ-trans p (⊑ᵘ-trans q r)) (⊑ᵘ-trans (⊑ᵘ-trans p q) r) (transport A r a))
+                          (fun-nat F (⊑ᵘ-trans p q) r a))
+  ; transport-cong  = λ p e q a → e (⊑ᵘ-trans p q) a
+  ; transport-refl  = λ F p a → fun-irr F (⊑ᵘ-trans ⊑ʳ-refl p) p a
+  ; transport-trans = λ p q F r a →
+                        fun-irr F (⊑ᵘ-trans (⊑ᵘ-trans p q) r) (⊑ᵘ-trans p (⊑ᵘ-trans q r)) a
+  }
 
 curryᵖ : ∀ {A B C} → A ×ᵖ B →ᵖ C → A →ᵖ B ⇒ᵖ C
-curryᵖ f = pmap (λ a b → app f (a , b))
+curryᵖ {A} {B} {C} f = pmap
+  (λ a → mk⇒
+    (λ p b → app f (transport A p a , b))
+    (λ p e → app-cong f (≈-refl A , e))
+    (λ q r b → ≈-trans C
+      (app-cong f (transport-trans A q r a , ≈-refl B))
+      (nat f r (transport A q a , b))))
+  (λ e p b → app-cong f (transport-cong A p e , ≈-refl B))
+  (λ p a q b → app-cong f (≈-sym A (transport-trans A p q a) , ≈-refl B))
 
 uncurryᵖ : ∀ {A B C} → A →ᵖ B ⇒ᵖ C → A ×ᵖ B →ᵖ C
-uncurryᵖ f = pmap (λ { (a , b) → app f a b })
+uncurryᵖ {A} {B} {C} g = pmap
+  (λ x → fun (app g (proj₁ x)) ⊑ʳ-refl (proj₂ x))
+  (λ {w} {x} {y} e → ≈-trans C
+    (app-cong g (proj₁ e) ⊑ʳ-refl (proj₂ x))
+    (fun-cong (app g (proj₁ y)) ⊑ʳ-refl (proj₂ e)))
+  (λ p → λ { (a , b) → ≈-trans C
+    (nat g p a ⊑ʳ-refl (transport B p b))
+    (≈-trans C
+      (fun-irr (app g a) (⊑ᵘ-trans p ⊑ʳ-refl) (⊑ᵘ-trans ⊑ʳ-refl p) (transport B p b))
+      (fun-nat (app g a) ⊑ʳ-refl p b)) })
+
+curryᵖ-cong : ∀ {A B C} {f g : A ×ᵖ B →ᵖ C} → f ≈ᵖ g → curryᵖ f ≈ᵖ curryᵖ g
+curryᵖ-cong {A} e a p b = e (transport A p a , b)
+
+uncurryᵖ-cong : ∀ {A B C} {f g : A →ᵖ B ⇒ᵖ C} → f ≈ᵖ g → uncurryᵖ f ≈ᵖ uncurryᵖ g
+uncurryᵖ-cong e x = e (proj₁ x) ⊑ʳ-refl (proj₂ x)
 
 curryᵖ-nat : ∀ {A B C D} → (f : A →ᵖ B) → (g : B ×ᵖ C →ᵖ D)
-           → curryᵖ (g ∘ᵖ ⟨ f ∘ᵖ fstᵖ , idᵖ ∘ᵖ sndᵖ ⟩ᵖ) ≡ curryᵖ g ∘ᵖ f
-curryᵖ-nat f g = →ᵖ-ext (λ x → refl)
+           → curryᵖ (g ∘ᵖ ⟨ f ∘ᵖ fstᵖ , idᵖ ∘ᵖ sndᵖ ⟩ᵖ) ≈ᵖ curryᵖ g ∘ᵖ f
+curryᵖ-nat {C = C} f g a p c = app-cong g (nat f p a , ≈-refl C)
 
 uncurryᵖ-nat : ∀ {A B C D} → (f : A →ᵖ B) → (g : B →ᵖ C ⇒ᵖ D)
-             → uncurryᵖ (g ∘ᵖ f) ≡ uncurryᵖ g ∘ᵖ ⟨ f ∘ᵖ fstᵖ , idᵖ ∘ᵖ sndᵖ ⟩ᵖ
-uncurryᵖ-nat f g = →ᵖ-ext (λ { (a , b) → refl })
+             → uncurryᵖ (g ∘ᵖ f) ≈ᵖ uncurryᵖ g ∘ᵖ ⟨ f ∘ᵖ fstᵖ , idᵖ ∘ᵖ sndᵖ ⟩ᵖ
+uncurryᵖ-nat {D = D} f g x = ≈-refl D
 
-curryᵖ-uncurryᵖ-iso : ∀ {A B C} → (f : A ×ᵖ B →ᵖ C) → uncurryᵖ (curryᵖ f) ≡ f
-curryᵖ-uncurryᵖ-iso f = →ᵖ-ext (λ { (a , b) → refl })
+curryᵖ-uncurryᵖ-iso : ∀ {A B C} → (f : A ×ᵖ B →ᵖ C) → uncurryᵖ (curryᵖ f) ≈ᵖ f
+curryᵖ-uncurryᵖ-iso {A} {B} f x = app-cong f (transport-refl A (proj₁ x) , ≈-refl B)
 
-uncurryᵖ-curryᵖ-iso : ∀ {A B C} → (f : A →ᵖ B ⇒ᵖ C) → curryᵖ (uncurryᵖ f) ≡ f
-uncurryᵖ-curryᵖ-iso f = →ᵖ-ext (λ a → refl)
+uncurryᵖ-curryᵖ-iso : ∀ {A B C} → (g : A →ᵖ B ⇒ᵖ C) → curryᵖ (uncurryᵖ g) ≈ᵖ g
+uncurryᵖ-curryᵖ-iso {C = C} g a p b = ≈-trans C
+  (nat g p a ⊑ʳ-refl b)
+  (fun-irr (app g a) (⊑ᵘ-trans p ⊑ʳ-refl) p b)
 
--- Packaging presheaves up as a cartesian closed category
+-- Packaging presheaves up as a setoid-enriched cartesian closed category
 
 PShCat : Category
 PShCat = record
   { Obj          = PSh
   ; _→ᵐ_         = _→ᵖ_
+  ; _≈ᵐ_         = _≈ᵖ_
+  ; ≈ᵐ-refl      = λ {A} {B} {f} → ≈ᵖ-refl {f = f}
+  ; ≈ᵐ-sym       = λ {A} {B} {f} {g} → ≈ᵖ-sym {f = f} {g = g}
+  ; ≈ᵐ-trans     = λ {A} {B} {f} {g} {h} → ≈ᵖ-trans {f = f} {g = g} {h = h}
   ; idᵐ          = idᵖ
   ; _∘ᵐ_         = _∘ᵖ_
-  ; ∘ᵐ-identityˡ = λ f → refl
-  ; ∘ᵐ-identityʳ = λ f → refl
-  ; ∘ᵐ-assoc     = λ h g f → refl
+  ; ∘ᵐ-congˡ     = λ {A} {B} {C} {g} {g'} {f} → ∘ᵖ-congˡ {g = g} {g' = g'} {f = f}
+  ; ∘ᵐ-congʳ     = λ {A} {B} {C} {g} {f} {f'} → ∘ᵖ-congʳ {g = g} {f = f} {f' = f'}
+  ; ∘ᵐ-identityˡ = ∘ᵖ-identityˡ
+  ; ∘ᵐ-identityʳ = ∘ᵖ-identityʳ
+  ; ∘ᵐ-assoc     = ∘ᵖ-assoc
   ; 𝟙ᵐ           = 𝟙ᵖ
   ; terminalᵐ    = terminalᵖ
-  ; terminalᵐ-unique = terminalᵖ-unique
+  ; terminalᵐ-unique = λ {A} {f} → terminalᵖ-unique {f = f}
   ; 𝟘ᵐ           = 𝟘ᵖ
   ; initialᵐ     = initialᵖ
-  ; initialᵐ-unique = initialᵖ-unique
+  ; initialᵐ-unique = λ {A} {f} → initialᵖ-unique {f = f}
   ; _×ᵐ_         = _×ᵖ_
   ; fstᵐ         = fstᵖ
   ; sndᵐ         = sndᵖ
   ; ⟨_,_⟩ᵐ       = ⟨_,_⟩ᵖ
+  ; ⟨_,_⟩ᵐ-cong  = λ {A} {B} {C} {f} {f'} {g} {g'} → ⟨_,_⟩ᵖ-cong {f = f} {f' = f'} {g = g} {g' = g'}
   ; ⟨⟩ᵐ-fstᵐ     = ⟨⟩ᵖ-fstᵖ
   ; ⟨⟩ᵐ-sndᵐ     = ⟨⟩ᵖ-sndᵖ
   ; ⟨⟩ᵐ-unique   = ⟨⟩ᵖ-unique
   ; _⇒ᵐ_         = _⇒ᵖ_
   ; curryᵐ       = curryᵖ
+  ; curryᵐ-cong  = λ {A} {B} {C} {f} {g} → curryᵖ-cong {f = f} {g = g}
   ; curryᵐ-nat   = curryᵖ-nat
   ; uncurryᵐ     = uncurryᵖ
+  ; uncurryᵐ-cong = λ {A} {B} {C} {f} {g} → uncurryᵖ-cong {f = f} {g = g}
   ; uncurryᵐ-nat = uncurryᵖ-nat
   ; curryᵐ-uncurryᵐ-iso = curryᵖ-uncurryᵖ-iso
   ; uncurryᵐ-curryᵐ-iso = uncurryᵖ-curryᵖ-iso

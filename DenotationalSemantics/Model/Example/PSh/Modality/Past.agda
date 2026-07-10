@@ -1,19 +1,32 @@
 ------------------------------------------------------------------------
--- The context modality `⟨ ρ ⟩ A` on discretely-indexed presheaves,    --
--- given the *Kripke possibility* semantics over the graded             --
--- accessibility relation on worlds:                                    --
+-- The context modality `⟨ ρ ⟩ A` on setoid-valued presheaves, with the --
+-- *Kripke possibility* semantics over the graded accessibility relation --
+-- on worlds. An element of `⟨ ρ ⟩ A` at a world `w` is a bundle          --
 --                                                                    --
---   carrier (⟨ ρ ⟩ᵒ A) w  =  Σ[ w' ∈ W ] (w' ⊑ʳ[ ρ ] w) × carrier A w'  --
+--   mk⟨⟩ (acc : wᵖ ⊑ʳ[ ρ ] w) (val : carrier A wᵖ)                       --
 --                                                                    --
--- i.e. `⟨ ρ ⟩ A` holds at `w` when there is some *past* world `w'`,    --
--- reachable to `w` by spending the resource grade `ρ`, at which `A`    --
--- holds. This is a lax graded monad (unit `η`, multiplication `μ`),    --
--- packaged as an instance of `DenotationalSemantics.Model.Modality.Past`. --
+-- i.e. a *past* world `wᵖ`, reachable to `w` by spending the resource     --
+-- grade `ρ`, together with a value of `A` at that past world.             --
 --                                                                    --
--- Because the presheaves are discrete, this Σ-type is an ordinary      --
--- (non-quotiented) set. Every coherence law is either definitional or  --
--- reduces, via function extensionality, to the proof irrelevance of    --
--- the accessibility relation (`⊑ʳ-irrelevant`).                         --
+-- As the base presheaves are unit-monotone rather than discrete, this     --
+-- Σ-bundle is quotiented into the *coend* `∫^{wᵖ} (wᵖ ⊑ʳ[ ρ ] w) ×        --
+-- carrier A wᵖ`. Concretely the per-world equivalence `_≈_` is the        --
+-- equivalence closure of the generating relation `_◅_`: a bundle may be   --
+-- pushed forward along a unit-accessibility step `wᵖ ⊑ʳ[ u ] wᵖ'`,        --
+-- transporting its value along and readjusting the witness (the witness   --
+-- readjustment is free, by `⊑ʳ-irrelevant`). Taking the closure of this   --
+-- one-step relation is exactly what makes the adjunction unit `η⊣`        --
+-- natural in the worlds: `η⊣` names the past world by the *present* one,  --
+-- and moving the present world forward is a generating step.              --
+--                                                                    --
+-- The modality is a lax graded monad (unit `η`, multiplication `μ` with   --
+-- reversed grade order), packaged as an instance of                       --
+-- `DenotationalSemantics.Model.Modality.Past`. Because transport of a     --
+-- bundle only readjusts the witness, keeping the past world and value     --
+-- fixed, almost every coherence law is either definitional (`≈-refl`) or  --
+-- a single generating step for witness-irrelevance (`≈-mk-irr`). The one  --
+-- exception is the congruence of `μ`, which folds a value-level chain     --
+-- through the fixed-outer-witness map `postμ`.                            --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -23,6 +36,12 @@ module DenotationalSemantics.Model.Example.PSh.Modality.Past (GS : GradeSystem) 
 
 open import Data.Product
 
+open import Relation.Binary.Core using (_=[_]⇒_)
+open import Relation.Binary.Construct.Closure.Equivalence
+  using (EqClosure; return; gmap; gfold)
+  renaming (reflexive to eq-refl; symmetric to eq-sym; transitive to eq-trans;
+            isEquivalence to eq-isEquivalence)
+
 open import Util.Equality
 
 open GradeSystem GS using (RGrade)
@@ -30,102 +49,180 @@ open Grade RGrade renaming (Carrier to R)
 open World Wld
 open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 
--- two-sided monotonicity of `·`
+-- two-sided monotonicity of `·` derived from the one-sided ones
 
 ·-mono-≾ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≾ ρ₁' → ρ₂ ≾ ρ₂' → ρ₁ · ρ₂ ≾ ρ₁' · ρ₂'
 ·-mono-≾ p q = ≾-trans (·-monoˡ-≾ p) (·-monoʳ-≾ q)
+
+-- Composition of a graded step with a unit step, collapsing `ρ ·ᵣ uᵣ`
+-- back to `ρ`.
+
+⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑ʳ[ ρ ] w' → w' ⊑ʳ[ u ] w'' → w ⊑ʳ[ ρ ] w''
+⊑ρ∘ᵘ {ρ} q r = ⊑ʳ-mono (≾-reflexive (·-identityʳ ρ)) (⊑ʳ-trans q r)
+
+-- The possibility bundle: a Kripke-possibility element of `⟨ ρ ⟩ A` at `w`.
+
+record ⟨_⟩ᶜ (ρ : R) (A : PSh) (w : W) : Set where
+  constructor mk⟨⟩
+  field
+    {wᵖ} : W
+    acc  : wᵖ ⊑ʳ[ ρ ] w
+    val  : carrier A wᵖ
+
+open ⟨_⟩ᶜ public
+
+-- The coend generating relation: push the past world forward along a
+-- unit step, transporting the value. The witnesses `acc` play no role
+-- (they are proof irrelevant), so the relation records only the unit
+-- step between past worlds and the value equation it induces.
+
+_◅_ : ∀ {ρ A w} → ⟨ ρ ⟩ᶜ A w → ⟨ ρ ⟩ᶜ A w → Set
+_◅_ {A = A} e e' = Σ[ s ∈ wᵖ e ⊑ʳ[ u ] wᵖ e' ] _≈_ A (transport A s (val e)) (val e')
 
 -- STRUCTURE
 
 -- Functor
 
 ⟨_⟩ᵒ : R → PSh → PSh
-⟨ ρ ⟩ᵒ A = psh (λ w → Σ[ w' ∈ W ] (w' ⊑ʳ[ ρ ] w) × carrier A w')
+⟨ ρ ⟩ᵒ A = record
+  { carrier         = ⟨ ρ ⟩ᶜ A
+  ; _≈_             = λ {w} → EqClosure (_◅_ {ρ} {A} {w})
+  ; ≈-refl          = λ {w} {x} → eq-refl (_◅_ {ρ} {A} {w}) {x}
+  ; ≈-sym           = λ {w} {x} {y} → eq-sym (_◅_ {ρ} {A} {w}) {x} {y}
+  ; ≈-trans         = λ {w} {x} {y} {z} → eq-trans (_◅_ {ρ} {A} {w}) {x} {y} {z}
+  ; transport       = λ t e → mk⟨⟩ (⊑ρ∘ᵘ (acc e) t) (val e)
+  ; transport-cong  = λ t e → gmap (λ z → mk⟨⟩ (⊑ρ∘ᵘ (acc z) t) (val z)) (λ st → st) e
+  ; transport-refl  = λ e → return (⊑ʳ-refl , transport-refl A (val e))
+  ; transport-trans = λ p q e → return (⊑ʳ-refl , transport-refl A (val e))
+  }
+
+-- Two bundles with the same past world and value are `≈`-equal
+-- irrespective of their accessibility witnesses.
+
+≈-mk-irr : ∀ {ρ A w v} (p q : v ⊑ʳ[ ρ ] w) (x : carrier A v)
+         → _≈_ (⟨ ρ ⟩ᵒ A) (mk⟨⟩ p x) (mk⟨⟩ q x)
+≈-mk-irr {A = A} p q x = return (⊑ʳ-refl , transport-refl A x)
 
 ⟨_⟩ᶠ : ∀ {A B} → (ρ : R) → A →ᵖ B → ⟨ ρ ⟩ᵒ A →ᵖ ⟨ ρ ⟩ᵒ B
-⟨ ρ ⟩ᶠ f = pmap (λ { (w' , p , x) → w' , p , app f x })
+⟨_⟩ᶠ {A} {B} ρ f = pmap
+  (λ e → mk⟨⟩ (acc e) (app f (val e)))
+  (gmap (λ e → mk⟨⟩ (acc e) (app f (val e)))
+        (λ {a} → λ { (s , eq) → s , ≈-trans B (≈-sym B (nat f s (val a))) (app-cong f eq) }))
+  (λ t e → ≈-refl (⟨ ρ ⟩ᵒ B))
 
 -- Monotonicity for gradings (covariant: the context modality is Σ-shaped)
 
 ⟨⟩-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → ⟨ ρ₁ ⟩ᵒ A →ᵖ ⟨ ρ₂ ⟩ᵒ A
-⟨⟩-≤ p = pmap (λ { (w' , q , x) → w' , ⊑ʳ-mono p q , x })
+⟨⟩-≤ {A} l = pmap
+  (λ e → mk⟨⟩ (⊑ʳ-mono l (acc e)) (val e))
+  (gmap (λ e → mk⟨⟩ (⊑ʳ-mono l (acc e)) (val e)) (λ st → st))
+  (λ t e → ≈-mk-irr _ _ (val e))
 
 -- Unit
 
 η : ∀ {A} → A →ᵖ ⟨ u ⟩ᵒ A
-η = pmap (λ {w} x → w , ⊑ʳ-refl , x)
+η {A} = pmap
+  (λ x → mk⟨⟩ ⊑ʳ-refl x)
+  (λ {w} {x} {y} e → return (⊑ʳ-refl , ≈-trans A (transport-refl A x) e))
+  (λ {w} {w'} t x → eq-sym (_◅_ {u} {A} {w'}) (return (t , ≈-refl A)))
 
 -- Multiplication (note the reversed grade order)
 
+μ-app : ∀ {A ρ₁ ρ₂ w} → ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ A) w → ⟨ ρ₂ · ρ₁ ⟩ᶜ A w
+μ-app e = mk⟨⟩ (⊑ʳ-trans (acc (val e)) (acc e)) (val (val e))
+
+-- `μ` with a fixed outer witness, used to fold `μ`'s congruence chain
+
+postμ : ∀ {A ρ₁ ρ₂ v w} → v ⊑ʳ[ ρ₁ ] w → ⟨ ρ₂ ⟩ᶜ A v → ⟨ ρ₂ · ρ₁ ⟩ᶜ A w
+postμ q X = mk⟨⟩ (⊑ʳ-trans (acc X) q) (val X)
+
+postμ-cong : ∀ {A ρ₁ ρ₂ v w} (q : v ⊑ʳ[ ρ₁ ] w) {X Y : ⟨ ρ₂ ⟩ᶜ A v}
+           → _≈_ (⟨ ρ₂ ⟩ᵒ A) X Y → _≈_ (⟨ ρ₂ · ρ₁ ⟩ᵒ A) (postμ q X) (postμ q Y)
+postμ-cong q = gmap (postμ q) (λ st → st)
+
+μ-cong : ∀ {A ρ₁ ρ₂ w} {E E' : ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ A) w}
+       → _≈_ (⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A)) E E'
+       → _≈_ (⟨ ρ₂ · ρ₁ ⟩ᵒ A) (μ-app E) (μ-app E')
+μ-cong {A} {ρ₁} {ρ₂} {w} = gfold (eq-isEquivalence (_◅_ {ρ₂ · ρ₁} {A} {w})) μ-app step
+  where
+    step : _◅_ {ρ₁} {⟨ ρ₂ ⟩ᵒ A} {w} =[ μ-app ]⇒ _≈_ (⟨ ρ₂ · ρ₁ ⟩ᵒ A)
+    step {E} {E'} (s , c) = ≈-trans (⟨ ρ₂ · ρ₁ ⟩ᵒ A)
+      (≈-mk-irr (⊑ʳ-trans (acc (val E)) (acc E))
+                (⊑ʳ-trans (⊑ρ∘ᵘ (acc (val E)) s) (acc E'))
+                (val (val E)))
+      (postμ-cong (acc E') c)
+
 μ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A) →ᵖ ⟨ ρ₂ · ρ₁ ⟩ᵒ A
-μ = pmap (λ { (w₁ , p₁ , w₂ , p₂ , x) → w₂ , ⊑ʳ-trans p₂ p₁ , x })
+μ = pmap μ-app μ-cong (λ t e → ≈-mk-irr _ _ (val (val e)))
 
 
 -- PROPERTIES
 
 -- ⟨_⟩ is functorial
 
-⟨⟩-idᵖ : ∀ {A ρ} → ⟨ ρ ⟩ᶠ (idᵖ {A = A}) ≡ idᵖ
-⟨⟩-idᵖ = →ᵖ-ext (λ { (w' , p , x) → refl })
+⟨⟩-idᵖ : ∀ {A ρ} → ⟨ ρ ⟩ᶠ (idᵖ {A}) ≈ᵖ idᵖ
+⟨⟩-idᵖ {A} {ρ} e = ≈-refl (⟨ ρ ⟩ᵒ A)
 
 ⟨⟩-∘ᵖ : ∀ {A B C ρ} → (g : B →ᵖ C) → (f : A →ᵖ B)
-      → ⟨ ρ ⟩ᶠ (g ∘ᵖ f) ≡ ⟨ ρ ⟩ᶠ g ∘ᵖ ⟨ ρ ⟩ᶠ f
-⟨⟩-∘ᵖ g f = →ᵖ-ext (λ { (w' , p , x) → refl })
+      → ⟨ ρ ⟩ᶠ (g ∘ᵖ f) ≈ᵖ ⟨ ρ ⟩ᶠ g ∘ᵖ ⟨ ρ ⟩ᶠ f
+⟨⟩-∘ᵖ {C = C} {ρ} g f e = ≈-refl (⟨ ρ ⟩ᵒ C)
+
+-- ⟨_⟩ᶠ is a congruence
+
+⟨⟩-congᶠ : ∀ {A B ρ} {f g : A →ᵖ B} → f ≈ᵖ g → ⟨ ρ ⟩ᶠ f ≈ᵖ ⟨ ρ ⟩ᶠ g
+⟨⟩-congᶠ {B = B} {ρ} {f} e x =
+  return (⊑ʳ-refl , ≈-trans B (transport-refl B (app f (val x))) (e (val x)))
 
 -- ⟨⟩-≤ is natural
 
-⟨⟩-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B) → (p : ρ₁ ≾ ρ₂)
-         → ⟨ ρ₂ ⟩ᶠ f ∘ᵖ ⟨⟩-≤ p ≡ ⟨⟩-≤ p ∘ᵖ ⟨ ρ₁ ⟩ᶠ f
-⟨⟩-≤-nat f p = →ᵖ-ext (λ { (w' , q , x) → refl })
+⟨⟩-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B) → (l : ρ₁ ≾ ρ₂)
+         → ⟨ ρ₂ ⟩ᶠ f ∘ᵖ ⟨⟩-≤ l ≈ᵖ ⟨⟩-≤ l ∘ᵖ ⟨ ρ₁ ⟩ᶠ f
+⟨⟩-≤-nat {B = B} {ρ₂ = ρ₂} f l e = ≈-refl (⟨ ρ₂ ⟩ᵒ B)
 
 -- ⟨_⟩ is functorial in the gradings
 
-⟨⟩-≤-refl : ∀ {A ρ} → ⟨⟩-≤ {A} (≾-refl {ρ}) ≡ idᵖ
-⟨⟩-≤-refl = →ᵖ-ext (λ { (w' , p , x) → cong (λ r → w' , r , x) (⊑ʳ-irrelevant _ _) })
+⟨⟩-≤-refl : ∀ {A ρ} → ⟨⟩-≤ {A} (≾-refl {ρ}) ≈ᵖ idᵖ
+⟨⟩-≤-refl {A} e = ≈-mk-irr _ _ (val e)
 
 ⟨⟩-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-           → ⟨⟩-≤ {A} q ∘ᵖ ⟨⟩-≤ {A} p ≡ ⟨⟩-≤ (≾-trans p q)
-⟨⟩-≤-trans p q = →ᵖ-ext (λ { (w' , r , x) → cong (λ s → w' , s , x) (⊑ʳ-irrelevant _ _) })
+           → ⟨⟩-≤ {A} q ∘ᵖ ⟨⟩-≤ {A} p ≈ᵖ ⟨⟩-≤ (≾-trans p q)
+⟨⟩-≤-trans p q e = ≈-mk-irr _ _ (val e)
 
 -- η is natural
 
-⟨⟩-η-nat : ∀ {A B} → (f : A →ᵖ B) → ⟨ u ⟩ᶠ f ∘ᵖ η ≡ η ∘ᵖ f
-⟨⟩-η-nat f = →ᵖ-ext (λ x → refl)
+⟨⟩-η-nat : ∀ {A B} → (f : A →ᵖ B) → ⟨ u ⟩ᶠ f ∘ᵖ η ≈ᵖ η ∘ᵖ f
+⟨⟩-η-nat {B = B} f x = ≈-refl (⟨ u ⟩ᵒ B)
 
 -- μ is natural
 
 ⟨⟩-μ-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B)
-         → ⟨ ρ₂ · ρ₁ ⟩ᶠ f ∘ᵖ μ ≡ μ ∘ᵖ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ f)
-⟨⟩-μ-nat f = →ᵖ-ext (λ { (w₁ , p₁ , w₂ , p₂ , x) → refl })
+         → ⟨ ρ₂ · ρ₁ ⟩ᶠ f ∘ᵖ μ ≈ᵖ μ ∘ᵖ ⟨ ρ₁ ⟩ᶠ (⟨ ρ₂ ⟩ᶠ f)
+⟨⟩-μ-nat {B = B} {ρ₁} {ρ₂} f e = ≈-refl (⟨ ρ₂ · ρ₁ ⟩ᵒ B)
 
 -- μ is compatible with the gradings
 
 ⟨⟩-μ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
        → ⟨⟩-≤ {A} (·-mono-≾ q p) ∘ᵖ μ {A} {ρ₁} {ρ₂}
-       ≡ μ {A} {ρ₁'} {ρ₂'} ∘ᵖ ⟨ ρ₁' ⟩ᶠ (⟨⟩-≤ q) ∘ᵖ ⟨⟩-≤ p
-⟨⟩-μ-≤ p q =
-  →ᵖ-ext (λ { (w₁ , p₁ , w₂ , p₂ , x) →
-    cong (λ r → w₂ , r , x) (⊑ʳ-irrelevant _ _) })
+       ≈ᵖ μ {A} {ρ₁'} {ρ₂'} ∘ᵖ ⟨ ρ₁' ⟩ᶠ (⟨⟩-≤ q) ∘ᵖ ⟨⟩-≤ p
+⟨⟩-μ-≤ {A} p q e = ≈-mk-irr _ _ (val (val e))
 
 -- Graded monad laws
 
 ⟨⟩-μ∘η≡id : ∀ {A ρ}
           → μ {A} {u} {ρ} ∘ᵖ η
-          ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
-⟨⟩-μ∘η≡id = →ᵖ-ext (λ { (w' , p , x) → cong (λ r → w' , r , x) (⊑ʳ-irrelevant _ _) })
+          ≈ᵖ ⟨⟩-≤ (≾-reflexive (sym (·-identityʳ ρ)))
+⟨⟩-μ∘η≡id {A} x = ≈-mk-irr _ _ (val x)
 
 ⟨⟩-μ∘Tη≡id : ∀ {A ρ}
            → μ {A} {ρ} {u} ∘ᵖ ⟨ ρ ⟩ᶠ η
-           ≡ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
-⟨⟩-μ∘Tη≡id = →ᵖ-ext (λ { (w' , p , x) → cong (λ r → w' , r , x) (⊑ʳ-irrelevant _ _) })
+           ≈ᵖ ⟨⟩-≤ (≾-reflexive (sym (·-identityˡ ρ)))
+⟨⟩-μ∘Tη≡id {A} e = ≈-mk-irr _ _ (val e)
 
 ⟨⟩-μ∘μ≡μ∘Tμ : ∀ {A ρ₁ ρ₂ ρ₃}
             → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵖ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
-            ≡    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
+            ≈ᵖ    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
               ∘ᵖ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵖ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
-⟨⟩-μ∘μ≡μ∘Tμ =
-  →ᵖ-ext (λ { (w₁ , p₁ , w₂ , p₂ , w₃ , p₃ , x) →
-    cong (λ r → w₃ , r , x) (⊑ʳ-irrelevant _ _) })
+⟨⟩-μ∘μ≡μ∘Tμ {A} e = ≈-mk-irr _ _ (val (val (val e)))
 
 
 -- Packaging the context modality up as a `Past` instance
@@ -142,6 +239,7 @@ PShPast = record
   ; μ           = λ {A} → μ {A}
   ; ⟨⟩-idᵐ      = λ {A} → ⟨⟩-idᵖ {A}
   ; ⟨⟩-∘ᵐ       = ⟨⟩-∘ᵖ
+  ; ⟨⟩-congᶠ    = λ {A} {B} {ρ} {f} {g} → ⟨⟩-congᶠ {A} {B} {ρ} {f} {g}
   ; ⟨⟩-≤-nat    = ⟨⟩-≤-nat
   ; ⟨⟩-≤-refl   = λ {A} → ⟨⟩-≤-refl {A}
   ; ⟨⟩-≤-trans  = λ {A} p q → ⟨⟩-≤-trans {A} p q

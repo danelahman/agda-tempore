@@ -65,51 +65,55 @@ record Future : Set₁ where
 
     -- [_] is functorial
 
-    []-idᵐ : ∀ {A ρ} → [ ρ ]ᶠ (idᵐ {A = A}) ≡ idᵐ
+    []-idᵐ : ∀ {A ρ} → [ ρ ]ᶠ (idᵐ {A = A}) ≈ᵐ idᵐ
     []-∘ᵐ : ∀ {A B C ρ} → (f : A →ᵐ B) → (g : B →ᵐ C)
-          → [ ρ ]ᶠ (g ∘ᵐ f) ≡ [ ρ ]ᶠ g ∘ᵐ [ ρ ]ᶠ f
+          → [ ρ ]ᶠ (g ∘ᵐ f) ≈ᵐ [ ρ ]ᶠ g ∘ᵐ [ ρ ]ᶠ f
+
+    -- [_]ᶠ is a congruence
+
+    []-congᶠ : ∀ {A B ρ} {f g : A →ᵐ B} → f ≈ᵐ g → [ ρ ]ᶠ f ≈ᵐ [ ρ ]ᶠ g
 
     -- []-≤ is natural
 
     []-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B) → (p : ρ₁ ≾ ρ₂)
-             → [ ρ₁ ]ᶠ f ∘ᵐ []-≤ {A = A} p ≡ []-≤ {A = B} p ∘ᵐ [ ρ₂ ]ᶠ f
+             → [ ρ₁ ]ᶠ f ∘ᵐ []-≤ {A = A} p ≈ᵐ []-≤ {A = B} p ∘ᵐ [ ρ₂ ]ᶠ f
 
     -- [_] is functorial in the gradings
 
-    []-≤-refl : ∀ {A ρ} → []-≤ {A} (≾-refl {ρ}) ≡ idᵐ
+    []-≤-refl : ∀ {A ρ} → []-≤ {A} (≾-refl {ρ}) ≈ᵐ idᵐ
     []-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-               → []-≤ {A} p ∘ᵐ []-≤ {A} q ≡ []-≤ {A} (≾-trans p q)
+               → []-≤ {A} p ∘ᵐ []-≤ {A} q ≈ᵐ []-≤ {A} (≾-trans p q)
 
     -- ε is natural
 
-    []-ε-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ ε ≡ ε ∘ᵐ [ u ]ᶠ f
+    []-ε-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ ε ≈ᵐ ε ∘ᵐ [ u ]ᶠ f
 
     -- δ is natural
 
     []-δ-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵐ B)
-             → [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ f) ∘ᵐ δ {A} ≡ δ {B} ∘ᵐ [ ρ₁ · ρ₂ ]ᶠ f
+             → [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ f) ∘ᵐ δ {A} ≈ᵐ δ {B} ∘ᵐ [ ρ₁ · ρ₂ ]ᶠ f
 
     -- []-monoidal is natural
 
     []-monoidal-nat : ∀ {A B C D ρ} → (f : A →ᵐ C) → (g : B →ᵐ D)
                     → [ ρ ]ᶠ (mapˣᵐ f g) ∘ᵐ []-monoidal
-                    ≡ []-monoidal ∘ᵐ mapˣᵐ ([ ρ ]ᶠ f) ([ ρ ]ᶠ g)
+                    ≈ᵐ []-monoidal ∘ᵐ mapˣᵐ ([ ρ ]ᶠ f) ([ ρ ]ᶠ g)
 
     -- δ is compatible with the gradings
 
     []-δ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
            → []-≤ {[ ρ₂ ]ᵒ A} p ∘ᵐ [ ρ₁' ]ᶠ ([]-≤ {A} q) ∘ᵐ δ {A} {ρ₁'} {ρ₂'}
-           ≡ δ {A} {ρ₁} {ρ₂} ∘ᵐ []-≤ {A} (·-mono-≾ p q)
+           ≈ᵐ δ {A} {ρ₁} {ρ₂} ∘ᵐ []-≤ {A} (·-mono-≾ p q)
 
     -- Graded comonad laws
 
     []-ε∘δ≡id : ∀ {A ρ}
               → ε {[ ρ ]ᵒ A} ∘ᵐ δ {A} {u} {ρ}
-              ≡ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
+              ≈ᵐ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
     []-Dε∘δ≡id : ∀ {A ρ}
                → [ ρ ]ᶠ (ε {A}) ∘ᵐ δ {A} {ρ} {u}
-               ≡ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
+               ≈ᵐ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
     []-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
                 → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵐ δ {A} {ρ₁ · ρ₂} {ρ₃}
-                ≡    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵐ δ {A} {ρ₁} {ρ₂ · ρ₃}
+                ≈ᵐ    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵐ δ {A} {ρ₁} {ρ₂ · ρ₃}
                   ∘ᵐ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))

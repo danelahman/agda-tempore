@@ -1,16 +1,17 @@
 ------------------------------------------------------------------------
--- Cartesian closed category structure for the models of the language. --
+-- Setoid-enriched cartesian closed category structure for the models   --
+-- of the language.                                                     --
 --                                                                    --
--- Morphism equality is plain propositional equality `≡`. Both          --
--- modalities and the effect monad are ordinary Kripke (co)limits over  --
--- a *discrete* presheaf category, so their morphism equalities are     --
--- propositional (provable from function extensionality), and `≡`       --
--- suffices.                                                            --
+-- Each hom-set carries an equivalence relation `_≈ᵐ_` of morphism       --
+-- equality, and every equational law is stated up to `_≈ᵐ_`. This is    --
+-- what lets the context (possibility) modality be realised as a coend    --
+-- (a quotient), whose morphism equality is coarser than propositional    --
+-- equality.                                                            --
 --                                                                    --
--- Beyond the core (identities, composition) we record the cartesian    --
--- closed structure (terminal, initial, binary products, exponentials)  --
--- needed to interpret the value and computation types and, in          --
--- particular, the operations and strength of the effect monad.         --
+-- Beyond the core (identities, composition, and its congruence) we      --
+-- record the cartesian closed structure (terminal, initial, binary       --
+-- products, exponentials) with the congruences needed to reason up to    --
+-- `_≈ᵐ_`.                                                              --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Category where
@@ -28,18 +29,40 @@ record Category : Set₂ where
 
   infix 20 _→ᵐ_
 
+  -- MORPHISM EQUALITY (a setoid on each hom-set)
+
+  field
+    _≈ᵐ_ : ∀ {A B} → (f g : A →ᵐ B) → Set₀
+
+    ≈ᵐ-refl  : ∀ {A B} {f : A →ᵐ B} → f ≈ᵐ f
+    ≈ᵐ-sym   : ∀ {A B} {f g : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ f
+    ≈ᵐ-trans : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+
+  infix 4 _≈ᵐ_
+
   -- IDENTITIES AND COMPOSITION
 
   field
     idᵐ : ∀ {A} → A →ᵐ A
     _∘ᵐ_ : ∀ {A B C} → B →ᵐ C → A →ᵐ B → A →ᵐ C
 
-    ∘ᵐ-identityˡ : ∀ {A B} → (f : A →ᵐ B) → idᵐ ∘ᵐ f ≡ f
-    ∘ᵐ-identityʳ : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ idᵐ ≡ f
+    ∘ᵐ-congˡ : ∀ {A B C} {g g' : B →ᵐ C} {f : A →ᵐ B}
+             → g ≈ᵐ g' → g ∘ᵐ f ≈ᵐ g' ∘ᵐ f
+    ∘ᵐ-congʳ : ∀ {A B C} {g : B →ᵐ C} {f f' : A →ᵐ B}
+             → f ≈ᵐ f' → g ∘ᵐ f ≈ᵐ g ∘ᵐ f'
+
+    ∘ᵐ-identityˡ : ∀ {A B} → (f : A →ᵐ B) → idᵐ ∘ᵐ f ≈ᵐ f
+    ∘ᵐ-identityʳ : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ idᵐ ≈ᵐ f
     ∘ᵐ-assoc : ∀ {A B C D} → (h : C →ᵐ D) → (g : B →ᵐ C) → (f : A →ᵐ B)
-             → (h ∘ᵐ g) ∘ᵐ f ≡ h ∘ᵐ (g ∘ᵐ f)
+             → (h ∘ᵐ g) ∘ᵐ f ≈ᵐ h ∘ᵐ (g ∘ᵐ f)
 
   infixr 9 _∘ᵐ_
+
+  -- two-sided congruence of composition, derived from the one-sided ones
+
+  ∘ᵐ-cong : ∀ {A B C} {g g' : B →ᵐ C} {f f' : A →ᵐ B}
+          → g ≈ᵐ g' → f ≈ᵐ f' → g ∘ᵐ f ≈ᵐ g' ∘ᵐ f'
+  ∘ᵐ-cong q p = ≈ᵐ-trans (∘ᵐ-congˡ q) (∘ᵐ-congʳ p)
 
   -- TERMINAL OBJECT
 
@@ -47,7 +70,7 @@ record Category : Set₂ where
     𝟙ᵐ : Obj
 
     terminalᵐ : ∀ {A} → A →ᵐ 𝟙ᵐ
-    terminalᵐ-unique : ∀ {A} {f : A →ᵐ 𝟙ᵐ} → f ≡ terminalᵐ
+    terminalᵐ-unique : ∀ {A} {f : A →ᵐ 𝟙ᵐ} → f ≈ᵐ terminalᵐ
 
   -- INITIAL OBJECT
 
@@ -55,7 +78,7 @@ record Category : Set₂ where
     𝟘ᵐ : Obj
 
     initialᵐ : ∀ {A} → 𝟘ᵐ →ᵐ A
-    initialᵐ-unique : ∀ {A} {f : 𝟘ᵐ →ᵐ A} → f ≡ initialᵐ
+    initialᵐ-unique : ∀ {A} {f : 𝟘ᵐ →ᵐ A} → f ≈ᵐ initialᵐ
 
   -- BINARY PRODUCTS
 
@@ -66,10 +89,13 @@ record Category : Set₂ where
     sndᵐ : ∀ {A B} → A ×ᵐ B →ᵐ B
     ⟨_,_⟩ᵐ : ∀ {A B C} → A →ᵐ B → A →ᵐ C → A →ᵐ B ×ᵐ C
 
-    ⟨⟩ᵐ-fstᵐ : ∀ {A B C} → (f : A →ᵐ B) → (g : A →ᵐ C) → fstᵐ ∘ᵐ ⟨ f , g ⟩ᵐ ≡ f
-    ⟨⟩ᵐ-sndᵐ : ∀ {A B C} → (f : A →ᵐ B) → (g : A →ᵐ C) → sndᵐ ∘ᵐ ⟨ f , g ⟩ᵐ ≡ g
+    ⟨_,_⟩ᵐ-cong : ∀ {A B C} {f f' : A →ᵐ B} {g g' : A →ᵐ C}
+                → f ≈ᵐ f' → g ≈ᵐ g' → ⟨ f , g ⟩ᵐ ≈ᵐ ⟨ f' , g' ⟩ᵐ
+
+    ⟨⟩ᵐ-fstᵐ : ∀ {A B C} → (f : A →ᵐ B) → (g : A →ᵐ C) → fstᵐ ∘ᵐ ⟨ f , g ⟩ᵐ ≈ᵐ f
+    ⟨⟩ᵐ-sndᵐ : ∀ {A B C} → (f : A →ᵐ B) → (g : A →ᵐ C) → sndᵐ ∘ᵐ ⟨ f , g ⟩ᵐ ≈ᵐ g
     ⟨⟩ᵐ-unique : ∀ {A B C} → (f : A →ᵐ B) → (g : A →ᵐ C) → (h : A →ᵐ B ×ᵐ C)
-               → fstᵐ ∘ᵐ h ≡ f → sndᵐ ∘ᵐ h ≡ g → h ≡ ⟨ f , g ⟩ᵐ
+               → fstᵐ ∘ᵐ h ≈ᵐ f → sndᵐ ∘ᵐ h ≈ᵐ g → h ≈ᵐ ⟨ f , g ⟩ᵐ
 
   infixr 23 _×ᵐ_
 
@@ -92,17 +118,19 @@ record Category : Set₂ where
     _⇒ᵐ_ : Obj → Obj → Obj
 
     curryᵐ : ∀ {A B C} → A ×ᵐ B →ᵐ C → A →ᵐ B ⇒ᵐ C
+    curryᵐ-cong : ∀ {A B C} {f g : A ×ᵐ B →ᵐ C} → f ≈ᵐ g → curryᵐ f ≈ᵐ curryᵐ g
     curryᵐ-nat : ∀ {A B C D} → (f : A →ᵐ B) → (g : B ×ᵐ C →ᵐ D)
-               → curryᵐ (g ∘ᵐ mapˣᵐ f idᵐ) ≡ curryᵐ g ∘ᵐ f
+               → curryᵐ (g ∘ᵐ mapˣᵐ f idᵐ) ≈ᵐ curryᵐ g ∘ᵐ f
 
     uncurryᵐ : ∀ {A B C} → A →ᵐ B ⇒ᵐ C → A ×ᵐ B →ᵐ C
+    uncurryᵐ-cong : ∀ {A B C} {f g : A →ᵐ B ⇒ᵐ C} → f ≈ᵐ g → uncurryᵐ f ≈ᵐ uncurryᵐ g
     uncurryᵐ-nat : ∀ {A B C D} → (f : A →ᵐ B) → (g : B →ᵐ C ⇒ᵐ D)
-                 → uncurryᵐ (g ∘ᵐ f) ≡ uncurryᵐ g ∘ᵐ mapˣᵐ f idᵐ
+                 → uncurryᵐ (g ∘ᵐ f) ≈ᵐ uncurryᵐ g ∘ᵐ mapˣᵐ f idᵐ
 
     curryᵐ-uncurryᵐ-iso : ∀ {A B C} → (f : A ×ᵐ B →ᵐ C)
-                        → uncurryᵐ (curryᵐ f) ≡ f
+                        → uncurryᵐ (curryᵐ f) ≈ᵐ f
     uncurryᵐ-curryᵐ-iso : ∀ {A B C} → (f : A →ᵐ B ⇒ᵐ C)
-                        → curryᵐ (uncurryᵐ f) ≡ f
+                        → curryᵐ (uncurryᵐ f) ≈ᵐ f
 
   infixr 22 _⇒ᵐ_
 

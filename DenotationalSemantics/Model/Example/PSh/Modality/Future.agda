@@ -1,19 +1,21 @@
 ------------------------------------------------------------------------
--- The box modality `[ ρ ] A` on discretely-indexed presheaves, given  --
--- the *Kripke necessity* semantics over the graded accessibility       --
--- relation on worlds:                                                  --
+-- The box modality `[ ρ ] A` on setoid-valued presheaves, with the    --
+-- *Kripke necessity* semantics over the graded accessibility relation  --
+-- on worlds. An element of `[ ρ ]ᵒ A` at a world `w` is an "end": a     --
+-- family of elements of `A` at every world reachable from `w` by        --
+-- spending the resource grade `ρ`, together with a naturality witness    --
+-- reconciling that family with the unit-transport of `A`. This is the    --
+-- exact shape of Base's Kripke exponential `_⇒ᶜ_`, but the only input    --
+-- is the accessibility witness (there is no argument object), so the     --
+-- bundle carries `fun` and `fun-nat` and no `fun-cong`.                  --
 --                                                                    --
---   carrier ([ ρ ]ᵒ A) w  =  ∀ {w'} → w ⊑ʳ[ ρ ] w' → carrier A w'       --
---                                                                    --
--- i.e. `[ ρ ] A` holds at `w` when `A` holds at every world reachable  --
--- from `w` by spending the resource grade `ρ`. This is a lax graded    --
--- comonad (counit `ε`, comultiplication `δ`), packaged as an instance  --
--- of `DenotationalSemantics.Model.Modality.Future`.                     --
---                                                                    --
--- Every coherence law reduces, via function extensionality, to the    --
--- proof irrelevance of the accessibility relation: the two sides       --
--- feed `A` two witnesses of the *same* accessibility fact, which are   --
--- equal by `⊑ʳ-irrelevant`.                                             --
+-- The modality is a lax graded comonad (counit `ε`, comultiplication    --
+-- `δ`), packaged as an instance of                                       --
+-- `DenotationalSemantics.Model.Modality.Future`. Every coherence law is  --
+-- a pointwise `≈` goal; the two sides feed `A` two witnesses of the      --
+-- *same* accessibility fact, reconciled by `[]-fun-irr` (proof           --
+-- irrelevance of the witnesses) and, where a transport is crossed, by    --
+-- `fun-nat`.                                                             --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -23,119 +25,115 @@ module DenotationalSemantics.Model.Example.PSh.Modality.Future (GS : GradeSystem
 
 open import Util.Equality
 
+open import Data.Product using (_,_; proj₁; proj₂)
+
 open GradeSystem GS using (RGrade)
 open Grade RGrade renaming (Carrier to R)
 open World Wld
 open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 
--- two-sided monotonicity of `·`
+-- Composition of a graded step with a unit step (and vice versa),
+-- collapsing `ρ ·ᵣ uᵣ` resp. `uᵣ ·ᵣ ρ` back to `ρ`.
 
-·-mono-≾ : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≾ ρ₁' → ρ₂ ≾ ρ₂' → ρ₁ · ρ₂ ≾ ρ₁' · ρ₂'
-·-mono-≾ p q = ≾-trans (·-monoˡ-≾ p) (·-monoʳ-≾ q)
+⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑ʳ[ ρ ] w' → w' ⊑ʳ[ u ] w'' → w ⊑ʳ[ ρ ] w''
+⊑ρ∘ᵘ {ρ} q r = ⊑ʳ-mono (≾-reflexive (·-identityʳ ρ)) (⊑ʳ-trans q r)
+
+⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑ʳ[ u ] w' → w' ⊑ʳ[ ρ ] w'' → w ⊑ʳ[ ρ ] w''
+⊑ᵘ∘ρ {ρ} p q = ⊑ʳ-mono (≾-reflexive (·-identityˡ ρ)) (⊑ʳ-trans p q)
+
+-- The box bundle: a Kripke-necessity element of `[ ρ ] A` at `w`.
+
+record [_]ᶜ (ρ : R) (A : PSh) (w : W) : Set where
+  constructor mk[]
+  field
+    fun     : ∀ {w'} → w ⊑ʳ[ ρ ] w' → carrier A w'
+    fun-nat : ∀ {w' w''} (q : w ⊑ʳ[ ρ ] w') (r : w' ⊑ʳ[ u ] w'')
+            → _≈_ A (fun (⊑ρ∘ᵘ q r)) (transport A r (fun q))
+
+open [_]ᶜ public
+
+-- The value of a box bundle is independent of the accessibility
+-- witness (up to `≈`), since witnesses are proof irrelevant.
+
+[]-fun-irr : ∀ {ρ A w w'} (F : [ ρ ]ᶜ A w) (p q : w ⊑ʳ[ ρ ] w')
+           → _≈_ A (fun F p) (fun F q)
+[]-fun-irr {A = A} F p q with ⊑ʳ-irrelevant p q
+... | refl = ≈-refl A
 
 -- STRUCTURE
 
 -- Functor
 
 [_]ᵒ : R → PSh → PSh
-[ ρ ]ᵒ A = psh (λ w → ∀ {w'} → w ⊑ʳ[ ρ ] w' → carrier A w')
+[ ρ ]ᵒ A = record
+  { carrier         = [ ρ ]ᶜ A
+  ; _≈_             = λ {w} F G → ∀ {w'} (q : w ⊑ʳ[ ρ ] w') → _≈_ A (fun F q) (fun G q)
+  ; ≈-refl          = λ q → ≈-refl A
+  ; ≈-sym           = λ e q → ≈-sym A (e q)
+  ; ≈-trans         = λ e e' q → ≈-trans A (e q) (e' q)
+  ; transport       = λ p F → mk[]
+                        (λ q → fun F (⊑ᵘ∘ρ p q))
+                        (λ q r → ≈-trans A
+                          ([]-fun-irr F (⊑ᵘ∘ρ p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑ᵘ∘ρ p q) r))
+                          (fun-nat F (⊑ᵘ∘ρ p q) r))
+  ; transport-cong  = λ p e q → e (⊑ᵘ∘ρ p q)
+  ; transport-refl  = λ F q → []-fun-irr F (⊑ᵘ∘ρ ⊑ʳ-refl q) q
+  ; transport-trans = λ p q F r → []-fun-irr F (⊑ᵘ∘ρ (⊑ᵘ-trans p q) r) (⊑ᵘ∘ρ p (⊑ᵘ∘ρ q r))
+  }
 
 [_]ᶠ : ∀ {A B} → (ρ : R) → A →ᵖ B → [ ρ ]ᵒ A →ᵖ [ ρ ]ᵒ B
-[ ρ ]ᶠ f = pmap (λ x p → app f (x p))
+[_]ᶠ {A} {B} ρ f = pmap
+  (λ F → mk[]
+    (λ q → app f (fun F q))
+    (λ q r → ≈-trans B (app-cong f (fun-nat F q r)) (nat f r (fun F q))))
+  (λ e q → app-cong f (e q))
+  (λ p F q → ≈-refl B)
 
 -- Monotonicity for gradings (contravariant: the box is ∀-shaped)
 
 []-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ A
-[]-≤ p = pmap (λ x q → x (⊑ʳ-mono p q))
+[]-≤ {A} p = pmap
+  (λ F → mk[]
+    (λ q → fun F (⊑ʳ-mono p q))
+    (λ q r → ≈-trans A
+      ([]-fun-irr F (⊑ʳ-mono p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑ʳ-mono p q) r))
+      (fun-nat F (⊑ʳ-mono p q) r)))
+  (λ e q → e (⊑ʳ-mono p q))
+  (λ p' F q → []-fun-irr F (⊑ᵘ∘ρ p' (⊑ʳ-mono p q)) (⊑ʳ-mono p (⊑ᵘ∘ρ p' q)))
 
 -- Counit
 
 ε : ∀ {A} → [ u ]ᵒ A →ᵖ A
-ε = pmap (λ x → x ⊑ʳ-refl)
+ε {A} = pmap
+  (λ F → fun F ⊑ʳ-refl)
+  (λ e → e ⊑ʳ-refl)
+  (λ p F → ≈-trans A
+    ([]-fun-irr F (⊑ᵘ∘ρ p ⊑ʳ-refl) (⊑ρ∘ᵘ ⊑ʳ-refl p))
+    (fun-nat F ⊑ʳ-refl p))
 
--- Comultiplication
+-- Comultiplication (split the accessibility witness via `⊑ʳ-trans`)
 
 δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
-δ = pmap (λ x p q → x (⊑ʳ-trans p q))
+δ {A} {ρ₁} {ρ₂} = pmap
+  (λ F → mk[]
+    (λ p → mk[]
+      (λ q → fun F (⊑ʳ-trans p q))
+      (λ q r → ≈-trans A
+        ([]-fun-irr F (⊑ʳ-trans p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑ʳ-trans p q) r))
+        (fun-nat F (⊑ʳ-trans p q) r)))
+    (λ p r s → []-fun-irr F (⊑ʳ-trans (⊑ρ∘ᵘ p r) s) (⊑ʳ-trans p (⊑ᵘ∘ρ r s))))
+  (λ e p q → e (⊑ʳ-trans p q))
+  (λ p F a s → []-fun-irr F (⊑ᵘ∘ρ p (⊑ʳ-trans a s)) (⊑ʳ-trans (⊑ᵘ∘ρ p a) s))
 
 -- Monoidality (lax): feed the shared accessibility witness to both boxes
 
-open import Data.Product using (_,_; proj₁; proj₂)
-
 []-monoidal : ∀ {A B ρ} → [ ρ ]ᵒ A ×ᵖ [ ρ ]ᵒ B →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
-[]-monoidal = pmap (λ { (x , y) p → x p , y p })
-
-
--- PROPERTIES
-
--- [_] is functorial
-
-[]-idᵖ : ∀ {A ρ} → [ ρ ]ᶠ (idᵖ {A = A}) ≡ idᵖ
-[]-idᵖ = →ᵖ-ext (λ x → refl)
-
-[]-∘ᵖ : ∀ {A B C ρ} → (f : A →ᵖ B) → (g : B →ᵖ C)
-      → [ ρ ]ᶠ (g ∘ᵖ f) ≡ [ ρ ]ᶠ g ∘ᵖ [ ρ ]ᶠ f
-[]-∘ᵖ f g = →ᵖ-ext (λ x → refl)
-
--- []-≤ is natural
-
-[]-≤-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B) → (p : ρ₁ ≾ ρ₂)
-         → [ ρ₁ ]ᶠ f ∘ᵖ []-≤ {A = A} p ≡ []-≤ {A = B} p ∘ᵖ [ ρ₂ ]ᶠ f
-[]-≤-nat f p = →ᵖ-ext (λ x → refl)
-
--- [_] is functorial in the gradings
-
-[]-≤-refl : ∀ {A ρ} → []-≤ {A} (≾-refl {ρ}) ≡ idᵖ
-[]-≤-refl = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑ʳ-irrelevant _ _))))
-
-[]-≤-trans : ∀ {A ρ ρ' ρ''} → (p : ρ ≾ ρ') → (q : ρ' ≾ ρ'')
-           → []-≤ {A} p ∘ᵖ []-≤ {A} q ≡ []-≤ {A} (≾-trans p q)
-[]-≤-trans p q = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ r → cong (λ s → x s) (⊑ʳ-irrelevant _ _))))
-
--- ε is natural
-
-[]-ε-nat : ∀ {A B} → (f : A →ᵖ B) → f ∘ᵖ ε ≡ ε ∘ᵖ [ u ]ᶠ f
-[]-ε-nat f = →ᵖ-ext (λ x → refl)
-
--- δ is natural
-
-[]-δ-nat : ∀ {A B ρ₁ ρ₂} → (f : A →ᵖ B)
-         → [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ f) ∘ᵖ δ {A} ≡ δ {B} ∘ᵖ [ ρ₁ · ρ₂ ]ᶠ f
-[]-δ-nat f = →ᵖ-ext (λ x → refl)
-
--- δ is compatible with the gradings
-
-[]-δ-≤ : ∀ {A ρ₁ ρ₂ ρ₁' ρ₂'} → (p : ρ₁ ≾ ρ₁') → (q : ρ₂ ≾ ρ₂')
-       → []-≤ {[ ρ₂ ]ᵒ A} p ∘ᵖ [ ρ₁' ]ᶠ ([]-≤ {A} q) ∘ᵖ δ {A} {ρ₁'} {ρ₂'}
-       ≡ δ {A} {ρ₁} {ρ₂} ∘ᵖ []-≤ {A} (·-mono-≾ p q)
-[]-δ-≤ p q =
-  →ᵖ-ext (λ x →
-    ifun-ext (fun-ext (λ a →
-    ifun-ext (fun-ext (λ b →
-      cong (λ r → x r) (⊑ʳ-irrelevant _ _))))))
-
--- Graded comonad laws
-
-[]-ε∘δ≡id : ∀ {A ρ}
-          → ε {[ ρ ]ᵒ A} ∘ᵖ δ {A} {u} {ρ}
-          ≡ []-≤ {A = A} (≾-reflexive (sym (·-identityˡ ρ)))
-[]-ε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ p → cong (λ r → x r) (⊑ʳ-irrelevant _ _))))
-
-[]-Dε∘δ≡id : ∀ {A ρ}
-           → [ ρ ]ᶠ (ε {A}) ∘ᵖ δ {A} {ρ} {u}
-           ≡ []-≤ {A} (≾-reflexive (sym (·-identityʳ ρ)))
-[]-Dε∘δ≡id = →ᵖ-ext (λ x → ifun-ext (fun-ext (λ a → cong (λ r → x r) (⊑ʳ-irrelevant _ _))))
-
-[]-δ∘δ≡Dδ∘δ : ∀ {A ρ₁ ρ₂ ρ₃}
-            → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵖ δ {A} {ρ₁ · ρ₂} {ρ₃}
-            ≡    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵖ δ {A} {ρ₁} {ρ₂ · ρ₃}
-              ∘ᵖ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))
-[]-δ∘δ≡Dδ∘δ =
-  →ᵖ-ext (λ x →
-    ifun-ext (fun-ext (λ c →
-    ifun-ext (fun-ext (λ d →
-    ifun-ext (fun-ext (λ b →
-      cong (λ r → x r) (⊑ʳ-irrelevant _ _))))))))
+[]-monoidal {A} {B} = pmap
+  (λ FG → mk[]
+    (λ q → fun (proj₁ FG) q , fun (proj₂ FG) q)
+    (λ q r → fun-nat (proj₁ FG) q r , fun-nat (proj₂ FG) q r))
+  (λ e q → proj₁ e q , proj₂ e q)
+  (λ p FG q → ≈-refl A , ≈-refl B)
 
 
 -- Packaging the box modality up as a `Future` instance
@@ -150,17 +148,18 @@ PShFut = record
   ; []-≤        = λ {A} → []-≤ {A}
   ; ε           = ε
   ; δ           = λ {A} → δ {A}
-  ; []-idᵐ      = λ {A} → []-idᵖ {A}
-  ; []-∘ᵐ       = []-∘ᵖ
-  ; []-≤-nat    = []-≤-nat
-  ; []-≤-refl   = λ {A} → []-≤-refl {A}
-  ; []-≤-trans  = λ {A} p q → []-≤-trans {A} p q
   ; []-monoidal = []-monoidal
-  ; []-ε-nat    = []-ε-nat
-  ; []-δ-nat    = []-δ-nat
-  ; []-monoidal-nat = λ f g → →ᵖ-ext (λ { (x , y) → refl })
-  ; []-δ-≤      = λ {A} p q → []-δ-≤ {A} p q
-  ; []-ε∘δ≡id   = λ {A} → []-ε∘δ≡id {A}
-  ; []-Dε∘δ≡id  = λ {A} → []-Dε∘δ≡id {A}
-  ; []-δ∘δ≡Dδ∘δ = λ {A} → []-δ∘δ≡Dδ∘δ {A}
+  ; []-idᵐ      = λ {A} {ρ} x q → ≈-refl A
+  ; []-∘ᵐ       = λ {A} {B} {C} {ρ} f g x q → ≈-refl C
+  ; []-congᶠ    = λ e x q → e (fun x q)
+  ; []-≤-nat    = λ {A} {B} {ρ₁} {ρ₂} f p x q → ≈-refl B
+  ; []-≤-refl   = λ x q → []-fun-irr x _ _
+  ; []-≤-trans  = λ p q x r → []-fun-irr x _ _
+  ; []-ε-nat    = λ {A} {B} f x → ≈-refl B
+  ; []-δ-nat    = λ {A} {B} f x p s → ≈-refl B
+  ; []-monoidal-nat = λ {A} {B} {C} {D} {ρ} f g x q → ≈-refl C , ≈-refl D
+  ; []-δ-≤      = λ p q x a b → []-fun-irr x _ _
+  ; []-ε∘δ≡id   = λ x s → []-fun-irr x _ _
+  ; []-Dε∘δ≡id  = λ x p → []-fun-irr x _ _
+  ; []-δ∘δ≡Dδ∘δ = λ x a b c → []-fun-irr x _ _
   }
