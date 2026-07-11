@@ -41,12 +41,19 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 ⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑[ u ] w' → w' ⊑[ ρ ] w'' → w ⊑[ ρ ] w''
 ⊑ᵘ∘ρ {ρ} p q = ⊑-mono (≾-reflexive (·-identityˡ ρ)) (⊑-trans p q)
 
+-- The underlying Kripke family of a box: a value of `A` at every world
+-- reachable from `w` by spending the resource grade `ρ`. This is exactly
+-- the (naturality-free) carrier of the box bundle `[ ρ ]ᶜ` below.
+
+[_]ᵏ : R → PSh → W → Set
+[ ρ ]ᵏ A w = ∀ {w'} → w ⊑[ ρ ] w' → carrier A w'
+
 -- The box bundle: a Kripke-necessity element of `[ ρ ] A` at `w`.
 
 record [_]ᶜ (ρ : R) (A : PSh) (w : W) : Set where
   constructor mk[]
   field
-    fun     : ∀ {w'} → w ⊑[ ρ ] w' → carrier A w'
+    fun     : [ ρ ]ᵏ A w
     fun-nat : ∀ {w' w''} (q : w ⊑[ ρ ] w') (r : w' ⊑[ u ] w'')
             → _≈_ A (fun (⊑ρ∘ᵘ q r)) (transport A r (fun q))
 
