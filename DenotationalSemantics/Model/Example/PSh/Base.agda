@@ -2,7 +2,7 @@
 -- Setoid-valued unit-monotone presheaves over the worlds `W`.          --
 --                                                                    --
 -- A presheaf is a covariant functor over the preorder of worlds       --
--- `(W, ⊑ʳ[ uᵣ ])` given by unit-graded accessibility, valued in        --
+-- `(W, ⊑[ uᵣ ])` given by unit-graded accessibility, valued in        --
 -- setoids: each world carries a set `carrier` together with a per-      --
 -- world equivalence `_≈_`. The functorial `transport` moves elements    --
 -- along unit-accessibility, respecting `_≈_` and satisfying the         --
@@ -39,8 +39,8 @@ open World Wld
 -- Composition of unit-accessibility, a genuine preorder since
 -- `uᵣ ·ᵣ uᵣ ≡ uᵣ`.
 
-⊑ᵘ-trans : ∀ {w w' w''} → w ⊑ʳ[ uᵣ ] w' → w' ⊑ʳ[ uᵣ ] w'' → w ⊑ʳ[ uᵣ ] w''
-⊑ᵘ-trans p q = ⊑ʳ-mono (≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)) (⊑ʳ-trans p q)
+⊑ᵘ-trans : ∀ {w w' w''} → w ⊑[ uᵣ ] w' → w' ⊑[ uᵣ ] w'' → w ⊑[ uᵣ ] w''
+⊑ᵘ-trans p q = ⊑-mono (≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)) (⊑-trans p q)
 
 -- Setoid-valued unit-monotone presheaves over the worlds
 
@@ -55,11 +55,11 @@ record PSh : Set₁ where
     ≈-sym      : ∀ {w} {x y : carrier w} → x ≈ y → y ≈ x
     ≈-trans    : ∀ {w} {x y z : carrier w} → x ≈ y → y ≈ z → x ≈ z
     -- functorial transport along unit-accessibility, respecting `_≈_`
-    transport  : ∀ {w w'} → w ⊑ʳ[ uᵣ ] w' → carrier w → carrier w'
-    transport-cong  : ∀ {w w'} (p : w ⊑ʳ[ uᵣ ] w') {x y : carrier w}
+    transport  : ∀ {w w'} → w ⊑[ uᵣ ] w' → carrier w → carrier w'
+    transport-cong  : ∀ {w w'} (p : w ⊑[ uᵣ ] w') {x y : carrier w}
                     → x ≈ y → transport p x ≈ transport p y
-    transport-refl  : ∀ {w} (x : carrier w) → transport ⊑ʳ-refl x ≈ x
-    transport-trans : ∀ {w w' w''} (p : w ⊑ʳ[ uᵣ ] w') (q : w' ⊑ʳ[ uᵣ ] w'') (x : carrier w)
+    transport-refl  : ∀ {w} (x : carrier w) → transport ⊑-refl x ≈ x
+    transport-trans : ∀ {w w' w''} (p : w ⊑[ uᵣ ] w') (q : w' ⊑[ uᵣ ] w'') (x : carrier w)
                     → transport (⊑ᵘ-trans p q) x ≈ transport q (transport p x)
 
 open PSh public
@@ -67,9 +67,9 @@ open PSh public
 -- Transport is independent of the accessibility witness (up to `≈`),
 -- since witnesses are proof irrelevant.
 
-transport-irr : ∀ {A : PSh} {w w'} (p q : w ⊑ʳ[ uᵣ ] w') (x : carrier A w)
+transport-irr : ∀ {A : PSh} {w w'} (p q : w ⊑[ uᵣ ] w') (x : carrier A w)
               → _≈_ A (transport A p x) (transport A q x)
-transport-irr {A} p q x with ⊑ʳ-irrelevant p q
+transport-irr {A} p q x with ⊑-irrelevant p q
 ... | refl = ≈-refl A
 
 -- Maps of presheaves: natural transformations respecting `_≈_`.
@@ -79,7 +79,7 @@ record _→ᵖ_ (A B : PSh) : Set where
   field
     app      : ∀ {w} → carrier A w → carrier B w
     app-cong : ∀ {w} {x y : carrier A w} → _≈_ A x y → _≈_ B (app x) (app y)
-    nat      : ∀ {w w'} (p : w ⊑ʳ[ uᵣ ] w') (x : carrier A w)
+    nat      : ∀ {w w'} (p : w ⊑[ uᵣ ] w') (x : carrier A w)
              → _≈_ B (app (transport A p x)) (transport B p (app x))
 
 open _→ᵖ_ public
@@ -230,10 +230,10 @@ sndᵖ {A} {B} = pmap proj₂ (λ e → proj₂ e) (λ p x → ≈-refl B)
 record _⇒ᶜ_ (A B : PSh) (w : W) : Set where
   constructor mk⇒
   field
-    fun      : ∀ {w'} → w ⊑ʳ[ uᵣ ] w' → carrier A w' → carrier B w'
-    fun-cong : ∀ {w'} (p : w ⊑ʳ[ uᵣ ] w') {a a' : carrier A w'}
+    fun      : ∀ {w'} → w ⊑[ uᵣ ] w' → carrier A w' → carrier B w'
+    fun-cong : ∀ {w'} (p : w ⊑[ uᵣ ] w') {a a' : carrier A w'}
              → _≈_ A a a' → _≈_ B (fun p a) (fun p a')
-    fun-nat  : ∀ {w' w''} (q : w ⊑ʳ[ uᵣ ] w') (r : w' ⊑ʳ[ uᵣ ] w'') (a : carrier A w')
+    fun-nat  : ∀ {w' w''} (q : w ⊑[ uᵣ ] w') (r : w' ⊑[ uᵣ ] w'') (a : carrier A w')
              → _≈_ B (fun (⊑ᵘ-trans q r) (transport A r a)) (transport B r (fun q a))
 
 open _⇒ᶜ_ public
@@ -243,9 +243,9 @@ infix 20 _⇒ᶜ_
 -- The value of a Kripke function is independent of the accessibility
 -- witness (up to `≈`), since witnesses are proof irrelevant.
 
-fun-irr : ∀ {A B w w'} (F : (A ⇒ᶜ B) w) (p q : w ⊑ʳ[ uᵣ ] w') (a : carrier A w')
+fun-irr : ∀ {A B w w'} (F : (A ⇒ᶜ B) w) (p q : w ⊑[ uᵣ ] w') (a : carrier A w')
         → _≈_ B (fun F p a) (fun F q a)
-fun-irr {B = B} F p q a with ⊑ʳ-irrelevant p q
+fun-irr {B = B} F p q a with ⊑-irrelevant p q
 ... | refl = ≈-refl B
 
 infixr 22 _⇒ᵖ_
@@ -253,7 +253,7 @@ infixr 22 _⇒ᵖ_
 _⇒ᵖ_ : PSh → PSh → PSh
 A ⇒ᵖ B = record
   { carrier         = A ⇒ᶜ B
-  ; _≈_             = λ {w} F G → ∀ {w'} (p : w ⊑ʳ[ uᵣ ] w') (a : carrier A w')
+  ; _≈_             = λ {w} F G → ∀ {w'} (p : w ⊑[ uᵣ ] w') (a : carrier A w')
                     → _≈_ B (fun F p a) (fun G p a)
   ; ≈-refl          = λ p a → ≈-refl B
   ; ≈-sym           = λ e p a → ≈-sym B (e p a)
@@ -265,7 +265,7 @@ A ⇒ᵖ B = record
                           (fun-irr F (⊑ᵘ-trans p (⊑ᵘ-trans q r)) (⊑ᵘ-trans (⊑ᵘ-trans p q) r) (transport A r a))
                           (fun-nat F (⊑ᵘ-trans p q) r a))
   ; transport-cong  = λ p e q a → e (⊑ᵘ-trans p q) a
-  ; transport-refl  = λ F p a → fun-irr F (⊑ᵘ-trans ⊑ʳ-refl p) p a
+  ; transport-refl  = λ F p a → fun-irr F (⊑ᵘ-trans ⊑-refl p) p a
   ; transport-trans = λ p q F r a →
                         fun-irr F (⊑ᵘ-trans (⊑ᵘ-trans p q) r) (⊑ᵘ-trans p (⊑ᵘ-trans q r)) a
   }
@@ -283,21 +283,21 @@ curryᵖ {A} {B} {C} f = pmap
 
 uncurryᵖ : ∀ {A B C} → A →ᵖ B ⇒ᵖ C → A ×ᵖ B →ᵖ C
 uncurryᵖ {A} {B} {C} g = pmap
-  (λ x → fun (app g (proj₁ x)) ⊑ʳ-refl (proj₂ x))
+  (λ x → fun (app g (proj₁ x)) ⊑-refl (proj₂ x))
   (λ {w} {x} {y} e → ≈-trans C
-    (app-cong g (proj₁ e) ⊑ʳ-refl (proj₂ x))
-    (fun-cong (app g (proj₁ y)) ⊑ʳ-refl (proj₂ e)))
+    (app-cong g (proj₁ e) ⊑-refl (proj₂ x))
+    (fun-cong (app g (proj₁ y)) ⊑-refl (proj₂ e)))
   (λ p → λ { (a , b) → ≈-trans C
-    (nat g p a ⊑ʳ-refl (transport B p b))
+    (nat g p a ⊑-refl (transport B p b))
     (≈-trans C
-      (fun-irr (app g a) (⊑ᵘ-trans p ⊑ʳ-refl) (⊑ᵘ-trans ⊑ʳ-refl p) (transport B p b))
-      (fun-nat (app g a) ⊑ʳ-refl p b)) })
+      (fun-irr (app g a) (⊑ᵘ-trans p ⊑-refl) (⊑ᵘ-trans ⊑-refl p) (transport B p b))
+      (fun-nat (app g a) ⊑-refl p b)) })
 
 curryᵖ-cong : ∀ {A B C} {f g : A ×ᵖ B →ᵖ C} → f ≈ᵖ g → curryᵖ f ≈ᵖ curryᵖ g
 curryᵖ-cong {A} e a p b = e (transport A p a , b)
 
 uncurryᵖ-cong : ∀ {A B C} {f g : A →ᵖ B ⇒ᵖ C} → f ≈ᵖ g → uncurryᵖ f ≈ᵖ uncurryᵖ g
-uncurryᵖ-cong e x = e (proj₁ x) ⊑ʳ-refl (proj₂ x)
+uncurryᵖ-cong e x = e (proj₁ x) ⊑-refl (proj₂ x)
 
 curryᵖ-nat : ∀ {A B C D} → (f : A →ᵖ B) → (g : B ×ᵖ C →ᵖ D)
            → curryᵖ (g ∘ᵖ ⟨ f ∘ᵖ fstᵖ , idᵖ ∘ᵖ sndᵖ ⟩ᵖ) ≈ᵖ curryᵖ g ∘ᵖ f
@@ -312,8 +312,8 @@ curryᵖ-uncurryᵖ-iso {A} {B} f x = app-cong f (transport-refl A (proj₁ x) ,
 
 uncurryᵖ-curryᵖ-iso : ∀ {A B C} → (g : A →ᵖ B ⇒ᵖ C) → curryᵖ (uncurryᵖ g) ≈ᵖ g
 uncurryᵖ-curryᵖ-iso {C = C} g a p b = ≈-trans C
-  (nat g p a ⊑ʳ-refl b)
-  (fun-irr (app g a) (⊑ᵘ-trans p ⊑ʳ-refl) p b)
+  (nat g p a ⊑-refl b)
+  (fun-irr (app g a) (⊑ᵘ-trans p ⊑-refl) p b)
 
 -- Packaging presheaves up as a setoid-enriched cartesian closed category
 

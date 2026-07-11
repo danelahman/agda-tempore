@@ -4,9 +4,16 @@
 -- monadic lock-modality on contexts in Fitch-style modal calculi.      --
 --                                                                    --
 -- The modality is a *lax* graded monad: unit `η` and multiplication   --
--- `μ`, but no inverses. Concretely it is realised as Kripke            --
--- possibility (a Σ-type over accessible *past* worlds). Laws are        --
--- stated up to propositional equality `≡`.                             --
+-- `μ`. Concretely it is realised as Kripke possibility (a Σ-type over  --
+-- accessible *past* worlds). Laws are stated up to the categorical     --
+-- equality `≈ᵐ`.                                                        --
+--                                                                    --
+-- At the *unit* resource grade the unit is additionally an             --
+-- isomorphism: a unit-graded counit `εᵘ : ⟨ u ⟩ᵒ A →ᵐ A` splits `η`,   --
+-- so `⟨ u ⟩ᵒ A ≅ A`. This is dual to the box modality's unit-graded    --
+-- unit `ηᵘ`, and combined with the graded adjunction `⟨ ρ ⟩ ⊣ [ ρ ]`   --
+-- it is what interprets using a variable once the resources to its     --
+-- right sum to the unit grade.                                         --
 --                                                                    --
 -- Note on the grade order: `μ` reverses the multiplication order,     --
 --   μ : ⟨ ρ₁ ⟩ (⟨ ρ₂ ⟩ A) →ᵐ ⟨ ρ₂ · ρ₁ ⟩ A ,                          --
@@ -54,6 +61,10 @@ record Past : Set₁ where
     -- Multiplication (note the reversed grade order, see the header)
 
     μ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A) →ᵐ ⟨ ρ₂ · ρ₁ ⟩ᵒ A
+
+    -- Unit-graded counit: the inverse of the unit `η` at grade `u`.
+
+    εᵘ : ∀ {A} → ⟨ u ⟩ᵒ A →ᵐ A
 
     -- PROPERTIES
 
@@ -105,3 +116,12 @@ record Past : Set₁ where
                 → μ {A} {ρ₂ · ρ₁} {ρ₃} ∘ᵐ μ {⟨ ρ₃ ⟩ᵒ A} {ρ₁} {ρ₂}
                 ≈ᵐ    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
                   ∘ᵐ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
+
+    -- εᵘ is natural
+
+    εᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ εᵘ ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ f
+
+    -- εᵘ and the unit η are mutually inverse (so `⟨ u ⟩ᵒ A ≅ A`)
+
+    ⟨⟩-εᵘ∘η≡id : ∀ {A} → εᵘ {A} ∘ᵐ η {A} ≈ᵐ idᵐ
+    ⟨⟩-η∘εᵘ≡id : ∀ {A} → η {A} ∘ᵐ εᵘ {A} ≈ᵐ idᵐ

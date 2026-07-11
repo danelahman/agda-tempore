@@ -179,9 +179,9 @@ w ⊑ᵗ[ P ] w' =
 ticks : World traces-up-to-subtrace
 ticks = record
   { W             = ℕ
-  ; _⊑ʳ[_]_       = _⊑ᵗ[_]_
-  ; ⊑ʳ-refl       = ⊑ᵗ-refl
-  ; ⊑ʳ-trans      = λ {P} {Q} → ⊑ᵗ-trans {P} {Q}
-  ; ⊑ʳ-mono       = λ {P} {Q} → ⊑ᵗ-mono {P} {Q}
-  ; ⊑ʳ-irrelevant = λ {P} → ⊑ᵗ-irrelevant {P}
+  ; _⊑[_]_       = _⊑ᵗ[_]_
+  ; ⊑-refl       = ⊑ᵗ-refl
+  ; ⊑-trans      = λ {P} {Q} → ⊑ᵗ-trans {P} {Q}
+  ; ⊑-mono       = λ {P} {Q} → ⊑ᵗ-mono {P} {Q}
+  ; ⊑-irrelevant = λ {P} → ⊑ᵗ-irrelevant {P}
   }

@@ -5,7 +5,7 @@
 -- Worlds are time points `ℕ`. A left-sided resource grade `[ n ,+∞⟩`   --
 -- ("at least `n` ticks") reaches every world at least `n` ticks ahead:  --
 --                                                                    --
---   w ⊑ʳ[ [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                             --
+--   w ⊑[ [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                             --
 --                                                                    --
 -- Multiplying grades (`·ₒ`) adds the lower bounds, so composing two     --
 -- accessibilities advances the world by the sum of their ticks.         --
@@ -59,9 +59,9 @@ w ⊑ᵗ[ [ n ,+∞⟩ ] w' = n + w ≤ w'
 ticks : World left-sided-intervals
 ticks = record
   { W             = ℕ
-  ; _⊑ʳ[_]_       = _⊑ᵗ[_]_
-  ; ⊑ʳ-refl       = ⊑ᵗ-refl
-  ; ⊑ʳ-trans      = ⊑ᵗ-trans
-  ; ⊑ʳ-mono       = ⊑ᵗ-mono
-  ; ⊑ʳ-irrelevant = ⊑ᵗ-irrelevant
+  ; _⊑[_]_       = _⊑ᵗ[_]_
+  ; ⊑-refl       = ⊑ᵗ-refl
+  ; ⊑-trans      = ⊑ᵗ-trans
+  ; ⊑-mono       = ⊑ᵗ-mono
+  ; ⊑-irrelevant = ⊑ᵗ-irrelevant
   }

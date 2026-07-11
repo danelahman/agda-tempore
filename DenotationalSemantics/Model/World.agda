@@ -9,7 +9,7 @@
 -- structure the frame provides is a single family of preorders on      --
 -- worlds:                                                              --
 --                                                                    --
---   * `_⊑ʳ[ ρ ]_`, graded by the *resource* grades `ρ : R`, driving    --
+--   * `_⊑[ ρ ]_`, graded by the *resource* grades `ρ : R`, driving    --
 --     the box and context modalities (Kripke necessity / possibility)  --
 --     and the world-movement of the graded effect monad.               --
 --                                                                    --
@@ -19,7 +19,7 @@
 -- `mapᵉ (op-grade op)` resources, matching the box `[ mapᵉ (op-grade   --
 -- op) ]` that the calculus's operations and handlers use. So no        --
 -- separate effect-graded accessibility is needed — the worlds may      --
--- themselves carry as much history as desired, and `_⊑ʳ[_]_` relates   --
+-- themselves carry as much history as desired, and `_⊑[_]_` relates   --
 -- those worlds.                                                        --
 --                                                                    --
 -- The family has the natural laws that make the (co)monad / monad      --
@@ -45,7 +45,7 @@ open Grade RG using () renaming
 
 record World : Set₁ where
 
-  infix 5 _⊑ʳ[_]_
+  infix 5 _⊑[_]_
 
   field
 
@@ -55,14 +55,14 @@ record World : Set₁ where
     W : Set₀
 
     -- the resource-grade-indexed accessibility relation
-    _⊑ʳ[_]_ : W → R → W → Set₀
+    _⊑[_]_ : W → R → W → Set₀
 
     -- PROPERTIES
 
     -- resource accessibility is a graded preorder
 
-    ⊑ʳ-refl : ∀ {w} → w ⊑ʳ[ uᵣ ] w
-    ⊑ʳ-trans : ∀ {ρ₁ ρ₂ w w' w''}
-            → w ⊑ʳ[ ρ₁ ] w' → w' ⊑ʳ[ ρ₂ ] w'' → w ⊑ʳ[ ρ₁ ·ᵣ ρ₂ ] w''
-    ⊑ʳ-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑ʳ[ ρ₁ ] w' → w ⊑ʳ[ ρ₂ ] w'
-    ⊑ʳ-irrelevant : ∀ {ρ w w'} → (p q : w ⊑ʳ[ ρ ] w') → p ≡ q
+    ⊑-refl : ∀ {w} → w ⊑[ uᵣ ] w
+    ⊑-trans : ∀ {ρ₁ ρ₂ w w' w''}
+            → w ⊑[ ρ₁ ] w' → w' ⊑[ ρ₂ ] w'' → w ⊑[ ρ₁ ·ᵣ ρ₂ ] w''
+    ⊑-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑[ ρ₁ ] w' → w ⊑[ ρ₂ ] w'
+    ⊑-irrelevant : ∀ {ρ w w'} → (p q : w ⊑[ ρ ] w') → p ≡ q

@@ -93,9 +93,9 @@ open _⊑ᵗ[_]_
 histories : World right-sided-traces
 histories = record
   { W             = Trace
-  ; _⊑ʳ[_]_       = _⊑ᵗ[_]_
-  ; ⊑ʳ-refl       = ⊑ᵗ-refl
-  ; ⊑ʳ-trans      = λ {ρ₁} {ρ₂} → ⊑ᵗ-trans {ρ₁} {ρ₂}
-  ; ⊑ʳ-mono       = λ {ρ₁} {ρ₂} → ⊑ᵗ-mono {ρ₁} {ρ₂}
-  ; ⊑ʳ-irrelevant = λ {ρ} → ⊑ᵗ-irrelevant {ρ}
+  ; _⊑[_]_       = _⊑ᵗ[_]_
+  ; ⊑-refl       = ⊑ᵗ-refl
+  ; ⊑-trans      = λ {ρ₁} {ρ₂} → ⊑ᵗ-trans {ρ₁} {ρ₂}
+  ; ⊑-mono       = λ {ρ₁} {ρ₂} → ⊑ᵗ-mono {ρ₁} {ρ₂}
+  ; ⊑-irrelevant = λ {ρ} → ⊑ᵗ-irrelevant {ρ}
   }

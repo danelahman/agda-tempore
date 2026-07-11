@@ -4,13 +4,20 @@
 -- of the comonadic □-modality on types in Fitch-style modal calculi.  --
 --                                                                    --
 -- The modality is a *lax* graded comonad: it provides a counit `ε`    --
--- and comultiplication `δ`, but no inverses. (With expiring resources --
--- the box is genuinely lax — a smaller resource budget is a strictly  --
--- stronger obligation, so `[ ρ₁ · ρ₂ ]` and `[ ρ₁ ] [ ρ₂ ]` need not  --
--- coincide.) Laws are stated up to propositional equality `≡`, and,    --
--- because the monoid laws hold only propositionally, the graded        --
--- comonad laws carry explicit `[]-≤` coercions along `·-identityˡ`,    --
--- `·-identityʳ`, and `·-assoc`.                                        --
+-- and comultiplication `δ`. (With expiring resources the box is        --
+-- genuinely lax — a smaller resource budget is a strictly stronger     --
+-- obligation, so `[ ρ₁ · ρ₂ ]` and `[ ρ₁ ] [ ρ₂ ]` need not coincide.) --
+-- Laws are stated up to the categorical equality `≈ᵐ`, and, because    --
+-- the monoid laws hold only propositionally, the graded comonad laws   --
+-- carry explicit `[]-≤` coercions along `·-identityˡ`, `·-identityʳ`,   --
+-- and `·-assoc`.                                                       --
+--                                                                    --
+-- At the *unit* resource grade the counit is additionally an           --
+-- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ u ]ᵒ A` splits `ε`, so  --
+-- `[ u ]ᵒ A ≅ A`. This is the semantic counterpart of the calculus     --
+-- being able to use a variable once the resources to its right sum to  --
+-- the unit grade, and it is dual to the possibility modality's         --
+-- unit-graded counit `εᵘ`.                                             --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -53,6 +60,10 @@ record Future : Set₁ where
     -- Comultiplication
 
     δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵐ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
+
+    -- Unit-graded unit: the inverse of the counit `ε` at grade `u`.
+
+    ηᵘ : ∀ {A} → A →ᵐ [ u ]ᵒ A
 
     -- Monoidality (lax): a boxed `A` and a boxed `B` at the same grade
     -- combine into a boxed pair. This is what lets the monad's strength
@@ -117,3 +128,12 @@ record Future : Set₁ where
                 → δ {[ ρ₃ ]ᵒ A} {ρ₁} {ρ₂} ∘ᵐ δ {A} {ρ₁ · ρ₂} {ρ₃}
                 ≈ᵐ    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵐ δ {A} {ρ₁} {ρ₂ · ρ₃}
                   ∘ᵐ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))
+
+    -- ηᵘ is natural
+
+    ηᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → [ u ]ᶠ f ∘ᵐ ηᵘ ≈ᵐ ηᵘ ∘ᵐ f
+
+    -- ηᵘ and the counit ε are mutually inverse (so `[ u ]ᵒ A ≅ A`)
+
+    []-ε∘ηᵘ≡id : ∀ {A} → ε {A} ∘ᵐ ηᵘ {A} ≈ᵐ idᵐ
+    []-ηᵘ∘ε≡id : ∀ {A} → ηᵘ {A} ∘ᵐ ε {A} ≈ᵐ idᵐ

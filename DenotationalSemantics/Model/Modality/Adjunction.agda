@@ -59,6 +59,18 @@ record Adjunction : Set₁ where
     ε⊣-nat : ∀ {A B ρ} → (f : A →ᵐ B)
            → f ∘ᵐ ε⊣ ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ ([ ρ ]ᶠ f)
 
+    -- unit and counit are compatible with the grading: transposing
+    -- along `η⊣` / `ε⊣` commutes with relaxing the grade. Because the
+    -- box is contravariant and the context modality covariant in the
+    -- grade, relaxing `ρ₁ ≾ ρ₂` on one side is matched by the functorial
+    -- action of the other modality on the same relaxation.
+
+    η⊣-≤ : ∀ {A ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
+         → []-≤ p ∘ᵐ η⊣ {A} {ρ₂} ≈ᵐ [ ρ₁ ]ᶠ (⟨⟩-≤ p) ∘ᵐ η⊣ {A} {ρ₁}
+
+    ε⊣-≤ : ∀ {A ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
+         → ε⊣ {A} {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ ε⊣ {A} {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ ([]-≤ p)
+
     -- triangle identities
 
     triangleˡ : ∀ {A ρ}

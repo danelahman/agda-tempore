@@ -6,7 +6,7 @@
 -- ("between `min` and `max` ticks") reaches exactly the worlds inside    --
 -- that window ahead:                                                    --
 --                                                                    --
---   w ⊑ʳ[ i ] w'   iff   min i + w ≤ w'   and   w' ≤ max i + w          --
+--   w ⊑[ i ] w'   iff   min i + w ≤ w'   and   w' ≤ max i + w          --
 --                                                                    --
 -- Multiplying grades (`·ᵢ`) adds the two endpoints, so composing two    --
 -- accessibilities advances the world into the summed window.            --
@@ -70,9 +70,9 @@ w ⊑ᵗ[ i ] w' = (min i + w ≤ w') × (w' ≤ max i + w)
 ticks : World two-sided-intervals
 ticks = record
   { W             = ℕ
-  ; _⊑ʳ[_]_       = _⊑ᵗ[_]_
-  ; ⊑ʳ-refl       = ⊑ᵗ-refl
-  ; ⊑ʳ-trans      = λ {ρ₁} {ρ₂} → ⊑ᵗ-trans {ρ₁} {ρ₂}
-  ; ⊑ʳ-mono       = λ {ρ₁} {ρ₂} → ⊑ᵗ-mono {ρ₁} {ρ₂}
-  ; ⊑ʳ-irrelevant = λ {ρ} → ⊑ᵗ-irrelevant {ρ}
+  ; _⊑[_]_       = _⊑ᵗ[_]_
+  ; ⊑-refl       = ⊑ᵗ-refl
+  ; ⊑-trans      = λ {ρ₁} {ρ₂} → ⊑ᵗ-trans {ρ₁} {ρ₂}
+  ; ⊑-mono       = λ {ρ₁} {ρ₂} → ⊑ᵗ-mono {ρ₁} {ρ₂}
+  ; ⊑-irrelevant = λ {ρ} → ⊑ᵗ-irrelevant {ρ}
   }

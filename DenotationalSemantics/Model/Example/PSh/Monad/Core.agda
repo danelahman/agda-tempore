@@ -13,7 +13,7 @@
 --   * `delay-node` : a delay by `τ` ticks, storing its boxed           --
 --                    continuation `[ mapᵉ (of-natᵉ τ) ]`.              --
 --                                                                    --
--- World movement uses the resource accessibility `_⊑ʳ[_]_` at the      --
+-- World movement uses the resource accessibility `_⊑[_]_` at the      --
 -- resource projection `mapᵉ` of the node's effect grade: the node      --
 -- stores the whole continuation box (nothing is discarded), which is   --
 -- what lets effect handlers fold the tree in any model, including      --
@@ -64,10 +64,10 @@ open Category PShCat using (mapˣᵐ; sndᵐ; ×ᵐ-assoc; ×ᵐ-assoc⁻¹)
 data Tˢ (A : PSh) : E → W → Set where
   leaf       : ∀ {w} → carrier A w → Tˢ A uₑ w
   op-node    : ∀ {ε w} → (op : Op) → carrier ⟦ param op ⟧ᵍ w
-             → (∀ {w'} → w ⊑ʳ[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+             → (∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
              → Tˢ A (op-grade op ·ₑ ε) w
   delay-node : ∀ {ε w} → (τ : ℕ)
-             → (∀ {w'} → w ⊑ʳ[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w')
+             → (∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w')
              → Tˢ A (of-natᵉ τ ·ₑ ε) w
   -- sub-effecting node (the semantics of `coerce`): the exact grade is
   -- kept exact on `leaf`/`op-node`/`delay-node` — which is what makes
@@ -225,13 +225,13 @@ T-μ∘η≡id = →ᵖ-ext (λ t → refl)
 -- `ε-substˢ` pushes through the operation and delay nodes
 
 ε-substˢ-op : ∀ {A ε ε' w} → (op : Op) → (v : carrier ⟦ param op ⟧ᵍ w) → (p : ε ≡ ε')
-            → (k : ∀ {w'} → w ⊑ʳ[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+            → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
             → ε-substˢ (cong (op-grade op ·ₑ_) p) (op-node op v k)
             ≡ op-node op v (λ q y → ε-substˢ p (k q y))
 ε-substˢ-op op v refl k = refl
 
 ε-substˢ-delay : ∀ {A ε ε' w} → (τ : ℕ) → (p : ε ≡ ε')
-               → (k : ∀ {w'} → w ⊑ʳ[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w')
+               → (k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w')
                → ε-substˢ (cong (of-natᵉ τ ·ₑ_) p) (delay-node τ k)
                ≡ delay-node τ (λ q → ε-substˢ p (k q))
 ε-substˢ-delay τ refl k = refl
@@ -362,25 +362,25 @@ T-μ∘μ≡μ∘Tμ = →ᵖ-ext (λ t → μˢ-assoc t)
 
 -- Coercion of a resource-accessibility witness along an equality of grades.
 
-⊑ʳ-coe : ∀ {ρ ρ' w w'} → ρ ≡ ρ' → w ⊑ʳ[ ρ ] w' → w ⊑ʳ[ ρ' ] w'
-⊑ʳ-coe e = ⊑ʳ-mono (≾ᵣ-reflexive e)
+⊑-coe : ∀ {ρ ρ' w w'} → ρ ≡ ρ' → w ⊑[ ρ ] w' → w ⊑[ ρ' ] w'
+⊑-coe e = ⊑-mono (≾ᵣ-reflexive e)
 
 -- The strength threads a box `[ mapᵉ ε ] A` along the tree: at every
--- effect step it advances the box (via `⊑ʳ-trans`), and
+-- effect step it advances the box (via `⊑-trans`), and
 -- pairs the extracted `A` with the returned `B` at the leaves.
 
 strˢ : ∀ {A B ε w}
      → carrier ([ mapᵉ ε ]ᵒ A) w → Tˢ B ε w → Tˢ (A ×ᵖ B) ε w
 strˢ box (leaf b) =
-  leaf (box (⊑ʳ-coe (sym map-uᵉ) ⊑ʳ-refl) , b)
+  leaf (box (⊑-coe (sym map-uᵉ) ⊑-refl) , b)
 strˢ box (op-node op v k) =
   op-node op v (λ q y →
-    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q y))
+    strˢ (λ r → box (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r))) (k q y))
 strˢ box (delay-node τ k) =
   delay-node τ (λ q →
-    strˢ (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q))
+    strˢ (λ r → box (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r))) (k q))
 strˢ box (sub p t) =
-  sub p (strˢ (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
+  sub p (strˢ (λ r → box (⊑-mono (map-monotoneᵉ p) r)) t)
 
 strᵀ : ∀ {A B ε} → [ mapᵉ ε ]ᵒ A ×ᵖ Tᵒ B ε →ᵖ Tᵒ (A ×ᵖ B) ε
 strᵀ = pmap (λ { (a , t) → strˢ a t })
@@ -394,13 +394,13 @@ strˢ-nat f g box (leaf b)          = refl
 strˢ-nat f g box (op-node op v k)  =
   cong (op-node op v)
     (ifun-ext (fun-ext (λ q → fun-ext (λ y →
-      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q y)))))
+      strˢ-nat f g (λ r → box (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r))) (k q y)))))
 strˢ-nat f g box (delay-node τ k)  =
   cong (delay-node τ)
     (ifun-ext (fun-ext (λ q →
-      strˢ-nat f g (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q))))
+      strˢ-nat f g (λ r → box (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r))) (k q))))
 strˢ-nat f g box (sub p t)         =
-  cong (sub p) (strˢ-nat f g (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
+  cong (sub p) (strˢ-nat f g (λ r → box (⊑-mono (map-monotoneᵉ p) r)) t)
 
 strᵀ-nat : ∀ {A A' B B' ε} → (f : A →ᵖ A') → (g : B →ᵖ B')
          → strᵀ {A'} {B'} ∘ᵖ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
@@ -416,13 +416,13 @@ strˢ-snd box (leaf b)          = refl
 strˢ-snd box (op-node op v k)  =
   cong (op-node op v)
     (ifun-ext (fun-ext (λ q → fun-ext (λ y →
-      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q y)))))
+      strˢ-snd (λ r → box (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r))) (k q y)))))
 strˢ-snd box (delay-node τ k)  =
   cong (delay-node τ)
     (ifun-ext (fun-ext (λ q →
-      strˢ-snd (λ r → box (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r))) (k q))))
+      strˢ-snd (λ r → box (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r))) (k q))))
 strˢ-snd box (sub p t)         =
-  cong (sub p) (strˢ-snd (λ r → box (⊑ʳ-mono (map-monotoneᵉ p) r)) t)
+  cong (sub p) (strˢ-snd (λ r → box (⊑-mono (map-monotoneᵉ p) r)) t)
 
 strᵀ-sndᵐ : ∀ {A B ε} → Tᶠ sndᵐ ∘ᵖ strᵀ {A} {B} {ε} ≡ sndᵐ
 strᵀ-sndᵐ = →ᵖ-ext (λ { (a , t) → strˢ-snd a t })
@@ -431,8 +431,8 @@ strᵀ-sndᵐ = →ᵖ-ext (λ { (a , t) → strˢ-snd a t })
 
 -- Unit: on a returned value the strength extracts the boxed component at
 -- the reflexive world and pairs it. Both sides produce the very same leaf
--- (the box witness `⊑ʳ-coe (sym map-uᵉ) ⊑ʳ-refl` on the left is, by
--- definition of `⊑ʳ-coe`, the `[]-≤ ∘ ε` witness on the right).
+-- (the box witness `⊑-coe (sym map-uᵉ) ⊑-refl` on the left is, by
+-- definition of `⊑-coe`, the `[]-≤ ∘ ε` witness on the right).
 
 strᵀ-ηᵀ : ∀ {A B}
         → strᵀ {A} {B} {uₑ} ∘ᵖ mapˣᵐ idᵖ ηᵀ
@@ -453,21 +453,21 @@ strˢ-assoc a b (op-node op v k)  =
   cong (op-node op v)
     (ifun-ext (fun-ext (λ q → fun-ext (λ y →
       strˢ-assoc
-        (λ r → a (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
-        (λ r → b (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
+        (λ r → a (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r)))
+        (λ r → b (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r)))
         (k q y)))))
 strˢ-assoc a b (delay-node τ k)  =
   cong (delay-node τ)
     (ifun-ext (fun-ext (λ q →
       strˢ-assoc
-        (λ r → a (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
-        (λ r → b (⊑ʳ-coe (sym map-·ᵉ) (⊑ʳ-trans (q) r)))
+        (λ r → a (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r)))
+        (λ r → b (⊑-coe (sym map-·ᵉ) (⊑-trans (q) r)))
         (k q))))
 strˢ-assoc a b (sub p t)         =
   cong (sub p)
     (strˢ-assoc
-      (λ r → a (⊑ʳ-mono (map-monotoneᵉ p) r))
-      (λ r → b (⊑ʳ-mono (map-monotoneᵉ p) r))
+      (λ r → a (⊑-mono (map-monotoneᵉ p) r))
+      (λ r → b (⊑-mono (map-monotoneᵉ p) r))
       t)
 
 strᵀ-assoc : ∀ {A B C ε}
@@ -478,11 +478,11 @@ strᵀ-assoc = →ᵖ-ext (λ { (a , b , t) → strˢ-assoc a b t })
 
 -- Multiplication: the strength commutes with the monad multiplication. The
 -- proof needs two auxiliary facts about `strˢ`: it only depends on its box
--- argument up to `⊑ʳ-irrelevant`, and it commutes with the on-the-nose grade
+-- argument up to `⊑-irrelevant`, and it commutes with the on-the-nose grade
 -- coercions `ε-substˢ` that `μˢ` inserts at every node.
 
 strˢ-cong : ∀ {A B ε w} {a a' : carrier ([ mapᵉ ε ]ᵒ A) w}
-          → (∀ {w'} (r : w ⊑ʳ[ mapᵉ ε ] w') → a r ≡ a' r)
+          → (∀ {w'} (r : w ⊑[ mapᵉ ε ] w') → a r ≡ a' r)
           → (t : Tˢ B ε w) → strˢ a t ≡ strˢ a' t
 strˢ-cong {A} {B} {ε} {w} h t =
   cong (λ (box : carrier ([ mapᵉ ε ]ᵒ A) w) → strˢ box t)
@@ -492,25 +492,25 @@ strˢ-ε-substˢ : ∀ {A B ε ε₁ w} → (p : ε ≡ ε₁)
               → (a : carrier ([ mapᵉ ε₁ ]ᵒ A) w)
               → (t : Tˢ B ε w)
               → strˢ a (ε-substˢ p t)
-              ≡ ε-substˢ p (strˢ (λ r → a (⊑ʳ-coe (cong mapᵉ p) r)) t)
-strˢ-ε-substˢ refl a t = strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _)) t
+              ≡ ε-substˢ p (strˢ (λ r → a (⊑-coe (cong mapᵉ p) r)) t)
+strˢ-ε-substˢ refl a t = strˢ-cong (λ r → cong a (⊑-irrelevant _ _)) t
 
 -- The core fact: threading the box through `μˢ` agrees with threading it
 -- once at the outer layer (splitting the box with `δ`) and then strength-ing
 -- the inner layer via `Tˢᶠ strᵀ`. Every node contributes an `ε-substˢ`
 -- coercion (from `μˢ`) that `strˢ` commutes past (`strˢ-ε-substˢ`), and the
--- box witnesses on the two sides agree up to `⊑ʳ-irrelevant` (`strˢ-cong`).
+-- box witnesses on the two sides agree up to `⊑-irrelevant` (`strˢ-cong`).
 
 strˢ-μˢ : ∀ {A B ε ε' w}
         → (a : carrier ([ mapᵉ (ε ·ₑ ε') ]ᵒ A) w)
         → (t : Tˢ (Tᵒ B ε') ε w)
         → strˢ a (μˢ t)
         ≡ μˢ (Tˢᶠ (strᵀ {A} {B} {ε'})
-               (strˢ (λ p q → a (⊑ʳ-mono (≾ᵣ-reflexive (sym map-·ᵉ)) (⊑ʳ-trans p q))) t))
+               (strˢ (λ p q → a (⊑-mono (≾ᵣ-reflexive (sym map-·ᵉ)) (⊑-trans p q))) t))
 strˢ-μˢ {ε' = ε'} a (leaf s) =
   trans (strˢ-ε-substˢ (sym (·ₑ-identityˡ ε')) a s)
         (cong (ε-substˢ (sym (·ₑ-identityˡ ε')))
-          (strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _)) s))
+          (strˢ-cong (λ r → cong a (⊑-irrelevant _ _)) s))
 strˢ-μˢ {ε' = ε'} a (op-node {ε = ε₀} op v k) =
   trans (strˢ-ε-substˢ (sym (·ₑ-assoc (op-grade op) ε₀ ε')) a
            (op-node op v (λ q y → μˢ (k q y))))
@@ -520,7 +520,7 @@ strˢ-μˢ {ε' = ε'} a (op-node {ε = ε₀} op v k) =
               trans (strˢ-μˢ _ (k q y))
                     (cong (λ z → μˢ (Tˢᶠ (strᵀ {ε = ε'}) z))
                       (strˢ-cong
-                        (λ r → ifun-ext (fun-ext (λ q'' → cong a (⊑ʳ-irrelevant _ _))))
+                        (λ r → ifun-ext (fun-ext (λ q'' → cong a (⊑-irrelevant _ _))))
                         (k q y)))))))))
 strˢ-μˢ {ε' = ε'} a (delay-node {ε = ε₀} τ k) =
   trans (strˢ-ε-substˢ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε')) a
@@ -531,13 +531,13 @@ strˢ-μˢ {ε' = ε'} a (delay-node {ε = ε₀} τ k) =
               trans (strˢ-μˢ _ (k q))
                     (cong (λ z → μˢ (Tˢᶠ (strᵀ {ε = ε'}) z))
                       (strˢ-cong
-                        (λ r → ifun-ext (fun-ext (λ q'' → cong a (⊑ʳ-irrelevant _ _))))
+                        (λ r → ifun-ext (fun-ext (λ q'' → cong a (⊑-irrelevant _ _))))
                         (k q))))))))
 strˢ-μˢ {ε' = ε'} a (sub p t) =
   trans (cong (sub (·ₑ-monoˡ-≾ₑ p)) (strˢ-μˢ _ t))
         (cong (λ z → sub (·ₑ-monoˡ-≾ₑ p) (μˢ (Tˢᶠ (strᵀ {ε = ε'}) z)))
           (strˢ-cong
-            (λ r → ifun-ext (fun-ext (λ q'' → cong a (⊑ʳ-irrelevant _ _))))
+            (λ r → ifun-ext (fun-ext (λ q'' → cong a (⊑-irrelevant _ _))))
             t))
 
 strᵀ-μᵀ : ∀ {A B ε ε'}

@@ -49,7 +49,7 @@ open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ; c
 delayᵀ : ∀ {A ε} → (τ : ℕ)
        → [ of-natʳ τ ]ᵒ (Tᵒ A ε) →ᵖ Tᵒ A (of-natᵉ τ ·ₑ ε)
 delayᵀ τ =
-  pmap (λ x → delay-node τ (λ q → x (⊑ʳ-coe map-of-natᵉ q)))
+  pmap (λ x → delay-node τ (λ q → x (⊑-coe map-of-natᵉ q)))
 
 -- An algebraic operation: its continuation box `[ mapᵉ (op-grade op) ]`
 -- is stored verbatim as the op-node's continuation.
@@ -88,7 +88,7 @@ opᵀ-algebraicity op = →ᵖ-ext (λ { (v , x) → refl })
 
 -- The delay is algebraic with respect to the strength. Both sides build the
 -- same `delay-node`; under the delay each side strengths `x` at the reached
--- world with box witnesses that agree by `⊑ʳ-irrelevant` (via `strˢ-cong`).
+-- world with box witnesses that agree by `⊑-irrelevant` (via `strˢ-cong`).
 
 strᵀ-delayᵀ-algebraicity : ∀ {A B ε} → (τ : ℕ)
   → strᵀ {A} {B} {of-natᵉ τ ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (delayᵀ {B} {ε} τ)
@@ -101,12 +101,12 @@ strᵀ-delayᵀ-algebraicity τ =
   →ᵖ-ext (λ { (a , x) →
     cong (delay-node τ)
       (ifun-ext (fun-ext (λ q →
-        strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _))
-          (x (⊑ʳ-coe map-of-natᵉ q))))) })
+        strˢ-cong (λ r → cong a (⊑-irrelevant _ _))
+          (x (⊑-coe map-of-natᵉ q))))) })
 
 -- The operation is algebraic with respect to the strength. Both sides build
 -- the same `op-node`; under it each side strengths the sub-computation with
--- box witnesses that agree by `⊑ʳ-irrelevant` (via `strˢ-cong`).
+-- box witnesses that agree by `⊑-irrelevant` (via `strˢ-cong`).
 
 strᵀ-opᵀ-algebraicity : ∀ {A B ε} → (op : Op)
   → strᵀ {A} {B} {op-grade op ·ₑ ε} ∘ᵖ mapˣᵐ idᵖ (opᵀ {B} {ε} op)
@@ -122,5 +122,5 @@ strᵀ-opᵀ-algebraicity op =
   →ᵖ-ext (λ { (a , v , boxk) →
     cong (op-node op v)
       (ifun-ext (fun-ext (λ q → fun-ext (λ y →
-        strˢ-cong (λ r → cong a (⊑ʳ-irrelevant _ _))
+        strˢ-cong (λ r → cong a (⊑-irrelevant _ _))
           (boxk q y))))) })

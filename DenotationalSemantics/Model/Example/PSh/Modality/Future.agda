@@ -35,19 +35,19 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 -- Composition of a graded step with a unit step (and vice versa),
 -- collapsing `ρ ·ᵣ uᵣ` resp. `uᵣ ·ᵣ ρ` back to `ρ`.
 
-⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑ʳ[ ρ ] w' → w' ⊑ʳ[ u ] w'' → w ⊑ʳ[ ρ ] w''
-⊑ρ∘ᵘ {ρ} q r = ⊑ʳ-mono (≾-reflexive (·-identityʳ ρ)) (⊑ʳ-trans q r)
+⊑ρ∘ᵘ : ∀ {ρ w w' w''} → w ⊑[ ρ ] w' → w' ⊑[ u ] w'' → w ⊑[ ρ ] w''
+⊑ρ∘ᵘ {ρ} q r = ⊑-mono (≾-reflexive (·-identityʳ ρ)) (⊑-trans q r)
 
-⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑ʳ[ u ] w' → w' ⊑ʳ[ ρ ] w'' → w ⊑ʳ[ ρ ] w''
-⊑ᵘ∘ρ {ρ} p q = ⊑ʳ-mono (≾-reflexive (·-identityˡ ρ)) (⊑ʳ-trans p q)
+⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑[ u ] w' → w' ⊑[ ρ ] w'' → w ⊑[ ρ ] w''
+⊑ᵘ∘ρ {ρ} p q = ⊑-mono (≾-reflexive (·-identityˡ ρ)) (⊑-trans p q)
 
 -- The box bundle: a Kripke-necessity element of `[ ρ ] A` at `w`.
 
 record [_]ᶜ (ρ : R) (A : PSh) (w : W) : Set where
   constructor mk[]
   field
-    fun     : ∀ {w'} → w ⊑ʳ[ ρ ] w' → carrier A w'
-    fun-nat : ∀ {w' w''} (q : w ⊑ʳ[ ρ ] w') (r : w' ⊑ʳ[ u ] w'')
+    fun     : ∀ {w'} → w ⊑[ ρ ] w' → carrier A w'
+    fun-nat : ∀ {w' w''} (q : w ⊑[ ρ ] w') (r : w' ⊑[ u ] w'')
             → _≈_ A (fun (⊑ρ∘ᵘ q r)) (transport A r (fun q))
 
 open [_]ᶜ public
@@ -55,9 +55,9 @@ open [_]ᶜ public
 -- The value of a box bundle is independent of the accessibility
 -- witness (up to `≈`), since witnesses are proof irrelevant.
 
-[]-fun-irr : ∀ {ρ A w w'} (F : [ ρ ]ᶜ A w) (p q : w ⊑ʳ[ ρ ] w')
+[]-fun-irr : ∀ {ρ A w w'} (F : [ ρ ]ᶜ A w) (p q : w ⊑[ ρ ] w')
            → _≈_ A (fun F p) (fun F q)
-[]-fun-irr {A = A} F p q with ⊑ʳ-irrelevant p q
+[]-fun-irr {A = A} F p q with ⊑-irrelevant p q
 ... | refl = ≈-refl A
 
 -- STRUCTURE
@@ -67,7 +67,7 @@ open [_]ᶜ public
 [_]ᵒ : R → PSh → PSh
 [ ρ ]ᵒ A = record
   { carrier         = [ ρ ]ᶜ A
-  ; _≈_             = λ {w} F G → ∀ {w'} (q : w ⊑ʳ[ ρ ] w') → _≈_ A (fun F q) (fun G q)
+  ; _≈_             = λ {w} F G → ∀ {w'} (q : w ⊑[ ρ ] w') → _≈_ A (fun F q) (fun G q)
   ; ≈-refl          = λ q → ≈-refl A
   ; ≈-sym           = λ e q → ≈-sym A (e q)
   ; ≈-trans         = λ e e' q → ≈-trans A (e q) (e' q)
@@ -77,7 +77,7 @@ open [_]ᶜ public
                           ([]-fun-irr F (⊑ᵘ∘ρ p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑ᵘ∘ρ p q) r))
                           (fun-nat F (⊑ᵘ∘ρ p q) r))
   ; transport-cong  = λ p e q → e (⊑ᵘ∘ρ p q)
-  ; transport-refl  = λ F q → []-fun-irr F (⊑ᵘ∘ρ ⊑ʳ-refl q) q
+  ; transport-refl  = λ F q → []-fun-irr F (⊑ᵘ∘ρ ⊑-refl q) q
   ; transport-trans = λ p q F r → []-fun-irr F (⊑ᵘ∘ρ (⊑ᵘ-trans p q) r) (⊑ᵘ∘ρ p (⊑ᵘ∘ρ q r))
   }
 
@@ -94,36 +94,36 @@ open [_]ᶜ public
 []-≤ : ∀ {A ρ₁ ρ₂} → ρ₁ ≾ ρ₂ → [ ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ A
 []-≤ {A} p = pmap
   (λ F → mk[]
-    (λ q → fun F (⊑ʳ-mono p q))
+    (λ q → fun F (⊑-mono p q))
     (λ q r → ≈-trans A
-      ([]-fun-irr F (⊑ʳ-mono p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑ʳ-mono p q) r))
-      (fun-nat F (⊑ʳ-mono p q) r)))
-  (λ e q → e (⊑ʳ-mono p q))
-  (λ p' F q → []-fun-irr F (⊑ᵘ∘ρ p' (⊑ʳ-mono p q)) (⊑ʳ-mono p (⊑ᵘ∘ρ p' q)))
+      ([]-fun-irr F (⊑-mono p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑-mono p q) r))
+      (fun-nat F (⊑-mono p q) r)))
+  (λ e q → e (⊑-mono p q))
+  (λ p' F q → []-fun-irr F (⊑ᵘ∘ρ p' (⊑-mono p q)) (⊑-mono p (⊑ᵘ∘ρ p' q)))
 
 -- Counit
 
 ε : ∀ {A} → [ u ]ᵒ A →ᵖ A
 ε {A} = pmap
-  (λ F → fun F ⊑ʳ-refl)
-  (λ e → e ⊑ʳ-refl)
+  (λ F → fun F ⊑-refl)
+  (λ e → e ⊑-refl)
   (λ p F → ≈-trans A
-    ([]-fun-irr F (⊑ᵘ∘ρ p ⊑ʳ-refl) (⊑ρ∘ᵘ ⊑ʳ-refl p))
-    (fun-nat F ⊑ʳ-refl p))
+    ([]-fun-irr F (⊑ᵘ∘ρ p ⊑-refl) (⊑ρ∘ᵘ ⊑-refl p))
+    (fun-nat F ⊑-refl p))
 
--- Comultiplication (split the accessibility witness via `⊑ʳ-trans`)
+-- Comultiplication (split the accessibility witness via `⊑-trans`)
 
 δ : ∀ {A ρ₁ ρ₂} → [ ρ₁ · ρ₂ ]ᵒ A →ᵖ [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A)
 δ {A} {ρ₁} {ρ₂} = pmap
   (λ F → mk[]
     (λ p → mk[]
-      (λ q → fun F (⊑ʳ-trans p q))
+      (λ q → fun F (⊑-trans p q))
       (λ q r → ≈-trans A
-        ([]-fun-irr F (⊑ʳ-trans p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑ʳ-trans p q) r))
-        (fun-nat F (⊑ʳ-trans p q) r)))
-    (λ p r s → []-fun-irr F (⊑ʳ-trans (⊑ρ∘ᵘ p r) s) (⊑ʳ-trans p (⊑ᵘ∘ρ r s))))
-  (λ e p q → e (⊑ʳ-trans p q))
-  (λ p F a s → []-fun-irr F (⊑ᵘ∘ρ p (⊑ʳ-trans a s)) (⊑ʳ-trans (⊑ᵘ∘ρ p a) s))
+        ([]-fun-irr F (⊑-trans p (⊑ρ∘ᵘ q r)) (⊑ρ∘ᵘ (⊑-trans p q) r))
+        (fun-nat F (⊑-trans p q) r)))
+    (λ p r s → []-fun-irr F (⊑-trans (⊑ρ∘ᵘ p r) s) (⊑-trans p (⊑ᵘ∘ρ r s))))
+  (λ e p q → e (⊑-trans p q))
+  (λ p F a s → []-fun-irr F (⊑ᵘ∘ρ p (⊑-trans a s)) (⊑-trans (⊑ᵘ∘ρ p a) s))
 
 -- Monoidality (lax): feed the shared accessibility witness to both boxes
 
@@ -134,6 +134,32 @@ open [_]ᶜ public
     (λ q r → fun-nat (proj₁ FG) q r , fun-nat (proj₂ FG) q r))
   (λ e q → proj₁ e q , proj₂ e q)
   (λ p FG q → ≈-refl A , ≈-refl B)
+
+
+-- Unit-graded unit (inverse of `ε` at grade `u`). It transports the
+-- value forward along the unit-accessibility witness — realisable for
+-- every world precisely because the presheaves are unit-monotone.
+
+ηᵘ : ∀ {A} → A →ᵖ [ u ]ᵒ A
+ηᵘ {A} = pmap
+  (λ x → mk[]
+    (λ p → transport A p x)
+    (λ q r → ≈-trans A (transport-irr {A} (⊑ρ∘ᵘ q r) (⊑ᵘ-trans q r) x) (transport-trans A q r x)))
+  (λ e q → transport-cong A q e)
+  (λ p x q → ≈-trans A (≈-sym A (transport-trans A p q x)) (transport-irr {A} (⊑ᵘ-trans p q) (⊑ᵘ∘ρ p q) x))
+
+-- ηᵘ is natural
+
+ηᵘ-nat : ∀ {A B} → (f : A →ᵖ B) → [ u ]ᶠ f ∘ᵖ ηᵘ ≈ᵖ ηᵘ ∘ᵖ f
+ηᵘ-nat f x q = nat f q x
+
+-- ηᵘ and the counit ε are mutually inverse
+
+[]-ε∘ηᵘ≡id : ∀ {A} → ε {A} ∘ᵖ ηᵘ {A} ≈ᵖ idᵖ
+[]-ε∘ηᵘ≡id {A} x = transport-refl A x
+
+[]-ηᵘ∘ε≡id : ∀ {A} → ηᵘ {A} ∘ᵖ ε {A} ≈ᵖ idᵖ
+[]-ηᵘ∘ε≡id {A} F p = ≈-trans A (≈-sym A (fun-nat F ⊑-refl p)) ([]-fun-irr F (⊑ρ∘ᵘ ⊑-refl p) p)
 
 
 -- Packaging the box modality up as a `Future` instance
@@ -162,4 +188,8 @@ PShFut = record
   ; []-ε∘δ≡id   = λ x s → []-fun-irr x _ _
   ; []-Dε∘δ≡id  = λ x p → []-fun-irr x _ _
   ; []-δ∘δ≡Dδ∘δ = λ x a b c → []-fun-irr x _ _
+  ; ηᵘ          = ηᵘ
+  ; ηᵘ-nat      = ηᵘ-nat
+  ; []-ε∘ηᵘ≡id  = λ {A} → []-ε∘ηᵘ≡id {A}
+  ; []-ηᵘ∘ε≡id  = λ {A} → []-ηᵘ∘ε≡id {A}
   }

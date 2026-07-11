@@ -96,9 +96,9 @@ open _⊑ʰ[_]_
 histories : World two-sided-intervals-with-∞
 histories = record
   { W             = Trace
-  ; _⊑ʳ[_]_       = _⊑ʰ[_]_
-  ; ⊑ʳ-refl       = ⊑ʰ-refl
-  ; ⊑ʳ-trans      = λ {ρ₁} {ρ₂} → ⊑ʰ-trans {ρ₁} {ρ₂}
-  ; ⊑ʳ-mono       = λ {ρ₁} {ρ₂} → ⊑ʰ-mono {ρ₁} {ρ₂}
-  ; ⊑ʳ-irrelevant = λ {ρ} → ⊑ʰ-irrelevant {ρ}
+  ; _⊑[_]_       = _⊑ʰ[_]_
+  ; ⊑-refl       = ⊑ʰ-refl
+  ; ⊑-trans      = λ {ρ₁} {ρ₂} → ⊑ʰ-trans {ρ₁} {ρ₂}
+  ; ⊑-mono       = λ {ρ₁} {ρ₂} → ⊑ʰ-mono {ρ₁} {ρ₂}
+  ; ⊑-irrelevant = λ {ρ} → ⊑ʰ-irrelevant {ρ}
   }
