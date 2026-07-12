@@ -417,6 +417,32 @@ sub-substˢ P refl t = refl
              → ε-substˢ r (sub P t) ≡ sub (subst (ε₁ ≾ₑ_) r P) t
 ε-substˢ-sub P refl t = refl
 
+-- Multiplication is natural in the value functor: `μˢ` commutes with
+-- `Tˢᶠ f` (which acts on the inner monad layer via `Tᶠ f`). At each node
+-- the equation recurses into the continuation and absorbs the grade
+-- coercion with `ε-substˢ-Tˢᶠ`.
+
+μˢ-nat-f : ∀ {A B ε ε' w} (f : A →ᵖ B) (t : Tˢ (Tᵒ A ε') ε w)
+         → μˢ (Tˢᶠ (Tᶠ f) t) ≈ᵗ Tˢᶠ f (μˢ t)
+μˢ-nat-f f (leaf s) =
+  ≡→≈ᵗ (ε-substˢ-Tˢᶠ (sym (·ₑ-identityˡ _)) f s)
+μˢ-nat-f f (op-node op v k kc kn) =
+  ≈ᵗ-trans
+    (ε-substˢ-congᵗ (sym (·ₑ-assoc _ _ _))
+      (op-≈ (≈-refl ⟦ param op ⟧ᵍ) (λ q y → μˢ-nat-f f (k q y))))
+    (≡→≈ᵗ (ε-substˢ-Tˢᶠ (sym (·ₑ-assoc _ _ _)) f _))
+μˢ-nat-f f (delay-node τ k kn) =
+  ≈ᵗ-trans
+    (ε-substˢ-congᵗ (sym (·ₑ-assoc _ _ _))
+      (delay-≈ (λ q → μˢ-nat-f f (k q))))
+    (≡→≈ᵗ (ε-substˢ-Tˢᶠ (sym (·ₑ-assoc _ _ _)) f _))
+μˢ-nat-f f (sub p t) =
+  sub-≈ (μˢ-nat-f f t)
+
+μᵀ-nat : ∀ {A B ε ε'} → (f : A →ᵖ B)
+       → μᵀ {ε = ε} {ε' = ε'} ∘ᵖ Tᶠ (Tᶠ f) ≈ᵖ Tᶠ f ∘ᵖ μᵀ
+μᵀ-nat f t = μˢ-nat-f f t
+
 -- MONAD LAWS
 
 -- First identity law

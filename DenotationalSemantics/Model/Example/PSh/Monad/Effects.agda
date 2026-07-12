@@ -123,20 +123,6 @@ strᵀ-delayᵀ-algebraicity {A} τ (a , x) =
   delay-≈ (λ q →
     strˢ-congᵗ A (λ r → []-fun-irr a _ _) (≈ᵗ-refl (fun x (⊑-coe map-of-natᵉ q))))
 
--- Exponential distributivity `X ×ᵖ (Y ⇒ᵖ Z) →ᵖ Y ⇒ᵖ (X ×ᵖ Z)`, defined
--- directly (not via `curryᵐ`/`uncurryᵐ`). Its small normal form is what keeps
--- `strᵀ-opᵀ-algebraicity` tractable: the `op-node` continuation it feeds
--- `opᵀ` reduces without unfolding a curry/uncurry cascade.
-
-expᵖ-str : ∀ {X Y Z} → X ×ᵖ (Y ⇒ᵖ Z) →ᵖ (Y ⇒ᵖ (X ×ᵖ Z))
-expᵖ-str {X} {Y} {Z} = pmap
-  (λ { (x , f) → mk⇒
-      (λ p y → transport X p x , fun f p y)
-      (λ p e → ≈-refl X , fun-cong f p e)
-      (λ q r y → transport-trans X q r x , fun-nat f q r y) })
-  (λ { (ex , ef) p y → transport-cong X p ex , ef p y })
-  (λ { p (x , f) q y → ≈-sym X (transport-trans X p q x) , ≈-refl Z })
-
 -- The operation is algebraic with respect to the strength. Both sides build
 -- the same `op-node`; under it each side strengths the sub-computation with
 -- box witnesses that agree by `[]-fun-irr` (via `strˢ-congᵗ`).

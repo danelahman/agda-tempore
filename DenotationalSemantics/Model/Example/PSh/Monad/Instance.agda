@@ -40,6 +40,7 @@ PShMonad = record
   ; T-≤                 = T-≤
   ; T-idᵐ               = Tᶠ-id
   ; T-∘ᵐ                = Tᶠ-∘
+  ; T-congᶠ             = T-congᶠ
   ; ηᵀ-nat              = ηᵀ-nat
   ; μᵀ-nat              = μᵀ-nat
   ; T-≤-nat             = T-≤-nat

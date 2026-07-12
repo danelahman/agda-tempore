@@ -132,6 +132,15 @@ record Category : Set₂ where
     uncurryᵐ-curryᵐ-iso : ∀ {A B C} → (f : A →ᵐ B ⇒ᵐ C)
                         → curryᵐ (uncurryᵐ f) ≈ᵐ f
 
+    -- The exponential's costrength `A ×ᵐ (B ⇒ᵐ C) →ᵐ B ⇒ᵐ (A ×ᵐ C)`, taken
+    -- as primitive (it is definable as `curryᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , uncurryᵐ
+    -- sndᵐ ⟩ᵐ`, but an instance may supply a computationally lighter one).
+    -- `exp-strᵐ-def` pins it to that definition.
+
+    exp-strᵐ : ∀ {A B C} → A ×ᵐ (B ⇒ᵐ C) →ᵐ B ⇒ᵐ (A ×ᵐ C)
+    exp-strᵐ-def : ∀ {A B C}
+                 → exp-strᵐ {A} {B} {C} ≈ᵐ curryᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , uncurryᵐ sndᵐ ⟩ᵐ
+
   infixr 22 _⇒ᵐ_
 
   -- evaluation and the functorial action of the exponential

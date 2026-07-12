@@ -315,6 +315,28 @@ uncurryᵖ-curryᵖ-iso {C = C} g a p b = ≈-trans C
   (nat g p a ⊑-refl b)
   (fun-irr (app g a) (⊑ᵘ-trans p ⊑-refl) p b)
 
+-- Distributivity of the exponential over the product `A ×ᵖ (B ⇒ᵖ C) →ᵖ B ⇒ᵖ (A ×ᵖ C)`
+-- (the exponential's costrength). Defined directly rather than via
+-- `curryᵖ`/`uncurryᵖ`, so its normal form is small: the Kripke function it
+-- produces just transports the `A` component and applies the `B ⇒ᵖ C` one.
+
+expᵖ-str : ∀ {A B C} → A ×ᵖ (B ⇒ᵖ C) →ᵖ (B ⇒ᵖ (A ×ᵖ C))
+expᵖ-str {A} {B} {C} = pmap
+  (λ { (a , f) → mk⇒
+      (λ p b → transport A p a , fun f p b)
+      (λ p e → ≈-refl A , fun-cong f p e)
+      (λ q r b → transport-trans A q r a , fun-nat f q r b) })
+  (λ { (ea , ef) p b → transport-cong A p ea , ef p b })
+  (λ { p (a , f) q b → ≈-sym A (transport-trans A p q a) , ≈-refl C })
+
+-- `expᵖ-str` is the costrength `curryᵖ ⟨ fstᵖ ∘ᵖ fstᵖ , uncurryᵖ sndᵖ ⟩ᵖ`
+-- (they differ only in that the latter applies the exponential at
+-- `⊑ᵘ-trans p ⊑-refl` rather than `p`, reconciled by `fun-irr`).
+
+expᵖ-str-def : ∀ {A B C}
+             → expᵖ-str {A} {B} {C} ≈ᵖ curryᵖ ⟨ fstᵖ ∘ᵖ fstᵖ , uncurryᵖ sndᵖ ⟩ᵖ
+expᵖ-str-def {A} (a , f) p b = ≈-refl A , fun-irr f p (⊑ᵘ-trans p ⊑-refl) b
+
 -- Packaging presheaves up as a setoid-enriched cartesian closed category
 
 PShCat : Category
@@ -355,4 +377,6 @@ PShCat = record
   ; uncurryᵐ-nat = uncurryᵖ-nat
   ; curryᵐ-uncurryᵐ-iso = curryᵖ-uncurryᵖ-iso
   ; uncurryᵐ-curryᵐ-iso = uncurryᵖ-curryᵖ-iso
+  ; exp-strᵐ     = expᵖ-str
+  ; exp-strᵐ-def = λ {A} {B} {C} → expᵖ-str-def {A} {B} {C}
   }

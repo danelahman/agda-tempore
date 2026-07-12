@@ -227,7 +227,7 @@ record Monad : Set₁ where
         ∘ᵐ mapˣᵐ idᵐ
             ([ mapᵉ (op-grade op) ]ᶠ
                (   map⇒ᵐ idᵐ (strᵀ {A} {B} {ε})
-                ∘ᵐ curryᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , uncurryᵐ sndᵐ ⟩ᵐ)
+                ∘ᵐ exp-strᵐ)
              ∘ᵐ []-monoidal
              ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ)
         ∘ᵐ ⟨ fstᵐ ∘ᵐ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ
