@@ -268,6 +268,58 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
 ⟨⟩-η∘εᵘ≡id {A} {w} E = eq-sym (_◅_ {u} {A} {w}) (return (acc E , ≈-refl A))
 
 
+-- STRONG MONOIDALITY: the inverse multiplication `μ⁻¹`.
+
+-- Composition of a unit step with a graded step, and the unit
+-- pre/post-composition coherences of `⊑-factor`. (Private: `⊑ᵘ∘ρ` and the
+-- coherences are also derived, under the same names, in the `Future`
+-- module.)
+
+private
+  ⊑ᵘ∘ρ : ∀ {ρ w w' w''} → w ⊑[ u ] w' → w' ⊑[ ρ ] w'' → w ⊑[ ρ ] w''
+  ⊑ᵘ∘ρ {ρ} p q = ⊑-mono (≾-reflexive (·-identityˡ ρ)) (⊑-trans p q)
+
+  factor-postcoh : ∀ {ρ₁ ρ₂ w w' w''} (t : w ⊑[ ρ₁ · ρ₂ ] w') (k : w' ⊑[ u ] w'')
+                 → ⊑-factor (⊑ρ∘ᵘ t k) ⊑[ u ] ⊑-factor t
+  factor-postcoh t k =
+    subst (_⊑[ u ] ⊑-factor t)
+          (cong ⊑-factor (⊑-irrelevant (⊑-trans (⊑-factorˡ t) (⊑ρ∘ᵘ (⊑-factorʳ t) k)) (⊑ρ∘ᵘ t k)))
+          (⊑-factor-coh (⊑-factorˡ t) (⊑ρ∘ᵘ (⊑-factorʳ t) k))
+
+  factor-precoh : ∀ {ρ₁ ρ₂ w w₁ w'} (p : w ⊑[ u ] w₁) (t : w₁ ⊑[ ρ₁ · ρ₂ ] w')
+                → ⊑-factor (⊑ᵘ∘ρ p t) ⊑[ u ] ⊑-factor t
+  factor-precoh p t =
+    subst (_⊑[ u ] ⊑-factor t)
+          (cong ⊑-factor (⊑-irrelevant (⊑-trans (⊑ᵘ∘ρ p (⊑-factorˡ t)) (⊑-factorʳ t)) (⊑ᵘ∘ρ p t)))
+          (⊑-factor-coh (⊑ᵘ∘ρ p (⊑-factorˡ t)) (⊑-factorʳ t))
+
+  -- The underlying map: factor the past-world's accessibility into two legs.
+  μ⁻¹-app : ∀ {A ρ₁ ρ₂ w} → ⟨ ρ₂ · ρ₁ ⟩ᶜ A w → ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ A) w
+  μ⁻¹-app {ρ₁ = ρ₁} {ρ₂} d =
+    mk⟨⟩ (⊑-factorʳ {ρ₂} {ρ₁} (acc d)) (mk⟨⟩ (⊑-factorˡ {ρ₂} {ρ₁} (acc d)) (val d))
+
+μ⁻¹ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₂ · ρ₁ ⟩ᵒ A →ᵖ ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A)
+μ⁻¹ {A} {ρ₁} {ρ₂} = pmap
+  μ⁻¹-app
+  (gmap μ⁻¹-app step)
+  (λ t d → return (factor-postcoh {ρ₂} {ρ₁} (acc d) t , ≈-mk-irr _ _ (val d)))
+  where
+    step : ∀ {w} {d d' : ⟨ ρ₂ · ρ₁ ⟩ᶜ A w}
+         → _◅_ {ρ₂ · ρ₁} {A} {w} d d'
+         → _◅_ {ρ₁} {⟨ ρ₂ ⟩ᵒ A} {w} (μ⁻¹-app d) (μ⁻¹-app d')
+    step {w} {d} {d'} (s , eq) =
+      subst (_⊑[ u ] ⊑-factor {ρ₂} {ρ₁} (acc d'))
+            (cong (⊑-factor {ρ₂} {ρ₁}) (⊑-irrelevant (⊑ᵘ∘ρ s (acc d')) (acc d)))
+            (factor-precoh {ρ₂} {ρ₁} s (acc d'))
+      , return (s , eq)
+
+⟨⟩-μ∘μ⁻¹≡id : ∀ {A ρ₁ ρ₂} → μ {A} {ρ₁} {ρ₂} ∘ᵖ μ⁻¹ ≈ᵖ idᵖ
+⟨⟩-μ∘μ⁻¹≡id d = ≈-mk-irr _ _ (val d)
+
+⟨⟩-μ⁻¹∘μ≡id : ∀ {A ρ₁ ρ₂} → μ⁻¹ {A} {ρ₁} {ρ₂} ∘ᵖ μ ≈ᵖ idᵖ
+⟨⟩-μ⁻¹∘μ≡id e = return (⊑-factor-coh (acc (val e)) (acc e) , ≈-mk-irr _ _ (val (val e)))
+
+
 -- Packaging the context modality up as a `Past` instance
 
 open import DenotationalSemantics.Model.Category
@@ -292,6 +344,9 @@ PShPast = record
   ; ⟨⟩-μ∘η≡id   = λ {A} → ⟨⟩-μ∘η≡id {A}
   ; ⟨⟩-μ∘Tη≡id  = λ {A} → ⟨⟩-μ∘Tη≡id {A}
   ; ⟨⟩-μ∘μ≡μ∘Tμ = λ {A} → ⟨⟩-μ∘μ≡μ∘Tμ {A}
+  ; μ⁻¹         = λ {A} → μ⁻¹ {A}
+  ; ⟨⟩-μ∘μ⁻¹≡id = λ {A} → ⟨⟩-μ∘μ⁻¹≡id {A}
+  ; ⟨⟩-μ⁻¹∘μ≡id = λ {A} → ⟨⟩-μ⁻¹∘μ≡id {A}
   ; εᵘ          = εᵘ
   ; εᵘ-nat      = εᵘ-nat
   ; ⟨⟩-εᵘ∘η≡id  = λ {A} → ⟨⟩-εᵘ∘η≡id {A}
