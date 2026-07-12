@@ -86,18 +86,18 @@ Kᵖ-eternalᵒ S = record
 
 -- Closure: the terminal object (Unit).
 
-𝟙ᵖ-nec : ∀ {ρ} → 𝟙ᵖ →ᵖ [ ρ ]ᵒ 𝟙ᵖ
-𝟙ᵖ-nec = pmap (λ _ → mk[] (λ _ → tt) (λ _ _ → tt)) (λ _ _ → tt) (λ _ _ _ → tt)
-
 𝟙ᵖ-eternalᵒ : Eternalᵒ 𝟙ᵖ
 𝟙ᵖ-eternalᵒ = record
-  { necᵉ      = 𝟙ᵖ-nec
-  ; extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ 𝟙ᵖ-nec
+  { necᵉ      = nec
+  ; extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (nec {ρ})
   ; extᵉ-mate = λ {ρ} _ → tt
   ; necᵉ-u    = λ _ _ → tt
   ; necᵉ-≤    = λ _ _ _ → tt
   ; necᵉ-δ    = λ _ _ _ → tt
   }
+  where
+    nec : ∀ {ρ} → 𝟙ᵖ →ᵖ [ ρ ]ᵒ 𝟙ᵖ
+    nec = pmap (λ _ → mk[] (λ _ → tt) (λ _ _ → tt)) (λ _ _ → tt) (λ _ _ _ → tt)
 
 -- Closure: the initial object (Empty).
 
