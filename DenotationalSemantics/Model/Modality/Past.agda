@@ -117,6 +117,16 @@ record Past : Set₁ where
                 ≈ᵐ    ⟨⟩-≤ (≾-reflexive (·-assoc ρ₃ ρ₂ ρ₁))
                   ∘ᵐ μ {A} {ρ₁} {ρ₃ · ρ₂} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (μ {A} {ρ₂} {ρ₃})
 
+    -- Strong monoidality: the multiplication `μ` has a two-sided inverse
+    -- `μ⁻¹`, splitting a single context lock into two nested ones at the
+    -- factor grades. Its existence rests on the frame's `⊑-factor`
+    -- structure. (Note the reversed grade order, matching `μ`.)
+
+    μ⁻¹ : ∀ {A ρ₁ ρ₂} → ⟨ ρ₂ · ρ₁ ⟩ᵒ A →ᵐ ⟨ ρ₁ ⟩ᵒ (⟨ ρ₂ ⟩ᵒ A)
+
+    ⟨⟩-μ∘μ⁻¹≡id : ∀ {A ρ₁ ρ₂} → μ {A} {ρ₁} {ρ₂} ∘ᵐ μ⁻¹ ≈ᵐ idᵐ
+    ⟨⟩-μ⁻¹∘μ≡id : ∀ {A ρ₁ ρ₂} → μ⁻¹ {A} {ρ₁} {ρ₂} ∘ᵐ μ ≈ᵐ idᵐ
+
     -- εᵘ is natural
 
     εᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → f ∘ᵐ εᵘ ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ f
