@@ -132,7 +132,7 @@ mutual
                      {H : (op : Op)
                         → (ε' : E)
                         → (Γ' : Ctx)
-                        → toCtx S ++ᶜ Γ'
+                        → Γ'
                                   ∷ type-of-gtype (param op)
                                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
@@ -149,7 +149,7 @@ mutual
                     → {S S' : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                     → {H : (op : Op) → (ε₃ : E) → (Γ' : Ctx) →
-                         toCtx S ++ᶜ Γ'
+                         Γ'
                                  ∷ type-of-gtype (param op)
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)} 
@@ -159,19 +159,8 @@ mutual
                     → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁)
                       -----------------------------------------------------------------------
                     → ⟨ S  , handle M `with H `in N ⟩ ↝
-                      ⟨ S' , handle M' 
-                            `with 
-                                (λ op' ε₃' Γ'' →
-                                    let S'eqS·S'' = ≤ₛ-comp (step-extends-state M↝M')
-                                    in
-                                    C-rename
-                                      (cong-∷-ren
-                                        (cong-∷-ren
-                                          (eq-ren
-                                            (trans
-                                              (sym (++ᶜ-assoc (toCtx S) (proj₁ S'eqS·S'') Γ''))
-                                              (cong (_++ᶜ Γ'') (sym (proj₂ S'eqS·S'')))))))
-                                      (H op' ε₃' (proj₁ S'eqS·S'' ++ᶜ Γ'')))
+                      ⟨ S' , handle M'
+                            `with H
                             `in (C-rename
                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
                                   N)⟩
@@ -183,7 +172,7 @@ mutual
                     → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
                     → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
                     → {H : (op' : Op) → (ε' : E) → (Γ' : Ctx) →
-                             toCtx S ++ᶜ Γ'
+                             Γ'
                                      ∷ type-of-gtype (param op')
                                      ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                                    ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
@@ -192,17 +181,13 @@ mutual
                     → ⟨ S , handle perform op V M `with H `in N ⟩ ↝
                       ⟨ S , box (lam
                               (handle M
-                              `with (λ op₁ ε''' Γ'' →
-                                  C-rename
-                                    (   cong-∷-ren (cong-∷-ren (cong-ren wk-ren
-                                     ∘ʳ eq-ren (sym (++ᶜ-assoc (toCtx S) ([] ⟨ mapᵉ (op-grade op) ⟩) Γ'')))))
-                                    (H op₁ ε''' ([] ⟨ mapᵉ (op-grade op) ⟩ ++ᶜ Γ'')))
+                              `with H
                               `in (C-rename
                                     (  cong-∷-ren (cong-⟨⟩-ren wk-ren
                                     ∘ʳ ⟨⟩-μ-ren
                                     ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
                                     N)))
-                             (H op (ε ·ₑ ε'') [] [ Tl-∷ Hd ↦ V ]c) ⟩ 
+                             (H op (ε ·ₑ ε'') (toCtx S) [ Tl-∷ Hd ↦ V ]c) ⟩
 
         -- step for box: we just extend our state with new resource
         BOX         : ∀ {A B ρ' ε} → {S : 𝕊 []}

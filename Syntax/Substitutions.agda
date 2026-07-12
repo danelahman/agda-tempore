@@ -85,27 +85,7 @@ mutual
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
   handle_`with_`in {B = B} M H N [ x ↦ W ]c =
     handle M [ x ↦ W ]c
-    `with (λ op ε'' Γ' →
-            C-rename
-              (eq-ren (
-                begin
-                  split-l (var-ρ-++ᶜ {Γ' = Γ'} x) ++ᶜ
-                   split-r (Tl-∷ (Tl-∷ (var-ρ-++ᶜ {Γ' = Γ'} x)))
-
-                ≡⟨ cong₂ _∷_ (cong₂ _∷_ (cong₂ _++ᶜ_ (sym (split-var-eqₗ {Γ' = Γ'} x)) refl ) refl ) refl ⟩
-
-                  split-l x ++ᶜ split-r (var-ρ-++ᶜ {Γ' = Γ'} x) ∷ _ ∷ _
-
-                ≡⟨ cong₂ _∷_ (cong₂ _∷_ (cong₂ _++ᶜ_ refl (sym (split-var-eqᵣ {Γ' = Γ'} x))) refl) refl ⟩
-
-                  split-l x ++ᶜ (split-r x ++ᶜ Γ' ∷ _ ∷ _)
-
-                ≡⟨ sym (++ᶜ-assoc (split-l x) (split-r x) ((Γ' ∷ _) ∷ _)) ⟩
-                    
-                  split-l x ++ᶜ split-r x ++ᶜ ((Γ' ∷ _) ∷ _)                    
-                ∎
-              ))
-              ((H op ε'' Γ') [ Tl-∷ (Tl-∷ (var-ρ-++ᶜ x)) ↦ V-rename (eq-ren (split-var-eqₗ {Γ' = Γ'} x)) W ]c))
+    `with H
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   -- For the value-based unboxing we first recover the underlying variable `y`
   -- (and grade bound `rel`) being unboxed via `unbox⇒var`, and then proceed
