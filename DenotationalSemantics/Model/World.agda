@@ -66,17 +66,3 @@ record World : Set₁ where
             → w ⊑[ ρ₁ ] w' → w' ⊑[ ρ₂ ] w'' → w ⊑[ ρ₁ ·ᵣ ρ₂ ] w''
     ⊑-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵣ ρ₂ → w ⊑[ ρ₁ ] w' → w ⊑[ ρ₂ ] w'
     ⊑-irrelevant : ∀ {ρ w w'} → (p q : w ⊑[ ρ ] w') → p ≡ q
-
-    -- Factorisation of a composite accessibility step. `⊑-factor` picks a
-    -- middle world for a `ρ₁ ·ᵣ ρ₂`-step, `⊑-factorˡ`/`⊑-factorʳ` are its
-    -- two legs, and `⊑-factor-coh` says that factoring a step built by
-    -- `⊑-trans` recovers the original middle world up to a unit step. This
-    -- is exactly what makes the context (possibility) and box (necessity)
-    -- modalities *strong* graded monoidal (`μ`/`δ` become isomorphisms),
-    -- which the calculus's `⟨⟩-μ⁻¹` renaming and its dual rely on.
-
-    ⊑-factor : ∀ {ρ₁ ρ₂ w w'} → w ⊑[ ρ₁ ·ᵣ ρ₂ ] w' → W
-    ⊑-factorˡ : ∀ {ρ₁ ρ₂ w w'} → (t : w ⊑[ ρ₁ ·ᵣ ρ₂ ] w') → w ⊑[ ρ₁ ] ⊑-factor t
-    ⊑-factorʳ : ∀ {ρ₁ ρ₂ w w'} → (t : w ⊑[ ρ₁ ·ᵣ ρ₂ ] w') → ⊑-factor t ⊑[ ρ₂ ] w'
-    ⊑-factor-coh : ∀ {ρ₁ ρ₂ w wᵐ w'} → (p : w ⊑[ ρ₁ ] wᵐ) → (q : wᵐ ⊑[ ρ₂ ] w')
-                 → ⊑-factor (⊑-trans p q) ⊑[ uᵣ ] wᵐ

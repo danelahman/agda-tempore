@@ -32,6 +32,9 @@ record GroundTypes (Cat : Category) (Fut : Future Cat RGrade) : Set₁ where
     -- interpretation of the base types
     ⟦_⟧ᵇ : BaseType → Obj
 
+    -- interpretation of base-typed constants as global elements
+    ⟦_⟧ᵏ : ∀ {B} → BaseConstants B → 𝟙ᵐ →ᵐ ⟦ B ⟧ᵇ
+
   -- interpretation of the ground types
 
   ⟦_⟧ᵍ : GType → Obj

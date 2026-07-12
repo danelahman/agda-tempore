@@ -129,15 +129,6 @@ record Future : Set₁ where
                 ≈ᵐ    [ ρ₁ ]ᶠ (δ {A} {ρ₂} {ρ₃}) ∘ᵐ δ {A} {ρ₁} {ρ₂ · ρ₃}
                   ∘ᵐ []-≤ {A} (≾-reflexive (sym (·-assoc ρ₁ ρ₂ ρ₃)))
 
-    -- Strong monoidality: the comultiplication `δ` has a two-sided inverse
-    -- `δ⁻¹`, fusing two nested boxes back into one at the product grade.
-    -- Its existence rests on the frame's `⊑-factor` structure.
-
-    δ⁻¹ : ∀ {A ρ₁ ρ₂} → [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A) →ᵐ [ ρ₁ · ρ₂ ]ᵒ A
-
-    []-δ∘δ⁻¹≡id : ∀ {A ρ₁ ρ₂} → δ {A} {ρ₁} {ρ₂} ∘ᵐ δ⁻¹ ≈ᵐ idᵐ
-    []-δ⁻¹∘δ≡id : ∀ {A ρ₁ ρ₂} → δ⁻¹ {A} {ρ₁} {ρ₂} ∘ᵐ δ ≈ᵐ idᵐ
-
     -- ηᵘ is natural
 
     ηᵘ-nat : ∀ {A B} → (f : A →ᵐ B) → [ u ]ᶠ f ∘ᵐ ηᵘ ≈ᵐ ηᵘ ∘ᵐ f

@@ -169,73 +169,6 @@ open [_]ᶜ public
 []-ηᵘ∘ε≡id {A} F p = ≈-trans A (≈-sym A (fun-nat F ⊑-refl p)) ([]-fun-irr F (⊑ρ∘ᵘ ⊑-refl p) p)
 
 
--- STRONG MONOIDALITY: the inverse comultiplication `δ⁻¹`.
-
--- Unit pre/post-composition coherences of `⊑-factor`, derived from
--- `⊑-factor-coh` and proof-irrelevance of accessibility witnesses.
--- (Private: also derived, under the same names, in the `Past` module.)
-
-private
-  factor-postcoh : ∀ {ρ₁ ρ₂ w w' w''} (t : w ⊑[ ρ₁ · ρ₂ ] w') (k : w' ⊑[ u ] w'')
-                 → ⊑-factor (⊑ρ∘ᵘ t k) ⊑[ u ] ⊑-factor t
-  factor-postcoh t k =
-    subst (_⊑[ u ] ⊑-factor t)
-          (cong ⊑-factor (⊑-irrelevant (⊑-trans (⊑-factorˡ t) (⊑ρ∘ᵘ (⊑-factorʳ t) k)) (⊑ρ∘ᵘ t k)))
-          (⊑-factor-coh (⊑-factorˡ t) (⊑ρ∘ᵘ (⊑-factorʳ t) k))
-
-  factor-precoh : ∀ {ρ₁ ρ₂ w w₁ w'} (p : w ⊑[ u ] w₁) (t : w₁ ⊑[ ρ₁ · ρ₂ ] w')
-                → ⊑-factor (⊑ᵘ∘ρ p t) ⊑[ u ] ⊑-factor t
-  factor-precoh p t =
-    subst (_⊑[ u ] ⊑-factor t)
-          (cong ⊑-factor (⊑-irrelevant (⊑-trans (⊑ᵘ∘ρ p (⊑-factorˡ t)) (⊑-factorʳ t)) (⊑ᵘ∘ρ p t)))
-          (⊑-factor-coh (⊑ᵘ∘ρ p (⊑-factorˡ t)) (⊑-factorʳ t))
-
--- `δ⁻¹` fuses two nested boxes into one by factoring the accessibility.
-
-δ⁻¹ : ∀ {A ρ₁ ρ₂} → [ ρ₁ ]ᵒ ([ ρ₂ ]ᵒ A) →ᵖ [ ρ₁ · ρ₂ ]ᵒ A
-δ⁻¹ {A} {ρ₁} {ρ₂} = pmap
-  (λ G → mk[]
-     (λ t → fun (fun G (⊑-factorˡ {ρ₁} {ρ₂} t)) (⊑-factorʳ {ρ₁} {ρ₂} t))
-     (λ t k →
-       let a₁ = ⊑-factorˡ {ρ₁} {ρ₂} (⊑ρ∘ᵘ t k) ; b₁ = ⊑-factorʳ {ρ₁} {ρ₂} (⊑ρ∘ᵘ t k)
-           a₀ = ⊑-factorˡ {ρ₁} {ρ₂} t          ; b₀ = ⊑-factorʳ {ρ₁} {ρ₂} t
-           k' = factor-postcoh {ρ₁} {ρ₂} t k
-           eq1 : _≈_ A (fun (fun G a₀) b₀) (fun (fun G a₁) (⊑ᵘ∘ρ k' b₀))
-           eq1 = ≈-trans A
-                   (≈-sym A (([]-fun-irr G (⊑ρ∘ᵘ a₁ k') a₀) b₀))
-                   ((fun-nat G a₁ k') b₀)
-       in ≈-trans A
-            (≈-trans A
-              ([]-fun-irr (fun G a₁) b₁ (⊑ρ∘ᵘ (⊑ᵘ∘ρ k' b₀) k))
-              (fun-nat (fun G a₁) (⊑ᵘ∘ρ k' b₀) k))
-            (≈-sym A (transport-cong A k eq1))))
-  (λ e t → e (⊑-factorˡ {ρ₁} {ρ₂} t) (⊑-factorʳ {ρ₁} {ρ₂} t))
-  (λ p G t →
-    let a₀ = ⊑-factorˡ {ρ₁} {ρ₂} t ; b₀ = ⊑-factorʳ {ρ₁} {ρ₂} t
-        aₚ = ⊑-factorˡ {ρ₁} {ρ₂} (⊑ᵘ∘ρ p t) ; bₚ = ⊑-factorʳ {ρ₁} {ρ₂} (⊑ᵘ∘ρ p t)
-        k' = factor-precoh {ρ₁} {ρ₂} p t
-        Hb-b₀ : _≈_ A (fun (fun G (⊑ᵘ∘ρ p a₀)) b₀) (fun (fun G aₚ) (⊑ᵘ∘ρ k' b₀))
-        Hb-b₀ = ≈-trans A
-                  (≈-sym A (([]-fun-irr G (⊑ρ∘ᵘ aₚ k') (⊑ᵘ∘ρ p a₀)) b₀))
-                  ((fun-nat G aₚ k') b₀)
-    in ≈-trans A
-         Hb-b₀
-         ([]-fun-irr (fun G aₚ) (⊑ᵘ∘ρ k' b₀) bₚ))
-
-[]-δ∘δ⁻¹≡id : ∀ {A ρ₁ ρ₂} → δ {A} {ρ₁} {ρ₂} ∘ᵖ δ⁻¹ ≈ᵖ idᵖ
-[]-δ∘δ⁻¹≡id {A} {ρ₁} {ρ₂} G p q =
-  let fl = ⊑-factorˡ {ρ₁} {ρ₂} (⊑-trans p q) ; fr = ⊑-factorʳ {ρ₁} {ρ₂} (⊑-trans p q)
-      k  = ⊑-factor-coh p q
-      H-q : _≈_ A (fun (fun G p) q) (fun (fun G fl) (⊑ᵘ∘ρ k q))
-      H-q = ≈-trans A
-              (≈-sym A (([]-fun-irr G (⊑ρ∘ᵘ fl k) p) q))
-              ((fun-nat G fl k) q)
-  in ≈-sym A (≈-trans A H-q ([]-fun-irr (fun G fl) (⊑ᵘ∘ρ k q) fr))
-
-[]-δ⁻¹∘δ≡id : ∀ {A ρ₁ ρ₂} → δ⁻¹ {A} {ρ₁} {ρ₂} ∘ᵖ δ ≈ᵖ idᵖ
-[]-δ⁻¹∘δ≡id {A} F t = []-fun-irr F _ _
-
-
 -- Packaging the box modality up as a `Future` instance
 
 open import DenotationalSemantics.Model.Category
@@ -262,9 +195,6 @@ PShFut = record
   ; []-ε∘δ≡id   = λ x s → []-fun-irr x _ _
   ; []-Dε∘δ≡id  = λ x p → []-fun-irr x _ _
   ; []-δ∘δ≡Dδ∘δ = λ x a b c → []-fun-irr x _ _
-  ; δ⁻¹         = λ {A} → δ⁻¹ {A}
-  ; []-δ∘δ⁻¹≡id = λ {A} → []-δ∘δ⁻¹≡id {A}
-  ; []-δ⁻¹∘δ≡id = λ {A} → []-δ⁻¹∘δ≡id {A}
   ; ηᵘ          = ηᵘ
   ; ηᵘ-nat      = ηᵘ-nat
   ; []-ε∘ηᵘ≡id  = λ {A} → []-ε∘ηᵘ≡id {A}

@@ -161,6 +161,7 @@ open import DenotationalSemantics.Model.Modality.Past
 open import DenotationalSemantics.Model.Modality.Adjunction
 open import DenotationalSemantics.Model.Modality.Eternal
 open import DenotationalSemantics.Model.GroundTypes
+open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
 
 ---- Concrete model on discretely-indexed presheaves
@@ -174,6 +175,13 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Core
 open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
 open import DenotationalSemantics.Model.Example.PSh.Monad.Handling
 open import DenotationalSemantics.Model.Example.PSh.Monad.Instance
+
+---- Interpretation of the calculus in a model (types, contexts,
+---- variables; terms in progress)
+
+open import DenotationalSemantics.Interpretation.Types
+open import DenotationalSemantics.Interpretation.Contexts
+open import DenotationalSemantics.Interpretation.Variables
 
 ---- Concrete time-ticks Kripke frames
 
