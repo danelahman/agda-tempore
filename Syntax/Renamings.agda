@@ -38,7 +38,6 @@ data Ren : Ctx → Ctx → Set where
   ⟨⟩-η-ren    : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
   ⟨⟩-η⁻¹-ren  : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
   ⟨⟩-μ-ren    : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ·ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
-  ⟨⟩-μ⁻¹-ren  : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Γ ⟨ ρ ·ᵣ ρ'  ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
   -- congruence renamings
@@ -74,8 +73,6 @@ cong-⟨⟩-≤-ren ⟨⟩-η⁻¹-ren ρ'≾ρ =
   cong-⟨⟩-ren ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren ⟨⟩-μ-ren ρ'≾ρ =
   cong-⟨⟩-ren ⟨⟩-μ-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
-cong-⟨⟩-≤-ren ⟨⟩-μ⁻¹-ren ρ'≾ρ =
-  cong-⟨⟩-ren ⟨⟩-μ⁻¹-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren (⟨⟩-≤-ren rel) ρ'≾ρ =
   cong-⟨⟩-ren (⟨⟩-≤-ren rel) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
@@ -105,8 +102,6 @@ cong-renˡ ⟨⟩-η⁻¹-ren =
   ⟨⟩-η⁻¹-ren
 cong-renˡ ⟨⟩-μ-ren =
   ⟨⟩-μ-ren
-cong-renˡ ⟨⟩-μ⁻¹-ren =
-  ⟨⟩-μ⁻¹-ren
 cong-renˡ (⟨⟩-≤-ren x) =
   ⟨⟩-≤-ren x
 cong-renˡ (cong-∷-ren r) =

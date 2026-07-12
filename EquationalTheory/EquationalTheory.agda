@@ -569,14 +569,14 @@ mutual
                           M)
 
     delay-delay : ∀ {A τ₁ τ₂ ε}
-                → (M : Γ ⟨ of-natʳ τ₁ ⟩ ⟨ of-natʳ τ₂ ⟩ ⊢C⦂ A ‼ ε)
+                → (M : Γ ⟨ of-natʳ (τ₁ + τ₂) ⟩ ⊢C⦂ A ‼ ε)
                 ------------------------------------
-                → Γ ⊢C⦂ delay τ₁ (delay τ₂ M)
-                    == ε-subst (trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε))
-                         (delay (τ₁ + τ₂)
+                → Γ ⊢C⦂ delay τ₁ (delay τ₂
                            (C-rename
-                             (eq-ren (cong (Γ ⟨_⟩) (sym of-natʳ-plus)) ∘ʳ ⟨⟩-μ⁻¹-ren)
+                             (⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus))
                              M))
+                    == ε-subst (trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε))
+                         (delay (τ₁ + τ₂) M)
 
   infix 18 _⊢C⦂_==_
 

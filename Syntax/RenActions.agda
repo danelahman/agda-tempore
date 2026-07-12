@@ -60,8 +60,6 @@ var-rename ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) =
   _ , ≾ᵣ-reflexive (·ᵣ-identityʳ (_ ·ᵣ _)) , Tl-⟨⟩ (Tl-⟨⟩ x)
 var-rename ⟨⟩-μ-ren (Tl-⟨⟩ x) =
   _ , ≾ᵣ-reflexive (·ᵣ-assoc _ _ _) , Tl-⟨⟩ (Tl-⟨⟩ x)
-var-rename ⟨⟩-μ⁻¹-ren (Tl-⟨⟩ (Tl-⟨⟩ x)) =
-  _ , ≾ᵣ-reflexive (sym (·ᵣ-assoc _ _ _)) , Tl-⟨⟩ x
 var-rename (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ₂≾ρ₁) (Tl-⟨⟩ x) =
   _ ·ᵣ ρ₂ , ·ᵣ-monoʳ-≾ᵣ ρ₂≾ρ₁ , Tl-⟨⟩ x
 var-rename (cong-∷-ren r) Hd =
