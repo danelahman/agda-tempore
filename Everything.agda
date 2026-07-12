@@ -159,6 +159,7 @@ open import DenotationalSemantics.Model.World
 open import DenotationalSemantics.Model.Modality.Future
 open import DenotationalSemantics.Model.Modality.Past
 open import DenotationalSemantics.Model.Modality.Adjunction
+open import DenotationalSemantics.Model.Modality.Eternal
 open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.Monad
 
@@ -168,6 +169,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base
 open import DenotationalSemantics.Model.Example.PSh.Modality.Future
 open import DenotationalSemantics.Model.Example.PSh.Modality.Past
 open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction
+open import DenotationalSemantics.Model.Example.PSh.Modality.Eternal
 open import DenotationalSemantics.Model.Example.PSh.Monad.Core
 open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
 open import DenotationalSemantics.Model.Example.PSh.Monad.Handling
