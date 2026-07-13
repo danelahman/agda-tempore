@@ -70,4 +70,6 @@ PShMonad = record
   ; T-alg-of-handlerᵀ-ηᵀ     = T-alg-of-handlerᵀ-ηᵀ
   ; T-alg-of-handlerᵀ-delayᵀ = T-alg-of-handlerᵀ-delayᵀ
   ; T-alg-of-handlerᵀ-opᵀ    = T-alg-of-handlerᵀ-opᵀ
+  ; T-alg-of-handlerᵀ-≤      = T-alg-of-handlerᵀ-≤
+  ; T-alg-of-handlerᵀ-μᵀ     = T-alg-of-handlerᵀ-μᵀ
   }

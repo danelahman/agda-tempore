@@ -249,17 +249,28 @@ box-ε-substˢ-fun : ∀ {A X ρ ε₁ ε₂ w} → (e : ε₁ ≡ ε₂)
                  ≡ ε-substˢ e (B.fun (F.fun b q) r y)
 box-ε-substˢ-fun refl b q r y = refl
 
--- A grade transport pushes out through a delay node.
+-- A grade transport pushes out through a delay node. The transported node's
+-- own coherence witness is *constructed* here (rather than taken as an
+-- argument), since `_≈ᵗ_` does not determine it.
+
+delay-ε-substˢ-nat : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
+                   → (f : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε₁ w')
+                   → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w')
+                             (r : w' ⊑[ uᵣ ] w'')
+                         → f (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f q))
+                   → ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
+                   → ε-substˢ e (f (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (ε-substˢ e (f q))
+delay-ε-substˢ-nat e f fn q r =
+  ≈ᵗ-trans (ε-substˢ-congᵗ e (fn q r))
+           (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r e (f q))))
 
 delay-ε-substˢ : ∀ {A ε₁ ε₂ τ w} → (e : ε₁ ≡ ε₂)
                → (f : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε₁ w')
                → (fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
                      → f (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f q))
-               → (fn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
-                      → ε-substˢ e (f (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (ε-substˢ e (f q)))
-               → delay-node τ (λ q → ε-substˢ e (f q)) fn'
+               → delay-node τ (λ q → ε-substˢ e (f q)) (delay-ε-substˢ-nat e f fn)
                ≈ᵗ ε-substˢ (cong (of-natᵉ τ ·ₑ_) e) (delay-node τ f fn)
-delay-ε-substˢ refl f fn fn' = delay-≈ (λ q → ≈ᵗ-refl _)
+delay-ε-substˢ refl f fn = delay-≈ (λ q → ≈ᵗ-refl _)
 
 -- The fold is an algebra: folding a two-layer tree is folding the outer layer
 -- after folding each inner one. By induction on the tree — at each node the
@@ -350,7 +361,13 @@ T-alg-of-handlerˢ-μˢ {ε' = ε'} {ε'' = ε''} h (delay-node {ε = ε₁} τ 
                         (delay-ε-substˢ (sym (·ₑ-assoc ε₁ ε' ε''))
                           (λ q → T-alg-of-handlerˢ h
                                    (Tˢᶠ (T-alg-of-handlerᵀ h) (k q)))
-                          _ _))))
+                          -- the folded continuation's own coherence witness
+                          (λ q r → ≈ᵗ-trans
+                            (T-alg-of-handlerˢ-cong h
+                              (≈ᵗ-trans (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ h) (kn q r))
+                                        (Tˢᶠ-natᵗ (T-alg-of-handlerᵀ h) r (k q))))
+                            (T-alg-of-handlerˢ-nat h r
+                              (Tˢᶠ (T-alg-of-handlerᵀ h) (k q))))))))
             (≡→≈ᵗ (trans (cong (ε-substˢ E1) (ε-substˢ-trans E3 E2 X))
                   (trans (ε-substˢ-trans (trans E3 E2) E1 X)
                   (trans (cong (λ z → ε-substˢ z X) uip)
@@ -383,3 +400,12 @@ T-alg-of-handlerˢ-μˢ {ε = ε} {ε' = ε'} {ε'' = ε''} h (sub {ε = ε₀} 
     q' : ε₀ ·ₑ (ε' ·ₑ ε'') ≾ₑ (ε ·ₑ ε') ·ₑ ε''
     q' = ≾ₑ-trans (≾ₑ-reflexive (sym (·ₑ-assoc ε₀ ε' ε'')))
                   (·ₑ-monoˡ-≾ₑ (·ₑ-monoˡ-≾ₑ p))
+
+-- Packaging the two laws as morphism equations.
+
+T-alg-of-handlerᵀ-μᵀ : ∀ {A ε ε' ε''} → (h : Handlerˢ A)
+                     → T-alg-of-handlerᵀ {A} {ε ·ₑ ε'} {ε''} h ∘ᵖ μᵀ {Tᵒ A ε''} {ε} {ε'}
+                     ≈ᵖ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
+                         ∘ᵖ T-alg-of-handlerᵀ {A} {ε} {ε' ·ₑ ε''} h
+                         ∘ᵖ Tᶠ (T-alg-of-handlerᵀ {A} {ε'} {ε''} h)
+T-alg-of-handlerᵀ-μᵀ h t = T-alg-of-handlerˢ-μˢ h t
