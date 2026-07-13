@@ -1592,6 +1592,173 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
   -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
   ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
 
+-- THE HANDLER COMMUTES WITH A STEP TRANSITION
+--
+-- A reduction step never *performs an operation*: `stepᵀ r` is `ηᵀ` for every
+-- rule but `DELAY`, where it is a tick. So handling the effects a step produces
+-- gives the same result whether the handler sits inside the step or outside it.
+-- That is what lets `HANDLE-STEP` move the transition out of the handler's
+-- argument and into the `⋄` of the target configuration.
+--
+-- (`alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` is *false* for a general tree — the outer layer's
+-- operations would be handled on one side and merely flattened on the other.
+-- It is true here precisely because a step emits no `op`-nodes.)
+
+-- The algebra commutes with a grade transport (derivable from `alg-≤`).
+
+alg-ε-subst : ∀ {B ε₂ ε₁' ε₂'}
+            → (alg : ∀ {ε} → Tᵒ (Tᵒ B ε₂) ε →ᵐ Tᵒ B (ε ·ₑ ε₂))
+            → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+                     → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
+            → (e : ε₁' ≡ ε₂')
+            → alg {ε₂'} ∘ᵐ ε-substᵀ e
+            ≈ᵐ ε-substᵀ (cong (_·ₑ ε₂) e) ∘ᵐ alg {ε₁'}
+alg-ε-subst alg alg-≤ e =
+    ∘ᵐ-congʳ (T-≤-≡ e)
+  ∙ alg-≤ (≾ₑ-reflexive e)
+  ∙ ∘ᵐ-congˡ (T-≤-irr _ (≾ₑ-reflexive (cong (_·ₑ _) e)))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-≤-≡ (cong (_·ₑ _) e)))
+
+-- The `ηᵀ` case: a step that performs nothing. Both sides collapse by the
+-- monad's left-unit law, and the algebra passes the returned value through
+-- (`T-alg-of-handlerᵀ-ηᵀ`).
+
+alg-ηᵀ : ∀ {B Y ε ε₂}
+       → (alg : ∀ {ε'} → Tᵒ (Tᵒ B ε₂) ε' →ᵐ Tᵒ B (ε' ·ₑ ε₂))
+       → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+                → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
+       → (alg-η : alg {uₑ} ∘ᵐ ηᵀ {Tᵒ B ε₂}
+                ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂)))
+       → (f : Y →ᵐ Tᵒ (Tᵒ B ε₂) ε)
+       → alg {uₑ ·ₑ ε} ∘ᵐ μᵀ {Tᵒ B ε₂} {uₑ} {ε} ∘ᵐ Tᶠ f ∘ᵐ ηᵀ
+       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc uₑ ε ε₂))
+           ∘ᵐ μᵀ {B} {uₑ} {ε ·ₑ ε₂} ∘ᵐ Tᶠ (alg {ε} ∘ᵐ f) ∘ᵐ ηᵀ
+alg-ηᵀ {ε = ε} {ε₂ = ε₂} alg alg-≤ alg-η f =
+  -- pull `ηᵀ` to the front, then the unit law collapses `μᵀ ∘ ηᵀ`
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (ηᵀ-nat f)))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ T-μ∘η≡id)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  -- the algebra passes the transport through
+  ∙ ∘ᵐ-congˡ (alg-ε-subst alg alg-≤ (sym (·ₑ-identityˡ ε)))
+  ∙ ∘ᵐ-assoc _ _ _
+  -- and the two accumulated transports agree (`uip`), so the same chain
+  -- rebuilds the right-hand side
+  ∙ ∘ᵐ-congˡ (≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ε-substᵀ-trans _ _))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym T-μ∘η≡id))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (ηᵀ-nat (alg ∘ᵐ f)))
+
+-- The step transition commutes with the handler, by induction on the
+-- reduction. Ten rules transition by `ηᵀ` (`alg-ηᵀ`); `DELAY` ticks, and the
+-- fold *re-delays* (`T-alg-of-handlerᵀ-delayᵀ`), so the tick passes through;
+-- the two step rules inherit their transition from the sub-step.
+
+alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A B} {S S' : 𝕊 []}
+          → {M : toCtx S ⊢C⦂ A ‼ ε₁'} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃'}
+          → (alg : ∀ {ε'} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε' ·ₑ ε₂))
+          → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+                   → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
+          → (alg-η : alg {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
+                   ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂)))
+          → (alg-delay : ∀ {ε'} → (τ : ℕ)
+                       → alg {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ
+                       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
+                           ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'}))
+          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+          → (f : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε)
+          → alg {step-grade r ·ₑ ε} ∘ᵐ μᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {step-grade r} {ε}
+              ∘ᵐ Tᶠ f ∘ᵐ stepᵀ r
+          ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (step-grade r) ε ε₂))
+              ∘ᵐ μᵀ {⟦ B ⟧ᵛ} {step-grade r} {ε ·ₑ ε₂}
+              ∘ᵐ Tᶠ (alg {ε} ∘ᵐ f) ∘ᵐ stepᵀ r
+alg-stepᵀ alg alg-≤ alg-η alg-delay APP        f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay MATCH      f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay SEQ-RET    f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay SEQ-OP     f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay HANDLE-RET f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay HANDLE-OP  f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay BOX        f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay UNBOX      f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay COERCE     f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ {B = B} alg alg-≤ alg-η alg-delay (SEQ-STEP r c) f =
+  alg-stepᵀ {B = B} alg alg-≤ alg-η alg-delay r f
+alg-stepᵀ {B = B} alg alg-≤ alg-η alg-delay (HANDLE-STEP r c) f =
+  alg-stepᵀ {B = B} alg alg-≤ alg-η alg-delay r f
+alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} alg alg-≤ alg-η alg-delay (DELAY {τ = τ}) f =
+  -- Both sides reach the same normal form: the tick, with the *whole* bind
+  -- carried under the box. `alg-ηᵀ` does the work there — under `[ of-natʳ τ ]`
+  -- the step has become the trivial one.
+  lhs ∙ ∘ᵐ-congˡ (≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip)) ∙ ≈ᵐ-sym rhs
+  where
+    -- the common normal form
+    NF : _ →ᵐ _
+    NF = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (μᵀ ∘ᵐ Tᶠ (alg {ε} ∘ᵐ f) ∘ᵐ ηᵀ) ∘ᵐ η⊣
+
+    -- the source: pull the tick out of the bind, collect everything under the
+    -- box, then `alg-ηᵀ`
+    lhs : alg {of-natᵉ τ ·ₑ uₑ ·ₑ ε} ∘ᵐ μᵀ ∘ᵐ Tᶠ f
+            ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+        ≈ᵐ ε-substᵀ _ ∘ᵐ NF
+    lhs =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ f))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-algebraicity τ))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (alg-ε-subst alg alg-≤ (sym (·ₑ-assoc (of-natᵉ τ) uₑ ε)))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (∘ᵐ-congˡ (alg-delay τ)))
+      -- collect the transports, and the `[ of-natʳ τ ]ᶠ`-images into one
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+      -- under the box the step has become the trivial one: `alg-ηᵀ` applies
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (alg-ηᵀ alg alg-≤ alg-η f))))
+      -- and the transport it produces floats out through the delay
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-ε-substᵀ τ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
+
+    -- the target: the same two laws, in the same order
+    rhs : ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ ·ₑ uₑ) ε ε₂))
+            ∘ᵐ μᵀ ∘ᵐ Tᶠ (alg {ε} ∘ᵐ f)
+            ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+        ≈ᵐ ε-substᵀ _ ∘ᵐ NF
+    rhs =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ (alg ∘ᵐ f)))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-algebraicity τ))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+
 -- HANDLE-STEP
 --
 -- The same assembly as `SEQ-STEP`, with the handler's fold in place of the
@@ -1637,16 +1804,24 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μᵀ-nat _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  -- STUCK HERE.  The chain has reached
-  --     T-≤ ∘ᵐ alg ∘ᵐ μᵀ ∘ᵐ Tᶠ (Tᶠ ⟦N⟧) ∘ᵐ Tᶠ X ∘ᵐ stepᵀ r
-  -- but the goal (whose `⋄` is the *monad's* Kleisli composition) needs
-  --     T-≤ ∘ᵐ μᵀ ∘ᵐ Tᶠ (alg ∘ᵐ Tᶠ ⟦N⟧ ∘ᵐ X) ∘ᵐ stepᵀ r
-  -- i.e. `alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` — which is NOT the algebra law
-  -- (`T-alg-of-handlerᵀ-μᵀ` gives `alg ∘ᵐ μᵀ ≈ᵐ alg ∘ᵐ Tᶠ alg`), and is false
-  -- for a general tree.  It *is* true for `stepᵀ r`, which never performs an
-  -- operation — see the message.
-  ∙ {!!}
+  -- merge the two functorial actions, so the bind is a single `Tᶠ f`
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))
+  -- THE KEY STEP: the handler commutes with the step transition, because a
+  -- reduction step never performs an operation
+  ∙ ∘ᵐ-congʳ (alg-stepᵀ {B = B} alg alg-≤ alg-η alg-delay r _)
+  -- drop the identity the strength's pairing picked up
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityʳ _ ⟩ᵐ-cong)))))))
+  -- what is under it is the target's denotation …
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (≈ᵐ-sym
+      (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
+                  {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
+                  (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ)
+                  N (suc-comp-ren (step-extends-state r) c)
+                  M' ⟦ S' ⟧ˢ))))))
+  -- … and `seq-coe` fixes the grade
+  ∙ seq-coe (step-≾ r) (step-≾ (HANDLE-STEP {H = H} {N = N} r c)) _
   where
     alg : ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
     alg = T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ
@@ -1654,3 +1829,13 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
     alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
           → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa}
     alg-≤ q = T-alg-of-handlerᵀ-≤ ⟦ H ⟧ʰᵗ q
+
+    alg-η : alg {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
+          ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂))
+    alg-η = T-alg-of-handlerᵀ-ηᵀ ⟦ H ⟧ʰᵗ
+
+    alg-delay : ∀ {ε'} → (τ : ℕ)
+              → alg {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ
+              ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
+                  ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'})
+    alg-delay τ = T-alg-of-handlerᵀ-delayᵀ τ ⟦ H ⟧ʰᵗ
