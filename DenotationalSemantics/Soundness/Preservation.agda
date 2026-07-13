@@ -880,6 +880,26 @@ box-push {ρ' = ρ'} e h =
   ∙ ∘ᵐ-identityʳ _
   ∙ ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl) ∙ ∘ᵐ-identityˡ _)
 
+-- Opening a unit-graded box around an arbitrary map.
+--
+-- At a grade that *is* the unit (`e : ρ ≡ uᵣ`), the box counit discharges the
+-- transposition entirely: what is left is the possibility unit, relaxed to the
+-- grade. This is `εᵇ-η⊣` with a map `H` carried through — `[]-≤-nat` and
+-- `[]-ε-nat` commute the counit and the relaxation past `[ ρ ]ᶠ H`.
+
+box-open : ∀ {X Z ρ} → (e : ρ ≡ uᵣ) → (H : ⟨ ρ ⟩ᵒ X →ᵐ Z)
+         → (εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e))) ∘ᵐ [ ρ ]ᶠ H ∘ᵐ η⊣ {X} {ρ}
+         ≈ᵐ H ∘ᵐ (⟨⟩-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η)
+box-open e H =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat H (≾ᵣ-reflexive (sym e)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat H))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (εᵇ-η⊣ e)
+
 -- Pairing two transposes is transposing the pair (the derived form of
 -- `η⊣-monoidal` that `delayᵀ`'s strength law needs).
 
@@ -1148,3 +1168,271 @@ box-id-suc {ρ₂ = ρ₂} a w env =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat env))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+
+-- THE TICK'S POSSIBILITY IDENTITY
+--
+-- What `DELAY` finally reduces to, once every box has been discharged: a pure
+-- statement about the past modality.
+
+-- Folding the unit that the tick's transposition introduced. `μ` against `η`
+-- is the graded monad's unit law, so the whole `⟨⟩-≤ ∘ μ ∘ ⟨⟩-≤ ∘ η` collapses
+-- to a single grade relaxation (the order being proof-irrelevant).
+
+past-η : ∀ {A ρ σ u'} → (pu : uᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
+       → (⟨⟩-≤ e ∘ᵐ μ {A} {u'} {ρ}) ∘ᵐ (⟨⟩-≤ pu ∘ᵐ η)
+       ≈ᵐ ⟨⟩-≤ k
+past-η pu e k =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ʳ pu)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-μ∘η≡id)
+  ∙ ∘ᵐ-congʳ (⟨⟩-≤-trans _ _)
+  ∙ ⟨⟩-≤-trans _ _
+  ∙ ⟨⟩-≤-irr _ k
+
+-- The environment then commutes past that relaxation (`⟨⟩-≤-nat`), and `μ`
+-- absorbs it (`μ-≤ˡ`) — leaving exactly the renaming `suc-comp-ren` builds for
+-- a `⟨⟩-suc`: the `μ` that folds the old lock with the new tick.
+
+past-tick : ∀ {A B ρ ρ₂ ρ₄ σ u'}
+          → (pu : uᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
+          → (g : σ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ ·ᵣ ρ₄ ≾ᵣ ρ₂)
+          → (E : A →ᵐ B)
+          → (⟨⟩-≤ g ∘ᵐ μ {B} {ρ₄} {σ})
+              ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟨ σ ⟩ᶠ E ∘ᵐ (⟨⟩-≤ e ∘ᵐ μ {A} {u'} {ρ}) ∘ᵐ (⟨⟩-≤ pu ∘ᵐ η))
+          ≈ᵐ (⟨⟩-≤ w ∘ᵐ μ {B} {ρ₄} {ρ}) ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟨ ρ ⟩ᶠ E)
+past-tick pu e k g w E =
+    ∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-congʳ (past-η pu e k)))
+  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩-≤-nat E k))
+  ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ k)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (⟨⟩-≤-trans _ _ ∙ ⟨⟩-≤-irr _ w)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- The grade witness that `suc-comp-ren id-suc` carries.
+
+wk-w : ∀ {ρ₂ ρ₄} → (c : uᵣ ·ᵣ ρ₄ ≾ᵣ ρ₂) → ρ₄ ≾ᵣ ρ₂
+wk-w {ρ₄ = ρ₄} c = ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ₄))) c
+
+-- The `∷-suc` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
+-- whose `fstᵐ` projects away exactly the cell that `⟦_⟧ˢ` just allocated. So
+-- allocation leaves the *environment* untouched — which is why `BOX` threads
+-- the box just like a time-preserving rule.
+
+box-∷-suc : ∀ {X Y Z ρ₂ ρ₄} → (w w' : ρ₄ ≾ᵣ ρ₂)
+          → (env : Y →ᵐ X) → (cell : X →ᵐ Z)
+          → ⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env
+          ≈ᵐ (⟨⟩-≤ w' ∘ᵐ ⟨ ρ₄ ⟩ᶠ fstᵐ) ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟨ idᵐ , cell ⟩ᵐ ∘ᵐ env)
+box-∷-suc w w' env cell =
+    ∘ᵐ-congˡ (⟨⟩-≤-irr w w')
+  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                                ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
+                                ∙ ∘ᵐ-identityˡ _)))
+  ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- THREADING THE ENVIRONMENT BOX ACROSS A STEP
+--
+-- The semantic content of "reduction only extends the state": the boxed
+-- environment of the old state, carried along the step's time transition, is
+-- the *new* state's boxed environment reindexed by the renaming the
+-- preservation theorem itself builds (`suc-comp-ren`).
+--
+-- Generic in the two resource grades: a reduction's own effect grades only
+-- *instantiate* them, and the recursive cases apply the lemma at the
+-- sub-step's grades, not the enclosing sequencing's.
+
+step-box : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
+         → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+         → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+         → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
+         → (g : mapᵉ (step-grade r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
+         → strᵀ {[ ρ₄ ]ᵒ (⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ} {step-grade r}
+             ∘ᵐ ⟨ (δ {⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {ρ₄} ∘ᵐ []-≤ g)
+                    ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ)
+                , stepᵀ r ⟩ᵐ
+           ≈ᵐ Tᶠ ⟨ [ ρ₄ ]ᶠ (⟦ suc-comp-ren (step-extends-state r) c ⟧ʳ
+                             ∘ᵐ ⟨ ρ₄ ⟩ᶠ ⟦ S' ⟧ˢ)
+                    ∘ᵐ η⊣
+                 , idᵐ ⟩ᵐ
+              ∘ᵐ stepᵀ r
+
+-- The nine time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-id-suc`
+-- is exactly what is left — the environment survives unchanged.
+
+step-box APP c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box MATCH c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box SEQ-RET c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box SEQ-OP c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box HANDLE-RET c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box HANDLE-OP c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box UNBOX c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box COERCE c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+-- The recursive rules: `stepᵀ`, `step-extends-state`, and both states are all
+-- inherited from the sub-step, so the statement is the sub-step's.
+
+step-box (SEQ-STEP r c') c g = step-box r c g
+step-box (HANDLE-STEP r c') c g = step-box r c g
+
+-- BOX: allocation. `stepᵀ` is still `ηᵀ`; the `fstᵐ` that `suc-comp-ren`
+-- contributes cancels exactly the cell just written.
+
+step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ (wk-w c) ⟦ St ⟧ˢ
+                  ∙ ∘ᵐ-congˡ ([]-congᶠ (box-∷-suc (wk-w c) (wk-w c) ⟦ St ⟧ˢ
+                                (  [ ρ' ]ᶠ (⟦ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ᵛᵗ
+                                            ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ
+                                                  {toCtx St ⟨ ρ' ⟩}) ⟧ʳ)
+                                 ∘ᵐ η⊣)))
+                , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+-- DELAY: the tick — the one rule that advances time.
+--
+-- `strᵀ-delayᵀ-algebraicity` routes the box through `[]-monoidal`, leaving a
+-- *double* `δ` stack on the first component. `box-split-env` peels the inner
+-- layer (carrying the environment under the box) and `box-push` pushes the
+-- outer one through; both components then transpose at the tick's own grade,
+-- so `η⊣-⟨⟩` reassembles them. Inside the resulting box the shape is again the
+-- time-preserving one, and `delayᵀ-nat` finally pulls `Tᶠ` out to match
+-- `stepᵀ DELAY`.
+--
+-- REMAINING: the box identity in the hole below. Every other step of this
+-- chain typechecks. Note the inner `strᵀ` sits at box grade `mapᵉ uₑ` while
+-- the target's first component is at `ρ₄`, so this identity must ALSO bridge
+-- those grades — it is *not* a direct instance of `box-id-suc`.
+
+step-box (DELAY {τ = τ} {S = St}) c g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity τ)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                                  ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (⟨ ∘ᵐ-congʳ (box-split-env _ _) ∙ box-push _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (η⊣-⟨⟩ _ _))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (
+        ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                          ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                  ∙ ⟨   -- merge the two unit-graded boxes, then open them
+                        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+                      ∙ box-open map-uᵉ _
+                      -- regroup so the `η⊣` inside can be pulled to the front
+                      -- reassociate so the `η⊣` sits second from the left
+                      ∙ ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-assoc _ _ _
+                      -- pull `η⊣` to the front (its naturality), so both sides
+                      -- are `[ ρ₄ ]ᶠ (…) ∘ᵐ η⊣`
+                      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat _))
+                      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+                      -- and what is left is the pure possibility identity
+                      ∙ ∘ᵐ-congˡ ([]-congᶠ
+                          (past-tick _ _
+                            (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (of-natʳ τ))))
+                              (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
+                                        (≾ᵣ-reflexive (sym (trans map-·ᵉ
+                                          (cong (_·ᵣ mapᵉ uₑ) map-of-natᵉ))))))
+                            g _ ⟦ St ⟧ˢ))
+                    , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+      ∙ ηᵀ-nat _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (delayᵀ-nat τ _)
+  ∙ ∘ᵐ-assoc _ _ _
