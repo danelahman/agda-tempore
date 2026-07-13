@@ -65,6 +65,9 @@ open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 
+import DenotationalSemantics.Model.Modality.Past Cat (GradeSystem.RGrade Grades) as P
+  using (·-mono-≾)
+
 -- The environment morphism realising the substitution of `W` for `x`:
 -- rebuild a `Γ`-environment from one for `Γ` with `x` removed, by
 -- computing the missing component with `⟦ W ⟧`.
@@ -120,6 +123,44 @@ eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   (≈ᵐ-trans (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
             (∘ᵐ-congˡ (≈ᵐ-sym (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁)
                                               (eternalᵛ-Eternalᵒ et₂))))))))
+
+-- The *ordinary* (non-eternal) extraction `εᵘ ∘ᵐ ⟨⟩-≤ _` is a graded
+-- `⟨_⟩`-algebra, exactly as the eternal one is (`extᵉ-μ`). Here it is
+-- derivable — the grades involved are all below the unit — from `μ-εᵘ`,
+-- the grade-compatibility of `μ`, and the naturality of `εᵘ`.
+
+-- and it is natural (this is `εᵘ`'s naturality together with that of `⟨⟩-≤`)
+
+ext-nat : ∀ {X Y ρ} → (p : ρ ≾ᵣ uᵣ) → (g : X →ᵐ Y)
+        → g ∘ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p) ≈ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p) ∘ᵐ ⟨ _ ⟩ᶠ g
+ext-nat p g =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (εᵘ-nat g))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat g p))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
+ext-alg : ∀ {X ρ₁ ρ₂} → (p : ρ₁ ≾ᵣ uᵣ) → (q : ρ₂ ≾ᵣ uᵣ) → (r : ρ₂ ·ᵣ ρ₁ ≾ᵣ uᵣ)
+        → (εᵘ ∘ᵐ ⟨⟩-≤ r) ∘ᵐ μ {X} {ρ₁} {ρ₂}
+        ≈ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ q) ∘ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p)
+ext-alg {X} {ρ₁} {ρ₂} p q r =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr r w)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (P.·-mono-≾ q p) uu))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-μ-≤ p q)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ μ-εᵘ))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (εᵘ-nat (⟨⟩-≤ q)))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+  where
+    uu : uᵣ ·ᵣ uᵣ ≾ᵣ uᵣ
+    uu = ≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)
+
+    w : ρ₂ ·ᵣ ρ₁ ≾ᵣ uᵣ
+    w = ≾ᵣ-trans (P.·-mono-≾ q p) uu
 
 -- Unfoldings of `var-morphism` once eternality has been decided. (Stating
 -- them as lemmas is what lets the `eternal?` split reduce `var-morphism`
@@ -220,7 +261,22 @@ sub-var-nat {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W with eternal? B
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-... | no ¬et = {!!}
+... | no ¬et =
+  ≈ᵐ-trans (V-rename-nat (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren)
+                         ⟨ y , _ ⟩[ x ↦ W ]var)
+  (≈ᵐ-trans (∘ᵐ-congˡ (sub-var-nat y _ x W))
+  (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (var-morphism-¬et y _ ¬et)))
+  (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (ext-nat _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (ext-alg _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))))))))))))))
 
 mutual
 
