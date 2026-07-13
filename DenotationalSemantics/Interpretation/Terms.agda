@@ -97,21 +97,28 @@ mutual
         ∘ᵐ η⊣ ⟩ᵐ
   ⟦ delay τ M ⟧ᶜᵗ = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ⟦ M ⟧ᶜᵗ ∘ᵐ η⊣
   ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) =
-    T-alg-of-handlerᵀ semH ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ
-    where
-      -- Each clause is closed (`[] ∷ param ∷ cont`), so it interprets to a
-      -- context-free morphism; the `ty-gty` coercions adapt the ground-type
-      -- parameter/arity to their value-type interpretations.
-      semH : Handlerᵀ ⟦ B ⟧ᵛ
-      semH op ε'' =
-        ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ
-          mapˣᵐ
-            ⟨ terminalᵐ , subst (λ O → ⟦ param op ⟧ᵍ →ᵐ O) (sym (ty-gty (param op))) idᵐ ⟩ᵐ
-            ([ mapᵉ (op-grade op) ]ᶠ
-              (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ) (sym (ty-gty (arity op))) idᵐ) idᵐ))
+    T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ
   ⟦ unbox w V M ⟧ᶜᵗ with unbox⇒var w V
   ... | ρ' , x , ρ'≾ρ =
     ⟦ M ⟧ᶜᵗ ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ ρ'≾ρ ∘ᵐ var-proj x ⟩ᵐ
   ⟦ box {ρ = ρ} V M ⟧ᶜᵗ =
     ⟦ M ⟧ᶜᵗ ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ ⟦ V ⟧ᵛᵗ ∘ᵐ η⊣ ⟩ᵐ
   ⟦ coerce p M ⟧ᶜᵗ = T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ
+
+  -- The semantic handler of a syntactic one. Each clause is closed
+  -- (`[] ∷ param ∷ cont`), so it interprets to a context-free morphism; the
+  -- `ty-gty` coercions adapt the ground-type parameter/arity to their
+  -- value-type interpretations. It is context-free, hence inert under
+  -- renaming and substitution.
+  ⟦_⟧ʰᵗ : ∀ {B}
+        → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
+             → Γ' ∷ type-of-gtype (param op)
+                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+        → Handlerᵀ ⟦ B ⟧ᵛ
+  ⟦ H ⟧ʰᵗ op ε'' =
+    ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ
+      mapˣᵐ
+        ⟨ terminalᵐ , subst (λ O → ⟦ param op ⟧ᵍ →ᵐ O) (sym (ty-gty (param op))) idᵐ ⟩ᵐ
+        ([ mapᵉ (op-grade op) ]ᶠ
+          (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ) (sym (ty-gty (arity op))) idᵐ) idᵐ))

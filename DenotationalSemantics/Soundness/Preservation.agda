@@ -72,9 +72,10 @@ open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
 
 open Category Cat
-open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ)
-open Adjunction Adj using (η⊣; η⊣-nat)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; []-≤-refl;
+                       []-ε-nat; []-ε∘ηᵘ≡id; ηᵘ) renaming (ε to εᵇ)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η)
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
@@ -418,3 +419,104 @@ sound-DELAY {ε = ε} τ St M q =
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (coe-cancel _ q)
       ∙ ∘ᵐ-identityˡ _
+
+-- Box-grade relaxation is irrelevant in its witness.
+
+[]-≤-irr : ∀ {A ρ₁ ρ₂} → (p q : ρ₁ ≾ᵣ ρ₂) → []-≤ {A} p ≈ᵐ []-≤ {A} q
+[]-≤-irr {A} p q =
+  subst (λ z → []-≤ {A} p ≈ᵐ []-≤ {A} z) (≾ᵣ-irrelevant p q) ≈ᵐ-refl
+
+-- The environment a `return` hands to its continuation.
+--
+-- `strᵀ-ηᵀ` opens the boxed environment with the box counit at the unit
+-- grade; the syntax instead re-locks the context with `⟨⟩-η-ren`. The two
+-- agree: at the unit grade the adjunction unit *is* the possibility unit
+-- (`η⊣-u`), and the counit cancels it. The grade equality `mapᵉ uₑ ≡ uᵣ` is
+-- generalised so that it can be matched.
+
+ret-env : ∀ {Γ ρ} → (e : ρ ≡ uᵣ)
+        → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η⊣ {⟦ Γ ⟧ᶜᵗˣ} {ρ}
+        ≈ᵐ ⟦ eq-ren (cong (Γ ⟨_⟩) e) ⟧ʳ ∘ᵐ η
+ret-env refl =
+    ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-trans ([]-≤-irr _ ≾ᵣ-refl) []-≤-refl))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-identityˡ _)
+  ∙ ∘ᵐ-congʳ η⊣-u
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat η))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
+  ∙ ∘ᵐ-identityʳ _
+  ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+
+-- Substituting into a renamed continuation: the renaming lands in the
+-- environment's first component, the substituted value in its second.
+
+sub-ren : ∀ {Γ Γ' A C} → (r : Ren Γ Γ') → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
+        → ⟦ C-rename (cong-∷-ren r) N [ Hd ↦ V ]c ⟧ᶜᵗ
+        ≈ᵐ ⟦ N ⟧ᶜᵗ ∘ᵐ ⟨ ⟦ r ⟧ʳ , ⟦ V ⟧ᵛᵗ ⟩ᵐ
+sub-ren r N V =
+    C-subst-nat (C-rename (cong-∷-ren r) N) Hd V
+  ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) N)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
+  ∙ ∘ᵐ-congʳ (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+-- THE `return` RULES
+--
+-- `⨟` and `handle` thread the environment through the strength in exactly the
+-- same way, differing only in the algebra that collapses the two monad layers
+-- (`μᵀ`, resp. the handler's `T-alg-of-handlerᵀ`). Both algebras compute on a
+-- returned value the same way, so `SEQ-RET` and `HANDLE-RET` share one proof.
+
+ret-step : ∀ {Γ A B ε}
+         → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
+         → (alg-η : alg ∘ᵐ ηᵀ ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε)))
+         → (V : Γ ⊢V⦂ A)
+         → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+         → alg ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ
+         ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
+            ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                   [ Hd ↦ V ]c ⟧ᶜᵗ
+ret-step {Γ} alg alg-η V N =
+  -- the returned value is `ηᵀ` in the strength's second component
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+        (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  -- the strength's unit law opens the boxed environment
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ strᵀ-ηᵀ))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
+  -- and the opened environment is exactly the syntax's re-locking renaming
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
+  -- what remains is the algebra's unit law
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ N ⟧ᶜᵗ)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ alg-η
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V))
+
+-- SEQ-RET and HANDLE-RET: the two instances of `ret-step`, one for the monad
+-- multiplication and one for the handler's algebra.
+
+sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+              → ⟦ return V ⨟ N ⟧ᶜᵗ
+              ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
+                 ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                        [ Hd ↦ V ]c ⟧ᶜᵗ
+sound-SEQ-RET V N = ret-step μᵀ T-μ∘η≡id V N
+
+sound-HANDLE-RET : ∀ {Γ A B ε}
+                 → (V : Γ ⊢V⦂ A)
+                 → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+                      → Γ' ∷ type-of-gtype (param op)
+                           ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                 → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ
+                 ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
+                    ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                           [ Hd ↦ V ]c ⟧ᶜᵗ
+sound-HANDLE-RET V H N =
+  ret-step (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ) (T-alg-of-handlerᵀ-ηᵀ ⟦ H ⟧ʰᵗ) V N
