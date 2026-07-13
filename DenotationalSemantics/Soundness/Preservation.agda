@@ -1004,14 +1004,17 @@ seq-push alg n m env =
 -- `T-≤-nat` and `T-≤-μᵀ` bubble it up past `Tᶠ n` and `μᵀ`.
 
 coe-out : ∀ {Γ Δ A B ε₀ ε₁ ε₂}
-        → (box : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
+        → (alg : ∀ {ε} → Tᵒ (Tᵒ B ε₂) ε →ᵐ Tᵒ B (ε ·ₑ ε₂))
+        → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+                 → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
+        → (bx : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
         → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
         → (W : Δ →ᵐ Tᵒ A ε₀) → (p : ε₀ ≾ₑ ε₁)
-        → μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁} ∘ᵐ ⟨ box , T-≤ p ∘ᵐ W ⟩ᵐ
+        → alg {ε₁} ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁} ∘ᵐ ⟨ bx , T-≤ p ∘ᵐ W ⟩ᵐ
         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p)
-            ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₀}
-            ∘ᵐ ⟨ []-≤ (map-monotoneᵉ p) ∘ᵐ box , W ⟩ᵐ
-coe-out bx n W p =
+            ∘ᵐ alg {ε₀} ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₀}
+            ∘ᵐ ⟨ []-≤ (map-monotoneᵉ p) ∘ᵐ bx , W ⟩ᵐ
+coe-out alg alg-≤ bx n W p =
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
         (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (T-≤ p) bx W
                  ∙ ⟨ ∘ᵐ-identityˡ bx , ≈ᵐ-refl ⟩ᵐ-cong))))
@@ -1025,10 +1028,8 @@ coe-out bx n W p =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat _ p))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-≤-μᵀ p)
+  ∙ ∘ᵐ-congˡ (alg-≤ p)
   ∙ ∘ᵐ-assoc _ _ _
-
-
 
 -- Splitting the strength across a bind, via `strᵀ-μᵀ` and `strᵀ-nat`.
 
@@ -1065,14 +1066,17 @@ str-split {Γ = Γ} {d = d} {ε₁ = ε₁} {ε₃ = ε₃} box₂ g' t =
 -- the strength/sub-effecting laws.
 
 push-str : ∀ {Γ Δ Δ' A B d ε₁ ε₂ ε₃}
+         → (alg : ∀ {ε} → Tᵒ (Tᵒ B ε₂) ε →ᵐ Tᵒ B (ε ·ₑ ε₂))
+         → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+                  → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
          → (bx : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
          → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
          → (g' : Δ' →ᵐ Tᵒ A ε₃) → (t : Δ →ᵐ Tᵒ Δ' d)
          → (p : d ·ₑ ε₃ ≾ₑ ε₁)
-         → μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁}
+         → alg {ε₁} ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁}
              ∘ᵐ ⟨ bx , T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t ⟩ᵐ
          ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p)
-             ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ μᵀ
+             ∘ᵐ alg {d ·ₑ ε₃} ∘ᵐ Tᶠ n ∘ᵐ μᵀ
              ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₃})
              ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
              ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
@@ -1080,8 +1084,8 @@ push-str : ∀ {Γ Δ Δ' A B d ε₁ ε₂ ε₃}
                      ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {d} {ε₃}))))
                     ∘ᵐ ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx)
                 , t ⟩ᵐ
-push-str bx n g' t p =
-    coe-out bx n (μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t) p
+push-str alg alg-≤ bx n g' t p =
+    coe-out alg alg-≤ bx n (μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t) p
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (str-split ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx) g' t)))
 
 -- The two coercions a sequencing step produces — the re-association of the
@@ -1105,6 +1109,9 @@ seq-coe {d = d} {ε₂ = ε₂} {ε₃ = ε₃} p q f =
 -- to the goal's `d ·ₑ (ε₃ ·ₑ ε₂)` afterwards.
 
 seq-step-core : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
+  → (alg : ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂))
+  → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+           → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
   → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
   → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
   → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
@@ -1113,9 +1120,9 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
               (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r)
-  → ⟦ M ⨟ N ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+  → (alg {ε₁} ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ ⟦ S ⟧ˢ
     ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ (step-≾ r))
-       ∘ᵐ μᵀ ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ μᵀ
+       ∘ᵐ alg {step-grade r ·ₑ ε₃} ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ μᵀ
        ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
        ∘ᵐ Tᶠ (mapˣᵐ idᵐ (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ))
        ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ} {step-grade r}
@@ -1123,9 +1130,9 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
                ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {step-grade r} {ε₃}))))
               ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ))
           , stepᵀ r ⟩ᵐ
-seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
+seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} alg alg-≤ {M} N {M'} r c ih =
     seq-push {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₁} {ε₂}
-             μᵀ ⟦ N ⟧ᶜᵗ ⟦ M ⟧ᶜᵗ ⟦ S ⟧ˢ
+             (alg {ε₁}) ⟦ N ⟧ᶜᵗ ⟦ M ⟧ᶜᵗ ⟦ S ⟧ˢ
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (⟨_,_⟩ᵐ-cong {f = η⊣ ∘ᵐ ⟦ S ⟧ˢ} {f' = η⊣ ∘ᵐ ⟦ S ⟧ˢ}
                    {g = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ}
@@ -1133,6 +1140,7 @@ seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
                    ≈ᵐ-refl ih)))
   ∙ push-str {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ}
              {step-grade r} {ε₁} {ε₂} {ε₃}
+             alg alg-≤
              (η⊣ ∘ᵐ ⟦ S ⟧ˢ) ⟦ N ⟧ᶜᵗ (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r) (step-≾ r)
 
 -- THE `id-suc` BOX IDENTITY
@@ -1485,19 +1493,27 @@ box-merge p q m d h =
 -- `suc-comp-ren` sits in the continuation, and `strᵀ-natˡ` moves it into the
 -- environment box — which is exactly the box `step-box` delivers.
 
+-- The target's denotation, unfolded to the same normal form. Generic in the
+-- algebra: `⨟` uses `μᵀ`, `handle` uses the handler's fold, and they thread the
+-- environment through the strength in exactly the same way. The renaming
+-- `suc-comp-ren` sits in the continuation, and `strᵀ-natˡ` moves it into the
+-- environment box — which is exactly the box `step-box` delivers.
+
 seq-target : ∀ {ε₁ ε₂ ε₃ A B} {Γ Γ' : Ctx} {H : Obj}
+           → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε₃ →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε₃ ·ₑ ε₂))
            → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
            → (ρ : Ren (Γ ⟨ mapᵉ ε₁ ⟩) (Γ' ⟨ mapᵉ ε₃ ⟩))
            → (M' : Γ' ⊢C⦂ A ‼ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
-           → ⟦ M' ⨟ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ∘ᵐ env
-           ≈ᵐ μᵀ ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ
+           → (alg ∘ᵐ Tᶠ ⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M' ⟧ᶜᵗ ⟩ᵐ)
+               ∘ᵐ env
+           ≈ᵐ alg ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ
                ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃}
                ∘ᵐ ⟨ [ mapᵉ ε₃ ]ᶠ (⟦ ρ ⟧ʳ ∘ᵐ ⟨ mapᵉ ε₃ ⟩ᶠ env) ∘ᵐ η⊣
                   , ⟦ M' ⟧ᶜᵗ ∘ᵐ env ⟩ᵐ
-seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} N ρ M' env =
+seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg N ρ M' env =
     seq-push {⟦ Γ' ⟧ᶜᵗˣ} {_} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₃} {_}
-             μᵀ ⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ⟦ M' ⟧ᶜᵗ env
+             alg ⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ⟦ M' ⟧ᶜᵗ env
   -- the renaming in the continuation …
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ρ) N)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _))
@@ -1532,7 +1548,7 @@ sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
                  ∘ᵐ ⟦ S' ⟧ˢ)
               (stepᵀ r)
 sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
-    seq-step-core N r c ih
+    seq-step-core μᵀ T-≤-μᵀ N r c ih
   -- merge the box's two relaxations into the one `step-box` expects
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
@@ -1571,7 +1587,70 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
       (∘ᵐ-assoc _ _ _
        ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
                             {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
-                            N (suc-comp-ren (step-extends-state r) c)
+                            μᵀ N (suc-comp-ren (step-extends-state r) c)
                             M' ⟦ S' ⟧ˢ))))))
   -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
   ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
+
+-- HANDLE-STEP
+--
+-- The same assembly as `SEQ-STEP`, with the handler's fold in place of the
+-- monad multiplication. Everything is shared: `seq-step-core`, `step-box` and
+-- `seq-target` are all generic in the algebra, and the two laws the chain uses
+-- of `μᵀ` (`T-≤-μᵀ`, `T-μ∘μ≡μ∘Tμ`) are matched by the handler's own
+-- (`T-alg-of-handlerᵀ-≤`, `T-alg-of-handlerᵀ-μᵀ`).
+
+sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
+  → {M : toCtx S ⊢C⦂ A ‼ ε₁}
+  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+       → Γ' ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+  → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+  → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
+  → ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+    ≈ᵐ T-≤ (step-≾ r)
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+              (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r)
+  → ⟦ handle M `with H `in N ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+    ≈ᵐ T-≤ (step-≾ (HANDLE-STEP {H = H} {N = N} r c))
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
+              (⟦ handle M' `with H
+                   `in (C-rename (cong-∷-ren
+                                   (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
+                 ∘ᵐ ⟦ S' ⟧ˢ)
+              (stepᵀ r)
+sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
+    seq-step-core alg alg-≤ N r c ih
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (step-box r c (seq-g r)))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+      (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μᵀ-nat _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  -- STUCK HERE.  The chain has reached
+  --     T-≤ ∘ᵐ alg ∘ᵐ μᵀ ∘ᵐ Tᶠ (Tᶠ ⟦N⟧) ∘ᵐ Tᶠ X ∘ᵐ stepᵀ r
+  -- but the goal (whose `⋄` is the *monad's* Kleisli composition) needs
+  --     T-≤ ∘ᵐ μᵀ ∘ᵐ Tᶠ (alg ∘ᵐ Tᶠ ⟦N⟧ ∘ᵐ X) ∘ᵐ stepᵀ r
+  -- i.e. `alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` — which is NOT the algebra law
+  -- (`T-alg-of-handlerᵀ-μᵀ` gives `alg ∘ᵐ μᵀ ≈ᵐ alg ∘ᵐ Tᶠ alg`), and is false
+  -- for a general tree.  It *is* true for `stepᵀ r`, which never performs an
+  -- operation — see the message.
+  ∙ {!!}
+  where
+    alg : ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
+    alg = T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ
+
+    alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
+          → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa}
+    alg-≤ q = T-alg-of-handlerᵀ-≤ ⟦ H ⟧ʰᵗ q
