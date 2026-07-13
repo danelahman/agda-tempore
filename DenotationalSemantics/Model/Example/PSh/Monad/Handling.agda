@@ -123,6 +123,12 @@ mutual
     ε-substˢ-congᵗ _ (delay-≈ (λ q → T-alg-of-handlerˢ-cong h (ek q)))
   T-alg-of-handlerˢ-cong h (sub-≈ et)             =
     sub-≈ (T-alg-of-handlerˢ-cong h et)
+  T-alg-of-handlerˢ-cong h sub-u                 = sub-u
+  T-alg-of-handlerˢ-cong h sub-∘                 = sub-∘
+  T-alg-of-handlerˢ-cong h (≈ᵗ-sym et)           =
+    ≈ᵗ-sym (T-alg-of-handlerˢ-cong h et)
+  T-alg-of-handlerˢ-cong h (≈ᵗ-trans et et')     =
+    ≈ᵗ-trans (T-alg-of-handlerˢ-cong h et) (T-alg-of-handlerˢ-cong h et')
 
   T-alg-of-handlerˢ-nat : ∀ {A ε ε' w w'} (h : Handlerˢ A) (p : w ⊑[ uᵣ ] w')
                           (t : Tˢ (Tᵒ A ε') ε w)

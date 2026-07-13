@@ -183,6 +183,11 @@ open import DenotationalSemantics.Interpretation.Terms
 open import DenotationalSemantics.Interpretation.Renaming
 open import DenotationalSemantics.Interpretation.RenamingCoherence
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence
+open import DenotationalSemantics.Interpretation.State
+
+---- Soundness of the operational semantics
+
+open import DenotationalSemantics.Soundness.Preservation
 
 ---- Concrete time-ticks Kripke frames
 

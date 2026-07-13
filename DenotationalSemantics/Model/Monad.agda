@@ -79,13 +79,10 @@ record Monad : Set₁ where
                    → ε-substᵀ q ∘ᵐ ε-substᵀ p ≈ᵐ ε-substᵀ {A} (trans p q)
 
     -- Sub-effecting — the semantics of `coerce`. Covariant in the effect
-    -- grade. It is *not* required to be a graded functor: the equational
-    -- theory imposes only that `coerce` be a proof-irrelevant congruence
-    -- (`coerce-cong`), and the operational semantics simply *peels it off*
-    -- during execution (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`, refining the
-    -- effect `ε' → ε`). Both are matched by `T-≤` here: peeling coerce
-    -- corresponds to the definitional `⟦ coerce p M ⟧ = T-≤ p ⟦ M ⟧`. So
-    -- `T-≤` needs only naturality, not `refl`/`trans` laws.
+    -- grade, and functorial in it (`T-≤-refl` / `T-≤-trans` below), so that
+    -- `⟦ coerce p M ⟧ = T-≤ p ⟦ M ⟧` is a genuine coercion: one that the
+    -- denotational equality can see through, as it must, since execution
+    -- peels coercions off (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`).
 
     T-≤ : ∀ {A ε₁ ε₂} → ε₁ ≾ₑ ε₂ → Tᵒ A ε₁ →ᵐ Tᵒ A ε₂
 
@@ -109,6 +106,31 @@ record Monad : Set₁ where
 
     T-≤-nat : ∀ {A B ε ε'} → (f : A →ᵐ B) → (p : ε ≾ₑ ε')
             → Tᶠ f ∘ᵐ T-≤ {A} p ≈ᵐ T-≤ {B} p ∘ᵐ Tᶠ f
+
+    -- Sub-effecting is *functorial in the grade*, and the on-the-nose
+    -- coercion is the special case of it at a reflexive witness.
+    --
+    -- These are what make `T-≤` a genuine coercion rather than extra
+    -- structure. They are needed because reduction *removes* coercions
+    -- (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`) and refines effect grades as it
+    -- goes, so a denotational equality preserved by reduction cannot see
+    -- them; and they are what make the soundness relation transitive, hence
+    -- closable under `↝*`.
+
+    T-≤-refl : ∀ {A ε} → (p : ε ≾ₑ ε) → T-≤ {A} p ≈ᵐ idᵐ
+    T-≤-trans : ∀ {A ε₁ ε₂ ε₃} → (p : ε₁ ≾ₑ ε₂) → (q : ε₂ ≾ₑ ε₃) → (r : ε₁ ≾ₑ ε₃)
+              → T-≤ {A} q ∘ᵐ T-≤ {A} p ≈ᵐ T-≤ {A} r
+    T-≤-≡ : ∀ {A ε ε'} → (e : ε ≡ ε')
+          → ε-substᵀ {A} e ≈ᵐ T-≤ (≾ₑ-reflexive e)
+
+    -- Sub-effecting commutes with the monad multiplication in the outer
+    -- grade, and with the strength (which also relaxes the box's grade,
+    -- the box being contravariant in it).
+
+    T-≤-μᵀ : ∀ {A ε₁ ε₂ ε'} → (p : ε₁ ≾ₑ ε₂)
+           → μᵀ {A} {ε₂} {ε'} ∘ᵐ T-≤ p
+           ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ μᵀ {A} {ε₁} {ε'}
+
 
     -- Graded monad laws
 
@@ -168,6 +190,14 @@ record Monad : Set₁ where
     strᵀ-nat : ∀ {A A' B B' ε} → (f : A →ᵐ A') → (g : B →ᵐ B')
              → strᵀ {A'} {B'} ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ f) (Tᶠ g)
              ≈ᵐ Tᶠ (mapˣᵐ f g) ∘ᵐ strᵀ {A} {B}
+
+    -- Strength commutes with sub-effecting. Relaxing the tree's grade also
+    -- relaxes the box's, contravariantly (`[]-≤`): a box that is available
+    -- `mapᵉ ε'`-far ahead is in particular available `mapᵉ ε`-far ahead.
+
+    strᵀ-≤ : ∀ {A B ε ε'} → (p : ε ≾ₑ ε')
+           → strᵀ {A} {B} {ε'} ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
+           ≈ᵐ T-≤ p ∘ᵐ strᵀ {A} {B} {ε} ∘ᵐ mapˣᵐ ([]-≤ (map-monotoneᵉ p)) idᵐ
 
     -- Strength projects away
 

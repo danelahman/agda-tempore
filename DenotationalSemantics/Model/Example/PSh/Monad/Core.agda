@@ -119,6 +119,30 @@ mutual
     sub-≈   : ∀ {ε ε' w} {e e' : ε ≾ₑ ε'} {t t' : Tˢ A ε w}
             → t ≈ᵗ t' → sub e t ≈ᵗ sub e' t'
 
+    -- Sub-effecting nodes are *invisible*. The operational semantics
+    -- discards a `coerce` (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`) and refines
+    -- effect grades as it steps, so a denotational equality that is to be
+    -- preserved by reduction must not see the `sub` nodes those coercions
+    -- leave behind. Collapsing them is what makes `T-≤` a genuine
+    -- sub-effecting coercion (`T-≤-refl` / `T-≤-trans`) rather than a
+    -- free constructor, and hence what makes the soundness relation a
+    -- preorder — without which the `↝*` closure would not compose.
+
+    sub-u   : ∀ {ε w} {e : ε ≾ₑ ε} {t : Tˢ A ε w}
+            → sub e t ≈ᵗ t
+    sub-∘   : ∀ {ε ε' ε'' w} {e : ε ≾ₑ ε'} {e' : ε' ≾ₑ ε''} {e'' : ε ≾ₑ ε''}
+                {t : Tˢ A ε w}
+            → sub e' (sub e t) ≈ᵗ sub e'' t
+
+    -- With the laws above the congruence rules no longer suffice to make
+    -- `_≈ᵗ_` an equivalence, so it is closed under symmetry and
+    -- transitivity explicitly.
+
+    ≈ᵗ-sym   : ∀ {ε w} {t t' : Tˢ A ε w}
+             → t ≈ᵗ t' → t' ≈ᵗ t
+    ≈ᵗ-trans : ∀ {ε w} {t t' t'' : Tˢ A ε w}
+             → t ≈ᵗ t' → t' ≈ᵗ t'' → t ≈ᵗ t''
+
   -- Transport of a tree along unit-accessibility. The top node is
   -- reindexed and its continuation is precomposed with the witness;
   -- the reindexed continuation's coherence witnesses are rebuilt from
@@ -150,17 +174,7 @@ infix 4 _≈ᵗ_
 ≈ᵗ-refl (delay-node τ k kn)      = delay-≈ (λ q → ≈ᵗ-refl (k q))
 ≈ᵗ-refl (sub e t)                = sub-≈ (≈ᵗ-refl t)
 
-≈ᵗ-sym : ∀ {A ε w} {t t' : Tˢ A ε w} → t ≈ᵗ t' → t' ≈ᵗ t
-≈ᵗ-sym {A} (leaf-≈ e)             = leaf-≈ (≈-sym A e)
-≈ᵗ-sym (op-≈ {op = op} ev ek)     = op-≈ (≈-sym ⟦ param op ⟧ᵍ ev) (λ q y → ≈ᵗ-sym (ek q y))
-≈ᵗ-sym (delay-≈ ek)               = delay-≈ (λ q → ≈ᵗ-sym (ek q))
-≈ᵗ-sym (sub-≈ et)                 = sub-≈ (≈ᵗ-sym et)
-
-≈ᵗ-trans : ∀ {A ε w} {t t' t'' : Tˢ A ε w} → t ≈ᵗ t' → t' ≈ᵗ t'' → t ≈ᵗ t''
-≈ᵗ-trans {A} (leaf-≈ e) (leaf-≈ e')             = leaf-≈ (≈-trans A e e')
-≈ᵗ-trans (op-≈ {op = op} ev ek) (op-≈ ev' ek')  = op-≈ (≈-trans ⟦ param op ⟧ᵍ ev ev') (λ q y → ≈ᵗ-trans (ek q y) (ek' q y))
-≈ᵗ-trans (delay-≈ ek) (delay-≈ ek')             = delay-≈ (λ q → ≈ᵗ-trans (ek q) (ek' q))
-≈ᵗ-trans (sub-≈ et) (sub-≈ et')                 = sub-≈ (≈ᵗ-trans et et')
+-- (`≈ᵗ-sym` and `≈ᵗ-trans` are constructors of `_≈ᵗ_`; see above.)
 
 ≡→≈ᵗ : ∀ {A ε w} {t t' : Tˢ A ε w} → t ≡ t' → t ≈ᵗ t'
 ≡→≈ᵗ refl = ≈ᵗ-refl _
@@ -173,6 +187,10 @@ transportᵗ-cong {A} p (leaf-≈ e)          = leaf-≈ (transport-cong A p e)
 transportᵗ-cong p (op-≈ {op = op} ev ek)  = op-≈ (transport-cong ⟦ param op ⟧ᵍ p ev) (λ q y → ek (⊑ᵘ∘ρ p q) y)
 transportᵗ-cong p (delay-≈ ek)            = delay-≈ (λ q → ek (⊑ᵘ∘ρ p q))
 transportᵗ-cong p (sub-≈ et)              = sub-≈ (transportᵗ-cong p et)
+transportᵗ-cong p sub-u                   = sub-u
+transportᵗ-cong p sub-∘                   = sub-∘
+transportᵗ-cong p (≈ᵗ-sym et)             = ≈ᵗ-sym (transportᵗ-cong p et)
+transportᵗ-cong p (≈ᵗ-trans et et')       = ≈ᵗ-trans (transportᵗ-cong p et) (transportᵗ-cong p et')
 
 transportᵗ-refl : ∀ {A ε w} (t : Tˢ A ε w) → transportᵗ ⊑-refl t ≈ᵗ t
 transportᵗ-refl {A} (leaf x)             = leaf-≈ (transport-refl A x)
@@ -246,6 +264,10 @@ mutual
   Tˢᶠ-congᵗ f (op-≈ ev ek) = op-≈ ev (λ q y → Tˢᶠ-congᵗ f (ek q y))
   Tˢᶠ-congᵗ f (delay-≈ ek) = delay-≈ (λ q → Tˢᶠ-congᵗ f (ek q))
   Tˢᶠ-congᵗ f (sub-≈ et)   = sub-≈ (Tˢᶠ-congᵗ f et)
+  Tˢᶠ-congᵗ f sub-u        = sub-u
+  Tˢᶠ-congᵗ f sub-∘        = sub-∘
+  Tˢᶠ-congᵗ f (≈ᵗ-sym et)  = ≈ᵗ-sym (Tˢᶠ-congᵗ f et)
+  Tˢᶠ-congᵗ f (≈ᵗ-trans et et') = ≈ᵗ-trans (Tˢᶠ-congᵗ f et) (Tˢᶠ-congᵗ f et')
 
   Tˢᶠ-natᵗ : ∀ {A B ε w w'} (f : A →ᵖ B) (p : w ⊑[ uᵣ ] w') (t : Tˢ A ε w)
            → Tˢᶠ f (transportᵗ p t) ≈ᵗ transportᵗ p (Tˢᶠ f t)
@@ -339,6 +361,10 @@ mutual
   μˢ-congᵗ (op-≈ ev ek) = ε-substˢ-congᵗ _ (op-≈ ev (λ q y → μˢ-congᵗ (ek q y)))
   μˢ-congᵗ (delay-≈ ek) = ε-substˢ-congᵗ _ (delay-≈ (λ q → μˢ-congᵗ (ek q)))
   μˢ-congᵗ (sub-≈ et)   = sub-≈ (μˢ-congᵗ et)
+  μˢ-congᵗ sub-u        = sub-u
+  μˢ-congᵗ sub-∘        = sub-∘
+  μˢ-congᵗ (≈ᵗ-sym et)  = ≈ᵗ-sym (μˢ-congᵗ et)
+  μˢ-congᵗ (≈ᵗ-trans et et') = ≈ᵗ-trans (μˢ-congᵗ et) (μˢ-congᵗ et')
 
   μˢ-natᵗ : ∀ {A ε ε' w w'} (p : w ⊑[ uᵣ ] w') (t : Tˢ (Tᵒ A ε') ε w)
           → μˢ (transportᵗ p t) ≈ᵗ transportᵗ p (μˢ t)
@@ -623,6 +649,24 @@ mutual
   strˢ-congᵗ A hb (delay-≈ ek) = delay-≈ (λ q → strˢ-congᵗ A (λ r → hb _) (ek q))
   strˢ-congᵗ A hb (sub-≈ {e = e} {e' = e'} et) with ≾ₑ-irrelevant e e'
   ... | refl                   = sub-≈ (strˢ-congᵗ A (λ r → hb _) et)
+  -- A `sub` coerces the box as well (`app ([]-≤ _)`), but only by moving it
+  -- along a different accessibility witness, which `[]-fun-irr` absorbs —
+  -- so the box hypothesis is reusable at the coerced box.
+  strˢ-congᵗ A {box} {box'} hb (sub-u {t = t}) =
+    ≈ᵗ-trans sub-u
+      (strˢ-congᵗ A (λ r → ≈-trans A ([]-fun-irr box _ r) (hb r)) (≈ᵗ-refl t))
+  strˢ-congᵗ A {box} {box'} hb (sub-∘ {e'' = e''} {t = t}) =
+    ≈ᵗ-trans (sub-∘ {e'' = e''})
+      (sub-≈ (strˢ-congᵗ A
+               (λ r → ≈-trans A ([]-fun-irr box _ (⊑-mono (map-monotoneᵉ e'') r))
+                        (≈-trans A (hb (⊑-mono (map-monotoneᵉ e'') r))
+                                   ([]-fun-irr box' _ _)))
+               (≈ᵗ-refl t)))
+  strˢ-congᵗ A hb (≈ᵗ-sym et)  =
+    ≈ᵗ-sym (strˢ-congᵗ A (λ r → ≈-sym A (hb r)) et)
+  strˢ-congᵗ A {box} {box'} hb (≈ᵗ-trans et et') =
+    ≈ᵗ-trans (strˢ-congᵗ A {box = box} {box' = box} (λ r → ≈-refl A) et)
+             (strˢ-congᵗ A hb et')
 
   -- Strength is natural in the world (uses the box's `fun-nat` at leaves).
 
@@ -781,3 +825,36 @@ strᵀ-μᵀ {A} {ε = ε} {ε' = ε'} (a , t) =
     (app (δ {A} {mapᵉ ε} {mapᵉ ε'}) (app ([]-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) a))
     (λ p q → ≈-refl A)
     t
+
+-- SUB-EFFECTING IS FUNCTORIAL IN THE GRADE
+--
+-- `T-≤ p` adds a `sub p` node, and `_≈ᵗ_` collapses those (`sub-u`,
+-- `sub-∘`): a coercion node is invisible to the tree equality. That is what
+-- makes these laws hold, and it is what the operational soundness proof
+-- needs, since reduction discards coercions as it refines effect grades.
+
+T-≤-refl : ∀ {A ε} → (p : ε ≾ₑ ε) → T-≤ {A} p ≈ᵖ idᵖ
+T-≤-refl p t = sub-u
+
+T-≤-trans : ∀ {A ε₁ ε₂ ε₃} → (p : ε₁ ≾ₑ ε₂) → (q : ε₂ ≾ₑ ε₃) → (r : ε₁ ≾ₑ ε₃)
+          → T-≤ {A} q ∘ᵖ T-≤ {A} p ≈ᵖ T-≤ {A} r
+T-≤-trans p q r t = sub-∘
+
+-- The on-the-nose coercion is sub-effecting at a reflexive witness: the
+-- transport does nothing, and the `sub` node it is compared against collapses.
+
+T-≤-≡ : ∀ {A ε ε'} → (e : ε ≡ ε') → ε-substᵀ {A} e ≈ᵖ T-≤ (≾ₑ-reflexive e)
+T-≤-≡ refl t = ≈ᵗ-sym sub-u
+
+-- Sub-effecting commutes with the multiplication and with the strength;
+-- both hold definitionally, as `μˢ` and `strˢ` push a `sub` node outwards
+-- (the strength relaxing the box's grade as it goes).
+
+T-≤-μᵀ : ∀ {A ε₁ ε₂ ε'} → (p : ε₁ ≾ₑ ε₂)
+       → μᵀ {A} {ε₂} {ε'} ∘ᵖ T-≤ p ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ μᵀ {A} {ε₁} {ε'}
+T-≤-μᵀ p t = ≈ᵗ-refl _
+
+strᵀ-≤ : ∀ {A B ε ε'} → (p : ε ≾ₑ ε')
+       → strᵀ {A} {B} {ε'} ∘ᵖ mapˣᵐ idᵖ (T-≤ p)
+       ≈ᵖ T-≤ p ∘ᵖ strᵀ {A} {B} {ε} ∘ᵖ mapˣᵐ ([]-≤ (map-monotoneᵉ p)) idᵖ
+strᵀ-≤ {A} p (box , t) = ≈ᵗ-refl _
