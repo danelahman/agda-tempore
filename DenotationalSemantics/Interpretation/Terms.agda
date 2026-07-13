@@ -96,7 +96,19 @@ mutual
                          (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ))
         ∘ᵐ η⊣ ⟩ᵐ
   ⟦ delay τ M ⟧ᶜᵗ = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ⟦ M ⟧ᶜᵗ ∘ᵐ η⊣
-  ⟦ handle M `with H `in N ⟧ᶜᵗ = {!!}
+  ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) =
+    T-alg-of-handlerᵀ semH ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ
+    where
+      -- Each clause is closed (`[] ∷ param ∷ cont`), so it interprets to a
+      -- context-free morphism; the `ty-gty` coercions adapt the ground-type
+      -- parameter/arity to their value-type interpretations.
+      semH : Handlerᵀ ⟦ B ⟧ᵛ
+      semH op ε'' =
+        ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ
+          mapˣᵐ
+            ⟨ terminalᵐ , subst (λ O → ⟦ param op ⟧ᵍ →ᵐ O) (sym (ty-gty (param op))) idᵐ ⟩ᵐ
+            ([ mapᵉ (op-grade op) ]ᶠ
+              (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ) (sym (ty-gty (arity op))) idᵐ) idᵐ))
   ⟦ unbox w V M ⟧ᶜᵗ with unbox⇒var w V
   ... | ρ' , x , ρ'≾ρ =
     ⟦ M ⟧ᶜᵗ ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ ρ'≾ρ ∘ᵐ var-proj x ⟩ᵐ
