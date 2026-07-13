@@ -78,3 +78,13 @@ record Adjunction : Set₁ where
 
     triangleʳ : ∀ {A ρ}
               → [ ρ ]ᶠ (ε⊣ {A} {ρ}) ∘ᵐ η⊣ {[ ρ ]ᵒ A} {ρ} ≈ᵐ idᵐ
+
+    -- At the *unit* grade the adjunction restricts to the unit-graded
+    -- isomorphisms `⟨ u ⟩ᵒ A ≅ A` and `[ u ]ᵒ A ≅ A`: the counit `ε⊣`
+    -- factors through the box counit `ε` and the possibility counit `εᵘ`,
+    -- and dually (by symmetry) the unit `η⊣` factors through the box unit
+    -- `ηᵘ` and the possibility unit `η`. This is what makes a variable of
+    -- *eternal* type usable at the unit grade: `extᵉ { u } ∘ η ≈ idᵐ`.
+
+    ε⊣-u : ∀ {A} → ε⊣ {A} {u} ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ ε
+    η⊣-u : ∀ {A} → η⊣ {A} {u} ≈ᵐ [ u ]ᶠ η ∘ᵐ ηᵘ

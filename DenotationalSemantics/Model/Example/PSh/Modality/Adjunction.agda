@@ -104,6 +104,23 @@ triangleˡ {A} {ρ} E = ≈-refl (⟨ ρ ⟩ᵒ A)
 triangleʳ : ∀ {A ρ} → [ ρ ]ᶠ (ε⊣ {A} {ρ}) ∘ᵖ η⊣ {[ ρ ]ᵒ A} {ρ} ≈ᵖ idᵖ
 triangleʳ {A} F p = ≈-refl A
 
+-- unit-grade restriction: `ε⊣` at grade `u` opens the boxed possibility
+-- along its own witness, which is the box's naturality (`fun-nat`) applied
+-- to the reflexive opening — i.e. exactly `εᵘ` after opening with `ε`.
+
+ε⊣-u : ∀ {A} → ε⊣ {A} {u} ≈ᵖ εᵘ ∘ᵖ ⟨ u ⟩ᶠ ε
+ε⊣-u {A} E =
+  ≈-trans A
+    ([]-fun-irr (val E) (acc E) (⊑ρ∘ᵘ ⊑-refl (acc E)))
+    (fun-nat (val E) ⊑-refl (acc E))
+
+-- Dually, `η⊣` at grade `u` names the past world by the present one, which
+-- is one generating step of the coend away from transporting the value
+-- forward — i.e. exactly `ηᵘ` followed by `η`.
+
+η⊣-u : ∀ {A} → η⊣ {A} {u} ≈ᵖ [ u ]ᶠ η ∘ᵖ ηᵘ
+η⊣-u {A} x q = return (q , ≈-refl A)
+
 
 -- Packaging the adjunction up as an `Adjunction` instance
 
@@ -120,4 +137,6 @@ PShAdj = record
   ; ε⊣-≤      = ε⊣-≤
   ; triangleˡ = λ {A} → triangleˡ {A}
   ; triangleʳ = λ {A} → triangleʳ {A}
+  ; ε⊣-u      = λ {A} → ε⊣-u {A}
+  ; η⊣-u      = λ {A} → η⊣-u {A}
   }

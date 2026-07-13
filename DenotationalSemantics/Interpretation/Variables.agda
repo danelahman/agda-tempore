@@ -46,9 +46,9 @@ open import Syntax.Types S
 open import Syntax.Contexts S
 
 open Category Cat
-open Future Fut using ([_]ᵒ)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; ε)
 open Past Pst
-open Adjunction Adj using (ε⊣)
+open Adjunction Adj using (ε⊣; ε⊣-≤; ε⊣-u)
 open GroundEternal GE
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
@@ -72,6 +72,79 @@ eternalᵛ-extᵉ Unitₑ             = terminalᵐ
 eternalᵛ-extᵉ (et₁ |×|ₑ et₂) {ρ} =
   mapˣᵐ (eternalᵛ-extᵉ et₁) (eternalᵛ-extᵉ et₂) ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
 eternalᵛ-extᵉ Emptyₑ {ρ}        = ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (initialᵐ {[ ρ ]ᵒ 𝟘ᵐ})
+
+-- Pairing distributes over precomposition, and the product functor's
+-- action distributes over a pairing.
+
+⟨⟩ᵐ-∘ : ∀ {A B C D} → (f : B →ᵐ C) → (g : B →ᵐ D) → (h : A →ᵐ B)
+      → ⟨ f , g ⟩ᵐ ∘ᵐ h ≈ᵐ ⟨ f ∘ᵐ h , g ∘ᵐ h ⟩ᵐ
+⟨⟩ᵐ-∘ f g h =
+  ⟨⟩ᵐ-unique (f ∘ᵐ h) (g ∘ᵐ h) (⟨ f , g ⟩ᵐ ∘ᵐ h)
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ ⟨ f , g ⟩ᵐ h)) (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ f g)))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ ⟨ f , g ⟩ᵐ h)) (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ f g)))
+
+mapˣᵐ-∘⟨⟩ : ∀ {A B C D E} → (a : B →ᵐ C) → (b : D →ᵐ E) → (u : A →ᵐ B) → (v : A →ᵐ D)
+          → mapˣᵐ a b ∘ᵐ ⟨ u , v ⟩ᵐ ≈ᵐ ⟨ a ∘ᵐ u , b ∘ᵐ v ⟩ᵐ
+mapˣᵐ-∘⟨⟩ a b u v =
+  ≈ᵐ-trans (⟨⟩ᵐ-∘ (a ∘ᵐ fstᵐ) (b ∘ᵐ sndᵐ) ⟨ u , v ⟩ᵐ)
+    ⟨ ≈ᵐ-trans (∘ᵐ-assoc a fstᵐ ⟨ u , v ⟩ᵐ) (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ u v))
+    , ≈ᵐ-trans (∘ᵐ-assoc b sndᵐ ⟨ u , v ⟩ᵐ) (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ u v)) ⟩ᵐ-cong
+
+-- Eternal extraction is uniform in the grade (base from `Eternalᵒ.extᵉ-≤`;
+-- `Unit`/`Empty` by (co)uniqueness, product functorially).
+
+eternalᵛ-extᵉ-≤ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ᵣ ρ₂)
+                → eternalᵛ-extᵉ et {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ eternalᵛ-extᵉ et {ρ₁}
+eternalᵛ-extᵉ-≤ (Baseₑ b eb)   p = Eternalᵒ.extᵉ-≤ (⟦ b ⟧ᵇᵉ eb) p
+eternalᵛ-extᵉ-≤ Unitₑ          p = terminalᵐ-unique
+eternalᵛ-extᵉ-≤ Emptyₑ         p =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat _ p))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (ε⊣-≤ p))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ([]-≤ p) _)))
+            (∘ᵐ-congʳ (⟨⟩-congᶠ initialᵐ-unique)))))))
+eternalᵛ-extᵉ-≤ (et₁ |×|ₑ et₂) p =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ ⟨ ⟨⟩-≤-nat _ p , ⟨⟩-≤-nat _ p ⟩ᵐ-cong)
+  (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+  (≈ᵐ-trans (⟨ ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (eternalᵛ-extᵉ-≤ et₁ p))
+             , ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (eternalᵛ-extᵉ-≤ et₂ p)) ⟩ᵐ-cong)
+            (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))))
+
+-- At the unit grade the eternal extraction is the possibility counit `εᵘ`.
+
+eternalᵛ-extᵉ-u : ∀ {A} → (et : Eternal A) → eternalᵛ-extᵉ et {uᵣ} ≈ᵐ εᵘ
+eternalᵛ-extᵉ-u (Baseₑ b eb)   = Eternalᵒ.extᵉ-u (⟦ b ⟧ᵇᵉ eb)
+eternalᵛ-extᵉ-u Unitₑ          = ≈ᵐ-sym terminalᵐ-unique
+eternalᵛ-extᵉ-u Emptyₑ         =
+  ≈ᵐ-trans (∘ᵐ-congˡ ε⊣-u)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ε _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-trans initialᵐ-unique (≈ᵐ-sym initialᵐ-unique))))
+  (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
+            (∘ᵐ-identityʳ εᵘ)))))
+eternalᵛ-extᵉ-u (et₁ |×|ₑ et₂) =
+  ≈ᵐ-trans (∘ᵐ-congˡ ⟨ ∘ᵐ-congˡ (eternalᵛ-extᵉ-u et₁) , ∘ᵐ-congˡ (eternalᵛ-extᵉ-u et₂) ⟩ᵐ-cong)
+  (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
+  (≈ᵐ-trans (⟨ ≈ᵐ-sym (εᵘ-nat fstᵐ) , ≈ᵐ-sym (εᵘ-nat sndᵐ) ⟩ᵐ-cong)
+  (≈ᵐ-trans (≈ᵐ-sym (⟨⟩ᵐ-∘ fstᵐ sndᵐ εᵘ))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ fstᵐ) (∘ᵐ-identityʳ sndᵐ))))
+            (∘ᵐ-identityˡ εᵘ)))))
+
+-- `η` after eternal extraction at grade `ρ` (with `ρ ≾ uᵣ`) is the grade
+-- relaxation `⟨⟩-≤`: the eternal value is available regardless of budget.
+
+eternalᵛ-η-ext : ∀ {A} → (et : Eternal A) → ∀ {ρ} → (p : ρ ≾ᵣ uᵣ)
+               → η ∘ᵐ eternalᵛ-extᵉ et {ρ} ≈ᵐ ⟨⟩-≤ p
+eternalᵛ-η-ext et p =
+  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et p)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-η∘εᵘ≡id)
+            (∘ᵐ-identityˡ (⟨⟩-≤ p)))))
 
 -- The morphism interpreting a variable: project, then extract.
 

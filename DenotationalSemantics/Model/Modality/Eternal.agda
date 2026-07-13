@@ -124,3 +124,18 @@ record Eternalᵒ (A : Obj) : Set where
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ([]-≤ p) (necᵉ {ρ₂}))))
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (necᵉ-≤ p)))
               (≈ᵐ-sym extᵉ-mate))))))))
+
+  -- At the unit grade the eternal extraction is exactly the possibility
+  -- counit `εᵘ`. This is where the adjunction's unit-grade restriction
+  -- `ε⊣-u` is used, together with `necᵉ-u` and the box iso `ε ∘ ηᵘ ≈ id`.
+
+  extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
+  extᵉ-u =
+    ≈ᵐ-trans extᵉ-mate
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ necᵉ-u))
+    (≈ᵐ-trans (∘ᵐ-congˡ ε⊣-u)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ε ηᵘ)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ []-ε∘ηᵘ≡id))
+    (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
+              (∘ᵐ-identityʳ εᵘ)))))))
