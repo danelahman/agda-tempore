@@ -36,12 +36,18 @@ module DenotationalSemantics.Interpretation.Renaming
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Types     S
-open import Syntax.Contexts  S
-open import Syntax.Renamings S
+open import Data.Product using (_,_; proj₁; proj₂)
+open import Relation.Nullary using (yes; no)
+
+open import Util.Equality using (subst)
+
+open import Syntax.Types      S
+open import Syntax.Contexts   S
+open import Syntax.Renamings  S
+open import Syntax.RenActions S using (var-rename)
 
 open Category Cat
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; ⟨⟩-≤; η; μ; εᵘ)
+open Past Pst
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
@@ -60,3 +66,133 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ⟦ ⟨⟩-≤-ren rel ⟧ʳ        = ⟨⟩-≤ rel
 ⟦ cong-∷-ren r ⟧ʳ        = mapˣᵐ ⟦ r ⟧ʳ idᵐ
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
+
+-- Grade relaxation is irrelevant in its proof witness.
+
+⟨⟩-≤-irr : ∀ {A ρ₁ ρ₂} → (w₁ w₂ : ρ₁ ≾ᵣ ρ₂) → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w₂
+⟨⟩-≤-irr {A} w₁ w₂ =
+  subst (λ w → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w) (≾ᵣ-irrelevant w₁ w₂) ≈ᵐ-refl
+
+-- Folding a unit-graded outer possibility layer with `μ` (and relaxing the
+-- redundant `· uᵣ`) is the possibility counit `εᵘ`.
+
+μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityʳ ρ)) ∘ᵐ μ {A} {uᵣ} {ρ} ≈ᵐ εᵘ
+μ-εᵘ {A} {ρ} =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ fη≡id)
+            (∘ᵐ-identityˡ εᵘ))))
+  where
+    fη≡id : (⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityʳ ρ)) ∘ᵐ μ {A} {uᵣ} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
+    fη≡id =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-μ∘η≡id)
+      (≈ᵐ-trans (⟨⟩-≤-trans _ _)
+                (≈ᵐ-trans (⟨⟩-≤-irr _ _) ⟨⟩-≤-refl)))
+
+-- `μ` is compatible with relaxing the inner resp. outer grade.
+
+μ-≤ˡ : ∀ {A τ ρ ρ'} → (p : ρ ≾ᵣ ρ')
+     → ⟨⟩-≤ (·ᵣ-monoˡ-≾ᵣ p) ∘ᵐ μ {A} {τ} {ρ} ≈ᵐ μ {A} {τ} {ρ'} ∘ᵐ ⟨ τ ⟩ᶠ (⟨⟩-≤ p)
+μ-≤ˡ p =
+  ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
+  (≈ᵐ-trans (⟨⟩-μ-≤ ≾ᵣ-refl p)
+            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-≤-refl) (∘ᵐ-identityʳ _))))
+
+μ-≤ʳ : ∀ {A σ ρ ρ'} → (p : ρ' ≾ᵣ ρ)
+     → ⟨⟩-≤ (·ᵣ-monoʳ-≾ᵣ p) ∘ᵐ μ {A} {ρ'} {σ} ≈ᵐ μ {A} {ρ} {σ} ∘ᵐ ⟨⟩-≤ p
+μ-≤ʳ p =
+  ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
+  (≈ᵐ-trans (⟨⟩-μ-≤ p ≾ᵣ-refl)
+            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ ⟨⟩-≤-refl) ⟨⟩-idᵐ))
+                                (∘ᵐ-identityˡ _))))
+
+-- Naturality of `var-proj` under a renaming: projecting the renamed
+-- variable (relaxed back to the original grade) equals projecting the
+-- original variable and reindexing the environment by `⟦ r ⟧ʳ`.
+
+var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+             → ⟨⟩-≤ (proj₁ (proj₂ (var-rename r x)))
+                 ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
+               ≈ᵐ var-proj x ∘ᵐ ⟦ r ⟧ʳ
+var-proj-nat id-ren x =
+  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+  (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
+var-proj-nat (r₂ ∘ʳ r₁) x with var-rename r₁ x | var-proj-nat r₁ x | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat r₂ (proj₂ (proj₂ (var-rename r₁ x)))
+... | ρ' , ρ'≾ρ , y | ih₁ | ρ'' , ρ''≾ρ' , z | ih₂ =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans ρ''≾ρ' ρ'≾ρ)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ ih₂)
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ ih₁)
+            (∘ᵐ-assoc _ _ _)))))
+var-proj-nat wk-ren x =
+  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl) (∘ᵐ-identityˡ _)
+var-proj-nat {A = A} (var-ren p y) Hd with eternal? A
+... | yes et =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-η-ext et p)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+... | no ¬et =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+var-proj-nat (var-ren p y) (Tl-∷ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+var-proj-nat ⟨⟩-η-ren (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-μ∘η≡id))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-η-nat (var-proj x))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat ⟨⟩-η⁻¹-ren Hd =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))
+var-proj-nat ⟨⟩-η⁻¹-ren (Tl-∷ x) =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))
+var-proj-nat ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))
+var-proj-nat ⟨⟩-μ-ren (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-μ∘μ≡μ∘Tμ))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-μ-nat (var-proj x))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+var-proj-nat (⟨⟩-≤-ren ρ'≾ρ) (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ʳ ρ'≾ρ))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat (var-proj x) ρ'≾ρ)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+var-proj-nat (cong-∷-ren r) Hd =
+  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat (cong-∷-ren r) (Tl-∷ x) with var-rename r x | var-proj-nat r x
+... | (ρ' , ρ'≾ρ , y) | ih =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ ih)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x | var-proj-nat r x
+... | (ρ' , ρ'≾ρ , y) | ih =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ˡ ρ'≾ρ))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ ih))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
