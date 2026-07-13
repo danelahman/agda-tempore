@@ -218,3 +218,15 @@ record Category : Set₂ where
 
   map⇒ᵐ : ∀ {A B C D} → A →ᵐ B → C →ᵐ D → B ⇒ᵐ C →ᵐ A ⇒ᵐ D
   map⇒ᵐ f g = curryᵐ (g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ f)
+
+  -- beta: applying an abstraction is substituting into its body
+
+  βᵐ : ∀ {A B C} → (f : A ×ᵐ B →ᵐ C) → (g : A →ᵐ B)
+     → appᵐ ∘ᵐ ⟨ curryᵐ f , g ⟩ᵐ ≈ᵐ f ∘ᵐ ⟨ idᵐ , g ⟩ᵐ
+  βᵐ f g =
+    ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ (curryᵐ f) idᵐ idᵐ g)
+                                        (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ f) idᵐ)))
+              (∘ᵐ-congˡ (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
+                                  (curryᵐ-uncurryᵐ-iso f)))))

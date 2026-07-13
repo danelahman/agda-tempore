@@ -65,19 +65,24 @@ open import Syntax.Types     S
 open import Syntax.Contexts  S
 open import Syntax.Language  S
 open import Syntax.Renamings S
+open import Syntax.RenActions S using (V-rename; C-rename)
+open import Syntax.Substitutions S
 
 open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
 
 open Category Cat
-open Future Fut using ([_]ᵒ; [_]ᶠ)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ)
-open Adjunction Adj using (η⊣)
+open Adjunction Adj using (η⊣; η⊣-nat)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 
 -- THE INTERPRETATION OF A CONFIGURATION
@@ -92,10 +97,10 @@ open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon
 -- Running a computation over the later history, after the transition that
 -- produces it. The effect grades multiply.
 
-_⋄_ : ∀ {H H' A ε ε'}
-    → (⟦ H' ⟧ᶜᵗˣ →ᵐ Tᵒ A ε')
-    → (⟦ H ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ H' ⟧ᶜᵗˣ ε)
-    → ⟦ H ⟧ᶜᵗˣ →ᵐ Tᵒ A (ε ·ₑ ε')
+_⋄_ : ∀ {X Y A ε ε'}
+    → (Y →ᵐ Tᵒ A ε')
+    → (X →ᵐ Tᵒ Y ε)
+    → X →ᵐ Tᵒ A (ε ·ₑ ε')
 f ⋄ t = μᵀ ∘ᵐ Tᶠ f ∘ᵐ t
 
 infixl 25 _⋄_
@@ -116,7 +121,7 @@ step-grade MATCH                = uₑ
 step-grade (SEQ-STEP r _)       = step-grade r
 step-grade SEQ-RET              = uₑ
 step-grade SEQ-OP               = uₑ
-step-grade (DELAY {τ = τ})      = of-natᵉ τ
+step-grade (DELAY {τ = τ})      = of-natᵉ τ ·ₑ uₑ
 step-grade HANDLE-RET           = uₑ
 step-grade (HANDLE-STEP r _)    = step-grade r
 step-grade HANDLE-OP            = uₑ
@@ -137,8 +142,7 @@ stepᵀ MATCH             = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
 stepᵀ SEQ-RET           = ηᵀ
 stepᵀ SEQ-OP            = ηᵀ
-stepᵀ (DELAY {τ = τ})   =
-  ε-substᵀ (·ₑ-identityʳ (of-natᵉ τ)) ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣
+stepᵀ (DELAY {τ = τ})   = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣
 stepᵀ HANDLE-RET        = ηᵀ
 stepᵀ (HANDLE-STEP r _) = stepᵀ r
 stepᵀ HANDLE-OP         = ηᵀ
@@ -162,7 +166,8 @@ step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
     (·ₑ-monoˡ-≾ₑ (step-≾ r))
 step-≾ SEQ-RET        = ≾ₑ-reflexive refl
 step-≾ {ε = ε} SEQ-OP = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ DELAY          = ≾ₑ-reflexive refl
+step-≾ (DELAY {τ = τ} {ε = ε}) =
+  ≾ₑ-reflexive (cong (_·ₑ ε) (·ₑ-identityʳ (of-natᵉ τ)))
 step-≾ HANDLE-RET     = ≾ₑ-reflexive refl
 step-≾ (HANDLE-STEP {ε₂ = ε₂} {ε₁' = ε₁'} r _) =
   ≾ₑ-trans
@@ -175,3 +180,241 @@ step-≾ {ε = ε} BOX    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} UNBOX  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (COERCE {ε = ε} {ε≾ε' = ε≾ε'}) =
   ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ ε)) ε≾ε'
+
+-- Sub-effecting is irrelevant in its witness (the effect order is).
+
+T-≤-irr : ∀ {A ε ε'} → (p q : ε ≾ₑ ε') → T-≤ {A} p ≈ᵐ T-≤ {A} q
+T-≤-irr {A} p q =
+  subst (λ z → T-≤ {A} p ≈ᵐ T-≤ {A} z) (≾ₑ-irrelevant p q) ≈ᵐ-refl
+
+-- Chaining equational steps (right-associated `≈ᵐ-trans`), so that the long
+-- rewriting chains below read as a linear sequence of steps.
+
+infixr 3 _∙_
+
+_∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+_∙_ = ≈ᵐ-trans
+
+-- Composing with the trivial transition just re-grades: `ηᵀ` allocates no
+-- time, so the Kleisli composite is the computation itself.
+
+⋄-ηᵀ : ∀ {X A ε'} → (f : X →ᵐ Tᵒ A ε')
+     → f ⋄ ηᵀ ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵐ f
+⋄-ηᵀ f =
+  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (ηᵀ-nat f)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (∘ᵐ-congˡ T-μ∘η≡id))
+
+-- THE TIME-PRESERVING STEPS
+--
+-- Every rule but `DELAY` leaves the history alone and transitions by `ηᵀ`.
+-- For those the soundness equation collapses to a plain equation between
+-- the two computations' denotations, coerced along the effect refinement:
+-- the `uₑ` that `ηᵀ` contributes is absorbed by `T-≤`, which the tree
+-- equality lets us do precisely because it collapses coercion nodes.
+
+pure-step : ∀ {X A ε ε'}
+          → (q : uₑ ·ₑ ε' ≾ₑ ε)
+          → {f : X →ᵐ Tᵒ A ε} → {g : X →ᵐ Tᵒ A ε'}
+          → (r : ε' ≾ₑ ε)
+          → f ≈ᵐ T-≤ r ∘ᵐ g
+          → f ≈ᵐ T-≤ q ∘ᵐ (g ⋄ ηᵀ)
+pure-step {ε' = ε'} q {f} {g} r e =
+  ≈ᵐ-trans e
+    (≈ᵐ-sym
+      (≈ᵐ-trans (∘ᵐ-congʳ (⋄-ηᵀ g))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ uₑ·ε'≡ε')))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                (∘ᵐ-congˡ (T-≤-trans (≾ₑ-reflexive uₑ·ε'≡ε') q r))))))
+  where
+    uₑ·ε'≡ε' : ε' ≡ uₑ ·ₑ ε'
+    uₑ·ε'≡ε' = sym (·ₑ-identityˡ ε')
+
+-- The special case where the effect grade does not change at all: then the
+-- coercion is the identity and only the two denotations need to agree.
+
+pure-step-≡ : ∀ {X A ε}
+            → (q : uₑ ·ₑ ε ≾ₑ ε)
+            → {f g : X →ᵐ Tᵒ A ε}
+            → f ≈ᵐ g
+            → f ≈ᵐ T-≤ q ∘ᵐ (g ⋄ ηᵀ)
+pure-step-≡ {ε = ε} q {f} {g} e =
+  pure-step q (≾ₑ-reflexive refl) e'
+  where
+    e' : f ≈ᵐ T-≤ (≾ₑ-reflexive {ε} refl) ∘ᵐ g
+    e' = ≈ᵐ-trans e
+           (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ (T-≤-refl (≾ₑ-reflexive {ε} refl)))
+                             (∘ᵐ-identityˡ g)))
+
+-- Transporting along a context equality and back is the identity.
+
+eq-ren-inv : ∀ {Γ Γ'} → (e : Γ ≡ Γ')
+           → ⟦ eq-ren (sym e) ⟧ʳ ∘ᵐ ⟦ eq-ren e ⟧ʳ ≈ᵐ idᵐ
+eq-ren-inv refl = ∘ᵐ-identityˡ idᵐ
+
+-- APP: applying an abstraction is substituting into its body (`βᵐ` plus the
+-- substitution coherence, whose environment `sub-env Hd V` is `⟨ idᵐ , ⟦V⟧ ⟩ᵐ`).
+
+sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (V : Γ ⊢V⦂ A)
+          → ⟦ lam M · V ⟧ᶜᵗ ≈ᵐ ⟦ M [ Hd ↦ V ]c ⟧ᶜᵗ
+sound-APP M V =
+  ≈ᵐ-trans (βᵐ ⟦ M ⟧ᶜᵗ ⟦ V ⟧ᵛᵗ) (≈ᵐ-sym (C-subst-nat M Hd V))
+
+-- MATCH: destructing a pair is the two substitutions in sequence. The inner
+-- one substitutes `W` weakened past `A`, which reindexes it by `fstᵐ`; that
+-- projection is then cancelled by the outer environment.
+
+sound-MATCH : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
+            → ⟦ match ⦉ V , W ⦊ `in M ⟧ᶜᵗ
+            ≈ᵐ ⟦ (M [ Hd ↦ V-rename wk-ren W ]c) [ Hd ↦ V ]c ⟧ᶜᵗ
+sound-MATCH V W M =
+  ≈ᵐ-trans
+    (∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong))
+    (≈ᵐ-sym
+      (≈ᵐ-trans (C-subst-nat (M [ Hd ↦ V-rename wk-ren W ]c) Hd V)
+      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M Hd (V-rename wk-ren W)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                (∘ᵐ-congʳ
+                  (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+                            (⟨ ∘ᵐ-identityˡ _
+                             , ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat wk-ren W))
+                               (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                               (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+                                         (∘ᵐ-identityʳ _))) ⟩ᵐ-cong)))))))
+
+-- BOX: allocating a resource and extending the store are the *same* morphism,
+-- so the two configurations' denotations coincide outright. The stored value
+-- is the boxed one reindexed along `[] ++ᶜ Γ ≡ Γ`, which cancels.
+
+sound-BOX : ∀ {A B ρ ε} → (St : 𝕊 []) → (V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A)
+          → (M : toCtx St ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
+          → ⟦ box V M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
+          ≈ᵐ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
+sound-BOX {ρ = ρ} St V M =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (∘ᵐ-congʳ (∘ᵐ-congˡ
+      (⟨ ≈ᵐ-refl {f = idᵐ}
+       , ∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym stored≈V)) ⟩ᵐ-cong)))
+  where
+    -- the value the state stores is `V` reindexed along `[] ++ᶜ Γ ≡ Γ`,
+    -- and the state's interpretation reindexes it straight back
+    stored≈V : ⟦ V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V ⟧ᵛᵗ
+                 ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}) ⟧ʳ
+             ≈ᵐ ⟦ V ⟧ᵛᵗ
+    stored≈V =
+      ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-inv (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})))
+                (∘ᵐ-identityʳ _)))
+
+-- COERCE: peeling a coercion off is exactly what `T-≤` does.
+
+sound-COERCE : ∀ {Γ A ε ε'} → (p : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε)
+             → ⟦ coerce p M ⟧ᶜᵗ ≈ᵐ T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ
+sound-COERCE p M = ≈ᵐ-refl
+
+-- TRANSPORT ALONG GRADE EQUALITIES
+--
+-- `ε-substᵀ` is a transport, so it commutes with everything in sight; each
+-- of these follows by matching the equality.
+
+ε-substᵀ-nat : ∀ {A B ε ε'} → (e : ε ≡ ε') → (f : A →ᵐ B)
+             → Tᶠ f ∘ᵐ ε-substᵀ e ≈ᵐ ε-substᵀ e ∘ᵐ Tᶠ f
+ε-substᵀ-nat refl f =
+  ≈ᵐ-trans (∘ᵐ-congʳ ε-substᵀ-refl)
+  (≈ᵐ-trans (∘ᵐ-identityʳ _)
+            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))))
+
+delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : ℕ) → (e : ε ≡ ε')
+                → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (ε-substᵀ e)
+                ≈ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) e) ∘ᵐ delayᵀ {A} {ε} τ
+delayᵀ-ε-substᵀ τ refl =
+  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans ([]-congᶠ ε-substᵀ-refl) []-idᵐ))
+  (≈ᵐ-trans (∘ᵐ-identityʳ _)
+            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))))
+
+-- A coercion cancels the transport it undoes (both are `T-≤`, and `T-≤` is
+-- functorial in the grade).
+
+coe-cancel : ∀ {A ε ε'} → (e : ε ≡ ε') → (q : ε' ≾ₑ ε)
+           → T-≤ {A} q ∘ᵐ ε-substᵀ e ≈ᵐ idᵐ
+coe-cancel e q =
+  ≈ᵐ-trans (∘ᵐ-congʳ (T-≤-≡ e))
+  (≈ᵐ-trans (T-≤-trans (≾ₑ-reflexive e) q (≾ₑ-reflexive refl))
+            (T-≤-refl (≾ₑ-reflexive refl)))
+
+-- DELAY: the tick.
+--
+-- This is the only rule that advances time, and the only one whose history
+-- grows. `η⊣`-naturality is what does the work: the state's interpretation
+-- passes under the new lock (`⟦ St ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ St ⟧ˢ`), so the
+-- source's `η⊣ ∘ᵐ ⟦ St ⟧ˢ` is the target's environment already boxed up.
+-- The transition then supplies exactly the `delayᵀ` that reaches the worlds
+-- one delay ahead, and `delayᵀ`'s algebraicity re-associates it out.
+
+sound-DELAY : ∀ {A ε} → (τ : ℕ) → (St : 𝕊 [])
+            → (M : toCtx St ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+            → (q : (of-natᵉ τ ·ₑ uₑ) ·ₑ ε ≾ₑ of-natᵉ τ ·ₑ ε)
+            → ⟦ delay τ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
+            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ)
+                          ⋄ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
+sound-DELAY {ε = ε} τ St M q =
+  lhs≈ ∙ ≈ᵐ-sym (∘ᵐ-congʳ rhs≈ ∙ cancel)
+  where
+    g : ⟨ of-natʳ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
+    g = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ
+
+    -- the common normal form: delay the whole configuration
+    nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (of-natᵉ τ ·ₑ ε)
+    nf = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ g ∘ᵐ η⊣
+
+    -- the source: `η⊣`-naturality absorbs the state into the boxed body
+    lhs≈ : ⟦ delay τ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ ≈ᵐ nf
+    lhs≈ =
+      ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ St ⟧ˢ)))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+
+    d : ε ≡ uₑ ·ₑ ε
+    d = sym (·ₑ-identityˡ ε)
+
+    c : (of-natᵉ τ ·ₑ uₑ) ·ₑ ε ≡ of-natᵉ τ ·ₑ (uₑ ·ₑ ε)
+    c = ·ₑ-assoc (of-natᵉ τ) uₑ ε
+
+    -- the target: `delayᵀ` is natural, then algebraic; the leftover unit
+    -- laws are pure transports
+    rhs≈ : (g ⋄ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
+         ≈ᵐ ε-substᵀ (sym c) ∘ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) d) ∘ᵐ nf
+    rhs≈ =
+      -- pull `Tᶠ g` through the delay (delayᵀ is natural)
+        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ g)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (ηᵀ-nat g)))))
+      -- `μᵀ ∘ᵐ delayᵀ` is algebraic: the delay floats out of the bind
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+      -- the remaining `μᵀ ∘ᵐ ηᵀ` is a unit law, hence a pure transport
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
+          (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ T-μ∘η≡id))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-ε-substᵀ τ d))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+
+    cancel : T-≤ q ∘ᵐ (ε-substᵀ (sym c) ∘ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) d) ∘ᵐ nf)
+           ≈ᵐ nf
+    cancel =
+      ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (coe-cancel _ q)
+      ∙ ∘ᵐ-identityˡ _
