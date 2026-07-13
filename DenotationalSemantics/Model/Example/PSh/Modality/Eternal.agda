@@ -35,7 +35,7 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 open import DenotationalSemantics.Model.Example.PSh.Modality.Future GS Wld
   using ([_]ᵒ; mk[]; fun; []-monoidal; PShFut)
 open import DenotationalSemantics.Model.Example.PSh.Modality.Past GS Wld
-  using (⟨_⟩ᵒ; ⟨_⟩ᶠ; PShPast)
+  using (⟨_⟩ᵒ; ⟨_⟩ᶠ; ⟨_⟩ᶜ; mk⟨⟩; acc; val; PShPast)
 open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction GS Wld
   using (ε⊣; PShAdj)
 
@@ -81,6 +81,7 @@ Kᵖ-eternalᵒ S = record
   ; necᵉ-u    = λ _ _ → reflˢ
   ; necᵉ-≤    = λ _ _ _ → reflˢ
   ; necᵉ-δ    = λ _ _ _ → reflˢ
+  ; extᵉ-μ    = λ _ → reflˢ
   }
   where open Setoid S renaming (refl to reflˢ)
 
@@ -94,6 +95,7 @@ Kᵖ-eternalᵒ S = record
   ; necᵉ-u    = λ _ _ → tt
   ; necᵉ-≤    = λ _ _ _ → tt
   ; necᵉ-δ    = λ _ _ _ → tt
+  ; extᵉ-μ    = λ _ → tt
   }
   where
     nec : ∀ {ρ} → 𝟙ᵖ →ᵖ [ ρ ]ᵒ 𝟙ᵖ
@@ -109,6 +111,7 @@ Kᵖ-eternalᵒ S = record
   ; necᵉ-u    = λ ()
   ; necᵉ-≤    = λ _ ()
   ; necᵉ-δ    = λ ()
+  ; extᵉ-μ    = λ ()
   }
 
 -- Closure: binary products of eternal objects. `necᵉ` combines the
@@ -123,7 +126,38 @@ Kᵖ-eternalᵒ S = record
   ; necᵉ-u    = λ { (a , b) q → Eternalᵒ.necᵉ-u eA a q , Eternalᵒ.necᵉ-u eB b q }
   ; necᵉ-≤    = λ { p (a , b) q → Eternalᵒ.necᵉ-≤ eA p a q , Eternalᵒ.necᵉ-≤ eB p b q }
   ; necᵉ-δ    = λ { (a , b) p q → Eternalᵒ.necᵉ-δ eA a p q , Eternalᵒ.necᵉ-δ eB b p q }
+  ; extᵉ-μ    = alg
   }
   where
     nec : ∀ {ρ} → (A ×ᵖ B) →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
     nec {ρ} = []-monoidal ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ eA {ρ}) (Eternalᵒ.necᵉ eB {ρ})
+
+    -- Both sides feed the two factors' necessitations the same pair of
+    -- accessibility witnesses, so the law holds componentwise, by the
+    -- factors' own algebra laws applied to the projected bundles.
+    -- one factor's component, bridged through that factor's `extᵉ-mate`
+    -- (its `extᵉ` is an abstract field, so it is not *definitionally* the
+    -- mate of its `necᵉ`)
+    comp : ∀ {C} → (e : Eternalᵒ C) → ∀ {ρ₁ ρ₂ w}
+         → (X : ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ C) w)
+         → _≈_ C
+             (fun (app (Eternalᵒ.necᵉ e) (val (val X))) (⊑-trans (acc (val X)) (acc X)))
+             (fun (app (Eternalᵒ.necᵉ e)
+                    (fun (app (Eternalᵒ.necᵉ e) (val (val X))) (acc (val X))))
+                  (acc X))
+    comp {C} e X =
+      ≈-trans C (≈-sym C (Eternalᵒ.extᵉ-mate e _))
+      (≈-trans C (Eternalᵒ.extᵉ-μ e X)
+      (≈-trans C (Eternalᵒ.extᵉ-mate e _)
+                 (app-cong (Eternalᵒ.necᵉ e) (Eternalᵒ.extᵉ-mate e _) (acc X))))
+
+    alg : ∀ {ρ₁ ρ₂ w} → (E : ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ (A ×ᵖ B)) w)
+        → _≈_ (A ×ᵖ B)
+            (fun (app nec (val (val E))) (⊑-trans (acc (val E)) (acc E)))
+            (fun (app nec
+                   ( fun (app (Eternalᵒ.necᵉ eA) (proj₁ (val (val E)))) (acc (val E))
+                   , fun (app (Eternalᵒ.necᵉ eB) (proj₂ (val (val E)))) (acc (val E)) ))
+                 (acc E))
+    alg E =
+        comp eA (mk⟨⟩ (acc E) (mk⟨⟩ (acc (val E)) (proj₁ (val (val E)))))
+      , comp eB (mk⟨⟩ (acc E) (mk⟨⟩ (acc (val E)) (proj₂ (val (val E)))))

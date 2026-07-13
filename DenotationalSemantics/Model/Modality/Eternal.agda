@@ -93,6 +93,16 @@ record Eternalᵒ (A : Obj) : Set where
     necᵉ-δ : ∀ {ρ₁ ρ₂}
            → δ ∘ᵐ necᵉ {ρ₁ · ρ₂} ≈ᵐ [ ρ₁ ]ᶠ (necᵉ {ρ₂}) ∘ᵐ necᵉ {ρ₁}
 
+    -- Dually, `extᵉ` is a graded `⟨_⟩`-algebra: extracting from a nested
+    -- possibility agrees with folding the two layers with `μ` and
+    -- extracting once. (The `⟨_⟩`-algebra multiplication law. It is not
+    -- derivable from `extᵉ-mate` and `necᵉ-δ`, since the adjunction
+    -- carries no law relating `Past.μ` with `Future.δ`.)
+
+    extᵉ-μ : ∀ {ρ₁ ρ₂}
+           → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
+           ≈ᵐ extᵉ {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (extᵉ {ρ₂})
+
   -- The reverse mate, derivable from `extᵉ-mate` and the right triangle
   -- identity: `necᵉ` is recovered by transposing `extᵉ` back.
 

@@ -8,17 +8,20 @@
 -- `εᵘ`; for an eternal type it uses the eternal extraction `extᵉ` at     --
 -- the arbitrary grade `ρ`.                                              --
 --                                                                    --
--- The eternal extraction of a *composite* eternal type is derived here  --
--- law-free (it is only a morphism, no coherence needed): `Unit` uses    --
--- the terminal map, products the functorial action, and `Empty` the     --
--- adjunction counit on `⟨ ρ ⟩ᶠ initialᵐ`. Only the eternal *base* types  --
--- need supplied structure (`GroundEternal`).                            --
+-- The `Eternalᵒ` structure of an eternal type is assembled by recursion   --
+-- on the eternality witness from the per-former structure supplied by     --
+-- `GroundEternal` (base types, `Unit`, `Empty`, and products). Landing in --
+-- `Eternalᵒ` means the eternal laws — grade-uniformity `extᵉ-≤`, the unit --
+-- grade `extᵉ-u`, and the `⟨_⟩`-algebra law `extᵉ-μ` — are inherited      --
+-- rather than re-proved for each former.                                  --
 ------------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+
+open import Util.Equality
 
 open import DenotationalSemantics.Model.Category
 open import DenotationalSemantics.Model.Modality.Future
@@ -63,59 +66,46 @@ var-proj Hd                    = η ∘ᵐ sndᵐ
 var-proj (Tl-∷ x)              = var-proj x ∘ᵐ fstᵐ
 var-proj (Tl-⟨⟩ {ρ = ρ} x)     = μ ∘ᵐ ⟨ ρ ⟩ᶠ (var-proj x)
 
--- Eternal extraction at an arbitrary grade, derived by recursion on the
--- eternality witness (base from `GroundEternal`; formers derived).
+-- The eternal structure of an eternal type's interpretation, assembled by
+-- recursion on the eternality witness from the structure supplied for each
+-- former by `GroundEternal`. Because this lands in `Eternalᵒ`, all the
+-- eternal laws below are `Eternalᵒ` fields (or derived there), rather than
+-- being re-proved by induction for each former.
+
+eternalᵛ-Eternalᵒ : ∀ {A} → Eternal A → Eternalᵒ ⟦ A ⟧ᵛ
+eternalᵛ-Eternalᵒ (Baseₑ b eb)   = ⟦ b ⟧ᵇᵉ eb
+eternalᵛ-Eternalᵒ Unitₑ          = 𝟙-eternalᵒ
+eternalᵛ-Eternalᵒ Emptyₑ         = 𝟘-eternalᵒ
+eternalᵛ-Eternalᵒ (et₁ |×|ₑ et₂) =
+  ×-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)
+
+-- Eternal extraction at an arbitrary grade.
 
 eternalᵛ-extᵉ : ∀ {A} → Eternal A → ∀ {ρ} → ⟨ ρ ⟩ᵒ ⟦ A ⟧ᵛ →ᵐ ⟦ A ⟧ᵛ
-eternalᵛ-extᵉ (Baseₑ b eb)      = Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb)
-eternalᵛ-extᵉ Unitₑ             = terminalᵐ
-eternalᵛ-extᵉ (et₁ |×|ₑ et₂) {ρ} =
-  mapˣᵐ (eternalᵛ-extᵉ et₁) (eternalᵛ-extᵉ et₂) ∘ᵐ ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
-eternalᵛ-extᵉ Emptyₑ {ρ}        = ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (initialᵐ {[ ρ ]ᵒ 𝟘ᵐ})
+eternalᵛ-extᵉ et = Eternalᵒ.extᵉ (eternalᵛ-Eternalᵒ et)
 
--- Eternal extraction is uniform in the grade (base from `Eternalᵒ.extᵉ-≤`;
--- `Unit`/`Empty` by (co)uniqueness, product functorially).
+-- Eternal extraction is uniform in the grade, is the possibility counit
+-- `εᵘ` at the unit grade, and is a graded `⟨_⟩`-algebra.
 
 eternalᵛ-extᵉ-≤ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ᵣ ρ₂)
                 → eternalᵛ-extᵉ et {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ eternalᵛ-extᵉ et {ρ₁}
-eternalᵛ-extᵉ-≤ (Baseₑ b eb)   p = Eternalᵒ.extᵉ-≤ (⟦ b ⟧ᵇᵉ eb) p
-eternalᵛ-extᵉ-≤ Unitₑ          p = terminalᵐ-unique
-eternalᵛ-extᵉ-≤ Emptyₑ         p =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat _ p))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (ε⊣-≤ p))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ([]-≤ p) _)))
-            (∘ᵐ-congʳ (⟨⟩-congᶠ initialᵐ-unique)))))))
-eternalᵛ-extᵉ-≤ (et₁ |×|ₑ et₂) p =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congʳ ⟨ ⟨⟩-≤-nat _ p , ⟨⟩-≤-nat _ p ⟩ᵐ-cong)
-  (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
-  (≈ᵐ-trans (⟨ ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (eternalᵛ-extᵉ-≤ et₁ p))
-             , ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ (eternalᵛ-extᵉ-≤ et₂ p)) ⟩ᵐ-cong)
-            (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))))
-
--- At the unit grade the eternal extraction is the possibility counit `εᵘ`.
+eternalᵛ-extᵉ-≤ et = Eternalᵒ.extᵉ-≤ (eternalᵛ-Eternalᵒ et)
 
 eternalᵛ-extᵉ-u : ∀ {A} → (et : Eternal A) → eternalᵛ-extᵉ et {uᵣ} ≈ᵐ εᵘ
-eternalᵛ-extᵉ-u (Baseₑ b eb)   = Eternalᵒ.extᵉ-u (⟦ b ⟧ᵇᵉ eb)
-eternalᵛ-extᵉ-u Unitₑ          = ≈ᵐ-sym terminalᵐ-unique
-eternalᵛ-extᵉ-u Emptyₑ         =
-  ≈ᵐ-trans (∘ᵐ-congˡ ε⊣-u)
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ε _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-trans initialᵐ-unique (≈ᵐ-sym initialᵐ-unique))))
-  (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
-            (∘ᵐ-identityʳ εᵘ)))))
-eternalᵛ-extᵉ-u (et₁ |×|ₑ et₂) =
-  ≈ᵐ-trans (∘ᵐ-congˡ ⟨ ∘ᵐ-congˡ (eternalᵛ-extᵉ-u et₁) , ∘ᵐ-congˡ (eternalᵛ-extᵉ-u et₂) ⟩ᵐ-cong)
-  (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
-  (≈ᵐ-trans (⟨ ≈ᵐ-sym (εᵘ-nat fstᵐ) , ≈ᵐ-sym (εᵘ-nat sndᵐ) ⟩ᵐ-cong)
-  (≈ᵐ-trans (≈ᵐ-sym (⟨⟩ᵐ-∘ fstᵐ sndᵐ εᵘ))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ fstᵐ) (∘ᵐ-identityʳ sndᵐ))))
-            (∘ᵐ-identityˡ εᵘ)))))
+eternalᵛ-extᵉ-u et = Eternalᵒ.extᵉ-u (eternalᵛ-Eternalᵒ et)
+
+eternalᵛ-extᵉ-μ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂}
+                → eternalᵛ-extᵉ et {ρ₂ ·ᵣ ρ₁} ∘ᵐ μ {⟦ A ⟧ᵛ} {ρ₁} {ρ₂}
+                ≈ᵐ eternalᵛ-extᵉ et {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (eternalᵛ-extᵉ et {ρ₂})
+eternalᵛ-extᵉ-μ et = Eternalᵒ.extᵉ-μ (eternalᵛ-Eternalᵒ et)
+
+-- Eternal extraction does not depend on how eternality was established
+-- (`Eternal` is a property — see `Syntax.Types.eternal-irrelevant`).
+
+eternalᵛ-extᵉ-irr : ∀ {A} → (et et' : Eternal A) → ∀ {ρ}
+                  → eternalᵛ-extᵉ et {ρ} ≈ᵐ eternalᵛ-extᵉ et' {ρ}
+eternalᵛ-extᵉ-irr et et' with eternal-irrelevant et et'
+... | refl = ≈ᵐ-refl
 
 -- `η` after eternal extraction at grade `ρ` (with `ρ ≾ uᵣ`) is the grade
 -- relaxation `⟨⟩-≤`: the eternal value is available regardless of budget.

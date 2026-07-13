@@ -22,5 +22,11 @@ record BaseTypes : Set₁ where
     
     EternalBaseType  : BaseType → Set
     eternalBaseType? : (b : BaseType) → Dec (EternalBaseType b)
-    
+
+    -- Being an eternal base type is a *property*, not structure: it is
+    -- evidence that a base type is eternal, and any two such witnesses
+    -- coincide. This is what makes the interpretation of a variable of
+    -- eternal type independent of how its eternality was established.
+    eternalBaseType-irrelevant : ∀ {b} → (p q : EternalBaseType b) → p ≡ q
+
     BaseConstants    : BaseType → Set

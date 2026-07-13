@@ -54,6 +54,19 @@ data Eternal : VType → Set where
   _|×|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |×| A₂)
   Emptyₑ : Eternal Empty
 
+-- Eternality is a *property* of a type: any two witnesses coincide
+-- (inherited from `eternalBaseType-irrelevant` at the base types).
+
+eternal-irrelevant : ∀ {A} → (et et' : Eternal A) → et ≡ et'
+eternal-irrelevant (Baseₑ b p) (Baseₑ .b q) =
+  cong (Baseₑ b) (eternalBaseType-irrelevant p q)
+eternal-irrelevant Unitₑ Unitₑ =
+  refl
+eternal-irrelevant (et₁ |×|ₑ et₂) (et₁' |×|ₑ et₂') =
+  cong₂ _|×|ₑ_ (eternal-irrelevant et₁ et₁') (eternal-irrelevant et₂ et₂')
+eternal-irrelevant Emptyₑ Emptyₑ =
+  refl
+
 -- Embedding ground types into types
 
 type-of-gtype : GType → VType
