@@ -140,19 +140,17 @@ open import OperationalSemantics.TopLevelProgressTheorem
 -- EQUATIONAL THEORY
 --------------------
 
-open import EquationalTheory.EquationalTheory
+-- open import EquationalTheory.EquationalTheory
 
 ---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
 
-open import EquationalTheory.EquationalSoundness
+-- open import EquationalTheory.EquationalSoundness
 
 
 -- DENOTATIONAL SEMANTICS
 -------------------------
 
----- Abstract model interface: a Kripke frame of worlds, presheaf
----- category with the future/past graded modalities, ground types,
----- and the graded effect monad
+---- Abstract model interface
 
 open import DenotationalSemantics.Model.Category
 open import DenotationalSemantics.Model.World
@@ -176,8 +174,7 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
 open import DenotationalSemantics.Model.Example.PSh.Monad.Handling
 open import DenotationalSemantics.Model.Example.PSh.Monad.Instance
 
----- Interpretation of the calculus in a model (types, contexts,
----- variables, and terms)
+---- Interpretation of the calculus
 
 open import DenotationalSemantics.Interpretation.Types
 open import DenotationalSemantics.Interpretation.Contexts

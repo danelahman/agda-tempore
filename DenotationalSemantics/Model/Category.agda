@@ -112,27 +112,6 @@ record Category : Set₂ where
   ×ᵐ-assoc⁻¹ : ∀ {A B C} → A ×ᵐ (B ×ᵐ C) →ᵐ (A ×ᵐ B) ×ᵐ C
   ×ᵐ-assoc⁻¹ = ⟨ ⟨ fstᵐ , fstᵐ ∘ᵐ sndᵐ ⟩ᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ
 
-  -- SET-INDEXED PRODUCTS (used to package a handler as an object of
-  -- operation clauses)
-
-  field
-    Πᵐ : (I : Set) → (I → Obj) → Obj
-
-    projᵐ : ∀ {I A} → (i : I) → Πᵐ I A →ᵐ A i
-    ⟨_⟩ᵢᵐ : ∀ {I A B} → ((i : I) → A →ᵐ B i) → A →ᵐ Πᵐ I B
-
-    ⟨⟩ᵢᵐ-cong : ∀ {I A} {B : I → Obj} {f g : (i : I) → A →ᵐ B i}
-              → (∀ i → f i ≈ᵐ g i) → ⟨ f ⟩ᵢᵐ ≈ᵐ ⟨ g ⟩ᵢᵐ
-    ⟨⟩ᵢᵐ-projᵐ : ∀ {I A} {B : I → Obj} → (f : (i : I) → A →ᵐ B i) → (i : I)
-               → projᵐ i ∘ᵐ ⟨ f ⟩ᵢᵐ ≈ᵐ f i
-    ⟨⟩ᵢᵐ-unique : ∀ {I A} {B : I → Obj} → (f : (i : I) → A →ᵐ B i) → (g : A →ᵐ Πᵐ I B)
-                → ((i : I) → projᵐ i ∘ᵐ g ≈ᵐ f i) → g ≈ᵐ ⟨ f ⟩ᵢᵐ
-
-  -- functorial action of the set-indexed product
-
-  mapⁱˣᵐ : ∀ {I} {A B : I → Obj} → ((i : I) → A i →ᵐ B i) → Πᵐ I A →ᵐ Πᵐ I B
-  mapⁱˣᵐ f = ⟨ (λ i → f i ∘ᵐ projᵐ i) ⟩ᵢᵐ
-
   -- EXPONENTIALS
 
   field

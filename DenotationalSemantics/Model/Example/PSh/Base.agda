@@ -337,42 +337,6 @@ expᵖ-str-def : ∀ {A B C}
              → expᵖ-str {A} {B} {C} ≈ᵖ curryᵖ ⟨ fstᵖ ∘ᵖ fstᵖ , uncurryᵖ sndᵖ ⟩ᵖ
 expᵖ-str-def {A} (a , f) p b = ≈-refl A , fun-irr f p (⊑ᵘ-trans p ⊑-refl) b
 
--- Set-indexed products, computed pointwise.
-
-Πᵖ : (I : Set) → (I → PSh) → PSh
-Πᵖ I A = record
-  { carrier         = λ w → (i : I) → carrier (A i) w
-  ; _≈_             = λ f g → ∀ i → _≈_ (A i) (f i) (g i)
-  ; ≈-refl          = λ i → ≈-refl (A i)
-  ; ≈-sym           = λ e i → ≈-sym (A i) (e i)
-  ; ≈-trans         = λ e e' i → ≈-trans (A i) (e i) (e' i)
-  ; transport       = λ p f i → transport (A i) p (f i)
-  ; transport-cong  = λ p e i → transport-cong (A i) p (e i)
-  ; transport-refl  = λ f i → transport-refl (A i) (f i)
-  ; transport-trans = λ p q f i → transport-trans (A i) p q (f i)
-  }
-
-projᵖ : ∀ {I A} → (i : I) → Πᵖ I A →ᵖ A i
-projᵖ {A = A} i = pmap (λ f → f i) (λ e → e i) (λ p f → ≈-refl (A i))
-
-⟨_⟩ᵢᵖ : ∀ {I A B} → ((i : I) → A →ᵖ B i) → A →ᵖ Πᵖ I B
-⟨ fs ⟩ᵢᵖ = pmap
-  (λ x i → app (fs i) x)
-  (λ e i → app-cong (fs i) e)
-  (λ p x i → nat (fs i) p x)
-
-⟨⟩ᵢᵖ-cong : ∀ {I A} {B : I → PSh} {fs gs : (i : I) → A →ᵖ B i}
-          → (∀ i → fs i ≈ᵖ gs i) → ⟨ fs ⟩ᵢᵖ ≈ᵖ ⟨ gs ⟩ᵢᵖ
-⟨⟩ᵢᵖ-cong e x i = e i x
-
-⟨⟩ᵢᵖ-projᵖ : ∀ {I A} {B : I → PSh} → (fs : (i : I) → A →ᵖ B i) → (i : I)
-           → projᵖ i ∘ᵖ ⟨ fs ⟩ᵢᵖ ≈ᵖ fs i
-⟨⟩ᵢᵖ-projᵖ {B = B} fs i x = ≈-refl (B i)
-
-⟨⟩ᵢᵖ-unique : ∀ {I A} {B : I → PSh} → (fs : (i : I) → A →ᵖ B i) → (g : A →ᵖ Πᵖ I B)
-            → ((i : I) → projᵖ i ∘ᵖ g ≈ᵖ fs i) → g ≈ᵖ ⟨ fs ⟩ᵢᵖ
-⟨⟩ᵢᵖ-unique fs g hyp x i = hyp i x
-
 -- Packaging presheaves up as a setoid-enriched cartesian closed category
 
 PShCat : Category
@@ -404,12 +368,6 @@ PShCat = record
   ; ⟨⟩ᵐ-fstᵐ     = ⟨⟩ᵖ-fstᵖ
   ; ⟨⟩ᵐ-sndᵐ     = ⟨⟩ᵖ-sndᵖ
   ; ⟨⟩ᵐ-unique   = ⟨⟩ᵖ-unique
-  ; Πᵐ           = Πᵖ
-  ; projᵐ        = projᵖ
-  ; ⟨_⟩ᵢᵐ        = ⟨_⟩ᵢᵖ
-  ; ⟨⟩ᵢᵐ-cong    = λ {I} {A} {B} {f} {g} → ⟨⟩ᵢᵖ-cong {fs = f} {gs = g}
-  ; ⟨⟩ᵢᵐ-projᵐ   = ⟨⟩ᵢᵖ-projᵖ
-  ; ⟨⟩ᵢᵐ-unique  = ⟨⟩ᵢᵖ-unique
   ; _⇒ᵐ_         = _⇒ᵖ_
   ; curryᵐ       = curryᵖ
   ; curryᵐ-cong  = λ {A} {B} {C} {f} {g} → curryᵖ-cong {f = f} {g = g}
