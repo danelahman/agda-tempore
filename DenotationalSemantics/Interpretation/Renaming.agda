@@ -39,7 +39,6 @@ open GradeSystemInterface Grades
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_; yes; no)
 
-open import Util.Equality using (subst)
 
 open import Syntax.Types      S
 open import Syntax.Contexts   S
@@ -66,47 +65,6 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ⟦ ⟨⟩-≤-ren rel ⟧ʳ        = ⟨⟩-≤ rel
 ⟦ cong-∷-ren r ⟧ʳ        = mapˣᵐ ⟦ r ⟧ʳ idᵐ
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
-
--- Grade relaxation is irrelevant in its proof witness.
-
-⟨⟩-≤-irr : ∀ {A ρ₁ ρ₂} → (w₁ w₂ : ρ₁ ≾ᵣ ρ₂) → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w₂
-⟨⟩-≤-irr {A} w₁ w₂ =
-  subst (λ w → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w) (≾ᵣ-irrelevant w₁ w₂) ≈ᵐ-refl
-
--- Folding a unit-graded outer possibility layer with `μ` (and relaxing the
--- redundant `· uᵣ`) is the possibility counit `εᵘ`.
-
-μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityʳ ρ)) ∘ᵐ μ {A} {uᵣ} {ρ} ≈ᵐ εᵘ
-μ-εᵘ {A} {ρ} =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ fη≡id)
-            (∘ᵐ-identityˡ εᵘ))))
-  where
-    fη≡id : (⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityʳ ρ)) ∘ᵐ μ {A} {uᵣ} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
-    fη≡id =
-      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-      (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-μ∘η≡id)
-      (≈ᵐ-trans (⟨⟩-≤-trans _ _)
-                (≈ᵐ-trans (⟨⟩-≤-irr _ _) ⟨⟩-≤-refl)))
-
--- `μ` is compatible with relaxing the inner resp. outer grade.
-
-μ-≤ˡ : ∀ {A τ ρ ρ'} → (p : ρ ≾ᵣ ρ')
-     → ⟨⟩-≤ (·ᵣ-monoˡ-≾ᵣ p) ∘ᵐ μ {A} {τ} {ρ} ≈ᵐ μ {A} {τ} {ρ'} ∘ᵐ ⟨ τ ⟩ᶠ (⟨⟩-≤ p)
-μ-≤ˡ p =
-  ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
-  (≈ᵐ-trans (⟨⟩-μ-≤ ≾ᵣ-refl p)
-            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-≤-refl) (∘ᵐ-identityʳ _))))
-
-μ-≤ʳ : ∀ {A σ ρ ρ'} → (p : ρ' ≾ᵣ ρ)
-     → ⟨⟩-≤ (·ᵣ-monoʳ-≾ᵣ p) ∘ᵐ μ {A} {ρ'} {σ} ≈ᵐ μ {A} {ρ} {σ} ∘ᵐ ⟨⟩-≤ p
-μ-≤ʳ p =
-  ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
-  (≈ᵐ-trans (⟨⟩-μ-≤ p ≾ᵣ-refl)
-            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ ⟨⟩-≤-refl) ⟨⟩-idᵐ))
-                                (∘ᵐ-identityˡ _))))
 
 -- Naturality of `var-proj` under a renaming: projecting the renamed
 -- variable (relaxed back to the original grade) equals projecting the

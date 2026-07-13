@@ -125,3 +125,89 @@ record Past : Set₁ where
 
     ⟨⟩-εᵘ∘η≡id : ∀ {A} → εᵘ {A} ∘ᵐ η {A} ≈ᵐ idᵐ
     ⟨⟩-η∘εᵘ≡id : ∀ {A} → η {A} ∘ᵐ εᵘ {A} ≈ᵐ idᵐ
+
+  -- DERIVED PROPERTIES
+
+  -- Grade relaxation is irrelevant in its proof witness (the grade order is).
+
+  ⟨⟩-≤-irr : ∀ {A ρ₁ ρ₂} → (w₁ w₂ : ρ₁ ≾ ρ₂) → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w₂
+  ⟨⟩-≤-irr {A} w₁ w₂ =
+    subst (λ w → ⟨⟩-≤ {A} w₁ ≈ᵐ ⟨⟩-≤ {A} w) (≾-irrelevant w₁ w₂) ≈ᵐ-refl
+
+  -- Folding a unit-graded outer layer with `μ` (and relaxing the redundant
+  -- `· u`) is the counit `εᵘ`.
+
+  μ-εᵘ : ∀ {A ρ} → ⟨⟩-≤ (≾-reflexive (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ} ≈ᵐ εᵘ
+  μ-εᵘ {A} {ρ} =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ fη≡id)
+              (∘ᵐ-identityˡ εᵘ))))
+    where
+      fη≡id : (⟨⟩-≤ (≾-reflexive (·-identityʳ ρ)) ∘ᵐ μ {A} {u} {ρ}) ∘ᵐ η ≈ᵐ idᵐ
+      fη≡id =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-μ∘η≡id)
+        (≈ᵐ-trans (⟨⟩-≤-trans _ _)
+                  (≈ᵐ-trans (⟨⟩-≤-irr _ _) ⟨⟩-≤-refl)))
+
+  -- `μ` is compatible with relaxing the inner resp. outer grade.
+
+  μ-≤ˡ : ∀ {A τ ρ ρ'} → (p : ρ ≾ ρ')
+       → ⟨⟩-≤ (·-monoˡ-≾ p) ∘ᵐ μ {A} {τ} {ρ} ≈ᵐ μ {A} {τ} {ρ'} ∘ᵐ ⟨ τ ⟩ᶠ (⟨⟩-≤ p)
+  μ-≤ˡ p =
+    ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
+    (≈ᵐ-trans (⟨⟩-μ-≤ ≾-refl p)
+              (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-≤-refl) (∘ᵐ-identityʳ _))))
+
+  μ-≤ʳ : ∀ {A σ ρ ρ'} → (p : ρ' ≾ ρ)
+       → ⟨⟩-≤ (·-monoʳ-≾ p) ∘ᵐ μ {A} {ρ'} {σ} ≈ᵐ μ {A} {ρ} {σ} ∘ᵐ ⟨⟩-≤ p
+  μ-≤ʳ p =
+    ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
+    (≈ᵐ-trans (⟨⟩-μ-≤ p ≾-refl)
+              (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ ⟨⟩-≤-refl) ⟨⟩-idᵐ))
+                                  (∘ᵐ-identityˡ _))))
+
+  -- EXTRACTION BELOW THE UNIT GRADE
+  --
+  -- At a grade `ρ ≾ u` the possibility can be discharged outright: relax to
+  -- the unit grade and apply the counit. This is what interprets a variable
+  -- whose remaining resources sum below the unit, and it is the ungraded
+  -- counterpart of the eternal `extᵉ` (which does the same at *every* grade).
+
+  -- extraction is natural
+
+  ext-nat : ∀ {X Y ρ} → (p : ρ ≾ u) → (g : X →ᵐ Y)
+          → g ∘ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p) ≈ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p) ∘ᵐ ⟨ _ ⟩ᶠ g
+  ext-nat p g =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (εᵘ-nat g))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat g p))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
+  -- and it is a `⟨_⟩`-algebra: extracting a folded pair of layers is
+  -- extracting them one after the other
+
+  ext-alg : ∀ {X ρ₁ ρ₂} → (p : ρ₁ ≾ u) → (q : ρ₂ ≾ u) → (r : ρ₂ · ρ₁ ≾ u)
+          → (εᵘ ∘ᵐ ⟨⟩-≤ r) ∘ᵐ μ {X} {ρ₁} {ρ₂}
+          ≈ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ q) ∘ᵐ (εᵘ ∘ᵐ ⟨⟩-≤ p)
+  ext-alg {X} {ρ₁} {ρ₂} p q r =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr r w)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·-mono-≾ q p) uu))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-μ-≤ p q)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ μ-εᵘ))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (εᵘ-nat (⟨⟩-≤ q)))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+    where
+      uu : u · u ≾ u
+      uu = ≾-reflexive (·-identityʳ u)
+
+      w : ρ₂ · ρ₁ ≾ u
+      w = ≾-trans (·-mono-≾ q p) uu

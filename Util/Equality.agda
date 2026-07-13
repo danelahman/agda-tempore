@@ -23,3 +23,11 @@ postulate
 
 uip : ∀ {l} {X : Set l} {x y : X} {p q : x ≡ y} → p ≡ q
 uip {p = refl} {q = refl} = refl
+
+-- The dependent eliminator `J` of propositional equality. A definition
+-- inside a record body may not case-split on `refl`, so the model records'
+-- transport lemmas (e.g. `Category.substᶜ-≈`) are proved by *applying* `J`
+-- at an explicit motive rather than by matching.
+
+open import Relation.Binary.PropositionalEquality.Properties public
+  using (J)

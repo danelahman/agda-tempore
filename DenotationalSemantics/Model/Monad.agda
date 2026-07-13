@@ -275,3 +275,16 @@ record Monad : Set₁ where
                             ∘ᵐ h op (ε' ·ₑ ε'')
                             ∘ᵐ mapˣᵐ idᵐ
                                  ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ h)))
+
+  -- DERIVED PROPERTIES
+
+  -- Naturality of the strength in its boxed component alone (the monadic
+  -- component being the identity), which is how the environment-threading
+  -- formers push a reindexing through `strᵀ`.
+
+  strᵀ-natˡ : ∀ {A A' B ε} → (f : A →ᵐ A')
+            → Tᶠ (mapˣᵐ f (idᵐ {B})) ∘ᵐ strᵀ {A} {B} {ε}
+            ≈ᵐ strᵀ {A'} {B} {ε} ∘ᵐ mapˣᵐ ([ mapᵉ ε ]ᶠ f) idᵐ
+  strᵀ-natˡ f =
+    ≈ᵐ-trans (≈ᵐ-sym (strᵀ-nat f idᵐ))
+             (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ T-idᵐ ⟩ᵐ-cong))

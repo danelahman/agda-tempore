@@ -64,6 +64,11 @@ record Category : Set₂ where
           → g ≈ᵐ g' → f ≈ᵐ f' → g ∘ᵐ f ≈ᵐ g' ∘ᵐ f'
   ∘ᵐ-cong q p = ≈ᵐ-trans (∘ᵐ-congˡ q) (∘ᵐ-congʳ p)
 
+  -- propositional equality of morphisms implies categorical equality
+
+  ≡→≈ᵐ : ∀ {A B} {f g : A →ᵐ B} → f ≡ g → f ≈ᵐ g
+  ≡→≈ᵐ {f = f} e = subst (λ h → f ≈ᵐ h) e ≈ᵐ-refl
+
   -- TERMINAL OBJECT
 
   field
@@ -104,6 +109,14 @@ record Category : Set₂ where
   mapˣᵐ : ∀ {A B C D} → A →ᵐ C → B →ᵐ D → A ×ᵐ B →ᵐ C ×ᵐ D
   mapˣᵐ f g = ⟨ f ∘ᵐ fstᵐ , g ∘ᵐ sndᵐ ⟩ᵐ
 
+  -- the product functor preserves identities
+
+  mapˣᵐ-idᵐ : ∀ {A B} → mapˣᵐ (idᵐ {A}) (idᵐ {B}) ≈ᵐ idᵐ
+  mapˣᵐ-idᵐ =
+    ≈ᵐ-sym (⟨⟩ᵐ-unique (idᵐ ∘ᵐ fstᵐ) (idᵐ ∘ᵐ sndᵐ) idᵐ
+             (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
+             (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
+
   -- pairing distributes over precomposition
 
   ⟨⟩ᵐ-∘ : ∀ {A B C D} → (f : B →ᵐ C) → (g : B →ᵐ D) → (h : A →ᵐ B)
@@ -121,6 +134,43 @@ record Category : Set₂ where
     ≈ᵐ-trans (⟨⟩ᵐ-∘ (a ∘ᵐ fstᵐ) (b ∘ᵐ sndᵐ) ⟨ u , v ⟩ᵐ)
       (⟨ ≈ᵐ-trans (∘ᵐ-assoc a fstᵐ ⟨ u , v ⟩ᵐ) (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ u v))
        , ≈ᵐ-trans (∘ᵐ-assoc b sndᵐ ⟨ u , v ⟩ᵐ) (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ u v)) ⟩ᵐ-cong)
+
+  -- TRANSPORT ALONG EQUALITIES OF OBJECTS
+  --
+  -- The interpretation of a syntactic construct can land in a
+  -- *propositionally* equal object (e.g. a context split rebuilt by
+  -- `_++ᶜ_`), and the resulting `subst` then has to be pushed through `≈ᵐ`
+  -- and through composition. Each is immediate once the equality is `refl`,
+  -- which here is reached by applying `J` at an explicit motive (a record
+  -- body may not case-split on `refl` itself).
+
+  -- transport in a morphism's codomain
+
+  substᶜ-≈ : ∀ {X A B} → (eq : A ≡ B) → {g g' : X →ᵐ A} → g ≈ᵐ g'
+           → subst (λ O → X →ᵐ O) eq g ≈ᵐ subst (λ O → X →ᵐ O) eq g'
+  substᶜ-≈ {X} eq {g} {g'} e =
+    J (λ _ eq' → subst (λ O → X →ᵐ O) eq' g ≈ᵐ subst (λ O → X →ᵐ O) eq' g') eq e
+
+  substᶜ-∘ : ∀ {X Y A B} → (eq : A ≡ B) → (g : X →ᵐ A) → (h : Y →ᵐ X)
+           → subst (λ O → X →ᵐ O) eq g ∘ᵐ h ≡ subst (λ O → Y →ᵐ O) eq (g ∘ᵐ h)
+  substᶜ-∘ {X} {Y} eq g h =
+    J (λ _ eq' → subst (λ O → X →ᵐ O) eq' g ∘ᵐ h
+               ≡ subst (λ O → Y →ᵐ O) eq' (g ∘ᵐ h)) eq refl
+
+  -- transport in the second component of a morphism's product domain
+
+  substᵈ-≈ : ∀ {X Z A B} → (eq : A ≡ B) → {g g' : (X ×ᵐ A) →ᵐ Z} → g ≈ᵐ g'
+           → subst (λ O → (X ×ᵐ O) →ᵐ Z) eq g ≈ᵐ subst (λ O → (X ×ᵐ O) →ᵐ Z) eq g'
+  substᵈ-≈ {X} {Z} eq {g} {g'} e =
+    J (λ _ eq' → subst (λ O → (X ×ᵐ O) →ᵐ Z) eq' g
+               ≈ᵐ subst (λ O → (X ×ᵐ O) →ᵐ Z) eq' g') eq e
+
+  substᵈ-∘ : ∀ {W X Z A B} → (eq : A ≡ B) → (g : (X ×ᵐ A) →ᵐ Z) → (h : W →ᵐ X)
+           → subst (λ O → (X ×ᵐ O) →ᵐ Z) eq g ∘ᵐ mapˣᵐ h idᵐ
+           ≡ subst (λ O → (W ×ᵐ O) →ᵐ Z) eq (g ∘ᵐ mapˣᵐ h idᵐ)
+  substᵈ-∘ {W} {X} {Z} eq g h =
+    J (λ _ eq' → subst (λ O → (X ×ᵐ O) →ᵐ Z) eq' g ∘ᵐ mapˣᵐ h idᵐ
+               ≡ subst (λ O → (W ×ᵐ O) →ᵐ Z) eq' (g ∘ᵐ mapˣᵐ h idᵐ)) eq refl
 
   -- associator of the product (and its inverse)
 
