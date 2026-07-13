@@ -832,6 +832,36 @@ box-split-env {ρ₁ = ρ₁} a env =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
 
+-- Pushing an outer box-split through one that has already happened.
+--
+-- `DELAY` produces a *double* `δ` stack — one `δ` from `step-box`'s own
+-- statement, one from `strᵀ-delayᵀ-algebraicity` — and a single split peels
+-- only one layer. This pushes the outer layer through (`[]-≤-nat`, then
+-- `[]-δ-nat`), exposing a bare `δ ∘ᵐ []-≤ ∘ᵐ η⊣` on which `box-split` fires
+-- again. The transposition then sits at `ρ₁` — the tick's own grade — which is
+-- what lets `η⊣-⟨⟩` reassemble the strength's two components.
+
+box-push : ∀ {Y Z ρ₁ ρ₂ ρ'} → (e : ρ₁ ·ᵣ ρ₂ ≾ᵣ ρ')
+         → (h : ⟨ ρ' ⟩ᵒ Y →ᵐ Z)
+         → (δ {Z} {ρ₁} {ρ₂} ∘ᵐ []-≤ e) ∘ᵐ ([ ρ' ]ᶠ h ∘ᵐ η⊣ {Y} {ρ'})
+         ≈ᵐ [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ h
+                      ∘ᵐ ([ ρ₂ ]ᶠ (⟨⟩-≤ e ∘ᵐ μ) ∘ᵐ η⊣ {⟨ ρ₁ ⟩ᵒ Y} {ρ₂}))
+              ∘ᵐ η⊣ {Y} {ρ₁}
+box-push {ρ' = ρ'} e h =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  -- commute the relaxation past the already-split box
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat h e)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  -- and commute `δ` past it too
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-δ-nat h))
+  ∙ ∘ᵐ-assoc _ _ _
+  -- what is left is a bare split
+  ∙ ∘ᵐ-congʳ (box-split e)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+
 -- Discharging a unit-graded box: at grade `u` the box counit turns a
 -- transposition into the possibility unit. (The object-general form of
 -- `ret-env`.)
@@ -1118,21 +1148,3 @@ box-id-suc {ρ₂ = ρ₂} a w env =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat env))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-
--- The `∷-suc` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
--- whose `fstᵐ` projects away exactly the cell that `⟦_⟧ˢ` just allocated. So
--- an allocation leaves the *environment* untouched — which is why `BOX`
--- threads the box just like a time-preserving rule.
-
-box-∷-suc : ∀ {X Y Z ρ₂ ρ₄} → (w w' : ρ₄ ≾ᵣ ρ₂)
-          → (env : Y →ᵐ X) → (cell : X →ᵐ Z)
-          → ⟨⟩-≤ w ∘ᵐ ⟨ ρ₄ ⟩ᶠ env
-          ≈ᵐ (⟨⟩-≤ w' ∘ᵐ ⟨ ρ₄ ⟩ᶠ fstᵐ)
-               ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟨ idᵐ , cell ⟩ᵐ ∘ᵐ env)
-box-∷-suc w w' env cell =
-    ∘ᵐ-congˡ (⟨⟩-≤-irr w w')
-  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                                ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
-                                ∙ ∘ᵐ-identityˡ _)))
-  ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
