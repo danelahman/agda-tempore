@@ -1436,3 +1436,142 @@ step-box (DELAY {τ = τ} {S = St}) c g =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (delayᵀ-nat τ _)
   ∙ ∘ᵐ-assoc _ _ _
+
+-- Re-associating two multiplications. `T-μ∘μ≡μ∘Tμ` runs the other way (it
+-- *produces* the transport), so the inverse direction cancels a transport
+-- against its own inverse — which is `refl` by uniqueness of identity proofs.
+
+μμ : ∀ {A ε ε' ε''}
+   → μᵀ {A} {ε ·ₑ ε'} {ε''} ∘ᵐ μᵀ {Tᵒ A ε''} {ε} {ε'}
+   ≈ᵐ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
+       ∘ᵐ μᵀ {A} {ε} {ε' ·ₑ ε''} ∘ᵐ Tᶠ (μᵀ {A} {ε'} {ε''})
+μμ {ε = ε} {ε' = ε'} {ε'' = ε''} =
+  ≈ᵐ-sym
+      (∘ᵐ-congʳ T-μ∘μ≡μ∘Tμ
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ (ε-substᵀ-trans _ _
+                ∙ ≡→≈ᵐ (cong (λ z → ε-substᵀ z) uip)
+                ∙ ε-substᵀ-refl)
+    ∙ ∘ᵐ-identityˡ _)
+
+-- SEQ-STEP
+--
+-- `seq-step-core` reduces the source to the `strᵀ ∘ ⟨ box , stepᵀ r ⟩` core;
+-- `step-box` replaces that core by the *new* state's box, renamed by
+-- `suc-comp-ren`; and `seq-coe` reconciles the effect grades (which differ by
+-- an associativity, as `step-≾ (SEQ-STEP …)` already anticipates).
+
+-- The box `seq-step-core` produces carries two grade relaxations, which merge
+-- into the single one `step-box` expects.
+
+seq-g : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []}
+      → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+      → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+      → mapᵉ (step-grade r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
+seq-g {ε₃ = ε₃} r =
+  ≾ᵣ-trans (≾ᵣ-reflexive (sym (map-·ᵉ {step-grade r} {ε₃})))
+           (map-monotoneᵉ (step-≾ r))
+
+box-merge : ∀ {X Y Z ρ₁ ρ₂ ρ₃} → (p : ρ₁ ≾ᵣ ρ₂) → (q : ρ₂ ≾ᵣ ρ₃) → (m : ρ₁ ≾ᵣ ρ₃)
+          → (d : [ ρ₁ ]ᵒ X →ᵐ Y) → (h : Z →ᵐ [ ρ₃ ]ᵒ X)
+          → (d ∘ᵐ []-≤ p) ∘ᵐ ([]-≤ q ∘ᵐ h) ≈ᵐ (d ∘ᵐ []-≤ m) ∘ᵐ h
+box-merge p q m d h =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-≤-trans p q ∙ []-≤-irr _ m))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- The target's denotation, unfolded to the same normal form. The renaming
+-- `suc-comp-ren` sits in the continuation, and `strᵀ-natˡ` moves it into the
+-- environment box — which is exactly the box `step-box` delivers.
+
+seq-target : ∀ {ε₁ ε₂ ε₃ A B} {Γ Γ' : Ctx} {H : Obj}
+           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+           → (ρ : Ren (Γ ⟨ mapᵉ ε₁ ⟩) (Γ' ⟨ mapᵉ ε₃ ⟩))
+           → (M' : Γ' ⊢C⦂ A ‼ ε₃)
+           → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
+           → ⟦ M' ⨟ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ∘ᵐ env
+           ≈ᵐ μᵀ ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ
+               ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃}
+               ∘ᵐ ⟨ [ mapᵉ ε₃ ]ᶠ (⟦ ρ ⟧ʳ ∘ᵐ ⟨ mapᵉ ε₃ ⟩ᶠ env) ∘ᵐ η⊣
+                  , ⟦ M' ⟧ᶜᵗ ∘ᵐ env ⟩ᵐ
+seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} N ρ M' env =
+    seq-push {⟦ Γ' ⟧ᶜᵗˣ} {_} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₃} {_}
+             μᵀ ⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ⟦ M' ⟧ᶜᵗ env
+  -- the renaming in the continuation …
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ρ) N)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  -- … moves into the environment box (`strᵀ-natˡ`)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                                  ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
+  -- the environment moves under the box (`η⊣`-naturality), giving exactly the
+  -- box that `step-box` delivers
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (⟨ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat env))
+         ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+         ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+       , ≈ᵐ-refl ⟩ᵐ-cong)))
+
+sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
+  → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+  → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
+  → ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+    ≈ᵐ T-≤ (step-≾ r)
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+              (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r)
+  → ⟦ M ⨟ N ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+    ≈ᵐ T-≤ (step-≾ (SEQ-STEP {N = N} r c))
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
+              (⟦ M' ⨟ C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N ⟧ᶜᵗ
+                 ∘ᵐ ⟦ S' ⟧ˢ)
+              (stepᵀ r)
+sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
+    seq-step-core N r c ih
+  -- merge the box's two relaxations into the one `step-box` expects
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
+  -- and replace the core by the new state's box
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (step-box r c (seq-g r)))))))
+  -- collect the functorial actions under one `Tᶠ`
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))))))
+  -- the inner term is now the target's normal form (`seq-target`)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+      (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
+  -- push `Tᶠ ⟦N⟧` past the inner `μᵀ` …
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μᵀ-nat _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  -- … and re-associate the two `μᵀ`s, which is where the `ε-substᵀ` appears
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ μμ)
+  -- regroup: the transport floats to the front, and the rest collects under
+  -- one `Tᶠ` — which is exactly `seq-target`'s normal form
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))
+  -- drop the identity the strength's pairing picked up
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+      (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))))))
+  -- collect the last two functorial actions under one `Tᶠ`
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))
+  -- what is under it is the target's denotation …
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+      (∘ᵐ-assoc _ _ _
+       ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
+                            {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
+                            N (suc-comp-ren (step-extends-state r) c)
+                            M' ⟦ S' ⟧ˢ))))))
+  -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
+  ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
