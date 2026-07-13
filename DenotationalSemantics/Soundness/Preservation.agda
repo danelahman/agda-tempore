@@ -815,6 +815,23 @@ box-split a =
   ∙ ∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                         ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
 
+-- `box-split` with an environment postcomposed. The environment is pulled out
+-- to the right, the split applied, and `η⊣`-naturality then carries it back
+-- under the box — so the transposition ends up at the *environment's* source.
+-- This is what lets `DELAY`'s strength components share one `η⊣`.
+
+box-split-env : ∀ {X Y σ ρ₁ ρ₃} → (a : σ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (env : Y →ᵐ X)
+              → (δ ∘ᵐ []-≤ a) ∘ᵐ (η⊣ {X} {ρ₁} ∘ᵐ env)
+              ≈ᵐ [ σ ]ᶠ (([ ρ₃ ]ᶠ (⟨⟩-≤ a ∘ᵐ μ) ∘ᵐ η⊣ {⟨ σ ⟩ᵒ X} {ρ₃}) ∘ᵐ ⟨ σ ⟩ᶠ env)
+                  ∘ᵐ η⊣ {Y} {σ}
+box-split-env {ρ₁ = ρ₁} a env =
+    ≈ᵐ-sym (∘ᵐ-assoc (δ ∘ᵐ []-≤ a) (η⊣ {_} {ρ₁}) env)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-assoc δ ([]-≤ a) (η⊣ {_} {ρ₁}) ∙ box-split a)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat env))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+
 -- Discharging a unit-graded box: at grade `u` the box counit turns a
 -- transposition into the possibility unit. (The object-general form of
 -- `ret-env`.)
