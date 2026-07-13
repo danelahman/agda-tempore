@@ -182,6 +182,7 @@ open import DenotationalSemantics.Interpretation.Variables
 open import DenotationalSemantics.Interpretation.Terms
 open import DenotationalSemantics.Interpretation.Renaming
 open import DenotationalSemantics.Interpretation.RenamingCoherence
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence
 
 ---- Concrete time-ticks Kripke frames
 

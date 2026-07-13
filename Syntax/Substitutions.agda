@@ -4,7 +4,6 @@
 
 open import Data.Empty
 open import Data.Product
-open import Data.Sum
 
 open import Function using (case_of_)
 
@@ -52,6 +51,46 @@ open import Syntax.Types      S
 ⟨ Tl-⟨⟩ y , f ⟩[ Tl-⟨⟩ x ↦ W ]var | no ¬p = 
   V-rename (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p)) ∘ʳ ⟨⟩-η⁻¹-ren) ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f z)) ⟩[ x ↦ W ]var
 
+-- Substituting a value for a variable in a *resource* variable, i.e. one of
+-- box type, which is what an `unbox` looks up.
+--
+-- Unlike `⟨_,_⟩[_↦_]var`, a resource variable's grade is *not* bounded by the
+-- unit (that is exactly what `unbox` is for), so it cannot be substituted as
+-- a value. It does, however, remain a *variable*: the only value of box type
+-- is a variable (`grad-typ⇒var`), so substituting one resource variable for
+-- another yields a resource variable again, together with a grade bound.
+--
+-- The recursion mirrors `⟨_,_⟩[_↦_]var` (and hence the recursion of the
+-- context splitting itself), so the interpretation's coherence proof follows
+-- the same shape.
+
+⟨_⟩[_↦_]rvar : ∀ {Γ A B ρ σ τ}
+             → ([ ρ ] B ∈[ σ ] Γ)
+             → (x : A ∈[ τ ] Γ)
+             → split-l x ⊢V⦂ A
+             ----------------------------------------------------------------
+             → Σ[ σ' ∈ R ]
+                 (([ ρ ] B ∈[ σ' ] (split-l x ++ᶜ split-r x)) × (σ' ≾ᵣ σ))
+
+-- the resource variable *is* the one being substituted: the value put in its
+-- place is of box type, hence a variable (and box types are never eternal,
+-- so its grade bound is available)
+⟨ Hd ⟩[ Hd ↦ W ]rvar with grad-typ⇒var W
+... | σ' , v , f , _ = σ' , v , f (λ ())
+
+-- the resource variable is the head, the substitution acts deeper
+⟨ Hd ⟩[ Tl-∷ _ ↦ _ ]rvar = _ , Hd , ≾ᵣ-refl
+
+-- the resource variable is deeper, the substitution replaces the head
+⟨ Tl-∷ y ⟩[ Hd ↦ _ ]rvar = _ , y , ≾ᵣ-refl
+
+-- both deeper: recurse
+⟨ Tl-∷ y ⟩[ Tl-∷ x ↦ W ]rvar with ⟨ y ⟩[ x ↦ W ]rvar
+... | σ' , v , p = σ' , Tl-∷ v , p
+
+⟨ Tl-⟨⟩ y ⟩[ Tl-⟨⟩ x ↦ W ]rvar with ⟨ y ⟩[ x ↦ W ]rvar
+... | σ' , v , p = σ' ·ᵣ _ , Tl-⟨⟩ v , ·ᵣ-monoˡ-≾ᵣ p
+
 -- Substituting a value for a variable in a well-typed term
 
 mutual
@@ -87,47 +126,15 @@ mutual
     handle M [ x ↦ W ]c
     `with H
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-  -- For the value-based unboxing we first recover the underlying variable `y`
-  -- (and grade bound `rel`) being unboxed via `unbox⇒var`, and then proceed
-  -- exactly as in the variable case, rebuilding a value-based unboxing from the
-  -- (possibly substituted) variable via the `unbox-var` smart constructor.
-  _[_↦_]c (unbox {A = B} {ρ = ρ₁} w V M) x W with unbox⇒var w V
-  ... | ρ₂ , y , rel with var-in-split (split-pf x) y
-  ...   | inj₁ (.(uᵣ) , Hd , eq , eq') =
-    unbox-var
-      (var-ρ-++ᶜ (proj₁ (proj₂ (grad-typ⇒var W))))
-      (≾ᵣ-trans
-        (≾ᵣ-trans
-          (·ᵣ-monoˡ-≾ᵣ ((proj₁ (proj₂ (proj₂ (grad-typ⇒var W)))) λ ()))
-          (≾ᵣ-reflexive
-            (trans
-              (·ᵣ-identityˡ (ctx-grade (split-r x)))
-              (cong ctx-grade (trans (sym (++ᶜ-identityˡ {Γ = split-r x})) (sym eq'))))))
-        (≾ᵣ-trans (≾ᵣ-reflexive (split-grade-≡ y)) rel))
-      (M [ Tl-∷ x ↦ W ]c)
-  ...   | inj₁ (ρ' , Tl-∷ z , eq , eq') =
-    unbox-var {ρ = ρ₁} {ρ' = ρ₂}
-      (var-ρ-subst
-      (begin
-        ρ' ·ᵣ ctx-grade (split-r x)
-      ≡⟨ cong
-         (_·ᵣ ctx-grade (split-r x))
-         (sym (split-grade-≡ (Tl-∷ {B = [ ρ₁ ] B} z))) ⟩
-        ctx-grade (split-r (Tl-∷ {B = [ ρ₁ ] B} z)) ·ᵣ ctx-grade (split-r x)
-      ≡⟨ sym (ctx-grade-++ᶜ (split-r (Tl-∷ z)) (split-r x)) ⟩
-        ctx-grade (split-r (Tl-∷ z) ++ᶜ split-r x)
-      ≡⟨ cong ctx-grade (sym eq') ⟩
-        ctx-grade (split-r y)
-      ≡⟨ split-grade-≡ y ⟩
-        ρ₂
-      ∎)
-        (var-ρ-++ᶜ z))
-      rel
-      (M [ Tl-∷ x ↦ W ]c)
-  ...   | inj₂ (z , _ , _) =
-    unbox-var
-      (∈-ctx-extensionˡ (split-l x) (split-r x) z)
-      rel
-      (M [ Tl-∷ x ↦ W ]c)
+  -- For the value-based unboxing we first recover the underlying resource
+  -- variable `y` (and grade bound `rel`) being unboxed via `unbox⇒var`. The
+  -- substitution takes it to another resource variable (`⟨_⟩[_↦_]rvar`), from
+  -- which we rebuild a value-based unboxing via the `unbox-var` smart
+  -- constructor. The new grade bound is the substituted variable's bound
+  -- composed with the original one.
+  _[_↦_]c (unbox w V M) x W with unbox⇒var w V
+  ... | _ , y , rel with ⟨ y ⟩[ x ↦ W ]rvar
+  ...   | _ , v , p =
+    unbox-var v (≾ᵣ-trans p rel) (M [ Tl-∷ x ↦ W ]c)
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
   coerce rel M [ x ↦ W ]c = coerce rel (M [ x ↦ W ]c)

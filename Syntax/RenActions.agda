@@ -22,15 +22,6 @@ open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.Types     S
 
--- Useful substitution of resource annotations
-
-var-ρ-subst : ∀ {Γ A ρ ρ'}
-            → ρ ≡ ρ'
-            → A ∈[ ρ ] Γ
-            → A ∈[ ρ' ] Γ
-            
-var-ρ-subst refl x = x
-
 -- Renaming of variables
 
 var-rename : ∀ {Γ Γ' A ρ}

@@ -3,7 +3,6 @@
 --------------------------------------------
 
 open import Data.Product
-open import Data.Sum
 
 open import Relation.Binary.Definitions
 open import Relation.Nullary
@@ -225,71 +224,6 @@ split-pres-ctx-grade (split-∷ c) =
 split-pres-ctx-grade (split-⟨⟩ {ρ = ρ} c) =
   cong (_·ᵣ ρ) (split-pres-ctx-grade c) 
 
--- Variable in context is in one of the two contexts splitting it
-
-var-in-split-proj₁-subst : ∀ {Γ A ρ ρ'}
-                         → (x : A ∈[ ρ ] Γ)
-                         → (c : ρ ≡ ρ')
-                         → proj₁ (var-split x)
-                         ≡ proj₁ (var-split (subst (A ∈[_] Γ) c x))
-
-var-in-split-proj₁-subst x refl = refl
-
-var-in-split-proj₂-subst : ∀ {Γ A ρ ρ'}
-                         → (x : A ∈[ ρ ] Γ)
-                         → (c : ρ ≡ ρ')
-                         → proj₁ (proj₂ (var-split x))
-                         ≡ proj₁ (proj₂ (var-split (subst (A ∈[_] Γ) c x)))
-
-var-in-split-proj₂-subst x refl = refl
-
-var-in-split : ∀ {Γ Γ₁ Γ₂ A ρ}
-             → Γ₁ , Γ₂ split Γ
-             → (x : A ∈[ ρ ] Γ)
-             → (Σ[ ρ' ∈ R ] (Σ[ y ∈ A ∈[ ρ' ] Γ₁ ]
-                   proj₁ (var-split x) ≡ proj₁ (var-split y)
-                 × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)) ++ᶜ Γ₂))
-             ⊎ (Σ[ y ∈ A ∈[ ρ ] Γ₂ ]
-                   proj₁ (var-split x) ≡ Γ₁ ++ᶜ proj₁ (var-split y)
-                 × proj₁ (proj₂ (var-split x)) ≡ proj₁ (proj₂ (var-split y)))
-
-var-in-split {ρ = ρ} split-[] x =
-  inj₁ (ρ , x , refl , refl)
-var-in-split (split-∷ p) Hd = 
-  inj₂ (Hd , sym (split-≡ p) , refl)
-var-in-split (split-∷ p) (Tl-∷ {B = B} x) with var-in-split p x
-... | inj₁ (ρ' , y , rel , rel') =
-  inj₁ (ρ' , y , rel , cong (_∷ B) rel')
-... | inj₂ (y , rel , rel') =
-  inj₂ (Tl-∷ y , rel , cong (_∷ B) rel')
-var-in-split {Γ₂ = Γ₂ ⟨ ρ₂ ⟩} {ρ = ρ} (split-⟨⟩ p) (Tl-⟨⟩ {ρ' = ρ''} x) with var-in-split p x
-... | inj₁ (ρ' , y , rel , rel') =
-  inj₁ (ρ' , y , rel , cong (_⟨ ρ₂ ⟩) rel')
-... | inj₂ (y , rel , rel') =
-  inj₂ (Tl-⟨⟩ y , rel , cong (_⟨ ρ₂ ⟩) rel')
-
-split-struct-≡ : ∀ {Γ Γ' Γ'' A ρ₁ ρ₂}
-               → (x : A ∈[ ρ₁ ] Γ')
-               → (y : A ∈[ ρ₂ ] Γ)
-               → proj₁ (var-split y) ≡ proj₁ (var-split x)
-               → proj₁ (proj₂ (var-split y)) ≡ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
-               → Γ' ++ᶜ Γ'' ≡ Γ
-               
-split-struct-≡ {Γ} {Γ'} {Γ''} {A} x y eq₁ eq₂ =
-  begin
-    Γ' ++ᶜ Γ''
-  ≡⟨ cong (_++ᶜ Γ'') (sym (split-≡ (proj₁ (proj₂ (proj₂ (var-split x)))))) ⟩
-    proj₁ (var-split x) ∷ A ++ᶜ proj₁ (proj₂ (var-split x)) ++ᶜ Γ''
-  ≡⟨ ++ᶜ-assoc (proj₁ (var-split x) ∷ A) (proj₁ (proj₂ (var-split x))) Γ'' ⟩
-    proj₁ (var-split x) ∷ A ++ᶜ (proj₁ (proj₂ (var-split x)) ++ᶜ Γ'')
-  ≡⟨ cong (proj₁ (var-split x) ∷ A ++ᶜ_) (sym eq₂) ⟩ 
-    proj₁ (var-split x) ∷ A ++ᶜ ((proj₁ (proj₂ (var-split y))))
-  ≡⟨ (cong (_++ᶜ proj₁ (proj₂ (var-split y))) (cong (_∷ A) (sym eq₁))) ⟩
-    proj₁ (var-split y) ∷ A ++ᶜ proj₁ (proj₂ (var-split y))
-  ≡⟨ split-≡ (proj₁ (proj₂ (proj₂ (var-split y)))) ⟩ 
-    Γ
-  ∎
-
 -- No variable belongs to the empty context
 
 var-not-in-empty-ctx : ∀ {A} → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] []))
@@ -364,39 +298,3 @@ var-split-≡-var-split-Tl-⟨⟩ : ∀ {Γ A ρ ρ'}
                             → (x : A ∈[ ρ ] Γ)
                             → proj₁ (var-split x) ≡ proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} x))
 var-split-≡-var-split-Tl-⟨⟩ x = refl
-
--- Generalisation of the above lemma:
--- The left split of a context Γ according to a variable x is the same as
--- the left split of a concatenation of Γ with another context.
-
-split-var-eqₗ : ∀ {Γ Γ' A ρ}
-              → (x : A ∈[ ρ ] Γ)
-              → proj₁ (var-split x) ≡ proj₁ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x))
-
-split-var-eqₗ {Γ' = []} {ρ = ρ} _ rewrite ·ᵣ-identityʳ ρ =
-  refl
-split-var-eqₗ {Γ} {Γ' ∷ _} x =
-  split-var-eqₗ {Γ} {Γ'} x
-split-var-eqₗ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eqₗ {Γ' = Γ'} x) =
-  begin
-    proj₁ (var-split (var-ρ-++ᶜ {Γ' = Γ'} x))
-  ≡⟨ var-split-≡-var-split-Tl-⟨⟩ {Γ ++ᶜ Γ'} {ρ' = ρ'} (var-ρ-++ᶜ x) ⟩
-    proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} (var-ρ-++ᶜ {Γ' = Γ'} x)))
-  ≡⟨ var-in-split-proj₁-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ' = Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') ⟩
-    proj₁ (var-split (subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') (Tl-⟨⟩ (var-ρ-++ᶜ x))))
-  ∎
-
--- The right split of a context Γ according to a variable x concatenated with another context Γ'
--- is the same as
--- the right split of Γ ++ᶜ Γ'.
-
-split-var-eqᵣ : ∀ {Γ Γ' A ρ}
-              → (x : A ∈[ ρ ] Γ)
-              → proj₁ (proj₂ (var-split x)) ++ᶜ Γ' ≡ proj₁ (proj₂ (var-split (var-ρ-++ᶜ {Γ} {Γ'} x)))
-
-split-var-eqᵣ {Γ' = []} {ρ = ρ} x rewrite ·ᵣ-identityʳ ρ =
-  refl
-split-var-eqᵣ {Γ' = Γ' ∷ B} x =
-  cong (_∷ B) (split-var-eqᵣ {Γ' = Γ'} x)
-split-var-eqᵣ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x rewrite (split-var-eqᵣ {Γ} {Γ'} x) =
-   var-in-split-proj₂-subst (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x)) (·ᵣ-assoc ρ (ctx-grade Γ') ρ')
