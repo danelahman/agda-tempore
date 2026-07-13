@@ -74,11 +74,14 @@ open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
 
 open Category Cat
-open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; []-≤-refl;
-                       []-ε-nat; []-ε∘ηᵘ≡id; ηᵘ) renaming (ε to εᵇ)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; []-≤-refl; []-≤-nat;
+                       []-ε-nat; []-ε∘ηᵘ≡id; ηᵘ; δ; []-δ-nat; []-monoidal;
+                       []-monoidal-nat) renaming (ε to εᵇ)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-η-nat; ⟨⟩-μ-nat;
-                     ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; ε⊣; ε⊣-nat; triangleˡ)
+                     ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ; μ-≤ʳ;
+                     ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣-monoidal;
+                           ε⊣; ε⊣-nat; triangleˡ)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
@@ -782,3 +785,234 @@ sound-UNBOX St w V M =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (unbox-lookup St w V)))
+
+-- Transport along an equality of *grades* is the grade relaxation at the
+-- reflexive witness.
+
+eq-ren-grade : ∀ {Γ ρ ρ'} → (g : ρ ≡ ρ')
+             → ⟦ eq-ren (cong (Γ ⟨_⟩) g) ⟧ʳ ≈ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} (≾ᵣ-reflexive (sym g))
+eq-ren-grade refl = ≈ᵐ-sym (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl)
+
+-- SPLITTING THE ENVIRONMENT BOX
+--
+-- A box available `ρ₁`-far ahead, where `ρ₁ ⊒ σ ·ᵣ ρ₃`, can be transposed in
+-- two stages: once at `σ` and once at `ρ₃`, the two pasts being folded back
+-- together by `μ`. This is `η⊣-δ` packaged with the grade relaxation, and it
+-- is the single move that carries an environment across a computation split
+-- into two graded phases — which is the shape `strᵀ-μᵀ` forces.
+
+box-split : ∀ {X σ ρ₁ ρ₃} → (a : σ ·ᵣ ρ₃ ≾ᵣ ρ₁)
+          → δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
+          ≈ᵐ [ σ ]ᶠ ([ ρ₃ ]ᶠ (⟨⟩-≤ a ∘ᵐ μ) ∘ᵐ η⊣ {⟨ σ ⟩ᵒ X} {ρ₃}) ∘ᵐ η⊣ {X} {σ}
+box-split a =
+    ∘ᵐ-congʳ (η⊣-≤ a)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-δ-nat (⟨⟩-≤ a)))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ η⊣-δ
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                        ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+
+-- Discharging a unit-graded box: at grade `u` the box counit turns a
+-- transposition into the possibility unit. (The object-general form of
+-- `ret-env`.)
+
+εᵇ-η⊣ : ∀ {X ρ} → (e : ρ ≡ uᵣ)
+      → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η⊣ {X} {ρ}
+      ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η
+εᵇ-η⊣ refl =
+    ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-≤-irr _ ≾ᵣ-refl ∙ []-≤-refl))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-identityˡ _)
+  ∙ ∘ᵐ-congʳ η⊣-u
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat η))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ []-ε∘ηᵘ≡id
+  ∙ ∘ᵐ-identityʳ _
+  ∙ ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl) ∙ ∘ᵐ-identityˡ _)
+
+-- Pairing two transposes is transposing the pair (the derived form of
+-- `η⊣-monoidal` that `delayᵀ`'s strength law needs).
+
+η⊣-⟨⟩ : ∀ {X Y Z ρ} → (f : ⟨ ρ ⟩ᵒ X →ᵐ Y) → (g : ⟨ ρ ⟩ᵒ X →ᵐ Z)
+      → []-monoidal ∘ᵐ ⟨ [ ρ ]ᶠ f ∘ᵐ η⊣ , [ ρ ]ᶠ g ∘ᵐ η⊣ ⟩ᵐ
+      ≈ᵐ [ ρ ]ᶠ ⟨ f , g ⟩ᵐ ∘ᵐ η⊣ {X} {ρ}
+η⊣-⟨⟩ f g =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-monoidal-nat f g))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ η⊣-monoidal
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congˡ ([]-congᶠ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                        ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+
+-- CARRYING THE ENVIRONMENT BOX ACROSS A TRIVIAL TRANSITION
+--
+-- The nine rules that do not advance time transition by `ηᵀ`. For them the
+-- environment box must survive unchanged. `strᵀ-ηᵀ` opens it with the box
+-- counit at the unit grade; what has to be shown is that opening it there
+-- gives the environment back boxed at the *continuation's* grade `ρ₃` — i.e.
+-- that it was carried, not lost. `box-split` is what puts back together what
+-- `strᵀ-μᵀ` split with `δ`.
+
+box-η : ∀ {X ρ₁ ρ₃} → (a : mapᵉ uₑ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (w : ρ₃ ≾ᵣ ρ₁)
+      → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ)) ∘ᵐ δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
+      ≈ᵐ [ ρ₃ ]ᶠ (⟨⟩-≤ w) ∘ᵐ η⊣ {X} {ρ₃}
+box-η {X} {ρ₁} {ρ₃} a w =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (box-split a))
+  -- the outer box is at the unit grade, so the counit discharges it
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ (≾ᵣ-reflexive (sym map-uᵉ)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (εᵇ-η⊣ map-uᵉ)
+  -- and the inner box reassembles, the grade relaxations collapsing
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congˡ ([]-congᶠ collapse)
+  where
+    collapse : (⟨⟩-≤ a ∘ᵐ μ {X} {ρ₃} {mapᵉ uₑ})
+                 ∘ᵐ ⟨ ρ₃ ⟩ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-uᵉ)) ∘ᵐ η)
+             ≈ᵐ ⟨⟩-≤ w
+    collapse =
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≾ᵣ-reflexive (sym map-uᵉ)))))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id)
+      ∙ ∘ᵐ-congʳ (⟨⟩-≤-trans _ _)
+      ∙ ⟨⟩-≤-trans _ _
+      ∙ ⟨⟩-≤-irr _ w
+
+-- Interpreting an effect-grade coercion is the transport `ε-substᵀ`.
+
+sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε)
+              → ⟦ ε-subst e M ⟧ᶜᵗ ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ
+sound-ε-subst refl M = ≈ᵐ-sym (∘ᵐ-congˡ ε-substᵀ-refl ∙ ∘ᵐ-identityˡ _)
+
+-- SEQ-STEP and HANDLE-STEP
+--
+-- Both step rules have the shape `alg ∘ Tᶠ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩ᵐ`,
+-- differing only in the algebra (`μᵀ` resp. the handler's). The proof pushes
+-- the inductive hypothesis' coercion out through the strength and multiplies,
+-- bottoming out in `step-box`: the environment carried across the step is the
+-- new state's environment, renamed by `suc-comp-ren`.
+
+-- Naturality of the strength in its monadic (tree) component alone — the
+-- dual of `strᵀ-natˡ`. Derived from `strᵀ-nat` and `[]-idᵐ`.
+
+strᵀ-natʳ : ∀ {A B B' ε} → (g : B →ᵐ B')
+          → strᵀ {A} {B'} {ε} ∘ᵐ mapˣᵐ idᵐ (Tᶠ g)
+          ≈ᵐ Tᶠ (mapˣᵐ idᵐ g) ∘ᵐ strᵀ {A} {B} {ε}
+strᵀ-natʳ g =
+    ∘ᵐ-congʳ (⟨ ∘ᵐ-congˡ (≈ᵐ-sym []-idᵐ) , ≈ᵐ-refl ⟩ᵐ-cong)
+  ∙ strᵀ-nat idᵐ g
+
+-- Pushing an environment reindexing into a sequencing/handling composite.
+-- Stated generically (over objects) so the associativity metas are pinned.
+
+seq-push : ∀ {Γ Δ A B ε₁ ε₂}
+         → (alg : Tᵒ (Tᵒ B ε₂) ε₁ →ᵐ Tᵒ B (ε₁ ·ₑ ε₂))
+         → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂) → (m : Γ →ᵐ Tᵒ A ε₁)
+         → (env : Δ →ᵐ Γ)
+         → (alg ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁} ∘ᵐ ⟨ η⊣ , m ⟩ᵐ) ∘ᵐ env
+         ≈ᵐ alg ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ ∘ᵐ env , m ∘ᵐ env ⟩ᵐ
+seq-push alg n m env =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)))
+
+-- Pulling the IH coercion `T-≤ p` out to the front of a sequencing composite.
+-- `strᵀ-≤` moves it past the strength (relaxing the box's grade), then
+-- `T-≤-nat` and `T-≤-μᵀ` bubble it up past `Tᶠ n` and `μᵀ`.
+
+coe-out : ∀ {Γ Δ A B ε₀ ε₁ ε₂}
+        → (box : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
+        → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
+        → (W : Δ →ᵐ Tᵒ A ε₀) → (p : ε₀ ≾ₑ ε₁)
+        → μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁} ∘ᵐ ⟨ box , T-≤ p ∘ᵐ W ⟩ᵐ
+        ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p)
+            ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₀}
+            ∘ᵐ ⟨ []-≤ (map-monotoneᵉ p) ∘ᵐ box , W ⟩ᵐ
+coe-out bx n W p =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+        (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (T-≤ p) bx W
+                 ∙ ⟨ ∘ᵐ-identityˡ bx , ≈ᵐ-refl ⟩ᵐ-cong))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-≤ p)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                                            ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat _ p))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-μᵀ p)
+  ∙ ∘ᵐ-assoc _ _ _
+
+
+
+-- Splitting the strength across a bind, via `strᵀ-μᵀ` and `strᵀ-nat`.
+
+str-split : ∀ {Γ Δ Δ' A d ε₁ ε₃}
+          → (box₂ : Δ →ᵐ [ mapᵉ (d ·ₑ ε₃) ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
+          → (g' : Δ' →ᵐ Tᵒ A ε₃) → (t : Δ →ᵐ Tᵒ Δ' d)
+          → strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {d ·ₑ ε₃} ∘ᵐ ⟨ box₂ , μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t ⟩ᵐ
+          ≈ᵐ μᵀ ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₃}) ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
+              ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
+              ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {mapᵉ d} {mapᵉ ε₃}
+                      ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {d} {ε₃})))) ∘ᵐ box₂ , t ⟩ᵐ
+str-split {Γ = Γ} {d = d} {ε₁ = ε₁} {ε₃ = ε₃} box₂ g' t =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ μᵀ box₂ (Tᶠ g' ∘ᵐ t)
+                      ∙ ⟨ ∘ᵐ-identityˡ box₂ , ≈ᵐ-refl ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-μᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                                  ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (Tᶠ g') _ t
+               ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natʳ g')))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ≈ᵐ-refl
+
+
+-- Pushing the inductive hypothesis' coercion out through the sequencing
+-- composite, down to the `strᵀ ∘ ⟨ box , stepᵀ ⟩` core. Generic over objects
+-- (so the metas are pinned by the explicit arguments); each step is one of
+-- the strength/sub-effecting laws.
+
+push-str : ∀ {Γ Δ Δ' A B d ε₁ ε₂ ε₃}
+         → (bx : Δ →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ))
+         → (n : ⟨ mapᵉ ε₁ ⟩ᵒ Γ ×ᵐ A →ᵐ Tᵒ B ε₂)
+         → (g' : Δ' →ᵐ Tᵒ A ε₃) → (t : Δ →ᵐ Tᵒ Δ' d)
+         → (p : d ·ₑ ε₃ ≾ₑ ε₁)
+         → μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₁}
+             ∘ᵐ ⟨ bx , T-≤ p ∘ᵐ μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t ⟩ᵐ
+         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p)
+             ∘ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ μᵀ
+             ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {A} {ε₃})
+             ∘ᵐ Tᶠ (mapˣᵐ idᵐ g')
+             ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ Γ)} {Δ'} {d}
+             ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ Γ} {mapᵉ d} {mapᵉ ε₃}
+                     ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {d} {ε₃}))))
+                    ∘ᵐ ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx)
+                , t ⟩ᵐ
+push-str bx n g' t p =
+    coe-out bx n (μᵀ ∘ᵐ Tᶠ g' ∘ᵐ t) p
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (str-split ([]-≤ (map-monotoneᵉ p) ∘ᵐ bx) g' t)))

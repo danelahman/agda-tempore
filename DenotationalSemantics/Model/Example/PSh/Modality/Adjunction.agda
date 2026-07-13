@@ -122,6 +122,26 @@ triangleʳ {A} F p = ≈-refl A
 η⊣-u {A} x q = return (q , ≈-refl A)
 
 
+-- The adjunction is compatible with composition of grades: splitting the box
+-- of `η⊣` at a product grade with `δ` gives the two transposes, whose pasts
+-- `μ` folds back together. Both sides name the same past — the witness
+-- `⊑-trans p q` — so this holds on the nose.
+
+η⊣-δ : ∀ {A ρ₁ ρ₂}
+     → δ ∘ᵖ η⊣ {A} {ρ₁ · ρ₂}
+     ≈ᵖ [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ (μ {A} {ρ₂} {ρ₁}) ∘ᵖ η⊣ {⟨ ρ₁ ⟩ᵒ A} {ρ₂}) ∘ᵖ η⊣ {A} {ρ₁}
+η⊣-δ {A} {ρ₁} {ρ₂} x p q = ≈-refl (⟨ ρ₁ · ρ₂ ⟩ᵒ A)
+
+
+-- Pairing two transposes is transposing the pair: both boxes are fed the same
+-- accessibility witness, so they agree pointwise.
+
+η⊣-monoidal : ∀ {A ρ}
+            → []-monoidal ∘ᵖ ⟨ η⊣ {A} {ρ} , η⊣ {A} {ρ} ⟩ᵖ
+            ≈ᵖ [ ρ ]ᶠ ⟨ idᵖ , idᵖ ⟩ᵖ ∘ᵖ η⊣ {A} {ρ}
+η⊣-monoidal {A} {ρ} x p = ≈-refl (⟨ ρ ⟩ᵒ A) , ≈-refl (⟨ ρ ⟩ᵒ A)
+
+
 -- Packaging the adjunction up as an `Adjunction` instance
 
 open import DenotationalSemantics.Model.Category
@@ -139,4 +159,6 @@ PShAdj = record
   ; triangleʳ = λ {A} → triangleʳ {A}
   ; ε⊣-u      = λ {A} → ε⊣-u {A}
   ; η⊣-u      = λ {A} → η⊣-u {A}
+  ; η⊣-δ      = λ {A} → η⊣-δ {A}
+  ; η⊣-monoidal = λ {A} → η⊣-monoidal {A}
   }

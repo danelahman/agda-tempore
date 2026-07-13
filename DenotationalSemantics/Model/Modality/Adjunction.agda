@@ -88,3 +88,29 @@ record Adjunction : Set₁ where
 
     ε⊣-u : ∀ {A} → ε⊣ {A} {u} ≈ᵐ εᵘ ∘ᵐ ⟨ u ⟩ᶠ ε
     η⊣-u : ∀ {A} → η⊣ {A} {u} ≈ᵐ [ u ]ᶠ η ∘ᵐ ηᵘ
+
+    -- The graded adjunction is compatible with *composition* of grades:
+    -- transposing at a product grade `ρ₁ · ρ₂` and then splitting the box
+    -- with the comultiplication `δ` is the same as transposing twice, once
+    -- at each factor, and folding the two resulting pasts with `μ`.
+    --
+    -- This is the mate law tying `Future.δ` to `Past.μ`; it is what lets a
+    -- boxed environment be carried across a computation that is itself split
+    -- into two graded phases (the `strᵀ-μᵀ` shape).
+
+    η⊣-δ : ∀ {A ρ₁ ρ₂}
+         → δ ∘ᵐ η⊣ {A} {ρ₁ · ρ₂}
+         ≈ᵐ [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ (μ {A} {ρ₂} {ρ₁}) ∘ᵐ η⊣ {⟨ ρ₁ ⟩ᵒ A} {ρ₂})
+             ∘ᵐ η⊣ {A} {ρ₁}
+
+    -- The unit is compatible with the box's monoidal structure: transposing a
+    -- value twice and pairing the two boxes gives the same as transposing the
+    -- pair. (Both name the *same* future, so the two boxes agree witness by
+    -- witness — that is what makes the lax monoidality enough here.)
+    --
+    -- This is what lets an environment box cross a `delay`: `delayᵀ`'s
+    -- strength law routes the box through `[]-monoidal`.
+
+    η⊣-monoidal : ∀ {A ρ}
+                → []-monoidal ∘ᵐ ⟨ η⊣ {A} {ρ} , η⊣ {A} {ρ} ⟩ᵐ
+                ≈ᵐ [ ρ ]ᶠ ⟨ idᵐ , idᵐ ⟩ᵐ ∘ᵐ η⊣ {A} {ρ}
