@@ -105,3 +105,22 @@ record Eternalᵒ (A : Obj) : Set where
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc ([ ρ ]ᶠ ε⊣) η⊣ necᵉ))
     (≈ᵐ-trans (∘ᵐ-congˡ triangleʳ)
               (∘ᵐ-identityˡ necᵉ)))))))
+
+  -- Extraction is uniform in the grade: extracting at `ρ₂` after relaxing
+  -- along `ρ₁ ≾ ρ₂` agrees with extracting directly at `ρ₁`. Derived from
+  -- `extᵉ-mate`, the naturality of `⟨⟩-≤`/`ε⊣`, and `necᵉ`'s uniformity
+  -- `necᵉ-≤`. This is what makes a variable of eternal type interpretable
+  -- independently of how much its context has been relaxed.
+
+  extᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
+         → extᵉ {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ extᵉ {ρ₁}
+  extᵉ-≤ {ρ₁} {ρ₂} p =
+    ≈ᵐ-trans (∘ᵐ-congˡ extᵉ-mate)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat (necᵉ {ρ₂}) p))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (ε⊣-≤ p))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ([]-≤ p) (necᵉ {ρ₂}))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (necᵉ-≤ p)))
+              (≈ᵐ-sym extᵉ-mate))))))))

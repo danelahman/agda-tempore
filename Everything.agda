@@ -180,6 +180,7 @@ open import DenotationalSemantics.Interpretation.Types
 open import DenotationalSemantics.Interpretation.Contexts
 open import DenotationalSemantics.Interpretation.Variables
 open import DenotationalSemantics.Interpretation.Terms
+open import DenotationalSemantics.Interpretation.Renaming
 
 ---- Concrete time-ticks Kripke frames
 
