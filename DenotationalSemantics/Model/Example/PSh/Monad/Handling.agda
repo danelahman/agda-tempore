@@ -184,3 +184,69 @@ T-alg-of-handlerᵀ-opᵀ op h (v , boxk) =
     (app-cong (h op _)
       (≈-refl ⟦ param op ⟧ᵍ ,
        (λ q p y → T-alg-of-handlerˢ-cong h (fun-nat boxk q p ⊑-refl y))))
+
+-- The fold commutes with sub-effecting: both sides put a `sub` node on top of
+-- the folded tree (the fold's own `sub` clause *is* `T-≤`), so this holds on
+-- the nose.
+
+T-alg-of-handlerᵀ-≤ : ∀ {A ε₁ ε₂ ε'} → (h : Handlerˢ A) → (p : ε₁ ≾ₑ ε₂)
+                    → T-alg-of-handlerᵀ {A} {ε₂} {ε'} h ∘ᵖ T-≤ p
+                    ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ T-alg-of-handlerᵀ {A} {ε₁} {ε'} h
+T-alg-of-handlerᵀ-≤ h p t = ≈ᵗ-refl _
+
+-- A coercion node absorbs a transport on either side (the `sub` witnesses are
+-- irrelevant to `_≈ᵗ_`).
+
+sub-ε-substˢ : ∀ {A ε₁ ε₂ ε₃ w} → (e : ε₁ ≡ ε₂) → (q : ε₂ ≾ₑ ε₃) → (q' : ε₁ ≾ₑ ε₃)
+             → (t : Tˢ A ε₁ w)
+             → sub q (ε-substˢ e t) ≈ᵗ sub q' t
+sub-ε-substˢ refl q q' t = sub-≈ (≈ᵗ-refl t)
+
+ε-substˢ-sub' : ∀ {A ε₁ ε₂ ε₃ w} → (q : ε₁ ≾ₑ ε₂) → (e : ε₂ ≡ ε₃) → (q' : ε₁ ≾ₑ ε₃)
+              → (t : Tˢ A ε₁ w)
+              → ε-substˢ e (sub q t) ≈ᵗ sub q' t
+ε-substˢ-sub' q refl q' t = sub-≈ (≈ᵗ-refl t)
+
+-- The fold commutes with a grade transport.
+
+T-alg-ε-substˢ : ∀ {A ε₁ ε₂ ε' w} → (h : Handlerˢ A) → (e : ε₁ ≡ ε₂)
+               → (t : Tˢ (Tᵒ A ε') ε₁ w)
+               → T-alg-of-handlerˢ h (ε-substˢ e t)
+               ≡ ε-substˢ (cong (_·ₑ ε') e) (T-alg-of-handlerˢ h t)
+T-alg-ε-substˢ h refl t = refl
+
+-- The fold is an algebra: folding a two-layer tree is folding the outer layer
+-- after folding each inner one. By induction on the tree — at each node the
+-- fold and the multiplication agree, so the two transports coincide.
+
+{-# TERMINATING #-}
+T-alg-of-handlerˢ-μˢ : ∀ {A ε ε' ε'' w} → (h : Handlerˢ A)
+                     → (t : Tˢ (Tᵒ (Tᵒ A ε'') ε') ε w)
+                     → T-alg-of-handlerˢ {ε = ε ·ₑ ε'} {ε''} h (μˢ t)
+                     ≈ᵗ ε-substˢ (sym (·ₑ-assoc ε ε' ε''))
+                          (T-alg-of-handlerˢ {ε = ε} {ε' ·ₑ ε''} h
+                            (Tˢᶠ (T-alg-of-handlerᵀ {ε = ε'} {ε''} h) t))
+-- leaf: the left transports the folded inner tree once (`T-alg-ε-substˢ`), the
+-- right twice; both composites are proofs of `ε' ·ₑ ε'' ≡ (uₑ ·ₑ ε') ·ₑ ε''`,
+-- so `uip` identifies them.
+T-alg-of-handlerˢ-μˢ {ε' = ε'} {ε'' = ε''} h (leaf t) =
+  ≡→≈ᵗ (trans (T-alg-ε-substˢ h (sym (·ₑ-identityˡ ε')) t)
+        (trans (cong (λ e → ε-substˢ e (T-alg-of-handlerˢ h t)) uip)
+               (sym (ε-substˢ-trans (sym (·ₑ-identityˡ (ε' ·ₑ ε'')))
+                                    (sym (·ₑ-assoc uₑ ε' ε''))
+                                    (T-alg-of-handlerˢ h t)))))
+T-alg-of-handlerˢ-μˢ h (op-node op v k kc kn)  = {!!}
+T-alg-of-handlerˢ-μˢ h (delay-node τ k kn)     = {!!}
+-- sub: both sides push the coercion node outwards; the transports it carries
+-- past are absorbed on each side (`sub`'s witnesses are irrelevant to `_≈ᵗ_`).
+T-alg-of-handlerˢ-μˢ {ε = ε} {ε' = ε'} {ε'' = ε''} h (sub {ε = ε₀} p t) =
+  ≈ᵗ-trans (sub-≈ (T-alg-of-handlerˢ-μˢ h t))
+  (≈ᵗ-trans (sub-ε-substˢ (sym (·ₑ-assoc ε₀ ε' ε''))
+                          (·ₑ-monoˡ-≾ₑ (·ₑ-monoˡ-≾ₑ p)) q' _)
+            (≈ᵗ-sym (ε-substˢ-sub' (·ₑ-monoˡ-≾ₑ p)
+                                   (sym (·ₑ-assoc ε ε' ε'')) q' _)))
+  where
+    -- the coercion witness, taken across the re-association
+    q' : ε₀ ·ₑ (ε' ·ₑ ε'') ≾ₑ (ε ·ₑ ε') ·ₑ ε''
+    q' = ≾ₑ-trans (≾ₑ-reflexive (sym (·ₑ-assoc ε₀ ε' ε'')))
+                  (·ₑ-monoˡ-≾ₑ (·ₑ-monoˡ-≾ₑ p))

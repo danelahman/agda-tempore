@@ -306,6 +306,27 @@ record Monad : Set₁ where
                             ∘ᵐ mapˣᵐ idᵐ
                                  ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ h)))
 
+    -- The fold commutes with sub-effecting in the *outer* grade — the same
+    -- shape as `T-≤-μᵀ`, and needed for the same reason: an inductive
+    -- hypothesis' coercion has to escape the handling composite.
+
+    T-alg-of-handlerᵀ-≤ : ∀ {A ε₁ ε₂ ε'} → (h : Handlerᵀ A) → (p : ε₁ ≾ₑ ε₂)
+                        → T-alg-of-handlerᵀ {A} {ε₂} {ε'} h ∘ᵐ T-≤ p
+                        ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {A} {ε₁} {ε'} h
+
+    -- And it *is* an algebra: folding a two-layer tree is folding the outer
+    -- layer after folding each inner one. (The individual clauses above say
+    -- what the fold does at each node; this says the fold is compatible with
+    -- the monad's multiplication — which is what lets a handled computation be
+    -- decomposed along a reduction step.)
+
+    T-alg-of-handlerᵀ-μᵀ : ∀ {A ε ε' ε''} → (h : Handlerᵀ A)
+                         → T-alg-of-handlerᵀ {A} {ε ·ₑ ε'} {ε''} h
+                             ∘ᵐ μᵀ {Tᵒ A ε''} {ε} {ε'}
+                         ≈ᵐ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
+                             ∘ᵐ T-alg-of-handlerᵀ {A} {ε} {ε' ·ₑ ε''} h
+                             ∘ᵐ Tᶠ (T-alg-of-handlerᵀ {A} {ε'} {ε''} h)
+
   -- DERIVED PROPERTIES
 
   -- Naturality of the strength in its boxed component alone (the monadic
