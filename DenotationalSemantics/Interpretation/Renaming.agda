@@ -37,7 +37,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import Data.Product using (_,_; proj₁; proj₂)
-open import Relation.Nullary using (yes; no)
+open import Relation.Nullary using (¬_; yes; no)
 
 open import Util.Equality using (subst)
 
@@ -196,3 +196,24 @@ var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x | var-proj-na
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ ih))
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+
+-- Naturality of the variable interpretation under a renaming (this is the
+-- `var` case of the term-renaming coherence): from `var-proj-nat` plus the
+-- eternal grade-independence `eternalᵛ-extᵉ-≤`.
+
+var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+                 → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) (f q))
+                                (proj₂ (proj₂ (var-rename r x)))
+                   ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ
+var-morphism-nat {A = A} r f x with eternal? A | var-rename r x | var-proj-nat r x
+... | yes et | ρ' , ρ'≾ρ , y | vpn =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et ρ'≾ρ)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ vpn)
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+... | no ¬et | ρ' , ρ'≾ρ , y | vpn =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans ρ'≾ρ (f ¬et)))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ vpn))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
