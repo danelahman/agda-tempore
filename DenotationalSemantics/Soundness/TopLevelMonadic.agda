@@ -12,10 +12,9 @@
 --                                                                    --
 -- `T` is a monad over the *syntax*. Its denotational counterpart is a    --
 -- strong monad `Mᵒ` over the model (`Model.RuntimeMonad`), and the two   --
--- are related by `RuntimeSemantics` below. A term denotes a morphism,    --
--- i.e. a point of an exponential, so a `T`-computation of terms denotes  --
--- a point of `Mᵒ` applied to that exponential; `kleisliᵐ` derives the     --
--- Kleisli map from it (`Soundness.RuntimeLemmas`).                       --
+-- are related by `RuntimeSemantics` below: a `T`-computation of           --
+-- configurations, applied to the history it is over, denotes an           --
+-- `Mᵒ`-computation of their denotations.                                 --
 --                                                                    --
 -- Computations are run into the tick monad by `implᵐ ∘ᵐ ⟦_⟧ᶜᶠ`, and the   --
 -- runtime effects are absorbed by the algebra `algᴹ` that the tick       --
@@ -99,8 +98,6 @@ open import DenotationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy M
 open import DenotationalSemantics.Soundness.TickLemmas S Cat Fut GTy Mon TMon
 open ImplLemmas implᵐ implᵐ-μᵀ implᵐ-nat
 
-open import DenotationalSemantics.Soundness.RuntimeLemmas Cat RMon
-
 -- The operation's continuation, with the interpretation's ground-type coercion
 -- on the arity applied. This is the morphism both the implementation's
 -- operation node and the reduct's bind carry.
@@ -152,21 +149,19 @@ module MonadicTopLevelSoundness
   ------------------------------------------------------------------------
   -- THE RUNTIME MONAD'S SEMANTICS
   --
-  -- A term denotes a morphism, i.e. a POINT of the exponential. So a runtime
-  -- computation of terms denotes a point of `Mᵒ` applied to that exponential.
-  -- The Kleisli map it induces is derived, not assumed (`kleisliᵐ`).
-  --
-  -- The only law needed of it here is that `returnM` names the configuration's
-  -- denotation. What the machine's operation step denotes is the theorem's
-  -- coherence condition, `MOpSemCoherent` below.
+  -- A runtime computation of configurations, applied to the history it is
+  -- over: an `Mᵒ`-computation of what those configurations denote. The only
+  -- law needed of it is that `returnM` names the configuration's denotation.
+  -- What the machine's operation step denotes is the theorem's coherence
+  -- condition, `MOpSemCoherent` below.
   ------------------------------------------------------------------------
 
   record RuntimeSemantics : Set₁ where
     field
-      ⟦_⟧ᵐᶜᶠ : ∀ {H C} → T (HConfig H C) → (𝟙ᵐ →ᵐ Mᵒ (⟦ H ⟧ᶜᵗˣ ⇒ᵐ ⟦ C ⟧ᶜ))
+      ⟦_⟧ᵐᶜᶠ : ∀ {H C} → T (HConfig H C) → (⟦ H ⟧ᶜᵗˣ →ᵐ Mᵒ ⟦ C ⟧ᶜ)
 
       ⟦⟧ᵐᶜᶠ-return : ∀ {H C} → (hcf : HConfig H C)
-                   → ⟦ returnM hcf ⟧ᵐᶜᶠ ≈ᵐ ηᴹ ∘ᵐ ptᵐ ⟦ hcf ⟧ʰᶜᶠ
+                   → ⟦ returnM hcf ⟧ᵐᶜᶠ ≈ᵐ ηᴹ ∘ᵐ ⟦ hcf ⟧ʰᶜᶠ
 
   ------------------------------------------------------------------------
   -- THE REDUCTS OF A STEP
@@ -275,9 +270,9 @@ module MonadicTopLevelSoundness
       → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
       → (M : toCtx St ⟨ mapᵉ (op-grade op) ⟩
              ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-      → kleisliᵐ ⟦ mon-op-sem op V >>= (λ V' → returnM
-                     (hcfg (grade-pass St (mapᵉ (op-grade op)))
-                           (M [ Hd ↦ V' ]c))) ⟧ᵐᶜᶠ
+      → ⟦ mon-op-sem op V >>= (λ V' → returnM
+             (hcfg (grade-pass St (mapᵉ (op-grade op)))
+                   (M [ Hd ↦ V' ]c))) ⟧ᵐᶜᶠ
       ≈ᵐ Mᶠ (contᵐ op St M)
          ∘ᵐ strᴹ
          ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ (paramᵐ op St V) ⟩ᵐ
@@ -296,21 +291,20 @@ module MonadicTopLevelSoundness
              → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
       ⟦ cf ⟧ᵏᶜᶠ = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ
 
-      runᵐ : ∀ {X B ε} → (𝟙ᵐ →ᵐ Mᵒ (X ⇒ᵐ Tᵒ B ε)) → (X →ᵐ Tᵏ B ε)
-      runᵐ b = algᴹ ∘ᵐ Mᶠ implᵐ ∘ᵐ kleisliᵐ b
+      runᵐ : ∀ {X B ε} → (X →ᵐ Mᵒ (Tᵒ B ε)) → (X →ᵐ Tᵏ B ε)
+      runᵐ b = algᴹ ∘ᵐ Mᶠ implᵐ ∘ᵐ b
 
-      runᵐ-cong : ∀ {X B ε} → {b b' : 𝟙ᵐ →ᵐ Mᵒ (X ⇒ᵐ Tᵒ B ε)}
+      runᵐ-cong : ∀ {X B ε} → {b b' : X →ᵐ Mᵒ (Tᵒ B ε)}
                 → b ≈ᵐ b' → runᵐ b ≈ᵐ runᵐ b'
-      runᵐ-cong e = ∘ᵐ-congʳ (∘ᵐ-congʳ (kleisliᵐ-cong e))
+      runᵐ-cong e = ∘ᵐ-congʳ (∘ᵐ-congʳ e)
 
       -- A returned configuration runs as that configuration: the algebra
       -- swallows the runtime monad's unit.
 
       runᵐ-return : ∀ {X B ε} → (f : X →ᵐ Tᵒ B ε)
-                  → runᵐ (ηᴹ ∘ᵐ ptᵐ f) ≈ᵐ implᵐ ∘ᵐ f
+                  → runᵐ (ηᴹ ∘ᵐ f) ≈ᵐ implᵐ ∘ᵐ f
       runᵐ-return f =
-          ∘ᵐ-congʳ (∘ᵐ-congʳ (kleisliᵐ-ptᵐ f))
-        ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+          ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (ηᴹ-nat implᵐ))
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
         ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
