@@ -163,6 +163,8 @@ open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
 open import DenotationalSemantics.Model.TickMonad
 open import DenotationalSemantics.Model.Implementation
+open import DenotationalSemantics.Model.RuntimeMonad
+open import DenotationalSemantics.Model.MonadicImplementation
 
 ---- Concrete model on discretely-indexed presheaves
 
@@ -194,9 +196,11 @@ open import DenotationalSemantics.Interpretation.State
 
 open import DenotationalSemantics.Soundness.Preservation
 
----- Soundness of the pure top-level operational semantics
+---- Soundness of the top-level operational semantics
 
+open import DenotationalSemantics.Soundness.TickLemmas
 open import DenotationalSemantics.Soundness.TopLevelPure
+open import DenotationalSemantics.Soundness.TopLevelMonadic
 
 ---- Concrete time-ticks Kripke frames
 

@@ -88,67 +88,8 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy Mon GE
 
--- Chaining equational steps.
-
-infixr 3 _∙ᵏ_
-
-_∙ᵏ_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
-_∙ᵏ_ = ≈ᵐ-trans
-
--- Kleisli composition in the tick monad.
-
-infixl 25 _⋄ᵏ_
-
-_⋄ᵏ_ : ∀ {X Y A ε ε'} → (Y →ᵐ Tᵏ A ε') → (X →ᵐ Tᵏ Y ε) → X →ᵐ Tᵏ A (ε ·ₑ ε')
-f ⋄ᵏ t = μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ t
-
-T-≤ᵏ-irr : ∀ {A ε ε'} → (p q : ε ≾ₑ ε') → T-≤ᵏ {A} p ≈ᵐ T-≤ᵏ {A} q
-T-≤ᵏ-irr {A} p q =
-  subst (λ z → T-≤ᵏ {A} p ≈ᵐ T-≤ᵏ {A} z) (≾ₑ-irrelevant p q) ≈ᵐ-refl
-
-⋄ᵏ-ηᵏ : ∀ {X A ε'} → (f : X →ᵐ Tᵏ A ε')
-      → f ⋄ᵏ ηᵏ ≈ᵐ ε-substᵏ (sym (·ₑ-identityˡ ε')) ∘ᵐ f
-⋄ᵏ-ηᵏ f =
-    ∘ᵐ-congʳ (≈ᵐ-sym (ηᵏ-nat f))
-  ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congˡ Tᵏ-μ∘η≡id
-
--- The tick monad's Kleisli composite is associative (as `bind-bind` for `T`).
-
-bind-bindᵏ : ∀ {X Y Z B ε₁ ε₂ ε₃}
-           → (f : Z →ᵐ Tᵏ B ε₃) → (t : Y →ᵐ Tᵏ Z ε₂) → (s : X →ᵐ Tᵏ Y ε₁)
-           → μᵏ ∘ᵐ Tᵏᶠ (f ⋄ᵏ t) ∘ᵐ s
-           ≈ᵐ ε-substᵏ (·ₑ-assoc ε₁ ε₂ ε₃) ∘ᵐ (f ⋄ᵏ (t ⋄ᵏ s))
-bind-bindᵏ f t s =
-    ∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-∘ᵐ _ _ ∙ᵏ ∘ᵐ-congʳ (Tᵏ-∘ᵐ _ _)))
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congˡ Tᵏ-μ∘μ≡μ∘Tμ)
-  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congʳ (μᵏ-nat f)))
-  ∙ᵏ ∘ᵐ-assoc _ _ _
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-
--- Being a monad morphism, the implementation maps a bind to a bind. This is
--- what carries the tree monad's soundness theorem over to `↝-STEP`.
-
-impl-⋄ : ∀ {X Y A ε ε'} → (f : Y →ᵐ Tᵒ A ε') → (t : X →ᵐ Tᵒ Y ε)
-       → implᵐ ∘ᵐ _⋄_ {X} {Y} {A} {ε} {ε'} f t
-       ≈ᵐ (implᵐ ∘ᵐ f) ⋄ᵏ (implᵐ ∘ᵐ t)
-impl-⋄ f t =
-    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congˡ implᵐ-μᵀ
-  ∙ᵏ ∘ᵐ-assoc _ _ _
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (implᵐ-nat f)))
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (Tᵏ-∘ᵐ _ _)))
+open import DenotationalSemantics.Soundness.TickLemmas S Cat Fut GTy Mon TMon
+open ImplLemmas implᵐ implᵐ-μᵀ implᵐ-nat
 
 module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
@@ -232,42 +173,6 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                   ∘ᵐ ⟨ idᵐ , subst (λ O → Z →ᵐ O) e g ⟩ᵐ
               ≈ᵐ f ∘ᵐ ⟨ idᵐ , g ⟩ᵐ
     substᵈ-⟨⟩ refl f g = ≈ᵐ-refl
-
-    -- BINDING AFTER A TICK
-    --
-    -- A tick is natural and algebraic, so the bind goes under it, and the
-    -- transition's `ηᵏ` is absorbed, leaving only a regrading.
-
-    tick-z : ∀ (δ : E) (ε : E) → δ ·ₑ ε ≾ₑ (δ ·ₑ uₑ) ·ₑ ε
-    tick-z δ ε =
-      ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≾ₑ-reflexive (sym (·ₑ-identityˡ ε))))
-               (≾ₑ-reflexive (sym (·ₑ-assoc δ uₑ ε)))
-
-    tick-nf : ∀ {X Y B ε} → (δ : E) → (env : X →ᵐ [ mapᵉ δ ]ᵒ Y)
-            → (f : Y →ᵐ Tᵏ B ε)
-            → μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ (tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ ηᵏ ∘ᵐ env)
-            ≈ᵐ T-≤ᵏ (tick-z δ ε) ∘ᵐ tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ f ∘ᵐ env
-    tick-nf {ε = ε} δ env f =
-        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (tickᵏ-nat δ f)))
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ᵏ ∘ᵐ-congˡ (tickᵏ-algebraicity δ)
-      ∙ᵏ ∘ᵐ-assoc _ _ _
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ
-          (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-           ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-           ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-           ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-           ∙ᵏ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ᵏ ⋄ᵏ-ηᵏ f ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _)))
-           ∙ᵏ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
-           ∙ᵏ ∘ᵐ-assoc _ _ _))
-      ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (tickᵏ-≤ δ _))
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤ᵏ-≡ _) ∙ᵏ T-≤ᵏ-trans _ _ (tick-z δ ε))
 
     -- OP-STEP
     --
