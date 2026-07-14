@@ -189,6 +189,10 @@ open import DenotationalSemantics.Interpretation.State
 
 open import DenotationalSemantics.Soundness.Preservation
 
+---- Soundness of the pure top-level operational semantics
+
+open import DenotationalSemantics.Soundness.TopLevelPure
+
 ---- Concrete time-ticks Kripke frames
 
 open import DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks

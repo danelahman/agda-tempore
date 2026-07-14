@@ -263,6 +263,15 @@ record Category : Set₂ where
                       (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
                                 (curryᵐ-uncurryᵐ-iso k))))))))
 
+  -- the exponential functor preserves identities
+
+  map⇒ᵐ-idᵐ : ∀ {A B} → map⇒ᵐ (idᵐ {A}) (idᵐ {B}) ≈ᵐ idᵐ
+  map⇒ᵐ-idᵐ =
+    ≈ᵐ-trans (curryᵐ-cong
+               (≈ᵐ-trans (∘ᵐ-identityˡ _)
+                         (≈ᵐ-trans (∘ᵐ-congʳ mapˣᵐ-idᵐ) (∘ᵐ-identityʳ _))))
+             (uncurryᵐ-curryᵐ-iso idᵐ)
+
   -- Precomposing an abstraction's *argument*: the functorial action of the
   -- exponential on the domain reindexes what the abstraction is applied to.
 

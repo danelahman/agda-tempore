@@ -137,9 +137,14 @@ mutual
     -- A `sub` may be pushed *under* a delay, when the grade it coerces factors
     -- through the delay's own (`of-natᵉ τ ·ₑ_`) — which is the only shape that
     -- ever arises, since a coercion of the tree's *residual* effect leaves the
-    -- delay itself untouched. (No such rule for `op-node`: an operation's grade
-    -- `op-grade op ·ₑ ε` coerced to an arbitrary `ε₂` need not factor at all,
-    -- and none is needed — a reduction step never performs an operation.)
+    -- delay itself untouched.
+    --
+    -- There is deliberately NO such rule for `op-node`. It would be statable at
+    -- the factored grade, but it is INCOMPATIBLE with handling: the fold selects
+    -- the clause `h op ε''` by the residual grade `ε''`, so pushing a coercion
+    -- under an operation would change *which clause* is applied. Making it sound
+    -- would require handler clauses to be natural in the residual grade. None is
+    -- needed here — a `_↝_` step never performs an operation.
     --
     -- This is what makes sub-effecting commute with the multiplication in the
     -- *inner* grade, and hence what lets the `↝*` closure compose.
@@ -152,6 +157,7 @@ mutual
                        → sub e (k (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (sub e (k q))}
               → sub (·ₑ-monoʳ-≾ₑ e) (delay-node τ k kn)
               ≈ᵗ delay-node τ (λ q → sub e (k q)) kn'
+
 
     -- With the laws above the congruence rules no longer suffice to make
     -- `_≈ᵗ_` an equivalence, so it is closed under symmetry and
