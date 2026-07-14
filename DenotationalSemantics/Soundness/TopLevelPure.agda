@@ -1,29 +1,38 @@
 ------------------------------------------------------------------------
 -- Soundness of the PURE top-level operational semantics.                --
 --                                                                    --
--- The top-level semantics runs a program against *external implementa-  --
--- tions* of the algebraic operations (`op-sem`). It has two rules: an    --
--- ordinary step `↝-STEP`, and `OP-STEP`, which performs an operation by  --
--- running its implementation:                                           --
+-- The top-level machine runs a program against external implementations  --
+-- of the algebraic operations (`op-sem`). It has two rules: an ordinary  --
+-- step `↝-STEP`, and                                                    --
 --                                                                    --
---   ⟨ S , perform op V M ⟩ ⟿ ⟨ S ⟨ mapᵉ (op-grade op) ⟩ₛ                --
---                            , M [ Hd ↦ op-sem op V ]c ⟩                --
+--   OP-STEP : ⟨ S , perform op V M ⟩                                    --
+--           ⟿ ⟨ S ⟨ mapᵉ (op-grade op) ⟩ₛ , M [ Hd ↦ op-sem op V ]c ⟩   --
 --                                                                    --
--- Note the state gains a lock: performing an operation takes            --
--- `mapᵉ (op-grade op)` worth of time. So — unlike every rule of `_↝_`    --
--- but `DELAY` — the transition is not `ηᵀ`; it is the operation itself,  --
--- `opᵀ op`, with a continuation that hands back the (now locked) history.--
+-- which replaces the operation call by the value the implementation      --
+-- computes — and locks the state, because performing the operation took  --
+-- `mapᵉ (op-grade op)` worth of time.                                   --
 --                                                                    --
--- THE COHERENCE CONDITION                                              --
+-- THE TOP-LEVEL DENOTATION                                              --
 --                                                                    --
--- In the model an operation is *uninterpreted* — `opᵀ op` is a free      --
--- node, and it hands its continuation an arbitrary arity value at the    --
--- later world. The top-level machine instead hands it `op-sem op V`. So  --
--- the two agree only in a model that *implements* the operations the way --
--- `op-sem` does, and that is exactly what `OpSemSound` below assumes. It --
--- is not derivable, and should not be: it is the statement that the      --
--- denotational and the external implementations of the operations are    --
--- the same one.                                                        --
+-- The point of the top-level semantics is that EVERY operation node gets --
+-- run away. So its denotation is not in the tree monad but in the TICK   --
+-- monad (`Model.TickMonad`), where the only effect is the passage of     --
+-- time, and the two are related by the implementation                    --
+--                                                                    --
+--   implᵐ : Tᵒ A ε →ᵐ Tᵏ A ε                                            --
+--                                                                    --
+-- the graded monad morphism that feeds each operation's continuation the --
+-- arity value `op-semᵐ` computes and leaves behind only the tick the     --
+-- operation cost (`Model.Implementation`).                              --
+--                                                                    --
+--   ⟦ cf ⟧ᵏᶜᶠ  =  implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ                                     --
+--                                                                    --
+-- Handling is untouched: `HANDLE-OP` is an `↝-STEP`, so operations under --
+-- a handler are still handled in the tree monad by `⟦_⟧ᶜᵗ`. The          --
+-- implementation applies to the operations that *survive to the top*.    --
+--                                                                    --
+-- Nothing here constrains the tree monad's `opᵀ`. The only condition is  --
+-- about `op-sem`: that it is the semantic implementation `op-semᵐ`.      --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -39,6 +48,8 @@ open import DenotationalSemantics.Model.Modality.Adjunction
 open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
+open import DenotationalSemantics.Model.TickMonad
+open import DenotationalSemantics.Model.Implementation
 
 module DenotationalSemantics.Soundness.TopLevelPure
          (S : LanguageSpec)
@@ -49,6 +60,8 @@ module DenotationalSemantics.Soundness.TopLevelPure
          (GTy : GroundTypes S Cat Fut)
          (Mon : Monad S Cat Fut GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
+         (TMon : TickMonad S Cat Fut)
+         (Impl : Implementation S Cat Fut Pst Adj GTy Mon TMon)
        where
 
 open LanguageSpec S
@@ -64,17 +77,19 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.Substitutions S
 
-open import OperationalSemantics.State                S
-open import OperationalSemantics.PreservationTheorem  S
-open import OperationalSemantics.TopLevelOpSemantics  S
+open import OperationalSemantics.State                       S
+open import OperationalSemantics.PreservationTheorem         S
+open import OperationalSemantics.TopLevelOpSemantics         S
 open import OperationalSemantics.TopLevelPreservationTheorem S
 
 open Category Cat
-open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-∘ᵐ)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-∘ᵐ; []-≤; []-≤-nat)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ)
 open Adjunction Adj using (η⊣; η⊣-nat)
 open GroundTypes GTy using (⟦_⟧ᵍ)
-open Monad Mon
+open Monad Mon using (Tᵒ; Tᶠ; ηᵀ; μᵀ; T-≤; ε-substᵀ; delayᵀ; opᵀ)
+open TickMonad TMon
+open Implementation Impl
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
@@ -83,13 +98,78 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy Mon GE
 
+-- Chaining equational steps.
+
+infixr 3 _∙ᵏ_
+
+_∙ᵏ_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+_∙ᵏ_ = ≈ᵐ-trans
+
+-- Kleisli composition in the tick monad.
+
+infixl 25 _⋄ᵏ_
+
+_⋄ᵏ_ : ∀ {X Y A ε ε'} → (Y →ᵐ Tᵏ A ε') → (X →ᵐ Tᵏ Y ε) → X →ᵐ Tᵏ A (ε ·ₑ ε')
+f ⋄ᵏ t = μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ t
+
+T-≤ᵏ-irr : ∀ {A ε ε'} → (p q : ε ≾ₑ ε') → T-≤ᵏ {A} p ≈ᵐ T-≤ᵏ {A} q
+T-≤ᵏ-irr {A} p q =
+  subst (λ z → T-≤ᵏ {A} p ≈ᵐ T-≤ᵏ {A} z) (≾ₑ-irrelevant p q) ≈ᵐ-refl
+
+⋄ᵏ-ηᵏ : ∀ {X A ε'} → (f : X →ᵐ Tᵏ A ε')
+      → f ⋄ᵏ ηᵏ ≈ᵐ ε-substᵏ (sym (·ₑ-identityˡ ε')) ∘ᵐ f
+⋄ᵏ-ηᵏ f =
+    ∘ᵐ-congʳ (≈ᵐ-sym (ηᵏ-nat f))
+  ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ∘ᵐ-congˡ Tᵏ-μ∘η≡id
+
+-- The tick monad's Kleisli composite is associative (as `bind-bind` for `T`).
+
+bind-bindᵏ : ∀ {X Y Z B ε₁ ε₂ ε₃}
+           → (f : Z →ᵐ Tᵏ B ε₃) → (t : Y →ᵐ Tᵏ Z ε₂) → (s : X →ᵐ Tᵏ Y ε₁)
+           → μᵏ ∘ᵐ Tᵏᶠ (f ⋄ᵏ t) ∘ᵐ s
+           ≈ᵐ ε-substᵏ (·ₑ-assoc ε₁ ε₂ ε₃) ∘ᵐ (f ⋄ᵏ (t ⋄ᵏ s))
+bind-bindᵏ f t s =
+    ∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-∘ᵐ _ _ ∙ᵏ ∘ᵐ-congʳ (Tᵏ-∘ᵐ _ _)))
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congˡ Tᵏ-μ∘μ≡μ∘Tμ)
+  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congʳ (μᵏ-nat f)))
+  ∙ᵏ ∘ᵐ-assoc _ _ _
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+
+-- THE IMPLEMENTATION IS A MONAD MORPHISM, SO IT MAPS A BIND TO A BIND.
+--
+-- This is what makes `↝-STEP` free: the ordinary soundness theorem is an
+-- equation in the tree monad, and a monad morphism carries it into the tick
+-- monad wholesale.
+
+impl-⋄ : ∀ {X Y A ε ε'} → (f : Y →ᵐ Tᵒ A ε') → (t : X →ᵐ Tᵒ Y ε)
+       → implᵐ ∘ᵐ _⋄_ {X} {Y} {A} {ε} {ε'} f t
+       ≈ᵐ (implᵐ ∘ᵐ f) ⋄ᵏ (implᵐ ∘ᵐ t)
+impl-⋄ f t =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ∘ᵐ-congˡ implᵐ-μᵀ
+  ∙ᵏ ∘ᵐ-assoc _ _ _
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (implᵐ-nat f)))
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (Tᵏ-∘ᵐ _ _)))
+
 module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
   open TopLevelOpSemantics OpSemantics
   open PureTopLevelPreservationTheorem OpSemantics
 
-  -- The operation's parameter, and the arity value its implementation returns,
-  -- as morphisms (with the ground-type coercions the interpretation carries).
+  -- The operation's parameter, and the value its implementation returns, as
+  -- morphisms (with the ground-type coercions the interpretation carries).
 
   paramᵐ : (op : Op) → (St : 𝕊 [])
          → toCtx St ⊢V⦂ type-of-gtype (param op)
@@ -103,53 +183,37 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     subst (λ O → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ O)
           (ty-gty (arity op)) ⟦ op-sem op V ⟧ᵛᵗ
 
-  -- THE COHERENCE CONDITION
+  -- THE ONLY CONDITION
   --
-  -- The model implements the operations the way `op-sem` does: the arity value
-  -- `opᵀ op` hands its continuation is the one `op-sem op V` computes. Stated as
-  -- a permission to replace the continuation's arity argument, which is how it
-  -- is used. (The continuation may still read the past environment — that is the
-  -- `fstᵐ` — so this says nothing about what the continuation does with it.)
-
-  OpSemSound : Set₁
-  OpSemSound = ∀ (op : Op) → (St : 𝕊 []) → ∀ {A ε}
-             → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
-             → (k : (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ ⟦ arity op ⟧ᵍ)
-                    →ᵐ Tᵒ A ε)
-             → opᵀ op ∘ᵐ ⟨ paramᵐ op St V
-                         , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ k) ∘ᵐ η⊣ ⟩ᵐ
-             ≈ᵐ opᵀ op ∘ᵐ ⟨ paramᵐ op St V
-                          , [ mapᵉ (op-grade op) ]ᶠ
-                              (curryᵐ (k ∘ᵐ ⟨ fstᵐ , arityᵐ op St V ∘ᵐ fstᵐ ⟩ᵐ))
-                            ∘ᵐ η⊣ ⟩ᵐ
-
-  -- SUB-EFFECTING COMMUTES WITH PERFORMING AN OPERATION
+  -- The syntactic implementation `op-sem` *is* the semantic one, `op-semᵐ`.
+  -- Both take the parameter as seen from `mapᵉ (op-grade op)` in its future —
+  -- which is where the operation's continuation runs — and return the arity
+  -- value.
   --
-  -- The second half of "the model implements the operations". In the free tree
-  -- model an `op-node` records the residual grade at the node, so coercing the
-  -- continuation's grade and coercing the whole computation give different
-  -- trees. In a model that *implements* the operation there is no node to record
-  -- anything, and the two coincide. (This is only assumable, not provable, for
-  -- the same reason `OpSemSound` is: it is a statement about the operation's
-  -- implementation. And it cannot be moved into the model interface — the free
-  -- model would have to satisfy it, and making it do so would force the handler
-  -- fold to know that clauses are natural in the residual grade, since the fold
-  -- selects `h op ε''` *by* that grade.)
+  -- Being an equation with `op-semᵐ` (a single morphism, not indexed by the
+  -- state) on the right, this also forces `op-sem` to be uniform in the state:
+  -- that is the naturality condition `TopLevelOpSemantics.op-sem` is annotated
+  -- as requiring.
 
-  OpTᵀ-≤ : Set₁
-  OpTᵀ-≤ = ∀ {A ε₁ ε₂} → (op : Op) → (p : ε₁ ≾ₑ ε₂)
-         → opᵀ {A} {ε₂} op
-             ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ p)))
-         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ opᵀ {A} {ε₁} op
+  OpSemCoherent : Set
+  OpSemCoherent = ∀ (op : Op) → (St : 𝕊 [])
+                → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
+                → arityᵐ op St V
+                ≈ᵐ op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ (paramᵐ op St V)
 
-  module _ (op-sound : OpSemSound) (op-≤ : OpTᵀ-≤) where
+  module _ (op-coh : OpSemCoherent) where
+
+    -- THE TOP-LEVEL DENOTATION OF A CONFIGURATION
+
+    ⟦_⟧ᵏᶜᶠ : ∀ {A ε} → (cf : Config (A ‼ ε))
+           → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
+    ⟦ cf ⟧ᵏᶜᶠ = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ
 
     -- THE TOP-LEVEL STEP'S GRADE, TRANSITION AND REFINEMENT
     --
-    -- `↝-STEP` inherits them. `OP-STEP` performs the operation: it spends
-    -- `op-grade op`, and its transition is `opᵀ op` itself, with a continuation
-    -- that discards the arity value and returns the history — now behind the
-    -- lock that the elapsed `mapᵉ (op-grade op)` has placed on it.
+    -- `↝-STEP` inherits the ordinary ones, run through the implementation.
+    -- `OP-STEP` performs the operation: it costs `op-grade op`, and — the
+    -- operation having been run away — its transition is a plain TICK.
 
     top-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
               → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -157,14 +221,13 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     top-grade (↝-STEP r)          = step-grade r
     top-grade (OP-STEP {op = op}) = op-grade op ·ₑ uₑ
 
-    top-stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
+    top-stepᵏ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
               → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
               → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
-              → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (top-grade r)
-    top-stepᵀ (↝-STEP r) = stepᵀ r
-    top-stepᵀ (OP-STEP {op = op} {S = St} {V = V}) =
-      opᵀ op ∘ᵐ ⟨ paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ
-                , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ (ηᵀ ∘ᵐ fstᵐ)) ∘ᵐ η⊣ ⟩ᵐ
+              → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ hist St' ⟧ᶜᵗˣ (top-grade r)
+    top-stepᵏ (↝-STEP r) = implᵐ ∘ᵐ stepᵀ r
+    top-stepᵏ (OP-STEP {op = op}) =
+      tickᵏ (op-grade op) ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ ηᵏ ∘ᵐ η⊣
 
     top-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -174,18 +237,14 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     top-≾ (OP-STEP {ε = ε} {op = op}) =
       ≾ₑ-reflexive (cong (_·ₑ ε) (·ₑ-identityʳ (op-grade op)))
 
-    -- Handlers reached by the underlying steps must be uniform, as before.
-
     Uniform⟿ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
              → ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩ → Set
     Uniform⟿ (↝-STEP r) = Uniform↝ r
     Uniform⟿ OP-STEP    = ⊤
 
-    -- SUBSTITUTING THE IMPLEMENTATION'S VALUE
-    --
-    -- The ground-type coercions the interpretation puts on the arity cancel
-    -- against the ones it puts on the substituted value.
+    -- The interpretation's ground-type coercions on the arity cancel against
+    -- the ones on the substituted value.
 
     substᵈ-⟨⟩ : ∀ {Z W Y Y'} → (e : Y ≡ Y') → (f : (Z ×ᵐ Y) →ᵐ W) → (g : Z →ᵐ Y)
               → subst (λ O → (Z ×ᵐ O) →ᵐ W) e f
@@ -193,271 +252,255 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
               ≈ᵐ f ∘ᵐ ⟨ idᵐ , g ⟩ᵐ
     substᵈ-⟨⟩ refl f g = ≈ᵐ-refl
 
-    -- Transporting the operation's residual grade commutes with the operation
-    -- (both sides are the same node, at propositionally equal grades).
-
-    opᵀ-ε-subst : ∀ {A ε ε'} → (op : Op) → (e : ε ≡ ε')
-                → opᵀ {A} {ε'} op
-                    ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (ε-substᵀ e)))
-                ≈ᵐ ε-substᵀ (cong (op-grade op ·ₑ_) e) ∘ᵐ opᵀ {A} {ε} op
-    opᵀ-ε-subst op refl =
-        ∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl
-                    ([]-congᶠ (map⇒ᵐ-cong-ε ∙ map⇒ᵐ-idᵐ) ∙ []-idᵐ'))
-      ∙ ∘ᵐ-congʳ mapˣᵐ-idᵐ
-      ∙ ∘ᵐ-identityʳ _
-      ∙ ≈ᵐ-sym (∘ᵐ-congˡ ε-substᵀ-refl ∙ ∘ᵐ-identityˡ _)
-      where
-        map⇒ᵐ-cong-ε : ∀ {X Y Z} → map⇒ᵐ (idᵐ {X}) (ε-substᵀ {Y} {Z} refl)
-                                 ≈ᵐ map⇒ᵐ idᵐ idᵐ
-        map⇒ᵐ-cong-ε = curryᵐ-cong (∘ᵐ-congˡ ε-substᵀ-refl)
-
-        []-idᵐ' : ∀ {ρ X} → [ ρ ]ᶠ (idᵐ {X}) ≈ᵐ idᵐ
-        []-idᵐ' = Future.[]-idᵐ Fut
-
-    -- BINDING AFTER AN OPERATION
+    -- BINDING AFTER A TICK
     --
-    -- `opᵀ` is natural and algebraic, so a bind after the operation goes into
-    -- the operation's continuation — where the transition's `ηᵀ` absorbs it,
-    -- leaving the bound computation and a regrading.
+    -- A tick is natural and algebraic, so the bind goes under it — and the
+    -- transition's `ηᵏ` is absorbed, leaving only a regrading. (Exactly
+    -- `Preservation`'s `delay-nf`, at an arbitrary grade.)
 
-    op-bind : ∀ {X A ε} → (op : Op)
-            → (pv : X →ᵐ ⟦ param op ⟧ᵍ)
-            → (f : ⟨ mapᵉ (op-grade op) ⟩ᵒ X →ᵐ Tᵒ A ε)
-            → μᵀ ∘ᵐ Tᶠ f
-                ∘ᵐ (opᵀ op ∘ᵐ ⟨ pv
-                              , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ (ηᵀ ∘ᵐ fstᵐ))
-                                ∘ᵐ η⊣ ⟩ᵐ)
-            ≈ᵐ (ε-substᵀ (sym (·ₑ-assoc (op-grade op) uₑ ε))
-                ∘ᵐ ε-substᵀ (cong (op-grade op ·ₑ_) (sym (·ₑ-identityˡ ε))))
-               ∘ᵐ opᵀ op ∘ᵐ ⟨ pv
-                            , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ (f ∘ᵐ fstᵐ)) ∘ᵐ η⊣ ⟩ᵐ
-    op-bind {ε = ε} op pv f =
-        -- the bind is natural for the operation …
-          ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op f)))
-        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-        -- … and the operation is algebraic for the multiplication
-        ∙ ∘ᵐ-congˡ (opᵀ-algebraicity op)
-        ∙ ∘ᵐ-assoc _ _ _
-        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-        -- collect the two maps on the continuation
-        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
-            (  ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
-             ∙ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
-        -- inside the box, the transition's `ηᵀ` is absorbed by the bind
-        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-            , ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-              ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-              ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-              ∙ ∘ᵐ-congˡ ([]-congᶠ
-                  (  ∘ᵐ-assoc _ _ _
-                   ∙ ∘ᵐ-congʳ (map⇒ᵐ-curryᵐ _ _)
-                   ∙ map⇒ᵐ-curryᵐ _ _
-                   ∙ curryᵐ-cong
-                       (  ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                        ∙ ∘ᵐ-congˡ (⋄-ηᵀ f)
-                        ∙ ∘ᵐ-assoc _ _ _)
-                   ∙ ≈ᵐ-sym (map⇒ᵐ-curryᵐ _ _)))
-              ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
-              ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong))
-        -- and the regrading floats out of the operation
-        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _
-                                      ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
-        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (opᵀ-ε-subst op (sym (·ₑ-identityˡ ε))))
-        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    tick-z : ∀ (δ : E) (ε : E) → δ ·ₑ ε ≾ₑ (δ ·ₑ uₑ) ·ₑ ε
+    tick-z δ ε =
+      ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≾ₑ-reflexive (sym (·ₑ-identityˡ ε))))
+               (≾ₑ-reflexive (sym (·ₑ-assoc δ uₑ ε)))
 
+    tick-nf : ∀ {X Y B ε} → (δ : E) → (env : X →ᵐ [ mapᵉ δ ]ᵒ Y)
+            → (f : Y →ᵐ Tᵏ B ε)
+            → μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ (tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ ηᵏ ∘ᵐ env)
+            ≈ᵐ T-≤ᵏ (tick-z δ ε) ∘ᵐ tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ f ∘ᵐ env
+    tick-nf {ε = ε} δ env f =
+        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (tickᵏ-nat δ f)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (tickᵏ-algebraicity δ)
+      ∙ᵏ ∘ᵐ-assoc _ _ _
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+           ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+           ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+           ∙ᵏ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+           ∙ᵏ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ᵏ ⋄ᵏ-ηᵏ f ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _)))
+           ∙ᵏ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
+           ∙ᵏ ∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (tickᵏ-≤ δ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤ᵏ-≡ _) ∙ᵏ T-≤ᵏ-trans _ _ (tick-z δ ε))
 
     -- OP-STEP
     --
-    -- Both sides are the operation, applied to the parameter, with the rest of
-    -- the computation as its (boxed) continuation. On the left the continuation
-    -- is `M` — which reads the arity value. On the right the operation's arity
-    -- value has already been substituted away, and the transition's continuation
-    -- merely returns the locked history; `opᵀ-nat` and `opᵀ-algebraicity` push
-    -- the bind back inside, and the two continuations then agree — *because* the
-    -- coherence condition says the value the operation supplies is `op-sem`'s.
+    -- The implementation runs the operation away: the continuation is fed
+    -- `op-semᵐ`'s value — which, by `OpSemCoherent`, is the very value the
+    -- reduct substitutes — and what is left of the operation is a tick.
 
     sound-OP-STEP : ∀ {A ε} → (op : Op) → (St : 𝕊 [])
                   → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
                   → (M : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                          ⊢C⦂ A ‼ ε)
-                  → ⟦ ⟨ St , perform op V M ⟩ ⟧ᶜᶠ
-                  ≈ᵐ T-≤ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
-                     ∘ᵐ _⋄_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist St ⟨ mapᵉ (op-grade op) ⟩ ⟧ᶜᵗˣ}
-                            {⟦ A ⟧ᵛ} {op-grade op ·ₑ uₑ} {ε}
-                            ⟦ ⟨ grade-pass St (mapᵉ (op-grade op))
-                              , M [ Hd ↦ op-sem op V ]c ⟩ ⟧ᶜᶠ
-                            (top-stepᵀ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
+                  → ⟦ ⟨ St , perform op V M ⟩ ⟧ᵏᶜᶠ
+                  ≈ᵐ T-≤ᵏ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
+                     ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ}
+                             {⟦ hist St ⟨ mapᵉ (op-grade op) ⟩ ⟧ᶜᵗˣ}
+                             {⟦ A ⟧ᵛ} {op-grade op ·ₑ uₑ} {ε}
+                             ⟦ ⟨ grade-pass St (mapᵉ (op-grade op))
+                               , M [ Hd ↦ op-sem op V ]c ⟩ ⟧ᵏᶜᶠ
+                             (top-stepᵏ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
     sound-OP-STEP {A} {ε} op St V M =
-      -- THE COHERENCE CONDITION: the operation supplies `op-sem`'s value
-        ∘ᵐ-congˡ (op-sound op St V _)
-      -- so the continuation is the reduct, weakened past the arity value
-      ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong cont)) ⟩ᵐ-cong))
-      -- push the state's environment inside the operation
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
-      ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , env ⟩ᵐ-cong)
-      -- and the target is the same operation, with the bind pushed into it
-      ∙ ≈ᵐ-sym (∘ᵐ-congʳ tgt ∙ coe)
+      -- run the operation away
+        ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (implᵐ-opᵀ op (paramᵐ op St V) _)
+      ∙ᵏ ∘ᵐ-assoc _ _ _
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      -- the value it feeds the continuation is the one the reduct substitutes
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ cont)))
+      -- and the state's environment goes under the tick's box
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ St ⟧ˢ)))
+      ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _)))
+      -- what is left is a tick, and `tick-nf` says the target is its bind
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-congʳ (tick-nf (op-grade op) η⊣ ⟦ cf' ⟧ᵏᶜᶠ) ∙ᵏ coe)
       where
         d = op-grade op
 
-        -- the reduct, in the new state's environment
-        g : ⟦ hist St ⟨ mapᵉ d ⟩ ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε
-        g = ⟦ M [ Hd ↦ op-sem op V ]c ⟧ᶜᵗ ∘ᵐ ⟨ mapᵉ d ⟩ᶠ ⟦ St ⟧ˢ
+        cf' : Config (A ‼ ε)
+        cf' = ⟨ grade-pass St (mapᵉ d) , M [ Hd ↦ op-sem op V ]c ⟩
 
-        -- the operation's continuation, with the implementation's value plugged
-        -- in, no longer reads the arity: it is the reduct, weakened
+        -- the operation's continuation, fed `op-semᵐ`'s value, IS the reduct
         cont : subst (λ O → (⟨ mapᵉ d ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
                      (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
-                 ∘ᵐ ⟨ fstᵐ , arityᵐ op St V ∘ᵐ fstᵐ ⟩ᵐ
-             ≈ᵐ ⟦ M [ Hd ↦ op-sem op V ]c ⟧ᶜᵗ ∘ᵐ fstᵐ
+                 ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V) ⟩ᵐ
+             ≈ᵐ ⟦ M [ Hd ↦ op-sem op V ]c ⟧ᶜᵗ
         cont =
-            ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
-          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-          ∙ ∘ᵐ-congˡ (substᵈ-⟨⟩ (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ ⟦ op-sem op V ⟧ᵛᵗ)
-          ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (op-sem op V)))
+            ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (op-coh op St V) ⟩ᵐ-cong)
+          ∙ᵏ substᵈ-⟨⟩ (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ ⟦ op-sem op V ⟧ᵛᵗ
+          ∙ᵏ ≈ᵐ-sym (C-subst-nat M Hd (op-sem op V))
 
-        -- the environment goes under the operation's box, by `η⊣`-naturality
-        env : ([ mapᵉ d ]ᶠ (curryᵐ (⟦ M [ Hd ↦ op-sem op V ]c ⟧ᶜᵗ ∘ᵐ fstᵐ)) ∘ᵐ η⊣)
-                ∘ᵐ ⟦ St ⟧ˢ
-            ≈ᵐ [ mapᵉ d ]ᶠ (curryᵐ (g ∘ᵐ fstᵐ)) ∘ᵐ η⊣
-        env =
-            ∘ᵐ-assoc _ _ _
-          ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ St ⟧ˢ))
-          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-          ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-          ∙ ∘ᵐ-congˡ ([]-congᶠ
-              (  ≈ᵐ-sym (curryᵐ-nat _ _)
-               ∙ curryᵐ-cong
-                   (  ∘ᵐ-assoc _ _ _
-                    ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
-                    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-
-        -- the target: bind the reduct after the transition. `opᵀ` is natural and
-        -- algebraic, so the bind goes into the continuation, where the
-        -- transition's `ηᵀ` absorbs it — leaving the reduct, and a regrading.
-        tgt : _⋄_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist St ⟨ mapᵉ d ⟩ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
-                  {d ·ₑ uₑ} {ε} g
-                  (opᵀ op ∘ᵐ ⟨ paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ
-                             , [ mapᵉ d ]ᶠ (curryᵐ (ηᵀ ∘ᵐ fstᵐ)) ∘ᵐ η⊣ ⟩ᵐ)
-            ≈ᵐ (ε-substᵀ (sym (·ₑ-assoc d uₑ ε))
-                ∘ᵐ ε-substᵀ (cong (d ·ₑ_) (sym (·ₑ-identityˡ ε))))
-               ∘ᵐ opᵀ op ∘ᵐ ⟨ paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ
-                           , [ mapᵉ d ]ᶠ (curryᵐ (g ∘ᵐ fstᵐ)) ∘ᵐ η⊣ ⟩ᵐ
-        tgt = op-bind op (paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ) g
-
-        -- the three coercions the target carries collapse: the source's grade is
-        -- reached exactly
-        coe : T-≤ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
-                ∘ᵐ ((ε-substᵀ (sym (·ₑ-assoc d uₑ ε))
-                     ∘ᵐ ε-substᵀ (cong (d ·ₑ_) (sym (·ₑ-identityˡ ε))))
-                    ∘ᵐ opᵀ op ∘ᵐ ⟨ paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ
-                                 , [ mapᵉ d ]ᶠ (curryᵐ (g ∘ᵐ fstᵐ)) ∘ᵐ η⊣ ⟩ᵐ)
-            ≈ᵐ opᵀ op ∘ᵐ ⟨ paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ
-                         , [ mapᵉ d ]ᶠ (curryᵐ (g ∘ᵐ fstᵐ)) ∘ᵐ η⊣ ⟩ᵐ
+        -- the coercions collapse: the source's grade is reached exactly
+        coe : T-≤ᵏ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
+                ∘ᵐ (T-≤ᵏ (tick-z d ε)
+                    ∘ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ ⟦ cf' ⟧ᵏᶜᶠ ∘ᵐ η⊣)
+            ≈ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ ⟦ cf' ⟧ᵏᶜᶠ ∘ᵐ η⊣
         coe =
             ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-          ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _) ∙ ∘ᵐ-congʳ (T-≤-≡ _)))
-          ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (T-≤-trans _ _ up))
-          ∙ ∘ᵐ-congˡ (T-≤-trans up _ (≾ₑ-reflexive {d ·ₑ ε} refl))
-          ∙ ∘ᵐ-congˡ (T-≤-refl _)
-          ∙ ∘ᵐ-identityˡ _
-          where
-            up : d ·ₑ ε ≾ₑ (d ·ₑ uₑ) ·ₑ ε
-            up = ≾ₑ-reflexive
-                   (trans (cong (d ·ₑ_) (sym (·ₑ-identityˡ ε)))
-                          (sym (·ₑ-assoc d uₑ ε)))
+          ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (≾ₑ-reflexive {d ·ₑ ε} refl))
+          ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-refl _)
+          ∙ᵏ ∘ᵐ-identityˡ _
 
     -- SOUNDNESS OF A TOP-LEVEL STEP
+    --
+    -- `↝-STEP` is free: the ordinary theorem is an equation in the tree monad,
+    -- and `implᵐ` is a monad morphism.
 
     ⟿-sound : ∀ {ε ε' A} {St St' : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
              → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
              → Uniform⟿ r
-             → ⟦ ⟨ St , M ⟩ ⟧ᶜᶠ
-             ≈ᵐ T-≤ (top-≾ r)
-                ∘ᵐ _⋄_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist St' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
-                       {top-grade r} {ε'}
-                       ⟦ ⟨ St' , M' ⟩ ⟧ᶜᶠ (top-stepᵀ r)
-    ⟿-sound (↝-STEP r) u = ↝-sound r u
+             → ⟦ ⟨ St , M ⟩ ⟧ᵏᶜᶠ
+             ≈ᵐ T-≤ᵏ (top-≾ r)
+                ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist St' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
+                        {top-grade r} {ε'}
+                        ⟦ ⟨ St' , M' ⟩ ⟧ᵏᶜᶠ (top-stepᵏ r)
+    ⟿-sound (↝-STEP {S' = St'} {N = M'} r) u =
+        ∘ᵐ-congʳ (↝-sound r u)
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (implᵐ-T-≤ (step-≾ r))
+      ∙ᵏ ∘ᵐ-assoc _ _ _
+      ∙ᵏ ∘ᵐ-congʳ (impl-⋄ ⟦ ⟨ St' , M' ⟩ ⟧ᶜᶠ (stepᵀ r))
     ⟿-sound (OP-STEP {op = op} {S = St} {V = V} {M = M}) _ =
       sound-OP-STEP op St V M
 
     -- THE COERCION ESCAPES A TOP-LEVEL TRANSITION
     --
-    -- The multi-step closure substitutes the rest of the run's coercion under
-    -- the bind of the first step's transition. For `↝-STEP` this is `T-≤-stepᵀ`
-    -- (proved by induction on the underlying step). For `OP-STEP` the transition
-    -- performs the operation, and it is `OpTᵀ-≤` that lets the coercion out.
+    -- This is where the tick monad earns its keep. Every top-level transition
+    -- is built from `ηᵏ` and TICKS — the operations have been run away — and a
+    -- tick records nothing, so `tickᵏ-≤` lets a coercion straight through it.
+    -- (In the tree monad the corresponding step is impossible: an operation
+    -- node records the residual grade, so coercing the continuation and
+    -- coercing the whole computation give different trees.)
 
-    T-≤-topᵀ : ∀ {ε ε' εa εb A} {St St' : 𝕊 []} → (B : Obj)
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
-             → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
-             → (g : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)
-             → μᵀ ∘ᵐ Tᶠ (T-≤ q ∘ᵐ g) ∘ᵐ top-stepᵀ r
-             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵀ ∘ᵐ Tᶠ g ∘ᵐ top-stepᵀ r
-    T-≤-topᵀ B (↝-STEP r) g q = T-≤-stepᵀ B r g q
-    T-≤-topᵀ {εa = εa} {εb = εb} B
-             (OP-STEP {op = op} {S = St} {V = V}) g q =
-      -- bind after the operation, on both sides …
-        op-bind op (paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ) (T-≤ q ∘ᵐ g)
-      -- … the coercion in the continuation is a map on the operation's box …
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-          , ∘ᵐ-congˡ ([]-congᶠ
-              (curryᵐ-cong (∘ᵐ-assoc _ _ _) ∙ ≈ᵐ-sym (map⇒ᵐ-curryᵐ _ _))
-              ∙ []-∘ᵐ _ _)
-            ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _
-                                    ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
-      -- … so `OpTᵀ-≤` pulls it out of the operation
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (op-≤ op q))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      -- and the coercions collapse to the same one on both sides
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-≡ _) ∙ ∘ᵐ-congʳ (T-≤-≡ _))
-                  ∙ ∘ᵐ-congˡ (T-≤-trans _ _ (wz εb))
-                  ∙ T-≤-trans (·ₑ-monoʳ-≾ₑ q) (wz εb) z)
-      ∙ ≈ᵐ-sym
-          (  ∘ᵐ-congʳ (op-bind op (paramᵐ op St V ∘ᵐ ⟦ St ⟧ˢ) g)
-           ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-           ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _) ∙ ∘ᵐ-congʳ (T-≤-≡ _))
-                       ∙ ∘ᵐ-congʳ (T-≤-trans _ _ (wz εa))
-                       ∙ T-≤-trans (wz εa) (·ₑ-monoʳ-≾ₑ q) z))
+    ηᵏ-case : ∀ {X B εa εb} → (g : X →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
+            → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ ηᵏ
+            ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ ηᵏ
+    ηᵏ-case {εa = εa} {εb = εb} g q =
+        ⋄ᵏ-ηᵏ (T-≤ᵏ q ∘ᵐ g)
+      ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _)
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans q _ w)
+      ∙ᵏ ≈ᵐ-sym
+          (  ∘ᵐ-congʳ (⋄ᵏ-ηᵏ g ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _))
+           ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+           ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ w))
       where
-        -- the regrading `op-bind` leaves behind
-        wz : (e : E) → op-grade op ·ₑ e ≾ₑ (op-grade op ·ₑ uₑ) ·ₑ e
-        wz e = ≾ₑ-reflexive
-                 (trans (cong (op-grade op ·ₑ_) (sym (·ₑ-identityˡ e)))
-                        (sym (·ₑ-assoc (op-grade op) uₑ e)))
+        w : εa ≾ₑ uₑ ·ₑ εb
+        w = ≾ₑ-trans q (≾ₑ-reflexive (sym (·ₑ-identityˡ εb)))
 
-        z : op-grade op ·ₑ εa ≾ₑ (op-grade op ·ₑ uₑ) ·ₑ εb
-        z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (wz εb)
+    tick-case : ∀ {X Y B εa εb} → (δ : E) → (env : X →ᵐ [ mapᵉ δ ]ᵒ Y)
+              → (g : Y →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
+              → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ ηᵏ ∘ᵐ env)
+              ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q)
+                 ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (tickᵏ δ ∘ᵐ [ mapᵉ δ ]ᶠ ηᵏ ∘ᵐ env)
+    tick-case {εa = εa} {εb = εb} δ env g q =
+        tick-nf δ env (T-≤ᵏ q ∘ᵐ g)
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (tickᵏ-≤ δ q))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans (·ₑ-monoʳ-≾ₑ q) (tick-z δ εb) z)
+      ∙ᵏ ≈ᵐ-sym
+          (  ∘ᵐ-congʳ (tick-nf δ env g)
+           ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+           ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans (tick-z δ εa) (·ₑ-monoʳ-≾ₑ q) z))
+      where
+        z : δ ·ₑ εa ≾ₑ (δ ·ₑ uₑ) ·ₑ εb
+        z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (tick-z δ εb)
+
+    -- the nine `ηᵀ` rules, with the implementation applied
+    ηᵀ-step : ∀ {X B εa εb} → (g : X →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
+            → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (implᵐ ∘ᵐ ηᵀ)
+            ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (implᵐ ∘ᵐ ηᵀ)
+    ηᵀ-step g q =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ implᵐ-ηᵀ)
+      ∙ᵏ ηᵏ-case g q
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym implᵐ-ηᵀ)))
+
+    -- `DELAY`'s transition, implemented: a tick
+    delay-tick : ∀ {X} → (τ : ℕ)
+               → implᵐ ∘ᵐ (delayᵀ {⟨ of-natʳ τ ⟩ᵒ X} {uₑ} τ
+                           ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣ {X} {of-natʳ τ})
+               ≈ᵐ tickᵏ (of-natᵉ τ)
+                  ∘ᵐ [ mapᵉ (of-natᵉ τ) ]ᶠ ηᵏ
+                  ∘ᵐ ([]-≤ (≾ᵣ-reflexive map-of-natᵉ) ∘ᵐ η⊣)
+    delay-tick τ =
+        ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (implᵐ-delayᵀ τ)
+      ∙ᵏ ∘ᵐ-assoc _ _ _
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ᵏ []-congᶠ implᵐ-ηᵀ)))
+      ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat ηᵏ _)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+
+    -- The implementation of an ordinary step's transition: `ηᵀ` becomes `ηᵏ`,
+    -- and `DELAY`'s delay becomes a tick.
+
+    T-≤ᵏ-implstep : ∀ {ε ε' εa εb A} {St St' : 𝕊 []} → (B : Obj)
+                  → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+                  → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+                  → (g : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
+                  → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
+                  ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
+    T-≤ᵏ-implstep B APP        g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B MATCH      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SEQ-RET    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SEQ-OP     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B HANDLE-RET g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B HANDLE-OP  g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B BOX        g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B UNBOX      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B COERCE     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B (SEQ-STEP r _)    g q = T-≤ᵏ-implstep B r g q
+    T-≤ᵏ-implstep B (HANDLE-STEP r _) g q = T-≤ᵏ-implstep B r g q
+    T-≤ᵏ-implstep B (DELAY {τ = τ}) g q =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ (delay-tick τ))
+      ∙ᵏ tick-case (of-natᵉ τ) _ g q
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (delay-tick τ))))
+
+
+    -- The coercion escapes any top-level transition.
+
+    T-≤ᵏ-topᵏ : ∀ {ε ε' εa εb A} {St St' : 𝕊 []} → (B : Obj)
+              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+              → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
+              → (g : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
+              → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ top-stepᵏ r
+              ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ top-stepᵏ r
+    T-≤ᵏ-topᵏ B (↝-STEP r) g q = T-≤ᵏ-implstep B r g q
+    T-≤ᵏ-topᵏ B (OP-STEP {op = op}) g q = tick-case (op-grade op) η⊣ g q
 
     -- THE MULTI-STEP CLOSURE
 
     top-steps-grade : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                     → cf ⟿* cf' → E
-    top-steps-grade ε*ᵗ        = uₑ
-    top-steps-grade (r ◅ᵗ rs)  = top-grade r ·ₑ top-steps-grade rs
+    top-steps-grade ε*ᵗ       = uₑ
+    top-steps-grade (r ◅ᵗ rs) = top-grade r ·ₑ top-steps-grade rs
 
-    top-stepsᵀ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+    top-stepsᵏ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                → (rs : cf ⟿* cf')
                → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ
-               →ᵐ Tᵒ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ (top-steps-grade rs)
-    top-stepsᵀ ε*ᵗ        = ηᵀ
-    top-stepsᵀ (r ◅ᵗ rs)  = top-stepsᵀ rs ⋄ top-stepᵀ r
+               →ᵐ Tᵏ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ (top-steps-grade rs)
+    top-stepsᵏ ε*ᵗ       = ηᵏ
+    top-stepsᵏ (r ◅ᵗ rs) = top-stepsᵏ rs ⋄ᵏ top-stepᵏ r
 
     top-steps-≾ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                 → (rs : cf ⟿* cf') → top-steps-grade rs ·ₑ ε' ≾ₑ ε
     top-steps-≾ {ε = ε} ε*ᵗ = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-    top-steps-≾ {ε' = ε'} (_◅ᵗ_ r rs) =
+    top-steps-≾ {ε' = ε'} (r ◅ᵗ rs) =
       ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (top-grade r) (top-steps-grade rs) ε'))
       (≾ₑ-trans (·ₑ-monoʳ-≾ₑ (top-steps-≾ rs)) (top-≾ r))
 
@@ -466,78 +509,40 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     Uniform⟿* ε*ᵗ       = ⊤
     Uniform⟿* (r ◅ᵗ rs) = Uniform⟿ r × Uniform⟿* rs
 
-    -- A run of the top-level machine is sound.
+    -- A run of the top-level machine is sound: what a program means, once its
+    -- operations have been run away, is what it runs to — after the ticks those
+    -- operations cost, and at the run's refined grade.
 
     ⟿*-sound : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
               → (rs : cf ⟿* cf') → Uniform⟿* rs
-              → ⟦ cf ⟧ᶜᶠ
-              ≈ᵐ T-≤ (top-steps-≾ rs)
-                 ∘ᵐ _⋄_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
-                        {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
-                        {top-steps-grade rs} {ε'}
-                        ⟦ cf' ⟧ᶜᶠ (top-stepsᵀ rs)
+              → ⟦ cf ⟧ᵏᶜᶠ
+              ≈ᵐ T-≤ᵏ (top-steps-≾ rs)
+                 ∘ᵐ _⋄ᵏ_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
+                         {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
+                         {top-steps-grade rs} {ε'}
+                         ⟦ cf' ⟧ᵏᶜᶠ (top-stepsᵏ rs)
     ⟿*-sound {A = A} {ε = ε} {cf = cf} ε*ᵗ _ =
-      pure-step-≡ (top-steps-≾ (ε*ᵗ {A} {ε} {cf})) ≈ᵐ-refl
+      ≈ᵐ-sym
+        (  ∘ᵐ-congʳ (⋄ᵏ-ηᵏ ⟦ cf ⟧ᵏᶜᶠ ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _))
+         ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+         ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (≾ₑ-reflexive {ε} refl))
+         ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-refl _)
+         ∙ᵏ ∘ᵐ-identityˡ _)
     ⟿*-sound {A = A} {ε' = ε'} (_◅ᵗ_ {ε₂ = ε₂} {cf₃ = cf₃} r rs) (u , us) =
         ⟿-sound r u
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (⟿*-sound rs us))))
-      -- the run's coercion escapes the step's bind
-      ∙ ∘ᵐ-congʳ (T-≤-topᵀ ⟦ A ⟧ᵛ r (⟦ cf₃ ⟧ᶜᶠ ⋄ top-stepsᵀ rs) (top-steps-≾ rs))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-congᶠ (⟿*-sound rs us))))
+      -- the run's coercion escapes the step's transition — because every
+      -- top-level transition is ticks and units
+      ∙ᵏ ∘ᵐ-congʳ (T-≤ᵏ-topᵏ ⟦ A ⟧ᵛ r (⟦ cf₃ ⟧ᵏᶜᶠ ⋄ᵏ top-stepsᵏ rs) (top-steps-≾ rs))
       -- and the two binds re-associate into one
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (bind-bind ⟦ cf₃ ⟧ᶜᶠ (top-stepsᵀ rs) (top-stepᵀ r)))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _)))
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-trans _ _ b))
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (T-≤-trans b (top-≾ r) (top-steps-≾ (r ◅ᵗ rs)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (bind-bindᵏ ⟦ cf₃ ⟧ᵏᶜᶠ (top-stepsᵏ rs) (top-stepᵏ r)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤ᵏ-≡ _)))
+      ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤ᵏ-trans _ _ b))
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans b (top-≾ r) (top-steps-≾ (r ◅ᵗ rs)))
       where
         b : top-steps-grade (r ◅ᵗ rs) ·ₑ ε' ≾ₑ top-grade r ·ₑ ε₂
         b = ≾ₑ-trans
               (≾ₑ-reflexive (·ₑ-assoc (top-grade r) (top-steps-grade rs) ε'))
               (·ₑ-monoʳ-≾ₑ (top-steps-≾ rs))
-
-    -- DENOTATIONAL RUNNING, FOR THE TOP-LEVEL MACHINE
-    --
-    -- As for `_↝_`, the relation is directed, not an equivalence, and reflexive
-    -- but not (freely) transitive: transitivity along a run is the induction in
-    -- `⟿*-sound`, which needs the coercion to escape each transition's bind.
-
-    infix 4 _⊳ᵗ_
-
-    record _⊳ᵗ_ {A ε ε'} (cf : Config (A ‼ ε)) (cf' : Config (A ‼ ε')) : Set where
-      constructor mk⊳ᵗ
-      field
-        gradeᵗ  : E
-        refineᵗ : gradeᵗ ·ₑ ε' ≾ₑ ε
-        trᵗ     : ⟦ hist (Config.state cf) ⟧ᶜᵗˣ
-                →ᵐ Tᵒ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ gradeᵗ
-        soundᵗ  : ⟦ cf ⟧ᶜᶠ
-                ≈ᵐ T-≤ refineᵗ
-                   ∘ᵐ _⋄_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
-                          {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {gradeᵗ} {ε'}
-                          ⟦ cf' ⟧ᶜᶠ trᵗ
-
-    ⟿*-⊳ᵗ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
-           → (rs : cf ⟿* cf') → Uniform⟿* rs → cf ⊳ᵗ cf'
-    ⟿*-⊳ᵗ rs us =
-      mk⊳ᵗ (top-steps-grade rs) (top-steps-≾ rs) (top-stepsᵀ rs) (⟿*-sound rs us)
-
-    -- CLOSED PROGRAMS
-    --
-    -- A program run to a value by the top-level machine *is* that value
-    -- returned, after the run's transition (which now performs the operations
-    -- the program requested), at the run's refined grade.
-
-    ⟿*-value : ∀ {A ε} {St' : 𝕊 []}
-             → (M : Program A ε)
-             → (V : toCtx St' ⊢V⦂ A)
-             → (rs : ⟨ ∅ , M ⟩ ⟿* ⟨ St' , return V ⟩)
-             → Uniform⟿* rs
-             → ⟦ M ⟧ᵖ
-             ≈ᵐ T-≤ (top-steps-≾ rs)
-                ∘ᵐ _⋄_ {𝟙ᵐ} {⟦ hist St' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {top-steps-grade rs} {uₑ}
-                       (ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ∘ᵐ ⟦ St' ⟧ˢ) (top-stepsᵀ rs)
-    ⟿*-value M V rs us =
-        ≈ᵐ-sym (∘ᵐ-identityʳ _)
-      ∙ ⟿*-sound rs us
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-assoc _ _ _))))

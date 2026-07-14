@@ -161,6 +161,8 @@ open import DenotationalSemantics.Model.Modality.Eternal
 open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
+open import DenotationalSemantics.Model.TickMonad
+open import DenotationalSemantics.Model.Implementation
 
 ---- Concrete model on discretely-indexed presheaves
 
