@@ -69,12 +69,14 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
 
 open import Util.Monad
 
-module MonadicTopLevelProgressTheorem {monad : Monad} (MonadicOpSemantics : TopLevelMonadicOpSemantics monad) where
+module MonadicTopLevelProgressTheorem
+         {monad : GradedMonad EGrade}
+         (MonadicOpSemantics : TopLevelMonadicOpSemantics monad) where
 
   open TopLevelMonadicOpSemantics MonadicOpSemantics
   open MonadicTopLevelPreservationTheorem {monad} (MonadicOpSemantics)
 
-  open Monad monad
+  open GradedMonad monad
 
   data TopLevelMonadicProgresses : {ε : E}
                                  → {S : 𝕊 []}

@@ -27,12 +27,19 @@ record TopLevelOpSemantics : Set where
            → toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op)
 
 -- TopLevel monadic semantics of algebraic operations
+--
+-- The implementation runs in a graded monad over the effect grades, and its
+-- grade is the operation's declared duration: running `mon-op-sem op V` costs
+-- `op-grade op` worth of time, which is the same time the reduction rule locks
+-- into the state. The arity value it returns is available only after that time
+-- has passed, hence the `⟨ mapᵉ (op-grade op) ⟩` in its context.
 
-record TopLevelMonadicOpSemantics (monad : Monad) : Set₁ where
-  open Monad monad
-  
+record TopLevelMonadicOpSemantics (monad : GradedMonad EGrade) : Set₁ where
+  open GradedMonad monad
+
   field
     mon-op-sem : (op : Op)
                → {S : 𝕊 []} -- TODO: formally requires a naturality condition; needs to be parametric in S
                → toCtx S ⊢V⦂ type-of-gtype (param op)
-               → T (toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op))
+               → T (op-grade op)
+                   (toCtx S ⟨ mapᵉ (op-grade op) ⟩ ⊢V⦂ type-of-gtype (arity op))
