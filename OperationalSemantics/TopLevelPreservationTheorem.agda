@@ -50,6 +50,17 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
             → ⟨ S , perform op V M ⟩ ⟿
               ⟨ grade-pass S (mapᵉ (op-grade op)) , M [ Hd ↦ op-sem op V ]c ⟩
 
+  -- Reflexive-transitive closure: a run of the top-level machine.
+
+  infixr 5 _◅ᵗ_
+
+  data _⟿*_ : ∀ {A ε ε'} → Config (A ‼ ε) → Config (A ‼ ε') → Set where
+    ε*ᵗ  : ∀ {A ε} {cf : Config (A ‼ ε)}
+         → cf ⟿* cf
+    _◅ᵗ_ : ∀ {A ε₁ ε₂ ε₃}
+         → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (A ‼ ε₂)} → {cf₃ : Config (A ‼ ε₃)}
+         → cf₁ ⟿ cf₂ → cf₂ ⟿* cf₃ → cf₁ ⟿* cf₃
+
   -- invariants preserved by the top-level small-step operational semantics
   -- in particular, running a top-level implementation of an algebraic operation
   -- results in an equality S' · ε' ≡ S · ε
