@@ -62,6 +62,7 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Unit using (⊤; tt)
 
 open import Syntax.Types     S
 open import Syntax.Contexts  S
@@ -1910,12 +1911,13 @@ op-env a =
 -- `η⊣-⟨⟩` is what lets the two transposed halves be re-paired under one box.
 
 seq-op-box : ∀ {X A B ε ε'} → (op : Op)
+  → (alg : Tᵒ (Tᵒ B ε') ε →ᵐ Tᵒ B (ε ·ₑ ε'))
   → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ A ε)
   → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
   → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ)
           →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
   → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
-  → [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (μᵀ {B} {ε} {ε'}))
+  → [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ alg)
       ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ n))
       ∘ᵐ ( [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (strᵀ {_} {A} {ε}) ∘ᵐ exp-strᵐ)
          ∘ᵐ []-monoidal
@@ -1923,9 +1925,9 @@ seq-op-box : ∀ {X A B ε ε'} → (op : Op)
       ∘ᵐ ⟨ η⊣ {X} {mapᵉ (op-grade op ·ₑ ε)}
          , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ m) ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)} ⟩ᵐ
   ≈ᵐ [ mapᵉ (op-grade op) ]ᶠ
-       (curryᵐ (μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ))
+       (curryᵐ (alg ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ))
      ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)}
-seq-op-box {X} {A} {B} {ε} {ε'} op m n rn ern =
+seq-op-box {X} {A} {B} {ε} {ε'} op alg m n rn ern =
   -- bring the strength law's reshuffle up against the operation's arguments
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
@@ -1961,8 +1963,8 @@ seq-op-box {X} {A} {B} {ε} {ε'} op m n rn ern =
     -- the renaming the syntax applies to the continuation *is* the environment
     -- the strength hands it: a map on the strength's boxed component (`strᵀ-natˡ`),
     -- and that map is `op-env`
-    body : μᵀ ∘ᵐ Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
-         ≈ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ
+    body : alg ∘ᵐ Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
+         ≈ᵐ alg ∘ᵐ Tᶠ n ∘ᵐ strᵀ
               ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣)
                      ∘ᵐ fstᵐ
                  , m ⟩ᵐ
@@ -1985,6 +1987,20 @@ seq-op-box {X} {A} {B} {ε} {ε'} op m n rn ern =
 -- generalised so it can be matched, at which point both `subst`s vanish.
 
 seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
+            -- the algebra that collapses the two monad layers (`μᵀ` for `⨟`,
+            -- the handler's fold for `handle`) …
+            → (alg : ∀ {ε₀} → Tᵒ (Tᵒ B ε') ε₀ →ᵐ Tᵒ B (ε₀ ·ₑ ε'))
+            -- … and what it does to an operation: re-emit it (`opᵀ-algebraicity`)
+            -- or apply the matching clause (`T-alg-of-handlerᵀ-opᵀ`). Either way
+            -- the algebra is pushed into the operation's continuation.
+            → (cl : (⟦ param op ⟧ᵍ
+                       ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ B (ε ·ₑ ε')))
+                    →ᵐ Tᵒ B (op-grade op ·ₑ (ε ·ₑ ε')))
+            → (alg-op : alg {op-grade op ·ₑ ε} ∘ᵐ opᵀ {ε = ε} op
+                      ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+                         ∘ᵐ cl
+                         ∘ᵐ mapˣᵐ idᵐ
+                              ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (alg {ε}))))
             → (ea : Y ≡ ⟦ arity op ⟧ᵍ)
             → (v : X →ᵐ ⟦ param op ⟧ᵍ)
             → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y) →ᵐ Tᵒ A ε)
@@ -1992,7 +2008,7 @@ seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
             → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y)
                     →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
             → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
-            → μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ
+            → alg ∘ᵐ Tᶠ n ∘ᵐ strᵀ
                 ∘ᵐ ⟨ η⊣
                    , opᵀ op
                        ∘ᵐ ⟨ v
@@ -2002,16 +2018,16 @@ seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
                                              ea m))
                               ∘ᵐ η⊣ ⟩ᵐ ⟩ᵐ
             ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
-               ∘ᵐ opᵀ op
+               ∘ᵐ cl
                ∘ᵐ ⟨ v
                   , [ mapᵉ (op-grade op) ]ᶠ
                       (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ O)
                                             →ᵐ Tᵒ B (ε ·ₑ ε'))
                                      ea
-                                     (μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ
+                                     (alg ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ
                                         ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)))
                     ∘ᵐ η⊣ ⟩ᵐ
-seq-op-core op refl v m n rn ern =
+seq-op-core op alg cl alg-op refl v m n rn ern =
   -- the operation is a map on the strength's monadic component …
     ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
         (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))))
@@ -2026,10 +2042,10 @@ seq-op-core op refl v m n rn ern =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op n)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  -- and the operation is algebraic, so the multiplication does too — leaving
-  -- the grade reassociation behind
+  -- and the operation is algebraic for the algebra, so that goes in too —
+  -- leaving the grade reassociation behind
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (opᵀ-algebraicity op)
+  ∙ ∘ᵐ-congˡ alg-op
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   -- collect the three maps on the continuation
@@ -2037,7 +2053,24 @@ seq-op-core op refl v m n rn ern =
       (  ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
        ∙ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   -- what they amount to is the sequenced continuation
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-op-box op m n rn ern ⟩ᵐ-cong))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-op-box op alg m n rn ern ⟩ᵐ-cong))
+
+-- Cancelling the ground-type coercions.
+--
+-- `⟦_⟧ᶜᵗ` coerces an operation's parameter and arity between their value-type
+-- and ground-type interpretations, and `⟦_⟧ʰᵗ` coerces them straight back. The
+-- two cancel — which is why the handler's clause may be applied to the very
+-- arguments the operation carries.
+
+gty-cancelᵛ : ∀ {X Y Y'} → (e : Y ≡ Y') → (g : X →ᵐ Y)
+            → subst (λ O → Y' →ᵐ O) (sym e) idᵐ ∘ᵐ subst (λ O → X →ᵐ O) e g ≈ᵐ g
+gty-cancelᵛ refl g = ∘ᵐ-identityˡ _
+
+gty-cancelᶜ : ∀ {Z W Y Y'} → (e : Y ≡ Y') → (f : (Z ×ᵐ Y) →ᵐ W)
+            → subst (λ O → (Z ×ᵐ O) →ᵐ W) e f
+                ∘ᵐ mapˣᵐ idᵐ (subst (λ O → O →ᵐ Y') (sym e) idᵐ)
+            ≈ᵐ f
+gty-cancelᶜ refl f = ∘ᵐ-congʳ mapˣᵐ-idᵐ ∙ ∘ᵐ-identityʳ _
 
 -- SEQ-OP: sequencing an operation is the operation with the sequencing pushed
 -- into its continuation. The state plays no part — the rule is a plain equation
@@ -2055,7 +2088,7 @@ sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
                                           ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
                              N)) ⟧ᶜᵗ
 sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
-    seq-op-core op (ty-gty (arity op))
+    seq-op-core op μᵀ (opᵀ op) (opᵀ-algebraicity op) (ty-gty (arity op))
       (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
       ⟦ M ⟧ᶜᵗ ⟦ N ⟧ᶜᵗ ⟦ ren ⟧ʳ ern
   ∙ ≈ᵐ-sym
@@ -2074,6 +2107,162 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
     -- arity value the continuation binds
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+
+-- HANDLE-OP
+--
+-- Handling an operation applies the matching clause, with the rest of the
+-- handled computation *boxed up* as the clause's continuation — the box being
+-- what stops the continuation running before `op-grade op` worth of time has
+-- passed. So the reduct is a `box`, and the equation is `SEQ-OP`'s with the
+-- handler's fold in place of the monad multiplication: `T-alg-of-handlerᵀ-opᵀ`
+-- (apply a clause) where `SEQ-OP` had `opᵀ-algebraicity` (re-emit the operation).
+--
+-- THE HANDLER UNIFORMITY CONDITION
+--
+-- On paper the handler's clauses are one raw term, well-typed at every context
+-- `Γ'`. Such a term can mention no variable of `Γ'` — it has to typecheck at
+-- `[]` too — so its meaning at `Γ'` is its meaning at `[]` with the context
+-- discarded. That is what `⟦_⟧ʰᵗ` builds into the model's context-free
+-- `Handlerᵀ`, and it is what `HANDLE-OP` needs, because the reduct fires the
+-- clause at `toCtx S` while the semantics reads it at `[]`.
+--
+-- Formalised here, terms are intrinsically typed, so we cannot say "the same
+-- raw term". We state the semantic consequence instead. It needs no renaming
+-- `Ren [] Γ'` — which is just as well, since the graded modality admits no
+-- counit at an arbitrary grade and so no such renaming exists.
+
+Uniformʰ : ∀ {B}
+         → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
+              → Γ' ∷ type-of-gtype (param op)
+                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+         → Set
+Uniformʰ H = ∀ op ε'' Γ'
+           → ⟦ H op ε'' Γ' ⟧ᶜᵗ
+           ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ terminalᵐ idᵐ) idᵐ
+
+-- The clause the semantics applies, reached from the clause the reduction fires.
+--
+-- `⟦_⟧ʰᵗ` coerces the operation's ground-typed parameter and arity; uniformity
+-- discards the context. What is left on both sides is the `[]`-clause applied to
+-- the parameter and the boxed continuation.
+
+clause-sound : ∀ {Γ B ε''} → (op : Op)
+             → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
+                  → Γ' ∷ type-of-gtype (param op')
+                       ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
+                    ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
+             → Uniformʰ H
+             → (V : Γ ⊢V⦂ type-of-gtype (param op))
+             -- the operation's continuation, boxed, at the *ground* arity — the
+             -- form `opᵀ` hands to the algebra
+             → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
+                      (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
+             → ⟦ H op ε'' Γ [ Tl-∷ Hd ↦ V ]c ⟧ᶜᵗ
+                 ∘ᵐ ⟨ idᵐ
+                    , [ mapᵉ (op-grade op) ]ᶠ
+                        (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ)
+                                      (sym (ty-gty (arity op))) idᵐ) idᵐ)
+                      ∘ᵐ W ⟩ᵐ
+             ≈ᵐ ⟦ H ⟧ʰᵗ op ε''
+                  ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
+                     , W ⟩ᵐ
+clause-sound {Γ} op H u V W =
+  -- substituting the parameter into the clause
+    ∘ᵐ-congˡ (C-subst-nat (H op _ Γ) (Tl-∷ Hd) V)
+  -- the clause ignores its context
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (u op _ Γ))
+  ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
+  -- what reaches the clause is the parameter and the boxed continuation
+  ∙ ∘ᵐ-congʳ
+      (⟨ ∘ᵐ-identityʳ _
+         ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+         ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+       , ∘ᵐ-congˡ (∘ᵐ-identityˡ _) ∙ ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  -- and that is exactly what the semantic handler is applied to: its own
+  -- ground-type coercions cancel the ones the operation carries
+  ∙ ≈ᵐ-sym
+      (  ∘ᵐ-assoc _ _ _
+       ∙ ∘ᵐ-congʳ
+           (mapˣᵐ-∘⟨⟩ _ _ _ _
+            ∙ ⟨ ⟨⟩ᵐ-∘ _ _ _
+                ∙ ⟨ terminalᵐ-unique
+                  , gty-cancelᵛ (ty-gty (param op)) ⟦ V ⟧ᵛᵗ ⟩ᵐ-cong
+              , ≈ᵐ-refl ⟩ᵐ-cong))
+
+-- HANDLE-OP: the operation is handled by its clause, with the rest of the
+-- computation boxed up as the clause's continuation.
+
+sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
+                → (V : Γ ⊢V⦂ type-of-gtype (param op))
+                → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                       ⊢C⦂ A ‼ ε)
+                → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
+                     → Γ' ∷ type-of-gtype (param op')
+                          ∷ [ mapᵉ (op-grade op') ]
+                              (type-of-gtype (arity op') ⇒ B ‼ ε')
+                       ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
+                → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'')
+                → Uniformʰ H
+                → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
+                ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
+                   ∘ᵐ ⟦ box (lam (handle M `with H
+                                   `in (C-rename (cong-∷-ren
+                                          (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
+                                           ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N)))
+                            (H op (ε ·ₑ ε'') Γ [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
+sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N u =
+  -- the commuting conversion, with the handler's fold as the algebra: the
+  -- operation is algebraic for it too, but it *applies a clause* rather than
+  -- re-emitting the operation
+    seq-op-core op (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ) (⟦ H ⟧ʰᵗ op (ε ·ₑ ε''))
+      (T-alg-of-handlerᵀ-opᵀ op ⟦ H ⟧ʰᵗ) (ty-gty (arity op))
+      (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
+      ⟦ M ⟧ᶜᵗ ⟦ N ⟧ᶜᵗ ⟦ ren ⟧ʳ ern
+  -- what is left is the reduct: the clause fired at `Γ`, applied to the
+  -- parameter and to the boxed continuation the `box` allocates
+  ∙ ∘ᵐ-congʳ tgt
+  where
+    ren : Ren (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+              ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+    ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+
+    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+
+    -- the box the reduct allocates is the operation's continuation: the
+    -- handled remainder, abstracted over the arity value. The `map⇒ᵐ` the
+    -- semantic handler applies is undone by `map⇒ᵐ-curryᵐˡ`, and the arity
+    -- coercions cancel.
+    tgt : ⟦ H ⟧ʰᵗ op (ε ·ₑ ε'')
+            ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
+               , [ mapᵉ (op-grade op) ]ᶠ
+                   (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O)
+                                         →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε''))
+                                  (ty-gty (arity op))
+                                  (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ
+                                     ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
+                                     ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ)))
+                 ∘ᵐ η⊣ ⟩ᵐ
+        ≈ᵐ ⟦ box (lam (handle M `with H `in (C-rename (cong-∷-ren ren) N)))
+                 (H op (ε ·ₑ ε'') Γ [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
+    tgt =
+        ≈ᵐ-sym (clause-sound op H u V _)
+      ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+          , ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+            ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+            -- undo the semantic handler's arity coercion …
+            ∙ ∘ᵐ-congˡ ([]-congᶠ (map⇒ᵐ-curryᵐˡ _ _))
+            -- … which cancels the interpretation's own
+            ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (gty-cancelᶜ (ty-gty (arity op)) _)))
+            -- and what is boxed is the handled remainder
+            ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
+                (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+                  (≈ᵐ-sym (C-rename-nat (cong-∷-ren ren) N)))))))
+          ⟩ᵐ-cong)
 
 ------------------------------------------------------------------------
 -- THE SOUNDNESS THEOREM
@@ -2103,9 +2292,31 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
 -- out the value the state already wrote there.
 ------------------------------------------------------------------------
 
+-- The handlers a reduction actually reaches must be uniform. `HANDLE-OP` is the
+-- only rule that fires a clause, and the only rules that can reach it are the
+-- two congruences — so this is a recursion on the *reduction*, not on the term.
+
+Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
+         → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+         → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
+         → Set
+Uniform↝ (HANDLE-OP {H = H})   = Uniformʰ H
+Uniform↝ (SEQ-STEP r _)        = Uniform↝ r
+Uniform↝ (HANDLE-STEP r _)     = Uniform↝ r
+Uniform↝ APP                   = ⊤
+Uniform↝ MATCH                 = ⊤
+Uniform↝ SEQ-RET               = ⊤
+Uniform↝ SEQ-OP                = ⊤
+Uniform↝ DELAY                 = ⊤
+Uniform↝ HANDLE-RET            = ⊤
+Uniform↝ BOX                   = ⊤
+Uniform↝ UNBOX                 = ⊤
+Uniform↝ COERCE                = ⊤
+
 ↝-sound : ∀ {ε ε' A} {S S' : 𝕊 []}
         → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
         → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+        → Uniform↝ r
         → ⟦ ⟨ S , M ⟩ ⟧ᶜᶠ
         ≈ᵐ T-≤ (step-≾ r)
            ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε'}
@@ -2114,47 +2325,53 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
 -- The rules that neither advance time nor change the store: a plain equation
 -- between the two denotations, with `ηᵀ`'s unit grade absorbed by `T-≤`.
 
-↝-sound r@(APP {M = M} {V = V}) =
+↝-sound r@(APP {M = M} {V = V}) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-APP M V))
-↝-sound r@(MATCH {V = V} {W = W} {M = M}) =
+↝-sound r@(MATCH {V = V} {W = W} {M = M}) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH V W M))
-↝-sound r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) =
+↝-sound r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SEQ-OP op V M N))
 
 -- Allocation and lookup: also plain equations, but ones that mention the store.
 
-↝-sound r@(BOX {S = St} {V = V} {M = M}) =
+↝-sound r@(BOX {S = St} {V = V} {M = M}) _ =
   pure-step-≡ (step-≾ r) (sound-BOX St V M)
-↝-sound r@(UNBOX {S = St} {w = w} {V = V} {M = M}) =
+↝-sound r@(UNBOX {S = St} {w = w} {V = V} {M = M}) _ =
   pure-step-≡ (step-≾ r) (sound-UNBOX St w V M)
 
 -- The `return` rules: the coercion the substitution leaves behind is `ε-substᵀ`,
 -- which `T-≤-≡` turns into the sub-effecting the theorem asks for.
 
-↝-sound r@(SEQ-RET {V = V} {N = N}) =
+↝-sound r@(SEQ-RET {V = V} {N = N}) _ =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
     (∘ᵐ-congˡ (sound-SEQ-RET V N) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
-↝-sound r@(HANDLE-RET {V = V} {H = H} {N = N}) =
+↝-sound r@(HANDLE-RET {V = V} {H = H} {N = N}) _ =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
     (∘ᵐ-congˡ (sound-HANDLE-RET V H N) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 
 -- Peeling a coercion: the step refines the grade by exactly the coercion's own
 -- witness, which is what `T-≤` already does.
 
-↝-sound r@(COERCE {M = M} {ε≾ε' = p}) =
+↝-sound r@(COERCE {M = M} {ε≾ε' = p}) _ =
   pure-step (step-≾ r) p (∘ᵐ-congˡ (sound-COERCE p M) ∙ ∘ᵐ-assoc _ _ _)
 
 -- The one rule that advances time.
 
-↝-sound r@(DELAY {τ = τ} {S = St} {M = M}) = sound-DELAY τ St M (step-≾ r)
+↝-sound r@(DELAY {τ = τ} {S = St} {M = M}) _ = sound-DELAY τ St M (step-≾ r)
 
 -- The congruence rules: the inductive hypothesis is pushed through the strength
 -- and multiplied, the environment carried across the step by `step-box`.
 
-↝-sound (SEQ-STEP {N = N} r c) = sound-SEQ-STEP N r c (↝-sound r)
-↝-sound (HANDLE-STEP {H = H} {N = N} r c) =
-  sound-HANDLE-STEP H N r c (↝-sound r)
+↝-sound (SEQ-STEP {N = N} r c) u = sound-SEQ-STEP N r c (↝-sound r u)
+↝-sound (HANDLE-STEP {H = H} {N = N} r c) u =
+  sound-HANDLE-STEP H N r c (↝-sound r u)
 
--- Handling an operation: still to be proved.
+-- Handling an operation: the clause is applied, with the handled remainder
+-- boxed up as its continuation. This is the only rule that reads a clause, and
+-- so the only one that needs the handler's uniformity.
 
-↝-sound HANDLE-OP = {!!}
+↝-sound r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N}) u =
+  pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-assoc (op-grade op) _ _)))
+    (∘ᵐ-congˡ (sound-HANDLE-OP op V M H N u)
+     ∙ ∘ᵐ-assoc _ _ _
+     ∙ ∘ᵐ-congˡ (T-≤-≡ _))

@@ -135,6 +135,22 @@ record Category : Set₂ where
       (⟨ ≈ᵐ-trans (∘ᵐ-assoc a fstᵐ ⟨ u , v ⟩ᵐ) (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ u v))
        , ≈ᵐ-trans (∘ᵐ-assoc b sndᵐ ⟨ u , v ⟩ᵐ) (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ u v)) ⟩ᵐ-cong)
 
+  -- congruence of the product functor's action
+
+  mapˣᵐ-cong : ∀ {A B C D} {f f' : A →ᵐ C} {g g' : B →ᵐ D}
+             → f ≈ᵐ f' → g ≈ᵐ g' → mapˣᵐ f g ≈ᵐ mapˣᵐ f' g'
+  mapˣᵐ-cong p q = ⟨ ∘ᵐ-congˡ p , ∘ᵐ-congˡ q ⟩ᵐ-cong
+
+  -- the product functor preserves composition
+
+  mapˣᵐ-∘ : ∀ {A B C D E F} → (a : C →ᵐ E) → (b : D →ᵐ F)
+          → (c : A →ᵐ C) → (d : B →ᵐ D)
+          → mapˣᵐ a b ∘ᵐ mapˣᵐ c d ≈ᵐ mapˣᵐ (a ∘ᵐ c) (b ∘ᵐ d)
+  mapˣᵐ-∘ a b c d =
+    ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ a b (c ∘ᵐ fstᵐ) (d ∘ᵐ sndᵐ))
+             (⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) , ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong)
+
+
   -- TRANSPORT ALONG EQUALITIES OF OBJECTS
   --
   -- The interpretation of a syntactic construct can land in a
@@ -246,6 +262,30 @@ record Category : Set₂ where
             (≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ k) idᵐ))
                       (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
                                 (curryᵐ-uncurryᵐ-iso k))))))))
+
+  -- Precomposing an abstraction's *argument*: the functorial action of the
+  -- exponential on the domain reindexes what the abstraction is applied to.
+
+  map⇒ᵐ-curryᵐˡ : ∀ {A B C D} → (f : A →ᵐ B) → (k : C ×ᵐ B →ᵐ D)
+                → map⇒ᵐ f idᵐ ∘ᵐ curryᵐ k ≈ᵐ curryᵐ (k ∘ᵐ mapˣᵐ idᵐ f)
+  map⇒ᵐ-curryᵐˡ f k =
+    ≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat (curryᵐ k) (idᵐ ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ f)))
+      (curryᵐ-cong
+        (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        -- the two product maps compose, and split off the argument's reindexing
+        (≈ᵐ-trans (∘ᵐ-congʳ
+                    (≈ᵐ-trans (mapˣᵐ-∘ idᵐ f (curryᵐ k) idᵐ)
+                    (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _))
+                              (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ (curryᵐ k) idᵐ idᵐ f)
+                                                (mapˣᵐ-cong (∘ᵐ-identityʳ _)
+                                                            (∘ᵐ-identityˡ _)))))))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                  -- what is left of the application is the abstraction undone
+                  (∘ᵐ-congˡ
+                    (≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ k) idᵐ))
+                    (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
+                              (curryᵐ-uncurryᵐ-iso k)))))))))
 
   -- The exponential's costrength applied to a pair whose second component is
   -- an abstraction: the paired-in value simply joins the abstraction's
