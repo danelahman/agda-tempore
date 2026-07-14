@@ -2074,3 +2074,87 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
     -- arity value the continuation binds
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
+
+------------------------------------------------------------------------
+-- THE SOUNDNESS THEOREM
+--
+-- A reduction step relates denotationally equal configurations.
+--
+-- Precisely: the source configuration's denotation is the target's, run
+-- after the step's own time transition, and coerced along the effect
+-- refinement that the step licenses. Reading the equation right to left:
+--
+--   * `stepᵀ r` is the time the step takes. Every rule but `DELAY` takes
+--     none, transitioning by `ηᵀ`; `DELAY` ticks by exactly its own delay.
+--     It is a map between the two states' *histories* — the part of the
+--     store the state cannot supply itself.
+--
+--   * `⟦ ⟨ S' , M' ⟩ ⟧ᶜᶠ ⋄ stepᵀ r` is the target configuration run over that
+--     later history, the two effect grades multiplying (`step-grade r ·ₑ ε'`).
+--
+--   * `T-≤ (step-≾ r)` puts the result back at the source's grade `ε`, which
+--     it may do because `step-≾ r : step-grade r ·ₑ ε' ≾ₑ ε` — a step never
+--     costs more than the type promised.
+--
+-- The state itself never appears: it *is* the environment, so it has already
+-- been plugged into both sides by `⟦_⟧ᶜᶠ`. Allocation (`BOX`) is invisible in
+-- the equation because extending the store and boxing a resource are the same
+-- morphism; lookup (`UNBOX`) is invisible because reading a cell is projecting
+-- out the value the state already wrote there.
+------------------------------------------------------------------------
+
+↝-sound : ∀ {ε ε' A} {S S' : 𝕊 []}
+        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+        → ⟦ ⟨ S , M ⟩ ⟧ᶜᶠ
+        ≈ᵐ T-≤ (step-≾ r)
+           ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε'}
+                  ⟦ ⟨ S' , M' ⟩ ⟧ᶜᶠ (stepᵀ r)
+
+-- The rules that neither advance time nor change the store: a plain equation
+-- between the two denotations, with `ηᵀ`'s unit grade absorbed by `T-≤`.
+
+↝-sound r@(APP {M = M} {V = V}) =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-APP M V))
+↝-sound r@(MATCH {V = V} {W = W} {M = M}) =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH V W M))
+↝-sound r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SEQ-OP op V M N))
+
+-- Allocation and lookup: also plain equations, but ones that mention the store.
+
+↝-sound r@(BOX {S = St} {V = V} {M = M}) =
+  pure-step-≡ (step-≾ r) (sound-BOX St V M)
+↝-sound r@(UNBOX {S = St} {w = w} {V = V} {M = M}) =
+  pure-step-≡ (step-≾ r) (sound-UNBOX St w V M)
+
+-- The `return` rules: the coercion the substitution leaves behind is `ε-substᵀ`,
+-- which `T-≤-≡` turns into the sub-effecting the theorem asks for.
+
+↝-sound r@(SEQ-RET {V = V} {N = N}) =
+  pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
+    (∘ᵐ-congˡ (sound-SEQ-RET V N) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+↝-sound r@(HANDLE-RET {V = V} {H = H} {N = N}) =
+  pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
+    (∘ᵐ-congˡ (sound-HANDLE-RET V H N) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+
+-- Peeling a coercion: the step refines the grade by exactly the coercion's own
+-- witness, which is what `T-≤` already does.
+
+↝-sound r@(COERCE {M = M} {ε≾ε' = p}) =
+  pure-step (step-≾ r) p (∘ᵐ-congˡ (sound-COERCE p M) ∙ ∘ᵐ-assoc _ _ _)
+
+-- The one rule that advances time.
+
+↝-sound r@(DELAY {τ = τ} {S = St} {M = M}) = sound-DELAY τ St M (step-≾ r)
+
+-- The congruence rules: the inductive hypothesis is pushed through the strength
+-- and multiplied, the environment carried across the step by `step-box`.
+
+↝-sound (SEQ-STEP {N = N} r c) = sound-SEQ-STEP N r c (↝-sound r)
+↝-sound (HANDLE-STEP {H = H} {N = N} r c) =
+  sound-HANDLE-STEP H N r c (↝-sound r)
+
+-- Handling an operation: still to be proved.
+
+↝-sound HANDLE-OP = {!!}
