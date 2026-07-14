@@ -199,6 +199,7 @@ open import DenotationalSemantics.Soundness.Preservation
 ---- Soundness of the top-level operational semantics
 
 open import DenotationalSemantics.Soundness.TickLemmas
+open import DenotationalSemantics.Soundness.RuntimeLemmas
 open import DenotationalSemantics.Soundness.TopLevelPure
 open import DenotationalSemantics.Soundness.TopLevelMonadic
 

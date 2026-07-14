@@ -12,18 +12,20 @@
 --                                                                    --
 -- `T` is a monad over the *syntax*. Its denotational counterpart is a    --
 -- strong monad `Mᵒ` over the model (`Model.RuntimeMonad`), and the two   --
--- are related by `RuntimeSemantics` below: a `T`-computation of terms    --
--- denotes an `Mᵒ`-computation of their denotations.                      --
+-- are related by `RuntimeSemantics` below. A term denotes a morphism,    --
+-- i.e. a point of an exponential, so a `T`-computation of terms denotes  --
+-- a point of `Mᵒ` applied to that exponential; `kleisliᵐ` derives the     --
+-- Kleisli map from it (`Soundness.RuntimeLemmas`).                       --
 --                                                                    --
--- The top-level denotation is again `implᵐ ∘ᵐ ⟦_⟧ᶜᶠ` into the tick monad --
--- (`Model.MonadicImplementation`), whose computations are now            --
--- `Mᵒ`-algebras: that is how the runtime monad's effects are absorbed     --
--- into a top-level computation.                                          --
+-- Computations are run into the tick monad by `implᵐ ∘ᵐ ⟦_⟧ᶜᶠ`, and the   --
+-- runtime effects are absorbed by the algebra `algᴹ` that the tick       --
+-- monad's computations carry (`Model.MonadicImplementation`).            --
 --                                                                    --
--- A step's reducts all share one state — only the value the operation    --
--- returns varies inside `T` — so they form an `MConfig`: a state and a   --
--- `T`-computation of computations. `⟿ₘ-target` proves the operational   --
--- reduct is exactly such a thing, and soundness is stated about it.      --
+-- The reducts of a step do NOT share a state — `BOX` stores the value    --
+-- the runtime computed — but they do share a HISTORY, which is all a     --
+-- configuration's denotation takes as its domain. `⟿ₘ-target` proves     --
+-- the operational reduct is a `T`-computation of `HConfig`s over one     --
+-- history, and soundness is stated about that.                           --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -97,15 +99,19 @@ open import DenotationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy M
 open import DenotationalSemantics.Soundness.TickLemmas S Cat Fut GTy Mon TMon
 open ImplLemmas implᵐ implᵐ-μᵀ implᵐ-nat
 
--- The interpretation's ground-type coercion, on the two sides of the arity, is
--- cancelled by the strength.
+open import DenotationalSemantics.Soundness.RuntimeLemmas Cat RMon
 
-substᴹ-str : ∀ {Z W Y Y'} → (e : Y ≡ Y')
-           → (f : (Z ×ᵐ Y) →ᵐ W) → (g : Z →ᵐ Mᵒ Y)
-           → Mᶠ (subst (λ O → (Z ×ᵐ O) →ᵐ W) e f)
-               ∘ᵐ strᴹ ∘ᵐ ⟨ idᵐ , subst (λ O → Z →ᵐ Mᵒ O) e g ⟩ᵐ
-           ≈ᵐ Mᶠ f ∘ᵐ strᴹ ∘ᵐ ⟨ idᵐ , g ⟩ᵐ
-substᴹ-str refl f g = ≈ᵐ-refl
+-- The operation's continuation, with the interpretation's ground-type coercion
+-- on the arity applied. This is the morphism both the implementation's
+-- operation node and the reduct's bind carry.
+
+contᵐ : ∀ {A ε} → (op : Op) → (St : 𝕊 [])
+      → toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε
+      → (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ ⟦ arity op ⟧ᵍ)
+        →ᵐ Tᵒ ⟦ A ⟧ᵛ ε
+contᵐ {A} {ε} op St M =
+  subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
+        (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
 
 
 module MonadicTopLevelSoundness
@@ -118,88 +124,107 @@ module MonadicTopLevelSoundness
   open MonadicTopLevelPreservationTheorem {rt} MOpSem
 
   ------------------------------------------------------------------------
+  -- CONFIGURATIONS OVER A HISTORY
+  --
+  -- The reducts of a step do NOT share a state: `BOX` stores the value the
+  -- runtime computed, so each of them extends the state with its own cell.
+  -- What they do share is the *history* — cells are dropped from it — and the
+  -- history is all a configuration's denotation takes as its domain.
+  ------------------------------------------------------------------------
+
+  record HConfig (H : Ctx) (C : CType) : Set where
+    constructor ⟪_,_,_⟫
+    field
+      state : 𝕊 []
+      hist≡ : hist state ≡ H
+      comp  : toCtx state ⊢C⦂ C
+
+  hcfg : ∀ {C} → (St : 𝕊 []) → toCtx St ⊢C⦂ C → HConfig (hist St) C
+  hcfg St M = ⟪ St , refl , M ⟫
+
+  ⟦_⟧ʰᶜᶠ : ∀ {H C} → HConfig H C → (⟦ H ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ)
+  ⟦ ⟪ St , refl , M ⟫ ⟧ʰᶜᶠ = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
+
+  flattenᴴ : ∀ {H C} → T (HConfig H C) → T (Config C)
+  flattenᴴ th =
+    th >>= (λ hcf → returnM (⟨ HConfig.state hcf , HConfig.comp hcf ⟩))
+
+  ------------------------------------------------------------------------
   -- THE RUNTIME MONAD'S SEMANTICS
   --
-  -- `Mᵒ` is the counterpart of `T`: a `T`-computation of terms denotes an
-  -- `Mᵒ`-computation of their denotations, compatibly with `returnM`, and with
-  -- the one bind the operational semantics performs — substituting the value
-  -- the runtime computes into a continuation.
+  -- A term denotes a morphism, i.e. a POINT of the exponential. So a runtime
+  -- computation of terms denotes a point of `Mᵒ` applied to that exponential.
+  -- The Kleisli map it induces is derived, not assumed (`kleisliᵐ`).
+  --
+  -- The only law needed of it here is that `returnM` names the configuration's
+  -- denotation. What the machine's operation step denotes is the theorem's
+  -- coherence condition, `MOpSemCoherent` below.
   ------------------------------------------------------------------------
 
   record RuntimeSemantics : Set₁ where
     field
-      ⟦_⟧ᵛᵐ : ∀ {Γ A} → T (Γ ⊢V⦂ A) → (⟦ Γ ⟧ᶜᵗˣ →ᵐ Mᵒ ⟦ A ⟧ᵛ)
-      ⟦_⟧ᶜᵐ : ∀ {Γ C} → T (Γ ⊢C⦂ C) → (⟦ Γ ⟧ᶜᵗˣ →ᵐ Mᵒ ⟦ C ⟧ᶜ)
+      ⟦_⟧ᵐᶜᶠ : ∀ {H C} → T (HConfig H C) → (𝟙ᵐ →ᵐ Mᵒ (⟦ H ⟧ᶜᵗˣ ⇒ᵐ ⟦ C ⟧ᶜ))
 
-      ⟦⟧ᵛᵐ-return : ∀ {Γ A} → (V : Γ ⊢V⦂ A)
-                  → ⟦ returnM V ⟧ᵛᵐ ≈ᵐ ηᴹ ∘ᵐ ⟦ V ⟧ᵛᵗ
-      ⟦⟧ᶜᵐ-return : ∀ {Γ C} → (M : Γ ⊢C⦂ C)
-                  → ⟦ returnM M ⟧ᶜᵐ ≈ᵐ ηᴹ ∘ᵐ ⟦ M ⟧ᶜᵗ
-
-      ⟦⟧ᶜᵐ-bind : ∀ {Γ A C} → (t : T (Γ ⊢V⦂ A)) → (M : Γ ∷ A ⊢C⦂ C)
-                → ⟦ t >>= (λ V → returnM (M [ Hd ↦ V ]c)) ⟧ᶜᵐ
-                ≈ᵐ Mᶠ ⟦ M ⟧ᶜᵗ ∘ᵐ strᴹ ∘ᵐ ⟨ idᵐ , ⟦ t ⟧ᵛᵐ ⟩ᵐ
+      ⟦⟧ᵐᶜᶠ-return : ∀ {H C} → (hcf : HConfig H C)
+                   → ⟦ returnM hcf ⟧ᵐᶜᶠ ≈ᵐ ηᴹ ∘ᵐ ptᵐ ⟦ hcf ⟧ʰᶜᶠ
 
   ------------------------------------------------------------------------
-  -- THE REDUCTS OF A MONADIC STEP
-  --
-  -- One state, and a runtime computation of computations over it.
+  -- THE REDUCTS OF A STEP
   ------------------------------------------------------------------------
 
-  record MConfig (C : CType) : Set where
-    constructor ⟪_,_⟫
-    field
-      state : 𝕊 []
-      comps : T (toCtx state ⊢C⦂ C)
-
-  flatten : ∀ {C} → MConfig C → T (Config C)
-  flatten ⟪ St , t ⟫ = t >>= (λ M → returnM (⟨ St , M ⟩))
+  hist-of : ∀ {A ε ε'} {St : 𝕊 []}
+          → {M : toCtx St ⊢C⦂ A ‼ ε} → {tcf : T (Config (A ‼ ε'))}
+          → ⟨ St , M ⟩ ⟿ₘ tcf → Ctx
+  hist-of (↝-STEPₘ {S' = St'} _)          = hist St'
+  hist-of (OP-STEPₘ {op = op} {S = St})   = hist St ⟨ mapᵉ (op-grade op) ⟩
 
   target : ∀ {A ε ε'} {St : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε} → {tcf : T (Config (A ‼ ε'))}
-         → ⟨ St , M ⟩ ⟿ₘ tcf
-         → MConfig (A ‼ ε')
-  target (↝-STEPₘ {S' = St'} {M' = M'} _) = ⟪ St' , returnM M' ⟫
+         → (r : ⟨ St , M ⟩ ⟿ₘ tcf)
+         → T (HConfig (hist-of r) (A ‼ ε'))
+  target (↝-STEPₘ {S' = St'} {M' = M'} _) = returnM (hcfg St' M')
   target (OP-STEPₘ {op = op} {S = St} {V = V} {M = M}) =
-    ⟪ grade-pass St (mapᵉ (op-grade op))
-    , mon-op-sem op V >>= (λ V' → returnM (M [ Hd ↦ V' ]c)) ⟫
+    mon-op-sem op V >>=
+      (λ V' → returnM (hcfg (grade-pass St (mapᵉ (op-grade op)))
+                            (M [ Hd ↦ V' ]c)))
 
-  -- The operational reduct IS the flattening of those reducts: every
-  -- configuration the step can produce has the same state.
+  -- The operational reduct is exactly the flattening of those: every
+  -- configuration the step can produce has the same history.
 
   ⟿ₘ-target : ∀ {A ε ε'} {St : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε} → {tcf : T (Config (A ‼ ε'))}
             → (r : ⟨ St , M ⟩ ⟿ₘ tcf)
-            → tcf ≡ flatten (target r)
+            → tcf ≡ flattenᴴ (target r)
   ⟿ₘ-target (↝-STEPₘ {S' = St'} {M' = M'} _) =
-    sym (>>=-apply M' (λ M → returnM (⟨ St' , M ⟩)))
+    sym (>>=-apply (hcfg St' M')
+                   (λ hcf → returnM (⟨ HConfig.state hcf , HConfig.comp hcf ⟩)))
   ⟿ₘ-target (OP-STEPₘ {op = op} {S = St} {V = V} {M = M}) =
     sym
       (trans
         (>>=-assoc (mon-op-sem op V)
-                   (λ V' → returnM (M [ Hd ↦ V' ]c))
-                   (λ M' → returnM (⟨ grade-pass St (mapᵉ (op-grade op)) , M' ⟩)))
+                   (λ V' → returnM (hcfg (grade-pass St (mapᵉ (op-grade op)))
+                                         (M [ Hd ↦ V' ]c)))
+                   (λ hcf → returnM (⟨ HConfig.state hcf , HConfig.comp hcf ⟩)))
         (cong (mon-op-sem op V >>=_)
               (fun-ext (λ V' →
-                 >>=-apply (M [ Hd ↦ V' ]c)
-                           (λ M' → returnM (⟨ grade-pass St (mapᵉ (op-grade op)) , M' ⟩))))))
+                 >>=-apply (hcfg (grade-pass St (mapᵉ (op-grade op)))
+                                 (M [ Hd ↦ V' ]c))
+                           (λ hcf → returnM
+                                      (⟨ HConfig.state hcf
+                                       , HConfig.comp hcf ⟩))))))
 
   -- THE STEP'S GRADE, TRANSITION AND REFINEMENT
-  --
-  -- As in the pure semantics: `↝-STEPₘ` inherits the ordinary ones, run through
-  -- the implementation, and `OP-STEPₘ` costs `op-grade op` and ticks.
 
   top-gradeₘ : ∀ {A ε ε'} {St : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {tcf : T (Config (A ‼ ε'))}
              → ⟨ St , M ⟩ ⟿ₘ tcf → E
-  top-gradeₘ (↝-STEPₘ r)         = step-grade r
+  top-gradeₘ (↝-STEPₘ r)          = step-grade r
   top-gradeₘ (OP-STEPₘ {op = op}) = op-grade op ·ₑ uₑ
 
   top-stepᵏₘ : ∀ {A ε ε'} {St : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {tcf : T (Config (A ‼ ε'))}
              → (r : ⟨ St , M ⟩ ⟿ₘ tcf)
-             → ⟦ hist St ⟧ᶜᵗˣ
-             →ᵐ Tᵏ ⟦ hist (MConfig.state (target r)) ⟧ᶜᵗˣ (top-gradeₘ r)
+             → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ hist-of r ⟧ᶜᵗˣ (top-gradeₘ r)
   top-stepᵏₘ (↝-STEPₘ r) = implᵐ ∘ᵐ stepᵀ r
   top-stepᵏₘ (OP-STEPₘ {op = op}) =
     tickᵏ (op-grade op) ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ ηᵏ ∘ᵐ η⊣
@@ -223,9 +248,8 @@ module MonadicTopLevelSoundness
 
     open RuntimeSemantics RS
 
-    -- The operation's parameter, and the runtime computation its
-    -- implementation returns, as morphisms (with the ground-type coercions the
-    -- interpretation carries).
+    -- The operation's parameter, with the ground-type coercion the
+    -- interpretation carries.
 
     paramᵐ : (op : Op) → (St : 𝕊 [])
            → toCtx St ⊢V⦂ type-of-gtype (param op)
@@ -233,48 +257,59 @@ module MonadicTopLevelSoundness
     paramᵐ op St V =
       subst (λ O → ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
 
-    arityᵐ : (op : Op) → (St : 𝕊 [])
-           → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
-           → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ Mᵒ ⟦ arity op ⟧ᵍ
-    arityᵐ op St V =
-      subst (λ O → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ Mᵒ O)
-            (ty-gty (arity op)) ⟦ mon-op-sem op V ⟧ᵛᵐ
-
-    -- The theorem's only condition: the syntactic implementation `mon-op-sem`
-    -- is the semantic one, `op-semᵐ`. As `op-semᵐ` is a single morphism, not
-    -- indexed by the state, this also forces `mon-op-sem` to be uniform in the
-    -- state.
+    -- THE THEOREM'S ONLY CONDITION
+    --
+    -- What an operation step's reducts denote: run the implementation
+    -- `op-semᵐ` on the parameter — a Kleisli map into `Mᵒ ⟦ arity op ⟧ᵍ`, which
+    -- is what a monadic implementation of an operation is — carry the locked
+    -- state's environment into it with the strength, and substitute the value
+    -- it returns into the operation's continuation.
+    --
+    -- `op-semᵐ` is a single morphism out of the *parameter*, not indexed by the
+    -- state, which is the naturality in `S` that `mon-op-sem` is annotated as
+    -- requiring.
 
     MOpSemCoherent : Set
-    MOpSemCoherent = ∀ (op : Op) → (St : 𝕊 [])
-                   → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
-                   → arityᵐ op St V
-                   ≈ᵐ op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ (paramᵐ op St V)
+    MOpSemCoherent =
+      ∀ {A ε} → (op : Op) → (St : 𝕊 [])
+      → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
+      → (M : toCtx St ⟨ mapᵉ (op-grade op) ⟩
+             ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+      → kleisliᵐ ⟦ mon-op-sem op V >>= (λ V' → returnM
+                     (hcfg (grade-pass St (mapᵉ (op-grade op)))
+                           (M [ Hd ↦ V' ]c))) ⟧ᵐᶜᶠ
+      ≈ᵐ Mᶠ (contᵐ op St M)
+         ∘ᵐ strᴹ
+         ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ (paramᵐ op St V) ⟩ᵐ
+         ∘ᵐ ⟦ grade-pass St (mapᵉ (op-grade op)) ⟧ˢ
 
     module _ (op-coh : MOpSemCoherent) where
 
       -- THE TOP-LEVEL DENOTATIONS
       --
-      -- A configuration denotes as in the pure semantics. A `T`-computation of
-      -- configurations denotes by running its `Mᵒ`-counterpart into the tick
-      -- monad's algebra.
+      -- A configuration denotes as in the pure semantics. A runtime
+      -- computation of configurations is applied to the history, its
+      -- operations are run, and the runtime effects are absorbed by the
+      -- algebra.
 
       ⟦_⟧ᵏᶜᶠ : ∀ {A ε} → (cf : Config (A ‼ ε))
              → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
       ⟦ cf ⟧ᵏᶜᶠ = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ
 
-      ⟦_⟧ᵐᶜᶠ : ∀ {A ε} → (mcf : MConfig (A ‼ ε))
-             → ⟦ hist (MConfig.state mcf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
-      ⟦ ⟪ St , t ⟫ ⟧ᵐᶜᶠ = algᴹ ∘ᵐ Mᶠ implᵐ ∘ᵐ ⟦ t ⟧ᶜᵐ ∘ᵐ ⟦ St ⟧ˢ
+      runᵐ : ∀ {X B ε} → (𝟙ᵐ →ᵐ Mᵒ (X ⇒ᵐ Tᵒ B ε)) → (X →ᵐ Tᵏ B ε)
+      runᵐ b = algᴹ ∘ᵐ Mᶠ implᵐ ∘ᵐ kleisliᵐ b
 
-      -- A returned configuration denotes as that configuration: the algebra
+      runᵐ-cong : ∀ {X B ε} → {b b' : 𝟙ᵐ →ᵐ Mᵒ (X ⇒ᵐ Tᵒ B ε)}
+                → b ≈ᵐ b' → runᵐ b ≈ᵐ runᵐ b'
+      runᵐ-cong e = ∘ᵐ-congʳ (∘ᵐ-congʳ (kleisliᵐ-cong e))
+
+      -- A returned configuration runs as that configuration: the algebra
       -- swallows the runtime monad's unit.
 
-      ⟦⟧ᵐᶜᶠ-return : ∀ {A ε} → (St : 𝕊 []) → (M : toCtx St ⊢C⦂ A ‼ ε)
-                   → ⟦ ⟪ St , returnM M ⟫ ⟧ᵐᶜᶠ ≈ᵐ ⟦ ⟨ St , M ⟩ ⟧ᵏᶜᶠ
-      ⟦⟧ᵐᶜᶠ-return St M =
-          ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟦⟧ᶜᵐ-return M)))
-        ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      runᵐ-return : ∀ {X B ε} → (f : X →ᵐ Tᵒ B ε)
+                  → runᵐ (ηᴹ ∘ᵐ ptᵐ f) ≈ᵐ implᵐ ∘ᵐ f
+      runᵐ-return f =
+          ∘ᵐ-congʳ (∘ᵐ-congʳ (kleisliᵐ-ptᵐ f))
         ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (ηᴹ-nat implᵐ))
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
@@ -298,8 +333,8 @@ module MonadicTopLevelSoundness
                         ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ}
                                 {⟦ hist St ⟨ mapᵉ (op-grade op) ⟩ ⟧ᶜᵗˣ}
                                 {⟦ A ⟧ᵛ} {op-grade op ·ₑ uₑ} {ε}
-                                ⟦ target (OP-STEPₘ {op = op} {S = St}
-                                                   {V = V} {M = M}) ⟧ᵐᶜᶠ
+                                (runᵐ ⟦ target (OP-STEPₘ {op = op} {S = St}
+                                                         {V = V} {M = M}) ⟧ᵐᶜᶠ)
                                 (top-stepᵏₘ (OP-STEPₘ {op = op} {S = St}
                                                       {V = V} {M = M}))
       sound-OP-STEPₘ {A} {ε} op St V M =
@@ -312,19 +347,34 @@ module MonadicTopLevelSoundness
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ St ⟧ˢ)))
         ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
-        -- and what is boxed is the reduct
+        -- and what is boxed is the reduct, run
         ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ cont))
         -- what is left is a tick, and `tick-nf` says the target is its bind
-        ∙ᵏ ≈ᵐ-sym (∘ᵐ-congʳ (tick-nf d η⊣ ⟦ mcf ⟧ᵐᶜᶠ) ∙ᵏ coe)
+        ∙ᵏ ≈ᵐ-sym (∘ᵐ-congʳ (tick-nf d η⊣ (runᵐ ⟦ tgt ⟧ᵐᶜᶠ)) ∙ᵏ coe)
         where
           d = op-grade op
 
-          mcf : MConfig (A ‼ ε)
-          mcf = target (OP-STEPₘ {op = op} {S = St} {V = V} {M = M})
+          St' : 𝕊 []
+          St' = grade-pass St (mapᵉ d)
+
+          tgt : T (HConfig (hist St ⟨ mapᵉ d ⟩) (A ‼ ε))
+          tgt = target (OP-STEPₘ {op = op} {S = St} {V = V} {M = M})
 
           k : (⟨ mapᵉ d ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε
-          k = subst (λ O → (⟨ mapᵉ d ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
-                    (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
+          k = contᵐ op St M
+
+          -- the target bag, run: `MOpSemCoherent` says it is the very shape
+          -- the implementation produces
+          tgt-run : runᵐ ⟦ tgt ⟧ᵐᶜᶠ
+                  ≈ᵐ algᴹ
+                     ∘ᵐ Mᶠ (implᵐ ∘ᵐ k)
+                     ∘ᵐ strᴹ
+                     ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V) ⟩ᵐ
+                     ∘ᵐ ⟨ mapᵉ d ⟩ᶠ ⟦ St ⟧ˢ
+          tgt-run =
+              ∘ᵐ-congʳ (∘ᵐ-congʳ (op-coh op St V M))
+            ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (Mᶠ-∘ᵐ _ _)))
 
           -- the operation's continuation, run under the runtime computation the
           -- implementation returns, IS the reduct
@@ -333,26 +383,18 @@ module MonadicTopLevelSoundness
                   ∘ᵐ strᴹ
                   ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V) ⟩ᵐ)
                  ∘ᵐ ⟨ mapᵉ d ⟩ᶠ ⟦ St ⟧ˢ
-               ≈ᵐ ⟦ mcf ⟧ᵐᶜᶠ
+               ≈ᵐ runᵐ ⟦ tgt ⟧ᵐᶜᶠ
           cont =
-              ∘ᵐ-congˡ
-                (  ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-                     (⟨ ≈ᵐ-refl , ≈ᵐ-sym (op-coh op St V) ⟩ᵐ-cong)))
-                 ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (Mᶠ-∘ᵐ implᵐ k))
-                 ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-                 ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ
-                     (substᴹ-str (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
-                                 ⟦ mon-op-sem op V ⟧ᵛᵐ))
-                 ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ
-                     (≈ᵐ-sym (⟦⟧ᶜᵐ-bind (mon-op-sem op V) M))))
-            ∙ᵏ ∘ᵐ-assoc _ _ _
+              ∘ᵐ-assoc _ _ _
             ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+            ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+            ∙ᵏ ≈ᵐ-sym tgt-run
 
           -- the coercions collapse: the source's grade is reached exactly
           coe : T-≤ᵏ (top-≾ₘ (OP-STEPₘ {op = op} {S = St} {V = V} {M = M}))
                   ∘ᵐ (T-≤ᵏ (tick-z d ε)
-                      ∘ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ ⟦ mcf ⟧ᵐᶜᶠ ∘ᵐ η⊣)
-              ≈ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ ⟦ mcf ⟧ᵐᶜᶠ ∘ᵐ η⊣
+                      ∘ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ (runᵐ ⟦ tgt ⟧ᵐᶜᶠ) ∘ᵐ η⊣)
+              ≈ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ (runᵐ ⟦ tgt ⟧ᵐᶜᶠ) ∘ᵐ η⊣
           coe =
               ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
             ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (≾ₑ-reflexive {d ·ₑ ε} refl))
@@ -360,8 +402,6 @@ module MonadicTopLevelSoundness
             ∙ᵏ ∘ᵐ-identityˡ _
 
       -- SOUNDNESS OF A MONADIC TOP-LEVEL STEP
-      --
-      -- `↝-STEPₘ` is `↝-sound` carried along the monad morphism `implᵐ`.
 
       ⟿ₘ-sound : ∀ {A ε ε'} {St : 𝕊 []}
                 → {M : toCtx St ⊢C⦂ A ‼ ε} → {tcf : T (Config (A ‼ ε'))}
@@ -369,17 +409,17 @@ module MonadicTopLevelSoundness
                 → Uniform⟿ₘ r
                 → ⟦ ⟨ St , M ⟩ ⟧ᵏᶜᶠ
                 ≈ᵐ T-≤ᵏ (top-≾ₘ r)
-                   ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ}
-                           {⟦ hist (MConfig.state (target r)) ⟧ᶜᵗˣ}
+                   ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist-of r ⟧ᶜᵗˣ}
                            {⟦ A ⟧ᵛ} {top-gradeₘ r} {ε'}
-                           ⟦ target r ⟧ᵐᶜᶠ (top-stepᵏₘ r)
+                           (runᵐ ⟦ target r ⟧ᵐᶜᶠ) (top-stepᵏₘ r)
       ⟿ₘ-sound (↝-STEPₘ {S' = St'} {M' = M'} r) u =
           ∘ᵐ-congʳ (↝-sound r u)
         ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
         ∙ᵏ ∘ᵐ-congˡ (implᵐ-T-≤ (step-≾ r))
         ∙ᵏ ∘ᵐ-assoc _ _ _
         ∙ᵏ ∘ᵐ-congʳ (impl-⋄ ⟦ ⟨ St' , M' ⟩ ⟧ᶜᶠ (stepᵀ r))
-        ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ
-             (Tᵏ-congᶠ (≈ᵐ-sym (⟦⟧ᵐᶜᶠ-return St' M')))))
+        ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-congᶠ
+             (≈ᵐ-sym (  runᵐ-cong (⟦⟧ᵐᶜᶠ-return (hcfg St' M'))
+                      ∙ᵏ runᵐ-return ⟦ ⟨ St' , M' ⟩ ⟧ᶜᶠ)))))
       ⟿ₘ-sound (OP-STEPₘ {op = op} {S = St} {V = V} {M = M}) _ =
         sound-OP-STEPₘ op St V M
