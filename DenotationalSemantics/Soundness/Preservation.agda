@@ -82,6 +82,7 @@ open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; 
                      ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
 open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣-monoidal;
                            ε⊣; ε⊣-nat; triangleˡ)
+open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
@@ -1839,3 +1840,237 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
               ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
                   ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'})
     alg-delay τ = T-alg-of-handlerᵀ-delayᵀ τ ⟦ H ⟧ʰᵗ
+
+-- SEQ-OP
+--
+-- The operation commuting conversion. Unlike the step rules this one does not
+-- touch the state at all: it is a plain equation between the two computations'
+-- denotations, in an arbitrary context. What it says is that sequencing a
+-- computation that begins with an operation is the operation performed with the
+-- sequencing pushed into its continuation — which is precisely the content of
+-- the two algebraicity laws, `opᵀ-algebraicity` for the monad's multiplication
+-- and `strᵀ-opᵀ-algebraicity` for the strength. The latter is where the
+-- environment goes: the operation's continuation is *boxed* (it may only run
+-- once `op-grade op` worth of time has passed), so the environment has to be
+-- pushed *under* that box, which is what `exp-strᵐ` is for.
+
+-- Reassociating the operation's arguments.
+--
+-- `strᵀ-opᵀ-algebraicity` hands the operation back its parameter and pairs the
+-- environment with the (boxed) continuation. Applied to an actual `perform`,
+-- whose argument is `⟨ env , ⟨ param , cont ⟩ᵐ ⟩ᵐ`, that reshuffle just puts the
+-- parameter back in front and leaves the environment sitting next to the
+-- continuation, ready to be pushed under its box.
+
+op-pair : ∀ {X E P Q R} → (v : X →ᵐ P) → (e : X →ᵐ E) → (c : X →ᵐ Q)
+        → (F : E ×ᵐ Q →ᵐ R)
+        → mapˣᵐ idᵐ F ∘ᵐ ⟨ fstᵐ ∘ᵐ sndᵐ , ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ
+            ∘ᵐ ⟨ e , ⟨ v , c ⟩ᵐ ⟩ᵐ
+        ≈ᵐ ⟨ v , F ∘ᵐ ⟨ e , c ⟩ᵐ ⟩ᵐ
+op-pair v e c F =
+    ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
+  ∙ ∘ᵐ-congʳ
+      (⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
+       , ⟨⟩ᵐ-∘ _ _ _
+         ∙ ⟨ ⟨⟩ᵐ-fstᵐ _ _
+           , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong ⟩ᵐ-cong)
+  ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+  ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong
+
+-- The environment the operation's continuation receives.
+--
+-- Under the operation's box the environment has already been transposed once
+-- (at `mapᵉ (op-grade op)`) and re-locked by `μ`; the continuation then binds
+-- the arity value, so the environment must be weakened past it. Doing that
+-- *outside* the second transposition (`_ ∘ᵐ fstᵐ`) and doing it *inside* it
+-- (the syntax's `cong-⟨⟩-ren wk-ren`) agree, by naturality of `η⊣`.
+
+op-env : ∀ {X Y d ε} → (a : mapᵉ d ·ᵣ mapᵉ ε ≾ᵣ mapᵉ (d ·ₑ ε))
+       → ([ mapᵉ ε ]ᶠ (⟨⟩-≤ a ∘ᵐ μ) ∘ᵐ η⊣ {⟨ mapᵉ d ⟩ᵒ X} {mapᵉ ε}) ∘ᵐ fstᵐ {_} {Y}
+       ≈ᵐ [ mapᵉ ε ]ᶠ (⟨⟩-≤ a ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ)
+            ∘ᵐ η⊣ {⟨ mapᵉ d ⟩ᵒ X ×ᵐ Y} {mapᵉ ε}
+op-env a =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat fstᵐ))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _))
+
+-- PUSHING THE SEQUENCING UNDER THE OPERATION'S BOX
+--
+-- This is the heart of `SEQ-OP`. On the left the environment arrives boxed at
+-- the *whole* computation's grade `mapᵉ (op-grade op ·ₑ ε)`; `strᵀ-opᵀ-algebra-
+-- icity` splits that box with `δ` into `mapᵉ (op-grade op)` (the operation's own
+-- delay) and `mapᵉ ε` (the continuation's), pairs the inner half with the boxed
+-- continuation via `[]-monoidal`, and pushes it under the exponential with
+-- `exp-strᵐ`. On the right the syntax has instead renamed the continuation's
+-- context with `⟨⟩-μ-ren`, folding the two locks back into one.
+--
+-- The two agree: `box-split` is exactly the `δ`-split-then-`μ`-refold, and
+-- `η⊣-⟨⟩` is what lets the two transposed halves be re-paired under one box.
+
+seq-op-box : ∀ {X A B ε ε'} → (op : Op)
+  → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ A ε)
+  → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
+  → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ)
+          →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
+  → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+  → [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (μᵀ {B} {ε} {ε'}))
+      ∘ᵐ [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ n))
+      ∘ᵐ ( [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (strᵀ {_} {A} {ε}) ∘ᵐ exp-strᵐ)
+         ∘ᵐ []-monoidal
+         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ )
+      ∘ᵐ ⟨ η⊣ {X} {mapᵉ (op-grade op ·ₑ ε)}
+         , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ m) ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)} ⟩ᵐ
+  ≈ᵐ [ mapᵉ (op-grade op) ]ᶠ
+       (curryᵐ (μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ))
+     ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)}
+seq-op-box {X} {A} {B} {ε} {ε'} op m n rn ern =
+  -- bring the strength law's reshuffle up against the operation's arguments
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+  -- split the environment's box: once at the operation's grade, once at the
+  -- continuation's, the two pasts refolded by `μ`
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (  mapˣᵐ-∘⟨⟩ _ _ _ _
+       ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ box-split _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
+  -- and pair the two transposed halves under one box
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (η⊣-⟨⟩ _ _)))
+  -- collect everything under a single box
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  -- inside the box: the environment is pushed under the exponential, and the
+  -- three postcompositions collapse into the sequenced body
+  ∙ ∘ᵐ-congˡ ([]-congᶠ
+      (  ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (exp-strᵐ-⟨⟩ _ _)))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (map⇒ᵐ-curryᵐ _ _))
+       ∙ ∘ᵐ-congʳ (map⇒ᵐ-curryᵐ _ _)
+       ∙ map⇒ᵐ-curryᵐ _ _))
+  -- and that body is the target's, once the syntax's renaming is recognised as
+  -- the environment the continuation actually receives
+  ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (≈ᵐ-sym
+      (  ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ n (mapˣᵐ rn idᵐ)))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+       ∙ body))))
+  where
+    -- the renaming the syntax applies to the continuation *is* the environment
+    -- the strength hands it: a map on the strength's boxed component (`strᵀ-natˡ`),
+    -- and that map is `op-env`
+    body : μᵀ ∘ᵐ Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
+         ≈ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ
+              ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣)
+                     ∘ᵐ fstᵐ
+                 , m ⟩ᵐ
+    body =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ rn)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+          (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+          (⟨ ∘ᵐ-congˡ ([]-congᶠ ern) ∙ ≈ᵐ-sym (op-env _) , ≈ᵐ-refl ⟩ᵐ-cong)))
+
+-- The commuting conversion, at the level of the model.
+--
+-- The three moves are the operation's three laws: `strᵀ-opᵀ-algebraicity` puts
+-- the environment inside the operation's continuation, `opᵀ-nat` puts the
+-- sequel `n` there too, and `opᵀ-algebraicity` puts the multiplication there —
+-- leaving the `ε-substᵀ` that reassociates the grades, which is exactly the
+-- coercion the syntactic rule carries. The ground-type coercion `ea` is
+-- generalised so it can be matched, at which point both `subst`s vanish.
+
+seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
+            → (ea : Y ≡ ⟦ arity op ⟧ᵍ)
+            → (v : X →ᵐ ⟦ param op ⟧ᵍ)
+            → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y) →ᵐ Tᵒ A ε)
+            → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
+            → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y)
+                    →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
+            → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+            → μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ
+                ∘ᵐ ⟨ η⊣
+                   , opᵀ op
+                       ∘ᵐ ⟨ v
+                          , [ mapᵉ (op-grade op) ]ᶠ
+                              (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ O)
+                                                    →ᵐ Tᵒ A ε)
+                                             ea m))
+                              ∘ᵐ η⊣ ⟩ᵐ ⟩ᵐ
+            ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+               ∘ᵐ opᵀ op
+               ∘ᵐ ⟨ v
+                  , [ mapᵉ (op-grade op) ]ᶠ
+                      (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ O)
+                                            →ᵐ Tᵒ B (ε ·ₑ ε'))
+                                     ea
+                                     (μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ
+                                        ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)))
+                    ∘ᵐ η⊣ ⟩ᵐ
+seq-op-core op refl v m n rn ern =
+  -- the operation is a map on the strength's monadic component …
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+        (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))))
+  -- … so the strength pushes into it, carrying the environment under its box
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-opᵀ-algebraicity op)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  -- the reshuffle just hands the parameter back and pairs environment with
+  -- continuation
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ op-pair _ _ _ _)))
+  -- the sequel is natural, so it too goes into the continuation
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op n)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  -- and the operation is algebraic, so the multiplication does too — leaving
+  -- the grade reassociation behind
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (opᵀ-algebraicity op)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  -- collect the three maps on the continuation
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+      (  ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
+       ∙ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+  -- what they amount to is the sequenced continuation
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-op-box op m n rn ern ⟩ᵐ-cong))
+
+-- SEQ-OP: sequencing an operation is the operation with the sequencing pushed
+-- into its continuation. The state plays no part — the rule is a plain equation
+-- in an arbitrary context.
+
+sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
+             → (V : Γ ⊢V⦂ type-of-gtype (param op))
+             → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+             → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+             → ⟦ perform op V M ⨟ N ⟧ᶜᵗ
+             ≈ᵐ ⟦ ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+                    (perform op V
+                      (M ⨟ C-rename
+                             (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
+                                          ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                             N)) ⟧ᶜᵗ
+sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
+    seq-op-core op (ty-gty (arity op))
+      (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
+      ⟦ M ⟧ᶜᵗ ⟦ N ⟧ᶜᵗ ⟦ ren ⟧ʳ ern
+  ∙ ≈ᵐ-sym
+      (  sound-ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
+           (perform op V (M ⨟ C-rename (cong-∷-ren ren) N))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+           , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (substᵈ-≈ (ty-gty (arity op))
+               (∘ᵐ-congʳ (∘ᵐ-congˡ
+                 (T-congᶠ (C-rename-nat (cong-∷-ren ren) N))))))) ⟩ᵐ-cong)))
+  where
+    ren : Ren (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+              ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+    ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+
+    -- the renaming is the `μ`-refold of the two locks, after weakening past the
+    -- arity value the continuation binds
+    ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+    ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _

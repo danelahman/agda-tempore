@@ -230,3 +230,40 @@ record Category : Set₂ where
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ f) idᵐ)))
               (∘ᵐ-congˡ (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
                                   (curryᵐ-uncurryᵐ-iso f)))))
+
+  -- Postcomposing an abstraction's body: the functorial action of the
+  -- exponential on the codomain absorbs into the abstraction.
+
+  map⇒ᵐ-curryᵐ : ∀ {A B C D} → (h : C →ᵐ D) → (k : A ×ᵐ B →ᵐ C)
+               → map⇒ᵐ idᵐ h ∘ᵐ curryᵐ k ≈ᵐ curryᵐ (h ∘ᵐ k)
+  map⇒ᵐ-curryᵐ h k =
+    ≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat (curryᵐ k) (h ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ idᵐ)))
+      (curryᵐ-cong
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (∘ᵐ-congʳ
+            (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ mapˣᵐ-idᵐ))
+            (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityʳ _))
+            (≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ k) idᵐ))
+                      (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
+                                (curryᵐ-uncurryᵐ-iso k))))))))
+
+  -- The exponential's costrength applied to a pair whose second component is
+  -- an abstraction: the paired-in value simply joins the abstraction's
+  -- environment (it is constant in the abstracted argument, hence `fstᵐ`).
+
+  exp-strᵐ-⟨⟩ : ∀ {A B C D} → (f : A →ᵐ B) → (g : A ×ᵐ C →ᵐ D)
+              → exp-strᵐ ∘ᵐ ⟨ f , curryᵐ g ⟩ᵐ ≈ᵐ curryᵐ ⟨ f ∘ᵐ fstᵐ , g ⟩ᵐ
+  exp-strᵐ-⟨⟩ f g =
+    ≈ᵐ-trans (∘ᵐ-congˡ exp-strᵐ-def)
+    (≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat ⟨ f , curryᵐ g ⟩ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , uncurryᵐ sndᵐ ⟩ᵐ))
+      (curryᵐ-cong
+        (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+          (⟨ -- the value: projected out of the pair, constant in the argument
+             ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+             (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                       (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))))
+             -- the body: the abstraction is undone by the application
+           , ≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat ⟨ f , curryᵐ g ⟩ᵐ sndᵐ))
+             (≈ᵐ-trans (uncurryᵐ-cong (⟨⟩ᵐ-sndᵐ _ _))
+                       (curryᵐ-uncurryᵐ-iso g)) ⟩ᵐ-cong))))
