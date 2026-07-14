@@ -219,11 +219,16 @@ mutual
                     → ⟨ S , coerce ε≾ε' M ⟩ ↝ ⟨ S , M ⟩
  
     -- reduction steps only extend states
+    --
+    -- Note: the value types of the two configurations are left independent
+    -- here (they are in fact equal, see `step-preserves-type` below). This is
+    -- what lets `step-grade-≾` mention `step-extends-state` in its statement,
+    -- where type preservation is not yet available.
     step-extends-state : ∀ {ε ε'}
                        → {S S' : 𝕊 []}
-                       → {A : VType}
+                       → {A B : VType}
                        → {M : toCtx S ⊢C⦂ A ‼ ε}
-                       → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+                       → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                        → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩ )
                        -----------------------------------
                        → S ≤ₛ S'
@@ -241,68 +246,123 @@ mutual
     step-extends-state UNBOX                = id-suc
     step-extends-state COERCE               = id-suc
 
--- invariants preserved by the small-step operational semantics
+-- reduction steps preserve the value type
+
+step-preserves-type : ∀ {A B ε ε'}
+                    → {S S' : 𝕊 []}
+                    → {M : toCtx S ⊢C⦂ A ‼ ε}
+                    → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                    → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
+                    ---------------------------
+                    → A ≡ B
+
+step-preserves-type APP              = refl
+step-preserves-type MATCH            = refl
+step-preserves-type (SEQ-STEP _ _)   = refl
+step-preserves-type SEQ-RET          = refl
+step-preserves-type SEQ-OP           = refl
+step-preserves-type DELAY            = refl
+step-preserves-type HANDLE-RET       = refl
+step-preserves-type (HANDLE-STEP _ _) = refl
+step-preserves-type HANDLE-OP        = refl
+step-preserves-type BOX              = refl
+step-preserves-type UNBOX            = refl
+step-preserves-type COERCE           = refl
+
+-- Reduction steps make effects more precise, stated in *cancelled* form: the
+-- grade δ by which the state grew during the step, composed with the residual
+-- effect ε', stays below the original effect ε.
+--
+-- This is exactly the shape of the grade premises that SEQ-STEP and
+-- HANDLE-STEP assume of the reductions happening under them, so those premises
+-- are in fact derivable — see `seq-step-grade` and `handle-step-grade` below.
+--
+-- Cancelled form is the stronger statement: the version speaking about the two
+-- states' total grades follows from it by monotonicity (`cancelled⇒total`,
+-- used in `step-invariants` below), whereas the converse would require
+-- left-cancelling state-grade S, which the grades interface does not provide.
+
+step-grade-≾ : ∀ {A B ε ε'}
+             → {S S' : 𝕊 []}
+             → {M : toCtx S ⊢C⦂ A ‼ ε}
+             → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+             → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+             -------------------------------------------------
+             → ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
+
+step-grade-≾ APP   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ MATCH = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
+  ≾ᵣ-trans
+    (≾ᵣ-reflexive
+      (trans
+        (cong (≤ₛ-grade (step-extends-state step) ·ᵣ_) (map-·ᵉ {ε₃} {ε₂}))
+        (sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₃) (mapᵉ ε₂)))))
+    (≾ᵣ-trans
+      (·ᵣ-monoˡ-≾ᵣ (step-grade-≾ step))
+      (≾ᵣ-reflexive (sym (map-·ᵉ {ε₁} {ε₂}))))
+step-grade-≾ (SEQ-RET {ε = ε}) =
+  ≾ᵣ-reflexive (sym (trans (map-·ᵉ {uₑ} {ε}) (cong (_·ᵣ mapᵉ ε) map-uᵉ)))
+step-grade-≾ SEQ-OP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ (DELAY {τ = τ} {ε = ε}) =
+  ≾ᵣ-reflexive
+    (trans
+      (cong (_·ᵣ mapᵉ ε) (·ᵣ-identityˡ (of-natʳ τ)))
+      (sym (trans (map-·ᵉ {of-natᵉ τ} {ε}) (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+step-grade-≾ (HANDLE-RET {ε = ε}) =
+  ≾ᵣ-reflexive (sym (trans (map-·ᵉ {uₑ} {ε}) (cong (_·ᵣ mapᵉ ε) map-uᵉ)))
+step-grade-≾ (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} step _) =
+  ≾ᵣ-trans
+    (≾ᵣ-reflexive
+      (trans
+        (cong (≤ₛ-grade (step-extends-state step) ·ᵣ_) (map-·ᵉ {ε₁'} {ε₂}))
+        (sym (·ᵣ-assoc (≤ₛ-grade (step-extends-state step)) (mapᵉ ε₁') (mapᵉ ε₂)))))
+    (≾ᵣ-trans
+      (·ᵣ-monoˡ-≾ᵣ (step-grade-≾ step))
+      (≾ᵣ-reflexive (sym (map-·ᵉ {ε₁} {ε₂}))))
+step-grade-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
+  ≾ᵣ-reflexive
+    (trans
+      (·ᵣ-identityˡ _)
+      (cong mapᵉ (sym (·ₑ-assoc (op-grade op) ε ε''))))
+step-grade-≾ BOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ UNBOX = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ (COERCE {ε≾ε' = ε≾ε'}) =
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ ε≾ε')
+
+-- The grade premises of SEQ-STEP and HANDLE-STEP, derived. These have exactly
+-- the types of the `δε₃≾ε₁` and `δε₁'≾ε₁` fields of those constructors.
+
+seq-step-grade : ∀ {A ε₁ ε₃}
+               → {S S' : 𝕊 []}
+               → {M : toCtx S ⊢C⦂ A ‼ ε₁}
+               → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+               → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+               → ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
+seq-step-grade = step-grade-≾
+
+handle-step-grade : ∀ {A ε₁ ε₁'}
+                  → {S S' : 𝕊 []}
+                  → {M : toCtx S ⊢C⦂ A ‼ ε₁}
+                  → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
+                  → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+                  → ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁
+handle-step-grade = step-grade-≾
+
+-- invariants preserved by the small-step operational semantics, in the form
+-- speaking about the two states' total grades
+
 step-invariants : ∀ {A B ε ε'}
                 → {S S' : 𝕊 []}
                 → {M : toCtx S ⊢C⦂ A ‼ ε}
                 → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
-                → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
+                → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                 → A ≡ B                                                 -- return types are preserved
                 × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε  -- effects become more precise
-                     
-step-invariants APP   = refl , ≾ᵣ-refl
-step-invariants MATCH = refl , ≾ᵣ-refl
-step-invariants {S = S} {S' = S'} (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step δε₃≾ε₁) =
-  refl ,
-  ≾ᵣ-trans
-    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) map-·ᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₃) (mapᵉ ε₂)))))
-    (≾ᵣ-trans
-      (·ᵣ-monoˡ-≾ᵣ (cancelled⇒total (step-extends-state step) δε₃≾ε₁))
-      (≾ᵣ-reflexive
-        (trans
-          (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
-          (sym (cong (state-grade S ·ᵣ_) map-·ᵉ)))))
-step-invariants {ε' = ε'} SEQ-RET =
-  refl ,
-  ·ᵣ-monoʳ-≾ᵣ
-    (≾ᵣ-trans
-      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'))))
-      (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
-        (≾ᵣ-reflexive (sym map-·ᵉ))))
-step-invariants SEQ-OP = refl , ≾ᵣ-refl
-step-invariants {ε' = ε'} {S = S} DELAY =
-  refl ,
-  ≾ᵣ-trans
-    (≾ᵣ-reflexive
-      (trans
-        (·ᵣ-assoc (state-grade S) (of-natʳ _) (mapᵉ ε'))
-        (cong (state-grade S ·ᵣ_) (cong ((_·ᵣ mapᵉ ε')) (sym map-of-natᵉ)))))
-    (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-·ᵉ)))
-step-invariants {ε' = ε'} HANDLE-RET =
-  refl ,
-  ·ᵣ-monoʳ-≾ᵣ
-    (≾ᵣ-trans
-      (≾ᵣ-reflexive (sym (·ᵣ-identityˡ (mapᵉ ε'))))
-      (≾ᵣ-trans
-        (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
-        (≾ᵣ-reflexive (sym map-·ᵉ))))
-step-invariants {S = S} {S' = S'} (HANDLE-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₁' = ε₁'} step δε₁'≾ε₁) =
-  refl ,
-    ≾ᵣ-trans
-    (≾ᵣ-reflexive (trans (cong (state-grade S' ·ᵣ_) map-·ᵉ) (sym (·ᵣ-assoc (state-grade S') (mapᵉ ε₁') (mapᵉ ε₂)))))
-    (≾ᵣ-trans
-      (·ᵣ-monoˡ-≾ᵣ (cancelled⇒total (step-extends-state step) δε₁'≾ε₁))
-      (≾ᵣ-reflexive
-        (trans
-          (·ᵣ-assoc (state-grade S) (mapᵉ ε₁) (mapᵉ ε₂))
-          (sym (cong (state-grade S ·ᵣ_) map-·ᵉ)))))
-step-invariants {S = S} HANDLE-OP =
-  refl ,
-  ≾ᵣ-reflexive (cong (state-grade S ·ᵣ_) (cong (λ x → mapᵉ x) (sym (·ₑ-assoc (op-grade _) _ _))))
-step-invariants BOX                    = refl , ≾ᵣ-refl
-step-invariants UNBOX                  = refl , ≾ᵣ-refl
-step-invariants (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (map-monotoneᵉ ε≾ε')
+
+step-invariants r =
+  step-preserves-type r ,
+  cancelled⇒total (step-extends-state r) (step-grade-≾ r)
 
 -- Reflexive-transitive closure: a run of the machine. Every step preserves the
 -- value type, but refines the effect grade, so the grade is free at each link.
