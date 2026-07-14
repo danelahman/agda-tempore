@@ -24,8 +24,8 @@
 -- The strength coherence laws are stated for the *lax* box (a counit    --
 -- `ε` and comultiplication `δ`, but no inverses `ε⁻¹`/`δ⁻¹`).           --
 -- Effect handling folds a handler — a family of clause *morphisms* — into --
--- a `T`-algebra; the clauses being morphisms is what makes them usable   --
--- at every world in the discrete presheaf model.                        --
+-- a `T`-algebra; the clauses being morphisms (natural families) is what   --
+-- makes them usable at every world the handled computation reaches.       --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -276,8 +276,7 @@ record Monad : Set₁ where
   -- continuation `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces
   -- a computation. Note the clauses are *morphisms* (natural families),
   -- hence usable at every world the handled computation reaches — this is
-  -- what lets the fold recurse under operations without moving the handler
-  -- (there is no functorial action on the discrete presheaves to move it).
+  -- what lets the fold recurse under operations without moving the handler.
 
   Handlerᵀ : Obj → Set
   Handlerᵀ A = (op : Op) → (ε'' : E)

@@ -67,6 +67,6 @@ record GroundEternal : Set₁ where
     -- A constant of an eternal base type denotes a *global* element: it is
     -- the same at every world, so the eternal extraction recovers it. This
     -- is what lets a constant be weakened under a lock (`eternal-val-ext`).
-    ⟦⟧ᵏ-eternal : ∀ {b} → (eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
-                → Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟦_⟧ᵏ {b} c)
-                ≈ᵐ ⟦_⟧ᵏ {b} c ∘ᵐ terminalᵐ
+    ⟦⟧ᵇᶜ-eternal : ∀ {b} → (eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
+                 → Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟦_⟧ᵇᶜ {b} c)
+                 ≈ᵐ ⟦_⟧ᵇᶜ {b} c ∘ᵐ terminalᵐ

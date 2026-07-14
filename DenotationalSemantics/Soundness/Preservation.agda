@@ -1177,10 +1177,10 @@ box-id-suc {ρ₂ = ρ₂} a w env =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
 
--- THE TICK'S POSSIBILITY IDENTITY
+-- THE TICK'S CONTEXT-MODALITY IDENTITY
 --
 -- What `DELAY` finally reduces to, once every box has been discharged: a pure
--- statement about the past modality.
+-- statement about the context modality.
 
 -- Folding the unit that the tick's transposition introduced. `μ` against `η`
 -- is the graded monad's unit law, so the whole `⟨⟩-≤ ∘ μ ∘ ⟨⟩-≤ ∘ η` collapses

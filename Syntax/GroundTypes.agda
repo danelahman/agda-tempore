@@ -16,7 +16,7 @@ data GType : Set where
   Unit   : GType                           -- unit type
   Empty  : GType                           -- empty type
   _|×|ᵍ_ : GType → GType → GType           -- product type
-  [_]ᵍ_  : R → GType → GType               -- temporal modality: values of type `[ ρ ] A`
-                                           -- become available in at most `r` steps
+  [_]ᵍ_  : R → GType → GType               -- box modality: values of type `[ ρ ]ᵍ A`
+                                           -- become available in at most `ρ` steps
 infix 38 _|×|ᵍ_
 infix 37 [_]ᵍ_

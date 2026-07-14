@@ -6,7 +6,7 @@
 -- contravariantly, as a reindexing `⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ`. Each       --
 -- constructor is a structural map of the model: weakening projects      --
 -- (`fstᵐ`), a variable renaming contracts (`⟨ idᵐ , var-morphism … ⟩ᵐ`), --
--- and the lock (possibility) renamings are exactly the past modality's  --
+-- and the lock renamings are exactly the context modality's             --
 -- unit `η`, counit `εᵘ`, multiplication `μ`, and monotonicity `⟨⟩-≤` —   --
 -- all available at an *arbitrary* resource grade.                       --
 ------------------------------------------------------------------------

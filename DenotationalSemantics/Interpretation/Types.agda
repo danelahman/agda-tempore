@@ -4,7 +4,7 @@
 -- Value types are interpreted as objects: base types via the           --
 -- `GroundTypes` interpretation, the finite-product/-coproduct and       --
 -- function-type formers via the cartesian closed structure, and the     --
--- grade modality `[ ρ ] A` via the box `[ ρ ]ᵒ`. A computation type     --
+-- box modality `[ ρ ] A` via `[ ρ ]ᵒ`. A computation type               --
 -- `A ‼ ε` is the graded monad applied to the value type, `Tᵒ ⟦ A ⟧ ε`.  --
 --                                                                    --
 -- The two interpretations are mutually recursive: a function type       --

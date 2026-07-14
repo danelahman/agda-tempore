@@ -2,7 +2,7 @@
 -- Interpretation of variables.                                         --
 --                                                                    --
 -- A variable `x : A ∈[ ρ ] Γ` is projected through the context to the  --
--- possibility modality at its accumulated grade, `var-proj x :          --
+-- context modality at its accumulated grade, `var-proj x :              --
 -- ⟦ Γ ⟧ →ᵐ ⟨ ρ ⟩ᵒ ⟦ A ⟧`. It is then extracted to `⟦ A ⟧`: for a        --
 -- non-eternal type this needs `ρ ≾ uᵣ` and uses the unit-graded counit   --
 -- `εᵘ`; for an eternal type it uses the eternal extraction `extᵉ` at     --
@@ -59,7 +59,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
 open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
 
--- Project a variable through the context to the possibility modality.
+-- Project a variable through the context to the context modality.
 
 var-proj : ∀ {A ρ Γ} → A ∈[ ρ ] Γ → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟨ ρ ⟩ᵒ ⟦ A ⟧ᵛ
 var-proj Hd                    = η ∘ᵐ sndᵐ

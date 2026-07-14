@@ -28,6 +28,14 @@
 --   - progress and preservation theorems                               --
 --                                                                      --
 --   - equational theory based on standard presentations of local state --
+--                                                                      --
+--   - a denotational semantics: an abstract model interface (worlds,   --
+--     box and context modalities, their adjunction, and a graded       --
+--     effect monad), a concrete model on presheaves over the worlds,   --
+--     and the interpretation of the language in any such model         --
+--                                                                      --
+--   - soundness of the operational semantics with respect to the       --
+--     denotational semantics                                           --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
@@ -164,7 +172,7 @@ open import DenotationalSemantics.Model.Monad
 open import DenotationalSemantics.Model.TickMonad
 open import DenotationalSemantics.Model.Implementation
 
----- Concrete model on discretely-indexed presheaves
+---- Concrete model on setoid-valued presheaves over the worlds
 
 open import DenotationalSemantics.Model.Example.PSh.Base
 open import DenotationalSemantics.Model.Example.PSh.Modality.Future

@@ -38,7 +38,7 @@ mutual
     _|×|_ : VType → VType → VType            -- product type
     Empty : VType                            -- empty type
     _⇒_   : VType → CType → VType            -- function type
-    [_]_  : R → VType → VType                -- grade modality: values of type `[ ρ ] A`
+    [_]_  : R → VType → VType                -- box modality: values of type `[ ρ ] A`
                                              -- become available in at most `ρ` steps
   data CType : Set where
     _‼_ : VType → E → CType

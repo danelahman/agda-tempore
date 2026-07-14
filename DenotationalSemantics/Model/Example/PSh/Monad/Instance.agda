@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Packaging the free graded monad on discrete presheaves as an        --
--- instance of the abstract `Monad` interface.                          --
+-- Packaging the free graded monad on presheaves as an instance of     --
+-- the abstract `Monad` interface.                                      --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

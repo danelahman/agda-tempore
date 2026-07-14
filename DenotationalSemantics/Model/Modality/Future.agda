@@ -16,7 +16,7 @@
 -- isomorphism: a unit-graded unit `ηᵘ : A →ᵐ [ u ]ᵒ A` splits `ε`, so  --
 -- `[ u ]ᵒ A ≅ A`. This is the semantic counterpart of the calculus     --
 -- being able to use a variable once the resources to its right sum to  --
--- the unit grade, and it is dual to the possibility modality's         --
+-- the unit grade, and it is dual to the context modality's             --
 -- unit-graded counit `εᵘ`.                                             --
 ------------------------------------------------------------------------
 

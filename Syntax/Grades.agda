@@ -58,7 +58,7 @@ record Grade : Set₁ where
     ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
     ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
 
-    -- inclusion of ℕ (d : ℕ → Carrier s.t. ... ? ...)
+    -- inclusion of ℕ, mapping `n` to the grade of `n` time steps
     of-nat : ℕ → Carrier
 
     -- including ℕ preserves unit
@@ -66,8 +66,6 @@ record Grade : Set₁ where
 
     -- including ℕ preserves addition
     of-nat-plus : ∀ {m n} → of-nat (m + n) ≡ of-nat m · of-nat n
-
-    -- ...
 
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
@@ -147,6 +145,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ₑ_;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
+     ≾-refl to ≾ₑ-refl;
      ≾-trans to ≾ₑ-trans;
      ≾-irrelevant to ≾ₑ-irrelevant;
      _≡?_ to _≡ₑ?_;

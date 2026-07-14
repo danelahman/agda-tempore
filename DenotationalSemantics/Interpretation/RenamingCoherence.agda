@@ -4,7 +4,7 @@
 --                                                                    --
 -- Proved by mutual induction on the term. The `var` case is            --
 -- `var-morphism-nat`; the environment-threading formers push `⟦ r ⟧ʳ`    --
--- through the modality structure using `η⊣`/`str`/box naturality.       --
+-- through the modality structure using `η⊣`/`strᵀ`/box naturality.      --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

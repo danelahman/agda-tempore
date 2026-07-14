@@ -106,7 +106,7 @@ eternal-val-ext-nat (Baseₑ b eb) (const c) =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧ᵏ-eternal eb c))
+    (≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧ᵇᶜ-eternal eb c))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
 eternal-val-ext-nat Unitₑ ⋆ =

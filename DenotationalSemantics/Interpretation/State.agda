@@ -81,7 +81,7 @@ hist (S ∷ₛ V)  = hist S
 
 -- The state as an environment for its own context.
 --
---   * a lock is passed through by the past modality's functorial action;
+--   * a lock is passed through by the context modality's functorial action;
 --   * a cell is filled by the value stored in it, boxed up by the
 --     adjunction unit (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`) — the `box` morphism.
 --

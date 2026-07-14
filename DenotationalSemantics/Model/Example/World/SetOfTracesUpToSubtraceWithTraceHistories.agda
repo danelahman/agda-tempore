@@ -7,7 +7,7 @@
 -- appending a continuation trace `cont` that is a sub-trace of some    --
 -- member of the set `P`:                                               --
 --                                                                      --
---   w ⊑ᵗ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                       --
+--   w ⊑ʰ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                       --
 --                          and   cont ≼ t   for some   t ∈ P           --
 --                                                                      --
 -- Covering the continuation by a sub-trace of a member keeps the       --
@@ -46,22 +46,22 @@ open import DenotationalSemantics.Model.World
 -- Reach `w'` from `w` by appending a continuation `cont` that is a
 -- sub-trace of some member of the set of traces `P`.
 
-infix 5 _⊑ᵗ[_]_
+infix 5 _⊑ʰ[_]_
 
-record _⊑ᵗ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
-  constructor mkᵗ
+record _⊑ʰ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
+  constructor mkʰ
   field
     cont    : Trace                                          -- continuation
     covered : True (any? (λ t → cont ≼? t) (traces P))       -- ≼ some member
     extends : w ∙ cont ≡ w'                                  -- `w'` extends `w`
 
-open _⊑ᵗ[_]_
+open _⊑ʰ[_]_
 
 -- reflexivity at the unit grade `{ ε }`: the empty continuation, which
 -- is a sub-trace of the sole member `ε` of the unit set of traces
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ u ] w
-⊑ᵗ-refl {w} = mkᵗ ε (fromWitness {a? = any? (λ t → ε ≼? t) (traces u)} εcov)
+⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ u ] w
+⊑ʰ-refl {w} = mkʰ ε (fromWitness {a? = any? (λ t → ε ≼? t) (traces u)} εcov)
                     (∙-identityʳ w)
   where
     εcov : Any (λ t → ε ≼ t) (traces u)
@@ -71,12 +71,12 @@ open _⊑ᵗ[_]_
 -- the two continuations; monotonicity of the trace product covers the
 -- sequenced continuation by the product of the two covering members
 
-⊑ᵗ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P · Q ] w''
-⊑ᵗ-trans {P} {Q} {w} (mkᵗ t₁ cov₁ eq₁) (mkᵗ t₂ cov₂ eq₂)
+⊑ʰ-trans : ∀ {P Q w w' w''}
+         → w ⊑ʰ[ P ] w' → w' ⊑ʰ[ Q ] w'' → w ⊑ʰ[ P · Q ] w''
+⊑ʰ-trans {P} {Q} {w} (mkʰ t₁ cov₁ eq₁) (mkʰ t₂ cov₂ eq₂)
   with find (toWitness cov₁) | find (toWitness cov₂)
 ... | a , a∈P , t₁≼a | b , b∈Q , t₂≼b =
-      mkᵗ (t₁ ∙ t₂)
+      mkʰ (t₁ ∙ t₂)
           (fromWitness
             (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼_) eq (mono-∙ t₁≼a t₂≼b))
                      (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
@@ -86,13 +86,13 @@ open _⊑ᵗ[_]_
 -- since the covering member's sub-trace is again covered, by transitivity
 -- of the sub-trace preorder
 
-⊑ᵗ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵗ[ P ] w' → w ⊑ᵗ[ Q ] w'
-⊑ᵗ-mono {P} {Q} rel (mkᵗ cont cov eq)
+⊑ʰ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ʰ[ P ] w' → w ⊑ʰ[ Q ] w'
+⊑ʰ-mono {P} {Q} rel (mkʰ cont cov eq)
   with find (toWitness cov)
 ... | t , t∈P , cont≼t
         with find (toWitness (rel t (fromWitness t∈P)))
 ...     | t' , t'∈Q , t≼t' =
-          mkᵗ cont
+          mkʰ cont
               (fromWitness
                 (Any.map (λ eq' → subst (cont ≼_) eq' (≼-trans cont≼t t≼t'))
                          t'∈Q))
@@ -101,12 +101,12 @@ open _⊑ᵗ[_]_
 -- proof irrelevance of the witnesses: the continuation is determined by
 -- left cancellation, and the covering witness is an irrelevant proof
 
-⊑ᵗ-irrelevant : ∀ {P w w'} → (p q : w ⊑ᵗ[ P ] w') → p ≡ q
-⊑ᵗ-irrelevant {P} {w} (mkᵗ cont cov refl) (mkᵗ cont' cov' eq')
+⊑ʰ-irrelevant : ∀ {P w w'} → (p q : w ⊑ʰ[ P ] w') → p ≡ q
+⊑ʰ-irrelevant {P} {w} (mkʰ cont cov refl) (mkʰ cont' cov' eq')
   with ∙-cancelˡ w eq'
 ... | refl with eq'
 ... | refl =
-        cong (λ z → mkᵗ cont z refl)
+        cong (λ z → mkʰ cont z refl)
              (True-irr (any? (λ t → cont ≼? t) (traces P)) cov cov')
 
 ------------------------------------------------------------------------
@@ -115,9 +115,9 @@ open _⊑ᵗ[_]_
 histories : World traces-up-to-subtrace
 histories = record
   { W             = Trace
-  ; _⊑[_]_       = _⊑ᵗ[_]_
-  ; ⊑-refl       = ⊑ᵗ-refl
-  ; ⊑-trans      = λ {ρ₁} {ρ₂} → ⊑ᵗ-trans {ρ₁} {ρ₂}
-  ; ⊑-mono       = λ {ρ₁} {ρ₂} → ⊑ᵗ-mono {ρ₁} {ρ₂}
-  ; ⊑-irrelevant = λ {ρ} → ⊑ᵗ-irrelevant {ρ}
+  ; _⊑[_]_       = _⊑ʰ[_]_
+  ; ⊑-refl       = ⊑ʰ-refl
+  ; ⊑-trans      = λ {ρ₁} {ρ₂} → ⊑ʰ-trans {ρ₁} {ρ₂}
+  ; ⊑-mono       = λ {ρ₁} {ρ₂} → ⊑ʰ-mono {ρ₁} {ρ₂}
+  ; ⊑-irrelevant = λ {ρ} → ⊑ʰ-irrelevant {ρ}
   }

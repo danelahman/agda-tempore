@@ -89,7 +89,7 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
 -- time its runtime computation takes. An `↝-STEPₘ` performs no runtime
 -- computation and so is graded `uₑ`; an `OP-STEPₘ` runs the operation's
 -- implementation, whose grade is `op-grade op` — the same time the rule locks
--- into the state. The two can no longer disagree (`m-top-level-step-time`).
+-- into the state. The two agree (`op-step-time`).
 
 open import Util.Monad
 

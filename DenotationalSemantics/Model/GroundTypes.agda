@@ -4,7 +4,7 @@
 -- A `GroundTypes` structure supplies an interpretation `⟦_⟧ᵇ` of the  --
 -- base types as objects; the interpretation `⟦_⟧ᵍ` of ground types is  --
 -- then determined by the cartesian closed structure (unit, empty,      --
--- products) and the box modality (for the temporal ground modality     --
+-- products) and the box `[ ρ ]ᵒ` (for the ground box modality          --
 -- `[ ρ ]ᵍ`).                                                           --
 ------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ record GroundTypes (Cat : Category) (Fut : Future Cat RGrade) : Set₁ where
     ⟦_⟧ᵇ : BaseType → Obj
 
     -- interpretation of base-typed constants as global elements
-    ⟦_⟧ᵏ : ∀ {B} → BaseConstants B → 𝟙ᵐ →ᵐ ⟦ B ⟧ᵇ
+    ⟦_⟧ᵇᶜ : ∀ {B} → BaseConstants B → 𝟙ᵐ →ᵐ ⟦ B ⟧ᵇ
 
   -- interpretation of the ground types
 

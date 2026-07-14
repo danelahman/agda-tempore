@@ -75,7 +75,7 @@ mutual
 
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → Γ ⊢V⦂ A → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
   ⟦ var f x  ⟧ᵛᵗ = var-morphism f x
-  ⟦ const c  ⟧ᵛᵗ = ⟦ c ⟧ᵏ ∘ᵐ terminalᵐ
+  ⟦ const c  ⟧ᵛᵗ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
   ⟦ ⋆        ⟧ᵛᵗ = terminalᵐ
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ = ⟨ ⟦ V ⟧ᵛᵗ , ⟦ W ⟧ᵛᵗ ⟩ᵐ
   ⟦ lam M    ⟧ᵛᵗ = curryᵐ ⟦ M ⟧ᶜᵗ

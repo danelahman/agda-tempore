@@ -8,8 +8,8 @@
 -- i.e. a *past* world `wᵖ`, reachable to `w` by spending the resource     --
 -- grade `ρ`, together with a value of `A` at that past world.             --
 --                                                                    --
--- As the base presheaves are unit-monotone rather than discrete, this     --
--- Σ-bundle is quotiented into the *coend* `∫^{wᵖ} (wᵖ ⊑[ ρ ] w) ×        --
+-- As the base presheaves are unit-monotone, this Σ-bundle is quotiented  --
+-- into the *coend* `∫^{wᵖ} (wᵖ ⊑[ ρ ] w) ×                               --
 -- carrier A wᵖ`. Concretely the per-world equivalence `_≈_` is the        --
 -- equivalence closure of the generating relation `_◅_`: a bundle may be   --
 -- pushed forward along a unit-accessibility step `wᵖ ⊑[ u ] wᵖ'`,        --

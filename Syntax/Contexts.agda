@@ -292,7 +292,7 @@ data ⟨⟩-Ctx : Ctx → Set where
 
 
 -- The left split of a context Γ according to a variable x is the same as
--- the left split of a Γ extended with a grade modality.
+-- the left split of a Γ extended with a context modality.
 
 var-split-≡-var-split-Tl-⟨⟩ : ∀ {Γ A ρ ρ'}
                             → (x : A ∈[ ρ ] Γ)
