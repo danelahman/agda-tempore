@@ -303,3 +303,15 @@ step-invariants {S = S} HANDLE-OP =
 step-invariants BOX                    = refl , ≾ᵣ-refl
 step-invariants UNBOX                  = refl , ≾ᵣ-refl
 step-invariants (COERCE {ε≾ε' = ε≾ε'}) = refl , ·ᵣ-monoʳ-≾ᵣ (map-monotoneᵉ ε≾ε')
+
+-- Reflexive-transitive closure: a run of the machine. Every step preserves the
+-- value type, but refines the effect grade, so the grade is free at each link.
+
+infixr 5 _◅_
+
+data _↝*_ : ∀ {A ε ε'} → Config (A ‼ ε) → Config (A ‼ ε') → Set where
+  ε*   : ∀ {A ε} {cf : Config (A ‼ ε)}
+       → cf ↝* cf
+  _◅_  : ∀ {A ε₁ ε₂ ε₃}
+       → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (A ‼ ε₂)} → {cf₃ : Config (A ‼ ε₃)}
+       → cf₁ ↝ cf₂ → cf₂ ↝* cf₃ → cf₁ ↝* cf₃

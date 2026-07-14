@@ -78,6 +78,20 @@ delayᵀ-nat : ∀ {A B ε} → (τ : ℕ) → (f : A →ᵖ B)
            → delayᵀ {ε = ε} τ ∘ᵖ [ of-natʳ τ ]ᶠ (Tᶠ f) ≈ᵖ Tᶠ f ∘ᵖ delayᵀ τ
 delayᵀ-nat τ f x = delay-≈ (λ q → ≈ᵗ-refl _)
 
+-- Sub-effecting the delayed computation is sub-effecting the delay: the `sub`
+-- the coercion leaves in each continuation may be pulled out past the delay
+-- node, because the grade it coerces factors through the delay's own
+-- (`sub-delay`). This is what makes `T-≤` commute with the multiplication in
+-- the *inner* grade, and hence what lets the `↝*` closure compose.
+
+delayᵀ-≤ : ∀ {A ε ε'} → (τ : ℕ) → (p : ε ≾ₑ ε')
+         → delayᵀ {A} {ε'} τ ∘ᵖ [ of-natʳ τ ]ᶠ (T-≤ p)
+         ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ delayᵀ {A} {ε} τ
+delayᵀ-≤ τ p x =
+  -- the two delay nodes agree on their continuations, differing only in the
+  -- coherence witness `delay-≈` ignores
+  ≈ᵗ-trans (delay-≈ (λ q → ≈ᵗ-refl _)) (≈ᵗ-sym (sub-delayᵗ p _ _))
+
 -- `opᵀ` naturality crosses the exponential functor `map⇒ᵐ`, which in the
 -- setoid model reindexes its argument by `transport ⊑-refl`; the discrepancy
 -- is exactly `transport-refl` of the exponential.

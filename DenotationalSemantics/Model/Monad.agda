@@ -161,6 +161,16 @@ record Monad : Set₁ where
                → delayᵀ {ε = ε} τ ∘ᵐ [ of-natʳ τ ]ᶠ (Tᶠ f)
                ≈ᵐ Tᶠ f ∘ᵐ delayᵀ τ
 
+    -- Sub-effecting the delayed computation is sub-effecting the delay. This is
+    -- the *inner*-grade counterpart of `T-≤-μᵀ`, and it is what a multi-step
+    -- reduction needs: composing two steps substitutes the target
+    -- configuration's coercion *under* the Kleisli bind, and only `DELAY`
+    -- produces a transition that is not `ηᵀ`.
+
+    delayᵀ-≤ : ∀ {A ε ε'} → (τ : ℕ) → (p : ε ≾ₑ ε')
+             → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (T-≤ p)
+             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ delayᵀ {A} {ε} τ
+
     opᵀ-nat : ∀ {A B ε} → (op : Op) → (f : A →ᵐ B)
             → opᵀ {ε = ε} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ f)))
             ≈ᵐ Tᶠ f ∘ᵐ opᵀ op

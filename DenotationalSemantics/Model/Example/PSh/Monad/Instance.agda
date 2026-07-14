@@ -55,6 +55,7 @@ PShMonad = record
   ; delayᵀ              = delayᵀ
   ; opᵀ                 = opᵀ
   ; delayᵀ-nat          = delayᵀ-nat
+  ; delayᵀ-≤            = delayᵀ-≤
   ; opᵀ-nat             = opᵀ-nat
   ; delayᵀ-algebraicity = delayᵀ-algebraicity
   ; opᵀ-algebraicity    = opᵀ-algebraicity

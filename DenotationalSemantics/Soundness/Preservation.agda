@@ -61,7 +61,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_,_; _×_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Syntax.Types     S
@@ -2264,6 +2264,113 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N u =
                   (≈ᵐ-sym (C-rename-nat (cong-∷-ren ren) N)))))))
           ⟩ᵐ-cong)
 
+-- SUB-EFFECTING ACROSS A STEP
+--
+-- Composing two reduction steps substitutes the target configuration's
+-- coercion *under* the Kleisli bind, so it has to escape from beneath `Tᶠ`.
+-- That is sub-effecting in the monad's *inner* grade. Rather than assume it in
+-- general, we prove it for the transitions that actually occur: `stepᵀ r` is
+-- `ηᵀ` for every rule but `DELAY`, and `DELAY`'s is a `delayᵀ` — for which the
+-- model's `delayᵀ-≤` says exactly this.
+
+-- The grade a delayed computation's `ηᵀ` leaves behind.
+
+delay-z : ∀ (τ : ℕ) (ε : E) → of-natᵉ τ ·ₑ ε ≾ₑ (of-natᵉ τ ·ₑ uₑ) ·ₑ ε
+delay-z τ ε =
+  ≾ₑ-trans (·ₑ-monoʳ-≾ₑ (≾ₑ-reflexive (sym (·ₑ-identityˡ ε))))
+           (≾ₑ-reflexive (sym (·ₑ-assoc (of-natᵉ τ) uₑ ε)))
+
+-- Binding a computation after a delay is delaying the bound computation. (The
+-- `ηᵀ` the transition carries is absorbed, leaving only a regrading.)
+
+delay-nf : ∀ {X Y B ε} → (τ : ℕ) → (env : X →ᵐ [ of-natʳ τ ]ᵒ Y) → (f : Y →ᵐ Tᵒ B ε)
+         → μᵀ ∘ᵐ Tᶠ f ∘ᵐ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ env)
+         ≈ᵐ T-≤ (delay-z τ ε) ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ f ∘ᵐ env
+delay-nf {ε = ε} τ env f =
+  -- push the bind under the delay …
+    ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ f)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  -- … and the multiplication too (the delay is algebraic)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  -- under the box: the transition's `ηᵀ` is absorbed by the multiplication
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+      (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+       ∙ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _ ∙ ⋄-ηᵀ f ∙ ∘ᵐ-congˡ (T-≤-≡ _)))
+       ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
+       ∙ ∘ᵐ-assoc _ _ _))
+  -- what is left is a coercion under the box, which `delayᵀ-≤` pulls out
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-≤ τ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-≡ _) ∙ T-≤-trans _ _ (delay-z τ ε))
+
+-- The nine rules that transition by `ηᵀ`: the coercion simply passes through,
+-- both sides collapsing to the same chain of sub-effectings.
+
+ηᵀ-case : ∀ {X B εa εb} → (g : X →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)
+        → μᵀ ∘ᵐ Tᶠ (T-≤ q ∘ᵐ g) ∘ᵐ ηᵀ
+        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵀ ∘ᵐ Tᶠ g ∘ᵐ ηᵀ
+ηᵀ-case {εa = εa} {εb = εb} g q =
+    ⋄-ηᵀ (T-≤ q ∘ᵐ g)
+  ∙ ∘ᵐ-congˡ (T-≤-≡ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-trans q _ w)
+  ∙ ≈ᵐ-sym
+      (  ∘ᵐ-congʳ (⋄-ηᵀ g ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congˡ (T-≤-trans _ _ w))
+  where
+    w : εa ≾ₑ uₑ ·ₑ εb
+    w = ≾ₑ-trans q (≾ₑ-reflexive (sym (·ₑ-identityˡ εb)))
+
+-- The coercion escapes the bind, for the transition of any step.
+
+T-≤-stepᵀ : ∀ {ε ε' εa εb A} {S S' : 𝕊 []} → (B : Obj)
+          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+          → (g : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)
+          → μᵀ ∘ᵐ Tᶠ (T-≤ q ∘ᵐ g) ∘ᵐ stepᵀ r
+          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵀ ∘ᵐ Tᶠ g ∘ᵐ stepᵀ r
+T-≤-stepᵀ B APP         g q = ηᵀ-case g q
+T-≤-stepᵀ B MATCH       g q = ηᵀ-case g q
+T-≤-stepᵀ B SEQ-RET     g q = ηᵀ-case g q
+T-≤-stepᵀ B SEQ-OP      g q = ηᵀ-case g q
+T-≤-stepᵀ B HANDLE-RET  g q = ηᵀ-case g q
+T-≤-stepᵀ B HANDLE-OP   g q = ηᵀ-case g q
+T-≤-stepᵀ B BOX         g q = ηᵀ-case g q
+T-≤-stepᵀ B UNBOX       g q = ηᵀ-case g q
+T-≤-stepᵀ B COERCE      g q = ηᵀ-case g q
+-- the congruences transition exactly as their sub-reduction does
+T-≤-stepᵀ B (SEQ-STEP r _)    g q = T-≤-stepᵀ B r g q
+T-≤-stepᵀ B (HANDLE-STEP r _) g q = T-≤-stepᵀ B r g q
+-- the one rule that advances time
+T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
+  -- the coercion is under the delay's box; `delayᵀ-≤` pulls it out, and the two
+  -- sub-effectings then collapse to the same one
+    delay-nf τ η⊣ (T-≤ q ∘ᵐ g)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (delayᵀ-≤ τ q))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-trans (·ₑ-monoʳ-≾ₑ q) (delay-z τ εb) z)
+  ∙ ≈ᵐ-sym
+      (  ∘ᵐ-congʳ (delay-nf τ η⊣ g)
+       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congˡ (T-≤-trans (delay-z τ εa) (·ₑ-monoʳ-≾ₑ q) z))
+  where
+    z : of-natᵉ τ ·ₑ εa ≾ₑ (of-natᵉ τ ·ₑ uₑ) ·ₑ εb
+    z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (delay-z τ εb)
+
 ------------------------------------------------------------------------
 -- THE SOUNDNESS THEOREM
 --
@@ -2375,3 +2482,172 @@ Uniform↝ COERCE                = ⊤
     (∘ᵐ-congˡ (sound-HANDLE-OP op V M H N u)
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+
+
+------------------------------------------------------------------------
+-- THE MULTI-STEP CLOSURE
+--
+-- A run of the machine is sound: the source configuration's denotation is the
+-- final one's, run after the accumulated transition, coerced along the
+-- accumulated refinement. The three components multiply/compose exactly as the
+-- single-step ones do, and the induction goes through because the target's
+-- coercion escapes the bind (`T-≤-stepᵀ`).
+------------------------------------------------------------------------
+
+-- The accumulated effect of a run, its transition, and its refinement.
+
+steps-grade : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+            → cf ↝* cf' → E
+steps-grade ε*        = uₑ
+steps-grade (r ◅ rs)  = step-grade r ·ₑ steps-grade rs
+
+stepsᵀ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+       → (rs : cf ↝* cf')
+       → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ
+       →ᵐ Tᵒ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ (steps-grade rs)
+stepsᵀ ε*       = ηᵀ
+stepsᵀ (r ◅ rs) = stepsᵀ rs ⋄ stepᵀ r
+
+steps-≾ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+        → (rs : cf ↝* cf') → steps-grade rs ·ₑ ε' ≾ₑ ε
+steps-≾ {ε = ε} ε*       = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+steps-≾ {ε' = ε'} (_◅_ {ε₂ = ε₂} r rs) =
+  -- the step's own refinement, after the run's, reassociated
+  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (step-grade r) (steps-grade rs) ε'))
+  (≾ₑ-trans (·ₑ-monoʳ-≾ₑ (steps-≾ rs)) (step-≾ r))
+
+-- Every handler the run reaches must be uniform.
+
+Uniform↝* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+          → cf ↝* cf' → Set
+Uniform↝* ε*       = ⊤
+Uniform↝* (r ◅ rs) = Uniform↝ r × Uniform↝* rs
+
+-- The Kleisli composite is associative: binding a run after a step is binding
+-- once, at the product of the two grades. (The monad's associativity, with the
+-- functorial actions collected.)
+
+bind-bind : ∀ {X Y Z B ε₁ ε₂ ε₃}
+          → (f : Z →ᵐ Tᵒ B ε₃) → (t : Y →ᵐ Tᵒ Z ε₂) → (s : X →ᵐ Tᵒ Y ε₁)
+          → μᵀ ∘ᵐ Tᶠ (f ⋄ t) ∘ᵐ s
+          ≈ᵐ ε-substᵀ (·ₑ-assoc ε₁ ε₂ ε₃) ∘ᵐ (f ⋄ (t ⋄ s))
+bind-bind f t s =
+  -- split the bound composite's functorial action …
+    ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _ ∙ ∘ᵐ-congʳ (T-∘ᵐ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  -- … and apply the monad's associativity
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ T-μ∘μ≡μ∘Tμ)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  -- the inner multiplication is natural, which exposes the second bind
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congʳ (μᵀ-nat f)))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+
+-- SOUNDNESS OF A RUN
+
+↝*-sound : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+         → (rs : cf ↝* cf') → Uniform↝* rs
+         → ⟦ cf ⟧ᶜᶠ
+         ≈ᵐ T-≤ (steps-≾ rs)
+            ∘ᵐ _⋄_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
+                   {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
+                   {steps-grade rs} {ε'}
+                   ⟦ cf' ⟧ᶜᶠ (stepsᵀ rs)
+-- the empty run: the transition is `ηᵀ`, which the bind absorbs
+↝*-sound {A = A} {ε = ε} {cf = cf} ε* _ =
+  pure-step-≡ (steps-≾ (ε* {A} {ε} {cf})) ≈ᵐ-refl
+-- a step, then a run
+↝*-sound {A = A} {ε' = ε'} (_◅_ {ε₂ = ε₂} {cf₃ = cf₃} r rs) (u , us) =
+  -- the step is sound …
+    ↝-sound r u
+  -- … and so, inductively, is the run that follows it
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (↝*-sound rs us))))
+  -- THE KEY STEP: the run's coercion escapes the bind
+  ∙ ∘ᵐ-congʳ (T-≤-stepᵀ ⟦ A ⟧ᵛ r (⟦ cf₃ ⟧ᶜᶠ ⋄ stepsᵀ rs) (steps-≾ rs))
+  -- the two binds re-associate into one, at the product of their grades …
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (bind-bind ⟦ cf₃ ⟧ᶜᶠ (stepsᵀ rs) (stepᵀ r)))
+  -- … and the three coercions collapse into the run's own
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _)))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-trans _ _ b))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-trans b (step-≾ r) (steps-≾ (r ◅ rs)))
+  where
+    b : steps-grade (r ◅ rs) ·ₑ ε' ≾ₑ step-grade r ·ₑ ε₂
+    b = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (step-grade r) (steps-grade rs) ε'))
+                 (·ₑ-monoʳ-≾ₑ (steps-≾ rs))
+
+
+
+------------------------------------------------------------------------
+-- THE SOUNDNESS PREORDER
+--
+-- `cf ≋ cf'` says that `cf` runs to `cf'` denotationally: `cf` is `cf'`,
+-- executed after some transition, coerced along some refinement. `↝*-sound` is
+-- the statement that a run of the machine witnesses it.
+--
+-- It is a preorder — reflexive by the empty run, transitive by `bind-bind` and
+-- by `T-≤`'s own transitivity (which is why `_≈ᵗ_` has to collapse the `sub`
+-- nodes: without `sub-u`/`sub-∘` the coercions would accumulate and `T-≤` would
+-- not compose).
+------------------------------------------------------------------------
+
+record _≋_ {A ε ε'} (cf : Config (A ‼ ε)) (cf' : Config (A ‼ ε')) : Set where
+  constructor mk≋
+  field
+    -- the effect the transition performs, and the refinement it licenses
+    grade : E
+    refine : grade ·ₑ ε' ≾ₑ ε
+    -- the transition itself, between the two states' histories
+    tr     : ⟦ hist (Config.state cf) ⟧ᶜᵗˣ
+           →ᵐ Tᵒ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ grade
+    -- and the equation
+    sound  : ⟦ cf ⟧ᶜᶠ
+           ≈ᵐ T-≤ refine
+              ∘ᵐ _⋄_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
+                     {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {grade} {ε'}
+                     ⟦ cf' ⟧ᶜᶠ tr
+
+-- A run of the machine is such a witness. This is the soundness theorem in its
+-- final form: reduction never changes what a configuration means.
+
+↝*-≋ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+     → (rs : cf ↝* cf') → Uniform↝* rs → cf ≋ cf'
+↝*-≋ rs us = mk≋ (steps-grade rs) (steps-≾ rs) (stepsᵀ rs) (↝*-sound rs us)
+
+-- CLOSED PROGRAMS
+--
+-- A program is a closed computation: the empty state, so the empty history, so
+-- its denotation is a global point of `Tᵒ ⟦ A ⟧ᵛ ε`. If it runs to a returned
+-- value, the program *is* that value returned — after the run's transition, and
+-- at the run's (refined) grade. Nothing of the state survives in the equation:
+-- `hist ∅ ≡ []`, so both sides are morphisms out of `𝟙ᵐ`.
+
+Program : VType → E → Set
+Program A ε = [] ⊢C⦂ A ‼ ε
+
+⟦_⟧ᵖ : ∀ {A ε} → Program A ε → 𝟙ᵐ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε
+⟦ M ⟧ᵖ = ⟦ M ⟧ᶜᵗ
+
+-- Running a program to a value: its denotation is `ηᵀ` of the value's, in the
+-- final state's environment, composed with the run's transition.
+
+↝*-value : ∀ {A ε} {S' : 𝕊 []}
+         → (M : Program A ε)
+         → (V : toCtx S' ⊢V⦂ A)
+         → (rs : ⟨ ∅ , M ⟩ ↝* ⟨ S' , return V ⟩)
+         → Uniform↝* rs
+         → ⟦ M ⟧ᵖ
+         ≈ᵐ T-≤ (steps-≾ rs)
+            ∘ᵐ _⋄_ {𝟙ᵐ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {steps-grade rs} {uₑ}
+                   (ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepsᵀ rs)
+↝*-value M V rs us =
+  -- the empty state is the empty environment
+    ≈ᵐ-sym (∘ᵐ-identityʳ _)
+  ∙ ↝*-sound rs us
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-assoc _ _ _))))

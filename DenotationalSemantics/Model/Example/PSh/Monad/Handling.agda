@@ -125,6 +125,17 @@ mutual
     sub-≈ (T-alg-of-handlerˢ-cong h et)
   T-alg-of-handlerˢ-cong h sub-u                 = sub-u
   T-alg-of-handlerˢ-cong h sub-∘                 = sub-∘
+  -- as for `μˢ`: the coercion moves past the fold's grade transport, and then
+  -- under the delay (the fold keeps a delay a delay)
+  T-alg-of-handlerˢ-cong {ε' = ε'} h
+    (sub-delay {ε = ε₁} {ε' = ε₁'} {τ = τ} {e = e}) =
+    ≈ᵗ-trans
+      (sub-ε-substᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₁ ε'))
+                    (sym (·ₑ-assoc (of-natᵉ τ) ε₁' ε'))
+                    (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
+                    (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
+                    _)
+      (ε-substˢ-congᵗ _ sub-delay)
   T-alg-of-handlerˢ-cong h (≈ᵗ-sym et)           =
     ≈ᵗ-sym (T-alg-of-handlerˢ-cong h et)
   T-alg-of-handlerˢ-cong h (≈ᵗ-trans et et')     =
