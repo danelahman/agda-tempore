@@ -2585,20 +2585,29 @@ bind-bind f t s =
 
 
 ------------------------------------------------------------------------
--- THE SOUNDNESS PREORDER
+-- DENOTATIONAL RUNNING
 --
--- `cf ≋ cf'` says that `cf` runs to `cf'` denotationally: `cf` is `cf'`,
--- executed after some transition, coerced along some refinement. `↝*-sound` is
--- the statement that a run of the machine witnesses it.
+-- `cf ⊳ cf'` says that `cf` runs to `cf'` denotationally: `cf` *is* `cf'`,
+-- executed after some transition, coerced along some refinement. `↝*-⊳` is the
+-- statement that a run of the machine witnesses it.
 --
--- It is a preorder — reflexive by the empty run, transitive by `bind-bind` and
--- by `T-≤`'s own transitivity (which is why `_≈ᵗ_` has to collapse the `sub`
--- nodes: without `sub-u`/`sub-∘` the coercions would accumulate and `T-≤` would
--- not compose).
+-- The relation is DIRECTED, not an equivalence: the two sides sit at different
+-- effect grades, and `T-≤ refine` only ever coerces the target's (finer) grade
+-- up to the source's. A step may refine an effect — `COERCE` does exactly that —
+-- and nothing runs it back.
+--
+-- It is reflexive (`⊳-refl`), but it is NOT a preorder: transitivity would have
+-- to substitute the middle configuration's coercion under an *arbitrary*
+-- transition's bind, and sub-effecting escapes a bind only for the transitions
+-- reductions actually produce (`T-≤-stepᵀ`, proved by induction on the step —
+-- `stepᵀ r` is `ηᵀ` for every rule but `DELAY`). Transitivity *along a run* is
+-- therefore not a free-standing law but exactly the induction in `↝*-sound`.
 ------------------------------------------------------------------------
 
-record _≋_ {A ε ε'} (cf : Config (A ‼ ε)) (cf' : Config (A ‼ ε')) : Set where
-  constructor mk≋
+infix 4 _⊳_
+
+record _⊳_ {A ε ε'} (cf : Config (A ‼ ε)) (cf' : Config (A ‼ ε')) : Set where
+  constructor mk⊳
   field
     -- the effect the transition performs, and the refinement it licenses
     grade : E
@@ -2613,12 +2622,19 @@ record _≋_ {A ε ε'} (cf : Config (A ‼ ε)) (cf' : Config (A ‼ ε')) : Se
                      {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {grade} {ε'}
                      ⟦ cf' ⟧ᶜᶠ tr
 
+-- Reflexivity: a configuration runs to itself, taking no time and refining
+-- nothing.
+
+⊳-refl : ∀ {A ε} → (cf : Config (A ‼ ε)) → cf ⊳ cf
+⊳-refl {ε = ε} cf =
+  mk⊳ uₑ (steps-≾ (ε* {cf = cf})) ηᵀ (↝*-sound (ε* {cf = cf}) tt)
+
 -- A run of the machine is such a witness. This is the soundness theorem in its
 -- final form: reduction never changes what a configuration means.
 
-↝*-≋ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
-     → (rs : cf ↝* cf') → Uniform↝* rs → cf ≋ cf'
-↝*-≋ rs us = mk≋ (steps-grade rs) (steps-≾ rs) (stepsᵀ rs) (↝*-sound rs us)
+↝*-⊳ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+     → (rs : cf ↝* cf') → Uniform↝* rs → cf ⊳ cf'
+↝*-⊳ rs us = mk⊳ (steps-grade rs) (steps-≾ rs) (stepsᵀ rs) (↝*-sound rs us)
 
 -- CLOSED PROGRAMS
 --
