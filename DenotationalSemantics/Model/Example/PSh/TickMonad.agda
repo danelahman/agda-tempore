@@ -1,27 +1,16 @@
 ------------------------------------------------------------------------
 -- The free graded TICK monad on setoid-valued unit-monotone presheaves. --
 --                                                                    --
--- The target of the pure top-level interpretation. Its trees are built   --
--- from                                                                 --
+-- Trees are built from                                                  --
 --                                                                    --
 --   * `leaf`      : a returned value of `A` (grade `uₑ`);              --
---   * `tick-node` : `δ` worth of time passes and NOTHING is observed —  --
---                   trivial parameter, trivial arity, the grade as its  --
---                   effect. It stores its Kripke continuation over       --
---                   every world reachable by `mapᵉ δ`;                  --
+--   * `tick-node` : `δ` worth of time passes and nothing is observed. It --
+--                   stores its Kripke continuation over every world      --
+--                   reachable by `mapᵉ δ`;                              --
 --   * `sub`       : sub-effecting.                                      --
 --                                                                    --
--- There is no operation node and no handling: by the time a program is   --
--- read in this monad, every operation has been RUN AWAY by its external  --
--- implementation, and all that is left of it is the time it took.        --
---                                                                    --
--- That is exactly why `sub-tick` is sound here, and why the top-level    --
--- multi-step closure composes. An operation node records the *residual*  --
--- grade, so a coercion cannot be pushed under it without changing which  --
--- handler clause a fold would select. A tick records nothing.            --
---                                                                    --
--- Each proof below is the `delay-node` case of `PSh.Monad.Core`, with     --
--- `of-natᵉ τ` generalised to an arbitrary grade `δ : E`.                 --
+-- A tick records nothing, so a coercion may be pushed under it: hence    --
+-- `sub-tick` in the quotient below.                                      --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -81,11 +70,9 @@ mutual
                {t : Tᵏˢ A ε w}
            → sub e' (sub e t) ≈ᵏ sub e'' t
 
-    -- … and they pass UNDER a tick. A tick stores nothing but the time it
-    -- takes, so coercing its continuation's residual effect and coercing the
-    -- whole computation are the same thing. (The tree monad's operation node
-    -- cannot do this: it records the residual grade, which a handler's fold
-    -- reads to select its clause.)
+    -- … and they pass under a tick: a tick stores nothing but the time it
+    -- takes, so coercing its continuation and coercing the whole computation
+    -- agree.
     sub-tick : ∀ {ε ε' w} {δ : E} {e : ε ≾ₑ ε'}
                  {k : ∀ {w'} → w ⊑[ mapᵉ δ ] w' → Tᵏˢ A ε w'}
                  {kn  : ∀ {w' w''} (q : w ⊑[ mapᵉ δ ] w') (r : w' ⊑[ uᵣ ] w'')
@@ -464,8 +451,7 @@ Tᵏ-μ∘μ≡μ∘Tμ t = μᵏˢ-assoc t
 -- THE TICK
 --
 -- `δ` worth of time passes; the computation resumes in the future the box
--- reaches. The box's grade `mapᵉ δ` is already the node's, so — unlike the tree
--- monad's `delayᵀ`, whose box sits at `of-natʳ τ` — no coercion is needed.
+-- reaches. The box sits at the node's own grade `mapᵉ δ`.
 
 tickᵏ : ∀ {A ε} → (δ : E) → [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵖ Tᵏ A (δ ·ₑ ε)
 tickᵏ δ = pmap
@@ -483,7 +469,7 @@ tickᵏ-algebraicity : ∀ {A ε ε'} → (δ : E)
                      ∘ᵖ tickᵏ δ ∘ᵖ [ mapᵉ δ ]ᶠ (μᵏ {A} {ε} {ε'})
 tickᵏ-algebraicity δ x = ε-substᵏˢ-cong _ (tick-≈ (λ q → ≈ᵏ-refl _))
 
--- THE LAW THAT THE TREE MONAD'S OPERATION NODE CANNOT SATISFY.
+-- SUB-EFFECTING PASSES UNDER A TICK
 
 tickᵏ-≤ : ∀ {A ε ε'} → (δ : E) → (p : ε ≾ₑ ε')
         → tickᵏ {A} {ε'} δ ∘ᵖ [ mapᵉ δ ]ᶠ (T-≤ᵏ p)

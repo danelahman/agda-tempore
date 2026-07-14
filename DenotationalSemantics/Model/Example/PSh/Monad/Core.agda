@@ -119,14 +119,10 @@ mutual
     sub-≈   : ∀ {ε ε' w} {e e' : ε ≾ₑ ε'} {t t' : Tˢ A ε w}
             → t ≈ᵗ t' → sub e t ≈ᵗ sub e' t'
 
-    -- Sub-effecting nodes are *invisible*. The operational semantics
-    -- discards a `coerce` (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`) and refines
-    -- effect grades as it steps, so a denotational equality that is to be
-    -- preserved by reduction must not see the `sub` nodes those coercions
-    -- leave behind. Collapsing them is what makes `T-≤` a genuine
-    -- sub-effecting coercion (`T-≤-refl` / `T-≤-trans`) rather than a
-    -- free constructor, and hence what makes the soundness relation a
-    -- preorder — without which the `↝*` closure would not compose.
+    -- Sub-effecting nodes are invisible: reduction discards a `coerce`
+    -- (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`), so an equality preserved by
+    -- reduction must not see the `sub` node it leaves behind. Collapsing them
+    -- is what makes `T-≤` a coercion (`T-≤-refl` / `T-≤-trans`).
 
     sub-u   : ∀ {ε w} {e : ε ≾ₑ ε} {t : Tˢ A ε w}
             → sub e t ≈ᵗ t
@@ -134,20 +130,15 @@ mutual
                 {t : Tˢ A ε w}
             → sub e' (sub e t) ≈ᵗ sub e'' t
 
-    -- A `sub` may be pushed *under* a delay, when the grade it coerces factors
-    -- through the delay's own (`of-natᵉ τ ·ₑ_`) — which is the only shape that
-    -- ever arises, since a coercion of the tree's *residual* effect leaves the
-    -- delay itself untouched.
+    -- A `sub` may be pushed under a delay, at a grade factoring through the
+    -- delay's own (`of-natᵉ τ ·ₑ_`): a coercion of the residual effect leaves
+    -- the delay untouched. This is what makes sub-effecting commute with the
+    -- multiplication in the inner grade, which the `↝*` closure needs.
     --
-    -- There is deliberately NO such rule for `op-node`. It would be statable at
-    -- the factored grade, but it is INCOMPATIBLE with handling: the fold selects
-    -- the clause `h op ε''` by the residual grade `ε''`, so pushing a coercion
-    -- under an operation would change *which clause* is applied. Making it sound
-    -- would require handler clauses to be natural in the residual grade. None is
-    -- needed here — a `_↝_` step never performs an operation.
-    --
-    -- This is what makes sub-effecting commute with the multiplication in the
-    -- *inner* grade, and hence what lets the `↝*` closure compose.
+    -- The corresponding rule for `op-node` is unsound: the handler fold selects
+    -- the clause `h op ε''` by the residual grade `ε''`, so a coercion pushed
+    -- under an operation would change which clause is applied. It is also not
+    -- needed, as a `_↝_` step never performs an operation.
 
     sub-delay : ∀ {ε ε' w} {τ : ℕ} {e : ε ≾ₑ ε'}
                   {k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w'}
@@ -159,9 +150,8 @@ mutual
               ≈ᵗ delay-node τ (λ q → sub e (k q)) kn'
 
 
-    -- With the laws above the congruence rules no longer suffice to make
-    -- `_≈ᵗ_` an equivalence, so it is closed under symmetry and
-    -- transitivity explicitly.
+    -- The congruence rules alone do not make `_≈ᵗ_` an equivalence in the
+    -- presence of the laws above, so symmetry and transitivity are explicit.
 
     ≈ᵗ-sym   : ∀ {ε w} {t t' : Tˢ A ε w}
              → t ≈ᵗ t' → t' ≈ᵗ t

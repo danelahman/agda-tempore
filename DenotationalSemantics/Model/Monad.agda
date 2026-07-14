@@ -107,15 +107,12 @@ record Monad : Set₁ where
     T-≤-nat : ∀ {A B ε ε'} → (f : A →ᵐ B) → (p : ε ≾ₑ ε')
             → Tᶠ f ∘ᵐ T-≤ {A} p ≈ᵐ T-≤ {B} p ∘ᵐ Tᶠ f
 
-    -- Sub-effecting is *functorial in the grade*, and the on-the-nose
-    -- coercion is the special case of it at a reflexive witness.
-    --
-    -- These are what make `T-≤` a genuine coercion rather than extra
-    -- structure. They are needed because reduction *removes* coercions
+    -- Sub-effecting is functorial in the grade, the on-the-nose coercion
+    -- being the special case at a reflexive witness. This is what makes
+    -- `T-≤` a coercion rather than extra structure, and it is needed
+    -- because reduction removes coercions
     -- (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`) and refines effect grades as it
-    -- goes, so a denotational equality preserved by reduction cannot see
-    -- them; and they are what make the soundness relation transitive, hence
-    -- closable under `↝*`.
+    -- goes, so an equality preserved by reduction cannot see them.
 
     T-≤-refl : ∀ {A ε} → (p : ε ≾ₑ ε) → T-≤ {A} p ≈ᵐ idᵐ
     T-≤-trans : ∀ {A ε₁ ε₂ ε₃} → (p : ε₁ ≾ₑ ε₂) → (q : ε₂ ≾ₑ ε₃) → (r : ε₁ ≾ₑ ε₃)

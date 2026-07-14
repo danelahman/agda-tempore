@@ -52,8 +52,7 @@ data Progresses : {ε : E}
                --------------------------------------------------------------
              → Progresses M
 
--- Any reduction step witnesses progress: the grade premise of `steps` is the
--- invariant `step-grade-≾` proves of that very step.
+-- Any reduction step witnesses progress: its grade premise is `step-grade-≾`.
 
 step-progress : ∀ {ε'' ε'''}
               → {S S' : 𝕊 []} {A : VType}

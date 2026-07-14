@@ -1,26 +1,19 @@
 ------------------------------------------------------------------------
 -- IMPLEMENTING THE OPERATIONS.                                          --
 --                                                                    --
--- The pure top-level semantics runs every algebraic operation against an --
--- external implementation. Denotationally that is a graded monad         --
--- morphism from the tree monad into the tick monad,                      --
+-- An external implementation `op-semᵐ` of each operation: from the       --
+-- parameter, seen from `mapᵉ (op-grade op)` in its future (where the     --
+-- continuation runs), the arity value. It is the semantic counterpart of --
+-- `OperationalSemantics.TopLevelOpSemantics.op-sem`, and being a single  --
+-- morphism it is uniform in the state.                                   --
+--                                                                    --
+-- Running the operations against it is a graded monad morphism from the  --
+-- tree monad into the tick monad,                                       --
 --                                                                    --
 --   implᵐ : Tᵒ A ε →ᵐ Tᵏ A ε                                            --
 --                                                                    --
--- which leaves leaves and delays alone and *runs away* every operation   --
--- node: it feeds the operation's continuation the arity value the        --
--- implementation computes, and what remains of the operation is the time --
--- it took — an `op-grade op`-tick.                                      --
---                                                                    --
--- The implementation itself is `op-semᵐ`: from the operation's parameter --
--- (seen from `mapᵉ (op-grade op)` in its future, which is where the      --
--- arity value is needed), the arity value. This is the semantic          --
--- counterpart of `OperationalSemantics.TopLevelOpSemantics.op-sem`, and  --
--- being a single morphism it is *automatically* uniform in the state —   --
--- which is the naturality condition `op-sem` is annotated as needing.    --
---                                                                    --
--- Note nothing here constrains `opᵀ`. The tree monad's operation node is --
--- what it is: a free node. What is assumed is only how it is *run*.      --
+-- which keeps leaves and delays, and replaces each operation node by an  --
+-- `op-grade op`-tick, feeding its continuation the computed arity value. --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -66,20 +59,16 @@ record Implementation : Set₁ where
 
   field
 
-    -- THE EXTERNAL IMPLEMENTATION OF THE OPERATIONS
-    --
-    -- Given the parameter — as seen from `mapᵉ (op-grade op)` in its future,
-    -- which is where and when the operation's continuation runs — the arity
-    -- value the operation returns.
+    -- The external implementation: from the parameter, as seen from
+    -- `mapᵉ (op-grade op)` in its future, the arity value the operation returns.
 
     op-semᵐ : (op : Op)
             → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵐ ⟦ arity op ⟧ᵍ
 
-    -- RUNNING A COMPUTATION'S OPERATIONS
+    -- Running a computation's operations. A graded monad morphism …
 
     implᵐ : ∀ {A ε} → Tᵒ A ε →ᵐ Tᵏ A ε
 
-    -- It is a graded monad morphism …
 
     implᵐ-ηᵀ : ∀ {A} → implᵐ ∘ᵐ ηᵀ {A} ≈ᵐ ηᵏ
     implᵐ-μᵀ : ∀ {A ε ε'}
@@ -100,9 +89,8 @@ record Implementation : Set₁ where
                     ∘ᵐ []-≤ (≾ᵣ-reflexive map-of-natᵉ)
                     ∘ᵐ [ of-natʳ τ ]ᶠ implᵐ
 
-    -- … and it RUNS AWAY an operation: the continuation is fed the arity
-    -- value the implementation computes, and what is left of the operation is
-    -- the time it took.
+    -- … and it runs an operation away: the continuation is fed the computed
+    -- arity value, and only the operation's tick is left.
 
     implᵐ-opᵀ : ∀ {X A ε} → (op : Op)
               → (v : X →ᵐ ⟦ param op ⟧ᵍ)

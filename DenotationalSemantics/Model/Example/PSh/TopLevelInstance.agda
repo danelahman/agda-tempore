@@ -1,13 +1,7 @@
 ------------------------------------------------------------------------
--- Packaging the free graded TICK monad, and the implementation that     --
--- runs the operations away, as instances of the abstract interfaces      --
--- `Model.TickMonad` and `Model.Implementation`.                          --
---                                                                    --
--- Together with `PSh.Monad.Instance` these witness every assumption the  --
--- pure top-level soundness theorem makes: the only remaining condition   --
--- is `OpSemCoherent`, which relates the *syntactic* `op-sem` to the       --
--- semantic implementation `op-semᵐ` — a property of the language's       --
--- external operation semantics, not of the model.                       --
+-- The free graded tick monad, and the implementation running the         --
+-- operations, as instances of `Model.TickMonad` and                      --
+-- `Model.Implementation`.                                               --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -75,7 +69,7 @@ PShTickMonad = record
   ; tickᵏ-≤      = tickᵏ-≤
   }
 
--- THE IMPLEMENTATION, for any semantic implementation of the operations.
+-- THE IMPLEMENTATION, for any semantic implementation of the operations
 
 PShImplementation : OpSemᵐ → Implementation PShTickMonad
 PShImplementation op-semᵐ = record

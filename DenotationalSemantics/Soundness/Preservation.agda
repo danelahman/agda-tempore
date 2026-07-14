@@ -9,27 +9,26 @@
 -- The plug is total on the *cells* of `toCtx S` (each carries its       --
 -- stored value) but not on the *locks*: `⟨ ρ ⟩ᵒ X` has no global points, --
 -- so the passage of time cannot be manufactured. What remains is the     --
--- state's history `hist S`, and a configuration therefore denotes a      --
--- morphism out of `⟦ hist S ⟧ᶜᵗˣ` — for an initial state `∅` that is     --
--- `𝟙ᵐ`, i.e. a genuine global point.                                     --
+-- state's history `hist S`, so a configuration denotes a morphism out of --
+-- `⟦ hist S ⟧ᶜᵗˣ` — for an initial state `∅` that is `𝟙ᵐ`, a global      --
+-- point.                                                                --
 --                                                                    --
--- A reduction step then relates the two denotations. Since the two       --
--- configurations have different histories and different effect grades,   --
--- the statement is mediated by                                          --
+-- A reduction step relates the two denotations. The two configurations   --
+-- have different histories and different effect grades, so the statement --
+-- is mediated by                                                        --
 --                                                                    --
 --   * a *time transition* `stepᵀ r : ⟦ hist S ⟧ →ᵐ Tᵒ ⟦ hist S' ⟧ δ`,    --
---     which is the identity (`ηᵀ`) for every rule but `DELAY` — the only --
---     rule that adds a lock — where it is the tick built from `delayᵀ`;  --
+--     which is `ηᵀ` for every rule but `DELAY` — the only rule that adds --
+--     a lock — where it is the tick built from `delayᵀ`;                 --
 --                                                                    --
---   * a sub-effecting coercion `T-≤`, because reduction *refines* the    --
---     effect grade (`COERCE` peels a coercion off; `SEQ-STEP` sharpens   --
---     a grade). The tree equality collapses coercion nodes, so `T-≤` is  --
---     functorial in the grade and the relation stays a preorder.         --
+--   * a sub-effecting coercion `T-≤`, as reduction refines the effect    --
+--     grade (`COERCE` peels a coercion off; `SEQ-STEP` sharpens a        --
+--     grade).                                                           --
 --                                                                    --
--- Note `BOX` needs no transition: allocating a resource and extending    --
--- the store are the *same* morphism (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`), which is     --
--- what `⟦_⟧ˢ`'s cell clause and `⟦ box V M ⟧ᶜᵗ` both use. Dually `UNBOX` --
--- needs none either: it is already a projection out of the environment.  --
+-- `BOX` needs no transition: allocating a resource and extending the     --
+-- store are the same morphism (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`), used by both       --
+-- `⟦_⟧ˢ`'s cell clause and `⟦ box V M ⟧ᶜᵗ`. Nor does `UNBOX`: it is a    --
+-- projection out of the environment.                                     --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -160,9 +159,8 @@ stepᵀ BOX               = ηᵀ
 stepᵀ UNBOX             = ηᵀ
 stepᵀ COERCE            = ηᵀ
 
--- The step's effect, composed with the target's, refines the source's.
--- (This is the *effect*-graded counterpart of `step-invariants`, whose
--- grade-decrease condition lives in the resource grades.)
+-- The step's effect, composed with the target's, refines the source's. This is
+-- `step-grade-≾` in the effect grades.
 
 step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
        → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -588,17 +586,17 @@ state-lookup (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) =
 
 -- THE SYNTACTIC BRIDGE
 --
--- `unbox-lookup` does not hand back the stored value directly: it renames it
--- out of the allocating prefix's context into `toCtx S`, through a composite
--- of transports, a `wk-ren-⟨ρ⟩-ctx`, and the grade relaxation `⟨⟩-≤-ren rel`.
--- What follows shows that composite denotes exactly `state-past`.
+-- `unbox-lookup` renames the stored value out of the allocating prefix's
+-- context into `toCtx S`, through a composite of transports, a
+-- `wk-ren-⟨ρ⟩-ctx`, and the grade relaxation `⟨⟩-≤-ren rel`. That composite
+-- denotes `state-past`.
 --
--- The delicate point: `wk-ren-⟨ρ⟩-ctx` matches its grade equality against
--- `refl`, but the grade `ρ'` occurs inside `split-state-snd St x`, whose type
--- mentions `x : … ∈[ ρ' ] …` — so specialising it is circular. The fix is to
--- never match that equality: carry the grade coercion *explicitly* as a
--- `⟨⟩-≤`, at an arbitrary witness (the order is proof-irrelevant), and let the
--- induction reconcile witnesses with `⟨⟩-≤-irr`.
+-- `wk-ren-⟨ρ⟩-ctx` matches its grade equality against `refl`, but the grade
+-- `ρ'` occurs inside `split-state-snd St x`, whose type mentions
+-- `x : … ∈[ ρ' ] …`, so specialising it is circular. The grade coercion is
+-- therefore carried explicitly as a `⟨⟩-≤` at an arbitrary witness (the order
+-- being proof-irrelevant), and the induction reconciles witnesses with
+-- `⟨⟩-≤-irr`.
 
 -- The grade a cell's suffix accumulates is the cell's own grade. (This is the
 -- equality `unbox-lookup` feeds to `wk-ren-⟨ρ⟩-ctx`.)
@@ -1201,9 +1199,9 @@ past-η pu e k =
   ∙ ⟨⟩-≤-trans _ _
   ∙ ⟨⟩-≤-irr _ k
 
--- The environment then commutes past that relaxation (`⟨⟩-≤-nat`), and `μ`
--- absorbs it (`μ-≤ˡ`) — leaving exactly the renaming `suc-comp-ren` builds for
--- a `⟨⟩-suc`: the `μ` that folds the old lock with the new tick.
+-- The environment commutes past that relaxation (`⟨⟩-≤-nat`) and `μ` absorbs it
+-- (`μ-≤ˡ`), leaving the renaming `suc-comp-ren` builds for a `⟨⟩-suc`: the `μ`
+-- folding the state's lock with the new tick.
 
 past-tick : ∀ {A B ρ ρ₂ ρ₄ σ u'}
           → (pu : uᵣ ≾ᵣ u') → (e : ρ ·ᵣ u' ≾ᵣ σ) → (k : ρ ≾ᵣ σ)
@@ -1249,13 +1247,13 @@ box-∷-suc w w' env cell =
 -- THREADING THE ENVIRONMENT BOX ACROSS A STEP
 --
 -- The semantic content of "reduction only extends the state": the boxed
--- environment of the old state, carried along the step's time transition, is
--- the *new* state's boxed environment reindexed by the renaming the
--- preservation theorem itself builds (`suc-comp-ren`).
+-- environment of the source state, carried along the step's time transition,
+-- is the target state's boxed environment reindexed by the renaming
+-- `suc-comp-ren` builds.
 --
 -- Generic in the two resource grades: a reduction's own effect grades only
--- *instantiate* them, and the recursive cases apply the lemma at the
--- sub-step's grades, not the enclosing sequencing's.
+-- instantiate them, and the recursive cases apply the lemma at the sub-step's
+-- grades, not the enclosing sequencing's.
 
 step-box : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
          → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
@@ -1380,20 +1378,14 @@ step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g =
                 , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
--- DELAY: the tick — the one rule that advances time.
+-- DELAY: the tick, the one rule that advances time.
 --
 -- `strᵀ-delayᵀ-algebraicity` routes the box through `[]-monoidal`, leaving a
--- *double* `δ` stack on the first component. `box-split-env` peels the inner
+-- double `δ` stack on the first component. `box-split-env` peels the inner
 -- layer (carrying the environment under the box) and `box-push` pushes the
 -- outer one through; both components then transpose at the tick's own grade,
 -- so `η⊣-⟨⟩` reassembles them. Inside the resulting box the shape is again the
--- time-preserving one, and `delayᵀ-nat` finally pulls `Tᶠ` out to match
--- `stepᵀ DELAY`.
---
--- REMAINING: the box identity in the hole below. Every other step of this
--- chain typechecks. Note the inner `strᵀ` sits at box grade `mapᵉ uₑ` while
--- the target's first component is at `ρ₄`, so this identity must ALSO bridge
--- those grades — it is *not* a direct instance of `box-id-suc`.
+-- time-preserving one, and `delayᵀ-nat` pulls `Tᶠ` out to match `stepᵀ DELAY`.
 
 step-box (DELAY {τ = τ} {S = St}) c g =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
@@ -1596,15 +1588,15 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
 
 -- THE HANDLER COMMUTES WITH A STEP TRANSITION
 --
--- A reduction step never *performs an operation*: `stepᵀ r` is `ηᵀ` for every
+-- A reduction step never performs an operation: `stepᵀ r` is `ηᵀ` for every
 -- rule but `DELAY`, where it is a tick. So handling the effects a step produces
--- gives the same result whether the handler sits inside the step or outside it.
--- That is what lets `HANDLE-STEP` move the transition out of the handler's
+-- gives the same result whether the handler sits inside the step or outside it,
+-- which is what lets `HANDLE-STEP` move the transition out of the handler's
 -- argument and into the `⋄` of the target configuration.
 --
--- (`alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` is *false* for a general tree — the outer layer's
--- operations would be handled on one side and merely flattened on the other.
--- It is true here precisely because a step emits no `op`-nodes.)
+-- The equation holds only for step transitions: `alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` is
+-- false for a general tree, whose outer layer's operations would be handled on
+-- one side and merely flattened on the other.
 
 -- The algebra commutes with a grade transport (derivable from `alg-≤`).
 
@@ -1844,16 +1836,16 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
 
 -- SEQ-OP
 --
--- The operation commuting conversion. Unlike the step rules this one does not
--- touch the state at all: it is a plain equation between the two computations'
--- denotations, in an arbitrary context. What it says is that sequencing a
--- computation that begins with an operation is the operation performed with the
--- sequencing pushed into its continuation — which is precisely the content of
--- the two algebraicity laws, `opᵀ-algebraicity` for the monad's multiplication
--- and `strᵀ-opᵀ-algebraicity` for the strength. The latter is where the
--- environment goes: the operation's continuation is *boxed* (it may only run
--- once `op-grade op` worth of time has passed), so the environment has to be
--- pushed *under* that box, which is what `exp-strᵐ` is for.
+-- The operation commuting conversion: sequencing a computation that begins
+-- with an operation is the operation with the sequencing pushed into its
+-- continuation. This is the content of the algebraicity laws,
+-- `opᵀ-algebraicity` for the multiplication and `strᵀ-opᵀ-algebraicity` for the
+-- strength. The rule leaves the state alone, so this is a plain equation
+-- between the two denotations, in an arbitrary context.
+--
+-- The strength is where the environment goes: the operation's continuation is
+-- boxed (it may run only once `op-grade op` worth of time has passed), so the
+-- environment is pushed under that box, which is what `exp-strᵐ` does.
 
 -- Reassociating the operation's arguments.
 --
@@ -2111,25 +2103,20 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
 -- HANDLE-OP
 --
 -- Handling an operation applies the matching clause, with the rest of the
--- handled computation *boxed up* as the clause's continuation — the box being
--- what stops the continuation running before `op-grade op` worth of time has
--- passed. So the reduct is a `box`, and the equation is `SEQ-OP`'s with the
--- handler's fold in place of the monad multiplication: `T-alg-of-handlerᵀ-opᵀ`
--- (apply a clause) where `SEQ-OP` had `opᵀ-algebraicity` (re-emit the operation).
+-- handled computation boxed up as the clause's continuation, the box being what
+-- stops the continuation running before `op-grade op` worth of time has passed.
+-- So the reduct is a `box`, and the equation is `SEQ-OP`'s with the handler's
+-- fold in place of the monad multiplication: `T-alg-of-handlerᵀ-opᵀ` (apply a
+-- clause) where `SEQ-OP` has `opᵀ-algebraicity` (re-emit the operation).
 --
 -- THE HANDLER UNIFORMITY CONDITION
 --
--- On paper the handler's clauses are one raw term, well-typed at every context
--- `Γ'`. Such a term can mention no variable of `Γ'` — it has to typecheck at
--- `[]` too — so its meaning at `Γ'` is its meaning at `[]` with the context
--- discarded. That is what `⟦_⟧ʰᵗ` builds into the model's context-free
--- `Handlerᵀ`, and it is what `HANDLE-OP` needs, because the reduct fires the
--- clause at `toCtx S` while the semantics reads it at `[]`.
---
--- Formalised here, terms are intrinsically typed, so we cannot say "the same
--- raw term". We state the semantic consequence instead. It needs no renaming
--- `Ren [] Γ'` — which is just as well, since the graded modality admits no
--- counit at an arbitrary grade and so no such renaming exists.
+-- A handler's clauses are one term, well-typed at every context `Γ'`, so they
+-- can mention no variable of `Γ'` and their meaning at `Γ'` is their meaning at
+-- `[]` with the context discarded. `Uniformʰ` states this semantically, terms
+-- here being intrinsically typed. `HANDLE-OP` needs it because the reduct fires
+-- the clause at `toCtx S` while `⟦_⟧ʰᵗ` reads the model's context-free
+-- `Handlerᵀ` at `[]`.
 
 Uniformʰ : ∀ {B}
          → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
@@ -2216,8 +2203,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                             (H op (ε ·ₑ ε'') Γ [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
 sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N u =
   -- the commuting conversion, with the handler's fold as the algebra: the
-  -- operation is algebraic for it too, but it *applies a clause* rather than
-  -- re-emitting the operation
+  -- operation is algebraic for it too, and applies a clause
     seq-op-core op (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ) (⟦ H ⟧ʰᵗ op (ε ·ₑ ε''))
       (T-alg-of-handlerᵀ-opᵀ op ⟦ H ⟧ʰᵗ) (ty-gty (arity op))
       (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
@@ -2267,11 +2253,10 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N u =
 -- SUB-EFFECTING ACROSS A STEP
 --
 -- Composing two reduction steps substitutes the target configuration's
--- coercion *under* the Kleisli bind, so it has to escape from beneath `Tᶠ`.
--- That is sub-effecting in the monad's *inner* grade. Rather than assume it in
--- general, we prove it for the transitions that actually occur: `stepᵀ r` is
--- `ηᵀ` for every rule but `DELAY`, and `DELAY`'s is a `delayᵀ` — for which the
--- model's `delayᵀ-≤` says exactly this.
+-- coercion under the Kleisli bind, so it has to escape from beneath `Tᶠ`: that
+-- is sub-effecting in the monad's inner grade. It holds for the transitions
+-- reduction produces — `ηᵀ` for every rule but `DELAY`, whose `delayᵀ` obeys
+-- the model's `delayᵀ-≤`.
 
 -- The grade a delayed computation's `ηᵀ` leaves behind.
 
@@ -2374,29 +2359,25 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
 ------------------------------------------------------------------------
 -- THE SOUNDNESS THEOREM
 --
--- A reduction step relates denotationally equal configurations.
+-- A reduction step relates denotationally equal configurations: the source's
+-- denotation is the target's, run after the step's time transition and coerced
+-- along the effect refinement the step licenses. Right to left:
 --
--- Precisely: the source configuration's denotation is the target's, run
--- after the step's own time transition, and coerced along the effect
--- refinement that the step licenses. Reading the equation right to left:
---
---   * `stepᵀ r` is the time the step takes. Every rule but `DELAY` takes
---     none, transitioning by `ηᵀ`; `DELAY` ticks by exactly its own delay.
---     It is a map between the two states' *histories* — the part of the
---     store the state cannot supply itself.
+--   * `stepᵀ r` is the time the step takes, a map between the two states'
+--     histories. Every rule but `DELAY` takes none, transitioning by `ηᵀ`;
+--     `DELAY` ticks by its own delay.
 --
 --   * `⟦ ⟨ S' , M' ⟩ ⟧ᶜᶠ ⋄ stepᵀ r` is the target configuration run over that
 --     later history, the two effect grades multiplying (`step-grade r ·ₑ ε'`).
 --
---   * `T-≤ (step-≾ r)` puts the result back at the source's grade `ε`, which
---     it may do because `step-≾ r : step-grade r ·ₑ ε' ≾ₑ ε` — a step never
---     costs more than the type promised.
+--   * `T-≤ (step-≾ r)` puts the result back at the source's grade `ε`, by
+--     `step-≾ r : step-grade r ·ₑ ε' ≾ₑ ε`: a step never costs more than the
+--     type promised.
 --
--- The state itself never appears: it *is* the environment, so it has already
--- been plugged into both sides by `⟦_⟧ᶜᶠ`. Allocation (`BOX`) is invisible in
--- the equation because extending the store and boxing a resource are the same
--- morphism; lookup (`UNBOX`) is invisible because reading a cell is projecting
--- out the value the state already wrote there.
+-- The state does not appear: it is the environment, already plugged into both
+-- sides by `⟦_⟧ᶜᶠ`. `BOX` is invisible because extending the store and boxing a
+-- resource are the same morphism, `UNBOX` because reading a cell projects out
+-- the value the state wrote there.
 ------------------------------------------------------------------------
 
 -- The handlers a reduction actually reaches must be uniform. `HANDLE-OP` is the
@@ -2587,21 +2568,19 @@ bind-bind f t s =
 ------------------------------------------------------------------------
 -- DENOTATIONAL RUNNING
 --
--- `cf ⊳ cf'` says that `cf` runs to `cf'` denotationally: `cf` *is* `cf'`,
--- executed after some transition, coerced along some refinement. `↝*-⊳` is the
--- statement that a run of the machine witnesses it.
+-- `cf ⊳ cf'` says that `cf` runs to `cf'` denotationally: `cf` is `cf'`,
+-- executed after some transition and coerced along some refinement. `↝*-⊳`
+-- says a run of the machine witnesses it.
 --
--- The relation is DIRECTED, not an equivalence: the two sides sit at different
--- effect grades, and `T-≤ refine` only ever coerces the target's (finer) grade
--- up to the source's. A step may refine an effect — `COERCE` does exactly that —
--- and nothing runs it back.
+-- The relation is directed, not an equivalence: the two sides sit at different
+-- effect grades, and `T-≤ refine` only coerces the target's (finer) grade up
+-- to the source's, never back.
 --
--- It is reflexive (`⊳-refl`), but it is NOT a preorder: transitivity would have
--- to substitute the middle configuration's coercion under an *arbitrary*
+-- It is reflexive (`⊳-refl`) but not transitive: transitivity would have to
+-- substitute the middle configuration's coercion under an arbitrary
 -- transition's bind, and sub-effecting escapes a bind only for the transitions
--- reductions actually produce (`T-≤-stepᵀ`, proved by induction on the step —
--- `stepᵀ r` is `ηᵀ` for every rule but `DELAY`). Transitivity *along a run* is
--- therefore not a free-standing law but exactly the induction in `↝*-sound`.
+-- reduction produces (`T-≤-stepᵀ`). Transitivity along a run is the induction
+-- in `↝*-sound`.
 ------------------------------------------------------------------------
 
 infix 4 _⊳_

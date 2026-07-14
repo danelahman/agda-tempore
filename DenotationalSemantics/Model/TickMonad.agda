@@ -1,31 +1,17 @@
 ------------------------------------------------------------------------
--- The TICK MONAD: the target of the top-level interpretation.           --
+-- The TICK MONAD: the target of the pure top-level interpretation.      --
 --                                                                    --
--- A graded monad on the same category, with the same unit,             --
--- multiplication, functorial action and sub-effecting as `Monad` — but   --
--- WITHOUT algebraic operations and without effect handling. In their     --
--- place it has a single primitive:                                      --
+-- A graded monad with the same unit, multiplication, functorial action  --
+-- and sub-effecting as `Monad`, but with no algebraic operations and no --
+-- effect handling. In their place, a single primitive:                  --
 --                                                                    --
---   tickᵀ δ : [ mapᵉ δ ]ᵒ (Tᵒ A ε) →ᵐ Tᵒ A (δ ·ₑ ε)                     --
+--   tickᵏ δ : [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)                     --
 --                                                                    --
--- a *delay at an arbitrary effect grade*: trivial parameter, trivial     --
--- arity, and the grade as its effect. An ordinary delay is `tickᵀ        --
--- (of-natᵉ τ)`; an operation *that has been implemented* is `tickᵀ       --
--- (op-grade op)` — the operation's own passage of time, with nothing     --
--- left to observe.                                                     --
---                                                                    --
--- This is what the pure top-level semantics computes in. Its whole point --
--- is that every operation node of the tree monad gets run away by the    --
--- external implementations (`OperationalSemantics.TopLevelOpSemantics`), --
--- so what survives is only the time those operations took. The           --
--- `Implementation` structure (see `Model.Implementation`) is the graded  --
--- monad morphism that does the running.                                 --
---                                                                    --
--- Note this is NOT an instance of `Monad`: it deliberately lacks `opᵀ`   --
--- and `T-alg-of-handlerᵀ`, so the language's interpretation cannot be    --
--- re-instantiated at it (`⟦ perform … ⟧` and `⟦ handle … ⟧` need both).  --
--- Handling happens where it always did, in the tree monad; the           --
--- implementation applies to the operations that survive to the top.      --
+-- a delay at an arbitrary effect grade: `δ` worth of time passes and     --
+-- nothing is observed. A delay is `tickᵏ (of-natᵉ τ)`; an operation that --
+-- has been implemented is `tickᵏ (op-grade op)`, leaving only the time   --
+-- it took. `Model.Implementation` supplies the monad morphism running    --
+-- the tree monad's operations into these ticks.                         --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -117,13 +103,9 @@ record TickMonad : Set₁ where
 
     tickᵏ : ∀ {A ε} → (δ : E) → [ mapᵉ δ ]ᵒ (Tᵏ A ε) →ᵐ Tᵏ A (δ ·ₑ ε)
 
-    -- It is natural, algebraic, and sub-effecting passes under it.
-    --
-    -- The last is what the tree monad's `opᵀ` cannot satisfy: an operation
-    -- node records the residual grade, so coercing the continuation and
-    -- coercing the whole computation give different trees. A tick records
-    -- nothing, so the two coincide — which is what lets a *run* of the
-    -- top-level machine compose.
+    -- It is natural, algebraic, and sub-effecting passes under it: a tick
+    -- records nothing, so coercing the continuation and coercing the whole
+    -- computation agree.
 
     tickᵏ-nat : ∀ {A B ε} → (δ : E) → (f : A →ᵐ B)
               → tickᵏ {ε = ε} δ ∘ᵐ [ mapᵉ δ ]ᶠ (Tᵏᶠ f)

@@ -1,15 +1,14 @@
 ------------------------------------------------------------------------
--- RUNNING THE OPERATIONS AWAY, on presheaves.                          --
+-- RUNNING THE OPERATIONS, on presheaves.                               --
 --                                                                    --
 -- The graded monad morphism from the free tree monad into the free tick --
 -- monad, determined by a semantic implementation of the operations       --
 --                                                                    --
 --   op-semᵐ op : ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ param op ⟧ᵍ →ᵖ ⟦ arity op ⟧ᵍ  --
 --                                                                    --
--- On trees it is the identity on leaves, delays and coercions, and on an --
--- operation node it feeds the continuation the value the implementation  --
--- computes — leaving behind a TICK of the operation's own grade, which   --
--- is all that remains of it: the time it took.                          --
+-- On trees it is the identity on leaves, delays and coercions; an        --
+-- operation node becomes a tick at the operation's grade, its            --
+-- continuation fed the value the implementation computes.                --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -68,9 +67,7 @@ module _ (op-semᵐ : OpSemᵐ) where
        → carrier ⟦ param op ⟧ᵍ w → carrier ⟦ arity op ⟧ᵍ w'
   semᵃ op q v = app (op-semᵐ op) (mk⟨⟩ q v)
 
-  -- Its naturality: the value at a later world is the transported one. (The
-  -- past modality's transport composes the accessibility witness, so this is
-  -- literally `op-semᵐ`'s own naturality.)
+  -- Its naturality: the value at a later world is the transported one.
 
   semᵃ-nat : ∀ {w w' w''} → (op : Op) → (q : w ⊑[ mapᵉ (op-grade op) ] w')
            → (r : w' ⊑[ uᵣ ] w'') → (v : carrier ⟦ param op ⟧ᵍ w)
@@ -193,9 +190,8 @@ module _ (op-semᵐ : OpSemᵐ) where
            → implᵐ ∘ᵖ μᵀ {A} {ε} {ε'} ≈ᵖ μᵏ ∘ᵖ Tᵏᶠ implᵐ ∘ᵖ implᵐ
   implᵐ-μᵀ t = implˢ-μ t
 
-  -- a delay stays a delay (a tick at the delay's grade). The box the tree
-  -- monad's `delayᵀ` carries sits at `of-natʳ τ`, the tick's at
-  -- `mapᵉ (of-natᵉ τ)`; the two agree, and `[]-fun-irr` absorbs the witness.
+  -- a delay becomes a tick at the delay's grade: the boxes sit at `of-natʳ τ`
+  -- and `mapᵉ (of-natᵉ τ)`, which agree, and `[]-fun-irr` absorbs the witness
 
   implᵐ-delayᵀ : ∀ {A ε} → (τ : ℕ)
                → implᵐ ∘ᵖ delayᵀ {A} {ε} τ
@@ -204,7 +200,7 @@ module _ (op-semᵐ : OpSemᵐ) where
                   ∘ᵖ [ of-natʳ τ ]ᶠ implᵐ
   implᵐ-delayᵀ τ x = tick-≈ (λ q → implˢ-cong ([]-fun-irr x _ _))
 
-  -- AND THE OPERATION IS RUN AWAY.
+  -- and an operation becomes a tick, its continuation fed the computed value
 
   implᵐ-opᵀ : ∀ {X A ε} → (op : Op)
             → (v : X →ᵖ ⟦ param op ⟧ᵍ)

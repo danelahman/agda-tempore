@@ -220,10 +220,9 @@ mutual
  
     -- reduction steps only extend states
     --
-    -- Note: the value types of the two configurations are left independent
-    -- here (they are in fact equal, see `step-preserves-type` below). This is
-    -- what lets `step-grade-≾` mention `step-extends-state` in its statement,
-    -- where type preservation is not yet available.
+    -- The two value types are independent here (they are equal, by
+    -- `step-preserves-type`), so that `step-grade-≾` can speak about
+    -- `step-extends-state` without first knowing the types agree.
     step-extends-state : ∀ {ε ε'}
                        → {S S' : 𝕊 []}
                        → {A B : VType}
@@ -269,18 +268,11 @@ step-preserves-type BOX              = refl
 step-preserves-type UNBOX            = refl
 step-preserves-type COERCE           = refl
 
--- Reduction steps make effects more precise, stated in *cancelled* form: the
--- grade δ by which the state grew during the step, composed with the residual
--- effect ε', stays below the original effect ε.
---
--- This is exactly the shape of the grade premises that SEQ-STEP and
--- HANDLE-STEP assume of the reductions happening under them, so those premises
--- are in fact derivable — see `seq-step-grade` and `handle-step-grade` below.
---
--- Cancelled form is the stronger statement: the version speaking about the two
--- states' total grades follows from it by monotonicity (`cancelled⇒total`,
--- used in `step-invariants` below), whereas the converse would require
--- left-cancelling state-grade S, which the grades interface does not provide.
+-- Reduction steps make effects more precise, in cancelled form: the grade δ by
+-- which the state grew, composed with the residual effect ε', stays below the
+-- original effect ε. This is the form the SEQ-STEP and HANDLE-STEP premises
+-- take, so those premises are derivable (`seq-step-grade`, `handle-step-grade`).
+-- The total form, about the two states' grades, follows by `cancelled⇒total`.
 
 step-grade-≾ : ∀ {A B ε ε'}
              → {S S' : 𝕊 []}
@@ -330,8 +322,7 @@ step-grade-≾ UNBOX = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (COERCE {ε≾ε' = ε≾ε'}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ ε≾ε')
 
--- The grade premises of SEQ-STEP and HANDLE-STEP, derived. These have exactly
--- the types of the `δε₃≾ε₁` and `δε₁'≾ε₁` fields of those constructors.
+-- The grade premises of SEQ-STEP and HANDLE-STEP, derived.
 
 seq-step-grade : ∀ {A ε₁ ε₃}
                → {S S' : 𝕊 []}
@@ -349,8 +340,8 @@ handle-step-grade : ∀ {A ε₁ ε₁'}
                   → ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁
 handle-step-grade = step-grade-≾
 
--- invariants preserved by the small-step operational semantics, in the form
--- speaking about the two states' total grades
+-- invariants preserved by the small-step operational semantics, stated in
+-- terms of the two states' grades
 
 step-invariants : ∀ {A B ε ε'}
                 → {S S' : 𝕊 []}

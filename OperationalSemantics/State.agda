@@ -83,14 +83,8 @@ data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where
             ---------------------------------------
             → S ≤ₛ (S' ∷ₛ V)
 
--- The extra grade accumulated when passing from a state 𝕊 to a successor
--- state 𝕊'. This is exactly the "delta" δ such that
--- state-grade S' ≡ state-grade S ·ᵣ δ (see state-grade-≤ₛ below).
---
--- Tracking δ explicitly lets us state the grade-decrease condition in
--- *already-cancelled* form (δ ·ᵣ ρ''' ≾ᵣ ρ''), avoiding the need to
--- left-cancel state-grade S — i.e. it removes the reliance on a
--- left-cancellativity property in the grades interface.
+-- The grade δ accumulated when passing from a state 𝕊 to a successor state 𝕊',
+-- i.e. the δ with state-grade S' ≡ state-grade S ·ᵣ δ (see state-grade-≤ₛ).
 
 ≤ₛ-grade : ∀ {Γ Γ'} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'} → S ≤ₛ S' → R
 ≤ₛ-grade id-suc       = uᵣ
@@ -109,11 +103,9 @@ state-grade-≤ₛ {S = S} (⟨⟩-suc ρ q) =
 state-grade-≤ₛ (∷-suc V q) =
   state-grade-≤ₛ q
 
--- Lemma: If one state 𝕊' is a successor of another 𝕊 and the extra grade
--- accumulated together with ρ''' stays below ρ'', then 𝕊' is a renaming of 𝕊.
---
--- Note: the grade-decrease hypothesis is stated in cancelled form, so the
--- construction below does not rely on left-cancellativity of grades.
+-- If 𝕊' is a successor of 𝕊 and the grade δ it accumulated stays, together
+-- with ρ''', below ρ'', then 𝕊' is a renaming of 𝕊.
+
 suc-comp-ren : ∀ {Γ Γ'}
              → {ρ'' ρ''' : R}
              → {S : 𝕊 Γ}
@@ -129,8 +121,9 @@ suc-comp-ren {ρ''' = ρ'''} (⟨⟩-suc ρ q) δρ'''≾ρ'' =
 suc-comp-ren (∷-suc V q) δρ'''≾ρ'' =
   cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren q δρ'''≾ρ''
 
--- Recovering the total ("uncancelled") grade-decrease statement from the
--- cancelled one, via monotonicity of _·ᵣ_ (no cancellativity required).
+-- The cancelled grade-decrease statement (about δ) implies the total one
+-- (about the two states' grades), by monotonicity of _·ᵣ_.
+
 cancelled⇒total : ∀ {Γ Γ'} → {a b : R} → {S : 𝕊 Γ} → {S' : 𝕊 Γ'}
                 → (q : S ≤ₛ S')
                 → ≤ₛ-grade q ·ᵣ a ≾ᵣ b
