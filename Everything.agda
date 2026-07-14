@@ -175,6 +175,9 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Core
 open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
 open import DenotationalSemantics.Model.Example.PSh.Monad.Handling
 open import DenotationalSemantics.Model.Example.PSh.Monad.Instance
+open import DenotationalSemantics.Model.Example.PSh.TickMonad
+open import DenotationalSemantics.Model.Example.PSh.Implementation
+open import DenotationalSemantics.Model.Example.PSh.TopLevelInstance
 
 ---- Interpretation of the calculus
 
