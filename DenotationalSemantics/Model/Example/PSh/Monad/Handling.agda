@@ -32,7 +32,7 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Handling
        where
 
 open import Data.Nat using (ℕ)
-open import Data.Product using (_,_)
+open import Data.Product using (_,_; proj₁; proj₂)
 
 open import Util.Equality
 
@@ -47,13 +47,17 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Core S Wld GTy
 open import DenotationalSemantics.Model.Example.PSh.Monad.Effects S Wld GTy
 
 open import DenotationalSemantics.Model.Category
-open Category PShCat using (mapˣᵐ; map⇒ᵐ)
+open Category PShCat using (mapˣᵐ; map⇒ᵐ; exp-strᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ)
 
--- A handler: a clause morphism for every operation and residual grade.
+open import DenotationalSemantics.Model.Modality.BoxCoalg
+  PShCat (GradeSystem.RGrade Grades) PShFut
 
-Handlerˢ : PSh → Set
-Handlerˢ A = (op : Op) → (ε'' : E)
-           → ⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε'')
+-- A handler parameterised by an eternal object `P`: a clause morphism for
+-- every operation and residual grade, closing over `P`.
+
+Handlerˢ : PSh → PSh → Set
+Handlerˢ P A = (op : Op) → (ε'' : E)
+           → P ×ᵖ (⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε''))
                →ᵖ Tᵒ A (op-grade op ·ₑ ε'')
 
 -- The T-algebra folding a handler over a computation tree, together with
@@ -75,23 +79,29 @@ mutual
 
   {-# TERMINATING #-}
 
-  T-alg-of-handlerˢ : ∀ {A ε ε' w} → Handlerˢ A → Tˢ (Tᵒ A ε') ε w → Tˢ A (ε ·ₑ ε') w
-  T-alg-of-handlerˢ {ε' = ε'} h (leaf s) =
+  T-alg-of-handlerˢ : ∀ {P A ε ε' w} → BoxCoalg P → Handlerˢ P A
+                    → carrier P w → Tˢ (Tᵒ A ε') ε w → Tˢ A (ε ·ₑ ε') w
+  T-alg-of-handlerˢ {ε' = ε'} bc h pv (leaf s) =
     ε-substˢ (sym (·ₑ-identityˡ ε')) s
-  T-alg-of-handlerˢ {ε' = ε'} h (op-node {ε = ε₀} op v k kc kn) =
+  T-alg-of-handlerˢ {ε' = ε'} bc h pv (op-node {ε = ε₀} op v k kc kn) =
     ε-substˢ (sym (·ₑ-assoc (op-grade op) ε₀ ε'))
-      (app (h op (ε₀ ·ₑ ε')) (v , handler-box h op k kc kn))
-  T-alg-of-handlerˢ {ε' = ε'} h (delay-node {ε = ε₀} τ k kn) =
+      (app (h op (ε₀ ·ₑ ε')) (pv , (v , handler-box bc pv h op k kc kn)))
+  T-alg-of-handlerˢ {ε' = ε'} bc h pv (delay-node {ε = ε₀} τ k kn) =
     ε-substˢ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε'))
-      (delay-node τ (λ q → T-alg-of-handlerˢ h (k q))
-        (λ q r → ≈ᵗ-trans (T-alg-of-handlerˢ-cong h (kn q r))
-                          (T-alg-of-handlerˢ-nat h r (k q))))
-  T-alg-of-handlerˢ h (sub p t) =
-    sub (·ₑ-monoˡ-≾ₑ p) (T-alg-of-handlerˢ h t)
+      (delay-node τ (λ q → T-alg-of-handlerˢ bc h (fun (app (BoxCoalg.necᵉ bc) pv) q) (k q))
+        (λ q r → ≈ᵗ-trans
+          (T-alg-of-handlerˢ-congᵖ bc h (fun-nat (app (BoxCoalg.necᵉ bc) pv) q r) (k (⊑ρ∘ᵘ q r)))
+          (≈ᵗ-trans
+            (T-alg-of-handlerˢ-congᵗ bc h _ (kn q r))
+            (T-alg-of-handlerˢ-nat bc h r (fun (app (BoxCoalg.necᵉ bc) pv) q) (k q)))))
+  T-alg-of-handlerˢ bc h pv (sub p t) =
+    sub (·ₑ-monoˡ-≾ₑ p) (T-alg-of-handlerˢ bc h pv t)
 
-  -- The clause's boxed continuation, folded and rebundled.
+  -- The clause's boxed continuation, folded and rebundled. The eternal
+  -- parameter `pv` is carried into the folded sub-computations at each future
+  -- world via `necᵉ` (which crosses the operation's box `[ mapᵉ (op-grade op) ]`).
 
-  handler-box : ∀ {A ε₀ ε' w} (h : Handlerˢ A) (op : Op)
+  handler-box : ∀ {P A ε₀ ε' w} (bc : BoxCoalg P) (pv : carrier P w) (h : Handlerˢ P A) (op : Op)
       → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w'
            → Tˢ (Tᵒ A ε') ε₀ w')
       → (kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
@@ -101,33 +111,45 @@ mutual
                 (y : carrier ⟦ arity op ⟧ᵍ w')
             → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y))
       → [ mapᵉ (op-grade op) ]ᶜ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A (ε₀ ·ₑ ε')) w
-  handler-box h op k kc kn = mk[]
+  handler-box bc pv h op k kc kn = mk[]
     (λ q → mk⇒
-      (λ r y → T-alg-of-handlerˢ h (k (⊑ρ∘ᵘ q r) y))
-      (λ r e → T-alg-of-handlerˢ-cong h (kc (⊑ρ∘ᵘ q r) e))
+      (λ r y → T-alg-of-handlerˢ bc h (fun (app (BoxCoalg.necᵉ bc) pv) (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y))
+      (λ r e → T-alg-of-handlerˢ-congᵗ bc h _ (kc (⊑ρ∘ᵘ q r) e))
       (λ r s y → ≈ᵗ-trans
-        (T-alg-of-handlerˢ-cong h
-          (≡→≈ᵗ (cong (λ z → k z (transport ⟦ arity op ⟧ᵍ s y)) (⊑-irrelevant _ _))))
+        (T-alg-of-handlerˢ-congᵖ bc h
+          (≈-trans _ ([]-fun-irr (app (BoxCoalg.necᵉ bc) pv) _ _)
+                     (fun-nat (app (BoxCoalg.necᵉ bc) pv) (⊑ρ∘ᵘ q r) s))
+          (k (⊑ρ∘ᵘ q (⊑ᵘ-trans r s)) (transport ⟦ arity op ⟧ᵍ s y)))
         (≈ᵗ-trans
-          (T-alg-of-handlerˢ-cong h (kn (⊑ρ∘ᵘ q r) s y))
-          (T-alg-of-handlerˢ-nat h s (k (⊑ρ∘ᵘ q r) y)))))
-    (λ q r p y → T-alg-of-handlerˢ-cong h (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _))))
+          (T-alg-of-handlerˢ-congᵗ bc h _
+            (≈ᵗ-trans
+              (≡→≈ᵗ (cong (λ z → k z (transport ⟦ arity op ⟧ᵍ s y)) (⊑-irrelevant _ _)))
+              (kn (⊑ρ∘ᵘ q r) s y)))
+          (T-alg-of-handlerˢ-nat bc h s
+            (fun (app (BoxCoalg.necᵉ bc) pv) (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y)))))
+    (λ q r p y → ≈ᵗ-trans
+                   (T-alg-of-handlerˢ-congᵖ bc h
+                     ([]-fun-irr (app (BoxCoalg.necᵉ bc) pv) _ _)
+                     (k (⊑ρ∘ᵘ (⊑ρ∘ᵘ q r) p) y))
+                   (T-alg-of-handlerˢ-congᵗ bc h _
+                     (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))))
 
-  T-alg-of-handlerˢ-cong : ∀ {A ε ε' w} (h : Handlerˢ A) {t t' : Tˢ (Tᵒ A ε') ε w}
-                         → t ≈ᵗ t' → T-alg-of-handlerˢ h t ≈ᵗ T-alg-of-handlerˢ h t'
-  T-alg-of-handlerˢ-cong h (leaf-≈ e)             = ε-substˢ-congᵗ _ e
-  T-alg-of-handlerˢ-cong h (op-≈ {op = op} ev ek) =
+  -- Congruence in the *tree* argument (the eternal parameter `pv` held fixed).
+
+  T-alg-of-handlerˢ-congᵗ : ∀ {P A ε ε' w} (bc : BoxCoalg P) (h : Handlerˢ P A)
+                            (pv : carrier P w) {t t' : Tˢ (Tᵒ A ε') ε w}
+                          → t ≈ᵗ t' → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv t'
+  T-alg-of-handlerˢ-congᵗ bc h pv (leaf-≈ e)             = ε-substˢ-congᵗ _ e
+  T-alg-of-handlerˢ-congᵗ bc h pv (op-≈ {op = op} ev ek) =
     ε-substˢ-congᵗ _ (app-cong (h op _)
-      (ev , (λ q p y → T-alg-of-handlerˢ-cong h (ek (⊑ρ∘ᵘ q p) y))))
-  T-alg-of-handlerˢ-cong h (delay-≈ ek)           =
-    ε-substˢ-congᵗ _ (delay-≈ (λ q → T-alg-of-handlerˢ-cong h (ek q)))
-  T-alg-of-handlerˢ-cong h (sub-≈ et)             =
-    sub-≈ (T-alg-of-handlerˢ-cong h et)
-  T-alg-of-handlerˢ-cong h sub-u                 = sub-u
-  T-alg-of-handlerˢ-cong h sub-∘                 = sub-∘
-  -- as for `μˢ`: the coercion moves past the fold's grade transport, and then
-  -- under the delay (the fold keeps a delay a delay)
-  T-alg-of-handlerˢ-cong {ε' = ε'} h
+      (≈-refl _ , (ev , (λ q p y → T-alg-of-handlerˢ-congᵗ bc h _ (ek (⊑ρ∘ᵘ q p) y)))))
+  T-alg-of-handlerˢ-congᵗ bc h pv (delay-≈ ek)           =
+    ε-substˢ-congᵗ _ (delay-≈ (λ q → T-alg-of-handlerˢ-congᵗ bc h _ (ek q)))
+  T-alg-of-handlerˢ-congᵗ bc h pv (sub-≈ et)             =
+    sub-≈ (T-alg-of-handlerˢ-congᵗ bc h pv et)
+  T-alg-of-handlerˢ-congᵗ bc h pv sub-u                 = sub-u
+  T-alg-of-handlerˢ-congᵗ bc h pv sub-∘                 = sub-∘
+  T-alg-of-handlerˢ-congᵗ {ε' = ε'} bc h pv
     (sub-delay {ε = ε₁} {ε' = ε₁'} {τ = τ} {e = e}) =
     ≈ᵗ-trans
       (sub-ε-substᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₁ ε'))
@@ -136,74 +158,130 @@ mutual
                     (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
                     _)
       (ε-substˢ-congᵗ _ sub-delay)
-  T-alg-of-handlerˢ-cong h (≈ᵗ-sym et)           =
-    ≈ᵗ-sym (T-alg-of-handlerˢ-cong h et)
-  T-alg-of-handlerˢ-cong h (≈ᵗ-trans et et')     =
-    ≈ᵗ-trans (T-alg-of-handlerˢ-cong h et) (T-alg-of-handlerˢ-cong h et')
+  T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-sym et)           =
+    ≈ᵗ-sym (T-alg-of-handlerˢ-congᵗ bc h pv et)
+  T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-trans et et')     =
+    ≈ᵗ-trans (T-alg-of-handlerˢ-congᵗ bc h pv et) (T-alg-of-handlerˢ-congᵗ bc h pv et')
 
-  T-alg-of-handlerˢ-nat : ∀ {A ε ε' w w'} (h : Handlerˢ A) (p : w ⊑[ uᵣ ] w')
+  -- Congruence in the eternal *parameter* argument (the tree held fixed).
+
+  T-alg-of-handlerˢ-congᵖ : ∀ {P A ε ε' w} (bc : BoxCoalg P) (h : Handlerˢ P A)
+                            {pv pv' : carrier P w} → _≈_ P pv pv'
+                          → (t : Tˢ (Tᵒ A ε') ε w)
+                          → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv' t
+  T-alg-of-handlerˢ-congᵖ bc h ep (leaf s)               = ≈ᵗ-refl _
+  T-alg-of-handlerˢ-congᵖ bc h ep (op-node op v k kc kn) =
+    ε-substˢ-congᵗ _ (app-cong (h op _)
+      (ep , (≈-refl ⟦ param op ⟧ᵍ ,
+        (λ q r y → T-alg-of-handlerˢ-congᵖ bc h
+                     (app-cong (BoxCoalg.necᵉ bc) ep (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y)))))
+  T-alg-of-handlerˢ-congᵖ bc h ep (delay-node τ k kn)    =
+    ε-substˢ-congᵗ _ (delay-≈
+      (λ q → T-alg-of-handlerˢ-congᵖ bc h (app-cong (BoxCoalg.necᵉ bc) ep q) (k q)))
+  T-alg-of-handlerˢ-congᵖ bc h ep (sub p t)              =
+    sub-≈ (T-alg-of-handlerˢ-congᵖ bc h ep t)
+
+  -- Naturality: the fold commutes with a (unit-graded) transport, jointly in
+  -- the eternal parameter and the tree.
+
+  T-alg-of-handlerˢ-nat : ∀ {P A ε ε' w w'} (bc : BoxCoalg P) (h : Handlerˢ P A)
+                          (r : w ⊑[ uᵣ ] w') (pv : carrier P w)
                           (t : Tˢ (Tᵒ A ε') ε w)
-                        → T-alg-of-handlerˢ h (transportᵗ p t)
-                        ≈ᵗ transportᵗ p (T-alg-of-handlerˢ h t)
-  T-alg-of-handlerˢ-nat h p (leaf s) =
-    ≡→≈ᵗ (sym (transportᵗ-ε-substˢ p (sym (·ₑ-identityˡ _)) s))
-  T-alg-of-handlerˢ-nat h p (op-node {ε = ε₀} op v k kc kn) =
+                        → T-alg-of-handlerˢ bc h (transport P r pv) (transportᵗ r t)
+                        ≈ᵗ transportᵗ r (T-alg-of-handlerˢ bc h pv t)
+  T-alg-of-handlerˢ-nat bc h r pv (leaf s) =
+    ≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-identityˡ _)) s))
+  T-alg-of-handlerˢ-nat bc h r pv (op-node {ε = ε₀} op v k kc kn) =
     ≈ᵗ-trans
       (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
         (app-cong (h op _)
-          (≈-refl ⟦ param op ⟧ᵍ ,
-           (λ q r y → T-alg-of-handlerˢ-cong h
-             (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))))))
+          (≈-refl _ ,
+           (≈-refl ⟦ param op ⟧ᵍ ,
+            (λ q s y → ≈ᵗ-trans
+              (T-alg-of-handlerˢ-congᵖ bc h
+                (≈-trans _ (nat (BoxCoalg.necᵉ bc) r pv (⊑ρ∘ᵘ q s))
+                           ([]-fun-irr (app (BoxCoalg.necᵉ bc) pv) _ _))
+                (k _ y))
+              (T-alg-of-handlerˢ-congᵗ bc h _
+                (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))))))))
       (≈ᵗ-trans
         (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
-          (nat (h op _) p (v , handler-box h op k kc kn)))
-        (≡→≈ᵗ (sym (transportᵗ-ε-substˢ p (sym (·ₑ-assoc (op-grade op) ε₀ _)) _))))
-  T-alg-of-handlerˢ-nat h p (delay-node {ε = ε₀} τ k kn) =
+          (nat (h op _) r (pv , (v , handler-box bc pv h op k kc kn))))
+        (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (op-grade op) ε₀ _)) _))))
+  T-alg-of-handlerˢ-nat bc h r pv (delay-node {ε = ε₀} τ k kn) =
     ≈ᵗ-trans
-      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ _)) (delay-≈ (λ q → ≈ᵗ-refl _)))
-      (≡→≈ᵗ (sym (transportᵗ-ε-substˢ p (sym (·ₑ-assoc (of-natᵉ τ) ε₀ _)) _)))
-  T-alg-of-handlerˢ-nat h p (sub e t) =
-    sub-≈ (T-alg-of-handlerˢ-nat h p t)
+      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ _))
+        (delay-≈ (λ q → T-alg-of-handlerˢ-congᵖ bc h
+                          (nat (BoxCoalg.necᵉ bc) r pv q) (k (⊑ᵘ∘ρ r q)))))
+      (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (of-natᵉ τ) ε₀ _)) _)))
+  T-alg-of-handlerˢ-nat bc h r pv (sub e t) =
+    sub-≈ (T-alg-of-handlerˢ-nat bc h r pv t)
 
-T-alg-of-handlerᵀ : ∀ {A ε ε'} → Handlerˢ A → Tᵒ (Tᵒ A ε') ε →ᵖ Tᵒ A (ε ·ₑ ε')
-T-alg-of-handlerᵀ h =
-  pmap (T-alg-of-handlerˢ h) (T-alg-of-handlerˢ-cong h) (λ p t → T-alg-of-handlerˢ-nat h p t)
+-- Joint congruence, assembled from the two one-sided congruences.
+
+T-alg-of-handlerˢ-cong : ∀ {P A ε ε' w} (bc : BoxCoalg P) (h : Handlerˢ P A)
+                         {pv pv' : carrier P w} {t t' : Tˢ (Tᵒ A ε') ε w}
+                       → _≈_ P pv pv' → t ≈ᵗ t'
+                       → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv' t'
+T-alg-of-handlerˢ-cong bc h {pv} {t' = t'} ep et =
+  ≈ᵗ-trans (T-alg-of-handlerˢ-congᵗ bc h pv et) (T-alg-of-handlerˢ-congᵖ bc h ep t')
+
+T-alg-of-handlerᵀ : ∀ {P A ε ε'} → BoxCoalg P → Handlerˢ P A
+                  → P ×ᵖ Tᵒ (Tᵒ A ε') ε →ᵖ Tᵒ A (ε ·ₑ ε')
+T-alg-of-handlerᵀ bc h =
+  pmap
+    (λ pt → T-alg-of-handlerˢ bc h (proj₁ pt) (proj₂ pt))
+    (λ e → T-alg-of-handlerˢ-cong bc h (proj₁ e) (proj₂ e))
+    (λ r pt → T-alg-of-handlerˢ-nat bc h r (proj₁ pt) (proj₂ pt))
 
 -- The three algebra laws (up to `_≈ᵗ_`): each side folds to the same tree
 -- (returning / re-delaying / applying the clause to the rebuilt box).
 
-T-alg-of-handlerᵀ-ηᵀ : ∀ {A ε'} → (h : Handlerˢ A)
-                     → T-alg-of-handlerᵀ h ∘ᵖ ηᵀ {Tᵒ A ε'}
-                     ≈ᵖ ε-substᵀ (sym (·ₑ-identityˡ ε'))
-T-alg-of-handlerᵀ-ηᵀ h s = ≈ᵗ-refl _
+T-alg-of-handlerᵀ-ηᵀ : ∀ {P A ε'} → (bc : BoxCoalg P) → (h : Handlerˢ P A)
+                     → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (ηᵀ {Tᵒ A ε'})
+                     ≈ᵖ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵖ sndᵐ
+T-alg-of-handlerᵀ-ηᵀ bc h x = ≈ᵗ-refl _
 
-T-alg-of-handlerᵀ-delayᵀ : ∀ {A ε' ε''} → (τ : ℕ) → (h : Handlerˢ A)
-                         → T-alg-of-handlerᵀ h ∘ᵖ delayᵀ {Tᵒ A ε''} {ε'} τ
+T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : ℕ) → (bc : BoxCoalg P) → (h : Handlerˢ P A)
+                         → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (delayᵀ {Tᵒ A ε''} {ε'} τ)
                          ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
-                           ∘ᵖ delayᵀ τ ∘ᵖ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ h)
-T-alg-of-handlerᵀ-delayᵀ τ h x =
-  ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) _ _)) (delay-≈ (λ q → ≈ᵗ-refl _))
+                           ∘ᵖ delayᵀ τ
+                           ∘ᵖ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
+                           ∘ᵖ []-monoidal
+                           ∘ᵖ mapˣᵐ (BoxCoalg.necᵉ bc {of-natʳ τ}) idᵖ
+T-alg-of-handlerᵀ-delayᵀ τ bc h (pv , boxT) =
+  ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) _ _))
+    (delay-≈ (λ q → T-alg-of-handlerˢ-congᵖ bc h
+                      (≈-sym _ (BoxCoalg.necᵉ-≤ bc (≾ᵣ-reflexive map-of-natᵉ) pv q)) _))
 
-T-alg-of-handlerᵀ-opᵀ : ∀ {A ε' ε''} → (op : Op) → (h : Handlerˢ A)
-                      → T-alg-of-handlerᵀ h ∘ᵖ opᵀ {Tᵒ A ε''} {ε'} op
+T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : BoxCoalg P) → (h : Handlerˢ P A)
+                      → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (opᵀ {Tᵒ A ε''} {ε'} op)
                       ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
                         ∘ᵖ h op (ε' ·ₑ ε'')
-                        ∘ᵖ mapˣᵐ idᵖ
-                             ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (T-alg-of-handlerᵀ h)))
-T-alg-of-handlerᵀ-opᵀ op h (v , boxk) =
+                        ∘ᵖ ⟨ fstᵐ
+                           , ⟨ fstᵐ ∘ᵖ sndᵐ
+                             ,   [ mapᵉ (op-grade op) ]ᶠ
+                                   (map⇒ᵐ idᵖ (T-alg-of-handlerᵀ bc h) ∘ᵖ exp-strᵐ)
+                               ∘ᵖ []-monoidal
+                               ∘ᵖ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ (op-grade op)}) idᵖ
+                               ∘ᵖ ⟨ fstᵐ , sndᵐ ∘ᵖ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
+T-alg-of-handlerᵀ-opᵀ op bc h (pv , (v , boxk)) =
   ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) _ _))
     (app-cong (h op _)
-      (≈-refl ⟦ param op ⟧ᵍ ,
-       (λ q p y → T-alg-of-handlerˢ-cong h (fun-nat boxk q p ⊑-refl y))))
+      (≈-refl _ ,
+       (≈-refl ⟦ param op ⟧ᵍ ,
+        (λ q p y → T-alg-of-handlerˢ-cong bc h
+                     (fun-nat (app (BoxCoalg.necᵉ bc) pv) q p)
+                     (fun-nat boxk q p ⊑-refl y)))))
 
 -- The fold commutes with sub-effecting: both sides put a `sub` node on top of
 -- the folded tree (the fold's own `sub` clause *is* `T-≤`), so this holds on
 -- the nose.
 
-T-alg-of-handlerᵀ-≤ : ∀ {A ε₁ ε₂ ε'} → (h : Handlerˢ A) → (p : ε₁ ≾ₑ ε₂)
-                    → T-alg-of-handlerᵀ {A} {ε₂} {ε'} h ∘ᵖ T-≤ p
-                    ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ T-alg-of-handlerᵀ {A} {ε₁} {ε'} h
-T-alg-of-handlerᵀ-≤ h p t = ≈ᵗ-refl _
+T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : BoxCoalg P) → (h : Handlerˢ P A) → (p : ε₁ ≾ₑ ε₂)
+                    → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵖ mapˣᵐ idᵖ (T-≤ p)
+                    ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
+T-alg-of-handlerᵀ-≤ bc h p x = ≈ᵗ-refl _
 
 -- A coercion node absorbs a transport on either side (the `sub` witnesses are
 -- irrelevant to `_≈ᵗ_`).

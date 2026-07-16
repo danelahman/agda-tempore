@@ -2,6 +2,7 @@
 -- Variables and contexts of the language --
 --------------------------------------------
 
+open import Data.Empty
 open import Data.Product
 
 open import Relation.Binary.Definitions
@@ -298,3 +299,97 @@ var-split-≡-var-split-Tl-⟨⟩ : ∀ {Γ A ρ ρ'}
                             → (x : A ∈[ ρ ] Γ)
                             → proj₁ (var-split x) ≡ proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} x))
 var-split-≡-var-split-Tl-⟨⟩ x = refl
+
+-- Eternal restriction of a context: keep only the eternal-typed variables,
+-- dropping non-eternal variables and all locks. Eternal values survive
+-- arbitrary time-passage (`eternal-val-ext`), so a lock imposes no real
+-- constraint on eternal data. The result is therefore lock-free, and every
+-- surviving variable sits at grade `uᵣ`.
+
+_ᴱ : Ctx → Ctx
+[] ᴱ         = []
+(Γ ∷ A) ᴱ    with eternal? A
+... | yes _  = Γ ᴱ ∷ A
+... | no  _  = Γ ᴱ
+(Γ ⟨ ρ ⟩) ᴱ  = Γ ᴱ
+
+infix 34 _ᴱ
+
+-- An eternal variable of Γ occurs in the eternal restriction at grade `uᵣ`.
+
+∈-ᴱ : ∀ {Γ A ρ} → Eternal A → A ∈[ ρ ] Γ → A ∈[ uᵣ ] Γ ᴱ
+∈-ᴱ {Γ ∷ A} et Hd       with eternal? A
+... | yes _  = Hd
+... | no ¬et = ⊥-elim (¬et et)
+∈-ᴱ {Γ ∷ B} et (Tl-∷ x) with eternal? B
+... | yes _  = Tl-∷ (∈-ᴱ et x)
+... | no  _  = ∈-ᴱ et x
+∈-ᴱ {Γ ⟨ ρ ⟩} et (Tl-⟨⟩ x) = ∈-ᴱ et x
+
+-- The eternal restriction is a homomorphism for context concatenation.
+
+ᴱ-++ᶜ : (Γ Γ' : Ctx) → (Γ ++ᶜ Γ') ᴱ ≡ Γ ᴱ ++ᶜ Γ' ᴱ
+ᴱ-++ᶜ Γ []          = refl
+ᴱ-++ᶜ Γ (Γ' ∷ A)    with eternal? A
+... | yes _ = cong (_∷ A) (ᴱ-++ᶜ Γ Γ')
+... | no  _ = ᴱ-++ᶜ Γ Γ'
+ᴱ-++ᶜ Γ (Γ' ⟨ ρ ⟩)  = ᴱ-++ᶜ Γ Γ'
+
+-- Restriction drops a non-eternal variable extension.
+
+ᴱ-∷-drop : ∀ {Γ A} → ¬ Eternal A → (Γ ∷ A) ᴱ ≡ Γ ᴱ
+ᴱ-∷-drop {A = A} ¬et with eternal? A
+... | yes et = ⊥-elim (¬et et)
+... | no  _  = refl
+
+-- Appending a context on the right of a split.
+
+split-++ʳ : ∀ {Γ Γ₁ Γ₂} → Γ₁ , Γ₂ split Γ → (D : Ctx) → Γ₁ , Γ₂ ++ᶜ D split (Γ ++ᶜ D)
+split-++ʳ s []        = s
+split-++ʳ s (D ∷ B)   = split-∷ (split-++ʳ s D)
+split-++ʳ s (D ⟨ ρ ⟩) = split-⟨⟩ (split-++ʳ s D)
+
+-- Splitting Γ at an eternal variable, restricted: `x` splits `Γ ᴱ` into the
+-- eternal restrictions of the two halves it splits `Γ` into.
+
+∈-ᴱ-split : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
+          → (split-l x) ᴱ ∷ A , (split-r x) ᴱ split (Γ ᴱ)
+∈-ᴱ-split {Γ ∷ A} et Hd       with eternal? A
+... | yes _  = split-[]
+... | no ¬et = ⊥-elim (¬et et)
+∈-ᴱ-split {Γ ∷ B} et (Tl-∷ x) with eternal? B
+... | yes _  = split-∷ (∈-ᴱ-split et x)
+... | no  _  = ∈-ᴱ-split et x
+∈-ᴱ-split {Γ ⟨ ρ ⟩} et (Tl-⟨⟩ x) = ∈-ᴱ-split et x
+
+-- The variable a split points at. Its two halves are read back by
+-- `split→∈-split-l`/`-r` (Σ-eta makes `split-l`/`split-r` commute through the
+-- `Tl` wrappers), so it can be substituted into by `_[_↦_]c`.
+
+split→∈ : ∀ {Γ Γ₁ Γ₂ A} → Γ₁ ∷ A , Γ₂ split Γ → A ∈[ ctx-grade Γ₂ ] Γ
+split→∈ split-[]     = Hd
+split→∈ (split-∷ s)  = Tl-∷ (split→∈ s)
+split→∈ (split-⟨⟩ s) = Tl-⟨⟩ (split→∈ s)
+
+split→∈-split-l : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ)
+                → split-l (split→∈ s) ≡ Γ₁
+split→∈-split-l split-[]     = refl
+split→∈-split-l (split-∷ s)  = split→∈-split-l s
+split→∈-split-l (split-⟨⟩ s) = split→∈-split-l s
+
+split→∈-split-r : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ)
+                → split-r (split→∈ s) ≡ Γ₂
+split→∈-split-r split-[]              = refl
+split→∈-split-r (split-∷ {A = B} s)   = cong (_∷ B) (split→∈-split-r s)
+split→∈-split-r (split-⟨⟩ {ρ = ρ} s)  = cong (_⟨ ρ ⟩) (split→∈-split-r s)
+
+-- When the split variable is *not* eternal, the eternal restriction is
+-- unchanged by removing it, i.e. it is the restriction of the two halves.
+
+ᴱ-drop-split : ∀ {Γ A ρ} → ¬ Eternal A → (x : A ∈[ ρ ] Γ)
+             → Γ ᴱ ≡ (split-l x ++ᶜ split-r x) ᴱ
+ᴱ-drop-split {Γ} ¬et x =
+  trans (cong _ᴱ (sym (split-≡ (split-pf x))))
+    (trans (ᴱ-++ᶜ (split-l x ∷ _) (split-r x))
+      (trans (cong (_++ᶜ (split-r x) ᴱ) (ᴱ-∷-drop ¬et))
+        (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))

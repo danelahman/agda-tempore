@@ -109,6 +109,44 @@ cong-renˡ (cong-∷-ren r) =
 cong-renˡ (cong-⟨⟩-ren r) =
   cong-⟨⟩-ren (cong-renˡ r)
 
+-- Restriction of a renaming to the eternal parts of its contexts. Since the
+-- eternal restriction is lock-free, every variable in it sits at grade `uᵣ`,
+-- which is exactly what discharges the `≾ᵣ uᵣ` side-condition of `var-ren`.
+
+restrict-ren : ∀ {Γ Γ'} → Ren Γ Γ' → Ren (Γ ᴱ) (Γ' ᴱ)
+restrict-ren id-ren =
+  id-ren
+restrict-ren (r₂ ∘ʳ r₁) =
+  restrict-ren r₂ ∘ʳ restrict-ren r₁
+restrict-ren (wk-ren {A = A}) with eternal? A
+... | yes _ = wk-ren
+... | no  _ = id-ren
+restrict-ren (var-ren {A = A} p x) with eternal? A
+... | yes et = var-ren ≾ᵣ-refl (∈-ᴱ et x)
+... | no  _  = id-ren
+restrict-ren ⟨⟩-η-ren =
+  id-ren
+restrict-ren ⟨⟩-η⁻¹-ren =
+  id-ren
+restrict-ren ⟨⟩-μ-ren =
+  id-ren
+restrict-ren (⟨⟩-≤-ren _) =
+  id-ren
+restrict-ren (cong-∷-ren {A = A} r) with eternal? A
+... | yes _ = cong-∷-ren (restrict-ren r)
+... | no  _ = restrict-ren r
+restrict-ren (cong-⟨⟩-ren r) =
+  restrict-ren r
+
+-- Extending the eternal restriction by a variable. Unlike a general weakening
+-- past the added structure, this always exists: a lock would be dropped by the
+-- restriction, and a variable is either kept (weaken) or dropped (identity).
+
+ren-ᴱ-∷ : ∀ {Γ} → (A : VType) → Ren (Γ ᴱ) ((Γ ∷ A) ᴱ)
+ren-ᴱ-∷ A with eternal? A
+... | yes _ = wk-ren
+... | no  _ = id-ren
+
 -- Weakening a grade to a context renaming
 
 wk-ren-⟨ρ⟩-ctx : ∀ {Γ Γ' ρ} → ctx-grade Γ' ≡ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Γ')

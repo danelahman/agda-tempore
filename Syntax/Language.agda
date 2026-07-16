@@ -139,12 +139,19 @@ mutual
 
     -- effect handling
 
+    -- The operation clauses may close over the *eternal* part of the ambient
+    -- context `Γ` (the variables whose types survive arbitrary time-passage),
+    -- captured by the eternal restriction `Γ ᴱ`. They remain parametric in a
+    -- further extension `Γ'`, which lets them be instantiated at the context
+    -- reached when the operation is eventually handled; the parameter and boxed
+    -- continuation are added on top.
+
     handle_`with_`in
             : {A B : VType}
             → {ε ε' : E}
             → Γ ⊢C⦂ A ‼ ε
             → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                 Γ' ∷ type-of-gtype (param op)
+                 Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
             → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
@@ -219,3 +226,18 @@ eternal-val-ext _ ⋆ =
   ⋆
 eternal-val-ext (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ⦉ eternal-val-ext et₁ V₁ , eternal-val-ext et₂ V₂ ⦊
+
+-- An eternal-typed value mentions only eternal variables, so it restricts to
+-- the eternal part of its typing context. This is the value-level counterpart
+-- of `restrict-ren`, and lets effect handler clauses closing over `Γ ᴱ` be
+-- substituted into.
+
+eternal-val-restrict : ∀ {Γ A} → Eternal A → Γ ⊢V⦂ A → Γ ᴱ ⊢V⦂ A
+eternal-val-restrict et (var _ x) =
+  var (λ ¬et → ⊥-elim (¬et et)) (∈-ᴱ et x)
+eternal-val-restrict _ (const b) =
+  const b
+eternal-val-restrict _ ⋆ =
+  ⋆
+eternal-val-restrict (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
+  ⦉ eternal-val-restrict et₁ V₁ , eternal-val-restrict et₂ V₂ ⦊

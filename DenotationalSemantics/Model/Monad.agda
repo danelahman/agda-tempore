@@ -47,6 +47,9 @@ open import Data.Nat using (ℕ)
 
 open import Util.Equality
 
+open import DenotationalSemantics.Model.Modality.BoxCoalg
+  Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut
+
 open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
@@ -271,67 +274,82 @@ record Monad : Set₁ where
 
   -- EFFECT HANDLING
 
-  -- A handler assigns to every operation `op` and every residual effect
-  -- grade `ε''` a clause: given the parameter and the operation's boxed
-  -- continuation `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces
-  -- a computation. Note the clauses are *morphisms* (natural families),
-  -- hence usable at every world the handled computation reaches — this is
-  -- what lets the fold recurse under operations without moving the handler.
+  -- A handler is parameterised by an *eternal* object `P` (the interpretation
+  -- of the eternal part `Γ ᴱ` of the ambient context it closes over). It
+  -- assigns to every operation `op` and residual effect grade `ε''` a clause:
+  -- given `P`, the parameter, and the operation's boxed continuation
+  -- `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces a computation.
+  -- The clauses are *morphisms* (natural families), hence usable at every
+  -- world the handled computation reaches; `P` being eternal (a `BoxCoalg`,
+  -- `necᵉ`) is what lets it be carried *under* the box at `delay`/`op` nodes,
+  -- across the passage of time, without moving the handler.
 
-  Handlerᵀ : Obj → Set
-  Handlerᵀ A = (op : Op) → (ε'' : E)
-             → ⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε'')
+  Handlerᵀ : Obj → Obj → Set
+  Handlerᵀ P A = (op : Op) → (ε'' : E)
+             → P ×ᵐ (⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε''))
                  →ᵐ Tᵒ A (op-grade op ·ₑ ε'')
 
   field
 
-    -- Folding a handler into a `T`-algebra: reinterpret every operation of
-    -- the tree by the corresponding clause, keeping delays as delays and
-    -- returning the leaf value (regraded).
+    -- Folding a handler into a `T`-algebra parameterised by `P`: reinterpret
+    -- every operation of the tree by the corresponding clause, keeping delays
+    -- as delays and returning the leaf value (regraded). The parameter `P` is
+    -- threaded alongside the tree.
 
-    T-alg-of-handlerᵀ : ∀ {A ε ε'} → Handlerᵀ A
-                      → Tᵒ (Tᵒ A ε') ε →ᵐ Tᵒ A (ε ·ₑ ε')
+    T-alg-of-handlerᵀ : ∀ {P A ε ε'} → BoxCoalg P → Handlerᵀ P A
+                      → P ×ᵐ Tᵒ (Tᵒ A ε') ε →ᵐ Tᵒ A (ε ·ₑ ε')
 
     -- It is an algebra for the monad's structure: it computes `η`, `delay`,
-    -- and `op` by, respectively, returning, re-delaying, and applying the
-    -- matching clause.
+    -- and `op` by, respectively, returning (discarding `P`), re-delaying
+    -- (carrying `P` under the delay by `necᵉ`), and applying the matching
+    -- clause (carrying `P` into the folded continuation by `necᵉ`).
 
-    T-alg-of-handlerᵀ-ηᵀ : ∀ {A ε'} → (h : Handlerᵀ A)
-                         → T-alg-of-handlerᵀ h ∘ᵐ ηᵀ {Tᵒ A ε'}
-                         ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε'))
+    T-alg-of-handlerᵀ-ηᵀ : ∀ {P A ε'} → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+                         → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ A ε'})
+                         ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵐ sndᵐ
 
-    T-alg-of-handlerᵀ-delayᵀ : ∀ {A ε' ε''} → (τ : ℕ) → (h : Handlerᵀ A)
-                             → T-alg-of-handlerᵀ h ∘ᵐ delayᵀ {Tᵒ A ε''} {ε'} τ
+    T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : ℕ) → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+                             → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ A ε''} {ε'} τ)
                              ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
-                               ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ h)
+                               ∘ᵐ delayᵀ τ
+                               ∘ᵐ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
+                               ∘ᵐ []-monoidal
+                               ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {of-natʳ τ}) idᵐ
 
-    T-alg-of-handlerᵀ-opᵀ : ∀ {A ε' ε''} → (op : Op) → (h : Handlerᵀ A)
-                          → T-alg-of-handlerᵀ h ∘ᵐ opᵀ {Tᵒ A ε''} {ε'} op
+    T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+                          → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (opᵀ {Tᵒ A ε''} {ε'} op)
                           ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
                             ∘ᵐ h op (ε' ·ₑ ε'')
-                            ∘ᵐ mapˣᵐ idᵐ
-                                 ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ h)))
+                            ∘ᵐ ⟨ fstᵐ
+                               , ⟨ fstᵐ ∘ᵐ sndᵐ
+                                 ,   [ mapᵉ (op-grade op) ]ᶠ
+                                       (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ bc h) ∘ᵐ exp-strᵐ)
+                                   ∘ᵐ []-monoidal
+                                   ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
+                                   ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
 
     -- The fold commutes with sub-effecting in the *outer* grade — the same
     -- shape as `T-≤-μᵀ`, and needed for the same reason: an inductive
     -- hypothesis' coercion has to escape the handling composite.
 
-    T-alg-of-handlerᵀ-≤ : ∀ {A ε₁ ε₂ ε'} → (h : Handlerᵀ A) → (p : ε₁ ≾ₑ ε₂)
-                        → T-alg-of-handlerᵀ {A} {ε₂} {ε'} h ∘ᵐ T-≤ p
-                        ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {A} {ε₁} {ε'} h
+    T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : BoxCoalg P) → (h : Handlerᵀ P A) → (p : ε₁ ≾ₑ ε₂)
+                        → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
+                        ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 
     -- And it *is* an algebra: folding a two-layer tree is folding the outer
-    -- layer after folding each inner one. (The individual clauses above say
-    -- what the fold does at each node; this says the fold is compatible with
-    -- the monad's multiplication — which is what lets a handled computation be
-    -- decomposed along a reduction step.)
+    -- layer after folding each inner one. Threading `P` into the inner folds
+    -- uses the monad's strength together with `necᵉ` (to box `P` at the grade
+    -- the strength requires); a copy of `P` is kept for the outer fold.
 
-    T-alg-of-handlerᵀ-μᵀ : ∀ {A ε ε' ε''} → (h : Handlerᵀ A)
-                         → T-alg-of-handlerᵀ {A} {ε ·ₑ ε'} {ε''} h
-                             ∘ᵐ μᵀ {Tᵒ A ε''} {ε} {ε'}
+    T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+                         → T-alg-of-handlerᵀ {P} {A} {ε ·ₑ ε'} {ε''} bc h
+                             ∘ᵐ mapˣᵐ idᵐ (μᵀ {Tᵒ A ε''} {ε} {ε'})
                          ≈ᵐ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
-                             ∘ᵐ T-alg-of-handlerᵀ {A} {ε} {ε' ·ₑ ε''} h
-                             ∘ᵐ Tᶠ (T-alg-of-handlerᵀ {A} {ε'} {ε''} h)
+                             ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε' ·ₑ ε''} bc h
+                             ∘ᵐ ⟨ fstᵐ
+                                ,   Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)
+                                  ∘ᵐ strᵀ
+                                  ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ ε}) idᵐ ⟩ᵐ
 
   -- DERIVED PROPERTIES
 

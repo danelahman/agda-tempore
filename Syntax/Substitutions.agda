@@ -122,9 +122,37 @@ mutual
   absurd V        [ x ↦ W ]c = absurd (V [ x ↦ W ]v)
   perform op V M  [ x ↦ W ]c = perform op (V [ x ↦ W ]v) (M [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
-  handle_`with_`in {B = B} M H N [ x ↦ W ]c =
-    handle M [ x ↦ W ]c
-    `with H
+  -- The handler clauses close over the eternal part `Γ ᴱ` of the ambient
+  -- context (and stay parametric in a further extension `Γ'`). If the
+  -- substituted variable is not eternal, it does not occur in `Γ ᴱ`, so the
+  -- clauses are only retyped (`ᴱ-drop-split`). If it is eternal, its value
+  -- restricts to the eternal context (`eternal-val-restrict`) and is
+  -- substituted into each clause at the variable's image, located within
+  -- `Γ ᴱ ++ᶜ Γ' ∷ …` via `∈-ᴱ-split`/`split-++ʳ`/`split→∈`.
+  _[_↦_]c {A = A} (handle_`with_`in {B = B} M H N) x W with eternal? A
+  ... | no ¬et =
+    handle (M [ x ↦ W ]c)
+    `with (λ op ε'' Γ' →
+             subst
+               (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+               (ᴱ-drop-split ¬et x)
+               (H op ε'' Γ'))
+    `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
+  ... | yes et =
+    handle (M [ x ↦ W ]c)
+    `with (λ op ε'' Γ' →
+             let D = Γ' ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 s = split-++ʳ (∈-ᴱ-split et x) D
+             in subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                  (trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
+                    (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D))
+                           (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l x) (split-r x))))))
+                  ((H op ε'' Γ') [ split→∈ s
+                                 ↦ subst (_⊢V⦂ A) (sym (split→∈-split-l s))
+                                      (eternal-val-restrict et W) ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   -- For the value-based unboxing we first recover the underlying resource
   -- variable `y` (and grade bound `rel`) being unboxed via `unbox⇒var`. The

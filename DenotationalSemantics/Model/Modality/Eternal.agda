@@ -51,6 +51,8 @@ module DenotationalSemantics.Model.Modality.Eternal
 
 open import Util.Equality
 
+open import DenotationalSemantics.Model.Modality.BoxCoalg Cat G Fut
+
 open Category Cat
 open Grade G
 open Future Fut
@@ -149,3 +151,15 @@ record Eternalᵒ (A : Obj) : Set where
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ []-ε∘ηᵘ≡id))
     (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
               (∘ᵐ-identityʳ εᵘ)))))))
+
+-- The box-part of an eternal structure: forgetting the extraction half
+-- leaves a uniform graded `[_]`-coalgebra. This is what the effect handling
+-- fold threads as its eternal parameter.
+
+eternalᵒ-boxCoalg : ∀ {A} → Eternalᵒ A → BoxCoalg A
+eternalᵒ-boxCoalg e = record
+  { necᵉ   = Eternalᵒ.necᵉ e
+  ; necᵉ-u = Eternalᵒ.necᵉ-u e
+  ; necᵉ-≤ = Eternalᵒ.necᵉ-≤ e
+  ; necᵉ-δ = Eternalᵒ.necᵉ-δ e
+  }
