@@ -369,6 +369,15 @@ record Monad : Set₁ where
                                (λ op ε'' → h op ε'' ∘ᵐ mapˣᵐ f idᵐ)
                            ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h ∘ᵐ mapˣᵐ f idᵐ
 
+    -- The fold is a congruence in the handler: pointwise-equal clauses fold to
+    -- equal algebras. Needed to rewrite a renamed/substituted handler into the
+    -- reindexed form that `natᴾ` consumes.
+
+    T-alg-of-handlerᵀ-cong : ∀ {P A ε ε'} → (bc : BoxCoalg P) → {h h' : Handlerᵀ P A}
+                           → (∀ op ε'' → h op ε'' ≈ᵐ h' op ε'')
+                           → T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h
+                           ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h'
+
   -- DERIVED PROPERTIES
 
   -- Naturality of the strength in its boxed component alone (the monadic
