@@ -323,7 +323,9 @@ record Monad : Set₁ where
                             ∘ᵐ ⟨ fstᵐ
                                , ⟨ fstᵐ ∘ᵐ sndᵐ
                                  ,   [ mapᵉ (op-grade op) ]ᶠ
-                                       (map⇒ᵐ idᵐ (T-alg-of-handlerᵀ bc h) ∘ᵐ exp-strᵐ)
+                                       (curryᵐ (T-alg-of-handlerᵀ bc h
+                                         ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ
+                                            , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ))
                                    ∘ᵐ []-monoidal
                                    ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
                                    ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
@@ -350,6 +352,22 @@ record Monad : Set₁ where
                                 ,   Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)
                                   ∘ᵐ strᵀ
                                   ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ ε}) idᵐ ⟩ᵐ
+
+    -- Naturality in the eternal parameter: reindexing the handler along a
+    -- `[_]`-coalgebra morphism `f : P' →ᵐ P` (`[ ρ ]ᶠ f ∘ necᵉ' ≈ necᵉ ∘ f`,
+    -- so `f` commutes with the necessitation threaded through the fold) equals
+    -- reindexing the fold's parameter by `f`. This is what lets the fold
+    -- transport its eternal context along a renaming/substitution — hence it is
+    -- what the handler's interpretation needs to be stable under those.
+
+    T-alg-of-handlerᵀ-natᴾ : ∀ {P P' A ε ε'} → (bc : BoxCoalg P) → (bc' : BoxCoalg P')
+                           → (f : P' →ᵐ P)
+                           → (∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ BoxCoalg.necᵉ bc' {ρ}
+                                     ≈ᵐ BoxCoalg.necᵉ bc {ρ} ∘ᵐ f)
+                           → (h : Handlerᵀ P A)
+                           → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc'
+                               (λ op ε'' → h op ε'' ∘ᵐ mapˣᵐ f idᵐ)
+                           ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h ∘ᵐ mapˣᵐ f idᵐ
 
   -- DERIVED PROPERTIES
 
