@@ -232,10 +232,10 @@ restrict-sub-env-extᵉ {Γ ∷ A} Hd W {ρ} with eternal? A
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
 restrict-sub-env-extᵉ (Tl-∷ {Γ = Γ₀} {B = B} x) W {ρ} with eternal? B
-... | yes _ =
+... | yes etB =
   prod-ext
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ₀} {B} _ {ρ}))
+    (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ₀} {B} etB {ρ}))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))
@@ -243,12 +243,12 @@ restrict-sub-env-extᵉ (Tl-∷ {Γ = Γ₀} {B = B} x) W {ρ} with eternal? B
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉ x W))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (projᴱ-extᵉ-fst {_} {B} _ {ρ})))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (projᴱ-extᵉ-fst {split-l x ++ᶜ split-r x} {B} etB {ρ})))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)))
               (∘ᵐ-assoc _ _ _)))))))))))))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ₀} {B} _ {ρ}))
+    (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ₀} {B} etB {ρ}))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
@@ -256,7 +256,7 @@ restrict-sub-env-extᵉ (Tl-∷ {Γ = Γ₀} {B = B} x) W {ρ} with eternal? B
     (≈ᵐ-sym (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
             (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
-                      (×-eternalᵒ-sndᵉ {_} {B} _ {ρ})))))))))))
+                      (×-eternalᵒ-sndᵉ {split-l x ++ᶜ split-r x} {B} etB {ρ})))))))))))
 ... | no  _  = restrict-sub-env-extᵉ x W
 restrict-sub-env-extᵉ (Tl-⟨⟩ x) W = restrict-sub-env-extᵉ x W
 
@@ -687,6 +687,88 @@ sub-var-nat {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W with eternal? B
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))))))))))))))
 
+-- Interpreting a context-equality transport of a computation: the transport
+-- becomes the corresponding equality renaming (both are the identity when the
+-- equality is `refl`). Used to strip the `subst`s that `_[_↦_]c` inserts in the
+-- handler clauses.
+
+subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C)
+                 → ⟦ subst (_⊢C⦂ C) e t ⟧ᶜᵗ ≈ᵐ ⟦ t ⟧ᶜᵗ ∘ᵐ ⟦ eq-ren e ⟧ʳ
+subst-ctx-interp refl t = ≈ᵐ-sym (∘ᵐ-identityʳ _)
+
+subst-clause-interp : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
+                    → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t ⟧ᶜᵗ
+                    ≈ᵐ ⟦ t ⟧ᶜᵗ ∘ᵐ ⟦ eq-ren (cong (_++ᶜ D) e) ⟧ʳ
+subst-clause-interp refl t = ≈ᵐ-sym (∘ᵐ-identityʳ _)
+
+-- The interpretation of an equality renaming depends only on the endpoints of
+-- the context equality (UIP), so any two proofs give the same transport.
+
+eq-ren-irr : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → ⟦ eq-ren e ⟧ʳ ≈ᵐ ⟦ eq-ren e' ⟧ʳ
+eq-ren-irr e e' = ≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (uip {p = e} {q = e'}))
+
+-- When the substituted variable is not eternal, `restrict-sub-env` is the pure
+-- reindexing transport of the (equal) eternal skeletons. Induction on the
+-- variable, mirroring `restrict-sub-env`'s `with`-structure; the head is the
+-- identity and each `∷`/`⟨⟩` step is `eq-ren-∷`/`eq-ren-irr` bookkeeping.
+
+restrict-transport : ∀ {Γ A ρ} → (¬et : ¬ Eternal A) → (x : A ∈[ ρ ] Γ)
+                   → (W : split-l x ⊢V⦂ A) → (e : Γ ᴱ ≡ (split-l x ++ᶜ split-r x) ᴱ)
+                   → restrict-sub-env x W ≈ᵐ ⟦ eq-ren e ⟧ʳ
+restrict-transport {A = A} ¬et Hd W e with eternal? A
+... | yes et = ⊥-elim (¬et et)
+... | no  _  = ≈ᵐ-sym (eq-ren-irr e refl)
+restrict-transport ¬et (Tl-∷ {Γ = Γ₀} {B = B} x) W e with eternal? B
+... | yes _ =
+  ≈ᵐ-trans (mapˣᵐ-cong (restrict-transport ¬et x W (ᴱ-drop-split ¬et x)) ≈ᵐ-refl)
+  (≈ᵐ-trans (≈ᵐ-sym (eq-ren-∷ (ᴱ-drop-split ¬et x)))
+            (eq-ren-irr (cong (_∷ B) (ᴱ-drop-split ¬et x)) e))
+... | no  _ = restrict-transport ¬et x W e
+restrict-transport ¬et (Tl-⟨⟩ x) W e = restrict-transport ¬et x W e
+
+-- The canonical eternal-skeleton transport for an eternal variable: it
+-- reconciles the split point of `∈-ᴱ-split` (via `split→∈-split-l`/`-r`) with
+-- the eternal restrictions of the two halves.
+
+canon-e : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
+        → split-l (split→∈ (∈-ᴱ-split et x)) ++ᶜ split-r (split→∈ (∈-ᴱ-split et x))
+          ≡ (split-l x ++ᶜ split-r x) ᴱ
+canon-e et x =
+  trans (cong₂ _++ᶜ_ (split→∈-split-l (∈-ᴱ-split et x)) (split→∈-split-r (∈-ᴱ-split et x)))
+        (sym (ᴱ-++ᶜ (split-l x) (split-r x)))
+
+-- When the substituted variable *is* eternal, its restricted value is placed
+-- (via `sub-env` at the split point of `∈-ᴱ-split`) exactly where
+-- `restrict-sub-env` inserts it, once the eternal-skeleton transport is
+-- accounted for. Induction on the variable; the head uses `eternal-irrelevant`
+-- to reconcile the two `Eternal` witnesses.
+
+eternal-bridge-core : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
+                    → (W : split-l x ⊢V⦂ A)
+                    → (e : split-l (split→∈ (∈-ᴱ-split et x)) ++ᶜ split-r (split→∈ (∈-ᴱ-split et x))
+                           ≡ (split-l x ++ᶜ split-r x) ᴱ)
+                    → sub-env (split→∈ (∈-ᴱ-split et x))
+                        (subst (_⊢V⦂ A) (sym (split→∈-split-l (∈-ᴱ-split et x)))
+                          (eternal-val-restrict et W))
+                        ∘ᵐ ⟦ eq-ren e ⟧ʳ
+                      ≈ᵐ restrict-sub-env x W
+eternal-bridge-core {A = A} et Hd W e with eternal? A
+... | yes p =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-irr e refl))
+  (≈ᵐ-trans (∘ᵐ-identityʳ _)
+            (⟨ ≈ᵐ-refl
+             , ≡→≈ᵐ (cong (λ q → ⟦ eternal-val-restrict q W ⟧ᵛᵗ)
+                          (eternal-irrelevant et p)) ⟩ᵐ-cong))
+... | no ¬et = ⊥-elim (¬et et)
+eternal-bridge-core et (Tl-∷ {B = B} x) W e with eternal? B
+... | yes _ =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-irr e (cong (_∷ B) (canon-e et x))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-∷ (canon-e et x)))
+  (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (eternal-bridge-core et x W (canon-e et x)) (∘ᵐ-identityˡ _))))
+... | no _ = eternal-bridge-core et x W e
+eternal-bridge-core et (Tl-⟨⟩ x) W e = eternal-bridge-core et x W e
+
 mutual
 
   V-subst-nat : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
@@ -767,21 +849,218 @@ mutual
       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
                 (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (C-subst-nat M (Tl-⟨⟩ x) W))))))))))
-  C-subst-nat (handle M `with H `in N) x W =
-    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-                (⟨ η⊣-nat (sub-env x W)
-                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W) ⟩ᵐ-cong))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))))))
+  -- The handle case mirrors `C-rename-nat`'s: the environment-threading second
+  -- component commutes as for `⨟` (`seq-nat`), and the handler algebra is
+  -- reindexed by `restrict-sub-env x W` (`alg-nat`, via `T-alg-of-handlerᵀ`'s
+  -- congruence and naturality-in-P). The substitution splits on whether the
+  -- variable is eternal; the two branches differ only in `⟦H'⟧ʰᵗ-nat`, which
+  -- relates the substituted clause to the original reindexed clause — a pure
+  -- reindexing transport when non-eternal (`restrict-transport`), and the
+  -- restricted value placed at the split point when eternal (`eternal-bridge`).
+  C-subst-nat {Γ = Γ} {A = A} (handle_`with_`in {A = Aₘ} {B = Bₘ} {ε} {ε'} M H N) x W
+    with eternal? A
+  ... | no ¬et =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-subst-nat x W) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+    where
+      Γ₀ : Ctx
+      Γ₀ = split-l x ++ᶜ split-r x
+      H' : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+         → Γ₀ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+            ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')
+      H' op ε'' Γ' =
+        subst (λ Γ₁ → Γ₁ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+                       ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε''))
+              (ᴱ-drop-split ¬et x) (H op ε'' Γ')
+      seq-nat : Tᶠ ⟦ N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M [ x ↦ W ]c ⟧ᶜᵗ ⟩ᵐ
+              ≈ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ sub-env x W
+      seq-nat =
+        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W)))
+        (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
+                    (⟨ η⊣-nat (sub-env x W)
+                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W) ⟩ᵐ-cong)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+      adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
+                    → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
+                    ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
+      adapt-commute g p a =
+        ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
+        (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
+                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                          (∘ᵐ-congˡ ba≈canon)))))
+        where
+          ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
+                        (∘ᵐ-identityˡ _))
+          ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
+                        (∘ᵐ-identityʳ _))
+      step1 : ∀ op ε''
+            → ⟦ H' op ε'' [] ⟧ᶜᵗ
+            ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ (restrict-sub-env x W) idᵐ) idᵐ
+      step1 op ε'' =
+        ≈ᵐ-trans (subst-clause-interp (ᴱ-drop-split ¬et x) (H op ε'' []))
+                 (∘ᵐ-congʳ ⟦eqren⟧≈)
+        where
+          ptᵥ = type-of-gtype (param op)
+          ktᵥ = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+          D₀ = [] ∷ ptᵥ ∷ ktᵥ
+          ⟦eqren⟧≈ =
+            ≈ᵐ-trans (eq-ren-irr (cong (_++ᶜ D₀) (ᴱ-drop-split ¬et x))
+                                 (cong (_∷ ktᵥ) (cong (_∷ ptᵥ) (ᴱ-drop-split ¬et x))))
+            (≈ᵐ-trans (eq-ren-∷ (cong (_∷ ptᵥ) (ᴱ-drop-split ¬et x)))
+                      (mapˣᵐ-cong
+                        (≈ᵐ-trans (eq-ren-∷ (ᴱ-drop-split ¬et x))
+                                  (mapˣᵐ-cong
+                                    (≈ᵐ-sym (restrict-transport ¬et x W (ᴱ-drop-split ¬et x)))
+                                    ≈ᵐ-refl))
+                        ≈ᵐ-refl))
+      ⟦H'⟧ʰᵗ-nat : ∀ op ε''
+                 → ⟦_⟧ʰᵗ {Γ₀} H' op ε''
+                 ≈ᵐ ⟦_⟧ʰᵗ {Γ} H op ε'' ∘ᵐ mapˣᵐ (restrict-sub-env x W) idᵐ
+      ⟦H'⟧ʰᵗ-nat op ε'' =
+        ≈ᵐ-trans (∘ᵐ-congˡ (step1 op ε''))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+      alg-nat : T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ₀} H')
+              ≈ᵐ T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
+                  ∘ᵐ mapˣᵐ (restrict-sub-env x W) idᵐ
+      alg-nat =
+        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) ⟦H'⟧ʰᵗ-nat)
+                 (T-alg-of-handlerᵀ-natᴾ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ))
+                    (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
+                    (restrict-sub-env x W) (restrict-sub-env-necᵉ x W)
+                    (⟦_⟧ʰᵗ {Γ} H))
+  ... | yes et =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-subst-nat x W) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+    where
+      Γ₀ : Ctx
+      Γ₀ = split-l x ++ᶜ split-r x
+      H' : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+         → Γ₀ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+            ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')
+      H' op ε'' Γ' =
+        subst (_⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε''))
+          (trans (cong₂ _++ᶜ_ (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ type-of-gtype (param op)
+                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε''))))
+                              (split→∈-split-r (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ type-of-gtype (param op)
+                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))))
+            (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) (Γ' ∷ type-of-gtype (param op)
+                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε''))))
+                   (cong (_++ᶜ (Γ' ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))
+                         (sym (ᴱ-++ᶜ (split-l x) (split-r x))))))
+          ((H op ε'' Γ') [ split→∈ (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ type-of-gtype (param op)
+                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))
+                         ↦ subst (_⊢V⦂ A)
+                             (sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ type-of-gtype (param op)
+                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))))
+                             (eternal-val-restrict et W) ]c)
+      seq-nat : Tᶠ ⟦ N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M [ x ↦ W ]c ⟧ᶜᵗ ⟩ᵐ
+              ≈ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ sub-env x W
+      seq-nat =
+        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W)))
+        (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
+                    (⟨ η⊣-nat (sub-env x W)
+                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W) ⟩ᵐ-cong)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+      adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
+                    → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
+                    ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
+      adapt-commute g p a =
+        ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
+        (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
+                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                          (∘ᵐ-congˡ ba≈canon)))))
+        where
+          ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
+                        (∘ᵐ-identityˡ _))
+          ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
+                        (∘ᵐ-identityʳ _))
+      step1 : ∀ op ε''
+            → ⟦ H' op ε'' [] ⟧ᶜᵗ
+            ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ (restrict-sub-env x W) idᵐ) idᵐ
+      step1 op ε'' =
+        ≈ᵐ-trans (subst-ctx-interp ctxEq body)
+        (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat (H op ε'' []) (split→∈ s₀) Wᴱ₀))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (∘ᵐ-congʳ
+          (≈ᵐ-trans (∘ᵐ-congʳ ⟦ctxEq⟧≈)
+          (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                    (mapˣᵐ-cong
+                      (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                (mapˣᵐ-cong (eternal-bridge-core et x W (canon-e et x)) (∘ᵐ-identityˡ _)))
+                      (∘ᵐ-identityˡ _)))))))
+        where
+          ptᵥ = type-of-gtype (param op)
+          ktᵥ = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+          D₀ = [] ∷ ptᵥ ∷ ktᵥ
+          s₀ = split-++ʳ (∈-ᴱ-split et x) D₀
+          Wᴱ₀ = subst (_⊢V⦂ A) (sym (split→∈-split-l s₀)) (eternal-val-restrict et W)
+          body = (H op ε'' []) [ split→∈ s₀ ↦ Wᴱ₀ ]c
+          ctxEq = trans (cong₂ _++ᶜ_ (split→∈-split-l s₀) (split→∈-split-r s₀))
+                    (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D₀))
+                           (cong (_++ᶜ D₀) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+          ⟦ctxEq⟧≈ =
+            ≈ᵐ-trans (eq-ren-irr ctxEq (cong (_∷ ktᵥ) (cong (_∷ ptᵥ) (canon-e et x))))
+            (≈ᵐ-trans (eq-ren-∷ (cong (_∷ ptᵥ) (canon-e et x)))
+                      (mapˣᵐ-cong (eq-ren-∷ (canon-e et x)) ≈ᵐ-refl))
+      ⟦H'⟧ʰᵗ-nat : ∀ op ε''
+                 → ⟦_⟧ʰᵗ {Γ₀} H' op ε''
+                 ≈ᵐ ⟦_⟧ʰᵗ {Γ} H op ε'' ∘ᵐ mapˣᵐ (restrict-sub-env x W) idᵐ
+      ⟦H'⟧ʰᵗ-nat op ε'' =
+        ≈ᵐ-trans (∘ᵐ-congˡ (step1 op ε''))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+      alg-nat : T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ₀} H')
+              ≈ᵐ T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
+                  ∘ᵐ mapˣᵐ (restrict-sub-env x W) idᵐ
+      alg-nat =
+        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) ⟦H'⟧ʰᵗ-nat)
+                 (T-alg-of-handlerᵀ-natᴾ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ))
+                    (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
+                    (restrict-sub-env x W) (restrict-sub-env-necᵉ x W)
+                    (⟦_⟧ʰᵗ {Γ} H))
   -- The substitution rebuilds the unboxing with `unbox-var`, so `unbox-var-nat`
   -- turns it back into a lookup; `unbox-step` then splits the goal into the
   -- continuation (the IH) and the lookup (`sub-lk`).
