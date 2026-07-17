@@ -94,6 +94,16 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 
+open import DenotationalSemantics.Model.Modality.Eternal
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; eternalᵒ-boxCoalg)
+open import DenotationalSemantics.Model.Modality.BoxCoalg
+       Cat (GradeSystem.RGrade Grades) Fut using (BoxCoalg)
+
+-- The `BoxCoalg` on `⟦ Γ ᴱ ⟧` carried by every `handle` interpretation: the
+-- eternal-parameter object of the handler's fold.
+bcᴱ : ∀ (Γ : Ctx) → BoxCoalg ⟦ Γ ᴱ ⟧ᶜᵗˣ
+bcᴱ Γ = eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)
+
 -- THE INTERPRETATION OF A CONFIGURATION
 --
 -- The computation, with its context plugged by the state.
@@ -485,24 +495,68 @@ ret-step : ∀ {Γ A B ε}
             ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
                    [ Hd ↦ V ]c ⟧ᶜᵗ
 ret-step {Γ} alg alg-η V N =
-  -- the returned value is `ηᵀ` in the strength's second component
-    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-        (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  -- the strength's unit law opens the boxed environment
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ strᵀ-ηᵀ))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
-  -- and the opened environment is exactly the syntax's re-locking renaming
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-      (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
-  -- what remains is the algebra's unit law
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ N ⟧ᶜᵗ)))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∘ᵐ-congʳ ret-massage
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ alg-η
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V))
+  where
+    -- the environment-threading part (independent of the algebra): the returned
+    -- value's `ηᵀ` opens the boxed environment (`strᵀ-ηᵀ`), which is exactly the
+    -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
+    ret-massage : Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ
+                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                            [ Hd ↦ V ]c ⟧ᶜᵗ
+    ret-massage =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ strᵀ-ηᵀ)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ N ⟧ᶜᵗ))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V))
+
+-- `ret-step`, threaded with an eternal parameter `P` supplied by `pv`. The
+-- handler's algebra reads its clause-context off `P` (`= ⟦ Γ ᴱ ⟧`, via
+-- `projᴱ Γ`); the `ηᵀ` law discards it (`sndᵐ`), so returning ignores `P`.
+ret-step-P : ∀ {Γ A B ε P}
+           → (pv : ⟦ Γ ⟧ᶜᵗˣ →ᵐ P)
+           → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
+           → (alg-η : alg ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε})
+                    ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε)) ∘ᵐ sndᵐ)
+           → (V : Γ ⊢V⦂ A)
+           → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+           → alg ∘ᵐ ⟨ pv , Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ ⟩ᵐ
+           ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
+              ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                     [ Hd ↦ V ]c ⟧ᶜᵗ
+ret-step-P {Γ} pv alg alg-η V N =
+    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ret-massage ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ alg-η
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
+  where
+    ret-massage : Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ
+                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                            [ Hd ↦ V ]c ⟧ᶜᵗ
+    ret-massage =
+        ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ strᵀ-ηᵀ)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ N ⟧ᶜᵗ))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V))
 
 -- SEQ-RET and HANDLE-RET: the two instances of `ret-step`, one for the monad
 -- multiplication and one for the handler's algebra.
@@ -517,7 +571,7 @@ sound-SEQ-RET V N = ret-step μᵀ T-μ∘η≡id V N
 sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (V : Γ ⊢V⦂ A)
                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                      → Γ' ∷ type-of-gtype (param op)
+                      → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
@@ -525,8 +579,9 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
                            [ Hd ↦ V ]c ⟧ᶜᵗ
-sound-HANDLE-RET V H N =
-  ret-step (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ) (T-alg-of-handlerᵀ-ηᵀ ⟦ H ⟧ʰᵗ) V N
+sound-HANDLE-RET {Γ} V H N =
+  ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H))
+             (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H)) V N
 
 -- UNBOX = LOOKUP
 --
@@ -1752,6 +1807,88 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} alg alg-≤ alg-η alg-delay (DELA
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
+
+-- COLLAPSING THE HANDLER'S ETERNAL PARAMETER AT RUNTIME CONTEXTS
+--
+-- In the operational soundness proofs every `handle` sits at a runtime context
+-- `Γ` with `Γ ᴱ ≡ []`, so its eternal-parameter object `⟦ Γ ᴱ ⟧` is terminal.
+-- The handler's fold therefore collapses to a plain (parameter-free) algebra
+-- `Halg`, letting the `HANDLE-*` proofs reuse the `⨟`/`μᵀ` machinery verbatim.
+
+-- The canonical (terminal) map into `⟦ Γ ᴱ ⟧` when `Γ ᴱ ≡ []`, and the fact
+-- that any two such maps agree.
+term∅ : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
+term∅ {X = X} e = subst (λ Δ → X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) (sym e) terminalᵐ
+
+∅-terminal : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → (f g : X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ) → f ≈ᵐ g
+∅-terminal {X = X} e =
+  subst (λ Δ → (f g : X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) → f ≈ᵐ g) (sym e)
+        (λ f g → ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique))
+
+-- The parameter-free algebra a `handle` at a runtime context folds with.
+Halg : ∀ {Γ A B ε₂} → (e : Γ ᴱ ≡ [])
+     → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+          → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+     → ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
+Halg {Γ} e H = T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ
+
+-- `Halg`'s sub-effecting and unit laws, from the fold's own laws plus the
+-- terminality of the (trivial) parameter.
+Halg-≤ : ∀ {Γ A B ε₂} → (e : Γ ᴱ ≡ [])
+       → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+            → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → ∀ {εa εb} → (q : εa ≾ₑ εb)
+       → Halg {ε₂ = ε₂} e H {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ Halg e H {εa}
+Halg-≤ {Γ} e H q =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
+  ∙ ∘ᵐ-congʳ (⟨ ∅-terminal e _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) q)
+  ∙ ∘ᵐ-assoc _ _ _
+
+Halg-η : ∀ {Γ A B ε₂} → (e : Γ ᴱ ≡ [])
+       → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+            → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → Halg {ε₂ = ε₂} e H {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
+       ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂))
+Halg-η {Γ} e H =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
+  ∙ ∘ᵐ-congʳ (⟨ ∅-terminal e _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
+  ∙ ∘ᵐ-identityʳ _
+
+-- The handle interpretation collapses to `Halg` applied to the `⨟`-style
+-- environment-threading term: the parameter `projᴱ Γ` is replaced by the
+-- terminal map (both agree by `∅-terminal`).
+handle-collapse : ∀ {Γ A B ε ε₂} → (e : Γ ᴱ ≡ [])
+  → (M : Γ ⊢C⦂ A ‼ ε)
+  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+  → ⟦ handle M `with H `in N ⟧ᶜᵗ
+  ≈ᵐ Halg {ε₂ = ε₂} e H {ε} ∘ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ)
+handle-collapse {Γ} e M H N =
+    ∘ᵐ-congʳ (⟨ ∅-terminal e (projᴱ Γ)
+                  (term∅ e ∘ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ))
+              , ≈ᵐ-refl ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
 -- HANDLE-STEP
 --
