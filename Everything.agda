@@ -200,6 +200,10 @@ open import DenotationalSemantics.Interpretation.State
 
 ---- Soundness of the operational semantics
 
+open import DenotationalSemantics.Soundness.Preservation.Base
+open import DenotationalSemantics.Soundness.Preservation.Unbox
+open import DenotationalSemantics.Soundness.Preservation.Step
+open import DenotationalSemantics.Soundness.Preservation.Handle
 open import DenotationalSemantics.Soundness.Preservation
 
 ---- Soundness of the pure top-level operational semantics
