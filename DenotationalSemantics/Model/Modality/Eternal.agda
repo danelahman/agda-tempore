@@ -26,12 +26,30 @@
 -- A single law `extᵉ-mate` states they are adjoint mates; the reverse   --
 -- mate `necᵉ-mate` is then derivable from the triangle identities.      --
 --                                                                    --
--- Note (why not an isomorphism): requiring `A ≅ [ ρ ]ᵒ A` would be too  --
--- strong. It fails for `Empty` in non-serial frames (`[ ρ ]ᵒ 𝟘 ≅ 𝟙`    --
--- when a world has no `ρ`-future) and, dually, `⟨ ρ ⟩ᵒ A ≅ A` fails for --
--- `Unit` (`⟨ ρ ⟩ᵒ 𝟙` counts accessible pasts). The one-directional      --
--- coalgebra/algebra pair holds for all eternal formers with no          --
--- seriality assumption, and is exactly what the calculus needs.         --
+-- We additionally carry the *other direction* as a STRENGTH condition:  --
+--                                                                    --
+--   * `strᵉ : ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ A)`  — the `⟨_⟩`-strength   --
+--     at every grade. The functor `⟨ ρ ⟩` is *not* strong in general    --
+--     (a possibility/diamond cannot drag an arbitrary object into the    --
+--     past); it becomes strong exactly against an *eternal* object,      --
+--     whose value is available at the past world the `⟨ ρ ⟩X` bundle     --
+--     already witnesses. Dually `necᵉ` supplies the `[_]`-strength       --
+--     `[ ρ ]ᵒ X ×ᵐ A →ᵐ [ ρ ]ᵒ (X ×ᵐ A)` (via `necᵉ` + `[]-monoidal`).   --
+--                                                                    --
+-- `strᵉ` is inverse to the canonical costrength                          --
+-- `⟨ ⟨ ρ ⟩ᶠ fstᵐ , extᵉ ∘ ⟨ ρ ⟩ᶠ sndᵐ ⟩` (which always exists, from      --
+-- `extᵉ`), so together they exhibit the distributivity isomorphism       --
+--                                                                    --
+--   `⟨ ρ ⟩ᵒ (X ×ᵐ A) ≅ ⟨ ρ ⟩ᵒ X ×ᵐ A`.                                  --
+--                                                                    --
+-- Note (why the distributivity iso, not `A ≅ [ ρ ]ᵒ A`): the naive       --
+-- `A ≅ [ ρ ]ᵒ A` is too strong — it fails for `Empty` in non-serial      --
+-- frames (`[ ρ ]ᵒ 𝟘 ≅ 𝟙` when a world has no `ρ`-future), and dually     --
+-- `⟨ ρ ⟩ᵒ A ≅ A` fails for `Unit` (`⟨ ρ ⟩ᵒ 𝟙` counts accessible pasts).  --
+-- The *distributivity* iso survives both (at `A = Unit` both sides are   --
+-- `⟨ ρ ⟩ᵒ X`; at `A = Empty` both are `𝟘`), and holds for all eternal    --
+-- formers with no seriality assumption. The `necᵉ`/`extᵉ` coalgebra/     --
+-- algebra pair is precisely the `[_]`-half of the same picture.          --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -59,7 +77,7 @@ open Future Fut
 open Past Pst
 open Adjunction Adj
 
-record Eternalᵒ (A : Obj) : Set where
+record Eternalᵒ (A : Obj) : Set₁ where
 
   field
 
@@ -104,6 +122,55 @@ record Eternalᵒ (A : Obj) : Set where
     extᵉ-μ : ∀ {ρ₁ ρ₂}
            → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
            ≈ᵐ extᵉ {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (extᵉ {ρ₂})
+
+    -- STRENGTH (the other direction)
+
+    -- The `⟨_⟩`-strength at every grade: an eternal object is pulled
+    -- *inside* the (past) context modality. `⟨ ρ ⟩` is not strong in
+    -- general — a diamond cannot drag an arbitrary object into the past —
+    -- but it is strong against an eternal `A`, whose value is available at
+    -- the past world the `⟨ ρ ⟩X` bundle already witnesses. This is the
+    -- companion of `necᵉ`, which supplies the dual `[_]`-strength.
+
+    strᵉ : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ A)
+
+  -- The canonical costrength: the inverse direction of the distributivity iso,
+  -- always available from `extᵉ` (project the `⟨ ρ ⟩X` factor, extract the
+  -- eternal one). Defined here so the iso laws below can relate `strᵉ` to it.
+
+  costrᵉ : ∀ {ρ X} → ⟨ ρ ⟩ᵒ (X ×ᵐ A) →ᵐ ⟨ ρ ⟩ᵒ X ×ᵐ A
+  costrᵉ {ρ} = ⟨ ⟨ ρ ⟩ᶠ fstᵐ , extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+
+  field
+
+    -- `strᵉ` is a two-sided inverse of `costrᵉ`: together they exhibit the
+    -- distributivity isomorphism `⟨ ρ ⟩ᵒ (X ×ᵐ A) ≅ ⟨ ρ ⟩ᵒ X ×ᵐ A`.
+    --
+    -- No naturality (in `X`) or grade-coherence (with `⟨⟩-≤`/`μ`/`η`) law is
+    -- carried, because both are *derivable*, not primitive: `costrᵉ` is a
+    -- composite of natural, grade-coherent pieces (`⟨ ρ ⟩ᶠ`, `fstᵐ`, `sndᵐ`,
+    -- `extᵉ`), so it is natural/coherent; and `strᵉ`, being its two-sided
+    -- inverse, inherits naturality/coherence (the inverse of a natural iso is
+    -- natural). Keeping them derived avoids extra per-instance obligations.
+
+    strᵉ-costrᵉ : ∀ {ρ X} → costrᵉ {ρ} {X} ∘ᵐ strᵉ {ρ} {X} ≈ᵐ idᵐ
+
+    costrᵉ-strᵉ : ∀ {ρ X} → strᵉ {ρ} {X} ∘ᵐ costrᵉ {ρ} {X} ≈ᵐ idᵐ
+
+  -- The strength's β-rules: reading back the two factors after `strᵉ` recovers
+  -- them. Immediate from `strᵉ-costrᵉ` (`costrᵉ ∘ strᵉ ≈ id`) and the product
+  -- projections of `costrᵉ`. They isolate `strᵉ`'s two components for reuse.
+
+  strᵉ-fstᵐ : ∀ {ρ X} → ⟨ ρ ⟩ᶠ fstᵐ ∘ᵐ strᵉ {ρ} {X} ≈ᵐ fstᵐ
+  strᵉ-fstᵐ = ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
+              (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (≈ᵐ-trans (∘ᵐ-congʳ strᵉ-costrᵉ) (∘ᵐ-identityʳ _)))
+
+  strᵉ-sndᵐ : ∀ {ρ X} → extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ strᵉ {ρ} {X} ≈ᵐ sndᵐ
+  strᵉ-sndᵐ = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+              (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
+              (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (≈ᵐ-trans (∘ᵐ-congʳ strᵉ-costrᵉ) (∘ᵐ-identityʳ _))))
 
   -- The reverse mate, derivable from `extᵉ-mate` and the right triangle
   -- identity: `necᵉ` is recovered by transposing `extᵉ` back.
