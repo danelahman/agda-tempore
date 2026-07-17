@@ -26,6 +26,7 @@ module DenotationalSemantics.Model.Example.PSh.Modality.Future (GS : GradeSystem
 open import Util.Equality
 
 open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Unit using (tt)
 
 open GradeSystem GS using (RGrade)
 open Grade RGrade renaming (Carrier to R)
@@ -199,4 +200,8 @@ PShFut = record
   ; ηᵘ-nat      = ηᵘ-nat
   ; []-ε∘ηᵘ≡id  = λ {A} → []-ε∘ηᵘ≡id {A}
   ; []-ηᵘ∘ε≡id  = λ {A} → []-ηᵘ∘ε≡id {A}
+  ; []-monoidal-fstᵐ = λ {A} {B} {ρ} x q → ≈-refl A
+  ; []-monoidal-sndᵐ = λ {A} {B} {ρ} x q → ≈-refl B
+  ; []-monoidal-η    = λ {A} {B} {ρ} x q → ≈-refl A , ≈-refl B
+  ; []-𝟙-unique      = λ {A} {ρ} f g x q → tt
   }

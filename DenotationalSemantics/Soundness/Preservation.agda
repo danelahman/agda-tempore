@@ -76,7 +76,8 @@ open import OperationalSemantics.PreservationTheorem S
 open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ; []-idᵐ; []-∘ᵐ; []-≤; []-≤-refl; []-≤-nat;
                        []-ε-nat; []-ε∘ηᵘ≡id; ηᵘ; δ; []-δ-nat; []-monoidal; []-≤-trans;
-                       []-monoidal-nat) renaming (ε to εᵇ)
+                       []-monoidal-nat; []-monoidal-fstᵐ; []-monoidal-sndᵐ; []-monoidal-η;
+                       []-𝟙-unique) renaming (ε to εᵇ)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-η-nat; ⟨⟩-μ-nat;
                      ⟨⟩-≤-nat; ⟨⟩-≤-irr; ⟨⟩-≤-refl; ⟨⟩-≤-trans; μ-≤ˡ; μ-≤ʳ;
                      ⟨⟩-μ∘Tη≡id; ⟨⟩-μ∘η≡id)
@@ -1890,6 +1891,88 @@ handle-collapse {Γ} e M H N =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
+-- Box-level terminality of `⟦ Γ ᴱ ⟧` (transport the empty-restriction fact into
+-- the box, then use `[]-𝟙-unique`), and extensionality for maps into a boxed
+-- product (from `[]-monoidal-η`). These discharge the `necᵉ`-bridge in the
+-- handler's delay law when the eternal parameter is trivial.
+∅-box-terminal : ∀ {Γ X ρ} → (e : Γ ᴱ ≡ [])
+               → (f g : X →ᵐ [ ρ ]ᵒ ⟦ Γ ᴱ ⟧ᶜᵗˣ) → f ≈ᵐ g
+∅-box-terminal {X = X} {ρ = ρ} e =
+  subst (λ Δ → (f g : X →ᵐ [ ρ ]ᵒ ⟦ Δ ⟧ᶜᵗˣ) → f ≈ᵐ g) (sym e)
+        (λ f g → []-𝟙-unique f g)
+
+box-×-ext : ∀ {A B X ρ} → (f g : X →ᵐ [ ρ ]ᵒ (A ×ᵐ B))
+          → [ ρ ]ᶠ fstᵐ ∘ᵐ f ≈ᵐ [ ρ ]ᶠ fstᵐ ∘ᵐ g
+          → [ ρ ]ᶠ sndᵐ ∘ᵐ f ≈ᵐ [ ρ ]ᶠ sndᵐ ∘ᵐ g
+          → f ≈ᵐ g
+box-×-ext f g pf ps =
+    ≈ᵐ-sym (∘ᵐ-identityˡ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym []-monoidal-η)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
+  ∙ ∘ᵐ-congʳ (⟨ pf , ps ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ []-monoidal-η
+  ∙ ∘ᵐ-identityˡ _
+
+Halg-delay : ∀ {Γ A B ε₂} → (e : Γ ᴱ ≡ [])
+       → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+            → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → ∀ {ε'} → (τ : ℕ)
+       → Halg {ε₂ = ε₂} e H {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ τ
+       ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
+           ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (Halg e H {ε'})
+Halg-delay {Γ} e H τ =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
+  ∙ ∘ᵐ-congʳ (⟨ ∅-terminal e _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-delayᵀ τ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ necbridge))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+  where
+    necbridge : []-monoidal ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ (bcᴱ Γ) {of-natʳ τ}) idᵐ
+                  ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ
+              ≈ᵐ [ of-natʳ τ ]ᶠ ⟨ term∅ e , idᵐ ⟩ᵐ
+    necbridge = box-×-ext _ _
+      (∅-box-terminal e _ _)
+      (   ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ ∘ᵐ-congˡ []-monoidal-sndᵐ
+        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)
+        ∙ ∘ᵐ-congˡ (∘ᵐ-identityˡ _)
+        ∙ ⟨⟩ᵐ-sndᵐ _ _
+        ∙ ≈ᵐ-sym (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ []-congᶠ (⟨⟩ᵐ-sndᵐ _ _) ∙ []-idᵐ))
+
+-- The `⟦_⟧ʰᵗ` adapter (parameter-independent) commutes with a reindexing of the
+-- eternal parameter — the same shape as in the renaming/substitution coherence.
+adapt-commute : ∀ {D D' P Q R Sₒ} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : Sₒ →ᵐ R)
+              → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
+              ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
+adapt-commute g p a =
+    ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
+    (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
+            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (∘ᵐ-congˡ ba≈canon)))))
+  where
+    ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+      (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                            (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
+                  (∘ᵐ-identityˡ _))
+    ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+      (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                            (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
+                  (∘ᵐ-identityʳ _))
+
 -- HANDLE-STEP
 --
 -- The same assembly as `SEQ-STEP`, with the handler's fold in place of the
@@ -1901,7 +1984,7 @@ handle-collapse {Γ} e M H N =
 sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → {M : toCtx S ⊢C⦂ A ‼ ε₁}
   → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ' ∷ type-of-gtype (param op)
+       → toCtx S ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
@@ -1915,13 +1998,22 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → ⟦ handle M `with H `in N ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
     ≈ᵐ T-≤ (step-≾ (HANDLE-STEP {H = H} {N = N} r c))
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
-              (⟦ handle M' `with H
+              (⟦ handle M'
+                   `with (λ op ε'' Γ' →
+                            subst
+                              (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                                        ∷ [ mapᵉ (op-grade op) ]
+                                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                              (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
+                              (H op ε'' Γ'))
                    `in (C-rename (cong-∷-ren
                                    (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
                  ∘ᵐ ⟦ S' ⟧ˢ)
               (stepᵀ r)
 sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
-    seq-step-core alg alg-≤ N r c ih
+    ∘ᵐ-congˡ (handle-collapse eS M H N)
+  ∙ seq-step-core alg alg-≤ N r c ih
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
@@ -1944,32 +2036,88 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
   -- drop the identity the strength's pairing picked up
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityʳ _ ⟩ᵐ-cong)))))))
-  -- what is under it is the target's denotation …
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (≈ᵐ-sym
-      (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
+  -- what is under it is the target's denotation (the handler collapses back, and
+  -- its eternal parameter is reconciled across the step by `Halg-SS'`) …
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (
+      ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
                   {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
-                  (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ)
-                  N (suc-comp-ren (step-extends-state r) c)
-                  M' ⟦ S' ⟧ˢ))))))
+                  alg N (suc-comp-ren (step-extends-state r) c) M' ⟦ S' ⟧ˢ)
+    ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ Halg-SS'
+               ∙ ≈ᵐ-sym (handle-collapse eS' M' H'
+                          (C-rename (cong-∷-ren
+                                      (suc-comp-ren (step-extends-state r) c)) N))))))))
   -- … and `seq-coe` fixes the grade
   ∙ seq-coe (step-≾ r) (step-≾ (HANDLE-STEP {H = H} {N = N} r c)) _
   where
+    eS  = toCtxᴱ-[] S
+    eS' = toCtxᴱ-[] S'
+
+    H' : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+       → toCtx S' ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+    H' op ε'' Γ' =
+      subst
+        (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+        (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
+        (H op ε'' Γ')
+
+    f : ⟦ toCtx S' ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ᴱ ⟧ᶜᵗˣ
+    f = term∅ eS
+
     alg : ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
-    alg = T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ
+    alg = Halg eS H
 
     alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
           → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa}
-    alg-≤ q = T-alg-of-handlerᵀ-≤ ⟦ H ⟧ʰᵗ q
+    alg-≤ q = Halg-≤ eS H q
 
     alg-η : alg {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
           ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂))
-    alg-η = T-alg-of-handlerᵀ-ηᵀ ⟦ H ⟧ʰᵗ
+    alg-η = Halg-η eS H
 
     alg-delay : ∀ {ε'} → (τ : ℕ)
               → alg {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ
               ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
                   ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'})
-    alg-delay τ = T-alg-of-handlerᵀ-delayᵀ τ ⟦ H ⟧ʰᵗ
+    alg-delay τ = Halg-delay eS H τ
+
+    ⟦H'⟧ʰᵗ-nat : ∀ op ε''
+               → ⟦_⟧ʰᵗ {toCtx S'} H' op ε''
+               ≈ᵐ ⟦_⟧ʰᵗ {toCtx S} H op ε'' ∘ᵐ mapˣᵐ f idᵐ
+    ⟦H'⟧ʰᵗ-nat op ε'' =
+        ∘ᵐ-congˡ step1'
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      where
+        ptᵥ = type-of-gtype (param op)
+        ktᵥ = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+        D₀ = [] ∷ ptᵥ ∷ ktᵥ
+        eq = trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))
+        ⟦eqren⟧≈ : ⟦ eq-ren (cong (_++ᶜ D₀) eq) ⟧ʳ
+                 ≈ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
+        ⟦eqren⟧≈ =
+            eq-ren-irr (cong (_++ᶜ D₀) eq) (cong (_∷ ktᵥ) (cong (_∷ ptᵥ) eq))
+          ∙ eq-ren-∷ (cong (_∷ ptᵥ) eq)
+          ∙ mapˣᵐ-cong
+              (eq-ren-∷ eq ∙ mapˣᵐ-cong (∅-terminal eS _ _) ≈ᵐ-refl)
+              ≈ᵐ-refl
+        step1' : ⟦ H' op ε'' [] ⟧ᶜᵗ
+               ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
+        step1' = subst-clause-interp eq (H op ε'' []) ∙ ∘ᵐ-congʳ ⟦eqren⟧≈
+
+    Halg-SS' : ∀ {ε} → Halg eS H {ε} ≈ᵐ Halg eS' H' {ε}
+    Halg-SS' =
+      ≈ᵐ-sym (
+          ∘ᵐ-congˡ (T-alg-of-handlerᵀ-cong (bcᴱ (toCtx S')) ⟦H'⟧ʰᵗ-nat)
+        ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-natᴾ (bcᴱ (toCtx S)) (bcᴱ (toCtx S'))
+                     f (∅-box-terminal eS _ _) (⟦_⟧ʰᵗ {toCtx S} H))
+        ∙ ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+                    ∙ ⟨ ∅-terminal eS _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
 
 -- SEQ-OP
 --
