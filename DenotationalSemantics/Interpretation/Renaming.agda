@@ -36,6 +36,8 @@ module DenotationalSemantics.Interpretation.Renaming
 open LanguageSpec S
 open GradeSystemInterface Grades
 
+open import Data.Empty using (⊥-elim)
+open import Util.Equality using (sym)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_; yes; no)
 
@@ -61,7 +63,7 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ⟦ id-ren ⟧ʳ              = idᵐ
 ⟦ r₂ ∘ʳ r₁ ⟧ʳ            = ⟦ r₁ ⟧ʳ ∘ᵐ ⟦ r₂ ⟧ʳ
 ⟦ wk-ren ⟧ʳ              = fstᵐ
-⟦ var-ren p x ⟧ʳ         = ⟨ idᵐ , var-morphism (λ _ → p) x ⟩ᵐ
+⟦ var-ren p x ⟧ʳ         = ⟨ idᵐ , var-morphism p x ⟩ᵐ
 ⟦ ⟨⟩-η-ren ⟧ʳ            = η
 ⟦ ⟨⟩-η⁻¹-ren ⟧ʳ          = εᵘ
 ⟦ ⟨⟩-μ-ren {Γ} {ρ} {ρ'} ⟧ʳ = μ {⟦ Γ ⟧ᶜᵗˣ} {ρ'} {ρ}
@@ -73,56 +75,53 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 -- variable (relaxed back to the original grade) equals projecting the
 -- original variable and reindexing the environment by `⟦ r ⟧ʳ`.
 
-var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
-             → ⟨⟩-≤ (proj₁ (proj₂ (var-rename r x)))
+var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Eternal A)
+             → ⟨⟩-≤ (proj₁ (proj₂ (var-rename r x)) ¬et)
                  ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
                ≈ᵐ var-proj x ∘ᵐ ⟦ r ⟧ʳ
-var-proj-nat id-ren x =
+var-proj-nat id-ren x ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
-var-proj-nat (r₂ ∘ʳ r₁) x with var-rename r₁ x | var-proj-nat r₁ x | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat r₂ (proj₂ (proj₂ (var-rename r₁ x)))
+var-proj-nat (r₂ ∘ʳ r₁) x ¬et with var-rename r₁ x | var-proj-nat r₁ x ¬et | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat r₂ (proj₂ (proj₂ (var-rename r₁ x))) ¬et
 ... | ρ' , ρ'≾ρ , y | ih₁ | ρ'' , ρ''≾ρ' , z | ih₂ =
-  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans ρ''≾ρ' ρ'≾ρ)))
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (ρ''≾ρ' ¬et) (ρ'≾ρ ¬et))))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ ih₂)
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ ih₁)
             (∘ᵐ-assoc _ _ _)))))
-var-proj-nat wk-ren x =
+var-proj-nat wk-ren x ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl) (∘ᵐ-identityˡ _)
-var-proj-nat {A = A} (var-ren p y) Hd with eternal? A
-... | yes et =
-  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-η-ext et p)))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-... | no ¬et =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
+var-proj-nat {A = A} (var-ren p y) Hd ¬et with eternal? A
+... | yes et = ⊥-elim (¬et et)
+... | no ¬et' =
+  ≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-var-proj-nat (var-ren p y) (Tl-∷ x) =
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
+var-proj-nat (var-ren p y) (Tl-∷ x) ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _)
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-var-proj-nat ⟨⟩-η-ren (Tl-⟨⟩ x) =
+var-proj-nat ⟨⟩-η-ren (Tl-⟨⟩ x) ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-μ∘η≡id))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-η-nat (var-proj x))))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-var-proj-nat ⟨⟩-η⁻¹-ren Hd =
+var-proj-nat ⟨⟩-η⁻¹-ren Hd ¬et =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))
-var-proj-nat ⟨⟩-η⁻¹-ren (Tl-∷ x) =
+var-proj-nat ⟨⟩-η⁻¹-ren (Tl-∷ x) ¬et =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))
-var-proj-nat ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) =
+var-proj-nat ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) ¬et =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))
-var-proj-nat ⟨⟩-μ-ren (Tl-⟨⟩ x) =
+var-proj-nat ⟨⟩-μ-ren (Tl-⟨⟩ x) ¬et =
   ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -130,28 +129,28 @@ var-proj-nat ⟨⟩-μ-ren (Tl-⟨⟩ x) =
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-μ-nat (var-proj x))))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-var-proj-nat (⟨⟩-≤-ren ρ'≾ρ) (Tl-⟨⟩ x) =
+var-proj-nat (⟨⟩-≤-ren ρ'≾ρ) (Tl-⟨⟩ x) ¬et =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ʳ ρ'≾ρ))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat (var-proj x) ρ'≾ρ)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-var-proj-nat (cong-∷-ren r) Hd =
+var-proj-nat (cong-∷-ren r) Hd ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-var-proj-nat (cong-∷-ren r) (Tl-∷ x) with var-rename r x | var-proj-nat r x
+var-proj-nat (cong-∷-ren r) (Tl-∷ x) ¬et with var-rename r x | var-proj-nat r x ¬et
 ... | (ρ' , ρ'≾ρ , y) | ih =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ ih)
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x | var-proj-nat r x
+var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) ¬et with var-rename r x | var-proj-nat r x ¬et
 ... | (ρ' , ρ'≾ρ , y) | ih =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ˡ ρ'≾ρ))
+  (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ˡ (ρ'≾ρ ¬et)))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ ih))
@@ -162,18 +161,126 @@ var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x | var-proj-na
 -- `var` case of the term-renaming coherence): from `var-proj-nat` plus the
 -- eternal grade-independence `eternalᵛ-extᵉ-≤`.
 
+-- Naturality of the eternal variable interpretation, grade-free. For an
+-- eternal type the extraction is uniform in the grade, so the coercion
+-- `⟨⟩-≤` that `var-proj-nat` carries is absorbed; proved by induction on the
+-- renaming using the eternal-extraction algebra laws.
+
+var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+    → eternalᵛ-extᵉ et {proj₁ (var-rename r x)} ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
+      ≈ᵐ (eternalᵛ-extᵉ et {ρ} ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
+var-proj-nat-eternal et id-ren x =
+  ≈ᵐ-sym (∘ᵐ-identityʳ _)
+var-proj-nat-eternal et (r₂ ∘ʳ r₁) x
+  with var-rename r₁ x | var-proj-nat-eternal et r₁ x
+     | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat-eternal et r₂ (proj₂ (proj₂ (var-rename r₁ x)))
+... | ρ₁' , _ , y₁ | ih₁ | ρ₂' , _ , y₂ | ih₂ =
+  ≈ᵐ-trans ih₂
+  (≈ᵐ-trans (∘ᵐ-congˡ ih₁)
+            (∘ᵐ-assoc _ _ _))
+var-proj-nat-eternal et wk-ren x =
+  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+var-proj-nat-eternal et (var-ren p y) Hd =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (var-morphism-unfoldᵉ et p y)))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)) ⟨⟩-εᵘ∘η≡id))
+              (∘ᵐ-identityˡ _)))))))
+var-proj-nat-eternal et (var-ren p y) (Tl-∷ x) =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)))
+              (∘ᵐ-congʳ (∘ᵐ-identityʳ _)))))
+var-proj-nat-eternal et ⟨⟩-η-ren (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-μ∘η≡id))
+                      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-η-nat (var-proj x))))
+                                (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat-eternal et ⟨⟩-η⁻¹-ren Hd =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat-eternal et ⟨⟩-η⁻¹-ren (Tl-∷ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≾ᵣ-reflexive (·ᵣ-identityʳ _)))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat-eternal et ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≾ᵣ-reflexive (·ᵣ-identityʳ (_ ·ᵣ _))))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (∘ᵐ-congˡ μ-εᵘ) (≈ᵐ-sym (εᵘ-nat _)))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat-eternal et ⟨⟩-μ-ren (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (≾ᵣ-reflexive (·ᵣ-assoc _ _ _)))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
+                      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+                      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-μ∘μ≡μ∘Tμ))
+                      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-μ-nat (var-proj x))))
+                                (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat-eternal et (⟨⟩-≤-ren ρ'≾ρ) (Tl-⟨⟩ x) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et (·ᵣ-monoʳ-≾ᵣ ρ'≾ρ))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ʳ ρ'≾ρ))
+                      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat (var-proj x) ρ'≾ρ)))
+                                (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+var-proj-nat-eternal et (cong-∷-ren r) Hd =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (∘ᵐ-congʳ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))))
+var-proj-nat-eternal et (cong-∷-ren r) (Tl-∷ x) with var-rename r x | var-proj-nat-eternal et r x
+... | (ρ' , _ , y) | ih =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ ih)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+              (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)))))))))
+var-proj-nat-eternal et (cong-⟨⟩-ren r) (Tl-⟨⟩ x)
+  with var-rename r x | var-proj-nat-eternal et r x
+... | (ρ' , _ , y) | ih =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ ih))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
+              (∘ᵐ-assoc _ _ _)))))))))))
+
 var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
-                 → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x))) (f q))
+                 → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
                                 (proj₂ (proj₂ (var-rename r x)))
                    ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ
-var-morphism-nat {A = A} r f x with eternal? A | var-rename r x | var-proj-nat r x
-... | yes et | ρ' , ρ'≾ρ , y | vpn =
-  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et ρ'≾ρ)))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ vpn)
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-... | no ¬et | ρ' , ρ'≾ρ , y | vpn =
-  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans ρ'≾ρ (f ¬et)))))
+var-morphism-nat {A = A} r f x with eternal? A
+... | yes et = var-proj-nat-eternal et r x
+... | no ¬et with var-rename r x | var-proj-nat r x ¬et
+...   | ρ' , ρ'≾ρ , y | vpn =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (ρ'≾ρ ¬et) (f ¬et)))))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ vpn))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))

@@ -77,10 +77,10 @@ unbox⇒var-nat r w V with grad-typ⇒var V
 ... | ρy , y , f , refl
   with var-rename w (Tl-⟨⟩ y)
      | var-rename r (proj₂ (proj₂ (var-rename w (Tl-⟨⟩ y))))
-     | var-proj-nat r (proj₂ (proj₂ (var-rename w (Tl-⟨⟩ y))))
+     | var-proj-nat r (proj₂ (proj₂ (var-rename w (Tl-⟨⟩ y)))) (λ ())
 ... | ρ' , p' , z | ρ'' , p'' , z'' | vpn =
-  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans p'' _))))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans p'' _))))
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (p'' (λ ())) _))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (p'' (λ ())) _))))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ vpn))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))

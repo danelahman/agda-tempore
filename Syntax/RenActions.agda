@@ -27,38 +27,38 @@ open import Syntax.Types     S
 var-rename : ∀ {Γ Γ' A ρ}
            → Ren Γ Γ'
            → A ∈[ ρ ] Γ
-           → Σ[ ρ' ∈ R ] (ρ' ≾ᵣ ρ × A ∈[ ρ' ] Γ')
-           
+           → Σ[ ρ' ∈ R ] ((¬ Eternal A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Γ')
+
 var-rename id-ren x =
-  _ , ≾ᵣ-refl , x
+  _ , (λ _ → ≾ᵣ-refl) , x
 var-rename (r₂ ∘ʳ r₁) x with var-rename r₁ x
 ... | ρ' , ρ'≾ρ , y with var-rename r₂ y
 ... | ρ'' , ρ''≾ρ' , z =
-  ρ'' , ≾ᵣ-trans ρ''≾ρ' ρ'≾ρ , z
+  ρ'' , (λ ¬et → ≾ᵣ-trans (ρ''≾ρ' ¬et) (ρ'≾ρ ¬et)) , z
 var-rename wk-ren x =
-  _ , ≾ᵣ-refl , Tl-∷ x
+  _ , (λ _ → ≾ᵣ-refl) , Tl-∷ x
 var-rename (var-ren p y) Hd =
   _ , p , y
 var-rename (var-ren p y) (Tl-∷ x) =
   var-rename id-ren x
 var-rename ⟨⟩-η-ren (Tl-⟨⟩ x) =
-  _ , ≾ᵣ-reflexive (sym (·ᵣ-identityʳ _)) , x
+  _ , (λ _ → ≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))) , x
 var-rename ⟨⟩-η⁻¹-ren Hd =
-  uᵣ ·ᵣ uᵣ , ≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ) , Tl-⟨⟩ Hd
+  uᵣ ·ᵣ uᵣ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)) , Tl-⟨⟩ Hd
 var-rename ⟨⟩-η⁻¹-ren (Tl-∷ x) =
-  _ , ≾ᵣ-reflexive (·ᵣ-identityʳ _) , Tl-⟨⟩ (Tl-∷ x)
+  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ _)) , Tl-⟨⟩ (Tl-∷ x)
 var-rename ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) =
-  _ , ≾ᵣ-reflexive (·ᵣ-identityʳ (_ ·ᵣ _)) , Tl-⟨⟩ (Tl-⟨⟩ x)
+  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ (_ ·ᵣ _))) , Tl-⟨⟩ (Tl-⟨⟩ x)
 var-rename ⟨⟩-μ-ren (Tl-⟨⟩ x) =
-  _ , ≾ᵣ-reflexive (·ᵣ-assoc _ _ _) , Tl-⟨⟩ (Tl-⟨⟩ x)
+  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-assoc _ _ _)) , Tl-⟨⟩ (Tl-⟨⟩ x)
 var-rename (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ₂≾ρ₁) (Tl-⟨⟩ x) =
-  _ ·ᵣ ρ₂ , ·ᵣ-monoʳ-≾ᵣ ρ₂≾ρ₁ , Tl-⟨⟩ x
+  _ ·ᵣ ρ₂ , (λ _ → ·ᵣ-monoʳ-≾ᵣ ρ₂≾ρ₁) , Tl-⟨⟩ x
 var-rename (cong-∷-ren r) Hd =
-  uᵣ , ≾ᵣ-refl , Hd
+  uᵣ , (λ _ → ≾ᵣ-refl) , Hd
 var-rename (cong-∷-ren r) (Tl-∷ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' , ρ'≾ρ , Tl-∷ y
 var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
-... | ρ' , ρ'≾ρ , y = ρ' ·ᵣ _ , ·ᵣ-monoˡ-≾ᵣ ρ'≾ρ , Tl-⟨⟩ y
+... | ρ' , ρ'≾ρ , y = ρ' ·ᵣ _ , (λ ¬et → ·ᵣ-monoˡ-≾ᵣ (ρ'≾ρ ¬et)) , Tl-⟨⟩ y
 
 -- A FGCBV-specific variable-based variant of `unbox` based on every value of 
 -- box-type being forced to be a variable (as proved below in unbox⇒var). 
@@ -86,7 +86,7 @@ unbox⇒var {ρ = ρ} w V with grad-typ⇒var V
 ... | _ , y , f , _ with var-rename w (Tl-⟨⟩ y)
 ... | ρ' , ρ'≾ρy·ρ , z =
   ρ' , z ,
-  ≾ᵣ-trans ρ'≾ρy·ρ
+  ≾ᵣ-trans (ρ'≾ρy·ρ (λ ()))
     (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)))
 
 -- Action of renamings on well-typed values and computations
@@ -100,7 +100,7 @@ mutual
            → Γ' ⊢V⦂ A
 
   V-rename r (var f x) with var-rename r x
-  ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans ρ'≾ρ (f p)) y
+  ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans (ρ'≾ρ p) (f p)) y
   V-rename r (const c)   = const c
   V-rename r ⋆           = ⋆
   V-rename r (⦉ V , W ⦊)  = ⦉ V-rename r V , V-rename r W ⦊

@@ -202,13 +202,13 @@ mutual
     handle-cong : ∀ {A B ε ε'}
                 → {M M' : Γ ⊢C⦂ A ‼ ε}
                 → {H H' : ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                             Γ' ∷ type-of-gtype (param op)
+                             Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))}
                 → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
                 → Γ ⊢C⦂ M == M'
                 → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                     Γ' ∷ type-of-gtype (param op)
+                     Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ H op ε'' Γ' == H' op ε'' Γ')
                 → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
@@ -373,7 +373,7 @@ mutual
     handle-return : ∀ {A B ε}
                   → (V : Γ ⊢V⦂ A)
                   → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                           Γ' ∷ type-of-gtype (param op)
+                           Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
@@ -390,7 +390,7 @@ mutual
                    → (V : Γ ⊢V⦂ type-of-gtype (param op))
                    → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
                    → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                            Γ' ∷ type-of-gtype (param op)
+                            Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                    → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
@@ -411,7 +411,7 @@ mutual
     handle-delay : ∀ {A B τ ε ε'}
                  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                          Γ' ∷ type-of-gtype (param op)
+                          Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
@@ -433,7 +433,7 @@ mutual
                  → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
                  → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                          Γ' ∷ type-of-gtype (param op)
+                          Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
@@ -449,7 +449,7 @@ mutual
                  → (V : Δ ⊢V⦂ [ ρ ] A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                          Γ' ∷ type-of-gtype (param op)
+                          Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')

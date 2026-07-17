@@ -32,8 +32,10 @@ data Ren : Ctx → Ctx → Set where
   _∘ʳ_        : ∀ {Γ Γ' Γ''} → Ren Γ' Γ'' → Ren Γ Γ' → Ren Γ Γ''
   -- weakening renaming
   wk-ren      : ∀ {Γ A} → Ren Γ (Γ ∷ A)
-  -- variable renaming (corresponds to contraction)
-  var-ren     : ∀ {Γ A ρ} → ρ ≾ᵣ uᵣ → A ∈[ ρ ] Γ → Ren (Γ ∷ A) Γ
+  -- variable renaming (corresponds to contraction). As in the `var` typing
+  -- rule, the grade bound is only required for non-eternal types: an eternal
+  -- variable is available at any grade (in particular behind a lock).
+  var-ren     : ∀ {Γ A ρ} → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] Γ → Ren (Γ ∷ A) Γ
   -- strong monoidal functor renamings for ⟨_⟩ modality
   ⟨⟩-η-ren    : ∀ {Γ} → Ren (Γ ⟨ uᵣ ⟩) Γ
   ⟨⟩-η⁻¹-ren  : ∀ {Γ} → Ren Γ (Γ ⟨ uᵣ ⟩)
@@ -48,7 +50,7 @@ infixr 20 _∘ʳ_
 
 -- Extending a renaming with a variable
 
-extend-ren : ∀ {Γ Γ' A ρ} → Ren Γ Γ' → ρ ≾ᵣ uᵣ → A ∈[ ρ ] Γ' → Ren (Γ ∷ A) Γ'
+extend-ren : ∀ {Γ Γ' A ρ} → Ren Γ Γ' → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] Γ' → Ren (Γ ∷ A) Γ'
 extend-ren ρ p x = var-ren p x ∘ʳ cong-∷-ren ρ
 
 -- Equality renaming
@@ -122,7 +124,7 @@ restrict-ren (wk-ren {A = A}) with eternal? A
 ... | yes _ = wk-ren
 ... | no  _ = id-ren
 restrict-ren (var-ren {A = A} p x) with eternal? A
-... | yes et = var-ren ≾ᵣ-refl (∈-ᴱ et x)
+... | yes et = var-ren (λ _ → ≾ᵣ-refl) (∈-ᴱ et x)
 ... | no  _  = id-ren
 restrict-ren ⟨⟩-η-ren =
   id-ren
@@ -160,4 +162,4 @@ wk-ren-⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} refl =
 -- Exchange renaming
 
 exch-ren : ∀ {Γ A B} → Ren (Γ ∷ A ∷ B) (Γ ∷ B ∷ A)
-exch-ren = extend-ren (cong-∷-ren wk-ren) ≾ᵣ-refl (Tl-∷ Hd)
+exch-ren = extend-ren (cong-∷-ren wk-ren) (λ _ → ≾ᵣ-refl) (Tl-∷ Hd)

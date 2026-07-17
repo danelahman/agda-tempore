@@ -278,7 +278,7 @@ unbox-lookup-sound {A} {ρ} St w V with grad-typ⇒var V
     ∙ ≈ᵐ-sym rhs
   where
     rel : ρ' ≾ᵣ ρ
-    rel = ≾ᵣ-trans bound
+    rel = ≾ᵣ-trans (bound (λ ()))
             (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)))
 
     p₀ = ≾ᵣ-reflexive (sym (cell-grade St x))

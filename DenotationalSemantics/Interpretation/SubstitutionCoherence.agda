@@ -448,10 +448,10 @@ unbox⇒var-Hd : ∀ {Γ Δ₀ A ρ} → (W : Ren ((Δ₀ ∷ [ ρ ] A) ⟨ ρ �
                   (proj₂ (proj₂ (unbox⇒var W (var (λ _ → ≾ᵣ-refl) Hd))))
                ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ ⟦ W ⟧ʳ
 unbox⇒var-Hd {Δ₀ = Δ₀} {A = A} {ρ = ρ} W
-  with var-rename W (Tl-⟨⟩ Hd) | var-proj-nat W (Tl-⟨⟩ Hd)
+  with var-rename W (Tl-⟨⟩ Hd) | var-proj-nat W (Tl-⟨⟩ Hd) (λ ())
 ... | ρ'' , b , z'' | vpn =
   ∘ᵐ-congʳ
-    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans b _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (b (λ ())) _)))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ vpn)
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -1068,7 +1068,7 @@ mutual
     with grad-typ⇒var V | var-rename w (Tl-⟨⟩ (proj₁ (proj₂ (grad-typ⇒var V))))
   ... | _ , yv , f , refl | _ , b , y =
     unbox-subst-nat y
-      (≾ᵣ-trans b (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ _))))
+      (≾ᵣ-trans (b (λ ())) (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ _))))
       M x W (C-subst-nat M (Tl-∷ x) W)
   C-subst-nat (box V N) x W =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat N (Tl-∷ x) W))
