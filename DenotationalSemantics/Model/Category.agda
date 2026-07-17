@@ -196,6 +196,41 @@ record Category : Set₂ where
   ×ᵐ-assoc⁻¹ : ∀ {A B C} → A ×ᵐ (B ×ᵐ C) →ᵐ (A ×ᵐ B) ×ᵐ C
   ×ᵐ-assoc⁻¹ = ⟨ ⟨ fstᵐ , fstᵐ ∘ᵐ sndᵐ ⟩ᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ
 
+  -- the associator and its inverse are mutually inverse
+
+  ×ᵐ-assoc-iso : ∀ {A B C} → ×ᵐ-assoc {A} {B} {C} ∘ᵐ ×ᵐ-assoc⁻¹ ≈ᵐ idᵐ
+  ×ᵐ-assoc-iso = ≈ᵐ-trans
+    (⟨⟩ᵐ-unique fstᵐ sndᵐ (×ᵐ-assoc ∘ᵐ ×ᵐ-assoc⁻¹)
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ ×ᵐ-assoc ×ᵐ-assoc⁻¹))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc fstᵐ fstᵐ ×ᵐ-assoc⁻¹)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _)))))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ ×ᵐ-assoc ×ᵐ-assoc⁻¹))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+      (≈ᵐ-trans (⟨⟩ᵐ-∘ (sndᵐ ∘ᵐ fstᵐ) sndᵐ ×ᵐ-assoc⁻¹)
+      (≈ᵐ-trans (⟨ ≈ᵐ-trans (∘ᵐ-assoc sndᵐ fstᵐ ×ᵐ-assoc⁻¹)
+                   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (⟨⟩ᵐ-sndᵐ _ _))
+                , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
+                (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ sndᵐ) (sndᵐ ∘ᵐ sndᵐ) sndᵐ ≈ᵐ-refl ≈ᵐ-refl)))))))
+    (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ fstᵐ) (∘ᵐ-identityʳ sndᵐ)))
+
+  ×ᵐ-assoc⁻¹-iso : ∀ {A B C} → ×ᵐ-assoc⁻¹ {A} {B} {C} ∘ᵐ ×ᵐ-assoc ≈ᵐ idᵐ
+  ×ᵐ-assoc⁻¹-iso = ≈ᵐ-trans
+    (⟨⟩ᵐ-unique fstᵐ sndᵐ (×ᵐ-assoc⁻¹ ∘ᵐ ×ᵐ-assoc)
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ ×ᵐ-assoc⁻¹ ×ᵐ-assoc))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (⟨⟩ᵐ-∘ fstᵐ (fstᵐ ∘ᵐ sndᵐ) ×ᵐ-assoc)
+      (≈ᵐ-trans (⟨ ⟨⟩ᵐ-fstᵐ _ _
+                , ≈ᵐ-trans (∘ᵐ-assoc fstᵐ sndᵐ ×ᵐ-assoc)
+                   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _))
+                ⟩ᵐ-cong)
+                (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ fstᵐ) (sndᵐ ∘ᵐ fstᵐ) fstᵐ ≈ᵐ-refl ≈ᵐ-refl))))))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ ×ᵐ-assoc⁻¹ ×ᵐ-assoc))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc sndᵐ sndᵐ ×ᵐ-assoc)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-sndᵐ _ _))))))
+    (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ fstᵐ) (∘ᵐ-identityʳ sndᵐ)))
+
   -- EXPONENTIALS
 
   field

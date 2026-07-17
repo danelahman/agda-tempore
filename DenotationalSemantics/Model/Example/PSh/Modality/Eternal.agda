@@ -45,6 +45,7 @@ open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction GS Wld
 open import DenotationalSemantics.Model.Category
 open Category PShCat using (mapˣᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ; _∘ᵐ_; idᵐ; _≈ᵐ_;
   ⟨⟩ᵐ-fstᵐ; ⟨⟩ᵐ-sndᵐ; ⟨⟩ᵐ-unique; ⟨_,_⟩ᵐ-cong; ⟨⟩ᵐ-∘; mapˣᵐ-∘; mapˣᵐ-cong; mapˣᵐ-idᵐ;
+  ×ᵐ-assoc; ×ᵐ-assoc⁻¹; ×ᵐ-assoc-iso; ×ᵐ-assoc⁻¹-iso;
   ∘ᵐ-assoc; ∘ᵐ-congˡ; ∘ᵐ-congʳ; ∘ᵐ-identityˡ; ∘ᵐ-identityʳ;
   ≈ᵐ-refl; ≈ᵐ-sym; ≈ᵐ-trans)
 
@@ -176,46 +177,23 @@ Kᵖ-eternalᵒ S = record
     nec : ∀ {ρ} → (A ×ᵖ B) →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
     nec {ρ} = []-monoidal ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ eA {ρ}) (Eternalᵒ.necᵉ eB {ρ})
 
-    -- Reassociation isos: `aⁿ` right-nests `(P × A) × B → P × (A × B)`,
-    -- `aⁿ⁻¹` left-nests. Used around the factor strengths.
-    aⁿ : ∀ {P} → (P ×ᵖ A) ×ᵖ B →ᵖ P ×ᵖ (A ×ᵖ B)
-    aⁿ = ⟨ fstᵐ ∘ᵐ fstᵐ , ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ
-
-    aⁿ⁻¹ : ∀ {P} → P ×ᵖ (A ×ᵖ B) →ᵖ (P ×ᵖ A) ×ᵖ B
-    aⁿ⁻¹ = ⟨ ⟨ fstᵐ , fstᵐ ∘ᵐ sndᵐ ⟩ᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ
-
     -- The `⟨_⟩`-strength for a product: bring the factors inside one at a
     -- time, using `eA`'s strength at object `X`, then `eB`'s at `X ×ᵖ A`,
-    -- reassociating around them.
+    -- reassociating around them with the product associator.
     strᵉ× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵖ (A ×ᵖ B) →ᵖ ⟨ ρ ⟩ᵒ (X ×ᵖ (A ×ᵖ B))
     strᵉ× {ρ} {X} =
-        ⟨ ρ ⟩ᶠ aⁿ
+        ⟨ ρ ⟩ᶠ ×ᵐ-assoc
       ∘ᵐ Eternalᵒ.strᵉ eB
       ∘ᵐ mapˣᵐ (Eternalᵒ.strᵉ eA) idᵐ
-      ∘ᵐ aⁿ⁻¹
+      ∘ᵐ ×ᵐ-assoc⁻¹
 
     -- The inverse: the reverse composite of the factor costrengths.
     costr'× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ (X ×ᵖ (A ×ᵖ B)) →ᵖ ⟨ ρ ⟩ᵒ X ×ᵖ (A ×ᵖ B)
     costr'× {ρ} {X} =
-        aⁿ
+        ×ᵐ-assoc
       ∘ᵐ mapˣᵐ (Eternalᵒ.costrᵉ eA) idᵐ
       ∘ᵐ Eternalᵒ.costrᵉ eB
-      ∘ᵐ ⟨ ρ ⟩ᶠ aⁿ⁻¹
-
-    -- Reassociations are mutually inverse (product iso facts).
-    -- CHECKPOINT: both reassociator-iso facts have the same residual implicit-
-    -- inference issue (the final `⟨⟩ᵐ-unique … ≈ᵐ-refl ≈ᵐ-refl` leaves the
-    -- projection objects as metas); the full proof terms are in memory. These
-    -- are pure product-category facts (`×ᵐ-assoc`/`×ᵐ-assoc⁻¹` are mutually
-    -- inverse) and would be cleaner as reusable Category lemmas.
-    aⁿ-aⁿ⁻¹ : ∀ {P} → aⁿ {P} ∘ᵐ aⁿ⁻¹ {P} ≈ᵐ idᵐ
-    aⁿ-aⁿ⁻¹ {P} = {!!}
-
-    -- Symmetric to `aⁿ-aⁿ⁻¹` (fst/snd roles swapped). CHECKPOINT: the analogous
-    -- proof term is written out in git/memory but has a residual implicit-
-    -- inference issue; finish alongside the two record laws.
-    aⁿ⁻¹-aⁿ : ∀ {P} → aⁿ⁻¹ {P} ∘ᵐ aⁿ {P} ≈ᵐ idᵐ
-    aⁿ⁻¹-aⁿ {P} = {!!}
+      ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹
 
     -- Both sides feed the two factors' necessitations the same pair of
     -- accessibility witnesses, so the law holds componentwise, by the
