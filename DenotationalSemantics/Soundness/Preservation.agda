@@ -99,6 +99,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; eternalᵒ-boxCoalg)
 open import DenotationalSemantics.Model.Modality.BoxCoalg
        Cat (GradeSystem.RGrade Grades) Fut using (BoxCoalg)
+import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut GTy as HC
 
 -- The `BoxCoalg` on `⟦ Γ ᴱ ⟧` carried by every `handle` interpretation: the
 -- eternal-parameter object of the handler's fold.
@@ -1952,6 +1953,23 @@ Halg-delay {Γ} e H τ =
         ∙ ⟨⟩ᵐ-sndᵐ _ _
         ∙ ≈ᵐ-sym (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ []-congᶠ (⟨⟩ᵐ-sndᵐ _ _) ∙ []-idᵐ))
 
+-- The operation law of the collapsed handler algebra, imported from the
+-- abstract `HandlerAlgebra` module (instantiated at the terminal parameter
+-- `⟦ Γ ᴱ ⟧`). This is the fold's operation law with the parameter-free clause.
+Halg-op : ∀ {Γ A B ε ε'} → (e : Γ ᴱ ≡ [])
+        → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+             → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+        → (op : Op)
+        → Halg {ε₂ = ε'} e H {op-grade op ·ₑ ε} ∘ᵐ opᵀ {ε = ε} op
+        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
+           ∘ᵐ (⟦_⟧ʰᵗ {Γ} H op (ε ·ₑ ε') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
+           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Halg e H {ε})))
+Halg-op {Γ} e H op =
+  HC.Halg-op Mon (bcᴱ Γ) (term∅ e) (∅-terminal e) (∅-box-terminal e)
+             (⟦_⟧ʰᵗ {Γ} H) op
+
 -- The `⟦_⟧ʰᵗ` adapter (parameter-independent) commutes with a reindexing of the
 -- eternal parameter — the same shape as in the renaming/substitution coherence.
 adapt-commute : ∀ {D D' P Q R Sₒ} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : Sₒ →ᵐ R)
@@ -2403,15 +2421,15 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
 -- the clause at `toCtx S` while `⟦_⟧ʰᵗ` reads the model's context-free
 -- `Handlerᵀ` at `[]`.
 
-Uniformʰ : ∀ {B}
+Uniformʰ : ∀ {Γ B} → Γ ᴱ ≡ []
          → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
-              → Γ' ∷ type-of-gtype (param op)
+              → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                 ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
          → Set
-Uniformʰ H = ∀ op ε'' Γ'
-           → ⟦ H op ε'' Γ' ⟧ᶜᵗ
-           ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ terminalᵐ idᵐ) idᵐ
+Uniformʰ e H = ∀ op ε'' Γ'
+             → ⟦ H op ε'' Γ' ⟧ᶜᵗ
+             ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ e) idᵐ) idᵐ
 
 -- The clause the semantics applies, reached from the clause the reduction fires.
 --
@@ -2419,12 +2437,12 @@ Uniformʰ H = ∀ op ε'' Γ'
 -- discards the context. What is left on both sides is the `[]`-clause applied to
 -- the parameter and the boxed continuation.
 
-clause-sound : ∀ {Γ B ε''} → (op : Op)
+clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
              → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
-                  → Γ' ∷ type-of-gtype (param op')
+                  → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
                        ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
-             → Uniformʰ H
+             → Uniformʰ e H
              → (V : Γ ⊢V⦂ type-of-gtype (param op))
              -- the operation's continuation, boxed, at the *ground* arity — the
              -- form `opᵀ` hands to the algebra
@@ -2436,10 +2454,10 @@ clause-sound : ∀ {Γ B ε''} → (op : Op)
                         (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ)
                                       (sym (ty-gty (arity op))) idᵐ) idᵐ)
                       ∘ᵐ W ⟩ᵐ
-             ≈ᵐ ⟦ H ⟧ʰᵗ op ε''
+             ≈ᵐ (⟦_⟧ʰᵗ {Γ} H op ε'' ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
                   ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
                      , W ⟩ᵐ
-clause-sound {Γ} op H u V W =
+clause-sound {Γ} e op H u V W =
   -- substituting the parameter into the clause
     ∘ᵐ-congˡ (C-subst-nat (H op _ Γ) (Tl-∷ Hd) V)
   -- the clause ignores its context
@@ -2454,31 +2472,32 @@ clause-sound {Γ} op H u V W =
          ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
          ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
        , ∘ᵐ-congˡ (∘ᵐ-identityˡ _) ∙ ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-  -- and that is exactly what the semantic handler is applied to: its own
-  -- ground-type coercions cancel the ones the operation carries
+  -- and that is exactly what the semantic handler is applied to: the parameter's
+  -- coercions cancel and the (terminal) eternal parameter is threaded by `term∅`
   ∙ ≈ᵐ-sym
       (  ∘ᵐ-assoc _ _ _
-       ∙ ∘ᵐ-congʳ
+       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
            (mapˣᵐ-∘⟨⟩ _ _ _ _
             ∙ ⟨ ⟨⟩ᵐ-∘ _ _ _
-                ∙ ⟨ terminalᵐ-unique
+                ∙ ⟨ ∅-terminal e _ _
                   , gty-cancelᵛ (ty-gty (param op)) ⟦ V ⟧ᵛᵗ ⟩ᵐ-cong
-              , ≈ᵐ-refl ⟩ᵐ-cong))
+              , ≈ᵐ-refl ⟩ᵐ-cong)))
 
 -- HANDLE-OP: the operation is handled by its clause, with the rest of the
 -- computation boxed up as the clause's continuation.
 
-sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
+sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                 → (V : Γ ⊢V⦂ type-of-gtype (param op))
                 → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                        ⊢C⦂ A ‼ ε)
                 → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
-                     → Γ' ∷ type-of-gtype (param op')
+                     → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
                           ∷ [ mapᵉ (op-grade op') ]
                               (type-of-gtype (arity op') ⇒ B ‼ ε')
                        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
                 → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'')
-                → Uniformʰ H
+                → Uniformʰ e H
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
                    ∘ᵐ ⟦ box (lam (handle M `with H
@@ -2486,11 +2505,14 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                                           (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
                                            ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N)))
                             (H op (ε ·ₑ ε'') Γ [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
-sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N u =
-  -- the commuting conversion, with the handler's fold as the algebra: the
-  -- operation is algebraic for it too, and applies a clause
-    seq-op-core op (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ) (⟦ H ⟧ʰᵗ op (ε ·ₑ ε''))
-      (T-alg-of-handlerᵀ-opᵀ op ⟦ H ⟧ʰᵗ) (ty-gty (arity op))
+sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N u =
+  -- collapse the eternal parameter (`Γ ᴱ ≡ []`), then the commuting conversion
+  -- with the handler's fold as the algebra: the operation is algebraic for it
+  -- too, and applies a clause
+    handle-collapse e (perform op V M) H N
+  ∙ seq-op-core op (Halg {ε₂ = ε''} e H)
+      (⟦_⟧ʰᵗ {Γ} H op (ε ·ₑ ε'') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
+      (Halg-op e H op) (ty-gty (arity op))
       (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
       ⟦ M ⟧ᶜᵗ ⟦ N ⟧ᶜᵗ ⟦ ren ⟧ʳ ern
   -- what is left is the reduct: the clause fired at `Γ`, applied to the
@@ -2508,20 +2530,20 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N u =
     -- handled remainder, abstracted over the arity value. The `map⇒ᵐ` the
     -- semantic handler applies is undone by `map⇒ᵐ-curryᵐˡ`, and the arity
     -- coercions cancel.
-    tgt : ⟦ H ⟧ʰᵗ op (ε ·ₑ ε'')
+    tgt : (⟦_⟧ʰᵗ {Γ} H op (ε ·ₑ ε'') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
             ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
                , [ mapᵉ (op-grade op) ]ᶠ
                    (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O)
                                          →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε''))
                                   (ty-gty (arity op))
-                                  (T-alg-of-handlerᵀ ⟦ H ⟧ʰᵗ
+                                  (Halg {ε₂ = ε''} e H
                                      ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
                                      ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ)))
                  ∘ᵐ η⊣ ⟩ᵐ
         ≈ᵐ ⟦ box (lam (handle M `with H `in (C-rename (cong-∷-ren ren) N)))
                  (H op (ε ·ₑ ε'') Γ [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
     tgt =
-        ≈ᵐ-sym (clause-sound op H u V _)
+        ≈ᵐ-sym (clause-sound e op H u V _)
       ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
           , ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
             ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
@@ -2673,7 +2695,7 @@ Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
          → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
          → Set
-Uniform↝ (HANDLE-OP {H = H})   = Uniformʰ H
+Uniform↝ (HANDLE-OP {S = S} {H = H}) = Uniformʰ (toCtxᴱ-[] S) H
 Uniform↝ (SEQ-STEP r _)        = Uniform↝ r
 Uniform↝ (HANDLE-STEP r _)     = Uniform↝ r
 Uniform↝ APP                   = ⊤
@@ -2743,9 +2765,9 @@ Uniform↝ COERCE                = ⊤
 -- boxed up as its continuation. This is the only rule that reads a clause, and
 -- so the only one that needs the handler's uniformity.
 
-↝-sound r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N}) u =
+↝-sound r@(HANDLE-OP {S = S} {op = op} {V = V} {M = M} {H = H} {N = N}) u =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-assoc (op-grade op) _ _)))
-    (∘ᵐ-congˡ (sound-HANDLE-OP op V M H N u)
+    (∘ᵐ-congˡ (sound-HANDLE-OP (toCtxᴱ-[] S) op V M H N u)
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 
