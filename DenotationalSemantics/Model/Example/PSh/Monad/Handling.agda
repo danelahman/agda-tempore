@@ -12,6 +12,7 @@
 -- and `Handling.Mu` (the μ law). This module re-exports all three.     --
 ------------------------------------------------------------------------
 
+open import Syntax.Grades
 open import Syntax.LanguageSpec
 
 open import DenotationalSemantics.Model.World

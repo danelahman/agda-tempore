@@ -2,6 +2,8 @@
 -- Effect handling: the η / delay / op / sub-effecting algebra laws.    --
 ------------------------------------------------------------------------
 
+{-# OPTIONS --lossy-unification #-}
+
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
