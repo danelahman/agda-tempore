@@ -122,15 +122,14 @@ triangleʳ {A} F p = ≈-refl A
 η⊣-u {A} x q = return (q , ≈-refl A)
 
 
--- The adjunction is compatible with composition of grades: splitting the box
--- of `η⊣` at a product grade with `δ` gives the two transposes, whose pasts
--- `μ` folds back together. Both sides name the same past — the witness
--- `⊑-trans p q` — so this holds on the nose.
+-- The counit-side compatibility with composition of grades: extracting a
+-- doubly-boxed value after folding the two pasts with `μ` names the same past
+-- as extracting through the two `δ`-split box layers, so it holds on the nose.
 
-η⊣-δ : ∀ {A ρ₁ ρ₂}
-     → δ ∘ᵖ η⊣ {A} {ρ₁ · ρ₂}
-     ≈ᵖ [ ρ₁ ]ᶠ ([ ρ₂ ]ᶠ (μ {A} {ρ₂} {ρ₁}) ∘ᵖ η⊣ {⟨ ρ₁ ⟩ᵒ A} {ρ₂}) ∘ᵖ η⊣ {A} {ρ₁}
-η⊣-δ {A} {ρ₁} {ρ₂} x p q = ≈-refl (⟨ ρ₁ · ρ₂ ⟩ᵒ A)
+ε⊣-μ : ∀ {A ρ₁ ρ₂}
+     → ε⊣ {A} {ρ₁ · ρ₂} ∘ᵖ μ {[ ρ₁ · ρ₂ ]ᵒ A} {ρ₂} {ρ₁}
+     ≈ᵖ ε⊣ {A} {ρ₂} ∘ᵖ ⟨ ρ₂ ⟩ᶠ (ε⊣ {[ ρ₂ ]ᵒ A} {ρ₁} ∘ᵖ ⟨ ρ₁ ⟩ᶠ (δ {A} {ρ₁} {ρ₂}))
+ε⊣-μ {A} {ρ₁} {ρ₂} E = ≈-refl A
 
 
 -- Pairing two transposes is transposing the pair: both boxes are fed the same
@@ -159,6 +158,6 @@ PShAdj = record
   ; triangleʳ = λ {A} → triangleʳ {A}
   ; ε⊣-u      = λ {A} → ε⊣-u {A}
   ; η⊣-u      = λ {A} → η⊣-u {A}
-  ; η⊣-δ      = λ {A} → η⊣-δ {A}
+  ; ε⊣-μ      = λ {A} → ε⊣-μ {A}
   ; η⊣-monoidal = λ {A} → η⊣-monoidal {A}
   }

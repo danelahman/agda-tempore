@@ -39,7 +39,7 @@ module DenotationalSemantics.Model.Implementation
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (TMon : TickMonad S Cat Fut)
        where
 

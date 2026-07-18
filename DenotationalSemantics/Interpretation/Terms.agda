@@ -35,7 +35,7 @@ module DenotationalSemantics.Interpretation.Terms
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 
@@ -58,10 +58,10 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (eternalᵒ-boxCoalg)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 
-open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
-open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 
 -- The value-type interpretation of a ground type coincides with its
@@ -100,7 +100,7 @@ mutual
         ∘ᵐ η⊣ ⟩ᵐ
   ⟦ delay τ M ⟧ᶜᵗ = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ⟦ M ⟧ᶜᵗ ∘ᵐ η⊣
   ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) =
-      T-alg-of-handlerᵀ (eternalᵒ-boxCoalg ⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H)
+      T-alg-of-handlerᵀ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H)
     ∘ᵐ ⟨ projᴱ Γ , Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ ⟩ᵐ
   ⟦ unbox w V M ⟧ᶜᵗ with unbox⇒var w V
   ... | ρ' , x , ρ'≾ρ =

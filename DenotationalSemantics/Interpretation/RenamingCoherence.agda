@@ -28,7 +28,7 @@ module DenotationalSemantics.Interpretation.RenamingCoherence
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 
@@ -52,12 +52,10 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; eternalᵒ-boxCoalg)
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-       Cat (GradeSystem.RGrade Grades) Fut using (BoxCoalg)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 
-open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
-open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
@@ -89,7 +87,7 @@ unbox⇒var-nat r w V with grad-typ⇒var V
 -- The interpretation of a restricted renaming also commutes with the
 -- necessitations `necᵉ` (the box/`Future` mate of `restrict-ren-mor`, which
 -- is stated for `extᵉ`). Derived via `necᵉ-mate` and the adjunction. This is
--- the `BoxCoalg`-morphism premise that the fold's parameter-naturality needs.
+-- the box-coalgebra-morphism premise that the fold's parameter-naturality needs.
 
 restrict-ren-necᵉ : ∀ {Γ Γ'} → (r : Ren Γ Γ') → ∀ {ρ}
                   → [ ρ ]ᶠ ⟦ restrict-ren r ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ' ⟧ᴱ-Eternalᵒ) {ρ}
@@ -267,15 +265,15 @@ mutual
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat : T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ' ⟧ᴱ-Eternalᵒ))
+      alg-nat : T-alg-of-handlerᵀ ((⟦ Γ' ⟧ᴱ-Eternalᵒ))
                   (⟦_⟧ʰᵗ {Γ'} (λ op ε'' Γ'' →
                      C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ'')))
-              ≈ᵐ T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
+              ≈ᵐ T-alg-of-handlerᵀ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
                   ∘ᵐ mapˣᵐ f idᵐ
       alg-nat =
-        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong (eternalᵒ-boxCoalg (⟦ Γ' ⟧ᴱ-Eternalᵒ)) ⟦⟧ʰᵗ-nat)
-                 (T-alg-of-handlerᵀ-natᴾ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ))
-                    (eternalᵒ-boxCoalg (⟦ Γ' ⟧ᴱ-Eternalᵒ)) f (restrict-ren-necᵉ r)
+        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong ((⟦ Γ' ⟧ᴱ-Eternalᵒ)) ⟦⟧ʰᵗ-nat)
+                 (T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ))
+                    ((⟦ Γ' ⟧ᴱ-Eternalᵒ)) f (restrict-ren-necᵉ r)
                     (⟦_⟧ʰᵗ {Γ} H))
   C-rename-nat r (unbox w V M) =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M))

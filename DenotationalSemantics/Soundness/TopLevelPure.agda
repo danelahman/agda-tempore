@@ -48,7 +48,7 @@ module DenotationalSemantics.Soundness.TopLevelPure
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
          (TMon : TickMonad S Cat Fut)
          (Impl : Implementation S Cat Fut Pst Adj GTy Mon TMon)
@@ -81,14 +81,14 @@ open Monad Mon using (Tᵒ; Tᶠ; ηᵀ; μᵀ; T-≤; ε-substᵀ; delayᵀ; op
 open TickMonad TMon
 open Implementation Impl
 
-open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
-open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy Mon GE
 
-open import DenotationalSemantics.Soundness.TickLemmas S Cat Fut GTy Mon TMon
+open import DenotationalSemantics.Soundness.TickLemmas S Cat Fut Pst Adj GTy Mon TMon
 open ImplLemmas implᵐ implᵐ-μᵀ implᵐ-nat
 
 module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where

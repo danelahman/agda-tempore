@@ -16,12 +16,16 @@ open import Syntax.Operations
 
 open import DenotationalSemantics.Model.Category
 open import DenotationalSemantics.Model.Modality.Future
+open import DenotationalSemantics.Model.Modality.Past
+open import DenotationalSemantics.Model.Modality.Adjunction
 open import DenotationalSemantics.Model.GroundTypes
 
 module DenotationalSemantics.Model.HandlerAlgebra
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
        where
 
@@ -29,8 +33,8 @@ open import Data.Nat using (ℕ)
 
 open import Util.Equality
 
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-  Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut
+open import DenotationalSemantics.Model.Modality.Eternal
+  Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst Adj
 
 open import DenotationalSemantics.Model.Monad
 
@@ -58,14 +62,14 @@ map⇒ᵐ-∘ g f =
   ∙ curryᵐ-cong (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-congʳ (map⇒ᵐ≈curry f) ∙ map⇒ᵐ-curryᵐ g (f ∘ᵐ appᵐ))
 
-module _ (Mon : Monad S Cat Fut GTy) where
+module _ (Mon : Monad S Cat Fut Pst Adj GTy) where
 
   open Monad Mon
 
   -- A terminal-ish parameter object: any two maps into it (or into a box of
   -- it) agree. This is what `⟦ Γ ᴱ ⟧` is when `Γ ᴱ ≡ []`.
   module _ {P : Obj}
-           (bc : BoxCoalg P)
+           (bc : Eternalᵒ P)
            (t : ∀ {X} → X →ᵐ P)
            (t-uniq : ∀ {X} → (f g : X →ᵐ P) → f ≈ᵐ g)
            (t-box-uniq : ∀ {X ρ} → (f g : X →ᵐ [ ρ ]ᵒ P) → f ≈ᵐ g)
@@ -109,7 +113,7 @@ module _ (Mon : Monad S Cat Fut GTy) where
     -- monoidally is boxing the direct pairing. The `fstᵐ` legs agree by
     -- terminality of `[ ρ ]ᵒ P`; the `sndᵐ` legs are both the value.
     mono-collapse : ∀ {C X ρ} → (u : X →ᵐ [ ρ ]ᵒ C)
-                  → []-monoidal {P} {C} {ρ} ∘ᵐ ⟨ BoxCoalg.necᵉ bc ∘ᵐ t , u ⟩ᵐ
+                  → []-monoidal {P} {C} {ρ} ∘ᵐ ⟨ Eternalᵒ.necᵉ bc ∘ᵐ t , u ⟩ᵐ
                   ≈ᵐ [ ρ ]ᶠ ⟨ t , idᵐ ⟩ᵐ ∘ᵐ u
     mono-collapse u =
       box-×-ext _ _
@@ -157,7 +161,7 @@ module _ (Mon : Monad S Cat Fut GTy) where
                                   ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ
                                      , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ))
                             ∘ᵐ []-monoidal
-                            ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
+                            ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
                             ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ)
                     ∘ᵐ ⟨ t , idᵐ ⟩ᵐ
                   ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
@@ -187,9 +191,9 @@ module _ (Mon : Monad S Cat Fut GTy) where
             -- finishes it, with `map⇒ᵐ-∘` recombining under the box.
             Talg = T-alg-of-handlerᵀ bc h
 
-            pairs : ⟨ BoxCoalg.necᵉ bc ∘ᵐ fstᵐ , idᵐ ∘ᵐ sndᵐ ⟩ᵐ
+            pairs : ⟨ Eternalᵒ.necᵉ bc ∘ᵐ fstᵐ , idᵐ ∘ᵐ sndᵐ ⟩ᵐ
                       ∘ᵐ (⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ∘ᵐ ⟨ t , idᵐ ⟩ᵐ)
-                  ≈ᵐ ⟨ BoxCoalg.necᵉ bc ∘ᵐ t , sndᵐ ⟩ᵐ
+                  ≈ᵐ ⟨ Eternalᵒ.necᵉ bc ∘ᵐ t , sndᵐ ⟩ᵐ
             pairs =
                 ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _
                           ∙ ⟨ ⟨⟩ᵐ-fstᵐ _ _

@@ -38,8 +38,10 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Effects S Wld GTy
 open import DenotationalSemantics.Model.Category
 open Category PShCat using (mapˣᵐ; map⇒ᵐ; exp-strᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ)
 
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-  PShCat (GradeSystem.RGrade Grades) PShFut
+open import DenotationalSemantics.Model.Example.PSh.Modality.Past Grades Wld using (PShPast)
+open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction Grades Wld using (PShAdj)
+open import DenotationalSemantics.Model.Modality.Eternal
+  PShCat (GradeSystem.RGrade Grades) PShFut PShPast PShAdj
 
 open import DenotationalSemantics.Model.Example.PSh.Monad.Handling.Core S Wld GTy
 
@@ -58,7 +60,7 @@ sub-ε-substˢ refl q q' t = sub-≈ (≈ᵗ-refl t)
 
 -- The fold commutes with a grade transport.
 
-T-alg-ε-substˢ : ∀ {P A ε₁ ε₂ ε' w} → (bc : BoxCoalg P) → (h : Handlerˢ P A)
+T-alg-ε-substˢ : ∀ {P A ε₁ ε₂ ε' w} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                → (pv : carrier P w) → (e : ε₁ ≡ ε₂)
                → (t : Tˢ (Tᵒ A ε') ε₁ w)
                → T-alg-of-handlerˢ bc h pv (ε-substˢ e t)
@@ -127,34 +129,34 @@ delay-ε-substˢ refl f fn = delay-≈ (λ q → ≈ᵗ-refl _)
 -- necessitating the parameter already advanced to the node's world. This is the
 -- comultiplication law `necᵉ-δ` (a composite-grade box splits into nested ones).
 
-necᵉ-box▸ : ∀ {P ρ₀ ε₀ w w' w''} (bc : BoxCoalg P) (pv : carrier P w)
+necᵉ-box▸ : ∀ {P ρ₀ ε₀ w w' w''} (bc : Eternalᵒ P) (pv : carrier P w)
             (q : w ⊑[ mapᵉ ρ₀ ] w') (r : w' ⊑[ mapᵉ ε₀ ] w'')
-          → _≈_ P (F.fun (box▸ P q (B.app (BoxCoalg.necᵉ bc {mapᵉ (ρ₀ ·ₑ ε₀)}) pv)) r)
-                  (F.fun (B.app (BoxCoalg.necᵉ bc {mapᵉ ε₀})
-                                (F.fun (B.app (BoxCoalg.necᵉ bc {mapᵉ ρ₀}) pv) q)) r)
+          → _≈_ P (F.fun (box▸ P q (B.app (Eternalᵒ.necᵉ bc {mapᵉ (ρ₀ ·ₑ ε₀)}) pv)) r)
+                  (F.fun (B.app (Eternalᵒ.necᵉ bc {mapᵉ ε₀})
+                                (F.fun (B.app (Eternalᵒ.necᵉ bc {mapᵉ ρ₀}) pv) q)) r)
 necᵉ-box▸ {P = P} bc pv q r =
-  ≈-trans P (BoxCoalg.necᵉ-≤ bc (≾ᵣ-reflexive (sym map-·ᵉ)) pv (⊑-trans q r))
-            (BoxCoalg.necᵉ-δ bc pv q r)
+  ≈-trans P (Eternalᵒ.necᵉ-≤ bc (≾ᵣ-reflexive (sym map-·ᵉ)) pv (⊑-trans q r))
+            (Eternalᵒ.necᵉ-δ bc pv q r)
 
 -- The fold is an algebra: folding a two-layer tree is folding the outer layer
 -- after folding each inner one. By induction on the tree — at each node the
 -- fold and the multiplication agree, so the two transports coincide.
 
 {-# TERMINATING #-}
-T-alg-of-handlerˢ-μˢ : ∀ {P A ε ε' ε'' w} → (bc : BoxCoalg P) → (h : Handlerˢ P A)
+T-alg-of-handlerˢ-μˢ : ∀ {P A ε ε' ε'' w} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                      → (pv : carrier P w)
                      → (t : Tˢ (Tᵒ (Tᵒ A ε'') ε') ε w)
                      → T-alg-of-handlerˢ {ε = ε ·ₑ ε'} {ε''} bc h pv (μˢ t)
                      ≈ᵗ ε-substˢ (sym (·ₑ-assoc ε ε' ε''))
                           (T-alg-of-handlerˢ {ε = ε} {ε' ·ₑ ε''} bc h pv
                             (Tˢᶠ (T-alg-of-handlerᵀ bc h)
-                              (strˢ _ (app (BoxCoalg.necᵉ bc) pv) t)))
+                              (strˢ _ (app (Eternalᵒ.necᵉ bc) pv) t)))
 T-alg-of-handlerˢ-μˢ {P = P} {ε' = ε'} {ε'' = ε''} bc h pv (leaf t) =
   ≈ᵗ-trans (≡→≈ᵗ (T-alg-ε-substˢ bc h pv (sym (·ₑ-identityˡ ε')) t))
   (≈ᵗ-trans (ε-substˢ-congᵗ (cong (_·ₑ ε'') (sym (·ₑ-identityˡ ε')))
                (T-alg-of-handlerˢ-congᵖ bc h
-                 (≈-sym P (≈-trans P (BoxCoalg.necᵉ-≤ bc (≾ᵣ-reflexive (sym map-uᵉ)) pv ⊑-refl)
-                                     (≈-trans P (BoxCoalg.necᵉ-u bc pv ⊑-refl)
+                 (≈-sym P (≈-trans P (Eternalᵒ.necᵉ-≤ bc (≾ᵣ-reflexive (sym map-uᵉ)) pv ⊑-refl)
+                                     (≈-trans P (Eternalᵒ.necᵉ-u bc pv ⊑-refl)
                                                 (transport-refl P pv))))
                  t))
             (≡→≈ᵗ (trans (cong (λ e → ε-substˢ e (T-alg-of-handlerˢ bc h _ t)) uip)
@@ -184,7 +186,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
     cont' : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w'
           → Tˢ (Tᵒ A (ε' ·ₑ ε'')) ε₁ w'
     cont' q' y = Tˢᶠ (T-alg-of-handlerᵀ bc h)
-                     (strˢ P (box▸ P q' (app (BoxCoalg.necᵉ bc) pv)) (k q' y))
+                     (strˢ P (box▸ P q' (app (Eternalᵒ.necᵉ bc) pv)) (k q' y))
 
     kc' : ∀ {w'} (q' : w ⊑[ mapᵉ (op-grade op) ] w') {y y' : carrier ⟦ arity op ⟧ᵍ w'}
         → _≈_ ⟦ arity op ⟧ᵍ y y' → cont' q' y ≈ᵗ cont' q' y'
@@ -197,10 +199,10 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
       ≈ᵗ-trans
         (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h)
           (≈ᵗ-trans
-            (strˢ-congᵗ P (λ t → []-fun-irr (app (BoxCoalg.necᵉ bc) pv) _ _) (kn q' r y))
-            (strˢ-natᵗ P (box▸ P q' (app (BoxCoalg.necᵉ bc) pv)) r (k q' y))))
+            (strˢ-congᵗ P (λ t → []-fun-irr (app (Eternalᵒ.necᵉ bc) pv) _ _) (kn q' r y))
+            (strˢ-natᵗ P (box▸ P q' (app (Eternalᵒ.necᵉ bc) pv)) r (k q' y))))
         (Tˢᶠ-natᵗ (T-alg-of-handlerᵀ bc h) r
-          (strˢ P (box▸ P q' (app (BoxCoalg.necᵉ bc) pv)) (k q' y)))
+          (strˢ P (box▸ P q' (app (Eternalᵒ.necᵉ bc) pv)) (k q' y)))
 
     X = B.app (h op (ε₁ ·ₑ (ε' ·ₑ ε''))) (pv , (v , handler-box bc pv h op cont' kc' kn'))
 
@@ -217,7 +219,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
       (≈ᵗ-trans
         (ε-substˢ-congᵗ (·ₑ-assoc ε₁ ε' ε'')
           (≈ᵗ-trans
-            (T-alg-of-handlerˢ-μˢ bc h (fun (app (BoxCoalg.necᵉ bc) pv) (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y))
+            (T-alg-of-handlerˢ-μˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y))
             (ε-substˢ-congᵗ (sym (·ₑ-assoc ε₁ ε' ε''))
               (T-alg-of-handlerˢ-congᵗ bc h _
                 (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h)
@@ -226,16 +228,16 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
         (≡→≈ᵗ (trans (ε-substˢ-trans (sym (·ₑ-assoc ε₁ ε' ε'')) (·ₑ-assoc ε₁ ε' ε'') FOLD)
                      (cong (λ z → ε-substˢ z FOLD) uip))))
       where
-        FOLD = T-alg-of-handlerˢ bc h (fun (app (BoxCoalg.necᵉ bc) pv) (⊑ρ∘ᵘ q r))
+        FOLD = T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) (⊑ρ∘ᵘ q r))
                  (Tˢᶠ (T-alg-of-handlerᵀ bc h)
-                   (strˢ P (box▸ P (⊑ρ∘ᵘ q r) (app (BoxCoalg.necᵉ bc) pv)) (k (⊑ρ∘ᵘ q r) y)))
+                   (strˢ P (box▸ P (⊑ρ∘ᵘ q r) (app (Eternalᵒ.necᵉ bc) pv)) (k (⊑ρ∘ᵘ q r) y)))
 T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h pv
                      (delay-node {ε = ε₁} τ k kn) =
   ≈ᵗ-trans (≡→≈ᵗ (T-alg-ε-substˢ bc h pv (sym (·ₑ-assoc (of-natᵉ τ) ε₁ ε')) _))
   (≈ᵗ-trans (ε-substˢ-congᵗ E1 (ε-substˢ-congᵗ E2
               (≈ᵗ-trans
                 (delay-≈ (λ q →
-                  ≈ᵗ-trans (T-alg-of-handlerˢ-μˢ bc h (fun (app (BoxCoalg.necᵉ bc) pv) q) (k q))
+                  ≈ᵗ-trans (T-alg-of-handlerˢ-μˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
                            (ε-substˢ-congᵗ (sym (·ₑ-assoc ε₁ ε' ε''))
                               (T-alg-of-handlerˢ-congᵗ bc h _
                                 (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h)
@@ -254,29 +256,29 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
     e2 = sym (·ₑ-assoc (of-natᵉ τ) ε₁ (ε' ·ₑ ε''))
 
     f-tgt : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A (ε₁ ·ₑ (ε' ·ₑ ε'')) w'
-    f-tgt q = T-alg-of-handlerˢ bc h (fun (app (BoxCoalg.necᵉ bc) pv) q)
+    f-tgt q = T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q)
                 (Tˢᶠ (T-alg-of-handlerᵀ bc h)
-                  (strˢ P (box▸ P q (app (BoxCoalg.necᵉ bc) pv)) (k q)))
+                  (strˢ P (box▸ P q (app (Eternalᵒ.necᵉ bc) pv)) (k q)))
 
     fn : ∀ {w' w''} (q : w ⊑[ mapᵉ (of-natᵉ τ) ] w') (r : w' ⊑[ uᵣ ] w'')
        → f-tgt (⊑ρ∘ᵘ q r) ≈ᵗ transportᵗ r (f-tgt q)
     fn q r =
       ≈ᵗ-trans
-        (T-alg-of-handlerˢ-congᵖ bc h (fun-nat (app (BoxCoalg.necᵉ bc) pv) q r)
+        (T-alg-of-handlerˢ-congᵖ bc h (fun-nat (app (Eternalᵒ.necᵉ bc) pv) q r)
           (Tˢᶠ (T-alg-of-handlerᵀ bc h)
-            (strˢ P (box▸ P (⊑ρ∘ᵘ q r) (app (BoxCoalg.necᵉ bc) pv)) (k (⊑ρ∘ᵘ q r)))))
+            (strˢ P (box▸ P (⊑ρ∘ᵘ q r) (app (Eternalᵒ.necᵉ bc) pv)) (k (⊑ρ∘ᵘ q r)))))
       (≈ᵗ-trans
         (T-alg-of-handlerˢ-congᵗ bc h _
           (≈ᵗ-trans
             (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h)
               (≈ᵗ-trans
-                (strˢ-congᵗ P (λ t → []-fun-irr (app (BoxCoalg.necᵉ bc) pv) _ _) (kn q r))
-                (strˢ-natᵗ P (box▸ P q (app (BoxCoalg.necᵉ bc) pv)) r (k q))))
+                (strˢ-congᵗ P (λ t → []-fun-irr (app (Eternalᵒ.necᵉ bc) pv) _ _) (kn q r))
+                (strˢ-natᵗ P (box▸ P q (app (Eternalᵒ.necᵉ bc) pv)) r (k q))))
             (Tˢᶠ-natᵗ (T-alg-of-handlerᵀ bc h) r
-              (strˢ P (box▸ P q (app (BoxCoalg.necᵉ bc) pv)) (k q)))))
-        (T-alg-of-handlerˢ-nat bc h r (fun (app (BoxCoalg.necᵉ bc) pv) q)
+              (strˢ P (box▸ P q (app (Eternalᵒ.necᵉ bc) pv)) (k q)))))
+        (T-alg-of-handlerˢ-nat bc h r (fun (app (Eternalᵒ.necᵉ bc) pv) q)
           (Tˢᶠ (T-alg-of-handlerᵀ bc h)
-            (strˢ P (box▸ P q (app (BoxCoalg.necᵉ bc) pv)) (k q)))))
+            (strˢ P (box▸ P q (app (Eternalᵒ.necᵉ bc) pv)) (k q)))))
 
     X = delay-node τ f-tgt fn
 T-alg-of-handlerˢ-μˢ {P = P} {ε = ε} {ε' = ε'} {ε'' = ε''} bc h pv (sub {ε = ε₀} p t) =
@@ -286,7 +288,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {ε = ε} {ε' = ε'} {ε'' = ε''} bc h pv (sub
                         (T-alg-of-handlerˢ-congᵗ bc h pv
                           (Tˢᶠ-congᵗ (T-alg-of-handlerᵀ bc h)
                             (strˢ-congᵗ P
-                              (λ q → ≈-sym P (BoxCoalg.necᵉ-≤ bc (map-monotoneᵉ p) pv q))
+                              (λ q → ≈-sym P (Eternalᵒ.necᵉ-≤ bc (map-monotoneᵉ p) pv q))
                               (≈ᵗ-refl t)))))))
     (≈ᵗ-trans (sub-ε-substˢ (sym (·ₑ-assoc ε₀ ε' ε'')) (·ₑ-monoˡ-≾ₑ (·ₑ-monoˡ-≾ₑ p)) q' _)
               (≈ᵗ-sym (ε-substˢ-sub' (·ₑ-monoˡ-≾ₑ p) (sym (·ₑ-assoc ε ε' ε'')) q' _)))
@@ -297,7 +299,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {ε = ε} {ε' = ε'} {ε'' = ε''} bc h pv (sub
 
 -- Packaging the two laws as morphism equations.
 
-T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : BoxCoalg P) → (h : Handlerˢ P A)
+T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                      → T-alg-of-handlerᵀ {P} {A} {ε ·ₑ ε'} {ε''} bc h
                          ∘ᵖ mapˣᵐ idᵖ (μᵀ {Tᵒ A ε''} {ε} {ε'})
                      ≈ᵖ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
@@ -305,5 +307,5 @@ T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : BoxCoalg P) → (h :
                          ∘ᵖ ⟨ fstᵐ
                             , Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)
                               ∘ᵖ strᵀ
-                              ∘ᵖ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ ε}) idᵖ ⟩ᵐ
+                              ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ ε}) idᵖ ⟩ᵐ
 T-alg-of-handlerᵀ-μᵀ bc h (pv , t) = T-alg-of-handlerˢ-μˢ bc h pv t

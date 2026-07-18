@@ -69,8 +69,6 @@ module DenotationalSemantics.Model.Modality.Eternal
 
 open import Util.Equality
 
-open import DenotationalSemantics.Model.Modality.BoxCoalg Cat G Fut
-
 open Category Cat
 open Grade G
 open Future Fut
@@ -214,8 +212,10 @@ record Eternalᵒ (A : Obj) : Set₁ where
               (∘ᵐ-congˡ ([]-congᶠ (extᵉ-≤ p))))))))
 
   -- and it is compatible with the comultiplication `δ`. This is the one
-  -- coalgebra law that needs the adjunction↔`μ`/`δ` mate law `η⊣-δ`; combined
-  -- with the algebra law `extᵉ-μ` and `η⊣`-naturality it reduces to `necᵉ`.
+  -- coalgebra law that needs the adjunction's grade-composition coherence,
+  -- supplied by the *derived* `η⊣-δ` (itself the future-side transpose of the
+  -- primitive counit law `ε⊣-μ`); combined with the algebra law `extᵉ-μ` and
+  -- `η⊣`-naturality it reduces to `necᵉ`.
 
   necᵉ-δ : ∀ {ρ₁ ρ₂}
          → δ ∘ᵐ necᵉ {ρ₁ · ρ₂} ≈ᵐ [ ρ₁ ]ᶠ (necᵉ {ρ₂}) ∘ᵐ necᵉ {ρ₁}
@@ -242,18 +242,6 @@ record Eternalᵒ (A : Obj) : Set₁ where
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (extᵉ {ρ₁})))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-
--- The box-part of an eternal structure: forgetting the extraction half
--- leaves a uniform graded `[_]`-coalgebra. This is what the effect handling
--- fold threads as its eternal parameter.
-
-eternalᵒ-boxCoalg : ∀ {A} → Eternalᵒ A → BoxCoalg A
-eternalᵒ-boxCoalg e = record
-  { necᵉ   = Eternalᵒ.necᵉ e
-  ; necᵉ-u = Eternalᵒ.necᵉ-u e
-  ; necᵉ-≤ = Eternalᵒ.necᵉ-≤ e
-  ; necᵉ-δ = Eternalᵒ.necᵉ-δ e
-  }
 
 -- PRODUCT CLOSURE OF THE ⟨_⟩-STRENGTH
 --

@@ -31,7 +31,7 @@ module DenotationalSemantics.Interpretation.SubstitutionCoherence
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 
@@ -59,12 +59,10 @@ open GroundEternal GE
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; eternalᵒ-boxCoalg)
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-       Cat (GradeSystem.RGrade Grades) Fut using (BoxCoalg)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 
-open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
-open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
@@ -941,13 +939,13 @@ mutual
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat : T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ₀} H')
-              ≈ᵐ T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
+      alg-nat : T-alg-of-handlerᵀ ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ₀} H')
+              ≈ᵐ T-alg-of-handlerᵀ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
                   ∘ᵐ mapˣᵐ (restrict-sub-env x W) idᵐ
       alg-nat =
-        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) ⟦H'⟧ʰᵗ-nat)
-                 (T-alg-of-handlerᵀ-natᴾ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ))
-                    (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
+        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) ⟦H'⟧ʰᵗ-nat)
+                 (T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ))
+                    ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
                     (restrict-sub-env x W) (restrict-sub-env-necᵉ x W)
                     (⟦_⟧ʰᵗ {Γ} H))
   ... | yes et =
@@ -1052,13 +1050,13 @@ mutual
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat : T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ₀} H')
-              ≈ᵐ T-alg-of-handlerᵀ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
+      alg-nat : T-alg-of-handlerᵀ ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ₀} H')
+              ≈ᵐ T-alg-of-handlerᵀ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
                   ∘ᵐ mapˣᵐ (restrict-sub-env x W) idᵐ
       alg-nat =
-        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) ⟦H'⟧ʰᵗ-nat)
-                 (T-alg-of-handlerᵀ-natᴾ (eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ))
-                    (eternalᵒ-boxCoalg (⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
+        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ)) ⟦H'⟧ʰᵗ-nat)
+                 (T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ))
+                    ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
                     (restrict-sub-env x W) (restrict-sub-env-necᵉ x W)
                     (⟦_⟧ʰᵗ {Γ} H))
   -- The substitution rebuilds the unboxing with `unbox-var`, so `unbox-var-nat`

@@ -21,7 +21,7 @@ module DenotationalSemantics.Soundness.Preservation.Handle
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 
@@ -55,9 +55,9 @@ open Adjunction Adj using (η⊣; η⊣-nat; η⊣-u; η⊣-≤; η⊣-δ; η⊣
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
-open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
-open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
@@ -65,10 +65,8 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; eternalᵒ-boxCoalg)
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-       Cat (GradeSystem.RGrade Grades) Fut using (BoxCoalg)
-import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut GTy as HC
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
@@ -368,7 +366,7 @@ Halg-delay {Γ} e H τ =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ necbridge))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym ([]-∘ᵐ _ _)))
   where
-    necbridge : []-monoidal ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ (bcᴱ Γ) {of-natʳ τ}) idᵐ
+    necbridge : []-monoidal ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ (bcᴱ Γ) {of-natʳ τ}) idᵐ
                   ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ
               ≈ᵐ [ of-natʳ τ ]ᶠ ⟨ term∅ e , idᵐ ⟩ᵐ
     necbridge = box-×-ext _ _

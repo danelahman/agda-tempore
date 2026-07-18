@@ -34,7 +34,7 @@ module DenotationalSemantics.Soundness.Preservation.HandleOpCont
          (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
          (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 
@@ -59,13 +59,11 @@ open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; eternalᵒ-boxCoalg)
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-       Cat (GradeSystem.RGrade Grades) Fut using (BoxCoalg)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 
-open import DenotationalSemantics.Interpretation.Types S Cat Fut GTy Mon
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
-open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
@@ -74,8 +72,8 @@ infixr 3 _∙_
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
 _∙_ = ≈ᵐ-trans
 
-bcᴱ : ∀ (Γ : Ctx) → BoxCoalg ⟦ Γ ᴱ ⟧ᶜᵗˣ
-bcᴱ Γ = eternalᵒ-boxCoalg (⟦ Γ ⟧ᴱ-Eternalᵒ)
+bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ᴱ ⟧ᶜᵗˣ
+bcᴱ Γ = (⟦ Γ ⟧ᴱ-Eternalᵒ)
 
 -- The reduct renames the handler's clauses by `ren-ᴱ-∷ A₀`, which is
 -- definitionally the eternal restriction of `wk-ren` (both split on
@@ -167,11 +165,11 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
                   (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀}
                      (λ op' ε₀ Γ' → C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ')))
               ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) ∘ᵐ mapˣᵐ f idᵐ
-      f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ BoxCoalg.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
-                      ≈ᵐ BoxCoalg.necᵉ (bcᴱ Γ) ∘ᵐ f
+      f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
+                      ≈ᵐ Eternalᵒ.necᵉ (bcᴱ Γ) ∘ᵐ f
       f-necᵉ =
-        subst (λ r → ∀ {ρ₁} → [ ρ₁ ]ᶠ ⟦ r ⟧ʳ ∘ᵐ BoxCoalg.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
-                            ≈ᵐ BoxCoalg.necᵉ (bcᴱ Γ) ∘ᵐ ⟦ r ⟧ʳ)
+        subst (λ r → ∀ {ρ₁} → [ ρ₁ ]ᶠ ⟦ r ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
+                            ≈ᵐ Eternalᵒ.necᵉ (bcᴱ Γ) ∘ᵐ ⟦ r ⟧ʳ)
               (sym (ren-ᴱ-∷≡restrict A₀))
               (restrict-ren-necᵉ (wk-ren {Γ = Γ ⟨ ρ ⟩} {A = A₀}))
 

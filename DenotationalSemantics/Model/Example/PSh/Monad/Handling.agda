@@ -5,7 +5,7 @@
 -- residual effect grade, closing over an eternal parameter `P`.        --
 -- `T-alg-of-handlerˢ` folds a computation tree, reinterpreting every   --
 -- operation by the matching clause and keeping delays as delays; `P`   --
--- (a `BoxCoalg`) is carried under the box at `delay`/`op` nodes.        --
+-- (an `Eternalᵒ`) is carried under the box at `delay`/`op` nodes.       --
 --                                                                    --
 -- Split for load time: the (slow) fold and its (co)naturality live in  --
 -- `Handling.Core`; the algebra laws in `Handling.Laws` (η/delay/op/≤)  --

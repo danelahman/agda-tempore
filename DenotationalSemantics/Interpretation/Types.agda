@@ -16,6 +16,8 @@ open import Syntax.LanguageSpec
 
 open import DenotationalSemantics.Model.Category
 open import DenotationalSemantics.Model.Modality.Future
+open import DenotationalSemantics.Model.Modality.Past
+open import DenotationalSemantics.Model.Modality.Adjunction
 open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.Monad
 
@@ -23,8 +25,10 @@ module DenotationalSemantics.Interpretation.Types
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
-         (Mon : Monad S Cat Fut GTy)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
        where
 
 open LanguageSpec S

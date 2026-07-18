@@ -34,12 +34,16 @@ open import Syntax.Operations
 
 open import DenotationalSemantics.Model.Category
 open import DenotationalSemantics.Model.Modality.Future
+open import DenotationalSemantics.Model.Modality.Past
+open import DenotationalSemantics.Model.Modality.Adjunction
 open import DenotationalSemantics.Model.GroundTypes
 
 module DenotationalSemantics.Model.Monad
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
          (GTy : GroundTypes S Cat Fut)
        where
 
@@ -47,8 +51,10 @@ open import Data.Nat using (ℕ)
 
 open import Util.Equality
 
-open import DenotationalSemantics.Model.Modality.BoxCoalg
-  Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut
+-- The eternal parameter threaded through effect handling is an `Eternalᵒ`
+-- object; its box-coalgebra part (`necᵉ` and its laws) is what crosses locks.
+open import DenotationalSemantics.Model.Modality.Eternal
+  Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst Adj
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -280,7 +286,7 @@ record Monad : Set₁ where
   -- given `P`, the parameter, and the operation's boxed continuation
   -- `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces a computation.
   -- The clauses are *morphisms* (natural families), hence usable at every
-  -- world the handled computation reaches; `P` being eternal (a `BoxCoalg`,
+  -- world the handled computation reaches; `P` being eternal (a `Eternalᵒ`,
   -- `necᵉ`) is what lets it be carried *under* the box at `delay`/`op` nodes,
   -- across the passage of time, without moving the handler.
 
@@ -296,7 +302,7 @@ record Monad : Set₁ where
     -- as delays and returning the leaf value (regraded). The parameter `P` is
     -- threaded alongside the tree.
 
-    T-alg-of-handlerᵀ : ∀ {P A ε ε'} → BoxCoalg P → Handlerᵀ P A
+    T-alg-of-handlerᵀ : ∀ {P A ε ε'} → Eternalᵒ P → Handlerᵀ P A
                       → P ×ᵐ Tᵒ (Tᵒ A ε') ε →ᵐ Tᵒ A (ε ·ₑ ε')
 
     -- It is an algebra for the monad's structure: it computes `η`, `delay`,
@@ -304,19 +310,19 @@ record Monad : Set₁ where
     -- (carrying `P` under the delay by `necᵉ`), and applying the matching
     -- clause (carrying `P` into the folded continuation by `necᵉ`).
 
-    T-alg-of-handlerᵀ-ηᵀ : ∀ {P A ε'} → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+    T-alg-of-handlerᵀ-ηᵀ : ∀ {P A ε'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (ηᵀ {Tᵒ A ε'})
                          ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε')) ∘ᵐ sndᵐ
 
-    T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : ℕ) → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+    T-alg-of-handlerᵀ-delayᵀ : ∀ {P A ε' ε''} → (τ : ℕ) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                              → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (delayᵀ {Tᵒ A ε''} {ε'} τ)
                              ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε''))
                                ∘ᵐ delayᵀ τ
                                ∘ᵐ [ of-natʳ τ ]ᶠ (T-alg-of-handlerᵀ bc h)
                                ∘ᵐ []-monoidal
-                               ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {of-natʳ τ}) idᵐ
+                               ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {of-natʳ τ}) idᵐ
 
-    T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+    T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                           → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (opᵀ {Tᵒ A ε''} {ε'} op)
                           ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
                             ∘ᵐ h op (ε' ·ₑ ε'')
@@ -327,14 +333,14 @@ record Monad : Set₁ where
                                          ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ
                                             , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ))
                                    ∘ᵐ []-monoidal
-                                   ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
+                                   ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
                                    ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
 
     -- The fold commutes with sub-effecting in the *outer* grade — the same
     -- shape as `T-≤-μᵀ`, and needed for the same reason: an inductive
     -- hypothesis' coercion has to escape the handling composite.
 
-    T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : BoxCoalg P) → (h : Handlerᵀ P A) → (p : ε₁ ≾ₑ ε₂)
+    T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A) → (p : ε₁ ≾ₑ ε₂)
                         → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
                         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 
@@ -343,7 +349,7 @@ record Monad : Set₁ where
     -- uses the monad's strength together with `necᵉ` (to box `P` at the grade
     -- the strength requires); a copy of `P` is kept for the outer fold.
 
-    T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : BoxCoalg P) → (h : Handlerᵀ P A)
+    T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → T-alg-of-handlerᵀ {P} {A} {ε ·ₑ ε'} {ε''} bc h
                              ∘ᵐ mapˣᵐ idᵐ (μᵀ {Tᵒ A ε''} {ε} {ε'})
                          ≈ᵐ ε-substᵀ (sym (·ₑ-assoc ε ε' ε''))
@@ -351,7 +357,7 @@ record Monad : Set₁ where
                              ∘ᵐ ⟨ fstᵐ
                                 ,   Tᶠ (T-alg-of-handlerᵀ {P} {A} {ε'} {ε''} bc h)
                                   ∘ᵐ strᵀ
-                                  ∘ᵐ mapˣᵐ (BoxCoalg.necᵉ bc {mapᵉ ε}) idᵐ ⟩ᵐ
+                                  ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ ε}) idᵐ ⟩ᵐ
 
     -- Naturality in the eternal parameter: reindexing the handler along a
     -- `[_]`-coalgebra morphism `f : P' →ᵐ P` (`[ ρ ]ᶠ f ∘ necᵉ' ≈ necᵉ ∘ f`,
@@ -360,10 +366,10 @@ record Monad : Set₁ where
     -- transport its eternal context along a renaming/substitution — hence it is
     -- what the handler's interpretation needs to be stable under those.
 
-    T-alg-of-handlerᵀ-natᴾ : ∀ {P P' A ε ε'} → (bc : BoxCoalg P) → (bc' : BoxCoalg P')
+    T-alg-of-handlerᵀ-natᴾ : ∀ {P P' A ε ε'} → (bc : Eternalᵒ P) → (bc' : Eternalᵒ P')
                            → (f : P' →ᵐ P)
-                           → (∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ BoxCoalg.necᵉ bc' {ρ}
-                                     ≈ᵐ BoxCoalg.necᵉ bc {ρ} ∘ᵐ f)
+                           → (∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ bc' {ρ}
+                                     ≈ᵐ Eternalᵒ.necᵉ bc {ρ} ∘ᵐ f)
                            → (h : Handlerᵀ P A)
                            → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc'
                                (λ op ε'' → h op ε'' ∘ᵐ mapˣᵐ f idᵐ)
@@ -373,7 +379,7 @@ record Monad : Set₁ where
     -- equal algebras. Needed to rewrite a renamed/substituted handler into the
     -- reindexed form that `natᴾ` consumes.
 
-    T-alg-of-handlerᵀ-cong : ∀ {P A ε ε'} → (bc : BoxCoalg P) → {h h' : Handlerᵀ P A}
+    T-alg-of-handlerᵀ-cong : ∀ {P A ε ε'} → (bc : Eternalᵒ P) → {h h' : Handlerᵀ P A}
                            → (∀ op ε'' → h op ε'' ≈ᵐ h' op ε'')
                            → T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h
                            ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h'

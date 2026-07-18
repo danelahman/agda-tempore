@@ -10,6 +10,8 @@ open import DenotationalSemantics.Model.World
 open import DenotationalSemantics.Model.GroundTypes
 import DenotationalSemantics.Model.Example.PSh.Base as B
 import DenotationalSemantics.Model.Example.PSh.Modality.Future as F
+import DenotationalSemantics.Model.Example.PSh.Modality.Past as P
+import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction as A
 
 module DenotationalSemantics.Model.Example.PSh.Monad.Instance
          (S : LanguageSpec)
@@ -25,6 +27,8 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Handling S Wld GTy
 open import DenotationalSemantics.Model.Monad S
              (B.PShCat (LanguageSpec.Grades S) Wld)
              (F.PShFut (LanguageSpec.Grades S) Wld)
+             (P.PShPast (LanguageSpec.Grades S) Wld)
+             (A.PShAdj (LanguageSpec.Grades S) Wld)
              GTy
            using (Monad)
 
