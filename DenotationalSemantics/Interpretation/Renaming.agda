@@ -70,6 +70,18 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ⟦ ⟨⟩-≤-ren rel ⟧ʳ        = ⟨⟩-≤ rel
 ⟦ cong-∷-ren r ⟧ʳ        = mapˣᵐ ⟦ r ⟧ʳ idᵐ
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
+⟦ ⟨⟩-ext-ren et ⟧ʳ       = Eternalᵒ.strᵉ (eternalᵛ-Eternalᵒ et)
+
+-- Reading a morphism of the `⟨ ρ ⟩X` factor back through the eternal strength:
+-- `strᵉ` cancels against `⟨ ρ ⟩ᶠ fstᵐ`, leaving the plain first projection. The
+-- shared core of the `⟨⟩-ext-ren` cases below (both wrap this with an extra
+-- extraction / grade coercion on the left).
+
+strᵉ-past-fstᵐ : ∀ {A} → (et : Eternal A) → ∀ {ρ X Z} → (g : ⟨ ρ ⟩ᵒ X →ᵐ Z)
+              → (g ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ) ∘ᵐ eternalᵛ-strᵉ et {ρ} {X} ≈ᵐ g ∘ᵐ fstᵐ
+strᵉ-past-fstᵐ et g =
+  ≈ᵐ-trans (∘ᵐ-assoc g (⟨ _ ⟩ᶠ fstᵐ) (eternalᵛ-strᵉ et))
+           (∘ᵐ-congʳ (eternalᵛ-strᵉ-fstᵐ et))
 
 -- Naturality of `var-proj` under a renaming: projecting the renamed
 -- variable (relaxed back to the original grade) equals projecting the
@@ -156,6 +168,14 @@ var-proj-nat (cong-⟨⟩-ren r) (Tl-⟨⟩ x) ¬et with var-rename r x | var-pr
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ ih))
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+var-proj-nat (⟨⟩-ext-ren et) (Tl-⟨⟩ Hd) ¬et = ⊥-elim (¬et et)
+var-proj-nat (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) ¬et =
+  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+              (strᵉ-past-fstᵐ et (μ ∘ᵐ ⟨ _ ⟩ᶠ (var-proj x)))))))
 
 -- Naturality of the variable interpretation under a renaming (this is the
 -- `var` case of the term-renaming coherence): from `var-proj-nat` plus the
@@ -271,6 +291,31 @@ var-proj-nat-eternal et (cong-⟨⟩-ren r) (Tl-⟨⟩ x)
     (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
               (∘ᵐ-assoc _ _ _)))))))))))
+var-proj-nat-eternal {A = A} et' (⟨⟩-ext-ren et) (Tl-⟨⟩ Hd) =
+  ≈ᵐ-trans (extᵉ-η _)
+  (≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et')))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (extᵉ-η _))))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))
+              (eternalᵛ-strᵉ-sndᵐ et)))))))))
+  where
+    -- `extᵉ` at `uᵣ` after `η` is the identity: `extᵉ{uᵣ}=εᵘ` and `εᵘ∘η≈id`.
+    extᵉ-η : ∀ {W} → (s : W →ᵐ ⟦ A ⟧ᵛ) → eternalᵛ-extᵉ et' {uᵣ} ∘ᵐ (η ∘ᵐ s) ≈ᵐ s
+    extᵉ-η s =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et')))
+      (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id) (∘ᵐ-identityˡ s)))
+var-proj-nat-eternal et' (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))))
+    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (strᵉ-past-fstᵐ et (eternalᵛ-extᵉ et' ∘ᵐ (μ ∘ᵐ ⟨ _ ⟩ᶠ (var-proj x))))
+              (∘ᵐ-assoc _ _ _)))))
 
 var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
                  → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
@@ -385,6 +430,11 @@ restrict-ren-mor (cong-∷-ren {Γ = Γ₀} {Γ' = Γ₀'} {A = A} r) {ρ} with 
                       (×-eternalᵒ-sndᵉ {Γ₀'} {A} eA {ρ})))))))))))
 ... | no  _  = restrict-ren-mor r
 restrict-ren-mor (cong-⟨⟩-ren r) = restrict-ren-mor r
+restrict-ren-mor (⟨⟩-ext-ren {A = A} et) with eternal? A
+... | yes _  =
+  ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
+  (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
+... | no ¬et = ⊥-elim (¬et et)
 
 -- Naturality of the eternal projection: it slides through a renaming, turning
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock
@@ -459,3 +509,38 @@ projᴱ-nat (cong-⟨⟩-ren {ρ = ρ} r) =
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (restrict-ren-mor r))
             (∘ᵐ-assoc _ _ _))))))
+projᴱ-nat (⟨⟩-ext-ren {Γ} {A} et) with eternal? A
+... | yes eA = ≈ᵐ-trans (prod-ext FST SND) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+  where
+    -- fstᵐ: the `Γ`-projection factor, `strᵉ` cancelled against `⟨ρ⟩ᶠ fstᵐ`
+    FST : fstᵐ ∘ᵐ ((Eternalᵒ.extᵉ (×-eternalᵒ (⟦ Γ ⟧ᴱ-Eternalᵒ) (eternalᵛ-Eternalᵒ eA))
+                     ∘ᵐ ⟨ _ ⟩ᶠ (mapˣᵐ (projᴱ Γ) idᵐ)) ∘ᵐ eternalᵛ-strᵉ et)
+        ≈ᵐ fstᵐ ∘ᵐ mapˣᵐ (projᴱ-extᵉ Γ ∘ᵐ ⟨ _ ⟩ᶠ (projᴱ Γ)) idᵐ
+    FST =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ} {A} eA)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _))))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (strᵉ-past-fstᵐ et (projᴱ-extᵉ Γ ∘ᵐ ⟨ _ ⟩ᶠ (projᴱ Γ)))
+                (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _))))))))))
+    -- sndᵐ: the eternal factor, `strᵉ` cancelled against `⟨ρ⟩ᶠ sndᵐ` via extᵉ
+    SND : sndᵐ ∘ᵐ ((Eternalᵒ.extᵉ (×-eternalᵒ (⟦ Γ ⟧ᴱ-Eternalᵒ) (eternalᵛ-Eternalᵒ eA))
+                     ∘ᵐ ⟨ _ ⟩ᶠ (mapˣᵐ (projᴱ Γ) idᵐ)) ∘ᵐ eternalᵛ-strᵉ et)
+        ≈ᵐ sndᵐ ∘ᵐ mapˣᵐ (projᴱ-extᵉ Γ ∘ᵐ ⟨ _ ⟩ᶠ (projᴱ Γ)) idᵐ
+    SND =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ} {A} eA)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _))))
+      (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-identityˡ _))))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr eA et))
+      (≈ᵐ-trans (eternalᵛ-strᵉ-sndᵐ et)
+                (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))))))))))
+... | no ¬et = ⊥-elim (¬et et)

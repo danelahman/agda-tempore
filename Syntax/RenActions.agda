@@ -2,6 +2,7 @@
 -- Renaming actions on well-typed terms --
 ------------------------------------------
 
+open import Data.Empty
 open import Data.Product
 open import Data.Sum
 
@@ -59,6 +60,10 @@ var-rename (cong-∷-ren r) (Tl-∷ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' , ρ'≾ρ , Tl-∷ y
 var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' ·ᵣ _ , (λ ¬et → ·ᵣ-monoˡ-≾ᵣ (ρ'≾ρ ¬et)) , Tl-⟨⟩ y
+var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ Hd) =
+  uᵣ , (λ ¬et → ⊥-elim (¬et et)) , Hd
+var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) =
+  _ , (λ _ → ≾ᵣ-refl) , Tl-∷ (Tl-⟨⟩ x)
 
 -- A FGCBV-specific variable-based variant of `unbox` based on every value of 
 -- box-type being forced to be a variable (as proved below in unbox⇒var). 

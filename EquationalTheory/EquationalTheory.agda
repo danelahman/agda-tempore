@@ -399,14 +399,20 @@ mutual
                        == ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                             (box (lam
                                    (handle M
-                                   `with H
+                                   `with (λ op' ε'' Γ' →
+                                            C-rename
+                                              (cong-ren (ren-ᴱ-∷ {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩}
+                                                          (type-of-gtype (arity op))))
+                                              (H op' ε'' Γ'))
                                    `in (C-rename
                                          (cong-∷-ren
                                            (cong-⟨⟩-ren wk-ren
                                             ∘ʳ ⟨⟩-μ-ren
                                             ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
                                          N)))
-                                  ((H op (ε ·ₑ ε') Γ [ Tl-∷ Hd ↦ V ]c)))
+                                  (C-rename (cong-∷-ren (cong-∷-ren (contract Γ)))
+                                    (H op (ε ·ₑ ε') Γ)
+                                   [ Tl-∷ Hd ↦ V ]c))
 
     handle-delay : ∀ {A B τ ε ε'}
                  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
@@ -456,7 +462,9 @@ mutual
                  -----------------------------------------------------------------
                  → Γ ⊢C⦂ handle unbox w V M `with H `in N
                      == unbox w V
-                        (handle M `with H
+                        (handle M
+                        `with (λ op' ε'' Γ' →
+                                 C-rename (cong-ren (ren-ᴱ-∷ {Γ = Γ} A)) (H op' ε'' Γ'))
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
     -- beta rule for unbox

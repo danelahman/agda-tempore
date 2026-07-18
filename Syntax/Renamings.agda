@@ -42,6 +42,10 @@ data Ren : Ctx → Ctx → Set where
   ⟨⟩-μ-ren    : ∀ {Γ ρ ρ'} → Ren (Γ ⟨ ρ ·ᵣ ρ' ⟩) (Γ ⟨ ρ ⟩ ⟨ ρ' ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Γ ρ ρ'} → ρ' ≾ᵣ ρ → Ren (Γ ⟨ ρ ⟩) (Γ ⟨ ρ' ⟩)
+  -- moving an eternal variable out of a lock: an eternal value is available at
+  -- the past world a `⟨ ρ ⟩` bundle already witnesses, so it can be extruded
+  -- past the lock. Semantically the `⟨_⟩`-strength against an eternal object.
+  ⟨⟩-ext-ren  : ∀ {Γ A ρ} → Eternal A → Ren ((Γ ∷ A) ⟨ ρ ⟩) ((Γ ⟨ ρ ⟩) ∷ A)
   -- congruence renamings
   cong-∷-ren  : ∀ {Γ Γ' A} → Ren Γ Γ' → Ren (Γ ∷ A) (Γ' ∷ A)
   cong-⟨⟩-ren : ∀ {Γ Γ' ρ} → Ren Γ Γ' → Ren (Γ ⟨ ρ ⟩) (Γ' ⟨ ρ ⟩)
@@ -81,6 +85,8 @@ cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
   cong-⟨⟩-ren (cong-∷-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren (cong-⟨⟩-ren r) ρ'≾ρ =
   cong-⟨⟩-ren (cong-⟨⟩-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+cong-⟨⟩-≤-ren (⟨⟩-ext-ren et) ρ'≾ρ =
+  cong-⟨⟩-ren (⟨⟩-ext-ren et) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
 
 -- Congruence renamings for general context extension
 
@@ -110,6 +116,8 @@ cong-renˡ (cong-∷-ren r) =
   cong-∷-ren (cong-renˡ r)
 cong-renˡ (cong-⟨⟩-ren r) =
   cong-⟨⟩-ren (cong-renˡ r)
+cong-renˡ (⟨⟩-ext-ren et) =
+  ⟨⟩-ext-ren et
 
 -- Restriction of a renaming to the eternal parts of its contexts. Since the
 -- eternal restriction is lock-free, every variable in it sits at grade `uᵣ`,
@@ -139,6 +147,9 @@ restrict-ren (cong-∷-ren {A = A} r) with eternal? A
 ... | no  _ = restrict-ren r
 restrict-ren (cong-⟨⟩-ren r) =
   restrict-ren r
+restrict-ren (⟨⟩-ext-ren {A = A} et) with eternal? A
+... | yes _  = id-ren
+... | no ¬et = ⊥-elim (¬et et)
 
 -- Extending the eternal restriction by a variable. Unlike a general weakening
 -- past the added structure, this always exists: a lock would be dropped by the
@@ -163,3 +174,25 @@ wk-ren-⟨ρ⟩-ctx {Γ} {Γ' ⟨ ρ' ⟩} {ρ} refl =
 
 exch-ren : ∀ {Γ A B} → Ren (Γ ∷ A ∷ B) (Γ ∷ B ∷ A)
 exch-ren = extend-ren (cong-∷-ren wk-ren) (λ _ → ≾ᵣ-refl) (Tl-∷ Hd)
+
+-- Bringing a variable buried under a suffix context `Θ` up to the top. The
+-- `∷`-case swaps it past the intervening variable (`exch-ren`), the `⟨⟩`-case
+-- extrudes it out of the lock (`⟨⟩-ext-ren`), which requires it to be eternal.
+
+bring-up : ∀ {Δ A} → Eternal A → (Θ : Ctx) → Ren ((Δ ∷ A) ++ᶜ Θ) ((Δ ++ᶜ Θ) ∷ A)
+bring-up et []        = id-ren
+bring-up et (Θ ∷ B)   = exch-ren ∘ʳ cong-∷-ren (bring-up et Θ)
+bring-up et (Θ ⟨ ρ ⟩) = ⟨⟩-ext-ren et ∘ʳ cong-⟨⟩-ren (bring-up et Θ)
+
+-- Contracting the eternal restriction prefix `Γ ᴱ` back into `Γ`'s own
+-- variables. Each eternal variable duplicated by the prefix is brought up to
+-- the top and contracted against its original occurrence in `Γ`.
+
+contract : (Γ : Ctx) → Ren (Γ ᴱ ++ᶜ Γ) Γ
+contract []        = id-ren
+contract (Γ ∷ A)   with eternal? A
+... | yes eA = cong-∷-ren (contract Γ)
+            ∘ʳ var-ren (λ _ → ≾ᵣ-refl) Hd
+            ∘ʳ cong-∷-ren (bring-up eA Γ)
+... | no  _  = cong-∷-ren (contract Γ)
+contract (Γ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Γ)

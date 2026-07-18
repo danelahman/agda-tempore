@@ -148,7 +148,7 @@ open import OperationalSemantics.TopLevelProgressTheorem
 -- EQUATIONAL THEORY
 --------------------
 
--- open import EquationalTheory.EquationalTheory
+open import EquationalTheory.EquationalTheory
 
 ---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
 
