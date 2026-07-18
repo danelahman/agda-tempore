@@ -83,56 +83,39 @@ record Eternalᵒ (A : Obj) : Set₁ where
 
     -- STRUCTURE
 
-    -- Necessitation at every grade (generalises `ηᵘ` from `u` to all `ρ`).
-
-    necᵉ : ∀ {ρ} → A →ᵐ [ ρ ]ᵒ A
-
-    -- Extraction at every grade (generalises `εᵘ`); consumed by `var`.
+    -- Extraction at every grade (generalises `εᵘ`); consumed by `var`. This
+    -- is the primitive: `Eternalᵒ` is a *graded `⟨_⟩`-algebra*, and the box
+    -- coalgebra half (`necᵉ` etc.) is derived from it below via the mate.
 
     extᵉ : ∀ {ρ} → ⟨ ρ ⟩ᵒ A →ᵐ A
-
-    -- PROPERTIES
-
-    -- `necᵉ` and `extᵉ` are adjoint mates under `⟨ ρ ⟩ ⊣ [ ρ ]`.
-
-    extᵉ-mate : ∀ {ρ} → extᵉ {ρ} ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (necᵉ {ρ})
-
-    -- `necᵉ` is a uniform graded `[_]`-coalgebra:
-
-    -- at the unit grade it is the box's unit `ηᵘ`,
-
-    necᵉ-u : necᵉ {u} ≈ᵐ ηᵘ
-
-    -- it is uniform in the grade (compatible with `[]-≤`),
-
-    necᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
-           → []-≤ p ∘ᵐ necᵉ {ρ₂} ≈ᵐ necᵉ {ρ₁}
-
-    -- and it is compatible with the comultiplication `δ`.
-
-    necᵉ-δ : ∀ {ρ₁ ρ₂}
-           → δ ∘ᵐ necᵉ {ρ₁ · ρ₂} ≈ᵐ [ ρ₁ ]ᶠ (necᵉ {ρ₂}) ∘ᵐ necᵉ {ρ₁}
-
-    -- Dually, `extᵉ` is a graded `⟨_⟩`-algebra: extracting from a nested
-    -- possibility agrees with folding the two layers with `μ` and
-    -- extracting once. (The `⟨_⟩`-algebra multiplication law. It is not
-    -- derivable from `extᵉ-mate` and `necᵉ-δ`, since the adjunction
-    -- carries no law relating `Past.μ` with `Future.δ`.)
-
-    extᵉ-μ : ∀ {ρ₁ ρ₂}
-           → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
-           ≈ᵐ extᵉ {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (extᵉ {ρ₂})
-
-    -- STRENGTH (the other direction)
 
     -- The `⟨_⟩`-strength at every grade: an eternal object is pulled
     -- *inside* the (past) context modality. `⟨ ρ ⟩` is not strong in
     -- general — a diamond cannot drag an arbitrary object into the past —
     -- but it is strong against an eternal `A`, whose value is available at
-    -- the past world the `⟨ ρ ⟩X` bundle already witnesses. This is the
-    -- companion of `necᵉ`, which supplies the dual `[_]`-strength.
+    -- the past world the `⟨ ρ ⟩X` bundle already witnesses.
 
     strᵉ : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ A)
+
+    -- ALGEBRA LAWS (`extᵉ` is a uniform graded `⟨_⟩`-algebra)
+
+    -- Extraction is uniform in the grade (compatible with `⟨⟩-≤`): this is
+    -- what makes a variable of eternal type interpretable independently of how
+    -- much its context has been relaxed.
+
+    extᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
+           → extᵉ {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ extᵉ {ρ₁}
+
+    -- At the unit grade the extraction is exactly the possibility counit `εᵘ`.
+
+    extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
+
+    -- Extracting from a nested possibility agrees with folding the two layers
+    -- with `μ` and extracting once (the `⟨_⟩`-algebra multiplication law).
+
+    extᵉ-μ : ∀ {ρ₁ ρ₂}
+           → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
+           ≈ᵐ extᵉ {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (extᵉ {ρ₂})
 
   -- The canonical costrength: the inverse direction of the distributivity iso,
   -- always available from `extᵉ` (project the `⟨ ρ ⟩X` factor, extract the
@@ -172,52 +155,93 @@ record Eternalᵒ (A : Obj) : Set₁ where
               (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (≈ᵐ-trans (∘ᵐ-congʳ strᵉ-costrᵉ) (∘ᵐ-identityʳ _))))
 
-  -- The reverse mate, derivable from `extᵉ-mate` and the right triangle
-  -- identity: `necᵉ` is recovered by transposing `extᵉ` back.
+  -- THE BOX COALGEBRA, DERIVED
+  --
+  -- Necessitation at every grade, as the adjoint mate of `extᵉ` under
+  -- `⟨ ρ ⟩ ⊣ [ ρ ]`. This is the `[_]`-coalgebra half of the structure — what
+  -- lets an eternal object be carried *under* a box, across the passage of
+  -- time. It is entirely derived from the algebra `extᵉ`, so a model need only
+  -- supply `extᵉ`; there is no separate box-coalgebra to construct.
+
+  necᵉ : ∀ {ρ} → A →ᵐ [ ρ ]ᵒ A
+  necᵉ {ρ} = [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
+
+  -- `necᵉ` is by definition the transpose of `extᵉ` (kept as a named lemma so
+  -- consumers that referred to the mate need not change).
 
   necᵉ-mate : ∀ {ρ} → necᵉ {ρ} ≈ᵐ [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
-  necᵉ-mate {ρ} = ≈ᵐ-sym (≈ᵐ-trans
-    (∘ᵐ-congˡ ([]-congᶠ extᵉ-mate))
-    (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ (⟨ ρ ⟩ᶠ necᵉ) ε⊣))
-    (≈ᵐ-trans (∘ᵐ-assoc ([ ρ ]ᶠ ε⊣) ([ ρ ]ᶠ (⟨ ρ ⟩ᶠ necᵉ)) η⊣)
-    (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat necᵉ))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc ([ ρ ]ᶠ ε⊣) η⊣ necᵉ))
-    (≈ᵐ-trans (∘ᵐ-congˡ triangleʳ)
-              (∘ᵐ-identityˡ necᵉ)))))))
+  necᵉ-mate = ≈ᵐ-refl
 
-  -- Extraction is uniform in the grade: extracting at `ρ₂` after relaxing
-  -- along `ρ₁ ≾ ρ₂` agrees with extracting directly at `ρ₁`. Derived from
-  -- `extᵉ-mate`, the naturality of `⟨⟩-≤`/`ε⊣`, and `necᵉ`'s uniformity
-  -- `necᵉ-≤`. This is what makes a variable of eternal type interpretable
-  -- independently of how much its context has been relaxed.
+  -- `extᵉ` and `necᵉ` are adjoint mates (the forward mate direction, from the
+  -- left triangle identity and `ε⊣`-naturality).
 
-  extᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
-         → extᵉ {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ extᵉ {ρ₁}
-  extᵉ-≤ {ρ₁} {ρ₂} p =
-    ≈ᵐ-trans (∘ᵐ-congˡ extᵉ-mate)
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat (necᵉ {ρ₂}) p))
+  extᵉ-mate : ∀ {ρ} → extᵉ {ρ} ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (necᵉ {ρ})
+  extᵉ-mate {ρ} = ≈ᵐ-sym (≈ᵐ-trans
+    (∘ᵐ-congʳ (⟨⟩-∘ᵐ ([ ρ ]ᶠ (extᵉ {ρ})) η⊣))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc ε⊣ (⟨ ρ ⟩ᶠ ([ ρ ]ᶠ (extᵉ {ρ}))) (⟨ ρ ⟩ᶠ η⊣)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (ε⊣-nat (extᵉ {ρ}))))
+    (≈ᵐ-trans (∘ᵐ-assoc (extᵉ {ρ}) ε⊣ (⟨ ρ ⟩ᶠ η⊣))
+    (≈ᵐ-trans (∘ᵐ-congʳ triangleˡ)
+              (∘ᵐ-identityʳ (extᵉ {ρ})))))))
+
+  -- `necᵉ` is a uniform graded `[_]`-coalgebra:
+
+  -- at the unit grade it is the box's unit `ηᵘ` (from `extᵉ-u`, `η⊣-u`, and
+  -- the possibility iso `εᵘ ∘ η ≈ id`).
+
+  necᵉ-u : necᵉ {u} ≈ᵐ ηᵘ
+  necᵉ-u =
+    ≈ᵐ-trans (∘ᵐ-congʳ η⊣-u)
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (ε⊣-≤ p))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ([]-≤ p) (necᵉ {ρ₂}))))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (necᵉ-≤ p)))
-              (≈ᵐ-sym extᵉ-mate))))))))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ η (extᵉ {u}))))
+    (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ extᵉ-u)))
+    (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ ⟨⟩-εᵘ∘η≡id))
+    (≈ᵐ-trans (∘ᵐ-congˡ []-idᵐ)
+              (∘ᵐ-identityˡ ηᵘ))))))
 
-  -- At the unit grade the eternal extraction is exactly the possibility
-  -- counit `εᵘ`. This is where the adjunction's unit-grade restriction
-  -- `ε⊣-u` is used, together with `necᵉ-u` and the box iso `ε ∘ ηᵘ ≈ id`.
+  -- it is uniform in the grade (compatible with `[]-≤`; from `[]-≤`/`η⊣`
+  -- naturality and `extᵉ-≤`),
 
-  extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
-  extᵉ-u =
-    ≈ᵐ-trans extᵉ-mate
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ necᵉ-u))
-    (≈ᵐ-trans (∘ᵐ-congˡ ε⊣-u)
+  necᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
+         → []-≤ p ∘ᵐ necᵉ {ρ₂} ≈ᵐ necᵉ {ρ₁}
+  necᵉ-≤ {ρ₁} {ρ₂} p =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat (extᵉ {ρ₂}) p)))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ ε ηᵘ)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ []-ε∘ηᵘ≡id))
-    (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
-              (∘ᵐ-identityʳ εᵘ)))))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-≤ p))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ (⟨⟩-≤ p) (extᵉ {ρ₂}))))
+              (∘ᵐ-congˡ ([]-congᶠ (extᵉ-≤ p))))))))
+
+  -- and it is compatible with the comultiplication `δ`. This is the one
+  -- coalgebra law that needs the adjunction↔`μ`/`δ` mate law `η⊣-δ`; combined
+  -- with the algebra law `extᵉ-μ` and `η⊣`-naturality it reduces to `necᵉ`.
+
+  necᵉ-δ : ∀ {ρ₁ ρ₂}
+         → δ ∘ᵐ necᵉ {ρ₁ · ρ₂} ≈ᵐ [ ρ₁ ]ᶠ (necᵉ {ρ₂}) ∘ᵐ necᵉ {ρ₁}
+  necᵉ-δ {ρ₁} {ρ₂} =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-δ-nat (extᵉ {ρ₁ · ρ₂}))))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ η⊣-δ)
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ inner))
+    (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
+              (∘ᵐ-assoc _ _ _))))))))
+    where
+      -- `[ρ₂]ᶠ extᵉ ∘ ([ρ₂]ᶠ μ ∘ η⊣) ≈ necᵉ{ρ₂} ∘ extᵉ{ρ₁}`, from `extᵉ-μ`
+      -- and `η⊣`-naturality (the eternal value slides out of the transpose).
+      inner : [ ρ₂ ]ᶠ (extᵉ {ρ₁ · ρ₂}) ∘ᵐ ([ ρ₂ ]ᶠ (μ {A} {ρ₂} {ρ₁}) ∘ᵐ η⊣)
+            ≈ᵐ necᵉ {ρ₂} ∘ᵐ extᵉ {ρ₁}
+      inner =
+        ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+        (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ extᵉ-μ))
+        (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (extᵉ {ρ₁})))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
 
 -- The box-part of an eternal structure: forgetting the extraction half
 -- leaves a uniform graded `[_]`-coalgebra. This is what the effect handling
@@ -415,6 +439,45 @@ module ×-strength {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
 
     snd-ext× : ∀ {ρ} → sndᵐ ∘ᵐ ext× {ρ} ≈ᵐ EB.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ
     snd-ext× = ≈ᵐ-trans (∘ᵐ-congʳ ext×-dec) (⟨⟩ᵐ-sndᵐ _ _)
+
+    -- The product's extraction is a uniform graded algebra: `extᵉ-≤`/`extᵉ-u`
+    -- reduce componentwise to the factors' via `ext×-dec` and `⟨⟩-≤`/`εᵘ`
+    -- naturality. These are the remaining algebra-law fields a product needs.
+    ext×-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂) → ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ ext× {ρ₁}
+    ext×-≤ {ρ₁} {ρ₂} p =
+      ≈ᵐ-trans (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ ext× {ρ₁}) (sndᵐ ∘ᵐ ext× {ρ₁})
+                  (ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p) L1 L2)
+               (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ ext× {ρ₁}) (sndᵐ ∘ᵐ ext× {ρ₁})
+                          (ext× {ρ₁}) ≈ᵐ-refl ≈ᵐ-refl))
+      where
+        L1 : fstᵐ ∘ᵐ (ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p) ≈ᵐ fstᵐ ∘ᵐ ext× {ρ₁}
+        L1 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ fst-ext×)
+             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+             (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat fstᵐ p))
+             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ (EA.extᵉ-≤ p))
+                       (≈ᵐ-sym fst-ext×))))))
+        L2 : sndᵐ ∘ᵐ (ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p) ≈ᵐ sndᵐ ∘ᵐ ext× {ρ₁}
+        L2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ snd-ext×)
+             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+             (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat sndᵐ p))
+             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ (EB.extᵉ-≤ p))
+                       (≈ᵐ-sym snd-ext×))))))
+
+    ext×-u : ext× {u} ≈ᵐ εᵘ
+    ext×-u =
+      ≈ᵐ-trans (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ εᵘ) (sndᵐ ∘ᵐ εᵘ) (ext× {u}) U1 U2)
+               (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ εᵘ) (sndᵐ ∘ᵐ εᵘ) εᵘ ≈ᵐ-refl ≈ᵐ-refl))
+      where
+        U1 : fstᵐ ∘ᵐ ext× {u} ≈ᵐ fstᵐ ∘ᵐ εᵘ
+        U1 = ≈ᵐ-trans fst-ext×
+             (≈ᵐ-trans (∘ᵐ-congˡ EA.extᵉ-u) (≈ᵐ-sym (εᵘ-nat fstᵐ)))
+        U2 : sndᵐ ∘ᵐ ext× {u} ≈ᵐ sndᵐ ∘ᵐ εᵘ
+        U2 = ≈ᵐ-trans snd-ext×
+             (≈ᵐ-trans (∘ᵐ-congˡ EB.extᵉ-u) (≈ᵐ-sym (εᵘ-nat sndᵐ)))
 
     -- `(ext× ∘ ⟨ρ⟩ᶠsndᵐ) ∘ strᵉ-× ≈ sndᵐ`, by prod-ext into the two factors
     strᵉ-×-sndᵐ : ∀ {ρ X} → (ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ sndᵐ

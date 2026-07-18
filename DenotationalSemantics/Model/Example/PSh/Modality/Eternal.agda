@@ -85,12 +85,9 @@ Kᵖ-nec S = pmap
 
 Kᵖ-eternalᵒ : (S : Setoid 0ℓ 0ℓ) → Eternalᵒ (Kᵖ S)
 Kᵖ-eternalᵒ S = record
-  { necᵉ      = Kᵖ-nec S
-  ; extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (Kᵖ-nec S {ρ})
-  ; extᵉ-mate = λ {ρ} _ → reflˢ
-  ; necᵉ-u    = λ _ _ → reflˢ
-  ; necᵉ-≤    = λ _ _ _ → reflˢ
-  ; necᵉ-δ    = λ _ _ _ → reflˢ
+  { extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (Kᵖ-nec S {ρ})
+  ; extᵉ-≤    = λ _ _ → reflˢ
+  ; extᵉ-u    = λ _ → reflˢ
   ; extᵉ-μ    = λ _ → reflˢ
   ; strᵉ      = λ {ρ} {X} → pmap
                   (λ {w} → λ { (e , a) → mk⟨⟩ (acc e) (val e , a) })
@@ -109,12 +106,9 @@ Kᵖ-eternalᵒ S = record
 
 𝟙ᵖ-eternalᵒ : Eternalᵒ 𝟙ᵖ
 𝟙ᵖ-eternalᵒ = record
-  { necᵉ      = nec
-  ; extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (nec {ρ})
-  ; extᵉ-mate = λ {ρ} _ → tt
-  ; necᵉ-u    = λ _ _ → tt
-  ; necᵉ-≤    = λ _ _ _ → tt
-  ; necᵉ-δ    = λ _ _ _ → tt
+  { extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (nec {ρ})
+  ; extᵉ-≤    = λ _ _ → tt
+  ; extᵉ-u    = λ _ → tt
   ; extᵉ-μ    = λ _ → tt
   ; strᵉ      = λ {ρ} {X} → pmap
                   (λ {w} → λ { (e , u) → mk⟨⟩ (acc e) (val e , u) })
@@ -135,12 +129,9 @@ Kᵖ-eternalᵒ S = record
 
 𝟘ᵖ-eternalᵒ : Eternalᵒ 𝟘ᵖ
 𝟘ᵖ-eternalᵒ = record
-  { necᵉ      = λ {ρ} → initialᵖ {[ ρ ]ᵒ 𝟘ᵖ}
-  ; extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (initialᵖ {[ ρ ]ᵒ 𝟘ᵖ})
-  ; extᵉ-mate = λ {ρ} ()
-  ; necᵉ-u    = λ ()
-  ; necᵉ-≤    = λ _ ()
-  ; necᵉ-δ    = λ ()
+  { extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (initialᵖ {[ ρ ]ᵒ 𝟘ᵖ})
+  ; extᵉ-≤    = λ _ ()
+  ; extᵉ-u    = λ ()
   ; extᵉ-μ    = λ ()
   ; strᵉ      = λ {ρ} {X} → pmap
                   (λ {w} x → ⊥-elim (proj₂ x))
@@ -156,12 +147,9 @@ Kᵖ-eternalᵒ S = record
 
 ×ᵖ-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A ×ᵖ B)
 ×ᵖ-eternalᵒ {A} {B} eA eB = record
-  { necᵉ      = nec
-  ; extᵉ      = ext×
-  ; extᵉ-mate = λ {ρ} _ → ≈-refl A , ≈-refl B
-  ; necᵉ-u    = λ { (a , b) q → Eternalᵒ.necᵉ-u eA a q , Eternalᵒ.necᵉ-u eB b q }
-  ; necᵉ-≤    = λ { p (a , b) q → Eternalᵒ.necᵉ-≤ eA p a q , Eternalᵒ.necᵉ-≤ eB p b q }
-  ; necᵉ-δ    = λ { (a , b) p q → Eternalᵒ.necᵉ-δ eA a p q , Eternalᵒ.necᵉ-δ eB b p q }
+  { extᵉ      = ext×
+  ; extᵉ-≤    = ×-strength.product-laws.ext×-≤ eA eB ext× ext×-dec
+  ; extᵉ-u    = ×-strength.product-laws.ext×-u eA eB ext× ext×-dec
   ; extᵉ-μ    = alg
   ; strᵉ      = ×-strength.strᵉ-× eA eB
   ; strᵉ-costrᵉ = ×-strength.product-laws.strᵉ-costrᵉ-× eA eB ext× ext×-dec
