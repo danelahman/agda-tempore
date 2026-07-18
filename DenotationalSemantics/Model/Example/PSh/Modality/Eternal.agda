@@ -54,7 +54,7 @@ open Past PShPast using (⟨⟩-∘ᵐ; ⟨⟩-idᵐ; ⟨⟩-congᶠ)
 
 open import DenotationalSemantics.Model.Modality.Eternal
        PShCat RGrade PShFut PShPast PShAdj
-  using (Eternalᵒ)
+  using (Eternalᵒ; module ×-strength)
 
 -- The constant presheaf on a setoid: the same value at every world,
 -- transported by the identity.
@@ -157,43 +157,31 @@ Kᵖ-eternalᵒ S = record
 ×ᵖ-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A ×ᵖ B)
 ×ᵖ-eternalᵒ {A} {B} eA eB = record
   { necᵉ      = nec
-  ; extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (nec {ρ})
+  ; extᵉ      = ext×
   ; extᵉ-mate = λ {ρ} _ → ≈-refl A , ≈-refl B
   ; necᵉ-u    = λ { (a , b) q → Eternalᵒ.necᵉ-u eA a q , Eternalᵒ.necᵉ-u eB b q }
   ; necᵉ-≤    = λ { p (a , b) q → Eternalᵒ.necᵉ-≤ eA p a q , Eternalᵒ.necᵉ-≤ eB p b q }
   ; necᵉ-δ    = λ { (a , b) p q → Eternalᵒ.necᵉ-δ eA a p q , Eternalᵒ.necᵉ-δ eB b p q }
   ; extᵉ-μ    = alg
-  ; strᵉ      = strᵉ×
-  -- TODO: `strᵉ×` is a composite of isos (`⟨ρ⟩ᶠ assoc`, `eB.strᵉ`,
-  -- `mapˣᵐ eA.strᵉ id`, `reassoc`), so it is an iso; the two laws say it
-  -- inverts `costrᵉ`. Proof plan (prod-ext + factor laws): from
-  -- `eA.strᵉ-costrᵉ`/`eB.strᵉ-costrᵉ` derive `⟨ρ⟩fst ∘ strᵉ ≈ fst` and the
-  -- `extᵉ`-component, then relate `extᵉ_{A×B}` to `eA.extᵉ`/`eB.extᵉ` (as in
-  -- the `comp`/`alg` lemmas above).
-  ; strᵉ-costrᵉ = {!!}
-  ; costrᵉ-strᵉ = {!!}
+  ; strᵉ      = ×-strength.strᵉ-× eA eB
+  ; strᵉ-costrᵉ = ×-strength.product-laws.strᵉ-costrᵉ-× eA eB ext× ext×-dec
+  ; costrᵉ-strᵉ = ×-strength.product-laws.costrᵉ-strᵉ-× eA eB ext× ext×-dec
   }
   where
     nec : ∀ {ρ} → (A ×ᵖ B) →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
     nec {ρ} = []-monoidal ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ eA {ρ}) (Eternalᵒ.necᵉ eB {ρ})
 
-    -- The `⟨_⟩`-strength for a product: bring the factors inside one at a
-    -- time, using `eA`'s strength at object `X`, then `eB`'s at `X ×ᵖ A`,
-    -- reassociating around them with the product associator.
-    strᵉ× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵖ (A ×ᵖ B) →ᵖ ⟨ ρ ⟩ᵒ (X ×ᵖ (A ×ᵖ B))
-    strᵉ× {ρ} {X} =
-        ⟨ ρ ⟩ᶠ ×ᵐ-assoc
-      ∘ᵐ Eternalᵒ.strᵉ eB
-      ∘ᵐ mapˣᵐ (Eternalᵒ.strᵉ eA) idᵐ
-      ∘ᵐ ×ᵐ-assoc⁻¹
+    ext× : ∀ {ρ} → ⟨ ρ ⟩ᵒ (A ×ᵖ B) →ᵖ (A ×ᵖ B)
+    ext× {ρ} = ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (nec {ρ})
 
-    -- The inverse: the reverse composite of the factor costrengths.
-    costr'× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ (X ×ᵖ (A ×ᵖ B)) →ᵖ ⟨ ρ ⟩ᵒ X ×ᵖ (A ×ᵖ B)
-    costr'× {ρ} {X} =
-        ×ᵐ-assoc
-      ∘ᵐ mapˣᵐ (Eternalᵒ.costrᵉ eA) idᵐ
-      ∘ᵐ Eternalᵒ.costrᵉ eB
-      ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹
+    -- The product's extraction decomposes into the factors' extractions: each
+    -- component reads its factor through the shared accessibility witness,
+    -- bridged by that factor's `extᵉ-mate`.
+    ext×-dec : ∀ {ρ} → ext× {ρ}
+             ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+    ext×-dec {ρ} E =
+        ≈-sym A (Eternalᵒ.extᵉ-mate eA (mk⟨⟩ (acc E) (proj₁ (val E))))
+      , ≈-sym B (Eternalᵒ.extᵉ-mate eB (mk⟨⟩ (acc E) (proj₂ (val E))))
 
     -- Both sides feed the two factors' necessitations the same pair of
     -- accessibility witnesses, so the law holds componentwise, by the
