@@ -747,16 +747,16 @@ substᴾᶜ : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ 
         → Paramᶜ t → Paramᶜ (subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t)
 substᴾᶜ refl t p = p
 
-substᴾᶜ′ : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C)
+substᴾᶜ′ : ∀ {Δ Δ' C} → {e : Δ ≡ Δ'} → (t : Δ ⊢C⦂ C)
          → Paramᶜ t → Paramᶜ (subst (_⊢C⦂ C) e t)
-substᴾᶜ′ refl t p = p
+substᴾᶜ′ {e = refl} t p = p
 
-substᴾᵛ : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢V⦂ A)
+substᴾᵛ : ∀ {Δ Δ' A} → {e : Δ ≡ Δ'} → (t : Δ ⊢V⦂ A)
         → Paramᵛ t → Paramᵛ (subst (_⊢V⦂ A) e t)
-substᴾᵛ refl t p = p
+substᴾᵛ {e = refl} t p = p
 
 subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C) → (p : Paramᶜ t)
-                 → ⟦ subst (_⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ′ e t p)
+                 → ⟦ subst (_⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ′ {e = e} t p)
                  ≈ᵐ ⟦ t ⟧ᶜᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
 subst-ctx-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
@@ -846,7 +846,7 @@ eternal-bridge-core : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ
                     → sub-env (split→∈ (∈-ᴱ-split et x))
                         (subst (_⊢V⦂ A) (sym (split→∈-split-l (∈-ᴱ-split et x)))
                           (eternal-val-restrict et W))
-                        (substᴾᵛ (sym (split→∈-split-l (∈-ᴱ-split et x)))
+                        (substᴾᵛ {e = sym (split→∈-split-l (∈-ᴱ-split et x))}
                                  (eternal-val-restrict et W)
                                  (eternal-val-restrictᴾ et W))
                         ∘ᵐ ⟦ eq-ren e ⟧ʳ
@@ -917,9 +917,9 @@ mutual
   ... | yes et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
-    , (λ op ε'' Γ' → substᴾᶜ′ _ _
+    , (λ op ε'' Γ' → substᴾᶜ′ _
          (subᶜ (H op ε'' Γ') (split→∈ _) _
-            (pH op ε'' Γ') (substᴾᵛ _ _ (eternal-val-restrictᴾ et W))))
+            (pH op ε'' Γ') (substᴾᵛ _ (eternal-val-restrictᴾ et W))))
     , (λ op q Γ' →
           ≈ᵐ-trans (∘ᵐ-congˡ (subst-ctx-interp _ _ _))
           (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (C-subst-nat (H op _ Γ') (split→∈ _) _ (pH op _ Γ') _)))
@@ -1183,9 +1183,14 @@ mutual
                         (∘ᵐ-identityʳ _))
       pH' : ∀ op ε'' Γ' → Paramᶜ (H' op ε'' Γ')
       pH' op ε'' Γ' =
-        substᴾᶜ′ _ _
-          (subᶜ (H op ε'' Γ') (split→∈ (split-++ʳ (∈-ᴱ-split et x) _)) _
-             (pH op ε'' Γ') (substᴾᵛ _ _ (eternal-val-restrictᴾ et W)))
+        substᴾᶜ′ ((H op ε'' Γ') [ z ↦ Wv ]c)
+          (subᶜ (H op ε'' Γ') z Wv (pH op ε'' Γ')
+             (substᴾᵛ (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)))
+        where
+          sp = split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε''))
+          z  = split→∈ sp
+          Wv = subst (_⊢V⦂ A) (sym (split→∈-split-l sp)) (eternal-val-restrict et W)
       step1 : ∀ op ε''
             → ⟦ H' op ε'' [] ⟧ᶜᵗ (pH' op ε'' [])
             ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
