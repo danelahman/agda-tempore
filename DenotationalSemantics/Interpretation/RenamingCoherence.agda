@@ -33,6 +33,7 @@ module DenotationalSemantics.Interpretation.RenamingCoherence
        where
 
 open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Unit using (⊤; tt)
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -125,27 +126,90 @@ restrict-ren-necᵉ {Γ} {Γ'} r {ρ} =
         (⟨ ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _) (⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
          , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
+-- Reindexings acting on disjoint product components commute.
+
+mapˣ-swapᵐ : ∀ {A A' B B'} → (a : A →ᵐ A') → (c : B →ᵐ B')
+           → mapˣᵐ a idᵐ ∘ᵐ mapˣᵐ idᵐ c ≈ᵐ mapˣᵐ idᵐ c ∘ᵐ mapˣᵐ a idᵐ
+mapˣ-swapᵐ a c =
+  ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+  (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityʳ a) (∘ᵐ-identityˡ c))
+  (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-sym (∘ᵐ-identityˡ a)) (≈ᵐ-sym (∘ᵐ-identityʳ c)))
+            (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))))
+
+-- Renaming preserves parametricity, and the interpretation is natural in the
+-- renaming. The two are defined simultaneously: transporting a handler's
+-- clause-uniformity across a renaming (`renᶜ`'s `handle` case) needs the
+-- naturality lemma for the clauses themselves.
+
 mutual
 
-  V-rename-nat : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → (V : Γ ⊢V⦂ A)
-               → ⟦ V-rename r V ⟧ᵛᵗ ≈ᵐ ⟦ V ⟧ᵛᵗ ∘ᵐ ⟦ r ⟧ʳ
-  V-rename-nat r (var f x) with var-rename r x | var-morphism-nat r f x
-  ... | ρ' , ρ'≾ρ , y | vmn = vmn
-  V-rename-nat r (const c) =
-    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
-  V-rename-nat r ⋆ = ≈ᵐ-sym terminalᵐ-unique
-  V-rename-nat r ⦉ V , W ⦊ =
-    ≈ᵐ-trans (⟨ V-rename-nat r V , V-rename-nat r W ⟩ᵐ-cong)
-             (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
-  V-rename-nat r (lam M) =
-    ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M)) (curryᵐ-nat ⟦ r ⟧ʳ ⟦ M ⟧ᶜᵗ)
+  -- `TERMINATING`: the recursion is structural on the term, but it passes
+  -- through the simultaneously-defined naturality lemma (the `handle` case of
+  -- `renᶜ` appeals to `C-rename-nat` on the clauses), which masks that from the
+  -- termination checker.
 
-  C-rename-nat : ∀ {Γ Γ' C} → (r : Ren Γ Γ') → (M : Γ ⊢C⦂ C)
-               → ⟦ C-rename r M ⟧ᶜᵗ ≈ᵐ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ r ⟧ʳ
-  C-rename-nat r (return V) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  C-rename-nat r (M ⨟ N) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) N))))
+  {-# TERMINATING #-}
+
+  renᵛ : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → (V : Γ ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
+  renᵛ r (var f x) _ = tt
+  renᵛ r (const c) _ = tt
+  renᵛ r ⋆        _ = tt
+  renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
+  renᵛ r (lam M)   pM = renᶜ (cong-∷-ren r) M pM
+
+  renᶜ : ∀ {Γ Γ' C} → (r : Ren Γ Γ') → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
+  renᶜ r (return V)       pV        = renᵛ r V pV
+  renᶜ r (M ⨟ N)          (pM , pN) =
+    renᶜ r M pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
+  renᶜ r (V · W)          (pV , pW) = renᵛ r V pV , renᵛ r W pW
+  renᶜ r (match V `in M)  (pV , pM) =
+    renᵛ r V pV , renᶜ (cong-∷-ren (cong-∷-ren r)) M pM
+  renᶜ r (absurd V)       pV        = renᵛ r V pV
+  renᶜ r (perform op V M) (pV , pM) =
+    renᵛ r V pV , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) M pM
+  renᶜ r (delay τ M)      pM        = renᶜ (cong-⟨⟩-ren r) M pM
+  renᶜ r (unbox w V M)    (pV , pM) = pV , renᶜ (cong-∷-ren r) M pM
+  renᶜ r (box V M)        (pV , pM) =
+    renᵛ (cong-⟨⟩-ren r) V pV , renᶜ (cong-∷-ren r) M pM
+  renᶜ r (coerce rel M)   pM        = renᶜ r M pM
+  -- the clauses' uniformity transports: the renaming acts on the ambient
+  -- context only, so it commutes with the continuation's coercion
+  -- (`mapˣ-swapᵐ`), after which the original uniformity applies
+  renᶜ r (handle_`with_`in M H N) (pM , pN , pH , uH) =
+      renᶜ r M pM
+    , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
+    , (λ op ε'' Γ'' → renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
+    , (λ op q Γ'' →
+        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r))
+                              (H op _ Γ'') (pH op _ Γ'')))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (mapˣ-swapᵐ _ _))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ''))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                  (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-ren (restrict-ren r))
+                                       (H op _ Γ'') (pH op _ Γ''))))))))))
+
+  V-rename-nat : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
+               → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
+  V-rename-nat r (var f x) _ with var-rename r x | var-morphism-nat r f x
+  ... | ρ' , ρ'≾ρ , y | vmn = vmn
+  V-rename-nat r (const c) _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-rename-nat r ⋆ _ = ≈ᵐ-sym terminalᵐ-unique
+  V-rename-nat r ⦉ V , W ⦊ (pV , pW) =
+    ≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
+             (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
+  V-rename-nat r (lam M) pM =
+    ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
+             (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
+
+  C-rename-nat : ∀ {Γ Γ' C} → (r : Ren Γ Γ') → (M : Γ ⊢C⦂ C) → (p : Paramᶜ M)
+               → ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M p) ≈ᵐ ⟦ M ⟧ᶜᵗ p ∘ᵐ ⟦ r ⟧ʳ
+  C-rename-nat r (return V) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  C-rename-nat r (M ⨟ N) (pM , pN) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) N pN))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
@@ -154,43 +218,41 @@ mutual
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
                 (⟨ η⊣-nat ⟦ r ⟧ʳ
-                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-rename-nat r M) ⟩ᵐ-cong))))
+                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-rename-nat r M pM) ⟩ᵐ-cong))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))))))
-  C-rename-nat r (V · W) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-rename-nat r V , V-rename-nat r W ⟩ᵐ-cong))
+  C-rename-nat r (V · W) (pV , pW) =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  C-rename-nat r (match V `in M) =
-    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren r)) M))
+  C-rename-nat r (match V `in M) (pV , pM) =
+    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren r)) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ
                 (⟨ ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
                    (⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
                     , ≈ᵐ-trans (∘ᵐ-identityˡ _)
-                      (≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V))
+                      (≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV))
                                 (≈ᵐ-sym (∘ᵐ-assoc _ _ _))) ⟩ᵐ-cong)
                  , ≈ᵐ-trans (∘ᵐ-identityˡ _)
-                   (≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V))
+                   (≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV))
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-  C-rename-nat r (absurd V) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  C-rename-nat r (perform op V M) =
+  C-rename-nat r (absurd V) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  C-rename-nat r (perform op V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congʳ
-      (⟨ -- parameter: push `⟦ r ⟧ʳ` past the ground-type coercion
-         ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-rename-nat r V))
-                  (≡→≈ᵐ (sym (substᶜ-∘ (ty-gty (param op)) ⟦ V ⟧ᵛᵗ ⟦ r ⟧ʳ)))
-       , -- continuation: coercion, then `curryᵐ`/box/adjunction naturality
-         ≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
+      (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-rename-nat r V pV))
+                  (≡→≈ᵐ (sym (substᶜ-∘ (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV) ⟦ r ⟧ʳ)))
+       , ≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
                     (≈ᵐ-trans (substᵈ-≈ (ty-gty (arity op))
-                                (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) M))
-                              (≡→≈ᵐ (sym (substᵈ-∘ (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
+                                (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) M pM))
+                              (≡→≈ᵐ (sym (substᵈ-∘ (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
                                            (⟨ mapᵉ (op-grade op) ⟩ᶠ ⟦ r ⟧ʳ))))))))
          (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-nat _ _)))
          (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
@@ -199,15 +261,17 @@ mutual
                    (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  C-rename-nat r (delay τ M) =
+  C-rename-nat r (delay τ M) pM =
     ≈ᵐ-sym
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ r ⟧ʳ))))
       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
-                (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (C-rename-nat (cong-⟨⟩-ren r) M))))))))))
-  C-rename-nat {Γ} {Γ'} r (handle_`with_`in {A} {B} {ε} {ε'} M H N) =
+                (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
+                  (≈ᵐ-sym (C-rename-nat (cong-⟨⟩-ren r) M pM))))))))))
+  C-rename-nat {Γ} {Γ'} r (handle_`with_`in {A} {B} {ε} {ε'} M H N)
+               (pM , pN , pH , uH) =
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -218,12 +282,12 @@ mutual
     where
       f : ⟦ Γ' ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
       f = ⟦ restrict-ren r ⟧ʳ
-      -- the second component (`seq`) commutes with the renaming, as for `⨟`
-      seq-nat : Tᶠ ⟦ C-rename (cong-∷-ren (cong-⟨⟩-ren r)) N ⟧ᶜᵗ ∘ᵐ strᵀ
-                  ∘ᵐ ⟨ η⊣ , ⟦ C-rename r M ⟧ᶜᵗ ⟩ᵐ
-              ≈ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ ⟦ r ⟧ʳ
+      seq-nat : Tᶠ (⟦ C-rename (cong-∷-ren (cong-⟨⟩-ren r)) N ⟧ᶜᵗ
+                      (renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN)) ∘ᵐ strᵀ
+                  ∘ᵐ ⟨ η⊣ , ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M pM) ⟩ᵐ
+              ≈ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ) ∘ᵐ ⟦ r ⟧ʳ
       seq-nat =
-        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) N)))
+        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren (cong-⟨⟩-ren r)) N pN)))
         (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
@@ -232,11 +296,10 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
                     (⟨ η⊣-nat ⟦ r ⟧ʳ
-                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-rename-nat r M) ⟩ᵐ-cong)))
+                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-rename-nat r M pM) ⟩ᵐ-cong)))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-      -- the adapter of `⟦_⟧ʰᵗ` commutes the parameter reindexing past itself
       adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
                     → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
                     ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
@@ -255,28 +318,24 @@ mutual
             (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
                                   (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
                         (∘ᵐ-identityʳ _))
-      -- the renamed handler equals the original reindexed by `f`
       ⟦⟧ʰᵗ-nat : ∀ op ε''
-               → ⟦_⟧ʰᵗ {Γ'} (λ op ε'' Γ'' →
-                    C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ'')) op ε''
-               ≈ᵐ ⟦_⟧ʰᵗ {Γ} H op ε'' ∘ᵐ mapˣᵐ f idᵐ
+               → clauseᵀ (⟦_⟧ʰᵗ {Γ'}
+                    (λ op ε'' Γ'' → C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ''))
+                    (λ op ε'' Γ'' →
+                       renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
+                    (proj₂ (proj₂ (proj₂ (renᶜ r (handle M `with H `in N)
+                                            (pM , pN , pH , uH)))))) op ε''
+               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦⟧ʰᵗ-nat op ε'' =
-        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r)) (H op ε'' [])))
+        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r))
+                              (H op ε'' []) (pH op ε'' [])))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat : T-alg-of-handlerᵀ ((⟦ Γ' ⟧ᴱ-Eternalᵒ))
-                  (⟦_⟧ʰᵗ {Γ'} (λ op ε'' Γ'' →
-                     C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ'')))
-              ≈ᵐ T-alg-of-handlerᵀ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) (⟦_⟧ʰᵗ {Γ} H)
-                  ∘ᵐ mapˣᵐ f idᵐ
-      alg-nat =
-        ≈ᵐ-trans (T-alg-of-handlerᵀ-cong ((⟦ Γ' ⟧ᴱ-Eternalᵒ)) ⟦⟧ʰᵗ-nat)
-                 (T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ))
-                    ((⟦ Γ' ⟧ᴱ-Eternalᵒ)) f (restrict-ren-necᵉ r)
-                    (⟦_⟧ʰᵗ {Γ} H))
-  C-rename-nat r (unbox w V M) =
-    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M))
+      alg-nat = T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) ((⟦ Γ' ⟧ᴱ-Eternalᵒ))
+                  f (restrict-ren-necᵉ r) (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦⟧ʰᵗ-nat
+  C-rename-nat r (unbox w V M) (pV , pM) =
+    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ
@@ -284,19 +343,19 @@ mutual
                  , ≈ᵐ-trans (∘ᵐ-identityˡ _) (unbox⇒var-nat r w V) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
-  C-rename-nat r (box V M) =
-    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M))
+  C-rename-nat r (box V M) (pV , pM) =
+    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ
                 (⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
                  , ≈ᵐ-trans (∘ᵐ-identityˡ _)
-                   (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (V-rename-nat (cong-⟨⟩-ren r) V)))
+                   (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (V-rename-nat (cong-⟨⟩-ren r) V pV)))
                    (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
                    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                    (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat ⟦ r ⟧ʳ))
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))) ⟩ᵐ-cong))
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ idᵐ ([ _ ]ᶠ ⟦ V ⟧ᵛᵗ ∘ᵐ η⊣) ⟦ r ⟧ʳ)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ idᵐ ([ _ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣) ⟦ r ⟧ʳ)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
-  C-rename-nat r (coerce rel M) =
-    ≈ᵐ-trans (∘ᵐ-congʳ (C-rename-nat r M)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  C-rename-nat r (coerce rel M) pM =
+    ≈ᵐ-trans (∘ᵐ-congʳ (C-rename-nat r M pM)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
