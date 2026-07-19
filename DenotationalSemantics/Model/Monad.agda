@@ -344,6 +344,24 @@ record Monad : Set₁ where
                         → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
                         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 
+    -- It also commutes with sub-effecting in the *inner* grade — landing on
+    -- `·ₑ-monoʳ`, dual to the outer law's `·ₑ-monoˡ` — provided the handler is
+    -- *ambivalent* in the residual grade `ε''`: coercing a clause's boxed
+    -- continuation equals coercing the clause's output (`hmono`). This holds
+    -- because the residual grade is fixed by the call site, not inspected by
+    -- the clause. The premise is essential: the fold selects the clause `h op`
+    -- by the residual grade, so without ambivalence an inner coercion would
+    -- change which clause is applied (cf. why `sub` has no `op-node` rule).
+
+    T-alg-of-handlerᵀ-≤ⁱ : ∀ {P A ε ε₁' ε₂'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
+                         → (p : ε₁' ≾ₑ ε₂')
+                         → (hmono : ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
+                                  → h op εb ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ
+                                        ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q))))
+                                  ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ h op εa)
+                         → T-alg-of-handlerᵀ {P} {A} {ε} {ε₂'} bc h ∘ᵐ mapˣᵐ idᵐ (Tᶠ (T-≤ p))
+                         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε₁'} bc h
+
     -- And it *is* an algebra: folding a two-layer tree is folding the outer
     -- layer after folding each inner one. Threading `P` into the inner folds
     -- uses the monad's strength together with `necᵉ` (to box `P` at the grade
