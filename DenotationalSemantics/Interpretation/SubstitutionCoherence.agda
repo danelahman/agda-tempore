@@ -614,13 +614,28 @@ unbox-subst-nat y rel M x W ih with ⟨ y ⟩[ x ↦ W ]rvar | sub-lk y rel x W
 
 -- Substitution in a variable.
 
+-- Substituting into a variable yields either a variable (parametric outright),
+-- a weakening of the substituend, or its eternal extension.
+
+subvarᴾ : ∀ {Γ A B ρ ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
+        → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A) → Paramᵛ W
+        → Paramᵛ (⟨ y , f ⟩[ x ↦ W ]var)
+subvarᴾ Hd       _ Hd        W pW = pW
+subvarᴾ Hd       f (Tl-∷ _)  _ pW = tt
+subvarᴾ (Tl-∷ y) f Hd        _ pW = tt
+subvarᴾ (Tl-∷ y) f (Tl-∷ x)  W pW = renᵛ wk-ren _ (subvarᴾ y f x W pW)
+subvarᴾ {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W pW with eternal? B
+... | yes p  = eternal-val-extᴾ p _
+... | no  ¬p = renᵛ _ _ (subvarᴾ y _ x W pW)
+
 sub-var-nat : ∀ {Γ A B ρ ρ'}
             → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
-            → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
-            → ⟦ ⟨ y , f ⟩[ x ↦ W ]var ⟧ᵛᵗ ≈ᵐ var-morphism f y ∘ᵐ sub-env x W
+            → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A) → (pW : Paramᵛ W)
+            → ⟦ ⟨ y , f ⟩[ x ↦ W ]var ⟧ᵛᵗ (subvarᴾ y f x W pW)
+            ≈ᵐ var-morphism f y ∘ᵐ sub-env x W pW
 
 -- the substituted variable is the one being replaced
-sub-var-nat {B = B} Hd f Hd W with eternal? B
+sub-var-nat {B = B} Hd f Hd W pW with eternal? B
 ... | yes et =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -643,7 +658,7 @@ sub-var-nat {B = B} Hd f Hd W with eternal? B
 
 -- the variable is the head, the substitution acts deeper: the head component
 -- of the environment is untouched (`sub-env (Tl-∷ x)` is `mapˣᵐ … idᵐ`)
-sub-var-nat {B = B} Hd f (Tl-∷ x) W with eternal? B
+sub-var-nat {B = B} Hd f (Tl-∷ x) W pW with eternal? B
 ... | yes et =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
          (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -658,7 +673,7 @@ sub-var-nat {B = B} Hd f (Tl-∷ x) W with eternal? B
 
 -- the variable is deeper, the substitution replaces the head: the variable's
 -- projection discards the substituted component
-sub-var-nat {B = B} (Tl-∷ y) f Hd W with eternal? B
+sub-var-nat {B = B} (Tl-∷ y) f Hd W pW with eternal? B
 ... | yes et =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
          (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -672,15 +687,15 @@ sub-var-nat {B = B} (Tl-∷ y) f Hd W with eternal? B
                    (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-identityʳ _)))))))
 
 -- both deeper: recurse, weakening the substituted value (uses `V-rename-nat`)
-sub-var-nat (Tl-∷ y) f (Tl-∷ x) W =
-  ≈ᵐ-trans (V-rename-nat wk-ren ⟨ y , f ⟩[ x ↦ W ]var)
+sub-var-nat (Tl-∷ y) f (Tl-∷ x) W pW =
+  ≈ᵐ-trans (V-rename-nat wk-ren ⟨ y , f ⟩[ x ↦ W ]var (subvarᴾ y f x W pW))
   (≈ᵐ-trans (∘ᵐ-congˡ (sub-var-nat y f x W pW))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (∘ᵐ-congˡ (≈ᵐ-sym (var-morphism-Tl-∷ y f)))))))
 
-sub-var-nat {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W with eternal? B
+sub-var-nat {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W pW with eternal? B
 ... | yes et =
   ≈ᵐ-trans (eternal-val-ext-nat et ⟨ y , _ ⟩[ x ↦ W ]var)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (sub-var-nat y _ x W)))
@@ -715,20 +730,50 @@ sub-var-nat {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W with eternal? B
 -- equality is `refl`). Used to strip the `subst`s that `_[_↦_]c` inserts in the
 -- handler clauses.
 
-subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C)
-                 → ⟦ subst (_⊢C⦂ C) e t ⟧ᶜᵗ ≈ᵐ ⟦ t ⟧ᶜᵗ ∘ᵐ ⟦ eq-ren e ⟧ʳ
-subst-ctx-interp refl t = ≈ᵐ-sym (∘ᵐ-identityʳ _)
+-- Retyping a clause along a context equality preserves parametricity.
+
+substᴾᶜ : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
+        → Paramᶜ t → Paramᶜ (subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t)
+substᴾᶜ refl t p = p
+
+substᴾᶜ′ : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C)
+         → Paramᶜ t → Paramᶜ (subst (_⊢C⦂ C) e t)
+substᴾᶜ′ refl t p = p
+
+substᴾᵛ : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢V⦂ A)
+        → Paramᵛ t → Paramᵛ (subst (_⊢V⦂ A) e t)
+substᴾᵛ refl t p = p
+
+subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C) → (p : Paramᶜ t)
+                 → ⟦ subst (_⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ′ e t p)
+                 ≈ᵐ ⟦ t ⟧ᶜᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
+subst-ctx-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
 subst-clause-interp : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
-                    → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t ⟧ᶜᵗ
-                    ≈ᵐ ⟦ t ⟧ᶜᵗ ∘ᵐ ⟦ eq-ren (cong (_++ᶜ D) e) ⟧ʳ
-subst-clause-interp refl t = ≈ᵐ-sym (∘ᵐ-identityʳ _)
+                    → (p : Paramᶜ t)
+                    → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ e t p)
+                    ≈ᵐ ⟦ t ⟧ᶜᵗ p ∘ᵐ ⟦ eq-ren (cong (_++ᶜ D) e) ⟧ʳ
+subst-clause-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
 -- The interpretation of an equality renaming depends only on the endpoints of
 -- the context equality (UIP), so any two proofs give the same transport.
 
 eq-ren-irr : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → ⟦ eq-ren e ⟧ʳ ≈ᵐ ⟦ eq-ren e' ⟧ʳ
 eq-ren-irr e e' = ≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (uip {p = e} {q = e'}))
+
+-- A clause-context retyping is a nested product reindexing, and in particular
+-- acts only on the ambient part — it is independent of the residual grade the
+-- continuation slot carries.
+
+eq-ren-clause : ∀ {Δ Δ'} → (e : Δ ≡ Δ') → (Γ' : Ctx) → (pt kt : VType)
+              → ⟦ eq-ren (cong (_++ᶜ (Γ' ∷ pt ∷ kt)) e) ⟧ʳ
+              ≈ᵐ mapˣᵐ (mapˣᵐ ⟦ eq-ren (cong (_++ᶜ Γ') e) ⟧ʳ idᵐ) idᵐ
+eq-ren-clause e Γ' pt kt =
+  ≈ᵐ-trans (eq-ren-irr (cong (_++ᶜ (Γ' ∷ pt ∷ kt)) e)
+                       (cong (_∷ kt) (cong (_∷ pt) (cong (_++ᶜ Γ') e))))
+  (≈ᵐ-trans (eq-ren-∷ (cong (_∷ pt) (cong (_++ᶜ Γ') e)))
+            (mapˣᵐ-cong (eq-ren-∷ (cong (_++ᶜ Γ') e)) ≈ᵐ-refl))
+
 
 -- When the substituted variable is not eternal, `restrict-sub-env` is the pure
 -- reindexing transport of the (equal) eternal skeletons. Induction on the
@@ -792,17 +837,58 @@ eternal-bridge-core et (Tl-∷ {B = B} x) W e with eternal? B
 ... | no _ = eternal-bridge-core et x W e
 eternal-bridge-core et (Tl-⟨⟩ x) W e = eternal-bridge-core et x W e
 
--- Retyping a clause along a context equality preserves parametricity.
-
-substᴾᶜ : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
-        → Paramᶜ t → Paramᶜ (subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t)
-substᴾᶜ refl t p = p
-
-substᴾᶜ′ : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C)
-         → Paramᶜ t → Paramᶜ (subst (_⊢C⦂ C) e t)
-substᴾᶜ′ refl t p = p
-
 mutual
+
+  subᵛ : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+       → Paramᵛ V → Paramᵛ W → Paramᵛ (V [ x ↦ W ]v)
+  subᵛ (var f y)   x W _         pW = subvarᴾ y f x W pW
+  subᵛ (const c)   x W _         pW = tt
+  subᵛ ⋆           x W _         pW = tt
+  subᵛ ⦉ V₁ , V₂ ⦊ x W (p₁ , p₂) pW = subᵛ V₁ x W p₁ pW , subᵛ V₂ x W p₂ pW
+  subᵛ (lam M)     x W pM        pW = subᶜ M (Tl-∷ x) W pM pW
+
+  subᶜ : ∀ {Γ A C ρ} → (M : Γ ⊢C⦂ C) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+       → Paramᶜ M → Paramᵛ W → Paramᶜ (M [ x ↦ W ]c)
+  subᶜ (return V)       x W pV        pW = subᵛ V x W pV pW
+  subᶜ (M ⨟ N)          x W (pM , pN) pW =
+    subᶜ M x W pM pW , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
+  subᶜ (V₁ · V₂)        x W (p₁ , p₂) pW = subᵛ V₁ x W p₁ pW , subᵛ V₂ x W p₂ pW
+  subᶜ (match V `in N)  x W (pV , pN) pW =
+    subᵛ V x W pV pW , subᶜ N (Tl-∷ (Tl-∷ x)) W pN pW
+  subᶜ (absurd V)       x W pV        pW = subᵛ V x W pV pW
+  subᶜ (perform op V M) x W (pV , pM) pW =
+    subᵛ V x W pV pW , subᶜ M (Tl-∷ (Tl-⟨⟩ x)) W pM pW
+  subᶜ (delay τ M)      x W pM        pW = subᶜ M (Tl-⟨⟩ x) W pM pW
+  subᶜ (unbox w V M)    x W (pV , pM) pW = pV , subᶜ M (Tl-∷ x) W pM pW
+  subᶜ (box V N)        x W (pV , pN) pW =
+    subᵛ V (Tl-⟨⟩ x) W pV pW , subᶜ N (Tl-∷ x) W pN pW
+  subᶜ (coerce rel M)   x W pM        pW = subᶜ M x W pM pW
+  subᶜ {A = A} (handle_`with_`in M H N) x W (pM , pN , pH , uH) pW
+    with eternal? A
+  ... | no ¬et =
+      subᶜ M x W pM pW
+    , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
+    , (λ op ε'' Γ' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'' Γ') (pH op ε'' Γ'))
+    , (λ op q Γ' →
+        ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp (ᴱ-drop-split ¬et x)
+                              (H op _ Γ') (pH op _ Γ')))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ
+          (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause (ᴱ-drop-split ¬et x) Γ' _ _))
+          (≈ᵐ-trans (mapˣ-swapᵐ _ _)
+                    (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause (ᴱ-drop-split ¬et x) Γ' _ _))))))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ'))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                  (∘ᵐ-congʳ (≈ᵐ-sym (subst-clause-interp (ᴱ-drop-split ¬et x)
+                                       (H op _ Γ') (pH op _ Γ'))))))))))
+  ... | yes et =
+      subᶜ M x W pM pW
+    , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
+    , (λ op ε'' Γ' → substᴾᶜ′ _ _
+         (subᶜ (H op ε'' Γ') (split→∈ _) _
+            (pH op ε'' Γ') (substᴾᵛ _ _ (eternal-val-restrictᴾ et W))))
+    , handle-uniform-et et
 
   V-subst-nat : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
               → (pV : Paramᵛ V) → (pW : Paramᵛ W)
