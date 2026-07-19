@@ -218,3 +218,97 @@ clause-sound {Γ} {B} {ε''} e op H u V W =
                 (mapˣᵐ-∘ _ _ _ _
                  ∙ mapˣᵐ-cong (∅-terminal {Γ} e _ _) (∘ᵐ-identityˡ _))
                 (∘ᵐ-identityˡ _))
+
+-- DENOTATIONAL-SIDE CITATION OF `eff-uniform`
+--
+-- `eff-uniform` is stated at the interpreted-clause level (`⟦ H op ε'' Γ' ⟧ᶜᵗ`).
+-- Transporting it along `⟦_⟧ʰᵗ`'s adapter yields the ambivalence premise
+-- (`hmonoʰ`) that the handler-fold inner-grade law `T-alg-of-handlerᵀ-≤ⁱ` takes
+-- for the model handler `⟦ H ⟧ʰᵗ`. Two generic helpers push the continuation
+-- coercion through the adapter: naturality of the inverse associator in its
+-- third component, and the fact that domain- and codomain-reindexing of an
+-- exponential commute.
+
+-- Naturality of `×ᵐ-assoc⁻¹` in its third component.
+×ᵐ-assoc⁻¹-nat³ : ∀ {A B C C'} → (h : C →ᵐ C')
+               → ×ᵐ-assoc⁻¹ {A} {B} {C'} ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ h)
+               ≈ᵐ mapˣᵐ idᵐ h ∘ᵐ ×ᵐ-assoc⁻¹ {A} {B} {C}
+×ᵐ-assoc⁻¹-nat³ h = ≈ᵐ-trans lhs≈canon (≈ᵐ-sym rhs≈canon)
+  where
+    fmapˣ : fstᵐ ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ h) ≈ᵐ fstᵐ
+    fmapˣ = ≈ᵐ-trans (⟨⟩ᵐ-fstᵐ _ _) (∘ᵐ-identityˡ _)
+    smapˣ : sndᵐ ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ h) ≈ᵐ mapˣᵐ idᵐ h ∘ᵐ sndᵐ
+    smapˣ = ⟨⟩ᵐ-sndᵐ _ _
+    fmapˣ' : fstᵐ ∘ᵐ mapˣᵐ idᵐ h ≈ᵐ fstᵐ
+    fmapˣ' = ≈ᵐ-trans (⟨⟩ᵐ-fstᵐ _ _) (∘ᵐ-identityˡ _)
+    smapˣ' : sndᵐ ∘ᵐ mapˣᵐ idᵐ h ≈ᵐ h ∘ᵐ sndᵐ
+    smapˣ' = ⟨⟩ᵐ-sndᵐ _ _
+    lhs≈canon =
+      ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+        (⟨ ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+             (⟨ fmapˣ
+              , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                (≈ᵐ-trans (∘ᵐ-congʳ smapˣ)
+                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ fmapˣ'))) ⟩ᵐ-cong)
+         , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+           (≈ᵐ-trans (∘ᵐ-congʳ smapˣ)
+           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+           (≈ᵐ-trans (∘ᵐ-congˡ smapˣ') (∘ᵐ-assoc _ _ _)))) ⟩ᵐ-cong)
+    rhs≈canon =
+      ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _) (⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
+
+-- Domain- and codomain-reindexing of an exponential commute.
+map⇒ᵐ-swap : ∀ {A B C D} → (f : A →ᵐ B) → (g : C →ᵐ D)
+           → map⇒ᵐ f idᵐ ∘ᵐ map⇒ᵐ idᵐ g ≈ᵐ map⇒ᵐ idᵐ g ∘ᵐ map⇒ᵐ f idᵐ
+map⇒ᵐ-swap f g =
+    map⇒ᵐ-curryᵐˡ f _
+  ∙ curryᵐ-cong (∘ᵐ-assoc _ _ _
+                 ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+                 ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _
+                     ∙ mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityˡ _))))
+  ∙ ≈ᵐ-sym (map⇒ᵐ-curryᵐ g _ ∙ curryᵐ-cong (∘ᵐ-congʳ (∘ᵐ-identityˡ _)))
+
+-- `eff-uniform`, transported to the model handler `⟦ H ⟧ʰᵗ`: the ambivalence
+-- premise of `T-alg-of-handlerᵀ-≤ⁱ`.
+hmonoʰ : ∀ {Γ B} → (e : Γ ᴱ ≡ [])
+       → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+            → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → Parametricʰ {Γ} e H
+       → ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+       → ⟦_⟧ʰᵗ {Γ} H op ε₂''
+           ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q))))
+       ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦_⟧ʰᵗ {Γ} H op ε₁''
+hmonoʰ {Γ} e H par op q =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-nat³ _)
+              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _
+                          ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _))
+                                       (  ≈ᵐ-sym ([]-∘ᵐ _ _)
+                                        ∙ []-congᶠ (map⇒ᵐ-swap _ _)
+                                        ∙ []-∘ᵐ _ _)
+                          ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
+              ∙ ∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (eff-uniform par op q [])
+  ∙ ∘ᵐ-assoc _ _ _
+
+-- The handler-fold inner-grade law for an interpreted *parametric* handler:
+-- folding commutes with sub-effecting the leaves' residual effect (landing on
+-- `·ₑ-monoʳ`). The model law `T-alg-of-handlerᵀ-≤ⁱ` supplies it once its
+-- ambivalence premise is discharged by `hmonoʰ` from `Parametricʰ`.
+Halg-≤ⁱ : ∀ {Γ B ε ε₁' ε₂'} → (e : Γ ᴱ ≡ [])
+        → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+             → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+        → Parametricʰ {Γ} e H → (p : ε₁' ≾ₑ ε₂')
+        → T-alg-of-handlerᵀ {ε = ε} {ε' = ε₂'} (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H)
+            ∘ᵐ mapˣᵐ idᵐ (Tᶠ (T-≤ p))
+        ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p)
+            ∘ᵐ T-alg-of-handlerᵀ {ε = ε} {ε' = ε₁'} (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H)
+Halg-≤ⁱ {Γ} e H par p =
+  T-alg-of-handlerᵀ-≤ⁱ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H) p (hmonoʰ e H par)
