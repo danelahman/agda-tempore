@@ -36,7 +36,8 @@ module DenotationalSemantics.Interpretation.SubstitutionCoherence
        where
 
 open import Data.Empty using (⊥-elim)
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_,_; _×_; Σ; Σ-syntax; proj₁; proj₂)
+open import Data.Unit using (⊤; tt)
 open import Relation.Nullary using (¬_; yes; no)
 
 open LanguageSpec S
@@ -72,11 +73,30 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 -- rebuild a `Γ`-environment from one for `Γ` with `x` removed, by
 -- computing the missing component with `⟦ W ⟧`.
 
-sub-env : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+-- `eternal-val-ext`/`eternal-val-restrict` build only variables, constants,
+-- units and pairs — never a `lam` — so their results are parametric outright.
+
+eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
+                 → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
+eternal-val-extᴾ et (var _ x)                  = tt
+eternal-val-extᴾ _  (const b)                  = tt
+eternal-val-extᴾ _  ⋆                          = tt
+eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
+  eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
+
+eternal-val-restrictᴾ : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
+                      → Paramᵛ (eternal-val-restrict et V)
+eternal-val-restrictᴾ et (var _ x)               = tt
+eternal-val-restrictᴾ _  (const b)               = tt
+eternal-val-restrictᴾ _  ⋆                       = tt
+eternal-val-restrictᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
+  eternal-val-restrictᴾ et₁ V₁ , eternal-val-restrictᴾ et₂ V₂
+
+sub-env : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A) → Paramᵛ W
         → ⟦ split-l x ++ᶜ split-r x ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
-sub-env Hd                W = ⟨ idᵐ , ⟦ W ⟧ᵛᵗ ⟩ᵐ
-sub-env (Tl-∷ x)          W = mapˣᵐ (sub-env x W) idᵐ
-sub-env (Tl-⟨⟩ {ρ = ρ} x) W = ⟨ ρ ⟩ᶠ (sub-env x W)
+sub-env Hd                W pW = ⟨ idᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
+sub-env (Tl-∷ x)          W pW = mapˣᵐ (sub-env x W pW) idᵐ
+sub-env (Tl-⟨⟩ {ρ = ρ} x) W pW = ⟨ ρ ⟩ᶠ (sub-env x W pW)
 
 -- Weakening a variable past a `∷` projects the environment (both sides of
 -- the equation mention `var-morphism` at the same type, so the `eternal?`
@@ -92,11 +112,11 @@ var-morphism-Tl-∷ {B = B} y f with eternal? B
 -- the eternal extraction applied to the locked environment. Proved by
 -- induction on the value (only the eternal formers can occur).
 
-eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
-                    → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ
-                      ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ ⟦ V ⟧ᵛᵗ
+eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
+                    → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ (eternal-val-extᴾ et V)
+                      ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV)
 
-eternal-val-ext-nat {A = A} et (var f y) with eternal? A
+eternal-val-ext-nat {A = A} et (var f y) _ with eternal? A
 ... | yes et' =
   ≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -105,17 +125,17 @@ eternal-val-ext-nat {A = A} et (var f y) with eternal? A
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))))))
 ... | no ¬et' = ⊥-elim (¬et' et)
-eternal-val-ext-nat (Baseₑ b eb) (const c) =
+eternal-val-ext-nat (Baseₑ b eb) (const c) _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧ᵇᶜ-eternal eb c))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ terminalᵐ-unique)))))
-eternal-val-ext-nat Unitₑ ⋆ =
+eternal-val-ext-nat Unitₑ ⋆ _ =
   ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
-eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
-  ≈ᵐ-trans (⟨ eternal-val-ext-nat et₁ V₁ , eternal-val-ext-nat et₂ V₂ ⟩ᵐ-cong)
+eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
+  ≈ᵐ-trans (⟨ eternal-val-ext-nat et₁ V₁ p₁ , eternal-val-ext-nat et₂ V₂ p₂ ⟩ᵐ-cong)
   (≈ᵐ-trans (⟨ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
              , ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _))) ⟩ᵐ-cong)
   (≈ᵐ-trans (⟨ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _) , ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _) ⟩ᵐ-cong)
@@ -133,7 +153,7 @@ eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
 restrict-sub-env : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
                  → ⟦ (split-l x ++ᶜ split-r x) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
 restrict-sub-env {A = A} Hd W with eternal? A
-... | yes et = ⟨ idᵐ , ⟦ eternal-val-restrict et W ⟧ᵛᵗ ⟩ᵐ
+... | yes et = ⟨ idᵐ , ⟦ eternal-val-restrict et W ⟧ᵛᵗ (eternal-val-restrictᴾ et W) ⟩ᵐ
 ... | no  _  = idᵐ
 restrict-sub-env (Tl-∷ {B = B} x) W with eternal? B
 ... | yes _ = mapˣᵐ (restrict-sub-env x W) idᵐ
@@ -145,16 +165,20 @@ restrict-sub-env (Tl-⟨⟩ x) W = restrict-sub-env x W
 -- `eternal-val-ext-nat`). This carries the substituted eternal value onto the
 -- eternal parameter in the handler substitution coherence below.
 
-eternal-val-restrict-nat : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
-                         → ⟦ V ⟧ᵛᵗ ≈ᵐ ⟦ eternal-val-restrict et V ⟧ᵛᵗ ∘ᵐ projᴱ Γ
+eternal-val-restrict-nat : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
+                         → ⟦ V ⟧ᵛᵗ pV
+                         ≈ᵐ ⟦ eternal-val-restrict et V ⟧ᵛᵗ (eternal-val-restrictᴾ et V)
+                              ∘ᵐ projᴱ Γ
 -- The interpretation of a *restricted* eternal value is a morphism of eternal
 -- objects (commutes with the extractions). Its variables are all `∈-ᴱ` images,
 -- so the variable case is exactly `eternal-mor`. This is what makes
 -- `restrict-sub-env` a coalgebra morphism at the head.
 
 restrict-val-mor : ∀ {Γ A} → (et : Eternal A) → (W : Γ ⊢V⦂ A) → ∀ {ρ}
-                 → eternalᵛ-extᵉ et {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ ⟦ eternal-val-restrict et W ⟧ᵛᵗ
-                 ≈ᵐ ⟦ eternal-val-restrict et W ⟧ᵛᵗ ∘ᵐ Eternalᵒ.extᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ)
+                 → eternalᵛ-extᵉ et {ρ}
+                     ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ eternal-val-restrict et W ⟧ᵛᵗ (eternal-val-restrictᴾ et W))
+                 ≈ᵐ ⟦ eternal-val-restrict et W ⟧ᵛᵗ (eternal-val-restrictᴾ et W)
+                      ∘ᵐ Eternalᵒ.extᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ)
 restrict-val-mor {A = A} et (var f x) with eternal? A
 ... | yes et' =
   ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))))
@@ -184,18 +208,18 @@ restrict-val-mor (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
                  (restrict-val-mor et₂ V₂))) ⟩ᵐ-cong)
     (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
 
-eternal-val-restrict-nat {A = A} et (var f x) with eternal? A
+eternal-val-restrict-nat {A = A} et (var f x) _ with eternal? A
 ... | yes et' =
   ≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))
   (≈ᵐ-trans (var-projᴱ et x)
             (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))
 ... | no ¬et' = ⊥-elim (¬et' et)
-eternal-val-restrict-nat _ (const c) =
+eternal-val-restrict-nat _ (const c) _ =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
-eternal-val-restrict-nat _ ⋆ =
+eternal-val-restrict-nat _ ⋆ _ =
   ≈ᵐ-sym terminalᵐ-unique
-eternal-val-restrict-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
-  ≈ᵐ-trans (⟨ eternal-val-restrict-nat et₁ V₁ , eternal-val-restrict-nat et₂ V₂ ⟩ᵐ-cong)
+eternal-val-restrict-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
+  ≈ᵐ-trans (⟨ eternal-val-restrict-nat et₁ V₁ p₁ , eternal-val-restrict-nat et₂ V₂ p₂ ⟩ᵐ-cong)
            (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
 
 -- `restrict-sub-env` is a morphism of eternal objects (commutes with the
@@ -280,33 +304,34 @@ restrict-sub-env-necᵉ {Γ} x W {ρ} =
 -- lock case uses `restrict-sub-env-extᵉ`.
 
 projᴱ-subst-nat : ∀ {Γ A ρ₀} → (x : A ∈[ ρ₀ ] Γ) → (W : split-l x ⊢V⦂ A)
-                → projᴱ Γ ∘ᵐ sub-env x W
+                → (pW : Paramᵛ W)
+                → projᴱ Γ ∘ᵐ sub-env x W pW
                 ≈ᵐ restrict-sub-env x W ∘ᵐ projᴱ (split-l x ++ᶜ split-r x)
-projᴱ-subst-nat {Γ ∷ A} Hd W with eternal? A
+projᴱ-subst-nat {Γ ∷ A} Hd W pW with eternal? A
 ... | yes et =
   ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
   (≈ᵐ-trans (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-  (≈ᵐ-trans (⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , eternal-val-restrict-nat et W ⟩ᵐ-cong)
+  (≈ᵐ-trans (⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , eternal-val-restrict-nat et W pW ⟩ᵐ-cong)
             (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
 ... | no  _ =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
-projᴱ-subst-nat (Tl-∷ {B = B} x) W with eternal? B
+projᴱ-subst-nat (Tl-∷ {B = B} x) W pW with eternal? B
 ... | yes _ =
   ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-  (≈ᵐ-trans (mapˣᵐ-cong (projᴱ-subst-nat x W) ≈ᵐ-refl)
+  (≈ᵐ-trans (mapˣᵐ-cong (projᴱ-subst-nat x W pW) ≈ᵐ-refl)
             (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
 ... | no  _ =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-subst-nat x W))
+  (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-subst-nat x W pW))
             (∘ᵐ-assoc _ _ _))))
-projᴱ-subst-nat (Tl-⟨⟩ x) W =
+projᴱ-subst-nat (Tl-⟨⟩ x) W pW =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (projᴱ-subst-nat x W)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (projᴱ-subst-nat x W pW)))
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉ x W))
@@ -649,7 +674,7 @@ sub-var-nat {B = B} (Tl-∷ y) f Hd W with eternal? B
 -- both deeper: recurse, weakening the substituted value (uses `V-rename-nat`)
 sub-var-nat (Tl-∷ y) f (Tl-∷ x) W =
   ≈ᵐ-trans (V-rename-nat wk-ren ⟨ y , f ⟩[ x ↦ W ]var)
-  (≈ᵐ-trans (∘ᵐ-congˡ (sub-var-nat y f x W))
+  (≈ᵐ-trans (∘ᵐ-congˡ (sub-var-nat y f x W pW))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -767,27 +792,41 @@ eternal-bridge-core et (Tl-∷ {B = B} x) W e with eternal? B
 ... | no _ = eternal-bridge-core et x W e
 eternal-bridge-core et (Tl-⟨⟩ x) W e = eternal-bridge-core et x W e
 
+-- Retyping a clause along a context equality preserves parametricity.
+
+substᴾᶜ : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
+        → Paramᶜ t → Paramᶜ (subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t)
+substᴾᶜ refl t p = p
+
+substᴾᶜ′ : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C)
+         → Paramᶜ t → Paramᶜ (subst (_⊢C⦂ C) e t)
+substᴾᶜ′ refl t p = p
+
 mutual
 
   V-subst-nat : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
-              → ⟦ V [ x ↦ W ]v ⟧ᵛᵗ ≈ᵐ ⟦ V ⟧ᵛᵗ ∘ᵐ sub-env x W
-  V-subst-nat (var f y) x W = sub-var-nat y f x W
-  V-subst-nat (const c) x W =
+              → (pV : Paramᵛ V) → (pW : Paramᵛ W)
+              → ⟦ V [ x ↦ W ]v ⟧ᵛᵗ (subᵛ V x W pV pW)
+              ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ sub-env x W pW
+  V-subst-nat (var f y) x W _ pW = sub-var-nat y f x W pW
+  V-subst-nat (const c) x W _ pW =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
-  V-subst-nat ⋆ x W = ≈ᵐ-sym terminalᵐ-unique
-  V-subst-nat ⦉ V₁ , V₂ ⦊ x W =
-    ≈ᵐ-trans (⟨ V-subst-nat V₁ x W , V-subst-nat V₂ x W ⟩ᵐ-cong)
+  V-subst-nat ⋆ x W _ pW = ≈ᵐ-sym terminalᵐ-unique
+  V-subst-nat ⦉ V₁ , V₂ ⦊ x W (p₁ , p₂) pW =
+    ≈ᵐ-trans (⟨ V-subst-nat V₁ x W p₁ pW , V-subst-nat V₂ x W p₂ pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
-  V-subst-nat (lam M) x W =
-    ≈ᵐ-trans (curryᵐ-cong (C-subst-nat M (Tl-∷ x) W))
-             (curryᵐ-nat (sub-env x W) ⟦ M ⟧ᶜᵗ)
+  V-subst-nat (lam M) x W pM pW =
+    ≈ᵐ-trans (curryᵐ-cong (C-subst-nat M (Tl-∷ x) W pM pW))
+             (curryᵐ-nat (sub-env x W pW) (⟦ M ⟧ᶜᵗ pM))
 
   C-subst-nat : ∀ {Γ A C ρ} → (M : Γ ⊢C⦂ C) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
-              → ⟦ M [ x ↦ W ]c ⟧ᶜᵗ ≈ᵐ ⟦ M ⟧ᶜᵗ ∘ᵐ sub-env x W
-  C-subst-nat (return V) x W =
-    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  C-subst-nat (M ⨟ N) x W =
-    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W))))
+              → (pM : Paramᶜ M) → (pW : Paramᵛ W)
+              → ⟦ M [ x ↦ W ]c ⟧ᶜᵗ (subᶜ M x W pM pW)
+              ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ sub-env x W pW
+  C-subst-nat (return V) x W pV pW =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W pV pW)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  C-subst-nat (M ⨟ N) x W (pM , pN) pW =
+    ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W pN pW))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
@@ -795,58 +834,58 @@ mutual
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-                (⟨ η⊣-nat (sub-env x W)
-                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W) ⟩ᵐ-cong))))
+                (⟨ η⊣-nat (sub-env x W pW)
+                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W pM pW) ⟩ᵐ-cong))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))))
     (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))))))
-  C-subst-nat (V₁ · V₂) x W =
-    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-subst-nat V₁ x W , V-subst-nat V₂ x W ⟩ᵐ-cong))
+  C-subst-nat (V₁ · V₂) x W (p₁ , p₂) pW =
+    ≈ᵐ-trans (∘ᵐ-congʳ (⟨ V-subst-nat V₁ x W p₁ pW , V-subst-nat V₂ x W p₂ pW ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  C-subst-nat (match V `in N) x W =
-    ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat N (Tl-∷ (Tl-∷ x)) W))
+  C-subst-nat (match V `in N) x W (pV , pN) pW =
+    ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat N (Tl-∷ (Tl-∷ x)) W pN pW))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ
                 (⟨ ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
                    (⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
                     , ≈ᵐ-trans (∘ᵐ-identityˡ _)
-                      (≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W))
+                      (≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W pV pW))
                                 (≈ᵐ-sym (∘ᵐ-assoc _ _ _))) ⟩ᵐ-cong)
                  , ≈ᵐ-trans (∘ᵐ-identityˡ _)
-                   (≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W))
+                   (≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W pV pW))
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-  C-subst-nat (absurd V) x W =
-    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  C-subst-nat (perform op V M) x W =
+  C-subst-nat (absurd V) x W pV pW =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-nat V x W pV pW)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  C-subst-nat (perform op V M) x W (pV , pM) pW =
     ≈ᵐ-trans (∘ᵐ-congʳ
-      (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-subst-nat V x W))
-                  (≡→≈ᵐ (sym (substᶜ-∘ (ty-gty (param op)) ⟦ V ⟧ᵛᵗ (sub-env x W))))
+      (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-subst-nat V x W pV pW))
+                  (≡→≈ᵐ (sym (substᶜ-∘ (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV) (sub-env x W pW))))
        , ≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
                     (≈ᵐ-trans (substᵈ-≈ (ty-gty (arity op))
-                                (C-subst-nat M (Tl-∷ (Tl-⟨⟩ x)) W))
-                              (≡→≈ᵐ (sym (substᵈ-∘ (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
-                                           (⟨ mapᵉ (op-grade op) ⟩ᶠ (sub-env x W)))))))))
+                                (C-subst-nat M (Tl-∷ (Tl-⟨⟩ x)) W pM pW))
+                              (≡→≈ᵐ (sym (substᵈ-∘ (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
+                                           (⟨ mapᵉ (op-grade op) ⟩ᶠ (sub-env x W pW)))))))))
          (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-nat _ _)))
          (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-         (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (sub-env x W)))
+         (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (sub-env x W pW)))
                    (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  C-subst-nat (delay τ M) x W =
+  C-subst-nat (delay τ M) x W pM pW =
     ≈ᵐ-sym
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (sub-env x W)))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (sub-env x W pW)))))
       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
-                (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (C-subst-nat M (Tl-⟨⟩ x) W))))))))))
+                (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (C-subst-nat M (Tl-⟨⟩ x) W pM pW))))))))))
   -- The handle case mirrors `C-rename-nat`'s: the environment-threading second
   -- component commutes as for `⨟` (`seq-nat`), and the handler algebra is
   -- reindexed by `restrict-sub-env x W` (`alg-nat`, via `T-alg-of-handlerᵀ`'s
@@ -862,7 +901,7 @@ mutual
     (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-subst-nat x W) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-subst-nat x W pW) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
     where
@@ -880,7 +919,7 @@ mutual
       seq-nat : Tᶠ ⟦ N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M [ x ↦ W ]c ⟧ᶜᵗ ⟩ᵐ
               ≈ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ sub-env x W
       seq-nat =
-        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W)))
+        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W pN pW)))
         (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
@@ -888,8 +927,8 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
-                    (⟨ η⊣-nat (sub-env x W)
-                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W) ⟩ᵐ-cong)))
+                    (⟨ η⊣-nat (sub-env x W pW)
+                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W pM pW) ⟩ᵐ-cong)))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
@@ -953,7 +992,7 @@ mutual
     (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-subst-nat x W) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-subst-nat x W pW) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
     where
@@ -983,7 +1022,7 @@ mutual
       seq-nat : Tᶠ ⟦ N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M [ x ↦ W ]c ⟧ᶜᵗ ⟩ᵐ
               ≈ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ sub-env x W
       seq-nat =
-        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W)))
+        ≈ᵐ-trans (∘ᵐ-congˡ (T-congᶠ (C-subst-nat N (Tl-∷ (Tl-⟨⟩ x)) W pN pW)))
         (≈ᵐ-trans (∘ᵐ-congˡ (T-∘ᵐ _ _))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
@@ -991,8 +1030,8 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ
-                    (⟨ η⊣-nat (sub-env x W)
-                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W) ⟩ᵐ-cong)))
+                    (⟨ η⊣-nat (sub-env x W pW)
+                     , ≈ᵐ-trans (∘ᵐ-identityˡ _) (C-subst-nat M x W pM pW) ⟩ᵐ-cong)))
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
@@ -1067,7 +1106,7 @@ mutual
   ... | _ , yv , f , refl | _ , b , y =
     unbox-subst-nat y
       (≾ᵣ-trans (b (λ ())) (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ _))))
-      M x W (C-subst-nat M (Tl-∷ x) W)
+      M x W (C-subst-nat M (Tl-∷ x) W pM pW)
   C-subst-nat (box V N) x W =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat N (Tl-∷ x) W))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -1078,9 +1117,9 @@ mutual
                    (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (V-subst-nat V (Tl-⟨⟩ x) W)))
                    (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
                    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                   (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (sub-env x W)))
+                   (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (sub-env x W pW)))
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
   C-subst-nat (coerce rel M) x W =
-    ≈ᵐ-trans (∘ᵐ-congʳ (C-subst-nat M x W)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ≈ᵐ-trans (∘ᵐ-congʳ (C-subst-nat M x W pM pW)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
