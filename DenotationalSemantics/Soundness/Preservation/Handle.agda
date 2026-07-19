@@ -70,7 +70,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; Uniformʰ; clause-sound)
+  using (term∅; ∅-terminal; CtxUniformʰ; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE public
 
@@ -847,7 +847,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                               (type-of-gtype (arity op') ⇒ B ‼ ε')
                        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
                 → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'')
-                → Uniformʰ {Γ} e H
+                → CtxUniformʰ {Γ} e H
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
                    ∘ᵐ ⟦ box (lam (handle M

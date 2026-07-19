@@ -101,7 +101,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; Uniformʰ; clause-sound)
+  using (term∅; ∅-terminal; CtxUniformʰ; Parametricʰ; ctx-uniform; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE public
 
@@ -243,7 +243,7 @@ Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
          → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
          → Set
-Uniform↝ (HANDLE-OP {S = S} {H = H}) = Uniformʰ {toCtx S} (toCtxᴱ-[] S) H
+Uniform↝ (HANDLE-OP {S = S} {H = H}) = Parametricʰ {toCtx S} (toCtxᴱ-[] S) H
 Uniform↝ (SEQ-STEP r _)        = Uniform↝ r
 Uniform↝ (HANDLE-STEP r _)     = Uniform↝ r
 Uniform↝ APP                   = ⊤
@@ -315,7 +315,7 @@ Uniform↝ COERCE                = ⊤
 
 ↝-sound {S = S} r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N}) u =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-assoc (op-grade op) _ _)))
-    (∘ᵐ-congˡ (sound-HANDLE-OP (toCtxᴱ-[] S) op V M H N u)
+    (∘ᵐ-congˡ (sound-HANDLE-OP (toCtxᴱ-[] S) op V M H N (ctx-uniform u))
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 

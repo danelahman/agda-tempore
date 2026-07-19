@@ -68,7 +68,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; Uniformʰ; clause-sound)
+  using (term∅; ∅-terminal; CtxUniformʰ; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj GTy Mon GE public
 

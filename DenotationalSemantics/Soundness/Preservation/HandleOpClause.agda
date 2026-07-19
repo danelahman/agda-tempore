@@ -6,7 +6,7 @@
 -- operational machinery) and its normalisation is heavy: keeping it in    --
 -- its own module lets `Preservation` import `clause-sound` rather than    --
 -- re-elaborate its body. `HANDLE-OP` fires the handler's clause at the    --
--- runtime context `Γ` (`Γ ᴱ ≡ []`); `Uniformʰ` says a clause's meaning    --
+-- runtime context `Γ` (`Γ ᴱ ≡ []`); `CtxUniformʰ` says a clause's meaning --
 -- is context-free, so applying it at `Γ` equals the model's `[]`-clause,  --
 -- the eternal parameter carried terminally (`term∅`).                     --
 ------------------------------------------------------------------------
@@ -93,22 +93,65 @@ assoc⁻¹-⟨⟩ a b c =
         , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong
     , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong
 
-Uniformʰ : ∀ {Γ B} → Γ ᴱ ≡ []
-         → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
-              → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-         → Set
-Uniformʰ {Γ} e H = ∀ op ε'' Γ'
+-- Uniformity of a clause family in the context extension `Γ'`: the clause does
+-- not depend on `Γ'`, so its meaning factors through discarding it.
+CtxUniformʰ : ∀ {Γ B} → Γ ᴱ ≡ []
+            → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
+                 → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+            → Set
+CtxUniformʰ {Γ} e H = ∀ op ε'' Γ'
              → ⟦ H op ε'' Γ' ⟧ᶜᵗ
              ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
+
+-- Uniformity of a clause family in the residual effect `ε''`: the clause
+-- commutes with sub-effecting the continuation's residual, landing on `·ₑ-monoʳ`.
+EffUniformʰ : ∀ {Γ B}
+            → ((op : Op) → (ε'' : E) → (Γ' : Ctx)
+                 → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+            → Set
+EffUniformʰ H = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
+             → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ
+                 ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ
+
+-- A handler is *parametric* when each clause's meaning is uniform in the two
+-- indices the clause is externally quantified over. The two conjuncts have the
+-- same shape — reindexing an index of the clause equals reindexing its meaning:
+--
+--   * `ctx-uniform` : `CtxUniformʰ` — uniform in the context extension `Γ'`.
+--                     The meaning at `Γ'` factors through discarding `Γ'`
+--                     (project to the `[]`-clause). This is precisely the former
+--                     stand-alone assumption, now subsumed here.
+--   * `eff-uniform` : `EffUniformʰ` — uniform in the residual effect `ε''`.
+--                     Transported along `⟦_⟧ʰᵗ`'s adapter to the model handler
+--                     `⟦ H ⟧ʰᵗ`, this is exactly the ambivalence premise that the
+--                     handler-fold inner-grade law (`T-alg-of-handlerᵀ-≤ⁱ`) takes.
+--
+-- It is the single standing assumption on interpreted handlers: operational
+-- soundness reads `ctx-uniform`, the denotational inner-grade reasoning reads
+-- `eff-uniform`.
+record Parametricʰ {Γ B} (e : Γ ᴱ ≡ [])
+                   (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+                      → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                           ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                 : Set where
+  field
+    ctx-uniform : CtxUniformʰ {Γ} e H
+    eff-uniform : EffUniformʰ {Γ} H
+
+open Parametricʰ public
 
 clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
              → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
                   → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
                        ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
-             → Uniformʰ {Γ} e H
+             → CtxUniformʰ {Γ} e H
              → (V : Γ ⊢V⦂ type-of-gtype (param op))
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
