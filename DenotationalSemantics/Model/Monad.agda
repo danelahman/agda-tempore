@@ -48,6 +48,7 @@ module DenotationalSemantics.Model.Monad
        where
 
 open import Data.Nat using (ℕ)
+open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
 
 open import Util.Equality
 
@@ -290,10 +291,32 @@ record Monad : Set₁ where
   -- `necᵉ`) is what lets it be carried *under* the box at `delay`/`op` nodes,
   -- across the passage of time, without moving the handler.
 
-  Handlerᵀ : Obj → Obj → Set
-  Handlerᵀ P A = (op : Op) → (ε'' : E)
+  Clausesᵀ : Obj → Obj → Set
+  Clausesᵀ P A = (op : Op) → (ε'' : E)
              → P ×ᵐ (⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε''))
                  →ᵐ Tᵒ A (op-grade op ·ₑ ε'')
+
+  -- A handler's clauses must be *ambivalent* in the residual grade `ε''`:
+  -- coercing the boxed continuation's residual equals coercing the clause's
+  -- output. The residual grade is fixed by the call site, not inspected by the
+  -- clause, so this is exactly the parametricity a handler is meant to have.
+  --
+  -- It is bundled into the handler rather than assumed law-by-law because the
+  -- fold must respect it to be a morphism at all: sub-effecting may be pushed
+  -- under an operation, and the fold selects the clause by the residual grade.
+  -- It is what makes both the fold and `μ` monotone in the inner grade.
+
+  Monoᵀ : ∀ {P A} → Clausesᵀ P A → Set
+  Monoᵀ {P} {A} cl = ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
+                   → cl op εb ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ
+                         ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q))))
+                   ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ cl op εa
+
+  Handlerᵀ : Obj → Obj → Set
+  Handlerᵀ P A = Σ[ cl ∈ Clausesᵀ P A ] Monoᵀ cl
+
+  clauseᵀ : ∀ {P A} → Handlerᵀ P A → Clausesᵀ P A
+  clauseᵀ = proj₁
 
   field
 
@@ -325,7 +348,7 @@ record Monad : Set₁ where
     T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                           → T-alg-of-handlerᵀ bc h ∘ᵐ mapˣᵐ idᵐ (opᵀ {Tᵒ A ε''} {ε'} op)
                           ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
-                            ∘ᵐ h op (ε' ·ₑ ε'')
+                            ∘ᵐ clauseᵀ h op (ε' ·ₑ ε'')
                             ∘ᵐ ⟨ fstᵐ
                                , ⟨ fstᵐ ∘ᵐ sndᵐ
                                  ,   [ mapᵉ (op-grade op) ]ᶠ
@@ -345,20 +368,12 @@ record Monad : Set₁ where
                         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 
     -- It also commutes with sub-effecting in the *inner* grade — landing on
-    -- `·ₑ-monoʳ`, dual to the outer law's `·ₑ-monoˡ` — provided the handler is
-    -- *ambivalent* in the residual grade `ε''`: coercing a clause's boxed
-    -- continuation equals coercing the clause's output (`hmono`). This holds
-    -- because the residual grade is fixed by the call site, not inspected by
-    -- the clause. The premise is essential: the fold selects the clause `h op`
-    -- by the residual grade, so without ambivalence an inner coercion would
-    -- change which clause is applied (cf. why `sub` has no `op-node` rule).
+    -- `·ₑ-monoʳ`, dual to the outer law's `·ₑ-monoˡ`. No premise is needed: the
+    -- handler carries its own ambivalence (`Monoᵀ`), which is what lets the
+    -- coercion escape an operation the fold is reinterpreting.
 
     T-alg-of-handlerᵀ-≤ⁱ : ∀ {P A ε ε₁' ε₂'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → (p : ε₁' ≾ₑ ε₂')
-                         → (hmono : ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
-                                  → h op εb ∘ᵐ mapˣᵐ idᵐ (mapˣᵐ idᵐ
-                                        ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q))))
-                                  ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ h op εa)
                          → T-alg-of-handlerᵀ {P} {A} {ε} {ε₂'} bc h ∘ᵐ mapˣᵐ idᵐ (Tᶠ (T-≤ p))
                          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε₁'} bc h
 
@@ -388,9 +403,10 @@ record Monad : Set₁ where
                            → (f : P' →ᵐ P)
                            → (∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ bc' {ρ}
                                      ≈ᵐ Eternalᵒ.necᵉ bc {ρ} ∘ᵐ f)
-                           → (h : Handlerᵀ P A)
-                           → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc'
-                               (λ op ε'' → h op ε'' ∘ᵐ mapˣᵐ f idᵐ)
+                           → (h : Handlerᵀ P A) → (h' : Handlerᵀ P' A)
+                           → (∀ op ε'' → clauseᵀ h' op ε''
+                                       ≈ᵐ clauseᵀ h op ε'' ∘ᵐ mapˣᵐ f idᵐ)
+                           → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc' h'
                            ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h ∘ᵐ mapˣᵐ f idᵐ
 
     -- The fold is a congruence in the handler: pointwise-equal clauses fold to
@@ -398,7 +414,7 @@ record Monad : Set₁ where
     -- reindexed form that `natᴾ` consumes.
 
     T-alg-of-handlerᵀ-cong : ∀ {P A ε ε'} → (bc : Eternalᵒ P) → {h h' : Handlerᵀ P A}
-                           → (∀ op ε'' → h op ε'' ≈ᵐ h' op ε'')
+                           → (∀ op ε'' → clauseᵀ h op ε'' ≈ᵐ clauseᵀ h' op ε'')
                            → T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h
                            ≈ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h'
 

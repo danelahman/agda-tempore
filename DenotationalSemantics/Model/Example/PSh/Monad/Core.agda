@@ -134,11 +134,6 @@ mutual
     -- delay's own (`of-natᵉ τ ·ₑ_`): a coercion of the residual effect leaves
     -- the delay untouched. This is what makes sub-effecting commute with the
     -- multiplication in the inner grade, which the `↝*` closure needs.
-    --
-    -- The corresponding rule for `op-node` is unsound: the handler fold selects
-    -- the clause `h op ε''` by the residual grade `ε''`, so a coercion pushed
-    -- under an operation would change which clause is applied. It is also not
-    -- needed, as a `_↝_` step never performs an operation.
 
     sub-delay : ∀ {ε ε' w} {τ : ℕ} {e : ε ≾ₑ ε'}
                   {k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ τ) ] w' → Tˢ A ε w'}
@@ -148,6 +143,36 @@ mutual
                        → sub e (k (⊑ρ∘ᵘ q r)) ≈ᵗ transportᵗ r (sub e (k q))}
               → sub (·ₑ-monoʳ-≾ₑ e) (delay-node τ k kn)
               ≈ᵗ delay-node τ (λ q → sub e (k q)) kn'
+
+    -- Likewise for an operation, at a grade factoring through the operation's
+    -- own (`op-grade op ·ₑ_`). This is what makes sub-effecting commute with
+    -- the multiplication in the inner grade at `op`-nodes, and hence what makes
+    -- `μ` monotone in the inner grade.
+    --
+    -- Soundness of this rule rests on handlers being *ambivalent* in the
+    -- residual grade (`Handlerˢ.clause-mono`): the fold selects the clause
+    -- `h op ε''` by the residual grade, so a coercion pushed under an operation
+    -- changes which clause is applied, and only a handler whose clauses agree
+    -- across such a coercion is left unaffected.
+
+    sub-op : ∀ {ε ε' w} {op : Op} {e : ε ≾ₑ ε'}
+               {v : carrier ⟦ param op ⟧ᵍ w}
+               {k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w'}
+               {kc  : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+                        {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+                    → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y'}
+               {kn  : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+                        (y : carrier ⟦ arity op ⟧ᵍ w')
+                    → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y)}
+               {kc' : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+                        {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+                    → _≈_ ⟦ arity op ⟧ᵍ y y' → sub e (k q y) ≈ᵗ sub e (k q y')}
+               {kn' : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+                        (y : carrier ⟦ arity op ⟧ᵍ w')
+                    → sub e (k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y))
+                    ≈ᵗ transportᵗ r (sub e (k q y))}
+           → sub (·ₑ-monoʳ-≾ₑ e) (op-node op v k kc kn)
+           ≈ᵗ op-node op v (λ q y → sub e (k q y)) kc' kn'
 
 
     -- The congruence rules alone do not make `_≈ᵗ_` an equivalence in the
@@ -206,6 +231,22 @@ sub-delayᵗ : ∀ {A ε ε' w} {τ : ℕ} → (e : ε ≾ₑ ε')
            ≈ᵗ delay-node τ (λ q → sub e (k q)) (λ q r → sub-≈ (kn q r))
 sub-delayᵗ e k kn = sub-delay
 
+-- `sub-op` with its coherence witnesses pinned (as for `sub-delayᵗ`).
+
+sub-opᵗ : ∀ {A ε ε' w} {op : Op} → (e : ε ≾ₑ ε')
+        → (v : carrier ⟦ param op ⟧ᵍ w)
+        → (k : ∀ {w'} → w ⊑[ mapᵉ (op-grade op) ] w' → carrier ⟦ arity op ⟧ᵍ w' → Tˢ A ε w')
+        → (kc : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
+                  {y y' : carrier ⟦ arity op ⟧ᵍ w'}
+              → _≈_ ⟦ arity op ⟧ᵍ y y' → k q y ≈ᵗ k q y')
+        → (kn : ∀ {w' w''} (q : w ⊑[ mapᵉ (op-grade op) ] w') (r : w' ⊑[ uᵣ ] w'')
+                  (y : carrier ⟦ arity op ⟧ᵍ w')
+              → k (⊑ρ∘ᵘ q r) (transport ⟦ arity op ⟧ᵍ r y) ≈ᵗ transportᵗ r (k q y))
+        → sub (·ₑ-monoʳ-≾ₑ e) (op-node op v k kc kn)
+        ≈ᵗ op-node op v (λ q y → sub e (k q y))
+             (λ q ey → sub-≈ (kc q ey)) (λ q r y → sub-≈ (kn q r y))
+sub-opᵗ e v k kc kn = sub-op
+
 -- Transport respects `_≈ᵗ_` and satisfies the presheaf laws (up to `_≈ᵗ_`).
 
 transportᵗ-cong : ∀ {A ε w w'} (p : w ⊑[ uᵣ ] w') {t t' : Tˢ A ε w}
@@ -217,6 +258,7 @@ transportᵗ-cong p (sub-≈ et)              = sub-≈ (transportᵗ-cong p et)
 transportᵗ-cong p sub-u                   = sub-u
 transportᵗ-cong p sub-∘                   = sub-∘
 transportᵗ-cong p sub-delay               = sub-delay
+transportᵗ-cong p sub-op                  = sub-op
 transportᵗ-cong p (≈ᵗ-sym et)             = ≈ᵗ-sym (transportᵗ-cong p et)
 transportᵗ-cong p (≈ᵗ-trans et et')       = ≈ᵗ-trans (transportᵗ-cong p et) (transportᵗ-cong p et')
 
@@ -303,6 +345,7 @@ mutual
   Tˢᶠ-congᵗ f sub-u        = sub-u
   Tˢᶠ-congᵗ f sub-∘        = sub-∘
   Tˢᶠ-congᵗ f sub-delay    = sub-delay
+  Tˢᶠ-congᵗ f sub-op       = sub-op
   Tˢᶠ-congᵗ f (≈ᵗ-sym et)  = ≈ᵗ-sym (Tˢᶠ-congᵗ f et)
   Tˢᶠ-congᵗ f (≈ᵗ-trans et et') = ≈ᵗ-trans (Tˢᶠ-congᵗ f et) (Tˢᶠ-congᵗ f et')
 
@@ -409,6 +452,15 @@ mutual
                     (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
                     _)
       (ε-substˢ-congᵗ _ sub-delay)
+  -- likewise under an operation
+  μˢ-congᵗ {ε' = ε'} (sub-op {ε = ε₁} {ε' = ε₁'} {op = op} {e = e}) =
+    ≈ᵗ-trans
+      (sub-ε-substᵗ (sym (·ₑ-assoc (op-grade op) ε₁ ε'))
+                    (sym (·ₑ-assoc (op-grade op) ε₁' ε'))
+                    (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
+                    (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
+                    _)
+      (ε-substˢ-congᵗ _ sub-op)
   μˢ-congᵗ (≈ᵗ-sym et)  = ≈ᵗ-sym (μˢ-congᵗ et)
   μˢ-congᵗ (≈ᵗ-trans et et') = ≈ᵗ-trans (μˢ-congᵗ et) (μˢ-congᵗ et')
 
@@ -720,6 +772,18 @@ mutual
                           (hb (⊑-coe (sym map-·ᵉ)
                                 (⊑-trans q (⊑-mono (map-monotoneᵉ e) r)))))
                  (≈ᵗ-refl (k q)))))
+  -- likewise for the box carried under an operation
+  strˢ-congᵗ A {box} {box'} hb (sub-op {op = op} {e = e} {v = v} {k = k}) =
+    ≈ᵗ-trans (sub-opᵗ e v _ _ _)
+      (op-≈ (≈-refl ⟦ param op ⟧ᵍ)
+        (λ q y → sub-≈ (strˢ-congᵗ A
+                   (λ r → ≈-trans A
+                            ([]-fun-irr box _
+                               (⊑-coe (sym map-·ᵉ)
+                                  (⊑-trans q (⊑-mono (map-monotoneᵉ e) r))))
+                            (hb (⊑-coe (sym map-·ᵉ)
+                                  (⊑-trans q (⊑-mono (map-monotoneᵉ e) r)))))
+                   (≈ᵗ-refl (k q y)))))
   strˢ-congᵗ A hb (≈ᵗ-sym et)  =
     ≈ᵗ-sym (strˢ-congᵗ A (λ r → ≈-sym A (hb r)) et)
   strˢ-congᵗ A {box} {box'} hb (≈ᵗ-trans et et') =
@@ -911,6 +975,48 @@ T-≤-≡ refl t = ≈ᵗ-sym sub-u
 T-≤-μᵀ : ∀ {A ε₁ ε₂ ε'} → (p : ε₁ ≾ₑ ε₂)
        → μᵀ {A} {ε₂} {ε'} ∘ᵖ T-≤ p ≈ᵖ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ μᵀ {A} {ε₁} {ε'}
 T-≤-μᵀ p t = ≈ᵗ-refl _
+
+-- Sub-effecting also commutes with the multiplication in the *inner* grade,
+-- landing on `·ₑ-monoʳ` (dual to the outer law's `·ₑ-monoˡ`). Unlike the outer
+-- law this is not definitional: the coercion starts at the leaves and has to
+-- migrate out to the root, crossing every node on the way — `sub-delay` at
+-- delays and `sub-op` at operations, the latter being what makes the inner
+-- grade monotone at all.
+
+μˢ-≤ⁱ : ∀ {A ε ε₁' ε₂' w} → (p : ε₁' ≾ₑ ε₂') → (t : Tˢ (Tᵒ A ε₁') ε w)
+      → μˢ (Tˢᶠ (T-≤ p) t) ≈ᵗ sub (·ₑ-monoʳ-≾ₑ p) (μˢ t)
+μˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} p (leaf s) =
+  ≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-identityˡ ε₁')) (sym (·ₑ-identityˡ ε₂'))
+                       p (·ₑ-monoʳ-≾ₑ p) s)
+μˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} p (op-node {ε = ε₀} op v k kc kn) =
+  ≈ᵗ-trans
+    (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ ε₂'))
+      (op-≈ (≈-refl ⟦ param op ⟧ᵍ) (λ q y → μˢ-≤ⁱ p (k q y))))
+    (≈ᵗ-trans
+      (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ ε₂'))
+        (≈ᵗ-sym (sub-opᵗ (·ₑ-monoʳ-≾ₑ p) v _ _ _)))
+      (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (op-grade op) ε₀ ε₁'))
+                            (sym (·ₑ-assoc (op-grade op) ε₀ ε₂'))
+                            (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _)))
+μˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} p (delay-node {ε = ε₀} τ k kn) =
+  ≈ᵗ-trans
+    (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
+      (delay-≈ (λ q → μˢ-≤ⁱ p (k q))))
+    (≈ᵗ-trans
+      (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
+        (≈ᵗ-sym (sub-delayᵗ (·ₑ-monoʳ-≾ₑ p) _ _)))
+      (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₁'))
+                            (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
+                            (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _)))
+μˢ-≤ⁱ p (sub p₀ t) =
+  ≈ᵗ-trans (sub-≈ (μˢ-≤ⁱ p t))
+           (≈ᵗ-trans (sub-∘ {e' = ·ₑ-monoˡ-≾ₑ p₀}
+                            {e'' = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)})
+                     (≈ᵗ-sym (sub-∘ {e'' = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)})))
+
+T-≤-μᵀⁱ : ∀ {A ε ε₁' ε₂'} → (p : ε₁' ≾ₑ ε₂')
+        → μᵀ {A} {ε} {ε₂'} ∘ᵖ Tᶠ (T-≤ p) ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ μᵀ {A} {ε} {ε₁'}
+T-≤-μᵀⁱ p t = μˢ-≤ⁱ p t
 
 strᵀ-≤ : ∀ {A B ε ε'} → (p : ε ≾ₑ ε')
        → strᵀ {A} {B} {ε'} ∘ᵖ mapˣᵐ idᵖ (T-≤ p)

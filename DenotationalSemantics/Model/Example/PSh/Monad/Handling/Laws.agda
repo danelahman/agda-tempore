@@ -74,7 +74,7 @@ T-alg-of-handlerᵀ-≤ bc h p x = ≈ᵗ-refl _
 T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
                       → T-alg-of-handlerᵀ bc h ∘ᵖ mapˣᵐ idᵖ (opᵀ {Tᵒ A ε''} {ε'} op)
                       ≈ᵖ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε' ε''))
-                        ∘ᵖ h op (ε' ·ₑ ε'')
+                        ∘ᵖ clause h op (ε' ·ₑ ε'')
                         ∘ᵖ ⟨ fstᵐ
                            , ⟨ fstᵐ ∘ᵖ sndᵐ
                              ,   [ mapᵉ (op-grade op) ]ᶠ
@@ -86,7 +86,7 @@ T-alg-of-handlerᵀ-opᵀ : ∀ {P A ε' ε''} → (op : Op) → (bc : Eternal�
                                ∘ᵖ ⟨ fstᵐ , sndᵐ ∘ᵖ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
 T-alg-of-handlerᵀ-opᵀ {P = P} op bc h (pv , (v , boxk)) =
   ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) _ _))
-    (app-cong (h op _)
+    (app-cong (clause h op _)
       (≈-refl P ,
        (≈-refl ⟦ param op ⟧ᵍ ,
         (λ q p y → T-alg-of-handlerˢ-cong bc h
@@ -100,14 +100,14 @@ T-alg-of-handlerᵀ-opᵀ {P = P} op bc h (pv , (v , boxk)) =
 
 {-# TERMINATING #-}
 T-alg-of-handlerˢ-congʰ : ∀ {P A ε ε' w} (bc : Eternalᵒ P) {h h' : Handlerˢ P A}
-                          (heq : ∀ op ε'' → h op ε'' ≈ᵖ h' op ε'')
+                          (heq : ∀ op ε'' → clause h op ε'' ≈ᵖ clause h' op ε'')
                           (pv : carrier P w) (t : Tˢ (Tᵒ A ε') ε w)
                         → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h' pv t
 T-alg-of-handlerˢ-congʰ bc heq pv (leaf s) = ≈ᵗ-refl _
 T-alg-of-handlerˢ-congʰ {P = P} bc {h = h} {h' = h'} heq pv (op-node op v k kc kn) =
   ε-substˢ-congᵗ _
     (≈ᵗ-trans (heq op _ (pv , (v , handler-box bc pv h op k kc kn)))
-              (app-cong (h' op _)
+              (app-cong (clause h' op _)
                 (≈-refl P ,
                  (≈-refl ⟦ param op ⟧ᵍ ,
                   (λ q r y → T-alg-of-handlerˢ-congʰ bc heq
@@ -121,7 +121,7 @@ T-alg-of-handlerˢ-congʰ bc heq pv (sub p t) =
   sub-≈ (T-alg-of-handlerˢ-congʰ bc heq pv t)
 
 T-alg-of-handlerᵀ-cong : ∀ {P A ε ε'} (bc : Eternalᵒ P) {h h' : Handlerˢ P A}
-                       → (∀ op ε'' → h op ε'' ≈ᵖ h' op ε'')
+                       → (∀ op ε'' → clause h op ε'' ≈ᵖ clause h' op ε'')
                        → T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h
                        ≈ᵖ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h'
 T-alg-of-handlerᵀ-cong bc heq (pv , t) = T-alg-of-handlerˢ-congʰ bc heq pv t
@@ -131,6 +131,15 @@ T-alg-of-handlerᵀ-cong bc heq (pv , t) = T-alg-of-handlerˢ-congʰ bc heq pv t
 -- By induction on the tree; at each `op`/`delay` node the continuation's parameter
 -- is advanced by `necᵉ`, and `f` commuting with `necᵉ` (`fcomm`) closes the case.
 
+-- Reindexing a handler's parameter along `f`. The clauses are precomposed, and
+-- ambivalence transports directly: precomposition only replaces the eternal
+-- parameter `pv'` by `app f pv'`, leaving the boxes it relates untouched.
+
+reindexʰ : ∀ {P P' A} → (f : P' →ᵖ P) → Handlerˢ P A → Handlerˢ P' A
+reindexʰ f h =
+    (λ op ε'' → clause h op ε'' ∘ᵖ mapˣᵐ f idᵖ)
+  , (λ op q x → clause-mono′ h op q (app f (proj₁ x) , proj₂ x))
+
 {-# TERMINATING #-}
 T-alg-of-handlerˢ-natᴾ : ∀ {P P' A ε ε' w} (bc : Eternalᵒ P) (bc' : Eternalᵒ P')
                          (f : P' →ᵖ P)
@@ -138,12 +147,12 @@ T-alg-of-handlerˢ-natᴾ : ∀ {P P' A ε ε' w} (bc : Eternalᵒ P) (bc' : Ete
                                           ≈ᵖ Eternalᵒ.necᵉ bc {ρ} ∘ᵖ f)
                          (h : Handlerˢ P A)
                          (pv' : carrier P' w) (t : Tˢ (Tᵒ A ε') ε w)
-                       → T-alg-of-handlerˢ bc' (λ op ε'' → h op ε'' ∘ᵖ mapˣᵐ f idᵖ) pv' t
+                       → T-alg-of-handlerˢ bc' (reindexʰ f h) pv' t
                        ≈ᵗ T-alg-of-handlerˢ bc h (app f pv') t
 T-alg-of-handlerˢ-natᴾ bc bc' f fcomm h pv' (leaf s) = ≈ᵗ-refl _
 T-alg-of-handlerˢ-natᴾ {P = P} bc bc' f fcomm h pv' (op-node op v k kc kn) =
   ε-substˢ-congᵗ _
-    (app-cong (h op _)
+    (app-cong (clause h op _)
       (≈-refl P ,
        (≈-refl ⟦ param op ⟧ᵍ ,
         (λ q r y → ≈ᵗ-trans
@@ -163,11 +172,28 @@ T-alg-of-handlerᵀ-natᴾ : ∀ {P P' A ε ε'} (bc : Eternalᵒ P) (bc' : Eter
                        → (∀ {ρ} → [ ρ ]ᶠ f ∘ᵖ Eternalᵒ.necᵉ bc' {ρ}
                                   ≈ᵖ Eternalᵒ.necᵉ bc {ρ} ∘ᵖ f)
                        → (h : Handlerˢ P A)
-                       → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc'
-                           (λ op ε'' → h op ε'' ∘ᵖ mapˣᵐ f idᵖ)
+                       → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc' (reindexʰ f h)
                        ≈ᵖ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h ∘ᵖ mapˣᵐ f idᵖ
 T-alg-of-handlerᵀ-natᴾ bc bc' f fcomm h (pv' , t) =
   T-alg-of-handlerˢ-natᴾ bc bc' f fcomm h pv' t
+
+-- The same, stated for an arbitrary handler `h'` whose clauses are the
+-- reindexed ones. This is the form consumers have (a renamed or substituted
+-- handler comes with a clause-level equation, not as a literal `reindexʰ`), and
+-- it is insensitive to which ambivalence proof `h'` happens to carry.
+
+T-alg-of-handlerᵀ-natᴾ′ : ∀ {P P' A ε ε'} (bc : Eternalᵒ P) (bc' : Eternalᵒ P')
+                          (f : P' →ᵖ P)
+                        → (∀ {ρ} → [ ρ ]ᶠ f ∘ᵖ Eternalᵒ.necᵉ bc' {ρ}
+                                   ≈ᵖ Eternalᵒ.necᵉ bc {ρ} ∘ᵖ f)
+                        → (h : Handlerˢ P A) → (h' : Handlerˢ P' A)
+                        → (∀ op ε'' → clause h' op ε'' ≈ᵖ clause h op ε'' ∘ᵖ mapˣᵐ f idᵖ)
+                        → T-alg-of-handlerᵀ {P'} {A} {ε} {ε'} bc' h'
+                        ≈ᵖ T-alg-of-handlerᵀ {P} {A} {ε} {ε'} bc h ∘ᵖ mapˣᵐ f idᵖ
+T-alg-of-handlerᵀ-natᴾ′ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h h' ceq x =
+  ≈ᵗ-trans
+    (T-alg-of-handlerᵀ-cong {P'} {A} {ε} {ε'} bc' {h = h'} {h' = reindexʰ f h} ceq x)
+    (T-alg-of-handlerᵀ-natᴾ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h x)
 
 -- Sub-effecting in the *inner* grade. The handler must be *ambivalent* in the
 -- residual grade (`hmono`); the fold selects `h op` by that grade, so at an
@@ -176,44 +202,31 @@ T-alg-of-handlerᵀ-natᴾ bc bc' f fcomm h (pv' , t) =
 -- the other cases. Leaves / delays / subs commute the coercion through the
 -- `sub`/`ε-subst` machinery (`sub-ε-substᵗ`, `sub-delay`, `sub-∘`).
 
-Hmonoˢ : ∀ {P A} → Eternalᵒ P → Handlerˢ P A → Set
-Hmonoˢ {P} {A} bc h = ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
-                    → h op εb ∘ᵖ mapˣᵐ idᵖ (mapˣᵐ idᵖ
-                          ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))))
-                    ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵖ h op εa
-
 {-# TERMINATING #-}
 T-alg-of-handlerˢ-≤ⁱ : ∀ {P A ε ε₁' ε₂' w} (bc : Eternalᵒ P) (h : Handlerˢ P A)
-                       (p : ε₁' ≾ₑ ε₂') (hmono : Hmonoˢ bc h)
+                       (p : ε₁' ≾ₑ ε₂')
                        (pv : carrier P w) (t : Tˢ (Tᵒ A ε₁') ε w)
                      → T-alg-of-handlerˢ {ε' = ε₂'} bc h pv (Tˢᶠ (T-≤ p) t)
                      ≈ᵗ sub (·ₑ-monoʳ-≾ₑ p) (T-alg-of-handlerˢ {ε' = ε₁'} bc h pv t)
-T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p hmono pv (leaf s) =
+T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p pv (leaf s) =
   ≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-identityˡ ε₁')) (sym (·ₑ-identityˡ ε₂'))
                        p (·ₑ-monoʳ-≾ₑ p) s)
-T-alg-of-handlerˢ-≤ⁱ {P = P} bc h p hmono pv (op-node {ε = ε₀} op v k kc kn) =
+-- the clause's own ambivalence moves the coercion out of the operation, with
+-- the inductive hypothesis supplying its relatedness premise on the two boxes
+T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p pv (op-node {ε = ε₀} op v k kc kn) =
   ≈ᵗ-trans
-    (ε-substˢ-congᵗ _
-      (app-cong (h op _)
-        (≈-refl P ,
-         (≈-refl ⟦ param op ⟧ᵍ ,
-          (λ q r y → ≈ᵗ-trans
-            (T-alg-of-handlerˢ-≤ⁱ bc h p hmono
-               (fun (app (Eternalᵒ.necᵉ bc) pv) (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y))
-            (≡→≈ᵗ (cong (λ z → sub (·ₑ-monoʳ-≾ₑ p)
-                                 (T-alg-of-handlerˢ bc h
-                                    (fun (app (Eternalᵒ.necᵉ bc) pv) z) (k z y)))
-                        (⊑-irrelevant (⊑ρ∘ᵘ q r) (⊑ρ∘ᵘ q (⊑ᵘ-trans r ⊑-refl))))))))))
-    (≈ᵗ-trans
-      (ε-substˢ-congᵗ _
-        (hmono op (·ₑ-monoʳ-≾ₑ p) (pv , (v , handler-box bc pv h op k kc kn))))
-      (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
-                            (sym (·ₑ-assoc (op-grade op) ε₀ _))
-                            (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _)))
-T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p hmono pv (delay-node {ε = ε₀} τ k kn) =
+    (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ ε₂'))
+      (clause-mono h op (·ₑ-monoʳ-≾ₑ p) pv v
+         (handler-box bc pv h op k kc kn) _
+         (λ r s y → T-alg-of-handlerˢ-≤ⁱ bc h p
+                      (fun (app (Eternalᵒ.necᵉ bc) pv) (⊑ρ∘ᵘ r s)) (k (⊑ρ∘ᵘ r s) y))))
+    (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (op-grade op) ε₀ ε₁'))
+                          (sym (·ₑ-assoc (op-grade op) ε₀ ε₂'))
+                          (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _))
+T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p pv (delay-node {ε = ε₀} τ k kn) =
   ≈ᵗ-trans
     (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
-      (delay-≈ (λ q → T-alg-of-handlerˢ-≤ⁱ bc h p hmono
+      (delay-≈ (λ q → T-alg-of-handlerˢ-≤ⁱ bc h p
                         (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))))
     (≈ᵗ-trans
       (ε-substˢ-congᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
@@ -221,15 +234,15 @@ T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p hmono pv (d
       (≈ᵗ-sym (sub-ε-substᵗ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₁'))
                             (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε₂'))
                             (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _)))
-T-alg-of-handlerˢ-≤ⁱ bc h p hmono pv (sub p₀ t) =
-  ≈ᵗ-trans (sub-≈ (T-alg-of-handlerˢ-≤ⁱ bc h p hmono pv t))
+T-alg-of-handlerˢ-≤ⁱ bc h p pv (sub p₀ t) =
+  ≈ᵗ-trans (sub-≈ (T-alg-of-handlerˢ-≤ⁱ bc h p pv t))
            (≈ᵗ-trans (sub-∘ {e' = ·ₑ-monoˡ-≾ₑ p₀}
                             {e'' = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)})
                      (≈ᵗ-sym (sub-∘ {e'' = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)})))
 
 T-alg-of-handlerᵀ-≤ⁱ : ∀ {P A ε ε₁' ε₂'} (bc : Eternalᵒ P) (h : Handlerˢ P A)
-                       (p : ε₁' ≾ₑ ε₂') (hmono : Hmonoˢ bc h)
+                       (p : ε₁' ≾ₑ ε₂')
                      → T-alg-of-handlerᵀ {P} {A} {ε} {ε₂'} bc h ∘ᵖ mapˣᵐ idᵖ (Tᶠ (T-≤ p))
                      ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ T-alg-of-handlerᵀ {P} {A} {ε} {ε₁'} bc h
-T-alg-of-handlerᵀ-≤ⁱ bc h p hmono (pv , t) =
-  T-alg-of-handlerˢ-≤ⁱ bc h p hmono pv t
+T-alg-of-handlerᵀ-≤ⁱ bc h p (pv , t) =
+  T-alg-of-handlerˢ-≤ⁱ bc h p pv t

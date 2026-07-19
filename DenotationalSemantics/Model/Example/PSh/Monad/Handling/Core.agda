@@ -23,7 +23,7 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Handling.Core
        where
 
 open import Data.Nat using (ℕ)
-open import Data.Product using (_,_; proj₁; proj₂)
+open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
 
 open import Util.Equality
 
@@ -48,10 +48,76 @@ open import DenotationalSemantics.Model.Modality.Eternal
 -- A handler parameterised by an eternal object `P`: a clause morphism for
 -- every operation and residual grade, closing over `P`.
 
+-- A handler bundles its clauses with a proof that they are *ambivalent* in the
+-- residual grade `ε''`: clauses whose boxed continuations agree up to a
+-- coercion `q` produce results agreeing up to `·ₑ-monoʳ-≾ₑ q`. The clause family
+-- alone would not determine this — clauses at different `ε''` are a priori
+-- unrelated morphisms — and it is exactly what the `sub-op` rule of `_≈ᵗ_`
+-- needs to be respected by the fold (a coercion pushed under an operation
+-- changes which clause is selected).
+--
+-- The witness is stated pointwise on *related boxes* rather than as a
+-- reindexing equation, because that is the form the fold consumes: at a
+-- `sub-op` node the two boxes differ by the fold's own `sub` clause, hence
+-- agree definitionally.
+
+-- The clause family alone, and the ambivalence property on it. The property is
+-- stated as a *reindexing equation* (coercing the boxed continuation's residual
+-- equals coercing the clause's output), which is the form expressible in an
+-- arbitrary category — see the abstract `Handlerᵀ`.
+
+Clausesˢ : PSh → PSh → Set
+Clausesˢ P A = (op : Op) → (ε'' : E)
+             → P ×ᵖ (⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε''))
+                 →ᵖ Tᵒ A (op-grade op ·ₑ ε'')
+
+Monoˢ : ∀ {P A} → Clausesˢ P A → Set
+Monoˢ {P} {A} cl = ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
+                 → cl op εb ∘ᵖ mapˣᵐ idᵖ (mapˣᵐ idᵖ
+                       ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))))
+                 ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵖ cl op εa
+
 Handlerˢ : PSh → PSh → Set
-Handlerˢ P A = (op : Op) → (ε'' : E)
-           → P ×ᵖ (⟦ param op ⟧ᵍ ×ᵖ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε''))
-               →ᵖ Tᵒ A (op-grade op ·ₑ ε'')
+Handlerˢ P A = Σ[ cl ∈ Clausesˢ P A ] Monoˢ cl
+
+clause : ∀ {P A} → Handlerˢ P A → Clausesˢ P A
+clause = proj₁
+
+clause-mono′ : ∀ {P A} → (h : Handlerˢ P A) → Monoˢ (clause h)
+clause-mono′ = proj₂
+
+-- Reading the coerced box: `[ ρ ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))` post-composes each fibre
+-- with `sub q`, up to the accessibility witness it is read at (`fun-irr`).
+
+coerced-box-fun : ∀ {A B ρ εa εb w w' w''} → (q : εa ≾ₑ εb)
+                → (bx : carrier ([ ρ ]ᵒ (A ⇒ᵖ Tᵒ B εa)) w)
+                → (r : w ⊑[ ρ ] w') → (s : w' ⊑[ uᵣ ] w'') → (y : carrier A w'')
+                → fun (fun (app ([ ρ ]ᶠ (map⇒ᵐ idᵖ (T-≤ q))) bx) r) s y
+                ≈ᵗ sub q (fun (fun bx r) s y)
+coerced-box-fun q bx r s y = sub-≈ (fun-irr (fun bx r) _ s y)
+
+-- The ambivalence property in the *pointwise* form the fold consumes: clauses
+-- applied to boxes that agree up to a coercion `q` agree up to `·ₑ-monoʳ-≾ₑ q`.
+-- Derived from the reindexing form by rewriting the coerced box.
+
+clause-mono : ∀ {P A} → (h : Handlerˢ P A)
+            → ∀ (op : Op) {εa εb w} → (q : εa ≾ₑ εb)
+            → (pv : carrier P w) → (v : carrier ⟦ param op ⟧ᵍ w)
+            → (bx  : carrier ([ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A εa)) w)
+            → (bx' : carrier ([ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A εb)) w)
+            → (∀ {w'} (r : w ⊑[ mapᵉ (op-grade op) ] w') {w''} (s : w' ⊑[ uᵣ ] w'')
+                 (y : carrier ⟦ arity op ⟧ᵍ w'')
+               → fun (fun bx' r) s y ≈ᵗ sub q (fun (fun bx r) s y))
+            → app (clause h op εb) (pv , (v , bx'))
+            ≈ᵗ sub (·ₑ-monoʳ-≾ₑ q) (app (clause h op εa) (pv , (v , bx)))
+clause-mono {P} h op {εa} q pv v bx bx' rel =
+  ≈ᵗ-trans
+    (app-cong (clause h op _)
+      (≈-refl P ,
+       (≈-refl ⟦ param op ⟧ᵍ ,
+        (λ r s y → ≈ᵗ-trans (rel r s y)
+                     (≈ᵗ-sym (coerced-box-fun q bx r s y))))))
+    (clause-mono′ h op q (pv , (v , bx)))
 
 -- The T-algebra folding a handler over a computation tree, together with
 -- its congruence and world-naturality (defined mutually, as for `μˢ`).
@@ -78,7 +144,7 @@ mutual
     ε-substˢ (sym (·ₑ-identityˡ ε')) s
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (op-node {ε = ε₀} op v k kc kn) =
     ε-substˢ (sym (·ₑ-assoc (op-grade op) ε₀ ε'))
-      (app (h op (ε₀ ·ₑ ε')) (pv , (v , handler-box bc pv h op k kc kn)))
+      (app (clause h op (ε₀ ·ₑ ε')) (pv , (v , handler-box bc pv h op k kc kn)))
   T-alg-of-handlerˢ {ε' = ε'} bc h pv (delay-node {ε = ε₀} τ k kn) =
     ε-substˢ (sym (·ₑ-assoc (of-natᵉ τ) ε₀ ε'))
       (delay-node τ (λ q → T-alg-of-handlerˢ bc h (fun (app (Eternalᵒ.necᵉ bc) pv) q) (k q))
@@ -134,7 +200,7 @@ mutual
                           → t ≈ᵗ t' → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv t'
   T-alg-of-handlerˢ-congᵗ bc h pv (leaf-≈ e)             = ε-substˢ-congᵗ _ e
   T-alg-of-handlerˢ-congᵗ {P = P} bc h pv (op-≈ {op = op} ev ek) =
-    ε-substˢ-congᵗ _ (app-cong (h op _)
+    ε-substˢ-congᵗ _ (app-cong (clause h op _)
       (≈-refl P , (ev , (λ q p y → T-alg-of-handlerˢ-congᵗ bc h _ (ek (⊑ρ∘ᵘ q p) y)))))
   T-alg-of-handlerˢ-congᵗ bc h pv (delay-≈ ek)           =
     ε-substˢ-congᵗ _ (delay-≈ (λ q → T-alg-of-handlerˢ-congᵗ bc h _ (ek q)))
@@ -151,6 +217,29 @@ mutual
                     (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
                     _)
       (ε-substˢ-congᵗ _ sub-delay)
+  -- The `op` case: the coercion pushed under the operation changes which clause
+  -- the fold selects, and `clause-mono` is what identifies the two. The two
+  -- boxes it relates differ exactly by the fold's own `sub` clause, so the
+  -- relatedness premise holds definitionally.
+  T-alg-of-handlerˢ-congᵗ {P = P} {ε' = ε'} bc h pv
+    (sub-op {ε = ε₁} {ε' = ε₁'} {op = op} {e = e} {v = v} {k = k} {kc = kc} {kn = kn}) =
+    ≈ᵗ-trans
+      (sub-ε-substᵗ (sym (·ₑ-assoc (op-grade op) ε₁ ε'))
+                    (sym (·ₑ-assoc (op-grade op) ε₁' ε'))
+                    (·ₑ-monoʳ-≾ₑ (·ₑ-monoˡ-≾ₑ e))
+                    (·ₑ-monoˡ-≾ₑ (·ₑ-monoʳ-≾ₑ e))
+                    _)
+      (ε-substˢ-congᵗ _
+        (≈ᵗ-trans
+          (≈ᵗ-sym (clause-mono h op (·ₑ-monoˡ-≾ₑ e) pv v
+                     (handler-box bc pv h op k kc kn)
+                     (handler-box bc pv h op (λ q y → sub e (k q y))
+                        (λ q ey → sub-≈ (kc q ey)) (λ q r y → sub-≈ (kn q r y)))
+                     (λ r s y → ≈ᵗ-refl _)))
+          -- the two boxes differ only in their coherence witnesses, which the
+          -- box's `_≈_` does not see
+          (app-cong (clause h op _)
+            (≈-refl P , (≈-refl ⟦ param op ⟧ᵍ , (λ q r y → ≈ᵗ-refl _))))))
   T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-sym et)           =
     ≈ᵗ-sym (T-alg-of-handlerˢ-congᵗ bc h pv et)
   T-alg-of-handlerˢ-congᵗ bc h pv (≈ᵗ-trans et et')     =
@@ -164,7 +253,7 @@ mutual
                           → T-alg-of-handlerˢ bc h pv t ≈ᵗ T-alg-of-handlerˢ bc h pv' t
   T-alg-of-handlerˢ-congᵖ bc h ep (leaf s)               = ≈ᵗ-refl _
   T-alg-of-handlerˢ-congᵖ bc h ep (op-node op v k kc kn) =
-    ε-substˢ-congᵗ _ (app-cong (h op _)
+    ε-substˢ-congᵗ _ (app-cong (clause h op _)
       (ep , (≈-refl ⟦ param op ⟧ᵍ ,
         (λ q r y → T-alg-of-handlerˢ-congᵖ bc h
                      (app-cong (Eternalᵒ.necᵉ bc) ep (⊑ρ∘ᵘ q r)) (k (⊑ρ∘ᵘ q r) y)))))
@@ -187,7 +276,7 @@ mutual
   T-alg-of-handlerˢ-nat {P = P} bc h r pv (op-node {ε = ε₀} op v k kc kn) =
     ≈ᵗ-trans
       (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
-        (app-cong (h op _)
+        (app-cong (clause h op _)
           (≈-refl P ,
            (≈-refl ⟦ param op ⟧ᵍ ,
             (λ q s y → ≈ᵗ-trans
@@ -199,7 +288,7 @@ mutual
                 (≡→≈ᵗ (cong (λ z → k z y) (⊑-irrelevant _ _)))))))))
       (≈ᵗ-trans
         (ε-substˢ-congᵗ (sym (·ₑ-assoc (op-grade op) ε₀ _))
-          (nat (h op _) r (pv , (v , handler-box bc pv h op k kc kn))))
+          (nat (clause h op _) r (pv , (v , handler-box bc pv h op k kc kn))))
         (≡→≈ᵗ (sym (transportᵗ-ε-substˢ r (sym (·ₑ-assoc (op-grade op) ε₀ _)) _))))
   T-alg-of-handlerˢ-nat bc h r pv (delay-node {ε = ε₀} τ k kn) =
     ≈ᵗ-trans

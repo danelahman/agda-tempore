@@ -87,9 +87,9 @@ app-ε-substˢ : ∀ {P A ε₁ ε₂ w} → (h : Handlerˢ P A) → (op : Op) �
              → (pv : carrier P w)
              → (v : carrier ⟦ param op ⟧ᵍ w)
              → (b : [ mapᵉ (op-grade op) ]ᶜ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε₁) w)
-             → app (h op ε₁) (pv , (v , b))
+             → app (clause h op ε₁) (pv , (v , b))
              ≈ᵗ ε-substˢ (cong (op-grade op ·ₑ_) (sym e))
-                  (app (h op ε₂) (pv , (v , box-ε-substˢ e b)))
+                  (app (clause h op ε₂) (pv , (v , box-ε-substˢ e b)))
 app-ε-substˢ h op refl pv v b = ≈ᵗ-refl _
 
 -- Reading a transported boxed continuation is transporting what it reads.
@@ -169,7 +169,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
   (≈ᵗ-trans (ε-substˢ-congᵗ E1 (ε-substˢ-congᵗ E2
               (app-ε-substˢ h op (·ₑ-assoc ε₁ ε' ε'') pv v _)))
   (≈ᵗ-trans (ε-substˢ-congᵗ E1 (ε-substˢ-congᵗ E2 (ε-substˢ-congᵗ E3
-              (app-cong (h op (ε₁ ·ₑ (ε' ·ₑ ε'')))
+              (app-cong (clause h op (ε₁ ·ₑ (ε' ·ₑ ε'')))
                         (≈-refl P , (≈-refl ⟦ param op ⟧ᵍ , box-eq))))))
             (≡→≈ᵗ (trans (cong (ε-substˢ E1) (ε-substˢ-trans E3 E2 X))
                   (trans (ε-substˢ-trans (trans E3 E2) E1 X)
@@ -204,7 +204,7 @@ T-alg-of-handlerˢ-μˢ {P = P} {A = A} {ε' = ε'} {ε'' = ε''} {w = w} bc h p
         (Tˢᶠ-natᵗ (T-alg-of-handlerᵀ bc h) r
           (strˢ P (box▸ P q' (app (Eternalᵒ.necᵉ bc) pv)) (k q' y)))
 
-    X = B.app (h op (ε₁ ·ₑ (ε' ·ₑ ε''))) (pv , (v , handler-box bc pv h op cont' kc' kn'))
+    X = B.app (clause h op (ε₁ ·ₑ (ε' ·ₑ ε''))) (pv , (v , handler-box bc pv h op cont' kc' kn'))
 
     box-eq : ∀ {w'} (q : w ⊑[ mapᵉ (op-grade op) ] w')
            → _≈_ (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A (ε₁ ·ₑ (ε' ·ₑ ε'')))

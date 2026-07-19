@@ -119,6 +119,7 @@ module _ (op-semᵐ : OpSemᵐ) where
     implˢ-cong sub-u        = sub-u
     implˢ-cong sub-∘        = sub-∘
     implˢ-cong sub-delay    = sub-tick
+    implˢ-cong sub-op       = sub-tick
     implˢ-cong (≈ᵗ-sym et)  = ≈ᵏ-sym (implˢ-cong et)
     implˢ-cong (≈ᵗ-trans et et') =
       ≈ᵏ-trans (implˢ-cong et) (implˢ-cong et')

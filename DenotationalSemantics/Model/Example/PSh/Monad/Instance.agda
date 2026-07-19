@@ -78,6 +78,6 @@ PShMonad = record
   ; T-alg-of-handlerᵀ-≤      = T-alg-of-handlerᵀ-≤
   ; T-alg-of-handlerᵀ-≤ⁱ     = T-alg-of-handlerᵀ-≤ⁱ
   ; T-alg-of-handlerᵀ-μᵀ     = T-alg-of-handlerᵀ-μᵀ
-  ; T-alg-of-handlerᵀ-natᴾ   = T-alg-of-handlerᵀ-natᴾ
+  ; T-alg-of-handlerᵀ-natᴾ   = T-alg-of-handlerᵀ-natᴾ′
   ; T-alg-of-handlerᵀ-cong   = T-alg-of-handlerᵀ-cong
   }

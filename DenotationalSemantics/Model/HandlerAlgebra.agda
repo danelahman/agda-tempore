@@ -136,7 +136,7 @@ module _ (Mon : Monad S Cat Fut Pst Adj GTy) where
     Halg-op : ∀ {ε ε'} → (op : Op)
             → Halg {op-grade op ·ₑ ε} {ε'} ∘ᵐ opᵀ {ε = ε} op
             ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
-               ∘ᵐ (h op (ε ·ₑ ε') ∘ᵐ ⟨ t , idᵐ ⟩ᵐ)
+               ∘ᵐ (clauseᵀ h op (ε ·ₑ ε') ∘ᵐ ⟨ t , idᵐ ⟩ᵐ)
                ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Halg {ε} {ε'})))
     Halg-op op =
         ∘ᵐ-assoc _ _ _
@@ -153,7 +153,7 @@ module _ (Mon : Monad S Cat Fut Pst Adj GTy) where
         -- recursive fold under the box/exponential becomes `map⇒ᵐ idᵐ Halg`.
         op-bridge : ∀ {ε ε'} → (op : Op)
                   → (ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
-                     ∘ᵐ h op (ε ·ₑ ε')
+                     ∘ᵐ clauseᵀ h op (ε ·ₑ ε')
                      ∘ᵐ ⟨ fstᵐ
                         , ⟨ fstᵐ ∘ᵐ sndᵐ
                           ,   [ mapᵉ (op-grade op) ]ᶠ
@@ -165,7 +165,7 @@ module _ (Mon : Monad S Cat Fut Pst Adj GTy) where
                             ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ)
                     ∘ᵐ ⟨ t , idᵐ ⟩ᵐ
                   ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
-                     ∘ᵐ (h op (ε ·ₑ ε') ∘ᵐ ⟨ t , idᵐ ⟩ᵐ)
+                     ∘ᵐ (clauseᵀ h op (ε ·ₑ ε') ∘ᵐ ⟨ t , idᵐ ⟩ᵐ)
                      ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Halg {ε} {ε'})))
         op-bridge op =
             ∘ᵐ-assoc _ _ _
