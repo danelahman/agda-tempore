@@ -342,6 +342,23 @@ infix 34 _ᴱ
 ... | yes et = ⊥-elim (¬et et)
 ... | no  _  = refl
 
+-- Restriction keeps an eternal variable extension.
+
+ᴱ-∷-keep : ∀ {Γ A} → Eternal A → (Γ ∷ A) ᴱ ≡ Γ ᴱ ∷ A
+ᴱ-∷-keep {A = A} et with eternal? A
+... | yes _  = refl
+... | no ¬et = ⊥-elim (¬et et)
+
+-- The eternal restriction is idempotent: `Γ ᴱ` is already lock-free with only
+-- eternal variables, so restricting it again changes nothing.
+
+ᴱ-idem : (Γ : Ctx) → (Γ ᴱ) ᴱ ≡ Γ ᴱ
+ᴱ-idem []        = refl
+ᴱ-idem (Γ ∷ A)   with eternal? A
+... | yes et rewrite ᴱ-∷-keep {Γ ᴱ} et = cong (_∷ A) (ᴱ-idem Γ)
+... | no  _ = ᴱ-idem Γ
+ᴱ-idem (Γ ⟨ ρ ⟩) = ᴱ-idem Γ
+
 -- Appending a context on the right of a split.
 
 split-++ʳ : ∀ {Γ Γ₁ Γ₂} → Γ₁ , Γ₂ split Γ → (D : Ctx) → Γ₁ , Γ₂ ++ᶜ D split (Γ ++ᶜ D)

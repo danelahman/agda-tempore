@@ -30,4 +30,4 @@ uip {p = refl} {q = refl} = refl
 -- at an explicit motive rather than by matching.
 
 open import Relation.Binary.PropositionalEquality.Properties public
-  using (J)
+  using (J; dcong)

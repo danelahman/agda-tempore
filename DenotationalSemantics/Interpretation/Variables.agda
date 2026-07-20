@@ -156,6 +156,76 @@ var-morphism {A = A} f x with eternal? A
 ... | no  _  = ⟦ Γ ⟧ᴱ-Eternalᵒ
 ⟦ Γ ⟨ ρ ⟩ ⟧ᴱ-Eternalᵒ = ⟦ Γ ⟧ᴱ-Eternalᵒ
 
+-- The eternal structure depends only on `Γ ᴱ`: restricting the context again
+-- (`ᴱ-idem`) does not change it. Proved at the `≡` level by pushing `subst`
+-- through the shared constructor `×-eternalᵒ` (`push-∷`), so the `≈ᵐ`-valued law
+-- fields are never inspected — no setoid equality of `Eternalᵒ` records needed.
+-- This is what bridges `⟦ Γ ⟧ᴱ` and `⟦ Γ₀ ⟧ᴱ` when a non-eternal substitution
+-- retypes a handler along `Γ ᴱ ≡ Γ₀ ᴱ`.
+
+private
+  -- Homogeneous unfold of the eternal structure at an eternal `∷` (shares the
+  -- internal `eternal?`, so no transport); the witness irrelevance is `eternal-
+  -- irrelevant`.
+  ⟦∷⟧ᴱ-yes : ∀ {Δ A} → (et : Eternal A)
+           → subst (λ Θ → Eternalᵒ ⟦ Θ ⟧ᶜᵗˣ) (ᴱ-∷-keep {Δ} et) (⟦ Δ ∷ A ⟧ᴱ-Eternalᵒ)
+           ≡ ×-eternalᵒ (⟦ Δ ⟧ᴱ-Eternalᵒ) (eternalᵛ-Eternalᵒ et)
+  ⟦∷⟧ᴱ-yes {Δ} {A} et with eternal? A
+  ... | yes et' = cong (λ q → ×-eternalᵒ (⟦ Δ ⟧ᴱ-Eternalᵒ) (eternalᵛ-Eternalᵒ q))
+                       (eternal-irrelevant et' et)
+  ... | no ¬et  = ⊥-elim (¬et et)
+
+  -- `subst` past the `×-eternalᵒ` constructor on the first factor.
+  push-∷ : ∀ {Δ Δ' A} → (et : Eternal A) → (e : Δ ≡ Δ') → (p : Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ)
+         → subst (λ Θ → Eternalᵒ ⟦ Θ ⟧ᶜᵗˣ) (cong (_∷ A) e) (×-eternalᵒ p (eternalᵛ-Eternalᵒ et))
+         ≡ ×-eternalᵒ (subst (λ Θ → Eternalᵒ ⟦ Θ ⟧ᶜᵗˣ) e p) (eternalᵛ-Eternalᵒ et)
+  push-∷ et refl p = refl
+
+⟦⟧ᴱ-idem : (Γ : Ctx) → (e : (Γ ᴱ) ᴱ ≡ Γ ᴱ)
+         → subst (λ Δ → Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) e (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ) ≡ ⟦ Γ ⟧ᴱ-Eternalᵒ
+⟦⟧ᴱ-idem [] e rewrite uip {p = e} {q = refl} = refl
+⟦⟧ᴱ-idem (Γ ∷ A) e with eternal? A
+... | yes et =
+  let m  = λ Δ → Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ
+      k  = ᴱ-∷-keep {Γ ᴱ} et
+      c  = cong (_∷ A) (ᴱ-idem Γ)
+  in
+  trans (cong (λ ee → subst m ee (⟦ Γ ᴱ ∷ A ⟧ᴱ-Eternalᵒ)) (uip {p = e} {q = trans k c}))
+   (trans (sym (subst-subst k {y≡z = c}))
+   (trans (cong (subst m c) (⟦∷⟧ᴱ-yes {Γ ᴱ} et))
+   (trans (push-∷ et (ᴱ-idem Γ) (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ))
+          (cong (λ z → ×-eternalᵒ z (eternalᵛ-Eternalᵒ et)) (⟦⟧ᴱ-idem Γ (ᴱ-idem Γ))))))
+... | no  _ = ⟦⟧ᴱ-idem Γ e
+⟦⟧ᴱ-idem (Γ ⟨ ρ ⟩) e = ⟦⟧ᴱ-idem Γ e
+
+private
+  subst-cong : ∀ {ℓ ℓ'} {A B : Set ℓ} → (P : B → Set ℓ') → (f : A → B)
+             → {x y : A} → (e : x ≡ y) → (p : P (f x))
+             → subst P (cong f e) p ≡ subst (λ a → P (f a)) e p
+  subst-cong P f refl p = refl
+
+-- The eternal structure depends only on `_ᴱ`: any equality of eternal bases
+-- transports one structure to the other. This is what relates `⟦ Γ ⟧ᴱ` and
+-- `⟦ Γ₀ ⟧ᴱ` when a non-eternal substitution retypes a handler along
+-- `Γ ᴱ ≡ Γ₀ ᴱ`. Built from `⟦⟧ᴱ-idem` (both bases collapse to their double
+-- restriction) and `dcong'` (the double restrictions agree along `cong _ᴱ e`).
+
+Eternalᵒ-coh : ∀ {Γ Γ'} → (e : Γ ᴱ ≡ Γ' ᴱ)
+             → subst (λ Δ → Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) e (⟦ Γ ⟧ᴱ-Eternalᵒ) ≡ ⟦ Γ' ⟧ᴱ-Eternalᵒ
+Eternalᵒ-coh {Γ} {Γ'} e =
+  let m = λ Δ → Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ
+      bridge : subst m (cong _ᴱ e) (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ) ≡ ⟦ Γ' ᴱ ⟧ᴱ-Eternalᵒ
+      bridge = trans (subst-cong m (λ v → v ᴱ) e (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ))
+                     (dcong (λ Δ → ⟦ Δ ⟧ᴱ-Eternalᵒ) e)
+  in
+  trans (cong (subst m e) (sym (⟦⟧ᴱ-idem Γ (ᴱ-idem Γ))))
+   (trans (subst-subst (ᴱ-idem Γ) {y≡z = e})
+   (trans (cong (λ pf → subst m pf (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ))
+               (uip {p = trans (ᴱ-idem Γ) e} {q = trans (cong _ᴱ e) (ᴱ-idem Γ')}))
+   (trans (sym (subst-subst (cong _ᴱ e) {y≡z = ᴱ-idem Γ'}))
+   (trans (cong (subst m (ᴱ-idem Γ')) bridge)
+          (⟦⟧ᴱ-idem Γ' (ᴱ-idem Γ'))))))
+
 -- The eternal projection: discard the non-eternal / time-passed part of the
 -- context, keeping the eternal skeleton. Under a lock it uses the eternal
 -- extraction `extᵉ` of the (eternal) restricted context.
