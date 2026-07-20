@@ -101,7 +101,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; CtxUniformʰ; Parametricʰ; ctx-uniform; clause-sound)
+  using (term∅; ∅-terminal; CtxUniformʰ; EffUniformʰ; Uniformʰ; uniformʰ; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE public
 
@@ -239,16 +239,17 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
 -- only rule that fires a clause, and the only rules that can reach it are the
 -- two congruences — so this is a recursion on the *reduction*, not on the term.
 
--- The clauses' uniformity in the *residual effect* is carried by `Paramᶜ`, so
--- what a reduction has to assume on top of that is uniformity in the *context
--- extension* — read off the term's own clause certificates.
+-- The two uniformity conditions are the two instances of one naturality square
+-- (`Uniformʰ`, pasted by `uniformʰ`). The residual-effect instance is carried by
+-- `Paramᶜ` already, so what a reduction has to assume on top of that is the
+-- context-extension instance, over the term's own clause certificates.
 
 Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramᶜ M
          → Set
 Uniform↝ (HANDLE-OP {S = S} {H = H}) (_ , _ , pH , _) =
-  CtxUniformʰ {toCtx S} (toCtxᴱ-[] S) H pH
+  CtxUniformʰ {toCtx S} H pH
 Uniform↝ (SEQ-STEP r _)      (pM , _)     = Uniform↝ r pM
 Uniform↝ (HANDLE-STEP r _)   (pM , _)     = Uniform↝ r pM
 Uniform↝ APP                 _            = ⊤

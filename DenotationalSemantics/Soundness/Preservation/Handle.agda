@@ -891,7 +891,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
                 → (uH : EffUniformʰ {Γ} H pH)
-                → (u : CtxUniformʰ {Γ} e H pH)
+                → (u : CtxUniformʰ {Γ} H pH)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                      ((pV , pM) , pN , pH , uH)
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
