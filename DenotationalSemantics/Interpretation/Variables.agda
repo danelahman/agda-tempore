@@ -312,3 +312,148 @@ var-morphism-unfoldᵉ : ∀ {Γ A ρ} → (et : Eternal A) → (f : ¬ Eternal 
 var-morphism-unfoldᵉ {A = A} et f y with eternal? A
 ... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
 ... | no ¬et = ⊥-elim (¬et et)
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- SPLITTING AN EXTENDED CONTEXT ALONG ITS ETERNAL BASE
+--
+-- The eternal base `⟦ Γ ᴱ ⟧` is an `Eternalᵒ` object, so it distributes out of
+-- every lock in an extension `Γ'` (via `strᵉ`/`costrᵉ`) and hence splits off as
+-- a product factor:  `⟦ Γ ᴱ ++ᶜ Γ' ⟧ ≅ ⟦ Γ' ⟧ ×ᵐ ⟦ Γ ᴱ ⟧`  — eternal on the
+-- right, matching the strength's orientation. This is what makes the eternal
+-- base act functorially in the extension `Γ'`.
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- Swap the last two factors of a left-nested triple (its own inverse).
+swap₂₃ : ∀ {Y A B} → (Y ×ᵐ A) ×ᵐ B →ᵐ (Y ×ᵐ B) ×ᵐ A
+swap₂₃ = ⟨ ⟨ fstᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ , sndᵐ ∘ᵐ fstᵐ ⟩ᵐ
+
+swap₂₃-iso : ∀ {Y A B} → swap₂₃ {Y} {B} {A} ∘ᵐ swap₂₃ {Y} {A} {B} ≈ᵐ idᵐ
+swap₂₃-iso =
+  ≈ᵐ-trans (⟨⟩ᵐ-unique fstᵐ sndᵐ (swap₂₃ ∘ᵐ swap₂₃) fst-eq snd-eq)
+           (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _)))
+  where
+    fst-eq : fstᵐ ∘ᵐ (swap₂₃ ∘ᵐ swap₂₃) ≈ᵐ fstᵐ
+    fst-eq =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ swap₂₃ swap₂₃))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ swap₂₃)
+      (≈ᵐ-trans (⟨ ≈ᵐ-trans (∘ᵐ-assoc fstᵐ fstᵐ swap₂₃)
+                            (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _))
+                 , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
+                (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ fstᵐ) (sndᵐ ∘ᵐ fstᵐ) fstᵐ ≈ᵐ-refl ≈ᵐ-refl)))))
+    snd-eq : sndᵐ ∘ᵐ (swap₂₃ ∘ᵐ swap₂₃) ≈ᵐ sndᵐ
+    snd-eq =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ swap₂₃ swap₂₃))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc sndᵐ fstᵐ swap₂₃)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+                (⟨⟩ᵐ-sndᵐ _ _))))
+
+-- The forward split: `⟦ Γ ᴱ ++ᶜ Γ' ⟧ →ᵐ ⟦ Γ' ⟧ ×ᵐ ⟦ Γ ᴱ ⟧`, by recursion on
+-- the extension. The lock case is exactly the eternal costrength.
+splitᴱ : (Γ Γ' : Ctx) → ⟦ Γ ᴱ ++ᶜ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ ×ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
+splitᴱ Γ []         = ⟨ terminalᵐ , idᵐ ⟩ᵐ
+splitᴱ Γ (Γ' ∷ A)   = swap₂₃ ∘ᵐ mapˣᵐ (splitᴱ Γ Γ') idᵐ
+splitᴱ Γ (Γ' ⟨ ρ ⟩) = Eternalᵒ.costrᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) ∘ᵐ ⟨ ρ ⟩ᶠ (splitᴱ Γ Γ')
+
+-- Its inverse (the eternal strength in the lock case).
+splitᴱ⁻¹ : (Γ Γ' : Ctx) → ⟦ Γ' ⟧ᶜᵗˣ ×ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ++ᶜ Γ' ⟧ᶜᵗˣ
+splitᴱ⁻¹ Γ []         = sndᵐ
+splitᴱ⁻¹ Γ (Γ' ∷ A)   = mapˣᵐ (splitᴱ⁻¹ Γ Γ') idᵐ ∘ᵐ swap₂₃
+splitᴱ⁻¹ Γ (Γ' ⟨ ρ ⟩) = ⟨ ρ ⟩ᶠ (splitᴱ⁻¹ Γ Γ') ∘ᵐ Eternalᵒ.strᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ)
+
+splitᴱ-iso : (Γ Γ' : Ctx) → splitᴱ Γ Γ' ∘ᵐ splitᴱ⁻¹ Γ Γ' ≈ᵐ idᵐ
+splitᴱ-iso Γ [] =
+  ≈ᵐ-trans (⟨⟩ᵐ-∘ terminalᵐ idᵐ sndᵐ)
+  (≈ᵐ-trans (⟨ ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
+             , ∘ᵐ-identityˡ sndᵐ ⟩ᵐ-cong)
+            (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))))
+splitᴱ-iso Γ (Γ' ∷ A) =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ MM⁻≈id))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _)) swap₂₃-iso)))
+  where
+    MM⁻≈id = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+             (≈ᵐ-trans (mapˣᵐ-cong (splitᴱ-iso Γ Γ') (∘ᵐ-identityˡ _)) mapˣᵐ-idᵐ)
+splitᴱ-iso Γ (Γ' ⟨ ρ ⟩) =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ bc≈id))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _))
+            (Eternalᵒ.strᵉ-costrᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ)))))
+  where
+    bc≈id = ≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+            (≈ᵐ-trans (⟨⟩-congᶠ (splitᴱ-iso Γ Γ')) ⟨⟩-idᵐ)
+
+splitᴱ⁻¹-iso : (Γ Γ' : Ctx) → splitᴱ⁻¹ Γ Γ' ∘ᵐ splitᴱ Γ Γ' ≈ᵐ idᵐ
+splitᴱ⁻¹-iso Γ []         = ⟨⟩ᵐ-sndᵐ terminalᵐ idᵐ
+splitᴱ⁻¹-iso Γ (Γ' ∷ A) =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ swap₂₃-iso))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _)) M⁻M≈id)))
+  where
+    M⁻M≈id = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+             (≈ᵐ-trans (mapˣᵐ-cong (splitᴱ⁻¹-iso Γ Γ') (∘ᵐ-identityˡ _)) mapˣᵐ-idᵐ)
+splitᴱ⁻¹-iso Γ (Γ' ⟨ ρ ⟩) =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (Eternalᵒ.costrᵉ-strᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _)) cb≈id)))
+  where
+    cb≈id = ≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+            (≈ᵐ-trans (⟨⟩-congᶠ (splitᴱ⁻¹-iso Γ Γ')) ⟨⟩-idᵐ)
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- THE FUNCTORIAL LIFT OF AN EXTENSION MAP UNDER THE ETERNAL BASE
+--
+-- A map `ρ : ⟦ Γ' ⟧ →ᵐ ⟦ Γ'' ⟧` between extensions lifts to one between the
+-- extended contexts, acting only on the extension and identity on `⟦ Γ ᴱ ⟧`.
+-- This is the action that makes the handler clauses a functor of the extension.
+-- ───────────────────────────────────────────────────────────────────────────
+
+infix 8 _⋉_
+
+_⋉_ : (Γ : Ctx) → ∀ {Γ' Γ''} → (⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ)
+    → ⟦ Γ ᴱ ++ᶜ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ++ᶜ Γ'' ⟧ᶜᵗˣ
+_⋉_ Γ {Γ'} {Γ''} ρ = splitᴱ⁻¹ Γ Γ'' ∘ᵐ mapˣᵐ ρ idᵐ ∘ᵐ splitᴱ Γ Γ'
+
+-- congruence, so a lifted map can be rewritten. `⟦_⟧ᶜᵗˣ` is not injective, so
+-- the extensions can only be pinned by an occurrence outside `⟦_⟧` — the clause
+-- application at the `CtxParamʰ` use site. These standalone laws lack that
+-- anchor, so they take the extensions explicitly and pass them to `_⋉_`.
+⋉-cong : (Γ Γ' Γ'' : Ctx) → {ρ ρ' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ}
+       → ρ ≈ᵐ ρ' → _⋉_ Γ {Γ'} {Γ''} ρ ≈ᵐ _⋉_ Γ {Γ'} {Γ''} ρ'
+⋉-cong Γ Γ' Γ'' p = ∘ᵐ-congʳ (∘ᵐ-congˡ (mapˣᵐ-cong p ≈ᵐ-refl))
+
+-- functoriality: identities and composition
+⋉-id : (Γ Γ' : Ctx) → _⋉_ Γ {Γ'} {Γ'} (idᵐ {⟦ Γ' ⟧ᶜᵗˣ}) ≈ᵐ idᵐ
+⋉-id Γ Γ' =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ mapˣᵐ-idᵐ))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _))
+            (splitᴱ⁻¹-iso Γ Γ'))
+
+⋉-∘ : (Γ Γ' Γ'' Γ''' : Ctx)
+    → (σ : ⟦ Γ'' ⟧ᶜᵗˣ →ᵐ ⟦ Γ''' ⟧ᶜᵗˣ) → (ρ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ)
+    → _⋉_ Γ {Γ'} {Γ'''} (σ ∘ᵐ ρ)
+    ≈ᵐ _⋉_ Γ {Γ''} {Γ'''} σ ∘ᵐ _⋉_ Γ {Γ'} {Γ''} ρ
+⋉-∘ Γ Γ' Γ'' Γ''' σ ρ = ≈ᵐ-sym
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (∘ᵐ-congʳ
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (splitᴱ-iso Γ Γ''))
+                  (∘ᵐ-identityˡ _))))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+              (∘ᵐ-congˡ (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)))))))))
+
+-- lifting the terminal map is the projection onto the eternal base; this is
+-- what discharges the operational `term∅` instance (at `Γ ᴱ ≡ []`).
+⋉-proj : (Γ Γ' : Ctx)
+       → _⋉_ Γ {Γ'} {[]} (terminalᵐ {⟦ Γ' ⟧ᶜᵗˣ}) ≈ᵐ sndᵐ ∘ᵐ splitᴱ Γ Γ'
+⋉-proj Γ Γ' =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+           (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _)))
