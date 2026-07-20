@@ -170,6 +170,27 @@ mutual
                    ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
                ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ')
 
+  -- Naturality of the clauses in the extension `Γ'`: the clause family is a
+  -- natural transformation on extensions — for a semantic map `ρ : Γ' → Γ''`,
+  -- lifted under the eternal base by `_⋉_`, reindexing the domain equals the
+  -- clause at the smaller extension (codomain constant in `Γ'`). This is the
+  -- *parametric-in-Γ'* certificate; being over the eternal base it is total
+  -- (holds for every ambient `Γ`), and at a runtime config (`Γ ᴱ ≡ []`) it
+  -- specialises to what `HANDLE-OP` consumes (`term∅`, by terminal uniqueness).
+  CtxParamʰ : ∀ {Γ B}
+            → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+                 → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+            → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+            → Set
+  CtxParamʰ {Γ} H pH =
+    ∀ (op : Op) (ε'' : E) {Γ' Γ'' : Ctx}
+      → (ρ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ)
+    → ⟦ H op ε'' Γ'' ⟧ᶜᵗ (pH op ε'' Γ'')
+        ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'} {Γ''} ρ) idᵐ) idᵐ
+    ≈ᵐ ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
+
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
   ⟦ var f x  ⟧ᵛᵗ _ = var-morphism f x
   ⟦ const c  ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ

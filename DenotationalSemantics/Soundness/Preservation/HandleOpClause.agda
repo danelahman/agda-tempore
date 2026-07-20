@@ -219,6 +219,26 @@ ctx-uniform-from-[] {Γ} e H pH u₀ op ε'' ρ =
                            (∘ᵐ-identityˡ _))
   ∙ ≈ᵐ-sym (u₀ op ε'' _)
 
+-- The `[]`-instance derived from the TOTAL parametricity certificate: at a
+-- runtime config (`Γ ᴱ ≡ []`) the lifted terminal map `Γ ⋉ terminalᵐ` and the
+-- terminal factoring `term∅` agree by `∅-terminal`, so the naturality square
+-- collapses to exactly the `[]`-clause the model reads. This is what lets
+-- `CtxParamʰ` (in `Paramᶜ`) replace the runtime-only `CtxUniformʰ` premise.
+ctx-param-[] : ∀ {Γ B} → (e : Γ ᴱ ≡ [])
+             → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+                  → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+             → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+             → CtxParamʰ {Γ} H pH
+             → ∀ op ε'' Γ'
+             → ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
+             ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
+                  ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
+ctx-param-[] {Γ} e H pH cH op ε'' Γ' =
+  ≈ᵐ-sym (  ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (∅-terminal {Γ} e _ _) ≈ᵐ-refl) ≈ᵐ-refl)
+          ∙ cH op ε'' {Γ'} {[]} (terminalᵐ {⟦ Γ' ⟧ᶜᵗˣ}))
+
 clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
              → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
                   → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
