@@ -82,10 +82,11 @@ open import DenotationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj 
 -- sub-state that allocated it.
 
 state-past : ∀ {A ρ ρ'} → (St : 𝕊 []) → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
+           → Paramˢ St
            → ⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟨ ρ' ⟩ᵒ ⟦ toCtx (split-state-fst St x) ⟧ᶜᵗˣ
-state-past (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) = μ ∘ᵐ ⟨ σ ⟩ᶠ (state-past St y)
-state-past (St ∷ₛ W)   Hd        = η ∘ᵐ ⟦ St ⟧ˢ
-state-past (St ∷ₛ W)   (Tl-∷ y)  = state-past St y
+state-past (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt        = μ ∘ᵐ ⟨ σ ⟩ᶠ (state-past St y pSt)
+state-past (St ∷ₛ W)   Hd        (pSt , _)  = η ∘ᵐ ⟦ St ⟧ˢ pSt
+state-past (St ∷ₛ W)   (Tl-∷ y)  (pSt , _)  = state-past St y pSt
 
 -- Projecting a cell out of the state's environment recovers exactly the value
 -- stored in it — boxed by `η⊣` (the `box` morphism, which is what put it
@@ -97,14 +98,15 @@ state-past (St ∷ₛ W)   (Tl-∷ y)  = state-past St y
 -- naturality — the grades multiplying exactly as `ctx-grade` says they must.
 
 state-lookup : ∀ {A ρ ρ'} → (St : 𝕊 []) → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
-             → var-proj x ∘ᵐ ⟦ St ⟧ˢ
-             ≈ᵐ ⟨ ρ' ⟩ᶠ ([ ρ ]ᶠ (⟦ resource-lookup St x ⟧ᵛᵗ
+             → (pSt : Paramˢ St)
+             → var-proj x ∘ᵐ ⟦ St ⟧ˢ pSt
+             ≈ᵐ ⟨ ρ' ⟩ᶠ ([ ρ ]ᶠ (⟦ resource-lookup St x ⟧ᵛᵗ (resource-lookupᴾ St x pSt)
                                    ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ
                                         {toCtx (split-state-fst St x) ⟨ ρ ⟩}) ⟧ʳ)
                                  ∘ᵐ η⊣)
-                ∘ᵐ state-past St x
+                ∘ᵐ state-past St x pSt
 
-state-lookup (St ∷ₛ W) Hd =
+state-lookup (St ∷ₛ W) Hd (pSt , pW) =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
@@ -112,17 +114,17 @@ state-lookup (St ∷ₛ W) Hd =
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-η-nat _))
   ∙ ∘ᵐ-assoc _ _ _
 
-state-lookup (St ∷ₛ W) (Tl-∷ y) =
+state-lookup (St ∷ₛ W) (Tl-∷ y) (pSt , pW) =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-identityˡ _)
-  ∙ state-lookup St y
+  ∙ state-lookup St y pSt
 
-state-lookup (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) =
+state-lookup (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (state-lookup St y))
+  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (state-lookup St y pSt))
   ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-μ-nat _))
@@ -160,17 +162,18 @@ cell-grade {A = A} {ρ = ρ} St x =
 -- `[] ++ᶜ_` transport, denotes the reach-back into the allocating prefix.
 
 past-core : ∀ {A ρ ρ'} → (St : 𝕊 []) → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
+          → (pSt : Paramˢ St)
           → (p : ρ' ≾ᵣ ctx-grade (([] ∷ [ ρ ] A) ++ᶜ toCtx (split-state-snd St x)))
           → ⟦ wk-ren-⟨ρ⟩-ctx {toCtx (split-state-fst St x)}
                              {([] ∷ [ ρ ] A) ++ᶜ toCtx (split-state-snd St x)} refl ⟧ʳ
               ∘ᵐ ⟦ eq-ren (sym (++ᶜ-assoc (toCtx (split-state-fst St x)) ([] ∷ [ ρ ] A)
                                           (toCtx (split-state-snd St x)))) ⟧ʳ
               ∘ᵐ ⟦ eq-ren (split-state-++ᶜ St x) ⟧ʳ
-              ∘ᵐ ⟦ St ⟧ˢ
-            ≈ᵐ ⟨⟩-≤ p ∘ᵐ state-past St x
+              ∘ᵐ ⟦ St ⟧ˢ pSt
+            ≈ᵐ ⟨⟩-≤ p ∘ᵐ state-past St x pSt
 
 -- the cell was just allocated: drop it with `fstᵐ`, and the reach-back is `η`
-past-core (St ∷ₛ W) Hd p =
+past-core (St ∷ₛ W) Hd (pSt , pW) p =
     ∘ᵐ-congʳ (∘ᵐ-identityˡ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-identityˡ _)
   ∙ ∘ᵐ-assoc _ _ _
@@ -181,7 +184,7 @@ past-core (St ∷ₛ W) Hd p =
 
 -- a later cell: it sits in the first component of every transport, so `fstᵐ`
 -- pushes straight through to the sub-state
-past-core {A} {ρ} (_∷ₛ_ {B} {σ} St W) (Tl-∷ y) p =
+past-core {A} {ρ} (_∷ₛ_ {B} {σ} St W) (Tl-∷ y) (pSt , pW) p =
     ∘ᵐ-congʳ (∘ᵐ-congˡ
       (≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (sym-cong {f = _∷ [ σ ] B} assoc))
        ∙ eq-ren-∷ (sym assoc)))
@@ -197,13 +200,13 @@ past-core {A} {ρ} (_∷ₛ_ {B} {σ} St W) (Tl-∷ y) p =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-identityˡ _)))
-  ∙ past-core St y p
+  ∙ past-core St y pSt p
   where
     assoc = ++ᶜ-assoc (toCtx (split-state-fst St y)) ([] ∷ [ ρ ] A)
                       (toCtx (split-state-snd St y))
 
 -- a lock: fold it with `μ`, the grades multiplying on both sides
-past-core {A} {ρ} (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) p =
+past-core {A} {ρ} (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt p =
     ∘ᵐ-congʳ (∘ᵐ-congˡ
       (≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (sym-cong {f = _⟨ σ ⟩} assoc))
        ∙ eq-ren-⟨⟩ (sym assoc)))
@@ -213,7 +216,7 @@ past-core {A} {ρ} (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) p =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (past-core St y p₀))
+  ∙ ∘ᵐ-congʳ (⟨⟩-congᶠ (past-core St y pSt p₀))
   -- and `μ` absorbs the sub-state's grade coercion (`μ-≤ˡ`)
   ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -243,18 +246,42 @@ wk-lock-≤ refl =
 -- cancels the `η⊣` by the triangle identity. The grade relaxation `rel` is
 -- what gates the read: it is the proof that enough resources have elapsed.
 
+-- The looked-up resource is the stored value renamed, so its certificate is
+-- the stored one's, renamed the same way.
+unbox-lookupᴾ : ∀ {A ρ Δ} → (St : 𝕊 [])
+              → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
+              → Paramˢ St → Paramᵛ (unbox-lookup St w V)
+unbox-lookupᴾ {A} {ρ} St w V pSt =
+  renᵛ
+    (   eq-ren (split-state-++ᶜ St z)
+     ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
+     ∘ʳ wk-ren-⟨ρ⟩-ctx
+          (trans
+            (trans
+              (trans
+                (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
+                (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
+              (sym (grades-≡ (split-state-snd St z))))
+            (snd-split-time≡time-from-head St z))
+     ∘ʳ ⟨⟩-≤-ren (proj₂ (proj₂ (unbox⇒var w V)))
+     ∘ʳ eq-ren ++ᶜ-identityˡ)
+    (resource-lookup St z) (resource-lookupᴾ St z pSt)
+  where
+    z = proj₁ (proj₂ (unbox⇒var w V))
+
 unbox-lookup-sound : ∀ {A ρ Δ} → (St : 𝕊 [])
                    → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
-                   → ⟦ unbox-lookup St w V ⟧ᵛᵗ ∘ᵐ ⟦ St ⟧ˢ
+                   → (pSt : Paramˢ St)
+                   → ⟦ unbox-lookup St w V ⟧ᵛᵗ (unbox-lookupᴾ St w V pSt) ∘ᵐ ⟦ St ⟧ˢ pSt
                    ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                           ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))))
-                      ∘ᵐ ⟦ St ⟧ˢ
-unbox-lookup-sound {A} {ρ} St w V with grad-typ⇒var V
+                      ∘ᵐ ⟦ St ⟧ˢ pSt
+unbox-lookup-sound {A} {ρ} St w V pSt with grad-typ⇒var V
 ... | _ , y , f , refl with var-rename w (Tl-⟨⟩ y)
 ... | ρ' , bound , x =
     -- the stored value, reindexed by `unbox-lookup`'s renaming composite
     -- (which `∘ʳ` leaves left-nested, so re-associate it first)
-      ∘ᵐ-congˡ (V-rename-nat _ (resource-lookup St x))
+      ∘ᵐ-congˡ (V-rename-nat _ (resource-lookup St x) (resource-lookupᴾ St x pSt))
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
     ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
@@ -266,7 +293,7 @@ unbox-lookup-sound {A} {ρ} St w V with grad-typ⇒var V
                              {([] ∷ [ ρ ] A) ++ᶜ toCtx (split-state-snd St x)}
                              (cell-grade St x)))))
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (past-core St x p₀))))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (past-core St x pSt p₀))))
     -- the two grade coercions cancel
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
     ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ
@@ -281,17 +308,17 @@ unbox-lookup-sound {A} {ρ} St w V with grad-typ⇒var V
 
     p₀ = ≾ᵣ-reflexive (sym (cell-grade St x))
 
-    g = ⟦ resource-lookup St x ⟧ᵛᵗ
+    g = ⟦ resource-lookup St x ⟧ᵛᵗ (resource-lookupᴾ St x pSt)
           ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ
                  {toCtx (split-state-fst St x) ⟨ ρ ⟩}) ⟧ʳ
 
-    rhs : (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x) ∘ᵐ ⟦ St ⟧ˢ
-        ≈ᵐ g ∘ᵐ ⟨⟩-≤ rel ∘ᵐ state-past St x
+    rhs : (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x) ∘ᵐ ⟦ St ⟧ˢ pSt
+        ≈ᵐ g ∘ᵐ ⟨⟩-≤ rel ∘ᵐ state-past St x pSt
     rhs =
       -- read the cell out of the environment
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (state-lookup St x))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (state-lookup St x pSt))
       -- move the gate past the cell's boxing
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-nat _ rel)))
@@ -308,25 +335,29 @@ unbox-lookup-sound {A} {ρ} St w V with grad-typ⇒var V
 -- `⟦_⟧ᶜᵗ` matches on `unbox⇒var`, so name its result to let the clause reduce.
 
 unbox-def : ∀ {Γ A C ρ Δ} → (w : Ren (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
-          → (M : Γ ∷ A ⊢C⦂ C)
-          → ⟦ unbox w V M ⟧ᶜᵗ
-          ≈ᵐ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                                   ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
-unbox-def w V M with unbox⇒var w V
+          → (M : Γ ∷ A ⊢C⦂ C) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
+          → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM)
+          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
+                                      ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
+unbox-def w V M pV pM with unbox⇒var w V
 ... | _ , _ , _ = ≈ᵐ-refl
 
 -- UNBOX: substituting the looked-up resource is reading the cell.
 
 sound-UNBOX : ∀ {A C ρ Δ} → (St : 𝕊 []) → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St))
             → (V : Δ ⊢V⦂ [ ρ ] A) → (M : toCtx St ∷ A ⊢C⦂ C)
-            → ⟦ unbox w V M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
-            ≈ᵐ ⟦ M [ Hd ↦ unbox-lookup St w V ]c ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
-sound-UNBOX St w V M =
-    ∘ᵐ-congˡ (unbox-def w V M)
+            → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
+            → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
+            ≈ᵐ ⟦ M [ Hd ↦ unbox-lookup St w V ]c ⟧ᶜᵗ
+                 (subᶜ M Hd (unbox-lookup St w V) pM (unbox-lookupᴾ St w V pSt))
+               ∘ᵐ ⟦ St ⟧ˢ pSt
+sound-UNBOX St w V M pSt pV pM =
+    ∘ᵐ-congˡ (unbox-def w V M pV pM)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
-  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-lookup-sound St w V) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-lookup-sound St w V pSt) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (unbox-lookup St w V)))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (unbox-lookup St w V) pM
+                        (unbox-lookupᴾ St w V pSt)))
 

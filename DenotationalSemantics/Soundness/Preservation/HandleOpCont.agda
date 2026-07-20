@@ -105,14 +105,33 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
          (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
          (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ‼ ε')
          (ren : Ren (Γ ⟨ σ ⟩) ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩))
+         (pM : Paramᶜ M) (pN : Paramᶜ N)
+         (pH : ∀ op' ε₀ Γ' → Paramᶜ (H op' ε₀ Γ'))
+         (uH : ∀ (op' : Op) {ε₁ ε₂} → (q : ε₁ ≾ₑ ε₂) → (Γ' : Ctx)
+             → ⟦ H op' ε₂ Γ' ⟧ᶜᵗ (pH op' ε₂ Γ')
+                 ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op') ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op' ε₁ Γ' ⟧ᶜᵗ (pH op' ε₁ Γ'))
        where
 
+  -- The reduct's clause family: `H` renamed along `ren-ᴱ-∷ A₀`, with the
+  -- renamed parametricity and uniformity certificates.
+  H' : (op' : Op) → (ε₀ : E) → (Γ' : Ctx)
+     → ((Γ ⟨ ρ ⟩) ∷ A₀) ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
+          ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
+       ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀)
+  H' op' ε₀ Γ' = C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ')
+
+  pH' : ∀ op' ε₀ Γ' → Paramᶜ (H' op' ε₀ Γ')
+  pH' op' ε₀ Γ' =
+    renᶜ (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ') (pH op' ε₀ Γ')
+
+  uH' = ren-clauses-uniform (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀) H pH uH
+
   handle-op-cont :
-      ⟦ handle M
-          `with (λ op' ε₀ Γ' → C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ'))
-          `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ
-    ≈ᵐ (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
-       ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ
+      ⟦ handle M `with H' `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ
+        (pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH')
+    ≈ᵐ (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
+       ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
   handle-op-cont =
       ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-eq ⟩ᵐ-cong)
     ∙ ∘ᵐ-congˡ alg-nat
@@ -126,9 +145,10 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
       f = ⟦ ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀ ⟧ʳ
 
       -- the renamed sequel commutes back to the un-renamed one under `Tᶠ`
-      seq-eq : Tᶠ ⟦ C-rename (cong-∷-ren ren) N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ
-             ≈ᵐ Tᶠ (⟦ N ⟧ᶜᵗ ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ
-      seq-eq = ∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ren) N))
+      seq-eq : Tᶠ (⟦ C-rename (cong-∷-ren ren) N ⟧ᶜᵗ (renᶜ (cong-∷-ren ren) N pN))
+                 ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
+             ≈ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
+      seq-eq = ∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ren) N pN))
 
       -- the `⟦_⟧ʰᵗ` adapter commutes past the eternal-parameter reindexing
       adapt-commute : ∀ {D D' P Q R Sₒ} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : Sₒ →ᵐ R)
@@ -152,19 +172,17 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
 
       -- the inner (renamed) handler equals the outer one reindexed by `f`
       ⟦H'⟧ʰᵗ-nat : ∀ op ε''
-                 → ⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀}
-                     (λ op' ε₀ Γ' → C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ')) op ε''
-                 ≈ᵐ ⟦_⟧ʰᵗ {Γ} H op ε'' ∘ᵐ mapˣᵐ f idᵐ
+                 → clauseᵀ (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH') op ε''
+                 ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦H'⟧ʰᵗ-nat op ε'' =
-          ∘ᵐ-congˡ (C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op ε'' []))
+          ∘ᵐ-congˡ (C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀))
+                      (H op ε'' []) (pH op ε'' []))
         ∙ ∘ᵐ-assoc _ _ _
         ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
         ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-      alg-nat : T-alg-of-handlerᵀ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
-                  (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀}
-                     (λ op' ε₀ Γ' → C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ')))
-              ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) ∘ᵐ mapˣᵐ f idᵐ
+      alg-nat : T-alg-of-handlerᵀ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH')
+              ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ mapˣᵐ f idᵐ
       f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
                       ≈ᵐ Eternalᵒ.necᵉ (bcᴱ Γ) ∘ᵐ f
       f-necᵉ =
@@ -174,5 +192,5 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
               (restrict-ren-necᵉ (wk-ren {Γ = Γ ⟨ ρ ⟩} {A = A₀}))
 
       alg-nat =
-          T-alg-of-handlerᵀ-cong (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) ⟦H'⟧ʰᵗ-nat
-        ∙ T-alg-of-handlerᵀ-natᴾ (bcᴱ Γ) (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) f f-necᵉ (⟦_⟧ʰᵗ {Γ} H)
+        T-alg-of-handlerᵀ-natᴾ (bcᴱ Γ) (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) f f-necᵉ
+          (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦H'⟧ʰᵗ-nat

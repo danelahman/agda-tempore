@@ -68,7 +68,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; CtxUniformʰ; clause-sound)
+  using (term∅; ∅-terminal; CtxUniformʰ; EffUniformʰ; clause-sound)
 
 -- The `Eternalᵒ` on `⟦ Γ ᴱ ⟧` carried by every `handle` interpretation: the
 -- eternal-parameter object of the handler's fold.
@@ -79,8 +79,12 @@ bcᴱ Γ = (⟦ Γ ⟧ᴱ-Eternalᵒ)
 --
 -- The computation, with its context plugged by the state.
 
-⟦_⟧ᶜᶠ : ∀ {C} → (cf : Config C) → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
-⟦ ⟨ St , M ⟩ ⟧ᶜᶠ = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
+Paramᶜᶠ : ∀ {C} → Config C → Set
+Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
+
+⟦_⟧ᶜᶠ : ∀ {C} → (cf : Config C) → Paramᶜᶠ cf
+      → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
+⟦ ⟨ St , M ⟩ ⟧ᶜᶠ (pSt , pM) = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
 
 -- KLEISLI COMPOSITION WITH A TIME TRANSITION
 --
@@ -245,28 +249,34 @@ eq-ren-inv refl = ∘ᵐ-identityˡ idᵐ
 -- substitution coherence, whose environment `sub-env Hd V` is `⟨ idᵐ , ⟦V⟧ ⟩ᵐ`).
 
 sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (V : Γ ⊢V⦂ A)
-          → ⟦ lam M · V ⟧ᶜᵗ ≈ᵐ ⟦ M [ Hd ↦ V ]c ⟧ᶜᵗ
-sound-APP M V =
-  ≈ᵐ-trans (βᵐ ⟦ M ⟧ᶜᵗ ⟦ V ⟧ᵛᵗ) (≈ᵐ-sym (C-subst-nat M Hd V))
+          → (pM : Paramᶜ M) → (pV : Paramᵛ V)
+          → ⟦ lam M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ Hd ↦ V ]c ⟧ᶜᵗ (subᶜ M Hd V pM pV)
+sound-APP M V pM pV =
+  ≈ᵐ-trans (βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ V ⟧ᵛᵗ pV)) (≈ᵐ-sym (C-subst-nat M Hd V pM pV))
 
 -- MATCH: destructing a pair is the two substitutions in sequence. The inner
 -- one substitutes `W` weakened past `A`, which reindexes it by `fstᵐ`; that
 -- projection is then cancelled by the outer environment.
 
 sound-MATCH : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
-            → ⟦ match ⦉ V , W ⦊ `in M ⟧ᶜᵗ
+            → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M)
+            → ⟦ match ⦉ V , W ⦊ `in M ⟧ᶜᵗ ((pV , pW) , pM)
             ≈ᵐ ⟦ (M [ Hd ↦ V-rename wk-ren W ]c) [ Hd ↦ V ]c ⟧ᶜᵗ
-sound-MATCH V W M =
+                 (subᶜ (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
+                    (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
+sound-MATCH V W M pV pW pM =
   ≈ᵐ-trans
     (∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong))
     (≈ᵐ-sym
-      (≈ᵐ-trans (C-subst-nat (M [ Hd ↦ V-rename wk-ren W ]c) Hd V)
-      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M Hd (V-rename wk-ren W)))
+      (≈ᵐ-trans (C-subst-nat (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
+                   (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
+      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M Hd (V-rename wk-ren W) pM
+                             (renᵛ wk-ren W pW)))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                 (∘ᵐ-congʳ
                   (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
                             (⟨ ∘ᵐ-identityˡ _
-                             , ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat wk-ren W))
+                             , ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat wk-ren W pW))
                                (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                                (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
                                          (∘ᵐ-identityʳ _))) ⟩ᵐ-cong)))))))
@@ -277,9 +287,11 @@ sound-MATCH V W M =
 
 sound-BOX : ∀ {A B ρ ε} → (St : 𝕊 []) → (V : toCtx St ⟨ ρ ⟩ ⊢V⦂ A)
           → (M : toCtx St ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-          → ⟦ box V M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
-          ≈ᵐ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
-sound-BOX {ρ = ρ} St V M =
+          → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
+          → ⟦ box V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
+          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ∷ₛ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ˢ
+                            (pSt , renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
+sound-BOX {ρ = ρ} St V M pSt pV pM =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (∘ᵐ-congʳ (∘ᵐ-congˡ
       (⟨ ≈ᵐ-refl {f = idᵐ}
@@ -288,19 +300,21 @@ sound-BOX {ρ = ρ} St V M =
     -- the value the state stores is `V` reindexed along `[] ++ᶜ Γ ≡ Γ`,
     -- and the state's interpretation reindexes it straight back
     stored≈V : ⟦ V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V ⟧ᵛᵗ
+                 (renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
                  ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}) ⟧ʳ
-             ≈ᵐ ⟦ V ⟧ᵛᵗ
+             ≈ᵐ ⟦ V ⟧ᵛᵗ pV
     stored≈V =
-      ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V))
+      ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat
+                            (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V pV))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
       (≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-inv (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})))
                 (∘ᵐ-identityʳ _)))
 
 -- COERCE: peeling a coercion off is exactly what `T-≤` does.
 
-sound-COERCE : ∀ {Γ A ε ε'} → (p : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε)
-             → ⟦ coerce p M ⟧ᶜᵗ ≈ᵐ T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ
-sound-COERCE p M = ≈ᵐ-refl
+sound-COERCE : ∀ {Γ A ε ε'} → (p : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
+             → ⟦ coerce p M ⟧ᶜᵗ pM ≈ᵐ T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-COERCE p M pM = ≈ᵐ-refl
 
 -- TRANSPORT ALONG GRADE EQUALITIES
 --
@@ -344,25 +358,26 @@ coe-cancel e q =
 sound-DELAY : ∀ {A ε} → (τ : ℕ) → (St : 𝕊 [])
             → (M : toCtx St ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
             → (q : (of-natᵉ τ ·ₑ uₑ) ·ₑ ε ≾ₑ of-natᵉ τ ·ₑ ε)
-            → ⟦ delay τ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ
-            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ)
+            → (pSt : Paramˢ St) → (pM : Paramᶜ M)
+            → ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
+            ≈ᵐ T-≤ q ∘ᵐ ((⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ pSt)
                           ⋄ (delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣))
-sound-DELAY {ε = ε} τ St M q =
+sound-DELAY {ε = ε} τ St M q pSt pM =
   lhs≈ ∙ ≈ᵐ-sym (∘ᵐ-congʳ rhs≈ ∙ cancel)
   where
     g : ⟨ of-natʳ τ ⟩ᵒ ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ ε
-    g = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ
+    g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟨ of-natʳ τ ⟩ₛ ⟧ˢ pSt
 
     -- the common normal form: delay the whole configuration
     nf : ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ _ (of-natᵉ τ ·ₑ ε)
     nf = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ g ∘ᵐ η⊣
 
     -- the source: `η⊣`-naturality absorbs the state into the boxed body
-    lhs≈ : ⟦ delay τ M ⟧ᶜᵗ ∘ᵐ ⟦ St ⟧ˢ ≈ᵐ nf
+    lhs≈ : ⟦ delay τ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt ≈ᵐ nf
     lhs≈ =
       ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ St ⟧ˢ)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (⟦ St ⟧ˢ pSt))))
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
 
@@ -440,11 +455,13 @@ ret-env refl =
 -- environment's first component, the substituted value in its second.
 
 sub-ren : ∀ {Γ Γ' A C} → (r : Ren Γ Γ') → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
+        → (pN : Paramᶜ N) → (pV : Paramᵛ V)
         → ⟦ C-rename (cong-∷-ren r) N [ Hd ↦ V ]c ⟧ᶜᵗ
-        ≈ᵐ ⟦ N ⟧ᶜᵗ ∘ᵐ ⟨ ⟦ r ⟧ʳ , ⟦ V ⟧ᵛᵗ ⟩ᵐ
-sub-ren r N V =
-    C-subst-nat (C-rename (cong-∷-ren r) N) Hd V
-  ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) N)
+             (subᶜ (C-rename (cong-∷-ren r) N) Hd V (renᶜ (cong-∷-ren r) N pN) pV)
+        ≈ᵐ ⟦ N ⟧ᶜᵗ pN ∘ᵐ ⟨ ⟦ r ⟧ʳ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
+sub-ren r N V pN pV =
+    C-subst-nat (C-rename (cong-∷-ren r) N) Hd V (renᶜ (cong-∷-ren r) N pN) pV
+  ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) N pN)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
@@ -456,16 +473,27 @@ sub-ren r N V =
 -- (`μᵀ`, resp. the handler's `T-alg-of-handlerᵀ`). Both algebras compute on a
 -- returned value the same way, so `SEQ-RET` and `HANDLE-RET` share one proof.
 
+-- The parametricity certificate of the `return`-rules' reduct: the sequel
+-- renamed by the re-locking renaming, then substituted into.
+ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
+         → Paramᵛ V → Paramᶜ N
+         → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                     [ Hd ↦ V ]c)
+ret-subᴾ {Γ} V N pV pN =
+  subᶜ (C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N) Hd V
+    (renᶜ (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N pN) pV
+
 ret-step : ∀ {Γ A B ε}
          → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
          → (alg-η : alg ∘ᵐ ηᵀ ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε)))
          → (V : Γ ⊢V⦂ A)
          → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
-         → alg ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ
+         → (pV : Paramᵛ V) → (pN : Paramᶜ N)
+         → alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
          ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
             ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
-                   [ Hd ↦ V ]c ⟧ᶜᵗ
-ret-step {Γ} alg alg-η V N =
+                   [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+ret-step {Γ} alg alg-η V N pV pN =
     ∘ᵐ-congʳ ret-massage
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ alg-η
@@ -473,9 +501,9 @@ ret-step {Γ} alg alg-η V N =
     -- the environment-threading part (independent of the algebra): the returned
     -- value's `ηᵀ` opens the boxed environment (`strᵀ-ηᵀ`), which is exactly the
     -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
-    ret-massage : Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ
+    ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
-                            [ Hd ↦ V ]c ⟧ᶜᵗ
+                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
           (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
@@ -486,9 +514,9 @@ ret-step {Γ} alg alg-η V N =
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
           (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ N ⟧ᶜᵗ))
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat (⟦ N ⟧ᶜᵗ pN)))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V pN pV))
 
 -- `ret-step`, threaded with an eternal parameter `P` supplied by `pv`. The
 -- handler's algebra reads its clause-context off `P` (`= ⟦ Γ ᴱ ⟧`, via
@@ -500,11 +528,12 @@ ret-step-P : ∀ {Γ A B ε P}
                     ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε)) ∘ᵐ sndᵐ)
            → (V : Γ ⊢V⦂ A)
            → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
-           → alg ∘ᵐ ⟨ pv , Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ ⟩ᵐ
+           → (pV : Paramᵛ V) → (pN : Paramᶜ N)
+           → alg ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ ⟩ᵐ
            ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
               ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
-                     [ Hd ↦ V ]c ⟧ᶜᵗ
-ret-step-P {Γ} pv alg alg-η V N =
+                     [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+ret-step-P {Γ} pv alg alg-η V N pV pN =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ret-massage ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -512,9 +541,9 @@ ret-step-P {Γ} pv alg alg-η V N =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
   where
-    ret-massage : Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ ⟩ᵐ
+    ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
-                            [ Hd ↦ V ]c ⟧ᶜᵗ
+                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
           (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
@@ -525,19 +554,20 @@ ret-step-P {Γ} pv alg alg-η V N =
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
           (⟨ ∘ᵐ-assoc _ _ _ ∙ ret-env map-uᵉ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ N ⟧ᶜᵗ))
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat (⟦ N ⟧ᶜᵗ pN)))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V pN pV))
 
 -- SEQ-RET and HANDLE-RET: the two instances of `ret-step`, one for the monad
 -- multiplication and one for the handler's algebra.
 
 sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
-              → ⟦ return V ⨟ N ⟧ᶜᵗ
+              → (pV : Paramᵛ V) → (pN : Paramᶜ N)
+              → ⟦ return V ⨟ N ⟧ᶜᵗ (pV , pN)
               ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                  ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
-                        [ Hd ↦ V ]c ⟧ᶜᵗ
-sound-SEQ-RET V N = ret-step μᵀ T-μ∘η≡id V N
+                        [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 
 sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (V : Γ ⊢V⦂ A)
@@ -546,11 +576,14 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
-                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ
+                 → (pV : Paramᵛ V) → (pN : Paramᶜ N)
+                 → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+                 → (uH : EffUniformʰ {Γ} H pH)
+                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
-                           [ Hd ↦ V ]c ⟧ᶜᵗ
-sound-HANDLE-RET {Γ} V H N =
-  ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H))
-             (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H)) V N
+                           [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+sound-HANDLE-RET {Γ} V H N pV pN pH uH =
+  ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+             (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)) V N pV pN
 

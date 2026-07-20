@@ -57,6 +57,9 @@ open import Syntax.Contexts  S
 open import Syntax.Language  S
 open import Syntax.Renamings S
 
+open import Data.Product using (_,_; _×_)
+open import Data.Unit using (⊤; tt)
+
 open import OperationalSemantics.State S
 
 open Category Cat
@@ -79,6 +82,14 @@ hist ∅         = []
 hist (S ⟨ ρ ⟩ₛ) = hist S ⟨ ρ ⟩
 hist (S ∷ₛ V)  = hist S
 
+-- Parametricity of the values a state stores: `⟦_⟧ˢ` interprets them, so it
+-- needs their certificates, one per cell.
+
+Paramˢ : ∀ {Γ} → 𝕊 Γ → Set
+Paramˢ ∅         = ⊤
+Paramˢ (S ⟨ ρ ⟩ₛ) = Paramˢ S
+Paramˢ (S ∷ₛ V)  = Paramˢ S × Paramᵛ V
+
 -- The state as an environment for its own context.
 --
 --   * a lock is passed through by the context modality's functorial action;
@@ -88,9 +99,18 @@ hist (S ∷ₛ V)  = hist S
 -- The stored value lives in `[] ++ᶜ toCtx S ⟨ ρ ⟩`, so it is first
 -- reindexed along the left unit of context concatenation.
 
-⟦_⟧ˢ : (S : 𝕊 []) → ⟦ hist S ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ⟧ᶜᵗˣ
-⟦ ∅ ⟧ˢ         = idᵐ
-⟦ S ⟨ ρ ⟩ₛ ⟧ˢ  = ⟨ ρ ⟩ᶠ ⟦ S ⟧ˢ
-⟦ _∷ₛ_ {A} {ρ} S V ⟧ˢ =
-  ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx S ⟨ ρ ⟩}) ⟧ʳ) ∘ᵐ η⊣ ⟩ᵐ
-  ∘ᵐ ⟦ S ⟧ˢ
+⟦_⟧ˢ : (S : 𝕊 []) → Paramˢ S → ⟦ hist S ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ⟧ᶜᵗˣ
+⟦ ∅ ⟧ˢ         _  = idᵐ
+⟦ S ⟨ ρ ⟩ₛ ⟧ˢ  p  = ⟨ ρ ⟩ᶠ (⟦ S ⟧ˢ p)
+⟦ _∷ₛ_ {A} {ρ} S V ⟧ˢ (pS , pV) =
+  ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ {toCtx S ⟨ ρ ⟩}) ⟧ʳ) ∘ᵐ η⊣ ⟩ᵐ
+  ∘ᵐ ⟦ S ⟧ˢ pS
+
+-- The values a state stores are exactly what a resource lookup returns, so a
+-- state's certificate hands one out for every cell.
+
+resource-lookupᴾ : ∀ {Γ ρ ρ' A} → (S : 𝕊 Γ) → (x : [ ρ ] A ∈[ ρ' ] toCtx S)
+                 → Paramˢ S → Paramᵛ (resource-lookup S x)
+resource-lookupᴾ (S ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) pS        = resource-lookupᴾ S x pS
+resource-lookupᴾ (S ∷ₛ V)   Hd        (_ , pV)  = pV
+resource-lookupᴾ (S ∷ₛ _)   (Tl-∷ x)  (pS , _)  = resource-lookupᴾ S x pS

@@ -179,16 +179,39 @@ mutual
       renᶜ r M pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
     , (λ op ε'' Γ'' → renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
-    , (λ op q Γ'' →
-        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r))
-                              (H op _ Γ'') (pH op _ Γ'')))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ (mapˣ-swapᵐ _ _))
-        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ''))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                  (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-ren (restrict-ren r))
-                                       (H op _ Γ'') (pH op _ Γ''))))))))))
+    , ren-clauses-uniform (restrict-ren r) H pH uH
+
+  -- Renaming a clause family's ambient context preserves the clauses'
+  -- uniformity in the residual grade: the renaming acts on the ambient context
+  -- only, so it commutes with the continuation's coercion (`mapˣ-swapᵐ`), after
+  -- which the original uniformity applies.
+  ren-clauses-uniform :
+    ∀ {Δ Δ' B} → (rr : Ren Δ Δ')
+    → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+         → Δ ++ᶜ Γ' ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+    → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+    → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
+         → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
+             ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ'))
+    → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
+         → ⟦ C-rename (cong-ren rr) (H op ε₂'' Γ') ⟧ᶜᵗ
+              (renᶜ (cong-ren rr) (H op ε₂'' Γ') (pH op ε₂'' Γ'))
+             ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
+              ∘ᵐ ⟦ C-rename (cong-ren rr) (H op ε₁'' Γ') ⟧ᶜᵗ
+                   (renᶜ (cong-ren rr) (H op ε₁'' Γ') (pH op ε₁'' Γ')))
+  ren-clauses-uniform rr H pH uH op q Γ' =
+    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren rr) (H op _ Γ') (pH op _ Γ')))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (mapˣ-swapᵐ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ'))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-ren rr)
+                                   (H op _ Γ') (pH op _ Γ')))))))))
 
   V-rename-nat : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
