@@ -248,9 +248,13 @@ box-η {X} {ρ₁} {ρ₃} a w =
 
 -- Interpreting an effect-grade coercion is the transport `ε-substᵀ`.
 
-sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε)
-              → ⟦ ε-subst e M ⟧ᶜᵗ ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ
-sound-ε-subst refl M = ≈ᵐ-sym (∘ᵐ-congˡ ε-substᵀ-refl ∙ ∘ᵐ-identityˡ _)
+ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε)
+         → Paramᶜ M → Paramᶜ (ε-subst e M)
+ε-substᴾ refl M p = p
+
+sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
+              → ⟦ ε-subst e M ⟧ᶜᵗ (ε-substᴾ e M pM) ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-ε-subst refl M pM = ≈ᵐ-sym (∘ᵐ-congˡ ε-substᵀ-refl ∙ ∘ᵐ-identityˡ _)
 
 -- SEQ-STEP and HANDLE-STEP
 --
@@ -402,32 +406,36 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
   → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
-  → ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+  → (pS : Paramˢ S) → (pS' : Paramˢ S')
+  → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
-              (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r)
-  → (alg {ε₁} ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ) ∘ᵐ ⟦ S ⟧ˢ
+              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS') (stepᵀ r)
+  → (alg {ε₁} ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ) ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ (step-≾ r))
-       ∘ᵐ alg {step-grade r ·ₑ ε₃} ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ μᵀ
+       ∘ᵐ alg {step-grade r ·ₑ ε₃} ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ μᵀ
        ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
-       ∘ᵐ Tᶠ (mapˣᵐ idᵐ (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ))
+       ∘ᵐ Tᶠ (mapˣᵐ idᵐ (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS'))
        ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ} {step-grade r}
        ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {mapᵉ ε₃}
                ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {step-grade r} {ε₃}))))
-              ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ))
+              ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS))
           , stepᵀ r ⟩ᵐ
-seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} alg alg-≤ {M} N {M'} r c ih =
+seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} alg alg-≤ {M} N {M'} r c pS pS' pM pN pM' ih =
     seq-push {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₁} {ε₂}
-             (alg {ε₁}) ⟦ N ⟧ᶜᵗ ⟦ M ⟧ᶜᵗ ⟦ S ⟧ˢ
+             (alg {ε₁}) (⟦ N ⟧ᶜᵗ pN) (⟦ M ⟧ᶜᵗ pM) (⟦ S ⟧ˢ pS)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-      (⟨_,_⟩ᵐ-cong {f = η⊣ ∘ᵐ ⟦ S ⟧ˢ} {f' = η⊣ ∘ᵐ ⟦ S ⟧ˢ}
-                   {g = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ}
-                   {g' = T-≤ (step-≾ r) ∘ᵐ (μᵀ ∘ᵐ Tᶠ (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) ∘ᵐ stepᵀ r)}
+      (⟨_,_⟩ᵐ-cong {f = η⊣ ∘ᵐ ⟦ S ⟧ˢ pS} {f' = η⊣ ∘ᵐ ⟦ S ⟧ˢ pS}
+                   {g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS}
+                   {g' = T-≤ (step-≾ r)
+                           ∘ᵐ (μᵀ ∘ᵐ Tᶠ (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS') ∘ᵐ stepᵀ r)}
                    ≈ᵐ-refl ih)))
   ∙ push-str {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ}
              {step-grade r} {ε₁} {ε₂} {ε₃}
              alg alg-≤
-             (η⊣ ∘ᵐ ⟦ S ⟧ˢ) ⟦ N ⟧ᶜᵗ (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r) (step-≾ r)
+             (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS')
+             (stepᵀ r) (step-≾ r)
 
 -- THE `id-suc` BOX IDENTITY
 --
@@ -546,12 +554,13 @@ step-box : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
          → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (g : mapᵉ (step-grade r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
+         → (pS : Paramˢ S) → (pM : Paramᶜ M)
          → strᵀ {[ ρ₄ ]ᵒ (⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ} {step-grade r}
              ∘ᵐ ⟨ (δ {⟨ ρ₂ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {ρ₄} ∘ᵐ []-≤ g)
-                    ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ)
+                    ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS)
                 , stepᵀ r ⟩ᵐ
            ≈ᵐ Tᶠ ⟨ [ ρ₄ ]ᶠ (⟦ suc-comp-ren (step-extends-state r) c ⟧ʳ
-                             ∘ᵐ ⟨ ρ₄ ⟩ᶠ ⟦ S' ⟧ˢ)
+                             ∘ᵐ ⟨ ρ₄ ⟩ᶠ (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)))
                     ∘ᵐ η⊣
                  , idᵐ ⟩ᵐ
               ∘ᵐ stepᵀ r
@@ -559,7 +568,7 @@ step-box : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
 -- The nine time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-id-suc`
 -- is exactly what is left — the environment survives unchanged.
 
-step-box APP c g =
+step-box APP c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -569,7 +578,7 @@ step-box APP c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box MATCH c g =
+step-box MATCH c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -579,7 +588,7 @@ step-box MATCH c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box SEQ-RET c g =
+step-box SEQ-RET c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -589,7 +598,7 @@ step-box SEQ-RET c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box SEQ-OP c g =
+step-box SEQ-OP c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -599,7 +608,7 @@ step-box SEQ-OP c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box HANDLE-RET c g =
+step-box HANDLE-RET c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -609,7 +618,7 @@ step-box HANDLE-RET c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box HANDLE-OP c g =
+step-box HANDLE-OP c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -619,7 +628,7 @@ step-box HANDLE-OP c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box UNBOX c g =
+step-box UNBOX c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -629,7 +638,7 @@ step-box UNBOX c g =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box COERCE c g =
+step-box COERCE c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -642,22 +651,23 @@ step-box COERCE c g =
 -- The recursive rules: `stepᵀ`, `step-extends-state`, and both states are all
 -- inherited from the sub-step, so the statement is the sub-step's.
 
-step-box (SEQ-STEP r c') c g = step-box r c g
-step-box (HANDLE-STEP r c') c g = step-box r c g
+step-box (SEQ-STEP r c') c g pS (pM , pN) = step-box r c g pS pM
+step-box (HANDLE-STEP r c') c g pS (pM , pN , pH , uH) = step-box r c g pS pM
 
 -- BOX: allocation. `stepᵀ` is still `ηᵀ`; the `fstᵐ` that `suc-comp-ren`
 -- contributes cancels exactly the cell just written.
 
-step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g =
+step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g pS (pV , pM) =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ (wk-w c) ⟦ St ⟧ˢ
-                  ∙ ∘ᵐ-congˡ ([]-congᶠ (box-∷-suc (wk-w c) (wk-w c) ⟦ St ⟧ˢ
+              ∙ ⟨ box-id-suc _ (wk-w c) (⟦ St ⟧ˢ pS)
+                  ∙ ∘ᵐ-congˡ ([]-congᶠ (box-∷-suc (wk-w c) (wk-w c) (⟦ St ⟧ˢ pS)
                                 (  [ ρ' ]ᶠ (⟦ V-rename (eq-ren (sym ++ᶜ-identityˡ)) V ⟧ᵛᵗ
+                                              (renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV)
                                             ∘ᵐ ⟦ eq-ren (++ᶜ-identityˡ
                                                   {toCtx St ⟨ ρ' ⟩}) ⟧ʳ)
                                  ∘ᵐ η⊣)))
@@ -673,7 +683,7 @@ step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g =
 -- so `η⊣-⟨⟩` reassembles them. Inside the resulting box the shape is again the
 -- time-preserving one, and `delayᵀ-nat` pulls `Tᶠ` out to match `stepᵀ DELAY`.
 
-step-box (DELAY {τ = τ} {S = St}) c g =
+step-box (DELAY {τ = τ} {S = St}) c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -716,7 +726,7 @@ step-box (DELAY {τ = τ} {S = St}) c g =
                               (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (≾ᵣ-reflexive (sym map-uᵉ)))
                                         (≾ᵣ-reflexive (sym (trans map-·ᵉ
                                           (cong (_·ᵣ mapᵉ uₑ) map-of-natᵉ))))))
-                            g _ ⟦ St ⟧ˢ))
+                            g _ (⟦ St ⟧ˢ pS)))
                     , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
       ∙ ηᵀ-nat _)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _))
@@ -785,17 +795,20 @@ seq-target : ∀ {ε₁ ε₂ ε₃ A B} {Γ Γ' : Ctx} {H : Obj}
            → (ρ : Ren (Γ ⟨ mapᵉ ε₁ ⟩) (Γ' ⟨ mapᵉ ε₃ ⟩))
            → (M' : Γ' ⊢C⦂ A ‼ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
-           → (alg ∘ᵐ Tᶠ ⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M' ⟧ᶜᵗ ⟩ᵐ)
+           → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+           → (alg ∘ᵐ Tᶠ (⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ (renᶜ (cong-∷-ren ρ) N pN))
+                 ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M' ⟧ᶜᵗ pM' ⟩ᵐ)
                ∘ᵐ env
-           ≈ᵐ alg ∘ᵐ Tᶠ ⟦ N ⟧ᶜᵗ
+           ≈ᵐ alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN)
                ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃}
                ∘ᵐ ⟨ [ mapᵉ ε₃ ]ᶠ (⟦ ρ ⟧ʳ ∘ᵐ ⟨ mapᵉ ε₃ ⟩ᶠ env) ∘ᵐ η⊣
-                  , ⟦ M' ⟧ᶜᵗ ∘ᵐ env ⟩ᵐ
-seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg N ρ M' env =
+                  , ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ env ⟩ᵐ
+seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg N ρ M' env pN pM' =
     seq-push {⟦ Γ' ⟧ᶜᵗˣ} {_} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₃} {_}
-             alg ⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ ⟦ M' ⟧ᶜᵗ env
+             alg (⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ (renᶜ (cong-∷-ren ρ) N pN))
+             (⟦ M' ⟧ᶜᵗ pM') env
   -- the renaming in the continuation …
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ρ) N)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ρ) N pN)))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _))
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   -- … moves into the environment box (`strᵀ-natˡ`)
@@ -817,24 +830,26 @@ sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
   → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
-  → ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+  → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
-              (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r)
-  → ⟦ M ⨟ N ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
+  → ⟦ M ⨟ N ⟧ᶜᵗ (pM , pN) ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ (SEQ-STEP {N = N} r c))
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
               (⟦ M' ⨟ C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N ⟧ᶜᵗ
-                 ∘ᵐ ⟦ S' ⟧ˢ)
+                 (pM' , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
+                 ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
-sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
-    seq-step-core μᵀ T-≤-μᵀ N r c ih
+sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c pS pM pN pM' ih =
+    seq-step-core μᵀ T-≤-μᵀ N r c pS (stepᴾˢ r pS pM) pM pN pM' ih
   -- merge the box's two relaxations into the one `step-box` expects
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
   -- and replace the core by the new state's box
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-      (step-box r c (seq-g r)))))))
+      (step-box r c (seq-g r) pS pM))))))
   -- collect the functorial actions under one `Tᶠ`
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))))
@@ -868,7 +883,7 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c ih =
        ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
                             {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
                             μᵀ N (suc-comp-ren (step-extends-state r) c)
-                            M' ⟦ S' ⟧ˢ))))))
+                            M' (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN pM'))))))
   -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
   ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
 

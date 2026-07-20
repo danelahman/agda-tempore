@@ -59,7 +59,7 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import Data.Unit using (⊤; tt)
-open import Data.Product using (_,_; _×_)
+open import Data.Product using (_,_; _×_; proj₁; proj₂)
 
 open import Syntax.Types         S
 open import Syntax.Contexts      S
@@ -100,16 +100,18 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
   -- morphisms (with the ground-type coercions the interpretation carries).
 
   paramᵐ : (op : Op) → (St : 𝕊 [])
-         → toCtx St ⊢V⦂ type-of-gtype (param op)
+         → (V : toCtx St ⊢V⦂ type-of-gtype (param op)) → Paramᵛ V
          → ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ
-  paramᵐ op St V = subst (λ O → ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
+  paramᵐ op St V pV =
+    subst (λ O → ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
 
   arityᵐ : (op : Op) → (St : 𝕊 [])
          → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
+         → Paramᵛ (op-sem op V)
          → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ ⟦ arity op ⟧ᵍ
-  arityᵐ op St V =
+  arityᵐ op St V pOp =
     subst (λ O → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ →ᵐ O)
-          (ty-gty (arity op)) ⟦ op-sem op V ⟧ᵛᵗ
+          (ty-gty (arity op)) (⟦ op-sem op V ⟧ᵛᵗ pOp)
 
   -- The theorem's only condition: the syntactic implementation `op-sem` is the
   -- semantic one, `op-semᵐ`. Both take the parameter as seen from
@@ -117,19 +119,39 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
   -- `op-semᵐ` is a single morphism, not indexed by the state, this also forces
   -- `op-sem` to be uniform in the state.
 
-  OpSemCoherent : Set
-  OpSemCoherent = ∀ (op : Op) → (St : 𝕊 [])
-                → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
-                → arityᵐ op St V
-                ≈ᵐ op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ (paramᵐ op St V)
+  -- The implementation's values are parametric. `op-sem` is a parameter of the
+  -- theorem, so this is assumed alongside its coherence.
 
-  module _ (op-coh : OpSemCoherent) where
+  OpSemParametric : Set
+  OpSemParametric = ∀ (op : Op) → (St : 𝕊 [])
+                  → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
+                  → Paramᵛ (op-sem op V)
+
+  OpSemCoherent : OpSemParametric → Set
+  OpSemCoherent op-par = ∀ (op : Op) → (St : 𝕊 [])
+                → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
+                → (pV : Paramᵛ V)
+                → arityᵐ op St V (op-par op St V)
+                ≈ᵐ op-semᵐ op ∘ᵐ ⟨ mapᵉ (op-grade op) ⟩ᶠ (paramᵐ op St V pV)
+
+  module _ (op-par : OpSemParametric) (op-coh : OpSemCoherent op-par) where
 
     -- THE TOP-LEVEL DENOTATION OF A CONFIGURATION
 
-    ⟦_⟧ᵏᶜᶠ : ∀ {A ε} → (cf : Config (A ‼ ε))
+    ⟦_⟧ᵏᶜᶠ : ∀ {A ε} → (cf : Config (A ‼ ε)) → Paramᶜᶠ cf
            → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
-    ⟦ cf ⟧ᵏᶜᶠ = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ
+    ⟦ cf ⟧ᵏᶜᶠ p = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ p
+
+    -- The certificate across a top-level step: `↝-STEP` inherits the ordinary
+    -- one, `OP-STEP` substitutes the implementation's (parametric) value.
+
+    topᴾᶜᶠ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
+           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+           → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
+           → Paramᶜᶠ (⟨ St , M ⟩) → Paramᶜᶠ (⟨ St' , M' ⟩)
+    topᴾᶜᶠ (↝-STEP r) p = stepᴾᶜᶠ r p
+    topᴾᶜᶠ (OP-STEP {op = op} {S = St} {V = V} {M = M}) (pSt , (pV , pM)) =
+      pSt , subᶜ M Hd (op-sem op V) pM (op-par op St V)
 
     -- THE TOP-LEVEL STEP'S GRADE, TRANSITION AND REFINEMENT
     --
@@ -161,9 +183,9 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
     Uniform⟿ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
-             → ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩ → Set
-    Uniform⟿ (↝-STEP r) = Uniform↝ r
-    Uniform⟿ OP-STEP    = ⊤
+             → ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩ → Paramᶜ M → Set
+    Uniform⟿ (↝-STEP r) pM = Uniform↝ r pM
+    Uniform⟿ OP-STEP    _  = ⊤
 
     -- The interpretation's ground-type coercions on the arity cancel against
     -- the ones on the substituted value.
@@ -183,50 +205,57 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                   → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
                   → (M : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                          ⊢C⦂ A ‼ ε)
-                  → ⟦ ⟨ St , perform op V M ⟩ ⟧ᵏᶜᶠ
+                  → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
+                  → ⟦ ⟨ St , perform op V M ⟩ ⟧ᵏᶜᶠ (pSt , (pV , pM))
                   ≈ᵐ T-≤ᵏ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
                      ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ}
                              {⟦ hist St ⟨ mapᵉ (op-grade op) ⟩ ⟧ᶜᵗˣ}
                              {⟦ A ⟧ᵛ} {op-grade op ·ₑ uₑ} {ε}
-                             ⟦ ⟨ grade-pass St (mapᵉ (op-grade op))
-                               , M [ Hd ↦ op-sem op V ]c ⟩ ⟧ᵏᶜᶠ
+                             (⟦ ⟨ grade-pass St (mapᵉ (op-grade op))
+                                , M [ Hd ↦ op-sem op V ]c ⟩ ⟧ᵏᶜᶠ
+                                (pSt , subᶜ M Hd (op-sem op V) pM (op-par op St V)))
                              (top-stepᵏ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
-    sound-OP-STEP {A} {ε} op St V M =
+    sound-OP-STEP {A} {ε} op St V M pSt pV pM =
       -- run the operation away
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ᵏ ∘ᵐ-congˡ (implᵐ-opᵀ op (paramᵐ op St V) _)
+      ∙ᵏ ∘ᵐ-congˡ (implᵐ-opᵀ op (paramᵐ op St V pV) _)
       ∙ᵏ ∘ᵐ-assoc _ _ _
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       -- the value it feeds the continuation is the one the reduct substitutes
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ cont)))
       -- and the state's environment goes under the tick's box
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟦ St ⟧ˢ)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (⟦ St ⟧ˢ pSt))))
       ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _)))
       -- what is left is a tick, and `tick-nf` says the target is its bind
-      ∙ᵏ ≈ᵐ-sym (∘ᵐ-congʳ (tick-nf (op-grade op) η⊣ ⟦ cf' ⟧ᵏᶜᶠ) ∙ᵏ coe)
+      ∙ᵏ ≈ᵐ-sym (∘ᵐ-congʳ (tick-nf (op-grade op) η⊣ (⟦ cf' ⟧ᵏᶜᶠ pcf')) ∙ᵏ coe)
       where
         d = op-grade op
 
         cf' : Config (A ‼ ε)
         cf' = ⟨ grade-pass St (mapᵉ d) , M [ Hd ↦ op-sem op V ]c ⟩
 
+        pcf' : Paramᶜᶠ cf'
+        pcf' = pSt , subᶜ M Hd (op-sem op V) pM (op-par op St V)
+
         -- the operation's continuation, fed `op-semᵐ`'s value, IS the reduct
         cont : subst (λ O → (⟨ mapᵉ d ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
-                     (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ
-                 ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V) ⟩ᵐ
+                     (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
+                 ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V pV) ⟩ᵐ
              ≈ᵐ ⟦ M [ Hd ↦ op-sem op V ]c ⟧ᶜᵗ
+                  (subᶜ M Hd (op-sem op V) pM (op-par op St V))
         cont =
-            ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (op-coh op St V) ⟩ᵐ-cong)
-          ∙ᵏ substᵈ-⟨⟩ (ty-gty (arity op)) ⟦ M ⟧ᶜᵗ ⟦ op-sem op V ⟧ᵛᵗ
-          ∙ᵏ ≈ᵐ-sym (C-subst-nat M Hd (op-sem op V))
+            ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (op-coh op St V pV) ⟩ᵐ-cong)
+          ∙ᵏ substᵈ-⟨⟩ (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
+               (⟦ op-sem op V ⟧ᵛᵗ (op-par op St V))
+          ∙ᵏ ≈ᵐ-sym (C-subst-nat M Hd (op-sem op V) pM (op-par op St V))
 
         -- the coercions collapse: the source's grade is reached exactly
         coe : T-≤ᵏ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
                 ∘ᵐ (T-≤ᵏ (tick-z d ε)
-                    ∘ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ ⟦ cf' ⟧ᵏᶜᶠ ∘ᵐ η⊣)
-            ≈ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ ⟦ cf' ⟧ᵏᶜᶠ ∘ᵐ η⊣
+                    ∘ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ (⟦ cf' ⟧ᵏᶜᶠ pcf') ∘ᵐ η⊣)
+            ≈ᵐ tickᵏ d ∘ᵐ [ mapᵉ d ]ᶠ (⟦ cf' ⟧ᵏᶜᶠ pcf') ∘ᵐ η⊣
         coe =
             ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
           ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (≾ₑ-reflexive {d ·ₑ ε} refl))
@@ -240,20 +269,21 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     ⟿-sound : ∀ {ε ε' A} {St St' : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
              → (r : ⟨ St , M ⟩ ⟿ ⟨ St' , M' ⟩)
-             → Uniform⟿ r
-             → ⟦ ⟨ St , M ⟩ ⟧ᵏᶜᶠ
+             → (p : Paramᶜᶠ (⟨ St , M ⟩))
+             → Uniform⟿ r (proj₂ p)
+             → ⟦ ⟨ St , M ⟩ ⟧ᵏᶜᶠ p
              ≈ᵐ T-≤ᵏ (top-≾ r)
                 ∘ᵐ _⋄ᵏ_ {⟦ hist St ⟧ᶜᵗˣ} {⟦ hist St' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
                         {top-grade r} {ε'}
-                        ⟦ ⟨ St' , M' ⟩ ⟧ᵏᶜᶠ (top-stepᵏ r)
-    ⟿-sound (↝-STEP {S' = St'} {N = M'} r) u =
-        ∘ᵐ-congʳ (↝-sound r u)
+                        (⟦ ⟨ St' , M' ⟩ ⟧ᵏᶜᶠ (topᴾᶜᶠ r p)) (top-stepᵏ r)
+    ⟿-sound (↝-STEP {S' = St'} {N = M'} r) (pSt , pM) u =
+        ∘ᵐ-congʳ (↝-sound r pSt pM u)
       ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ᵏ ∘ᵐ-congˡ (implᵐ-T-≤ (step-≾ r))
       ∙ᵏ ∘ᵐ-assoc _ _ _
-      ∙ᵏ ∘ᵐ-congʳ (impl-⋄ ⟦ ⟨ St' , M' ⟩ ⟧ᶜᶠ (stepᵀ r))
-    ⟿-sound (OP-STEP {op = op} {S = St} {V = V} {M = M}) _ =
-      sound-OP-STEP op St V M
+      ∙ᵏ ∘ᵐ-congʳ (impl-⋄ (⟦ ⟨ St' , M' ⟩ ⟧ᶜᶠ (stepᴾᶜᶠ r (pSt , pM))) (stepᵀ r))
+    ⟿-sound (OP-STEP {op = op} {S = St} {V = V} {M = M}) (pSt , (pV , pM)) _ =
+      sound-OP-STEP op St V M pSt pV pM
 
     -- THE COERCION ESCAPES A TOP-LEVEL TRANSITION
     --
@@ -383,36 +413,44 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
       ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (top-grade r) (top-steps-grade rs) ε'))
       (≾ₑ-trans (·ₑ-monoʳ-≾ₑ (top-steps-≾ rs)) (top-≾ r))
 
+    top-stepsᴾᶜᶠ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+                 → cf ⟿* cf' → Paramᶜᶠ cf → Paramᶜᶠ cf'
+    top-stepsᴾᶜᶠ ε*ᵗ       p = p
+    top-stepsᴾᶜᶠ (r ◅ᵗ rs) p = top-stepsᴾᶜᶠ rs (topᴾᶜᶠ r p)
+
     Uniform⟿* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
-              → cf ⟿* cf' → Set
-    Uniform⟿* ε*ᵗ       = ⊤
-    Uniform⟿* (r ◅ᵗ rs) = Uniform⟿ r × Uniform⟿* rs
+              → cf ⟿* cf' → Paramᶜᶠ cf → Set
+    Uniform⟿* ε*ᵗ       _ = ⊤
+    Uniform⟿* (r ◅ᵗ rs) p = Uniform⟿ r (proj₂ p) × Uniform⟿* rs (topᴾᶜᶠ r p)
 
     -- A run of the top-level machine is sound: a program means what it runs
     -- to, after the ticks its operations cost, at the run's refined grade.
 
     ⟿*-sound : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
-              → (rs : cf ⟿* cf') → Uniform⟿* rs
-              → ⟦ cf ⟧ᵏᶜᶠ
+              → (rs : cf ⟿* cf') → (p : Paramᶜᶠ cf) → Uniform⟿* rs p
+              → ⟦ cf ⟧ᵏᶜᶠ p
               ≈ᵐ T-≤ᵏ (top-steps-≾ rs)
                  ∘ᵐ _⋄ᵏ_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
                          {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
                          {top-steps-grade rs} {ε'}
-                         ⟦ cf' ⟧ᵏᶜᶠ (top-stepsᵏ rs)
-    ⟿*-sound {A = A} {ε = ε} {cf = cf} ε*ᵗ _ =
+                         (⟦ cf' ⟧ᵏᶜᶠ (top-stepsᴾᶜᶠ rs p)) (top-stepsᵏ rs)
+    ⟿*-sound {A = A} {ε = ε} {cf = cf} ε*ᵗ p _ =
       ≈ᵐ-sym
-        (  ∘ᵐ-congʳ (⋄ᵏ-ηᵏ ⟦ cf ⟧ᵏᶜᶠ ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _))
+        (  ∘ᵐ-congʳ (⋄ᵏ-ηᵏ (⟦ cf ⟧ᵏᶜᶠ p) ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-≡ _))
          ∙ᵏ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
          ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-trans _ _ (≾ₑ-reflexive {ε} refl))
          ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-refl _)
          ∙ᵏ ∘ᵐ-identityˡ _)
-    ⟿*-sound {A = A} {ε' = ε'} (_◅ᵗ_ {ε₂ = ε₂} {cf₃ = cf₃} r rs) (u , us) =
-        ⟿-sound r u
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-congᶠ (⟿*-sound rs us))))
+    ⟿*-sound {A = A} {ε' = ε'} (_◅ᵗ_ {ε₂ = ε₂} {cf₃ = cf₃} r rs) p (u , us) =
+        ⟿-sound r p u
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (Tᵏ-congᶠ (⟿*-sound rs (topᴾᶜᶠ r p) us))))
       -- the run's coercion escapes the step's transition …
-      ∙ᵏ ∘ᵐ-congʳ (T-≤ᵏ-topᵏ ⟦ A ⟧ᵛ r (⟦ cf₃ ⟧ᵏᶜᶠ ⋄ᵏ top-stepsᵏ rs) (top-steps-≾ rs))
+      ∙ᵏ ∘ᵐ-congʳ (T-≤ᵏ-topᵏ ⟦ A ⟧ᵛ r
+           (⟦ cf₃ ⟧ᵏᶜᶠ (top-stepsᴾᶜᶠ rs (topᴾᶜᶠ r p)) ⋄ᵏ top-stepsᵏ rs)
+           (top-steps-≾ rs))
       -- … and the two binds re-associate into one
-      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (bind-bindᵏ ⟦ cf₃ ⟧ᵏᶜᶠ (top-stepsᵏ rs) (top-stepᵏ r)))
+      ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (bind-bindᵏ (⟦ cf₃ ⟧ᵏᶜᶠ (top-stepsᴾᶜᶠ rs (topᴾᶜᶠ r p)))
+                               (top-stepsᵏ rs) (top-stepᵏ r)))
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤ᵏ-≡ _)))
       ∙ᵏ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
       ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤ᵏ-trans _ _ b))

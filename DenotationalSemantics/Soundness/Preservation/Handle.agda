@@ -70,7 +70,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; CtxUniformʰ; clause-sound)
+  using (term∅; ∅-terminal; CtxUniformʰ; EffUniformʰ; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE public
 
@@ -257,8 +257,10 @@ Halg : ∀ {Γ B ε₂} → (e : Γ ᴱ ≡ [])
           → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+     → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+     → (uH : EffUniformʰ {Γ} H pH)
      → ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
-Halg {Γ} e H = T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ
+Halg {Γ} e H pH uH = T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ
 
 -- `Halg`'s sub-effecting and unit laws, from the fold's own laws plus the
 -- terminality of the (trivial) parameter.
@@ -267,15 +269,18 @@ Halg-≤ : ∀ {Γ B ε₂} → (e : Γ ᴱ ≡ [])
             → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+       → (uH : EffUniformʰ {Γ} H pH)
        → ∀ {εa εb} → (q : εa ≾ₑ εb)
-       → Halg {ε₂ = ε₂} e H {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ Halg e H {εa}
-Halg-≤ {Γ} e H q =
+       → Halg {ε₂ = ε₂} e H pH uH {εb} ∘ᵐ T-≤ q
+       ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ Halg e H pH uH {εa}
+Halg-≤ {Γ} e H pH uH q =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ∅-terminal e _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H) q)
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) q)
   ∙ ∘ᵐ-assoc _ _ _
 
 Halg-η : ∀ {Γ B ε₂} → (e : Γ ᴱ ≡ [])
@@ -283,9 +288,11 @@ Halg-η : ∀ {Γ B ε₂} → (e : Γ ᴱ ≡ [])
             → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-       → Halg {ε₂ = ε₂} e H {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
+       → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+       → (uH : EffUniformʰ {Γ} H pH)
+       → Halg {ε₂ = ε₂} e H pH uH {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
        ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂))
-Halg-η {Γ} {B} {ε₂} e H =
+Halg-η {Γ} {B} {ε₂} e H pH uH =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ∅-terminal e (term∅ e ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂})
@@ -293,7 +300,7 @@ Halg-η {Γ} {B} {ε₂} e H =
               , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H))
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
   ∙ ∘ᵐ-identityʳ _
@@ -308,11 +315,15 @@ handle-collapse : ∀ {Γ A B ε ε₂} → (e : Γ ᴱ ≡ [])
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-  → ⟦ handle M `with H `in N ⟧ᶜᵗ
-  ≈ᵐ Halg {ε₂ = ε₂} e H {ε} ∘ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ)
-handle-collapse {Γ} e M H N =
+  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+  → (uH : EffUniformʰ {Γ} H pH)
+  → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH)
+  ≈ᵐ Halg {ε₂ = ε₂} e H pH uH {ε}
+       ∘ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ)
+handle-collapse {Γ} e M H N pM pN pH uH =
     ∘ᵐ-congʳ (⟨ ∅-terminal e (projᴱ Γ)
-                  (term∅ e ∘ᵐ (Tᶠ ⟦ N ⟧ᶜᵗ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ))
+                  (term∅ e ∘ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ))
               , ≈ᵐ-refl ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -348,17 +359,19 @@ Halg-delay : ∀ {Γ B ε₂} → (e : Γ ᴱ ≡ [])
             → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+       → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+       → (uH : EffUniformʰ {Γ} H pH)
        → ∀ {ε'} → (τ : ℕ)
-       → Halg {ε₂ = ε₂} e H {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ τ
+       → Halg {ε₂ = ε₂} e H pH uH {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ τ
        ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
-           ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (Halg e H {ε'})
-Halg-delay {Γ} e H τ =
+           ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (Halg e H pH uH {ε'})
+Halg-delay {Γ} e H pH uH τ =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ∅-terminal e _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-delayᵀ τ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H))
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-delayᵀ τ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -387,14 +400,16 @@ Halg-op : ∀ {Γ B ε ε'} → (e : Γ ᴱ ≡ [])
              → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+        → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+        → (uH : EffUniformʰ {Γ} H pH)
         → (op : Op)
-        → Halg {ε₂ = ε'} e H {op-grade op ·ₑ ε} ∘ᵐ opᵀ {ε = ε} op
+        → Halg {ε₂ = ε'} e H pH uH {op-grade op ·ₑ ε} ∘ᵐ opᵀ {ε = ε} op
         ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε'))
-           ∘ᵐ (⟦_⟧ʰᵗ {Γ} H op (ε ·ₑ ε') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
-           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Halg e H {ε})))
-Halg-op {Γ} e H op =
+           ∘ᵐ (clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op (ε ·ₑ ε') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
+           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Halg e H pH uH {ε})))
+Halg-op {Γ} e H pH uH op =
   HC.Halg-op Mon (bcᴱ Γ) (term∅ e) (∅-terminal e) (∅-box-terminal e)
-             (⟦_⟧ʰᵗ {Γ} H) op
+             (⟦_⟧ʰᵗ {Γ} H pH uH) op
 
 -- The `⟦_⟧ʰᵗ` adapter (parameter-independent) commutes with a reindexing of the
 -- eternal parameter — the same shape as in the renaming/substitution coherence.
@@ -435,11 +450,14 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
   → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
-  → ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+  → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+  → (uH : EffUniformʰ {toCtx S} H pH)
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
-              (⟦ M' ⟧ᶜᵗ ∘ᵐ ⟦ S' ⟧ˢ) (stepᵀ r)
-  → ⟦ handle M `with H `in N ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ
+              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
+  → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH) ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ (HANDLE-STEP {H = H} {N = N} r c))
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
               (⟦ handle M'
@@ -453,15 +471,22 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
                               (H op ε'' Γ'))
                    `in (C-rename (cong-∷-ren
                                    (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
-                 ∘ᵐ ⟦ S' ⟧ˢ)
+                      (pM'
+                      , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
+                      , (λ op ε'' Γ' →
+                           substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
+                             (H op ε'' Γ') (pH op ε'' Γ'))
+                      , subst-clauses-uniform
+                          (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH)
+                 ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
-sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
-    ∘ᵐ-congˡ (handle-collapse eS M H N)
-  ∙ seq-step-core alg alg-≤ N r c ih
+sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS pM pN pM' pH uH ih =
+    ∘ᵐ-congˡ (handle-collapse eS M H N pM pN pH uH)
+  ∙ seq-step-core alg alg-≤ N r c pS (stepᴾˢ r pS pM) pM pN pM' ih
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
       (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-      (step-box r c (seq-g r)))))))
+      (step-box r c (seq-g r) pS pM))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
@@ -485,11 +510,15 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (
       ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B}
                   {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
-                  alg N (suc-comp-ren (step-extends-state r) c) M' ⟦ S' ⟧ˢ)
+                  alg N (suc-comp-ren (step-extends-state r) c) M'
+                  (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN pM')
     ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ Halg-SS'
                ∙ ≈ᵐ-sym (handle-collapse eS' M' H'
                           (C-rename (cong-∷-ren
-                                      (suc-comp-ren (step-extends-state r) c)) N))))))))
+                                      (suc-comp-ren (step-extends-state r) c)) N)
+                          pM' (renᶜ (cong-∷-ren
+                                      (suc-comp-ren (step-extends-state r) c)) N pN)
+                          pH' uH')))))))
   -- … and `seq-coe` fixes the grade
   ∙ seq-coe (step-≾ r) (step-≾ (HANDLE-STEP {H = H} {N = N} r c)) _
   where
@@ -508,29 +537,35 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
         (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
         (H op ε'' Γ')
 
+    pH' : ∀ op ε'' Γ' → Paramᶜ (H' op ε'' Γ')
+    pH' op ε'' Γ' =
+      substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) (H op ε'' Γ') (pH op ε'' Γ')
+
+    uH' = subst-clauses-uniform (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
+
     f : ⟦ toCtx S' ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ᴱ ⟧ᶜᵗˣ
     f = term∅ eS
 
     alg : ∀ {ε} → Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
-    alg = Halg eS H
+    alg = Halg eS H pH uH
 
     alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
           → alg {εb} ∘ᵐ T-≤ q ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa}
-    alg-≤ q = Halg-≤ eS H q
+    alg-≤ q = Halg-≤ eS H pH uH q
 
     alg-η : alg {uₑ} ∘ᵐ ηᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂}
           ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε₂))
-    alg-η = Halg-η eS H
+    alg-η = Halg-η eS H pH uH
 
     alg-delay : ∀ {ε'} → (τ : ℕ)
               → alg {of-natᵉ τ ·ₑ ε'} ∘ᵐ delayᵀ {Tᵒ ⟦ B ⟧ᵛ ε₂} {ε'} τ
               ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (of-natᵉ τ) ε' ε₂))
                   ∘ᵐ delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (alg {ε'})
-    alg-delay τ = Halg-delay eS H τ
+    alg-delay τ = Halg-delay eS H pH uH τ
 
     ⟦H'⟧ʰᵗ-nat : ∀ op ε''
-               → ⟦_⟧ʰᵗ {toCtx S'} H' op ε''
-               ≈ᵐ ⟦_⟧ʰᵗ {toCtx S} H op ε'' ∘ᵐ mapˣᵐ f idᵐ
+               → clauseᵀ (⟦_⟧ʰᵗ {toCtx S'} H' pH' uH') op ε''
+               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {toCtx S} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
     ⟦H'⟧ʰᵗ-nat op ε'' =
         ∘ᵐ-congˡ step1'
       ∙ ∘ᵐ-assoc _ _ _
@@ -549,16 +584,17 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c ih =
           ∙ mapˣᵐ-cong
               (eq-ren-∷ eq ∙ mapˣᵐ-cong (∅-terminal eS _ _) ≈ᵐ-refl)
               ≈ᵐ-refl
-        step1' : ⟦ H' op ε'' [] ⟧ᶜᵗ
-               ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
-        step1' = subst-clause-interp eq (H op ε'' []) ∙ ∘ᵐ-congʳ ⟦eqren⟧≈
+        step1' : ⟦ H' op ε'' [] ⟧ᶜᵗ (pH' op ε'' [])
+               ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' []) ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
+        step1' = subst-clause-interp eq (H op ε'' []) (pH op ε'' [])
+               ∙ ∘ᵐ-congʳ ⟦eqren⟧≈
 
-    Halg-SS' : ∀ {ε} → Halg eS H {ε} ≈ᵐ Halg eS' H' {ε}
+    Halg-SS' : ∀ {ε} → Halg eS H pH uH {ε} ≈ᵐ Halg eS' H' pH' uH' {ε}
     Halg-SS' =
       ≈ᵐ-sym (
-          ∘ᵐ-congˡ (T-alg-of-handlerᵀ-cong (bcᴱ (toCtx S')) ⟦H'⟧ʰᵗ-nat)
-        ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-natᴾ (bcᴱ (toCtx S)) (bcᴱ (toCtx S'))
-                     f (∅-box-terminal eS _ _) (⟦_⟧ʰᵗ {toCtx S} H))
+          ∘ᵐ-congˡ (T-alg-of-handlerᵀ-natᴾ (bcᴱ (toCtx S)) (bcᴱ (toCtx S'))
+                     f (∅-box-terminal eS _ _) (⟦_⟧ʰᵗ {toCtx S} H pH uH)
+                     _ ⟦H'⟧ʰᵗ-nat)
         ∙ ∘ᵐ-assoc _ _ _
         ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
                     ∙ ⟨ ∅-terminal eS _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
@@ -797,24 +833,29 @@ sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
              → (V : Γ ⊢V⦂ type-of-gtype (param op))
              → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
              → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
-             → ⟦ perform op V M ⨟ N ⟧ᶜᵗ
+             → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+             → ⟦ perform op V M ⨟ N ⟧ᶜᵗ ((pV , pM) , pN)
              ≈ᵐ ⟦ ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                     (perform op V
                       (M ⨟ C-rename
                              (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
                                           ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
                              N)) ⟧ᶜᵗ
-sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N =
+                  (ε-substᴾ (sym (·ₑ-assoc (op-grade op) ε ε'))
+                     (perform op V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N))
+                     (pV , pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N pN))
+sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
     seq-op-core op μᵀ (opᵀ op) (opᵀ-algebraicity op) (ty-gty (arity op))
-      (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
-      ⟦ M ⟧ᶜᵗ ⟦ N ⟧ᶜᵗ ⟦ ren ⟧ʳ ern
+      (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV))
+      (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟦ ren ⟧ʳ ern
   ∙ ≈ᵐ-sym
       (  sound-ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
            (perform op V (M ⨟ C-rename (cong-∷-ren ren) N))
+           (pV , pM , renᶜ (cong-∷-ren ren) N pN)
        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
            , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (substᵈ-≈ (ty-gty (arity op))
                (∘ᵐ-congʳ (∘ᵐ-congˡ
-                 (T-congᶠ (C-rename-nat (cong-∷-ren ren) N))))))) ⟩ᵐ-cong)))
+                 (T-congᶠ (C-rename-nat (cong-∷-ren ren) N pN))))))) ⟩ᵐ-cong)))
   where
     ren : Ren (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
               ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
@@ -847,8 +888,12 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                               (type-of-gtype (arity op') ⇒ B ‼ ε')
                        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
                 → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε'')
-                → CtxUniformʰ {Γ} e H
+                → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
+                → (uH : EffUniformʰ {Γ} H pH)
+                → (u : CtxUniformʰ {Γ} e H pH)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
+                     ((pV , pM) , pN , pH , uH)
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
                    ∘ᵐ ⟦ box (lam (handle M
                                    `with (λ op' ε' Γ' →
@@ -866,16 +911,34 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                                    (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ)
                                    (H op (ε ·ₑ ε'') Γ)
                              [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
-sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N u =
+                     ( (pM
+                       , renᶜ (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N pN
+                       , (λ op' ε' Γ' →
+                            renᶜ (cong-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))) (H op' ε' Γ') (pH op' ε' Γ'))
+                       , ren-clauses-uniform
+                           (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))
+                           H pH uH)
+                     , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
+                                             ∷ [ mapᵉ (op-grade op) ]
+                                                 (type-of-gtype (arity op) ⇒ B ‼ (ε ·ₑ ε''))
+                                           ⊢C⦂ B ‼ (op-grade op ·ₑ (ε ·ₑ ε'')))
+                                   (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') Γ))
+                            (Tl-∷ Hd) V
+                            (substᴾᶜ {D = [] ∷ type-of-gtype (param op)
+                                            ∷ [ mapᵉ (op-grade op) ]
+                                                (type-of-gtype (arity op) ⇒ B ‼ (ε ·ₑ ε''))}
+                               (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') Γ) (pH op (ε ·ₑ ε'') Γ))
+                            pV )
+sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH u =
   -- collapse the eternal parameter (`Γ ᴱ ≡ []`), then the commuting conversion
   -- with the handler's fold as the algebra: the operation is algebraic for it
   -- too, and applies a clause
-    handle-collapse e (perform op V M) H N
-  ∙ seq-op-core op (Halg {ε₂ = ε''} e H)
-      (⟦_⟧ʰᵗ {Γ} H op (ε ·ₑ ε'') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
-      (Halg-op e H op) (ty-gty (arity op))
-      (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ)
-      ⟦ M ⟧ᶜᵗ ⟦ N ⟧ᶜᵗ ⟦ ren ⟧ʳ ern
+    handle-collapse e (perform op V M) H N (pV , pM) pN pH uH
+  ∙ seq-op-core op (Halg {ε₂ = ε''} e H pH uH)
+      (clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op (ε ·ₑ ε'') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
+      (Halg-op e H pH uH op) (ty-gty (arity op))
+      (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV))
+      (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟦ ren ⟧ʳ ern
   -- what is left is the reduct: the clause fired at `Γ`, applied to the
   -- parameter and to the boxed continuation the `box` allocates
   ∙ ∘ᵐ-congʳ tgt
@@ -891,15 +954,15 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N u =
     -- handled remainder, abstracted over the arity value. The `map⇒ᵐ` the
     -- semantic handler applies is undone by `map⇒ᵐ-curryᵐˡ`, and the arity
     -- coercions cancel.
-    tgt : (⟦_⟧ʰᵗ {Γ} H op (ε ·ₑ ε'') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
-            ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) ⟦ V ⟧ᵛᵗ
+    tgt : (clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op (ε ·ₑ ε'') ∘ᵐ ⟨ term∅ e , idᵐ ⟩ᵐ)
+            ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
                , [ mapᵉ (op-grade op) ]ᶠ
                    (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O)
                                          →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε''))
                                   (ty-gty (arity op))
-                                  (Halg {ε₂ = ε''} e H
-                                     ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
-                                     ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ ⟩ᵐ)))
+                                  (Halg {ε₂ = ε''} e H pH uH
+                                     ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
+                                     ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ)))
                  ∘ᵐ η⊣ ⟩ᵐ
         ≈ᵐ ⟦ box (lam (handle M
                         `with (λ op' ε' Γ' →
@@ -915,8 +978,25 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N u =
                         (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ)
                         (H op (ε ·ₑ ε'') Γ)
                   [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
+             ( (pM
+               , renᶜ (cong-∷-ren ren) N pN
+               , (λ op' ε' Γ' → renᶜ (cong-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))) (H op' ε' Γ') (pH op' ε' Γ'))
+               , ren-clauses-uniform
+                   (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))
+                   H pH uH)
+             , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
+                                     ∷ [ mapᵉ (op-grade op) ]
+                                         (type-of-gtype (arity op) ⇒ B ‼ (ε ·ₑ ε''))
+                                   ⊢C⦂ B ‼ (op-grade op ·ₑ (ε ·ₑ ε'')))
+                           (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') Γ))
+                    (Tl-∷ Hd) V
+                    (substᴾᶜ {D = [] ∷ type-of-gtype (param op)
+                                    ∷ [ mapᵉ (op-grade op) ]
+                                        (type-of-gtype (arity op) ⇒ B ‼ (ε ·ₑ ε''))}
+                       (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') Γ) (pH op (ε ·ₑ ε'') Γ))
+                    pV )
     tgt =
-        ≈ᵐ-sym (clause-sound e op H u V _)
+        ≈ᵐ-sym (clause-sound e op H pH uH u V pV _)
       ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
           , ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
             ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
@@ -927,6 +1007,6 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N u =
             -- and what is boxed is the handled remainder (the renamed inner
             -- handle collapses back by `handle-op-cont`)
             ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
-                (≈ᵐ-sym (handle-op-cont e H M N ren))))
+                (≈ᵐ-sym (handle-op-cont e H M N ren pM pN pH uH))))
           ⟩ᵐ-cong)
 

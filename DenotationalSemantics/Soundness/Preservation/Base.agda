@@ -86,6 +86,29 @@ Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
       → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
 ⟦ ⟨ St , M ⟩ ⟧ᶜᶠ (pSt , pM) = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
 
+-- THE STATE'S CERTIFICATE ACROSS A STEP
+--
+-- Only `BOX` changes it: the cell it allocates stores the boxed value, whose
+-- certificate is the term's, renamed. Every other rule either keeps the state
+-- or only locks it, and the two congruences inherit the sub-step's.
+
+stepᴾˢ : ∀ {ε ε' A} {S S' : 𝕊 []}
+       → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+       → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
+stepᴾˢ APP                 pS _              = pS
+stepᴾˢ MATCH               pS _              = pS
+stepᴾˢ (SEQ-STEP r _)      pS (pM , _)       = stepᴾˢ r pS pM
+stepᴾˢ SEQ-RET             pS _              = pS
+stepᴾˢ SEQ-OP              pS _              = pS
+stepᴾˢ DELAY               pS _              = pS
+stepᴾˢ HANDLE-RET          pS _              = pS
+stepᴾˢ (HANDLE-STEP r _)   pS (pM , _)       = stepᴾˢ r pS pM
+stepᴾˢ HANDLE-OP           pS _              = pS
+stepᴾˢ (BOX {V = V})       pS (pV , _)       =
+  pS , renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV
+stepᴾˢ UNBOX               pS _              = pS
+stepᴾˢ COERCE              pS _              = pS
+
 -- KLEISLI COMPOSITION WITH A TIME TRANSITION
 --
 -- Running a computation over the later history, after the transition that

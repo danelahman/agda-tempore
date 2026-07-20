@@ -155,7 +155,8 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                        ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
              → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
-             → (par : Parametricʰ {Γ} e H pH)
+             → (uH : EffUniformʰ {Γ} H pH)
+             → (u : CtxUniformʰ {Γ} e H pH)
              → (V : Γ ⊢V⦂ type-of-gtype (param op)) → (pV : Paramᵛ V)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
@@ -178,11 +179,11 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                         (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ)
                                       (sym (ty-gty (arity op))) idᵐ) idᵐ)
                       ∘ᵐ W ⟩ᵐ
-             ≈ᵐ (clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH (eff-uniform par)) op ε''
+             ≈ᵐ (clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''
                    ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
                   ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
                      , W ⟩ᵐ
-clause-sound {Γ} {B} {ε''} e op H pH par V pV W =
+clause-sound {Γ} {B} {ε''} e op H pH uH u V pV W =
     ∘ᵐ-congˡ (C-subst-nat Hcl (Tl-∷ Hd) V pHcl pV)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ mid)
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
@@ -222,7 +223,7 @@ clause-sound {Γ} {B} {ε''} e op H pH par V pV W =
         ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' []) ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
     mid =
         subst-clause-interp {D = [] ∷ pt ∷ kt} eq (H op ε'' Γ) (pH op ε'' Γ)
-      ∙ ∘ᵐ-congˡ (ctx-uniform par op ε'' Γ)
+      ∙ ∘ᵐ-congˡ (u op ε'' Γ)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ
           (   ∘ᵐ-congʳ (eq-ren-irr (cong (_++ᶜ ([] ∷ pt ∷ kt)) eq)

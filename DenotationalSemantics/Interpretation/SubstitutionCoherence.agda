@@ -809,6 +809,45 @@ eq-ren-clause e Γ' pt kt =
             (mapˣᵐ-cong (eq-ren-∷ (cong (_++ᶜ Γ') e)) ≈ᵐ-refl))
 
 
+-- Retyping a clause family's ambient context preserves the clauses' uniformity
+-- in the residual grade: the retyping acts on the ambient context only, so it
+-- commutes with the continuation's coercion (`mapˣ-swapᵐ`), after which the
+-- original uniformity applies.
+
+subst-clauses-uniform :
+  ∀ {Δ Δ' B} → (e : Δ ≡ Δ')
+  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+       → Δ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+  → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
+       → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
+           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+       ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ'))
+  → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
+       → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₂'')
+                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε₂''))
+                 e (H op ε₂'' Γ') ⟧ᶜᵗ (substᴾᶜ e (H op ε₂'' Γ') (pH op ε₂'' Γ'))
+           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+       ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
+           ∘ᵐ ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₁'')
+                               ⊢C⦂ B ‼ (op-grade op ·ₑ ε₁''))
+                      e (H op ε₁'' Γ') ⟧ᶜᵗ (substᴾᶜ e (H op ε₁'' Γ') (pH op ε₁'' Γ')))
+subst-clauses-uniform e H pH uH op q Γ' =
+  ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp e (H op _ Γ') (pH op _ Γ')))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ
+    (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause e Γ' _ _))
+    (≈ᵐ-trans (mapˣ-swapᵐ _ _)
+              (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause e Γ' _ _))))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ'))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-sym (subst-clause-interp e (H op _ Γ') (pH op _ Γ')))))))))
+
 -- When the substituted variable is not eternal, `restrict-sub-env` is the pure
 -- reindexing transport of the (equal) eternal skeletons. Induction on the
 -- variable, mirroring `restrict-sub-env`'s `with`-structure; the head is the
@@ -907,19 +946,7 @@ mutual
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
     , (λ op ε'' Γ' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'' Γ') (pH op ε'' Γ'))
-    , (λ op q Γ' →
-        ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp (ᴱ-drop-split ¬et x)
-                              (H op _ Γ') (pH op _ Γ')))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ
-          (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause (ᴱ-drop-split ¬et x) Γ' _ _))
-          (≈ᵐ-trans (mapˣ-swapᵐ _ _)
-                    (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause (ᴱ-drop-split ¬et x) Γ' _ _))))))
-        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ'))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                  (∘ᵐ-congʳ (≈ᵐ-sym (subst-clause-interp (ᴱ-drop-split ¬et x)
-                                       (H op _ Γ') (pH op _ Γ'))))))))))
+    , subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
   ... | yes et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
@@ -1144,19 +1171,7 @@ mutual
           → ⟦ H' op ε₂'' Γ' ⟧ᶜᵗ (pH' op ε₂'' Γ')
               ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H' op ε₁'' Γ' ⟧ᶜᵗ (pH' op ε₁'' Γ')
-      uH' op q Γ' =
-        ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp (ᴱ-drop-split ¬et x)
-                              (H op _ Γ') (pH op _ Γ')))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ
-          (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause (ᴱ-drop-split ¬et x) Γ' _ _))
-          (≈ᵐ-trans (mapˣ-swapᵐ _ _)
-                    (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause (ᴱ-drop-split ¬et x) Γ' _ _))))))
-        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ'))
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                  (∘ᵐ-congʳ (≈ᵐ-sym (subst-clause-interp (ᴱ-drop-split ¬et x)
-                                       (H op _ Γ') (pH op _ Γ')))))))))
+      uH' = subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
       ⟦H'⟧ʰᵗ-nat : ∀ op ε''
                  → clauseᵀ (⟦_⟧ʰᵗ {Γ₀} H' pH' uH') op ε''
                  ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''
