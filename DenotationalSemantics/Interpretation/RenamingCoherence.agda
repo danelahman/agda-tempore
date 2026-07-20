@@ -175,11 +175,12 @@ mutual
   -- the clauses' uniformity transports: the renaming acts on the ambient
   -- context only, so it commutes with the continuation's coercion
   -- (`mapˣ-swapᵐ`), after which the original uniformity applies
-  renᶜ r (handle_`with_`in M H N) (pM , pN , pH , uH) =
+  renᶜ r (handle_`with_`in M H N) (pM , pN , pH , uH , cH) =
       renᶜ r M pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
     , (λ op ε'' Γ'' → renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
     , ren-clauses-uniform (restrict-ren r) H pH uH
+    , ren-clauses-ctxparam r H pH cH
 
   -- Renaming a clause family's ambient context preserves the clauses'
   -- uniformity in the residual grade: the renaming acts on the ambient context
@@ -212,6 +213,30 @@ mutual
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
               (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-ren rr)
                                    (H op _ Γ') (pH op _ Γ')))))))))
+
+  -- Renaming a clause family preserves its parametricity in the extension:
+  -- the renaming acts on the eternal base, `⋉ ρ` on the extension, and `⋉-ren`
+  -- (lifted by `⋉-ren²`) passes them, after which the original `cH` applies.
+  ren-clauses-ctxparam :
+    ∀ {Γ Γ' B} → (r : Ren Γ Γ')
+    → (H : (op : Op) → (ε'' : E) → (Γ'' : Ctx)
+         → Γ ᴱ ++ᶜ Γ'' ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+    → (pH : ∀ op ε'' Γ'' → Paramᶜ (H op ε'' Γ''))
+    → CtxParamʰ {Γ} {B} H pH
+    → CtxParamʰ {Γ'} {B}
+        (λ op ε'' Γ'' → C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ''))
+        (λ op ε'' Γ'' → renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
+  ren-clauses-ctxparam r H pH cH op ε'' {Γ'a} {Γ'b} ρ =
+    ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r))
+                          (H op ε'' Γ'b) (pH op ε'' Γ'b)))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⋉-ren² {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (cH op ε'' {Γ'a} {Γ'b} ρ))
+              (≈ᵐ-sym (C-rename-nat (cong-ren (restrict-ren r))
+                         (H op ε'' Γ'a) (pH op ε'' Γ'a)))))))
 
   V-rename-nat : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
@@ -294,7 +319,7 @@ mutual
                 (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
                   (≈ᵐ-sym (C-rename-nat (cong-⟨⟩-ren r) M pM))))))))))
   C-rename-nat {Γ} {Γ'} r (handle_`with_`in {A} {B} {ε} {ε'} M H N)
-               (pM , pN , pH , uH) =
+               (pM , pN , pH , uH , cH) =
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -346,8 +371,8 @@ mutual
                     (λ op ε'' Γ'' → C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ''))
                     (λ op ε'' Γ'' →
                        renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
-                    (proj₂ (proj₂ (proj₂ (renᶜ r (handle M `with H `in N)
-                                            (pM , pN , pH , uH)))))) op ε''
+                    (proj₁ (proj₂ (proj₂ (proj₂ (renᶜ r (handle M `with H `in N)
+                                            (pM , pN , pH , uH , cH))))))) op ε''
                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦⟧ʰᵗ-nat op ε'' =
         ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r))

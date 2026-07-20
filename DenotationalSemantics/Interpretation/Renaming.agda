@@ -503,6 +503,25 @@ splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
                                      (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
                          (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
 
+-- `⋉-ren` lifted through the clause-context shape `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ`
+-- (parameter and continuation factors ride along untouched). This is the form
+-- `ren-clauses-ctxparam` consumes.
+⋉-ren² : ∀ {Γ Γ' Γ'a Γ'b} {P Q : Obj} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+       → mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ (idᵐ {P})) (idᵐ {Q})
+           ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ' {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
+       ≈ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
+           ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ idᵐ) idᵐ
+⋉-ren² {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ =
+  ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+  (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong (⋉-ren {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ)
+                                              (∘ᵐ-identityˡ _)))
+                        (∘ᵐ-identityˡ _))
+  (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+          (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                (mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)))
+                      (∘ᵐ-identityˡ _)))))
+
 -- Naturality of the eternal projection: it slides through a renaming, turning
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock
 -- case uses `restrict-ren-mor` to carry the restricted renaming past `extᵉ`.

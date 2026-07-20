@@ -151,7 +151,8 @@ mutual
   -- the actual content — the clauses' uniformity in the residual grade
   Paramᶜ {Γ} (handle_`with_`in {B = B} M H N) =
     Paramᶜ M × Paramᶜ N ×
-    Σ[ pH ∈ (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ')) ] EffUniformʰ {Γ} {B} H pH
+    Σ[ pH ∈ (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ')) ]
+      (EffUniformʰ {Γ} {B} H pH × CtxParamʰ {Γ} {B} H pH)
 
   -- Naturality of a handler's clauses in the residual effect `ε''`: the clause
   -- commutes with sub-effecting the boxed continuation's residual, landing on
@@ -214,7 +215,7 @@ mutual
                          (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)))
         ∘ᵐ η⊣ ⟩ᵐ
   ⟦ delay τ M ⟧ᶜᵗ pM = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (⟦ M ⟧ᶜᵗ pM) ∘ᵐ η⊣
-  ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH) =
+  ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH , cH) =
       T-alg-of-handlerᵀ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH)
     ∘ᵐ ⟨ projᴱ Γ , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) with unbox⇒var w V
