@@ -457,3 +457,72 @@ _⋉_ Γ {Γ'} {Γ''} ρ = splitᴱ⁻¹ Γ Γ'' ∘ᵐ mapˣᵐ ρ idᵐ ∘ᵐ
 ⋉-proj Γ Γ' =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
            (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _)))
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- NATURALITY OF THE SPLIT UNDER A MORPHISM OF THE ETERNAL BASE
+--
+-- Generic building block: `costrᵉ` is natural in the eternal factor along any
+-- morphism of eternal objects `m` (one that commutes with the extractions).
+-- This is what carries `splitᴱ` across an ambient renaming/substitution, whose
+-- eternal-base action (`restrict-ren`/`restrict-sub-env`) is exactly such a
+-- morphism (`restrict-ren-mor` / `restrict-sub-env-extᵉ`).
+-- ───────────────────────────────────────────────────────────────────────────
+
+costrᵉ-nat : ∀ {P P'} → (eP : Eternalᵒ P) → (eP' : Eternalᵒ P') → (m : P' →ᵐ P)
+           → (m-mor : ∀ {ρ} → Eternalᵒ.extᵉ eP {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ m
+                            ≈ᵐ m ∘ᵐ Eternalᵒ.extᵉ eP' {ρ})
+           → ∀ {ρ X} → Eternalᵒ.costrᵉ eP {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ (mapˣᵐ idᵐ m)
+                     ≈ᵐ mapˣᵐ idᵐ m ∘ᵐ Eternalᵒ.costrᵉ eP' {ρ} {X}
+costrᵉ-nat eP eP' m m-mor {ρ} {X} =
+  ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+  (≈ᵐ-trans
+    (⟨ -- first factor: both reduce to `⟨ρ⟩ᶠ fstᵐ`
+       ≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+         (≈ᵐ-trans (⟨⟩-congᶠ (≈ᵐ-trans (⟨⟩ᵐ-fstᵐ _ _) (∘ᵐ-identityˡ _)))
+                   (≈ᵐ-sym (∘ᵐ-identityˡ _)))
+     -- second factor: naturality of the extraction (`m-mor`)
+     , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+         (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
+         (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+         (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+         (≈ᵐ-trans (∘ᵐ-congˡ m-mor) (∘ᵐ-assoc _ _ _))))))
+     ⟩ᵐ-cong)
+    (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))
+
+-- `swap₂₃` is natural in its middle (`A`) factor.
+swap₂₃-nat : ∀ {Y A A' B} → (g : A →ᵐ A')
+           → swap₂₃ {Y} {A'} {B} ∘ᵐ mapˣᵐ (mapˣᵐ idᵐ g) idᵐ
+           ≈ᵐ mapˣᵐ idᵐ g ∘ᵐ swap₂₃ {Y} {A} {B}
+swap₂₃-nat g =
+  ≈ᵐ-trans (⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl)
+           (≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ (≈ᵐ-sym fst-eq) (≈ᵐ-sym snd-eq)))
+  where
+    fst-inner =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩ᵐ-fstᵐ _ _) (∘ᵐ-identityˡ _)))))
+    fst-eq =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+      (≈ᵐ-trans (⟨ fst-inner , ≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
+      (≈ᵐ-sym
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
+                  (⟨⟩ᵐ-fstᵐ _ _))))))))
+    snd-eq =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-sym
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                  (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _))))))))))))

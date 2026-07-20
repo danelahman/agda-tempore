@@ -436,6 +436,73 @@ restrict-ren-mor (⟨⟩-ext-ren {A = A} et) with eternal? A
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
 ... | no ¬et = ⊥-elim (¬et et)
 
+-- Naturality of `splitᴱ` under an ambient renaming: the renaming acts on the
+-- eternal base (`restrict-ren`) while the split isolates it, so the two commute.
+-- Recursion on the extension; the lock case is `costrᵉ-nat` fed by the eternal
+-- morphism `restrict-ren-mor`, the `∷` case is `swap₂₃-nat`.
+
+splitᴱ-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Γ'x : Ctx)
+           → splitᴱ Γ Γ'x ∘ᵐ ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ
+           ≈ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ splitᴱ Γ' Γ'x
+splitᴱ-nat r [] =
+  ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+  (≈ᵐ-trans (⟨ ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym (∘ᵐ-identityˡ _))
+             , ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)) ⟩ᵐ-cong)
+            (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))
+splitᴱ-nat r (Γ'x ∷ A) =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-cong (splitᴱ-nat r Γ'x) ≈ᵐ-refl))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (swap₂₃-nat _))
+            (∘ᵐ-assoc _ _ _))))))
+splitᴱ-nat {Γ} {Γ'} r (Γ'x ⟨ ρ' ⟩) =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (splitᴱ-nat r Γ'x)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (costrᵉ-nat (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ' ⟧ᴱ-Eternalᵒ)
+                        ⟦ restrict-ren r ⟧ʳ (restrict-ren-mor r)))
+            (∘ᵐ-assoc _ _ _))))))
+
+splitᴱ⁻¹-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Γ'x : Ctx)
+             → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ ∘ᵐ splitᴱ⁻¹ Γ' Γ'x
+             ≈ᵐ splitᴱ⁻¹ Γ Γ'x ∘ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ
+splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (splitᴱ⁻¹-iso Γ Γ'x)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (splitᴱ-nat r Γ'x)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (splitᴱ-iso Γ' Γ'x)))
+            (∘ᵐ-congʳ (∘ᵐ-identityʳ _))))))))
+
+-- The lift `_⋉_` commutes with an ambient renaming: it acts on the extension,
+-- the renaming on the base, so they pass each other. This is what carries
+-- `CtxParamʰ` through `renᶜ`.
+
+⋉-ren : ∀ {Γ Γ' Γ'a Γ'b} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+      → ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ ∘ᵐ _⋉_ Γ' {Γ'a} {Γ'b} ρ
+      ≈ᵐ _⋉_ Γ {Γ'a} {Γ'b} ρ ∘ᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ
+⋉-ren {Γ} {Γ'} {Γ'a} {Γ'b} r ρ =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (splitᴱ⁻¹-nat r Γ'b))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ mid-comm))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (splitᴱ-nat r Γ'a))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))
+  where
+    mid-comm = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+               (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
+                                     (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
+                         (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
+
 -- Naturality of the eternal projection: it slides through a renaming, turning
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock
 -- case uses `restrict-ren-mor` to carry the restricted renaming past `extᵉ`.
