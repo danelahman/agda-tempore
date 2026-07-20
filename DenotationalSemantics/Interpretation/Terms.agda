@@ -149,13 +149,26 @@ mutual
   Paramᶜ (coerce p M)     = Paramᶜ M
   -- the handled computation, the return clause, every operation clause, and —
   -- the actual content — the clauses' uniformity in the residual grade
-  Paramᶜ (handle_`with_`in {B = B} M H N) =
+  Paramᶜ {Γ} (handle_`with_`in {B = B} M H N) =
     Paramᶜ M × Paramᶜ N ×
-    Σ[ pH ∈ (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ')) ]
-      (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
-         → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
-             ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-         ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ'))
+    Σ[ pH ∈ (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ')) ] EffUniformʰ {Γ} {B} H pH
+
+  -- Naturality of a handler's clauses in the residual effect `ε''`: the clause
+  -- commutes with sub-effecting the boxed continuation's residual, landing on
+  -- `·ₑ-monoʳ`. This is what `Paramᶜ` carries for a `handle` and what becomes the
+  -- semantic handler's `Monoᵀ` field (built by `⟦_⟧ʰᵗ`). Named here so the two —
+  -- the certificate and `⟦_⟧ʰᵗ`'s premise — are one condition, not two copies.
+  EffUniformʰ : ∀ {Γ B}
+              → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+                   → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+              → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+              → Set
+  EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
+               → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
+                   ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+               ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ')
 
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
   ⟦ var f x  ⟧ᵛᵗ _ = var-morphism f x
@@ -206,10 +219,7 @@ mutual
                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
         → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-        → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
-             → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
-                 ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ'))
+        → EffUniformʰ {Γ} {B} H pH
         → Handlerᵀ ⟦ Γ ᴱ ⟧ᶜᵗˣ ⟦ B ⟧ᵛ
   ⟦_⟧ʰᵗ {Γ} {B} H pH uH =
       (λ op ε'' → ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])

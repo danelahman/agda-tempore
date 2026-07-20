@@ -125,23 +125,6 @@ Uniformʰ {Γ} H pH =
       ∘ᵐ mapˣᵐ (mapˣᵐ ρ idᵐ) ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
   ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ')
 
--- Naturality in the residual effect `ε''`: the clause commutes with
--- sub-effecting the continuation's residual, landing on `·ₑ-monoʳ`. This is the
--- instance the interpretation itself needs — it is what `Paramᶜ` carries for a
--- `handle`, and what becomes the handler's `Monoᵀ` field.
-
-EffUniformʰ : ∀ {Γ B}
-            → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                 → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-            → Set
-EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
-             → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
-                 ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ')
-
 -- Naturality in the context extension `Γ'`. Quantifying over an arbitrary
 -- reindexing `ρ` is what says the clause reads nothing of `Γ'`; it is
 -- satisfiable exactly when `⟦ Γ ᴱ ⟧ᶜᵗˣ` is terminal, i.e. for the runtime
