@@ -58,15 +58,6 @@ sub-ε-substˢ refl q q' t = sub-≈ (≈ᵗ-refl t)
               → ε-substˢ e (sub q t) ≈ᵗ sub q' t
 ε-substˢ-sub' q refl q' t = sub-≈ (≈ᵗ-refl t)
 
--- The fold commutes with a grade transport.
-
-T-alg-ε-substˢ : ∀ {P A ε₁ ε₂ ε' w} → (bc : Eternalᵒ P) → (h : Handlerˢ P A)
-               → (pv : carrier P w) → (e : ε₁ ≡ ε₂)
-               → (t : Tˢ (Tᵒ A ε') ε₁ w)
-               → T-alg-of-handlerˢ bc h pv (ε-substˢ e t)
-               ≡ ε-substˢ (cong (_·ₑ ε') e) (T-alg-of-handlerˢ bc h pv t)
-T-alg-ε-substˢ bc h pv refl t = refl
-
 -- THE HANDLER IS UNIFORM IN ITS GRADE INDEX
 --
 -- The algebra law applies the handler's clause at two grades that are only

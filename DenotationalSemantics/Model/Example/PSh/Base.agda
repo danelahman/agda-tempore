@@ -25,7 +25,7 @@ open import DenotationalSemantics.Model.World
 
 module DenotationalSemantics.Model.Example.PSh.Base (GS : GradeSystem) (Wld : World (GradeSystem.RGrade GS)) where
 
-open import Data.Empty using (⊥)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
@@ -174,6 +174,12 @@ initialᵖ = pmap (λ ()) (λ ()) (λ p ())
 
 initialᵖ-unique : ∀ {A} {f : 𝟘ᵖ →ᵖ A} → f ≈ᵖ initialᵖ
 initialᵖ-unique ()
+
+-- The initial presheaf is strict: its carrier is empty at every world, so an
+-- `X →ᵖ 𝟘ᵖ` empties `X`'s carriers too.
+
+𝟘ᵖ-strict : ∀ {X A} → X →ᵖ 𝟘ᵖ → (f g : X →ᵖ A) → f ≈ᵖ g
+𝟘ᵖ-strict z f g x = ⊥-elim (app z x)
 
 -- Binary products
 
@@ -360,6 +366,7 @@ PShCat = record
   ; 𝟘ᵐ           = 𝟘ᵖ
   ; initialᵐ     = initialᵖ
   ; initialᵐ-unique = λ {A} {f} → initialᵖ-unique {f = f}
+  ; 𝟘ᵐ-strict      = 𝟘ᵖ-strict
   ; _×ᵐ_         = _×ᵖ_
   ; fstᵐ         = fstᵖ
   ; sndᵐ         = sndᵖ

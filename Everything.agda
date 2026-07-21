@@ -198,6 +198,14 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence
 open import DenotationalSemantics.Interpretation.State
 
+---- Soundness of the equational theory with respect to the interpretation
+
+open import EquationalTheory.Soundness.Base
+open import EquationalTheory.Soundness.Parametric
+open import EquationalTheory.Soundness.Values
+open import EquationalTheory.Soundness.Modal
+open import EquationalTheory.Soundness.Coerce
+
 ---- Soundness of the operational semantics
 
 open import DenotationalSemantics.Soundness.Preservation.Base

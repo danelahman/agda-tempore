@@ -269,3 +269,16 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congˡ (uH op q []))
                   (∘ᵐ-assoc _ _ _)))))
 
+
+-- The syntactic grade coercion `ε-subst` denotes the monad's `ε-substᵀ`. It
+-- carries no computational content, so it also transports a term's
+-- parametricity certificate.
+
+ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε)
+         → Paramᶜ M → Paramᶜ (ε-subst e M)
+ε-substᴾ refl M p = p
+
+sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
+              → ⟦ ε-subst e M ⟧ᶜᵗ (ε-substᴾ e M pM) ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-ε-subst refl M pM =
+  ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))

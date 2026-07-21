@@ -47,7 +47,7 @@ module DenotationalSemantics.Model.Monad
          (GTy : GroundTypes S Cat Fut)
        where
 
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
 
 open import Util.Equality
@@ -190,6 +190,31 @@ record Monad : Set₁ where
     opᵀ-≤ : ∀ {A ε ε'} → (op : Op) → (p : ε ≾ₑ ε')
           → opᵀ {A} {ε'} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ p)))
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ opᵀ {A} {ε} op
+
+    -- Delays *are* the passage of time, not observable nodes: a delay by no
+    -- time is no delay, and two consecutive delays are the one delay by the
+    -- sum. In the zero case the box `[ of-natʳ 0 ]` is the unit-graded box,
+    -- whose counit `ε` extracts; in the sum case the box `[ of-natʳ (τ₁ + τ₂) ]`
+    -- splits into the two delays' boxes by the comultiplication `δ`. Both are
+    -- stated with the grade relaxation `[]-≤` at the reflexive witness of the
+    -- grade algebra's `of-nat` laws, since `of-natʳ` is only *propositionally*
+    -- a monoid morphism.
+
+    delayᵀ-zero : ∀ {A ε'}
+                → delayᵀ {A} {ε'} 0
+                ≈ᵐ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-natᵉ-zero)
+                                        (·ₑ-identityˡ ε')))
+                  ∘ᵐ ε
+                  ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-natʳ-zero))
+
+    delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : ℕ)
+                → delayᵀ {A} {of-natᵉ τ₂ ·ₑ ε'} τ₁
+                    ∘ᵐ [ of-natʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
+                    ∘ᵐ δ
+                    ∘ᵐ []-≤ (≾ᵣ-reflexive (sym of-natʳ-plus))
+                ≈ᵐ ε-substᵀ (trans (cong (_·ₑ ε') of-natᵉ-plus)
+                                   (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε'))
+                  ∘ᵐ delayᵀ {A} {ε'} (τ₁ + τ₂)
 
     -- Operations and delays are algebraic
 

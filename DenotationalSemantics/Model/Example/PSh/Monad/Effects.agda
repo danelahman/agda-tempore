@@ -24,7 +24,7 @@ module DenotationalSemantics.Model.Example.PSh.Monad.Effects
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_; proj₁; proj₂)
 
 open import Util.Equality
@@ -71,6 +71,30 @@ opᵀ op = pmap
                                (fun-nat (fun x q) ⊑-refl r y))) })
   (λ { (ev , ex) → op-≈ ev (λ q y → ex q ⊑-refl y) })
   (λ { p (v , x) → op-≈ (≈-refl ⟦ param op ⟧ᵍ) (λ q y → ≈ᵗ-refl _) })
+
+-- Delays are the passage of time: a zero delay is no delay (its box is the
+-- unit-graded one, whose counit `ε` extracts), and consecutive delays merge
+-- (the merged box splits by `δ`). Both are the corresponding rules of `_≈ᵗ_`,
+-- the accessibility witnesses being reconciled by `[]-fun-irr`.
+
+delayᵀ-zero : ∀ {A ε'}
+            → delayᵀ {A} {ε'} 0
+            ≈ᵖ ε-substᵀ (sym (trans (cong (_·ₑ ε') of-natᵉ-zero) (·ₑ-identityˡ ε')))
+              ∘ᵖ ε
+              ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-natʳ-zero))
+delayᵀ-zero x =
+  ≈ᵗ-trans (delay-zero {q₀ = ⊑-delay0} delay0ᵉ)
+           (ε-substˢ-congᵗ delay0ᵉ ([]-fun-irr x _ _))
+
+delayᵀ-plus : ∀ {A ε'} → (τ₁ τ₂ : ℕ)
+            → delayᵀ {A} {of-natᵉ τ₂ ·ₑ ε'} τ₁
+                ∘ᵖ [ of-natʳ τ₁ ]ᶠ (delayᵀ {A} {ε'} τ₂)
+                ∘ᵖ δ
+                ∘ᵖ []-≤ (≾ᵣ-reflexive (sym of-natʳ-plus))
+            ≈ᵖ ε-substᵀ (trans (cong (_·ₑ ε') of-natᵉ-plus)
+                               (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε'))
+              ∘ᵖ delayᵀ {A} {ε'} (τ₁ + τ₂)
+delayᵀ-plus τ₁ τ₂ x = delay-plus (λ q₁ q₂ → []-fun-irr x _ _) delay+ᵉ
 
 -- Naturality
 

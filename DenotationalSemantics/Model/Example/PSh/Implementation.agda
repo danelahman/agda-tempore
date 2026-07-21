@@ -28,7 +28,7 @@ module DenotationalSemantics.Model.Example.PSh.Implementation
                               (F.PShFut (LanguageSpec.Grades S) Wld))
        where
 
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; _+_)
 open import Data.Product using (_,_)
 
 open import Util.Equality
@@ -116,14 +116,31 @@ module _ (op-semᵐ : OpSemᵐ) where
         (≈ᵗ-trans (kc q (semᵃ-cong op q ev)) (ek q (semᵃ op q v'))))
     implˢ-cong (delay-≈ ek) = tick-≈ (λ q → implˢ-cong (ek q))
     implˢ-cong (sub-≈ et)   = sub-≈ (implˢ-cong et)
-    implˢ-cong sub-u        = sub-u
-    implˢ-cong sub-∘        = sub-∘
+    implˢ-cong sub-u        = sub-uᵏ _ _
+    implˢ-cong sub-∘        = sub-∘ᵏ _ _ _ _
     implˢ-cong sub-delay    = sub-tick
     implˢ-cong sub-op       = sub-tick
+    -- a delay implements as a tick, so the two delay collapses implement as
+    -- the two tick collapses; the split witnesses agree by `⊑-irrelevant`
+    implˢ-cong (delay-zero {k = k} {q₀ = q₀} e) =
+      ≈ᵏ-trans (tick-u {q₀ = q₀} of-natᵉ-zero e)
+               (≡→≈ᵏ (sym (implˢ-ε-substˢ e (k q₀))))
+    implˢ-cong (delay-plus {τ₁ = τ₁} {τ₂ = τ₂} {k = k} {kn = kn} hk e) =
+      ≈ᵏ-trans (tick-· of-natᵉ-plus
+                 (λ q₁ q₂ → ≈ᵏ-trans (implˢ-cong (hk q₁ q₂))
+                              (≡→≈ᵏ (cong (λ z → implˢ (k z)) (⊑-irrelevant _ _))))
+                 e)
+               (≡→≈ᵏ (sym (implˢ-ε-substˢ e (delay-node (τ₁ + τ₂) k kn))))
     implˢ-cong (≈ᵗ-sym et)  = ≈ᵏ-sym (implˢ-cong et)
     implˢ-cong (≈ᵗ-trans et et') =
       ≈ᵏ-trans (implˢ-cong et) (implˢ-cong et')
 
+
+    -- The implementation commutes with a grade transport.
+
+    implˢ-ε-substˢ : ∀ {A ε ε' w} → (e : ε ≡ ε') → (t : Tˢ A ε w)
+                   → implˢ (ε-substˢ e t) ≡ ε-substᵏˢ e (implˢ t)
+    implˢ-ε-substˢ refl t = refl
 
     implˢ-nat : ∀ {A ε w w'} (p : w ⊑[ uᵣ ] w') (t : Tˢ A ε w)
               → implˢ (transportᵗ p t) ≈ᵏ transportᵏ p (implˢ t)

@@ -85,6 +85,15 @@ record Category : Set₂ where
     initialᵐ : ∀ {A} → 𝟘ᵐ →ᵐ A
     initialᵐ-unique : ∀ {A} {f : 𝟘ᵐ →ᵐ A} → f ≈ᵐ initialᵐ
 
+    -- The initial object is *strict*: an object admitting a map to `𝟘ᵐ` is
+    -- itself initial, so any two maps out of it agree. This is what the
+    -- calculus's eta rule for `absurd` needs — with an empty-typed value in
+    -- scope, every computation of the same type is the same one — and
+    -- `initialᵐ-unique` alone does not give it, since that only speaks about
+    -- maps *out of* `𝟘ᵐ`.
+
+    𝟘ᵐ-strict : ∀ {X A} → X →ᵐ 𝟘ᵐ → (f g : X →ᵐ A) → f ≈ᵐ g
+
   -- BINARY PRODUCTS
 
   field

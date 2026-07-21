@@ -72,13 +72,6 @@ open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fu
 
 open import DenotationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj GTy Mon GE public
 
--- Transport along an equality of *grades* is the grade relaxation at the
--- reflexive witness.
-
-eq-ren-grade : ∀ {Γ ρ ρ'} → (g : ρ ≡ ρ')
-             → ⟦ eq-ren (cong (Γ ⟨_⟩) g) ⟧ʳ ≈ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} (≾ᵣ-reflexive (sym g))
-eq-ren-grade refl = ≈ᵐ-sym (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl)
-
 -- SPLITTING THE ENVIRONMENT BOX
 --
 -- A box available `ρ₁`-far ahead, where `ρ₁ ⊒ σ ·ᵣ ρ₃`, can be transposed in
@@ -247,14 +240,6 @@ box-η {X} {ρ₁} {ρ₃} a w =
       ∙ ⟨⟩-≤-irr _ w
 
 -- Interpreting an effect-grade coercion is the transport `ε-substᵀ`.
-
-ε-substᴾ : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε)
-         → Paramᶜ M → Paramᶜ (ε-subst e M)
-ε-substᴾ refl M p = p
-
-sound-ε-subst : ∀ {Γ A ε ε'} → (e : ε ≡ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
-              → ⟦ ε-subst e M ⟧ᶜᵗ (ε-substᴾ e M pM) ≈ᵐ ε-substᵀ e ∘ᵐ ⟦ M ⟧ᶜᵗ pM
-sound-ε-subst refl M pM = ≈ᵐ-sym (∘ᵐ-congˡ ε-substᵀ-refl ∙ ∘ᵐ-identityˡ _)
 
 -- SEQ-STEP and HANDLE-STEP
 --

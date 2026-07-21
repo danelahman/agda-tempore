@@ -72,6 +72,14 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
 ⟦ ⟨⟩-ext-ren et ⟧ʳ       = Eternalᵒ.strᵉ (eternalᵛ-Eternalᵒ et)
 
+-- Transport along an equality of *grades* is the grade relaxation at the
+-- reflexive witness.
+
+eq-ren-grade : ∀ {Γ ρ ρ'} → (g : ρ ≡ ρ')
+             → ⟦ eq-ren (cong (Γ ⟨_⟩) g) ⟧ʳ ≈ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} (≾ᵣ-reflexive (sym g))
+eq-ren-grade refl =
+  ≈ᵐ-sym (≈ᵐ-trans (⟨⟩-≤-irr _ ≾ᵣ-refl) ⟨⟩-≤-refl)
+
 -- Reading a morphism of the `⟨ ρ ⟩X` factor back through the eternal strength:
 -- `strᵉ` cancels against `⟨ ρ ⟩ᶠ fstᵐ`, leaving the plain first projection. The
 -- shared core of the `⟨⟩-ext-ren` cases below (both wrap this with an extra

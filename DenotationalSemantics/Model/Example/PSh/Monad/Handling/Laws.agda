@@ -236,9 +236,10 @@ T-alg-of-handlerˢ-≤ⁱ {ε₁' = ε₁'} {ε₂' = ε₂'} bc h p pv (delay-n
                             (·ₑ-monoʳ-≾ₑ (·ₑ-monoʳ-≾ₑ p)) (·ₑ-monoʳ-≾ₑ p) _)))
 T-alg-of-handlerˢ-≤ⁱ bc h p pv (sub p₀ t) =
   ≈ᵗ-trans (sub-≈ (T-alg-of-handlerˢ-≤ⁱ bc h p pv t))
-           (≈ᵗ-trans (sub-∘ {e' = ·ₑ-monoˡ-≾ₑ p₀}
-                            {e'' = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)})
-                     (≈ᵗ-sym (sub-∘ {e'' = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)})))
+           (≈ᵗ-trans (sub-∘ᵗ _ (·ₑ-monoˡ-≾ₑ p₀)
+                            (≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)) _)
+                     (≈ᵗ-sym (sub-∘ᵗ _ _
+                            (≾ₑ-trans (·ₑ-monoʳ-≾ₑ p) (·ₑ-monoˡ-≾ₑ p₀)) _)))
 
 T-alg-of-handlerᵀ-≤ⁱ : ∀ {P A ε ε₁' ε₂'} (bc : Eternalᵒ P) (h : Handlerˢ P A)
                        (p : ε₁' ≾ₑ ε₂')
