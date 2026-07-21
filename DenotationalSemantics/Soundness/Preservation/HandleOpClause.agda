@@ -94,148 +94,22 @@ assoc⁻¹-⟨⟩ a b c =
         , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong
     , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong
 
--- HANDLER UNIFORMITY, IN ONE SHAPE
---
--- A clause is quantified over two indices, the context extension `Γ'` and the
--- residual effect `ε''`, and its interpretation
---
---   ⟦ H op ε'' Γ' ⟧ᶜᵗ : ⟦ Γ ᴱ ++ᶜ Γ' ∷ pt ∷ kt ε'' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ B ⟧ᵛ (op-grade op ·ₑ ε'')
---
--- is a functor of both: covariant in `ε''` in the domain (the continuation's
--- residual) and in the codomain (the clause's own effect), covariant in `Γ'` in
--- the domain and *constant* in `Γ'` in the codomain.
---
--- Uniformity is naturality in these indices: reindexing an index of the clause
--- is reindexing its meaning. `Uniformʰ` is the single square, moving both at
--- once; `EffUniformʰ` and `CtxUniformʰ` are its two instances (`ρ = idᵐ`, resp.
--- `q = ≾ₑ-refl`), and `uniformʰ` pastes them back together. The `Γ'` square has
--- no coercion on the right precisely because the codomain is constant there.
-
-Uniformʰ : ∀ {Γ B}
-         → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-              → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-         → (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-         → Set
-Uniformʰ {Γ} H pH =
-  ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → {Γ' Γ'' : Ctx}
-    → (ρ : ⟦ Γ ᴱ ++ᶜ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ++ᶜ Γ'' ⟧ᶜᵗˣ)
-  → ⟦ H op ε₂'' Γ'' ⟧ᶜᵗ (pH op ε₂'' Γ'')
-      ∘ᵐ mapˣᵐ (mapˣᵐ ρ idᵐ) ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-  ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ')
-
--- Naturality in the context extension `Γ'`. Quantifying over an arbitrary
--- reindexing `ρ` is what says the clause reads nothing of `Γ'`; it is
--- satisfiable exactly when `⟦ Γ ᴱ ⟧ᶜᵗˣ` is terminal, i.e. for the runtime
--- contexts (`Γ ᴱ ≡ []`) that `HANDLE-OP` fires a clause in. Taking `Γ'' = []`
--- and `ρ = term∅` recovers the `[]`-clause the model uses (`ctx-uniform-[]`);
--- conversely that instance implies all the others, by terminal uniqueness.
-
-CtxUniformʰ : ∀ {Γ B}
-            → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                 → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-            → Set
-CtxUniformʰ {Γ} H pH =
-  ∀ (op : Op) (ε'' : E) {Γ' Γ'' : Ctx}
-    → (ρ : ⟦ Γ ᴱ ++ᶜ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ++ᶜ Γ'' ⟧ᶜᵗˣ)
-  → ⟦ H op ε'' Γ'' ⟧ᶜᵗ (pH op ε'' Γ'') ∘ᵐ mapˣᵐ (mapˣᵐ ρ idᵐ) idᵐ
-  ≈ᵐ ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
-
--- Reindexing an exponential by an identity-up-to-`≈ᵐ` map is the identity.
-map⇒ᵐ-id : ∀ {A B} {h : B →ᵐ B} → h ≈ᵐ idᵐ → map⇒ᵐ (idᵐ {A}) h ≈ᵐ idᵐ
-map⇒ᵐ-id h≈ =
-    curryᵐ-cong (  ∘ᵐ-congˡ h≈
-                 ∙ ∘ᵐ-identityˡ _
-                 ∙ ∘ᵐ-congʳ mapˣᵐ-idᵐ
-                 ∙ ∘ᵐ-identityʳ _)
-  ∙ uncurryᵐ-curryᵐ-iso idᵐ
-
--- The two instances, and the paste that recovers the joint square: reindex the
--- extension first (at `ε₂''`), then the residual (at `Γ'`).
-
-uniformʰ-eff : ∀ {Γ B H pH} → Uniformʰ {Γ} {B} H pH → EffUniformʰ {Γ} H pH
-uniformʰ-eff u op q Γ' =
-    ∘ᵐ-congʳ (mapˣᵐ-cong (≈ᵐ-sym mapˣᵐ-idᵐ) ≈ᵐ-refl)
-  ∙ u op q {Γ'} {Γ'} idᵐ
-
-uniformʰ-ctx : ∀ {Γ B H pH} → Uniformʰ {Γ} {B} H pH → CtxUniformʰ {Γ} H pH
-uniformʰ-ctx u op ε'' ρ =
-    ∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl
-                (≈ᵐ-sym (  []-congᶠ (map⇒ᵐ-id (T-≤-refl ≾ₑ-refl))
-                         ∙ []-idᵐ)))
-  ∙ u op ≾ₑ-refl ρ
-  ∙ ∘ᵐ-congˡ (T-≤-refl _)
-  ∙ ∘ᵐ-identityˡ _
-
-uniformʰ : ∀ {Γ B H pH}
-         → EffUniformʰ {Γ} {B} H pH → CtxUniformʰ {Γ} H pH → Uniformʰ {Γ} H pH
-uniformʰ {pH = pH} ue uc op q {Γ'} {Γ''} ρ =
-    ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘ _ _ _ _
-                      ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (uc op _ ρ)
-  ∙ ue op q Γ'
-
--- The `[]`-instance the model's clause is read at.
-
+-- The `[]`-instance the model's clause is read at: at a runtime config
+-- (`Γ ᴱ ≡ []`) the lifted terminal map `Γ ⋉ terminalᵐ` and the terminal
+-- factoring `term∅` agree by `∅-terminal`, so the naturality square collapses
+-- to the `[]`-clause. This is the only instance `clause-sound` needs.
 ctx-uniform-[] : ∀ {Γ B} → (e : Γ ᴱ ≡ [])
-               → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                    → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-               → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-               → CtxUniformʰ {Γ} H pH
-               → ∀ op ε'' Γ'
-               → ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
-               ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
-                    ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
-ctx-uniform-[] {Γ} e H pH u op ε'' Γ' = ≈ᵐ-sym (u op ε'' (term∅ {Γ} e))
-
--- … and conversely, so the naturality form is exactly the old `[]`-form, not a
--- stronger assumption: any two maps into `⟦ Γ ᴱ ⟧ᶜᵗˣ` agree (`∅-terminal`), so
--- reindexing by an arbitrary `ρ` first changes nothing.
-
-ctx-uniform-from-[] : ∀ {Γ B} → (e : Γ ᴱ ≡ [])
-                    → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                         → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                    → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-                    → (∀ op ε'' Γ'
-                         → ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
-                         ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
-                              ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ)
-                    → CtxUniformʰ {Γ} H pH
-ctx-uniform-from-[] {Γ} e H pH u₀ op ε'' ρ =
-    ∘ᵐ-congˡ (u₀ op ε'' _)
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘ _ _ _ _
-              ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                            ∙ mapˣᵐ-cong (∅-terminal {Γ} e _ _) (∘ᵐ-identityˡ _))
-                           (∘ᵐ-identityˡ _))
-  ∙ ≈ᵐ-sym (u₀ op ε'' _)
-
--- The `[]`-instance derived from the TOTAL parametricity certificate: at a
--- runtime config (`Γ ᴱ ≡ []`) the lifted terminal map `Γ ⋉ terminalᵐ` and the
--- terminal factoring `term∅` agree by `∅-terminal`, so the naturality square
--- collapses to exactly the `[]`-clause the model reads. This is what lets
--- `CtxParamʰ` (in `Paramᶜ`) replace the runtime-only `CtxUniformʰ` premise.
-ctx-param-[] : ∀ {Γ B} → (e : Γ ᴱ ≡ [])
              → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
                   → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
              → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-             → CtxParamʰ {Γ} H pH
+             → CtxUniformʰ {Γ} H pH
              → ∀ op ε'' Γ'
              → ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
              ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
                   ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
-ctx-param-[] {Γ} e H pH cH op ε'' Γ' =
+ctx-uniform-[] {Γ} e H pH cH op ε'' Γ' =
   ≈ᵐ-sym (  ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (∅-terminal {Γ} e _ _) ≈ᵐ-refl) ≈ᵐ-refl)
           ∙ cH op ε'' {Γ'} {[]} (terminalᵐ {⟦ Γ' ⟧ᶜᵗˣ}))
 
@@ -246,7 +120,7 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
              → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
              → (uH : EffUniformʰ {Γ} H pH)
-             → (cH : CtxParamʰ {Γ} H pH)
+             → (cH : CtxUniformʰ {Γ} H pH)
              → (V : Γ ⊢V⦂ type-of-gtype (param op)) → (pV : Paramᵛ V)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
@@ -313,7 +187,7 @@ clause-sound {Γ} {B} {ε''} e op H pH uH cH V pV W =
         ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' []) ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
     mid =
         subst-clause-interp {D = [] ∷ pt ∷ kt} eq (H op ε'' Γ) (pH op ε'' Γ)
-      ∙ ∘ᵐ-congˡ (ctx-param-[] {Γ = Γ} e H pH cH op ε'' Γ)
+      ∙ ∘ᵐ-congˡ (ctx-uniform-[] {Γ = Γ} e H pH cH op ε'' Γ)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ
           (   ∘ᵐ-congʳ (eq-ren-irr (cong (_++ᶜ ([] ∷ pt ∷ kt)) eq)

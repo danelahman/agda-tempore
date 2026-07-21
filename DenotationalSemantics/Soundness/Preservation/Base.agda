@@ -68,7 +68,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; CtxUniformʰ; clause-sound)
+  using (term∅; ∅-terminal; clause-sound)
 
 -- The `Eternalᵒ` on `⟦ Γ ᴱ ⟧` carried by every `handle` interpretation: the
 -- eternal-parameter object of the handler's fold.
@@ -602,7 +602,7 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (pV : Paramᵛ V) → (pN : Paramᶜ N)
                  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
                  → (uH : EffUniformʰ {Γ} H pH)
-                 → (cH : CtxParamʰ {Γ} H pH)
+                 → (cH : CtxUniformʰ {Γ} H pH)
                  → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH , cH)
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N

@@ -483,7 +483,7 @@ splitᴰ⁻¹-iso Δ eΔ (Γ' ⟨ ρ ⟩) =
             (≈ᵐ-trans (⟨⟩-congᶠ (splitᴰ⁻¹-iso Δ eΔ Γ')) ⟨⟩-idᵐ)
 
 -- The `Γ`-form wrappers: instantiate the base at `Δ = Γ ᴱ`, `eΔ = ⟦ Γ ⟧ᴱ`.
--- Everything downstream (`Renaming`, `CtxParamʰ`) is stated against these.
+-- Everything downstream (`Renaming`, `CtxUniformʰ`) is stated against these.
 splitᴱ : (Γ Γ' : Ctx) → ⟦ Γ ᴱ ++ᶜ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ ×ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
 splitᴱ Γ = splitᴰ (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ)
 
@@ -541,7 +541,7 @@ _⋉_ Γ {Γ'} {Γ''} ρ = ⋉ᴰ (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ) {Γ'} {Γ'
 
 -- `Γ`-form functoriality laws, as wrappers. `⟦_⟧ᶜᵗˣ` is not injective, so the
 -- extensions can only be pinned by an occurrence outside `⟦_⟧` — the clause
--- application at the `CtxParamʰ` use site. These standalone laws lack that
+-- application at the `CtxUniformʰ` use site. These standalone laws lack that
 -- anchor, so they take the extensions explicitly.
 ⋉-cong : (Γ Γ' Γ'' : Ctx) → {ρ ρ' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ}
        → ρ ≈ᵐ ρ' → _⋉_ Γ {Γ'} {Γ''} ρ ≈ᵐ _⋉_ Γ {Γ'} {Γ''} ρ'

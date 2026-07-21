@@ -997,21 +997,21 @@ Lsub-clause et x W Γ' pt kt e' =
 -- `⋉ᴰ-eq` (fed `Eternalᵒ-coh` to relate the two bases' eternal structures)
 -- commutes it past the lift. Mirrors `subst-clauses-uniform`, with
 -- `mapˣ²-comm (⋉ᴰ-eq …)` in place of `mapˣ-swapᵐ`.
-subst-clauses-ctxparam :
+subst-clauses-ctxuniform :
   ∀ {Γ Γ₀ B} → (e : Γ ᴱ ≡ Γ₀ ᴱ)
   → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
        → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-  → CtxParamʰ {Γ} H pH
-  → CtxParamʰ {Γ₀}
+  → CtxUniformʰ {Γ} H pH
+  → CtxUniformʰ {Γ₀}
       (λ op ε'' Γ' → subst (λ Γ₁ → Γ₁ ++ᶜ Γ' ∷ type-of-gtype (param op)
                                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                            e (H op ε'' Γ'))
       (λ op ε'' Γ' → substᴾᶜ e (H op ε'' Γ') (pH op ε'' Γ'))
-subst-clauses-ctxparam {Γ} {Γ₀} {B} e H pH cH op ε'' {Γ'a} {Γ'b} ρ =
+subst-clauses-ctxuniform {Γ} {Γ₀} {B} e H pH cH op ε'' {Γ'a} {Γ'b} ρ =
   ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp e (H op ε'' Γ'b) (pH op ε'' Γ'b)))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ
@@ -1124,7 +1124,7 @@ mutual
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
     , (λ op ε'' Γ' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'' Γ') (pH op ε'' Γ'))
     , subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
-    , subst-clauses-ctxparam {Γ} {split-l x ++ᶜ split-r x} {B} (ᴱ-drop-split ¬et x) H pH cH
+    , subst-clauses-ctxuniform {Γ} {split-l x ++ᶜ split-r x} {B} (ᴱ-drop-split ¬et x) H pH cH
   ... | yes et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW

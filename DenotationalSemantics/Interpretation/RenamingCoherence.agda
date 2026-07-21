@@ -180,7 +180,7 @@ mutual
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
     , (λ op ε'' Γ'' → renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
     , ren-clauses-uniform (restrict-ren r) H pH uH
-    , ren-clauses-ctxparam r H pH cH
+    , ren-clauses-ctxuniform r H pH cH
 
   -- Renaming a clause family's ambient context preserves the clauses'
   -- uniformity in the residual grade: the renaming acts on the ambient context
@@ -217,18 +217,18 @@ mutual
   -- Renaming a clause family preserves its parametricity in the extension:
   -- the renaming acts on the eternal base, `⋉ ρ` on the extension, and `⋉-ren`
   -- (lifted by `⋉-ren²`) passes them, after which the original `cH` applies.
-  ren-clauses-ctxparam :
+  ren-clauses-ctxuniform :
     ∀ {Γ Γ' B} → (r : Ren Γ Γ')
     → (H : (op : Op) → (ε'' : E) → (Γ'' : Ctx)
          → Γ ᴱ ++ᶜ Γ'' ∷ type-of-gtype (param op)
               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
     → (pH : ∀ op ε'' Γ'' → Paramᶜ (H op ε'' Γ''))
-    → CtxParamʰ {Γ} {B} H pH
-    → CtxParamʰ {Γ'} {B}
+    → CtxUniformʰ {Γ} {B} H pH
+    → CtxUniformʰ {Γ'} {B}
         (λ op ε'' Γ'' → C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ''))
         (λ op ε'' Γ'' → renᶜ (cong-ren (restrict-ren r)) (H op ε'' Γ'') (pH op ε'' Γ''))
-  ren-clauses-ctxparam r H pH cH op ε'' {Γ'a} {Γ'b} ρ =
+  ren-clauses-ctxuniform r H pH cH op ε'' {Γ'a} {Γ'b} ρ =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-ren (restrict-ren r))
                           (H op ε'' Γ'b) (pH op ε'' Γ'b)))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

@@ -101,7 +101,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont; ren-ᴱ-∷≡restrict)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; CtxUniformʰ; Uniformʰ; uniformʰ; clause-sound)
+  using (term∅; ∅-terminal; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE public
 
@@ -287,7 +287,7 @@ stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH 
   , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
   , (λ op ε₃ Γ' → substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) (H op ε₃ Γ') (pH op ε₃ Γ'))
   , subst-clauses-uniform (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
-  , subst-clauses-ctxparam {toCtx S} {toCtx S'}
+  , subst-clauses-ctxuniform {toCtx S} {toCtx S'}
       (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH cH
 stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} {H = H} {N = N})
        pS ((pV , pM) , pN , pH , uH , cH) =
@@ -296,11 +296,11 @@ stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} 
     , (λ op' ε' Γ' → renᶜ (cong-ren (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))) (H op' ε' Γ') (pH op' ε' Γ'))
     , ren-clauses-uniform
         (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH
-    , subst (λ rr → CtxParamʰ {toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
+    , subst (λ rr → CtxUniformʰ {toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
                       (λ op' ε' Γ' → C-rename (cong-ren rr) (H op' ε' Γ'))
                       (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
             (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
-            (ren-clauses-ctxparam
+            (ren-clauses-ctxuniform
               (wk-ren {Γ = toCtx S ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
               H pH cH))
   , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)

@@ -318,7 +318,7 @@ handle-collapse : ∀ {Γ A B ε ε₂} → (e : Γ ᴱ ≡ [])
   → (pM : Paramᶜ M) → (pN : Paramᶜ N)
   → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
   → (uH : EffUniformʰ {Γ} H pH)
-  → (cH : CtxParamʰ {Γ} H pH)
+  → (cH : CtxUniformʰ {Γ} H pH)
   → ⟦ handle M `with H `in N ⟧ᶜᵗ (pM , pN , pH , uH , cH)
   ≈ᵐ Halg {ε₂ = ε₂} e H pH uH {ε}
        ∘ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ)
@@ -454,7 +454,7 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
   → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
   → (uH : EffUniformʰ {toCtx S} H pH)
-  → (cH : CtxParamʰ {toCtx S} H pH)
+  → (cH : CtxUniformʰ {toCtx S} H pH)
   → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
@@ -480,7 +480,7 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
                              (H op ε'' Γ') (pH op ε'' Γ'))
                       , subst-clauses-uniform
                           (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
-                      , subst-clauses-ctxparam {toCtx S} {toCtx S'}
+                      , subst-clauses-ctxuniform {toCtx S} {toCtx S'}
                           (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH cH)
                  ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
@@ -547,7 +547,7 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS p
 
     uH' = subst-clauses-uniform (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
 
-    cH' = subst-clauses-ctxparam {toCtx S} {toCtx S'}
+    cH' = subst-clauses-ctxuniform {toCtx S} {toCtx S'}
             (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH cH
 
     f : ⟦ toCtx S' ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ᴱ ⟧ᶜᵗˣ
@@ -898,7 +898,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                 → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
                 → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
                 → (uH : EffUniformʰ {Γ} H pH)
-                → (cH : CtxParamʰ {Γ} H pH)
+                → (cH : CtxUniformʰ {Γ} H pH)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                      ((pV , pM) , pN , pH , uH , cH)
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
@@ -925,11 +925,11 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                        , ren-clauses-uniform
                            (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))
                            H pH uH
-                       , subst (λ rr → CtxParamʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
+                       , subst (λ rr → CtxUniformʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
                                          (λ op' ε' Γ' → C-rename (cong-ren rr) (H op' ε' Γ'))
                                          (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
                                (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
-                               (ren-clauses-ctxparam
+                               (ren-clauses-ctxuniform
                                  (wk-ren {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
                                  H pH cH))
                      , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
@@ -998,11 +998,11 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH cH =
                , ren-clauses-uniform
                    (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))
                    H pH uH
-               , subst (λ rr → CtxParamʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
+               , subst (λ rr → CtxUniformʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
                                  (λ op' ε' Γ' → C-rename (cong-ren rr) (H op' ε' Γ'))
                                  (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
                        (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
-                       (ren-clauses-ctxparam
+                       (ren-clauses-ctxuniform
                          (wk-ren {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
                          H pH cH))
              , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)

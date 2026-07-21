@@ -152,7 +152,7 @@ mutual
   Paramᶜ {Γ} (handle_`with_`in {B = B} M H N) =
     Paramᶜ M × Paramᶜ N ×
     Σ[ pH ∈ (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ')) ]
-      (EffUniformʰ {Γ} {B} H pH × CtxParamʰ {Γ} {B} H pH)
+      (EffUniformʰ {Γ} {B} H pH × CtxUniformʰ {Γ} {B} H pH)
 
   -- Naturality of a handler's clauses in the residual effect `ε''`: the clause
   -- commutes with sub-effecting the boxed continuation's residual, landing on
@@ -174,18 +174,18 @@ mutual
   -- Naturality of the clauses in the extension `Γ'`: the clause family is a
   -- natural transformation on extensions — for a semantic map `ρ : Γ' → Γ''`,
   -- lifted under the eternal base by `_⋉_`, reindexing the domain equals the
-  -- clause at the smaller extension (codomain constant in `Γ'`). This is the
-  -- *parametric-in-Γ'* certificate; being over the eternal base it is total
-  -- (holds for every ambient `Γ`), and at a runtime config (`Γ ᴱ ≡ []`) it
-  -- specialises to what `HANDLE-OP` consumes (`term∅`, by terminal uniqueness).
-  CtxParamʰ : ∀ {Γ B}
+  -- clause at the smaller extension (codomain constant in `Γ'`). Acting only on
+  -- the extension, over the eternal base, it holds for every ambient `Γ`; at a
+  -- runtime config (`Γ ᴱ ≡ []`) it specialises to what `HANDLE-OP` consumes
+  -- (`term∅`, by terminal uniqueness).
+  CtxUniformʰ : ∀ {Γ B}
             → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
                  → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
             → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
             → Set
-  CtxParamʰ {Γ} H pH =
+  CtxUniformʰ {Γ} H pH =
     ∀ (op : Op) (ε'' : E) {Γ' Γ'' : Ctx}
       → (ρ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ)
     → ⟦ H op ε'' Γ'' ⟧ᶜᵗ (pH op ε'' Γ'')

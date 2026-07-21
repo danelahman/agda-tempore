@@ -111,7 +111,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
              → ⟦ H op' ε₂ Γ' ⟧ᶜᵗ (pH op' ε₂ Γ')
                  ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op') ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
              ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op' ε₁ Γ' ⟧ᶜᵗ (pH op' ε₁ Γ'))
-         (cH : CtxParamʰ {Γ} H pH)
+         (cH : CtxUniformʰ {Γ} H pH)
        where
 
   -- The reduct's clause family: `H` renamed along `ren-ᴱ-∷ A₀`, with the
@@ -128,14 +128,14 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
 
   uH' = ren-clauses-uniform (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀) H pH uH
 
-  -- `ren-clauses-ctxparam` is stated for the *full* renaming (via `restrict-ren`);
+  -- `ren-clauses-ctxuniform` is stated for the *full* renaming (via `restrict-ren`);
   -- here the base renaming is `ren-ᴱ-∷ A₀ = restrict-ren (wk-ren)`, so transport
   -- the `wk-ren` instance along `ren-ᴱ-∷≡restrict`.
-  cH' = subst (λ rr → CtxParamʰ {(Γ ⟨ ρ ⟩) ∷ A₀}
+  cH' = subst (λ rr → CtxUniformʰ {(Γ ⟨ ρ ⟩) ∷ A₀}
                         (λ op' ε₀ Γ' → C-rename (cong-ren rr) (H op' ε₀ Γ'))
                         (λ op' ε₀ Γ' → renᶜ (cong-ren rr) (H op' ε₀ Γ') (pH op' ε₀ Γ')))
               (sym (ren-ᴱ-∷≡restrict A₀))
-              (ren-clauses-ctxparam (wk-ren {Γ = Γ ⟨ ρ ⟩} {A = A₀}) H pH cH)
+              (ren-clauses-ctxuniform (wk-ren {Γ = Γ ⟨ ρ ⟩} {A = A₀}) H pH cH)
 
   handle-op-cont :
       ⟦ handle M `with H' `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ

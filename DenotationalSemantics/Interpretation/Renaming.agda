@@ -469,7 +469,7 @@ splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
 
 -- The lift `_⋉_` commutes with an ambient renaming: it acts on the extension,
 -- the renaming on the base, so they pass each other. This is what carries
--- `CtxParamʰ` through `renᶜ`.
+-- `CtxUniformʰ` through `renᶜ`.
 
 ⋉-ren : ∀ {Γ Γ' Γ'a Γ'b} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
       → ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ ∘ᵐ _⋉_ Γ' {Γ'a} {Γ'b} ρ
@@ -492,11 +492,11 @@ splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
 
 -- `⋉-ren` lifted through the clause-context shape `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ`
 -- (parameter and continuation factors ride along untouched). This is the form
--- `ren-clauses-ctxparam` consumes.
+-- `ren-clauses-ctxuniform` consumes.
 -- A commutation of two maps lifted through the clause-context shape
 -- `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ` (parameter and continuation factors ride along).
 -- Used to carry both the renaming and the substitution base-commutations up to
--- the shape `CtxParamʰ`/`ren-clauses-ctxparam`/`subst-clauses-ctxparam` consume.
+-- the shape `CtxUniformʰ`/`ren-clauses-ctxuniform`/`subst-clauses-ctxuniform` consume.
 mapˣ²-comm : ∀ {A B C D P Q} {g : C →ᵐ D} {f : A →ᵐ C} {f' : B →ᵐ D} {g' : A →ᵐ B}
            → g ∘ᵐ f ≈ᵐ f' ∘ᵐ g'
            → mapˣᵐ (mapˣᵐ g (idᵐ {P})) (idᵐ {Q}) ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
@@ -521,7 +521,7 @@ mapˣ²-comm comm =
 -- The lift `⋉ᴰ` transported along a base equality `e : Δ ≡ Δ'` (with the two
 -- eternal structures related by `e`, supplied by `Eternalᵒ-coh`): reindexing the
 -- base by `eq-ren` commutes with the lift, since the lift is identity on the
--- base. A clean `J` on `e` — this is what carries `CtxParamʰ` through a
+-- base. A clean `J` on `e` — this is what carries `CtxUniformʰ` through a
 -- non-eternal substitution, which retypes the ambient base along `Γ ᴱ ≡ Γ₀ ᴱ`.
 ⋉ᴰ-eq : (Δ Δ' : Ctx) → (eΔ : Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) → (eΔ' : Eternalᵒ ⟦ Δ' ⟧ᶜᵗˣ)
       → (e : Δ ≡ Δ') → subst (λ Θ → Eternalᵒ ⟦ Θ ⟧ᶜᵗˣ) e eΔ ≡ eΔ'
