@@ -848,6 +848,150 @@ subst-clauses-uniform e H pH uH op q Γ' =
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
             (∘ᵐ-congʳ (≈ᵐ-sym (subst-clause-interp e (H op _ Γ') (pH op _ Γ')))))))))
 
+-- Computation lemmas for `eternal?`: with the eternality decision in hand, all
+-- the `with eternal?`-defined functions (`_ᴱ`, `∈-ᴱ-split`, `restrict-sub-env`,
+-- …) can be forced to reduce by `rewrite`ing their scrutinee — cleaner than
+-- per-function unfold lemmas whose signatures are themselves `_ᴱ`-stuck.
+eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
+eternal?-yes {A} et with eternal? A
+... | yes et' = cong yes (eternal-irrelevant et' et)
+... | no ¬et  = ⊥-elim (¬et et)
+
+eternal?-no : ∀ {A} → (¬et : ¬ Eternal A) → eternal? A ≡ no ¬et
+eternal?-no {A} ¬et with eternal? A
+... | yes et  = ⊥-elim (¬et et)
+... | no ¬et' = cong no (fun-ext (λ e → ⊥-elim (¬et e)))
+
+-- The canonical eternal-skeleton reassociation for the `∈-ᴱ-split` image.
+∈-ᴱ-e₀ : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
+       → split-l (split→∈ (∈-ᴱ-split et x)) ++ᶜ split-r (split→∈ (∈-ᴱ-split et x))
+       ≡ (split-l x ++ᶜ split-r x) ᴱ
+∈-ᴱ-e₀ et x = trans (cong₂ _++ᶜ_ (split→∈-split-l (∈-ᴱ-split et x))
+                                 (split→∈-split-r (∈-ᴱ-split et x)))
+                    (sym (ᴱ-++ᶜ (split-l x) (split-r x)))
+
+-- Base case for the eternal substitution's `splitᴰ`-naturality: substituting the
+-- eternal value at its `∈-ᴱ-split` image (reassociated by `eq-ren`) is exactly
+-- the eternal-skeleton reindexing `restrict-sub-env`. Induction on the variable;
+-- each case `rewrite`s `eternal?` to reduce `∈-ᴱ-split`/`restrict-sub-env`/`_ᴱ`,
+-- then the `eq-ren` proofs are settled by `eq-ren-irr` (UIP).
+sub-env-∈-ᴱ : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+            → (e₀ : split-l (split→∈ (∈-ᴱ-split et x)) ++ᶜ split-r (split→∈ (∈-ᴱ-split et x))
+                    ≡ (split-l x ++ᶜ split-r x) ᴱ)
+            → sub-env (split→∈ (∈-ᴱ-split et x))
+                (subst (_⊢V⦂ A) (sym (split→∈-split-l (∈-ᴱ-split et x))) (eternal-val-restrict et W))
+                (substᴾᵛ {e = sym (split→∈-split-l (∈-ᴱ-split et x))}
+                   (eternal-val-restrict et W) (eternal-val-restrictᴾ et W))
+              ∘ᵐ ⟦ eq-ren e₀ ⟧ʳ
+            ≈ᵐ restrict-sub-env x W
+sub-env-∈-ᴱ {Γ ∷ A} et Hd W e₀ rewrite eternal?-yes et =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-irr e₀ refl)) (∘ᵐ-identityʳ _)
+sub-env-∈-ᴱ {Γ ∷ B} et (Tl-∷ x) W e₀ with eternal? B
+... | yes etB =
+  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (eq-ren-irr e₀ (cong (_∷ B) (∈-ᴱ-e₀ et x)))
+                               (eq-ren-∷ (∈-ᴱ-e₀ et x))))
+  (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (sub-env-∈-ᴱ et x W (∈-ᴱ-e₀ et x)) (∘ᵐ-identityˡ _)))
+... | no ¬etB =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-irr e₀ (∈-ᴱ-e₀ et x)))
+           (sub-env-∈-ᴱ et x W (∈-ᴱ-e₀ et x))
+sub-env-∈-ᴱ et (Tl-⟨⟩ x) W e₀ =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-irr e₀ (∈-ᴱ-e₀ et x)))
+           (sub-env-∈-ᴱ et x W (∈-ᴱ-e₀ et x))
+
+-- The `∈-ᴱ-e₀` reassociation extended through an ambient block `Δx`.
+sub-e₀ : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ) → (Δx : Ctx)
+       → split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) Δx))
+           ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) Δx))
+       ≡ (split-l x ++ᶜ split-r x) ᴱ ++ᶜ Δx
+sub-e₀ et x Δx =
+  trans (cong₂ _++ᶜ_ (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) Δx))
+                     (split→∈-split-r (split-++ʳ (∈-ᴱ-split et x) Δx)))
+        (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) Δx))
+               (cong (_++ᶜ Δx) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+
+-- The eternal value substitution's clause lift, as a function of the extension
+-- `Δx`: substitute the (restricted) eternal value at its `∈-ᴱ-split` image, then
+-- reassociate the eternal base by `eq-ren`.
+Lsub : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+     → (Δx : Ctx)
+     → ⟦ (split-l x ++ᶜ split-r x) ᴱ ++ᶜ Δx ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ++ᶜ Δx ⟧ᶜᵗˣ
+Lsub {A = A} et x W Δx =
+  sub-env (split→∈ (split-++ʳ (∈-ᴱ-split et x) Δx))
+    (subst (_⊢V⦂ A) (sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) Δx)))
+           (eternal-val-restrict et W))
+    (substᴾᵛ {e = sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) Δx))}
+           (eternal-val-restrict et W) (eternal-val-restrictᴾ et W))
+  ∘ᵐ ⟦ eq-ren (sub-e₀ et x Δx) ⟧ʳ
+
+-- `splitᴰ`-naturality for the eternal value substitution: the substitution acts
+-- on the eternal base (`restrict-sub-env`, a morphism by `restrict-sub-env-extᵉ`)
+-- and identically on the extension `Δx`, so `splitᴰ` intertwines them. The
+-- `splitᴰ-nat-gen` instance whose lift is `Lsub` (base case `sub-env-∈-ᴱ`);
+-- the `∷`/`⟨⟩` steps are `eq-ren-∷`/`eq-ren-⟨⟩` (recursion is definitional,
+-- `split-++ʳ`/`split→∈`/`sub-env` all compute through `Δx`).
+splitᴰ-sub-nat : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
+               → (W : split-l x ⊢V⦂ A) → (pW : Paramᵛ W) → (Δx : Ctx)
+               → splitᴰ (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ) Δx ∘ᵐ Lsub et x W Δx
+               ≈ᵐ mapˣᵐ idᵐ (restrict-sub-env x W)
+                   ∘ᵐ splitᴰ ((split-l x ++ᶜ split-r x) ᴱ)
+                             (⟦ split-l x ++ᶜ split-r x ⟧ᴱ-Eternalᵒ) Δx
+splitᴰ-sub-nat {Γ} {A} et x W pW =
+  splitᴰ-nat-gen (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ split-l x ++ᶜ split-r x ⟧ᴱ-Eternalᵒ)
+    (restrict-sub-env x W) (restrict-sub-env-extᵉ x W)
+    (Lsub et x W)
+    (sub-env-∈-ᴱ et x W (sub-e₀ et x []))
+    (λ Δx A' →
+       ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (eq-ren-irr (sub-e₀ et x (Δx ∷ A'))
+                                                (cong (_∷ A') (sub-e₀ et x Δx)))
+                                    (eq-ren-∷ (sub-e₀ et x Δx))))
+       (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                 (mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _))))
+    (λ Δx ρ' →
+       ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (eq-ren-irr (sub-e₀ et x (Δx ⟨ ρ' ⟩))
+                                                (cong (_⟨ ρ' ⟩) (sub-e₀ et x Δx)))
+                                    (eq-ren-⟨⟩ (sub-e₀ et x Δx))))
+                (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+
+-- The eternal substitution's clause lift commutes with `⋉ᴰ` (the `⋉ᴰ-comm`
+-- instance of `splitᴰ-sub-nat`) — the substitution/extension actions pass.
+⋉-sub : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
+      → (W : split-l x ⊢V⦂ A) → (pW : Paramᵛ W) → (Γ'a Γ'b : Ctx)
+      → (ρ' : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+      → Lsub et x W Γ'b
+          ∘ᵐ ⋉ᴰ ((split-l x ++ᶜ split-r x) ᴱ) (⟦ split-l x ++ᶜ split-r x ⟧ᴱ-Eternalᵒ)
+                {Γ'a} {Γ'b} ρ'
+      ≈ᵐ ⋉ᴰ (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ) {Γ'a} {Γ'b} ρ' ∘ᵐ Lsub et x W Γ'a
+⋉-sub {Γ} et x W pW =
+  ⋉ᴰ-comm (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ split-l x ++ᶜ split-r x ⟧ᴱ-Eternalᵒ)
+    (restrict-sub-env x W) (Lsub et x W) (splitᴰ-sub-nat et x W pW)
+
+-- The clause-level value substitution (`sub-env` at the full clause context,
+-- then `eq-ren`) is `Lsub` lifted through the parameter/continuation factors
+-- `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ`. The `∷∷` peeling is definitional for `sub-env`;
+-- the `eq-ren` peels by `eq-ren-∷∷`, its residual proof settled by `eq-ren-irr`.
+Lsub-clause : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+            → (Γ' : Ctx) → (pt kt : VType)
+            → (e' : split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ pt ∷ kt)))
+                      ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ pt ∷ kt)))
+                    ≡ (split-l x ++ᶜ split-r x) ᴱ ++ᶜ (Γ' ∷ pt ∷ kt))
+            → sub-env (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ pt ∷ kt)))
+                (subst (_⊢V⦂ A)
+                  (sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ pt ∷ kt))))
+                  (eternal-val-restrict et W))
+                (substᴾᵛ {e = sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) (Γ' ∷ pt ∷ kt)))}
+                  (eternal-val-restrict et W) (eternal-val-restrictᴾ et W))
+              ∘ᵐ ⟦ eq-ren e' ⟧ʳ
+            ≈ᵐ mapˣᵐ (mapˣᵐ (Lsub et x W Γ') idᵐ) idᵐ
+Lsub-clause et x W Γ' pt kt e' =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-∷∷ e'))
+  (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                                  (mapˣᵐ-cong (∘ᵐ-congʳ (eq-ren-irr (ctx-∷-inj (ctx-∷-inj e'))
+                                                                    (sub-e₀ et x Γ')))
+                                              (∘ᵐ-identityˡ _)))
+                        (∘ᵐ-identityˡ _)))
+
 -- Parametricity-in-`Γ'` transports across a non-eternal retyping (base equality
 -- `e : Γ ᴱ ≡ Γ₀ ᴱ`): the retyping reindexes the eternal base by `eq-ren`, and
 -- `⋉ᴰ-eq` (fed `Eternalᵒ-coh` to relate the two bases' eternal structures)
@@ -867,14 +1011,16 @@ subst-clauses-ctxparam :
                                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                            e (H op ε'' Γ'))
       (λ op ε'' Γ' → substᴾᶜ e (H op ε'' Γ') (pH op ε'' Γ'))
-subst-clauses-ctxparam {Γ} {Γ₀} e H pH cH op ε'' {Γ'a} {Γ'b} ρ =
+subst-clauses-ctxparam {Γ} {Γ₀} {B} e H pH cH op ε'' {Γ'a} {Γ'b} ρ =
   ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp e (H op ε'' Γ'b) (pH op ε'' Γ'b)))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ
-    (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause e Γ'b _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause e Γ'b (type-of-gtype (param op))
+                          ([ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε''))))
     (≈ᵐ-trans (mapˣ²-comm (⋉ᴰ-eq (Γ ᴱ) (Γ₀ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)
-                            e (Eternalᵒ-coh e) Γ'a Γ'b ρ))
-              (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause e Γ'a _ _))))))
+                            e (Eternalᵒ-coh {Γ} {Γ₀} e) Γ'a Γ'b ρ))
+              (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause e Γ'a (type-of-gtype (param op))
+                                  ([ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε''))))))))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (cH op ε'' {Γ'a} {Γ'b} ρ))
             (≈ᵐ-sym (subst-clause-interp e (H op ε'' Γ'a) (pH op ε'' Γ'a)))))))
@@ -971,14 +1117,14 @@ mutual
   subᶜ (box V N)        x W (pV , pN) pW =
     subᵛ V (Tl-⟨⟩ x) W pV pW , subᶜ N (Tl-∷ x) W pN pW
   subᶜ (coerce rel M)   x W pM        pW = subᶜ M x W pM pW
-  subᶜ {A = A} (handle_`with_`in {B = B} M H N) x W (pM , pN , pH , uH , cH) pW
+  subᶜ {Γ = Γ} {A = A} (handle_`with_`in {B = B} M H N) x W (pM , pN , pH , uH , cH) pW
     with eternal? A
   ... | no ¬et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
     , (λ op ε'' Γ' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'' Γ') (pH op ε'' Γ'))
     , subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
-    , subst-clauses-ctxparam (ᴱ-drop-split ¬et x) H pH cH
+    , subst-clauses-ctxparam {Γ} {split-l x ++ᶜ split-r x} {B} (ᴱ-drop-split ¬et x) H pH cH
   ... | yes et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
@@ -1026,6 +1172,45 @@ mutual
           (≈ᵐ-trans (∘ᵐ-congˡ (uH op q Γ'))
           (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
           ((∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat (H op ε₁'' Γ') (split→∈ s₁) Wv₁ (pH op ε₁'' Γ') pWv₁))) (≈ᵐ-sym (subst-ctx-interp e₁ ((H op ε₁'' Γ') [ split→∈ s₁ ↦ Wv₁ ]c) (subᶜ (H op ε₁'' Γ') (split→∈ s₁) Wv₁ (pH op ε₁'' Γ') pWv₁)))))))))))))))
+    -- parametricity in `Γ'` of the eternal-substituted clauses: mirrors the
+    -- residual-uniformity proof above, but pushes the extension reindexing
+    -- `⋉ᴰ` (not the ε''-coercion) through the value substitution, via `Lsub-clause`
+    -- + `mapˣ²-comm (⋉-sub …)` in place of the `eq-ren-∷∷`/`mapˣ-swapᵐ` shuffle,
+    -- and applies the handler's own `cH` (not `uH`).
+    , (λ op ε'' {Γ'} {Γ''} ρ' →
+         let D'  = Γ' ∷ type-of-gtype (param op)
+                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+             D'' = Γ'' ∷ type-of-gtype (param op)
+                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+             s'  = split-++ʳ (∈-ᴱ-split et x) D'
+             s'' = split-++ʳ (∈-ᴱ-split et x) D''
+             Wv'  = subst (_⊢V⦂ A) (sym (split→∈-split-l s'))  (eternal-val-restrict et W)
+             Wv'' = subst (_⊢V⦂ A) (sym (split→∈-split-l s'')) (eternal-val-restrict et W)
+             pWv'  = substᴾᵛ {e = sym (split→∈-split-l s')}
+                       (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
+             pWv'' = substᴾᵛ {e = sym (split→∈-split-l s'')}
+                       (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
+             e'  = trans (cong₂ _++ᶜ_ (split→∈-split-l s') (split→∈-split-r s'))
+                     (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D'))
+                            (cong (_++ᶜ D') (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+             e'' = trans (cong₂ _++ᶜ_ (split→∈-split-l s'') (split→∈-split-r s''))
+                     (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D''))
+                            (cong (_++ᶜ D'') (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+         in
+          ≈ᵐ-trans (∘ᵐ-congˡ (subst-ctx-interp e'' ((H op ε'' Γ'') [ split→∈ s'' ↦ Wv'' ]c)
+                                (subᶜ (H op ε'' Γ'') (split→∈ s'') Wv'' (pH op ε'' Γ'') pWv'')))
+          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (C-subst-nat (H op ε'' Γ'') (split→∈ s'') Wv'' (pH op ε'' Γ'') pWv'')))
+          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-congˡ (Lsub-clause et x W Γ'' _ _ e''))
+                                        (mapˣ²-comm (⋉-sub et x W pW Γ' Γ'' ρ'))))
+          (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+          (≈ᵐ-trans (∘ᵐ-congˡ (cH op ε'' {Γ'} {Γ''} ρ'))
+          (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (Lsub-clause et x W Γ' _ _ e')))
+          (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+          (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat (H op ε'' Γ') (split→∈ s') Wv' (pH op ε'' Γ') pWv')))
+                    (≈ᵐ-sym (subst-ctx-interp e' ((H op ε'' Γ') [ split→∈ s' ↦ Wv' ]c)
+                               (subᶜ (H op ε'' Γ') (split→∈ s') Wv' (pH op ε'' Γ') pWv')))))))))))))
 
   V-subst-nat : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
               → (pV : Paramᵛ V) → (pW : Paramᵛ W)
@@ -1118,7 +1303,7 @@ mutual
   -- reindexing transport when non-eternal (`restrict-transport`), and the
   -- restricted value placed at the split point when eternal (`eternal-bridge`).
   C-subst-nat {Γ = Γ} {A = A} (handle_`with_`in {A = Aₘ} {B = Bₘ} {ε} {ε'} M H N) x W
-              (pM , pN , pH , uH) pW
+              (pM , pN , pH , uH , cH) pW
     with eternal? A
   ... | no ¬et =
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-nat ⟩ᵐ-cong))

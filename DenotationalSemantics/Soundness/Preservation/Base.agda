@@ -602,11 +602,12 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (pV : Paramᵛ V) → (pN : Paramᶜ N)
                  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
                  → (uH : EffUniformʰ {Γ} H pH)
-                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
+                 → (cH : CtxParamʰ {Γ} H pH)
+                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH , cH)
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
-sound-HANDLE-RET {Γ} V H N pV pN pH uH =
+sound-HANDLE-RET {Γ} V H N pV pN pH uH cH =
   ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
              (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)) V N pV pN
 

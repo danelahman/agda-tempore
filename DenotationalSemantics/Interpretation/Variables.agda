@@ -679,3 +679,42 @@ splitᴰ-nat-gen {Δ} {Δ'} eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ (Γ'x ⟨ ρ 
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (costrᵉ-nat eΔ eΔ' b b-mor))
             (∘ᵐ-assoc _ _ _)))))))
+
+-- A `splitᴰ`-naturality (`SN`, as produced by `splitᴰ-nat-gen`) yields the
+-- commutation of its lift `L` with `⋉ᴰ`: the base action `L` (identity on the
+-- extension) and the extension action `⋉ᴰ ρ` (identity on the base) pass each
+-- other. The generic engine behind both `⋉-ren` and the eternal `⋉-sub`.
+⋉ᴰ-comm : ∀ {Δ Δ'} → (eΔ : Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) → (eΔ' : Eternalᵒ ⟦ Δ' ⟧ᶜᵗˣ)
+        → (b : ⟦ Δ' ⟧ᶜᵗˣ →ᵐ ⟦ Δ ⟧ᶜᵗˣ)
+        → (L : (Δx : Ctx) → ⟦ Δ' ++ᶜ Δx ⟧ᶜᵗˣ →ᵐ ⟦ Δ ++ᶜ Δx ⟧ᶜᵗˣ)
+        → (SN : (Δx : Ctx) → splitᴰ Δ eΔ Δx ∘ᵐ L Δx ≈ᵐ mapˣᵐ idᵐ b ∘ᵐ splitᴰ Δ' eΔ' Δx)
+        → (Γ'a Γ'b : Ctx) → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+        → L Γ'b ∘ᵐ ⋉ᴰ Δ' eΔ' {Γ'a} {Γ'b} ρ ≈ᵐ ⋉ᴰ Δ eΔ {Γ'a} {Γ'b} ρ ∘ᵐ L Γ'a
+⋉ᴰ-comm {Δ} {Δ'} eΔ eΔ' b L SN Γ'a Γ'b ρ =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ helper)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ mid))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (SN Γ'a))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))) 
+  where
+    -- `L Γ'b ∘ splitᴰ⁻¹ Δ' ≈ splitᴰ⁻¹ Δ ∘ mapˣ id b`, from `SN Γ'b` + the isos.
+    helper : L Γ'b ∘ᵐ splitᴰ⁻¹ Δ' eΔ' Γ'b ≈ᵐ splitᴰ⁻¹ Δ eΔ Γ'b ∘ᵐ mapˣᵐ idᵐ b
+    helper =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (splitᴰ⁻¹-iso Δ eΔ Γ'b)))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (SN Γ'b)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (splitᴰ-iso Δ' eΔ' Γ'b)))
+                (∘ᵐ-congʳ (∘ᵐ-identityʳ _)))))))) 
+    -- `mapˣ id b ∘ mapˣ ρ id ≈ mapˣ ρ id ∘ mapˣ id b` (both `mapˣ ρ b`).
+    mid : mapˣᵐ idᵐ b ∘ᵐ mapˣᵐ ρ idᵐ ≈ᵐ mapˣᵐ ρ idᵐ ∘ᵐ mapˣᵐ idᵐ b
+    mid = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+          (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _))
+          (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                            (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))))
