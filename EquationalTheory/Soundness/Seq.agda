@@ -10,6 +10,11 @@
 -- sequencing. Both binders denote `⟦M⟧ ∘ ⟨ idᵐ , _ ⟩ᵐ` — an            --
 -- environment extension that the first projection undoes — which is    --
 -- exactly the premise of the shared `seq-extend` below.                --
+--                                                                    --
+-- `seq-delay` says `delay` is algebraic: `delayᵀ` pulls out of `⨟`     --
+-- (`strᵀ-delayᵀ-algebraicity`, `delayᵀ-nat`, `delayᵀ-algebraicity`),   --
+-- the continuation's `⟨⟩-μ-ren` re-lock realigning the two graded locks --
+-- via `η⊣-δ` / `[]-δ-nat`.                                             --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -55,10 +60,11 @@ open import Syntax.Substitutions S
 open import EquationalTheory.EquationalTheory S
 
 open Category Cat
-open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; []-∘ᵐ; []-congᶠ; []-ε-nat; []-ε∘ηᵘ≡id; ηᵘ)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-≤; []-∘ᵐ; []-congᶠ; []-ε-nat; []-ε∘ηᵘ≡id; ηᵘ;
+                       δ; []-monoidal; []-δ-nat; []-monoidal-nat)
                 renaming (ε to εᵇ)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ)
-open Adjunction Adj using (η⊣; η⊣-nat; η⊣-≤; η⊣-u; ε⊣)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ)
+open Adjunction Adj using (η⊣; η⊣-nat; η⊣-≤; η⊣-u; ε⊣; η⊣-δ; η⊣-monoidal)
 open GroundTypes GTy
 open Monad Mon
 
@@ -223,4 +229,91 @@ sound-seq-unbox {ε = ε} w V M N ((pV , pM) , pN) pR =
     r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
     g = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                     ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
+
+sound-seq-delay : ∀ {Γ A B τ ε ε'}
+                → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                → Soundᶜ== (seq-delay M N)
+sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
+    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (M ⨟ C-rename r N)))
+                pR (ε-substᴾ e _ pRc)
+            ∙ sound-ε-subst e (delay τ (M ⨟ C-rename r N)) pRc
+            -- segment A: unfold the renaming and move it inside the pair by
+            -- strᵀ-naturality, leaving `strᵀ ∘ ⟨ [ mapᵉ ε ]ᶠ φ ∘ η⊣ , m ⟩`.
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ (
+                  ∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN) ∙ T-∘ᵐ _ _)
+                ∙ ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ (
+                    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (strᵀ-natˡ ⟦ rin ⟧ʳ)
+                  ∙ ∘ᵐ-assoc _ _ _
+                  ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                              ∙ ⟨ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ
+                                    (eq-ren-grade (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))))
+                                , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))))))
+            -- split `[ρτ]ᶠ(μᵀ∘Tᶠn∘strᵀ ∘ ⟨P',m⟩)` to expose the tail `[ρτ]ᶠ⟨P',m⟩ ∘ η⊣`
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                  ∘ᵐ-congˡ (  []-congᶠ (  ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                                        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                            ∙ []-∘ᵐ _ _)
+                ∙ ∘ᵐ-assoc _ _ _))
+            -- core3: rebuild `[ρτ]ᶠ⟨P',m⟩ ∘ η⊣` into the `strᵀ-delayᵀ-algebraicity`
+            -- tail `[]-monoidal ∘ mapˣᵐ (δ ∘ []-≤ σ) idᵐ ∘ ⟨ η⊣ , [ρτ]ᶠm ∘ η⊣ ⟩`,
+            -- via η⊣-monoidal (diagonal), []-δ-nat / η⊣-δ (split the lock), η⊣-≤.
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
+                  ∘ᵐ-congˡ (  []-congᶠ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                                                ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+                            ∙ []-∘ᵐ _ _)
+                ∙ ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-monoidal)
+                ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                ∙ ∘ᵐ-congˡ ([]-monoidal-nat _ _)
+                ∙ ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
+                ∙ ∘ᵐ-congʳ (⟨   ∘ᵐ-congˡ (  []-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
+                                          ∙ []-∘ᵐ _ _)
+                              ∙ ∘ᵐ-assoc _ _ _
+                              ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-δ)
+                              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                              ∙ ∘ᵐ-congˡ ([]-δ-nat _)
+                              ∙ ∘ᵐ-assoc _ _ _
+                              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-≤ _))
+                            , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
+                ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong
+                            ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))))
+            -- R5 ≈ R0: delay is algebraic (pull `delayᵀ τ` out of `⨟`)
+            ∙ ≈ᵐ-sym (
+                -- p1: factor `delayᵀ τ` out of the pair
+                ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
+                    ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
+                  ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))
+                -- p2: strᵀ-delay algebraicity
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity τ)))
+                -- p3: delayᵀ commutes past `Tᶠ n`
+              ∙ ∘ᵐ-congʳ (
+                    ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ _)))
+                -- p4: delayᵀ is algebraic over `μᵀ`
+              ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
+                -- step5: recombine the three `[ρτ]ᶠ` factors into `[ρτ]ᶠ(μᵀ∘Tᶠn∘strᵀ)`
+              ∙ ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                    ∘ᵐ-congʳ (  ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+                              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (  ∘ᵐ-congʳ (≈ᵐ-sym ([]-∘ᵐ _ _))
+                              ∙ ≈ᵐ-sym ([]-∘ᵐ _ _))))))
+  where
+    e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
+    rin = ⟨⟩-μ-ren
+          ∘ʳ eq-ren (cong (Γ ⟨_⟩) (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+    r   = cong-∷-ren rin
+    pRc = pM , renᶜ r N pN
+
 
