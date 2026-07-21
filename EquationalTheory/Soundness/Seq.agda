@@ -223,3 +223,4 @@ sound-seq-unbox {ε = ε} w V M N ((pV , pM) , pN) pR =
     r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
     g = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                     ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
+
