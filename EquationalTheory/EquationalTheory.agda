@@ -582,6 +582,34 @@ mutual
                  → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (delay τ M)
                       == delay τ (coerce rel M)
 
+    -- Coercing the *handled*/sequenced computation is coercing the composite.
+    -- The continuation lives under the lock `Γ ⟨ mapᵉ ε ⟩`, which the coercion
+    -- relaxes, so it is reindexed along `⟨⟩-≤-ren` (the box being contravariant
+    -- in its grade — the model's `strᵀ-≤`).
+
+    coerce-seq : ∀ {A B ε₁ ε₂ ε'}
+               → (rel : ε₁ ≾ₑ ε₂)
+               → (M : Γ ⊢C⦂ A ‼ ε₁)
+               → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+               ------------------------------------------------------------
+               → Γ ⊢C⦂ (coerce rel M) ⨟ N
+                    == coerce (·ₑ-monoˡ-≾ₑ rel)
+                         (M ⨟ C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)
+
+    coerce-handle : ∀ {A B ε₁ ε₂ ε'}
+                  → (rel : ε₁ ≾ₑ ε₂)
+                  → (M : Γ ⊢C⦂ A ‼ ε₁)
+                  → (H : (op : Op) → (ε₀ : E) → (Γ' : Ctx) →
+                           Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
+                  → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                  ----------------------------------------------------------------
+                  → Γ ⊢C⦂ handle (coerce rel M) `with H `in N
+                       == coerce (·ₑ-monoˡ-≾ₑ rel)
+                            (handle M `with H
+                               `in (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N))
+
     -- equations for collapsing successive delays
 
     delay-zero : ∀ {A ε}
@@ -730,6 +758,10 @@ mutual
   ⊢C⦂==-is-homogeneous (coerce-perform rel V M) =
     refl
   ⊢C⦂==-is-homogeneous (coerce-delay rel M) =
+    refl
+  ⊢C⦂==-is-homogeneous (coerce-seq rel M N) =
+    refl
+  ⊢C⦂==-is-homogeneous (coerce-handle rel M H N) =
     refl
   ⊢C⦂==-is-homogeneous (delay-zero M) =
     refl
