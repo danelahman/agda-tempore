@@ -37,7 +37,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import Data.Empty using (⊥-elim)
-open import Util.Equality using (sym)
+open import Util.Equality using (sym; _≡_; refl; cong; subst)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_; yes; no)
 
@@ -506,21 +506,43 @@ splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
 -- `⋉-ren` lifted through the clause-context shape `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ`
 -- (parameter and continuation factors ride along untouched). This is the form
 -- `ren-clauses-ctxparam` consumes.
-⋉-ren² : ∀ {Γ Γ' Γ'a Γ'b} {P Q : Obj} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
-       → mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ (idᵐ {P})) (idᵐ {Q})
-           ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ' {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
-       ≈ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
-           ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ idᵐ) idᵐ
-⋉-ren² {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ =
+-- A commutation of two maps lifted through the clause-context shape
+-- `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ` (parameter and continuation factors ride along).
+-- Used to carry both the renaming and the substitution base-commutations up to
+-- the shape `CtxParamʰ`/`ren-clauses-ctxparam`/`subst-clauses-ctxparam` consume.
+mapˣ²-comm : ∀ {A B C D P Q} {g : C →ᵐ D} {f : A →ᵐ C} {f' : B →ᵐ D} {g' : A →ᵐ B}
+           → g ∘ᵐ f ≈ᵐ f' ∘ᵐ g'
+           → mapˣᵐ (mapˣᵐ g (idᵐ {P})) (idᵐ {Q}) ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
+           ≈ᵐ mapˣᵐ (mapˣᵐ f' idᵐ) idᵐ ∘ᵐ mapˣᵐ (mapˣᵐ g' idᵐ) idᵐ
+mapˣ²-comm comm =
   ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
   (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (⋉-ren {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ)
-                                              (∘ᵐ-identityˡ _)))
+                                  (mapˣᵐ-cong comm (∘ᵐ-identityˡ _)))
                         (∘ᵐ-identityˡ _))
   (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
           (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
                                 (mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)))
                       (∘ᵐ-identityˡ _)))))
+
+⋉-ren² : ∀ {Γ Γ' Γ'a Γ'b} {P Q : Obj} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+       → mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ (idᵐ {P})) (idᵐ {Q})
+           ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ' {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
+       ≈ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
+           ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ idᵐ) idᵐ
+⋉-ren² {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ = mapˣ²-comm (⋉-ren {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ)
+
+-- The lift `⋉ᴰ` transported along a base equality `e : Δ ≡ Δ'` (with the two
+-- eternal structures related by `e`, supplied by `Eternalᵒ-coh`): reindexing the
+-- base by `eq-ren` commutes with the lift, since the lift is identity on the
+-- base. A clean `J` on `e` — this is what carries `CtxParamʰ` through a
+-- non-eternal substitution, which retypes the ambient base along `Γ ᴱ ≡ Γ₀ ᴱ`.
+⋉ᴰ-eq : (Δ Δ' : Ctx) → (eΔ : Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) → (eΔ' : Eternalᵒ ⟦ Δ' ⟧ᶜᵗˣ)
+      → (e : Δ ≡ Δ') → subst (λ Θ → Eternalᵒ ⟦ Θ ⟧ᶜᵗˣ) e eΔ ≡ eΔ'
+      → (Γ'a Γ'b : Ctx) → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+      → ⟦ eq-ren (cong (_++ᶜ Γ'b) e) ⟧ʳ ∘ᵐ ⋉ᴰ Δ' eΔ' {Γ'a} {Γ'b} ρ
+      ≈ᵐ ⋉ᴰ Δ eΔ {Γ'a} {Γ'b} ρ ∘ᵐ ⟦ eq-ren (cong (_++ᶜ Γ'a) e) ⟧ʳ
+⋉ᴰ-eq Δ .Δ eΔ .eΔ refl refl Γ'a Γ'b ρ =
+  ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))
 
 -- Naturality of the eternal projection: it slides through a renaming, turning
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock

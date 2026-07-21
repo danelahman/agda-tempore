@@ -848,6 +848,37 @@ subst-clauses-uniform e H pH uH op q Γ' =
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
             (∘ᵐ-congʳ (≈ᵐ-sym (subst-clause-interp e (H op _ Γ') (pH op _ Γ')))))))))
 
+-- Parametricity-in-`Γ'` transports across a non-eternal retyping (base equality
+-- `e : Γ ᴱ ≡ Γ₀ ᴱ`): the retyping reindexes the eternal base by `eq-ren`, and
+-- `⋉ᴰ-eq` (fed `Eternalᵒ-coh` to relate the two bases' eternal structures)
+-- commutes it past the lift. Mirrors `subst-clauses-uniform`, with
+-- `mapˣ²-comm (⋉ᴰ-eq …)` in place of `mapˣ-swapᵐ`.
+subst-clauses-ctxparam :
+  ∀ {Γ Γ₀ B} → (e : Γ ᴱ ≡ Γ₀ ᴱ)
+  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+  → CtxParamʰ {Γ} H pH
+  → CtxParamʰ {Γ₀}
+      (λ op ε'' Γ' → subst (λ Γ₁ → Γ₁ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+                           e (H op ε'' Γ'))
+      (λ op ε'' Γ' → substᴾᶜ e (H op ε'' Γ') (pH op ε'' Γ'))
+subst-clauses-ctxparam {Γ} {Γ₀} e H pH cH op ε'' {Γ'a} {Γ'b} ρ =
+  ≈ᵐ-trans (∘ᵐ-congˡ (subst-clause-interp e (H op ε'' Γ'b) (pH op ε'' Γ'b)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ
+    (≈ᵐ-trans (∘ᵐ-congˡ (eq-ren-clause e Γ'b _ _))
+    (≈ᵐ-trans (mapˣ²-comm (⋉ᴰ-eq (Γ ᴱ) (Γ₀ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ₀ ⟧ᴱ-Eternalᵒ)
+                            e (Eternalᵒ-coh e) Γ'a Γ'b ρ))
+              (∘ᵐ-congʳ (≈ᵐ-sym (eq-ren-clause e Γ'a _ _))))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (cH op ε'' {Γ'a} {Γ'b} ρ))
+            (≈ᵐ-sym (subst-clause-interp e (H op ε'' Γ'a) (pH op ε'' Γ'a)))))))
+
 -- When the substituted variable is not eternal, `restrict-sub-env` is the pure
 -- reindexing transport of the (equal) eternal skeletons. Induction on the
 -- variable, mirroring `restrict-sub-env`'s `with`-structure; the head is the
@@ -940,13 +971,14 @@ mutual
   subᶜ (box V N)        x W (pV , pN) pW =
     subᵛ V (Tl-⟨⟩ x) W pV pW , subᶜ N (Tl-∷ x) W pN pW
   subᶜ (coerce rel M)   x W pM        pW = subᶜ M x W pM pW
-  subᶜ {A = A} (handle_`with_`in {B = B} M H N) x W (pM , pN , pH , uH) pW
+  subᶜ {A = A} (handle_`with_`in {B = B} M H N) x W (pM , pN , pH , uH , cH) pW
     with eternal? A
   ... | no ¬et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
     , (λ op ε'' Γ' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'' Γ') (pH op ε'' Γ'))
     , subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
+    , subst-clauses-ctxparam (ᴱ-drop-split ¬et x) H pH cH
   ... | yes et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
