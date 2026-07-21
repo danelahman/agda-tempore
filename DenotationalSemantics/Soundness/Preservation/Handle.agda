@@ -70,7 +70,7 @@ import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont; ren-ᴱ-∷≡restrict)
 open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; CtxUniformʰ; clause-sound)
+  using (term∅; ∅-terminal; clause-sound)
 
 open import DenotationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE public
 
@@ -899,7 +899,6 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                 → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
                 → (uH : EffUniformʰ {Γ} H pH)
                 → (cH : CtxParamʰ {Γ} H pH)
-                → (u : CtxUniformʰ {Γ} H pH)
                 → ⟦ handle perform op V M `with H `in N ⟧ᶜᵗ
                      ((pV , pM) , pN , pH , uH , cH)
                 ≈ᵐ ε-substᵀ (sym (·ₑ-assoc (op-grade op) ε ε''))
@@ -944,7 +943,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                                                 (type-of-gtype (arity op) ⇒ B ‼ (ε ·ₑ ε''))}
                                (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') Γ) (pH op (ε ·ₑ ε'') Γ))
                             pV )
-sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH cH u =
+sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH cH =
   -- collapse the eternal parameter (`Γ ᴱ ≡ []`), then the commuting conversion
   -- with the handler's fold as the algebra: the operation is algebraic for it
   -- too, and applies a clause
@@ -1018,7 +1017,7 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH cH u =
                        (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') Γ) (pH op (ε ·ₑ ε'') Γ))
                     pV )
     tgt =
-        ≈ᵐ-sym (clause-sound e op H pH uH u V pV _)
+        ≈ᵐ-sym (clause-sound e op H pH uH cH V pV _)
       ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
           , ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
             ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))

@@ -246,7 +246,7 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
              → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
              → (uH : EffUniformʰ {Γ} H pH)
-             → (u : CtxUniformʰ {Γ} H pH)
+             → (cH : CtxParamʰ {Γ} H pH)
              → (V : Γ ⊢V⦂ type-of-gtype (param op)) → (pV : Paramᵛ V)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
@@ -273,7 +273,7 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                    ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
                   ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
                      , W ⟩ᵐ
-clause-sound {Γ} {B} {ε''} e op H pH uH u V pV W =
+clause-sound {Γ} {B} {ε''} e op H pH uH cH V pV W =
     ∘ᵐ-congˡ (C-subst-nat Hcl (Tl-∷ Hd) V pHcl pV)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ mid)
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
@@ -313,7 +313,7 @@ clause-sound {Γ} {B} {ε''} e op H pH uH u V pV W =
         ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' []) ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
     mid =
         subst-clause-interp {D = [] ∷ pt ∷ kt} eq (H op ε'' Γ) (pH op ε'' Γ)
-      ∙ ∘ᵐ-congˡ (ctx-uniform-[] {Γ = Γ} e H pH u op ε'' Γ)
+      ∙ ∘ᵐ-congˡ (ctx-param-[] {Γ = Γ} e H pH cH op ε'' Γ)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ
           (   ∘ᵐ-congʳ (eq-ren-irr (cong (_++ᶜ ([] ∷ pt ∷ kt)) eq)
