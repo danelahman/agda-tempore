@@ -30,7 +30,7 @@ mutual
 
   -- value equations
 
-  data _⊢V⦂_==_ (Γ : Ctx) : {A B : VType} → Γ ⊢V⦂ A → Γ ⊢V⦂ B → Set where
+  data _⊢V⦂_==_ (Γ : Ctx) : {A : VType} → Γ ⊢V⦂ A → Γ ⊢V⦂ A → Set where
 
     -- reflexivity, symmetry, transitivity
 
@@ -39,17 +39,14 @@ mutual
            ---------------
            → Γ ⊢V⦂ V == V
 
-    V-sym : ∀ {A B}
-          → {V : Γ ⊢V⦂ A}
-          → {W : Γ ⊢V⦂ B}
+    V-sym : ∀ {A}
+          → {V W : Γ ⊢V⦂ A}
           → Γ ⊢V⦂ V == W
           -----------------
           → Γ ⊢V⦂ W == V
 
-    V-trans : ∀ {A B C}
-            → {V : Γ ⊢V⦂ A}
-            → {W : Γ ⊢V⦂ B}
-            → {U : Γ ⊢V⦂ C}
+    V-trans : ∀ {A}
+            → {V W U : Γ ⊢V⦂ A}
             → Γ ⊢V⦂ V == W
             → Γ ⊢V⦂ W == U
             -------------------
@@ -57,32 +54,28 @@ mutual
 
     -- substitutivity
 
-    V-subst : ∀ {Γ' A B B' ρ}
-            → {V : Γ' ⊢V⦂ B}
-            → {W : Γ' ⊢V⦂ B'}
+    V-subst : ∀ {Γ' A B ρ}
+            → {V W : Γ' ⊢V⦂ B}
             → (p : Γ' ⊢V⦂ V == W)
             → (x : A ∈[ ρ ] Γ')
             → (q : split-l x ++ᶜ split-r x ≡ Γ)
             → (U : split-l x ⊢V⦂ A)
             ---------------------------------------------------------------
             → Γ ⊢V⦂ subst (_⊢V⦂ B) q (V [ x ↦ U ]v)
-                == subst (_⊢V⦂ B') q (W [ x ↦ U ]v)
+                == subst (_⊢V⦂ B) q (W [ x ↦ U ]v)
 
     -- congruence equations
 
-    ⦉⦊-cong : ∀ {A A' B B'}
-           → {V : Γ ⊢V⦂ A}
-           → {V' : Γ ⊢V⦂ A'}
-           → {W : Γ ⊢V⦂ B}
-           → {W' : Γ ⊢V⦂ B'}
+    ⦉⦊-cong : ∀ {A B}
+           → {V V' : Γ ⊢V⦂ A}
+           → {W W' : Γ ⊢V⦂ B}
            → Γ ⊢V⦂ V == V'
            → Γ ⊢V⦂ W == W'
            ------------------------------
            → Γ ⊢V⦂ ⦉ V , W ⦊ == ⦉ V' , W' ⦊
 
-    lam-cong : ∀ {A B B' ε}
-             → {M : Γ ∷ A ⊢C⦂ B ‼ ε}
-             → {N : Γ ∷ A ⊢C⦂ B' ‼ ε}
+    lam-cong : ∀ {A B ε}
+             → {M N : Γ ∷ A ⊢C⦂ B ‼ ε}
              → Γ ∷ A ⊢C⦂ M == N
              -------------------------
              → Γ ⊢V⦂ lam M == lam N
@@ -103,7 +96,7 @@ mutual
 
   -- computation equations
 
-  data _⊢C⦂_==_ (Γ : Ctx) : {C D : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ D → Set where
+  data _⊢C⦂_==_ (Γ : Ctx) : {C : CType} → Γ ⊢C⦂ C → Γ ⊢C⦂ C → Set where
 
     -- reflexivity, symmetry, transitivity
 
@@ -112,17 +105,14 @@ mutual
            ---------------
            → Γ ⊢C⦂ M == M
 
-    C-sym : ∀ {C D}
-          → {M : Γ ⊢C⦂ C}
-          → {N : Γ ⊢C⦂ D}
+    C-sym : ∀ {C}
+          → {M N : Γ ⊢C⦂ C}
           → Γ ⊢C⦂ M == N
           -----------------
           → Γ ⊢C⦂ N == M
 
-    C-trans : ∀ {C D E}
-            → {M : Γ ⊢C⦂ C}
-            → {N : Γ ⊢C⦂ D}
-            → {P : Γ ⊢C⦂ E}
+    C-trans : ∀ {C}
+            → {M N P : Γ ⊢C⦂ C}
             → Γ ⊢C⦂ M == N
             → Γ ⊢C⦂ N == P
             -------------------
@@ -130,48 +120,43 @@ mutual
 
     -- substitutivity
 
-    C-subst : ∀ {Γ' A C D ρ}
-            → {M : Γ' ⊢C⦂ C}
-            → {N : Γ' ⊢C⦂ D}
+    C-subst : ∀ {Γ' A C ρ}
+            → {M N : Γ' ⊢C⦂ C}
             → (p : Γ' ⊢C⦂ M == N)
             → (x : A ∈[ ρ ] Γ')
             → (q : split-l x ++ᶜ split-r x ≡ Γ)
             → (V : split-l x ⊢V⦂ A)
             ---------------------------------------------------------------
             → Γ ⊢C⦂ subst (_⊢C⦂ C) q (M [ x ↦ V ]c)
-                == subst (_⊢C⦂ D) q (N [ x ↦ V ]c)
+                == subst (_⊢C⦂ C) q (N [ x ↦ V ]c)
 
     -- congruence equations
 
-    return-cong : ∀ {A B}
-                → {V : Γ ⊢V⦂ A}
-                → {W : Γ ⊢V⦂ B}
+    return-cong : ∀ {A}
+                → {V W : Γ ⊢V⦂ A}
                 → Γ ⊢V⦂ V == W
                 ----------------------------
                 → Γ ⊢C⦂ return V == return W
 
-    seq-cong : ∀ {A B B' ε ε' ε''}
+    seq-cong : ∀ {A B ε ε'}
              → {M M' : Γ ⊢C⦂ A ‼ ε}
-             → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
-             → {N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε''}
+             → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
              → Γ ⊢C⦂ M == M'
              → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
              ---------------------------------
              → Γ ⊢C⦂ M ⨟ N == M' ⨟ N'
 
-    app-cong : ∀ {A C D}
-             → {V : Γ ⊢V⦂ A ⇒ C}
-             → {V' : Γ ⊢V⦂ A ⇒ D}
+    app-cong : ∀ {A C}
+             → {V V' : Γ ⊢V⦂ A ⇒ C}
              → {W W' : Γ ⊢V⦂ A}
              → Γ ⊢V⦂ V == V'
              → Γ ⊢V⦂ W == W'
              ------------------------
              → Γ ⊢C⦂ V · W == V' · W'
 
-    match-cong : ∀ {A B C D}
+    match-cong : ∀ {A B C}
                → {V W : Γ ⊢V⦂ A |×| B}
-               → {M : Γ ∷ A ∷ B ⊢C⦂ C}
-               → {N : Γ ∷ A ∷ B ⊢C⦂ D}
+               → {M N : Γ ∷ A ∷ B ⊢C⦂ C}
                → Γ ⊢V⦂ V == W
                → Γ ∷ A ∷ B ⊢C⦂ M == N
                --------------------------------------
@@ -183,18 +168,16 @@ mutual
                 ------------------------------------
                 → Γ ⊢C⦂ absurd {C = C} V == absurd {C = C} W
 
-    perform-cong : ∀ {A A' ε ε' op}
+    perform-cong : ∀ {A ε op}
                  → {V W : Γ ⊢V⦂ type-of-gtype (param op)}
-                 → {M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
-                 → {N : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A' ‼ ε'}
+                 → {M N : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
                  → Γ ⊢V⦂ V == W
                  → Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ M == N
                  ---------------------------------------------------------------
                  → Γ ⊢C⦂ perform op V M == perform op W N
 
-    delay-cong  : ∀ {A A' τ ε ε'}
-                → {M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
-                → {N : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A' ‼ ε'}
+    delay-cong  : ∀ {A τ ε}
+                → {M N : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
                 → Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ M == N
                 --------------------------------------
                 → Γ ⊢C⦂ delay τ M == delay τ N
@@ -215,20 +198,18 @@ mutual
                 --------------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
-    unbox-cong : ∀ {A C D ρ Δ}
+    unbox-cong : ∀ {A C ρ Δ}
                → {w : Ren (Δ ⟨ ρ ⟩) Γ}
                → {V W : Δ ⊢V⦂ [ ρ ] A}
-               → {M : Γ ∷ A  ⊢C⦂ C}
-               → {N : Γ ∷ A  ⊢C⦂ D}
+               → {M N : Γ ∷ A  ⊢C⦂ C}
                → Δ ⊢V⦂ V == W
                → Γ ∷ A ⊢C⦂ M == N
                ------------------------------------
                → Γ ⊢C⦂ unbox w V M == unbox w W N
 
-    box-cong : ∀ {A C D ρ}
+    box-cong : ∀ {A C ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}
-             → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}
-             → {N : Γ ∷ [ ρ ] A ⊢C⦂ D}
+             → {M N : Γ ∷ [ ρ ] A ⊢C⦂ C}
              → Γ ⟨ ρ ⟩ ⊢V⦂ V == W
              → Γ ∷ [ ρ ] A ⊢C⦂ M == N
              --------------------------
@@ -632,138 +613,3 @@ mutual
                          (delay (τ₁ + τ₂) M)
 
   infix 18 _⊢C⦂_==_
-
-
--- The heterogeneously defined equational theory is no more powerful
--- than a homogeneous one: equated values have equal types, and equated
--- computations have equal types.
-
-mutual
-
-  ⊢V⦂==-is-homogeneous : ∀ {Γ A B} {V : Γ ⊢V⦂ A} {W : Γ ⊢V⦂ B}
-                      → Γ ⊢V⦂ V == W
-                      --------------
-                      → A ≡ B
-
-  ⊢V⦂==-is-homogeneous V-refl =
-    refl
-  ⊢V⦂==-is-homogeneous (V-sym p) =
-    sym (⊢V⦂==-is-homogeneous p)
-  ⊢V⦂==-is-homogeneous (V-trans p q) =
-    trans (⊢V⦂==-is-homogeneous p) (⊢V⦂==-is-homogeneous q)
-  ⊢V⦂==-is-homogeneous (V-subst p x q V) =
-    ⊢V⦂==-is-homogeneous p
-  ⊢V⦂==-is-homogeneous (⦉⦊-cong p q) =
-    cong₂ _|×|_
-      (⊢V⦂==-is-homogeneous p)
-      (⊢V⦂==-is-homogeneous q)
-  ⊢V⦂==-is-homogeneous (lam-cong {A = A} p) =
-    cong (A ⇒_) (⊢C⦂==-is-homogeneous p)
-  ⊢V⦂==-is-homogeneous (unit-eta _) =
-    refl
-  ⊢V⦂==-is-homogeneous (fun-eta _) =
-    refl
-
-  ⊢C⦂==-is-homogeneous : ∀ {Γ C D} {M : Γ ⊢C⦂ C} {N : Γ ⊢C⦂ D}
-                      → Γ ⊢C⦂ M == N
-                      --------------
-                      → C ≡ D
-
-  ⊢C⦂==-is-homogeneous C-refl =
-    refl
-  ⊢C⦂==-is-homogeneous (C-sym p) =
-    sym (⊢C⦂==-is-homogeneous p)
-  ⊢C⦂==-is-homogeneous (C-trans p q) =
-    trans (⊢C⦂==-is-homogeneous p) (⊢C⦂==-is-homogeneous q)
-  ⊢C⦂==-is-homogeneous (C-subst p x q V) =
-    ⊢C⦂==-is-homogeneous p
-  ⊢C⦂==-is-homogeneous (return-cong p) =
-    cong (_‼ uₑ) (⊢V⦂==-is-homogeneous p)
-  ⊢C⦂==-is-homogeneous (seq-cong {ε = ε} p q) =
-    cong₂ (λ B ε' → B ‼ (ε ·ₑ ε'))
-      (‼-injective-ty (⊢C⦂==-is-homogeneous q))
-      (‼-injective-egrade (⊢C⦂==-is-homogeneous q))
-  ⊢C⦂==-is-homogeneous (app-cong p q) =
-    ⇒-injective-cod (⊢V⦂==-is-homogeneous p)
-  ⊢C⦂==-is-homogeneous (match-cong p q) =
-    ⊢C⦂==-is-homogeneous q
-  ⊢C⦂==-is-homogeneous (absurd-cong p) =
-    refl
-  ⊢C⦂==-is-homogeneous (perform-cong {op = op} p q) =
-    cong₂ (λ A ε → A ‼ (op-grade op ·ₑ ε))
-      (‼-injective-ty (⊢C⦂==-is-homogeneous q))
-      (‼-injective-egrade (⊢C⦂==-is-homogeneous q))
-  ⊢C⦂==-is-homogeneous (delay-cong {τ = τ} p) =
-    cong₂ (λ A ε' → A ‼ (of-natᵉ τ ·ₑ ε'))
-      (‼-injective-ty (⊢C⦂==-is-homogeneous p))
-      (‼-injective-egrade (⊢C⦂==-is-homogeneous p))
-  ⊢C⦂==-is-homogeneous (handle-cong {ε = ε} p q r) =
-    cong₂ (λ A ε' → A ‼ (ε ·ₑ ε'))
-      (‼-injective-ty (⊢C⦂==-is-homogeneous r))
-      (‼-injective-egrade (⊢C⦂==-is-homogeneous r))
-  ⊢C⦂==-is-homogeneous (unbox-cong vp p) =
-    ⊢C⦂==-is-homogeneous p
-  ⊢C⦂==-is-homogeneous (box-cong p q) =
-    ⊢C⦂==-is-homogeneous q
-  ⊢C⦂==-is-homogeneous (coerce-cong p) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-return V M) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-perform V M N) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-delay M N) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-box V M N) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-unbox w V M N) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-eta _) =
-    refl
-  ⊢C⦂==-is-homogeneous (seq-assoc M N P) =
-    refl
-  ⊢C⦂==-is-homogeneous (fun-beta M W) =
-    refl
-  ⊢C⦂==-is-homogeneous (match-beta V W M) =
-    refl
-  ⊢C⦂==-is-homogeneous (match-eta V M) =
-    refl
-  ⊢C⦂==-is-homogeneous (absurd-eta V M) =
-    refl
-  ⊢C⦂==-is-homogeneous (handle-return V H N) =
-    refl
-  ⊢C⦂==-is-homogeneous (handle-perform V M H N) =
-    refl
-  ⊢C⦂==-is-homogeneous (handle-delay M H N) =
-    refl
-  ⊢C⦂==-is-homogeneous (handle-box V M H N) =
-    refl
-  ⊢C⦂==-is-homogeneous (handle-unbox w V M H N) =
-    refl
-  ⊢C⦂==-is-homogeneous (unbox-beta V K p N) =
-    refl
-  ⊢C⦂==-is-homogeneous (unbox-comm w₁ V₁ w₂ V₂ M) =
-    refl
-  ⊢C⦂==-is-homogeneous (box-comm V W M) =
-    refl
-  ⊢C⦂==-is-homogeneous (boxed-not-used V M) =
-    refl
-  ⊢C⦂==-is-homogeneous (unbox-not-used w V _) =
-    refl
-  ⊢C⦂==-is-homogeneous (box-unbox-comm V w₂ V₂ M) =
-    refl
-  ⊢C⦂==-is-homogeneous (coerce-refl rel M) =
-    refl
-  ⊢C⦂==-is-homogeneous (coerce-trans rel rel' rel'' M) =
-    refl
-  ⊢C⦂==-is-homogeneous (coerce-perform rel V M) =
-    refl
-  ⊢C⦂==-is-homogeneous (coerce-delay rel M) =
-    refl
-  ⊢C⦂==-is-homogeneous (coerce-seq rel M N) =
-    refl
-  ⊢C⦂==-is-homogeneous (coerce-handle rel M H N) =
-    refl
-  ⊢C⦂==-is-homogeneous (delay-zero M) =
-    refl
-  ⊢C⦂==-is-homogeneous (delay-delay M) =
-    refl
