@@ -182,6 +182,15 @@ record Monad : Set₁ where
             → opᵀ {ε = ε} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ f)))
             ≈ᵐ Tᶠ f ∘ᵐ opᵀ op
 
+    -- Sub-effecting the continuation is sub-effecting the operation, the
+    -- counterpart of `delayᵀ-≤` for `opᵀ`. Sound because handlers are
+    -- ambivalent in the residual grade (`Monoᵀ`): the fold picks the clause by
+    -- that grade, so a coercion pushed under an operation is unobservable.
+
+    opᵀ-≤ : ∀ {A ε ε'} → (op : Op) → (p : ε ≾ₑ ε')
+          → opᵀ {A} {ε'} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ p)))
+          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ opᵀ {A} {ε} op
+
     -- Operations and delays are algebraic
 
     delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : ℕ)

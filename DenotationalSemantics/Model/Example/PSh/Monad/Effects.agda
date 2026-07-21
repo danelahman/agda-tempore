@@ -103,6 +103,20 @@ opᵀ-nat {A} {ε = ε} op f (v , x) =
   op-≈ (≈-refl ⟦ param op ⟧ᵍ)
     (λ q y → Tˢᶠ-congᵗ f (transport-refl (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε) (fun x q) ⊑-refl y))
 
+-- Sub-effecting the continuation is sub-effecting the operation: the `sub` the
+-- coercion leaves in each continuation pulls out past the op node (`sub-op`),
+-- exactly as `delayᵀ-≤` does past a delay node. The `map⇒ᵐ` reindexing is
+-- absorbed by `transport-refl`, as in `opᵀ-nat`.
+
+opᵀ-≤ : ∀ {A ε ε'} → (op : Op) → (p : ε ≾ₑ ε')
+      → opᵀ {A} {ε'} op ∘ᵖ mapˣᵐ idᵖ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵖ (T-≤ p)))
+      ≈ᵖ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵖ opᵀ {A} {ε} op
+opᵀ-≤ {A} {ε = ε} op p (v , x) =
+  ≈ᵗ-trans
+    (op-≈ (≈-refl ⟦ param op ⟧ᵍ)
+      (λ q y → sub-≈ (transport-refl (⟦ arity op ⟧ᵍ ⇒ᵖ Tᵒ A ε) (fun x q) ⊑-refl y)))
+    (≈ᵗ-sym (sub-opᵗ p v _ _ _))
+
 -- Algebraicity: the operations commute with the monad multiplication.
 
 delayᵀ-algebraicity : ∀ {A ε' ε''} → (τ : ℕ)

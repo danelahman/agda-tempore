@@ -545,6 +545,43 @@ mutual
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))
 
+    -- equations for sub-effecting coercions
+    --
+    -- Coercion is a coercion, not structure: it is functorial in the effect
+    -- witness (`coerce-refl`/`coerce-trans`, no dependence on which witness is
+    -- used — that is already `coerce-cong`), and it commutes with the two
+    -- effect-grade formers, so a coercion of the continuation is unobservable
+    -- from outside the operation or delay. These are the syntactic image of the
+    -- monad's `T-≤-refl`, `T-≤-trans`, `opᵀ-≤` and `delayᵀ-≤`.
+
+    coerce-refl : ∀ {A ε}
+                → (rel : ε ≾ₑ ε)
+                → (M : Γ ⊢C⦂ A ‼ ε)
+                ---------------------------
+                → Γ ⊢C⦂ coerce rel M == M
+
+    coerce-trans : ∀ {A ε₁ ε₂ ε₃}
+                 → (rel : ε₁ ≾ₑ ε₂) → (rel' : ε₂ ≾ₑ ε₃) → (rel'' : ε₁ ≾ₑ ε₃)
+                 → (M : Γ ⊢C⦂ A ‼ ε₁)
+                 ------------------------------------------------------
+                 → Γ ⊢C⦂ coerce rel' (coerce rel M) == coerce rel'' M
+
+    coerce-perform : ∀ {A ε ε' op}
+                   → (rel : ε ≾ₑ ε')
+                   → (V : Γ ⊢V⦂ type-of-gtype (param op))
+                   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                          ⊢C⦂ A ‼ ε)
+                   ----------------------------------------------------------
+                   → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (perform op V M)
+                        == perform op V (coerce rel M)
+
+    coerce-delay : ∀ {A τ ε ε'}
+                 → (rel : ε ≾ₑ ε')
+                 → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+                 ------------------------------------------------
+                 → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (delay τ M)
+                      == delay τ (coerce rel M)
+
     -- equations for collapsing successive delays
 
     delay-zero : ∀ {A ε}
@@ -685,6 +722,14 @@ mutual
   ⊢C⦂==-is-homogeneous (unbox-not-used w V _) =
     refl
   ⊢C⦂==-is-homogeneous (box-unbox-comm V w₂ V₂ M) =
+    refl
+  ⊢C⦂==-is-homogeneous (coerce-refl rel M) =
+    refl
+  ⊢C⦂==-is-homogeneous (coerce-trans rel rel' rel'' M) =
+    refl
+  ⊢C⦂==-is-homogeneous (coerce-perform rel V M) =
+    refl
+  ⊢C⦂==-is-homogeneous (coerce-delay rel M) =
     refl
   ⊢C⦂==-is-homogeneous (delay-zero M) =
     refl
