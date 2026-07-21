@@ -441,31 +441,18 @@ restrict-ren-mor (⟨⟩-ext-ren {A = A} et) with eternal? A
 -- Recursion on the extension; the lock case is `costrᵉ-nat` fed by the eternal
 -- morphism `restrict-ren-mor`, the `∷` case is `swap₂₃-nat`.
 
+-- `splitᴱ` slides through a renaming — the renaming instance of `splitᴰ-nat-gen`
+-- with base map `⟦ restrict-ren r ⟧ʳ` (its morphism law is `restrict-ren-mor`)
+-- and lift `⟦ cong-ren (restrict-ren r) ⟧ʳ`, whose recursion holds definitionally
+-- (`⟦ cong-ren {[]} ⟧ = ⟦ − ⟧`, `⟦ cong-∷-ren ⟧ = mapˣᵐ _ idᵐ`, `⟦ cong-⟨⟩-ren ⟧ = ⟨_⟩ᶠ`).
 splitᴱ-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Γ'x : Ctx)
            → splitᴱ Γ Γ'x ∘ᵐ ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ
            ≈ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ splitᴱ Γ' Γ'x
-splitᴱ-nat r [] =
-  ≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
-  (≈ᵐ-trans (⟨ ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym (∘ᵐ-identityˡ _))
-             , ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)) ⟩ᵐ-cong)
-            (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))
-splitᴱ-nat r (Γ'x ∷ A) =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-cong (splitᴱ-nat r Γ'x) ≈ᵐ-refl))
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (swap₂₃-nat _))
-            (∘ᵐ-assoc _ _ _))))))
-splitᴱ-nat {Γ} {Γ'} r (Γ'x ⟨ ρ' ⟩) =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (splitᴱ-nat r Γ'x)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (costrᵉ-nat (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ' ⟧ᴱ-Eternalᵒ)
-                        ⟦ restrict-ren r ⟧ʳ (restrict-ren-mor r)))
-            (∘ᵐ-assoc _ _ _))))))
+splitᴱ-nat {Γ} {Γ'} r =
+  splitᴰ-nat-gen (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ' ⟧ᴱ-Eternalᵒ)
+    ⟦ restrict-ren r ⟧ʳ (restrict-ren-mor r)
+    (λ Γ'x → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ)
+    ≈ᵐ-refl (λ _ _ → ≈ᵐ-refl) (λ _ _ → ≈ᵐ-refl)
 
 splitᴱ⁻¹-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Γ'x : Ctx)
              → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ ∘ᵐ splitᴱ⁻¹ Γ' Γ'x

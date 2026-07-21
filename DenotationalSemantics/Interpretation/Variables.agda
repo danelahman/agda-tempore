@@ -632,3 +632,50 @@ swap₂₃-nat g =
         (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                   (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _))))))))))))
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- GENERIC NATURALITY OF `splitᴰ` UNDER A BASE MAP
+--
+-- `splitᴰ` intertwines any base map `b : ⟦ Δ' ⟧ →ᵐ ⟦ Δ ⟧` that is a morphism of
+-- eternal objects (`b-mor`) with its identity-on-the-extension lift `L`. Both
+-- the renaming lift (`⟦ cong-ren (restrict-ren r) ⟧ʳ`) and the substitution lift
+-- (`sub-env` at a base position) satisfy the `L-∷`/`L-⟨⟩` recursion, so this one
+-- lemma serves both `splitᴱ-nat` and the eternal substitution branch. The `∷`
+-- step is `swap₂₃-nat`, the `⟨⟩` step is `costrᵉ-nat`.
+-- ───────────────────────────────────────────────────────────────────────────
+
+splitᴰ-nat-gen :
+  ∀ {Δ Δ'} → (eΔ : Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) → (eΔ' : Eternalᵒ ⟦ Δ' ⟧ᶜᵗˣ)
+  → (b : ⟦ Δ' ⟧ᶜᵗˣ →ᵐ ⟦ Δ ⟧ᶜᵗˣ)
+  → (b-mor : ∀ {ρ} → Eternalᵒ.extᵉ eΔ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ b ≈ᵐ b ∘ᵐ Eternalᵒ.extᵉ eΔ' {ρ})
+  → (L : (Γ'x : Ctx) → ⟦ Δ' ++ᶜ Γ'x ⟧ᶜᵗˣ →ᵐ ⟦ Δ ++ᶜ Γ'x ⟧ᶜᵗˣ)
+  → (L-[] : L [] ≈ᵐ b)
+  → (L-∷  : ∀ Γ'x A → L (Γ'x ∷ A) ≈ᵐ mapˣᵐ (L Γ'x) idᵐ)
+  → (L-⟨⟩ : ∀ Γ'x ρ → L (Γ'x ⟨ ρ ⟩) ≈ᵐ ⟨ ρ ⟩ᶠ (L Γ'x))
+  → (Γ'x : Ctx)
+  → splitᴰ Δ eΔ Γ'x ∘ᵐ L Γ'x ≈ᵐ mapˣᵐ idᵐ b ∘ᵐ splitᴰ Δ' eΔ' Γ'x
+splitᴰ-nat-gen eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ [] =
+  ≈ᵐ-trans (∘ᵐ-congʳ L-[])
+  (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
+  (≈ᵐ-trans (⟨ ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
+             , ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)) ⟩ᵐ-cong)
+            (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))
+splitᴰ-nat-gen {Δ} {Δ'} eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ (Γ'x ∷ A) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (L-∷ Γ'x A))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-cong (splitᴰ-nat-gen eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ Γ'x)
+                                  ≈ᵐ-refl))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (swap₂₃-nat _))
+            (∘ᵐ-assoc _ _ _)))))))
+splitᴰ-nat-gen {Δ} {Δ'} eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ (Γ'x ⟨ ρ ⟩) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (L-⟨⟩ Γ'x ρ))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (splitᴰ-nat-gen eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ Γ'x)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (costrᵉ-nat eΔ eΔ' b b-mor))
+            (∘ᵐ-assoc _ _ _)))))))
