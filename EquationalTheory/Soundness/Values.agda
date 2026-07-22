@@ -92,6 +92,17 @@ var-morphism-Hd {A = A} f with eternal? A
     open Past Pst using (⟨⟩-≤-irr)
 
 
+-- The exchange renaming swaps the two topmost variables.
+
+exch-ren-mor : ∀ {Γ X Y}
+             → ⟦ exch-ren {Γ} {X} {Y} ⟧ʳ ≈ᵐ ⟨ mapˣᵐ fstᵐ idᵐ , sndᵐ ∘ᵐ fstᵐ ⟩ᵐ
+exch-ren-mor {Γ} {X} {Y} =
+    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+              ,   var-morphism-Tl-∷ {Γ ∷ Y} {X} {Y} Hd _
+                ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {Y} _) ⟩ᵐ-cong)
+  ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+  ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+
 sound-unit-eta : ∀ {Γ} → (V : Γ ⊢V⦂ Unit) → Soundᵛ== (unit-eta V)
 sound-unit-eta V pV _ = terminalᵐ-unique
 
@@ -116,6 +127,71 @@ sound-fun-beta M W (pM , pW) pR =
 sound-absurd-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ Empty) → (M : Γ ∷ Empty ⊢C⦂ C)
                  → Soundᶜ== (absurd-eta V M)
 sound-absurd-eta V M pV pR = 𝟘ᵐ-strict (⟦ V ⟧ᵛᵗ pV) _ _
+
+-- `match-eta`: re-pairing the two bound components rebuilds the matched value
+-- (the product's eta, `⟨⟩ᵐ-unique`). Both sides mention `M` only under a
+-- substitution, so its certificate comes in separately (this is the axiom's
+-- `Midᶜ` payload).
+
+sound-match-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A |×| B ⊢C⦂ C)
+                → Paramᶜ M → Soundᶜ== (match-eta V M)
+sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
+    ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr ((C-rename ρ M) [ Hd ↦ pair ]c) pB
+                  (subᶜ (C-rename ρ M) Hd pair (renᶜ ρ M pM) (tt , tt))
+              ∙ C-subst-nat (C-rename ρ M) Hd pair (renᶜ ρ M pM) (tt , tt)
+              ∙ ∘ᵐ-congˡ (C-rename-nat ρ M pM))
+  ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ cart)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (M [ Hd ↦ V ]c) pR (subᶜ M Hd V pM pV)
+            ∙ C-subst-nat M Hd V pM pV)
+  where
+    ρ    = exch-ren ∘ʳ wk-ren ∘ʳ exch-ren ∘ʳ wk-ren
+    pair = ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊
+
+    v = ⟦ V ⟧ᵛᵗ pV
+
+    -- The whole renaming forgets the two components it re-bound: two
+    -- exchanges each followed by a weakening leave the environment untouched
+    -- apart from dropping `A` and `B`.
+    ρ-mor : ⟦ ρ ⟧ʳ ≈ᵐ mapˣᵐ (fstᵐ ∘ᵐ fstᵐ) idᵐ
+    ρ-mor =
+        ∘ᵐ-congˡ (∘ᵐ-congˡ (  ∘ᵐ-congʳ (exch-ren-mor {Γ} {A |×| B} {A})
+                            ∙ ⟨⟩ᵐ-fstᵐ _ _))
+      ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ ∷ A} {A |×| B} {B})
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+      ∙ mapˣᵐ-∘ _ _ _ _
+      ∙ mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)
+
+    -- Substituting the re-paired components into the matched environment
+    -- rebuilds the matched value: this is the product's eta.
+    re-pair : sub-env Hd pair (tt , tt)
+                ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ v ⟩ᵐ , sndᵐ ∘ᵐ v ⟩ᵐ
+            ≈ᵐ ⟨ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ v ⟩ᵐ , sndᵐ ∘ᵐ v ⟩ᵐ , v ⟩ᵐ
+    re-pair =
+        ⟨⟩ᵐ-∘ _ _ _
+      ∙ ⟨ ∘ᵐ-identityˡ _
+        ,   ⟨⟩ᵐ-∘ _ _ _
+          ∙ ⟨   ∘ᵐ-congˡ (  var-morphism-Tl-∷ {Γ ∷ A} {B} {A} Hd _
+                          ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {A} _))
+              ∙ ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+              ∙ ⟨⟩ᵐ-sndᵐ _ _
+            , ∘ᵐ-congˡ (var-morphism-Hd {Γ ∷ A} {B} _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong
+          ∙ ≈ᵐ-sym (⟨⟩ᵐ-unique _ _ v ≈ᵐ-refl ≈ᵐ-refl) ⟩ᵐ-cong
+
+    cart : ⟦ ρ ⟧ʳ ∘ᵐ sub-env Hd pair (tt , tt)
+                     ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ v ⟩ᵐ , sndᵐ ∘ᵐ v ⟩ᵐ
+         ≈ᵐ sub-env Hd V pV
+    cart =
+        ∘ᵐ-congˡ ρ-mor
+      ∙ ∘ᵐ-congʳ re-pair
+      ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+      ∙ ⟨   ∘ᵐ-assoc _ _ _
+          ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+          ∙ ⟨⟩ᵐ-fstᵐ _ _
+        , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
 
 sound-match-beta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                  → Soundᶜ== (match-beta V W M)

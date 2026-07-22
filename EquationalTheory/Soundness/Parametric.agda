@@ -99,4 +99,8 @@ mutual
   Midᶜ (unbox-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (box-cong p q)                    = Midᵛ p × Midᶜ q
   Midᶜ (coerce-cong p)                   = Midᶜ p
+  -- The only *axiom* whose endpoints do not determine all the certificates:
+  -- both sides of `match-eta` mention `M` only under a substitution, so the
+  -- body's own certificate has to be carried.
+  Midᶜ (match-eta V M)                   = Paramᶜ M
   Midᶜ _                                 = ⊤
