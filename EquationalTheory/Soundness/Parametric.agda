@@ -99,8 +99,11 @@ mutual
   Midᶜ (unbox-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (box-cong p q)                    = Midᵛ p × Midᶜ q
   Midᶜ (coerce-cong p)                   = Midᶜ p
-  -- The only *axiom* whose endpoints do not determine all the certificates:
-  -- both sides of `match-eta` mention `M` only under a substitution, so the
-  -- body's own certificate has to be carried.
+  -- The two *axioms* whose endpoints do not determine all the certificates,
+  -- because each mentions its body only under a renaming or a substitution
+  -- (and neither `renᶜ` nor `subᶜ` is invertible): `match-eta`'s `M` occurs
+  -- substituted on both sides, and `delay-delay`'s occurs renamed on the left
+  -- and under an `ε-subst` on the right.
   Midᶜ (match-eta V M)                   = Paramᶜ M
+  Midᶜ (delay-delay M)                   = Paramᶜ M
   Midᶜ _                                 = ⊤
