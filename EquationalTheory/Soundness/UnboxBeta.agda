@@ -71,7 +71,7 @@ open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 
-open import DenotationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj GTy Mon GE
        using (unbox-def)
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE

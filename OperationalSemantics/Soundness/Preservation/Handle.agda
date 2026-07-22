@@ -14,7 +14,7 @@ open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
 
-module DenotationalSemantics.Soundness.Preservation.Handle
+module OperationalSemantics.Soundness.Preservation.Handle
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
@@ -67,12 +67,12 @@ open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
-open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont; ren-ᴱ-∷≡restrict)
-open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
   using (term∅; ∅-terminal; clause-sound)
 
-open import DenotationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE public
+open import OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE public
 
 -- THE HANDLER COMMUTES WITH A STEP TRANSITION
 --

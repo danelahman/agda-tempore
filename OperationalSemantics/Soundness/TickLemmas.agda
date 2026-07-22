@@ -20,7 +20,7 @@ open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.Monad
 open import DenotationalSemantics.Model.TickMonad
 
-module DenotationalSemantics.Soundness.TickLemmas
+module OperationalSemantics.Soundness.TickLemmas
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))

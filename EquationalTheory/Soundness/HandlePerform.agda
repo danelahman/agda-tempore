@@ -69,11 +69,11 @@ open import EquationalTheory.EquationalTheory S
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
        using (⟦⟧ᶜᵗ-irr; ⟦⟧ᵛᵗ-irr; Soundᶜ==)
-open import DenotationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE
        using (box-split; η⊣-⟨⟩)
-open import DenotationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE
        using (op-pair; op-env)
-open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
        using (ren-ᴱ-∷≡restrict)
 
 private

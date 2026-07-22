@@ -26,7 +26,7 @@ open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
 
-module DenotationalSemantics.Soundness.Preservation.HandleOpClause
+module OperationalSemantics.Soundness.Preservation.HandleOpClause
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))

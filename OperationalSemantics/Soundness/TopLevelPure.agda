@@ -41,7 +41,7 @@ open import DenotationalSemantics.Model.Monad
 open import DenotationalSemantics.Model.TickMonad
 open import DenotationalSemantics.Model.Implementation
 
-module DenotationalSemantics.Soundness.TopLevelPure
+module OperationalSemantics.Soundness.TopLevelPure
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
@@ -86,9 +86,9 @@ open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
-open import DenotationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation S Cat Fut Pst Adj GTy Mon GE
 
-open import DenotationalSemantics.Soundness.TickLemmas S Cat Fut Pst Adj GTy Mon TMon
+open import OperationalSemantics.Soundness.TickLemmas S Cat Fut Pst Adj GTy Mon TMon
 open ImplLemmas implᵐ implᵐ-μᵀ implᵐ-nat
 
 module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where

@@ -217,16 +217,16 @@ open import EquationalTheory.Soundness.HandlePerform
 
 ---- Soundness of the operational semantics
 
-open import DenotationalSemantics.Soundness.Preservation.Base
-open import DenotationalSemantics.Soundness.Preservation.Unbox
-open import DenotationalSemantics.Soundness.Preservation.Step
-open import DenotationalSemantics.Soundness.Preservation.Handle
-open import DenotationalSemantics.Soundness.Preservation
+open import OperationalSemantics.Soundness.Preservation.Base
+open import OperationalSemantics.Soundness.Preservation.Unbox
+open import OperationalSemantics.Soundness.Preservation.Step
+open import OperationalSemantics.Soundness.Preservation.Handle
+open import OperationalSemantics.Soundness.Preservation
 
 ---- Soundness of the pure top-level operational semantics
 
-open import DenotationalSemantics.Soundness.TickLemmas
-open import DenotationalSemantics.Soundness.TopLevelPure
+open import OperationalSemantics.Soundness.TickLemmas
+open import OperationalSemantics.Soundness.TopLevelPure
 
 ---- Concrete time-ticks Kripke frames
 

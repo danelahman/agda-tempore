@@ -12,7 +12,7 @@ open import DenotationalSemantics.Model.GroundTypes
 open import DenotationalSemantics.Model.GroundEternal
 open import DenotationalSemantics.Model.Monad
 
-module DenotationalSemantics.Soundness.Preservation.Base
+module OperationalSemantics.Soundness.Preservation.Base
          (S : LanguageSpec)
          (Cat : Category)
          (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
@@ -65,9 +65,9 @@ open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
-open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
   using (handle-op-cont)
-open import DenotationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
+open import OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
   using (term∅; ∅-terminal; clause-sound)
 
 -- The `Eternalᵒ` on `⟦ Γ ᴱ ⟧` carried by every `handle` interpretation: the
