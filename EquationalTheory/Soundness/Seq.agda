@@ -94,15 +94,19 @@ open import EquationalTheory.Soundness.Values S Cat Fut Pst Adj GTy Mon GE
 -- being reindexed under the lock instead (which is what the equations'
 -- `cong-⟨⟩-ren wk-ren` does).
 
-seq-extend : ∀ {X Y A B ε ε'}
+-- The `μᵀ`-free core: the same statement about the strengthened continuation
+-- alone. `handle` puts its sub-computation in the same position as `⨟` but
+-- under `T-alg-of-handlerᵀ` rather than `μᵀ`, so the handling equations reuse
+-- this directly.
+
+str-extend : ∀ {X Y A B ε ε'}
            → (m : Y →ᵐ Tᵒ A ε)
            → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
            → (g : X →ᵐ Y) → (f : Y →ᵐ X)
            → f ∘ᵐ g ≈ᵐ idᵐ
-           →    μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
-             ≈ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ∘ᵐ g ⟩ᵐ
-seq-extend m n g f fg =
-    ∘ᵐ-congʳ (  ∘ᵐ-congˡ (T-∘ᵐ _ _)
+           →    Tᶠ (n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
+             ≈ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ∘ᵐ g ⟩ᵐ
+str-extend m n g f fg =  ∘ᵐ-congˡ (T-∘ᵐ _ _)
               ∙ ∘ᵐ-assoc _ _ _
               ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                           ∙ ∘ᵐ-congˡ (strᵀ-natˡ _)
@@ -114,7 +118,16 @@ seq-extend m n g f fg =
                                           ∙ ∘ᵐ-assoc _ _ _
                                           ∙ ∘ᵐ-congʳ fg
                                           ∙ ∘ᵐ-identityʳ _
-                                        , ∘ᵐ-congˡ (∘ᵐ-identityˡ _) ⟩ᵐ-cong)))
+                                        , ∘ᵐ-congˡ (∘ᵐ-identityˡ _) ⟩ᵐ-cong))
+
+seq-extend : ∀ {X Y A B ε ε'}
+           → (m : Y →ᵐ Tᵒ A ε)
+           → (n : ⟨ mapᵉ ε ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+           → (g : X →ᵐ Y) → (f : Y →ᵐ X)
+           → f ∘ᵐ g ≈ᵐ idᵐ
+           →    μᵀ ∘ᵐ Tᶠ (n ∘ᵐ mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ f) idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ ∘ᵐ g
+             ≈ᵐ μᵀ ∘ᵐ Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ∘ᵐ g ⟩ᵐ
+seq-extend m n g f fg = ∘ᵐ-congʳ (str-extend m n g f fg)
 
 
 -- The unit law: sequencing a `return` is substitution. The environment the
