@@ -71,6 +71,8 @@ open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 
+open import EquationalTheory.Soundness.Fill S Cat Fut Pst Adj GTy Mon GE using (Paramᵏ)
+
 mutual
 
   Midᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → Γ ⊢V⦂ V == W → Set
@@ -106,4 +108,6 @@ mutual
   -- and under an `ε-subst` on the right.
   Midᶜ (match-eta V M)                   = Paramᶜ M
   Midᶜ (delay-delay M)                   = Paramᶜ M
+  -- `unbox-beta` mentions `K` and `N` only inside the filled context.
+  Midᶜ (unbox-beta V K p N)              = Paramᵏ K × Paramᶜ N
   Midᶜ _                                 = ⊤
