@@ -209,6 +209,7 @@ open import EquationalTheory.Soundness.Coerce
 open import EquationalTheory.Soundness.Seq
 open import EquationalTheory.Soundness.SeqAssoc
 open import EquationalTheory.Soundness.Delay
+open import EquationalTheory.Soundness.Fill
 
 ---- Soundness of the operational semantics
 
