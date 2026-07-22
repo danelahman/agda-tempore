@@ -15,6 +15,11 @@
 -- (`strᵀ-delayᵀ-algebraicity`, `delayᵀ-nat`, `delayᵀ-algebraicity`),   --
 -- the continuation's `⟨⟩-μ-ren` re-lock realigning the two graded locks --
 -- via `η⊣-δ` / `[]-δ-nat`.                                             --
+--                                                                    --
+-- `seq-perform` is the same for `opᵀ` (`strᵀ-opᵀ-algebraicity`,        --
+-- `opᵀ-nat`, `opᵀ-algebraicity`): the lock-split core is reused,        --
+-- wrapped by the operation continuation's `exp-strᵐ`/`map⇒ᵐ`, with the  --
+-- arity's `ty-gty` transport threaded through the pair.                 --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -315,5 +320,132 @@ sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
           ∘ʳ eq-ren (cong (Γ ⟨_⟩) (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
     r   = cong-∷-ren rin
     pRc = pM , renᶜ r N pN
+
+sound-seq-perform : ∀ {Γ A B ε ε' op}
+                  → (V : Γ ⊢V⦂ type-of-gtype (param op))
+                  → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+                  → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+                  → Soundᶜ== (seq-perform V M N)
+sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
+    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e' (perform op V (M ⨟ C-rename r' N)))
+                pR (ε-substᴾ e' _ pRc')
+            ∙ sound-ε-subst e' (perform op V (M ⨟ C-rename r' N)) pRc'
+            -- segment A: under the param/arity substs, move the continuation's
+            -- renaming inside the strength pair by strᵀ-naturality.
+            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+                , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (substᵈ-≈ (ty-gty (arity op)) (
+                    ∘ᵐ-congʳ (
+                        ∘ᵐ-congˡ (T-congᶠ (C-rename-nat r' N pN) ∙ T-∘ᵐ _ _)
+                      ∙ ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (
+                          ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                        ∙ ∘ᵐ-congˡ (strᵀ-natˡ ⟦ rin' ⟧ʳ)
+                        ∙ ∘ᵐ-assoc _ _ _
+                        ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                                    ∙ ⟨ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ (∘ᵐ-congˡ
+                                          (eq-ren-grade map-·ᵉ))))
+                                      , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))))))
+                ⟩ᵐ-cong))
+            -- `op` is algebraic: pull `opᵀ op` out of `⨟`.
+            ∙ ≈ᵐ-sym (
+                -- p1: factor `opᵀ op` out of the pair
+                ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
+                    ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
+                  ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))
+                -- p2: strᵀ-op algebraicity
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (strᵀ-opᵀ-algebraicity op)))
+                -- p3: opᵀ commutes past `Tᶠ n`
+              ∙ ∘ᵐ-congʳ (
+                    ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op _)))
+                -- p4: opᵀ is algebraic over `μᵀ`
+              ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (opᵀ-algebraicity op)
+                -- collapse the `strᵀ-opᵀ-algebraicity` reshape and the three
+                -- `mapˣᵐ idᵐ _` layers onto the pair `⟨ Vp , S ⟩`
+              ∙ ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                    ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                        ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
+                                  ∙ ⟨   ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
+                                      ,   ⟨⟩ᵐ-∘ _ _ _
+                                        ∙ ⟨ ⟨⟩ᵐ-fstᵐ _ _
+                                          , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong ⟩ᵐ-cong)
+                      ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+                  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
+                  ∙ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl ,
+                  -- C2: rebuild the lock-split tail (seq-delay's core3, reversed)
+                    ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                        ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ≈ᵐ-sym (
+                            ∘ᵐ-congˡ (  []-congᶠ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                                                          ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+                                      ∙ []-∘ᵐ _ _)
+                          ∙ ∘ᵐ-assoc _ _ _
+                          ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-monoidal)
+                          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                          ∙ ∘ᵐ-congˡ ([]-monoidal-nat _ _)
+                          ∙ ∘ᵐ-assoc _ _ _
+                          ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
+                          ∙ ∘ᵐ-congʳ (⟨   ∘ᵐ-congˡ (  []-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
+                                                    ∙ []-∘ᵐ _ _)
+                                        ∙ ∘ᵐ-assoc _ _ _
+                                        ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-δ)
+                                        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                                        ∙ ∘ᵐ-congˡ ([]-δ-nat _)
+                                        ∙ ∘ᵐ-assoc _ _ _
+                                        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-≤ _))
+                                      , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
+                          ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong
+                                      ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))))
+                  -- C3: peel `strᵀ` (through `exp-strᵐ`), then `Tᶠ n`, then `μᵀ`
+                  -- into the curried continuation
+                  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+                        ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
+                                  ∙ []-congᶠ (  ∘ᵐ-assoc _ _ _
+                                              ∙ ∘ᵐ-congʳ (exp-strᵐ-⟨⟩ _ _)
+                                              ∙ map⇒ᵐ-curryᵐ _ _))))
+                  ∙ ∘ᵐ-congʳ (
+                        ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ []-congᶠ (map⇒ᵐ-curryᵐ _ _)))
+                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ []-congᶠ (map⇒ᵐ-curryᵐ _ _))
+                  -- C4: transporting the arity type across the pair — the
+                  -- continuation's `subst` and the boxed environment's `fstᵐ`.
+                  ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (c4 (ty-gty (arity op)))))
+                  ⟩ᵐ-cong))))
+  where
+    e'   = sym (·ₑ-assoc (op-grade op) ε ε')
+    rin' = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+    r'   = cong-∷-ren rin'
+    pRc' = pV , (pM , renᶜ r' N pN)
+    -- The arity type occurs (a) in the continuation `M`'s domain and (b) in the
+    -- environment box `η⊣ ∘ fstᵐ`; transporting it commutes with both. At `refl`
+    -- the two boxed environments agree by `η⊣`-naturality.
+    c4 : ∀ {O} → (eq : ⟦ type-of-gtype (arity op) ⟧ᵛ ≡ O)
+       → μᵀ ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ
+           ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣) ∘ᵐ fstᵐ
+              , subst (λ O' → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O' →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
+                      eq (⟦ M ⟧ᶜᵗ pM) ⟩ᵐ
+       ≈ᵐ subst (λ O' → ⟨ mapᵉ (op-grade op) ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ ×ᵐ O' →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε'))
+                eq (μᵀ ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ
+                      ∘ᵐ ⟨ [ mapᵉ ε ]ᶠ ((⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ)
+                                         ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ) ∘ᵐ η⊣
+                         , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ)
+    c4 refl =
+      ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨   ∘ᵐ-assoc _ _ _
+                                      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat fstᵐ))
+                                      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                                      ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+                                    , ≈ᵐ-refl ⟩ᵐ-cong)))
 
 
