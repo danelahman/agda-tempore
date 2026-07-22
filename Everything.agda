@@ -213,6 +213,7 @@ open import EquationalTheory.Soundness.Fill
 open import EquationalTheory.Soundness.UnboxBeta
 open import EquationalTheory.Soundness.Comm
 open import EquationalTheory.Soundness.Handle
+open import EquationalTheory.Soundness.HandlePerform
 
 ---- Soundness of the operational semantics
 
