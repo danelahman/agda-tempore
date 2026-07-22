@@ -57,9 +57,9 @@ open import Syntax.Substitutions S
 open import EquationalTheory.EquationalTheory S
 
 open Category Cat
-open Future Fut using ([_]ᵒ; [_]ᶠ)
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-∘ᵐ; []-congᶠ; []-monoidal; []-monoidal-nat)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤)
-open Adjunction Adj using (η⊣; ε⊣)
+open Adjunction Adj using (η⊣; ε⊣; η⊣-nat; η⊣-monoidal)
 open GroundTypes GTy
 open Monad Mon
 
@@ -79,7 +79,7 @@ open import DenotationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 open import EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE
-       using (εᵇ-η⊣-u; str-extend)
+       using (εᵇ-η⊣-u; str-extend; str-delay)
 
 sound-handle-return : ∀ {Γ A B ε}
   → (V : Γ ⊢V⦂ A)
@@ -273,3 +273,70 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
     alg-nat = T-alg-of-handlerᵀ-natᴾ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ ∷ A ⟧ᴱ-Eternalᵒ)
                 f necᵉ-comm (⟦_⟧ʰᵗ {Γ} H pH uH) (⟦_⟧ʰᵗ {Γ ∷ A} H' pH₂ uH₂)
                 clause-nat
+
+-- `handle-delay`: the handled computation's `delay` becomes a `delay` of the
+-- handled computation. The strength half is `str-delay` (shared with
+-- `seq-delay`); the fold's own law is `T-alg-of-handlerᵀ-delayᵀ`, which carries
+-- the eternal parameter under the box by `necᵉ`. The handler itself is
+-- unchanged, since `(Γ ⟨ ρ ⟩) ᴱ = Γ ᴱ`.
+
+sound-handle-delay : ∀ {Γ A B τ ε ε'}
+  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
+       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+  → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
+  → Soundᶜ== (handle-delay M H N)
+sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH , cH) pR =
+    -- the strength half
+    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)
+    -- re-form `mapˣᵐ idᵐ (delayᵀ τ)` and fire the fold's delay law
+  ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
+              ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-delayᵀ τ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    -- carry the eternal parameter under the box: `necᵉ` is the transpose of
+    -- the extraction (`necᵉ-mate`), so both components become `[ρτ]ᶠ _ ∘ᵐ η⊣`
+    -- and `η⊣-monoidal` pairs them up
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
+        ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                  ∙ ⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate (⟦ Γ ⟧ᴱ-Eternalᵒ))
+                      ∙ ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (projᴱ Γ)))
+                      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+                    , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+                  ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-monoidal-nat _ _))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ η⊣-monoidal
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
+                  ∙ []-congᶠ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                              ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong)))))
+    -- recombine the two boxes, and put the continuation's re-lock renaming back
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
+        ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
+                  ∙ []-congᶠ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+                                        , ∘ᵐ-congˡ (≈ᵐ-sym (
+                                              T-congᶠ (C-rename-nat r N pN)
+                                            ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
+                                                (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
+                                                  (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+                                                ≈ᵐ-refl)))) ⟩ᵐ-cong)))))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (handle M `with H `in (C-rename r N))))
+                pR (ε-substᴾ e _ pRc)
+            ∙ sound-ε-subst e (delay τ (handle M `with H `in (C-rename r N))) pRc)
+  where
+    e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
+    r   = cong-∷-ren (⟨⟩-μ-ren
+                      ∘ʳ eq-ren (cong (Γ ⟨_⟩)
+                           (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+    pRc = pM , renᶜ r N pN , pH , uH , cH

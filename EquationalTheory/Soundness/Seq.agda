@@ -248,85 +248,116 @@ sound-seq-unbox {ε = ε} w V M N ((pV , pM) , pN) pR =
     g = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                     ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
 
+
+
+
+-- The transposed pair, boxed, is exactly the tail that
+-- `strᵀ-delayᵀ-algebraicity` produces: `η⊣-monoidal` supplies the diagonal,
+-- `[]-δ-nat`/`η⊣-δ` split the lock `of-natʳ τ ·ᵣ mapᵉ ε`, and `η⊣-≤` relaxes it.
+
+delay-core3 : ∀ {X A ε} → (τ : ℕ) → (m : ⟨ of-natʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
+            → [ of-natʳ τ ]ᶠ
+                 ⟨ [ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive
+                       (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))) ∘ᵐ μ)
+                     ∘ᵐ η⊣
+                 , m ⟩ᵐ
+                ∘ᵐ η⊣
+            ≈ᵐ []-monoidal
+                 ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive
+                       (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))) idᵐ
+                 ∘ᵐ ⟨ η⊣ , [ of-natʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
+delay-core3 τ m =
+    ∘ᵐ-congˡ (  []-congᶠ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                                  ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+              ∙ []-∘ᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-monoidal)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ([]-monoidal-nat _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
+  ∙ ∘ᵐ-congʳ (⟨   ∘ᵐ-congˡ (  []-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
+                            ∙ []-∘ᵐ _ _)
+                ∙ ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-δ)
+                ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                ∙ ∘ᵐ-congˡ ([]-δ-nat _)
+                ∙ ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-≤ _))
+              , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong
+              ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
+
+-- The `μᵀ`-free core of the delay equation: pulling `delayᵀ` out of a
+-- strengthened continuation. `seq-delay` is this plus `delayᵀ-algebraicity`;
+-- `handle-delay` is this plus `T-alg-of-handlerᵀ-delayᵀ`.
+
+str-delay : ∀ {X A B ε ε'} → (τ : ℕ)
+          → (m : ⟨ of-natʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
+          → (n : ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ᵒ X ×ᵐ A →ᵐ Tᵒ B ε')
+          → Tᶠ n ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ m ∘ᵐ η⊣ ⟩ᵐ
+          ≈ᵐ delayᵀ τ
+               ∘ᵐ [ of-natʳ τ ]ᶠ
+                    (Tᶠ (n ∘ᵐ mapˣᵐ (⟨⟩-≤ (≾ᵣ-reflexive
+                            (sym (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))) ∘ᵐ μ) idᵐ)
+                     ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)
+               ∘ᵐ η⊣
+str-delay {X} {A} {B} {ε} {ε'} τ m n =
+    -- p1: factor `delayᵀ τ` out of the pair
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
+                        ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))
+    -- p2: the strength's delay-algebraicity
+  ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity {ε = ε} τ))
+    -- p3: `delayᵀ` commutes past `Tᶠ n`
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ n))
+    -- recombine the two `[ of-natʳ τ ]ᶠ` factors
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (  ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+    -- core3, reversed: rebuild the transposed pair out of the algebraicity tail
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
+                        ∙ ≈ᵐ-sym (delay-core3 {X} {A} {ε} τ m)))
+    -- and put the re-lock back outside the strength pair
+  ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
+                          ∙ []-congᶠ (  ∘ᵐ-assoc _ _ _
+                                      ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ (T-∘ᵐ _ _)
+                                                ∙ ∘ᵐ-assoc _ _ _
+                                                ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                                                            ∙ ∘ᵐ-congˡ (strᵀ-natˡ _)
+                                                            ∙ ∘ᵐ-assoc _ _ _
+                                                            ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                                                                        ∙ ⟨ ≈ᵐ-refl
+                                                                          , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))))
+
 sound-seq-delay : ∀ {Γ A B τ ε ε'}
                 → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
                 → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 → Soundᶜ== (seq-delay M N)
 sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
-    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (M ⨟ C-rename r N)))
+    -- the strength part is `str-delay`; the continuation's `⟨⟩-μ-ren` denotes
+    -- exactly its `φ` (`eq-ren-grade`)
+    ∘ᵐ-congʳ (str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN))
+    -- then `delayᵀ` is algebraic over `μᵀ`
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
+              ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                          ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
+                                      ∙ []-congᶠ (∘ᵐ-congʳ (∘ᵐ-congˡ (
+                                          ≈ᵐ-sym (  T-congᶠ (C-rename-nat r N pN)
+                                                  ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
+                                                      (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
+                                                        (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+                                                      ≈ᵐ-refl)))))))))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (M ⨟ C-rename r N)))
                 pR (ε-substᴾ e _ pRc)
-            ∙ sound-ε-subst e (delay τ (M ⨟ C-rename r N)) pRc
-            -- segment A: unfold the renaming and move it inside the pair by
-            -- strᵀ-naturality, leaving `strᵀ ∘ ⟨ [ mapᵉ ε ]ᶠ φ ∘ η⊣ , m ⟩`.
-            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ (
-                  ∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN) ∙ T-∘ᵐ _ _)
-                ∙ ∘ᵐ-assoc _ _ _
-                ∙ ∘ᵐ-congʳ (
-                    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                  ∙ ∘ᵐ-congˡ (strᵀ-natˡ ⟦ rin ⟧ʳ)
-                  ∙ ∘ᵐ-assoc _ _ _
-                  ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                              ∙ ⟨ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congˡ
-                                    (eq-ren-grade (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))))
-                                , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))))))
-            -- split `[ρτ]ᶠ(μᵀ∘Tᶠn∘strᵀ ∘ ⟨P',m⟩)` to expose the tail `[ρτ]ᶠ⟨P',m⟩ ∘ η⊣`
-            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
-                  ∘ᵐ-congˡ (  []-congᶠ (  ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                                        ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                            ∙ []-∘ᵐ _ _)
-                ∙ ∘ᵐ-assoc _ _ _))
-            -- core3: rebuild `[ρτ]ᶠ⟨P',m⟩ ∘ η⊣` into the `strᵀ-delayᵀ-algebraicity`
-            -- tail `[]-monoidal ∘ mapˣᵐ (δ ∘ []-≤ σ) idᵐ ∘ ⟨ η⊣ , [ρτ]ᶠm ∘ η⊣ ⟩`,
-            -- via η⊣-monoidal (diagonal), []-δ-nat / η⊣-δ (split the lock), η⊣-≤.
-            ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
-                  ∘ᵐ-congˡ (  []-congᶠ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                                                ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
-                            ∙ []-∘ᵐ _ _)
-                ∙ ∘ᵐ-assoc _ _ _
-                ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-monoidal)
-                ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                ∙ ∘ᵐ-congˡ ([]-monoidal-nat _ _)
-                ∙ ∘ᵐ-assoc _ _ _
-                ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
-                ∙ ∘ᵐ-congʳ (⟨   ∘ᵐ-congˡ (  []-congᶠ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
-                                          ∙ []-∘ᵐ _ _)
-                              ∙ ∘ᵐ-assoc _ _ _
-                              ∙ ∘ᵐ-congʳ (≈ᵐ-sym η⊣-δ)
-                              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                              ∙ ∘ᵐ-congˡ ([]-δ-nat _)
-                              ∙ ∘ᵐ-assoc _ _ _
-                              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-≤ _))
-                            , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
-                ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong
-                            ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))))
-            -- R5 ≈ R0: delay is algebraic (pull `delayᵀ τ` out of `⨟`)
-            ∙ ≈ᵐ-sym (
-                -- p1: factor `delayᵀ τ` out of the pair
-                ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
-                    ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
-                  ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))
-                -- p2: strᵀ-delay algebraicity
-              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
-                    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                  ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity τ)))
-                -- p3: delayᵀ commutes past `Tᶠ n`
-              ∙ ∘ᵐ-congʳ (
-                    ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ _)))
-                -- p4: delayᵀ is algebraic over `μᵀ`
-              ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-              ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
-                -- step5: recombine the three `[ρτ]ᶠ` factors into `[ρτ]ᶠ(μᵀ∘Tᶠn∘strᵀ)`
-              ∙ ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
-                    ∘ᵐ-congʳ (  ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-                              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                  ∙ ∘ᵐ-congˡ (  ∘ᵐ-congʳ (≈ᵐ-sym ([]-∘ᵐ _ _))
-                              ∙ ≈ᵐ-sym ([]-∘ᵐ _ _))))))
+            ∙ sound-ε-subst e (delay τ (M ⨟ C-rename r N)) pRc)
   where
     e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
     rin = ⟨⟩-μ-ren
