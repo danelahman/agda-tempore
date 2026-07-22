@@ -133,8 +133,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                   ∙ []-congᶠ (∘ᵐ-assoc _ _ _ ∙ ≈ᵐ-sym φ-def))
 
     -- (Step B) The split box `δ ∘ []-≤ σ ∘ η⊣` is the transpose of `α`: the
-    -- adjunction reconciles the comultiplication with the lock merge. This is
-    -- the lax-box replacement for the reference proof's `δ⁻¹ ∘ δ` cancellation.
+    -- adjunction reconciles the comultiplication with the lock merge.
     box-split : δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ η⊣
               ≈ᵐ [ mapᵉ ε ]ᶠ α ∘ᵐ η⊣
     box-split =

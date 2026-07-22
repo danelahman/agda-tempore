@@ -412,27 +412,6 @@ Halg-op {Γ} e H pH uH op =
   HC.Halg-op Mon (bcᴱ Γ) (term∅ e) (∅-terminal e) (∅-box-terminal e)
              (⟦_⟧ʰᵗ {Γ} H pH uH) op
 
--- The `⟦_⟧ʰᵗ` adapter (parameter-independent) commutes with a reindexing of the
--- eternal parameter — the same shape as in the renaming/substitution coherence.
-adapt-commute : ∀ {D D' P Q R Sₒ} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : Sₒ →ᵐ R)
-              → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-              ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-adapt-commute g p a =
-    ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
-    (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-            (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
-            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                      (∘ᵐ-congˡ ba≈canon)))))
-  where
-    ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-      (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                            (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-                  (∘ᵐ-identityˡ _))
-    ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-      (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                            (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
-                  (∘ᵐ-identityʳ _))
-
 -- HANDLE-STEP
 --
 -- The same assembly as `SEQ-STEP`, with the handler's fold in place of the

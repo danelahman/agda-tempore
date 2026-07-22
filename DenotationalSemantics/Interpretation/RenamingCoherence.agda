@@ -61,6 +61,11 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 
+private
+  infixr 3 _∙_
+  _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+  _∙_ = ≈ᵐ-trans
+
 -- The resource looked up by an `unbox` is stable under renaming: extending
 -- the unboxing renaming `w` by `r` reindexes the looked-up variable exactly
 -- along `⟦ r ⟧ʳ`. The two grade bounds are witnesses of the same relation,
@@ -84,6 +89,58 @@ unbox⇒var-nat r w V with grad-typ⇒var V
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ vpn))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
+
+-- The unbox environment `ε⊣ ∘ᵐ ⟨⟩-≤ ∘ᵐ var-proj x` (`x` extracted by
+-- `unbox⇒var`) equals reading the boxed value `V` through the lock and
+-- unboxing with `ε⊣`.
+unbox-read : ∀ {Γ A ρ Δ} → (w : Ren (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A) → (pV : Paramᵛ V)
+           → ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
+                  ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V)))
+           ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ ⟦ w ⟧ʳ
+unbox-read {ρ = ρ} w V pV with grad-typ⇒var V
+... | ρy , y , f , refl with var-rename w (Tl-⟨⟩ y) | var-proj-nat w (Tl-⟨⟩ y) (λ ())
+... | ρ' , bound , x | vpn =
+    -- split the grade relaxation, then `vpn` (var-proj naturality) returns the
+    -- extracted variable to the locked source variable, reindexed by `w`
+      ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (bound (λ ())) relax)))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (bound (λ ())) relax)))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ vpn)
+    -- isolate `⟨⟩-≤ relax ∘ᵐ μ` and apply `coh`
+    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (∘ᵐ-congˡ coh))
+    -- merge the three `⟨ ρ ⟩ᶠ` factors
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ
+        (  ∘ᵐ-assoc _ _ _
+         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+         ∙ ≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  where
+    relax : ρy ·ᵣ ρ ≾ᵣ ρ
+    relax = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
+
+    -- folding the unit layer with `μ` (relaxing the redundant `· u`) is `⟨ρ⟩ᶠ εᵘ`
+    Teᵘ : ⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ∘ᵐ μ {_} {ρ} {uᵣ}
+        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ
+    Teᵘ =
+        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-identityʳ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-congᶠ ⟨⟩-η∘εᵘ≡id ∙ ⟨⟩-idᵐ)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id ∙ ⟨⟩-≤-trans _ _ ∙ ⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl)
+      ∙ ∘ᵐ-identityˡ _
+
+    coh : ⟨⟩-≤ relax ∘ᵐ μ {_} {ρ} {ρy}
+        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⟩-≤ (f (λ ())))
+    coh =
+        ∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _) ∙ ⟨⟩-μ-≤ ≾ᵣ-refl (f (λ ())))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-≤-refl ∙ ∘ᵐ-identityʳ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ Teᵘ
 
 -- The interpretation of a restricted renaming also commutes with the
 -- necessitations `necᵉ` (the box/`Future` mate of `restrict-ren-mor`, which
@@ -125,6 +182,29 @@ restrict-ren-necᵉ {Γ} {Γ'} r {ρ} =
       ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
         (⟨ ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _) (⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
          , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+
+-- A left map `mapˣᵐ g idᵐ` commutes past the reassociating adapter
+-- `mapˣᵐ (mapˣᵐ idᵐ p) a ∘ᵐ ×ᵐ-assoc⁻¹` — the naturality in the first factor of
+-- the ground-type adapter used by `⟦_⟧ʰᵗ`.
+
+adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
+              → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
+              ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
+adapt-commute g p a =
+  ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
+  (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
+          (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                    (∘ᵐ-congˡ ba≈canon)))))
+  where
+    ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+      (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                            (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
+                  (∘ᵐ-identityˡ _))
+    ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+      (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+                            (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
+                  (∘ᵐ-identityʳ _))
 
 -- Reindexings acting on disjoint product components commute.
 
@@ -348,24 +428,6 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-      adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
-                    → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-                    ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-      adapt-commute g p a =
-        ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
-        (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
-                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                          (∘ᵐ-congˡ ba≈canon)))))
-        where
-          ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-                        (∘ᵐ-identityˡ _))
-          ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
-                        (∘ᵐ-identityʳ _))
       ⟦⟧ʰᵗ-nat : ∀ op ε''
                → clauseᵀ (⟦_⟧ʰᵗ {Γ'}
                     (λ op ε'' Γ'' → C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ''))

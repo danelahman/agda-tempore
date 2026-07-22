@@ -18,11 +18,10 @@
 -- monad's strength is natural (`enrᵀ-nat`) and recovers the strength    --
 -- (`str-of-enrᵀ≈strᵀ`).                                                --
 --                                                                    --
--- Unlike the version proved for the (ungraded-box) reference model,     --
--- this correspondence concerns only the strength/enrichment and their   --
--- naturality: the box here is *lax*, so the further enrichment          --
--- coherence laws (which need the box's counit/comultiplication          --
--- inverses) are not available to be transported.                       --
+-- The correspondence concerns the strength/enrichment and their         --
+-- naturality only: the box is *lax*, so the further enrichment          --
+-- coherence laws (which would need the box's counit/comultiplication    --
+-- inverses) are not available.                                          --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

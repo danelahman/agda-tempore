@@ -1,9 +1,12 @@
 ------------------------------------------------------------------------
--- Soundness of the `handle-perform` equation (the last axiom).          --
---                                                                      --
--- Development module (not yet in Everything.agda). General renaming     --
--- lemmas proved here (`contract-mor`) will move to their proper homes    --
--- once the whole axiom is green.                                        --
+-- Soundness of the `handle-perform` equation.                          --
+--                                                                    --
+-- Handling an operation applies the matching clause, with the rest of  --
+-- the handled computation boxed up as the clause's continuation. The   --
+-- proof is the parametric generalisation of the operational            --
+-- `sound-HANDLE-OP`: the eternal parameter is threaded live and carried --
+-- under the operation's box by `necᵉ`, rather than collapsed to the     --
+-- terminal object as in a closed runtime configuration.                --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -81,15 +84,15 @@ private
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙_ = ≈ᵐ-trans
 
--- ═══════════════════════════════════════════════════════════════════════════
--- BRICK 2: pushing a sequel under an operation, WITHOUT an algebra.
+-- ───────────────────────────────────────────────────────────────────────────
+-- Pushing a sequel under an operation.
 --
--- `seq-op-box`/`seq-op-core` (Preservation/Handle) bake in a parameter-free
--- algebra `alg`, which a handler with a live eternal parameter is not. These
--- are the same two moves with that layer removed: what is left is exactly the
--- strength's own algebraicity, so the sequel `n` ends up inside the
--- operation's (boxed) continuation and nothing else changes.
--- ═══════════════════════════════════════════════════════════════════════════
+-- `seq-op-box`/`seq-op-core` (Preservation/Handle) are stated for a
+-- parameter-free algebra `alg`, which a handler with a live eternal parameter
+-- is not. These are the same two steps with that layer removed: what remains is
+-- the strength's own algebraicity, so the sequel `n` is placed inside the
+-- operation's (boxed) continuation.
+-- ───────────────────────────────────────────────────────────────────────────
 
 str-op-box : ∀ {X A B ε ε'} → (op : Op)
   → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ A ε)
@@ -185,39 +188,20 @@ str-op op refl v m n rn ern =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op n))
   ∙ ∘ᵐ-assoc _ _ _
-  -- collect the map on the continuation, and fire the box lemma
+  -- collect the map on the continuation, then apply `str-op-box`
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-op-box op m n rn ern ⟩ᵐ-cong)
 
 
--- ═══════════════════════════════════════════════════════════════════════════
--- BRICK 3: transporting the fold along an eternal-skeleton extension, with a
--- LIVE parameter.
+-- ───────────────────────────────────────────────────────────────────────────
+-- Transporting the fold along an eternal-skeleton extension, with a live
+-- parameter.
 --
 -- `HandleOpCont.handle-op-cont` does this only at a runtime configuration
 -- (`Γ ᴱ ≡ []`), where the parameter collapses by terminality. Here the
 -- parameter is carried, so the reconciliation is `T-alg-of-handlerᵀ-natᴾ`
 -- along `ren-ᴱ-∷ A₀` — as in `sound-handle-unbox`, but over an arbitrary base.
--- ═══════════════════════════════════════════════════════════════════════════
-
-private
-  -- the ground-type adapter commutes with reindexing the eternal parameter
-  adapt-comm : ∀ {D D' P Q R Sₒ} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : Sₒ →ᵐ R)
-             → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-             ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-  adapt-comm g p a =
-      ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-    ∙ ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _
-                ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                              ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _))
-                             (∘ᵐ-identityˡ _))
-    ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g)
-              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-              ∙ ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _
-                          ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                                        ∙ mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _))
-                                       (∘ᵐ-identityʳ _)))
+-- ───────────────────────────────────────────────────────────────────────────
 
 module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
          (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
@@ -267,7 +251,7 @@ module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
                   ∙ C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ₀} A₀))
                       (H op ε'' []) (pH op ε'' []))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (adapt-comm _ _ _)
+      ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
     alg-natᴿ : ∀ {ε ε'}
@@ -282,16 +266,15 @@ module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
         clause-natᴿ
 
 
--- ═══════════════════════════════════════════════════════════════════════════
--- BRICK 4: the clause at `Γ' = Γ`, contracted, is the clause at `Γ' = []`.
+-- ───────────────────────────────────────────────────────────────────────────
+-- The clause at `Γ' = Γ`, contracted, is the clause at `Γ' = []`.
 --
--- The fold's operation law hands back `clauseᵀ h op _`, which is the clause at
--- the EMPTY extension; the axiom's right-hand side instead uses the clause at
--- `Γ' = Γ`, reindexed by `contract Γ`. `CtxUniformʰ` (naturality in the
--- extension) at the terminal map bridges them: `⋉-proj` turns the lifted
--- terminal map into `sndᵐ ∘ᵐ splitᴱ`, which cancels `contract Γ`'s re-glue
--- (`contract-mor` + `splitᴱ-iso`), leaving exactly `projᴱ Γ`.
--- ═══════════════════════════════════════════════════════════════════════════
+-- The fold's operation law returns `clauseᵀ h op _`, the clause at the empty
+-- extension; the equation's right-hand side uses the clause at `Γ' = Γ`
+-- reindexed by `contract Γ`. `CtxUniformʰ` at the terminal map relates them:
+-- `⋉-proj` rewrites the lifted terminal map to `sndᵐ ∘ᵐ splitᴱ`, which cancels
+-- `contract Γ`'s re-gluing (`contract-mor` + `splitᴱ-iso`) down to `projᴱ Γ`.
+-- ───────────────────────────────────────────────────────────────────────────
 
 contract-clause : ∀ {Γ B}
   → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
@@ -308,13 +291,12 @@ contract-clause {Γ} H pH cH op ε'' =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘ _ _ _ _
               ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                            ∙ mapˣᵐ-cong bridge (∘ᵐ-identityˡ _))
+                            ∙ mapˣᵐ-cong ⋉-contract (∘ᵐ-identityˡ _))
                            (∘ᵐ-identityˡ _))
   where
-    -- lifting the terminal map is the eternal projection, once `contract`'s
-    -- re-glue is cancelled against `splitᴱ`
-    bridge : _⋉_ Γ {Γ} {[]} terminalᵐ ∘ᵐ ⟦ contract Γ ⟧ʳ ≈ᵐ projᴱ Γ
-    bridge =
+    -- lifting the terminal map is the eternal projection
+    ⋉-contract : _⋉_ Γ {Γ} {[]} terminalᵐ ∘ᵐ ⟦ contract Γ ⟧ʳ ≈ᵐ projᴱ Γ
+    ⋉-contract =
         ∘ᵐ-cong (⋉-proj Γ Γ) (contract-mor Γ)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -458,10 +440,9 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
                   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
-    -- the operation's boxed continuation on the reduct side: the arity
-    -- coercions cancel (`arity-box`), the inner handle's fold is transported
-    -- to the ambient eternal base (`alg-natᴿ`/`projᴱ-wkᴿ`, brick 3), and the
-    -- sequel's renaming is recognised (`C-rename-nat`)
+    -- the boxed continuation on the reduct side: the arity coercions cancel
+    -- (`arity-box`), the inner handle's fold is transported to the ambient
+    -- eternal base (`alg-natᴿ`/`projᴱ-wkᴿ`), the sequel's renaming is `C-rename-nat`
     boxeq =
       -- merge the coercion into the box and cancel it against the arity subst
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -526,19 +507,17 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
       ∙ ∘ᵐ-congˡ ([]-congᶠ (cont-collapse _ _ _))
 
     assembly =
-      -- the operation push (brick 2): the sequel `N` moves into the
-      -- operation's boxed continuation
+      -- `str-op` moves the sequel `N` into the operation's boxed continuation
         ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                   , str-op op (ty-gty (arity op)) Vp (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
                       ⟦ ren ⟧ʳ ern ⟩ᵐ-cong)
-      -- re-form `mapˣᵐ idᵐ (opᵀ op)` and fire the fold's operation law
+      -- re-form `mapˣᵐ idᵐ (opᵀ op)` and apply the fold's operation law
       ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-opᵀ op (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH))
-      -- feed the operation's arguments to the law's reshuffle: the eternal
-      -- parameter and the operation's parameter come back untouched, and the
-      -- continuation is where all the work happens
+      -- the law's reshuffle returns the eternal and operation parameters
+      -- unchanged; the continuation carries the rest
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
@@ -547,7 +526,7 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
             , ⟨⟩ᵐ-∘ _ _ _
               ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
                 , boxpart ⟩ᵐ-cong ⟩ᵐ-cong))
-      -- … and that is the reduct: the clause fired at `Γ`, applied to the
+      -- what remains is the reduct: the clause at `Γ`, applied to the
       -- parameter and to the boxed continuation the `box` allocates
       ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr
                     (ε-subst e

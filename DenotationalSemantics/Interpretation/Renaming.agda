@@ -913,11 +913,8 @@ bring-up-mor {Δ} {A} eA eΔ (Θ ⟨ ρ ⟩) =
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ costrP
 
--- ═══════════════════════════════════════════════════════════════════════════
--- BRICK 1: the denotation of the eternal-prefix contraction.
--- `contract Γ : Ren (Γ ᴱ ++ᶜ Γ) Γ` re-assembles `Γ` together with its eternal
--- projection: pair the identity with `projᴱ Γ`, then `splitᴱ⁻¹` glues on the base.
--- ═══════════════════════════════════════════════════════════════════════════
+-- The denotation of the eternal-prefix contraction `contract Γ : Ren (Γ ᴱ ++ᶜ Γ) Γ`:
+-- pair the identity with `projᴱ Γ`, then `splitᴱ⁻¹` glues the eternal base back on.
 
 -- the pure-cartesian reshuffle used in the non-eternal `∷` case
 private

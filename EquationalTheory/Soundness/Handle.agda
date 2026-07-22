@@ -165,7 +165,7 @@ sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH , cH) p
 -- or `Γ ᴱ`. The handler is therefore reindexed along `ren-ᴱ-∷ A`, and
 -- `T-alg-of-handlerᵀ-natᴾ` transports the fold along it — its two premises
 -- being `restrict-ren-necᵉ` (the necessitation commutes) and `clause-nat`
--- (the clauses commute, `adapt-comm` moving the reindexing past the
+-- (the clauses commute, `adapt-commute` moving the reindexing past the
 -- ground-type adapters). `ren-ᴱ-∷ A` *is* `restrict-ren wk-ren`, which is what
 -- lets those two be reused verbatim.
 
@@ -174,24 +174,6 @@ private
   ren-ᴱ-∷≡ A with eternal? A
   ... | yes _ = refl
   ... | no  _ = refl
-
-  -- the ground-type adapter commutes with reindexing the eternal parameter
-  adapt-comm : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
-             → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-             ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-  adapt-comm g p a =
-      ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-    ∙ ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _
-                ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                              ∙ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _))
-                             (∘ᵐ-identityˡ _))
-    ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g)
-              ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-              ∙ ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _
-                          ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                                        ∙ mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _))
-                                       (∘ᵐ-identityʳ _)))
 
 sound-handle-unbox : ∀ {Γ A B C ρ Δ ε ε'}
   → (w : Ren (Δ ⟨ ρ ⟩) Γ)
@@ -267,7 +249,7 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
                       (renᶜ (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op ε'' []) (pH op ε'' []))
                   ∙ C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op ε'' []) (pH op ε'' []))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (adapt-comm _ _ _)
+      ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
     alg-nat = T-alg-of-handlerᵀ-natᴾ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ ∷ A ⟧ᴱ-Eternalᵒ)

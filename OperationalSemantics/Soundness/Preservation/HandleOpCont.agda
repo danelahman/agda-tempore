@@ -160,26 +160,6 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
              ≈ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
       seq-eq = ∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ren) N pN))
 
-      -- the `⟦_⟧ʰᵗ` adapter commutes past the eternal-parameter reindexing
-      adapt-commute : ∀ {D D' P Q R Sₒ} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : Sₒ →ᵐ R)
-                    → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-                    ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-      adapt-commute g p a =
-        ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
-        (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
-                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                          (∘ᵐ-congˡ ba≈canon)))))
-        where
-          ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-                        (∘ᵐ-identityˡ _))
-          ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
-                        (∘ᵐ-identityʳ _))
-
       -- the inner (renamed) handler equals the outer one reindexed by `f`
       ⟦H'⟧ʰᵗ-nat : ∀ op ε''
                  → clauseᵀ (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH') op ε''

@@ -45,16 +45,14 @@ open import Syntax.Types         S
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
-open import Syntax.RenActions    S using (V-rename; C-rename; unbox⇒var; var-rename)
+open import Syntax.RenActions    S using (V-rename; C-rename)
 open import Syntax.Substitutions S
 
 open import EquationalTheory.EquationalTheory S
 
 open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; ⟨⟩-≤; ⟨⟩-congᶠ; ⟨⟩-∘ᵐ; ⟨⟩-idᵐ; μ; η; εᵘ;
-                     ⟨⟩-≤-trans; ⟨⟩-≤-refl; ⟨⟩-≤-irr; ⟨⟩-μ-≤; ⟨⟩-μ∘Tη≡id; ⟨⟩-η∘εᵘ≡id)
-open Adjunction Adj using (η⊣; ε⊣)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; ⟨⟩-congᶠ)
 open GroundTypes GTy
 open Monad Mon
 
@@ -63,9 +61,11 @@ open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
+       using (unbox-read)
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
        using (V-subst-nat; C-subst-nat; subᵛ; subᶜ; substᴾᵛ; substᴾᶜ′;
-              subst-ctx-interp; sub-env; var-morphism-¬et)
+              subst-ctx-interp; subst-val-interp; sub-env)
 open import OperationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj GTy Mon GE
        using (unbox-def)
 
@@ -81,68 +81,6 @@ open import EquationalTheory.Soundness.UnboxBeta S Cat Fut Pst Adj GTy Mon GE
 open import EquationalTheory.Soundness.Comm S Cat Fut Pst Adj GTy Mon GE
 open import EquationalTheory.Soundness.Handle S Cat Fut Pst Adj GTy Mon GE
 open import EquationalTheory.Soundness.HandlePerform S Cat Fut Pst Adj GTy Mon GE
-
--- The unbox environment `ε⊣ ∘ᵐ ⟨⟩-≤ ∘ᵐ var-proj x` (`x` extracted by
--- `unbox⇒var`) equals reading the boxed value `V` through the lock and
--- unboxing with the adjunction counit `ε⊣`. This is the coherence at the heart
--- of the Fitch-style `unbox`: it is what lets `unbox-cong` use the IH `⟦V⟧≈⟦W⟧`.
-unbox-read : ∀ {Γ A ρ Δ} → (w : Ren (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A) → (pV : Paramᵛ V)
-           → ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                  ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V)))
-           ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ ⟦ w ⟧ʳ
-unbox-read {ρ = ρ} w V pV with grad-typ⇒var V
-... | ρy , y , f , refl with var-rename w (Tl-⟨⟩ y) | var-proj-nat w (Tl-⟨⟩ y) (λ ())
-... | ρ' , bound , x | vpn =
-    -- split the grade relaxation, then `vpn` (var-proj naturality) turns the
-    -- extracted variable back into the locked source variable, reindexed by `w`
-      ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (bound (λ ())) relax)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (bound (λ ())) relax)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ vpn)
-    -- ε⊣ ∘ᵐ ⟨⟩-≤ relax ∘ᵐ ((μ ∘ᵐ ⟨ρ⟩ᶠ(var-proj y)) ∘ᵐ ⟦w⟧ʳ)
-    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (∘ᵐ-congˡ coh))
-    -- ε⊣ ∘ᵐ (((⟨ρ⟩ᶠ εᵘ ∘ᵐ ⟨ρ⟩ᶠ(⟨⟩-≤ f)) ∘ᵐ ⟨ρ⟩ᶠ(var-proj y)) ∘ᵐ ⟦w⟧ʳ) ; merge the boxes
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ
-        (  ∘ᵐ-assoc _ _ _
-         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-         ∙ ≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  where
-    relax : ρy ·ᵣ ρ ≾ᵣ ρ
-    relax = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
-
-    -- the ε⊣/μ/εᵘ coherence: folding the unit layer with `μ` (and relaxing
-    -- the redundant `· u`) is `⟨ρ⟩ᶠ εᵘ`, the outer image of the counit.
-    Teᵘ : ⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ∘ᵐ μ {_} {ρ} {uᵣ}
-        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ
-    Teᵘ =
-        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-identityʳ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-congᶠ ⟨⟩-η∘εᵘ≡id ∙ ⟨⟩-idᵐ)))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id ∙ ⟨⟩-≤-trans _ _ ∙ ⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl)
-      ∙ ∘ᵐ-identityˡ _
-
-    coh : ⟨⟩-≤ relax ∘ᵐ μ {_} {ρ} {ρy}
-        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⟩-≤ (f (λ ())))
-    coh =
-        ∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
-      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _) ∙ ⟨⟩-μ-≤ ≾ᵣ-refl (f (λ ())))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-≤-refl ∙ ∘ᵐ-identityʳ _))
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ Teᵘ
-
--- The value analogue of `subst-ctx-interp`: a context transport of a value
--- denotes precomposition with the equality renaming.
-private
-  subst-val-interp : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢V⦂ A) → (p : Paramᵛ t)
-                   → ⟦ subst (_⊢V⦂ A) e t ⟧ᵛᵗ (substᴾᵛ {e = e} t p)
-                   ≈ᵐ ⟦ t ⟧ᵛᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
-  subst-val-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
 mutual
 

@@ -749,6 +749,11 @@ subst-ctx-interp : ∀ {Δ Δ' C} → (e : Δ ≡ Δ') → (t : Δ ⊢C⦂ C) �
                  ≈ᵐ ⟦ t ⟧ᶜᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
 subst-ctx-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
+subst-val-interp : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢V⦂ A) → (p : Paramᵛ t)
+                 → ⟦ subst (_⊢V⦂ A) e t ⟧ᵛᵗ (substᴾᵛ {e = e} t p)
+                 ≈ᵐ ⟦ t ⟧ᵛᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
+subst-val-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
+
 subst-clause-interp : ∀ {Δ Δ' D C} → (e : Δ ≡ Δ') → (t : Δ ++ᶜ D ⊢C⦂ C)
                     → (p : Paramᶜ t)
                     → ⟦ subst (λ Γ₀ → Γ₀ ++ᶜ D ⊢C⦂ C) e t ⟧ᶜᵗ (substᴾᶜ e t p)
@@ -1323,24 +1328,6 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-      adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
-                    → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-                    ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-      adapt-commute g p a =
-        ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
-        (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
-                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                          (∘ᵐ-congˡ ba≈canon)))))
-        where
-          ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-                        (∘ᵐ-identityˡ _))
-          ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
-                        (∘ᵐ-identityʳ _))
       pH' : ∀ op ε'' Γ' → Paramᶜ (H' op ε'' Γ')
       pH' op ε'' Γ' = substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'' Γ') (pH op ε'' Γ')
       step1 : ∀ op ε''
@@ -1431,24 +1418,6 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
-      adapt-commute : ∀ {D D' P Q R S} → (g : D →ᵐ D') → (p : Q →ᵐ P) → (a : S →ᵐ R)
-                    → mapˣᵐ (mapˣᵐ g idᵐ) idᵐ ∘ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D}) p) a ∘ᵐ ×ᵐ-assoc⁻¹)
-                    ≈ᵐ (mapˣᵐ (mapˣᵐ (idᵐ {D'}) p) a ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ mapˣᵐ g idᵐ
-      adapt-commute g p a =
-        ≈ᵐ-trans (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (∘ᵐ-congˡ ab≈canon))
-        (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                (≈ᵐ-trans (∘ᵐ-congʳ (×ᵐ-assoc⁻¹-natˡ g))
-                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                          (∘ᵐ-congˡ ba≈canon)))))
-        where
-          ab≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-                        (∘ᵐ-identityˡ _))
-          ba≈canon = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-            (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)))
-                        (∘ᵐ-identityʳ _))
       pH' : ∀ op ε'' Γ' → Paramᶜ (H' op ε'' Γ')
       pH' op ε'' Γ' =
         let D = Γ' ∷ type-of-gtype (param op)
