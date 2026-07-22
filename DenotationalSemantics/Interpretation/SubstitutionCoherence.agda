@@ -337,16 +337,8 @@ projᴱ-subst-nat (Tl-⟨⟩ x) W pW =
   (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉ x W))
             (∘ᵐ-assoc _ _ _))))))
 
--- Transport renamings along a context equality commute with the context
--- formers (both sides are the identity once the equality is `refl`).
-
-eq-ren-∷ : ∀ {Γ Γ' B} → (e : Γ ≡ Γ')
-         → ⟦ eq-ren (cong (_∷ B) e) ⟧ʳ ≈ᵐ mapˣᵐ ⟦ eq-ren e ⟧ʳ idᵐ
-eq-ren-∷ refl = ≈ᵐ-sym mapˣᵐ-idᵐ
-
-eq-ren-⟨⟩ : ∀ {Γ Γ' ρ} → (e : Γ ≡ Γ')
-          → ⟦ eq-ren (cong (_⟨ ρ ⟩) e) ⟧ʳ ≈ᵐ ⟨ ρ ⟩ᶠ ⟦ eq-ren e ⟧ʳ
-eq-ren-⟨⟩ refl = ≈ᵐ-sym ⟨⟩-idᵐ
+-- (`eq-ren-∷` / `eq-ren-⟨⟩` / `eq-ren-irr` live with the other renaming
+-- denotation lemmas in `Interpretation.Renaming`.)
 
 -- The variable that a context splitting points at.
 
@@ -773,9 +765,6 @@ subst-clause-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
 
 -- The interpretation of an equality renaming depends only on the endpoints of
 -- the context equality (UIP), so any two proofs give the same transport.
-
-eq-ren-irr : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → ⟦ eq-ren e ⟧ʳ ≈ᵐ ⟦ eq-ren e' ⟧ʳ
-eq-ren-irr e e' = ≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (uip {p = e} {q = e'}))
 
 -- Context extension is injective, so an equality between two contexts sharing
 -- their last two entries restricts to their ambient parts.

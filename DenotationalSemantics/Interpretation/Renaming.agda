@@ -37,7 +37,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import Data.Empty using (⊥-elim)
-open import Util.Equality using (sym; _≡_; refl; cong; subst)
+open import Util.Equality using (sym; trans; _≡_; refl; cong; subst; uip)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Nullary using (¬_; yes; no)
 
@@ -79,6 +79,91 @@ eq-ren-grade : ∀ {Γ ρ ρ'} → (g : ρ ≡ ρ')
              → ⟦ eq-ren (cong (Γ ⟨_⟩) g) ⟧ʳ ≈ᵐ ⟨⟩-≤ {⟦ Γ ⟧ᶜᵗˣ} (≾ᵣ-reflexive (sym g))
 eq-ren-grade refl =
   ≈ᵐ-sym (≈ᵐ-trans (⟨⟩-≤-irr _ ≾ᵣ-refl) ⟨⟩-≤-refl)
+
+-- Transport renamings along a context equality commute with the context
+-- formers, with each other, and with themselves (both sides are the identity
+-- once the equality is `refl`; `eq-ren-irr` is UIP).
+
+eq-ren-irr : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → ⟦ eq-ren e ⟧ʳ ≈ᵐ ⟦ eq-ren e' ⟧ʳ
+eq-ren-irr e e' = ≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (uip {p = e} {q = e'}))
+
+eq-ren-∷ : ∀ {Γ Γ' B} → (e : Γ ≡ Γ')
+         → ⟦ eq-ren (cong (_∷ B) e) ⟧ʳ ≈ᵐ mapˣᵐ ⟦ eq-ren e ⟧ʳ idᵐ
+eq-ren-∷ refl = ≈ᵐ-sym mapˣᵐ-idᵐ
+
+eq-ren-⟨⟩ : ∀ {Γ Γ' ρ} → (e : Γ ≡ Γ')
+          → ⟦ eq-ren (cong (_⟨ ρ ⟩) e) ⟧ʳ ≈ᵐ ⟨ ρ ⟩ᶠ ⟦ eq-ren e ⟧ʳ
+eq-ren-⟨⟩ refl = ≈ᵐ-sym ⟨⟩-idᵐ
+
+eq-ren-trans : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ'')
+             → ⟦ eq-ren (trans e e') ⟧ʳ ≈ᵐ ⟦ eq-ren e ⟧ʳ ∘ᵐ ⟦ eq-ren e' ⟧ʳ
+eq-ren-trans refl refl = ≈ᵐ-sym (∘ᵐ-identityˡ _)
+
+-- EXTENDING AN ENVIRONMENT MORPHISM THROUGH A CONTEXT SUFFIX
+--
+-- `ext Γ Γ' Θ` weakens a morphism `⟦ Γ ⟧ → ⟦ Γ' ⟧` past everything a suffix
+-- `Θ` binds. It is the semantic counterpart of the syntactic `cong-ren`
+-- (`cong-ren-ext` below), generalised from renaming denotations to arbitrary
+-- morphisms — which is what an environment *extension* (e.g. the one `box`
+-- installs) needs, since that is not the denotation of any renaming. It is
+-- also the same recursion as `sub-env`.
+--
+-- The two contexts are explicit: they only ever occur under `⟦_⟧ᶜᵗˣ`, which is
+-- not injective, so leaving them implicit makes every use ambiguous.
+
+ext : (Γ Γ' Θ : Ctx) → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ
+    → ⟦ Γ ++ᶜ Θ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ++ᶜ Θ ⟧ᶜᵗˣ
+ext Γ Γ' []        g = g
+ext Γ Γ' (Θ ∷ A)   g = mapˣᵐ (ext Γ Γ' Θ g) idᵐ
+ext Γ Γ' (Θ ⟨ ρ ⟩) g = ⟨ ρ ⟩ᶠ (ext Γ Γ' Θ g)
+
+-- `ext` on a renaming's denotation is that renaming's `cong-ren`.
+
+cong-ren-ext : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Θ : Ctx)
+             → ⟦ cong-ren {Γ'' = Θ} r ⟧ʳ ≈ᵐ ext Γ' Γ Θ ⟦ r ⟧ʳ
+cong-ren-ext r []        = ≈ᵐ-refl
+cong-ren-ext r (Θ ∷ A)   = mapˣᵐ-cong (cong-ren-ext r Θ) ≈ᵐ-refl
+cong-ren-ext r (Θ ⟨ ρ ⟩) = ⟨⟩-congᶠ (cong-ren-ext r Θ)
+
+-- `ext` is natural in the suffix: a context equality of suffixes commutes
+-- with the extension.
+
+ext-eq : (Γ Γ' : Ctx) → {Θ Θ' : Ctx} → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ) → (e : Θ ≡ Θ')
+       → ⟦ eq-ren (cong (Γ' ++ᶜ_) e) ⟧ʳ ∘ᵐ ext Γ Γ' Θ' g
+       ≈ᵐ ext Γ Γ' Θ g ∘ᵐ ⟦ eq-ren (cong (Γ ++ᶜ_) e) ⟧ʳ
+ext-eq Γ Γ' g refl = ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))
+
+-- Extending through a concatenated suffix is extending twice (up to the
+-- associativity coercion). Induction on the outer suffix, following
+-- `++ᶜ-assoc`'s own `refl`/`cong` structure.
+
+ext-++ᶜ : (Γ Γ' : Ctx) → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ) → (Θ Δ : Ctx)
+        → ⟦ eq-ren (sym (++ᶜ-assoc Γ' Θ Δ)) ⟧ʳ
+            ∘ᵐ ext (Γ ++ᶜ Θ) (Γ' ++ᶜ Θ) Δ (ext Γ Γ' Θ g)
+        ≈ᵐ ext Γ Γ' (Θ ++ᶜ Δ) g ∘ᵐ ⟦ eq-ren (sym (++ᶜ-assoc Γ Θ Δ)) ⟧ʳ
+ext-++ᶜ Γ Γ' g Θ [] =
+  ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))
+ext-++ᶜ Γ Γ' g Θ (Δ ∷ A) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (eq-ren-irr (sym (++ᶜ-assoc Γ' Θ (Δ ∷ A)))
+                                           (cong (_∷ A) (sym (++ᶜ-assoc Γ' Θ Δ))))
+                               (eq-ren-∷ (sym (++ᶜ-assoc Γ' Θ Δ)))))
+  (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
+  (≈ᵐ-trans (mapˣᵐ-cong (ext-++ᶜ Γ Γ' g Θ Δ) ≈ᵐ-refl)
+  (≈ᵐ-trans (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _))
+            (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (eq-ren-∷ (sym (++ᶜ-assoc Γ Θ Δ))))
+                                (eq-ren-irr (cong (_∷ A) (sym (++ᶜ-assoc Γ Θ Δ)))
+                                            (sym (++ᶜ-assoc Γ Θ (Δ ∷ A)))))))))
+ext-++ᶜ Γ Γ' g Θ (Δ ⟨ ρ ⟩) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (eq-ren-irr (sym (++ᶜ-assoc Γ' Θ (Δ ⟨ ρ ⟩)))
+                                           (cong (_⟨ ρ ⟩) (sym (++ᶜ-assoc Γ' Θ Δ))))
+                               (eq-ren-⟨⟩ (sym (++ᶜ-assoc Γ' Θ Δ)))))
+  (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (⟨⟩-congᶠ (ext-++ᶜ Γ Γ' g Θ Δ))
+  (≈ᵐ-trans (⟨⟩-∘ᵐ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (eq-ren-⟨⟩ (sym (++ᶜ-assoc Γ Θ Δ))))
+                                (eq-ren-irr (cong (_⟨ ρ ⟩) (sym (++ᶜ-assoc Γ Θ Δ)))
+                                            (sym (++ᶜ-assoc Γ Θ (Δ ⟨ ρ ⟩)))))))))
+
 
 -- Reading a morphism of the `⟨ ρ ⟩X` factor back through the eternal strength:
 -- `strᵉ` cancels against `⟨ ρ ⟩ᶠ fstᵐ`, leaving the plain first projection. The

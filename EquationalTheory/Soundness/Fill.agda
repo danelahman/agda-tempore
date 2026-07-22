@@ -15,7 +15,9 @@
 -- `fill-cong-env` is the strengthened form actually needed by            --
 -- `unbox-beta`, whose two fillings agree only under the ambient          --
 -- `box V`: its hypothesis may assume that environment morphism,          --
--- weakened (`ext`) past every binder `K` crosses.                        --
+-- weakened past every binder `K` crosses. That weakening (`ext`) and     --
+-- the `eq-ren` coercion lemmas are general renaming machinery and live   --
+-- in `Interpretation.Renaming`.                                          --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -75,84 +77,6 @@ open import DenotationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj
        using (unbox-def)
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
-
--- CONTEXT COERCIONS
---
--- `_[_]` inserts an `eq-ren` at every binder, so the environment-pushing
--- lemmas below need to know how `⟦ eq-ren _ ⟧ʳ` interacts with the context
--- formers. All of these are immediate once the equality is `refl`; `eq-ren-irr`
--- (by UIP) is what lets a differently-built proof of the same context equality
--- be swapped in.
-
-eq-ren-irr : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → ⟦ eq-ren e ⟧ʳ ≈ᵐ ⟦ eq-ren e' ⟧ʳ
-eq-ren-irr e e' = ≡→≈ᵐ (cong (λ z → ⟦ eq-ren z ⟧ʳ) (uip {p = e} {q = e'}))
-
-eq-ren-∷ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ')
-         → ⟦ eq-ren (cong (_∷ A) e) ⟧ʳ ≈ᵐ mapˣᵐ ⟦ eq-ren e ⟧ʳ idᵐ
-eq-ren-∷ refl = ≈ᵐ-sym mapˣᵐ-idᵐ
-
-eq-ren-⟨⟩ : ∀ {Γ Γ' ρ} → (e : Γ ≡ Γ')
-          → ⟦ eq-ren (cong (_⟨ ρ ⟩) e) ⟧ʳ ≈ᵐ ⟨ ρ ⟩ᶠ ⟦ eq-ren e ⟧ʳ
-eq-ren-⟨⟩ refl = ≈ᵐ-sym ⟨⟩-idᵐ
-
-eq-ren-trans : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ'')
-             → ⟦ eq-ren (trans e e') ⟧ʳ ≈ᵐ ⟦ eq-ren e ⟧ʳ ∘ᵐ ⟦ eq-ren e' ⟧ʳ
-eq-ren-trans refl refl = ≈ᵐ-sym (∘ᵐ-identityˡ _)
-
--- EXTENDING AN ENVIRONMENT MORPHISM THROUGH A CONTEXT SUFFIX
---
--- `unbox-beta`'s two sides differ *inside* `K`, but are equal only under the
--- ambient `box V` — whose environment extension sits outside `K`. So the
--- congruence has to carry that morphism to the hole, weakening it past every
--- binder `K` crosses. That is `ext` (the same recursion as `sub-env`).
---
--- The two contexts are *explicit* throughout this section: they only ever
--- appear under `⟦_⟧ᶜᵗˣ`, which is not injective, so leaving them implicit
--- makes every use ambiguous.
-
-ext : (Γ Γ' Θ : Ctx) → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ
-    → ⟦ Γ ++ᶜ Θ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ++ᶜ Θ ⟧ᶜᵗˣ
-ext Γ Γ' []        g = g
-ext Γ Γ' (Θ ∷ A)   g = mapˣᵐ (ext Γ Γ' Θ g) idᵐ
-ext Γ Γ' (Θ ⟨ ρ ⟩) g = ⟨ ρ ⟩ᶠ (ext Γ Γ' Θ g)
-
--- `ext` is natural in the suffix: a context equality of suffixes commutes with
--- the extension.
-
-ext-eq : (Γ Γ' : Ctx) → {Θ Θ' : Ctx} → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ) → (e : Θ ≡ Θ')
-       → ⟦ eq-ren (cong (Γ' ++ᶜ_) e) ⟧ʳ ∘ᵐ ext Γ Γ' Θ' g
-       ≈ᵐ ext Γ Γ' Θ g ∘ᵐ ⟦ eq-ren (cong (Γ ++ᶜ_) e) ⟧ʳ
-ext-eq Γ Γ' g refl = ∘ᵐ-identityˡ _ ∙ ≈ᵐ-sym (∘ᵐ-identityʳ _)
-
--- Extending through a concatenated suffix is extending twice (up to the
--- associativity coercion). Induction on the outer suffix, following
--- `++ᶜ-assoc`'s own `refl`/`cong` structure.
-
-ext-++ᶜ : (Γ Γ' : Ctx) → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ) → (Θ Δ : Ctx)
-        → ⟦ eq-ren (sym (++ᶜ-assoc Γ' Θ Δ)) ⟧ʳ
-            ∘ᵐ ext (Γ ++ᶜ Θ) (Γ' ++ᶜ Θ) Δ (ext Γ Γ' Θ g)
-        ≈ᵐ ext Γ Γ' (Θ ++ᶜ Δ) g ∘ᵐ ⟦ eq-ren (sym (++ᶜ-assoc Γ Θ Δ)) ⟧ʳ
-ext-++ᶜ Γ Γ' g Θ [] = ∘ᵐ-identityˡ _ ∙ ≈ᵐ-sym (∘ᵐ-identityʳ _)
-ext-++ᶜ Γ Γ' g Θ (Δ ∷ A) =
-    ∘ᵐ-congˡ (  eq-ren-irr (sym (++ᶜ-assoc Γ' Θ (Δ ∷ A)))
-                           (cong (_∷ A) (sym (++ᶜ-assoc Γ' Θ Δ)))
-              ∙ eq-ren-∷ (sym (++ᶜ-assoc Γ' Θ Δ)))
-  ∙ mapˣᵐ-∘ _ _ _ _
-  ∙ mapˣᵐ-cong (ext-++ᶜ Γ Γ' g Θ Δ) ≈ᵐ-refl
-  ∙ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)
-  ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (eq-ren-∷ (sym (++ᶜ-assoc Γ Θ Δ)))
-              ∙ eq-ren-irr (cong (_∷ A) (sym (++ᶜ-assoc Γ Θ Δ)))
-                           (sym (++ᶜ-assoc Γ Θ (Δ ∷ A))))
-ext-++ᶜ Γ Γ' g Θ (Δ ⟨ ρ ⟩) =
-    ∘ᵐ-congˡ (  eq-ren-irr (sym (++ᶜ-assoc Γ' Θ (Δ ⟨ ρ ⟩)))
-                           (cong (_⟨ ρ ⟩) (sym (++ᶜ-assoc Γ' Θ Δ)))
-              ∙ eq-ren-⟨⟩ (sym (++ᶜ-assoc Γ' Θ Δ)))
-  ∙ ≈ᵐ-sym (⟨⟩-∘ᵐ _ _)
-  ∙ ⟨⟩-congᶠ (ext-++ᶜ Γ Γ' g Θ Δ)
-  ∙ ⟨⟩-∘ᵐ _ _
-  ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (eq-ren-⟨⟩ (sym (++ᶜ-assoc Γ Θ Δ)))
-              ∙ eq-ren-irr (cong (_⟨ ρ ⟩) (sym (++ᶜ-assoc Γ Θ Δ)))
-                           (sym (++ᶜ-assoc Γ Θ (Δ ⟨ ρ ⟩))))
 
 -- The certificates a computation term context carries, i.e. those of every
 -- sub-term other than the hole.

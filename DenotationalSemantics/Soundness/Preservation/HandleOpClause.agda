@@ -66,7 +66,7 @@ open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
-  using (C-subst-nat; subst-clause-interp; eq-ren-irr; eq-ren-∷; subᶜ; substᴾᶜ)
+  using (C-subst-nat; subst-clause-interp; subᶜ; substᴾᶜ)
 
 infixr 3 _∙_
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
