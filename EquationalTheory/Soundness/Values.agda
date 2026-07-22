@@ -72,36 +72,8 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 
--- The head variable denotes the second projection: at a non-eternal type the
--- grade bound is reflexive and the possibility counit cancels `η`; at an
--- eternal one the extraction cancels it (`eternalᵛ-η-ext`).
-
-var-morphism-Hd : ∀ {Γ A} → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
-                → var-morphism {Γ ∷ A} f Hd ≈ᵐ sndᵐ
-var-morphism-Hd {A = A} f with eternal? A
-... | yes et =
-    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et) ∙ ⟨⟩-εᵘ∘η≡id)
-  ∙ ∘ᵐ-identityˡ _
-... | no ¬et =
-    ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr (f ¬et) ≾ᵣ-refl ∙ ⟨⟩-≤-refl) ∙ ∘ᵐ-identityˡ _)
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id
-  ∙ ∘ᵐ-identityˡ _
-  where
-    open Past Pst using (⟨⟩-≤-irr)
-
-
--- The exchange renaming swaps the two topmost variables.
-
-exch-ren-mor : ∀ {Γ X Y}
-             → ⟦ exch-ren {Γ} {X} {Y} ⟧ʳ ≈ᵐ ⟨ mapˣᵐ fstᵐ idᵐ , sndᵐ ∘ᵐ fstᵐ ⟩ᵐ
-exch-ren-mor {Γ} {X} {Y} =
-    ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-              ,   var-morphism-Tl-∷ {Γ ∷ Y} {X} {Y} Hd _
-                ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {Y} _) ⟩ᵐ-cong)
-  ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
-  ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
+-- (`var-morphism-Hd` lives in `Interpretation.Variables`,
+--  `exch-ren-mor` in `Interpretation.Renaming`.)
 
 sound-unit-eta : ∀ {Γ} → (V : Γ ⊢V⦂ Unit) → Soundᵛ== (unit-eta V)
 sound-unit-eta V pV _ = terminalᵐ-unique

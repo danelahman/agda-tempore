@@ -98,15 +98,7 @@ sub-env Hd                W pW = ⟨ idᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
 sub-env (Tl-∷ x)          W pW = mapˣᵐ (sub-env x W pW) idᵐ
 sub-env (Tl-⟨⟩ {ρ = ρ} x) W pW = ⟨ ρ ⟩ᶠ (sub-env x W pW)
 
--- Weakening a variable past a `∷` projects the environment (both sides of
--- the equation mention `var-morphism` at the same type, so the `eternal?`
--- split reduces them simultaneously).
-
-var-morphism-Tl-∷ : ∀ {Γ A B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
-                  → var-morphism {Γ ∷ A} f (Tl-∷ y) ≈ᵐ var-morphism f y ∘ᵐ fstᵐ
-var-morphism-Tl-∷ {B = B} y f with eternal? B
-... | yes et = ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-... | no ¬et = ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+-- (`var-morphism-Tl-∷` lives in `Interpretation.Variables`.)
 
 -- Weakening a value of *eternal* type under a lock: denotationally this is
 -- the eternal extraction applied to the locked environment. Proved by

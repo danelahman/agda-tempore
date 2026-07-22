@@ -718,3 +718,40 @@ splitᴰ-nat-gen {Δ} {Δ'} eΔ eΔ' b b-mor L L-[] L-∷ L-⟨⟩ (Γ'x ⟨ ρ 
           (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _))
           (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
                             (mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))))
+
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- READING THE TOPMOST VARIABLES
+--
+-- Two facts about `var-morphism` at the top of a context, used wherever a
+-- renaming's denotation has to be computed. Both split on `eternal?` of the
+-- variable's type, and both sides of each equation reduce simultaneously.
+-- ───────────────────────────────────────────────────────────────────────────
+
+private
+  infixr 3 _∙ᵛ_
+  _∙ᵛ_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+  _∙ᵛ_ = ≈ᵐ-trans
+
+-- The head variable denotes the second projection: at a non-eternal type the
+-- grade bound is reflexive and the possibility counit cancels `η`; at an
+-- eternal one the extraction cancels it.
+var-morphism-Hd : ∀ {Γ A} → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
+                → var-morphism {Γ ∷ A} f Hd ≈ᵐ sndᵐ
+var-morphism-Hd {A = A} f with eternal? A
+... | yes et =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ᵛ ∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et) ∙ᵛ ⟨⟩-εᵘ∘η≡id)
+  ∙ᵛ ∘ᵐ-identityˡ _
+... | no ¬et =
+    ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr (f ¬et) ≾ᵣ-refl ∙ᵛ ⟨⟩-≤-refl) ∙ᵛ ∘ᵐ-identityˡ _)
+  ∙ᵛ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ᵛ ∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id
+  ∙ᵛ ∘ᵐ-identityˡ _
+
+-- Weakening a variable past a `∷` projects the environment.
+var-morphism-Tl-∷ : ∀ {Γ A B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
+                  → var-morphism {Γ ∷ A} f (Tl-∷ y) ≈ᵐ var-morphism f y ∘ᵐ fstᵐ
+var-morphism-Tl-∷ {B = B} y f with eternal? B
+... | yes et = ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+... | no ¬et = ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
