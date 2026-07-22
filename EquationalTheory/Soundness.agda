@@ -1,0 +1,270 @@
+------------------------------------------------------------------------
+-- Denotational soundness of the equational theory.                      --
+--                                                                    --
+-- The main induction: every derivable equation `M == N` denotes an     --
+-- equality of morphisms `⟦M⟧ ≈ᵐ ⟦N⟧`. Reflexivity/symmetry/transitivity --
+-- are the setoid structure of `_≈ᵐ_`; each congruence rule recurses on   --
+-- its premises (mirroring `⟦⟧ᶜᵗ-irr`); each axiom dispatches to its own   --
+-- `sound-*` lemma. Certificates the endpoints do not determine are       --
+-- threaded by `Midᵛ`/`Midᶜ`.                                             --
+------------------------------------------------------------------------
+
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
+
+open import Util.Equality
+
+open import DenotationalSemantics.Model.Category
+open import DenotationalSemantics.Model.Modality.Future
+open import DenotationalSemantics.Model.Modality.Past
+open import DenotationalSemantics.Model.Modality.Adjunction
+open import DenotationalSemantics.Model.GroundTypes
+open import DenotationalSemantics.Model.GroundEternal
+open import DenotationalSemantics.Model.Monad
+
+module EquationalTheory.Soundness
+         (S : LanguageSpec)
+         (Cat : Category)
+         (Fut : Future Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Pst : Past Cat (GradeSystem.RGrade (LanguageSpec.Grades S)))
+         (Adj : Adjunction Cat (GradeSystem.RGrade (LanguageSpec.Grades S)) Fut Pst)
+         (GTy : GroundTypes S Cat Fut)
+         (Mon : Monad S Cat Fut Pst Adj GTy)
+         (GE : GroundEternal S Cat Fut Pst Adj GTy)
+       where
+
+open import Data.Product using (_,_; _×_; proj₁; proj₂)
+open import Data.Unit using (⊤; tt)
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+open Operations Ops
+
+open import Syntax.Types         S
+open import Syntax.Contexts      S
+open import Syntax.Language      S
+open import Syntax.Renamings     S
+open import Syntax.RenActions    S using (V-rename; C-rename; unbox⇒var; var-rename)
+open import Syntax.Substitutions S
+
+open import EquationalTheory.EquationalTheory S
+
+open Category Cat
+open Future Fut using ([_]ᵒ; [_]ᶠ; []-congᶠ)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; ⟨⟩-≤; ⟨⟩-congᶠ; ⟨⟩-∘ᵐ; ⟨⟩-idᵐ; μ; η; εᵘ;
+                     ⟨⟩-≤-trans; ⟨⟩-≤-refl; ⟨⟩-≤-irr; ⟨⟩-μ-≤; ⟨⟩-μ∘Tη≡id; ⟨⟩-η∘εᵘ≡id)
+open Adjunction Adj using (η⊣; ε⊣)
+open GroundTypes GTy
+open Monad Mon
+
+open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
+       using (V-subst-nat; C-subst-nat; subᵛ; subᶜ; substᴾᵛ; substᴾᶜ′;
+              subst-ctx-interp; sub-env; var-morphism-¬et)
+open import DenotationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj GTy Mon GE
+       using (unbox-def)
+
+open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Parametric S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Values S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Modal S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Coerce S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.SeqAssoc S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Delay S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.UnboxBeta S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Comm S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.Handle S Cat Fut Pst Adj GTy Mon GE
+open import EquationalTheory.Soundness.HandlePerform S Cat Fut Pst Adj GTy Mon GE
+
+-- The unbox environment `ε⊣ ∘ᵐ ⟨⟩-≤ ∘ᵐ var-proj x` (`x` extracted by
+-- `unbox⇒var`) equals reading the boxed value `V` through the lock and
+-- unboxing with the adjunction counit `ε⊣`. This is the coherence at the heart
+-- of the Fitch-style `unbox`: it is what lets `unbox-cong` use the IH `⟦V⟧≈⟦W⟧`.
+unbox-read : ∀ {Γ A ρ Δ} → (w : Ren (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A) → (pV : Paramᵛ V)
+           → ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
+                  ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V)))
+           ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ ⟦ w ⟧ʳ
+unbox-read {ρ = ρ} w V pV with grad-typ⇒var V
+... | ρy , y , f , refl with var-rename w (Tl-⟨⟩ y) | var-proj-nat w (Tl-⟨⟩ y) (λ ())
+... | ρ' , bound , x | vpn =
+    -- split the grade relaxation, then `vpn` (var-proj naturality) turns the
+    -- extracted variable back into the locked source variable, reindexed by `w`
+      ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (bound (λ ())) relax)))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (bound (λ ())) relax)))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ vpn)
+    -- ε⊣ ∘ᵐ ⟨⟩-≤ relax ∘ᵐ ((μ ∘ᵐ ⟨ρ⟩ᶠ(var-proj y)) ∘ᵐ ⟦w⟧ʳ)
+    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (∘ᵐ-congˡ coh))
+    -- ε⊣ ∘ᵐ (((⟨ρ⟩ᶠ εᵘ ∘ᵐ ⟨ρ⟩ᶠ(⟨⟩-≤ f)) ∘ᵐ ⟨ρ⟩ᶠ(var-proj y)) ∘ᵐ ⟦w⟧ʳ) ; merge the boxes
+    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ
+        (  ∘ᵐ-assoc _ _ _
+         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+         ∙ ≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  where
+    relax : ρy ·ᵣ ρ ≾ᵣ ρ
+    relax = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
+
+    -- the ε⊣/μ/εᵘ coherence: folding the unit layer with `μ` (and relaxing
+    -- the redundant `· u`) is `⟨ρ⟩ᶠ εᵘ`, the outer image of the counit.
+    Teᵘ : ⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ∘ᵐ μ {_} {ρ} {uᵣ}
+        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ
+    Teᵘ =
+        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-identityʳ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-congᶠ ⟨⟩-η∘εᵘ≡id ∙ ⟨⟩-idᵐ)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id ∙ ⟨⟩-≤-trans _ _ ∙ ⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl)
+      ∙ ∘ᵐ-identityˡ _
+
+    coh : ⟨⟩-≤ relax ∘ᵐ μ {_} {ρ} {ρy}
+        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⟩-≤ (f (λ ())))
+    coh =
+        ∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _) ∙ ⟨⟩-μ-≤ ≾ᵣ-refl (f (λ ())))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-≤-refl ∙ ∘ᵐ-identityʳ _))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ Teᵘ
+
+-- The value analogue of `subst-ctx-interp`: a context transport of a value
+-- denotes precomposition with the equality renaming.
+private
+  subst-val-interp : ∀ {Δ Δ' A} → (e : Δ ≡ Δ') → (t : Δ ⊢V⦂ A) → (p : Paramᵛ t)
+                   → ⟦ subst (_⊢V⦂ A) e t ⟧ᵛᵗ (substᴾᵛ {e = e} t p)
+                   ≈ᵐ ⟦ t ⟧ᵛᵗ p ∘ᵐ ⟦ eq-ren e ⟧ʳ
+  subst-val-interp refl t p = ≈ᵐ-sym (∘ᵐ-identityʳ _)
+
+mutual
+
+  {-# TERMINATING #-}
+
+  soundᵛ : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → (p : Γ ⊢V⦂ V == W) → Midᵛ p → Soundᵛ== p
+  -- setoid structure
+  soundᵛ (V-refl {V = V})     _            pV pW = ⟦⟧ᵛᵗ-irr V pV pW
+  soundᵛ (V-sym p)            mp           pV pW = ≈ᵐ-sym (soundᵛ p mp pW pV)
+  soundᵛ (V-trans p q)        (pW , mp , mq) pV pU =
+    soundᵛ p mp pV pW ∙ soundᵛ q mq pW pU
+  -- substitutivity
+  soundᵛ (V-subst {V = V} {W = W} p x q U) (pV , pW , pU , mp) pVL pWR =
+      ⟦⟧ᵛᵗ-irr (subst (_⊢V⦂ _) q (V [ x ↦ U ]v)) pVL
+              (substᴾᵛ {e = q} (V [ x ↦ U ]v) (subᵛ V x U pV pU))
+    ∙ subst-val-interp q (V [ x ↦ U ]v) (subᵛ V x U pV pU)
+    ∙ ∘ᵐ-congˡ (  V-subst-nat V x U pV pU
+                ∙ ∘ᵐ-congˡ (soundᵛ p mp pV pW)
+                ∙ ≈ᵐ-sym (V-subst-nat W x U pW pU))
+    ∙ ≈ᵐ-sym (subst-val-interp q (W [ x ↦ U ]v) (subᵛ W x U pW pU))
+    ∙ ≈ᵐ-sym (⟦⟧ᵛᵗ-irr (subst (_⊢V⦂ _) q (W [ x ↦ U ]v)) pWR
+                        (substᴾᵛ {e = q} (W [ x ↦ U ]v) (subᵛ W x U pW pU)))
+  -- congruences
+  soundᵛ (⦉⦊-cong p q)        (mp , mq)    (pV , pW) (pV' , pW') =
+    ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
+  soundᵛ (lam-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
+  -- eta
+  soundᵛ (unit-eta V)         _            pV pW = sound-unit-eta V pV pW
+  soundᵛ (fun-eta V)          _            pV pW = sound-fun-eta V pV pW
+
+  soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M == N) → Midᶜ p → Soundᶜ== p
+  -- setoid structure
+  soundᶜ (C-refl {M = M})     _            pM pN = ⟦⟧ᶜᵗ-irr M pM pN
+  soundᶜ (C-sym p)            mp           pM pN = ≈ᵐ-sym (soundᶜ p mp pN pM)
+  soundᶜ (C-trans p q)        (pN , mp , mq) pM pU =
+    soundᶜ p mp pM pN ∙ soundᶜ q mq pN pU
+  -- substitutivity
+  soundᶜ (C-subst {M = M} {N = N} p x q V) (pM , pN , pV , mp) pML pNR =
+      ⟦⟧ᶜᵗ-irr (subst (_⊢C⦂ _) q (M [ x ↦ V ]c)) pML
+              (substᴾᶜ′ {e = q} (M [ x ↦ V ]c) (subᶜ M x V pM pV))
+    ∙ subst-ctx-interp q (M [ x ↦ V ]c) (subᶜ M x V pM pV)
+    ∙ ∘ᵐ-congˡ (  C-subst-nat M x V pM pV
+                ∙ ∘ᵐ-congˡ (soundᶜ p mp pM pN)
+                ∙ ≈ᵐ-sym (C-subst-nat N x V pN pV))
+    ∙ ≈ᵐ-sym (subst-ctx-interp q (N [ x ↦ V ]c) (subᶜ N x V pN pV))
+    ∙ ≈ᵐ-sym (⟦⟧ᶜᵗ-irr (subst (_⊢C⦂ _) q (N [ x ↦ V ]c)) pNR
+                        (substᴾᶜ′ {e = q} (N [ x ↦ V ]c) (subᶜ N x V pN pV)))
+  -- congruences
+  soundᶜ (return-cong p)      mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
+  soundᶜ (seq-cong p q)       (mp , mq)    (pM , pN) (pM' , pN') =
+    ∘ᵐ-congʳ (∘ᵐ-cong (T-congᶠ (soundᶜ q mq pN pN'))
+                      (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)))
+  soundᶜ (app-cong p q)       (mp , mq)    (pV , pW) (pV' , pW') =
+    ∘ᵐ-congʳ (⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong)
+  soundᶜ (match-cong p q)     (mp , mq)    (pV , pM) (pV' , pM') =
+    ∘ᵐ-cong (soundᶜ q mq pM pM')
+            (⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (soundᵛ p mp pV pV') ⟩ᵐ-cong
+             , ∘ᵐ-congʳ (soundᵛ p mp pV pV') ⟩ᵐ-cong)
+  soundᶜ (absurd-cong p)      mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
+  soundᶜ (perform-cong p q)   (mp , mq)    (pV , pM) (pV' , pM') =
+    ∘ᵐ-congʳ (⟨ substᶜ-≈ (ty-gty (param _)) (soundᵛ p mp pV pV')
+              , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
+                  (substᵈ-≈ (ty-gty (arity _)) (soundᶜ q mq pM pM')))) ⟩ᵐ-cong)
+  soundᶜ (delay-cong p)       mp           pM pM' =
+    ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (soundᶜ p mp pM pM')))
+  soundᶜ (handle-cong {H = H} {H' = H'} p hs q) (mp , mhs , mq)
+         (pM , pN , pH , uH , cH) (pM' , pN' , pH' , uH' , cH') =
+    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong _
+              (λ op ε'' → ∘ᵐ-congˡ
+                            (soundᶜ (hs op ε'' []) (mhs op ε'' [])
+                                    (pH op ε'' []) (pH' op ε'' []))))
+            (⟨ ≈ᵐ-refl
+             , ∘ᵐ-cong (T-congᶠ (soundᶜ q mq pN pN'))
+                       (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
+  soundᶜ (unbox-cong {w = w} {V = V} {W = W} {M = M} {N = N} p q)
+         (mp , mq) (pV , pM) (pV' , pM') =
+      unbox-def w V M pV pM
+    ∙ ∘ᵐ-cong (soundᶜ q mq pM pM')
+              (⟨ ≈ᵐ-refl
+               , unbox-read w V pV
+                 ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-congᶠ (soundᵛ p mp pV pV')))
+                 ∙ ≈ᵐ-sym (unbox-read w W pV') ⟩ᵐ-cong)
+    ∙ ≈ᵐ-sym (unbox-def w W N pV' pM')
+  soundᶜ (box-cong p q)       (mp , mq)    (pV , pM) (pV' , pM') =
+    ∘ᵐ-cong (soundᶜ q mq pM pM')
+            (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (soundᵛ p mp pV pV')) ⟩ᵐ-cong)
+  soundᶜ (coerce-cong {rel = rel} {rel' = rel'} p) mp pM pN =
+    ∘ᵐ-cong (≡→≈ᵐ (cong T-≤ (≾ₑ-irrelevant rel rel')))
+            (soundᶜ p mp pM pN)
+  -- axioms — sequencing
+  soundᶜ (seq-return V M)     _  = sound-seq-return V M
+  soundᶜ (seq-perform V M N)  _  = sound-seq-perform V M N
+  soundᶜ (seq-delay M N)      _  = sound-seq-delay M N
+  soundᶜ (seq-box V M N)      _  = sound-seq-box V M N
+  soundᶜ (seq-unbox w V M N)  _  = sound-seq-unbox w V M N
+  soundᶜ (seq-eta M)          _  = sound-seq-eta M
+  soundᶜ (seq-assoc M N P)    _  = sound-seq-assoc M N P
+  -- axioms — beta/eta
+  soundᶜ (fun-beta M W)       _  = sound-fun-beta M W
+  soundᶜ (match-beta V W M)   _  = sound-match-beta V W M
+  soundᶜ (match-eta V M)      m  = sound-match-eta V M m
+  soundᶜ (absurd-eta V M)     _  = sound-absurd-eta V M
+  -- axioms — handling
+  soundᶜ (handle-return V H N)   _ = sound-handle-return V H N
+  soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N
+  soundᶜ (handle-delay M H N)    _ = sound-handle-delay M H N
+  soundᶜ (handle-box V M H N)    _ = sound-handle-box V M H N
+  soundᶜ (handle-unbox w V M H N) _ = sound-handle-unbox w V M H N
+  -- axioms — modal
+  soundᶜ (unbox-beta V K p N)    m = sound-unbox-beta V K p N (proj₁ m) (proj₂ m)
+  soundᶜ (unbox-comm w₁ V₁ w₂ V₂ M) _ = sound-unbox-comm w₁ V₁ w₂ V₂ M
+  soundᶜ (box-comm V W M)        _ = sound-box-comm V W M
+  soundᶜ (box-unbox-comm V w₂ V₂ M) _ = sound-box-unbox-comm V w₂ V₂ M
+  soundᶜ (boxed-not-used V M)    _ = sound-boxed-not-used V M
+  soundᶜ (unbox-not-used w V M)  _ = sound-unbox-not-used w V M
+  -- axioms — coercion
+  soundᶜ (coerce-refl rel M)     _ = sound-coerce-refl rel M
+  soundᶜ (coerce-trans rel rel' rel'' M) _ = sound-coerce-trans rel rel' rel'' M
+  soundᶜ (coerce-perform rel V M) _ = sound-coerce-perform rel V M
+  soundᶜ (coerce-delay rel M)    _ = sound-coerce-delay rel M
+  soundᶜ (coerce-seq rel M N)    _ = sound-coerce-seq rel M N
+  soundᶜ (coerce-handle rel M H N) _ = sound-coerce-handle rel M H N
+  -- axioms — delay
+  soundᶜ (delay-zero M)          _ = sound-delay-zero M
+  soundᶜ (delay-delay M)         m = sound-delay-delay M m

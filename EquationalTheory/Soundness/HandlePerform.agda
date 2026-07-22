@@ -76,9 +76,10 @@ open import DenotationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Ad
 open import DenotationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
        using (ren-ᴱ-∷≡restrict)
 
-infixr 3 _∙_
-_∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
-_∙_ = ≈ᵐ-trans
+private
+  infixr 3 _∙_
+  _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+  _∙_ = ≈ᵐ-trans
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- BRICK 2: pushing a sequel under an operation, WITHOUT an algebra.

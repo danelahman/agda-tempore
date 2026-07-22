@@ -152,7 +152,7 @@ open import EquationalTheory.EquationalTheory
 
 ---- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
 
--- open import EquationalTheory.EquationalSoundness
+open import EquationalTheory.Soundness
 
 
 -- DENOTATIONAL SEMANTICS

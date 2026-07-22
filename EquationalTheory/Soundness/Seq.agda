@@ -85,8 +85,6 @@ open import DenotationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj
        using (unbox-def)
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
-open import EquationalTheory.Soundness.Values S Cat Fut Pst Adj GTy Mon GE
-       using (var-morphism-Hd)
 
 -- Extending the environment commutes with sequencing: if `g` extends the
 -- environment and `f` undoes the extension, then reindexing the whole `⨟`
