@@ -798,6 +798,110 @@ seq-op-core op alg cl alg-op refl v m n rn ern =
   -- what they amount to is the sequenced continuation
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-op-box op alg m n rn ern ⟩ᵐ-cong))
 
+-- The algebra-free counterparts of `seq-op-box`/`seq-op-core`: `str-op-box` and
+-- `str-op` push a sequel under an operation without collapsing the two monad
+-- layers with an algebra (the codomain stays `Tᵒ (Tᵒ B ε') ε`). What remains is
+-- the strength's own algebraicity. Used by the `handle-perform` soundness, where
+-- the handler carries a live eternal parameter and is not a plain algebra.
+
+str-op-box : ∀ {X A B ε ε'} → (op : Op)
+  → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ) →ᵐ Tᵒ A ε)
+  → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
+  → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ ⟦ arity op ⟧ᵍ)
+          →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
+  → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+  → [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ n))
+      ∘ᵐ ( [ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (strᵀ {_} {A} {ε}) ∘ᵐ exp-strᵐ)
+         ∘ᵐ []-monoidal
+         ∘ᵐ mapˣᵐ (δ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-·ᵉ))) idᵐ )
+      ∘ᵐ ⟨ η⊣ {X} {mapᵉ (op-grade op ·ₑ ε)}
+         , [ mapᵉ (op-grade op) ]ᶠ (curryᵐ m) ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)} ⟩ᵐ
+  ≈ᵐ [ mapᵉ (op-grade op) ]ᶠ
+       (curryᵐ (Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ))
+     ∘ᵐ η⊣ {X} {mapᵉ (op-grade op)}
+str-op-box {X} {A} {B} {ε} {ε'} op m n rn ern =
+  -- bring the strength law's reshuffle up against the operation's arguments
+    ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  -- split the environment's box, and pair the two transposed halves under one
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (  mapˣᵐ-∘⟨⟩ _ _ _ _
+       ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ box-split _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (η⊣-⟨⟩ _ _))
+  -- collect everything under a single box
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  -- inside the box: push the environment under the exponential and collapse
+  ∙ ∘ᵐ-congˡ ([]-congᶠ
+      (  ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (exp-strᵐ-⟨⟩ _ _))
+       ∙ ∘ᵐ-congʳ (map⇒ᵐ-curryᵐ _ _)
+       ∙ map⇒ᵐ-curryᵐ _ _))
+  -- and recognise the syntax's renaming as the environment `n` receives
+  ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (≈ᵐ-sym
+      (  ∘ᵐ-congˡ (T-∘ᵐ n (mapˣᵐ rn idᵐ))
+       ∙ ∘ᵐ-assoc _ _ _
+       ∙ body))))
+  where
+    body : Tᶠ n ∘ᵐ Tᶠ (mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
+         ≈ᵐ Tᶠ n ∘ᵐ strᵀ
+              ∘ᵐ ⟨ ([ mapᵉ ε ]ᶠ (⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ) ∘ᵐ η⊣)
+                     ∘ᵐ fstᵐ
+                 , m ⟩ᵐ
+    body =
+        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-natˡ rn))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ
+          (⟨ ∘ᵐ-congˡ ([]-congᶠ ern) ∙ ≈ᵐ-sym (op-env _) , ≈ᵐ-refl ⟩ᵐ-cong))
+
+str-op : ∀ {X Y A B ε ε'} → (op : Op)
+  → (ea : Y ≡ ⟦ arity op ⟧ᵍ)
+  → (v : X →ᵐ ⟦ param op ⟧ᵍ)
+  → (m : (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y) →ᵐ Tᵒ A ε)
+  → (n : (⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X ×ᵐ A) →ᵐ Tᵒ B ε')
+  → (rn : ⟨ mapᵉ ε ⟩ᵒ (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ Y)
+          →ᵐ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ᵒ X)
+  → rn ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
+  → Tᶠ n ∘ᵐ strᵀ
+      ∘ᵐ ⟨ η⊣
+         , opᵀ op
+             ∘ᵐ ⟨ v
+                , [ mapᵉ (op-grade op) ]ᶠ
+                    (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ O)
+                                          →ᵐ Tᵒ A ε)
+                                   ea m))
+                    ∘ᵐ η⊣ ⟩ᵐ ⟩ᵐ
+  ≈ᵐ opᵀ op
+     ∘ᵐ ⟨ v
+        , [ mapᵉ (op-grade op) ]ᶠ
+            (curryᵐ (subst (λ O → (⟨ mapᵉ (op-grade op) ⟩ᵒ X ×ᵐ O)
+                                  →ᵐ Tᵒ (Tᵒ B ε') ε)
+                           ea
+                           (Tᶠ (n ∘ᵐ mapˣᵐ rn idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)))
+          ∘ᵐ η⊣ ⟩ᵐ
+str-op op refl v m n rn ern =
+  -- the operation is a map on the strength's monadic component …
+    ∘ᵐ-congʳ (∘ᵐ-congʳ
+        (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
+  -- … so the strength pushes into it, carrying the environment under its box
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (strᵀ-opᵀ-algebraicity op))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  -- the reshuffle hands the parameter back and pairs environment with cont.
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ op-pair _ _ _ _))
+  -- the sequel is natural, so it too goes into the continuation
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op n))
+  ∙ ∘ᵐ-assoc _ _ _
+  -- collect the map on the continuation, then apply `str-op-box`
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-op-box op m n rn ern ⟩ᵐ-cong)
+
 -- Cancelling the ground-type coercions.
 --
 -- `⟦_⟧ᶜᵗ` coerces an operation's parameter and arity between their value-type
@@ -810,6 +914,53 @@ gty-cancelᶜ : ∀ {Z W Y Y'} → (e : Y ≡ Y') → (f : (Z ×ᵐ Y) →ᵐ W)
                 ∘ᵐ mapˣᵐ idᵐ (subst (λ O → O →ᵐ Y') (sym e) idᵐ)
             ≈ᵐ f
 gty-cancelᶜ refl f = ∘ᵐ-congʳ mapˣᵐ-idᵐ ∙ ∘ᵐ-identityʳ _
+
+-- The codomain counterpart of `gty-cancelᶜ`: a codomain coercion and its inverse
+-- cancel. Used where the `handle-perform` reduct's parameter coercion meets its
+-- inverse from `⟦_⟧ʰᵗ`.
+gty-cancelᵛ : ∀ {X Y Y'} → (e : Y ≡ Y') → (f : X →ᵐ Y)
+            → subst (λ O → Y' →ᵐ O) (sym e) idᵐ ∘ᵐ subst (λ O → X →ᵐ O) e f
+            ≈ᵐ f
+gty-cancelᵛ refl f = ∘ᵐ-identityˡ f
+
+-- The arity coercion cancels inside the operation's boxed continuation
+-- (`map⇒ᵐ-idᵐ`).
+arity-box : ∀ {Z W W' P Yv Yg} → (e : Yv ≡ Yg)
+          → (alg : P ×ᵐ W' →ᵐ W) → (p : Z →ᵐ P) → (c : Z ×ᵐ Yv →ᵐ W')
+          → map⇒ᵐ (subst (λ O → O →ᵐ Yg) (sym e) idᵐ) idᵐ
+              ∘ᵐ curryᵐ (alg ∘ᵐ ⟨ p ∘ᵐ fstᵐ
+                                , subst (λ O → Z ×ᵐ O →ᵐ W') e c ⟩ᵐ)
+          ≈ᵐ curryᵐ (alg ∘ᵐ ⟨ p ∘ᵐ fstᵐ , c ⟩ᵐ)
+arity-box refl alg p c = ∘ᵐ-congˡ map⇒ᵐ-idᵐ ∙ ∘ᵐ-identityˡ _
+
+-- Applying the fold's boxed continuation to the actual (curried) continuation:
+-- the `appᵐ` of the law's body meets the `curryᵐ` the operation carries, and the
+-- exponential β-rule collapses them.
+cont-collapse : ∀ {P X Y Z W} → (alg : P ×ᵐ Z →ᵐ W) → (p : X →ᵐ P)
+              → (c : X ×ᵐ Y →ᵐ Z)
+              → curryᵐ (alg ∘ᵐ ⟨ fstᵐ ∘ᵐ fstᵐ
+                               , appᵐ ∘ᵐ ⟨ sndᵐ ∘ᵐ fstᵐ , sndᵐ ⟩ᵐ ⟩ᵐ)
+                  ∘ᵐ ⟨ p , curryᵐ c ⟩ᵐ
+              ≈ᵐ curryᵐ (alg ∘ᵐ ⟨ p ∘ᵐ fstᵐ , c ⟩ᵐ)
+cont-collapse alg p c =
+    ≈ᵐ-sym (curryᵐ-nat ⟨ p , curryᵐ c ⟩ᵐ _)
+  ∙ curryᵐ-cong
+      (  ∘ᵐ-assoc _ _ _
+       ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
+                   ∙ ⟨   ∘ᵐ-assoc _ _ _
+                       ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                       ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
+                     ,   ∘ᵐ-assoc _ _ _
+                       ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
+                                   ∙ ⟨   ∘ᵐ-assoc _ _ _
+                                       ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+                                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                                       ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)
+                                     , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
+                       ∙ ≈ᵐ-sym (uncurryᵐ-nat (curryᵐ c) idᵐ)
+                       ∙ uncurryᵐ-cong (∘ᵐ-identityˡ _)
+                       ∙ curryᵐ-uncurryᵐ-iso c ⟩ᵐ-cong))
 
 -- SEQ-OP: sequencing an operation is the operation with the sequencing pushed
 -- into its continuation. The state plays no part — the rule is a plain equation
