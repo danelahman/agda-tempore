@@ -607,23 +607,78 @@ unbox-ren-resume-≐ {ρ} q = mk≐ʳ go
 -- irrelevant.
 ------------------------------------------------------------------------
 
+-- Retyping along a context equality (the state equivalence needs these here).
+
+castᵛˢ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
+castᵛˢ refl V = V
+
+castʳˢ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren (Δ ⟨ ρ ⟩) Γ' → Ren (Δ ⟨ ρ ⟩) Γ
+castʳˢ refl w = w
+
+-- The lookup's renaming composite depends on the state only through two
+-- contexts, the stored value and three proofs — so it is factored out. That is
+-- what lets two lookups be compared: at corresponding contexts the proofs are
+-- irrelevant (`uip`, `≾ᵣ-irrelevant`) and only the values have to be related.
+
+lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
+             → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
+             → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
+             → (rel : σ ≾ᵣ ρ)
+             → ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A
+             → Γ ⊢V⦂ A
+lookup-body′ {A} {ρ} Γf Γs eq h rel U =
+  V-rename
+    (   eq-ren eq
+     ∘ʳ eq-ren (sym (++ᶜ-assoc Γf ([] ∷ [ ρ ] A) Γs))
+     ∘ʳ wk-ren-⟨ρ⟩-ctx h
+     ∘ʳ ⟨⟩-≤-ren rel
+     ∘ʳ eq-ren ++ᶜ-identityˡ)
+    U
+
 lookup-body : ∀ {A ρ} → (St : 𝕊 []) → (t : Tgt (toCtx St) ([ ρ ] A))
             → proj₁ t ≾ᵣ ρ → toCtx St ⊢V⦂ A
 lookup-body {A} {ρ} St (ρ' , z) rel =
-  V-rename
-    (   eq-ren (split-state-++ᶜ St z)
-     ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
-     ∘ʳ wk-ren-⟨ρ⟩-ctx
-          (trans
-            (trans
-              (trans
-                (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
-                (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
-              (sym (grades-≡ (split-state-snd St z))))
-            (snd-split-time≡time-from-head St z))
-     ∘ʳ ⟨⟩-≤-ren rel
-     ∘ʳ eq-ren ++ᶜ-identityˡ)
+  lookup-body′
+    (toCtx (split-state-fst St z)) (toCtx (split-state-snd St z))
+    (split-state-++ᶜ St z)
+    (trans
+      (trans
+        (trans
+          (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
+          (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
+        (sym (grades-≡ (split-state-snd St z))))
+      (snd-split-time≡time-from-head St z))
+    rel
     (resource-lookup St z)
+
+-- Two lookups at corresponding data agree: match the context equalities, and
+-- everything else is proof-irrelevant.
+
+lookup-body′-≐ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
+               → {Γf Γf' Γs Γs' : Ctx} → (eF : Γf' ≡ Γf) → (eS : Γs' ≡ Γs)
+               → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
+               → (eq' : (Γf' ∷ [ ρ ] A) ++ᶜ Γs' ≡ Γ')
+               → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
+               → (h' : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs') ≡ σ)
+               → (rel rel' : σ ≾ᵣ ρ)
+               → (U : ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A)
+               → (U' : ([] ++ᶜ Γf') ⟨ ρ ⟩ ⊢V⦂ A)
+               → U ≐ᵛ castᵛˢ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) U'
+               → lookup-body′ Γf Γs eq h rel U
+               ≐ᵛ castᵛˢ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
+lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
+  rewrite uip {p = eq} {q = eq'} | uip {p = h} {q = h'}
+        | ≾ᵣ-irrelevant rel rel' = V-rename-cong _ eU
+
+-- Transporting the renaming an `unbox` consults relocates the cell it names.
+
+unbox-tgt-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren (Δ ⟨ ρ ⟩) Γ')
+               → (V : Δ ⊢V⦂ [ ρ ] A)
+               → unbox-tgt (castʳˢ e w') V
+               ≡ (proj₁ (unbox-tgt w' V)
+                 , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w' V) ] Γ₀) e
+                         (proj₂ (unbox-tgt w' V)))
+unbox-tgt-cast refl w' V = refl
 
 unbox-lookup-≡ : ∀ {A ρ Δ} → (St : 𝕊 [])
                → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)

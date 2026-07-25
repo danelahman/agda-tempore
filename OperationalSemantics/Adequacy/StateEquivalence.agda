@@ -40,7 +40,7 @@ open import OperationalSemantics.Adequacy.SubEquivalence Spec
 -- Retyping along a context equality.
 
 castᵛ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
-castᵛ refl V = V
+castᵛ = castᵛˢ
 
 castᶜ : ∀ {Γ Γ' C} → Γ ≡ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
 castᶜ refl M = M
@@ -247,7 +247,7 @@ mutual
 -- `unbox` stores a renaming, so its inversion transports that too.
 
 castʳ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren (Δ ⟨ ρ ⟩) Γ' → Ren (Δ ⟨ ρ ⟩) Γ
-castʳ refl w = w
+castʳ = castʳˢ
 
 ≐-unbox⁻ : ∀ {Γ Γ' A C ρ Δ} → (e : Γ' ≡ Γ)
          → {w : Ren (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
@@ -455,33 +455,85 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 ≐ˢ-lookup (∷-≐ˢ {A₁} {ρ₁} es eV) (Tl-∷ z)
   rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z = ≐ˢ-lookup es z
 
+-- The part of the state after the cell corresponds too, as a context.
+
+≐ˢ-snd-ctx : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+           → (z : [ ρ ] A ∈[ σ ] toCtx St)
+           → toCtx (split-state-snd St' (≐ˢ-var es z))
+           ≡ toCtx (split-state-snd St z)
+
+≐ˢ-snd-ctx (⟨⟩-≐ˢ ρ' es) (Tl-⟨⟩ z)
+  rewrite subst-Tl-⟨⟩ {ρ = ρ'} (toCtx-≐ˢ es) z =
+  cong (_⟨ ρ' ⟩) (≐ˢ-snd-ctx es z)
+≐ˢ-snd-ctx {A} {ρ} (∷-≐ˢ es eV) Hd
+  rewrite subst-Hd {A = [ ρ ] A} (toCtx-≐ˢ es) = refl
+≐ˢ-snd-ctx (∷-≐ˢ {A₁} {ρ₁} es eV) (Tl-∷ z)
+  rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z =
+  cong (_∷ [ ρ₁ ] A₁) (≐ˢ-snd-ctx es z)
+
+-- The same, presented at the `St'`-side cell the caller actually has.
+
+≐ˢ-fst₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+        → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
+        → ≐ˢ-var es z ≡ z'
+        → split-state-fst St z ≐ˢ split-state-fst St' z'
+≐ˢ-fst₂ es z z' refl = ≐ˢ-fst es z
+
+≐ˢ-snd-ctx₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
+            → ≐ˢ-var es z ≡ z'
+            → toCtx (split-state-snd St' z') ≡ toCtx (split-state-snd St z)
+≐ˢ-snd-ctx₂ es z z' refl = ≐ˢ-snd-ctx es z
+
+≐ˢ-lookup₂ : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+           → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
+           → (e : ≐ˢ-var es z ≡ z')
+           → resource-lookup St z
+           ≐ᵛ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩)
+                          (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' e))))
+                    (resource-lookup St' z')
+≐ˢ-lookup₂ es z z' refl = ≐ˢ-lookup es z
+
 ------------------------------------------------------------------------
--- LEMMA TO PROVE
+-- READING THE STORE, UP TO THE EQUIVALENCE
+--
+-- `UNBOX` reads the store; related states hold related values, and the
+-- renaming it consults is seen only up to `_≐ʳ_` (`unbox-tgt-≐`). Unfolding
+-- both lookups (`unbox-lookup-≡`) leaves `lookup-body′` at corresponding data,
+-- which `lookup-body′-≐` compares.
 ------------------------------------------------------------------------
 
-postulate
+unbox-lookup-≐ : ∀ {A ρ Δ} {St St' : 𝕊 []}
+               → (es : St ≐ˢ St')
+               → {w : Ren (Δ ⟨ ρ ⟩) (toCtx St)} → {w' : Ren (Δ ⟨ ρ ⟩) (toCtx St')}
+               → w ≐ʳ castʳ (sym (toCtx-≐ˢ es)) w'
+               → (V : Δ ⊢V⦂ [ ρ ] A)
+               -------------------------------------------------------
+               → unbox-lookup St w V
+               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V)
 
-  -- `UNBOX` reads the store; related states hold related values, and the
-  -- renaming it consults is seen only up to `_≐ʳ_` (`unbox-tgt-≐`).
-  --
-  -- The store half is now available: `≐ˢ-fst`/`≐ˢ-lookup` say the cell is split
-  -- off at related states and holds `_≐ᵛ_`-related values, and `unbox-lookup-≡`
-  -- (in `Slice`) unfolds the lookup to `lookup-body` of the cell — which
-  -- `unbox-tgt-≐` identifies on the two sides. What is left is that
-  -- `lookup-body`'s renaming composite is the *same* on both: it is built only
-  -- from contexts and grades (`split-state-++ᶜ`, `wk-ren-⟨ρ⟩-ctx`,
-  -- `snd-split-time≡time-from-head`), all of which correspond because related
-  -- states have equal `toCtx`, so this should follow from `≐ˢ-fst` plus an
-  -- `eq-ren`-irrelevance lemma rather than a fresh induction.
+unbox-lookup-≐ {A} {ρ} {St = St} {St' = St'} es {w} {w'} hw V =
+  subst (λ u → u ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V))
+        (sym (lookup-body-≡ St cellEq _ relW))
+        (lookup-body′-≐
+           (sym (toCtx-≐ˢ es))
+           (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' zz))) (≐ˢ-snd-ctx₂ es z z' zz)
+           _ _ _ _ relW relW _ _
+           (≐ˢ-lookup₂ es z z' zz))
+  where
+    z' = proj₂ (unbox-tgt w' V)
 
-  unbox-lookup-≐ : ∀ {A ρ Δ} {St St' : 𝕊 []}
-                 → (es : St ≐ˢ St')
-                 → {w : Ren (Δ ⟨ ρ ⟩) (toCtx St)} → {w' : Ren (Δ ⟨ ρ ⟩) (toCtx St')}
-                 → w ≐ʳ castʳ (sym (toCtx-≐ˢ es)) w'
-                 → (V : Δ ⊢V⦂ [ ρ ] A)
-                 -------------------------------------------------------
-                 → unbox-lookup St w V
-                 ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V)
+    relW = proj₂ (proj₂ (unbox⇒var w' V))
+
+    z = subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w' V) ] Γ₀)
+              (sym (toCtx-≐ˢ es)) z'
+
+    zz : ≐ˢ-var es z ≡ z'
+    zz = subst-subst-sym (toCtx-≐ˢ es)
+
+    -- the two lookups name the same cell: `hw` up to `_≐ʳ_`, then the cast
+    cellEq : unbox-tgt w V ≡ (proj₁ (unbox-tgt w' V) , z)
+    cellEq = trans (unbox-tgt-≐ hw V) (unbox-tgt-cast (sym (toCtx-≐ˢ es)) w' V)
 
 ------------------------------------------------------------------------
 -- THE BISIMULATION, RULE BY RULE
