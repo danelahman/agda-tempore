@@ -561,3 +561,21 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
                                         _ (step-grade-≾ r)
                                         (steps-grade-≾ rs)))))
           N))
+
+-- Two slices whose renamings are identity-like: the unit slice at a state, and
+-- the slice a `DELAY` takes (whose target context *is* the source under the
+-- lock). Both are needed to recognise a reduct as the action of an environment.
+
+-- Both are `≤ₛ-embed` of the identity extension, which is the identity: a
+-- variable of a state context cannot be case-split on, so this goes through the
+-- `var-tgt` layer rather than pointwise.
+
+slice-renᵘ-id-≐ : ∀ {St : 𝕊 []} → slice-renᵘ (slice-id {St} {uᵣ}) ≐ʳ id-ren
+slice-renᵘ-id-≐ = mk≐ʳ (λ x → slice-renᵘ-tgt slice-id x)
+
+unbox-ren-delay-≐ : ∀ {ρ} {St : 𝕊 []}
+                  → unbox-ren (delay-slice {ρ} {St}) ≐ʳ id-ren
+unbox-ren-delay-≐ = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) = unbox-ren-tgt delay-slice x

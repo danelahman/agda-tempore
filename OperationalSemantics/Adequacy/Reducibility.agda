@@ -238,6 +238,13 @@ pair-canonical : ∀ {A B} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A |×| B)
 pair-canonical (var f x) = ⊥-elim (⦉⦊-not-in-toCtx x)
 pair-canonical ⦉ V , W ⦊  = V , W , refl
 
+-- There is no value of the empty type over a state context: a variable is ruled
+-- out by `Empty-not-in-toCtx` and no other value has that type. This is what
+-- discharges `absurd`, which has no reduction rule.
+
+empty-canonical : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ Empty → ⊥
+empty-canonical (var f x) = Empty-not-in-toCtx x
+
 Val-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → Val A St V
 
 Val-eternal (Baseₑ b _)      V = tt
