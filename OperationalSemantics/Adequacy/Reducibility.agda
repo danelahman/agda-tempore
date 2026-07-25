@@ -42,6 +42,7 @@ open import Syntax.Types         Spec
 
 open import OperationalSemantics.Adequacy.RenEquivalence   Spec
 open import OperationalSemantics.Adequacy.Slice           Spec
+open import OperationalSemantics.Adequacy.SubEquivalence  Spec
 open import OperationalSemantics.Adequacy.StateEquivalence Spec
 
 -- REDUCIBLE GROUND VALUES (recursion on `GType`)
@@ -173,18 +174,6 @@ Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
 
 store-∅ : Store ∅
 store-∅ x f = ⊥-elim (not-in-empty-ctx x)
-
-postulate
-
-  -- Reducibility is insensitive to the term equivalence. `↝*-≐` transports the
-  -- run, but its whnf sits at a state only `_≐ˢ_`-related to the original's
-  -- (`BOX` stores `_≐ᵛ_`-related values), so the whnf's components have to be
-  -- moved across `_≐ˢ_` too. That is the one remaining semantic obligation —
-  -- `Val-≐`/`Comp-≐` of the plan's item 4, to be proved *non*-mutually, passing
-  -- `Val-≐ A` to `Comp-≐` as a parameter.
-
-  Comp-≐ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
-          → M ≐ᶜ M' → Comp' A ε St M → Comp' A ε St M'
 
 ------------------------------------------------------------------------
 -- LEMMAS TO PROVE
@@ -383,33 +372,192 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} q' W eW
                   (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
                   (unbox-lookup-≐ es₂ (unbox-ren-bridge es es₂ h) V))))
 
--- COMPUTATIONS ACROSS THE STATE EQUIVALENCE (next step)
+-- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
 --
--- `Comp-≐ᶜ` below must be proved as one lemma carrying *both* relations at
--- once — the state equivalence and the term equivalence:
+-- One lemma carrying *both* relations: the states' and the terms'. They cannot
+-- be separated — the `comp-op` case replays the resumption's slice and recurses,
+-- and the two continuations come out of `≐-perform⁻` related only by `_≐ᶜ_`.
 --
---   Comp-≐ : (es : St ≐ˢ St') → (tr : P transports along `_≐ˢ_`)
---          → (tr≐ : P respects `_≐ᵛ_`)
---          → M ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) M' → Comp A P ε St M
---          → Comp A P ε St' M'
+-- Parameterised by the value predicate's transport rather than mutual with
+-- `Val-≐ˢ`, so that both recurse structurally on the *type*.
+
+≡→≐ᶜ : ∀ {Γ C} {M M' : Γ ⊢C⦂ C} → M ≡ M' → M ≐ᶜ M'
+≡→≐ᶜ refl = ≐ᶜ-refl _
+
+-- The reduct a resumption builds, compared across the two states.
+
+resume-≐ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
+         → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
+         → {q : Slice St ρ St₂ ρ} → {q' : Slice St' ρ St₂' ρ}
+         → ext q ≤≐ ext q'
+         → {M : toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
+         → {M' : toCtx St' ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
+         → M ≐ᶜ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B) (sym (toCtx-≐ˢ es))) M'
+         → {W : toCtx (St₂ ⟨ ρ ⟩ₛ) ⊢V⦂ B} → {W' : toCtx (St₂' ⟨ ρ ⟩ₛ) ⊢V⦂ B}
+         → W ≐ᵛ castᵛ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂))) W'
+         -------------------------------------------------------------------
+         → resume q M W
+         ≐ᶜ castᶜ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂))) (resume q' M' W')
+
+resume-≐ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
+  ≐ᶜ-trans
+    (sub-≐ᶜ Hd eW
+      (≐ᶜ-trans (C-rename-≐ (cong-∷-ren-≐ (suc-comp-ren-≐ h es es₂ _ _)) M)
+                (C-rename-cong (cong-∷-ren _)
+                  (subst (λ z → M ≐ᶜ z)
+                         (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B)
+                                          (sym (toCtx-≐ˢ es)))
+                                    (cong (_∷ B) e₁) M')
+                         eM))))
+    (≡→≐ᶜ (trans (cong (λ z → z [ Hd ↦ castᵛ e₂ W' ]c)
+                       (cast-rename-∷ e₁ e₂ (slice-ren q') M'))
+                 (cast-app e₂ (C-rename (cong-∷-ren (slice-ren q')) M') W')))
+  where
+    e₁ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es))
+    e₂ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂))
+
+Comp-≐ : ∀ {A P ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+       → (tr : ∀ {St₁ St₁' : 𝕊 []} → (es₁ : St₁ ≐ˢ St₁')
+             → (V : toCtx St₁ ⊢V⦂ A) → P St₁ V
+             → P St₁' (castᵛ (toCtx-≐ˢ es₁) V))
+       → (tr≐ : ∀ {St₁ : 𝕊 []} {V V' : toCtx St₁ ⊢V⦂ A}
+              → V ≐ᵛ V' → P St₁ V → P St₁ V')
+       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
+       → M ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) M'
+       -------------------------------------------------------------
+       → Comp A P ε St M → Comp A P ε St' M'
+
+Comp-≐ es tr tr≐ eM (comp-ret rs pV) with ↝*-≐ es eM rs
+... | St₁' , N' , es₁ , rs' , eN with ≐-return⁻ (sym (toCtx-≐ˢ es₁)) N' eN
+...   | V' , refl , eV =
+  comp-ret rs'
+    (tr≐ (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≐ᵛ z)
+                (castᵛ-castᵛ (sym (toCtx-≐ˢ es₁)) (toCtx-≐ˢ es₁) V')
+                (castᵛ-≐ (toCtx-≐ˢ es₁) eV))
+         (tr es₁ _ pV))
+
+Comp-≐ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
+  with ↝*-≐ es eM rs
+... | St₁' , N' , es₁ , rs' , eN with ≐-perform⁻ (sym (toCtx-≐ˢ es₁)) N' eN
+...   | W' , Mk' , refl , eW , eMk =
+  comp-op rs'
+    (Valᵍ-≐ᵛ (param op)
+      (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≐ᵛ z)
+             (castᵛ-castᵛ (sym (toCtx-≐ˢ es₁)) (toCtx-≐ˢ es₁) W')
+             (castᵛ-≐ (toCtx-≐ˢ es₁) eW))
+      (Valᵍ-≐ˢ es₁ (param op) _ pW))
+    (λ q' W'' pW'' → step q' W'' pW'')
+  where
+    ρ = mapᵉ (op-grade op)
+
+    step : ∀ {St₂ : 𝕊 []} → (q' : Slice _ ρ St₂ ρ)
+         → (W'' : toCtx (St₂ ⟨ ρ ⟩ₛ) ⊢V⦂ type-of-gtype (arity op))
+         → Valᵍ (arity op) (St₂ ⟨ ρ ⟩ₛ) W''
+         → Comp A P _ (St₂ ⟨ ρ ⟩ₛ) (resume q' Mk' W'')
+    step {St₂} q' W'' pW'' with slice-replay (≐ˢ-sym es₁) q'
+    ... | St₃ , q , es₃ , h =
+      Comp-≐ (≐ˢ-sym esL) tr tr≐
+        (subst (λ z → resume q Mk (castᵛ (toCtx-≐ˢ esL) W'') ≐ᶜ z)
+               (castᶜ-irr (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ (≐ˢ-sym es₃))))
+                          (sym (toCtx-≐ˢ (≐ˢ-sym esL)))
+                          (resume q' Mk' W''))
+          (resume-≐ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
+            (subst (λ z → castᵛ (toCtx-≐ˢ esL) W'' ≐ᵛ z)
+                   (castᵛ-irr (toCtx-≐ˢ esL)
+                              (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ (≐ˢ-sym es₃))))
+                              W'')
+                   (≐ᵛ-refl _))))
+        (pk q (castᵛ (toCtx-≐ˢ esL) W'')
+             (Valᵍ-≐ˢ esL (arity op) W'' pW''))
+      where
+        esL = ⟨⟩-≐ˢ ρ es₃
+
+-- VALUES ACROSS THE STATE EQUIVALENCE
 --
--- Separating them does not work: the `comp-op` case replays the resumption's
--- slice on the other state and recurses, and the two resumptions' continuations
--- are related only by `_≐ᶜ_` (they come from `≐-perform⁻`), never equal — so the
--- recursive call needs the term relation in hand. `Comp-≐ᶜ` is then the special
--- case `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
---
--- It stays parameterised by `P`'s transport rather than mutual with `Val-≐ˢ`,
--- so that both recurse structurally on the *type*: `Val-≐ˢ` at `⇒` calls it with
--- `Val-≐ˢ B`, at `[ ρ ]` with `Val-≐ˢ A`. Made mutual, the checker would see the
--- cycle `Comp-≐ A → Val-≐ˢ A → Comp-≐ A`.
---
--- Everything the Kripke clauses need is now proved: `Valᵍ-≐ˢ`/`Valᵍ-≐ᵛ` above,
--- and `unbox-lookup-≐`, `unbox-lookup-cast-val`, `unbox-ren-bridge`,
--- `slice-replay` in `Slice`/`StateEquivalence`. What is left is the `comp-op`
--- resumption: replay the slice, transport the arity value, and relate the two
--- `resume`s (`suc-comp-ren-≐` for the renamings, `C-rename-cong` and `sub-≐ᶜ`
--- for the continuation and the value).
+-- Recursion on the type. Both Kripke clauses replay the other state's extension
+-- and transport back; the arrow clause is where `Comp-≐` is called, at the
+-- smaller type `B`, which is what keeps the two definitions non-mutual.
+
+Val-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (A : VType)
+       → (V : toCtx St ⊢V⦂ A)
+       → Val A St V → Val A St' (castᵛ (toCtx-≐ˢ es) V)
+
+Val-≐ˢ es (Base b)  V p = tt
+Val-≐ˢ es Unit      V p = tt
+Val-≐ˢ es Empty     V p = tt
+Val-≐ˢ es (A |×| B) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
+  _ , _ , castᵛˢ-pair (toCtx-≐ˢ es) V₁ V₂
+  , Val-≐ˢ es A V₁ p₁ , Val-≐ˢ es B V₂ p₂
+
+Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
+    _ , castᵛ-lam (toCtx-≐ˢ es) M
+  , λ {St''} q' M₂ eM₂ W pW → step q' M₂ eM₂ W pW
+  where
+    e = toCtx-≐ˢ es
+
+    step : ∀ {St'' : 𝕊 []} → (q' : Slice St' uᵣ St'' uᵣ)
+         → (M₂ : toCtx St'' ∷ A ⊢C⦂ B ‼ ε)
+         → M₂ ≐ᶜ slice-under q' (castᶜ (cong (_∷ A) e) M)
+         → (W : toCtx St'' ⊢V⦂ A) → Val A St'' W
+         → Comp B (Val B) ε St'' (M₂ [ Hd ↦ W ]c)
+    step {St''} q' M₂ eM₂ W pW with slice-replay (≐ˢ-sym es) q'
+    ... | St₂ , q , es₂ , h =
+      Comp-≐ (≐ˢ-sym es₂) (λ es₁ V₀ → Val-≐ˢ es₁ B V₀) (Val-≐ᵛ B)
+        (≡→≐ᶜ (trans (cast-app e₂ M₂ W)
+                     (castᶜ-irr e₂ (sym (toCtx-≐ˢ (≐ˢ-sym es₂)))
+                                (M₂ [ Hd ↦ W ]c))))
+        (f q (castᶜ (cong (_∷ A) e₂) M₂) eM₃ (castᵛ e₂ W)
+             (Val-≐ˢ es₂ A W pW))
+      where
+        e₂ = toCtx-≐ˢ es₂
+
+        eM₃ : castᶜ (cong (_∷ A) e₂) M₂ ≐ᶜ slice-under q M
+        eM₃ =
+          ≐ᶜ-trans (castᶜ-≐ (cong (_∷ A) e₂) eM₂)
+            (≐ᶜ-trans
+              (≡→≐ᶜ (sym (cast-rename-∷ (sym e) e₂ (slice-renᵘ q')
+                                        (castᶜ (cong (_∷ A) e) M))))
+              (≐ᶜ-trans
+                (≡→≐ᶜ (cong (C-rename
+                              (cong-∷-ren (castʳ² (sym e) e₂ (slice-renᵘ q'))))
+                            (castᶜ-castᶜ (cong (_∷ A) e) (cong (_∷ A) (sym e)) M)))
+                (≐ᶜ-sym
+                  (C-rename-≐
+                    (cong-∷-ren-≐
+                      (≐ʳ-trans (slice-renᵘ-≐ˢ es (≐ˢ-sym es₂) (≤≐-sym h))
+                                (castʳ²-irr (sym e) (sym e)
+                                            (sym (toCtx-≐ˢ (≐ˢ-sym es₂))) e₂
+                                            (slice-renᵘ q'))))
+                    M))))
+
+Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} q' W eW
+  with slice-replay (≐ˢ-sym es) q'
+... | St₂ , q , es₂ , h =
+  subst (Val A St'')
+        (castᵛ-castᵛ (toCtx-≐ˢ es₂) (toCtx-≐ˢ (≐ˢ-sym es₂)) W)
+        (Val-≐ˢ (≐ˢ-sym es₂) A (castᵛ (toCtx-≐ˢ es₂) W)
+          (f q (castᵛ (toCtx-≐ˢ es₂) W) eW₂))
+  where
+    eW₂ : castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ unbox-lookup St₂ (unbox-ren q) V
+    eW₂ =
+      subst (λ z → castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ z)
+            (castᵛ-castᵛ (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ es₂)
+                         (unbox-lookup St₂ (unbox-ren q) V))
+            (castᵛ-≐ (toCtx-≐ˢ es₂)
+              (≐ᵛ-trans eW
+                (≐ᵛ-trans
+                  (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
+                  (unbox-lookup-≐ es₂ (unbox-ren-bridge es es₂ h) V))))
+
+-- Hence reducibility is insensitive to the term equivalence: the special case
+-- `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
+
+Comp-≐ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
+        → M ≐ᶜ M' → Comp' A ε St M → Comp' A ε St M'
+Comp-≐ᶜ {A} {ε} {St} {M} {M'} eM pM =
+  Comp-≐ (≐ˢ-refl St) (λ es₁ V₀ → Val-≐ˢ es₁ A V₀) (Val-≐ᵛ A)
+    (subst (λ z → M ≐ᶜ castᶜ (sym z) M') (sym (toCtx-≐ˢ-refl St)) eM)
+    pM
 
 -- ALLOCATION
 --

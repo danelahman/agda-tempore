@@ -56,6 +56,10 @@ castᶜ-≐ refl eM = eM
 -- Casts are irrelevant in their equality proof, so the two ways of building the
 -- reduct's context equality (`sym (cong f e)` and `cong f (sym e)`) agree.
 
+castᵛ-lam : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
+          → castᵛ e (lam M) ≡ lam (castᶜ (cong (_∷ A) e) M)
+castᵛ-lam refl M = refl
+
 castᵛ-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
           → castᵛ e V ≡ castᵛ e' V
 castᵛ-irr e e' V = cong (λ z → castᵛ z V) uip
@@ -323,6 +327,12 @@ data _≤≐_ : ∀ {St St₁ St' St₁' : 𝕊 []} → St ≤ₛ St₁ → St' 
         → {V  : ([] ++ᶜ toCtx St₁  ⟨ ρ ⟩) ⊢V⦂ A}
         → {V' : ([] ++ᶜ toCtx St₁' ⟨ ρ ⟩) ⊢V⦂ A}
         → q ≤≐ q' → (∷-suc V q) ≤≐ (∷-suc V' q')
+
+≤≐-sym : ∀ {St St₁ St' St₁' : 𝕊 []} {q : St ≤ₛ St₁} {q' : St' ≤ₛ St₁'}
+       → q ≤≐ q' → q' ≤≐ q
+≤≐-sym id-≤≐       = id-≤≐
+≤≐-sym (⟨⟩-≤≐ ρ h) = ⟨⟩-≤≐ ρ (≤≐-sym h)
+≤≐-sym (∷-≤≐ h)    = ∷-≤≐ (≤≐-sym h)
 
 ≤ₛ-grade-≤≐ : ∀ {St St₁ St' St₁' : 𝕊 []} {q : St ≤ₛ St₁} {q' : St' ≤ₛ St₁'}
             → q ≤≐ q' → ≤ₛ-grade q ≡ ≤ₛ-grade q'
@@ -1175,3 +1185,38 @@ unbox-ren-bridge {ρ} es es₂ {q'} {q} h
     (∘ʳ-≐ (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h) ≐ʳ-refl)
     (castʳ²-cancel (sym (toCtx-≐ˢ (≐ˢ-sym es))) (sym (toCtx-≐ˢ es₂))
                    (unbox-ren q))
+
+-- The unit-slice analogue: a replayed slice renames the state's own context
+-- the same way, up to the two states' context equalities. As `unbox-ren-≐ˢ`,
+-- with the two `⟨⟩-η` renamings pushed through the cast.
+
+⟨⟩-η⁻¹-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
+                → ⟨⟩-η⁻¹-ren {Γ = Γ}
+                ≐ʳ castʳ² e (cong (_⟨ uᵣ ⟩) e) ⟨⟩-η⁻¹-ren
+⟨⟩-η⁻¹-ren-cast refl = ≐ʳ-refl
+
+slice-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
+              → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
+              → {q : Slice St uᵣ St₂ uᵣ} → {q' : Slice St' uᵣ St₂' uᵣ}
+              → ext q ≤≐ ext q'
+              -------------------------------------------------------------
+              → slice-renᵘ q
+              ≐ʳ castʳ² (sym (toCtx-≐ˢ es)) (sym (toCtx-≐ˢ es₂)) (slice-renᵘ q')
+
+slice-renᵘ-≐ˢ es es₂ {q} {q'} h =
+  ≐ʳ-trans
+    (∘ʳ-≐ (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))
+      (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (bound q) (bound q'))
+            (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))))
+    (≐ʳ-trans
+      (∘ʳ-≐ ≐ʳ-refl
+        (≐ʳ-sym
+          (castʳ²-∘ʳ (sym (toCtx-≐ˢ es))
+                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                     (suc-comp-ren (ext q') (bound q')) ⟨⟩-η⁻¹-ren)))
+      (≐ʳ-sym
+        (castʳ²-∘ʳ (sym (toCtx-≐ˢ es))
+                   (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                   (sym (toCtx-≐ˢ es₂))
+                   ⟨⟩-η-ren (suc-comp-ren (ext q') (bound q') ∘ʳ ⟨⟩-η⁻¹-ren))))
