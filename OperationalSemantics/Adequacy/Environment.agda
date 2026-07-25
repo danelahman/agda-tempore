@@ -1752,28 +1752,333 @@ env-Vˢ-≐ (eternalˡ Δ₀ lf η γ) Δ eV =
   env-Vˢ-≐ γ Δ (env-eternal-V-≐ lf η (castᵛ-≐ _ eV))
 
 ------------------------------------------------------------------------
+-- SUFFIX VARIABLES
+--
+-- The action is defined under a suffix `Δ`, and a variable of that suffix is
+-- one the environment does not close: it is carried along, its position fixed
+-- and only its grade bound recomputed. `∈-++ᶜʳ` is the injection, and the
+-- lemmas below are what the recursion needs to see through the casts and the
+-- congruence renamings.
+------------------------------------------------------------------------
+
+∈-++ᶜʳ : ∀ {Γ Δ A ρ} → A ∈[ ρ ] Δ → A ∈[ ρ ] (Γ ++ᶜ Δ)
+∈-++ᶜʳ Hd        = Hd
+∈-++ᶜʳ (Tl-∷ x)  = Tl-∷ (∈-++ᶜʳ x)
+∈-++ᶜʳ (Tl-⟨⟩ x) = Tl-⟨⟩ (∈-++ᶜʳ x)
+
+-- A cast acts on a variable by relocating it.
+
+castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
+          → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+          → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+castᵛ-var refl f x = refl
+
+-- Relocating a suffix variable along associativity re-brackets the injection.
+
+∈-++ᶜʳ-assoc : ∀ {A ρ} → (Γ Γ' : Ctx) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+             → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) (++ᶜ-assoc Γ Γ' Δ)
+                     (∈-++ᶜʳ {Γ = Γ ++ᶜ Γ'} x)
+             ≡ ∈-++ᶜʳ {Γ = Γ} (∈-++ᶜʳ {Γ = Γ'} x)
+
+∈-++ᶜʳ-assoc Γ Γ' {Δ ∷ B} Hd       = subst-Hd (++ᶜ-assoc Γ Γ' Δ)
+∈-++ᶜʳ-assoc Γ Γ' {Δ ∷ B} (Tl-∷ x) =
+  trans (subst-Tl-∷ (++ᶜ-assoc Γ Γ' Δ) (∈-++ᶜʳ x))
+        (cong Tl-∷ (∈-++ᶜʳ-assoc Γ Γ' x))
+∈-++ᶜʳ-assoc Γ Γ' {Δ ⟨ ρ ⟩} (Tl-⟨⟩ x) =
+  trans (subst-Tl-⟨⟩ (++ᶜ-assoc Γ Γ' Δ) (∈-++ᶜʳ x))
+        (cong Tl-⟨⟩ (∈-++ᶜʳ-assoc Γ Γ' x))
+
+-- A congruence renaming fixes a suffix variable, up to its grade bound.
+
+cong-ren-tgt-r : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+               → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜʳ {Γ = Γ} x)
+               ≡ (ρ , ∈-++ᶜʳ {Γ = Γ'} x)
+
+cong-ren-tgt-r r Hd        = refl
+cong-ren-tgt-r r (Tl-∷ x)  =
+  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (cong-ren-tgt-r r x)
+cong-ren-tgt-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
+  cong (λ z → proj₁ z ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ z)) (cong-ren-tgt-r r x)
+
+-- Renaming a suffix variable along a congruence renaming leaves it where it is.
+
+ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+          → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+          → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
+          ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
+ren-var-r r x f f' =
+  var-ren-tgt-≐ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-tgt-r r x) f'
+
+-- SUBSTITUTION FIXES A SUFFIX VARIABLE
+--
+-- The variable being replaced lies in the prefix, so a suffix variable survives
+-- it: what comes back is that variable again, its position fixed and only its
+-- grade bound recomputed. Induction on the suffix variable, which is also the
+-- recursion of `split-≡-++ᶜ = ≡-split refl` and of `⟨_,_⟩[_↦_]var`.
+
+≡→≐ᵛ : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≡ V' → V ≐ᵛ V'
+≡→≐ᵛ refl = ≐ᵛ-refl _
+
+-- Relocating a variable along an equality of *extended* contexts: the equality
+-- must have come from one of the smaller contexts, and any two proofs agree.
+
+subst-Hd-any : ∀ {Γ Γ' A} → (e : Γ ∷ A ≡ Γ' ∷ A)
+             → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) e Hd ≡ Hd
+subst-Hd-any {A = A} e =
+  trans (cong (λ z → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) z Hd)
+              (uip {p = e} {q = cong (_∷ A) (∷ᶜ-injective-ctx e)}))
+        (subst-Hd (∷ᶜ-injective-ctx e))
+
+-- A cast commutes with the three things the substitution puts in front of the
+-- recursive call: a weakening, an eternal extension, and a lock-crossing
+-- renaming. Each is uniform in its context, so matching the equality suffices.
+
+cast-wk-any : ∀ {Γ Γ' A C} → (e : Γ ∷ C ≡ Γ' ∷ C) → (e₀ : Γ ≡ Γ')
+            → (V : Γ ⊢V⦂ A)
+            → castᵛ e (V-rename (wk-ren {A = C}) V)
+            ≡ V-rename wk-ren (castᵛ e₀ V)
+cast-wk-any refl e₀ V rewrite uip {p = e₀} {q = refl} = refl
+
+cast-ext-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → (e₀ : Γ ≡ Γ')
+             → (et : Eternal A) → (V : Γ ⊢V⦂ A)
+             → castᵛ e (eternal-val-ext {ρ = ρ} et V)
+             ≡ eternal-val-ext et (castᵛ e₀ V)
+cast-ext-any refl e₀ et V rewrite uip {p = e₀} {q = refl} = refl
+
+cast-ren-⟨⟩-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → (e₀ : Γ ≡ Γ')
+                → (r : ∀ {Γ₀ : Ctx} → Ren Γ₀ (Γ₀ ⟨ ρ ⟩)) → (V : Γ ⊢V⦂ A)
+                → castᵛ e (V-rename r V) ≡ V-rename r (castᵛ e₀ V)
+cast-ren-⟨⟩-any refl e₀ r V rewrite uip {p = e₀} {q = refl} = refl
+
+-- The context equality the substitution's result is presented along.
+
+castOf : ∀ {Γ₁ B} → (Γ₂ : Ctx)
+       → (split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
+            ++ᶜ split-r (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})))
+       ≡ (Γ₁ ++ᶜ Γ₂)
+castOf {Γ₁} {B} Γ₂ =
+  cong₂ _++ᶜ_ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
+              (split→∈-split-r (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
+
+sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
+          → (x : A ∈[ ρ ] Γ₂)
+          → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
+          → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+          → castᵛ (castOf {Γ₁} {B} Γ₂)
+              (⟨ ∈-++ᶜʳ {Γ = Γ₁ ∷ B} x , f ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})
+                                            ↦ W ]var)
+          ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
+
+sub-var-r {Γ₁} {B} (Γ₂ ∷ C) Hd W f f' =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (trans (castᵛ-var (castOf {Γ₁} {B} (Γ₂ ∷ C)) f Hd)
+                 (cong (var f) (subst-Hd-any (castOf {Γ₁} {B} (Γ₂ ∷ C))))))
+    var-≐
+
+sub-var-r {Γ₁} {B} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
+    (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
+              (var-ren-tgt-≐ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f'))
+
+sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? A
+
+... | yes et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
+    (≐ᵛ-trans (eternal-val-ext-cong et
+                (sub-var-r Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≐)
+
+... | no ¬et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) rn _))
+    (≐ᵛ-trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
+              (var-ren-tgt-≐ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
+                 (cong (var-tgt′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+                       (⟨⟩-η⁻¹-tgt (∈-++ᶜʳ {Γ = Γ₁} x)))
+                 f'))
+  where
+    rn : ∀ {Γ₀ : Ctx} → Ren Γ₀ (Γ₀ ⟨ ρ ⟩)
+    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+
+    fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
+
+-- A variable the splitting sends right *is* that variable, pushed right.
+
+∈-++ᶜ-split-inj₂ : ∀ {A ρ} → (Δ₁ Δ₂ : Ctx) → (x : A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂))
+                 → (y : A ∈[ ρ ] Δ₂)
+                 → ∈-++ᶜ-split Δ₁ Δ₂ x ≡ inj₂ y
+                 → x ≡ ∈-++ᶜʳ {Γ = Δ₁} y
+
+∈-++ᶜ-split-inj₂ Δ₁ (Δ₂ ∷ B) Hd .Hd refl = refl
+
+∈-++ᶜ-split-inj₂ Δ₁ (Δ₂ ∷ B) (Tl-∷ x) y eq
+  with ∈-++ᶜ-split Δ₁ Δ₂ x in eq'
+... | inj₁ p  with eq
+...   | ()
+∈-++ᶜ-split-inj₂ Δ₁ (Δ₂ ∷ B) (Tl-∷ x) y eq
+    | inj₂ y' with eq
+...   | refl = cong Tl-∷ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
+
+∈-++ᶜ-split-inj₂ Δ₁ (Δ₂ ⟨ ρ ⟩) (Tl-⟨⟩ x) y eq
+  with ∈-++ᶜ-split Δ₁ Δ₂ x in eq'
+... | inj₁ p  with eq
+...   | ()
+∈-++ᶜ-split-inj₂ Δ₁ (Δ₂ ⟨ ρ ⟩) (Tl-⟨⟩ x) y eq
+    | inj₂ y' with eq
+...   | refl = cong Tl-⟨⟩ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
+
+-- At the empty prefix the injection is the identity, once relocated.
+
+∈-++ᶜʳ-[] : ∀ {Δ A ρ} → (x : A ∈[ ρ ] Δ)
+          → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) ++ᶜ-identityˡ (∈-++ᶜʳ {Γ = []} x) ≡ x
+∈-++ᶜʳ-[] Hd        = subst-Hd ++ᶜ-identityˡ
+∈-++ᶜʳ-[] (Tl-∷ x)  =
+  trans (subst-Tl-∷ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-∷ (∈-++ᶜʳ-[] x))
+∈-++ᶜʳ-[] (Tl-⟨⟩ x) =
+  trans (subst-Tl-⟨⟩ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-⟨⟩ (∈-++ᶜʳ-[] x))
+
+-- The eternal zone leaves the variables of the context it prefixes alone: each
+-- of its substitutions replaces a variable of its own prefix (`sub-var-r`).
+
+env-eternal-V-var-r : ∀ {Δ₀ Γ' A ρ} → (lf : Lock-free Δ₀) → (η : ClosedVals Δ₀)
+                    → (x : A ∈[ ρ ] Γ') → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+                    → env-eternal-V lf η (var f (∈-++ᶜʳ {Γ = Δ₀} x)) ≐ᵛ var f' x
+
+env-eternal-V-var-r lf-[] η x f f' =
+  ≐ᵛ-trans (≡→≐ᵛ (trans (castᵛ-var ++ᶜ-identityˡ f (∈-++ᶜʳ x))
+                        (cong (var f) (∈-++ᶜʳ-[] x))))
+           var-≐
+
+env-eternal-V-var-r (lf-∷ lf) η x f f' =
+  ≐ᵛ-trans (env-eternal-V-≐ lf (λ z → η (Tl-∷ z)) (sub-var-r _ x _ f f))
+           (env-eternal-V-var-r lf (λ z → η (Tl-∷ z)) x f f')
+
+-- THE ACTION FIXES A SUFFIX VARIABLE
+--
+-- Recursion on the environment. Each zone either renames along a congruence
+-- renaming (`ren-var-r`) or substitutes at a variable of the prefix
+-- (`sub-var-r`); the two zones that re-bracket the suffix pass through
+-- `∈-++ᶜʳ-assoc`.
+
+env-Vˢ-var-r : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx) → (x : A ∈[ ρ ] Δ)
+             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → env-Vˢ γ Δ (var f (∈-++ᶜʳ {Γ = Γ} x))
+             ≐ᵛ var f' (∈-++ᶜʳ {Γ = toCtx St} x)
+
+env-Vˢ-var-r ⌊ St ⌋ Δ x f f' = var-≐
+
+env-Vˢ-var-r (renᵉ γ r) Δ x f f' =
+  ≐ᵛ-trans (env-Vˢ-≐ γ Δ (ren-var-r r x f f)) (env-Vˢ-var-r γ Δ x f f')
+
+env-Vˢ-var-r (sliceᵉ γ q) Δ x f f' =
+  ≐ᵛ-trans (V-rename-cong (cong-ren (slice-renᵘ q)) (env-Vˢ-var-r γ Δ x f f))
+           (ren-var-r (slice-renᵘ q) x f f')
+
+env-Vˢ-var-r (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ x f f' =
+  ≐ᵛ-trans (V-rename-cong (cong-ren (unbox-ren q)) step)
+           (ren-var-r (unbox-ren q) x f f')
+  where
+    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+    ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
+    y  = ∈-++ᶜʳ {Γ = [] ⟨ ρ ⟩} x
+
+    inner : castᵛ ei (var f (∈-++ᶜʳ {Γ = Γ ⟨ ρ ⟩} x))
+          ≡ var f (∈-++ᶜʳ {Γ = Γ} y)
+    inner = trans (castᵛ-var ei f (∈-++ᶜʳ x))
+                  (cong (var f) (∈-++ᶜʳ-assoc Γ ([] ⟨ ρ ⟩) x))
+
+    outer : castᵛ eo (var f (∈-++ᶜʳ {Γ = toCtx St} y))
+          ≡ var f (∈-++ᶜʳ {Γ = toCtx St ⟨ ρ ⟩} x)
+    outer =
+      trans (castᵛ-var eo f (∈-++ᶜʳ y))
+        (cong (var f)
+          (trans (cong (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) eo)
+                       (sym (∈-++ᶜʳ-assoc (toCtx St) ([] ⟨ ρ ⟩) x)))
+                 (subst-sym-subst′ (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+                                   (∈-++ᶜʳ x))))
+
+    step : castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (var f (∈-++ᶜʳ {Γ = Γ ⟨ ρ ⟩} x))))
+         ≐ᵛ var f (∈-++ᶜʳ {Γ = toCtx St ⟨ ρ ⟩} x)
+    step =
+      ≐ᵛ-trans (≡→≐ᵛ (cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) inner))
+        (≐ᵛ-trans (castᵛ-≐ eo (env-Vˢ-var-r γ Δ' y f f)) (≡→≐ᵛ outer))
+
+env-Vˢ-var-r (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x f f' =
+  ≐ᵛ-trans (≡→≐ᵛ (cong (λ z → castᵛ (castOf Δ)
+                                (castᵛ eIn (env-Vˢ γ Δ'' z) [ split→∈ t ↦ Ŵ ]v))
+                       inner))
+    (≐ᵛ-trans
+      (castᵛ-≐ (castOf Δ)
+        (sub-≐ᵛ (split→∈ t) (≐ᵛ-refl Ŵ)
+          (≐ᵛ-trans (castᵛ-≐ eIn (env-Vˢ-var-r γ Δ'' y f f)) (≡→≐ᵛ outer))))
+      (sub-var-r Δ x Ŵ f f'))
+  where
+    Δ'' = [] ∷ A₀ ++ᶜ Δ
+    eIn = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eA  = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
+    t   = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}
+    Ŵ   = castᵛ (sym (split→∈-split-l t)) W
+    y   = ∈-++ᶜʳ {Γ = [] ∷ A₀} x
+
+    inner : castᵛ eA (var f (∈-++ᶜʳ {Γ = Γ ∷ A₀} x))
+          ≡ var f (∈-++ᶜʳ {Γ = Γ} y)
+    inner = trans (castᵛ-var eA f (∈-++ᶜʳ x))
+                  (cong (var f) (∈-++ᶜʳ-assoc Γ ([] ∷ A₀) x))
+
+    outer : castᵛ eIn (var f (∈-++ᶜʳ {Γ = toCtx St} y))
+          ≡ var f (∈-++ᶜʳ {Γ = toCtx St ∷ A₀} x)
+    outer =
+      trans (castᵛ-var eIn f (∈-++ᶜʳ y))
+        (cong (var f)
+          (trans (cong (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) eIn)
+                       (sym (∈-++ᶜʳ-assoc (toCtx St) ([] ∷ A₀) x)))
+                 (subst-sym-subst′ (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+                                   (∈-++ᶜʳ x))))
+
+env-Vˢ-var-r (eternalˡ {Γ = Γ} Δ₀ lf η γ) Δ x f f' =
+  ≐ᵛ-trans
+    (env-Vˢ-≐ γ Δ
+      (≐ᵛ-trans (≡→≐ᵛ (cong (env-eternal-V lf η) inner))
+                (env-eternal-V-var-r lf η (∈-++ᶜʳ {Γ = Γ} x) f f)))
+    (env-Vˢ-var-r γ Δ x f f')
+  where
+    inner : castᵛ (++ᶜ-assoc Δ₀ Γ Δ) (var f (∈-++ᶜʳ {Γ = Δ₀ ++ᶜ Γ} x))
+          ≡ var f (∈-++ᶜʳ {Γ = Δ₀} (∈-++ᶜʳ {Γ = Γ} x))
+    inner = trans (castᵛ-var (++ᶜ-assoc Δ₀ Γ Δ) f (∈-++ᶜʳ x))
+                  (cong (var f) (∈-++ᶜʳ-assoc Δ₀ Γ x))
+
+------------------------------------------------------------------------
 -- THE ACTION ON A VARIABLE
 --
 -- What each zone does to a variable of its own context. The bounds are left
 -- free: `_≐ᵛ_` does not see them, and each caller has its own.
 ------------------------------------------------------------------------
 
+-- A telescope entry is substituted by its value: at the empty suffix the
+-- action is `env-Vˢ γ ([] ∷ A)` followed by substituting `Hd`, and the entry's
+-- own variable is a suffix variable.
+
+env-var-hd : ∀ {St Γ A} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
+           → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
+           → env-V (γ ∷ᵉ W) (var f Hd) ≐ᵛ W
+env-var-hd γ W f =
+  sub-≐ᵛ Hd (≐ᵛ-refl W) (env-Vˢ-var-r γ ([] ∷ _) Hd f f)
+
+-- Any other variable is untouched by the entry, and is the action of the rest.
+
+-- These two speak of a variable of the *prefix*, which is where the action
+-- actually acts: `env-Vˢ-var-r` does not apply, and what is needed instead is
+-- that the action commutes with growing the suffix by a binder (`env-var-tl`)
+-- or by a lock (`env-var-lock`).
+
 postulate
-
-  -- A telescope entry is substituted by its value, and leaves the rest alone.
-
-  env-var-hd : ∀ {St Γ A} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
-             → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
-             → env-V (γ ∷ᵉ W) (var f Hd) ≐ᵛ W
 
   env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A₀)
              → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
              → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
              → env-V (γ ∷ᵉ W) (var f (Tl-∷ x)) ≐ᵛ env-V γ (var f' x)
-
-  -- A variable crossing a lock is the same value, moved along the slice the
-  -- lock was matched by. Its own bound is what licenses the move
-  -- (`slice-unit`), so the relaxation is an argument.
 
   env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : Slice St ρ St' uᵣ)
                → (p : ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ' ] Γ)
@@ -1782,14 +2087,22 @@ postulate
                → env-V (γ ⟨ q ⟩ᵉ) (var f (Tl-⟨⟩ x))
                ≐ᵛ slice-val (slice-unit q p) (env-V γ (var f' x))
 
-  -- The eternal zone does not touch the variables of the context it prefixes.
+-- The eternal zone does not touch the variables of the context it prefixes.
+-- `y` must be *the* variable `x` comes from: quantifying over the two
+-- independently would identify any two same-typed variables of a state
+-- context, since `env-V ⌊ St ⌋` is the identity.
 
-  env-var-eternalˡ : ∀ {St Γ A ρ ρ'} → (Δ : Ctx) → (lf : Lock-free Δ)
-                   → (η : ClosedVals Δ) → (γ : Env St Γ)
-                   → (x : A ∈[ ρ ] (Δ ++ᶜ Γ)) → (y : A ∈[ ρ' ] Γ)
-                   → (f  : ¬ Eternal A → ρ  ≾ᵣ uᵣ)
-                   → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
-                   → env-V (eternalˡ Δ lf η γ) (var f x) ≐ᵛ env-V γ (var f' y)
+env-var-eternalˡ : ∀ {St Γ A ρ} → (Δ : Ctx) → (lf : Lock-free Δ)
+                 → (η : ClosedVals Δ) → (γ : Env St Γ)
+                 → (x : A ∈[ ρ ] (Δ ++ᶜ Γ)) → (y : A ∈[ ρ ] Γ)
+                 → ∈-++ᶜ-split Δ Γ x ≡ inj₂ y
+                 → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+                 → env-V (eternalˡ Δ lf η γ) (var f x) ≐ᵛ env-V γ (var f y)
+env-var-eternalˡ Δ lf η γ x y eq f =
+  env-Vˢ-≐ γ []
+    (subst (λ z → env-eternal-V lf η (var f z) ≐ᵛ var f y)
+           (sym (∈-++ᶜ-split-inj₂ Δ _ x y eq))
+           (env-eternal-V-var-r lf η y f f))
 
 -- Every variable of a reducible environment's context becomes a reducible
 -- value: the fundamental lemma's variable case. The eternal cases are the two
@@ -1826,7 +2139,7 @@ env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
     f' = λ _ → ≾ᵣ-zero-productˡ (f ¬et)
 
 env-var {A = A} (eternalˡ Δ lf η γ) (pγ , et) x f
-  with ∈-++ᶜ-split Δ _ x
+  with ∈-++ᶜ-split Δ _ x in eq
 ... | inj₁ (ρ' , y) = Val-eternal (et y) _
 ... | inj₂ y        =
-  Val-≐ᵛ _ (≐ᵛ-sym (env-var-eternalˡ Δ lf η γ x y f f)) (env-var γ pγ y f)
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-eternalˡ Δ lf η γ x y eq f)) (env-var γ pγ y f)

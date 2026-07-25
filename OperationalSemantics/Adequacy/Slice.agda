@@ -579,3 +579,92 @@ unbox-ren-delay-≐ = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) = unbox-ren-tgt delay-slice x
+
+-- Resuming: the renaming a `HANDLE-OP` resumption transports the continuation
+-- by is the one the environment's own lock gives, once the resumption's slice is
+-- extended by the lock it lands under. Both send a locked variable to the
+-- embedding of the same extension.
+
+unbox-ren-resume-≐ : ∀ {ρ} {St St₂ : 𝕊 []} → (q : Slice St ρ St₂ ρ)
+                   → unbox-ren (slice-∘ delay-slice q) ≐ʳ slice-ren q
+unbox-ren-resume-≐ {ρ} q = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) =
+      trans (unbox-ren-tgt (slice-∘ delay-slice q) x)
+        (trans (≤ₛ-embed-∘ (ext q) (⟨⟩-suc ρ id-suc) x)
+               (sym (suc-comp-ren-tgt (ext q) (bound q) x)))
+
+------------------------------------------------------------------------
+-- UNFOLDING THE LOOKUP
+--
+-- `unbox-lookup` is a `with` on `unbox⇒var`, so it does not reduce at an
+-- abstract boxed value — but `Σ` has eta, so the scrutinee *is* its own triple
+-- of projections and the block unfolds against them. Naming the body as a
+-- function of the cell (`Tgt`) and the grade bound is therefore an equality
+-- proved by `refl`, and it is what makes the lookup coherences provable: the
+-- cell is `unbox-tgt`, whose behaviour is already known, and the bound is
+-- irrelevant.
+------------------------------------------------------------------------
+
+lookup-body : ∀ {A ρ} → (St : 𝕊 []) → (t : Tgt (toCtx St) ([ ρ ] A))
+            → proj₁ t ≾ᵣ ρ → toCtx St ⊢V⦂ A
+lookup-body {A} {ρ} St (ρ' , z) rel =
+  V-rename
+    (   eq-ren (split-state-++ᶜ St z)
+     ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
+     ∘ʳ wk-ren-⟨ρ⟩-ctx
+          (trans
+            (trans
+              (trans
+                (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
+                (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
+              (sym (grades-≡ (split-state-snd St z))))
+            (snd-split-time≡time-from-head St z))
+     ∘ʳ ⟨⟩-≤-ren rel
+     ∘ʳ eq-ren ++ᶜ-identityˡ)
+    (resource-lookup St z)
+
+unbox-lookup-≡ : ∀ {A ρ Δ} → (St : 𝕊 [])
+               → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
+               → unbox-lookup St w V
+               ≡ lookup-body St (unbox-tgt w V) (proj₂ (proj₂ (unbox⇒var w V)))
+unbox-lookup-≡ St w V = refl
+
+-- Same cell, same value: the bound is `≾ᵣ`-irrelevant.
+
+lookup-body-≡ : ∀ {A ρ} → (St : 𝕊 [])
+              → {t t' : Tgt (toCtx St) ([ ρ ] A)} → t ≡ t'
+              → (rel : proj₁ t ≾ᵣ ρ) → (rel' : proj₁ t' ≾ᵣ ρ)
+              → lookup-body St t rel ≡ lookup-body St t' rel'
+lookup-body-≡ St refl rel rel' =
+  cong (lookup-body St _) (≾ᵣ-irrelevant rel rel')
+
+------------------------------------------------------------------------
+-- THE STORE IS STABLE UNDER AN EXTENSION
+--
+-- An already-allocated cell is split off at the same state, and holds the same
+-- value, however far the state has grown since. Both `≤ₛ` constructors leave
+-- `split-state-fst` and `resource-lookup` alone — a lock is crossed and a newer
+-- cell is skipped — so each is its own induction hypothesis.
+------------------------------------------------------------------------
+
+≤ₛ-embed-fst : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A ρ σ}
+             → (x : [ ρ ] A ∈[ σ ] toCtx St)
+             → split-state-fst St₁ (proj₂ (≤ₛ-embed e x))
+             ≡ split-state-fst St x
+
+≤ₛ-embed-fst id-suc       x = refl
+≤ₛ-embed-fst (⟨⟩-suc ρ e) x = ≤ₛ-embed-fst e x
+≤ₛ-embed-fst (∷-suc V e)  x = ≤ₛ-embed-fst e x
+
+≤ₛ-embed-lookup : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A ρ σ}
+                → (x : [ ρ ] A ∈[ σ ] toCtx St)
+                → resource-lookup St₁ (proj₂ (≤ₛ-embed e x))
+                ≡ subst (λ S → ([] ++ᶜ toCtx S) ⟨ ρ ⟩ ⊢V⦂ A)
+                        (sym (≤ₛ-embed-fst e x))
+                        (resource-lookup St x)
+
+≤ₛ-embed-lookup id-suc       x = refl
+≤ₛ-embed-lookup (⟨⟩-suc ρ e) x = ≤ₛ-embed-lookup e x
+≤ₛ-embed-lookup (∷-suc V e)  x = ≤ₛ-embed-lookup e x

@@ -209,20 +209,20 @@ unbox-lookup-val-≐ {St = St} w (var-≐ {x = x})
     (resource-lookup St z)
 
 -- Renaming the boxed value before looking it up is looking it up along the
--- composed slice. The *cell* is the same by `unbox-cellsᵛ` (proved), and what is
--- left over is the grade bound, which reaches only a `⟨⟩-≤-ren` — so this is
--- `V-rename-≐` of that. What resists is the plumbing: `unbox⇒var` is a `with`
--- inside a `with`, so neither the `var-rename` calls nor the `unbox⇒var` calls
--- can be abstracted in a way that lets the cell equation be matched as `refl`
--- (`SplitError.UnificationStuck`, whichever level is abstracted).
+-- composed slice. Unfolding the lookup (`unbox-lookup-≡`) leaves the cell,
+-- which is the same by `unbox-cellsᵛ`, and the grade bound, which is
+-- irrelevant — so the two values are equal, not merely equivalent.
 
-postulate
+unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
+                 → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+                 → (V : toCtx St ⊢V⦂ [ ρ ] A)
+                 → unbox-lookup St₂ (unbox-ren q') (slice-val q₀ V)
+                 ≡ unbox-lookup St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V
 
-  unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-                   → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
-                   → (V : toCtx St ⊢V⦂ [ ρ ] A)
-                   → unbox-lookup St₂ (unbox-ren q') (slice-val q₀ V)
-                   ≐ᵛ unbox-lookup St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V
+unbox-lookup-ren {St₂ = St₂} q₀ q' V =
+  trans (unbox-lookup-≡ St₂ (unbox-ren q') (slice-val q₀ V))
+    (trans (lookup-body-≡ St₂ (unbox-cellsᵛ q₀ q' V) _ _)
+           (sym (unbox-lookup-≡ St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V)))
 
 -- ETERNAL TYPES ARE FREE
 --
@@ -299,7 +299,36 @@ Val-slice {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
                         M)))
         W pW
 Val-slice {[ ρ ] A} q₀ V f =
-  λ q' W eW → f (slice-∘ᵘ q' q₀) W (≐ᵛ-trans eW (unbox-lookup-ren q₀ q' V))
+  λ q' W eW →
+    f (slice-∘ᵘ q' q₀) W
+      (subst (λ z → W ≐ᵛ z) (unbox-lookup-ren q₀ q' V) eW)
+
+-- GROUND TYPES
+--
+-- `Valᵍ` is `Val` restricted to the ground types, whose formation rules
+-- `type-of-gtype` matches one for one. Two recursions on the ground type, needed
+-- because `Comp`'s operation constructor speaks of `Valᵍ` while the fundamental
+-- lemma delivers `Val`.
+
+Val→Valᵍ : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
+         → Val (type-of-gtype G) St V → Valᵍ G St V
+
+Val→Valᵍ (Base b)     V p = tt
+Val→Valᵍ Unit         V p = tt
+Val→Valᵍ Empty        V p = tt
+Val→Valᵍ (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
+  V₁ , V₂ , refl , Val→Valᵍ G₁ V₁ p₁ , Val→Valᵍ G₂ V₂ p₂
+Val→Valᵍ ([ ρ ]ᵍ G)   V p = λ q W eW → Val→Valᵍ G W (p q W eW)
+
+Valᵍ→Val : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
+         → Valᵍ G St V → Val (type-of-gtype G) St V
+
+Valᵍ→Val (Base b)     V p = tt
+Valᵍ→Val Unit         V p = tt
+Valᵍ→Val Empty        V p = tt
+Valᵍ→Val (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
+  V₁ , V₂ , refl , Valᵍ→Val G₁ V₁ p₁ , Valᵍ→Val G₂ V₂ p₂
+Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ q W eW → Valᵍ→Val G W (p q W eW)
 
 -- ALLOCATION
 --
@@ -318,12 +347,22 @@ alloc-var-≐ V x f =
   var-ren-tgt-≐ (slice-renᵘ (alloc-slice V)) x f
                 (slice-renᵘ-tgt (alloc-slice V) x) f
 
-postulate
+-- The freshly allocated cell is reducible: a slice out of `St ∷ₛ V` at `ρ` is
+-- one out of `St` (`slice-∘ᵘ` against `alloc-slice`), and reading the cell back
+-- returns the stored value. Which cell is read is settled — `unbox-ren-tgt`
+-- sends it to `≤ₛ-embed (ext q) Hd` — and what it holds is settled too, by
+-- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
+-- however far the state has grown.
+--
+-- What is left is one renaming agreement. `lookup-body` transports the stored
+-- value by `wk-ren-⟨ρ⟩-ctx` past the cell and everything allocated after it
+-- (`split-state-snd`), then reindexes by `split-state-++ᶜ`; the hypothesis
+-- transports it by `unbox-ren (slice-∘ᵘ q (alloc-slice V))`, i.e. by
+-- `≤ₛ-embed (ext q)`. Both are the same inclusion, but seeing that means
+-- relating `split-state-snd St₂` to the part of the extension after the
+-- allocation — the last piece of knot 3.
 
-  -- The freshly allocated cell is reducible: a slice out of `St ∷ₛ V` at `ρ`
-  -- is one out of `St` (`slice-∘ᵘ` against `alloc-slice`), and the lookup at
-  -- `Hd` returns the stored value (`resource-lookup (St ∷ₛ V) Hd = V`)
-  -- transported along it.
+postulate
 
   store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
               → (∀ {St'} → (q : Slice St ρ St' uᵣ)

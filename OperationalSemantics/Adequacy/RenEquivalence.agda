@@ -56,6 +56,34 @@ var-tgt r x = proj₁ (var-rename r x) , proj₂ (proj₂ (var-rename r x))
 var-tgt′ : ∀ {Γ' Γ'' A} → Ren Γ' Γ'' → Tgt Γ' A → Tgt Γ'' A
 var-tgt′ r (ρ' , y) = var-tgt r y
 
+-- RELOCATING A VARIABLE
+--
+-- A context equality that only extends a smaller one relocates a variable by
+-- pushing the equality inside the constructors. Kept here so that both the
+-- environment and the state equivalence can use it.
+
+-- Relocating a variable past a context equality that only extends it.
+
+subst-Hd : ∀ {Γ Γ' A} → (e : Γ ≡ Γ')
+         → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) (cong (_∷ A) e) Hd ≡ Hd
+subst-Hd refl = refl
+
+subst-Tl-∷ : ∀ {Γ Γ' A B ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+           → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) (cong (_∷ B) e) (Tl-∷ x)
+           ≡ Tl-∷ (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+subst-Tl-∷ refl x = refl
+
+subst-Tl-⟨⟩ : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ') → (x : A ∈[ ρ' ] Γ)
+            → subst (λ Γ₀ → A ∈[ ρ' ·ᵣ ρ ] Γ₀) (cong (_⟨ ρ ⟩) e) (Tl-⟨⟩ x)
+            ≡ Tl-⟨⟩ (subst (λ Γ₀ → A ∈[ ρ' ] Γ₀) e x)
+subst-Tl-⟨⟩ refl x = refl
+
+subst-sym-subst′ : ∀ {a p} {X : Set a} {P : X → Set p} {u v : X}
+                 → (e : u ≡ v) → (w : P u)
+                 → subst P (sym e) (subst P e w) ≡ w
+subst-sym-subst′ refl w = refl
+
+
 -- ACTING ALIKE
 
 infix 4 _≐ʳ_

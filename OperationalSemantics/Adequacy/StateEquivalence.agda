@@ -417,6 +417,45 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
                   (suc-comp-ren (∷-suc V' q') c')))
 
 ------------------------------------------------------------------------
+-- RELATED STATES HOLD RELATED VALUES
+--
+-- A cell of `St` is a cell of `St'`, split off at related states and holding
+-- `_≐ᵛ_`-related values — which at the cell itself is exactly what `∷-≐ˢ`
+-- stores. Induction on the relation and the variable together; `toCtx-≐ˢ` is
+-- built by `cong`, so relocating the variable is `subst-Hd`/`subst-Tl-*`.
+------------------------------------------------------------------------
+
+≐ˢ-var : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+       → [ ρ ] A ∈[ σ ] toCtx St → [ ρ ] A ∈[ σ ] toCtx St'
+≐ˢ-var {A} {ρ} {σ} es z =
+  subst (λ Γ₀ → [ ρ ] A ∈[ σ ] Γ₀) (toCtx-≐ˢ es) z
+
+≐ˢ-fst : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+       → (z : [ ρ ] A ∈[ σ ] toCtx St)
+       → split-state-fst St z ≐ˢ split-state-fst St' (≐ˢ-var es z)
+
+≐ˢ-fst (⟨⟩-≐ˢ ρ' es) (Tl-⟨⟩ z)
+  rewrite subst-Tl-⟨⟩ {ρ = ρ'} (toCtx-≐ˢ es) z = ≐ˢ-fst es z
+≐ˢ-fst {A} {ρ} (∷-≐ˢ es eV) Hd
+  rewrite subst-Hd {A = [ ρ ] A} (toCtx-≐ˢ es) = es
+≐ˢ-fst (∷-≐ˢ {A₁} {ρ₁} es eV) (Tl-∷ z)
+  rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z = ≐ˢ-fst es z
+
+≐ˢ-lookup : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+          → (z : [ ρ ] A ∈[ σ ] toCtx St)
+          → resource-lookup St z
+          ≐ᵛ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩)
+                         (sym (toCtx-≐ˢ (≐ˢ-fst es z))))
+                   (resource-lookup St' (≐ˢ-var es z))
+
+≐ˢ-lookup (⟨⟩-≐ˢ ρ' es) (Tl-⟨⟩ z)
+  rewrite subst-Tl-⟨⟩ {ρ = ρ'} (toCtx-≐ˢ es) z = ≐ˢ-lookup es z
+≐ˢ-lookup {A} {ρ} (∷-≐ˢ es eV) Hd
+  rewrite subst-Hd {A = [ ρ ] A} (toCtx-≐ˢ es) = eV
+≐ˢ-lookup (∷-≐ˢ {A₁} {ρ₁} es eV) (Tl-∷ z)
+  rewrite subst-Tl-∷ {B = [ ρ₁ ] A₁} (toCtx-≐ˢ es) z = ≐ˢ-lookup es z
+
+------------------------------------------------------------------------
 -- LEMMA TO PROVE
 ------------------------------------------------------------------------
 
@@ -424,6 +463,16 @@ postulate
 
   -- `UNBOX` reads the store; related states hold related values, and the
   -- renaming it consults is seen only up to `_≐ʳ_` (`unbox-tgt-≐`).
+  --
+  -- The store half is now available: `≐ˢ-fst`/`≐ˢ-lookup` say the cell is split
+  -- off at related states and holds `_≐ᵛ_`-related values, and `unbox-lookup-≡`
+  -- (in `Slice`) unfolds the lookup to `lookup-body` of the cell — which
+  -- `unbox-tgt-≐` identifies on the two sides. What is left is that
+  -- `lookup-body`'s renaming composite is the *same* on both: it is built only
+  -- from contexts and grades (`split-state-++ᶜ`, `wk-ren-⟨ρ⟩-ctx`,
+  -- `snd-split-time≡time-from-head`), all of which correspond because related
+  -- states have equal `toCtx`, so this should follow from `≐ˢ-fst` plus an
+  -- `eq-ren`-irrelevance lemma rather than a fresh induction.
 
   unbox-lookup-≐ : ∀ {A ρ Δ} {St St' : 𝕊 []}
                  → (es : St ≐ˢ St')
