@@ -103,77 +103,193 @@ record Same-whnf {A : VType} {ε : E} (M N : Prog A ε) : Set where
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
-postulate
+-- SOUNDNESS, PACKAGED. A program is its whnf, run after the run's transition
+-- and coerced back to the program's grade: `↝*-sound` at the empty state
+-- (`hist ∅ ≡ []`, so `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty environment is `idᵐ`).
 
-  -- SOUNDNESS, PACKAGED. A program is its whnf, run after the run's transition
-  -- and coerced back to the program's grade: `↝*-sound` at the empty state
-  -- (`hist ∅ ≡ []`, so `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ`), with the transition recognised as a
-  -- delay composite (`stepsᵀ-delays`).
+program-run-sound : ∀ {A ε ε'} {cf' : Config (A ‼ ε')}
+                  → (M : Prog A ε) → (pM : Paramᶜ M)
+                  → (rs : ⟨ ∅ , M ⟩ ↝* cf')
+                  → ⟦ M ⟧ᵖ pM
+                  ≈ᵐ delayedᵐ (⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs (tt , pM)))
+                              (stepsᵀ rs) (steps-≾ rs)
 
-  program-run-sound : ∀ {A ε ε'} {cf' : Config (A ‼ ε')}
-                    → (M : Prog A ε) → (pM : Paramᶜ M)
-                    → (rs : ⟨ ∅ , M ⟩ ↝* cf')
-                    → ⟦ M ⟧ᵖ pM
-                    ≈ᵐ delayedᵐ (⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs (tt , pM)))
-                                (stepsᵀ rs) (steps-≾ rs)
+program-run-sound M pM rs =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ (⟦ M ⟧ᵖ pM)))
+           (↝*-sound rs (tt , pM) (uniform↝* rs (tt , pM)))
 
-  -- ADEQUACY, CASE-FAITHFULNESS. Equal denotations halt alike.
-  --
-  -- Given a whnf of `M` (`halts`), `program-run-sound` presents `⟦ M ⟧` in
-  -- head form; `halts` presents `⟦ N ⟧` likewise; `ret≢op` rules out the
-  -- mismatched pairing and `op-inj` identifies the operation.
+-- The two head presentations of a program, read off a whnf it reaches.
 
-  adequacy : ∀ {A ε} → {M N : Prog A ε}
-           → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-           → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-           ----------------------------
-           → Same-whnf M N
+ret-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
+                 → (w : Ret-whnf (⟨ ∅ , M ⟩))
+                 → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ] Σ[ a ∈ (Y →ᵐ ⟦ A ⟧ᵛ) ]
+                   Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
+                   Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
+                     (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r)
+ret-presentation M pM (ret-whnf St V rs) =
+    _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
+  , ≈ᵐ-trans (program-run-sound M pM rs)
+      (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs)
+        (proj₂ (ret-whnf-shape V _ _)))
 
-  -- ADEQUACY AT BASE TYPE. The returned answers are the *same constant*: a
-  -- base-typed value over a state context is a constant (`base-canonical`),
-  -- `leaf-const` identifies the two denotations, and `const-inj` reflects that
-  -- to the syntax.
+op-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
+                → (w : Op-whnf (⟨ ∅ , M ⟩))
+                → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ] Σ[ ε₂ ∈ E ]
+                  Σ[ v ∈ (Y →ᵐ ⟦ param (Op-whnf.oper w) ⟧ᵍ) ]
+                  Σ[ k ∈ (Y →ᵐ [ mapᵉ (op-grade (Op-whnf.oper w)) ]ᵒ
+                                 (⟦ arity (Op-whnf.oper w) ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)) ]
+                  Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (op-ticks w) ]
+                  Σ[ r ∈ (δ ·ₑ (op-grade (Op-whnf.oper w) ·ₑ ε₂) ≾ₑ ε) ]
+                    (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ (Op-whnf.oper w) v k) d r)
+op-presentation M pM (op-whnf St op ε' W M' rs) =
+    _ , _ , _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
+  , ≈ᵐ-trans (program-run-sound M pM rs)
+      (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs)
+        (proj₂ (proj₂ (op-whnf-shape W M' _ _ _))))
 
-  adequacy-base : ∀ {b ε} → {M N : Prog (Base b) ε}
-                → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-                → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
-                ------------------------------------------------------------
-                → Σ[ c ∈ BaseConstants b ]
-                    (Ret-whnf.value wM ≡ const c) × (Ret-whnf.value wN ≡ const c)
+-- Equal denotations cannot halt in different shapes, and when both get stuck
+-- it is on the same operation: the two presentations meet at `ret≢op`
+-- resp. `op-inj`.
 
-  -- THE HYPOTHESIS FORM. A point already presented as a delayed leaf, resp. a
-  -- delayed operation node, dictates how the program halts. (No exhaustiveness
-  -- of head forms is claimed — only that a *given* head form is realised.)
+ret-vs-op : ∀ {A ε} → {M N : Prog A ε}
+          → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+          → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+          → Ret-whnf (⟨ ∅ , M ⟩) → Op-whnf (⟨ ∅ , N ⟩)
+          -------------------------------------------
+          → ⊥
+ret-vs-op {M = M} {N = N} pM pN e wM wN
+  with ret-presentation M pM wM | op-presentation N pN wN
+... | _ , _ , _ , _ , ndM , rM , eM
+    | _ , _ , _ , _ , _ , _ , ndN , rN , eN =
+  ret≢op ndM ndN rM rN (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))
 
-  leaf-adequacy : ∀ {A ε Y δ n} → {M : Prog A ε} → (pM : Paramᶜ M)
-                → {a : Y →ᵐ ⟦ A ⟧ᵛ}
-                → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
-                → (r : δ ·ₑ uₑ ≾ₑ ε)
-                → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r
-                -------------------------------------
-                → Ret-whnf (⟨ ∅ , M ⟩)
+same-oper : ∀ {A ε} → {M N : Prog A ε}
+          → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+          → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+          → (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
+          ---------------------------------------------------------
+          → Op-whnf.oper wM ≡ Op-whnf.oper wN
+same-oper {M = M} {N = N} pM pN e wM wN
+  with op-presentation M pM wM | op-presentation N pN wN
+... | _ , _ , _ , _ , _ , _ , ndM , rM , eM
+    | _ , _ , _ , _ , _ , _ , ndN , rN , eN =
+  op-inj ndM ndN rM rN (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))
 
-  node-adequacy : ∀ {A ε ε₂ Y δ n op} → {M : Prog A ε} → (pM : Paramᶜ M)
-                → {w : Y →ᵐ ⟦ param op ⟧ᵍ}
-                → {k : Y →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)}
-                → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
-                → (r : δ ·ₑ (op-grade op ·ₑ ε₂) ≾ₑ ε)
-                → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ op w k) d r
-                ------------------------------------------
-                → Σ[ w' ∈ Op-whnf (⟨ ∅ , M ⟩) ] Op-whnf.oper w' ≡ op
+-- ADEQUACY, CASE-FAITHFULNESS. Equal denotations halt alike: `halts` supplies
+-- a whnf on each side, and the two lemmas above exclude the mismatched pairing.
 
-  -- THE TIMED REFINEMENT, opt-in: under `HeadTimed` the two programs also take
-  -- the same time. Separated because the natural proof of `HeadTimed` needs the
-  -- Kripke frame to interpolate a composite step, which fails in general.
+adequacy : ∀ {A ε} → {M N : Prog A ε}
+         → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+         → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+         ----------------------------
+         → Same-whnf M N
 
-  adequacy-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
-                 → ∀ {A ε} → {M N : Prog A ε}
-                 → (pM : Paramᶜ M) → (pN : Paramᶜ N)
-                 → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
-                 → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
-                 -----------------------------------------------------------
-                 → ret-ticks wM ≡ ret-ticks wN
+adequacy {M = M} {N = N} pM pN e = record { same-ret = sr ; same-op = so }
+  where
+    sr : Ret-whnf (⟨ ∅ , M ⟩) → Ret-whnf (⟨ ∅ , N ⟩)
+    sr wM with halts N
+    ... | halts-ret wN = wN
+    ... | halts-op wN  = ⊥-elim (ret-vs-op pM pN e wM wN)
+
+    so : (wM : Op-whnf (⟨ ∅ , M ⟩))
+       → Σ[ wN ∈ Op-whnf (⟨ ∅ , N ⟩) ] Op-whnf.oper wM ≡ Op-whnf.oper wN
+    so wM with halts N
+    ... | halts-ret wN = ⊥-elim (ret-vs-op pN pM (≈ᵐ-sym e) wN wM)
+    ... | halts-op wN  = wN , same-oper pM pN e wM wN
+
+-- The head presentation at base type, with the constant it returns.
+
+const-presentation : ∀ {b ε} → (M : Prog (Base b) ε) → (pM : Paramᶜ M)
+                   → (w : Ret-whnf (⟨ ∅ , M ⟩))
+                   → Σ[ c ∈ BaseConstants b ] Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
+                     Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
+                     Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
+                       (Ret-whnf.value w ≡ const c)
+                     × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d r)
+
+const-presentation M pM (ret-whnf St V rs) with base-leaf-const V _ _
+... | c , sc , qc =
+    c , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs , sc
+  , ≈ᵐ-trans (program-run-sound M pM rs)
+      (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs) qc)
+
+-- ADEQUACY AT BASE TYPE. The returned answers are the same constant:
+-- `leaf-const` identifies the two denotations and `const-inj` reflects that to
+-- the syntax.
+
+adequacy-base : ∀ {b ε} → {M N : Prog (Base b) ε}
+              → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+              → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+              → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+              ------------------------------------------------------------
+              → Σ[ c ∈ BaseConstants b ]
+                  (Ret-whnf.value wM ≡ const c) × (Ret-whnf.value wN ≡ const c)
+
+adequacy-base {M = M} {N = N} pM pN e wM wN
+  with const-presentation M pM wM | const-presentation N pN wN
+... | cM , _ , _ , _ , ndM , rM , sM , eM
+    | cN , _ , _ , _ , ndN , rN , sN , eN
+  with const-inj (leaf-const ndM ndN rM rN
+                    (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN)))
+... | refl = cM , sM , sN
+
+-- THE HYPOTHESIS FORM. A point presented as a delayed leaf, resp. a delayed
+-- operation node, dictates how the program halts.
+
+leaf-adequacy : ∀ {A ε Y δ n} → {M : Prog A ε} → (pM : Paramᶜ M)
+              → {a : Y →ᵐ ⟦ A ⟧ᵛ}
+              → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
+              → (r : δ ·ₑ uₑ ≾ₑ ε)
+              → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r
+              -------------------------------------
+              → Ret-whnf (⟨ ∅ , M ⟩)
+
+leaf-adequacy {M = M} pM nd r eq = go (halts M)
+  where
+    go : Halts (⟨ ∅ , M ⟩) → Ret-whnf (⟨ ∅ , M ⟩)
+    go (halts-ret w) = w
+    go (halts-op w) with op-presentation M pM w
+    ... | _ , _ , _ , _ , _ , _ , ndO , rO , eO =
+      ⊥-elim (ret≢op nd ndO r rO (≈ᵐ-trans (≈ᵐ-sym eq) eO))
+
+node-adequacy : ∀ {A ε ε₂ Y δ n op} → {M : Prog A ε} → (pM : Paramᶜ M)
+              → {v : Y →ᵐ ⟦ param op ⟧ᵍ}
+              → {k : Y →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε₂)}
+              → {d : 𝟙ᵐ →ᵐ Tᵒ Y δ} → Delaysᵐ d n
+              → (r : δ ·ₑ (op-grade op ·ₑ ε₂) ≾ₑ ε)
+              → ⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ op v k) d r
+              ------------------------------------------
+              → Σ[ w' ∈ Op-whnf (⟨ ∅ , M ⟩) ] Op-whnf.oper w' ≡ op
+
+node-adequacy {op = op} {M = M} pM nd r eq = go (halts M)
+  where
+    go : Halts (⟨ ∅ , M ⟩)
+       → Σ[ w' ∈ Op-whnf (⟨ ∅ , M ⟩) ] Op-whnf.oper w' ≡ op
+    go (halts-ret w) with ret-presentation M pM w
+    ... | _ , _ , _ , _ , ndR , rR , eR =
+      ⊥-elim (ret≢op ndR nd rR r (≈ᵐ-trans (≈ᵐ-sym eR) eq))
+    go (halts-op w) with op-presentation M pM w
+    ... | _ , _ , _ , _ , _ , _ , ndO , rO , eO =
+      w , sym (op-inj nd ndO r rO (≈ᵐ-trans (≈ᵐ-sym eq) eO))
+
+-- THE TIMED REFINEMENT, opt-in: under `HeadTimed` the two programs also take
+-- the same time. The presentations are indexed by the runs' tick totals, so
+-- this is `ret-ticks-eq` at them.
+
+adequacy-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
+               → ∀ {A ε} → {M N : Prog A ε}
+               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+               -----------------------------------------------------------
+               → ret-ticks wM ≡ ret-ticks wN
+
+adequacy-ticks ht {M = M} {N = N} pM pN e wM wN
+  with ret-presentation M pM wM | ret-presentation N pN wN
+... | _ , _ , _ , _ , ndM , rM , eM
+    | _ , _ , _ , _ , ndN , rN , eN =
+  HF.HeadTimed.ret-ticks-eq ht ndM ndN rM rN
+    (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))
 
 ------------------------------------------------------------------------
 -- COROLLARIES

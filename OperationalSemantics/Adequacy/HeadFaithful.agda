@@ -152,6 +152,16 @@ delayedᵐ : ∀ {X Y : Obj} {ε ε' δ : E}
          → 𝟙ᵐ →ᵐ Tᵒ X ε
 delayedᵐ {Y = Y} {δ = δ} h d r = T-≤ r ∘ᵐ _⋄_ {𝟙ᵐ} {Y} h d
 
+-- The head is the only part a `delayedᵐ` shape is congruent in that the
+-- statements below need.
+
+delayedᵐ-cong : ∀ {X Y : Obj} {ε ε' δ : E} {h h' : Y →ᵐ Tᵒ X ε'}
+              → (d : 𝟙ᵐ →ᵐ Tᵒ Y δ) → (r : δ ·ₑ ε' ≾ₑ ε)
+              → h ≈ᵐ h'
+              ---------------------------------------
+              → delayedᵐ h d r ≈ᵐ delayedᵐ h' d r
+delayedᵐ-cong d r eh = ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ eh)))
+
 ------------------------------------------------------------------------
 -- THE INTERFACE
 ------------------------------------------------------------------------
@@ -317,12 +327,13 @@ op-whnf-shape {St = St} {op = op} W M' pSt pW pM' =
 base-leaf-const : ∀ {b} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Base b)
                 → (pSt : Paramˢ St) → (pV : Paramᵛ V)
                 → Σ[ c ∈ BaseConstants b ]
-                    ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
-                      ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)
+                    (V ≡ const c)
+                  × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                       ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ))
 
 base-leaf-const {St = St} V pSt pV with base-canonical V
 base-leaf-const {St = St} .(const c) pSt pV | c , refl =
-    c
+    c , refl
   , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
       (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc ⟦ c ⟧ᵇᶜ terminalᵐ (⟦ St ⟧ˢ pSt))
                           (∘ᵐ-congʳ terminalᵐ-unique)))
