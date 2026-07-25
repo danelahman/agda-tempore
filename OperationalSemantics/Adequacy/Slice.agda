@@ -22,6 +22,8 @@ open GradeSystemInterface Grades
 open import OperationalSemantics.PreservationTheorem Spec
 open import OperationalSemantics.State               Spec
 
+open import OperationalSemantics.Adequacy.RenEquivalence Spec
+
 open import Syntax.Contexts   Spec
 open import Syntax.Language   Spec
 open import Syntax.RenActions Spec
@@ -180,3 +182,117 @@ delay-slice : ∀ {ρ} {St : 𝕊 []}
 delay-slice {ρ} =
   slice (⟨⟩-suc ρ id-suc)
     (≾ᵣ-reflexive (trans (·ᵣ-identityʳ (uᵣ ·ᵣ ρ)) (·ᵣ-identityˡ ρ)))
+
+------------------------------------------------------------------------
+-- COMPOSING EXTENSIONS
+--
+-- `Val`'s Kripke clauses compose two transports, and the composite has to be
+-- recognised as one: extending twice is extending once along the composite.
+-- Everything here is cast-free — both sides are renamings between the same
+-- contexts — so it is a statement about `suc-comp-ren` alone.
+------------------------------------------------------------------------
+
+-- The grade bound is invisible: it only ever reaches a `⟨⟩-≤-ren`.
+
+suc-comp-ren-irr : ∀ {St St₁ : 𝕊 []} {ρ₀ ρ₁ : R} → (e : St ≤ₛ St₁)
+                 → (b b' : ≤ₛ-grade e ·ᵣ ρ₁ ≾ᵣ ρ₀)
+                 → suc-comp-ren e b ≐ʳ suc-comp-ren e b'
+suc-comp-ren-irr e b b' rewrite ≾ᵣ-irrelevant b b' = ≐ʳ-refl
+
+-- A grade relaxation commutes past the two renamings `suc-comp-ren` inserts.
+
+⟨⟩-μ-≤-comm : ∀ {Γ ρ ρ₁ ρ₂} → (p : ρ₂ ≾ᵣ ρ₁) → (p' : ρ ·ᵣ ρ₂ ≾ᵣ ρ ·ᵣ ρ₁)
+            → (⟨⟩-μ-ren {Γ = Γ} {ρ = ρ} {ρ' = ρ₂} ∘ʳ ⟨⟩-≤-ren p')
+            ≐ʳ (⟨⟩-≤-ren p ∘ʳ ⟨⟩-μ-ren)
+⟨⟩-μ-≤-comm p p' = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) = refl
+
+wk-≤-comm : ∀ {Γ A ρ₁ ρ₂} → (p : ρ₂ ≾ᵣ ρ₁)
+          → (cong-⟨⟩-ren {Γ = Γ} {ρ = ρ₂} (wk-ren {A = A}) ∘ʳ ⟨⟩-≤-ren p)
+          ≐ʳ (⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren)
+wk-≤-comm p = mk≐ʳ go
+  where
+    go : ∀ {A' σ} → (x : A' ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) = refl
+
+-- Changing the residual grade is post-composing with a relaxation.
+
+suc-comp-ren-≤ : ∀ {St St₁ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R} → (e : St ≤ₛ St₁)
+               → (b  : ≤ₛ-grade e ·ᵣ ρ₂ ≾ᵣ ρ₀)
+               → (b₁ : ≤ₛ-grade e ·ᵣ ρ₁ ≾ᵣ ρ₀)
+               → (p  : ρ₂ ≾ᵣ ρ₁)
+               → suc-comp-ren e b ≐ʳ (⟨⟩-≤-ren p ∘ʳ suc-comp-ren e b₁)
+
+suc-comp-ren-≤ id-suc b b₁ p = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) = refl
+
+suc-comp-ren-≤ (⟨⟩-suc ρ q) b b₁ p =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (suc-comp-ren-≤ q _ _ (·ᵣ-monoʳ-≾ᵣ p)))
+    (≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-μ-ren (⟨⟩-≤-ren (·ᵣ-monoʳ-≾ᵣ p))
+                                  (suc-comp-ren q _)))
+      (≐ʳ-trans (∘ʳ-≐ (⟨⟩-μ-≤-comm p (·ᵣ-monoʳ-≾ᵣ p)) ≐ʳ-refl)
+                (∘ʳ-assoc-≐ (⟨⟩-≤-ren p) ⟨⟩-μ-ren (suc-comp-ren q _))))
+
+suc-comp-ren-≤ (∷-suc V q) b b₁ p =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (suc-comp-ren-≤ q _ _ p))
+    (≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren wk-ren) (⟨⟩-≤-ren p)
+                                  (suc-comp-ren q _)))
+      (≐ʳ-trans (∘ʳ-≐ (wk-≤-comm p) ≐ʳ-refl)
+                (∘ʳ-assoc-≐ (⟨⟩-≤-ren p) (cong-⟨⟩-ren wk-ren)
+                            (suc-comp-ren q _))))
+
+-- Extending twice is extending once along the composite.
+
+suc-comp-ren-∘-≐ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
+                 → (e : St ≤ₛ St₁) → (e' : St₁ ≤ₛ St₂)
+                 → (b  : ≤ₛ-grade (≤ₛ-trans e e') ·ᵣ ρ₂ ≾ᵣ ρ₀)
+                 → (b₁ : ≤ₛ-grade e  ·ᵣ ρ₁ ≾ᵣ ρ₀)
+                 → (b₂ : ≤ₛ-grade e' ·ᵣ ρ₂ ≾ᵣ ρ₁)
+                 ------------------------------------------------------
+                 → suc-comp-ren (≤ₛ-trans e e') b
+                 ≐ʳ (suc-comp-ren e' b₂ ∘ʳ suc-comp-ren e b₁)
+
+-- `≤ₛ-trans e id-suc` *is* `e`, so the composite is `e` at a relaxed grade
+suc-comp-ren-∘-≐ {ρ₂ = ρ₂} e id-suc b b₁ b₂ =
+  suc-comp-ren-≤ e b b₁
+    (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ₂))) b₂)
+
+suc-comp-ren-∘-≐ e (⟨⟩-suc ρ e') b b₁ b₂ =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (suc-comp-ren-∘-≐ e e' _ b₁ _))
+           (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-μ-ren (suc-comp-ren e' _)
+                               (suc-comp-ren e b₁)))
+
+suc-comp-ren-∘-≐ e (∷-suc V e') b b₁ b₂ =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (suc-comp-ren-∘-≐ e e' _ b₁ _))
+           (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren wk-ren) (suc-comp-ren e' _)
+                               (suc-comp-ren e b₁)))
+
+-- Lifting it to `slice-renᵘ`: the two copies leave a `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
+-- in the middle, which is the identity up to `_≐ʳ_`.
+
+⟨⟩-η-cancel : ∀ {Γ} → (⟨⟩-η⁻¹-ren {Γ = Γ} ∘ʳ ⟨⟩-η-ren) ≐ʳ id-ren
+⟨⟩-η-cancel = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ Hd)        = refl
+    go (Tl-⟨⟩ (Tl-∷ x))  = refl
+    go (Tl-⟨⟩ (Tl-⟨⟩ x)) = refl
+
+slice-renᵘ-∘ : ∀ {St St' St'' : 𝕊 []}
+             → (q' : Slice St' uᵣ St'' uᵣ) → (q : Slice St uᵣ St' uᵣ)
+             → slice-renᵘ (slice-∘ q' q) ≐ʳ (slice-renᵘ q' ∘ʳ slice-renᵘ q)
+slice-renᵘ-∘ (slice e' b') (slice e b) = mk≐ʳ go
+  where
+    -- `_≐ʳ_` does not see associativity (`var-tgt` of a composite *is* the
+    -- composite), so the whole thing is pointwise: replace the composite
+    -- extension by the two, then cancel the `⟨⟩-η` pair in the middle.
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go x =
+      trans (cong (var-tgt′ ⟨⟩-η-ren)
+                  (at (suc-comp-ren-∘-≐ e e' _ b b') _))
+            (cong (λ z → var-tgt′ ⟨⟩-η-ren (var-tgt′ (suc-comp-ren e' b') z))
+                  (sym (at ⟨⟩-η-cancel _)))

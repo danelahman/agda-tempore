@@ -58,7 +58,9 @@ Valᵍ (G₁ |×|ᵍ G₂)  St V =
   Σ[ V₂ ∈ toCtx St ⊢V⦂ type-of-gtype G₂ ]
     (V ≡ ⦉ V₁ , V₂ ⦊) × Valᵍ G₁ St V₁ × Valᵍ G₂ St V₂
 Valᵍ ([ ρ ]ᵍ G)    St V =
-  ∀ {St'} → (q : Slice St ρ St' uᵣ) → Valᵍ G St' (unbox-lookup St' (unbox-ren q) V)
+  ∀ {St'} → (q : Slice St ρ St' uᵣ)
+  → (W : toCtx St' ⊢V⦂ type-of-gtype G) → W ≐ᵛ unbox-lookup St' (unbox-ren q) V
+  → Valᵍ G St' W
 
 -- REDUCIBLE COMPUTATIONS (inductive)
 --
@@ -109,11 +111,10 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 -- allocates a cell, and a function reaching the extended state may be applied
 -- to arguments mentioning it.
 --
--- The arrow clause takes the transported body up to `_≐ᶜ_` rather than on the
--- nose. That is what makes `Val-slice` compose two transports: renaming is
--- functorial only up to `_≐ᶜ_` (`unbox` stores a renaming), so with the slack
--- the composite is reached by `≐ᶜ-trans` instead of needing `Comp` to respect
--- `_≐ᶜ_` across *different* states.
+-- Both clauses take their transported term up to `_≐_` rather than on the nose.
+-- That is what makes `Val-slice` compose two transports: renaming is functorial
+-- only up to `_≐ᶜ_` (`unbox` stores a renaming), so with the slack the composite
+-- is reached by `≐-trans` instead of needing `Comp` to respect `_≐ᶜ_`.
 
 Val : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 Val (Base b)      St V = ⊤
@@ -130,7 +131,9 @@ Val (A ⇒ (B ‼ ε)) St V =
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
      → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
 Val ([ ρ ] A)     St V =
-  ∀ {St'} → (q : Slice St ρ St' uᵣ) → Val A St' (unbox-lookup St' (unbox-ren q) V)
+  ∀ {St'} → (q : Slice St ρ St' uᵣ)
+  → (W : toCtx St' ⊢V⦂ A) → W ≐ᵛ unbox-lookup St' (unbox-ren q) V
+  → Val A St' W
 
 -- Reducible computations at the value predicate `Val` — the form the
 -- fundamental lemma proves.
@@ -169,41 +172,22 @@ Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
--- Ground reducibility is value reducibility at the embedded type: the clauses
--- agree, ground types having no arrow. Needed at `perform` and at a `handle`
--- clause's parameter and resumption.
-
-Valᵍ→Val : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
-         → Valᵍ G St V → Val (type-of-gtype G) St V
-
-Val→Valᵍ : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
-         → Val (type-of-gtype G) St V → Valᵍ G St V
-
-Valᵍ→Val {Base b}      V p = tt
-Valᵍ→Val {Unit}        V p = tt
-Valᵍ→Val {Empty}       V p = tt
-Valᵍ→Val {G₁ |×|ᵍ G₂}  V (V₁ , V₂ , e , p₁ , p₂) =
-  V₁ , V₂ , e , Valᵍ→Val V₁ p₁ , Valᵍ→Val V₂ p₂
-Valᵍ→Val {[ ρ ]ᵍ G}    V p = λ q → Valᵍ→Val _ (p q)
-
-Val→Valᵍ {Base b}      V p = tt
-Val→Valᵍ {Unit}        V p = tt
-Val→Valᵍ {Empty}       V p = tt
-Val→Valᵍ {G₁ |×|ᵍ G₂}  V (V₁ , V₂ , e , p₁ , p₂) =
-  V₁ , V₂ , e , Val→Valᵍ V₁ p₁ , Val→Valᵍ V₂ p₂
-Val→Valᵍ {[ ρ ]ᵍ G}    V p = λ q → Val→Valᵍ _ (p q)
-
 postulate
 
-  -- Monotonicity along a unit slice, used by `BOX`. Recursion on `A`. The `⇒`
-  -- clause composes two transports, so it needs functoriality of renaming —
-  -- which holds only up to `_≐ᶜ_` (`Adequacy.RenEquivalence`), since `unbox`
-  -- stores a renaming. So this also needs `Val`/`Comp` to respect
-  -- `_≐ᵛ_`/`_≐ᶜ_`, hence `↝` to respect `_≐ᶜ_`. The `[ ρ ]` clause needs
-  -- coherence of `unbox-lookup` with slice composition.
+  -- Looking a resource up is coherent: it consults the boxed value only through
+  -- `unbox⇒var` (so up to `_≐ᵛ_`), and renaming that value before looking it up
+  -- is looking it up along the composed slice.
 
-  Val-slice : ∀ {A St St'} → (q : Slice St uᵣ St' uᵣ) → (V : toCtx St ⊢V⦂ A)
-            → Val A St V → Val A St' (slice-val q V)
+  unbox-lookup-val-≐ : ∀ {A ρ Δ} {St : 𝕊 []}
+                     → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St))
+                     → {V V' : Δ ⊢V⦂ [ ρ ] A} → V ≐ᵛ V'
+                     → unbox-lookup St w V ≐ᵛ unbox-lookup St w V'
+
+  unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
+                   → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+                   → (V : toCtx St ⊢V⦂ [ ρ ] A)
+                   → unbox-lookup St₂ (unbox-ren q') (slice-val q₀ V)
+                   ≐ᵛ unbox-lookup St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V
 
   -- The store makes every resource variable reducible: this is what discharges
   -- `Val`'s `[ ρ ]` clause in the variable case of the fundamental lemma.
@@ -213,6 +197,53 @@ postulate
             → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
             → (f : ¬ Eternal ([ ρ ] A) → ρ' ≾ᵣ uᵣ)
             → Val ([ ρ ] A) St (var f x)
+
+------------------------------------------------------------------------
+-- REDUCIBILITY IS INSENSITIVE TO THE EQUIVALENCE, AND MONOTONE
+--
+-- Both are recursions on the type, and both are almost free: the slack in the
+-- two Kripke clauses absorbs exactly the mismatch, so nothing has to be
+-- transported. `Val-slice` composes the two slices — `slice-∘` at `⇒` (both
+-- unit-graded) and `slice-∘ᵘ` at `[ ρ ]` (the outer one guarded).
+------------------------------------------------------------------------
+
+Val-≐ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
+       → V ≐ᵛ V' → Val A St V → Val A St V'
+
+Val-≐ᵛ (Base b)  eV p = tt
+Val-≐ᵛ Unit      eV p = tt
+Val-≐ᵛ Empty     eV p = tt
+Val-≐ᵛ (A |×| B) (pair-≐ e₁ e₂) (V₁ , V₂ , refl , p₁ , p₂) =
+  _ , _ , refl , Val-≐ᵛ A e₁ p₁ , Val-≐ᵛ B e₂ p₂
+Val-≐ᵛ (A ⇒ (B ‼ ε)) (lam-≐ eM) (M , refl , f) =
+  _ , refl , λ q M₂ eM₂ W pW →
+                f q M₂ (≐ᶜ-trans eM₂ (C-rename-cong (cong-∷-ren _) (≐ᶜ-sym eM))) W pW
+Val-≐ᵛ ([ ρ ] A) eV f =
+  λ q W eW → f q W (≐ᵛ-trans eW (unbox-lookup-val-≐ (unbox-ren q) (≐ᵛ-sym eV)))
+
+Val-slice : ∀ {A St St'} → (q : Slice St uᵣ St' uᵣ) → (V : toCtx St ⊢V⦂ A)
+          → Val A St V → Val A St' (slice-val q V)
+
+Val-slice {Base b}  q V p = tt
+Val-slice {Unit}    q V p = tt
+Val-slice {Empty}   q V p = tt
+Val-slice {A |×| B} q .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
+  _ , _ , refl , Val-slice q V₁ p₁ , Val-slice q V₂ p₂
+Val-slice {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
+    _ , refl
+  , λ q' M₂ eM₂ W pW →
+      f (slice-∘ q' q₀) M₂
+        (≐ᶜ-trans eM₂
+          (≐ᶜ-trans
+            (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-renᵘ q'))
+                                (cong-∷-ren (slice-renᵘ q₀)) M))
+            (C-rename-≐ (≐ʳ-trans
+                          (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-renᵘ q') (slice-renᵘ q₀)))
+                          (cong-∷-ren-≐ (≐ʳ-sym (slice-renᵘ-∘ q' q₀))))
+                        M)))
+        W pW
+Val-slice {[ ρ ] A} q₀ V f =
+  λ q' W eW → f (slice-∘ᵘ q' q₀) W (≐ᵛ-trans eW (unbox-lookup-ren q₀ q' V))
 
 -- Allocation extends a reducible store with a reducible value (`BOX`): a cell
 -- is its stored value, so this is the pair.
