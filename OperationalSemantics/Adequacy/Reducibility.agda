@@ -139,6 +139,22 @@ Store (St ⟨ ρ ⟩ₛ)         = Store St
 Store (_∷ₛ_ {A} {ρ} St V) =
   Store St × Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V)
 
+-- HEAD EXPANSION
+--
+-- A step in front of a reducible computation: the whnf it reaches is the same
+-- one, reached by the longer run. The grade changes across the step, which is
+-- why `Comp` carries runs rather than a fixed grade — `_◅_` leaves it free.
+
+Comp-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
+            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+            → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
+            → Comp A P ε' St' M'
+            -------------------------
+            → Comp A P ε St M
+
+Comp-expand r (comp-ret rs pV)   = comp-ret (r ◅ rs) pV
+Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
+
 ------------------------------------------------------------------------
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
@@ -164,16 +180,6 @@ postulate
 
   Comp-slice : ∀ {A ε St St'} → (q : Slice St uᵣ St' uᵣ) → (M : toCtx St ⊢C⦂ A ‼ ε)
              → Comp' A ε St M → Comp' A ε St' (slice-comp q M)
-
-  -- Head expansion: a step in front of a reducible computation. The grade
-  -- changes across the step, which is why `Comp` carries runs rather than a
-  -- fixed grade.
-
-  Comp-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
-              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
-              → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
-              → Comp A P ε' St' M'
-              → Comp A P ε St M
 
   -- The store makes every resource variable reducible: this is what discharges
   -- `Val`'s `[ ρ ]` clause in the variable case of the fundamental lemma.

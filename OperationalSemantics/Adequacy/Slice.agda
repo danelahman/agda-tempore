@@ -83,33 +83,78 @@ resume : ∀ {St St' ρ A ε B}
        → toCtx (St' ⟨ ρ ⟩ₛ) ⊢C⦂ A ‼ ε
 resume q M W = (C-rename (cong-∷-ren (slice-ren q)) M) [ Hd ↦ W ]c
 
-------------------------------------------------------------------------
--- LEMMAS TO PROVE
-------------------------------------------------------------------------
+-- TRANSITIVITY OF STATE EXTENSION
+--
+-- Two general facts about `_≤ₛ_` that `OperationalSemantics.State` does not
+-- carry: extensions compose, and their accumulated grades multiply. Kept here
+-- while the adequacy development is separate.
 
-postulate
+≤ₛ-trans : ∀ {Γ Γ' Γ''} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'} → {St'' : 𝕊 Γ''}
+         → St ≤ₛ St' → St' ≤ₛ St''
+         -------------------------
+         → St ≤ₛ St''
 
-  -- The slice is a category: composition and its interaction with the
-  -- renamings above. `⊑`-style transitivity of guarded extensions, with the
-  -- grade bounds composing.
+≤ₛ-trans q id-suc        = q
+≤ₛ-trans q (⟨⟩-suc ρ q') = ⟨⟩-suc ρ (≤ₛ-trans q q')
+≤ₛ-trans q (∷-suc V q')  = ∷-suc V (≤ₛ-trans q q')
 
-  slice-∘ : ∀ {St St' St'' ρ ρ' ρ''}
-          → Slice St' ρ' St'' ρ'' → Slice St ρ St' ρ' → Slice St ρ St'' ρ''
+≤ₛ-grade-trans : ∀ {Γ Γ' Γ''} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'} → {St'' : 𝕊 Γ''}
+               → (q : St ≤ₛ St') → (q' : St' ≤ₛ St'')
+               ---------------------------------------------------------
+               → ≤ₛ-grade (≤ₛ-trans q q') ≡ ≤ₛ-grade q ·ᵣ ≤ₛ-grade q'
 
-  -- A step, and a run, extend the state along the slice at the unit lock
-  -- whenever the grades permit; this is `step-extends-state`/`step-grade-≾`
-  -- repackaged as slice data.
+≤ₛ-grade-trans q id-suc        =
+  sym (·ᵣ-identityʳ (≤ₛ-grade q))
+≤ₛ-grade-trans q (⟨⟩-suc ρ q') =
+  trans (cong (_·ᵣ ρ) (≤ₛ-grade-trans q q')) (·ᵣ-assoc _ _ ρ)
+≤ₛ-grade-trans q (∷-suc V q')  =
+  ≤ₛ-grade-trans q q'
 
-  step-slice : ∀ {A B ε ε'} {St St' : 𝕊 []}
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
-             → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
-             → ≤ₛ-grade (step-extends-state r) ≾ᵣ uᵣ
-             → Slice St uᵣ St' uᵣ
+-- THE SLICE IS A CATEGORY
+--
+-- Composition: the extensions compose and the two bounds chain, the inner one
+-- under `_·ᵣ_`'s monotonicity.
 
-  -- Allocating a cell is a slice at the unit lock (`BOX`), and letting time
-  -- pass is a slice at the lock it passes (`DELAY`).
+slice-∘ : ∀ {St St' St'' ρ ρ' ρ''}
+        → Slice St' ρ' St'' ρ'' → Slice St ρ St' ρ'
+        -------------------------------------------
+        → Slice St ρ St'' ρ''
 
-  alloc-slice : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-              → Slice St uᵣ (St ∷ₛ V) uᵣ
+slice-∘ {ρ'' = ρ''} (slice e' b') (slice e b) =
+  slice (≤ₛ-trans e e')
+    (≾ᵣ-trans
+      (≾ᵣ-reflexive
+        (trans (cong (_·ᵣ ρ'') (≤ₛ-grade-trans e e')) (·ᵣ-assoc _ _ ρ'')))
+      (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ b') b))
 
-  delay-slice : ∀ {ρ} {St : 𝕊 []} → Slice St ρ (St ⟨ ρ ⟩ₛ) uᵣ
+-- THE SLICES THE MACHINE PRODUCES
+--
+-- A step extends the state at the unit lock whenever the grade it accumulated
+-- permits (`step-extends-state`); allocating a cell accumulates nothing
+-- (`BOX`); letting time pass is a slice at exactly the lock it passes
+-- (`DELAY`).
+
+step-slice : ∀ {A B ε ε'} {St St' : 𝕊 []}
+           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
+           → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+           → ≤ₛ-grade (step-extends-state r) ≾ᵣ uᵣ
+           ---------------------------------------
+           → Slice St uᵣ St' uᵣ
+
+step-slice r h =
+  slice (step-extends-state r)
+    (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityʳ (≤ₛ-grade (step-extends-state r)))) h)
+
+alloc-slice : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+            ------------------------------------------------------------
+            → Slice St uᵣ (St ∷ₛ V) uᵣ
+
+alloc-slice V = slice (∷-suc V id-suc) (≾ᵣ-reflexive (·ᵣ-identityˡ uᵣ))
+
+delay-slice : ∀ {ρ} {St : 𝕊 []}
+            ------------------------------
+            → Slice St ρ (St ⟨ ρ ⟩ₛ) uᵣ
+
+delay-slice {ρ} =
+  slice (⟨⟩-suc ρ id-suc)
+    (≾ᵣ-reflexive (trans (·ᵣ-identityʳ (uᵣ ·ᵣ ρ)) (·ᵣ-identityˡ ρ)))

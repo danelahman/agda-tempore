@@ -62,16 +62,21 @@ postulate
        -------------------------------
        → Comp' A ε St (env-C γ M)
 
-  -- A reducible computation halts: read the whnf off the `Comp` constructor.
-
-  Comp-halts : ∀ {A P ε} {St : 𝕊 []} → {M : toCtx St ⊢C⦂ A ‼ ε}
-             → Comp A P ε St M
-             -----------------
-             → Halts (⟨ St , M ⟩)
-
 ------------------------------------------------------------------------
 -- COROLLARIES
 ------------------------------------------------------------------------
+
+-- A reducible computation halts: its run *is* the evaluation, and which of the
+-- two shapes it halts in is which `Comp` constructor it is. The reducibility
+-- of the components plays no part — normalization is all that is read off.
+
+Comp-halts : ∀ {A P ε} {St : 𝕊 []} → {M : toCtx St ⊢C⦂ A ‼ ε}
+           → Comp A P ε St M
+           -------------------
+           → Halts (⟨ St , M ⟩)
+
+Comp-halts (comp-ret rs _)  = halts-ret (ret-whnf _ _ rs)
+Comp-halts (comp-op rs _ _) = halts-op (op-whnf _ _ _ _ _ rs)
 
 -- A closed program is reducible at the empty state: `Γ = []`, `St = ∅`, and
 -- `⌊ ∅ ⌋` closes nothing (`Store ∅ ≡ ⊤`).

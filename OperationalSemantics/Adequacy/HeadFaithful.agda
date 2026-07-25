@@ -105,6 +105,41 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → ℕ → S
              -----------------------
              → Delaysᵐ t' n
 
+-- A run's transition is one of the class above, and its index is the run's
+-- tick total: the bridge between the syntactic observable (`ticks`) and the
+-- model-side interface. Step by step, since `stepᵀ` is `ηᵀ` for every rule but
+-- `DELAY`, and both `stepᵀ` and `step-ticks` recurse identically through the
+-- two congruences.
+
+step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A : VType}
+            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+            → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
+            → {X : Obj} → {δ : E} → {t : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
+            → Delaysᵐ t n
+            ------------------------------------------
+            → Delaysᵐ (t ⋄ stepᵀ r) (step-ticks r + n)
+
+step-delays APP                d = η-step d
+step-delays MATCH              d = η-step d
+step-delays (SEQ-STEP r _)     d = step-delays r d
+step-delays SEQ-RET            d = η-step d
+step-delays SEQ-OP             d = η-step d
+step-delays (DELAY {τ = τ})    d = τ-step τ d
+step-delays HANDLE-RET         d = η-step d
+step-delays (HANDLE-STEP r _)  d = step-delays r d
+step-delays HANDLE-OP          d = η-step d
+step-delays BOX                d = η-step d
+step-delays UNBOX              d = η-step d
+step-delays COERCE             d = η-step d
+
+stepsᵀ-delays : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+              → (rs : cf ↝* cf')
+              ------------------------------
+              → Delaysᵐ (stepsᵀ rs) (ticks rs)
+
+stepsᵀ-delays ε*       = no-delay
+stepsᵀ-delays (r ◅ rs) = step-delays r (stepsᵀ-delays rs)
+
 -- THE TWO HEAD SHAPES, as morphisms
 --
 -- `⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ` is a leaf and `⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ` an
@@ -233,16 +268,6 @@ record BaseFaithful : Set where
 ------------------------------------------------------------------------
 
 postulate
-
-  -- A run's transition is one of the class above, and its index is the run's
-  -- tick total. Bridges the syntactic observable (`ticks`) and the model-side
-  -- interface. Immediate from `stepsᵀ`'s recursion, `DELAY` being the only
-  -- rule whose `stepᵀ` is not `ηᵀ`.
-
-  stepsᵀ-delays : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
-                → (rs : cf ↝* cf')
-                ----------------------------------
-                → Delaysᵐ (stepsᵀ rs) (ticks rs)
 
   -- Uniformity of the handlers a run reaches is now carried by the term's own
   -- certificate, so `Uniform↝*` is inhabited outright (every case is `⊤`).
