@@ -17,6 +17,7 @@
 -- the cleanup list in `notes/adequacy-plan.md`.                      --
 ------------------------------------------------------------------------
 
+open import Data.Empty
 open import Data.Product
 
 open import Relation.Nullary using (¬_)
@@ -24,6 +25,8 @@ open import Relation.Nullary using (¬_)
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
+
+open import Relation.Nullary using (yes; no)
 
 open import Util.Equality
 
@@ -312,17 +315,159 @@ restrict-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (r₂ : Ren Γ' Γ'') → (r₁ : R
 restrict-ren-∘-≐ r₂ r₁ = ≐ʳ-refl
 
 ------------------------------------------------------------------------
--- LEMMAS TO PROVE
+-- THE ETERNAL RESTRICTION
+--
+-- `restrict-ren` recurses on the *renaming*, so `restrict-ren-≐` is not a
+-- congruence of a function of `var-tgt`. It goes through the *reflection* of a
+-- restricted variable, `∈-ᴱ⁻`: restricting commutes with it (`restrict-tgt⁻`),
+-- so `var-tgt (restrict-ren r) x` is determined by `var-tgt r` up to
+-- injectivity of `∈-ᴱ⁻`.
+--
+-- Everything is stated in terms of `∈-ᴱ⁻` and never `∈-ᴱ`: both split on
+-- `eternal?`, but a goal mentioning `∈-ᴱ` blocks the `with`-abstraction on that
+-- scrutinee, whereas `∈-ᴱ⁻`'s own recursion does not.
 ------------------------------------------------------------------------
 
-postulate
+-- The variable of `Γ` that a variable of `Γ ᴱ` came from, on `Tgt`s.
 
-  -- The eternal restriction respects acting alike. `restrict-ren` recurses on
-  -- the *renaming*, so this is not a congruence of a function of `var-tgt`; it
-  -- has to be related back through `∈-ᴱ`/`∈-ᴱ⁻`.
+∈-ᴱ⁻ : (Γ : Ctx) → ∀ {A ρ} → A ∈[ ρ ] Γ ᴱ → Tgt Γ A
+∈-ᴱ⁻ []        x with x
+... | ()
+∈-ᴱ⁻ (Γ ∷ B)   x with eternal? B
+∈-ᴱ⁻ (Γ ∷ B)   Hd       | yes _ = uᵣ , Hd
+∈-ᴱ⁻ (Γ ∷ B)   (Tl-∷ y) | yes _ = proj₁ (∈-ᴱ⁻ Γ y) , Tl-∷ (proj₂ (∈-ᴱ⁻ Γ y))
+∈-ᴱ⁻ (Γ ∷ B)   x        | no  _ = proj₁ (∈-ᴱ⁻ Γ x) , Tl-∷ (proj₂ (∈-ᴱ⁻ Γ x))
+∈-ᴱ⁻ (Γ ⟨ ρ ⟩) x =
+  proj₁ (∈-ᴱ⁻ Γ x) ·ᵣ ρ , Tl-⟨⟩ (proj₂ (∈-ᴱ⁻ Γ x))
 
-  restrict-ren-≐ : ∀ {Γ Γ'} {r r' : Ren Γ Γ'}
-                 → r ≐ʳ r' → restrict-ren r ≐ʳ restrict-ren r'
+∈-ᴱ⁻′ : (Γ : Ctx) → ∀ {A} → Tgt (Γ ᴱ) A → Tgt Γ A
+∈-ᴱ⁻′ Γ (ρ , x) = ∈-ᴱ⁻ Γ x
+
+-- Forcing a `with eternal?`-defined function to reduce: `rewrite`ing the
+-- scrutinee is cleaner than unfold lemmas whose statements are themselves
+-- `_ᴱ`-stuck. (Also in `Interpretation.SubstitutionCoherence`; see the cleanup
+-- list in `notes/adequacy-plan.md`.)
+
+eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
+eternal?-yes {A} et with eternal? A
+... | yes et' = cong yes (eternal-irrelevant et' et)
+... | no ¬et  = ⊥-elim (¬et et)
+
+-- Reflection undoes `∈-ᴱ`.
+
+∈-ᴱ⁻-∈-ᴱ : (Γ : Ctx) → ∀ {A ρ} → (et : Eternal A) → (z : A ∈[ ρ ] Γ)
+         → ∈-ᴱ⁻ Γ (∈-ᴱ et z) ≡ (ρ , z)
+
+∈-ᴱ⁻-∈-ᴱ (Γ ∷ B)   et Hd       rewrite eternal?-yes et = refl
+∈-ᴱ⁻-∈-ᴱ (Γ ∷ B)   et (Tl-∷ z) with eternal? B
+... | yes _ = cong (λ w → proj₁ w , Tl-∷ (proj₂ w)) (∈-ᴱ⁻-∈-ᴱ Γ et z)
+... | no  _ = cong (λ w → proj₁ w , Tl-∷ (proj₂ w)) (∈-ᴱ⁻-∈-ᴱ Γ et z)
+∈-ᴱ⁻-∈-ᴱ (Γ ⟨ ρ₀ ⟩) et (Tl-⟨⟩ z) =
+  cong (λ w → proj₁ w ·ᵣ ρ₀ , Tl-⟨⟩ (proj₂ w)) (∈-ᴱ⁻-∈-ᴱ Γ et z)
+
+-- It is injective: distinct variables of `Γ ᴱ` come from distinct variables.
+
+∈-ᴱ⁻-inj : (Γ : Ctx) → ∀ {A} → (t t' : Tgt (Γ ᴱ) A)
+         → ∈-ᴱ⁻′ Γ t ≡ ∈-ᴱ⁻′ Γ t' → t ≡ t'
+
+∈-ᴱ⁻-inj []        (_ , x) _        e with x
+... | ()
+∈-ᴱ⁻-inj (Γ ∷ B)   t       t'       e with eternal? B
+∈-ᴱ⁻-inj (Γ ∷ B) (_ , Hd)      (_ , Hd)      e | yes _ = refl
+∈-ᴱ⁻-inj (Γ ∷ B) (_ , Hd)      (_ , Tl-∷ y') e | yes _ with ∈-ᴱ⁻ Γ y'
+... | _ , _ with e
+... | ()
+∈-ᴱ⁻-inj (Γ ∷ B) (_ , Tl-∷ y) (_ , Hd)       e | yes _ with ∈-ᴱ⁻ Γ y
+... | _ , _ with e
+... | ()
+∈-ᴱ⁻-inj (Γ ∷ B) (ρ , Tl-∷ y) (ρ' , Tl-∷ y') e | yes _ =
+  cong (λ z → proj₁ z , Tl-∷ (proj₂ z))
+       (∈-ᴱ⁻-inj Γ (ρ , y) (ρ' , y') (∷-inj e))
+  where
+    ∷-inj : ∀ {A ρ₁ ρ₂} {z₁ : A ∈[ ρ₁ ] Γ} {z₂ : A ∈[ ρ₂ ] Γ}
+          → _≡_ {A = Tgt (Γ ∷ B) A} (ρ₁ , Tl-∷ z₁) (ρ₂ , Tl-∷ z₂)
+          → _≡_ {A = Tgt Γ A} (ρ₁ , z₁) (ρ₂ , z₂)
+    ∷-inj refl = refl
+∈-ᴱ⁻-inj (Γ ∷ B) (ρ , x)      (ρ' , x')      e | no _ =
+  ∈-ᴱ⁻-inj Γ (ρ , x) (ρ' , x') (∷-inj e)
+  where
+    ∷-inj : ∀ {A ρ₁ ρ₂} {z₁ : A ∈[ ρ₁ ] Γ} {z₂ : A ∈[ ρ₂ ] Γ}
+          → _≡_ {A = Tgt (Γ ∷ B) A} (ρ₁ , Tl-∷ z₁) (ρ₂ , Tl-∷ z₂)
+          → _≡_ {A = Tgt Γ A} (ρ₁ , z₁) (ρ₂ , z₂)
+    ∷-inj refl = refl
+∈-ᴱ⁻-inj (Γ ⟨ ρ₀ ⟩) (ρ , x)   (ρ' , x')      e =
+  ∈-ᴱ⁻-inj Γ (ρ , x) (ρ' , x') (⟨⟩-inj e)
+  where
+    ⟨⟩-inj : ∀ {A ρ₁ ρ₂} {z₁ : A ∈[ ρ₁ ] Γ} {z₂ : A ∈[ ρ₂ ] Γ}
+           → _≡_ {A = Tgt (Γ ⟨ ρ₀ ⟩) A} (ρ₁ ·ᵣ ρ₀ , Tl-⟨⟩ z₁) (ρ₂ ·ᵣ ρ₀ , Tl-⟨⟩ z₂)
+           → _≡_ {A = Tgt Γ A} (ρ₁ , z₁) (ρ₂ , z₂)
+    ⟨⟩-inj refl = refl
+
+-- Restricting commutes with reflection. Induction on the renaming.
+
+restrict-tgt⁻ : ∀ {Γ Γ'} → (r : Ren Γ Γ') → ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
+              → ∈-ᴱ⁻′ Γ' (var-tgt (restrict-ren r) x)
+              ≡ var-tgt′ r (∈-ᴱ⁻ Γ x)
+
+restrict-tgt⁻ id-ren x = refl
+
+restrict-tgt⁻ (r₂ ∘ʳ r₁) x =
+  trans (restrict-tgt⁻ r₂ (proj₂ (var-tgt (restrict-ren r₁) x)))
+        (cong (var-tgt′ r₂) (restrict-tgt⁻ r₁ x))
+
+restrict-tgt⁻ (wk-ren {A = B}) x with eternal? B
+... | yes _ = refl
+... | no  _ = refl
+
+restrict-tgt⁻ {Γ' = Γ'} (var-ren {A = B} p z) x with eternal? B
+restrict-tgt⁻ {Γ' = Γ'} (var-ren {A = B} p z) Hd       | yes etB =
+  ∈-ᴱ⁻-∈-ᴱ Γ' etB z
+restrict-tgt⁻ (var-ren {A = B} p z) (Tl-∷ x) | yes _ = refl
+restrict-tgt⁻ (var-ren {A = B} p z) x        | no  _ = refl
+
+restrict-tgt⁻ ⟨⟩-η-ren     x = refl
+restrict-tgt⁻ ⟨⟩-μ-ren     x = refl
+restrict-tgt⁻ (⟨⟩-≤-ren _) x = refl
+
+-- the one renaming whose source carries no lock and whose `var-rename` still
+-- splits on the variable, so the reflected variable has to be exposed
+restrict-tgt⁻ {Γ = Γ} ⟨⟩-η⁻¹-ren x with ∈-ᴱ⁻ Γ x
+... | _ , Hd      = refl
+... | _ , Tl-∷ y  = refl
+... | _ , Tl-⟨⟩ y = refl
+
+restrict-tgt⁻ (cong-∷-ren {A = B} r) x with eternal? B
+restrict-tgt⁻ (cong-∷-ren {A = B} r) Hd       | yes _ = refl
+restrict-tgt⁻ (cong-∷-ren {A = B} r) (Tl-∷ x) | yes _ =
+  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (restrict-tgt⁻ r x)
+restrict-tgt⁻ (cong-∷-ren {A = B} r) x        | no  _ =
+  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (restrict-tgt⁻ r x)
+
+restrict-tgt⁻ (cong-⟨⟩-ren {ρ = ρ₀} r) x =
+  cong (λ z → proj₁ z ·ᵣ ρ₀ , Tl-⟨⟩ (proj₂ z)) (restrict-tgt⁻ r x)
+
+restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) x with eternal? B
+restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) Hd       | yes _ = refl
+restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) (Tl-∷ x) | yes _ = refl
+restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) x        | no ¬etB = ⊥-elim (¬etB etB)
+
+-- The eternal restriction respects acting alike.
+
+restrict-ren-≐ : ∀ {Γ Γ'} {r r' : Ren Γ Γ'}
+               → r ≐ʳ r' → restrict-ren r ≐ʳ restrict-ren r'
+
+restrict-ren-≐ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
+  where
+    go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
+       → var-tgt (restrict-ren r) x ≡ var-tgt (restrict-ren r') x
+    go x =
+      ∈-ᴱ⁻-inj Γ' _ _
+        (trans (restrict-tgt⁻ r x)
+          (trans (cong (var-tgt′ r) refl)
+            (trans (at-tgt (∈-ᴱ⁻ Γ x)) (sym (restrict-tgt⁻ r' x)))))
+      where
+        at-tgt : ∀ {A} → (t : Tgt Γ A) → var-tgt′ r t ≡ var-tgt′ r' t
+        at-tgt (_ , y) = at h y
 
 ------------------------------------------------------------------------
 -- THE ACTION RESPECTS ACTING ALIKE
@@ -440,3 +585,46 @@ mutual
           (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ ([] ∷ _) r₂ r₁) M)
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (coerce p M) = coerce-≐ (C-rename-∘ r₂ r₁ M)
+
+------------------------------------------------------------------------
+-- THE ACTION IS A CONGRUENCE
+--
+-- Renaming related terms gives related terms. Induction on the relation, not on
+-- the term; `unbox` needs `∘ʳ-≐` on the stored renamings.
+------------------------------------------------------------------------
+
+mutual
+
+  V-rename-cong : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → {V V' : Γ ⊢V⦂ A}
+                → V ≐ᵛ V' → V-rename r V ≐ᵛ V-rename r V'
+
+  V-rename-cong r var-≐            = var-≐
+  V-rename-cong r const-≐          = const-≐
+  V-rename-cong r ⋆-≐              = ⋆-≐
+  V-rename-cong r (pair-≐ eV eW)   =
+    pair-≐ (V-rename-cong r eV) (V-rename-cong r eW)
+  V-rename-cong r (lam-≐ eM)       = lam-≐ (C-rename-cong (cong-ren r) eM)
+
+  C-rename-cong : ∀ {Γ Γ' C} → (r : Ren Γ Γ') → {M M' : Γ ⊢C⦂ C}
+                → M ≐ᶜ M' → C-rename r M ≐ᶜ C-rename r M'
+
+  C-rename-cong r (return-≐ eV)     = return-≐ (V-rename-cong r eV)
+  C-rename-cong r (seq-≐ eM eN)     =
+    seq-≐ (C-rename-cong r eM) (C-rename-cong (cong-ren r) eN)
+  C-rename-cong r (app-≐ eV eW)     =
+    app-≐ (V-rename-cong r eV) (V-rename-cong r eW)
+  C-rename-cong r (match-≐ eV eM)   =
+    match-≐ (V-rename-cong r eV) (C-rename-cong (cong-ren r) eM)
+  C-rename-cong r (absurd-≐ eV)     = absurd-≐ (V-rename-cong r eV)
+  C-rename-cong r (perform-≐ eV eM) =
+    perform-≐ (V-rename-cong r eV) (C-rename-cong (cong-ren r) eM)
+  C-rename-cong r (delay-≐ eM)      = delay-≐ (C-rename-cong (cong-ren r) eM)
+  C-rename-cong r (handle-≐ eM eH eN) =
+    handle-≐ (C-rename-cong r eM)
+             (λ op ε'' Γ' → C-rename-cong (cong-ren (restrict-ren r)) (eH op ε'' Γ'))
+             (C-rename-cong (cong-ren r) eN)
+  C-rename-cong r (unbox-≐ hw eM)   =
+    unbox-≐ (∘ʳ-≐ (≐ʳ-refl {r = r}) hw) (C-rename-cong (cong-ren r) eM)
+  C-rename-cong r (coerce-≐ eM)     = coerce-≐ (C-rename-cong r eM)
+  C-rename-cong r (box-≐ eV eM)     =
+    box-≐ (V-rename-cong (cong-ren r) eV) (C-rename-cong (cong-ren r) eM)
