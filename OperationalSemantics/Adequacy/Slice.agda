@@ -296,3 +296,106 @@ slice-renᵘ-∘ (slice e' b') (slice e b) = mk≐ʳ go
                   (at (suc-comp-ren-∘-≐ e e' _ b b') _))
             (cong (λ z → var-tgt′ ⟨⟩-η-ren (var-tgt′ (suc-comp-ren e' b') z))
                   (sym (at ⟨⟩-η-cancel _)))
+
+------------------------------------------------------------------------
+-- WHAT AN EXTENSION DOES TO A VARIABLE
+--
+-- `suc-comp-ren` sends a locked variable to a locked variable: the extension
+-- embeds `toCtx St` into `toCtx St₁`, and the renaming is that embedding under
+-- the lock. Making this explicit is what lets the `⟨⟩-η` round trip in
+-- `slice-renᵘ`/`unbox-ren` be cancelled at a specific variable.
+------------------------------------------------------------------------
+
+≤ₛ-embed : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A σ}
+         → A ∈[ σ ] toCtx St → Σ[ σ' ∈ R ] A ∈[ σ' ] toCtx St₁
+≤ₛ-embed id-suc        {σ = σ} x = σ , x
+≤ₛ-embed (⟨⟩-suc ρ e)  x with ≤ₛ-embed e x
+... | σ' , y = σ' ·ᵣ ρ , Tl-⟨⟩ y
+≤ₛ-embed (∷-suc V e)   x with ≤ₛ-embed e x
+... | σ' , y = σ' , Tl-∷ y
+
+suc-comp-ren-tgt : ∀ {St St₁ : 𝕊 []} {ρ₂ ρ₃ : R} → (e : St ≤ₛ St₁)
+                 → (b : ≤ₛ-grade e ·ᵣ ρ₃ ≾ᵣ ρ₂)
+                 → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
+                 → var-tgt (suc-comp-ren e b) (Tl-⟨⟩ x)
+                 ≡ (proj₁ (≤ₛ-embed e x) ·ᵣ ρ₃ , Tl-⟨⟩ (proj₂ (≤ₛ-embed e x)))
+
+suc-comp-ren-tgt id-suc       b x = refl
+suc-comp-ren-tgt (⟨⟩-suc ρ e) b x =
+  cong (var-tgt′ ⟨⟩-μ-ren) (suc-comp-ren-tgt e _ x)
+suc-comp-ren-tgt (∷-suc V e)  b x =
+  cong (var-tgt′ (cong-⟨⟩-ren wk-ren)) (suc-comp-ren-tgt e _ x)
+
+-- The embedding is functorial, and the two `⟨⟩-η` renamings are its identity
+-- steps. Together these compute what `slice-renᵘ` and `unbox-ren` do to a
+-- variable, which is all the lookup coherences need.
+
+≤ₛ-embed-∘ : ∀ {St St₁ St₂ : 𝕊 []} → (e : St ≤ₛ St₁) → (e' : St₁ ≤ₛ St₂)
+           → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
+           → ≤ₛ-embed (≤ₛ-trans e e') x ≡ ≤ₛ-embed e' (proj₂ (≤ₛ-embed e x))
+≤ₛ-embed-∘ e id-suc        x = refl
+≤ₛ-embed-∘ e (⟨⟩-suc ρ e') x =
+  cong (λ z → proj₁ z ·ᵣ ρ , Tl-⟨⟩ (proj₂ z)) (≤ₛ-embed-∘ e e' x)
+≤ₛ-embed-∘ e (∷-suc V e')  x =
+  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (≤ₛ-embed-∘ e e' x)
+
+⟨⟩-η-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
+         → var-tgt (⟨⟩-η-ren {Γ = Γ}) (Tl-⟨⟩ x) ≡ (σ , x)
+⟨⟩-η-tgt x = refl
+
+⟨⟩-η⁻¹-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
+           → var-tgt (⟨⟩-η⁻¹-ren {Γ = Γ}) x ≡ (σ ·ᵣ uᵣ , Tl-⟨⟩ x)
+⟨⟩-η⁻¹-tgt Hd        = refl
+⟨⟩-η⁻¹-tgt (Tl-∷ x)  = refl
+⟨⟩-η⁻¹-tgt (Tl-⟨⟩ x) = refl
+
+-- What a slice does to a variable: the embedding of its extension.
+
+slice-renᵘ-tgt : ∀ {St St' : 𝕊 []} → (q : Slice St uᵣ St' uᵣ)
+               → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
+               → var-tgt (slice-renᵘ q) x ≡ ≤ₛ-embed (ext q) x
+slice-renᵘ-tgt (slice e b) x =
+  trans (cong (λ t → var-tgt′ ⟨⟩-η-ren (var-tgt′ (suc-comp-ren e b) t))
+              (⟨⟩-η⁻¹-tgt x))
+        (cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x))
+
+unbox-ren-tgt : ∀ {St St' : 𝕊 []} {ρ : R} → (q : Slice St ρ St' uᵣ)
+              → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
+              → var-tgt (unbox-ren q) (Tl-⟨⟩ x) ≡ ≤ₛ-embed (ext q) x
+unbox-ren-tgt (slice e b) x = cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x)
+
+-- The variable an `unbox` refers to, forgetting its grade bound. `unbox⇒var`
+-- reads it off with `var-rename`, so `_≐ʳ_`-equal renamings agree on it.
+
+unbox-tgt : ∀ {Γ A ρ Δ} → Ren (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
+unbox-tgt w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
+
+unbox-tgt-≐ : ∀ {Γ A ρ Δ} {w w' : Ren (Δ ⟨ ρ ⟩) Γ}
+            → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
+            → unbox-tgt w V ≡ unbox-tgt w' V
+unbox-tgt-≐ hw V with grad-typ⇒var V
+... | _ , y , f , refl = at hw (Tl-⟨⟩ y)
+
+-- Consequently: looking a resource up after transporting it along a slice
+-- reaches the same cell as looking it up along the composite.
+
+unbox-cells : ∀ {A ρ} {St St' St₂ : 𝕊 []}
+            → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+            → ∀ {σ} → (x : [ ρ ] A ∈[ σ ] toCtx St)
+            → var-tgt (unbox-ren q') (Tl-⟨⟩ (proj₂ (var-tgt (slice-renᵘ q₀) x)))
+            ≡ var-tgt (unbox-ren (slice-∘ᵘ q' q₀)) (Tl-⟨⟩ x)
+unbox-cells q₀ q' x =
+  trans (unbox-ren-tgt q' (proj₂ (var-tgt (slice-renᵘ q₀) x)))
+    (trans (cong (λ t → ≤ₛ-embed (ext q') (proj₂ t)) (slice-renᵘ-tgt q₀ x))
+      (trans (sym (≤ₛ-embed-∘ (ext q₀) (ext q') x))
+             (sym (unbox-ren-tgt (slice-∘ᵘ q' q₀) x))))
+
+-- The same at the level `unbox-lookup` consumes it: a boxed value *is* a
+-- variable, so the cell it names is `unbox-cells`.
+
+unbox-cellsᵛ : ∀ {A ρ} {St St' St₂ : 𝕊 []}
+             → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+             → (V : toCtx St ⊢V⦂ [ ρ ] A)
+             → unbox-tgt (unbox-ren q') (slice-val q₀ V)
+             ≡ unbox-tgt (unbox-ren (slice-∘ᵘ q' q₀)) V
+unbox-cellsᵛ q₀ q' (var f x) = unbox-cells q₀ q' x

@@ -102,6 +102,18 @@ open _≐ʳ_ public
 ∘ʳ-identityʳ-≐ : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (r ∘ʳ id-ren) ≐ʳ r
 ∘ʳ-identityʳ-≐ r = mk≐ʳ (λ x → refl)
 
+-- GRADE BOUNDS ARE INVISIBLE TO `_≐ʳ_`
+--
+-- `⟨⟩-≤-ren` stores a `≾ᵣ` proof, but sends a variable to itself at a grade
+-- fixed by the renaming's indices, so the proof is not observable.
+
+⟨⟩-≤-ren-≐ : ∀ {Γ ρ ρ'} → (p p' : ρ' ≾ᵣ ρ)
+           → ⟨⟩-≤-ren {Γ = Γ} p ≐ʳ ⟨⟩-≤-ren p'
+⟨⟩-≤-ren-≐ p p' = mk≐ʳ go
+  where
+    go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
+    go (Tl-⟨⟩ x) = refl
+
 -- SUFFIX EXTENSION
 --
 -- `cong-ren` recurses on the suffix, so it respects `_≐ʳ_` and commutes with

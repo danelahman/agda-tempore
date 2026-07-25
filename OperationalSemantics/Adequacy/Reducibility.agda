@@ -172,22 +172,42 @@ Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
+-- Looking a resource up consults the boxed value only through `unbox⇒var`,
+-- which sees it as a variable (`grad-typ⇒var`), so `_≐ᵛ_`-related values give
+-- the same cell — and the recovered grade bound reaches only a `⟨⟩-≤-ren`.
+
+unbox-lookup-val-≐ : ∀ {A ρ Δ} {St : 𝕊 []}
+                   → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St))
+                   → {V V' : Δ ⊢V⦂ [ ρ ] A} → V ≐ᵛ V'
+                   → unbox-lookup St w V ≐ᵛ unbox-lookup St w V'
+
+unbox-lookup-val-≐ {St = St} w (var-≐ {x = x})
+  with var-rename w (Tl-⟨⟩ x)
+... | ρ' , p , z =
+  V-rename-≐
+    (∘ʳ-≐ ≐ʳ-refl
+      (∘ʳ-≐ ≐ʳ-refl
+        (∘ʳ-≐ ≐ʳ-refl
+          (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl))))
+    (resource-lookup St z)
+
+-- Renaming the boxed value before looking it up is looking it up along the
+-- composed slice. The *cell* is the same by `unbox-cellsᵛ` (proved), and what is
+-- left over is the grade bound, which reaches only a `⟨⟩-≤-ren` — so this is
+-- `V-rename-≐` of that. What resists is the plumbing: `unbox⇒var` is a `with`
+-- inside a `with`, so neither the `var-rename` calls nor the `unbox⇒var` calls
+-- can be abstracted in a way that lets the cell equation be matched as `refl`
+-- (`SplitError.UnificationStuck`, whichever level is abstracted).
+
 postulate
-
-  -- Looking a resource up is coherent: it consults the boxed value only through
-  -- `unbox⇒var` (so up to `_≐ᵛ_`), and renaming that value before looking it up
-  -- is looking it up along the composed slice.
-
-  unbox-lookup-val-≐ : ∀ {A ρ Δ} {St : 𝕊 []}
-                     → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St))
-                     → {V V' : Δ ⊢V⦂ [ ρ ] A} → V ≐ᵛ V'
-                     → unbox-lookup St w V ≐ᵛ unbox-lookup St w V'
 
   unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
                    → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
                    → (V : toCtx St ⊢V⦂ [ ρ ] A)
                    → unbox-lookup St₂ (unbox-ren q') (slice-val q₀ V)
                    ≐ᵛ unbox-lookup St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V
+
+postulate
 
   -- The store makes every resource variable reducible: this is what discharges
   -- `Val`'s `[ ρ ]` clause in the variable case of the fundamental lemma.

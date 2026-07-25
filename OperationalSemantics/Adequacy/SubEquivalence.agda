@@ -37,18 +37,6 @@ open import Syntax.Types         Spec
 
 open import OperationalSemantics.Adequacy.RenEquivalence Spec
 
--- GRADE BOUNDS ARE INVISIBLE TO `_≐ʳ_`
---
--- `⟨⟩-≤-ren` stores a `≾ᵣ` proof, but sends a variable to itself at a grade
--- fixed by the renaming's indices, so the proof is not observable.
-
-⟨⟩-≤-ren-≐ : ∀ {Γ ρ ρ'} → (p p' : ρ' ≾ᵣ ρ)
-           → ⟨⟩-≤-ren {Γ = Γ} p ≐ʳ ⟨⟩-≤-ren p'
-⟨⟩-≤-ren-≐ p p' = mk≐ʳ go
-  where
-    go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
-    go (Tl-⟨⟩ x) = refl
-
 -- ETERNAL VALUES
 --
 -- `eternal-val-ext` and `eternal-val-restrict` recurse on the value, and an
@@ -161,18 +149,6 @@ unbox-var-≐ : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ)
             → unbox-var x rel M ≐ᶜ unbox-var x rel' M'
 unbox-var-≐ x rel rel' eM =
   unbox-≐ (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ rel rel'))) eM
-
--- The variable an `unbox` refers to, forgetting its grade bound. `unbox⇒var`
--- reads it off with `var-rename`, so `_≐ʳ_`-equal renamings agree on it.
-
-unbox-tgt : ∀ {Γ A ρ Δ} → Ren (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
-unbox-tgt w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
-
-unbox-tgt-≐ : ∀ {Γ A ρ Δ} {w w' : Ren (Δ ⟨ ρ ⟩) Γ}
-            → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
-            → unbox-tgt w V ≡ unbox-tgt w' V
-unbox-tgt-≐ hw V with grad-typ⇒var V
-... | _ , y , f , refl = at hw (Tl-⟨⟩ y)
 
 ------------------------------------------------------------------------
 -- SUBSTITUTION IS A CONGRUENCE
