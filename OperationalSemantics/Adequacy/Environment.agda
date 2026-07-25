@@ -26,7 +26,7 @@ open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Nullary using (yes; no)
+open import Relation.Nullary using (yes; no; ¬_)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -50,8 +50,10 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
-open import OperationalSemantics.Adequacy.Reducibility Spec
-open import OperationalSemantics.Adequacy.Slice        Spec
+open import OperationalSemantics.Adequacy.Reducibility   Spec
+open import OperationalSemantics.Adequacy.RenEquivalence Spec
+open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.SubEquivalence Spec
 
 -- Closed values for an eternal prefix.
 
@@ -107,6 +109,18 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            ---------------------
            → Env St Γ₀
 
+  -- postcomposition with a slice: what makes `Env` functorial in the *state*
+  -- (`env-alloc`). Recorded rather than pushed into the base, so that a
+  -- reducible environment stays reducible when the state grows: its values
+  -- still come from the earlier state, and `Val-slice` moves them. Pushing it
+  -- into `⌊_⌋` would instead demand the *later* state's store, which nothing
+  -- supplies.
+
+  sliceᵉ   : ∀ {St St' Γ}
+           → Env St Γ → Slice St uᵣ St' uᵣ
+           ------------------------------
+           → Env St' Γ
+
   -- a lock, matched by any state far enough ahead
 
   _⟨_⟩ᵉ    : ∀ {St St' Γ ρ}
@@ -127,15 +141,18 @@ data Env : (St : 𝕊 []) → Ctx → Set where
 -- REDUCIBLE ENVIRONMENTS
 --
 -- The state's own part is the store; each instantiated binder holds a
--- reducible value; the eternal prefix holds closed constants, of which nothing
--- is asked (eternal types are base/unit/products).
+-- reducible value. Of the eternal prefix nothing is asked beyond its types
+-- being eternal, at which `Val` holds of everything (`Val-eternal`) — that is
+-- the only thing that makes a *closed* value usable where a lock stands.
 
 Rel-Env : ∀ {St Γ} → Env St Γ → Set
 Rel-Env ⌊ St ⌋                = Store St
 Rel-Env (γ ⟨ q ⟩ᵉ)             = Rel-Env γ
 Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × Val A St V
 Rel-Env (renᵉ γ r)             = Rel-Env γ
-Rel-Env (eternalˡ Δ lf η γ)    = Rel-Env γ
+Rel-Env (sliceᵉ γ q)           = Rel-Env γ
+Rel-Env (eternalˡ Δ lf η γ)    =
+  Rel-Env γ × (∀ {A ρ} → A ∈[ ρ ] Δ → Eternal A)
 
 -- RETYPING ALONG A CONTEXT EQUALITY
 
@@ -281,6 +298,7 @@ env-Cˢ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ ⌊ St ⌋ Δ V = V
 env-Vˢ (renᵉ γ r) Δ V = env-Vˢ γ Δ (V-rename (cong-ren r) V)
+env-Vˢ (sliceᵉ γ q) Δ V = V-rename (cong-ren (slice-renᵘ q)) (env-Vˢ γ Δ V)
 env-Vˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   V-rename (cong-ren (unbox-ren q))
     (castᵛ (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
@@ -298,6 +316,7 @@ env-Vˢ (eternalˡ Δ₀ lf η γ) Δ V =
 
 env-Cˢ ⌊ St ⌋ Δ M = M
 env-Cˢ (renᵉ γ r) Δ M = env-Cˢ γ Δ (C-rename (cong-ren r) M)
+env-Cˢ (sliceᵉ γ q) Δ M = C-rename (cong-ren (slice-renᵘ q)) (env-Cˢ γ Δ M)
 env-Cˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   C-rename (cong-ren (unbox-ren q))
     (castᶜ (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
@@ -353,6 +372,7 @@ env-Vˢ-lam : ∀ {St Γ A B ε} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ-lam ⌊ St ⌋ Δ M = refl
 env-Vˢ-lam (renᵉ γ r) Δ M = env-Vˢ-lam γ Δ _
+env-Vˢ-lam (sliceᵉ γ q) Δ M = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-lam γ Δ M)
 
 env-Vˢ-lam {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -501,6 +521,7 @@ env-Cˢ-ret : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → (V : (Γ ++�
 
 env-Cˢ-ret ⌊ St ⌋ Δ V = refl
 env-Cˢ-ret (renᵉ γ r) Δ V = env-Cˢ-ret γ Δ _
+env-Cˢ-ret (sliceᵉ γ q) Δ V = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-ret γ Δ V)
 
 env-Cˢ-ret (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -560,6 +581,7 @@ env-Cˢ-app : ∀ {St Γ A C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-app ⌊ St ⌋ Δ V U = refl
 env-Cˢ-app (renᵉ γ r) Δ V U = env-Cˢ-app γ Δ _ _
+env-Cˢ-app (sliceᵉ γ q) Δ V U = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-app γ Δ V U)
 
 env-Cˢ-app (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -618,6 +640,7 @@ env-Cˢ-absurd : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-absurd ⌊ St ⌋ Δ V = refl
 env-Cˢ-absurd (renᵉ γ r) Δ V = env-Cˢ-absurd γ Δ _
+env-Cˢ-absurd (sliceᵉ γ q) Δ V = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-absurd γ Δ V)
 
 env-Cˢ-absurd (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -676,6 +699,7 @@ env-Cˢ-coerce : ∀ {St Γ A ε ε'} → (γ : Env St Γ) → (Δ : Ctx) → {p
 
 env-Cˢ-coerce ⌊ St ⌋ Δ M = refl
 env-Cˢ-coerce (renᵉ γ r) Δ M = env-Cˢ-coerce γ Δ _
+env-Cˢ-coerce (sliceᵉ γ q) Δ M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-coerce γ Δ M)
 
 env-Cˢ-coerce (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -734,6 +758,7 @@ env-Vˢ-pair : ∀ {St Γ A B} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ-pair ⌊ St ⌋ Δ V U = refl
 env-Vˢ-pair (renᵉ γ r) Δ V U = env-Vˢ-pair γ Δ _ _
+env-Vˢ-pair (sliceᵉ γ q) Δ V U = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-pair γ Δ V U)
 
 env-Vˢ-pair (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -791,6 +816,7 @@ env-Vˢ-const : ∀ {St Γ b} → (γ : Env St Γ) → (Δ : Ctx) → (c : BaseC
 
 env-Vˢ-const ⌊ St ⌋ Δ c = refl
 env-Vˢ-const (renᵉ γ r) Δ c = env-Vˢ-const γ Δ _
+env-Vˢ-const (sliceᵉ γ q) Δ c = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-const γ Δ c)
 
 env-Vˢ-const (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ c =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -847,6 +873,7 @@ env-Vˢ-⋆ : ∀ {St Γ} → (γ : Env St Γ) → (Δ : Ctx) → env-Vˢ γ Δ 
 
 env-Vˢ-⋆ ⌊ St ⌋ Δ  = refl
 env-Vˢ-⋆ (renᵉ γ r) Δ  = env-Vˢ-⋆ γ Δ
+env-Vˢ-⋆ (sliceᵉ γ q) Δ = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-⋆ γ Δ)
 
 env-Vˢ-⋆ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ  =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -933,6 +960,7 @@ env-Cˢ-delay : ∀ {St Γ A ε τ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-delay ⌊ St ⌋ Δ M = refl
 env-Cˢ-delay (renᵉ γ r) Δ M = env-Cˢ-delay γ Δ _
+env-Cˢ-delay (sliceᵉ γ q) Δ M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-delay γ Δ M)
 
 env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1062,6 +1090,7 @@ env-Cˢ-seq : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-seq ⌊ St ⌋ Δ M N = refl
 env-Cˢ-seq (renᵉ γ r) Δ M N = env-Cˢ-seq γ Δ _ _
+env-Cˢ-seq (sliceᵉ γ q) Δ M N = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-seq γ Δ M N)
 
 env-Cˢ-seq {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M N =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1210,6 +1239,7 @@ env-Cˢ-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-perform ⌊ St ⌋ Δ V M = refl
 env-Cˢ-perform (renᵉ γ r) Δ V M = env-Cˢ-perform γ Δ _ _
+env-Cˢ-perform (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-perform γ Δ V M)
 
 env-Cˢ-perform {op = op} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1331,6 +1361,7 @@ env-Cˢ-match : ∀ {St Γ A B C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-match ⌊ St ⌋ Δ V M = refl
 env-Cˢ-match (renᵉ γ r) Δ V M = env-Cˢ-match γ Δ _ _
+env-Cˢ-match (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-match γ Δ V M)
 
 env-Cˢ-match {A = A} {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1461,6 +1492,7 @@ env-Cˢ-box : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-box ⌊ St ⌋ Δ V M = refl
 env-Cˢ-box (renᵉ γ r) Δ V M = env-Cˢ-box γ Δ _ _
+env-Cˢ-box (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-box γ Δ V M)
 
 env-Cˢ-box {A = A} {ρ = ρ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ V M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1608,21 +1640,8 @@ env-Cˢ-head γ M W = refl
 -- eternal type and so *is* closed (`eternal-val-restrict`), and the eternal
 -- prefix already holds closed values.
 
--- A variable of the eternal restriction comes from the context itself.
-
-∈-ᴱ⁻ : ∀ {A ρ} → (Δ : Ctx) → A ∈[ ρ ] Δ ᴱ → Σ[ ρ' ∈ R ] A ∈[ ρ' ] Δ
-∈-ᴱ⁻ []        x with x
-... | ()
-∈-ᴱ⁻ (Δ ∷ B)   x with eternal? B
-∈-ᴱ⁻ (Δ ∷ B)   Hd       | yes _ = uᵣ , Hd
-∈-ᴱ⁻ (Δ ∷ B)   (Tl-∷ y) | yes _ with ∈-ᴱ⁻ Δ y
-... | ρ' , z = ρ' , Tl-∷ z
-∈-ᴱ⁻ (Δ ∷ B)   x        | no  _ with ∈-ᴱ⁻ Δ x
-... | ρ' , z = ρ' , Tl-∷ z
-∈-ᴱ⁻ (Δ ⟨ ρ ⟩) x with ∈-ᴱ⁻ Δ x
-... | ρ' , z = ρ' ·ᵣ ρ , Tl-⟨⟩ z
-
--- Every variable of the eternal restriction has eternal type.
+-- A variable of the eternal restriction comes from the context itself
+-- (`∈-ᴱ⁻`, in `RenEquivalence`), and every variable of the eternal restriction has eternal type.
 
 ᴱ-eternal : ∀ {A ρ} → (Δ : Ctx) → A ∈[ ρ ] Δ ᴱ → Eternal A
 ᴱ-eternal []        x with x
@@ -1635,22 +1654,26 @@ env-Cˢ-head γ M W = refl
 
 -- A variable of a concatenation comes from one of the two parts.
 
+-- The grade of a variable of the *right* part is unchanged: only that part's
+-- locks stand to its right.
+
 ∈-++ᶜ-split : ∀ {A ρ} → (Δ₁ Δ₂ : Ctx) → A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂)
-            → (Σ[ ρ' ∈ R ] A ∈[ ρ' ] Δ₁) ⊎ (Σ[ ρ' ∈ R ] A ∈[ ρ' ] Δ₂)
+            → (Σ[ ρ' ∈ R ] A ∈[ ρ' ] Δ₁) ⊎ (A ∈[ ρ ] Δ₂)
 ∈-++ᶜ-split Δ₁ []         x        = inj₁ (_ , x)
-∈-++ᶜ-split Δ₁ (Δ₂ ∷ B)   Hd       = inj₂ (_ , Hd)
+∈-++ᶜ-split Δ₁ (Δ₂ ∷ B)   Hd       = inj₂ Hd
 ∈-++ᶜ-split Δ₁ (Δ₂ ∷ B)   (Tl-∷ x) with ∈-++ᶜ-split Δ₁ Δ₂ x
-... | inj₁ p        = inj₁ p
-... | inj₂ (ρ' , y) = inj₂ (ρ' , Tl-∷ y)
+... | inj₁ p = inj₁ p
+... | inj₂ y = inj₂ (Tl-∷ y)
 ∈-++ᶜ-split Δ₁ (Δ₂ ⟨ ρ ⟩) (Tl-⟨⟩ x) with ∈-++ᶜ-split Δ₁ Δ₂ x
-... | inj₁ p        = inj₁ p
-... | inj₂ (ρ' , y) = inj₂ (ρ' ·ᵣ ρ , Tl-⟨⟩ y)
+... | inj₁ p = inj₁ p
+... | inj₂ y = inj₂ (Tl-⟨⟩ y)
 
 env-ᴱ : ∀ {St Γ} → (γ : Env St Γ) → ClosedVals (Γ ᴱ)
 
 env-ᴱ ⌊ St ⌋ x =
   ⊥-elim (not-in-empty-ctx (subst (λ Γ' → _ ∈[ _ ] Γ') (toCtxᴱ-[] St) x))
 env-ᴱ (γ ⟨ q ⟩ᵉ) x = env-ᴱ γ x
+env-ᴱ (sliceᵉ γ q) x = env-ᴱ γ x
 env-ᴱ (renᵉ {Γ₀ = Γ₀} γ r) x with ᴱ-eternal Γ₀ x | ∈-ᴱ⁻ Γ₀ x
 ... | et | ρ' , y with var-rename r y
 ... | ρ'' , _ , z = env-ᴱ γ (∈-ᴱ et z)
@@ -1662,7 +1685,7 @@ env-ᴱ (_∷ᵉ_ γ V)                   x        | no ¬et = env-ᴱ γ x
 env-ᴱ (eternalˡ {Γ = Γ} Δ lf η γ) x
   with ∈-++ᶜ-split (Δ ᴱ) (Γ ᴱ) (subst (λ Γ' → _ ∈[ _ ] Γ') (ᴱ-++ᶜ Δ Γ) x)
 ... | inj₁ (ρ' , y) = η (proj₂ (∈-ᴱ⁻ Δ y))
-... | inj₂ (ρ' , y) = env-ᴱ γ y
+... | inj₂ y        = env-ᴱ γ y
 
 ------------------------------------------------------------------------
 -- FUNCTORIALITY IN THE STATE
@@ -1670,8 +1693,8 @@ env-ᴱ (eternalˡ {Γ = Γ} Δ lf η γ) x
 -- `BOX` steps `⟨St, box V M⟩ ↝ ⟨St ∷ₛ V', M⟩`, so the `box` case of the
 -- fundamental lemma must move an environment to the extended state. The term
 -- needs no reindexing — `toCtx (St ∷ₛ V) = toCtx St ∷ [ρ]A` is the context the
--- action already produced. The environment moves by structural recursion: a
--- weakening at the base, a longer slice at a lock.
+-- action already produced, and moving the environment is recording the
+-- allocation slice.
 ------------------------------------------------------------------------
 
 env-alloc : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
@@ -1679,25 +1702,131 @@ env-alloc : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
           ---------------------
           → Env (St ∷ₛ V) Γ
 
-env-alloc V ⌊ St ⌋            = renᵉ ⌊ St ∷ₛ V ⌋ wk-ren
-env-alloc V (γ ⟨ q ⟩ᵉ)         = γ ⟨ slice-∘ (alloc-slice V) q ⟩ᵉ
-env-alloc V (renᵉ γ r)        = renᵉ (env-alloc V γ) r
-env-alloc V (γ ∷ᵉ W)          = (env-alloc V γ) ∷ᵉ slice-val (alloc-slice V) W
-env-alloc V (eternalˡ Δ lf η γ) = eternalˡ Δ lf η (env-alloc V γ)
+env-alloc V γ = sliceᵉ γ (alloc-slice V)
 
--- Allocation preserves reducibility of the environment, given that the new
--- cell is itself reducible (which is what `BOX` supplies). Each entry moves
--- along the allocation slice, so this is exactly `Val-slice`.
+-- Reducibility is unaffected: the values still live at the earlier state.
 
 env-allocᴿ : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-           → (pV : Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V))
            → (γ : Env St Γ) → Rel-Env γ
            ------------------------------
            → Rel-Env (env-alloc V γ)
 
-env-allocᴿ V pV ⌊ St ⌋            pγ        = store-alloc V pγ pV
-env-allocᴿ V pV (γ ⟨ q ⟩ᵉ)         pγ        = pγ
-env-allocᴿ V pV (renᵉ γ r)        pγ        = env-allocᴿ V pV γ pγ
-env-allocᴿ V pV (_∷ᵉ_ {A = A} γ W) (pγ , pW) =
-  env-allocᴿ V pV γ pγ , Val-slice (alloc-slice V) W pW
-env-allocᴿ V pV (eternalˡ Δ lf η γ) pγ      = env-allocᴿ V pV γ pγ
+env-allocᴿ V γ pγ = pγ
+
+------------------------------------------------------------------------
+-- THE ACTION RESPECTS THE TERM EQUIVALENCE
+--
+-- Recursion on the environment, not on the term: each zone acts by renaming
+-- and substitution, both of which are congruences (`V-rename-cong`, `sub-≐ᵛ`).
+------------------------------------------------------------------------
+
+castᵛ-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
+        → V ≐ᵛ V' → castᵛ e V ≐ᵛ castᵛ e V'
+castᵛ-≐ refl eV = eV
+
+env-eternal-V-≐ : ∀ {Δ Γ A} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+                → {V V' : (Δ ++ᶜ Γ) ⊢V⦂ A} → V ≐ᵛ V'
+                → env-eternal-V lf η V ≐ᵛ env-eternal-V lf η V'
+
+env-eternal-V-≐ lf-[]              η eV = castᵛ-≐ ++ᶜ-identityˡ eV
+env-eternal-V-≐ {Δ ∷ B} {Γ} (lf-∷ lf) η eV =
+  env-eternal-V-≐ lf (λ x → η (Tl-∷ x))
+    (castᵛ-≐ _ (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Δ ∷ B} {Γ})) (≐ᵛ-refl _) eV))
+
+env-Vˢ-≐ : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → {V V' : (Γ ++ᶜ Δ) ⊢V⦂ A}
+         → V ≐ᵛ V' → env-Vˢ γ Δ V ≐ᵛ env-Vˢ γ Δ V'
+
+env-Vˢ-≐ ⌊ St ⌋       Δ eV = eV
+env-Vˢ-≐ (renᵉ γ r)   Δ eV = env-Vˢ-≐ γ Δ (V-rename-cong (cong-ren r) eV)
+env-Vˢ-≐ (sliceᵉ γ q) Δ eV = V-rename-cong _ (env-Vˢ-≐ γ Δ eV)
+env-Vˢ-≐ (γ ⟨ q ⟩ᵉ)    Δ eV =
+  V-rename-cong _ (castᵛ-≐ _ (env-Vˢ-≐ γ _ (castᵛ-≐ _ eV)))
+env-Vˢ-≐ (_∷ᵉ_ {St = St} {Γ = Γ} {A = A} γ W) Δ eV =
+  castᵛ-≐ (cong₂ _++ᶜ_ (split→∈-split-l t) (split→∈-split-r t))
+    (sub-≐ᵛ (split→∈ t) (≐ᵛ-refl (castᵛ (sym (split→∈-split-l t)) W))
+      (castᵛ-≐ (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+        (env-Vˢ-≐ γ ([] ∷ A ++ᶜ Δ) (castᵛ-≐ (++ᶜ-assoc Γ ([] ∷ A) Δ) eV))))
+  where
+    t = split-≡-++ᶜ {toCtx St ∷ A} {Δ}
+env-Vˢ-≐ (eternalˡ Δ₀ lf η γ) Δ eV =
+  env-Vˢ-≐ γ Δ (env-eternal-V-≐ lf η (castᵛ-≐ _ eV))
+
+------------------------------------------------------------------------
+-- THE ACTION ON A VARIABLE
+--
+-- What each zone does to a variable of its own context. The bounds are left
+-- free: `_≐ᵛ_` does not see them, and each caller has its own.
+------------------------------------------------------------------------
+
+postulate
+
+  -- A telescope entry is substituted by its value, and leaves the rest alone.
+
+  env-var-hd : ∀ {St Γ A} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
+             → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
+             → env-V (γ ∷ᵉ W) (var f Hd) ≐ᵛ W
+
+  env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A₀)
+             → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → env-V (γ ∷ᵉ W) (var f (Tl-∷ x)) ≐ᵛ env-V γ (var f' x)
+
+  -- A variable crossing a lock is the same value, moved along the slice the
+  -- lock was matched by. Its own bound is what licenses the move
+  -- (`slice-unit`), so the relaxation is an argument.
+
+  env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : Slice St ρ St' uᵣ)
+               → (p : ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ' ] Γ)
+               → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
+               → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
+               → env-V (γ ⟨ q ⟩ᵉ) (var f (Tl-⟨⟩ x))
+               ≐ᵛ slice-val (slice-unit q p) (env-V γ (var f' x))
+
+  -- The eternal zone does not touch the variables of the context it prefixes.
+
+  env-var-eternalˡ : ∀ {St Γ A ρ ρ'} → (Δ : Ctx) → (lf : Lock-free Δ)
+                   → (η : ClosedVals Δ) → (γ : Env St Γ)
+                   → (x : A ∈[ ρ ] (Δ ++ᶜ Γ)) → (y : A ∈[ ρ' ] Γ)
+                   → (f  : ¬ Eternal A → ρ  ≾ᵣ uᵣ)
+                   → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
+                   → env-V (eternalˡ Δ lf η γ) (var f x) ≐ᵛ env-V γ (var f' y)
+
+-- Every variable of a reducible environment's context becomes a reducible
+-- value: the fundamental lemma's variable case. The eternal cases are the two
+-- that need no law — `Val` holds of everything at an eternal type, which is
+-- also why a locked variable of eternal type needs no slice.
+
+env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
+        → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+        ------------------------------------------------
+        → Val A St (env-V γ (var f x))
+
+env-var ⌊ St ⌋       pγ x f = pγ x f
+
+env-var (sliceᵉ γ q) pγ x f = Val-slice q _ (env-var γ pγ x f)
+
+env-var (renᵉ γ r)   pγ x f =
+  Val-≐ᵛ _ (≐ᵛ-sym (env-Vˢ-≐ γ [] (var-ren-≐ r x f f')))
+           (env-var γ pγ (proj₂ (var-tgt r x)) f')
+  where
+    f' = λ ¬et → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) ¬et) (f ¬et)
+
+env-var (γ ∷ᵉ W) (pγ , pW) Hd       f =
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-hd γ W f)) pW
+env-var (γ ∷ᵉ W) (pγ , pW) (Tl-∷ x) f =
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-tl γ W x f f)) (env-var γ pγ x f)
+
+env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
+... | yes et = Val-eternal et _
+... | no ¬et =
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-lock γ q p x f f'))
+           (Val-slice (slice-unit q p) _ (env-var γ pγ x f'))
+  where
+    p  = ≾ᵣ-zero-productʳ (f ¬et)
+    f' = λ _ → ≾ᵣ-zero-productˡ (f ¬et)
+
+env-var {A = A} (eternalˡ Δ lf η γ) (pγ , et) x f
+  with ∈-++ᶜ-split Δ _ x
+... | inj₁ (ρ' , y) = Val-eternal (et y) _
+... | inj₂ y        =
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-eternalˡ Δ lf η γ x y f f)) (env-var γ pγ y f)

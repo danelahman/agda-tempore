@@ -53,6 +53,14 @@ slice-ren (slice e b) = suc-comp-ren e b
 slice-id : ∀ {St ρ} → Slice St ρ St ρ
 slice-id {ρ = ρ} = slice id-suc (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
 
+-- A guarded slice whose guard is itself below the unit is a unit slice: the
+-- extension is the same, only the bound is relaxed. This is how a value under a
+-- lock is moved forward — a *usable* variable's grade bound gives `ρ ≾ᵣ uᵣ` by
+-- the grade monoid's zero-product law.
+
+slice-unit : ∀ {St St' ρ} → Slice St ρ St' uᵣ → ρ ≾ᵣ uᵣ → Slice St uᵣ St' uᵣ
+slice-unit (slice e b) p = slice e (≾ᵣ-trans b p)
+
 -- At the unit lock the slice is a plain renaming `toCtx St → toCtx St'`.
 
 slice-renᵘ : ∀ {St St'} → Slice St uᵣ St' uᵣ → Ren (toCtx St) (toCtx St')

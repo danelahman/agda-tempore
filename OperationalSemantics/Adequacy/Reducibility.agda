@@ -141,17 +141,17 @@ Val ([ ρ ] A)     St V =
 Comp' : (A : VType) → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
 Comp' A = Comp A (Val A)
 
--- REDUCIBLE STORES (recursion on `𝕊`)
+-- REDUCIBLE STORES
 --
--- Every cell holds a value reducible at the stage it was allocated for. The
--- reducibility analogue of `Paramˢ`; the store is the closing environment for
--- the resource variables of `toCtx St`.
+-- Every resource variable of the state context is reducible. Stated on the
+-- variables rather than by recursion on `𝕊`, because reducibility of a cell is
+-- a Kripke statement — the value is read back by `unbox-lookup` at a *later*
+-- state — and that is exactly `Val` at the cell's box type. The store is the
+-- closing environment for the resource variables of `toCtx St`.
 
 Store : 𝕊 [] → Set
-Store ∅                  = ⊤
-Store (St ⟨ ρ ⟩ₛ)         = Store St
-Store (_∷ₛ_ {A} {ρ} St V) =
-  Store St × Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V)
+Store St = ∀ {A ρ} → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+         → Val A St (var f x)
 
 -- HEAD EXPANSION
 --
@@ -167,6 +167,23 @@ Comp-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
 
 Comp-expand r (comp-ret rs pV)   = comp-ret (r ◅ rs) pV
 Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
+
+-- The empty store: `toCtx ∅` has no variables.
+
+store-∅ : Store ∅
+store-∅ x f = ⊥-elim (not-in-empty-ctx x)
+
+postulate
+
+  -- Reducibility is insensitive to the term equivalence. `↝*-≐` transports the
+  -- run, but its whnf sits at a state only `_≐ˢ_`-related to the original's
+  -- (`BOX` stores `_≐ᵛ_`-related values), so the whnf's components have to be
+  -- moved across `_≐ˢ_` too. That is the one remaining semantic obligation —
+  -- `Val-≐`/`Comp-≐` of the plan's item 4, to be proved *non*-mutually, passing
+  -- `Val-≐ A` to `Comp-≐` as a parameter.
+
+  Comp-≐ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
+          → M ≐ᶜ M' → Comp' A ε St M → Comp' A ε St M'
 
 ------------------------------------------------------------------------
 -- LEMMAS TO PROVE
@@ -207,16 +224,28 @@ postulate
                    → unbox-lookup St₂ (unbox-ren q') (slice-val q₀ V)
                    ≐ᵛ unbox-lookup St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V
 
-postulate
+-- ETERNAL TYPES ARE FREE
+--
+-- An eternal type is built from base, unit, empty and products, so `Val` asks
+-- nothing of a value of eternal type — except, at a product, that it *be* a
+-- pair, which over a state context it is (`⦉⦊-not-in-toCtx`). This is what
+-- makes the eternal zone of an environment reducible for nothing, and what
+-- covers the variables a lock would otherwise block.
 
-  -- The store makes every resource variable reducible: this is what discharges
-  -- `Val`'s `[ ρ ]` clause in the variable case of the fundamental lemma.
+pair-canonical : ∀ {A B} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A |×| B)
+               → Σ[ V₁ ∈ toCtx St ⊢V⦂ A ] Σ[ V₂ ∈ toCtx St ⊢V⦂ B ]
+                   (V ≡ ⦉ V₁ , V₂ ⦊)
+pair-canonical (var f x) = ⊥-elim (⦉⦊-not-in-toCtx x)
+pair-canonical ⦉ V , W ⦊  = V , W , refl
 
-  store-var : ∀ {A ρ ρ'} {St : 𝕊 []}
-            → Store St
-            → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
-            → (f : ¬ Eternal ([ ρ ] A) → ρ' ≾ᵣ uᵣ)
-            → Val ([ ρ ] A) St (var f x)
+Val-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → Val A St V
+
+Val-eternal (Baseₑ b _)      V = tt
+Val-eternal Unitₑ            V = tt
+Val-eternal Emptyₑ           V = tt
+Val-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
+... | V₁ , V₂ , refl           =
+  V₁ , V₂ , refl , Val-eternal et₁ V₁ , Val-eternal et₂ V₂
 
 ------------------------------------------------------------------------
 -- REDUCIBILITY IS INSENSITIVE TO THE EQUIVALENCE, AND MONOTONE
@@ -265,12 +294,44 @@ Val-slice {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
 Val-slice {[ ρ ] A} q₀ V f =
   λ q' W eW → f (slice-∘ᵘ q' q₀) W (≐ᵛ-trans eW (unbox-lookup-ren q₀ q' V))
 
--- Allocation extends a reducible store with a reducible value (`BOX`): a cell
--- is its stored value, so this is the pair.
+-- ALLOCATION
+--
+-- `BOX` extends the store with a value that is reducible at every state the
+-- lock it was boxed under permits — which is what the fundamental lemma
+-- supplies, by running its own value case at each such state.
+--
+-- The old variables are covered by `Val-slice` along the allocation, once the
+-- renaming is seen to send a variable to its own weakening. The new one is the
+-- lookup at the freshly allocated cell.
+
+alloc-var-≐ : ∀ {A A' ρ ρ'} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+            → (x : A' ∈[ ρ' ] toCtx St) → (f : ¬ Eternal A' → ρ' ≾ᵣ uᵣ)
+            → slice-val (alloc-slice V) (var f x) ≐ᵛ var f (Tl-∷ x)
+alloc-var-≐ V x f =
+  var-ren-tgt-≐ (slice-renᵘ (alloc-slice V)) x f
+                (slice-renᵘ-tgt (alloc-slice V) x) f
+
+postulate
+
+  -- The freshly allocated cell is reducible: a slice out of `St ∷ₛ V` at `ρ`
+  -- is one out of `St` (`slice-∘ᵘ` against `alloc-slice`), and the lookup at
+  -- `Hd` returns the stored value (`resource-lookup (St ∷ₛ V) Hd = V`)
+  -- transported along it.
+
+  store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+              → (∀ {St'} → (q : Slice St ρ St' uᵣ)
+                   → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
+              → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
+              ------------------------------------------
+              → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
-            → Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V)
-            ------------------------------------------------------
+            → (∀ {St'} → (q : Slice St ρ St' uᵣ)
+                 → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
+            ------------------------------------------------------------------
             → Store (St ∷ₛ V)
-store-alloc V pSt pV = pSt , pV
+
+store-alloc V pSt pV Hd       f = store-fresh V pV f
+store-alloc V pSt pV (Tl-∷ x) f =
+  Val-≐ᵛ _ (alloc-var-≐ V x f) (Val-slice (alloc-slice V) (var f x) (pSt x f))

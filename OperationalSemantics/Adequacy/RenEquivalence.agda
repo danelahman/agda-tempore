@@ -503,6 +503,26 @@ restrict-ren-≐ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
         at-tgt : ∀ {A} → (t : Tgt Γ A) → var-tgt′ r t ≡ var-tgt′ r' t
         at-tgt (_ , y) = at h y
 
+-- Renaming a variable is the variable the renaming sends it to: `var-tgt`
+-- records the position, and the grade bound it recomputes is invisible to
+-- `_≐ᵛ_`. Stated at an arbitrary bound so that the caller may present the
+-- result with whichever bound its own typing supplies.
+
+var-ren-≐ : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+          → (f  : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+          → (f' : ¬ Eternal A → proj₁ (var-tgt r x) ≾ᵣ uᵣ)
+          → V-rename r (var f x) ≐ᵛ var f' (proj₂ (var-tgt r x))
+var-ren-≐ r x f f' with var-rename r x
+... | _ , _ , y = var-≐
+
+-- The same with the target supplied, for callers that have computed it.
+
+var-ren-tgt-≐ : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+              → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → {t : Tgt Γ' A}
+              → var-tgt r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
+              → V-rename r (var f x) ≐ᵛ var f' (proj₂ t)
+var-ren-tgt-≐ r x f refl f' = var-ren-≐ r x f f'
+
 ------------------------------------------------------------------------
 -- THE ACTION RESPECTS ACTING ALIKE
 --
