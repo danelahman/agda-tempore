@@ -263,19 +263,45 @@ record BaseFaithful : Set where
               ----------------------
               → c₁ ≡ c₂
 
+-- UNIFORMITY IS FREE
+--
+-- The handler uniformity a reduction needs is carried by the term's own
+-- certificate, so `Uniform↝`/`Uniform↝*` are `⊤` in every case; the two
+-- congruences just inherit their sub-step's.
+
+uniform↝ : ∀ {A ε ε'} {St St' : 𝕊 []}
+         → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+         → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩) → (pM : Paramᶜ M)
+         ---------------------------------------------------
+         → Uniform↝ r pM
+
+uniform↝ APP                 _         = tt
+uniform↝ MATCH               _         = tt
+uniform↝ (SEQ-STEP r _)      (pM , _)  = uniform↝ r pM
+uniform↝ SEQ-RET             _         = tt
+uniform↝ SEQ-OP              _         = tt
+uniform↝ DELAY               _         = tt
+uniform↝ HANDLE-RET          _         = tt
+uniform↝ (HANDLE-STEP r _)   (pM , _)  = uniform↝ r pM
+uniform↝ HANDLE-OP           _         = tt
+uniform↝ BOX                 _         = tt
+uniform↝ UNBOX               _         = tt
+uniform↝ COERCE              _         = tt
+
+uniform↝* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+          → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf)
+          ------------------------------------
+          → Uniform↝* rs p
+
+uniform↝* ε*       p          = tt
+uniform↝* (r ◅ rs) (pS , pM)  =
+  uniform↝ r pM , uniform↝* rs (stepᴾᶜᶠ r (pS , pM))
+
 ------------------------------------------------------------------------
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
 postulate
-
-  -- Uniformity of the handlers a run reaches is now carried by the term's own
-  -- certificate, so `Uniform↝*` is inhabited outright (every case is `⊤`).
-
-  uniform↝* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
-            → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf)
-            ------------------------------------
-            → Uniform↝* rs p
 
   -- A whnf configuration denotes a head: a `return` is a leaf, a `perform` an
   -- operation node. Unfolding `⟦_⟧ᶜᵗ` at the two whnf formers, with the

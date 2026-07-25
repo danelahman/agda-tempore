@@ -159,17 +159,32 @@ Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
+-- GROUND REDUCIBILITY IS VALUE REDUCIBILITY at the embedded type. The two
+-- definitions agree clause by clause — ground types have no arrow, so nothing
+-- is lost. Needed wherever they meet: `perform`, and the `handle` clause's
+-- parameter and resumption.
+
+Valᵍ→Val : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
+         → Valᵍ G St V → Val (type-of-gtype G) St V
+
+Val→Valᵍ : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
+         → Val (type-of-gtype G) St V → Valᵍ G St V
+
+Valᵍ→Val {Base b}      V p = tt
+Valᵍ→Val {Unit}        V p = tt
+Valᵍ→Val {Empty}       V p = tt
+Valᵍ→Val {G₁ |×|ᵍ G₂}  V (V₁ , V₂ , e , p₁ , p₂) =
+  V₁ , V₂ , e , Valᵍ→Val V₁ p₁ , Valᵍ→Val V₂ p₂
+Valᵍ→Val {[ ρ ]ᵍ G}    V p = λ q → Valᵍ→Val _ (p q)
+
+Val→Valᵍ {Base b}      V p = tt
+Val→Valᵍ {Unit}        V p = tt
+Val→Valᵍ {Empty}       V p = tt
+Val→Valᵍ {G₁ |×|ᵍ G₂}  V (V₁ , V₂ , e , p₁ , p₂) =
+  V₁ , V₂ , e , Val→Valᵍ V₁ p₁ , Val→Valᵍ V₂ p₂
+Val→Valᵍ {[ ρ ]ᵍ G}    V p = λ q → Val→Valᵍ _ (p q)
+
 postulate
-
-  -- Ground reducibility is value reducibility at the embedded type. Needed
-  -- wherever the two meet: `perform`, and the `handle` clause's parameter and
-  -- resumption.
-
-  Valᵍ→Val : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
-           → Valᵍ G St V → Val (type-of-gtype G) St V
-
-  Val→Valᵍ : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
-           → Val (type-of-gtype G) St V → Valᵍ G St V
 
   -- Monotonicity along the slice. Only stated where it holds: a plain value
   -- moves at the unit lock (knot 1 of `notes/adequacy-plan.md` — the general
