@@ -40,7 +40,8 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
-open import OperationalSemantics.Adequacy.Slice Spec
+open import OperationalSemantics.Adequacy.RenEquivalence Spec
+open import OperationalSemantics.Adequacy.Slice         Spec
 
 -- REDUCIBLE GROUND VALUES (recursion on `GType`)
 --
@@ -107,6 +108,12 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 -- once enough time has passed. `⇒` because `Val` must be monotone: `BOX`
 -- allocates a cell, and a function reaching the extended state may be applied
 -- to arguments mentioning it.
+--
+-- The arrow clause takes the transported body up to `_≐ᶜ_` rather than on the
+-- nose. That is what makes `Val-slice` compose two transports: renaming is
+-- functorial only up to `_≐ᶜ_` (`unbox` stores a renaming), so with the slack
+-- the composite is reached by `≐ᶜ-trans` instead of needing `Comp` to respect
+-- `_≐ᶜ_` across *different* states.
 
 Val : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 Val (Base b)      St V = ⊤
@@ -119,8 +126,9 @@ Val (A ⇒ (B ‼ ε)) St V =
   Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
     (V ≡ lam M)
   × (∀ {St'} → (q : Slice St uᵣ St' uᵣ)
+     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≐ᶜ slice-under q M
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
-     → Comp B (Val B) ε St' ((slice-under q M) [ Hd ↦ W ]c))
+     → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
 Val ([ ρ ] A)     St V =
   ∀ {St'} → (q : Slice St ρ St' uᵣ) → Val A St' (unbox-lookup St' (unbox-ren q) V)
 

@@ -249,8 +249,7 @@ mutual
     box-≐     : ∀ {A C ρ} {V V' : Γ ⟨ ρ ⟩ ⊢V⦂ A} {M M' : Γ ∷ [ ρ ] A ⊢C⦂ C}
               → V ≐ᵛ V' → M ≐ᶜ M' → box V M ≐ᶜ box V' M'
 
--- Reflexivity and transitivity. (Symmetry is the same recursion, omitted until
--- it is needed.)
+-- Reflexivity, symmetry and transitivity.
 
 mutual
 
@@ -306,6 +305,29 @@ mutual
   ≐ᶜ-trans (coerce-≐ eM)      (coerce-≐ eM')      = coerce-≐ (≐ᶜ-trans eM eM')
   ≐ᶜ-trans (box-≐ eV eM)      (box-≐ eV' eM')     =
     box-≐ (≐ᵛ-trans eV eV') (≐ᶜ-trans eM eM')
+
+mutual
+
+  ≐ᵛ-sym : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≐ᵛ V' → V' ≐ᵛ V
+  ≐ᵛ-sym var-≐            = var-≐
+  ≐ᵛ-sym const-≐          = const-≐
+  ≐ᵛ-sym ⋆-≐              = ⋆-≐
+  ≐ᵛ-sym (pair-≐ eV eW)   = pair-≐ (≐ᵛ-sym eV) (≐ᵛ-sym eW)
+  ≐ᵛ-sym (lam-≐ eM)       = lam-≐ (≐ᶜ-sym eM)
+
+  ≐ᶜ-sym : ∀ {Γ C} {M M' : Γ ⊢C⦂ C} → M ≐ᶜ M' → M' ≐ᶜ M
+  ≐ᶜ-sym (return-≐ eV)      = return-≐ (≐ᵛ-sym eV)
+  ≐ᶜ-sym (seq-≐ eM eN)      = seq-≐ (≐ᶜ-sym eM) (≐ᶜ-sym eN)
+  ≐ᶜ-sym (app-≐ eV eW)      = app-≐ (≐ᵛ-sym eV) (≐ᵛ-sym eW)
+  ≐ᶜ-sym (match-≐ eV eM)    = match-≐ (≐ᵛ-sym eV) (≐ᶜ-sym eM)
+  ≐ᶜ-sym (absurd-≐ eV)      = absurd-≐ (≐ᵛ-sym eV)
+  ≐ᶜ-sym (perform-≐ eV eM)  = perform-≐ (≐ᵛ-sym eV) (≐ᶜ-sym eM)
+  ≐ᶜ-sym (delay-≐ eM)       = delay-≐ (≐ᶜ-sym eM)
+  ≐ᶜ-sym (handle-≐ eM eH eN) =
+    handle-≐ (≐ᶜ-sym eM) (λ op ε'' Γ' → ≐ᶜ-sym (eH op ε'' Γ')) (≐ᶜ-sym eN)
+  ≐ᶜ-sym (unbox-≐ hw eM)    = unbox-≐ (≐ʳ-sym hw) (≐ᶜ-sym eM)
+  ≐ᶜ-sym (coerce-≐ eM)      = coerce-≐ (≐ᶜ-sym eM)
+  ≐ᶜ-sym (box-≐ eV eM)      = box-≐ (≐ᵛ-sym eV) (≐ᶜ-sym eM)
 
 -- The eternal restriction is compositional by definition.
 
