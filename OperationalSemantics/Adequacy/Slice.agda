@@ -11,6 +11,7 @@ open import Data.Product
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
 
@@ -18,6 +19,7 @@ module OperationalSemantics.Adequacy.Slice (Spec : LanguageSpec) where
 
 open LanguageSpec Spec
 open GradeSystemInterface Grades
+open Operations Ops
 
 open import OperationalSemantics.PreservationTheorem Spec
 open import OperationalSemantics.State               Spec
@@ -407,3 +409,155 @@ unbox-cellsᵛ : ∀ {A ρ} {St St' St₂ : 𝕊 []}
              → unbox-tgt (unbox-ren q') (slice-val q₀ V)
              ≡ unbox-tgt (unbox-ren (slice-∘ᵘ q' q₀)) V
 unbox-cellsᵛ q₀ q' (var f x) = unbox-cells q₀ q' x
+
+------------------------------------------------------------------------
+-- RUNS
+--
+-- What a whole run accumulates. `PreservationTheorem` has the per-step facts;
+-- these are their closure under composition, packaged as the slice a run
+-- licenses. The `Slice` is exactly the data `SEQ-STEP`/`HANDLE-STEP` consume,
+-- which is what lets a run be lifted under those two formers.
+------------------------------------------------------------------------
+
+steps-extends-state : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+                    → cf ↝* cf' → Config.state cf ≤ₛ Config.state cf'
+
+steps-extends-state ε*       = id-suc
+steps-extends-state (r ◅ rs) =
+  ≤ₛ-trans (step-extends-state r) (steps-extends-state rs)
+
+steps-grade-≾ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+              → (rs : cf ↝* cf')
+              → ≤ₛ-grade (steps-extends-state rs) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
+
+steps-grade-≾ {ε = ε} ε* = ≾ᵣ-reflexive (·ᵣ-identityˡ (mapᵉ ε))
+steps-grade-≾ {ε' = ε'} (r ◅ rs) =
+  ≾ᵣ-trans
+    (≾ᵣ-reflexive
+      (trans (cong (_·ᵣ mapᵉ ε')
+                   (≤ₛ-grade-trans (step-extends-state r)
+                                   (steps-extends-state rs)))
+             (·ᵣ-assoc (≤ₛ-grade (step-extends-state r))
+                       (≤ₛ-grade (steps-extends-state rs)) (mapᵉ ε'))))
+    (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (steps-grade-≾ rs)) (step-grade-≾ r))
+
+steps-slice : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+            → (rs : cf ↝* cf')
+            → Slice (Config.state cf) (mapᵉ ε) (Config.state cf') (mapᵉ ε')
+steps-slice rs = slice (steps-extends-state rs) (steps-grade-≾ rs)
+
+-- LIFTING A RUN UNDER A FORMER
+--
+-- Both congruence rules retype the continuation along `suc-comp-ren` of the
+-- step's own extension, so after a run it has been renamed once per step.
+-- The composite is the run's own renaming only up to `_≐ʳ_`
+-- (`suc-comp-ren-∘-≐`), and at the empty run it is a grade relaxation rather
+-- than the identity, so the continuation reached is returned as it stands.
+
+seq-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
+          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
+          → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
+          → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+          -----------------------------------------------------------------
+          → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
+              (⟨ St , M ⨟ N ⟩ ↝* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
+            × (N₁ ≐ᶜ C-rename (cong-∷-ren (slice-ren (steps-slice rs))) N)
+
+seq-steps ε* N =
+  N , ε* , ≐ᶜ-sym (C-rename-id-≐ (cong-∷-ren-id-≐ (⟨⟩-≤-ren-id-≐ _)) N)
+
+seq-steps (r ◅ rs) N
+  with seq-steps rs
+         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                             (step-grade-≾ r))) N)
+... | N₁ , rs' , eN₁ =
+    N₁
+  , SEQ-STEP r (step-grade-≾ r) ◅ rs'
+  , ≐ᶜ-trans eN₁
+      (≐ᶜ-trans
+        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-ren (steps-slice rs)))
+                            (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                      (step-grade-≾ r))) N))
+        (C-rename-≐
+          (≐ʳ-trans
+            (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-ren (steps-slice rs))
+                                    (suc-comp-ren (step-extends-state r)
+                                                  (step-grade-≾ r))))
+            (cong-∷-ren-≐
+              (≐ʳ-sym (suc-comp-ren-∘-≐ (step-extends-state r)
+                                        (steps-extends-state rs)
+                                        _ (step-grade-≾ r)
+                                        (steps-grade-≾ rs)))))
+          N))
+
+-- The same under `handle`, which also retypes the clauses — along an equality
+-- of the two states' eternal parts, both empty. The transports compose, and any
+-- two proofs of the equality agree, so the clauses reached are the original ones
+-- transported once.
+
+Cl : (B : VType) → (op : Op) → (ε₃ : E) → (Γ' : Ctx) → Ctx → Set
+Cl B op ε₃ Γ' Γ₀ =
+  Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
+  ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)
+
+toCtxᴱ-≡ : (St St₁ : 𝕊 []) → toCtx St ᴱ ≡ toCtx St₁ ᴱ
+toCtxᴱ-≡ St St₁ = trans (toCtxᴱ-[] St) (sym (toCtxᴱ-[] St₁))
+
+subst² : ∀ {a} {X : Set a} {P : X → Set} {x y z : X}
+       → (e₁ : x ≡ y) → (e₂ : y ≡ z) → (e₃ : x ≡ z) → (v : P x)
+       → subst P e₂ (subst P e₁ v) ≡ subst P e₃ v
+subst² refl refl refl v = refl
+
+handle-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
+             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
+             → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
+             → (H : (op : Op) → (ε₃ : E) → (Γ' : Ctx)
+                  → Cl B op ε₃ Γ' (toCtx St ᴱ))
+             → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+             ---------------------------------------------------------------
+             → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → (Γ' : Ctx)
+                        → Cl B op ε₃ Γ' (toCtx St₁ ᴱ)) ]
+               Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
+                 (⟨ St , handle M `with H `in N ⟩ ↝*
+                  ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
+               × (∀ op ε₃ Γ' → H₁ op ε₃ Γ'
+                    ≡ subst (Cl B op ε₃ Γ') (toCtxᴱ-≡ St St₁) (H op ε₃ Γ'))
+               × (N₁ ≐ᶜ C-rename (cong-∷-ren (slice-ren (steps-slice rs))) N)
+
+handle-steps {B = B} {St = St} ε* H N =
+    H , N , ε*
+  , (λ op ε₃ Γ' →
+       cong (λ e → subst (Cl B op ε₃ Γ') e (H op ε₃ Γ'))
+            (uip {p = refl} {q = toCtxᴱ-≡ St St}))
+  , ≐ᶜ-sym (C-rename-id-≐ (cong-∷-ren-id-≐ (⟨⟩-≤-ren-id-≐ _)) N)
+
+handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩} r rs) H N
+  with handle-steps rs
+         (λ op ε₃ Γ' →
+            subst (Cl B op ε₃ Γ') (toCtxᴱ-≡ St St') (H op ε₃ Γ'))
+         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                             (step-grade-≾ r))) N)
+... | H₁ , N₁ , rs' , eH₁ , eN₁ =
+    H₁ , N₁
+  , HANDLE-STEP r (step-grade-≾ r) ◅ rs'
+  , (λ op ε₃ Γ' →
+       trans (eH₁ op ε₃ Γ')
+             (subst² (toCtxᴱ-≡ St St') (toCtxᴱ-≡ St' St₁) (toCtxᴱ-≡ St St₁)
+                     (H op ε₃ Γ')))
+  , ≐ᶜ-trans eN₁
+      (≐ᶜ-trans
+        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-ren (steps-slice rs)))
+                            (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                      (step-grade-≾ r))) N))
+        (C-rename-≐
+          (≐ʳ-trans
+            (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-ren (steps-slice rs))
+                                    (suc-comp-ren (step-extends-state r)
+                                                  (step-grade-≾ r))))
+            (cong-∷-ren-≐
+              (≐ʳ-sym (suc-comp-ren-∘-≐ (step-extends-state r)
+                                        (steps-extends-state rs)
+                                        _ (step-grade-≾ r)
+                                        (steps-grade-≾ rs)))))
+          N))

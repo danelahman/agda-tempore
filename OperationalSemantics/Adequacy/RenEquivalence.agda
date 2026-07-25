@@ -571,6 +571,88 @@ mutual
   C-rename-≐ h (coerce p M) = coerce-≐ (C-rename-≐ h M)
 
 ------------------------------------------------------------------------
+-- RENAMING ALONG AN IDENTITY-LIKE RENAMING
+--
+-- `cong-∷-ren id-ren`, `⟨⟩-≤-ren` at equal grades and `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
+-- all act as the identity without being it, so the action is the identity only
+-- up to the equivalence. Induction on the term, as for `C-rename-≐`.
+------------------------------------------------------------------------
+
+⟨⟩-≤-ren-id-≐ : ∀ {Γ ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤-ren {Γ = Γ} p ≐ʳ id-ren
+⟨⟩-≤-ren-id-≐ p = mk≐ʳ go
+  where
+    go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
+    go (Tl-⟨⟩ x) = refl
+
+cong-∷-ren-id-≐ : ∀ {Γ A} {r : Ren Γ Γ}
+                → r ≐ʳ id-ren → cong-∷-ren {A = A} r ≐ʳ id-ren
+cong-∷-ren-id-≐ h = mk≐ʳ go
+  where
+    go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
+    go Hd       = refl
+    go (Tl-∷ x) = cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (at h x)
+
+cong-⟨⟩-ren-id-≐ : ∀ {Γ ρ} {r : Ren Γ Γ}
+                 → r ≐ʳ id-ren → cong-⟨⟩-ren {ρ = ρ} r ≐ʳ id-ren
+cong-⟨⟩-ren-id-≐ {ρ = ρ} h = mk≐ʳ go
+  where
+    go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
+    go (Tl-⟨⟩ x) = cong (λ z → proj₁ z ·ᵣ ρ , Tl-⟨⟩ (proj₂ z)) (at h x)
+
+cong-ren-id-≐ : ∀ {Γ} {r : Ren Γ Γ} → (Γ₀ : Ctx)
+              → r ≐ʳ id-ren → cong-ren {Γ'' = Γ₀} r ≐ʳ id-ren
+cong-ren-id-≐ []         h = h
+cong-ren-id-≐ (Γ₀ ∷ A)   h = cong-∷-ren-id-≐ (cong-ren-id-≐ Γ₀ h)
+cong-ren-id-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ (cong-ren-id-≐ Γ₀ h)
+
+∘ʳ-id-≐ : ∀ {Γ Γ'} {r : Ren Γ' Γ'} → (w : Ren Γ Γ')
+        → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
+∘ʳ-id-≐ w h = mk≐ʳ (λ x → at h (proj₂ (var-tgt w x)))
+
+restrict-ren-id-≐ : ∀ {Γ} {r : Ren Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
+restrict-ren-id-≐ h = restrict-ren-≐ h
+
+mutual
+
+  V-rename-id-≐ : ∀ {Γ A} {r : Ren Γ Γ} → r ≐ʳ id-ren
+                → (V : Γ ⊢V⦂ A) → V-rename r V ≐ᵛ V
+
+  V-rename-id-≐ {r = r} h (var f x) with var-rename r x | at h x
+  ... | _ | refl = var-≐
+  V-rename-id-≐ h (const c) = const-≐
+  V-rename-id-≐ h ⋆         = ⋆-≐
+  V-rename-id-≐ h ⦉ V , W ⦊  = pair-≐ (V-rename-id-≐ h V) (V-rename-id-≐ h W)
+  V-rename-id-≐ h (lam M)   = lam-≐ (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
+
+  C-rename-id-≐ : ∀ {Γ C} {r : Ren Γ Γ} → r ≐ʳ id-ren
+                → (M : Γ ⊢C⦂ C) → C-rename r M ≐ᶜ M
+
+  C-rename-id-≐ h (return V) = return-≐ (V-rename-id-≐ h V)
+  C-rename-id-≐ h (M ⨟ N) =
+    seq-≐ (C-rename-id-≐ h M) (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
+  C-rename-id-≐ h (V · W) = app-≐ (V-rename-id-≐ h V) (V-rename-id-≐ h W)
+  C-rename-id-≐ h (match V `in M) =
+    match-≐ (V-rename-id-≐ h V) (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _ ∷ _) h) M)
+  C-rename-id-≐ h (absurd V) = absurd-≐ (V-rename-id-≐ h V)
+  C-rename-id-≐ h (perform op V M) =
+    perform-≐ (V-rename-id-≐ h V)
+              (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) M)
+  C-rename-id-≐ h (delay τ M) =
+    delay-≐ (C-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) M)
+  C-rename-id-≐ h (handle M `with H `in N) =
+    handle-≐ (C-rename-id-≐ h M)
+      (λ op ε'' Γ' →
+         C-rename-id-≐ (cong-ren-id-≐ (_ ∷ _ ∷ _) (restrict-ren-id-≐ h))
+                       (H op ε'' Γ'))
+      (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
+  C-rename-id-≐ h (unbox w V M) =
+    unbox-≐ (∘ʳ-id-≐ w h) (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
+  C-rename-id-≐ h (box V M) =
+    box-≐ (V-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) V)
+          (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
+  C-rename-id-≐ h (coerce p M) = coerce-≐ (C-rename-id-≐ h M)
+
+------------------------------------------------------------------------
 -- FUNCTORIALITY
 --
 -- At the binding formers the two sides rename along `cong-ren (r₂ ∘ʳ r₁)` and
