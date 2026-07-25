@@ -607,6 +607,10 @@ unbox-ren-resume-≐ {ρ} q = mk≐ʳ go
 -- irrelevant.
 ------------------------------------------------------------------------
 
+≡→≐ᵛˢ : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≡ V' → V ≐ᵛ V'
+≡→≐ᵛˢ refl = ≐ᵛ-refl _
+
+
 -- Retyping along a context equality (the state equivalence needs these here).
 
 castᵛˢ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
@@ -614,6 +618,9 @@ castᵛˢ refl V = V
 
 castʳˢ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren (Δ ⟨ ρ ⟩) Γ' → Ren (Δ ⟨ ρ ⟩) Γ
 castʳˢ refl w = w
+castᵛˢ-pair : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+            → castᵛˢ e ⦉ V , W ⦊ ≡ ⦉ castᵛˢ e V , castᵛˢ e W ⦊
+castᵛˢ-pair refl V W = refl
 
 -- The lookup's renaming composite depends on the state only through two
 -- contexts, the stored value and three proofs — so it is factored out. That is
@@ -694,6 +701,20 @@ lookup-body-≡ : ∀ {A ρ} → (St : 𝕊 [])
               → lookup-body St t rel ≡ lookup-body St t' rel'
 lookup-body-≡ St refl rel rel' =
   cong (lookup-body St _) (≾ᵣ-irrelevant rel rel')
+
+-- Retyping the *boxed value* instead: the lookup sees it only through
+-- `unbox⇒var`, so moving it along a context equality is precomposing the
+-- consulted renaming with that equality.
+
+unbox-lookup-cast-val : ∀ {Δ Δ' A ρ} → (St : 𝕊 []) → (e : Δ' ≡ Δ)
+                      → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ' ⊢V⦂ [ ρ ] A)
+                      → unbox-lookup St w (castᵛˢ e V)
+                      ≐ᵛ unbox-lookup St (w ∘ʳ cong-⟨⟩-ren (eq-ren e)) V
+unbox-lookup-cast-val St refl w V =
+  ≡→≐ᵛˢ (lookup-body-≡ St
+           (unbox-tgt-≐ (≐ʳ-sym (∘ʳ-id-≐ʳ w (cong-⟨⟩-ren-id-≐ ≐ʳ-refl))) V)
+           _ _)
+
 
 ------------------------------------------------------------------------
 -- THE STORE IS STABLE UNDER AN EXTENSION

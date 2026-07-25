@@ -637,6 +637,10 @@ cong-ren-id-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ (cong-ren-id-≐ �
         → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
 ∘ʳ-id-≐ w h = mk≐ʳ (λ x → at h (proj₂ (var-tgt w x)))
 
+∘ʳ-id-≐ʳ : ∀ {Γ Γ'} {r : Ren Γ Γ} → (w : Ren Γ Γ')
+         → r ≐ʳ id-ren → (w ∘ʳ r) ≐ʳ w
+∘ʳ-id-≐ʳ w h = mk≐ʳ (λ x → cong (var-tgt′ w) (at h x))
+
 restrict-ren-id-≐ : ∀ {Γ} {r : Ren Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
 restrict-ren-id-≐ h = restrict-ren-≐ h
 

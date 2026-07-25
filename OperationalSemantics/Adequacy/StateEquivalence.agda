@@ -45,6 +45,10 @@ castᵛ = castᵛˢ
 castᶜ : ∀ {Γ Γ' C} → Γ ≡ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
 castᶜ refl M = M
 
+castᵛ-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
+        → V ≐ᵛ V' → castᵛ e V ≐ᵛ castᵛ e V'
+castᵛ-≐ refl eV = eV
+
 castᶜ-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {M M' : Γ ⊢C⦂ C}
         → M ≐ᶜ M' → castᶜ e M ≐ᶜ castᶜ e M'
 castᶜ-≐ refl eM = eM
@@ -1078,6 +1082,10 @@ castᵛ-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → 
             → castᵛ e' (castᵛ e V) ≡ V
 castᵛ-castᵛ refl e' V = cong (λ z → castᵛ z V) (uip {p = e'} {q = refl})
 
+castᶜ-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (M : Γ ⊢C⦂ C)
+            → castᶜ e' (castᶜ e M) ≡ M
+castᶜ-castᶜ refl e' M = cong (λ z → castᶜ z M) (uip {p = e'} {q = refl})
+
 replay : ∀ {St St' St₂ : 𝕊 []} → (es : St ≐ˢ St') → (q : St ≤ₛ St₂)
        → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' ≤ₛ St₂' ] Σ[ es₂ ∈ St₂ ≐ˢ St₂' ]
            (q ≤≐ q')
@@ -1113,3 +1121,57 @@ slice-replay : ∀ {St St' St₂ : 𝕊 []} {ρ ρ' : R}
 slice-replay {ρ' = ρ'} es (slice e b) with replay es e
 ... | St₂' , e' , es₂ , h =
     St₂' , slice e' (subst (λ z → z ·ᵣ ρ' ≾ᵣ _) (≤ₛ-grade-≤≐ h) b) , es₂ , h
+
+-- What a replayed slice does to an `unbox`: the two consulted renamings agree,
+-- up to the two states' context equalities. This is `suc-comp-ren-≐` with the
+-- `⟨⟩-η-ren` that `unbox-ren` puts in front pushed through the cast.
+
+⟨⟩-η-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
+              → ⟨⟩-η-ren {Γ = Γ}
+              ≐ʳ castʳ² (cong (_⟨ uᵣ ⟩) e) e ⟨⟩-η-ren
+⟨⟩-η-ren-cast refl = ≐ʳ-refl
+
+unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
+             → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
+             → {q : Slice St ρ St₂ uᵣ} → {q' : Slice St' ρ St₂' uᵣ}
+             → ext q ≤≐ ext q'
+             -------------------------------------------------------------
+             → unbox-ren q
+             ≐ʳ castʳ² (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
+                       (sym (toCtx-≐ˢ es₂)) (unbox-ren q')
+
+unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
+  ≐ʳ-trans
+    (∘ʳ-≐ (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))
+          (suc-comp-ren-≐ h es es₂ (bound q) (bound q')))
+    (≐ʳ-sym
+      (castʳ²-∘ʳ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
+                 (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                 (sym (toCtx-≐ˢ es₂))
+                 ⟨⟩-η-ren (suc-comp-ren (ext q') (bound q'))))
+
+-- The form the Kripke clauses use. A clause transported along `_≐ˢ_` moves its
+-- boxed value to the other state too, so the renaming consulted there is
+-- precomposed with that context equality — which cancels against the source
+-- cast the bridge introduces.
+
+castʳ²-cancel : ∀ {Γ Γ' Δ Δ' ρ} → (a : Γ ≡ Γ') → (b : Δ ≡ Δ')
+              → (r : Ren (Γ ⟨ ρ ⟩) Δ)
+              → (castʳ² (cong (_⟨ ρ ⟩) a) b r ∘ʳ cong-⟨⟩-ren (eq-ren a))
+              ≐ʳ castʳ b r
+castʳ²-cancel refl refl r = ∘ʳ-id-≐ʳ r (cong-⟨⟩-ren-id-≐ ≐ʳ-refl)
+
+unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
+                 → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
+                 → {q' : Slice St' ρ St'' uᵣ} → {q : Slice St ρ St₂ uᵣ}
+                 → ext q' ≤≐ ext q
+                 -------------------------------------------------------------
+                 → (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
+                 ≐ʳ castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)
+
+unbox-ren-bridge {ρ} es es₂ {q'} {q} h
+  rewrite uip {p = toCtx-≐ˢ es} {q = sym (toCtx-≐ˢ (≐ˢ-sym es))} =
+  ≐ʳ-trans
+    (∘ʳ-≐ (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h) ≐ʳ-refl)
+    (castʳ²-cancel (sym (toCtx-≐ˢ (≐ˢ-sym es))) (sym (toCtx-≐ˢ es₂))
+                   (unbox-ren q))

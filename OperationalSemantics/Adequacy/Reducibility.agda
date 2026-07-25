@@ -40,8 +40,9 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
-open import OperationalSemantics.Adequacy.RenEquivalence Spec
-open import OperationalSemantics.Adequacy.Slice         Spec
+open import OperationalSemantics.Adequacy.RenEquivalence   Spec
+open import OperationalSemantics.Adequacy.Slice           Spec
+open import OperationalSemantics.Adequacy.StateEquivalence Spec
 
 -- REDUCIBLE GROUND VALUES (recursion on `GType`)
 --
@@ -329,6 +330,86 @@ Valᵍ→Val Empty        V p = tt
 Valᵍ→Val (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , Valᵍ→Val G₁ V₁ p₁ , Valᵍ→Val G₂ V₂ p₂
 Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ q W eW → Valᵍ→Val G W (p q W eW)
+
+-- Ground reducibility is insensitive to the equivalence, as `Val-≐ᵛ` is.
+
+Valᵍ-≐ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂ type-of-gtype G}
+        → V ≐ᵛ V' → Valᵍ G St V → Valᵍ G St V'
+
+Valᵍ-≐ᵛ (Base b)     eV p = tt
+Valᵍ-≐ᵛ Unit         eV p = tt
+Valᵍ-≐ᵛ Empty        eV p = tt
+Valᵍ-≐ᵛ (G₁ |×|ᵍ G₂) (pair-≐ e₁ e₂) (V₁ , V₂ , refl , p₁ , p₂) =
+  _ , _ , refl , Valᵍ-≐ᵛ G₁ e₁ p₁ , Valᵍ-≐ᵛ G₂ e₂ p₂
+Valᵍ-≐ᵛ ([ ρ ]ᵍ G)   eV f =
+  λ q W eW → f q W (≐ᵛ-trans eW (unbox-lookup-val-≐ (unbox-ren q) (≐ᵛ-sym eV)))
+
+-- GROUND VALUES ACROSS THE STATE EQUIVALENCE
+--
+-- Related states hold related values, so reducibility transports. Recursion on
+-- the ground type; the box clause replays the slice on the other state
+-- (`slice-replay` + `≐ˢ-sym`), moves the boxed value there
+-- (`unbox-lookup-cast-val`), and identifies the two reads
+-- (`unbox-ren-bridge`, then `unbox-lookup-≐`).
+
+Valᵍ-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (G : GType)
+        → (V : toCtx St ⊢V⦂ type-of-gtype G)
+        → Valᵍ G St V → Valᵍ G St' (castᵛ (toCtx-≐ˢ es) V)
+
+Valᵍ-≐ˢ es (Base b)     V p = tt
+Valᵍ-≐ˢ es Unit         V p = tt
+Valᵍ-≐ˢ es Empty        V p = tt
+Valᵍ-≐ˢ es (G₁ |×|ᵍ G₂) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
+  _ , _ , castᵛˢ-pair (toCtx-≐ˢ es) V₁ V₂
+  , Valᵍ-≐ˢ es G₁ V₁ p₁ , Valᵍ-≐ˢ es G₂ V₂ p₂
+
+Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} q' W eW
+  with slice-replay (≐ˢ-sym es) q'
+... | St₂ , q , es₂ , h =
+  subst (Valᵍ G St'')
+        (castᵛ-castᵛ (toCtx-≐ˢ es₂) (toCtx-≐ˢ (≐ˢ-sym es₂)) W)
+        (Valᵍ-≐ˢ (≐ˢ-sym es₂) G (castᵛ (toCtx-≐ˢ es₂) W)
+          (f q (castᵛ (toCtx-≐ˢ es₂) W) eW₂))
+  where
+    -- the read at `St''` is the read at `St₂`, moved back
+    eW₂ : castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ unbox-lookup St₂ (unbox-ren q) V
+    eW₂ =
+      subst (λ z → castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ z)
+            (castᵛ-castᵛ (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ es₂)
+                         (unbox-lookup St₂ (unbox-ren q) V))
+            (castᵛ-≐ (toCtx-≐ˢ es₂)
+              (≐ᵛ-trans eW
+                (≐ᵛ-trans
+                  (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
+                  (unbox-lookup-≐ es₂ (unbox-ren-bridge es es₂ h) V))))
+
+-- COMPUTATIONS ACROSS THE STATE EQUIVALENCE (next step)
+--
+-- `Comp-≐ᶜ` below must be proved as one lemma carrying *both* relations at
+-- once — the state equivalence and the term equivalence:
+--
+--   Comp-≐ : (es : St ≐ˢ St') → (tr : P transports along `_≐ˢ_`)
+--          → (tr≐ : P respects `_≐ᵛ_`)
+--          → M ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) M' → Comp A P ε St M
+--          → Comp A P ε St' M'
+--
+-- Separating them does not work: the `comp-op` case replays the resumption's
+-- slice on the other state and recurses, and the two resumptions' continuations
+-- are related only by `_≐ᶜ_` (they come from `≐-perform⁻`), never equal — so the
+-- recursive call needs the term relation in hand. `Comp-≐ᶜ` is then the special
+-- case `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
+--
+-- It stays parameterised by `P`'s transport rather than mutual with `Val-≐ˢ`,
+-- so that both recurse structurally on the *type*: `Val-≐ˢ` at `⇒` calls it with
+-- `Val-≐ˢ B`, at `[ ρ ]` with `Val-≐ˢ A`. Made mutual, the checker would see the
+-- cycle `Comp-≐ A → Val-≐ˢ A → Comp-≐ A`.
+--
+-- Everything the Kripke clauses need is now proved: `Valᵍ-≐ˢ`/`Valᵍ-≐ᵛ` above,
+-- and `unbox-lookup-≐`, `unbox-lookup-cast-val`, `unbox-ren-bridge`,
+-- `slice-replay` in `Slice`/`StateEquivalence`. What is left is the `comp-op`
+-- resumption: replay the slice, transport the arity value, and relate the two
+-- `resume`s (`suc-comp-ren-≐` for the renamings, `C-rename-cong` and `sub-≐ᶜ`
+-- for the continuation and the value).
 
 -- ALLOCATION
 --
