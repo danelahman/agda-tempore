@@ -1,26 +1,24 @@
 ------------------------------------------------------------------------
--- Closing environments over a state.                                   --
+-- Closing environments over a state.                                 --
 --                                                                    --
--- The formalisation has only *single-variable* substitution, and its   --
--- replacement is *prefix-typed*: typed in the context left of the      --
--- variable it replaces, which the substitution removes                 --
--- (`Syntax.Substitutions`). So a closing environment is not a          --
--- `Sub`: it is a description of how a context is built from a state,   --
--- realised by iterated single substitutions (route (b) of              --
--- `notes/adequacy-plan.md`).                                           --
+-- `Syntax.Substitutions` provides single-variable substitution whose --
+-- replacement is *prefix-typed*: typed in the context left of the    --
+-- variable it replaces, which the substitution removes. A closing    --
+-- environment is therefore not a `Sub` but a description of how a    --
+-- context is built from a state, realised by iterated single         --
+-- substitutions.                                                     --
 --                                                                    --
--- The three zones a context of the fundamental lemma has:                --
+-- The zones a context of the fundamental lemma has:                  --
 --                                                                    --
---   * `⌊ St ⌋`      — the state itself: locks and cells, closed by the    --
---                     store (its resource variables are its own);         --
---   * `_∷ᵉ_`/`_⟨_⟩ᵉ` — the binder telescope on the right, each ordinary   --
---                     variable instantiated by a value over `toCtx St`,   --
---                     each lock matched by a lock on the state;           --
---   * `eternalˡ`    — an eternal prefix on the left, as handler clauses    --
---                     close over `Γ ᴱ` and are instantiated at            --
---                     `Γ' := toCtx St` in the middle (`HANDLE-OP`).       --
---                     `toCtx St ᴱ ≡ []`, so eternal-typed values over a    --
---                     state context are closed.                           --
+--   * `⌊ St ⌋`  — the state: locks and cells, closed by the store;   --
+--   * `renᵉ`    — precomposition with a renaming, making `Env`       --
+--                 functorial (`env-alloc`);                          --
+--   * `_∷ᵉ_`/`_⟨_⟩ᵉ` — the binder telescope: each variable           --
+--                 instantiated by a value, each lock matched by a    --
+--                 slice into a state far enough ahead;               --
+--   * `eternalˡ` — an eternal prefix: handler clauses close over     --
+--                 `Γ ᴱ` and fire at `Γ' := toCtx St` (`HANDLE-OP`);  --
+--                 `toCtx St ᴱ ≡ []`, so eternal values are closed.   --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -62,9 +60,9 @@ ClosedVals Δ = ∀ {A ρ} → A ∈[ ρ ] Δ → [] ⊢V⦂ A
 
 -- LOCK-FREE CONTEXTS
 --
--- The eternal prefix must be lock-free, and it is: `_ᴱ` drops every lock. This
--- is what makes a *closed* value weakenable into it — `Ren [] Γ` is available
--- exactly when `Γ` has no lock, since crossing one would need `ρ ≾ᵣ uᵣ`.
+-- `_ᴱ` drops every lock, so the eternal prefix is lock-free — which is what
+-- makes a closed value weakenable into it: `Ren [] Γ` exists exactly when `Γ`
+-- has no lock, crossing one needing `ρ ≾ᵣ uᵣ`.
 
 data Lock-free : Ctx → Set where
   lf-[] : Lock-free []
@@ -100,10 +98,21 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            ------------------
            → Env St (toCtx St)
 
-  _⟨_⟩ᵉ    : ∀ {St Γ}
-           → Env St Γ → (ρ : R)
-           ---------------------------
-           → Env (St ⟨ ρ ⟩ₛ) (Γ ⟨ ρ ⟩)
+  -- precomposition with a renaming: what makes `Env` functorial in the
+  -- state (`env-alloc`). Kept separate from `⌊_⌋` so that the identity
+  -- case of the action stays `refl`, `Ren` being unquotiented.
+
+  renᵉ     : ∀ {St Γ Γ₀}
+           → Env St Γ → Ren Γ₀ Γ
+           ---------------------
+           → Env St Γ₀
+
+  -- a lock, matched by any state far enough ahead
+
+  _⟨_⟩ᵉ    : ∀ {St St' Γ ρ}
+           → Env St Γ → Slice St ρ St' uᵣ
+           ------------------------------
+           → Env St' (Γ ⟨ ρ ⟩)
 
   _∷ᵉ_     : ∀ {St Γ A}
            → Env St Γ → toCtx St ⊢V⦂ A
@@ -123,8 +132,9 @@ data Env : (St : 𝕊 []) → Ctx → Set where
 
 Rel-Env : ∀ {St Γ} → Env St Γ → Set
 Rel-Env ⌊ St ⌋                = Store St
-Rel-Env (γ ⟨ ρ ⟩ᵉ)             = Rel-Env γ
+Rel-Env (γ ⟨ q ⟩ᵉ)             = Rel-Env γ
 Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × Val A St V
+Rel-Env (renᵉ γ r)             = Rel-Env γ
 Rel-Env (eternalˡ Δ lf η γ)    = Rel-Env γ
 
 -- RETYPING ALONG A CONTEXT EQUALITY
@@ -200,6 +210,12 @@ cast-match : ∀ {Γ Γ' A B C} → (e : Γ ≡ Γ')
            ≡ match (castᵛ e V) `in (castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M)
 cast-match refl = refl
 
+cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
+         → {V : Γ ⟨ ρ ⟩ ⊢V⦂ A} → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}
+         → castᶜ e (box V M)
+         ≡ box (castᵛ (cong (_⟨ ρ ⟩) e) V) (castᶜ (cong (_∷ [ ρ ] A) e) M)
+cast-box refl = refl
+
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
          → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
          → castᶜ e (M ⨟ N)
@@ -219,14 +235,11 @@ cast-seq refl = refl
 --     grade-lowering case of `⟨_,_⟩[_↦_]var`, licensed by the `var` rule's own
 --     premise, and needs nothing from here;
 --
---   * a telescope entry is substituted *last*, after the recursion has closed
---     everything below it: the entry rides along in the suffix
+--   * a telescope entry is substituted *last*: it rides along in the suffix
 --     (`[] ∷ A ++ᶜ Δ`) and its variable is substituted afterwards. Its value
---     then already lives over the prefix `toCtx St`, so it needs no weakening,
---     and `env-C (γ ∷ᵉ W) M ≡ (env-Cˢ γ ([] ∷ A) M) [ Hd ↦ W ]c` holds
---     *definitionally* — the order the machine's `APP` reduct wants.
---     Substituting the entry first would make that a substitution-commutation
---     lemma instead.
+--     already lives over the prefix `toCtx St`, so it needs no weakening, and
+--     `env-C (γ ∷ᵉ W) M ≡ (env-Cˢ γ ([] ∷ A) M) [ Hd ↦ W ]c` holds
+--     definitionally — the order `APP` wants.
 ------------------------------------------------------------------------
 
 -- THE ETERNAL ZONE
@@ -267,10 +280,12 @@ env-Cˢ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
        → (toCtx St ++ᶜ Δ) ⊢C⦂ C
 
 env-Vˢ ⌊ St ⌋ Δ V = V
-env-Vˢ (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V =
-  castᵛ (sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ))
-    (env-Vˢ γ ([] ⟨ ρ ⟩ ++ᶜ Δ)
-      (castᵛ (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ) V))
+env-Vˢ (renᵉ γ r) Δ V = env-Vˢ γ Δ (V-rename (cong-ren r) V)
+env-Vˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
+  V-rename (cong-ren (unbox-ren q))
+    (castᵛ (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
+      (env-Vˢ γ ([] ⟨ ρ ⟩ ++ᶜ Δ)
+        (castᵛ (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ) V)))
 env-Vˢ (_∷ᵉ_ {St = St} {Γ = Γ} {A = A} γ W) Δ V =
   castᵛ (cong₂ _++ᶜ_ (split→∈-split-l t) (split→∈-split-r t))
     ((castᵛ (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
@@ -282,10 +297,12 @@ env-Vˢ (eternalˡ Δ₀ lf η γ) Δ V =
   env-Vˢ γ Δ (env-eternal-V lf η (castᵛ (++ᶜ-assoc Δ₀ _ Δ) V))
 
 env-Cˢ ⌊ St ⌋ Δ M = M
-env-Cˢ (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ M =
-  castᶜ (sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ))
-    (env-Cˢ γ ([] ⟨ ρ ⟩ ++ᶜ Δ)
-      (castᶜ (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ) M))
+env-Cˢ (renᵉ γ r) Δ M = env-Cˢ γ Δ (C-rename (cong-ren r) M)
+env-Cˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
+  C-rename (cong-ren (unbox-ren q))
+    (castᶜ (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
+      (env-Cˢ γ ([] ⟨ ρ ⟩ ++ᶜ Δ)
+        (castᶜ (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ) M)))
 env-Cˢ (_∷ᵉ_ {St = St} {Γ = Γ} {A = A} γ W) Δ M =
   castᶜ (cong₂ _++ᶜ_ (split→∈-split-l t) (split→∈-split-r t))
     ((castᶜ (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
@@ -298,11 +315,9 @@ env-Cˢ (eternalˡ Δ₀ lf η γ) Δ M =
 
 -- THE ACTION COMMUTES WITH `lam`
 --
--- Each single substitution does (`lam M [ x ↦ W ]v = lam (M [ Tl-∷ x ↦ W ]c)`),
--- and the variable the recursion substitutes at a suffix `Δ ∷ A` is `Tl-∷` of
--- the one it substitutes at `Δ` — definitionally, since `split-≡-++ᶜ` is
--- `≡-split refl` and `≡-split` recurses on the suffix. So only the casts differ,
--- and they are irrelevant.
+-- Each single substitution does, and the variable substituted at suffix
+-- `Δ ∷ A` is `Tl-∷` of the one at `Δ` — definitionally, since `split-≡-++ᶜ` is
+-- `≡-split refl` and `≡-split` recurses on the suffix. Only the casts differ.
 
 env-eternal-lam : ∀ {Δ Γ A B ε} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
                 → (M : (Δ ++ᶜ Γ) ∷ A ⊢C⦂ B ‼ ε)
@@ -337,27 +352,29 @@ env-Vˢ-lam : ∀ {St Γ A B ε} → (γ : Env St Γ) → (Δ : Ctx)
            → env-Vˢ γ Δ (lam M) ≡ lam (env-Cˢ γ (Δ ∷ A) M)
 
 env-Vˢ-lam ⌊ St ⌋ Δ M = refl
+env-Vˢ-lam (renᵉ γ r) Δ M = env-Vˢ-lam γ Δ _
 
-env-Vˢ-lam {A = A} (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ M =
-  begin
-    castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (lam M)))
-  ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-lam ei M) ⟩
-    castᵛ eo (env-Vˢ γ Δ' (lam (castᶜ (cong (_∷ A) ei) M)))
-  ≡⟨ cong (castᵛ eo) (env-Vˢ-lam γ Δ' (castᶜ (cong (_∷ A) ei) M)) ⟩
-    castᵛ eo (lam (env-Cˢ γ (Δ' ∷ A) (castᶜ (cong (_∷ A) ei) M)))
-  ≡⟨ cast-lam eo _ ⟩
-    lam (castᶜ (cong (_∷ A) eo) (env-Cˢ γ (Δ' ∷ A) (castᶜ (cong (_∷ A) ei) M)))
-  ≡⟨ cong lam (castᶜ-irr (cong (_∷ A) eo) eo' _) ⟩
-    lam (castᶜ eo' (env-Cˢ γ (Δ' ∷ A) (castᶜ (cong (_∷ A) ei) M)))
-  ≡⟨ cong (λ z → lam (castᶜ eo' (env-Cˢ γ (Δ' ∷ A) z)))
-          (castᶜ-irr (cong (_∷ A) ei) ei' M) ⟩
-    lam (castᶜ eo' (env-Cˢ γ (Δ' ∷ A) (castᶜ ei' M)))
-  ∎
+env-Vˢ-lam {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (lam M)))
+    ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-lam ei M) ⟩
+      castᵛ eo (env-Vˢ γ Δ' (lam (castᶜ (cong (_∷ A) ei) M)))
+    ≡⟨ cong (castᵛ eo) (env-Vˢ-lam γ Δ' (castᶜ (cong (_∷ A) ei) M)) ⟩
+      castᵛ eo (lam (env-Cˢ γ (Δ' ∷ A) (castᶜ (cong (_∷ A) ei) M)))
+    ≡⟨ cast-lam eo _ ⟩
+      lam (castᶜ (cong (_∷ A) eo) (env-Cˢ γ (Δ' ∷ A) (castᶜ (cong (_∷ A) ei) M)))
+    ≡⟨ cong lam (castᶜ-irr (cong (_∷ A) eo) eo' _) ⟩
+      lam (castᶜ eo' (env-Cˢ γ (Δ' ∷ A) (castᶜ (cong (_∷ A) ei) M)))
+    ≡⟨ cong (λ z → lam (castᶜ eo' (env-Cˢ γ (Δ' ∷ A) z)))
+            (castᶜ-irr (cong (_∷ A) ei) ei' M) ⟩
+      lam (castᶜ eo' (env-Cˢ γ (Δ' ∷ A) (castᶜ ei' M)))
+     ∎)
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo  = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo' = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) (Δ ∷ A))
+    eo' = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ∷ A))
     ei' = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ∷ A)
 
 env-Vˢ-lam {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
@@ -420,9 +437,8 @@ env-Vˢ-lam {A = A} (eternalˡ Δ₀ lf η γ) Δ M =
 
 -- THE ACTION COMMUTES WITH THE NON-BINDING FORMERS
 --
--- Shorter than the `lam` law: the suffix does not grow, so both sides carry the
--- *same* cast proofs and no `castᶜ-irr` step is needed. Each single
--- substitution is a congruence at these formers, definitionally.
+-- The suffix does not grow, so both sides carry the same cast proofs and no
+-- `castᶜ-irr` step is needed.
 
 env-eternal-const : ∀ {Δ Γ b} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
                   → (c : BaseConstants b)
@@ -484,20 +500,22 @@ env-Cˢ-ret : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → (V : (Γ ++�
            → env-Cˢ γ Δ (return V) ≡ return (env-Vˢ γ Δ V)
 
 env-Cˢ-ret ⌊ St ⌋ Δ V = refl
+env-Cˢ-ret (renᵉ γ r) Δ V = env-Cˢ-ret γ Δ _
 
-env-Cˢ-ret (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (return V)))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-ret ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (return (castᵛ ei V)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-ret γ Δ' (castᵛ ei V)) ⟩
-    castᶜ eo (return (env-Vˢ γ Δ' (castᵛ ei V)))
-  ≡⟨ cast-ret eo ⟩
-    return (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)))
-  ∎
+env-Cˢ-ret (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (return V)))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-ret ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (return (castᵛ ei V)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-ret γ Δ' (castᵛ ei V)) ⟩
+      castᶜ eo (return (env-Vˢ γ Δ' (castᵛ ei V)))
+    ≡⟨ cast-ret eo ⟩
+      return (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)))
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Cˢ-ret (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V =
@@ -541,20 +559,22 @@ env-Cˢ-app : ∀ {St Γ A C} → (γ : Env St Γ) → (Δ : Ctx)
            → env-Cˢ γ Δ (V · U) ≡ (env-Vˢ γ Δ V) · (env-Vˢ γ Δ U)
 
 env-Cˢ-app ⌊ St ⌋ Δ V U = refl
+env-Cˢ-app (renᵉ γ r) Δ V U = env-Cˢ-app γ Δ _ _
 
-env-Cˢ-app (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V U =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (V · U)))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-app ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (castᵛ ei V · castᵛ ei U))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-app γ Δ' (castᵛ ei V) (castᵛ ei U)) ⟩
-    castᶜ eo (env-Vˢ γ Δ' (castᵛ ei V) · env-Vˢ γ Δ' (castᵛ ei U))
-  ≡⟨ cast-app eo ⟩
-    castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)) · castᵛ eo (env-Vˢ γ Δ' (castᵛ ei U))
-  ∎
+env-Cˢ-app (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (V · U)))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-app ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (castᵛ ei V · castᵛ ei U))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-app γ Δ' (castᵛ ei V) (castᵛ ei U)) ⟩
+      castᶜ eo (env-Vˢ γ Δ' (castᵛ ei V) · env-Vˢ γ Δ' (castᵛ ei U))
+    ≡⟨ cast-app eo ⟩
+      castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)) · castᵛ eo (env-Vˢ γ Δ' (castᵛ ei U))
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Cˢ-app (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V U =
@@ -597,20 +617,22 @@ env-Cˢ-absurd : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
               → env-Cˢ γ Δ (absurd {C = C} V) ≡ absurd (env-Vˢ γ Δ V)
 
 env-Cˢ-absurd ⌊ St ⌋ Δ V = refl
+env-Cˢ-absurd (renᵉ γ r) Δ V = env-Cˢ-absurd γ Δ _
 
-env-Cˢ-absurd (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (absurd (V))))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-absurd ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (absurd (castᵛ ei V)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-absurd γ Δ' (castᵛ ei V)) ⟩
-    castᶜ eo (absurd (env-Vˢ γ Δ' (castᵛ ei V)))
-  ≡⟨ cast-absurd eo ⟩
-    absurd (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)))
-  ∎
+env-Cˢ-absurd (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (absurd (V))))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-absurd ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (absurd (castᵛ ei V)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-absurd γ Δ' (castᵛ ei V)) ⟩
+      castᶜ eo (absurd (env-Vˢ γ Δ' (castᵛ ei V)))
+    ≡⟨ cast-absurd eo ⟩
+      absurd (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)))
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Cˢ-absurd (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V =
@@ -653,20 +675,22 @@ env-Cˢ-coerce : ∀ {St Γ A ε ε'} → (γ : Env St Γ) → (Δ : Ctx) → {p
               → env-Cˢ γ Δ (coerce p M) ≡ coerce p (env-Cˢ γ Δ M)
 
 env-Cˢ-coerce ⌊ St ⌋ Δ M = refl
+env-Cˢ-coerce (renᵉ γ r) Δ M = env-Cˢ-coerce γ Δ _
 
-env-Cˢ-coerce (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ M =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (coerce _ (M))))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-coerce ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (coerce _ (castᶜ ei M)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-coerce γ Δ' (castᶜ ei M)) ⟩
-    castᶜ eo (coerce _ (env-Cˢ γ Δ' (castᶜ ei M)))
-  ≡⟨ cast-coerce eo ⟩
-    coerce _ (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-  ∎
+env-Cˢ-coerce (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (coerce _ (M))))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-coerce ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (coerce _ (castᶜ ei M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-coerce γ Δ' (castᶜ ei M)) ⟩
+      castᶜ eo (coerce _ (env-Cˢ γ Δ' (castᶜ ei M)))
+    ≡⟨ cast-coerce eo ⟩
+      coerce _ (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Cˢ-coerce (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
@@ -709,20 +733,22 @@ env-Vˢ-pair : ∀ {St Γ A B} → (γ : Env St Γ) → (Δ : Ctx)
             → env-Vˢ γ Δ ⦉ V , U ⦊ ≡ ⦉ env-Vˢ γ Δ V , env-Vˢ γ Δ U ⦊
 
 env-Vˢ-pair ⌊ St ⌋ Δ V U = refl
+env-Vˢ-pair (renᵉ γ r) Δ V U = env-Vˢ-pair γ Δ _ _
 
-env-Vˢ-pair (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V U =
-  begin
-    castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (⦉ V , U ⦊)))
-  ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-pair ei) ⟩
-    castᵛ eo (env-Vˢ γ Δ' (⦉ castᵛ ei V , castᵛ ei U ⦊))
-  ≡⟨ cong (castᵛ eo) (env-Vˢ-pair γ Δ' (castᵛ ei V) (castᵛ ei U)) ⟩
-    castᵛ eo (⦉ env-Vˢ γ Δ' (castᵛ ei V) , env-Vˢ γ Δ' (castᵛ ei U) ⦊)
-  ≡⟨ cast-pair eo ⟩
-    ⦉ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)) , castᵛ eo (env-Vˢ γ Δ' (castᵛ ei U)) ⦊
-  ∎
+env-Vˢ-pair (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (⦉ V , U ⦊)))
+    ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-pair ei) ⟩
+      castᵛ eo (env-Vˢ γ Δ' (⦉ castᵛ ei V , castᵛ ei U ⦊))
+    ≡⟨ cong (castᵛ eo) (env-Vˢ-pair γ Δ' (castᵛ ei V) (castᵛ ei U)) ⟩
+      castᵛ eo (⦉ env-Vˢ γ Δ' (castᵛ ei V) , env-Vˢ γ Δ' (castᵛ ei U) ⦊)
+    ≡⟨ cast-pair eo ⟩
+      ⦉ castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V)) , castᵛ eo (env-Vˢ γ Δ' (castᵛ ei U)) ⦊
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Vˢ-pair (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V U =
@@ -764,20 +790,22 @@ env-Vˢ-const : ∀ {St Γ b} → (γ : Env St Γ) → (Δ : Ctx) → (c : BaseC
              → env-Vˢ γ Δ (const c) ≡ const c
 
 env-Vˢ-const ⌊ St ⌋ Δ c = refl
+env-Vˢ-const (renᵉ γ r) Δ c = env-Vˢ-const γ Δ _
 
-env-Vˢ-const (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ c =
-  begin
-    castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (const c)))
-  ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-const ei) ⟩
-    castᵛ eo (env-Vˢ γ Δ' (const c))
-  ≡⟨ cong (castᵛ eo) (env-Vˢ-const γ Δ' c) ⟩
-    castᵛ eo (const c)
-  ≡⟨ cast-const eo ⟩
-    const c
-  ∎
+env-Vˢ-const (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ c =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (const c)))
+    ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-const ei) ⟩
+      castᵛ eo (env-Vˢ γ Δ' (const c))
+    ≡⟨ cong (castᵛ eo) (env-Vˢ-const γ Δ' c) ⟩
+      castᵛ eo (const c)
+    ≡⟨ cast-const eo ⟩
+      const c
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Vˢ-const (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ c =
@@ -818,20 +846,22 @@ env-Vˢ-const (eternalˡ Δ₀ lf η γ) Δ c =
 env-Vˢ-⋆ : ∀ {St Γ} → (γ : Env St Γ) → (Δ : Ctx) → env-Vˢ γ Δ ⋆ ≡ ⋆
 
 env-Vˢ-⋆ ⌊ St ⌋ Δ  = refl
+env-Vˢ-⋆ (renᵉ γ r) Δ  = env-Vˢ-⋆ γ Δ
 
-env-Vˢ-⋆ (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ  =
-  begin
-    castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (⋆)))
-  ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-⋆ ei) ⟩
-    castᵛ eo (env-Vˢ γ Δ' (⋆))
-  ≡⟨ cong (castᵛ eo) (env-Vˢ-⋆ γ Δ') ⟩
-    castᵛ eo (⋆)
-  ≡⟨ cast-⋆ eo ⟩
-    ⋆
-  ∎
+env-Vˢ-⋆ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ  =
+  cong (V-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᵛ eo (env-Vˢ γ Δ' (castᵛ ei (⋆)))
+    ≡⟨ cong (λ z → castᵛ eo (env-Vˢ γ Δ' z)) (cast-⋆ ei) ⟩
+      castᵛ eo (env-Vˢ γ Δ' (⋆))
+    ≡⟨ cong (castᵛ eo) (env-Vˢ-⋆ γ Δ') ⟩
+      castᵛ eo (⋆)
+    ≡⟨ cast-⋆ eo ⟩
+      ⋆
+     ∎)
   where
     Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
 
 env-Vˢ-⋆ (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ  =
@@ -870,8 +900,8 @@ env-Vˢ-⋆ (eternalˡ Δ₀ lf η γ) Δ  =
     e = ++ᶜ-assoc Δ₀ _ Δ
 -- THE ACTION COMMUTES WITH THE BINDING FORMERS
 --
--- As for `lam`: the body sits at an extended suffix, so the two sides carry
--- casts along *different* (but equal) proofs, reconciled by `castᶜ-irr`.
+-- The body sits at an extended suffix, so the two sides carry casts along
+-- different (but equal) proofs, reconciled by `castᶜ-irr`.
 
 env-eternal-delay : ∀ {Δ Γ A ε τ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
                   → (M : (Δ ++ᶜ Γ) ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
@@ -902,30 +932,32 @@ env-Cˢ-delay : ∀ {St Γ A ε τ} → (γ : Env St Γ) → (Δ : Ctx)
              → env-Cˢ γ Δ (delay τ M) ≡ delay τ (env-Cˢ γ (Δ ⟨ of-natʳ τ ⟩) M)
 
 env-Cˢ-delay ⌊ St ⌋ Δ M = refl
+env-Cˢ-delay (renᵉ γ r) Δ M = env-Cˢ-delay γ Δ _
 
-env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ') Δ M =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (delay τ M)))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-delay ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)) ⟩
-    castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩)
-                        (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cast-delay eo ⟩
-    delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) eo)
-              (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) eo) eo₂ _) ⟩
-    delay τ (castᶜ eo₂
-              (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
-  ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) z)))
-          (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) ei) ei₂ M) ⟩
-    delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ ei₂ M)))
-  ∎
+env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ M =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (delay τ M)))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-delay ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-delay γ Δ' (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)) ⟩
+      castᶜ eo (delay τ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩)
+                          (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
+    ≡⟨ cast-delay eo ⟩
+      delay τ (castᶜ (cong (_⟨ of-natʳ τ ⟩) eo)
+                (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
+    ≡⟨ cong (delay τ) (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) eo) eo₂ _) ⟩
+      delay τ (castᶜ eo₂
+                (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ (cong (_⟨ of-natʳ τ ⟩) ei) M)))
+    ≡⟨ cong (λ z → delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) z)))
+            (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) ei) ei₂ M) ⟩
+      delay τ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ of-natʳ τ ⟩) (castᶜ ei₂ M)))
+     ∎)
   where
     Δ'  = [] ⟨ ρ' ⟩ ++ᶜ Δ
-    eo  = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ' ⟩) Δ)
+    eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ' ⟩) (Δ ⟨ of-natʳ τ ⟩))
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ⟨ of-natʳ τ ⟩))
     ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ⟨ of-natʳ τ ⟩)
 
 env-Cˢ-delay {τ = τ} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ M =
@@ -1029,33 +1061,35 @@ env-Cˢ-seq : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
            ≡ (env-Cˢ γ Δ M) ⨟ (env-Cˢ γ (Δ ⟨ mapᵉ ε ⟩ ∷ A) N)
 
 env-Cˢ-seq ⌊ St ⌋ Δ M N = refl
+env-Cˢ-seq (renᵉ γ r) Δ M N = env-Cˢ-seq γ Δ _ _
 
-env-Cˢ-seq {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ M N =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (M ⨟ N)))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-seq ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' ((castᶜ ei M) ⨟ (castᶜ (exε ei) N)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-seq γ Δ' (castᶜ ei M) (castᶜ (exε ei) N)) ⟩
-    castᶜ eo ((env-Cˢ γ Δ' (castᶜ ei M))
-                ⨟ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
-  ≡⟨ cast-seq eo ⟩
-    (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-      ⨟ (castᶜ (exε eo) (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
-  ≡⟨ cong ((castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M))) ⨟_)
-          (castᶜ-irr (exε eo) eo₂ _) ⟩
-    (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-      ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
-  ≡⟨ cong (λ z → (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-                   ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) z)))
-          (castᶜ-irr (exε ei) ei₂ N) ⟩
-    (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
-      ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ ei₂ N)))
-  ∎
+env-Cˢ-seq {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M N =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (M ⨟ N)))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-seq ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' ((castᶜ ei M) ⨟ (castᶜ (exε ei) N)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-seq γ Δ' (castᶜ ei M) (castᶜ (exε ei) N)) ⟩
+      castᶜ eo ((env-Cˢ γ Δ' (castᶜ ei M))
+                  ⨟ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+    ≡⟨ cast-seq eo ⟩
+      (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
+        ⨟ (castᶜ (exε eo) (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+    ≡⟨ cong ((castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M))) ⨟_)
+            (castᶜ-irr (exε eo) eo₂ _) ⟩
+      (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
+        ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ (exε ei) N)))
+    ≡⟨ cong (λ z → (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
+                     ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) z)))
+            (castᶜ-irr (exε ei) ei₂ N) ⟩
+      (castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M)))
+        ⨟ (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ ei₂ N)))
+     ∎)
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo  = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A))
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A))
     ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ ε ⟩ ∷ A)
     exε = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) p
 
@@ -1175,28 +1209,30 @@ env-Cˢ-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → (Δ : Ctx)
            ≡ perform op (env-Vˢ γ Δ V) (env-Cˢ γ (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) M)
 
 env-Cˢ-perform ⌊ St ⌋ Δ V M = refl
+env-Cˢ-perform (renᵉ γ r) Δ V M = env-Cˢ-perform γ Δ _ _
 
-env-Cˢ-perform {op = op} (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V M =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (perform op (V) (M))))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-perform ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (perform op (castᵛ ei V) (castᶜ (exf ei) M)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-perform γ Δ' (castᵛ ei V) (castᶜ (exf ei) M)) ⟩
-    castᶜ eo (perform op (env-Vˢ γ Δ' (castᵛ ei V)) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
-  ≡⟨ cast-perform eo ⟩
-    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ (exf eo) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
-  ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (z))
-          (castᶜ-irr (exf eo) eo₂ _) ⟩
-    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
-  ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) z)))
-          (castᶜ-irr (exf ei) ei₂ M) ⟩
-    perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ ei₂ M)))
-  ∎
+env-Cˢ-perform {op = op} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (perform op (V) (M))))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-perform ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (perform op (castᵛ ei V) (castᶜ (exf ei) M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-perform γ Δ' (castᵛ ei V) (castᶜ (exf ei) M)) ⟩
+      castᶜ eo (perform op (env-Vˢ γ Δ' (castᵛ ei V)) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+    ≡⟨ cast-perform eo ⟩
+      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ (exf eo) (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+    ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (z))
+            (castᶜ-irr (exf eo) eo₂ _) ⟩
+      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ (exf ei) M)))
+    ≡⟨ cong (λ z → perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) z)))
+            (castᶜ-irr (exf ei) ei₂ M) ⟩
+      perform op (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) (castᶜ eo₂ (env-Cˢ γ (Δ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) (castᶜ ei₂ M)))
+     ∎)
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo  = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)))
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)))
     ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
     exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) p
 
@@ -1294,28 +1330,30 @@ env-Cˢ-match : ∀ {St Γ A B C} → (γ : Env St Γ) → (Δ : Ctx)
            ≡ match (env-Vˢ γ Δ V) `in (env-Cˢ γ (Δ ∷ A ∷ B) M)
 
 env-Cˢ-match ⌊ St ⌋ Δ V M = refl
+env-Cˢ-match (renᵉ γ r) Δ V M = env-Cˢ-match γ Δ _ _
 
-env-Cˢ-match {A = A} {B = B} (_⟨_⟩ᵉ {St = St₀} {Γ = Γ} γ ρ) Δ V M =
-  begin
-    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (match (V) `in (M))))
-  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-match ei) ⟩
-    castᶜ eo (env-Cˢ γ Δ' (match (castᵛ ei V) `in (castᶜ (exf ei) M)))
-  ≡⟨ cong (castᶜ eo) (env-Cˢ-match γ Δ' (castᵛ ei V) (castᶜ (exf ei) M)) ⟩
-    castᶜ eo (match (env-Vˢ γ Δ' (castᵛ ei V)) `in (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ (exf ei) M)))
-  ≡⟨ cast-match eo ⟩
-    match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ (exf eo) (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ (exf ei) M)))
-  ≡⟨ cong (λ z → match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (z))
-          (castᶜ-irr (exf eo) eo₂ _) ⟩
-    match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ eo₂ (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ (exf ei) M)))
-  ≡⟨ cong (λ z → match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ eo₂ (env-Cˢ γ (Δ' ∷ A ∷ B) z)))
-          (castᶜ-irr (exf ei) ei₂ M) ⟩
-    match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ eo₂ (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ ei₂ M)))
-  ∎
+env-Cˢ-match {A = A} {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (match (V) `in (M))))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-match ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (match (castᵛ ei V) `in (castᶜ (exf ei) M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-match γ Δ' (castᵛ ei V) (castᶜ (exf ei) M)) ⟩
+      castᶜ eo (match (env-Vˢ γ Δ' (castᵛ ei V)) `in (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ (exf ei) M)))
+    ≡⟨ cast-match eo ⟩
+      match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ (exf eo) (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ (exf ei) M)))
+    ≡⟨ cong (λ z → match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (z))
+            (castᶜ-irr (exf eo) eo₂ _) ⟩
+      match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ eo₂ (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ (exf ei) M)))
+    ≡⟨ cong (λ z → match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ eo₂ (env-Cˢ γ (Δ' ∷ A ∷ B) z)))
+            (castᶜ-irr (exf ei) ei₂ M) ⟩
+      match (castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))) `in (castᶜ eo₂ (env-Cˢ γ (Δ' ∷ A ∷ B) (castᶜ ei₂ M)))
+     ∎)
   where
     Δ'  = [] ⟨ ρ ⟩ ++ᶜ Δ
-    eo  = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) Δ)
+    eo  = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
     ei  = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
-    eo₂ = sym (++ᶜ-assoc (toCtx St₀) ([] ⟨ ρ ⟩) (Δ ∷ A ∷ B))
+    eo₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) (Δ ∷ A ∷ B))
     ei₂ = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) (Δ ∷ A ∷ B)
     exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ∷ A ∷ B) p
 
@@ -1378,6 +1416,160 @@ env-Cˢ-match {A = A} {B = B} (eternalˡ Δ₀ lf η γ) Δ V M =
     e₂  = ++ᶜ-assoc Δ₀ _ (Δ ∷ A ∷ B)
     exf = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (λ Γ₀ → Γ₀ ∷ A ∷ B) p
 
+env-eternal-box : ∀ {Δ Γ A C ρ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+                → (V : (Δ ++ᶜ Γ) ⟨ ρ ⟩ ⊢V⦂ A)
+                → (M : (Δ ++ᶜ Γ) ∷ [ ρ ] A ⊢C⦂ C)
+                → env-eternal-C lf η (box V M)
+                ≡ box (env-eternal-V lf η V) (env-eternal-C lf η M)
+
+env-eternal-box {A = A} {ρ = ρ} lf-[] η V M =
+  trans (cast-box ++ᶜ-identityˡ)
+        (trans (cong (λ z → box z (castᶜ (cong (_∷ [ ρ ] A) ++ᶜ-identityˡ) M))
+                 (castᵛ-irr (cong (_⟨ ρ ⟩) ++ᶜ-identityˡ) ++ᶜ-identityˡ V))
+               (cong (λ z → box (castᵛ ++ᶜ-identityˡ V) z)
+                 (castᶜ-irr (cong (_∷ [ ρ ] A) ++ᶜ-identityˡ) ++ᶜ-identityˡ M)))
+
+env-eternal-box {Δ ∷ B₀} {Γ} {A = A} {ρ = ρ} (lf-∷ lf) η V M =
+  trans (cong (env-eternal-C lf η') (cast-box e))
+        (trans (env-eternal-box lf η' (castᵛ (exV e) bodyV) (castᶜ (exM e) bodyM))
+               (trans (cong (λ z → box (env-eternal-V lf η' z)
+                                       (env-eternal-C lf η' (castᶜ (exM e) bodyM)))
+                        (castᵛ-irr (exV e) eV₂ bodyV))
+                      (cong (λ z → box (env-eternal-V lf η' (castᵛ eV₂ bodyV))
+                                       (env-eternal-C lf η' z))
+                        (castᶜ-irr (exM e) eM₂ bodyM))))
+  where
+    η'    = λ {A' ρ'} (v : A' ∈[ ρ' ] Δ) → η (Tl-∷ v)
+    s     = split-≡-++ᶜ {Δ ∷ B₀} {Γ}
+    sV    = split-≡-++ᶜ {Δ ∷ B₀} {Γ ⟨ ρ ⟩}
+    sM    = split-≡-++ᶜ {Δ ∷ B₀} {Γ ∷ [ ρ ] A}
+    y     = split→∈ s
+    Ŵ     = castᵛ (sym (split→∈-split-l s)) (V-rename (empty-ren lf) (η Hd))
+    bodyV = V [ Tl-⟨⟩ y ↦ Ŵ ]v
+    bodyM = M [ Tl-∷ y ↦ Ŵ ]c
+    e     = cong₂ _++ᶜ_ (split→∈-split-l s)  (split→∈-split-r s)
+    eV₂   = cong₂ _++ᶜ_ (split→∈-split-l sV) (split→∈-split-r sV)
+    eM₂   = cong₂ _++ᶜ_ (split→∈-split-l sM) (split→∈-split-r sM)
+    exV   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_⟨ ρ ⟩) p
+    exM   = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ [ ρ ] A) p
+
+env-Cˢ-box : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
+           → (V : (Γ ++ᶜ Δ) ⟨ ρ ⟩ ⊢V⦂ A)
+           → (M : (Γ ++ᶜ Δ) ∷ [ ρ ] A ⊢C⦂ C)
+           → env-Cˢ γ Δ (box V M)
+           ≡ box (env-Vˢ γ (Δ ⟨ ρ ⟩) V) (env-Cˢ γ (Δ ∷ [ ρ ] A) M)
+
+env-Cˢ-box ⌊ St ⌋ Δ V M = refl
+env-Cˢ-box (renᵉ γ r) Δ V M = env-Cˢ-box γ Δ _ _
+
+env-Cˢ-box {A = A} {ρ = ρ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ V M =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (box (V) (M))))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-box ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ' (box (castᵛ (exV ei) V) (castᶜ (exM ei) M)))
+    ≡⟨ cong (castᶜ eo) (env-Cˢ-box γ Δ' (castᵛ (exV ei) V) (castᶜ (exM ei) M)) ⟩
+      castᶜ eo (box (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ (exV ei) V)) (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M)))
+    ≡⟨ cast-box eo ⟩
+      box (castᵛ (exV eo) (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ (exV ei) V))) (castᶜ (exM eo) (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M)))
+    ≡⟨ cong (λ z → box (z) (castᶜ (exM eo) (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M))))
+            (castᵛ-irr (exV eo) eoV₂ _) ⟩
+      box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ (exV ei) V))) (castᶜ (exM eo) (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M)))
+    ≡⟨ cong (λ z → box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ (exV ei) V))) (z))
+            (castᶜ-irr (exM eo) eoM₂ _) ⟩
+      box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ (exV ei) V))) (castᶜ eoM₂ (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M)))
+    ≡⟨ cong (λ z → box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) z)) (castᶜ eoM₂ (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M))))
+            (castᵛ-irr (exV ei) eiV₂ V) ⟩
+      box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ eiV₂ V))) (castᶜ eoM₂ (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ (exM ei) M)))
+    ≡⟨ cong (λ z → box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ eiV₂ V))) (castᶜ eoM₂ (env-Cˢ γ (Δ' ∷ [ ρ ] A) z)))
+            (castᶜ-irr (exM ei) eiM₂ M) ⟩
+      box (castᵛ eoV₂ (env-Vˢ γ (Δ' ⟨ ρ ⟩) (castᵛ eiV₂ V))) (castᶜ eoM₂ (env-Cˢ γ (Δ' ∷ [ ρ ] A) (castᶜ eiM₂ M)))
+     ∎)
+  where
+    Δ'   = [] ⟨ ρ' ⟩ ++ᶜ Δ
+    eo   = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) Δ)
+    ei   = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) Δ
+    eoV₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩))
+    eoM₂ = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ' ⟩) (Δ ∷ [ ρ ] A))
+    eiV₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
+    eiM₂ = ++ᶜ-assoc Γ ([] ⟨ ρ' ⟩) (Δ ∷ [ ρ ] A)
+    exV  = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_⟨ ρ ⟩) p
+    exM  = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ [ ρ ] A) p
+
+env-Cˢ-box {A = A} {ρ = ρ} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M =
+  begin
+    castᶜ eOut ((castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA (box (V) (M))))) [ x ↦ Ŵ ]c)
+  ≡⟨ cong (λ z → castᶜ eOut ((castᶜ eIn (env-Cˢ γ Δ₁ z)) [ x ↦ Ŵ ]c))
+          (cast-box eA) ⟩
+    castᶜ eOut ((castᶜ eIn (env-Cˢ γ Δ₁ (box (castᵛ (exV eA) V) (castᶜ (exM eA) M)))) [ x ↦ Ŵ ]c)
+  ≡⟨ cong (λ z → castᶜ eOut ((castᶜ eIn z) [ x ↦ Ŵ ]c))
+          (env-Cˢ-box γ Δ₁ (castᵛ (exV eA) V) (castᶜ (exM eA) M)) ⟩
+    castᶜ eOut ((castᶜ eIn (box (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V)) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M)))) [ x ↦ Ŵ ]c)
+  ≡⟨ cong (λ z → castᶜ eOut (z [ x ↦ Ŵ ]c)) (cast-box eIn) ⟩
+    castᶜ eOut ((box (castᵛ (exV eIn) (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) (castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M)))) [ x ↦ Ŵ ]c)
+  ≡⟨ cast-box eOut ⟩
+    box (castᵛ (exV eOut) ((castᵛ (exV eIn) (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ (exM eOut) ((castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ≡⟨ cong (λ z → box (z) (castᶜ (exM eOut) ((castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c)))
+          (castᵛ-irr (exV eOut) eOutV₂ _) ⟩
+    box (castᵛ eOutV₂ ((castᵛ (exV eIn) (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ (exM eOut) ((castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ≡⟨ cong (λ z → box (castᵛ eOutV₂ ((castᵛ (exV eIn) (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (z))
+          (castᶜ-irr (exM eOut) eOutM₂ _) ⟩
+    box (castᵛ eOutV₂ ((castᵛ (exV eIn) (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ≡⟨ cong (λ z → box (castᵛ eOutV₂ (z [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c)))
+          (castᵛ-irr (exV eIn) eInV₂ _) ⟩
+    box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ (exM eIn) (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ≡⟨ cong (λ z → box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ (z [ Tl-∷ x ↦ Ŵ ]c)))
+          (castᶜ-irr (exM eIn) eInM₂ _) ⟩
+    box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ (exV eA) V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ eInM₂ (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ≡⟨ cong (λ z → box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) z)) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ eInM₂ (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c)))
+          (castᵛ-irr (exV eA) eAV₂ V) ⟩
+    box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ eAV₂ V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ eInM₂ (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ (exM eA) M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ≡⟨ cong (λ z → box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ eAV₂ V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ eInM₂ (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) z)) [ Tl-∷ x ↦ Ŵ ]c)))
+          (castᶜ-irr (exM eA) eAM₂ M) ⟩
+    box (castᵛ eOutV₂ ((castᵛ eInV₂ (env-Vˢ γ (Δ₁ ⟨ ρ ⟩) (castᵛ eAV₂ V))) [ Tl-⟨⟩ x ↦ Ŵ ]v)) (castᶜ eOutM₂ ((castᶜ eInM₂ (env-Cˢ γ (Δ₁ ∷ [ ρ ] A) (castᶜ eAM₂ M))) [ Tl-∷ x ↦ Ŵ ]c))
+  ∎
+  where
+    Δ₁     = [] ∷ A₀ ++ᶜ Δ
+    t      = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}
+    tV     = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ ⟨ ρ ⟩}
+    tM     = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ ∷ [ ρ ] A}
+    x      = split→∈ t
+    Ŵ      = castᵛ (sym (split→∈-split-l t)) W
+    eOut   = cong₂ _++ᶜ_ (split→∈-split-l t)  (split→∈-split-r t)
+    eOutV₂ = cong₂ _++ᶜ_ (split→∈-split-l tV) (split→∈-split-r tV)
+    eOutM₂ = cong₂ _++ᶜ_ (split→∈-split-l tM) (split→∈-split-r tM)
+    eIn    = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eInV₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ⟨ ρ ⟩))
+    eInM₂  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ∷ [ ρ ] A))
+    eA     = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
+    eAV₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ⟨ ρ ⟩)
+    eAM₂   = ++ᶜ-assoc Γ ([] ∷ A₀) (Δ ∷ [ ρ ] A)
+    exV    = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_⟨ ρ ⟩) p
+    exM    = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ [ ρ ] A) p
+
+env-Cˢ-box {A = A} {ρ = ρ} (eternalˡ Δ₀ lf η γ) Δ V M =
+  begin
+    env-Cˢ γ Δ (env-eternal-C lf η (castᶜ e (box (V) (M))))
+  ≡⟨ cong (λ z → env-Cˢ γ Δ (env-eternal-C lf η z)) (cast-box e) ⟩
+    env-Cˢ γ Δ (env-eternal-C lf η (box (castᵛ (exV e) V) (castᶜ (exM e) M)))
+  ≡⟨ cong (env-Cˢ γ Δ) (env-eternal-box lf η (castᵛ (exV e) V) (castᶜ (exM e) M)) ⟩
+    env-Cˢ γ Δ (box (env-eternal-V lf η (castᵛ (exV e) V)) (env-eternal-C lf η (castᶜ (exM e) M)))
+  ≡⟨ env-Cˢ-box γ Δ (env-eternal-V lf η (castᵛ (exV e) V)) (env-eternal-C lf η (castᶜ (exM e) M)) ⟩
+    box (env-Vˢ γ (Δ ⟨ ρ ⟩) (env-eternal-V lf η (castᵛ (exV e) V))) (env-Cˢ γ (Δ ∷ [ ρ ] A) (env-eternal-C lf η (castᶜ (exM e) M)))
+  ≡⟨ cong (λ z → box (env-Vˢ γ (Δ ⟨ ρ ⟩) (env-eternal-V lf η z)) (env-Cˢ γ (Δ ∷ [ ρ ] A) (env-eternal-C lf η (castᶜ (exM e) M))))
+          (castᵛ-irr (exV e) eV₂ V) ⟩
+    box (env-Vˢ γ (Δ ⟨ ρ ⟩) (env-eternal-V lf η (castᵛ eV₂ V))) (env-Cˢ γ (Δ ∷ [ ρ ] A) (env-eternal-C lf η (castᶜ (exM e) M)))
+  ≡⟨ cong (λ z → box (env-Vˢ γ (Δ ⟨ ρ ⟩) (env-eternal-V lf η (castᵛ eV₂ V))) (env-Cˢ γ (Δ ∷ [ ρ ] A) (env-eternal-C lf η z)))
+          (castᶜ-irr (exM e) eM₂ M) ⟩
+    box (env-Vˢ γ (Δ ⟨ ρ ⟩) (env-eternal-V lf η (castᵛ eV₂ V))) (env-Cˢ γ (Δ ∷ [ ρ ] A) (env-eternal-C lf η (castᶜ eM₂ M)))
+  ∎
+  where
+    e   = ++ᶜ-assoc Δ₀ _ Δ
+    eV₂ = ++ᶜ-assoc Δ₀ _ (Δ ⟨ ρ ⟩)
+    eM₂ = ++ᶜ-assoc Δ₀ _ (Δ ∷ [ ρ ] A)
+    exV = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_⟨ ρ ⟩) p
+    exM = λ {Γ₁ Γ₂ : Ctx} (p : Γ₁ ≡ Γ₂) → cong (_∷ [ ρ ] A) p
+
 -- The action, at the empty suffix.
 
 env-V : ∀ {St Γ A} → Env St Γ → Γ ⊢V⦂ A → toCtx St ⊢V⦂ A
@@ -1398,11 +1590,9 @@ env-C-id M = refl
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
--- The action commutes with substituting a telescope entry — definitionally,
--- because the entry is substituted last: at the empty suffix every cast is
--- `refl` (`++ᶜ-assoc Γ Γ' []` is, and so is `cong₂ _++ᶜ_ refl refl`) and the
--- variable is `Hd`. This is the order the machine's `APP` reduct wants, so no
--- substitution-commutation lemma is needed anywhere.
+-- The action commutes with substituting a telescope entry, definitionally:
+-- at the empty suffix every cast is `refl` (`++ᶜ-assoc Γ Γ' []` is, and so is
+-- `cong₂ _++ᶜ_ refl refl`) and the variable is `Hd`.
 
 env-Cˢ-head : ∀ {St Γ A C} → (γ : Env St Γ) → (M : Γ ∷ A ⊢C⦂ C)
             → (W : toCtx St ⊢V⦂ A)
@@ -1432,6 +1622,17 @@ env-Cˢ-head γ M W = refl
 ∈-ᴱ⁻ (Δ ⟨ ρ ⟩) x with ∈-ᴱ⁻ Δ x
 ... | ρ' , z = ρ' ·ᵣ ρ , Tl-⟨⟩ z
 
+-- Every variable of the eternal restriction has eternal type.
+
+ᴱ-eternal : ∀ {A ρ} → (Δ : Ctx) → A ∈[ ρ ] Δ ᴱ → Eternal A
+ᴱ-eternal []        x with x
+... | ()
+ᴱ-eternal (Δ ∷ B)   x with eternal? B
+ᴱ-eternal (Δ ∷ B)   Hd       | yes et = et
+ᴱ-eternal (Δ ∷ B)   (Tl-∷ y) | yes _  = ᴱ-eternal Δ y
+ᴱ-eternal (Δ ∷ B)   x        | no  _  = ᴱ-eternal Δ x
+ᴱ-eternal (Δ ⟨ ρ ⟩) x = ᴱ-eternal Δ x
+
 -- A variable of a concatenation comes from one of the two parts.
 
 ∈-++ᶜ-split : ∀ {A ρ} → (Δ₁ Δ₂ : Ctx) → A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂)
@@ -1449,7 +1650,10 @@ env-ᴱ : ∀ {St Γ} → (γ : Env St Γ) → ClosedVals (Γ ᴱ)
 
 env-ᴱ ⌊ St ⌋ x =
   ⊥-elim (not-in-empty-ctx (subst (λ Γ' → _ ∈[ _ ] Γ') (toCtxᴱ-[] St) x))
-env-ᴱ (γ ⟨ ρ ⟩ᵉ) x = env-ᴱ γ x
+env-ᴱ (γ ⟨ q ⟩ᵉ) x = env-ᴱ γ x
+env-ᴱ (renᵉ {Γ₀ = Γ₀} γ r) x with ᴱ-eternal Γ₀ x | ∈-ᴱ⁻ Γ₀ x
+... | et | ρ' , y with var-rename r y
+... | ρ'' , _ , z = env-ᴱ γ (∈-ᴱ et z)
 env-ᴱ (_∷ᵉ_ {A = A} γ V) x with eternal? A
 env-ᴱ (_∷ᵉ_ {St = St} {A = A} γ V) Hd       | yes et =
   castᵛ (toCtxᴱ-[] St) (eternal-val-restrict et V)
@@ -1459,3 +1663,41 @@ env-ᴱ (eternalˡ {Γ = Γ} Δ lf η γ) x
   with ∈-++ᶜ-split (Δ ᴱ) (Γ ᴱ) (subst (λ Γ' → _ ∈[ _ ] Γ') (ᴱ-++ᶜ Δ Γ) x)
 ... | inj₁ (ρ' , y) = η (proj₂ (∈-ᴱ⁻ Δ y))
 ... | inj₂ (ρ' , y) = env-ᴱ γ y
+
+------------------------------------------------------------------------
+-- FUNCTORIALITY IN THE STATE
+--
+-- `BOX` steps `⟨St, box V M⟩ ↝ ⟨St ∷ₛ V', M⟩`, so the `box` case of the
+-- fundamental lemma must move an environment to the extended state. The term
+-- needs no reindexing — `toCtx (St ∷ₛ V) = toCtx St ∷ [ρ]A` is the context the
+-- action already produced. The environment moves by structural recursion: a
+-- weakening at the base, a longer slice at a lock.
+------------------------------------------------------------------------
+
+env-alloc : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+          → Env St Γ
+          ---------------------
+          → Env (St ∷ₛ V) Γ
+
+env-alloc V ⌊ St ⌋            = renᵉ ⌊ St ∷ₛ V ⌋ wk-ren
+env-alloc V (γ ⟨ q ⟩ᵉ)         = γ ⟨ slice-∘ (alloc-slice V) q ⟩ᵉ
+env-alloc V (renᵉ γ r)        = renᵉ (env-alloc V γ) r
+env-alloc V (γ ∷ᵉ W)          = (env-alloc V γ) ∷ᵉ slice-val (alloc-slice V) W
+env-alloc V (eternalˡ Δ lf η γ) = eternalˡ Δ lf η (env-alloc V γ)
+
+-- Allocation preserves reducibility of the environment, given that the new
+-- cell is itself reducible (which is what `BOX` supplies). Each entry moves
+-- along the allocation slice, so this is exactly `Val-slice`.
+
+env-allocᴿ : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+           → (pV : Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V))
+           → (γ : Env St Γ) → Rel-Env γ
+           ------------------------------
+           → Rel-Env (env-alloc V γ)
+
+env-allocᴿ V pV ⌊ St ⌋            pγ        = store-alloc V pγ pV
+env-allocᴿ V pV (γ ⟨ q ⟩ᵉ)         pγ        = pγ
+env-allocᴿ V pV (renᵉ γ r)        pγ        = env-allocᴿ V pV γ pγ
+env-allocᴿ V pV (_∷ᵉ_ {A = A} γ W) (pγ , pW) =
+  env-allocᴿ V pV γ pγ , Val-slice (alloc-slice V) W pW
+env-allocᴿ V pV (eternalˡ Δ lf η γ) pγ      = env-allocᴿ V pV γ pγ

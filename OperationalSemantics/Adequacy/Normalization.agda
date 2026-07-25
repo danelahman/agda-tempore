@@ -1,13 +1,11 @@
 ------------------------------------------------------------------------
--- Weak-head normalization: the fundamental lemma.                      --
+-- Weak-head normalization: the fundamental lemma.                    --
 --                                                                    --
--- The language has no recursion, so termination is entirely syntactic:  --
--- no denotational measure, no well-founded `Tᵒ`-height, no split into   --
--- observable and silent steps. What is needed is reducibility, because  --
--- substitution can grow a term.                                        --
+-- The language has no recursion, so termination is syntactic.        --
+-- Reducibility is still needed, since substitution can grow a term.  --
 --                                                                    --
--- The `handle` case is an induction on the scrutinee's `Comp`           --
--- derivation: each `HANDLE-OP` consumes one resumption premise.         --
+-- The `handle` case is an induction on the scrutinee's `Comp`        --
+-- derivation: each `HANDLE-OP` consumes one resumption premise.      --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -44,13 +42,9 @@ open import OperationalSemantics.Adequacy.Slice        Spec
 postulate
 
   -- THE FUNDAMENTAL LEMMA (mutual, induction on the typing derivation).
-  --
-  -- Cases: `lam`/`_·_` by `Val`'s arrow clause and head expansion off `APP`;
-  -- `_⨟_` by running the head and continuing with `SEQ-RET`/`SEQ-OP`;
-  -- `match`/`absurd`/`coerce` by head expansion; `perform` by building
-  -- `comp-op`; `handle` by induction on the scrutinee's derivation, firing
-  -- `HANDLE-OP` and feeding the resumption into the clause; `box`/`unbox` by
-  -- moving along the slice; `delay` by head expansion off `DELAY`.
+  -- Most cases are head expansion off the corresponding rule; `handle`
+  -- inducts on the scrutinee's `Comp` derivation, `box` moves the
+  -- environment along `env-alloc`.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⊢V⦂ A)

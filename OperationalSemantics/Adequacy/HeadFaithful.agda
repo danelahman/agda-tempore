@@ -1,21 +1,15 @@
 ------------------------------------------------------------------------
--- The model-side interface: head faithfulness.                         --
+-- The model-side interface: head faithfulness.                       --
 --                                                                    --
--- Adequacy does not need *exhaustiveness* ("every point of `Tᵒ A ε` has --
--- a weak-head form") — the machine supplies the shape and `↝*-sound`    --
--- transports it. What the model has to provide is that it does not      --
--- identify distinct heads: no-confusion and injectivity.                --
+-- The model must not identify distinct heads: no-confusion and       --
+-- injectivity, at the composite shape `↝*-sound` produces — a head   --
+-- (`ηᵀ`-leaf or `opᵀ`-node) bound after a run's time transition.     --
+-- Transitions are restricted to the class `stepsᵀ` builds, which     --
+-- carries the run's tick total.                                      --
 --                                                                    --
--- Both are stated at the composite shape `↝*-sound` produces: a head    --
--- (`ηᵀ`-leaf or `opᵀ`-node) bound after a run's *time transition*.       --
--- Transitions are not arbitrary morphisms — a stuck one observes nothing --
--- — so they are restricted to the class `stepsᵀ` builds, which also      --
--- carries the run's tick total.                                        --
---                                                                    --
--- For the presheaf model these are facts about the tree setoid `_≈ᵗ_`,   --
--- proved by induction on its derivations (`sub-*`, `delay-zero`,        --
--- `delay-plus`, `≈ᵗ-sym`, `≈ᵗ-trans`) against a head observation        --
--- indexed by a path of `⊑`-witnesses. See `notes/adequacy-plan.md`.      --
+-- For the presheaf model these are facts about the tree setoid       --
+-- `_≈ᵗ_`, proved by induction on its derivations against a head      --
+-- observation.                                                       --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -79,9 +73,7 @@ open import OperationalSemantics.Adequacy.Evaluation Spec
 -- A RUN'S TIME TRANSITION
 --
 -- The class of morphisms `stepsᵀ` builds: `ηᵀ`, and a `DELAY`'s tick bound
--- into a further transition. The index is the tick total, the run's observable
--- time. Closed under morphism equality, since transitions are only ever used
--- up to `_≈ᵐ_`.
+-- into a further transition, indexed by the tick total. Closed under `_≈ᵐ_`.
 
 data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → ℕ → Set₁ where
 
@@ -105,11 +97,9 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → ℕ → S
              -----------------------
              → Delaysᵐ t' n
 
--- A run's transition is one of the class above, and its index is the run's
--- tick total: the bridge between the syntactic observable (`ticks`) and the
--- model-side interface. Step by step, since `stepᵀ` is `ηᵀ` for every rule but
--- `DELAY`, and both `stepᵀ` and `step-ticks` recurse identically through the
--- two congruences.
+-- A run's transition lies in that class, at the run's tick total: the bridge
+-- between the syntactic observable (`ticks`) and the model-side interface.
+-- `stepᵀ` is `ηᵀ` for every rule but `DELAY`.
 
 step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A : VType}
             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -217,10 +207,9 @@ record HeadFaithful : Set₂ where
                -----------------------------------------------------------
                → ⟦ c₁ ⟧ᵇᶜ ≈ᵐ ⟦ c₂ ⟧ᵇᶜ
 
--- The timed refinement: the tick total is observable too. Split off, because
--- the natural proof needs the Kripke frame to *interpolate* a composite step
--- (`delay-plus` in the other direction), which fails in general — see
--- `notes/pra-and-unbox.md`.
+-- The timed refinement: the tick total is observable too. Split off because
+-- proving it needs the Kripke frame to interpolate a composite step, which
+-- holds only for coarse-unit frames (`notes/pra-and-unbox.md`).
 
 record HeadTimed : Set₂ where
 
@@ -250,9 +239,7 @@ record HeadTimed : Set₂ where
                 → n₁ ≡ n₂
 
 -- Faithfulness of the base-constant interpretation: an assumption on the
--- `GroundTypes` parameter, not a theorem. (Definability — every semantic
--- element being some `⟦ V ⟧` — is *not* needed: the adequacy statement
--- compares two programs, so injectivity suffices.)
+-- `GroundTypes` parameter, not a theorem.
 
 record BaseFaithful : Set where
 
@@ -265,9 +252,8 @@ record BaseFaithful : Set where
 
 -- UNIFORMITY IS FREE
 --
--- The handler uniformity a reduction needs is carried by the term's own
--- certificate, so `Uniform↝`/`Uniform↝*` are `⊤` in every case; the two
--- congruences just inherit their sub-step's.
+-- Handler uniformity is carried by the term's own certificate, so
+-- `Uniform↝`/`Uniform↝*` are `⊤` in every case.
 
 uniform↝ : ∀ {A ε ε'} {St St' : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -297,36 +283,46 @@ uniform↝* ε*       p          = tt
 uniform↝* (r ◅ rs) (pS , pM)  =
   uniform↝ r pM , uniform↝* rs (stepᴾᶜᶠ r (pS , pM))
 
-------------------------------------------------------------------------
--- LEMMAS TO PROVE
-------------------------------------------------------------------------
+-- WHNF CONFIGURATIONS DENOTE HEADS
+--
+-- Unfold `⟦_⟧ᶜᵗ` at the two whnf formers and push the state's environment
+-- inside; it survives only inside the head's components.
 
-postulate
+ret-whnf-shape : ∀ {A} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A)
+               → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+               → Σ[ a ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ) ]
+                   ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV) ≈ᵐ leafᵐ a
 
-  -- A whnf configuration denotes a head: a `return` is a leaf, a `perform` an
-  -- operation node. Unfolding `⟦_⟧ᶜᵗ` at the two whnf formers, with the
-  -- `ty-gty` adapters absorbed.
+ret-whnf-shape {St = St} V pSt pV =
+  ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ St ⟧ˢ pSt , ∘ᵐ-assoc ηᵀ (⟦ V ⟧ᵛᵗ pV) (⟦ St ⟧ˢ pSt)
 
-  ret-whnf-shape : ∀ {A} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A)
-                 → (pSt : Paramˢ St) → (pV : Paramᵛ V)
-                 → Σ[ a ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ) ]
-                     ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV) ≈ᵐ leafᵐ a
+op-whnf-shape : ∀ {A ε} {St : 𝕊 []} {op : Op}
+              → (W : toCtx St ⊢V⦂ type-of-gtype (param op))
+              → (M' : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                        ⊢C⦂ A ‼ ε)
+              → (pSt : Paramˢ St) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
+              → Σ[ w ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
+                Σ[ k ∈ (⟦ hist St ⟧ᶜᵗˣ
+                          →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε)) ]
+                   ⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ (pSt , pW , pM') ≈ᵐ nodeᵐ op w k
 
-  op-whnf-shape : ∀ {A ε} {St : 𝕊 []} {op : Op}
-                → (W : toCtx St ⊢V⦂ type-of-gtype (param op))
-                → (M' : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-                          ⊢C⦂ A ‼ ε)
-                → (pSt : Paramˢ St) → (pW : Paramᵛ W) → (pM' : Paramᶜ M')
-                → Σ[ w ∈ (⟦ hist St ⟧ᶜᵗˣ →ᵐ ⟦ param op ⟧ᵍ) ]
-                  Σ[ k ∈ (⟦ hist St ⟧ᶜᵗˣ
-                            →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ A ⟧ᵛ ε)) ]
-                     ⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ (pSt , pW , pM') ≈ᵐ nodeᵐ op w k
+op-whnf-shape {St = St} {op = op} W M' pSt pW pM' =
+    _ , _
+  , ≈ᵐ-trans (∘ᵐ-assoc (opᵀ op) _ (⟦ St ⟧ˢ pSt))
+             (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ (⟦ St ⟧ˢ pSt)))
 
-  -- A base-typed value's leaf is a constant's: `base-canonical` transported to
-  -- the model, where `⟦ const c ⟧ᵛᵗ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ`.
+-- A base-typed value's leaf is a constant's (`base-canonical`); the state's
+-- environment is absorbed by the terminal object.
 
-  base-leaf-const : ∀ {b} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Base b)
-                  → (pSt : Paramˢ St) → (pV : Paramᵛ V)
-                  → Σ[ c ∈ BaseConstants b ]
-                      ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
-                        ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)
+base-leaf-const : ∀ {b} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Base b)
+                → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+                → Σ[ c ∈ BaseConstants b ]
+                    ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                      ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)
+
+base-leaf-const {St = St} V pSt pV with base-canonical V
+base-leaf-const {St = St} .(const c) pSt pV | c , refl =
+    c
+  , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
+      (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc ⟦ c ⟧ᵇᶜ terminalᵐ (⟦ St ⟧ˢ pSt))
+                          (∘ᵐ-congʳ terminalᵐ-unique)))

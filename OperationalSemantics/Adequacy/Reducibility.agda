@@ -1,17 +1,15 @@
 ------------------------------------------------------------------------
--- The logical relation: reducible values, computations and stores.     --
+-- The logical relation: reducible values, computations and stores.   --
 --                                                                    --
--- Unary and purely syntactic — soundness of the operational semantics  --
--- is already available and head-faithfulness is a separate model       --
--- lemma, so the relation only has to deliver weak-head normalization.   --
+-- Unary and purely syntactic — it only has to deliver weak-head      --
+-- normalization; soundness and head-faithfulness are separate.       --
 --                                                                    --
--- `Comp` is an *inductive family*, not a definition by recursion on the --
--- effect grade: `E` is an arbitrary preordered monoid, so                --
--- `op-grade op ·ₑ ε` need not exceed `ε`. Its induction is what carries   --
--- the `handle` case of the fundamental lemma (one `HANDLE-OP` consumes    --
--- one resumption premise). Ground types carry no arrows, so `Valᵍ` is a   --
--- prior definition and `Comp` can be given before `Val`, which then       --
--- instantiates it at the structurally smaller value predicate.            --
+-- `Comp` is an inductive family: `E` is an arbitrary preordered      --
+-- monoid, so `op-grade op ·ₑ ε` need not exceed `ε` and there is no  --
+-- measure to recurse on. Its induction carries FL's `handle` case.   --
+--                                                                    --
+-- Ground types have no arrows, so `Valᵍ` comes first and `Comp`      --
+-- precedes `Val`, which instantiates it at the smaller predicate.    --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -63,10 +61,9 @@ Valᵍ ([ ρ ]ᵍ G)    St V =
 
 -- REDUCIBLE COMPUTATIONS (inductive)
 --
--- `M` runs to a weak head normal form whose components are reducible. The
--- run's grade is free (a step only refines it), so the whnf's grade and state
--- are bound by the constructors; `steps-≾`/`steps-grade` recover the
--- refinement when it is needed.
+-- `M` runs to a weak head normal form whose components are reducible. A step
+-- only refines the grade, so the whnf's grade and state are bound by the
+-- constructors; `steps-≾`/`steps-grade` recover the refinement.
 
 data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
      : (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set where
@@ -104,8 +101,12 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 --
 -- Over a state context a product value *is* a pair and a function value *is*
 -- a lambda (`⦉⦊-not-in-toCtx`, `⇒-not-in-toCtx`), and a box-typed value is a
--- resource variable (`grad-typ⇒var`) — so only `[ ρ ]` needs a Kripke
--- quantifier, at the slice that makes the resource ready.
+-- resource variable (`grad-typ⇒var`) — canonical forms are read off directly.
+--
+-- Both `⇒` and `[ ρ ]` are Kripke. `[ ρ ]` because the resource is ready only
+-- once enough time has passed. `⇒` because `Val` must be monotone: `BOX`
+-- allocates a cell, and a function reaching the extended state may be applied
+-- to arguments mentioning it.
 
 Val : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 Val (Base b)      St V = ⊤
@@ -117,7 +118,9 @@ Val (A |×| B)     St V =
 Val (A ⇒ (B ‼ ε)) St V =
   Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
     (V ≡ lam M)
-  × (∀ (W : toCtx St ⊢V⦂ A) → Val A St W → Comp B (Val B) ε St (M [ Hd ↦ W ]c))
+  × (∀ {St'} → (q : Slice St uᵣ St' uᵣ)
+     → (W : toCtx St' ⊢V⦂ A) → Val A St' W
+     → Comp B (Val B) ε St' ((slice-under q M) [ Hd ↦ W ]c))
 Val ([ ρ ] A)     St V =
   ∀ {St'} → (q : Slice St ρ St' uᵣ) → Val A St' (unbox-lookup St' (unbox-ren q) V)
 
@@ -141,9 +144,8 @@ Store (_∷ₛ_ {A} {ρ} St V) =
 
 -- HEAD EXPANSION
 --
--- A step in front of a reducible computation: the whnf it reaches is the same
--- one, reached by the longer run. The grade changes across the step, which is
--- why `Comp` carries runs rather than a fixed grade — `_◅_` leaves it free.
+-- A step in front of a reducible computation reaches the same whnf by a longer
+-- run. `Comp` carries runs, so `_◅_` leaves the grade free.
 
 Comp-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -159,10 +161,9 @@ Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
--- GROUND REDUCIBILITY IS VALUE REDUCIBILITY at the embedded type. The two
--- definitions agree clause by clause — ground types have no arrow, so nothing
--- is lost. Needed wherever they meet: `perform`, and the `handle` clause's
--- parameter and resumption.
+-- Ground reducibility is value reducibility at the embedded type: the clauses
+-- agree, ground types having no arrow. Needed at `perform` and at a `handle`
+-- clause's parameter and resumption.
 
 Valᵍ→Val : ∀ {G St} → (V : toCtx St ⊢V⦂ type-of-gtype G)
          → Valᵍ G St V → Val (type-of-gtype G) St V
@@ -186,15 +187,14 @@ Val→Valᵍ {[ ρ ]ᵍ G}    V p = λ q → Val→Valᵍ _ (p q)
 
 postulate
 
-  -- Monotonicity along the slice. Only stated where it holds: a plain value
-  -- moves at the unit lock (knot 1 of `notes/adequacy-plan.md` — the general
-  -- `≤ₛ` reindexing is *not* available).
+  -- Monotonicity along a unit slice, used by `BOX`. Recursion on `A`, needing
+  -- two syntactic lemmas: functoriality of renaming
+  -- (`C-rename (r ∘ʳ r') ≡ C-rename r ∘ C-rename r'`, absent from
+  -- `Syntax.RenActions`) for `⇒`, and coherence of `unbox-lookup` with slice
+  -- composition for `[ ρ ]`.
 
   Val-slice : ∀ {A St St'} → (q : Slice St uᵣ St' uᵣ) → (V : toCtx St ⊢V⦂ A)
             → Val A St V → Val A St' (slice-val q V)
-
-  Comp-slice : ∀ {A ε St St'} → (q : Slice St uᵣ St' uᵣ) → (M : toCtx St ⊢C⦂ A ‼ ε)
-             → Comp' A ε St M → Comp' A ε St' (slice-comp q M)
 
   -- The store makes every resource variable reducible: this is what discharges
   -- `Val`'s `[ ρ ]` clause in the variable case of the fundamental lemma.
@@ -205,10 +205,12 @@ postulate
             → (f : ¬ Eternal ([ ρ ] A) → ρ' ≾ᵣ uᵣ)
             → Val ([ ρ ] A) St (var f x)
 
-  -- Allocation extends a reducible store with a reducible value (`BOX`), and
-  -- letting time pass keeps it reducible (`DELAY`).
+-- Allocation extends a reducible store with a reducible value (`BOX`): a cell
+-- is its stored value, so this is the pair.
 
-  store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-              → Store St
-              → Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V)
-              → Store (St ∷ₛ V)
+store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+            → Store St
+            → Val A (St ⟨ ρ ⟩ₛ) (V-rename (eq-ren ++ᶜ-identityˡ) V)
+            ------------------------------------------------------
+            → Store (St ∷ₛ V)
+store-alloc V pSt pV = pSt , pV

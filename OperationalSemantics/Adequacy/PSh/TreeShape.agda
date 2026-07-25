@@ -1,28 +1,23 @@
 ------------------------------------------------------------------------
--- Head shapes of effect trees, at zero delay.                          --
+-- Head shapes of effect trees, at zero delay.                        --
 --                                                                    --
--- The presheaf model's tree setoid `_≈ᵗ_` is not structural            --
--- bisimulation: it is generated with `sub-u`/`sub-∘`/`sub-delay`/       --
--- `sub-op`, the two delay collapses, and explicit `≈ᵗ-sym`/`≈ᵗ-trans`.  --
--- So no-confusion has to be proved against an observation that survives --
--- every one of those rules, by induction on the derivation.             --
+-- `_≈ᵗ_` is generated with `sub-u`/`sub-∘`/`sub-delay`/`sub-op`, the --
+-- two delay collapses, and explicit `≈ᵗ-sym`/`≈ᵗ-trans`, so no-      --
+-- confusion is proved against an observation invariant under all of  --
+-- them, by induction on the derivation.                              --
 --                                                                    --
--- `Head0 t s` says: descending `t`'s delay nodes through *no* time at    --
--- all, its head is a leaf, resp. an operation node for a given `op`.     --
--- Two things make this work where a tick-counting observation would      --
--- struggle:                                                            --
+-- `Head0 t s` reads off `t`'s head, descending only structure that   --
+-- takes no time. Two things make that work:                          --
 --                                                                    --
---   * a zero delay has a *canonical* witness `⊑-delay0` (the frame       --
---     needs no future world for it), so the observation quantifies over  --
---     no witness at all and everything is witness-irrelevant;           --
+--   * a zero delay has a canonical witness `⊑-delay0`, so the        --
+--     observation quantifies over none and all is witness-irrelevant;--
 --                                                                    --
---   * splitting a `τ₁ + τ₂` step — `delay-plus` read backwards — would   --
---     need the frame to interpolate, which it does not in general; at    --
---     `τ₁ + τ₂ ≡ 0` the split is `⊑-delay0` twice.                      --
+--   * splitting a `τ₁ + τ₂` step (`delay-plus` backwards) needs the  --
+--     frame to interpolate; at `τ₁ + τ₂ ≡ 0` it is `⊑-delay0` twice. --
 --                                                                    --
--- This is the base case of `HeadFaithful` (`ret≢op` and `op-inj` at zero  --
--- delay). The general case is the same argument at a tick-indexed        --
--- observation, and needs the interpolation axiom.                        --
+-- This is `HeadFaithful`'s `ret≢op`/`op-inj` at zero delay. The      --
+-- general case is the same argument at a tick-indexed observation,   --
+-- needing interpolation.                                             --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -71,9 +66,8 @@ op-shape-inj refl = refl
 
 -- THE ZERO-DELAY HEAD OBSERVATION
 --
--- `sub` nodes are transparent (reduction discards a `coerce`); a delay may be
--- descended only when it delays by nothing, and then along the canonical
--- zero-step.
+-- `sub` nodes are transparent (reduction discards a `coerce`); a delay is
+-- descended only when it delays by nothing, along the canonical zero-step.
 
 data Head0 {A : PSh} : ∀ {ε w} → Tˢ A ε w → Shape → Set where
 
@@ -132,8 +126,8 @@ head0-ε-subst⁺ : ∀ {A ε ε' w s} → (e : ε ≡ ε') → {t : Tˢ A ε w}
                → Head0 (ε-substˢ e t) s
 head0-ε-subst⁺ refl h = h
 
--- Retargeting the canonical step: all zero-steps out of a world into the same
--- world agree (`⊑-irrelevant`), which is what the two delay collapses need.
+-- All zero-steps out of a world into the same world agree (`⊑-irrelevant`),
+-- which is what the two delay collapses need.
 
 head0-⊑ : ∀ {A ε w s}
         → (k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ 0) ] w' → Tˢ A ε w')
@@ -146,10 +140,10 @@ head0-⊑ k q q' h = subst (λ z → Head0 (k z) _) (⊑-irrelevant q q') h
 ------------------------------------------------------------------------
 -- INVARIANCE
 --
--- Bisimilar trees have the same zero-delay head shape. Mutually with its
+-- Bisimilar trees have the same zero-delay head shape. Mutual with its
 -- converse, since `≈ᵗ-sym` is a constructor. Every case recurses on a
--- sub-derivation of `_≈ᵗ_` — including the two delay collapses, whose
--- continuation coherences (`ek`, `hk`) are fields of the derivation.
+-- sub-derivation of `_≈ᵗ_`; the delay collapses' continuation coherences
+-- (`ek`, `hk`) are fields of the derivation.
 ------------------------------------------------------------------------
 
 mutual
@@ -222,10 +216,9 @@ mutual
 -- NO-CONFUSION AT ZERO DELAY
 ------------------------------------------------------------------------
 
--- A returned value is never an operation. Stated at the head observation: a
--- leaf and an operation node sit at different effect grades, and whichever
--- `ε-substˢ`/`sub` the two denotations are presented with, `Head0` sees
--- through it.
+-- A returned value is never an operation. Stated at the head observation,
+-- which sees through the `ε-substˢ`/`sub` the two denotations carry (a leaf
+-- and an operation node sit at different effect grades).
 
 ret≉op : ∀ {A ε w} {op : Op} {t t' : Tˢ A ε w}
        → t ≈ᵗ t'

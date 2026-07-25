@@ -1,21 +1,17 @@
 ------------------------------------------------------------------------
--- ADEQUACY of the denotational semantics w.r.t. the operational one.   --
+-- ADEQUACY of the denotational semantics w.r.t. the operational one. --
 --                                                                    --
--- The converse direction of `↝*-sound`: denotational information is    --
--- reflected back into operational behaviour. Assembled from            --
+-- The converse direction of `↝*-sound`. Assembled from               --
 --                                                                    --
---   * whnf existence            — `Adequacy.Normalization.halts`       --
---     (syntactic; the language has no recursion)                       --
---   * the whnf denotes the source — `↝*-sound` (already proved)         --
---   * head faithfulness         — `Adequacy.HeadFaithful` (model side)  --
+--   * whnf existence  — `Normalization.halts` (syntactic)            --
+--   * the whnf denotes the source — `↝*-sound`                       --
+--   * head faithfulness — `HeadFaithful` (model side)                --
 --                                                                    --
--- Stated for two programs: `⟦ M ⟧ ≈ᵐ ⟦ N ⟧` implies they halt with the  --
--- same shape, at the same operation, with the same answer. That form    --
--- needs no *definability* — only injectivity of the base constants      --
--- (`BaseFaithful`) — and no exhaustiveness of the head forms.           --
+-- Stated for two programs: `⟦ M ⟧ ≈ᵐ ⟦ N ⟧` implies they halt with   --
+-- the same shape, at the same operation, with the same answer.       --
 --                                                                    --
--- Scope: the non-top-level machine `↝`, where unhandled operations stop --
--- computing and denotations live in the tree monad `Tᵒ`.                --
+-- Scope: the machine `↝`, where unhandled operations stop computing  --
+-- and denotations live in the tree monad `Tᵒ`.                       --
 ------------------------------------------------------------------------
 
 open import Data.Empty

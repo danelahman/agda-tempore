@@ -1,12 +1,13 @@
 ------------------------------------------------------------------------
--- Weak-head evaluation: the two shapes a configuration halts in.      --
+-- Weak-head evaluation: the two shapes a configuration halts in.     --
 --                                                                    --
--- `progress` halts a configuration at a `return` or at an unhandled   --
--- `perform` (`ProgressTheorem`'s `is-value`/`is-op`), and both are     --
--- final. Packaged here as evaluation relations on configurations,      --
--- together with the run's observable time (its *tick total*).          --
+-- `progress` halts a configuration at a `return` or at an unhandled  --
+-- `perform` (`ProgressTheorem`'s `is-value`/`is-op`), and both are   --
+-- final. Packaged here as evaluation relations on configurations,    --
+-- together with the run's observable time (its *tick total*).        --
 --                                                                    --
--- Purely syntactic: no model parameters. See `notes/adequacy-plan.md`. --
+-- Purely syntactic: no model parameters. See `notes/adequacy-        --
+-- plan.md`.                                                          --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -53,9 +54,9 @@ base-canonical (const c) = c , refl
 
 -- THE OBSERVABLE TIME OF A RUN
 --
--- The ticks a step takes: only `DELAY` advances time, and it does so by
--- exactly its own delay. (The grade `steps-grade` is not an observable: it
--- absorbs `uₑ` factors freely and `_≾ₑ_` is only a preorder.)
+-- The ticks a step takes: only `DELAY` advances time, by its own delay. The
+-- grade `steps-grade` is not an observable — it absorbs `uₑ` factors freely
+-- and `_≾ₑ_` is a preorder.
 
 step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
@@ -126,9 +127,7 @@ Prog A ε = toCtx {[]} ∅ ⊢C⦂ A ‼ ε
 
 -- FINALITY
 --
--- Neither whnf steps. (`ProgressTheorem`'s `finality-value`/`finality-op` say
--- this too, but carry an unused `uₑ ≾ₑ _` implicit that every use would have to
--- solve.)
+-- Neither whnf steps.
 
 finality-ret : ∀ {A} {D : CType} {St : 𝕊 []}
              → {V : toCtx St ⊢V⦂ A} → {cf : Config D}
@@ -150,11 +149,10 @@ finality-perform ()
 -- DETERMINISM
 --
 -- A step out of a configuration is unique — target *and* derivation. The
--- derivation has to be included: the two congruence rules rebuild their
--- continuation along `suc-comp-ren (step-extends-state r)`, so the reduct is
--- only determined once the sub-derivation is. Packing the grade, the target and
--- the derivation into one Σ keeps the statement homogeneous, so the congruence
--- cases are a `cong` and the consumers below can match on `refl`.
+-- derivation is part of it: the congruence rules rebuild their continuation
+-- along `suc-comp-ren (step-extends-state r)`, so the reduct is determined only
+-- once the sub-derivation is. Packing grade, target and derivation into one Σ
+-- keeps the statement homogeneous, so consumers can match on `refl`.
 
 Step-from : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Step-from {A} cf = Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A ‼ ε') ] (cf ↝ cf')
@@ -220,8 +218,7 @@ handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-gra
 
 -- RUNS TO A WHNF ARE UNIQUE
 --
--- Packed as above, so that the state, the value/operation and the time all
--- follow by `cong`.
+-- Packed as above, so state, value/operation and time follow by `cong`.
 
 Ret-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Ret-run {A} cf =

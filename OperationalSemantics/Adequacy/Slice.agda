@@ -1,15 +1,10 @@
 ------------------------------------------------------------------------
--- The index of the logical relation: guarded state extensions.         --
+-- The index of the logical relation: guarded state extensions.       --
 --                                                                    --
--- Reindexing along `S ≤ₛ S'` is not free weakening — `suc-comp-ren`     --
--- takes a grade side-condition, and only eternal values move            --
--- unconditionally. So the relation is Kripke over the *slice* that       --
--- `suc-comp-ren` accepts: an extension together with the bound that      --
--- licenses crossing the lock it was guarded by.                          --
---                                                                    --
--- Only lock-guarded data has to be monotone (`⨟`/`perform` continuations, --
--- boxed resources); a plain value is used at the state it was built at,   --
--- which is exactly what the `var` rule's own grade premise says.          --
+-- Reindexing along `S ≤ₛ S'` is not free weakening — `suc-comp-ren`  --
+-- takes a grade side-condition. So the relation is Kripke over the   --
+-- *slice* that `suc-comp-ren` accepts: an extension together with    --
+-- the bound licensing the lock it was guarded by.                    --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -56,14 +51,22 @@ slice-ren (slice e b) = suc-comp-ren e b
 slice-id : ∀ {St ρ} → Slice St ρ St ρ
 slice-id {ρ = ρ} = slice id-suc (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
 
--- Transporting a plain value: at the unit lock the slice is a renaming
--- `toCtx St → toCtx St'`.
+-- At the unit lock the slice is a plain renaming `toCtx St → toCtx St'`.
+
+slice-renᵘ : ∀ {St St'} → Slice St uᵣ St' uᵣ → Ren (toCtx St) (toCtx St')
+slice-renᵘ q = ⟨⟩-η-ren ∘ʳ slice-ren q ∘ʳ ⟨⟩-η⁻¹-ren
 
 slice-val : ∀ {St St' A} → Slice St uᵣ St' uᵣ → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
-slice-val q = V-rename (⟨⟩-η-ren ∘ʳ slice-ren q ∘ʳ ⟨⟩-η⁻¹-ren)
+slice-val q = V-rename (slice-renᵘ q)
 
 slice-comp : ∀ {St St' C} → Slice St uᵣ St' uᵣ → toCtx St ⊢C⦂ C → toCtx St' ⊢C⦂ C
-slice-comp q = C-rename (⟨⟩-η-ren ∘ʳ slice-ren q ∘ʳ ⟨⟩-η⁻¹-ren)
+slice-comp q = C-rename (slice-renᵘ q)
+
+-- Transporting a term with one more variable on top (a `lam` body).
+
+slice-under : ∀ {St St' A C} → Slice St uᵣ St' uᵣ
+            → toCtx St ∷ A ⊢C⦂ C → toCtx St' ∷ A ⊢C⦂ C
+slice-under q = C-rename (cong-∷-ren (slice-renᵘ q))
 
 -- The witness an `unbox` needs: enough time has passed for a `ρ`-boxed value
 -- to be ready at `St'`. This is the shape of `UNBOX`'s premise, hence what
@@ -126,6 +129,25 @@ slice-∘ {ρ'' = ρ''} (slice e' b') (slice e b) =
       (≾ᵣ-reflexive
         (trans (cong (_·ᵣ ρ'') (≤ₛ-grade-trans e e')) (·ᵣ-assoc _ _ ρ'')))
       (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ b') b))
+
+-- Composition against a unit slice on the right: a `ρ`-guarded step out of a
+-- later state still starts `ρ`-guarded from the earlier one. `slice-∘` needs
+-- its middle grades to agree, so this is a separate lemma; `Val`'s box clause
+-- needs it to be monotone.
+
+slice-∘ᵘ : ∀ {St St' St'' ρ}
+         → Slice St' ρ St'' uᵣ → Slice St uᵣ St' uᵣ
+         -------------------------------------------
+         → Slice St ρ St'' uᵣ
+
+slice-∘ᵘ {ρ = ρ} (slice e' b') (slice e b) =
+  slice (≤ₛ-trans e e')
+    (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityʳ _))
+      (≾ᵣ-trans (≾ᵣ-reflexive (≤ₛ-grade-trans e e'))
+        (≾ᵣ-trans
+          (·ᵣ-monoˡ-≾ᵣ (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))) b))
+          (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+                    (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))) b')))))
 
 -- THE SLICES THE MACHINE PRODUCES
 --
