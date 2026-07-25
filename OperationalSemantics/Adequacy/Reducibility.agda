@@ -187,11 +187,12 @@ Val→Valᵍ {[ ρ ]ᵍ G}    V p = λ q → Val→Valᵍ _ (p q)
 
 postulate
 
-  -- Monotonicity along a unit slice, used by `BOX`. Recursion on `A`, needing
-  -- two syntactic lemmas: functoriality of renaming
-  -- (`C-rename (r ∘ʳ r') ≡ C-rename r ∘ C-rename r'`, absent from
-  -- `Syntax.RenActions`) for `⇒`, and coherence of `unbox-lookup` with slice
-  -- composition for `[ ρ ]`.
+  -- Monotonicity along a unit slice, used by `BOX`. Recursion on `A`. The `⇒`
+  -- clause composes two transports, so it needs functoriality of renaming —
+  -- which holds only up to `_≐ᶜ_` (`Adequacy.RenEquivalence`), since `unbox`
+  -- stores a renaming. So this also needs `Val`/`Comp` to respect
+  -- `_≐ᵛ_`/`_≐ᶜ_`, hence `↝` to respect `_≐ᶜ_`. The `[ ρ ]` clause needs
+  -- coherence of `unbox-lookup` with slice composition.
 
   Val-slice : ∀ {A St St'} → (q : Slice St uᵣ St' uᵣ) → (V : toCtx St ⊢V⦂ A)
             → Val A St V → Val A St' (slice-val q V)
