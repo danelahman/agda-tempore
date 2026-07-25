@@ -744,3 +744,32 @@ unbox-lookup-cast-val St refl w V =
 ≤ₛ-embed-lookup id-suc       x = refl
 ≤ₛ-embed-lookup (⟨⟩-suc ρ e) x = ≤ₛ-embed-lookup e x
 ≤ₛ-embed-lookup (∷-suc V e)  x = ≤ₛ-embed-lookup e x
+
+------------------------------------------------------------------------
+-- WHAT THE LOOKUP'S WEAKENING DOES TO A VARIABLE
+--
+-- `wk-ren-⟨ρ⟩-ctx` weakens out of a lock into everything the context holds
+-- beyond it, which on a variable is `var-ρ-++ᶜ` — the same push, with the same
+-- grade. Recursion on that context, as the renaming's own.
+------------------------------------------------------------------------
+
+-- A `Tgt` is determined by its grade, so a grade equality relocates it.
+
+Tgt-≡ : ∀ {Γ A} {σ σ' : R} → (e : σ ≡ σ') → (y : A ∈[ σ ] Γ)
+      → (σ , y) ≡ (σ' , subst (λ ρ₀ → A ∈[ ρ₀ ] Γ) e y)
+Tgt-≡ refl y = refl
+
+wk-ren-⟨ρ⟩-ctx-tgt : ∀ {Γ A σ ρ} → (Γ' : Ctx) → (h : ctx-grade Γ' ≡ ρ)
+                   → (x : A ∈[ σ ] Γ)
+                   → var-tgt (wk-ren-⟨ρ⟩-ctx {Γ} {Γ'} {ρ} h) (Tl-⟨⟩ x)
+                   ≡ (σ ·ᵣ ctx-grade Γ' , var-ρ-++ᶜ {Γ' = Γ'} x)
+
+wk-ren-⟨ρ⟩-ctx-tgt {Γ} {A} {σ} [] refl x =
+  Tgt-≡ (sym (·ᵣ-identityʳ σ)) x
+wk-ren-⟨ρ⟩-ctx-tgt (Γ' ∷ B) refl x =
+  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (wk-ren-⟨ρ⟩-ctx-tgt Γ' refl x)
+wk-ren-⟨ρ⟩-ctx-tgt {Γ} {A} {σ} (Γ' ⟨ ρ' ⟩) refl x =
+  trans (cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t))
+              (wk-ren-⟨ρ⟩-ctx-tgt Γ' refl x))
+        (Tgt-≡ (·ᵣ-assoc σ (ctx-grade Γ') ρ')
+               (Tl-⟨⟩ (var-ρ-++ᶜ {Γ' = Γ'} x)))

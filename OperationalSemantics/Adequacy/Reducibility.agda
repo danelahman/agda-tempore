@@ -583,13 +583,20 @@ alloc-var-≐ V x f =
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
 --
--- What is left is one renaming agreement. `lookup-body` transports the stored
--- value by `wk-ren-⟨ρ⟩-ctx` past the cell and everything allocated after it
--- (`split-state-snd`), then reindexes by `split-state-++ᶜ`; the hypothesis
--- transports it by `unbox-ren (slice-∘ᵘ q (alloc-slice V))`, i.e. by
--- `≤ₛ-embed (ext q)`. Both are the same inclusion, but seeing that means
--- relating `split-state-snd St₂` to the part of the extension after the
--- allocation — the last piece of knot 3.
+-- What is left is one renaming agreement, best stated as its own lemma about
+-- *any* already-allocated cell rather than the fresh one:
+--
+--   lookup-slice : (e : St₀ ≤ₛ St₂) → (c : [ ρ ] A ∈[ σ ] toCtx St₀) → …
+--                → lookup-body St₂ (≤ₛ-embed e c) _
+--                ≐ᵛ V-rename (unbox-ren (slice e b)) (lookup-body St₀ c _)
+--
+-- "reading an already-allocated cell in a later state is reading it in the
+-- earlier one and transporting". `store-fresh` is the case `St₀ := St ∷ₛ V`,
+-- `c := Hd`, where `lookup-body St₀ Hd _` is `V` renamed. By induction on `e`:
+-- each `≤ₛ` step grows `split-state-snd` by exactly what `suc-comp-ren` adds, so
+-- the two renamings stay in step. `wk-ren-⟨ρ⟩-ctx-tgt` (in `Slice`) computes the
+-- lookup side of that on a variable; `≤ₛ-embed-fst`/`≤ₛ-embed-lookup` already
+-- give the value side.
 
 postulate
 

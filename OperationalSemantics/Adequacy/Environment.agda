@@ -1809,6 +1809,26 @@ ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → {Δ : Ctx} → (x : A ∈
 ren-var-r r x f f' =
   var-ren-tgt-≐ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-tgt-r r x) f'
 
+-- PUSHING A PREFIX VARIABLE UNDER A SUFFIX
+--
+-- The grade is whatever the locks of the suffix multiply it by, so this is
+-- stated as a `Tgt` and never needs a `subst` (unlike `var-ρ-++ᶜ`).
+
+-- The grade depends only on the suffix, not on the variable, so it is a
+-- function of its own — which is what lets the two sides of `sub-var-l` be
+-- seen to have the same grade.
+
+grade-++ᶜˡ : R → Ctx → R
+grade-++ᶜˡ ρ []         = ρ
+grade-++ᶜˡ ρ (Δ ∷ B)    = grade-++ᶜˡ ρ Δ
+grade-++ᶜˡ ρ (Δ ⟨ ρ' ⟩) = grade-++ᶜˡ ρ Δ ·ᵣ ρ'
+
+∈-++ᶜˡ : ∀ {Γ A ρ} → (Δ : Ctx) → A ∈[ ρ ] Γ
+       → A ∈[ grade-++ᶜˡ ρ Δ ] (Γ ++ᶜ Δ)
+∈-++ᶜˡ []        x = x
+∈-++ᶜˡ (Δ ∷ B)   x = Tl-∷ (∈-++ᶜˡ Δ x)
+∈-++ᶜˡ (Δ ⟨ ρ ⟩) x = Tl-⟨⟩ (∈-++ᶜˡ Δ x)
+
 -- SUBSTITUTION FIXES A SUFFIX VARIABLE
 --
 -- The variable being replaced lies in the prefix, so a suffix variable survives
@@ -1821,6 +1841,13 @@ ren-var-r r x f f' =
 
 -- Relocating a variable along an equality of *extended* contexts: the equality
 -- must have come from one of the smaller contexts, and any two proofs agree.
+
+-- Relocating a variable along a proof that its context is what it is.
+
+subst-var-id : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+             → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
+             ≡ subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
+subst-var-id e x = refl
 
 subst-Hd-any : ∀ {Γ Γ' A} → (e : Γ ∷ A ≡ Γ' ∷ A)
              → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) e Hd ≡ Hd
@@ -1954,6 +1981,57 @@ env-eternal-V-var-r (lf-∷ lf) η x f f' =
   ≐ᵛ-trans (env-eternal-V-≐ lf (λ z → η (Tl-∷ z)) (sub-var-r _ x _ f f))
            (env-eternal-V-var-r lf (λ z → η (Tl-∷ z)) x f f')
 
+-- SUBSTITUTION FIXES A PREFIX VARIABLE
+--
+-- The mirror of `sub-var-r`: the variable being replaced is the `B` sitting at
+-- the boundary, so a variable of the prefix survives it too, landing at the
+-- corresponding position of the shorter prefix. Same induction on the suffix.
+
+sub-var-l : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
+          → (x : A ∈[ ρ ] Γ₁)
+          → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
+          → (f  : ¬ Eternal A → grade-++ᶜˡ ρ Γ₂ ≾ᵣ uᵣ)
+          → (f' : ¬ Eternal A → grade-++ᶜˡ ρ Γ₂ ≾ᵣ uᵣ)
+          → castᵛ (castOf {Γ₁} {B} Γ₂)
+              (⟨ ∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Tl-∷ x) , f
+               ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
+          ≐ᵛ var f' (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)
+
+sub-var-l {Γ₁} {B} [] x W f f' =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (trans (castᵛ-var (castOf {Γ₁} {B} []) f x)
+                 (cong (var f) (subst-var-id (castOf {Γ₁} {B} []) x))))
+    var-≐
+
+sub-var-l {Γ₁} {B} (Γ₂ ∷ C) x W f f' =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
+    (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
+              (var-ren-tgt-≐ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f'))
+
+sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
+
+... | yes et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
+    (≐ᵛ-trans (eternal-val-ext-cong et
+                (sub-var-l Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≐)
+
+... | no ¬et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩))
+                           (castOf {Γ₁} {B} Γ₂) rn _))
+    (≐ᵛ-trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
+              (var-ren-tgt-≐ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
+                 (cong (var-tgt′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+                       (⟨⟩-η⁻¹-tgt (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
+                 f'))
+  where
+    rn : ∀ {Γ₀ : Ctx} → Ren Γ₀ (Γ₀ ⟨ ρ' ⟩)
+    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+
+    fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
+
 -- THE ACTION FIXES A SUFFIX VARIABLE
 --
 -- Recursion on the environment. Each zone either renames along a congruence
@@ -2069,9 +2147,17 @@ env-var-hd γ W f =
 -- Any other variable is untouched by the entry, and is the action of the rest.
 
 -- These two speak of a variable of the *prefix*, which is where the action
--- actually acts: `env-Vˢ-var-r` does not apply, and what is needed instead is
--- that the action commutes with growing the suffix by a binder (`env-var-tl`)
--- or by a lock (`env-var-lock`).
+-- actually acts, so `env-Vˢ-var-r` does not apply. Both follow from
+--
+--   env-Vˢ-var-∷ : env-Vˢ γ ([] ∷ A₀) (var f (Tl-∷ x))
+--                ≐ᵛ V-rename wk-ren (env-Vˢ γ [] (var f' x))
+--
+-- and its lock analogue, by recursion on the environment: `⌊_⌋` is `var-≐`,
+-- `renᵉ`/`sliceᵉ` are the induction hypothesis with the renamings commuted
+-- (`V-rename-∘` twice against a `_≐ʳ_` step), and the two substituting zones are
+-- `sub-var-l` above. `env-var-tl` is then the case at the empty suffix, where
+-- substituting `Hd` into a weakening cancels; `env-var-lock`'s weakening is the
+-- lock-crossing renaming, which is where `slice-unit`'s grade premise enters.
 
 postulate
 
