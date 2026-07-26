@@ -397,19 +397,7 @@ unbox-ren-tgt : ∀ {St St' : 𝕊 []} {ρ : R} → (q : Slice St ρ St' uᵣ)
               → var-tgt (unbox-ren q) (Tl-⟨⟩ x) ≡ ≤ₛ-embed (ext q) x
 unbox-ren-tgt (slice e b) x = cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x)
 
--- The variable an `unbox` refers to, forgetting its grade bound. `unbox⇒var`
--- reads it off with `var-rename`, so `_≐ʳ_`-equal renamings agree on it.
-
-unbox-tgt : ∀ {Γ A ρ Δ} → Ren (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
-unbox-tgt w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
-
-unbox-tgt-≐ : ∀ {Γ A ρ Δ} {w w' : Ren (Δ ⟨ ρ ⟩) Γ}
-            → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
-            → unbox-tgt w V ≡ unbox-tgt w' V
-unbox-tgt-≐ hw V with grad-typ⇒var V
-... | _ , y , f , refl = at hw (Tl-⟨⟩ y)
-
--- Consequently: looking a resource up after transporting it along a slice
+-- Looking a resource up after transporting it along a slice
 -- reaches the same cell as looking it up along the composite.
 
 unbox-cells : ∀ {A ρ} {St St' St₂ : 𝕊 []}

@@ -388,7 +388,13 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} q' W eW
               (≐ᵛ-trans eW
                 (≐ᵛ-trans
                   (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
-                  (unbox-lookup-≐ es₂ (unbox-ren-bridge es es₂ h) V))))
+                  (unbox-lookup-≐ es₂
+                     {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
+                     {w' = unbox-ren q} {V = V} {V' = V}
+                     (unbox-tgt-≐
+                        {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
+                        {w' = castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)}
+                        (unbox-ren-bridge es es₂ h) V)))))
 
 -- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
 --
@@ -565,7 +571,13 @@ Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} q' W eW
               (≐ᵛ-trans eW
                 (≐ᵛ-trans
                   (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
-                  (unbox-lookup-≐ es₂ (unbox-ren-bridge es es₂ h) V))))
+                  (unbox-lookup-≐ es₂
+                     {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
+                     {w' = unbox-ren q} {V = V} {V' = V}
+                     (unbox-tgt-≐
+                        {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
+                        {w' = castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)}
+                        (unbox-ren-bridge es es₂ h) V)))))
 
 -- Hence reducibility is insensitive to the term equivalence: the special case
 -- `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.

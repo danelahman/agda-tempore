@@ -261,11 +261,12 @@ castʳ = castʳˢ
          → {w : Ren (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
          → unbox w V M ≐ᶜ castᶜ e P'
-         → Σ[ w' ∈ Ren (Δ ⟨ ρ ⟩) Γ' ] Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
-             (P' ≡ unbox w' V M')
-           × (w ≐ʳ castʳ e w')
+         → Σ[ Δ' ∈ Ctx ] Σ[ w' ∈ Ren (Δ' ⟨ ρ ⟩) Γ' ] Σ[ V' ∈ (Δ' ⊢V⦂ [ ρ ] A) ]
+           Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
+             (P' ≡ unbox w' V' M')
+           × (unbox-tgt w V ≡ unbox-tgt (castʳ e w') V')
            × (M ≐ᶜ castᶜ (cong (_∷ A) e) M')
-≐-unbox⁻ refl _ (unbox-≐ hw eM) = _ , _ , refl , hw , eM
+≐-unbox⁻ refl _ (unbox-≐ hw eM) = _ , _ , _ , _ , refl , hw , eM
 
 ------------------------------------------------------------------------
 -- CASTS AND THE REDUCTS
@@ -517,17 +518,17 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 -- which `lookup-body′-≐` compares.
 ------------------------------------------------------------------------
 
-unbox-lookup-≐ : ∀ {A ρ Δ} {St St' : 𝕊 []}
+unbox-lookup-≐ : ∀ {A ρ Δ Δ'} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
-               → {w : Ren (Δ ⟨ ρ ⟩) (toCtx St)} → {w' : Ren (Δ ⟨ ρ ⟩) (toCtx St')}
-               → w ≐ʳ castʳ (sym (toCtx-≐ˢ es)) w'
-               → (V : Δ ⊢V⦂ [ ρ ] A)
+               → {w : Ren (Δ ⟨ ρ ⟩) (toCtx St)} → {w' : Ren (Δ' ⟨ ρ ⟩) (toCtx St')}
+               → {V : Δ ⊢V⦂ [ ρ ] A} → {V' : Δ' ⊢V⦂ [ ρ ] A}
+               → unbox-tgt w V ≡ unbox-tgt (castʳ (sym (toCtx-≐ˢ es)) w') V'
                -------------------------------------------------------
                → unbox-lookup St w V
-               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V)
+               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V')
 
-unbox-lookup-≐ {A} {ρ} {St = St} {St' = St'} es {w} {w'} hw V =
-  subst (λ u → u ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V))
+unbox-lookup-≐ {A} {ρ} {St = St} {St' = St'} es {w} {w'} {V} {V'} hw =
+  subst (λ u → u ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V'))
         (sym (lookup-body-≡ St cellEq _ relW))
         (lookup-body′-≐
            (sym (toCtx-≐ˢ es))
@@ -535,19 +536,20 @@ unbox-lookup-≐ {A} {ρ} {St = St} {St' = St'} es {w} {w'} hw V =
            _ _ _ _ relW relW _ _
            (≐ˢ-lookup₂ es z z' zz))
   where
-    z' = proj₂ (unbox-tgt w' V)
+    z' = proj₂ (unbox-tgt w' V')
 
-    relW = proj₂ (proj₂ (unbox⇒var w' V))
+    relW = proj₂ (proj₂ (unbox⇒var w' V'))
 
-    z = subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w' V) ] Γ₀)
+    z = subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w' V') ] Γ₀)
               (sym (toCtx-≐ˢ es)) z'
 
     zz : ≐ˢ-var es z ≡ z'
     zz = subst-subst-sym (toCtx-≐ˢ es)
 
     -- the two lookups name the same cell: `hw` up to `_≐ʳ_`, then the cast
-    cellEq : unbox-tgt w V ≡ (proj₁ (unbox-tgt w' V) , z)
-    cellEq = trans (unbox-tgt-≐ hw V) (unbox-tgt-cast (sym (toCtx-≐ˢ es)) w' V)
+    -- the two lookups name the same cell: the hypothesis, then the cast
+    cellEq : unbox-tgt w V ≡ (proj₁ (unbox-tgt w' V') , z)
+    cellEq = trans hw (unbox-tgt-cast (sym (toCtx-≐ˢ es)) w' V')
 
 ------------------------------------------------------------------------
 -- THE BISIMULATION, RULE BY RULE
@@ -684,13 +686,14 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
           → unbox w V M₀ ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) P'
           → Sim es P' (UNBOX {w = w} {V = V} {M = M₀})
-↝-≐-unbox {St = St} {St' = St'} es {V = V} P' eM
+↝-≐-unbox {St = St} {St' = St'} es {w = w} {V = V} P' eM
   with ≐-unbox⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | w' , M₀' , refl , hw , eM₀ =
+... | _ , w' , V' , M₀' , refl , hw , eM₀ =
     _ , _ , es , UNBOX , id-≤≐
   , subst (λ z → _ ≐ᶜ z)
-      (cast-app (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' w' V))
-      (sub-≐ᶜ Hd (unbox-lookup-≐ es hw V) eM₀)
+      (cast-app (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' w' V'))
+      (sub-≐ᶜ Hd (unbox-lookup-≐ es {w = w} {w' = w'} {V = V} {V' = V'} hw)
+                 eM₀)
 
 -- sequencing an operation: the operation floats out, its continuation gaining
 -- the sequel. The reduct is retyped in its *effect* (`ε-subst`) as well.

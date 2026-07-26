@@ -148,7 +148,12 @@ unbox-var-≐ : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ)
             → M ≐ᶜ M'
             → unbox-var x rel M ≐ᶜ unbox-var x rel' M'
 unbox-var-≐ x rel rel' eM =
-  unbox-≐ (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ rel rel'))) eM
+  unbox-≐ (unbox-tgt-≐
+             (∘ʳ-≐ (≐ʳ-refl {r = eq-ren (split-≡ (split-pf x))})
+               (∘ʳ-≐ (≐ʳ-refl {r = wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)})
+                     (⟨⟩-≤-ren-≐ rel rel')))
+             (var (λ _ → ≾ᵣ-refl) Hd))
+          eM
 
 ------------------------------------------------------------------------
 -- SUBSTITUTION IS A CONGRUENCE
@@ -211,10 +216,10 @@ mutual
 
   -- the underlying resource variable is recovered by `unbox⇒var`, pushed through
   -- `⟨_⟩[_↦_]rvar` and rebuilt by `unbox-var`; only the grade bounds differ
-  sub-≐ᶜ x {W} {W'} eW (unbox-≐ {w = w} {w' = w'} {V = V} hw eM)
-    with grad-typ⇒var V
-  ... | _ , y , f , refl
-    with var-rename w (Tl-⟨⟩ y) | var-rename w' (Tl-⟨⟩ y) | at hw (Tl-⟨⟩ y)
+  sub-≐ᶜ x {W} {W'} eW (unbox-≐ {w = w} {w' = w'} {V = V} {V' = V'} hw eM)
+    with grad-typ⇒var V | grad-typ⇒var V'
+  ... | _ , y , f , refl | _ , y' , f' , refl
+    with var-rename w (Tl-⟨⟩ y) | var-rename w' (Tl-⟨⟩ y') | hw
   ...   | _ , _ , z | _ , _ , _ | refl
     with ⟨ z ⟩[ x ↦ W ]rvar | ⟨ z ⟩[ x ↦ W' ]rvar | sub-rvar-≐ z x eW
   ...     | _ , v , p | _ , _ , p' | refl =

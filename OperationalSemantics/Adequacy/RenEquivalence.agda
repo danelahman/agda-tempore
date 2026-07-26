@@ -199,6 +199,35 @@ cong-ren-∘-≐ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
            (cong-⟨⟩-ren-∘-≐ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
 
 ------------------------------------------------------------------------
+-- THE CELL AN `unbox` NAMES
+--
+-- Reduction consults an `unbox` only through `unbox⇒var`, and `unbox-lookup`
+-- only through this — so this, and not the stored renaming or boxed value, is
+-- what `_≐ᶜ_` compares below.
+------------------------------------------------------------------------
+
+unbox-tgt : ∀ {Γ A ρ Δ} → Ren (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
+unbox-tgt w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
+
+-- `_≐ʳ_`-equal renamings name the same cell: the boxed value is seen only as a
+-- variable (`grad-typ⇒var`), which both consult alike.
+
+unbox-tgt-≐ : ∀ {Γ A ρ Δ} {w w' : Ren (Δ ⟨ ρ ⟩) Γ}
+            → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
+            → unbox-tgt w V ≡ unbox-tgt w' V
+unbox-tgt-≐ hw V with grad-typ⇒var V
+... | _ , y , f , refl = at hw (Tl-⟨⟩ y)
+
+-- Renaming an `unbox` relocates its cell — definitionally, since `var-rename`
+-- of a composite is the composite.
+
+unbox-tgt-∘ : ∀ {Γ Γ' A ρ Δ} → (r : Ren Γ Γ') → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+            → (V : Δ ⊢V⦂ [ ρ ] A)
+            → unbox-tgt (r ∘ʳ w) V ≡ var-tgt′ r (unbox-tgt w V)
+unbox-tgt-∘ r w V with grad-typ⇒var V
+... | _ , y , f , refl = refl
+
+------------------------------------------------------------------------
 -- TERMS UP TO IRRELEVANT STORED DATA
 --
 -- A term is *not* determined by its shape: `var` stores a grade bound,
@@ -278,10 +307,15 @@ mutual
 
     -- the two nodes storing data that matters only up to equivalence
 
-    unbox-≐   : ∀ {A C ρ Δ} {w w' : Ren (Δ ⟨ ρ ⟩) Γ} {V : Δ ⊢V⦂ [ ρ ] A}
+    -- `unbox` is compared at the *cell* it names, not at the renaming and boxed
+    -- value it stores: substitution renormalises those (`unbox⇒var` then
+    -- `unbox-var`), so demanding they agree would make substitution lemmas false.
+
+    unbox-≐   : ∀ {A C ρ Δ Δ'} {w : Ren (Δ ⟨ ρ ⟩) Γ} {w' : Ren (Δ' ⟨ ρ ⟩) Γ}
+                  {V : Δ ⊢V⦂ [ ρ ] A} {V' : Δ' ⊢V⦂ [ ρ ] A}
                   {M M' : Γ ∷ A ⊢C⦂ C}
-              → w ≐ʳ w' → M ≐ᶜ M'
-              → unbox w V M ≐ᶜ unbox w' V M'
+              → unbox-tgt w V ≡ unbox-tgt w' V' → M ≐ᶜ M'
+              → unbox w V M ≐ᶜ unbox w' V' M'
 
     coerce-≐  : ∀ {A ε ε'} {p p' : ε ≾ₑ ε'} {M M' : Γ ⊢C⦂ A ‼ ε}
               → M ≐ᶜ M' → coerce p M ≐ᶜ coerce p' M'
@@ -310,7 +344,7 @@ mutual
   ≐ᶜ-refl (delay τ M)             = delay-≐ (≐ᶜ-refl M)
   ≐ᶜ-refl (handle M `with H `in N) =
     handle-≐ (≐ᶜ-refl M) (λ op ε'' Γ' → ≐ᶜ-refl (H op ε'' Γ')) (≐ᶜ-refl N)
-  ≐ᶜ-refl (unbox w V M)           = unbox-≐ ≐ʳ-refl (≐ᶜ-refl M)
+  ≐ᶜ-refl (unbox w V M)           = unbox-≐ refl (≐ᶜ-refl M)
   ≐ᶜ-refl (box V M)               = box-≐ (≐ᵛ-refl V) (≐ᶜ-refl M)
   ≐ᶜ-refl (coerce p M)            = coerce-≐ (≐ᶜ-refl M)
 
@@ -341,7 +375,7 @@ mutual
              (λ op ε'' Γ' → ≐ᶜ-trans (eH op ε'' Γ') (eH' op ε'' Γ'))
              (≐ᶜ-trans eN eN')
   ≐ᶜ-trans (unbox-≐ hw eM)    (unbox-≐ hw' eM')   =
-    unbox-≐ (≐ʳ-trans hw hw') (≐ᶜ-trans eM eM')
+    unbox-≐ (trans hw hw') (≐ᶜ-trans eM eM')
   ≐ᶜ-trans (coerce-≐ eM)      (coerce-≐ eM')      = coerce-≐ (≐ᶜ-trans eM eM')
   ≐ᶜ-trans (box-≐ eV eM)      (box-≐ eV' eM')     =
     box-≐ (≐ᵛ-trans eV eV') (≐ᶜ-trans eM eM')
@@ -365,7 +399,7 @@ mutual
   ≐ᶜ-sym (delay-≐ eM)       = delay-≐ (≐ᶜ-sym eM)
   ≐ᶜ-sym (handle-≐ eM eH eN) =
     handle-≐ (≐ᶜ-sym eM) (λ op ε'' Γ' → ≐ᶜ-sym (eH op ε'' Γ')) (≐ᶜ-sym eN)
-  ≐ᶜ-sym (unbox-≐ hw eM)    = unbox-≐ (≐ʳ-sym hw) (≐ᶜ-sym eM)
+  ≐ᶜ-sym (unbox-≐ hw eM)    = unbox-≐ (sym hw) (≐ᶜ-sym eM)
   ≐ᶜ-sym (coerce-≐ eM)      = coerce-≐ (≐ᶜ-sym eM)
   ≐ᶜ-sym (box-≐ eV eM)      = box-≐ (≐ᵛ-sym eV) (≐ᶜ-sym eM)
 
@@ -592,7 +626,8 @@ mutual
          C-rename-≐ (cong-ren-≐ (_ ∷ _ ∷ _) (restrict-ren-≐ h)) (H op ε'' Γ'))
       (C-rename-≐ (cong-ren-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≐ h (unbox w V M) =
-    unbox-≐ (∘ʳ-≐ h ≐ʳ-refl) (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
+    unbox-≐ (unbox-tgt-≐ (∘ʳ-≐ h (≐ʳ-refl {r = w})) V)
+            (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
   C-rename-≐ h (box V M) =
     box-≐ (V-rename-≐ (cong-ren-≐ ([] ⟨ _ ⟩) h) V)
           (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
@@ -678,7 +713,8 @@ mutual
                        (H op ε'' Γ'))
       (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≐ h (unbox w V M) =
-    unbox-≐ (∘ʳ-id-≐ w h) (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
+    unbox-≐ (unbox-tgt-≐ (∘ʳ-id-≐ w h) V)
+            (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
   C-rename-id-≐ h (box V M) =
     box-≐ (V-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) V)
           (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
@@ -744,7 +780,7 @@ mutual
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (unbox w V M) =
-    unbox-≐ (∘ʳ-assoc-≐ r₂ r₁ w)
+    unbox-≐ (unbox-tgt-≐ (∘ʳ-assoc-≐ r₂ r₁ w) V)
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ ([] ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (box V M) =
@@ -791,8 +827,11 @@ mutual
     handle-≐ (C-rename-cong r eM)
              (λ op ε'' Γ' → C-rename-cong (cong-ren (restrict-ren r)) (eH op ε'' Γ'))
              (C-rename-cong (cong-ren r) eN)
-  C-rename-cong r (unbox-≐ hw eM)   =
-    unbox-≐ (∘ʳ-≐ (≐ʳ-refl {r = r}) hw) (C-rename-cong (cong-ren r) eM)
+  C-rename-cong r (unbox-≐ {w = w} {w' = w'} {V = V} {V' = V'} hw eM) =
+    unbox-≐ (trans (unbox-tgt-∘ r w V)
+                   (trans (cong (var-tgt′ r) hw)
+                          (sym (unbox-tgt-∘ r w' V'))))
+            (C-rename-cong (cong-ren r) eM)
   C-rename-cong r (coerce-≐ eM)     = coerce-≐ (C-rename-cong r eM)
   C-rename-cong r (box-≐ eV eM)     =
     box-≐ (V-rename-cong (cong-ren r) eV) (C-rename-cong (cong-ren r) eM)

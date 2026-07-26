@@ -172,7 +172,7 @@ castᵛ-irr e e' V = cong (λ z → castᵛ z V) uip
 castᶜ-irr : ∀ {Γ Γ' C} → (e e' : Γ ≡ Γ') → (M : Γ ⊢C⦂ C) → castᶜ e M ≡ castᶜ e' M
 castᶜ-irr e e' M = cong (λ z → castᶜ z M) uip
 
-cast-lam : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
+cast-lam : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ C)
          → castᵛ e (lam M) ≡ lam (castᶜ (cong (_∷ A) e) M)
 cast-lam refl M = refl
 
@@ -2087,6 +2087,105 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
     rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
+
+-- SUBSTITUTING FOR A FRESHLY WEAKENED VARIABLE: THE VARIABLE CASE
+--
+-- The weakening's image never *is* the substituted variable, so a variable comes
+-- back unchanged. Which of `sub-var-r`/`sub-var-l` applies depends on whether it
+-- came from the suffix or the prefix, and `∈-++ᶜ-split` decides that.
+
+sub-wk-var-r : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ} → (z : A ∈[ ρ ] Θ)
+             → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → castᵛ (castOf {Γ} {B} Θ)
+                 ((V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                            (var f (∈-++ᶜʳ {Γ = Γ} z)))
+                    [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]v)
+             ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ} z)
+
+sub-wk-var-r {Γ} {B} Θ z W f f' =
+  ≐ᵛ-trans
+    (castᵛ-≐ (castOf {Γ} {B} Θ)
+      (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) (≐ᵛ-refl W)
+        (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                       (∈-++ᶜʳ {Γ = Γ} z) f
+                       (cong-ren-tgt-r (wk-ren {A = B}) z) f)))
+    (sub-var-r Θ z W f f')
+
+sub-wk-var-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ} → (z : A ∈[ ρ ] Γ)
+             → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+             → (f f' : ¬ Eternal A → grade-++ᶜˡ ρ Θ ≾ᵣ uᵣ)
+             → castᵛ (castOf {Γ} {B} Θ)
+                 ((V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                            (var f (∈-++ᶜˡ {Γ = Γ} Θ z)))
+                    [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]v)
+             ≐ᵛ var f' (∈-++ᶜˡ {Γ = Γ} Θ z)
+
+sub-wk-var-l {Γ} {B} Θ z W f f' =
+  ≐ᵛ-trans
+    (castᵛ-≐ (castOf {Γ} {B} Θ)
+      (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) (≐ᵛ-refl W)
+        (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                       (∈-++ᶜˡ {Γ = Γ} Θ z) f
+                       (cong-ren-tgt-l (wk-ren {A = B}) Θ z) f)))
+    (sub-var-l Θ z W f f')
+
+sub-wk-var : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ} → (y : A ∈[ ρ ] (Γ ++ᶜ Θ))
+           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+           → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+           → castᵛ (castOf {Γ} {B} Θ)
+               ((V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) (var f y))
+                  [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]v)
+           ≐ᵛ var f' y
+
+sub-wk-var {Γ} {B} Θ {A} {ρ} y W f f' with ∈-++ᶜ-split Γ Θ y in eq
+
+... | inj₂ z
+  rewrite ∈-++ᶜ-split-inj₂ Γ Θ y z eq = sub-wk-var-r Θ z W f f'
+
+... | inj₁ (ρ' , z) =
+  subst (λ t → (fu f'u : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
+             → castᵛ (castOf {Γ} {B} Θ)
+                 ((V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                            (var fu (proj₂ t)))
+                    [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]v)
+             ≐ᵛ var f'u (proj₂ t))
+        (sym (∈-++ᶜ-split-inj₁ Γ Θ y z eq))
+        (λ fu f'u → sub-wk-var-l Θ z W fu f'u)
+        f f'
+
+-- SUBSTITUTING FOR A FRESHLY WEAKENED VARIABLE
+--
+-- `sub-wk-V`/`sub-wk-C` — "substituting for a freshly weakened variable is the
+-- identity" — is what `env-var-tl` and (via `seq-Comp`) `FL-seq`/`FL-handle`
+-- need. Thirteen of its fifteen cases are mechanical and were proved; they are
+-- withdrawn here because the lemma **cannot be completed at `unbox` as
+-- `_≐ᶜ_` currently stands**, and a partial mutual definition cannot be kept.
+--
+-- The obstruction. Substitution does not push through `unbox w V M`: it recovers
+-- the underlying resource variable (`unbox⇒var`), substitutes *that*
+-- (`⟨_⟩[_↦_]rvar`) and rebuilds with the `unbox-var` smart constructor, whose
+-- boxed value is `var _ Hd` over `split-l v ∷ [ ρ ] A`. The unsubstituted term's
+-- is `V` over an unrelated `Δ`. But `_≐ᶜ_`'s `unbox-≐` quantifies over a
+-- *single* `Δ` and a *single* `V`, so it forces those to agree — checked, by
+-- matching `unbox-≐` and getting `Δ ≡ Δ'`. So the statement is not merely
+-- unproved, it is false, and postulating it would be unsound.
+--
+-- The fix is to coarsen `_≐ᶜ_` at `unbox` to compare the *cell* the two name
+-- rather than their stored values:
+--
+--   unbox-≐ : unbox-tgt w V ≡ unbox-tgt w' V' → M ≐ᶜ M'
+--           → unbox w V M ≐ᶜ unbox w' V' M'
+--
+-- which is the semantically right notion — reduction consults an `unbox` only
+-- through `unbox⇒var`, and `unbox-lookup` only through `unbox-tgt` — and is
+-- exactly the root cause recorded in `notes/adequacy-plan.md` (knot 0). It needs
+-- `unbox-tgt` moved from `Slice` into `RenEquivalence` (it depends only on
+-- `unbox⇒var`), and then the `unbox` case of `≐ᶜ-refl`/`-sym`/`-trans`,
+-- `C-rename-≐`/`-∘`/`-cong`/`-id-≐`, `sub-≐ᶜ`, `≐-unbox⁻` and `↝-≐`'s `UNBOX`
+-- case adjusted — each from a `_≐ʳ_` hypothesis to a cell equation, which should
+-- *simplify* `unbox-lookup-≐`, whose present hypothesis is a `_≐ʳ_` it only ever
+-- uses through `unbox-tgt-≐`.
 
 -- THE ACTION FIXES A SUFFIX VARIABLE
 --
