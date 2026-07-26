@@ -252,6 +252,39 @@ cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
               `in (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
 cast-handle refl = refl
 
+-- SUBSTITUTION RESPECTS A CONTEXT TRANSPORT
+--
+-- Relocating a term's context relocates the variable it is substituted at, and
+-- the replacement's own context along with it. All four hold by matching the
+-- equality, but they are what lets a substitution be moved across the
+-- `ᴱ`/`++ᶜ` transports that `handle`'s eternal clause accumulates.
+
+split-l-cast : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+             → split-l x ≡ split-l (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+split-l-cast refl x = refl
+
+split-r-cast : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+             → split-r x ≡ split-r (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+split-r-cast refl x = refl
+
+sub-cast-C : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C) → (x : A ∈[ ρ ] Γ)
+           → (W : split-l x ⊢V⦂ A)
+           → subst (_⊢C⦂ C) (cong₂ _++ᶜ_ (split-l-cast e x) (split-r-cast e x))
+               (M [ x ↦ W ]c)
+           ≡ (subst (_⊢C⦂ C) e M)
+               [ subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
+               ↦ subst (_⊢V⦂ A) (split-l-cast e x) W ]c
+sub-cast-C refl M x W = refl
+
+sub-cast-V : ∀ {Γ Γ' A B ρ} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ)
+           → (W : split-l x ⊢V⦂ A)
+           → subst (_⊢V⦂ B) (cong₂ _++ᶜ_ (split-l-cast e x) (split-r-cast e x))
+               (V [ x ↦ W ]v)
+           ≡ (subst (_⊢V⦂ B) e V)
+               [ subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
+               ↦ subst (_⊢V⦂ A) (split-l-cast e x) W ]v
+sub-cast-V refl V x W = refl
+
 -- Transports along context equalities, all normalised to `subst` so that a
 -- chain of them fuses and collapses by `uip`.
 
