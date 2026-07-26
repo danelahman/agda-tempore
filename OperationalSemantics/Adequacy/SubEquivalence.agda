@@ -224,3 +224,22 @@ mutual
     with ⟨ z ⟩[ x ↦ W ]rvar | ⟨ z ⟩[ x ↦ W' ]rvar | sub-rvar-≐ z x eW
   ...     | _ , v , p | _ , _ , p' | refl =
     unbox-var-≐ v (≾ᵣ-trans p _) (≾ᵣ-trans p' _) (sub-≐ᶜ (Tl-∷ x) eW eM)
+
+-- WHAT SUBSTITUTION DOES TO AN `unbox`
+--
+-- It renormalises: the resource variable is recovered, substituted
+-- (`⟨_⟩[_↦_]rvar`) and rebuilt by `unbox-var`. Stated as its own lemma so that
+-- the three nested `with`s stay local — callers then reason with `rvar-tgt` and
+-- `unbox-tgt` alone. The grade bound is arbitrary, `_≐ᶜ_` not seeing it.
+
+sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+          → (M : Γ ∷ A ⊢C⦂ C) → (x : A₀ ∈[ τ ] Γ) → (W : split-l x ⊢V⦂ A₀)
+          → (rel : proj₁ (rvar-tgt (proj₂ (unbox-tgt w V)) x W) ≾ᵣ ρ)
+          → ((unbox w V M) [ x ↦ W ]c)
+          ≐ᶜ unbox-var (proj₂ (rvar-tgt (proj₂ (unbox-tgt w V)) x W)) rel
+                       (M [ Tl-∷ x ↦ W ]c)
+
+sub-unbox w V M x W rel with grad-typ⇒var V
+... | _ , y , f , refl with var-rename w (Tl-⟨⟩ y)
+...   | _ , b , c with ⟨ c ⟩[ x ↦ W ]rvar
+...     | _ , v , p = unbox-var-≐ v (≾ᵣ-trans p _) rel (≐ᶜ-refl _)

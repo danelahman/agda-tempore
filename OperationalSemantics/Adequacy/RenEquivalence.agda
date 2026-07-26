@@ -151,6 +151,33 @@ open _≐ʳ_ public
     go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
     go (Tl-⟨⟩ x) = refl
 
+-- Relocating a whole `Tgt` along a context equality, and the pushes it commutes
+-- with. `Tgt-cast-Hd` needs only that any two proofs of a `∷`-equality agree.
+
+Tgt-cast : ∀ {Γ Γ' A} → Γ ≡ Γ' → Tgt Γ A → Tgt Γ' A
+Tgt-cast {A = A} e (σ , y) = σ , subst (λ Γ₀ → A ∈[ σ ] Γ₀) e y
+
+Tgt-cast-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (t : Tgt Γ A)
+             → Tgt-cast e t ≡ Tgt-cast e' t
+Tgt-cast-irr e e' t = cong (λ z → Tgt-cast z t) uip
+
+Tgt-cast-Hd : ∀ {Γ Γ' A} → (e : Γ ∷ A ≡ Γ' ∷ A)
+            → Tgt-cast {A = A} e (uᵣ , Hd) ≡ (uᵣ , Hd)
+Tgt-cast-Hd {A = A} e =
+  cong (λ y → uᵣ , y)
+       (trans (cong (λ z → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) z Hd)
+                    (uip {p = e} {q = cong (_∷ A) (∷ᶜ-injective-ctx e)}))
+              (subst-Hd (∷ᶜ-injective-ctx e)))
+
+Tgt-cast-∷ : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → (t : Tgt Γ A)
+           → Tgt-cast {A = A} (cong (_∷ C) e) (Tgt-∷ t) ≡ Tgt-∷ (Tgt-cast e t)
+Tgt-cast-∷ e (σ , y) = cong (λ v → σ , v) (subst-Tl-∷ e y)
+
+Tgt-cast-⟨⟩ : ∀ {Γ Γ' A} → (ρ : R) → (e : Γ ≡ Γ') → (t : Tgt Γ A)
+            → Tgt-cast {A = A} (cong (_⟨ ρ ⟩) e) (Tgt-⟨⟩ ρ t)
+            ≡ Tgt-⟨⟩ ρ (Tgt-cast e t)
+Tgt-cast-⟨⟩ ρ e (σ , y) = cong (λ v → σ ·ᵣ ρ , v) (subst-Tl-⟨⟩ e y)
+
 -- An `eq-ren` relocates a variable and leaves its grade alone.
 
 eq-ren-tgt : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)

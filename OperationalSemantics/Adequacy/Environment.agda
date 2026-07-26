@@ -1739,6 +1739,10 @@ env-allocᴿ V γ pγ = pγ
 -- and substitution, both of which are congruences (`V-rename-cong`, `sub-≐ᵛ`).
 ------------------------------------------------------------------------
 
+castᶜ-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {M M' : Γ ⊢C⦂ C}
+        → M ≐ᶜ M' → castᶜ e M ≐ᶜ castᶜ e M'
+castᶜ-≐ refl eM = eM
+
 castᵛ-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
         → V ≐ᵛ V' → castᵛ e V ≐ᵛ castᵛ e V'
 castᵛ-≐ refl eV = eV
@@ -2088,6 +2092,105 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 -- `grade-++ᶜˡ`/`∈-++ᶜˡ` down into `RenEquivalence` beside the other
 -- variable-relocation lemmas.
 
+-- SUBSTITUTION FIXES A RESOURCE VARIABLE
+--
+-- The `rvar` counterparts of `sub-var-r`/`sub-var-l`: `⟨_⟩[_↦_]rvar` returns the
+-- same cell when the variable it replaces is a different one. Simpler than the
+-- value versions — a box type is never eternal, so there is no `eternal?` split.
+
+sub-rvar-r : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
+           → (z : [ ρ ] A ∈[ σ ] Θ)
+           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+           → Tgt-cast (castOf {Γ} {B} Θ)
+               (rvar-tgt (∈-++ᶜʳ {Γ = Γ ∷ B} z)
+                         (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+           ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
+
+sub-rvar-r {Γ} {B} (Θ ∷ C) Hd W = Tgt-cast-Hd (castOf {Γ} {B} (Θ ∷ C))
+
+sub-rvar-r {Γ} {B} (Θ ∷ C) (Tl-∷ z) W =
+  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ∷ C))
+                      (cong (_∷ C) (castOf {Γ} {B} Θ)) _)
+    (trans (Tgt-cast-∷ (castOf {Γ} {B} Θ) _)
+           (cong Tgt-∷ (sub-rvar-r Θ z W)))
+
+sub-rvar-r {Γ} {B} (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W =
+  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
+                      (cong (_⟨ ρ' ⟩) (castOf {Γ} {B} Θ)) _)
+    (trans (Tgt-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
+           (cong (Tgt-⟨⟩ ρ') (sub-rvar-r Θ z W)))
+
+sub-rvar-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
+           → (z : [ ρ ] A ∈[ σ ] Γ)
+           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+           → Tgt-cast (castOf {Γ} {B} Θ)
+               (rvar-tgt (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
+                         (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+           ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
+
+sub-rvar-l {Γ} {B} [] z W = refl
+
+sub-rvar-l {Γ} {B} (Θ ∷ C) z W =
+  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ∷ C))
+                      (cong (_∷ C) (castOf {Γ} {B} Θ)) _)
+    (trans (Tgt-cast-∷ (castOf {Γ} {B} Θ) _)
+           (cong Tgt-∷ (sub-rvar-l Θ z W)))
+
+sub-rvar-l {Γ} {B} (Θ ⟨ ρ' ⟩) z W =
+  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
+                      (cong (_⟨ ρ' ⟩) (castOf {Γ} {B} Θ)) _)
+    (trans (Tgt-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
+           (cong (Tgt-⟨⟩ ρ') (sub-rvar-l Θ z W)))
+
+-- The same, taking the cell's location as an equation rather than reading it off
+-- with `proj₂` — which is dependent, so `cong proj₂` is not available.
+
+sub-rvar-r′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Θ)
+            → (t : Tgt ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
+            → t ≡ (σ , ∈-++ᶜʳ {Γ = Γ ∷ B} z)
+            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+            → Tgt-cast (castOf {Γ} {B} Θ)
+                (rvar-tgt (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+            ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
+sub-rvar-r′ Θ z t refl W = sub-rvar-r Θ z W
+
+sub-rvar-l′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Γ)
+            → (t : Tgt ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
+            → t ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
+            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+            → Tgt-cast (castOf {Γ} {B} Θ)
+                (rvar-tgt (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+            ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
+sub-rvar-l′ Θ z t refl W = sub-rvar-l Θ z W
+
+-- The cell a weakened-then-substituted `unbox` names is the original one: the
+-- renaming pushes it (`cong-ren-tgt-r`/`-l`, by which side `∈-++ᶜ-split` says it
+-- came from) and the substitution puts it back (`sub-rvar-r`/`-l`).
+
+unbox-cell-wk : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
+              → (c : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Θ))
+              → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+              → Tgt-cast (castOf {Γ} {B} Θ)
+                  (rvar-tgt
+                     (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (wk-ren {A = B})) c))
+                     (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+              ≡ (σ , c)
+
+unbox-cell-wk {Γ} {B} Θ c W with ∈-++ᶜ-split Γ Θ c in eqc
+
+... | inj₂ c'
+  rewrite ∈-++ᶜ-split-inj₂ Γ Θ c c' eqc =
+  sub-rvar-r′ Θ c' _ (cong-ren-tgt-r (wk-ren {A = B}) c') W
+
+... | inj₁ (σ' , c') =
+  subst (λ t → Tgt-cast (castOf {Γ} {B} Θ)
+                 (rvar-tgt (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                                           (proj₂ t)))
+                           (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+             ≡ t)
+        (sym (∈-++ᶜ-split-inj₁ Γ Θ c c' eqc))
+        (sub-rvar-l′ Θ c' _ (cong-ren-tgt-l (wk-ren {A = B}) Θ c') W)
+
 -- SUBSTITUTING FOR A FRESHLY WEAKENED VARIABLE: THE VARIABLE CASE
 --
 -- The weakening's image never *is* the substituted variable, so a variable comes
@@ -2171,22 +2274,6 @@ postulate
   -- through `restrict-ren (cong-ren {Θ} wk-ren)`. `unbox`'s comes back as an
   -- `unbox-var`, so it needs the cell that names — which is what the coarsened
   -- `unbox-≐` now permits (before, this case was false).
-
-  -- `unbox`: the substitution renormalises it to an `unbox-var`, and by
-  -- `unbox-var-tgt` (proved, in `Slice`) the cell that names is the one
-  -- `⟨_⟩[_↦_]rvar` produced. What is left is that *that* is the cell the
-  -- original named — i.e. `rvar` analogues of `sub-var-r`/`sub-var-l`, since the
-  -- cell is an arbitrary variable of `Γ ++ᶜ Θ` and `∈-++ᶜ-split` must decide
-  -- which side it came from, exactly as in `sub-wk-var`.
-
-  sub-wk-unbox : ∀ {Γ B} → (Θ : Ctx) → ∀ {A C ρ Δ₀}
-               → (w : Ren (Δ₀ ⟨ ρ ⟩) (Γ ++ᶜ Θ)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
-               → (M : (Γ ++ᶜ Θ) ∷ A ⊢C⦂ C)
-               → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-               → castᶜ (castOf {Γ} {B} Θ)
-                   ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) (unbox w V M))
-                      [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
-               ≐ᶜ unbox w V M
 
   sub-wk-handle : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
                 → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
@@ -2292,7 +2379,42 @@ mutual
              (coerce-≐ (sub-wk-C Θ M W))
 
   sub-wk-C {Γ} {B} Θ (handle M `with H `in N) W = sub-wk-handle Θ M H N W
-  sub-wk-C {Γ} {B} Θ (unbox w V M)            W = sub-wk-unbox Θ w V M W
+  -- `unbox`: the substitution renormalises it to an `unbox-var` (`sub-unbox`),
+  -- whose cell is `unbox-var-tgt`; that this is the cell the original named is
+  -- `unbox-cell-wk`, modulo the outer cast (`unbox-tgt-castʳᵉ`).
+  sub-wk-C {Γ} {B} Θ (unbox {A = A} {ρ = ρ} w V M) W =
+    ≐ᶜ-trans
+      (castᶜ-≐ (castOf {Γ} {B} Θ)
+        (sub-unbox (rn ∘ʳ w) V
+                   (C-rename (cong-ren {Γ'' = Θ ∷ A} (wk-ren {A = B})) M)
+                   z₀ W relv))
+      (≐ᶜ-trans (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))
+        (unbox-≐ cell
+          (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
+                                     (castOf {Γ} {B} (Θ ∷ A)) _))
+                    (sub-wk-C (Θ ∷ A) M W))))
+    where
+      rn = cong-ren {Γ'' = Θ} (wk-ren {A = B})
+      z₀ = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+
+      v = proj₂ (rvar-tgt (proj₂ (unbox-tgt (rn ∘ʳ w) V)) z₀ W)
+
+      -- the bound the substitution itself builds
+      relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (rn ∘ʳ w) V) ⟩[ z₀ ↦ W ]rvar)))
+                      (proj₂ (proj₂ (unbox⇒var (rn ∘ʳ w) V)))
+
+      cell : unbox-tgt (castʳᵉ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
+                       (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
+           ≡ unbox-tgt w V
+      cell =
+        trans (unbox-tgt-castʳᵉ (castOf {Γ} {B} Θ) (unbox-var-ren v relv)
+                                (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd))
+          (trans (cong (Tgt-cast (castOf {Γ} {B} Θ)) (unbox-var-tgt v relv))
+            (trans (cong (λ t → Tgt-cast (castOf {Γ} {B} Θ)
+                                  (rvar-tgt (proj₂ t)
+                                     (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
+                         (unbox-tgt-∘ rn w V))
+                   (unbox-cell-wk Θ (proj₂ (unbox-tgt w V)) W)))
 
 -- THE ACTION FIXES A SUFFIX VARIABLE
 --

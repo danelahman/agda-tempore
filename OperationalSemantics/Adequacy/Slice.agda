@@ -841,10 +841,17 @@ split-lookup-tgt (Tl-⟨⟩ {ρ = ρ₁} z) =
 -- `eq-ren (split-≡ …) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`, and
 -- `var-tgt` runs through those right to left.
 
+-- The renaming `unbox-var` stores.
+
+unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
+              → Ren ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
+unbox-var-ren z rel =
+     eq-ren (split-≡ (split-pf z))
+  ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)
+  ∘ʳ ⟨⟩-≤-ren rel
+
 unbox-var-tgt : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → unbox-tgt (   eq-ren (split-≡ (split-pf z))
-                           ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)
-                           ∘ʳ ⟨⟩-≤-ren rel)
+              → unbox-tgt (unbox-var-ren z rel)
                           (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
               ≡ (ρ' , z)
 
