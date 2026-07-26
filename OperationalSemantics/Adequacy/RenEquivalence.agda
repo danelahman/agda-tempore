@@ -829,6 +829,145 @@ cong-ren-eq-ren-≐ : ∀ {Γ Γ'} → (Δ : Ctx) → (e : Γ ≡ Γ')
                   ≐ʳ eq-ren (cong (_++ᶜ Δ) e)
 cong-ren-eq-ren-≐ Δ refl = cong-ren-id-≐ Δ ≐ʳ-refl
 
+-- `eq-ren` commutes with the suffix formers. (Note `cong-ren` at nested suffixes
+-- is *not* `cong-ren` at their concatenation: the contexts differ by
+-- `++ᶜ-assoc`, so any such step has to be conjugated by `eq-ren`s.)
+
+eq-ren-∷-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ')
+           → eq-ren (cong (_∷ A) e) ≐ʳ cong-∷-ren {A = A} (eq-ren e)
+eq-ren-∷-≐ refl = ≐ʳ-sym (cong-∷-ren-id-≐ ≐ʳ-refl)
+
+eq-ren-⟨⟩-≐ : ∀ {Γ Γ' ρ} → (e : Γ ≡ Γ')
+            → eq-ren (cong (_⟨ ρ ⟩) e) ≐ʳ cong-⟨⟩-ren {ρ = ρ} (eq-ren e)
+eq-ren-⟨⟩-≐ refl = ≐ʳ-sym (cong-⟨⟩-ren-id-≐ ≐ʳ-refl)
+
+-- A context splitting is determined by its two halves: `_,_split_` recurses on
+-- the right half, so its constructor is forced at each step. This is what
+-- identifies the two ways `sub-wk`'s `handle` case reaches the substituted
+-- variable — `split-++ʳ (∈-ᴱ-split et z₀) D` and `split-≡-++ᶜ` — without
+-- computing either. (Pure `Syntax.Contexts` material; see the cleanup list.)
+
+split-unique : ∀ {Γ Γ₁ Γ₂} → (s s' : Γ₁ , Γ₂ split Γ) → s ≡ s'
+split-unique split-[]     split-[]      = refl
+split-unique (split-∷ s)  (split-∷ s')  = cong split-∷ (split-unique s s')
+split-unique (split-⟨⟩ s) (split-⟨⟩ s') = cong split-⟨⟩ (split-unique s s')
+
+-- Hence the variables they name agree, once the two contexts are identified.
+
+split→∈-subst : ∀ {Γ Γ' Γ₁ Γ₂ A} → (e : Γ ≡ Γ')
+              → (s : Γ₁ ∷ A , Γ₂ split Γ)
+              → split→∈ (subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s)
+              ≡ subst (λ Γ₀ → A ∈[ ctx-grade Γ₂ ] Γ₀) e (split→∈ s)
+split→∈-subst refl s = refl
+
+split→∈-unique : ∀ {Γ Γ' Γ₁ Γ₂ A} → (e : Γ ≡ Γ')
+               → (s : Γ₁ ∷ A , Γ₂ split Γ) → (s' : Γ₁ ∷ A , Γ₂ split Γ')
+               → subst (λ Γ₀ → A ∈[ ctx-grade Γ₂ ] Γ₀) e (split→∈ s)
+               ≡ split→∈ s'
+split→∈-unique e s s' =
+  trans (sym (split→∈-subst e s))
+        (cong split→∈ (split-unique (subst (λ Γ₀ → _ , _ split Γ₀) e s) s'))
+
+-- `cong-ren` at nested suffixes is `cong-ren` at their concatenation — but only
+-- up to `++ᶜ-assoc`, so conjugated by `eq-ren`s.
+
+cong-ren-assoc-≐ : ∀ {Γ Γ'} → (Θ D : Ctx) → (r : Ren Γ Γ')
+                 → cong-ren {Γ'' = D} (cong-ren {Γ'' = Θ} r)
+                 ≐ʳ (eq-ren (sym (++ᶜ-assoc Γ' Θ D))
+                     ∘ʳ cong-ren {Γ'' = Θ ++ᶜ D} r
+                     ∘ʳ eq-ren (++ᶜ-assoc Γ Θ D))
+
+cong-ren-assoc-≐ Θ [] r =
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+
+cong-ren-assoc-≐ {Γ} {Γ'} Θ (D ∷ A) r =
+  ≐ʳ-trans (cong-∷-ren-≐ (cong-ren-assoc-≐ Θ D r))
+    (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-trans (≐ʳ-sym (eq-ren-∷-≐ (sym (++ᶜ-assoc Γ' Θ D))))
+                                (eq-ren-≐ _ _))
+                      (cong-∷-ren-∘-≐ _ _))
+                (∘ʳ-≐ ≐ʳ-refl
+                      (∘ʳ-≐ ≐ʳ-refl
+                            (≐ʳ-trans (≐ʳ-sym (eq-ren-∷-≐ (++ᶜ-assoc Γ Θ D)))
+                                      (eq-ren-≐ _ _))))))
+
+cong-ren-assoc-≐ {Γ} {Γ'} Θ (D ⟨ ρ ⟩) r =
+  ≐ʳ-trans (cong-⟨⟩-ren-≐ (cong-ren-assoc-≐ Θ D r))
+    (≐ʳ-trans (cong-⟨⟩-ren-∘-≐ _ _)
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-trans (≐ʳ-sym (eq-ren-⟨⟩-≐ (sym (++ᶜ-assoc Γ' Θ D))))
+                                (eq-ren-≐ _ _))
+                      (cong-⟨⟩-ren-∘-≐ _ _))
+                (∘ʳ-≐ ≐ʳ-refl
+                      (∘ʳ-≐ ≐ʳ-refl
+                            (≐ʳ-trans (≐ʳ-sym (eq-ren-⟨⟩-≐ (++ᶜ-assoc Γ Θ D)))
+                                      (eq-ren-≐ _ _))))))
+
+-- Composing two `eq-ren`s.
+
+eq-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ'')
+           → (eq-ren e' ∘ʳ eq-ren e) ≐ʳ eq-ren (trans e e')
+eq-ren-∘-≐ refl refl = ∘ʳ-identityˡ-≐ _
+
+-- With an *eternal* `B`, weakening by `B` weakens the eternal restriction by it
+-- too: `restrict-ren` walks down to `restrict-ren wk-ren`, which at an eternal
+-- type is `wk-ren`. The two contexts differ by `ᴱ`'s distribution over `_++ᶜ_`,
+-- so the statement is conjugated by `eq-ren`s at arbitrary proofs of that.
+
+restrict-wk-et-≐ : ∀ {Γ B} → (et : Eternal B) → (Δ : Ctx)
+                 → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
+                 → (e₂ : ((Γ ∷ B) ++ᶜ Δ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Δ ᴱ)
+                 → restrict-ren (cong-ren {Γ'' = Δ} (wk-ren {A = B}))
+                 ≐ʳ (eq-ren (sym e₂)
+                     ∘ʳ cong-ren {Γ'' = Δ ᴱ} (wk-ren {A = B}) ∘ʳ eq-ren e₁)
+
+restrict-wk-et-≐ {Γ} {B} et [] e₁ e₂
+  rewrite eternal?-yes et
+        | uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+
+restrict-wk-et-≐ {Γ} {B} et (Δ ∷ C) e₁ e₂ with eternal? C
+
+... | yes _ =
+  ≐ʳ-trans (cong-∷-ren-≐ (restrict-wk-et-≐ et Δ (∷ᶜ-injective-ctx e₁)
+                                              (∷ᶜ-injective-ctx e₂)))
+    (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))
+                      (cong-∷-ren-∘-≐ _ _))
+        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ (sym e₂))
+                        (∘ʳ-≐ ≐ʳ-refl
+                              (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))))
+                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ e₁))))))
+
+... | no  _ = restrict-wk-et-≐ et Δ e₁ e₂
+
+restrict-wk-et-≐ {Γ} {B} et (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-wk-et-≐ et Δ e₁ e₂
+
+-- The form `sub-wk`'s eternal `handle` clause needs: the clause's renaming
+-- `cong-ren {D} (restrict-ren (cong-ren {Θ} wk-ren))` is `cong-ren` at the
+-- concatenated suffix `Θ ᴱ ++ᶜ D`, conjugated by `eq-ren`s. Assembled from
+-- `restrict-wk-et-≐`, `cong-ren-∘-≐`, `cong-ren-eq-ren-≐` and
+-- `cong-ren-assoc-≐`, with the `eq-ren`s fused by `eq-ren-∘-≐` and any two
+-- proofs identified by `eq-ren-≐`.
+
+restrict-wk-clause-≐ : ∀ {Γ B} → (et : Eternal B) → (Θ D : Ctx)
+                     → (e₁ : (Γ ++ᶜ Θ) ᴱ ≡ Γ ᴱ ++ᶜ Θ ᴱ)
+                     → (e₂ : ((Γ ∷ B) ++ᶜ Θ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Θ ᴱ)
+                     → cong-ren {Γ'' = D}
+                         (restrict-ren (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
+                     ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
+                         ∘ʳ (eq-ren (sym (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) D))
+                             ∘ʳ cong-ren {Γ'' = Θ ᴱ ++ᶜ D} (wk-ren {A = B})
+                             ∘ʳ eq-ren (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D))
+                         ∘ʳ eq-ren (cong (_++ᶜ D) e₁))
+
+restrict-wk-clause-≐ {Γ} {B} et Θ D e₁ e₂ =
+  ≐ʳ-trans (cong-ren-≐ D (restrict-wk-et-≐ et Θ e₁ e₂))
+    (≐ʳ-trans (cong-ren-∘-≐ D _ _)
+      (∘ʳ-≐ (cong-ren-eq-ren-≐ D (sym e₂))
+        (≐ʳ-trans (cong-ren-∘-≐ D _ _)
+                  (∘ʳ-≐ (cong-ren-assoc-≐ (Θ ᴱ) D (wk-ren {A = B}))
+                        (cong-ren-eq-ren-≐ D e₁)))))
+
 -- With a non-eternal `B`, weakening by `B` leaves the eternal restriction
 -- alone: `restrict-ren` walks `cong-ren` down to `restrict-ren wk-ren`, which at
 -- a non-eternal type is `id-ren`. The two contexts are then equal only

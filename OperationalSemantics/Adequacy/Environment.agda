@@ -26,7 +26,7 @@ open import Data.Product
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Nullary using (yes; no; ¬_)
+open import Relation.Nullary using (yes; no; ¬_; Dec)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -232,6 +232,45 @@ cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
          → castᶜ e (box V M)
          ≡ box (castᵛ (cong (_⟨ ρ ⟩) e) V) (castᶜ (cong (_∷ [ ρ ] A) e) M)
 cast-box refl = refl
+
+cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
+            → {M : Γ ⊢C⦂ A ‼ ε}
+            → {H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
+                     Γ ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                       ∷ [ mapᵉ (op-grade op) ]
+                           (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+            → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
+            → castᶜ e (handle M `with H `in N)
+            ≡ handle (castᶜ e M)
+              `with (λ op ε'' Γ₀ →
+                       castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                                             ∷ [ mapᵉ (op-grade op) ]
+                                                 (type-of-gtype (arity op) ⇒ B ‼ ε''))
+                              e)
+                             (H op ε'' Γ₀))
+              `in (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
+cast-handle refl = refl
+
+-- Transports along context equalities, all normalised to `subst` so that a
+-- chain of them fuses and collapses by `uip`.
+
+castᶜ≡subst : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
+            → castᶜ e M ≡ subst (_⊢C⦂ C) e M
+castᶜ≡subst refl M = refl
+
+subst-++ᶜʳ : ∀ {Γ Γ' C} → (D : Ctx) → (e : Γ ≡ Γ') → (M : (Γ ++ᶜ D) ⊢C⦂ C)
+           → subst (λ Γ₀ → (Γ₀ ++ᶜ D) ⊢C⦂ C) e M
+           ≡ subst (_⊢C⦂ C) (cong (_++ᶜ D) e) M
+subst-++ᶜʳ D refl M = refl
+
+-- Three transports whose composite is a loop are the identity.
+
+subst-loop₃ : ∀ {Γ₁ Γ₂ Γ₃ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂ : Γ₂ ≡ Γ₃) → (e₃ : Γ₃ ≡ Γ₁)
+            → (M : Γ₁ ⊢C⦂ C)
+            → subst (_⊢C⦂ C) e₃ (subst (_⊢C⦂ C) e₂ (subst (_⊢C⦂ C) e₁ M)) ≡ M
+subst-loop₃ refl refl e₃ M =
+  cong (λ z → subst (_⊢C⦂ _) z M) (uip {p = e₃} {q = refl})
 
 castʳᵉ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren (Δ ⟨ ρ ⟩) Γ → Ren (Δ ⟨ ρ ⟩) Γ'
 castʳᵉ refl w = w
@@ -2270,25 +2309,29 @@ sub-wk-var {Γ} {B} Θ {A} {ρ} y W f f' with ∈-++ᶜ-split Γ Θ y in eq
 
 postulate
 
-  -- `handle`'s substitution clause splits on `eternal? B`, and its renaming goes
-  -- through `restrict-ren (cong-ren {Θ} wk-ren)`. `unbox`'s comes back as an
-  -- `unbox-var`, so it needs the cell that names — which is what the coarsened
-  -- `unbox-≐` now permits (before, this case was false).
+  -- `handle`'s eternal branch. `restrict-ren wk-ren` is `wk-ren` there, so the
+  -- clause is weakened by the eternal `B` and then substituted at it — another
+  -- instance of `sub-wk-C`, at `Γ ᴱ` with suffix `Θ ᴱ ++ᶜ D` and value
+  -- `eternal-val-restrict et W`. Its three ingredients are proved:
+  -- `restrict-wk-clause-≐` (the renaming, below), `split→∈-unique` (the
+  -- substituted variable, via `split-unique`), and the recursive `sub-wk-C`.
+  -- What is left is fusing the transports.
 
-  sub-wk-handle : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
-                → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
-                → (H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
-                         (Γ ++ᶜ Θ) ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
-                           ∷ [ mapᵉ (op-grade op) ]
-                               (type-of-gtype (arity op) ⇒ B' ‼ ε'')
-                         ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
-                → (N : (Γ ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
-                → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-                → castᶜ (castOf {Γ} {B} Θ)
-                    ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
-                               (handle M `with H `in N))
-                       [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
-                ≐ᶜ (handle M `with H `in N)
+  sub-wk-handle-et : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
+                   → (et : Eternal B)
+                   → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                   → (H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
+                            (Γ ++ᶜ Θ) ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ]
+                                  (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                            ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                   → (N : (Γ ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+                   → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+                   → castᶜ (castOf {Γ} {B} Θ)
+                       ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                                  (handle M `with H `in N))
+                          [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+                   ≐ᶜ (handle M `with H `in N)
 
 mutual
 
@@ -2378,10 +2421,16 @@ mutual
     ≐ᶜ-trans (≡→≐ᶜ (cast-coerce (castOf {Γ} {B} Θ)))
              (coerce-≐ (sub-wk-C Θ M W))
 
-  sub-wk-C {Γ} {B} Θ (handle M `with H `in N) W = sub-wk-handle Θ M H N W
-  -- `unbox`: the substitution renormalises it to an `unbox-var` (`sub-unbox`),
-  -- whose cell is `unbox-var-tgt`; that this is the cell the original named is
-  -- `unbox-cell-wk`, modulo the outer cast (`unbox-tgt-castʳᵉ`).
+  -- `handle`: dispatch on whether the weakened type is eternal. Matching a `Dec`
+  -- *argument* rather than `with eternal? B` is what keeps this typeable — a
+  -- `with` would abstract `eternal? B` in the goal, and the two halves' own
+  -- statements (which re-elaborate it) would then no longer match.
+  sub-wk-C {Γ} {B} Θ (handle M `with H `in N) W = go (eternal? B)
+    where
+      go : Dec (Eternal B) → _
+      go (yes et) = sub-wk-handle-et Θ et M H N W
+      go (no ¬et) = sub-wk-handle-ne Θ ¬et M H N W
+
   sub-wk-C {Γ} {B} Θ (unbox {A = A} {ρ = ρ} w V M) W =
     ≐ᶜ-trans
       (castᶜ-≐ (castOf {Γ} {B} Θ)
@@ -2415,6 +2464,78 @@ mutual
                                      (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
                          (unbox-tgt-∘ rn w V))
                    (unbox-cell-wk Θ (proj₂ (unbox-tgt w V)) W)))
+
+  -- `handle`, non-eternal. The clause's renaming `restrict-ren (cong-ren {Θ}
+  -- wk-ren)` is identity-like (`restrict-wk-≐`), so the clause is transported
+  -- three times — by it, by the substitution's `ᴱ-drop-split`, and by the outer
+  -- cast — around a loop, which `subst-loop₃` collapses.
+  --
+  -- Stated over the unreduced substitution and doing its own `with`, so that the
+  -- `yes` case is dismissed by absurdity rather than appearing in any statement.
+
+  sub-wk-handle-ne : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
+                   → ¬ Eternal B
+                   → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                   → (H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
+                            (Γ ++ᶜ Θ) ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ]
+                                  (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                            ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                   → (N : (Γ ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+                   → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+                   → castᶜ (castOf {Γ} {B} Θ)
+                       ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                                  (handle M `with H `in N))
+                          [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+                   ≐ᶜ (handle M `with H `in N)
+
+  sub-wk-handle-ne {Γ} {B} Θ {A = A} {B' = B'} {ε = ε} ¬et M H N W
+    rewrite eternal?-no ¬et =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-handle (castOf {Γ} {B} Θ)))
+      (handle-≐ (sub-wk-C Θ M W)
+        (λ op ε'' Γ' → clause op ε'' Γ')
+        (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
+                           (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (castOf {Γ} {B} Θ))
+                           (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))
+                  (sub-wk-C (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)))
+    where
+      z₀ = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+
+      e₁ : (Γ ++ᶜ Θ) ᴱ ≡ ((Γ ∷ B) ++ᶜ Θ) ᴱ
+      e₁ = sym (trans (ᴱ-drop-split ¬et z₀) (cong _ᴱ (castOf {Γ} {B} Θ)))
+
+      clause : (op : Op) → (ε'' : E) → (Γ' : Ctx) → _
+      clause op ε'' Γ' =
+        ≐ᶜ-trans
+          (castᶜ-≐ (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ))
+            (substᶜ-≐′ (λ Γ₀ → Γ₀ ++ᶜ D)
+                       {C = CT} (ᴱ-drop-split ¬et z₀)
+              (C-rename-eq-≐ (cong (_++ᶜ D) e₁)
+                (≐ʳ-trans (cong-ren-≐ D (restrict-wk-≐ ¬et Θ e₁))
+                          (cong-ren-eq-ren-≐ D e₁))
+                (H op ε'' Γ'))))
+          (≡→≐ᶜ collapse)
+        where
+          D = Γ' ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+
+          CT = B' ‼ (op-grade op ·ₑ ε'')
+
+          collapse : castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ))
+                       (subst (λ Γ₀ → (Γ₀ ++ᶜ D) ⊢C⦂ CT) (ᴱ-drop-split ¬et z₀)
+                         (subst (_⊢C⦂ CT) (cong (_++ᶜ D) e₁) (H op ε'' Γ')))
+                   ≡ H op ε'' Γ'
+          collapse =
+            trans (castᶜ≡subst (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ)) _)
+              (trans (cong (subst (_⊢C⦂ CT)
+                              (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ)))
+                           (subst-++ᶜʳ D (ᴱ-drop-split ¬et z₀) _))
+                     (subst-loop₃ (cong (_++ᶜ D) e₁)
+                                  (cong (_++ᶜ D) (ᴱ-drop-split ¬et z₀))
+                                  (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ))
+                                  (H op ε'' Γ')))
+
+
 
 -- THE ACTION FIXES A SUFFIX VARIABLE
 --
