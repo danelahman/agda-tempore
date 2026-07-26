@@ -233,6 +233,25 @@ cast-box : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ')
          ≡ box (castᵛ (cong (_⟨ ρ ⟩) e) V) (castᶜ (cong (_∷ [ ρ ] A) e) M)
 cast-box refl = refl
 
+castʳᵉ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren (Δ ⟨ ρ ⟩) Γ → Ren (Δ ⟨ ρ ⟩) Γ'
+castʳᵉ refl w = w
+
+cast-unbox : ∀ {Γ Γ' A C ρ Δ} → (e : Γ ≡ Γ')
+           → {w : Ren (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
+           → castᶜ e (unbox w V M)
+           ≡ unbox (castʳᵉ e w) V (castᶜ (cong (_∷ A) e) M)
+cast-unbox refl = refl
+
+-- A cast does not move the cell an `unbox` names.
+
+unbox-tgt-castʳᵉ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+                 → (V : Δ ⊢V⦂ [ ρ ] A)
+                 → unbox-tgt (castʳᵉ e w) V
+                 ≡ (proj₁ (unbox-tgt w V)
+                   , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w V) ] Γ₀) e
+                           (proj₂ (unbox-tgt w V)))
+unbox-tgt-castʳᵉ refl w V = refl
+
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
          → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
          → castᶜ e (M ⨟ N)
@@ -1809,51 +1828,6 @@ ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → {Δ : Ctx} → (x : A ∈
 ren-var-r r x f f' =
   var-ren-tgt-≐ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-tgt-r r x) f'
 
--- PUSHING A PREFIX VARIABLE UNDER A SUFFIX
---
--- The grade is whatever the locks of the suffix multiply it by, so this is
--- stated as a `Tgt` and never needs a `subst` (unlike `var-ρ-++ᶜ`).
-
--- The grade depends only on the suffix, not on the variable, so it is a
--- function of its own — which is what lets the two sides of `sub-var-l` be
--- seen to have the same grade.
-
-grade-++ᶜˡ : R → Ctx → R
-grade-++ᶜˡ ρ []         = ρ
-grade-++ᶜˡ ρ (Δ ∷ B)    = grade-++ᶜˡ ρ Δ
-grade-++ᶜˡ ρ (Δ ⟨ ρ' ⟩) = grade-++ᶜˡ ρ Δ ·ᵣ ρ'
-
-∈-++ᶜˡ : ∀ {Γ A ρ} → (Δ : Ctx) → A ∈[ ρ ] Γ
-       → A ∈[ grade-++ᶜˡ ρ Δ ] (Γ ++ᶜ Δ)
-∈-++ᶜˡ []        x = x
-∈-++ᶜˡ (Δ ∷ B)   x = Tl-∷ (∈-++ᶜˡ Δ x)
-∈-++ᶜˡ (Δ ⟨ ρ ⟩) x = Tl-⟨⟩ (∈-++ᶜˡ Δ x)
-
--- The grade a suffix contributes is associative in the suffix.
-
-grade-++ᶜˡ-assoc : (ρ : R) → (Δ₁ Δ₂ : Ctx)
-                 → grade-++ᶜˡ ρ (Δ₁ ++ᶜ Δ₂)
-                 ≡ grade-++ᶜˡ (grade-++ᶜˡ ρ Δ₁) Δ₂
-grade-++ᶜˡ-assoc ρ Δ₁ []          = refl
-grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ∷ B)    = grade-++ᶜˡ-assoc ρ Δ₁ Δ₂
-grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ⟨ ρ' ⟩) =
-  cong (_·ᵣ ρ') (grade-++ᶜˡ-assoc ρ Δ₁ Δ₂)
-
--- A congruence renaming sends a pushed prefix variable to the push of its
--- image: the counterpart of `cong-ren-tgt-r`, and what makes the pushing
--- renaming family natural.
-
-cong-ren-tgt-l : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ)
-               → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜˡ Δ y)
-               ≡ (grade-++ᶜˡ (proj₁ (var-tgt r y)) Δ
-                 , ∈-++ᶜˡ Δ (proj₂ (var-tgt r y)))
-
-cong-ren-tgt-l r []         y = refl
-cong-ren-tgt-l r (Δ ∷ B)    y =
-  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (cong-ren-tgt-l r Δ y)
-cong-ren-tgt-l r (Δ ⟨ ρ' ⟩) y =
-  cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (cong-ren-tgt-l r Δ y)
-
 -- SUBSTITUTION FIXES A SUFFIX VARIABLE
 --
 -- The variable being replaced lies in the prefix, so a suffix variable survives
@@ -2088,6 +2062,32 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
 
+-- THE CELL `unbox-var` NAMES (what `sub-wk-unbox` needs)
+--
+-- `unbox-var z rel M` rebuilds an unboxing whose boxed value is the head
+-- variable of `split-l z ∷ [ ρ ] A`, so the cell it names is `z` itself — the
+-- syntactic counterpart of `split-lookup` in
+-- `Interpretation.SubstitutionCoherence`. Its renaming is
+-- `eq-ren (split-≡ (split-pf z)) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`,
+-- so computing its `var-tgt` at `Tl-⟨⟩ Hd` needs, in order: `⟨⟩-≤-ren`'s clause,
+-- `wk-ren-⟨ρ⟩-ctx-tgt` (in `Slice`, proved), and `eq-ren-tgt` below. What is left
+-- is
+--
+--   split-lookup-tgt : (z : [ ρ ] A ∈[ ρ' ] Γ)
+--                    → (grade-++ᶜˡ uᵣ (split-r z)
+--                      , subst _ (split-≡ (split-pf z))
+--                              (∈-++ᶜˡ (split-r z) (Hd {Γ = split-l z})))
+--                    ≡ (ρ' , z)
+--
+-- by induction on `z` — `Hd` is `refl`, and the two `Tl` cases are `subst-Tl-∷`
+-- resp. `subst-Tl-⟨⟩` under a `cong`. **State it with `∈-++ᶜˡ`, not
+-- `var-ρ-++ᶜ`**: the latter carries a grade `subst` in each of its `[]` and
+-- `⟨⟩` clauses, which turns all three cases into `Tgt`-level transport puzzles,
+-- whereas `grade-++ᶜˡ`/`∈-++ᶜˡ` are subst-free by construction. That means
+-- restating `wk-ren-⟨ρ⟩-ctx-tgt` over `∈-++ᶜˡ` too, and so moving
+-- `grade-++ᶜˡ`/`∈-++ᶜˡ` down into `RenEquivalence` beside the other
+-- variable-relocation lemmas.
+
 -- SUBSTITUTING FOR A FRESHLY WEAKENED VARIABLE: THE VARIABLE CASE
 --
 -- The weakening's image never *is* the substituted variable, so a variable comes
@@ -2156,36 +2156,143 @@ sub-wk-var {Γ} {B} Θ {A} {ρ} y W f f' with ∈-++ᶜ-split Γ Θ y in eq
 
 -- SUBSTITUTING FOR A FRESHLY WEAKENED VARIABLE
 --
--- `sub-wk-V`/`sub-wk-C` — "substituting for a freshly weakened variable is the
--- identity" — is what `env-var-tl` and (via `seq-Comp`) `FL-seq`/`FL-handle`
--- need. Thirteen of its fifteen cases are mechanical and were proved; they are
--- withdrawn here because the lemma **cannot be completed at `unbox` as
--- `_≐ᶜ_` currently stands**, and a partial mutual definition cannot be kept.
---
--- The obstruction. Substitution does not push through `unbox w V M`: it recovers
--- the underlying resource variable (`unbox⇒var`), substitutes *that*
--- (`⟨_⟩[_↦_]rvar`) and rebuilds with the `unbox-var` smart constructor, whose
--- boxed value is `var _ Hd` over `split-l v ∷ [ ρ ] A`. The unsubstituted term's
--- is `V` over an unrelated `Δ`. But `_≐ᶜ_`'s `unbox-≐` quantifies over a
--- *single* `Δ` and a *single* `V`, so it forces those to agree — checked, by
--- matching `unbox-≐` and getting `Δ ≡ Δ'`. So the statement is not merely
--- unproved, it is false, and postulating it would be unsound.
---
--- The fix is to coarsen `_≐ᶜ_` at `unbox` to compare the *cell* the two name
--- rather than their stored values:
---
---   unbox-≐ : unbox-tgt w V ≡ unbox-tgt w' V' → M ≐ᶜ M'
---           → unbox w V M ≐ᶜ unbox w' V' M'
---
--- which is the semantically right notion — reduction consults an `unbox` only
--- through `unbox⇒var`, and `unbox-lookup` only through `unbox-tgt` — and is
--- exactly the root cause recorded in `notes/adequacy-plan.md` (knot 0). It needs
--- `unbox-tgt` moved from `Slice` into `RenEquivalence` (it depends only on
--- `unbox⇒var`), and then the `unbox` case of `≐ᶜ-refl`/`-sym`/`-trans`,
--- `C-rename-≐`/`-∘`/`-cong`/`-id-≐`, `sub-≐ᶜ`, `≐-unbox⁻` and `↝-≐`'s `UNBOX`
--- case adjusted — each from a `_≐ʳ_` hypothesis to a cell equation, which should
--- *simplify* `unbox-lookup-≐`, whose present hypothesis is a `_≐ʳ_` it only ever
--- uses through `unbox-tgt-≐`.
+-- Mutual induction on the term, at an arbitrary suffix: each binding former
+-- grows it, which costs nothing — `cong-ren {Θ ∷ A} r` *is*
+-- `cong-∷-ren (cong-ren {Θ} r)` and `split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ ∷ A})` *is*
+-- `Tl-∷ (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}))`, both definitionally, and
+-- `split-l` is unchanged so the substituted value keeps its type. What is left
+-- per case is pushing the cast through the former and reconciling the two
+-- (equal) context proofs by `castᶜ-irr` — whose two arguments must be given
+-- explicitly, since nothing determines them.
+
+postulate
+
+  -- `handle`'s substitution clause splits on `eternal? B`, and its renaming goes
+  -- through `restrict-ren (cong-ren {Θ} wk-ren)`. `unbox`'s comes back as an
+  -- `unbox-var`, so it needs the cell that names — which is what the coarsened
+  -- `unbox-≐` now permits (before, this case was false).
+
+  -- `unbox`: the substitution renormalises it to an `unbox-var`, and by
+  -- `unbox-var-tgt` (proved, in `Slice`) the cell that names is the one
+  -- `⟨_⟩[_↦_]rvar` produced. What is left is that *that* is the cell the
+  -- original named — i.e. `rvar` analogues of `sub-var-r`/`sub-var-l`, since the
+  -- cell is an arbitrary variable of `Γ ++ᶜ Θ` and `∈-++ᶜ-split` must decide
+  -- which side it came from, exactly as in `sub-wk-var`.
+
+  sub-wk-unbox : ∀ {Γ B} → (Θ : Ctx) → ∀ {A C ρ Δ₀}
+               → (w : Ren (Δ₀ ⟨ ρ ⟩) (Γ ++ᶜ Θ)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+               → (M : (Γ ++ᶜ Θ) ∷ A ⊢C⦂ C)
+               → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+               → castᶜ (castOf {Γ} {B} Θ)
+                   ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) (unbox w V M))
+                      [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+               ≐ᶜ unbox w V M
+
+  sub-wk-handle : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
+                → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                → (H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
+                         (Γ ++ᶜ Θ) ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                           ∷ [ mapᵉ (op-grade op) ]
+                               (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                         ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                → (N : (Γ ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+                → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+                → castᶜ (castOf {Γ} {B} Θ)
+                    ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                               (handle M `with H `in N))
+                       [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+                ≐ᶜ (handle M `with H `in N)
+
+mutual
+
+  sub-wk-V : ∀ {Γ B} → (Θ : Ctx) → ∀ {A} → (U : (Γ ++ᶜ Θ) ⊢V⦂ A)
+           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+           → castᵛ (castOf {Γ} {B} Θ)
+               ((V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U)
+                  [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]v)
+           ≐ᵛ U
+
+  sub-wk-V {Γ} {B} Θ (var f y) W = sub-wk-var Θ y W f f
+  sub-wk-V {Γ} {B} Θ (const c) W = ≡→≐ᵛ (cast-const (castOf {Γ} {B} Θ))
+  sub-wk-V {Γ} {B} Θ ⋆         W = ≡→≐ᵛ (cast-⋆ (castOf {Γ} {B} Θ))
+  sub-wk-V {Γ} {B} Θ ⦉ V₁ , V₂ ⦊ W =
+    ≐ᵛ-trans (≡→≐ᵛ (cast-pair (castOf {Γ} {B} Θ)))
+             (pair-≐ (sub-wk-V Θ V₁ W) (sub-wk-V Θ V₂ W))
+  sub-wk-V {Γ} {B} Θ {A = A ⇒ C} (lam M) W =
+    ≐ᵛ-trans (≡→≐ᵛ (cast-lam (castOf {Γ} {B} Θ) _))
+             (lam-≐ (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
+                                               (castOf {Γ} {B} (Θ ∷ A)) _))
+                              (sub-wk-C (Θ ∷ A) M W)))
+
+  sub-wk-C : ∀ {Γ B} → (Θ : Ctx) → ∀ {C} → (M : (Γ ++ᶜ Θ) ⊢C⦂ C)
+           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+           → castᶜ (castOf {Γ} {B} Θ)
+               ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M)
+                  [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+           ≐ᶜ M
+
+  sub-wk-C {Γ} {B} Θ (return V) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-ret (castOf {Γ} {B} Θ))) (return-≐ (sub-wk-V Θ V W))
+
+  sub-wk-C {Γ} {B} Θ (_⨟_ {A = A} {ε = ε} M N) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-seq (castOf {Γ} {B} Θ)))
+      (seq-≐ (sub-wk-C Θ M W)
+             (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
+                                (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (castOf {Γ} {B} Θ))
+                                (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))
+                       (sub-wk-C (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)))
+
+  sub-wk-C {Γ} {B} Θ (V₁ · V₂) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-app (castOf {Γ} {B} Θ)))
+             (app-≐ (sub-wk-V Θ V₁ W) (sub-wk-V Θ V₂ W))
+
+  sub-wk-C {Γ} {B} Θ (match_`in_ {A = A} {B = B'} V N) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-match (castOf {Γ} {B} Θ)))
+      (match-≐ (sub-wk-V Θ V W)
+               (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
+                                  (cong (λ Γ₀ → Γ₀ ∷ A ∷ B') (castOf {Γ} {B} Θ))
+                                  (castOf {Γ} {B} (Θ ∷ A ∷ B')) _))
+                         (sub-wk-C (Θ ∷ A ∷ B') N W)))
+
+  sub-wk-C {Γ} {B} Θ (absurd V) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-absurd (castOf {Γ} {B} Θ)))
+             (absurd-≐ (sub-wk-V Θ V W))
+
+  sub-wk-C {Γ} {B} Θ (perform op V M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-perform (castOf {Γ} {B} Θ)))
+      (perform-≐ (sub-wk-V Θ V W)
+                 (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
+                                    (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                                                    ∷ type-of-gtype (arity op))
+                                          (castOf {Γ} {B} Θ))
+                                    (castOf {Γ} {B}
+                                      (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                         ∷ type-of-gtype (arity op))) _))
+                           (sub-wk-C (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                        ∷ type-of-gtype (arity op)) M W)))
+
+  sub-wk-C {Γ} {B} Θ (delay τ M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-delay (castOf {Γ} {B} Θ)))
+      (delay-≐ (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
+                                  (cong (_⟨ of-natʳ τ ⟩) (castOf {Γ} {B} Θ))
+                                  (castOf {Γ} {B} (Θ ⟨ of-natʳ τ ⟩)) _))
+                         (sub-wk-C (Θ ⟨ of-natʳ τ ⟩) M W)))
+
+  sub-wk-C {Γ} {B} Θ (box {A = A} {ρ = ρ} V M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-box (castOf {Γ} {B} Θ)))
+      (box-≐ (≐ᵛ-trans (≡→≐ᵛ (castᵛ-irr (cong (_⟨ ρ ⟩) (castOf {Γ} {B} Θ))
+                                        (castOf {Γ} {B} (Θ ⟨ ρ ⟩)) _))
+                       (sub-wk-V (Θ ⟨ ρ ⟩) V W))
+             (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr (cong (_∷ [ ρ ] A) (castOf {Γ} {B} Θ))
+                                        (castOf {Γ} {B} (Θ ∷ [ ρ ] A)) _))
+                       (sub-wk-C (Θ ∷ [ ρ ] A) M W)))
+
+  sub-wk-C {Γ} {B} Θ (coerce p M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-coerce (castOf {Γ} {B} Θ)))
+             (coerce-≐ (sub-wk-C Θ M W))
+
+  sub-wk-C {Γ} {B} Θ (handle M `with H `in N) W = sub-wk-handle Θ M H N W
+  sub-wk-C {Γ} {B} Θ (unbox w V M)            W = sub-wk-unbox Θ w V M W
 
 -- THE ACTION FIXES A SUFFIX VARIABLE
 --

@@ -56,6 +56,15 @@ var-tgt r x = proj₁ (var-rename r x) , proj₂ (proj₂ (var-rename r x))
 var-tgt′ : ∀ {Γ' Γ'' A} → Ren Γ' Γ'' → Tgt Γ' A → Tgt Γ'' A
 var-tgt′ r (ρ' , y) = var-tgt r y
 
+-- Pushing a `Tgt` under one more binder, resp. one more lock. Named rather than
+-- written as a lambda because `Tgt` is a Σ, so `cong` cannot infer the motive.
+
+Tgt-∷ : ∀ {Γ A B} → Tgt Γ A → Tgt (Γ ∷ B) A
+Tgt-∷ (σ , y) = σ , Tl-∷ y
+
+Tgt-⟨⟩ : ∀ {Γ A} → (ρ : R) → Tgt Γ A → Tgt (Γ ⟨ ρ ⟩) A
+Tgt-⟨⟩ ρ (σ , y) = σ ·ᵣ ρ , Tl-⟨⟩ y
+
 -- RELOCATING A VARIABLE
 --
 -- A context equality that only extends a smaller one relocates a variable by
@@ -141,6 +150,55 @@ open _≐ʳ_ public
   where
     go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
     go (Tl-⟨⟩ x) = refl
+
+-- An `eq-ren` relocates a variable and leaves its grade alone.
+
+eq-ren-tgt : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+           → var-tgt (eq-ren e) x ≡ (ρ , subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+eq-ren-tgt refl x = refl
+
+-- PUSHING A PREFIX VARIABLE UNDER A SUFFIX
+--
+-- The grade depends only on the suffix, not on the variable, so it is a function
+-- of its own — which is what lets the two sides of `sub-var-l` be seen to have
+-- the same grade, and what keeps every lemma about the push subst-free (unlike
+-- `var-ρ-++ᶜ`, whose `[]` and `⟨⟩` clauses each carry a grade transport).
+
+grade-++ᶜˡ : R → Ctx → R
+grade-++ᶜˡ ρ []         = ρ
+grade-++ᶜˡ ρ (Δ ∷ B)    = grade-++ᶜˡ ρ Δ
+grade-++ᶜˡ ρ (Δ ⟨ ρ' ⟩) = grade-++ᶜˡ ρ Δ ·ᵣ ρ'
+
+∈-++ᶜˡ : ∀ {Γ A ρ} → (Δ : Ctx) → A ∈[ ρ ] Γ
+       → A ∈[ grade-++ᶜˡ ρ Δ ] (Γ ++ᶜ Δ)
+∈-++ᶜˡ []        x = x
+∈-++ᶜˡ (Δ ∷ B)   x = Tl-∷ (∈-++ᶜˡ Δ x)
+∈-++ᶜˡ (Δ ⟨ ρ ⟩) x = Tl-⟨⟩ (∈-++ᶜˡ Δ x)
+
+-- The grade a suffix contributes is associative in the suffix.
+
+grade-++ᶜˡ-assoc : (ρ : R) → (Δ₁ Δ₂ : Ctx)
+                 → grade-++ᶜˡ ρ (Δ₁ ++ᶜ Δ₂)
+                 ≡ grade-++ᶜˡ (grade-++ᶜˡ ρ Δ₁) Δ₂
+grade-++ᶜˡ-assoc ρ Δ₁ []          = refl
+grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ∷ B)    = grade-++ᶜˡ-assoc ρ Δ₁ Δ₂
+grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ⟨ ρ' ⟩) =
+  cong (_·ᵣ ρ') (grade-++ᶜˡ-assoc ρ Δ₁ Δ₂)
+
+-- A congruence renaming sends a pushed prefix variable to the push of its
+-- image: the counterpart of `cong-ren-tgt-r`, and what makes the pushing
+-- renaming family natural.
+
+cong-ren-tgt-l : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ)
+               → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜˡ Δ y)
+               ≡ (grade-++ᶜˡ (proj₁ (var-tgt r y)) Δ
+                 , ∈-++ᶜˡ Δ (proj₂ (var-tgt r y)))
+
+cong-ren-tgt-l r []         y = refl
+cong-ren-tgt-l r (Δ ∷ B)    y =
+  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (cong-ren-tgt-l r Δ y)
+cong-ren-tgt-l r (Δ ⟨ ρ' ⟩) y =
+  cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (cong-ren-tgt-l r Δ y)
 
 -- SUFFIX EXTENSION
 --
