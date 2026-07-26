@@ -534,6 +534,11 @@ eternal?-yes {A} et with eternal? A
 ... | yes et' = cong yes (eternal-irrelevant et' et)
 ... | no ¬et  = ⊥-elim (¬et et)
 
+eternal?-no : ∀ {A} → (¬et : ¬ Eternal A) → eternal? A ≡ no ¬et
+eternal?-no {A} ¬et with eternal? A
+... | yes et  = ⊥-elim (¬et et)
+... | no ¬et' = cong no (fun-ext (λ e → ⊥-elim (¬et e)))
+
 -- Reflection undoes `∈-ᴱ`.
 
 ∈-ᴱ⁻-∈-ᴱ : (Γ : Ctx) → ∀ {A ρ} → (et : Eternal A) → (z : A ∈[ ρ ] Γ)
@@ -804,6 +809,47 @@ mutual
     box-≐ (V-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) V)
           (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
   C-rename-id-≐ h (coerce p M) = coerce-≐ (C-rename-id-≐ h M)
+
+eq-ren-≐ : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → eq-ren e ≐ʳ eq-ren e'
+eq-ren-≐ e e' rewrite uip {p = e} {q = e'} = ≐ʳ-refl
+
+-- Renaming along an identity-*like* renaming between contexts that are only
+-- propositionally equal: the action is the transport. `eq-ren refl` is
+-- `id-ren`, so this is `C-rename-id-≐` once the equality is matched.
+
+C-rename-eq-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {r : Ren Γ Γ'}
+              → r ≐ʳ eq-ren e → (M : Γ ⊢C⦂ C)
+              → C-rename r M ≐ᶜ subst (_⊢C⦂ C) e M
+C-rename-eq-≐ refl h M = C-rename-id-≐ h M
+
+-- Extending such a renaming by a suffix stays identity-like.
+
+cong-ren-eq-ren-≐ : ∀ {Γ Γ'} → (Δ : Ctx) → (e : Γ ≡ Γ')
+                  → cong-ren {Γ'' = Δ} (eq-ren e)
+                  ≐ʳ eq-ren (cong (_++ᶜ Δ) e)
+cong-ren-eq-ren-≐ Δ refl = cong-ren-id-≐ Δ ≐ʳ-refl
+
+-- With a non-eternal `B`, weakening by `B` leaves the eternal restriction
+-- alone: `restrict-ren` walks `cong-ren` down to `restrict-ren wk-ren`, which at
+-- a non-eternal type is `id-ren`. The two contexts are then equal only
+-- propositionally, so the statement is against an arbitrary proof of that
+-- equality — any two agree by `uip`.
+
+restrict-wk-≐ : ∀ {Γ B} → (¬et : ¬ Eternal B) → (Δ : Ctx)
+              → (e : (Γ ++ᶜ Δ) ᴱ ≡ ((Γ ∷ B) ++ᶜ Δ) ᴱ)
+              → restrict-ren (cong-ren {Γ'' = Δ} (wk-ren {A = B})) ≐ʳ eq-ren e
+
+restrict-wk-≐ {Γ} {B} ¬et [] e
+  rewrite eternal?-no ¬et | uip {p = e} {q = refl} = ≐ʳ-refl
+
+restrict-wk-≐ {Γ} {B} ¬et (Δ ∷ C) e with eternal? C
+... | yes _ =
+  ≐ʳ-trans (cong-∷-ren-≐ (restrict-wk-≐ ¬et Δ (∷ᶜ-injective-ctx e)))
+    (≐ʳ-trans (cong-ren-eq-ren-≐ ([] ∷ C) (∷ᶜ-injective-ctx e))
+              (eq-ren-≐ _ e))
+... | no  _ = restrict-wk-≐ ¬et Δ e
+
+restrict-wk-≐ {Γ} {B} ¬et (Δ ⟨ ρ ⟩) e = restrict-wk-≐ ¬et Δ e
 
 ------------------------------------------------------------------------
 -- FUNCTORIALITY
