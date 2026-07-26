@@ -1829,6 +1829,31 @@ grade-++ᶜˡ ρ (Δ ⟨ ρ' ⟩) = grade-++ᶜˡ ρ Δ ·ᵣ ρ'
 ∈-++ᶜˡ (Δ ∷ B)   x = Tl-∷ (∈-++ᶜˡ Δ x)
 ∈-++ᶜˡ (Δ ⟨ ρ ⟩) x = Tl-⟨⟩ (∈-++ᶜˡ Δ x)
 
+-- The grade a suffix contributes is associative in the suffix.
+
+grade-++ᶜˡ-assoc : (ρ : R) → (Δ₁ Δ₂ : Ctx)
+                 → grade-++ᶜˡ ρ (Δ₁ ++ᶜ Δ₂)
+                 ≡ grade-++ᶜˡ (grade-++ᶜˡ ρ Δ₁) Δ₂
+grade-++ᶜˡ-assoc ρ Δ₁ []          = refl
+grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ∷ B)    = grade-++ᶜˡ-assoc ρ Δ₁ Δ₂
+grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ⟨ ρ' ⟩) =
+  cong (_·ᵣ ρ') (grade-++ᶜˡ-assoc ρ Δ₁ Δ₂)
+
+-- A congruence renaming sends a pushed prefix variable to the push of its
+-- image: the counterpart of `cong-ren-tgt-r`, and what makes the pushing
+-- renaming family natural.
+
+cong-ren-tgt-l : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ)
+               → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜˡ Δ y)
+               ≡ (grade-++ᶜˡ (proj₁ (var-tgt r y)) Δ
+                 , ∈-++ᶜˡ Δ (proj₂ (var-tgt r y)))
+
+cong-ren-tgt-l r []         y = refl
+cong-ren-tgt-l r (Δ ∷ B)    y =
+  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (cong-ren-tgt-l r Δ y)
+cong-ren-tgt-l r (Δ ⟨ ρ' ⟩) y =
+  cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (cong-ren-tgt-l r Δ y)
+
 -- SUBSTITUTION FIXES A SUFFIX VARIABLE
 --
 -- The variable being replaced lies in the prefix, so a suffix variable survives
@@ -1954,6 +1979,37 @@ sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with etern
 ∈-++ᶜ-split-inj₂ Δ₁ (Δ₂ ⟨ ρ ⟩) (Tl-⟨⟩ x) y eq
     | inj₂ y' with eq
 ...   | refl = cong Tl-⟨⟩ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
+
+-- A variable the splitting sends left is that variable pushed under the suffix.
+-- Stated as a `Tgt` equality, so the grade travels with the position.
+
+∈-++ᶜ-split-inj₁ : ∀ {A ρ ρ'} → (Δ₁ Δ₂ : Ctx) → (x : A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂))
+                 → (z : A ∈[ ρ' ] Δ₁)
+                 → ∈-++ᶜ-split Δ₁ Δ₂ x ≡ inj₁ (ρ' , z)
+                 → (ρ , x) ≡ (grade-++ᶜˡ ρ' Δ₂ , ∈-++ᶜˡ Δ₂ z)
+
+∈-++ᶜ-split-inj₁ Δ₁ []       x .x refl = refl
+
+∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ∷ B) Hd       z eq with eq
+... | ()
+∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ∷ B) (Tl-∷ x) z eq
+  with ∈-++ᶜ-split Δ₁ Δ₂ x in eq'
+... | inj₂ _  with eq
+...   | ()
+∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ∷ B) (Tl-∷ x) z eq
+    | inj₁ (ρ'' , z') with eq
+...   | refl =
+  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (∈-++ᶜ-split-inj₁ Δ₁ Δ₂ x z' eq')
+
+∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ⟨ ρ₁ ⟩) (Tl-⟨⟩ x) z eq
+  with ∈-++ᶜ-split Δ₁ Δ₂ x in eq'
+... | inj₂ _  with eq
+...   | ()
+∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ⟨ ρ₁ ⟩) (Tl-⟨⟩ x) z eq
+    | inj₁ (ρ'' , z') with eq
+...   | refl =
+  cong (λ t → proj₁ t ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ t))
+       (∈-++ᶜ-split-inj₁ Δ₁ Δ₂ x z' eq')
 
 -- At the empty prefix the injection is the identity, once relocated.
 
@@ -2146,27 +2202,52 @@ env-var-hd γ W f =
 
 -- Any other variable is untouched by the entry, and is the action of the rest.
 
--- These two speak of a variable of the *prefix*, which is where the action
--- actually acts, so `env-Vˢ-var-r` does not apply. Both follow from
+-- Both follow from *one* lemma, over an arbitrary suffix and an arbitrary
+-- family of renamings that pushes a context by it:
 --
---   env-Vˢ-var-∷ : env-Vˢ γ ([] ∷ A₀) (var f (Tl-∷ x))
---                ≐ᵛ V-rename wk-ren (env-Vˢ γ [] (var f' x))
+--   env-Vˢ-var-l : (γ : Env St Γ) → (Δ : Ctx) → ¬ Eternal A
+--                → (rn : ∀ {Γ₀} → Ren Γ₀ (Γ₀ ++ᶜ Δ))
+--                → (sp : ∀ {Γ₀ A' ρ'} → (y : A' ∈[ ρ' ] Γ₀)
+--                      → var-tgt rn y ≡ (grade-++ᶜˡ ρ' Δ , ∈-++ᶜˡ Δ y))
+--                → (x : A ∈[ ρ ] Γ) → (f …) → (f' …)
+--                → env-Vˢ γ Δ (var f (∈-++ᶜˡ Δ x))
+--                ≐ᵛ V-rename rn (env-Vˢ γ [] (var f' x))
 --
--- and its lock analogue, by recursion on the environment: `⌊_⌋` is `var-≐`,
--- `renᵉ`/`sliceᵉ` are the induction hypothesis with the renamings commuted
--- (`V-rename-∘` twice against a `_≐ʳ_` step), and the two substituting zones are
--- `sub-var-l` above. `env-var-tl` is then the case at the empty suffix, where
--- substituting `Hd` into a weakening cancels; `env-var-lock`'s weakening is the
--- lock-crossing renaming, which is where `slice-unit`'s grade premise enters.
+-- The suffix must be arbitrary because `env-Vˢ` grows it at `_⟨_⟩ᵉ` and `_∷ᵉ_`,
+-- and the renaming must be a *family* with `sp` because those two zones need it
+-- at a longer suffix (`rn ∘ʳ` the lock-crossing, resp. `rn ∘ʳ wk-ren`) and the
+-- substituting zones need to know it lands in the pushed positions.
+--
+-- Status. `⌊_⌋` is `sp` read backwards; `renᵉ` and `sliceᵉ` are the induction
+-- hypothesis, the latter needing `rn`'s naturality — which is `sp` plus
+-- `cong-ren-tgt-l` above. `_∷ᵉ_` and `eternalˡ` are `sub-var-l`; `_⟨_⟩ᵉ` extracts
+-- its lock's bound from `f` by `≾ᵣ-zero-product*` (this is why `¬ Eternal A` is
+-- a premise: at an eternal type `f` is vacuous and no bound is available). Those
+-- three also need `grade-++ᶜˡ-assoc` above and an `∈-++ᶜˡ` analogue of
+-- `∈-++ᶜʳ-assoc` to build `sp` at the longer suffix.
+--
+-- `env-var-lock` then follows with no further syntactic input: `unbox-ren-unit`
+-- (in `Slice`) identifies `unbox-ren q ∘ʳ` the lock-crossing renaming with
+-- `slice-renᵘ (slice-unit q p)`. `env-var-tl` needs one more lemma, that
+-- substituting `Hd` into a weakening cancels — a mutual induction over all term
+-- formers, at an arbitrary suffix (`V-rename (cong-ren wk-ren) U [ … ↦ W ]v ≐ᵛ U`),
+-- whose `var` case is `sub-var-r`/`sub-var-l` split by `∈-++ᶜ-split`.
+
+-- Both take `¬ Eternal A`: at an eternal type `Val` holds of everything
+-- (`Val-eternal`), so `env-var` never calls them there — and without it the
+-- lock case would have no grade bound to cross the lock with, since `f` is
+-- vacuous exactly when the type is eternal.
 
 postulate
 
   env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A₀)
+             → ¬ Eternal A
              → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
              → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
              → env-V (γ ∷ᵉ W) (var f (Tl-∷ x)) ≐ᵛ env-V γ (var f' x)
 
   env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : Slice St ρ St' uᵣ)
+               → ¬ Eternal A
                → (p : ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ' ] Γ)
                → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
                → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
@@ -2212,13 +2293,15 @@ env-var (renᵉ γ r)   pγ x f =
 
 env-var (γ ∷ᵉ W) (pγ , pW) Hd       f =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-hd γ W f)) pW
-env-var (γ ∷ᵉ W) (pγ , pW) (Tl-∷ x) f =
-  Val-≐ᵛ _ (≐ᵛ-sym (env-var-tl γ W x f f)) (env-var γ pγ x f)
+env-var {A = A} (γ ∷ᵉ W) (pγ , pW) (Tl-∷ x) f with eternal? A
+... | yes et = Val-eternal et _
+... | no ¬et =
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-tl γ W ¬et x f f)) (env-var γ pγ x f)
 
 env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
 ... | yes et = Val-eternal et _
 ... | no ¬et =
-  Val-≐ᵛ _ (≐ᵛ-sym (env-var-lock γ q p x f f'))
+  Val-≐ᵛ _ (≐ᵛ-sym (env-var-lock γ q ¬et p x f f'))
            (Val-slice (slice-unit q p) _ (env-var γ pγ x f'))
   where
     p  = ≾ᵣ-zero-productʳ (f ¬et)

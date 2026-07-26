@@ -255,6 +255,29 @@ suc-comp-ren-≤ (∷-suc V q) b b₁ p =
                 (∘ʳ-assoc-≐ (⟨⟩-≤-ren p) (cong-⟨⟩-ren wk-ren)
                             (suc-comp-ren q _))))
 
+-- Relaxing the *source* grade is pre-composing with a relaxation (the mirror of
+-- `suc-comp-ren-≤`, which relaxes the residual one).
+
+suc-comp-ren-≤ˡ : ∀ {St St₁ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R} → (e : St ≤ₛ St₁)
+                → (b  : ≤ₛ-grade e ·ᵣ ρ₂ ≾ᵣ ρ₀)
+                → (b₁ : ≤ₛ-grade e ·ᵣ ρ₂ ≾ᵣ ρ₁)
+                → (p  : ρ₁ ≾ᵣ ρ₀)
+                → suc-comp-ren e b ≐ʳ (suc-comp-ren e b₁ ∘ʳ ⟨⟩-≤-ren p)
+
+suc-comp-ren-≤ˡ id-suc b b₁ p = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) = refl
+
+suc-comp-ren-≤ˡ (⟨⟩-suc ρ e) b b₁ p =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (suc-comp-ren-≤ˡ e _ _ p))
+           (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-μ-ren (suc-comp-ren e _) (⟨⟩-≤-ren p)))
+
+suc-comp-ren-≤ˡ (∷-suc V e) b b₁ p =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (suc-comp-ren-≤ˡ e _ _ p))
+           (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren wk-ren) (suc-comp-ren e _)
+                               (⟨⟩-≤-ren p)))
+
 -- Extending twice is extending once along the composite.
 
 suc-comp-ren-∘-≐ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
@@ -561,6 +584,34 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
                                         _ (step-grade-≾ r)
                                         (steps-grade-≾ rs)))))
           N))
+
+-- Transporting a slice's residual grade along a grade equality: the renaming is
+-- unchanged, since the bound is all that differs (`suc-comp-ren-irr`). This is
+-- what reconciles a run's `mapᵉ uₑ` with the `uᵣ` a `Slice` wants.
+
+suc-comp-ren-grade : ∀ {St St₁ : 𝕊 []} {ρ'' ρ₁ ρ₂ : R} → (e : St ≤ₛ St₁)
+                   → (eg : ρ₁ ≡ ρ₂)
+                   → (b₁ : ≤ₛ-grade e ·ᵣ ρ₁ ≾ᵣ ρ'')
+                   → (b₂ : ≤ₛ-grade e ·ᵣ ρ₂ ≾ᵣ ρ'')
+                   → (eq-ren (cong (toCtx St₁ ⟨_⟩) eg) ∘ʳ suc-comp-ren e b₁)
+                   ≐ʳ suc-comp-ren e b₂
+suc-comp-ren-grade e refl b₁ b₂ =
+  ≐ʳ-trans (∘ʳ-identityˡ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
+
+-- Crossing a lock and then following a guarded slice is following the
+-- corresponding unit slice (`slice-unit`): the source grade is relaxed from `ρ`
+-- to `uᵣ`, which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).
+
+unbox-ren-unit : ∀ {ρ} {St St' : 𝕊 []} → (q : Slice St ρ St' uᵣ) → (p : ρ ≾ᵣ uᵣ)
+               → (unbox-ren q ∘ʳ (⟨⟩-≤-ren p ∘ʳ ⟨⟩-η⁻¹-ren))
+               ≐ʳ slice-renᵘ (slice-unit q p)
+unbox-ren-unit q p = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go x = cong (var-tgt′ ⟨⟩-η-ren)
+                (sym (at (suc-comp-ren-≤ˡ (ext q) (bound (slice-unit q p))
+                                          (bound q) p)
+                         (proj₂ (var-tgt ⟨⟩-η⁻¹-ren x))))
 
 -- Two slices whose renamings are identity-like: the unit slice at a state, and
 -- the slice a `DELAY` takes (whose target context *is* the source under the

@@ -170,6 +170,24 @@ Comp-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
 Comp-expand r (comp-ret rs pV)   = comp-ret (r ◅ rs) pV
 Comp-expand r (comp-op rs pW pk) = comp-op (r ◅ rs) pW pk
 
+-- A whole run in front of a reducible computation, and transporting one along an
+-- equality of effects (which `SEQ-OP`'s reduct carries).
+
+Comp-expand* : ∀ {A P ε ε'} {St St' : 𝕊 []}
+             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+             → ⟨ St , M ⟩ ↝* ⟨ St' , M' ⟩
+             → Comp A P ε' St' M'
+             -------------------------
+             → Comp A P ε St M
+
+Comp-expand* ε*       p = p
+Comp-expand* (r ◅ rs) p = Comp-expand r (Comp-expand* rs p)
+
+Comp-ε-subst : ∀ {A P ε ε'} {St : 𝕊 []} → (e : ε ≡ ε')
+             → {M : toCtx St ⊢C⦂ A ‼ ε}
+             → Comp A P ε St M → Comp A P ε' St (ε-subst e M)
+Comp-ε-subst refl p = p
+
 -- The empty store: `toCtx ∅` has no variables.
 
 store-∅ : Store ∅
