@@ -53,17 +53,6 @@ open import OperationalSemantics.Adequacy.SubEquivalence Spec
 
 postulate
 
-  -- Sequencing: run the scrutinee (`seq-steps`), then either substitute the
-  -- returned value or float the operation out and resume.
-
-  FL-seq : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
-         → (M : Γ ⊢C⦂ A ‼ ε₁) → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-         → Comp' A ε₁ St (env-C γ M)
-         → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
-              → Comp' B ε₂ St' (env-C γ' N))
-         --------------------------------------------------------------
-         → Comp' B (ε₁ ·ₑ ε₂) St (env-C γ (M ⨟ N))
-
   -- Handling: as sequencing (`handle-steps`), with `HANDLE-OP` firing a clause.
   -- This is the case that inducts on the scrutinee's `Comp` derivation.
 
@@ -243,8 +232,18 @@ mutual
                 (cong (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩))
                       (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ of-natʳ τ ⟩) []) refl M)))
 
-  FL-C γ pγ (M ⨟ N) =
-    FL-seq γ pγ M N (FL-C γ pγ M) (λ γ' pγ' → FL-C γ' pγ' N)
+  -- Sequencing: `env-Cˢ-seq` splits the action, `seq-Comp` runs the scrutinee and
+  -- then the sequel. The environment the sequel needs is `(γ ⟨ q ⟩ᵉ) ∷ᵉ V` — and
+  -- `env-Cˢ (γ ⟨ q ⟩ᵉ) ([] ∷ A)` *is* `C-rename (cong-∷-ren (unbox-ren q))` of the
+  -- action at suffix `[] ⟨ mapᵉ ε₁ ⟩ ∷ A`, definitionally (both of `env-Cˢ`'s
+  -- casts are `refl` at the empty suffix), so only `env-Cˢ-head` is needed.
+
+  FL-C {St = St} {ε = ε} γ pγ (_⨟_ {A = A} {ε = ε₁} M N) =
+    subst (Comp' _ _ St) (sym (env-Cˢ-seq γ [] M N))
+      (seq-Comp (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) (FL-C γ pγ M)
+        (λ q V pV →
+           subst (Comp' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
+                 (FL-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV) N)))
 
   FL-C γ pγ (handle M `with H `in N) =
     FL-handle γ pγ M H N (FL-C γ pγ M)

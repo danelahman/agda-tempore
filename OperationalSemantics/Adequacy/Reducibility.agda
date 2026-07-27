@@ -589,6 +589,32 @@ Comp-≐ᶜ {A} {ε} {St} {M} {M'} eM pM =
     (subst (λ z → M ≐ᶜ castᶜ (sym z) M') (sym (toCtx-≐ˢ-refl St)) eM)
     pM
 
+-- BIND
+--
+-- Sequencing preserves reducibility. Stated about `Comp` alone — over the sequel
+-- *term* and its effect, at an arbitrary state — rather than over closing
+-- environments, because `SEQ-OP` floats the operation out and leaves the sequel
+-- at `toCtx St₂ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⟨ … ⟩ ∷ A`; a
+-- state context appends only box-typed cells, so no environment reaches there,
+-- whereas this statement instantiates at `St := St₂ ⟨ mapᵉ (op-grade op) ⟩ₛ` and
+-- the shifted effect.
+--
+-- Induction on the `Comp` derivation: `comp-ret` fires `SEQ-RET`, `comp-op`
+-- floats the operation out and recurses on the `pk` field, as `Comp-≐` does.
+
+postulate
+
+  seq-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
+           → {M : toCtx St ⊢C⦂ A ‼ ε₁}
+           → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+           → Comp' A ε₁ St M
+           → (∀ {St₁ : 𝕊 []} → (q : Slice St (mapᵉ ε₁) St₁ uᵣ)
+                → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
+                → Comp' B ε₂ St₁
+                    ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c))
+           ------------------------------------------------------------------
+           → Comp' B (ε₁ ·ₑ ε₂) St (M ⨟ N)
+
 -- ALLOCATION
 --
 -- `BOX` extends the store with a value that is reducible at every state the
