@@ -123,12 +123,11 @@ mutual
   perform op V M  [ x ↦ W ]c = perform op (V [ x ↦ W ]v) (M [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
   -- The handler clauses close over the eternal part `Γ ᴱ` of the ambient
-  -- context (and stay parametric in a further extension `Γ'`). If the
-  -- substituted variable is not eternal, it does not occur in `Γ ᴱ`, so the
-  -- clauses are only retyped (`ᴱ-drop-split`). If it is eternal, its value
-  -- restricts to the eternal context (`eternal-val-restrict`) and is
+  -- context. If the substituted variable is not eternal, it does not occur in
+  -- `Γ ᴱ`, so the clauses are only retyped (`ᴱ-drop-split`). If it is eternal,
+  -- its value restricts to the eternal context (`eternal-val-restrict`) and is
   -- substituted into each clause at the variable's image, located within
-  -- `Γ ᴱ ++ᶜ Γ' ∷ …` via `∈-ᴱ-split`/`split-++ʳ`/`split→∈`.
+  -- `Γ ᴱ ++ᶜ ([] ∷ param ∷ cont)` via `∈-ᴱ-split`/`split-++ʳ`/`split→∈`.
   _[_↦_]c {A = A} (handle_`with_`in {B = B} M H N) x W with eternal? A
   ... | no ¬et =
     handle (M [ x ↦ W ]c)

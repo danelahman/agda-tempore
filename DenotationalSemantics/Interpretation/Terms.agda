@@ -171,11 +171,6 @@ mutual
                    ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
                ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁'')
 
-  -- (There is no longer a uniformity condition in the extension: the clauses do
-  -- not quantify over one. Moving a clause to the context reached when the
-  -- operation is handled is the renaming `ᴱ-ren`, so what was `CtxUniformʰ` is
-  -- now `C-rename-nat`.)
-
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
   ⟦ var f x  ⟧ᵛᵗ _ = var-morphism f x
   ⟦ const c  ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
@@ -210,8 +205,8 @@ mutual
   ⟦ coerce p M ⟧ᶜᵗ pM = T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 
   -- The semantic handler of a syntactic one. Each clause closes over the
-  -- eternal part `Γ ᴱ` of the ambient context, so it interprets (at `Γ' = []`)
-  -- to a morphism parameterised by `⟦ Γ ᴱ ⟧`; the `ty-gty` coercions adapt the
+  -- eternal part `Γ ᴱ` of the ambient context, so it interprets to a morphism
+  -- parameterised by `⟦ Γ ᴱ ⟧`; the `ty-gty` coercions adapt the
   -- ground-type parameter/arity to their value-type interpretations, and
   -- `×ᵐ-assoc⁻¹` reassociates the `⟦Γ ᴱ⟧`-parameter alongside the parameter.
   --

@@ -239,10 +239,9 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
 -- only rule that fires a clause, and the only rules that can reach it are the
 -- two congruences — so this is a recursion on the *reduction*, not on the term.
 
--- Both uniformity conditions — naturality in the residual effect and in the
--- context extension — are now carried by the term's own `Paramᶜ`, so a
--- reduction assumes nothing on top of it and every case is `⊤`. Kept as a
--- (trivial) predicate so the soundness statements' shape is unchanged.
+-- The clauses' uniformity in the residual effect is carried by the term's own
+-- `Paramᶜ`, so a reduction assumes nothing on top of it and every case is `⊤`.
+-- It stays a predicate so the soundness statements can take it uniformly.
 
 Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}

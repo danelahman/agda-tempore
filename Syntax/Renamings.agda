@@ -279,7 +279,7 @@ restrict-ren (⟨⟩-ext-ctx ecΞ ecΔ) =
 -- restriction, and a variable is either kept (weaken) or dropped (identity).
 
 -- In the derived renamings the local parts are bound before the ambient, so
--- that positional instantiation still names them.
+-- that positional instantiation names them.
 
 ren-ᴱ-∷ : ∀ {Δ Ξ} → (A : VType) → Ren Ξ (Δ ᴱ) ((Δ ∷ A) ᴱ)
 ren-ᴱ-∷ A with eternal? A

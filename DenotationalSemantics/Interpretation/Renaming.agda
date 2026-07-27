@@ -1000,9 +1000,7 @@ private
 contract-mor : (Γ : Ctx) → ⟦ contract Γ ⟧ʳ ≈ᵐ splitᴱ⁻¹ Γ Γ ∘ᵐ ⟨ idᵐ , projᴱ Γ ⟩ᵐ
 contract-mor []        = ≈ᵐ-sym (⟨⟩ᵐ-sndᵐ idᵐ idᵐ)
 contract-mor (Γ ∷ A) with eternal? A
--- TODO: the eternal head grows the base `Γ ᴱ → Γ ᴱ ∷ A`; needs a `bring-up`
--- denotation lemma (induction through `exch-ren` = `exch-ren-mor` and
--- `⟨⟩-ext-ren` = `strᵉ`) relating `splitᴰ⁻¹ (Γ ᴱ ∷ A) _ Γ` to `splitᴱ⁻¹ Γ Γ`.
+-- an eternal head grows the base `Γ ᴱ → Γ ᴱ ∷ A`, which `bring-up-mor` carries
 ... | yes eA =
     ∘ᵐ-congˡ (  ∘ᵐ-congˡ (mapˣᵐ-cong (bring-up-mor {Γ ᴱ} {A} eA (⟦ Γ ⟧ᴱ-Eternalᵒ) Γ) ≈ᵐ-refl)
               ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , var-morphism-Hd {Γ ᴱ ++ᶜ Γ} {A} _ ⟩ᵐ-cong))

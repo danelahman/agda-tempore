@@ -295,9 +295,6 @@ mutual
               (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-∷-ren (cong-∷-ren rr))
                                    (H op _) (pH op _)))))))))
 
-  -- (`ren-clauses-ctxuniform` is gone: the clauses no longer quantify over an
-  -- extension, so there is no ⋉-naturality left to transport along a renaming.)
-
   V-rename-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
   V-rename-nat r (var f x) _ with var-rename r x | var-morphism-nat r f x
@@ -415,7 +412,7 @@ mutual
                     (λ op ε'' →
                        renᶜ (cong-∷-ren (cong-∷-ren (restrict-ren r)))
                          (H op ε'') (pH op ε''))
-                    -- `renᶜ`'s handle tuple is one component shorter now
+                    -- the uniformity component of `renᶜ`'s handle tuple
                     (proj₂ (proj₂ (proj₂ (renᶜ r (handle M `with H `in N)
                                             (pM , pN , pH , uH)))))) op ε''
                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ

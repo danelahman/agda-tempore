@@ -90,7 +90,7 @@ record Adjunction : Set₁ where
     η⊣-u : ∀ {A} → η⊣ {A} {u} ≈ᵐ [ u ]ᶠ η ∘ᵐ ηᵘ
 
     -- The graded adjunction is compatible with *composition* of grades. Since
-    -- an eternal object is now characterised as a `Past.μ`-algebra (via the
+    -- an eternal object is characterised as a `Past.μ`-algebra (via the
     -- extraction `extᵉ` / counit `ε⊣`), we take the *counit*-side law as
     -- primitive: extracting a doubly-boxed value after folding the two pasts
     -- with `μ` agrees with extracting through the two `δ`-split box layers. The

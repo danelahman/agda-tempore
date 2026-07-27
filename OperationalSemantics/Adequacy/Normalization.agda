@@ -2,7 +2,7 @@
 -- Weak-head normalization: the fundamental lemma.                    --
 --                                                                    --
 -- The language has no recursion, so termination is syntactic.        --
--- Reducibility is still needed, since substitution can grow a term.  --
+-- Reducibility is needed, since substitution can grow a term.        --
 --                                                                    --
 -- The `handle` case is an induction on the scrutinee's `Comp`        --
 -- derivation: each `HANDLE-OP` consumes one resumption premise.      --
@@ -45,7 +45,7 @@ open import OperationalSemantics.Adequacy.SubEquivalence Spec
 -- THE FUNDAMENTAL LEMMA
 --
 -- Induction on the typing derivation, mutually for values and computations.
--- Six computation cases are still open; each is stated as its own lemma taking
+-- Six computation cases are open; each is stated as its own lemma taking
 -- the induction hypotheses it needs — for a binding subterm, at *every*
 -- environment, since the state the subterm is reached at is not the one the
 -- case starts from.
@@ -56,12 +56,11 @@ postulate
   -- Handling: as sequencing (`handle-steps`), with `HANDLE-OP` firing a clause.
   -- This is the case that inducts on the scrutinee's `Comp` derivation.
   --
-  -- Superseded in statement by `handle-Comp` in `Reducibility`, which quantifies
-  -- the sequel over the *term* (as `seq-Comp` does, since `HANDLE-OP` leaves it
+  -- `handle-Comp` in `Reducibility` states the same case with the sequel
+  -- quantified over the *term* (as `seq-Comp` does, since `HANDLE-OP` leaves it
   -- under a residual lock) and the clauses over a state carrying a `Store`.
-  -- Kept until the store obligation there is settled: both forms need a store at
-  -- the state where an operation is handled, and nothing yet propagates one
-  -- along a run.
+  -- Both forms need a store at the state where an operation is handled, and
+  -- nothing propagates one along a run.
 
   FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
             → (M : Γ ⊢C⦂ A ‼ ε₁)
