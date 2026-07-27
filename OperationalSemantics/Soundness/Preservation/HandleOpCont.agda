@@ -98,48 +98,38 @@ term∅ {X = X} e = subst (λ Δ → X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) (sym e) termin
 -- `wk-ren`, reconciled with the terminal parameter of the outer context.
 module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
          (e : Γ ᴱ ≡ [])
-         (H : (op' : Op) → (ε₀ : E) → (Γ' : Ctx)
-              → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
+         (H : (op' : Op) → (ε₀ : E)
+              → Γ ᴱ ∷ type-of-gtype (param op')
                    ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
                 ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀))
          (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
          (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ‼ ε')
          (ren : Ren [] (Γ ⟨ σ ⟩) ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩))
          (pM : Paramᶜ M) (pN : Paramᶜ N)
-         (pH : ∀ op' ε₀ Γ' → Paramᶜ (H op' ε₀ Γ'))
-         (uH : ∀ (op' : Op) {ε₁ ε₂} → (q : ε₁ ≾ₑ ε₂) → (Γ' : Ctx)
-             → ⟦ H op' ε₂ Γ' ⟧ᶜᵗ (pH op' ε₂ Γ')
+         (pH : ∀ op' ε₀ → Paramᶜ (H op' ε₀))
+         (uH : ∀ (op' : Op) {ε₁ ε₂} → (q : ε₁ ≾ₑ ε₂)
+             → ⟦ H op' ε₂ ⟧ᶜᵗ (pH op' ε₂)
                  ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op') ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op' ε₁ Γ' ⟧ᶜᵗ (pH op' ε₁ Γ'))
-         (cH : CtxUniformʰ {Γ} H pH)
+             ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op' ε₁ ⟧ᶜᵗ (pH op' ε₁))
        where
 
   -- The reduct's clause family: `H` renamed along `ren-ᴱ-∷ A₀`, with the
   -- renamed parametricity and uniformity certificates.
-  H' : (op' : Op) → (ε₀ : E) → (Γ' : Ctx)
-     → ((Γ ⟨ ρ ⟩) ∷ A₀) ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
+  H' : (op' : Op) → (ε₀ : E)
+     → ((Γ ⟨ ρ ⟩) ∷ A₀) ᴱ ∷ type-of-gtype (param op')
           ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀)
-  H' op' ε₀ Γ' = C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ')
+  H' op' ε₀ = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀))) (H op' ε₀)
 
-  pH' : ∀ op' ε₀ Γ' → Paramᶜ (H' op' ε₀ Γ')
-  pH' op' ε₀ Γ' =
-    renᶜ (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)) (H op' ε₀ Γ') (pH op' ε₀ Γ')
+  pH' : ∀ op' ε₀ → Paramᶜ (H' op' ε₀)
+  pH' op' ε₀ =
+    renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀))) (H op' ε₀) (pH op' ε₀)
 
   uH' = ren-clauses-uniform (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀) H pH uH
 
-  -- `ren-clauses-ctxuniform` is stated for the *full* renaming (via `restrict-ren`);
-  -- here the base renaming is `ren-ᴱ-∷ A₀ = restrict-ren (wk-ren)`, so transport
-  -- the `wk-ren` instance along `ren-ᴱ-∷≡restrict`.
-  cH' = subst (λ rr → CtxUniformʰ {(Γ ⟨ ρ ⟩) ∷ A₀}
-                        (λ op' ε₀ Γ' → C-rename (cong-ren rr) (H op' ε₀ Γ'))
-                        (λ op' ε₀ Γ' → renᶜ (cong-ren rr) (H op' ε₀ Γ') (pH op' ε₀ Γ')))
-              (sym (ren-ᴱ-∷≡restrict A₀))
-              (ren-clauses-ctxuniform (wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀}) H pH cH)
-
   handle-op-cont :
       ⟦ handle M `with H' `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ
-        (pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH' , cH')
+        (pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH')
     ≈ᵐ (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
        ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
   handle-op-cont =
@@ -165,8 +155,8 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
                  → clauseᵀ (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH') op ε''
                  ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦H'⟧ʰᵗ-nat op ε'' =
-          ∘ᵐ-congˡ (C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀))
-                      (H op ε'' []) (pH op ε'' []))
+          ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)))
+                      (H op ε'') (pH op ε''))
         ∙ ∘ᵐ-assoc _ _ _
         ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
         ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)

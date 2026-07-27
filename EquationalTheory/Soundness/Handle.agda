@@ -83,13 +83,13 @@ open import EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE
 
 sound-handle-return : ∀ {Γ A B ε}
   → (V : Γ ⊢V⦂ A)
-  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+  → (H : (op : Op) → (ε'' : E)
+       → Γ ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
   → Soundᶜ== (handle-return V H N)
-sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH , cH) pR =
+sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
     -- expose the `ηᵀ` the handler's algebra law consumes: the strength's
     -- unit law, then `ηᵀ`-naturality past the continuation
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
@@ -137,15 +137,15 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH , cH) pR =
 sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
   → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+  → (H : (op : Op) → (ε'' : E)
+       → Γ ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
   → Soundᶜ== (handle-box V M H N)
-sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH , cH) pR =
+sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH) pR =
   ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box V (handle M `with H `in (C-rename r N))) pR
-              (pV , (pM , renᶜ r N pN , pH , uH , cH))
+              (pV , (pM , renᶜ r N pN , pH , uH))
           ∙ ∘ᵐ-assoc _ _ _
           ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
                       ∙ ⟨   ∘ᵐ-assoc _ _ _
@@ -180,20 +180,20 @@ sound-handle-unbox : ∀ {Γ A B C ρ Δ ε ε'}
   → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
   → (V : Δ ⊢V⦂ [ ρ ] A)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+  → (H : (op : Op) → (ε'' : E)
+       → Γ ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
   → Soundᶜ== (handle-unbox w V M H N)
 sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
-                   ((pV , pM) , pN , pH , uH , cH)
-                   (pV₂ , pM₂ , pN₂ , pH₂ , uH₂ , cH₂) =
+                   ((pV , pM) , pN , pH , uH)
+                   (pV₂ , pM₂ , pN₂ , pH₂ , uH₂) =
   ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w V (handle M `with H' `in (C-rename r N)))
-              (pV₂ , pM₂ , pN₂ , pH₂ , uH₂ , cH₂)
-              (pV , (pM , renᶜ r N pN , pH₂ , uH₂ , cH₂))
+              (pV₂ , pM₂ , pN₂ , pH₂ , uH₂)
+              (pV , (pM , renᶜ r N pN , pH₂ , uH₂))
           ∙ unbox-def w V (handle M `with H' `in (C-rename r N)) pV
-              (pM , renᶜ r N pN , pH₂ , uH₂ , cH₂)
+              (pM , renᶜ r N pN , pH₂ , uH₂)
             -- transport the fold along the eternal-skeleton renaming
           ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ alg-nat)
           ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
@@ -215,11 +215,11 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
   where
     r  = cong-∷-ren (cong-⟨⟩-ren wk-ren)
 
-    H' : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → (Γ ∷ A) ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+    H' : (op : Op) → (ε'' : E)
+       → (Γ ∷ A) ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε'')
-    H' op' ε'' Γ' = C-rename (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op' ε'' Γ')
+    H' op' ε'' = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A))) (H op' ε'')
 
     gu = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                     ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
@@ -246,9 +246,11 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
                → clauseᵀ (⟦_⟧ʰᵗ {Γ ∷ A} H' pH₂ uH₂) op ε''
                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
     clause-nat op ε'' =
-        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (H' op ε'' []) (pH₂ op ε'' [])
-                      (renᶜ (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op ε'' []) (pH op ε'' []))
-                  ∙ C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op ε'' []) (pH op ε'' []))
+        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (H' op ε'') (pH₂ op ε'')
+                      (renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
+                            (H op ε'') (pH op ε''))
+                  ∙ C-rename-nat (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
+                      (H op ε'') (pH op ε''))
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -265,13 +267,13 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
 
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
   → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+  → (H : (op : Op) → (ε'' : E)
+       → Γ ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-delay M H N)
-sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH , cH) pR =
+sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
     -- the strength half
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)
     -- re-form `mapˣᵐ idᵐ (delayᵀ τ)` and fire the fold's delay law
@@ -322,4 +324,4 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH , cH) p
     r   = cong-∷-ren (⟨⟩-μ-ren
                       ∘ʳ eq-ren (cong (Γ ⟨_⟩)
                            (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
-    pRc = pM , renᶜ r N pN , pH , uH , cH
+    pRc = pM , renᶜ r N pN , pH , uH

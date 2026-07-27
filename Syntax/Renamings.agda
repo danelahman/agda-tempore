@@ -31,6 +31,18 @@ data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []
   ec-∷  : ∀ {Δ A} → EternalCtx Δ → Eternal A → EternalCtx (Δ ∷ A)
 
+-- The eternal restriction is an eternal context: it is lock-free and keeps only
+-- eternal-typed variables. This is what licenses the lock in `ᴱ-ren`, along
+-- which a handler clause (closing over `Γ ᴱ`) moves to the context reached when
+-- the operation is handled.
+
+ᴱ-EternalCtx : (Δ : Ctx) → EternalCtx (Δ ᴱ)
+ᴱ-EternalCtx []        = ec-[]
+ᴱ-EternalCtx (Δ ∷ A)   with eternal? A
+... | yes et = ec-∷ (ᴱ-EternalCtx Δ) et
+... | no  _  = ᴱ-EternalCtx Δ
+ᴱ-EternalCtx (Δ ⟨ ρ ⟩) = ᴱ-EternalCtx Δ
+
 ec-eternal : ∀ {Δ A ρ} → EternalCtx Δ → A ∈[ ρ ] Δ → Eternal A
 ec-eternal (ec-∷ ec et) Hd       = et
 ec-eternal (ec-∷ ec et) (Tl-∷ x) = ec-eternal ec x
@@ -312,6 +324,21 @@ contract {Ξ} (Δ ∷ A)   with eternal? A
             ∘ʳ cong-∷-ren (bring-up eA Δ)
 ... | no  _  = cong-∷-ren (contract Δ)
 contract (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Δ)
+
+-- THE ETERNAL INCLUSION
+--
+-- Weakening the eternal restriction `Δ ᴱ` back into `Δ`: non-eternal entries
+-- are dropped by `wk-ren`, and a lock is introduced by `⟨⟩-ext-ctx`, which the
+-- restriction's own eternality licenses. This is what a handler clause, which
+-- closes over `Δ ᴱ`, is renamed along when the operation is handled; its
+-- interpretation is exactly the eternal projection (`ᴱ-ren-mor`).
+
+ᴱ-ren : (Δ : Ctx) → Ren [] (Δ ᴱ) Δ
+ᴱ-ren []        = id-ren
+ᴱ-ren (Δ ∷ A)   with eternal? A
+... | yes _ = cong-∷-ren (ᴱ-ren Δ)
+... | no  _ = wk-ren ∘ʳ ᴱ-ren Δ
+ᴱ-ren (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (ᴱ-ren Δ) ∘ʳ ⟨⟩-ext-ctx ec-[] (ᴱ-EternalCtx Δ)
 
 -- THE ETERNAL WEAKENING
 --

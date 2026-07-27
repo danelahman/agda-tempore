@@ -183,17 +183,17 @@ sound-coerce-seq rel M N (pM , pN) (pM' , pN') =
 sound-coerce-handle : ∀ {Γ A B ε₁ ε₂ ε'}
                     → (rel : ε₁ ≾ₑ ε₂)
                     → (M : Γ ⊢C⦂ A ‼ ε₁)
-                    → (H : (op : Op) → (ε₀ : E) → (Γ' : Ctx) →
-                             Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                    → (H : (op : Op) → (ε₀ : E) →
+                             Γ ᴱ ∷ type-of-gtype (param op)
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
                     → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                     → Soundᶜ== (coerce-handle rel M H N)
 sound-coerce-handle {Γ = Γ} rel M H N
-                    (pM , pN , pH , uH , cH) (pM' , pN' , pH' , uH' , cH') =
+                    (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
     ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟦ Γ ⟧ᴱ-Eternalᵒ)
               (λ op ε'' → ∘ᵐ-congˡ
-                            (⟦⟧ᶜᵗ-irr (H op ε'' []) (pH op ε'' []) (pH' op ε'' []))))
+                            (⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))))
             (⟨ ≈ᵐ-refl
              , ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM') ⟩ᵐ-cong))
                ∙ coe-str rel N pN (⟦ M ⟧ᶜᵗ pM') ⟩ᵐ-cong)

@@ -281,38 +281,23 @@ stepᴾᶜ (SEQ-OP {op = op} {S = S} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN
     (perform op V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ))) N))
     (pV , pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ))) N pN)
 stepᴾᶜ DELAY                            pS pM         = pM
-stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH , cH) = ret-subᴾ V N pV pN
-stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH , cH) =
+stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ V N pV pN
+stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
   stepᴾᶜ r pS pM
   , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
-  , (λ op ε₃ Γ' → substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) (H op ε₃ Γ') (pH op ε₃ Γ'))
+  , (λ op ε₃ → substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) (H op ε₃) (pH op ε₃))
   , subst-clauses-uniform (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
-  , subst-clauses-ctxuniform {toCtx S} {toCtx S'}
-      (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH cH
 stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} {H = H} {N = N})
-       pS ((pV , pM) , pN , pH , uH , cH) =
+       pS ((pV , pM) , pN , pH , uH) =
     (pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ))) N pN
-    , (λ op' ε' Γ' → renᶜ (cong-ren (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))) (H op' ε' Γ') (pH op' ε' Γ'))
+    , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
     , ren-clauses-uniform
-        (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH
-    , subst (λ rr → CtxUniformʰ {toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
-                      (λ op' ε' Γ' → C-rename (cong-ren rr) (H op' ε' Γ'))
-                      (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
-            (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
-            (ren-clauses-ctxuniform
-              (wk-ren {Δ = toCtx S ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
-              H pH cH))
-  , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                          ∷ [ mapᵉ (op-grade op) ]
-                              (type-of-gtype (arity op) ⇒ _ ‼ (ε ·ₑ ε''))
-                        ⊢C⦂ _ ‼ (op-grade op ·ₑ (ε ·ₑ ε'')))
-                (trans (cong (_++ᶜ toCtx S) (toCtxᴱ-[] S)) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') (toCtx S)))
+        (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH)
+  , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S)))) (H op (ε ·ₑ ε'')))
          (Tl-∷ Hd) V
-         (substᴾᶜ {D = [] ∷ type-of-gtype (param op)
-                         ∷ [ mapᵉ (op-grade op) ]
-                             (type-of-gtype (arity op) ⇒ _ ‼ (ε ·ₑ ε''))}
-            (trans (cong (_++ᶜ toCtx S) (toCtxᴱ-[] S)) ++ᶜ-identityˡ) (H op (ε ·ₑ ε'') (toCtx S)) (pH op (ε ·ₑ ε'') (toCtx S)))
+         (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S))))
+               (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
          pV
 stepᴾᶜ BOX                              pS (pV , pM)  = pM
 stepᴾᶜ (UNBOX {S = S} {w = w} {V = V} {M = M}) pS (pV , pM) =
@@ -360,9 +345,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 ↝-sound r@(SEQ-RET {V = V} {N = N}) pS (pV , pN) _ =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
     (∘ᵐ-congˡ (sound-SEQ-RET V N pV pN) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
-↝-sound r@(HANDLE-RET {V = V} {H = H} {N = N}) pS (pV , pN , pH , uH , cH) _ =
+↝-sound r@(HANDLE-RET {V = V} {H = H} {N = N}) pS (pV , pN , pH , uH) _ =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
-    (∘ᵐ-congˡ (sound-HANDLE-RET V H N pV pN pH uH cH)
+    (∘ᵐ-congˡ (sound-HANDLE-RET V H N pV pN pH uH)
      ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 
 -- Peeling a coercion: the step refines the grade by exactly the coercion's own
@@ -381,17 +366,17 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 ↝-sound (SEQ-STEP {N = N} r c) pS (pM , pN) u =
   sound-SEQ-STEP N r c pS pM pN (stepᴾᶜ r pS pM) (↝-sound r pS pM u)
-↝-sound (HANDLE-STEP {H = H} {N = N} r c) pS (pM , pN , pH , uH , cH) u =
-  sound-HANDLE-STEP H N r c pS pM pN (stepᴾᶜ r pS pM) pH uH cH (↝-sound r pS pM u)
+↝-sound (HANDLE-STEP {H = H} {N = N} r c) pS (pM , pN , pH , uH) u =
+  sound-HANDLE-STEP H N r c pS pM pN (stepᴾᶜ r pS pM) pH uH (↝-sound r pS pM u)
 
 -- Handling an operation: the clause is applied, with the handled remainder
 -- boxed up as its continuation. This is the only rule that reads a clause; its
 -- parametricity now comes from the term's own `Paramᶜ` certificate.
 
 ↝-sound {S = S} r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N})
-        pS ((pV , pM) , pN , pH , uH , cH) u =
+        pS ((pV , pM) , pN , pH , uH) u =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-assoc (op-grade op) _ _)))
-    (∘ᵐ-congˡ (sound-HANDLE-OP (toCtxᴱ-[] S) op V M H N pV pM pN pH uH cH)
+    (∘ᵐ-congˡ (sound-HANDLE-OP (toCtxᴱ-[] S) op V M H N pV pM pN pH uH)
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 

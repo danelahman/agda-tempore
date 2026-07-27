@@ -95,20 +95,20 @@ private
 -- ───────────────────────────────────────────────────────────────────────────
 
 module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
-         (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-            → Γ₀ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+         (H : (op : Op) → (ε'' : E)
+            → Γ₀ ᴱ ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-         (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+         (pH : ∀ op ε'' → Paramᶜ (H op ε''))
          (uH : EffUniformʰ {Γ₀} H pH)
        where
 
   -- the clauses reindexed to the extended eternal skeleton
-  Hᴿ : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-     → (Γ₀ ∷ A₀) ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+  Hᴿ : (op : Op) → (ε'' : E)
+     → (Γ₀ ∷ A₀) ᴱ ∷ type-of-gtype (param op)
           ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
-  Hᴿ op ε'' Γ' = C-rename (cong-ren (ren-ᴱ-∷ {Γ₀} A₀)) (H op ε'' Γ')
+  Hᴿ op ε'' = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ₀} A₀))) (H op ε'')
 
   fᴿ : ⟦ (Γ₀ ∷ A₀) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ₀ ᴱ ⟧ᶜᵗˣ
   fᴿ = ⟦ ren-ᴱ-∷ {Γ₀} A₀ ⟧ʳ
@@ -129,7 +129,7 @@ module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
           (sym (ren-ᴱ-∷≡restrict {Γ₀} A₀))
           (projᴱ-nat (wk-ren {Δ = Γ₀} {A = A₀}))
 
-  module _ (pHᴿ : ∀ op ε'' Γ' → Paramᶜ (Hᴿ op ε'' Γ'))
+  module _ (pHᴿ : ∀ op ε'' → Paramᶜ (Hᴿ op ε''))
            (uHᴿ : EffUniformʰ {Γ₀ ∷ A₀} Hᴿ pHᴿ)
          where
 
@@ -137,10 +137,11 @@ module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
                 → clauseᵀ (⟦_⟧ʰᵗ {Γ₀ ∷ A₀} Hᴿ pHᴿ uHᴿ) op ε''
                 ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ₀} H pH uH) op ε'' ∘ᵐ mapˣᵐ fᴿ idᵐ
     clause-natᴿ op ε'' =
-        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (Hᴿ op ε'' []) (pHᴿ op ε'' [])
-                      (renᶜ (cong-ren (ren-ᴱ-∷ {Γ₀} A₀)) (H op ε'' []) (pH op ε'' []))
-                  ∙ C-rename-nat (cong-ren (ren-ᴱ-∷ {Γ₀} A₀))
-                      (H op ε'' []) (pH op ε'' []))
+        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (Hᴿ op ε'') (pHᴿ op ε'')
+                      (renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ₀} A₀)))
+                            (H op ε'') (pH op ε''))
+                  ∙ C-rename-nat (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ₀} A₀)))
+                      (H op ε'') (pH op ε''))
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -158,42 +159,24 @@ module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
 
 
 -- ───────────────────────────────────────────────────────────────────────────
--- The clause at `Γ' = Γ`, contracted, is the clause at `Γ' = []`.
+-- The clause included into `Γ` is the clause reindexed by `projᴱ Γ`.
 --
--- The fold's operation law returns `clauseᵀ h op _`, the clause at the empty
--- extension; the equation's right-hand side uses the clause at `Γ' = Γ`
--- reindexed by `contract Γ`. `CtxUniformʰ` at the terminal map relates them:
--- `⋉-proj` rewrites the lifted terminal map to `sndᵐ ∘ᵐ splitᴱ`, which cancels
--- `contract Γ`'s re-gluing (`contract-mor` + `splitᴱ-iso`) down to `projᴱ Γ`.
+-- The fold's operation law returns `clauseᵀ h op _`, the clause read at its own
+-- eternal skeleton; the equation's right-hand side uses the clause included
+-- into `Γ` by `ᴱ-ren`, whose denotation is exactly `projᴱ Γ` (`ᴱ-ren-mor`).
 -- ───────────────────────────────────────────────────────────────────────────
 
-contract-clause : ∀ {Γ B}
-  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+ᴱ-ren-clause : ∀ {Γ B}
+  → (H : (op : Op) → (ε'' : E)
+       → Γ ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-  → (cH : CtxUniformʰ {Γ} H pH)
+  → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
   → ∀ op ε''
-  → ⟦ H op ε'' Γ ⟧ᶜᵗ (pH op ε'' Γ) ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ contract Γ ⟧ʳ idᵐ) idᵐ
-  ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' []) ∘ᵐ mapˣᵐ (mapˣᵐ (projᴱ Γ) idᵐ) idᵐ
-contract-clause {Γ} H pH cH op ε'' =
-    ∘ᵐ-congˡ (≈ᵐ-sym (cH op ε'' {Γ} {[]} terminalᵐ))
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘ _ _ _ _
-              ∙ mapˣᵐ-cong (  mapˣᵐ-∘ _ _ _ _
-                            ∙ mapˣᵐ-cong ⋉-contract (∘ᵐ-identityˡ _))
-                           (∘ᵐ-identityˡ _))
-  where
-    -- lifting the terminal map is the eternal projection
-    ⋉-contract : _⋉_ Γ {Γ} {[]} terminalᵐ ∘ᵐ ⟦ contract Γ ⟧ʳ ≈ᵐ projᴱ Γ
-    ⋉-contract =
-        ∘ᵐ-cong (⋉-proj Γ Γ) (contract-mor Γ)
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                  ∙ ∘ᵐ-congˡ (splitᴱ-iso Γ Γ)
-                  ∙ ∘ᵐ-identityˡ _)
-      ∙ ⟨⟩ᵐ-sndᵐ _ _
+  → ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ ᴱ-ren Γ ⟧ʳ idᵐ) idᵐ
+  ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ (projᴱ Γ) idᵐ) idᵐ
+ᴱ-ren-clause {Γ} H pH op ε'' =
+  ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (ᴱ-ren-mor Γ) ≈ᵐ-refl) ≈ᵐ-refl)
 
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -204,14 +187,14 @@ contract-clause {Γ} H pH cH op ε'' =
 sound-handle-perform : ∀ {Γ A B ε ε' op}
   → (V : Γ ⊢V⦂ type-of-gtype (param op))
   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-  → (H : (op' : Op) → (ε'' : E) → (Γ' : Ctx)
-       → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
+  → (H : (op' : Op) → (ε'' : E)
+       → Γ ᴱ ∷ type-of-gtype (param op')
             ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-perform V M H N)
 sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
-                     ((pV , pM) , pN , pH , uH , cH) pR = assembly
+                     ((pV , pM) , pN , pH , uH) pR = assembly
   where
     ren : Ren [] (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
                  ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
@@ -225,43 +208,32 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     e = sym (·ₑ-assoc (op-grade op) ε ε')
 
     -- the reduct's pieces, with their certificates
-    H' : (op' : Op) → (ε'' : E) → (Γ' : Ctx)
+    H' : (op' : Op) → (ε'' : E)
        → (Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ᴱ
-           ++ᶜ Γ' ∷ type-of-gtype (param op')
-                  ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
+           ∷ type-of-gtype (param op')
+           ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'')
-    H' op' ε'' Γ' =
-      C-rename (cong-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                                  (type-of-gtype (arity op))))
-               (H op' ε'' Γ')
+    H' op' ε'' =
+      C-rename (cong-∷-ren (cong-∷-ren
+                 (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))))
+               (H op' ε'')
 
-    pH' : ∀ op' ε'' Γ' → Paramᶜ (H' op' ε'' Γ')
-    pH' op' ε'' Γ' =
-      renᶜ (cong-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                              (type-of-gtype (arity op))))
-           (H op' ε'' Γ') (pH op' ε'' Γ')
+    pH' : ∀ op' ε'' → Paramᶜ (H' op' ε'')
+    pH' op' ε'' =
+      renᶜ (cong-∷-ren (cong-∷-ren
+             (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))))
+           (H op' ε'') (pH op' ε'')
 
     uH' : EffUniformʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)} H' pH'
     uH' = ren-clauses-uniform
             (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH
 
-    cH' : CtxUniformʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)} H' pH'
-    cH' = subst (λ rr → CtxUniformʰ
-                          {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)}
-                          (λ op' ε'' Γ' → C-rename (cong-ren rr) (H op' ε'' Γ'))
-                          (λ op' ε'' Γ' → renᶜ (cong-ren rr) (H op' ε'' Γ')
-                                            (pH op' ε'' Γ')))
-                (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
-                (ren-clauses-ctxuniform
-                  (wk-ren {Δ = Γ ⟨ mapᵉ (op-grade op) ⟩}
-                          {A = type-of-gtype (arity op)}) H pH cH)
-
-    Cren = cong-∷-ren (cong-∷-ren (contract Γ))
-    CL   = C-rename Cren (H op (ε ·ₑ ε') Γ)
-    pCL  = renᶜ Cren (H op (ε ·ₑ ε') Γ) (pH op (ε ·ₑ ε') Γ)
+    Cren = cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))
+    CL   = C-rename Cren (H op (ε ·ₑ ε'))
+    pCL  = renᶜ Cren (H op (ε ·ₑ ε')) (pH op (ε ·ₑ ε'))
 
     pBody : Paramᶜ (handle M `with H' `in (C-rename (cong-∷-ren ren) N))
-    pBody = pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH' , cH'
+    pBody = pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH'
 
     pBox : Paramᶜ (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
                        (CL [ Tl-∷ Hd ↦ V ]c))
@@ -271,9 +243,9 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     -- extension applied to the eternal projection and the operation's value
     rhs-left =
         ∘ᵐ-congˡ (  C-subst-nat CL (Tl-∷ Hd) V pCL pV
-                  ∙ ∘ᵐ-congˡ (  C-rename-nat Cren (H op (ε ·ₑ ε') Γ)
-                                  (pH op (ε ·ₑ ε') Γ)
-                              ∙ contract-clause {Γ} {B} H pH cH op (ε ·ₑ ε')))
+                  ∙ ∘ᵐ-congˡ (  C-rename-nat Cren (H op (ε ·ₑ ε'))
+                                  (pH op (ε ·ₑ ε'))
+                              ∙ ᴱ-ren-clause {Γ} {B} H pH op (ε ·ₑ ε')))
       ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _

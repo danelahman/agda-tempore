@@ -594,20 +594,19 @@ sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 
 sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (V : Γ ⊢V⦂ A)
-                 → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                      → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                 → (H : (op : Op) → (ε'' : E)
+                      → Γ ᴱ ∷ type-of-gtype (param op)
                            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                  → (pV : Paramᵛ V) → (pN : Paramᶜ N)
-                 → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+                 → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
                  → (uH : EffUniformʰ {Γ} H pH)
-                 → (cH : CtxUniformʰ {Γ} H pH)
-                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH , cH)
+                 → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
-sound-HANDLE-RET {Γ} V H N pV pN pH uH cH =
+sound-HANDLE-RET {Γ} V H N pV pN pH uH =
   ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
              (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)) V N pV pN
 

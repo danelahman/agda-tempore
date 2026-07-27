@@ -158,8 +158,8 @@ mutual
   C-rename r (delay τ M)      = delay τ (C-rename (cong-ren r) M)
   C-rename r (handle M `with H `in N) =
     handle C-rename r M
-    `with (λ op ε'' Γ' →
-             C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ'))
+    `with (λ op ε'' →
+             C-rename (cong-∷-ren (cong-∷-ren (restrict-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
   C-rename r (unbox w V M) =
     unbox (r ∘ʳ w) V (C-rename (cong-ren r) M)

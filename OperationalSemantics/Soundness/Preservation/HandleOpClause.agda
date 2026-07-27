@@ -5,11 +5,10 @@
 -- Split off from `Preservation` because it is interpretation-only (no    --
 -- operational machinery) and its normalisation is heavy: keeping it in    --
 -- its own module lets `Preservation` import `clause-sound` rather than    --
--- re-elaborate its body. `HANDLE-OP` fires the handler's clause at the    --
--- runtime context `Γ` (`Γ ᴱ ≡ []`); `CtxUniformʰ` — naturality in the      --
--- extension — says a clause reads nothing of it, so applying it at `Γ`     --
--- equals the model's `[]`-clause, the eternal parameter carried            --
--- terminally (`term∅`).                                                    --
+-- re-elaborate its body. `HANDLE-OP` includes the handler's clause into the --
+-- runtime context `Γ` (`Γ ᴱ ≡ []`) along `ᴱ-ren`; its coherence is          --
+-- `C-rename-nat`, and the reindexing it introduces is a map into            --
+-- `⟦ Γ ᴱ ⟧ᶜᵗˣ`, hence terminal (`term∅`).                                   --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -65,6 +64,8 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
+open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
+  using (renᶜ; C-rename-nat)
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
   using (C-subst-nat; subst-clause-interp; subᶜ; substᴾᶜ)
 
@@ -94,49 +95,22 @@ assoc⁻¹-⟨⟩ a b c =
         , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong
     , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong
 
--- The `[]`-instance the model's clause is read at: at a runtime config
--- (`Γ ᴱ ≡ []`) the lifted terminal map `Γ ⋉ terminalᵐ` and the terminal
--- factoring `term∅` agree by `∅-terminal`, so the naturality square collapses
--- to the `[]`-clause. This is the only instance `clause-sound` needs.
-ctx-uniform-[] : ∀ {Γ B} → (e : Γ ᴱ ≡ [])
-             → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                  → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-             → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-             → CtxUniformʰ {Γ} H pH
-             → ∀ op ε'' Γ'
-             → ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
-             ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
-                  ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
-ctx-uniform-[] {Γ} e H pH cH op ε'' Γ' =
-  ≈ᵐ-sym (  ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (∅-terminal {Γ} e _ _) ≈ᵐ-refl) ≈ᵐ-refl)
-          ∙ cH op ε'' {Γ'} {[]} (terminalᵐ {⟦ Γ' ⟧ᶜᵗˣ}))
-
 clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
-             → (H : (op' : Op) → (ε' : E) → (Γ' : Ctx)
-                  → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op')
+             → (H : (op' : Op) → (ε' : E)
+                  → Γ ᴱ ∷ type-of-gtype (param op')
                        ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
-             → (pH : ∀ op' ε' Γ' → Paramᶜ (H op' ε' Γ'))
+             → (pH : ∀ op' ε' → Paramᶜ (H op' ε'))
              → (uH : EffUniformʰ {Γ} H pH)
-             → (cH : CtxUniformʰ {Γ} H pH)
              → (V : Γ ⊢V⦂ type-of-gtype (param op)) → (pV : Paramᵛ V)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
-             → ⟦ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                        (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op ε'' Γ))
+             → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε''))
                      [ Tl-∷ Hd ↦ V ]c ⟧ᶜᵗ
-                 (subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                              (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op ε'' Γ))
+                 (subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε''))
                        (Tl-∷ Hd) V
-                       (substᴾᶜ {D = [] ∷ type-of-gtype (param op)
-                                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')}
-                          (trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ) (H op ε'' Γ) (pH op ε'' Γ))
+                       (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                             (H op ε'') (pH op ε''))
                        pV)
                  ∘ᵐ ⟨ idᵐ
                     , [ mapᵉ (op-grade op) ]ᶠ
@@ -147,7 +121,7 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                    ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
                   ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
                      , W ⟩ᵐ
-clause-sound {Γ} {B} {ε''} e op H pH uH cH V pV W =
+clause-sound {Γ} {B} {ε''} e op H pH uH V pV W =
     ∘ᵐ-congˡ (C-subst-nat Hcl (Tl-∷ Hd) V pHcl pV)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ mid)
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
@@ -177,26 +151,13 @@ clause-sound {Γ} {B} {ε''} e op H pH uH cH V pV W =
                        , gty-cancelᵛ (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV) ⟩ᵐ-cong
                    , ≈ᵐ-refl ⟩ᵐ-cong))
   where
-    pt = type-of-gtype (param op)
-    kt = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-    eq : Γ ᴱ ++ᶜ Γ ≡ Γ
-    eq = trans (cong (_++ᶜ Γ) e) ++ᶜ-identityˡ
-    Hcl = subst (λ Γ₀ → Γ₀ ∷ pt ∷ kt ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) eq (H op ε'' Γ)
-    pHcl = substᴾᶜ {D = [] ∷ pt ∷ kt} eq (H op ε'' Γ) (pH op ε'' Γ)
+    Hcl  = C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'')
+    pHcl = renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'') (pH op ε'')
+    -- the clause's inclusion is `projᴱ Γ` on the ambient slot, and any map into
+    -- `⟦ Γ ᴱ ⟧` is terminal here
     mid : ⟦ Hcl ⟧ᶜᵗ pHcl
-        ≈ᵐ ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' []) ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
+        ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
     mid =
-        subst-clause-interp {D = [] ∷ pt ∷ kt} eq (H op ε'' Γ) (pH op ε'' Γ)
-      ∙ ∘ᵐ-congˡ (ctx-uniform-[] {Γ = Γ} e H pH cH op ε'' Γ)
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ
-          (   ∘ᵐ-congʳ (eq-ren-irr (cong (_++ᶜ ([] ∷ pt ∷ kt)) eq)
-                                   (cong (_∷ kt) (cong (_∷ pt) eq))
-                        ∙ eq-ren-∷ (cong (_∷ pt) eq)
-                        ∙ mapˣᵐ-cong (eq-ren-∷ eq) ≈ᵐ-refl)
-            ∙ mapˣᵐ-∘ _ _ _ _
-            ∙ mapˣᵐ-cong
-                (mapˣᵐ-∘ _ _ _ _
-                 ∙ mapˣᵐ-cong (∅-terminal {Γ} e _ _) (∘ᵐ-identityˡ _))
-                (∘ᵐ-identityˡ _))
+        C-rename-nat (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'') (pH op ε'')
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (∅-terminal {Γ} e _ _) ≈ᵐ-refl) ≈ᵐ-refl)
 

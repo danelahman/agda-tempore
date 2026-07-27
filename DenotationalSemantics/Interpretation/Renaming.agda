@@ -666,101 +666,6 @@ restrict-ren-mor (⟨⟩-ext-ctx _ _) =
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
 
--- Naturality of `splitᴱ` under an ambient renaming: the renaming acts on the
--- eternal base (`restrict-ren`) while the split isolates it, so the two commute.
--- Recursion on the extension; the lock case is `costrᵉ-nat` fed by the eternal
--- morphism `restrict-ren-mor`, the `∷` case is `swap₂₃-nat`.
-
--- `splitᴱ` slides through a renaming — the renaming instance of `splitᴰ-nat-gen`
--- with base map `⟦ restrict-ren r ⟧ʳ` (its morphism law is `restrict-ren-mor`)
--- and lift `⟦ cong-ren (restrict-ren r) ⟧ʳ`, whose recursion holds definitionally
--- (`⟦ cong-ren {[]} ⟧ = ⟦ − ⟧`, `⟦ cong-∷-ren ⟧ = mapˣᵐ _ idᵐ`, `⟦ cong-⟨⟩-ren ⟧ = ⟨_⟩ᶠ`).
-splitᴱ-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Γ'x : Ctx)
-           → splitᴱ Γ Γ'x ∘ᵐ ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ
-           ≈ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ splitᴱ Γ' Γ'x
-splitᴱ-nat {Γ} {Γ'} r =
-  splitᴰ-nat-gen (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ' ⟧ᴱ-Eternalᵒ)
-    ⟦ restrict-ren r ⟧ʳ (restrict-ren-mor r)
-    (λ Γ'x → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ)
-    ≈ᵐ-refl (λ _ _ → ≈ᵐ-refl) (λ _ _ → ≈ᵐ-refl)
-
-splitᴱ⁻¹-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Γ'x : Ctx)
-             → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ ∘ᵐ splitᴱ⁻¹ Γ' Γ'x
-             ≈ᵐ splitᴱ⁻¹ Γ Γ'x ∘ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ
-splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (splitᴱ⁻¹-iso Γ Γ'x)))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (splitᴱ-nat r Γ'x)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (splitᴱ-iso Γ' Γ'x)))
-            (∘ᵐ-congʳ (∘ᵐ-identityʳ _))))))))
-
--- The lift `_⋉_` commutes with an ambient renaming: it acts on the extension,
--- the renaming on the base, so they pass each other. This is what carries
--- `CtxUniformʰ` through `renᶜ`.
-
-⋉-ren : ∀ {Γ Γ' Γ'a Γ'b} → (r : Ren [] Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
-      → ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ ∘ᵐ _⋉_ Γ' {Γ'a} {Γ'b} ρ
-      ≈ᵐ _⋉_ Γ {Γ'a} {Γ'b} ρ ∘ᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ
-⋉-ren {Γ} {Γ'} {Γ'a} {Γ'b} r ρ =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (splitᴱ⁻¹-nat r Γ'b))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ mid-comm))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (splitᴱ-nat r Γ'a))))
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))
-  where
-    mid-comm = ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-               (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
-                                     (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
-                         (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
-
--- `⋉-ren` lifted through the clause-context shape `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ`
--- (parameter and continuation factors ride along untouched). This is the form
--- `ren-clauses-ctxuniform` consumes.
--- A commutation of two maps lifted through the clause-context shape
--- `mapˣᵐ (mapˣᵐ _ idᵐ) idᵐ` (parameter and continuation factors ride along).
--- Used to carry both the renaming and the substitution base-commutations up to
--- the shape `CtxUniformʰ`/`ren-clauses-ctxuniform`/`subst-clauses-ctxuniform` consume.
-mapˣ²-comm : ∀ {A B C D P Q} {g : C →ᵐ D} {f : A →ᵐ C} {f' : B →ᵐ D} {g' : A →ᵐ B}
-           → g ∘ᵐ f ≈ᵐ f' ∘ᵐ g'
-           → mapˣᵐ (mapˣᵐ g (idᵐ {P})) (idᵐ {Q}) ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
-           ≈ᵐ mapˣᵐ (mapˣᵐ f' idᵐ) idᵐ ∘ᵐ mapˣᵐ (mapˣᵐ g' idᵐ) idᵐ
-mapˣ²-comm comm =
-  ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-  (≈ᵐ-trans (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                  (mapˣᵐ-cong comm (∘ᵐ-identityˡ _)))
-                        (∘ᵐ-identityˡ _))
-  (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-          (mapˣᵐ-cong (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-                                (mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)))
-                      (∘ᵐ-identityˡ _)))))
-
-⋉-ren² : ∀ {Γ Γ' Γ'a Γ'b} {P Q : Obj} → (r : Ren [] Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
-       → mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ (idᵐ {P})) (idᵐ {Q})
-           ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ' {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
-       ≈ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
-           ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ idᵐ) idᵐ
-⋉-ren² {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ = mapˣ²-comm (⋉-ren {Γ'a = Γ'a} {Γ'b = Γ'b} r ρ)
-
--- The lift `⋉ᴰ` transported along a base equality `e : Δ ≡ Δ'` (with the two
--- eternal structures related by `e`, supplied by `Eternalᵒ-coh`): reindexing the
--- base by `eq-ren` commutes with the lift, since the lift is identity on the
--- base. A clean `J` on `e` — this is what carries `CtxUniformʰ` through a
--- non-eternal substitution, which retypes the ambient base along `Γ ᴱ ≡ Γ₀ ᴱ`.
-⋉ᴰ-eq : (Δ Δ' : Ctx) → (eΔ : Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) → (eΔ' : Eternalᵒ ⟦ Δ' ⟧ᶜᵗˣ)
-      → (e : Δ ≡ Δ') → subst (λ Θ → Eternalᵒ ⟦ Θ ⟧ᶜᵗˣ) e eΔ ≡ eΔ'
-      → (Γ'a Γ'b : Ctx) → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
-      → ⟦ eq-ren (cong (_++ᶜ Γ'b) e) ⟧ʳ ∘ᵐ ⋉ᴰ Δ' eΔ' {Γ'a} {Γ'b} ρ
-      ≈ᵐ ⋉ᴰ Δ eΔ {Γ'a} {Γ'b} ρ ∘ᵐ ⟦ eq-ren (cong (_++ᶜ Γ'a) e) ⟧ʳ
-⋉ᴰ-eq Δ .Δ eΔ .eΔ refl refl Γ'a Γ'b ρ =
-  ≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _))
-
 -- Naturality of the eternal projection: it slides through a renaming, turning
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock
 -- case uses `restrict-ren-mor` to carry the restricted renaming past `extᵉ`.
@@ -1053,6 +958,28 @@ bring-up-mor {Δ} {A} eA eΔ (Θ ⟨ ρ ⟩) =
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (Eternalᵒ.costrᵉ-strᵉ (×-eternalᵒ eΔ eA')))
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ costrP
+
+-- The denotation of the eternal inclusion `ᴱ-ren Γ : Ren [] (Γ ᴱ) Γ` is the
+-- eternal projection: the two are defined by the same `eternal?` recursion, the
+-- lock case matching `extᵉ` against `⟨⟩-ext-ctx`. That case needs the two
+-- eternal structures on `⟦ Γ ᴱ ⟧` — the one read off the `EternalCtx` witness
+-- and the one `projᴱ` uses — to agree, which they do, by the same recursion.
+
+ec-Eternalᵒ-ᴱ : (Γ : Ctx) → ec-Eternalᵒ (ᴱ-EternalCtx Γ) ≡ ⟦ Γ ⟧ᴱ-Eternalᵒ
+ec-Eternalᵒ-ᴱ []        = refl
+ec-Eternalᵒ-ᴱ (Γ ∷ A)   with eternal? A
+... | yes et = cong (λ z → ×-eternalᵒ z (eternalᵛ-Eternalᵒ et)) (ec-Eternalᵒ-ᴱ Γ)
+... | no  _  = ec-Eternalᵒ-ᴱ Γ
+ec-Eternalᵒ-ᴱ (Γ ⟨ ρ ⟩) = ec-Eternalᵒ-ᴱ Γ
+
+ᴱ-ren-mor : (Γ : Ctx) → ⟦ ᴱ-ren Γ ⟧ʳ ≈ᵐ projᴱ Γ
+ᴱ-ren-mor []        = ≈ᵐ-refl
+ᴱ-ren-mor (Γ ∷ A)   with eternal? A
+... | yes _ = mapˣᵐ-cong (ᴱ-ren-mor Γ) ≈ᵐ-refl
+... | no  _ = ∘ᵐ-congˡ (ᴱ-ren-mor Γ)
+ᴱ-ren-mor (Γ ⟨ ρ ⟩) =
+    ∘ᵐ-cong (≡→≈ᵐ (cong (λ eΓ → Eternalᵒ.extᵉ eΓ {ρ}) (ec-Eternalᵒ-ᴱ Γ)))
+            (⟨⟩-congᶠ (ᴱ-ren-mor Γ))
 
 -- The denotation of the eternal-prefix contraction `contract Γ : Ren (Γ ᴱ ++ᶜ Γ) Γ`:
 -- pair the identity with `projᴱ Γ`, then `splitᴱ⁻¹` glues the eternal base back on.

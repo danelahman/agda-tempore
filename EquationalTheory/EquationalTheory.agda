@@ -184,16 +184,16 @@ mutual
 
     handle-cong : ∀ {A B ε ε'}
                 → {M M' : Γ ⊢C⦂ A ‼ ε}
-                → {H H' : ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                             Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                → {H H' : ((op : Op) → (ε'' : E) →
+                             Γ ᴱ ∷ type-of-gtype (param op)
+                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))}
                 → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
                 → Γ ⊢C⦂ M == M'
-                → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                     Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                     ⊢C⦂ H op ε'' Γ' == H' op ε'' Γ')
+                → ((op : Op) → (ε'' : E) →
+                     Γ ᴱ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                     ⊢C⦂ H op ε'' == H' op ε'')
                 → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
                 --------------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
@@ -353,9 +353,9 @@ mutual
 
     handle-return : ∀ {A B ε}
                   → (V : Γ ⊢V⦂ A)
-                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                           Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                  → (H : (op : Op) → (ε'' : E) →
+                           Γ ᴱ ∷ type-of-gtype (param op)
+                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                   ----------------------------------------------------------------
@@ -370,9 +370,9 @@ mutual
     handle-perform : ∀ {A B ε ε' op}
                    → (V : Γ ⊢V⦂ type-of-gtype (param op))
                    → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-                   → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                            Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                   → (H : (op : Op) → (ε'' : E) →
+                            Γ ᴱ ∷ type-of-gtype (param op)
+                                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                    → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                    ----------------------------------------------------------------
@@ -380,26 +380,27 @@ mutual
                        == ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                             (box (lam
                                    (handle M
-                                   `with (λ op' ε'' Γ' →
+                                   `with (λ op' ε'' →
                                             C-rename
-                                              (cong-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                                                          (type-of-gtype (arity op))))
-                                              (H op' ε'' Γ'))
+                                              (cong-∷-ren (cong-∷-ren
+                                                (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
+                                                         (type-of-gtype (arity op)))))
+                                              (H op' ε''))
                                    `in (C-rename
                                          (cong-∷-ren
                                            (cong-⟨⟩-ren wk-ren
                                             ∘ʳ ⟨⟩-μ-ren
                                             ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
                                          N)))
-                                  (C-rename (cong-∷-ren (cong-∷-ren (contract Γ)))
-                                    (H op (ε ·ₑ ε') Γ)
+                                  (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                                    (H op (ε ·ₑ ε'))
                                    [ Tl-∷ Hd ↦ V ]c))
 
     handle-delay : ∀ {A B τ ε ε'}
                  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-                 → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                          Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                 → (H : (op : Op) → (ε'' : E) →
+                          Γ ᴱ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                  ------------------------------------------------------------------------------
@@ -419,9 +420,9 @@ mutual
     handle-box : ∀ {A B C ρ ε ε'}
                  → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
                  → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
-                 → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                          Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
+                 → (H : (op : Op) → (ε'' : E) →
+                          Γ ᴱ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  ------------------------------------------------------------------------------
@@ -435,17 +436,18 @@ mutual
                  → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
                  → (V : Δ ⊢V⦂ [ ρ ] A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-                 → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                          Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
+                 → (H : (op : Op) → (ε'' : E) →
+                          Γ ᴱ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  -----------------------------------------------------------------
                  → Γ ⊢C⦂ handle unbox w V M `with H `in N
                      == unbox w V
                         (handle M
-                        `with (λ op' ε'' Γ' →
-                                 C-rename (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op' ε'' Γ'))
+                        `with (λ op' ε'' →
+                                 C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
+                                   (H op' ε''))
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
     -- beta rule for unbox
@@ -580,9 +582,9 @@ mutual
     coerce-handle : ∀ {A B ε₁ ε₂ ε'}
                   → (rel : ε₁ ≾ₑ ε₂)
                   → (M : Γ ⊢C⦂ A ‼ ε₁)
-                  → (H : (op : Op) → (ε₀ : E) → (Γ' : Ctx) →
-                           Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                                       ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                  → (H : (op : Op) → (ε₀ : E) →
+                           Γ ᴱ ∷ type-of-gtype (param op)
+                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
                   → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                   ----------------------------------------------------------------

@@ -132,25 +132,25 @@ mutual
   _[_↦_]c {A = A} (handle_`with_`in {B = B} M H N) x W with eternal? A
   ... | no ¬et =
     handle (M [ x ↦ W ]c)
-    `with (λ op ε'' Γ' →
+    `with (λ op ε'' →
              subst
-               (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+               (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
                           ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                (ᴱ-drop-split ¬et x)
-               (H op ε'' Γ'))
+               (H op ε''))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   ... | yes et =
     handle (M [ x ↦ W ]c)
-    `with (λ op ε'' Γ' →
-             let D = Γ' ∷ type-of-gtype (param op)
+    `with (λ op ε'' →
+             let D = [] ∷ type-of-gtype (param op)
                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  s = split-++ʳ (∈-ᴱ-split et x) D
              in subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                   (trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
                     (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D))
                            (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l x) (split-r x))))))
-                  ((H op ε'' Γ') [ split→∈ s
+                  ((H op ε'') [ split→∈ s
                                  ↦ subst (_⊢V⦂ A) (sym (split→∈-split-l s))
                                       (eternal-val-restrict et W) ]c))
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)

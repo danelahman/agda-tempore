@@ -151,8 +151,8 @@ mutual
   -- the actual content — the clauses' uniformity in the residual grade
   Paramᶜ {Γ} (handle_`with_`in {B = B} M H N) =
     Paramᶜ M × Paramᶜ N ×
-    Σ[ pH ∈ (∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ')) ]
-      (EffUniformʰ {Γ} {B} H pH × CtxUniformʰ {Γ} {B} H pH)
+    Σ[ pH ∈ (∀ op ε'' → Paramᶜ (H op ε'')) ]
+      EffUniformʰ {Γ} {B} H pH
 
   -- Naturality of a handler's clauses in the residual effect `ε''`: the clause
   -- commutes with sub-effecting the boxed continuation's residual, landing on
@@ -160,37 +160,21 @@ mutual
   -- semantic handler's `Monoᵀ` field (built by `⟦_⟧ʰᵗ`). Named here so the two —
   -- the certificate and `⟦_⟧ʰᵗ`'s premise — are one condition, not two copies.
   EffUniformʰ : ∀ {Γ B}
-              → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                   → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+              → (H : (op : Op) → (ε'' : E)
+                   → Γ ᴱ ∷ type-of-gtype (param op)
                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-              → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+              → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
               → Set
-  EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'') → (Γ' : Ctx)
-               → ⟦ H op ε₂'' Γ' ⟧ᶜᵗ (pH op ε₂'' Γ')
+  EffUniformʰ H pH = ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+               → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
                    ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-               ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' Γ' ⟧ᶜᵗ (pH op ε₁'' Γ')
+               ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁'')
 
-  -- Naturality of the clauses in the extension `Γ'`: the clause family is a
-  -- natural transformation on extensions — for a semantic map `ρ : Γ' → Γ''`,
-  -- lifted under the eternal base by `_⋉_`, reindexing the domain equals the
-  -- clause at the smaller extension (codomain constant in `Γ'`). Acting only on
-  -- the extension, over the eternal base, it holds for every ambient `Γ`; at a
-  -- runtime config (`Γ ᴱ ≡ []`) it specialises to what `HANDLE-OP` consumes
-  -- (`term∅`, by terminal uniqueness).
-  CtxUniformʰ : ∀ {Γ B}
-            → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-                 → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
-                      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                   ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
-            → Set
-  CtxUniformʰ {Γ} H pH =
-    ∀ (op : Op) (ε'' : E) {Γ' Γ'' : Ctx}
-      → (ρ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ'' ⟧ᶜᵗˣ)
-    → ⟦ H op ε'' Γ'' ⟧ᶜᵗ (pH op ε'' Γ'')
-        ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'} {Γ''} ρ) idᵐ) idᵐ
-    ≈ᵐ ⟦ H op ε'' Γ' ⟧ᶜᵗ (pH op ε'' Γ')
+  -- (There is no longer a uniformity condition in the extension: the clauses do
+  -- not quantify over one. Moving a clause to the context reached when the
+  -- operation is handled is the renaming `ᴱ-ren`, so what was `CtxUniformʰ` is
+  -- now `C-rename-nat`.)
 
   ⟦_⟧ᵛᵗ : ∀ {Γ A} → (V : Γ ⊢V⦂ A) → Paramᵛ V → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
   ⟦ var f x  ⟧ᵛᵗ _ = var-morphism f x
@@ -215,7 +199,7 @@ mutual
                          (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)))
         ∘ᵐ η⊣ ⟩ᵐ
   ⟦ delay τ M ⟧ᶜᵗ pM = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (⟦ M ⟧ᶜᵗ pM) ∘ᵐ η⊣
-  ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH , cH) =
+  ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH) =
       T-alg-of-handlerᵀ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH)
     ∘ᵐ ⟨ projᴱ Γ , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) with unbox⇒var w V
@@ -236,15 +220,15 @@ mutual
   -- (`×ᵐ-assoc⁻¹-nat³`) and past the ground-type coercions (`[]-∘ᵐ`,
   -- `map⇒ᵐ-swap`), after which `uH` applies.
   ⟦_⟧ʰᵗ : ∀ {Γ B}
-        → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
-             → Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+        → (H : (op : Op) → (ε'' : E)
+             → Γ ᴱ ∷ type-of-gtype (param op)
                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-        → (pH : ∀ op ε'' Γ' → Paramᶜ (H op ε'' Γ'))
+        → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
         → EffUniformʰ {Γ} {B} H pH
         → Handlerᵀ ⟦ Γ ᴱ ⟧ᶜᵗˣ ⟦ B ⟧ᵛ
   ⟦_⟧ʰᵗ {Γ} {B} H pH uH =
-      (λ op ε'' → ⟦ H op ε'' [] ⟧ᶜᵗ (pH op ε'' [])
+      (λ op ε'' → ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'')
                     ∘ᵐ mapˣᵐ
                          (mapˣᵐ idᵐ (subst (λ O → ⟦ param op ⟧ᵍ →ᵐ O)
                                            (sym (ty-gty (param op))) idᵐ))
@@ -266,7 +250,7 @@ mutual
                       (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))))
                     (∘ᵐ-assoc _ _ _))))))
         (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q []))
+        (≈ᵐ-trans (∘ᵐ-congˡ (uH op q))
                   (∘ᵐ-assoc _ _ _)))))
 
 

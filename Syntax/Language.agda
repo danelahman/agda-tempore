@@ -141,17 +141,17 @@ mutual
 
     -- The operation clauses may close over the *eternal* part of the ambient
     -- context `Γ` (the variables whose types survive arbitrary time-passage),
-    -- captured by the eternal restriction `Γ ᴱ`. They remain parametric in a
-    -- further extension `Γ'`, which lets them be instantiated at the context
-    -- reached when the operation is eventually handled; the parameter and boxed
-    -- continuation are added on top.
+    -- captured by the eternal restriction `Γ ᴱ`; the parameter and boxed
+    -- continuation are added on top. Being eternal, `Γ ᴱ` is an eternal context
+    -- (`ᴱ-EternalCtx`), so `Γ ᴱ` includes back into `Γ` as a renaming
+    -- (`ᴱ-ren`) — the rules that use a clause apply that renaming themselves.
 
     handle_`with_`in
             : {A B : VType}
             → {ε ε' : E}
             → Γ ⊢C⦂ A ‼ ε
-            → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                 Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            → ((op : Op) → (ε'' : E) →
+                 Γ ᴱ ∷ type-of-gtype (param op)
                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                  ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
             → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'

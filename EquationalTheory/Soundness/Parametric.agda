@@ -97,7 +97,7 @@ mutual
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
   Midᶜ (handle-cong p hs q)              =
-    Midᶜ p × ((op : Op) → (ε'' : E) → (Γ' : Ctx) → Midᶜ (hs op ε'' Γ')) × Midᶜ q
+    Midᶜ p × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε'')) × Midᶜ q
   Midᶜ (unbox-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (box-cong p q)                    = Midᵛ p × Midᶜ q
   Midᶜ (coerce-cong p)                   = Midᶜ p

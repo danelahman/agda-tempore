@@ -147,11 +147,11 @@ mutual
   soundᶜ (delay-cong p)       mp           pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (soundᶜ p mp pM pM')))
   soundᶜ (handle-cong {H = H} {H' = H'} p hs q) (mp , mhs , mq)
-         (pM , pN , pH , uH , cH) (pM' , pN' , pH' , uH' , cH') =
+         (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
     ∘ᵐ-cong (T-alg-of-handlerᵀ-cong _
               (λ op ε'' → ∘ᵐ-congˡ
-                            (soundᶜ (hs op ε'' []) (mhs op ε'' [])
-                                    (pH op ε'' []) (pH' op ε'' []))))
+                            (soundᶜ (hs op ε'') (mhs op ε'')
+                                    (pH op ε'') (pH' op ε''))))
             (⟨ ≈ᵐ-refl
              , ∘ᵐ-cong (T-congᶠ (soundᶜ q mq pN pN'))
                        (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)

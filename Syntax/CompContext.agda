@@ -138,8 +138,8 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         : ∀ {A B ε ε'}
         → eval ≤ᶠ f
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε
-        → ((op : Op) → (ε'' : E) → (Γ' : Ctx) →
-             Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+        → ((op : Op) → (ε'' : E) →
+             Γ ᴱ ∷ type-of-gtype (param op)
                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
         → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'
@@ -257,8 +257,8 @@ K-rename r (perform[ p ]ₖ op V K) =
   perform[ p ]ₖ op (V-rename r V) (K-rename (cong-ren r) K)
 K-rename r (handle[ p ]ₖ K `with H `in N) =
   handle[ p ]ₖ K-rename r K
-    `with (λ op ε'' Γ' →
-             C-rename (cong-ren (restrict-ren r)) (H op ε'' Γ'))
+    `with (λ op ε'' →
+             C-rename (cong-∷-ren (cong-∷-ren (restrict-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
 K-rename r (delay[ p ]ₖ τ K) =
   delay[ p ]ₖ τ (K-rename (cong-ren r) K)

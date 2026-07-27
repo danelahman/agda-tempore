@@ -107,10 +107,10 @@ mutual
   ⟦⟧ᶜᵗ-irr (delay τ M) pM pM' =
     ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᶜᵗ-irr M pM pM')))
   ⟦⟧ᶜᵗ-irr (handle M `with H `in N)
-           (pM , pN , pH , uH , cH) (pM' , pN' , pH' , uH' , cH') =
+           (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
     ∘ᵐ-cong (T-alg-of-handlerᵀ-cong _
               (λ op ε'' → ∘ᵐ-congˡ
-                            (⟦⟧ᶜᵗ-irr (H op ε'' []) (pH op ε'' []) (pH' op ε'' []))))
+                            (⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))))
             (⟨ ≈ᵐ-refl
              , ∘ᵐ-cong (T-congᶠ (⟦⟧ᶜᵗ-irr N pN pN'))
                        (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
