@@ -285,6 +285,22 @@ sub-cast-V : ∀ {Γ Γ' A B ρ} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ B) →
                ↦ subst (_⊢V⦂ A) (split-l-cast e x) W ]v
 sub-cast-V refl V x W = refl
 
+-- The same, packaged for a caller that knows where the transport sends the
+-- substituted variable and what value it carries there. Both equations are
+-- matched, so the two substitutions are literally the same one.
+
+sub-cast-C′ : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
+            → (x : A ∈[ ρ ] Γ) → (y : A ∈[ ρ ] Γ')
+            → (ey : subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x ≡ y)
+            → (U : split-l x ⊢V⦂ A) → (U' : split-l y ⊢V⦂ A)
+            → subst (_⊢V⦂ A) (trans (split-l-cast e x) (cong split-l ey)) U ≡ U'
+            → (subst (_⊢C⦂ C) e M) [ y ↦ U' ]c
+            ≡ subst (_⊢C⦂ C)
+                (cong₂ _++ᶜ_ (trans (split-l-cast e x) (cong split-l ey))
+                             (trans (split-r-cast e x) (cong split-r ey)))
+                (M [ x ↦ U ]c)
+sub-cast-C′ refl M x .x refl U .U refl = refl
+
 -- Transports along context equalities, all normalised to `subst` so that a
 -- chain of them fuses and collapses by `uip`.
 
@@ -304,6 +320,40 @@ subst-loop₃ : ∀ {Γ₁ Γ₂ Γ₃ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂
             → subst (_⊢C⦂ C) e₃ (subst (_⊢C⦂ C) e₂ (subst (_⊢C⦂ C) e₁ M)) ≡ M
 subst-loop₃ refl refl e₃ M =
   cong (λ z → subst (_⊢C⦂ _) z M) (uip {p = e₃} {q = refl})
+
+-- Two transports fuse into one; a transport that returns to its own context is
+-- the identity. Together they collapse a tower of any height.
+
+subst-fuseᶜ : ∀ {Γ₁ Γ₂ Γ₃ C} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (M : Γ₁ ⊢C⦂ C)
+            → subst (_⊢C⦂ C) e' (subst (_⊢C⦂ C) e M)
+            ≡ subst (_⊢C⦂ C) (trans e e') M
+subst-fuseᶜ refl refl M = refl
+
+subst-loopᶜ : ∀ {Γ C} → (e : Γ ≡ Γ) → (M : Γ ⊢C⦂ C) → subst (_⊢C⦂ C) e M ≡ M
+subst-loopᶜ {C = C} e M = cong (λ z → subst (_⊢C⦂ C) z M) (uip {p = e} {q = refl})
+
+subst-subst-sym′ : ∀ {a p} {X : Set a} {P : X → Set p} {u v : X}
+                 → (e : u ≡ v) → (w : P v)
+                 → subst P e (subst P (sym e) w) ≡ w
+subst-subst-sym′ refl w = refl
+
+-- Relocating a weakening's two contexts. Renaming algebra, so it belongs
+-- upstream with `_≐ʳ_` (see the cleanup list); it is here because nothing else
+-- uses it yet. With both equalities matched the conjugating renamings are
+-- identity-like, and any two proofs of the (only propositional) context
+-- equations agree by `uip`.
+
+cong-ren-wk-cast-≐ : ∀ {B} → (Γ₀ Γ₁ Θ₀ Θ₁ : Ctx) → Γ₀ ≡ Γ₁ → Θ₀ ≡ Θ₁
+                   → (e  : Γ₁ ++ᶜ Θ₁ ≡ Γ₀ ++ᶜ Θ₀)
+                   → (e' : (Γ₀ ∷ B) ++ᶜ Θ₀ ≡ (Γ₁ ∷ B) ++ᶜ Θ₁)
+                   → cong-ren {Γ'' = Θ₁} (wk-ren {A = B})
+                   ≐ʳ (eq-ren e' ∘ʳ cong-ren {Γ'' = Θ₀} (wk-ren {A = B})
+                                 ∘ʳ eq-ren e)
+cong-ren-wk-cast-≐ {B} Γ₀ Γ₁ Θ₀ Θ₁ refl refl e e' =
+  ≐ʳ-sym
+    (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ e' refl)
+                    (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ e refl)))
+              (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _)))
 
 castʳᵉ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ → Ren [] (Δ ⟨ ρ ⟩) Γ'
 castʳᵉ refl w = w
@@ -2325,32 +2375,6 @@ sub-wk-var {Γ} {B} Θ {A} {ρ} y W f f' with ∈-++ᶜ-split Γ Θ y in eq
 -- (equal) context proofs by `castᶜ-irr` — whose two arguments must be given
 -- explicitly, since nothing determines them.
 
-postulate
-
-  -- `handle`'s eternal branch. `restrict-ren wk-ren` is `wk-ren` there, so the
-  -- clause is weakened by the eternal `B` and then substituted at it — another
-  -- instance of `sub-wk-C`, at `Γ ᴱ` with suffix `Θ ᴱ ++ᶜ D` and value
-  -- `eternal-val-restrict et W`. Its three ingredients are proved:
-  -- `restrict-wk-clause-≐` (the renaming, below), `split→∈-unique` (the
-  -- substituted variable, via `split-unique`), and the recursive `sub-wk-C`.
-  -- What is left is fusing the transports.
-
-  sub-wk-handle-et : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
-                   → (et : Eternal B)
-                   → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
-                   → (H : (op : Op) → (ε'' : E) →
-                            (Γ ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
-                              ∷ [ mapᵉ (op-grade op) ]
-                                  (type-of-gtype (arity op) ⇒ B' ‼ ε'')
-                            ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
-                   → (N : (Γ ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
-                   → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-                   → castᶜ (castOf {Γ} {B} Θ)
-                       ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
-                                  (handle M `with H `in N))
-                          [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
-                   ≐ᶜ (handle M `with H `in N)
-
 mutual
 
   sub-wk-V : ∀ {Γ B} → (Θ : Ctx) → ∀ {A} → (U : (Γ ++ᶜ Θ) ⊢V⦂ A)
@@ -2482,6 +2506,221 @@ mutual
                                      (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
                          (unbox-tgt-∘ rn w V))
                    (unbox-cell-wk Θ (proj₂ (unbox-tgt w V)) W)))
+
+  -- `sub-wk-C` with its context given by an equation rather than literally, so
+  -- that the eternal `handle` clause below can recurse on the bare subterm:
+  -- casting the argument into shape is not structurally smaller, and the
+  -- termination checker rejects it.
+
+  sub-wk-C-cast : ∀ {Γ B Γ₀} → (Θ : Ctx) → (e : Γ₀ ≡ Γ ++ᶜ Θ) → ∀ {C}
+                → (M : Γ₀ ⊢C⦂ C)
+                → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+                → castᶜ (castOf {Γ} {B} Θ)
+                    ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                               (subst (_⊢C⦂ C) e M))
+                       [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+                ≐ᶜ subst (_⊢C⦂ C) e M
+
+  sub-wk-C-cast Θ refl M W = sub-wk-C Θ M W
+
+  -- `handle`, eternal. `restrict-ren wk-ren` is `wk-ren` there, so the clause is
+  -- weakened by the eternal `B` and then substituted at it — another instance of
+  -- `sub-wk-C`, at the *splitting's own halves* `split-l z₀ ᴱ` and
+  -- `split-r z₀ ᴱ ++ᶜ D`. Taking them rather than `Γ ᴱ`, `Θ ᴱ ++ᶜ D` is what
+  -- makes the two ways of naming the substituted variable the *same splitting*,
+  -- so `split→∈-unique` settles it outright; the resulting mismatch with the
+  -- renaming (which `restrict-wk-clause-≐` delivers at `Γ ᴱ`, `Θ ᴱ`) is a
+  -- relocation of two contexts, which `cong-ren-wk-cast-≐` discharges by
+  -- matching both equalities. The transports left over form a loop.
+
+  sub-wk-handle-et : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
+                   → (et : Eternal B)
+                   → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                   → (H : (op : Op) → (ε'' : E) →
+                            (Γ ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ]
+                                  (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                            ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                   → (N : (Γ ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+                   → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
+                   → castᶜ (castOf {Γ} {B} Θ)
+                       ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                                  (handle M `with H `in N))
+                          [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) ↦ W ]c)
+                   ≐ᶜ (handle M `with H `in N)
+
+  sub-wk-handle-et {Γ} {B} Θ {A = A} {B' = B'} {ε = ε} et M H N W
+    rewrite eternal?-yes et =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-handle (castOf {Γ} {B} Θ)))
+      (handle-≐ (sub-wk-C Θ M W)
+        (λ op ε'' → clause op ε'')
+        (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
+                           (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (castOf {Γ} {B} Θ))
+                           (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))
+                  (sub-wk-C (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)))
+    where
+      z₀ = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+
+      e₁ : (Γ ++ᶜ Θ) ᴱ ≡ Γ ᴱ ++ᶜ Θ ᴱ
+      e₁ = ᴱ-++ᶜ Γ Θ
+
+      e₂ : ((Γ ∷ B) ++ᶜ Θ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Θ ᴱ
+      e₂ = trans (ᴱ-++ᶜ (Γ ∷ B) Θ) (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep et))
+
+      clause : (op : Op) → (ε'' : E) → _
+      clause op ε'' =
+        ≐ᶜ-trans (castᶜ-≐ cOut (substᶜ-≐ bigE (sub-≐ᶜ v (≐ᵛ-refl _) ren-step)))
+          (≐ᶜ-trans (≡→≐ᶜ (cong (λ t → castᶜ cOut (subst (_⊢C⦂ CT) bigE t))
+                                sub-step))
+            (≐ᶜ-trans (≡→≐ᶜ reshape)
+              (≐ᶜ-trans (substᶜ-≐ resid (sub-wk-C-cast Θ₀ F₁ (H op ε'') W₁))
+                        (≡→≐ᶜ (trans (subst-fuseᶜ F₁ resid (H op ε''))
+                                     (subst-loopᶜ _ (H op ε'')))))))
+        where
+          D = [] ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+
+          CT = B' ‼ (op-grade op ·ₑ ε'')
+
+          s = split-++ʳ (∈-ᴱ-split et z₀) D
+
+          -- the transport the substitution's own eternal clause applies
+          bigE : split-l (split→∈ s) ++ᶜ split-r (split→∈ s)
+               ≡ (split-l z₀ ++ᶜ split-r z₀) ᴱ ++ᶜ D
+          bigE = trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
+                   (trans (sym (++ᶜ-assoc ((split-l z₀) ᴱ) ((split-r z₀) ᴱ) D))
+                          (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l z₀) (split-r z₀)))))
+
+          cOut : (split-l z₀ ++ᶜ split-r z₀) ᴱ ++ᶜ D ≡ (Γ ++ᶜ Θ) ᴱ ++ᶜ D
+          cOut = cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ)
+
+          -- the renaming, fused: at this suffix the associativity legs are `refl`
+          rfuse : cong-ren {Γ'' = D} (restrict-ren {Ξ = []}
+                                       (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
+                ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
+                    ∘ʳ cong-ren {Γ'' = Θ ᴱ ++ᶜ D} (wk-ren {A = B})
+                    ∘ʳ eq-ren (cong (_++ᶜ D) e₁))
+          rfuse =
+            ≐ʳ-trans (restrict-wk-clause-≐ et Θ D e₁ e₂)
+                     (∘ʳ-≐ ≐ʳ-refl
+                           (∘ʳ-≐ (≐ʳ-trans (∘ʳ-identityˡ-≐ _)
+                                           (∘ʳ-identityʳ-≐ _))
+                                 ≐ʳ-refl))
+
+          -- the recursion's context: the splitting's own halves
+          Γ₀ = split-l z₀ ᴱ
+          Θ₀ = split-r z₀ ᴱ ++ᶜ D
+
+          eLΓ : split-l z₀ ᴱ ≡ Γ ᴱ
+          eLΓ = cong _ᴱ (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+
+          eRΘ : split-r z₀ ᴱ ++ᶜ D ≡ Θ ᴱ ++ᶜ D
+          eRΘ = cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D)
+                     (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+
+          eIn : Γ ᴱ ++ᶜ (Θ ᴱ ++ᶜ D) ≡ Γ₀ ++ᶜ Θ₀
+          eIn = sym (cong₂ _++ᶜ_ eLΓ eRΘ)
+
+          eOut′ : (Γ₀ ∷ B) ++ᶜ Θ₀ ≡ (Γ ᴱ ∷ B) ++ᶜ (Θ ᴱ ++ᶜ D)
+          eOut′ = cong₂ (λ Γ₁ Θ₁ → (Γ₁ ∷ B) ++ᶜ Θ₁) eLΓ eRΘ
+
+          F₁ : (Γ ++ᶜ Θ) ᴱ ++ᶜ D ≡ Γ₀ ++ᶜ Θ₀
+          F₁ = trans (cong (_++ᶜ D) e₁) eIn
+
+          F₂ : (Γ₀ ∷ B) ++ᶜ Θ₀ ≡ ((Γ ∷ B) ++ᶜ Θ) ᴱ ++ᶜ D
+          F₂ = trans eOut′ (cong (_++ᶜ D) (sym e₂))
+
+          wk₀ = cong-ren {Γ'' = Θ₀} (wk-ren {A = B})
+
+          -- the two names for the substituted variable are the same splitting
+          x₁ = split→∈ (split-≡-++ᶜ {Γ₀ ∷ B} {Θ₀})
+          v  = split→∈ s
+
+          var-eq : subst (λ Γ₁ → B ∈[ ctx-grade Θ₀ ] Γ₁) F₂ x₁ ≡ v
+          var-eq = split→∈-unique F₂ (split-≡-++ᶜ {Γ₀ ∷ B} {Θ₀}) s
+
+          Wᴱ : split-l v ⊢V⦂ B
+          Wᴱ = subst (_⊢V⦂ B) (sym (split→∈-split-l s))
+                     (eternal-val-restrict et W)
+
+          eW : split-l x₁ ≡ split-l v
+          eW = trans (split-l-cast F₂ x₁) (cong split-l var-eq)
+
+          W₁ : split-l x₁ ⊢V⦂ B
+          W₁ = subst (_⊢V⦂ B) (sym eW) Wᴱ
+
+          Y = C-rename wk₀ (subst (_⊢C⦂ CT) F₁ (H op ε''))
+
+          rfuse2 : cong-ren {Γ'' = D} (restrict-ren {Ξ = []}
+                              (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
+                 ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
+                     ∘ʳ (eq-ren eOut′ ∘ʳ wk₀ ∘ʳ eq-ren eIn)
+                     ∘ʳ eq-ren (cong (_++ᶜ D) e₁))
+          rfuse2 =
+            ≐ʳ-trans rfuse
+              (∘ʳ-≐ ≐ʳ-refl
+                (∘ʳ-≐ (cong-ren-wk-cast-≐ Γ₀ (Γ ᴱ) Θ₀ (Θ ᴱ ++ᶜ D)
+                                          eLΓ eRΘ eIn eOut′)
+                      ≐ʳ-refl))
+
+          -- the renaming, split into its legs, each `eq-ren` becoming its
+          -- transport
+          ren-step : C-rename (cong-ren {Γ'' = D} (restrict-ren {Ξ = []}
+                                  (cong-ren {Γ'' = Θ} (wk-ren {A = B}))))
+                              (H op ε'')
+                   ≐ᶜ subst (_⊢C⦂ CT) F₂ Y
+          ren-step =
+            ≐ᶜ-trans (C-rename-≐ rfuse2 (H op ε''))
+              (≐ᶜ-trans (C-rename-∘ _ _ (H op ε''))
+                (≐ᶜ-trans (C-rename-eq-≐ (cong (_++ᶜ D) (sym e₂)) ≐ʳ-refl _)
+                  (≐ᶜ-trans
+                    (substᶜ-≐ (cong (_++ᶜ D) (sym e₂))
+                      (≐ᶜ-trans (C-rename-∘ _ (eq-ren (cong (_++ᶜ D) e₁))
+                                            (H op ε''))
+                        (≐ᶜ-trans (C-rename-cong _
+                                    (C-rename-eq-≐ (cong (_++ᶜ D) e₁) ≐ʳ-refl _))
+                          (≐ᶜ-trans (C-rename-∘ (eq-ren eOut′) _ _)
+                            (≐ᶜ-trans (C-rename-eq-≐ eOut′ ≐ʳ-refl _)
+                              (substᶜ-≐ eOut′
+                                (≐ᶜ-trans (C-rename-∘ wk₀ (eq-ren eIn) _)
+                                          (C-rename-cong wk₀
+                                            (C-rename-eq-≐ eIn ≐ʳ-refl _)))))))))
+                    (≡→≐ᶜ (trans (subst-fuseᶜ eOut′ (cong (_++ᶜ D) (sym e₂)) _)
+                                 (cong (λ t → subst (_⊢C⦂ CT) F₂ (C-rename wk₀ t))
+                                       (subst-fuseᶜ (cong (_++ᶜ D) e₁) eIn
+                                                    (H op ε''))))))))
+
+          -- the substitution, moved across the outer transport
+          sub-step : (subst (_⊢C⦂ CT) F₂ Y) [ v ↦ Wᴱ ]c
+                   ≡ subst (_⊢C⦂ CT)
+                       (cong₂ _++ᶜ_ eW
+                              (trans (split-r-cast F₂ x₁) (cong split-r var-eq)))
+                       (Y [ x₁ ↦ W₁ ]c)
+          sub-step =
+            sub-cast-C′ F₂ Y x₁ v var-eq W₁ Wᴱ (subst-subst-sym′ eW Wᴱ)
+
+          resid : Γ₀ ++ᶜ Θ₀ ≡ (Γ ++ᶜ Θ) ᴱ ++ᶜ D
+          resid = sym F₁
+
+          Z = Y [ x₁ ↦ W₁ ]c
+
+          G : split-l x₁ ++ᶜ split-r x₁ ≡ split-l v ++ᶜ split-r v
+          G = cong₂ _++ᶜ_ eW (trans (split-r-cast F₂ x₁) (cong split-r var-eq))
+
+          -- the goal's three transports and the recursion's own one both take
+          -- `Z` to the clause's context, so they agree by `uip`
+          reshape : castᶜ cOut (subst (_⊢C⦂ CT) bigE (subst (_⊢C⦂ CT) G Z))
+                  ≡ subst (_⊢C⦂ CT) resid (castᶜ (castOf {Γ₀} {B} Θ₀) Z)
+          reshape =
+            trans (castᶜ≡subst cOut _)
+              (trans (cong (subst (_⊢C⦂ CT) cOut) (subst-fuseᶜ G bigE Z))
+                (trans (subst-fuseᶜ (trans G bigE) cOut Z)
+                  (sym (trans (cong (subst (_⊢C⦂ CT) resid)
+                                    (castᶜ≡subst (castOf {Γ₀} {B} Θ₀) Z))
+                         (trans (subst-fuseᶜ (castOf {Γ₀} {B} Θ₀) resid Z)
+                                (cong (λ z → subst (_⊢C⦂ CT) z Z)
+                                      (uip {p = trans (castOf {Γ₀} {B} Θ₀) resid}
+                                           {q = trans (trans G bigE) cOut})))))))
 
   -- `handle`, non-eternal. The clause's renaming `restrict-ren (cong-ren {Θ}
   -- wk-ren)` is identity-like (`restrict-wk-≐`), so the clause is transported
