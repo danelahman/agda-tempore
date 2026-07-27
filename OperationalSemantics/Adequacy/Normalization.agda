@@ -55,6 +55,13 @@ postulate
 
   -- Handling: as sequencing (`handle-steps`), with `HANDLE-OP` firing a clause.
   -- This is the case that inducts on the scrutinee's `Comp` derivation.
+  --
+  -- Superseded in statement by `handle-Comp` in `Reducibility`, which quantifies
+  -- the sequel over the *term* (as `seq-Comp` does, since `HANDLE-OP` leaves it
+  -- under a residual lock) and the clauses over a state carrying a `Store`.
+  -- Kept until the store obligation there is settled: both forms need a store at
+  -- the state where an operation is handled, and nothing yet propagates one
+  -- along a run.
 
   FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
             → (M : Γ ⊢C⦂ A ‼ ε₁)
