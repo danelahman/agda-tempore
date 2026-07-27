@@ -1856,11 +1856,6 @@ env-Vˢ-≐ (eternalˡ Δ₀ lf η γ) Δ eV =
 -- congruence renamings.
 ------------------------------------------------------------------------
 
-∈-++ᶜʳ : ∀ {Γ Δ A ρ} → A ∈[ ρ ] Δ → A ∈[ ρ ] (Γ ++ᶜ Δ)
-∈-++ᶜʳ Hd        = Hd
-∈-++ᶜʳ (Tl-∷ x)  = Tl-∷ (∈-++ᶜʳ x)
-∈-++ᶜʳ (Tl-⟨⟩ x) = Tl-⟨⟩ (∈-++ᶜʳ x)
-
 -- A cast acts on a variable by relocating it.
 
 castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
@@ -2060,16 +2055,6 @@ sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with etern
 ...   | refl =
   cong (λ t → proj₁ t ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ t))
        (∈-++ᶜ-split-inj₁ Δ₁ Δ₂ x z' eq')
-
--- At the empty prefix the injection is the identity, once relocated.
-
-∈-++ᶜʳ-[] : ∀ {Δ A ρ} → (x : A ∈[ ρ ] Δ)
-          → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) ++ᶜ-identityˡ (∈-++ᶜʳ {Γ = []} x) ≡ x
-∈-++ᶜʳ-[] Hd        = subst-Hd ++ᶜ-identityˡ
-∈-++ᶜʳ-[] (Tl-∷ x)  =
-  trans (subst-Tl-∷ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-∷ (∈-++ᶜʳ-[] x))
-∈-++ᶜʳ-[] (Tl-⟨⟩ x) =
-  trans (subst-Tl-⟨⟩ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-⟨⟩ (∈-++ᶜʳ-[] x))
 
 -- The eternal zone leaves the variables of the context it prefixes alone: each
 -- of its substitutions replaces a variable of its own prefix (`sub-var-r`).

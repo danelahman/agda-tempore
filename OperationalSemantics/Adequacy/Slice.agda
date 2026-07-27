@@ -666,20 +666,29 @@ castᵛˢ-pair refl V W = refl
 -- what lets two lookups be compared: at corresponding contexts the proofs are
 -- irrelevant (`uip`, `≾ᵣ-irrelevant`) and only the values have to be related.
 
+lookup-ren′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
+            → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
+            → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
+            → (rel : σ ≾ᵣ ρ)
+            → Ren (([] ++ᶜ Γf) ⟨ ρ ⟩) Γ
+lookup-ren′ {A} {ρ} Γf Γs eq h rel =
+     eq-ren eq
+  ∘ʳ eq-ren (sym (++ᶜ-assoc Γf ([] ∷ [ ρ ] A) Γs))
+  ∘ʳ wk-ren-⟨ρ⟩-ctx h
+  ∘ʳ ⟨⟩-≤-ren rel
+  ∘ʳ eq-ren ++ᶜ-identityˡ
+
 lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
              → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
              → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
              → (rel : σ ≾ᵣ ρ)
              → ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A
              → Γ ⊢V⦂ A
-lookup-body′ {A} {ρ} Γf Γs eq h rel U =
-  V-rename
-    (   eq-ren eq
-     ∘ʳ eq-ren (sym (++ᶜ-assoc Γf ([] ∷ [ ρ ] A) Γs))
-     ∘ʳ wk-ren-⟨ρ⟩-ctx h
-     ∘ʳ ⟨⟩-≤-ren rel
-     ∘ʳ eq-ren ++ᶜ-identityˡ)
-    U
+lookup-body′ Γf Γs eq h rel U = V-rename (lookup-ren′ Γf Γs eq h rel) U
+
+-- What is left for `store-fresh` is `var-tgt` of this: `eq-ren ++ᶜ-identityˡ`
+-- (`eq-ren-tgt`, then `∈-++ᶜʳ-[]`), `⟨⟩-≤-ren`, the push
+-- `wk-ren-⟨ρ⟩-ctx-tgt` computes, and the two relocations (`eq-ren-tgt`).
 
 lookup-body : ∀ {A ρ} → (St : 𝕊 []) → (t : Tgt (toCtx St) ([ ρ ] A))
             → proj₁ t ≾ᵣ ρ → toCtx St ⊢V⦂ A
@@ -860,3 +869,54 @@ unbox-var-tgt z rel =
               (wk-ren-⟨ρ⟩-ctx-tgt (split-r z) (split-grade-≡ z) Hd))
     (trans (eq-ren-tgt (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd))
            (split-lookup-tgt z))
+
+------------------------------------------------------------------------
+-- WHAT AN EXTENSION ADDS AFTER AN ALREADY-ALLOCATED CELL
+--
+-- `store-fresh` compares the lookup at a later state with the value that was
+-- stored. `≤ₛ-embed-fst` already says the cell is split off at the same state;
+-- what is left is that the part *after* it grows by exactly the context the
+-- extension adds. Three cases, each a `cong` of the next.
+------------------------------------------------------------------------
+
+≤ₛ-ctx : {St₀ St₂ : 𝕊 []} → St₀ ≤ₛ St₂ → Ctx
+≤ₛ-ctx id-suc                  = []
+≤ₛ-ctx (⟨⟩-suc ρ e)            = ≤ₛ-ctx e ⟨ ρ ⟩
+≤ₛ-ctx (∷-suc {ρ = ρ} {A = A} V e) = ≤ₛ-ctx e ∷ [ ρ ] A
+
+≤ₛ-embed-snd-ctx : ∀ {A ρ σ} {St₀ St₂ : 𝕊 []} → (e : St₀ ≤ₛ St₂)
+                 → (c : [ ρ ] A ∈[ σ ] toCtx St₀)
+                 → toCtx (split-state-snd St₂ (proj₂ (≤ₛ-embed e c)))
+                 ≡ toCtx (split-state-snd St₀ c) ++ᶜ ≤ₛ-ctx e
+
+≤ₛ-embed-snd-ctx id-suc       c = refl
+≤ₛ-embed-snd-ctx (⟨⟩-suc ρ e) c = cong (_⟨ ρ ⟩) (≤ₛ-embed-snd-ctx e c)
+≤ₛ-embed-snd-ctx (∷-suc V e)  c = cong (_∷ _) (≤ₛ-embed-snd-ctx e c)
+
+-- And the state itself grows the same way.
+
+≤ₛ-ctx-toCtx : {St₀ St₂ : 𝕊 []} → (e : St₀ ≤ₛ St₂)
+             → toCtx St₂ ≡ toCtx St₀ ++ᶜ ≤ₛ-ctx e
+≤ₛ-ctx-toCtx id-suc       = refl
+≤ₛ-ctx-toCtx (⟨⟩-suc ρ e) = cong (_⟨ ρ ⟩) (≤ₛ-ctx-toCtx e)
+≤ₛ-ctx-toCtx (∷-suc V e)  = cong (_∷ _) (≤ₛ-ctx-toCtx e)
+
+-- So an extension's embedding *is* the push under the context it adds.
+
+≤ₛ-embed-push : ∀ {A ρ} {St₀ St₂ : 𝕊 []} → (e : St₀ ≤ₛ St₂)
+              → (y : A ∈[ ρ ] toCtx St₀)
+              → ≤ₛ-embed e y
+              ≡ Tgt-cast (sym (≤ₛ-ctx-toCtx e))
+                  (grade-++ᶜˡ ρ (≤ₛ-ctx e) , ∈-++ᶜˡ (≤ₛ-ctx e) y)
+
+≤ₛ-embed-push id-suc       y = refl
+≤ₛ-embed-push (⟨⟩-suc ρ e) y =
+  trans (cong (Tgt-⟨⟩ ρ) (≤ₛ-embed-push e y))
+    (trans (sym (Tgt-cast-⟨⟩ ρ (sym (≤ₛ-ctx-toCtx e)) _))
+           (Tgt-cast-irr (cong (_⟨ ρ ⟩) (sym (≤ₛ-ctx-toCtx e)))
+                         (sym (≤ₛ-ctx-toCtx (⟨⟩-suc ρ e))) _))
+≤ₛ-embed-push (∷-suc V e)  y =
+  trans (cong Tgt-∷ (≤ₛ-embed-push e y))
+    (trans (sym (Tgt-cast-∷ (sym (≤ₛ-ctx-toCtx e)) _))
+           (Tgt-cast-irr (cong (_∷ _) (sym (≤ₛ-ctx-toCtx e)))
+                         (sym (≤ₛ-ctx-toCtx (∷-suc V e))) _))

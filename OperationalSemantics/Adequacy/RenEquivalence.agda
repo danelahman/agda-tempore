@@ -184,6 +184,25 @@ eq-ren-tgt : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
            → var-tgt (eq-ren e) x ≡ (ρ , subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 eq-ren-tgt refl x = refl
 
+-- PUSHING A SUFFIX VARIABLE UNDER A PREFIX
+--
+-- The grade is untouched: only the suffix's own locks stand to its right.
+
+∈-++ᶜʳ : ∀ {Γ Δ A ρ} → A ∈[ ρ ] Δ → A ∈[ ρ ] (Γ ++ᶜ Δ)
+∈-++ᶜʳ Hd        = Hd
+∈-++ᶜʳ (Tl-∷ x)  = Tl-∷ (∈-++ᶜʳ x)
+∈-++ᶜʳ (Tl-⟨⟩ x) = Tl-⟨⟩ (∈-++ᶜʳ x)
+
+-- At the empty prefix it is the identity, once relocated.
+
+∈-++ᶜʳ-[] : ∀ {Δ A ρ} → (x : A ∈[ ρ ] Δ)
+          → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) ++ᶜ-identityˡ (∈-++ᶜʳ {Γ = []} x) ≡ x
+∈-++ᶜʳ-[] Hd        = subst-Hd ++ᶜ-identityˡ
+∈-++ᶜʳ-[] (Tl-∷ x)  =
+  trans (subst-Tl-∷ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-∷ (∈-++ᶜʳ-[] x))
+∈-++ᶜʳ-[] (Tl-⟨⟩ x) =
+  trans (subst-Tl-⟨⟩ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-⟨⟩ (∈-++ᶜʳ-[] x))
+
 -- PUSHING A PREFIX VARIABLE UNDER A SUFFIX
 --
 -- The grade depends only on the suffix, not on the variable, so it is a function
@@ -211,6 +230,25 @@ grade-++ᶜˡ-assoc ρ Δ₁ []          = refl
 grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ∷ B)    = grade-++ᶜˡ-assoc ρ Δ₁ Δ₂
 grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ⟨ ρ' ⟩) =
   cong (_·ᵣ ρ') (grade-++ᶜˡ-assoc ρ Δ₁ Δ₂)
+
+-- Pushing under a concatenated suffix is pushing twice.
+
+∈-++ᶜˡ-assoc : ∀ {Γ A ρ} → (Δ₁ Δ₂ : Ctx) → (x : A ∈[ ρ ] Γ)
+             → Tgt-cast (sym (++ᶜ-assoc Γ Δ₁ Δ₂))
+                 (grade-++ᶜˡ ρ (Δ₁ ++ᶜ Δ₂) , ∈-++ᶜˡ (Δ₁ ++ᶜ Δ₂) x)
+             ≡ (grade-++ᶜˡ (grade-++ᶜˡ ρ Δ₁) Δ₂ , ∈-++ᶜˡ Δ₂ (∈-++ᶜˡ Δ₁ x))
+
+∈-++ᶜˡ-assoc Δ₁ []         x = refl
+∈-++ᶜˡ-assoc {Γ} Δ₁ (Δ₂ ∷ B)   x =
+  trans (Tgt-cast-irr (sym (++ᶜ-assoc Γ Δ₁ (Δ₂ ∷ B)))
+                      (cong (_∷ B) (sym (++ᶜ-assoc Γ Δ₁ Δ₂))) _)
+    (trans (Tgt-cast-∷ (sym (++ᶜ-assoc Γ Δ₁ Δ₂)) _)
+           (cong Tgt-∷ (∈-++ᶜˡ-assoc Δ₁ Δ₂ x)))
+∈-++ᶜˡ-assoc {Γ} Δ₁ (Δ₂ ⟨ ρ' ⟩) x =
+  trans (Tgt-cast-irr (sym (++ᶜ-assoc Γ Δ₁ (Δ₂ ⟨ ρ' ⟩)))
+                      (cong (_⟨ ρ' ⟩) (sym (++ᶜ-assoc Γ Δ₁ Δ₂))) _)
+    (trans (Tgt-cast-⟨⟩ ρ' (sym (++ᶜ-assoc Γ Δ₁ Δ₂)) _)
+           (cong (Tgt-⟨⟩ ρ') (∈-++ᶜˡ-assoc Δ₁ Δ₂ x)))
 
 -- A congruence renaming sends a pushed prefix variable to the push of its
 -- image: the counterpart of `cong-ren-tgt-r`, and what makes the pushing
