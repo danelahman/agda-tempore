@@ -994,8 +994,8 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
                (∘ᵐ-congʳ (∘ᵐ-congˡ
                  (T-congᶠ (C-rename-nat (cong-∷-ren ren) N pN))))))) ⟩ᵐ-cong)))
   where
-    ren : Ren (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-              ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+    ren : Ren [] (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+                 ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
     ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
 
     -- the renaming is the `μ`-refold of the two locks, after weakening past the
@@ -1060,7 +1060,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                                          (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
                                (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
                                (ren-clauses-ctxuniform
-                                 (wk-ren {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
+                                 (wk-ren {Δ = Γ ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
                                  H pH cH))
                      , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
                                              ∷ [ mapᵉ (op-grade op) ]
@@ -1087,8 +1087,8 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH cH =
   -- parameter and to the boxed continuation the `box` allocates
   ∙ ∘ᵐ-congʳ tgt
   where
-    ren : Ren (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-              ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+    ren : Ren [] (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+                 ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
     ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
 
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
@@ -1133,7 +1133,7 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH cH =
                                  (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
                        (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
                        (ren-clauses-ctxuniform
-                         (wk-ren {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
+                         (wk-ren {Δ = Γ ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
                          H pH cH))
              , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
                                      ∷ [ mapᵉ (op-grade op) ]

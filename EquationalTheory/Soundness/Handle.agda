@@ -170,13 +170,14 @@ sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH , cH) p
 -- lets those two be reused verbatim.
 
 private
-  ren-ᴱ-∷≡ : ∀ {Γ} → (A : VType) → ren-ᴱ-∷ {Γ} A ≡ restrict-ren (wk-ren {Γ} {A})
+  ren-ᴱ-∷≡ : ∀ {Γ} → (A : VType)
+           → ren-ᴱ-∷ {Γ} {[]} A ≡ restrict-ren {[]} (wk-ren {Δ = Γ} {A = A})
   ren-ᴱ-∷≡ A with eternal? A
   ... | yes _ = refl
   ... | no  _ = refl
 
 sound-handle-unbox : ∀ {Γ A B C ρ Δ ε ε'}
-  → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+  → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
   → (V : Δ ⊢V⦂ [ ρ ] A)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
   → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx)
@@ -233,13 +234,13 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
       subst (λ z → [ ρ₀ ]ᶠ ⟦ z ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ ∷ A ⟧ᴱ-Eternalᵒ) {ρ₀}
                  ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ₀} ∘ᵐ ⟦ z ⟧ʳ)
             (sym (ren-ᴱ-∷≡ {Γ} A))
-            (restrict-ren-necᵉ (wk-ren {Γ} {A}))
+            (restrict-ren-necᵉ (wk-ren {Δ = Γ} {A = A}))
 
     projᴱ-wk : projᴱ Γ ∘ᵐ fstᵐ ≈ᵐ f ∘ᵐ projᴱ (Γ ∷ A)
     projᴱ-wk =
-      subst (λ z → projᴱ Γ ∘ᵐ ⟦ wk-ren {Γ} {A} ⟧ʳ ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ (Γ ∷ A))
+      subst (λ z → projᴱ Γ ∘ᵐ ⟦ wk-ren {Δ = Γ} {A = A} ⟧ʳ ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ (Γ ∷ A))
             (sym (ren-ᴱ-∷≡ {Γ} A))
-            (projᴱ-nat (wk-ren {Γ} {A}))
+            (projᴱ-nat (wk-ren {Δ = Γ} {A = A}))
 
     clause-nat : ∀ op ε''
                → clauseᵀ (⟦_⟧ʰᵗ {Γ ∷ A} H' pH₂ uH₂) op ε''

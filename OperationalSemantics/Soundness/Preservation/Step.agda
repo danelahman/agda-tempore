@@ -777,7 +777,7 @@ box-merge p q m d h =
 seq-target : ∀ {ε₁ ε₂ ε₃ A B} {Γ Γ' : Ctx} {H : Obj}
            → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε₃ →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε₃ ·ₑ ε₂))
            → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-           → (ρ : Ren (Γ ⟨ mapᵉ ε₁ ⟩) (Γ' ⟨ mapᵉ ε₃ ⟩))
+           → (ρ : Ren [] (Γ ⟨ mapᵉ ε₁ ⟩) (Γ' ⟨ mapᵉ ε₃ ⟩))
            → (M' : Γ' ⊢C⦂ A ‼ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
            → (pN : Paramᶜ N) → (pM' : Paramᶜ M')

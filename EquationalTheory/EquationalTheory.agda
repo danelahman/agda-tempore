@@ -199,7 +199,7 @@ mutual
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
     unbox-cong : ∀ {A C ρ Δ}
-               → {w : Ren (Δ ⟨ ρ ⟩) Γ}
+               → {w : Ren [] (Δ ⟨ ρ ⟩) Γ}
                → {V W : Δ ⊢V⦂ [ ρ ] A}
                → {M N : Γ ∷ A  ⊢C⦂ C}
                → Δ ⊢V⦂ V == W
@@ -277,7 +277,7 @@ mutual
                 == box V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     seq-unbox : ∀ {A B C ρ Δ ε ε'}
-              → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+              → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
               → (V : Δ ⊢V⦂ [ ρ ] A)
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
@@ -382,7 +382,7 @@ mutual
                                    (handle M
                                    `with (λ op' ε'' Γ' →
                                             C-rename
-                                              (cong-ren (ren-ᴱ-∷ {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩}
+                                              (cong-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
                                                           (type-of-gtype (arity op))))
                                               (H op' ε'' Γ'))
                                    `in (C-rename
@@ -432,7 +432,7 @@ mutual
 
 
     handle-unbox : ∀ {A B C ρ Δ ε ε'}
-                 → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+                 → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
                  → (V : Δ ⊢V⦂ [ ρ ] A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
@@ -445,7 +445,7 @@ mutual
                      == unbox w V
                         (handle M
                         `with (λ op' ε'' Γ' →
-                                 C-rename (cong-ren (ren-ᴱ-∷ {Γ = Γ} A)) (H op' ε'' Γ'))
+                                 C-rename (cong-ren (ren-ᴱ-∷ {Γ} A)) (H op' ε'' Γ'))
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
     -- beta rule for unbox
@@ -465,9 +465,9 @@ mutual
     -- unboxing non-related values commute
 
     unbox-comm : ∀ {A B C ρ₁ Δ₁ ρ₂ Δ₂}
-               → (w₁ : Ren (Δ₁ ⟨ ρ₁ ⟩) Γ)
+               → (w₁ : Ren [] (Δ₁ ⟨ ρ₁ ⟩) Γ)
                → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
-               → (w₂ : Ren (Δ₂ ⟨ ρ₂ ⟩) Γ)
+               → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ)
                → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
@@ -504,7 +504,7 @@ mutual
     -- eta rule for unbox
 
     unbox-not-used : ∀ {A C ρ Δ}
-                   → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+                   → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
                    → (V : Δ ⊢V⦂ [ ρ ] A)
                    → (M : Γ ⊢C⦂ C)
                    -------------------------------------
@@ -515,7 +515,7 @@ mutual
 
     box-unbox-comm : ∀ {A B C ρ ρ₂ Δ₂}
                    → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                   → (w₂ : Ren (Δ₂ ⟨ ρ₂ ⟩) Γ)
+                   → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ)
                    → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------

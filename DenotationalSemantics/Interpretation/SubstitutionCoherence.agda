@@ -439,7 +439,7 @@ hd-lookup c =
 -- the renaming that `unbox-var` builds
 
 unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → Ren ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
+              → Ren [] ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
 unbox-var-ren z rel =
      eq-ren (split-≡ (split-pf z))
   ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)
@@ -450,7 +450,7 @@ unbox-var-ren z rel =
 -- The renaming must be a *variable* here, so that `var-rename` is stuck and
 -- the `with` can abstract it.
 
-unbox⇒var-Hd : ∀ {Γ Δ₀ A ρ} → (W : Ren ((Δ₀ ∷ [ ρ ] A) ⟨ ρ ⟩) Γ)
+unbox⇒var-Hd : ∀ {Γ Δ₀ A ρ} → (W : Ren [] ((Δ₀ ∷ [ ρ ] A) ⟨ ρ ⟩) Γ)
              → lk (proj₁ (proj₂ (unbox⇒var W (var (λ _ → ≾ᵣ-refl) Hd))))
                   (proj₂ (proj₂ (unbox⇒var W (var (λ _ → ≾ᵣ-refl) Hd))))
                ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ ⟦ W ⟧ʳ
@@ -838,10 +838,7 @@ subst-clauses-uniform e H pH uH op q Γ' =
 -- the `with eternal?`-defined functions (`_ᴱ`, `∈-ᴱ-split`, `restrict-sub-env`,
 -- …) can be forced to reduce by `rewrite`ing their scrutinee — cleaner than
 -- per-function unfold lemmas whose signatures are themselves `_ᴱ`-stuck.
-eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
-eternal?-yes {A} et with eternal? A
-... | yes et' = cong yes (eternal-irrelevant et' et)
-... | no ¬et  = ⊥-elim (¬et et)
+-- (`eternal?-yes` is in `Interpretation.Renaming`, which needs it first.)
 
 eternal?-no : ∀ {A} → (¬et : ¬ Eternal A) → eternal? A ≡ no ¬et
 eternal?-no {A} ¬et with eternal? A

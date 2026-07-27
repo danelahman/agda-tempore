@@ -58,6 +58,27 @@ infixl 30 _++ᶜ_
 ++ᶜ-identityˡ {Γ ∷ A}   = cong (_∷ A) ++ᶜ-identityˡ
 ++ᶜ-identityˡ {Γ ⟨ ρ ⟩} = cong (_⟨ ρ ⟩) ++ᶜ-identityˡ
 
+-- AMBIENT JOIN
+--
+-- The same concatenation, but recursing on its *left* argument, so that the
+-- empty case reduces: `[] ⋈ᶜ Δ` is `Δ` definitionally, where `[] ++ᶜ Δ` is only
+-- propositionally so (`++ᶜ` recurses on the right). Renamings are indexed by an
+-- ambient context and join it to their local parts with this, which is what
+-- keeps everything at the empty ambient — the language's own renamings and all
+-- the derived ones — free of transports.
+
+_⋈ᶜ_ : Ctx → Ctx → Ctx
+[] ⋈ᶜ Δ        = Δ
+(Ξ ∷ A) ⋈ᶜ Δ   = (Ξ ∷ A) ++ᶜ Δ
+(Ξ ⟨ ρ ⟩) ⋈ᶜ Δ = (Ξ ⟨ ρ ⟩) ++ᶜ Δ
+
+infixl 30 _⋈ᶜ_
+
+⋈ᶜ-++ᶜ : (Ξ Δ : Ctx) → Ξ ⋈ᶜ Δ ≡ Ξ ++ᶜ Δ
+⋈ᶜ-++ᶜ []        Δ = sym ++ᶜ-identityˡ
+⋈ᶜ-++ᶜ (Ξ ∷ A)   Δ = refl
+⋈ᶜ-++ᶜ (Ξ ⟨ ρ ⟩) Δ = refl
+
 ++ᶜ-identityʳ : ∀ {Γ} → Γ ++ᶜ [] ≡ Γ
 ++ᶜ-identityʳ = refl
 
@@ -334,6 +355,34 @@ infix 34 _ᴱ
 ... | yes _ = cong (_∷ A) (ᴱ-++ᶜ Γ Γ')
 ... | no  _ = ᴱ-++ᶜ Γ Γ'
 ᴱ-++ᶜ Γ (Γ' ⟨ ρ ⟩)  = ᴱ-++ᶜ Γ Γ'
+
+-- The same for the ambient join. Recursion on the ambient, so at the empty one
+-- this is `refl` and the transports it justifies compute away.
+
+ᴱ-⋈ᶜ : (Ξ Δ : Ctx) → (Ξ ⋈ᶜ Δ) ᴱ ≡ (Ξ ᴱ) ⋈ᶜ (Δ ᴱ)
+ᴱ-⋈ᶜ []        Δ = refl
+ᴱ-⋈ᶜ (Ξ ∷ A)   Δ =
+  trans (ᴱ-++ᶜ (Ξ ∷ A) Δ) (sym (⋈ᶜ-++ᶜ ((Ξ ∷ A) ᴱ) (Δ ᴱ)))
+ᴱ-⋈ᶜ (Ξ ⟨ ρ ⟩) Δ =
+  trans (ᴱ-++ᶜ (Ξ ⟨ ρ ⟩) Δ) (sym (⋈ᶜ-++ᶜ ((Ξ ⟨ ρ ⟩) ᴱ) (Δ ᴱ)))
+
+-- A variable of the local part is one of the join. At the empty ambient this is
+-- the identity, definitionally, which is what keeps the derived renamings there
+-- transport-free.
+
+∈-⋈ᶜ : ∀ {Δ A ρ} → (Ξ : Ctx) → A ∈[ ρ ] Δ → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
+∈-⋈ᶜ []        x = x
+∈-⋈ᶜ (Ξ ∷ A)   x = ∈-ctx-extensionˡ (Ξ ∷ A) _ x
+∈-⋈ᶜ (Ξ ⟨ ρ ⟩) x = ∈-ctx-extensionˡ (Ξ ⟨ ρ ⟩) _ x
+
+-- Reassociating a prefix of the ambient into the local part.
+
+⋈ᶜ-assoc : (Ξ Δ Δ₀ : Ctx) → (Ξ ⋈ᶜ Δ) ⋈ᶜ Δ₀ ≡ Ξ ⋈ᶜ (Δ ++ᶜ Δ₀)
+⋈ᶜ-assoc []        Δ Δ₀ = ⋈ᶜ-++ᶜ Δ Δ₀
+⋈ᶜ-assoc (Ξ ∷ A)   Δ Δ₀ =
+  trans (⋈ᶜ-++ᶜ ((Ξ ∷ A) ++ᶜ Δ) Δ₀) (++ᶜ-assoc (Ξ ∷ A) Δ Δ₀)
+⋈ᶜ-assoc (Ξ ⟨ ρ ⟩) Δ Δ₀ =
+  trans (⋈ᶜ-++ᶜ ((Ξ ⟨ ρ ⟩) ++ᶜ Δ) Δ₀) (++ᶜ-assoc (Ξ ⟨ ρ ⟩) Δ Δ₀)
 
 -- Restriction drops a non-eternal variable extension.
 

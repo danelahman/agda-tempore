@@ -124,8 +124,8 @@ box-wk X W pW =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
 sound-unbox-comm : ∀ {Γ A B C ρ₁ Δ₁ ρ₂ Δ₂}
-                 → (w₁ : Ren (Δ₁ ⟨ ρ₁ ⟩) Γ) → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
-                 → (w₂ : Ren (Δ₂ ⟨ ρ₂ ⟩) Γ) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+                 → (w₁ : Ren [] (Δ₁ ⟨ ρ₁ ⟩) Γ) → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
+                 → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                  → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                  → Soundᶜ== (unbox-comm w₁ V₁ w₂ V₂ M)
 sound-unbox-comm {Γ = Γ} {A = A} {B = B} w₁ V₁ w₂ V₂ M (pV₁ , (pV₂ , pM)) pR =
@@ -174,7 +174,7 @@ sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' 
 
 sound-box-unbox-comm : ∀ {Γ A B C ρ ρ₂ Δ₂}
                      → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                     → (w₂ : Ren (Δ₂ ⟨ ρ₂ ⟩) Γ) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+                     → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                      → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                      → Soundᶜ== (box-unbox-comm V w₂ V₂ M)
 sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V w₂ V₂ M (pV , (pV₂ , pM)) pR =

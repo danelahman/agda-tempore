@@ -123,7 +123,7 @@ suc-comp-ren : ∀ {Γ Γ'}
              → {S' : 𝕊 Γ'}
              → (q : S ≤ₛ S')
              → ≤ₛ-grade q ·ᵣ ρ''' ≾ᵣ ρ''
-             → Ren (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
+             → Ren [] (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
 
 suc-comp-ren {ρ''' = ρ'''} id-suc δρ'''≾ρ'' =
   ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ'''))) δρ'''≾ρ'')

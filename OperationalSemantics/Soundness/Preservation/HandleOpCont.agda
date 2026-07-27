@@ -79,7 +79,7 @@ bcᴱ Γ = (⟦ Γ ⟧ᴱ-Eternalᵒ)
 -- definitionally the eternal restriction of `wk-ren` (both split on
 -- `eternal? A₀`) — so the renaming coherence machinery applies to it.
 ren-ᴱ-∷≡restrict : ∀ {Γ₀} → (A : VType)
-                 → ren-ᴱ-∷ {Γ₀} A ≡ restrict-ren (wk-ren {Γ = Γ₀} {A = A})
+                 → ren-ᴱ-∷ {Γ₀} {[]} A ≡ restrict-ren {[]} (wk-ren {Δ = Γ₀} {A = A})
 ren-ᴱ-∷≡restrict A with eternal? A
 ... | yes _ = refl
 ... | no  _ = refl
@@ -104,7 +104,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
                 ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀))
          (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
          (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ‼ ε')
-         (ren : Ren (Γ ⟨ σ ⟩) ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩))
+         (ren : Ren [] (Γ ⟨ σ ⟩) ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩))
          (pM : Paramᶜ M) (pN : Paramᶜ N)
          (pH : ∀ op' ε₀ Γ' → Paramᶜ (H op' ε₀ Γ'))
          (uH : ∀ (op' : Op) {ε₁ ε₂} → (q : ε₁ ≾ₑ ε₂) → (Γ' : Ctx)
@@ -135,7 +135,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
                         (λ op' ε₀ Γ' → C-rename (cong-ren rr) (H op' ε₀ Γ'))
                         (λ op' ε₀ Γ' → renᶜ (cong-ren rr) (H op' ε₀ Γ') (pH op' ε₀ Γ')))
               (sym (ren-ᴱ-∷≡restrict A₀))
-              (ren-clauses-ctxuniform (wk-ren {Γ = Γ ⟨ ρ ⟩} {A = A₀}) H pH cH)
+              (ren-clauses-ctxuniform (wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀}) H pH cH)
 
   handle-op-cont :
       ⟦ handle M `with H' `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ
@@ -179,7 +179,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
         subst (λ r → ∀ {ρ₁} → [ ρ₁ ]ᶠ ⟦ r ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
                             ≈ᵐ Eternalᵒ.necᵉ (bcᴱ Γ) ∘ᵐ ⟦ r ⟧ʳ)
               (sym (ren-ᴱ-∷≡restrict A₀))
-              (restrict-ren-necᵉ (wk-ren {Γ = Γ ⟨ ρ ⟩} {A = A₀}))
+              (restrict-ren-necᵉ (wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀}))
 
       alg-nat =
         T-alg-of-handlerᵀ-natᴾ (bcᴱ Γ) (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) f f-necᵉ

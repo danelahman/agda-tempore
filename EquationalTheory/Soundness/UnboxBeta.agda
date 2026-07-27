@@ -117,11 +117,11 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
     Θ = hole-ctx K
 
     -- the renaming that reaches the boxed variable from under `K`
-    w : Ren ((Γ ∷ [ ρ ] A) ⟨ ρ ⟩) ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
+    w : Ren [] ((Γ ∷ [ ρ ] A) ⟨ ρ ⟩) ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
     w = wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p
 
     -- the same at the un-extended context
-    w₀ : Ren (Γ ⟨ ρ ⟩) (Γ ++ᶜ Θ)
+    w₀ : Ren [] (Γ ⟨ ρ ⟩) (Γ ++ᶜ Θ)
     w₀ = wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p
 
     X : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢C⦂ D
@@ -129,7 +129,7 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
 
     -- exactly the renaming the axiom's right-hand side uses (`∘ʳ` is a
     -- constructor, so the bracketing matters)
-    r₁ : Ren (Γ ⟨ ρ ⟩) ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
+    r₁ : Ren [] (Γ ⟨ ρ ⟩) ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
     r₁ = wk-ren-⟨ρ⟩-ctx refl ∘ʳ (⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren)
 
     W : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢V⦂ A

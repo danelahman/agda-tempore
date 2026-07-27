@@ -112,7 +112,7 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
 
     unbox[_]ₖ : ∀ {A C ρ Δ}
         → state ≤ᶠ f
-        → Ren (Δ ⟨ ρ ⟩) Γ
+        → Ren [] (Δ ⟨ ρ ⟩) Γ
         → Δ ⊢V⦂ [ ρ ] A
         → Γ ∷ A ⊢K[ f ◁ CH ]⦂ C
         -------------------------
@@ -244,7 +244,7 @@ eval-hole-ctx (handle[ p ]ₖ K `with H `in N) =
 -- Renaming of computation term contexts
 
 K-rename : ∀ {Γ Γ' CH C f}
-         → Ren Γ Γ'
+         → Ren [] Γ Γ'
          → Γ ⊢K[ f ◁ CH ]⦂ C
          ---------------
          → Γ' ⊢K[ f ◁ CH ]⦂ C

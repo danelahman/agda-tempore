@@ -301,7 +301,7 @@ stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} 
                       (λ op' ε' Γ' → renᶜ (cong-ren rr) (H op' ε' Γ') (pH op' ε' Γ')))
             (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
             (ren-clauses-ctxuniform
-              (wk-ren {Γ = toCtx S ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
+              (wk-ren {Δ = toCtx S ⟨ mapᵉ (op-grade op) ⟩} {A = type-of-gtype (arity op)})
               H pH cH))
   , subᶜ (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
                           ∷ [ mapᵉ (op-grade op) ]

@@ -230,7 +230,7 @@ sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
     g = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
 
 sound-seq-unbox : ∀ {Γ A B C ρ Δ ε ε'}
-                → (w : Ren (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
+                → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
                 → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                 → Soundᶜ== (seq-unbox w V M N)
 sound-seq-unbox {ε = ε} w V M N ((pV , pM) , pN) pR =

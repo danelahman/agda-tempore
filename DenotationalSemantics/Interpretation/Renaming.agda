@@ -59,7 +59,135 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 
 -- The reindexing morphism of a renaming (contravariant in the context).
 
-⟦_⟧ʳ : ∀ {Γ Γ'} → Ren Γ Γ' → ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
+-- An eternal context interprets to a graded `⟨_⟩`-algebra: `𝟙ᵐ` and `×ᵐ` are
+-- eternal objects, and the entries are eternal by assumption. This is what a
+-- lock-introducing renaming needs of the context standing to its left, and why
+-- `⟨⟩-ext-ctx` alone constrains it.
+
+ec-Eternalᵒ : ∀ {Γ} → EternalCtx Γ → Eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
+ec-Eternalᵒ ec-[]        = 𝟙-eternalᵒ
+ec-Eternalᵒ (ec-∷ ec et) = ×-eternalᵒ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)
+
+ec-extᵉ : ∀ {Γ} → EternalCtx Γ → ∀ {ρ} → ⟨ ρ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
+ec-extᵉ ec = Eternalᵒ.extᵉ (ec-Eternalᵒ ec)
+
+-- The extraction's two components, read off the product structure.
+
+ec-extᵉ-fstᵐ : ∀ {Γ A} → (ec : EternalCtx Γ) → (et : Eternal A) → ∀ {ρ}
+             → fstᵐ ∘ᵐ ec-extᵉ (ec-∷ ec et) {ρ} ≈ᵐ ec-extᵉ ec ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
+ec-extᵉ-fstᵐ ec et =
+  ≈ᵐ-trans (∘ᵐ-congʳ (×-eternalᵒ-extᵉ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)))
+           (⟨⟩ᵐ-fstᵐ _ _)
+
+ec-extᵉ-sndᵐ : ∀ {Γ A} → (ec : EternalCtx Γ) → (et : Eternal A) → ∀ {ρ}
+             → sndᵐ ∘ᵐ ec-extᵉ (ec-∷ ec et) {ρ} ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ
+ec-extᵉ-sndᵐ ec et =
+  ≈ᵐ-trans (∘ᵐ-congʳ (×-eternalᵒ-extᵉ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)))
+           (⟨⟩ᵐ-sndᵐ _ _)
+
+-- Extraction undoes `η`, so an eternal variable at the head is the projection.
+
+evar-Hd : ∀ {Γ A} → (et : Eternal A)
+        → eternalᵛ-extᵉ et ∘ᵐ var-proj (Hd {A} {Γ}) ≈ᵐ sndᵐ
+evar-Hd et =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)) ⟨⟩-εᵘ∘η≡id))
+            (∘ᵐ-identityˡ sndᵐ))
+
+-- Extensionality for maps into a product: agreeing on both projections.
+
+prod-ext : ∀ {X A B} {h k : X →ᵐ A ×ᵐ B}
+         → fstᵐ ∘ᵐ h ≈ᵐ fstᵐ ∘ᵐ k → sndᵐ ∘ᵐ h ≈ᵐ sndᵐ ∘ᵐ k → h ≈ᵐ k
+prod-ext pf ps =
+  ≈ᵐ-trans (⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl)
+           (≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ (≈ᵐ-sym pf) (≈ᵐ-sym ps)))
+
+-- With the eternality decision in hand, the `with eternal?`-defined functions
+-- (`_ᴱ`, `projᴱ`, `⟦_⟧ᴱ-Eternalᵒ`) can be forced to reduce by `rewrite`ing their
+-- scrutinee.
+
+eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
+eternal?-yes {A} et with eternal? A
+... | yes et' = cong yes (eternal-irrelevant et' et)
+... | no ¬et  = ⊥-elim (¬et et)
+
+-- THE ETERNAL PROJECTION OF AN ETERNAL CONTEXT IS AN ALGEBRA MORPHISM
+--
+-- `projᴱ Γ` carries the context's own `⟨_⟩`-algebra to that of its restriction.
+-- Needed because `⟨⟩-ext-ctx` interprets to the former, and `restrict-ren` sends
+-- it to the identity, so `projᴱ`-naturality at that rule is exactly this.
+
+ec-projᴱ-extᵉ : ∀ {Γ} → (ec : EternalCtx Γ) → ∀ {ρ}
+              → projᴱ Γ ∘ᵐ ec-extᵉ ec {ρ}
+              ≈ᵐ projᴱ-extᵉ Γ ∘ᵐ ⟨ ρ ⟩ᶠ (projᴱ Γ)
+
+ec-projᴱ-extᵉ ec-[] =
+  ≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _)) (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-idᵐ)))
+
+ec-projᴱ-extᵉ (ec-∷ {Δ = Γ₀} {A = A} ec et) {ρ} rewrite eternal?-yes et =
+  prod-ext
+    -- both sides reach `projᴱ-extᵉ Γ₀ ∘ᵐ ⟨ ρ ⟩ᶠ (projᴱ Γ₀ ∘ᵐ fstᵐ)`
+    (≈ᵐ-trans
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (ec-extᵉ-fstᵐ ec et))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (ec-projᴱ-extᵉ ec))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))))))
+      (≈ᵐ-sym
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ₀} {A} et))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+                  (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))))))))
+    -- and both reach `eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ`
+    (≈ᵐ-trans
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _)))
+                (ec-extᵉ-sndᵐ ec et)))
+      (≈ᵐ-sym
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ₀} {A} et))
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+                  (∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))))))))
+
+-- AN ETERNAL VARIABLE'S MORPHISM IS AN ALGEBRA MORPHISM
+--
+-- `extᵉ ∘ᵐ var-proj y`, which is `var-morphism` at an eternal type, carries the
+-- context's `⟨_⟩`-algebra to the type's. This is what `⟨⟩-ext-ctx` needs of its
+-- ambient: `extᵉ` has no naturality law, so only algebra morphisms commute with
+-- it. Two cases, `EternalCtx` being lock-free.
+
+ec-var-alg : ∀ {Γ A ρ σ} → (ec : EternalCtx Γ) → (et : Eternal A) → (y : A ∈[ ρ ] Γ)
+           → eternalᵛ-extᵉ et ∘ᵐ ⟨ σ ⟩ᶠ (eternalᵛ-extᵉ et ∘ᵐ var-proj y)
+           ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ec-extᵉ ec {σ}
+
+ec-var-alg (ec-∷ {Δ = Γ₀} ec et') et Hd =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (evar-Hd {Γ = Γ₀} et)))
+  (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))
+  (≈ᵐ-trans (≈ᵐ-sym (ec-extᵉ-sndᵐ ec et'))
+            (∘ᵐ-congˡ (≈ᵐ-sym (evar-Hd {Γ = Γ₀} et)))))
+
+ec-var-alg (ec-∷ ec et') et (Tl-∷ y) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-alg ec et y))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (ec-extᵉ-fstᵐ ec et')))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))))))))
+
+-- Renamings are interpreted at the empty ambient: that is where the language's
+-- own renamings (`unbox`'s certificate) and every derived one live, `[] ᴱ`,
+-- `cong-ren`, `restrict-ren` and `contract` all preserving it. An
+-- ambient-indexed renaming reaches the semantics through `expose-ren-[]`.
+
+⟦_⟧ʳ : ∀ {Γ Γ'} → Ren [] Γ Γ' → ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
 ⟦ id-ren ⟧ʳ              = idᵐ
 ⟦ r₂ ∘ʳ r₁ ⟧ʳ            = ⟦ r₁ ⟧ʳ ∘ᵐ ⟦ r₂ ⟧ʳ
 ⟦ wk-ren ⟧ʳ              = fstᵐ
@@ -71,6 +199,7 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ⟦ cong-∷-ren r ⟧ʳ        = mapˣᵐ ⟦ r ⟧ʳ idᵐ
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
 ⟦ ⟨⟩-ext-ren et ⟧ʳ       = Eternalᵒ.strᵉ (eternalᵛ-Eternalᵒ et)
+⟦ ⟨⟩-ext-ctx _ ecΓ ⟧ʳ    = Eternalᵒ.extᵉ (ec-Eternalᵒ ecΓ)
 
 -- Transport along an equality of *grades* is the grade relaxation at the
 -- reflexive witness.
@@ -119,7 +248,7 @@ ext Γ Γ' (Θ ⟨ ρ ⟩) g = ⟨ ρ ⟩ᶠ (ext Γ Γ' Θ g)
 
 -- `ext` on a renaming's denotation is that renaming's `cong-ren`.
 
-cong-ren-ext : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Θ : Ctx)
+cong-ren-ext : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Θ : Ctx)
              → ⟦ cong-ren {Γ'' = Θ} r ⟧ʳ ≈ᵐ ext Γ' Γ Θ ⟦ r ⟧ʳ
 cong-ren-ext r []        = ≈ᵐ-refl
 cong-ren-ext r (Θ ∷ A)   = mapˣᵐ-cong (cong-ren-ext r Θ) ≈ᵐ-refl
@@ -180,7 +309,7 @@ strᵉ-past-fstᵐ et g =
 -- variable (relaxed back to the original grade) equals projecting the
 -- original variable and reindexing the environment by `⟦ r ⟧ʳ`.
 
-var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Eternal A)
+var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Eternal A)
              → ⟨⟩-≤ (proj₁ (proj₂ (var-rename r x)) ¬et)
                  ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
                ≈ᵐ var-proj x ∘ᵐ ⟦ r ⟧ʳ
@@ -212,6 +341,9 @@ var-proj-nat (var-ren p y) (Tl-∷ x) ¬et =
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+-- every variable of an eternal ambient is eternal, so this case is vacuous
+var-proj-nat (⟨⟩-ext-ctx _ ecΓ) x ¬et =
+  ⊥-elim (¬et (ec-eternal ecΓ x))
 var-proj-nat ⟨⟩-η-ren (Tl-⟨⟩ x) ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-μ∘η≡id))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -279,7 +411,7 @@ var-proj-nat (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) ¬et =
 -- `⟨⟩-≤` that `var-proj-nat` carries is absorbed; proved by induction on the
 -- renaming using the eternal-extraction algebra laws.
 
-var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
     → eternalᵛ-extᵉ et {proj₁ (var-rename r x)} ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
       ≈ᵐ (eternalᵛ-extᵉ et {ρ} ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
 var-proj-nat-eternal et id-ren x =
@@ -409,8 +541,17 @@ var-proj-nat-eternal et' (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) =
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
     (≈ᵐ-trans (strᵉ-past-fstᵐ et (eternalᵛ-extᵉ et' ∘ᵐ (μ ∘ᵐ ⟨ _ ⟩ᶠ (var-proj x))))
               (∘ᵐ-assoc _ _ _)))))
+-- Introducing a lock: `extᵉ-μ` splits the extraction across the new lock, and
+-- `ec-var-alg` absorbs the outer half into the ambient's own extraction. This is
+-- the case the ambient index exists for.
+var-proj-nat-eternal et (⟨⟩-ext-ctx _ ecΓ) x =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+            (ec-var-alg ecΓ et x))))
 
-var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
                  → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
                                 (proj₂ (proj₂ (var-rename r x)))
                    ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ
@@ -424,20 +565,12 @@ var-morphism-nat {A = A} r f x with eternal? A
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
--- Extensionality for maps into a product: agreeing on both projections.
-
-prod-ext : ∀ {X A B} {h k : X →ᵐ A ×ᵐ B}
-         → fstᵐ ∘ᵐ h ≈ᵐ fstᵐ ∘ᵐ k → sndᵐ ∘ᵐ h ≈ᵐ sndᵐ ∘ᵐ k → h ≈ᵐ k
-prod-ext pf ps =
-  ≈ᵐ-trans (⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl)
-           (≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ (≈ᵐ-sym pf) (≈ᵐ-sym ps)))
-
 -- The interpretation of a *restricted* renaming is a morphism of eternal
 -- objects: it commutes with the eternal extractions of its (eternal) source
 -- and target restrictions. Proved by recursion on the renaming; the eternal
 -- variable case is exactly `eternal-mor`.
 
-restrict-ren-mor : ∀ {Γ Γ'} → (r : Ren Γ Γ') → ∀ {ρ}
+restrict-ren-mor : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → ∀ {ρ}
                  → projᴱ-extᵉ Γ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ ⟦ restrict-ren r ⟧ʳ
                  ≈ᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ projᴱ-extᵉ Γ' {ρ}
 restrict-ren-mor id-ren =
@@ -455,7 +588,7 @@ restrict-ren-mor {Γ} (wk-ren {A = A}) {ρ} with eternal? A
 ... | no  _  =
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
-restrict-ren-mor (var-ren {Γ = Γ₀} {A = A} p x) {ρ} with eternal? A
+restrict-ren-mor (var-ren {Δ = Γ₀} {A = A} p x) {ρ} with eternal? A
 ... | yes eA =
   prod-ext
     -- fstᵐ: extraction of `Γ ᴱ` on both sides (`idᵐ` component)
@@ -493,7 +626,7 @@ restrict-ren-mor ⟨⟩-μ-ren =
 restrict-ren-mor (⟨⟩-≤-ren _) =
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
-restrict-ren-mor (cong-∷-ren {Γ = Γ₀} {Γ' = Γ₀'} {A = A} r) {ρ} with eternal? A
+restrict-ren-mor (cong-∷-ren {Δ = Γ₀} {Δ' = Γ₀'} {A = A} r) {ρ} with eternal? A
 ... | yes eA =
   prod-ext
     -- fstᵐ: the sub-renaming, via `restrict-ren-mor r`
@@ -528,6 +661,10 @@ restrict-ren-mor (⟨⟩-ext-ren {A = A} et) with eternal? A
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
 ... | no ¬et = ⊥-elim (¬et et)
+-- the restriction drops the lock this introduces, so it restricts to `id-ren`
+restrict-ren-mor (⟨⟩-ext-ctx _ _) =
+  ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
+  (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
 
 -- Naturality of `splitᴱ` under an ambient renaming: the renaming acts on the
 -- eternal base (`restrict-ren`) while the split isolates it, so the two commute.
@@ -538,7 +675,7 @@ restrict-ren-mor (⟨⟩-ext-ren {A = A} et) with eternal? A
 -- with base map `⟦ restrict-ren r ⟧ʳ` (its morphism law is `restrict-ren-mor`)
 -- and lift `⟦ cong-ren (restrict-ren r) ⟧ʳ`, whose recursion holds definitionally
 -- (`⟦ cong-ren {[]} ⟧ = ⟦ − ⟧`, `⟦ cong-∷-ren ⟧ = mapˣᵐ _ idᵐ`, `⟦ cong-⟨⟩-ren ⟧ = ⟨_⟩ᶠ`).
-splitᴱ-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Γ'x : Ctx)
+splitᴱ-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Γ'x : Ctx)
            → splitᴱ Γ Γ'x ∘ᵐ ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ
            ≈ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ splitᴱ Γ' Γ'x
 splitᴱ-nat {Γ} {Γ'} r =
@@ -547,7 +684,7 @@ splitᴱ-nat {Γ} {Γ'} r =
     (λ Γ'x → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ)
     ≈ᵐ-refl (λ _ _ → ≈ᵐ-refl) (λ _ _ → ≈ᵐ-refl)
 
-splitᴱ⁻¹-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (Γ'x : Ctx)
+splitᴱ⁻¹-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Γ'x : Ctx)
              → ⟦ cong-ren {Γ'' = Γ'x} (restrict-ren r) ⟧ʳ ∘ᵐ splitᴱ⁻¹ Γ' Γ'x
              ≈ᵐ splitᴱ⁻¹ Γ Γ'x ∘ᵐ mapˣᵐ idᵐ ⟦ restrict-ren r ⟧ʳ
 splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
@@ -564,7 +701,7 @@ splitᴱ⁻¹-nat {Γ} {Γ'} r Γ'x =
 -- the renaming on the base, so they pass each other. This is what carries
 -- `CtxUniformʰ` through `renᶜ`.
 
-⋉-ren : ∀ {Γ Γ' Γ'a Γ'b} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+⋉-ren : ∀ {Γ Γ' Γ'a Γ'b} → (r : Ren [] Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
       → ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ ∘ᵐ _⋉_ Γ' {Γ'a} {Γ'b} ρ
       ≈ᵐ _⋉_ Γ {Γ'a} {Γ'b} ρ ∘ᵐ ⟦ cong-ren {Γ'' = Γ'a} (restrict-ren r) ⟧ʳ
 ⋉-ren {Γ} {Γ'} {Γ'a} {Γ'b} r ρ =
@@ -604,7 +741,7 @@ mapˣ²-comm comm =
                                 (mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)))
                       (∘ᵐ-identityˡ _)))))
 
-⋉-ren² : ∀ {Γ Γ' Γ'a Γ'b} {P Q : Obj} → (r : Ren Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
+⋉-ren² : ∀ {Γ Γ' Γ'a Γ'b} {P Q : Obj} → (r : Ren [] Γ Γ') → (ρ : ⟦ Γ'a ⟧ᶜᵗˣ →ᵐ ⟦ Γ'b ⟧ᶜᵗˣ)
        → mapˣᵐ (mapˣᵐ ⟦ cong-ren {Γ'' = Γ'b} (restrict-ren r) ⟧ʳ (idᵐ {P})) (idᵐ {Q})
            ∘ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ' {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
        ≈ᵐ mapˣᵐ (mapˣᵐ (_⋉_ Γ {Γ'a} {Γ'b} ρ) idᵐ) idᵐ
@@ -628,7 +765,7 @@ mapˣ²-comm comm =
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock
 -- case uses `restrict-ren-mor` to carry the restricted renaming past `extᵉ`.
 
-projᴱ-nat : ∀ {Γ Γ'} → (r : Ren Γ Γ')
+projᴱ-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ')
           → projᴱ Γ ∘ᵐ ⟦ r ⟧ʳ ≈ᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ projᴱ Γ'
 projᴱ-nat id-ren =
   ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
@@ -653,14 +790,14 @@ projᴱ-nat (var-ren {A = A} p x) with eternal? A
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
-projᴱ-nat (⟨⟩-η-ren {Γ = Γ}) =
+projᴱ-nat (⟨⟩-η-ren {Δ = Γ}) =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-η-nat _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (Eternalᵒ.extᵉ-u (⟦ Γ ⟧ᴱ-Eternalᵒ))))
   (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id)
   (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))))))
-projᴱ-nat (⟨⟩-η⁻¹-ren {Γ = Γ}) =
+projᴱ-nat (⟨⟩-η⁻¹-ren {Δ = Γ}) =
   ≈ᵐ-trans (εᵘ-nat _)
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (Eternalᵒ.extᵉ-u (⟦ Γ ⟧ᴱ-Eternalᵒ))))
             (≈ᵐ-sym (∘ᵐ-identityˡ _)))
@@ -672,7 +809,7 @@ projᴱ-nat (⟨⟩-μ-ren {Γ} {ρ} {ρ'}) =
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (≈ᵐ-sym (∘ᵐ-identityˡ _)))))))
-projᴱ-nat (⟨⟩-≤-ren {Γ = Γ} rel) =
+projᴱ-nat (⟨⟩-≤-ren {Δ = Γ} rel) =
   ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat _ rel))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -732,6 +869,10 @@ projᴱ-nat (⟨⟩-ext-ren {Γ} {A} et) with eternal? A
       (≈ᵐ-trans (eternalᵛ-strᵉ-sndᵐ et)
                 (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))))))))))
 ... | no ¬et = ⊥-elim (¬et et)
+-- the lock this introduces is dropped by the restriction, so the restricted
+-- renaming is the identity and the square is `ec-projᴱ-extᵉ`
+projᴱ-nat (⟨⟩-ext-ctx _ ecΓ) =
+  ≈ᵐ-trans (ec-projᴱ-extᵉ ecΓ) (≈ᵐ-sym (∘ᵐ-identityˡ _))
 
 
 -- ───────────────────────────────────────────────────────────────────────────

@@ -477,7 +477,7 @@ ret-env refl =
 -- Substituting into a renamed continuation: the renaming lands in the
 -- environment's first component, the substituted value in its second.
 
-sub-ren : ∀ {Γ Γ' A C} → (r : Ren Γ Γ') → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
+sub-ren : ∀ {Γ Γ' A C} → (r : Ren [] Γ Γ') → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
         → (pN : Paramᶜ N) → (pV : Paramᵛ V)
         → ⟦ C-rename (cong-∷-ren r) N [ Hd ↦ V ]c ⟧ᶜᵗ
              (subᶜ (C-rename (cong-∷-ren r) N) Hd V (renᶜ (cong-∷-ren r) N pN) pV)

@@ -33,7 +33,7 @@ record Config (C : CType) : Set where
 
 unbox-lookup : ∀ {A ρ Δ}
              → (S : 𝕊 [])
-             → (w : Ren (Δ ⟨ ρ ⟩) (toCtx S))
+             → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx S))
              → (V : Δ ⊢V⦂ [ ρ ] A)
              → toCtx S ⊢V⦂ A
 unbox-lookup {A} {ρ} S w V with unbox⇒var w V
@@ -190,7 +190,7 @@ mutual
                               (handle M
                               `with (λ op' ε' Γ' →
                                        C-rename
-                                         (cong-ren (ren-ᴱ-∷ {Γ = toCtx S ⟨ mapᵉ (op-grade op) ⟩}
+                                         (cong-ren (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩}
                                                      (type-of-gtype (arity op))))
                                          (H op' ε' Γ'))
                               `in (C-rename
@@ -220,7 +220,7 @@ mutual
         -- resource in the state and substitute it into the continuation M
         UNBOX       : ∀ {A C ρ Δ}
                     → {S : 𝕊 []}
-                    → {w : Ren (Δ ⟨ ρ ⟩) (toCtx S)}
+                    → {w : Ren [] (Δ ⟨ ρ ⟩) (toCtx S)}
                     → {V : Δ ⊢V⦂ [ ρ ] A}
                     → {M : toCtx S ∷ A ⊢C⦂ C}
                       ----------------------------------------------------------

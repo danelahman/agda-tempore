@@ -81,7 +81,7 @@ sound-boxed-not-used V M (pV , pCM) pR =
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-identityʳ _
 
-sound-unbox-not-used : ∀ {Γ A C ρ Δ} → (w : Ren (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
+sound-unbox-not-used : ∀ {Γ A C ρ Δ} → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
                      → (M : Γ ⊢C⦂ C) → Soundᶜ== (unbox-not-used w V M)
 sound-unbox-not-used w V M (pV , pCM) pR =
     unbox-def w V (C-rename wk-ren M) pV pCM

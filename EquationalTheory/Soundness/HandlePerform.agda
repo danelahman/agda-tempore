@@ -121,13 +121,13 @@ module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
     subst (λ z → [ ρ₀ ]ᶠ ⟦ z ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ₀ ∷ A₀ ⟧ᴱ-Eternalᵒ) {ρ₀}
                ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ₀ ⟧ᴱ-Eternalᵒ) {ρ₀} ∘ᵐ ⟦ z ⟧ʳ)
           (sym (ren-ᴱ-∷≡restrict {Γ₀} A₀))
-          (restrict-ren-necᵉ (wk-ren {Γ₀} {A₀}))
+          (restrict-ren-necᵉ (wk-ren {Δ = Γ₀} {A = A₀}))
 
   projᴱ-wkᴿ : projᴱ Γ₀ ∘ᵐ fstᵐ ≈ᵐ fᴿ ∘ᵐ projᴱ (Γ₀ ∷ A₀)
   projᴱ-wkᴿ =
-    subst (λ z → projᴱ Γ₀ ∘ᵐ ⟦ wk-ren {Γ₀} {A₀} ⟧ʳ ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ (Γ₀ ∷ A₀))
+    subst (λ z → projᴱ Γ₀ ∘ᵐ ⟦ wk-ren {Δ = Γ₀} {A = A₀} ⟧ʳ ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ (Γ₀ ∷ A₀))
           (sym (ren-ᴱ-∷≡restrict {Γ₀} A₀))
-          (projᴱ-nat (wk-ren {Γ₀} {A₀}))
+          (projᴱ-nat (wk-ren {Δ = Γ₀} {A = A₀}))
 
   module _ (pHᴿ : ∀ op ε'' Γ' → Paramᶜ (Hᴿ op ε'' Γ'))
            (uHᴿ : EffUniformʰ {Γ₀ ∷ A₀} Hᴿ pHᴿ)
@@ -213,8 +213,8 @@ sound-handle-perform : ∀ {Γ A B ε ε' op}
 sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                      ((pV , pM) , pN , pH , uH , cH) pR = assembly
   where
-    ren : Ren (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-              ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+    ren : Ren [] (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+                 ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
     ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
 
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
@@ -253,7 +253,7 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                                             (pH op' ε'' Γ')))
                 (sym (ren-ᴱ-∷≡restrict (type-of-gtype (arity op))))
                 (ren-clauses-ctxuniform
-                  (wk-ren {Γ = Γ ⟨ mapᵉ (op-grade op) ⟩}
+                  (wk-ren {Δ = Γ ⟨ mapᵉ (op-grade op) ⟩}
                           {A = type-of-gtype (arity op)}) H pH cH)
 
     Cren = cong-∷-ren (cong-∷-ren (contract Γ))

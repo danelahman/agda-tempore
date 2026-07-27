@@ -10,6 +10,7 @@ open import Relation.Nullary
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
 
@@ -17,18 +18,47 @@ module Syntax.RenActions (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
+open Operations Ops
 
 open import Syntax.Contexts  S
 open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.Types     S
 
--- Renaming of variables
+-- Transporting a typing along an equality of contexts
 
-var-rename : ∀ {Γ Γ' A ρ}
-           → Ren Γ Γ'
-           → A ∈[ ρ ] Γ
-           → Σ[ ρ' ∈ R ] ((¬ Eternal A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Γ')
+∈-ctx-≡ : ∀ {Γ Γ' A ρ} → Γ ≡ Γ' → A ∈[ ρ ] Γ → A ∈[ ρ ] Γ'
+∈-ctx-≡ refl x = x
+
+V-ctx-≡ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
+V-ctx-≡ refl V = V
+
+C-ctx-≡ : ∀ {Γ Γ' C} → Γ ≡ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
+C-ctx-≡ refl M = M
+
+-- Splitting the eternal restriction of an ambient-plus-local context, then
+-- reassociating a suffix onto the local half. This is the shape an effect
+-- handler clause's context takes once the ambient index is in play.
+
+ᴱ-++ᶜ-assoc : (Ξ Δ Θ : Ctx) → ((Ξ ++ᶜ Δ) ᴱ) ++ᶜ Θ ≡ (Ξ ᴱ) ++ᶜ ((Δ ᴱ) ++ᶜ Θ)
+ᴱ-++ᶜ-assoc Ξ Δ Θ =
+  trans (cong (_++ᶜ Θ) (ᴱ-++ᶜ Ξ Δ)) (++ᶜ-assoc (Ξ ᴱ) (Δ ᴱ) Θ)
+
+-- Renaming of variables
+--
+-- Stated at the empty ambient, which is where all of the language's renamings
+-- and every derived one live: `[] ᴱ` is `[]`, and the congruences preserve it,
+-- so nothing here is transported and every clause reduces. Ambient-indexed
+-- renamings act through `expose-ren-[]` (see `V-renameᴬ` below).
+--
+-- `⟨⟩-ext-ctx` is the one rule whose variable is not analysed: it accepts any
+-- variable of the context to its left, and pays for it by that variable being
+-- eternal, which discharges the grade bound vacuously.
+
+var-rename : ∀ {Δ Δ' A ρ}
+           → Ren [] Δ Δ'
+           → A ∈[ ρ ] Δ
+           → Σ[ ρ' ∈ R ] ((¬ Eternal A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Δ')
 
 var-rename id-ren x =
   _ , (λ _ → ≾ᵣ-refl) , x
@@ -41,15 +71,11 @@ var-rename wk-ren x =
 var-rename (var-ren p y) Hd =
   _ , p , y
 var-rename (var-ren p y) (Tl-∷ x) =
-  var-rename id-ren x
+  _ , (λ _ → ≾ᵣ-refl) , x
 var-rename ⟨⟩-η-ren (Tl-⟨⟩ x) =
   _ , (λ _ → ≾ᵣ-reflexive (sym (·ᵣ-identityʳ _))) , x
-var-rename ⟨⟩-η⁻¹-ren Hd =
-  uᵣ ·ᵣ uᵣ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ uᵣ)) , Tl-⟨⟩ Hd
-var-rename ⟨⟩-η⁻¹-ren (Tl-∷ x) =
-  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ _)) , Tl-⟨⟩ (Tl-∷ x)
-var-rename ⟨⟩-η⁻¹-ren (Tl-⟨⟩ x) =
-  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ (_ ·ᵣ _))) , Tl-⟨⟩ (Tl-⟨⟩ x)
+var-rename ⟨⟩-η⁻¹-ren x =
+  _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-identityʳ _)) , Tl-⟨⟩ x
 var-rename ⟨⟩-μ-ren (Tl-⟨⟩ x) =
   _ , (λ _ → ≾ᵣ-reflexive (·ᵣ-assoc _ _ _)) , Tl-⟨⟩ (Tl-⟨⟩ x)
 var-rename (⟨⟩-≤-ren {ρ = ρ₁} {ρ' = ρ₂} ρ₂≾ρ₁) (Tl-⟨⟩ x) =
@@ -64,9 +90,11 @@ var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ Hd) =
   uᵣ , (λ ¬et → ⊥-elim (¬et et)) , Hd
 var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) =
   _ , (λ _ → ≾ᵣ-refl) , Tl-∷ (Tl-⟨⟩ x)
+var-rename (⟨⟩-ext-ctx _ ecΔ) x =
+  _ , (λ ¬et → ⊥-elim (¬et (ec-eternal ecΔ x))) , Tl-⟨⟩ x
 
--- A FGCBV-specific variable-based variant of `unbox` based on every value of 
--- box-type being forced to be a variable (as proved below in unbox⇒var). 
+-- A FGCBV-specific variable-based variant of `unbox` based on every value of
+-- box-type being forced to be a variable (as proved below in unbox⇒var).
 
 unbox-var : ∀ {Γ A C ρ ρ'}
           → (x : [ ρ ] A ∈[ ρ' ] Γ)
@@ -84,7 +112,7 @@ unbox-var x rel M =
 -- Extracting the underlying variable (and grade bound) from a box-typed value
 
 unbox⇒var : ∀ {Γ A ρ Δ}
-          → Ren (Δ ⟨ ρ ⟩) Γ
+          → Ren [] (Δ ⟨ ρ ⟩) Γ
           → Δ ⊢V⦂ [ ρ ] A
           → Σ[ ρ' ∈ R ] (([ ρ ] A ∈[ ρ' ] Γ) × ρ' ≾ᵣ ρ)
 unbox⇒var {ρ = ρ} w V with grad-typ⇒var V
@@ -95,11 +123,15 @@ unbox⇒var {ρ = ρ} w V with grad-typ⇒var V
     (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)))
 
 -- Action of renamings on well-typed values and computations
+--
+-- At the empty ambient throughout, and so transport-free: `unbox`'s stored
+-- certificate lives there too and composes directly, and the handler clauses'
+-- `restrict-ren r` stays there because `[] ᴱ` is `[]`.
 
 mutual
 
   V-rename : ∀ {Γ Γ' A}
-           → Ren Γ Γ'
+           → Ren [] Γ Γ'
            → Γ ⊢V⦂ A
            ------------
            → Γ' ⊢V⦂ A
@@ -112,7 +144,7 @@ mutual
   V-rename r (lam M)     = lam (C-rename (cong-ren r) M)
 
   C-rename : ∀ {Γ Γ' C}
-           → Ren Γ Γ'
+           → Ren [] Γ Γ'
            → Γ ⊢C⦂ C
            ------------
            → Γ' ⊢C⦂ C
@@ -133,3 +165,32 @@ mutual
     unbox (r ∘ʳ w) V (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (coerce rel M) = coerce rel (C-rename r M)
+
+-- ACTING BY AN AMBIENT-INDEXED RENAMING
+--
+-- A renaming that fixes an ambient acts by first forgetting what it fixes:
+-- `expose-ren-[]` reassociates `Ren Ξ Δ Δ'` into a renaming of `Ξ ++ᶜ Δ` proper,
+-- which is the context such a term has. This is the form the eternal weakening
+-- takes, `wk-ren-ctx` being ambient-indexed.
+
+V-renameᴬ : ∀ {Ξ Δ Δ' A} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ) ⊢V⦂ A → (Ξ ++ᶜ Δ') ⊢V⦂ A
+V-renameᴬ r V = V-rename (expose-ren-[] r) V
+
+C-renameᴬ : ∀ {Ξ Δ Δ' C} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ) ⊢C⦂ C → (Ξ ++ᶜ Δ') ⊢C⦂ C
+C-renameᴬ r M = C-rename (expose-ren-[] r) M
+
+-- THE ETERNAL WEAKENING
+--
+-- Inserting a context `Γ'` after an all-eternal prefix `Ξ`, under an arbitrary
+-- suffix `Θ`. This is an ordinary renaming action: `wk-ren-ctx` introduces the
+-- locks of `Γ'` by `⟨⟩-ext-ctx`, which is exactly what the eternal ambient
+-- licenses. Its coherence is therefore `C-rename-nat`, and its preservation of
+-- `Paramᶜ` is `renᶜ` — no separate recursion over terms.
+
+wkᵛ : ∀ {Ξ A} → EternalCtx Ξ → (Γ' Θ : Ctx)
+    → (Ξ ++ᶜ Θ) ⊢V⦂ A → (Ξ ++ᶜ (Γ' ++ᶜ Θ)) ⊢V⦂ A
+wkᵛ ec Γ' Θ V = V-renameᴬ (wk-ren-ctx ec Γ' Θ) V
+
+wkᶜ : ∀ {Ξ C} → EternalCtx Ξ → (Γ' Θ : Ctx)
+    → (Ξ ++ᶜ Θ) ⊢C⦂ C → (Ξ ++ᶜ (Γ' ++ᶜ Θ)) ⊢C⦂ C
+wkᶜ ec Γ' Θ M = C-renameᴬ (wk-ren-ctx ec Γ' Θ) M
