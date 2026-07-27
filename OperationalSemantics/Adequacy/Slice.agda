@@ -47,7 +47,7 @@ open Slice public
 
 -- The renaming a slice licenses.
 
-slice-ren : ∀ {St ρ St' ρ'} → Slice St ρ St' ρ' → Ren (toCtx St ⟨ ρ ⟩) (toCtx St' ⟨ ρ' ⟩)
+slice-ren : ∀ {St ρ St' ρ'} → Slice St ρ St' ρ' → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St' ⟨ ρ' ⟩)
 slice-ren (slice e b) = suc-comp-ren e b
 
 -- Identity: no extension, nothing accumulated.
@@ -65,7 +65,7 @@ slice-unit (slice e b) p = slice e (≾ᵣ-trans b p)
 
 -- At the unit lock the slice is a plain renaming `toCtx St → toCtx St'`.
 
-slice-renᵘ : ∀ {St St'} → Slice St uᵣ St' uᵣ → Ren (toCtx St) (toCtx St')
+slice-renᵘ : ∀ {St St'} → Slice St uᵣ St' uᵣ → Ren [] (toCtx St) (toCtx St')
 slice-renᵘ q = ⟨⟩-η-ren ∘ʳ slice-ren q ∘ʳ ⟨⟩-η⁻¹-ren
 
 slice-val : ∀ {St St' A} → Slice St uᵣ St' uᵣ → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
@@ -84,7 +84,7 @@ slice-under q = C-rename (cong-∷-ren (slice-renᵘ q))
 -- to be ready at `St'`. This is the shape of `UNBOX`'s premise, hence what
 -- `unbox-lookup` consumes.
 
-unbox-ren : ∀ {St ρ St'} → Slice St ρ St' uᵣ → Ren (toCtx St ⟨ ρ ⟩) (toCtx St')
+unbox-ren : ∀ {St ρ St'} → Slice St ρ St' uᵣ → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St')
 unbox-ren q = ⟨⟩-η-ren ∘ʳ slice-ren q
 
 -- Resuming a continuation guarded by `ρ` at a later state: transport it along
@@ -212,7 +212,7 @@ suc-comp-ren-irr e b b' rewrite ≾ᵣ-irrelevant b b' = ≐ʳ-refl
 -- A grade relaxation commutes past the two renamings `suc-comp-ren` inserts.
 
 ⟨⟩-μ-≤-comm : ∀ {Γ ρ ρ₁ ρ₂} → (p : ρ₂ ≾ᵣ ρ₁) → (p' : ρ ·ᵣ ρ₂ ≾ᵣ ρ ·ᵣ ρ₁)
-            → (⟨⟩-μ-ren {Γ = Γ} {ρ = ρ} {ρ' = ρ₂} ∘ʳ ⟨⟩-≤-ren p')
+            → (⟨⟩-μ-ren {Δ = Γ} {ρ = ρ} {ρ' = ρ₂} ∘ʳ ⟨⟩-≤-ren p')
             ≐ʳ (⟨⟩-≤-ren p ∘ʳ ⟨⟩-μ-ren)
 ⟨⟩-μ-≤-comm p p' = mk≐ʳ go
   where
@@ -220,7 +220,7 @@ suc-comp-ren-irr e b b' rewrite ≾ᵣ-irrelevant b b' = ≐ʳ-refl
     go (Tl-⟨⟩ x) = refl
 
 wk-≤-comm : ∀ {Γ A ρ₁ ρ₂} → (p : ρ₂ ≾ᵣ ρ₁)
-          → (cong-⟨⟩-ren {Γ = Γ} {ρ = ρ₂} (wk-ren {A = A}) ∘ʳ ⟨⟩-≤-ren p)
+          → (cong-⟨⟩-ren {Δ = Γ} {ρ = ρ₂} (wk-ren {A = A}) ∘ʳ ⟨⟩-≤-ren p)
           ≐ʳ (⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren)
 wk-≤-comm p = mk≐ʳ go
   where
@@ -307,7 +307,7 @@ suc-comp-ren-∘-≐ e (∷-suc V e') b b₁ b₂ =
 -- Lifting it to `slice-renᵘ`: the two copies leave a `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
 -- in the middle, which is the identity up to `_≐ʳ_`.
 
-⟨⟩-η-cancel : ∀ {Γ} → (⟨⟩-η⁻¹-ren {Γ = Γ} ∘ʳ ⟨⟩-η-ren) ≐ʳ id-ren
+⟨⟩-η-cancel : ∀ {Γ} → (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-η-ren) ≐ʳ id-ren
 ⟨⟩-η-cancel = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
@@ -373,11 +373,11 @@ suc-comp-ren-tgt (∷-suc V e)  b x =
   cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (≤ₛ-embed-∘ e e' x)
 
 ⟨⟩-η-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
-         → var-tgt (⟨⟩-η-ren {Γ = Γ}) (Tl-⟨⟩ x) ≡ (σ , x)
+         → var-tgt (⟨⟩-η-ren {Δ = Γ}) (Tl-⟨⟩ x) ≡ (σ , x)
 ⟨⟩-η-tgt x = refl
 
 ⟨⟩-η⁻¹-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
-           → var-tgt (⟨⟩-η⁻¹-ren {Γ = Γ}) x ≡ (σ ·ᵣ uᵣ , Tl-⟨⟩ x)
+           → var-tgt (⟨⟩-η⁻¹-ren {Δ = Γ}) x ≡ (σ ·ᵣ uᵣ , Tl-⟨⟩ x)
 ⟨⟩-η⁻¹-tgt Hd        = refl
 ⟨⟩-η⁻¹-tgt (Tl-∷ x)  = refl
 ⟨⟩-η⁻¹-tgt (Tl-⟨⟩ x) = refl
@@ -506,9 +506,9 @@ seq-steps (r ◅ rs) N
 -- two proofs of the equality agree, so the clauses reached are the original ones
 -- transported once.
 
-Cl : (B : VType) → (op : Op) → (ε₃ : E) → (Γ' : Ctx) → Ctx → Set
-Cl B op ε₃ Γ' Γ₀ =
-  Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+Cl : (B : VType) → (op : Op) → (ε₃ : E) → Ctx → Set
+Cl B op ε₃ Γ₀ =
+  Γ₀ ∷ type-of-gtype (param op)
     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
   ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)
 
@@ -523,39 +523,37 @@ subst² refl refl refl v = refl
 handle-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
              → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
-             → (H : (op : Op) → (ε₃ : E) → (Γ' : Ctx)
-                  → Cl B op ε₃ Γ' (toCtx St ᴱ))
+             → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ))
              → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
              ---------------------------------------------------------------
-             → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → (Γ' : Ctx)
-                        → Cl B op ε₃ Γ' (toCtx St₁ ᴱ)) ]
+             → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ᴱ)) ]
                Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
                  (⟨ St , handle M `with H `in N ⟩ ↝*
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
-               × (∀ op ε₃ Γ' → H₁ op ε₃ Γ'
-                    ≡ subst (Cl B op ε₃ Γ') (toCtxᴱ-≡ St St₁) (H op ε₃ Γ'))
+               × (∀ op ε₃ → H₁ op ε₃
+                    ≡ subst (Cl B op ε₃) (toCtxᴱ-≡ St St₁) (H op ε₃))
                × (N₁ ≐ᶜ C-rename (cong-∷-ren (slice-ren (steps-slice rs))) N)
 
 handle-steps {B = B} {St = St} ε* H N =
     H , N , ε*
-  , (λ op ε₃ Γ' →
-       cong (λ e → subst (Cl B op ε₃ Γ') e (H op ε₃ Γ'))
+  , (λ op ε₃ →
+       cong (λ e → subst (Cl B op ε₃) e (H op ε₃))
             (uip {p = refl} {q = toCtxᴱ-≡ St St}))
   , ≐ᶜ-sym (C-rename-id-≐ (cong-∷-ren-id-≐ (⟨⟩-≤-ren-id-≐ _)) N)
 
 handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩} r rs) H N
   with handle-steps rs
-         (λ op ε₃ Γ' →
-            subst (Cl B op ε₃ Γ') (toCtxᴱ-≡ St St') (H op ε₃ Γ'))
+         (λ op ε₃ →
+            subst (Cl B op ε₃) (toCtxᴱ-≡ St St') (H op ε₃))
          (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
                                              (step-grade-≾ r))) N)
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
     H₁ , N₁
   , HANDLE-STEP r (step-grade-≾ r) ◅ rs'
-  , (λ op ε₃ Γ' →
-       trans (eH₁ op ε₃ Γ')
+  , (λ op ε₃ →
+       trans (eH₁ op ε₃)
              (subst² (toCtxᴱ-≡ St St') (toCtxᴱ-≡ St' St₁) (toCtxᴱ-≡ St St₁)
-                     (H op ε₃ Γ')))
+                     (H op ε₃)))
   , ≐ᶜ-trans eN₁
       (≐ᶜ-trans
         (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-ren (steps-slice rs)))
@@ -655,7 +653,7 @@ unbox-ren-resume-≐ {ρ} q = mk≐ʳ go
 castᵛˢ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
 castᵛˢ refl V = V
 
-castʳˢ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren (Δ ⟨ ρ ⟩) Γ' → Ren (Δ ⟨ ρ ⟩) Γ
+castʳˢ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren [] (Δ ⟨ ρ ⟩) Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ
 castʳˢ refl w = w
 castᵛˢ-pair : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
             → castᵛˢ e ⦉ V , W ⦊ ≡ ⦉ castᵛˢ e V , castᵛˢ e W ⦊
@@ -670,7 +668,7 @@ lookup-ren′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
             → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
             → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ Γs) ≡ σ)
             → (rel : σ ≾ᵣ ρ)
-            → Ren (([] ++ᶜ Γf) ⟨ ρ ⟩) Γ
+            → Ren [] (([] ++ᶜ Γf) ⟨ ρ ⟩) Γ
 lookup-ren′ {A} {ρ} Γf Γs eq h rel =
      eq-ren eq
   ∘ʳ eq-ren (sym (++ᶜ-assoc Γf ([] ∷ [ ρ ] A) Γs))
@@ -727,7 +725,7 @@ lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
 
 -- Transporting the renaming an `unbox` consults relocates the cell it names.
 
-unbox-tgt-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren (Δ ⟨ ρ ⟩) Γ')
+unbox-tgt-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren [] (Δ ⟨ ρ ⟩) Γ')
                → (V : Δ ⊢V⦂ [ ρ ] A)
                → unbox-tgt (castʳˢ e w') V
                ≡ (proj₁ (unbox-tgt w' V)
@@ -736,7 +734,7 @@ unbox-tgt-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren (Δ ⟨
 unbox-tgt-cast refl w' V = refl
 
 unbox-lookup-≡ : ∀ {A ρ Δ} → (St : 𝕊 [])
-               → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
+               → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
                → unbox-lookup St w V
                ≡ lookup-body St (unbox-tgt w V) (proj₂ (proj₂ (unbox⇒var w V)))
 unbox-lookup-≡ St w V = refl
@@ -755,7 +753,7 @@ lookup-body-≡ St refl rel rel' =
 -- consulted renaming with that equality.
 
 unbox-lookup-cast-val : ∀ {Δ Δ' A ρ} → (St : 𝕊 []) → (e : Δ' ≡ Δ)
-                      → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ' ⊢V⦂ [ ρ ] A)
+                      → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ' ⊢V⦂ [ ρ ] A)
                       → unbox-lookup St w (castᵛˢ e V)
                       ≐ᵛ unbox-lookup St (w ∘ʳ cong-⟨⟩-ren (eq-ren e)) V
 unbox-lookup-cast-val St refl w V =
@@ -853,7 +851,7 @@ split-lookup-tgt (Tl-⟨⟩ {ρ = ρ₁} z) =
 -- The renaming `unbox-var` stores.
 
 unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → Ren ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
+              → Ren [] ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
 unbox-var-ren z rel =
      eq-ren (split-≡ (split-pf z))
   ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)

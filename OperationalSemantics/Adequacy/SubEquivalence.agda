@@ -198,20 +198,20 @@ mutual
   sub-≐ᶜ {A = A} x eW (handle-≐ {B = B} eM eH eN) with eternal? A
   ... | no ¬et =
     handle-≐ (sub-≐ᶜ x eW eM)
-      (λ op ε'' Γ' →
+      (λ op ε'' →
          substᶜ-≐′
-           (λ Γ₀ → Γ₀ ++ᶜ Γ' ∷ type-of-gtype (param op)
+           (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
                      ∷ [ mapᵉ (op-grade op) ]
                          (type-of-gtype (arity op) ⇒ B ‼ ε''))
-           (ᴱ-drop-split ¬et x) (eH op ε'' Γ'))
+           (ᴱ-drop-split ¬et x) (eH op ε''))
       (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ x)) eW eN)
   ... | yes et =
     handle-≐ (sub-≐ᶜ x eW eM)
-      (λ op ε'' Γ' →
+      (λ op ε'' →
          substᶜ-≐ _
            (sub-≐ᶜ (split→∈ (split-++ʳ (∈-ᴱ-split et x) _))
                    (substᵛ-≐ _ (eternal-val-restrict-cong et eW))
-                   (eH op ε'' Γ')))
+                   (eH op ε'')))
       (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ x)) eW eN)
 
   -- the underlying resource variable is recovered by `unbox⇒var`, pushed through
@@ -232,7 +232,7 @@ mutual
 -- the three nested `with`s stay local — callers then reason with `rvar-tgt` and
 -- `unbox-tgt` alone. The grade bound is arbitrary, `_≐ᶜ_` not seeing it.
 
-sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
           → (M : Γ ∷ A ⊢C⦂ C) → (x : A₀ ∈[ τ ] Γ) → (W : split-l x ⊢V⦂ A₀)
           → (rel : proj₁ (rvar-tgt (proj₂ (unbox-tgt w V)) x W) ≾ᵣ ρ)
           → ((unbox w V M) [ x ↦ W ]c)

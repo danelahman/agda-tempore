@@ -64,15 +64,15 @@ postulate
 
   FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
             → (M : Γ ⊢C⦂ A ‼ ε₁)
-            → (H : (op : Op) → (ε₃ : E) → (Γ' : Ctx) → Cl B op ε₃ Γ' (Γ ᴱ))
+            → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (Γ ᴱ))
             → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
             → Comp' A ε₁ St (env-C γ M)
-            → (∀ {St'} {op : Op} {ε₃ : E} {Γ' : Ctx}
-                 → (γ' : Env St' (Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            → (∀ {St'} {op : Op} {ε₃ : E}
+                 → (γ' : Env St' (Γ ᴱ ∷ type-of-gtype (param op)
                                     ∷ [ mapᵉ (op-grade op) ]
                                         (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
                  → Rel-Env γ'
-                 → Comp' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃ Γ')))
+                 → Comp' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
             → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
                  → Comp' B ε₂ St' (env-C γ' N))
             --------------------------------------------------------------
@@ -108,7 +108,7 @@ postulate
   -- variable to.
 
   FL-unbox : ∀ {St Γ Δ₀ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
-           → (w : Ren (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+           → (w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
            → (M : Γ ∷ A ⊢C⦂ D ‼ ε)
            → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
                 → Comp' D ε St' (env-C γ' M))
@@ -253,7 +253,7 @@ mutual
 
   FL-C γ pγ (handle M `with H `in N) =
     FL-handle γ pγ M H N (FL-C γ pγ M)
-      (λ γ' pγ' → FL-C γ' pγ' (H _ _ _)) (λ γ' pγ' → FL-C γ' pγ' N)
+      (λ γ' pγ' → FL-C γ' pγ' (H _ _)) (λ γ' pγ' → FL-C γ' pγ' N)
 
   FL-C γ pγ (match V `in M) =
     FL-match γ pγ V M (FL-V γ pγ V) (λ γ' pγ' → FL-C γ' pγ' M)

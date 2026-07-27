@@ -202,7 +202,7 @@ store-∅ x f = ⊥-elim (not-in-empty-ctx x)
 -- the same cell — and the recovered grade bound reaches only a `⟨⟩-≤-ren`.
 
 unbox-lookup-val-≐ : ∀ {A ρ Δ} {St : 𝕊 []}
-                   → (w : Ren (Δ ⟨ ρ ⟩) (toCtx St))
+                   → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St))
                    → {V V' : Δ ⊢V⦂ [ ρ ] A} → V ≐ᵛ V'
                    → unbox-lookup St w V ≐ᵛ unbox-lookup St w V'
 
@@ -617,31 +617,30 @@ postulate
 
 -- HANDLING
 --
--- As sequencing, plus a clause premise. `HANDLE-OP` fires the clause at
--- `Γ' := toCtx St₁`, substituting the operation's parameter and then the boxed
--- resumption, so the clause premise is stated at exactly that instance: the
--- ambient eternal part of a state context is empty (`toCtxᴱ-[]`), which is what
--- makes the instantiated clause live over `toCtx St₁` and so be a `Comp'`.
+-- As sequencing, plus a clause premise. `HANDLE-OP` includes the clause into the
+-- context it fires at by the renaming `ᴱ-ren`, then substitutes the operation's
+-- parameter and the boxed resumption, so the clause premise is stated at exactly
+-- that instance; `toCtxᴱ-≡` retypes the clauses to the state the run reaches, as
+-- `handle-steps` carries them.
 --
 -- The sequel premise is slice-quantified for the same reason as in `seq-Comp`:
 -- `HANDLE-OP` leaves it under a residual lock, and composing slices is what
 -- reaches it.
 --
--- The clause premise carries a `Store St₁`. It has to: the clause family is an
--- arbitrary function of `Γ'` (`Language.agda:153` imposes no naturality), so at
--- `Γ' := toCtx St₁` its body may use the state's own variables, and the
--- fundamental lemma can only run on it with the identity environment `⌊ St₁ ⌋`,
--- whose reducibility *is* that store.
+-- The clause premise carries a `Store St₁`. A clause closes over `Γ ᴱ` alone, so
+-- at a state it has no free state variable; but the only environment reaching a
+-- clause's context is `renᵉ ⌊ St₁ ⌋ (ᴱ-ren _)`, whose reducibility *is* that
+-- store. An `Env St []` constructor would remove the premise.
 --
--- Discharging the premise is therefore what the fundamental lemma can do; but
--- `handle-Comp` itself cannot yet be proved, because nothing propagates a store
--- along a run: `Comp` records the state reached and says nothing about its
--- cells, and store-reducibility is not a consequence of the run alone — it comes
--- from the boxed values having been reducible, which only the fundamental lemma
--- knows. Adding a `Store` field to `comp-ret`/`comp-op` does not work either:
--- `Val`'s Kripke clauses would then have to *demand* a store at the later
--- state, and `Store` is defined by quantifying `Val` at the state's cell types,
--- so neither the recursion on the type nor strict positivity survives.
+-- Discharging the premise is what the fundamental lemma can do; but `handle-Comp`
+-- itself cannot yet be proved, because nothing propagates a store along a run:
+-- `Comp` records the state reached and says nothing about its cells, and
+-- store-reducibility is not a consequence of the run alone — it comes from the
+-- boxed values having been reducible, which only the fundamental lemma knows.
+-- Adding a `Store` field to `comp-ret`/`comp-op` does not work either: `Val`'s
+-- Kripke clauses would then have to *demand* a store at the later state, and
+-- `Store` is defined by quantifying `Val` at the state's cell types, so neither
+-- the recursion on the type nor strict positivity survives.
 --
 -- Induction on the scrutinee's `Comp` derivation: `comp-ret` fires `HANDLE-RET`,
 -- `comp-op` fires `HANDLE-OP` and recurses on the `pk` field, the clauses being
@@ -649,7 +648,7 @@ postulate
 
   handle-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
               → {M : toCtx St ⊢C⦂ A ‼ ε₁}
-              → (H : (op : Op) → (ε₃ : E) → (Γ' : Ctx) → Cl B op ε₃ Γ' (toCtx St ᴱ))
+              → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ))
               → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
               → Comp' A ε₁ St M
               → (∀ {St₁ : 𝕊 []} {op : Op} {ε₃ : E}
@@ -661,14 +660,8 @@ postulate
                    → Val ([ mapᵉ (op-grade op) ]
                             (type-of-gtype (arity op) ⇒ B ‼ ε₃)) St₁ K
                    → Comp' B (op-grade op ·ₑ ε₃) St₁
-                       (((subst
-                            (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                                       ∷ [ mapᵉ (op-grade op) ]
-                                           (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-                                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
-                            (trans (cong (_++ᶜ toCtx St₁) (toCtxᴱ-[] St))
-                                   ++ᶜ-identityˡ)
-                            (H op ε₃ (toCtx St₁)))
+                       (((C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₁))))
+                            (subst (Cl B op ε₃) (toCtxᴱ-≡ St St₁) (H op ε₃)))
                           [ Tl-∷ Hd ↦ W ]c) [ Hd ↦ K ]c))
               → (∀ {St₁ : 𝕊 []} → (q : Slice St (mapᵉ ε₁) St₁ uᵣ)
                    → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V

@@ -47,13 +47,13 @@ open import Syntax.Types      Spec
 Tgt : Ctx → VType → Set
 Tgt Γ' A = Σ[ ρ' ∈ R ] A ∈[ ρ' ] Γ'
 
-var-tgt : ∀ {Γ Γ' A ρ} → Ren Γ Γ' → A ∈[ ρ ] Γ → Tgt Γ' A
+var-tgt : ∀ {Γ Γ' A ρ} → Ren [] Γ Γ' → A ∈[ ρ ] Γ → Tgt Γ' A
 var-tgt r x = proj₁ (var-rename r x) , proj₂ (proj₂ (var-rename r x))
 
 -- The same, at an already-located variable: this is what makes `var-tgt` of a
 -- composite the composite of `var-tgt`s, definitionally.
 
-var-tgt′ : ∀ {Γ' Γ'' A} → Ren Γ' Γ'' → Tgt Γ' A → Tgt Γ'' A
+var-tgt′ : ∀ {Γ' Γ'' A} → Ren [] Γ' Γ'' → Tgt Γ' A → Tgt Γ'' A
 var-tgt′ r (ρ' , y) = var-tgt r y
 
 -- Pushing a `Tgt` under one more binder, resp. one more lock. Named rather than
@@ -100,19 +100,19 @@ infix 4 _≐ʳ_
 -- A record, not a function type: the statements below are used at renamings
 -- Agda has to *infer*, which needs the relation to be rigid.
 
-record _≐ʳ_ {Γ Γ'} (r r' : Ren Γ Γ') : Set where
+record _≐ʳ_ {Γ Γ'} (r r' : Ren [] Γ Γ') : Set where
   constructor mk≐ʳ
   field at : ∀ {A ρ} → (x : A ∈[ ρ ] Γ) → var-tgt r x ≡ var-tgt r' x
 
 open _≐ʳ_ public
 
-≐ʳ-refl : ∀ {Γ Γ'} {r : Ren Γ Γ'} → r ≐ʳ r
+≐ʳ-refl : ∀ {Γ Γ'} {r : Ren [] Γ Γ'} → r ≐ʳ r
 ≐ʳ-refl = mk≐ʳ (λ x → refl)
 
-≐ʳ-sym : ∀ {Γ Γ'} {r r' : Ren Γ Γ'} → r ≐ʳ r' → r' ≐ʳ r
+≐ʳ-sym : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → r ≐ʳ r' → r' ≐ʳ r
 ≐ʳ-sym h = mk≐ʳ (λ x → sym (at h x))
 
-≐ʳ-trans : ∀ {Γ Γ'} {r r' r'' : Ren Γ Γ'} → r ≐ʳ r' → r' ≐ʳ r'' → r ≐ʳ r''
+≐ʳ-trans : ∀ {Γ Γ'} {r r' r'' : Ren [] Γ Γ'} → r ≐ʳ r' → r' ≐ʳ r'' → r ≐ʳ r''
 ≐ʳ-trans h h' = mk≐ʳ (λ x → trans (at h x) (at h' x))
 
 -- COMPOSITION
@@ -120,7 +120,7 @@ open _≐ʳ_ public
 -- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₁` and then with `r₂`,
 -- so all three laws below hold at the level of `var-tgt` by computation.
 
-∘ʳ-≐ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren Γ' Γ''} {r₁ r₁' : Ren Γ Γ'}
+∘ʳ-≐ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren [] Γ' Γ''} {r₁ r₁' : Ren [] Γ Γ'}
      → r₂ ≐ʳ r₂' → r₁ ≐ʳ r₁'
      -------------------------------
      → (r₂ ∘ʳ r₁) ≐ʳ (r₂' ∘ʳ r₁')
@@ -128,15 +128,15 @@ open _≐ʳ_ public
   mk≐ʳ (λ x → trans (cong (var-tgt′ r₂) (at h₁ x)) (at h₂ _))
 
 ∘ʳ-assoc-≐ : ∀ {Γ Γ' Γ'' Γ'''}
-           → (r₃ : Ren Γ'' Γ''') → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+           → (r₃ : Ren [] Γ'' Γ''') → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
            ----------------------------------------------------------
            → ((r₃ ∘ʳ r₂) ∘ʳ r₁) ≐ʳ (r₃ ∘ʳ (r₂ ∘ʳ r₁))
 ∘ʳ-assoc-≐ r₃ r₂ r₁ = mk≐ʳ (λ x → refl)
 
-∘ʳ-identityˡ-≐ : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (id-ren ∘ʳ r) ≐ʳ r
+∘ʳ-identityˡ-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (id-ren ∘ʳ r) ≐ʳ r
 ∘ʳ-identityˡ-≐ r = mk≐ʳ (λ x → refl)
 
-∘ʳ-identityʳ-≐ : ∀ {Γ Γ'} → (r : Ren Γ Γ') → (r ∘ʳ id-ren) ≐ʳ r
+∘ʳ-identityʳ-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (r ∘ʳ id-ren) ≐ʳ r
 ∘ʳ-identityʳ-≐ r = mk≐ʳ (λ x → refl)
 
 -- GRADE BOUNDS ARE INVISIBLE TO `_≐ʳ_`
@@ -145,7 +145,7 @@ open _≐ʳ_ public
 -- fixed by the renaming's indices, so the proof is not observable.
 
 ⟨⟩-≤-ren-≐ : ∀ {Γ ρ ρ'} → (p p' : ρ' ≾ᵣ ρ)
-           → ⟨⟩-≤-ren {Γ = Γ} p ≐ʳ ⟨⟩-≤-ren p'
+           → ⟨⟩-≤-ren {Δ = Γ} p ≐ʳ ⟨⟩-≤-ren p'
 ⟨⟩-≤-ren-≐ p p' = mk≐ʳ go
   where
     go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
@@ -254,7 +254,7 @@ grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ⟨ ρ' ⟩) =
 -- image: the counterpart of `cong-ren-tgt-r`, and what makes the pushing
 -- renaming family natural.
 
-cong-ren-tgt-l : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ)
+cong-ren-tgt-l : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ)
                → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜˡ Δ y)
                ≡ (grade-++ᶜˡ (proj₁ (var-tgt r y)) Δ
                  , ∈-++ᶜˡ Δ (proj₂ (var-tgt r y)))
@@ -271,7 +271,7 @@ cong-ren-tgt-l r (Δ ⟨ ρ' ⟩) y =
 -- composition up to it (`cong-∷-ren (r ∘ʳ r')` and `cong-∷-ren r ∘ʳ cong-∷-ren r'`
 -- are distinct renamings acting alike).
 
-cong-∷-ren-≐ : ∀ {Γ Γ' A} {r r' : Ren Γ Γ'}
+cong-∷-ren-≐ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'}
              → r ≐ʳ r' → cong-∷-ren {A = A} r ≐ʳ cong-∷-ren r'
 cong-∷-ren-≐ h = mk≐ʳ go
   where
@@ -279,20 +279,20 @@ cong-∷-ren-≐ h = mk≐ʳ go
     go Hd       = refl
     go (Tl-∷ x) = cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (at h x)
 
-cong-⟨⟩-ren-≐ : ∀ {Γ Γ' ρ} {r r' : Ren Γ Γ'}
+cong-⟨⟩-ren-≐ : ∀ {Γ Γ' ρ} {r r' : Ren [] Γ Γ'}
               → r ≐ʳ r' → cong-⟨⟩-ren {ρ = ρ} r ≐ʳ cong-⟨⟩-ren r'
 cong-⟨⟩-ren-≐ {ρ = ρ} h = mk≐ʳ go
   where
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go (Tl-⟨⟩ x) = cong (λ z → proj₁ z ·ᵣ ρ , Tl-⟨⟩ (proj₂ z)) (at h x)
 
-cong-ren-≐ : ∀ {Γ Γ'} {r r' : Ren Γ Γ'} → (Γ₀ : Ctx)
+cong-ren-≐ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → (Γ₀ : Ctx)
            → r ≐ʳ r' → cong-ren {Γ'' = Γ₀} r ≐ʳ cong-ren r'
 cong-ren-≐ []         h = h
 cong-ren-≐ (Γ₀ ∷ A)   h = cong-∷-ren-≐ (cong-ren-≐ Γ₀ h)
 cong-ren-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-≐ (cong-ren-≐ Γ₀ h)
 
-cong-∷-ren-∘-≐ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+cong-∷-ren-∘-≐ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
                → cong-∷-ren {A = A} (r₂ ∘ʳ r₁)
                ≐ʳ (cong-∷-ren r₂ ∘ʳ cong-∷-ren r₁)
 cong-∷-ren-∘-≐ r₂ r₁ = mk≐ʳ go
@@ -301,7 +301,7 @@ cong-∷-ren-∘-≐ r₂ r₁ = mk≐ʳ go
     go Hd       = refl
     go (Tl-∷ x) = refl
 
-cong-⟨⟩-ren-∘-≐ : ∀ {Γ Γ' Γ'' ρ} → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+cong-⟨⟩-ren-∘-≐ : ∀ {Γ Γ' Γ'' ρ} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
                 → cong-⟨⟩-ren {ρ = ρ} (r₂ ∘ʳ r₁)
                 ≐ʳ (cong-⟨⟩-ren r₂ ∘ʳ cong-⟨⟩-ren r₁)
 cong-⟨⟩-ren-∘-≐ {ρ = ρ} r₂ r₁ = mk≐ʳ go
@@ -310,7 +310,7 @@ cong-⟨⟩-ren-∘-≐ {ρ = ρ} r₂ r₁ = mk≐ʳ go
     go (Tl-⟨⟩ x) = refl
 
 cong-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (Γ₀ : Ctx)
-             → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+             → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
              → cong-ren {Γ'' = Γ₀} (r₂ ∘ʳ r₁)
              ≐ʳ (cong-ren {Γ'' = Γ₀} r₂ ∘ʳ cong-ren {Γ'' = Γ₀} r₁)
 cong-ren-∘-≐ []         r₂ r₁ = ≐ʳ-refl
@@ -329,13 +329,13 @@ cong-ren-∘-≐ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
 -- what `_≐ᶜ_` compares below.
 ------------------------------------------------------------------------
 
-unbox-tgt : ∀ {Γ A ρ Δ} → Ren (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
+unbox-tgt : ∀ {Γ A ρ Δ} → Ren [] (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
 unbox-tgt w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
 
 -- `_≐ʳ_`-equal renamings name the same cell: the boxed value is seen only as a
 -- variable (`grad-typ⇒var`), which both consult alike.
 
-unbox-tgt-≐ : ∀ {Γ A ρ Δ} {w w' : Ren (Δ ⟨ ρ ⟩) Γ}
+unbox-tgt-≐ : ∀ {Γ A ρ Δ} {w w' : Ren [] (Δ ⟨ ρ ⟩) Γ}
             → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
             → unbox-tgt w V ≡ unbox-tgt w' V
 unbox-tgt-≐ hw V with grad-typ⇒var V
@@ -344,7 +344,7 @@ unbox-tgt-≐ hw V with grad-typ⇒var V
 -- Renaming an `unbox` relocates its cell — definitionally, since `var-rename`
 -- of a composite is the composite.
 
-unbox-tgt-∘ : ∀ {Γ Γ' A ρ Δ} → (r : Ren Γ Γ') → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+unbox-tgt-∘ : ∀ {Γ Γ' A ρ Δ} → (r : Ren [] Γ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
             → (V : Δ ⊢V⦂ [ ρ ] A)
             → unbox-tgt (r ∘ʳ w) V ≡ var-tgt′ r (unbox-tgt w V)
 unbox-tgt-∘ r w V with grad-typ⇒var V
@@ -417,14 +417,14 @@ mutual
               → M ≐ᶜ M' → delay τ M ≐ᶜ delay τ M'
 
     handle-≐  : ∀ {A B ε ε'} {M M' : Γ ⊢C⦂ A ‼ ε}
-                  {H H' : (op : Op) → (ε'' : E) → (Γ' : Ctx) →
-                            Γ ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+                  {H H' : (op : Op) → (ε'' : E) →
+                            Γ ᴱ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ]
                                   (type-of-gtype (arity op) ⇒ B ‼ ε'')
                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
                   {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
               → M ≐ᶜ M'
-              → (∀ op ε'' Γ' → H op ε'' Γ' ≐ᶜ H' op ε'' Γ')
+              → (∀ op ε'' → H op ε'' ≐ᶜ H' op ε'')
               → N ≐ᶜ N'
               → (handle M `with H `in N) ≐ᶜ (handle M' `with H' `in N')
 
@@ -434,7 +434,7 @@ mutual
     -- value it stores: substitution renormalises those (`unbox⇒var` then
     -- `unbox-var`), so demanding they agree would make substitution lemmas false.
 
-    unbox-≐   : ∀ {A C ρ Δ Δ'} {w : Ren (Δ ⟨ ρ ⟩) Γ} {w' : Ren (Δ' ⟨ ρ ⟩) Γ}
+    unbox-≐   : ∀ {A C ρ Δ Δ'} {w : Ren [] (Δ ⟨ ρ ⟩) Γ} {w' : Ren [] (Δ' ⟨ ρ ⟩) Γ}
                   {V : Δ ⊢V⦂ [ ρ ] A} {V' : Δ' ⊢V⦂ [ ρ ] A}
                   {M M' : Γ ∷ A ⊢C⦂ C}
               → unbox-tgt w V ≡ unbox-tgt w' V' → M ≐ᶜ M'
@@ -466,7 +466,7 @@ mutual
   ≐ᶜ-refl (perform op V M)        = perform-≐ (≐ᵛ-refl V) (≐ᶜ-refl M)
   ≐ᶜ-refl (delay τ M)             = delay-≐ (≐ᶜ-refl M)
   ≐ᶜ-refl (handle M `with H `in N) =
-    handle-≐ (≐ᶜ-refl M) (λ op ε'' Γ' → ≐ᶜ-refl (H op ε'' Γ')) (≐ᶜ-refl N)
+    handle-≐ (≐ᶜ-refl M) (λ op ε'' → ≐ᶜ-refl (H op ε'')) (≐ᶜ-refl N)
   ≐ᶜ-refl (unbox w V M)           = unbox-≐ refl (≐ᶜ-refl M)
   ≐ᶜ-refl (box V M)               = box-≐ (≐ᵛ-refl V) (≐ᶜ-refl M)
   ≐ᶜ-refl (coerce p M)            = coerce-≐ (≐ᶜ-refl M)
@@ -495,7 +495,7 @@ mutual
   ≐ᶜ-trans (delay-≐ eM)       (delay-≐ eM')       = delay-≐ (≐ᶜ-trans eM eM')
   ≐ᶜ-trans (handle-≐ eM eH eN) (handle-≐ eM' eH' eN') =
     handle-≐ (≐ᶜ-trans eM eM')
-             (λ op ε'' Γ' → ≐ᶜ-trans (eH op ε'' Γ') (eH' op ε'' Γ'))
+             (λ op ε'' → ≐ᶜ-trans (eH op ε'') (eH' op ε''))
              (≐ᶜ-trans eN eN')
   ≐ᶜ-trans (unbox-≐ hw eM)    (unbox-≐ hw' eM')   =
     unbox-≐ (trans hw hw') (≐ᶜ-trans eM eM')
@@ -521,14 +521,14 @@ mutual
   ≐ᶜ-sym (perform-≐ eV eM)  = perform-≐ (≐ᵛ-sym eV) (≐ᶜ-sym eM)
   ≐ᶜ-sym (delay-≐ eM)       = delay-≐ (≐ᶜ-sym eM)
   ≐ᶜ-sym (handle-≐ eM eH eN) =
-    handle-≐ (≐ᶜ-sym eM) (λ op ε'' Γ' → ≐ᶜ-sym (eH op ε'' Γ')) (≐ᶜ-sym eN)
+    handle-≐ (≐ᶜ-sym eM) (λ op ε'' → ≐ᶜ-sym (eH op ε'')) (≐ᶜ-sym eN)
   ≐ᶜ-sym (unbox-≐ hw eM)    = unbox-≐ (sym hw) (≐ᶜ-sym eM)
   ≐ᶜ-sym (coerce-≐ eM)      = coerce-≐ (≐ᶜ-sym eM)
   ≐ᶜ-sym (box-≐ eV eM)      = box-≐ (≐ᵛ-sym eV) (≐ᶜ-sym eM)
 
 -- The eternal restriction is compositional by definition.
 
-restrict-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+restrict-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
                  → restrict-ren (r₂ ∘ʳ r₁)
                  ≐ʳ (restrict-ren r₂ ∘ʳ restrict-ren r₁)
 restrict-ren-∘-≐ r₂ r₁ = ≐ʳ-refl
@@ -629,7 +629,7 @@ eternal?-no {A} ¬et with eternal? A
 
 -- Restricting commutes with reflection. Induction on the renaming.
 
-restrict-tgt⁻ : ∀ {Γ Γ'} → (r : Ren Γ Γ') → ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
+restrict-tgt⁻ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
               → ∈-ᴱ⁻′ Γ' (var-tgt (restrict-ren r) x)
               ≡ var-tgt′ r (∈-ᴱ⁻ Γ x)
 
@@ -675,9 +675,13 @@ restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) Hd       | yes _ = refl
 restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) (Tl-∷ x) | yes _ = refl
 restrict-tgt⁻ (⟨⟩-ext-ren {A = B} etB) x        | no ¬etB = ⊥-elim (¬etB etB)
 
+-- the restriction drops the introduced lock, so both sides are the reflected
+-- variable pushed under it
+restrict-tgt⁻ (⟨⟩-ext-ctx _ _) x = refl
+
 -- The eternal restriction respects acting alike.
 
-restrict-ren-≐ : ∀ {Γ Γ'} {r r' : Ren Γ Γ'}
+restrict-ren-≐ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'}
                → r ≐ʳ r' → restrict-ren r ≐ʳ restrict-ren r'
 
 restrict-ren-≐ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
@@ -698,7 +702,7 @@ restrict-ren-≐ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
 -- `_≐ᵛ_`. Stated at an arbitrary bound so that the caller may present the
 -- result with whichever bound its own typing supplies.
 
-var-ren-≐ : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+var-ren-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
           → (f  : ¬ Eternal A → ρ ≾ᵣ uᵣ)
           → (f' : ¬ Eternal A → proj₁ (var-tgt r x) ≾ᵣ uᵣ)
           → V-rename r (var f x) ≐ᵛ var f' (proj₂ (var-tgt r x))
@@ -707,7 +711,7 @@ var-ren-≐ r x f f' with var-rename r x
 
 -- The same with the target supplied, for callers that have computed it.
 
-var-ren-tgt-≐ : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → (x : A ∈[ ρ ] Γ)
+var-ren-tgt-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
               → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → {t : Tgt Γ' A}
               → var-tgt r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
               → V-rename r (var f x) ≐ᵛ var f' (proj₂ t)
@@ -723,7 +727,7 @@ var-ren-tgt-≐ r x f refl f' = var-ren-≐ r x f f'
 
 mutual
 
-  V-rename-≐ : ∀ {Γ Γ' A} {r r' : Ren Γ Γ'} → r ≐ʳ r'
+  V-rename-≐ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
              → (V : Γ ⊢V⦂ A) → V-rename r V ≐ᵛ V-rename r' V
 
   V-rename-≐ {r = r} {r' = r'} h (var f x)
@@ -734,7 +738,7 @@ mutual
   V-rename-≐ h ⦉ V , W ⦊   = pair-≐ (V-rename-≐ h V) (V-rename-≐ h W)
   V-rename-≐ h (lam M)    = lam-≐ (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
 
-  C-rename-≐ : ∀ {Γ Γ' C} {r r' : Ren Γ Γ'} → r ≐ʳ r'
+  C-rename-≐ : ∀ {Γ Γ' C} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
              → (M : Γ ⊢C⦂ C) → C-rename r M ≐ᶜ C-rename r' M
 
   C-rename-≐ h (return V) = return-≐ (V-rename-≐ h V)
@@ -750,8 +754,8 @@ mutual
     delay-≐ (C-rename-≐ (cong-ren-≐ ([] ⟨ _ ⟩) h) M)
   C-rename-≐ h (handle M `with H `in N) =
     handle-≐ (C-rename-≐ h M)
-      (λ op ε'' Γ' →
-         C-rename-≐ (cong-ren-≐ (_ ∷ _ ∷ _) (restrict-ren-≐ h)) (H op ε'' Γ'))
+      (λ op ε'' →
+         C-rename-≐ (cong-∷-ren-≐ (cong-∷-ren-≐ (restrict-ren-≐ h))) (H op ε''))
       (C-rename-≐ (cong-ren-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≐ h (unbox w V M) =
     unbox-≐ (unbox-tgt-≐ (∘ʳ-≐ h (≐ʳ-refl {r = w})) V)
@@ -769,13 +773,13 @@ mutual
 -- up to the equivalence. Induction on the term, as for `C-rename-≐`.
 ------------------------------------------------------------------------
 
-⟨⟩-≤-ren-id-≐ : ∀ {Γ ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤-ren {Γ = Γ} p ≐ʳ id-ren
+⟨⟩-≤-ren-id-≐ : ∀ {Γ ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤-ren {Δ = Γ} p ≐ʳ id-ren
 ⟨⟩-≤-ren-id-≐ p = mk≐ʳ go
   where
     go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
     go (Tl-⟨⟩ x) = refl
 
-cong-∷-ren-id-≐ : ∀ {Γ A} {r : Ren Γ Γ}
+cong-∷-ren-id-≐ : ∀ {Γ A} {r : Ren [] Γ Γ}
                 → r ≐ʳ id-ren → cong-∷-ren {A = A} r ≐ʳ id-ren
 cong-∷-ren-id-≐ h = mk≐ʳ go
   where
@@ -783,33 +787,33 @@ cong-∷-ren-id-≐ h = mk≐ʳ go
     go Hd       = refl
     go (Tl-∷ x) = cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (at h x)
 
-cong-⟨⟩-ren-id-≐ : ∀ {Γ ρ} {r : Ren Γ Γ}
+cong-⟨⟩-ren-id-≐ : ∀ {Γ ρ} {r : Ren [] Γ Γ}
                  → r ≐ʳ id-ren → cong-⟨⟩-ren {ρ = ρ} r ≐ʳ id-ren
 cong-⟨⟩-ren-id-≐ {ρ = ρ} h = mk≐ʳ go
   where
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go (Tl-⟨⟩ x) = cong (λ z → proj₁ z ·ᵣ ρ , Tl-⟨⟩ (proj₂ z)) (at h x)
 
-cong-ren-id-≐ : ∀ {Γ} {r : Ren Γ Γ} → (Γ₀ : Ctx)
+cong-ren-id-≐ : ∀ {Γ} {r : Ren [] Γ Γ} → (Γ₀ : Ctx)
               → r ≐ʳ id-ren → cong-ren {Γ'' = Γ₀} r ≐ʳ id-ren
 cong-ren-id-≐ []         h = h
 cong-ren-id-≐ (Γ₀ ∷ A)   h = cong-∷-ren-id-≐ (cong-ren-id-≐ Γ₀ h)
 cong-ren-id-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ (cong-ren-id-≐ Γ₀ h)
 
-∘ʳ-id-≐ : ∀ {Γ Γ'} {r : Ren Γ' Γ'} → (w : Ren Γ Γ')
+∘ʳ-id-≐ : ∀ {Γ Γ'} {r : Ren [] Γ' Γ'} → (w : Ren [] Γ Γ')
         → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
 ∘ʳ-id-≐ w h = mk≐ʳ (λ x → at h (proj₂ (var-tgt w x)))
 
-∘ʳ-id-≐ʳ : ∀ {Γ Γ'} {r : Ren Γ Γ} → (w : Ren Γ Γ')
+∘ʳ-id-≐ʳ : ∀ {Γ Γ'} {r : Ren [] Γ Γ} → (w : Ren [] Γ Γ')
          → r ≐ʳ id-ren → (w ∘ʳ r) ≐ʳ w
 ∘ʳ-id-≐ʳ w h = mk≐ʳ (λ x → cong (var-tgt′ w) (at h x))
 
-restrict-ren-id-≐ : ∀ {Γ} {r : Ren Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
+restrict-ren-id-≐ : ∀ {Γ} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
 restrict-ren-id-≐ h = restrict-ren-≐ h
 
 mutual
 
-  V-rename-id-≐ : ∀ {Γ A} {r : Ren Γ Γ} → r ≐ʳ id-ren
+  V-rename-id-≐ : ∀ {Γ A} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
                 → (V : Γ ⊢V⦂ A) → V-rename r V ≐ᵛ V
 
   V-rename-id-≐ {r = r} h (var f x) with var-rename r x | at h x
@@ -819,7 +823,7 @@ mutual
   V-rename-id-≐ h ⦉ V , W ⦊  = pair-≐ (V-rename-id-≐ h V) (V-rename-id-≐ h W)
   V-rename-id-≐ h (lam M)   = lam-≐ (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
 
-  C-rename-id-≐ : ∀ {Γ C} {r : Ren Γ Γ} → r ≐ʳ id-ren
+  C-rename-id-≐ : ∀ {Γ C} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
                 → (M : Γ ⊢C⦂ C) → C-rename r M ≐ᶜ M
 
   C-rename-id-≐ h (return V) = return-≐ (V-rename-id-≐ h V)
@@ -836,9 +840,9 @@ mutual
     delay-≐ (C-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) M)
   C-rename-id-≐ h (handle M `with H `in N) =
     handle-≐ (C-rename-id-≐ h M)
-      (λ op ε'' Γ' →
-         C-rename-id-≐ (cong-ren-id-≐ (_ ∷ _ ∷ _) (restrict-ren-id-≐ h))
-                       (H op ε'' Γ'))
+      (λ op ε'' →
+         C-rename-id-≐ (cong-∷-ren-id-≐ (cong-∷-ren-id-≐ (restrict-ren-id-≐ h)))
+                       (H op ε''))
       (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≐ h (unbox w V M) =
     unbox-≐ (unbox-tgt-≐ (∘ʳ-id-≐ w h) V)
@@ -855,7 +859,7 @@ eq-ren-≐ e e' rewrite uip {p = e} {q = e'} = ≐ʳ-refl
 -- propositionally equal: the action is the transport. `eq-ren refl` is
 -- `id-ren`, so this is `C-rename-id-≐` once the equality is matched.
 
-C-rename-eq-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {r : Ren Γ Γ'}
+C-rename-eq-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {r : Ren [] Γ Γ'}
               → r ≐ʳ eq-ren e → (M : Γ ⊢C⦂ C)
               → C-rename r M ≐ᶜ subst (_⊢C⦂ C) e M
 C-rename-eq-≐ refl h M = C-rename-id-≐ h M
@@ -909,7 +913,7 @@ split→∈-unique e s s' =
 -- `cong-ren` at nested suffixes is `cong-ren` at their concatenation — but only
 -- up to `++ᶜ-assoc`, so conjugated by `eq-ren`s.
 
-cong-ren-assoc-≐ : ∀ {Γ Γ'} → (Θ D : Ctx) → (r : Ren Γ Γ')
+cong-ren-assoc-≐ : ∀ {Γ Γ'} → (Θ D : Ctx) → (r : Ren [] Γ Γ')
                  → cong-ren {Γ'' = D} (cong-ren {Γ'' = Θ} r)
                  ≐ʳ (eq-ren (sym (++ᶜ-assoc Γ' Θ D))
                      ∘ʳ cong-ren {Γ'' = Θ ++ᶜ D} r
@@ -954,7 +958,7 @@ eq-ren-∘-≐ refl refl = ∘ʳ-identityˡ-≐ _
 restrict-wk-et-≐ : ∀ {Γ B} → (et : Eternal B) → (Δ : Ctx)
                  → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
                  → (e₂ : ((Γ ∷ B) ++ᶜ Δ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Δ ᴱ)
-                 → restrict-ren (cong-ren {Γ'' = Δ} (wk-ren {A = B}))
+                 → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (wk-ren {A = B}))
                  ≐ʳ (eq-ren (sym e₂)
                      ∘ʳ cong-ren {Γ'' = Δ ᴱ} (wk-ren {A = B}) ∘ʳ eq-ren e₁)
 
@@ -991,7 +995,7 @@ restrict-wk-clause-≐ : ∀ {Γ B} → (et : Eternal B) → (Θ D : Ctx)
                      → (e₁ : (Γ ++ᶜ Θ) ᴱ ≡ Γ ᴱ ++ᶜ Θ ᴱ)
                      → (e₂ : ((Γ ∷ B) ++ᶜ Θ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Θ ᴱ)
                      → cong-ren {Γ'' = D}
-                         (restrict-ren (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
+                         (restrict-ren {Ξ = []} (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
                      ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
                          ∘ʳ (eq-ren (sym (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) D))
                              ∘ʳ cong-ren {Γ'' = Θ ᴱ ++ᶜ D} (wk-ren {A = B})
@@ -1014,7 +1018,7 @@ restrict-wk-clause-≐ {Γ} {B} et Θ D e₁ e₂ =
 
 restrict-wk-≐ : ∀ {Γ B} → (¬et : ¬ Eternal B) → (Δ : Ctx)
               → (e : (Γ ++ᶜ Δ) ᴱ ≡ ((Γ ∷ B) ++ᶜ Δ) ᴱ)
-              → restrict-ren (cong-ren {Γ'' = Δ} (wk-ren {A = B})) ≐ʳ eq-ren e
+              → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (wk-ren {A = B})) ≐ʳ eq-ren e
 
 restrict-wk-≐ {Γ} {B} ¬et [] e
   rewrite eternal?-no ¬et | uip {p = e} {q = refl} = ≐ʳ-refl
@@ -1039,7 +1043,7 @@ restrict-wk-≐ {Γ} {B} ¬et (Δ ⟨ ρ ⟩) e = restrict-wk-≐ ¬et Δ e
 
 mutual
 
-  V-rename-∘ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+  V-rename-∘ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
              → (V : Γ ⊢V⦂ A)
              → V-rename (r₂ ∘ʳ r₁) V ≐ᵛ V-rename r₂ (V-rename r₁ V)
 
@@ -1053,7 +1057,7 @@ mutual
     lam-≐ (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ ([] ∷ _) r₂ r₁) M)
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
 
-  C-rename-∘ : ∀ {Γ Γ' Γ'' C} → (r₂ : Ren Γ' Γ'') → (r₁ : Ren Γ Γ')
+  C-rename-∘ : ∀ {Γ Γ' Γ'' C} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
              → (M : Γ ⊢C⦂ C)
              → C-rename (r₂ ∘ʳ r₁) M ≐ᶜ C-rename r₂ (C-rename r₁ M)
 
@@ -1077,14 +1081,16 @@ mutual
                       (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (handle M `with H `in N) =
     handle-≐ (C-rename-∘ r₂ r₁ M)
-      (λ op ε'' Γ' →
+      (λ op ε'' →
          ≐ᶜ-trans
            (C-rename-≐
-             (≐ʳ-trans (cong-ren-≐ (_ ∷ _ ∷ _) (restrict-ren-∘-≐ r₂ r₁))
-                       (cong-ren-∘-≐ (_ ∷ _ ∷ _) (restrict-ren r₂) (restrict-ren r₁)))
-             (H op ε'' Γ'))
-           (C-rename-∘ (cong-ren (restrict-ren r₂)) (cong-ren (restrict-ren r₁))
-                       (H op ε'' Γ')))
+             (≐ʳ-trans (cong-∷-ren-≐ (cong-∷-ren-≐ (restrict-ren-∘-≐ r₂ r₁)))
+                       (cong-ren-∘-≐ ([] ∷ _ ∷ _)
+                                     (restrict-ren r₂) (restrict-ren r₁)))
+             (H op ε''))
+           (C-rename-∘ (cong-∷-ren (cong-∷-ren (restrict-ren r₂)))
+                       (cong-∷-ren (cong-∷-ren (restrict-ren r₁)))
+                       (H op ε'')))
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (unbox w V M) =
@@ -1107,7 +1113,7 @@ mutual
 
 mutual
 
-  V-rename-cong : ∀ {Γ Γ' A} → (r : Ren Γ Γ') → {V V' : Γ ⊢V⦂ A}
+  V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ ⊢V⦂ A}
                 → V ≐ᵛ V' → V-rename r V ≐ᵛ V-rename r V'
 
   V-rename-cong r var-≐            = var-≐
@@ -1117,7 +1123,7 @@ mutual
     pair-≐ (V-rename-cong r eV) (V-rename-cong r eW)
   V-rename-cong r (lam-≐ eM)       = lam-≐ (C-rename-cong (cong-ren r) eM)
 
-  C-rename-cong : ∀ {Γ Γ' C} → (r : Ren Γ Γ') → {M M' : Γ ⊢C⦂ C}
+  C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ ⊢C⦂ C}
                 → M ≐ᶜ M' → C-rename r M ≐ᶜ C-rename r M'
 
   C-rename-cong r (return-≐ eV)     = return-≐ (V-rename-cong r eV)
@@ -1133,7 +1139,8 @@ mutual
   C-rename-cong r (delay-≐ eM)      = delay-≐ (C-rename-cong (cong-ren r) eM)
   C-rename-cong r (handle-≐ eM eH eN) =
     handle-≐ (C-rename-cong r eM)
-             (λ op ε'' Γ' → C-rename-cong (cong-ren (restrict-ren r)) (eH op ε'' Γ'))
+             (λ op ε'' → C-rename-cong (cong-∷-ren (cong-∷-ren (restrict-ren r)))
+                                       (eH op ε''))
              (C-rename-cong (cong-ren r) eN)
   C-rename-cong r (unbox-≐ {w = w} {w' = w'} {V = V} {V' = V'} hw eM) =
     unbox-≐ (trans (unbox-tgt-∘ r w V)

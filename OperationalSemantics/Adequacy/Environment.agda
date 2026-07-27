@@ -63,7 +63,7 @@ ClosedVals Δ = ∀ {A ρ} → A ∈[ ρ ] Δ → [] ⊢V⦂ A
 -- LOCK-FREE CONTEXTS
 --
 -- `_ᴱ` drops every lock, so the eternal prefix is lock-free — which is what
--- makes a closed value weakenable into it: `Ren [] Γ` exists exactly when `Γ`
+-- makes a closed value weakenable into it: `Ren [] [] Γ` exists exactly when `Γ`
 -- has no lock, crossing one needing `ρ ≾ᵣ uᵣ`.
 
 data Lock-free : Ctx → Set where
@@ -80,11 +80,11 @@ data Lock-free : Ctx → Set where
 -- Weakening a closed term into a lock-free context, and a term into one
 -- left-extended by a lock-free prefix.
 
-empty-ren : ∀ {Δ} → Lock-free Δ → Ren [] Δ
+empty-ren : ∀ {Δ} → Lock-free Δ → Ren [] [] Δ
 empty-ren lf-[]     = id-ren
 empty-ren (lf-∷ lf) = wk-ren ∘ʳ empty-ren lf
 
-eternal-wk : ∀ {Δ} → Lock-free Δ → (Γ : Ctx) → Ren Γ (Δ ++ᶜ Γ)
+eternal-wk : ∀ {Δ} → Lock-free Δ → (Γ : Ctx) → Ren [] Γ (Δ ++ᶜ Γ)
 eternal-wk lf []        = empty-ren lf
 eternal-wk lf (Γ ∷ A)   = cong-∷-ren (eternal-wk lf Γ)
 eternal-wk lf (Γ ⟨ ρ ⟩) = cong-⟨⟩-ren (eternal-wk lf Γ)
@@ -105,7 +105,7 @@ data Env : (St : 𝕊 []) → Ctx → Set where
   -- case of the action stays `refl`, `Ren` being unquotiented.
 
   renᵉ     : ∀ {St Γ Γ₀}
-           → Env St Γ → Ren Γ₀ Γ
+           → Env St Γ → Ren [] Γ₀ Γ
            ---------------------
            → Env St Γ₀
 
@@ -235,20 +235,20 @@ cast-box refl = refl
 
 cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
             → {M : Γ ⊢C⦂ A ‼ ε}
-            → {H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
-                     Γ ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+            → {H : (op : Op) → (ε'' : E) →
+                     Γ ᴱ ∷ type-of-gtype (param op)
                        ∷ [ mapᵉ (op-grade op) ]
                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
             → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
             → castᶜ e (handle M `with H `in N)
             ≡ handle (castᶜ e M)
-              `with (λ op ε'' Γ₀ →
-                       castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+              `with (λ op ε'' →
+                       castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
                                              ∷ [ mapᵉ (op-grade op) ]
                                                  (type-of-gtype (arity op) ⇒ B ‼ ε''))
                               e)
-                             (H op ε'' Γ₀))
+                             (H op ε''))
               `in (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
 cast-handle refl = refl
 
@@ -305,18 +305,18 @@ subst-loop₃ : ∀ {Γ₁ Γ₂ Γ₃ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂
 subst-loop₃ refl refl e₃ M =
   cong (λ z → subst (_⊢C⦂ _) z M) (uip {p = e₃} {q = refl})
 
-castʳᵉ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren (Δ ⟨ ρ ⟩) Γ → Ren (Δ ⟨ ρ ⟩) Γ'
+castʳᵉ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ → Ren [] (Δ ⟨ ρ ⟩) Γ'
 castʳᵉ refl w = w
 
 cast-unbox : ∀ {Γ Γ' A C ρ Δ} → (e : Γ ≡ Γ')
-           → {w : Ren (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
+           → {w : Ren [] (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
            → castᶜ e (unbox w V M)
            ≡ unbox (castʳᵉ e w) V (castᶜ (cong (_∷ A) e) M)
 cast-unbox refl = refl
 
 -- A cast does not move the cell an `unbox` names.
 
-unbox-tgt-castʳᵉ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren (Δ ⟨ ρ ⟩) Γ)
+unbox-tgt-castʳᵉ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
                  → (V : Δ ⊢V⦂ [ ρ ] A)
                  → unbox-tgt (castʳᵉ e w) V
                  ≡ (proj₁ (unbox-tgt w V)
@@ -1880,7 +1880,7 @@ castᵛ-var refl f x = refl
 
 -- A congruence renaming fixes a suffix variable, up to its grade bound.
 
-cong-ren-tgt-r : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+cong-ren-tgt-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
                → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜʳ {Γ = Γ} x)
                ≡ (ρ , ∈-++ᶜʳ {Γ = Γ'} x)
 
@@ -1892,7 +1892,7 @@ cong-ren-tgt-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
 
 -- Renaming a suffix variable along a congruence renaming leaves it where it is.
 
-ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
           → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
           → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
           ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
@@ -1943,7 +1943,7 @@ cast-ext-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → 
 cast-ext-any refl e₀ et V rewrite uip {p = e₀} {q = refl} = refl
 
 cast-ren-⟨⟩-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → (e₀ : Γ ≡ Γ')
-                → (r : ∀ {Γ₀ : Ctx} → Ren Γ₀ (Γ₀ ⟨ ρ ⟩)) → (V : Γ ⊢V⦂ A)
+                → (r : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)) → (V : Γ ⊢V⦂ A)
                 → castᵛ e (V-rename r V) ≡ V-rename r (castᵛ e₀ V)
 cast-ren-⟨⟩-any refl e₀ r V rewrite uip {p = e₀} {q = refl} = refl
 
@@ -1995,7 +1995,7 @@ sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with etern
                        (⟨⟩-η⁻¹-tgt (∈-++ᶜʳ {Γ = Γ₁} x)))
                  f'))
   where
-    rn : ∀ {Γ₀ : Ctx} → Ren Γ₀ (Γ₀ ⟨ ρ ⟩)
+    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
     rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
@@ -2118,7 +2118,7 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
                        (⟨⟩-η⁻¹-tgt (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
                  f'))
   where
-    rn : ∀ {Γ₀ : Ctx} → Ren Γ₀ (Γ₀ ⟨ ρ' ⟩)
+    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ' ⟩)
     rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
@@ -2338,8 +2338,8 @@ postulate
   sub-wk-handle-et : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
                    → (et : Eternal B)
                    → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
-                   → (H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
-                            (Γ ++ᶜ Θ) ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                   → (H : (op : Op) → (ε'' : E) →
+                            (Γ ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ]
                                   (type-of-gtype (arity op) ⇒ B' ‼ ε'')
                             ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
@@ -2494,8 +2494,8 @@ mutual
   sub-wk-handle-ne : ∀ {Γ B} → (Θ : Ctx) → ∀ {A B' ε ε'}
                    → ¬ Eternal B
                    → (M : (Γ ++ᶜ Θ) ⊢C⦂ A ‼ ε)
-                   → (H : (op : Op) → (ε'' : E) → (Γ₀ : Ctx) →
-                            (Γ ++ᶜ Θ) ᴱ ++ᶜ Γ₀ ∷ type-of-gtype (param op)
+                   → (H : (op : Op) → (ε'' : E) →
+                            (Γ ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ]
                                   (type-of-gtype (arity op) ⇒ B' ‼ ε'')
                             ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
@@ -2511,7 +2511,7 @@ mutual
     rewrite eternal?-no ¬et =
     ≐ᶜ-trans (≡→≐ᶜ (cast-handle (castOf {Γ} {B} Θ)))
       (handle-≐ (sub-wk-C Θ M W)
-        (λ op ε'' Γ' → clause op ε'' Γ')
+        (λ op ε'' → clause op ε'')
         (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr
                            (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (castOf {Γ} {B} Θ))
                            (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))
@@ -2522,8 +2522,8 @@ mutual
       e₁ : (Γ ++ᶜ Θ) ᴱ ≡ ((Γ ∷ B) ++ᶜ Θ) ᴱ
       e₁ = sym (trans (ᴱ-drop-split ¬et z₀) (cong _ᴱ (castOf {Γ} {B} Θ)))
 
-      clause : (op : Op) → (ε'' : E) → (Γ' : Ctx) → _
-      clause op ε'' Γ' =
+      clause : (op : Op) → (ε'' : E) → _
+      clause op ε'' =
         ≐ᶜ-trans
           (castᶜ-≐ (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ))
             (substᶜ-≐′ (λ Γ₀ → Γ₀ ++ᶜ D)
@@ -2531,18 +2531,18 @@ mutual
               (C-rename-eq-≐ (cong (_++ᶜ D) e₁)
                 (≐ʳ-trans (cong-ren-≐ D (restrict-wk-≐ ¬et Θ e₁))
                           (cong-ren-eq-ren-≐ D e₁))
-                (H op ε'' Γ'))))
+                (H op ε''))))
           (≡→≐ᶜ collapse)
         where
-          D = Γ' ∷ type-of-gtype (param op)
+          D = [] ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B' ‼ ε'')
 
           CT = B' ‼ (op-grade op ·ₑ ε'')
 
           collapse : castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ))
                        (subst (λ Γ₀ → (Γ₀ ++ᶜ D) ⊢C⦂ CT) (ᴱ-drop-split ¬et z₀)
-                         (subst (_⊢C⦂ CT) (cong (_++ᶜ D) e₁) (H op ε'' Γ')))
-                   ≡ H op ε'' Γ'
+                         (subst (_⊢C⦂ CT) (cong (_++ᶜ D) e₁) (H op ε'')))
+                   ≡ H op ε''
           collapse =
             trans (castᶜ≡subst (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ)) _)
               (trans (cong (subst (_⊢C⦂ CT)
@@ -2551,7 +2551,7 @@ mutual
                      (subst-loop₃ (cong (_++ᶜ D) e₁)
                                   (cong (_++ᶜ D) (ᴱ-drop-split ¬et z₀))
                                   (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D) (castOf {Γ} {B} Θ))
-                                  (H op ε'' Γ')))
+                                  (H op ε'')))
 
 
 
@@ -2673,7 +2673,7 @@ env-var-hd γ W f =
 -- family of renamings that pushes a context by it:
 --
 --   env-Vˢ-var-l : (γ : Env St Γ) → (Δ : Ctx) → ¬ Eternal A
---                → (rn : ∀ {Γ₀} → Ren Γ₀ (Γ₀ ++ᶜ Δ))
+--                → (rn : ∀ {Γ₀} → Ren [] Γ₀ (Γ₀ ++ᶜ Δ))
 --                → (sp : ∀ {Γ₀ A' ρ'} → (y : A' ∈[ ρ' ] Γ₀)
 --                      → var-tgt rn y ≡ (grade-++ᶜˡ ρ' Δ , ∈-++ᶜˡ Δ y))
 --                → (x : A ∈[ ρ ] Γ) → (f …) → (f' …)

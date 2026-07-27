@@ -168,8 +168,8 @@ seq-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε�
 seq-step N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SEQ-STEP r (step-grade-≾ r)
 
 handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
-            → (H : (op : Op) → (ε₃ : E) → (Γ' : Ctx) →
-                     toCtx St ᴱ ++ᶜ Γ' ∷ type-of-gtype (param op)
+            → (H : (op : Op) → (ε₃ : E) →
+                     toCtx St ᴱ ∷ type-of-gtype (param op)
                              ∷ [ mapᵉ (op-grade op) ]
                                  (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
