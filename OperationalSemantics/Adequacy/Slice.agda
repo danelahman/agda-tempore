@@ -918,3 +918,122 @@ unbox-var-tgt z rel =
     (trans (sym (Tgt-cast-∷ (sym (≤ₛ-ctx-toCtx e)) _))
            (Tgt-cast-irr (cong (_∷ _) (sym (≤ₛ-ctx-toCtx e)))
                          (sym (≤ₛ-ctx-toCtx (∷-suc V e))) _))
+
+------------------------------------------------------------------------
+-- READING BACK A FRESHLY ALLOCATED CELL
+--
+-- What `store-fresh` needs. Looking up, at whatever state the run has reached,
+-- the cell `BOX` just allocated returns the value that was stored — renamed.
+-- Both sides are that value renamed, so the content is a renaming agreement,
+-- and both renamings *push* the value's context under everything the state has
+-- gained since: the lookup by `wk-ren-⟨ρ⟩-ctx` out of the cell's own lock, the
+-- slice by `≤ₛ-embed`.
+------------------------------------------------------------------------
+
+-- Casting the target of a renaming is prefixing it with an `eq-ren`.
+
+castᵛˢ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ Γ')
+              → (V : Γ ⊢V⦂ A)
+              → castᵛˢ e (V-rename r V) ≐ᵛ V-rename (eq-ren e ∘ʳ r) V
+castᵛˢ-rename refl r V =
+  ≐ᵛ-sym (≐ᵛ-trans (V-rename-∘ id-ren r V) (V-rename-id-≐ ≐ʳ-refl _))
+
+-- Transporting a stored value along an equality of the states it was split off
+-- at is transporting it along the contexts.
+
+subst-state-castᵛˢ : ∀ {A ρ} {St St' : 𝕊 []} → (p : St ≡ St')
+                   → (U : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+                   → subst (λ S → ([] ++ᶜ toCtx S ⟨ ρ ⟩) ⊢V⦂ A) p U
+                   ≡ castᵛˢ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) (cong toCtx p)) U
+subst-state-castᵛˢ refl U = refl
+
+-- The renaming agreement. The lookup's composite runs, right to left: out of
+-- the leading `[] ++ᶜ`, across the cell's own lock at the grade the state after
+-- it contributes, out of that lock into everything after the cell, and back
+-- along the two context equalities. The slice's runs by `≤ₛ-embed`. Both land
+-- on `∈-++ᶜˡ (≤ₛ-ctx e) (Tl-∷ y)`, relocated by the same `≤ₛ-ctx-toCtx e`.
+
+alloc-lookup-ren : ∀ {A ρ σ} {St St' : 𝕊 []}
+                 → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+                 → (e : (St ∷ₛ V) ≤ₛ St')
+                 → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ ≤ₛ-ctx e) ≡ σ)
+                 → (rel : σ ≾ᵣ ρ)
+                 → (q₀ : Slice St ρ St' uᵣ)
+                 → ext q₀ ≡ ≤ₛ-trans (∷-suc V id-suc) e
+                 → (eq-ren (sym (≤ₛ-ctx-toCtx e))
+                     ∘ʳ lookup-ren′ (toCtx St) (≤ₛ-ctx e) refl h rel)
+                 ≐ʳ (unbox-ren q₀ ∘ʳ eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))
+
+alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
+  where
+    Δ  = ≤ₛ-ctx e
+    Δ₁ = [] ∷ [ ρ ] A
+    eΓ = sym (≤ₛ-ctx-toCtx e)
+
+    assoc = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
+
+    go : ∀ {A' τ} → (x : A' ∈[ τ ] (([] ++ᶜ toCtx St) ⟨ ρ ⟩)) → _
+    go {A'} (Tl-⟨⟩ {ρ' = τ'} w) =
+      trans (cong (λ t → f₅ (f₄ (f₃ (f₂ (f₁ t))))) s₀)
+        (trans (cong (λ t → f₅ (f₄ (f₃ t)))
+                     (wk-ren-⟨ρ⟩-ctx-tgt (Δ₁ ++ᶜ Δ) h y))
+          (trans (cong (λ t → f₅ (f₄ t))
+                       (trans (eq-ren-tgt assoc (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) y))
+                              (∈-++ᶜˡ-assoc Δ₁ Δ y)))
+            (trans (eq-ren-tgt eΓ (∈-++ᶜˡ Δ (Tl-∷ y)))
+              (sym (trans (cong (var-tgt′ (unbox-ren q₀)) s₀)
+                     (trans (unbox-ren-tgt q₀ y)
+                       (trans (cong (λ z → ≤ₛ-embed z y) eq₀)
+                         (trans (≤ₛ-embed-∘ (∷-suc V id-suc) e y)
+                                (≤ₛ-embed-push e (Tl-∷ y))))))))))
+      where
+        y : A' ∈[ τ' ] toCtx St
+        y = subst (λ Γ₀ → A' ∈[ τ' ] Γ₀) ++ᶜ-identityˡ w
+
+        f₁ = var-tgt′ {A = A'} (⟨⟩-≤-ren rel)
+        f₂ = var-tgt′ {A = A'} (wk-ren-⟨ρ⟩-ctx h)
+        f₃ = var-tgt′ {A = A'} (eq-ren assoc)
+        f₄ = var-tgt′ {A = A'} (eq-ren (refl {x = (toCtx St ∷ [ ρ ] A) ++ᶜ Δ}))
+        f₅ = var-tgt′ {A = A'} (eq-ren eΓ)
+
+        s₀ : var-tgt (eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})) (Tl-⟨⟩ w)
+           ≡ (τ' ·ᵣ ρ , Tl-⟨⟩ y)
+        s₀ = trans (eq-ren-tgt (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}) (Tl-⟨⟩ w))
+                   (cong (λ z → τ' ·ᵣ ρ , z)
+                         (subst-Tl-⟨⟩ (++ᶜ-identityˡ {toCtx St}) w))
+
+-- Hence the lookup itself. `lookup-body′-≐` moves the lookup's own data — the
+-- state the cell is split off at, what the state gained after it, and the value
+-- stored — onto the data the allocation presents, which `≤ₛ-embed-fst`,
+-- `≤ₛ-embed-snd-ctx` and `≤ₛ-embed-lookup` supply.
+
+alloc-lookup-≐ : ∀ {A ρ} {St St' : 𝕊 []}
+               → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+               → (e : (St ∷ₛ V) ≤ₛ St')
+               → (rel : proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St})) ≾ᵣ ρ)
+               → (q₀ : Slice St ρ St' uᵣ)
+               → ext q₀ ≡ ≤ₛ-trans (∷-suc V id-suc) e
+               → lookup-body St' (≤ₛ-embed e (Hd {Γ = toCtx St})) rel
+               ≐ᵛ V-rename (unbox-ren q₀ ∘ʳ eq-ren ++ᶜ-identityˡ) V
+
+alloc-lookup-≐ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
+  ≐ᵛ-trans (lookup-body′-≐ eΓ eF eS _ refl _ h rel rel _ V eU)
+    (≐ᵛ-trans (castᵛˢ-rename eΓ (lookup-ren′ (toCtx St) Δ refl h rel) V)
+              (V-rename-≐ (alloc-lookup-ren V e h rel q₀ eq₀) V))
+  where
+    Δ  = ≤ₛ-ctx e
+    Δ₁ = [] ∷ [ ρ ] A
+    eΓ = sym (≤ₛ-ctx-toCtx e)
+    eF = cong toCtx (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St})))
+    eS = sym (trans (≤ₛ-embed-snd-ctx e (Hd {Γ = toCtx St})) ++ᶜ-identityˡ)
+
+    h : ctx-grade (Δ₁ ++ᶜ Δ) ≡ proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St}))
+    h = trans (trans (ctx-grade-++ᶜ Δ₁ Δ) (·ᵣ-identityˡ (ctx-grade Δ)))
+              (trans (sym (grade-++ᶜˡ-uᵣ Δ))
+                     (sym (cong proj₁ (≤ₛ-embed-push e (Hd {Γ = toCtx St})))))
+
+    eU : resource-lookup St' (proj₂ (≤ₛ-embed e (Hd {Γ = toCtx St})))
+       ≐ᵛ castᵛˢ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) V
+    eU = ≡→≐ᵛˢ (trans (≤ₛ-embed-lookup e (Hd {Γ = toCtx St}))
+                      (subst-state-castᵛˢ
+                         (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St}))) V))

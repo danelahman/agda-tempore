@@ -694,29 +694,32 @@ alloc-var-≐ V x f =
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
 --
--- What is left is one renaming agreement, best stated as its own lemma about
--- *any* already-allocated cell rather than the fresh one:
---
---   lookup-slice : (e : St₀ ≤ₛ St₂) → (c : [ ρ ] A ∈[ σ ] toCtx St₀) → …
---                → lookup-body St₂ (≤ₛ-embed e c) _
---                ≐ᵛ V-rename (unbox-ren (slice e b)) (lookup-body St₀ c _)
---
--- "reading an already-allocated cell in a later state is reading it in the
--- earlier one and transporting". `store-fresh` is the case `St₀ := St ∷ₛ V`,
--- `c := Hd`, where `lookup-body St₀ Hd _` is `V` renamed. By induction on `e`:
--- each `≤ₛ` step grows `split-state-snd` by exactly what `suc-comp-ren` adds, so
--- the two renamings stay in step. `wk-ren-⟨ρ⟩-ctx-tgt` (in `Slice`) computes the
--- lookup side of that on a variable; `≤ₛ-embed-fst`/`≤ₛ-embed-lookup` already
--- give the value side.
+-- What is left is one renaming agreement, `alloc-lookup-≐` in `Slice`: the two
+-- renamings both push the value's context under everything the state has gained
+-- since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the slice by `≤ₛ-embed`.
 
-postulate
+store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+            → (∀ {St'} → (q : Slice St ρ St' uᵣ)
+                 → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
+            → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
+            ------------------------------------------
+            → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
-  store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-              → (∀ {St'} → (q : Slice St ρ St' uᵣ)
-                   → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
-              → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
-              ------------------------------------------
-              → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
+store-fresh {A} {ρ} {St} V pV f {St'} q W eW =
+  Val-≐ᵛ A (≐ᵛ-sym (≐ᵛ-trans eW step)) (pV (slice-∘ᵘ q (alloc-slice V)))
+  where
+    cell = unbox-tgt (unbox-ren q) (var f (Hd {Γ = toCtx St}))
+    rel  = proj₂ (proj₂ (unbox⇒var (unbox-ren q) (var f (Hd {Γ = toCtx St}))))
+    rel' = subst (_≾ᵣ ρ)
+                 (cong proj₁ (unbox-ren-tgt q (Hd {Γ = toCtx St}))) rel
+
+    step : unbox-lookup St' (unbox-ren q) (var f Hd)
+         ≐ᵛ V-rename (unbox-ren (slice-∘ᵘ q (alloc-slice V))
+                        ∘ʳ eq-ren ++ᶜ-identityˡ) V
+    step =
+      ≐ᵛ-trans
+        (≡→≐ᵛˢ (lookup-body-≡ St' (unbox-ren-tgt q (Hd {Γ = toCtx St})) rel rel'))
+        (alloc-lookup-≐ V (ext q) rel' (slice-∘ᵘ q (alloc-slice V)) refl)
 
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
