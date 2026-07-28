@@ -3051,7 +3051,8 @@ mutual
       e₁ = ᴱ-++ᶜ Γ Θ
 
       e₂ : ((Γ ∷ B) ++ᶜ Θ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Θ ᴱ
-      e₂ = trans (ᴱ-++ᶜ (Γ ∷ B) Θ) (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep et))
+      e₂ = trans (ᴱ-++ᶜ (Γ ∷ B) Θ)
+                 (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep {Γ} {B} et))
 
       clause : (op : Op) → (ε'' : E) → _
       clause op ε'' =

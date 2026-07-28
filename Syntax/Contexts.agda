@@ -327,12 +327,21 @@ var-split-≡-var-split-Tl-⟨⟩ x = refl
 -- constraint on eternal data. The result is therefore lock-free, and every
 -- surviving variable sits at grade `uᵣ`.
 
+-- The `∷` clause is routed through a helper taking the decision, rather than
+-- being a `with` on it. That keeps `(Γ ∷ A) ᴱ` *reducible* at a variable `A`:
+-- it exposes `eternal? A` syntactically, so a `with`/`rewrite` elsewhere can
+-- abstract it. As a `with`-function the occurrence sits inside an auxiliary
+-- that nothing outside can see, which blocks every proof that must reduce both
+-- a term and its clause family's context at the same decision.
+
+ᴱ-∷ : Ctx → (A : VType) → Dec (Eternal A) → Ctx
+ᴱ-∷ Γ A (yes _) = Γ ∷ A
+ᴱ-∷ Γ A (no  _) = Γ
+
 _ᴱ : Ctx → Ctx
-[] ᴱ         = []
-(Γ ∷ A) ᴱ    with eternal? A
-... | yes _  = Γ ᴱ ∷ A
-... | no  _  = Γ ᴱ
-(Γ ⟨ ρ ⟩) ᴱ  = Γ ᴱ
+[] ᴱ        = []
+(Γ ∷ A) ᴱ   = ᴱ-∷ (Γ ᴱ) A (eternal? A)
+(Γ ⟨ ρ ⟩) ᴱ = Γ ᴱ
 
 infix 34 _ᴱ
 
@@ -454,8 +463,8 @@ split→∈-split-r (split-⟨⟩ {ρ = ρ} s)  = cong (_⟨ ρ ⟩) (split→�
 
 ᴱ-drop-split : ∀ {Γ A ρ} → ¬ Eternal A → (x : A ∈[ ρ ] Γ)
              → Γ ᴱ ≡ (split-l x ++ᶜ split-r x) ᴱ
-ᴱ-drop-split {Γ} ¬et x =
+ᴱ-drop-split {Γ} {A} ¬et x =
   trans (cong _ᴱ (sym (split-≡ (split-pf x))))
-    (trans (ᴱ-++ᶜ (split-l x ∷ _) (split-r x))
-      (trans (cong (_++ᶜ (split-r x) ᴱ) (ᴱ-∷-drop ¬et))
+    (trans (ᴱ-++ᶜ (split-l x ∷ A) (split-r x))
+      (trans (cong (_++ᶜ (split-r x) ᴱ) (ᴱ-∷-drop {split-l x} {A} ¬et))
         (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))

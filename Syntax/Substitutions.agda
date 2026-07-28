@@ -122,36 +122,14 @@ mutual
   absurd V        [ x ↦ W ]c = absurd (V [ x ↦ W ]v)
   perform op V M  [ x ↦ W ]c = perform op (V [ x ↦ W ]v) (M [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   delay τ M       [ x ↦ W ]c = delay τ (M [ Tl-⟨⟩ x ↦ W ]c)
-  -- The handler clauses close over the eternal part `Γ ᴱ` of the ambient
-  -- context. If the substituted variable is not eternal, it does not occur in
-  -- `Γ ᴱ`, so the clauses are only retyped (`ᴱ-drop-split`). If it is eternal,
-  -- its value restricts to the eternal context (`eternal-val-restrict`) and is
-  -- substituted into each clause at the variable's image, located within
-  -- `Γ ᴱ ++ᶜ ([] ∷ param ∷ cont)` via `∈-ᴱ-split`/`split-++ʳ`/`split→∈`.
-  _[_↦_]c {A = A} (handle_`with_`in {B = B} M H N) x W with eternal? A
-  ... | no ¬et =
+  -- Substituting into a handle *is* a handle, whatever the substituted
+  -- variable's type: the eternality split lives in `⟨_⟩[_↦_]cl` below, which
+  -- takes the decision as an argument rather than matching on it here. That
+  -- keeps this clause free of a `with`, so the substitution reduces at an
+  -- abstract type and every caller can see the three components.
+  _[_↦_]c {A = A} (handle_`with_`in {B = B} M H N) x W =
     handle (M [ x ↦ W ]c)
-    `with (λ op ε'' →
-             subst
-               (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-               (ᴱ-drop-split ¬et x)
-               (H op ε''))
-    `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-  ... | yes et =
-    handle (M [ x ↦ W ]c)
-    `with (λ op ε'' →
-             let D = [] ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                 s = split-++ʳ (∈-ᴱ-split et x) D
-             in subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                  (trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
-                    (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D))
-                           (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l x) (split-r x))))))
-                  ((H op ε'') [ split→∈ s
-                                 ↦ subst (_⊢V⦂ A) (sym (split→∈-split-l s))
-                                      (eternal-val-restrict et W) ]c))
+    `with ⟨ eternal? A ⟩[ x ↦ W ]cl H
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
   -- For the value-based unboxing we first recover the underlying resource
   -- variable `y` (and grade bound `rel`) being unboxed via `unbox⇒var`. The
@@ -165,3 +143,48 @@ mutual
     unbox-var v (≾ᵣ-trans p rel) (M [ Tl-∷ x ↦ W ]c)
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
   coerce rel M [ x ↦ W ]c = coerce rel (M [ x ↦ W ]c)
+
+  -- The handler clauses close over the eternal part `Γ ᴱ` of the ambient
+  -- context. If the substituted variable is not eternal, it does not occur in
+  -- `Γ ᴱ`, so the clauses are only retyped (`ᴱ-drop-split`). If it is eternal,
+  -- its value restricts to the eternal context (`eternal-val-restrict`) and is
+  -- substituted into each clause at the variable's image, located within
+  -- `Γ ᴱ ++ᶜ ([] ∷ param ∷ cont)` via `∈-ᴱ-split`/`split-++ʳ`/`split→∈`.
+
+  ⟨_⟩[_↦_]cl : ∀ {Γ A B ρ}
+             → Dec (Eternal A)
+             → (x : A ∈[ ρ ] Γ)
+             → split-l x ⊢V⦂ A
+             → ((op : Op) → (ε'' : E)
+                  → Γ ᴱ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
+                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+             → (op : Op) → (ε'' : E)
+             → (split-l x ++ᶜ split-r x) ᴱ
+                   ∷ type-of-gtype (param op)
+                   ∷ [ mapᵉ (op-grade op) ]
+                       (type-of-gtype (arity op) ⇒ B ‼ ε'')
+               ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+
+  ⟨_⟩[_↦_]cl {B = B} (no ¬et) x W H op ε'' =
+    subst
+      (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+               ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+      (ᴱ-drop-split ¬et x)
+      (H op ε'')
+
+  ⟨_⟩[_↦_]cl {A = A} {B = B} (yes et) x W H op ε'' =
+    subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+      (trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
+        (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D))
+               (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l x) (split-r x))))))
+      ((H op ε'') [ split→∈ s
+                     ↦ subst (_⊢V⦂ A) (sym (split→∈-split-l s))
+                          (eternal-val-restrict et W) ]c)
+    where
+      D = [] ∷ type-of-gtype (param op)
+             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+      s = split-++ʳ (∈-ᴱ-split et x) D
+
