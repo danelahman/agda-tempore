@@ -584,6 +584,35 @@ suc-comp-ren-grade : ∀ {St St₁ : 𝕊 []} {ρ'' ρ₁ ρ₂ : R} → (e : St
 suc-comp-ren-grade e refl b₁ b₂ =
   ≐ʳ-trans (∘ʳ-identityˡ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
+-- The same on the *source* side: an extension started at a propositionally
+-- equal guard is the same renaming, `eq-ren` being the identity there.
+
+suc-comp-ren-grade-src : ∀ {St St₁ : 𝕊 []} {ρ₁ ρ₂ ρ₃ : R} → (e : St ≤ₛ St₁)
+                       → (eg : ρ₁ ≡ ρ₂)
+                       → (b₁ : ≤ₛ-grade e ·ᵣ ρ₃ ≾ᵣ ρ₂)
+                       → (b₂ : ≤ₛ-grade e ·ᵣ ρ₃ ≾ᵣ ρ₁)
+                       → (suc-comp-ren e b₁ ∘ʳ eq-ren (cong (toCtx St ⟨_⟩) eg))
+                       ≐ʳ suc-comp-ren e b₂
+suc-comp-ren-grade-src e refl b₁ b₂ =
+  ≐ʳ-trans (∘ʳ-identityʳ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
+
+-- `⟨⟩-μ-ren` is natural in the extension: splitting a lock and then following
+-- the extension under it is following the extension at the joined grade and
+-- splitting after. Both send `Tl-⟨⟩ x` to the extension's embedding under two
+-- locks (`suc-comp-ren-tgt`), so this holds pointwise.
+
+suc-comp-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ₂ ρ₃ σ : R} → (e : St ≤ₛ St₁)
+                 → (b₁ : ≤ₛ-grade e ·ᵣ ρ₃ ≾ᵣ ρ₂)
+                 → (b₂ : ≤ₛ-grade e ·ᵣ (ρ₃ ·ᵣ σ) ≾ᵣ ρ₂ ·ᵣ σ)
+                 → (cong-⟨⟩-ren {ρ = σ} (suc-comp-ren e b₁) ∘ʳ ⟨⟩-μ-ren)
+                 ≐ʳ (⟨⟩-μ-ren ∘ʳ suc-comp-ren e b₂)
+suc-comp-ren-μ-≐ {ρ₃ = ρ₃} {σ = σ} e b₁ b₂ = mk≐ʳ go
+  where
+    go : ∀ {A τ} → (x : A ∈[ τ ] _) → _
+    go (Tl-⟨⟩ x) =
+      trans (cong (Tgt-⟨⟩ σ) (suc-comp-ren-tgt e b₁ x))
+            (sym (cong (var-tgt′ ⟨⟩-μ-ren) (suc-comp-ren-tgt e b₂ x)))
+
 -- Crossing a lock and then following a guarded slice is following the
 -- corresponding unit slice (`slice-unit`): the source grade is relaxed from `ρ`
 -- to `uᵣ`, which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).

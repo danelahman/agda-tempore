@@ -34,6 +34,7 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
+open import OperationalSemantics.Adequacy.Bind           Spec
 open import OperationalSemantics.Adequacy.Environment    Spec
 open import OperationalSemantics.Adequacy.Evaluation     Spec
 open import OperationalSemantics.Adequacy.Reducibility   Spec

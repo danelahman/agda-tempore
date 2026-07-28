@@ -450,6 +450,13 @@ cong-⟨⟩-ren-∘-≐ {ρ = ρ} r₂ r₁ = mk≐ʳ go
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go (Tl-⟨⟩ x) = refl
 
+-- Weakening is natural: renaming the prefix and then weakening is weakening
+-- and then renaming under the new binder.
+
+wk-ren-nat-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ')
+             → (cong-∷-ren {A = B} r ∘ʳ wk-ren) ≐ʳ (wk-ren ∘ʳ r)
+wk-ren-nat-≐ r = mk≐ʳ (λ y → refl)
+
 cong-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (Γ₀ : Ctx)
              → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
              → cong-ren {Γ'' = Γ₀} (r₂ ∘ʳ r₁)
