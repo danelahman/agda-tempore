@@ -265,6 +265,147 @@ cong-ren-tgt-l r (Δ ∷ B)    y =
 cong-ren-tgt-l r (Δ ⟨ ρ' ⟩) y =
   cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (cong-ren-tgt-l r Δ y)
 
+-- The suffix's contribution is monotone in the variable's own grade, and a
+-- bound on it is a bound on that grade: the two directions a push needs, the
+-- first to carry a renaming's grade drop under the suffix, the second to read
+-- the suffix's locks off a `var`'s bound.
+
+grade-++ᶜˡ-mono : ∀ {ρ ρ'} → (Δ : Ctx) → ρ ≾ᵣ ρ'
+                → grade-++ᶜˡ ρ Δ ≾ᵣ grade-++ᶜˡ ρ' Δ
+grade-++ᶜˡ-mono []         p = p
+grade-++ᶜˡ-mono (Δ ∷ B)    p = grade-++ᶜˡ-mono Δ p
+grade-++ᶜˡ-mono (Δ ⟨ ρ' ⟩) p = ·ᵣ-monoˡ-≾ᵣ (grade-++ᶜˡ-mono Δ p)
+
+grade-++ᶜˡ-zeroˡ : ∀ {ρ} → (Δ : Ctx) → grade-++ᶜˡ ρ Δ ≾ᵣ uᵣ → ρ ≾ᵣ uᵣ
+grade-++ᶜˡ-zeroˡ []         p = p
+grade-++ᶜˡ-zeroˡ (Δ ∷ B)    p = grade-++ᶜˡ-zeroˡ Δ p
+grade-++ᶜˡ-zeroˡ (Δ ⟨ ρ' ⟩) p = grade-++ᶜˡ-zeroˡ Δ (≾ᵣ-zero-productˡ p)
+
+-- A concatenation of unit-bounded suffixes is unit-bounded.
+
+ctx-grade-++ᶜ-≾ᵣ : (Δ₁ Δ₂ : Ctx) → ctx-grade Δ₁ ≾ᵣ uᵣ → ctx-grade Δ₂ ≾ᵣ uᵣ
+                 → ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ uᵣ
+ctx-grade-++ᶜ-≾ᵣ Δ₁ []          p₁ p₂ = p₁
+ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ∷ B)    p₁ p₂ = ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ₂ p₁ p₂
+ctx-grade-++ᶜ-≾ᵣ Δ₁ (Δ₂ ⟨ ρ ⟩)  p₁ p₂ =
+  ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (ctx-grade-++ᶜ-≾ᵣ Δ₁ Δ₂ p₁ (≾ᵣ-zero-productˡ p₂)))
+           (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) (≾ᵣ-zero-productʳ p₂))
+
+-- At the unit the push contributes the suffix's own grade, which is the grade
+-- `split→∈` records.
+
+grade-++ᶜˡ-uᵣ : (Δ : Ctx) → grade-++ᶜˡ uᵣ Δ ≡ ctx-grade Δ
+grade-++ᶜˡ-uᵣ []         = refl
+grade-++ᶜˡ-uᵣ (Δ ∷ B)    = grade-++ᶜˡ-uᵣ Δ
+grade-++ᶜˡ-uᵣ (Δ ⟨ ρ' ⟩) = cong (_·ᵣ ρ') (grade-++ᶜˡ-uᵣ Δ)
+
+-- The variable a `Γ₁ ∷ B , Γ₂` splitting names is `B` pushed under `Γ₂`.
+
+split→∈-∈-++ᶜˡ : (Γ₁ : Ctx) → (B : VType) → (Γ₂ : Ctx)
+               → _≡_ {A = Tgt ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
+                   (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
+                   (grade-++ᶜˡ uᵣ Γ₂ , ∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Hd {Γ = Γ₁}))
+split→∈-∈-++ᶜˡ Γ₁ B []         = refl
+split→∈-∈-++ᶜˡ Γ₁ B (Γ₂ ∷ C)   =
+  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (split→∈-∈-++ᶜˡ Γ₁ B Γ₂)
+split→∈-∈-++ᶜˡ Γ₁ B (Γ₂ ⟨ ρ ⟩) =
+  cong (λ t → proj₁ t ·ᵣ ρ , Tl-⟨⟩ (proj₂ t)) (split→∈-∈-++ᶜˡ Γ₁ B Γ₂)
+
+-- Pushing a prefix variable under a suffix commutes with pushing a suffix
+-- variable under a prefix: the two injections meet in the middle context.
+
+∈-++ᶜˡ-++ᶜʳ : ∀ {A ρ} → (Γ Γ₀ Δ : Ctx) → (y : A ∈[ ρ ] Γ₀)
+            → Tgt-cast (++ᶜ-assoc Γ Γ₀ Δ)
+                (grade-++ᶜˡ ρ Δ , ∈-++ᶜˡ {Γ = Γ ++ᶜ Γ₀} Δ (∈-++ᶜʳ {Γ = Γ} y))
+            ≡ (grade-++ᶜˡ ρ Δ , ∈-++ᶜʳ {Γ = Γ} (∈-++ᶜˡ {Γ = Γ₀} Δ y))
+
+∈-++ᶜˡ-++ᶜʳ Γ Γ₀ []         y = refl
+∈-++ᶜˡ-++ᶜʳ Γ Γ₀ (Δ ∷ B)    y =
+  trans (Tgt-cast-∷ (++ᶜ-assoc Γ Γ₀ Δ) _)
+        (cong Tgt-∷ (∈-++ᶜˡ-++ᶜʳ Γ Γ₀ Δ y))
+∈-++ᶜˡ-++ᶜʳ Γ Γ₀ (Δ ⟨ ρ' ⟩) y =
+  trans (Tgt-cast-⟨⟩ ρ' (++ᶜ-assoc Γ Γ₀ Δ) _)
+        (cong (Tgt-⟨⟩ ρ') (∈-++ᶜˡ-++ᶜʳ Γ Γ₀ Δ y))
+
+-- Reading a `Tgt-cast` equation in the other direction.
+
+Tgt-cast-flip : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (t : Tgt Γ A) → (t' : Tgt Γ' A)
+              → Tgt-cast e t ≡ t' → Tgt-cast (sym e) t' ≡ t
+Tgt-cast-flip refl t t' q = sym q
+
+Tgt-cast-flip⁻ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (t : Tgt Γ' A) → (t' : Tgt Γ A)
+               → Tgt-cast (sym e) t ≡ t' → Tgt-cast e t' ≡ t
+Tgt-cast-flip⁻ refl t t' q = sym q
+
+-- THE PUSHING RENAMING
+--
+-- The renaming that weakens a context by a whole suffix. It exists only when
+-- the suffix's grade is bounded by the unit — each of its locks has to be
+-- crossed, which is `⟨⟩-≤-ren` at that lock's own grade.
+
+push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ uᵣ → Ren [] Γ₀ (Γ₀ ++ᶜ Δ)
+push-ren []         p = id-ren
+push-ren (Δ ∷ B)    p = wk-ren ∘ʳ push-ren Δ p
+push-ren (Δ ⟨ ρ' ⟩) p =
+  (⟨⟩-≤-ren (≾ᵣ-zero-productʳ p) ∘ʳ ⟨⟩-η⁻¹-ren)
+    ∘ʳ push-ren Δ (≾ᵣ-zero-productˡ p)
+
+-- It acts as `∈-++ᶜˡ`, which is what pins it down up to `_≐ʳ_`.
+
+push-ren-tgt : ∀ {Γ₀ A ρ} → (Δ : Ctx) → (p : ctx-grade Δ ≾ᵣ uᵣ)
+             → (y : A ∈[ ρ ] Γ₀)
+             → var-tgt (push-ren {Γ₀} Δ p) y ≡ (grade-++ᶜˡ ρ Δ , ∈-++ᶜˡ Δ y)
+push-ren-tgt []         p y = refl
+push-ren-tgt (Δ ∷ B)    p y = cong Tgt-∷ (push-ren-tgt Δ p y)
+push-ren-tgt (Δ ⟨ ρ' ⟩) p y =
+  cong (Tgt-⟨⟩ ρ') (push-ren-tgt Δ (≾ᵣ-zero-productˡ p) y)
+
+-- At a one-entry suffix it is the weakening, resp. the lock crossing — the two
+-- shapes the environment's telescope zones present.
+
+push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ uᵣ)
+           → push-ren {Γ₀} ([] ∷ B) p ≐ʳ wk-ren
+push-ren-∷ p = ∘ʳ-identityʳ-≐ wk-ren
+
+push-ren-⟨⟩ : ∀ {Γ₀ ρ} → (p : ctx-grade ([] ⟨ ρ ⟩) ≾ᵣ uᵣ) → (p' : ρ ≾ᵣ uᵣ)
+            → push-ren {Γ₀} ([] ⟨ ρ ⟩) p ≐ʳ (⟨⟩-≤-ren p' ∘ʳ ⟨⟩-η⁻¹-ren)
+push-ren-⟨⟩ p p' =
+  ≐ʳ-trans (∘ʳ-identityʳ-≐ _) (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ p') ≐ʳ-refl)
+
+-- Pushing is natural: renaming the prefix and then pushing is pushing and then
+-- renaming the prefix under the suffix.
+
+push-ren-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
+             → (p : ctx-grade Δ ≾ᵣ uᵣ)
+             → (cong-ren {Γ'' = Δ} r ∘ʳ push-ren Δ p) ≐ʳ (push-ren Δ p ∘ʳ r)
+push-ren-nat r Δ p = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (y : A ∈[ σ ] _) → _
+    go y =
+      trans (cong (var-tgt′ (cong-ren {Γ'' = Δ} r)) (push-ren-tgt Δ p y))
+        (trans (cong-ren-tgt-l r Δ y)
+               (sym (push-ren-tgt Δ p (proj₂ (var-tgt r y)))))
+
+-- Pushing by a concatenated suffix is pushing twice, the contexts differing by
+-- associativity.
+
+push-ren-++ᶜ : ∀ {Γ₀} → (Δ₁ Δ₂ : Ctx)
+             → (p : ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ uᵣ)
+             → (p₁ : ctx-grade Δ₁ ≾ᵣ uᵣ) → (p₂ : ctx-grade Δ₂ ≾ᵣ uᵣ)
+             → (eq-ren (sym (++ᶜ-assoc Γ₀ Δ₁ Δ₂)) ∘ʳ push-ren (Δ₁ ++ᶜ Δ₂) p)
+             ≐ʳ (push-ren Δ₂ p₂ ∘ʳ push-ren {Γ₀} Δ₁ p₁)
+push-ren-++ᶜ {Γ₀} Δ₁ Δ₂ p p₁ p₂ = mk≐ʳ go
+  where
+    e = sym (++ᶜ-assoc Γ₀ Δ₁ Δ₂)
+
+    go : ∀ {A σ} → (y : A ∈[ σ ] Γ₀) → _
+    go y =
+      trans (cong (var-tgt′ (eq-ren e)) (push-ren-tgt (Δ₁ ++ᶜ Δ₂) p y))
+        (trans (eq-ren-tgt e (∈-++ᶜˡ (Δ₁ ++ᶜ Δ₂) y))
+          (trans (∈-++ᶜˡ-assoc Δ₁ Δ₂ y)
+            (sym (trans (cong (var-tgt′ (push-ren Δ₂ p₂)) (push-ren-tgt Δ₁ p₁ y))
+                        (push-ren-tgt Δ₂ p₂ (∈-++ᶜˡ Δ₁ y))))))
+
 -- SUFFIX EXTENSION
 --
 -- `cong-ren` recurses on the suffix, so it respects `_≐ʳ_` and commutes with
