@@ -37,6 +37,7 @@ open import Syntax.Types         Spec
 open import OperationalSemantics.Adequacy.Bind           Spec
 open import OperationalSemantics.Adequacy.Environment    Spec
 open import OperationalSemantics.Adequacy.Evaluation     Spec
+open import OperationalSemantics.Adequacy.Handle         Spec
 open import OperationalSemantics.Adequacy.Reducibility   Spec
 open import OperationalSemantics.Adequacy.RenEquivalence Spec
 open import OperationalSemantics.Adequacy.Slice          Spec
