@@ -414,12 +414,47 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
                 -- WHAT IS LEFT: the clause premise, rebuilt from `hH`.
                 --
-                -- `H₁'` is `H₁` included by `ren-ᴱ-∷`, then restricted by
-                -- `restrict-ren (cong-∷-ren sq)` and substituted; `hH` speaks of
-                -- `H` at `toCtx St ᴱ`, and `handle-steps`'s `eH₁` links `H₁` to
-                -- `H`. All four contexts are `[]` (`toCtxᴱ-[]`), so all the
-                -- renamings between them are `≐ʳ`-equal by `∅-ren-≐`; what has to
-                -- be produced is that `Fired`'s two clause instances agree, and
-                -- then `Comp-≐ᶜ` of `hH`.
+                -- It suffices that `Fired`'s two clause instances agree, since
+                -- `Fired` is a renaming and a substitution of them, both
+                -- congruences; then `hH₂ = Comp-≐ᶜ … (hH …)`. So the goal is
+                --
+                --   subst (Cl B op₃ ε₄) (toCtxᴱ-≡ St'' St₃) (H₂ op₃ ε₄)
+                --   ≐ᶜ subst (Cl B op₃ ε₄) (toCtxᴱ-≡ St   St₃) (H  op₃ ε₄)
+                --
+                -- where `H₂` is `H` pushed along: `eH₁`'s transport, the
+                -- `ren-ᴱ-∷ Ar` inclusion, `restrict-ren (cong-∷-ren sq)`, and
+                -- `⟨ eternal? Ar ⟩[ Hd ↦ W' ]cl`.
+                --
+                -- Two lemmas close it, and both are within reach now that `_ᴱ`
+                -- and `_[_↦_]c` expose the decision:
+                --
+                --   * *the inclusion cancels the substitution*: at an eternal
+                --     `Ar`, `ren-ᴱ-∷′ Ar (yes et)` is `wk-ren` and
+                --     `⟨ yes et ⟩[ Hd ↦ W' ]cl` substitutes for exactly that
+                --     binder, so `sub-wk-C` cancels them (its splitting
+                --     `split-++ʳ (∈-ᴱ-split et Hd) D` *is* `split-≡-++ᶜ`
+                --     definitionally, `D` being built from `[]`); at a
+                --     non-eternal one the inclusion is `id-ren` and the
+                --     substitution only retypes, so `uip` finishes.
+                --   * *renamings out of a clause context over a state agree when
+                --     they agree on the clause's own two variables*: the eternal
+                --     part is `[]` (`toCtxᴱ-[]`), so `∈-++ᶜ-split` sends every
+                --     variable to `D` and the rest is `∈-++ᶜ-split-inj₂`. This
+                --     is what makes `restrict-ren (cong-∷-ren sq)` and the two
+                --     `toCtxᴱ-≡` transports interchangeable.
+                --
+                -- The `Dec`-parameter rollout is complete — `_ᴱ`, `_[_↦_]c`'s
+                -- `handle` clause, `ren-ᴱ-∷`, `restrict-ren`'s three clauses and
+                -- `ᴱ-ren`'s `∷` clause all take the decision now.
+                --
+                -- What still blocks the first lemma is `⟨_⟩[_↦_]cl`'s *signature*:
+                -- its family argument sits at `Γ ᴱ` for `Γ` the substituted
+                -- variable's own context, so at `Γ := Γ₀ ∷ A` and `x := Hd` the
+                -- family's type recomputes `eternal? A` independently of the
+                -- `dec` argument. A `with`/`rewrite` at a use site abstracts one
+                -- and not the other, and the application stops typechecking —
+                -- in either direction. Tying the two together (an `ᴱ-∷`-shaped
+                -- family argument for the head case, or an abstract context plus
+                -- an equation) is the design decision to take next.
                 postulate
                   hH₂ : Clause-Prem B St'' _

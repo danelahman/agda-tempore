@@ -242,18 +242,44 @@ expose-ren-[] {Ξ} r = expose-ren Ξ r
 -- Well-typed on the ambient too, `ᴱ-⋈ᶜ` distributing over the join (and being
 -- `refl` at the empty ambient, so nothing is transported there).
 
+-- Extending the eternal restriction by a variable. Unlike a general weakening
+-- past the added structure, this always exists: a lock would be dropped by the
+-- restriction, and a variable is either kept (weaken) or dropped (identity).
+--
+-- As `_ᴱ` itself, the decision is a parameter rather than a `with`, so that a
+-- caller matching on it reduces this too.
+
+ren-ᴱ-∷′ : ∀ {Δ Ξ} → (A : VType) → (dec : Dec (Eternal A))
+         → Ren Ξ (Δ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec)
+ren-ᴱ-∷′ A (yes _) = wk-ren
+ren-ᴱ-∷′ A (no  _) = id-ren
+
+-- The two clauses of `restrict-ren` that inspect a variable's type, likewise
+-- with the decision taken as a parameter.
+
+restrict-var-ren : ∀ {Ξ Δ A ρ} → (dec : Dec (Eternal A))
+                 → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
+                 → Ren (Ξ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec) (Δ ᴱ)
+restrict-var-ren {Ξ} {Δ} {A} (yes et) p x =
+  var-ren (λ _ → ≾ᵣ-refl)
+    (subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) (ᴱ-⋈ᶜ Ξ Δ) (∈-ᴱ et x))
+restrict-var-ren (no _) p x = id-ren
+
+restrict-∷-ren : ∀ {Ξ Δ Δ' A} → (dec : Dec (Eternal A))
+               → Ren (Ξ ᴱ) (Δ ᴱ) (Δ' ᴱ)
+               → Ren (Ξ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec) (ᴱ-∷ (Δ' ᴱ) A dec)
+restrict-∷-ren (yes _) r = cong-∷-ren r
+restrict-∷-ren (no  _) r = r
+
 restrict-ren : ∀ {Ξ Δ Δ'} → Ren Ξ Δ Δ' → Ren (Ξ ᴱ) (Δ ᴱ) (Δ' ᴱ)
 restrict-ren id-ren =
   id-ren
 restrict-ren (r₂ ∘ʳ r₁) =
   restrict-ren r₂ ∘ʳ restrict-ren r₁
-restrict-ren (wk-ren {A = A}) with eternal? A
-... | yes _ = wk-ren
-... | no  _ = id-ren
-restrict-ren {Ξ} {Δ' = Δ'} (var-ren {A = A} p x) with eternal? A
-... | yes et = var-ren (λ _ → ≾ᵣ-refl)
-                 (subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) (ᴱ-⋈ᶜ Ξ Δ') (∈-ᴱ et x))
-... | no  _  = id-ren
+restrict-ren {Ξ} {Δ} (wk-ren {A = A}) =
+  ren-ᴱ-∷′ {Δ} {Ξ ᴱ} A (eternal? A)
+restrict-ren {Ξ} {Δ' = Δ'} (var-ren {A = A} p x) =
+  restrict-var-ren {Ξ} {Δ'} {A} (eternal? A) p x
 restrict-ren ⟨⟩-η-ren =
   id-ren
 restrict-ren ⟨⟩-η⁻¹-ren =
@@ -262,14 +288,13 @@ restrict-ren ⟨⟩-μ-ren =
   id-ren
 restrict-ren (⟨⟩-≤-ren _) =
   id-ren
-restrict-ren (cong-∷-ren {A = A} r) with eternal? A
-... | yes _ = cong-∷-ren (restrict-ren r)
-... | no  _ = restrict-ren r
+restrict-ren {Ξ} (cong-∷-ren {Δ} {Δ'} {A} r) =
+  restrict-∷-ren {Ξ} {Δ} {Δ'} {A} (eternal? A) (restrict-ren r)
 restrict-ren (cong-⟨⟩-ren r) =
   restrict-ren r
-restrict-ren (⟨⟩-ext-ren {A = A} et) with eternal? A
-... | yes _  = id-ren
-... | no ¬et = ⊥-elim (¬et et)
+-- both sides drop the lock, so this is the identity whatever `A`'s eternality
+restrict-ren (⟨⟩-ext-ren {A = A} et) =
+  id-ren
 -- a lock is dropped by the restriction, so introducing one restricts to nothing
 restrict-ren (⟨⟩-ext-ctx ecΞ ecΔ) =
   id-ren
@@ -282,9 +307,7 @@ restrict-ren (⟨⟩-ext-ctx ecΞ ecΔ) =
 -- that positional instantiation names them.
 
 ren-ᴱ-∷ : ∀ {Δ Ξ} → (A : VType) → Ren Ξ (Δ ᴱ) ((Δ ∷ A) ᴱ)
-ren-ᴱ-∷ A with eternal? A
-... | yes _ = wk-ren
-... | no  _ = id-ren
+ren-ᴱ-∷ {Δ} {Ξ} A = ren-ᴱ-∷′ {Δ} {Ξ} A (eternal? A)
 
 -- Weakening a grade to a context renaming
 
@@ -333,11 +356,14 @@ contract (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Δ)
 -- closes over `Δ ᴱ`, is renamed along when the operation is handled; its
 -- interpretation is exactly the eternal projection (`ᴱ-ren-mor`).
 
+ᴱ-ren-∷ : ∀ {Δ} → (A : VType) → (dec : Dec (Eternal A))
+        → Ren [] (Δ ᴱ) Δ → Ren [] (ᴱ-∷ (Δ ᴱ) A dec) (Δ ∷ A)
+ᴱ-ren-∷ A (yes _) r = cong-∷-ren r
+ᴱ-ren-∷ A (no  _) r = wk-ren ∘ʳ r
+
 ᴱ-ren : (Δ : Ctx) → Ren [] (Δ ᴱ) Δ
 ᴱ-ren []        = id-ren
-ᴱ-ren (Δ ∷ A)   with eternal? A
-... | yes _ = cong-∷-ren (ᴱ-ren Δ)
-... | no  _ = wk-ren ∘ʳ ᴱ-ren Δ
+ᴱ-ren (Δ ∷ A)   = ᴱ-ren-∷ {Δ} A (eternal? A) (ᴱ-ren Δ)
 ᴱ-ren (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (ᴱ-ren Δ) ∘ʳ ⟨⟩-ext-ctx ec-[] (ᴱ-EternalCtx Δ)
 
 -- THE ETERNAL WEAKENING
