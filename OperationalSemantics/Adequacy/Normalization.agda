@@ -92,19 +92,6 @@ postulate
            --------------------------------------------------------------
            → Comp' D ε St (env-C γ (match V `in M))
 
-  -- Boxing: allocate, which is where the store grows (`store-fresh`). The
-  -- boxed value is asked for at every state its lock permits, which is why the
-  -- hypothesis quantifies over the environment.
-
-  FL-box : ∀ {St Γ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
-         → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ D ‼ ε)
-         → (∀ {St'} → (γ' : Env St' (Γ ⟨ ρ ⟩)) → Rel-Env γ'
-              → Val A St' (env-V γ' V))
-         → (∀ {St'} → (γ' : Env St' (Γ ∷ [ ρ ] A)) → Rel-Env γ'
-              → Comp' D ε St' (env-C γ' M))
-         --------------------------------------------------------------
-         → Comp' D ε St (env-C γ (box V M))
-
   -- Unboxing: read the store. The value read is reducible because the cell the
   -- action's `unbox` names is the one the environment sends the boxed
   -- variable to.
@@ -116,6 +103,53 @@ postulate
                 → Comp' D ε St' (env-C γ' M))
            --------------------------------------------------------------
            → Comp' D ε St (env-C γ (unbox w V M))
+
+-- Boxing: `BOX` allocates, and the reduct already lives over the *new* state's
+-- context — so the environment must keep the binder as the fresh cell rather than
+-- substitute for it, which is `liftᵉ`. Then `env-Cˢ-lift` is `refl`: the reduct
+-- *is* the action at `liftᵉ V₀ γ`, and its `Rel-Env` is the boxed value's
+-- reducibility at every state the lock permits — which is the first hypothesis,
+-- at the environment `γ ⟨ q ⟩ᵉ` (whose action at the empty suffix is
+-- `V-rename (unbox-ren q)`, both casts being `refl` there).
+
+FL-box : ∀ {St Γ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
+       → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ D ‼ ε)
+       → (∀ {St'} → (γ' : Env St' (Γ ⟨ ρ ⟩)) → Rel-Env γ'
+            → Val A St' (env-V γ' V))
+       → (∀ {St'} → (γ' : Env St' (Γ ∷ [ ρ ] A)) → Rel-Env γ'
+            → Comp' D ε St' (env-C γ' M))
+       --------------------------------------------------------------
+       → Comp' D ε St (env-C γ (box V M))
+
+FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
+  subst (Comp' _ _ St) (sym (env-Cˢ-box γ [] V M))
+    (Comp-expand BOX (pM (liftᵉ V₀ γ) (pγ , cell)))
+  where
+    V' = env-Vˢ γ ([] ⟨ ρ ⟩) V
+    V₀ = V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V'
+
+    -- the two `eq-ren`s the allocation and the lookup insert cancel
+    cancel : ∀ {St'} → (q : Slice St ρ St' uᵣ)
+           → V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀
+           ≐ᵛ V-rename (unbox-ren q) V'
+    cancel q =
+      ≐ᵛ-trans
+        (≐ᵛ-sym (V-rename-∘ (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ)
+                            (eq-ren (sym ++ᶜ-identityˡ)) V'))
+        (V-rename-≐
+          (≐ʳ-trans
+            (∘ʳ-assoc-≐ (unbox-ren q) (eq-ren ++ᶜ-identityˡ)
+                        (eq-ren (sym ++ᶜ-identityˡ)))
+            (∘ʳ-id-≐ʳ (unbox-ren q)
+              (≐ʳ-trans
+                (eq-ren-∘-≐ (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))
+                            ++ᶜ-identityˡ)
+                (eq-ren-≐ _ refl))))
+          V')
+
+    cell : ∀ {St'} → (q : Slice St ρ St' uᵣ)
+         → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
+    cell q = Val-≐ᵛ A (≐ᵛ-sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
 
 -- Performing: already a weak head normal form, so this is `comp-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
