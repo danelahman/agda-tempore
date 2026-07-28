@@ -597,6 +597,12 @@ suc-comp-ren-grade-src : ∀ {St St₁ : 𝕊 []} {ρ₁ ρ₂ ρ₃ : R} → (e
 suc-comp-ren-grade-src e refl b₁ b₂ =
   ≐ʳ-trans (∘ʳ-identityʳ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
+-- Allocating a cell renames the old context by weakening past it.
+
+alloc-ren-≐ : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+            → slice-renᵘ (alloc-slice V) ≐ʳ wk-ren
+alloc-ren-≐ V = mk≐ʳ (λ x → slice-renᵘ-tgt (alloc-slice V) x)
+
 -- The same for the renaming an `unbox` consumes: splitting the guard into the
 -- slice's own part and a residual `σ`, then crossing the lock under `σ`, is the
 -- extension at residual `σ`. Both send `Tl-⟨⟩ x` to the embedding under `σ`.
