@@ -84,8 +84,9 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
            → Comp A P ε St M
 
   -- or it gets stuck on an operation with a reducible parameter, whose
-  -- resumption is reducible at every later state that unboxing the
-  -- continuation permits (the `Slice` at the operation's own grade)
+  -- resumption is reducible at every state where the operation's own grade has
+  -- elapsed — the `Slice` an `unbox` consumes, since `HANDLE-OP` boxes the
+  -- resumption at that grade and a clause reaches it by unboxing
 
   comp-op : ∀ {ε ε₁} {St St₁ : 𝕊 []} {op : Op}
           → {M : toCtx St ⊢C⦂ A ‼ ε}
@@ -95,10 +96,10 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
           → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
           → Valᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
-             → (q : Slice St₁ (mapᵉ (op-grade op)) St₂ (mapᵉ (op-grade op)))
-             → (W' : toCtx (St₂ ⟨ mapᵉ (op-grade op) ⟩ₛ) ⊢V⦂ type-of-gtype (arity op))
-             → Valᵍ (arity op) (St₂ ⟨ mapᵉ (op-grade op) ⟩ₛ) W'
-             → Comp A P ε₁ (St₂ ⟨ mapᵉ (op-grade op) ⟩ₛ) (resume q M' W'))
+             → (q : Slice St₁ (mapᵉ (op-grade op)) St₂ uᵣ)
+             → (W' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
+             → Valᵍ (arity op) St₂ W'
+             → Comp A P ε₁ St₂ (resume q M' W'))
           -------------------------------------------------------------------
           → Comp A P ε St M
 
@@ -412,21 +413,21 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} q' W eW
 
 resume-≐ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
          → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-         → {q : Slice St ρ St₂ ρ} → {q' : Slice St' ρ St₂' ρ}
+         → {q : Slice St ρ St₂ uᵣ} → {q' : Slice St' ρ St₂' uᵣ}
          → ext q ≤≐ ext q'
          → {M : toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
          → {M' : toCtx St' ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
          → M ≐ᶜ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B) (sym (toCtx-≐ˢ es))) M'
-         → {W : toCtx (St₂ ⟨ ρ ⟩ₛ) ⊢V⦂ B} → {W' : toCtx (St₂' ⟨ ρ ⟩ₛ) ⊢V⦂ B}
-         → W ≐ᵛ castᵛ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂))) W'
+         → {W : toCtx St₂ ⊢V⦂ B} → {W' : toCtx St₂' ⊢V⦂ B}
+         → W ≐ᵛ castᵛ (sym (toCtx-≐ˢ es₂)) W'
          -------------------------------------------------------------------
          → resume q M W
-         ≐ᶜ castᶜ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂))) (resume q' M' W')
+         ≐ᶜ castᶜ (sym (toCtx-≐ˢ es₂)) (resume q' M' W')
 
 resume-≐ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
   ≐ᶜ-trans
     (sub-≐ᶜ Hd eW
-      (≐ᶜ-trans (C-rename-≐ (cong-∷-ren-≐ (suc-comp-ren-≐ h es es₂ _ _)) M)
+      (≐ᶜ-trans (C-rename-≐ (cong-∷-ren-≐ (unbox-ren-≐ˢ es es₂ h)) M)
                 (C-rename-cong (cong-∷-ren _)
                   (subst (λ z → M ≐ᶜ z)
                          (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B)
@@ -434,11 +435,11 @@ resume-≐ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
                                     (cong (_∷ B) e₁) M')
                          eM))))
     (≡→≐ᶜ (trans (cong (λ z → z [ Hd ↦ castᵛ e₂ W' ]c)
-                       (cast-rename-∷ e₁ e₂ (slice-ren q') M'))
-                 (cast-app e₂ (C-rename (cong-∷-ren (slice-ren q')) M') W')))
+                       (cast-rename-∷ e₁ e₂ (unbox-ren q') M'))
+                 (cast-app e₂ (C-rename (cong-∷-ren (unbox-ren q')) M') W')))
   where
     e₁ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es))
-    e₂ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂))
+    e₂ = sym (toCtx-≐ˢ es₂)
 
 Comp-≐ : ∀ {A P ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
        → (tr : ∀ {St₁ St₁' : 𝕊 []} → (es₁ : St₁ ≐ˢ St₁')
@@ -474,27 +475,20 @@ Comp-≐ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
   where
     ρ = mapᵉ (op-grade op)
 
-    step : ∀ {St₂ : 𝕊 []} → (q' : Slice _ ρ St₂ ρ)
-         → (W'' : toCtx (St₂ ⟨ ρ ⟩ₛ) ⊢V⦂ type-of-gtype (arity op))
-         → Valᵍ (arity op) (St₂ ⟨ ρ ⟩ₛ) W''
-         → Comp A P _ (St₂ ⟨ ρ ⟩ₛ) (resume q' Mk' W'')
+    step : ∀ {St₂ : 𝕊 []} → (q' : Slice _ ρ St₂ uᵣ)
+         → (W'' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
+         → Valᵍ (arity op) St₂ W''
+         → Comp A P _ St₂ (resume q' Mk' W'')
     step {St₂} q' W'' pW'' with slice-replay (≐ˢ-sym es₁) q'
     ... | St₃ , q , es₃ , h =
-      Comp-≐ (≐ˢ-sym esL) tr tr≐
-        (subst (λ z → resume q Mk (castᵛ (toCtx-≐ˢ esL) W'') ≐ᶜ z)
-               (castᶜ-irr (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ (≐ˢ-sym es₃))))
-                          (sym (toCtx-≐ˢ (≐ˢ-sym esL)))
-                          (resume q' Mk' W''))
-          (resume-≐ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
-            (subst (λ z → castᵛ (toCtx-≐ˢ esL) W'' ≐ᵛ z)
-                   (castᵛ-irr (toCtx-≐ˢ esL)
-                              (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ (≐ˢ-sym es₃))))
-                              W'')
-                   (≐ᵛ-refl _))))
-        (pk q (castᵛ (toCtx-≐ˢ esL) W'')
-             (Valᵍ-≐ˢ esL (arity op) W'' pW''))
-      where
-        esL = ⟨⟩-≐ˢ ρ es₃
+      Comp-≐ (≐ˢ-sym es₃) tr tr≐
+        (resume-≐ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
+          (subst (λ z → castᵛ (toCtx-≐ˢ es₃) W'' ≐ᵛ z)
+                 (castᵛ-irr (toCtx-≐ˢ es₃)
+                            (sym (toCtx-≐ˢ (≐ˢ-sym es₃))) W'')
+                 (≐ᵛ-refl _)))
+        (pk q (castᵛ (toCtx-≐ˢ es₃) W'')
+             (Valᵍ-≐ˢ es₃ (arity op) W'' pW''))
 
 -- VALUES ACROSS THE STATE EQUIVALENCE
 --
@@ -606,24 +600,33 @@ Comp-≐ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- `HANDLE-OP` leaves it under a residual lock, and composing slices is what
 -- reaches it.
 --
--- The clause premise carries a `Store St₁`. A clause closes over `Γ ᴱ` alone, so
--- at a state it has no free state variable; but the only environment reaching a
--- clause's context is `renᵉ ⌊ St₁ ⌋ (ᴱ-ren _)`, whose reducibility *is* that
--- store. An `Env St []` constructor would remove the premise.
---
--- Discharging the premise is what the fundamental lemma can do; but `handle-Comp`
--- itself cannot yet be proved, because nothing propagates a store along a run:
--- `Comp` records the state reached and says nothing about its cells, and
--- store-reducibility is not a consequence of the run alone — it comes from the
--- boxed values having been reducible, which only the fundamental lemma knows.
--- Adding a `Store` field to `comp-ret`/`comp-op` does not work either: `Val`'s
--- Kripke clauses would then have to *demand* a store at the later state, and
--- `Store` is defined by quantifying `Val` at the state's cell types, so neither
--- the recursion on the type nor strict positivity survives.
---
 -- Induction on the scrutinee's `Comp` derivation: `comp-ret` fires `HANDLE-RET`,
 -- `comp-op` fires `HANDLE-OP` and recurses on the `pk` field, the clauses being
--- carried along by `handle-steps`.
+-- carried along by `handle-steps`. `HANDLE-OP` boxes the resumption at the
+-- operation's grade and hands the clause the fresh cell, so the reducibility of
+-- that cell is `store-fresh`, whose premise is the recursion.
+--
+-- Two things in the statement still do not line up with that reduct.
+--
+-- (1) The clause premise carries a `Store St₁`, and the state the clause fires at
+-- is `St₁ ∷ₛ` the boxed resumption — so firing it needs `store-alloc`, hence
+-- `Store St₁`, and nothing propagates a store along a run: `Comp` records the
+-- state reached and says nothing about its cells, and store-reducibility is not a
+-- consequence of the run alone (it comes from the boxed values having been
+-- reducible, which only the fundamental lemma knows). Adding a `Store` field to
+-- `comp-ret`/`comp-op` does not work either: `Val`'s Kripke clauses would then
+-- have to *demand* a store at the later state, and `Store` quantifies `Val` at
+-- the state's cell types, so neither the recursion on the type nor strict
+-- positivity survives. A clause closes over `Γ ᴱ` alone, so at a state it has no
+-- free state variable, and an `Env St []` constructor would remove the premise
+-- outright — that is the fix, and it is what lets the fundamental lemma discharge
+-- the premise without a store.
+--
+-- (2) The premise substitutes the continuation `K`, whereas `HANDLE-OP` followed
+-- by `BOX` leaves it as the fresh cell *variable* of the extended state. Closing
+-- that variable by substituting it for itself is the contraction law `FL-box`
+-- also wants, and it does not hold; so the premise has to be restated with the
+-- continuation left in place — which is the same `Env` constructor question.
 
 postulate
 

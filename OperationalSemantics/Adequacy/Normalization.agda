@@ -118,9 +118,9 @@ postulate
 
 -- Performing: already a weak head normal form, so this is `comp-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
--- `resume` amounts to: the lock the operation is performed under, matched by the
--- resumption's own slice extended by the lock it lands beneath
--- (`unbox-ren-resume-≐`), and the arity value on top.
+-- `resume` amounts to — the lock the operation is performed under, matched by
+-- the resumption's own slice, and the arity value on top — which the action
+-- *is*, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
 
 FL-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → Rel-Env γ
            → (V : Γ ⊢V⦂ type-of-gtype (param op))
@@ -137,31 +137,24 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
   subst (Comp' _ _ _) (sym (env-Cˢ-perform γ [] V M))
     (comp-op ε* (Val→Valᵍ (param op) (env-V γ V) pV)
       (λ q W' pW' →
-         Comp-≐ᶜ (resumeq q W')
-           (pM ((γ ⟨ slice-∘ delay-slice q ⟩ᵉ) ∷ᵉ W')
-               (pγ , Valᵍ→Val (arity op) W' pW'))))
+         subst (Comp' _ _ _) (resumeq q W')
+           (pM ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') (pγ , Valᵍ→Val (arity op) W' pW'))))
   where
     ρ  = mapᵉ (op-grade op)
     Ar = type-of-gtype (arity op)
     M₀ = env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar) M
 
     -- the action at the resumption's environment *is* the resumption, once the
-    -- two `++ᶜ`-associativity casts are seen to be the identity and the two
-    -- renamings to act alike
-    resumeq : ∀ {St₂ : 𝕊 []} → (q : Slice St ρ St₂ ρ)
-            → (W' : toCtx (St₂ ⟨ ρ ⟩ₛ) ⊢V⦂ Ar)
-            → env-C ((γ ⟨ slice-∘ delay-slice q ⟩ᵉ) ∷ᵉ W') M
-            ≐ᶜ resume q M₀ W'
+    -- two `++ᶜ`-associativity casts are seen to be the identity
+    resumeq : ∀ {St₂ : 𝕊 []} → (q : Slice St ρ St₂ uᵣ)
+            → (W' : toCtx St₂ ⊢V⦂ Ar)
+            → env-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') M ≡ resume q M₀ W'
     resumeq q W' =
-      subst (λ z → (z [ Hd ↦ W' ]c) ≐ᶜ resume q M₀ W')
-        (sym (cong (C-rename (cong-∷-ren (unbox-ren (slice-∘ delay-slice q))))
-               (trans (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩)
-                                                 ([] ∷ Ar))) refl _)
-                      (cong (env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar))
-                            (castᶜ-irr (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) ([] ∷ Ar))
-                                       refl M)))))
-        (sub-≐ᶜ Hd (≐ᵛ-refl W')
-          (C-rename-≐ (cong-∷-ren-≐ (unbox-ren-resume-≐ q)) M₀))
+      cong (λ z → (C-rename (cong-∷-ren (unbox-ren q)) z) [ Hd ↦ W' ]c)
+        (trans (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) ([] ∷ Ar)))
+                          refl _)
+               (cong (env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar))
+                     (castᶜ-irr (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) ([] ∷ Ar)) refl M)))
 
 mutual
 

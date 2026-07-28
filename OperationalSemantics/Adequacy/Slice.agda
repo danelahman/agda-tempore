@@ -87,16 +87,17 @@ slice-under q = C-rename (cong-∷-ren (slice-renᵘ q))
 unbox-ren : ∀ {St ρ St'} → Slice St ρ St' uᵣ → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St')
 unbox-ren q = ⟨⟩-η-ren ∘ʳ slice-ren q
 
--- Resuming a continuation guarded by `ρ` at a later state: transport it along
--- the slice, then feed it the arity value. The result lives over the *locked*
--- state `St' ⟨ ρ ⟩ₛ`, which is where `HANDLE-OP` resumes.
+-- Resuming a continuation guarded by `ρ` at a state where `ρ` has elapsed:
+-- cross the lock along the slice, then feed it the arity value. The slice is the
+-- one `unbox` consumes, because that is how a resumption is reached — `HANDLE-OP`
+-- boxes it at `ρ` and the clause unboxes it once `ρ` has passed.
 
 resume : ∀ {St St' ρ A ε B}
-       → (q : Slice St ρ St' ρ)
+       → (q : Slice St ρ St' uᵣ)
        → toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε
-       → toCtx (St' ⟨ ρ ⟩ₛ) ⊢V⦂ B
-       → toCtx (St' ⟨ ρ ⟩ₛ) ⊢C⦂ A ‼ ε
-resume q M W = (C-rename (cong-∷-ren (slice-ren q)) M) [ Hd ↦ W ]c
+       → toCtx St' ⊢V⦂ B
+       → toCtx St' ⊢C⦂ A ‼ ε
+resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ Hd ↦ W ]c
 
 -- TRANSITIVITY OF STATE EXTENSION
 --
@@ -596,22 +597,19 @@ suc-comp-ren-grade-src : ∀ {St St₁ : 𝕊 []} {ρ₁ ρ₂ ρ₃ : R} → (e
 suc-comp-ren-grade-src e refl b₁ b₂ =
   ≐ʳ-trans (∘ʳ-identityʳ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
--- `⟨⟩-μ-ren` is natural in the extension: splitting a lock and then following
--- the extension under it is following the extension at the joined grade and
--- splitting after. Both send `Tl-⟨⟩ x` to the extension's embedding under two
--- locks (`suc-comp-ren-tgt`), so this holds pointwise.
+-- The same for the renaming an `unbox` consumes: splitting the guard into the
+-- slice's own part and a residual `σ`, then crossing the lock under `σ`, is the
+-- extension at residual `σ`. Both send `Tl-⟨⟩ x` to the embedding under `σ`.
 
-suc-comp-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ₂ ρ₃ σ : R} → (e : St ≤ₛ St₁)
-                 → (b₁ : ≤ₛ-grade e ·ᵣ ρ₃ ≾ᵣ ρ₂)
-                 → (b₂ : ≤ₛ-grade e ·ᵣ (ρ₃ ·ᵣ σ) ≾ᵣ ρ₂ ·ᵣ σ)
-                 → (cong-⟨⟩-ren {ρ = σ} (suc-comp-ren e b₁) ∘ʳ ⟨⟩-μ-ren)
-                 ≐ʳ (⟨⟩-μ-ren ∘ʳ suc-comp-ren e b₂)
-suc-comp-ren-μ-≐ {ρ₃ = ρ₃} {σ = σ} e b₁ b₂ = mk≐ʳ go
+unbox-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : Slice St ρ St₁ uᵣ)
+              → (b : ≤ₛ-grade (ext q) ·ᵣ σ ≾ᵣ ρ ·ᵣ σ)
+              → (cong-⟨⟩-ren {ρ = σ} (unbox-ren q) ∘ʳ ⟨⟩-μ-ren)
+              ≐ʳ suc-comp-ren (ext q) b
+unbox-ren-μ-≐ {σ = σ} q b = mk≐ʳ go
   where
     go : ∀ {A τ} → (x : A ∈[ τ ] _) → _
-    go (Tl-⟨⟩ x) =
-      trans (cong (Tgt-⟨⟩ σ) (suc-comp-ren-tgt e b₁ x))
-            (sym (cong (var-tgt′ ⟨⟩-μ-ren) (suc-comp-ren-tgt e b₂ x)))
+    go (Tl-⟨⟩ x) = trans (cong (Tgt-⟨⟩ σ) (unbox-ren-tgt q x))
+                         (sym (suc-comp-ren-tgt (ext q) b x))
 
 -- Crossing a lock and then following a guarded slice is following the
 -- corresponding unit slice (`slice-unit`): the source grade is relaxed from `ρ`
@@ -645,21 +643,6 @@ unbox-ren-delay-≐ = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) = unbox-ren-tgt delay-slice x
-
--- Resuming: the renaming a `HANDLE-OP` resumption transports the continuation
--- by is the one the environment's own lock gives, once the resumption's slice is
--- extended by the lock it lands under. Both send a locked variable to the
--- embedding of the same extension.
-
-unbox-ren-resume-≐ : ∀ {ρ} {St St₂ : 𝕊 []} → (q : Slice St ρ St₂ ρ)
-                   → unbox-ren (slice-∘ delay-slice q) ≐ʳ slice-ren q
-unbox-ren-resume-≐ {ρ} q = mk≐ʳ go
-  where
-    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
-    go (Tl-⟨⟩ x) =
-      trans (unbox-ren-tgt (slice-∘ delay-slice q) x)
-        (trans (≤ₛ-embed-∘ (ext q) (⟨⟩-suc ρ id-suc) x)
-               (sym (suc-comp-ren-tgt (ext q) (bound q) x)))
 
 ------------------------------------------------------------------------
 -- UNFOLDING THE LOOKUP

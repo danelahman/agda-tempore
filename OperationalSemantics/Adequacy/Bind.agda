@@ -131,44 +131,41 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
 
     N₂ = C-rename (cong-∷-ren κ) N₁
 
-    resump : ∀ {St₂ : 𝕊 []} → (q : Slice St₁ ρₒ St₂ ρₒ)
-           → (W' : toCtx (St₂ ⟨ ρₒ ⟩ₛ) ⊢V⦂ Ar)
-           → Valᵍ (arity op) (St₂ ⟨ ρₒ ⟩ₛ) W'
-           → Comp' B (ε₃ ·ₑ ε₂) (St₂ ⟨ ρₒ ⟩ₛ) (resume q (M' ⨟ N₂) W')
+    resump : ∀ {St₂ : 𝕊 []} → (q : Slice St₁ ρₒ St₂ uᵣ)
+           → (W' : toCtx St₂ ⊢V⦂ Ar)
+           → Valᵍ (arity op) St₂ W'
+           → Comp' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
 
     resump {St₂} q W' pW' = seq-Comp N₃ (pk q W' pW') hN₃
       where
-        sq = slice-ren q
+        sq = unbox-ren q
 
         N₃ = (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₂)
                [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c
 
-        -- the extension the operation's own lock contributes
-        E₁ = ⟨⟩-suc ρₒ (ext q)
+        bq : ≤ₛ-grade (ext q) ≾ᵣ ρₒ
+        bq = ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (≤ₛ-grade (ext q)))))
+                      (bound q)
 
-        B₁ : ≤ₛ-grade E₁ ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
-        B₁ = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (bound q)) (≾ᵣ-reflexive (sym map-·ᵉ))
+        B₁' : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ ρₒ ·ᵣ mapᵉ ε₃
+        B₁' = ·ᵣ-monoˡ-≾ᵣ bq
 
-        sB : Slice St₁ (mapᵉ (op-grade op ·ₑ ε₃)) (St₂ ⟨ ρₒ ⟩ₛ) (mapᵉ ε₃)
-        sB = slice E₁ B₁
+        B₁ : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
+        B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
+
+        sB : Slice St₁ (mapᵉ (op-grade op ·ₑ ε₃)) St₂ (mapᵉ ε₃)
+        sB = slice (ext q) B₁
 
         -- what is left of the sequel's renaming once the arity variable is gone
         W₁ : Ren [] (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-                  (toCtx (St₂ ⟨ ρₒ ⟩ₛ) ⟨ mapᵉ ε₃ ⟩)
+                  (toCtx St₂ ⟨ mapᵉ ε₃ ⟩)
         W₁ = cong-⟨⟩-ren sq ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren emap
 
-        bμ : ≤ₛ-grade (ext q) ·ᵣ (ρₒ ·ᵣ mapᵉ ε₃) ≾ᵣ ρₒ ·ᵣ mapᵉ ε₃
-        bμ = ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (≤ₛ-grade (ext q)) ρₒ (mapᵉ ε₃))))
-                      (·ᵣ-monoˡ-≾ᵣ (bound q))
-
-        eW₁ : W₁ ≐ʳ suc-comp-ren E₁ B₁
+        eW₁ : W₁ ≐ʳ suc-comp-ren (ext q) B₁
         eW₁ =
           ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren sq) ⟨⟩-μ-ren (eq-ren emap)))
-            (≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-μ-≐ (ext q) (bound q) bμ) ≐ʳ-refl)
-              (≐ʳ-trans (∘ʳ-assoc-≐ ⟨⟩-μ-ren (suc-comp-ren (ext q) bμ)
-                                    (eq-ren emap))
-                (∘ʳ-≐ ≐ʳ-refl
-                  (suc-comp-ren-grade-src (ext q) map-·ᵉ bμ _))))
+            (≐ʳ-trans (∘ʳ-≐ (unbox-ren-μ-≐ q B₁') ≐ʳ-refl)
+                      (suc-comp-ren-grade-src (ext q) map-·ᵉ B₁' B₁))
 
         -- the sequel the recursion needs is the original one, renamed
         eN₃ : N₃ ≐ᶜ C-rename (cong-∷-ren (W₁ ∘ʳ srs)) N
@@ -210,7 +207,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                     N₁)
                   (C-rename-∘ (cong-∷-ren (cong-⟨⟩-ren wk-ren)) (cong-∷-ren W₁) N₁))
 
-        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : Slice (St₂ ⟨ ρₒ ⟩ₛ) (mapᵉ ε₃) St₃ uᵣ)
+        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : Slice St₂ (mapᵉ ε₃) St₃ uᵣ)
             → (V : toCtx St₃ ⊢V⦂ A) → Val A St₃ V
             → Comp' B ε₂ St₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ Hd ↦ V ]c)
@@ -225,10 +222,10 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                       ≐ʳ (suc-comp-ren (ext q') (bound q') ∘ʳ (W₁ ∘ʳ srs))
             composite =
               ≐ʳ-trans
-                (suc-comp-ren-∘-≐ (≤ₛ-trans E₀ E₁) (ext q')
+                (suc-comp-ren-∘-≐ (≤ₛ-trans E₀ (ext q)) (ext q')
                                   (bound q₁) (bound s₁₂) (bound q'))
                 (∘ʳ-≐ ≐ʳ-refl
-                  (≐ʳ-trans (suc-comp-ren-∘-≐ E₀ E₁ (bound s₁₂) b₀ B₁)
+                  (≐ʳ-trans (suc-comp-ren-∘-≐ E₀ (ext q) (bound s₁₂) b₀ B₁)
                             (∘ʳ-≐ (≐ʳ-sym eW₁) ≐ʳ-refl)))
 
             finalEq : unbox-ren q₁ ≐ʳ (unbox-ren q' ∘ʳ (W₁ ∘ʳ srs))
