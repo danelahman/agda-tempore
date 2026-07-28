@@ -2462,6 +2462,61 @@ env-clause-rel : ∀ {St Γ} → (γ : Env St Γ) → (St₁ : 𝕊 [])
                → Rel-Env (env-clause γ St₁)
 env-clause-rel {Γ = Γ} γ St₁ = tt , ᴱ-eternal Γ
 
+-- THE CLAUSE ACTION AGAINST THE CLAUSE ENVIRONMENT
+--
+-- `env-Hˢ γ Δ` reaches a clause zone by zone, each contributing its own
+-- `restrict-ren` or — at the substituting zones — its `⟨_⟩[_↦_]cl`, and the
+-- weakening into a state's context comes only afterwards (`Fired`).
+-- `env-clause γ St₁` instead substitutes every closed value `env-ᴱ γ` computes
+-- and weakens once, at the base. The two agree, and only up to `≐ᶜ`: lining them
+-- up moves each zone's renaming past the substitutions to its right, which
+-- `Ren` being unquotiented does not do on the nose.
+--
+-- Proving it needs a lemma the development does not yet have: *renaming
+-- commutes with substitution* — `C-rename (cong-ren r) (M [ x ↦ V ]c) ≐ᶜ
+-- (C-rename (cong-ren r) M) [ x ↦ V-rename r V ]c` at an arbitrary suffix. The
+-- `_∷ᵉ_` zone is where it bites: `env-Hˢ` substitutes there *after* the zones to
+-- its left have run, `env-eternal-C` *before*. That lemma is a mutual induction
+-- on the term of `sub-wk`'s size, and `FL-match` wants its substitution/
+-- substitution counterpart.
+
+-- A state contributes nothing to a restriction, at any suffix.
+
+toCtxᴱ-++ᶜ : (St : 𝕊 []) → (Δ : Ctx) → (toCtx St ++ᶜ Δ) ᴱ ≡ Δ ᴱ
+toCtxᴱ-++ᶜ St Δ =
+  trans (ᴱ-++ᶜ (toCtx St) Δ)
+        (trans (cong (_++ᶜ Δ ᴱ) (toCtxᴱ-[] St)) (++ᶜ-identityˡ {Δ ᴱ}))
+
+-- The weakening `env-clause` ends with, at a suffix.
+
+clause-ren : (St₁ : 𝕊 []) → (Δ : Ctx) → Ren [] (Δ ᴱ) (toCtx St₁ ++ᶜ Δ ᴱ)
+clause-ren St₁ Δ =
+  cong-ren {Γ'' = Δ ᴱ} (∅-ren St₁) ∘ʳ eq-ren (sym (++ᶜ-identityˡ {Δ ᴱ}))
+
+-- Relocating a clause along an equality of the *restricted* context it is
+-- already stated over — `Cl-cast`'s shape, one `_ᴱ` further in.
+
+Cl-castᴿ : ∀ {Γ₀ Γ₀' B} → (op : Op) → (ε : E) → Γ₀ ≡ Γ₀'
+         → Cl B op ε Γ₀ → Cl B op ε Γ₀'
+Cl-castᴿ {B = B} op ε e X =
+  castᶜ (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              e)
+        X
+
+postulate
+  env-Hˢ-clause : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 []) → (Δ : Ctx)
+                → (K : Fam B ((Γ ++ᶜ Δ) ᴱ)) → (op : Op) → (ε : E)
+                → C-rename (cong-∷-ren (cong-∷-ren
+                              (clause-ren St₁ Δ ∘ʳ eq-ren (toCtxᴱ-++ᶜ St Δ))))
+                           (env-Hˢ γ Δ K op ε)
+                ≐ᶜ env-Cˢ (env-clause γ St₁)
+                          (Δ ᴱ ∷ type-of-gtype (param op)
+                               ∷ [ mapᵉ (op-grade op) ]
+                                   (type-of-gtype (arity op) ⇒ B ‼ ε))
+                          (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε))
+
 ------------------------------------------------------------------------
 -- FUNCTORIALITY IN THE STATE
 --

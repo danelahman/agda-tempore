@@ -859,3 +859,51 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                             (cl-cancel (eternal? Ar) (Hd {Γ = toCtx St''}) W' _ K
                                        hne het op₃ ε₄)))
 
+
+------------------------------------------------------------------------
+-- THE FIRED CLAUSE IS THE CLAUSE ENVIRONMENT'S ACTION
+--
+-- `env-Hˢ-clause` at the empty suffix. What is left to reconcile is where each
+-- side puts the two extra binders: `Fired` renames the clause into `toCtx St₁`
+-- and then substitutes the parameter at `Tl-∷ Hd`, while `liftᵉ` (at the empty
+-- suffix, two `refl` casts) and `_∷ᵉ_` (whose splitting's variable *is*
+-- `Tl-∷ Hd`) produce exactly that. The two weakenings differ — `ᴱ-ren
+-- (toCtx St₁)` against `clause-ren St₁ []` — but both leave `toCtx St ᴱ`, a
+-- context with no variables, so `≐ʳ` identifies them.
+------------------------------------------------------------------------
+
+-- A state's eternal part has no variables, so any two renamings out of it act
+-- alike — `∅-ren-≐` one `toCtxᴱ-[]` away.
+
+toCtxᴱ-ren-≐ : ∀ {Γ'} → (St : 𝕊 []) → (r r' : Ren [] (toCtx St ᴱ) Γ')
+             → r ≐ʳ r'
+toCtxᴱ-ren-≐ St r r' =
+  mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx
+                        (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (toCtxᴱ-[] St) x)))
+
+-- A clause's transport is absorbed into the renaming that follows it.
+
+subst-Cl-ren : ∀ {Γ₀ Γ₀' Γ₁ B} {op : Op} {ε : E} → (e : Γ₀ ≡ Γ₀')
+             → (r : Ren [] Γ₀' Γ₁) → (r' : Ren [] Γ₀ Γ₁)
+             → (r ∘ʳ eq-ren e) ≐ʳ r' → (Y : Cl B op ε Γ₀)
+             → C-rename (cong-∷-ren (cong-∷-ren r)) (subst (Cl B op ε) e Y)
+             ≐ᶜ C-rename (cong-∷-ren (cong-∷-ren r')) Y
+subst-Cl-ren refl r r' h Y =
+  C-rename-≐
+    (cong-∷-ren-≐ (cong-∷-ren-≐ (≐ʳ-trans (≐ʳ-sym (∘ʳ-identityʳ-≐ r)) h))) Y
+
+env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 [])
+             → (H : Fam B (Γ ᴱ)) → {op : Op} → {ε : E}
+             → (V₀ : Boxed B op ε St₁)
+             → (W : toCtx St₁ ⊢V⦂ type-of-gtype (param op))
+             → Fired St op ε (env-Hˢ γ [] H) St₁ V₀ W
+             ≐ᶜ env-C (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)) (H op ε)
+
+env-Hˢ-fired {St} {Γ} {B} γ St₁ H {op} {ε} V₀ W =
+  sub-≐ᶜ (Tl-∷ Hd) (≐ᵛ-refl W)
+    (≐ᶜ-trans
+      (subst-Cl-ren (toCtxᴱ-≡ St St₁) (ᴱ-ren (toCtx St₁))
+                    (clause-ren St₁ [] ∘ʳ eq-ren (toCtxᴱ-++ᶜ St []))
+                    (toCtxᴱ-ren-≐ St _ _)
+                    (env-Hˢ γ [] H op ε))
+      (env-Hˢ-clause γ St₁ [] H op ε))

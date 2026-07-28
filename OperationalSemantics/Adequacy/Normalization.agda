@@ -116,18 +116,17 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
     Hγ : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ)
     Hγ = env-Hˢ γ [] H
 
+    -- The clause the machine fires and the clause the environment closes agree
+    -- only up to the equivalence: the substituted values match on the nose, the
+    -- *renamings* reaching the state's context do not (`ᴱ-ren (toCtx St₁)`
+    -- against `∅-ren St₁`), and only `≐ᶜ` identifies those. Hence `Comp-≐ᶜ`
+    -- rather than a transport.
+
     clause : Clause-Prem B St Hγ
     clause {St₁} {op} {ε₃} V₀ bv W pW =
-      subst (Comp' _ _ _) (sym eq)
+      Comp-≐ᶜ (≐ᶜ-sym (env-Hˢ-fired γ St₁ H V₀ W))
         (pH (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W))
             ((env-clause-rel γ St₁ , pW) , bv))
-      where
-        -- `HANDLE-OP` includes the clause by `ᴱ-ren` and substitutes the
-        -- parameter, `BOX` allocates the resumption; the environment
-        -- `liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)` is that, zone for zone.
-        postulate
-          eq : Fired St op ε₃ Hγ St₁ V₀ W
-             ≡ env-C (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)) (H op ε₃)
 
     sequel : Seq-Prem (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N)
     sequel q V pV =
