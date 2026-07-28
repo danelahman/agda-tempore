@@ -55,31 +55,6 @@ open import OperationalSemantics.Adequacy.SubEquivalence Spec
 
 postulate
 
-  -- Handling: as sequencing (`handle-steps`), with `HANDLE-OP` firing a clause.
-  -- This is the case that inducts on the scrutinee's `Comp` derivation.
-  --
-  -- `handle-Comp` in `Reducibility` states the same case with the sequel
-  -- quantified over the *term* (as `seq-Comp` does, since `HANDLE-OP` leaves it
-  -- under a residual lock) and the clauses over a state carrying a `Store`.
-  -- Both forms need a store at the state where an operation is handled, and
-  -- nothing propagates one along a run.
-
-  FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
-            → (M : Γ ⊢C⦂ A ‼ ε₁)
-            → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (Γ ᴱ))
-            → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-            → Comp' A ε₁ St (env-C γ M)
-            → (∀ {St'} {op : Op} {ε₃ : E}
-                 → (γ' : Env St' (Γ ᴱ ∷ type-of-gtype (param op)
-                                    ∷ [ mapᵉ (op-grade op) ]
-                                        (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
-                 → Rel-Env γ'
-                 → Comp' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
-            → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
-                 → Comp' B ε₂ St' (env-C γ' N))
-            --------------------------------------------------------------
-            → Comp' B (ε₁ ·ₑ ε₂) St (env-C γ (handle M `with H `in N))
-
   -- Matching: the scrutinee is a pair, and the reduct substitutes its two
   -- components. Needs the two nested substitutions to be seen in the order the
   -- environment applies them.
@@ -103,6 +78,61 @@ postulate
                 → Comp' D ε St' (env-C γ' M))
            --------------------------------------------------------------
            → Comp' D ε St (env-C γ (unbox w V M))
+
+-- Handling: `env-Cˢ-handle` splits the action, `handle-Comp` runs the scrutinee
+-- and then the clauses and the sequel.
+--
+-- The sequel premise is `FL-C`'s at `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, as for sequencing.
+--
+-- The clause premise is where this session's constructors land. `HANDLE-OP`
+-- fires a clause at `St₁` and `BOX` allocates the resumption, so the clause is
+-- reached at `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell:
+-- that environment is `liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)` — `env-clause` giving
+-- the clause's own context with no store (`∅ᵉ`), `_∷ᵉ_` the operation's
+-- parameter, and `liftᵉ` the cell. Its `Rel-Env` is
+-- `((env-clause-rel γ St₁ , pW) , bv)`, whose last component is exactly the
+-- `Boxed-Val` argument `handle-Comp` supplies.
+
+FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
+          → (M : Γ ⊢C⦂ A ‼ ε₁)
+          → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (Γ ᴱ))
+          → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
+          → Comp' A ε₁ St (env-C γ M)
+          → (∀ {St'} {op : Op} {ε₃ : E}
+               → (γ' : Env St' (Γ ᴱ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ]
+                                      (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
+               → Rel-Env γ'
+               → Comp' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
+          → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
+               → Comp' B ε₂ St' (env-C γ' N))
+          --------------------------------------------------------------
+          → Comp' B (ε₁ ·ₑ ε₂) St (env-C γ (handle M `with H `in N))
+
+FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH pN =
+  subst (Comp' _ _ St) (sym (env-Cˢ-handle γ [] M H N))
+    (handle-Comp Hγ (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) pM clause sequel)
+  where
+    Hγ : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ)
+    Hγ = env-Hˢ γ [] H
+
+    clause : Clause-Prem B St Hγ
+    clause {St₁} {op} {ε₃} V₀ bv W pW =
+      subst (Comp' _ _ _) (sym eq)
+        (pH (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W))
+            ((env-clause-rel γ St₁ , pW) , bv))
+      where
+        -- `HANDLE-OP` includes the clause by `ᴱ-ren` and substitutes the
+        -- parameter, `BOX` allocates the resumption; the environment
+        -- `liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)` is that, zone for zone.
+        postulate
+          eq : Fired St op ε₃ Hγ St₁ V₀ W
+             ≡ env-C (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)) (H op ε₃)
+
+    sequel : Seq-Prem (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N)
+    sequel q V pV =
+      subst (Comp' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
+            (pN ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV))
 
 -- Boxing: `BOX` allocates, and the reduct already lives over the *new* state's
 -- context — so the environment must keep the binder as the fresh cell rather than
