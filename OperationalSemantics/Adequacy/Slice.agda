@@ -597,6 +597,21 @@ suc-comp-ren-grade-src : ∀ {St St₁ : 𝕊 []} {ρ₁ ρ₂ ρ₃ : R} → (e
 suc-comp-ren-grade-src e refl b₁ b₂ =
   ≐ʳ-trans (∘ʳ-identityʳ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
+-- Crossing a lock and then moving on is crossing it into the later state: both
+-- send `Tl-⟨⟩ x` to the composite extension's embedding.
+
+slice-unbox-ren-≐ : ∀ {ρ} {St St' St'' : 𝕊 []}
+                  → (q' : Slice St' uᵣ St'' uᵣ) → (q : Slice St ρ St' uᵣ)
+                  → (slice-renᵘ q' ∘ʳ unbox-ren q) ≐ʳ unbox-ren (slice-∘ q' q)
+slice-unbox-ren-≐ q' q = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
+    go (Tl-⟨⟩ x) =
+      trans (cong (var-tgt′ (slice-renᵘ q')) (unbox-ren-tgt q x))
+        (trans (slice-renᵘ-tgt q' (proj₂ (≤ₛ-embed (ext q) x)))
+          (trans (sym (≤ₛ-embed-∘ (ext q) (ext q') x))
+                 (sym (unbox-ren-tgt (slice-∘ q' q) x))))
+
 -- Allocating a cell renames the old context by weakening past it.
 
 alloc-ren-≐ : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
