@@ -9242,3 +9242,444 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq
             (isSub-cast _ (++ᶜ-identityˡ {Θ'}) (isSub-refl S₂))
 
     lhs-step = isSub-≐ (isSub-reassoc isL isMid) isR (≐ᶜ-sym swapStep)
+
+------------------------------------------------------------------------
+-- THE ACTION ON THE CELL AN `unbox` NAMES
+--
+-- Reduction consults an `unbox` only through its cell (`unbox-tgt`), and that
+-- is also all `_≐ᶜ_` compares, so this is what the action does to an `unbox`.
+-- The zones that rename move the cell by `var-tgt′`; the zones that substitute
+-- move it by `⟨_⟩[_↦_]rvar`, the value put in a resource variable's place
+-- being of box type and hence itself a variable.
+--
+-- Only the cell is tracked, not its grade bound: `unbox-var-≐` does not see the
+-- bound, so every consumer recovers whichever bound it needs from the term.
+------------------------------------------------------------------------
+
+-- one step of the eternal zone's chain
+
+env-eternal-cell : ∀ {Δ Γc A ρ} → Lock-free Δ → ClosedVals Δ
+                 → Tgt (Δ ++ᶜ Γc) ([ ρ ] A) → Tgt Γc ([ ρ ] A)
+
+env-eternal-cell lf-[] η t = Tgt-cast ++ᶜ-identityˡ t
+
+env-eternal-cell {Δ ∷ B} {Γc} (lf-∷ lf) η (σ , z) =
+  env-eternal-cell lf (λ x → η (Tl-∷ x))
+    (Tgt-cast (castOf {Δ} {B} Γc)
+      (proj₁ (⟨ z ⟩[ bvar B Γc ↦ bval Γc (V-rename (empty-ren lf) (η Hd)) ]rvar)
+      , proj₁ (proj₂ (⟨ z ⟩[ bvar B Γc
+                             ↦ bval Γc (V-rename (empty-ren lf) (η Hd)) ]rvar))))
+
+env-cell : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
+         → Tgt (Γ ++ᶜ Δ) ([ ρ ] A) → Tgt (toCtx St ++ᶜ Δ) ([ ρ ] A)
+
+env-cell ⌊ St ⌋      Δ t = t
+env-cell (∅ᵉ St)     Δ t = var-tgt′ (cong-ren (∅-ren St)) t
+env-cell (sliceᵉ γ q) Δ t =
+  var-tgt′ (cong-ren (slice-renᵘ q)) (env-cell γ Δ t)
+
+env-cell (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ t =
+  var-tgt′ (cong-ren (unbox-ren q))
+    (Tgt-cast (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ₀ ⟩) Δ))
+      (env-cell γ ([] ⟨ ρ₀ ⟩ ++ᶜ Δ)
+        (Tgt-cast (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) t)))
+
+env-cell (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ t =
+  Tgt-cast (sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ₀ ] A₀) Δ))
+    (env-cell γ ([] ∷ [ ρ₀ ] A₀ ++ᶜ Δ)
+      (Tgt-cast (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) t))
+
+env-cell (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t =
+  Tgt-cast (castOf {toCtx St} {A₀} Δ)
+    (proj₁ (⟨ z ⟩[ bvar A₀ Δ ↦ bval Δ W ]rvar)
+    , proj₁ (proj₂ (⟨ z ⟩[ bvar A₀ Δ ↦ bval Δ W ]rvar)))
+  where
+    z = proj₂ (Tgt-cast (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ))
+                 (env-cell γ ([] ∷ A₀ ++ᶜ Δ)
+                   (Tgt-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t)))
+
+env-cell (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ t =
+  env-cell γ Δ
+    (env-eternal-cell lf η (Tgt-cast (++ᶜ-assoc Δ₀ Γ₁ Δ) t))
+
+-- The readability bound travels with the cell. Renaming a variable can only
+-- lower its grade (`var-rename`'s own bound, discharged at a box type, which is
+-- never eternal), and `⟨_⟩[_↦_]rvar` carries its bound as its third component —
+-- so a cell readable at `ρ` stays readable at `ρ` wherever the action puts it.
+
+var-tgt-≾ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ Γ')
+          → (x : [ ρ ] A ∈[ σ ] Γ) → proj₁ (var-tgt r x) ≾ᵣ σ
+var-tgt-≾ r x = proj₁ (proj₂ (var-rename r x)) (λ ())
+
+env-eternal-cell-rel : ∀ {Δ Γc A ρ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+                     → (t : Tgt (Δ ++ᶜ Γc) ([ ρ ] A))
+                     → proj₁ t ≾ᵣ ρ
+                     → proj₁ (env-eternal-cell lf η t) ≾ᵣ ρ
+
+env-eternal-cell-rel lf-[] η t rel = rel
+
+env-eternal-cell-rel {Δ ∷ B} {Γc} (lf-∷ lf) η (σ , z) rel =
+  env-eternal-cell-rel lf (λ x → η (Tl-∷ x)) _
+    (≾ᵣ-trans
+      (proj₂ (proj₂ (⟨ z ⟩[ bvar B Γc
+                            ↦ bval Γc (V-rename (empty-ren lf) (η Hd)) ]rvar)))
+      rel)
+
+env-cell-rel : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
+             → (t : Tgt (Γ ++ᶜ Δ) ([ ρ ] A))
+             → proj₁ t ≾ᵣ ρ
+             → proj₁ (env-cell γ Δ t) ≾ᵣ ρ
+
+env-cell-rel ⌊ St ⌋       Δ t rel = rel
+env-cell-rel (∅ᵉ St)      Δ t rel =
+  ≾ᵣ-trans (var-tgt-≾ (cong-ren (∅-ren St)) (proj₂ t)) rel
+env-cell-rel (sliceᵉ γ q) Δ t rel =
+  ≾ᵣ-trans (var-tgt-≾ (cong-ren (slice-renᵘ q)) (proj₂ (env-cell γ Δ t)))
+           (env-cell-rel γ Δ t rel)
+
+env-cell-rel (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ t rel =
+  ≾ᵣ-trans (var-tgt-≾ (cong-ren (unbox-ren q)) z)
+           (env-cell-rel γ ([] ⟨ ρ₀ ⟩ ++ᶜ Δ)
+                         (Tgt-cast (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) t) rel)
+  where
+    z = proj₂ (Tgt-cast (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ₀ ⟩) Δ))
+                 (env-cell γ ([] ⟨ ρ₀ ⟩ ++ᶜ Δ)
+                   (Tgt-cast (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) t)))
+
+env-cell-rel (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ t rel =
+  env-cell-rel γ ([] ∷ [ ρ₀ ] A₀ ++ᶜ Δ)
+               (Tgt-cast (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) t) rel
+
+env-cell-rel (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t rel =
+  ≾ᵣ-trans
+    (proj₂ (proj₂ (⟨ z ⟩[ bvar A₀ Δ ↦ bval Δ W ]rvar)))
+    (env-cell-rel γ ([] ∷ A₀ ++ᶜ Δ) (Tgt-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t) rel)
+  where
+    z = proj₂ (Tgt-cast (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ))
+                 (env-cell γ ([] ∷ A₀ ++ᶜ Δ)
+                   (Tgt-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t)))
+
+env-cell-rel (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ t rel =
+  env-cell-rel γ Δ _
+    (env-eternal-cell-rel lf η (Tgt-cast (++ᶜ-assoc Δ₀ Γ₁ Δ) t) rel)
+
+-- and the same on computations, zone for zone
+
+env-Cˢ-≐ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx) → {M M' : (Γ ++ᶜ Δ) ⊢C⦂ C}
+         → M ≐ᶜ M' → env-Cˢ γ Δ M ≐ᶜ env-Cˢ γ Δ M'
+
+env-Cˢ-≐ ⌊ St ⌋       Δ eM = eM
+env-Cˢ-≐ (∅ᵉ St)      Δ eM = C-rename-cong _ eM
+env-Cˢ-≐ (sliceᵉ γ q) Δ eM = C-rename-cong _ (env-Cˢ-≐ γ Δ eM)
+env-Cˢ-≐ (γ ⟨ q ⟩ᵉ)   Δ eM =
+  C-rename-cong _ (castᶜ-≐ _ (env-Cˢ-≐ γ _ (castᶜ-≐ _ eM)))
+env-Cˢ-≐ (liftᵉ V γ)  Δ eM = castᶜ-≐ _ (env-Cˢ-≐ γ _ (castᶜ-≐ _ eM))
+env-Cˢ-≐ (_∷ᵉ_ {St = St} {Γ = Γ} {A = A} γ W) Δ eM =
+  castᶜ-≐ (cong₂ _++ᶜ_ (split→∈-split-l t) (split→∈-split-r t))
+    (sub-≐ᶜ (split→∈ t) (≐ᵛ-refl (castᵛ (sym (split→∈-split-l t)) W))
+      (castᶜ-≐ (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+        (env-Cˢ-≐ γ ([] ∷ A ++ᶜ Δ) (castᶜ-≐ (++ᶜ-assoc Γ ([] ∷ A) Δ) eM))))
+  where
+    t = split-≡-++ᶜ {toCtx St ∷ A} {Δ}
+env-Cˢ-≐ (eternalˡ Δ₀ lf η γ) Δ eM =
+  env-Cˢ-≐ γ Δ (env-eternal-C-≐ lf η (castᶜ-≐ _ eM))
+
+------------------------------------------------------------------------
+-- THE ACTION COMMUTES WITH `unbox`
+--
+-- The action sends an `unbox` to an `unbox` at the cell `env-cell` computes.
+-- Only up to `_≐ᶜ_`, and necessarily so: the renaming zones compose their
+-- renaming into the one the node stores, while the substituting zones
+-- renormalise the node entirely (`unbox⇒var` then `unbox-var`), so the stored
+-- renaming and boxed value do not agree on the nose — which is exactly why
+-- `unbox-≐` compares the cell alone.
+------------------------------------------------------------------------
+
+-- Recognising a node by its cell.
+
+unbox-cell-≐ : ∀ {Γ A C ρ Δ₀ σ} → {w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ} → {V : Δ₀ ⊢V⦂ [ ρ ] A}
+             → {z : [ ρ ] A ∈[ σ ] Γ} → (rel : σ ≾ᵣ ρ)
+             → unbox-tgt w V ≡ (σ , z)
+             → {N N' : Γ ∷ A ⊢C⦂ C} → N ≐ᶜ N'
+             → unbox w V N ≐ᶜ unbox-var z rel N'
+unbox-cell-≐ rel eq eN = unbox-≐ (trans eq (sym (unbox-var-tgt _ rel))) eN
+
+-- and moving a recognised node along a transport of its context
+
+unbox-var-cast-≐ : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ') → (t : Tgt Γ ([ ρ ] A))
+                 → (rel rel' : proj₁ t ≾ᵣ ρ)
+                 → (N : Γ ∷ A ⊢C⦂ C)
+                 → castᶜ e (unbox-var (proj₂ t) rel N)
+                 ≐ᶜ unbox-var (proj₂ (Tgt-cast e t)) rel'
+                              (castᶜ (cong (_∷ A) e) N)
+unbox-var-cast-≐ refl t rel rel' N = unbox-var-≐ (proj₂ t) rel rel' (≐ᶜ-refl N)
+
+------------------------------------------------------------------------
+-- THE ACTION COMMUTES WITH `unbox`
+--
+-- The action sends an `unbox` to an `unbox` at the cell `env-cell` computes.
+-- Only up to `_≐ᶜ_`, and necessarily so: the renaming zones compose their
+-- renaming into the one the node stores, while the substituting zones
+-- renormalise the node entirely (`unbox⇒var` then `unbox-var`), so the stored
+-- renaming and boxed value do not agree on the nose — which is why `unbox-≐`
+-- compares the cell alone.
+--
+-- The node is *returned*, together with its cell, rather than presented as an
+-- `unbox-var`. Otherwise every zone's intermediate term carries a `≾ᵣ` bound
+-- that unification cannot recover — `unbox-var` stores its renaming through
+-- `split-pf`, so it is not invertible — and there are two such bounds per zone.
+-- Returning the node keeps every bound out of the chain but one, `sub-unbox`'s,
+-- which the input bound supplies explicitly through `env-cell-rel`.
+--
+-- The cell is a parameter given by an equation, since a substituting zone
+-- retargets it: its cell is `unbox-var-tgt` of the rebuilt node.
+------------------------------------------------------------------------
+
+UnboxAt : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
+        → Tgt (Γ ++ᶜ Δ) ([ ρ ] A)
+        → toCtx St ++ᶜ Δ ⊢C⦂ C → ((Γ ++ᶜ Δ) ∷ A) ⊢C⦂ C → Set
+UnboxAt {St} {Γ} {A} {C} {ρ} γ Δ t N M =
+  Σ[ Δ₁ ∈ Ctx ] Σ[ w₁ ∈ Ren [] (Δ₁ ⟨ ρ ⟩) (toCtx St ++ᶜ Δ) ]
+  Σ[ V₁ ∈ Δ₁ ⊢V⦂ [ ρ ] A ]
+    (unbox-tgt w₁ V₁ ≡ env-cell γ Δ t)
+  × (N ≐ᶜ unbox w₁ V₁ (env-Cˢ γ (Δ ∷ A) M))
+
+env-eternal-C-unbox : ∀ {Δ Γc Δ₀ A C ρ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+                    → (w : Ren [] (Δ₀ ⟨ ρ ⟩) (Δ ++ᶜ Γc)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+                    → (M : ((Δ ++ᶜ Γc) ∷ A) ⊢C⦂ C)
+                    → (t : Tgt (Δ ++ᶜ Γc) ([ ρ ] A)) → unbox-tgt w V ≡ t
+                    → (rel : proj₁ t ≾ᵣ ρ)
+                    → Σ[ Δ₁ ∈ Ctx ] Σ[ w₁ ∈ Ren [] (Δ₁ ⟨ ρ ⟩) Γc ]
+                      Σ[ V₁ ∈ Δ₁ ⊢V⦂ [ ρ ] A ]
+                        (unbox-tgt w₁ V₁ ≡ env-eternal-cell lf η t)
+                      × (env-eternal-C lf η (unbox w V M)
+                         ≐ᶜ unbox w₁ V₁ (env-eternal-C lf η M))
+
+env-eternal-C-unbox {[]} {Γc} {A = A} lf-[] η w V M .(unbox-tgt w V) refl rel =
+    _ , castʳᵉ (++ᶜ-identityˡ {Γc}) w , V
+  , unbox-tgt-castʳᵉ (++ᶜ-identityˡ {Γc}) w V
+  , ≐ᶜ-trans (≡→≐ᶜ (cast-unbox (++ᶜ-identityˡ {Γc})))
+      (unbox-≐ refl
+        (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (++ᶜ-identityˡ {Γc}))
+                         (++ᶜ-identityˡ {Γc ∷ A}) M)))
+
+env-eternal-C-unbox {Δ ∷ B} {Γc} {A = A} (lf-∷ lf) η w V M
+                    .(unbox-tgt w V) refl rel
+  with env-eternal-C-unbox lf (λ x → η (Tl-∷ x))
+         (castʳᵉ (castOf {Δ} {B} Γc) (unbox-var-ren (proj₂ tE) relE))
+         (var (λ _ → ≾ᵣ-refl) Hd)
+         (castᶜ (castOf {Δ} {B} (Γc ∷ A)) (M [ Tl-∷ (bvar B Γc) ↦ W₀ ]c))
+         _
+         (trans (unbox-tgt-castʳᵉ (castOf {Δ} {B} Γc)
+                                  (unbox-var-ren (proj₂ tE) relE)
+                                  (var (λ _ → ≾ᵣ-refl) Hd))
+                (cong (Tgt-cast (castOf {Δ} {B} Γc))
+                      (unbox-var-tgt (proj₂ tE) relE)))
+         relE
+  where
+    W₀   = bval Γc (V-rename (empty-ren lf) (η Hd))
+    tE   = rvar-tgt (proj₂ (unbox-tgt w V)) (bvar B Γc) W₀
+    relE = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt w V) ⟩[ bvar B Γc
+                                     ↦ W₀ ]rvar))) rel
+... | Δ₁ , w₁ , V₁ , ce , eq =
+    Δ₁ , w₁ , V₁ , ce
+  , ≐ᶜ-trans
+      (env-eternal-C-≐ lf (λ x → η (Tl-∷ x))
+        (≐ᶜ-trans
+          (castᶜ-≐ (castOf {Δ} {B} Γc)
+            (sub-unbox w V M (bvar B Γc)
+                       (bval Γc (V-rename (empty-ren lf) (η Hd))) _))
+          (≐ᶜ-trans
+            (≡→≐ᶜ (cast-unbox (castOf {Δ} {B} Γc)))
+            (unbox-≐ refl
+              (≡→≐ᶜ (castᶜ-irr
+                       (cong (_∷ A) (castOf {Δ} {B} Γc))
+                       (castOf {Δ} {B} (Γc ∷ A)) _))))))
+      eq
+
+env-Cˢ-unbox : ∀ {St Γ Δ₀ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
+             → (w : Ren [] (Δ₀ ⟨ ρ ⟩) (Γ ++ᶜ Δ)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+             → (M : ((Γ ++ᶜ Δ) ∷ A) ⊢C⦂ C)
+             → (t : Tgt (Γ ++ᶜ Δ) ([ ρ ] A)) → unbox-tgt w V ≡ t
+             → (rel : proj₁ t ≾ᵣ ρ)
+             → UnboxAt γ Δ t (env-Cˢ γ Δ (unbox w V M)) M
+
+env-Cˢ-unbox ⌊ St ⌋ Δ w V M .(unbox-tgt w V) refl rel =
+  _ , w , V , refl , ≐ᶜ-refl _
+
+env-Cˢ-unbox (∅ᵉ St) Δ w V M .(unbox-tgt w V) refl rel =
+    _ , (cong-ren (∅-ren St) ∘ʳ w) , V
+  , unbox-tgt-∘ (cong-ren (∅-ren St)) w V , ≐ᶜ-refl _
+
+env-Cˢ-unbox (sliceᵉ γ q) Δ w V M .(unbox-tgt w V) refl rel
+  with env-Cˢ-unbox γ Δ w V M _ refl rel
+... | Δ₁ , w₁ , V₁ , ce , eq =
+    Δ₁ , (cong-ren (slice-renᵘ q) ∘ʳ w₁) , V₁
+  , trans (unbox-tgt-∘ (cong-ren (slice-renᵘ q)) w₁ V₁)
+          (cong (var-tgt′ (cong-ren (slice-renᵘ q))) ce)
+  , C-rename-cong (cong-ren (slice-renᵘ q)) eq
+
+env-Cˢ-unbox {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ w V M
+             .(unbox-tgt w V) refl rel
+  with env-Cˢ-unbox γ ([] ⟨ ρ₀ ⟩ ++ᶜ Δ)
+         (castʳᵉ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w) V
+         (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ)) M)
+         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w V) rel
+... | Δ₁ , w₁ , V₁ , ce , eq =
+    Δ₁ , (cong-ren (unbox-ren q) ∘ʳ castʳᵉ eOut w₁) , V₁
+  , trans (unbox-tgt-∘ (cong-ren (unbox-ren q)) (castʳᵉ eOut w₁) V₁)
+          (cong (var-tgt′ (cong-ren (unbox-ren q)))
+                (trans (unbox-tgt-castʳᵉ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)))
+  , ≐ᶜ-trans
+      (C-rename-cong (cong-ren (unbox-ren q))
+        (castᶜ-≐ eOut
+          (≐ᶜ-trans (env-Cˢ-≐ γ ([] ⟨ ρ₀ ⟩ ++ᶜ Δ)
+                       (≡→≐ᶜ (cast-unbox (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ)))) eq)))
+      (≐ᶜ-trans
+        (≡→≐ᶜ (cong (C-rename (cong-ren (unbox-ren q))) (cast-unbox eOut)))
+        (unbox-≐ refl
+          (C-rename-cong (cong-ren (unbox-ren q))
+            (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) eOut)
+                     (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ₀ ⟩) (Δ ∷ A))) _)))))
+  where
+    eOut = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ₀ ⟩) Δ)
+
+env-Cˢ-unbox {A = A} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V₀ γ) Δ w V M
+             .(unbox-tgt w V) refl rel
+  with env-Cˢ-unbox γ ([] ∷ [ ρ₀ ] A₀ ++ᶜ Δ)
+         (castʳᵉ (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) w) V
+         (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ)) M)
+         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) w V) rel
+... | Δ₁ , w₁ , V₁ , ce , eq =
+    Δ₁ , castʳᵉ eOut w₁ , V₁
+  , trans (unbox-tgt-castʳᵉ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)
+  , ≐ᶜ-trans
+      (castᶜ-≐ eOut
+        (≐ᶜ-trans (env-Cˢ-≐ γ ([] ∷ [ ρ₀ ] A₀ ++ᶜ Δ)
+                     (≡→≐ᶜ (cast-unbox (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ)))) eq))
+      (≐ᶜ-trans (≡→≐ᶜ (cast-unbox eOut))
+        (unbox-≐ refl
+          (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) eOut)
+                   (sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ₀ ] A₀) (Δ ∷ A))) _))))
+  where
+    eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ₀ ] A₀) Δ)
+
+env-Cˢ-unbox (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ w V M .(unbox-tgt w V) refl rel
+  with env-eternal-C-unbox lf η (castʳᵉ (++ᶜ-assoc Δ₀ Γ₁ Δ) w) V
+         (castᶜ (cong (_∷ _) (++ᶜ-assoc Δ₀ Γ₁ Δ)) M)
+         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Δ₀ Γ₁ Δ) w V) rel
+... | Δ₁ , w₁ , V₁ , ce , eq
+  with env-Cˢ-unbox γ Δ w₁ V₁ _ _ ce
+         (env-eternal-cell-rel lf η (Tgt-cast (++ᶜ-assoc Δ₀ Γ₁ Δ)
+                                       (unbox-tgt w V)) rel)
+...  | Δ₂ , w₂ , V₂ , ce₂ , eq₂ =
+    Δ₂ , w₂ , V₂ , ce₂
+  , ≐ᶜ-trans
+      (env-Cˢ-≐ γ Δ
+        (≐ᶜ-trans
+          (env-eternal-C-≐ lf η
+            (≡→≐ᶜ (cast-unbox (++ᶜ-assoc Δ₀ Γ₁ Δ))))
+          eq))
+      (≐ᶜ-trans eq₂
+        (unbox-≐ refl
+          (env-Cˢ-≐ γ (Δ ∷ _)
+            (env-eternal-C-≐ lf η
+              (≡→≐ᶜ (castᶜ-irr (cong (_∷ _) (++ᶜ-assoc Δ₀ Γ₁ Δ))
+                       (++ᶜ-assoc Δ₀ Γ₁ (Δ ∷ _)) _))))))
+
+env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ w V M
+             .(unbox-tgt w V) refl rel
+  with env-Cˢ-unbox γ ([] ∷ A₀ ++ᶜ Δ)
+         (castʳᵉ (++ᶜ-assoc Γ ([] ∷ A₀) Δ) w) V
+         (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ∷ A₀) Δ)) M)
+         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Γ ([] ∷ A₀) Δ) w V) rel
+... | Δ₁ , w₁ , V₁ , ce , eq =
+    _ , castʳᵉ cOf (unbox-var-ren z relSub) , var (λ _ → ≾ᵣ-refl) Hd
+  , trans (unbox-tgt-castʳᵉ cOf (unbox-var-ren z relSub)
+                            (var (λ _ → ≾ᵣ-refl) Hd))
+          (cong (Tgt-cast cOf)
+            (trans (unbox-var-tgt z relSub)
+                   (cong (λ u → rvar-tgt (proj₂ u) (bvar A₀ Δ) (bval Δ W))
+                         ceOut)))
+  , ≐ᶜ-trans
+      (castᶜ-≐ cOf
+        (≐ᶜ-trans
+          (sub-≐ᶜ (bvar A₀ Δ) (≐ᵛ-refl (bval Δ W))
+            (≐ᶜ-trans
+              (castᶜ-≐ eOut
+                (≐ᶜ-trans
+                  (env-Cˢ-≐ γ ([] ∷ A₀ ++ᶜ Δ)
+                    (≡→≐ᶜ (cast-unbox (++ᶜ-assoc Γ ([] ∷ A₀) Δ))))
+                  eq))
+              (≡→≐ᶜ (cast-unbox eOut))))
+          (sub-unbox (castʳᵉ eOut w₁) V₁ _ (bvar A₀ Δ) (bval Δ W) relSub)))
+      (≐ᶜ-trans (≡→≐ᶜ (cast-unbox cOf))
+        (unbox-≐ refl
+          (≐ᶜ-trans
+            (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) cOf)
+                     (castOf {toCtx St} {A₀} (Δ ∷ A)) _))
+            (castᶜ-≐ (castOf {toCtx St} {A₀} (Δ ∷ A))
+              (sub-≐ᶜ (bvar A₀ (Δ ∷ A))
+                (≡→≐ᵛ (castᵛ-irr _ _ W))
+                (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) eOut)
+                         (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ∷ A)))
+                         _)))))))
+  where
+    eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    cOf  = castOf {toCtx St} {A₀} Δ
+
+    ceOut = trans (unbox-tgt-castʳᵉ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)
+
+    relSub =
+      ≾ᵣ-trans
+        (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (castʳᵉ eOut w₁) V₁) ⟩[ bvar A₀ Δ
+                         ↦ bval Δ W ]rvar)))
+        (subst (_≾ᵣ _) (sym (cong proj₁ ceOut))
+          (env-cell-rel γ ([] ∷ A₀ ++ᶜ Δ)
+            (Tgt-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) (unbox-tgt w V)) rel))
+
+    z = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳᵉ eOut w₁) V₁))
+                        (bvar A₀ Δ) (bval Δ W))
+
+------------------------------------------------------------------------
+-- THE CELL ACTION, SUFFIX-FREE
+--
+-- `env-cell` recurses through *growing* suffixes, so a statement that only
+-- makes sense at the empty one — such as "the cell's content is reducible",
+-- whose `lookup-body` needs the cell to land in `toCtx St` — cannot be proved
+-- against it by induction on the environment. This is the same action read
+-- off the environment's zones directly, where the recursion stays at the
+-- boundary and every case is a variable of `toCtx St`.
+--
+-- Two zones are discharged rather than computed. `∅ᵉ` has no variables; and an
+-- eternal prefix has no *cell*, because the value it would substitute is a
+-- closed one of box type, hence a variable of `[]` (`grad-typ⇒var`).
+------------------------------------------------------------------------
+
+env-cell₀ : ∀ {St Γ A ρ} → (γ : Env St Γ)
+          → Tgt Γ ([ ρ ] A) → Tgt (toCtx St) ([ ρ ] A)
+
+-- a cell cannot come from an eternal prefix
+eternal-no-cell : ∀ {Δ₀ A ρ σ} → (η : ClosedVals Δ₀)
+                → [ ρ ] A ∈[ σ ] Δ₀ → ⊥
+eternal-no-cell η x =
+  not-in-empty-ctx (proj₁ (proj₂ (grad-typ⇒var (η x))))
+
+env-cell₀ ⌊ St ⌋      t         = t
+env-cell₀ (∅ᵉ St)     (σ , x)   = ⊥-elim (not-in-empty-ctx x)
+env-cell₀ (sliceᵉ γ q) t        = var-tgt′ (slice-renᵘ q) (env-cell₀ γ t)
+
+env-cell₀ (_⟨_⟩ᵉ {ρ = ρ₀} γ q) (σ , Tl-⟨⟩ y) =
+  var-tgt′ (unbox-ren q) (Tgt-⟨⟩ ρ₀ (env-cell₀ γ (_ , y)))
+
+env-cell₀ (γ ∷ᵉ W) (σ , Hd)     =
+  proj₁ (grad-typ⇒var W) , proj₁ (proj₂ (grad-typ⇒var W))
+env-cell₀ (γ ∷ᵉ W) (σ , Tl-∷ y) = env-cell₀ γ (σ , y)
+
+env-cell₀ (liftᵉ V γ) (σ , Hd)     = uᵣ , Hd
+env-cell₀ (liftᵉ V γ) (σ , Tl-∷ y) = Tgt-∷ (env-cell₀ γ (σ , y))
+
+env-cell₀ (eternalˡ Δ₀ lf η γ) (σ , x)
+  with ∈-++ᶜ-split Δ₀ _ x
+... | inj₁ (ρ' , y) = ⊥-elim (eternal-no-cell η y)
+... | inj₂ y        = env-cell₀ γ (σ , y)

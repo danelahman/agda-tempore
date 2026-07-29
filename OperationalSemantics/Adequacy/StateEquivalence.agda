@@ -518,6 +518,35 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 -- which `lookup-body′-≐` compares.
 ------------------------------------------------------------------------
 
+-- The same on cells rather than on `unbox` nodes: this is what a `Val` stated
+-- on readability needs, `unbox-lookup-≐` below being this with an `unbox-tgt`
+-- wrapper. Same proof — the cell equation is now the hypothesis.
+
+lookup-body-≐ˢ : ∀ {A ρ} {St St' : 𝕊 []}
+               → (es : St ≐ˢ St')
+               → (t : Tgt (toCtx St) ([ ρ ] A)) → (t' : Tgt (toCtx St') ([ ρ ] A))
+               → t ≡ Tgt-cast (sym (toCtx-≐ˢ es)) t'
+               → (rel : proj₁ t ≾ᵣ ρ) → (rel' : proj₁ t' ≾ᵣ ρ)
+               -------------------------------------------------------
+               → lookup-body St t rel
+               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel')
+
+lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
+  subst (λ u → u ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel'))
+        (sym (lookup-body-≡ St ht rel rel'))
+        (lookup-body′-≐
+           (sym (toCtx-≐ˢ es))
+           (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' zz))) (≐ˢ-snd-ctx₂ es z z' zz)
+           _ _ _ _ rel' rel' _ _
+           (≐ˢ-lookup₂ es z z' zz))
+  where
+    z' = proj₂ t'
+
+    z = subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ t' ] Γ₀) (sym (toCtx-≐ˢ es)) z'
+
+    zz : ≐ˢ-var es z ≡ z'
+    zz = subst-subst-sym (toCtx-≐ˢ es)
+
 unbox-lookup-≐ : ∀ {A ρ Δ Δ'} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
                → {w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)} → {w' : Ren [] (Δ' ⟨ ρ ⟩) (toCtx St')}
