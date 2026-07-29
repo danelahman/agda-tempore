@@ -246,6 +246,9 @@ open import OperationalSemantics.Adequacy.Adequacy
 ---- Head shapes of effect trees in the presheaf model
 
 open import OperationalSemantics.Adequacy.PSh.TreeShape
+open import OperationalSemantics.Adequacy.PSh.TreeHead
+open import OperationalSemantics.Adequacy.PSh.HeadFaithful
+open import OperationalSemantics.Adequacy.PSh.TickFrames
 
 ---- Concrete time-ticks Kripke frames
 
