@@ -24,7 +24,10 @@ open Operations Ops
 open import OperationalSemantics.PreservationTheorem Spec
 open import OperationalSemantics.State               Spec
 
-open import OperationalSemantics.Adequacy.RenEquivalence Spec
+open import Syntax.Renamings.Equivalence Spec
+open import Syntax.Renamings.Coherence   Spec
+open import Syntax.Terms.Equivalence     Spec
+open import Syntax.Terms.Transport       Spec
 
 open import Syntax.Contexts   Spec
 open import Syntax.Language   Spec
@@ -385,16 +388,6 @@ suc-comp-ren-tgt (∷-suc V e)  b x =
         (·ᵣ-assoc σ (≤ₛ-grade e) ρ)
 ≤ₛ-embed-grade (∷-suc V e)  x = ≤ₛ-embed-grade e x
 
-⟨⟩-η-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
-         → var-tgt (⟨⟩-η-ren {Δ = Γ}) (Tl-⟨⟩ x) ≡ (σ , x)
-⟨⟩-η-tgt x = refl
-
-⟨⟩-η⁻¹-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
-           → var-tgt (⟨⟩-η⁻¹-ren {Δ = Γ}) x ≡ (σ ·ᵣ uᵣ , Tl-⟨⟩ x)
-⟨⟩-η⁻¹-tgt Hd        = refl
-⟨⟩-η⁻¹-tgt (Tl-∷ x)  = refl
-⟨⟩-η⁻¹-tgt (Tl-⟨⟩ x) = refl
-
 -- What a slice does to a variable: the embedding of its extension.
 
 slice-renᵘ-tgt : ∀ {St St' : 𝕊 []} → (q : Slice St uᵣ St' uᵣ)
@@ -518,12 +511,6 @@ seq-steps (r ◅ rs) N
 -- of the two states' eternal parts, both empty. The transports compose, and any
 -- two proofs of the equality agree, so the clauses reached are the original ones
 -- transported once.
-
-Cl : (B : VType) → (op : Op) → (ε₃ : E) → Ctx → Set
-Cl B op ε₃ Γ₀ =
-  Γ₀ ∷ type-of-gtype (param op)
-    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-  ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)
 
 toCtxᴱ-≡ : (St St₁ : 𝕊 []) → toCtx St ᴱ ≡ toCtx St₁ ᴱ
 toCtxᴱ-≡ St St₁ = trans (toCtxᴱ-[] St) (sym (toCtxᴱ-[] St₁))
@@ -843,75 +830,6 @@ unbox-lookup-cast-val St refl w V =
 -- beyond it, which on a variable is `var-ρ-++ᶜ` — the same push, with the same
 -- grade. Recursion on that context, as the renaming's own.
 ------------------------------------------------------------------------
-
--- What the lookup's weakening does to a variable: it is the subst-free push
--- `∈-++ᶜˡ`, at the grade the suffix's locks contribute. Stated over `∈-++ᶜˡ`
--- rather than `var-ρ-++ᶜ` precisely so that no case needs a grade transport —
--- each is a `cong` of the next.
-
-wk-ren-⟨ρ⟩-ctx-tgt : ∀ {Γ A σ ρ} → (Γ' : Ctx) → (h : ctx-grade Γ' ≡ ρ)
-                   → (x : A ∈[ σ ] Γ)
-                   → var-tgt (wk-ren-⟨ρ⟩-ctx {Γ} {Γ'} {ρ} h) (Tl-⟨⟩ x)
-                   ≡ (grade-++ᶜˡ σ Γ' , ∈-++ᶜˡ Γ' x)
-
-wk-ren-⟨ρ⟩-ctx-tgt []         refl x = refl
-wk-ren-⟨ρ⟩-ctx-tgt (Γ' ∷ B)   refl x =
-  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (wk-ren-⟨ρ⟩-ctx-tgt Γ' refl x)
-wk-ren-⟨ρ⟩-ctx-tgt (Γ' ⟨ ρ' ⟩) refl x =
-  cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (wk-ren-⟨ρ⟩-ctx-tgt Γ' refl x)
-
--- THE CELL `unbox-var` NAMES
---
--- `unbox-var z rel M` rebuilds an unboxing whose boxed value is the head
--- variable of `split-l z ∷ [ ρ ] A`; the cell it names is therefore `z` itself.
--- The syntactic counterpart of `split-lookup` in
--- `Interpretation.SubstitutionCoherence`.
-
--- Pushing that head variable through `split-r z` and relocating along the split
--- returns `z`. Induction on `z`, i.e. on `var-split`'s own recursion.
-
-split-lookup-tgt : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ)
-                 → (grade-++ᶜˡ uᵣ (split-r z)
-                   , subst (λ Γ₀ → [ ρ ] A ∈[ grade-++ᶜˡ uᵣ (split-r z) ] Γ₀)
-                           (split-≡ (split-pf z))
-                           (∈-++ᶜˡ (split-r z) (Hd {Γ = split-l z})))
-                 ≡ (ρ' , z)
-
-split-lookup-tgt Hd = refl
-
-split-lookup-tgt (Tl-∷ {B = B} z) =
-  trans (cong (λ y → grade-++ᶜˡ uᵣ (split-r z) , y)
-              (subst-Tl-∷ (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd)))
-        (cong Tgt-∷ (split-lookup-tgt z))
-
-split-lookup-tgt (Tl-⟨⟩ {ρ = ρ₁} z) =
-  trans (cong (λ y → grade-++ᶜˡ uᵣ (split-r z) ·ᵣ ρ₁ , y)
-              (subst-Tl-⟨⟩ (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd)))
-        (cong (Tgt-⟨⟩ ρ₁) (split-lookup-tgt z))
-
--- Hence: the cell `unbox-var z rel M` names is `z`. The renaming it stores is
--- `eq-ren (split-≡ …) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`, and
--- `var-tgt` runs through those right to left.
-
--- The renaming `unbox-var` stores.
-
-unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → Ren [] ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
-unbox-var-ren z rel =
-     eq-ren (split-≡ (split-pf z))
-  ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)
-  ∘ʳ ⟨⟩-≤-ren rel
-
-unbox-var-tgt : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → unbox-tgt (unbox-var-ren z rel)
-                          (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
-              ≡ (ρ' , z)
-
-unbox-var-tgt z rel =
-  trans (cong (var-tgt′ (eq-ren (split-≡ (split-pf z))))
-              (wk-ren-⟨ρ⟩-ctx-tgt (split-r z) (split-grade-≡ z) Hd))
-    (trans (eq-ren-tgt (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd))
-           (split-lookup-tgt z))
 
 ------------------------------------------------------------------------
 -- WHAT AN EXTENSION ADDS AFTER AN ALREADY-ALLOCATED CELL

@@ -40,9 +40,11 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
-open import OperationalSemantics.Adequacy.RenEquivalence   Spec
+open import Syntax.Renamings.Equivalence Spec
+open import Syntax.Renamings.Coherence   Spec
+open import Syntax.Terms.Equivalence     Spec
 open import OperationalSemantics.Adequacy.Slice           Spec
-open import OperationalSemantics.Adequacy.SubEquivalence  Spec
+open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.StateEquivalence Spec
 
 -- REDUCIBLE GROUND VALUES (recursion on `GType`)
@@ -438,8 +440,6 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
 -- Parameterised by the value predicate's transport rather than mutual with
 -- `Val-≐ˢ`, so that both recurse structurally on the *type*.
 
-≡→≐ᶜ : ∀ {Γ C} {M M' : Γ ⊢C⦂ C} → M ≡ M' → M ≐ᶜ M'
-≡→≐ᶜ refl = ≐ᶜ-refl _
 
 -- The reduct a resumption builds, compared across the two states.
 

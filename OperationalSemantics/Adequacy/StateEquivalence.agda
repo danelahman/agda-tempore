@@ -35,9 +35,11 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
-open import OperationalSemantics.Adequacy.RenEquivalence Spec
+open import Syntax.Renamings.Equivalence Spec
+open import Syntax.Renamings.Coherence   Spec
+open import Syntax.Terms.Equivalence     Spec
 open import OperationalSemantics.Adequacy.Slice          Spec
-open import OperationalSemantics.Adequacy.SubEquivalence Spec
+open import Syntax.Substitutions.Equivalence Spec
 
 -- Retyping along a context equality.
 

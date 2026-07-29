@@ -1,8 +1,7 @@
 ------------------------------------------------------------------------
 -- Substitution against the term equivalence.                         --
 --                                                                    --
--- `↝` respects `_≐ᶜ_` (needed for `Val-slice`, see                    --
--- `notes/adequacy-plan.md`) and almost every rule's reduct is a        --
+-- `↝` respects `_≐ᶜ_`, and almost every reduction rule's reduct is a  --
 -- substitution, so substitution must be a congruence for it.          --
 --                                                                    --
 -- The content is in the variable clauses: `⟨_,_⟩[_↦_]var` crosses a    --
@@ -22,7 +21,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-module OperationalSemantics.Adequacy.SubEquivalence (Spec : LanguageSpec) where
+module Syntax.Substitutions.Equivalence (Spec : LanguageSpec) where
 
 open LanguageSpec Spec
 open GradeSystemInterface Grades
@@ -35,7 +34,9 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
-open import OperationalSemantics.Adequacy.RenEquivalence Spec
+open import Syntax.Renamings.Equivalence Spec
+open import Syntax.Renamings.Coherence   Spec
+open import Syntax.Terms.Equivalence     Spec
 
 -- ETERNAL VALUES
 --

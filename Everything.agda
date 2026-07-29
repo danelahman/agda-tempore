@@ -76,6 +76,18 @@ open import Syntax.Renamings
 open import Syntax.RenActions
 open import Syntax.Substitutions
 
+---- Equivalence of renamings, of terms, and coherence of the action
+
+open import Syntax.Renamings.Equivalence
+open import Syntax.Terms.Equivalence
+open import Syntax.Renamings.Coherence
+open import Syntax.Terms.Transport
+open import Syntax.Substitutions.Equivalence
+open import Syntax.Substitutions.Variables
+open import Syntax.Substitutions.Weakening
+open import Syntax.Substitutions.Renaming
+open import Syntax.Substitutions.Swap
+
 ---- Computation term and evaluation contexts
 
 open import Syntax.CompContext
@@ -231,9 +243,7 @@ open import OperationalSemantics.Soundness.TopLevelPure
 ---- Adequacy of the interpretation with respect to the operational semantics
 
 open import OperationalSemantics.Adequacy.Evaluation
-open import OperationalSemantics.Adequacy.RenEquivalence
 open import OperationalSemantics.Adequacy.StateEquivalence
-open import OperationalSemantics.Adequacy.SubEquivalence
 open import OperationalSemantics.Adequacy.Slice
 open import OperationalSemantics.Adequacy.Reducibility
 open import OperationalSemantics.Adequacy.Environment

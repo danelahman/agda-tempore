@@ -39,9 +39,16 @@ open import OperationalSemantics.Adequacy.Environment    Spec
 open import OperationalSemantics.Adequacy.Evaluation     Spec
 open import OperationalSemantics.Adequacy.Handle         Spec
 open import OperationalSemantics.Adequacy.Reducibility   Spec
-open import OperationalSemantics.Adequacy.RenEquivalence Spec
+open import Syntax.Renamings.Equivalence Spec
+open import Syntax.Renamings.Coherence   Spec
+open import Syntax.Terms.Equivalence     Spec
+open import Syntax.Terms.Transport       Spec
+open import Syntax.Substitutions.Variables Spec
+open import Syntax.Substitutions.Weakening Spec
+open import Syntax.Substitutions.Renaming  Spec
+open import Syntax.Substitutions.Swap      Spec
 open import OperationalSemantics.Adequacy.Slice          Spec
-open import OperationalSemantics.Adequacy.SubEquivalence Spec
+open import Syntax.Substitutions.Equivalence Spec
 
 ------------------------------------------------------------------------
 -- THE FUNDAMENTAL LEMMA
