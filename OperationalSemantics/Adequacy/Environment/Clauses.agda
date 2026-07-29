@@ -40,7 +40,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 open import OperationalSemantics.Adequacy.Environment.Action Spec
@@ -656,9 +656,9 @@ env-Hˢ-ᴱ {B = B} (∅ᵉ St) Δ K op ε =
                (++ᶜ-identityˡ {[] ++ᶜ D~ Δ B op ε})
                (eStar St Δ op ε) (K op ε))
             (cong (λ p → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) p (K op ε)) uip)
--- a slice's restriction is a transport between provably-empty state parts
+-- a reach's restriction is a transport between provably-empty state parts
 
-env-Hˢ-ᴱ {B = B} (sliceᵉ {St} {St'} γ q) Δ K op ε =
+env-Hˢ-ᴱ {B = B} (reachᵉ {St} {St'} γ q) Δ K op ε =
   ≐ᶜ-trans (C-rename-eq-≐ Ewhole hren (env-Hˢ γ Δ K op ε))
     (≐ᶜ-trans (substᶜ-≐ Ewhole (env-Hˢ-ᴱ γ Δ K op ε))
       (≡→≐ᶜ (trans (cong (subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) Ewhole)
@@ -678,19 +678,19 @@ env-Hˢ-ᴱ {B = B} (sliceᵉ {St} {St'} γ q) Δ K op ε =
     Ewhole = cong (_++ᶜ Dcl B op ε) Einner
 
     hren : cong-∷-ren (cong-∷-ren
-             (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (slice-renᵘ q))))
+             (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (reach-renᵘ q))))
          ≐ʳ eq-ren Ewhole
     hren =
       ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
                (cong-ren-eq-ren-≐ (Dcl B op ε) Einner)
       where
-        inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (slice-renᵘ q))
+        inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (reach-renᵘ q))
               ≐ʳ eq-ren Einner
         inner =
           conj-eq-≐ (ᴱ-++ᶜ (toCtx St) Δ) (cong (_++ᶜ Δ ᴱ) EStSt')
                     (sym (ᴱ-++ᶜ (toCtx St') Δ))
             (≐ʳ-trans
-              (restrict-cong-≐ (slice-renᵘ q) Δ (ᴱ-++ᶜ (toCtx St) Δ)
+              (restrict-cong-≐ (reach-renᵘ q) Δ (ᴱ-++ᶜ (toCtx St) Δ)
                                                 (ᴱ-++ᶜ (toCtx St') Δ))
               (∘ʳ-≐ ≐ʳ-refl
                 (∘ʳ-≐ (≐ʳ-trans

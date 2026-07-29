@@ -40,7 +40,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 
@@ -104,7 +104,7 @@ env-Cˢ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ ⌊ St ⌋ Δ V = V
 env-Vˢ (∅ᵉ St) Δ V = V-rename (cong-ren (∅-ren St)) V
-env-Vˢ (sliceᵉ γ q) Δ V = V-rename (cong-ren (slice-renᵘ q)) (env-Vˢ γ Δ V)
+env-Vˢ (reachᵉ γ q) Δ V = V-rename (cong-ren (reach-renᵘ q)) (env-Vˢ γ Δ V)
 env-Vˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   V-rename (cong-ren (unbox-ren q))
     (castᵛ (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
@@ -126,7 +126,7 @@ env-Vˢ (eternalˡ Δ₀ lf η γ) Δ V =
 
 env-Cˢ ⌊ St ⌋ Δ M = M
 env-Cˢ (∅ᵉ St) Δ M = C-rename (cong-ren (∅-ren St)) M
-env-Cˢ (sliceᵉ γ q) Δ M = C-rename (cong-ren (slice-renᵘ q)) (env-Cˢ γ Δ M)
+env-Cˢ (reachᵉ γ q) Δ M = C-rename (cong-ren (reach-renᵘ q)) (env-Cˢ γ Δ M)
 env-Cˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   C-rename (cong-ren (unbox-ren q))
     (castᶜ (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
@@ -186,7 +186,7 @@ env-Vˢ-lam : ∀ {St Γ A B ε} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ-lam ⌊ St ⌋ Δ M = refl
 env-Vˢ-lam (∅ᵉ St) Δ M = refl
-env-Vˢ-lam (sliceᵉ γ q) Δ M = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-lam γ Δ M)
+env-Vˢ-lam (reachᵉ γ q) Δ M = cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-lam γ Δ M)
 
 env-Vˢ-lam {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -358,7 +358,7 @@ env-Cˢ-ret : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → (V : (Γ ++�
 
 env-Cˢ-ret ⌊ St ⌋ Δ V = refl
 env-Cˢ-ret (∅ᵉ St) Δ V = refl
-env-Cˢ-ret (sliceᵉ γ q) Δ V = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-ret γ Δ V)
+env-Cˢ-ret (reachᵉ γ q) Δ V = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-ret γ Δ V)
 
 env-Cˢ-ret (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -434,7 +434,7 @@ env-Cˢ-app : ∀ {St Γ A C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-app ⌊ St ⌋ Δ V U = refl
 env-Cˢ-app (∅ᵉ St) Δ V U = refl
-env-Cˢ-app (sliceᵉ γ q) Δ V U = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-app γ Δ V U)
+env-Cˢ-app (reachᵉ γ q) Δ V U = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-app γ Δ V U)
 
 env-Cˢ-app (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -509,7 +509,7 @@ env-Cˢ-absurd : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-absurd ⌊ St ⌋ Δ V = refl
 env-Cˢ-absurd (∅ᵉ St) Δ V = refl
-env-Cˢ-absurd (sliceᵉ γ q) Δ V = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-absurd γ Δ V)
+env-Cˢ-absurd (reachᵉ γ q) Δ V = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-absurd γ Δ V)
 
 env-Cˢ-absurd (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -584,7 +584,7 @@ env-Cˢ-coerce : ∀ {St Γ A ε ε'} → (γ : Env St Γ) → (Δ : Ctx) → {p
 
 env-Cˢ-coerce ⌊ St ⌋ Δ M = refl
 env-Cˢ-coerce (∅ᵉ St) Δ M = refl
-env-Cˢ-coerce (sliceᵉ γ q) Δ M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-coerce γ Δ M)
+env-Cˢ-coerce (reachᵉ γ q) Δ M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-coerce γ Δ M)
 
 env-Cˢ-coerce (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -659,7 +659,7 @@ env-Vˢ-pair : ∀ {St Γ A B} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ-pair ⌊ St ⌋ Δ V U = refl
 env-Vˢ-pair (∅ᵉ St) Δ V U = refl
-env-Vˢ-pair (sliceᵉ γ q) Δ V U = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-pair γ Δ V U)
+env-Vˢ-pair (reachᵉ γ q) Δ V U = cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-pair γ Δ V U)
 
 env-Vˢ-pair (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -733,7 +733,7 @@ env-Vˢ-const : ∀ {St Γ b} → (γ : Env St Γ) → (Δ : Ctx) → (c : BaseC
 
 env-Vˢ-const ⌊ St ⌋ Δ c = refl
 env-Vˢ-const (∅ᵉ St) Δ c = refl
-env-Vˢ-const (sliceᵉ γ q) Δ c = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-const γ Δ c)
+env-Vˢ-const (reachᵉ γ q) Δ c = cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-const γ Δ c)
 
 env-Vˢ-const (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ c =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -806,7 +806,7 @@ env-Vˢ-⋆ : ∀ {St Γ} → (γ : Env St Γ) → (Δ : Ctx) → env-Vˢ γ Δ 
 
 env-Vˢ-⋆ ⌊ St ⌋ Δ  = refl
 env-Vˢ-⋆ (∅ᵉ St) Δ = refl
-env-Vˢ-⋆ (sliceᵉ γ q) Δ = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-⋆ γ Δ)
+env-Vˢ-⋆ (reachᵉ γ q) Δ = cong (V-rename (cong-ren (reach-renᵘ q))) (env-Vˢ-⋆ γ Δ)
 
 env-Vˢ-⋆ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ  =
   cong (V-rename (cong-ren (unbox-ren q)))
@@ -909,7 +909,7 @@ env-Cˢ-delay : ∀ {St Γ A ε τ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-delay ⌊ St ⌋ Δ M = refl
 env-Cˢ-delay (∅ᵉ St) Δ M = refl
-env-Cˢ-delay (sliceᵉ γ q) Δ M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-delay γ Δ M)
+env-Cˢ-delay (reachᵉ γ q) Δ M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-delay γ Δ M)
 
 env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1065,7 +1065,7 @@ env-Cˢ-seq : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-seq ⌊ St ⌋ Δ M N = refl
 env-Cˢ-seq (∅ᵉ St) Δ M N = refl
-env-Cˢ-seq (sliceᵉ γ q) Δ M N = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-seq γ Δ M N)
+env-Cˢ-seq (reachᵉ γ q) Δ M N = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-seq γ Δ M N)
 
 env-Cˢ-seq {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M N =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1244,7 +1244,7 @@ env-Cˢ-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-perform ⌊ St ⌋ Δ V M = refl
 env-Cˢ-perform (∅ᵉ St) Δ V M = refl
-env-Cˢ-perform (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-perform γ Δ V M)
+env-Cˢ-perform (reachᵉ γ q) Δ V M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-perform γ Δ V M)
 
 env-Cˢ-perform {op = op} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1391,7 +1391,7 @@ env-Cˢ-match : ∀ {St Γ A B C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-match ⌊ St ⌋ Δ V M = refl
 env-Cˢ-match (∅ᵉ St) Δ V M = refl
-env-Cˢ-match (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-match γ Δ V M)
+env-Cˢ-match (reachᵉ γ q) Δ V M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-match γ Δ V M)
 
 env-Cˢ-match {A = A} {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1547,7 +1547,7 @@ env-Cˢ-box : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-box ⌊ St ⌋ Δ V M = refl
 env-Cˢ-box (∅ᵉ St) Δ V M = refl
-env-Cˢ-box (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-box γ Δ V M)
+env-Cˢ-box (reachᵉ γ q) Δ V M = cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-box γ Δ V M)
 
 env-Cˢ-box {A = A} {ρ = ρ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ V M =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1803,9 +1803,9 @@ env-Hˢ (∅ᵉ St) Δ K op ε =
   C-rename (cong-∷-ren (cong-∷-ren
              (restrict-ren (cong-ren {Γ'' = Δ} (∅-ren St))))) (K op ε)
 
-env-Hˢ (sliceᵉ γ q) Δ K op ε =
+env-Hˢ (reachᵉ γ q) Δ K op ε =
   C-rename (cong-∷-ren (cong-∷-ren
-             (restrict-ren (cong-ren {Γ'' = Δ} (slice-renᵘ q)))))
+             (restrict-ren (cong-ren {Γ'' = Δ} (reach-renᵘ q)))))
     (env-Hˢ γ Δ K op ε)
 
 env-Hˢ {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ K op ε =
@@ -1861,8 +1861,8 @@ env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-handle ⌊ St ⌋ Δ M H N = refl
 env-Cˢ-handle (∅ᵉ St) Δ M H N = refl
-env-Cˢ-handle (sliceᵉ γ q) Δ M H N =
-  cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-handle γ Δ M H N)
+env-Cˢ-handle (reachᵉ γ q) Δ M H N =
+  cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-handle γ Δ M H N)
 
 env-Cˢ-handle {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M H N =
   cong (C-rename (cong-ren (unbox-ren q)))
@@ -1993,7 +1993,7 @@ env-ᴱ (liftᵉ {A = A} {ρ = ρ} V γ) x with eternal? ([ ρ ] A)
 ... | yes ()
 ... | no ¬et = env-ᴱ γ x
 env-ᴱ (γ ⟨ q ⟩ᵉ) x = env-ᴱ γ x
-env-ᴱ (sliceᵉ γ q) x = env-ᴱ γ x
+env-ᴱ (reachᵉ γ q) x = env-ᴱ γ x
 env-ᴱ (_∷ᵉ_ {A = A} γ V) = env-ᴱ-∷ γ V (eternal? A)
 env-ᴱ (eternalˡ {Γ = Γ} Δ lf η γ) x
   with ∈-++ᶜ-split (Δ ᴱ) (Γ ᴱ) (subst (λ Γ' → _ ∈[ _ ] Γ') (ᴱ-++ᶜ Δ Γ) x)
@@ -2062,7 +2062,7 @@ Cl-castᴿ {B = B} op ε e X =
 -- fundamental lemma must move an environment to the extended state. The term
 -- needs no reindexing — `toCtx (St ∷ₛ V) = toCtx St ∷ [ρ]A` is the context the
 -- action already produced, and moving the environment is recording the
--- allocation slice.
+-- allocation reach.
 ------------------------------------------------------------------------
 
 env-alloc : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
@@ -2070,7 +2070,7 @@ env-alloc : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
           ---------------------
           → Env (St ∷ₛ V) Γ
 
-env-alloc V γ = sliceᵉ γ (alloc-slice V)
+env-alloc V γ = reachᵉ γ (alloc-reach V)
 
 -- Reducibility is unaffected: the values still live at the earlier state.
 

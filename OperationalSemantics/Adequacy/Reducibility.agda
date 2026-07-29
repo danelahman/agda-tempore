@@ -45,7 +45,7 @@ open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
-open import OperationalSemantics.Adequacy.Slice           Spec
+open import OperationalSemantics.Adequacy.GradedReach           Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.StateEquivalence Spec
 
@@ -97,7 +97,7 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 
   -- or it gets stuck on an operation with a reducible parameter, whose
   -- resumption is reducible at every state where the operation's own grade has
-  -- elapsed — the `Slice` an `unbox` consumes, since `HANDLE-OP` boxes the
+  -- elapsed — the graded reach an `unbox` consumes, since `HANDLE-OP` boxes the
   -- resumption at that grade and a clause reaches it by unboxing
 
   comp-op : ∀ {ε ε₁} {St St₁ : 𝕊 []} {op : Op}
@@ -108,7 +108,7 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
           → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
           → Valᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
-             → (q : Slice St₁ (mapᵉ (op-grade op)) St₂ uᵣ)
+             → (q : St₁ [ mapᵉ (op-grade op) ]⊑ₛ[ uᵣ ] St₂)
              → (W' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
              → Valᵍ (arity op) St₂ W'
              → Comp A P ε₁ St₂ (resume q M' W'))
@@ -127,7 +127,7 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 -- to arguments mentioning it.
 --
 -- Both clauses take their transported term up to `_≐_` rather than on the nose.
--- That is what makes `Val-slice` compose two transports: renaming is functorial
+-- That is what makes `Val-reach` compose two transports: renaming is functorial
 -- only up to `_≐ᶜ_` (`unbox` stores a renaming), so with the slack the composite
 -- is reached by `≐-trans` instead of needing `Comp` to respect `_≐ᶜ_`.
 
@@ -141,13 +141,13 @@ Val (A |×| B)     St V =
 Val (A ⇒ (B ‼ ε)) St V =
   Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
     (V ≡ lam M)
-  × (∀ {St'} → (q : Slice St uᵣ St' uᵣ)
-     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≐ᶜ slice-under q M
+  × (∀ {St'} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St')
+     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≐ᶜ reach-under q M
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
      → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
 -- A box type is the cell the value names: readable at a later state means its
 -- content is reducible there. This is `Store` below, per cell — `store-var`.
--- Quantifying over `Slice St ρ St' uᵣ` instead would demand more than
+-- Quantifying over `St [ ρ ]⊑ₛ[ uᵣ ] St'` instead would demand more than
 -- readability: that bound is `≤ₛ-grade e ≾ᵣ ρ`, whereas reading a cell gives
 -- `proj₁ (≤ₛ-embed e c) ≾ᵣ ρ`, i.e. `σ_c ·ᵣ ≤ₛ-grade e ≾ᵣ ρ`, and with
 -- `σ_c ≾ᵣ uᵣ` the latter is strictly weaker.
@@ -178,12 +178,12 @@ Comp' A = Comp A (Val A)
 --     and `unbox⇒var` yields only `ρ' ≾ᵣ ρ`, never `ρ' ≾ᵣ uᵣ`: a cell can be
 --     readable without being usable as a value.
 --
---   * `e = ext q` for a `ρ`-slice `q` is `Val` at the cell's box type, which is
+--   * `e = ext q` for a `ρ`-reach `q` is `Val` at the cell's box type, which is
 --     `store-var` below. So the reducibility of a box-typed *variable* is this
 --     same condition at a later state, not a separate assumption.
 --
 -- Keeping only the second would not do: instantiating it at the current state
--- needs `Slice St ρ St uᵣ`, whose bound is `uᵣ ≾ᵣ ρ`, and `Grade` has no such
+-- needs `St [ ρ ]⊑ₛ[ uᵣ ] St`, whose bound is `uᵣ ≾ᵣ ρ`, and `Grade` has no such
 -- law — rightly, since it would say every box is ready immediately.
 
 Store : 𝕊 [] → Set
@@ -254,20 +254,20 @@ unbox-lookup-val-≐ {St = St} w (var-≐ {x = x})
     (resource-lookup St z)
 
 -- Renaming the boxed value before looking it up is looking it up along the
--- composed slice. Unfolding the lookup (`unbox-lookup-≡`) leaves the cell,
+-- composed reach. Unfolding the lookup (`unbox-lookup-≡`) leaves the cell,
 -- which is the same by `unbox-cellsᵛ`, and the grade bound, which is
 -- irrelevant — so the two values are equal, not merely equivalent.
 
 unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-                 → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+                 → (q₀ : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂)
                  → (V : toCtx St ⊢V⦂ [ ρ ] A)
-                 → unbox-lookup St₂ (unbox-ren q') (slice-val q₀ V)
-                 ≡ unbox-lookup St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V
+                 → unbox-lookup St₂ (unbox-ren q') (reach-val q₀ V)
+                 ≡ unbox-lookup St₂ (unbox-ren (reach-∘ᵘ q' q₀)) V
 
 unbox-lookup-ren {St₂ = St₂} q₀ q' V =
-  trans (unbox-lookup-≡ St₂ (unbox-ren q') (slice-val q₀ V))
+  trans (unbox-lookup-≡ St₂ (unbox-ren q') (reach-val q₀ V))
     (trans (lookup-body-≡ St₂ (unbox-cellsᵛ q₀ q' V) _ _)
-           (sym (unbox-lookup-≡ St₂ (unbox-ren (slice-∘ᵘ q' q₀)) V)))
+           (sym (unbox-lookup-≡ St₂ (unbox-ren (reach-∘ᵘ q' q₀)) V)))
 
 -- ETERNAL TYPES ARE FREE
 --
@@ -304,8 +304,8 @@ Val-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
 --
 -- Both are recursions on the type, and both are almost free: the slack in the
 -- two Kripke clauses absorbs exactly the mismatch, so nothing has to be
--- transported. `Val-slice` composes the two slices — `slice-∘` at `⇒` (both
--- unit-graded) and `slice-∘ᵘ` at `[ ρ ]` (the outer one guarded).
+-- transported. `Val-reach` composes the two reaches — `reach-∘` at `⇒` (both
+-- unit-graded) and `reach-∘ᵘ` at `[ ρ ]` (the outer one guarded).
 ------------------------------------------------------------------------
 
 Val-≐ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
@@ -324,35 +324,35 @@ Val-≐ᵛ ([ ρ ] A) {V} {V'} eV f
 ... | _ , x , g , refl | _ , x' , g' , refl with eV
 ...   | var-≐ = f
 
-Val-slice : ∀ {A St St'} → (q : Slice St uᵣ St' uᵣ) → (V : toCtx St ⊢V⦂ A)
-          → Val A St V → Val A St' (slice-val q V)
+Val-reach : ∀ {A St St'} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
+          → Val A St V → Val A St' (reach-val q V)
 
-Val-slice {Base b}  q V p = tt
-Val-slice {Unit}    q V p = tt
-Val-slice {Empty}   q V p = tt
-Val-slice {A |×| B} q .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , refl , Val-slice q V₁ p₁ , Val-slice q V₂ p₂
-Val-slice {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
+Val-reach {Base b}  q V p = tt
+Val-reach {Unit}    q V p = tt
+Val-reach {Empty}   q V p = tt
+Val-reach {A |×| B} q .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
+  _ , _ , refl , Val-reach q V₁ p₁ , Val-reach q V₂ p₂
+Val-reach {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
     _ , refl
   , λ q' M₂ eM₂ W pW →
-      f (slice-∘ q' q₀) M₂
+      f (reach-∘ q' q₀) M₂
         (≐ᶜ-trans eM₂
           (≐ᶜ-trans
-            (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-renᵘ q'))
-                                (cong-∷-ren (slice-renᵘ q₀)) M))
+            (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (reach-renᵘ q'))
+                                (cong-∷-ren (reach-renᵘ q₀)) M))
             (C-rename-≐ (≐ʳ-trans
-                          (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-renᵘ q') (slice-renᵘ q₀)))
-                          (cong-∷-ren-≐ (≐ʳ-sym (slice-renᵘ-∘ q' q₀))))
+                          (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-renᵘ q') (reach-renᵘ q₀)))
+                          (cong-∷-ren-≐ (≐ʳ-sym (reach-renᵘ-∘ q' q₀))))
                         M)))
         W pW
-Val-slice {[ ρ ] A} q₀ V f {St''} e rel with grad-typ⇒var V
+Val-reach {[ ρ ] A} q₀ V f {St''} e rel with grad-typ⇒var V
 ... | _ , c , g , refl =
   Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St'' cellEq rel₁ rel))
            (f (≤ₛ-trans (ext q₀) e) rel₁)
   where
     cellEq = trans (≤ₛ-embed-∘ (ext q₀) e c)
                    (sym (cong (λ z → ≤ₛ-embed e (proj₂ z))
-                              (slice-renᵘ-tgt q₀ c)))
+                              (reach-renᵘ-tgt q₀ c)))
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
 -- GROUND TYPES
@@ -400,8 +400,8 @@ Valᵍ-≐ᵛ ([ ρ ]ᵍ G)   {V} {V'} eV f
 -- GROUND VALUES ACROSS THE STATE EQUIVALENCE
 --
 -- Related states hold related values, so reducibility transports. Recursion on
--- the ground type; the box clause replays the slice on the other state
--- (`slice-replay` + `≐ˢ-sym`), moves the boxed value there
+-- the ground type; the box clause replays the reach on the other state
+-- (`reach-replay` + `≐ˢ-sym`), moves the boxed value there
 -- (`unbox-lookup-cast-val`), and identifies the two reads
 -- (`unbox-ren-bridge`, then `unbox-lookup-≐`).
 
@@ -436,7 +436,7 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
 -- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
 --
 -- One lemma carrying *both* relations: the states' and the terms'. They cannot
--- be separated — the `comp-op` case replays the resumption's slice and recurses,
+-- be separated — the `comp-op` case replays the resumption's reach and recurses,
 -- and the two continuations come out of `≐-perform⁻` related only by `_≐ᶜ_`.
 --
 -- Parameterised by the value predicate's transport rather than mutual with
@@ -447,7 +447,7 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
 
 resume-≐ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
          → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-         → {q : Slice St ρ St₂ uᵣ} → {q' : Slice St' ρ St₂' uᵣ}
+         → {q : St [ ρ ]⊑ₛ[ uᵣ ] St₂} → {q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂'}
          → ext q ≤≐ ext q'
          → {M : toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
          → {M' : toCtx St' ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
@@ -509,11 +509,11 @@ Comp-≐ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
   where
     ρ = mapᵉ (op-grade op)
 
-    step : ∀ {St₂ : 𝕊 []} → (q' : Slice _ ρ St₂ uᵣ)
+    step : ∀ {St₂ : 𝕊 []} → (q' : _ [ ρ ]⊑ₛ[ uᵣ ] St₂)
          → (W'' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
          → Valᵍ (arity op) St₂ W''
          → Comp A P _ St₂ (resume q' Mk' W'')
-    step {St₂} q' W'' pW'' with slice-replay (≐ˢ-sym es₁) q'
+    step {St₂} q' W'' pW'' with reach-replay (≐ˢ-sym es₁) q'
     ... | St₃ , q , es₃ , h =
       Comp-≐ (≐ˢ-sym es₃) tr tr≐
         (resume-≐ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
@@ -547,12 +547,12 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
   where
     e = toCtx-≐ˢ es
 
-    step : ∀ {St'' : 𝕊 []} → (q' : Slice St' uᵣ St'' uᵣ)
+    step : ∀ {St'' : 𝕊 []} → (q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St'')
          → (M₂ : toCtx St'' ∷ A ⊢C⦂ B ‼ ε)
-         → M₂ ≐ᶜ slice-under q' (castᶜ (cong (_∷ A) e) M)
+         → M₂ ≐ᶜ reach-under q' (castᶜ (cong (_∷ A) e) M)
          → (W : toCtx St'' ⊢V⦂ A) → Val A St'' W
          → Comp B (Val B) ε St'' (M₂ [ Hd ↦ W ]c)
-    step {St''} q' M₂ eM₂ W pW with slice-replay (≐ˢ-sym es) q'
+    step {St''} q' M₂ eM₂ W pW with reach-replay (≐ˢ-sym es) q'
     ... | St₂ , q , es₂ , h =
       Comp-≐ (≐ˢ-sym es₂) (λ es₁ V₀ → Val-≐ˢ es₁ B V₀) (Val-≐ᵛ B)
         (≡→≐ᶜ (trans (cast-app-reduct e₂ M₂ W)
@@ -563,23 +563,23 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
       where
         e₂ = toCtx-≐ˢ es₂
 
-        eM₃ : castᶜ (cong (_∷ A) e₂) M₂ ≐ᶜ slice-under q M
+        eM₃ : castᶜ (cong (_∷ A) e₂) M₂ ≐ᶜ reach-under q M
         eM₃ =
           ≐ᶜ-trans (castᶜ-≐ (cong (_∷ A) e₂) eM₂)
             (≐ᶜ-trans
-              (≡→≐ᶜ (sym (cast-rename-∷ (sym e) e₂ (slice-renᵘ q')
+              (≡→≐ᶜ (sym (cast-rename-∷ (sym e) e₂ (reach-renᵘ q')
                                         (castᶜ (cong (_∷ A) e) M))))
               (≐ᶜ-trans
                 (≡→≐ᶜ (cong (C-rename
-                              (cong-∷-ren (castʳ² (sym e) e₂ (slice-renᵘ q'))))
+                              (cong-∷-ren (castʳ² (sym e) e₂ (reach-renᵘ q'))))
                             (castᶜ-castᶜ (cong (_∷ A) e) (cong (_∷ A) (sym e)) M)))
                 (≐ᶜ-sym
                   (C-rename-≐
                     (cong-∷-ren-≐
-                      (≐ʳ-trans (slice-renᵘ-≐ˢ es (≐ˢ-sym es₂) (≤≐-sym h))
+                      (≐ʳ-trans (reach-renᵘ-≐ˢ es (≐ˢ-sym es₂) (≤≐-sym h))
                                 (castʳ²-irr (sym e) (sym e)
                                             (sym (toCtx-≐ˢ (≐ˢ-sym es₂))) e₂
-                                            (slice-renᵘ q'))))
+                                            (reach-renᵘ q'))))
                     M))))
 
 Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} e rel
@@ -618,30 +618,30 @@ Comp-≐ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- lock it was boxed under permits — which is what the fundamental lemma
 -- supplies, by running its own value case at each such state.
 --
--- The old variables are covered by `Val-slice` along the allocation, once the
+-- The old variables are covered by `Val-reach` along the allocation, once the
 -- renaming is seen to send a variable to its own weakening. The new one is the
 -- lookup at the freshly allocated cell.
 
 alloc-var-≐ : ∀ {A A' ρ ρ'} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → (x : A' ∈[ ρ' ] toCtx St) → (f : ¬ Eternal A' → ρ' ≾ᵣ uᵣ)
-            → slice-val (alloc-slice V) (var f x) ≐ᵛ var f (Tl-∷ x)
+            → reach-val (alloc-reach V) (var f x) ≐ᵛ var f (Tl-∷ x)
 alloc-var-≐ V x f =
-  var-ren-tgt-≐ (slice-renᵘ (alloc-slice V)) x f
-                (slice-renᵘ-tgt (alloc-slice V) x) f
+  var-ren-tgt-≐ (reach-renᵘ (alloc-reach V)) x f
+                (reach-renᵘ-tgt (alloc-reach V) x) f
 
--- The freshly allocated cell is reducible: a slice out of `St ∷ₛ V` at `ρ` is
--- one out of `St` (`slice-∘ᵘ` against `alloc-slice`), and reading the cell back
+-- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ` is
+-- one out of `St` (`reach-∘ᵘ` against `alloc-reach`), and reading the cell back
 -- returns the stored value. Which cell is read is settled — `unbox-ren-tgt`
 -- sends it to `≤ₛ-embed (ext q) Hd` — and what it holds is settled too, by
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
 --
--- What is left is one renaming agreement, `alloc-lookup-≐` in `Slice`: the two
+-- What is left is one renaming agreement, `alloc-lookup-≐` in `GradedReach` (the module): the two
 -- renamings both push the value's context under everything the state has gained
--- since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the slice by `≤ₛ-embed`.
+-- since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the reach by `≤ₛ-embed`.
 
 store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-            → (∀ {St'} → (q : Slice St ρ St' uᵣ)
+            → (∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
                  → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
             → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
             ------------------------------------------
@@ -651,9 +651,9 @@ store-fresh {A} {ρ} {St} V pV f {St'} e rel =
   Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V e rel q₀ refl)) (pV q₀)
   where
     -- the allocation accumulates nothing, so the cell's readability at `St'`
-    -- *is* the bound the slice back to `St` needs
-    q₀ : Slice St ρ St' uᵣ
-    q₀ = slice (≤ₛ-trans (∷-suc V id-suc) e)
+    -- *is* the bound the reach back to `St` needs
+    q₀ : St [ ρ ]⊑ₛ[ uᵣ ] St'
+    q₀ = reach (≤ₛ-trans (∷-suc V id-suc) e)
                (≾ᵣ-trans
                  (≾ᵣ-reflexive
                    (trans (·ᵣ-identityʳ (≤ₛ-grade (≤ₛ-trans (∷-suc V id-suc) e)))
@@ -686,7 +686,7 @@ store-var {[ ρ ] A} pSt x f e rel = pSt e x rel
 
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
-            → (∀ {St'} → (q : Slice St ρ St' uᵣ)
+            → (∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
                  → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
             ------------------------------------------------------------------
             → Store (St ∷ₛ V)

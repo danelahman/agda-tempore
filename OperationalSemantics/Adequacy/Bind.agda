@@ -40,7 +40,7 @@ open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 ------------------------------------------------------------------------
@@ -50,8 +50,8 @@ open import Syntax.Substitutions.Equivalence Spec
 -- exactly as `Comp-≐` does.
 --
 --   * `comp-ret` runs the scrutinee to a `return` (`seq-steps`), fires
---     `SEQ-RET`, and hands the value to the sequel premise. The run's own slice
---     lands at `mapᵉ uₑ` where a `Slice` wants `uᵣ`, which `suc-comp-ren-grade`
+--     `SEQ-RET`, and hands the value to the sequel premise. The run's own reach
+--     lands at `mapᵉ uₑ` where a graded reach wants `uᵣ`, which `suc-comp-ren-grade`
 --     reconciles.
 --   * `comp-op` runs it to a `perform`, floats the operation out with `SEQ-OP`
 --     and recurses at the resumption. The sequel the recursion needs is the
@@ -63,7 +63,7 @@ seq-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε₁}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
          → Comp' A ε₁ St M
-         → (∀ {St₁ : 𝕊 []} → (q : Slice St (mapᵉ ε₁) St₁ uᵣ)
+         → (∀ {St₁ : 𝕊 []} → (q : St [ mapᵉ ε₁ ]⊑ₛ[ uᵣ ] St₁)
               → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
               → Comp' B ε₂ St₁
                   ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c))
@@ -87,7 +87,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
     b = ≾ᵣ-trans (≾ᵣ-reflexive (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ)))
                  (steps-grade-≾ rs)
 
-    q = slice E₀ b
+    q = reach E₀ b
 
     -- the renaming `SEQ-RET` puts in front of the sequel it reached
     R₁ : Ren [] (toCtx St₁ ⟨ mapᵉ uₑ ⟩) (toCtx St₁)
@@ -136,7 +136,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
 
     N₂ = C-rename (cong-∷-ren κ) N₁
 
-    resump : ∀ {St₂ : 𝕊 []} → (q : Slice St₁ ρₒ St₂ uᵣ)
+    resump : ∀ {St₂ : 𝕊 []} → (q : St₁ [ ρₒ ]⊑ₛ[ uᵣ ] St₂)
            → (W' : toCtx St₂ ⊢V⦂ Ar)
            → Valᵍ (arity op) St₂ W'
            → Comp' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
@@ -158,8 +158,8 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         B₁ : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
         B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
 
-        sB : Slice St₁ (mapᵉ (op-grade op ·ₑ ε₃)) St₂ (mapᵉ ε₃)
-        sB = slice (ext q) B₁
+        sB : St₁ [ mapᵉ (op-grade op ·ₑ ε₃) ]⊑ₛ[ mapᵉ ε₃ ] St₂
+        sB = reach (ext q) B₁
 
         -- what is left of the sequel's renaming once the arity variable is gone
         W₁ : Ren [] (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
@@ -212,7 +212,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                     N₁)
                   (C-rename-∘ (cong-∷-ren (cong-⟨⟩-ren wk-ren)) (cong-∷-ren W₁) N₁))
 
-        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : Slice St₂ (mapᵉ ε₃) St₃ uᵣ)
+        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ [ mapᵉ ε₃ ]⊑ₛ[ uᵣ ] St₃)
             → (V : toCtx St₃ ⊢V⦂ A) → Val A St₃ V
             → Comp' B ε₂ St₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ Hd ↦ V ]c)
@@ -220,8 +220,8 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         hN₃ {St₃} q' V pV =
           Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl V) shift) (hN q₁ V pV)
           where
-            s₁₂ = slice-∘ sB (steps-slice rs)
-            q₁  = slice-∘ q' s₁₂
+            s₁₂ = reach-∘ sB (steps-reach rs)
+            q₁  = reach-∘ q' s₁₂
 
             composite : suc-comp-ren (ext q₁) (bound q₁)
                       ≐ʳ (suc-comp-ren (ext q') (bound q') ∘ʳ (W₁ ∘ʳ srs))

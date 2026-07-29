@@ -1,10 +1,19 @@
 ------------------------------------------------------------------------
--- The index of the logical relation: guarded state extensions.       --
+-- Graded reachability: the frame the logical relation is indexed by. --
 --                                                                    --
 -- Reindexing along `S ≤ₛ S'` is not free weakening — `suc-comp-ren`  --
--- takes a grade side-condition. So the relation is Kripke over the   --
--- *slice* that `suc-comp-ren` accepts: an extension together with    --
--- the bound licensing the lock it was guarded by.                    --
+-- takes a grade side-condition. So the relation is Kripke not over    --
+-- `≤ₛ` but over the accessibility that carries a grade budget: an     --
+-- extension together with the bound licensing the lock it crossed.    --
+--                                                                    --
+-- This is a category, not merely a relation. Its objects are pairs    --
+-- `(St , ρ)` — a state and the budget still to elapse — and a         --
+-- morphism draws the budget down by exactly what the extension        --
+-- consumed. `reach-id` and `reach-∘` are its identity and             --
+-- composition, the latter resting on `≤ₛ-grade` being multiplicative  --
+-- (`≤ₛ-grade-trans`). `reach-ren` is then a functor into renamings,   --
+-- sending `(St , ρ)` to `toCtx St ⟨ ρ ⟩`, with `reach-renᵘ-∘` and     --
+-- `reach-renᵘ-id-≐` its two functor laws.                             --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -15,7 +24,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-module OperationalSemantics.Adequacy.Slice (Spec : LanguageSpec) where
+module OperationalSemantics.Adequacy.GradedReach (Spec : LanguageSpec) where
 
 open LanguageSpec Spec
 open GradeSystemInterface Grades
@@ -37,67 +46,70 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
--- A `ρ`-guarded extension: `St'` extends `St`, and the grade it accumulated,
--- composed with the residual lock `ρ'`, stays below the guarding lock `ρ`.
+-- `St [ ρ ]⊑ₛ[ ρ' ] St'` — from `St` owing `ρ` one reaches `St'` still owing
+-- `ρ'`: the extension's accumulated grade, composed with the residual `ρ'`,
+-- stays below `ρ`. The `ₛ` marks it as refining the state extension `≤ₛ`.
 -- This is precisely the data `suc-comp-ren` consumes.
 
-record Slice (St : 𝕊 []) (ρ : R) (St' : 𝕊 []) (ρ' : R) : Set where
-  constructor slice
+infix 4 _[_]⊑ₛ[_]_
+
+record _[_]⊑ₛ[_]_ (St : 𝕊 []) (ρ : R) (ρ' : R) (St' : 𝕊 []) : Set where
+  constructor reach
   field
     ext   : St ≤ₛ St'
     bound : ≤ₛ-grade ext ·ᵣ ρ' ≾ᵣ ρ
 
-open Slice public
+open _[_]⊑ₛ[_]_ public
 
--- The renaming a slice licenses.
+-- The renaming a reach licenses.
 
-slice-ren : ∀ {St ρ St' ρ'} → Slice St ρ St' ρ' → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St' ⟨ ρ' ⟩)
-slice-ren (slice e b) = suc-comp-ren e b
+reach-ren : ∀ {St ρ St' ρ'} → St [ ρ ]⊑ₛ[ ρ' ] St' → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St' ⟨ ρ' ⟩)
+reach-ren (reach e b) = suc-comp-ren e b
 
 -- Identity: no extension, nothing accumulated.
 
-slice-id : ∀ {St ρ} → Slice St ρ St ρ
-slice-id {ρ = ρ} = slice id-suc (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
+reach-id : ∀ {St ρ} → St [ ρ ]⊑ₛ[ ρ ] St
+reach-id {ρ = ρ} = reach id-suc (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
 
--- A guarded slice whose guard is itself below the unit is a unit slice: the
+-- A guarded reach whose guard is itself below the unit is a unit reach: the
 -- extension is the same, only the bound is relaxed. This is how a value under a
 -- lock is moved forward — a *usable* variable's grade bound gives `ρ ≾ᵣ uᵣ` by
 -- the grade monoid's zero-product law.
 
-slice-unit : ∀ {St St' ρ} → Slice St ρ St' uᵣ → ρ ≾ᵣ uᵣ → Slice St uᵣ St' uᵣ
-slice-unit (slice e b) p = slice e (≾ᵣ-trans b p)
+reach-unit : ∀ {St St' ρ} → St [ ρ ]⊑ₛ[ uᵣ ] St' → ρ ≾ᵣ uᵣ → St [ uᵣ ]⊑ₛ[ uᵣ ] St'
+reach-unit (reach e b) p = reach e (≾ᵣ-trans b p)
 
--- At the unit lock the slice is a plain renaming `toCtx St → toCtx St'`.
+-- At the unit lock the reach is a plain renaming `toCtx St → toCtx St'`.
 
-slice-renᵘ : ∀ {St St'} → Slice St uᵣ St' uᵣ → Ren [] (toCtx St) (toCtx St')
-slice-renᵘ q = ⟨⟩-η-ren ∘ʳ slice-ren q ∘ʳ ⟨⟩-η⁻¹-ren
+reach-renᵘ : ∀ {St St'} → St [ uᵣ ]⊑ₛ[ uᵣ ] St' → Ren [] (toCtx St) (toCtx St')
+reach-renᵘ q = ⟨⟩-η-ren ∘ʳ reach-ren q ∘ʳ ⟨⟩-η⁻¹-ren
 
-slice-val : ∀ {St St' A} → Slice St uᵣ St' uᵣ → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
-slice-val q = V-rename (slice-renᵘ q)
+reach-val : ∀ {St St' A} → St [ uᵣ ]⊑ₛ[ uᵣ ] St' → toCtx St ⊢V⦂ A → toCtx St' ⊢V⦂ A
+reach-val q = V-rename (reach-renᵘ q)
 
-slice-comp : ∀ {St St' C} → Slice St uᵣ St' uᵣ → toCtx St ⊢C⦂ C → toCtx St' ⊢C⦂ C
-slice-comp q = C-rename (slice-renᵘ q)
+reach-comp : ∀ {St St' C} → St [ uᵣ ]⊑ₛ[ uᵣ ] St' → toCtx St ⊢C⦂ C → toCtx St' ⊢C⦂ C
+reach-comp q = C-rename (reach-renᵘ q)
 
 -- Transporting a term with one more variable on top (a `lam` body).
 
-slice-under : ∀ {St St' A C} → Slice St uᵣ St' uᵣ
+reach-under : ∀ {St St' A C} → St [ uᵣ ]⊑ₛ[ uᵣ ] St'
             → toCtx St ∷ A ⊢C⦂ C → toCtx St' ∷ A ⊢C⦂ C
-slice-under q = C-rename (cong-∷-ren (slice-renᵘ q))
+reach-under q = C-rename (cong-∷-ren (reach-renᵘ q))
 
 -- The witness an `unbox` needs: enough time has passed for a `ρ`-boxed value
 -- to be ready at `St'`. This is the shape of `UNBOX`'s premise, hence what
 -- `unbox-lookup` consumes.
 
-unbox-ren : ∀ {St ρ St'} → Slice St ρ St' uᵣ → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St')
-unbox-ren q = ⟨⟩-η-ren ∘ʳ slice-ren q
+unbox-ren : ∀ {St ρ St'} → St [ ρ ]⊑ₛ[ uᵣ ] St' → Ren [] (toCtx St ⟨ ρ ⟩) (toCtx St')
+unbox-ren q = ⟨⟩-η-ren ∘ʳ reach-ren q
 
 -- Resuming a continuation guarded by `ρ` at a state where `ρ` has elapsed:
--- cross the lock along the slice, then feed it the arity value. The slice is the
+-- cross the lock along the reach, then feed it the arity value. The reach is the
 -- one `unbox` consumes, because that is how a resumption is reached — `HANDLE-OP`
 -- boxes it at `ρ` and the clause unboxes it once `ρ` has passed.
 
 resume : ∀ {St St' ρ A ε B}
-       → (q : Slice St ρ St' uᵣ)
+       → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
        → toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε
        → toCtx St' ⊢V⦂ B
        → toCtx St' ⊢C⦂ A ‼ ε
@@ -135,30 +147,30 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ Hd ↦ W ]c
 -- Composition: the extensions compose and the two bounds chain, the inner one
 -- under `_·ᵣ_`'s monotonicity.
 
-slice-∘ : ∀ {St St' St'' ρ ρ' ρ''}
-        → Slice St' ρ' St'' ρ'' → Slice St ρ St' ρ'
+reach-∘ : ∀ {St St' St'' ρ ρ' ρ''}
+        → St' [ ρ' ]⊑ₛ[ ρ'' ] St'' → St [ ρ ]⊑ₛ[ ρ' ] St'
         -------------------------------------------
-        → Slice St ρ St'' ρ''
+        → St [ ρ ]⊑ₛ[ ρ'' ] St''
 
-slice-∘ {ρ'' = ρ''} (slice e' b') (slice e b) =
-  slice (≤ₛ-trans e e')
+reach-∘ {ρ'' = ρ''} (reach e' b') (reach e b) =
+  reach (≤ₛ-trans e e')
     (≾ᵣ-trans
       (≾ᵣ-reflexive
         (trans (cong (_·ᵣ ρ'') (≤ₛ-grade-trans e e')) (·ᵣ-assoc _ _ ρ'')))
       (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ b') b))
 
--- Composition against a unit slice on the right: a `ρ`-guarded step out of a
--- later state still starts `ρ`-guarded from the earlier one. `slice-∘` needs
+-- Composition against a unit reach on the right: a `ρ`-guarded step out of a
+-- later state still starts `ρ`-guarded from the earlier one. `reach-∘` needs
 -- its middle grades to agree, so this is a separate lemma; `Val`'s box clause
 -- needs it to be monotone.
 
-slice-∘ᵘ : ∀ {St St' St'' ρ}
-         → Slice St' ρ St'' uᵣ → Slice St uᵣ St' uᵣ
+reach-∘ᵘ : ∀ {St St' St'' ρ}
+         → St' [ ρ ]⊑ₛ[ uᵣ ] St'' → St [ uᵣ ]⊑ₛ[ uᵣ ] St'
          -------------------------------------------
-         → Slice St ρ St'' uᵣ
+         → St [ ρ ]⊑ₛ[ uᵣ ] St''
 
-slice-∘ᵘ {ρ = ρ} (slice e' b') (slice e b) =
-  slice (≤ₛ-trans e e')
+reach-∘ᵘ {ρ = ρ} (reach e' b') (reach e b) =
+  reach (≤ₛ-trans e e')
     (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityʳ _))
       (≾ᵣ-trans (≾ᵣ-reflexive (≤ₛ-grade-trans e e'))
         (≾ᵣ-trans
@@ -170,32 +182,32 @@ slice-∘ᵘ {ρ = ρ} (slice e' b') (slice e b) =
 --
 -- A step extends the state at the unit lock whenever the grade it accumulated
 -- permits (`step-extends-state`); allocating a cell accumulates nothing
--- (`BOX`); letting time pass is a slice at exactly the lock it passes
+-- (`BOX`); letting time pass is a reach at exactly the lock it passes
 -- (`DELAY`).
 
-step-slice : ∀ {A B ε ε'} {St St' : 𝕊 []}
+step-reach : ∀ {A B ε ε'} {St St' : 𝕊 []}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
            → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
            → ≤ₛ-grade (step-extends-state r) ≾ᵣ uᵣ
            ---------------------------------------
-           → Slice St uᵣ St' uᵣ
+           → St [ uᵣ ]⊑ₛ[ uᵣ ] St'
 
-step-slice r h =
-  slice (step-extends-state r)
+step-reach r h =
+  reach (step-extends-state r)
     (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityʳ (≤ₛ-grade (step-extends-state r)))) h)
 
-alloc-slice : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+alloc-reach : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             ------------------------------------------------------------
-            → Slice St uᵣ (St ∷ₛ V) uᵣ
+            → St [ uᵣ ]⊑ₛ[ uᵣ ] (St ∷ₛ V)
 
-alloc-slice V = slice (∷-suc V id-suc) (≾ᵣ-reflexive (·ᵣ-identityˡ uᵣ))
+alloc-reach V = reach (∷-suc V id-suc) (≾ᵣ-reflexive (·ᵣ-identityˡ uᵣ))
 
-delay-slice : ∀ {ρ} {St : 𝕊 []}
+delay-reach : ∀ {ρ} {St : 𝕊 []}
             ------------------------------
-            → Slice St ρ (St ⟨ ρ ⟩ₛ) uᵣ
+            → St [ ρ ]⊑ₛ[ uᵣ ] (St ⟨ ρ ⟩ₛ)
 
-delay-slice {ρ} =
-  slice (⟨⟩-suc ρ id-suc)
+delay-reach {ρ} =
+  reach (⟨⟩-suc ρ id-suc)
     (≾ᵣ-reflexive (trans (·ᵣ-identityʳ (uᵣ ·ᵣ ρ)) (·ᵣ-identityˡ ρ)))
 
 ------------------------------------------------------------------------
@@ -309,7 +321,7 @@ suc-comp-ren-∘-≐ e (∷-suc V e') b b₁ b₂ =
            (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren wk-ren) (suc-comp-ren e' _)
                                (suc-comp-ren e b₁)))
 
--- Lifting it to `slice-renᵘ`: the two copies leave a `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
+-- Lifting it to `reach-renᵘ`: the two copies leave a `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
 -- in the middle, which is the identity up to `_≐ʳ_`.
 
 ⟨⟩-η-cancel : ∀ {Γ} → (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-η-ren) ≐ʳ id-ren
@@ -320,10 +332,10 @@ suc-comp-ren-∘-≐ e (∷-suc V e') b b₁ b₂ =
     go (Tl-⟨⟩ (Tl-∷ x))  = refl
     go (Tl-⟨⟩ (Tl-⟨⟩ x)) = refl
 
-slice-renᵘ-∘ : ∀ {St St' St'' : 𝕊 []}
-             → (q' : Slice St' uᵣ St'' uᵣ) → (q : Slice St uᵣ St' uᵣ)
-             → slice-renᵘ (slice-∘ q' q) ≐ʳ (slice-renᵘ q' ∘ʳ slice-renᵘ q)
-slice-renᵘ-∘ (slice e' b') (slice e b) = mk≐ʳ go
+reach-renᵘ-∘ : ∀ {St St' St'' : 𝕊 []}
+             → (q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St'') → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St')
+             → reach-renᵘ (reach-∘ q' q) ≐ʳ (reach-renᵘ q' ∘ʳ reach-renᵘ q)
+reach-renᵘ-∘ (reach e' b') (reach e b) = mk≐ʳ go
   where
     -- `_≐ʳ_` does not see associativity (`var-tgt` of a composite *is* the
     -- composite), so the whole thing is pointwise: replace the composite
@@ -341,7 +353,7 @@ slice-renᵘ-∘ (slice e' b') (slice e b) = mk≐ʳ go
 -- `suc-comp-ren` sends a locked variable to a locked variable: the extension
 -- embeds `toCtx St` into `toCtx St₁`, and the renaming is that embedding under
 -- the lock. Making this explicit is what lets the `⟨⟩-η` round trip in
--- `slice-renᵘ`/`unbox-ren` be cancelled at a specific variable.
+-- `reach-renᵘ`/`unbox-ren` be cancelled at a specific variable.
 ------------------------------------------------------------------------
 
 ≤ₛ-embed : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A σ}
@@ -365,7 +377,7 @@ suc-comp-ren-tgt (∷-suc V e)  b x =
   cong (var-tgt′ (cong-⟨⟩-ren wk-ren)) (suc-comp-ren-tgt e _ x)
 
 -- The embedding is functorial, and the two `⟨⟩-η` renamings are its identity
--- steps. Together these compute what `slice-renᵘ` and `unbox-ren` do to a
+-- steps. Together these compute what `reach-renᵘ` and `unbox-ren` do to a
 -- variable, which is all the lookup coherences need.
 
 ≤ₛ-embed-∘ : ∀ {St St₁ St₂ : 𝕊 []} → (e : St ≤ₛ St₁) → (e' : St₁ ≤ₛ St₂)
@@ -389,51 +401,51 @@ suc-comp-ren-tgt (∷-suc V e)  b x =
         (·ᵣ-assoc σ (≤ₛ-grade e) ρ)
 ≤ₛ-embed-grade (∷-suc V e)  x = ≤ₛ-embed-grade e x
 
--- What a slice does to a variable: the embedding of its extension.
+-- What a reach does to a variable: the embedding of its extension.
 
-slice-renᵘ-tgt : ∀ {St St' : 𝕊 []} → (q : Slice St uᵣ St' uᵣ)
+reach-renᵘ-tgt : ∀ {St St' : 𝕊 []} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St')
                → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
-               → var-tgt (slice-renᵘ q) x ≡ ≤ₛ-embed (ext q) x
-slice-renᵘ-tgt (slice e b) x =
+               → var-tgt (reach-renᵘ q) x ≡ ≤ₛ-embed (ext q) x
+reach-renᵘ-tgt (reach e b) x =
   trans (cong (λ t → var-tgt′ ⟨⟩-η-ren (var-tgt′ (suc-comp-ren e b) t))
               (⟨⟩-η⁻¹-tgt x))
         (cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x))
 
-unbox-ren-tgt : ∀ {St St' : 𝕊 []} {ρ : R} → (q : Slice St ρ St' uᵣ)
+unbox-ren-tgt : ∀ {St St' : 𝕊 []} {ρ : R} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
               → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
               → var-tgt (unbox-ren q) (Tl-⟨⟩ x) ≡ ≤ₛ-embed (ext q) x
-unbox-ren-tgt (slice e b) x = cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x)
+unbox-ren-tgt (reach e b) x = cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x)
 
--- Looking a resource up after transporting it along a slice
+-- Looking a resource up after transporting it along a reach
 -- reaches the same cell as looking it up along the composite.
 
 unbox-cells : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-            → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+            → (q₀ : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂)
             → ∀ {σ} → (x : [ ρ ] A ∈[ σ ] toCtx St)
-            → var-tgt (unbox-ren q') (Tl-⟨⟩ (proj₂ (var-tgt (slice-renᵘ q₀) x)))
-            ≡ var-tgt (unbox-ren (slice-∘ᵘ q' q₀)) (Tl-⟨⟩ x)
+            → var-tgt (unbox-ren q') (Tl-⟨⟩ (proj₂ (var-tgt (reach-renᵘ q₀) x)))
+            ≡ var-tgt (unbox-ren (reach-∘ᵘ q' q₀)) (Tl-⟨⟩ x)
 unbox-cells q₀ q' x =
-  trans (unbox-ren-tgt q' (proj₂ (var-tgt (slice-renᵘ q₀) x)))
-    (trans (cong (λ t → ≤ₛ-embed (ext q') (proj₂ t)) (slice-renᵘ-tgt q₀ x))
+  trans (unbox-ren-tgt q' (proj₂ (var-tgt (reach-renᵘ q₀) x)))
+    (trans (cong (λ t → ≤ₛ-embed (ext q') (proj₂ t)) (reach-renᵘ-tgt q₀ x))
       (trans (sym (≤ₛ-embed-∘ (ext q₀) (ext q') x))
-             (sym (unbox-ren-tgt (slice-∘ᵘ q' q₀) x))))
+             (sym (unbox-ren-tgt (reach-∘ᵘ q' q₀) x))))
 
 -- The same at the level `unbox-lookup` consumes it: a boxed value *is* a
 -- variable, so the cell it names is `unbox-cells`.
 
 unbox-cellsᵛ : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-             → (q₀ : Slice St uᵣ St' uᵣ) → (q' : Slice St' ρ St₂ uᵣ)
+             → (q₀ : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂)
              → (V : toCtx St ⊢V⦂ [ ρ ] A)
-             → unbox-tgt (unbox-ren q') (slice-val q₀ V)
-             ≡ unbox-tgt (unbox-ren (slice-∘ᵘ q' q₀)) V
+             → unbox-tgt (unbox-ren q') (reach-val q₀ V)
+             ≡ unbox-tgt (unbox-ren (reach-∘ᵘ q' q₀)) V
 unbox-cellsᵛ q₀ q' (var f x) = unbox-cells q₀ q' x
 
 ------------------------------------------------------------------------
 -- RUNS
 --
 -- What a whole run accumulates. `PreservationTheorem` has the per-step facts;
--- these are their closure under composition, packaged as the slice a run
--- licenses. The `Slice` is exactly the data `SEQ-STEP`/`HANDLE-STEP` consume,
+-- these are their closure under composition, packaged as the reach a run
+-- licenses. A graded reach is exactly the data `SEQ-STEP`/`HANDLE-STEP` consume,
 -- which is what lets a run be lifted under those two formers.
 ------------------------------------------------------------------------
 
@@ -459,10 +471,10 @@ steps-grade-≾ {ε' = ε'} (r ◅ rs) =
                        (≤ₛ-grade (steps-extends-state rs)) (mapᵉ ε'))))
     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (steps-grade-≾ rs)) (step-grade-≾ r))
 
-steps-slice : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-reach : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
             → (rs : cf ↝* cf')
-            → Slice (Config.state cf) (mapᵉ ε) (Config.state cf') (mapᵉ ε')
-steps-slice rs = slice (steps-extends-state rs) (steps-grade-≾ rs)
+            → Config.state cf [ mapᵉ ε ]⊑ₛ[ mapᵉ ε' ] Config.state cf'
+steps-reach rs = reach (steps-extends-state rs) (steps-grade-≾ rs)
 
 -- LIFTING A RUN UNDER A FORMER
 --
@@ -479,7 +491,7 @@ seq-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
           -----------------------------------------------------------------
           → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
               (⟨ St , M ⨟ N ⟩ ↝* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
-            × (N₁ ≐ᶜ C-rename (cong-∷-ren (slice-ren (steps-slice rs))) N)
+            × (N₁ ≐ᶜ C-rename (cong-∷-ren (reach-ren (steps-reach rs))) N)
 
 seq-steps ε* N =
   N , ε* , ≐ᶜ-sym (C-rename-id-≐ (cong-∷-ren-id-≐ (⟨⟩-≤-ren-id-≐ _)) N)
@@ -493,12 +505,12 @@ seq-steps (r ◅ rs) N
   , SEQ-STEP r (step-grade-≾ r) ◅ rs'
   , ≐ᶜ-trans eN₁
       (≐ᶜ-trans
-        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-ren (steps-slice rs)))
+        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (reach-ren (steps-reach rs)))
                             (cong-∷-ren (suc-comp-ren (step-extends-state r)
                                                       (step-grade-≾ r))) N))
         (C-rename-≐
           (≐ʳ-trans
-            (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-ren (steps-slice rs))
+            (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-ren (steps-reach rs))
                                     (suc-comp-ren (step-extends-state r)
                                                   (step-grade-≾ r))))
             (cong-∷-ren-≐
@@ -533,7 +545,7 @@ handle-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
                     ≡ subst (Cl B op ε₃) (toCtxᴱ-≡ St St₁) (H op ε₃))
-               × (N₁ ≐ᶜ C-rename (cong-∷-ren (slice-ren (steps-slice rs))) N)
+               × (N₁ ≐ᶜ C-rename (cong-∷-ren (reach-ren (steps-reach rs))) N)
 
 handle-steps {B = B} {St = St} ε* H N =
     H , N , ε*
@@ -557,12 +569,12 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
                      (H op ε₃)))
   , ≐ᶜ-trans eN₁
       (≐ᶜ-trans
-        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (slice-ren (steps-slice rs)))
+        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (reach-ren (steps-reach rs)))
                             (cong-∷-ren (suc-comp-ren (step-extends-state r)
                                                       (step-grade-≾ r))) N))
         (C-rename-≐
           (≐ʳ-trans
-            (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-ren (steps-slice rs))
+            (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-ren (steps-reach rs))
                                     (suc-comp-ren (step-extends-state r)
                                                   (step-grade-≾ r))))
             (cong-∷-ren-≐
@@ -572,9 +584,9 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
                                         (steps-grade-≾ rs)))))
           N))
 
--- Transporting a slice's residual grade along a grade equality: the renaming is
+-- Transporting a reach's residual grade along a grade equality: the renaming is
 -- unchanged, since the bound is all that differs (`suc-comp-ren-irr`). This is
--- what reconciles a run's `mapᵉ uₑ` with the `uᵣ` a `Slice` wants.
+-- what reconciles a run's `mapᵉ uₑ` with the `uᵣ` a graded reach wants.
 
 suc-comp-ren-grade : ∀ {St St₁ : 𝕊 []} {ρ'' ρ₁ ρ₂ : R} → (e : St ≤ₛ St₁)
                    → (eg : ρ₁ ≡ ρ₂)
@@ -600,29 +612,29 @@ suc-comp-ren-grade-src e refl b₁ b₂ =
 -- Crossing a lock and then moving on is crossing it into the later state: both
 -- send `Tl-⟨⟩ x` to the composite extension's embedding.
 
-slice-unbox-ren-≐ : ∀ {ρ} {St St' St'' : 𝕊 []}
-                  → (q' : Slice St' uᵣ St'' uᵣ) → (q : Slice St ρ St' uᵣ)
-                  → (slice-renᵘ q' ∘ʳ unbox-ren q) ≐ʳ unbox-ren (slice-∘ q' q)
-slice-unbox-ren-≐ q' q = mk≐ʳ go
+reach-unbox-ren-≐ : ∀ {ρ} {St St' St'' : 𝕊 []}
+                  → (q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St'') → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+                  → (reach-renᵘ q' ∘ʳ unbox-ren q) ≐ʳ unbox-ren (reach-∘ q' q)
+reach-unbox-ren-≐ q' q = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) =
-      trans (cong (var-tgt′ (slice-renᵘ q')) (unbox-ren-tgt q x))
-        (trans (slice-renᵘ-tgt q' (proj₂ (≤ₛ-embed (ext q) x)))
+      trans (cong (var-tgt′ (reach-renᵘ q')) (unbox-ren-tgt q x))
+        (trans (reach-renᵘ-tgt q' (proj₂ (≤ₛ-embed (ext q) x)))
           (trans (sym (≤ₛ-embed-∘ (ext q) (ext q') x))
-                 (sym (unbox-ren-tgt (slice-∘ q' q) x))))
+                 (sym (unbox-ren-tgt (reach-∘ q' q) x))))
 
 -- Allocating a cell renames the old context by weakening past it.
 
 alloc-ren-≐ : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-            → slice-renᵘ (alloc-slice V) ≐ʳ wk-ren
-alloc-ren-≐ V = mk≐ʳ (λ x → slice-renᵘ-tgt (alloc-slice V) x)
+            → reach-renᵘ (alloc-reach V) ≐ʳ wk-ren
+alloc-ren-≐ V = mk≐ʳ (λ x → reach-renᵘ-tgt (alloc-reach V) x)
 
 -- The same for the renaming an `unbox` consumes: splitting the guard into the
--- slice's own part and a residual `σ`, then crossing the lock under `σ`, is the
+-- reach's own part and a residual `σ`, then crossing the lock under `σ`, is the
 -- extension at residual `σ`. Both send `Tl-⟨⟩ x` to the embedding under `σ`.
 
-unbox-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : Slice St ρ St₁ uᵣ)
+unbox-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St₁)
               → (b : ≤ₛ-grade (ext q) ·ᵣ σ ≾ᵣ ρ ·ᵣ σ)
               → (cong-⟨⟩-ren {ρ = σ} (unbox-ren q) ∘ʳ ⟨⟩-μ-ren)
               ≐ʳ suc-comp-ren (ext q) b
@@ -632,38 +644,38 @@ unbox-ren-μ-≐ {σ = σ} q b = mk≐ʳ go
     go (Tl-⟨⟩ x) = trans (cong (Tgt-⟨⟩ σ) (unbox-ren-tgt q x))
                          (sym (suc-comp-ren-tgt (ext q) b x))
 
--- Crossing a lock and then following a guarded slice is following the
--- corresponding unit slice (`slice-unit`): the source grade is relaxed from `ρ`
+-- Crossing a lock and then following a guarded reach is following the
+-- corresponding unit reach (`reach-unit`): the source grade is relaxed from `ρ`
 -- to `uᵣ`, which is pre-composition with `⟨⟩-≤-ren` (`suc-comp-ren-≤ˡ`).
 
-unbox-ren-unit : ∀ {ρ} {St St' : 𝕊 []} → (q : Slice St ρ St' uᵣ) → (p : ρ ≾ᵣ uᵣ)
+unbox-ren-unit : ∀ {ρ} {St St' : 𝕊 []} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St') → (p : ρ ≾ᵣ uᵣ)
                → (unbox-ren q ∘ʳ (⟨⟩-≤-ren p ∘ʳ ⟨⟩-η⁻¹-ren))
-               ≐ʳ slice-renᵘ (slice-unit q p)
+               ≐ʳ reach-renᵘ (reach-unit q p)
 unbox-ren-unit q p = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go x = cong (var-tgt′ ⟨⟩-η-ren)
-                (sym (at (suc-comp-ren-≤ˡ (ext q) (bound (slice-unit q p))
+                (sym (at (suc-comp-ren-≤ˡ (ext q) (bound (reach-unit q p))
                                           (bound q) p)
                          (proj₂ (var-tgt ⟨⟩-η⁻¹-ren x))))
 
--- Two slices whose renamings are identity-like: the unit slice at a state, and
--- the slice a `DELAY` takes (whose target context *is* the source under the
+-- Two reaches whose renamings are identity-like: the unit reach at a state, and
+-- the reach a `DELAY` takes (whose target context *is* the source under the
 -- lock). Both are needed to recognise a reduct as the action of an environment.
 
 -- Both are `≤ₛ-embed` of the identity extension, which is the identity: a
 -- variable of a state context cannot be case-split on, so this goes through the
 -- `var-tgt` layer rather than pointwise.
 
-slice-renᵘ-id-≐ : ∀ {St : 𝕊 []} → slice-renᵘ (slice-id {St} {uᵣ}) ≐ʳ id-ren
-slice-renᵘ-id-≐ = mk≐ʳ (λ x → slice-renᵘ-tgt slice-id x)
+reach-renᵘ-id-≐ : ∀ {St : 𝕊 []} → reach-renᵘ (reach-id {St} {uᵣ}) ≐ʳ id-ren
+reach-renᵘ-id-≐ = mk≐ʳ (λ x → reach-renᵘ-tgt reach-id x)
 
 unbox-ren-delay-≐ : ∀ {ρ} {St : 𝕊 []}
-                  → unbox-ren (delay-slice {ρ} {St}) ≐ʳ id-ren
+                  → unbox-ren (delay-reach {ρ} {St}) ≐ʳ id-ren
 unbox-ren-delay-≐ = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
-    go (Tl-⟨⟩ x) = unbox-ren-tgt delay-slice x
+    go (Tl-⟨⟩ x) = unbox-ren-tgt delay-reach x
 
 ------------------------------------------------------------------------
 -- UNFOLDING THE LOOKUP
@@ -878,7 +890,7 @@ unbox-lookup-cast-val St refl w V =
 -- Both sides are that value renamed, so the content is a renaming agreement,
 -- and both renamings *push* the value's context under everything the state has
 -- gained since: the lookup by `wk-ren-⟨ρ⟩-ctx` out of the cell's own lock, the
--- slice by `≤ₛ-embed`.
+-- reach by `≤ₛ-embed`.
 ------------------------------------------------------------------------
 
 -- Transporting a stored value along an equality of the states it was split off
@@ -893,7 +905,7 @@ subst-state-castᵛ refl U = refl
 -- The renaming agreement. The lookup's composite runs, right to left: out of
 -- the leading `[] ++ᶜ`, across the cell's own lock at the grade the state after
 -- it contributes, out of that lock into everything after the cell, and back
--- along the two context equalities. The slice's runs by `≤ₛ-embed`. Both land
+-- along the two context equalities. The reach's runs by `≤ₛ-embed`. Both land
 -- on `∈-++ᶜˡ (≤ₛ-ctx e) (Tl-∷ y)`, relocated by the same `≤ₛ-ctx-toCtx e`.
 
 alloc-lookup-ren : ∀ {A ρ σ} {St St' : 𝕊 []}
@@ -901,7 +913,7 @@ alloc-lookup-ren : ∀ {A ρ σ} {St St' : 𝕊 []}
                  → (e : (St ∷ₛ V) ≤ₛ St')
                  → (h : ctx-grade (([] ∷ [ ρ ] A) ++ᶜ ≤ₛ-ctx e) ≡ σ)
                  → (rel : σ ≾ᵣ ρ)
-                 → (q₀ : Slice St ρ St' uᵣ)
+                 → (q₀ : St [ ρ ]⊑ₛ[ uᵣ ] St')
                  → ext q₀ ≡ ≤ₛ-trans (∷-suc V id-suc) e
                  → (eq-ren (sym (≤ₛ-ctx-toCtx e))
                      ∘ʳ lookup-ren′ (toCtx St) (≤ₛ-ctx e) refl h rel)
@@ -954,7 +966,7 @@ alloc-lookup-≐ : ∀ {A ρ} {St St' : 𝕊 []}
                → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
                → (e : (St ∷ₛ V) ≤ₛ St')
                → (rel : proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St})) ≾ᵣ ρ)
-               → (q₀ : Slice St ρ St' uᵣ)
+               → (q₀ : St [ ρ ]⊑ₛ[ uᵣ ] St')
                → ext q₀ ≡ ≤ₛ-trans (∷-suc V id-suc) e
                → lookup-body St' (≤ₛ-embed e (Hd {Γ = toCtx St})) rel
                ≐ᵛ V-rename (unbox-ren q₀ ∘ʳ eq-ren ++ᶜ-identityˡ) V

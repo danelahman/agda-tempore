@@ -40,7 +40,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 -- Closed values for an eternal prefix.
@@ -118,22 +118,22 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            --------------
            → Env St []
 
-  -- postcomposition with a slice: what makes `Env` functorial in the *state*
+  -- postcomposition with a reach: what makes `Env` functorial in the *state*
   -- (`env-alloc`). Recorded rather than pushed into the base, so that a
   -- reducible environment stays reducible when the state grows: its values
-  -- still come from the earlier state, and `Val-slice` moves them. Pushing it
+  -- still come from the earlier state, and `Val-reach` moves them. Pushing it
   -- into `⌊_⌋` would instead demand the *later* state's store, which nothing
   -- supplies.
 
-  sliceᵉ   : ∀ {St St' Γ}
-           → Env St Γ → Slice St uᵣ St' uᵣ
+  reachᵉ   : ∀ {St St' Γ}
+           → Env St Γ → St [ uᵣ ]⊑ₛ[ uᵣ ] St'
            ------------------------------
            → Env St' Γ
 
   -- a lock, matched by any state far enough ahead
 
   _⟨_⟩ᵉ    : ∀ {St St' Γ ρ}
-           → Env St Γ → Slice St ρ St' uᵣ
+           → Env St Γ → St [ ρ ]⊑ₛ[ uᵣ ] St'
            ------------------------------
            → Env St' (Γ ⟨ ρ ⟩)
 
@@ -172,9 +172,9 @@ Rel-Env (γ ⟨ q ⟩ᵉ)             = Rel-Env γ
 Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × Val A St V
 Rel-Env (liftᵉ {St} {Γ} {A} {ρ} V γ) =
   Rel-Env γ
-  × (∀ {St'} → (q : Slice St ρ St' uᵣ)
+  × (∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
        → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
-Rel-Env (sliceᵉ γ q)           = Rel-Env γ
+Rel-Env (reachᵉ γ q)           = Rel-Env γ
 Rel-Env (eternalˡ Δ lf η γ)    =
   Rel-Env γ × (∀ {A ρ} → A ∈[ ρ ] Δ → Eternal A)
 
@@ -188,7 +188,7 @@ Rel-Env (eternalˡ Δ lf η γ)    =
 Eternal-Env : ∀ {St Γ} → Env St Γ → Set
 Eternal-Env ⌊ St ⌋              = ⊤
 Eternal-Env (∅ᵉ St)              = ⊤
-Eternal-Env (sliceᵉ γ q)        = Eternal-Env γ
+Eternal-Env (reachᵉ γ q)        = Eternal-Env γ
 Eternal-Env (γ ⟨ q ⟩ᵉ)           = Eternal-Env γ
 Eternal-Env (γ ∷ᵉ V)            = Eternal-Env γ
 Eternal-Env (liftᵉ V γ)         = Eternal-Env γ
@@ -198,7 +198,7 @@ Eternal-Env (eternalˡ Δ lf η γ) =
 Rel-Env-eternal : ∀ {St Γ} → (γ : Env St Γ) → Rel-Env γ → Eternal-Env γ
 Rel-Env-eternal ⌊ St ⌋              pγ        = tt
 Rel-Env-eternal (∅ᵉ St)              pγ        = tt
-Rel-Env-eternal (sliceᵉ γ q)        pγ        = Rel-Env-eternal γ pγ
+Rel-Env-eternal (reachᵉ γ q)        pγ        = Rel-Env-eternal γ pγ
 Rel-Env-eternal (γ ⟨ q ⟩ᵉ)           pγ        = Rel-Env-eternal γ pγ
 Rel-Env-eternal (γ ∷ᵉ V)            (pγ , _)  = Rel-Env-eternal γ pγ
 Rel-Env-eternal (liftᵉ V γ)         (pγ , _)  = Rel-Env-eternal γ pγ

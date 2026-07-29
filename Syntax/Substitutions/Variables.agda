@@ -387,7 +387,7 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 -- `Interpretation.SubstitutionCoherence`. Its renaming is
 -- `eq-ren (split-≡ (split-pf z)) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`,
 -- so computing its `var-tgt` at `Tl-⟨⟩ Hd` needs, in order: `⟨⟩-≤-ren`'s clause,
--- `wk-ren-⟨ρ⟩-ctx-tgt` (in `Slice`, proved), and `eq-ren-tgt` below. What is left
+-- `wk-ren-⟨ρ⟩-ctx-tgt` (in `GradedReach`, proved), and `eq-ren-tgt` below. What is left
 -- is
 --
 --   split-lookup-tgt : (z : [ ρ ] A ∈[ ρ' ] Γ)

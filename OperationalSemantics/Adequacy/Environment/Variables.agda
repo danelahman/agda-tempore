@@ -40,7 +40,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 open import OperationalSemantics.Adequacy.Environment.Action Spec
@@ -66,7 +66,7 @@ env-Vˢ-≐ : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → {V V' : (Γ 
 
 env-Vˢ-≐ ⌊ St ⌋       Δ eV = eV
 env-Vˢ-≐ (∅ᵉ St)       Δ eV = V-rename-cong _ eV
-env-Vˢ-≐ (sliceᵉ γ q) Δ eV = V-rename-cong _ (env-Vˢ-≐ γ Δ eV)
+env-Vˢ-≐ (reachᵉ γ q) Δ eV = V-rename-cong _ (env-Vˢ-≐ γ Δ eV)
 env-Vˢ-≐ (γ ⟨ q ⟩ᵉ)    Δ eV =
   V-rename-cong _ (castᵛ-≐ _ (env-Vˢ-≐ γ _ (castᵛ-≐ _ eV)))
 env-Vˢ-≐ (liftᵉ V γ)   Δ eV = castᵛ-≐ _ (env-Vˢ-≐ γ _ (castᵛ-≐ _ eV))
@@ -114,9 +114,9 @@ env-Vˢ-var-r : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx) → (x : A 
 env-Vˢ-var-r ⌊ St ⌋ Δ x f f' = var-≐
 env-Vˢ-var-r (∅ᵉ St) Δ x f f' = ren-var-r (∅-ren St) x f f'
 
-env-Vˢ-var-r (sliceᵉ γ q) Δ x f f' =
-  ≐ᵛ-trans (V-rename-cong (cong-ren (slice-renᵘ q)) (env-Vˢ-var-r γ Δ x f f))
-           (ren-var-r (slice-renᵘ q) x f f')
+env-Vˢ-var-r (reachᵉ γ q) Δ x f f' =
+  ≐ᵛ-trans (V-rename-cong (cong-ren (reach-renᵘ q)) (env-Vˢ-var-r γ Δ x f f))
+           (ren-var-r (reach-renᵘ q) x f f')
 
 env-Vˢ-var-r (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ x f f' =
   ≐ᵛ-trans (V-rename-cong (cong-ren (unbox-ren q)) step)
@@ -267,14 +267,14 @@ env-Vˢ-var-l ⌊ St ⌋ Δ eγ ¬et p x f f' =
 
 env-Vˢ-var-l (∅ᵉ St) Δ eγ ¬et p x f f' = ⊥-elim (not-in-empty-ctx x)
 
-env-Vˢ-var-l (sliceᵉ γ q) Δ eγ ¬et p x f f' =
+env-Vˢ-var-l (reachᵉ γ q) Δ eγ ¬et p x f f' =
   ≐ᵛ-trans
-    (V-rename-cong (cong-ren {Γ'' = Δ} (slice-renᵘ q))
+    (V-rename-cong (cong-ren {Γ'' = Δ} (reach-renᵘ q))
                    (env-Vˢ-var-l γ Δ eγ ¬et p x f f'))
     (≐ᵛ-trans
-      (≐ᵛ-sym (V-rename-∘ (cong-ren {Γ'' = Δ} (slice-renᵘ q)) (push-ren Δ p) _))
-      (≐ᵛ-trans (V-rename-≐ (push-ren-nat (slice-renᵘ q) Δ p) _)
-                (V-rename-∘ (push-ren Δ p) (slice-renᵘ q) _)))
+      (≐ᵛ-sym (V-rename-∘ (cong-ren {Γ'' = Δ} (reach-renᵘ q)) (push-ren Δ p) _))
+      (≐ᵛ-trans (V-rename-≐ (push-ren-nat (reach-renᵘ q) Δ p) _)
+                (V-rename-∘ (push-ren Δ p) (reach-renᵘ q) _)))
 
 env-Vˢ-var-l (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₁} γ q) Δ eγ ¬et p (Tl-⟨⟩ x) f f' =
   ≐ᵛ-trans
@@ -455,7 +455,7 @@ env-Vˢ-var-l (eternalˡ {Γ = Γ} Δ₀ lf η γ) Δ (eγ , et) ¬et p x f f'
 
 -- The two one-entry instances. `env-var-tl` substitutes `Hd` into a weakening,
 -- which cancels (`sub-wk-V []`); `env-var-lock` composes the lock crossing with
--- the slice, which `unbox-ren-unit` recognises as the unit slice's renaming.
+-- the reach, which `unbox-ren-unit` recognises as the unit reach's renaming.
 
 env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A₀)
            → Eternal-Env γ → ¬ Eternal A
@@ -471,13 +471,13 @@ env-var-tl {St = St} {A₀ = A₀} γ W eγ ¬et x f f' =
                   (V-rename-≐ (push-ren-∷ ≾ᵣ-refl) _))))
     (sub-wk-V [] (env-Vˢ γ [] (var f' x)) _)
 
-env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : Slice St ρ St' uᵣ)
+env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
              → Eternal-Env γ → ¬ Eternal A
              → (p : ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ' ] Γ)
              → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
              → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
              → env-V (γ ⟨ q ⟩ᵉ) (var f (Tl-⟨⟩ x))
-             ≐ᵛ slice-val (slice-unit q p) (env-V γ (var f' x))
+             ≐ᵛ reach-val (reach-unit q p) (env-V γ (var f' x))
 
 -- The cell zone's own instance: `Δ := [] ∷ [ ρ ] A₀`, where the push is the
 -- weakening past the new cell and there is nothing to cancel — `liftᵉ` keeps the
@@ -523,7 +523,7 @@ env-var-eternalˡ Δ lf η γ x y eq f =
 -- Every variable of a reducible environment's context becomes a reducible
 -- value: the fundamental lemma's variable case. The eternal cases are the two
 -- that need no law — `Val` holds of everything at an eternal type, which is
--- also why a locked variable of eternal type needs no slice.
+-- also why a locked variable of eternal type needs no reach.
 
 env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
         → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
@@ -534,7 +534,7 @@ env-var ⌊ St ⌋       pγ x f = store-var pγ x f
 
 env-var (∅ᵉ St)       pγ x f = ⊥-elim (not-in-empty-ctx x)
 
-env-var (sliceᵉ γ q) pγ x f = Val-slice q _ (env-var γ pγ x f)
+env-var (reachᵉ γ q) pγ x f = Val-reach q _ (env-var γ pγ x f)
 
 env-var (γ ∷ᵉ W) (pγ , pW) Hd       f =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-hd γ W f)) pW
@@ -551,13 +551,13 @@ env-var {A = A} (liftᵉ V γ) (pγ , pV) (Tl-∷ x) f with eternal? A
 ... | no ¬et =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-lift V γ (Rel-Env-eternal γ pγ) ¬et x f f))
     (Val-≐ᵛ _ (V-rename-≐ (alloc-ren-≐ V) _)
-      (Val-slice (alloc-slice V) _ (env-var γ pγ x f)))
+      (Val-reach (alloc-reach V) _ (env-var γ pγ x f)))
 
 env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
 ... | yes et = Val-eternal et _
 ... | no ¬et =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-lock γ q (Rel-Env-eternal γ pγ) ¬et p x f f'))
-           (Val-slice (slice-unit q p) _ (env-var γ pγ x f'))
+           (Val-reach (reach-unit q p) _ (env-var γ pγ x f'))
   where
     p  = ≾ᵣ-zero-productʳ (f ¬et)
     f' = λ _ → ≾ᵣ-zero-productˡ (f ¬et)

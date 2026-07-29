@@ -166,14 +166,6 @@ hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ⟨ ρ ⟩) W g g' E with eternal? B
 bound-irr : ∀ {A ρ} → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ) → f ≡ f'
 bound-irr f f' = fun-ext (λ z → ≾ᵣ-irrelevant _ _)
 
-castᵛ-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
-           → castᵛ e' (castᵛ e V) ≡ castᵛ (trans e e') V
-castᵛ-fuse refl refl V = refl
-
-Tgt-cast-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (t : Tgt Γ₁ A)
-              → Tgt-cast e' (Tgt-cast e t) ≡ Tgt-cast (trans e e') t
-Tgt-cast-fuse refl refl t = refl
-
 -- Relocating a variable along a context transport, at the `Tgt` level so
 -- that the grade travels with the position.
 

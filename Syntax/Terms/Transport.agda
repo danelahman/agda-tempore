@@ -302,3 +302,40 @@ castᶜ-≐ refl eM = eM
 castᵛ-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
         → V ≐ᵛ V' → castᵛ e V ≐ᵛ castᵛ e V'
 castᵛ-≐ refl eV = eV
+
+------------------------------------------------------------------------
+-- VALUE-LEVEL TRANSPORT ALGEBRA
+------------------------------------------------------------------------
+
+castᵛ≡subst : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
+            → castᵛ e V ≡ subst (_⊢V⦂ A) e V
+castᵛ≡subst refl V = refl
+
+subst-fuseᵛ : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
+            → subst (_⊢V⦂ A) e' (subst (_⊢V⦂ A) e V)
+            ≡ subst (_⊢V⦂ A) (trans e e') V
+subst-fuseᵛ refl refl V = refl
+
+-- Two transport chains out of the same value agree by `uip`.
+
+substᵛ-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
+           → subst (_⊢V⦂ A) e V ≡ subst (_⊢V⦂ A) e' V
+substᵛ-irr e e' V = cong (λ z → subst (_⊢V⦂ _) z V) (uip {p = e} {q = e'})
+
+-- The eternal restriction of a value respects a context transport.
+
+restrict-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (et : Eternal A) → (V : Γ ⊢V⦂ A)
+               → eternal-val-restrict et (castᵛ e V)
+               ≡ castᵛ (cong _ᴱ e) (eternal-val-restrict et V)
+restrict-castᵛ refl et V = refl
+
+
+-- Fusing two transports, on values and on the target of a variable.
+
+castᵛ-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
+           → castᵛ e' (castᵛ e V) ≡ castᵛ (trans e e') V
+castᵛ-fuse refl refl V = refl
+
+Tgt-cast-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (t : Tgt Γ₁ A)
+              → Tgt-cast e' (Tgt-cast e t) ≡ Tgt-cast (trans e e') t
+Tgt-cast-fuse refl refl t = refl

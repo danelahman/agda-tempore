@@ -13,7 +13,7 @@ time passage as the means to specify and verify temporal properties of resources
 and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 
 In contrast, the core language formalised in this repository can use arbitrary
-(commutative) ordered monoids to specify effects and verify temporal properties 
+ordered monoids to specify effects and verify temporal properties 
 of resources. Furthermore, one can use *different* monoids for grading effects 
 and resources, related by a grade morphism, so that an effect grade (e.g., a 
 trace or interval of possible execution costs) can be reinterpreted as a resource 
@@ -59,7 +59,7 @@ a grade system, a signature of base types, and operations' signatures.
 
 ### Grades and grade systems
 
-- `Syntax/Grades.agda` defines the notion of a `Grade` (a commutative ordered
+- `Syntax/Grades.agda` defines the notion of a `Grade` (an ordered
   monoid), grade morphisms `_→ᵍ_`, and a `GradeSystem` (effect grades `EGrade`,
   resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the
   latter), together with a convenience interface `GradeSystemInterface`.
@@ -90,9 +90,21 @@ a grade system, a signature of base types, and operations' signatures.
 - `Syntax/Contexts.agda` defines variables and structured contexts, including
   the time-passage context former `Γ ⟨ ρ ⟩`.
 - `Syntax/Language.agda` defines well-typed values and computations.
-- `Syntax/Renamings.agda` defines context renamings, and
-  `Syntax/RenActions.agda` their action on well-typed terms.
-- `Syntax/Substitutions.agda` defines the action of substituting.
+- `Syntax/Renamings/` defines context renamings: `Base.agda` the generating
+  calculus (eternal contexts and the `Ren` datatype, indexed by an *ambient*
+  context it must fix), `Eternal.agda` the eternal restriction's action on them,
+  `Equivalence.agda` when two renamings act alike (`_≐ʳ_`), `Coherence.agda` the
+  laws of the action with respect to it, and `Category.agda` the categorical
+  structure this all amounts to.
+- `Syntax/RenActions.agda` defines renamings' action on well-typed terms.
+- `Syntax/Terms/Equivalence.agda` defines equality of terms up to the data they
+  store that only matters up to equivalence (`_≐ᵛ_`/`_≐ᶜ_`), and
+  `Syntax/Terms/Transport.agda` retyping a term along an equality of contexts.
+- `Syntax/Substitutions.agda` defines the action of substituting, and
+  `Syntax/Substitutions/` its metatheory: `Variables.agda` how a substitution
+  acts on a variable, `Weakening.agda` that substituting for a freshly weakened
+  variable is the identity, `Renaming/` that renaming commutes with
+  substitution, and `Swap/` that two adjacent prefix substitutions commute.
 - `Syntax/CompContext.agda` defines computation term and evaluation contexts.
 
 ### Operational semantics, progress and preservation theorems

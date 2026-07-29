@@ -13,7 +13,7 @@
 --   * `⌊ St ⌋`  — the state: locks and cells, closed by the store;   --
 --   * `_∷ᵉ_`/`_⟨_⟩ᵉ` — the binder telescope: each variable           --
 --                 instantiated by a value, each lock matched by a    --
---                 slice into a state far enough ahead;               --
+--                 graded reach into a state far enough ahead;        --
 --   * `eternalˡ` — an eternal prefix: handler clauses close over     --
 --                 `Γ ᴱ` and fire at `Γ' := toCtx St` (`HANDLE-OP`);  --
 --                 `toCtx St ᴱ ≡ []`, so eternal values are closed.   --

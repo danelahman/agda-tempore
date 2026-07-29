@@ -49,7 +49,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 ------------------------------------------------------------------------
@@ -69,7 +69,7 @@ Boxed B op ε₃ St₁ =
 Boxed-Val : (B : VType) → (op : Op) → (ε₃ : E)
           → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
 Boxed-Val B op ε₃ St₁ V₀ =
-  ∀ {St'} → (q : Slice St₁ (mapᵉ (op-grade op)) St' uᵣ)
+  ∀ {St'} → (q : St₁ [ mapᵉ (op-grade op) ]⊑ₛ[ uᵣ ] St')
     → Val (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
           (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
 
@@ -101,7 +101,7 @@ Clause-Prem B St H =
 Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → Set
 Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
-  ∀ {St₁ : 𝕊 []} → (q : Slice St (mapᵉ ε₁) St₁ uᵣ)
+  ∀ {St₁ : 𝕊 []} → (q : St [ mapᵉ ε₁ ]⊑ₛ[ uᵣ ] St₁)
     → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
     → Comp' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c)
 
@@ -206,7 +206,7 @@ cl-cancel (yes et) x W H K hne het op ε = het et op ε
 --
 -- Induction on the scrutinee's `Comp` derivation. `comp-ret` fires `HANDLE-RET`
 -- and is `Bind`'s `comp-ret` verbatim — the sequel premise consumes the value
--- and the run's `mapᵉ uₑ` is reconciled with the slice's `uᵣ` by
+-- and the run's `mapᵉ uₑ` is reconciled with the reach's `uᵣ` by
 -- `suc-comp-ren-grade`.
 ------------------------------------------------------------------------
 
@@ -238,7 +238,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
     b = ≾ᵣ-trans (≾ᵣ-reflexive (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ)))
                  (steps-grade-≾ rs)
 
-    q = slice E₀ b
+    q = reach E₀ b
 
     R₁ : Ren [] (toCtx St₁ ⟨ mapᵉ uₑ ⟩) (toCtx St₁)
     R₁ = ⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ)
@@ -322,8 +322,8 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
            (sym (eH₁ op (ε₃ ·ₑ ε₂)))
 
     -- The boxed resumption *is* a lambda, so `Val`'s arrow clause is met by its
-    -- own body; the two `eq-ren`s cancel and `slice-unbox-ren-≐` composes the
-    -- unboxing with the clause's own slice.
+    -- own body; the two `eq-ren`s cancel and `reach-unbox-ren-≐` composes the
+    -- unboxing with the clause's own reach.
 
     bv : Boxed-Val B op (ε₃ ·ₑ ε₂) St₁ V₀
     bv {St'} q = _ , refl , resump
@@ -332,22 +332,22 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                (C-rename (cong-∷-ren (eq-ren (sym (++ᶜ-identityˡ
                                                     {toCtx St₁ ⟨ ρₒ ⟩})))) Body)
 
-        resump : ∀ {St'' : 𝕊 []} → (q' : Slice St' uᵣ St'' uᵣ)
+        resump : ∀ {St'' : 𝕊 []} → (q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St'')
                → (M₂ : toCtx St'' ∷ Ar ⊢C⦂ B ‼ (ε₃ ·ₑ ε₂))
-               → M₂ ≐ᶜ slice-under q' Mq
+               → M₂ ≐ᶜ reach-under q' Mq
                → (W' : toCtx St'' ⊢V⦂ Ar) → Val Ar St'' W'
                → Comp' B (ε₃ ·ₑ ε₂) St'' (M₂ [ Hd ↦ W' ]c)
 
         resump {St''} q' M₂ eM₂ W' pW' =
           Comp-≐ᶜ (≐ᶜ-sym (sub-≐ᶜ Hd (≐ᵛ-refl W') collapse)) inner
           where
-            q₂ = slice-∘ q' q
+            q₂ = reach-∘ q' q
 
             R₂ = (unbox-ren q ∘ʳ eq-ren (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
                    ∘ʳ eq-ren (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
 
             -- the three renamings the clause stacks up compose to `unbox-ren q₂`
-            ren-eq : (slice-renᵘ q' ∘ʳ R₂) ≐ʳ unbox-ren q₂
+            ren-eq : (reach-renᵘ q' ∘ʳ R₂) ≐ʳ unbox-ren q₂
             ren-eq =
               ≐ʳ-trans
                 (∘ʳ-≐ ≐ʳ-refl
@@ -359,13 +359,13 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                         (eq-ren-∘-≐ (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
                                     ++ᶜ-identityˡ)
                         (eq-ren-≐ _ refl)))))
-                (slice-unbox-ren-≐ q' q)
+                (reach-unbox-ren-≐ q' q)
 
             collapse : M₂ ≐ᶜ C-rename (cong-∷-ren (unbox-ren q₂)) Body
             collapse =
               ≐ᶜ-trans eM₂
                 (≐ᶜ-trans
-                  (C-rename-cong (cong-∷-ren (slice-renᵘ q'))
+                  (C-rename-cong (cong-∷-ren (reach-renᵘ q'))
                     (≐ᶜ-trans
                       (≐ᶜ-sym (C-rename-∘
                                  (cong-∷-ren (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ))
@@ -378,11 +378,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                         Body)))
                   (≐ᶜ-trans
                     (≐ᶜ-sym
-                      (C-rename-∘ (cong-∷-ren (slice-renᵘ q'))
+                      (C-rename-∘ (cong-∷-ren (reach-renᵘ q'))
                                   (cong-∷-ren R₂) Body))
                     (C-rename-≐
                       (≐ʳ-trans
-                        (≐ʳ-sym (cong-∷-ren-∘-≐ (slice-renᵘ q') R₂))
+                        (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-renᵘ q') R₂))
                         (cong-∷-ren-≐ ren-eq))
                       Body)))
 
@@ -410,8 +410,8 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                    ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
                 B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
 
-                sB : Slice St₁ (mapᵉ (op-grade op ·ₑ ε₃)) St'' (mapᵉ ε₃)
-                sB = slice (ext q₂) B₁
+                sB : St₁ [ mapᵉ (op-grade op ·ₑ ε₃) ]⊑ₛ[ mapᵉ ε₃ ] St''
+                sB = reach (ext q₂) B₁
 
                 -- what is left of the sequel's renaming once the arity variable
                 -- is gone
@@ -484,8 +484,8 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 hN₂ {St₃} q₃ V pV =
                   Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl V) shift) (hN q₄ V pV)
                   where
-                    s₁₂ = slice-∘ sB (steps-slice rs)
-                    q₄  = slice-∘ q₃ s₁₂
+                    s₁₂ = reach-∘ sB (steps-reach rs)
+                    q₄  = reach-∘ q₃ s₁₂
 
                     composite : suc-comp-ren (ext q₄) (bound q₄)
                               ≐ʳ (suc-comp-ren (ext q₃) (bound q₃)

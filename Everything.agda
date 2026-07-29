@@ -213,8 +213,15 @@ open import DenotationalSemantics.Interpretation.Types
 open import DenotationalSemantics.Interpretation.Contexts
 open import DenotationalSemantics.Interpretation.Variables
 open import DenotationalSemantics.Interpretation.Terms
+open import DenotationalSemantics.Interpretation.Renaming.Algebra
+open import DenotationalSemantics.Interpretation.Renaming.Extension
+open import DenotationalSemantics.Interpretation.Renaming.Structural
 open import DenotationalSemantics.Interpretation.Renaming
 open import DenotationalSemantics.Interpretation.RenamingCoherence
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Unbox
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Core
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence
 open import DenotationalSemantics.Interpretation.State
 
@@ -250,8 +257,12 @@ open import OperationalSemantics.Soundness.TopLevelPure
 ---- Adequacy of the interpretation with respect to the operational semantics
 
 open import OperationalSemantics.Adequacy.Evaluation
+open import OperationalSemantics.Adequacy.StateEquivalence.Core
+open import OperationalSemantics.Adequacy.StateEquivalence.Extensions
+open import OperationalSemantics.Adequacy.StateEquivalence.Bisimulation
+open import OperationalSemantics.Adequacy.StateEquivalence.Replay
 open import OperationalSemantics.Adequacy.StateEquivalence
-open import OperationalSemantics.Adequacy.Slice
+open import OperationalSemantics.Adequacy.GradedReach
 open import OperationalSemantics.Adequacy.Reducibility
 open import OperationalSemantics.Adequacy.Environment.Core
 open import OperationalSemantics.Adequacy.Environment.Action

@@ -326,10 +326,13 @@ restrict-cong-≐ r (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-cong-≐ r Δ e₁ e₂
 -- type is `wk-ren`. The two contexts differ by `ᴱ`'s distribution over `_++ᶜ_`,
 -- so the statement is conjugated by `eq-ren`s at arbitrary proofs of that.
 --
--- This is `restrict-cong-≐` at `r := wk-ren`, but not derivable from it as
--- stated: the general law phrases the target as `(Γ ∷ B) ᴱ`, this one as the
--- already-reduced `Γ ᴱ ∷ B`, and no `eternal? B` remains in the goal for a
--- `rewrite` to act on. Aligning them is a change to the callers, not here.
+-- This and `restrict-wk-≐` below are `restrict-cong-≐` at `r := wk-ren`, and
+-- their `∷`/`⟨⟩` cases repeat its proof. They are kept all the same: the
+-- general law phrases the target as `(Γ ∷ B) ᴱ`, these as the already-reduced
+-- `Γ ᴱ ∷ B`, and that reduction needs `eternal? B` decided. Absorbing it here,
+-- once, is what lets the four call sites state their equalities in reduced
+-- form; deriving them instead would leave each caller transporting a *renaming*
+-- along `ᴱ-∷-keep`, which costs more than the repeated induction saves.
 
 restrict-wk-et-≐ : ∀ {Γ B} → (et : Eternal B) → (Δ : Ctx)
                  → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)

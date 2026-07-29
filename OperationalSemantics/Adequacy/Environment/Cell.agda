@@ -40,7 +40,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 open import OperationalSemantics.Adequacy.Environment.Action Spec
@@ -79,8 +79,8 @@ env-cell : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-cell ⌊ St ⌋      Δ t = t
 env-cell (∅ᵉ St)     Δ t = var-tgt′ (cong-ren (∅-ren St)) t
-env-cell (sliceᵉ γ q) Δ t =
-  var-tgt′ (cong-ren (slice-renᵘ q)) (env-cell γ Δ t)
+env-cell (reachᵉ γ q) Δ t =
+  var-tgt′ (cong-ren (reach-renᵘ q)) (env-cell γ Δ t)
 
 env-cell (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ t =
   var-tgt′ (cong-ren (unbox-ren q))
@@ -137,8 +137,8 @@ env-cell-rel : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
 env-cell-rel ⌊ St ⌋       Δ t rel = rel
 env-cell-rel (∅ᵉ St)      Δ t rel =
   ≾ᵣ-trans (var-tgt-≾ (cong-ren (∅-ren St)) (proj₂ t)) rel
-env-cell-rel (sliceᵉ γ q) Δ t rel =
-  ≾ᵣ-trans (var-tgt-≾ (cong-ren (slice-renᵘ q)) (proj₂ (env-cell γ Δ t)))
+env-cell-rel (reachᵉ γ q) Δ t rel =
+  ≾ᵣ-trans (var-tgt-≾ (cong-ren (reach-renᵘ q)) (proj₂ (env-cell γ Δ t)))
            (env-cell-rel γ Δ t rel)
 
 env-cell-rel (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ t rel =
@@ -174,7 +174,7 @@ env-Cˢ-≐ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx) → {M M' : (Γ 
 
 env-Cˢ-≐ ⌊ St ⌋       Δ eM = eM
 env-Cˢ-≐ (∅ᵉ St)      Δ eM = C-rename-cong _ eM
-env-Cˢ-≐ (sliceᵉ γ q) Δ eM = C-rename-cong _ (env-Cˢ-≐ γ Δ eM)
+env-Cˢ-≐ (reachᵉ γ q) Δ eM = C-rename-cong _ (env-Cˢ-≐ γ Δ eM)
 env-Cˢ-≐ (γ ⟨ q ⟩ᵉ)   Δ eM =
   C-rename-cong _ (castᶜ-≐ _ (env-Cˢ-≐ γ _ (castᶜ-≐ _ eM)))
 env-Cˢ-≐ (liftᵉ V γ)  Δ eM = castᶜ-≐ _ (env-Cˢ-≐ γ _ (castᶜ-≐ _ eM))
@@ -315,13 +315,13 @@ env-Cˢ-unbox (∅ᵉ St) Δ w V M .(unbox-tgt w V) refl rel =
     _ , (cong-ren (∅-ren St) ∘ʳ w) , V
   , unbox-tgt-∘ (cong-ren (∅-ren St)) w V , ≐ᶜ-refl _
 
-env-Cˢ-unbox (sliceᵉ γ q) Δ w V M .(unbox-tgt w V) refl rel
+env-Cˢ-unbox (reachᵉ γ q) Δ w V M .(unbox-tgt w V) refl rel
   with env-Cˢ-unbox γ Δ w V M _ refl rel
 ... | Δ₁ , w₁ , V₁ , ce , eq =
-    Δ₁ , (cong-ren (slice-renᵘ q) ∘ʳ w₁) , V₁
-  , trans (unbox-tgt-∘ (cong-ren (slice-renᵘ q)) w₁ V₁)
-          (cong (var-tgt′ (cong-ren (slice-renᵘ q))) ce)
-  , C-rename-cong (cong-ren (slice-renᵘ q)) eq
+    Δ₁ , (cong-ren (reach-renᵘ q) ∘ʳ w₁) , V₁
+  , trans (unbox-tgt-∘ (cong-ren (reach-renᵘ q)) w₁ V₁)
+          (cong (var-tgt′ (cong-ren (reach-renᵘ q))) ce)
+  , C-rename-cong (cong-ren (reach-renᵘ q)) eq
 
 env-Cˢ-unbox {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ w V M
              .(unbox-tgt w V) refl rel
@@ -471,7 +471,7 @@ eternal-no-cell η x =
 
 env-cell₀ ⌊ St ⌋      t         = t
 env-cell₀ (∅ᵉ St)     (σ , x)   = ⊥-elim (not-in-empty-ctx x)
-env-cell₀ (sliceᵉ γ q) t        = var-tgt′ (slice-renᵘ q) (env-cell₀ γ t)
+env-cell₀ (reachᵉ γ q) t        = var-tgt′ (reach-renᵘ q) (env-cell₀ γ t)
 
 env-cell₀ (_⟨_⟩ᵉ {ρ = ρ₀} γ q) (σ , Tl-⟨⟩ y) =
   var-tgt′ (unbox-ren q) (Tgt-⟨⟩ ρ₀ (env-cell₀ γ (_ , y)))
@@ -496,7 +496,7 @@ env-cell₀ (eternalˡ Δ₀ lf η γ) (σ , x)
 -- substitutes, and `Rel-Env` already says that value is `Val` at its box type;
 -- `liftᵉ`'s is the freshly allocated cell, and `Rel-Env`'s Kripke component is
 -- exactly `store-fresh`'s hypothesis. Both were unreachable while `Val` at a
--- box type quantified over a slice rather than over readability.
+-- box type quantified over a reach rather than over readability.
 ------------------------------------------------------------------------
 
 env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
@@ -510,7 +510,7 @@ env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
 env-cell₀-val ⌊ St ⌋   pγ t       e rel = pγ e (proj₂ t) rel
 env-cell₀-val (∅ᵉ St)  pγ (σ , x) e rel = ⊥-elim (not-in-empty-ctx x)
 
-env-cell₀-val {A = A} {ρ = ρ} (sliceᵉ γ q) pγ t {St'} e rel =
+env-cell₀-val {A = A} {ρ = ρ} (reachᵉ γ q) pγ t {St'} e rel =
   Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St' cellEq rel₁ rel))
            (env-cell₀-val γ pγ t (≤ₛ-trans (ext q) e) rel₁)
   where
@@ -518,7 +518,7 @@ env-cell₀-val {A = A} {ρ = ρ} (sliceᵉ γ q) pγ t {St'} e rel =
 
     cellEq = trans (≤ₛ-embed-∘ (ext q) e c)
                    (sym (cong (λ z → ≤ₛ-embed e (proj₂ z))
-                              (slice-renᵘ-tgt q c)))
+                              (reach-renᵘ-tgt q c)))
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
 env-cell₀-val {A = A} {ρ = ρ} (_⟨_⟩ᵉ {ρ = ρ₀} γ q) pγ (σ , Tl-⟨⟩ y) {St'} e rel =
@@ -632,9 +632,9 @@ env-cell-suffix : ∀ {St Γ A ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-cell-suffix ⌊ St ⌋  Δ z = refl
 env-cell-suffix (∅ᵉ St) Δ z = cong-ren-tgt-r (∅-ren St) z
-env-cell-suffix (sliceᵉ γ q) Δ z =
-  trans (cong (var-tgt′ (cong-ren (slice-renᵘ q))) (env-cell-suffix γ Δ z))
-        (cong-ren-tgt-r (slice-renᵘ q) z)
+env-cell-suffix (reachᵉ γ q) Δ z =
+  trans (cong (var-tgt′ (cong-ren (reach-renᵘ q))) (env-cell-suffix γ Δ z))
+        (cong-ren-tgt-r (reach-renᵘ q) z)
 
 env-cell-suffix (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ z =
   trans (cong (λ v → var-tgt′ (cong-ren (unbox-ren q))
@@ -690,9 +690,9 @@ env-cell-push : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
 env-cell-push ⌊ St ⌋  Δ t       = refl
 env-cell-push (∅ᵉ St) Δ (σ , x) = ⊥-elim (not-in-empty-ctx x)
 
-env-cell-push (sliceᵉ γ q) Δ t =
-  trans (cong (var-tgt′ (cong-ren (slice-renᵘ q))) (env-cell-push γ Δ t))
-        (cong-ren-tgt-l (slice-renᵘ q) Δ (proj₂ (env-cell₀ γ t)))
+env-cell-push (reachᵉ γ q) Δ t =
+  trans (cong (var-tgt′ (cong-ren (reach-renᵘ q))) (env-cell-push γ Δ t))
+        (cong-ren-tgt-l (reach-renᵘ q) Δ (proj₂ (env-cell₀ γ t)))
 
 -- The two zones that grow the suffix by a binder split on the variable. A
 -- `Tl-∷` is the `⟨⟩ᵉ` pattern with `[] ∷ A₀` for `[] ⟨ ρ₀ ⟩`; a `Hd` is the

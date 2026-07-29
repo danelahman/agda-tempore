@@ -47,7 +47,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.Weakening Spec
 open import Syntax.Substitutions.Renaming  Spec
 open import Syntax.Substitutions.Swap      Spec
-open import OperationalSemantics.Adequacy.Slice          Spec
+open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 ------------------------------------------------------------------------
@@ -201,7 +201,7 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
     V₀ = V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V'
 
     -- the two `eq-ren`s the allocation and the lookup insert cancel
-    cancel : ∀ {St'} → (q : Slice St ρ St' uᵣ)
+    cancel : ∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
            → V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀
            ≐ᵛ V-rename (unbox-ren q) V'
     cancel q =
@@ -219,14 +219,14 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
                 (eq-ren-≐ _ refl))))
           V')
 
-    cell : ∀ {St'} → (q : Slice St ρ St' uᵣ)
+    cell : ∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
          → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
     cell q = Val-≐ᵛ A (≐ᵛ-sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
 
 -- Performing: already a weak head normal form, so this is `comp-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
 -- `resume` amounts to — the lock the operation is performed under, matched by
--- the resumption's own slice, and the arity value on top — which the action
+-- the resumption's own reach, and the arity value on top — which the action
 -- *is*, both of `env-Cˢ`'s casts being `refl` at the empty suffix.
 
 FL-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → Rel-Env γ
@@ -253,7 +253,7 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
 
     -- the action at the resumption's environment *is* the resumption, once the
     -- two `++ᶜ`-associativity casts are seen to be the identity
-    resumeq : ∀ {St₂ : 𝕊 []} → (q : Slice St ρ St₂ uᵣ)
+    resumeq : ∀ {St₂ : 𝕊 []} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St₂)
             → (W' : toCtx St₂ ⊢V⦂ Ar)
             → env-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') M ≡ resume q M₀ W'
     resumeq q W' =
@@ -269,9 +269,9 @@ mutual
   -- the pair of the actions; a variable is `env-var`.
   --
   -- At a lambda the environment moves to the state the Kripke clause offers and
-  -- gains the argument (`sliceᵉ`, `_∷ᵉ_`) — and that is the whole reason the
-  -- slice is *recorded* in the environment: the clause supplies no store for
-  -- the later state, and a recorded slice needs none. The reduct the clause asks
+  -- gains the argument (`reachᵉ`, `_∷ᵉ_`) — and that is the whole reason the
+  -- reach is *recorded* in the environment: the clause supplies no store for
+  -- the later state, and a recorded reach needs none. The reduct the clause asks
   -- for is the action's body up to `_≐ᶜ_`, whence `Comp-≐ᶜ`.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
@@ -289,14 +289,14 @@ mutual
       _ , env-Vˢ-lam γ [] M
     , λ q M₂ eM₂ W pW →
         Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl W) (≐ᶜ-sym eM₂))
-                (FL-C (sliceᵉ γ q ∷ᵉ W) (pγ , pW) M)
+                (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M)
 
   -- The computation half. `return` is a weak head normal form; `coerce`,
   -- application and `delay` are head expansion off their own rule; `absurd` is
   -- vacuous, since no value of the empty type lives over a state context.
   --
   -- Application instantiates the function's Kripke clause at the state it
-  -- already stands in, and `delay` at the slice the lock it passes gives. In
+  -- already stands in, and `delay` at the reach the lock it passes gives. In
   -- both, the renaming the clause inserts is identity-like, so the reduct is
   -- the action itself up to `_≐ᶜ_`.
 
@@ -321,8 +321,8 @@ mutual
         (Comp-expand APP
           (Comp-≐ᶜ
             (sub-≐ᶜ Hd (≐ᵛ-refl (env-V γ W))
-              (C-rename-id-≐ (cong-∷-ren-id-≐ slice-renᵘ-id-≐) M₀))
-            (f slice-id (slice-under slice-id M₀) (≐ᶜ-refl _)
+              (C-rename-id-≐ (cong-∷-ren-id-≐ reach-renᵘ-id-≐) M₀))
+            (f reach-id (reach-under reach-id M₀) (≐ᶜ-refl _)
                (env-V γ W) (FL-V γ pγ W)))))
 
   FL-C {St = St} γ pγ (delay τ M) =
@@ -330,9 +330,9 @@ mutual
       (Comp-expand DELAY
         (Comp-≐ᶜ
           (C-rename-id-≐ unbox-ren-delay-≐ (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩) M))
-          (subst (Comp' _ _ _) eqδ (FL-C (γ ⟨ delay-slice ⟩ᵉ) pγ M))))
+          (subst (Comp' _ _ _) eqδ (FL-C (γ ⟨ delay-reach ⟩ᵉ) pγ M))))
     where
-      eqδ = cong (C-rename (unbox-ren (delay-slice {of-natʳ τ} {St})))
+      eqδ = cong (C-rename (unbox-ren (delay-reach {of-natʳ τ} {St})))
               (trans
                 (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ of-natʳ τ ⟩) []))
                            refl _)
