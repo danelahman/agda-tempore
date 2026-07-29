@@ -228,6 +228,25 @@ open import OperationalSemantics.Soundness.Preservation
 open import OperationalSemantics.Soundness.TickLemmas
 open import OperationalSemantics.Soundness.TopLevelPure
 
+---- Adequacy of the interpretation with respect to the operational semantics
+
+open import OperationalSemantics.Adequacy.Evaluation
+open import OperationalSemantics.Adequacy.RenEquivalence
+open import OperationalSemantics.Adequacy.StateEquivalence
+open import OperationalSemantics.Adequacy.SubEquivalence
+open import OperationalSemantics.Adequacy.Slice
+open import OperationalSemantics.Adequacy.Reducibility
+open import OperationalSemantics.Adequacy.Environment
+open import OperationalSemantics.Adequacy.Bind
+open import OperationalSemantics.Adequacy.Handle
+open import OperationalSemantics.Adequacy.Normalization
+open import OperationalSemantics.Adequacy.HeadFaithful
+open import OperationalSemantics.Adequacy.Adequacy
+
+---- Head shapes of effect trees in the presheaf model
+
+open import OperationalSemantics.Adequacy.PSh.TreeShape
+
 ---- Concrete time-ticks Kripke frames
 
 open import DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks

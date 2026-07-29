@@ -51,6 +51,14 @@ open import OperationalSemantics.Adequacy.StateEquivalence Spec
 -- no arrows, so this needs nothing but itself — which is what lets `Comp`
 -- mention it.
 
+-- THE CELL A BOX-TYPED VALUE NAMES
+--
+-- A value of box type is always a variable (`grad-typ⇒var`), so it *is* a cell,
+-- and that is what both `Val` and `Valᵍ` speak about at a box type.
+
+val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
+val-cell V = proj₁ (grad-typ⇒var V) , proj₁ (proj₂ (grad-typ⇒var V))
+
 Valᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ type-of-gtype G → Set
 Valᵍ (Base b)      St V = ⊤
 Valᵍ Unit          St V = ⊤
@@ -60,9 +68,9 @@ Valᵍ (G₁ |×|ᵍ G₂)  St V =
   Σ[ V₂ ∈ toCtx St ⊢V⦂ type-of-gtype G₂ ]
     (V ≡ ⦉ V₁ , V₂ ⦊) × Valᵍ G₁ St V₁ × Valᵍ G₂ St V₂
 Valᵍ ([ ρ ]ᵍ G)    St V =
-  ∀ {St'} → (q : Slice St ρ St' uᵣ)
-  → (W : toCtx St' ⊢V⦂ type-of-gtype G) → W ≐ᵛ unbox-lookup St' (unbox-ren q) V
-  → Valᵍ G St' W
+  ∀ {St'} → (e : St ≤ₛ St')
+  → (rel : proj₁ (≤ₛ-embed e (proj₂ (val-cell V))) ≾ᵣ ρ)
+  → Valᵍ G St' (lookup-body St' (≤ₛ-embed e (proj₂ (val-cell V))) rel)
 
 -- REDUCIBLE COMPUTATIONS (inductive)
 --
@@ -133,10 +141,16 @@ Val (A ⇒ (B ‼ ε)) St V =
      → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≐ᶜ slice-under q M
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
      → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
+-- A box type is the cell the value names: readable at a later state means its
+-- content is reducible there. This is `Store` below, per cell — `store-var`.
+-- Quantifying over `Slice St ρ St' uᵣ` instead would demand more than
+-- readability: that bound is `≤ₛ-grade e ≾ᵣ ρ`, whereas reading a cell gives
+-- `proj₁ (≤ₛ-embed e c) ≾ᵣ ρ`, i.e. `σ_c ·ᵣ ≤ₛ-grade e ≾ᵣ ρ`, and with
+-- `σ_c ≾ᵣ uᵣ` the latter is strictly weaker.
 Val ([ ρ ] A)     St V =
-  ∀ {St'} → (q : Slice St ρ St' uᵣ)
-  → (W : toCtx St' ⊢V⦂ A) → W ≐ᵛ unbox-lookup St' (unbox-ren q) V
-  → Val A St' W
+  ∀ {St'} → (e : St ≤ₛ St')
+  → (rel : proj₁ (≤ₛ-embed e (proj₂ (val-cell V))) ≾ᵣ ρ)
+  → Val A St' (lookup-body St' (≤ₛ-embed e (proj₂ (val-cell V))) rel)
 
 -- Reducible computations at the value predicate `Val` — the form the
 -- fundamental lemma proves.
@@ -301,8 +315,10 @@ Val-≐ᵛ (A |×| B) (pair-≐ e₁ e₂) (V₁ , V₂ , refl , p₁ , p₂) =
 Val-≐ᵛ (A ⇒ (B ‼ ε)) (lam-≐ eM) (M , refl , f) =
   _ , refl , λ q M₂ eM₂ W pW →
                 f q M₂ (≐ᶜ-trans eM₂ (C-rename-cong (cong-∷-ren _) (≐ᶜ-sym eM))) W pW
-Val-≐ᵛ ([ ρ ] A) eV f =
-  λ q W eW → f q W (≐ᵛ-trans eW (unbox-lookup-val-≐ (unbox-ren q) (≐ᵛ-sym eV)))
+Val-≐ᵛ ([ ρ ] A) {V} {V'} eV f
+  with grad-typ⇒var V | grad-typ⇒var V'
+... | _ , x , g , refl | _ , x' , g' , refl with eV
+...   | var-≐ = f
 
 Val-slice : ∀ {A St St'} → (q : Slice St uᵣ St' uᵣ) → (V : toCtx St ⊢V⦂ A)
           → Val A St V → Val A St' (slice-val q V)
@@ -325,10 +341,15 @@ Val-slice {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
                           (cong-∷-ren-≐ (≐ʳ-sym (slice-renᵘ-∘ q' q₀))))
                         M)))
         W pW
-Val-slice {[ ρ ] A} q₀ V f =
-  λ q' W eW →
-    f (slice-∘ᵘ q' q₀) W
-      (subst (λ z → W ≐ᵛ z) (unbox-lookup-ren q₀ q' V) eW)
+Val-slice {[ ρ ] A} q₀ V f {St''} e rel with grad-typ⇒var V
+... | _ , c , g , refl =
+  Val-≐ᵛ A (≡→≐ᵛˢ (lookup-body-≡ St'' cellEq rel₁ rel))
+           (f (≤ₛ-trans (ext q₀) e) rel₁)
+  where
+    cellEq = trans (≤ₛ-embed-∘ (ext q₀) e c)
+                   (sym (cong (λ z → ≤ₛ-embed e (proj₂ z))
+                              (slice-renᵘ-tgt q₀ c)))
+    rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
 -- GROUND TYPES
 --
@@ -345,7 +366,7 @@ Val→Valᵍ Unit         V p = tt
 Val→Valᵍ Empty        V p = tt
 Val→Valᵍ (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , Val→Valᵍ G₁ V₁ p₁ , Val→Valᵍ G₂ V₂ p₂
-Val→Valᵍ ([ ρ ]ᵍ G)   V p = λ q W eW → Val→Valᵍ G W (p q W eW)
+Val→Valᵍ ([ ρ ]ᵍ G)   V p = λ e rel → Val→Valᵍ G _ (p e rel)
 
 Valᵍ→Val : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
          → Valᵍ G St V → Val (type-of-gtype G) St V
@@ -355,7 +376,7 @@ Valᵍ→Val Unit         V p = tt
 Valᵍ→Val Empty        V p = tt
 Valᵍ→Val (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , Valᵍ→Val G₁ V₁ p₁ , Valᵍ→Val G₂ V₂ p₂
-Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ q W eW → Valᵍ→Val G W (p q W eW)
+Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ e rel → Valᵍ→Val G _ (p e rel)
 
 -- Ground reducibility is insensitive to the equivalence, as `Val-≐ᵛ` is.
 
@@ -367,8 +388,10 @@ Valᵍ-≐ᵛ Unit         eV p = tt
 Valᵍ-≐ᵛ Empty        eV p = tt
 Valᵍ-≐ᵛ (G₁ |×|ᵍ G₂) (pair-≐ e₁ e₂) (V₁ , V₂ , refl , p₁ , p₂) =
   _ , _ , refl , Valᵍ-≐ᵛ G₁ e₁ p₁ , Valᵍ-≐ᵛ G₂ e₂ p₂
-Valᵍ-≐ᵛ ([ ρ ]ᵍ G)   eV f =
-  λ q W eW → f q W (≐ᵛ-trans eW (unbox-lookup-val-≐ (unbox-ren q) (≐ᵛ-sym eV)))
+Valᵍ-≐ᵛ ([ ρ ]ᵍ G)   {V} {V'} eV f
+  with grad-typ⇒var V | grad-typ⇒var V'
+... | _ , x , g , refl | _ , x' , g' , refl with eV
+...   | var-≐ = f
 
 -- GROUND VALUES ACROSS THE STATE EQUIVALENCE
 --
@@ -389,31 +412,22 @@ Valᵍ-≐ˢ es (G₁ |×|ᵍ G₂) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl ,
   _ , _ , castᵛˢ-pair (toCtx-≐ˢ es) V₁ V₂
   , Valᵍ-≐ˢ es G₁ V₁ p₁ , Valᵍ-≐ˢ es G₂ V₂ p₂
 
-Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} q' W eW
-  with slice-replay (≐ˢ-sym es) q'
-... | St₂ , q , es₂ , h =
-  subst (Valᵍ G St'')
-        (castᵛ-castᵛ (toCtx-≐ˢ es₂) (toCtx-≐ˢ (≐ˢ-sym es₂)) W)
-        (Valᵍ-≐ˢ (≐ˢ-sym es₂) G (castᵛ (toCtx-≐ˢ es₂) W)
-          (f q (castᵛ (toCtx-≐ˢ es₂) W) eW₂))
+Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
+  with grad-typ⇒var V
+... | _ , c , g , refl with replay (≐ˢ-sym es) e
+...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
+  Valᵍ-≐ᵛ G (≡→≐ᵛˢ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
+    (Valᵍ-≐ᵛ G (≐ᵛ-sym bridge)
+      (Valᵍ-≐ˢ (≐ˢ-sym es₂) G _ (f e₀ rel₀)))
   where
-    -- the read at `St''` is the read at `St₂`, moved back
-    eW₂ : castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ unbox-lookup St₂ (unbox-ren q) V
-    eW₂ =
-      subst (λ z → castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ z)
-            (castᵛ-castᵛ (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ es₂)
-                         (unbox-lookup St₂ (unbox-ren q) V))
-            (castᵛ-≐ (toCtx-≐ˢ es₂)
-              (≐ᵛ-trans eW
-                (≐ᵛ-trans
-                  (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
-                  (unbox-lookup-≐ es₂
-                     {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
-                     {w' = unbox-ren q} {V = V} {V' = V}
-                     (unbox-tgt-≐
-                        {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
-                        {w' = castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)}
-                        (unbox-ren-bridge es es₂ h) V)))))
+    cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
+    rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
+
+    bridge =
+      ≐ᵛ-trans
+        (lookup-body-≐ˢ es₂ (Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
+                        (≤ₛ-embed e₀ c) refl rel₀ rel₀)
+        (≡→≐ᵛˢ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
 -- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
 --
@@ -566,30 +580,22 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
                                             (slice-renᵘ q'))))
                     M))))
 
-Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} q' W eW
-  with slice-replay (≐ˢ-sym es) q'
-... | St₂ , q , es₂ , h =
-  subst (Val A St'')
-        (castᵛ-castᵛ (toCtx-≐ˢ es₂) (toCtx-≐ˢ (≐ˢ-sym es₂)) W)
-        (Val-≐ˢ (≐ˢ-sym es₂) A (castᵛ (toCtx-≐ˢ es₂) W)
-          (f q (castᵛ (toCtx-≐ˢ es₂) W) eW₂))
+Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} e rel
+  with grad-typ⇒var V
+... | _ , c , g , refl with replay (≐ˢ-sym es) e
+...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
+  Val-≐ᵛ A (≡→≐ᵛˢ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
+    (Val-≐ᵛ A (≐ᵛ-sym bridge)
+      (Val-≐ˢ (≐ˢ-sym es₂) A _ (f e₀ rel₀)))
   where
-    eW₂ : castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ unbox-lookup St₂ (unbox-ren q) V
-    eW₂ =
-      subst (λ z → castᵛ (toCtx-≐ˢ es₂) W ≐ᵛ z)
-            (castᵛ-castᵛ (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ es₂)
-                         (unbox-lookup St₂ (unbox-ren q) V))
-            (castᵛ-≐ (toCtx-≐ˢ es₂)
-              (≐ᵛ-trans eW
-                (≐ᵛ-trans
-                  (unbox-lookup-cast-val St'' (toCtx-≐ˢ es) (unbox-ren q') V)
-                  (unbox-lookup-≐ es₂
-                     {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
-                     {w' = unbox-ren q} {V = V} {V' = V}
-                     (unbox-tgt-≐
-                        {w = unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es))}
-                        {w' = castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)}
-                        (unbox-ren-bridge es es₂ h) V)))))
+    cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
+    rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
+
+    bridge =
+      ≐ᵛ-trans
+        (lookup-body-≐ˢ es₂ (Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
+                        (≤ₛ-embed e₀ c) refl rel₀ rel₀)
+        (≡→≐ᵛˢ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
 -- Hence reducibility is insensitive to the term equivalence: the special case
 -- `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
@@ -639,21 +645,19 @@ store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) 
             ------------------------------------------
             → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
-store-fresh {A} {ρ} {St} V pV f {St'} q W eW =
-  Val-≐ᵛ A (≐ᵛ-sym (≐ᵛ-trans eW step)) (pV (slice-∘ᵘ q (alloc-slice V)))
+store-fresh {A} {ρ} {St} V pV f {St'} e rel =
+  Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V e rel q₀ refl)) (pV q₀)
   where
-    cell = unbox-tgt (unbox-ren q) (var f (Hd {Γ = toCtx St}))
-    rel  = proj₂ (proj₂ (unbox⇒var (unbox-ren q) (var f (Hd {Γ = toCtx St}))))
-    rel' = subst (_≾ᵣ ρ)
-                 (cong proj₁ (unbox-ren-tgt q (Hd {Γ = toCtx St}))) rel
-
-    step : unbox-lookup St' (unbox-ren q) (var f Hd)
-         ≐ᵛ V-rename (unbox-ren (slice-∘ᵘ q (alloc-slice V))
-                        ∘ʳ eq-ren ++ᶜ-identityˡ) V
-    step =
-      ≐ᵛ-trans
-        (≡→≐ᵛˢ (lookup-body-≡ St' (unbox-ren-tgt q (Hd {Γ = toCtx St})) rel rel'))
-        (alloc-lookup-≐ V (ext q) rel' (slice-∘ᵘ q (alloc-slice V)) refl)
+    -- the allocation accumulates nothing, so the cell's readability at `St'`
+    -- *is* the bound the slice back to `St` needs
+    q₀ : Slice St ρ St' uᵣ
+    q₀ = slice (≤ₛ-trans (∷-suc V id-suc) e)
+               (≾ᵣ-trans
+                 (≾ᵣ-reflexive
+                   (trans (·ᵣ-identityʳ (≤ₛ-grade (≤ₛ-trans (∷-suc V id-suc) e)))
+                     (trans (≤ₛ-grade-trans (∷-suc V id-suc) e)
+                            (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St}))))))
+                 rel)
 
 -- THE STORE ON VARIABLES
 --
@@ -676,15 +680,7 @@ store-var {Empty}     pSt x f = tt
 store-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 store-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
 
-store-var {[ ρ ] A} pSt x f {St'} q W eW =
-  Val-≐ᵛ A (≐ᵛ-sym (≐ᵛ-trans eW step)) (pSt (ext q) x rel')
-  where
-    rel  = proj₂ (proj₂ (unbox⇒var (unbox-ren q) (var f x)))
-    rel' = subst (_≾ᵣ ρ) (cong proj₁ (unbox-ren-tgt q x)) rel
-
-    step : unbox-lookup St' (unbox-ren q) (var f x)
-         ≐ᵛ lookup-body St' (≤ₛ-embed (ext q) x) rel'
-    step = ≡→≐ᵛˢ (lookup-body-≡ St' (unbox-ren-tgt q x) rel rel')
+store-var {[ ρ ] A} pSt x f e rel = pSt e x rel
 
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
@@ -694,18 +690,7 @@ store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) 
             → Store (St ∷ₛ V)
 
 store-alloc {A} {ρ} {St} V pSt pV {St' = St'} e Hd rel =
-  Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V e rel q₀ refl)) (pV q₀)
-  where
-    -- the allocation accumulates nothing, so the cell's readability at `St'`
-    -- *is* the bound the slice back to `St` needs
-    q₀ : Slice St ρ St' uᵣ
-    q₀ = slice (≤ₛ-trans (∷-suc V id-suc) e)
-               (≾ᵣ-trans
-                 (≾ᵣ-reflexive
-                   (trans (·ᵣ-identityʳ (≤ₛ-grade (≤ₛ-trans (∷-suc V id-suc) e)))
-                     (trans (≤ₛ-grade-trans (∷-suc V id-suc) e)
-                            (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St}))))))
-                 rel)
+  store-fresh V pV (λ _ → ≾ᵣ-refl) e rel
 
 store-alloc {St = St} V pSt pV {St' = St'} e (Tl-∷ x) rel =
   Val-≐ᵛ _ (≡→≐ᵛˢ (lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))

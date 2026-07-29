@@ -15,6 +15,8 @@ open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
+open import Relation.Nullary using (¬_)
+
 open import Util.Equality
 
 module OperationalSemantics.Adequacy.StateEquivalence (Spec : LanguageSpec) where
@@ -1212,3 +1214,55 @@ slice-renᵘ-≐ˢ es es₂ {q} {q'} h =
                    (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
                    (sym (toCtx-≐ˢ es₂))
                    ⟨⟩-η-ren (suc-comp-ren (ext q') (bound q') ∘ʳ ⟨⟩-η⁻¹-ren))))
+
+castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
+          → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+          → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
+castᵛ-var refl f x = refl
+
+-- WHERE A CELL GETS TO, ACROSS THE EQUIVALENCE
+--
+-- The `≤ₛ`-level counterpart of `unbox-ren-bridge`, which is what a `Val`
+-- stated on cell readability needs. Derived from it rather than by a fresh
+-- induction: an arbitrary extension is the extension of *some* slice — take
+-- the guard to be its own accumulated grade, where the bound is reflexivity —
+-- and `unbox-ren-tgt` then reads `≤ₛ-embed` off that slice's renaming.
+
+var-tgt-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] (Δ ⟨ ρ ⟩) Γ')
+              → (y : A ∈[ σ ] (Δ ⟨ ρ ⟩))
+              → var-tgt (castʳ e r) y ≡ Tgt-cast e (var-tgt r y)
+var-tgt-castʳ refl r y = refl
+
+cong-⟨⟩-eq-tgt : ∀ {Γ Γ' ρ A σ} → (e : Γ ≡ Γ') → (x : A ∈[ σ ] Γ)
+               → var-tgt (cong-⟨⟩-ren {ρ = ρ} (eq-ren e)) (Tl-⟨⟩ x)
+               ≡ (σ ·ᵣ ρ , Tl-⟨⟩ (subst (λ Γ₀ → A ∈[ σ ] Γ₀) e x))
+cong-⟨⟩-eq-tgt refl x = refl
+
+≤ₛ-embed-≐ˢ : ∀ {A σ} {St St' St'' St₂ : 𝕊 []}
+            → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
+            → {e' : St' ≤ₛ St''} → {e : St ≤ₛ St₂}
+            → (h : e' ≤≐ e)
+            → (x : A ∈[ σ ] toCtx St)
+            -------------------------------------------------------------
+            → ≤ₛ-embed e' (subst (λ Γ₀ → A ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
+            ≡ Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
+
+≤ₛ-embed-≐ˢ {σ = σ} es es₂ {e'} {e} h x =
+  trans (sym stepL) (trans (at (unbox-ren-bridge es es₂ {q'} {q} h) (Tl-⟨⟩ x))
+                           stepR)
+  where
+    q' = slice e' (≾ᵣ-refl {≤ₛ-grade e' ·ᵣ uᵣ})
+    q  = slice e  (≾ᵣ-reflexive (cong (_·ᵣ uᵣ) (sym (≤ₛ-grade-≤≐ h))))
+
+    stepL : var-tgt (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
+                    (Tl-⟨⟩ x)
+          ≡ ≤ₛ-embed e' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
+    stepL =
+      trans (cong (var-tgt′ (unbox-ren q')) (cong-⟨⟩-eq-tgt (toCtx-≐ˢ es) x))
+            (unbox-ren-tgt q' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x))
+
+    stepR : var-tgt (castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)) (Tl-⟨⟩ x)
+          ≡ Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
+    stepR =
+      trans (var-tgt-castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q) (Tl-⟨⟩ x))
+            (cong (Tgt-cast (sym (toCtx-≐ˢ es₂))) (unbox-ren-tgt q x))
