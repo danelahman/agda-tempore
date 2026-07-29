@@ -3968,7 +3968,7 @@ env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
         ------------------------------------------------
         → Val A St (env-V γ (var f x))
 
-env-var ⌊ St ⌋       pγ x f = pγ x f
+env-var ⌊ St ⌋       pγ x f = store-var pγ x f
 
 env-var (∅ᵉ St)       pγ x f = ⊥-elim (not-in-empty-ctx x)
 

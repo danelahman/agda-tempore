@@ -146,15 +146,33 @@ Comp' A = Comp A (Val A)
 
 -- REDUCIBLE STORES
 --
--- Every resource variable of the state context is reducible. Stated on the
--- variables rather than by recursion on `𝕊`, because reducibility of a cell is
--- a Kripke statement — the value is read back by `unbox-lookup` at a *later*
--- state — and that is exactly `Val` at the cell's box type. The store is the
--- closing environment for the resource variables of `toCtx St`.
+-- Every cell of the state holds a value that is reducible at any later state
+-- at which it is readable. Stated on the cells rather than by recursion on
+-- `𝕊`, and on cells alone because every variable of `toCtx St` is of box type
+-- (`⇒-not-in-toCtx`, `⦉⦊-not-in-toCtx`, `Empty-not-in-toCtx`).
+--
+-- The `≤ₛ` is what makes this one condition rather than two. Reading a cell is
+-- a Kripke matter — `≤ₛ-embed e x` is where the cell has got to at `St'`, and
+-- `rel` says enough time has passed there for a `ρ`-box — and the two ways the
+-- development reads a cell are the two ends of that quantification:
+--
+--   * `e = id-suc` is what `UNBOX` consumes. It fires at the *current* state,
+--     and `unbox⇒var` yields only `ρ' ≾ᵣ ρ`, never `ρ' ≾ᵣ uᵣ`: a cell can be
+--     readable without being usable as a value.
+--
+--   * `e = ext q` for a `ρ`-slice `q` is `Val` at the cell's box type, which is
+--     `store-var` below. So the reducibility of a box-typed *variable* is this
+--     same condition at a later state, not a separate assumption.
+--
+-- Keeping only the second would not do: instantiating it at the current state
+-- needs `Slice St ρ St uᵣ`, whose bound is `uᵣ ≾ᵣ ρ`, and `Grade` has no such
+-- law — rightly, since it would say every box is ready immediately.
 
 Store : 𝕊 [] → Set
-Store St = ∀ {A ρ} → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-         → Val A St (var f x)
+Store St = ∀ {A ρ σ} {St' : 𝕊 []} → (e : St ≤ₛ St')
+         → (x : [ ρ ] A ∈[ σ ] toCtx St)
+         → (rel : proj₁ (≤ₛ-embed e x) ≾ᵣ ρ)
+         → Val A St' (lookup-body St' (≤ₛ-embed e x) rel)
 
 -- HEAD EXPANSION
 --
@@ -192,7 +210,7 @@ Comp-ε-subst refl p = p
 -- The empty store: `toCtx ∅` has no variables.
 
 store-∅ : Store ∅
-store-∅ x f = ⊥-elim (not-in-empty-ctx x)
+store-∅ e x rel = ⊥-elim (not-in-empty-ctx x)
 
 ------------------------------------------------------------------------
 -- LEMMAS TO PROVE
@@ -637,6 +655,37 @@ store-fresh {A} {ρ} {St} V pV f {St'} q W eW =
         (≡→≐ᵛˢ (lookup-body-≡ St' (unbox-ren-tgt q (Hd {Γ = toCtx St})) rel rel'))
         (alloc-lookup-≐ V (ext q) rel' (slice-∘ᵘ q (alloc-slice V)) refl)
 
+-- THE STORE ON VARIABLES
+--
+-- Every variable of a state context is of box type, so at the other four types
+-- there is nothing to show (`⊤`, or no such variable at all). At a box type a
+-- *usable* variable — one carrying the grade bound `var` demands — is
+-- reducible, and that is the store read at the later states its own box grade
+-- allows: `unbox-ren-tgt` identifies the cell the lookup names with
+-- `≤ₛ-embed (ext q)`, which is exactly where the store speaks. So `Val` at a
+-- box type is not a second assumption about the state; it is this one.
+
+store-var : ∀ {A ρ} {St : 𝕊 []} → Store St
+          → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+          --------------------------------------------------------
+          → Val A St (var f x)
+
+store-var {Base b}    pSt x f = tt
+store-var {Unit}      pSt x f = tt
+store-var {Empty}     pSt x f = tt
+store-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
+store-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
+
+store-var {[ ρ ] A} pSt x f {St'} q W eW =
+  Val-≐ᵛ A (≐ᵛ-sym (≐ᵛ-trans eW step)) (pSt (ext q) x rel')
+  where
+    rel  = proj₂ (proj₂ (unbox⇒var (unbox-ren q) (var f x)))
+    rel' = subst (_≾ᵣ ρ) (cong proj₁ (unbox-ren-tgt q x)) rel
+
+    step : unbox-lookup St' (unbox-ren q) (var f x)
+         ≐ᵛ lookup-body St' (≤ₛ-embed (ext q) x) rel'
+    step = ≡→≐ᵛˢ (lookup-body-≡ St' (unbox-ren-tgt q x) rel rel')
+
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
             → (∀ {St'} → (q : Slice St ρ St' uᵣ)
@@ -644,6 +693,23 @@ store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) 
             ------------------------------------------------------------------
             → Store (St ∷ₛ V)
 
-store-alloc V pSt pV Hd       f = store-fresh V pV f
-store-alloc V pSt pV (Tl-∷ x) f =
-  Val-≐ᵛ _ (alloc-var-≐ V x f) (Val-slice (alloc-slice V) (var f x) (pSt x f))
+store-alloc {A} {ρ} {St} V pSt pV {St' = St'} e Hd rel =
+  Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V e rel q₀ refl)) (pV q₀)
+  where
+    -- the allocation accumulates nothing, so the cell's readability at `St'`
+    -- *is* the bound the slice back to `St` needs
+    q₀ : Slice St ρ St' uᵣ
+    q₀ = slice (≤ₛ-trans (∷-suc V id-suc) e)
+               (≾ᵣ-trans
+                 (≾ᵣ-reflexive
+                   (trans (·ᵣ-identityʳ (≤ₛ-grade (≤ₛ-trans (∷-suc V id-suc) e)))
+                     (trans (≤ₛ-grade-trans (∷-suc V id-suc) e)
+                            (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St}))))))
+                 rel)
+
+store-alloc {St = St} V pSt pV {St' = St'} e (Tl-∷ x) rel =
+  Val-≐ᵛ _ (≡→≐ᵛˢ (lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
+           (pSt (≤ₛ-trans (∷-suc V id-suc) e) x rel₀)
+  where
+    rel₀ = subst (_≾ᵣ _)
+                 (sym (cong proj₁ (≤ₛ-embed-∘ (∷-suc V id-suc) e x))) rel

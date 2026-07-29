@@ -373,6 +373,18 @@ suc-comp-ren-tgt (∷-suc V e)  b x =
 ≤ₛ-embed-∘ e (∷-suc V e')  x =
   cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (≤ₛ-embed-∘ e e' x)
 
+-- What the embedding does to a variable's grade: it accumulates exactly the
+-- extension's own grade, the locks passed being the same ones.
+
+≤ₛ-embed-grade : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A σ}
+               → (x : A ∈[ σ ] toCtx St)
+               → proj₁ (≤ₛ-embed e x) ≡ σ ·ᵣ ≤ₛ-grade e
+≤ₛ-embed-grade id-suc       {σ = σ} x = sym (·ᵣ-identityʳ σ)
+≤ₛ-embed-grade (⟨⟩-suc ρ e) {σ = σ} x =
+  trans (cong (_·ᵣ ρ) (≤ₛ-embed-grade e x))
+        (·ᵣ-assoc σ (≤ₛ-grade e) ρ)
+≤ₛ-embed-grade (∷-suc V e)  x = ≤ₛ-embed-grade e x
+
 ⟨⟩-η-tgt : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
          → var-tgt (⟨⟩-η-ren {Δ = Γ}) (Tl-⟨⟩ x) ≡ (σ , x)
 ⟨⟩-η-tgt x = refl
