@@ -86,7 +86,13 @@ open import Syntax.Terms.Transport
 open import Syntax.Substitutions.Equivalence
 open import Syntax.Substitutions.Variables
 open import Syntax.Substitutions.Weakening
+open import Syntax.Substitutions.Renaming.Variables
+open import Syntax.Substitutions.Renaming.Clauses
+open import Syntax.Substitutions.Renaming.Core
 open import Syntax.Substitutions.Renaming
+open import Syntax.Substitutions.Swap.Base
+open import Syntax.Substitutions.Swap.Variables
+open import Syntax.Substitutions.Swap.Clauses
 open import Syntax.Substitutions.Swap
 
 ---- Computation term and evaluation contexts
@@ -247,6 +253,11 @@ open import OperationalSemantics.Adequacy.Evaluation
 open import OperationalSemantics.Adequacy.StateEquivalence
 open import OperationalSemantics.Adequacy.Slice
 open import OperationalSemantics.Adequacy.Reducibility
+open import OperationalSemantics.Adequacy.Environment.Core
+open import OperationalSemantics.Adequacy.Environment.Action
+open import OperationalSemantics.Adequacy.Environment.Variables
+open import OperationalSemantics.Adequacy.Environment.Clauses
+open import OperationalSemantics.Adequacy.Environment.Cell
 open import OperationalSemantics.Adequacy.Environment
 open import OperationalSemantics.Adequacy.Bind
 open import OperationalSemantics.Adequacy.Handle
