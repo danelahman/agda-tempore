@@ -55,18 +55,6 @@ open import OperationalSemantics.Adequacy.SubEquivalence Spec
 
 postulate
 
-  -- Matching: the scrutinee is a pair, and the reduct substitutes its two
-  -- components. Needs the two nested substitutions to be seen in the order the
-  -- environment applies them.
-
-  FL-match : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
-           → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A ∷ B ⊢C⦂ D ‼ ε)
-           → Val (A |×| B) St (env-V γ V)
-           → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ B)) → Rel-Env γ'
-                → Comp' D ε St' (env-C γ' M))
-           --------------------------------------------------------------
-           → Comp' D ε St (env-C γ (match V `in M))
-
   -- Unboxing: read the store. The value read is reducible because the cell the
   -- action's `unbox` names is the one the environment sends the boxed
   -- variable to.
@@ -78,6 +66,33 @@ postulate
                 → Comp' D ε St' (env-C γ' M))
            --------------------------------------------------------------
            → Comp' D ε St (env-C γ (unbox w V M))
+
+-- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components
+-- in the *opposite* order from the environment — the rule replaces `B` (its
+-- value weakened past `A`) and then `A`, the action replaces `A` with `B`
+-- riding in the suffix and then `B`. That is exactly `sub-swap-C`, at the
+-- empty suffix, where both orders' casts and boundary variables reduce.
+
+FL-match : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
+         → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A ∷ B ⊢C⦂ D ‼ ε)
+         → Val (A |×| B) St (env-V γ V)
+         → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ B)) → Rel-Env γ'
+              → Comp' D ε St' (env-C γ' M))
+         --------------------------------------------------------------
+         → Comp' D ε St (env-C γ (match V `in M))
+
+FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
+         (U₁ , U₂ , eV , p₁ , p₂) pM =
+  subst (Comp' _ _ St) (sym (env-Cˢ-match γ [] V M))
+    (subst (λ z → Comp' _ _ St (match z `in M₀)) (sym eV)
+      (Comp-expand MATCH
+        (Comp-≐ᶜ (≐ᶜ-sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂)))))
+  where
+    M₀ = env-Cˢ γ ([] ∷ A ∷ B) M
+
+    step : (M₀ [ Hd ↦ V-rename wk-ren U₂ ]c) [ Hd ↦ U₁ ]c
+         ≐ᶜ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
+    step = sub-swap-C [] M₀ U₂ U₁
 
 -- Handling: `env-Cˢ-handle` splits the action, `handle-Comp` runs the scrutinee
 -- and then the clauses and the sequel.
