@@ -230,11 +230,11 @@ mutual
       relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (rn ∘ʳ w) V) ⟩[ z₀ ↦ W ]rvar)))
                       (proj₂ (proj₂ (unbox⇒var (rn ∘ʳ w) V)))
 
-      cell : unbox-tgt (castʳᵉ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
+      cell : unbox-tgt (castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
                        (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
            ≡ unbox-tgt w V
       cell =
-        trans (unbox-tgt-castʳᵉ (castOf {Γ} {B} Θ) (unbox-var-ren v relv)
+        trans (unbox-tgt-castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv)
                                 (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd))
           (trans (cong (Tgt-cast (castOf {Γ} {B} Θ)) (unbox-var-tgt v relv))
             (trans (cong (λ t → Tgt-cast (castOf {Γ} {B} Θ)

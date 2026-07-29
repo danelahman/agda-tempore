@@ -558,14 +558,14 @@ ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
     vL = proj₂ (rvar-tgt cL xL WL)
     vR = proj₂ (rvar-tgt (proj₂ (unbox-tgt (ρ' ∘ʳ w) V)) xR WR)
 
-    wL = castʳᵉ (castOf {Γ} {B} Θ) (unbox-var-ren vL relL)
-    wR = castʳᵉ (castOf {Γ'} {B} Θ) (unbox-var-ren vR relR)
+    wL = castʳ (castOf {Γ} {B} Θ) (unbox-var-ren vL relL)
+    wR = castʳ (castOf {Γ'} {B} Θ) (unbox-var-ren vR relR)
 
     cell : unbox-tgt (ρ₀ ∘ʳ wL) hd ≡ unbox-tgt wR hd
     cell =
       trans (unbox-tgt-∘ ρ₀ wL hd)
         (trans (cong (var-tgt′ ρ₀)
-                 (trans (unbox-tgt-castʳᵉ (castOf {Γ} {B} Θ)
+                 (trans (unbox-tgt-castʳ (castOf {Γ} {B} Θ)
                                           (unbox-var-ren vL relL) hd)
                         (cong (Tgt-cast (castOf {Γ} {B} Θ))
                               (unbox-var-tgt vL relL))))
@@ -573,7 +573,7 @@ ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
             (trans (cong (λ t → Tgt-cast (castOf {Γ'} {B} Θ)
                                   (rvar-tgt (proj₂ t) xR WR))
                          (sym (unbox-tgt-∘ ρ' w V)))
-              (sym (trans (unbox-tgt-castʳᵉ (castOf {Γ'} {B} Θ)
+              (sym (trans (unbox-tgt-castʳ (castOf {Γ'} {B} Θ)
                                             (unbox-var-ren vR relR) hd)
                      (cong (Tgt-cast (castOf {Γ'} {B} Θ))
                            (unbox-var-tgt vR relR)))))))

@@ -1148,13 +1148,13 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
                     (≡→≐ᶜ (cast-unbox (assocᴮ Γ B₁ B₂ Θ))))
                   (≐ᶜ-trans
                     (castᶜ-≐ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
-                      (sub-unbox (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V _ y₁ U₁ relC))
+                      (sub-unbox (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V _ y₁ U₁ relC))
                     (≡→≐ᶜ (cast-unbox
                              (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))))))
               (≡→≐ᶜ (cast-unbox (assocᴮ⁻ Γ B₂ Θ)))))
           (≐ᶜ-trans
             (castᶜ-≐ (castOf {Γ} {B₂} Θ)
-              (sub-unbox (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd _ y₂ U₂ relD))
+              (sub-unbox (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd _ y₂ U₂ relD))
             (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₂} Θ)))))))
   where
     Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
@@ -1178,7 +1178,7 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
 
     vA = proj₂ (rvar-tgt cW x₂ V₂)
 
-    wA = castʳᵉ (castOf {Γ ∷ B₁} {B₂} Θ) (unbox-var-ren vA relA)
+    wA = castʳ (castOf {Γ ∷ B₁} {B₂} Θ) (unbox-var-ren vA relA)
 
     bodyA = castᶜ (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
                   (M [ Tl-∷ x₂ ↦ V₂ ]c)
@@ -1188,35 +1188,35 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
 
     vB = proj₂ (rvar-tgt (proj₂ (unbox-tgt wA hd)) x₁ V₁)
 
-    wB = castʳᵉ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB)
+    wB = castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB)
 
     relC = ≾ᵣ-trans
              (proj₂ (proj₂
-               (⟨ proj₂ (unbox-tgt (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V)
+               (⟨ proj₂ (unbox-tgt (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)
                 ⟩[ y₁ ↦ U₁ ]rvar)))
-             (proj₂ (proj₂ (unbox⇒var (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V)))
+             (proj₂ (proj₂ (unbox⇒var (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)))
 
-    vC = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V))
+    vC = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V))
                          y₁ U₁)
 
-    wC = castʳᵉ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)) (unbox-var-ren vC relC)
+    wC = castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)) (unbox-var-ren vC relC)
 
     relD = ≾ᵣ-trans
              (proj₂ (proj₂
-               (⟨ proj₂ (unbox-tgt (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd)
+               (⟨ proj₂ (unbox-tgt (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)
                 ⟩[ y₂ ↦ U₂ ]rvar)))
-             (proj₂ (proj₂ (unbox⇒var (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd)))
+             (proj₂ (proj₂ (unbox⇒var (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)))
 
-    vD = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd))
+    vD = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd))
                          y₂ U₂)
 
-    wD = castʳᵉ (castOf {Γ} {B₂} Θ) (unbox-var-ren vD relD)
+    wD = castʳ (castOf {Γ} {B₂} Θ) (unbox-var-ren vD relD)
 
     -- each stored renaming is read only through `unbox-tgt`, and there it is
     -- the cell the substitution left; so the two sides' cells are exactly the
     -- two sides of `unbox-cell-swap`
     cellA : unbox-tgt wA hd ≡ rcell Θ cW Ŵ₂
-    cellA = trans (unbox-tgt-castʳᵉ (castOf {Γ ∷ B₁} {B₂} Θ)
+    cellA = trans (unbox-tgt-castʳ (castOf {Γ ∷ B₁} {B₂} Θ)
                                     (unbox-var-ren vA relA) hd)
                   (cong (Tgt-cast (castOf {Γ ∷ B₁} {B₂} Θ))
                         (unbox-var-tgt vA relA))
@@ -1225,27 +1225,27 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
           ≡ rcell (([] ∷ B₂) ++ᶜ Θ)
                   (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) (unbox-tgt w V))) W₁
     cellC =
-      trans (unbox-tgt-castʳᵉ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+      trans (unbox-tgt-castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
                               (unbox-var-ren vC relC) hd)
         (trans (cong (Tgt-cast (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))
                      (unbox-var-tgt vC relC))
                (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
-                     (unbox-tgt-castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w V)))
+                     (unbox-tgt-castʳ (assocᴮ Γ B₁ B₂ Θ) w V)))
 
     cell : unbox-tgt wB hd ≡ unbox-tgt wD hd
     cell =
-      trans (unbox-tgt-castʳᵉ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB) hd)
+      trans (unbox-tgt-castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB) hd)
         (trans (cong (Tgt-cast (castOf {Γ} {B₁} Θ)) (unbox-var-tgt vB relB))
           (trans (cong (λ t → rcell′ Θ t W₁) cellA)
             (trans (unbox-cell-swap Θ cW W₂ W₁)
               (sym
-                (trans (unbox-tgt-castʳᵉ (castOf {Γ} {B₂} Θ)
+                (trans (unbox-tgt-castʳ (castOf {Γ} {B₂} Θ)
                                          (unbox-var-ren vD relD) hd)
                   (trans (cong (Tgt-cast (castOf {Γ} {B₂} Θ))
                                (unbox-var-tgt vD relD))
                     (trans
                       (cong (λ t → rcell′ Θ t W₂)
-                            (unbox-tgt-castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC hd))
+                            (unbox-tgt-castʳ (assocᴮ⁻ Γ B₂ Θ) wC hd))
                       (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
                             cellC))))))))
 

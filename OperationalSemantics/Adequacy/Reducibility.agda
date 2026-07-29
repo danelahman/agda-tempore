@@ -43,6 +43,8 @@ open import Syntax.Types         Spec
 open import Syntax.Renamings.Equivalence Spec
 open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
+open import Syntax.Terms.Transport       Spec
+open import Syntax.Substitutions.Variables Spec
 open import OperationalSemantics.Adequacy.Slice           Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.StateEquivalence Spec
@@ -345,7 +347,7 @@ Val-slice {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
         W pW
 Val-slice {[ ρ ] A} q₀ V f {St''} e rel with grad-typ⇒var V
 ... | _ , c , g , refl =
-  Val-≐ᵛ A (≡→≐ᵛˢ (lookup-body-≡ St'' cellEq rel₁ rel))
+  Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St'' cellEq rel₁ rel))
            (f (≤ₛ-trans (ext q₀) e) rel₁)
   where
     cellEq = trans (≤ₛ-embed-∘ (ext q₀) e c)
@@ -411,14 +413,14 @@ Valᵍ-≐ˢ es (Base b)     V p = tt
 Valᵍ-≐ˢ es Unit         V p = tt
 Valᵍ-≐ˢ es Empty        V p = tt
 Valᵍ-≐ˢ es (G₁ |×|ᵍ G₂) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , castᵛˢ-pair (toCtx-≐ˢ es) V₁ V₂
+  _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
   , Valᵍ-≐ˢ es G₁ V₁ p₁ , Valᵍ-≐ˢ es G₂ V₂ p₂
 
 Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
   with grad-typ⇒var V
 ... | _ , c , g , refl with replay (≐ˢ-sym es) e
 ...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
-  Valᵍ-≐ᵛ G (≡→≐ᵛˢ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
+  Valᵍ-≐ᵛ G (≡→≐ᵛ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
     (Valᵍ-≐ᵛ G (≐ᵛ-sym bridge)
       (Valᵍ-≐ˢ (≐ˢ-sym es₂) G _ (f e₀ rel₀)))
   where
@@ -429,7 +431,7 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
       ≐ᵛ-trans
         (lookup-body-≐ˢ es₂ (Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
-        (≡→≐ᵛˢ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
+        (≡→≐ᵛ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
 -- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
 --
@@ -468,7 +470,7 @@ resume-≐ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
                          eM))))
     (≡→≐ᶜ (trans (cong (λ z → z [ Hd ↦ castᵛ e₂ W' ]c)
                        (cast-rename-∷ e₁ e₂ (unbox-ren q') M'))
-                 (cast-app e₂ (C-rename (cong-∷-ren (unbox-ren q')) M') W')))
+                 (cast-app-reduct e₂ (C-rename (cong-∷-ren (unbox-ren q')) M') W')))
   where
     e₁ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es))
     e₂ = sym (toCtx-≐ˢ es₂)
@@ -536,11 +538,11 @@ Val-≐ˢ es (Base b)  V p = tt
 Val-≐ˢ es Unit      V p = tt
 Val-≐ˢ es Empty     V p = tt
 Val-≐ˢ es (A |×| B) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , castᵛˢ-pair (toCtx-≐ˢ es) V₁ V₂
+  _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
   , Val-≐ˢ es A V₁ p₁ , Val-≐ˢ es B V₂ p₂
 
 Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
-    _ , castᵛ-lam (toCtx-≐ˢ es) M
+    _ , cast-lam (toCtx-≐ˢ es) M
   , λ {St''} q' M₂ eM₂ W pW → step q' M₂ eM₂ W pW
   where
     e = toCtx-≐ˢ es
@@ -553,7 +555,7 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
     step {St''} q' M₂ eM₂ W pW with slice-replay (≐ˢ-sym es) q'
     ... | St₂ , q , es₂ , h =
       Comp-≐ (≐ˢ-sym es₂) (λ es₁ V₀ → Val-≐ˢ es₁ B V₀) (Val-≐ᵛ B)
-        (≡→≐ᶜ (trans (cast-app e₂ M₂ W)
+        (≡→≐ᶜ (trans (cast-app-reduct e₂ M₂ W)
                      (castᶜ-irr e₂ (sym (toCtx-≐ˢ (≐ˢ-sym es₂)))
                                 (M₂ [ Hd ↦ W ]c))))
         (f q (castᶜ (cong (_∷ A) e₂) M₂) eM₃ (castᵛ e₂ W)
@@ -584,7 +586,7 @@ Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} e rel
   with grad-typ⇒var V
 ... | _ , c , g , refl with replay (≐ˢ-sym es) e
 ...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
-  Val-≐ᵛ A (≡→≐ᵛˢ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
+  Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
     (Val-≐ᵛ A (≐ᵛ-sym bridge)
       (Val-≐ˢ (≐ˢ-sym es₂) A _ (f e₀ rel₀)))
   where
@@ -595,7 +597,7 @@ Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} e rel
       ≐ᵛ-trans
         (lookup-body-≐ˢ es₂ (Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
-        (≡→≐ᵛˢ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
+        (≡→≐ᵛ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
 -- Hence reducibility is insensitive to the term equivalence: the special case
 -- `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
@@ -693,7 +695,7 @@ store-alloc {A} {ρ} {St} V pSt pV {St' = St'} e Hd rel =
   store-fresh V pV (λ _ → ≾ᵣ-refl) e rel
 
 store-alloc {St = St} V pSt pV {St' = St'} e (Tl-∷ x) rel =
-  Val-≐ᵛ _ (≡→≐ᵛˢ (lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
+  Val-≐ᵛ _ (≡→≐ᵛ (lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
            (pSt (≤ₛ-trans (∷-suc V id-suc) e) x rel₀)
   where
     rel₀ = subst (_≾ᵣ _)

@@ -46,6 +46,7 @@ open import Syntax.Types      S
 open import Syntax.Contexts   S
 open import Syntax.Renamings  S
 open import Syntax.RenActions S using (var-rename)
+open import Syntax.Renamings.Equivalence S using (eternal?-yes)
 
 open Category Cat
 open Past Pst
@@ -101,15 +102,6 @@ prod-ext : ∀ {X A B} {h k : X →ᵐ A ×ᵐ B}
 prod-ext pf ps =
   ≈ᵐ-trans (⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl)
            (≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ (≈ᵐ-sym pf) (≈ᵐ-sym ps)))
-
--- With the eternality decision in hand, the `with eternal?`-defined functions
--- (`_ᴱ`, `projᴱ`, `⟦_⟧ᴱ-Eternalᵒ`) can be forced to reduce by `rewrite`ing their
--- scrutinee.
-
-eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
-eternal?-yes {A} et with eternal? A
-... | yes et' = cong yes (eternal-irrelevant et' et)
-... | no ¬et  = ⊥-elim (¬et et)
 
 -- THE ETERNAL PROJECTION OF AN ETERNAL CONTEXT IS AN ALGEBRA MORPHISM
 --

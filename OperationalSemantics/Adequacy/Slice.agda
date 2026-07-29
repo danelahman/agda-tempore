@@ -28,6 +28,7 @@ open import Syntax.Renamings.Equivalence Spec
 open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
+open import Syntax.Substitutions.Variables Spec
 
 open import Syntax.Contexts   Spec
 open import Syntax.Language   Spec
@@ -676,20 +677,7 @@ unbox-ren-delay-≐ = mk≐ʳ go
 -- irrelevant.
 ------------------------------------------------------------------------
 
-≡→≐ᵛˢ : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≡ V' → V ≐ᵛ V'
-≡→≐ᵛˢ refl = ≐ᵛ-refl _
 
-
--- Retyping along a context equality (the state equivalence needs these here).
-
-castᵛˢ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
-castᵛˢ refl V = V
-
-castʳˢ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren [] (Δ ⟨ ρ ⟩) Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ
-castʳˢ refl w = w
-castᵛˢ-pair : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
-            → castᵛˢ e ⦉ V , W ⦊ ≡ ⦉ castᵛˢ e V , castᵛˢ e W ⦊
-castᵛˢ-pair refl V W = refl
 
 -- The lookup's renaming composite depends on the state only through two
 -- contexts, the stored value and three proofs — so it is factored out. That is
@@ -748,9 +736,9 @@ lookup-body′-≐ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
                → (rel rel' : σ ≾ᵣ ρ)
                → (U : ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A)
                → (U' : ([] ++ᶜ Γf') ⟨ ρ ⟩ ⊢V⦂ A)
-               → U ≐ᵛ castᵛˢ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) U'
+               → U ≐ᵛ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) U'
                → lookup-body′ Γf Γs eq h rel U
-               ≐ᵛ castᵛˢ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
+               ≐ᵛ castᵛ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
 lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
   rewrite uip {p = eq} {q = eq'} | uip {p = h} {q = h'}
         | ≾ᵣ-irrelevant rel rel' = V-rename-cong _ eU
@@ -759,7 +747,7 @@ lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
 
 unbox-tgt-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren [] (Δ ⟨ ρ ⟩) Γ')
                → (V : Δ ⊢V⦂ [ ρ ] A)
-               → unbox-tgt (castʳˢ e w') V
+               → unbox-tgt (castʳ e w') V
                ≡ (proj₁ (unbox-tgt w' V)
                  , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w' V) ] Γ₀) e
                          (proj₂ (unbox-tgt w' V)))
@@ -786,10 +774,10 @@ lookup-body-≡ St refl rel rel' =
 
 unbox-lookup-cast-val : ∀ {Δ Δ' A ρ} → (St : 𝕊 []) → (e : Δ' ≡ Δ)
                       → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ' ⊢V⦂ [ ρ ] A)
-                      → unbox-lookup St w (castᵛˢ e V)
+                      → unbox-lookup St w (castᵛ e V)
                       ≐ᵛ unbox-lookup St (w ∘ʳ cong-⟨⟩-ren (eq-ren e)) V
 unbox-lookup-cast-val St refl w V =
-  ≡→≐ᵛˢ (lookup-body-≡ St
+  ≡→≐ᵛ (lookup-body-≡ St
            (unbox-tgt-≐ (≐ʳ-sym (∘ʳ-id-≐ʳ w (cong-⟨⟩-ren-id-≐ ≐ʳ-refl))) V)
            _ _)
 
@@ -893,22 +881,14 @@ unbox-lookup-cast-val St refl w V =
 -- slice by `≤ₛ-embed`.
 ------------------------------------------------------------------------
 
--- Casting the target of a renaming is prefixing it with an `eq-ren`.
-
-castᵛˢ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ Γ')
-              → (V : Γ ⊢V⦂ A)
-              → castᵛˢ e (V-rename r V) ≐ᵛ V-rename (eq-ren e ∘ʳ r) V
-castᵛˢ-rename refl r V =
-  ≐ᵛ-sym (≐ᵛ-trans (V-rename-∘ id-ren r V) (V-rename-id-≐ ≐ʳ-refl _))
-
 -- Transporting a stored value along an equality of the states it was split off
 -- at is transporting it along the contexts.
 
-subst-state-castᵛˢ : ∀ {A ρ} {St St' : 𝕊 []} → (p : St ≡ St')
+subst-state-castᵛ : ∀ {A ρ} {St St' : 𝕊 []} → (p : St ≡ St')
                    → (U : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
                    → subst (λ S → ([] ++ᶜ toCtx S ⟨ ρ ⟩) ⊢V⦂ A) p U
-                   ≡ castᵛˢ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) (cong toCtx p)) U
-subst-state-castᵛˢ refl U = refl
+                   ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) (cong toCtx p)) U
+subst-state-castᵛ refl U = refl
 
 -- The renaming agreement. The lookup's composite runs, right to left: out of
 -- the leading `[] ++ᶜ`, across the cell's own lock at the grade the state after
@@ -981,7 +961,7 @@ alloc-lookup-≐ : ∀ {A ρ} {St St' : 𝕊 []}
 
 alloc-lookup-≐ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
   ≐ᵛ-trans (lookup-body′-≐ eΓ eF eS _ refl _ h rel rel _ V eU)
-    (≐ᵛ-trans (castᵛˢ-rename eΓ (lookup-ren′ (toCtx St) Δ refl h rel) V)
+    (≐ᵛ-trans (castᵛ-rename eΓ (lookup-ren′ (toCtx St) Δ refl h rel) V)
               (V-rename-≐ (alloc-lookup-ren V e h rel q₀ eq₀) V))
   where
     Δ  = ≤ₛ-ctx e
@@ -996,7 +976,7 @@ alloc-lookup-≐ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
                      (sym (cong proj₁ (≤ₛ-embed-push e (Hd {Γ = toCtx St})))))
 
     eU : resource-lookup St' (proj₂ (≤ₛ-embed e (Hd {Γ = toCtx St})))
-       ≐ᵛ castᵛˢ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) V
-    eU = ≡→≐ᵛˢ (trans (≤ₛ-embed-lookup e (Hd {Γ = toCtx St}))
-                      (subst-state-castᵛˢ
+       ≐ᵛ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) V
+    eU = ≡→≐ᵛ (trans (≤ₛ-embed-lookup e (Hd {Γ = toCtx St}))
+                      (subst-state-castᵛ
                          (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St}))) V))

@@ -38,39 +38,11 @@ open import Syntax.Types         Spec
 open import Syntax.Renamings.Equivalence Spec
 open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
+open import Syntax.Terms.Transport       Spec
+open import Syntax.Substitutions.Variables Spec
 open import OperationalSemantics.Adequacy.Slice          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
--- Retyping along a context equality.
-
-castᵛ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
-castᵛ = castᵛˢ
-
-castᶜ : ∀ {Γ Γ' C} → Γ ≡ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
-castᶜ refl M = M
-
-castᵛ-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
-        → V ≐ᵛ V' → castᵛ e V ≐ᵛ castᵛ e V'
-castᵛ-≐ refl eV = eV
-
-castᶜ-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {M M' : Γ ⊢C⦂ C}
-        → M ≐ᶜ M' → castᶜ e M ≐ᶜ castᶜ e M'
-castᶜ-≐ refl eM = eM
-
--- Casts are irrelevant in their equality proof, so the two ways of building the
--- reduct's context equality (`sym (cong f e)` and `cong f (sym e)`) agree.
-
-castᵛ-lam : ∀ {Γ Γ' A B ε} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
-          → castᵛ e (lam M) ≡ lam (castᶜ (cong (_∷ A) e) M)
-castᵛ-lam refl M = refl
-
-castᵛ-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
-          → castᵛ e V ≡ castᵛ e' V
-castᵛ-irr e e' V = cong (λ z → castᵛ z V) uip
-
-castᶜ-irr : ∀ {Γ Γ' C} → (e e' : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
-          → castᶜ e M ≡ castᶜ e' M
-castᶜ-irr e e' M = cong (λ z → castᶜ z M) uip
 
 -- STATES UP TO THE EQUIVALENCE
 
@@ -256,11 +228,6 @@ mutual
             × (N ≐ᶜ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
 ≐-handle⁻ refl _ (handle-≐ eM eH eN) = _ , _ , _ , refl , eM , eH , eN
 
--- `unbox` stores a renaming, so its inversion transports that too.
-
-castʳ : ∀ {Γ Γ' Δ ρ} → Γ' ≡ Γ → Ren [] (Δ ⟨ ρ ⟩) Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ
-castʳ = castʳˢ
-
 ≐-unbox⁻ : ∀ {Γ Γ' A C ρ Δ} → (e : Γ' ≡ Γ)
          → {w : Ren [] (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
@@ -281,18 +248,18 @@ castʳ = castʳˢ
 -- exactly the shape the corresponding case needs.
 ------------------------------------------------------------------------
 
-cast-app : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
+cast-app-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
          → (M' : Γ' ∷ A ⊢C⦂ C) → (W' : Γ' ⊢V⦂ A)
          → (castᶜ (cong (_∷ A) e) M') [ Hd ↦ castᵛ e W' ]c
          ≡ castᶜ e (M' [ Hd ↦ W' ]c)
-cast-app refl M' W' = refl
+cast-app-reduct refl M' W' = refl
 
-cast-match : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
+cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢C⦂ C) → (V' : Γ' ⊢V⦂ A) → (W' : Γ' ⊢V⦂ B)
            → ((castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
                 [ Hd ↦ V-rename wk-ren (castᵛ e W') ]c) [ Hd ↦ castᵛ e V' ]c
            ≡ castᶜ e ((M' [ Hd ↦ V-rename wk-ren W' ]c) [ Hd ↦ V' ]c)
-cast-match refl M' V' W' = refl
+cast-match-reduct refl M' V' W' = refl
 
 cast-seq-ret : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
              → (N' : Γ' ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε) → (V' : Γ' ⊢V⦂ A)
@@ -613,7 +580,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ... | p' , M₀' , refl , eM₀ = _ , _ , es , COERCE , id-≤≐ , eM₀
 
 -- application: the function is a lambda on both sides, and the reducts are the
--- same substitution (`sub-≐ᶜ`), the cast commuting with it (`cast-app`).
+-- same substitution (`sub-≐ᶜ`), the cast commuting with it (`cast-app-reduct`).
 
 ↝-≐-app : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
         → {M₀ : toCtx St ∷ A ⊢C⦂ B ‼ ε} → {V : toCtx St ⊢V⦂ A}
@@ -624,7 +591,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ... | Vf' , W' , refl , eVf , eW with ≐-lam⁻ (sym (toCtx-≐ˢ es)) Vf' eVf
 ...   | M₀' , refl , eM₀ =
     _ , _ , es , APP , id-≤≐
-  , subst (λ z → _ ≐ᶜ z) (cast-app (sym (toCtx-≐ˢ es)) M₀' W')
+  , subst (λ z → _ ≐ᶜ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' W')
           (sub-≐ᶜ Hd eW eM₀)
 
 -- a delay moves the lock into the state, so the two states are related by
@@ -670,7 +637,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ... | U' , M₀' , refl , eU , eM₀ with ≐-pair⁻ (sym (toCtx-≐ˢ es)) U' eU
 ...   | V' , W' , refl , eV , eW =
     _ , _ , es , MATCH , id-≤≐
-  , subst (λ z → _ ≐ᶜ z) (cast-match (sym (toCtx-≐ˢ es)) M₀' V' W')
+  , subst (λ z → _ ≐ᶜ z) (cast-match-reduct (sym (toCtx-≐ˢ es)) M₀' V' W')
       (sub-≐ᶜ Hd eV
         (sub-≐ᶜ Hd (V-rename-cong wk-ren eW) eM₀))
 
@@ -724,7 +691,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ... | _ , w' , V' , M₀' , refl , hw , eM₀ =
     _ , _ , es , UNBOX , id-≤≐
   , subst (λ z → _ ≐ᶜ z)
-      (cast-app (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' w' V'))
+      (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' w' V'))
       (sub-≐ᶜ Hd (unbox-lookup-≐ es {w = w} {w' = w'} {V = V} {V' = V'} hw)
                  eM₀)
 
@@ -774,38 +741,6 @@ cast-seq-op refl V' M' N' = refl
   , subst (λ z → _ ≐ᶜ z) (cast-seq-op (sym (toCtx-≐ˢ es)) V' M₀' N')
       (ε-subst-≐ _
         (perform-≐ eV (seq-≐ eM₀ (C-rename-cong (cong-∷-ren _) eN))))
-
--- Renaming the continuation of a congruence rule: the two renamings differ, but
--- agree up to `_≐ʳ_` (`suc-comp-ren-≐`), and the cast moves past the renaming.
-
-cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
-         → (M' : Γ' ⊢C⦂ A ‼ ε) → (N' : Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
-         → castᶜ e (M' ⨟ N')
-         ≡ (castᶜ e M' ⨟ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
-cast-seq refl M' N' = refl
-
--- Pushing a cast through a `handle`, and past the retyping its congruence rule
--- applies to the clauses (a runtime context has no eternal part, so the reduct
--- moves them along `toCtxᴱ-[]`).
-
-cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
-            → (M' : Γ' ⊢C⦂ A ‼ ε)
-            → (H' : (op : Op) → (ε'' : E) →
-                      Γ' ᴱ ∷ type-of-gtype (param op)
-                        ∷ [ mapᵉ (op-grade op) ]
-                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-            → (N' : Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
-            → castᶜ e (handle M' `with H' `in N')
-            ≡ handle (castᶜ e M')
-              `with (λ op ε'' →
-                       castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
-                                             ∷ [ mapᵉ (op-grade op) ]
-                                                 (type-of-gtype (arity op) ⇒ B ‼ ε''))
-                              e)
-                             (H' op ε''))
-              `in (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
-cast-handle refl M' H' N' = refl
 
 cast-clause : ∀ {Γ Γ' Γ₁ Γ₁' D C} → (e : Γ' ≡ Γ) → (e₁ : Γ₁' ≡ Γ₁)
             → (a : Γ ᴱ ≡ Γ₁ ᴱ) → (a' : Γ' ᴱ ≡ Γ₁' ᴱ)
@@ -964,7 +899,7 @@ cast-handle-op refl V' M' H' N' = refl
                 (St₂' , M₂' , es₂ , r' , h , eM₂) =
     St₂' , _ , es₂ , HANDLE-STEP r' (step-grade-≾ r') , h
   , subst (λ z → _ ≐ᶜ z)
-      (sym (cast-handle (sym (toCtx-≐ˢ es₂)) M₂' _ _))
+      (sym (cast-handle (sym (toCtx-≐ˢ es₂)) {M = M₂'}))
       (handle-≐ eM₂
         (λ op ε₃ →
            subst (λ z → _ ≐ᶜ z)
@@ -1029,9 +964,9 @@ cast-handle-op refl V' M' H' N' = refl
 ...   | St₂' , M₂' , es₂ , r' , h , eM₂ =
     St₂' , _ , es₂ , SEQ-STEP r' (step-grade-≾ r') , h
   , subst (λ z → _ ≐ᶜ z)
-      (sym (cast-seq (sym (toCtx-≐ˢ es₂)) M₂'
-             (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
-                                                 (step-grade-≾ r'))) N')))
+      (sym (cast-seq (sym (toCtx-≐ˢ es₂)) {M = M₂'}
+             {N = C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
+                                                     (step-grade-≾ r'))) N'}))
     (seq-≐ eM₂
       (≐ᶜ-trans
         (C-rename-≐ (cong-∷-ren-≐ (suc-comp-ren-≐ h es es₂ c (step-grade-≾ r'))) _)
@@ -1216,11 +1151,6 @@ slice-renᵘ-≐ˢ es es₂ {q} {q'} h =
                    (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
                    (sym (toCtx-≐ˢ es₂))
                    ⟨⟩-η-ren (suc-comp-ren (ext q') (bound q') ∘ʳ ⟨⟩-η⁻¹-ren))))
-
-castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
-          → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
-          → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
-castᵛ-var refl f x = refl
 
 -- WHERE A CELL GETS TO, ACROSS THE EQUIVALENCE
 --

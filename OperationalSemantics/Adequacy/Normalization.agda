@@ -92,7 +92,7 @@ FL-unbox {St = St} {A = A} {ρ = ρ} γ pγ w V M pM
     rel₂ = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel₁
 
     pU : Val A St U
-    pU = Val-≐ᵛ A (≡→≐ᵛˢ (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
+    pU = Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
                   (env-cell₀-val γ pγ (unbox-tgt w V) id-suc rel₂)
 
 -- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components

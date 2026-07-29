@@ -50,6 +50,7 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.RenActions    S
 open import Syntax.Substitutions S
+open import Syntax.Renamings.Equivalence S using (eternal?-no; unbox-var-ren)
 
 open Category Cat
 open Future Fut
@@ -437,13 +438,6 @@ hd-lookup c =
             (∘ᵐ-identityˡ _)))))))
 
 -- the renaming that `unbox-var` builds
-
-unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → Ren [] ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
-unbox-var-ren z rel =
-     eq-ren (split-≡ (split-pf z))
-  ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)
-  ∘ʳ ⟨⟩-≤-ren rel
 
 -- Interpreting an unboxing whose value is the head variable: the looked-up
 -- resource is the (locked) second projection, reindexed by the renaming.
@@ -839,11 +833,6 @@ subst-clauses-uniform e H pH uH op q =
 -- …) can be forced to reduce by `rewrite`ing their scrutinee — cleaner than
 -- per-function unfold lemmas whose signatures are themselves `_ᴱ`-stuck.
 -- (`eternal?-yes` is in `Interpretation.Renaming`, which needs it first.)
-
-eternal?-no : ∀ {A} → (¬et : ¬ Eternal A) → eternal? A ≡ no ¬et
-eternal?-no {A} ¬et with eternal? A
-... | yes et  = ⊥-elim (¬et et)
-... | no ¬et' = cong no (fun-ext (λ e → ⊥-elim (¬et e)))
 
 -- The canonical eternal-skeleton reassociation for the `∈-ᴱ-split` image.
 ∈-ᴱ-e₀ : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)

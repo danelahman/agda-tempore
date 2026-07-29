@@ -3102,11 +3102,6 @@ restrict-closed (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ (λ U₁ U₂ → ⦉ U₁ , U₂ ⦊)
         (restrict-closed et₁ V₁) (restrict-closed et₂ V₂)
 
--- Two renamings out of the empty context act alike.
-
-empty-ren-≐ : ∀ {Γ₁} → (r r' : Ren [] [] Γ₁) → r ≐ʳ r'
-empty-ren-≐ r r' = mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx x))
-
 -- An eternal zone's values, on the context the chain peels.
 
 ηᴱ : ∀ {Δ₀} → ClosedVals Δ₀ → ClosedVals (Δ₀ ᴱ)
@@ -3269,7 +3264,7 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
           (≐ᵛ-trans
             (≡→≐ᵛ (cong (V-rename (restrict-ren (empty-ren lf)))
                         (restrict-closed et (η Hd))))
-            (V-rename-≐ (empty-ren-≐ (restrict-ren (empty-ren lf))
+            (V-rename-≐ (∅-ren-≐ (restrict-ren (empty-ren lf))
                                      (empty-ren (ᴱ-lock-free Δ)))
                         (η Hd))))
 
@@ -4281,8 +4276,8 @@ env-eternal-C-unbox : ∀ {Δ Γc Δ₀ A C ρ} → (lf : Lock-free Δ) → (η 
                          ≐ᶜ unbox w₁ V₁ (env-eternal-C lf η M))
 
 env-eternal-C-unbox {[]} {Γc} {A = A} lf-[] η w V M .(unbox-tgt w V) refl rel =
-    _ , castʳᵉ (++ᶜ-identityˡ {Γc}) w , V
-  , unbox-tgt-castʳᵉ (++ᶜ-identityˡ {Γc}) w V
+    _ , castʳ (++ᶜ-identityˡ {Γc}) w , V
+  , unbox-tgt-castʳ (++ᶜ-identityˡ {Γc}) w V
   , ≐ᶜ-trans (≡→≐ᶜ (cast-unbox (++ᶜ-identityˡ {Γc})))
       (unbox-≐ refl
         (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (++ᶜ-identityˡ {Γc}))
@@ -4291,11 +4286,11 @@ env-eternal-C-unbox {[]} {Γc} {A = A} lf-[] η w V M .(unbox-tgt w V) refl rel 
 env-eternal-C-unbox {Δ ∷ B} {Γc} {A = A} (lf-∷ lf) η w V M
                     .(unbox-tgt w V) refl rel
   with env-eternal-C-unbox lf (λ x → η (Tl-∷ x))
-         (castʳᵉ (castOf {Δ} {B} Γc) (unbox-var-ren (proj₂ tE) relE))
+         (castʳ (castOf {Δ} {B} Γc) (unbox-var-ren (proj₂ tE) relE))
          (var (λ _ → ≾ᵣ-refl) Hd)
          (castᶜ (castOf {Δ} {B} (Γc ∷ A)) (M [ Tl-∷ (bvar B Γc) ↦ W₀ ]c))
          _
-         (trans (unbox-tgt-castʳᵉ (castOf {Δ} {B} Γc)
+         (trans (unbox-tgt-castʳ (castOf {Δ} {B} Γc)
                                   (unbox-var-ren (proj₂ tE) relE)
                                   (var (λ _ → ≾ᵣ-refl) Hd))
                 (cong (Tgt-cast (castOf {Δ} {B} Γc))
@@ -4347,14 +4342,14 @@ env-Cˢ-unbox (sliceᵉ γ q) Δ w V M .(unbox-tgt w V) refl rel
 env-Cˢ-unbox {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ w V M
              .(unbox-tgt w V) refl rel
   with env-Cˢ-unbox γ ([] ⟨ ρ₀ ⟩ ++ᶜ Δ)
-         (castʳᵉ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w) V
+         (castʳ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w) V
          (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ)) M)
-         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w V) rel
+         _ (unbox-tgt-castʳ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w V) rel
 ... | Δ₁ , w₁ , V₁ , ce , eq =
-    Δ₁ , (cong-ren (unbox-ren q) ∘ʳ castʳᵉ eOut w₁) , V₁
-  , trans (unbox-tgt-∘ (cong-ren (unbox-ren q)) (castʳᵉ eOut w₁) V₁)
+    Δ₁ , (cong-ren (unbox-ren q) ∘ʳ castʳ eOut w₁) , V₁
+  , trans (unbox-tgt-∘ (cong-ren (unbox-ren q)) (castʳ eOut w₁) V₁)
           (cong (var-tgt′ (cong-ren (unbox-ren q)))
-                (trans (unbox-tgt-castʳᵉ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)))
+                (trans (unbox-tgt-castʳ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)))
   , ≐ᶜ-trans
       (C-rename-cong (cong-ren (unbox-ren q))
         (castᶜ-≐ eOut
@@ -4372,12 +4367,12 @@ env-Cˢ-unbox {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ w V
 env-Cˢ-unbox {A = A} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V₀ γ) Δ w V M
              .(unbox-tgt w V) refl rel
   with env-Cˢ-unbox γ ([] ∷ [ ρ₀ ] A₀ ++ᶜ Δ)
-         (castʳᵉ (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) w) V
+         (castʳ (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) w) V
          (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ)) M)
-         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) w V) rel
+         _ (unbox-tgt-castʳ (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) w V) rel
 ... | Δ₁ , w₁ , V₁ , ce , eq =
-    Δ₁ , castʳᵉ eOut w₁ , V₁
-  , trans (unbox-tgt-castʳᵉ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)
+    Δ₁ , castʳ eOut w₁ , V₁
+  , trans (unbox-tgt-castʳ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)
   , ≐ᶜ-trans
       (castᶜ-≐ eOut
         (≐ᶜ-trans (env-Cˢ-≐ γ ([] ∷ [ ρ₀ ] A₀ ++ᶜ Δ)
@@ -4390,9 +4385,9 @@ env-Cˢ-unbox {A = A} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V₀ 
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ₀ ] A₀) Δ)
 
 env-Cˢ-unbox (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ w V M .(unbox-tgt w V) refl rel
-  with env-eternal-C-unbox lf η (castʳᵉ (++ᶜ-assoc Δ₀ Γ₁ Δ) w) V
+  with env-eternal-C-unbox lf η (castʳ (++ᶜ-assoc Δ₀ Γ₁ Δ) w) V
          (castᶜ (cong (_∷ _) (++ᶜ-assoc Δ₀ Γ₁ Δ)) M)
-         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Δ₀ Γ₁ Δ) w V) rel
+         _ (unbox-tgt-castʳ (++ᶜ-assoc Δ₀ Γ₁ Δ) w V) rel
 ... | Δ₁ , w₁ , V₁ , ce , eq
   with env-Cˢ-unbox γ Δ w₁ V₁ _ _ ce
          (env-eternal-cell-rel lf η (Tgt-cast (++ᶜ-assoc Δ₀ Γ₁ Δ)
@@ -4415,12 +4410,12 @@ env-Cˢ-unbox (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ w V M .(unbox-tgt w V) 
 env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ w V M
              .(unbox-tgt w V) refl rel
   with env-Cˢ-unbox γ ([] ∷ A₀ ++ᶜ Δ)
-         (castʳᵉ (++ᶜ-assoc Γ ([] ∷ A₀) Δ) w) V
+         (castʳ (++ᶜ-assoc Γ ([] ∷ A₀) Δ) w) V
          (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ∷ A₀) Δ)) M)
-         _ (unbox-tgt-castʳᵉ (++ᶜ-assoc Γ ([] ∷ A₀) Δ) w V) rel
+         _ (unbox-tgt-castʳ (++ᶜ-assoc Γ ([] ∷ A₀) Δ) w V) rel
 ... | Δ₁ , w₁ , V₁ , ce , eq =
-    _ , castʳᵉ cOf (unbox-var-ren z relSub) , var (λ _ → ≾ᵣ-refl) Hd
-  , trans (unbox-tgt-castʳᵉ cOf (unbox-var-ren z relSub)
+    _ , castʳ cOf (unbox-var-ren z relSub) , var (λ _ → ≾ᵣ-refl) Hd
+  , trans (unbox-tgt-castʳ cOf (unbox-var-ren z relSub)
                             (var (λ _ → ≾ᵣ-refl) Hd))
           (cong (Tgt-cast cOf)
             (trans (unbox-var-tgt z relSub)
@@ -4437,7 +4432,7 @@ env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ w V M
                     (≡→≐ᶜ (cast-unbox (++ᶜ-assoc Γ ([] ∷ A₀) Δ))))
                   eq))
               (≡→≐ᶜ (cast-unbox eOut))))
-          (sub-unbox (castʳᵉ eOut w₁) V₁ _ (bvar A₀ Δ) (bval Δ W) relSub)))
+          (sub-unbox (castʳ eOut w₁) V₁ _ (bvar A₀ Δ) (bval Δ W) relSub)))
       (≐ᶜ-trans (≡→≐ᶜ (cast-unbox cOf))
         (unbox-≐ refl
           (≐ᶜ-trans
@@ -4453,17 +4448,17 @@ env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ w V M
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
     cOf  = castOf {toCtx St} {A₀} Δ
 
-    ceOut = trans (unbox-tgt-castʳᵉ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)
+    ceOut = trans (unbox-tgt-castʳ eOut w₁ V₁) (cong (Tgt-cast eOut) ce)
 
     relSub =
       ≾ᵣ-trans
-        (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (castʳᵉ eOut w₁) V₁) ⟩[ bvar A₀ Δ
+        (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (castʳ eOut w₁) V₁) ⟩[ bvar A₀ Δ
                          ↦ bval Δ W ]rvar)))
         (subst (_≾ᵣ _) (sym (cong proj₁ ceOut))
           (env-cell-rel γ ([] ∷ A₀ ++ᶜ Δ)
             (Tgt-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) (unbox-tgt w V)) rel))
 
-    z = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳᵉ eOut w₁) V₁))
+    z = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳ eOut w₁) V₁))
                         (bvar A₀ Δ) (bval Δ W))
 
 ------------------------------------------------------------------------
@@ -4532,7 +4527,7 @@ env-cell₀-val ⌊ St ⌋   pγ t       e rel = pγ e (proj₂ t) rel
 env-cell₀-val (∅ᵉ St)  pγ (σ , x) e rel = ⊥-elim (not-in-empty-ctx x)
 
 env-cell₀-val {A = A} {ρ = ρ} (sliceᵉ γ q) pγ t {St'} e rel =
-  Val-≐ᵛ A (≡→≐ᵛˢ (lookup-body-≡ St' cellEq rel₁ rel))
+  Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St' cellEq rel₁ rel))
            (env-cell₀-val γ pγ t (≤ₛ-trans (ext q) e) rel₁)
   where
     c = proj₂ (env-cell₀ γ t)
@@ -4543,7 +4538,7 @@ env-cell₀-val {A = A} {ρ = ρ} (sliceᵉ γ q) pγ t {St'} e rel =
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
 env-cell₀-val {A = A} {ρ = ρ} (_⟨_⟩ᵉ {ρ = ρ₀} γ q) pγ (σ , Tl-⟨⟩ y) {St'} e rel =
-  Val-≐ᵛ A (≡→≐ᵛˢ (lookup-body-≡ St' cellEq rel₁ rel))
+  Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St' cellEq rel₁ rel))
            (env-cell₀-val γ pγ (_ , y) (≤ₛ-trans (ext q) e) rel₁)
   where
     c = proj₂ (env-cell₀ γ (_ , y))
@@ -4561,7 +4556,7 @@ env-cell₀-val (liftᵉ V γ) (pγ , pV) (σ , Hd) e rel =
   store-fresh V pV (λ _ → ≾ᵣ-refl) e rel
 
 env-cell₀-val {A = A} {ρ = ρ} (liftᵉ V γ) (pγ , pV) (σ , Tl-∷ y) {St'} e rel =
-  Val-≐ᵛ A (≡→≐ᵛˢ (lookup-body-≡ St' cellEq rel₁ rel))
+  Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St' cellEq rel₁ rel))
            (env-cell₀-val γ pγ (σ , y) (≤ₛ-trans (∷-suc V id-suc) e) rel₁)
   where
     c = proj₂ (env-cell₀ γ (σ , y))

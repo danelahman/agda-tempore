@@ -41,6 +41,10 @@ open import Syntax.Renamings.Coherence   Spec
 
 -- RETYPING ALONG A CONTEXT EQUALITY
 
+-- Defined by matching on the proof, not as `subst`: the rigid head is what
+-- lets the unifier solve the clause-swap metas, and what lets the inversion
+-- lemmas match a cast off.
+
 castᵛ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
 castᵛ refl V = V
 
@@ -240,24 +244,24 @@ cong-ren-wk-cast-≐ {B} Γ₀ Γ₁ Θ₀ Θ₁ refl refl e e' =
                     (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ e refl)))
               (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _)))
 
-castʳᵉ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ → Ren [] (Δ ⟨ ρ ⟩) Γ'
-castʳᵉ refl w = w
+castʳ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ → Ren [] (Δ ⟨ ρ ⟩) Γ'
+castʳ refl w = w
 
 cast-unbox : ∀ {Γ Γ' A C ρ Δ} → (e : Γ ≡ Γ')
            → {w : Ren [] (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
            → castᶜ e (unbox w V M)
-           ≡ unbox (castʳᵉ e w) V (castᶜ (cong (_∷ A) e) M)
+           ≡ unbox (castʳ e w) V (castᶜ (cong (_∷ A) e) M)
 cast-unbox refl = refl
 
 -- A cast does not move the cell an `unbox` names.
 
-unbox-tgt-castʳᵉ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+unbox-tgt-castʳ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
                  → (V : Δ ⊢V⦂ [ ρ ] A)
-                 → unbox-tgt (castʳᵉ e w) V
+                 → unbox-tgt (castʳ e w) V
                  ≡ (proj₁ (unbox-tgt w V)
                    , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w V) ] Γ₀) e
                            (proj₂ (unbox-tgt w V)))
-unbox-tgt-castʳᵉ refl w V = refl
+unbox-tgt-castʳ refl w V = refl
 
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
          → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
