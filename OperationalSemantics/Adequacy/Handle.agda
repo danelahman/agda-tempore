@@ -272,7 +272,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
     (Comp-expand HANDLE-OP
       (Comp-expand BOX
         (subst (Comp' B _ (St₁ ∷ₛ V₀)) fired
-          (hH V₀ bval W (Valᵍ→Val (param op) W pW)))))
+          (hH V₀ bv W (Valᵍ→Val (param op) W pW)))))
   where
     ρₒ  = mapᵉ (op-grade op)
     Ar  = type-of-gtype (arity op)
@@ -318,8 +318,8 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
     -- own body; the two `eq-ren`s cancel and `slice-unbox-ren-≐` composes the
     -- unboxing with the clause's own slice.
 
-    bval : Boxed-Val B op (ε₃ ·ₑ ε₂) St₁ V₀
-    bval {St'} q = _ , refl , resump
+    bv : Boxed-Val B op (ε₃ ·ₑ ε₂) St₁ V₀
+    bv {St'} q = _ , refl , resump
       where
         Mq = C-rename (cong-∷-ren (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ))
                (C-rename (cong-∷-ren (eq-ren (sym (++ᶜ-identityˡ

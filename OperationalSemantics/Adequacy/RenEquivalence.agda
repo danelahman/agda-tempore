@@ -26,7 +26,7 @@ open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
-open import Relation.Nullary using (yes; no)
+open import Relation.Nullary using (yes; no; Dec)
 
 open import Util.Equality
 
@@ -697,13 +697,20 @@ restrict-ren-∘-≐ r₂ r₁ = ≐ʳ-refl
 
 -- The variable of `Γ` that a variable of `Γ ᴱ` came from, on `Tgt`s.
 
-∈-ᴱ⁻ : (Γ : Ctx) → ∀ {A ρ} → A ∈[ ρ ] Γ ᴱ → Tgt Γ A
+∈-ᴱ⁻   : (Γ : Ctx) → ∀ {A ρ} → A ∈[ ρ ] Γ ᴱ → Tgt Γ A
+
+-- as `ᴱ-∷`: the entry's decision is an argument, so that a caller that has
+-- decided it sees the reflection reduce
+∈-ᴱ⁻-∷ : (Γ : Ctx) → (B : VType) → (d : Dec (Eternal B)) → ∀ {A ρ}
+       → A ∈[ ρ ] ᴱ-∷ (Γ ᴱ) B d → Tgt (Γ ∷ B) A
+
+∈-ᴱ⁻-∷ Γ B (yes _) Hd       = uᵣ , Hd
+∈-ᴱ⁻-∷ Γ B (yes _) (Tl-∷ y) = proj₁ (∈-ᴱ⁻ Γ y) , Tl-∷ (proj₂ (∈-ᴱ⁻ Γ y))
+∈-ᴱ⁻-∷ Γ B (no  _) x        = proj₁ (∈-ᴱ⁻ Γ x) , Tl-∷ (proj₂ (∈-ᴱ⁻ Γ x))
+
 ∈-ᴱ⁻ []        x with x
 ... | ()
-∈-ᴱ⁻ (Γ ∷ B)   x with eternal? B
-∈-ᴱ⁻ (Γ ∷ B)   Hd       | yes _ = uᵣ , Hd
-∈-ᴱ⁻ (Γ ∷ B)   (Tl-∷ y) | yes _ = proj₁ (∈-ᴱ⁻ Γ y) , Tl-∷ (proj₂ (∈-ᴱ⁻ Γ y))
-∈-ᴱ⁻ (Γ ∷ B)   x        | no  _ = proj₁ (∈-ᴱ⁻ Γ x) , Tl-∷ (proj₂ (∈-ᴱ⁻ Γ x))
+∈-ᴱ⁻ (Γ ∷ B)   x = ∈-ᴱ⁻-∷ Γ B (eternal? B) x
 ∈-ᴱ⁻ (Γ ⟨ ρ ⟩) x =
   proj₁ (∈-ᴱ⁻ Γ x) ·ᵣ ρ , Tl-⟨⟩ (proj₂ (∈-ᴱ⁻ Γ x))
 

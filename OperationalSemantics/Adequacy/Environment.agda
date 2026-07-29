@@ -11,8 +11,6 @@
 -- The zones a context of the fundamental lemma has:                  --
 --                                                                    --
 --   * `⌊ St ⌋`  — the state: locks and cells, closed by the store;   --
---   * `renᵉ`    — precomposition with a renaming, making `Env`       --
---                 functorial (`env-alloc`);                          --
 --   * `_∷ᵉ_`/`_⟨_⟩ᵉ` — the binder telescope: each variable           --
 --                 instantiated by a value, each lock matched by a    --
 --                 slice into a state far enough ahead;               --
@@ -70,12 +68,22 @@ data Lock-free : Ctx → Set where
   lf-[] : Lock-free []
   lf-∷  : ∀ {Γ A} → Lock-free Γ → Lock-free (Γ ∷ A)
 
-ᴱ-lock-free : (Γ : Ctx) → Lock-free (Γ ᴱ)
+-- The decision is routed through a helper *taking* it rather than matching
+-- on it, as `_ᴱ` itself is (`ᴱ-∷`): a caller that has decided `A`'s
+-- eternality can then see the witness reduce, which `with`/`rewrite` at the
+-- use site cannot achieve — `eternal? A` does not occur syntactically in
+-- `ᴱ-lock-free (Γ ∷ A)`, only inside its own `with`.
+
+ᴱ-lock-free   : (Γ : Ctx) → Lock-free (Γ ᴱ)
+ᴱ-lock-free-∷ : (Γ : Ctx) → (A : VType) → (d : Dec (Eternal A))
+              → Lock-free (ᴱ-∷ (Γ ᴱ) A d)
+
 ᴱ-lock-free []        = lf-[]
-ᴱ-lock-free (Γ ∷ A)   with eternal? A
-... | yes _           = lf-∷ (ᴱ-lock-free Γ)
-... | no  _           = ᴱ-lock-free Γ
+ᴱ-lock-free (Γ ∷ A)   = ᴱ-lock-free-∷ Γ A (eternal? A)
 ᴱ-lock-free (Γ ⟨ ρ ⟩) = ᴱ-lock-free Γ
+
+ᴱ-lock-free-∷ Γ A (yes _) = lf-∷ (ᴱ-lock-free Γ)
+ᴱ-lock-free-∷ Γ A (no  _) = ᴱ-lock-free Γ
 
 -- Weakening a closed term into a lock-free context, and a term into one
 -- left-extended by a lock-free prefix.
@@ -119,15 +127,6 @@ data Env : (St : 𝕊 []) → Ctx → Set where
   ∅ᵉ       : (St : 𝕊 [])
            --------------
            → Env St []
-
-  -- precomposition with a renaming: what makes `Env` functorial in the
-  -- state (`env-alloc`). Kept separate from `⌊_⌋` so that the identity
-  -- case of the action stays `refl`, `Ren` being unquotiented.
-
-  renᵉ     : ∀ {St Γ Γ₀}
-           → Env St Γ → Ren [] Γ₀ Γ
-           ---------------------
-           → Env St Γ₀
 
   -- postcomposition with a slice: what makes `Env` functorial in the *state*
   -- (`env-alloc`). Recorded rather than pushed into the base, so that a
@@ -185,7 +184,6 @@ Rel-Env (liftᵉ {St} {Γ} {A} {ρ} V γ) =
   Rel-Env γ
   × (∀ {St'} → (q : Slice St ρ St' uᵣ)
        → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
-Rel-Env (renᵉ γ r)             = Rel-Env γ
 Rel-Env (sliceᵉ γ q)           = Rel-Env γ
 Rel-Env (eternalˡ Δ lf η γ)    =
   Rel-Env γ × (∀ {A ρ} → A ∈[ ρ ] Δ → Eternal A)
@@ -200,7 +198,6 @@ Rel-Env (eternalˡ Δ lf η γ)    =
 Eternal-Env : ∀ {St Γ} → Env St Γ → Set
 Eternal-Env ⌊ St ⌋              = ⊤
 Eternal-Env (∅ᵉ St)              = ⊤
-Eternal-Env (renᵉ γ r)          = Eternal-Env γ
 Eternal-Env (sliceᵉ γ q)        = Eternal-Env γ
 Eternal-Env (γ ⟨ q ⟩ᵉ)           = Eternal-Env γ
 Eternal-Env (γ ∷ᵉ V)            = Eternal-Env γ
@@ -211,7 +208,6 @@ Eternal-Env (eternalˡ Δ lf η γ) =
 Rel-Env-eternal : ∀ {St Γ} → (γ : Env St Γ) → Rel-Env γ → Eternal-Env γ
 Rel-Env-eternal ⌊ St ⌋              pγ        = tt
 Rel-Env-eternal (∅ᵉ St)              pγ        = tt
-Rel-Env-eternal (renᵉ γ r)          pγ        = Rel-Env-eternal γ pγ
 Rel-Env-eternal (sliceᵉ γ q)        pγ        = Rel-Env-eternal γ pγ
 Rel-Env-eternal (γ ⟨ q ⟩ᵉ)           pγ        = Rel-Env-eternal γ pγ
 Rel-Env-eternal (γ ∷ᵉ V)            (pγ , _)  = Rel-Env-eternal γ pγ
@@ -503,7 +499,6 @@ env-Cˢ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ ⌊ St ⌋ Δ V = V
 env-Vˢ (∅ᵉ St) Δ V = V-rename (cong-ren (∅-ren St)) V
-env-Vˢ (renᵉ γ r) Δ V = env-Vˢ γ Δ (V-rename (cong-ren r) V)
 env-Vˢ (sliceᵉ γ q) Δ V = V-rename (cong-ren (slice-renᵘ q)) (env-Vˢ γ Δ V)
 env-Vˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
   V-rename (cong-ren (unbox-ren q))
@@ -526,7 +521,6 @@ env-Vˢ (eternalˡ Δ₀ lf η γ) Δ V =
 
 env-Cˢ ⌊ St ⌋ Δ M = M
 env-Cˢ (∅ᵉ St) Δ M = C-rename (cong-ren (∅-ren St)) M
-env-Cˢ (renᵉ γ r) Δ M = env-Cˢ γ Δ (C-rename (cong-ren r) M)
 env-Cˢ (sliceᵉ γ q) Δ M = C-rename (cong-ren (slice-renᵘ q)) (env-Cˢ γ Δ M)
 env-Cˢ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
   C-rename (cong-ren (unbox-ren q))
@@ -587,7 +581,6 @@ env-Vˢ-lam : ∀ {St Γ A B ε} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ-lam ⌊ St ⌋ Δ M = refl
 env-Vˢ-lam (∅ᵉ St) Δ M = refl
-env-Vˢ-lam (renᵉ γ r) Δ M = env-Vˢ-lam γ Δ _
 env-Vˢ-lam (sliceᵉ γ q) Δ M = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-lam γ Δ M)
 
 env-Vˢ-lam {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
@@ -760,7 +753,6 @@ env-Cˢ-ret : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → (V : (Γ ++�
 
 env-Cˢ-ret ⌊ St ⌋ Δ V = refl
 env-Cˢ-ret (∅ᵉ St) Δ V = refl
-env-Cˢ-ret (renᵉ γ r) Δ V = env-Cˢ-ret γ Δ _
 env-Cˢ-ret (sliceᵉ γ q) Δ V = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-ret γ Δ V)
 
 env-Cˢ-ret (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
@@ -837,7 +829,6 @@ env-Cˢ-app : ∀ {St Γ A C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-app ⌊ St ⌋ Δ V U = refl
 env-Cˢ-app (∅ᵉ St) Δ V U = refl
-env-Cˢ-app (renᵉ γ r) Δ V U = env-Cˢ-app γ Δ _ _
 env-Cˢ-app (sliceᵉ γ q) Δ V U = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-app γ Δ V U)
 
 env-Cˢ-app (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
@@ -913,7 +904,6 @@ env-Cˢ-absurd : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-absurd ⌊ St ⌋ Δ V = refl
 env-Cˢ-absurd (∅ᵉ St) Δ V = refl
-env-Cˢ-absurd (renᵉ γ r) Δ V = env-Cˢ-absurd γ Δ _
 env-Cˢ-absurd (sliceᵉ γ q) Δ V = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-absurd γ Δ V)
 
 env-Cˢ-absurd (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V =
@@ -989,7 +979,6 @@ env-Cˢ-coerce : ∀ {St Γ A ε ε'} → (γ : Env St Γ) → (Δ : Ctx) → {p
 
 env-Cˢ-coerce ⌊ St ⌋ Δ M = refl
 env-Cˢ-coerce (∅ᵉ St) Δ M = refl
-env-Cˢ-coerce (renᵉ γ r) Δ M = env-Cˢ-coerce γ Δ _
 env-Cˢ-coerce (sliceᵉ γ q) Δ M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-coerce γ Δ M)
 
 env-Cˢ-coerce (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M =
@@ -1065,7 +1054,6 @@ env-Vˢ-pair : ∀ {St Γ A B} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Vˢ-pair ⌊ St ⌋ Δ V U = refl
 env-Vˢ-pair (∅ᵉ St) Δ V U = refl
-env-Vˢ-pair (renᵉ γ r) Δ V U = env-Vˢ-pair γ Δ _ _
 env-Vˢ-pair (sliceᵉ γ q) Δ V U = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-pair γ Δ V U)
 
 env-Vˢ-pair (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V U =
@@ -1140,7 +1128,6 @@ env-Vˢ-const : ∀ {St Γ b} → (γ : Env St Γ) → (Δ : Ctx) → (c : BaseC
 
 env-Vˢ-const ⌊ St ⌋ Δ c = refl
 env-Vˢ-const (∅ᵉ St) Δ c = refl
-env-Vˢ-const (renᵉ γ r) Δ c = env-Vˢ-const γ Δ _
 env-Vˢ-const (sliceᵉ γ q) Δ c = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-const γ Δ c)
 
 env-Vˢ-const (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ c =
@@ -1214,7 +1201,6 @@ env-Vˢ-⋆ : ∀ {St Γ} → (γ : Env St Γ) → (Δ : Ctx) → env-Vˢ γ Δ 
 
 env-Vˢ-⋆ ⌊ St ⌋ Δ  = refl
 env-Vˢ-⋆ (∅ᵉ St) Δ = refl
-env-Vˢ-⋆ (renᵉ γ r) Δ  = env-Vˢ-⋆ γ Δ
 env-Vˢ-⋆ (sliceᵉ γ q) Δ = cong (V-rename (cong-ren (slice-renᵘ q))) (env-Vˢ-⋆ γ Δ)
 
 env-Vˢ-⋆ (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ  =
@@ -1318,7 +1304,6 @@ env-Cˢ-delay : ∀ {St Γ A ε τ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-delay ⌊ St ⌋ Δ M = refl
 env-Cˢ-delay (∅ᵉ St) Δ M = refl
-env-Cˢ-delay (renᵉ γ r) Δ M = env-Cˢ-delay γ Δ _
 env-Cˢ-delay (sliceᵉ γ q) Δ M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-delay γ Δ M)
 
 env-Cˢ-delay {τ = τ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ M =
@@ -1475,7 +1460,6 @@ env-Cˢ-seq : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-seq ⌊ St ⌋ Δ M N = refl
 env-Cˢ-seq (∅ᵉ St) Δ M N = refl
-env-Cˢ-seq (renᵉ γ r) Δ M N = env-Cˢ-seq γ Δ _ _
 env-Cˢ-seq (sliceᵉ γ q) Δ M N = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-seq γ Δ M N)
 
 env-Cˢ-seq {A = A} {ε = ε} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ M N =
@@ -1655,7 +1639,6 @@ env-Cˢ-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-perform ⌊ St ⌋ Δ V M = refl
 env-Cˢ-perform (∅ᵉ St) Δ V M = refl
-env-Cˢ-perform (renᵉ γ r) Δ V M = env-Cˢ-perform γ Δ _ _
 env-Cˢ-perform (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-perform γ Δ V M)
 
 env-Cˢ-perform {op = op} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
@@ -1803,7 +1786,6 @@ env-Cˢ-match : ∀ {St Γ A B C} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-match ⌊ St ⌋ Δ V M = refl
 env-Cˢ-match (∅ᵉ St) Δ V M = refl
-env-Cˢ-match (renᵉ γ r) Δ V M = env-Cˢ-match γ Δ _ _
 env-Cˢ-match (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-match γ Δ V M)
 
 env-Cˢ-match {A = A} {B = B} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M =
@@ -1960,7 +1942,6 @@ env-Cˢ-box : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-box ⌊ St ⌋ Δ V M = refl
 env-Cˢ-box (∅ᵉ St) Δ V M = refl
-env-Cˢ-box (renᵉ γ r) Δ V M = env-Cˢ-box γ Δ _ _
 env-Cˢ-box (sliceᵉ γ q) Δ V M = cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-box γ Δ V M)
 
 env-Cˢ-box {A = A} {ρ = ρ} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ'} γ q) Δ V M =
@@ -2233,11 +2214,6 @@ env-Hˢ (∅ᵉ St) Δ K op ε =
   C-rename (cong-∷-ren (cong-∷-ren
              (restrict-ren (cong-ren {Γ'' = Δ} (∅-ren St))))) (K op ε)
 
-env-Hˢ (renᵉ γ r) Δ K =
-  env-Hˢ γ Δ (λ op ε →
-    C-rename (cong-∷-ren (cong-∷-ren
-               (restrict-ren (cong-ren {Γ'' = Δ} r)))) (K op ε))
-
 env-Hˢ (sliceᵉ γ q) Δ K op ε =
   C-rename (cong-∷-ren (cong-∷-ren
              (restrict-ren (cong-ren {Γ'' = Δ} (slice-renᵘ q)))))
@@ -2296,7 +2272,6 @@ env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
 
 env-Cˢ-handle ⌊ St ⌋ Δ M H N = refl
 env-Cˢ-handle (∅ᵉ St) Δ M H N = refl
-env-Cˢ-handle (renᵉ γ r) Δ M H N = env-Cˢ-handle γ Δ _ _ _
 env-Cˢ-handle (sliceᵉ γ q) Δ M H N =
   cong (C-rename (cong-ren (slice-renᵘ q))) (env-Cˢ-handle γ Δ M H N)
 
@@ -2423,7 +2398,18 @@ env-Cˢ-handle {A = A} {ε = ε} (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ M H 
 ... | inj₁ p = inj₁ p
 ... | inj₂ y = inj₂ (Tl-⟨⟩ y)
 
-env-ᴱ : ∀ {St Γ} → (γ : Env St Γ) → ClosedVals (Γ ᴱ)
+env-ᴱ   : ∀ {St Γ} → (γ : Env St Γ) → ClosedVals (Γ ᴱ)
+
+-- as `ᴱ-lock-free-∷`: the telescope entry's decision is taken as an
+-- argument, so a caller that has decided it sees the values reduce
+env-ᴱ-∷ : ∀ {St Γ A} → (γ : Env St Γ) → (V : toCtx St ⊢V⦂ A)
+        → (d : Dec (Eternal A)) → ClosedVals (ᴱ-∷ (Γ ᴱ) A d)
+
+env-ᴱ-∷ {St = St} γ V (yes et) Hd       =
+  castᵛ (toCtxᴱ-[] St) (eternal-val-restrict et V)
+env-ᴱ-∷           γ V (yes et) (Tl-∷ y) = env-ᴱ γ y
+env-ᴱ-∷           γ V (no ¬et) x        = env-ᴱ γ x
+
 
 env-ᴱ ⌊ St ⌋ x =
   ⊥-elim (not-in-empty-ctx (subst (λ Γ' → _ ∈[ _ ] Γ') (toCtxᴱ-[] St) x))
@@ -2434,14 +2420,7 @@ env-ᴱ (liftᵉ {A = A} {ρ = ρ} V γ) x with eternal? ([ ρ ] A)
 ... | no ¬et = env-ᴱ γ x
 env-ᴱ (γ ⟨ q ⟩ᵉ) x = env-ᴱ γ x
 env-ᴱ (sliceᵉ γ q) x = env-ᴱ γ x
-env-ᴱ (renᵉ {Γ₀ = Γ₀} γ r) x with ᴱ-eternal Γ₀ x | ∈-ᴱ⁻ Γ₀ x
-... | et | ρ' , y with var-rename r y
-... | ρ'' , _ , z = env-ᴱ γ (∈-ᴱ et z)
-env-ᴱ (_∷ᵉ_ {A = A} γ V) x with eternal? A
-env-ᴱ (_∷ᵉ_ {St = St} {A = A} γ V) Hd       | yes et =
-  castᵛ (toCtxᴱ-[] St) (eternal-val-restrict et V)
-env-ᴱ (_∷ᵉ_ γ V)                   (Tl-∷ y) | yes et = env-ᴱ γ y
-env-ᴱ (_∷ᵉ_ γ V)                   x        | no ¬et = env-ᴱ γ x
+env-ᴱ (_∷ᵉ_ {A = A} γ V) = env-ᴱ-∷ γ V (eternal? A)
 env-ᴱ (eternalˡ {Γ = Γ} Δ lf η γ) x
   with ∈-++ᶜ-split (Δ ᴱ) (Γ ᴱ) (subst (λ Γ' → _ ∈[ _ ] Γ') (ᴱ-++ᶜ Δ Γ) x)
 ... | inj₁ (ρ' , y) = η (proj₂ (∈-ᴱ⁻ Δ y))
@@ -2472,13 +2451,10 @@ env-clause-rel {Γ = Γ} γ St₁ = tt , ᴱ-eternal Γ
 -- up moves each zone's renaming past the substitutions to its right, which
 -- `Ren` being unquotiented does not do on the nose.
 --
--- Proving it needs a lemma the development does not yet have: *renaming
--- commutes with substitution* — `C-rename (cong-ren r) (M [ x ↦ V ]c) ≐ᶜ
--- (C-rename (cong-ren r) M) [ x ↦ V-rename r V ]c` at an arbitrary suffix. The
--- `_∷ᵉ_` zone is where it bites: `env-Hˢ` substitutes there *after* the zones to
--- its left have run, `env-eternal-C` *before*. That lemma is a mutual induction
--- on the term of `sub-wk`'s size, and `FL-match` wants its substitution/
--- substitution counterpart.
+-- It is proved at the end of this module (`env-Hˢ-clause`), on the two
+-- developments that go before it there: `sub-swap`, since the `_∷ᵉ_` zone
+-- substitutes *after* the zones to its left while `env-eternal-C`
+-- substitutes before; and `env-Hˢ-ᴱ`, the state-free core.
 
 -- A state contributes nothing to a restriction, at any suffix.
 
@@ -2504,18 +2480,6 @@ Cl-castᴿ {B = B} op ε e X =
                             (type-of-gtype (arity op) ⇒ B ‼ ε))
               e)
         X
-
-postulate
-  env-Hˢ-clause : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 []) → (Δ : Ctx)
-                → (K : Fam B ((Γ ++ᶜ Δ) ᴱ)) → (op : Op) → (ε : E)
-                → C-rename (cong-∷-ren (cong-∷-ren
-                              (clause-ren St₁ Δ ∘ʳ eq-ren (toCtxᴱ-++ᶜ St Δ))))
-                           (env-Hˢ γ Δ K op ε)
-                ≐ᶜ env-Cˢ (env-clause γ St₁)
-                          (Δ ᴱ ∷ type-of-gtype (param op)
-                               ∷ [ mapᵉ (op-grade op) ]
-                                   (type-of-gtype (arity op) ⇒ B ‼ ε))
-                          (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε))
 
 ------------------------------------------------------------------------
 -- FUNCTORIALITY IN THE STATE
@@ -2572,7 +2536,6 @@ env-Vˢ-≐ : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → {V V' : (Γ 
 
 env-Vˢ-≐ ⌊ St ⌋       Δ eV = eV
 env-Vˢ-≐ (∅ᵉ St)       Δ eV = V-rename-cong _ eV
-env-Vˢ-≐ (renᵉ γ r)   Δ eV = env-Vˢ-≐ γ Δ (V-rename-cong (cong-ren r) eV)
 env-Vˢ-≐ (sliceᵉ γ q) Δ eV = V-rename-cong _ (env-Vˢ-≐ γ Δ eV)
 env-Vˢ-≐ (γ ⟨ q ⟩ᵉ)    Δ eV =
   V-rename-cong _ (castᵛ-≐ _ (env-Vˢ-≐ γ _ (castᵛ-≐ _ eV)))
@@ -3589,9 +3552,6 @@ env-Vˢ-var-r : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx) → (x : A 
 env-Vˢ-var-r ⌊ St ⌋ Δ x f f' = var-≐
 env-Vˢ-var-r (∅ᵉ St) Δ x f f' = ren-var-r (∅-ren St) x f f'
 
-env-Vˢ-var-r (renᵉ γ r) Δ x f f' =
-  ≐ᵛ-trans (env-Vˢ-≐ γ Δ (ren-var-r r x f f)) (env-Vˢ-var-r γ Δ x f f')
-
 env-Vˢ-var-r (sliceᵉ γ q) Δ x f f' =
   ≐ᵛ-trans (V-rename-cong (cong-ren (slice-renᵘ q)) (env-Vˢ-var-r γ Δ x f f))
            (ren-var-r (slice-renᵘ q) x f f')
@@ -3744,19 +3704,6 @@ env-Vˢ-var-l ⌊ St ⌋ Δ eγ ¬et p x f f' =
   ≐ᵛ-sym (var-ren-tgt-≐ (push-ren Δ p) x f' (push-ren-tgt Δ p x) f)
 
 env-Vˢ-var-l (∅ᵉ St) Δ eγ ¬et p x f f' = ⊥-elim (not-in-empty-ctx x)
-
-env-Vˢ-var-l (renᵉ γ r) Δ eγ ¬et p x f f' =
-  ≐ᵛ-trans
-    (env-Vˢ-≐ γ Δ
-      (var-ren-tgt-≐ (cong-ren {Γ'' = Δ} r) (∈-++ᶜˡ Δ x) f
-                     (cong-ren-tgt-l r Δ x) f₂))
-    (≐ᵛ-trans (env-Vˢ-var-l γ Δ eγ ¬et p (proj₂ (var-tgt r x)) f₂ f₃)
-              (V-rename-cong (push-ren Δ p)
-                (env-Vˢ-≐ γ [] (≐ᵛ-sym (var-ren-≐ r x f' f₃)))))
-  where
-    drop = proj₁ (proj₂ (var-rename r x))
-    f₂   = λ z → ≾ᵣ-trans (grade-++ᶜˡ-mono Δ (drop z)) (f z)
-    f₃   = λ z → ≾ᵣ-trans (drop z) (f' z)
 
 env-Vˢ-var-l (sliceᵉ γ q) Δ eγ ¬et p x f f' =
   ≐ᵛ-trans
@@ -4027,12 +3974,6 @@ env-var (∅ᵉ St)       pγ x f = ⊥-elim (not-in-empty-ctx x)
 
 env-var (sliceᵉ γ q) pγ x f = Val-slice q _ (env-var γ pγ x f)
 
-env-var (renᵉ γ r)   pγ x f =
-  Val-≐ᵛ _ (≐ᵛ-sym (env-Vˢ-≐ γ [] (var-ren-≐ r x f f')))
-           (env-var γ pγ (proj₂ (var-tgt r x)) f')
-  where
-    f' = λ ¬et → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) ¬et) (f ¬et)
-
 env-var (γ ∷ᵉ W) (pγ , pW) Hd       f =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-hd γ W f)) pW
 env-var {A = A} (γ ∷ᵉ W) (pγ , pW) (Tl-∷ x) f with eternal? A
@@ -4064,3 +4005,5240 @@ env-var {A = A} (eternalˡ Δ lf η γ) (pγ , et) x f
 ... | inj₁ (ρ' , y) = Val-eternal (et y) _
 ... | inj₂ y        =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-eternalˡ Δ lf η γ x y eq f)) (env-var γ pγ y f)
+
+------------------------------------------------------------------------
+-- RENAMING COMMUTES WITH SUBSTITUTION
+--
+-- Renaming a prefix and substituting at the variable just past it are
+-- independent, so they may be done in either order — the value substituted
+-- picking up the renaming when it goes second. Stated at an arbitrary suffix,
+-- as `sub-wk`, and for the same reason: every binding former grows it.
+------------------------------------------------------------------------
+
+-- The three renamings the variable substitution puts in front of its recursive
+-- call are natural in a renaming of the prefix.
+
+wk-ren-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ')
+           → (cong-∷-ren {A = A} r ∘ʳ wk-ren) ≐ʳ (wk-ren ∘ʳ r)
+wk-ren-nat r = mk≐ʳ (λ y → cong-ren-tgt-l r ([] ∷ _) y)
+
+⟨⟩-ren-nat : ∀ {Γ Γ' ρ} → (r : Ren [] Γ Γ')
+           → (rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩))
+           → (∀ {A σ} → (y : A ∈[ σ ] Γ') → var-tgt rn y ≡ Tgt-⟨⟩ ρ (σ , y))
+           → (∀ {A σ} → (y : A ∈[ σ ] Γ)  → var-tgt rn y ≡ Tgt-⟨⟩ ρ (σ , y))
+           → (cong-⟨⟩-ren r ∘ʳ rn) ≐ʳ (rn ∘ʳ r)
+⟨⟩-ren-nat {ρ = ρ} r rn h' h = mk≐ʳ go
+  where
+    go : ∀ {A σ} → (y : A ∈[ σ ] _) → _
+    go y =
+      trans (cong (var-tgt′ (cong-⟨⟩-ren r)) (h y))
+            (sym (h' (proj₂ (var-tgt r y))))
+
+hit-⟨⟩-tgt : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ uᵣ) → (y : A ∈[ σ ] Γ)
+           → var-tgt (⟨⟩-≤-ren p ∘ʳ ⟨⟩-η⁻¹-ren {Δ = Γ}) y ≡ Tgt-⟨⟩ ρ (σ , y)
+hit-⟨⟩-tgt p y = cong (var-tgt′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-tgt y)
+
+-- An eternal extension is natural: it builds only variables, constants, `⋆` and
+-- pairs, so a renaming passes through it.
+
+eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ Γ')
+                    → (V : Γ ⊢V⦂ A)
+                    → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
+                    ≐ᵛ eternal-val-ext et (V-rename r V)
+eternal-val-ext-ren et             r (var f x)   = var-≐
+eternal-val-ext-ren et             r (const c)   = const-≐
+eternal-val-ext-ren et             r ⋆           = ⋆-≐
+eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊ =
+  pair-≐ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
+
+-- THE VARIABLE SUBSTITUTED FOR
+--
+-- Looking up the variable being replaced returns the value, pushed under the
+-- suffix — a push the recursion of `⟨_,_⟩[_↦_]var` builds one layer at a time,
+-- and each layer is natural in a renaming of the prefix.
+
+ren-sub-hit : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+            → (f f' : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ)
+            → V-rename (cong-ren {Γ'' = Θ} r)
+                (castᵛ (castOf {Γ} {B} Θ)
+                  (⟨ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}) , f
+                   ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                      ↦ castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W
+                    ]var))
+            ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                 (⟨ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ}) , f'
+                  ⟩[ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                     ↦ castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                             (V-rename r W)
+                   ]var)
+
+ren-sub-hit r [] W f f' = ≐ᵛ-refl _
+
+ren-sub-hit {Γ} {Γ'} {B} r (Θ ∷ C) W f f' =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cong (V-rename (cong-∷-ren (cong-ren {Γ'' = Θ} r)))
+                (cast-wk-any (castOf {Γ} {B} (Θ ∷ C)) (castOf {Γ} {B} Θ) _)))
+    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (cong-∷-ren (cong-ren {Γ'' = Θ} r)) wk-ren _))
+      (≐ᵛ-trans (V-rename-≐ (wk-ren-nat (cong-ren {Γ'' = Θ} r)) _)
+        (≐ᵛ-trans (V-rename-∘ wk-ren (cong-ren {Γ'' = Θ} r) _)
+          (≐ᵛ-trans (V-rename-cong wk-ren (ren-sub-hit r Θ W f f'))
+                    (≡→≐ᵛ (sym (cast-wk-any (castOf {Γ'} {B} (Θ ∷ C))
+                                            (castOf {Γ'} {B} Θ) _)))))))
+
+ren-sub-hit {Γ} {Γ'} {B} r (Θ ⟨ ρ ⟩) W f f' with eternal? B
+
+... | yes et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cong (V-rename (cong-⟨⟩-ren (cong-ren {Γ'' = Θ} r)))
+                (cast-ext-any (castOf {Γ} {B} (Θ ⟨ ρ ⟩))
+                              (castOf {Γ} {B} Θ) et _)))
+    (≐ᵛ-trans (eternal-val-ext-ren et (cong-ren {Γ'' = Θ} r) _)
+      (≐ᵛ-trans (eternal-val-ext-cong et (ren-sub-hit r Θ W _ _))
+                (≡→≐ᵛ (sym (cast-ext-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
+                                         (castOf {Γ'} {B} Θ) et _)))))
+
+... | no ¬et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cong (V-rename (cong-⟨⟩-ren ρ₀))
+                (cast-ren-⟨⟩-any (castOf {Γ} {B} (Θ ⟨ ρ ⟩))
+                                 (castOf {Γ} {B} Θ) rn _)))
+    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (cong-⟨⟩-ren ρ₀) rn _))
+      (≐ᵛ-trans (V-rename-≐ (⟨⟩-ren-nat ρ₀ rn (λ y → hit-⟨⟩-tgt bd y)
+                                              (λ y → hit-⟨⟩-tgt bd y)) _)
+        (≐ᵛ-trans (V-rename-∘ rn ρ₀ _)
+          (≐ᵛ-trans (V-rename-cong rn (ren-sub-hit r Θ W _ _))
+            (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl) _)
+                      (≡→≐ᵛ (sym (cast-ren-⟨⟩-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
+                                                  (castOf {Γ'} {B} Θ) rn' _))))))))
+  where
+    ρ₀ = cong-ren {Γ'' = Θ} r
+    bd = ≾ᵣ-zero-productʳ (f ¬et)
+
+    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
+    rn = ⟨⟩-≤-ren bd ∘ʳ ⟨⟩-η⁻¹-ren
+
+    rn' : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
+    rn' = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+
+-- The same, taking both variables as equations: what reaches the substitution
+-- on either side is `∈-++ᶜˡ Θ Hd`, which is `split→∈` of the splitting only up
+-- to `split→∈-∈-++ᶜˡ`.
+
+ren-sub-hit′ : ∀ {Γ Γ' B σ σ'} → (r : Ren [] Γ Γ') → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+             → (y  : B ∈[ σ  ] ((Γ  ∷ B) ++ᶜ Θ))
+             → (y' : B ∈[ σ' ] ((Γ' ∷ B) ++ᶜ Θ))
+             → (f  : ¬ Eternal B → σ  ≾ᵣ uᵣ)
+             → (f' : ¬ Eternal B → σ' ≾ᵣ uᵣ)
+             → _≡_ {A = Tgt ((Γ ∷ B) ++ᶜ Θ) B}
+                 (σ , y) (ctx-grade Θ , split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+             → _≡_ {A = Tgt ((Γ' ∷ B) ++ᶜ Θ) B}
+                 (σ' , y') (ctx-grade Θ , split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ}))
+             → V-rename (cong-ren {Γ'' = Θ} r)
+                 (castᵛ (castOf {Γ} {B} Θ)
+                   (⟨ y , f ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                               ↦ castᵛ (sym (split→∈-split-l
+                                               (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+             ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                  (⟨ y' , f' ⟩[ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                                ↦ castᵛ (sym (split→∈-split-l
+                                                (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                                        (V-rename r W) ]var)
+ren-sub-hit′ r Θ W _ _ f f' refl refl = ren-sub-hit r Θ W f f'
+
+-- A SUFFIX VARIABLE
+--
+-- Neither the renaming nor the substitution moves it, in either order.
+
+ren-sub-var-r : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ}
+              → (z : A ∈[ ρ ] Θ) → (W : Γ ⊢V⦂ B)
+              → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+              → V-rename (cong-ren {Γ'' = Θ} r)
+                  (castᵛ (castOf {Γ} {B} Θ)
+                    (⟨ ∈-++ᶜʳ {Γ = Γ ∷ B} z , f
+                     ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                        ↦ castᵛ (sym (split→∈-split-l
+                                        (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+              ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                   ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                              (var f' (∈-++ᶜʳ {Γ = Γ ∷ B} z)))
+                      [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                        ↦ castᵛ (sym (split→∈-split-l
+                                        (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                                (V-rename r W) ]v)
+
+ren-sub-var-r {Γ} {Γ'} {B} r Θ z W f f' =
+  ≐ᵛ-trans (V-rename-cong (cong-ren {Γ'' = Θ} r) (sub-var-r Θ z _ f f))
+    (≐ᵛ-trans (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} r) (∈-++ᶜʳ {Γ = Γ} z) f
+                             (cong-ren-tgt-r r z) f)
+      (≐ᵛ-sym
+        (≐ᵛ-trans
+          (castᵛ-≐ (castOf {Γ'} {B} Θ)
+            (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (≐ᵛ-refl _)
+              (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                             (∈-++ᶜʳ {Γ = Γ ∷ B} z) f'
+                             (cong-ren-tgt-r (cong-∷-ren r) z) f')))
+          (sub-var-r Θ z _ f' f))))
+
+-- A PREFIX VARIABLE
+--
+-- The substitution fixes it on either side, and the renaming moves it to its
+-- own image, pushed under the suffix.
+
+ren-sub-var-l : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ}
+              → (z : A ∈[ ρ ] Γ) → (W : Γ ⊢V⦂ B)
+              → (f f' : ¬ Eternal A → grade-++ᶜˡ ρ Θ ≾ᵣ uᵣ)
+              → V-rename (cong-ren {Γ'' = Θ} r)
+                  (castᵛ (castOf {Γ} {B} Θ)
+                    (⟨ ∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z) , f
+                     ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                        ↦ castᵛ (sym (split→∈-split-l
+                                        (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+              ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                   ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                              (var f' (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))))
+                      [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                        ↦ castᵛ (sym (split→∈-split-l
+                                        (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                                (V-rename r W) ]v)
+
+ren-sub-var-l {Γ} {Γ'} {B} r Θ z W f f' =
+  ≐ᵛ-trans (V-rename-cong (cong-ren {Γ'' = Θ} r) (sub-var-l Θ z _ f f))
+    (≐ᵛ-trans (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} r) (∈-++ᶜˡ {Γ = Γ} Θ z) f
+                             (cong-ren-tgt-l r Θ z) fr)
+      (≐ᵛ-sym
+        (≐ᵛ-trans
+          (castᵛ-≐ (castOf {Γ'} {B} Θ)
+            (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (≐ᵛ-refl _)
+              (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                             (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z)) f'
+                             (cong-ren-tgt-l (cong-∷-ren r) Θ (Tl-∷ z)) fr)))
+          (sub-var-l Θ (proj₂ (var-tgt r z)) _ fr fr))))
+  where
+    -- a renaming only lowers a variable's grade, and the suffix's contribution
+    -- is monotone in it, so the bound survives
+    fr = λ ¬et → ≾ᵣ-trans (grade-++ᶜˡ-mono Θ
+                            (proj₁ (proj₂ (var-rename r z)) ¬et))
+                          (f ¬et)
+
+-- THE VARIABLE BEING REPLACED
+--
+-- `ren-sub-hit` with the variable presented as `∈-++ᶜˡ Θ Hd`, which is where
+-- the splitting leaves it, and the renamed side folded into the same shape.
+
+ren-sub-var-hd : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+               → (f f' : ¬ Eternal B → grade-++ᶜˡ uᵣ Θ ≾ᵣ uᵣ)
+               → V-rename (cong-ren {Γ'' = Θ} r)
+                   (castᵛ (castOf {Γ} {B} Θ)
+                     (⟨ ∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ}) , f
+                      ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                         ↦ castᵛ (sym (split→∈-split-l
+                                         (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+               ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                    ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                               (var f' (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ}))))
+                       [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                         ↦ castᵛ (sym (split→∈-split-l
+                                         (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                                 (V-rename r W) ]v)
+
+ren-sub-var-hd {Γ} {Γ'} {B} r Θ W f f' =
+  ≐ᵛ-trans
+    (ren-sub-hit′ r Θ W (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ}))
+                        (∈-++ᶜˡ {Γ = Γ' ∷ B} Θ (Hd {Γ = Γ'})) f f'
+                  (sym (split→∈-∈-++ᶜˡ Γ B Θ)) (sym (split→∈-∈-++ᶜˡ Γ' B Θ)))
+    (≐ᵛ-sym
+      (castᵛ-≐ (castOf {Γ'} {B} Θ)
+        (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (≐ᵛ-refl _)
+          (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                         (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ})) f'
+                         (cong-ren-tgt-l (cong-∷-ren r) Θ (Hd {Γ = Γ})) f'))))
+
+-- THE VARIABLE CASE
+--
+-- Which of the three applies is what `∈-++ᶜ-split` decides, the prefix's own
+-- head being the variable replaced.
+
+ren-sub-var : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ}
+            → (y : A ∈[ ρ ] ((Γ ∷ B) ++ᶜ Θ)) → (W : Γ ⊢V⦂ B)
+            → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+            → V-rename (cong-ren {Γ'' = Θ} r)
+                (castᵛ (castOf {Γ} {B} Θ)
+                  (⟨ y , f ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                              ↦ castᵛ (sym (split→∈-split-l
+                                              (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+            ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                 ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) (var f' y))
+                    [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                      ↦ castᵛ (sym (split→∈-split-l
+                                      (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                              (V-rename r W) ]v)
+
+ren-sub-var {Γ} {Γ'} {B} r Θ {A} {ρ} y W f f'
+  with ∈-++ᶜ-split (Γ ∷ B) Θ y in eq
+
+... | inj₂ z
+  rewrite ∈-++ᶜ-split-inj₂ (Γ ∷ B) Θ y z eq = ren-sub-var-r r Θ z W f f'
+
+... | inj₁ (ρ'' , z) =
+  subst (λ t → (fu f'u : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
+             → V-rename (cong-ren {Γ'' = Θ} r)
+                 (castᵛ (castOf {Γ} {B} Θ)
+                   (⟨ proj₂ t , fu
+                    ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                       ↦ castᵛ (sym (split→∈-split-l
+                                       (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+             ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                  ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                             (var f'u (proj₂ t)))
+                     [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                       ↦ castᵛ (sym (split→∈-split-l
+                                       (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                               (V-rename r W) ]v))
+        (sym (∈-++ᶜ-split-inj₁ (Γ ∷ B) Θ y z eq))
+        (go z)
+        f f'
+  where
+    go : ∀ {ρ₀} → (z₀ : A ∈[ ρ₀ ] (Γ ∷ B))
+       → (fu f'u : ¬ Eternal A → grade-++ᶜˡ ρ₀ Θ ≾ᵣ uᵣ)
+       → V-rename (cong-ren {Γ'' = Θ} r)
+           (castᵛ (castOf {Γ} {B} Θ)
+             (⟨ ∈-++ᶜˡ {Γ = Γ ∷ B} Θ z₀ , fu
+              ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                 ↦ castᵛ (sym (split→∈-split-l
+                                 (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
+       ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+            ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                       (var f'u (∈-++ᶜˡ {Γ = Γ ∷ B} Θ z₀)))
+               [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                 ↦ castᵛ (sym (split→∈-split-l
+                                 (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                         (V-rename r W) ]v)
+    go Hd        fu f'u = ren-sub-var-hd r Θ W fu f'u
+    go (Tl-∷ z₀) fu f'u = ren-sub-var-l r Θ z₀ W fu f'u
+
+-- THE CELL AN `unbox` NAMES, RENAMED AND SUBSTITUTED
+--
+-- `unbox-cell-wk`'s counterpart: the cell survives both orders. The third case
+-- a weakening could not reach is here — the cell may *be* the variable
+-- replaced, and then it is the one inside the substituted value, which is of
+-- box type and so a variable itself.
+
+rvar-hit-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+             → (W : Γ ⊢V⦂ [ ρ ] A)
+             → var-tgt′ (cong-ren {Γ'' = Θ} r)
+                 (Tgt-cast (castOf {Γ} {[ ρ ] A} Θ)
+                   (rvar-tgt (split→∈ (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ}))
+                             (split→∈ (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ}))
+                             (castᵛ (sym (split→∈-split-l
+                                            (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ}))) W)))
+             ≡ Tgt-cast (castOf {Γ'} {[ ρ ] A} Θ)
+                 (rvar-tgt (split→∈ (split-≡-++ᶜ {Γ' ∷ [ ρ ] A} {Θ}))
+                           (split→∈ (split-≡-++ᶜ {Γ' ∷ [ ρ ] A} {Θ}))
+                           (castᵛ (sym (split→∈-split-l
+                                          (split-≡-++ᶜ {Γ' ∷ [ ρ ] A} {Θ})))
+                                  (V-rename r W)))
+
+rvar-hit-ren r [] (var f y) = refl
+
+rvar-hit-ren {Γ} {Γ'} {A} {ρ} r (Θ ∷ C) W =
+  trans (cong (var-tgt′ (cong-∷-ren (cong-ren {Γ'' = Θ} r)))
+              (trans (Tgt-cast-irr (castOf {Γ} {[ ρ ] A} (Θ ∷ C))
+                                   (cong (_∷ C) (castOf {Γ} {[ ρ ] A} Θ)) _)
+                     (Tgt-cast-∷ (castOf {Γ} {[ ρ ] A} Θ) _)))
+    (trans (cong Tgt-∷ (rvar-hit-ren r Θ W))
+      (trans (sym (Tgt-cast-∷ (castOf {Γ'} {[ ρ ] A} Θ) _))
+             (Tgt-cast-irr (cong (_∷ C) (castOf {Γ'} {[ ρ ] A} Θ))
+                           (castOf {Γ'} {[ ρ ] A} (Θ ∷ C)) _)))
+
+rvar-hit-ren {Γ} {Γ'} {A} {ρ} r (Θ ⟨ ρ' ⟩) W =
+  trans (cong (var-tgt′ (cong-⟨⟩-ren (cong-ren {Γ'' = Θ} r)))
+              (trans (Tgt-cast-irr (castOf {Γ} {[ ρ ] A} (Θ ⟨ ρ' ⟩))
+                                   (cong (_⟨ ρ' ⟩) (castOf {Γ} {[ ρ ] A} Θ)) _)
+                     (Tgt-cast-⟨⟩ ρ' (castOf {Γ} {[ ρ ] A} Θ) _)))
+    (trans (cong (Tgt-⟨⟩ ρ') (rvar-hit-ren r Θ W))
+      (trans (sym (Tgt-cast-⟨⟩ ρ' (castOf {Γ'} {[ ρ ] A} Θ) _))
+             (Tgt-cast-irr (cong (_⟨ ρ' ⟩) (castOf {Γ'} {[ ρ ] A} Θ))
+                           (castOf {Γ'} {[ ρ ] A} (Θ ⟨ ρ' ⟩)) _)))
+
+rvar-hit-ren′ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+              → (W : Γ ⊢V⦂ [ ρ ] A)
+              → (c  : [ ρ ] A ∈[ σ ] ((Γ ∷ [ ρ ] A) ++ᶜ Θ))
+              → (t' : Tgt ((Γ' ∷ [ ρ ] A) ++ᶜ Θ) ([ ρ ] A))
+              → _≡_ {A = Tgt ((Γ ∷ [ ρ ] A) ++ᶜ Θ) ([ ρ ] A)}
+                  (σ , c)
+                  (ctx-grade Θ , split→∈ (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ}))
+              → t' ≡ (ctx-grade Θ , split→∈ (split-≡-++ᶜ {Γ' ∷ [ ρ ] A} {Θ}))
+              → var-tgt′ (cong-ren {Γ'' = Θ} r)
+                  (Tgt-cast (castOf {Γ} {[ ρ ] A} Θ)
+                    (rvar-tgt c (split→∈ (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ}))
+                              (castᵛ (sym (split→∈-split-l
+                                             (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ}))) W)))
+              ≡ Tgt-cast (castOf {Γ'} {[ ρ ] A} Θ)
+                  (rvar-tgt (proj₂ t')
+                            (split→∈ (split-≡-++ᶜ {Γ' ∷ [ ρ ] A} {Θ}))
+                            (castᵛ (sym (split→∈-split-l
+                                           (split-≡-++ᶜ {Γ' ∷ [ ρ ] A} {Θ})))
+                                   (V-rename r W)))
+rvar-hit-ren′ r Θ W _ _ refl refl = rvar-hit-ren r Θ W
+
+unbox-cell-ren : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ σ}
+               → (c : [ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ)) → (W : Γ ⊢V⦂ B)
+               → var-tgt′ (cong-ren {Γ'' = Θ} r)
+                   (Tgt-cast (castOf {Γ} {B} Θ)
+                     (rvar-tgt c (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+                               (castᵛ (sym (split→∈-split-l
+                                              (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W)))
+               ≡ Tgt-cast (castOf {Γ'} {B} Θ)
+                   (rvar-tgt (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (cong-∷-ren r)) c))
+                             (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ}))
+                             (castᵛ (sym (split→∈-split-l
+                                            (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                                    (V-rename r W)))
+
+unbox-cell-ren {Γ} {Γ'} {B} r Θ {A} {ρ} {σ} c W
+  with ∈-++ᶜ-split (Γ ∷ B) Θ c in eqc
+
+... | inj₂ c'
+  rewrite ∈-++ᶜ-split-inj₂ (Γ ∷ B) Θ c c' eqc =
+  trans (cong (var-tgt′ (cong-ren {Γ'' = Θ} r)) (sub-rvar-r Θ c' _))
+    (trans (cong-ren-tgt-r r c')
+           (sym (sub-rvar-r′ Θ c' _ (cong-ren-tgt-r (cong-∷-ren r) c') _)))
+
+... | inj₁ (σ' , c') =
+  subst (λ t → var-tgt′ (cong-ren {Γ'' = Θ} r)
+                 (Tgt-cast (castOf {Γ} {B} Θ)
+                   (rvar-tgt (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+                             (castᵛ (sym (split→∈-split-l
+                                            (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W)))
+             ≡ Tgt-cast (castOf {Γ'} {B} Θ)
+                 (rvar-tgt (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                                           (proj₂ t)))
+                           (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ}))
+                           (castᵛ (sym (split→∈-split-l
+                                          (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                                  (V-rename r W))))
+        (sym (∈-++ᶜ-split-inj₁ (Γ ∷ B) Θ c c' eqc))
+        (go c')
+  where
+    go : ∀ {σ₀} → (c₀ : [ ρ ] A ∈[ σ₀ ] (Γ ∷ B))
+       → var-tgt′ (cong-ren {Γ'' = Θ} r)
+           (Tgt-cast (castOf {Γ} {B} Θ)
+             (rvar-tgt (∈-++ᶜˡ {Γ = Γ ∷ B} Θ c₀)
+                       (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+                       (castᵛ (sym (split→∈-split-l
+                                      (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W)))
+       ≡ Tgt-cast (castOf {Γ'} {B} Θ)
+           (rvar-tgt (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+                                     (∈-++ᶜˡ {Γ = Γ ∷ B} Θ c₀)))
+                     (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ}))
+                     (castᵛ (sym (split→∈-split-l
+                                    (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                            (V-rename r W)))
+
+    go Hd =
+      rvar-hit-ren′ r Θ W (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ})) _
+        (sym (split→∈-∈-++ᶜˡ Γ B Θ))
+        (trans (cong-ren-tgt-l (cong-∷-ren r) Θ (Hd {Γ = Γ}))
+               (sym (split→∈-∈-++ᶜˡ Γ' B Θ)))
+
+    go (Tl-∷ c₀) =
+      trans (cong (var-tgt′ (cong-ren {Γ'' = Θ} r)) (sub-rvar-l Θ c₀ _))
+        (trans (cong-ren-tgt-l r Θ c₀)
+               (sym (sub-rvar-l′ Θ (proj₂ (var-tgt r c₀)) _
+                       (cong-ren-tgt-l (cong-∷-ren r) Θ (Tl-∷ c₀)) _)))
+
+
+-- The two formers that do not simply distribute: `unbox`, whose boxed value is
+-- a variable the substitution relocates, and `handle`, whose clauses see the
+-- substitution only through the eternal restriction. Both are stated so that
+-- the induction below can hand them its hypothesis at the grown suffix.
+
+-- `unbox`: both orders rebuild the unboxing from the cell the substitution
+-- leaves (`sub-unbox`), and `unbox-cell-ren` says the two cells agree. The body
+-- is the induction hypothesis at the grown suffix, taken as an argument so that
+-- this can stand outside the induction.
+
+ren-sub-unbox
+  : ∀ {Γ Γ' B A ρ C Δ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+  → (w : Ren [] (Δ ⟨ ρ ⟩) ((Γ ∷ B) ++ᶜ Θ))
+  → (V : Δ ⊢V⦂ [ ρ ] A)
+  → (M : (((Γ ∷ B) ++ᶜ Θ) ∷ A) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
+  → (ih : C-rename (cong-ren {Γ'' = Θ ∷ A} r)
+            (castᶜ (castOf {Γ} {B} (Θ ∷ A))
+              (M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ ∷ A})
+                   ↦ castᵛ (sym (split→∈-split-l
+                                   (split-≡-++ᶜ {Γ ∷ B} {Θ ∷ A}))) W ]c))
+          ≐ᶜ castᶜ (castOf {Γ'} {B} (Θ ∷ A))
+               ((C-rename (cong-ren {Γ'' = Θ ∷ A} (cong-∷-ren r)) M)
+                  [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ ∷ A})
+                    ↦ castᵛ (sym (split→∈-split-l
+                                    (split-≡-++ᶜ {Γ' ∷ B} {Θ ∷ A})))
+                            (V-rename r W) ]c))
+  → C-rename (cong-ren {Γ'' = Θ} r)
+      (castᶜ (castOf {Γ} {B} Θ)
+        (unbox w V M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                       ↦ castᵛ (sym (split→∈-split-l
+                                       (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
+  ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
+       ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) (unbox w V M))
+          [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+            ↦ castᵛ (sym (split→∈-split-l
+                            (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                    (V-rename r W) ]c)
+
+ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
+  ≐ᶜ-trans
+    (C-rename-cong ρ₀
+      (≐ᶜ-trans (castᶜ-≐ (castOf {Γ} {B} Θ) (sub-unbox w V M xL WL relL))
+                (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))))
+    (≐ᶜ-trans
+      (unbox-≐ cell
+        (≐ᶜ-trans
+          (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
+                      (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
+                                 (castOf {Γ} {B} (Θ ∷ A)) _)))
+          (≐ᶜ-trans ih
+                    (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
+                                     (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
+      (≐ᶜ-sym
+        (≐ᶜ-trans (castᶜ-≐ (castOf {Γ'} {B} Θ)
+                    (sub-unbox (ρ' ∘ʳ w) V (C-rename (cong-∷-ren ρ') M)
+                               xR WR relR))
+                  (≡→≐ᶜ (cast-unbox (castOf {Γ'} {B} Θ))))))
+  where
+    ρ₀ = cong-ren {Γ'' = Θ} r
+    ρ' = cong-ren {Γ'' = Θ} (cong-∷-ren r)
+
+    xL = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+    xR = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+    WL = castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W
+    WR = castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ}))) (V-rename r W)
+
+    cL = proj₂ (unbox-tgt w V)
+
+    relL = ≾ᵣ-trans (proj₂ (proj₂ (⟨ cL ⟩[ xL ↦ WL ]rvar)))
+                    (proj₂ (proj₂ (unbox⇒var w V)))
+
+    relR = ≾ᵣ-trans
+             (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (ρ' ∘ʳ w) V) ⟩[ xR ↦ WR ]rvar)))
+             (proj₂ (proj₂ (unbox⇒var (ρ' ∘ʳ w) V)))
+
+    hd : ∀ {Γ₀ : Ctx} → (Γ₀ ∷ [ ρ ] A) ⊢V⦂ [ ρ ] A
+    hd = var (λ _ → ≾ᵣ-refl) Hd
+
+    vL = proj₂ (rvar-tgt cL xL WL)
+    vR = proj₂ (rvar-tgt (proj₂ (unbox-tgt (ρ' ∘ʳ w) V)) xR WR)
+
+    wL = castʳᵉ (castOf {Γ} {B} Θ) (unbox-var-ren vL relL)
+    wR = castʳᵉ (castOf {Γ'} {B} Θ) (unbox-var-ren vR relR)
+
+    cell : unbox-tgt (ρ₀ ∘ʳ wL) hd ≡ unbox-tgt wR hd
+    cell =
+      trans (unbox-tgt-∘ ρ₀ wL hd)
+        (trans (cong (var-tgt′ ρ₀)
+                 (trans (unbox-tgt-castʳᵉ (castOf {Γ} {B} Θ)
+                                          (unbox-var-ren vL relL) hd)
+                        (cong (Tgt-cast (castOf {Γ} {B} Θ))
+                              (unbox-var-tgt vL relL))))
+          (trans (unbox-cell-ren r Θ cL W)
+            (trans (cong (λ t → Tgt-cast (castOf {Γ'} {B} Θ)
+                                  (rvar-tgt (proj₂ t) xR WR))
+                         (sym (unbox-tgt-∘ ρ' w V)))
+              (sym (trans (unbox-tgt-castʳᵉ (castOf {Γ'} {B} Θ)
+                                            (unbox-var-ren vR relR) hd)
+                     (cong (Tgt-cast (castOf {Γ'} {B} Θ))
+                           (unbox-var-tgt vR relR)))))))
+
+------------------------------------------------------------------------
+-- RESTRICTING A SUFFIX-EXTENDED RENAMING
+--
+-- `restrict-ren (cong-ren {Δ} r)` is `cong-ren {Δ ᴱ} (restrict-ren r)`,
+-- conjugated by `eq-ren`s at `ᴱ`'s distribution over `_++ᶜ_` — the
+-- arbitrary-prefix-renaming counterpart of `restrict-wk-et-≐`.
+------------------------------------------------------------------------
+
+restrict-cong-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
+                → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
+                → (e₂ : (Γ' ++ᶜ Δ) ᴱ ≡ Γ' ᴱ ++ᶜ Δ ᴱ)
+                → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} r)
+                ≐ʳ (eq-ren (sym e₂)
+                    ∘ʳ cong-ren {Γ'' = Δ ᴱ} (restrict-ren r) ∘ʳ eq-ren e₁)
+
+restrict-cong-≐ r [] e₁ e₂
+  rewrite uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+
+restrict-cong-≐ r (Δ ∷ C) e₁ e₂ with eternal? C
+
+... | yes _ =
+  ≐ʳ-trans (cong-∷-ren-≐ (restrict-cong-≐ r Δ (∷ᶜ-injective-ctx e₁)
+                                              (∷ᶜ-injective-ctx e₂)))
+    (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))
+                      (cong-∷-ren-∘-≐ _ _))
+        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ (sym e₂))
+                        (∘ʳ-≐ ≐ʳ-refl
+                              (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))))
+                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ e₁))))))
+
+... | no  _ = restrict-cong-≐ r Δ e₁ e₂
+
+restrict-cong-≐ r (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-cong-≐ r Δ e₁ e₂
+
+-- Restricting a binder extension: at an eternal binder the restriction
+-- keeps it, at a non-eternal one it drops it — in both cases conjugated
+-- by `eq-ren`s at the (only propositional) context equalities.
+
+restrict-∷-et-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (et : Eternal B)
+                → (e₁ : (Γ ∷ B) ᴱ ≡ Γ ᴱ ∷ B)
+                → (e₂ : (Γ' ∷ B) ᴱ ≡ Γ' ᴱ ∷ B)
+                → restrict-ren {Ξ = []} (cong-∷-ren {A = B} r)
+                ≐ʳ (eq-ren (sym e₂)
+                    ∘ʳ cong-∷-ren {A = B} (restrict-ren r) ∘ʳ eq-ren e₁)
+
+restrict-∷-et-≐ r et e₁ e₂
+  rewrite eternal?-yes et
+        | uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+
+restrict-∷-ne-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (¬et : ¬ Eternal B)
+                → (e₁ : (Γ ∷ B) ᴱ ≡ Γ ᴱ)
+                → (e₂ : (Γ' ∷ B) ᴱ ≡ Γ' ᴱ)
+                → restrict-ren {Ξ = []} (cong-∷-ren {A = B} r)
+                ≐ʳ (eq-ren (sym e₂) ∘ʳ restrict-ren r ∘ʳ eq-ren e₁)
+
+restrict-∷-ne-≐ r ¬et e₁ e₂
+  rewrite eternal?-no ¬et
+        | uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+
+------------------------------------------------------------------------
+-- SPLITTING UNIQUENESS ACROSS TRANSPORTED HALVES
+--
+-- `split→∈-unique` requires the two splittings' halves to agree on the
+-- nose; here they agree only propositionally, so the halves' equations
+-- are matched first and the grade transport rides along.
+------------------------------------------------------------------------
+
+split→∈-unique₂ : ∀ {Γ Γ' Γ₁ Γ₁' Γ₂ Γ₂' A}
+                → (eΓ₁ : Γ₁ ≡ Γ₁') → (eΓ₂ : Γ₂ ≡ Γ₂') → (e : Γ ≡ Γ')
+                → (s : Γ₁ ∷ A , Γ₂ split Γ) → (s' : Γ₁' ∷ A , Γ₂' split Γ')
+                → subst (λ Γ₀ → A ∈[ ctx-grade Γ₂' ] Γ₀) e
+                    (subst (λ ρ₀ → A ∈[ ρ₀ ] Γ) (cong ctx-grade eΓ₂)
+                           (split→∈ s))
+                ≡ split→∈ s'
+split→∈-unique₂ refl refl e s s' = split→∈-unique e s s'
+
+-- The two halves' equations induced by a grade-and-context transport of
+-- the substituted variable.
+
+sl-eq : ∀ {Γ Γ' A ρ ρ'} → (eρ : ρ ≡ ρ') → (e : Γ ≡ Γ')
+      → (x : A ∈[ ρ ] Γ) → (y : A ∈[ ρ' ] Γ')
+      → subst (λ Γ₀ → A ∈[ ρ' ] Γ₀) e (subst (λ ρ₀ → A ∈[ ρ₀ ] Γ) eρ x) ≡ y
+      → split-l x ≡ split-l y
+sl-eq refl e x y ey = trans (split-l-cast e x) (cong split-l ey)
+
+sr-eq : ∀ {Γ Γ' A ρ ρ'} → (eρ : ρ ≡ ρ') → (e : Γ ≡ Γ')
+      → (x : A ∈[ ρ ] Γ) → (y : A ∈[ ρ' ] Γ')
+      → subst (λ Γ₀ → A ∈[ ρ' ] Γ₀) e (subst (λ ρ₀ → A ∈[ ρ₀ ] Γ) eρ x) ≡ y
+      → split-r x ≡ split-r y
+sr-eq refl e x y ey = trans (split-r-cast e x) (cong split-r ey)
+
+-- `sub-cast-C′` with the substituted variable's grade transported too.
+
+sub-cast-C″ : ∀ {Γ Γ' A C ρ ρ'} → (eρ : ρ ≡ ρ') → (e : Γ ≡ Γ')
+            → (M : Γ ⊢C⦂ C)
+            → (x : A ∈[ ρ ] Γ) → (y : A ∈[ ρ' ] Γ')
+            → (ey : subst (λ Γ₀ → A ∈[ ρ' ] Γ₀) e
+                          (subst (λ ρ₀ → A ∈[ ρ₀ ] Γ) eρ x) ≡ y)
+            → (U : split-l x ⊢V⦂ A) → (U' : split-l y ⊢V⦂ A)
+            → (eU : subst (_⊢V⦂ A) (sl-eq eρ e x y ey) U ≡ U')
+            → (subst (_⊢C⦂ C) e M) [ y ↦ U' ]c
+            ≡ subst (_⊢C⦂ C) (cong₂ _++ᶜ_ (sl-eq eρ e x y ey)
+                                          (sr-eq eρ e x y ey))
+                (M [ x ↦ U ]c)
+sub-cast-C″ refl e M x y ey U U' eU = sub-cast-C′ e M x y ey U U' eU
+
+------------------------------------------------------------------------
+-- VALUE-LEVEL TRANSPORT ALGEBRA
+------------------------------------------------------------------------
+
+castᵛ≡subst : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
+            → castᵛ e V ≡ subst (_⊢V⦂ A) e V
+castᵛ≡subst refl V = refl
+
+subst-fuseᵛ : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
+            → subst (_⊢V⦂ A) e' (subst (_⊢V⦂ A) e V)
+            ≡ subst (_⊢V⦂ A) (trans e e') V
+subst-fuseᵛ refl refl V = refl
+
+-- Two transport chains out of the same value agree by `uip`.
+
+substᵛ-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
+           → subst (_⊢V⦂ A) e V ≡ subst (_⊢V⦂ A) e' V
+substᵛ-irr e e' V = cong (λ z → subst (_⊢V⦂ _) z V) (uip {p = e} {q = e'})
+
+-- The eternal restriction of a value respects a context transport.
+
+restrict-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (et : Eternal A) → (V : Γ ⊢V⦂ A)
+               → eternal-val-restrict et (castᵛ e V)
+               ≡ castᵛ (cong _ᴱ e) (eternal-val-restrict et V)
+restrict-castᵛ refl et V = refl
+
+------------------------------------------------------------------------
+-- THE ETERNAL RESTRICTION IS NATURAL IN RENAMING
+--
+-- The var case goes through the reflection `∈-ᴱ⁻`: both sides' targets
+-- reflect to `var-tgt r x`, so `∈-ᴱ⁻-inj` identifies them.
+------------------------------------------------------------------------
+
+eternal-val-restrict-ren : ∀ {Γ Γ' A} → (et : Eternal A)
+                         → (r : Ren [] Γ Γ') → (W : Γ ⊢V⦂ A)
+                         → eternal-val-restrict et (V-rename r W)
+                         ≐ᵛ V-rename (restrict-ren r) (eternal-val-restrict et W)
+
+eternal-val-restrict-ren {Γ} {Γ'} et r (var f x) =
+  ≐ᵛ-trans
+    (eternal-val-restrict-cong et (var-ren-≐ r x f fet))
+    (≐ᵛ-sym (var-ren-tgt-≐ (restrict-ren r) (∈-ᴱ et x) fet
+                           (sym tgt-eq) fet))
+  where
+    fet : ∀ {ρ₀} → ¬ Eternal _ → ρ₀ ≾ᵣ uᵣ
+    fet ¬et = ⊥-elim (¬et et)
+
+    tgt-eq : _≡_ {A = Tgt (Γ' ᴱ) _}
+                 (uᵣ , ∈-ᴱ et (proj₂ (var-tgt r x)))
+                 (var-tgt (restrict-ren r) (∈-ᴱ et x))
+    tgt-eq =
+      ∈-ᴱ⁻-inj Γ' _ _
+        (trans (∈-ᴱ⁻-∈-ᴱ Γ' et (proj₂ (var-tgt r x)))
+          (sym (trans (restrict-tgt⁻ r (∈-ᴱ et x))
+                      (cong (var-tgt′ r) (∈-ᴱ⁻-∈-ᴱ Γ et x)))))
+
+eternal-val-restrict-ren et r (const c) = ≐ᵛ-refl _
+eternal-val-restrict-ren et r ⋆         = ≐ᵛ-refl _
+eternal-val-restrict-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊ =
+  pair-≐ (eternal-val-restrict-ren et₁ r V₁)
+         (eternal-val-restrict-ren et₂ r V₂)
+
+------------------------------------------------------------------------
+-- THE `ren-sub` STATEMENT, ABBREVIATED
+------------------------------------------------------------------------
+
+RenSubC : ∀ {Γ Γ' B C} → Ren [] Γ Γ' → (Θ : Ctx)
+        → ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ C → Γ ⊢V⦂ B → Set
+RenSubC {Γ} {Γ'} {B} r Θ M W =
+  C-rename (cong-ren {Γ'' = Θ} r)
+      (castᶜ (castOf {Γ} {B} Θ)
+        (M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+             ↦ castᵛ (sym (split→∈-split-l
+                             (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
+  ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
+       ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) M)
+          [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+            ↦ castᵛ (sym (split→∈-split-l
+                            (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                    (V-rename r W) ]c)
+
+-- A clause's two binders, as a suffix.
+
+Dcl : VType → Op → E → Ctx
+Dcl D op ε'' =
+  [] ∷ type-of-gtype (param op)
+     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ D ‼ ε'')
+
+-- The clause context, relocated to the recursion's canonical contexts.
+
+ren-sub-eTot : ∀ {Γ B} → (Θ : Ctx) → Eternal B → (Δ : Ctx)
+             → ((Γ ∷ B) ++ᶜ Θ) ᴱ ++ᶜ Δ ≡ (Γ ᴱ ∷ B) ++ᶜ (Θ ᴱ ++ᶜ Δ)
+ren-sub-eTot {Γ} {B} Θ et Δ =
+  trans (cong (_++ᶜ Δ)
+              (trans (ᴱ-++ᶜ (Γ ∷ B) Θ)
+                     (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep {Γ} {B} et))))
+        (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) Δ)
+
+------------------------------------------------------------------------
+-- CONJUGATED DECOMPOSITIONS
+--
+-- Every renaming this proof decomposes comes out as an `eq-ren`-conjugated
+-- core; the two helpers below fuse nested conjugations and turn a
+-- conjugation into transports around the core's action.
+------------------------------------------------------------------------
+
+infix 4 _≐ʳconj⟨_,_,_⟩
+
+_≐ʳconj⟨_,_,_⟩ : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'} → Ren [] Γ₁ Γ₂'
+              → (Γ₁ ≡ Γ₁') → Ren [] Γ₁' Γ₂ → (Γ₂ ≡ Γ₂') → Set
+R ≐ʳconj⟨ e , K , e' ⟩ = R ≐ʳ (eq-ren e' ∘ʳ K ∘ʳ eq-ren e)
+
+-- Fusing a conjugation of a conjugation.
+
+conj-fuse : ∀ {Γ₁ Γ₀ Γ₀' Γ₂ Γ₂' Γ₃}
+          → {R : Ren [] Γ₀ Γ₂'} → (a : Γ₁ ≡ Γ₀) → (a' : Γ₂' ≡ Γ₃)
+          → {K : Ren [] Γ₀' Γ₂} → (b : Γ₀ ≡ Γ₀') → (b' : Γ₂ ≡ Γ₂')
+          → R ≐ʳconj⟨ b , K , b' ⟩
+          → (eq-ren a' ∘ʳ R ∘ʳ eq-ren a) ≐ʳconj⟨ trans a b , K , trans b' a' ⟩
+conj-fuse {R = R} a a' {K = K} b b' h =
+  ≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ h ≐ʳ-refl))
+    (≐ʳ-trans
+      (∘ʳ-≐ ≐ʳ-refl (≐ʳ-trans (∘ʳ-assoc-≐ _ _ _)
+                              (∘ʳ-≐ ≐ʳ-refl
+                                (≐ʳ-trans (∘ʳ-assoc-≐ _ _ _)
+                                          (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ a b))))))
+      (≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ _ _ _))
+                (∘ʳ-≐ (eq-ren-∘-≐ b' a') ≐ʳ-refl)))
+
+-- Extending a conjugation by a suffix.
+
+conj-cong-ren : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'} → (Δ : Ctx)
+              → {R : Ren [] Γ₁ Γ₂'} → (e : Γ₁ ≡ Γ₁')
+              → {K : Ren [] Γ₁' Γ₂} → (e' : Γ₂ ≡ Γ₂')
+              → R ≐ʳconj⟨ e , K , e' ⟩
+              → cong-ren {Γ'' = Δ} R
+                  ≐ʳconj⟨ cong (_++ᶜ Δ) e , cong-ren {Γ'' = Δ} K
+                        , cong (_++ᶜ Δ) e' ⟩
+conj-cong-ren Δ e e' h =
+  ≐ʳ-trans (cong-ren-≐ Δ h)
+    (≐ʳ-trans (cong-ren-∘-≐ Δ _ _)
+      (∘ʳ-≐ (cong-ren-eq-ren-≐ Δ e')
+            (≐ʳ-trans (cong-ren-∘-≐ Δ _ _)
+                      (∘ʳ-≐ ≐ʳ-refl (cong-ren-eq-ren-≐ Δ e)))))
+
+-- The action of a conjugated renaming is the core's action between the
+-- two transports.
+
+C-rename-conj : ∀ {Γ₁ Γ₁' Γ₂ Γ₂' C}
+              → {R : Ren [] Γ₁ Γ₂'} → (e : Γ₁ ≡ Γ₁')
+              → {K : Ren [] Γ₁' Γ₂} → (e' : Γ₂ ≡ Γ₂')
+              → R ≐ʳconj⟨ e , K , e' ⟩
+              → (X : Γ₁ ⊢C⦂ C)
+              → C-rename R X
+              ≐ᶜ subst (_⊢C⦂ C) e' (C-rename K (subst (_⊢C⦂ C) e X))
+C-rename-conj e {K = K} e' h X =
+  ≐ᶜ-trans (C-rename-≐ h X)
+    (≐ᶜ-trans (C-rename-∘ (eq-ren e') (K ∘ʳ eq-ren e) X)
+      (≐ᶜ-trans
+        (C-rename-eq-≐ e' ≐ʳ-refl (C-rename (K ∘ʳ eq-ren e) X))
+        (substᶜ-≐ e'
+          (≐ᶜ-trans (C-rename-∘ K (eq-ren e) X)
+                    (C-rename-cong K (C-rename-eq-≐ e ≐ʳ-refl X))))))
+
+------------------------------------------------------------------------
+-- THE TWO CLAUSE RENAMINGS, DECOMPOSED
+--
+-- Both sides of `ren-sub-handle`'s clause comparison rename by
+-- `cong-ren {D}` of a restriction of a suffix-extended renaming; both
+-- decompose onto the same core over the canonical restricted contexts.
+------------------------------------------------------------------------
+
+-- The left side: `restrict-ren (cong-ren {Θ} r)`, extended by the two
+-- clause binders.
+
+clause-ren-l-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Θ Δ : Ctx)
+               → cong-ren {Γ'' = Δ}
+                   (restrict-ren {Ξ = []} (cong-ren {Γ'' = Θ} r))
+               ≐ʳconj⟨ trans (cong (_++ᶜ Δ) (ᴱ-++ᶜ Γ Θ))
+                             (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) Δ)
+                     , cong-ren {Γ'' = Θ ᴱ ++ᶜ Δ} (restrict-ren {Ξ = []} r)
+                     , sym (trans (cong (_++ᶜ Δ) (ᴱ-++ᶜ Γ' Θ))
+                                  (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ)) ⟩
+clause-ren-l-≐ {Γ} {Γ'} r Θ Δ =
+  ≐ʳ-trans
+    (conj-cong-ren Δ (ᴱ-++ᶜ Γ Θ) (sym (ᴱ-++ᶜ Γ' Θ))
+       (restrict-cong-≐ r Θ (ᴱ-++ᶜ Γ Θ) (ᴱ-++ᶜ Γ' Θ)))
+    (≐ʳ-trans
+      (conj-fuse (cong (_++ᶜ Δ) (ᴱ-++ᶜ Γ Θ))
+                 (cong (_++ᶜ Δ) (sym (ᴱ-++ᶜ Γ' Θ)))
+                 (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) Δ)
+                 (sym (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ))
+                 (cong-ren-assoc-≐ (Θ ᴱ) Δ (restrict-ren {Ξ = []} r)))
+      (∘ʳ-≐ (eq-ren-≐ _ _) ≐ʳ-refl))
+
+-- The right side: `restrict-ren (cong-ren {Θ} (cong-∷-ren r))` at an
+-- eternal substituted type — the restriction keeps the binder.
+
+clause-ren-r-et-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (et : Eternal B)
+                  → (Θ Δ : Ctx)
+                  → cong-ren {Γ'' = Δ}
+                      (restrict-ren {Ξ = []}
+                        (cong-ren {Γ'' = Θ} (cong-∷-ren {A = B} r)))
+                  ≐ʳconj⟨ ren-sub-eTot {Γ} {B} Θ et Δ
+                        , cong-ren {Γ'' = Θ ᴱ ++ᶜ Δ}
+                            (cong-∷-ren {A = B} (restrict-ren {Ξ = []} r))
+                        , sym (ren-sub-eTot {Γ'} {B} Θ et Δ) ⟩
+clause-ren-r-et-≐ {Γ} {Γ'} {B} r et Θ Δ =
+  ≐ʳ-trans
+    (conj-cong-ren Δ _ _
+      (≐ʳ-trans
+        (restrict-cong-≐ (cong-∷-ren {A = B} r) Θ
+           (ᴱ-++ᶜ (Γ ∷ B) Θ) (ᴱ-++ᶜ (Γ' ∷ B) Θ))
+        (conj-fuse (ᴱ-++ᶜ (Γ ∷ B) Θ) (sym (ᴱ-++ᶜ (Γ' ∷ B) Θ))
+           (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep {Γ} {B} et))
+           (cong (_++ᶜ Θ ᴱ) (sym (ᴱ-∷-keep {Γ'} {B} et)))
+           (conj-cong-ren (Θ ᴱ) (ᴱ-∷-keep {Γ} {B} et)
+              (sym (ᴱ-∷-keep {Γ'} {B} et))
+              (restrict-∷-et-≐ r et (ᴱ-∷-keep {Γ} {B} et)
+                                    (ᴱ-∷-keep {Γ'} {B} et))))))
+    (≐ʳ-trans
+      (conj-fuse _ _
+         (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) Δ)
+         (sym (++ᶜ-assoc (Γ' ᴱ ∷ B) (Θ ᴱ) Δ))
+         (cong-ren-assoc-≐ (Θ ᴱ) Δ (cong-∷-ren {A = B} (restrict-ren {Ξ = []} r))))
+      (∘ʳ-≐ (eq-ren-≐ _ _) ≐ʳ-refl))
+
+-- The same at a non-eternal substituted type — the restriction drops it.
+
+clause-ren-r-ne-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (¬et : ¬ Eternal B)
+                  → (Θ Δ : Ctx)
+                  → cong-ren {Γ'' = Δ}
+                      (restrict-ren {Ξ = []}
+                        (cong-ren {Γ'' = Θ} (cong-∷-ren {A = B} r)))
+                  ≐ʳconj⟨ trans (cong (_++ᶜ Δ)
+                                  (trans (ᴱ-++ᶜ (Γ ∷ B) Θ)
+                                    (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-drop {Γ} {B} ¬et))))
+                                (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) Δ)
+                        , cong-ren {Γ'' = Θ ᴱ ++ᶜ Δ} (restrict-ren {Ξ = []} r)
+                        , sym (trans (cong (_++ᶜ Δ)
+                                       (trans (ᴱ-++ᶜ (Γ' ∷ B) Θ)
+                                         (cong (_++ᶜ Θ ᴱ)
+                                               (ᴱ-∷-drop {Γ'} {B} ¬et))))
+                                     (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ)) ⟩
+clause-ren-r-ne-≐ {Γ} {Γ'} {B} r ¬et Θ Δ =
+  ≐ʳ-trans
+    (conj-cong-ren Δ _ _
+      (≐ʳ-trans
+        (restrict-cong-≐ (cong-∷-ren {A = B} r) Θ
+           (ᴱ-++ᶜ (Γ ∷ B) Θ) (ᴱ-++ᶜ (Γ' ∷ B) Θ))
+        (conj-fuse (ᴱ-++ᶜ (Γ ∷ B) Θ) (sym (ᴱ-++ᶜ (Γ' ∷ B) Θ))
+           (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-drop {Γ} {B} ¬et))
+           (cong (_++ᶜ Θ ᴱ) (sym (ᴱ-∷-drop {Γ'} {B} ¬et)))
+           (conj-cong-ren (Θ ᴱ) (ᴱ-∷-drop {Γ} {B} ¬et)
+              (sym (ᴱ-∷-drop {Γ'} {B} ¬et))
+              (restrict-∷-ne-≐ r ¬et (ᴱ-∷-drop {Γ} {B} ¬et)
+                                     (ᴱ-∷-drop {Γ'} {B} ¬et))))))
+    (≐ʳ-trans
+      (conj-fuse _ _
+         (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) Δ)
+         (sym (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ))
+         (cong-ren-assoc-≐ (Θ ᴱ) Δ (restrict-ren {Ξ = []} r)))
+      (∘ʳ-≐ (eq-ren-≐ _ _) ≐ʳ-refl))
+
+------------------------------------------------------------------------
+-- `handle`, NON-ETERNAL
+--
+-- Both sides' clause components are the same core renaming
+-- `cong-ren {Θ ᴱ ++ᶜ D₀} (restrict-ren r)` of the clause, inside
+-- transport chains with the same endpoints, so after both are decomposed
+-- (`clause-ren-l-≐`/`clause-ren-r-ne-≐`) `uip` closes the comparison.
+------------------------------------------------------------------------
+
+ren-sub-handle-ne : ∀ {Γ Γ' B A B' ε ε'} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+                  → (¬et : ¬ Eternal B)
+                  → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                  → (H : (op : Op) → (ε'' : E) →
+                           ((Γ ∷ B) ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                           ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                  → (N : ((Γ ∷ B) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+                  → (W : Γ ⊢V⦂ B)
+                  → (hM : RenSubC r Θ M W)
+                  → (hN : RenSubC r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+                  → RenSubC r Θ (handle M `with H `in N) W
+
+ren-sub-handle-ne {Γ} {Γ'} {B} {A} {B'} {ε} r Θ ¬et M H N W hM hN
+  rewrite eternal?-no ¬et =
+  ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                       (cast-handle (castOf {Γ} {B} Θ))))
+    (≐ᶜ-trans
+      (handle-≐ hM (λ op ε'' → clause op ε'')
+        (≐ᶜ-trans
+          (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
+                      (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
+                                       (castOf {Γ} {B} Θ))
+                                 (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
+          (≐ᶜ-trans hN
+            (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
+                             (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
+                                   (castOf {Γ'} {B} Θ)) _)))))
+      (≡→≐ᶜ (sym (cast-handle (castOf {Γ'} {B} Θ)))))
+  where
+    z₀  = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+    z₀' = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+
+    clause : (op : Op) → (ε'' : E) → _
+    clause op ε'' =
+      ≐ᶜ-trans
+        (C-rename-conj eLL eLL' (clause-ren-l-≐ r Θ D₀) _)
+        (≐ᶜ-trans
+          (≡→≐ᶜ (cong (λ z → subst (_⊢C⦂ CT) eLL' (C-rename K z)) inner-eq))
+          (≐ᶜ-trans
+            (≡→≐ᶜ uip²)
+            (≐ᶜ-sym
+              (≐ᶜ-trans (≡→≐ᶜ r1)
+                (≐ᶜ-trans
+                  (substᶜ-≐ TRout
+                    (C-rename-conj eRR eRR'
+                       (clause-ren-r-ne-≐ r ¬et Θ D₀) (H op ε'')))
+                  (≡→≐ᶜ (subst-fuseᶜ eRR' TRout _)))))))
+      where
+        D₀ = [] ∷ type-of-gtype (param op)
+                ∷ [ mapᵉ (op-grade op) ]
+                    (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+
+        CT = B' ‼ (op-grade op ·ₑ ε'')
+
+        K = cong-ren {Γ'' = Θ ᴱ ++ᶜ D₀} (restrict-ren {Ξ = []} r)
+
+        cDL = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B' ‼ ε''))
+                   (castOf {Γ} {B} Θ)
+
+        cDR = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B' ‼ ε''))
+                   (castOf {Γ'} {B} Θ)
+
+        eLL = trans (cong (_++ᶜ D₀) (ᴱ-++ᶜ Γ Θ)) (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D₀)
+
+        eLL' = sym (trans (cong (_++ᶜ D₀) (ᴱ-++ᶜ Γ' Θ))
+                          (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) D₀))
+
+        eRR = trans (cong (_++ᶜ D₀)
+                          (trans (ᴱ-++ᶜ (Γ ∷ B) Θ)
+                                 (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-drop {Γ} {B} ¬et))))
+                    (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D₀)
+
+        eRR' = sym (trans (cong (_++ᶜ D₀)
+                                (trans (ᴱ-++ᶜ (Γ' ∷ B) Θ)
+                                       (cong (_++ᶜ Θ ᴱ)
+                                             (ᴱ-∷-drop {Γ'} {B} ¬et))))
+                          (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) D₀))
+
+        dropL = ᴱ-drop-split ¬et z₀
+        dropR = ᴱ-drop-split ¬et z₀'
+
+        TL = trans (trans (cong (_++ᶜ D₀) dropL) cDL) eLL
+
+        TRout = trans (cong (_++ᶜ D₀) dropR) cDR
+
+        inner-eq : subst (_⊢C⦂ CT) eLL
+                     (castᶜ cDL
+                       (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
+                                        ∷ [ mapᵉ (op-grade op) ]
+                                            (type-of-gtype (arity op)
+                                              ⇒ B' ‼ ε'')
+                                      ⊢C⦂ CT)
+                              dropL (H op ε'')))
+                 ≡ subst (_⊢C⦂ CT) TL (H op ε'')
+        inner-eq =
+          trans (cong (subst (_⊢C⦂ CT) eLL)
+                   (trans (cong (castᶜ cDL)
+                                (subst-++ᶜʳ D₀ dropL (H op ε'')))
+                     (trans (castᶜ≡subst cDL _)
+                            (subst-fuseᶜ (cong (_++ᶜ D₀) dropL) cDL
+                                         (H op ε'')))))
+                (subst-fuseᶜ (trans (cong (_++ᶜ D₀) dropL) cDL) eLL (H op ε''))
+
+        r1 : castᶜ cDR
+               (subst (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
+                                ∷ [ mapᵉ (op-grade op) ]
+                                    (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                              ⊢C⦂ CT)
+                      dropR
+                      (C-rename (cong-∷-ren (cong-∷-ren
+                                  (restrict-ren {Ξ = []}
+                                    (cong-ren {Γ'' = Θ} (cong-∷-ren r)))))
+                                (H op ε'')))
+           ≡ subst (_⊢C⦂ CT) TRout
+               (C-rename (cong-∷-ren (cong-∷-ren
+                           (restrict-ren {Ξ = []}
+                             (cong-ren {Γ'' = Θ} (cong-∷-ren r)))))
+                         (H op ε''))
+        r1 =
+          trans (cong (castᶜ cDR) (subst-++ᶜʳ D₀ dropR _))
+            (trans (castᶜ≡subst cDR _)
+                   (subst-fuseᶜ (cong (_++ᶜ D₀) dropR) cDR _))
+
+        uip² : subst (_⊢C⦂ CT) eLL'
+                 (C-rename K (subst (_⊢C⦂ CT) TL (H op ε'')))
+             ≡ subst (_⊢C⦂ CT) (trans eRR' TRout)
+                 (C-rename K (subst (_⊢C⦂ CT) eRR (H op ε'')))
+        uip² =
+          trans (cong (λ p → subst (_⊢C⦂ CT) eLL'
+                               (C-rename K (subst (_⊢C⦂ CT) p (H op ε''))))
+                      (uip {p = TL} {q = eRR}))
+                (cong (λ p → subst (_⊢C⦂ CT) p
+                               (C-rename K (subst (_⊢C⦂ CT) eRR (H op ε''))))
+                      (uip {p = eLL'} {q = trans eRR' TRout}))
+
+------------------------------------------------------------------------
+-- `handle`, ETERNAL
+--
+-- The clause substitutes the restricted value, so the comparison is the
+-- recursion (`hH`, `ren-sub-C` at the canonical restricted contexts) with
+-- the goal's two substitutions carried over by `sub-cast-C″` — the
+-- splittings' halves agree with the canonical ones only propositionally,
+-- which `split→∈-unique₂` absorbs — and the value mismatch bridged by
+-- `eternal-val-restrict-ren`.
+------------------------------------------------------------------------
+
+ren-sub-handle-et : ∀ {Γ Γ' B A B' ε ε'} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+                  → (et : Eternal B)
+                  → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                  → (H : (op : Op) → (ε'' : E) →
+                           ((Γ ∷ B) ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                           ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                  → (N : ((Γ ∷ B) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+                  → (W : Γ ⊢V⦂ B)
+                  → (hM : RenSubC r Θ M W)
+                  → (hN : RenSubC r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+                  → (hH : (op : Op) → (ε'' : E)
+                        → RenSubC {Γ ᴱ} {Γ' ᴱ} {B}
+                            (restrict-ren {Ξ = []} r) (Θ ᴱ ++ᶜ Dcl B' op ε'')
+                            (subst (_⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                                   (ren-sub-eTot {Γ} {B} Θ et (Dcl B' op ε''))
+                                   (H op ε''))
+                            (eternal-val-restrict et W))
+                  → RenSubC r Θ (handle M `with H `in N) W
+
+ren-sub-handle-et {Γ} {Γ'} {B} {A} {B'} {ε} r Θ et M H N W hM hN hH =
+  ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                       (cast-handle (castOf {Γ} {B} Θ))))
+    (≐ᶜ-trans
+      (handle-≐ hM (λ op ε'' → clause op ε'')
+        (≐ᶜ-trans
+          (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
+                      (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
+                                       (castOf {Γ} {B} Θ))
+                                 (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
+          (≐ᶜ-trans hN
+            (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
+                             (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
+                                   (castOf {Γ'} {B} Θ)) _)))))
+      (≡→≐ᶜ (sym (cast-handle (castOf {Γ'} {B} Θ)))))
+  where
+    z₀  = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+    z₀' = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+
+    cWL = sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+    cWR = sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ}))
+
+    clause : (op : Op) → (ε'' : E) → _
+    clause op ε'' =
+      ≐ᶜ-trans
+        (≡→≐ᶜ (cong (λ d → C-rename
+                             (cong-∷-ren (cong-∷-ren
+                               (restrict-ren {Ξ = []}
+                                 (cong-ren {Γ'' = Θ} r))))
+                             (castᶜ cDL
+                               (⟨ d ⟩[ z₀ ↦ castᵛ cWL W ]cl H op ε'')))
+                    (eternal?-yes et)))
+        (≐ᶜ-trans
+          (C-rename-conj eLL eLL' (clause-ren-l-≐ r Θ D₀) _)
+          (≐ᶜ-trans
+            (≡→≐ᶜ (cong (λ z → subst (_⊢C⦂ CT) eLL' (C-rename KL z))
+                        inner-eq-L))
+            (≐ᶜ-trans
+              (substᶜ-≐ eLL' (hH op ε''))
+              (≐ᶜ-trans (≡→≐ᶜ out-eq)
+                (≐ᶜ-sym
+                  (≐ᶜ-trans
+                    (≡→≐ᶜ (cong (λ d → castᶜ cDR
+                                         (⟨ d ⟩[ z₀'
+                                               ↦ castᵛ cWR (V-rename r W)
+                                               ]cl
+                                            (λ op₁ ε₁ →
+                                               C-rename
+                                                 (cong-∷-ren (cong-∷-ren
+                                                   (restrict-ren {Ξ = []}
+                                                     (cong-ren {Γ'' = Θ}
+                                                       (cong-∷-ren r)))))
+                                                 (H op₁ ε₁))
+                                            op ε''))
+                                (eternal?-yes et)))
+                    gr-chain))))))
+      where
+        D₀ = Dcl B' op ε''
+
+        CT = B' ‼ (op-grade op ·ₑ ε'')
+
+        Θ₀ = Θ ᴱ ++ᶜ D₀
+
+        KL = cong-ren {Γ'' = Θ₀} (restrict-ren {Ξ = []} r)
+        KR = cong-ren {Γ'' = Θ₀} (cong-∷-ren {A = B} (restrict-ren {Ξ = []} r))
+
+        eT   = ren-sub-eTot {Γ} {B} Θ et D₀
+        eTΓ' = ren-sub-eTot {Γ'} {B} Θ et D₀
+
+        Ĥ  = H op ε''
+        H⁺ = subst (_⊢C⦂ CT) eT Ĥ
+
+        sL = split-++ʳ (∈-ᴱ-split et z₀) D₀
+        sR = split-++ʳ (∈-ᴱ-split et z₀') D₀
+
+        xL = split→∈ sL
+        xR = split→∈ sR
+
+        y₁ = split→∈ (split-≡-++ᶜ {Γ ᴱ ∷ B} {Θ₀})
+        y₂ = split→∈ (split-≡-++ᶜ {Γ' ᴱ ∷ B} {Θ₀})
+
+        VL = subst (_⊢V⦂ B) (sym (split→∈-split-l sL))
+                   (eternal-val-restrict et (castᵛ cWL W))
+        VR = subst (_⊢V⦂ B) (sym (split→∈-split-l sR))
+                   (eternal-val-restrict et (castᵛ cWR (V-rename r W)))
+
+        U₁ = castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ ᴱ ∷ B} {Θ₀})))
+                   (eternal-val-restrict et W)
+        U₂ = castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ᴱ ∷ B} {Θ₀})))
+                   (V-rename (restrict-ren {Ξ = []} r)
+                             (eternal-val-restrict et W))
+
+        cDL = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B' ‼ ε''))
+                   (castOf {Γ} {B} Θ)
+
+        cDR = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B' ‼ ε''))
+                   (castOf {Γ'} {B} Θ)
+
+        eLL = trans (cong (_++ᶜ D₀) (ᴱ-++ᶜ Γ Θ)) (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D₀)
+
+        eLL' = sym (trans (cong (_++ᶜ D₀) (ᴱ-++ᶜ Γ' Θ))
+                          (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) D₀))
+
+        bigEL = trans (cong₂ _++ᶜ_ (split→∈-split-l sL) (split→∈-split-r sL))
+                  (trans (sym (++ᶜ-assoc ((split-l z₀) ᴱ) ((split-r z₀) ᴱ) D₀))
+                         (cong (_++ᶜ D₀)
+                               (sym (ᴱ-++ᶜ (split-l z₀) (split-r z₀)))))
+
+        bigER = trans (cong₂ _++ᶜ_ (split→∈-split-l sR) (split→∈-split-r sR))
+                  (trans (sym (++ᶜ-assoc ((split-l z₀') ᴱ) ((split-r z₀') ᴱ) D₀))
+                         (cong (_++ᶜ D₀)
+                               (sym (ᴱ-++ᶜ (split-l z₀') (split-r z₀')))))
+
+        -- the left substitution, carried to the canonical contexts
+
+        eΓ₁L = cong _ᴱ (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+        eΓ₂L = cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D₀)
+                    (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B} {Θ}))
+
+        eρL = cong ctx-grade eΓ₂L
+
+        eyL : subst (λ Γ₀ → B ∈[ ctx-grade Θ₀ ] Γ₀) eT
+                (subst (λ ρ₀ → B ∈[ ρ₀ ] (((Γ ∷ B) ++ᶜ Θ) ᴱ ++ᶜ D₀)) eρL xL)
+            ≡ y₁
+        eyL = split→∈-unique₂ eΓ₁L eΓ₂L eT sL (split-≡-++ᶜ {Γ ᴱ ∷ B} {Θ₀})
+
+        slL = sl-eq eρL eT xL y₁ eyL
+
+        eUL : subst (_⊢V⦂ B) slL VL ≡ U₁
+        eUL =
+          trans (cong (subst (_⊢V⦂ B) slL)
+                  (trans (cong (subst (_⊢V⦂ B) (sym (split→∈-split-l sL)))
+                               (trans (restrict-castᵛ cWL et W)
+                                      (castᵛ≡subst (cong _ᴱ cWL)
+                                        (eternal-val-restrict et W))))
+                         (subst-fuseᵛ (cong _ᴱ cWL)
+                                      (sym (split→∈-split-l sL))
+                                      (eternal-val-restrict et W))))
+            (trans (subst-fuseᵛ (trans (cong _ᴱ cWL)
+                                       (sym (split→∈-split-l sL)))
+                                slL (eternal-val-restrict et W))
+              (trans (substᵛ-irr (trans (trans (cong _ᴱ cWL)
+                                               (sym (split→∈-split-l sL)))
+                                        slL)
+                        (sym (split→∈-split-l (split-≡-++ᶜ {Γ ᴱ ∷ B} {Θ₀})))
+                        (eternal-val-restrict et W))
+                     (sym (castᵛ≡subst
+                             (sym (split→∈-split-l (split-≡-++ᶜ {Γ ᴱ ∷ B} {Θ₀})))
+                             (eternal-val-restrict et W)))))
+
+        subCL : H⁺ [ y₁ ↦ U₁ ]c
+              ≡ subst (_⊢C⦂ CT)
+                  (cong₂ _++ᶜ_ slL (sr-eq eρL eT xL y₁ eyL))
+                  (Ĥ [ xL ↦ VL ]c)
+        subCL = sub-cast-C″ eρL eT Ĥ xL y₁ eyL VL U₁ eUL
+
+        inner-eq-L : subst (_⊢C⦂ CT) eLL
+                       (castᶜ cDL (subst (_⊢C⦂ CT) bigEL (Ĥ [ xL ↦ VL ]c)))
+                   ≡ castᶜ (castOf {Γ ᴱ} {B} Θ₀) (H⁺ [ y₁ ↦ U₁ ]c)
+        inner-eq-L =
+          trans (cong (subst (_⊢C⦂ CT) eLL)
+                  (trans (castᶜ≡subst cDL _)
+                         (subst-fuseᶜ bigEL cDL _)))
+            (trans (subst-fuseᶜ (trans bigEL cDL) eLL _)
+              (trans (cong (λ p → subst (_⊢C⦂ CT) p (Ĥ [ xL ↦ VL ]c))
+                           (uip {p = trans (trans bigEL cDL) eLL}
+                                {q = trans (cong₂ _++ᶜ_ slL
+                                             (sr-eq eρL eT xL y₁ eyL))
+                                           (castOf {Γ ᴱ} {B} Θ₀)}))
+                (sym (trans (castᶜ≡subst (castOf {Γ ᴱ} {B} Θ₀) _)
+                       (trans (cong (subst (_⊢C⦂ CT) (castOf {Γ ᴱ} {B} Θ₀))
+                                    subCL)
+                              (subst-fuseᶜ (cong₂ _++ᶜ_ slL
+                                             (sr-eq eρL eT xL y₁ eyL))
+                                           (castOf {Γ ᴱ} {B} Θ₀) _))))))
+
+        -- the right substitution, likewise
+
+        eΓ₁R = cong _ᴱ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+        eΓ₂R = cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ D₀)
+                    (sym (split→∈-split-r (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+
+        eρR = cong ctx-grade eΓ₂R
+
+        eyR : subst (λ Γ₀ → B ∈[ ctx-grade ((split-r z₀') ᴱ ++ᶜ D₀) ] Γ₀)
+                    (sym eTΓ')
+                (subst (λ ρ₀ → B ∈[ ρ₀ ] ((Γ' ᴱ ∷ B) ++ᶜ Θ₀)) eρR y₂)
+            ≡ xR
+        eyR = split→∈-unique₂ eΓ₁R eΓ₂R (sym eTΓ')
+                              (split-≡-++ᶜ {Γ' ᴱ ∷ B} {Θ₀}) sR
+
+        slR = sl-eq eρR (sym eTΓ') y₂ xR eyR
+
+        VR″ = subst (_⊢V⦂ B) slR U₂
+
+        X₂ = (C-rename KR H⁺) [ y₂ ↦ U₂ ]c
+
+        subCR : (subst (_⊢C⦂ CT) (sym eTΓ') (C-rename KR H⁺)) [ xR ↦ VR″ ]c
+              ≡ subst (_⊢C⦂ CT)
+                  (cong₂ _++ᶜ_ slR (sr-eq eρR (sym eTΓ') y₂ xR eyR))
+                  X₂
+        subCR = sub-cast-C″ eρR (sym eTΓ') (C-rename KR H⁺) y₂ xR eyR
+                            U₂ VR″ refl
+
+        eVR : VR ≐ᵛ VR″
+        eVR =
+          ≐ᵛ-trans
+            (≡→≐ᵛ (cong (subst (_⊢V⦂ B) (sym (split→∈-split-l sR)))
+                        (restrict-castᵛ cWR et (V-rename r W))))
+            (≐ᵛ-trans
+              (substᵛ-≐ (sym (split→∈-split-l sR))
+                 (castᵛ-≐ (cong _ᴱ cWR) (eternal-val-restrict-ren et r W)))
+              (≡→≐ᵛ
+                (trans (cong (subst (_⊢V⦂ B) (sym (split→∈-split-l sR)))
+                             (castᵛ≡subst (cong _ᴱ cWR)
+                               (V-rename (restrict-ren {Ξ = []} r)
+                                         (eternal-val-restrict et W))))
+                  (trans (subst-fuseᵛ (cong _ᴱ cWR)
+                                      (sym (split→∈-split-l sR))
+                                      (V-rename (restrict-ren {Ξ = []} r)
+                                                (eternal-val-restrict et W)))
+                    (trans (substᵛ-irr
+                              (trans (cong _ᴱ cWR)
+                                     (sym (split→∈-split-l sR)))
+                              (trans (sym (split→∈-split-l
+                                            (split-≡-++ᶜ {Γ' ᴱ ∷ B} {Θ₀})))
+                                     slR)
+                              (V-rename (restrict-ren {Ξ = []} r)
+                                        (eternal-val-restrict et W)))
+                      (sym (trans (cong (subst (_⊢V⦂ B) slR)
+                                        (castᵛ≡subst
+                                          (sym (split→∈-split-l
+                                                 (split-≡-++ᶜ {Γ' ᴱ ∷ B} {Θ₀})))
+                                          (V-rename (restrict-ren {Ξ = []} r)
+                                                    (eternal-val-restrict et W))))
+                                  (subst-fuseᵛ
+                                    (sym (split→∈-split-l
+                                           (split-≡-++ᶜ {Γ' ᴱ ∷ B} {Θ₀})))
+                                    slR
+                                    (V-rename (restrict-ren {Ξ = []} r)
+                                              (eternal-val-restrict et W))))))))))
+
+        TRfin = trans (trans (cong₂ _++ᶜ_ slR
+                               (sr-eq eρR (sym eTΓ') y₂ xR eyR))
+                             bigER)
+                      cDR
+
+        gr-chain : castᶜ cDR
+                     (subst (_⊢C⦂ CT) bigER
+                       ((C-rename (cong-∷-ren (cong-∷-ren
+                                    (restrict-ren {Ξ = []}
+                                      (cong-ren {Γ'' = Θ} (cong-∷-ren r)))))
+                                  Ĥ)
+                          [ xR ↦ VR ]c))
+                 ≐ᶜ subst (_⊢C⦂ CT) TRfin X₂
+        gr-chain =
+          ≐ᶜ-trans
+            (castᶜ-≐ cDR (substᶜ-≐ bigER
+              (sub-≐ᶜ xR eVR
+                 (C-rename-conj eT (sym eTΓ')
+                    (clause-ren-r-et-≐ r et Θ D₀) Ĥ))))
+            (≐ᶜ-trans
+              (≡→≐ᶜ (cong (λ z → castᶜ cDR (subst (_⊢C⦂ CT) bigER z)) subCR))
+              (≡→≐ᶜ (trans (cong (castᶜ cDR)
+                              (subst-fuseᶜ (cong₂ _++ᶜ_ slR
+                                             (sr-eq eρR (sym eTΓ') y₂ xR eyR))
+                                           bigER X₂))
+                       (trans (castᶜ≡subst cDR _)
+                              (subst-fuseᶜ (trans (cong₂ _++ᶜ_ slR
+                                                    (sr-eq eρR (sym eTΓ')
+                                                           y₂ xR eyR))
+                                                  bigER)
+                                           cDR X₂)))))
+
+        out-eq : subst (_⊢C⦂ CT) eLL'
+                   (castᶜ (castOf {Γ' ᴱ} {B} Θ₀) X₂)
+               ≡ subst (_⊢C⦂ CT) TRfin X₂
+        out-eq =
+          trans (cong (subst (_⊢C⦂ CT) eLL')
+                      (castᶜ≡subst (castOf {Γ' ᴱ} {B} Θ₀) X₂))
+            (trans (subst-fuseᶜ (castOf {Γ' ᴱ} {B} Θ₀) eLL' X₂)
+                   (cong (λ p → subst (_⊢C⦂ CT) p X₂)
+                         (uip {p = trans (castOf {Γ' ᴱ} {B} Θ₀) eLL'}
+                              {q = TRfin})))
+
+-- The dispatcher: the two halves' own statements each fit the unreduced
+-- goal, so a `Dec` argument is matched instead of a `with`.
+
+ren-sub-handle : ∀ {Γ Γ' B A B' ε ε'} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+               → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+               → (H : (op : Op) → (ε'' : E) →
+                        ((Γ ∷ B) ++ᶜ Θ) ᴱ ∷ type-of-gtype (param op)
+                          ∷ [ mapᵉ (op-grade op) ]
+                              (type-of-gtype (arity op) ⇒ B' ‼ ε'')
+                        ⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+               → (N : ((Γ ∷ B) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B' ‼ ε')
+               → (W : Γ ⊢V⦂ B)
+               → (hM : RenSubC r Θ M W)
+               → (hN : RenSubC r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+               → (hH : (et : Eternal B) → (op : Op) → (ε'' : E)
+                     → RenSubC {Γ ᴱ} {Γ' ᴱ} {B}
+                         (restrict-ren {Ξ = []} r) (Θ ᴱ ++ᶜ Dcl B' op ε'')
+                         (subst (_⊢C⦂ B' ‼ (op-grade op ·ₑ ε''))
+                                (ren-sub-eTot {Γ} {B} Θ et (Dcl B' op ε''))
+                                (H op ε''))
+                         (eternal-val-restrict et W))
+               → RenSubC r Θ (handle M `with H `in N) W
+
+ren-sub-handle {B = B} r Θ M H N W hM hN hH = go (eternal? B)
+  where
+    go : Dec (Eternal B) → _
+    go (yes et) = ren-sub-handle-et r Θ et M H N W hM hN (hH et)
+    go (no ¬et) = ren-sub-handle-ne r Θ ¬et M H N W hM hN
+
+-- RENAMING THE PREFIX COMMUTES WITH SUBSTITUTING AT THE VARIABLE PAST IT
+--
+-- Mutual induction on the term, at an arbitrary suffix, as `sub-wk`: each
+-- binding former grows the suffix, `cong-ren {Θ ∷ A} r` *is*
+-- `cong-∷-ren (cong-ren {Θ} r)` and the substituted variable at `Θ ∷ A` *is*
+-- `Tl-∷` of the one at `Θ`, both definitionally. What is left per case is
+-- pushing the two casts through the former.
+
+mutual
+
+  ren-sub-V : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A}
+            → (U : ((Γ ∷ B) ++ᶜ Θ) ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+            → V-rename (cong-ren {Γ'' = Θ} r)
+                (castᵛ (castOf {Γ} {B} Θ)
+                  (U [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                       ↦ castᵛ (sym (split→∈-split-l
+                                       (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]v))
+            ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+                 ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) U)
+                    [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                      ↦ castᵛ (sym (split→∈-split-l
+                                      (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                              (V-rename r W) ]v)
+
+  ren-sub-V {Γ} {Γ'} {B} r Θ (var f y) W = ren-sub-var r Θ y W f f
+
+  ren-sub-V {Γ} {Γ'} {B} r Θ (const c) W =
+    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-const (castOf {Γ} {B} Θ))))
+             (≡→≐ᵛ (sym (cast-const (castOf {Γ'} {B} Θ))))
+
+  ren-sub-V {Γ} {Γ'} {B} r Θ ⋆ W =
+    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-⋆ (castOf {Γ} {B} Θ))))
+             (≡→≐ᵛ (sym (cast-⋆ (castOf {Γ'} {B} Θ))))
+
+  ren-sub-V {Γ} {Γ'} {B} r Θ ⦉ V₁ , V₂ ⦊ W =
+    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-pair (castOf {Γ} {B} Θ))))
+      (≐ᵛ-trans (pair-≐ (ren-sub-V r Θ V₁ W) (ren-sub-V r Θ V₂ W))
+                (≡→≐ᵛ (sym (cast-pair (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-V {Γ} {Γ'} {B} r Θ {A = A ⇒ C} (lam M) W =
+    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-lam (castOf {Γ} {B} Θ) _)))
+      (≐ᵛ-trans
+        (lam-≐ (≐ᶜ-trans
+                 (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
+                             (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
+                                        (castOf {Γ} {B} (Θ ∷ A)) _)))
+                 (≐ᶜ-trans (ren-sub-C r (Θ ∷ A) M W)
+                           (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
+                                            (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
+        (≡→≐ᵛ (sym (cast-lam (castOf {Γ'} {B} Θ) _))))
+
+  ren-sub-C : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {C}
+            → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
+            → C-rename (cong-ren {Γ'' = Θ} r)
+                (castᶜ (castOf {Γ} {B} Θ)
+                  (M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                       ↦ castᵛ (sym (split→∈-split-l
+                                       (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
+            ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
+                 ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) M)
+                    [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+                      ↦ castᵛ (sym (split→∈-split-l
+                                      (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
+                              (V-rename r W) ]c)
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (return V) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-ret (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans (return-≐ (ren-sub-V r Θ V W))
+                (≡→≐ᶜ (sym (cast-ret (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (_⨟_ {A = A} {ε = ε} M N) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-seq (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans
+        (seq-≐ (ren-sub-C r Θ M W)
+               (≐ᶜ-trans
+                 (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
+                             (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
+                                              (castOf {Γ} {B} Θ))
+                                        (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
+                 (≐ᶜ-trans (ren-sub-C r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+                           (≡→≐ᶜ (castᶜ-irr
+                                    (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
+                                    (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
+                                          (castOf {Γ'} {B} Θ)) _)))))
+        (≡→≐ᶜ (sym (cast-seq (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (V₁ · V₂) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-app (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans (app-≐ (ren-sub-V r Θ V₁ W) (ren-sub-V r Θ V₂ W))
+                (≡→≐ᶜ (sym (cast-app (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (match_`in_ {A = A} {B = B'} V N) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-match (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans
+        (match-≐ (ren-sub-V r Θ V W)
+                 (≐ᶜ-trans
+                   (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A ∷ B'} r))
+                               (castᶜ-irr (cong (λ Γ₀ → Γ₀ ∷ A ∷ B')
+                                                (castOf {Γ} {B} Θ))
+                                          (castOf {Γ} {B} (Θ ∷ A ∷ B')) _)))
+                   (≐ᶜ-trans (ren-sub-C r (Θ ∷ A ∷ B') N W)
+                             (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A ∷ B'))
+                                              (cong (λ Γ₀ → Γ₀ ∷ A ∷ B')
+                                                    (castOf {Γ'} {B} Θ)) _)))))
+        (≡→≐ᶜ (sym (cast-match (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (absurd V) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-absurd (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans (absurd-≐ (ren-sub-V r Θ V W))
+                (≡→≐ᶜ (sym (cast-absurd (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (perform op V M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-perform (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans
+        (perform-≐ (ren-sub-V r Θ V W)
+                   (≐ᶜ-trans
+                     (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ'} r))
+                                 (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                                                            ∷ type-of-gtype (arity op))
+                                                  (castOf {Γ} {B} Θ))
+                                            (castOf {Γ} {B} Θ') _)))
+                     (≐ᶜ-trans (ren-sub-C r Θ' M W)
+                               (≡→≐ᶜ (castᶜ-irr
+                                        (castOf {Γ'} {B} Θ')
+                                        (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                                                        ∷ type-of-gtype (arity op))
+                                              (castOf {Γ'} {B} Θ)) _)))))
+        (≡→≐ᶜ (sym (cast-perform (castOf {Γ'} {B} Θ)))))
+    where
+      Θ' = Θ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (delay τ M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-delay (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans
+        (delay-≐ (≐ᶜ-trans
+                   (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ of-natʳ τ ⟩} r))
+                               (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) (castOf {Γ} {B} Θ))
+                                          (castOf {Γ} {B} (Θ ⟨ of-natʳ τ ⟩)) _)))
+                   (≐ᶜ-trans (ren-sub-C r (Θ ⟨ of-natʳ τ ⟩) M W)
+                             (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ of-natʳ τ ⟩))
+                                              (cong (_⟨ of-natʳ τ ⟩)
+                                                    (castOf {Γ'} {B} Θ)) _)))))
+        (≡→≐ᶜ (sym (cast-delay (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (box {A = A} {ρ = ρ} V M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-box (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans
+        (box-≐ (≐ᵛ-trans
+                 (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ ⟨ ρ ⟩} r))
+                             (castᵛ-irr (cong (_⟨ ρ ⟩) (castOf {Γ} {B} Θ))
+                                        (castOf {Γ} {B} (Θ ⟨ ρ ⟩)) _)))
+                 (≐ᵛ-trans (ren-sub-V r (Θ ⟨ ρ ⟩) V W)
+                           (≡→≐ᵛ (castᵛ-irr (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
+                                            (cong (_⟨ ρ ⟩) (castOf {Γ'} {B} Θ)) _))))
+               (≐ᶜ-trans
+                 (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ [ ρ ] A} r))
+                             (castᶜ-irr (cong (_∷ [ ρ ] A) (castOf {Γ} {B} Θ))
+                                        (castOf {Γ} {B} (Θ ∷ [ ρ ] A)) _)))
+                 (≐ᶜ-trans (ren-sub-C r (Θ ∷ [ ρ ] A) M W)
+                           (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ [ ρ ] A))
+                                            (cong (_∷ [ ρ ] A)
+                                                  (castOf {Γ'} {B} Θ)) _)))))
+        (≡→≐ᶜ (sym (cast-box (castOf {Γ'} {B} Θ)))))
+
+  ren-sub-C {Γ} {Γ'} {B} r Θ (coerce p M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+                         (cast-coerce (castOf {Γ} {B} Θ))))
+      (≐ᶜ-trans (coerce-≐ (ren-sub-C r Θ M W))
+                (≡→≐ᶜ (sym (cast-coerce (castOf {Γ'} {B} Θ)))))
+
+  -- the clause hypothesis is the recursion at the canonical restricted
+  -- contexts, threaded through `ren-sub-C-cast` so it runs on the bare clause
+  ren-sub-C {Γ} {Γ'} {B} r Θ (handle_`with_`in {A = A} {B = B'} {ε = ε} M H N) W =
+    ren-sub-handle r Θ M H N W
+      (ren-sub-C r Θ M W)
+      (ren-sub-C r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+      (λ et op ε'' →
+         ren-sub-C-cast (restrict-ren {Ξ = []} r) (Θ ᴱ ++ᶜ Dcl B' op ε'')
+                        (ren-sub-eTot {Γ} {B} Θ et (Dcl B' op ε''))
+                        (H op ε'') (eternal-val-restrict et W))
+  ren-sub-C r Θ (unbox {A = A} w V M)    W =
+    ren-sub-unbox r Θ w V M W (ren-sub-C r (Θ ∷ A) M W)
+
+  -- `ren-sub-C` with its context given by an equation, so the `handle` clause
+  -- can recurse on the bare clause term (as `sub-wk-C-cast`).
+
+  ren-sub-C-cast : ∀ {Γ Γ' B Γ₀} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+                 → ∀ {C} → (e : Γ₀ ≡ (Γ ∷ B) ++ᶜ Θ) → (M : Γ₀ ⊢C⦂ C)
+                 → (W : Γ ⊢V⦂ B)
+                 → RenSubC r Θ (subst (_⊢C⦂ C) e M) W
+
+  ren-sub-C-cast r Θ refl M W = ren-sub-C r Θ M W
+
+------------------------------------------------------------------------
+-- SUB-SWAP: TWO ADJACENT PREFIX SUBSTITUTIONS COMMUTE
+--
+-- Replacing the outer entry (its value weakened past the inner one) and
+-- then the inner one agrees with replacing the inner entry, the outer one
+-- riding in the suffix, and then the outer one.
+--
+-- The right-hand order names the *inner* entry `B₁` with the outer one
+-- riding in the suffix. Rather than a `split-++ʳ` splitting, that is
+-- presented as the ordinary `split-≡-++ᶜ` at the suffix `([] ∷ B₂) ++ᶜ Θ`
+-- applied to an associativity-cast term — the two are interchangeable
+-- (`sub-cast-C`), and this way `sub-var-r`/`-l`/`-hit` apply verbatim,
+-- since `B₂` and `Θ`'s variables are then literally variables of that
+-- suffix. The cast pushes through every former for free: the proof
+-- `++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) (Θ ∷ A)` *is*
+-- `cong (_∷ A) (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ)`, definitionally.
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- SUBSTITUTING AT THE PREFIX BOUNDARY
+--
+-- The whole development is phrased in this one abbreviation: replace the
+-- entry sitting between `Γ'` and the suffix `Θ` by a value over `Γ'`,
+-- presenting the result over `Γ' ++ᶜ Θ`.
+------------------------------------------------------------------------
+
+bvar : ∀ {Γ'} → (B : VType) → (Θ : Ctx) → B ∈[ ctx-grade Θ ] ((Γ' ∷ B) ++ᶜ Θ)
+bvar {Γ'} B Θ = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
+
+bval : ∀ {Γ' B} → (Θ : Ctx) → Γ' ⊢V⦂ B
+     → split-l (bvar {Γ'} B Θ) ⊢V⦂ B
+bval {Γ'} {B} Θ W =
+  castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ}))) W
+
+sub-atᵛ : ∀ {Γ' B A} → (Θ : Ctx) → ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A → Γ' ⊢V⦂ B
+        → (Γ' ++ᶜ Θ) ⊢V⦂ A
+sub-atᵛ {Γ'} {B} Θ U W =
+  castᵛ (castOf {Γ'} {B} Θ) (U [ bvar B Θ ↦ bval Θ W ]v)
+
+sub-atᶜ : ∀ {Γ' B C} → (Θ : Ctx) → ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C → Γ' ⊢V⦂ B
+        → (Γ' ++ᶜ Θ) ⊢C⦂ C
+sub-atᶜ {Γ'} {B} Θ M W =
+  castᶜ (castOf {Γ'} {B} Θ) (M [ bvar B Θ ↦ bval Θ W ]c)
+
+-- and on a clause family, where the substitution reaches through
+-- `⟨_⟩[_↦_]cl` and the transport is `Cl-cast`, i.e. exactly the shape
+-- `cast-handle` produces
+
+sub-atᴴ : ∀ {Γ' B D} → (Θ : Ctx) → Fam D (((Γ' ∷ B) ++ᶜ Θ) ᴱ) → Γ' ⊢V⦂ B
+        → Fam D ((Γ' ++ᶜ Θ) ᴱ)
+sub-atᴴ {Γ'} {B} Θ H W op ε =
+  Cl-cast op ε (castOf {Γ'} {B} Θ)
+    (⟨ eternal? B ⟩[ bvar B Θ ↦ bval Θ W ]cl H op ε)
+
+------------------------------------------------------------------------
+-- THE FORMER LAWS
+--
+-- One per constructor: the action commutes with it, the suffix growing by
+-- the former's own binders. Each is the corresponding `cast-*` lemma, plus
+-- `castᶜ-irr`/`castᵛ-irr` wherever a binder makes the two ways of naming
+-- the context equality differ (only propositionally).
+------------------------------------------------------------------------
+
+sub-at-const : ∀ {Γ' B b} → (Θ : Ctx) → {c : BaseConstants b} → (W : Γ' ⊢V⦂ B)
+             → sub-atᵛ Θ (const c) W ≡ const c
+sub-at-const {Γ'} {B} Θ W = cast-const (castOf {Γ'} {B} Θ)
+
+sub-at-⋆ : ∀ {Γ' B} → (Θ : Ctx) → (W : Γ' ⊢V⦂ B) → sub-atᵛ Θ ⋆ W ≡ ⋆
+sub-at-⋆ {Γ'} {B} Θ W = cast-⋆ (castOf {Γ'} {B} Θ)
+
+sub-at-pair : ∀ {Γ' B A₁ A₂} → (Θ : Ctx)
+            → (V₁ : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A₁) → (V₂ : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A₂)
+            → (W : Γ' ⊢V⦂ B)
+            → sub-atᵛ Θ ⦉ V₁ , V₂ ⦊ W ≡ ⦉ sub-atᵛ Θ V₁ W , sub-atᵛ Θ V₂ W ⦊
+sub-at-pair {Γ'} {B} Θ V₁ V₂ W = cast-pair (castOf {Γ'} {B} Θ)
+
+sub-at-lam : ∀ {Γ' B A C} → (Θ : Ctx)
+           → (N : ((Γ' ∷ B) ++ᶜ Θ) ∷ A ⊢C⦂ C) → (W : Γ' ⊢V⦂ B)
+           → sub-atᵛ Θ (lam N) W ≡ lam (sub-atᶜ (Θ ∷ A) N W)
+sub-at-lam {Γ'} {B} {A} Θ N W =
+  trans (cast-lam (castOf {Γ'} {B} Θ) _)
+        (cong lam (castᶜ-irr (cong (_∷ A) (castOf {Γ'} {B} Θ))
+                             (castOf {Γ'} {B} (Θ ∷ A)) _))
+
+sub-at-ret : ∀ {Γ' B A} → (Θ : Ctx) → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A)
+           → (W : Γ' ⊢V⦂ B)
+           → sub-atᶜ Θ (return V) W ≡ return (sub-atᵛ Θ V W)
+sub-at-ret {Γ'} {B} Θ V W = cast-ret (castOf {Γ'} {B} Θ)
+
+sub-at-app : ∀ {Γ' B A C} → (Θ : Ctx)
+           → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A ⇒ C) → (U : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A)
+           → (W : Γ' ⊢V⦂ B)
+           → sub-atᶜ Θ (V · U) W ≡ (sub-atᵛ Θ V W · sub-atᵛ Θ U W)
+sub-at-app {Γ'} {B} Θ V U W = cast-app (castOf {Γ'} {B} Θ)
+
+sub-at-absurd : ∀ {Γ' B C} → (Θ : Ctx) → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ Empty)
+              → (W : Γ' ⊢V⦂ B)
+              → sub-atᶜ {C = C} Θ (absurd V) W ≡ absurd (sub-atᵛ Θ V W)
+sub-at-absurd {Γ'} {B} Θ V W = cast-absurd (castOf {Γ'} {B} Θ)
+
+sub-at-coerce : ∀ {Γ' B A ε ε'} → (Θ : Ctx) → {p : ε ≾ₑ ε'}
+              → (M : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ A ‼ ε) → (W : Γ' ⊢V⦂ B)
+              → sub-atᶜ Θ (coerce p M) W ≡ coerce p (sub-atᶜ Θ M W)
+sub-at-coerce {Γ'} {B} Θ M W = cast-coerce (castOf {Γ'} {B} Θ)
+
+sub-at-seq : ∀ {Γ' B A A' ε ε'} → (Θ : Ctx)
+           → (M : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+           → (N : ((Γ' ∷ B) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ A' ‼ ε')
+           → (W : Γ' ⊢V⦂ B)
+           → sub-atᶜ Θ (M ⨟ N) W
+           ≡ (sub-atᶜ Θ M W ⨟ sub-atᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+sub-at-seq {Γ'} {B} {A} {ε = ε} Θ M N W =
+  trans (cast-seq (castOf {Γ'} {B} Θ))
+        (cong (_ ⨟_)
+              (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (castOf {Γ'} {B} Θ))
+                         (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))
+
+sub-at-match : ∀ {Γ' B A₁ A₂ C} → (Θ : Ctx)
+             → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A₁ |×| A₂)
+             → (N : ((Γ' ∷ B) ++ᶜ Θ) ∷ A₁ ∷ A₂ ⊢C⦂ C) → (W : Γ' ⊢V⦂ B)
+             → sub-atᶜ Θ (match V `in N) W
+             ≡ match sub-atᵛ Θ V W `in (sub-atᶜ (Θ ∷ A₁ ∷ A₂) N W)
+sub-at-match {Γ'} {B} {A₁} {A₂} Θ V N W =
+  trans (cast-match (castOf {Γ'} {B} Θ))
+        (cong (match _ `in_)
+              (castᶜ-irr (cong (λ Γ₀ → Γ₀ ∷ A₁ ∷ A₂) (castOf {Γ'} {B} Θ))
+                         (castOf {Γ'} {B} (Θ ∷ A₁ ∷ A₂)) _))
+
+sub-at-perform : ∀ {Γ' B A ε} → (Θ : Ctx) → {op : Op}
+               → (V : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ type-of-gtype (param op))
+               → (N : ((Γ' ∷ B) ++ᶜ Θ) ⟨ mapᵉ (op-grade op) ⟩
+                        ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+               → (W : Γ' ⊢V⦂ B)
+               → sub-atᶜ Θ (perform op V N) W
+               ≡ perform op (sub-atᵛ Θ V W)
+                   (sub-atᶜ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                               ∷ type-of-gtype (arity op)) N W)
+sub-at-perform {Γ'} {B} Θ {op = op} V N W =
+  trans (cast-perform (castOf {Γ'} {B} Θ))
+        (cong (perform op _)
+              (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                                          ∷ type-of-gtype (arity op))
+                               (castOf {Γ'} {B} Θ))
+                         (castOf {Γ'} {B} (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                             ∷ type-of-gtype (arity op))) _))
+
+sub-at-delay : ∀ {Γ' B A ε τ} → (Θ : Ctx)
+             → (M : ((Γ' ∷ B) ++ᶜ Θ) ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε) → (W : Γ' ⊢V⦂ B)
+             → sub-atᶜ Θ (delay τ M) W ≡ delay τ (sub-atᶜ (Θ ⟨ of-natʳ τ ⟩) M W)
+sub-at-delay {Γ'} {B} {τ = τ} Θ M W =
+  trans (cast-delay (castOf {Γ'} {B} Θ))
+        (cong (delay τ)
+              (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) (castOf {Γ'} {B} Θ))
+                         (castOf {Γ'} {B} (Θ ⟨ of-natʳ τ ⟩)) _))
+
+sub-at-box : ∀ {Γ' B A C ρ} → (Θ : Ctx)
+           → (V : ((Γ' ∷ B) ++ᶜ Θ) ⟨ ρ ⟩ ⊢V⦂ A)
+           → (M : ((Γ' ∷ B) ++ᶜ Θ) ∷ [ ρ ] A ⊢C⦂ C) → (W : Γ' ⊢V⦂ B)
+           → sub-atᶜ Θ (box V M) W
+           ≡ box (sub-atᵛ (Θ ⟨ ρ ⟩) V W) (sub-atᶜ (Θ ∷ [ ρ ] A) M W)
+sub-at-box {Γ'} {B} {A} {ρ = ρ} Θ V M W =
+  trans (cast-box (castOf {Γ'} {B} Θ))
+        (cong₂ box
+          (castᵛ-irr (cong (_⟨ ρ ⟩) (castOf {Γ'} {B} Θ))
+                     (castOf {Γ'} {B} (Θ ⟨ ρ ⟩)) _)
+          (castᶜ-irr (cong (_∷ [ ρ ] A) (castOf {Γ'} {B} Θ))
+                     (castOf {Γ'} {B} (Θ ∷ [ ρ ] A)) _))
+
+sub-at-handle : ∀ {Γ' B A D ε ε'} → (Θ : Ctx)
+              → (M : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+              → (H : Fam D (((Γ' ∷ B) ++ᶜ Θ) ᴱ))
+              → (N : ((Γ' ∷ B) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ D ‼ ε')
+              → (W : Γ' ⊢V⦂ B)
+              → sub-atᶜ Θ (handle M `with H `in N) W
+              ≡ handle (sub-atᶜ Θ M W)
+                 `with sub-atᴴ Θ H W
+                 `in (sub-atᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+sub-at-handle {Γ'} {B} {A} {ε = ε} Θ M H N W =
+  trans (cast-handle (castOf {Γ'} {B} Θ))
+        (cong (λ z → handle _ `with _ `in z)
+              (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (castOf {Γ'} {B} Θ))
+                         (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))
+
+------------------------------------------------------------------------
+-- THE TWO ORDERS
+--
+-- `outer-first` replaces `B₂` (its value weakened past `B₁`) and then
+-- `B₁`; `inner-first` replaces `B₁`, with `B₂` riding in the suffix, and
+-- then `B₂`. The associativity is what re-brackets `B₂` into the suffix;
+-- at a grown suffix it is `cong` of itself, definitionally, so it costs
+-- nothing at the non-binding formers and one `castᶜ-irr` at the binding
+-- ones.
+------------------------------------------------------------------------
+
+assocᴮ : (Γ : Ctx) → (B₁ B₂ : VType) → (Θ : Ctx)
+       → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ≡ ((Γ ∷ B₁) ++ᶜ (([] ∷ B₂) ++ᶜ Θ))
+assocᴮ Γ B₁ B₂ Θ = ++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ
+
+assocᴮ⁻ : (Γ : Ctx) → (B₂ : VType) → (Θ : Ctx)
+        → (Γ ++ᶜ (([] ∷ B₂) ++ᶜ Θ)) ≡ ((Γ ∷ B₂) ++ᶜ Θ)
+assocᴮ⁻ Γ B₂ Θ = sym (++ᶜ-assoc Γ ([] ∷ B₂) Θ)
+
+outerᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
+       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢V⦂ A
+outerᵛ {B₁ = B₁} Θ U W₂ W₁ =
+  sub-atᵛ Θ (sub-atᵛ Θ U (V-rename (wk-ren {A = B₁}) W₂)) W₁
+
+outerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
+       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢C⦂ C
+outerᶜ {B₁ = B₁} Θ M W₂ W₁ =
+  sub-atᶜ Θ (sub-atᶜ Θ M (V-rename (wk-ren {A = B₁}) W₂)) W₁
+
+-- `B₁` alone, with `B₂` re-bracketed into the suffix. Both orders' second
+-- step is then an ordinary `sub-atᵛ`/`sub-atᶜ`, so only this operation
+-- needs former laws of its own.
+
+inner₀ᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
+        → Γ ⊢V⦂ B₁ → ((Γ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
+inner₀ᵛ {Γ} {B₁} {B₂} Θ U W₁ =
+  castᵛ (assocᴮ⁻ Γ B₂ Θ)
+    (sub-atᵛ (([] ∷ B₂) ++ᶜ Θ) (castᵛ (assocᴮ Γ B₁ B₂ Θ) U) W₁)
+
+inner₀ᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
+        → Γ ⊢V⦂ B₁ → ((Γ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
+inner₀ᶜ {Γ} {B₁} {B₂} Θ M W₁ =
+  castᶜ (assocᴮ⁻ Γ B₂ Θ)
+    (sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) (castᶜ (assocᴮ Γ B₁ B₂ Θ) M) W₁)
+
+inner₀ᴴ : ∀ {Γ B₁ B₂ D} → (Θ : Ctx) → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ)
+        → Γ ⊢V⦂ B₁ → Fam D (((Γ ∷ B₂) ++ᶜ Θ) ᴱ)
+inner₀ᴴ {Γ} {B₁} {B₂} Θ H W₁ op ε =
+  Cl-cast op ε (assocᴮ⁻ Γ B₂ Θ)
+    (sub-atᴴ (([] ∷ B₂) ++ᶜ Θ)
+       (λ op' ε' → Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε')) W₁ op ε)
+
+innerᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
+       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢V⦂ A
+innerᵛ Θ U W₂ W₁ = sub-atᵛ Θ (inner₀ᵛ Θ U W₁) W₂
+
+innerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
+       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢C⦂ C
+innerᶜ Θ M W₂ W₁ = sub-atᶜ Θ (inner₀ᶜ Θ M W₁) W₂
+
+-- and on a clause family
+
+outerᴴ : ∀ {Γ B₁ B₂ D} → (Θ : Ctx) → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ)
+       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Fam D ((Γ ++ᶜ Θ) ᴱ)
+outerᴴ {B₁ = B₁} Θ H W₂ W₁ =
+  sub-atᴴ Θ (sub-atᴴ Θ H (V-rename (wk-ren {A = B₁}) W₂)) W₁
+
+innerᴴ : ∀ {Γ B₁ B₂ D} → (Θ : Ctx) → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ)
+       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Fam D ((Γ ++ᶜ Θ) ᴱ)
+innerᴴ Θ H W₂ W₁ = sub-atᴴ Θ (inner₀ᴴ Θ H W₁) W₂
+
+------------------------------------------------------------------------
+-- `inner₀`'S FORMER LAWS
+--
+-- Each is `cast-F` (pushing the associativity in), `sub-at-F`, `cast-F`
+-- again (pushing the inverse out); the binding formers add one
+-- `castᶜ-irr`, since `cong (_∷ A) (sym p)` and `sym (cong (_∷ A) p)`
+-- agree only propositionally. Note the associativity itself needs no
+-- reconciliation: `++ᶜ-assoc Γ' Δ (Θ ∷ A)` *is* `cong (_∷ A)` of the one
+-- at `Θ`, definitionally.
+------------------------------------------------------------------------
+
+inner₀-const : ∀ {Γ B₁ B₂ b} → (Θ : Ctx) → {c : BaseConstants b}
+             → (W₁ : Γ ⊢V⦂ B₁)
+             → inner₀ᵛ {B₂ = B₂} Θ (const c) W₁ ≡ const c
+inner₀-const {Γ} {B₁} {B₂} Θ W₁ =
+  trans (cong (castᵛ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᵛ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-const (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-const (([] ∷ B₂) ++ᶜ Θ) W₁)))
+        (cast-const (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-⋆ : ∀ {Γ B₁ B₂} → (Θ : Ctx) → (W₁ : Γ ⊢V⦂ B₁)
+         → inner₀ᵛ {B₂ = B₂} Θ ⋆ W₁ ≡ ⋆
+inner₀-⋆ {Γ} {B₁} {B₂} Θ W₁ =
+  trans (cong (castᵛ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᵛ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-⋆ (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-⋆ (([] ∷ B₂) ++ᶜ Θ) W₁)))
+        (cast-⋆ (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-pair : ∀ {Γ B₁ B₂ A₁ A₂} → (Θ : Ctx)
+            → (V₁ : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A₁)
+            → (V₂ : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A₂) → (W₁ : Γ ⊢V⦂ B₁)
+            → inner₀ᵛ Θ ⦉ V₁ , V₂ ⦊ W₁
+            ≡ ⦉ inner₀ᵛ Θ V₁ W₁ , inner₀ᵛ Θ V₂ W₁ ⦊
+inner₀-pair {Γ} {B₁} {B₂} Θ V₁ V₂ W₁ =
+  trans (cong (castᵛ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᵛ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-pair (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-pair (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V₁)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V₂) W₁)))
+        (cast-pair (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-lam : ∀ {Γ B₁ B₂ A C} → (Θ : Ctx)
+           → (N : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ∷ A ⊢C⦂ C) → (W₁ : Γ ⊢V⦂ B₁)
+           → inner₀ᵛ {B₂ = B₂} Θ (lam N) W₁ ≡ lam (inner₀ᶜ (Θ ∷ A) N W₁)
+inner₀-lam {Γ} {B₁} {B₂} {A} Θ N W₁ =
+  trans (cong (castᵛ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᵛ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-lam (assocᴮ Γ B₁ B₂ Θ) N))
+                 (sub-at-lam (([] ∷ B₂) ++ᶜ Θ)
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ∷ A)) N) W₁)))
+    (trans (cast-lam (assocᴮ⁻ Γ B₂ Θ) _)
+           (cong lam (castᶜ-irr (cong (_∷ A) (assocᴮ⁻ Γ B₂ Θ))
+                                (assocᴮ⁻ Γ B₂ (Θ ∷ A)) _)))
+
+inner₀-ret : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → (V : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A)
+           → (W₁ : Γ ⊢V⦂ B₁)
+           → inner₀ᶜ {B₂ = B₂} Θ (return V) W₁ ≡ return (inner₀ᵛ Θ V W₁)
+inner₀-ret {Γ} {B₁} {B₂} Θ V W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-ret (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-ret (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V) W₁)))
+        (cast-ret (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-app : ∀ {Γ B₁ B₂ A C} → (Θ : Ctx)
+           → (V : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A ⇒ C)
+           → (U : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A) → (W₁ : Γ ⊢V⦂ B₁)
+           → inner₀ᶜ {B₂ = B₂} Θ (V · U) W₁
+           ≡ (inner₀ᵛ Θ V W₁ · inner₀ᵛ Θ U W₁)
+inner₀-app {Γ} {B₁} {B₂} Θ V U W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-app (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-app (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) U) W₁)))
+        (cast-app (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-absurd : ∀ {Γ B₁ B₂ C} → (Θ : Ctx)
+              → (V : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ Empty) → (W₁ : Γ ⊢V⦂ B₁)
+              → inner₀ᶜ {B₂ = B₂} {C = C} Θ (absurd V) W₁
+              ≡ absurd (inner₀ᵛ Θ V W₁)
+inner₀-absurd {Γ} {B₁} {B₂} Θ V W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-absurd (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-absurd (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V) W₁)))
+        (cast-absurd (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-coerce : ∀ {Γ B₁ B₂ A ε ε'} → (Θ : Ctx) → {p : ε ≾ₑ ε'}
+              → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ A ‼ ε) → (W₁ : Γ ⊢V⦂ B₁)
+              → inner₀ᶜ {B₂ = B₂} Θ (coerce p M) W₁
+              ≡ coerce p (inner₀ᶜ Θ M W₁)
+inner₀-coerce {Γ} {B₁} {B₂} Θ M W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-coerce (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-coerce (([] ∷ B₂) ++ᶜ Θ)
+                    (castᶜ (assocᴮ Γ B₁ B₂ Θ) M) W₁)))
+        (cast-coerce (assocᴮ⁻ Γ B₂ Θ))
+
+inner₀-seq : ∀ {Γ B₁ B₂ A A' ε ε'} → (Θ : Ctx)
+           → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+           → (N : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ A' ‼ ε')
+           → (W₁ : Γ ⊢V⦂ B₁)
+           → inner₀ᶜ {B₂ = B₂} Θ (M ⨟ N) W₁
+           ≡ (inner₀ᶜ Θ M W₁ ⨟ inner₀ᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₁)
+inner₀-seq {Γ} {B₁} {B₂} {A} {ε = ε} Θ M N W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                   (trans (cast-seq (assocᴮ Γ B₁ B₂ Θ))
+                     (cong (castᶜ (assocᴮ Γ B₁ B₂ Θ) M ⨟_)
+                       (castᶜ-irr
+                          (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (assocᴮ Γ B₁ B₂ Θ))
+                          (assocᴮ Γ B₁ B₂ (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))))
+                 (sub-at-seq (([] ∷ B₂) ++ᶜ Θ)
+                    (castᶜ (assocᴮ Γ B₁ B₂ Θ) M)
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ⟨ mapᵉ ε ⟩ ∷ A)) N) W₁)))
+    (trans (cast-seq (assocᴮ⁻ Γ B₂ Θ))
+           (cong (_ ⨟_)
+                 (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (assocᴮ⁻ Γ B₂ Θ))
+                            (assocᴮ⁻ Γ B₂ (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
+
+inner₀-match : ∀ {Γ B₁ B₂ A₁ A₂ C} → (Θ : Ctx)
+             → (V : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A₁ |×| A₂)
+             → (N : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ∷ A₁ ∷ A₂ ⊢C⦂ C) → (W₁ : Γ ⊢V⦂ B₁)
+             → inner₀ᶜ {B₂ = B₂} Θ (match V `in N) W₁
+             ≡ match inner₀ᵛ Θ V W₁ `in (inner₀ᶜ (Θ ∷ A₁ ∷ A₂) N W₁)
+inner₀-match {Γ} {B₁} {B₂} {A₁} {A₂} Θ V N W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                   (trans (cast-match (assocᴮ Γ B₁ B₂ Θ))
+                     (cong (match castᵛ (assocᴮ Γ B₁ B₂ Θ) V `in_)
+                       (castᶜ-irr
+                          (cong (λ Γ₀ → Γ₀ ∷ A₁ ∷ A₂) (assocᴮ Γ B₁ B₂ Θ))
+                          (assocᴮ Γ B₁ B₂ (Θ ∷ A₁ ∷ A₂)) _))))
+                 (sub-at-match (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V)
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ∷ A₁ ∷ A₂)) N) W₁)))
+    (trans (cast-match (assocᴮ⁻ Γ B₂ Θ))
+           (cong (match _ `in_)
+                 (castᶜ-irr (cong (λ Γ₀ → Γ₀ ∷ A₁ ∷ A₂) (assocᴮ⁻ Γ B₂ Θ))
+                            (assocᴮ⁻ Γ B₂ (Θ ∷ A₁ ∷ A₂)) _)))
+
+inner₀-perform : ∀ {Γ B₁ B₂ A ε} → (Θ : Ctx) → {op : Op}
+               → (V : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ type-of-gtype (param op))
+               → (N : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⟨ mapᵉ (op-grade op) ⟩
+                        ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+               → (W₁ : Γ ⊢V⦂ B₁)
+               → inner₀ᶜ {B₂ = B₂} Θ (perform op V N) W₁
+               ≡ perform op (inner₀ᵛ Θ V W₁)
+                   (inner₀ᶜ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                               ∷ type-of-gtype (arity op)) N W₁)
+inner₀-perform {Γ} {B₁} {B₂} Θ {op = op} V N W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                   (trans (cast-perform (assocᴮ Γ B₁ B₂ Θ))
+                     (cong (perform op (castᵛ (assocᴮ Γ B₁ B₂ Θ) V))
+                       (castᶜ-irr
+                          (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                                           ∷ type-of-gtype (arity op))
+                                (assocᴮ Γ B₁ B₂ Θ))
+                          (assocᴮ Γ B₁ B₂ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                             ∷ type-of-gtype (arity op))) _))))
+                 (sub-at-perform (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ Θ) V)
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                              ∷ type-of-gtype (arity op))) N)
+                    W₁)))
+    (trans (cast-perform (assocᴮ⁻ Γ B₂ Θ))
+           (cong (perform op _)
+                 (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+                                             ∷ type-of-gtype (arity op))
+                                  (assocᴮ⁻ Γ B₂ Θ))
+                            (assocᴮ⁻ Γ B₂ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                             ∷ type-of-gtype (arity op))) _)))
+
+inner₀-delay : ∀ {Γ B₁ B₂ A ε τ} → (Θ : Ctx)
+             → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+             → (W₁ : Γ ⊢V⦂ B₁)
+             → inner₀ᶜ {B₂ = B₂} Θ (delay τ M) W₁
+             ≡ delay τ (inner₀ᶜ (Θ ⟨ of-natʳ τ ⟩) M W₁)
+inner₀-delay {Γ} {B₁} {B₂} {τ = τ} Θ M W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-delay (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-delay (([] ∷ B₂) ++ᶜ Θ)
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ⟨ of-natʳ τ ⟩)) M) W₁)))
+    (trans (cast-delay (assocᴮ⁻ Γ B₂ Θ))
+           (cong (delay τ)
+                 (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) (assocᴮ⁻ Γ B₂ Θ))
+                            (assocᴮ⁻ Γ B₂ (Θ ⟨ of-natʳ τ ⟩)) _)))
+
+inner₀-box : ∀ {Γ B₁ B₂ A C ρ} → (Θ : Ctx)
+           → (V : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⟨ ρ ⟩ ⊢V⦂ A)
+           → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ∷ [ ρ ] A ⊢C⦂ C) → (W₁ : Γ ⊢V⦂ B₁)
+           → inner₀ᶜ {B₂ = B₂} Θ (box V M) W₁
+           ≡ box (inner₀ᵛ (Θ ⟨ ρ ⟩) V W₁) (inner₀ᶜ (Θ ∷ [ ρ ] A) M W₁)
+inner₀-box {Γ} {B₁} {B₂} {A} {ρ = ρ} Θ V M W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                       (cast-box (assocᴮ Γ B₁ B₂ Θ)))
+                 (sub-at-box (([] ∷ B₂) ++ᶜ Θ)
+                    (castᵛ (assocᴮ Γ B₁ B₂ (Θ ⟨ ρ ⟩)) V)
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ∷ [ ρ ] A)) M) W₁)))
+    (trans (cast-box (assocᴮ⁻ Γ B₂ Θ))
+           (cong₂ box
+             (castᵛ-irr (cong (_⟨ ρ ⟩) (assocᴮ⁻ Γ B₂ Θ))
+                        (assocᴮ⁻ Γ B₂ (Θ ⟨ ρ ⟩)) _)
+             (castᶜ-irr (cong (_∷ [ ρ ] A) (assocᴮ⁻ Γ B₂ Θ))
+                        (assocᴮ⁻ Γ B₂ (Θ ∷ [ ρ ] A)) _)))
+
+inner₀-handle : ∀ {Γ B₁ B₂ A D ε ε'} → (Θ : Ctx)
+              → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+              → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+              → (N : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ D ‼ ε')
+              → (W₁ : Γ ⊢V⦂ B₁)
+              → inner₀ᶜ {B₂ = B₂} Θ (handle M `with H `in N) W₁
+              ≡ handle (inner₀ᶜ Θ M W₁)
+                 `with inner₀ᴴ Θ H W₁
+                 `in (inner₀ᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₁)
+inner₀-handle {Γ} {B₁} {B₂} {A} {ε = ε} Θ M H N W₁ =
+  trans (cong (castᶜ (assocᴮ⁻ Γ B₂ Θ))
+          (trans (cong (λ z → sub-atᶜ (([] ∷ B₂) ++ᶜ Θ) z W₁)
+                   (trans (cast-handle (assocᴮ Γ B₁ B₂ Θ))
+                     (cong (λ z → handle castᶜ (assocᴮ Γ B₁ B₂ Θ) M
+                                   `with (λ op' ε' →
+                                            Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ)
+                                              (H op' ε'))
+                                   `in z)
+                       (castᶜ-irr
+                          (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (assocᴮ Γ B₁ B₂ Θ))
+                          (assocᴮ Γ B₁ B₂ (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _))))
+                 (sub-at-handle (([] ∷ B₂) ++ᶜ Θ)
+                    (castᶜ (assocᴮ Γ B₁ B₂ Θ) M)
+                    (λ op' ε' → Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε'))
+                    (castᶜ (assocᴮ Γ B₁ B₂ (Θ ⟨ mapᵉ ε ⟩ ∷ A)) N) W₁)))
+    (trans (cast-handle (assocᴮ⁻ Γ B₂ Θ))
+           (cong (λ z → handle _ `with _ `in z)
+                 (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) (assocᴮ⁻ Γ B₂ Θ))
+                            (assocᴮ⁻ Γ B₂ (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
+
+------------------------------------------------------------------------
+-- THE STATEMENT
+------------------------------------------------------------------------
+
+SubSwapV : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
+         → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set
+SubSwapV Θ U W₂ W₁ = outerᵛ Θ U W₂ W₁ ≐ᵛ innerᵛ Θ U W₂ W₁
+
+SubSwapC : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
+         → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set
+SubSwapC Θ M W₂ W₁ = outerᶜ Θ M W₂ W₁ ≐ᶜ innerᶜ Θ M W₂ W₁
+
+------------------------------------------------------------------------
+-- THE SWAP
+--
+-- Mutual induction on the term at an arbitrary suffix, as `sub-wk` and
+-- `ren-sub`. Each structural case is: unfold both orders by their former
+-- laws, apply the congruence to the induction hypotheses at the grown
+-- suffix, fold back.
+------------------------------------------------------------------------
+
+-- The action respects the equivalence: each zone is a substitution, and
+-- substitution is a congruence.
+
+-- Reading a transport equation in the other direction.
+
+subst-flip : ∀ {a p} {X : Set a} {P : X → Set p} {u v : X}
+           → (e : u ≡ v) → (m : P u) → (n : P v)
+           → subst P e m ≡ n → subst P (sym e) n ≡ m
+subst-flip refl m n q = sym q
+
+sub-atᵛ-≐ : ∀ {Γ' B A} → (Θ : Ctx) → {U U' : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A}
+          → (W : Γ' ⊢V⦂ B) → U ≐ᵛ U' → sub-atᵛ Θ U W ≐ᵛ sub-atᵛ Θ U' W
+sub-atᵛ-≐ Θ W e = castᵛ-≐ _ (sub-≐ᵛ _ (≐ᵛ-refl _) e)
+
+sub-atᶜ-≐ : ∀ {Γ' B C} → (Θ : Ctx) → {M M' : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C}
+          → (W : Γ' ⊢V⦂ B) → M ≐ᶜ M' → sub-atᶜ Θ M W ≐ᶜ sub-atᶜ Θ M' W
+sub-atᶜ-≐ Θ W e = castᶜ-≐ _ (sub-≐ᶜ _ (≐ᵛ-refl _) e)
+
+------------------------------------------------------------------------
+-- THE VARIABLE CASE
+--
+-- Four positions: in the suffix, the outer entry `B₂`, the inner entry
+-- `B₁`, and the prefix `Γ`. The two entries are the content; both are
+-- kept in their *unreduced* hit form, as `ren-sub-hit` does, so no
+-- normal form for "the value pushed under the suffix" is needed — and
+-- with it none of the eternal/non-eternal case analysis at a lock, which
+-- `ren-sub-hit` has already absorbed.
+------------------------------------------------------------------------
+
+-- Looking up the replaced entry itself.
+
+hitᵛ : ∀ {Γ' B} → (Θ : Ctx) → Γ' ⊢V⦂ B
+     → (f : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ) → (Γ' ++ᶜ Θ) ⊢V⦂ B
+hitᵛ {Γ'} {B} Θ W f = sub-atᵛ Θ (var f (bvar B Θ)) W
+
+-- The hit at a concatenated suffix is the hit at the outer part, of the
+-- value weakened by the inner one. Induction on the outer part, layer by
+-- layer, exactly as `ren-sub-hit`; the lock case splits on eternality,
+-- since an eternal value crosses a lock by extension rather than by a
+-- renaming.
+
+-- Any proof of the context equation will do; the induction never has to
+-- reconcile the one it receives with the one it passes down.
+
+Ehit : ∀ {Γ'} → (B B₀ : VType) → (Θ : Ctx)
+     → (split-l (bvar {Γ'} B (([] ∷ B₀) ++ᶜ Θ))
+          ++ᶜ split-r (bvar {Γ'} B (([] ∷ B₀) ++ᶜ Θ)))
+     ≡ ((Γ' ∷ B₀) ++ᶜ Θ)
+Ehit {Γ'} B B₀ Θ =
+  trans (castOf {Γ'} {B} (([] ∷ B₀) ++ᶜ Θ)) (sym (++ᶜ-assoc Γ' ([] ∷ B₀) Θ))
+
+hit-∷-++ᶜ : ∀ {Γ' B B₀} → (Θ : Ctx) → (W : Γ' ⊢V⦂ B)
+          → (g  : ¬ Eternal B → ctx-grade (([] ∷ B₀) ++ᶜ Θ) ≾ᵣ uᵣ)
+          → (g' : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ)
+          → (E : (split-l (bvar {Γ'} B (([] ∷ B₀) ++ᶜ Θ))
+                    ++ᶜ split-r (bvar {Γ'} B (([] ∷ B₀) ++ᶜ Θ)))
+               ≡ ((Γ' ∷ B₀) ++ᶜ Θ))
+          → castᵛ E (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , g
+                     ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
+                        ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)
+          ≐ᵛ hitᵛ {Γ' ∷ B₀} Θ (V-rename (wk-ren {A = B₀}) W) g'
+
+hit-∷-++ᶜ {Γ'} {B} {B₀} [] W g g' E = ≡→≐ᵛ (castᵛ-irr E refl _)
+
+hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ∷ C) W g g' E =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-wk-any E (Ehit B B₀ Θ)
+             (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , g
+              ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
+                 ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
+    (≐ᵛ-trans
+      (V-rename-cong wk-ren (hit-∷-++ᶜ Θ W g g' (Ehit B B₀ Θ)))
+      (≡→≐ᵛ (sym (cast-wk-any (castOf {Γ' ∷ B₀} {B} (Θ ∷ C))
+                              (castOf {Γ' ∷ B₀} {B} Θ) _))))
+
+hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ⟨ ρ ⟩) W g g' E with eternal? B
+
+... | yes et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-ext-any E (Ehit B B₀ Θ) et
+             (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , _
+              ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
+                 ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
+    (≐ᵛ-trans
+      (eternal-val-ext-cong et (hit-∷-++ᶜ Θ W _ _ (Ehit B B₀ Θ)))
+      (≡→≐ᵛ (sym (cast-ext-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
+                               (castOf {Γ' ∷ B₀} {B} Θ) et _))))
+
+... | no ¬et =
+  ≐ᵛ-trans
+    (≡→≐ᵛ (cast-ren-⟨⟩-any E (Ehit B B₀ Θ) rn
+             (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , _
+              ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
+                 ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
+    (≐ᵛ-trans (V-rename-cong rn (hit-∷-++ᶜ Θ W _ _ (Ehit B B₀ Θ)))
+      (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl) _)
+                (≡→≐ᵛ (sym (cast-ren-⟨⟩-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
+                                            (castOf {Γ' ∷ B₀} {B} Θ) rn' _)))))
+  where
+    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
+    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+
+    rn' : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
+    rn' = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g' ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+
+-- Grade bounds are proof-irrelevant, so the substitution does not see
+-- which one it was handed.
+
+bound-irr : ∀ {A ρ} → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ) → f ≡ f'
+bound-irr f f' = fun-ext (λ z → ≾ᵣ-irrelevant _ _)
+
+castᵛ-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
+           → castᵛ e' (castᵛ e V) ≡ castᵛ (trans e e') V
+castᵛ-fuse refl refl V = refl
+
+Tgt-cast-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (t : Tgt Γ₁ A)
+              → Tgt-cast e' (Tgt-cast e t) ≡ Tgt-cast (trans e e') t
+Tgt-cast-fuse refl refl t = refl
+
+-- Relocating a variable along a context transport, at the `Tgt` level so
+-- that the grade travels with the position.
+
+castᵛ-var-tgt : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+              → (t : Tgt Γ' A) → Tgt-cast e (ρ , x) ≡ t
+              → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+              → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
+              → castᵛ e (var f x) ≐ᵛ var f' (proj₂ t)
+castᵛ-var-tgt refl x .(_ , x) refl f f' = var-≐
+
+-- The three positions the substitution distinguishes, each taking where
+-- the variable sits as a `Tgt` equation.
+
+sub-at-varᵣ : ∀ {Γ' B A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Θ)
+            → (y : A ∈[ ρ ] ((Γ' ∷ B) ++ᶜ Θ)) → y ≡ ∈-++ᶜʳ {Γ = Γ' ∷ B} x
+            → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+            → (W : Γ' ⊢V⦂ B)
+            → sub-atᵛ Θ (var f y) W ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
+sub-at-varᵣ Θ x _ refl f f' W = sub-var-r Θ x (bval Θ W) f f'
+
+sub-at-varₗ : ∀ {Γ' B A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Γ')
+            → (y : A ∈[ grade-++ᶜˡ ρ Θ ] ((Γ' ∷ B) ++ᶜ Θ))
+            → y ≡ ∈-++ᶜˡ {Γ = Γ' ∷ B} Θ (Tl-∷ x)
+            → (f f' : ¬ Eternal A → grade-++ᶜˡ ρ Θ ≾ᵣ uᵣ) → (W : Γ' ⊢V⦂ B)
+            → sub-atᵛ Θ (var f y) W ≐ᵛ var f' (∈-++ᶜˡ {Γ = Γ'} Θ x)
+sub-at-varₗ Θ x _ refl f f' W = sub-var-l Θ x (bval Θ W) f f'
+
+sub-at-varₕ : ∀ {Γ' B ρ} → (Θ : Ctx) → (y : B ∈[ ρ ] ((Γ' ∷ B) ++ᶜ Θ))
+            → _≡_ {A = Tgt ((Γ' ∷ B) ++ᶜ Θ) B}
+                  (ρ , y) (ctx-grade Θ , bvar B Θ)
+            → (f : ¬ Eternal B → ρ ≾ᵣ uᵣ)
+            → (f' : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ) → (W : Γ' ⊢V⦂ B)
+            → sub-atᵛ Θ (var f y) W ≐ᵛ hitᵛ Θ W f'
+sub-at-varₕ Θ .(bvar _ Θ) refl f f' W
+  rewrite bound-irr f f' = ≐ᵛ-refl _
+
+------------------------------------------------------------------------
+-- The four positions.
+------------------------------------------------------------------------
+
+swap-var-r : ∀ {Γ B₁ B₂ A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Θ)
+           → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+           → SubSwapV Θ (var f (∈-++ᶜʳ {Γ = Γ ∷ B₁ ∷ B₂} x)) W₂ W₁
+swap-var-r {Γ} {B₁} {B₂} Θ x f W₂ W₁ =
+  ≐ᵛ-trans
+    (≐ᵛ-trans (sub-atᵛ-≐ Θ W₁ (sub-at-varᵣ Θ x _ refl f f _))
+              (sub-at-varᵣ Θ x _ refl f f W₁))
+    (≐ᵛ-sym
+      (≐ᵛ-trans
+        (sub-atᵛ-≐ Θ W₂
+          (≐ᵛ-trans
+            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
+              (≐ᵛ-trans
+                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
+                      (cong (λ z → _ , z) (∈-++ᶜʳ-assoc (Γ ∷ B₁) ([] ∷ B₂) x))
+                      f f))
+                (sub-at-varᵣ (([] ∷ B₂) ++ᶜ Θ) (∈-++ᶜʳ {Γ = [] ∷ B₂} x) _
+                             refl f f W₁)))
+            (castᵛ-var-tgt (assocᴮ⁻ Γ B₂ Θ) _ _
+               (cong (λ z → _ , z)
+                 (subst-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
+                             (∈-++ᶜʳ-assoc Γ ([] ∷ B₂) x)))
+               f f)))
+        (sub-at-varᵣ Θ x _ refl f f W₂)))
+
+swap-var-l : ∀ {Γ B₁ B₂ A ρ} → (Θ : Ctx) → (v : A ∈[ ρ ] Γ)
+           → (f : ¬ Eternal A → grade-++ᶜˡ ρ Θ ≾ᵣ uᵣ)
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+           → SubSwapV Θ (var f (∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ (Tl-∷ (Tl-∷ v))))
+                        W₂ W₁
+swap-var-l {Γ} {B₁} {B₂} Θ v f W₂ W₁ =
+  ≐ᵛ-trans
+    (≐ᵛ-trans (sub-atᵛ-≐ Θ W₁ (sub-at-varₗ Θ (Tl-∷ v) _ refl f f _))
+              (sub-at-varₗ Θ v _ refl f f W₁))
+    (≐ᵛ-sym
+      (≐ᵛ-trans
+        (sub-atᵛ-≐ Θ W₂
+          (≐ᵛ-trans
+            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
+              (≐ᵛ-trans
+                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
+                      (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                         (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Tl-∷ v)))
+                      f fΔ))
+                (sub-at-varₗ (([] ∷ B₂) ++ᶜ Θ) v _ refl fΔ fΔ W₁)))
+            (castᵛ-var-tgt (assocᴮ⁻ Γ B₂ Θ) _ _
+               (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ v) fΔ f)))
+        (sub-at-varₗ Θ v _ refl f f W₂)))
+  where
+    fΔ : ¬ Eternal _ → grade-++ᶜˡ _ (([] ∷ B₂) ++ᶜ Θ) ≾ᵣ uᵣ
+    fΔ ¬et = subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ ([] ∷ B₂) Θ)) (f ¬et)
+
+swap-var-B₂ : ∀ {Γ B₁ B₂ ρ} → (Θ : Ctx)
+            → (f : ¬ Eternal B₂ → ρ ≾ᵣ uᵣ)
+            → (y : B₂ ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+            → _≡_ {A = Tgt ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) B₂}
+                  (ρ , y) (grade-++ᶜˡ uᵣ Θ , ∈-++ᶜˡ Θ (Hd {Γ = Γ ∷ B₁}))
+            → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+            → SubSwapV Θ (var f y) W₂ W₁
+swap-var-B₂ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ Hd) refl W₂ W₁ =
+  ≐ᵛ-trans
+    (≐ᵛ-trans
+      (sub-atᵛ-≐ Θ W₁
+        (sub-at-varₕ Θ _ (sym (split→∈-∈-++ᶜˡ (Γ ∷ B₁) B₂ Θ)) f fΘ _))
+      (≐ᵛ-trans
+        (sub-atᵛ-≐ Θ W₁
+          (≐ᵛ-sym (ren-sub-hit (wk-ren {A = B₁}) Θ W₂ fΘ fΘ)))
+        (sub-wk-V Θ (hitᵛ Θ W₂ fΘ) (bval Θ W₁))))
+    (≐ᵛ-sym
+      (≐ᵛ-trans
+        (sub-atᵛ-≐ Θ W₂
+          (≐ᵛ-trans
+            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
+              (≐ᵛ-trans
+                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
+                      (∈-++ᶜˡ-++ᶜʳ (Γ ∷ B₁) ([] ∷ B₂) Θ (Hd {Γ = []}))
+                      f f))
+                (sub-at-varᵣ (([] ∷ B₂) ++ᶜ Θ)
+                             (∈-++ᶜˡ {Γ = [] ∷ B₂} Θ (Hd {Γ = []})) _
+                             refl f f W₁)))
+            (castᵛ-var-tgt (assocᴮ⁻ Γ B₂ Θ) _ _
+               (Tgt-cast-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
+                  (∈-++ᶜˡ-++ᶜʳ Γ ([] ∷ B₂) Θ (Hd {Γ = []})))
+               f f)))
+        (sub-at-varₕ Θ _ (sym (split→∈-∈-++ᶜˡ Γ B₂ Θ)) f fΘ W₂)))
+  where
+    fΘ : ¬ Eternal B₂ → ctx-grade Θ ≾ᵣ uᵣ
+    fΘ ¬et = subst (_≾ᵣ uᵣ) (grade-++ᶜˡ-uᵣ Θ) (f ¬et)
+
+swap-var-B₁ : ∀ {Γ B₁ B₂ ρ} → (Θ : Ctx)
+            → (f : ¬ Eternal B₁ → ρ ≾ᵣ uᵣ)
+            → (y : B₁ ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+            → _≡_ {A = Tgt ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) B₁}
+                  (ρ , y) (grade-++ᶜˡ uᵣ Θ , ∈-++ᶜˡ Θ (Tl-∷ (Hd {Γ = Γ})))
+            → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+            → SubSwapV Θ (var f y) W₂ W₁
+swap-var-B₁ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ (Tl-∷ Hd)) refl W₂ W₁ =
+  ≐ᵛ-trans
+    (≐ᵛ-trans (sub-atᵛ-≐ Θ W₁ (sub-at-varₗ Θ (Hd {Γ = Γ}) _ refl f f _))
+              (sub-at-varₕ Θ _ (sym (split→∈-∈-++ᶜˡ Γ B₁ Θ)) f fΘ W₁))
+    (≐ᵛ-sym
+      (≐ᵛ-trans
+        (sub-atᵛ-≐ Θ W₂
+          (≐ᵛ-trans
+            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
+              (≐ᵛ-trans
+                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
+                      (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                         (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Hd {Γ = Γ})))
+                      f fΔ))
+                (sub-at-varₕ (([] ∷ B₂) ++ᶜ Θ) _
+                   (sym (split→∈-∈-++ᶜˡ Γ B₁ (([] ∷ B₂) ++ᶜ Θ))) fΔ g W₁)))
+            (≐ᵛ-trans
+              (≡→≐ᵛ (castᵛ-fuse (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+                                (assocᴮ⁻ Γ B₂ Θ) _))
+              (hit-∷-++ᶜ Θ W₁ g fΘ (Ehit B₁ B₂ Θ)))))
+        (≐ᵛ-trans
+          (sub-atᵛ-≐ Θ W₂ (≐ᵛ-sym (ren-sub-hit (wk-ren {A = B₂}) Θ W₁ fΘ fΘ)))
+          (sub-wk-V Θ (hitᵛ Θ W₁ fΘ) (bval Θ W₂)))))
+  where
+    fΘ : ¬ Eternal B₁ → ctx-grade Θ ≾ᵣ uᵣ
+    fΘ ¬et = subst (_≾ᵣ uᵣ) (grade-++ᶜˡ-uᵣ Θ) (f ¬et)
+
+    fΔ : ¬ Eternal B₁ → grade-++ᶜˡ uᵣ (([] ∷ B₂) ++ᶜ Θ) ≾ᵣ uᵣ
+    fΔ ¬et = subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc uᵣ ([] ∷ B₂) Θ)) (f ¬et)
+
+    g : ¬ Eternal B₁ → ctx-grade (([] ∷ B₂) ++ᶜ Θ) ≾ᵣ uᵣ
+    g ¬et = subst (_≾ᵣ uᵣ) (grade-++ᶜˡ-uᵣ (([] ∷ B₂) ++ᶜ Θ)) (fΔ ¬et)
+
+-- The prefix case, taking the equation in the shape `∈-++ᶜ-split-inj₁`
+-- delivers it.
+
+swap-var-l′ : ∀ {Γ B₁ B₂ A ρ ρ'} → (Θ : Ctx) → (v : A ∈[ ρ' ] Γ)
+            → (y : A ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+            → _≡_ {A = Tgt ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) A}
+                  (ρ , y) (grade-++ᶜˡ ρ' Θ , ∈-++ᶜˡ Θ (Tl-∷ (Tl-∷ v)))
+            → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+            → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+            → SubSwapV Θ (var f y) W₂ W₁
+swap-var-l′ Θ v .(∈-++ᶜˡ Θ (Tl-∷ (Tl-∷ v))) refl f W₂ W₁ =
+  swap-var-l Θ v f W₂ W₁
+
+swap-var-r′ : ∀ {Γ B₁ B₂ A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Θ)
+            → (y : A ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+            → y ≡ ∈-++ᶜʳ {Γ = Γ ∷ B₁ ∷ B₂} x
+            → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+            → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+            → SubSwapV Θ (var f y) W₂ W₁
+swap-var-r′ Θ x .(∈-++ᶜʳ x) refl f W₂ W₁ = swap-var-r Θ x f W₂ W₁
+
+-- Where the variable sits decides which of the four applies.
+
+sub-swap-var : ∀ {Γ B₁ B₂ A ρ} → (Θ : Ctx)
+             → (y : A ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+             → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
+             → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+             → SubSwapV Θ (var f y) W₂ W₁
+
+sub-swap-var {Γ} {B₁} {B₂} Θ y f W₂ W₁
+  with ∈-++ᶜ-split (Γ ∷ B₁ ∷ B₂) Θ y in eq
+
+... | inj₂ x =
+  swap-var-r′ Θ x y (∈-++ᶜ-split-inj₂ (Γ ∷ B₁ ∷ B₂) Θ y x eq) f W₂ W₁
+
+... | inj₁ (ρ' , Hd) =
+  swap-var-B₂ Θ f y (∈-++ᶜ-split-inj₁ (Γ ∷ B₁ ∷ B₂) Θ y Hd eq) W₂ W₁
+
+... | inj₁ (ρ' , Tl-∷ Hd) =
+  swap-var-B₁ Θ f y (∈-++ᶜ-split-inj₁ (Γ ∷ B₁ ∷ B₂) Θ y (Tl-∷ Hd) eq) W₂ W₁
+
+... | inj₁ (ρ' , Tl-∷ (Tl-∷ v)) =
+  swap-var-l′ Θ v y
+    (∈-++ᶜ-split-inj₁ (Γ ∷ B₁ ∷ B₂) Θ y (Tl-∷ (Tl-∷ v)) eq) f W₂ W₁
+
+------------------------------------------------------------------------
+-- THE CELL AN `unbox` NAMES
+--
+-- `sub-unbox` rebuilds an unboxing from the cell the substitution leaves,
+-- so the `unbox` case reduces to: the two orders name the same cell. That
+-- is the `rvar` counterpart of the variable case, and a simpler one — a
+-- box type is never eternal, so `⟨_⟩[_↦_]rvar` has no `eternal?` split
+-- and each position is one `Tgt-cast` push.
+------------------------------------------------------------------------
+
+-- The cell left by replacing the entry at the boundary.
+
+rcell : ∀ {Γ' B A ρ σ} → (Θ : Ctx)
+      → ([ ρ ] A ∈[ σ ] ((Γ' ∷ B) ++ᶜ Θ)) → (W : Γ' ⊢V⦂ B)
+      → Tgt (Γ' ++ᶜ Θ) ([ ρ ] A)
+rcell {Γ'} {B} Θ c W =
+  Tgt-cast (castOf {Γ'} {B} Θ) (rvar-tgt c (bvar B Θ) (bval Θ W))
+
+-- The same at an already-located cell. `Tgt` is a Σ, so `cong` cannot infer
+-- the dependent motive from a lambda — this has to be named, exactly as
+-- `var-tgt′` is.
+
+rcell′ : ∀ {Γ' B A ρ} → (Θ : Ctx) → Tgt ((Γ' ∷ B) ++ᶜ Θ) ([ ρ ] A)
+       → (W : Γ' ⊢V⦂ B) → Tgt (Γ' ++ᶜ Θ) ([ ρ ] A)
+rcell′ Θ (σ , c) W = rcell Θ c W
+
+-- and, when the entry replaced *is* the cell, the cell of the value it is
+-- replaced by, pushed under the suffix.
+
+hcell : ∀ {Γ' A ρ} → (Θ : Ctx) → (W : Γ' ⊢V⦂ [ ρ ] A) → Tgt (Γ' ++ᶜ Θ) ([ ρ ] A)
+hcell {Γ'} {A} {ρ} Θ W = rcell Θ (bvar ([ ρ ] A) Θ) W
+
+-- The cell counterpart of `hit-∷-++ᶜ`, and by the same induction.
+
+rhit-∷-++ᶜ : ∀ {Γ' A ρ B₀} → (Θ : Ctx) → (W : Γ' ⊢V⦂ [ ρ ] A)
+           → (E : (split-l (bvar {Γ'} ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
+                     ++ᶜ split-r (bvar {Γ'} ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ)))
+                ≡ ((Γ' ∷ B₀) ++ᶜ Θ))
+           → Tgt-cast E
+               (rvar-tgt (bvar ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
+                         (bvar ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
+                         (bval (([] ∷ B₀) ++ᶜ Θ) W))
+           ≡ hcell {Γ' ∷ B₀} Θ (V-rename (wk-ren {A = B₀}) W)
+
+rhit-∷-++ᶜ {Γ'} {A} {ρ} {B₀} [] (var f y) E =
+  Tgt-cast-irr E refl _
+
+rhit-∷-++ᶜ {Γ'} {A} {ρ} {B₀} (Θ ∷ C) W E =
+  trans (Tgt-cast-irr E (cong (_∷ C) (Ehit ([ ρ ] A) B₀ Θ)) _)
+    (trans (Tgt-cast-∷ (Ehit ([ ρ ] A) B₀ Θ) _)
+      (trans (cong Tgt-∷ (rhit-∷-++ᶜ Θ W (Ehit ([ ρ ] A) B₀ Θ)))
+        (trans (sym (Tgt-cast-∷ (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ) _))
+               (Tgt-cast-irr (cong (_∷ C) (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ))
+                             (castOf {Γ' ∷ B₀} {[ ρ ] A} (Θ ∷ C)) _))))
+
+rhit-∷-++ᶜ {Γ'} {A} {ρ} {B₀} (Θ ⟨ ρ' ⟩) W E =
+  trans (Tgt-cast-irr E (cong (_⟨ ρ' ⟩) (Ehit ([ ρ ] A) B₀ Θ)) _)
+    (trans (Tgt-cast-⟨⟩ ρ' (Ehit ([ ρ ] A) B₀ Θ) _)
+      (trans (cong (Tgt-⟨⟩ ρ') (rhit-∷-++ᶜ Θ W (Ehit ([ ρ ] A) B₀ Θ)))
+        (trans (sym (Tgt-cast-⟨⟩ ρ' (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ) _))
+               (Tgt-cast-irr (cong (_⟨ ρ' ⟩) (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ))
+                             (castOf {Γ' ∷ B₀} {[ ρ ] A} (Θ ⟨ ρ' ⟩)) _))))
+
+-- The four positions, at the cell level.
+
+unbox-cell-swap : ∀ {Γ B₁ B₂ A ρ σ} → (Θ : Ctx)
+                → (c : [ ρ ] A ∈[ σ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+                → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+                → rcell Θ (proj₂ (rcell Θ c (V-rename (wk-ren {A = B₁}) W₂)))
+                          W₁
+                ≡ rcell Θ
+                    (proj₂ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ)
+                             (rcell (([] ∷ B₂) ++ᶜ Θ)
+                                (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) (σ , c)))
+                                W₁)))
+                    W₂
+
+unbox-cell-swap {Γ} {B₁} {B₂} {A} {ρ} {σ} Θ c W₂ W₁
+  with ∈-++ᶜ-split (Γ ∷ B₁ ∷ B₂) Θ c in eqc
+
+... | inj₂ c'
+  rewrite ∈-++ᶜ-split-inj₂ (Γ ∷ B₁ ∷ B₂) Θ c c' eqc =
+  trans (cong (λ t → rcell′ Θ t W₁)
+              (sub-rvar-r {Γ = Γ ∷ B₁} {B = B₂} Θ c'
+                          (bval Θ (V-rename (wk-ren {A = B₁}) W₂))))
+    (trans (sub-rvar-r {Γ = Γ} {B = B₁} Θ c' (bval Θ W₁))
+      (sym
+        (trans
+          (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+            (trans
+              (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                    (cong (λ z → σ , z)
+                          (∈-++ᶜʳ-assoc (Γ ∷ B₁) ([] ∷ B₂) c')))
+              (sub-rvar-r {Γ = Γ} {B = B₁} (([] ∷ B₂) ++ᶜ Θ)
+                          (∈-++ᶜʳ {Γ = [] ∷ B₂} c')
+                          (bval (([] ∷ B₂) ++ᶜ Θ) W₁))))
+          (trans
+            (cong (λ t → rcell′ Θ t W₂)
+                  (cong (λ z → σ , z)
+                        (subst-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
+                                    (∈-++ᶜʳ-assoc Γ ([] ∷ B₂) c'))))
+            (sub-rvar-r {Γ = Γ} {B = B₂} Θ c' (bval Θ W₂))))))
+
+... | inj₁ (σ' , c') =
+  subst (λ t → rcell Θ (proj₂ (rcell Θ (proj₂ t)
+                                (V-rename (wk-ren {A = B₁}) W₂))) W₁
+             ≡ rcell Θ
+                 (proj₂ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ)
+                          (rcell (([] ∷ B₂) ++ᶜ Θ)
+                             (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) t)) W₁)))
+                 W₂)
+        (sym (∈-++ᶜ-split-inj₁ (Γ ∷ B₁ ∷ B₂) Θ c c' eqc))
+        (go c')
+  where
+    go : ∀ {σ₀} → (c₀ : [ ρ ] A ∈[ σ₀ ] (Γ ∷ B₁ ∷ B₂))
+       → rcell Θ (proj₂ (rcell Θ (∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ c₀)
+                          (V-rename (wk-ren {A = B₁}) W₂))) W₁
+       ≡ rcell Θ
+           (proj₂ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ)
+                    (rcell (([] ∷ B₂) ++ᶜ Θ)
+                       (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ)
+                                (_ , ∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ c₀)))
+                       W₁)))
+           W₂
+
+    -- the cell is the outer entry `B₂`: the left order hits it at once and
+    -- then cancels the weakening (`unbox-cell-wk`); the right order lets it
+    -- survive into the suffix and hits it last
+    go Hd =
+      trans
+        (cong (λ t → rcell′ Θ t W₁)
+          (trans (cong (λ t → rcell′ Θ t (V-rename (wk-ren {A = B₁}) W₂))
+                       (sym (split→∈-∈-++ᶜˡ (Γ ∷ B₁) B₂ Θ)))
+                 (sym (rvar-hit-ren (wk-ren {A = B₁}) Θ W₂))))
+        (trans (unbox-cell-wk {Γ = Γ} {B = B₁} Θ (proj₂ (hcell Θ W₂)) (bval Θ W₁))
+          (sym
+            (trans
+              (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+                (trans
+                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                        (∈-++ᶜˡ-++ᶜʳ (Γ ∷ B₁) ([] ∷ B₂) Θ (Hd {Γ = []})))
+                  (sub-rvar-r {Γ = Γ} {B = B₁} (([] ∷ B₂) ++ᶜ Θ)
+                              (∈-++ᶜˡ {Γ = [] ∷ B₂} Θ (Hd {Γ = []}))
+                              (bval (([] ∷ B₂) ++ᶜ Θ) W₁))))
+              (trans
+                (cong (λ t → rcell′ Θ t W₂)
+                  (Tgt-cast-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
+                     (∈-++ᶜˡ-++ᶜʳ Γ ([] ∷ B₂) Θ (Hd {Γ = []}))))
+                (cong (λ t → rcell′ Θ t W₂)
+                      (sym (split→∈-∈-++ᶜˡ Γ B₂ Θ)))))))
+
+    -- the cell is the inner entry `B₁`: the left order lets it survive and
+    -- then hits it; the right order hits it at the bigger suffix, and
+    -- `rhit-∷-++ᶜ` peels the `B₂` layer off again
+    go (Tl-∷ Hd) =
+      trans
+        (cong (λ t → rcell′ Θ t W₁)
+              (sub-rvar-l {Γ = Γ ∷ B₁} {B = B₂} Θ (Hd {Γ = Γ})
+                          (bval Θ (V-rename (wk-ren {A = B₁}) W₂))))
+        (trans
+          (cong (λ t → rcell′ Θ t W₁)
+                (sym (split→∈-∈-++ᶜˡ Γ B₁ Θ)))
+          (sym
+            (trans
+              (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+                (trans
+                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                    (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                       (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Hd {Γ = Γ}))))
+                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                        (sym (split→∈-∈-++ᶜˡ Γ B₁ (([] ∷ B₂) ++ᶜ Θ))))))
+              (trans
+                (cong (λ t → rcell′ Θ t W₂)
+                  (trans (Tgt-cast-fuse (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+                                        (assocᴮ⁻ Γ B₂ Θ) _)
+                         (rhit-∷-++ᶜ Θ W₁ (Ehit B₁ B₂ Θ))))
+                (trans
+                  (cong (λ t → rcell′ Θ t W₂)
+                        (sym (rvar-hit-ren (wk-ren {A = B₂}) Θ W₁)))
+                  (unbox-cell-wk {Γ = Γ} {B = B₂} Θ (proj₂ (hcell Θ W₁)) (bval Θ W₂)))))))
+
+    go (Tl-∷ (Tl-∷ c₀)) =
+      trans (cong (λ t → rcell′ Θ t W₁)
+                  (sub-rvar-l {Γ = Γ ∷ B₁} {B = B₂} Θ (Tl-∷ c₀)
+                              (bval Θ (V-rename (wk-ren {A = B₁}) W₂))))
+        (trans (sub-rvar-l {Γ = Γ} {B = B₁} Θ c₀ (bval Θ W₁))
+          (sym
+            (trans
+              (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+                (trans
+                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                    (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                       (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Tl-∷ c₀))))
+                  (sub-rvar-l {Γ = Γ} {B = B₁} (([] ∷ B₂) ++ᶜ Θ) c₀
+                              (bval (([] ∷ B₂) ++ᶜ Θ) W₁))))
+              (trans
+                (cong (λ t → rcell′ Θ t W₂)
+                      (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ c₀))
+                (sub-rvar-l {Γ = Γ} {B = B₂} Θ c₀ (bval Θ W₂))))))
+
+-- `unbox`: both orders rebuild the unboxing from the cell the substitution
+-- leaves (`sub-unbox`), so `unbox-≐` reduces the case to `unbox-cell-swap`
+-- for the cell and the induction hypothesis for the body.
+
+sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ Δ₀} → (Θ : Ctx)
+               → (w : Ren [] (Δ₀ ⟨ ρ ⟩) ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+               → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+               → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ∷ A ⊢C⦂ C)
+               → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+               → SubSwapC (Θ ∷ A) M W₂ W₁
+               → SubSwapC Θ (unbox w V M) W₂ W₁
+
+sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
+  ≐ᶜ-trans
+    (≐ᶜ-trans
+      (sub-atᶜ-≐ Θ W₁
+        (≐ᶜ-trans (castᶜ-≐ (castOf {Γ ∷ B₁} {B₂} Θ)
+                     (sub-unbox w V M x₂ V₂ relA))
+                  (≡→≐ᶜ (cast-unbox (castOf {Γ ∷ B₁} {B₂} Θ)))))
+      (≐ᶜ-trans (castᶜ-≐ (castOf {Γ} {B₁} Θ)
+                   (sub-unbox wA hd bodyA x₁ V₁ relB))
+                (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₁} Θ)))))
+    (≐ᶜ-trans
+      (unbox-≐ cell
+        (≐ᶜ-trans
+          (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B₁} Θ))
+                           (castOf {Γ} {B₁} (Θ ∷ A)) _))
+          (≐ᶜ-trans
+            (sub-atᶜ-≐ (Θ ∷ A) W₁
+              (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
+                               (castOf {Γ ∷ B₁} {B₂} (Θ ∷ A)) _)))
+            (≐ᶜ-trans ih
+              (≐ᶜ-trans
+                (sub-atᶜ-≐ (Θ ∷ A) W₂
+                  (≡→≐ᶜ (trans
+                    (cong (castᶜ (assocᴮ⁻ Γ B₂ (Θ ∷ A)))
+                      (castᶜ-irr (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ (Θ ∷ A)))
+                                 (cong (_∷ A)
+                                       (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))) _))
+                    (castᶜ-irr (assocᴮ⁻ Γ B₂ (Θ ∷ A))
+                               (cong (_∷ A) (assocᴮ⁻ Γ B₂ Θ)) _))))
+                (≡→≐ᶜ (castᶜ-irr (castOf {Γ} {B₂} (Θ ∷ A))
+                                 (cong (_∷ A) (castOf {Γ} {B₂} Θ)) _)))))))
+      (≐ᶜ-sym
+        (≐ᶜ-trans
+          (sub-atᶜ-≐ Θ W₂
+            (≐ᶜ-trans
+              (castᶜ-≐ (assocᴮ⁻ Γ B₂ Θ)
+                (≐ᶜ-trans
+                  (sub-atᶜ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+                    (≡→≐ᶜ (cast-unbox (assocᴮ Γ B₁ B₂ Θ))))
+                  (≐ᶜ-trans
+                    (castᶜ-≐ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+                      (sub-unbox (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V _ y₁ U₁ relC))
+                    (≡→≐ᶜ (cast-unbox
+                             (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))))))
+              (≡→≐ᶜ (cast-unbox (assocᴮ⁻ Γ B₂ Θ)))))
+          (≐ᶜ-trans
+            (castᶜ-≐ (castOf {Γ} {B₂} Θ)
+              (sub-unbox (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd _ y₂ U₂ relD))
+            (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₂} Θ)))))))
+  where
+    Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
+
+    x₂ = bvar B₂ Θ
+    V₂ = bval Θ Ŵ₂
+    x₁ = bvar B₁ Θ
+    V₁ = bval Θ W₁
+    y₁ = bvar B₁ (([] ∷ B₂) ++ᶜ Θ)
+    U₁ = bval (([] ∷ B₂) ++ᶜ Θ) W₁
+    y₂ = bvar B₂ Θ
+    U₂ = bval Θ W₂
+
+    cW = proj₂ (unbox-tgt w V)
+
+    hd : ∀ {Γ₀ : Ctx} → (Γ₀ ∷ [ ρ ] A) ⊢V⦂ [ ρ ] A
+    hd = var (λ _ → ≾ᵣ-refl) Hd
+
+    relA = ≾ᵣ-trans (proj₂ (proj₂ (⟨ cW ⟩[ x₂ ↦ V₂ ]rvar)))
+                    (proj₂ (proj₂ (unbox⇒var w V)))
+
+    vA = proj₂ (rvar-tgt cW x₂ V₂)
+
+    wA = castʳᵉ (castOf {Γ ∷ B₁} {B₂} Θ) (unbox-var-ren vA relA)
+
+    bodyA = castᶜ (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
+                  (M [ Tl-∷ x₂ ↦ V₂ ]c)
+
+    relB = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt wA hd) ⟩[ x₁ ↦ V₁ ]rvar)))
+                    (proj₂ (proj₂ (unbox⇒var wA hd)))
+
+    vB = proj₂ (rvar-tgt (proj₂ (unbox-tgt wA hd)) x₁ V₁)
+
+    wB = castʳᵉ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB)
+
+    relC = ≾ᵣ-trans
+             (proj₂ (proj₂
+               (⟨ proj₂ (unbox-tgt (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V)
+                ⟩[ y₁ ↦ U₁ ]rvar)))
+             (proj₂ (proj₂ (unbox⇒var (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V)))
+
+    vC = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w) V))
+                         y₁ U₁)
+
+    wC = castʳᵉ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)) (unbox-var-ren vC relC)
+
+    relD = ≾ᵣ-trans
+             (proj₂ (proj₂
+               (⟨ proj₂ (unbox-tgt (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd)
+                ⟩[ y₂ ↦ U₂ ]rvar)))
+             (proj₂ (proj₂ (unbox⇒var (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd)))
+
+    vD = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC) hd))
+                         y₂ U₂)
+
+    wD = castʳᵉ (castOf {Γ} {B₂} Θ) (unbox-var-ren vD relD)
+
+    -- each stored renaming is read only through `unbox-tgt`, and there it is
+    -- the cell the substitution left; so the two sides' cells are exactly the
+    -- two sides of `unbox-cell-swap`
+    cellA : unbox-tgt wA hd ≡ rcell Θ cW Ŵ₂
+    cellA = trans (unbox-tgt-castʳᵉ (castOf {Γ ∷ B₁} {B₂} Θ)
+                                    (unbox-var-ren vA relA) hd)
+                  (cong (Tgt-cast (castOf {Γ ∷ B₁} {B₂} Θ))
+                        (unbox-var-tgt vA relA))
+
+    cellC : unbox-tgt wC hd
+          ≡ rcell (([] ∷ B₂) ++ᶜ Θ)
+                  (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) (unbox-tgt w V))) W₁
+    cellC =
+      trans (unbox-tgt-castʳᵉ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+                              (unbox-var-ren vC relC) hd)
+        (trans (cong (Tgt-cast (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))
+                     (unbox-var-tgt vC relC))
+               (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                     (unbox-tgt-castʳᵉ (assocᴮ Γ B₁ B₂ Θ) w V)))
+
+    cell : unbox-tgt wB hd ≡ unbox-tgt wD hd
+    cell =
+      trans (unbox-tgt-castʳᵉ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB) hd)
+        (trans (cong (Tgt-cast (castOf {Γ} {B₁} Θ)) (unbox-var-tgt vB relB))
+          (trans (cong (λ t → rcell′ Θ t W₁) cellA)
+            (trans (unbox-cell-swap Θ cW W₂ W₁)
+              (sym
+                (trans (unbox-tgt-castʳᵉ (castOf {Γ} {B₂} Θ)
+                                         (unbox-var-ren vD relD) hd)
+                  (trans (cong (Tgt-cast (castOf {Γ} {B₂} Θ))
+                               (unbox-var-tgt vD relD))
+                    (trans
+                      (cong (λ t → rcell′ Θ t W₂)
+                            (unbox-tgt-castʳᵉ (assocᴮ⁻ Γ B₂ Θ) wC hd))
+                      (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+                            cellC))))))))
+
+-- `handle`: the scrutinee and the sequel are the induction hypotheses at
+-- their own suffixes, so the whole content is the clauses — the same swap
+-- at the *restricted* context, where each order reaches them through its
+-- own `⟨_⟩[_↦_]cl`.
+--
+-- That is the one piece still open. It dispatches on `eternal? B₁` and
+-- `eternal? B₂` (four combinations, by `cl-cancel`'s Dec-argument
+-- pattern, since a `with` would abstract the clause family's own type).
+-- Three are cheap: a `⟨ no ¬et ⟩cl` is a transport, so at most one
+-- substitution survives on each side and the leftover transports form a
+-- loop that `uip` collapses (`sub-wk-handle-ne`'s `collapse`). The
+-- both-eternal one is *this lemma again* at the splitting's own halves,
+-- threaded through a `sub-swap-C-cast` so the recursion stays on the bare
+-- clause — `sub-wk-handle-et`'s shape, and the same reason: only there do
+-- the two ways of naming the substituted variable become the same
+-- splitting (`split→∈-unique`/`split→∈-unique₂`).
+
+-- The clause action with the eternality decision taken as an argument, so
+-- that the four branches can be matched rather than `with`-abstracted —
+-- a `with` would abstract the clause family's own type, which mentions
+-- `_ᴱ` of the very context being decided about.
+
+sub-atᴴ′ : ∀ {Γ' B D} → Dec (Eternal B) → (Θ : Ctx)
+         → Fam D (((Γ' ∷ B) ++ᶜ Θ) ᴱ) → Γ' ⊢V⦂ B → Fam D ((Γ' ++ᶜ Θ) ᴱ)
+sub-atᴴ′ {Γ'} {B} dec Θ H W op ε =
+  Cl-cast op ε (castOf {Γ'} {B} Θ) (⟨ dec ⟩[ bvar B Θ ↦ bval Θ W ]cl H op ε)
+
+inner₀ᴴ′ : ∀ {Γ B₁ B₂ D} → Dec (Eternal B₁) → (Θ : Ctx)
+         → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ) → Γ ⊢V⦂ B₁
+         → Fam D (((Γ ∷ B₂) ++ᶜ Θ) ᴱ)
+inner₀ᴴ′ {Γ} {B₁} {B₂} dec₁ Θ H W₁ op ε =
+  Cl-cast op ε (assocᴮ⁻ Γ B₂ Θ)
+    (sub-atᴴ′ dec₁ (([] ∷ B₂) ++ᶜ Θ)
+       (λ op' ε' → Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε')) W₁ op ε)
+
+outerᴴ′ : ∀ {Γ B₁ B₂ D} → Dec (Eternal B₁) → Dec (Eternal B₂) → (Θ : Ctx)
+        → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ) → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁
+        → Fam D ((Γ ++ᶜ Θ) ᴱ)
+outerᴴ′ {B₁ = B₁} dec₁ dec₂ Θ H W₂ W₁ =
+  sub-atᴴ′ dec₁ Θ (sub-atᴴ′ dec₂ Θ H (V-rename (wk-ren {A = B₁}) W₂)) W₁
+
+innerᴴ′ : ∀ {Γ B₁ B₂ D} → Dec (Eternal B₁) → Dec (Eternal B₂) → (Θ : Ctx)
+        → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ) → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁
+        → Fam D ((Γ ++ᶜ Θ) ᴱ)
+innerᴴ′ dec₁ dec₂ Θ H W₂ W₁ =
+  sub-atᴴ′ dec₂ Θ (inner₀ᴴ′ dec₁ Θ H W₁) W₂
+
+ClSwap : ∀ {Γ B₁ B₂ D} → Dec (Eternal B₁) → Dec (Eternal B₂) → (Θ : Ctx)
+       → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ) → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁
+       → (op : Op) → (ε : E) → Set
+ClSwap dec₁ dec₂ Θ H W₂ W₁ op ε =
+  outerᴴ′ dec₁ dec₂ Θ H W₂ W₁ op ε ≐ᶜ innerᴴ′ dec₁ dec₂ Θ H W₂ W₁ op ε
+
+------------------------------------------------------------------------
+-- BEING A TRANSPORT OF A GIVEN TERM
+--
+-- Every clause-level step that does not substitute is a transport, of one
+-- of two shapes (`Cl-cast`, and `⟨ no ¬et ⟩cl`'s own `subst` at the
+-- `_++ᶜ D` motive). Recording "X is some transport of h" makes them
+-- compose, and two such records of the same `h` are equal by `uip` —
+-- which is the whole of the both-non-eternal branch.
+------------------------------------------------------------------------
+
+IsSub : ∀ {Γ₀ Γ₁ C} → Γ₀ ⊢C⦂ C → Γ₁ ⊢C⦂ C → Set
+IsSub {Γ₀} {Γ₁} {C} h X = Σ[ e ∈ Γ₀ ≡ Γ₁ ] X ≡ subst (_⊢C⦂ C) e h
+
+isSub-refl : ∀ {Γ₀ C} → (h : Γ₀ ⊢C⦂ C) → IsSub h h
+isSub-refl h = refl , refl
+
+isSub-substC : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → (X : Γ₁ ⊢C⦂ C) → (e : Γ₁ ≡ Γ₂)
+             → IsSub h X → IsSub h (subst (_⊢C⦂ C) e X)
+isSub-substC {C = C} {h = h} X e (e₀ , q) =
+  trans e₀ e
+  , trans (cong (subst (_⊢C⦂ C) e) q) (subst-fuseᶜ e₀ e h)
+
+isSub-cast : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → (X : Γ₁ ⊢C⦂ C) → (e : Γ₁ ≡ Γ₂)
+           → IsSub h X → IsSub h (castᶜ e X)
+isSub-cast {C = C} X e p =
+  subst (IsSub _) (sym (castᶜ≡subst e X)) (isSub-substC X e p)
+
+-- the two shapes the clause level actually presents
+
+isSub-Cl : ∀ {Γ₀ Γ₁ Γ₂ D} → (op : Op) → (ε : E)
+         → {h : Γ₀ ⊢C⦂ D ‼ (op-grade op ·ₑ ε)}
+         → (X : Cl D op ε (Γ₁ ᴱ)) → (e : Γ₁ ≡ Γ₂)
+         → IsSub h X → IsSub h (Cl-cast op ε e X)
+isSub-Cl {D = D} op ε X e p =
+  isSub-cast X
+    (cong (λ Γ₃ → Γ₃ ᴱ ∷ type-of-gtype (param op)
+                     ∷ [ mapᵉ (op-grade op) ]
+                         (type-of-gtype (arity op) ⇒ D ‼ ε))
+          e)
+    p
+
+-- the shape `⟨ no ¬et ⟩[_↦_]cl` transports at
+isSub-substD : ∀ {Γ₀ Γ₁ Γ₂ C} → (Dc : Ctx) → {h : Γ₀ ⊢C⦂ C}
+             → (X : (Γ₁ ++ᶜ Dc) ⊢C⦂ C) → (e : Γ₁ ≡ Γ₂)
+             → IsSub h X
+             → IsSub h (subst (λ Γ₃ → (Γ₃ ++ᶜ Dc) ⊢C⦂ C) e X)
+isSub-substD Dc X e p =
+  subst (IsSub _) (sym (subst-++ᶜʳ Dc e X))
+        (isSub-substC X (cong (_++ᶜ Dc) e) p)
+
+-- two transports of one term are transports of each other
+
+isSub-reassoc : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → {X : Γ₁ ⊢C⦂ C} → {Y : Γ₂ ⊢C⦂ C}
+              → IsSub h X → IsSub h Y → IsSub Y X
+isSub-reassoc {C = C} {h = h} (e , q) (e' , q') =
+  trans (sym e') e
+  , trans q
+      (trans (cong (λ z → subst (_⊢C⦂ C) z h)
+                   (uip {p = e} {q = trans e' (trans (sym e') e)}))
+        (trans (sym (subst-fuseᶜ e' (trans (sym e') e) h))
+               (cong (subst (_⊢C⦂ C) (trans (sym e') e)) (sym q'))))
+
+isSub-trans : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → {X : Γ₁ ⊢C⦂ C} → {Y : Γ₂ ⊢C⦂ C}
+            → IsSub h X → IsSub X Y → IsSub h Y
+isSub-trans {C = C} {h = h} (e , q) (e' , q') =
+  trans e e'
+  , trans q' (trans (cong (subst (_⊢C⦂ C) e') q) (subst-fuseᶜ e e' h))
+
+isSub-uniq : ∀ {Γ₀ Γ₁ C} → {h : Γ₀ ⊢C⦂ C} → {X Y : Γ₁ ⊢C⦂ C}
+           → IsSub h X → IsSub h Y → X ≡ Y
+isSub-uniq {C = C} {h = h} (e , q) (e' , q') =
+  trans q (trans (cong (λ z → subst (_⊢C⦂ C) z h) (uip {p = e} {q = e'}))
+                 (sym q'))
+
+-- BOTH ENTRIES NON-ETERNAL
+--
+-- Neither `⟨ no ¬et ⟩cl` substitutes, so each side is a tower of
+-- transports over the same clause: four on the left, six on the right.
+
+cl-swap-nn : ∀ {Γ B₁ B₂ D} → (¬et₁ : ¬ Eternal B₁) → (¬et₂ : ¬ Eternal B₂)
+           → (Θ : Ctx) → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁) → (op : Op) → (ε : E)
+           → ClSwap (no ¬et₁) (no ¬et₂) Θ H W₂ W₁ op ε
+
+cl-swap-nn {Γ} {B₁} {B₂} {D} ¬et₁ ¬et₂ Θ H W₂ W₁ op ε =
+  ≡→≐ᶜ (isSub-uniq lhs rhs)
+  where
+    Dc = Dcl D op ε
+
+    lhs : IsSub (H op ε) (outerᴴ′ (no ¬et₁) (no ¬et₂) Θ H W₂ W₁ op ε)
+    lhs =
+      isSub-Cl op ε _ (castOf {Γ} {B₁} Θ)
+        (isSub-substD Dc _ (ᴱ-drop-split ¬et₁ (bvar B₁ Θ))
+          (isSub-Cl op ε _ (castOf {Γ ∷ B₁} {B₂} Θ)
+            (isSub-substD Dc _ (ᴱ-drop-split ¬et₂ (bvar B₂ Θ))
+              (isSub-refl (H op ε)))))
+
+    rhs : IsSub (H op ε) (innerᴴ′ (no ¬et₁) (no ¬et₂) Θ H W₂ W₁ op ε)
+    rhs =
+      isSub-Cl op ε _ (castOf {Γ} {B₂} Θ)
+        (isSub-substD Dc _ (ᴱ-drop-split ¬et₂ (bvar B₂ Θ))
+          (isSub-Cl op ε _ (assocᴮ⁻ Γ B₂ Θ)
+            (isSub-Cl op ε _ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+              (isSub-substD Dc _
+                (ᴱ-drop-split ¬et₁ (bvar B₁ (([] ∷ B₂) ++ᶜ Θ)))
+                (isSub-Cl op ε _ (assocᴮ Γ B₁ B₂ Θ)
+                          (isSub-refl (H op ε)))))))
+
+-- `sub-atᶜ` is natural in a transport of its prefix, its suffix, its term
+-- and its value — which is what the eternal branches need, `cl-yes`
+-- landing the two sides at contexts that agree only propositionally.
+-- Proved by matching the two context equations; the `IsSub` premise then
+-- forces the terms equal, its own equation being a loop.
+
+sub-at-IsSub : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) → (eΘ : Θ₁ ≡ Θ₂)
+             → (X₁ : ((Γ₁ ∷ B) ++ᶜ Θ₁) ⊢C⦂ C)
+             → (X₂ : ((Γ₂ ∷ B) ++ᶜ Θ₂) ⊢C⦂ C)
+             → IsSub X₁ X₂
+             → (V₁ : Γ₁ ⊢V⦂ B) → (V₂ : Γ₂ ⊢V⦂ B)
+             → subst (_⊢V⦂ B) eΓ V₁ ≡ V₂
+             → IsSub (sub-atᶜ Θ₁ X₁ V₁) (sub-atᶜ Θ₂ X₂ V₂)
+sub-at-IsSub refl refl X₁ X₂ (e , q) V .V refl =
+  refl , cong (λ z → sub-atᶜ _ z V) (trans q (subst-loopᶜ e X₁))
+
+-- The eternal restriction respects a transport of its context.
+
+restrict-substᵛ : ∀ {Γ₁ Γ₂ A} → (e : Γ₁ ≡ Γ₂) → (et : Eternal A) → (V : Γ₁ ⊢V⦂ A)
+                → eternal-val-restrict et (subst (_⊢V⦂ A) e V)
+                ≡ subst (_⊢V⦂ A) (cong _ᴱ e) (eternal-val-restrict et V)
+restrict-substᵛ refl et V = refl
+
+------------------------------------------------------------------------
+-- WHAT `⟨ yes et ⟩[_↦_]cl` REALLY IS
+--
+-- It is `sub-atᶜ` at the *restricted* contexts — but at the splitting's
+-- own halves (`split-l x ᴱ`, `split-r x ᴱ ++ᶜ Dcl`), not at the contexts
+-- those are propositionally equal to. That is `sub-wk-handle-et`'s
+-- hard-won move, and the reason for it is the same: only there do
+-- `split-++ʳ (∈-ᴱ-split et x) Dcl` and `split-≡-++ᶜ` have literally the
+-- same halves, so `split→∈-unique` applies on the nose.
+--
+-- Both `⟨ yes et ⟩cl` and that `sub-atᶜ` are transports of one and the
+-- same substituted clause, which is what the two lemmas below record;
+-- `isSub-uniq` then identifies them.
+------------------------------------------------------------------------
+
+-- the substituted clause both sides are transports of
+
+clBody : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
+       → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+       → (split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε)))
+            ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))))
+         ⊢C⦂ D ‼ (op-grade op ·ₑ ε)
+clBody {D = D} et x W H op ε =
+  (H op ε) [ split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))
+             ↦ subst (_⊢V⦂ _)
+                 (sym (split→∈-split-l
+                        (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))))
+                 (eternal-val-restrict et W) ]c
+
+-- the clause substitution is that, transported (definitionally)
+
+cl-yes-raw : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
+           → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+           → IsSub (clBody et x W H op ε) (⟨ yes et ⟩[ x ↦ W ]cl H op ε)
+cl-yes-raw et x W H op ε = _ , refl
+
+-- and so is the `sub-atᶜ` at the splitting's own halves
+
+cl-yes-sub : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
+           → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+           → (e : (Γ₀ ᴱ ++ᶜ Dcl D op ε)
+                ≡ ((split-l x ᴱ ∷ A) ++ᶜ (split-r x ᴱ ++ᶜ Dcl D op ε)))
+           → IsSub (clBody et x W H op ε)
+                   (sub-atᶜ {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε)
+                            (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
+                            (eternal-val-restrict et W))
+cl-yes-sub {Γ₀} {A} {ρ} {D} et x W H op ε e =
+  isSub-cast _ (castOf {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε))
+    (_ , sub-cast-C′ e (H op ε) v y ey U U' eU)
+  where
+    Dc = Dcl D op ε
+    Γ₀' = split-l x ᴱ
+    Θ₀' = split-r x ᴱ ++ᶜ Dc
+
+    s = split-++ʳ (∈-ᴱ-split et x) Dc
+    v = split→∈ s
+    y = split→∈ (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})
+
+    ey : subst (λ Γ₁ → A ∈[ ctx-grade Θ₀' ] Γ₁) e v ≡ y
+    ey = split→∈-unique e s (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})
+
+    U : split-l v ⊢V⦂ A
+    U = subst (_⊢V⦂ A) (sym (split→∈-split-l s)) (eternal-val-restrict et W)
+
+    U' : split-l y ⊢V⦂ A
+    U' = bval Θ₀' (eternal-val-restrict et W)
+
+    eU : subst (_⊢V⦂ A) (trans (split-l-cast e v) (cong split-l ey)) U ≡ U'
+    eU =
+      trans (subst-fuseᵛ (sym (split→∈-split-l s))
+                         (trans (split-l-cast e v) (cong split-l ey))
+                         (eternal-val-restrict et W))
+        (trans (substᵛ-irr _
+                  (sym (split→∈-split-l (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})))
+                  (eternal-val-restrict et W))
+               (sym (castᵛ≡subst _ (eternal-val-restrict et W))))
+
+-- hence the clause substitution *is* that `sub-atᶜ`, transported
+
+cl-yes : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
+       → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+       → (e : (Γ₀ ᴱ ++ᶜ Dcl D op ε)
+            ≡ ((split-l x ᴱ ∷ A) ++ᶜ (split-r x ᴱ ++ᶜ Dcl D op ε)))
+       → IsSub (sub-atᶜ {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε)
+                        (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
+                        (eternal-val-restrict et W))
+               (⟨ yes et ⟩[ x ↦ W ]cl H op ε)
+cl-yes et x W H op ε e =
+  isSub-reassoc (cl-yes-raw et x W H op ε) (cl-yes-sub et x W H op ε e)
+
+-- The equation `cl-yes` wants is the splitting's own.
+
+eCl : ∀ {Γ₀ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀) → (D : VType)
+    → (op : Op) → (ε : E)
+    → (Γ₀ ᴱ ++ᶜ Dcl D op ε)
+    ≡ ((split-l x ᴱ ∷ A) ++ᶜ (split-r x ᴱ ++ᶜ Dcl D op ε))
+eCl et x D op ε =
+  sym (split-≡ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε)))
+
+-- ONE ENTRY ETERNAL
+--
+-- Exactly one side of each order substitutes, and both substitute the
+-- same restricted value — but `cl-yes` lands them at contexts that agree
+-- only propositionally (`split-r (bvar B₁ Θ) ≡ Θ` against
+-- `split-r (bvar B₁ (([] ∷ B₂) ++ᶜ Θ)) ≡ ([] ∷ B₂) ++ᶜ Θ`, whose eternal
+-- parts coincide because `B₂` is not eternal). `sub-at-IsSub` aligns
+-- them; everything else is transports.
+
+cl-swap-en : ∀ {Γ B₁ B₂ D} → (et₁ : Eternal B₁) → (¬et₂ : ¬ Eternal B₂)
+           → (Θ : Ctx) → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁) → (op : Op) → (ε : E)
+           → ClSwap (yes et₁) (no ¬et₂) Θ H W₂ W₁ op ε
+
+cl-swap-en {Γ} {B₁} {B₂} {D} et₁ ¬et₂ Θ H W₂ W₁ op ε =
+  ≡→≐ᶜ (isSub-uniq lhs rhs)
+  where
+    Dc = Dcl D op ε
+    Δ₂ = [] ∷ B₂
+    Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
+
+    xL = bvar {Γ} B₁ Θ
+    xR = bvar {Γ} B₁ (Δ₂ ++ᶜ Θ)
+
+    K : Fam D (((Γ ∷ B₁) ++ᶜ Θ) ᴱ)
+    K = sub-atᴴ′ (no ¬et₂) Θ H Ŵ₂
+
+    H' : Fam D (((Γ ∷ B₁) ++ᶜ (Δ₂ ++ᶜ Θ)) ᴱ)
+    H' op' ε' = Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε')
+
+    eL = eCl et₁ xL D op ε
+    eR = eCl et₁ xR D op ε
+
+    -- both substituted terms are transports of the clause
+    isL : IsSub (H op ε) (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) eL (K op ε))
+    isL =
+      isSub-substC _ eL
+        (isSub-Cl op ε _ (castOf {Γ ∷ B₁} {B₂} Θ)
+          (isSub-substD Dc _ (ᴱ-drop-split ¬et₂ (bvar B₂ Θ))
+            (isSub-refl (H op ε))))
+
+    isR : IsSub (H op ε) (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) eR (H' op ε))
+    isR =
+      isSub-substC _ eR
+        (isSub-Cl op ε _ (assocᴮ Γ B₁ B₂ Θ) (isSub-refl (H op ε)))
+
+    -- and the two prefixes/suffixes agree
+    eΓ : split-l xL ᴱ ≡ split-l xR ᴱ
+    eΓ = cong _ᴱ (trans (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B₁} {Θ}))
+                        (sym (split→∈-split-l
+                               (split-≡-++ᶜ {Γ ∷ B₁} {Δ₂ ++ᶜ Θ}))))
+
+    -- `B₂` is not eternal, so the extra entry disappears from the
+    -- restriction and the two suffixes' eternal parts coincide
+    eΘᴱ : Θ ᴱ ≡ (Δ₂ ++ᶜ Θ) ᴱ
+    eΘᴱ = sym (trans (ᴱ-++ᶜ Δ₂ Θ)
+                (trans (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-drop {[]} {B₂} ¬et₂))
+                       (++ᶜ-identityˡ {Θ ᴱ})))
+
+    eΘ : (split-r xL ᴱ ++ᶜ Dc) ≡ (split-r xR ᴱ ++ᶜ Dc)
+    eΘ = cong (_++ᶜ Dc)
+              (trans (cong _ᴱ (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B₁} {Θ})))
+                (trans eΘᴱ
+                       (cong _ᴱ (sym (split→∈-split-r
+                                       (split-≡-++ᶜ {Γ ∷ B₁} {Δ₂ ++ᶜ Θ}))))))
+
+    eV : subst (_⊢V⦂ B₁) eΓ
+           (eternal-val-restrict et₁ (bval {Γ} Θ W₁))
+       ≡ eternal-val-restrict et₁ (bval {Γ} (Δ₂ ++ᶜ Θ) W₁)
+    eV =
+      trans (cong (subst (_⊢V⦂ B₁) eΓ)
+              (trans (cong (eternal-val-restrict et₁)
+                           (castᵛ≡subst _ W₁))
+                     (restrict-substᵛ _ et₁ W₁)))
+        (trans (subst-fuseᵛ _ eΓ (eternal-val-restrict et₁ W₁))
+          (trans (substᵛ-irr _ (cong _ᴱ (sym (split→∈-split-l
+                                    (split-≡-++ᶜ {Γ ∷ B₁} {Δ₂ ++ᶜ Θ}))))
+                             (eternal-val-restrict et₁ W₁))
+            (trans (sym (restrict-substᵛ _ et₁ W₁))
+                   (cong (eternal-val-restrict et₁)
+                         (sym (castᵛ≡subst _ W₁))))))
+
+    aligned : IsSub (sub-atᶜ (split-r xL ᴱ ++ᶜ Dc)
+                             (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) eL (K op ε))
+                             (eternal-val-restrict et₁ (bval Θ W₁)))
+                    (sub-atᶜ (split-r xR ᴱ ++ᶜ Dc)
+                             (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) eR (H' op ε))
+                             (eternal-val-restrict et₁ (bval (Δ₂ ++ᶜ Θ) W₁)))
+    aligned = sub-at-IsSub eΓ eΘ _ _ (isSub-reassoc isR isL) _ _ eV
+
+    lhs : IsSub (sub-atᶜ (split-r xL ᴱ ++ᶜ Dc)
+                         (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) eL (K op ε))
+                         (eternal-val-restrict et₁ (bval Θ W₁)))
+                (outerᴴ′ (yes et₁) (no ¬et₂) Θ H W₂ W₁ op ε)
+    lhs =
+      isSub-trans (cl-yes et₁ xL (bval Θ W₁) K op ε eL)
+        (isSub-Cl op ε _ (castOf {Γ} {B₁} Θ) (isSub-refl _))
+
+    rhs : IsSub (sub-atᶜ (split-r xL ᴱ ++ᶜ Dc)
+                         (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) eL (K op ε))
+                         (eternal-val-restrict et₁ (bval Θ W₁)))
+                (innerᴴ′ (yes et₁) (no ¬et₂) Θ H W₂ W₁ op ε)
+    rhs =
+      isSub-trans aligned
+        (isSub-trans (cl-yes et₁ xR (bval (Δ₂ ++ᶜ Θ) W₁) H' op ε eR)
+          (isSub-Cl op ε _ (castOf {Γ} {B₂} Θ)
+            (isSub-substD Dc _ (ᴱ-drop-split ¬et₂ (bvar B₂ Θ))
+              (isSub-Cl op ε _ (assocᴮ⁻ Γ B₂ Θ)
+                (isSub-Cl op ε _ (castOf {Γ} {B₁} (Δ₂ ++ᶜ Θ))
+                          (isSub-refl _))))))
+
+-- THE VALUE BRIDGE THE TWO REMAINING BRANCHES NEED
+--
+-- Where the left order weakens the outer value past `B₁` before
+-- restricting it and the right order does not, the two agree — at a
+-- *non-eternal* `B₁` the restriction of the weakening is the identity
+-- (`ren-ᴱ-∷′ B₁ (no ¬et₁)` is `id-ren`), so this is
+-- `eternal-val-restrict-ren` followed by `V-rename-id-≐`. Stated against
+-- an arbitrary proof of the (only propositional) context equation, so the
+-- caller may present it with whichever proof it has; `rewrite` then
+-- reduces both `_ᴱ` and `ᴱ-∷-drop`, and `uip` finishes.
+
+-- renaming along an identity-like renaming is the transport (the value
+-- counterpart of `C-rename-eq-≐`)
+
+V-rename-eq-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {r : Ren [] Γ Γ'}
+              → r ≐ʳ eq-ren e → (V : Γ ⊢V⦂ A)
+              → V-rename r V ≐ᵛ subst (_⊢V⦂ A) e V
+V-rename-eq-≐ refl h V = V-rename-id-≐ h V
+
+restrict-wk-ne-≐ : ∀ {Γ₀ A B} → (¬et : ¬ Eternal B) → (et : Eternal A)
+                 → (V : Γ₀ ⊢V⦂ A) → (e : Γ₀ ᴱ ≡ (Γ₀ ∷ B) ᴱ)
+                 → eternal-val-restrict et (V-rename (wk-ren {A = B}) V)
+                 ≐ᵛ subst (_⊢V⦂ A) e (eternal-val-restrict et V)
+restrict-wk-ne-≐ {Γ₀} {A} {B} ¬et et V e =
+  ≐ᵛ-trans (eternal-val-restrict-ren et (wk-ren {A = B}) V)
+           (V-rename-eq-≐ e (restrict-wk-≐ ¬et [] e) (eternal-val-restrict et V))
+
+-- and the action respects `_≐ᵛ_` in the value it substitutes
+
+sub-atᶜ-≐ᵥ : ∀ {Γ' B C} → (Θ : Ctx) → (X : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C)
+           → {V V' : Γ' ⊢V⦂ B} → V ≐ᵛ V'
+           → sub-atᶜ Θ X V ≐ᶜ sub-atᶜ Θ X V'
+sub-atᶜ-≐ᵥ Θ X eV = castᶜ-≐ _ (sub-≐ᶜ _ (castᵛ-≐ _ eV) (≐ᶜ-refl X))
+
+-- two transports of `≐ᶜ`-related terms are `≐ᶜ`-related
+
+isSub-≐ : ∀ {Γ₀ Γ₁ C} → {M M' : Γ₀ ⊢C⦂ C} → {X Y : Γ₁ ⊢C⦂ C}
+        → IsSub M X → IsSub M' Y → M ≐ᶜ M' → X ≐ᶜ Y
+isSub-≐ {C = C} {M' = M'} (e , q) (e' , q') eM =
+  ≐ᶜ-trans (≡→≐ᶜ q)
+    (≐ᶜ-trans (substᶜ-≐ e eM)
+      (≡→≐ᶜ (trans (cong (λ z → subst (_⊢C⦂ C) z M') (uip {p = e} {q = e'}))
+                   (sym q'))))
+
+-- THE OUTER ENTRY ETERNAL, THE INNER ONE NOT
+--
+-- As `cl-swap-en`, except that here the two substituted values differ: the
+-- left order restricts `W₂` *weakened past `B₁`*, the right order restricts
+-- `W₂` itself. `restrict-wk-ne-≐` bridges them — at a non-eternal `B₁` the
+-- restriction of that weakening is the identity — so the two `sub-atᶜ`s
+-- agree only up to `_≐ᵛ_`, and the branch is `≐ᶜ` rather than `≡`.
+
+cl-swap-ne : ∀ {Γ B₁ B₂ D} → (¬et₁ : ¬ Eternal B₁) → (et₂ : Eternal B₂)
+           → (Θ : Ctx) → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁) → (op : Op) → (ε : E)
+           → ClSwap (no ¬et₁) (yes et₂) Θ H W₂ W₁ op ε
+
+cl-swap-ne {Γ} {B₁} {B₂} {D} ¬et₁ et₂ Θ H W₂ W₁ op ε =
+  isSub-≐ lhs' rhs valStep
+  where
+    CT = D ‼ (op-grade op ·ₑ ε)
+    Dc = Dcl D op ε
+    Δ₂ = [] ∷ B₂
+    Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
+
+    xL = bvar {Γ ∷ B₁} B₂ Θ
+    xR = bvar {Γ} B₂ Θ
+
+    G : Fam D (((Γ ∷ B₂) ++ᶜ Θ) ᴱ)
+    G = inner₀ᴴ′ (no ¬et₁) Θ H W₁
+
+    eL = eCl et₂ xL D op ε
+    eR = eCl et₂ xR D op ε
+
+    VL = eternal-val-restrict et₂ (bval {Γ ∷ B₁} Θ Ŵ₂)
+    VR = eternal-val-restrict et₂ (bval {Γ} Θ W₂)
+
+    isL : IsSub (H op ε) (subst (_⊢C⦂ CT) eL (H op ε))
+    isL = isSub-substC _ eL (isSub-refl (H op ε))
+
+    isR : IsSub (H op ε) (subst (_⊢C⦂ CT) eR (G op ε))
+    isR =
+      isSub-substC _ eR
+        (isSub-Cl op ε _ (assocᴮ⁻ Γ B₂ Θ)
+          (isSub-Cl op ε _ (castOf {Γ} {B₁} (Δ₂ ++ᶜ Θ))
+            (isSub-substD Dc _ (ᴱ-drop-split ¬et₁ (bvar B₁ (Δ₂ ++ᶜ Θ)))
+              (isSub-Cl op ε _ (assocᴮ Γ B₁ B₂ Θ) (isSub-refl (H op ε))))))
+
+    -- `B₁` is not eternal, so the two prefixes' eternal parts coincide
+    eΓ : split-l xL ᴱ ≡ split-l xR ᴱ
+    eΓ = trans (cong _ᴱ (split→∈-split-l (split-≡-++ᶜ {(Γ ∷ B₁) ∷ B₂} {Θ})))
+           (trans (ᴱ-∷-drop {Γ} {B₁} ¬et₁)
+                  (cong _ᴱ (sym (split→∈-split-l
+                                  (split-≡-++ᶜ {Γ ∷ B₂} {Θ})))))
+
+    eΘ : (split-r xL ᴱ ++ᶜ Dc) ≡ (split-r xR ᴱ ++ᶜ Dc)
+    eΘ = cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+              (trans (split→∈-split-r (split-≡-++ᶜ {(Γ ∷ B₁) ∷ B₂} {Θ}))
+                     (sym (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B₂} {Θ}))))
+
+    aligned : IsSub (sub-atᶜ (split-r xL ᴱ ++ᶜ Dc)
+                             (subst (_⊢C⦂ CT) eL (H op ε)) VL)
+                    (sub-atᶜ (split-r xR ᴱ ++ᶜ Dc)
+                             (subst (_⊢C⦂ CT) eR (G op ε))
+                             (subst (_⊢V⦂ B₂) eΓ VL))
+    aligned = sub-at-IsSub eΓ eΘ _ _ (isSub-reassoc isR isL) VL _ refl
+
+    lhs : IsSub (sub-atᶜ (split-r xL ᴱ ++ᶜ Dc)
+                         (subst (_⊢C⦂ CT) eL (H op ε)) VL)
+                (outerᴴ′ (no ¬et₁) (yes et₂) Θ H W₂ W₁ op ε)
+    lhs =
+      isSub-trans (cl-yes et₂ xL (bval Θ Ŵ₂) H op ε eL)
+        (isSub-Cl op ε _ (castOf {Γ} {B₁} Θ)
+          (isSub-substD Dc _ (ᴱ-drop-split ¬et₁ (bvar B₁ Θ))
+            (isSub-Cl op ε _ (castOf {Γ ∷ B₁} {B₂} Θ) (isSub-refl _))))
+
+    rhs : IsSub (sub-atᶜ (split-r xR ᴱ ++ᶜ Dc)
+                         (subst (_⊢C⦂ CT) eR (G op ε)) VR)
+                (innerᴴ′ (no ¬et₁) (yes et₂) Θ H W₂ W₁ op ε)
+    rhs =
+      isSub-trans (cl-yes et₂ xR (bval Θ W₂) G op ε eR)
+        (isSub-Cl op ε _ (castOf {Γ} {B₂} Θ) (isSub-refl _))
+
+    cL : (Γ ∷ B₁) ≡ split-l xL
+    cL = sym (split→∈-split-l (split-≡-++ᶜ {(Γ ∷ B₁) ∷ B₂} {Θ}))
+
+    cR : Γ ≡ split-l xR
+    cR = sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B₂} {Θ}))
+
+    e₀ : Γ ᴱ ≡ (Γ ∷ B₁) ᴱ
+    e₀ = sym (ᴱ-∷-drop {Γ} {B₁} ¬et₁)
+
+    eVal : subst (_⊢V⦂ B₂) eΓ VL ≐ᵛ VR
+    eVal =
+      ≐ᵛ-trans
+        (≡→≐ᵛ (cong (subst (_⊢V⦂ B₂) eΓ)
+                (trans (cong (eternal-val-restrict et₂) (castᵛ≡subst cL Ŵ₂))
+                       (restrict-substᵛ cL et₂ Ŵ₂))))
+        (≐ᵛ-trans
+          (substᵛ-≐ eΓ (substᵛ-≐ (cong _ᴱ cL)
+                                 (restrict-wk-ne-≐ ¬et₁ et₂ W₂ e₀)))
+          (≡→≐ᵛ
+            (trans (cong (subst (_⊢V⦂ B₂) eΓ)
+                     (subst-fuseᵛ e₀ (cong _ᴱ cL)
+                                  (eternal-val-restrict et₂ W₂)))
+              (trans (subst-fuseᵛ (trans e₀ (cong _ᴱ cL)) eΓ
+                                  (eternal-val-restrict et₂ W₂))
+                (trans (substᵛ-irr (trans (trans e₀ (cong _ᴱ cL)) eΓ)
+                                   (cong _ᴱ cR)
+                                   (eternal-val-restrict et₂ W₂))
+                  (trans (sym (restrict-substᵛ cR et₂ W₂))
+                         (cong (eternal-val-restrict et₂)
+                               (sym (castᵛ≡subst cR W₂)))))))))
+
+    valStep : sub-atᶜ (split-r xR ᴱ ++ᶜ Dc)
+                      (subst (_⊢C⦂ CT) eR (G op ε))
+                      (subst (_⊢V⦂ B₂) eΓ VL)
+            ≐ᶜ sub-atᶜ (split-r xR ᴱ ++ᶜ Dc)
+                       (subst (_⊢C⦂ CT) eR (G op ε)) VR
+    valStep = sub-atᶜ-≐ᵥ _ _ eVal
+
+    lhs' : IsSub (sub-atᶜ (split-r xR ᴱ ++ᶜ Dc)
+                          (subst (_⊢C⦂ CT) eR (G op ε))
+                          (subst (_⊢V⦂ B₂) eΓ VL))
+                 (outerᴴ′ (no ¬et₁) (yes et₂) Θ H W₂ W₁ op ε)
+    lhs' = isSub-reassoc lhs aligned
+
+-- The eternal counterpart of `restrict-wk-ne-≐`: at an *eternal* `B` the
+-- restriction of the weakening is the weakening again, so restricting a
+-- `B`-weakened value is weakening its restriction — which is exactly the
+-- value `outerᶜ` hands its inner step.
+
+restrict-wk-et-≐ᵛ : ∀ {Γ₀ A B} → (etB : Eternal B) → (et : Eternal A)
+                  → (V : Γ₀ ⊢V⦂ A) → (e : (Γ₀ ∷ B) ᴱ ≡ Γ₀ ᴱ ∷ B)
+                  → eternal-val-restrict et (V-rename (wk-ren {A = B}) V)
+                  ≐ᵛ subst (_⊢V⦂ A) (sym e)
+                       (V-rename (wk-ren {A = B}) (eternal-val-restrict et V))
+restrict-wk-et-≐ᵛ {Γ₀} {A} {B} etB et V e =
+  ≐ᵛ-trans (eternal-val-restrict-ren et (wk-ren {A = B}) V)
+    (≐ᵛ-trans (V-rename-≐ (restrict-wk-et-≐ etB [] refl e)
+                          (eternal-val-restrict et V))
+      (≐ᵛ-trans (V-rename-∘ (eq-ren (sym e)) (wk-ren ∘ʳ eq-ren refl)
+                            (eternal-val-restrict et V))
+        (≐ᵛ-trans
+          (V-rename-cong (eq-ren (sym e))
+            (≐ᵛ-trans (V-rename-∘ (wk-ren {A = B}) (eq-ren refl)
+                                  (eternal-val-restrict et V))
+                      (V-rename-cong (wk-ren {A = B})
+                                     (V-rename-id-≐ ≐ʳ-refl _))))
+          (V-rename-eq-≐ (sym e) ≐ʳ-refl _))))
+
+-- The `_≐ᶜ_`-flavoured alignment the both-eternal branch needs. Unlike
+-- `sub-at-IsSub` it takes the terms related only up to `_≐ᶜ_` and the
+-- values only up to `_≐ᵛ_` — which is what the nested case forces, the
+-- inner `sub-atᶜ`s' values being restrictions of *weakened* values, equal
+-- to the unweakened ones only up to `restrict-wk-et-≐ᵛ`.
+
+sub-at-≐ : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) → (eΘ : Θ₁ ≡ Θ₂)
+         → (X₁ : ((Γ₁ ∷ B) ++ᶜ Θ₁) ⊢C⦂ C) → (X₂ : ((Γ₂ ∷ B) ++ᶜ Θ₂) ⊢C⦂ C)
+         → (e : ((Γ₁ ∷ B) ++ᶜ Θ₁) ≡ ((Γ₂ ∷ B) ++ᶜ Θ₂))
+         → X₂ ≐ᶜ subst (_⊢C⦂ C) e X₁
+         → (V₁ : Γ₁ ⊢V⦂ B) → (V₂ : Γ₂ ⊢V⦂ B)
+         → subst (_⊢V⦂ B) eΓ V₁ ≐ᵛ V₂
+         → (e' : (Γ₁ ++ᶜ Θ₁) ≡ (Γ₂ ++ᶜ Θ₂))
+         → sub-atᶜ Θ₂ X₂ V₂ ≐ᶜ subst (_⊢C⦂ C) e' (sub-atᶜ Θ₁ X₁ V₁)
+sub-at-≐ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
+  rewrite uip {p = e} {q = refl} | uip {p = e'} {q = refl} =
+  ≐ᶜ-trans (sub-atᶜ-≐ _ V₂ eX) (sub-atᶜ-≐ᵥ _ X₁ (≐ᵛ-sym eV))
+
+-- The recursion the both-eternal branch makes, with its context given by
+-- an equation rather than literally — as `sub-wk-C-cast`, and for the same
+-- reason: casting the clause into shape is not structurally smaller, so the
+-- termination checker would reject it. Forward-declared here and defined
+-- after the induction, which puts it in the same recursive group; the
+-- decrease is the clause `H op ε` against the `handle` node.
+
+sub-swap-C-cast : ∀ {Γ B₁ B₂ Γ₀ C} → (Θ : Ctx)
+                → (e : Γ₀ ≡ ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+                → (M : Γ₀ ⊢C⦂ C) → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+                → SubSwapC Θ (subst (_⊢C⦂ C) e M) W₂ W₁
+
+-- BOTH ENTRIES ETERNAL
+--
+-- Both orders substitute twice, so after `cl-yes` on all four
+-- substitutions the two sides *are* `outerᶜ` and `innerᶜ` at the
+-- restricted contexts — at an eternal `B₁`, `(Γ ∷ B₁) ᴱ` is `Γ ᴱ ∷ B₁`,
+-- and at an eternal `B₂` the right order's inner suffix is
+-- `([] ∷ B₂) ++ᶜ Θ ᴱ ++ᶜ Dcl`, which is `inner₀ᶜ`'s own re-bracketing up
+-- to one `++ᶜ-assoc`. So the branch is `sub-swap-C` at `Θ ᴱ ++ᶜ Dcl`, and
+-- the rest is the nested alignment: `sub-at-≐` at the inner level, then
+-- again at the outer, on each side.
+
+cl-swap-ee : ∀ {Γ B₁ B₂ D} → (et₁ : Eternal B₁) → (et₂ : Eternal B₂)
+           → (Θ : Ctx) → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁) → (op : Op) → (ε : E)
+           → ClSwap (yes et₁) (yes et₂) Θ H W₂ W₁ op ε
+
+cl-swap-ee {Γ} {B₁} {B₂} {D} et₁ et₂ Θ H W₂ W₁ op ε =
+  ≐ᶜ-trans ee-left
+    (≐ᶜ-trans (substᶜ-≐ eLfin (sub-swap-C-cast Θ' eXfull (H op ε) V₂ᴱ V₁ᴱ))
+      (≐ᶜ-trans (≡→≐ᶜ (cong (λ z → subst (_⊢C⦂ CT) z (innerᶜ Θ' X V₂ᴱ V₁ᴱ))
+                            (uip {p = eLfin} {q = eRfin})))
+                (≐ᶜ-sym ee-right)))
+  where
+    CT = D ‼ (op-grade op ·ₑ ε)
+    Dc = Dcl D op ε
+    Δ₂ = [] ∷ B₂
+    Θ' = Θ ᴱ ++ᶜ Dc
+    Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
+
+    V₁ᴱ = eternal-val-restrict et₁ W₁
+    V₂ᴱ = eternal-val-restrict et₂ W₂
+
+    -- the restriction of the doubly-extended context
+    eᴱ : (Γ ∷ B₁ ∷ B₂) ᴱ ≡ Γ ᴱ ∷ B₁ ∷ B₂
+    eᴱ = trans (ᴱ-∷-keep {Γ ∷ B₁} {B₂} et₂)
+               (cong (_∷ B₂) (ᴱ-∷-keep {Γ} {B₁} et₁))
+
+    eXfull : (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ ++ᶜ Dc) ≡ ((Γ ᴱ ∷ B₁ ∷ B₂) ++ᶜ Θ')
+    eXfull =
+      trans (cong (_++ᶜ Dc)
+              (trans (ᴱ-++ᶜ (Γ ∷ B₁ ∷ B₂) Θ) (cong (_++ᶜ Θ ᴱ) eᴱ)))
+            (++ᶜ-assoc (Γ ᴱ ∷ B₁ ∷ B₂) (Θ ᴱ) Dc)
+
+    X : ((Γ ᴱ ∷ B₁ ∷ B₂) ++ᶜ Θ') ⊢C⦂ CT
+    X = subst (_⊢C⦂ CT) eXfull (H op ε)
+
+    ----------------------------------------------------------------
+    -- the left order
+    ----------------------------------------------------------------
+
+    xL₁ = bvar {Γ} B₁ Θ
+    xL₂ = bvar {Γ ∷ B₁} B₂ Θ
+
+    K : Fam D (((Γ ∷ B₁) ++ᶜ Θ) ᴱ)
+    K = sub-atᴴ′ (yes et₂) Θ H Ŵ₂
+
+    eL₂ = eCl et₂ xL₂ D op ε
+    eL₁ = eCl et₁ xL₁ D op ε
+
+    VL₂ = eternal-val-restrict et₂ (bval {Γ ∷ B₁} Θ Ŵ₂)
+    VL₁ = eternal-val-restrict et₁ (bval {Γ} Θ W₁)
+
+    subatL₂ = sub-atᶜ {split-l xL₂ ᴱ} {B₂} (split-r xL₂ ᴱ ++ᶜ Dc)
+                      (subst (_⊢C⦂ CT) eL₂ (H op ε)) VL₂
+    subatL₁ = sub-atᶜ {split-l xL₁ ᴱ} {B₁} (split-r xL₁ ᴱ ++ᶜ Dc)
+                      (subst (_⊢C⦂ CT) eL₁ (K op ε)) VL₁
+
+    cL₂ : (Γ ∷ B₁) ≡ split-l xL₂
+    cL₂ = sym (split→∈-split-l (split-≡-++ᶜ {(Γ ∷ B₁) ∷ B₂} {Θ}))
+
+    cL₁ : Γ ≡ split-l xL₁
+    cL₁ = sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B₁} {Θ}))
+
+    eΓL₂ : split-l xL₂ ᴱ ≡ Γ ᴱ ∷ B₁
+    eΓL₂ = trans (cong _ᴱ (sym cL₂)) (ᴱ-∷-keep {Γ} {B₁} et₁)
+
+    eΘL₂ : (split-r xL₂ ᴱ ++ᶜ Dc) ≡ Θ'
+    eΘL₂ = cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+                (split→∈-split-r (split-≡-++ᶜ {(Γ ∷ B₁) ∷ B₂} {Θ}))
+
+    eΓL₁ : split-l xL₁ ᴱ ≡ Γ ᴱ
+    eΓL₁ = cong _ᴱ (sym cL₁)
+
+    eΘL₁ : (split-r xL₁ ᴱ ++ᶜ Dc) ≡ Θ'
+    eΘL₁ = cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+                (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B₁} {Θ}))
+
+    valL₂ : subst (_⊢V⦂ B₂) eΓL₂ VL₂ ≐ᵛ V-rename (wk-ren {A = B₁}) V₂ᴱ
+    valL₂ =
+      ≐ᵛ-trans
+        (≡→≐ᵛ (cong (subst (_⊢V⦂ B₂) eΓL₂)
+                (trans (cong (eternal-val-restrict et₂) (castᵛ≡subst cL₂ Ŵ₂))
+                       (restrict-substᵛ cL₂ et₂ Ŵ₂))))
+        (≐ᵛ-trans
+          (substᵛ-≐ eΓL₂
+            (substᵛ-≐ (cong _ᴱ cL₂)
+              (restrict-wk-et-≐ᵛ et₁ et₂ W₂ (ᴱ-∷-keep {Γ} {B₁} et₁))))
+          (≡→≐ᵛ
+            (trans (cong (subst (_⊢V⦂ B₂) eΓL₂)
+                     (subst-fuseᵛ (sym (ᴱ-∷-keep {Γ} {B₁} et₁)) (cong _ᴱ cL₂)
+                                  (V-rename (wk-ren {A = B₁}) V₂ᴱ)))
+              (trans (subst-fuseᵛ _ eΓL₂ (V-rename (wk-ren {A = B₁}) V₂ᴱ))
+                     (substᵛ-irr _ refl (V-rename (wk-ren {A = B₁}) V₂ᴱ))))))
+
+    valL₁ : subst (_⊢V⦂ B₁) eΓL₁ VL₁ ≐ᵛ V₁ᴱ
+    valL₁ =
+      ≡→≐ᵛ
+        (trans (cong (subst (_⊢V⦂ B₁) eΓL₁)
+                 (trans (cong (eternal-val-restrict et₁) (castᵛ≡subst cL₁ W₁))
+                        (restrict-substᵛ cL₁ et₁ W₁)))
+          (trans (subst-fuseᵛ (cong _ᴱ cL₁) eΓL₁ V₁ᴱ)
+                 (substᵛ-irr _ refl V₁ᴱ)))
+
+    -- the inner alignment
+    Oᴵ = sub-atᶜ {Γ ᴱ ∷ B₁} {B₂} Θ' X (V-rename (wk-ren {A = B₁}) V₂ᴱ)
+
+    eIL : ((split-l xL₂ ᴱ ∷ B₂) ++ᶜ (split-r xL₂ ᴱ ++ᶜ Dc))
+        ≡ ((Γ ᴱ ∷ B₁ ∷ B₂) ++ᶜ Θ')
+    eIL = cong₂ (λ Γ₀ Θ₀ → (Γ₀ ∷ B₂) ++ᶜ Θ₀) eΓL₂ eΘL₂
+
+    eIL' : (split-l xL₂ ᴱ ++ᶜ (split-r xL₂ ᴱ ++ᶜ Dc)) ≡ ((Γ ᴱ ∷ B₁) ++ᶜ Θ')
+    eIL' = cong₂ _++ᶜ_ eΓL₂ eΘL₂
+
+    oI : Oᴵ ≐ᶜ subst (_⊢C⦂ CT) eIL' subatL₂
+    oI =
+      sub-at-≐ eΓL₂ eΘL₂ (subst (_⊢C⦂ CT) eL₂ (H op ε)) X eIL
+        (≡→≐ᶜ (sym (trans (subst-fuseᶜ eL₂ eIL (H op ε))
+                          (cong (λ z → subst (_⊢C⦂ CT) z (H op ε))
+                                (uip {p = trans eL₂ eIL} {q = eXfull})))))
+        VL₂ (V-rename (wk-ren {A = B₁}) V₂ᴱ) valL₂ eIL'
+
+    kIs : IsSub subatL₂ (subst (_⊢C⦂ CT) eL₁ (K op ε))
+    kIs =
+      isSub-substC _ eL₁
+        (isSub-Cl op ε _ (castOf {Γ ∷ B₁} {B₂} Θ)
+          (cl-yes et₂ xL₂ (bval Θ Ŵ₂) H op ε eL₂))
+
+    eOL : ((split-l xL₁ ᴱ ∷ B₁) ++ᶜ (split-r xL₁ ᴱ ++ᶜ Dc))
+        ≡ ((Γ ᴱ ∷ B₁) ++ᶜ Θ')
+    eOL = cong₂ (λ Γ₀ Θ₀ → (Γ₀ ∷ B₁) ++ᶜ Θ₀) eΓL₁ eΘL₁
+
+    eOL' : (split-l xL₁ ᴱ ++ᶜ (split-r xL₁ ᴱ ++ᶜ Dc)) ≡ (Γ ᴱ ++ᶜ Θ')
+    eOL' = cong₂ _++ᶜ_ eΓL₁ eΘL₁
+
+    termO : Oᴵ ≐ᶜ subst (_⊢C⦂ CT) eOL (subst (_⊢C⦂ CT) eL₁ (K op ε))
+    termO =
+      ≐ᶜ-trans oI
+        (≡→≐ᶜ
+          (trans (cong (λ z → subst (_⊢C⦂ CT) z subatL₂)
+                       (uip {p = eIL'} {q = trans (proj₁ kIs) eOL}))
+            (trans (sym (subst-fuseᶜ (proj₁ kIs) eOL subatL₂))
+                   (cong (subst (_⊢C⦂ CT) eOL) (sym (proj₂ kIs))))))
+
+    oO : outerᶜ Θ' X V₂ᴱ V₁ᴱ ≐ᶜ subst (_⊢C⦂ CT) eOL' subatL₁
+    oO =
+      sub-at-≐ eΓL₁ eΘL₁ (subst (_⊢C⦂ CT) eL₁ (K op ε)) Oᴵ eOL termO
+               VL₁ V₁ᴱ valL₁ eOL'
+
+    lIs : IsSub subatL₁ (outerᴴ′ (yes et₁) (yes et₂) Θ H W₂ W₁ op ε)
+    lIs =
+      isSub-Cl op ε _ (castOf {Γ} {B₁} Θ)
+        (cl-yes et₁ xL₁ (bval Θ W₁) K op ε eL₁)
+
+    eLfin : (Γ ᴱ ++ᶜ Θ') ≡ (((Γ ++ᶜ Θ) ᴱ) ++ᶜ Dc)
+    eLfin = trans (sym eOL') (proj₁ lIs)
+
+    ee-left : outerᴴ′ (yes et₁) (yes et₂) Θ H W₂ W₁ op ε
+            ≐ᶜ subst (_⊢C⦂ CT) eLfin (outerᶜ Θ' X V₂ᴱ V₁ᴱ)
+    ee-left =
+      ≐ᶜ-trans (≡→≐ᶜ (proj₂ lIs))
+        (≐ᶜ-sym
+          (≐ᶜ-trans (substᶜ-≐ eLfin oO)
+            (≡→≐ᶜ (trans (subst-fuseᶜ eOL' eLfin subatL₁)
+                         (cong (λ z → subst (_⊢C⦂ CT) z subatL₁) uip)))))
+
+    ----------------------------------------------------------------
+    -- the right order
+    ----------------------------------------------------------------
+
+    xR₂ = bvar {Γ} B₂ Θ
+    xR₁ = bvar {Γ} B₁ (Δ₂ ++ᶜ Θ)
+
+    H' : Fam D (((Γ ∷ B₁) ++ᶜ (Δ₂ ++ᶜ Θ)) ᴱ)
+    H' op' ε' = Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε')
+
+    G : Fam D (((Γ ∷ B₂) ++ᶜ Θ) ᴱ)
+    G = inner₀ᴴ′ (yes et₁) Θ H W₁
+
+    eR₁ = eCl et₁ xR₁ D op ε
+    eR₂ = eCl et₂ xR₂ D op ε
+
+    VR₁ = eternal-val-restrict et₁ (bval {Γ} (Δ₂ ++ᶜ Θ) W₁)
+    VR₂ = eternal-val-restrict et₂ (bval {Γ} Θ W₂)
+
+    subatR₁ = sub-atᶜ {split-l xR₁ ᴱ} {B₁} (split-r xR₁ ᴱ ++ᶜ Dc)
+                      (subst (_⊢C⦂ CT) eR₁ (H' op ε)) VR₁
+    subatR₂ = sub-atᶜ {split-l xR₂ ᴱ} {B₂} (split-r xR₂ ᴱ ++ᶜ Dc)
+                      (subst (_⊢C⦂ CT) eR₂ (G op ε)) VR₂
+
+    cR₁ : Γ ≡ split-l xR₁
+    cR₁ = sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B₁} {Δ₂ ++ᶜ Θ}))
+
+    cR₂ : Γ ≡ split-l xR₂
+    cR₂ = sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B₂} {Θ}))
+
+    eΓR₁ : split-l xR₁ ᴱ ≡ Γ ᴱ
+    eΓR₁ = cong _ᴱ (sym cR₁)
+
+    eΓR₂ : split-l xR₂ ᴱ ≡ Γ ᴱ
+    eΓR₂ = cong _ᴱ (sym cR₂)
+
+    -- at an eternal `B₂` the extra entry survives the restriction, and
+    -- one `++ᶜ-assoc` turns it into `inner₀ᶜ`'s own bracketing
+    eΘR₁ : (split-r xR₁ ᴱ ++ᶜ Dc) ≡ (Δ₂ ++ᶜ Θ')
+    eΘR₁ =
+      trans (cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+                  (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B₁} {Δ₂ ++ᶜ Θ})))
+        (trans (cong (_++ᶜ Dc)
+                 (trans (ᴱ-++ᶜ Δ₂ Θ)
+                        (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep {[]} {B₂} et₂))))
+               (++ᶜ-assoc Δ₂ (Θ ᴱ) Dc))
+
+    eΘR₂ : (split-r xR₂ ᴱ ++ᶜ Dc) ≡ Θ'
+    eΘR₂ = cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+                (split→∈-split-r (split-≡-++ᶜ {Γ ∷ B₂} {Θ}))
+
+    valR₁ : subst (_⊢V⦂ B₁) eΓR₁ VR₁ ≐ᵛ V₁ᴱ
+    valR₁ =
+      ≡→≐ᵛ
+        (trans (cong (subst (_⊢V⦂ B₁) eΓR₁)
+                 (trans (cong (eternal-val-restrict et₁) (castᵛ≡subst cR₁ W₁))
+                        (restrict-substᵛ cR₁ et₁ W₁)))
+          (trans (subst-fuseᵛ (cong _ᴱ cR₁) eΓR₁ V₁ᴱ)
+                 (substᵛ-irr _ refl V₁ᴱ)))
+
+    valR₂ : subst (_⊢V⦂ B₂) eΓR₂ VR₂ ≐ᵛ V₂ᴱ
+    valR₂ =
+      ≡→≐ᵛ
+        (trans (cong (subst (_⊢V⦂ B₂) eΓR₂)
+                 (trans (cong (eternal-val-restrict et₂) (castᵛ≡subst cR₂ W₂))
+                        (restrict-substᵛ cR₂ et₂ W₂)))
+          (trans (subst-fuseᵛ (cong _ᴱ cR₂) eΓR₂ V₂ᴱ)
+                 (substᵛ-irr _ refl V₂ᴱ)))
+
+    Iᴵ = sub-atᶜ {Γ ᴱ} {B₁} (Δ₂ ++ᶜ Θ')
+                 (castᶜ (assocᴮ (Γ ᴱ) B₁ B₂ Θ') X) V₁ᴱ
+
+    eIR : ((split-l xR₁ ᴱ ∷ B₁) ++ᶜ (split-r xR₁ ᴱ ++ᶜ Dc))
+        ≡ ((Γ ᴱ ∷ B₁) ++ᶜ (Δ₂ ++ᶜ Θ'))
+    eIR = cong₂ (λ Γ₀ Θ₀ → (Γ₀ ∷ B₁) ++ᶜ Θ₀) eΓR₁ eΘR₁
+
+    eIR' : (split-l xR₁ ᴱ ++ᶜ (split-r xR₁ ᴱ ++ᶜ Dc)) ≡ (Γ ᴱ ++ᶜ (Δ₂ ++ᶜ Θ'))
+    eIR' = cong₂ _++ᶜ_ eΓR₁ eΘR₁
+
+    iI : Iᴵ ≐ᶜ subst (_⊢C⦂ CT) eIR' subatR₁
+    iI =
+      sub-at-≐ eΓR₁ eΘR₁ (subst (_⊢C⦂ CT) eR₁ (H' op ε))
+               (castᶜ (assocᴮ (Γ ᴱ) B₁ B₂ Θ') X) eIR
+        (≡→≐ᶜ
+          (trans (castᶜ≡subst (assocᴮ (Γ ᴱ) B₁ B₂ Θ') X)
+            (trans (subst-fuseᶜ eXfull (assocᴮ (Γ ᴱ) B₁ B₂ Θ') (H op ε))
+              (trans (cong (λ z → subst (_⊢C⦂ CT) z (H op ε))
+                           (uip {q = trans (cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+                                                 (assocᴮ Γ B₁ B₂ Θ))
+                                           (trans eR₁ eIR)}))
+                (trans (sym (subst-fuseᶜ (cong (λ Γ₀ → Γ₀ ᴱ ++ᶜ Dc)
+                                               (assocᴮ Γ B₁ B₂ Θ))
+                                         (trans eR₁ eIR) (H op ε)))
+                  (trans (cong (subst (_⊢C⦂ CT) (trans eR₁ eIR))
+                               (sym (castᶜ≡subst _ (H op ε))))
+                         (sym (subst-fuseᶜ eR₁ eIR (H' op ε)))))))))
+        VR₁ V₁ᴱ valR₁ eIR'
+
+    gIs : IsSub subatR₁ (subst (_⊢C⦂ CT) eR₂ (G op ε))
+    gIs =
+      isSub-substC _ eR₂
+        (isSub-Cl op ε _ (assocᴮ⁻ Γ B₂ Θ)
+          (isSub-Cl op ε _ (castOf {Γ} {B₁} (Δ₂ ++ᶜ Θ))
+            (cl-yes et₁ xR₁ (bval (Δ₂ ++ᶜ Θ) W₁) H' op ε eR₁)))
+
+    eOR : ((split-l xR₂ ᴱ ∷ B₂) ++ᶜ (split-r xR₂ ᴱ ++ᶜ Dc))
+        ≡ ((Γ ᴱ ∷ B₂) ++ᶜ Θ')
+    eOR = cong₂ (λ Γ₀ Θ₀ → (Γ₀ ∷ B₂) ++ᶜ Θ₀) eΓR₂ eΘR₂
+
+    eOR' : (split-l xR₂ ᴱ ++ᶜ (split-r xR₂ ᴱ ++ᶜ Dc)) ≡ (Γ ᴱ ++ᶜ Θ')
+    eOR' = cong₂ _++ᶜ_ eΓR₂ eΘR₂
+
+    termOR : castᶜ (assocᴮ⁻ (Γ ᴱ) B₂ Θ') Iᴵ
+           ≐ᶜ subst (_⊢C⦂ CT) eOR (subst (_⊢C⦂ CT) eR₂ (G op ε))
+    termOR =
+      ≐ᶜ-trans (≡→≐ᶜ (castᶜ≡subst (assocᴮ⁻ (Γ ᴱ) B₂ Θ') Iᴵ))
+        (≐ᶜ-trans (substᶜ-≐ (assocᴮ⁻ (Γ ᴱ) B₂ Θ') iI)
+          (≡→≐ᶜ
+            (trans (subst-fuseᶜ eIR' (assocᴮ⁻ (Γ ᴱ) B₂ Θ') subatR₁)
+              (trans (cong (λ z → subst (_⊢C⦂ CT) z subatR₁)
+                           (uip {q = trans (proj₁ gIs) eOR}))
+                (trans (sym (subst-fuseᶜ (proj₁ gIs) eOR subatR₁))
+                       (cong (subst (_⊢C⦂ CT) eOR) (sym (proj₂ gIs))))))))
+
+    iO : innerᶜ Θ' X V₂ᴱ V₁ᴱ ≐ᶜ subst (_⊢C⦂ CT) eOR' subatR₂
+    iO =
+      sub-at-≐ eΓR₂ eΘR₂ (subst (_⊢C⦂ CT) eR₂ (G op ε))
+               (castᶜ (assocᴮ⁻ (Γ ᴱ) B₂ Θ') Iᴵ) eOR termOR
+               VR₂ V₂ᴱ valR₂ eOR'
+
+    rIs : IsSub subatR₂ (innerᴴ′ (yes et₁) (yes et₂) Θ H W₂ W₁ op ε)
+    rIs =
+      isSub-Cl op ε _ (castOf {Γ} {B₂} Θ)
+        (cl-yes et₂ xR₂ (bval Θ W₂) G op ε eR₂)
+
+    eRfin : (Γ ᴱ ++ᶜ Θ') ≡ (((Γ ++ᶜ Θ) ᴱ) ++ᶜ Dc)
+    eRfin = trans (sym eOR') (proj₁ rIs)
+
+    ee-right : innerᴴ′ (yes et₁) (yes et₂) Θ H W₂ W₁ op ε
+             ≐ᶜ subst (_⊢C⦂ CT) eRfin (innerᶜ Θ' X V₂ᴱ V₁ᴱ)
+    ee-right =
+      ≐ᶜ-trans (≡→≐ᶜ (proj₂ rIs))
+        (≐ᶜ-sym
+          (≐ᶜ-trans (substᶜ-≐ eRfin iO)
+            (≡→≐ᶜ (trans (subst-fuseᶜ eOR' eRfin subatR₂)
+                         (cong (λ z → subst (_⊢C⦂ CT) z subatR₂) uip)))))
+
+-- The dispatch. `sub-atᴴ` *is* `sub-atᴴ′ (eternal? B)`, so instantiating
+-- the two decisions recovers the statement on the nose.
+
+sub-swap-clause : ∀ {Γ B₁ B₂ D} → (Θ : Ctx)
+                → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+                → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+                → (op : Op) → (ε : E)
+                → outerᴴ Θ H W₂ W₁ op ε ≐ᶜ innerᴴ Θ H W₂ W₁ op ε
+
+sub-swap-clause {Γ} {B₁} {B₂} Θ H W₂ W₁ op ε =
+  go (eternal? B₁) (eternal? B₂)
+  where
+    go : (dec₁ : Dec (Eternal B₁)) → (dec₂ : Dec (Eternal B₂))
+       → ClSwap dec₁ dec₂ Θ H W₂ W₁ op ε
+    go (no ¬et₁)  (no ¬et₂)  = cl-swap-nn ¬et₁ ¬et₂ Θ H W₂ W₁ op ε
+    go (yes et₁)  (no ¬et₂)  = cl-swap-en et₁  ¬et₂ Θ H W₂ W₁ op ε
+    go (no ¬et₁)  (yes et₂)  = cl-swap-ne ¬et₁ et₂  Θ H W₂ W₁ op ε
+    go (yes et₁)  (yes et₂)  = cl-swap-ee et₁  et₂  Θ H W₂ W₁ op ε
+
+sub-swap-handle : ∀ {Γ B₁ B₂ A D ε ε'} → (Θ : Ctx)
+                → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ A ‼ ε)
+                → (H : Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ))
+                → (N : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ D ‼ ε')
+                → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+                → SubSwapC Θ M W₂ W₁
+                → SubSwapC (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₂ W₁
+                → SubSwapC Θ (handle M `with H `in N) W₂ W₁
+
+sub-swap-handle {Γ} {B₁} {B₂} {A} {ε = ε} Θ M H N W₂ W₁ ihM ihN =
+  ≐ᶜ-trans
+    (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁)
+                       (sub-at-handle Θ M H N Ŵ₂))
+                 (sub-at-handle Θ (sub-atᶜ Θ M Ŵ₂) (sub-atᴴ Θ H Ŵ₂)
+                                (sub-atᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N Ŵ₂) W₁)))
+    (≐ᶜ-trans
+      (handle-≐ ihM (λ op ε'' → sub-swap-clause Θ H W₂ W₁ op ε'') ihN)
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂)
+                              (inner₀-handle Θ M H N W₁))
+                        (sub-at-handle Θ (inner₀ᶜ Θ M W₁) (inner₀ᴴ Θ H W₁)
+                                       (inner₀ᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₁)
+                                       W₂)))))
+  where
+    Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
+
+
+sub-swap-V : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → (U : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A)
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+           → SubSwapV Θ U W₂ W₁
+
+sub-swap-C : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C)
+           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
+           → SubSwapC Θ M W₂ W₁
+
+sub-swap-V Θ (var f y) W₂ W₁ = sub-swap-var Θ y f W₂ W₁
+
+sub-swap-V {Γ} {B₁} {B₂} Θ (const c) W₂ W₁ =
+  ≐ᵛ-trans (≡→≐ᵛ (trans (cong (λ z → sub-atᵛ Θ z W₁) (sub-at-const Θ (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-const Θ W₁)))
+           (≡→≐ᵛ (sym (trans (cong (λ z → sub-atᵛ Θ z W₂)
+                                   (inner₀-const Θ W₁))
+                             (sub-at-const Θ W₂))))
+
+sub-swap-V {Γ} {B₁} {B₂} Θ ⋆ W₂ W₁ =
+  ≐ᵛ-trans (≡→≐ᵛ (trans (cong (λ z → sub-atᵛ Θ z W₁) (sub-at-⋆ Θ (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-⋆ Θ W₁)))
+           (≡→≐ᵛ (sym (trans (cong (λ z → sub-atᵛ Θ z W₂) (inner₀-⋆ Θ W₁))
+                             (sub-at-⋆ Θ W₂))))
+
+sub-swap-V {Γ} {B₁} {B₂} Θ ⦉ V₁ , V₂ ⦊ W₂ W₁ =
+  ≐ᵛ-trans (≡→≐ᵛ (trans (cong (λ z → sub-atᵛ Θ z W₁) (sub-at-pair Θ V₁ V₂ (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-pair Θ (sub-atᵛ Θ V₁ (V-rename (wk-ren {A = B₁}) W₂))
+                                       (sub-atᵛ Θ V₂ (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᵛ-trans (pair-≐ (sub-swap-V Θ V₁ W₂ W₁) (sub-swap-V Θ V₂ W₂ W₁))
+      (≡→≐ᵛ (sym (trans (cong (λ z → sub-atᵛ Θ z W₂)
+                              (inner₀-pair Θ V₁ V₂ W₁))
+                        (sub-at-pair Θ (inner₀ᵛ Θ V₁ W₁)
+                                       (inner₀ᵛ Θ V₂ W₁) W₂)))))
+
+sub-swap-V {Γ} {B₁} {B₂} {A ⇒ C} Θ (lam N) W₂ W₁ =
+  ≐ᵛ-trans (≡→≐ᵛ (trans (cong (λ z → sub-atᵛ Θ z W₁) (sub-at-lam Θ N (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-lam Θ (sub-atᶜ (Θ ∷ A) N (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᵛ-trans (lam-≐ (sub-swap-C (Θ ∷ A) N W₂ W₁))
+      (≡→≐ᵛ (sym (trans (cong (λ z → sub-atᵛ Θ z W₂) (inner₀-lam Θ N W₁))
+                        (sub-at-lam Θ (inner₀ᶜ (Θ ∷ A) N W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (return V) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-ret Θ V (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-ret Θ (sub-atᵛ Θ V (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (return-≐ (sub-swap-V Θ V W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-ret Θ V W₁))
+                        (sub-at-ret Θ (inner₀ᵛ Θ V W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (_⨟_ {A = A} {ε = ε} M N) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-seq Θ M N (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-seq Θ (sub-atᶜ Θ M (V-rename (wk-ren {A = B₁}) W₂))
+                                      (sub-atᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (seq-≐ (sub-swap-C Θ M W₂ W₁)
+                     (sub-swap-C (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-seq Θ M N W₁))
+                        (sub-at-seq Θ (inner₀ᶜ Θ M W₁)
+                                      (inner₀ᶜ (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (V · U) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-app Θ V U (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-app Θ (sub-atᵛ Θ V (V-rename (wk-ren {A = B₁}) W₂))
+                                      (sub-atᵛ Θ U (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (app-≐ (sub-swap-V Θ V W₂ W₁) (sub-swap-V Θ U W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-app Θ V U W₁))
+                        (sub-at-app Θ (inner₀ᵛ Θ V W₁)
+                                      (inner₀ᵛ Θ U W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (match_`in_ {A = A₁} {B = A₂} V N) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-match Θ V N (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-match Θ (sub-atᵛ Θ V (V-rename (wk-ren {A = B₁}) W₂))
+                                        (sub-atᶜ (Θ ∷ A₁ ∷ A₂) N (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (match-≐ (sub-swap-V Θ V W₂ W₁)
+                       (sub-swap-C (Θ ∷ A₁ ∷ A₂) N W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-match Θ V N W₁))
+                        (sub-at-match Θ (inner₀ᵛ Θ V W₁)
+                                        (inner₀ᶜ (Θ ∷ A₁ ∷ A₂) N W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (absurd V) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-absurd Θ V (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-absurd Θ (sub-atᵛ Θ V (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (absurd-≐ (sub-swap-V Θ V W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-absurd Θ V W₁))
+                        (sub-at-absurd Θ (inner₀ᵛ Θ V W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (perform op V N) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-perform Θ V N (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-perform Θ (sub-atᵛ Θ V (V-rename (wk-ren {A = B₁}) W₂))
+                           (sub-atᶜ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                       ∷ type-of-gtype (arity op)) N (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (perform-≐ (sub-swap-V Θ V W₂ W₁)
+                         (sub-swap-C (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                        ∷ type-of-gtype (arity op)) N W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂)
+                              (inner₀-perform Θ V N W₁))
+                        (sub-at-perform Θ (inner₀ᵛ Θ V W₁)
+                           (inner₀ᶜ (Θ ⟨ mapᵉ (op-grade op) ⟩
+                                       ∷ type-of-gtype (arity op)) N W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (delay τ M) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-delay Θ M (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-delay Θ (sub-atᶜ (Θ ⟨ of-natʳ τ ⟩) M (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (delay-≐ (sub-swap-C (Θ ⟨ of-natʳ τ ⟩) M W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-delay Θ M W₁))
+                        (sub-at-delay Θ (inner₀ᶜ (Θ ⟨ of-natʳ τ ⟩) M W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (box {A = A} {ρ = ρ} V M) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁)
+                              (sub-at-box Θ V M (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-box Θ
+                           (sub-atᵛ (Θ ⟨ ρ ⟩) V (V-rename (wk-ren {A = B₁}) W₂))
+                           (sub-atᶜ (Θ ∷ [ ρ ] A) M
+                                    (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (box-≐ (sub-swap-V (Θ ⟨ ρ ⟩) V W₂ W₁)
+                     (sub-swap-C (Θ ∷ [ ρ ] A) M W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-box Θ V M W₁))
+                        (sub-at-box Θ (inner₀ᵛ (Θ ⟨ ρ ⟩) V W₁)
+                                      (inner₀ᶜ (Θ ∷ [ ρ ] A) M W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (coerce p M) W₂ W₁ =
+  ≐ᶜ-trans (≡→≐ᶜ (trans (cong (λ z → sub-atᶜ Θ z W₁) (sub-at-coerce Θ M (V-rename (wk-ren {A = B₁}) W₂)))
+                        (sub-at-coerce Θ (sub-atᶜ Θ M (V-rename (wk-ren {A = B₁}) W₂)) W₁)))
+    (≐ᶜ-trans (coerce-≐ (sub-swap-C Θ M W₂ W₁))
+      (≡→≐ᶜ (sym (trans (cong (λ z → sub-atᶜ Θ z W₂) (inner₀-coerce Θ M W₁))
+                        (sub-at-coerce Θ (inner₀ᶜ Θ M W₁) W₂)))))
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (handle_`with_`in {A = A} {ε = ε} M H N) W₂ W₁ =
+  sub-swap-handle Θ M H N W₂ W₁
+    (sub-swap-C Θ M W₂ W₁) (sub-swap-C (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W₂ W₁)
+
+sub-swap-C {Γ} {B₁} {B₂} Θ (unbox {A = A} w V M) W₂ W₁ =
+  sub-swap-unbox Θ w V M W₂ W₁ (sub-swap-C (Θ ∷ A) M W₂ W₁)
+
+sub-swap-C-cast Θ refl M W₂ W₁ = sub-swap-C Θ M W₂ W₁
+
+------------------------------------------------------------------------
+-- THE CLAUSE ACTION AGAINST THE CLAUSE ENVIRONMENT, PROVED
+--
+-- The factorisation: `env-Hˢ-ᴱ` is the state-free core — the clause
+-- action *is* the eternal-restriction action `env-eternal-C ∘ env-ᴱ`, up
+-- to transport (the state contributes nothing to a restricted context) —
+-- and the `St₁`-weakening is one generic conjugation step on top.
+------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- UTILITIES
+------------------------------------------------------------------------
+
+-- A lock-freeness witness is unique.
+
+Lock-free-irr : ∀ {Δ} → (p q : Lock-free Δ) → p ≡ q
+Lock-free-irr lf-[]     lf-[]      = refl
+Lock-free-irr (lf-∷ p)  (lf-∷ q)   = cong lf-∷ (Lock-free-irr p q)
+
+-- A renaming out of a provably empty context acts like any transport.
+
+empty-src-≐ : ∀ {Γ₀ Γ₁} → (e₀ : Γ₀ ≡ []) → (r : Ren [] Γ₀ Γ₁)
+            → (e : Γ₀ ≡ Γ₁) → r ≐ʳ eq-ren e
+empty-src-≐ e₀ r e =
+  mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx
+                       (subst (λ Γ₂ → _ ∈[ _ ] Γ₂) e₀ x)))
+
+-- The eternal-values action at a provably empty prefix is a transport.
+
+env-eternal-C-empty : ∀ {Δ₀ Γc C} → (e : Δ₀ ≡ [])
+                    → (lf : Lock-free Δ₀) → (η : ClosedVals Δ₀)
+                    → (M : (Δ₀ ++ᶜ Γc) ⊢C⦂ C)
+                    → env-eternal-C lf η M
+                    ≡ castᶜ (trans (cong (_++ᶜ Γc) e) (++ᶜ-identityˡ {Γc})) M
+env-eternal-C-empty {Γc = Γc} e lf-[] η M =
+  castᶜ-irr (++ᶜ-identityˡ {Γc}) (trans (cong (_++ᶜ Γc) e) (++ᶜ-identityˡ {Γc})) M
+env-eternal-C-empty e (lf-∷ lf) η M with e
+... | ()
+
+-- The eternal-values action respects a transport of its suffix.
+
+env-eternal-C-suffix : ∀ {Δ₀ Γc Γc' C} → (e : Γc ≡ Γc')
+                     → (lf : Lock-free Δ₀) → (η : ClosedVals Δ₀)
+                     → (M : (Δ₀ ++ᶜ Γc) ⊢C⦂ C)
+                     → castᶜ e (env-eternal-C lf η M)
+                     ≡ env-eternal-C lf η (castᶜ (cong (Δ₀ ++ᶜ_) e) M)
+env-eternal-C-suffix refl lf η M = refl
+
+-- Fusing a conjugation whose core is itself an `eq-ren`.
+
+conj-eq-≐ : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'}
+          → {R : Ren [] Γ₁ Γ₂'} → (e : Γ₁ ≡ Γ₁') → (e₀ : Γ₁' ≡ Γ₂)
+          → (e' : Γ₂ ≡ Γ₂')
+          → R ≐ʳconj⟨ e , eq-ren e₀ , e' ⟩
+          → R ≐ʳ eq-ren (trans e (trans e₀ e'))
+conj-eq-≐ e e₀ e' h =
+  ≐ʳ-trans h
+    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ e e₀))
+              (≐ʳ-trans (eq-ren-∘-≐ (trans e e₀) e')
+                        (eq-ren-≐ _ _)))
+
+-- A loop of four casts is the identity.
+
+cast-loop₄ : ∀ {Γ₁ Γ₂ Γ₃ Γ₄ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂ : Γ₂ ≡ Γ₃)
+           → (e₃ : Γ₃ ≡ Γ₄) → (e₄ : Γ₄ ≡ Γ₁) → (M : Γ₁ ⊢C⦂ C)
+           → castᶜ e₄ (castᶜ e₃ (castᶜ e₂ (castᶜ e₁ M))) ≡ M
+cast-loop₄ refl refl refl e₄ M = castᶜ-irr e₄ refl M
+
+-- A loop of two casts is the identity.
+
+cast-loop₂ : ∀ {Γ₁ Γ₂ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂ : Γ₂ ≡ Γ₁) → (M : Γ₁ ⊢C⦂ C)
+           → castᶜ e₂ (castᶜ e₁ M) ≡ M
+cast-loop₂ refl e₂ M = castᶜ-irr e₂ refl M
+
+-- A chain of two casts is one transport.
+
+cast-chain₂ : ∀ {Γ₁ Γ₂ Γ₃ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂ : Γ₂ ≡ Γ₃)
+            → (M : Γ₁ ⊢C⦂ C)
+            → castᶜ e₂ (castᶜ e₁ M) ≡ subst (_⊢C⦂ C) (trans e₁ e₂) M
+cast-chain₂ refl refl M = refl
+
+-- A chain of four casts is one transport.
+
+cast-chain₄ : ∀ {Γ₁ Γ₂ Γ₃ Γ₄ Γ₅ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂ : Γ₂ ≡ Γ₃)
+            → (e₃ : Γ₃ ≡ Γ₄) → (e₄ : Γ₄ ≡ Γ₅) → (M : Γ₁ ⊢C⦂ C)
+            → castᶜ e₄ (castᶜ e₃ (castᶜ e₂ (castᶜ e₁ M)))
+            ≡ subst (_⊢C⦂ C) (trans e₁ (trans e₂ (trans e₃ e₄))) M
+cast-chain₄ refl refl refl refl M = refl
+
+------------------------------------------------------------------------
+-- THE STATE-FREE CORE
+--
+-- `env-Hˢ γ Δ K` is `env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)` of the
+-- clause, up to transport: the state's part of the restricted context is
+-- empty, so every state-indexed zone of `env-Hˢ` contributes only a
+-- transport, and the value-substituting zones match `env-eternal-C`'s
+-- own steps.
+------------------------------------------------------------------------
+
+-- The recursion's suffix context.
+
+D~ : Ctx → VType → Op → E → Ctx
+D~ Δ B op ε =
+  Δ ᴱ ∷ type-of-gtype (param op)
+      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε)
+
+eStar : ∀ {B} → (St : 𝕊 []) → (Δ : Ctx) → (op : Op) → (ε : E)
+      → ([] ++ᶜ D~ Δ B op ε)
+      ≡ ((toCtx St ++ᶜ Δ) ᴱ ∷ type-of-gtype (param op)
+           ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε))
+eStar {B} St Δ op ε =
+  trans (++ᶜ-identityˡ {D~ Δ B op ε})
+        (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (sym (toCtxᴱ-++ᶜ St Δ)))
+
+-- The eternal-values action respects the equivalence (the computation
+-- counterpart of `env-eternal-V-≐`).
+
+env-eternal-C-≐ : ∀ {Δ Γ C} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+                → {M M' : (Δ ++ᶜ Γ) ⊢C⦂ C} → M ≐ᶜ M'
+                → env-eternal-C lf η M ≐ᶜ env-eternal-C lf η M'
+env-eternal-C-≐ lf-[]                 η eM = castᶜ-≐ ++ᶜ-identityˡ eM
+env-eternal-C-≐ {Δ ∷ B} {Γ} (lf-∷ lf) η eM =
+  env-eternal-C-≐ lf (λ x → η (Tl-∷ x))
+    (castᶜ-≐ _ (sub-≐ᶜ (split→∈ (split-≡-++ᶜ {Δ ∷ B} {Γ})) (≐ᵛ-refl _) eM))
+
+------------------------------------------------------------------------
+-- ONE SUBSTITUTION PAST THE ETERNAL CHAIN
+--
+-- `env-eternal-C` peels its prefix from the *right*, while `env-Hˢ`
+-- reaches a zone's substitution only after the zones to its left have
+-- run. So the two open cases both need to move one substitution past the
+-- whole chain. Each step of the chain substitutes the entry immediately
+-- to the left of the one being moved — `Δ ∷ B` against `([] ∷ A) ++ᶜ Θ'`
+-- *is* `(Δ ∷ B ∷ A) ++ᶜ Θ'` — so each step is exactly one `sub-swap-C`.
+--
+-- Note `env-eternal-C (lf-∷ lf) η` *is* `env-eternal-C lf η' ∘ sub-atᶜ`,
+-- definitionally: the two agree on the nose, which is what makes the
+-- induction below readable.
+------------------------------------------------------------------------
+
+env-eternal-C-swap : ∀ {Δ₀ A C} → (lf : Lock-free Δ₀) → (η : ClosedVals Δ₀)
+                   → (Θ' : Ctx) → (V : [] ⊢V⦂ A)
+                   → (M : ((Δ₀ ∷ A) ++ᶜ Θ') ⊢C⦂ C)
+                   → castᶜ (++ᶜ-identityˡ {Θ'})
+                       (sub-atᶜ {[]} {A} Θ'
+                         (env-eternal-C lf η
+                           (castᶜ (++ᶜ-assoc Δ₀ ([] ∷ A) Θ') M)) V)
+                   ≐ᶜ env-eternal-C lf η
+                        (sub-atᶜ {Δ₀} {A} Θ' M (V-rename (empty-ren lf) V))
+
+env-eternal-C-swap {Δ₀} {A} {C} lf-[] η Θ' V M =
+  ≐ᶜ-trans
+    (castᶜ-≐ (++ᶜ-identityˡ {Θ'})
+      (sub-atᶜ-≐ {[]} {A} Θ' V
+        (≡→≐ᶜ (cast-loop₂ (++ᶜ-assoc [] ([] ∷ A) Θ') (++ᶜ-identityˡ) M))))
+    (castᶜ-≐ (++ᶜ-identityˡ {Θ'})
+      (sub-atᶜ-≐ᵥ {[]} {A} Θ' M (≐ᵛ-sym (V-rename-id-≐ ≐ʳ-refl V))))
+
+env-eternal-C-swap {Δ ∷ B} {A} {C} (lf-∷ lf) η Θ' V M =
+  ≐ᶜ-trans
+    (≡→≐ᶜ (cong (λ z → castᶜ (++ᶜ-identityˡ {Θ'})
+                         (sub-atᶜ {[]} {A} Θ' (env-eternal-C lf η' z) V))
+                (sym (cast-loop₂ (sym (++ᶜ-assoc Δ ([] ∷ A) Θ'))
+                                 (++ᶜ-assoc Δ ([] ∷ A) Θ')
+                                 (sub-atᶜ {Δ} {B} (([] ∷ A) ++ᶜ Θ')
+                                    (castᶜ (++ᶜ-assoc (Δ ∷ B) ([] ∷ A) Θ') M)
+                                    W₁)))))
+    (≐ᶜ-trans (env-eternal-C-swap lf η' Θ' V (inner₀ᶜ Θ' M W₁))
+      (env-eternal-C-≐ lf η'
+        (≐ᶜ-trans (≐ᶜ-sym (sub-swap-C Θ' M W₂ W₁))
+                  (sub-atᶜ-≐ {Δ} {B} Θ' W₁
+                    (sub-atᶜ-≐ᵥ {Δ ∷ B} {A} Θ' M
+                      (≐ᵛ-sym (V-rename-∘ (wk-ren {A = B})
+                                          (empty-ren lf) V)))))))
+  where
+    η' : ClosedVals Δ
+    η' x = η (Tl-∷ x)
+
+    W₁ = V-rename (empty-ren lf) (η Hd)
+    W₂ = V-rename (empty-ren lf) V
+
+------------------------------------------------------------------------
+-- THE CHAIN AT A CONCATENATED PREFIX
+--
+-- At `eternalˡ` the mismatch is block for block: `env-Hˢ` runs the
+-- eternal zone's substitutions before the zones to its left, while
+-- `env-eternal-C` at `Δ₁ ++ᶜ Δ₂` peels `Δ₂` first. Splitting the
+-- concatenated chain one entry at a time reduces that to
+-- `env-eternal-C-swap`: each entry of `Δ₂` moves past the whole of `Δ₁`,
+-- and the entry left over is adjacent to the chain it crosses.
+------------------------------------------------------------------------
+
+-- The values of a concatenated prefix. By recursion on `Δ₂`'s
+-- lock-freeness, so that peeling an entry is definitional.
+
+++ᶜᵛ : ∀ {Δ₁ Δ₂} → Lock-free Δ₂ → ClosedVals Δ₁ → ClosedVals Δ₂
+     → ClosedVals (Δ₁ ++ᶜ Δ₂)
+++ᶜᵛ lf-[]      η₁ η₂ x        = η₁ x
+++ᶜᵛ (lf-∷ lf₂) η₁ η₂ Hd       = η₂ Hd
+++ᶜᵛ (lf-∷ lf₂) η₁ η₂ (Tl-∷ x) = ++ᶜᵛ lf₂ η₁ (λ y → η₂ (Tl-∷ y)) x
+
+-- and the same values, presented against the splitting `env-ᴱ` dispatches
+-- on rather than by recursion
+
+splitVal : ∀ {Δ₁ Δ₂ A ρ} → ClosedVals Δ₁ → ClosedVals Δ₂
+         → (Σ[ ρ' ∈ R ] A ∈[ ρ' ] Δ₁) ⊎ (A ∈[ ρ ] Δ₂) → [] ⊢V⦂ A
+splitVal η₁ η₂ (inj₁ (_ , y)) = η₁ y
+splitVal η₁ η₂ (inj₂ y)       = η₂ y
+
+++ᶜᵛ-split : ∀ {Δ₁ Δ₂ A ρ} → (lf₂ : Lock-free Δ₂)
+           → (η₁ : ClosedVals Δ₁) → (η₂ : ClosedVals Δ₂)
+           → (y : A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂))
+           → ++ᶜᵛ lf₂ η₁ η₂ y ≡ splitVal η₁ η₂ (∈-++ᶜ-split Δ₁ Δ₂ y)
+++ᶜᵛ-split lf-[]      η₁ η₂ y  = refl
+++ᶜᵛ-split (lf-∷ lf₂) η₁ η₂ Hd = refl
+++ᶜᵛ-split {Δ₁} {Δ₂ ∷ B} (lf-∷ lf₂) η₁ η₂ (Tl-∷ y)
+  with ∈-++ᶜ-split Δ₁ Δ₂ y | ++ᶜᵛ-split lf₂ η₁ (λ z → η₂ (Tl-∷ z)) y
+... | inj₁ p | q = q
+... | inj₂ z | q = q
+
+-- The chain uses its values only pointwise.
+
+env-eternal-C-η : ∀ {Δ Θ C} → (lf : Lock-free Δ) → {η η' : ClosedVals Δ}
+                → (∀ {A ρ} → (x : A ∈[ ρ ] Δ) → η x ≡ η' x)
+                → (M : (Δ ++ᶜ Θ) ⊢C⦂ C)
+                → env-eternal-C lf η M ≡ env-eternal-C lf η' M
+env-eternal-C-η lf-[] h M = refl
+env-eternal-C-η {Δ ∷ B} {Θ} (lf-∷ lf) {η} {η'} h M =
+  trans (cong (λ z → env-eternal-C lf (λ x → η (Tl-∷ x))
+                       (sub-atᶜ {Δ} {B} Θ M (V-rename (empty-ren lf) z)))
+              (h Hd))
+        (env-eternal-C-η lf (λ x → h (Tl-∷ x))
+          (sub-atᶜ {Δ} {B} Θ M (V-rename (empty-ren lf) (η' Hd))))
+
+-- and it respects a transport of its prefix.
+
+env-eternal-C-pre : ∀ {Δ Δ' Θ C} → (e : Δ ≡ Δ')
+                  → (lf : Lock-free Δ) → (lf' : Lock-free Δ')
+                  → (η : ClosedVals Δ) → (η' : ClosedVals Δ')
+                  → (∀ {A ρ} → (x : A ∈[ ρ ] Δ)
+                       → η x ≡ η' (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x))
+                  → (M : (Δ ++ᶜ Θ) ⊢C⦂ C)
+                  → env-eternal-C lf η M
+                  ≡ env-eternal-C lf' η' (castᶜ (cong (_++ᶜ Θ) e) M)
+env-eternal-C-pre refl lf lf' η η' h M
+  rewrite Lock-free-irr lf lf' = env-eternal-C-η lf' h M
+
+-- The decomposition itself.
+
+env-eternal-C-++ : ∀ {Δ₁ Δ₂ Θ C} → (lf₁ : Lock-free Δ₁) → (lf₂ : Lock-free Δ₂)
+                 → (lf₁₂ : Lock-free (Δ₁ ++ᶜ Δ₂))
+                 → (η₁ : ClosedVals Δ₁) → (η₂ : ClosedVals Δ₂)
+                 → (M : ((Δ₁ ++ᶜ Δ₂) ++ᶜ Θ) ⊢C⦂ C)
+                 → env-eternal-C lf₁₂ (++ᶜᵛ lf₂ η₁ η₂) M
+                 ≐ᶜ env-eternal-C lf₂ η₂
+                      (env-eternal-C lf₁ η₁ (castᶜ (++ᶜ-assoc Δ₁ Δ₂ Θ) M))
+
+env-eternal-C-++ {Δ₁} {[]} {Θ} lf₁ lf-[] lf₁₂ η₁ η₂ M =
+  ≐ᶜ-trans (≡→≐ᶜ (env-eternal-C-pre refl lf₁₂ lf₁ _ η₁ (λ x → refl) M))
+    (≡→≐ᶜ (sym
+      (trans (env-eternal-C-suffix (++ᶜ-identityˡ {Θ}) lf₁ η₁ _)
+             (cong (env-eternal-C lf₁ η₁)
+                   (cast-loop₂ (++ᶜ-assoc Δ₁ [] Θ)
+                               (cong (Δ₁ ++ᶜ_) (++ᶜ-identityˡ {Θ})) M)))))
+
+env-eternal-C-++ {Δ₁} {Δ₂ ∷ B} {Θ} {C} lf₁ (lf-∷ lf₂) (lf-∷ lf₁₂) η₁ η₂ M =
+  ≐ᶜ-trans (≐ᶜ-sym (env-eternal-C-swap lf₁₂ (++ᶜᵛ lf₂ η₁ η₂') Θ (η₂ Hd) M))
+    (≐ᶜ-trans
+      (castᶜ-≐ (++ᶜ-identityˡ {Θ})
+        (sub-atᶜ-≐ {[]} {B} Θ (η₂ Hd)
+          (≐ᶜ-trans (env-eternal-C-++ lf₁ lf₂ lf₁₂ η₁ η₂' (castᶜ c₂ M))
+                    (env-eternal-C-≐ lf₂ η₂' (≡→≐ᶜ qeq)))))
+      (env-eternal-C-swap lf₂ η₂' Θ (η₂ Hd) M̃))
+  where
+    η₂' : ClosedVals Δ₂
+    η₂' x = η₂ (Tl-∷ x)
+
+    c₂ = ++ᶜ-assoc (Δ₁ ++ᶜ Δ₂) ([] ∷ B) Θ
+    c₁ = ++ᶜ-assoc Δ₁ Δ₂ (([] ∷ B) ++ᶜ Θ)
+    c₃ = ++ᶜ-assoc Δ₁ (Δ₂ ∷ B) Θ
+
+    M̃ = env-eternal-C lf₁ η₁ (castᶜ c₃ M)
+
+    qeq : env-eternal-C lf₁ η₁ (castᶜ c₁ (castᶜ c₂ M))
+        ≡ castᶜ (++ᶜ-assoc Δ₂ ([] ∷ B) Θ) M̃
+    qeq =
+      trans
+        (cong (env-eternal-C lf₁ η₁)
+          (trans (cast-chain₂ c₂ c₁ M)
+            (trans (cong (λ p → subst (_⊢C⦂ C) p M) uip)
+                   (sym (cast-chain₂ c₃
+                          (cong (Δ₁ ++ᶜ_) (++ᶜ-assoc Δ₂ ([] ∷ B) Θ)) M)))))
+        (sym (env-eternal-C-suffix (++ᶜ-assoc Δ₂ ([] ∷ B) Θ) lf₁ η₁
+                                   (castᶜ c₃ M)))
+
+------------------------------------------------------------------------
+-- THE ETERNAL ZONE'S CLAUSE ACTION IS A CHAIN
+--
+-- `env-eternal-H` peels `Δ₀` itself; `env-eternal-C` peels the *restricted*
+-- `Δ₀ ᴱ`. At a non-eternal entry the first is a transport and the second
+-- has nothing to peel; at an eternal one both substitute the restricted
+-- value, and in the same order — so, unlike `eternalˡ` as a whole, this
+-- needs no swap, only the per-entry dispatch.
+------------------------------------------------------------------------
+
+-- Restricting a closed value is the identity: it has no variables to move.
+
+restrict-closed : ∀ {A} → (et : Eternal A) → (V : [] ⊢V⦂ A)
+                → eternal-val-restrict et V ≡ V
+restrict-closed (Baseₑ b p)    (var f x)   = ⊥-elim (not-in-empty-ctx x)
+restrict-closed (Baseₑ b p)    (const c)   = refl
+restrict-closed Unitₑ          (var f x)   = ⊥-elim (not-in-empty-ctx x)
+restrict-closed Unitₑ          ⋆           = refl
+restrict-closed Emptyₑ         (var f x)   = ⊥-elim (not-in-empty-ctx x)
+restrict-closed (et₁ |×|ₑ et₂) (var f x)   = ⊥-elim (not-in-empty-ctx x)
+restrict-closed (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
+  cong₂ (λ U₁ U₂ → ⦉ U₁ , U₂ ⦊)
+        (restrict-closed et₁ V₁) (restrict-closed et₂ V₂)
+
+-- Two renamings out of the empty context act alike.
+
+empty-ren-≐ : ∀ {Γ₁} → (r r' : Ren [] [] Γ₁) → r ≐ʳ r'
+empty-ren-≐ r r' = mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx x))
+
+-- An eternal zone's values, on the context the chain peels.
+
+ηᴱ : ∀ {Δ₀} → ClosedVals Δ₀ → ClosedVals (Δ₀ ᴱ)
+ηᴱ {Δ₀} η y = η (proj₂ (∈-ᴱ⁻ Δ₀ y))
+
+-- The clause context, split at the zone's own boundary.
+
+eH : (Δ₀ Γc : Ctx) → (B : VType) → (op : Op) → (ε : E)
+   → ((Δ₀ ++ᶜ Γc) ᴱ ++ᶜ Dcl B op ε)
+   ≡ (Δ₀ ᴱ ++ᶜ (Γc ᴱ ++ᶜ Dcl B op ε))
+eH Δ₀ Γc B op ε =
+  trans (cong (_++ᶜ Dcl B op ε) (ᴱ-++ᶜ Δ₀ Γc))
+        (++ᶜ-assoc (Δ₀ ᴱ) (Γc ᴱ) (Dcl B op ε))
+
+-- As `env-Hˢ-ᴱ-∷`, except that here the decision can be taken *before*
+-- the statement is made: every occurrence of `eternal? B₀` sits under one
+-- of the rollout's `Dec`-taking forms, so the entry is stated at `d` and
+-- matched directly — no `rewrite`, hence no with-abstraction to reorder.
+
+env-eternal-H-C-∷ : ∀ {B₀ Δ Γc B} → (lf : Lock-free Δ)
+                  → (η : ClosedVals (Δ ∷ B₀))
+                  → (K : Fam B (((Δ ∷ B₀) ++ᶜ Γc) ᴱ)) → (op : Op) → (ε : E)
+                  → (d : Dec (Eternal B₀))
+                  → (e₁ : (((Δ ∷ B₀) ++ᶜ Γc) ᴱ ++ᶜ Dcl B op ε)
+                        ≡ (ᴱ-∷ (Δ ᴱ) B₀ d ++ᶜ (Γc ᴱ ++ᶜ Dcl B op ε)))
+                  → (ih : (K₀ : Fam B ((Δ ++ᶜ Γc) ᴱ))
+                        → env-eternal-H {_} {Γc} lf (λ x → η (Tl-∷ x)) K₀ op ε
+                        ≐ᶜ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
+                             (ᴱ-lock-free Δ) (ηᴱ (λ x → η (Tl-∷ x)))
+                             (castᶜ (eH Δ Γc B op ε) (K₀ op ε)))
+                  → env-eternal-H {_} {Γc} lf (λ x → η (Tl-∷ x))
+                       (sub-atᴴ′ d Γc K (V-rename (empty-ren lf) (η Hd))) op ε
+                  ≐ᶜ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
+                       (ᴱ-lock-free-∷ Δ B₀ d)
+                       (λ y → η (proj₂ (∈-ᴱ⁻-∷ Δ B₀ d y)))
+                       (castᶜ e₁ (K op ε))
+
+env-eternal-H-C : ∀ {Δ₀ Γc B} → (lf : Lock-free Δ₀) → (η : ClosedVals Δ₀)
+                → (K : Fam B ((Δ₀ ++ᶜ Γc) ᴱ)) → (op : Op) → (ε : E)
+                → env-eternal-H {_} {Γc} lf η K op ε
+                ≐ᶜ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
+                     (ᴱ-lock-free Δ₀) (ηᴱ η)
+                     (castᶜ (eH Δ₀ Γc B op ε) (K op ε))
+
+env-eternal-H-C {[]} {Γc} {B} lf-[] η K op ε =
+  ≐ᶜ-sym (≡→≐ᶜ
+    (trans (cast-chain₂ (eH [] Γc B op ε)
+                        (++ᶜ-identityˡ {Γc ᴱ ++ᶜ Dcl B op ε}) (K op ε))
+      (trans (cong (λ p → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) p (K op ε)) uip)
+             (sym (castᶜ≡subst
+                     (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                                     ∷ [ mapᵉ (op-grade op) ]
+                                         (type-of-gtype (arity op) ⇒ B ‼ ε))
+                           (++ᶜ-identityˡ {Γc}))
+                     (K op ε))))))
+
+env-eternal-H-C {Δ ∷ B₀} {Γc} {B} (lf-∷ lf) η K op ε =
+  env-eternal-H-C-∷ lf η K op ε (eternal? B₀) (eH (Δ ∷ B₀) Γc B op ε)
+    (λ K₀ → env-eternal-H-C lf (λ x → η (Tl-∷ x)) K₀ op ε)
+
+-- at a non-eternal entry neither side peels: the clause substitution is a
+-- transport and the entry is absent from the restricted prefix
+
+env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
+  ≐ᶜ-trans (ih K₄) (≡→≐ᶜ (cong (env-eternal-C (ᴱ-lock-free Δ) (ηᴱ η')) inner))
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+    Dc = Dcl B op ε
+
+    η' : ClosedVals Δ
+    η' x = η (Tl-∷ x)
+
+    W₀ = V-rename (empty-ren lf) (η Hd)
+
+    K₄ : Fam B ((Δ ++ᶜ Γc) ᴱ)
+    K₄ = sub-atᴴ′ (no ¬et) Γc K W₀
+
+    cCl = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε))
+               (castOf {Δ} {B₀} Γc)
+
+    dropM = ᴱ-drop-split ¬et (bvar {Δ} B₀ Γc)
+
+    inner : castᶜ (eH Δ Γc B op ε) (K₄ op ε) ≡ castᶜ e₁ (K op ε)
+    inner =
+      trans (cong (λ z → castᶜ (eH Δ Γc B op ε) (castᶜ cCl z))
+                  (subst-++ᶜʳ Dc dropM (K op ε)))
+        (trans (cong (castᶜ (eH Δ Γc B op ε))
+                  (trans (castᶜ≡subst cCl _)
+                         (subst-fuseᶜ (cong (_++ᶜ Dc) dropM) cCl (K op ε))))
+          (trans (castᶜ≡subst (eH Δ Γc B op ε) _)
+            (trans (subst-fuseᶜ (trans (cong (_++ᶜ Dc) dropM) cCl)
+                                (eH Δ Γc B op ε) (K op ε))
+              (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
+                     (sym (castᶜ≡subst e₁ (K op ε)))))))
+
+-- at an eternal one both sides substitute the restricted value, and both
+-- do it first, so `cl-yes` and `sub-at-≐` align them where they stand
+
+env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
+  ≐ᶜ-trans (ih K₄)
+    (env-eternal-C-≐ (ᴱ-lock-free Δ) (ηᴱ η')
+      (isSub-≐ (isSub-reassoc isL isMid) (isSub-refl S₂) (≐ᶜ-sym swapStep)))
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+    Dc = Dcl B op ε
+    Θᴱ = Γc ᴱ ++ᶜ Dc
+
+    η' : ClosedVals Δ
+    η' x = η (Tl-∷ x)
+
+    W₀ = V-rename (empty-ren lf) (η Hd)
+
+    K₄ : Fam B ((Δ ++ᶜ Γc) ᴱ)
+    K₄ = sub-atᴴ′ (yes et) Γc K W₀
+
+    x  = bvar {Δ} B₀ Γc
+    Wv = bval {Δ} {B₀} Γc W₀
+
+    sl = split→∈-split-l (split-≡-++ᶜ {Δ ∷ B₀} {Γc})
+    sr = split→∈-split-r (split-≡-++ᶜ {Δ ∷ B₀} {Γc})
+
+    V₂ = V-rename (empty-ren (ᴱ-lock-free Δ)) (η Hd)
+
+    eclx = eCl et x B op ε
+
+    X₁ = subst (_⊢C⦂ CT) eclx (K op ε)
+    X₂ = castᶜ e₁ (K op ε)
+
+    eΓ : split-l x ᴱ ≡ Δ ᴱ
+    eΓ = cong _ᴱ sl
+
+    eΘ : (split-r x ᴱ ++ᶜ Dc) ≡ Θᴱ
+    eΘ = cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ Dc) sr
+
+    e  = cong₂ (λ Γ₁ Θ₁ → (Γ₁ ∷ B₀) ++ᶜ Θ₁) eΓ eΘ
+    e' = cong₂ _++ᶜ_ eΓ eΘ
+
+    -- both are transports of the same clause
+    mid : X₂ ≐ᶜ subst (_⊢C⦂ CT) e X₁
+    mid =
+      ≡→≐ᶜ (trans (castᶜ≡subst e₁ (K op ε))
+             (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
+                    (sym (subst-fuseᶜ eclx e (K op ε)))))
+
+    eVal : subst (_⊢V⦂ B₀) eΓ (eternal-val-restrict et Wv) ≐ᵛ V₂
+    eVal =
+      ≐ᵛ-trans
+        (≡→≐ᵛ
+          (trans (cong (λ z → subst (_⊢V⦂ B₀) eΓ (eternal-val-restrict et z))
+                       (castᵛ≡subst (sym sl) W₀))
+            (trans (cong (subst (_⊢V⦂ B₀) eΓ)
+                         (restrict-substᵛ (sym sl) et W₀))
+              (trans (subst-fuseᵛ (cong _ᴱ (sym sl)) eΓ
+                                  (eternal-val-restrict et W₀))
+                     (substᵛ-irr (trans (cong _ᴱ (sym sl)) eΓ) refl
+                                 (eternal-val-restrict et W₀))))))
+        (≐ᵛ-trans (eternal-val-restrict-ren et (empty-ren lf) (η Hd))
+          (≐ᵛ-trans
+            (≡→≐ᵛ (cong (V-rename (restrict-ren (empty-ren lf)))
+                        (restrict-closed et (η Hd))))
+            (V-rename-≐ (empty-ren-≐ (restrict-ren (empty-ren lf))
+                                     (empty-ren (ᴱ-lock-free Δ)))
+                        (η Hd))))
+
+    S₁ = sub-atᶜ {split-l x ᴱ} {B₀} (split-r x ᴱ ++ᶜ Dc) X₁
+                 (eternal-val-restrict et Wv)
+
+    S₂ = sub-atᶜ {Δ ᴱ} {B₀} Θᴱ X₂ V₂
+
+    swapStep : S₂ ≐ᶜ subst (_⊢C⦂ CT) e' S₁
+    swapStep =
+      sub-at-≐ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
+
+    isL = isSub-cast _ (eH Δ Γc B op ε)
+            (isSub-Cl op ε _ (castOf {Δ} {B₀} Γc)
+              (cl-yes et x Wv K op ε eclx))
+
+    isMid : IsSub S₁ (subst (_⊢C⦂ CT) e' S₁)
+    isMid = e' , refl
+
+-- THE TELESCOPE ENTRY
+--
+-- The clause is split off, taking the eternality decision *and* the
+-- equation naming it, plus its own induction hypothesis (as
+-- `ren-sub-unbox` does). That is the only way in: a bare `with eternal? A`
+-- on the `_∷ᵉ_` clause hoists the decision ahead of `St`, `Γ`, `γ`, `W`,
+-- `Δ`, `K` and leaves an occurrence un-abstracted, because the statement
+-- mentions fixed proof terms whose types mention `(Γ ∷ A) ᴱ`. Here every
+-- variable is already fixed, so `rewrite` touches the goal alone.
+
+env-Hˢ-ᴱ-∷ : ∀ {St Γ A B} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
+           → (Δ : Ctx) → (K : Fam B (((Γ ∷ A) ++ᶜ Δ) ᴱ))
+           → (op : Op) → (ε : E)
+           → (e₁ : (((Γ ∷ A) ++ᶜ Δ) ᴱ ++ᶜ Dcl B op ε)
+                 ≡ ((Γ ∷ A) ᴱ ++ᶜ ([] ++ᶜ D~ Δ B op ε)))
+           → (d : Dec (Eternal A)) → eternal? A ≡ d
+           → (ih : (Δ₀ : Ctx) → (K₀ : Fam B ((Γ ++ᶜ Δ₀) ᴱ))
+                 → env-Hˢ γ Δ₀ K₀ op ε
+                 ≐ᶜ castᶜ (eStar St Δ₀ op ε)
+                      (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+                        (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ₀ B op ε))
+                          (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ₀) (K₀ op ε)))))
+           → env-Hˢ (γ ∷ᵉ W) Δ K op ε
+           ≐ᶜ castᶜ (eStar St Δ op ε)
+                (env-eternal-C (ᴱ-lock-free (Γ ∷ A)) (env-ᴱ (γ ∷ᵉ W))
+                  (castᶜ e₁ (K op ε)))
+
+env-Hˢ-ᴱ : ∀ {St Γ B} → (γ : Env St Γ) → (Δ : Ctx)
+         → (K : Fam B ((Γ ++ᶜ Δ) ᴱ)) → (op : Op) → (ε : E)
+         → env-Hˢ γ Δ K op ε
+         ≐ᶜ castᶜ (eStar St Δ op ε)
+             (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+               (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                 (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε))))
+
+-- the state contributes nothing: the prefix is provably empty and every
+-- transport loops back to the clause itself
+
+env-Hˢ-ᴱ {B = B} ⌊ St ⌋ Δ K op ε =
+  ≐ᶜ-sym (≡→≐ᶜ
+    (trans (cong (castᶜ (eStar St Δ op ε))
+                 (env-eternal-C-empty (toCtxᴱ-[] St)
+                                      (ᴱ-lock-free (toCtx St)) _ _))
+           (cast-loop₄
+              (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ]
+                                  (type-of-gtype (arity op) ⇒ B ‼ ε))
+                    (ᴱ-++ᶜ (toCtx St) Δ))
+              (++ᶜ-assoc (toCtx St ᴱ) [] (D~ Δ B op ε))
+              (trans (cong (_++ᶜ ([] ++ᶜ D~ Δ B op ε)) (toCtxᴱ-[] St))
+                     (++ᶜ-identityˡ {[] ++ᶜ D~ Δ B op ε}))
+              (eStar St Δ op ε) (K op ε))))
+-- the base weakening restricts to a transport ([] has no variables)
+
+env-Hˢ-ᴱ {B = B} (∅ᵉ St) Δ K op ε =
+  ≐ᶜ-trans
+    (C-rename-eq-≐ (cong (_++ᶜ Dcl B op ε) Efull) hren (K op ε))
+    (≡→≐ᶜ (sym rhs-eq))
+  where
+    Efull = trans (ᴱ-++ᶜ [] Δ)
+                  (trans (cong (_++ᶜ Δ ᴱ) (sym (toCtxᴱ-[] St)))
+                         (sym (ᴱ-++ᶜ (toCtx St) Δ)))
+
+    hren : cong-∷-ren (cong-∷-ren
+             (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (∅-ren St))))
+         ≐ʳ eq-ren (cong (_++ᶜ Dcl B op ε) Efull)
+    hren =
+      ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
+               (cong-ren-eq-ren-≐ (Dcl B op ε) Efull)
+      where
+        inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (∅-ren St))
+              ≐ʳ eq-ren Efull
+        inner =
+          conj-eq-≐ (ᴱ-++ᶜ [] Δ)
+                    (cong (_++ᶜ Δ ᴱ) (sym (toCtxᴱ-[] St)))
+                    (sym (ᴱ-++ᶜ (toCtx St) Δ))
+            (≐ʳ-trans
+              (restrict-cong-≐ (∅-ren St) Δ (ᴱ-++ᶜ [] Δ)
+                                            (ᴱ-++ᶜ (toCtx St) Δ))
+              (∘ʳ-≐ ≐ʳ-refl
+                (∘ʳ-≐ (≐ʳ-trans
+                         (cong-ren-≐ (Δ ᴱ)
+                           (∅-ren-≐ _ (eq-ren (sym (toCtxᴱ-[] St)))))
+                         (cong-ren-eq-ren-≐ (Δ ᴱ) (sym (toCtxᴱ-[] St))))
+                      ≐ʳ-refl)))
+
+    rhs-eq : castᶜ (eStar St Δ op ε)
+               (castᶜ (++ᶜ-identityˡ {[] ++ᶜ D~ Δ B op ε})
+                 (castᶜ (++ᶜ-assoc ([] ᴱ) [] (D~ Δ B op ε))
+                   (castᶜ (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                                          ∷ [ mapᵉ (op-grade op) ]
+                                              (type-of-gtype (arity op)
+                                                ⇒ B ‼ ε))
+                                (ᴱ-++ᶜ [] Δ))
+                          (K op ε))))
+           ≡ subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε))
+                   (cong (_++ᶜ Dcl B op ε) Efull) (K op ε)
+    rhs-eq =
+      trans (cast-chain₄
+               (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                               ∷ [ mapᵉ (op-grade op) ]
+                                   (type-of-gtype (arity op) ⇒ B ‼ ε))
+                     (ᴱ-++ᶜ [] Δ))
+               (++ᶜ-assoc ([] ᴱ) [] (D~ Δ B op ε))
+               (++ᶜ-identityˡ {[] ++ᶜ D~ Δ B op ε})
+               (eStar St Δ op ε) (K op ε))
+            (cong (λ p → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) p (K op ε)) uip)
+-- a slice's restriction is a transport between provably-empty state parts
+
+env-Hˢ-ᴱ {B = B} (sliceᵉ {St} {St'} γ q) Δ K op ε =
+  ≐ᶜ-trans (C-rename-eq-≐ Ewhole hren (env-Hˢ γ Δ K op ε))
+    (≐ᶜ-trans (substᶜ-≐ Ewhole (env-Hˢ-ᴱ γ Δ K op ε))
+      (≡→≐ᶜ (trans (cong (subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) Ewhole)
+                         (castᶜ≡subst (eStar St Δ op ε) _))
+              (trans (subst-fuseᶜ (eStar St Δ op ε) Ewhole _)
+                (trans (cong (λ p → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) p _)
+                             (uip {p = trans (eStar St Δ op ε) Ewhole}
+                                  {q = eStar St' Δ op ε}))
+                       (sym (castᶜ≡subst (eStar St' Δ op ε) _)))))))
+  where
+    EStSt' = trans (toCtxᴱ-[] St) (sym (toCtxᴱ-[] St'))
+
+    Einner = trans (ᴱ-++ᶜ (toCtx St) Δ)
+                   (trans (cong (_++ᶜ Δ ᴱ) EStSt')
+                          (sym (ᴱ-++ᶜ (toCtx St') Δ)))
+
+    Ewhole = cong (_++ᶜ Dcl B op ε) Einner
+
+    hren : cong-∷-ren (cong-∷-ren
+             (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (slice-renᵘ q))))
+         ≐ʳ eq-ren Ewhole
+    hren =
+      ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
+               (cong-ren-eq-ren-≐ (Dcl B op ε) Einner)
+      where
+        inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (slice-renᵘ q))
+              ≐ʳ eq-ren Einner
+        inner =
+          conj-eq-≐ (ᴱ-++ᶜ (toCtx St) Δ) (cong (_++ᶜ Δ ᴱ) EStSt')
+                    (sym (ᴱ-++ᶜ (toCtx St') Δ))
+            (≐ʳ-trans
+              (restrict-cong-≐ (slice-renᵘ q) Δ (ᴱ-++ᶜ (toCtx St) Δ)
+                                                (ᴱ-++ᶜ (toCtx St') Δ))
+              (∘ʳ-≐ ≐ʳ-refl
+                (∘ʳ-≐ (≐ʳ-trans
+                         (cong-ren-≐ (Δ ᴱ)
+                           (empty-src-≐ (toCtxᴱ-[] St) _ EStSt'))
+                         (cong-ren-eq-ren-≐ (Δ ᴱ) EStSt'))
+                      ≐ʳ-refl)))
+-- a lock: the recursion at the lock-absorbing suffix; the crossing
+-- renaming restricts to a transport, and the suffix relocation moves
+-- inside `env-eternal-C`
+
+env-Hˢ-ᴱ {B = B} (_⟨_⟩ᵉ {St} {St'} {Γ} {ρ} γ q) Δ K op ε =
+  ≐ᶜ-trans (C-rename-eq-≐ EW hren _)
+    (≐ᶜ-trans
+      (substᶜ-≐ EW (castᶜ-≐ eo (env-Hˢ-ᴱ γ Δ' K' op ε)))
+      (≡→≐ᶜ step))
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+
+    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
+
+    K' : Fam B ((Γ ++ᶜ Δ') ᴱ)
+    K' op' ε' = Cl-cast op' ε' (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ) (K op' ε')
+
+    eo = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ))
+
+    E₁₂ = trans (toCtxᴱ-[] St) (sym (toCtxᴱ-[] St'))
+
+    EI = trans (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ)
+               (trans (cong (_++ᶜ Δ ᴱ) E₁₂)
+                      (sym (ᴱ-++ᶜ (toCtx St') Δ)))
+
+    EW = cong (_++ᶜ Dcl B op ε) EI
+
+    hren : cong-∷-ren (cong-∷-ren
+             (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (unbox-ren q))))
+         ≐ʳ eq-ren EW
+    hren =
+      ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
+               (cong-ren-eq-ren-≐ (Dcl B op ε) EI)
+      where
+        inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (unbox-ren q))
+              ≐ʳ eq-ren EI
+        inner =
+          conj-eq-≐ (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ) (cong (_++ᶜ Δ ᴱ) E₁₂)
+                    (sym (ᴱ-++ᶜ (toCtx St') Δ))
+            (≐ʳ-trans
+              (restrict-cong-≐ (unbox-ren q) Δ (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ)
+                                               (ᴱ-++ᶜ (toCtx St') Δ))
+              (∘ʳ-≐ ≐ʳ-refl
+                (∘ʳ-≐ (≐ʳ-trans
+                         (cong-ren-≐ (Δ ᴱ)
+                           (empty-src-≐ (toCtxᴱ-[] St) _ E₁₂))
+                         (cong-ren-eq-ren-≐ (Δ ᴱ) E₁₂))
+                      ≐ʳ-refl)))
+
+    eΔ'Δ : Δ' ᴱ ≡ Δ ᴱ
+    eΔ'Δ = trans (ᴱ-++ᶜ ([] ⟨ ρ ⟩) Δ) (++ᶜ-identityˡ {Δ ᴱ})
+
+    eSuf : ([] ++ᶜ D~ Δ' B op ε) ≡ ([] ++ᶜ D~ Δ B op ε)
+    eSuf = cong (λ Γ₁ → [] ++ᶜ (Γ₁ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ]
+                                      (type-of-gtype (arity op) ⇒ B ‼ ε)))
+                eΔ'Δ
+
+    cKassoc = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B ‼ ε))
+                   (++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ)
+
+    cE' = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε))
+               (ᴱ-++ᶜ Γ Δ')
+
+    cE = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (ᴱ-++ᶜ (Γ ⟨ ρ ⟩) Δ)
+
+    X' = env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+           (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+             (castᶜ cE' (K' op ε)))
+
+    inner-eq : castᶜ (cong (Γ ᴱ ++ᶜ_) eSuf)
+                 (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+                   (castᶜ cE' (castᶜ cKassoc (K op ε))))
+             ≡ castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                 (castᶜ cE (K op ε))
+    inner-eq =
+      trans (cast-chain₄ cKassoc cE'
+               (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+               (cong (Γ ᴱ ++ᶜ_) eSuf) (K op ε))
+        (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
+               (sym (cast-chain₂ cE (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                                 (K op ε))))
+
+    step : subst (_⊢C⦂ CT) EW
+             (castᶜ eo (castᶜ (eStar St Δ' op ε) X'))
+         ≡ castᶜ (eStar St' Δ op ε)
+             (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+               (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                 (castᶜ cE (K op ε))))
+    step =
+      trans (cong (subst (_⊢C⦂ CT) EW)
+                  (cast-chain₂ (eStar St Δ' op ε) eo X'))
+        (trans (subst-fuseᶜ (trans (eStar St Δ' op ε) eo) EW X')
+          (trans (cong (λ p → subst (_⊢C⦂ CT) p X') uip)
+            (trans (sym (cast-chain₂ eSuf (eStar St' Δ op ε) X'))
+              (cong (castᶜ (eStar St' Δ op ε))
+                (trans (env-eternal-C-suffix eSuf (ᴱ-lock-free Γ)
+                                             (env-ᴱ γ) _)
+                       (cong (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ))
+                             inner-eq))))))
+-- a telescope entry, and the eternal prefix. Both are open; see the note
+-- below `env-eternal-C-swap` and `notes/adequacy-plan.md` for what they
+-- need and why `with eternal? A` is not the way in.
+
+env-Hˢ-ᴱ {B = B} (_∷ᵉ_ {St} {Γ} {A} γ W) Δ K op ε =
+  ≐ᶜ-trans
+    (env-Hˢ-ᴱ-∷ γ W Δ K op ε
+       (trans (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ]
+                                  (type-of-gtype (arity op) ⇒ B ‼ ε))
+                    (ᴱ-++ᶜ (Γ ∷ A) Δ))
+              (++ᶜ-assoc ((Γ ∷ A) ᴱ) [] (D~ Δ B op ε)))
+       (eternal? A) refl (λ Δ₀ K₀ → env-Hˢ-ᴱ γ Δ₀ K₀ op ε))
+    (≡→≐ᶜ (cong (λ z → castᶜ (eStar St Δ op ε)
+                         (env-eternal-C (ᴱ-lock-free (Γ ∷ A))
+                                        (env-ᴱ (γ ∷ᵉ W)) z))
+                (trans (castᶜ≡subst _ (K op ε))
+                  (sym (cast-chain₂
+                          (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                                          ∷ [ mapᵉ (op-grade op) ]
+                                              (type-of-gtype (arity op)
+                                                ⇒ B ‼ ε))
+                                (ᴱ-++ᶜ (Γ ∷ A) Δ))
+                          (++ᶜ-assoc ((Γ ∷ A) ᴱ) [] (D~ Δ B op ε))
+                          (K op ε))))))
+
+env-Hˢ-ᴱ {B = B} (liftᵉ {St} {Γ} {A} {ρ} V γ) Δ K op ε =
+  ≐ᶜ-trans (castᶜ-≐ eo (env-Hˢ-ᴱ γ Δ' K' op ε)) (≡→≐ᶜ step)
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+
+    Δ' = [] ∷ [ ρ ] A ++ᶜ Δ
+
+    K' : Fam B ((Γ ++ᶜ Δ') ᴱ)
+    K' op' ε' = Cl-cast op' ε' (++ᶜ-assoc Γ ([] ∷ [ ρ ] A) Δ) (K op' ε')
+
+    eo = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ ] A) Δ))
+
+    eΔ'Δ : Δ' ᴱ ≡ Δ ᴱ
+    eΔ'Δ = trans (ᴱ-++ᶜ ([] ∷ [ ρ ] A) Δ) (++ᶜ-identityˡ {Δ ᴱ})
+
+    eSuf : ([] ++ᶜ D~ Δ' B op ε) ≡ ([] ++ᶜ D~ Δ B op ε)
+    eSuf = cong (λ Γ₁ → [] ++ᶜ (Γ₁ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ]
+                                      (type-of-gtype (arity op) ⇒ B ‼ ε)))
+                eΔ'Δ
+
+    cKassoc = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B ‼ ε))
+                   (++ᶜ-assoc Γ ([] ∷ [ ρ ] A) Δ)
+
+    cE' = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε))
+               (ᴱ-++ᶜ Γ Δ')
+
+    cE = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (ᴱ-++ᶜ (Γ ∷ [ ρ ] A) Δ)
+
+    X' = env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+           (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+             (castᶜ cE' (K' op ε)))
+
+    inner-eq : castᶜ (cong (Γ ᴱ ++ᶜ_) eSuf)
+                 (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+                   (castᶜ cE' (castᶜ cKassoc (K op ε))))
+             ≡ castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                 (castᶜ cE (K op ε))
+    inner-eq =
+      trans (cast-chain₄ cKassoc cE'
+               (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+               (cong (Γ ᴱ ++ᶜ_) eSuf) (K op ε))
+        (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
+               (sym (cast-chain₂ cE (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                                 (K op ε))))
+
+    step : castᶜ eo (castᶜ (eStar St Δ' op ε) X')
+         ≡ castᶜ (eStar (St ∷ₛ V) Δ op ε)
+             (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+               (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+                 (castᶜ cE (K op ε))))
+    step =
+      trans (cast-chain₂ (eStar St Δ' op ε) eo X')
+        (trans (cong (λ p → subst (_⊢C⦂ CT) p X') uip)
+          (trans (sym (cast-chain₂ eSuf (eStar (St ∷ₛ V) Δ op ε) X'))
+            (cong (castᶜ (eStar (St ∷ₛ V) Δ op ε))
+              (trans (env-eternal-C-suffix eSuf (ᴱ-lock-free Γ)
+                                           (env-ᴱ γ) _)
+                     (cong (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ))
+                           inner-eq)))))
+-- an eternal zone: `env-Hˢ` runs it before the zones to its left, the
+-- restriction peels it last. `env-eternal-H-C` turns the zone's clause
+-- action into a chain at `Δ₀ ᴱ`, and `env-eternal-C-++` splits the
+-- restriction's own chain at `Δ₀ ᴱ ++ᶜ Γ ᴱ` into the same two halves.
+
+env-Hˢ-ᴱ {St} {B = B} (eternalˡ {Γ = Γ} Δ₀ lf η γ) Δ K op ε =
+  ≐ᶜ-trans (env-Hˢ-ᴱ γ Δ K₂ op ε)
+    (castᶜ-≐ (eStar St Δ op ε)
+      (≐ᶜ-trans
+        (env-eternal-C-≐ (ᴱ-lock-free Γ) (env-ᴱ γ)
+          (≐ᶜ-trans
+            (castᶜ-≐ a₁ (castᶜ-≐ cR (env-eternal-H-C lf η K₃ op ε)))
+            (≡→≐ᶜ midEq)))
+        (≐ᶜ-trans
+          (≐ᶜ-sym (env-eternal-C-++ (ᴱ-lock-free Δ₀) (ᴱ-lock-free Γ)
+                     lf₁₂ (ηᴱ η) (env-ᴱ γ) M₀))
+          (≡→≐ᶜ preEq))))
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+    Θ  = [] ++ᶜ D~ Δ B op ε
+    Γ₊ = Γ ++ᶜ Δ
+
+    K₃ : Fam B ((Δ₀ ++ᶜ Γ₊) ᴱ)
+    K₃ op' ε' = Cl-cast op' ε' (++ᶜ-assoc Δ₀ Γ Δ) (K op' ε')
+
+    K₂ : Fam B ((Γ ++ᶜ Δ) ᴱ)
+    K₂ = env-eternal-H {Δ₀} {Γ₊} lf η K₃
+
+    a₁ = ++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε)
+
+    cR = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (ᴱ-++ᶜ Γ Δ)
+
+    cKassoc = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B ‼ ε))
+                   (++ᶜ-assoc Δ₀ Γ Δ)
+
+    cRᴿ = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε))
+               (ᴱ-++ᶜ (Δ₀ ++ᶜ Γ) Δ)
+
+    lf₁₂ : Lock-free (Δ₀ ᴱ ++ᶜ Γ ᴱ)
+    lf₁₂ = subst Lock-free (ᴱ-++ᶜ Δ₀ Γ) (ᴱ-lock-free (Δ₀ ++ᶜ Γ))
+
+    Y₀ = castᶜ (++ᶜ-assoc ((Δ₀ ++ᶜ Γ) ᴱ) [] (D~ Δ B op ε))
+           (castᶜ cRᴿ (K op ε))
+
+    M₀ = castᶜ (cong (_++ᶜ Θ) (ᴱ-++ᶜ Δ₀ Γ)) Y₀
+
+    -- the two casts between the halves move inside the inner chain, and
+    -- both towers are transports of the same clause
+    midEq : castᶜ a₁
+              (castᶜ cR
+                (env-eternal-C {_} {Γ₊ ᴱ ++ᶜ Dcl B op ε}
+                   (ᴱ-lock-free Δ₀) (ηᴱ η)
+                   (castᶜ (eH Δ₀ Γ₊ B op ε) (K₃ op ε))))
+          ≡ env-eternal-C (ᴱ-lock-free Δ₀) (ηᴱ η)
+              (castᶜ (++ᶜ-assoc (Δ₀ ᴱ) (Γ ᴱ) Θ) M₀)
+    midEq =
+      trans (cong (castᶜ a₁)
+               (env-eternal-C-suffix cR (ᴱ-lock-free Δ₀) (ηᴱ η) _))
+        (trans (env-eternal-C-suffix a₁ (ᴱ-lock-free Δ₀) (ηᴱ η) _)
+          (cong (env-eternal-C (ᴱ-lock-free Δ₀) (ηᴱ η))
+            (trans (cast-chain₄ cKassoc (eH Δ₀ Γ₊ B op ε)
+                      (cong (Δ₀ ᴱ ++ᶜ_) cR) (cong (Δ₀ ᴱ ++ᶜ_) a₁) (K op ε))
+              (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
+                     (sym (cast-chain₄ cRᴿ
+                             (++ᶜ-assoc ((Δ₀ ++ᶜ Γ) ᴱ) [] (D~ Δ B op ε))
+                             (cong (_++ᶜ Θ) (ᴱ-++ᶜ Δ₀ Γ))
+                             (++ᶜ-assoc (Δ₀ ᴱ) (Γ ᴱ) Θ) (K op ε)))))))
+
+    -- `env-ᴱ` at an eternal zone *is* the concatenated values
+    hη : ∀ {A ρ} → (x : A ∈[ ρ ] ((Δ₀ ++ᶜ Γ) ᴱ))
+       → env-ᴱ (eternalˡ Δ₀ lf η γ) x
+       ≡ splitVal (ηᴱ η) (env-ᴱ γ)
+           (∈-++ᶜ-split (Δ₀ ᴱ) (Γ ᴱ)
+             (subst (λ Γ₁ → _ ∈[ _ ] Γ₁) (ᴱ-++ᶜ Δ₀ Γ) x))
+    hη x
+      with ∈-++ᶜ-split (Δ₀ ᴱ) (Γ ᴱ)
+             (subst (λ Γ₁ → _ ∈[ _ ] Γ₁) (ᴱ-++ᶜ Δ₀ Γ) x)
+    ... | inj₁ (ρ' , y) = refl
+    ... | inj₂ y        = refl
+
+    hpre : ∀ {A ρ} → (y : A ∈[ ρ ] (Δ₀ ᴱ ++ᶜ Γ ᴱ))
+         → ++ᶜᵛ (ᴱ-lock-free Γ) (ηᴱ η) (env-ᴱ γ) y
+         ≡ env-ᴱ (eternalˡ Δ₀ lf η γ)
+             (subst (λ Γ₁ → A ∈[ ρ ] Γ₁) (sym (ᴱ-++ᶜ Δ₀ Γ)) y)
+    hpre y =
+      trans (++ᶜᵛ-split (ᴱ-lock-free Γ) (ηᴱ η) (env-ᴱ γ) y)
+        (sym (trans (hη (subst (λ Γ₁ → _ ∈[ _ ] Γ₁) (sym (ᴱ-++ᶜ Δ₀ Γ)) y))
+               (cong (λ z → splitVal (ηᴱ η) (env-ᴱ γ)
+                              (∈-++ᶜ-split (Δ₀ ᴱ) (Γ ᴱ) z))
+                     (subst-subst-sym′ (ᴱ-++ᶜ Δ₀ Γ) y))))
+
+    preEq : env-eternal-C lf₁₂ (++ᶜᵛ (ᴱ-lock-free Γ) (ηᴱ η) (env-ᴱ γ)) M₀
+          ≡ env-eternal-C (ᴱ-lock-free (Δ₀ ++ᶜ Γ))
+              (env-ᴱ (eternalˡ Δ₀ lf η γ)) Y₀
+    preEq =
+      trans (env-eternal-C-pre (sym (ᴱ-++ᶜ Δ₀ Γ)) lf₁₂
+               (ᴱ-lock-free (Δ₀ ++ᶜ Γ)) _ (env-ᴱ (eternalˡ Δ₀ lf η γ))
+               hpre M₀)
+            (cong (env-eternal-C (ᴱ-lock-free (Δ₀ ++ᶜ Γ))
+                                 (env-ᴱ (eternalˡ Δ₀ lf η γ)))
+                  (cast-loop₂ (cong (_++ᶜ Θ) (ᴱ-++ᶜ Δ₀ Γ))
+                              (cong (_++ᶜ Θ) (sym (ᴱ-++ᶜ Δ₀ Γ))) Y₀))
+
+------------------------------------------------------------------------
+-- THE ASSEMBLY: `env-Hˢ-clause` FROM THE STATE-FREE CORE
+--
+-- The outer weakening decomposes onto `cong-ren {Δ ᴱ ∷ p ∷ k} (∅-ren St₁)`
+-- — exactly the renaming `env-Cˢ (env-clause γ St₁)` applies — and the
+-- leftover transports loop.
+------------------------------------------------------------------------
+
+env-Hˢ-clause : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 []) → (Δ : Ctx)
+               → (K : Fam B ((Γ ++ᶜ Δ) ᴱ)) → (op : Op) → (ε : E)
+               → C-rename (cong-∷-ren (cong-∷-ren
+                             (clause-ren St₁ Δ ∘ʳ eq-ren (toCtxᴱ-++ᶜ St Δ))))
+                          (env-Hˢ γ Δ K op ε)
+               ≐ᶜ env-Cˢ (env-clause γ St₁)
+                         (Δ ᴱ ∷ type-of-gtype (param op)
+                              ∷ [ mapᵉ (op-grade op) ]
+                                  (type-of-gtype (arity op) ⇒ B ‼ ε))
+                         (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε))
+
+env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
+  ≐ᶜ-trans
+    (C-rename-cong _ (env-Hˢ-ᴱ γ Δ K op ε))
+    (≐ᶜ-trans
+      (C-rename-conj eIn eOut hconj
+         (castᶜ (eStar St Δ op ε) X))
+      (≡→≐ᶜ
+        (trans (cong (subst (_⊢C⦂ CT) eOut)
+                 (cong (C-rename (cong-ren {Γ'' = D~ Δ B op ε} (∅-ren St₁)))
+                   (trans (cong (subst (_⊢C⦂ CT) eIn)
+                                (castᶜ≡subst (eStar St Δ op ε) X))
+                     (trans (subst-fuseᶜ (eStar St Δ op ε) eIn X)
+                            (subst-loopᶜ _ X)))))
+               (subst-loopᶜ eOut _))))
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+
+    X = env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+          (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
+            (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε)))
+
+    eIn : ((toCtx St ++ᶜ Δ) ᴱ ∷ type-of-gtype (param op)
+             ∷ [ mapᵉ (op-grade op) ]
+                 (type-of-gtype (arity op) ⇒ B ‼ ε))
+        ≡ ([] ++ᶜ D~ Δ B op ε)
+    eIn = sym (eStar St Δ op ε)
+
+    eOut : (toCtx St₁ ++ᶜ D~ Δ B op ε)
+         ≡ (toCtx St₁ ++ᶜ D~ Δ B op ε)
+    eOut = refl
+
+    hconj : cong-∷-ren (cong-∷-ren
+              (clause-ren St₁ Δ ∘ʳ eq-ren (toCtxᴱ-++ᶜ St Δ)))
+          ≐ʳconj⟨ eIn , cong-ren {Γ'' = D~ Δ B op ε} (∅-ren St₁) , eOut ⟩
+    hconj =
+      ≐ʳ-trans
+        (conj-cong-ren (Dcl B op ε) EA refl
+          (≐ʳ-trans
+            (≐ʳ-trans (∘ʳ-≐ hsplit ≐ʳ-refl) (∘ʳ-assoc-≐ _ _ _))
+            (≐ʳ-trans
+              (≐ʳ-sym (∘ʳ-identityˡ-≐ _))
+              (∘ʳ-≐ (eq-ren-≐ refl refl)
+                (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ (toCtxᴱ-++ᶜ St Δ)
+                                          (sym (++ᶜ-identityˡ {Δ ᴱ}))))))))
+        (≐ʳ-trans
+          (conj-fuse (cong (_++ᶜ Dcl B op ε) EA) refl
+             (++ᶜ-assoc [] (Δ ᴱ) (Dcl B op ε))
+             (sym (++ᶜ-assoc (toCtx St₁) (Δ ᴱ) (Dcl B op ε)))
+             (cong-ren-assoc-≐ (Δ ᴱ) (Dcl B op ε) (∅-ren St₁)))
+          (∘ʳ-≐ (eq-ren-≐ _ eOut) (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ eIn))))
+      where
+        EA = trans (toCtxᴱ-++ᶜ St Δ) (sym (++ᶜ-identityˡ {Δ ᴱ}))
+
+        hsplit : clause-ren St₁ Δ
+               ≐ʳ (cong-ren {Γ'' = Δ ᴱ} (∅-ren St₁)
+                   ∘ʳ eq-ren (sym (++ᶜ-identityˡ {Δ ᴱ})))
+        hsplit = ≐ʳ-refl
+
+-- at a non-eternal entry the whole zone disappears from both sides: the
+-- clause substitution is a transport and so is the entry's contribution
+-- to the restriction, so this is `liftᵉ`'s case with one transport more
+
+env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (no ¬et) eq ih rewrite eq =
+  ≐ᶜ-trans
+    (castᶜ-≐ cOut
+      (substᶜ-≐′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
+        (castᶜ-≐ eo (ih Δ' K'))))
+    (≡→≐ᶜ step)
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+    Dc = Dcl B op ε
+
+    Δ' = [] ∷ A ++ᶜ Δ
+
+    K' : Fam B ((Γ ++ᶜ Δ') ᴱ)
+    K' op' ε' = Cl-cast op' ε' (++ᶜ-assoc Γ ([] ∷ A) Δ) (K op' ε')
+
+    cOut = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                          ∷ [ mapᵉ (op-grade op) ]
+                              (type-of-gtype (arity op) ⇒ B ‼ ε))
+                (castOf {toCtx St} {A} Δ)
+
+    dropM = ᴱ-drop-split ¬et (bvar {toCtx St} A Δ)
+
+    eo = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                        ∷ [ mapᵉ (op-grade op) ]
+                            (type-of-gtype (arity op) ⇒ B ‼ ε))
+              (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+
+    -- `A` is not eternal, so it drops out of the restricted suffix
+    eΔ'Δ : Δ' ᴱ ≡ Δ ᴱ
+    eΔ'Δ = trans (ᴱ-++ᶜ ([] ∷ A) Δ)
+             (trans (cong (_++ᶜ Δ ᴱ) (ᴱ-∷-drop {[]} {A} ¬et))
+                    (++ᶜ-identityˡ {Δ ᴱ}))
+
+    eSuf : ([] ++ᶜ D~ Δ' B op ε) ≡ ([] ++ᶜ D~ Δ B op ε)
+    eSuf = cong (λ Γ₁ → [] ++ᶜ (Γ₁ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ]
+                                      (type-of-gtype (arity op) ⇒ B ‼ ε)))
+                eΔ'Δ
+
+    cKassoc = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B ‼ ε))
+                   (++ᶜ-assoc Γ ([] ∷ A) Δ)
+
+    cE' = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε))
+               (ᴱ-++ᶜ Γ Δ')
+
+    X' = env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
+           (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+             (castᶜ cE' (K' op ε)))
+
+    inner-eq : castᶜ (cong (Γ ᴱ ++ᶜ_) eSuf)
+                 (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+                   (castᶜ cE' (castᶜ cKassoc (K op ε))))
+             ≡ castᶜ e₁ (K op ε)
+    inner-eq =
+      trans (cast-chain₄ cKassoc cE'
+               (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+               (cong (Γ ᴱ ++ᶜ_) eSuf) (K op ε))
+        (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
+               (sym (castᶜ≡subst e₁ (K op ε))))
+
+    step : castᶜ cOut
+             (subst (λ Γ₀ → (Γ₀ ++ᶜ Dc) ⊢C⦂ CT) dropM
+               (castᶜ eo (castᶜ (eStar St Δ' op ε) X')))
+         ≡ castᶜ (eStar St Δ op ε)
+             (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ) (castᶜ e₁ (K op ε)))
+    step =
+      trans (cong (λ z → castᶜ cOut
+                           (subst (λ Γ₀ → (Γ₀ ++ᶜ Dc) ⊢C⦂ CT) dropM z))
+                  (cast-chain₂ (eStar St Δ' op ε) eo X'))
+        (trans (cong (castᶜ cOut) (subst-++ᶜʳ Dc dropM _))
+          (trans (castᶜ≡subst cOut _)
+            (trans (subst-fuseᶜ (cong (_++ᶜ Dc) dropM) cOut
+                     (subst (_⊢C⦂ CT) (trans (eStar St Δ' op ε) eo) X'))
+              (trans (subst-fuseᶜ (trans (eStar St Δ' op ε) eo)
+                                  (trans (cong (_++ᶜ Dc) dropM) cOut) X')
+                (trans (cong (λ p → subst (_⊢C⦂ CT) p X') uip)
+                  (trans (sym (cast-chain₂ eSuf (eStar St Δ op ε) X'))
+                    (cong (castᶜ (eStar St Δ op ε))
+                      (trans (env-eternal-C-suffix eSuf (ᴱ-lock-free Γ)
+                                                   (env-ᴱ γ) _)
+                             (cong (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ))
+                                   inner-eq)))))))))
+-- at an eternal entry both sides substitute the restricted value, but at
+-- different prefixes: the clause zone at the state's (provably empty)
+-- one, `env-eternal-C` at `Γ ᴱ`, and only after the chain to its left.
+-- `cl-yes` presents the former as a `sub-atᶜ`, `sub-at-≐` aligns the two,
+-- and `env-eternal-C-swap` moves the latter past the chain.
+
+env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq =
+  ≐ᶜ-trans lhs-step
+    (castᶜ-≐ (eStar St Δ op ε)
+      (env-eternal-C-swap lf (env-ᴱ γ) Θ' V₂ (castᶜ e₁ (K op ε))))
+  where
+    CT = B ‼ (op-grade op ·ₑ ε)
+    Dc = Dcl B op ε
+    lf = ᴱ-lock-free Γ
+
+    Θ' = [] ++ᶜ D~ Δ B op ε
+    Δ' = [] ∷ A ++ᶜ Δ
+
+    K' : Fam B ((Γ ++ᶜ Δ') ᴱ)
+    K' op' ε' = Cl-cast op' ε' (++ᶜ-assoc Γ ([] ∷ A) Δ) (K op' ε')
+
+    Krec : Fam B (((toCtx St ∷ A) ++ᶜ Δ) ᴱ)
+    Krec op' ε' = Cl-cast op' ε' (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+                    (env-Hˢ γ Δ' K' op' ε')
+
+    x  = bvar {toCtx St} A Δ
+    Wv = bval {toCtx St} {A} Δ W
+
+    sl = split→∈-split-l (split-≡-++ᶜ {toCtx St ∷ A} {Δ})
+    sr = split→∈-split-r (split-≡-++ᶜ {toCtx St ∷ A} {Δ})
+
+    V₂ = castᵛ (toCtxᴱ-[] St) (eternal-val-restrict et W)
+
+    eclx = eCl et x B op ε
+
+    X₁ = subst (_⊢C⦂ CT) eclx (Krec op ε)
+
+    X₂ = env-eternal-C lf (env-ᴱ γ)
+           (castᶜ (++ᶜ-assoc (Γ ᴱ) ([] ∷ A) Θ') (castᶜ e₁ (K op ε)))
+
+    -- the state's half of the splitting is empty, the other half is `Δ`
+    eΓ : split-l x ᴱ ≡ []
+    eΓ = trans (cong _ᴱ sl) (toCtxᴱ-[] St)
+
+    eΘ : (split-r x ᴱ ++ᶜ Dc) ≡ Θ'
+    eΘ = trans (cong (λ Γ₁ → Γ₁ ᴱ ++ᶜ Dc) sr)
+               (sym (++ᶜ-identityˡ {D~ Δ B op ε}))
+
+    e  = cong₂ (λ Γ₁ Θ₁ → (Γ₁ ∷ A) ++ᶜ Θ₁) eΓ eΘ
+    e' = cong₂ _++ᶜ_ eΓ eΘ
+
+    -- `A` is eternal, so it survives into the recursion's restricted suffix
+    eΔsuf : ([] ++ᶜ Δ' ᴱ) ≡ (([] ∷ A) ++ᶜ ([] ++ᶜ Δ ᴱ))
+    eΔsuf = trans (++ᶜ-identityˡ {Δ' ᴱ})
+              (trans (ᴱ-++ᶜ ([] ∷ A) Δ)
+                (trans (cong (_++ᶜ Δ ᴱ) (ᴱ-∷-keep {[]} {A} et))
+                       (cong (([] ∷ A) ++ᶜ_) (sym (++ᶜ-identityˡ {Δ ᴱ})))))
+
+    eSuf : ([] ++ᶜ D~ Δ' B op ε) ≡ (([] ∷ A) ++ᶜ Θ')
+    eSuf = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                          ∷ [ mapᵉ (op-grade op) ]
+                              (type-of-gtype (arity op) ⇒ B ‼ ε))
+                eΔsuf
+
+    cAssoc = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                            ∷ [ mapᵉ (op-grade op) ]
+                                (type-of-gtype (arity op) ⇒ B ‼ ε))
+                  (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+
+    cKassoc = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ]
+                                 (type-of-gtype (arity op) ⇒ B ‼ ε))
+                   (++ᶜ-assoc Γ ([] ∷ A) Δ)
+
+    cE' = cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
+                         ∷ [ mapᵉ (op-grade op) ]
+                             (type-of-gtype (arity op) ⇒ B ‼ ε))
+               (ᴱ-++ᶜ Γ Δ')
+
+    Y = env-eternal-C lf (env-ᴱ γ)
+          (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+            (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ') (K' op ε)))
+
+    inner-eq : castᶜ (cong (Γ ᴱ ++ᶜ_) eSuf)
+                 (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+                   (castᶜ cE' (castᶜ cKassoc (K op ε))))
+             ≡ castᶜ (++ᶜ-assoc (Γ ᴱ) ([] ∷ A) Θ') (castᶜ e₁ (K op ε))
+    inner-eq =
+      trans (cast-chain₄ cKassoc cE'
+               (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ' B op ε))
+               (cong (Γ ᴱ ++ᶜ_) eSuf) (K op ε))
+        (trans (cong (λ q → subst (_⊢C⦂ CT) q (K op ε)) uip)
+               (sym (cast-chain₂ e₁ (++ᶜ-assoc (Γ ᴱ) ([] ∷ A) Θ') (K op ε))))
+
+    collapse : subst (_⊢C⦂ CT) e
+                 (subst (_⊢C⦂ CT) eclx
+                   (castᶜ cAssoc (castᶜ (eStar St Δ' op ε) Y)))
+             ≡ X₂
+    collapse =
+      trans (cong (λ z → subst (_⊢C⦂ CT) e (subst (_⊢C⦂ CT) eclx z))
+                  (cast-chain₂ (eStar St Δ' op ε) cAssoc Y))
+        (trans (cong (subst (_⊢C⦂ CT) e)
+                     (subst-fuseᶜ (trans (eStar St Δ' op ε) cAssoc) eclx Y))
+          (trans (subst-fuseᶜ (trans (trans (eStar St Δ' op ε) cAssoc) eclx) e Y)
+            (trans (cong (λ q → subst (_⊢C⦂ CT) q Y) uip)
+              (trans (sym (castᶜ≡subst eSuf Y))
+                (trans (env-eternal-C-suffix eSuf lf (env-ᴱ γ) _)
+                       (cong (env-eternal-C lf (env-ᴱ γ)) inner-eq))))))
+
+    mid : X₂ ≐ᶜ subst (_⊢C⦂ CT) e X₁
+    mid =
+      ≐ᶜ-sym
+        (≐ᶜ-trans (substᶜ-≐ e (substᶜ-≐ eclx (castᶜ-≐ cAssoc (ih Δ' K'))))
+                  (≡→≐ᶜ collapse))
+
+    eVal : subst (_⊢V⦂ A) eΓ (eternal-val-restrict et Wv) ≐ᵛ V₂
+    eVal =
+      ≡→≐ᵛ
+        (trans (cong (λ z → subst (_⊢V⦂ A) eΓ (eternal-val-restrict et z))
+                     (castᵛ≡subst (sym sl) W))
+          (trans (cong (subst (_⊢V⦂ A) eΓ) (restrict-substᵛ (sym sl) et W))
+            (trans (subst-fuseᵛ (cong _ᴱ (sym sl)) eΓ
+                                (eternal-val-restrict et W))
+              (trans (substᵛ-irr _ (toCtxᴱ-[] St) (eternal-val-restrict et W))
+                     (sym (castᵛ≡subst (toCtxᴱ-[] St)
+                                       (eternal-val-restrict et W)))))))
+
+    S₁ = sub-atᶜ {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dc) X₁
+                 (eternal-val-restrict et Wv)
+
+    S₂ = sub-atᶜ {[]} {A} Θ' X₂ V₂
+
+    swapStep : S₂ ≐ᶜ subst (_⊢C⦂ CT) e' S₁
+    swapStep =
+      sub-at-≐ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
+
+    isL = isSub-Cl op ε _ (castOf {toCtx St} {A} Δ)
+            (cl-yes et x Wv Krec op ε eclx)
+
+    isMid : IsSub S₁ (subst (_⊢C⦂ CT) e' S₁)
+    isMid = e' , refl
+
+    isR = isSub-cast _ (eStar St Δ op ε)
+            (isSub-cast _ (++ᶜ-identityˡ {Θ'}) (isSub-refl S₂))
+
+    lhs-step = isSub-≐ (isSub-reassoc isL isMid) isR (≐ᶜ-sym swapStep)
