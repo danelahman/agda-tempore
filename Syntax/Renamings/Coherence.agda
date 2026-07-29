@@ -286,10 +286,50 @@ eq-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ'')
            → (eq-ren e' ∘ʳ eq-ren e) ≐ʳ eq-ren (trans e e')
 eq-ren-∘-≐ refl refl = ∘ʳ-identityˡ-≐ _
 
+-- THE ETERNAL RESTRICTION AGAINST A SUFFIX
+--
+-- `restrict-ren (cong-ren {Δ} r)` is `cong-ren {Δ ᴱ} (restrict-ren r)`,
+-- conjugated by `eq-ren`s at `ᴱ`'s distribution over `_++ᶜ_`. This is the
+-- functor `_ᴱ` commuting with the action of contexts on each fibre; the two
+-- weakening cases below are its instances at `r := wk-ren`.
+
+restrict-cong-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
+                → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
+                → (e₂ : (Γ' ++ᶜ Δ) ᴱ ≡ Γ' ᴱ ++ᶜ Δ ᴱ)
+                → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} r)
+                ≐ʳ (eq-ren (sym e₂)
+                    ∘ʳ cong-ren {Γ'' = Δ ᴱ} (restrict-ren r) ∘ʳ eq-ren e₁)
+
+restrict-cong-≐ r [] e₁ e₂
+  rewrite uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+
+restrict-cong-≐ r (Δ ∷ C) e₁ e₂ with eternal? C
+
+... | yes _ =
+  ≐ʳ-trans (cong-∷-ren-≐ (restrict-cong-≐ r Δ (∷ᶜ-injective-ctx e₁)
+                                              (∷ᶜ-injective-ctx e₂)))
+    (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))
+                      (cong-∷-ren-∘-≐ _ _))
+        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ (sym e₂))
+                        (∘ʳ-≐ ≐ʳ-refl
+                              (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))))
+                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ e₁))))))
+
+... | no  _ = restrict-cong-≐ r Δ e₁ e₂
+
+restrict-cong-≐ r (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-cong-≐ r Δ e₁ e₂
+
 -- With an *eternal* `B`, weakening by `B` weakens the eternal restriction by it
 -- too: `restrict-ren` walks down to `restrict-ren wk-ren`, which at an eternal
 -- type is `wk-ren`. The two contexts differ by `ᴱ`'s distribution over `_++ᶜ_`,
 -- so the statement is conjugated by `eq-ren`s at arbitrary proofs of that.
+--
+-- This is `restrict-cong-≐` at `r := wk-ren`, but not derivable from it as
+-- stated: the general law phrases the target as `(Γ ∷ B) ᴱ`, this one as the
+-- already-reduced `Γ ᴱ ∷ B`, and no `eternal? B` remains in the goal for a
+-- `rewrite` to act on. Aligning them is a change to the callers, not here.
 
 restrict-wk-et-≐ : ∀ {Γ B} → (et : Eternal B) → (Δ : Ctx)
                  → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)

@@ -81,6 +81,7 @@ open import Syntax.Substitutions
 open import Syntax.Renamings.Equivalence
 open import Syntax.Terms.Equivalence
 open import Syntax.Renamings.Coherence
+open import Syntax.Renamings.Category
 open import Syntax.Terms.Transport
 open import Syntax.Substitutions.Equivalence
 open import Syntax.Substitutions.Variables

@@ -581,42 +581,10 @@ ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
 ------------------------------------------------------------------------
 -- RESTRICTING A SUFFIX-EXTENDED RENAMING
 --
--- `restrict-ren (cong-ren {Δ} r)` is `cong-ren {Δ ᴱ} (restrict-ren r)`,
--- conjugated by `eq-ren`s at `ᴱ`'s distribution over `_++ᶜ_` — the
--- arbitrary-prefix-renaming counterpart of `restrict-wk-et-≐`.
-------------------------------------------------------------------------
-
-restrict-cong-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
-                → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
-                → (e₂ : (Γ' ++ᶜ Δ) ᴱ ≡ Γ' ᴱ ++ᶜ Δ ᴱ)
-                → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} r)
-                ≐ʳ (eq-ren (sym e₂)
-                    ∘ʳ cong-ren {Γ'' = Δ ᴱ} (restrict-ren r) ∘ʳ eq-ren e₁)
-
-restrict-cong-≐ r [] e₁ e₂
-  rewrite uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
-  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
-
-restrict-cong-≐ r (Δ ∷ C) e₁ e₂ with eternal? C
-
-... | yes _ =
-  ≐ʳ-trans (cong-∷-ren-≐ (restrict-cong-≐ r Δ (∷ᶜ-injective-ctx e₁)
-                                              (∷ᶜ-injective-ctx e₂)))
-    (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
-      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))
-                      (cong-∷-ren-∘-≐ _ _))
-        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ (sym e₂))
-                        (∘ʳ-≐ ≐ʳ-refl
-                              (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))))
-                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ e₁))))))
-
-... | no  _ = restrict-cong-≐ r Δ e₁ e₂
-
-restrict-cong-≐ r (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-cong-≐ r Δ e₁ e₂
-
 -- Restricting a binder extension: at an eternal binder the restriction
 -- keeps it, at a non-eternal one it drops it — in both cases conjugated
 -- by `eq-ren`s at the (only propositional) context equalities.
+------------------------------------------------------------------------
 
 restrict-∷-et-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (et : Eternal B)
                 → (e₁ : (Γ ∷ B) ᴱ ≡ Γ ᴱ ∷ B)
