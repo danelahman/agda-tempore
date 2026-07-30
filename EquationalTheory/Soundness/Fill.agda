@@ -86,7 +86,7 @@ Paramᵏ []ₖ                        = ⊤
 Paramᵏ (K ₖ[ p ]⨟ N)              = Paramᵏ K × Paramᶜ N
 Paramᵏ (perform[ p ]ₖ op V K)     = Paramᵛ V × Paramᵏ K
 Paramᵏ (delay[ p ]ₖ τ K)          = Paramᵏ K
-Paramᵏ (unbox[ p ]ₖ w V K)        = Paramᵛ V × Paramᵏ K
+Paramᵏ (unbox[ p ]ₖ x rel K)      = Paramᵏ K
 Paramᵏ (box[ p ]ₖ V K)            = Paramᵛ V × Paramᵏ K
 Paramᵏ {Γ} (handle[_]ₖ_`with_`in {B = B} p K H N) =
   Paramᵏ K × Paramᶜ N ×
@@ -101,7 +101,7 @@ fillᴾ []ₖ                    _          N pN = pN
 fillᴾ (K ₖ[ p ]⨟ M)          (pK , pM)  N pN = fillᴾ K pK N pN , pM
 fillᴾ (perform[ p ]ₖ op V K) (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _ N pN)
 fillᴾ (delay[ p ]ₖ τ K)      pK         N pN = fillᴾ K pK _ (renᶜ _ N pN)
-fillᴾ (unbox[ p ]ₖ w V K)    (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _ N pN)
+fillᴾ (unbox[ p ]ₖ x rel K)  pK         N pN = fillᴾ K pK _ (renᶜ _ N pN)
 fillᴾ (box[ p ]ₖ V K)        (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _ N pN)
 fillᴾ (handle[ p ]ₖ K `with H `in M) (pK , pM , pH , uH) N pN =
   fillᴾ K pK N pN , pM , pH , uH
@@ -260,9 +260,9 @@ fill-cong-env Γ {Γ'} (delay[_]ₖ {A} {ε} p τ K) pK N N' pN pN' g eq =
            (ext Γ Γ' Θ₁ g)
            (ren-hyp Γ Γ' Θ₁ K g rΓ' rΓ (fill-ext Γ Γ' Θ₁ K g) N N' pN pN' eq)
 
-fill-cong-env Γ {Γ'} (unbox[_]ₖ {A} {C} {ρ} {Δ} p w V K) (pV , pK)
+fill-cong-env Γ {Γ'} (unbox[_]ₖ {A} {C} {ρ} p x rel K) pK
               N N' pN pN' g eq =
-    ∘ᵐ-congˡ (unbox-def w V (K [ C-rename rΓ' N ]) pV
+    ∘ᵐ-congˡ (unbox-def x rel (K [ C-rename rΓ' N ])
                 (fillᴾ K pK (C-rename rΓ' N) (renᶜ rΓ' N pN)))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
@@ -277,7 +277,7 @@ fill-cong-env Γ {Γ'} (unbox[_]ₖ {A} {C} {ρ} {Δ} p w V K) (pV , pK)
               ∙ ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (unbox-def w V (K [ C-rename rΓ' N' ]) pV
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (unbox-def x rel (K [ C-rename rΓ' N' ])
                        (fillᴾ K pK (C-rename rΓ' N') (renᶜ rΓ' N' pN'))))
   where
     Θ₁ : Ctx
@@ -419,14 +419,14 @@ fill-cong {Γ} (delay[_]ₖ {A} {ε} p τ K) pK {N} {N'} pN pN' eq =
     r = eq-ren (trans
           (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
           (sym (++ᶜ-assoc Γ ([] ⟨ of-natʳ τ ⟩) (hole-ctx K))))
-fill-cong {Γ} (unbox[_]ₖ {A} {C} {ρ} {Δ} p w V K) (pV , pK) {N} {N'} pN pN' eq =
-    unbox-def w V (K [ C-rename r N ]) pV (fillᴾ K pK (C-rename r N) (renᶜ r N pN))
+fill-cong {Γ} (unbox[_]ₖ {A} {C} {ρ} p x rel K) pK {N} {N'} pN pN' eq =
+    unbox-def x rel (K [ C-rename r N ]) (fillᴾ K pK (C-rename r N) (renᶜ r N pN))
   ∙ ∘ᵐ-congˡ (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN')
                 (ren-cong r N N' pN pN' eq))
-  ∙ ≈ᵐ-sym (unbox-def w V (K [ C-rename r N' ]) pV
+  ∙ ≈ᵐ-sym (unbox-def x rel (K [ C-rename r N' ])
               (fillᴾ K pK (C-rename r N') (renᶜ r N' pN')))
   where
-    r : Ren [] ((Γ ∷ A) ++ᶜ hole-ctx K) (Γ ++ᶜ hole-ctx (unbox[ p ]ₖ w V K))
+    r : Ren [] ((Γ ∷ A) ++ᶜ hole-ctx K) (Γ ++ᶜ hole-ctx (unbox[ p ]ₖ x rel K))
     r = eq-ren (trans
           (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
           (sym (++ᶜ-assoc Γ ([] ∷ A) (hole-ctx K))))

@@ -31,13 +31,12 @@ record Config (C : CType) : Set where
 
 -- Looking up the resource that an unboxing computation refers to
 
-unbox-lookup : ∀ {A ρ Δ}
+unbox-lookup : ∀ {A ρ ρ'}
              → (S : 𝕊 [])
-             → (w : Ren [] (toCtx S) (Δ ⟨ ρ ⟩))
-             → (V : Δ ⊢V⦂ [ ρ ] A)
+             → (z : [ ρ ] A ∈[ ρ' ] toCtx S)
+             → ρ' ≾ᵣ ρ
              → toCtx S ⊢V⦂ A
-unbox-lookup {A} {ρ} S w V with unbox⇒var w V
-... | ρ' , z , ρ'≾ρ =
+unbox-lookup {A} {ρ} S z ρ'≾ρ =
   V-rename
     ((((  eq-ren ++ᶜ-identityˡ
        ∘ʳ ⟨⟩-≤-ren ρ'≾ρ)
@@ -213,16 +212,16 @@ mutual
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
 
 
-        -- step for unbox: we look up the (arbitrary, value-based) unboxed
-        -- resource in the state and substitute it into the continuation M
-        UNBOX       : ∀ {A C ρ Δ}
+        -- step for unbox: we look up the unboxed resource in the state and
+        -- substitute it into the continuation M
+        UNBOX       : ∀ {A C ρ ρ'}
                     → {S : 𝕊 []}
-                    → {w : Ren [] (toCtx S) (Δ ⟨ ρ ⟩)}
-                    → {V : Δ ⊢V⦂ [ ρ ] A}
+                    → {z : [ ρ ] A ∈[ ρ' ] toCtx S}
+                    → {rel : ρ' ≾ᵣ ρ}
                     → {M : toCtx S ∷ A ⊢C⦂ C}
                       ----------------------------------------------------------
-                    → ⟨ S , unbox w V M ⟩ ↝
-                      ⟨ S , M [ Hd ↦ unbox-lookup S w V ]c ⟩
+                    → ⟨ S , unbox z rel M ⟩ ↝
+                      ⟨ S , M [ Hd ↦ unbox-lookup S z rel ]c ⟩
 
         -- during execution coerces are peeled off and
         -- the computation's effect becomes more precise

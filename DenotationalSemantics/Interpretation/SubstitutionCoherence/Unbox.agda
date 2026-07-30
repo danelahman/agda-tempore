@@ -40,7 +40,7 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.RenActions    S
 open import Syntax.Substitutions S
-open import Syntax.Renamings.Equivalence S using (eternal?-no; unbox-var-ren)
+open import Syntax.Renamings.Equivalence S using (eternal?-no; Var)
 
 open Category Cat
 open Future Fut
@@ -66,13 +66,15 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base S Ca
 lk : ∀ {Γ A ρ ρ'} → [ ρ ] A ∈[ ρ' ] Γ → ρ' ≾ᵣ ρ → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
 lk z rel = ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj z
 
--- The `unbox-var` smart constructor rebuilds an unboxing whose looked-up
--- resource is the very variable it was built from: interpreting it runs
--- `unbox⇒var` on the rebuilt renaming, and `split-lookup` shows the result
--- is again `z`'s projection.
+-- It depends on the cell alone, the bound being irrelevant.
 
--- projecting the head variable through one lock and relaxing the redundant
--- `uᵣ ·ᵣ ρ` back to `ρ` is just the (locked) second projection
+lk-irr : ∀ {Γ A ρ} → {t t' : Var Γ ([ ρ ] A)} → t ≡ t'
+       → (b : proj₁ t ≾ᵣ ρ) → (b' : proj₁ t' ≾ᵣ ρ)
+       → lk (proj₂ t) b ≈ᵐ lk (proj₂ t') b'
+lk-irr refl b b' rewrite ≾ᵣ-irrelevant b b' = ≈ᵐ-refl
+
+-- Projecting the head variable through one lock and relaxing the redundant
+-- `uᵣ ·ᵣ ρ` back to `ρ` is just the (locked) second projection.
 
 hd-lookup : ∀ {Δ₀ B ρ} → (c : uᵣ ·ᵣ ρ ≾ᵣ ρ)
           → ⟨⟩-≤ c ∘ᵐ var-proj (Tl-⟨⟩ {Γ = Δ₀ ∷ B} {ρ = ρ} Hd) ≈ᵐ ⟨ ρ ⟩ᶠ sndᵐ
@@ -86,50 +88,8 @@ hd-lookup c =
   (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
             (∘ᵐ-identityˡ _)))))))
 
--- the renaming that `unbox-var` builds
-
--- Interpreting an unboxing whose value is the head variable: the looked-up
--- resource is the (locked) second projection, reindexed by the renaming.
--- The renaming must be a *variable* here, so that `var-rename` is stuck and
--- the `with` can abstract it.
-
-unbox⇒var-Hd : ∀ {Γ Δ₀ A ρ} → (W : Ren [] Γ ((Δ₀ ∷ [ ρ ] A) ⟨ ρ ⟩))
-             → lk (proj₁ (proj₂ (unbox⇒var W (var (λ _ → ≾ᵣ-refl) Hd))))
-                  (proj₂ (proj₂ (unbox⇒var W (var (λ _ → ≾ᵣ-refl) Hd))))
-               ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ ⟦ W ⟧ʳ
-unbox⇒var-Hd {Δ₀ = Δ₀} {A = A} {ρ = ρ} W
-  with var-rename W (Tl-⟨⟩ Hd) | var-proj-nat W (Tl-⟨⟩ Hd) (λ ())
-... | ρ'' , b , z'' | vpn =
-  ∘ᵐ-congʳ
-    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (b (λ ())) _)))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ vpn)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-              (∘ᵐ-congˡ (hd-lookup {Δ₀ = Δ₀} {B = [ ρ ] A} {ρ = ρ} _))))))
-
-unbox-varᴾ : ∀ {Γ A C ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-           → (M : Γ ∷ A ⊢C⦂ C) → Paramᶜ M → Paramᶜ (unbox-var z rel M)
-unbox-varᴾ z rel M pM = tt , pM
-
-unbox-var-nat : ∀ {Γ A C ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
-              → ⟦ unbox-var z rel M ⟧ᶜᵗ (unbox-varᴾ z rel M pM)
-              ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , lk z rel ⟩ᵐ
-unbox-var-nat z rel M pM =
-  ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , inner ⟩ᵐ-cong)
-  where
-    inner : _ ≈ᵐ lk z rel
-    inner =
-      ≈ᵐ-trans (unbox⇒var-Hd (unbox-var-ren z rel))
-      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
-      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-nat sndᵐ rel)))
-      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-                (∘ᵐ-congʳ (∘ᵐ-congʳ (split-lookup z)))))))
-
 -- Given that the continuation and the resource lookup each commute with the
--- substitution, so does the whole unboxing. (This is all that is left of the
--- `unbox` case once `unbox-var-nat` has rebuilt both sides.)
+-- substitution, so does the whole unboxing.
 
 unbox-step : ∀ {Γ Γ' A C} → {M' : Γ' ∷ A ⊢C⦂ C} → {M : Γ ∷ A ⊢C⦂ C}
            → {σ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ}
@@ -239,18 +199,15 @@ unbox-subst-nat : ∀ {Γ A B C ρ σ τ}
                 → {pM' : Paramᶜ (M [ Tl-∷ x ↦ W ]c)}
                 → ⟦ M [ Tl-∷ x ↦ W ]c ⟧ᶜᵗ pM'
                   ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ mapˣᵐ (sub-env x W pW) idᵐ
-                → ⟦ unbox-var (proj₁ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar))
-                              (≾ᵣ-trans (proj₂ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar)) rel)
-                              (M [ Tl-∷ x ↦ W ]c) ⟧ᶜᵗ
-                       (unbox-varᴾ (proj₁ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar))
-                                   (≾ᵣ-trans (proj₂ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar)) rel)
-                                   (M [ Tl-∷ x ↦ W ]c) pM')
+                → ⟦ unbox (proj₁ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar))
+                          (≾ᵣ-trans (proj₂ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar)) rel)
+                          (M [ Tl-∷ x ↦ W ]c) ⟧ᶜᵗ pM'
                   ≈ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , lk y rel ⟩ᵐ) ∘ᵐ sub-env x W pW
-unbox-subst-nat y rel M x W pW ih with ⟨ y ⟩[ x ↦ W ]rvar | sub-lk y rel x W pW
-... | _ , v , p | slk =
-  ≈ᵐ-trans (unbox-var-nat v (≾ᵣ-trans p rel) (M [ Tl-∷ x ↦ W ]c) _)
-           (unbox-step {M' = M [ Tl-∷ x ↦ W ]c} {M = M} {σ = sub-env x W pW}
-                       {lk' = lk v (≾ᵣ-trans p rel)} {lkᵒ = lk y rel} ih slk)
+unbox-subst-nat y rel M x W pW ih =
+  unbox-step {M' = M [ Tl-∷ x ↦ W ]c} {M = M} {σ = sub-env x W pW}
+             {lk' = lk (proj₁ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar))
+                       (≾ᵣ-trans (proj₂ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar)) rel)}
+             {lkᵒ = lk y rel} ih (sub-lk y rel x W pW)
 
 -- Substitution in a variable.
 

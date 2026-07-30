@@ -60,40 +60,38 @@ open import Syntax.Substitutions.Equivalence Spec
 -- case starts from.
 ------------------------------------------------------------------------
 
--- Unboxing: read the store. `env-Cˢ-unbox` splits the action into an `unbox`
--- at the cell the environment sends this one to, `UNBOX` reads that cell, and
--- the value read is reducible at the current state — which is the store, come
+-- Unboxing: read the store. `env-Cˢ-unbox` sends the action to an `unbox` at
+-- the cell the environment sends this one to, `UNBOX` reads that cell, and the
+-- value read is reducible at the current state — which is the store, come
 -- through the environment (`env-cell₀-val` at `id-suc`, the extension `UNBOX`
 -- performs). `env-cell-push` at the empty suffix is what identifies the cell
 -- the shape law computes with the one the reducibility statement speaks about.
 
-FL-unbox : ∀ {St Γ Δ₀ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
-         → (w : Ren [] Γ (Δ₀ ⟨ ρ ⟩)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+FL-unbox : ∀ {St Γ A D ρ σ ε} → (γ : Env St Γ) → Rel-Env γ
+         → (x : [ ρ ] A ∈[ σ ] Γ) → (rel : σ ≾ᵣ ρ)
          → (M : Γ ∷ A ⊢C⦂ D ‼ ε)
          → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
               → Comp' D ε St' (env-C γ' M))
          --------------------------------------------------------------
-         → Comp' D ε St (env-C γ (unbox w V M))
+         → Comp' D ε St (env-C γ (unbox x rel M))
 
-FL-unbox {St = St} {A = A} {ρ = ρ} γ pγ w V M pM
-  with env-Cˢ-unbox γ [] w V M (unbox-img w V) refl
-                    (proj₂ (proj₂ (unbox⇒var w V)))
-
-... | Δ₁ , w₁ , V₁ , ce , eN =
-  Comp-≐ᶜ (≐ᶜ-sym eN) (Comp-expand UNBOX (pM (γ ∷ᵉ U) (pγ , pU)))
+FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
+  Comp-≐ᶜ (≐ᶜ-sym (env-Cˢ-unbox γ [] x rel M rel₁))
+          (Comp-expand UNBOX (pM (γ ∷ᵉ U) (pγ , pU)))
   where
-    U    = unbox-lookup St w₁ V₁
-    rel₁ = proj₂ (proj₂ (unbox⇒var w₁ V₁))
+    rel₁ = env-cell-rel γ [] (σ , x) rel
 
-    -- the cell the split names is the cell the environment sends `w`'s to
-    cellEq : unbox-img w₁ V₁ ≡ env-cell₀ γ (unbox-img w V)
-    cellEq = trans ce (env-cell-push γ [] (unbox-img w V))
+    U = unbox-lookup St (proj₂ (env-cell γ [] (σ , x))) rel₁
+
+    -- the cell the action names is the one the reducibility statement speaks of
+    cellEq : env-cell γ [] (σ , x) ≡ env-cell₀ γ (σ , x)
+    cellEq = env-cell-push γ [] (σ , x)
 
     rel₂ = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel₁
 
     pU : Val A St U
     pU = Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
-                  (env-cell₀-val γ pγ (unbox-img w V) id-suc rel₂)
+                  (env-cell₀-val γ pγ (σ , x) id-suc rel₂)
 
 -- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components
 -- in the *opposite* order from the environment — the rule replaces `B` (its
@@ -365,8 +363,8 @@ mutual
   FL-C γ pγ (box V M) =
     FL-box γ pγ V M (λ γ' pγ' → FL-V γ' pγ' V) (λ γ' pγ' → FL-C γ' pγ' M)
 
-  FL-C γ pγ (unbox w V M) =
-    FL-unbox γ pγ w V M (λ γ' pγ' → FL-C γ' pγ' M)
+  FL-C γ pγ (unbox x rel M) =
+    FL-unbox γ pγ x rel M (λ γ' pγ' → FL-C γ' pγ' M)
 
 ------------------------------------------------------------------------
 -- COROLLARIES

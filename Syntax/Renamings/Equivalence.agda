@@ -462,36 +462,6 @@ cong-ren-∘-≐ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
   ≐ʳ-trans (cong-⟨⟩-ren-≐ (cong-ren-∘-≐ Γ₀ r₂ r₁))
            (cong-⟨⟩-ren-∘-≐ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
 
-------------------------------------------------------------------------
--- THE CELL AN `unbox` NAMES
---
--- Reduction consults an `unbox` only through `unbox⇒var`, and `unbox-lookup`
--- only through this — so this, and not the stored renaming or boxed value, is
--- what `_≐ᶜ_` compares below.
-------------------------------------------------------------------------
-
-unbox-img : ∀ {Γ A ρ Δ} → Ren [] Γ (Δ ⟨ ρ ⟩) → Δ ⊢V⦂ [ ρ ] A → Var Γ ([ ρ ] A)
-unbox-img w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
-
--- `_≐ʳ_`-equal renamings name the same resource variable: the boxed value is seen only as a
--- variable (`grad-typ⇒var`), which both consult alike.
-
-unbox-img-≐ : ∀ {Γ A ρ Δ} {w w' : Ren [] Γ (Δ ⟨ ρ ⟩)}
-            → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
-            → unbox-img w V ≡ unbox-img w' V
-unbox-img-≐ hw V with grad-typ⇒var V
-... | _ , y , f , refl = at hw (Tl-⟨⟩ y)
-
--- Renaming an `unbox` relocates its resource variable — definitionally, since `var-rename`
--- of a composite is the composite.
-
-unbox-img-∘ : ∀ {Γ Γ' A ρ Δ} → (r : Ren [] Γ Γ') → (w : Ren [] Γ' (Δ ⟨ ρ ⟩))
-            → (V : Δ ⊢V⦂ [ ρ ] A)
-            → unbox-img (w ∘ʳ r) V ≡ var-img′ r (unbox-img w V)
-unbox-img-∘ r w V with grad-typ⇒var V
-... | _ , y , f , refl = refl
-
-
 -- The eternal restriction is compositional by definition.
 
 restrict-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
@@ -714,15 +684,12 @@ wk-ren-⟨ρ⟩-ctx-img (Γ' ∷ B)   refl x =
 wk-ren-⟨ρ⟩-ctx-img (Γ' ⟨ ρ' ⟩) refl x =
   cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (wk-ren-⟨ρ⟩-ctx-img Γ' refl x)
 
--- THE CELL `unbox-var` NAMES
+-- THE SPLIT'S HEAD VARIABLE
 --
--- `unbox-var z rel M` rebuilds an unboxing whose boxed value is the head
--- variable of `split-l z ∷ [ ρ ] A`; the resource variable it names is therefore `z` itself.
--- The syntactic counterpart of `split-lookup` in
+-- Pushing the head variable of `split-l z ∷ A` through `split-r z` and relocating
+-- along the split returns `z`. Induction on `z`, i.e. on `var-split`'s own
+-- recursion. The syntactic counterpart of `split-lookup` in
 -- `Interpretation.SubstitutionCoherence`.
-
--- Pushing that head variable through `split-r z` and relocating along the split
--- returns `z`. Induction on `z`, i.e. on `var-split`'s own recursion.
 
 split-lookup-img : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ)
                  → (grade-++ᶜˡ uᵣ (split-r z)
@@ -743,26 +710,3 @@ split-lookup-img (Tl-⟨⟩ {ρ = ρ₁} z) =
               (subst-Tl-⟨⟩ (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd)))
         (cong (Var-⟨⟩ ρ₁) (split-lookup-img z))
 
--- Hence: the resource variable `unbox-var z rel M` names is `z`. The renaming it stores is
--- `(⟨⟩-≤-ren rel ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)) ∘ʳ eq-ren (split-≡ …)`, and
--- `var-img` runs through those left to right.
-
--- The renaming `unbox-var` stores.
-
-unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → Ren [] Γ ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩)
-unbox-var-ren z rel =
-     (⟨⟩-≤-ren rel
-  ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z))
-  ∘ʳ eq-ren (split-≡ (split-pf z))
-
-unbox-var-img : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → unbox-img (unbox-var-ren z rel)
-                          (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
-              ≡ (ρ' , z)
-
-unbox-var-img z rel =
-  trans (cong (var-img′ (eq-ren (split-≡ (split-pf z))))
-              (wk-ren-⟨ρ⟩-ctx-img (split-r z) (split-grade-≡ z) Hd))
-    (trans (eq-ren-img (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd))
-           (split-lookup-img z))

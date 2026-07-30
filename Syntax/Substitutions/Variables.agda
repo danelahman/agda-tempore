@@ -379,32 +379,6 @@ sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Eternal B
                   (castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) W)
 sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 
--- THE CELL `unbox-var` NAMES (what `sub-wk-unbox` needs)
---
--- `unbox-var z rel M` rebuilds an unboxing whose boxed value is the head
--- variable of `split-l z ∷ [ ρ ] A`, so the resource variable it names is `z` itself — the
--- syntactic counterpart of `split-lookup` in
--- `Interpretation.SubstitutionCoherence`. Its renaming is
--- `(⟨⟩-≤-ren rel ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)) ∘ʳ eq-ren (split-≡ (split-pf z))`,
--- so computing its `var-img` at `Tl-⟨⟩ Hd` needs, in order: `⟨⟩-≤-ren`'s clause,
--- `wk-ren-⟨ρ⟩-ctx-img` (in `GradedReach`, proved), and `eq-ren-img` below. What is left
--- is
---
---   split-lookup-img : (z : [ ρ ] A ∈[ ρ' ] Γ)
---                    → (grade-++ᶜˡ uᵣ (split-r z)
---                      , subst _ (split-≡ (split-pf z))
---                              (∈-++ᶜˡ (split-r z) (Hd {Γ = split-l z})))
---                    ≡ (ρ' , z)
---
--- by induction on `z` — `Hd` is `refl`, and the two `Tl` cases are `subst-Tl-∷`
--- resp. `subst-Tl-⟨⟩` under a `cong`. **State it with `∈-++ᶜˡ`, not
--- `var-ρ-++ᶜ`**: the latter carries a grade `subst` in each of its `[]` and
--- `⟨⟩` clauses, which turns all three cases into `Var`-level transport puzzles,
--- whereas `grade-++ᶜˡ`/`∈-++ᶜˡ` are subst-free by construction. That means
--- restating `wk-ren-⟨ρ⟩-ctx-img` over `∈-++ᶜˡ` too, and so moving
--- `grade-++ᶜˡ`/`∈-++ᶜˡ` into `Syntax.Renamings.Equivalence` beside the other
--- variable-relocation lemmas.
-
 -- SUBSTITUTION FIXES A RESOURCE VARIABLE
 --
 -- The `rvar` counterparts of `sub-var-r`/`sub-var-l`: `⟨_⟩[_↦_]rvar` returns the

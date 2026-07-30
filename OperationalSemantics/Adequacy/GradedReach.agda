@@ -382,16 +382,6 @@ unbox-cells q₀ q' x =
       (trans (sym (≤ₛ-embed-∘ (ext q₀) (ext q') x))
              (sym (unbox-ren-img (reach-∘ᵘ q' q₀) x))))
 
--- The same at the level `unbox-lookup` consumes it: a boxed value *is* a
--- variable, so the cell it names is `unbox-cells`.
-
-unbox-cellsᵛ : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-             → (q₀ : St ⊑ₛ[ uᵣ ] St') → (q' : St' ⊑ₛ[ ρ ] St₂)
-             → (V : toCtx St ⊢V⦂ [ ρ ] A)
-             → unbox-img (unbox-ren q') (reach-val q₀ V)
-             ≡ unbox-img (unbox-ren (reach-∘ᵘ q' q₀)) V
-unbox-cellsᵛ q₀ q' (var f x) = unbox-cells q₀ q' x
-
 ------------------------------------------------------------------------
 -- RUNS
 --
@@ -647,13 +637,9 @@ unbox-ren-delay-≐ = mk≐ʳ go
 ------------------------------------------------------------------------
 -- UNFOLDING THE LOOKUP
 --
--- `unbox-lookup` is a `with` on `unbox⇒var`, so it does not reduce at an
--- abstract boxed value — but `Σ` has eta, so the scrutinee *is* its own triple
--- of projections and the block unfolds against them. Naming the body as a
--- function of the cell (`Var`) and the grade bound is therefore an equality
--- proved by `refl`, and it is what makes the lookup coherences provable: the
--- cell is `unbox-img`, whose behaviour is already known, and the bound is
--- irrelevant.
+-- Naming `unbox-lookup`'s body as a function of the cell (`Var`) and the grade
+-- bound is what makes the lookup coherences provable: two lookups at the same
+-- cell agree, the bound being irrelevant.
 ------------------------------------------------------------------------
 
 
@@ -722,21 +708,10 @@ lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
   rewrite uip {p = eq} {q = eq'} | uip {p = h} {q = h'}
         | ≾ᵣ-irrelevant rel rel' = V-rename-cong _ eU
 
--- Transporting the renaming an `unbox` consults relocates the cell it names.
-
-unbox-img-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren [] Γ' (Δ ⟨ ρ ⟩))
-               → (V : Δ ⊢V⦂ [ ρ ] A)
-               → unbox-img (castʳ e w') V
-               ≡ (proj₁ (unbox-img w' V)
-                 , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-img w' V) ] Γ₀) e
-                         (proj₂ (unbox-img w' V)))
-unbox-img-cast refl w' V = refl
-
-unbox-lookup-≡ : ∀ {A ρ Δ} → (St : 𝕊 [])
-               → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
-               → unbox-lookup St w V
-               ≡ lookup-body St (unbox-img w V) (proj₂ (proj₂ (unbox⇒var w V)))
-unbox-lookup-≡ St w V = refl
+unbox-lookup-≡ : ∀ {A ρ ρ'} → (St : 𝕊 [])
+               → (z : [ ρ ] A ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ)
+               → unbox-lookup St z rel ≡ lookup-body St (ρ' , z) rel
+unbox-lookup-≡ St z rel = refl
 
 -- Same cell, same value: the bound is `≾ᵣ`-irrelevant.
 
@@ -746,19 +721,6 @@ lookup-body-≡ : ∀ {A ρ} → (St : 𝕊 [])
               → lookup-body St t rel ≡ lookup-body St t' rel'
 lookup-body-≡ St refl rel rel' =
   cong (lookup-body St _) (≾ᵣ-irrelevant rel rel')
-
--- Retyping the *boxed value* instead: the lookup sees it only through
--- `unbox⇒var`, so moving it along a context equality is precomposing the
--- consulted renaming with that equality.
-
-unbox-lookup-cast-val : ∀ {Δ Δ' A ρ} → (St : 𝕊 []) → (e : Δ' ≡ Δ)
-                      → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)) → (V : Δ' ⊢V⦂ [ ρ ] A)
-                      → unbox-lookup St w (castᵛ e V)
-                      ≐ᵛ unbox-lookup St (cong-⟨⟩-ren (eq-ren e) ∘ʳ w) V
-unbox-lookup-cast-val St refl w V =
-  ≡→≐ᵛ (lookup-body-≡ St
-           (unbox-img-≐ (≐ʳ-sym (∘ʳ-id-≐ w (cong-⟨⟩-ren-id-≐ ≐ʳ-refl))) V)
-           _ _)
 
 
 ------------------------------------------------------------------------

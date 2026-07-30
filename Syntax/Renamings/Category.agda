@@ -144,17 +144,13 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
                (cong (var-img′ r) (sym (ᴱ-ren-img Γ' x))))
 
 ------------------------------------------------------------------------
--- TERMS ARE SETOID-VALUED PRESHEAVES
+-- TERMS ARE PRESHEAVES
 --
--- `(Γ ⊢V⦂ A , _≐ᵛ_)` and `(Γ ⊢C⦂ C , _≐ᶜ_)` are presheaves on the category
--- above. The action is `V-rename`/`C-rename`; the laws are `V-rename-∘`,
--- `V-rename-id-≐`, `V-rename-≐` (the action respects the quotient) and
--- `V-rename-cong` (it respects the setoid), and likewise for `C`.
---
--- The setoid is not optional. `C-rename r` stores `w ∘ʳ r` in every `unbox`
--- node, so renaming along `r₂ ∘ʳ r₁` stores that composite where renaming
--- twice stores `(w ∘ʳ r₂) ∘ʳ r₁`: functoriality holds up to `_≐ᶜ_` and
--- never up to `_≡_`.
+-- `Γ ⊢V⦂ A` and `Γ ⊢C⦂ C` are presheaves on the category above. The action is
+-- `V-rename`/`C-rename`; the laws are `V-rename-∘`, `V-rename-id-≐` (the
+-- action respects the quotient on renamings) and `V-rename-cong`, and likewise
+-- for `C`. Everything a term stores is either shape or a proof-irrelevant
+-- bound, so the laws hold at `_≡_`.
 --
 -- Transport along a context equality is this action restricted to the
 -- subgroupoid of equalities: `castᵛ e V ≐ᵛ V-rename (eq-ren e) V`

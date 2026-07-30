@@ -480,15 +480,14 @@ unbox-rvar-ren {Γ} {Γ'} {B} r Θ {A} {ρ} {σ} c W
 -- substitution only through the eternal restriction. Both are stated so that
 -- the induction below can hand them its hypothesis at the grown suffix.
 
--- `unbox`: both orders rebuild the unboxing from the resource variable the substitution
--- leaves (`sub-unbox`), and `unbox-rvar-ren` says the two resource variables agree. The body
--- is the induction hypothesis at the grown suffix, taken as an argument so that
--- this can stand outside the induction.
+-- `unbox`: `unbox-rvar-ren` says the two orders name the same resource
+-- variable. The body is the induction hypothesis at the grown suffix, taken as
+-- an argument so that this can stand outside the induction.
 
 ren-sub-unbox
-  : ∀ {Γ Γ' B A ρ C Δ} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
-  → (w : Ren [] ((Γ ∷ B) ++ᶜ Θ) (Δ ⟨ ρ ⟩))
-  → (V : Δ ⊢V⦂ [ ρ ] A)
+  : ∀ {Γ Γ' B A ρ σ C} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
+  → (c : [ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ))
+  → (rel : σ ≾ᵣ ρ)
   → (M : (((Γ ∷ B) ++ᶜ Θ) ∷ A) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
   → (ih : C-rename (cong-ren {Γ'' = Θ ∷ A} r)
             (castᶜ (castOf {Γ} {B} (Θ ∷ A))
@@ -503,23 +502,21 @@ ren-sub-unbox
                             (V-rename r W) ]c))
   → C-rename (cong-ren {Γ'' = Θ} r)
       (castᶜ (castOf {Γ} {B} Θ)
-        (unbox w V M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
-                       ↦ castᵛ (sym (split→∈-split-l
-                                       (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
+        (unbox c rel M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
+                         ↦ castᵛ (sym (split→∈-split-l
+                                         (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
   ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
-       ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) (unbox w V M))
+       ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) (unbox c rel M))
           [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
             ↦ castᵛ (sym (split→∈-split-l
                             (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
                     (V-rename r W) ]c)
 
-ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
+ren-sub-unbox {Γ} {Γ'} {B} {A} r Θ c rel M W ih =
   ≐ᶜ-trans
-    (C-rename-cong ρ₀
-      (≐ᶜ-trans (castᶜ-≐ (castOf {Γ} {B} Θ) (sub-unbox w V M xL WL relL))
-                (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))))
+    (C-rename-cong (cong-ren {Γ'' = Θ} r) (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ))))
     (≐ᶜ-trans
-      (unbox-≐ rvarEq
+      (unbox-≐ (unbox-rvar-ren r Θ c W)
         (≐ᶜ-trans
           (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
                       (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
@@ -527,53 +524,6 @@ ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
           (≐ᶜ-trans ih
                     (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
                                      (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
-      (≐ᶜ-sym
-        (≐ᶜ-trans (castᶜ-≐ (castOf {Γ'} {B} Θ)
-                    (sub-unbox (w ∘ʳ ρ') V (C-rename (cong-∷-ren ρ') M)
-                               xR WR relR))
-                  (≡→≐ᶜ (cast-unbox (castOf {Γ'} {B} Θ))))))
-  where
-    ρ₀ = cong-ren {Γ'' = Θ} r
-    ρ' = cong-ren {Γ'' = Θ} (cong-∷-ren r)
-
-    xL = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
-    xR = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
-    WL = castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W
-    WR = castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ}))) (V-rename r W)
-
-    cL = proj₂ (unbox-img w V)
-
-    relL = ≾ᵣ-trans (proj₂ (proj₂ (⟨ cL ⟩[ xL ↦ WL ]rvar)))
-                    (proj₂ (proj₂ (unbox⇒var w V)))
-
-    relR = ≾ᵣ-trans
-             (proj₂ (proj₂ (⟨ proj₂ (unbox-img (w ∘ʳ ρ') V) ⟩[ xR ↦ WR ]rvar)))
-             (proj₂ (proj₂ (unbox⇒var (w ∘ʳ ρ') V)))
-
-    hd : ∀ {Γ₀ : Ctx} → (Γ₀ ∷ [ ρ ] A) ⊢V⦂ [ ρ ] A
-    hd = var (λ _ → ≾ᵣ-refl) Hd
-
-    vL = proj₂ (rvar-img cL xL WL)
-    vR = proj₂ (rvar-img (proj₂ (unbox-img (w ∘ʳ ρ') V)) xR WR)
-
-    wL = castʳ (castOf {Γ} {B} Θ) (unbox-var-ren vL relL)
-    wR = castʳ (castOf {Γ'} {B} Θ) (unbox-var-ren vR relR)
-
-    rvarEq : unbox-img (wL ∘ʳ ρ₀) hd ≡ unbox-img wR hd
-    rvarEq =
-      trans (unbox-img-∘ ρ₀ wL hd)
-        (trans (cong (var-img′ ρ₀)
-                 (trans (unbox-img-castʳ (castOf {Γ} {B} Θ)
-                                          (unbox-var-ren vL relL) hd)
-                        (cong (Var-cast (castOf {Γ} {B} Θ))
-                              (unbox-var-img vL relL))))
-          (trans (unbox-rvar-ren r Θ cL W)
-            (trans (cong (λ t → Var-cast (castOf {Γ'} {B} Θ)
-                                  (rvar-img (proj₂ t) xR WR))
-                         (sym (unbox-img-∘ ρ' w V)))
-              (sym (trans (unbox-img-castʳ (castOf {Γ'} {B} Θ)
-                                            (unbox-var-ren vR relR) hd)
-                     (cong (Var-cast (castOf {Γ'} {B} Θ))
-                           (unbox-var-img vR relR)))))))
+      (≐ᶜ-sym (≡→≐ᶜ (cast-unbox (castOf {Γ'} {B} Θ)))))
 
 ------------------------------------------------------------------------

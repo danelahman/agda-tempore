@@ -4,10 +4,9 @@
 -- `↝` respects `_≐ᶜ_`, and almost every reduction rule's reduct is a  --
 -- substitution, so substitution must be a congruence for it.          --
 --                                                                    --
--- The content is in the variable clauses: `⟨_,_⟩[_↦_]var` crosses a    --
--- lock by weakening along a renaming built from the *grade bound*, and --
--- two related terms carry different bounds — so the two sides are      --
--- renamed along different but `_≐ʳ_`-equal renamings.                  --
+-- The one clause with content is `⟨_,_⟩[_↦_]var`, which crosses a     --
+-- lock by weakening along a renaming built from the *grade bound*:    --
+-- the two sides carry different bounds, related by `bound-irr`.       --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -39,38 +38,21 @@ open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 
 -- ETERNAL VALUES
---
--- `eternal-val-ext` and `eternal-val-restrict` recurse on the value, and an
--- eternal type carries no arrow, so the `lam` case is impossible.
 
 eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Eternal A) → {V V' : Γ ⊢V⦂ A}
                      → V ≐ᵛ V'
                      → eternal-val-ext {ρ = ρ} et V ≐ᵛ eternal-val-ext et V'
-eternal-val-ext-cong et            var-≐          = var-≐
-eternal-val-ext-cong et            const-≐        = const-≐
-eternal-val-ext-cong et            ⋆-≐            = ⋆-≐
-eternal-val-ext-cong (et₁ |×|ₑ et₂) (pair-≐ e₁ e₂) =
-  pair-≐ (eternal-val-ext-cong et₁ e₁) (eternal-val-ext-cong et₂ e₂)
-eternal-val-ext-cong et (lam-≐ e) with et
-... | ()
+eternal-val-ext-cong et = cong (eternal-val-ext et)
 
 eternal-val-restrict-cong : ∀ {Γ A} → (et : Eternal A) → {V V' : Γ ⊢V⦂ A}
                           → V ≐ᵛ V'
                           → eternal-val-restrict et V ≐ᵛ eternal-val-restrict et V'
-eternal-val-restrict-cong et            var-≐          = var-≐
-eternal-val-restrict-cong et            const-≐        = const-≐
-eternal-val-restrict-cong et            ⋆-≐            = ⋆-≐
-eternal-val-restrict-cong (et₁ |×|ₑ et₂) (pair-≐ e₁ e₂) =
-  pair-≐ (eternal-val-restrict-cong et₁ e₁) (eternal-val-restrict-cong et₂ e₂)
-eternal-val-restrict-cong et (lam-≐ e) with et
-... | ()
+eternal-val-restrict-cong et = cong (eternal-val-restrict et)
 
 -- SUBSTITUTING INTO A VARIABLE
 --
--- Induction on the two variables, mirroring `⟨_,_⟩[_↦_]var`. The lock case is
--- where the bounds enter: on the non-eternal side the two results are renamed
--- along `⟨⟩-≤-ren` at different proofs, related by `⟨⟩-≤-ren-≐` and transported
--- by `V-rename-≐`.
+-- The substitution reads the variable's grade bound (at the lock case, to build
+-- a `⟨⟩-≤-ren`), so the two bounds must be identified — by `bound-irr`.
 
 sub-var-≐ : ∀ {Γ A B ρ ρ'}
           → (y : B ∈[ ρ' ] Γ) → (f f' : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
@@ -79,32 +61,13 @@ sub-var-≐ : ∀ {Γ A B ρ ρ'}
           --------------------------------------------------------
           → ⟨ y , f ⟩[ x ↦ W ]var ≐ᵛ ⟨ y , f' ⟩[ x ↦ W' ]var
 
-sub-var-≐ Hd       f f' Hd       eW = eW
-sub-var-≐ Hd       f f' (Tl-∷ x) eW = var-≐
-sub-var-≐ (Tl-∷ y) f f' Hd       eW = var-≐
-sub-var-≐ (Tl-∷ y) f f' (Tl-∷ x) eW =
-  V-rename-cong wk-ren (sub-var-≐ y f f' x eW)
-sub-var-≐ {B = B} (Tl-⟨⟩ y) f f' (Tl-⟨⟩ x) eW with eternal? B
-... | yes p =
-  eternal-val-ext-cong p
-    (sub-var-≐ y (λ z → ≾ᵣ-zero-productˡ (f (λ _ → z p)))
-                 (λ z → ≾ᵣ-zero-productˡ (f' (λ _ → z p))) x eW)
-... | no ¬p =
-  ≐ᵛ-trans
-    (V-rename-≐ (∘ʳ-≐ (≐ʳ-refl {r = ⟨⟩-η⁻¹-ren})
-                      (⟨⟩-≤-ren-≐ (≾ᵣ-zero-productʳ (f ¬p))
-                                  (≾ᵣ-zero-productʳ (f' ¬p))))
-                ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f z)) ⟩[ x ↦ _ ]var)
-    (V-rename-cong (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬p)))
-      (sub-var-≐ y (λ z → ≾ᵣ-zero-productˡ (f z))
-                   (λ z → ≾ᵣ-zero-productˡ (f' z)) x eW))
+sub-var-≐ y f f' x eW =
+  cong₂ (λ g U → ⟨ y , g ⟩[ x ↦ U ]var) (bound-irr f f') eW
 
 -- SUBSTITUTING INTO A RESOURCE VARIABLE
 --
--- `⟨_⟩[_↦_]rvar` returns a variable and a grade bound. Only the variable is
--- observable, and it depends on the substituted value solely through
--- `grad-typ⇒var`, which `_≐ᵛ_` pins down (related box-typed values are the same
--- variable).
+-- `⟨_⟩[_↦_]rvar` returns a variable and a grade bound; only the variable is
+-- observable, and that is what an `unbox` node stores.
 
 rvar-img : ∀ {Γ A B ρ σ τ}
          → ([ ρ ] B ∈[ σ ] Γ) → (x : A ∈[ τ ] Γ) → split-l x ⊢V⦂ A
@@ -117,130 +80,34 @@ sub-rvar-≐ : ∀ {Γ A B ρ σ τ}
            ----------------------------------------
            → rvar-img y x W ≡ rvar-img y x W'
 
-sub-rvar-≐ Hd       Hd       eW with eW
-sub-rvar-≐ Hd       Hd       eW | var-≐ = refl
-sub-rvar-≐ Hd       (Tl-∷ x) eW = refl
-sub-rvar-≐ (Tl-∷ y) Hd       eW = refl
-sub-rvar-≐ (Tl-∷ y) (Tl-∷ x) eW =
-  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (sub-rvar-≐ y x eW)
-sub-rvar-≐ (Tl-⟨⟩ y) (Tl-⟨⟩ x) eW =
-  cong (λ z → proj₁ z ·ᵣ _ , Tl-⟨⟩ (proj₂ z)) (sub-rvar-≐ y x eW)
+sub-rvar-≐ y x = cong (rvar-img y x)
 
--- RETYPING AND THE `unbox` SMART CONSTRUCTOR
+-- RETYPING
 
 substᵛ-≐ : ∀ {A Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {V V' : Γ₁ ⊢V⦂ A}
          → V ≐ᵛ V' → subst (_⊢V⦂ A) e V ≐ᵛ subst (_⊢V⦂ A) e V'
-substᵛ-≐ refl eV = eV
+substᵛ-≐ {A} e = cong (subst (_⊢V⦂ A) e)
 
 substᶜ-≐ : ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : Γ₁ ⊢C⦂ C}
          → M ≐ᶜ M' → subst (_⊢C⦂ C) e M ≐ᶜ subst (_⊢C⦂ C) e M'
-substᶜ-≐ refl eM = eM
+substᶜ-≐ {C} e = cong (subst (_⊢C⦂ C) e)
 
 substᶜ-≐′ : (f : Ctx → Ctx) → ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : f Γ₁ ⊢C⦂ C}
           → M ≐ᶜ M'
           → subst (λ z → f z ⊢C⦂ C) e M ≐ᶜ subst (λ z → f z ⊢C⦂ C) e M'
-substᶜ-≐′ f refl eM = eM
-
--- `unbox-var` stores its grade bound inside a `⟨⟩-≤-ren`, so it is a congruence
--- at differing bounds.
-
-unbox-var-≐ : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ)
-            → (rel rel' : ρ' ≾ᵣ ρ) → {M M' : Γ ∷ A ⊢C⦂ C}
-            → M ≐ᶜ M'
-            → unbox-var x rel M ≐ᶜ unbox-var x rel' M'
-unbox-var-≐ x rel rel' eM =
-  unbox-≐ (unbox-img-≐
-             (∘ʳ-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ rel rel')
-                         (≐ʳ-refl {r = wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)}))
-                   (≐ʳ-refl {r = eq-ren (split-≡ (split-pf x))}))
-             (var (λ _ → ≾ᵣ-refl) Hd))
-          eM
+substᶜ-≐′ f {C} e = cong (subst (λ z → f z ⊢C⦂ C) e)
 
 ------------------------------------------------------------------------
 -- SUBSTITUTION IS A CONGRUENCE
---
--- Induction on the relation; the substituted variable and value vary, so the
--- `handle` case can recurse at the clause variable `split→∈ s`.
 ------------------------------------------------------------------------
 
-mutual
+sub-≐ᵛ : ∀ {Γ A B ρ} → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
+       → W ≐ᵛ W' → {V V' : Γ ⊢V⦂ B} → V ≐ᵛ V'
+       → (V [ x ↦ W ]v) ≐ᵛ (V' [ x ↦ W' ]v)
+sub-≐ᵛ x eW eV = cong₂ (λ U V₀ → V₀ [ x ↦ U ]v) eW eV
 
-  sub-≐ᵛ : ∀ {Γ A B ρ} → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
-         → W ≐ᵛ W' → {V V' : Γ ⊢V⦂ B} → V ≐ᵛ V'
-         → (V [ x ↦ W ]v) ≐ᵛ (V' [ x ↦ W' ]v)
+sub-≐ᶜ : ∀ {Γ A C ρ} → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
+       → W ≐ᵛ W' → {M M' : Γ ⊢C⦂ C} → M ≐ᶜ M'
+       → (M [ x ↦ W ]c) ≐ᶜ (M' [ x ↦ W' ]c)
+sub-≐ᶜ x eW eM = cong₂ (λ U M₀ → M₀ [ x ↦ U ]c) eW eM
 
-  sub-≐ᵛ x eW (var-≐ {f = f} {f' = f'} {x = y}) = sub-var-≐ y f f' x eW
-  sub-≐ᵛ x eW const-≐          = const-≐
-  sub-≐ᵛ x eW ⋆-≐              = ⋆-≐
-  sub-≐ᵛ x eW (pair-≐ e₁ e₂)   = pair-≐ (sub-≐ᵛ x eW e₁) (sub-≐ᵛ x eW e₂)
-  sub-≐ᵛ x eW (lam-≐ eM)       = lam-≐ (sub-≐ᶜ (Tl-∷ x) eW eM)
-
-  sub-≐ᶜ : ∀ {Γ A C ρ} → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
-         → W ≐ᵛ W' → {M M' : Γ ⊢C⦂ C} → M ≐ᶜ M'
-         → (M [ x ↦ W ]c) ≐ᶜ (M' [ x ↦ W' ]c)
-
-  sub-≐ᶜ x eW (return-≐ eV)     = return-≐ (sub-≐ᵛ x eW eV)
-  sub-≐ᶜ x eW (seq-≐ eM eN)     =
-    seq-≐ (sub-≐ᶜ x eW eM) (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ x)) eW eN)
-  sub-≐ᶜ x eW (app-≐ eV eU)     = app-≐ (sub-≐ᵛ x eW eV) (sub-≐ᵛ x eW eU)
-  sub-≐ᶜ x eW (match-≐ eV eM)   =
-    match-≐ (sub-≐ᵛ x eW eV) (sub-≐ᶜ (Tl-∷ (Tl-∷ x)) eW eM)
-  sub-≐ᶜ x eW (absurd-≐ eV)     = absurd-≐ (sub-≐ᵛ x eW eV)
-  sub-≐ᶜ x eW (perform-≐ eV eM) =
-    perform-≐ (sub-≐ᵛ x eW eV) (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ x)) eW eM)
-  sub-≐ᶜ x eW (delay-≐ eM)      = delay-≐ (sub-≐ᶜ (Tl-⟨⟩ x) eW eM)
-  sub-≐ᶜ x eW (coerce-≐ eM)     = coerce-≐ (sub-≐ᶜ x eW eM)
-  sub-≐ᶜ x eW (box-≐ eV eM)     =
-    box-≐ (sub-≐ᵛ (Tl-⟨⟩ x) eW eV) (sub-≐ᶜ (Tl-∷ x) eW eM)
-
-  -- the clauses close over `Γ ᴱ`: if the substituted variable is not eternal it
-  -- does not occur there and they are only retyped; if it is, its value
-  -- restricts and is substituted into each clause
-  sub-≐ᶜ {A = A} x eW (handle-≐ {B = B} eM eH eN) with eternal? A
-  ... | no ¬et =
-    handle-≐ (sub-≐ᶜ x eW eM)
-      (λ op ε'' →
-         substᶜ-≐′
-           (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                     ∷ [ mapᵉ (op-grade op) ]
-                         (type-of-gtype (arity op) ⇒ B ‼ ε''))
-           (ᴱ-drop-split ¬et x) (eH op ε''))
-      (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ x)) eW eN)
-  ... | yes et =
-    handle-≐ (sub-≐ᶜ x eW eM)
-      (λ op ε'' →
-         substᶜ-≐ _
-           (sub-≐ᶜ (split→∈ (split-++ʳ (∈-ᴱ-split et x) _))
-                   (substᵛ-≐ _ (eternal-val-restrict-cong et eW))
-                   (eH op ε'')))
-      (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ x)) eW eN)
-
-  -- the underlying resource variable is recovered by `unbox⇒var`, pushed through
-  -- `⟨_⟩[_↦_]rvar` and rebuilt by `unbox-var`; only the grade bounds differ
-  sub-≐ᶜ x {W} {W'} eW (unbox-≐ {w = w} {w' = w'} {V = V} {V' = V'} hw eM)
-    with grad-typ⇒var V | grad-typ⇒var V'
-  ... | _ , y , f , refl | _ , y' , f' , refl
-    with var-rename w (Tl-⟨⟩ y) | var-rename w' (Tl-⟨⟩ y') | hw
-  ...   | _ , _ , z | _ , _ , _ | refl
-    with ⟨ z ⟩[ x ↦ W ]rvar | ⟨ z ⟩[ x ↦ W' ]rvar | sub-rvar-≐ z x eW
-  ...     | _ , v , p | _ , _ , p' | refl =
-    unbox-var-≐ v (≾ᵣ-trans p _) (≾ᵣ-trans p' _) (sub-≐ᶜ (Tl-∷ x) eW eM)
-
--- WHAT SUBSTITUTION DOES TO AN `unbox`
---
--- It renormalises: the resource variable is recovered, substituted
--- (`⟨_⟩[_↦_]rvar`) and rebuilt by `unbox-var`. Stated as its own lemma so that
--- the three nested `with`s stay local — callers then reason with `rvar-img` and
--- `unbox-img` alone. The grade bound is arbitrary, `_≐ᶜ_` not seeing it.
-
-sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren [] Γ (Δ₀ ⟨ ρ ⟩)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
-          → (M : Γ ∷ A ⊢C⦂ C) → (x : A₀ ∈[ τ ] Γ) → (W : split-l x ⊢V⦂ A₀)
-          → (rel : proj₁ (rvar-img (proj₂ (unbox-img w V)) x W) ≾ᵣ ρ)
-          → ((unbox w V M) [ x ↦ W ]c)
-          ≐ᶜ unbox-var (proj₂ (rvar-img (proj₂ (unbox-img w V)) x W)) rel
-                       (M [ Tl-∷ x ↦ W ]c)
-
-sub-unbox w V M x W rel with grad-typ⇒var V
-... | _ , y , f , refl with var-rename w (Tl-⟨⟩ y)
-...   | _ , b , c with ⟨ c ⟩[ x ↦ W ]rvar
-...     | _ , v , p = unbox-var-≐ v (≾ᵣ-trans p _) rel (≐ᶜ-refl _)

@@ -40,7 +40,7 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.RenActions    S
 open import Syntax.Substitutions S
-open import Syntax.Renamings.Equivalence S using (eternal?-no; unbox-var-ren)
+open import Syntax.Renamings.Equivalence S using (eternal?-no)
 
 open Category Cat
 open Future Fut

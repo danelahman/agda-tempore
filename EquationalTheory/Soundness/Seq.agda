@@ -59,7 +59,7 @@ open import Syntax.Types         S
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
-open import Syntax.RenActions    S using (V-rename; C-rename; unbox⇒var)
+open import Syntax.RenActions    S using (V-rename; C-rename)
 open import Syntax.Substitutions S
 
 open import EquationalTheory.EquationalTheory S
@@ -229,22 +229,21 @@ sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
     r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
     g = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
 
-sound-seq-unbox : ∀ {Γ A B C ρ Δ ε ε'}
-                → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
+sound-seq-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
+                → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
                 → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-                → Soundᶜ== (seq-unbox w V M N)
-sound-seq-unbox {ε = ε} w V M N ((pV , pM) , pN) pR =
-    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w V (M ⨟ C-rename r N)) pR (pV , (pM , renᶜ r N pN))
-            ∙ unbox-def w V (M ⨟ C-rename r N) pV (pM , renᶜ r N pN)
+                → Soundᶜ== (seq-unbox x rel M N)
+sound-seq-unbox {ε = ε} x rel M N (pM , pN) pR =
+    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel (M ⨟ C-rename r N)) pR (pM , renᶜ r N pN)
+            ∙ unbox-def x rel (M ⨟ C-rename r N) (pM , renᶜ r N pN)
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN))))
             ∙ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
             ∙ seq-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) g fstᵐ (⟨⟩ᵐ-fstᵐ _ _)
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-                (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-def w V M pV pM) ⟩ᵐ-cong))))
+                (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-def x rel M pM) ⟩ᵐ-cong))))
   where
     r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
-    g = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                    ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
+    g = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
 
 
 

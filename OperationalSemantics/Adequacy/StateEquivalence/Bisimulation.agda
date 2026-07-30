@@ -167,19 +167,19 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 -- unboxing: the store is read at the same cell, so the substituted values are
 -- related (`unbox-lookup-≐`).
 
-↝-≐-unbox : ∀ {A D ε ρ Δ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)} → {V : Δ ⊢V⦂ [ ρ ] A}
+↝-≐-unbox : ∀ {A D ε ρ ρ'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+          → {x : [ ρ ] A ∈[ ρ' ] toCtx St} → {rel : ρ' ≾ᵣ ρ}
           → {M₀ : toCtx St ∷ A ⊢C⦂ D ‼ ε}
           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
-          → unbox w V M₀ ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) P'
-          → Sim es P' (UNBOX {w = w} {V = V} {M = M₀})
-↝-≐-unbox {St = St} {St' = St'} es {w = w} {V = V} P' eM
+          → unbox x rel M₀ ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) P'
+          → Sim es P' (UNBOX {z = x} {rel = rel} {M = M₀})
+↝-≐-unbox {St = St} {St' = St'} es {x = x} {rel = rel} P' eM
   with ≐-unbox⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | _ , w' , V' , M₀' , refl , hw , eM₀ =
+... | _ , x' , rel' , M₀' , refl , hw , eM₀ =
     _ , _ , es , UNBOX , id-≤≐
   , subst (λ z → _ ≐ᶜ z)
-      (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' w' V'))
-      (sub-≐ᶜ Hd (unbox-lookup-≐ es {w = w} {w' = w'} {V = V} {V' = V'} hw)
+      (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' x' rel'))
+      (sub-≐ᶜ Hd (unbox-lookup-≐ es {x = x} {x' = x'} {rel = rel} {rel' = rel'} hw)
                  eM₀)
 
 -- sequencing an operation: the operation floats out, its continuation gaining

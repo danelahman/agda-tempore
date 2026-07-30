@@ -97,8 +97,9 @@ a grade system, a signature of base types, and operations' signatures.
   laws of the action with respect to it, and `Category.agda` the categorical
   structure this all amounts to.
 - `Syntax/RenActions.agda` defines renamings' action on well-typed terms.
-- `Syntax/Terms/Equivalence.agda` defines equality of terms up to the data they
-  store that only matters up to equivalence (`_≐ᵛ_`/`_≐ᶜ_`), and
+- `Syntax/Terms/Equivalence.agda` defines equality of terms (`_≐ᵛ_`/`_≐ᶜ_`,
+  which are propositional equality: the grade bounds a term stores are
+  proof-irrelevant) together with a congruence per former, and
   `Syntax/Terms/Transport.agda` retyping a term along an equality of contexts.
 - `Syntax/Substitutions.agda` defines the action of substituting, and
   `Syntax/Substitutions/` its metatheory: `Variables.agda` how a substitution

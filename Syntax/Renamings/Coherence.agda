@@ -1,10 +1,9 @@
 ------------------------------------------------------------------------
 -- Coherence of the renaming action.                                  --
 --                                                                    --
--- The action is functorial and a congruence, both only up to          --
--- `_≐ᵛ_`/`_≐ᶜ_`: renaming along `r₂ ∘ʳ r₁` stores that composite in   --
--- every `unbox` node, where renaming twice stores `r₂ ∘ʳ (r₁ ∘ʳ w)`.  --
--- The two are `_≐ʳ_`-equal, never equal.                             --
+-- The action is functorial and a congruence. The premises are stated  --
+-- at `_≐ʳ_`, since `Ren` is freely generated and `cong-ren` commutes   --
+-- with `_∘ʳ_` only up to it; the conclusions are equalities of terms.  --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -56,9 +55,9 @@ var-ren-img-≐ r x f refl f' = var-ren-≐ r x f f'
 ------------------------------------------------------------------------
 -- THE ACTION RESPECTS ACTING ALIKE
 --
--- Induction on the term. At `var` the whole content is the hypothesis, the
--- grade bounds being irrelevant; the binding formers use `cong-ren-≐`, `handle`
--- uses `restrict-ren-≐`, and `unbox` stores `r ∘ʳ w`, related by `∘ʳ-≐`.
+-- Induction on the term. At `var` and `unbox` the whole content is the
+-- hypothesis, the grade bounds being irrelevant; the binding formers use
+-- `cong-ren-≐` and `handle` uses `restrict-ren-≐`.
 ------------------------------------------------------------------------
 
 mutual
@@ -93,9 +92,8 @@ mutual
       (λ op ε'' →
          C-rename-≐ (cong-∷-ren-≐ (cong-∷-ren-≐ (restrict-ren-≐ h))) (H op ε''))
       (C-rename-≐ (cong-ren-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-≐ h (unbox w V M) =
-    unbox-≐ (unbox-img-≐ (∘ʳ-≐ (≐ʳ-refl {r = w}) h) V)
-            (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
+  C-rename-≐ h (unbox x rel M) =
+    unbox-≐ (at h x) (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
   C-rename-≐ h (box V M) =
     box-≐ (V-rename-≐ (cong-ren-≐ ([] ⟨ _ ⟩) h) V)
           (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
@@ -180,9 +178,8 @@ mutual
          C-rename-id-≐ (cong-∷-ren-id-≐ (cong-∷-ren-id-≐ (restrict-ren-id-≐ h)))
                        (H op ε''))
       (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-id-≐ h (unbox w V M) =
-    unbox-≐ (unbox-img-≐ (∘ʳ-id-≐ʳ w h) V)
-            (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
+  C-rename-id-≐ h (unbox x rel M) =
+    unbox-≐ (at h x) (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
   C-rename-id-≐ h (box V M) =
     box-≐ (V-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) V)
           (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
@@ -415,9 +412,10 @@ restrict-wk-≐ {Γ} {B} ¬et (Δ ⟨ ρ ⟩) e = restrict-wk-≐ ¬et Δ e
 -- FUNCTORIALITY
 --
 -- At the binding formers the two sides rename along `cong-ren (r₂ ∘ʳ r₁)` and
--- `cong-ren r₂ ∘ʳ cong-ren r₁`, at `unbox` along `(r₂ ∘ʳ r₁) ∘ʳ w` and
--- `r₂ ∘ʳ (r₁ ∘ʳ w)`: distinct renamings acting alike, so the statement is at
--- `_≐ᵛ_`/`_≐ᶜ_` and the proof leans on the laws above.
+-- `cong-ren r₂ ∘ʳ cong-ren r₁`: distinct renamings acting alike, so the proof
+-- leans on the laws above. At `var` and `unbox` both sides locate the variable
+-- with `r₂` and then with `r₁`, which is what `var-rename` of a composite does,
+-- so abstracting the two lookups makes the clause `refl` up to irrelevance.
 ------------------------------------------------------------------------
 
 mutual
@@ -472,8 +470,10 @@ mutual
                        (H op ε'')))
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
-  C-rename-∘ r₂ r₁ (unbox w V M) =
-    unbox-≐ (unbox-img-≐ (≐ʳ-sym (∘ʳ-assoc-≐ w r₂ r₁)) V)
+  C-rename-∘ r₂ r₁ (unbox x rel M) with var-rename r₂ x
+  ... | _ , _ , y with var-rename r₁ y
+  ...   | _ , _ , z =
+    unbox-≐ refl
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ ([] ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (box V M) =
@@ -486,46 +486,13 @@ mutual
 ------------------------------------------------------------------------
 -- THE ACTION IS A CONGRUENCE
 --
--- Renaming related terms gives related terms. Induction on the relation, not on
--- the term; `unbox` needs `∘ʳ-≐` on the stored renamings.
+-- Renaming related terms gives related terms.
 ------------------------------------------------------------------------
 
-mutual
+V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ' ⊢V⦂ A}
+              → V ≐ᵛ V' → V-rename r V ≐ᵛ V-rename r V'
+V-rename-cong r = cong (V-rename r)
 
-  V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ' ⊢V⦂ A}
-                → V ≐ᵛ V' → V-rename r V ≐ᵛ V-rename r V'
-
-  V-rename-cong r var-≐            = var-≐
-  V-rename-cong r const-≐          = const-≐
-  V-rename-cong r ⋆-≐              = ⋆-≐
-  V-rename-cong r (pair-≐ eV eW)   =
-    pair-≐ (V-rename-cong r eV) (V-rename-cong r eW)
-  V-rename-cong r (lam-≐ eM)       = lam-≐ (C-rename-cong (cong-ren r) eM)
-
-  C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ' ⊢C⦂ C}
-                → M ≐ᶜ M' → C-rename r M ≐ᶜ C-rename r M'
-
-  C-rename-cong r (return-≐ eV)     = return-≐ (V-rename-cong r eV)
-  C-rename-cong r (seq-≐ eM eN)     =
-    seq-≐ (C-rename-cong r eM) (C-rename-cong (cong-ren r) eN)
-  C-rename-cong r (app-≐ eV eW)     =
-    app-≐ (V-rename-cong r eV) (V-rename-cong r eW)
-  C-rename-cong r (match-≐ eV eM)   =
-    match-≐ (V-rename-cong r eV) (C-rename-cong (cong-ren r) eM)
-  C-rename-cong r (absurd-≐ eV)     = absurd-≐ (V-rename-cong r eV)
-  C-rename-cong r (perform-≐ eV eM) =
-    perform-≐ (V-rename-cong r eV) (C-rename-cong (cong-ren r) eM)
-  C-rename-cong r (delay-≐ eM)      = delay-≐ (C-rename-cong (cong-ren r) eM)
-  C-rename-cong r (handle-≐ eM eH eN) =
-    handle-≐ (C-rename-cong r eM)
-             (λ op ε'' → C-rename-cong (cong-∷-ren (cong-∷-ren (restrict-ren r)))
-                                       (eH op ε''))
-             (C-rename-cong (cong-ren r) eN)
-  C-rename-cong r (unbox-≐ {w = w} {w' = w'} {V = V} {V' = V'} hw eM) =
-    unbox-≐ (trans (unbox-img-∘ r w V)
-                   (trans (cong (var-img′ r) hw)
-                          (sym (unbox-img-∘ r w' V'))))
-            (C-rename-cong (cong-ren r) eM)
-  C-rename-cong r (coerce-≐ eM)     = coerce-≐ (C-rename-cong r eM)
-  C-rename-cong r (box-≐ eV eM)     =
-    box-≐ (V-rename-cong (cong-ren r) eV) (C-rename-cong (cong-ren r) eM)
+C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ' ⊢C⦂ C}
+              → M ≐ᶜ M' → C-rename r M ≐ᶜ C-rename r M'
+C-rename-cong r = cong (C-rename r)

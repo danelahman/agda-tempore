@@ -9,8 +9,8 @@
 -- commute. Both orders normalise to `⟦M⟧ ∘ᵐ ⟨ ⟨ idᵐ , a ⟩ᵐ , b ⟩ᵐ`,      --
 -- which is `comm-l` / `comm-r`; everything else is unfolding.           --
 --                                                                    --
--- The inner binder's value/renaming is weakened past the outer one, so   --
--- each case first pushes that weakening out: `unbox⇒var-nat` for a       --
+-- The inner binder's variable/value is weakened past the outer one, so   --
+-- each case first pushes that weakening out: `unbox-env-nat` for a       --
 -- lookup, `box-wk` (below) for a box.                                    --
 ------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ open import Syntax.Types         S
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
-open import Syntax.RenActions    S using (V-rename; C-rename; unbox⇒var)
+open import Syntax.RenActions    S using (V-rename; C-rename)
 open import Syntax.Substitutions S
 
 open import EquationalTheory.EquationalTheory S
@@ -123,29 +123,29 @@ box-wk X W pW =
   ∙ ∘ᵐ-congʳ (η⊣-nat fstᵐ)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-sound-unbox-comm : ∀ {Γ A B C ρ₁ Δ₁ ρ₂ Δ₂}
-                 → (w₁ : Ren [] Γ (Δ₁ ⟨ ρ₁ ⟩)) → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
-                 → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩)) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+sound-unbox-comm : ∀ {Γ A B C ρ₁ ρ₁' ρ₂ ρ₂'}
+                 → (x₁ : [ ρ₁ ] A ∈[ ρ₁' ] Γ) → (rel₁ : ρ₁' ≾ᵣ ρ₁)
+                 → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                  → (M : Γ ∷ A ∷ B ⊢C⦂ C)
-                 → Soundᶜ== (unbox-comm w₁ V₁ w₂ V₂ M)
-sound-unbox-comm {Γ = Γ} {A = A} {B = B} w₁ V₁ w₂ V₂ M (pV₁ , (pV₂ , pM)) pR =
+                 → Soundᶜ== (unbox-comm x₁ rel₁ x₂ rel₂ M)
+sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ x₂ rel₂ M pM pR =
     -- LHS: unfold both unboxings, push the inner lookup's weakening out
-    unbox-def w₁ V₁ (unbox (w₂ ∘ʳ wk-ren) V₂ M) pV₁ (pV₂ , pM)
-  ∙ ∘ᵐ-congˡ (unbox-def (w₂ ∘ʳ wk-ren) V₂ M pV₂ pM)
+    unbox-def x₁ rel₁ (unbox (Tl-∷ x₂) rel₂ M) pM
+  ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₂) rel₂ M pM)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                        , unbox⇒var-nat (wk-ren {A = A}) w₂ V₂ ⟩ᵐ-cong))
+                        , unbox-env-nat (wk-ren {A = A}) x₂ rel₂ rel₂ ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
     -- RHS: the same, with the exchange renaming unfolded
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w₂ V₂ (unbox (w₁ ∘ʳ wk-ren) V₁ (C-rename exch-ren M)))
-                pR (pV₂ , (pV₁ , renᶜ exch-ren M pM))
-            ∙ unbox-def w₂ V₂ (unbox (w₁ ∘ʳ wk-ren) V₁ (C-rename exch-ren M))
-                pV₂ (pV₁ , renᶜ exch-ren M pM)
-            ∙ ∘ᵐ-congˡ (unbox-def (w₁ ∘ʳ wk-ren) V₁ (C-rename exch-ren M)
-                          pV₁ (renᶜ exch-ren M pM))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ (unbox (Tl-∷ x₁) rel₁ (C-rename exch-ren M)))
+                pR (renᶜ exch-ren M pM)
+            ∙ unbox-def x₂ rel₂ (unbox (Tl-∷ x₁) rel₁ (C-rename exch-ren M))
+                (renᶜ exch-ren M pM)
+            ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₁) rel₁ (C-rename exch-ren M)
+                          (renᶜ exch-ren M pM))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM
                                   ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {B} {A})))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                                  , unbox⇒var-nat (wk-ren {A = B}) w₁ V₁ ⟩ᵐ-cong))
+                                  , unbox-env-nat (wk-ren {A = B}) x₁ rel₁ rel₁ ⟩ᵐ-cong))
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
 
 sound-box-comm : ∀ {Γ A B C ρ ρ'}
@@ -172,24 +172,25 @@ sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' 
                                     ∙ box-wk ([ ρ' ] B) V pV ⟩ᵐ-cong))
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
 
-sound-box-unbox-comm : ∀ {Γ A B C ρ ρ₂ Δ₂}
+sound-box-unbox-comm : ∀ {Γ A B C ρ ρ₂ ρ₂'}
                      → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                     → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩)) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+                     → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                      → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
-                     → Soundᶜ== (box-unbox-comm V w₂ V₂ M)
-sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V w₂ V₂ M (pV , (pV₂ , pM)) pR =
+                     → Soundᶜ== (box-unbox-comm V x₂ rel₂ M)
+sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ M (pV , pM) pR =
     -- LHS: `box` outside, the inner lookup weakened past it
-    ∘ᵐ-congˡ (  unbox-def (w₂ ∘ʳ wk-ren) V₂ M pV₂ pM
+    ∘ᵐ-congˡ (  unbox-def (Tl-∷ x₂) rel₂ M pM
               ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                          , unbox⇒var-nat (wk-ren {A = [ ρ ] A}) w₂ V₂ ⟩ᵐ-cong))
+                          , unbox-env-nat (wk-ren {A = [ ρ ] A}) x₂ rel₂ rel₂
+                            ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
     -- RHS: `unbox` outside, the box weakened past it
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w₂ V₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
-                                         (C-rename exch-ren M)))
-                pR (pV₂ , (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM))
-            ∙ unbox-def w₂ V₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
-                                   (C-rename exch-ren M))
-                pV₂ (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
+                                           (C-rename exch-ren M)))
+                pR (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
+            ∙ unbox-def x₂ rel₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
+                                     (C-rename exch-ren M))
+                (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM
                                   ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {B} {[ ρ ] A})))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , box-wk B V pV ⟩ᵐ-cong))

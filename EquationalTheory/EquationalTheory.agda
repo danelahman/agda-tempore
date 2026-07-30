@@ -24,7 +24,8 @@ open import Syntax.Renamings     S
 open import Syntax.Substitutions S
 open import Syntax.Types         S
 
-open import Syntax.Renamings.Equivalence S using (unbox-img)
+open import Syntax.Renamings.Equivalence S using (∈-++ᶜˡ; grade-++ᶜˡ-uᵣ)
+
 
 -- Equations between well-typed values and computations
 
@@ -200,22 +201,16 @@ mutual
                 --------------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
-    -- As `unbox-≐`: the two nodes are compared at the *cell* they name, so the
-    -- stored renaming, its source context and the boxed value may all differ.
-    -- Demanding instead that the boxed values agree would be strictly finer,
-    -- and would make `_==_` insensitive to the renormalisation substitution
-    -- performs on them (`unbox⇒var` then `unbox-var`).
+    -- The grade bound an `unbox` stores is irrelevant, so the two nodes are
+    -- compared at the resource variable they name.
 
-    unbox-cong : ∀ {A C ρ Δ Δ'}
-               → {w : Ren [] Γ (Δ ⟨ ρ ⟩)}
-               → {w' : Ren [] Γ (Δ' ⟨ ρ ⟩)}
-               → {V : Δ ⊢V⦂ [ ρ ] A}
-               → {V' : Δ' ⊢V⦂ [ ρ ] A}
+    unbox-cong : ∀ {A C ρ ρ'}
+               → {x : [ ρ ] A ∈[ ρ' ] Γ}
+               → {rel rel' : ρ' ≾ᵣ ρ}
                → {M N : Γ ∷ A  ⊢C⦂ C}
-               → unbox-img w V ≡ unbox-img w' V'
                → Γ ∷ A ⊢C⦂ M == N
                --------------------------------------
-               → Γ ⊢C⦂ unbox w V M == unbox w' V' N
+               → Γ ⊢C⦂ unbox x rel M == unbox x rel' N
 
     box-cong : ∀ {A C ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}
@@ -286,14 +281,14 @@ mutual
             → Γ ⊢C⦂ box V M ⨟ N
                 == box V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
-    seq-unbox : ∀ {A B C ρ Δ ε ε'}
-              → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
-              → (V : Δ ⊢V⦂ [ ρ ] A)
+    seq-unbox : ∀ {A B C ρ ρ' ε ε'}
+              → (x : [ ρ ] A ∈[ ρ' ] Γ)
+              → (rel : ρ' ≾ᵣ ρ)
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
               -------------------------------------------------------
-              → Γ ⊢C⦂ unbox w V M ⨟ N
-                  == unbox w V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+              → Γ ⊢C⦂ unbox x rel M ⨟ N
+                  == unbox x rel (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     -- eta-equation for sequential composition
 
@@ -442,9 +437,9 @@ mutual
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
 
-    handle-unbox : ∀ {A B C ρ Δ ε ε'}
-                 → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
-                 → (V : Δ ⊢V⦂ [ ρ ] A)
+    handle-unbox : ∀ {A B C ρ ρ' ε ε'}
+                 → (x : [ ρ ] A ∈[ ρ' ] Γ)
+                 → (rel : ρ' ≾ᵣ ρ)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
                           Γ ᴱ ∷ type-of-gtype (param op)
@@ -452,8 +447,8 @@ mutual
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  -----------------------------------------------------------------
-                 → Γ ⊢C⦂ handle unbox w V M `with H `in N
-                     == unbox w V
+                 → Γ ⊢C⦂ handle unbox x rel M `with H `in N
+                     == unbox x rel
                         (handle M
                         `with (λ op' ε'' →
                                  C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
@@ -468,25 +463,27 @@ mutual
                → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
                → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
                -----------------------------------------------------------------------
-               → Γ ⊢C⦂ box V (K [ unbox (⟨⟩-≤-ren p ∘ʳ wk-ren-⟨ρ⟩-ctx refl)
-                                        (var (λ _ → ≾ᵣ-refl) Hd)
+               → Γ ⊢C⦂ box V (K [ unbox (∈-++ᶜˡ (hole-ctx K) Hd)
+                                        (≾ᵣ-trans (≾ᵣ-reflexive
+                                                    (grade-++ᶜˡ-uᵣ (hole-ctx K)))
+                                                  p)
                                         N ])
                    == box V (K [ N [ Hd ↦ V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V ]c ])
 
 
     -- unboxing non-related values commute
 
-    unbox-comm : ∀ {A B C ρ₁ Δ₁ ρ₂ Δ₂}
-               → (w₁ : Ren [] Γ (Δ₁ ⟨ ρ₁ ⟩))
-               → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
-               → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩))
-               → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+    unbox-comm : ∀ {A B C ρ₁ ρ₁' ρ₂ ρ₂'}
+               → (x₁ : [ ρ₁ ] A ∈[ ρ₁' ] Γ)
+               → (rel₁ : ρ₁' ≾ᵣ ρ₁)
+               → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
+               → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
-               → Γ ⊢C⦂ unbox w₁ V₁
-                        (unbox (w₂ ∘ʳ wk-ren) V₂ M)
-                   == unbox w₂ V₂
-                        (unbox (w₁ ∘ʳ wk-ren) V₁
+               → Γ ⊢C⦂ unbox x₁ rel₁
+                        (unbox (Tl-∷ x₂) rel₂ M)
+                   == unbox x₂ rel₂
+                        (unbox (Tl-∷ x₁) rel₁
                                (C-rename exch-ren M))
 
 
@@ -515,25 +512,25 @@ mutual
 
     -- eta rule for unbox
 
-    unbox-not-used : ∀ {A C ρ Δ}
-                   → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
-                   → (V : Δ ⊢V⦂ [ ρ ] A)
+    unbox-not-used : ∀ {A C ρ ρ'}
+                   → (x : [ ρ ] A ∈[ ρ' ] Γ)
+                   → (rel : ρ' ≾ᵣ ρ)
                    → (M : Γ ⊢C⦂ C)
                    -------------------------------------
-                   → Γ ⊢C⦂ unbox w V (C-rename wk-ren M)
+                   → Γ ⊢C⦂ unbox x rel (C-rename wk-ren M)
                        == M
 
     -- boxing and unboxing unrelated resources commute
 
-    box-unbox-comm : ∀ {A B C ρ ρ₂ Δ₂}
+    box-unbox-comm : ∀ {A B C ρ ρ₂ ρ₂'}
                    → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                   → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩))
-                   → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+                   → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
+                   → (rel₂ : ρ₂' ≾ᵣ ρ₂)
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
                    → Γ ⊢C⦂ box V
-                            (unbox (w₂ ∘ʳ wk-ren) V₂ M)
-                       == unbox w₂ V₂
+                            (unbox (Tl-∷ x₂) rel₂ M)
+                       == unbox x₂ rel₂
                             (box
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))

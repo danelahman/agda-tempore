@@ -160,12 +160,6 @@ hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ⟨ ρ ⟩) W g g' E with eternal? B
     rn' : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
     rn' = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g' ¬et))
 
--- Grade bounds are proof-irrelevant, so the substitution does not see
--- which one it was handed.
-
-bound-irr : ∀ {A ρ} → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ) → f ≡ f'
-bound-irr f f' = fun-ext (λ z → ≾ᵣ-irrelevant _ _)
-
 -- Relocating a variable along a context transport, at the `Var` level so
 -- that the grade travels with the position.
 
@@ -388,11 +382,11 @@ sub-swap-var {Γ} {B₁} {B₂} Θ y f W₂ W₁
 ------------------------------------------------------------------------
 -- THE CELL AN `unbox` NAMES
 --
--- `sub-unbox` rebuilds an unboxing from the resource variable the substitution leaves,
--- so the `unbox` case reduces to: the two orders name the same resource variable. That
--- is the `rvar` counterpart of the variable case, and a simpler one — a
--- box type is never eternal, so `⟨_⟩[_↦_]rvar` has no `eternal?` split
--- and each position is one `Var-cast` push.
+-- Substitution takes an `unbox` to an `unbox` at the resource variable
+-- `⟨_⟩[_↦_]rvar` leaves, so the `unbox` case reduces to: the two orders name
+-- the same resource variable. That is the `rvar` counterpart of the variable
+-- case, and a simpler one — a box type is never eternal, so `⟨_⟩[_↦_]rvar` has
+-- no `eternal?` split and each position is one `Var-cast` push.
 ------------------------------------------------------------------------
 
 -- The resource variable left by replacing the entry at the boundary.
@@ -585,30 +579,24 @@ unbox-rvar-swap {Γ} {B₁} {B₂} {A} {ρ} {σ} Θ c W₂ W₁
                       (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ c₀))
                 (sub-rvar-l {Γ = Γ} {B = B₂} Θ c₀ (bval Θ W₂))))))
 
--- `unbox`: both orders rebuild the unboxing from the resource variable the substitution
--- leaves (`sub-unbox`), so `unbox-≐` reduces the case to `unbox-rvar-swap`
--- for the resource variable and the induction hypothesis for the body.
+-- `unbox`: `unbox-≐` reduces the case to `unbox-rvar-swap` for the resource
+-- variable and the induction hypothesis for the body.
 
-sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ Δ₀} → (Θ : Ctx)
-               → (w : Ren [] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) (Δ₀ ⟨ ρ ⟩))
-               → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ σ} → (Θ : Ctx)
+               → (c : [ ρ ] A ∈[ σ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+               → (rel : σ ≾ᵣ ρ)
                → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ∷ A ⊢C⦂ C)
                → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
                → SubSwapC (Θ ∷ A) M W₂ W₁
-               → SubSwapC Θ (unbox w V M) W₂ W₁
+               → SubSwapC Θ (unbox c rel M) W₂ W₁
 
-sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
+sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} Θ c rel M W₂ W₁ ih =
   ≐ᶜ-trans
     (≐ᶜ-trans
-      (sub-atᶜ-≐ Θ W₁
-        (≐ᶜ-trans (castᶜ-≐ (castOf {Γ ∷ B₁} {B₂} Θ)
-                     (sub-unbox w V M x₂ V₂ relA))
-                  (≡→≐ᶜ (cast-unbox (castOf {Γ ∷ B₁} {B₂} Θ)))))
-      (≐ᶜ-trans (castᶜ-≐ (castOf {Γ} {B₁} Θ)
-                   (sub-unbox wA hd bodyA x₁ V₁ relB))
-                (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₁} Θ)))))
+      (sub-atᶜ-≐ Θ W₁ (≡→≐ᶜ (cast-unbox (castOf {Γ ∷ B₁} {B₂} Θ))))
+      (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₁} Θ))))
     (≐ᶜ-trans
-      (unbox-≐ rvarEq
+      (unbox-≐ (unbox-rvar-swap Θ c W₂ W₁)
         (≐ᶜ-trans
           (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B₁} Θ))
                            (castOf {Γ} {B₁} (Θ ∷ A)) _))
@@ -636,108 +624,10 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
                 (≐ᶜ-trans
                   (sub-atᶜ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
                     (≡→≐ᶜ (cast-unbox (assocᴮ Γ B₁ B₂ Θ))))
-                  (≐ᶜ-trans
-                    (castᶜ-≐ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
-                      (sub-unbox (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V _ y₁ U₁ relC))
-                    (≡→≐ᶜ (cast-unbox
-                             (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))))))
+                  (≡→≐ᶜ (cast-unbox
+                           (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))))))
               (≡→≐ᶜ (cast-unbox (assocᴮ⁻ Γ B₂ Θ)))))
-          (≐ᶜ-trans
-            (castᶜ-≐ (castOf {Γ} {B₂} Θ)
-              (sub-unbox (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd _ y₂ U₂ relD))
-            (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₂} Θ)))))))
-  where
-    Ŵ₂ = V-rename (wk-ren {A = B₁}) W₂
-
-    x₂ = bvar B₂ Θ
-    V₂ = bval Θ Ŵ₂
-    x₁ = bvar B₁ Θ
-    V₁ = bval Θ W₁
-    y₁ = bvar B₁ (([] ∷ B₂) ++ᶜ Θ)
-    U₁ = bval (([] ∷ B₂) ++ᶜ Θ) W₁
-    y₂ = bvar B₂ Θ
-    U₂ = bval Θ W₂
-
-    cW = proj₂ (unbox-img w V)
-
-    hd : ∀ {Γ₀ : Ctx} → (Γ₀ ∷ [ ρ ] A) ⊢V⦂ [ ρ ] A
-    hd = var (λ _ → ≾ᵣ-refl) Hd
-
-    relA = ≾ᵣ-trans (proj₂ (proj₂ (⟨ cW ⟩[ x₂ ↦ V₂ ]rvar)))
-                    (proj₂ (proj₂ (unbox⇒var w V)))
-
-    vA = proj₂ (rvar-img cW x₂ V₂)
-
-    wA = castʳ (castOf {Γ ∷ B₁} {B₂} Θ) (unbox-var-ren vA relA)
-
-    bodyA = castᶜ (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
-                  (M [ Tl-∷ x₂ ↦ V₂ ]c)
-
-    relB = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-img wA hd) ⟩[ x₁ ↦ V₁ ]rvar)))
-                    (proj₂ (proj₂ (unbox⇒var wA hd)))
-
-    vB = proj₂ (rvar-img (proj₂ (unbox-img wA hd)) x₁ V₁)
-
-    wB = castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB)
-
-    relC = ≾ᵣ-trans
-             (proj₂ (proj₂
-               (⟨ proj₂ (unbox-img (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)
-                ⟩[ y₁ ↦ U₁ ]rvar)))
-             (proj₂ (proj₂ (unbox⇒var (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)))
-
-    vC = proj₂ (rvar-img (proj₂ (unbox-img (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V))
-                         y₁ U₁)
-
-    wC = castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)) (unbox-var-ren vC relC)
-
-    relD = ≾ᵣ-trans
-             (proj₂ (proj₂
-               (⟨ proj₂ (unbox-img (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)
-                ⟩[ y₂ ↦ U₂ ]rvar)))
-             (proj₂ (proj₂ (unbox⇒var (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)))
-
-    vD = proj₂ (rvar-img (proj₂ (unbox-img (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd))
-                         y₂ U₂)
-
-    wD = castʳ (castOf {Γ} {B₂} Θ) (unbox-var-ren vD relD)
-
-    -- each stored renaming is read only through `unbox-img`, and there it is
-    -- the resource variable the substitution left; so the two sides' resource variables are exactly the
-    -- two sides of `unbox-rvar-swap`
-    rvarA : unbox-img wA hd ≡ rvar-at Θ cW Ŵ₂
-    rvarA = trans (unbox-img-castʳ (castOf {Γ ∷ B₁} {B₂} Θ)
-                                    (unbox-var-ren vA relA) hd)
-                  (cong (Var-cast (castOf {Γ ∷ B₁} {B₂} Θ))
-                        (unbox-var-img vA relA))
-
-    rvarC : unbox-img wC hd
-          ≡ rvar-at (([] ∷ B₂) ++ᶜ Θ)
-                  (proj₂ (Var-cast (assocᴮ Γ B₁ B₂ Θ) (unbox-img w V))) W₁
-    rvarC =
-      trans (unbox-img-castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
-                              (unbox-var-ren vC relC) hd)
-        (trans (cong (Var-cast (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))
-                     (unbox-var-img vC relC))
-               (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
-                     (unbox-img-castʳ (assocᴮ Γ B₁ B₂ Θ) w V)))
-
-    rvarEq : unbox-img wB hd ≡ unbox-img wD hd
-    rvarEq =
-      trans (unbox-img-castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB) hd)
-        (trans (cong (Var-cast (castOf {Γ} {B₁} Θ)) (unbox-var-img vB relB))
-          (trans (cong (λ t → rvar-at′ Θ t W₁) rvarA)
-            (trans (unbox-rvar-swap Θ cW W₂ W₁)
-              (sym
-                (trans (unbox-img-castʳ (castOf {Γ} {B₂} Θ)
-                                         (unbox-var-ren vD relD) hd)
-                  (trans (cong (Var-cast (castOf {Γ} {B₂} Θ))
-                               (unbox-var-img vD relD))
-                    (trans
-                      (cong (λ t → rvar-at′ Θ t W₂)
-                            (unbox-img-castʳ (assocᴮ⁻ Γ B₂ Θ) wC hd))
-                      (cong (λ t → rvar-at′ Θ (Var-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
-                            rvarC))))))))
+          (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₂} Θ))))))
 
 -- `handle`: the scrutinee and the sequel are the induction hypotheses at
 -- their own suffixes, so the whole content is the clauses — the same swap

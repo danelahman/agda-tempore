@@ -93,39 +93,26 @@ var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) =
 var-rename (⟨⟩-ext-ctx _ ecΔ) x =
   _ , (λ ¬et → ⊥-elim (¬et (ec-eternal ecΔ x))) , Tl-⟨⟩ x
 
--- A FGCBV-specific variable-based variant of `unbox` based on every value of
--- box-type being forced to be a variable (as proved below in unbox⇒var).
+-- Renaming a *resource* variable, i.e. one of box type, which is what `unbox`
+-- names. Box types are never eternal, so the grade bound is unconditional.
+--
+-- Stated with projections rather than a `with`, so that the `unbox` clause of
+-- the action below reduces to an `unbox` node at an abstract renaming.
 
-unbox-var : ∀ {Γ A C ρ ρ'}
-          → (x : [ ρ ] A ∈[ ρ' ] Γ)
-          → ρ' ≾ᵣ ρ
-          → Γ ∷ A ⊢C⦂ C
-          → Γ ⊢C⦂ C
-unbox-var x rel M =
-  unbox
-    ((⟨⟩-≤-ren rel
-      ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ x))
-     ∘ʳ eq-ren (split-≡ (split-pf x)))
-    (var (λ _ → ≾ᵣ-refl) Hd)
-    M
+rvar-rename : ∀ {Γ Γ' A ρ ρ'}
+            → Ren [] Γ Γ'
+            → [ ρ ] A ∈[ ρ' ] Γ'
+            -----------------------------------------------------------
+            → Σ[ ρ'' ∈ R ] (([ ρ ] A ∈[ ρ'' ] Γ) × ρ'' ≾ᵣ ρ')
 
--- Extracting the underlying variable (and grade bound) from a box-typed value
-
-unbox⇒var : ∀ {Γ A ρ Δ}
-          → Ren [] Γ (Δ ⟨ ρ ⟩)
-          → Δ ⊢V⦂ [ ρ ] A
-          → Σ[ ρ' ∈ R ] (([ ρ ] A ∈[ ρ' ] Γ) × ρ' ≾ᵣ ρ)
-unbox⇒var {ρ = ρ} w V with grad-typ⇒var V
-... | _ , y , f , _ with var-rename w (Tl-⟨⟩ y)
-... | ρ' , ρ'≾ρy·ρ , z =
-  ρ' , z ,
-  ≾ᵣ-trans (ρ'≾ρy·ρ (λ ()))
-    (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)))
+rvar-rename r x =
+    proj₁ (var-rename r x)
+  , proj₂ (proj₂ (var-rename r x))
+  , proj₁ (proj₂ (var-rename r x)) (λ ())
 
 -- Action of renamings on well-typed values and computations
 --
--- At the empty ambient throughout, and so transport-free: `unbox`'s stored
--- certificate lives there too and composes directly, and the handler clauses'
+-- At the empty ambient throughout, and so transport-free: the handler clauses'
 -- `restrict-ren r` stays there because `[] ᴱ` is `[]`.
 
 mutual
@@ -161,8 +148,10 @@ mutual
     `with (λ op ε'' →
              C-rename (cong-∷-ren (cong-∷-ren (restrict-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
-  C-rename r (unbox w V M) =
-    unbox (w ∘ʳ r) V (C-rename (cong-ren r) M)
+  C-rename r (unbox x rel M) =
+    unbox (proj₁ (proj₂ (rvar-rename r x)))
+          (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
+          (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (coerce rel M) = coerce rel (C-rename r M)
 

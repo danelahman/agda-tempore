@@ -43,7 +43,7 @@ open import Syntax.Types      S
 open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.Renamings  S
-open import Syntax.RenActions S using (V-rename; C-rename; var-rename; unbox⇒var)
+open import Syntax.RenActions S using (V-rename; C-rename; var-rename; rvar-rename)
 
 open Category Cat
 open Future Fut
@@ -66,81 +66,34 @@ private
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙_ = ≈ᵐ-trans
 
--- The resource looked up by an `unbox` is stable under renaming: extending
--- the unboxing renaming `w` by `r` reindexes the looked-up variable exactly
--- along `⟦ r ⟧ʳ`. The two grade bounds are witnesses of the same relation,
--- so they are interchangeable by `⟨⟩-≤-irr`.
+-- The resource an `unbox` names is stable under renaming: renaming the
+-- variable reindexes the looked-up resource exactly along `⟦ r ⟧ʳ`. The two
+-- grade bounds are witnesses of the same relation, so they are interchangeable
+-- by `⟨⟩-≤-irr`.
 
-unbox⇒var-nat : ∀ {Γ Γ' Δ A ρ} → (r : Ren [] Γ' Γ) → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
-              → (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var (w ∘ʳ r) V)))
-                    ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var (w ∘ʳ r) V))))
-                ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                       ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))))
-                   ∘ᵐ ⟦ r ⟧ʳ
-unbox⇒var-nat r w V with grad-typ⇒var V
-... | ρy , y , f , refl
-  with var-rename w (Tl-⟨⟩ y)
-     | var-rename r (proj₂ (proj₂ (var-rename w (Tl-⟨⟩ y))))
-     | var-proj-nat r (proj₂ (proj₂ (var-rename w (Tl-⟨⟩ y)))) (λ ())
-... | ρ' , p' , z | ρ'' , p'' , z'' | vpn =
-  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (p'' (λ ())) _))))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (p'' (λ ())) _))))
+unbox-env-nat′ : ∀ {Γ Γ' A ρ ρ'} → (r : Ren [] Γ' Γ)
+               → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
+               → (ε⊣ ∘ᵐ ⟨⟩-≤ (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
+                     ∘ᵐ var-proj (proj₁ (proj₂ (rvar-rename r x))))
+                 ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
+unbox-env-nat′ r x rel with var-rename r x | var-proj-nat r x (λ ())
+... | ρ'' , p'' , y | vpn =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (p'' (λ ())) rel))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (p'' (λ ())) rel))))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ vpn))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
 
--- The unbox environment `ε⊣ ∘ᵐ ⟨⟩-≤ ∘ᵐ var-proj x` (`x` extracted by
--- `unbox⇒var`) equals reading the boxed value `V` through the lock and
--- unboxing with `ε⊣`.
-unbox-read : ∀ {Γ A ρ Δ} → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A) → (pV : Paramᵛ V)
-           → ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                  ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V)))
-           ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ ⟦ w ⟧ʳ
-unbox-read {ρ = ρ} w V pV with grad-typ⇒var V
-... | ρy , y , f , refl with var-rename w (Tl-⟨⟩ y) | var-proj-nat w (Tl-⟨⟩ y) (λ ())
-... | ρ' , bound , x | vpn =
-    -- split the grade relaxation, then `vpn` (var-proj naturality) returns the
-    -- extracted variable to the locked source variable, reindexed by `w`
-      ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (bound (λ ())) relax)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (bound (λ ())) relax)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ vpn)
-    -- isolate `⟨⟩-≤ relax ∘ᵐ μ` and apply `coh`
-    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (∘ᵐ-congˡ coh))
-    -- merge the three `⟨ ρ ⟩ᶠ` factors
-    ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ
-        (  ∘ᵐ-assoc _ _ _
-         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-         ∙ ≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  where
-    relax : ρy ·ᵣ ρ ≾ᵣ ρ
-    relax = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
+-- and at whichever bound the renamed node actually stores
 
-    -- folding the unit layer with `μ` (relaxing the redundant `· u`) is `⟨ρ⟩ᶠ εᵘ`
-    Teᵘ : ⟨⟩-≤ (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ∘ᵐ μ {_} {ρ} {uᵣ}
-        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ
-    Teᵘ =
-        ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-identityʳ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-congᶠ ⟨⟩-η∘εᵘ≡id ∙ ⟨⟩-idᵐ)))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ ⟨⟩-μ∘Tη≡id ∙ ⟨⟩-≤-trans _ _ ∙ ⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl)
-      ∙ ∘ᵐ-identityˡ _
-
-    coh : ⟨⟩-≤ relax ∘ᵐ μ {_} {ρ} {ρy}
-        ≈ᵐ ⟨ ρ ⟩ᶠ εᵘ ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⟩-≤ (f (λ ())))
-    coh =
-        ∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
-      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))))
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _) ∙ ⟨⟩-μ-≤ ≾ᵣ-refl (f (λ ())))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ ⟨⟩-≤-refl ∙ ∘ᵐ-identityʳ _))
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ Teᵘ
+unbox-env-nat : ∀ {Γ Γ' A ρ ρ'} → (r : Ren [] Γ' Γ)
+              → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
+              → (rel' : proj₁ (rvar-rename r x) ≾ᵣ ρ)
+              → (ε⊣ ∘ᵐ ⟨⟩-≤ rel' ∘ᵐ var-proj (proj₁ (proj₂ (rvar-rename r x))))
+                ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
+unbox-env-nat r x rel rel' =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr rel' _))) (unbox-env-nat′ r x rel)
 
 -- The interpretation of a restricted renaming also commutes with the
 -- necessitations `necᵉ` (the box/`Future` mate of `restrict-ren-mor`, which
@@ -248,7 +201,7 @@ mutual
   renᶜ r (perform op V M) (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) M pM
   renᶜ r (delay τ M)      pM        = renᶜ (cong-⟨⟩-ren r) M pM
-  renᶜ r (unbox w V M)    (pV , pM) = pV , renᶜ (cong-∷-ren r) M pM
+  renᶜ r (unbox x rel M)  pM        = renᶜ (cong-∷-ren r) M pM
   renᶜ r (box V M)        (pV , pM) =
     renᵛ (cong-⟨⟩-ren r) V pV , renᶜ (cong-∷-ren r) M pM
   renᶜ r (coerce rel M)   pM        = renᶜ r M pM
@@ -424,13 +377,13 @@ mutual
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
       alg-nat = T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) ((⟦ Γ' ⟧ᴱ-Eternalᵒ))
                   f (restrict-ren-necᵉ r) (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦⟧ʰᵗ-nat
-  C-rename-nat r (unbox w V M) (pV , pM) =
+  C-rename-nat r (unbox x rel M) pM =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ
                 (⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
-                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (unbox⇒var-nat r w V) ⟩ᵐ-cong))
+                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (unbox-env-nat r x rel _) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
   C-rename-nat r (box V M) (pV , pM) =

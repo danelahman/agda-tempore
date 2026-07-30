@@ -36,7 +36,7 @@ open import Syntax.Types     S
 open import Syntax.Contexts  S
 open import Syntax.Language  S
 open import Syntax.Renamings S
-open import Syntax.RenActions S using (V-rename; C-rename; unbox⇒var; var-rename)
+open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
 
 open import OperationalSemantics.State S

@@ -242,15 +242,13 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 ------------------------------------------------------------------------
 -- READING THE STORE, UP TO THE EQUIVALENCE
 --
--- `UNBOX` reads the store; related states hold related values, and the
--- renaming it consults is seen only up to `_≐ʳ_` (`unbox-img-≐`). Unfolding
--- both lookups (`unbox-lookup-≡`) leaves `lookup-body′` at corresponding data,
+-- `UNBOX` reads the store; related states hold related values. Unfolding both
+-- lookups (`unbox-lookup-≡`) leaves `lookup-body′` at corresponding data,
 -- which `lookup-body′-≐` compares.
 ------------------------------------------------------------------------
 
--- The same on cells rather than on `unbox` nodes: this is what a `Val` stated
--- on readability needs, `unbox-lookup-≐` below being this with an `unbox-img`
--- wrapper. Same proof — the cell equation is now the hypothesis.
+-- Stated on cells, which is what a `Val` stated on readability needs;
+-- `unbox-lookup-≐` below is the same at an `unbox` node's variable.
 
 lookup-body-≐ˢ : ∀ {A ρ} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
@@ -277,36 +275,16 @@ lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
     zz : ≐ˢ-var es z ≡ z'
     zz = subst-subst-sym (toCtx-≐ˢ es)
 
-unbox-lookup-≐ : ∀ {A ρ Δ Δ'} {St St' : 𝕊 []}
+unbox-lookup-≐ : ∀ {A ρ ρ' ρ''} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
-               → {w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)} → {w' : Ren [] (toCtx St') (Δ' ⟨ ρ ⟩)}
-               → {V : Δ ⊢V⦂ [ ρ ] A} → {V' : Δ' ⊢V⦂ [ ρ ] A}
-               → unbox-img w V ≡ unbox-img (castʳ (sym (toCtx-≐ˢ es)) w') V'
+               → {x : [ ρ ] A ∈[ ρ' ] toCtx St} → {x' : [ ρ ] A ∈[ ρ'' ] toCtx St'}
+               → {rel : ρ' ≾ᵣ ρ} → {rel' : ρ'' ≾ᵣ ρ}
+               → _≡_ {A = Var (toCtx St) ([ ρ ] A)}
+                     (ρ' , x) (Var-cast (sym (toCtx-≐ˢ es)) (ρ'' , x'))
                -------------------------------------------------------
-               → unbox-lookup St w V
-               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V')
+               → unbox-lookup St x rel
+               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' x' rel')
 
-unbox-lookup-≐ {A} {ρ} {St = St} {St' = St'} es {w} {w'} {V} {V'} hw =
-  subst (λ u → u ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' w' V'))
-        (sym (lookup-body-≡ St cellEq _ relW))
-        (lookup-body′-≐
-           (sym (toCtx-≐ˢ es))
-           (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' zz))) (≐ˢ-snd-ctx₂ es z z' zz)
-           _ _ _ _ relW relW _ _
-           (≐ˢ-lookup₂ es z z' zz))
-  where
-    z' = proj₂ (unbox-img w' V')
-
-    relW = proj₂ (proj₂ (unbox⇒var w' V'))
-
-    z = subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-img w' V') ] Γ₀)
-              (sym (toCtx-≐ˢ es)) z'
-
-    zz : ≐ˢ-var es z ≡ z'
-    zz = subst-subst-sym (toCtx-≐ˢ es)
-
-    -- the two lookups name the same cell: `hw` up to `_≐ʳ_`, then the cast
-    -- the two lookups name the same cell: the hypothesis, then the cast
-    cellEq : unbox-img w V ≡ (proj₁ (unbox-img w' V') , z)
-    cellEq = trans hw (unbox-img-cast (sym (toCtx-≐ˢ es)) w' V')
+unbox-lookup-≐ es {x} {x'} {rel} {rel'} h =
+  lookup-body-≐ˢ es (_ , x) (_ , x') h rel rel'
 

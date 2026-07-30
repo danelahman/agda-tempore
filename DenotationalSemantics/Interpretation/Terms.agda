@@ -7,8 +7,8 @@
 -- `return`↦`ηᵀ`, `⨟`↦`μᵀ ∘ Tᶠ- ∘ strᵀ` (environment threaded by the     --
 -- adjunction unit `η⊣`), `perform`↦`opᵀ`, `delay`↦`delayᵀ`,             --
 -- `coerce`↦`T-≤`. The Fitch formers use the adjunction: `box` transposes --
--- by `[ ρ ]ᶠ- ∘ η⊣`, and `unbox` extracts the underlying variable via    --
--- `unbox⇒var` and opens it with the counit `ε⊣`.                        --
+-- by `[ ρ ]ᶠ- ∘ η⊣`, and `unbox` projects the variable it names and     --
+-- opens it with the counit `ε⊣`.                                        --
 --                                                                    --
 -- `perform`'s parameter/arity are ground types, interpreted via the      --
 -- coercion `⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ` (`ty-gty`).                  --
@@ -49,8 +49,6 @@ open Operations Ops
 open import Syntax.Types S
 open import Syntax.Contexts S
 open import Syntax.Language S
-open import Syntax.RenActions S using (unbox⇒var)
-
 open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-∘ᵐ; []-congᶠ)
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; ⟨⟩-≤; εᵘ)
@@ -144,7 +142,7 @@ mutual
   Paramᶜ (absurd V)       = Paramᵛ V
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
-  Paramᶜ (unbox w V M)    = Paramᵛ V × Paramᶜ M
+  Paramᶜ (unbox x rel M)  = Paramᶜ M
   Paramᶜ (box V M)        = Paramᵛ V × Paramᶜ M
   Paramᶜ (coerce p M)     = Paramᶜ M
   -- the handled computation, the return clause, every operation clause, and —
@@ -197,9 +195,8 @@ mutual
   ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH) =
       T-alg-of-handlerᵀ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH)
     ∘ᵐ ⟨ projᴱ Γ , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
-  ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) with unbox⇒var w V
-  ... | ρ' , x , ρ'≾ρ =
-    ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ ρ'≾ρ ∘ᵐ var-proj x ⟩ᵐ
+  ⟦ unbox x rel M ⟧ᶜᵗ pM =
+    ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
   ⟦ box {ρ = ρ} V M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
   ⟦ coerce p M ⟧ᶜᵗ pM = T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM

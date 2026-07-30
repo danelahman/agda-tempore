@@ -67,7 +67,7 @@ open import Syntax.Types     S
 open import Syntax.Contexts  S
 open import Syntax.Language  S
 open import Syntax.Renamings S
-open import Syntax.RenActions S using (V-rename; C-rename; unbox⇒var; var-rename)
+open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
 
 open import OperationalSemantics.State S
@@ -299,8 +299,8 @@ stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} 
                (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
          pV
 stepᴾᶜ BOX                              pS (pV , pM)  = pM
-stepᴾᶜ (UNBOX {S = S} {w = w} {V = V} {M = M}) pS (pV , pM) =
-  subᶜ M Hd (unbox-lookup S w V) pM (unbox-lookupᴾ S w V pS)
+stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {M = M}) pS pM =
+  subᶜ M Hd (unbox-lookup S z rel) pM (unbox-lookupᴾ S z rel pS)
 stepᴾᶜ COERCE                           pS pM         = pM
 
 -- Both halves at once, for a configuration.
@@ -335,8 +335,8 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 ↝-sound r@(BOX {S = St} {V = V} {M = M}) pS (pV , pM) _ =
   pure-step-≡ (step-≾ r) (sound-BOX St V M pS pV pM)
-↝-sound r@(UNBOX {S = St} {w = w} {V = V} {M = M}) pS (pV , pM) _ =
-  pure-step-≡ (step-≾ r) (sound-UNBOX St w V M pS pV pM)
+↝-sound r@(UNBOX {S = St} {z = z} {rel = rel} {M = M}) pS pM _ =
+  pure-step-≡ (step-≾ r) (sound-UNBOX St z rel M pS pM)
 
 -- The `return` rules: the coercion the substitution leaves behind is `ε-substᵀ`,
 -- which `T-≤-≡` turns into the sub-effecting the theorem asks for.

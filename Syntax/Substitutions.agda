@@ -131,16 +131,13 @@ mutual
     handle (M [ x ↦ W ]c)
     `with ⟨ eternal? A ⟩[ x ↦ W ]cl H
     `in (N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c)
-  -- For the value-based unboxing we first recover the underlying resource
-  -- variable `y` (and grade bound `rel`) being unboxed via `unbox⇒var`. The
-  -- substitution takes it to another resource variable (`⟨_⟩[_↦_]rvar`), from
-  -- which we rebuild a value-based unboxing via the `unbox-var` smart
-  -- constructor. The new grade bound is the substituted variable's bound
+  -- The unboxed resource variable `y` is taken to another resource variable by
+  -- `⟨_⟩[_↦_]rvar`; the new grade bound is the substituted variable's bound
   -- composed with the original one.
-  _[_↦_]c (unbox w V M) x W with unbox⇒var w V
-  ... | _ , y , rel with ⟨ y ⟩[ x ↦ W ]rvar
-  ...   | _ , v , p =
-    unbox-var v (≾ᵣ-trans p rel) (M [ Tl-∷ x ↦ W ]c)
+  _[_↦_]c (unbox y rel M) x W =
+    unbox (proj₁ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar))
+          (≾ᵣ-trans (proj₂ (proj₂ ⟨ y ⟩[ x ↦ W ]rvar)) rel)
+          (M [ Tl-∷ x ↦ W ]c)
   box V N      [ x ↦ W ]c = box (V [ Tl-⟨⟩ x ↦ W ]v) (N [ Tl-∷ x ↦ W ]c)
   coerce rel M [ x ↦ W ]c = coerce rel (M [ x ↦ W ]c)
 

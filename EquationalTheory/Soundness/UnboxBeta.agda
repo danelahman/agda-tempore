@@ -49,7 +49,9 @@ open import Syntax.Types         S
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
-open import Syntax.RenActions    S using (V-rename; C-rename; unbox⇒var)
+open import Syntax.RenActions    S using (V-rename; C-rename)
+open import Syntax.Renamings.Equivalence S
+       using (∈-++ᶜˡ; grade-++ᶜˡ; grade-++ᶜˡ-uᵣ; wk-ren-⟨ρ⟩-ctx-img; var-img)
 open import Syntax.Substitutions S
 open import Syntax.CompContext   S
 
@@ -109,8 +111,8 @@ sound-unbox-beta : ∀ {Γ A C D ρ}
                  → Paramᵏ K → Paramᶜ N
                  → Soundᶜ== (unbox-beta V K p N)
 sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
-    ⟦⟧ᶜᵗ-irr (box V (K [ X ])) (pV , pL) (pV , fillᴾ K pK X (tt , pN))
-  ∙ fill-cong-env Γ K pK X Y (tt , pN) pY g hole
+    ⟦⟧ᶜᵗ-irr (box V (K [ X ])) (pV , pL) (pV , fillᴾ K pK X pN)
+  ∙ fill-cong-env Γ K pK X Y pN pY g hole
   ∙ ≈ᵐ-sym (⟦⟧ᶜᵗ-irr (box V (K [ Y ])) (pV' , pR) (pV , fillᴾ K pK Y pY))
   where
     Θ : Ctx
@@ -124,8 +126,15 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
     w₀ : Ren [] (Γ ++ᶜ Θ) (Γ ⟨ ρ ⟩)
     w₀ = ⟨⟩-≤-ren p ∘ʳ wk-ren-⟨ρ⟩-ctx refl
 
+    -- the variable that renaming names, and the bound the axiom stores
+    xB : [ ρ ] A ∈[ grade-++ᶜˡ uᵣ Θ ] ((Γ ∷ [ ρ ] A) ++ᶜ Θ)
+    xB = ∈-++ᶜˡ Θ Hd
+
+    relB : grade-++ᶜˡ uᵣ Θ ≾ᵣ ρ
+    relB = ≾ᵣ-trans (≾ᵣ-reflexive (grade-++ᶜˡ-uᵣ Θ)) p
+
     X : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢C⦂ D
-    X = unbox w (var (λ _ → ≾ᵣ-refl) Hd) N
+    X = unbox xB relB N
 
     -- exactly the renaming the axiom's right-hand side uses (`∘ʳ` is a
     -- constructor, so the bracketing matters)
@@ -160,12 +169,26 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-nat g p))
       ∙ ∘ᵐ-assoc _ _ _
 
-    lookup : lk (proj₁ (proj₂ (unbox⇒var w (var (λ _ → ≾ᵣ-refl) Hd))))
-                (proj₂ (proj₂ (unbox⇒var w (var (λ _ → ≾ᵣ-refl) Hd))))
-               ∘ᵐ G
-           ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ r₁ ⟧ʳ ∘ᵐ G
+    -- reaching `xB` is reaching the head variable through the lock
+    c : uᵣ ·ᵣ ρ ≾ᵣ ρ
+    c = ≾ᵣ-reflexive (·ᵣ-identityˡ ρ)
+
+    wImg : var-img w (Tl-⟨⟩ (Hd {Γ = Γ})) ≡ (grade-++ᶜˡ uᵣ Θ , xB)
+    wImg = wk-ren-⟨ρ⟩-ctx-img Θ refl (Hd {Γ = Γ})
+
+    relW : proj₁ (var-img w (Tl-⟨⟩ (Hd {Γ = Γ}))) ≾ᵣ ρ
+    relW = subst (_≾ᵣ ρ) (sym (cong proj₁ wImg)) relB
+
+    lkw : lk xB relB ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ ⟦ w ⟧ʳ
+    lkw =
+        lk-irr (sym wImg) relB relW
+      ∙ unbox-env-nat w (Tl-⟨⟩ (Hd {Γ = Γ})) c relW
+      ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (hd-lookup {Δ₀ = Γ} {B = [ ρ ] A} {ρ = ρ} c))
+      ∙ ∘ᵐ-assoc _ _ _
+
+    lookup : lk xB relB ∘ᵐ G ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ ⟦ r₁ ⟧ʳ ∘ᵐ G
     lookup =
-        ∘ᵐ-congˡ (unbox⇒var-Hd w)
+        ∘ᵐ-congˡ lkw
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
                   ∙ ∘ᵐ-congʳ w-ext
@@ -190,9 +213,9 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
                                       ∙ ⟨⟩-idᵐ)
                           ∙ ∘ᵐ-identityˡ _))
 
-    hole : ⟦ X ⟧ᶜᵗ (tt , pN) ∘ᵐ G ≈ᵐ ⟦ Y ⟧ᶜᵗ pY ∘ᵐ G
+    hole : ⟦ X ⟧ᶜᵗ pN ∘ᵐ G ≈ᵐ ⟦ Y ⟧ᶜᵗ pY ∘ᵐ G
     hole =
-        ∘ᵐ-congˡ (unbox-def w (var (λ _ → ≾ᵣ-refl) Hd) N tt pN)
+        ∘ᵐ-congˡ (unbox-def xB relB N pN)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
                   ∙ ⟨ ∘ᵐ-identityˡ _ , lookup ⟩ᵐ-cong

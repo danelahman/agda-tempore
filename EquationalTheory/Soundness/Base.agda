@@ -45,7 +45,6 @@ open import Syntax.Types      S
 open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.Renamings  S
-open import Syntax.RenActions S using (unbox⇒var)
 
 open import EquationalTheory.EquationalTheory S
 
@@ -114,8 +113,7 @@ mutual
             (⟨ ≈ᵐ-refl
              , ∘ᵐ-cong (T-congᶠ (⟦⟧ᶜᵗ-irr N pN pN'))
                        (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
-  ⟦⟧ᶜᵗ-irr (unbox w V M) (pV , pM) (pV' , pM') with unbox⇒var w V
-  ... | ρ' , x , ρ'≾ρ = ∘ᵐ-congˡ (⟦⟧ᶜᵗ-irr M pM pM')
+  ⟦⟧ᶜᵗ-irr (unbox x rel M) pM pM' = ∘ᵐ-congˡ (⟦⟧ᶜᵗ-irr M pM pM')
   ⟦⟧ᶜᵗ-irr (box V M) (pV , pM) (pV' , pM') =
     ∘ᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
             (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᵛᵗ-irr V pV pV')) ⟩ᵐ-cong)

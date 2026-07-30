@@ -40,7 +40,7 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.RenActions    S
 open import Syntax.Substitutions S
-open import Syntax.Renamings.Equivalence S using (eternal?-no; unbox-var-ren)
+open import Syntax.Renamings.Equivalence S using (eternal?-no)
 
 open Category Cat
 open Future Fut
@@ -85,7 +85,7 @@ mutual
   subᶜ (perform op V M) x W (pV , pM) pW =
     subᵛ V x W pV pW , subᶜ M (Tl-∷ (Tl-⟨⟩ x)) W pM pW
   subᶜ (delay τ M)      x W pM        pW = subᶜ M (Tl-⟨⟩ x) W pM pW
-  subᶜ (unbox w V M)    x W (pV , pM) pW = tt , subᶜ M (Tl-∷ x) W pM pW
+  subᶜ (unbox y rel M)  x W pM        pW = subᶜ M (Tl-∷ x) W pM pW
   subᶜ (box V N)        x W (pV , pN) pW =
     subᵛ V (Tl-⟨⟩ x) W pV pW , subᶜ N (Tl-∷ x) W pN pW
   subᶜ (coerce rel M)   x W pM        pW = subᶜ M x W pM pW
@@ -453,15 +453,10 @@ mutual
       alg-nat = T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) ((⟦ Γ₀ ⟧ᴱ-Eternalᵒ))
                   (restrict-sub-env x W) (restrict-sub-env-necᵉ x W)
                   (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦H'⟧ʰᵗ-nat
-  -- The substitution rebuilds the unboxing with `unbox-var`, so `unbox-var-nat`
-  -- turns it back into a lookup; `unbox-step` then splits the goal into the
-  -- continuation (the IH) and the lookup (`sub-lk`).
-  C-subst-nat (unbox w V M) x W (pV , pM) pW
-    with grad-typ⇒var V | var-rename w (Tl-⟨⟩ (proj₁ (proj₂ (grad-typ⇒var V))))
-  ... | _ , yv , f , refl | _ , b , y =
-    unbox-subst-nat y
-      (≾ᵣ-trans (b (λ ())) (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ _))))
-      M x W pW (C-subst-nat M (Tl-∷ x) W pM pW)
+  -- `unbox-step` splits the goal into the continuation (the IH) and the
+  -- resource lookup (`sub-lk`).
+  C-subst-nat (unbox y rel M) x W pM pW =
+    unbox-subst-nat y rel M x W pW (C-subst-nat M (Tl-∷ x) W pM pW)
   C-subst-nat (box V N) x W (pV , pN) pW =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat N (Tl-∷ x) W pN pW))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

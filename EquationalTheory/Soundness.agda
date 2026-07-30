@@ -62,7 +62,6 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
-       using (unbox-read)
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
        using (V-subst-nat; C-subst-nat; subᵛ; subᶜ; substᴾᵛ; substᴾᶜ′;
               subst-ctx-interp; subst-val-interp; sub-env)
@@ -155,15 +154,14 @@ mutual
             (⟨ ≈ᵐ-refl
              , ∘ᵐ-cong (T-congᶠ (soundᶜ q mq pN pN'))
                        (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
-  -- The premise is the cell equation, so the two nodes' environments agree by
-  -- `unbox-cell-≈` (the bound `unbox⇒var` also returns is irrelevant); only the
-  -- body needs the recursive call.
-  soundᶜ (unbox-cong {w = w} {w' = w'} {V = V} {V' = V'} {M = M} {N = N} p q)
-         mq (pV , pM) (pV' , pM') =
-      unbox-cell-≈ w w' V V' p M pV pV' pM
-    ∙ unbox-def w' V' M pV' pM
+  -- The two nodes name the same variable and differ only in an irrelevant
+  -- bound (`unbox-cell-≈`); only the body needs the recursive call.
+  soundᶜ (unbox-cong {x = x} {rel = rel} {rel' = rel'} {M = M} {N = N} q)
+         mq pM pM' =
+      unbox-cell-≈ x x rel rel' refl M pM
+    ∙ unbox-def x rel' M pM
     ∙ ∘ᵐ-congˡ (soundᶜ q mq pM pM')
-    ∙ ≈ᵐ-sym (unbox-def w' V' N pV' pM')
+    ∙ ≈ᵐ-sym (unbox-def x rel' N pM')
   soundᶜ (box-cong p q)       (mp , mq)    (pV , pM) (pV' , pM') =
     ∘ᵐ-cong (soundᶜ q mq pM pM')
             (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (soundᵛ p mp pV pV')) ⟩ᵐ-cong)

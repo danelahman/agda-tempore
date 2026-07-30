@@ -34,7 +34,7 @@ open import Syntax.Types     S
 open import Syntax.Contexts  S
 open import Syntax.Language  S
 open import Syntax.Renamings S
-open import Syntax.RenActions S using (V-rename; C-rename; unbox⇒var; var-rename)
+open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
 
 open import OperationalSemantics.State S
@@ -248,13 +248,13 @@ wk-lock-≤ refl =
 
 -- The looked-up resource is the stored value renamed, so its certificate is
 -- the stored one's, renamed the same way.
-unbox-lookupᴾ : ∀ {A ρ Δ} → (St : 𝕊 [])
-              → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
-              → Paramˢ St → Paramᵛ (unbox-lookup St w V)
-unbox-lookupᴾ {A} {ρ} St w V pSt =
+unbox-lookupᴾ : ∀ {A ρ ρ'} → (St : 𝕊 [])
+              → (z : [ ρ ] A ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ)
+              → Paramˢ St → Paramᵛ (unbox-lookup St z rel)
+unbox-lookupᴾ {A} {ρ} St z rel pSt =
   renᵛ
     ((((  eq-ren ++ᶜ-identityˡ
-       ∘ʳ ⟨⟩-≤-ren (proj₂ (proj₂ (unbox⇒var w V))))
+       ∘ʳ ⟨⟩-≤-ren rel)
        ∘ʳ wk-ren-⟨ρ⟩-ctx
             (trans
               (trans
@@ -266,19 +266,14 @@ unbox-lookupᴾ {A} {ρ} St w V pSt =
        ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _)))
        ∘ʳ eq-ren (split-state-++ᶜ St z))
     (resource-lookup St z) (resource-lookupᴾ St z pSt)
-  where
-    z = proj₁ (proj₂ (unbox⇒var w V))
 
-unbox-lookup-sound : ∀ {A ρ Δ} → (St : 𝕊 [])
-                   → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
+unbox-lookup-sound : ∀ {A ρ ρ'} → (St : 𝕊 [])
+                   → (x : [ ρ ] A ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ)
                    → (pSt : Paramˢ St)
-                   → ⟦ unbox-lookup St w V ⟧ᵛᵗ (unbox-lookupᴾ St w V pSt) ∘ᵐ ⟦ St ⟧ˢ pSt
-                   ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                          ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))))
-                      ∘ᵐ ⟦ St ⟧ˢ pSt
-unbox-lookup-sound {A} {ρ} St w V pSt with grad-typ⇒var V
-... | _ , y , f , refl with var-rename w (Tl-⟨⟩ y)
-... | ρ' , bound , x =
+                   → ⟦ unbox-lookup St x rel ⟧ᵛᵗ (unbox-lookupᴾ St x rel pSt)
+                       ∘ᵐ ⟦ St ⟧ˢ pSt
+                   ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x) ∘ᵐ ⟦ St ⟧ˢ pSt
+unbox-lookup-sound {A} {ρ} St x rel pSt =
     -- the stored value, reindexed by `unbox-lookup`'s renaming composite
     -- (which `∘ʳ` leaves left-nested, so re-associate it first)
       ∘ᵐ-congˡ (V-rename-nat _ (resource-lookup St x) (resource-lookupᴾ St x pSt))
@@ -302,10 +297,6 @@ unbox-lookup-sound {A} {ρ} St w V pSt with grad-typ⇒var V
     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
     ∙ ≈ᵐ-sym rhs
   where
-    rel : ρ' ≾ᵣ ρ
-    rel = ≾ᵣ-trans (bound (λ ()))
-            (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (f (λ ()))) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)))
-
     p₀ = ≾ᵣ-reflexive (sym (cell-grade St x))
 
     g = ⟦ resource-lookup St x ⟧ᵛᵗ (resource-lookupᴾ St x pSt)
@@ -332,32 +323,32 @@ unbox-lookup-sound {A} {ρ} St w V pSt with grad-typ⇒var V
       ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ triangleˡ)
       ∙ ∘ᵐ-congˡ (∘ᵐ-identityʳ _)
 
--- `⟦_⟧ᶜᵗ` matches on `unbox⇒var`, so name its result to let the clause reduce.
+-- The interpretation of an `unbox`, named so that the equational-theory
+-- soundness proofs can rewrite by it.
 
-unbox-def : ∀ {Γ A C ρ Δ} → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
-          → (M : Γ ∷ A ⊢C⦂ C) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
-          → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM)
-          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                                      ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
-unbox-def w V M pV pM with unbox⇒var w V
-... | _ , _ , _ = ≈ᵐ-refl
+unbox-def : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
+          → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
+          → ⟦ unbox x rel M ⟧ᶜᵗ pM
+          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
+unbox-def x rel M pM = ≈ᵐ-refl
 
 -- UNBOX: substituting the looked-up resource is reading the cell.
 
-sound-UNBOX : ∀ {A C ρ Δ} → (St : 𝕊 []) → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩))
-            → (V : Δ ⊢V⦂ [ ρ ] A) → (M : toCtx St ∷ A ⊢C⦂ C)
-            → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
-            → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt
-            ≈ᵐ ⟦ M [ Hd ↦ unbox-lookup St w V ]c ⟧ᶜᵗ
-                 (subᶜ M Hd (unbox-lookup St w V) pM (unbox-lookupᴾ St w V pSt))
+sound-UNBOX : ∀ {A C ρ ρ'} → (St : 𝕊 [])
+            → (x : [ ρ ] A ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ)
+            → (M : toCtx St ∷ A ⊢C⦂ C)
+            → (pSt : Paramˢ St) → (pM : Paramᶜ M)
+            → ⟦ unbox x rel M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
+            ≈ᵐ ⟦ M [ Hd ↦ unbox-lookup St x rel ]c ⟧ᶜᵗ
+                 (subᶜ M Hd (unbox-lookup St x rel) pM (unbox-lookupᴾ St x rel pSt))
                ∘ᵐ ⟦ St ⟧ˢ pSt
-sound-UNBOX St w V M pSt pV pM =
-    ∘ᵐ-congˡ (unbox-def w V M pV pM)
+sound-UNBOX St x rel M pSt pM =
+    ∘ᵐ-congˡ (unbox-def x rel M pM)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
-  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-lookup-sound St w V pSt) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-lookup-sound St x rel pSt) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (unbox-lookup St w V) pM
-                        (unbox-lookupᴾ St w V pSt)))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (unbox-lookup St x rel) pM
+                        (unbox-lookupᴾ St x rel pSt)))
 

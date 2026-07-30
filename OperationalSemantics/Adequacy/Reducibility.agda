@@ -171,7 +171,7 @@ Comp' A = Comp A (Val A)
 -- development reads a cell are the two ends of that quantification:
 --
 --   * `e = id-suc` is what `UNBOX` consumes. It fires at the *current* state,
---     and `unbox⇒var` yields only `ρ' ≾ᵣ ρ`, never `ρ' ≾ᵣ uᵣ`: a cell can be
+--     and an `unbox` carries only `ρ' ≾ᵣ ρ`, never `ρ' ≾ᵣ uᵣ`: a cell can be
 --     readable without being usable as a value.
 --
 --   * `e = ext q` for a `ρ`-reach `q` is `Val` at the cell's box type, which is
@@ -229,38 +229,27 @@ store-∅ c r = ⊥-elim (not-in-empty-ctx c)
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
--- Looking a resource up consults the boxed value only through `unbox⇒var`,
--- which sees it as a variable (`grad-typ⇒var`), so `_≐ᵛ_`-related values give
--- the same cell — and the recovered grade bound reaches only a `⟨⟩-≤-ren`.
+-- Transporting the resource variable along a reach before looking it up is
+-- looking it up along the composed reach. Unfolding the lookup
+-- (`unbox-lookup-≡`) leaves the cell, which is the same by `unbox-cells`, and
+-- the grade bound, which is irrelevant — so the two values are equal, not
+-- merely equivalent.
 
-unbox-lookup-val-≐ : ∀ {A ρ Δ} {St : 𝕊 []}
-                   → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩))
-                   → {V V' : Δ ⊢V⦂ [ ρ ] A} → V ≐ᵛ V'
-                   → unbox-lookup St w V ≐ᵛ unbox-lookup St w V'
-
-unbox-lookup-val-≐ {St = St} w (var-≐ {x = x})
-  with var-rename w (Tl-⟨⟩ x)
-... | ρ' , p , z =
-  V-rename-≐
-    (∘ʳ-≐ (∘ʳ-≐ (∘ʳ-≐ (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _)) ≐ʳ-refl) ≐ʳ-refl)
-          ≐ʳ-refl)
-    (resource-lookup St z)
-
--- Renaming the boxed value before looking it up is looking it up along the
--- composed reach. Unfolding the lookup (`unbox-lookup-≡`) leaves the cell,
--- which is the same by `unbox-cellsᵛ`, and the grade bound, which is
--- irrelevant — so the two values are equal, not merely equivalent.
-
-unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
+unbox-lookup-ren : ∀ {A ρ σ} {St St' St₂ : 𝕊 []}
                  → (q₀ : St ⊑ₛ[ uᵣ ] St') → (q' : St' ⊑ₛ[ ρ ] St₂)
-                 → (V : toCtx St ⊢V⦂ [ ρ ] A)
-                 → unbox-lookup St₂ (unbox-ren q') (reach-val q₀ V)
-                 ≡ unbox-lookup St₂ (unbox-ren (reach-∘ᵘ q' q₀)) V
+                 → (x : [ ρ ] A ∈[ σ ] toCtx St)
+                 → (rel  : proj₁ (var-img (unbox-ren q')
+                             (Tl-⟨⟩ (proj₂ (var-img (reach-renᵘ q₀) x)))) ≾ᵣ ρ)
+                 → (rel' : proj₁ (var-img (unbox-ren (reach-∘ᵘ q' q₀))
+                                          (Tl-⟨⟩ x)) ≾ᵣ ρ)
+                 → unbox-lookup St₂
+                     (proj₂ (var-img (unbox-ren q')
+                       (Tl-⟨⟩ (proj₂ (var-img (reach-renᵘ q₀) x))))) rel
+                 ≡ unbox-lookup St₂
+                     (proj₂ (var-img (unbox-ren (reach-∘ᵘ q' q₀)) (Tl-⟨⟩ x))) rel'
 
-unbox-lookup-ren {St₂ = St₂} q₀ q' V =
-  trans (unbox-lookup-≡ St₂ (unbox-ren q') (reach-val q₀ V))
-    (trans (lookup-body-≡ St₂ (unbox-cellsᵛ q₀ q' V) _ _)
-           (sym (unbox-lookup-≡ St₂ (unbox-ren (reach-∘ᵘ q' q₀)) V)))
+unbox-lookup-ren {St₂ = St₂} q₀ q' x rel rel' =
+  lookup-body-≡ St₂ (unbox-cells q₀ q' x) rel rel'
 
 -- ETERNAL TYPES ARE FREE
 --
@@ -304,18 +293,7 @@ Val-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
 Val-≐ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
        → V ≐ᵛ V' → Val A St V → Val A St V'
 
-Val-≐ᵛ (Base b)  eV p = tt
-Val-≐ᵛ Unit      eV p = tt
-Val-≐ᵛ Empty     eV p = tt
-Val-≐ᵛ (A |×| B) (pair-≐ e₁ e₂) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , refl , Val-≐ᵛ A e₁ p₁ , Val-≐ᵛ B e₂ p₂
-Val-≐ᵛ (A ⇒ (B ‼ ε)) (lam-≐ eM) (M , refl , f) =
-  _ , refl , λ q M₂ eM₂ W pW →
-                f q M₂ (≐ᶜ-trans eM₂ (C-rename-cong (cong-∷-ren _) (≐ᶜ-sym eM))) W pW
-Val-≐ᵛ ([ ρ ] A) {V} {V'} eV f
-  with grad-typ⇒var V | grad-typ⇒var V'
-... | _ , x , g , refl | _ , x' , g' , refl with eV
-...   | var-≐ = f
+Val-≐ᵛ A refl p = p
 
 Val-reach : ∀ {A St St'} → (q : St ⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
           → Val A St V → Val A St' (reach-val q V)
@@ -380,23 +358,14 @@ Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ r → Valᵍ→Val G _ (p r)
 Valᵍ-≐ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂ type-of-gtype G}
         → V ≐ᵛ V' → Valᵍ G St V → Valᵍ G St V'
 
-Valᵍ-≐ᵛ (Base b)     eV p = tt
-Valᵍ-≐ᵛ Unit         eV p = tt
-Valᵍ-≐ᵛ Empty        eV p = tt
-Valᵍ-≐ᵛ (G₁ |×|ᵍ G₂) (pair-≐ e₁ e₂) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , refl , Valᵍ-≐ᵛ G₁ e₁ p₁ , Valᵍ-≐ᵛ G₂ e₂ p₂
-Valᵍ-≐ᵛ ([ ρ ]ᵍ G)   {V} {V'} eV f
-  with grad-typ⇒var V | grad-typ⇒var V'
-... | _ , x , g , refl | _ , x' , g' , refl with eV
-...   | var-≐ = f
+Valᵍ-≐ᵛ G refl p = p
 
 -- GROUND VALUES ACROSS THE STATE EQUIVALENCE
 --
 -- Related states hold related values, so reducibility transports. Recursion on
 -- the ground type; the box clause replays the reach on the other state
--- (`reach-replay` + `≐ˢ-sym`), moves the boxed value there
--- (`unbox-lookup-cast-val`), and identifies the two reads
--- (`unbox-ren-bridge`, then `unbox-lookup-≐`).
+-- (`reach-replay` + `≐ˢ-sym`) and identifies the two reads (`unbox-ren-bridge`,
+-- then `lookup-body-≐ˢ`).
 
 Valᵍ-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (G : GType)
         → (V : toCtx St ⊢V⦂ type-of-gtype G)

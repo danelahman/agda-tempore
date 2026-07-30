@@ -51,7 +51,7 @@ open import Syntax.Types         S
 open import Syntax.Contexts      S
 open import Syntax.Language      S
 open import Syntax.Renamings     S
-open import Syntax.RenActions    S using (V-rename; C-rename; unbox⇒var)
+open import Syntax.RenActions    S using (V-rename; C-rename)
 open import Syntax.Substitutions S
 
 open import EquationalTheory.EquationalTheory S
@@ -176,23 +176,23 @@ private
   ... | yes _ = refl
   ... | no  _ = refl
 
-sound-handle-unbox : ∀ {Γ A B C ρ Δ ε ε'}
-  → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
-  → (V : Δ ⊢V⦂ [ ρ ] A)
+sound-handle-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
+  → (x : [ ρ ] A ∈[ ρ' ] Γ)
+  → (rel : ρ' ≾ᵣ ρ)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
   → (H : (op : Op) → (ε'' : E)
        → Γ ᴱ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-  → Soundᶜ== (handle-unbox w V M H N)
-sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
-                   ((pV , pM) , pN , pH , uH)
-                   (pV₂ , pM₂ , pN₂ , pH₂ , uH₂) =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w V (handle M `with H' `in (C-rename r N)))
-              (pV₂ , pM₂ , pN₂ , pH₂ , uH₂)
-              (pV , (pM , renᶜ r N pN , pH₂ , uH₂))
-          ∙ unbox-def w V (handle M `with H' `in (C-rename r N)) pV
+  → Soundᶜ== (handle-unbox x rel M H N)
+sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
+                   (pM , pN , pH , uH)
+                   (pM₂ , pN₂ , pH₂ , uH₂) =
+  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel (handle M `with H' `in (C-rename r N)))
+              (pM₂ , pN₂ , pH₂ , uH₂)
+              (pM , renᶜ r N pN , pH₂ , uH₂)
+          ∙ unbox-def x rel (handle M `with H' `in (C-rename r N))
               (pM , renᶜ r N pN , pH₂ , uH₂)
             -- transport the fold along the eternal-skeleton renaming
           ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ alg-nat)
@@ -221,8 +221,7 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {Δ} {ε} {ε'} w V M H N
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε'')
     H' op' ε'' = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A))) (H op' ε'')
 
-    gu = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
-                    ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))) ⟩ᵐ
+    gu = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
 
     f : ⟦ (Γ ∷ A) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
     f = ⟦ ren-ᴱ-∷ {Γ} A ⟧ʳ

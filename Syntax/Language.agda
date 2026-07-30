@@ -24,7 +24,6 @@ open Operations Ops
 
 open import Syntax.Contexts   S
 open import Syntax.Types      S
-open import Syntax.Renamings  S
 
 -- Well-typed terms (values and computations)
 
@@ -159,22 +158,20 @@ mutual
             → Γ ⊢C⦂ B ‼ (ε ·ₑ ε')
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
-    
-    -- That enough time has passed since the box-typed value was brought into scope
-    -- is captured by the renaming assumption from context `Γ` to context `Δ ⟨ ρ ⟩`,
-    -- i.e. by rewinding `Γ` past a `ρ`-lock.
-    -- See the lemma `unbox⇒var` in `RenActions` that proves that the value has to
-    -- be a variable with the resources `ρ'` to the right of it satisfying `ρ' ≾ᵣ ρ`.
+
+    -- The value being unboxed is a variable of box type `[ ρ ] A`: every value of
+    -- a graded modal type is one (`grad-typ⇒var` below). That enough time has
+    -- passed since it was brought into scope is the grade bound `ρ' ≾ᵣ ρ`, where
+    -- `ρ'` is the product of the locks standing to the variable's right.
     -- This achieves the same kind of temporal rewinding of the context that the
     -- original calculus and its formalisation (Ahman & Žajdela MFPS 2024) achieved
     -- via a recursively defined subtraction operation on contexts on ℕ-grades.
-    
+
     unbox   : {A : VType}
             → {C : CType}
-            → {ρ : R}
-            → {Δ : Ctx}
-            → Ren [] Γ (Δ ⟨ ρ ⟩)
-            → Δ ⊢V⦂ [ ρ ] A
+            → {ρ ρ' : R}
+            → [ ρ ] A ∈[ ρ' ] Γ
+            → ρ' ≾ᵣ ρ
             → Γ ∷ A ⊢C⦂ C
             ---------------------------
             → Γ ⊢C⦂ C

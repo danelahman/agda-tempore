@@ -209,39 +209,12 @@ mutual
       go (yes et) = sub-wk-handle-et Θ et M H N W
       go (no ¬et) = sub-wk-handle-ne Θ ¬et M H N W
 
-  sub-wk-C {Γ} {B} Θ (unbox {A = A} {ρ = ρ} w V M) W =
-    ≐ᶜ-trans
-      (castᶜ-≐ (castOf {Γ} {B} Θ)
-        (sub-unbox (w ∘ʳ rn) V
-                   (C-rename (cong-ren {Γ'' = Θ ∷ A} (wk-ren {A = B})) M)
-                   z₀ W relv))
-      (≐ᶜ-trans (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))
-        (unbox-≐ rvarEq
-          (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
-                                     (castOf {Γ} {B} (Θ ∷ A)) _))
-                    (sub-wk-C (Θ ∷ A) M W))))
-    where
-      rn = cong-ren {Γ'' = Θ} (wk-ren {A = B})
-      z₀ = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
-
-      v = proj₂ (rvar-img (proj₂ (unbox-img (w ∘ʳ rn) V)) z₀ W)
-
-      -- the bound the substitution itself builds
-      relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-img (w ∘ʳ rn) V) ⟩[ z₀ ↦ W ]rvar)))
-                      (proj₂ (proj₂ (unbox⇒var (w ∘ʳ rn) V)))
-
-      rvarEq : unbox-img (castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
-                       (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
-           ≡ unbox-img w V
-      rvarEq =
-        trans (unbox-img-castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv)
-                                (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd))
-          (trans (cong (Var-cast (castOf {Γ} {B} Θ)) (unbox-var-img v relv))
-            (trans (cong (λ t → Var-cast (castOf {Γ} {B} Θ)
-                                  (rvar-img (proj₂ t)
-                                     (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
-                         (unbox-img-∘ rn w V))
-                   (unbox-rvar-wk Θ (proj₂ (unbox-img w V)) W)))
+  sub-wk-C {Γ} {B} Θ (unbox {A = A} x rel M) W =
+    ≐ᶜ-trans (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))
+      (unbox-≐ (unbox-rvar-wk Θ x W)
+        (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
+                                   (castOf {Γ} {B} (Θ ∷ A)) _))
+                  (sub-wk-C (Θ ∷ A) M W)))
 
   -- `sub-wk-C` with its context given by an equation rather than literally, so
   -- that the eternal `handle` clause below can recurse on the bare subterm:
