@@ -239,7 +239,7 @@ env-var-hd γ W f =
 -- Both are the same lemma at a one-entry suffix: the action under a suffix `Δ`
 -- of a variable of the *prefix* is the action at the empty suffix, pushed under
 -- `Δ` by `push-ren`. The suffix must be arbitrary, because `env-Vˢ` grows it at
--- `_⟨_⟩ᵉ` and `_∷ᵉ_`; `push-ren` is pinned up to `_≐ʳ_` by `push-ren-tgt`, which
+-- `_⟨_⟩ᵉ` and `_∷ᵉ_`; `push-ren` is pinned up to `_≐ʳ_` by `push-ren-img`, which
 -- is why no renaming needs to be quantified over.
 --
 -- The two zones that grow the suffix use the induction hypothesis **twice** —
@@ -263,7 +263,7 @@ env-Vˢ-var-l : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
              ≐ᵛ V-rename (push-ren Δ p) (env-Vˢ γ [] (var f' x))
 
 env-Vˢ-var-l ⌊ St ⌋ Δ eγ ¬et p x f f' =
-  ≐ᵛ-sym (var-ren-tgt-≐ (push-ren Δ p) x f' (push-ren-tgt Δ p x) f)
+  ≐ᵛ-sym (var-ren-img-≐ (push-ren Δ p) x f' (push-ren-img Δ p x) f)
 
 env-Vˢ-var-l (∅ᵉ St) Δ eγ ¬et p x f f' = ⊥-elim (not-in-empty-ctx x)
 
@@ -303,8 +303,8 @@ env-Vˢ-var-l (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₁} γ q) Δ eγ ¬et p 
     f₁  = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
     f'' = λ z → ≾ᵣ-zero-productˡ (grade-++ᶜˡ-zeroˡ Δ (f z))
 
-    inner = castᵛ-var-Tgt ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
-              (Tgt-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
+    inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
+              (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
 
 -- The cell zone: nothing is substituted, so both sides re-bracket and the
 -- comparison is `push-ren-++ᶜ` alone.
@@ -327,8 +327,8 @@ env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ eγ 
 
     f₁ = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
 
-    inner = castᵛ-var-Tgt ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
-              (Tgt-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
+    inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
+              (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
 
 -- The cell's own variable: a *suffix* variable of the inner action, carried
 -- through unchanged since nothing is substituted.
@@ -341,20 +341,20 @@ env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ eγ 
           (≐ᵛ-trans
             (V-rename-cong (push-ren Δ p)
               (env-Vˢ-var-r γ Δ₁ (Hd {Γ = []}) f' f'))
-            (var-ren-tgt-≐ (push-ren Δ p) (Hd {Γ = toCtx St}) f'
-                           (push-ren-tgt Δ p Hd) f)))))
+            (var-ren-img-≐ (push-ren Δ p) (Hd {Γ = toCtx St}) f'
+                           (push-ren-img Δ p Hd) f)))))
   where
     Δ₁ = [] ∷ [ ρ₁ ] A₀
     eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei = ++ᶜ-assoc Γ Δ₁ Δ
     hd = ∈-++ᶜˡ {Γ = Δ₁} Δ (Hd {Γ = []})
 
-    inner = castᵛ-var-Tgt ei (∈-++ᶜˡ Δ (∈-++ᶜʳ {Γ = Γ} (Hd {Γ = []})))
+    inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜʳ {Γ = Γ} (Hd {Γ = []})))
               (∈-++ᶜʳ {Γ = Γ} hd) (∈-++ᶜˡ-++ᶜʳ Γ Δ₁ Δ (Hd {Γ = []})) f f
 
-    outer = castᵛ-var-Tgt eo (∈-++ᶜʳ {Γ = toCtx St} hd)
+    outer = castᵛ-var-Var eo (∈-++ᶜʳ {Γ = toCtx St} hd)
               (∈-++ᶜˡ Δ (Hd {Γ = toCtx St}))
-              (Tgt-cast-flip (++ᶜ-assoc (toCtx St) Δ₁ Δ) _ _
+              (Var-cast-flip (++ᶜ-assoc (toCtx St) Δ₁ Δ) _ _
                              (∈-++ᶜˡ-++ᶜʳ (toCtx St) Δ₁ Δ (Hd {Γ = []})))
               f f
 
@@ -393,8 +393,8 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ eγ ¬et p (Tl-�
 
     f₁ = λ z → subst (_≾ᵣ uᵣ) (sym (grade-++ᶜˡ-assoc _ Δ₁ Δ)) (f z)
 
-    inner = castᵛ-var-Tgt ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
-              (Tgt-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
+    inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜˡ Δ₁ x)) (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) x)
+              (Var-cast-flip⁻ ei _ _ (∈-++ᶜˡ-assoc Δ₁ Δ x)) f f₁
 
 -- The entry's own variable: a *suffix* variable of the inner action, which the
 -- substitution then hits (`sub-var-hit′`), returning the entry's value pushed
@@ -420,12 +420,12 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ eγ ¬et p Hd f 
     t  = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}
     hd = ∈-++ᶜˡ {Γ = Δ₁} Δ (Hd {Γ = []})
 
-    inner = castᵛ-var-Tgt ei (∈-++ᶜˡ Δ (∈-++ᶜʳ {Γ = Γ} (Hd {Γ = []})))
+    inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜʳ {Γ = Γ} (Hd {Γ = []})))
               (∈-++ᶜʳ {Γ = Γ} hd) (∈-++ᶜˡ-++ᶜʳ Γ Δ₁ Δ (Hd {Γ = []})) f f
 
-    outer = castᵛ-var-Tgt eo (∈-++ᶜʳ {Γ = toCtx St} hd)
+    outer = castᵛ-var-Var eo (∈-++ᶜʳ {Γ = toCtx St} hd)
               (∈-++ᶜˡ Δ (Hd {Γ = toCtx St}))
-              (Tgt-cast-flip (++ᶜ-assoc (toCtx St) Δ₁ Δ) _ _
+              (Var-cast-flip (++ᶜ-assoc (toCtx St) Δ₁ Δ) _ _
                              (∈-++ᶜˡ-++ᶜʳ (toCtx St) Δ₁ Δ (Hd {Γ = []})))
               f f
 
@@ -448,7 +448,7 @@ env-Vˢ-var-l (eternalˡ {Γ = Γ} Δ₀ lf η γ) Δ (eγ , et) ¬et p x f f'
         (env-Vˢ-≐ γ []
           (≐ᵛ-sym (env-eternal-V-var-r lf η y f' f')))))
   where
-    inner = castᵛ-var-Tgt (++ᶜ-assoc Δ₀ Γ Δ)
+    inner = castᵛ-var-Var (++ᶜ-assoc Δ₀ Γ Δ)
               (∈-++ᶜˡ Δ (∈-++ᶜʳ {Γ = Δ₀} y))
               (∈-++ᶜʳ {Γ = Δ₀} (∈-++ᶜˡ {Γ = Γ} Δ y))
               (∈-++ᶜˡ-++ᶜʳ Δ₀ Γ Δ y) f f

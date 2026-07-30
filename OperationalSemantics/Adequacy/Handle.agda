@@ -118,14 +118,14 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
 cl-ren-≐ : ∀ {Γ'} → (St : 𝕊 []) → (D : Ctx)
          → {r r' : Ren [] (toCtx St ᴱ ++ᶜ D) Γ'}
          → (∀ {A ρ} → (y : A ∈[ ρ ] D)
-              → var-tgt r  (∈-++ᶜʳ {Γ = toCtx St ᴱ} y)
-              ≡ var-tgt r' (∈-++ᶜʳ {Γ = toCtx St ᴱ} y))
+              → var-img r  (∈-++ᶜʳ {Γ = toCtx St ᴱ} y)
+              ≡ var-img r' (∈-++ᶜʳ {Γ = toCtx St ᴱ} y))
          → r ≐ʳ r'
 
 cl-ren-≐ St D {r} {r'} h = mk≐ʳ go
   where
     go : ∀ {A ρ} → (x : A ∈[ ρ ] (toCtx St ᴱ ++ᶜ D))
-       → var-tgt r x ≡ var-tgt r' x
+       → var-img r x ≡ var-img r' x
     go x with ∈-++ᶜ-split (toCtx St ᴱ) D x in eq
     ... | inj₁ (ρ' , z) =
       ⊥-elim (not-in-empty-ctx
@@ -140,7 +140,7 @@ cl-ren-≐ St D {r} {r'} h = mk≐ʳ go
 ∈-++ᶜʳ-cast D refl y = refl
 
 -- Hence: a congruence renaming out of such a context is the transport, whatever
--- it is built from — the two agree on `D` by `cong-ren-tgt-r` and `eq-ren-tgt`.
+-- it is built from — the two agree on `D` by `cong-ren-img-r` and `eq-ren-img`.
 
 cl-ren-eq-≐ : ∀ {Γ₁} → (St : 𝕊 []) → (D : Ctx)
             → (r₀ : Ren [] (toCtx St ᴱ) Γ₁) → (e₀ : toCtx St ᴱ ≡ Γ₁)
@@ -148,8 +148,8 @@ cl-ren-eq-≐ : ∀ {Γ₁} → (St : 𝕊 []) → (D : Ctx)
 
 cl-ren-eq-≐ St D r₀ e₀ =
   cl-ren-≐ St D
-    (λ y → trans (cong-ren-tgt-r r₀ y)
-             (sym (trans (eq-ren-tgt (cong (_++ᶜ D) e₀) (∈-++ᶜʳ y))
+    (λ y → trans (cong-ren-img-r r₀ y)
+             (sym (trans (eq-ren-img (cong (_++ᶜ D) e₀) (∈-++ᶜʳ y))
                          (cong (λ z → _ , z) (∈-++ᶜʳ-cast D e₀ y)))))
 
 -- Transports of a clause along its eternal context compose. (`subst-fuseᶜ` is
@@ -636,14 +636,14 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                   (λ y →
                                      trans
                                        (trans
-                                         (cong (var-tgt′
+                                         (cong (var-img′
                                                  (cong-ren {Γ'' = D}
                                                    (restrict-ren
                                                      (cong-∷-ren (unbox-ren q₂)))))
-                                               (cong-ren-tgt-r _ y))
-                                         (cong-ren-tgt-r _ y))
+                                               (cong-ren-img-r _ y))
+                                         (cong-ren-img-r _ y))
                                        (sym (trans
-                                         (eq-ren-tgt (cong (_++ᶜ D) e₀)
+                                         (eq-ren-img (cong (_++ᶜ D) e₀)
                                                      (∈-++ᶜʳ y))
                                          (cong (λ z → _ , z)
                                            (∈-++ᶜʳ-cast D e₀ y))))))
@@ -804,22 +804,22 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                             pointwise y =
                               trans
                                 (trans
-                                  (cong (var-tgt′
+                                  (cong (var-img′
                                           (cong-ren {Γ'' = D}
                                             (restrict-ren
                                               (cong-∷-ren (unbox-ren q₂)))))
-                                        (cong-ren-tgt-r _ y))
-                                  (cong-ren-tgt-r _ y))
+                                        (cong-ren-img-r _ y))
+                                  (cong-ren-img-r _ y))
                                 (sym (trans
-                                  (cong (λ z → var-tgt′ (eq-ren eKD)
-                                                 (var-tgt′ (cong-ren {Γ'' = D}
+                                  (cong (λ z → var-img′ (eq-ren eKD)
+                                                 (var-img′ (cong-ren {Γ'' = D}
                                                    (wk-ren {A = Ar})) z))
-                                        (trans (eq-ren-tgt eG (∈-++ᶜʳ y))
+                                        (trans (eq-ren-img eG (∈-++ᶜʳ y))
                                           (cong (λ z → _ , z)
                                             (∈-++ᶜʳ-cast D (toCtxᴱ-≡ St₁ St'') y))))
-                                  (trans (cong (var-tgt′ (eq-ren eKD))
-                                           (cong-ren-tgt-r _ y))
-                                    (trans (eq-ren-tgt eKD (∈-++ᶜʳ y))
+                                  (trans (cong (var-img′ (eq-ren eKD))
+                                           (cong-ren-img-r _ y))
+                                    (trans (eq-ren-img eKD (∈-++ᶜʳ y))
                                       (cong (λ z → _ , z)
                                         (∈-++ᶜʳ-cast D _ y))))))
 

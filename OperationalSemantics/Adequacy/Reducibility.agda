@@ -60,7 +60,7 @@ open import OperationalSemantics.Adequacy.StateEquivalence Spec
 -- A value of box type is always a variable (`grad-typ⇒var`), so it *is* a cell,
 -- and that is what both `Val` and `Valᵍ` speak about at a box type.
 
-val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A → Tgt Γ ([ ρ ] A)
+val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A → Var Γ ([ ρ ] A)
 val-cell V = proj₁ (grad-typ⇒var V) , proj₁ (proj₂ (grad-typ⇒var V))
 
 Valᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ type-of-gtype G → Set
@@ -72,9 +72,7 @@ Valᵍ (G₁ |×|ᵍ G₂)  St V =
   Σ[ V₂ ∈ toCtx St ⊢V⦂ type-of-gtype G₂ ]
     (V ≡ ⦉ V₁ , V₂ ⦊) × Valᵍ G₁ St V₁ × Valᵍ G₂ St V₂
 Valᵍ ([ ρ ]ᵍ G)    St V =
-  ∀ {St'} → (e : St ≤ₛ St')
-  → (rel : proj₁ (≤ₛ-embed e (proj₂ (val-cell V))) ≾ᵣ ρ)
-  → Valᵍ G St' (lookup-body St' (≤ₛ-embed e (proj₂ (val-cell V))) rel)
+  ∀ {St'} → (r : St [ proj₂ (val-cell V) ]⊑ᶜ St') → Valᵍ G St' (lookupᶜ r)
 
 -- REDUCIBLE COMPUTATIONS (inductive)
 --
@@ -152,9 +150,7 @@ Val (A ⇒ (B ‼ ε)) St V =
 -- `proj₁ (≤ₛ-embed e c) ≾ᵣ ρ`, i.e. `σ_c ·ᵣ ≤ₛ-grade e ≾ᵣ ρ`, and with
 -- `σ_c ≾ᵣ uᵣ` the latter is strictly weaker.
 Val ([ ρ ] A)     St V =
-  ∀ {St'} → (e : St ≤ₛ St')
-  → (rel : proj₁ (≤ₛ-embed e (proj₂ (val-cell V))) ≾ᵣ ρ)
-  → Val A St' (lookup-body St' (≤ₛ-embed e (proj₂ (val-cell V))) rel)
+  ∀ {St'} → (r : St [ proj₂ (val-cell V) ]⊑ᶜ St') → Val A St' (lookupᶜ r)
 
 -- Reducible computations at the value predicate `Val` — the form the
 -- fundamental lemma proves.
@@ -187,10 +183,9 @@ Comp' A = Comp A (Val A)
 -- law — rightly, since it would say every box is ready immediately.
 
 Store : 𝕊 [] → Set
-Store St = ∀ {A ρ σ} {St' : 𝕊 []} → (e : St ≤ₛ St')
-         → (x : [ ρ ] A ∈[ σ ] toCtx St)
-         → (rel : proj₁ (≤ₛ-embed e x) ≾ᵣ ρ)
-         → Val A St' (lookup-body St' (≤ₛ-embed e x) rel)
+Store St = ∀ {A ρ σ} {St' : 𝕊 []} → (c : [ ρ ] A ∈[ σ ] toCtx St)
+         → (r : St [ c ]⊑ᶜ St')
+         → Val A St' (lookupᶜ r)
 
 -- HEAD EXPANSION
 --
@@ -228,7 +223,7 @@ Comp-ε-subst refl p = p
 -- The empty store: `toCtx ∅` has no variables.
 
 store-∅ : Store ∅
-store-∅ e x rel = ⊥-elim (not-in-empty-ctx x)
+store-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
 ------------------------------------------------------------------------
 -- LEMMAS TO PROVE
@@ -345,14 +340,14 @@ Val-reach {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
                           (cong-∷-ren-≐ (≐ʳ-sym (reach-renᵘ-∘ q' q₀))))
                         M)))
         W pW
-Val-reach {[ ρ ] A} q₀ V f {St''} e rel with grad-typ⇒var V
+Val-reach {[ ρ ] A} q₀ V f {St''} (read e rel) with grad-typ⇒var V
 ... | _ , c , g , refl =
   Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St'' cellEq rel₁ rel))
-           (f (≤ₛ-trans (ext q₀) e) rel₁)
+           (f (read (≤ₛ-trans (ext q₀) e) rel₁))
   where
     cellEq = trans (≤ₛ-embed-∘ (ext q₀) e c)
                    (sym (cong (λ z → ≤ₛ-embed e (proj₂ z))
-                              (reach-renᵘ-tgt q₀ c)))
+                              (reach-renᵘ-img q₀ c)))
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
 -- GROUND TYPES
@@ -370,7 +365,7 @@ Val→Valᵍ Unit         V p = tt
 Val→Valᵍ Empty        V p = tt
 Val→Valᵍ (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , Val→Valᵍ G₁ V₁ p₁ , Val→Valᵍ G₂ V₂ p₂
-Val→Valᵍ ([ ρ ]ᵍ G)   V p = λ e rel → Val→Valᵍ G _ (p e rel)
+Val→Valᵍ ([ ρ ]ᵍ G)   V p = λ r → Val→Valᵍ G _ (p r)
 
 Valᵍ→Val : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
          → Valᵍ G St V → Val (type-of-gtype G) St V
@@ -380,7 +375,7 @@ Valᵍ→Val Unit         V p = tt
 Valᵍ→Val Empty        V p = tt
 Valᵍ→Val (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , Valᵍ→Val G₁ V₁ p₁ , Valᵍ→Val G₂ V₂ p₂
-Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ e rel → Valᵍ→Val G _ (p e rel)
+Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ r → Valᵍ→Val G _ (p r)
 
 -- Ground reducibility is insensitive to the equivalence, as `Val-≐ᵛ` is.
 
@@ -416,20 +411,20 @@ Valᵍ-≐ˢ es (G₁ |×|ᵍ G₂) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl ,
   _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
   , Valᵍ-≐ˢ es G₁ V₁ p₁ , Valᵍ-≐ˢ es G₂ V₂ p₂
 
-Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} e rel
+Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} (read e rel)
   with grad-typ⇒var V
 ... | _ , c , g , refl with replay (≐ˢ-sym es) e
 ...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
   Valᵍ-≐ᵛ G (≡→≐ᵛ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
     (Valᵍ-≐ᵛ G (≐ᵛ-sym bridge)
-      (Valᵍ-≐ˢ (≐ˢ-sym es₂) G _ (f e₀ rel₀)))
+      (Valᵍ-≐ˢ (≐ˢ-sym es₂) G _ (f (read e₀ rel₀))))
   where
     cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
     rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
 
     bridge =
       ≐ᵛ-trans
-        (lookup-body-≐ˢ es₂ (Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
+        (lookup-body-≐ˢ es₂ (Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
         (≡→≐ᵛ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
@@ -582,20 +577,20 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
                                             (reach-renᵘ q'))))
                     M))))
 
-Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} e rel
+Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} (read e rel)
   with grad-typ⇒var V
 ... | _ , c , g , refl with replay (≐ˢ-sym es) e
 ...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
   Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
     (Val-≐ᵛ A (≐ᵛ-sym bridge)
-      (Val-≐ˢ (≐ˢ-sym es₂) A _ (f e₀ rel₀)))
+      (Val-≐ˢ (≐ˢ-sym es₂) A _ (f (read e₀ rel₀))))
   where
     cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
     rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
 
     bridge =
       ≐ᵛ-trans
-        (lookup-body-≐ˢ es₂ (Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
+        (lookup-body-≐ˢ es₂ (Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
         (≡→≐ᵛ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
@@ -626,12 +621,12 @@ alloc-var-≐ : ∀ {A A' ρ ρ'} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨
             → (x : A' ∈[ ρ' ] toCtx St) → (f : ¬ Eternal A' → ρ' ≾ᵣ uᵣ)
             → reach-val (alloc-reach V) (var f x) ≐ᵛ var f (Tl-∷ x)
 alloc-var-≐ V x f =
-  var-ren-tgt-≐ (reach-renᵘ (alloc-reach V)) x f
-                (reach-renᵘ-tgt (alloc-reach V) x) f
+  var-ren-img-≐ (reach-renᵘ (alloc-reach V)) x f
+                (reach-renᵘ-img (alloc-reach V) x) f
 
 -- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ` is
 -- one out of `St` (`reach-∘ᵘ` against `alloc-reach`), and reading the cell back
--- returns the stored value. Which cell is read is settled — `unbox-ren-tgt`
+-- returns the stored value. Which cell is read is settled — `unbox-ren-img`
 -- sends it to `≤ₛ-embed (ext q) Hd` — and what it holds is settled too, by
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
@@ -647,9 +642,11 @@ store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) 
             ------------------------------------------
             → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
-store-fresh {A} {ρ} {St} V pV f {St'} e rel =
-  Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V e rel q₀ refl)) (pV q₀)
+store-fresh {A} {ρ} {St} V pV f {St'} r =
+  Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V (extᶜ r) (ready r) q₀ refl)) (pV q₀)
   where
+    e   = extᶜ r
+    rel = ready r
     -- the allocation accumulates nothing, so the cell's readability at `St'`
     -- *is* the bound the reach back to `St` needs
     q₀ : St [ ρ ]⊑ₛ[ uᵣ ] St'
@@ -667,7 +664,7 @@ store-fresh {A} {ρ} {St} V pV f {St'} e rel =
 -- there is nothing to show (`⊤`, or no such variable at all). At a box type a
 -- *usable* variable — one carrying the grade bound `var` demands — is
 -- reducible, and that is the store read at the later states its own box grade
--- allows: `unbox-ren-tgt` identifies the cell the lookup names with
+-- allows: `unbox-ren-img` identifies the cell the lookup names with
 -- `≤ₛ-embed (ext q)`, which is exactly where the store speaks. So `Val` at a
 -- box type is not a second assumption about the state; it is this one.
 
@@ -682,7 +679,7 @@ store-var {Empty}     pSt x f = tt
 store-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 store-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
 
-store-var {[ ρ ] A} pSt x f e rel = pSt e x rel
+store-var {[ ρ ] A} pSt x f r = pSt x r
 
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
@@ -691,12 +688,14 @@ store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) 
             ------------------------------------------------------------------
             → Store (St ∷ₛ V)
 
-store-alloc {A} {ρ} {St} V pSt pV {St' = St'} e Hd rel =
-  store-fresh V pV (λ _ → ≾ᵣ-refl) e rel
+store-alloc {A} {ρ} {St} V pSt pV {St' = St'} Hd r =
+  store-fresh V pV (λ _ → ≾ᵣ-refl) r
 
-store-alloc {St = St} V pSt pV {St' = St'} e (Tl-∷ x) rel =
+store-alloc {St = St} V pSt pV {St' = St'} (Tl-∷ x) r =
   Val-≐ᵛ _ (≡→≐ᵛ (lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
-           (pSt (≤ₛ-trans (∷-suc V id-suc) e) x rel₀)
+           (pSt x (read (≤ₛ-trans (∷-suc V id-suc) e) rel₀))
   where
+    e   = extᶜ r
+    rel = ready r
     rel₀ = subst (_≾ᵣ _)
                  (sym (cong proj₁ (≤ₛ-embed-∘ (∷-suc V id-suc) e x))) rel

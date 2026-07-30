@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The swap on a variable, and on the cell an `unbox` names.
+-- The swap on a variable, and on the resource variable an `unbox` names.
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -166,18 +166,18 @@ hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ⟨ ρ ⟩) W g g' E with eternal? B
 bound-irr : ∀ {A ρ} → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ) → f ≡ f'
 bound-irr f f' = fun-ext (λ z → ≾ᵣ-irrelevant _ _)
 
--- Relocating a variable along a context transport, at the `Tgt` level so
+-- Relocating a variable along a context transport, at the `Var` level so
 -- that the grade travels with the position.
 
-castᵛ-var-tgt : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
-              → (t : Tgt Γ' A) → Tgt-cast e (ρ , x) ≡ t
+castᵛ-var-img : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
+              → (t : Var Γ' A) → Var-cast e (ρ , x) ≡ t
               → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
               → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
               → castᵛ e (var f x) ≐ᵛ var f' (proj₂ t)
-castᵛ-var-tgt refl x .(_ , x) refl f f' = var-≐
+castᵛ-var-img refl x .(_ , x) refl f f' = var-≐
 
 -- The three positions the substitution distinguishes, each taking where
--- the variable sits as a `Tgt` equation.
+-- the variable sits as a `Var` equation.
 
 sub-at-varᵣ : ∀ {Γ' B A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Θ)
             → (y : A ∈[ ρ ] ((Γ' ∷ B) ++ᶜ Θ)) → y ≡ ∈-++ᶜʳ {Γ = Γ' ∷ B} x
@@ -194,7 +194,7 @@ sub-at-varₗ : ∀ {Γ' B A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Γ')
 sub-at-varₗ Θ x _ refl f f' W = sub-var-l Θ x (bval Θ W) f f'
 
 sub-at-varₕ : ∀ {Γ' B ρ} → (Θ : Ctx) → (y : B ∈[ ρ ] ((Γ' ∷ B) ++ᶜ Θ))
-            → _≡_ {A = Tgt ((Γ' ∷ B) ++ᶜ Θ) B}
+            → _≡_ {A = Var ((Γ' ∷ B) ++ᶜ Θ) B}
                   (ρ , y) (ctx-grade Θ , bvar B Θ)
             → (f : ¬ Eternal B → ρ ≾ᵣ uᵣ)
             → (f' : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ) → (W : Γ' ⊢V⦂ B)
@@ -221,12 +221,12 @@ swap-var-r {Γ} {B₁} {B₂} Θ x f W₂ W₁ =
             (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
               (≐ᵛ-trans
                 (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
-                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
+                   (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
                       (cong (λ z → _ , z) (∈-++ᶜʳ-assoc (Γ ∷ B₁) ([] ∷ B₂) x))
                       f f))
                 (sub-at-varᵣ (([] ∷ B₂) ++ᶜ Θ) (∈-++ᶜʳ {Γ = [] ∷ B₂} x) _
                              refl f f W₁)))
-            (castᵛ-var-tgt (assocᴮ⁻ Γ B₂ Θ) _ _
+            (castᵛ-var-img (assocᴮ⁻ Γ B₂ Θ) _ _
                (cong (λ z → _ , z)
                  (subst-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
                              (∈-++ᶜʳ-assoc Γ ([] ∷ B₂) x)))
@@ -249,12 +249,12 @@ swap-var-l {Γ} {B₁} {B₂} Θ v f W₂ W₁ =
             (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
               (≐ᵛ-trans
                 (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
-                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
-                      (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                   (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
+                      (Var-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
                          (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Tl-∷ v)))
                       f fΔ))
                 (sub-at-varₗ (([] ∷ B₂) ++ᶜ Θ) v _ refl fΔ fΔ W₁)))
-            (castᵛ-var-tgt (assocᴮ⁻ Γ B₂ Θ) _ _
+            (castᵛ-var-img (assocᴮ⁻ Γ B₂ Θ) _ _
                (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ v) fΔ f)))
         (sub-at-varₗ Θ v _ refl f f W₂)))
   where
@@ -264,7 +264,7 @@ swap-var-l {Γ} {B₁} {B₂} Θ v f W₂ W₁ =
 swap-var-B₂ : ∀ {Γ B₁ B₂ ρ} → (Θ : Ctx)
             → (f : ¬ Eternal B₂ → ρ ≾ᵣ uᵣ)
             → (y : B₂ ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
-            → _≡_ {A = Tgt ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) B₂}
+            → _≡_ {A = Var ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) B₂}
                   (ρ , y) (grade-++ᶜˡ uᵣ Θ , ∈-++ᶜˡ Θ (Hd {Γ = Γ ∷ B₁}))
             → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
             → SubSwapV Θ (var f y) W₂ W₁
@@ -284,14 +284,14 @@ swap-var-B₂ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ Hd) refl W₂ W₁ =
             (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
               (≐ᵛ-trans
                 (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
-                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
+                   (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
                       (∈-++ᶜˡ-++ᶜʳ (Γ ∷ B₁) ([] ∷ B₂) Θ (Hd {Γ = []}))
                       f f))
                 (sub-at-varᵣ (([] ∷ B₂) ++ᶜ Θ)
                              (∈-++ᶜˡ {Γ = [] ∷ B₂} Θ (Hd {Γ = []})) _
                              refl f f W₁)))
-            (castᵛ-var-tgt (assocᴮ⁻ Γ B₂ Θ) _ _
-               (Tgt-cast-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
+            (castᵛ-var-img (assocᴮ⁻ Γ B₂ Θ) _ _
+               (Var-cast-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
                   (∈-++ᶜˡ-++ᶜʳ Γ ([] ∷ B₂) Θ (Hd {Γ = []})))
                f f)))
         (sub-at-varₕ Θ _ (sym (split→∈-∈-++ᶜˡ Γ B₂ Θ)) f fΘ W₂)))
@@ -302,7 +302,7 @@ swap-var-B₂ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ Hd) refl W₂ W₁ =
 swap-var-B₁ : ∀ {Γ B₁ B₂ ρ} → (Θ : Ctx)
             → (f : ¬ Eternal B₁ → ρ ≾ᵣ uᵣ)
             → (y : B₁ ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
-            → _≡_ {A = Tgt ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) B₁}
+            → _≡_ {A = Var ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) B₁}
                   (ρ , y) (grade-++ᶜˡ uᵣ Θ , ∈-++ᶜˡ Θ (Tl-∷ (Hd {Γ = Γ})))
             → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
             → SubSwapV Θ (var f y) W₂ W₁
@@ -317,8 +317,8 @@ swap-var-B₁ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ (Tl-∷ Hd)) refl W₂ W�
             (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
               (≐ᵛ-trans
                 (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
-                   (castᵛ-var-tgt (assocᴮ Γ B₁ B₂ Θ) _ _
-                      (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                   (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
+                      (Var-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
                          (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Hd {Γ = Γ})))
                       f fΔ))
                 (sub-at-varₕ (([] ∷ B₂) ++ᶜ Θ) _
@@ -345,7 +345,7 @@ swap-var-B₁ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ (Tl-∷ Hd)) refl W₂ W�
 
 swap-var-l′ : ∀ {Γ B₁ B₂ A ρ ρ'} → (Θ : Ctx) → (v : A ∈[ ρ' ] Γ)
             → (y : A ∈[ ρ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
-            → _≡_ {A = Tgt ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) A}
+            → _≡_ {A = Var ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) A}
                   (ρ , y) (grade-++ᶜˡ ρ' Θ , ∈-++ᶜˡ Θ (Tl-∷ (Tl-∷ v)))
             → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
             → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
@@ -388,206 +388,206 @@ sub-swap-var {Γ} {B₁} {B₂} Θ y f W₂ W₁
 ------------------------------------------------------------------------
 -- THE CELL AN `unbox` NAMES
 --
--- `sub-unbox` rebuilds an unboxing from the cell the substitution leaves,
--- so the `unbox` case reduces to: the two orders name the same cell. That
+-- `sub-unbox` rebuilds an unboxing from the resource variable the substitution leaves,
+-- so the `unbox` case reduces to: the two orders name the same resource variable. That
 -- is the `rvar` counterpart of the variable case, and a simpler one — a
 -- box type is never eternal, so `⟨_⟩[_↦_]rvar` has no `eternal?` split
--- and each position is one `Tgt-cast` push.
+-- and each position is one `Var-cast` push.
 ------------------------------------------------------------------------
 
--- The cell left by replacing the entry at the boundary.
+-- The resource variable left by replacing the entry at the boundary.
 
-rcell : ∀ {Γ' B A ρ σ} → (Θ : Ctx)
+rvar-at : ∀ {Γ' B A ρ σ} → (Θ : Ctx)
       → ([ ρ ] A ∈[ σ ] ((Γ' ∷ B) ++ᶜ Θ)) → (W : Γ' ⊢V⦂ B)
-      → Tgt (Γ' ++ᶜ Θ) ([ ρ ] A)
-rcell {Γ'} {B} Θ c W =
-  Tgt-cast (castOf {Γ'} {B} Θ) (rvar-tgt c (bvar B Θ) (bval Θ W))
+      → Var (Γ' ++ᶜ Θ) ([ ρ ] A)
+rvar-at {Γ'} {B} Θ c W =
+  Var-cast (castOf {Γ'} {B} Θ) (rvar-img c (bvar B Θ) (bval Θ W))
 
--- The same at an already-located cell. `Tgt` is a Σ, so `cong` cannot infer
+-- The same at an already-located resource variable. `Var` is a Σ, so `cong` cannot infer
 -- the dependent motive from a lambda — this has to be named, exactly as
--- `var-tgt′` is.
+-- `var-img′` is.
 
-rcell′ : ∀ {Γ' B A ρ} → (Θ : Ctx) → Tgt ((Γ' ∷ B) ++ᶜ Θ) ([ ρ ] A)
-       → (W : Γ' ⊢V⦂ B) → Tgt (Γ' ++ᶜ Θ) ([ ρ ] A)
-rcell′ Θ (σ , c) W = rcell Θ c W
+rvar-at′ : ∀ {Γ' B A ρ} → (Θ : Ctx) → Var ((Γ' ∷ B) ++ᶜ Θ) ([ ρ ] A)
+       → (W : Γ' ⊢V⦂ B) → Var (Γ' ++ᶜ Θ) ([ ρ ] A)
+rvar-at′ Θ (σ , c) W = rvar-at Θ c W
 
--- and, when the entry replaced *is* the cell, the cell of the value it is
+-- and, when the entry replaced *is* the resource variable, the resource variable of the value it is
 -- replaced by, pushed under the suffix.
 
-hcell : ∀ {Γ' A ρ} → (Θ : Ctx) → (W : Γ' ⊢V⦂ [ ρ ] A) → Tgt (Γ' ++ᶜ Θ) ([ ρ ] A)
-hcell {Γ'} {A} {ρ} Θ W = rcell Θ (bvar ([ ρ ] A) Θ) W
+rvar-at-hit : ∀ {Γ' A ρ} → (Θ : Ctx) → (W : Γ' ⊢V⦂ [ ρ ] A) → Var (Γ' ++ᶜ Θ) ([ ρ ] A)
+rvar-at-hit {Γ'} {A} {ρ} Θ W = rvar-at Θ (bvar ([ ρ ] A) Θ) W
 
--- The cell counterpart of `hit-∷-++ᶜ`, and by the same induction.
+-- The resource variable counterpart of `hit-∷-++ᶜ`, and by the same induction.
 
 rhit-∷-++ᶜ : ∀ {Γ' A ρ B₀} → (Θ : Ctx) → (W : Γ' ⊢V⦂ [ ρ ] A)
            → (E : (split-l (bvar {Γ'} ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
                      ++ᶜ split-r (bvar {Γ'} ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ)))
                 ≡ ((Γ' ∷ B₀) ++ᶜ Θ))
-           → Tgt-cast E
-               (rvar-tgt (bvar ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
+           → Var-cast E
+               (rvar-img (bvar ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
                          (bvar ([ ρ ] A) (([] ∷ B₀) ++ᶜ Θ))
                          (bval (([] ∷ B₀) ++ᶜ Θ) W))
-           ≡ hcell {Γ' ∷ B₀} Θ (V-rename (wk-ren {A = B₀}) W)
+           ≡ rvar-at-hit {Γ' ∷ B₀} Θ (V-rename (wk-ren {A = B₀}) W)
 
 rhit-∷-++ᶜ {Γ'} {A} {ρ} {B₀} [] (var f y) E =
-  Tgt-cast-irr E refl _
+  Var-cast-irr E refl _
 
 rhit-∷-++ᶜ {Γ'} {A} {ρ} {B₀} (Θ ∷ C) W E =
-  trans (Tgt-cast-irr E (cong (_∷ C) (Ehit ([ ρ ] A) B₀ Θ)) _)
-    (trans (Tgt-cast-∷ (Ehit ([ ρ ] A) B₀ Θ) _)
-      (trans (cong Tgt-∷ (rhit-∷-++ᶜ Θ W (Ehit ([ ρ ] A) B₀ Θ)))
-        (trans (sym (Tgt-cast-∷ (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ) _))
-               (Tgt-cast-irr (cong (_∷ C) (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ))
+  trans (Var-cast-irr E (cong (_∷ C) (Ehit ([ ρ ] A) B₀ Θ)) _)
+    (trans (Var-cast-∷ (Ehit ([ ρ ] A) B₀ Θ) _)
+      (trans (cong Var-∷ (rhit-∷-++ᶜ Θ W (Ehit ([ ρ ] A) B₀ Θ)))
+        (trans (sym (Var-cast-∷ (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ) _))
+               (Var-cast-irr (cong (_∷ C) (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ))
                              (castOf {Γ' ∷ B₀} {[ ρ ] A} (Θ ∷ C)) _))))
 
 rhit-∷-++ᶜ {Γ'} {A} {ρ} {B₀} (Θ ⟨ ρ' ⟩) W E =
-  trans (Tgt-cast-irr E (cong (_⟨ ρ' ⟩) (Ehit ([ ρ ] A) B₀ Θ)) _)
-    (trans (Tgt-cast-⟨⟩ ρ' (Ehit ([ ρ ] A) B₀ Θ) _)
-      (trans (cong (Tgt-⟨⟩ ρ') (rhit-∷-++ᶜ Θ W (Ehit ([ ρ ] A) B₀ Θ)))
-        (trans (sym (Tgt-cast-⟨⟩ ρ' (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ) _))
-               (Tgt-cast-irr (cong (_⟨ ρ' ⟩) (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ))
+  trans (Var-cast-irr E (cong (_⟨ ρ' ⟩) (Ehit ([ ρ ] A) B₀ Θ)) _)
+    (trans (Var-cast-⟨⟩ ρ' (Ehit ([ ρ ] A) B₀ Θ) _)
+      (trans (cong (Var-⟨⟩ ρ') (rhit-∷-++ᶜ Θ W (Ehit ([ ρ ] A) B₀ Θ)))
+        (trans (sym (Var-cast-⟨⟩ ρ' (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ) _))
+               (Var-cast-irr (cong (_⟨ ρ' ⟩) (castOf {Γ' ∷ B₀} {[ ρ ] A} Θ))
                              (castOf {Γ' ∷ B₀} {[ ρ ] A} (Θ ⟨ ρ' ⟩)) _))))
 
--- The four positions, at the cell level.
+-- The four positions, at the resource variable level.
 
-unbox-cell-swap : ∀ {Γ B₁ B₂ A ρ σ} → (Θ : Ctx)
+unbox-rvar-swap : ∀ {Γ B₁ B₂ A ρ σ} → (Θ : Ctx)
                 → (c : [ ρ ] A ∈[ σ ] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
                 → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
-                → rcell Θ (proj₂ (rcell Θ c (V-rename (wk-ren {A = B₁}) W₂)))
+                → rvar-at Θ (proj₂ (rvar-at Θ c (V-rename (wk-ren {A = B₁}) W₂)))
                           W₁
-                ≡ rcell Θ
-                    (proj₂ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ)
-                             (rcell (([] ∷ B₂) ++ᶜ Θ)
-                                (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) (σ , c)))
+                ≡ rvar-at Θ
+                    (proj₂ (Var-cast (assocᴮ⁻ Γ B₂ Θ)
+                             (rvar-at (([] ∷ B₂) ++ᶜ Θ)
+                                (proj₂ (Var-cast (assocᴮ Γ B₁ B₂ Θ) (σ , c)))
                                 W₁)))
                     W₂
 
-unbox-cell-swap {Γ} {B₁} {B₂} {A} {ρ} {σ} Θ c W₂ W₁
+unbox-rvar-swap {Γ} {B₁} {B₂} {A} {ρ} {σ} Θ c W₂ W₁
   with ∈-++ᶜ-split (Γ ∷ B₁ ∷ B₂) Θ c in eqc
 
 ... | inj₂ c'
   rewrite ∈-++ᶜ-split-inj₂ (Γ ∷ B₁ ∷ B₂) Θ c c' eqc =
-  trans (cong (λ t → rcell′ Θ t W₁)
+  trans (cong (λ t → rvar-at′ Θ t W₁)
               (sub-rvar-r {Γ = Γ ∷ B₁} {B = B₂} Θ c'
                           (bval Θ (V-rename (wk-ren {A = B₁}) W₂))))
     (trans (sub-rvar-r {Γ = Γ} {B = B₁} Θ c' (bval Θ W₁))
       (sym
         (trans
-          (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+          (cong (λ t → rvar-at′ Θ (Var-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
             (trans
-              (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+              (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
                     (cong (λ z → σ , z)
                           (∈-++ᶜʳ-assoc (Γ ∷ B₁) ([] ∷ B₂) c')))
               (sub-rvar-r {Γ = Γ} {B = B₁} (([] ∷ B₂) ++ᶜ Θ)
                           (∈-++ᶜʳ {Γ = [] ∷ B₂} c')
                           (bval (([] ∷ B₂) ++ᶜ Θ) W₁))))
           (trans
-            (cong (λ t → rcell′ Θ t W₂)
+            (cong (λ t → rvar-at′ Θ t W₂)
                   (cong (λ z → σ , z)
                         (subst-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
                                     (∈-++ᶜʳ-assoc Γ ([] ∷ B₂) c'))))
             (sub-rvar-r {Γ = Γ} {B = B₂} Θ c' (bval Θ W₂))))))
 
 ... | inj₁ (σ' , c') =
-  subst (λ t → rcell Θ (proj₂ (rcell Θ (proj₂ t)
+  subst (λ t → rvar-at Θ (proj₂ (rvar-at Θ (proj₂ t)
                                 (V-rename (wk-ren {A = B₁}) W₂))) W₁
-             ≡ rcell Θ
-                 (proj₂ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ)
-                          (rcell (([] ∷ B₂) ++ᶜ Θ)
-                             (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) t)) W₁)))
+             ≡ rvar-at Θ
+                 (proj₂ (Var-cast (assocᴮ⁻ Γ B₂ Θ)
+                          (rvar-at (([] ∷ B₂) ++ᶜ Θ)
+                             (proj₂ (Var-cast (assocᴮ Γ B₁ B₂ Θ) t)) W₁)))
                  W₂)
         (sym (∈-++ᶜ-split-inj₁ (Γ ∷ B₁ ∷ B₂) Θ c c' eqc))
         (go c')
   where
     go : ∀ {σ₀} → (c₀ : [ ρ ] A ∈[ σ₀ ] (Γ ∷ B₁ ∷ B₂))
-       → rcell Θ (proj₂ (rcell Θ (∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ c₀)
+       → rvar-at Θ (proj₂ (rvar-at Θ (∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ c₀)
                           (V-rename (wk-ren {A = B₁}) W₂))) W₁
-       ≡ rcell Θ
-           (proj₂ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ)
-                    (rcell (([] ∷ B₂) ++ᶜ Θ)
-                       (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ)
+       ≡ rvar-at Θ
+           (proj₂ (Var-cast (assocᴮ⁻ Γ B₂ Θ)
+                    (rvar-at (([] ∷ B₂) ++ᶜ Θ)
+                       (proj₂ (Var-cast (assocᴮ Γ B₁ B₂ Θ)
                                 (_ , ∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ c₀)))
                        W₁)))
            W₂
 
-    -- the cell is the outer entry `B₂`: the left order hits it at once and
-    -- then cancels the weakening (`unbox-cell-wk`); the right order lets it
+    -- the resource variable is the outer entry `B₂`: the left order hits it at once and
+    -- then cancels the weakening (`unbox-rvar-wk`); the right order lets it
     -- survive into the suffix and hits it last
     go Hd =
       trans
-        (cong (λ t → rcell′ Θ t W₁)
-          (trans (cong (λ t → rcell′ Θ t (V-rename (wk-ren {A = B₁}) W₂))
+        (cong (λ t → rvar-at′ Θ t W₁)
+          (trans (cong (λ t → rvar-at′ Θ t (V-rename (wk-ren {A = B₁}) W₂))
                        (sym (split→∈-∈-++ᶜˡ (Γ ∷ B₁) B₂ Θ)))
                  (sym (rvar-hit-ren (wk-ren {A = B₁}) Θ W₂))))
-        (trans (unbox-cell-wk {Γ = Γ} {B = B₁} Θ (proj₂ (hcell Θ W₂)) (bval Θ W₁))
+        (trans (unbox-rvar-wk {Γ = Γ} {B = B₁} Θ (proj₂ (rvar-at-hit Θ W₂)) (bval Θ W₁))
           (sym
             (trans
-              (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+              (cong (λ t → rvar-at′ Θ (Var-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
                 (trans
-                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                  (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
                         (∈-++ᶜˡ-++ᶜʳ (Γ ∷ B₁) ([] ∷ B₂) Θ (Hd {Γ = []})))
                   (sub-rvar-r {Γ = Γ} {B = B₁} (([] ∷ B₂) ++ᶜ Θ)
                               (∈-++ᶜˡ {Γ = [] ∷ B₂} Θ (Hd {Γ = []}))
                               (bval (([] ∷ B₂) ++ᶜ Θ) W₁))))
               (trans
-                (cong (λ t → rcell′ Θ t W₂)
-                  (Tgt-cast-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
+                (cong (λ t → rvar-at′ Θ t W₂)
+                  (Var-cast-flip (++ᶜ-assoc Γ ([] ∷ B₂) Θ) _ _
                      (∈-++ᶜˡ-++ᶜʳ Γ ([] ∷ B₂) Θ (Hd {Γ = []}))))
-                (cong (λ t → rcell′ Θ t W₂)
+                (cong (λ t → rvar-at′ Θ t W₂)
                       (sym (split→∈-∈-++ᶜˡ Γ B₂ Θ)))))))
 
-    -- the cell is the inner entry `B₁`: the left order lets it survive and
+    -- the resource variable is the inner entry `B₁`: the left order lets it survive and
     -- then hits it; the right order hits it at the bigger suffix, and
     -- `rhit-∷-++ᶜ` peels the `B₂` layer off again
     go (Tl-∷ Hd) =
       trans
-        (cong (λ t → rcell′ Θ t W₁)
+        (cong (λ t → rvar-at′ Θ t W₁)
               (sub-rvar-l {Γ = Γ ∷ B₁} {B = B₂} Θ (Hd {Γ = Γ})
                           (bval Θ (V-rename (wk-ren {A = B₁}) W₂))))
         (trans
-          (cong (λ t → rcell′ Θ t W₁)
+          (cong (λ t → rvar-at′ Θ t W₁)
                 (sym (split→∈-∈-++ᶜˡ Γ B₁ Θ)))
           (sym
             (trans
-              (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+              (cong (λ t → rvar-at′ Θ (Var-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
                 (trans
-                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
-                    (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                  (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                    (Var-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
                        (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Hd {Γ = Γ}))))
-                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                  (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
                         (sym (split→∈-∈-++ᶜˡ Γ B₁ (([] ∷ B₂) ++ᶜ Θ))))))
               (trans
-                (cong (λ t → rcell′ Θ t W₂)
-                  (trans (Tgt-cast-fuse (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+                (cong (λ t → rvar-at′ Θ t W₂)
+                  (trans (Var-cast-fuse (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
                                         (assocᴮ⁻ Γ B₂ Θ) _)
                          (rhit-∷-++ᶜ Θ W₁ (Ehit B₁ B₂ Θ))))
                 (trans
-                  (cong (λ t → rcell′ Θ t W₂)
+                  (cong (λ t → rvar-at′ Θ t W₂)
                         (sym (rvar-hit-ren (wk-ren {A = B₂}) Θ W₁)))
-                  (unbox-cell-wk {Γ = Γ} {B = B₂} Θ (proj₂ (hcell Θ W₁)) (bval Θ W₂)))))))
+                  (unbox-rvar-wk {Γ = Γ} {B = B₂} Θ (proj₂ (rvar-at-hit Θ W₁)) (bval Θ W₂)))))))
 
     go (Tl-∷ (Tl-∷ c₀)) =
-      trans (cong (λ t → rcell′ Θ t W₁)
+      trans (cong (λ t → rvar-at′ Θ t W₁)
                   (sub-rvar-l {Γ = Γ ∷ B₁} {B = B₂} Θ (Tl-∷ c₀)
                               (bval Θ (V-rename (wk-ren {A = B₁}) W₂))))
         (trans (sub-rvar-l {Γ = Γ} {B = B₁} Θ c₀ (bval Θ W₁))
           (sym
             (trans
-              (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+              (cong (λ t → rvar-at′ Θ (Var-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
                 (trans
-                  (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
-                    (Tgt-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
+                  (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                    (Var-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
                        (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Tl-∷ c₀))))
                   (sub-rvar-l {Γ = Γ} {B = B₁} (([] ∷ B₂) ++ᶜ Θ) c₀
                               (bval (([] ∷ B₂) ++ᶜ Θ) W₁))))
               (trans
-                (cong (λ t → rcell′ Θ t W₂)
+                (cong (λ t → rvar-at′ Θ t W₂)
                       (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ c₀))
                 (sub-rvar-l {Γ = Γ} {B = B₂} Θ c₀ (bval Θ W₂))))))
 
--- `unbox`: both orders rebuild the unboxing from the cell the substitution
--- leaves (`sub-unbox`), so `unbox-≐` reduces the case to `unbox-cell-swap`
--- for the cell and the induction hypothesis for the body.
+-- `unbox`: both orders rebuild the unboxing from the resource variable the substitution
+-- leaves (`sub-unbox`), so `unbox-≐` reduces the case to `unbox-rvar-swap`
+-- for the resource variable and the induction hypothesis for the body.
 
 sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ Δ₀} → (Θ : Ctx)
                → (w : Ren [] (Δ₀ ⟨ ρ ⟩) ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
@@ -608,7 +608,7 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
                    (sub-unbox wA hd bodyA x₁ V₁ relB))
                 (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₁} Θ)))))
     (≐ᶜ-trans
-      (unbox-≐ cell
+      (unbox-≐ rvarEq
         (≐ᶜ-trans
           (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B₁} Θ))
                            (castOf {Γ} {B₁} (Θ ∷ A)) _))
@@ -658,7 +658,7 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
     y₂ = bvar B₂ Θ
     U₂ = bval Θ W₂
 
-    cW = proj₂ (unbox-tgt w V)
+    cW = proj₂ (unbox-img w V)
 
     hd : ∀ {Γ₀ : Ctx} → (Γ₀ ∷ [ ρ ] A) ⊢V⦂ [ ρ ] A
     hd = var (λ _ → ≾ᵣ-refl) Hd
@@ -666,78 +666,78 @@ sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} {ρ} {Δ₀} Θ w V M W₂ W₁ ih =
     relA = ≾ᵣ-trans (proj₂ (proj₂ (⟨ cW ⟩[ x₂ ↦ V₂ ]rvar)))
                     (proj₂ (proj₂ (unbox⇒var w V)))
 
-    vA = proj₂ (rvar-tgt cW x₂ V₂)
+    vA = proj₂ (rvar-img cW x₂ V₂)
 
     wA = castʳ (castOf {Γ ∷ B₁} {B₂} Θ) (unbox-var-ren vA relA)
 
     bodyA = castᶜ (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
                   (M [ Tl-∷ x₂ ↦ V₂ ]c)
 
-    relB = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt wA hd) ⟩[ x₁ ↦ V₁ ]rvar)))
+    relB = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-img wA hd) ⟩[ x₁ ↦ V₁ ]rvar)))
                     (proj₂ (proj₂ (unbox⇒var wA hd)))
 
-    vB = proj₂ (rvar-tgt (proj₂ (unbox-tgt wA hd)) x₁ V₁)
+    vB = proj₂ (rvar-img (proj₂ (unbox-img wA hd)) x₁ V₁)
 
     wB = castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB)
 
     relC = ≾ᵣ-trans
              (proj₂ (proj₂
-               (⟨ proj₂ (unbox-tgt (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)
+               (⟨ proj₂ (unbox-img (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)
                 ⟩[ y₁ ↦ U₁ ]rvar)))
              (proj₂ (proj₂ (unbox⇒var (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V)))
 
-    vC = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V))
+    vC = proj₂ (rvar-img (proj₂ (unbox-img (castʳ (assocᴮ Γ B₁ B₂ Θ) w) V))
                          y₁ U₁)
 
     wC = castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)) (unbox-var-ren vC relC)
 
     relD = ≾ᵣ-trans
              (proj₂ (proj₂
-               (⟨ proj₂ (unbox-tgt (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)
+               (⟨ proj₂ (unbox-img (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)
                 ⟩[ y₂ ↦ U₂ ]rvar)))
              (proj₂ (proj₂ (unbox⇒var (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd)))
 
-    vD = proj₂ (rvar-tgt (proj₂ (unbox-tgt (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd))
+    vD = proj₂ (rvar-img (proj₂ (unbox-img (castʳ (assocᴮ⁻ Γ B₂ Θ) wC) hd))
                          y₂ U₂)
 
     wD = castʳ (castOf {Γ} {B₂} Θ) (unbox-var-ren vD relD)
 
-    -- each stored renaming is read only through `unbox-tgt`, and there it is
-    -- the cell the substitution left; so the two sides' cells are exactly the
-    -- two sides of `unbox-cell-swap`
-    cellA : unbox-tgt wA hd ≡ rcell Θ cW Ŵ₂
-    cellA = trans (unbox-tgt-castʳ (castOf {Γ ∷ B₁} {B₂} Θ)
+    -- each stored renaming is read only through `unbox-img`, and there it is
+    -- the resource variable the substitution left; so the two sides' resource variables are exactly the
+    -- two sides of `unbox-rvar-swap`
+    rvarA : unbox-img wA hd ≡ rvar-at Θ cW Ŵ₂
+    rvarA = trans (unbox-img-castʳ (castOf {Γ ∷ B₁} {B₂} Θ)
                                     (unbox-var-ren vA relA) hd)
-                  (cong (Tgt-cast (castOf {Γ ∷ B₁} {B₂} Θ))
-                        (unbox-var-tgt vA relA))
+                  (cong (Var-cast (castOf {Γ ∷ B₁} {B₂} Θ))
+                        (unbox-var-img vA relA))
 
-    cellC : unbox-tgt wC hd
-          ≡ rcell (([] ∷ B₂) ++ᶜ Θ)
-                  (proj₂ (Tgt-cast (assocᴮ Γ B₁ B₂ Θ) (unbox-tgt w V))) W₁
-    cellC =
-      trans (unbox-tgt-castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+    rvarC : unbox-img wC hd
+          ≡ rvar-at (([] ∷ B₂) ++ᶜ Θ)
+                  (proj₂ (Var-cast (assocᴮ Γ B₁ B₂ Θ) (unbox-img w V))) W₁
+    rvarC =
+      trans (unbox-img-castʳ (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
                               (unbox-var-ren vC relC) hd)
-        (trans (cong (Tgt-cast (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))
-                     (unbox-var-tgt vC relC))
-               (cong (λ t → rcell′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
-                     (unbox-tgt-castʳ (assocᴮ Γ B₁ B₂ Θ) w V)))
+        (trans (cong (Var-cast (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ)))
+                     (unbox-var-img vC relC))
+               (cong (λ t → rvar-at′ (([] ∷ B₂) ++ᶜ Θ) t W₁)
+                     (unbox-img-castʳ (assocᴮ Γ B₁ B₂ Θ) w V)))
 
-    cell : unbox-tgt wB hd ≡ unbox-tgt wD hd
-    cell =
-      trans (unbox-tgt-castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB) hd)
-        (trans (cong (Tgt-cast (castOf {Γ} {B₁} Θ)) (unbox-var-tgt vB relB))
-          (trans (cong (λ t → rcell′ Θ t W₁) cellA)
-            (trans (unbox-cell-swap Θ cW W₂ W₁)
+    rvarEq : unbox-img wB hd ≡ unbox-img wD hd
+    rvarEq =
+      trans (unbox-img-castʳ (castOf {Γ} {B₁} Θ) (unbox-var-ren vB relB) hd)
+        (trans (cong (Var-cast (castOf {Γ} {B₁} Θ)) (unbox-var-img vB relB))
+          (trans (cong (λ t → rvar-at′ Θ t W₁) rvarA)
+            (trans (unbox-rvar-swap Θ cW W₂ W₁)
               (sym
-                (trans (unbox-tgt-castʳ (castOf {Γ} {B₂} Θ)
+                (trans (unbox-img-castʳ (castOf {Γ} {B₂} Θ)
                                          (unbox-var-ren vD relD) hd)
-                  (trans (cong (Tgt-cast (castOf {Γ} {B₂} Θ))
-                               (unbox-var-tgt vD relD))
+                  (trans (cong (Var-cast (castOf {Γ} {B₂} Θ))
+                               (unbox-var-img vD relD))
                     (trans
-                      (cong (λ t → rcell′ Θ t W₂)
-                            (unbox-tgt-castʳ (assocᴮ⁻ Γ B₂ Θ) wC hd))
-                      (cong (λ t → rcell′ Θ (Tgt-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
-                            cellC))))))))
+                      (cong (λ t → rvar-at′ Θ t W₂)
+                            (unbox-img-castʳ (assocᴮ⁻ Γ B₂ Θ) wC hd))
+                      (cong (λ t → rvar-at′ Θ (Var-cast (assocᴮ⁻ Γ B₂ Θ) t) W₂)
+                            rvarC))))))))
 
 -- `handle`: the scrutinee and the sequel are the induction hypotheses at
 -- their own suffixes, so the whole content is the clauses — the same swap

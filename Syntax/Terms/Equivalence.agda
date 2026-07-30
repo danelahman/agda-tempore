@@ -114,14 +114,14 @@ mutual
 
     -- the two nodes storing data that matters only up to equivalence
 
-    -- `unbox` is compared at the *cell* it names, not at the renaming and boxed
+    -- `unbox` is compared at the *resource variable* it names, not at the renaming and boxed
     -- value it stores: substitution renormalises those (`unbox⇒var` then
     -- `unbox-var`), so demanding they agree would make substitution lemmas false.
 
     unbox-≐   : ∀ {A C ρ Δ Δ'} {w : Ren [] (Δ ⟨ ρ ⟩) Γ} {w' : Ren [] (Δ' ⟨ ρ ⟩) Γ}
                   {V : Δ ⊢V⦂ [ ρ ] A} {V' : Δ' ⊢V⦂ [ ρ ] A}
                   {M M' : Γ ∷ A ⊢C⦂ C}
-              → unbox-tgt w V ≡ unbox-tgt w' V' → M ≐ᶜ M'
+              → unbox-img w V ≡ unbox-img w' V' → M ≐ᶜ M'
               → unbox w V M ≐ᶜ unbox w' V' M'
 
     coerce-≐  : ∀ {A ε ε'} {p p' : ε ≾ₑ ε'} {M M' : Γ ⊢C⦂ A ‼ ε}

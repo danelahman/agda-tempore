@@ -10,7 +10,7 @@ open import Syntax.LanguageSpec
 
 module Syntax.Substitutions.Renaming (Spec : LanguageSpec) where
 
--- Renaming against substitution on variables and cells.
+-- Renaming against substitution on variables and resource variables.
 
 open import Syntax.Substitutions.Renaming.Variables Spec public
 

@@ -33,25 +33,25 @@ open import Syntax.Renamings.Equivalence Spec
 open import Syntax.Terms.Equivalence     Spec
 
 
--- Renaming a variable is the variable the renaming sends it to: `var-tgt`
+-- Renaming a variable is the variable the renaming sends it to: `var-img`
 -- records the position, and the grade bound it recomputes is invisible to
 -- `_≐ᵛ_`. Stated at an arbitrary bound so that the caller may present the
 -- result with whichever bound its own typing supplies.
 
 var-ren-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
           → (f  : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-          → (f' : ¬ Eternal A → proj₁ (var-tgt r x) ≾ᵣ uᵣ)
-          → V-rename r (var f x) ≐ᵛ var f' (proj₂ (var-tgt r x))
+          → (f' : ¬ Eternal A → proj₁ (var-img r x) ≾ᵣ uᵣ)
+          → V-rename r (var f x) ≐ᵛ var f' (proj₂ (var-img r x))
 var-ren-≐ r x f f' with var-rename r x
 ... | _ , _ , y = var-≐
 
 -- The same with the target supplied, for callers that have computed it.
 
-var-ren-tgt-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
-              → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → {t : Tgt Γ' A}
-              → var-tgt r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
+var-ren-img-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
+              → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → {t : Var Γ' A}
+              → var-img r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
               → V-rename r (var f x) ≐ᵛ var f' (proj₂ t)
-var-ren-tgt-≐ r x f refl f' = var-ren-≐ r x f f'
+var-ren-img-≐ r x f refl f' = var-ren-≐ r x f f'
 
 ------------------------------------------------------------------------
 -- THE ACTION RESPECTS ACTING ALIKE
@@ -94,7 +94,7 @@ mutual
          C-rename-≐ (cong-∷-ren-≐ (cong-∷-ren-≐ (restrict-ren-≐ h))) (H op ε''))
       (C-rename-≐ (cong-ren-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≐ h (unbox w V M) =
-    unbox-≐ (unbox-tgt-≐ (∘ʳ-≐ h (≐ʳ-refl {r = w})) V)
+    unbox-≐ (unbox-img-≐ (∘ʳ-≐ h (≐ʳ-refl {r = w})) V)
             (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
   C-rename-≐ h (box V M) =
     box-≐ (V-rename-≐ (cong-ren-≐ ([] ⟨ _ ⟩) h) V)
@@ -138,11 +138,11 @@ cong-ren-id-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ (cong-ren-id-≐ �
 
 ∘ʳ-id-≐ : ∀ {Γ Γ'} {r : Ren [] Γ' Γ'} → (w : Ren [] Γ Γ')
         → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
-∘ʳ-id-≐ w h = mk≐ʳ (λ x → at h (proj₂ (var-tgt w x)))
+∘ʳ-id-≐ w h = mk≐ʳ (λ x → at h (proj₂ (var-img w x)))
 
 ∘ʳ-id-≐ʳ : ∀ {Γ Γ'} {r : Ren [] Γ Γ} → (w : Ren [] Γ Γ')
          → r ≐ʳ id-ren → (w ∘ʳ r) ≐ʳ w
-∘ʳ-id-≐ʳ w h = mk≐ʳ (λ x → cong (var-tgt′ w) (at h x))
+∘ʳ-id-≐ʳ w h = mk≐ʳ (λ x → cong (var-img′ w) (at h x))
 
 restrict-ren-id-≐ : ∀ {Γ} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
 restrict-ren-id-≐ h = restrict-ren-≐ h
@@ -181,7 +181,7 @@ mutual
                        (H op ε''))
       (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≐ h (unbox w V M) =
-    unbox-≐ (unbox-tgt-≐ (∘ʳ-id-≐ w h) V)
+    unbox-≐ (unbox-img-≐ (∘ʳ-id-≐ w h) V)
             (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
   C-rename-id-≐ h (box V M) =
     box-≐ (V-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) V)
@@ -473,7 +473,7 @@ mutual
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (unbox w V M) =
-    unbox-≐ (unbox-tgt-≐ (∘ʳ-assoc-≐ r₂ r₁ w) V)
+    unbox-≐ (unbox-img-≐ (∘ʳ-assoc-≐ r₂ r₁ w) V)
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ ([] ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (box V M) =
@@ -522,9 +522,9 @@ mutual
                                        (eH op ε''))
              (C-rename-cong (cong-ren r) eN)
   C-rename-cong r (unbox-≐ {w = w} {w' = w'} {V = V} {V' = V'} hw eM) =
-    unbox-≐ (trans (unbox-tgt-∘ r w V)
-                   (trans (cong (var-tgt′ r) hw)
-                          (sym (unbox-tgt-∘ r w' V'))))
+    unbox-≐ (trans (unbox-img-∘ r w V)
+                   (trans (cong (var-img′ r) hw)
+                          (sym (unbox-img-∘ r w' V'))))
             (C-rename-cong (cong-ren r) eM)
   C-rename-cong r (coerce-≐ eM)     = coerce-≐ (C-rename-cong r eM)
   C-rename-cong r (box-≐ eV eM)     =

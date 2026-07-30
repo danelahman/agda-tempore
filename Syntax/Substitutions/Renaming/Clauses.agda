@@ -115,7 +115,7 @@ sub-cast-C″ refl e M x y ey U U' eU = sub-cast-C′ e M x y ey U U' eU
 -- THE ETERNAL RESTRICTION IS NATURAL IN RENAMING
 --
 -- The var case goes through the reflection `∈-ᴱ⁻`: both sides' targets
--- reflect to `var-tgt r x`, so `∈-ᴱ⁻-inj` identifies them.
+-- reflect to `var-img r x`, so `∈-ᴱ⁻-inj` identifies them.
 ------------------------------------------------------------------------
 
 eternal-val-restrict-ren : ∀ {Γ Γ' A} → (et : Eternal A)
@@ -126,20 +126,20 @@ eternal-val-restrict-ren : ∀ {Γ Γ' A} → (et : Eternal A)
 eternal-val-restrict-ren {Γ} {Γ'} et r (var f x) =
   ≐ᵛ-trans
     (eternal-val-restrict-cong et (var-ren-≐ r x f fet))
-    (≐ᵛ-sym (var-ren-tgt-≐ (restrict-ren r) (∈-ᴱ et x) fet
+    (≐ᵛ-sym (var-ren-img-≐ (restrict-ren r) (∈-ᴱ et x) fet
                            (sym tgt-eq) fet))
   where
     fet : ∀ {ρ₀} → ¬ Eternal _ → ρ₀ ≾ᵣ uᵣ
     fet ¬et = ⊥-elim (¬et et)
 
-    tgt-eq : _≡_ {A = Tgt (Γ' ᴱ) _}
-                 (uᵣ , ∈-ᴱ et (proj₂ (var-tgt r x)))
-                 (var-tgt (restrict-ren r) (∈-ᴱ et x))
+    tgt-eq : _≡_ {A = Var (Γ' ᴱ) _}
+                 (uᵣ , ∈-ᴱ et (proj₂ (var-img r x)))
+                 (var-img (restrict-ren r) (∈-ᴱ et x))
     tgt-eq =
       ∈-ᴱ⁻-inj Γ' _ _
-        (trans (∈-ᴱ⁻-∈-ᴱ Γ' et (proj₂ (var-tgt r x)))
-          (sym (trans (restrict-tgt⁻ r (∈-ᴱ et x))
-                      (cong (var-tgt′ r) (∈-ᴱ⁻-∈-ᴱ Γ et x)))))
+        (trans (∈-ᴱ⁻-∈-ᴱ Γ' et (proj₂ (var-img r x)))
+          (sym (trans (restrict-img⁻ r (∈-ᴱ et x))
+                      (cong (var-img′ r) (∈-ᴱ⁻-∈-ᴱ Γ et x)))))
 
 eternal-val-restrict-ren et r (const c) = ≐ᵛ-refl _
 eternal-val-restrict-ren et r ⋆         = ≐ᵛ-refl _

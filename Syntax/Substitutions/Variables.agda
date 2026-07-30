@@ -51,15 +51,15 @@ castᵛ-var : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ')
           → castᵛ e (var f x) ≡ var f (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 castᵛ-var refl f x = refl
 
--- The same, taking the relocation as a `Tgt` equality — which is what the
+-- The same, taking the relocation as a `Var` equality — which is what the
 -- pushing lemmas below have, their grades changing along with their positions.
 
-castᵛ-var-Tgt : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
+castᵛ-var-Var : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
               → (x : A ∈[ ρ ] Γ) → (x' : A ∈[ ρ' ] Γ')
-              → Tgt-cast e (ρ , x) ≡ (ρ' , x')
+              → Var-cast e (ρ , x) ≡ (ρ' , x')
               → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
               → castᵛ e (var f x) ≐ᵛ var f' x'
-castᵛ-var-Tgt refl x _ refl f f' = var-≐
+castᵛ-var-Var refl x _ refl f f' = var-≐
 
 -- A cast cancels its own inverse.
 
@@ -92,15 +92,15 @@ castᵛ-rename refl r V =
 
 -- A congruence renaming fixes a suffix variable, up to its grade bound.
 
-cong-ren-tgt-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
-               → var-tgt (cong-ren {Γ'' = Δ} r) (∈-++ᶜʳ {Γ = Γ} x)
+cong-ren-img-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+               → var-img (cong-ren {Γ'' = Δ} r) (∈-++ᶜʳ {Γ = Γ} x)
                ≡ (ρ , ∈-++ᶜʳ {Γ = Γ'} x)
 
-cong-ren-tgt-r r Hd        = refl
-cong-ren-tgt-r r (Tl-∷ x)  =
-  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (cong-ren-tgt-r r x)
-cong-ren-tgt-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
-  cong (λ z → proj₁ z ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ z)) (cong-ren-tgt-r r x)
+cong-ren-img-r r Hd        = refl
+cong-ren-img-r r (Tl-∷ x)  =
+  cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (cong-ren-img-r r x)
+cong-ren-img-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
+  cong (λ z → proj₁ z ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ z)) (cong-ren-img-r r x)
 
 -- Renaming a suffix variable along a congruence renaming leaves it where it is.
 
@@ -109,7 +109,7 @@ ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A 
           → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
           ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
 ren-var-r r x f f' =
-  var-ren-tgt-≐ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-tgt-r r x) f'
+  var-ren-img-≐ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-img-r r x) f'
 
 -- SUBSTITUTION FIXES A SUFFIX VARIABLE
 --
@@ -185,7 +185,7 @@ sub-var-r {Γ₁} {B} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
   ≐ᵛ-trans
     (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
     (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
-              (var-ren-tgt-≐ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f'))
+              (var-ren-img-≐ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f'))
 
 sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? A
 
@@ -199,9 +199,9 @@ sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with etern
   ≐ᵛ-trans
     (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) rn _))
     (≐ᵛ-trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
-              (var-ren-tgt-≐ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
-                 (cong (var-tgt′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
-                       (⟨⟩-η⁻¹-tgt (∈-++ᶜʳ {Γ = Γ₁} x)))
+              (var-ren-img-≐ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
+                 (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+                       (⟨⟩-η⁻¹-img (∈-++ᶜʳ {Γ = Γ₁} x)))
                  f'))
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
@@ -235,7 +235,7 @@ sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with etern
 ...   | refl = cong Tl-⟨⟩ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
 
 -- A variable the splitting sends left is that variable pushed under the suffix.
--- Stated as a `Tgt` equality, so the grade travels with the position.
+-- Stated as a `Var` equality, so the grade travels with the position.
 
 ∈-++ᶜ-split-inj₁ : ∀ {A ρ ρ'} → (Δ₁ Δ₂ : Ctx) → (x : A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂))
                  → (z : A ∈[ ρ' ] Δ₁)
@@ -290,7 +290,7 @@ sub-var-l {Γ₁} {B} (Γ₂ ∷ C) x W f f' =
   ≐ᵛ-trans
     (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
     (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
-              (var-ren-tgt-≐ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f'))
+              (var-ren-img-≐ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f'))
 
 sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 
@@ -305,9 +305,9 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
     (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩))
                            (castOf {Γ₁} {B} Γ₂) rn _))
     (≐ᵛ-trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
-              (var-ren-tgt-≐ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
-                 (cong (var-tgt′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
-                       (⟨⟩-η⁻¹-tgt (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
+              (var-ren-img-≐ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
+                 (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+                       (⟨⟩-η⁻¹-img (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
                  f'))
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ' ⟩)
@@ -368,7 +368,7 @@ sub-var-hit {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
 sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Eternal B
              → (p : ctx-grade Γ₂ ≾ᵣ uᵣ)
              → (y : B ∈[ σ ] ((Γ₁ ∷ B) ++ᶜ Γ₂))
-             → _≡_ {A = Tgt ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
+             → _≡_ {A = Var ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
                  (σ , y)
                  (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
              → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
@@ -382,15 +382,15 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 -- THE CELL `unbox-var` NAMES (what `sub-wk-unbox` needs)
 --
 -- `unbox-var z rel M` rebuilds an unboxing whose boxed value is the head
--- variable of `split-l z ∷ [ ρ ] A`, so the cell it names is `z` itself — the
+-- variable of `split-l z ∷ [ ρ ] A`, so the resource variable it names is `z` itself — the
 -- syntactic counterpart of `split-lookup` in
 -- `Interpretation.SubstitutionCoherence`. Its renaming is
 -- `eq-ren (split-≡ (split-pf z)) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`,
--- so computing its `var-tgt` at `Tl-⟨⟩ Hd` needs, in order: `⟨⟩-≤-ren`'s clause,
--- `wk-ren-⟨ρ⟩-ctx-tgt` (in `GradedReach`, proved), and `eq-ren-tgt` below. What is left
+-- so computing its `var-img` at `Tl-⟨⟩ Hd` needs, in order: `⟨⟩-≤-ren`'s clause,
+-- `wk-ren-⟨ρ⟩-ctx-img` (in `GradedReach`, proved), and `eq-ren-img` below. What is left
 -- is
 --
---   split-lookup-tgt : (z : [ ρ ] A ∈[ ρ' ] Γ)
+--   split-lookup-img : (z : [ ρ ] A ∈[ ρ' ] Γ)
 --                    → (grade-++ᶜˡ uᵣ (split-r z)
 --                      , subst _ (split-≡ (split-pf z))
 --                              (∈-++ᶜˡ (split-r z) (Hd {Γ = split-l z})))
@@ -399,108 +399,108 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 -- by induction on `z` — `Hd` is `refl`, and the two `Tl` cases are `subst-Tl-∷`
 -- resp. `subst-Tl-⟨⟩` under a `cong`. **State it with `∈-++ᶜˡ`, not
 -- `var-ρ-++ᶜ`**: the latter carries a grade `subst` in each of its `[]` and
--- `⟨⟩` clauses, which turns all three cases into `Tgt`-level transport puzzles,
+-- `⟨⟩` clauses, which turns all three cases into `Var`-level transport puzzles,
 -- whereas `grade-++ᶜˡ`/`∈-++ᶜˡ` are subst-free by construction. That means
--- restating `wk-ren-⟨ρ⟩-ctx-tgt` over `∈-++ᶜˡ` too, and so moving
+-- restating `wk-ren-⟨ρ⟩-ctx-img` over `∈-++ᶜˡ` too, and so moving
 -- `grade-++ᶜˡ`/`∈-++ᶜˡ` into `Syntax.Renamings.Equivalence` beside the other
 -- variable-relocation lemmas.
 
 -- SUBSTITUTION FIXES A RESOURCE VARIABLE
 --
 -- The `rvar` counterparts of `sub-var-r`/`sub-var-l`: `⟨_⟩[_↦_]rvar` returns the
--- same cell when the variable it replaces is a different one. Simpler than the
+-- same resource variable when the variable it replaces is a different one. Simpler than the
 -- value versions — a box type is never eternal, so there is no `eternal?` split.
 
 sub-rvar-r : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
            → (z : [ ρ ] A ∈[ σ ] Θ)
            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-           → Tgt-cast (castOf {Γ} {B} Θ)
-               (rvar-tgt (∈-++ᶜʳ {Γ = Γ ∷ B} z)
+           → Var-cast (castOf {Γ} {B} Θ)
+               (rvar-img (∈-++ᶜʳ {Γ = Γ ∷ B} z)
                          (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
            ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
 
-sub-rvar-r {Γ} {B} (Θ ∷ C) Hd W = Tgt-cast-Hd (castOf {Γ} {B} (Θ ∷ C))
+sub-rvar-r {Γ} {B} (Θ ∷ C) Hd W = Var-cast-Hd (castOf {Γ} {B} (Θ ∷ C))
 
 sub-rvar-r {Γ} {B} (Θ ∷ C) (Tl-∷ z) W =
-  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ∷ C))
+  trans (Var-cast-irr (castOf {Γ} {B} (Θ ∷ C))
                       (cong (_∷ C) (castOf {Γ} {B} Θ)) _)
-    (trans (Tgt-cast-∷ (castOf {Γ} {B} Θ) _)
-           (cong Tgt-∷ (sub-rvar-r Θ z W)))
+    (trans (Var-cast-∷ (castOf {Γ} {B} Θ) _)
+           (cong Var-∷ (sub-rvar-r Θ z W)))
 
 sub-rvar-r {Γ} {B} (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W =
-  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
+  trans (Var-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
                       (cong (_⟨ ρ' ⟩) (castOf {Γ} {B} Θ)) _)
-    (trans (Tgt-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
-           (cong (Tgt-⟨⟩ ρ') (sub-rvar-r Θ z W)))
+    (trans (Var-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
+           (cong (Var-⟨⟩ ρ') (sub-rvar-r Θ z W)))
 
 sub-rvar-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
            → (z : [ ρ ] A ∈[ σ ] Γ)
            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-           → Tgt-cast (castOf {Γ} {B} Θ)
-               (rvar-tgt (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
+           → Var-cast (castOf {Γ} {B} Θ)
+               (rvar-img (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
                          (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
            ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 
 sub-rvar-l {Γ} {B} [] z W = refl
 
 sub-rvar-l {Γ} {B} (Θ ∷ C) z W =
-  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ∷ C))
+  trans (Var-cast-irr (castOf {Γ} {B} (Θ ∷ C))
                       (cong (_∷ C) (castOf {Γ} {B} Θ)) _)
-    (trans (Tgt-cast-∷ (castOf {Γ} {B} Θ) _)
-           (cong Tgt-∷ (sub-rvar-l Θ z W)))
+    (trans (Var-cast-∷ (castOf {Γ} {B} Θ) _)
+           (cong Var-∷ (sub-rvar-l Θ z W)))
 
 sub-rvar-l {Γ} {B} (Θ ⟨ ρ' ⟩) z W =
-  trans (Tgt-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
+  trans (Var-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
                       (cong (_⟨ ρ' ⟩) (castOf {Γ} {B} Θ)) _)
-    (trans (Tgt-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
-           (cong (Tgt-⟨⟩ ρ') (sub-rvar-l Θ z W)))
+    (trans (Var-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
+           (cong (Var-⟨⟩ ρ') (sub-rvar-l Θ z W)))
 
--- The same, taking the cell's location as an equation rather than reading it off
+-- The same, taking the resource variable's location as an equation rather than reading it off
 -- with `proj₂` — which is dependent, so `cong proj₂` is not available.
 
 sub-rvar-r′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Θ)
-            → (t : Tgt ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
+            → (t : Var ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
             → t ≡ (σ , ∈-++ᶜʳ {Γ = Γ ∷ B} z)
             → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-            → Tgt-cast (castOf {Γ} {B} Θ)
-                (rvar-tgt (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+            → Var-cast (castOf {Γ} {B} Θ)
+                (rvar-img (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
             ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
 sub-rvar-r′ Θ z t refl W = sub-rvar-r Θ z W
 
 sub-rvar-l′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Γ)
-            → (t : Tgt ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
+            → (t : Var ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
             → t ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
             → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-            → Tgt-cast (castOf {Γ} {B} Θ)
-                (rvar-tgt (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+            → Var-cast (castOf {Γ} {B} Θ)
+                (rvar-img (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
             ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 sub-rvar-l′ Θ z t refl W = sub-rvar-l Θ z W
 
--- The cell a weakened-then-substituted `unbox` names is the original one: the
--- renaming pushes it (`cong-ren-tgt-r`/`-l`, by which side `∈-++ᶜ-split` says it
+-- The resource variable a weakened-then-substituted `unbox` names is the original one: the
+-- renaming pushes it (`cong-ren-img-r`/`-l`, by which side `∈-++ᶜ-split` says it
 -- came from) and the substitution puts it back (`sub-rvar-r`/`-l`).
 
-unbox-cell-wk : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
+unbox-rvar-wk : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
               → (c : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Θ))
               → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-              → Tgt-cast (castOf {Γ} {B} Θ)
-                  (rvar-tgt
-                     (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (wk-ren {A = B})) c))
+              → Var-cast (castOf {Γ} {B} Θ)
+                  (rvar-img
+                     (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) c))
                      (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
               ≡ (σ , c)
 
-unbox-cell-wk {Γ} {B} Θ c W with ∈-++ᶜ-split Γ Θ c in eqc
+unbox-rvar-wk {Γ} {B} Θ c W with ∈-++ᶜ-split Γ Θ c in eqc
 
 ... | inj₂ c'
   rewrite ∈-++ᶜ-split-inj₂ Γ Θ c c' eqc =
-  sub-rvar-r′ Θ c' _ (cong-ren-tgt-r (wk-ren {A = B}) c') W
+  sub-rvar-r′ Θ c' _ (cong-ren-img-r (wk-ren {A = B}) c') W
 
 ... | inj₁ (σ' , c') =
-  subst (λ t → Tgt-cast (castOf {Γ} {B} Θ)
-                 (rvar-tgt (proj₂ (var-tgt (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+  subst (λ t → Var-cast (castOf {Γ} {B} Θ)
+                 (rvar-img (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
                                            (proj₂ t)))
                            (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
              ≡ t)
         (sym (∈-++ᶜ-split-inj₁ Γ Θ c c' eqc))
-        (sub-rvar-l′ Θ c' _ (cong-ren-tgt-l (wk-ren {A = B}) Θ c') W)
+        (sub-rvar-l′ Θ c' _ (cong-ren-img-l (wk-ren {A = B}) Θ c') W)
 

@@ -227,7 +227,7 @@ mutual
          → Σ[ Δ' ∈ Ctx ] Σ[ w' ∈ Ren [] (Δ' ⟨ ρ ⟩) Γ' ] Σ[ V' ∈ (Δ' ⊢V⦂ [ ρ ] A) ]
            Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
              (P' ≡ unbox w' V' M')
-           × (unbox-tgt w V ≡ unbox-tgt (castʳ e w') V')
+           × (unbox-img w V ≡ unbox-img (castʳ e w') V')
            × (M ≐ᶜ castᶜ (cong (_∷ A) e) M')
 ≐-unbox⁻ refl _ (unbox-≐ hw eM) = _ , _ , _ , _ , refl , hw , eM
 

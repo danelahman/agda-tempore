@@ -53,9 +53,9 @@ sub-wk-var-r {Γ} {B} Θ z W f f' =
   ≐ᵛ-trans
     (castᵛ-≐ (castOf {Γ} {B} Θ)
       (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) (≐ᵛ-refl W)
-        (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+        (var-ren-img-≐ (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
                        (∈-++ᶜʳ {Γ = Γ} z) f
-                       (cong-ren-tgt-r (wk-ren {A = B}) z) f)))
+                       (cong-ren-img-r (wk-ren {A = B}) z) f)))
     (sub-var-r Θ z W f f')
 
 sub-wk-var-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ} → (z : A ∈[ ρ ] Γ)
@@ -71,9 +71,9 @@ sub-wk-var-l {Γ} {B} Θ z W f f' =
   ≐ᵛ-trans
     (castᵛ-≐ (castOf {Γ} {B} Θ)
       (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) (≐ᵛ-refl W)
-        (var-ren-tgt-≐ (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+        (var-ren-img-≐ (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
                        (∈-++ᶜˡ {Γ = Γ} Θ z) f
-                       (cong-ren-tgt-l (wk-ren {A = B}) Θ z) f)))
+                       (cong-ren-img-l (wk-ren {A = B}) Θ z) f)))
     (sub-var-l Θ z W f f')
 
 sub-wk-var : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ} → (y : A ∈[ ρ ] (Γ ++ᶜ Θ))
@@ -216,7 +216,7 @@ mutual
                    (C-rename (cong-ren {Γ'' = Θ ∷ A} (wk-ren {A = B})) M)
                    z₀ W relv))
       (≐ᶜ-trans (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))
-        (unbox-≐ cell
+        (unbox-≐ rvarEq
           (≐ᶜ-trans (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
                                      (castOf {Γ} {B} (Θ ∷ A)) _))
                     (sub-wk-C (Θ ∷ A) M W))))
@@ -224,24 +224,24 @@ mutual
       rn = cong-ren {Γ'' = Θ} (wk-ren {A = B})
       z₀ = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
 
-      v = proj₂ (rvar-tgt (proj₂ (unbox-tgt (rn ∘ʳ w) V)) z₀ W)
+      v = proj₂ (rvar-img (proj₂ (unbox-img (rn ∘ʳ w) V)) z₀ W)
 
       -- the bound the substitution itself builds
-      relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-tgt (rn ∘ʳ w) V) ⟩[ z₀ ↦ W ]rvar)))
+      relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-img (rn ∘ʳ w) V) ⟩[ z₀ ↦ W ]rvar)))
                       (proj₂ (proj₂ (unbox⇒var (rn ∘ʳ w) V)))
 
-      cell : unbox-tgt (castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
+      rvarEq : unbox-img (castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
                        (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
-           ≡ unbox-tgt w V
-      cell =
-        trans (unbox-tgt-castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv)
+           ≡ unbox-img w V
+      rvarEq =
+        trans (unbox-img-castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv)
                                 (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd))
-          (trans (cong (Tgt-cast (castOf {Γ} {B} Θ)) (unbox-var-tgt v relv))
-            (trans (cong (λ t → Tgt-cast (castOf {Γ} {B} Θ)
-                                  (rvar-tgt (proj₂ t)
+          (trans (cong (Var-cast (castOf {Γ} {B} Θ)) (unbox-var-img v relv))
+            (trans (cong (λ t → Var-cast (castOf {Γ} {B} Θ)
+                                  (rvar-img (proj₂ t)
                                      (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
-                         (unbox-tgt-∘ rn w V))
-                   (unbox-cell-wk Θ (proj₂ (unbox-tgt w V)) W)))
+                         (unbox-img-∘ rn w V))
+                   (unbox-rvar-wk Θ (proj₂ (unbox-img w V)) W)))
 
   -- `sub-wk-C` with its context given by an equation rather than literally, so
   -- that the eternal `handle` clause below can recurse on the bare subterm:

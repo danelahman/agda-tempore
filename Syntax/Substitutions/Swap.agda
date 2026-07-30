@@ -14,7 +14,7 @@ module Syntax.Substitutions.Swap (Spec : LanguageSpec) where
 
 open import Syntax.Substitutions.Swap.Base      Spec public
 
--- The swap on a variable, and on the cell an `unbox` names.
+-- The swap on a variable, and on the resource variable an `unbox` names.
 
 open import Syntax.Substitutions.Swap.Variables Spec public
 

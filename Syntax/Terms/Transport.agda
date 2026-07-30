@@ -253,15 +253,15 @@ cast-unbox : ∀ {Γ Γ' A C ρ Δ} → (e : Γ ≡ Γ')
            ≡ unbox (castʳ e w) V (castᶜ (cong (_∷ A) e) M)
 cast-unbox refl = refl
 
--- A cast does not move the cell an `unbox` names.
+-- A cast does not move the resource variable an `unbox` names.
 
-unbox-tgt-castʳ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+unbox-img-castʳ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
                  → (V : Δ ⊢V⦂ [ ρ ] A)
-                 → unbox-tgt (castʳ e w) V
-                 ≡ (proj₁ (unbox-tgt w V)
-                   , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w V) ] Γ₀) e
-                           (proj₂ (unbox-tgt w V)))
-unbox-tgt-castʳ refl w V = refl
+                 → unbox-img (castʳ e w) V
+                 ≡ (proj₁ (unbox-img w V)
+                   , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-img w V) ] Γ₀) e
+                           (proj₂ (unbox-img w V)))
+unbox-img-castʳ refl w V = refl
 
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
          → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
@@ -336,6 +336,6 @@ castᵛ-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ�
            → castᵛ e' (castᵛ e V) ≡ castᵛ (trans e e') V
 castᵛ-fuse refl refl V = refl
 
-Tgt-cast-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (t : Tgt Γ₁ A)
-              → Tgt-cast e' (Tgt-cast e t) ≡ Tgt-cast (trans e e') t
-Tgt-cast-fuse refl refl t = refl
+Var-cast-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (t : Var Γ₁ A)
+              → Var-cast e' (Var-cast e t) ≡ Var-cast (trans e e') t
+Var-cast-fuse refl refl t = refl

@@ -76,7 +76,7 @@ FL-unbox : ∀ {St Γ Δ₀ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
          → Comp' D ε St (env-C γ (unbox w V M))
 
 FL-unbox {St = St} {A = A} {ρ = ρ} γ pγ w V M pM
-  with env-Cˢ-unbox γ [] w V M (unbox-tgt w V) refl
+  with env-Cˢ-unbox γ [] w V M (unbox-img w V) refl
                     (proj₂ (proj₂ (unbox⇒var w V)))
 
 ... | Δ₁ , w₁ , V₁ , ce , eN =
@@ -86,14 +86,14 @@ FL-unbox {St = St} {A = A} {ρ = ρ} γ pγ w V M pM
     rel₁ = proj₂ (proj₂ (unbox⇒var w₁ V₁))
 
     -- the cell the split names is the cell the environment sends `w`'s to
-    cellEq : unbox-tgt w₁ V₁ ≡ env-cell₀ γ (unbox-tgt w V)
-    cellEq = trans ce (env-cell-push γ [] (unbox-tgt w V))
+    cellEq : unbox-img w₁ V₁ ≡ env-cell₀ γ (unbox-img w V)
+    cellEq = trans ce (env-cell-push γ [] (unbox-img w V))
 
     rel₂ = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel₁
 
     pU : Val A St U
     pU = Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
-                  (env-cell₀-val γ pγ (unbox-tgt w V) id-suc rel₂)
+                  (env-cell₀-val γ pγ (unbox-img w V) id-suc rel₂)
 
 -- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components
 -- in the *opposite* order from the environment — the rule replaces `B` (its

@@ -39,13 +39,13 @@ open import Syntax.Terms.Equivalence     Spec
 -- THE CATEGORY OF RENAMINGS
 --
 -- Objects are contexts, morphisms are `Ren [] Γ Γ'` taken up to `_≐ʳ_`.
--- The three laws hold by computation at the level of `var-tgt`, which is
+-- The three laws hold by computation at the level of `var-img`, which is
 -- what makes this quotient the right one:
 --
 --   `∘ʳ-assoc-≐`, `∘ʳ-identityˡ-≐`, `∘ʳ-identityʳ-≐`   (Equivalence)
 --
 -- and `∘ʳ-≐` is composition's congruence, i.e. `_≐ʳ_` is a congruence for
--- the category structure. `var-tgt` itself is the faithful functor into
+-- the category structure. `var-img` itself is the faithful functor into
 -- the presheaf of variables that defines the quotient.
 ------------------------------------------------------------------------
 
@@ -111,37 +111,37 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- clauses line up. This is what ties the renaming `ᴱ-ren` to the
 -- variable-level reflection the naturality square is stated over.
 
-ᴱ-ren-tgt : (Γ : Ctx) → ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
-          → var-tgt (ᴱ-ren Γ) x ≡ ∈-ᴱ⁻ Γ x
+ᴱ-ren-img : (Γ : Ctx) → ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
+          → var-img (ᴱ-ren Γ) x ≡ ∈-ᴱ⁻ Γ x
 
-ᴱ-ren-tgt-∷ : (Γ : Ctx) → (B : VType) → (d : Dec (Eternal B)) → ∀ {A ρ}
+ᴱ-ren-img-∷ : (Γ : Ctx) → (B : VType) → (d : Dec (Eternal B)) → ∀ {A ρ}
             → (x : A ∈[ ρ ] ᴱ-∷ (Γ ᴱ) B d)
-            → var-tgt (ᴱ-ren-∷ {Γ} B d (ᴱ-ren Γ)) x ≡ ∈-ᴱ⁻-∷ Γ B d x
+            → var-img (ᴱ-ren-∷ {Γ} B d (ᴱ-ren Γ)) x ≡ ∈-ᴱ⁻-∷ Γ B d x
 
-ᴱ-ren-tgt-∷ Γ B (yes _) Hd       = refl
-ᴱ-ren-tgt-∷ Γ B (yes _) (Tl-∷ y) = cong Tgt-∷ (ᴱ-ren-tgt Γ y)
-ᴱ-ren-tgt-∷ Γ B (no  _) x        = cong Tgt-∷ (ᴱ-ren-tgt Γ x)
+ᴱ-ren-img-∷ Γ B (yes _) Hd       = refl
+ᴱ-ren-img-∷ Γ B (yes _) (Tl-∷ y) = cong Var-∷ (ᴱ-ren-img Γ y)
+ᴱ-ren-img-∷ Γ B (no  _) x        = cong Var-∷ (ᴱ-ren-img Γ x)
 
-ᴱ-ren-tgt []        ()
-ᴱ-ren-tgt (Γ ∷ B)   x = ᴱ-ren-tgt-∷ Γ B (eternal? B) x
-ᴱ-ren-tgt (Γ ⟨ ρ ⟩) x = cong (Tgt-⟨⟩ ρ) (ᴱ-ren-tgt Γ x)
+ᴱ-ren-img []        ()
+ᴱ-ren-img (Γ ∷ B)   x = ᴱ-ren-img-∷ Γ B (eternal? B) x
+ᴱ-ren-img (Γ ⟨ ρ ⟩) x = cong (Var-⟨⟩ ρ) (ᴱ-ren-img Γ x)
 
 -- NATURALITY OF THE COUNIT
 --
 -- Restricting a renaming and then including is including and then renaming.
--- The content is `restrict-tgt⁻`, which is this square stated over `∈-ᴱ⁻`;
--- `ᴱ-ren-tgt` transports it to the renamings themselves.
+-- The content is `restrict-img⁻`, which is this square stated over `∈-ᴱ⁻`;
+-- `ᴱ-ren-img` transports it to the renamings themselves.
 
 ᴱ-ren-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ')
           → (r ∘ʳ ᴱ-ren Γ) ≐ʳ (ᴱ-ren Γ' ∘ʳ restrict-ren r)
 ᴱ-ren-nat {Γ} {Γ'} r = mk≐ʳ go
   where
     go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
-       → var-tgt (r ∘ʳ ᴱ-ren Γ) x ≡ var-tgt (ᴱ-ren Γ' ∘ʳ restrict-ren r) x
+       → var-img (r ∘ʳ ᴱ-ren Γ) x ≡ var-img (ᴱ-ren Γ' ∘ʳ restrict-ren r) x
     go x =
-      trans (cong (var-tgt′ r) (ᴱ-ren-tgt Γ x))
-        (trans (sym (restrict-tgt⁻ r x))
-               (sym (ᴱ-ren-tgt Γ' (proj₂ (var-tgt (restrict-ren r) x)))))
+      trans (cong (var-img′ r) (ᴱ-ren-img Γ x))
+        (trans (sym (restrict-img⁻ r x))
+               (sym (ᴱ-ren-img Γ' (proj₂ (var-img (restrict-ren r) x)))))
 
 ------------------------------------------------------------------------
 -- TERMS ARE SETOID-VALUED PRESHEAVES

@@ -186,17 +186,17 @@ reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
 -- stated on cell readability needs. Derived from it rather than by a fresh
 -- induction: an arbitrary extension is the extension of *some* reach — take
 -- the guard to be its own accumulated grade, where the bound is reflexivity —
--- and `unbox-ren-tgt` then reads `≤ₛ-embed` off that reach's renaming.
+-- and `unbox-ren-img` then reads `≤ₛ-embed` off that reach's renaming.
 
-var-tgt-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] (Δ ⟨ ρ ⟩) Γ')
+var-img-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] (Δ ⟨ ρ ⟩) Γ')
               → (y : A ∈[ σ ] (Δ ⟨ ρ ⟩))
-              → var-tgt (castʳ e r) y ≡ Tgt-cast e (var-tgt r y)
-var-tgt-castʳ refl r y = refl
+              → var-img (castʳ e r) y ≡ Var-cast e (var-img r y)
+var-img-castʳ refl r y = refl
 
-cong-⟨⟩-eq-tgt : ∀ {Γ Γ' ρ A σ} → (e : Γ ≡ Γ') → (x : A ∈[ σ ] Γ)
-               → var-tgt (cong-⟨⟩-ren {ρ = ρ} (eq-ren e)) (Tl-⟨⟩ x)
+cong-⟨⟩-eq-img : ∀ {Γ Γ' ρ A σ} → (e : Γ ≡ Γ') → (x : A ∈[ σ ] Γ)
+               → var-img (cong-⟨⟩-ren {ρ = ρ} (eq-ren e)) (Tl-⟨⟩ x)
                ≡ (σ ·ᵣ ρ , Tl-⟨⟩ (subst (λ Γ₀ → A ∈[ σ ] Γ₀) e x))
-cong-⟨⟩-eq-tgt refl x = refl
+cong-⟨⟩-eq-img refl x = refl
 
 ≤ₛ-embed-≐ˢ : ∀ {A σ} {St St' St'' St₂ : 𝕊 []}
             → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
@@ -205,7 +205,7 @@ cong-⟨⟩-eq-tgt refl x = refl
             → (x : A ∈[ σ ] toCtx St)
             -------------------------------------------------------------
             → ≤ₛ-embed e' (subst (λ Γ₀ → A ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
-            ≡ Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
+            ≡ Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
 
 ≤ₛ-embed-≐ˢ {σ = σ} es es₂ {e'} {e} h x =
   trans (sym stepL) (trans (at (unbox-ren-bridge es es₂ {q'} {q} h) (Tl-⟨⟩ x))
@@ -214,15 +214,15 @@ cong-⟨⟩-eq-tgt refl x = refl
     q' = reach e' (≾ᵣ-refl {≤ₛ-grade e' ·ᵣ uᵣ})
     q  = reach e  (≾ᵣ-reflexive (cong (_·ᵣ uᵣ) (sym (≤ₛ-grade-≤≐ h))))
 
-    stepL : var-tgt (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
+    stepL : var-img (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
                     (Tl-⟨⟩ x)
           ≡ ≤ₛ-embed e' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
     stepL =
-      trans (cong (var-tgt′ (unbox-ren q')) (cong-⟨⟩-eq-tgt (toCtx-≐ˢ es) x))
-            (unbox-ren-tgt q' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x))
+      trans (cong (var-img′ (unbox-ren q')) (cong-⟨⟩-eq-img (toCtx-≐ˢ es) x))
+            (unbox-ren-img q' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x))
 
-    stepR : var-tgt (castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)) (Tl-⟨⟩ x)
-          ≡ Tgt-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
+    stepR : var-img (castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)) (Tl-⟨⟩ x)
+          ≡ Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e x)
     stepR =
-      trans (var-tgt-castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q) (Tl-⟨⟩ x))
-            (cong (Tgt-cast (sym (toCtx-≐ˢ es₂))) (unbox-ren-tgt q x))
+      trans (var-img-castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q) (Tl-⟨⟩ x))
+            (cong (Var-cast (sym (toCtx-≐ˢ es₂))) (unbox-ren-img q x))

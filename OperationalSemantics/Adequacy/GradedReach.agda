@@ -337,14 +337,14 @@ reach-renᵘ-∘ : ∀ {St St' St'' : 𝕊 []}
              → reach-renᵘ (reach-∘ q' q) ≐ʳ (reach-renᵘ q' ∘ʳ reach-renᵘ q)
 reach-renᵘ-∘ (reach e' b') (reach e b) = mk≐ʳ go
   where
-    -- `_≐ʳ_` does not see associativity (`var-tgt` of a composite *is* the
+    -- `_≐ʳ_` does not see associativity (`var-img` of a composite *is* the
     -- composite), so the whole thing is pointwise: replace the composite
     -- extension by the two, then cancel the `⟨⟩-η` pair in the middle.
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go x =
-      trans (cong (var-tgt′ ⟨⟩-η-ren)
+      trans (cong (var-img′ ⟨⟩-η-ren)
                   (at (suc-comp-ren-∘-≐ e e' _ b b') _))
-            (cong (λ z → var-tgt′ ⟨⟩-η-ren (var-tgt′ (suc-comp-ren e' b') z))
+            (cong (λ z → var-img′ ⟨⟩-η-ren (var-img′ (suc-comp-ren e' b') z))
                   (sym (at ⟨⟩-η-cancel _)))
 
 ------------------------------------------------------------------------
@@ -364,17 +364,17 @@ reach-renᵘ-∘ (reach e' b') (reach e b) = mk≐ʳ go
 ≤ₛ-embed (∷-suc V e)   x with ≤ₛ-embed e x
 ... | σ' , y = σ' , Tl-∷ y
 
-suc-comp-ren-tgt : ∀ {St St₁ : 𝕊 []} {ρ₂ ρ₃ : R} → (e : St ≤ₛ St₁)
+suc-comp-ren-img : ∀ {St St₁ : 𝕊 []} {ρ₂ ρ₃ : R} → (e : St ≤ₛ St₁)
                  → (b : ≤ₛ-grade e ·ᵣ ρ₃ ≾ᵣ ρ₂)
                  → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
-                 → var-tgt (suc-comp-ren e b) (Tl-⟨⟩ x)
+                 → var-img (suc-comp-ren e b) (Tl-⟨⟩ x)
                  ≡ (proj₁ (≤ₛ-embed e x) ·ᵣ ρ₃ , Tl-⟨⟩ (proj₂ (≤ₛ-embed e x)))
 
-suc-comp-ren-tgt id-suc       b x = refl
-suc-comp-ren-tgt (⟨⟩-suc ρ e) b x =
-  cong (var-tgt′ ⟨⟩-μ-ren) (suc-comp-ren-tgt e _ x)
-suc-comp-ren-tgt (∷-suc V e)  b x =
-  cong (var-tgt′ (cong-⟨⟩-ren wk-ren)) (suc-comp-ren-tgt e _ x)
+suc-comp-ren-img id-suc       b x = refl
+suc-comp-ren-img (⟨⟩-suc ρ e) b x =
+  cong (var-img′ ⟨⟩-μ-ren) (suc-comp-ren-img e _ x)
+suc-comp-ren-img (∷-suc V e)  b x =
+  cong (var-img′ (cong-⟨⟩-ren wk-ren)) (suc-comp-ren-img e _ x)
 
 -- The embedding is functorial, and the two `⟨⟩-η` renamings are its identity
 -- steps. Together these compute what `reach-renᵘ` and `unbox-ren` do to a
@@ -403,18 +403,18 @@ suc-comp-ren-tgt (∷-suc V e)  b x =
 
 -- What a reach does to a variable: the embedding of its extension.
 
-reach-renᵘ-tgt : ∀ {St St' : 𝕊 []} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St')
+reach-renᵘ-img : ∀ {St St' : 𝕊 []} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St')
                → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
-               → var-tgt (reach-renᵘ q) x ≡ ≤ₛ-embed (ext q) x
-reach-renᵘ-tgt (reach e b) x =
-  trans (cong (λ t → var-tgt′ ⟨⟩-η-ren (var-tgt′ (suc-comp-ren e b) t))
-              (⟨⟩-η⁻¹-tgt x))
-        (cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x))
+               → var-img (reach-renᵘ q) x ≡ ≤ₛ-embed (ext q) x
+reach-renᵘ-img (reach e b) x =
+  trans (cong (λ t → var-img′ ⟨⟩-η-ren (var-img′ (suc-comp-ren e b) t))
+              (⟨⟩-η⁻¹-img x))
+        (cong (var-img′ ⟨⟩-η-ren) (suc-comp-ren-img e b x))
 
-unbox-ren-tgt : ∀ {St St' : 𝕊 []} {ρ : R} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+unbox-ren-img : ∀ {St St' : 𝕊 []} {ρ : R} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
               → ∀ {A σ} → (x : A ∈[ σ ] toCtx St)
-              → var-tgt (unbox-ren q) (Tl-⟨⟩ x) ≡ ≤ₛ-embed (ext q) x
-unbox-ren-tgt (reach e b) x = cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt e b x)
+              → var-img (unbox-ren q) (Tl-⟨⟩ x) ≡ ≤ₛ-embed (ext q) x
+unbox-ren-img (reach e b) x = cong (var-img′ ⟨⟩-η-ren) (suc-comp-ren-img e b x)
 
 -- Looking a resource up after transporting it along a reach
 -- reaches the same cell as looking it up along the composite.
@@ -422,13 +422,13 @@ unbox-ren-tgt (reach e b) x = cong (var-tgt′ ⟨⟩-η-ren) (suc-comp-ren-tgt 
 unbox-cells : ∀ {A ρ} {St St' St₂ : 𝕊 []}
             → (q₀ : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂)
             → ∀ {σ} → (x : [ ρ ] A ∈[ σ ] toCtx St)
-            → var-tgt (unbox-ren q') (Tl-⟨⟩ (proj₂ (var-tgt (reach-renᵘ q₀) x)))
-            ≡ var-tgt (unbox-ren (reach-∘ᵘ q' q₀)) (Tl-⟨⟩ x)
+            → var-img (unbox-ren q') (Tl-⟨⟩ (proj₂ (var-img (reach-renᵘ q₀) x)))
+            ≡ var-img (unbox-ren (reach-∘ᵘ q' q₀)) (Tl-⟨⟩ x)
 unbox-cells q₀ q' x =
-  trans (unbox-ren-tgt q' (proj₂ (var-tgt (reach-renᵘ q₀) x)))
-    (trans (cong (λ t → ≤ₛ-embed (ext q') (proj₂ t)) (reach-renᵘ-tgt q₀ x))
+  trans (unbox-ren-img q' (proj₂ (var-img (reach-renᵘ q₀) x)))
+    (trans (cong (λ t → ≤ₛ-embed (ext q') (proj₂ t)) (reach-renᵘ-img q₀ x))
       (trans (sym (≤ₛ-embed-∘ (ext q₀) (ext q') x))
-             (sym (unbox-ren-tgt (reach-∘ᵘ q' q₀) x))))
+             (sym (unbox-ren-img (reach-∘ᵘ q' q₀) x))))
 
 -- The same at the level `unbox-lookup` consumes it: a boxed value *is* a
 -- variable, so the cell it names is `unbox-cells`.
@@ -436,8 +436,8 @@ unbox-cells q₀ q' x =
 unbox-cellsᵛ : ∀ {A ρ} {St St' St₂ : 𝕊 []}
              → (q₀ : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂)
              → (V : toCtx St ⊢V⦂ [ ρ ] A)
-             → unbox-tgt (unbox-ren q') (reach-val q₀ V)
-             ≡ unbox-tgt (unbox-ren (reach-∘ᵘ q' q₀)) V
+             → unbox-img (unbox-ren q') (reach-val q₀ V)
+             ≡ unbox-img (unbox-ren (reach-∘ᵘ q' q₀)) V
 unbox-cellsᵛ q₀ q' (var f x) = unbox-cells q₀ q' x
 
 ------------------------------------------------------------------------
@@ -619,16 +619,16 @@ reach-unbox-ren-≐ q' q = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) =
-      trans (cong (var-tgt′ (reach-renᵘ q')) (unbox-ren-tgt q x))
-        (trans (reach-renᵘ-tgt q' (proj₂ (≤ₛ-embed (ext q) x)))
+      trans (cong (var-img′ (reach-renᵘ q')) (unbox-ren-img q x))
+        (trans (reach-renᵘ-img q' (proj₂ (≤ₛ-embed (ext q) x)))
           (trans (sym (≤ₛ-embed-∘ (ext q) (ext q') x))
-                 (sym (unbox-ren-tgt (reach-∘ q' q) x))))
+                 (sym (unbox-ren-img (reach-∘ q' q) x))))
 
 -- Allocating a cell renames the old context by weakening past it.
 
 alloc-ren-≐ : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → reach-renᵘ (alloc-reach V) ≐ʳ wk-ren
-alloc-ren-≐ V = mk≐ʳ (λ x → reach-renᵘ-tgt (alloc-reach V) x)
+alloc-ren-≐ V = mk≐ʳ (λ x → reach-renᵘ-img (alloc-reach V) x)
 
 -- The same for the renaming an `unbox` consumes: splitting the guard into the
 -- reach's own part and a residual `σ`, then crossing the lock under `σ`, is the
@@ -641,8 +641,8 @@ unbox-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : St [ ρ ]⊑ₛ
 unbox-ren-μ-≐ {σ = σ} q b = mk≐ʳ go
   where
     go : ∀ {A τ} → (x : A ∈[ τ ] _) → _
-    go (Tl-⟨⟩ x) = trans (cong (Tgt-⟨⟩ σ) (unbox-ren-tgt q x))
-                         (sym (suc-comp-ren-tgt (ext q) b x))
+    go (Tl-⟨⟩ x) = trans (cong (Var-⟨⟩ σ) (unbox-ren-img q x))
+                         (sym (suc-comp-ren-img (ext q) b x))
 
 -- Crossing a lock and then following a guarded reach is following the
 -- corresponding unit reach (`reach-unit`): the source grade is relaxed from `ρ`
@@ -654,10 +654,10 @@ unbox-ren-unit : ∀ {ρ} {St St' : 𝕊 []} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St
 unbox-ren-unit q p = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
-    go x = cong (var-tgt′ ⟨⟩-η-ren)
+    go x = cong (var-img′ ⟨⟩-η-ren)
                 (sym (at (suc-comp-ren-≤ˡ (ext q) (bound (reach-unit q p))
                                           (bound q) p)
-                         (proj₂ (var-tgt ⟨⟩-η⁻¹-ren x))))
+                         (proj₂ (var-img ⟨⟩-η⁻¹-ren x))))
 
 -- Two reaches whose renamings are identity-like: the unit reach at a state, and
 -- the reach a `DELAY` takes (whose target context *is* the source under the
@@ -665,17 +665,17 @@ unbox-ren-unit q p = mk≐ʳ go
 
 -- Both are `≤ₛ-embed` of the identity extension, which is the identity: a
 -- variable of a state context cannot be case-split on, so this goes through the
--- `var-tgt` layer rather than pointwise.
+-- `var-img` layer rather than pointwise.
 
 reach-renᵘ-id-≐ : ∀ {St : 𝕊 []} → reach-renᵘ (reach-id {St} {uᵣ}) ≐ʳ id-ren
-reach-renᵘ-id-≐ = mk≐ʳ (λ x → reach-renᵘ-tgt reach-id x)
+reach-renᵘ-id-≐ = mk≐ʳ (λ x → reach-renᵘ-img reach-id x)
 
 unbox-ren-delay-≐ : ∀ {ρ} {St : 𝕊 []}
                   → unbox-ren (delay-reach {ρ} {St}) ≐ʳ id-ren
 unbox-ren-delay-≐ = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
-    go (Tl-⟨⟩ x) = unbox-ren-tgt delay-reach x
+    go (Tl-⟨⟩ x) = unbox-ren-img delay-reach x
 
 ------------------------------------------------------------------------
 -- UNFOLDING THE LOOKUP
@@ -683,9 +683,9 @@ unbox-ren-delay-≐ = mk≐ʳ go
 -- `unbox-lookup` is a `with` on `unbox⇒var`, so it does not reduce at an
 -- abstract boxed value — but `Σ` has eta, so the scrutinee *is* its own triple
 -- of projections and the block unfolds against them. Naming the body as a
--- function of the cell (`Tgt`) and the grade bound is therefore an equality
+-- function of the cell (`Var`) and the grade bound is therefore an equality
 -- proved by `refl`, and it is what makes the lookup coherences provable: the
--- cell is `unbox-tgt`, whose behaviour is already known, and the bound is
+-- cell is `unbox-img`, whose behaviour is already known, and the bound is
 -- irrelevant.
 ------------------------------------------------------------------------
 
@@ -716,11 +716,11 @@ lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
              → Γ ⊢V⦂ A
 lookup-body′ Γf Γs eq h rel U = V-rename (lookup-ren′ Γf Γs eq h rel) U
 
--- What is left for `store-fresh` is `var-tgt` of this: `eq-ren ++ᶜ-identityˡ`
--- (`eq-ren-tgt`, then `∈-++ᶜʳ-[]`), `⟨⟩-≤-ren`, the push
--- `wk-ren-⟨ρ⟩-ctx-tgt` computes, and the two relocations (`eq-ren-tgt`).
+-- What is left for `store-fresh` is `var-img` of this: `eq-ren ++ᶜ-identityˡ`
+-- (`eq-ren-img`, then `∈-++ᶜʳ-[]`), `⟨⟩-≤-ren`, the push
+-- `wk-ren-⟨ρ⟩-ctx-img` computes, and the two relocations (`eq-ren-img`).
 
-lookup-body : ∀ {A ρ} → (St : 𝕊 []) → (t : Tgt (toCtx St) ([ ρ ] A))
+lookup-body : ∀ {A ρ} → (St : 𝕊 []) → (t : Var (toCtx St) ([ ρ ] A))
             → proj₁ t ≾ᵣ ρ → toCtx St ⊢V⦂ A
 lookup-body {A} {ρ} St (ρ' , z) rel =
   lookup-body′
@@ -757,24 +757,24 @@ lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
 
 -- Transporting the renaming an `unbox` consults relocates the cell it names.
 
-unbox-tgt-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren [] (Δ ⟨ ρ ⟩) Γ')
+unbox-img-cast : ∀ {Γ Γ' A ρ Δ} → (e : Γ' ≡ Γ) → (w' : Ren [] (Δ ⟨ ρ ⟩) Γ')
                → (V : Δ ⊢V⦂ [ ρ ] A)
-               → unbox-tgt (castʳ e w') V
-               ≡ (proj₁ (unbox-tgt w' V)
-                 , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-tgt w' V) ] Γ₀) e
-                         (proj₂ (unbox-tgt w' V)))
-unbox-tgt-cast refl w' V = refl
+               → unbox-img (castʳ e w') V
+               ≡ (proj₁ (unbox-img w' V)
+                 , subst (λ Γ₀ → [ ρ ] A ∈[ proj₁ (unbox-img w' V) ] Γ₀) e
+                         (proj₂ (unbox-img w' V)))
+unbox-img-cast refl w' V = refl
 
 unbox-lookup-≡ : ∀ {A ρ Δ} → (St : 𝕊 [])
                → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
                → unbox-lookup St w V
-               ≡ lookup-body St (unbox-tgt w V) (proj₂ (proj₂ (unbox⇒var w V)))
+               ≡ lookup-body St (unbox-img w V) (proj₂ (proj₂ (unbox⇒var w V)))
 unbox-lookup-≡ St w V = refl
 
 -- Same cell, same value: the bound is `≾ᵣ`-irrelevant.
 
 lookup-body-≡ : ∀ {A ρ} → (St : 𝕊 [])
-              → {t t' : Tgt (toCtx St) ([ ρ ] A)} → t ≡ t'
+              → {t t' : Var (toCtx St) ([ ρ ] A)} → t ≡ t'
               → (rel : proj₁ t ≾ᵣ ρ) → (rel' : proj₁ t' ≾ᵣ ρ)
               → lookup-body St t rel ≡ lookup-body St t' rel'
 lookup-body-≡ St refl rel rel' =
@@ -790,7 +790,7 @@ unbox-lookup-cast-val : ∀ {Δ Δ' A ρ} → (St : 𝕊 []) → (e : Δ' ≡ Δ
                       ≐ᵛ unbox-lookup St (w ∘ʳ cong-⟨⟩-ren (eq-ren e)) V
 unbox-lookup-cast-val St refl w V =
   ≡→≐ᵛ (lookup-body-≡ St
-           (unbox-tgt-≐ (≐ʳ-sym (∘ʳ-id-≐ʳ w (cong-⟨⟩-ren-id-≐ ≐ʳ-refl))) V)
+           (unbox-img-≐ (≐ʳ-sym (∘ʳ-id-≐ʳ w (cong-⟨⟩-ren-id-≐ ≐ʳ-refl))) V)
            _ _)
 
 
@@ -867,19 +867,19 @@ unbox-lookup-cast-val St refl w V =
 ≤ₛ-embed-push : ∀ {A ρ} {St₀ St₂ : 𝕊 []} → (e : St₀ ≤ₛ St₂)
               → (y : A ∈[ ρ ] toCtx St₀)
               → ≤ₛ-embed e y
-              ≡ Tgt-cast (sym (≤ₛ-ctx-toCtx e))
+              ≡ Var-cast (sym (≤ₛ-ctx-toCtx e))
                   (grade-++ᶜˡ ρ (≤ₛ-ctx e) , ∈-++ᶜˡ (≤ₛ-ctx e) y)
 
 ≤ₛ-embed-push id-suc       y = refl
 ≤ₛ-embed-push (⟨⟩-suc ρ e) y =
-  trans (cong (Tgt-⟨⟩ ρ) (≤ₛ-embed-push e y))
-    (trans (sym (Tgt-cast-⟨⟩ ρ (sym (≤ₛ-ctx-toCtx e)) _))
-           (Tgt-cast-irr (cong (_⟨ ρ ⟩) (sym (≤ₛ-ctx-toCtx e)))
+  trans (cong (Var-⟨⟩ ρ) (≤ₛ-embed-push e y))
+    (trans (sym (Var-cast-⟨⟩ ρ (sym (≤ₛ-ctx-toCtx e)) _))
+           (Var-cast-irr (cong (_⟨ ρ ⟩) (sym (≤ₛ-ctx-toCtx e)))
                          (sym (≤ₛ-ctx-toCtx (⟨⟩-suc ρ e))) _))
 ≤ₛ-embed-push (∷-suc V e)  y =
-  trans (cong Tgt-∷ (≤ₛ-embed-push e y))
-    (trans (sym (Tgt-cast-∷ (sym (≤ₛ-ctx-toCtx e)) _))
-           (Tgt-cast-irr (cong (_∷ _) (sym (≤ₛ-ctx-toCtx e)))
+  trans (cong Var-∷ (≤ₛ-embed-push e y))
+    (trans (sym (Var-cast-∷ (sym (≤ₛ-ctx-toCtx e)) _))
+           (Var-cast-irr (cong (_∷ _) (sym (≤ₛ-ctx-toCtx e)))
                          (sym (≤ₛ-ctx-toCtx (∷-suc V e))) _))
 
 ------------------------------------------------------------------------
@@ -931,13 +931,13 @@ alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
     go {A'} (Tl-⟨⟩ {ρ' = τ'} w) =
       trans (cong (λ t → f₅ (f₄ (f₃ (f₂ (f₁ t))))) s₀)
         (trans (cong (λ t → f₅ (f₄ (f₃ t)))
-                     (wk-ren-⟨ρ⟩-ctx-tgt (Δ₁ ++ᶜ Δ) h y))
+                     (wk-ren-⟨ρ⟩-ctx-img (Δ₁ ++ᶜ Δ) h y))
           (trans (cong (λ t → f₅ (f₄ t))
-                       (trans (eq-ren-tgt assoc (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) y))
+                       (trans (eq-ren-img assoc (∈-++ᶜˡ (Δ₁ ++ᶜ Δ) y))
                               (∈-++ᶜˡ-assoc Δ₁ Δ y)))
-            (trans (eq-ren-tgt eΓ (∈-++ᶜˡ Δ (Tl-∷ y)))
-              (sym (trans (cong (var-tgt′ (unbox-ren q₀)) s₀)
-                     (trans (unbox-ren-tgt q₀ y)
+            (trans (eq-ren-img eΓ (∈-++ᶜˡ Δ (Tl-∷ y)))
+              (sym (trans (cong (var-img′ (unbox-ren q₀)) s₀)
+                     (trans (unbox-ren-img q₀ y)
                        (trans (cong (λ z → ≤ₛ-embed z y) eq₀)
                          (trans (≤ₛ-embed-∘ (∷-suc V id-suc) e y)
                                 (≤ₛ-embed-push e (Tl-∷ y))))))))))
@@ -945,15 +945,15 @@ alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
         y : A' ∈[ τ' ] toCtx St
         y = subst (λ Γ₀ → A' ∈[ τ' ] Γ₀) ++ᶜ-identityˡ w
 
-        f₁ = var-tgt′ {A = A'} (⟨⟩-≤-ren rel)
-        f₂ = var-tgt′ {A = A'} (wk-ren-⟨ρ⟩-ctx h)
-        f₃ = var-tgt′ {A = A'} (eq-ren assoc)
-        f₄ = var-tgt′ {A = A'} (eq-ren (refl {x = (toCtx St ∷ [ ρ ] A) ++ᶜ Δ}))
-        f₅ = var-tgt′ {A = A'} (eq-ren eΓ)
+        f₁ = var-img′ {A = A'} (⟨⟩-≤-ren rel)
+        f₂ = var-img′ {A = A'} (wk-ren-⟨ρ⟩-ctx h)
+        f₃ = var-img′ {A = A'} (eq-ren assoc)
+        f₄ = var-img′ {A = A'} (eq-ren (refl {x = (toCtx St ∷ [ ρ ] A) ++ᶜ Δ}))
+        f₅ = var-img′ {A = A'} (eq-ren eΓ)
 
-        s₀ : var-tgt (eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})) (Tl-⟨⟩ w)
+        s₀ : var-img (eq-ren (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})) (Tl-⟨⟩ w)
            ≡ (τ' ·ᵣ ρ , Tl-⟨⟩ y)
-        s₀ = trans (eq-ren-tgt (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}) (Tl-⟨⟩ w))
+        s₀ = trans (eq-ren-img (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}) (Tl-⟨⟩ w))
                    (cong (λ z → τ' ·ᵣ ρ , z)
                          (subst-Tl-⟨⟩ (++ᶜ-identityˡ {toCtx St}) w))
 
@@ -992,3 +992,35 @@ alloc-lookup-≐ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
     eU = ≡→≐ᵛ (trans (≤ₛ-embed-lookup e (Hd {Γ = toCtx St}))
                       (subst-state-castᵛ
                          (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St}))) V))
+
+------------------------------------------------------------------------
+-- READABILITY AT A CELL
+--
+-- `St [ c ]⊑ᶜ St'` — an extension under which the cell `c` has ripened:
+-- enough grade has accumulated *at `c`'s own position* for its `ρ`-box to
+-- be read. The sibling of `_[_]⊑ₛ[_]_`, measured at a cell rather than at
+-- a lock, which is why the bound composes in the other order
+-- (`σ ·ᵣ ≤ₛ-grade e` against `≤ₛ-grade e ·ᵣ ρ'`) and why the two cannot be
+-- identified without commutativity of `_·ᵣ_`, which `Grade` does not assume.
+--
+-- Packaging the pair is what makes `Store` and `Val` at a box type the same
+-- statement at different cells (`store-var`).
+------------------------------------------------------------------------
+
+infix 4 _[_]⊑ᶜ_
+
+record _[_]⊑ᶜ_ {A ρ σ} (St : 𝕊 [])
+                (c : [ ρ ] A ∈[ σ ] toCtx St) (St' : 𝕊 []) : Set where
+  constructor read
+  field
+    extᶜ  : St ≤ₛ St'
+    ready : proj₁ (≤ₛ-embed extᶜ c) ≾ᵣ ρ
+
+open _[_]⊑ᶜ_ public
+
+-- What reading it yields.
+
+lookupᶜ : ∀ {A ρ σ} {St St' : 𝕊 []} {c : [ ρ ] A ∈[ σ ] toCtx St}
+        → St [ c ]⊑ᶜ St' → toCtx St' ⊢V⦂ A
+lookupᶜ {c = c} r = lookup-body _ (≤ₛ-embed (extᶜ r) c) (ready r)
+

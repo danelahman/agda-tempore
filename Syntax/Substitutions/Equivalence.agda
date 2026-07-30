@@ -106,16 +106,16 @@ sub-var-≐ {B = B} (Tl-⟨⟩ y) f f' (Tl-⟨⟩ x) eW with eternal? B
 -- `grad-typ⇒var`, which `_≐ᵛ_` pins down (related box-typed values are the same
 -- variable).
 
-rvar-tgt : ∀ {Γ A B ρ σ τ}
+rvar-img : ∀ {Γ A B ρ σ τ}
          → ([ ρ ] B ∈[ σ ] Γ) → (x : A ∈[ τ ] Γ) → split-l x ⊢V⦂ A
-         → Tgt (split-l x ++ᶜ split-r x) ([ ρ ] B)
-rvar-tgt y x W = proj₁ (⟨ y ⟩[ x ↦ W ]rvar) , proj₁ (proj₂ (⟨ y ⟩[ x ↦ W ]rvar))
+         → Var (split-l x ++ᶜ split-r x) ([ ρ ] B)
+rvar-img y x W = proj₁ (⟨ y ⟩[ x ↦ W ]rvar) , proj₁ (proj₂ (⟨ y ⟩[ x ↦ W ]rvar))
 
 sub-rvar-≐ : ∀ {Γ A B ρ σ τ}
            → (y : [ ρ ] B ∈[ σ ] Γ) → (x : A ∈[ τ ] Γ)
            → {W W' : split-l x ⊢V⦂ A} → W ≐ᵛ W'
            ----------------------------------------
-           → rvar-tgt y x W ≡ rvar-tgt y x W'
+           → rvar-img y x W ≡ rvar-img y x W'
 
 sub-rvar-≐ Hd       Hd       eW with eW
 sub-rvar-≐ Hd       Hd       eW | var-≐ = refl
@@ -149,7 +149,7 @@ unbox-var-≐ : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ)
             → M ≐ᶜ M'
             → unbox-var x rel M ≐ᶜ unbox-var x rel' M'
 unbox-var-≐ x rel rel' eM =
-  unbox-≐ (unbox-tgt-≐
+  unbox-≐ (unbox-img-≐
              (∘ʳ-≐ (≐ʳ-refl {r = eq-ren (split-≡ (split-pf x))})
                (∘ʳ-≐ (≐ʳ-refl {r = wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)})
                      (⟨⟩-≤-ren-≐ rel rel')))
@@ -230,14 +230,14 @@ mutual
 --
 -- It renormalises: the resource variable is recovered, substituted
 -- (`⟨_⟩[_↦_]rvar`) and rebuilt by `unbox-var`. Stated as its own lemma so that
--- the three nested `with`s stay local — callers then reason with `rvar-tgt` and
--- `unbox-tgt` alone. The grade bound is arbitrary, `_≐ᶜ_` not seeing it.
+-- the three nested `with`s stay local — callers then reason with `rvar-img` and
+-- `unbox-img` alone. The grade bound is arbitrary, `_≐ᶜ_` not seeing it.
 
 sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
           → (M : Γ ∷ A ⊢C⦂ C) → (x : A₀ ∈[ τ ] Γ) → (W : split-l x ⊢V⦂ A₀)
-          → (rel : proj₁ (rvar-tgt (proj₂ (unbox-tgt w V)) x W) ≾ᵣ ρ)
+          → (rel : proj₁ (rvar-img (proj₂ (unbox-img w V)) x W) ≾ᵣ ρ)
           → ((unbox w V M) [ x ↦ W ]c)
-          ≐ᶜ unbox-var (proj₂ (rvar-tgt (proj₂ (unbox-tgt w V)) x W)) rel
+          ≐ᶜ unbox-var (proj₂ (rvar-img (proj₂ (unbox-img w V)) x W)) rel
                        (M [ Tl-∷ x ↦ W ]c)
 
 sub-unbox w V M x W rel with grad-typ⇒var V
