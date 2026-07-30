@@ -24,6 +24,8 @@ open import Syntax.Renamings     S
 open import Syntax.Substitutions S
 open import Syntax.Types         S
 
+open import Syntax.Renamings.Equivalence S using (unbox-img)
+
 -- Equations between well-typed values and computations
 
 mutual
@@ -198,14 +200,22 @@ mutual
                 --------------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
-    unbox-cong : ∀ {A C ρ Δ}
+    -- As `unbox-≐`: the two nodes are compared at the *cell* they name, so the
+    -- stored renaming, its source context and the boxed value may all differ.
+    -- Demanding instead that the boxed values agree would be strictly finer,
+    -- and would make `_==_` insensitive to the renormalisation substitution
+    -- performs on them (`unbox⇒var` then `unbox-var`).
+
+    unbox-cong : ∀ {A C ρ Δ Δ'}
                → {w : Ren [] (Δ ⟨ ρ ⟩) Γ}
-               → {V W : Δ ⊢V⦂ [ ρ ] A}
+               → {w' : Ren [] (Δ' ⟨ ρ ⟩) Γ}
+               → {V : Δ ⊢V⦂ [ ρ ] A}
+               → {V' : Δ' ⊢V⦂ [ ρ ] A}
                → {M N : Γ ∷ A  ⊢C⦂ C}
-               → Δ ⊢V⦂ V == W
+               → unbox-img w V ≡ unbox-img w' V'
                → Γ ∷ A ⊢C⦂ M == N
-               ------------------------------------
-               → Γ ⊢C⦂ unbox w V M == unbox w W N
+               --------------------------------------
+               → Γ ⊢C⦂ unbox w V M == unbox w' V' N
 
     box-cong : ∀ {A C ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}

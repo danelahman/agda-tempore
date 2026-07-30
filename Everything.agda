@@ -169,7 +169,11 @@ open import OperationalSemantics.TopLevelProgressTheorem
 
 open import EquationalTheory.EquationalTheory
 
----- Equational soundness theorem (Thm 4.9 of Ahman & Žajdela)
+---- The syntactic equivalence is contained in the equational theory
+
+open import EquationalTheory.Alignment
+
+---- Equational theory's soundness theorem
 
 open import EquationalTheory.Soundness
 

@@ -47,6 +47,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.Renamings  S
 open import Syntax.RenActions S using (V-rename; C-rename; unbox⇒var)
+open import Syntax.Renamings.Equivalence S using (Var; unbox-img)
 
 open import EquationalTheory.EquationalTheory S
 
@@ -90,3 +91,32 @@ sound-unbox-not-used w V M (pV , pCM) pR =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-identityʳ _
+
+-- AN `unbox` NODE DEPENDS ONLY ON THE CELL IT NAMES
+--
+-- `⟦_⟧ᶜᵗ` reads `unbox⇒var w V` for three things: a grade, a variable and the
+-- bound relating them. The first two are exactly `unbox-img w V`, and the third
+-- is a `_≾ᵣ_` proof, which is irrelevant. So two `unbox` nodes naming the same
+-- cell denote the same morphism, whatever renamings and boxed values they were
+-- built from — the semantic content of `unbox-cong`'s premise.
+
+unbox-env-irr : ∀ {Γ A ρ} → {c c' : Var Γ ([ ρ ] A)} → c ≡ c'
+              → (b : proj₁ c ≾ᵣ ρ) → (b' : proj₁ c' ≾ᵣ ρ)
+              → (ε⊣ ∘ᵐ ⟨⟩-≤ b ∘ᵐ var-proj (proj₂ c))
+              ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ b' ∘ᵐ var-proj (proj₂ c'))
+unbox-env-irr refl b b' rewrite ≾ᵣ-irrelevant b b' = ≈ᵐ-refl
+
+unbox-cell-≈ : ∀ {Γ A C ρ Δ Δ'}
+             → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (w' : Ren [] (Δ' ⟨ ρ ⟩) Γ)
+             → (V : Δ ⊢V⦂ [ ρ ] A) → (V' : Δ' ⊢V⦂ [ ρ ] A)
+             → unbox-img w V ≡ unbox-img w' V'
+             → (M : Γ ∷ A ⊢C⦂ C)
+             → (pV : Paramᵛ V) → (pV' : Paramᵛ V') → (pM : Paramᶜ M)
+             → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) ≈ᵐ ⟦ unbox w' V' M ⟧ᶜᵗ (pV' , pM)
+
+unbox-cell-≈ w w' V V' h M pV pV' pM =
+    unbox-def w V M pV pM
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+              , unbox-env-irr h (proj₂ (proj₂ (unbox⇒var w V)))
+                                (proj₂ (proj₂ (unbox⇒var w' V'))) ⟩ᵐ-cong)
+  ∙ ≈ᵐ-sym (unbox-def w' V' M pV' pM)

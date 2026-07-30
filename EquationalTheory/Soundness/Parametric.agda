@@ -98,7 +98,8 @@ mutual
   Midᶜ (delay-cong p)                    = Midᶜ p
   Midᶜ (handle-cong p hs q)              =
     Midᶜ p × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε'')) × Midᶜ q
-  Midᶜ (unbox-cong p q)                  = Midᵛ p × Midᶜ q
+  -- the cell premise is an `_≡_`, so only the body carries a certificate
+  Midᶜ (unbox-cong p q)                  = Midᶜ q
   Midᶜ (box-cong p q)                    = Midᵛ p × Midᶜ q
   Midᶜ (coerce-cong p)                   = Midᶜ p
   -- The two *axioms* whose endpoints do not determine all the certificates,

@@ -155,15 +155,15 @@ mutual
             (⟨ ≈ᵐ-refl
              , ∘ᵐ-cong (T-congᶠ (soundᶜ q mq pN pN'))
                        (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
-  soundᶜ (unbox-cong {w = w} {V = V} {W = W} {M = M} {N = N} p q)
-         (mp , mq) (pV , pM) (pV' , pM') =
-      unbox-def w V M pV pM
-    ∙ ∘ᵐ-cong (soundᶜ q mq pM pM')
-              (⟨ ≈ᵐ-refl
-               , unbox-read w V pV
-                 ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-congᶠ (soundᵛ p mp pV pV')))
-                 ∙ ≈ᵐ-sym (unbox-read w W pV') ⟩ᵐ-cong)
-    ∙ ≈ᵐ-sym (unbox-def w W N pV' pM')
+  -- The premise is the cell equation, so the two nodes' environments agree by
+  -- `unbox-cell-≈` (the bound `unbox⇒var` also returns is irrelevant); only the
+  -- body needs the recursive call.
+  soundᶜ (unbox-cong {w = w} {w' = w'} {V = V} {V' = V'} {M = M} {N = N} p q)
+         mq (pV , pM) (pV' , pM') =
+      unbox-cell-≈ w w' V V' p M pV pV' pM
+    ∙ unbox-def w' V' M pV' pM
+    ∙ ∘ᵐ-congˡ (soundᶜ q mq pM pM')
+    ∙ ≈ᵐ-sym (unbox-def w' V' N pV' pM')
   soundᶜ (box-cong p q)       (mp , mq)    (pV , pM) (pV' , pM') =
     ∘ᵐ-cong (soundᶜ q mq pM pM')
             (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (soundᵛ p mp pV pV')) ⟩ᵐ-cong)
