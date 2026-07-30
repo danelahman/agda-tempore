@@ -104,7 +104,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
                 ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀))
          (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
          (N : Γ ⟨ σ ⟩ ∷ A ⊢C⦂ B ‼ ε')
-         (ren : Ren [] (Γ ⟨ σ ⟩) ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩))
+         (ren : Ren [] ((Γ ⟨ ρ ⟩ ∷ A₀) ⟨ mapᵉ ε ⟩) (Γ ⟨ σ ⟩))
          (pM : Paramᶜ M) (pN : Paramᶜ N)
          (pH : ∀ op' ε₀ → Paramᶜ (H op' ε₀))
          (uH : ∀ (op' : Op) {ε₁ ε₂} → (q : ε₁ ≾ₑ ε₂)

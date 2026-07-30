@@ -35,7 +35,7 @@ open import Syntax.Renamings.Base S
 -- caller matching on it reduces this too.
 
 ren-ᴱ-∷′ : ∀ {Δ Ξ} → (A : VType) → (dec : Dec (Eternal A))
-         → Ren Ξ (Δ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec)
+         → Ren Ξ (ᴱ-∷ (Δ ᴱ) A dec) (Δ ᴱ)
 ren-ᴱ-∷′ A (yes _) = wk-ren
 ren-ᴱ-∷′ A (no  _) = id-ren
 
@@ -44,7 +44,7 @@ ren-ᴱ-∷′ A (no  _) = id-ren
 
 restrict-var-ren : ∀ {Ξ Δ A ρ} → (dec : Dec (Eternal A))
                  → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
-                 → Ren (Ξ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec) (Δ ᴱ)
+                 → Ren (Ξ ᴱ) (Δ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec)
 restrict-var-ren {Ξ} {Δ} {A} (yes et) p x =
   var-ren (λ _ → ≾ᵣ-refl)
     (subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) (ᴱ-⋈ᶜ Ξ Δ) (∈-ᴱ et x))
@@ -61,10 +61,10 @@ restrict-ren id-ren =
   id-ren
 restrict-ren (r₂ ∘ʳ r₁) =
   restrict-ren r₂ ∘ʳ restrict-ren r₁
-restrict-ren {Ξ} {Δ} (wk-ren {A = A}) =
+restrict-ren {Ξ} {Δ' = Δ} (wk-ren {A = A}) =
   ren-ᴱ-∷′ {Δ} {Ξ ᴱ} A (eternal? A)
-restrict-ren {Ξ} {Δ' = Δ'} (var-ren {A = A} p x) =
-  restrict-var-ren {Ξ} {Δ'} {A} (eternal? A) p x
+restrict-ren {Ξ} {Δ} (var-ren {A = A} p x) =
+  restrict-var-ren {Ξ} {Δ} {A} (eternal? A) p x
 restrict-ren ⟨⟩-η-ren =
   id-ren
 restrict-ren ⟨⟩-η⁻¹-ren =
@@ -87,7 +87,7 @@ restrict-ren (⟨⟩-ext-ctx ecΞ ecΔ) =
 -- In the derived renamings the local parts are bound before the ambient, so
 -- that positional instantiation names them.
 
-ren-ᴱ-∷ : ∀ {Δ Ξ} → (A : VType) → Ren Ξ (Δ ᴱ) ((Δ ∷ A) ᴱ)
+ren-ᴱ-∷ : ∀ {Δ Ξ} → (A : VType) → Ren Ξ ((Δ ∷ A) ᴱ) (Δ ᴱ)
 ren-ᴱ-∷ {Δ} {Ξ} A = ren-ᴱ-∷′ {Δ} {Ξ} A (eternal? A)
 
 -- Bringing a variable buried under a suffix context `Θ` up to the top. The
@@ -95,21 +95,21 @@ ren-ᴱ-∷ {Δ} {Ξ} A = ren-ᴱ-∷′ {Δ} {Ξ} A (eternal? A)
 -- extrudes it out of the lock (`⟨⟩-ext-ren`), which requires it to be eternal.
 
 bring-up : ∀ {Δ A Ξ} → Eternal A → (Θ : Ctx)
-         → Ren Ξ ((Δ ∷ A) ++ᶜ Θ) ((Δ ++ᶜ Θ) ∷ A)
+         → Ren Ξ ((Δ ++ᶜ Θ) ∷ A) ((Δ ∷ A) ++ᶜ Θ)
 bring-up et []        = id-ren
-bring-up et (Θ ∷ B)   = exch-ren ∘ʳ cong-∷-ren (bring-up et Θ)
-bring-up et (Θ ⟨ ρ ⟩) = ⟨⟩-ext-ren et ∘ʳ cong-⟨⟩-ren (bring-up et Θ)
+bring-up et (Θ ∷ B)   = cong-∷-ren (bring-up et Θ) ∘ʳ exch-ren
+bring-up et (Θ ⟨ ρ ⟩) = cong-⟨⟩-ren (bring-up et Θ) ∘ʳ ⟨⟩-ext-ren et
 
 -- Contracting the eternal restriction prefix `Δ ᴱ` back into `Δ`'s own
 -- variables. Each eternal variable duplicated by the prefix is brought up to
 -- the top and contracted against its original occurrence in `Δ`.
 
-contract : ∀ {Ξ} → (Δ : Ctx) → Ren Ξ (Δ ᴱ ++ᶜ Δ) Δ
+contract : ∀ {Ξ} → (Δ : Ctx) → Ren Ξ Δ (Δ ᴱ ++ᶜ Δ)
 contract []        = id-ren
 contract {Ξ} (Δ ∷ A)   with eternal? A
-... | yes eA = cong-∷-ren (contract Δ)
-            ∘ʳ var-ren (λ _ → ≾ᵣ-refl) (∈-⋈ᶜ Ξ Hd)
-            ∘ʳ cong-∷-ren (bring-up eA Δ)
+... | yes eA = (cong-∷-ren (bring-up eA Δ)
+            ∘ʳ var-ren (λ _ → ≾ᵣ-refl) (∈-⋈ᶜ Ξ Hd))
+            ∘ʳ cong-∷-ren (contract Δ)
 ... | no  _  = cong-∷-ren (contract Δ)
 contract (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Δ)
 
@@ -122,14 +122,14 @@ contract (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Δ)
 -- interpretation is exactly the eternal projection (`ᴱ-ren-mor`).
 
 ᴱ-ren-∷ : ∀ {Δ} → (A : VType) → (dec : Dec (Eternal A))
-        → Ren [] (Δ ᴱ) Δ → Ren [] (ᴱ-∷ (Δ ᴱ) A dec) (Δ ∷ A)
+        → Ren [] Δ (Δ ᴱ) → Ren [] (Δ ∷ A) (ᴱ-∷ (Δ ᴱ) A dec)
 ᴱ-ren-∷ A (yes _) r = cong-∷-ren r
-ᴱ-ren-∷ A (no  _) r = wk-ren ∘ʳ r
+ᴱ-ren-∷ A (no  _) r = r ∘ʳ wk-ren
 
-ᴱ-ren : (Δ : Ctx) → Ren [] (Δ ᴱ) Δ
+ᴱ-ren : (Δ : Ctx) → Ren [] Δ (Δ ᴱ)
 ᴱ-ren []        = id-ren
 ᴱ-ren (Δ ∷ A)   = ᴱ-ren-∷ {Δ} A (eternal? A) (ᴱ-ren Δ)
-ᴱ-ren (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (ᴱ-ren Δ) ∘ʳ ⟨⟩-ext-ctx ec-[] (ᴱ-EternalCtx Δ)
+ᴱ-ren (Δ ⟨ ρ ⟩) = ⟨⟩-ext-ctx ec-[] (ᴱ-EternalCtx Δ) ∘ʳ cong-⟨⟩-ren (ᴱ-ren Δ)
 
 -- THE ETERNAL WEAKENING
 --
@@ -139,12 +139,12 @@ contract (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Δ)
 -- eternal. This is what makes the weakening a renaming rather than a recursion
 -- over terms.
 
-wk-ctx-ren : ∀ {Ξ} → EternalCtx Ξ → (Γ' : Ctx) → Ren Ξ [] Γ'
+wk-ctx-ren : ∀ {Ξ} → EternalCtx Ξ → (Γ' : Ctx) → Ren Ξ Γ' []
 wk-ctx-ren ec []         = id-ren
-wk-ctx-ren ec (Γ' ∷ A)   = cong-∷-ren (wk-ctx-ren ec Γ') ∘ʳ wk-ren
-wk-ctx-ren ec (Γ' ⟨ ρ ⟩) = cong-⟨⟩-ren (wk-ctx-ren ec Γ') ∘ʳ ⟨⟩-ext-ctx ec ec-[]
+wk-ctx-ren ec (Γ' ∷ A)   = wk-ren ∘ʳ cong-∷-ren (wk-ctx-ren ec Γ')
+wk-ctx-ren ec (Γ' ⟨ ρ ⟩) = ⟨⟩-ext-ctx ec ec-[] ∘ʳ cong-⟨⟩-ren (wk-ctx-ren ec Γ')
 
-wk-ren-ctx : ∀ {Ξ} → EternalCtx Ξ → (Γ' Θ : Ctx) → Ren Ξ Θ (Γ' ++ᶜ Θ)
+wk-ren-ctx : ∀ {Ξ} → EternalCtx Ξ → (Γ' Θ : Ctx) → Ren Ξ (Γ' ++ᶜ Θ) Θ
 wk-ren-ctx ec Γ' []        = wk-ctx-ren ec Γ'
 wk-ren-ctx ec Γ' (Θ ∷ A)   = cong-∷-ren (wk-ren-ctx ec Γ' Θ)
 wk-ren-ctx ec Γ' (Θ ⟨ ρ ⟩) = cong-⟨⟩-ren (wk-ren-ctx ec Γ' Θ)

@@ -168,7 +168,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 -- related (`unbox-lookup-≐`).
 
 ↝-≐-unbox : ∀ {A D ε ρ Δ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)} → {V : Δ ⊢V⦂ [ ρ ] A}
+          → {w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)} → {V : Δ ⊢V⦂ [ ρ ] A}
           → {M₀ : toCtx St ∷ A ⊢C⦂ D ‼ ε}
           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
           → unbox w V M₀ ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) P'
@@ -199,16 +199,17 @@ cast-seq-op : ∀ {Γ Γ' A B ε ε'} {op : Op} → (e : Γ' ≡ Γ)
                   ((castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
                                           ∷ type-of-gtype (arity op)) e) M')
                     ⨟ C-rename
-                        (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
-                                     ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                        (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
+                                     ∘ʳ cong-⟨⟩-ren wk-ren))
                         (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A) e)
                                N')))
             ≡ castᶜ e
                 (ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                   (perform op V'
                     (M' ⨟ C-rename
-                            (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
-                                         ∘ʳ eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)))
+                            (cong-∷-ren ((eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)
+                                          ∘ʳ ⟨⟩-μ-ren)
+                                         ∘ʳ cong-⟨⟩-ren wk-ren))
                             N')))
 cast-seq-op refl V' M' N' = refl
 
@@ -240,7 +241,7 @@ cast-clause {D = D} {C = C} refl refl a a' h' =
   cong (λ z → subst (λ Γ₂ → (Γ₂ ++ᶜ D) ⊢C⦂ C) z h') uip
 
 cast-rename-∷ : ∀ {Γ₁ Γ₂ Γ₁' Γ₂' A C} → (e₁ : Γ₁' ≡ Γ₁) → (e₂ : Γ₂' ≡ Γ₂)
-              → (r' : Ren [] Γ₁' Γ₂') → (M' : Γ₁' ∷ A ⊢C⦂ C)
+              → (r' : Ren [] Γ₂' Γ₁') → (M' : Γ₁' ∷ A ⊢C⦂ C)
               → C-rename (cong-∷-ren (castʳ² e₁ e₂ r'))
                   (castᶜ (cong (_∷ A) e₁) M')
               ≡ castᶜ (cong (_∷ A) e₂) (C-rename (cong-∷-ren r') M')
@@ -277,9 +278,9 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                                e)
                                          (H' op' ε')))
                        `in (C-rename
-                             (  cong-∷-ren (cong-⟨⟩-ren wk-ren
-                             ∘ʳ ⟨⟩-μ-ren
-                             ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                             (  cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                             ∘ʳ ⟨⟩-μ-ren)
+                             ∘ʳ cong-⟨⟩-ren wk-ren))
                              (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A)
                                           e) N'))))
                       (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
@@ -300,9 +301,9 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                                 (type-of-gtype (arity op)))))
                                      (H' op' ε'))
                           `in (C-rename
-                                (  cong-∷-ren (cong-⟨⟩-ren wk-ren
-                                ∘ʳ ⟨⟩-μ-ren
-                                ∘ʳ eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)))
+                                (  cong-∷-ren ((eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)
+                                ∘ʳ ⟨⟩-μ-ren)
+                                ∘ʳ cong-⟨⟩-ren wk-ren))
                                 N')))
                          (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ')))
                                    (H' op (ε ·ₑ ε''))

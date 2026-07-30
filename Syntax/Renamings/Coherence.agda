@@ -38,7 +38,7 @@ open import Syntax.Terms.Equivalence     Spec
 -- `_≐ᵛ_`. Stated at an arbitrary bound so that the caller may present the
 -- result with whichever bound its own typing supplies.
 
-var-ren-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
+var-ren-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
           → (f  : ¬ Eternal A → ρ ≾ᵣ uᵣ)
           → (f' : ¬ Eternal A → proj₁ (var-img r x) ≾ᵣ uᵣ)
           → V-rename r (var f x) ≐ᵛ var f' (proj₂ (var-img r x))
@@ -47,7 +47,7 @@ var-ren-≐ r x f f' with var-rename r x
 
 -- The same with the target supplied, for callers that have computed it.
 
-var-ren-img-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
+var-ren-img-≐ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
               → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → {t : Var Γ' A}
               → var-img r x ≡ t → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
               → V-rename r (var f x) ≐ᵛ var f' (proj₂ t)
@@ -64,7 +64,7 @@ var-ren-img-≐ r x f refl f' = var-ren-≐ r x f f'
 mutual
 
   V-rename-≐ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
-             → (V : Γ ⊢V⦂ A) → V-rename r V ≐ᵛ V-rename r' V
+             → (V : Γ' ⊢V⦂ A) → V-rename r V ≐ᵛ V-rename r' V
 
   V-rename-≐ {r = r} {r' = r'} h (var f x)
     with var-rename r x | var-rename r' x | at h x
@@ -75,7 +75,7 @@ mutual
   V-rename-≐ h (lam M)    = lam-≐ (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
 
   C-rename-≐ : ∀ {Γ Γ' C} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
-             → (M : Γ ⊢C⦂ C) → C-rename r M ≐ᶜ C-rename r' M
+             → (M : Γ' ⊢C⦂ C) → C-rename r M ≐ᶜ C-rename r' M
 
   C-rename-≐ h (return V) = return-≐ (V-rename-≐ h V)
   C-rename-≐ h (M ⨟ N) =
@@ -94,7 +94,7 @@ mutual
          C-rename-≐ (cong-∷-ren-≐ (cong-∷-ren-≐ (restrict-ren-≐ h))) (H op ε''))
       (C-rename-≐ (cong-ren-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≐ h (unbox w V M) =
-    unbox-≐ (unbox-img-≐ (∘ʳ-≐ h (≐ʳ-refl {r = w})) V)
+    unbox-≐ (unbox-img-≐ (∘ʳ-≐ (≐ʳ-refl {r = w}) h) V)
             (C-rename-≐ (cong-ren-≐ ([] ∷ _) h) M)
   C-rename-≐ h (box V M) =
     box-≐ (V-rename-≐ (cong-ren-≐ ([] ⟨ _ ⟩) h) V)
@@ -138,11 +138,11 @@ cong-ren-id-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ (cong-ren-id-≐ �
 
 ∘ʳ-id-≐ : ∀ {Γ Γ'} {r : Ren [] Γ' Γ'} → (w : Ren [] Γ Γ')
         → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
-∘ʳ-id-≐ w h = mk≐ʳ (λ x → at h (proj₂ (var-img w x)))
+∘ʳ-id-≐ w h = mk≐ʳ (λ x → cong (var-img′ w) (at h x))
 
 ∘ʳ-id-≐ʳ : ∀ {Γ Γ'} {r : Ren [] Γ Γ} → (w : Ren [] Γ Γ')
          → r ≐ʳ id-ren → (w ∘ʳ r) ≐ʳ w
-∘ʳ-id-≐ʳ w h = mk≐ʳ (λ x → cong (var-img′ w) (at h x))
+∘ʳ-id-≐ʳ w h = mk≐ʳ (λ x → at h (proj₂ (var-img w x)))
 
 restrict-ren-id-≐ : ∀ {Γ} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
 restrict-ren-id-≐ h = restrict-ren-≐ h
@@ -181,7 +181,7 @@ mutual
                        (H op ε''))
       (C-rename-id-≐ (cong-ren-id-≐ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≐ h (unbox w V M) =
-    unbox-≐ (unbox-img-≐ (∘ʳ-id-≐ w h) V)
+    unbox-≐ (unbox-img-≐ (∘ʳ-id-≐ʳ w h) V)
             (C-rename-id-≐ (cong-ren-id-≐ ([] ∷ _) h) M)
   C-rename-id-≐ h (box V M) =
     box-≐ (V-rename-id-≐ (cong-ren-id-≐ ([] ⟨ _ ⟩) h) V)
@@ -195,7 +195,7 @@ eq-ren-≐ e e' rewrite uip {p = e} {q = e'} = ≐ʳ-refl
 -- propositionally equal: the action is the transport. `eq-ren refl` is
 -- `id-ren`, so this is `C-rename-id-≐` once the equality is matched.
 
-C-rename-eq-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {r : Ren [] Γ Γ'}
+C-rename-eq-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {r : Ren [] Γ' Γ}
               → r ≐ʳ eq-ren e → (M : Γ ⊢C⦂ C)
               → C-rename r M ≐ᶜ subst (_⊢C⦂ C) e M
 C-rename-eq-≐ refl h M = C-rename-id-≐ h M
@@ -249,11 +249,11 @@ split→∈-unique e s s' =
 -- `cong-ren` at nested suffixes is `cong-ren` at their concatenation — but only
 -- up to `++ᶜ-assoc`, so conjugated by `eq-ren`s.
 
-cong-ren-assoc-≐ : ∀ {Γ Γ'} → (Θ D : Ctx) → (r : Ren [] Γ Γ')
+cong-ren-assoc-≐ : ∀ {Γ Γ'} → (Θ D : Ctx) → (r : Ren [] Γ' Γ)
                  → cong-ren {Γ'' = D} (cong-ren {Γ'' = Θ} r)
-                 ≐ʳ (eq-ren (sym (++ᶜ-assoc Γ' Θ D))
+                 ≐ʳ (eq-ren (++ᶜ-assoc Γ Θ D)
                      ∘ʳ cong-ren {Γ'' = Θ ++ᶜ D} r
-                     ∘ʳ eq-ren (++ᶜ-assoc Γ Θ D))
+                     ∘ʳ eq-ren (sym (++ᶜ-assoc Γ' Θ D)))
 
 cong-ren-assoc-≐ Θ [] r =
   ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
@@ -261,29 +261,29 @@ cong-ren-assoc-≐ Θ [] r =
 cong-ren-assoc-≐ {Γ} {Γ'} Θ (D ∷ A) r =
   ≐ʳ-trans (cong-∷-ren-≐ (cong-ren-assoc-≐ Θ D r))
     (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
-      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-trans (≐ʳ-sym (eq-ren-∷-≐ (sym (++ᶜ-assoc Γ' Θ D))))
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-trans (≐ʳ-sym (eq-ren-∷-≐ (++ᶜ-assoc Γ Θ D)))
                                 (eq-ren-≐ _ _))
                       (cong-∷-ren-∘-≐ _ _))
                 (∘ʳ-≐ ≐ʳ-refl
                       (∘ʳ-≐ ≐ʳ-refl
-                            (≐ʳ-trans (≐ʳ-sym (eq-ren-∷-≐ (++ᶜ-assoc Γ Θ D)))
+                            (≐ʳ-trans (≐ʳ-sym (eq-ren-∷-≐ (sym (++ᶜ-assoc Γ' Θ D))))
                                       (eq-ren-≐ _ _))))))
 
 cong-ren-assoc-≐ {Γ} {Γ'} Θ (D ⟨ ρ ⟩) r =
   ≐ʳ-trans (cong-⟨⟩-ren-≐ (cong-ren-assoc-≐ Θ D r))
     (≐ʳ-trans (cong-⟨⟩-ren-∘-≐ _ _)
-      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-trans (≐ʳ-sym (eq-ren-⟨⟩-≐ (sym (++ᶜ-assoc Γ' Θ D))))
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-trans (≐ʳ-sym (eq-ren-⟨⟩-≐ (++ᶜ-assoc Γ Θ D)))
                                 (eq-ren-≐ _ _))
                       (cong-⟨⟩-ren-∘-≐ _ _))
                 (∘ʳ-≐ ≐ʳ-refl
                       (∘ʳ-≐ ≐ʳ-refl
-                            (≐ʳ-trans (≐ʳ-sym (eq-ren-⟨⟩-≐ (++ᶜ-assoc Γ Θ D)))
+                            (≐ʳ-trans (≐ʳ-sym (eq-ren-⟨⟩-≐ (sym (++ᶜ-assoc Γ' Θ D))))
                                       (eq-ren-≐ _ _))))))
 
 -- Composing two `eq-ren`s.
 
 eq-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ'')
-           → (eq-ren e' ∘ʳ eq-ren e) ≐ʳ eq-ren (trans e e')
+           → (eq-ren e ∘ʳ eq-ren e') ≐ʳ eq-ren (trans e e')
 eq-ren-∘-≐ refl refl = ∘ʳ-identityˡ-≐ _
 
 -- THE ETERNAL RESTRICTION AGAINST A SUFFIX
@@ -293,12 +293,12 @@ eq-ren-∘-≐ refl refl = ∘ʳ-identityˡ-≐ _
 -- functor `_ᴱ` commuting with the action of contexts on each fibre; the two
 -- weakening cases below are its instances at `r := wk-ren`.
 
-restrict-cong-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
+restrict-cong-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Δ : Ctx)
                 → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
                 → (e₂ : (Γ' ++ᶜ Δ) ᴱ ≡ Γ' ᴱ ++ᶜ Δ ᴱ)
                 → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} r)
-                ≐ʳ (eq-ren (sym e₂)
-                    ∘ʳ cong-ren {Γ'' = Δ ᴱ} (restrict-ren r) ∘ʳ eq-ren e₁)
+                ≐ʳ (eq-ren e₁
+                    ∘ʳ cong-ren {Γ'' = Δ ᴱ} (restrict-ren r) ∘ʳ eq-ren (sym e₂))
 
 restrict-cong-≐ r [] e₁ e₂
   rewrite uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
@@ -310,12 +310,12 @@ restrict-cong-≐ r (Δ ∷ C) e₁ e₂ with eternal? C
   ≐ʳ-trans (cong-∷-ren-≐ (restrict-cong-≐ r Δ (∷ᶜ-injective-ctx e₁)
                                               (∷ᶜ-injective-ctx e₂)))
     (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
-      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))
                       (cong-∷-ren-∘-≐ _ _))
-        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ (sym e₂))
+        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ e₁)
                         (∘ʳ-≐ ≐ʳ-refl
-                              (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))))
-                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ e₁))))))
+                              (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))))
+                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ (sym e₂)))))))
 
 ... | no  _ = restrict-cong-≐ r Δ e₁ e₂
 
@@ -338,8 +338,8 @@ restrict-wk-et-≐ : ∀ {Γ B} → (et : Eternal B) → (Δ : Ctx)
                  → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
                  → (e₂ : ((Γ ∷ B) ++ᶜ Δ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Δ ᴱ)
                  → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (wk-ren {A = B}))
-                 ≐ʳ (eq-ren (sym e₂)
-                     ∘ʳ cong-ren {Γ'' = Δ ᴱ} (wk-ren {A = B}) ∘ʳ eq-ren e₁)
+                 ≐ʳ (eq-ren e₁
+                     ∘ʳ cong-ren {Γ'' = Δ ᴱ} (wk-ren {A = B}) ∘ʳ eq-ren (sym e₂))
 
 restrict-wk-et-≐ {Γ} {B} et [] e₁ e₂
   rewrite eternal?-yes et
@@ -352,12 +352,12 @@ restrict-wk-et-≐ {Γ} {B} et (Δ ∷ C) e₁ e₂ with eternal? C
   ≐ʳ-trans (cong-∷-ren-≐ (restrict-wk-et-≐ et Δ (∷ᶜ-injective-ctx e₁)
                                               (∷ᶜ-injective-ctx e₂)))
     (≐ʳ-trans (cong-∷-ren-∘-≐ _ _)
-      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))
+      (≐ʳ-trans (∘ʳ-≐ (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))
                       (cong-∷-ren-∘-≐ _ _))
-        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ (sym e₂))
+        (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ _ e₁)
                         (∘ʳ-≐ ≐ʳ-refl
-                              (≐ʳ-sym (eq-ren-∷-≐ (∷ᶜ-injective-ctx e₁)))))
-                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ e₁))))))
+                              (≐ʳ-sym (eq-ren-∷-≐ (sym (∷ᶜ-injective-ctx e₂))))))
+                  (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ (sym e₂)))))))
 
 ... | no  _ = restrict-wk-et-≐ et Δ e₁ e₂
 
@@ -375,19 +375,19 @@ restrict-wk-clause-≐ : ∀ {Γ B} → (et : Eternal B) → (Θ D : Ctx)
                      → (e₂ : ((Γ ∷ B) ++ᶜ Θ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Θ ᴱ)
                      → cong-ren {Γ'' = D}
                          (restrict-ren {Ξ = []} (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
-                     ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
-                         ∘ʳ (eq-ren (sym (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) D))
+                     ≐ʳ (eq-ren (cong (_++ᶜ D) e₁)
+                         ∘ʳ (eq-ren (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D)
                              ∘ʳ cong-ren {Γ'' = Θ ᴱ ++ᶜ D} (wk-ren {A = B})
-                             ∘ʳ eq-ren (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D))
-                         ∘ʳ eq-ren (cong (_++ᶜ D) e₁))
+                             ∘ʳ eq-ren (sym (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) D)))
+                         ∘ʳ eq-ren (cong (_++ᶜ D) (sym e₂)))
 
 restrict-wk-clause-≐ {Γ} {B} et Θ D e₁ e₂ =
   ≐ʳ-trans (cong-ren-≐ D (restrict-wk-et-≐ et Θ e₁ e₂))
     (≐ʳ-trans (cong-ren-∘-≐ D _ _)
-      (∘ʳ-≐ (cong-ren-eq-ren-≐ D (sym e₂))
+      (∘ʳ-≐ (cong-ren-eq-ren-≐ D e₁)
         (≐ʳ-trans (cong-ren-∘-≐ D _ _)
                   (∘ʳ-≐ (cong-ren-assoc-≐ (Θ ᴱ) D (wk-ren {A = B}))
-                        (cong-ren-eq-ren-≐ D e₁)))))
+                        (cong-ren-eq-ren-≐ D (sym e₂))))))
 
 -- With a non-eternal `B`, weakening by `B` leaves the eternal restriction
 -- alone: `restrict-ren` walks `cong-ren` down to `restrict-ren wk-ren`, which at
@@ -423,11 +423,11 @@ restrict-wk-≐ {Γ} {B} ¬et (Δ ⟨ ρ ⟩) e = restrict-wk-≐ ¬et Δ e
 mutual
 
   V-rename-∘ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
-             → (V : Γ ⊢V⦂ A)
-             → V-rename (r₂ ∘ʳ r₁) V ≐ᵛ V-rename r₂ (V-rename r₁ V)
+             → (V : Γ'' ⊢V⦂ A)
+             → V-rename (r₂ ∘ʳ r₁) V ≐ᵛ V-rename r₁ (V-rename r₂ V)
 
-  V-rename-∘ r₂ r₁ (var f x) with var-rename r₁ x
-  ... | _ , _ , y with var-rename r₂ y
+  V-rename-∘ r₂ r₁ (var f x) with var-rename r₂ x
+  ... | _ , _ , y with var-rename r₁ y
   ...   | _ , _ , z = var-≐
   V-rename-∘ r₂ r₁ (const c) = const-≐
   V-rename-∘ r₂ r₁ ⋆         = ⋆-≐
@@ -437,8 +437,8 @@ mutual
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
 
   C-rename-∘ : ∀ {Γ Γ' Γ'' C} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
-             → (M : Γ ⊢C⦂ C)
-             → C-rename (r₂ ∘ʳ r₁) M ≐ᶜ C-rename r₂ (C-rename r₁ M)
+             → (M : Γ'' ⊢C⦂ C)
+             → C-rename (r₂ ∘ʳ r₁) M ≐ᶜ C-rename r₁ (C-rename r₂ M)
 
   C-rename-∘ r₂ r₁ (return V) = return-≐ (V-rename-∘ r₂ r₁ V)
   C-rename-∘ r₂ r₁ (M ⨟ N) =
@@ -473,7 +473,7 @@ mutual
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
   C-rename-∘ r₂ r₁ (unbox w V M) =
-    unbox-≐ (unbox-img-≐ (∘ʳ-assoc-≐ r₂ r₁ w) V)
+    unbox-≐ (unbox-img-≐ (≐ʳ-sym (∘ʳ-assoc-≐ w r₂ r₁)) V)
       (≐ᶜ-trans (C-rename-≐ (cong-ren-∘-≐ ([] ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (box V M) =
@@ -492,7 +492,7 @@ mutual
 
 mutual
 
-  V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ ⊢V⦂ A}
+  V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ' ⊢V⦂ A}
                 → V ≐ᵛ V' → V-rename r V ≐ᵛ V-rename r V'
 
   V-rename-cong r var-≐            = var-≐
@@ -502,7 +502,7 @@ mutual
     pair-≐ (V-rename-cong r eV) (V-rename-cong r eW)
   V-rename-cong r (lam-≐ eM)       = lam-≐ (C-rename-cong (cong-ren r) eM)
 
-  C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ ⊢C⦂ C}
+  C-rename-cong : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → {M M' : Γ' ⊢C⦂ C}
                 → M ≐ᶜ M' → C-rename r M ≐ᶜ C-rename r M'
 
   C-rename-cong r (return-≐ eV)     = return-≐ (V-rename-cong r eV)

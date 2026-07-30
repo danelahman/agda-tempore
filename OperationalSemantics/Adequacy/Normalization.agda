@@ -68,7 +68,7 @@ open import Syntax.Substitutions.Equivalence Spec
 -- the shape law computes with the one the reducibility statement speaks about.
 
 FL-unbox : ∀ {St Γ Δ₀ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
-         → (w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+         → (w : Ren [] Γ (Δ₀ ⟨ ρ ⟩)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
          → (M : Γ ∷ A ⊢C⦂ D ‼ ε)
          → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
               → Comp' D ε St' (env-C γ' M))
@@ -202,17 +202,17 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
 
     -- the two `eq-ren`s the allocation and the lookup insert cancel
     cancel : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-           → V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀
+           → V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀
            ≐ᵛ V-rename (unbox-ren q) V'
     cancel q =
       ≐ᵛ-trans
-        (≐ᵛ-sym (V-rename-∘ (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ)
-                            (eq-ren (sym ++ᶜ-identityˡ)) V'))
+        (≐ᵛ-sym (V-rename-∘ (eq-ren (sym ++ᶜ-identityˡ))
+                            (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V'))
         (V-rename-≐
           (≐ʳ-trans
-            (∘ʳ-assoc-≐ (unbox-ren q) (eq-ren ++ᶜ-identityˡ)
-                        (eq-ren (sym ++ᶜ-identityˡ)))
-            (∘ʳ-id-≐ʳ (unbox-ren q)
+            (≐ʳ-sym (∘ʳ-assoc-≐ (eq-ren (sym ++ᶜ-identityˡ))
+                                (eq-ren ++ᶜ-identityˡ) (unbox-ren q)))
+            (∘ʳ-id-≐ (unbox-ren q)
               (≐ʳ-trans
                 (eq-ren-∘-≐ (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))
                             ++ᶜ-identityˡ)
@@ -220,7 +220,7 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
           V')
 
     cell : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-         → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
+         → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
     cell q = Val-≐ᵛ A (≐ᵛ-sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
 
 -- Performing: already a weak head normal form, so this is `comp-op` at the empty

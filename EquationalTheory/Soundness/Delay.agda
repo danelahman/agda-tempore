@@ -101,7 +101,7 @@ sound-delay-zero {Γ} {A} {ε} M pM pR =
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-natʳ-zero))))
   where
     e = sym (trans (cong (_·ₑ ε) of-natᵉ-zero) (·ₑ-identityˡ ε))
-    r = ⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero)
+    r = eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero) ∘ʳ ⟨⟩-η-ren
 
 -- Two consecutive delays are the one delay by the sum: the nested transposes
 -- rebuild `δ`, and the re-lock renaming becomes the grade relaxation.
@@ -130,7 +130,7 @@ sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
             ∙ sound-ε-subst e' (delay (τ₁ + τ₂) M) pM)
   where
     e' = trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε)
-    r  = ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus)
+    r  = eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus) ∘ʳ ⟨⟩-μ-ren
 
     σ = ≾ᵣ-reflexive (sym (of-natʳ-plus {τ₁} {τ₂}))
 

@@ -212,7 +212,7 @@ mutual
   sub-wk-C {Γ} {B} Θ (unbox {A = A} {ρ = ρ} w V M) W =
     ≐ᶜ-trans
       (castᶜ-≐ (castOf {Γ} {B} Θ)
-        (sub-unbox (rn ∘ʳ w) V
+        (sub-unbox (w ∘ʳ rn) V
                    (C-rename (cong-ren {Γ'' = Θ ∷ A} (wk-ren {A = B})) M)
                    z₀ W relv))
       (≐ᶜ-trans (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ)))
@@ -224,11 +224,11 @@ mutual
       rn = cong-ren {Γ'' = Θ} (wk-ren {A = B})
       z₀ = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
 
-      v = proj₂ (rvar-img (proj₂ (unbox-img (rn ∘ʳ w) V)) z₀ W)
+      v = proj₂ (rvar-img (proj₂ (unbox-img (w ∘ʳ rn) V)) z₀ W)
 
       -- the bound the substitution itself builds
-      relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-img (rn ∘ʳ w) V) ⟩[ z₀ ↦ W ]rvar)))
-                      (proj₂ (proj₂ (unbox⇒var (rn ∘ʳ w) V)))
+      relv = ≾ᵣ-trans (proj₂ (proj₂ (⟨ proj₂ (unbox-img (w ∘ʳ rn) V) ⟩[ z₀ ↦ W ]rvar)))
+                      (proj₂ (proj₂ (unbox⇒var (w ∘ʳ rn) V)))
 
       rvarEq : unbox-img (castʳ (castOf {Γ} {B} Θ) (unbox-var-ren v relv))
                        (var {A = [ ρ ] A} (λ _ → ≾ᵣ-refl) Hd)
@@ -334,9 +334,9 @@ mutual
           -- the renaming, fused: at this suffix the associativity legs are `refl`
           rfuse : cong-ren {Γ'' = D} (restrict-ren {Ξ = []}
                                        (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
-                ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
+                ≐ʳ (eq-ren (cong (_++ᶜ D) e₁)
                     ∘ʳ cong-ren {Γ'' = Θ ᴱ ++ᶜ D} (wk-ren {A = B})
-                    ∘ʳ eq-ren (cong (_++ᶜ D) e₁))
+                    ∘ʳ eq-ren (cong (_++ᶜ D) (sym e₂)))
           rfuse =
             ≐ʳ-trans (restrict-wk-clause-≐ et Θ D e₁ e₂)
                      (∘ʳ-≐ ≐ʳ-refl
@@ -390,9 +390,9 @@ mutual
 
           rfuse2 : cong-ren {Γ'' = D} (restrict-ren {Ξ = []}
                               (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
-                 ≐ʳ (eq-ren (cong (_++ᶜ D) (sym e₂))
-                     ∘ʳ (eq-ren eOut′ ∘ʳ wk₀ ∘ʳ eq-ren eIn)
-                     ∘ʳ eq-ren (cong (_++ᶜ D) e₁))
+                 ≐ʳ (eq-ren (cong (_++ᶜ D) e₁)
+                     ∘ʳ (eq-ren eIn ∘ʳ wk₀ ∘ʳ eq-ren eOut′)
+                     ∘ʳ eq-ren (cong (_++ᶜ D) (sym e₂)))
           rfuse2 =
             ≐ʳ-trans rfuse
               (∘ʳ-≐ ≐ʳ-refl
@@ -409,23 +409,22 @@ mutual
           ren-step =
             ≐ᶜ-trans (C-rename-≐ rfuse2 (H op ε''))
               (≐ᶜ-trans (C-rename-∘ _ _ (H op ε''))
-                (≐ᶜ-trans (C-rename-eq-≐ (cong (_++ᶜ D) (sym e₂)) ≐ʳ-refl _)
-                  (≐ᶜ-trans
-                    (substᶜ-≐ (cong (_++ᶜ D) (sym e₂))
-                      (≐ᶜ-trans (C-rename-∘ _ (eq-ren (cong (_++ᶜ D) e₁))
-                                            (H op ε''))
-                        (≐ᶜ-trans (C-rename-cong _
-                                    (C-rename-eq-≐ (cong (_++ᶜ D) e₁) ≐ʳ-refl _))
-                          (≐ᶜ-trans (C-rename-∘ (eq-ren eOut′) _ _)
-                            (≐ᶜ-trans (C-rename-eq-≐ eOut′ ≐ʳ-refl _)
-                              (substᶜ-≐ eOut′
-                                (≐ᶜ-trans (C-rename-∘ wk₀ (eq-ren eIn) _)
-                                          (C-rename-cong wk₀
-                                            (C-rename-eq-≐ eIn ≐ʳ-refl _)))))))))
-                    (≡→≐ᶜ (trans (subst-fuseᶜ eOut′ (cong (_++ᶜ D) (sym e₂)) _)
-                                 (cong (λ t → subst (_⊢C⦂ CT) F₂ (C-rename wk₀ t))
-                                       (subst-fuseᶜ (cong (_++ᶜ D) e₁) eIn
-                                                    (H op ε''))))))))
+                (≐ᶜ-trans (C-rename-cong _
+                            (C-rename-eq-≐ (cong (_++ᶜ D) e₁) ≐ʳ-refl _))
+                  (≐ᶜ-trans (C-rename-∘ _ (eq-ren (cong (_++ᶜ D) (sym e₂))) _)
+                    (≐ᶜ-trans
+                      (C-rename-cong _
+                        (≐ᶜ-trans (C-rename-∘ (eq-ren eIn) _ _)
+                          (≐ᶜ-trans (C-rename-cong _
+                                      (C-rename-eq-≐ eIn ≐ʳ-refl _))
+                            (≐ᶜ-trans (C-rename-∘ wk₀ (eq-ren eOut′) _)
+                                      (C-rename-eq-≐ eOut′ ≐ʳ-refl _)))))
+                      (≐ᶜ-trans
+                        (C-rename-eq-≐ (cong (_++ᶜ D) (sym e₂)) ≐ʳ-refl _)
+                        (≡→≐ᶜ (trans (subst-fuseᶜ eOut′ (cong (_++ᶜ D) (sym e₂)) _)
+                                     (cong (λ t → subst (_⊢C⦂ CT) F₂ (C-rename wk₀ t))
+                                           (subst-fuseᶜ (cong (_++ᶜ D) e₁) eIn
+                                                        (H op ε''))))))))))
 
           -- the substitution, moved across the outer transport
           sub-step : (subst (_⊢C⦂ CT) F₂ Y) [ v ↦ Wᴱ ]c

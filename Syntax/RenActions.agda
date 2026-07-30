@@ -57,13 +57,13 @@ C-ctx-≡ refl M = M
 
 var-rename : ∀ {Δ Δ' A ρ}
            → Ren [] Δ Δ'
-           → A ∈[ ρ ] Δ
-           → Σ[ ρ' ∈ R ] ((¬ Eternal A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Δ')
+           → A ∈[ ρ ] Δ'
+           → Σ[ ρ' ∈ R ] ((¬ Eternal A → ρ' ≾ᵣ ρ) × A ∈[ ρ' ] Δ)
 
 var-rename id-ren x =
   _ , (λ _ → ≾ᵣ-refl) , x
-var-rename (r₂ ∘ʳ r₁) x with var-rename r₁ x
-... | ρ' , ρ'≾ρ , y with var-rename r₂ y
+var-rename (r₂ ∘ʳ r₁) x with var-rename r₂ x
+... | ρ' , ρ'≾ρ , y with var-rename r₁ y
 ... | ρ'' , ρ''≾ρ' , z =
   ρ'' , (λ ¬et → ≾ᵣ-trans (ρ''≾ρ' ¬et) (ρ'≾ρ ¬et)) , z
 var-rename wk-ren x =
@@ -103,16 +103,16 @@ unbox-var : ∀ {Γ A C ρ ρ'}
           → Γ ⊢C⦂ C
 unbox-var x rel M =
   unbox
-    (eq-ren (split-≡ (split-pf x))
-     ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)
-     ∘ʳ ⟨⟩-≤-ren rel)
+    ((⟨⟩-≤-ren rel
+      ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ x))
+     ∘ʳ eq-ren (split-≡ (split-pf x)))
     (var (λ _ → ≾ᵣ-refl) Hd)
     M
 
 -- Extracting the underlying variable (and grade bound) from a box-typed value
 
 unbox⇒var : ∀ {Γ A ρ Δ}
-          → Ren [] (Δ ⟨ ρ ⟩) Γ
+          → Ren [] Γ (Δ ⟨ ρ ⟩)
           → Δ ⊢V⦂ [ ρ ] A
           → Σ[ ρ' ∈ R ] (([ ρ ] A ∈[ ρ' ] Γ) × ρ' ≾ᵣ ρ)
 unbox⇒var {ρ = ρ} w V with grad-typ⇒var V
@@ -132,9 +132,9 @@ mutual
 
   V-rename : ∀ {Γ Γ' A}
            → Ren [] Γ Γ'
-           → Γ ⊢V⦂ A
-           ------------
            → Γ' ⊢V⦂ A
+           ------------
+           → Γ ⊢V⦂ A
 
   V-rename r (var f x) with var-rename r x
   ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans (ρ'≾ρ p) (f p)) y
@@ -145,9 +145,9 @@ mutual
 
   C-rename : ∀ {Γ Γ' C}
            → Ren [] Γ Γ'
-           → Γ ⊢C⦂ C
-           ------------
            → Γ' ⊢C⦂ C
+           ------------
+           → Γ ⊢C⦂ C
 
   C-rename r (return V)       = return (V-rename r V)
   C-rename r (M ⨟ N)          = C-rename r M ⨟ C-rename (cong-ren r) N
@@ -162,7 +162,7 @@ mutual
              C-rename (cong-∷-ren (cong-∷-ren (restrict-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
   C-rename r (unbox w V M) =
-    unbox (r ∘ʳ w) V (C-rename (cong-ren r) M)
+    unbox (w ∘ʳ r) V (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (coerce rel M) = coerce rel (C-rename r M)
 
@@ -173,10 +173,10 @@ mutual
 -- which is the context such a term has. This is the form the eternal weakening
 -- takes, `wk-ren-ctx` being ambient-indexed.
 
-V-renameᴬ : ∀ {Ξ Δ Δ' A} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ) ⊢V⦂ A → (Ξ ++ᶜ Δ') ⊢V⦂ A
+V-renameᴬ : ∀ {Ξ Δ Δ' A} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢V⦂ A → (Ξ ++ᶜ Δ) ⊢V⦂ A
 V-renameᴬ r V = V-rename (expose-ren-[] r) V
 
-C-renameᴬ : ∀ {Ξ Δ Δ' C} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ) ⊢C⦂ C → (Ξ ++ᶜ Δ') ⊢C⦂ C
+C-renameᴬ : ∀ {Ξ Δ Δ' C} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢C⦂ C → (Ξ ++ᶜ Δ) ⊢C⦂ C
 C-renameᴬ r M = C-rename (expose-ren-[] r) M
 
 -- THE ETERNAL WEAKENING

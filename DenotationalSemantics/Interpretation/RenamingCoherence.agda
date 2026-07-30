@@ -71,9 +71,9 @@ private
 -- along `⟦ r ⟧ʳ`. The two grade bounds are witnesses of the same relation,
 -- so they are interchangeable by `⟨⟩-≤-irr`.
 
-unbox⇒var-nat : ∀ {Γ Γ' Δ A ρ} → (r : Ren [] Γ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
-              → (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var (r ∘ʳ w) V)))
-                    ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var (r ∘ʳ w) V))))
+unbox⇒var-nat : ∀ {Γ Γ' Δ A ρ} → (r : Ren [] Γ' Γ) → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
+              → (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var (w ∘ʳ r) V)))
+                    ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var (w ∘ʳ r) V))))
                 ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                        ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V))))
                    ∘ᵐ ⟦ r ⟧ʳ
@@ -93,7 +93,7 @@ unbox⇒var-nat r w V with grad-typ⇒var V
 -- The unbox environment `ε⊣ ∘ᵐ ⟨⟩-≤ ∘ᵐ var-proj x` (`x` extracted by
 -- `unbox⇒var`) equals reading the boxed value `V` through the lock and
 -- unboxing with `ε⊣`.
-unbox-read : ∀ {Γ A ρ Δ} → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A) → (pV : Paramᵛ V)
+unbox-read : ∀ {Γ A ρ Δ} → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A) → (pV : Paramᵛ V)
            → ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
                   ∘ᵐ var-proj (proj₁ (proj₂ (unbox⇒var w V)))
            ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ ⟦ w ⟧ʳ
@@ -147,7 +147,7 @@ unbox-read {ρ = ρ} w V pV with grad-typ⇒var V
 -- is stated for `extᵉ`). Derived via `necᵉ-mate` and the adjunction. This is
 -- the box-coalgebra-morphism premise that the fold's parameter-naturality needs.
 
-restrict-ren-necᵉ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → ∀ {ρ}
+restrict-ren-necᵉ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → ∀ {ρ}
                   → [ ρ ]ᶠ ⟦ restrict-ren r ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ' ⟧ᴱ-Eternalᵒ) {ρ}
                   ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ} ∘ᵐ ⟦ restrict-ren r ⟧ʳ
 restrict-ren-necᵉ {Γ} {Γ'} r {ρ} =
@@ -230,14 +230,14 @@ mutual
 
   {-# TERMINATING #-}
 
-  renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
+  renᵛ : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢V⦂ A) → Paramᵛ V → Paramᵛ (V-rename r V)
   renᵛ r (var f x) _ = tt
   renᵛ r (const c) _ = tt
   renᵛ r ⋆        _ = tt
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (lam M)   pM = renᶜ (cong-∷-ren r) M pM
 
-  renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
+  renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
   renᶜ r (return V)       pV        = renᵛ r V pV
   renᶜ r (M ⨟ N)          (pM , pN) =
     renᶜ r M pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
@@ -267,7 +267,7 @@ mutual
   -- only, so it commutes with the continuation's coercion (`mapˣ-swapᵐ`), after
   -- which the original uniformity applies.
   ren-clauses-uniform :
-    ∀ {Δ Δ' B} → (rr : Ren [] Δ Δ')
+    ∀ {Δ Δ' B} → (rr : Ren [] Δ' Δ)
     → (H : (op : Op) → (ε'' : E)
          → Δ ∷ type-of-gtype (param op)
               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
@@ -295,7 +295,7 @@ mutual
               (∘ᵐ-congʳ (≈ᵐ-sym (C-rename-nat (cong-∷-ren (cong-∷-ren rr))
                                    (H op _) (pH op _)))))))))
 
-  V-rename-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
+  V-rename-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ) → (V : Γ ⊢V⦂ A) → (p : Paramᵛ V)
                → ⟦ V-rename r V ⟧ᵛᵗ (renᵛ r V p) ≈ᵐ ⟦ V ⟧ᵛᵗ p ∘ᵐ ⟦ r ⟧ʳ
   V-rename-nat r (var f x) _ with var-rename r x | var-morphism-nat r f x
   ... | ρ' , ρ'≾ρ , y | vmn = vmn
@@ -309,7 +309,7 @@ mutual
     ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
              (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
 
-  C-rename-nat : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → (M : Γ ⊢C⦂ C) → (p : Paramᶜ M)
+  C-rename-nat : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → (p : Paramᶜ M)
                → ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M p) ≈ᵐ ⟦ M ⟧ᶜᵗ p ∘ᵐ ⟦ r ⟧ʳ
   C-rename-nat r (return V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

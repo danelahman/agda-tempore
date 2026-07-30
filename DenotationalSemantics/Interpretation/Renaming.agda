@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- Interpretation of context renamings.                                --
 --                                                                    --
--- A renaming `Ren Γ Γ'` rewrites a `Γ`-typed term into a `Γ'`-typed    --
+-- A renaming `Ren Γ Γ'` rewrites a `Γ'`-typed term into a `Γ`-typed    --
 -- term (`V-rename`/`C-rename`), so on environments it runs             --
--- contravariantly, as a reindexing `⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ`. Each       --
+-- covariantly, as a reindexing `⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ`. Each           --
 -- constructor is a structural map of the model: weakening projects      --
 -- (`fstᵐ`), a variable renaming contracts (`⟨ idᵐ , var-morphism … ⟩ᵐ`), --
 -- and the lock renamings are exactly the context modality's             --

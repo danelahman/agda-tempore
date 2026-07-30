@@ -82,7 +82,7 @@ sound-boxed-not-used V M (pV , pCM) pR =
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-identityʳ _
 
-sound-unbox-not-used : ∀ {Γ A C ρ Δ} → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
+sound-unbox-not-used : ∀ {Γ A C ρ Δ} → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
                      → (M : Γ ⊢C⦂ C) → Soundᶜ== (unbox-not-used w V M)
 sound-unbox-not-used w V M (pV , pCM) pR =
     unbox-def w V (C-rename wk-ren M) pV pCM
@@ -107,7 +107,7 @@ unbox-env-irr : ∀ {Γ A ρ} → {c c' : Var Γ ([ ρ ] A)} → c ≡ c'
 unbox-env-irr refl b b' rewrite ≾ᵣ-irrelevant b b' = ≈ᵐ-refl
 
 unbox-cell-≈ : ∀ {Γ A C ρ Δ Δ'}
-             → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (w' : Ren [] (Δ' ⟨ ρ ⟩) Γ)
+             → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (w' : Ren [] Γ (Δ' ⟨ ρ ⟩))
              → (V : Δ ⊢V⦂ [ ρ ] A) → (V' : Δ' ⊢V⦂ [ ρ ] A)
              → unbox-img w V ≡ unbox-img w' V'
              → (M : Γ ∷ A ⊢C⦂ C)

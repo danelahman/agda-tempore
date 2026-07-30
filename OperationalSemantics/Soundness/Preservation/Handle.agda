@@ -968,12 +968,12 @@ sound-SEQ-OP : ∀ {Γ A B ε ε'} → (op : Op)
              ≈ᵐ ⟦ ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                     (perform op V
                       (M ⨟ C-rename
-                             (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
-                                          ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                             (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
+                                          ∘ʳ cong-⟨⟩-ren wk-ren))
                              N)) ⟧ᶜᵗ
                   (ε-substᴾ (sym (·ₑ-assoc (op-grade op) ε ε'))
-                     (perform op V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N))
-                     (pV , pM , renᶜ (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N pN))
+                     (perform op V (M ⨟ C-rename (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N))
+                     (pV , pM , renᶜ (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN))
 sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
     seq-op-core op μᵀ (opᵀ op) (opᵀ-algebraicity op) (ty-gty (arity op))
       (subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV))
@@ -987,9 +987,9 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
                (∘ᵐ-congʳ (∘ᵐ-congˡ
                  (T-congᶠ (C-rename-nat (cong-∷-ren ren) N pN))))))) ⟩ᵐ-cong)))
   where
-    ren : Ren [] (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-                 ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
-    ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+    ren : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+                 (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+    ren = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     -- the renaming is the `μ`-refold of the two locks, after weakening past the
     -- arity value the continuation binds
@@ -1031,13 +1031,13 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                                                        (type-of-gtype (arity op)))))
                                               (H op' ε'))
                                    `in (C-rename (cong-∷-ren
-                                          (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren
-                                           ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N)))
+                                          ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
+                                           ∘ʳ cong-⟨⟩-ren wk-ren)) N)))
                             (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                                        (H op (ε ·ₑ ε''))
                              [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
                      ( (pM
-                       , renᶜ (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ))) N pN
+                       , renᶜ (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
                        , (λ op' ε' →
                             renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
                        , ren-clauses-uniform
@@ -1068,9 +1068,9 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH =
     pHwk = renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                 (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε''))
 
-    ren : Ren [] (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
-                 ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
-    ren = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+    ren : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ mapᵉ ε ⟩)
+                 (Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩)
+    ren = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _

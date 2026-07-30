@@ -249,28 +249,28 @@ wk-lock-≤ refl =
 -- The looked-up resource is the stored value renamed, so its certificate is
 -- the stored one's, renamed the same way.
 unbox-lookupᴾ : ∀ {A ρ Δ} → (St : 𝕊 [])
-              → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
+              → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
               → Paramˢ St → Paramᵛ (unbox-lookup St w V)
 unbox-lookupᴾ {A} {ρ} St w V pSt =
   renᵛ
-    (   eq-ren (split-state-++ᶜ St z)
-     ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
-     ∘ʳ wk-ren-⟨ρ⟩-ctx
-          (trans
+    ((((  eq-ren ++ᶜ-identityˡ
+       ∘ʳ ⟨⟩-≤-ren (proj₂ (proj₂ (unbox⇒var w V))))
+       ∘ʳ wk-ren-⟨ρ⟩-ctx
             (trans
               (trans
-                (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
-                (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
-              (sym (grades-≡ (split-state-snd St z))))
-            (snd-split-time≡time-from-head St z))
-     ∘ʳ ⟨⟩-≤-ren (proj₂ (proj₂ (unbox⇒var w V)))
-     ∘ʳ eq-ren ++ᶜ-identityˡ)
+                (trans
+                  (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd St z)))
+                  (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd St z)))))
+                (sym (grades-≡ (split-state-snd St z))))
+              (snd-split-time≡time-from-head St z)))
+       ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _)))
+       ∘ʳ eq-ren (split-state-++ᶜ St z))
     (resource-lookup St z) (resource-lookupᴾ St z pSt)
   where
     z = proj₁ (proj₂ (unbox⇒var w V))
 
 unbox-lookup-sound : ∀ {A ρ Δ} → (St : 𝕊 [])
-                   → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)) → (V : Δ ⊢V⦂ [ ρ ] A)
+                   → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
                    → (pSt : Paramˢ St)
                    → ⟦ unbox-lookup St w V ⟧ᵛᵗ (unbox-lookupᴾ St w V pSt) ∘ᵐ ⟦ St ⟧ˢ pSt
                    ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
@@ -334,7 +334,7 @@ unbox-lookup-sound {A} {ρ} St w V pSt with grad-typ⇒var V
 
 -- `⟦_⟧ᶜᵗ` matches on `unbox⇒var`, so name its result to let the clause reduce.
 
-unbox-def : ∀ {Γ A C ρ Δ} → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
+unbox-def : ∀ {Γ A C ρ Δ} → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
           → (M : Γ ∷ A ⊢C⦂ C) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
           → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM)
           ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₂ (proj₂ (unbox⇒var w V)))
@@ -344,7 +344,7 @@ unbox-def w V M pV pM with unbox⇒var w V
 
 -- UNBOX: substituting the looked-up resource is reading the cell.
 
-sound-UNBOX : ∀ {A C ρ Δ} → (St : 𝕊 []) → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St))
+sound-UNBOX : ∀ {A C ρ Δ} → (St : 𝕊 []) → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩))
             → (V : Δ ⊢V⦂ [ ρ ] A) → (M : toCtx St ∷ A ⊢C⦂ C)
             → (pSt : Paramˢ St) → (pV : Paramᵛ V) → (pM : Paramᶜ M)
             → ⟦ unbox w V M ⟧ᶜᵗ (pV , pM) ∘ᵐ ⟦ St ⟧ˢ pSt

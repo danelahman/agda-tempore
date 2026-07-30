@@ -390,7 +390,7 @@ cl-swap-en {Γ} {B₁} {B₂} {D} et₁ ¬et₂ Θ H W₂ W₁ op ε =
 -- renaming along an identity-like renaming is the transport (the value
 -- counterpart of `C-rename-eq-≐`)
 
-V-rename-eq-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {r : Ren [] Γ Γ'}
+V-rename-eq-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {r : Ren [] Γ' Γ}
               → r ≐ʳ eq-ren e → (V : Γ ⊢V⦂ A)
               → V-rename r V ≐ᵛ subst (_⊢V⦂ A) e V
 V-rename-eq-≐ refl h V = V-rename-id-≐ h V
@@ -557,15 +557,13 @@ restrict-wk-et-≐ᵛ {Γ₀} {A} {B} etB et V e =
   ≐ᵛ-trans (eternal-val-restrict-ren et (wk-ren {A = B}) V)
     (≐ᵛ-trans (V-rename-≐ (restrict-wk-et-≐ etB [] refl e)
                           (eternal-val-restrict et V))
-      (≐ᵛ-trans (V-rename-∘ (eq-ren (sym e)) (wk-ren ∘ʳ eq-ren refl)
+      (≐ᵛ-trans (V-rename-∘ (eq-ren refl) (wk-ren ∘ʳ eq-ren (sym e))
                             (eternal-val-restrict et V))
         (≐ᵛ-trans
-          (V-rename-cong (eq-ren (sym e))
-            (≐ᵛ-trans (V-rename-∘ (wk-ren {A = B}) (eq-ren refl)
-                                  (eternal-val-restrict et V))
-                      (V-rename-cong (wk-ren {A = B})
-                                     (V-rename-id-≐ ≐ʳ-refl _))))
-          (V-rename-eq-≐ (sym e) ≐ʳ-refl _))))
+          (V-rename-cong (wk-ren ∘ʳ eq-ren (sym e))
+                         (V-rename-id-≐ ≐ʳ-refl _))
+          (≐ᵛ-trans (V-rename-∘ (wk-ren {A = B}) (eq-ren (sym e)) _)
+                    (V-rename-eq-≐ (sym e) ≐ʳ-refl _)))))
 
 -- The `_≐ᶜ_`-flavoured alignment the both-eternal branch needs. Unlike
 -- `sub-at-IsSub` it takes the terms related only up to `_≐ᶜ_` and the

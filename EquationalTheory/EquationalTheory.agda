@@ -207,8 +207,8 @@ mutual
     -- performs on them (`unbox⇒var` then `unbox-var`).
 
     unbox-cong : ∀ {A C ρ Δ Δ'}
-               → {w : Ren [] (Δ ⟨ ρ ⟩) Γ}
-               → {w' : Ren [] (Δ' ⟨ ρ ⟩) Γ}
+               → {w : Ren [] Γ (Δ ⟨ ρ ⟩)}
+               → {w' : Ren [] Γ (Δ' ⟨ ρ ⟩)}
                → {V : Δ ⊢V⦂ [ ρ ] A}
                → {V' : Δ' ⊢V⦂ [ ρ ] A}
                → {M N : Γ ∷ A  ⊢C⦂ C}
@@ -242,7 +242,7 @@ mutual
                    == ε-subst (sym (·ₑ-identityˡ ε))
                         ((C-rename
                            (cong-∷-ren
-                             (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)))
+                             (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                            M)
                          [ Hd ↦ V ]c)
 
@@ -257,9 +257,9 @@ mutual
                             (M ⨟
                              C-rename
                                (cong-∷-ren
-                                 (cong-⟨⟩-ren wk-ren
-                                  ∘ʳ ⟨⟩-μ-ren
-                                  ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                                 ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                                  ∘ʳ ⟨⟩-μ-ren)
+                                  ∘ʳ cong-⟨⟩-ren wk-ren))
                                N))
 
     seq-delay : ∀ {A B τ ε ε'}
@@ -272,10 +272,10 @@ mutual
                          (M ⨟
                           C-rename
                             (cong-∷-ren
-                              (⟨⟩-μ-ren
-                               ∘ʳ eq-ren (cong (Γ ⟨_⟩)
+                              (eq-ren (cong (Γ ⟨_⟩)
                                                (trans map-·ᵉ
-                                                      (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))))
+                                                      (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+                               ∘ʳ ⟨⟩-μ-ren))
                             N))
 
     seq-box : ∀ {A B C ρ ε ε'}
@@ -287,7 +287,7 @@ mutual
                 == box V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     seq-unbox : ∀ {A B C ρ Δ ε ε'}
-              → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+              → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
               → (V : Δ ⊢V⦂ [ ρ ] A)
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
@@ -314,9 +314,9 @@ mutual
                   == ε-subst (sym (·ₑ-assoc ε ε' ε''))
                        (M ⨟ (N ⨟ C-rename
                                    (cong-∷-ren
-                                     (cong-⟨⟩-ren wk-ren
-                                      ∘ʳ ⟨⟩-μ-ren
-                                      ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                                     ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                                      ∘ʳ ⟨⟩-μ-ren)
+                                      ∘ʳ cong-⟨⟩-ren wk-ren))
                                    P))
 
     -- computational/beta-equation for function application
@@ -346,7 +346,7 @@ mutual
               → (M : Γ ∷ A |×| B ⊢C⦂ C)
               -------------------------------------------------------------
               → Γ ⊢C⦂ match V `in
-                       ((C-rename (exch-ren ∘ʳ wk-ren ∘ʳ exch-ren ∘ʳ wk-ren)
+                       ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren)
                          M) [ Hd ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
                   == M [ Hd ↦ V ]c
 
@@ -373,7 +373,7 @@ mutual
                       == ε-subst (sym (·ₑ-identityˡ ε))
                            ((C-rename
                               (cong-∷-ren
-                                (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)))
+                                (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                               N)
                             [ Hd ↦ V ]c)
 
@@ -398,9 +398,9 @@ mutual
                                               (H op' ε''))
                                    `in (C-rename
                                          (cong-∷-ren
-                                           (cong-⟨⟩-ren wk-ren
-                                            ∘ʳ ⟨⟩-μ-ren
-                                            ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)))
+                                           ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+                                            ∘ʳ ⟨⟩-μ-ren)
+                                            ∘ʳ cong-⟨⟩-ren wk-ren))
                                          N)))
                                   (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                                     (H op (ε ·ₑ ε'))
@@ -421,10 +421,10 @@ mutual
                             `with H
                             `in (C-rename
                                   (cong-∷-ren
-                                    (⟨⟩-μ-ren
-                                     ∘ʳ eq-ren (cong (Γ ⟨_⟩)
+                                    (eq-ren (cong (Γ ⟨_⟩)
                                                      (trans map-·ᵉ
-                                                            (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))))
+                                                            (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+                                     ∘ʳ ⟨⟩-μ-ren))
                                   N)))
 
     handle-box : ∀ {A B C ρ ε ε'}
@@ -443,7 +443,7 @@ mutual
 
 
     handle-unbox : ∀ {A B C ρ Δ ε ε'}
-                 → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+                 → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
                  → (V : Δ ⊢V⦂ [ ρ ] A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
@@ -468,25 +468,25 @@ mutual
                → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
                → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
                -----------------------------------------------------------------------
-               → Γ ⊢C⦂ box V (K [ unbox (wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p)
+               → Γ ⊢C⦂ box V (K [ unbox (⟨⟩-≤-ren p ∘ʳ wk-ren-⟨ρ⟩-ctx refl)
                                         (var (λ _ → ≾ᵣ-refl) Hd)
                                         N ])
-                   == box V (K [ N [ Hd ↦ V-rename (wk-ren-⟨ρ⟩-ctx refl ∘ʳ ⟨⟩-≤-ren p ∘ʳ cong-⟨⟩-ren wk-ren) V ]c ])
+                   == box V (K [ N [ Hd ↦ V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V ]c ])
 
 
     -- unboxing non-related values commute
 
     unbox-comm : ∀ {A B C ρ₁ Δ₁ ρ₂ Δ₂}
-               → (w₁ : Ren [] (Δ₁ ⟨ ρ₁ ⟩) Γ)
+               → (w₁ : Ren [] Γ (Δ₁ ⟨ ρ₁ ⟩))
                → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
-               → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ)
+               → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩))
                → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
                → Γ ⊢C⦂ unbox w₁ V₁
-                        (unbox (wk-ren ∘ʳ w₂) V₂ M)
+                        (unbox (w₂ ∘ʳ wk-ren) V₂ M)
                    == unbox w₂ V₂
-                        (unbox (wk-ren ∘ʳ w₁) V₁
+                        (unbox (w₁ ∘ʳ wk-ren) V₁
                                (C-rename exch-ren M))
 
 
@@ -516,7 +516,7 @@ mutual
     -- eta rule for unbox
 
     unbox-not-used : ∀ {A C ρ Δ}
-                   → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+                   → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
                    → (V : Δ ⊢V⦂ [ ρ ] A)
                    → (M : Γ ⊢C⦂ C)
                    -------------------------------------
@@ -527,12 +527,12 @@ mutual
 
     box-unbox-comm : ∀ {A B C ρ ρ₂ Δ₂}
                    → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                   → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ)
+                   → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩))
                    → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
                    → Γ ⊢C⦂ box V
-                            (unbox (wk-ren ∘ʳ w₂) V₂ M)
+                            (unbox (w₂ ∘ʳ wk-ren) V₂ M)
                        == unbox w₂ V₂
                             (box
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
@@ -611,7 +611,7 @@ mutual
                → Γ ⊢C⦂ delay 0 M
                    == ε-subst (sym (trans (cong (_·ₑ ε) of-natᵉ-zero) (·ₑ-identityˡ ε)))
                         (C-rename
-                          (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero))
+                          (eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero) ∘ʳ ⟨⟩-η-ren)
                           M)
 
     delay-delay : ∀ {A τ₁ τ₂ ε}
@@ -619,7 +619,7 @@ mutual
                 ------------------------------------
                 → Γ ⊢C⦂ delay τ₁ (delay τ₂
                            (C-rename
-                             (⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus))
+                             (eq-ren (cong (Γ ⟨_⟩) of-natʳ-plus) ∘ʳ ⟨⟩-μ-ren)
                              M))
                     == ε-subst (trans (cong (_·ₑ ε) of-natᵉ-plus) (·ₑ-assoc (of-natᵉ τ₁) (of-natᵉ τ₂) ε))
                          (delay (τ₁ + τ₂) M)

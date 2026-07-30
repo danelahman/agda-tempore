@@ -234,7 +234,7 @@ store-∅ c r = ⊥-elim (not-in-empty-ctx c)
 -- the same cell — and the recovered grade bound reaches only a `⟨⟩-≤-ren`.
 
 unbox-lookup-val-≐ : ∀ {A ρ Δ} {St : 𝕊 []}
-                   → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St))
+                   → (w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩))
                    → {V V' : Δ ⊢V⦂ [ ρ ] A} → V ≐ᵛ V'
                    → unbox-lookup St w V ≐ᵛ unbox-lookup St w V'
 
@@ -242,10 +242,8 @@ unbox-lookup-val-≐ {St = St} w (var-≐ {x = x})
   with var-rename w (Tl-⟨⟩ x)
 ... | ρ' , p , z =
   V-rename-≐
-    (∘ʳ-≐ ≐ʳ-refl
-      (∘ʳ-≐ ≐ʳ-refl
-        (∘ʳ-≐ ≐ʳ-refl
-          (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl))))
+    (∘ʳ-≐ (∘ʳ-≐ (∘ʳ-≐ (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _)) ≐ʳ-refl) ≐ʳ-refl)
+          ≐ʳ-refl)
     (resource-lookup St z)
 
 -- Renaming the boxed value before looking it up is looking it up along the
@@ -333,10 +331,10 @@ Val-reach {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
       f (reach-∘ q' q₀) M₂
         (≐ᶜ-trans eM₂
           (≐ᶜ-trans
-            (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (reach-renᵘ q'))
-                                (cong-∷-ren (reach-renᵘ q₀)) M))
+            (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (reach-renᵘ q₀))
+                                (cong-∷-ren (reach-renᵘ q')) M))
             (C-rename-≐ (≐ʳ-trans
-                          (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-renᵘ q') (reach-renᵘ q₀)))
+                          (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-renᵘ q₀) (reach-renᵘ q')))
                           (cong-∷-ren-≐ (≐ʳ-sym (reach-renᵘ-∘ q' q₀))))
                         M)))
         W pW
@@ -637,7 +635,7 @@ alloc-var-≐ V x f =
 
 store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-                 → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
+                 → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
             → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
             ------------------------------------------
             → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
@@ -683,7 +681,7 @@ store-var {[ ρ ] A} pSt x f r = pSt x r
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
             → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-                 → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
+                 → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
             ------------------------------------------------------------------
             → Store (St ∷ₛ V)
 

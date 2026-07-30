@@ -68,8 +68,8 @@ exch-ren-mor : ∀ {Γ X Y}
              → ⟦ exch-ren {Γ} {X} {Y} ⟧ʳ ≈ᵐ ⟨ mapˣᵐ fstᵐ idᵐ , sndᵐ ∘ᵐ fstᵐ ⟩ᵐ
 exch-ren-mor {Γ} {X} {Y} =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-              ,   var-morphism-Tl-∷ {Γ ∷ Y} {X} {Y} Hd _
-                ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {Y} _) ⟩ᵐ-cong)
+              ,   var-morphism-Tl-∷ {Γ ∷ X} {Y} {X} Hd _
+                ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {X} _) ⟩ᵐ-cong)
   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
 
@@ -87,7 +87,7 @@ bring-up-mor eA eΔ [] =
           , ≈ᵐ-refl ⟩ᵐ-cong
       ∙ ≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _)))
 bring-up-mor {Δ} {A} eA eΔ (Θ ∷ B) =
-    ∘ᵐ-congʳ (  exch-ren-mor {Δ ++ᶜ Θ} {A} {B}
+    ∘ᵐ-congʳ (  exch-ren-mor {Δ ++ᶜ Θ} {B} {A}
               ∙ ⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong , ≈ᵐ-refl ⟩ᵐ-cong)
   ∙ ∘ᵐ-congˡ (mapˣᵐ-cong (bring-up-mor eA eΔ Θ) ≈ᵐ-refl)
   ∙ ∘ᵐ-congˡ (  mapˣᵐ-cong ≈ᵐ-refl (≈ᵐ-sym (∘ᵐ-identityˡ idᵐ))
@@ -228,7 +228,7 @@ bring-up-mor {Δ} {A} eA eΔ (Θ ⟨ ρ ⟩) =
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ costrP
 
--- The denotation of the eternal inclusion `ᴱ-ren Γ : Ren [] (Γ ᴱ) Γ` is the
+-- The denotation of the eternal inclusion `ᴱ-ren Γ : Ren [] Γ` (Γ ᴱ) is the
 -- eternal projection: the two are defined by the same `eternal?` recursion, the
 -- lock case matching `extᵉ` against `⟨⟩-ext-ctx`. That case needs the two
 -- eternal structures on `⟦ Γ ᴱ ⟧` — the one read off the `EternalCtx` witness
@@ -250,7 +250,7 @@ ec-Eternalᵒ-ᴱ (Γ ⟨ ρ ⟩) = ec-Eternalᵒ-ᴱ Γ
     ∘ᵐ-cong (≡→≈ᵐ (cong (λ eΓ → Eternalᵒ.extᵉ eΓ {ρ}) (ec-Eternalᵒ-ᴱ Γ)))
             (⟨⟩-congᶠ (ᴱ-ren-mor Γ))
 
--- The denotation of the eternal-prefix contraction `contract Γ : Ren (Γ ᴱ ++ᶜ Γ) Γ`:
+-- The denotation of the eternal-prefix contraction `contract Γ : Ren (Γ ++ᶜ ᴱ Γ) Γ`:
 -- pair the identity with `projᴱ Γ`, then `splitᴱ⁻¹` glues the eternal base back on.
 
 -- the pure-cartesian reshuffle used in the non-eternal `∷` case

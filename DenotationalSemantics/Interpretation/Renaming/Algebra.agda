@@ -48,7 +48,7 @@ open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 
 
--- The reindexing morphism of a renaming (contravariant in the context).
+-- The reindexing morphism of a renaming (covariant in the context).
 
 -- An eternal context interprets to a graded `⟨_⟩`-algebra: `𝟙ᵐ` and `×ᵐ` are
 -- eternal objects, and the entries are eternal by assumption. This is what a
@@ -169,9 +169,9 @@ ec-var-alg (ec-∷ ec et') et (Tl-∷ y) =
 -- `cong-ren`, `restrict-ren` and `contract` all preserving it. An
 -- ambient-indexed renaming reaches the semantics through `expose-ren-[]`.
 
-⟦_⟧ʳ : ∀ {Γ Γ'} → Ren [] Γ Γ' → ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
+⟦_⟧ʳ : ∀ {Γ Γ'} → Ren [] Γ Γ' → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ
 ⟦ id-ren ⟧ʳ              = idᵐ
-⟦ r₂ ∘ʳ r₁ ⟧ʳ            = ⟦ r₁ ⟧ʳ ∘ᵐ ⟦ r₂ ⟧ʳ
+⟦ r₂ ∘ʳ r₁ ⟧ʳ            = ⟦ r₂ ⟧ʳ ∘ᵐ ⟦ r₁ ⟧ʳ
 ⟦ wk-ren ⟧ʳ              = fstᵐ
 ⟦ var-ren p x ⟧ʳ         = ⟨ idᵐ , var-morphism p x ⟩ᵐ
 ⟦ ⟨⟩-η-ren ⟧ʳ            = η

@@ -33,24 +33,24 @@ record Config (C : CType) : Set where
 
 unbox-lookup : ∀ {A ρ Δ}
              → (S : 𝕊 [])
-             → (w : Ren [] (Δ ⟨ ρ ⟩) (toCtx S))
+             → (w : Ren [] (toCtx S) (Δ ⟨ ρ ⟩))
              → (V : Δ ⊢V⦂ [ ρ ] A)
              → toCtx S ⊢V⦂ A
 unbox-lookup {A} {ρ} S w V with unbox⇒var w V
 ... | ρ' , z , ρ'≾ρ =
   V-rename
-    (   eq-ren (split-state-++ᶜ S z)
-     ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _))
-     ∘ʳ wk-ren-⟨ρ⟩-ctx
-          (trans
+    ((((  eq-ren ++ᶜ-identityˡ
+       ∘ʳ ⟨⟩-≤-ren ρ'≾ρ)
+       ∘ʳ wk-ren-⟨ρ⟩-ctx
             (trans
               (trans
-                (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd S z)))
-                (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd S z)))))
-              (sym (grades-≡ (split-state-snd S z))))
-            (snd-split-time≡time-from-head S z))
-     ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
-     ∘ʳ eq-ren ++ᶜ-identityˡ)
+                (trans
+                  (ctx-grade-++ᶜ ([] ∷ [ ρ ] A) (toCtx (split-state-snd S z)))
+                  (·ᵣ-identityˡ (ctx-grade (toCtx (split-state-snd S z)))))
+                (sym (grades-≡ (split-state-snd S z))))
+              (snd-split-time≡time-from-head S z)))
+       ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _)))
+       ∘ʳ eq-ren (split-state-++ᶜ S z))
     (resource-lookup S z)
 
 mutual 
@@ -100,7 +100,7 @@ mutual
                    → ⟨ S , return V ⨟ N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               ((⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ))))
+                               ((eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)))
                               N) [ Hd ↦ V ]c ⟩
 
         -- usual performing operation in sequencing
@@ -114,7 +114,7 @@ mutual
                      ⟨ S , ε-subst (sym (·ₑ-assoc (op-grade op) ε ε'))
                              (perform op V
                                (M ⨟ C-rename
-                                      (cong-∷-ren (cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
+                                      (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren))
                                       N)) ⟩
 
         -- delay just pass time further
@@ -140,7 +140,7 @@ mutual
                    → ⟨ S , handle return V `with H `in N ⟩ ↝
                      ⟨ S , (C-rename
                              (cong-∷-ren
-                               (⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ)))
+                               (eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                              N) [ Hd ↦ V ]c ⟩
                      
         -- step on computation in handle. time and state must go on
@@ -194,9 +194,9 @@ mutual
                                                     (type-of-gtype (arity op)))))
                                          (H op' ε'))
                               `in (C-rename
-                                    (  cong-∷-ren (cong-⟨⟩-ren wk-ren
-                                    ∘ʳ ⟨⟩-μ-ren
-                                    ∘ʳ eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)))
+                                    (  cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)
+                                    ∘ʳ ⟨⟩-μ-ren)
+                                    ∘ʳ cong-⟨⟩-ren wk-ren))
                                     N)))
                              -- the clause is included into the context reached
                              -- when the operation is handled
@@ -217,7 +217,7 @@ mutual
         -- resource in the state and substitute it into the continuation M
         UNBOX       : ∀ {A C ρ Δ}
                     → {S : 𝕊 []}
-                    → {w : Ren [] (Δ ⟨ ρ ⟩) (toCtx S)}
+                    → {w : Ren [] (toCtx S) (Δ ⟨ ρ ⟩)}
                     → {V : Δ ⊢V⦂ [ ρ ] A}
                     → {M : toCtx S ∷ A ⊢C⦂ C}
                       ----------------------------------------------------------

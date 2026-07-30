@@ -44,7 +44,7 @@ open import Syntax.Renamings.Equivalence Spec
 --
 -- So the laws below cannot be stated at `_≡_`: renaming along `r₂ ∘ʳ r₁`
 -- stores that composite in every `unbox` node, where renaming twice stores
--- `r₂ ∘ʳ (r₁ ∘ʳ w)`. The two are `_≐ʳ_`-equal, never equal. `_≐ᵛ_`/`_≐ᶜ_`
+-- `(w ∘ʳ r₂) ∘ʳ r₁`. The two are `_≐ʳ_`-equal, never equal. `_≐ᵛ_`/`_≐ᶜ_`
 -- below are the congruence that ignores exactly this data.
 --
 -- `EquationalTheory` is insensitive to the `coerce` witness but not to the
@@ -118,7 +118,7 @@ mutual
     -- value it stores: substitution renormalises those (`unbox⇒var` then
     -- `unbox-var`), so demanding they agree would make substitution lemmas false.
 
-    unbox-≐   : ∀ {A C ρ Δ Δ'} {w : Ren [] (Δ ⟨ ρ ⟩) Γ} {w' : Ren [] (Δ' ⟨ ρ ⟩) Γ}
+    unbox-≐   : ∀ {A C ρ Δ Δ'} {w : Ren [] Γ (Δ ⟨ ρ ⟩)} {w' : Ren [] Γ (Δ' ⟨ ρ ⟩)}
                   {V : Δ ⊢V⦂ [ ρ ] A} {V' : Δ' ⊢V⦂ [ ρ ] A}
                   {M M' : Γ ∷ A ⊢C⦂ C}
               → unbox-img w V ≡ unbox-img w' V' → M ≐ᶜ M'

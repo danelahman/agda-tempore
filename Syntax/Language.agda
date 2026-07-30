@@ -161,7 +161,8 @@ mutual
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
     
     -- That enough time has passed since the box-typed value was brought into scope
-    -- is captured by the renaming assumption from context `Δ ⟨ ρ ⟩` to context `Γ`.
+    -- is captured by the renaming assumption from context `Γ` to context `Δ ⟨ ρ ⟩`,
+    -- i.e. by rewinding `Γ` past a `ρ`-lock.
     -- See the lemma `unbox⇒var` in `RenActions` that proves that the value has to
     -- be a variable with the resources `ρ'` to the right of it satisfying `ρ' ≾ᵣ ρ`.
     -- This achieves the same kind of temporal rewinding of the context that the
@@ -172,7 +173,7 @@ mutual
             → {C : CType}
             → {ρ : R}
             → {Δ : Ctx}
-            → Ren [] (Δ ⟨ ρ ⟩) Γ
+            → Ren [] Γ (Δ ⟨ ρ ⟩)
             → Δ ⊢V⦂ [ ρ ] A
             → Γ ∷ A ⊢C⦂ C
             ---------------------------

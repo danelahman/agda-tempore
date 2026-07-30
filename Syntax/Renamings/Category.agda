@@ -52,7 +52,7 @@ open import Syntax.Terms.Equivalence     Spec
 ------------------------------------------------------------------------
 -- THE AMBIENT INDEXING
 --
--- `Ren Ξ Δ Δ'` renames `Ξ ++ᶜ Δ` into `Ξ ++ᶜ Δ'` while fixing `Ξ`, so the
+-- `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` fixing `Ξ`, so the
 -- family `Ξ ↦ Ren Ξ` is an indexed category: each `Ξ` gives a category
 -- with the same objects, and the ambient is reindexed by the two functors
 -- below. `Ren []` is the fibre over the empty ambient.
@@ -97,12 +97,12 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- the nose: that is `cong-ren-∘-≐` and `cong-ren-id-≐` (Coherence).
 
 ------------------------------------------------------------------------
--- THE ETERNAL RESTRICTION IS AN IDEMPOTENT COMONAD
+-- THE ETERNAL RESTRICTION IS AN IDEMPOTENT MONAD
 --
 -- Object map `_ᴱ` (Contexts), morphism map `restrict-ren` (Renamings), and
--- counit `ᴱ-ren : Ren [] (Γ ᴱ) Γ`. The functor laws are `restrict-ren-∘-≐`,
+-- unit `ᴱ-ren : Ren [] Γ (Γ ᴱ)`. The functor laws are `restrict-ren-∘-≐`,
 -- `restrict-ren-id-≐` and `restrict-ren-≐`; idempotence on objects is
--- `ᴱ-idem`. What is proved here is the counit's naturality, the one law the
+-- `ᴱ-idem`. What is proved here is the unit's naturality, the one law the
 -- development used only in special cases.
 ------------------------------------------------------------------------
 
@@ -126,22 +126,22 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 ᴱ-ren-img (Γ ∷ B)   x = ᴱ-ren-img-∷ Γ B (eternal? B) x
 ᴱ-ren-img (Γ ⟨ ρ ⟩) x = cong (Var-⟨⟩ ρ) (ᴱ-ren-img Γ x)
 
--- NATURALITY OF THE COUNIT
+-- NATURALITY OF THE UNIT
 --
--- Restricting a renaming and then including is including and then renaming.
+-- Including and then restricting is renaming and then including.
 -- The content is `restrict-img⁻`, which is this square stated over `∈-ᴱ⁻`;
 -- `ᴱ-ren-img` transports it to the renamings themselves.
 
 ᴱ-ren-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ')
-          → (r ∘ʳ ᴱ-ren Γ) ≐ʳ (ᴱ-ren Γ' ∘ʳ restrict-ren r)
+          → (restrict-ren r ∘ʳ ᴱ-ren Γ) ≐ʳ (ᴱ-ren Γ' ∘ʳ r)
 ᴱ-ren-nat {Γ} {Γ'} r = mk≐ʳ go
   where
-    go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
-       → var-img (r ∘ʳ ᴱ-ren Γ) x ≡ var-img (ᴱ-ren Γ' ∘ʳ restrict-ren r) x
+    go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ' ᴱ)
+       → var-img (restrict-ren r ∘ʳ ᴱ-ren Γ) x ≡ var-img (ᴱ-ren Γ' ∘ʳ r) x
     go x =
-      trans (cong (var-img′ r) (ᴱ-ren-img Γ x))
-        (trans (sym (restrict-img⁻ r x))
-               (sym (ᴱ-ren-img Γ' (proj₂ (var-img (restrict-ren r) x)))))
+      trans (ᴱ-ren-img Γ (proj₂ (var-img (restrict-ren r) x)))
+        (trans (restrict-img⁻ r x)
+               (cong (var-img′ r) (sym (ᴱ-ren-img Γ' x))))
 
 ------------------------------------------------------------------------
 -- TERMS ARE SETOID-VALUED PRESHEAVES
@@ -151,9 +151,9 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- `V-rename-id-≐`, `V-rename-≐` (the action respects the quotient) and
 -- `V-rename-cong` (it respects the setoid), and likewise for `C`.
 --
--- The setoid is not optional. `C-rename r` stores `r ∘ʳ w` in every `unbox`
+-- The setoid is not optional. `C-rename r` stores `w ∘ʳ r` in every `unbox`
 -- node, so renaming along `r₂ ∘ʳ r₁` stores that composite where renaming
--- twice stores `r₂ ∘ʳ (r₁ ∘ʳ w)`: functoriality holds up to `_≐ᶜ_` and
+-- twice stores `(w ∘ʳ r₂) ∘ʳ r₁`: functoriality holds up to `_≐ᶜ_` and
 -- never up to `_≡_`.
 --
 -- Transport along a context equality is this action restricted to the

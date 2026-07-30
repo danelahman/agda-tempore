@@ -51,7 +51,7 @@ ClosedVals Δ = ∀ {A ρ} → A ∈[ ρ ] Δ → [] ⊢V⦂ A
 -- LOCK-FREE CONTEXTS
 --
 -- `_ᴱ` drops every lock, so the eternal prefix is lock-free — which is what
--- makes a closed value weakenable into it: `Ren [] [] Γ` exists exactly when `Γ`
+-- makes a closed value weakenable into it: `Ren [] Γ` [] exists exactly when `Γ`
 -- has no lock, crossing one needing `ρ ≾ᵣ uᵣ`.
 
 data Lock-free : Ctx → Set where
@@ -78,11 +78,11 @@ data Lock-free : Ctx → Set where
 -- Weakening a closed term into a lock-free context, and a term into one
 -- left-extended by a lock-free prefix.
 
-empty-ren : ∀ {Δ} → Lock-free Δ → Ren [] [] Δ
+empty-ren : ∀ {Δ} → Lock-free Δ → Ren [] Δ []
 empty-ren lf-[]     = id-ren
-empty-ren (lf-∷ lf) = wk-ren ∘ʳ empty-ren lf
+empty-ren (lf-∷ lf) = empty-ren lf ∘ʳ wk-ren
 
-eternal-wk : ∀ {Δ} → Lock-free Δ → (Γ : Ctx) → Ren [] Γ (Δ ++ᶜ Γ)
+eternal-wk : ∀ {Δ} → Lock-free Δ → (Γ : Ctx) → Ren [] (Δ ++ᶜ Γ) Γ
 eternal-wk lf []        = empty-ren lf
 eternal-wk lf (Γ ∷ A)   = cong-∷-ren (eternal-wk lf Γ)
 eternal-wk lf (Γ ⟨ ρ ⟩) = cong-⟨⟩-ren (eternal-wk lf Γ)
@@ -92,10 +92,10 @@ eternal-wk lf (Γ ⟨ ρ ⟩) = cong-⟨⟩-ren (eternal-wk lf Γ)
 -- that is `[]`, vacuously. Which such renaming is chosen never matters: `_≐ʳ_`
 -- compares renamings on variables, and `[]` has none (`∅-ren-≐`).
 
-∅-ren : (St : 𝕊 []) → Ren [] [] (toCtx St)
+∅-ren : (St : 𝕊 []) → Ren [] (toCtx St) []
 ∅-ren St = wk-ctx-ren ec-[] (toCtx St)
 
-∅-ren-≐ : ∀ {Γ} → (r r' : Ren [] [] Γ) → r ≐ʳ r'
+∅-ren-≐ : ∀ {Γ} → (r r' : Ren [] Γ []) → r ≐ʳ r'
 ∅-ren-≐ r r' = mk≐ʳ (λ ())
 
 -- A closing environment: how `Γ` is closed down to the state context.
@@ -173,7 +173,7 @@ Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × Val A St V
 Rel-Env (liftᵉ {St} {Γ} {A} {ρ} V γ) =
   Rel-Env γ
   × (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-       → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
+       → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
 Rel-Env (reachᵉ γ q)           = Rel-Env γ
 Rel-Env (eternalˡ Δ lf η γ)    =
   Rel-Env γ × (∀ {A ρ} → A ∈[ ρ ] Δ → Eternal A)

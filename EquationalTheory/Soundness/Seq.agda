@@ -177,7 +177,7 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
                                         ∙ ∘ᵐ-congˡ (eq-ren-grade {Γ} map-uᵉ)
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
   where
-    r   = cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))
+    r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r M) Hd V (renᶜ r M pM) pV
 
 -- The counit law: sequencing a `return` of the bound variable is the identity.
@@ -230,7 +230,7 @@ sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
     g = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
 
 sound-seq-unbox : ∀ {Γ A B C ρ Δ ε ε'}
-                → (w : Ren [] (Δ ⟨ ρ ⟩) Γ) → (V : Δ ⊢V⦂ [ ρ ] A)
+                → (w : Ren [] Γ (Δ ⟨ ρ ⟩)) → (V : Δ ⊢V⦂ [ ρ ] A)
                 → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                 → Soundᶜ== (seq-unbox w V M N)
 sound-seq-unbox {ε = ε} w V M N ((pV , pM) , pN) pR =
@@ -358,8 +358,8 @@ sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
             ∙ sound-ε-subst e (delay τ (M ⨟ C-rename r N)) pRc)
   where
     e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
-    rin = ⟨⟩-μ-ren
-          ∘ʳ eq-ren (cong (Γ ⟨_⟩) (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+    rin = eq-ren (cong (Γ ⟨_⟩) (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+          ∘ʳ ⟨⟩-μ-ren
     r   = cong-∷-ren rin
     pRc = pM , renᶜ r N pN
 
@@ -467,7 +467,7 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
                   ⟩ᵐ-cong))))
   where
     e'   = sym (·ₑ-assoc (op-grade op) ε ε')
-    rin' = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+    rin' = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
     r'   = cong-∷-ren rin'
     pRc' = pV , (pM , renᶜ r' N pN)
     -- The arity type occurs (a) in the continuation `M`'s domain and (b) in the

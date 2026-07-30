@@ -69,11 +69,11 @@ castᵛ-sym-cast refl V = refl
 
 -- Casting the target of a renaming is prefixing it with an `eq-ren`.
 
-castᵛ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ Γ')
+castᵛ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ' Γ)
              → (V : Γ ⊢V⦂ A)
-             → castᵛ e (V-rename r V) ≐ᵛ V-rename (eq-ren e ∘ʳ r) V
+             → castᵛ e (V-rename r V) ≐ᵛ V-rename (r ∘ʳ eq-ren e) V
 castᵛ-rename refl r V =
-  ≐ᵛ-sym (≐ᵛ-trans (V-rename-∘ id-ren r V) (V-rename-id-≐ ≐ʳ-refl _))
+  ≐ᵛ-sym (≐ᵛ-trans (V-rename-∘ r id-ren V) (V-rename-id-≐ ≐ʳ-refl _))
 
 -- Relocating a suffix variable along associativity re-brackets the injection.
 
@@ -92,7 +92,7 @@ castᵛ-rename refl r V =
 
 -- A congruence renaming fixes a suffix variable, up to its grade bound.
 
-cong-ren-img-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+cong-ren-img-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
                → var-img (cong-ren {Γ'' = Δ} r) (∈-++ᶜʳ {Γ = Γ} x)
                ≡ (ρ , ∈-++ᶜʳ {Γ = Γ'} x)
 
@@ -104,7 +104,7 @@ cong-ren-img-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
 
 -- Renaming a suffix variable along a congruence renaming leaves it where it is.
 
-ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
+ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
           → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
           → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
           ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
@@ -152,7 +152,7 @@ cast-ext-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → 
 cast-ext-any refl e₀ et V rewrite uip {p = e₀} {q = refl} = refl
 
 cast-ren-⟨⟩-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → (e₀ : Γ ≡ Γ')
-                → (r : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)) → (V : Γ ⊢V⦂ A)
+                → (r : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀) → (V : Γ ⊢V⦂ A)
                 → castᵛ e (V-rename r V) ≡ V-rename r (castᵛ e₀ V)
 cast-ren-⟨⟩-any refl e₀ r V rewrite uip {p = e₀} {q = refl} = refl
 
@@ -204,8 +204,8 @@ sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with etern
                        (⟨⟩-η⁻¹-img (∈-++ᶜʳ {Γ = Γ₁} x)))
                  f'))
   where
-    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
-    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+    rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
 
@@ -310,8 +310,8 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
                        (⟨⟩-η⁻¹-img (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
                  f'))
   where
-    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ' ⟩)
-    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+    rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ' ⟩) Γ₀
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))
 
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
 
@@ -320,7 +320,7 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 -- The third possibility: the variable looked up *is* the one being replaced, so
 -- what comes back is the value, pushed under the suffix. The recursion of
 -- `⟨_,_⟩[_↦_]var` builds that push one layer at a time — `wk-ren` per binder and
--- `⟨⟩-≤-ren ∘ʳ ⟨⟩-η⁻¹-ren` per lock — which is exactly `push-ren`, up to the
+-- `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren` per lock — which is exactly `push-ren`, up to the
 -- grade bounds `_≐ʳ_` does not see. Non-eternality is what selects that branch
 -- at a lock; at an eternal type the substitution extends the value instead.
 
@@ -341,7 +341,7 @@ sub-var-hit {Γ₁} {B} (Γ₂ ∷ C) ¬et p W f =
   ≐ᵛ-trans
     (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
     (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-hit Γ₂ ¬et p W f))
-              (≐ᵛ-sym (V-rename-∘ wk-ren (push-ren Γ₂ p) _)))
+              (≐ᵛ-sym (V-rename-∘ (push-ren Γ₂ p) wk-ren _)))
 
 sub-var-hit {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
 
@@ -352,11 +352,11 @@ sub-var-hit {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
     (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩))
                            (castOf {Γ₁} {B} Γ₂) rn _))
     (≐ᵛ-trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W fᵢ))
-      (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ rn (push-ren Γ₂ pᵢ) _))
-                (V-rename-≐ (∘ʳ-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl) ≐ʳ-refl) _)))
+      (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (push-ren Γ₂ pᵢ) rn _))
+                (V-rename-≐ (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _))) _)))
   where
-    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
-    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p)) ∘ʳ ⟨⟩-η⁻¹-ren
+    rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p))
 
     pᵢ = ≾ᵣ-zero-productˡ p
     fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
@@ -385,7 +385,7 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 -- variable of `split-l z ∷ [ ρ ] A`, so the resource variable it names is `z` itself — the
 -- syntactic counterpart of `split-lookup` in
 -- `Interpretation.SubstitutionCoherence`. Its renaming is
--- `eq-ren (split-≡ (split-pf z)) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`,
+-- `(⟨⟩-≤-ren rel ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)) ∘ʳ eq-ren (split-≡ (split-pf z))`,
 -- so computing its `var-img` at `Tl-⟨⟩ Hd` needs, in order: `⟨⟩-≤-ren`'s clause,
 -- `wk-ren-⟨ρ⟩-ctx-img` (in `GradedReach`, proved), and `eq-ren-img` below. What is left
 -- is

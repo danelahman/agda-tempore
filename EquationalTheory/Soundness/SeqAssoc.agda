@@ -96,9 +96,9 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
             ∙ sound-ε-subst e (M ⨟ (N ⨟ C-rename r P)) pRc)
   where
     e   = sym (·ₑ-assoc ε ε' ε'')
-    rin = cong-⟨⟩-ren wk-ren
-          ∘ʳ ⟨⟩-μ-ren
-          ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+    rin = (eq-ren (cong (Γ ⟨_⟩) map-·ᵉ)
+           ∘ʳ ⟨⟩-μ-ren)
+          ∘ʳ cong-⟨⟩-ren wk-ren
     r   = cong-∷-ren rin
     pRc = pM , (pN , renᶜ r P pP)
 

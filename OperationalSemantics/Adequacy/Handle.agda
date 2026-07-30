@@ -71,7 +71,7 @@ Boxed-Val : (B : VType) → (op : Op) → (ε₃ : E)
 Boxed-Val B op ε₃ St₁ V₀ =
   ∀ {St'} → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St')
     → Val (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
-          (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
+          (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
 
 -- The clause, included into the context it fires at and given the operation's
 -- parameter. Its continuation binder is the cell `BOX` just allocated, so this
@@ -116,7 +116,7 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
 ------------------------------------------------------------------------
 
 cl-ren-≐ : ∀ {Γ'} → (St : 𝕊 []) → (D : Ctx)
-         → {r r' : Ren [] (toCtx St ᴱ ++ᶜ D) Γ'}
+         → {r r' : Ren [] Γ' (toCtx St ᴱ ++ᶜ D)}
          → (∀ {A ρ} → (y : A ∈[ ρ ] D)
               → var-img r  (∈-++ᶜʳ {Γ = toCtx St ᴱ} y)
               ≡ var-img r' (∈-++ᶜʳ {Γ = toCtx St ᴱ} y))
@@ -143,7 +143,7 @@ cl-ren-≐ St D {r} {r'} h = mk≐ʳ go
 -- it is built from — the two agree on `D` by `cong-ren-img-r` and `eq-ren-img`.
 
 cl-ren-eq-≐ : ∀ {Γ₁} → (St : 𝕊 []) → (D : Ctx)
-            → (r₀ : Ren [] (toCtx St ᴱ) Γ₁) → (e₀ : toCtx St ᴱ ≡ Γ₁)
+            → (r₀ : Ren [] Γ₁ (toCtx St ᴱ)) → (e₀ : toCtx St ᴱ ≡ Γ₁)
             → cong-ren {Γ'' = D} r₀ ≐ʳ eq-ren (cong (_++ᶜ D) e₀)
 
 cl-ren-eq-≐ St D r₀ e₀ =
@@ -243,22 +243,23 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
     q = reach E₀ b
 
-    R₁ : Ren [] (toCtx St₁ ⟨ mapᵉ uₑ ⟩) (toCtx St₁)
-    R₁ = ⟨⟩-η-ren ∘ʳ eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ)
+    R₁ : Ren [] (toCtx St₁) (toCtx St₁ ⟨ mapᵉ uₑ ⟩)
+    R₁ = eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren
 
-    eqr : (R₁ ∘ʳ srs) ≐ʳ unbox-ren q
-    eqr = ≐ʳ-trans (∘ʳ-assoc-≐ ⟨⟩-η-ren (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ)) srs)
-                   (∘ʳ-≐ ≐ʳ-refl
-                     (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
-                                         (reach-bound q)))
+    eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
+    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ srs (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ))
+                                       ⟨⟩-η-ren))
+                   (∘ʳ-≐ (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
+                                             (reach-bound q))
+                         ≐ʳ-refl)
 
     shift : C-rename (cong-∷-ren (unbox-ren q)) N
           ≐ᶜ C-rename (cong-∷-ren R₁) N₁
     shift =
       ≐ᶜ-sym
         (≐ᶜ-trans (C-rename-cong (cong-∷-ren R₁) eN₁)
-          (≐ᶜ-trans (≐ᶜ-sym (C-rename-∘ (cong-∷-ren R₁) (cong-∷-ren srs) N))
-            (C-rename-≐ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ R₁ srs))
+          (≐ᶜ-trans (≐ᶜ-sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
+            (C-rename-≐ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ srs R₁))
                                   (cong-∷-ren-≐ eqr)) N)))
 
 -- The scrutinee gets stuck on an operation. The reduct chain is
@@ -301,9 +302,9 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
          ≡ toCtx St₁ ⟨ ρₒ ·ᵣ mapᵉ ε₃ ⟩
     emap = cong (toCtx St₁ ⟨_⟩) map-·ᵉ
 
-    κ : Ren [] (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-              ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ mapᵉ ε₃ ⟩)
-    κ = cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren emap
+    κ : Ren [] ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ⟨ mapᵉ ε₃ ⟩)
+              (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
+    κ = (eq-ren emap ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren
 
     -- the clauses and sequel `HANDLE-OP` puts under the boxed resumption
     H₁' : (op' : Op) → (ε' : E) → Cl B op' ε' ((toCtx St₁ ⟨ ρₒ ⟩ ∷ Ar) ᴱ)
@@ -332,7 +333,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
     bv : Boxed-Val B op (ε₃ ·ₑ ε₂) St₁ V₀
     bv {St'} q = _ , refl , resump
       where
-        Mq = C-rename (cong-∷-ren (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ))
+        Mq = C-rename (cong-∷-ren (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q))
                (C-rename (cong-∷-ren (eq-ren (sym (++ᶜ-identityˡ
                                                     {toCtx St₁ ⟨ ρₒ ⟩})))) Body)
 
@@ -347,22 +348,23 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
           where
             q₂ = reach-∘ q' q
 
-            R₂ = (unbox-ren q ∘ʳ eq-ren (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
-                   ∘ʳ eq-ren (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
+            R₂ = eq-ren (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
+                   ∘ʳ (eq-ren (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}) ∘ʳ unbox-ren q)
 
             -- the three renamings the clause stacks up compose to `unbox-ren q₂`
-            ren-eq : (reach-renᵘ q' ∘ʳ R₂) ≐ʳ unbox-ren q₂
+            ren-eq : (R₂ ∘ʳ reach-renᵘ q') ≐ʳ unbox-ren q₂
             ren-eq =
               ≐ʳ-trans
-                (∘ʳ-≐ ≐ʳ-refl
+                (∘ʳ-≐
                   (≐ʳ-trans
-                    (∘ʳ-assoc-≐ (unbox-ren q) (eq-ren ++ᶜ-identityˡ)
-                                (eq-ren (sym ++ᶜ-identityˡ)))
-                    (∘ʳ-id-≐ʳ (unbox-ren q)
+                    (≐ʳ-sym (∘ʳ-assoc-≐ (eq-ren (sym ++ᶜ-identityˡ))
+                                        (eq-ren ++ᶜ-identityˡ) (unbox-ren q)))
+                    (∘ʳ-id-≐ (unbox-ren q)
                       (≐ʳ-trans
                         (eq-ren-∘-≐ (sym (++ᶜ-identityˡ {toCtx St₁ ⟨ ρₒ ⟩}))
                                     ++ᶜ-identityˡ)
-                        (eq-ren-≐ _ refl)))))
+                        (eq-ren-≐ _ refl))))
+                  ≐ʳ-refl)
                 (reach-unbox-ren-≐ q' q)
 
             collapse : M₂ ≐ᶜ C-rename (cong-∷-ren (unbox-ren q₂)) Body
@@ -372,21 +374,21 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                   (C-rename-cong (cong-∷-ren (reach-renᵘ q'))
                     (≐ᶜ-trans
                       (≐ᶜ-sym (C-rename-∘
-                                 (cong-∷-ren (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ))
                                  (cong-∷-ren (eq-ren (sym ++ᶜ-identityˡ)))
+                                 (cong-∷-ren (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q))
                                  Body))
                       (C-rename-≐
                         (≐ʳ-sym (cong-∷-ren-∘-≐
-                                   (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ)
-                                   (eq-ren (sym ++ᶜ-identityˡ))))
+                                   (eq-ren (sym ++ᶜ-identityˡ))
+                                   (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q)))
                         Body)))
                   (≐ᶜ-trans
                     (≐ᶜ-sym
-                      (C-rename-∘ (cong-∷-ren (reach-renᵘ q'))
-                                  (cong-∷-ren R₂) Body))
+                      (C-rename-∘ (cong-∷-ren R₂)
+                                  (cong-∷-ren (reach-renᵘ q')) Body))
                     (C-rename-≐
                       (≐ʳ-trans
-                        (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-renᵘ q') R₂))
+                        (≐ʳ-sym (cong-∷-ren-∘-≐ R₂ (reach-renᵘ q')))
                         (cong-∷-ren-≐ ren-eq))
                       Body)))
 
@@ -411,15 +413,15 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
                 -- what is left of the sequel's renaming once the arity variable
                 -- is gone
-                W₁ : Ren [] (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
-                          (toCtx St'' ⟨ mapᵉ ε₃ ⟩)
-                W₁ = cong-⟨⟩-ren sq ∘ʳ ⟨⟩-μ-ren ∘ʳ eq-ren emap
+                W₁ : Ren [] (toCtx St'' ⟨ mapᵉ ε₃ ⟩)
+                          (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
+                W₁ = (eq-ren emap ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren sq
 
                 eW₁ : W₁ ≐ʳ suc-comp-ren (ext q₂) B₁
                 eW₁ =
                   ≐ʳ-trans
-                    (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren sq) ⟨⟩-μ-ren (eq-ren emap)))
-                    (≐ʳ-trans (∘ʳ-≐ (unbox-ren-μ-≐ q₂ B₁') ≐ʳ-refl)
+                    (∘ʳ-assoc-≐ (eq-ren emap) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
+                    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (unbox-ren-μ-≐ q₂ B₁'))
                               (suc-comp-ren-grade-src (ext q₂) map-·ᵉ B₁' B₁))
 
                 -- the sequel the recursion needs is the original one, renamed:
@@ -427,32 +429,33 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 -- substitutes for exactly that variable, so the two cancel
                 eN₂ : (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                         [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c
-                    ≐ᶜ C-rename (cong-∷-ren (W₁ ∘ʳ srs)) N
+                    ≐ᶜ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
                 eN₂ =
                   ≐ᶜ-trans (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ Hd)) (≐ᵛ-refl W') split-off)
                     (≐ᶜ-trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
                                         (C-rename (cong-∷-ren W₁) N₁) W')
                       (≐ᶜ-trans (C-rename-cong (cong-∷-ren W₁) eN₁)
                         (≐ᶜ-trans
-                          (≐ᶜ-sym (C-rename-∘ (cong-∷-ren W₁)
-                                              (cong-∷-ren srs) N))
-                          (C-rename-≐ (≐ʳ-sym (cong-∷-ren-∘-≐ W₁ srs)) N))))
+                          (≐ᶜ-sym (C-rename-∘ (cong-∷-ren srs)
+                                              (cong-∷-ren W₁) N))
+                          (C-rename-≐ (≐ʳ-sym (cong-∷-ren-∘-≐ srs W₁)) N))))
                   where
-                    innerᵣ : (cong-⟨⟩-ren (cong-∷-ren sq) ∘ʳ κ)
-                           ≐ʳ (cong-⟨⟩-ren wk-ren ∘ʳ W₁)
+                    innerᵣ : (κ ∘ʳ cong-⟨⟩-ren (cong-∷-ren sq))
+                           ≐ʳ (W₁ ∘ʳ cong-⟨⟩-ren wk-ren)
                     innerᵣ =
                       ≐ʳ-trans
-                        (≐ʳ-sym (∘ʳ-assoc-≐ (cong-⟨⟩-ren (cong-∷-ren sq))
-                                            (cong-⟨⟩-ren wk-ren)
-                                            (⟨⟩-μ-ren ∘ʳ eq-ren emap)))
+                        (∘ʳ-assoc-≐ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+                                    (cong-⟨⟩-ren wk-ren)
+                                    (cong-⟨⟩-ren (cong-∷-ren sq)))
                         (≐ʳ-trans
-                          (∘ʳ-≐ (≐ʳ-trans
-                                  (≐ʳ-sym (cong-⟨⟩-ren-∘-≐ (cong-∷-ren sq) wk-ren))
-                                  (≐ʳ-trans (cong-⟨⟩-ren-≐ (wk-ren-nat-≐ sq))
-                                            (cong-⟨⟩-ren-∘-≐ wk-ren sq)))
-                                ≐ʳ-refl)
-                          (∘ʳ-assoc-≐ (cong-⟨⟩-ren wk-ren) (cong-⟨⟩-ren sq)
-                                      (⟨⟩-μ-ren ∘ʳ eq-ren emap)))
+                          (∘ʳ-≐ ≐ʳ-refl
+                            (≐ʳ-trans
+                              (≐ʳ-sym (cong-⟨⟩-ren-∘-≐ wk-ren (cong-∷-ren sq)))
+                              (≐ʳ-trans (cong-⟨⟩-ren-≐ (wk-ren-nat-≐ sq))
+                                        (cong-⟨⟩-ren-∘-≐ sq wk-ren))))
+                          (≐ʳ-sym (∘ʳ-assoc-≐ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+                                              (cong-⟨⟩-ren sq)
+                                              (cong-⟨⟩-ren wk-ren))))
 
                     split-off : C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq)))
                                          N₁'
@@ -461,18 +464,19 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     split-off =
                       ≐ᶜ-trans
                         (≐ᶜ-sym (C-rename-∘
+                                   (cong-∷-ren κ)
                                    (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq)))
-                                   (cong-∷-ren κ) N₁))
+                                   N₁))
                         (≐ᶜ-trans
                           (C-rename-≐
                             (≐ʳ-trans
                               (≐ʳ-sym (cong-∷-ren-∘-≐
-                                         (cong-⟨⟩-ren (cong-∷-ren sq)) κ))
+                                         κ (cong-⟨⟩-ren (cong-∷-ren sq))))
                               (≐ʳ-trans (cong-∷-ren-≐ innerᵣ)
-                                        (cong-∷-ren-∘-≐ (cong-⟨⟩-ren wk-ren) W₁)))
+                                        (cong-∷-ren-∘-≐ W₁ (cong-⟨⟩-ren wk-ren))))
                             N₁)
-                          (C-rename-∘ (cong-∷-ren (cong-⟨⟩-ren wk-ren))
-                                      (cong-∷-ren W₁) N₁))
+                          (C-rename-∘ (cong-∷-ren W₁)
+                                      (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N₁))
 
                 hN₂ : Seq-Prem ((C-rename
                                    (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
@@ -501,23 +505,24 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                              (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q₃)) B₂))
 
                     composite : suc-comp-ren (ext q₄) (reach-bound q₄)
-                              ≐ʳ (suc-comp-ren (ext q₃) (reach-bound q₃)
-                                    ∘ʳ (W₁ ∘ʳ srs))
+                              ≐ʳ ((srs ∘ʳ W₁)
+                                    ∘ʳ suc-comp-ren (ext q₃) (reach-bound q₃))
                     composite =
                       ≐ʳ-trans
                         (suc-comp-ren-∘-≐ (≤ₛ-trans E₀ (ext q₂)) (ext q₃)
                                           (reach-bound q₄) B₂ (reach-bound q₃))
-                        (∘ʳ-≐ ≐ʳ-refl
+                        (∘ʳ-≐
                           (≐ʳ-trans
                             (suc-comp-ren-∘-≐ E₀ (ext q₂) B₂ b₀ B₁)
-                            (∘ʳ-≐ (≐ʳ-sym eW₁) ≐ʳ-refl)))
+                            (∘ʳ-≐ ≐ʳ-refl (≐ʳ-sym eW₁)))
+                          ≐ʳ-refl)
 
-                    finalEq : unbox-ren q₄ ≐ʳ (unbox-ren q₃ ∘ʳ (W₁ ∘ʳ srs))
+                    finalEq : unbox-ren q₄ ≐ʳ ((srs ∘ʳ W₁) ∘ʳ unbox-ren q₃)
                     finalEq =
-                      ≐ʳ-trans (∘ʳ-≐ (≐ʳ-refl {r = ⟨⟩-η-ren}) composite)
-                        (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-η-ren
-                                   (suc-comp-ren (ext q₃) (reach-bound q₃))
-                                   (W₁ ∘ʳ srs)))
+                      ≐ʳ-trans (∘ʳ-≐ composite (≐ʳ-refl {r = ⟨⟩-η-ren}))
+                        (∘ʳ-assoc-≐ (srs ∘ʳ W₁)
+                                    (suc-comp-ren (ext q₃) (reach-bound q₃))
+                                    ⟨⟩-η-ren)
 
                     shift : C-rename (cong-∷-ren (unbox-ren q₄)) N
                           ≐ᶜ C-rename (cong-∷-ren (unbox-ren q₃))
@@ -528,11 +533,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                       ≐ᶜ-trans
                         (C-rename-≐
                           (≐ʳ-trans (cong-∷-ren-≐ finalEq)
-                                    (cong-∷-ren-∘-≐ (unbox-ren q₃)
-                                                    (W₁ ∘ʳ srs))) N)
+                                    (cong-∷-ren-∘-≐ (srs ∘ʳ W₁)
+                                                    (unbox-ren q₃))) N)
                         (≐ᶜ-trans
-                          (C-rename-∘ (cong-∷-ren (unbox-ren q₃))
-                                      (cong-∷-ren (W₁ ∘ʳ srs)) N)
+                          (C-rename-∘ (cong-∷-ren (srs ∘ʳ W₁))
+                                      (cong-∷-ren (unbox-ren q₃)) N)
                           (C-rename-cong (cong-∷-ren (unbox-ren q₃))
                                          (≐ᶜ-sym eN₂)))
 
@@ -606,13 +611,13 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     -- transport it is: source and target eternal parts are both
                     -- `[]`, and `cl-ren-≐` pins it by `D`'s variables alone
                     Rᶜ : (op' : Op) → (ε' : E)
-                       → Ren [] (toCtx St₁ ᴱ ++ᶜ Dof op' ε')
-                              ((toCtx St'' ∷ Ar) ᴱ ++ᶜ Dof op' ε')
+                       → Ren [] ((toCtx St'' ∷ Ar) ᴱ ++ᶜ Dof op' ε')
+                              (toCtx St₁ ᴱ ++ᶜ Dof op' ε')
                     Rᶜ op' ε' =
                       cong-ren {Γ'' = Dof op' ε'}
-                        (restrict-ren (cong-∷-ren (unbox-ren q₂)))
+                        (ren-ᴱ-∷′ {toCtx St₁ ⟨ ρₒ ⟩} {[]} Ar (eternal? Ar))
                       ∘ʳ cong-ren {Γ'' = Dof op' ε'}
-                           (ren-ᴱ-∷′ {toCtx St₁ ⟨ ρₒ ⟩} {[]} Ar (eternal? Ar))
+                           (restrict-ren (cong-∷-ren (unbox-ren q₂)))
 
                     -- `Hᵣ` is the clause renamed by that composite
                     Hᵣ-≐ : (op' : Op) → (ε' : E)
@@ -798,16 +803,18 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                             (≐ᶜ-trans
                               (C-rename-≐ (cl-ren-≐ St₁ D pointwise) (H₁ op' ε'))
                               (≐ᶜ-trans
-                                (C-rename-∘ (eq-ren eKD)
-                                  (cong-ren {Γ'' = D} (wk-ren {A = Ar})
-                                     ∘ʳ eq-ren eG)
+                                (C-rename-∘
+                                  (eq-ren eG
+                                     ∘ʳ cong-ren {Γ'' = D} (wk-ren {A = Ar}))
+                                  (eq-ren eKD)
                                   (H₁ op' ε'))
                                 (≐ᶜ-trans
                                   (C-rename-cong (eq-ren eKD)
                                     (≐ᶜ-trans
                                       (C-rename-∘
+                                        (eq-ren eG)
                                         (cong-ren {Γ'' = D} (wk-ren {A = Ar}))
-                                        (eq-ren eG) (H₁ op' ε'))
+                                        (H₁ op' ε'))
                                       (C-rename-cong
                                         (cong-ren {Γ'' = D} (wk-ren {A = Ar}))
                                         (C-rename-eq-≐ eG ≐ʳ-refl (H₁ op' ε')))))
@@ -895,7 +902,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 -- A state's eternal part has no variables, so any two renamings out of it act
 -- alike — `∅-ren-≐` one `toCtxᴱ-[]` away.
 
-toCtxᴱ-ren-≐ : ∀ {Γ'} → (St : 𝕊 []) → (r r' : Ren [] (toCtx St ᴱ) Γ')
+toCtxᴱ-ren-≐ : ∀ {Γ'} → (St : 𝕊 []) → (r r' : Ren [] Γ' (toCtx St ᴱ))
              → r ≐ʳ r'
 toCtxᴱ-ren-≐ St r r' =
   mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx
@@ -904,13 +911,13 @@ toCtxᴱ-ren-≐ St r r' =
 -- A clause's transport is absorbed into the renaming that follows it.
 
 subst-Cl-ren : ∀ {Γ₀ Γ₀' Γ₁ B} {op : Op} {ε : E} → (e : Γ₀ ≡ Γ₀')
-             → (r : Ren [] Γ₀' Γ₁) → (r' : Ren [] Γ₀ Γ₁)
-             → (r ∘ʳ eq-ren e) ≐ʳ r' → (Y : Cl B op ε Γ₀)
+             → (r : Ren [] Γ₁ Γ₀') → (r' : Ren [] Γ₁ Γ₀)
+             → (eq-ren e ∘ʳ r) ≐ʳ r' → (Y : Cl B op ε Γ₀)
              → C-rename (cong-∷-ren (cong-∷-ren r)) (subst (Cl B op ε) e Y)
              ≐ᶜ C-rename (cong-∷-ren (cong-∷-ren r')) Y
 subst-Cl-ren refl r r' h Y =
   C-rename-≐
-    (cong-∷-ren-≐ (cong-∷-ren-≐ (≐ʳ-trans (≐ʳ-sym (∘ʳ-identityʳ-≐ r)) h))) Y
+    (cong-∷-ren-≐ (cong-∷-ren-≐ (≐ʳ-trans (≐ʳ-sym (∘ʳ-identityˡ-≐ r)) h))) Y
 
 env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 [])
              → (H : Fam B (Γ ᴱ)) → {op : Op} → {ε : E}
@@ -923,7 +930,7 @@ env-Hˢ-fired {St} {Γ} {B} γ St₁ H {op} {ε} V₀ W =
   sub-≐ᶜ (Tl-∷ Hd) (≐ᵛ-refl W)
     (≐ᶜ-trans
       (subst-Cl-ren (toCtxᴱ-≡ St St₁) (ᴱ-ren (toCtx St₁))
-                    (clause-ren St₁ [] ∘ʳ eq-ren (toCtxᴱ-++ᶜ St []))
+                    (eq-ren (toCtxᴱ-++ᶜ St []) ∘ʳ clause-ren St₁ [])
                     (toCtxᴱ-ren-≐ St _ _)
                     (env-Hˢ γ [] H op ε))
       (env-Hˢ-clause γ St₁ [] H op ε))

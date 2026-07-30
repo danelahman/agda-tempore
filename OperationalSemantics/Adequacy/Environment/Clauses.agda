@@ -66,7 +66,7 @@ Lock-free-irr (lf-∷ p)  (lf-∷ q)   = cong lf-∷ (Lock-free-irr p q)
 
 -- A renaming out of a provably empty context acts like any transport.
 
-empty-src-≐ : ∀ {Γ₀ Γ₁} → (e₀ : Γ₀ ≡ []) → (r : Ren [] Γ₀ Γ₁)
+empty-src-≐ : ∀ {Γ₀ Γ₁} → (e₀ : Γ₀ ≡ []) → (r : Ren [] Γ₁ Γ₀)
             → (e : Γ₀ ≡ Γ₁) → r ≐ʳ eq-ren e
 empty-src-≐ e₀ r e =
   mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx
@@ -96,14 +96,14 @@ env-eternal-C-suffix refl lf η M = refl
 -- Fusing a conjugation whose core is itself an `eq-ren`.
 
 conj-eq-≐ : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'}
-          → {R : Ren [] Γ₁ Γ₂'} → (e : Γ₁ ≡ Γ₁') → (e₀ : Γ₁' ≡ Γ₂)
+          → {R : Ren [] Γ₂' Γ₁} → (e : Γ₁ ≡ Γ₁') → (e₀ : Γ₁' ≡ Γ₂)
           → (e' : Γ₂ ≡ Γ₂')
           → R ≐ʳconj⟨ e , eq-ren e₀ , e' ⟩
           → R ≐ʳ eq-ren (trans e (trans e₀ e'))
 conj-eq-≐ e e₀ e' h =
   ≐ʳ-trans h
-    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ e e₀))
-              (≐ʳ-trans (eq-ren-∘-≐ (trans e e₀) e')
+    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ e₀ e'))
+              (≐ʳ-trans (eq-ren-∘-≐ e (trans e₀ e'))
                         (eq-ren-≐ _ _)))
 
 -- A loop of four casts is the identity.
@@ -220,8 +220,8 @@ env-eternal-C-swap {Δ ∷ B} {A} {C} (lf-∷ lf) η Θ' V M =
         (≐ᶜ-trans (≐ᶜ-sym (sub-swap-C Θ' M W₂ W₁))
                   (sub-atᶜ-≐ {Δ} {B} Θ' W₁
                     (sub-atᶜ-≐ᵥ {Δ ∷ B} {A} Θ' M
-                      (≐ᵛ-sym (V-rename-∘ (wk-ren {A = B})
-                                          (empty-ren lf) V)))))))
+                      (≐ᵛ-sym (V-rename-∘ (empty-ren lf)
+                                          (wk-ren {A = B}) V)))))))
   where
     η' : ClosedVals Δ
     η' x = η (Tl-∷ x)
@@ -1025,7 +1025,7 @@ env-Hˢ-ᴱ {St} {B = B} (eternalˡ {Γ = Γ} Δ₀ lf η γ) Δ K op ε =
 env-Hˢ-clause : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 []) → (Δ : Ctx)
                → (K : Fam B ((Γ ++ᶜ Δ) ᴱ)) → (op : Op) → (ε : E)
                → C-rename (cong-∷-ren (cong-∷-ren
-                             (clause-ren St₁ Δ ∘ʳ eq-ren (toCtxᴱ-++ᶜ St Δ))))
+                             (eq-ren (toCtxᴱ-++ᶜ St Δ) ∘ʳ clause-ren St₁ Δ)))
                           (env-Hˢ γ Δ K op ε)
                ≐ᶜ env-Cˢ (env-clause γ St₁)
                          (Δ ᴱ ∷ type-of-gtype (param op)
@@ -1065,30 +1065,30 @@ env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
     eOut = refl
 
     hconj : cong-∷-ren (cong-∷-ren
-              (clause-ren St₁ Δ ∘ʳ eq-ren (toCtxᴱ-++ᶜ St Δ)))
+              (eq-ren (toCtxᴱ-++ᶜ St Δ) ∘ʳ clause-ren St₁ Δ))
           ≐ʳconj⟨ eIn , cong-ren {Γ'' = D~ Δ B op ε} (∅-ren St₁) , eOut ⟩
     hconj =
       ≐ʳ-trans
         (conj-cong-ren (Dcl B op ε) EA refl
           (≐ʳ-trans
-            (≐ʳ-trans (∘ʳ-≐ hsplit ≐ʳ-refl) (∘ʳ-assoc-≐ _ _ _))
+            (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl hsplit) (≐ʳ-sym (∘ʳ-assoc-≐ _ _ _)))
             (≐ʳ-trans
-              (≐ʳ-sym (∘ʳ-identityˡ-≐ _))
-              (∘ʳ-≐ (eq-ren-≐ refl refl)
-                (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ (toCtxᴱ-++ᶜ St Δ)
-                                          (sym (++ᶜ-identityˡ {Δ ᴱ}))))))))
+              (∘ʳ-≐ (eq-ren-∘-≐ (toCtxᴱ-++ᶜ St Δ)
+                                (sym (++ᶜ-identityˡ {Δ ᴱ})))
+                    ≐ʳ-refl)
+              (∘ʳ-≐ (eq-ren-≐ _ EA) (≐ʳ-sym (∘ʳ-identityʳ-≐ _))))))
         (≐ʳ-trans
           (conj-fuse (cong (_++ᶜ Dcl B op ε) EA) refl
              (++ᶜ-assoc [] (Δ ᴱ) (Dcl B op ε))
              (sym (++ᶜ-assoc (toCtx St₁) (Δ ᴱ) (Dcl B op ε)))
              (cong-ren-assoc-≐ (Δ ᴱ) (Dcl B op ε) (∅-ren St₁)))
-          (∘ʳ-≐ (eq-ren-≐ _ eOut) (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ eIn))))
+          (∘ʳ-≐ (eq-ren-≐ _ eIn) (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ eOut))))
       where
         EA = trans (toCtxᴱ-++ᶜ St Δ) (sym (++ᶜ-identityˡ {Δ ᴱ}))
 
         hsplit : clause-ren St₁ Δ
-               ≐ʳ (cong-ren {Γ'' = Δ ᴱ} (∅-ren St₁)
-                   ∘ʳ eq-ren (sym (++ᶜ-identityˡ {Δ ᴱ})))
+               ≐ʳ (eq-ren (sym (++ᶜ-identityˡ {Δ ᴱ}))
+                   ∘ʳ cong-ren {Γ'' = Δ ᴱ} (∅-ren St₁))
         hsplit = ≐ʳ-refl
 
 -- at a non-eternal entry the whole zone disappears from both sides: the

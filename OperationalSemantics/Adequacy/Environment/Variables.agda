@@ -272,9 +272,9 @@ env-Vˢ-var-l (reachᵉ γ q) Δ eγ ¬et p x f f' =
     (V-rename-cong (cong-ren {Γ'' = Δ} (reach-renᵘ q))
                    (env-Vˢ-var-l γ Δ eγ ¬et p x f f'))
     (≐ᵛ-trans
-      (≐ᵛ-sym (V-rename-∘ (cong-ren {Γ'' = Δ} (reach-renᵘ q)) (push-ren Δ p) _))
+      (≐ᵛ-sym (V-rename-∘ (push-ren Δ p) (cong-ren {Γ'' = Δ} (reach-renᵘ q)) _))
       (≐ᵛ-trans (V-rename-≐ (push-ren-nat (reach-renᵘ q) Δ p) _)
-                (V-rename-∘ (push-ren Δ p) (reach-renᵘ q) _)))
+                (V-rename-∘ (reach-renᵘ q) (push-ren Δ p) _)))
 
 env-Vˢ-var-l (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₁} γ q) Δ eγ ¬et p (Tl-⟨⟩ x) f f' =
   ≐ᵛ-trans
@@ -283,11 +283,11 @@ env-Vˢ-var-l (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₁} γ q) Δ eγ ¬et p 
         (≐ᵛ-trans (castᵛ-≐ eo (env-Vˢ-var-l γ (Δ₁ ++ᶜ Δ) eγ ¬et p₁ x f₁ f''))
           (≐ᵛ-trans (castᵛ-rename eo (push-ren (Δ₁ ++ᶜ Δ) p₁) _)
             (≐ᵛ-trans (V-rename-≐ (push-ren-++ᶜ Δ₁ Δ p₁ pₗ p) _)
-                      (V-rename-∘ (push-ren Δ p) (push-ren Δ₁ pₗ) _))))))
+                      (V-rename-∘ (push-ren Δ₁ pₗ) (push-ren Δ p) _))))))
     (≐ᵛ-trans
-      (≐ᵛ-sym (V-rename-∘ (cong-ren {Γ'' = Δ} (unbox-ren q)) (push-ren Δ p) _))
+      (≐ᵛ-sym (V-rename-∘ (push-ren Δ p) (cong-ren {Γ'' = Δ} (unbox-ren q)) _))
       (≐ᵛ-trans (V-rename-≐ (push-ren-nat (unbox-ren q) Δ p) _)
-        (≐ᵛ-trans (V-rename-∘ (push-ren Δ p) (unbox-ren q) _)
+        (≐ᵛ-trans (V-rename-∘ (unbox-ren q) (push-ren Δ p) _)
           (V-rename-cong (push-ren Δ p)
             (V-rename-cong (unbox-ren q)
               (≐ᵛ-sym (env-Vˢ-var-l γ Δ₁ eγ ¬et pₗ x f' f'')))))))
@@ -314,7 +314,7 @@ env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ eγ 
     (≐ᵛ-trans (castᵛ-≐ eo (env-Vˢ-var-l γ (Δ₁ ++ᶜ Δ) eγ ¬et p₁ x f₁ f'))
       (≐ᵛ-trans (castᵛ-rename eo (push-ren (Δ₁ ++ᶜ Δ) p₁) _)
         (≐ᵛ-trans (V-rename-≐ (push-ren-++ᶜ Δ₁ Δ p₁ pₗ p) _)
-          (≐ᵛ-trans (V-rename-∘ (push-ren Δ p) (push-ren Δ₁ pₗ) _)
+          (≐ᵛ-trans (V-rename-∘ (push-ren Δ₁ pₗ) (push-ren Δ p) _)
             (V-rename-cong (push-ren Δ p)
               (≐ᵛ-sym (env-Vˢ-var-l γ Δ₁ eγ ¬et pₗ x f' f')))))))
   where
@@ -368,9 +368,9 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ eγ ¬et p (Tl-�
               (≐ᵛ-trans (V-rename-≐ (push-ren-++ᶜ Δ₁ Δ p₁ pₗ p) _)
                 (≐ᵛ-trans
                   (V-rename-≐
-                    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (push-ren-∷ pₗ))
+                    (≐ʳ-trans (∘ʳ-≐ (push-ren-∷ pₗ) ≐ʳ-refl)
                               (≐ʳ-sym (push-ren-nat wk-ren Δ p))) _)
-                  (V-rename-∘ (cong-ren {Γ'' = Δ} wk-ren) (push-ren Δ p) _))))))))
+                  (V-rename-∘ (push-ren Δ p) (cong-ren {Γ'' = Δ} wk-ren) _))))))))
     (≐ᵛ-trans (sub-wk-V Δ (V-rename (push-ren Δ p) Z) _)
       (V-rename-cong (push-ren Δ p)
         (≐ᵛ-sym
@@ -497,8 +497,8 @@ env-var-lock {ρ = ρ} γ q eγ ¬et p x f f' =
   ≐ᵛ-trans
     (V-rename-cong (unbox-ren q)
       (env-Vˢ-var-l γ ([] ⟨ ρ ⟩) eγ ¬et pₗ x f f'))
-    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (unbox-ren q) (push-ren ([] ⟨ ρ ⟩) pₗ) _))
-              (V-rename-≐ (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (push-ren-⟨⟩ pₗ p))
+    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (push-ren ([] ⟨ ρ ⟩) pₗ) (unbox-ren q) _))
+              (V-rename-≐ (≐ʳ-trans (∘ʳ-≐ (push-ren-⟨⟩ pₗ p) ≐ʳ-refl)
                                     (unbox-ren-unit q p)) _))
   where
     pₗ = ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) p

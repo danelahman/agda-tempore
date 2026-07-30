@@ -6,8 +6,9 @@
 -- and `cong-ren` does not commute with it on the nose. What is true   --
 -- is that renamings agreeing on variables act the same on terms.      --
 --                                                                    --
--- `_≐ʳ_` compares renamings by where they send variables — grade and  --
--- position, not the grade-bound proof, which is irrelevant.           --
+-- `_≐ʳ_` compares renamings by where a variable of the target comes   --
+-- from — grade and position, not the grade-bound proof, which is      --
+-- irrelevant.                                                         --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -39,13 +40,13 @@ open import Syntax.Types      Spec
 Var : Ctx → VType → Set
 Var Γ' A = Σ[ ρ' ∈ R ] A ∈[ ρ' ] Γ'
 
-var-img : ∀ {Γ Γ' A ρ} → Ren [] Γ Γ' → A ∈[ ρ ] Γ → Var Γ' A
+var-img : ∀ {Γ Γ' A ρ} → Ren [] Γ Γ' → A ∈[ ρ ] Γ' → Var Γ A
 var-img r x = proj₁ (var-rename r x) , proj₂ (proj₂ (var-rename r x))
 
 -- The same, at an already-located variable: this is what makes `var-img` of a
 -- composite the composite of `var-img`s, definitionally.
 
-var-img′ : ∀ {Γ' Γ'' A} → Ren [] Γ' Γ'' → Var Γ' A → Var Γ'' A
+var-img′ : ∀ {Γ' Γ'' A} → Ren [] Γ' Γ'' → Var Γ'' A → Var Γ' A
 var-img′ r (ρ' , y) = var-img r y
 
 -- Pushing a `Var` under one more binder, resp. one more lock. Named rather than
@@ -94,7 +95,7 @@ infix 4 _≐ʳ_
 
 record _≐ʳ_ {Γ Γ'} (r r' : Ren [] Γ Γ') : Set where
   constructor mk≐ʳ
-  field at : ∀ {A ρ} → (x : A ∈[ ρ ] Γ) → var-img r x ≡ var-img r' x
+  field at : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → var-img r x ≡ var-img r' x
 
 open _≐ʳ_ public
 
@@ -109,15 +110,15 @@ open _≐ʳ_ public
 
 -- COMPOSITION
 --
--- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₁` and then with `r₂`,
+-- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₂` and then with `r₁`,
 -- so all three laws below hold at the level of `var-img` by computation.
 
 ∘ʳ-≐ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren [] Γ' Γ''} {r₁ r₁' : Ren [] Γ Γ'}
      → r₂ ≐ʳ r₂' → r₁ ≐ʳ r₁'
      -------------------------------
      → (r₂ ∘ʳ r₁) ≐ʳ (r₂' ∘ʳ r₁')
-∘ʳ-≐ {r₂ = r₂} h₂ h₁ =
-  mk≐ʳ (λ x → trans (cong (var-img′ r₂) (at h₁ x)) (at h₂ _))
+∘ʳ-≐ {r₁ = r₁} h₂ h₁ =
+  mk≐ʳ (λ x → trans (cong (var-img′ r₁) (at h₂ x)) (at h₁ _))
 
 ∘ʳ-assoc-≐ : ∀ {Γ Γ' Γ'' Γ'''}
            → (r₃ : Ren [] Γ'' Γ''') → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
@@ -246,7 +247,7 @@ grade-++ᶜˡ-assoc ρ Δ₁ (Δ₂ ⟨ ρ' ⟩) =
 -- image: the counterpart of `cong-ren-img-r`, and what makes the pushing
 -- renaming family natural.
 
-cong-ren-img-l : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ)
+cong-ren-img-l : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (Δ : Ctx) → (y : A ∈[ ρ ] Γ')
                → var-img (cong-ren {Γ'' = Δ} r) (∈-++ᶜˡ Δ y)
                ≡ (grade-++ᶜˡ (proj₁ (var-img r y)) Δ
                  , ∈-++ᶜˡ Δ (proj₂ (var-img r y)))
@@ -335,12 +336,12 @@ Var-cast-flip⁻ refl t t' q = sym q
 -- the suffix's grade is bounded by the unit — each of its locks has to be
 -- crossed, which is `⟨⟩-≤-ren` at that lock's own grade.
 
-push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ uᵣ → Ren [] Γ₀ (Γ₀ ++ᶜ Δ)
+push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ uᵣ → Ren [] (Γ₀ ++ᶜ Δ) Γ₀
 push-ren []         p = id-ren
-push-ren (Δ ∷ B)    p = wk-ren ∘ʳ push-ren Δ p
+push-ren (Δ ∷ B)    p = push-ren Δ p ∘ʳ wk-ren
 push-ren (Δ ⟨ ρ' ⟩) p =
-  (⟨⟩-≤-ren (≾ᵣ-zero-productʳ p) ∘ʳ ⟨⟩-η⁻¹-ren)
-    ∘ʳ push-ren Δ (≾ᵣ-zero-productˡ p)
+  push-ren Δ (≾ᵣ-zero-productˡ p)
+    ∘ʳ (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ p))
 
 -- It acts as `∈-++ᶜˡ`, which is what pins it down up to `_≐ʳ_`.
 
@@ -357,19 +358,19 @@ push-ren-img (Δ ⟨ ρ' ⟩) p y =
 
 push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ uᵣ)
            → push-ren {Γ₀} ([] ∷ B) p ≐ʳ wk-ren
-push-ren-∷ p = ∘ʳ-identityʳ-≐ wk-ren
+push-ren-∷ p = ∘ʳ-identityˡ-≐ wk-ren
 
 push-ren-⟨⟩ : ∀ {Γ₀ ρ} → (p : ctx-grade ([] ⟨ ρ ⟩) ≾ᵣ uᵣ) → (p' : ρ ≾ᵣ uᵣ)
-            → push-ren {Γ₀} ([] ⟨ ρ ⟩) p ≐ʳ (⟨⟩-≤-ren p' ∘ʳ ⟨⟩-η⁻¹-ren)
+            → push-ren {Γ₀} ([] ⟨ ρ ⟩) p ≐ʳ (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p')
 push-ren-⟨⟩ p p' =
-  ≐ʳ-trans (∘ʳ-identityʳ-≐ _) (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ p') ≐ʳ-refl)
+  ≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ p'))
 
 -- Pushing is natural: renaming the prefix and then pushing is pushing and then
 -- renaming the prefix under the suffix.
 
 push-ren-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Δ : Ctx)
              → (p : ctx-grade Δ ≾ᵣ uᵣ)
-             → (cong-ren {Γ'' = Δ} r ∘ʳ push-ren Δ p) ≐ʳ (push-ren Δ p ∘ʳ r)
+             → (push-ren Δ p ∘ʳ cong-ren {Γ'' = Δ} r) ≐ʳ (r ∘ʳ push-ren Δ p)
 push-ren-nat r Δ p = mk≐ʳ go
   where
     go : ∀ {A σ} → (y : A ∈[ σ ] _) → _
@@ -384,8 +385,8 @@ push-ren-nat r Δ p = mk≐ʳ go
 push-ren-++ᶜ : ∀ {Γ₀} → (Δ₁ Δ₂ : Ctx)
              → (p : ctx-grade (Δ₁ ++ᶜ Δ₂) ≾ᵣ uᵣ)
              → (p₁ : ctx-grade Δ₁ ≾ᵣ uᵣ) → (p₂ : ctx-grade Δ₂ ≾ᵣ uᵣ)
-             → (eq-ren (sym (++ᶜ-assoc Γ₀ Δ₁ Δ₂)) ∘ʳ push-ren (Δ₁ ++ᶜ Δ₂) p)
-             ≐ʳ (push-ren Δ₂ p₂ ∘ʳ push-ren {Γ₀} Δ₁ p₁)
+             → (push-ren (Δ₁ ++ᶜ Δ₂) p ∘ʳ eq-ren (sym (++ᶜ-assoc Γ₀ Δ₁ Δ₂)))
+             ≐ʳ (push-ren {Γ₀} Δ₁ p₁ ∘ʳ push-ren Δ₂ p₂)
 push-ren-++ᶜ {Γ₀} Δ₁ Δ₂ p p₁ p₂ = mk≐ʳ go
   where
     e = sym (++ᶜ-assoc Γ₀ Δ₁ Δ₂)
@@ -446,7 +447,7 @@ cong-⟨⟩-ren-∘-≐ {ρ = ρ} r₂ r₁ = mk≐ʳ go
 -- and then renaming under the new binder.
 
 wk-ren-nat-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ')
-             → (cong-∷-ren {A = B} r ∘ʳ wk-ren) ≐ʳ (wk-ren ∘ʳ r)
+             → (wk-ren ∘ʳ cong-∷-ren {A = B} r) ≐ʳ (r ∘ʳ wk-ren)
 wk-ren-nat-≐ r = mk≐ʳ (λ y → refl)
 
 cong-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (Γ₀ : Ctx)
@@ -469,13 +470,13 @@ cong-ren-∘-≐ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
 -- what `_≐ᶜ_` compares below.
 ------------------------------------------------------------------------
 
-unbox-img : ∀ {Γ A ρ Δ} → Ren [] (Δ ⟨ ρ ⟩) Γ → Δ ⊢V⦂ [ ρ ] A → Var Γ ([ ρ ] A)
+unbox-img : ∀ {Γ A ρ Δ} → Ren [] Γ (Δ ⟨ ρ ⟩) → Δ ⊢V⦂ [ ρ ] A → Var Γ ([ ρ ] A)
 unbox-img w V = proj₁ (unbox⇒var w V) , proj₁ (proj₂ (unbox⇒var w V))
 
 -- `_≐ʳ_`-equal renamings name the same resource variable: the boxed value is seen only as a
 -- variable (`grad-typ⇒var`), which both consult alike.
 
-unbox-img-≐ : ∀ {Γ A ρ Δ} {w w' : Ren [] (Δ ⟨ ρ ⟩) Γ}
+unbox-img-≐ : ∀ {Γ A ρ Δ} {w w' : Ren [] Γ (Δ ⟨ ρ ⟩)}
             → w ≐ʳ w' → (V : Δ ⊢V⦂ [ ρ ] A)
             → unbox-img w V ≡ unbox-img w' V
 unbox-img-≐ hw V with grad-typ⇒var V
@@ -484,9 +485,9 @@ unbox-img-≐ hw V with grad-typ⇒var V
 -- Renaming an `unbox` relocates its resource variable — definitionally, since `var-rename`
 -- of a composite is the composite.
 
-unbox-img-∘ : ∀ {Γ Γ' A ρ Δ} → (r : Ren [] Γ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+unbox-img-∘ : ∀ {Γ Γ' A ρ Δ} → (r : Ren [] Γ Γ') → (w : Ren [] Γ' (Δ ⟨ ρ ⟩))
             → (V : Δ ⊢V⦂ [ ρ ] A)
-            → unbox-img (r ∘ʳ w) V ≡ var-img′ r (unbox-img w V)
+            → unbox-img (w ∘ʳ r) V ≡ var-img′ r (unbox-img w V)
 unbox-img-∘ r w V with grad-typ⇒var V
 ... | _ , y , f , refl = refl
 
@@ -601,23 +602,23 @@ eternal?-no {A} ¬et with eternal? A
 
 -- Restricting commutes with reflection. Induction on the renaming.
 
-restrict-img⁻ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
-              → ∈-ᴱ⁻′ Γ' (var-img (restrict-ren r) x)
-              ≡ var-img′ r (∈-ᴱ⁻ Γ x)
+restrict-img⁻ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → ∀ {A ρ} → (x : A ∈[ ρ ] Γ' ᴱ)
+              → ∈-ᴱ⁻′ Γ (var-img (restrict-ren r) x)
+              ≡ var-img′ r (∈-ᴱ⁻ Γ' x)
 
 restrict-img⁻ id-ren x = refl
 
 restrict-img⁻ (r₂ ∘ʳ r₁) x =
-  trans (restrict-img⁻ r₂ (proj₂ (var-img (restrict-ren r₁) x)))
-        (cong (var-img′ r₂) (restrict-img⁻ r₁ x))
+  trans (restrict-img⁻ r₁ (proj₂ (var-img (restrict-ren r₂) x)))
+        (cong (var-img′ r₁) (restrict-img⁻ r₂ x))
 
 restrict-img⁻ (wk-ren {A = B}) x with eternal? B
 ... | yes _ = refl
 ... | no  _ = refl
 
-restrict-img⁻ {Γ' = Γ'} (var-ren {A = B} p z) x with eternal? B
-restrict-img⁻ {Γ' = Γ'} (var-ren {A = B} p z) Hd       | yes etB =
-  ∈-ᴱ⁻-∈-ᴱ Γ' etB z
+restrict-img⁻ {Γ = Γ₀} (var-ren {A = B} p z) x with eternal? B
+restrict-img⁻ {Γ = Γ₀} (var-ren {A = B} p z) Hd       | yes etB =
+  ∈-ᴱ⁻-∈-ᴱ Γ₀ etB z
 restrict-img⁻ (var-ren {A = B} p z) (Tl-∷ x) | yes _ = refl
 restrict-img⁻ (var-ren {A = B} p z) x        | no  _ = refl
 
@@ -627,7 +628,7 @@ restrict-img⁻ (⟨⟩-≤-ren _) x = refl
 
 -- the one renaming whose source carries no lock and whose `var-rename` still
 -- splits on the variable, so the reflected variable has to be exposed
-restrict-img⁻ {Γ = Γ} ⟨⟩-η⁻¹-ren x with ∈-ᴱ⁻ Γ x
+restrict-img⁻ {Γ' = Γ} ⟨⟩-η⁻¹-ren x with ∈-ᴱ⁻ Γ x
 ... | _ , Hd      = refl
 ... | _ , Tl-∷ y  = refl
 ... | _ , Tl-⟨⟩ y = refl
@@ -658,15 +659,15 @@ restrict-ren-≐ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'}
 
 restrict-ren-≐ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
   where
-    go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ ᴱ)
+    go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ' ᴱ)
        → var-img (restrict-ren r) x ≡ var-img (restrict-ren r') x
     go x =
-      ∈-ᴱ⁻-inj Γ' _ _
+      ∈-ᴱ⁻-inj Γ _ _
         (trans (restrict-img⁻ r x)
           (trans (cong (var-img′ r) refl)
-            (trans (at-img (∈-ᴱ⁻ Γ x)) (sym (restrict-img⁻ r' x)))))
+            (trans (at-img (∈-ᴱ⁻ Γ' x)) (sym (restrict-img⁻ r' x)))))
       where
-        at-img : ∀ {A} → (t : Var Γ A) → var-img′ r t ≡ var-img′ r' t
+        at-img : ∀ {A} → (t : Var Γ' A) → var-img′ r t ≡ var-img′ r' t
         at-img (_ , y) = at h y
 
 -- The unit renamings act on a variable by adding, resp. removing, a lock.
@@ -743,17 +744,17 @@ split-lookup-img (Tl-⟨⟩ {ρ = ρ₁} z) =
         (cong (Var-⟨⟩ ρ₁) (split-lookup-img z))
 
 -- Hence: the resource variable `unbox-var z rel M` names is `z`. The renaming it stores is
--- `eq-ren (split-≡ …) ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z) ∘ʳ ⟨⟩-≤-ren rel`, and
--- `var-img` runs through those right to left.
+-- `(⟨⟩-≤-ren rel ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)) ∘ʳ eq-ren (split-≡ …)`, and
+-- `var-img` runs through those left to right.
 
 -- The renaming `unbox-var` stores.
 
 unbox-var-ren : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-              → Ren [] ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩) Γ
+              → Ren [] Γ ((split-l z ∷ [ ρ ] A) ⟨ ρ ⟩)
 unbox-var-ren z rel =
-     eq-ren (split-≡ (split-pf z))
-  ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z)
-  ∘ʳ ⟨⟩-≤-ren rel
+     (⟨⟩-≤-ren rel
+  ∘ʳ wk-ren-⟨ρ⟩-ctx (split-grade-≡ z))
+  ∘ʳ eq-ren (split-≡ (split-pf z))
 
 unbox-var-img : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
               → unbox-img (unbox-var-ren z rel)

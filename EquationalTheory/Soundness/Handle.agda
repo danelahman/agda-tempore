@@ -125,7 +125,7 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
   where
     e   = sym (·ₑ-identityˡ ε)
-    r   = cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))
+    r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r N) Hd V (renᶜ r N pN) pV
 
 -- `handle-box`: a `box` binder commutes with handling. The binder denotes an
@@ -177,7 +177,7 @@ private
   ... | no  _ = refl
 
 sound-handle-unbox : ∀ {Γ A B C ρ Δ ε ε'}
-  → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+  → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
   → (V : Δ ⊢V⦂ [ ρ ] A)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
   → (H : (op : Op) → (ε'' : E)
@@ -321,7 +321,7 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
             ∙ sound-ε-subst e (delay τ (handle M `with H `in (C-rename r N))) pRc)
   where
     e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
-    r   = cong-∷-ren (⟨⟩-μ-ren
-                      ∘ʳ eq-ren (cong (Γ ⟨_⟩)
-                           (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+    r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩)
+                               (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
+                      ∘ʳ ⟨⟩-μ-ren)
     pRc = pM , renᶜ r N pN , pH , uH

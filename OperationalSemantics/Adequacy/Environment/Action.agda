@@ -2039,9 +2039,9 @@ toCtxᴱ-++ᶜ St Δ =
 
 -- The weakening `env-clause` ends with, at a suffix.
 
-clause-ren : (St₁ : 𝕊 []) → (Δ : Ctx) → Ren [] (Δ ᴱ) (toCtx St₁ ++ᶜ Δ ᴱ)
+clause-ren : (St₁ : 𝕊 []) → (Δ : Ctx) → Ren [] (toCtx St₁ ++ᶜ Δ ᴱ) (Δ ᴱ)
 clause-ren St₁ Δ =
-  cong-ren {Γ'' = Δ ᴱ} (∅-ren St₁) ∘ʳ eq-ren (sym (++ᶜ-identityˡ {Δ ᴱ}))
+  eq-ren (sym (++ᶜ-identityˡ {Δ ᴱ})) ∘ʳ cong-ren {Γ'' = Δ ᴱ} (∅-ren St₁)
 
 -- Relocating a clause along an equality of the *restricted* context it is
 -- already stated over — `Cl-cast`'s shape, one `_ᴱ` further in.

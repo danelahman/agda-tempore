@@ -91,11 +91,11 @@ sub-var-≐ {B = B} (Tl-⟨⟩ y) f f' (Tl-⟨⟩ x) eW with eternal? B
                  (λ z → ≾ᵣ-zero-productˡ (f' (λ _ → z p))) x eW)
 ... | no ¬p =
   ≐ᵛ-trans
-    (V-rename-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ (≾ᵣ-zero-productʳ (f ¬p))
-                                  (≾ᵣ-zero-productʳ (f' ¬p)))
-                      (≐ʳ-refl {r = ⟨⟩-η⁻¹-ren}))
+    (V-rename-≐ (∘ʳ-≐ (≐ʳ-refl {r = ⟨⟩-η⁻¹-ren})
+                      (⟨⟩-≤-ren-≐ (≾ᵣ-zero-productʳ (f ¬p))
+                                  (≾ᵣ-zero-productʳ (f' ¬p))))
                 ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f z)) ⟩[ x ↦ _ ]var)
-    (V-rename-cong (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬p)) ∘ʳ ⟨⟩-η⁻¹-ren)
+    (V-rename-cong (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬p)))
       (sub-var-≐ y (λ z → ≾ᵣ-zero-productˡ (f z))
                    (λ z → ≾ᵣ-zero-productˡ (f' z)) x eW))
 
@@ -150,9 +150,9 @@ unbox-var-≐ : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ)
             → unbox-var x rel M ≐ᶜ unbox-var x rel' M'
 unbox-var-≐ x rel rel' eM =
   unbox-≐ (unbox-img-≐
-             (∘ʳ-≐ (≐ʳ-refl {r = eq-ren (split-≡ (split-pf x))})
-               (∘ʳ-≐ (≐ʳ-refl {r = wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)})
-                     (⟨⟩-≤-ren-≐ rel rel')))
+             (∘ʳ-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ rel rel')
+                         (≐ʳ-refl {r = wk-ren-⟨ρ⟩-ctx (split-grade-≡ x)}))
+                   (≐ʳ-refl {r = eq-ren (split-≡ (split-pf x))}))
              (var (λ _ → ≾ᵣ-refl) Hd))
           eM
 
@@ -233,7 +233,7 @@ mutual
 -- the three nested `with`s stay local — callers then reason with `rvar-img` and
 -- `unbox-img` alone. The grade bound is arbitrary, `_≐ᶜ_` not seeing it.
 
-sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+sub-unbox : ∀ {Γ A C ρ Δ₀ A₀ τ} → (w : Ren [] Γ (Δ₀ ⟨ ρ ⟩)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
           → (M : Γ ∷ A ⊢C⦂ C) → (x : A₀ ∈[ τ ] Γ) → (W : split-l x ⊢V⦂ A₀)
           → (rel : proj₁ (rvar-img (proj₂ (unbox-img w V)) x W) ≾ᵣ ρ)
           → ((unbox w V M) [ x ↦ W ]c)

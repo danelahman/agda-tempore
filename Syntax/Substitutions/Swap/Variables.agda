@@ -150,15 +150,15 @@ hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ⟨ ρ ⟩) W g g' E with eternal? B
               ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
                  ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
     (≐ᵛ-trans (V-rename-cong rn (hit-∷-++ᶜ Θ W _ _ (Ehit B B₀ Θ)))
-      (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl) _)
+      (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _)) _)
                 (≡→≐ᵛ (sym (cast-ren-⟨⟩-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
                                             (castOf {Γ' ∷ B₀} {B} Θ) rn' _)))))
   where
-    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
-    rn = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+    rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g ¬et))
 
-    rn' : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
-    rn' = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g' ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+    rn' : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
+    rn' = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (g' ¬et))
 
 -- Grade bounds are proof-irrelevant, so the substitution does not see
 -- which one it was handed.
@@ -590,7 +590,7 @@ unbox-rvar-swap {Γ} {B₁} {B₂} {A} {ρ} {σ} Θ c W₂ W₁
 -- for the resource variable and the induction hypothesis for the body.
 
 sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ Δ₀} → (Θ : Ctx)
-               → (w : Ren [] (Δ₀ ⟨ ρ ⟩) ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ))
+               → (w : Ren [] ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) (Δ₀ ⟨ ρ ⟩))
                → (V : Δ₀ ⊢V⦂ [ ρ ] A)
                → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ∷ A ⊢C⦂ C)
                → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)

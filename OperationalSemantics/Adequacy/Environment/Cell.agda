@@ -111,7 +111,7 @@ env-cell (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ t =
 -- never eternal), and `⟨_⟩[_↦_]rvar` carries its bound as its third component —
 -- so a cell readable at `ρ` stays readable at `ρ` wherever the action puts it.
 
-var-img-≾ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ Γ')
+var-img-≾ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ' Γ)
           → (x : [ ρ ] A ∈[ σ ] Γ) → proj₁ (var-img r x) ≾ᵣ σ
 var-img-≾ r x = proj₁ (proj₂ (var-rename r x)) (λ ())
 
@@ -201,7 +201,7 @@ env-Cˢ-≐ (eternalˡ Δ₀ lf η γ) Δ eM =
 
 -- Recognising a node by its cell.
 
-unbox-cell-≐ : ∀ {Γ A C ρ Δ₀ σ} → {w : Ren [] (Δ₀ ⟨ ρ ⟩) Γ} → {V : Δ₀ ⊢V⦂ [ ρ ] A}
+unbox-cell-≐ : ∀ {Γ A C ρ Δ₀ σ} → {w : Ren [] Γ (Δ₀ ⟨ ρ ⟩)} → {V : Δ₀ ⊢V⦂ [ ρ ] A}
              → {z : [ ρ ] A ∈[ σ ] Γ} → (rel : σ ≾ᵣ ρ)
              → unbox-img w V ≡ (σ , z)
              → {N N' : Γ ∷ A ⊢C⦂ C} → N ≐ᶜ N'
@@ -243,17 +243,17 @@ UnboxAt : ∀ {St Γ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
         → Var (Γ ++ᶜ Δ) ([ ρ ] A)
         → toCtx St ++ᶜ Δ ⊢C⦂ C → ((Γ ++ᶜ Δ) ∷ A) ⊢C⦂ C → Set
 UnboxAt {St} {Γ} {A} {C} {ρ} γ Δ t N M =
-  Σ[ Δ₁ ∈ Ctx ] Σ[ w₁ ∈ Ren [] (Δ₁ ⟨ ρ ⟩) (toCtx St ++ᶜ Δ) ]
+  Σ[ Δ₁ ∈ Ctx ] Σ[ w₁ ∈ Ren [] (toCtx St ++ᶜ Δ) (Δ₁ ⟨ ρ ⟩) ]
   Σ[ V₁ ∈ Δ₁ ⊢V⦂ [ ρ ] A ]
     (unbox-img w₁ V₁ ≡ env-cell γ Δ t)
   × (N ≐ᶜ unbox w₁ V₁ (env-Cˢ γ (Δ ∷ A) M))
 
 env-eternal-C-unbox : ∀ {Δ Γc Δ₀ A C ρ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-                    → (w : Ren [] (Δ₀ ⟨ ρ ⟩) (Δ ++ᶜ Γc)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+                    → (w : Ren [] (Δ ++ᶜ Γc) (Δ₀ ⟨ ρ ⟩)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
                     → (M : ((Δ ++ᶜ Γc) ∷ A) ⊢C⦂ C)
                     → (t : Var (Δ ++ᶜ Γc) ([ ρ ] A)) → unbox-img w V ≡ t
                     → (rel : proj₁ t ≾ᵣ ρ)
-                    → Σ[ Δ₁ ∈ Ctx ] Σ[ w₁ ∈ Ren [] (Δ₁ ⟨ ρ ⟩) Γc ]
+                    → Σ[ Δ₁ ∈ Ctx ] Σ[ w₁ ∈ Ren [] Γc (Δ₁ ⟨ ρ ⟩) ]
                       Σ[ V₁ ∈ Δ₁ ⊢V⦂ [ ρ ] A ]
                         (unbox-img w₁ V₁ ≡ env-eternal-cell lf η t)
                       × (env-eternal-C lf η (unbox w V M)
@@ -302,7 +302,7 @@ env-eternal-C-unbox {Δ ∷ B} {Γc} {A = A} (lf-∷ lf) η w V M
       eq
 
 env-Cˢ-unbox : ∀ {St Γ Δ₀ A C ρ} → (γ : Env St Γ) → (Δ : Ctx)
-             → (w : Ren [] (Δ₀ ⟨ ρ ⟩) (Γ ++ᶜ Δ)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
+             → (w : Ren [] (Γ ++ᶜ Δ) (Δ₀ ⟨ ρ ⟩)) → (V : Δ₀ ⊢V⦂ [ ρ ] A)
              → (M : ((Γ ++ᶜ Δ) ∷ A) ⊢C⦂ C)
              → (t : Var (Γ ++ᶜ Δ) ([ ρ ] A)) → unbox-img w V ≡ t
              → (rel : proj₁ t ≾ᵣ ρ)
@@ -312,13 +312,13 @@ env-Cˢ-unbox ⌊ St ⌋ Δ w V M .(unbox-img w V) refl rel =
   _ , w , V , refl , ≐ᶜ-refl _
 
 env-Cˢ-unbox (∅ᵉ St) Δ w V M .(unbox-img w V) refl rel =
-    _ , (cong-ren (∅-ren St) ∘ʳ w) , V
+    _ , (w ∘ʳ cong-ren (∅-ren St)) , V
   , unbox-img-∘ (cong-ren (∅-ren St)) w V , ≐ᶜ-refl _
 
 env-Cˢ-unbox (reachᵉ γ q) Δ w V M .(unbox-img w V) refl rel
   with env-Cˢ-unbox γ Δ w V M _ refl rel
 ... | Δ₁ , w₁ , V₁ , ce , eq =
-    Δ₁ , (cong-ren (reach-renᵘ q) ∘ʳ w₁) , V₁
+    Δ₁ , (w₁ ∘ʳ cong-ren (reach-renᵘ q)) , V₁
   , trans (unbox-img-∘ (cong-ren (reach-renᵘ q)) w₁ V₁)
           (cong (var-img′ (cong-ren (reach-renᵘ q))) ce)
   , C-rename-cong (cong-ren (reach-renᵘ q)) eq
@@ -330,7 +330,7 @@ env-Cˢ-unbox {A = A} (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ w V
          (castᶜ (cong (_∷ A) (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ)) M)
          _ (unbox-img-castʳ (++ᶜ-assoc Γ ([] ⟨ ρ₀ ⟩) Δ) w V) rel
 ... | Δ₁ , w₁ , V₁ , ce , eq =
-    Δ₁ , (cong-ren (unbox-ren q) ∘ʳ castʳ eOut w₁) , V₁
+    Δ₁ , (castʳ eOut w₁ ∘ʳ cong-ren (unbox-ren q)) , V₁
   , trans (unbox-img-∘ (cong-ren (unbox-ren q)) (castʳ eOut w₁) V₁)
           (cong (var-img′ (cong-ren (unbox-ren q)))
                 (trans (unbox-img-castʳ eOut w₁ V₁) (cong (Var-cast eOut) ce)))

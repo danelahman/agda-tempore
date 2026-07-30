@@ -68,7 +68,7 @@ ext Γ Γ' (Θ ⟨ ρ ⟩) g = ⟨ ρ ⟩ᶠ (ext Γ Γ' Θ g)
 
 -- `ext` on a renaming's denotation is that renaming's `cong-ren`.
 
-cong-ren-ext : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+cong-ren-ext : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
              → ⟦ cong-ren {Γ'' = Θ} r ⟧ʳ ≈ᵐ ext Γ' Γ Θ ⟦ r ⟧ʳ
 cong-ren-ext r []        = ≈ᵐ-refl
 cong-ren-ext r (Θ ∷ A)   = mapˣᵐ-cong (cong-ren-ext r Θ) ≈ᵐ-refl
@@ -129,14 +129,14 @@ strᵉ-past-fstᵐ et g =
 -- variable (relaxed back to the original grade) equals projecting the
 -- original variable and reindexing the environment by `⟦ r ⟧ʳ`.
 
-var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Eternal A)
+var-proj-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ) → (¬et : ¬ Eternal A)
              → ⟨⟩-≤ (proj₁ (proj₂ (var-rename r x)) ¬et)
                  ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
                ≈ᵐ var-proj x ∘ᵐ ⟦ r ⟧ʳ
 var-proj-nat id-ren x ¬et =
   ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
-var-proj-nat (r₂ ∘ʳ r₁) x ¬et with var-rename r₁ x | var-proj-nat r₁ x ¬et | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat r₂ (proj₂ (proj₂ (var-rename r₁ x))) ¬et
+var-proj-nat (r₁ ∘ʳ r₂) x ¬et with var-rename r₁ x | var-proj-nat r₁ x ¬et | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat r₂ (proj₂ (proj₂ (var-rename r₁ x))) ¬et
 ... | ρ' , ρ'≾ρ , y | ih₁ | ρ'' , ρ''≾ρ' , z | ih₂ =
   ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (ρ''≾ρ' ¬et) (ρ'≾ρ ¬et))))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -231,12 +231,12 @@ var-proj-nat (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) ¬et =
 -- `⟨⟩-≤` that `var-proj-nat` carries is absorbed; proved by induction on the
 -- renaming using the eternal-extraction algebra laws.
 
-var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ Γ') → (x : A ∈[ ρ ] Γ)
+var-proj-nat-eternal : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ] Γ)
     → eternalᵛ-extᵉ et {proj₁ (var-rename r x)} ∘ᵐ var-proj (proj₂ (proj₂ (var-rename r x)))
       ≈ᵐ (eternalᵛ-extᵉ et {ρ} ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
 var-proj-nat-eternal et id-ren x =
   ≈ᵐ-sym (∘ᵐ-identityʳ _)
-var-proj-nat-eternal et (r₂ ∘ʳ r₁) x
+var-proj-nat-eternal et (r₁ ∘ʳ r₂) x
   with var-rename r₁ x | var-proj-nat-eternal et r₁ x
      | var-rename r₂ (proj₂ (proj₂ (var-rename r₁ x))) | var-proj-nat-eternal et r₂ (proj₂ (proj₂ (var-rename r₁ x)))
 ... | ρ₁' , _ , y₁ | ih₁ | ρ₂' , _ , y₂ | ih₂ =
@@ -371,7 +371,7 @@ var-proj-nat-eternal et (⟨⟩-ext-ctx _ ecΓ) x =
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (ec-var-alg ecΓ et x))))
 
-var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
+var-morphism-nat : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ ] Γ)
                  → var-morphism (λ q → ≾ᵣ-trans (proj₁ (proj₂ (var-rename r x)) q) (f q))
                                 (proj₂ (proj₂ (var-rename r x)))
                    ≈ᵐ var-morphism f x ∘ᵐ ⟦ r ⟧ʳ
@@ -390,13 +390,13 @@ var-morphism-nat {A = A} r f x with eternal? A
 -- and target restrictions. Proved by recursion on the renaming; the eternal
 -- variable case is exactly `eternal-mor`.
 
-restrict-ren-mor : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → ∀ {ρ}
+restrict-ren-mor : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → ∀ {ρ}
                  → projᴱ-extᵉ Γ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ ⟦ restrict-ren r ⟧ʳ
                  ≈ᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ projᴱ-extᵉ Γ' {ρ}
 restrict-ren-mor id-ren =
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
-restrict-ren-mor (r₂ ∘ʳ r₁) =
+restrict-ren-mor (r₁ ∘ʳ r₂) =
   ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (restrict-ren-mor r₁))
@@ -446,7 +446,7 @@ restrict-ren-mor ⟨⟩-μ-ren =
 restrict-ren-mor (⟨⟩-≤-ren _) =
   ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
   (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
-restrict-ren-mor (cong-∷-ren {Δ = Γ₀} {Δ' = Γ₀'} {A = A} r) {ρ} with eternal? A
+restrict-ren-mor (cong-∷-ren {Δ = Γ₀'} {Δ' = Γ₀} {A = A} r) {ρ} with eternal? A
 ... | yes eA =
   prod-ext
     -- fstᵐ: the sub-renaming, via `restrict-ren-mor r`
@@ -490,11 +490,11 @@ restrict-ren-mor (⟨⟩-ext-ctx _ _) =
 -- into the restricted renaming. The variable case is `var-projᴱ`; the lock
 -- case uses `restrict-ren-mor` to carry the restricted renaming past `extᵉ`.
 
-projᴱ-nat : ∀ {Γ Γ'} → (r : Ren [] Γ Γ')
+projᴱ-nat : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ)
           → projᴱ Γ ∘ᵐ ⟦ r ⟧ʳ ≈ᵐ ⟦ restrict-ren r ⟧ʳ ∘ᵐ projᴱ Γ'
 projᴱ-nat id-ren =
   ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
-projᴱ-nat (r₂ ∘ʳ r₁) =
+projᴱ-nat (r₁ ∘ʳ r₂) =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-nat r₁))
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

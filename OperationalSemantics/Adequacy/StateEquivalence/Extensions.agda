@@ -73,7 +73,7 @@ data _≤≐_ : ∀ {St St₁ St' St₁' : 𝕊 []} → St ≤ₛ St₁ → St' 
 
 -- Transporting a renaming along equalities of both its contexts.
 
-castʳ² : ∀ {Γ₁ Γ₂ Γ₁' Γ₂'} → Γ₁' ≡ Γ₁ → Γ₂' ≡ Γ₂ → Ren [] Γ₁' Γ₂' → Ren [] Γ₁ Γ₂
+castʳ² : ∀ {Γ₁ Γ₂ Γ₁' Γ₂'} → Γ₁' ≡ Γ₁ → Γ₂' ≡ Γ₂ → Ren [] Γ₂' Γ₁' → Ren [] Γ₂ Γ₁
 castʳ² refl refl r = r
 
 -- The three renamings `suc-comp-ren` is built from, each compared across a cast.
@@ -83,13 +83,13 @@ castʳ² refl refl r = r
 castʳ²-∘ʳ : ∀ {Γ₁ Γ₂ Γ₃ Γ₁' Γ₂' Γ₃'}
           → (e₁ : Γ₁' ≡ Γ₁) → (e₂ : Γ₂' ≡ Γ₂) → (e₃ : Γ₃' ≡ Γ₃)
           → (r₂ : Ren [] Γ₂' Γ₃') → (r₁ : Ren [] Γ₁' Γ₂')
-          → castʳ² e₁ e₃ (r₂ ∘ʳ r₁) ≐ʳ (castʳ² e₂ e₃ r₂ ∘ʳ castʳ² e₁ e₂ r₁)
+          → castʳ² e₃ e₁ (r₂ ∘ʳ r₁) ≐ʳ (castʳ² e₃ e₂ r₂ ∘ʳ castʳ² e₂ e₁ r₁)
 castʳ²-∘ʳ refl refl refl r₂ r₁ = ≐ʳ-refl
 
 -- Two casts along (necessarily equal) proofs of the same equation agree.
 
 castʳ²-irr : ∀ {Γ₁ Γ₂ Γ₁' Γ₂'} → (e₁ e₁' : Γ₁' ≡ Γ₁) → (e₂ e₂' : Γ₂' ≡ Γ₂)
-           → (r : Ren [] Γ₁' Γ₂')
+           → (r : Ren [] Γ₂' Γ₁')
            → castʳ² e₁ e₂ r ≐ʳ castʳ² e₁' e₂' r
 castʳ²-irr e₁ e₁' e₂ e₂' r
   rewrite uip {p = e₁} {q = e₁'} | uip {p = e₂} {q = e₂'} = ≐ʳ-refl
@@ -106,7 +106,7 @@ castʳ²-irr e₁ e₁' e₂ e₂' r
 ⟨⟩-μ-ren-cast refl = ≐ʳ-refl
 
 cong-⟨⟩-wk-cast : ∀ {Γ Γ' A ρ} → (e : Γ' ≡ Γ)
-                → cong-⟨⟩-ren {Δ = Γ} {ρ = ρ} (wk-ren {A = A})
+                → cong-⟨⟩-ren {ρ = ρ} (wk-ren {Δ = Γ} {A = A})
                 ≐ʳ castʳ² (cong (_⟨ ρ ⟩) e) (cong (λ Γ₀ → (Γ₀ ∷ A) ⟨ ρ ⟩) e)
                           (cong-⟨⟩-ren wk-ren)
 cong-⟨⟩-wk-cast refl = ≐ʳ-refl
@@ -130,13 +130,13 @@ suc-comp-ren-≐ id-≤≐ es es₁ c c' =
 
 suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} (⟨⟩-≤≐ {q' = q'} ρ h) es
                (⟨⟩-≐ˢ .ρ es₁) c c' =
-  ≐ʳ-trans (∘ʳ-≐ (⟨⟩-μ-ren-cast {ρ = ρ} {ρ' = ρ'''} (sym (toCtx-≐ˢ es₁)))
-                 (suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ ·ᵣ ρ'''} h es es₁ _ _))
+  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ ·ᵣ ρ'''} h es es₁ _ _)
+                 (⟨⟩-μ-ren-cast {ρ = ρ} {ρ' = ρ'''} (sym (toCtx-≐ˢ es₁))))
     (≐ʳ-trans
-      (≐ʳ-sym (castʳ²-∘ʳ (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
+      (≐ʳ-sym (castʳ²-∘ʳ (cong (λ Γ₀ → (Γ₀ ⟨ ρ ⟩) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
                          (cong (_⟨ ρ ·ᵣ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
-                         (cong (λ Γ₀ → (Γ₀ ⟨ ρ ⟩) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
-                         ⟨⟩-μ-ren (suc-comp-ren _ _)))
+                         (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
+                         (suc-comp-ren _ _) ⟨⟩-μ-ren))
       (castʳ²-irr (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
                   (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
                   (cong (λ Γ₀ → (Γ₀ ⟨ ρ ⟩) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
@@ -146,15 +146,15 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} (⟨⟩-≤≐ {q' = q'} ρ h) es
 suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
                (∷-≤≐ {A = A} {ρ = ρ} {q' = q'} {V' = V'} h) es
                (∷-≐ˢ es₁ eV) c c' =
-  ≐ʳ-trans (∘ʳ-≐ (cong-⟨⟩-wk-cast {A = [ ρ ] A} {ρ = ρ'''}
-                   (sym (toCtx-≐ˢ es₁)))
-                 (suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} h es es₁ _ _))
+  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} h es es₁ _ _)
+                 (cong-⟨⟩-wk-cast {A = [ ρ ] A} {ρ = ρ'''}
+                   (sym (toCtx-≐ˢ es₁))))
     (≐ʳ-trans
-      (≐ʳ-sym (castʳ²-∘ʳ (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
-                         (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
-                         (cong (λ Γ₀ → (Γ₀ ∷ [ ρ ] A) ⟨ ρ''' ⟩)
+      (≐ʳ-sym (castʳ²-∘ʳ (cong (λ Γ₀ → (Γ₀ ∷ [ ρ ] A) ⟨ ρ''' ⟩)
                                (sym (toCtx-≐ˢ es₁)))
-                         (cong-⟨⟩-ren wk-ren) (suc-comp-ren _ _)))
+                         (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
+                         (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
+                         (suc-comp-ren _ _) (cong-⟨⟩-ren wk-ren)))
       (castʳ²-irr (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
                   (cong (_⟨ ρ'' ⟩) (sym (toCtx-≐ˢ es)))
                   (cong (λ Γ₀ → (Γ₀ ∷ [ ρ ] A) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
@@ -279,7 +279,7 @@ lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
 
 unbox-lookup-≐ : ∀ {A ρ Δ Δ'} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
-               → {w : Ren [] (Δ ⟨ ρ ⟩) (toCtx St)} → {w' : Ren [] (Δ' ⟨ ρ ⟩) (toCtx St')}
+               → {w : Ren [] (toCtx St) (Δ ⟨ ρ ⟩)} → {w' : Ren [] (toCtx St') (Δ' ⟨ ρ ⟩)}
                → {V : Δ ⊢V⦂ [ ρ ] A} → {V' : Δ' ⊢V⦂ [ ρ ] A}
                → unbox-img w V ≡ unbox-img (castʳ (sym (toCtx-≐ˢ es)) w') V'
                -------------------------------------------------------

@@ -123,14 +123,14 @@ suc-comp-ren : ∀ {Γ Γ'}
              → {S' : 𝕊 Γ'}
              → (q : S ≤ₛ S')
              → ≤ₛ-grade q ·ᵣ ρ''' ≾ᵣ ρ''
-             → Ren [] (toCtx S ⟨ ρ'' ⟩) (toCtx S' ⟨ ρ''' ⟩)
+             → Ren [] (toCtx S' ⟨ ρ''' ⟩) (toCtx S ⟨ ρ'' ⟩)
 
 suc-comp-ren {ρ''' = ρ'''} id-suc δρ'''≾ρ'' =
   ⟨⟩-≤-ren (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ'''))) δρ'''≾ρ'')
 suc-comp-ren {ρ''' = ρ'''} (⟨⟩-suc ρ q) δρ'''≾ρ'' =
-  ⟨⟩-μ-ren ∘ʳ suc-comp-ren q (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (≤ₛ-grade q) ρ ρ'''))) δρ'''≾ρ'')
+  suc-comp-ren q (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-assoc (≤ₛ-grade q) ρ ρ'''))) δρ'''≾ρ'') ∘ʳ ⟨⟩-μ-ren
 suc-comp-ren (∷-suc V q) δρ'''≾ρ'' =
-  cong-⟨⟩-ren wk-ren ∘ʳ suc-comp-ren q δρ'''≾ρ''
+  suc-comp-ren q δρ'''≾ρ'' ∘ʳ cong-⟨⟩-ren wk-ren
 
 -- The cancelled grade-decrease statement (about δ) implies the total one
 -- (about the two states' grades), by monotonicity of _·ᵣ_.

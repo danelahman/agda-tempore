@@ -119,7 +119,7 @@ fill-cong : ∀ {Γ f CH C} → (K : Γ ⊢K[ f ◁ CH ]⦂ C) → (pK : Param�
 -- recursive cases hand to the induction hypothesis. The renaming has to be
 -- named at each use (it is the `eq-ren` that `_[_]` inserts): it occurs under
 -- `⟦_⟧ᶜᵗ`, which is not injective, so Agda cannot recover it from the goal.
-ren-cong : ∀ {Γ Γ' CH} → (r : Ren [] Γ Γ')
+ren-cong : ∀ {Γ Γ' CH} → (r : Ren [] Γ' Γ)
          → (N N' : Γ ⊢C⦂ CH) → (pN : Paramᶜ N) → (pN' : Paramᶜ N')
          → ⟦ N ⟧ᶜᵗ pN ≈ᵐ ⟦ N' ⟧ᶜᵗ pN'
          → ⟦ C-rename r N ⟧ᶜᵗ (renᶜ r N pN)
@@ -155,8 +155,8 @@ fill-ext Γ Γ' Θ₁ K g =
 
 ren-hyp : (Γ Γ' Θ₁ : Ctx) → ∀ {Δ f CH C} → (K : Δ ⊢K[ f ◁ CH ]⦂ C)
         → (g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
-        → (rΓ' : Ren [] (Γ' ++ᶜ rel-hole-ctx K Θ₁) ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K))
-        → (rΓ : Ren [] (Γ ++ᶜ rel-hole-ctx K Θ₁) ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K))
+        → (rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁))
+        → (rΓ : Ren [] ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ ++ᶜ rel-hole-ctx K Θ₁))
         → ⟦ rΓ' ⟧ʳ ∘ᵐ ext (Γ ++ᶜ Θ₁) (Γ' ++ᶜ Θ₁) (hole-ctx K) (ext Γ Γ' Θ₁ g)
           ≈ᵐ ext Γ Γ' (rel-hole-ctx K Θ₁) g ∘ᵐ ⟦ rΓ ⟧ʳ
         → (N N' : Γ' ++ᶜ rel-hole-ctx K Θ₁ ⊢C⦂ CH)
@@ -240,11 +240,11 @@ fill-cong-env Γ {Γ'} (delay[_]ₖ {A} {ε} p τ K) pK N N' pN pN' g eq =
     Θ₁ : Ctx
     Θ₁ = [] ⟨ of-natʳ τ ⟩
 
-    rΓ' : Ren [] (Γ' ++ᶜ rel-hole-ctx K Θ₁) ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                         (sym (++ᶜ-assoc Γ' Θ₁ (hole-ctx K))))
 
-    rΓ : Ren [] (Γ ++ᶜ rel-hole-ctx K Θ₁) ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ : Ren [] ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ ++ᶜ rel-hole-ctx K Θ₁)
     rΓ = eq-ren (trans (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                        (sym (++ᶜ-assoc Γ Θ₁ (hole-ctx K))))
 
@@ -283,11 +283,11 @@ fill-cong-env Γ {Γ'} (unbox[_]ₖ {A} {C} {ρ} {Δ} p w V K) (pV , pK)
     Θ₁ : Ctx
     Θ₁ = [] ∷ A
 
-    rΓ' : Ren [] (Γ' ++ᶜ rel-hole-ctx K Θ₁) ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                         (sym (++ᶜ-assoc Γ' Θ₁ (hole-ctx K))))
 
-    rΓ : Ren [] (Γ ++ᶜ rel-hole-ctx K Θ₁) ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ : Ren [] ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ ++ᶜ rel-hole-ctx K Θ₁)
     rΓ = eq-ren (trans (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                        (sym (++ᶜ-assoc Γ Θ₁ (hole-ctx K))))
 
@@ -321,11 +321,11 @@ fill-cong-env Γ {Γ'} (box[_]ₖ {A} {C} {ρ} p V K) (pV , pK) N N' pN pN' g eq
     Θ₁ : Ctx
     Θ₁ = [] ∷ [ ρ ] A
 
-    rΓ' : Ren [] (Γ' ++ᶜ rel-hole-ctx K Θ₁) ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                         (sym (++ᶜ-assoc Γ' Θ₁ (hole-ctx K))))
 
-    rΓ : Ren [] (Γ ++ᶜ rel-hole-ctx K Θ₁) ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ : Ren [] ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ ++ᶜ rel-hole-ctx K Θ₁)
     rΓ = eq-ren (trans (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                        (sym (++ᶜ-assoc Γ Θ₁ (hole-ctx K))))
 
@@ -351,11 +351,11 @@ fill-cong-env Γ {Γ'} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) N N' pN pN' g
     Θ₁ : Ctx
     Θ₁ = [] ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
 
-    rΓ' : Ren [] (Γ' ++ᶜ rel-hole-ctx K Θ₁) ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ' : Ren [] ((Γ' ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ' ++ᶜ rel-hole-ctx K Θ₁)
     rΓ' = eq-ren (trans (cong (Γ' ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                         (sym (++ᶜ-assoc Γ' Θ₁ (hole-ctx K))))
 
-    rΓ : Ren [] (Γ ++ᶜ rel-hole-ctx K Θ₁) ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K)
+    rΓ : Ren [] ((Γ ++ᶜ Θ₁) ++ᶜ hole-ctx K) (Γ ++ᶜ rel-hole-ctx K Θ₁)
     rΓ = eq-ren (trans (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ {_} {Θ₁} {[]} K))
                        (sym (++ᶜ-assoc Γ Θ₁ (hole-ctx K))))
 
@@ -404,8 +404,8 @@ fill-cong {Γ} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) {N} {N'} pN pN' eq =
                 (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN')
                    (ren-cong r N N' pN pN' eq))))) ⟩ᵐ-cong)
   where
-    r : Ren [] (Γ ++ᶜ hole-ctx (perform[ p ]ₖ op V K))
-               ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ++ᶜ hole-ctx K)
+    r : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ++ᶜ hole-ctx K)
+               (Γ ++ᶜ hole-ctx (perform[ p ]ₖ op V K))
     r = eq-ren (trans
           (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
           (sym (++ᶜ-assoc Γ ([] ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
@@ -414,8 +414,8 @@ fill-cong {Γ} (delay[_]ₖ {A} {ε} p τ K) pK {N} {N'} pN pN' eq =
   ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
     (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN') (ren-cong r N N' pN pN' eq))))
   where
-    r : Ren [] (Γ ++ᶜ hole-ctx (delay[ p ]ₖ τ K))
-               ((Γ ⟨ of-natʳ τ ⟩) ++ᶜ hole-ctx K)
+    r : Ren [] ((Γ ⟨ of-natʳ τ ⟩) ++ᶜ hole-ctx K)
+               (Γ ++ᶜ hole-ctx (delay[ p ]ₖ τ K))
     r = eq-ren (trans
           (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
           (sym (++ᶜ-assoc Γ ([] ⟨ of-natʳ τ ⟩) (hole-ctx K))))
@@ -426,7 +426,7 @@ fill-cong {Γ} (unbox[_]ₖ {A} {C} {ρ} {Δ} p w V K) (pV , pK) {N} {N'} pN pN'
   ∙ ≈ᵐ-sym (unbox-def w V (K [ C-rename r N' ]) pV
               (fillᴾ K pK (C-rename r N') (renᶜ r N' pN')))
   where
-    r : Ren [] (Γ ++ᶜ hole-ctx (unbox[ p ]ₖ w V K)) ((Γ ∷ A) ++ᶜ hole-ctx K)
+    r : Ren [] ((Γ ∷ A) ++ᶜ hole-ctx K) (Γ ++ᶜ hole-ctx (unbox[ p ]ₖ w V K))
     r = eq-ren (trans
           (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
           (sym (++ᶜ-assoc Γ ([] ∷ A) (hole-ctx K))))
@@ -434,7 +434,7 @@ fill-cong {Γ} (box[_]ₖ {A} {C} {ρ} p V K) (pV , pK) {N} {N'} pN pN' eq =
   ∘ᵐ-congˡ (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN')
               (ren-cong r N N' pN pN' eq))
   where
-    r : Ren [] (Γ ++ᶜ hole-ctx (box[ p ]ₖ V K)) ((Γ ∷ [ ρ ] A) ++ᶜ hole-ctx K)
+    r : Ren [] ((Γ ∷ [ ρ ] A) ++ᶜ hole-ctx K) (Γ ++ᶜ hole-ctx (box[ p ]ₖ V K))
     r = eq-ren (trans
           (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
           (sym (++ᶜ-assoc Γ ([] ∷ [ ρ ] A) (hole-ctx K))))

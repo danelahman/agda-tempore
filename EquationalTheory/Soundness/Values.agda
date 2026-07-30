@@ -118,7 +118,7 @@ sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (M [ Hd ↦ V ]c) pR (subᶜ M Hd V pM pV)
             ∙ C-subst-nat M Hd V pM pV)
   where
-    ρ    = exch-ren ∘ʳ wk-ren ∘ʳ exch-ren ∘ʳ wk-ren
+    ρ    = wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren
     pair = ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊
 
     v = ⟦ V ⟧ᵛᵗ pV
@@ -128,11 +128,11 @@ sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
     -- apart from dropping `A` and `B`.
     ρ-mor : ⟦ ρ ⟧ʳ ≈ᵐ mapˣᵐ (fstᵐ ∘ᵐ fstᵐ) idᵐ
     ρ-mor =
-        ∘ᵐ-congˡ (∘ᵐ-congˡ (  ∘ᵐ-congʳ (exch-ren-mor {Γ} {A |×| B} {A})
+        ∘ᵐ-congʳ (∘ᵐ-congʳ (  ∘ᵐ-congʳ (exch-ren-mor {Γ ∷ A} {B} {A |×| B})
                             ∙ ⟨⟩ᵐ-fstᵐ _ _))
-      ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ ∷ A} {A |×| B} {B})
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (exch-ren-mor {Γ} {A} {A |×| B}))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)
       ∙ mapˣᵐ-∘ _ _ _ _
       ∙ mapˣᵐ-cong ≈ᵐ-refl (∘ᵐ-identityˡ _)
 

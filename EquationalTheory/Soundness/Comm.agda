@@ -124,26 +124,26 @@ box-wk X W pW =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
 sound-unbox-comm : ∀ {Γ A B C ρ₁ Δ₁ ρ₂ Δ₂}
-                 → (w₁ : Ren [] (Δ₁ ⟨ ρ₁ ⟩) Γ) → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
-                 → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+                 → (w₁ : Ren [] Γ (Δ₁ ⟨ ρ₁ ⟩)) → (V₁ : Δ₁ ⊢V⦂ [ ρ₁ ] A)
+                 → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩)) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                  → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                  → Soundᶜ== (unbox-comm w₁ V₁ w₂ V₂ M)
 sound-unbox-comm {Γ = Γ} {A = A} {B = B} w₁ V₁ w₂ V₂ M (pV₁ , (pV₂ , pM)) pR =
     -- LHS: unfold both unboxings, push the inner lookup's weakening out
-    unbox-def w₁ V₁ (unbox (wk-ren ∘ʳ w₂) V₂ M) pV₁ (pV₂ , pM)
-  ∙ ∘ᵐ-congˡ (unbox-def (wk-ren ∘ʳ w₂) V₂ M pV₂ pM)
+    unbox-def w₁ V₁ (unbox (w₂ ∘ʳ wk-ren) V₂ M) pV₁ (pV₂ , pM)
+  ∙ ∘ᵐ-congˡ (unbox-def (w₂ ∘ʳ wk-ren) V₂ M pV₂ pM)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                         , unbox⇒var-nat (wk-ren {A = A}) w₂ V₂ ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
     -- RHS: the same, with the exchange renaming unfolded
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w₂ V₂ (unbox (wk-ren ∘ʳ w₁) V₁ (C-rename exch-ren M)))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox w₂ V₂ (unbox (w₁ ∘ʳ wk-ren) V₁ (C-rename exch-ren M)))
                 pR (pV₂ , (pV₁ , renᶜ exch-ren M pM))
-            ∙ unbox-def w₂ V₂ (unbox (wk-ren ∘ʳ w₁) V₁ (C-rename exch-ren M))
+            ∙ unbox-def w₂ V₂ (unbox (w₁ ∘ʳ wk-ren) V₁ (C-rename exch-ren M))
                 pV₂ (pV₁ , renᶜ exch-ren M pM)
-            ∙ ∘ᵐ-congˡ (unbox-def (wk-ren ∘ʳ w₁) V₁ (C-rename exch-ren M)
+            ∙ ∘ᵐ-congˡ (unbox-def (w₁ ∘ʳ wk-ren) V₁ (C-rename exch-ren M)
                           pV₁ (renᶜ exch-ren M pM))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM
-                                  ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {A} {B})))
+                                  ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {B} {A})))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                                   , unbox⇒var-nat (wk-ren {A = B}) w₁ V₁ ⟩ᵐ-cong))
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
@@ -164,7 +164,7 @@ sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' 
   ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ (∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename exch-ren M) pMr
                                       (renᶜ exch-ren M pM)
                                   ∙ C-rename-nat exch-ren M pM
-                                  ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {[ ρ ] A} {[ ρ' ] B})))
+                                  ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {[ ρ' ] B} {[ ρ ] A})))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                                   ,   ∘ᵐ-congˡ ([]-congᶠ
                                         (⟦⟧ᵛᵗ-irr (V-rename (cong-⟨⟩-ren wk-ren) V) pV'
@@ -174,12 +174,12 @@ sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' 
 
 sound-box-unbox-comm : ∀ {Γ A B C ρ ρ₂ Δ₂}
                      → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                     → (w₂ : Ren [] (Δ₂ ⟨ ρ₂ ⟩) Γ) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
+                     → (w₂ : Ren [] Γ (Δ₂ ⟨ ρ₂ ⟩)) → (V₂ : Δ₂ ⊢V⦂ [ ρ₂ ] B)
                      → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                      → Soundᶜ== (box-unbox-comm V w₂ V₂ M)
 sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V w₂ V₂ M (pV , (pV₂ , pM)) pR =
     -- LHS: `box` outside, the inner lookup weakened past it
-    ∘ᵐ-congˡ (  unbox-def (wk-ren ∘ʳ w₂) V₂ M pV₂ pM
+    ∘ᵐ-congˡ (  unbox-def (w₂ ∘ʳ wk-ren) V₂ M pV₂ pM
               ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                           , unbox⇒var-nat (wk-ren {A = [ ρ ] A}) w₂ V₂ ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
@@ -191,6 +191,6 @@ sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V w₂ V₂ M (pV , (pV
                                    (C-rename exch-ren M))
                 pV₂ (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM
-                                  ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {[ ρ ] A} {B})))
+                                  ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {B} {[ ρ ] A})))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , box-wk B V pV ⟩ᵐ-cong))
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)

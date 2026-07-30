@@ -221,10 +221,10 @@ mutual
 ≐-handle⁻ refl _ (handle-≐ eM eH eN) = _ , _ , _ , refl , eM , eH , eN
 
 ≐-unbox⁻ : ∀ {Γ Γ' A C ρ Δ} → (e : Γ' ≡ Γ)
-         → {w : Ren [] (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
+         → {w : Ren [] Γ (Δ ⟨ ρ ⟩)} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
          → unbox w V M ≐ᶜ castᶜ e P'
-         → Σ[ Δ' ∈ Ctx ] Σ[ w' ∈ Ren [] (Δ' ⟨ ρ ⟩) Γ' ] Σ[ V' ∈ (Δ' ⊢V⦂ [ ρ ] A) ]
+         → Σ[ Δ' ∈ Ctx ] Σ[ w' ∈ Ren [] Γ' (Δ' ⟨ ρ ⟩) ] Σ[ V' ∈ (Δ' ⊢V⦂ [ ρ ] A) ]
            Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
              (P' ≡ unbox w' V' M')
            × (unbox-img w V ≡ unbox-img (castʳ e w') V')
@@ -255,11 +255,11 @@ cast-match-reduct refl M' V' W' = refl
 
 cast-seq-ret : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
              → (N' : Γ' ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε) → (V' : Γ' ⊢V⦂ A)
-             → (C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (_⟨_⟩ Γ) map-uᵉ)))
+             → (C-rename (cong-∷-ren (eq-ren (cong (_⟨_⟩ Γ) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                  (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ uₑ ⟩ ∷ A) e) N'))
                    [ Hd ↦ castᵛ e V' ]c
              ≡ castᶜ e ((C-rename
-                          (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (_⟨_⟩ Γ') map-uᵉ)))
+                          (cong-∷-ren (eq-ren (cong (_⟨_⟩ Γ') map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                           N') [ Hd ↦ V' ]c)
 cast-seq-ret refl N' V' = refl
 

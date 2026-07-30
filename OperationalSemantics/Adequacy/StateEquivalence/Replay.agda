@@ -111,13 +111,13 @@ unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
 
 unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
   ≐ʳ-trans
-    (∘ʳ-≐ (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))
-          (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q')))
+    (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q'))
+          (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂))))
     (≐ʳ-sym
-      (castʳ²-∘ʳ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
+      (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
                  (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
-                 (sym (toCtx-≐ˢ es₂))
-                 ⟨⟩-η-ren (suc-comp-ren (ext q') (reach-bound q'))))
+                 (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
+                 (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren))
 
 -- The form the Kripke clauses use. A clause transported along `_≐ˢ_` moves its
 -- boxed value to the other state too, so the renaming consulted there is
@@ -125,23 +125,23 @@ unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
 -- cast the bridge introduces.
 
 castʳ²-cancel : ∀ {Γ Γ' Δ Δ' ρ} → (a : Γ ≡ Γ') → (b : Δ ≡ Δ')
-              → (r : Ren [] (Γ ⟨ ρ ⟩) Δ)
-              → (castʳ² (cong (_⟨ ρ ⟩) a) b r ∘ʳ cong-⟨⟩-ren (eq-ren a))
+              → (r : Ren [] Δ (Γ ⟨ ρ ⟩))
+              → (cong-⟨⟩-ren (eq-ren a) ∘ʳ castʳ² (cong (_⟨ ρ ⟩) a) b r)
               ≐ʳ castʳ b r
-castʳ²-cancel refl refl r = ∘ʳ-id-≐ʳ r (cong-⟨⟩-ren-id-≐ ≐ʳ-refl)
+castʳ²-cancel refl refl r = ∘ʳ-id-≐ r (cong-⟨⟩-ren-id-≐ ≐ʳ-refl)
 
 unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
                  → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
                  → {q' : St' ⊑ₛ[ ρ ] St''} → {q : St ⊑ₛ[ ρ ] St₂}
                  → ext q' ≤≐ ext q
                  -------------------------------------------------------------
-                 → (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
+                 → (cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)) ∘ʳ unbox-ren q')
                  ≐ʳ castʳ (sym (toCtx-≐ˢ es₂)) (unbox-ren q)
 
 unbox-ren-bridge {ρ} es es₂ {q'} {q} h
   rewrite uip {p = toCtx-≐ˢ es} {q = sym (toCtx-≐ˢ (≐ˢ-sym es))} =
   ≐ʳ-trans
-    (∘ʳ-≐ (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h) ≐ʳ-refl)
+    (∘ʳ-≐ ≐ʳ-refl (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h))
     (castʳ²-cancel (sym (toCtx-≐ˢ (≐ˢ-sym es))) (sym (toCtx-≐ˢ es₂))
                    (unbox-ren q))
 
@@ -164,22 +164,22 @@ reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
 
 reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
   ≐ʳ-trans
-    (∘ʳ-≐ (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))
+    (∘ʳ-≐ (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))
       (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q'))
-            (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))))
+            (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))))
     (≐ʳ-trans
       (∘ʳ-≐ ≐ʳ-refl
         (≐ʳ-sym
-          (castʳ²-∘ʳ (sym (toCtx-≐ˢ es))
-                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+          (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
                      (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
-                     (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η⁻¹-ren)))
+                     (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                     (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren)))
       (≐ʳ-sym
-        (castʳ²-∘ʳ (sym (toCtx-≐ˢ es))
-                   (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
-                   (sym (toCtx-≐ˢ es₂))
-                   ⟨⟩-η-ren
-                   (suc-comp-ren (ext q') (reach-bound q') ∘ʳ ⟨⟩-η⁻¹-ren))))
+        (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
+                   (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                   (sym (toCtx-≐ˢ es))
+                   ⟨⟩-η⁻¹-ren
+                   (suc-comp-ren (ext q') (reach-bound q') ∘ʳ ⟨⟩-η-ren))))
 
 -- WHERE A CELL GETS TO, ACROSS THE EQUIVALENCE
 --
@@ -189,7 +189,7 @@ reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
 -- the guard to be its own accumulated grade, where the bound is reflexivity —
 -- and `unbox-ren-img` then reads `≤ₛ-embed` off that reach's renaming.
 
-var-img-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] (Δ ⟨ ρ ⟩) Γ')
+var-img-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] Γ' (Δ ⟨ ρ ⟩))
               → (y : A ∈[ σ ] (Δ ⟨ ρ ⟩))
               → var-img (castʳ e r) y ≡ Var-cast e (var-img r y)
 var-img-castʳ refl r y = refl
@@ -215,7 +215,7 @@ cong-⟨⟩-eq-img refl x = refl
     q' = reach e' (≾ᵣ-refl {≤ₛ-grade e'})
     q  = reach e  (≾ᵣ-reflexive (sym (≤ₛ-grade-≤≐ h)))
 
-    stepL : var-img (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
+    stepL : var-img (cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)) ∘ʳ unbox-ren q')
                     (Tl-⟨⟩ x)
           ≡ ≤ₛ-embed e' (subst (λ Γ₀ → _ ∈[ σ ] Γ₀) (toCtx-≐ˢ es) x)
     stepL =

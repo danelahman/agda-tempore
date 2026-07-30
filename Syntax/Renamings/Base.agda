@@ -62,8 +62,13 @@ ec-split (Δ' ⟨ ρ ⟩) ()
 -- identities, composition, congruences, ordinary variable
 -- renamings, and strong monoidal functor structure for ⟨_⟩)
 --
--- Indexed by an AMBIENT context `Ξ`: `Ren Ξ Δ Δ'` renames `Ξ ++ᶜ Δ` into
--- `Ξ ++ᶜ Δ'`. Every rule acts only at the top of the local part `Δ`, carrying
+-- A `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` of contexts, so each
+-- constructor's indices run in the direction of the model map it denotes and
+-- the action on terms is contravariant: it takes a `Ξ ++ᶜ Δ'`-term to a
+-- `Ξ ++ᶜ Δ`-term (`V-rename`, `C-rename`).
+--
+-- Indexed by an AMBIENT context `Ξ`, which the renaming fixes. Every rule acts
+-- only at the top of the local part `Δ`, carrying
 -- the ambient untouched — semantically, each is natural in `Ξ` (`⟨⟩-η-nat`,
 -- `εᵘ-nat`, `⟨⟩-μ-nat`, `⟨⟩-≤-nat` are laws of the model, and `strᵉ`'s
 -- naturality is derivable there).
@@ -79,30 +84,30 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   id-ren      : ∀ {Δ} → Ren Ξ Δ Δ
   -- composition of renamings
   _∘ʳ_        : ∀ {Δ Δ' Δ''} → Ren Ξ Δ' Δ'' → Ren Ξ Δ Δ' → Ren Ξ Δ Δ''
-  -- weakening renaming
-  wk-ren      : ∀ {Δ A} → Ren Ξ Δ (Δ ∷ A)
+  -- weakening renaming (the projection off the top variable)
+  wk-ren      : ∀ {Δ A} → Ren Ξ (Δ ∷ A) Δ
   -- variable renaming (corresponds to contraction). As in the `var` typing
   -- rule, the grade bound is only required for non-eternal types: an eternal
   -- variable is available at any grade (in particular behind a lock).
   var-ren     : ∀ {Δ A ρ} → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
-              → Ren Ξ (Δ ∷ A) Δ
+              → Ren Ξ Δ (Δ ∷ A)
   -- strong monoidal functor renamings for ⟨_⟩ modality
-  ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ (Δ ⟨ uᵣ ⟩) Δ
-  ⟨⟩-η⁻¹-ren  : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ uᵣ ⟩)
-  ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ·ᵣ ρ' ⟩) (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩)
+  ⟨⟩-η-ren    : ∀ {Δ} → Ren Ξ Δ (Δ ⟨ uᵣ ⟩)
+  ⟨⟩-η⁻¹-ren  : ∀ {Δ} → Ren Ξ (Δ ⟨ uᵣ ⟩) Δ
+  ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Δ ⟨ ρ ·ᵣ ρ' ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
-  ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ ⟩) (Δ ⟨ ρ' ⟩)
+  ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
   -- moving an eternal variable out of a lock: an eternal value is available at
   -- the past world a `⟨ ρ ⟩` bundle already witnesses, so it can be extruded
   -- past the lock. Semantically the `⟨_⟩`-strength against an eternal object.
   ⟨⟩-ext-ren  : ∀ {Δ A ρ} → Eternal A
-              → Ren Ξ ((Δ ∷ A) ⟨ ρ ⟩) ((Δ ⟨ ρ ⟩) ∷ A)
+              → Ren Ξ ((Δ ⟨ ρ ⟩) ∷ A) ((Δ ∷ A) ⟨ ρ ⟩)
   -- introducing a lock: the counit of `⟨ ρ ⟩` at an arbitrary grade, available
   -- exactly when everything to the lock's left is eternal, since `⟦_⟧ᶜᵗˣ` of
   -- such a context is a `⟨_⟩`-algebra and `extᵉ` is that counit. The context to
   -- the left is `Ξ ++ᶜ Δ`, so both halves are asked for (`ec-++ᶜ` assembles
   -- them). The only rule that reads the ambient.
-  ⟨⟩-ext-ctx  : ∀ {Δ ρ} → EternalCtx Ξ → EternalCtx Δ → Ren Ξ Δ (Δ ⟨ ρ ⟩)
+  ⟨⟩-ext-ctx  : ∀ {Δ ρ} → EternalCtx Ξ → EternalCtx Δ → Ren Ξ (Δ ⟨ ρ ⟩) Δ
   -- congruence renamings
   cong-∷-ren  : ∀ {Δ Δ' A} → Ren Ξ Δ Δ' → Ren Ξ (Δ ∷ A) (Δ' ∷ A)
   cong-⟨⟩-ren : ∀ {Δ Δ' ρ} → Ren Ξ Δ Δ' → Ren Ξ (Δ ⟨ ρ ⟩) (Δ' ⟨ ρ ⟩)
@@ -112,42 +117,44 @@ infixr 20 _∘ʳ_
 -- Extending a renaming with a variable
 
 extend-ren : ∀ {Ξ Δ Δ' A ρ} → Ren Ξ Δ Δ' → (¬ Eternal A → ρ ≾ᵣ uᵣ)
-           → A ∈[ ρ ] (Ξ ⋈ᶜ Δ') → Ren Ξ (Δ ∷ A) Δ'
-extend-ren ρ p x = var-ren p x ∘ʳ cong-∷-ren ρ
+           → A ∈[ ρ ] (Ξ ⋈ᶜ Δ) → Ren Ξ Δ (Δ' ∷ A)
+extend-ren r p x = cong-∷-ren r ∘ʳ var-ren p x
 
--- Equality renaming
+-- Equality renaming. It runs from `Δ'` to `Δ`, since the action on terms is
+-- contravariant and `castᵛ e` transports a term forwards along `e`
+-- (`V-rename-eq-≐`).
 
-eq-ren : ∀ {Ξ Δ Δ'} → Δ ≡ Δ' → Ren Ξ Δ Δ'
+eq-ren : ∀ {Ξ Δ Δ'} → Δ ≡ Δ' → Ren Ξ Δ' Δ
 eq-ren refl = id-ren
 
 -- Combination of congruence and monotonicity renamings
 
-cong-⟨⟩-≤-ren : ∀ {Ξ Δ Δ' ρ ρ'} → Ren Ξ Δ Δ' → ρ' ≾ᵣ ρ
-              → Ren Ξ (Δ ⟨ ρ ⟩) (Δ' ⟨ ρ' ⟩)
+cong-⟨⟩-≤-ren : ∀ {Ξ Δ Δ' ρ ρ'} → Ren Ξ Δ' Δ → ρ' ≾ᵣ ρ
+              → Ren Ξ (Δ' ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
 cong-⟨⟩-≤-ren id-ren ρ'≾ρ =
   ⟨⟩-≤-ren ρ'≾ρ
 cong-⟨⟩-≤-ren (r₂ ∘ʳ r₁) ρ'≾ρ =
   cong-⟨⟩-≤-ren r₂ ρ'≾ρ ∘ʳ cong-⟨⟩-ren r₁
 cong-⟨⟩-≤-ren wk-ren ρ'≾ρ =
-  cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren wk-ren
 cong-⟨⟩-≤-ren (var-ren p x) ρ'≾ρ =
-  cong-⟨⟩-ren (var-ren p x) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (var-ren p x)
 cong-⟨⟩-≤-ren ⟨⟩-η-ren ρ'≾ρ =
-  cong-⟨⟩-ren ⟨⟩-η-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren ⟨⟩-η-ren
 cong-⟨⟩-≤-ren ⟨⟩-η⁻¹-ren ρ'≾ρ =
-  cong-⟨⟩-ren ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren ⟨⟩-η⁻¹-ren
 cong-⟨⟩-≤-ren ⟨⟩-μ-ren ρ'≾ρ =
-  cong-⟨⟩-ren ⟨⟩-μ-ren ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren ⟨⟩-μ-ren
 cong-⟨⟩-≤-ren (⟨⟩-≤-ren rel) ρ'≾ρ =
-  cong-⟨⟩-ren (⟨⟩-≤-ren rel) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (⟨⟩-≤-ren rel)
 cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
-  cong-⟨⟩-ren (cong-∷-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (cong-∷-ren r)
 cong-⟨⟩-≤-ren (cong-⟨⟩-ren r) ρ'≾ρ =
-  cong-⟨⟩-ren (cong-⟨⟩-ren r) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (cong-⟨⟩-ren r)
 cong-⟨⟩-≤-ren (⟨⟩-ext-ren et) ρ'≾ρ =
-  cong-⟨⟩-ren (⟨⟩-ext-ren et) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (⟨⟩-ext-ren et)
 cong-⟨⟩-≤-ren (⟨⟩-ext-ctx ecΞ ecΔ) ρ'≾ρ =
-  cong-⟨⟩-ren (⟨⟩-ext-ctx ecΞ ecΔ) ∘ʳ ⟨⟩-≤-ren ρ'≾ρ
+  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (⟨⟩-ext-ctx ecΞ ecΔ)
 
 -- Congruence renamings for general context extension. Recursion on the suffix,
 -- so the ambient is untouched.
@@ -169,11 +176,11 @@ cong-renˡ Γ'' ec'' (r₂ ∘ʳ r₁) =
   cong-renˡ Γ'' ec'' r₂ ∘ʳ cong-renˡ Γ'' ec'' r₁
 cong-renˡ Γ'' ec'' wk-ren =
   wk-ren
-cong-renˡ {Ξ} {Δ' = Δ'} Γ'' ec'' (var-ren p x) =
+cong-renˡ {Ξ} {Δ} Γ'' ec'' (var-ren p x) =
   var-ren p (subst (λ Γ₀ → _ ∈[ _ ] Γ₀)
-              (trans (sym (++ᶜ-assoc Γ'' Ξ Δ')) (sym (⋈ᶜ-++ᶜ (Γ'' ++ᶜ Ξ) Δ')))
-              (∈-ctx-extensionˡ Γ'' (Ξ ++ᶜ Δ')
-                (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (⋈ᶜ-++ᶜ Ξ Δ') x)))
+              (trans (sym (++ᶜ-assoc Γ'' Ξ Δ)) (sym (⋈ᶜ-++ᶜ (Γ'' ++ᶜ Ξ) Δ)))
+              (∈-ctx-extensionˡ Γ'' (Ξ ++ᶜ Δ)
+                (subst (λ Γ₀ → _ ∈[ _ ] Γ₀) (⋈ᶜ-++ᶜ Ξ Δ) x)))
 cong-renˡ Γ'' ec'' ⟨⟩-η-ren =
   ⟨⟩-η-ren
 cong-renˡ Γ'' ec'' ⟨⟩-η⁻¹-ren =
@@ -238,13 +245,13 @@ expose-ren-[] {Ξ} r = expose-ren Ξ r
 
 -- Weakening a grade to a context renaming
 
-wk-ren-⟨ρ⟩-ctx : ∀ {Δ Δ' ρ Ξ} → ctx-grade Δ' ≡ ρ → Ren Ξ (Δ ⟨ ρ ⟩) (Δ ++ᶜ Δ')
+wk-ren-⟨ρ⟩-ctx : ∀ {Δ Δ' ρ Ξ} → ctx-grade Δ' ≡ ρ → Ren Ξ (Δ ++ᶜ Δ') (Δ ⟨ ρ ⟩)
 wk-ren-⟨ρ⟩-ctx {Δ' = []} refl =
   ⟨⟩-η-ren
 wk-ren-⟨ρ⟩-ctx {Δ' = Δ' ∷ _} refl =
-  wk-ren ∘ʳ wk-ren-⟨ρ⟩-ctx refl
+  wk-ren-⟨ρ⟩-ctx refl ∘ʳ wk-ren
 wk-ren-⟨ρ⟩-ctx {Δ} {Δ' ⟨ ρ' ⟩} {ρ} {Ξ} refl =
-  cong-⟨⟩-ren (wk-ren-⟨ρ⟩-ctx refl) ∘ʳ ⟨⟩-μ-ren
+  ⟨⟩-μ-ren ∘ʳ cong-⟨⟩-ren (wk-ren-⟨ρ⟩-ctx refl)
 
 -- Exchange renaming
 

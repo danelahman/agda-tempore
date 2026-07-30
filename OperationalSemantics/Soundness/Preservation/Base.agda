@@ -477,7 +477,7 @@ ret-env refl =
 -- Substituting into a renamed continuation: the renaming lands in the
 -- environment's first component, the substituted value in its second.
 
-sub-ren : ∀ {Γ Γ' A C} → (r : Ren [] Γ Γ') → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
+sub-ren : ∀ {Γ Γ' A C} → (r : Ren [] Γ' Γ) → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
         → (pN : Paramᶜ N) → (pV : Paramᵛ V)
         → ⟦ C-rename (cong-∷-ren r) N [ Hd ↦ V ]c ⟧ᶜᵗ
              (subᶜ (C-rename (cong-∷-ren r) N) Hd V (renᶜ (cong-∷-ren r) N pN) pV)
@@ -500,11 +500,11 @@ sub-ren r N V pN pV =
 -- renamed by the re-locking renaming, then substituted into.
 ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
          → Paramᵛ V → Paramᶜ N
-         → Paramᶜ (C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+         → Paramᶜ (C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                      [ Hd ↦ V ]c)
 ret-subᴾ {Γ} V N pV pN =
-  subᶜ (C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N) Hd V
-    (renᶜ (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N pN) pV
+  subᶜ (C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N) Hd V
+    (renᶜ (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N pN) pV
 
 ret-step : ∀ {Γ A B ε}
          → (alg : Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
@@ -514,7 +514,7 @@ ret-step : ∀ {Γ A B ε}
          → (pV : Paramᵛ V) → (pN : Paramᶜ N)
          → alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
          ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
-            ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+            ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                    [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step {Γ} alg alg-η V N pV pN =
     ∘ᵐ-congʳ ret-massage
@@ -525,7 +525,7 @@ ret-step {Γ} alg alg-η V N pV pN =
     -- value's `ηᵀ` opens the boxed environment (`strᵀ-ηᵀ`), which is exactly the
     -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
-                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                             [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
@@ -539,7 +539,7 @@ ret-step {Γ} alg alg-η V N pV pN =
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat (⟦ N ⟧ᶜᵗ pN)))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V pN pV))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
 
 -- `ret-step`, threaded with an eternal parameter `P` supplied by `pv`. The
 -- handler's algebra reads its clause-context off `P` (`= ⟦ Γ ᴱ ⟧`, via
@@ -554,7 +554,7 @@ ret-step-P : ∀ {Γ A B ε P}
            → (pV : Paramᵛ V) → (pN : Paramᶜ N)
            → alg ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ ⟩ᵐ
            ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
-              ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+              ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                      [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step-P {Γ} pv alg alg-η V N pV pN =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ret-massage ⟩ᵐ-cong)
@@ -565,7 +565,7 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
   where
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
-                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                             [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
@@ -579,7 +579,7 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat (⟦ N ⟧ᶜᵗ pN)))
       ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ)) N V pN pV))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
 
 -- SEQ-RET and HANDLE-RET: the two instances of `ret-step`, one for the monad
 -- multiplication and one for the handler's algebra.
@@ -588,7 +588,7 @@ sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ u�
               → (pV : Paramᵛ V) → (pN : Paramᶜ N)
               → ⟦ return V ⨟ N ⟧ᶜᵗ (pV , pN)
               ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
-                 ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                 ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                         [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 
@@ -604,7 +604,7 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (uH : EffUniformʰ {Γ} H pH)
                  → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
-                    ∘ᵐ ⟦ C-rename (cong-∷-ren (⟨⟩-η-ren ∘ʳ eq-ren (cong (Γ ⟨_⟩) map-uᵉ))) N
+                    ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-HANDLE-RET {Γ} V H N pV pN pH uH =
   ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))

@@ -236,26 +236,26 @@ cong-ren-wk-cast-≐ : ∀ {B} → (Γ₀ Γ₁ Θ₀ Θ₁ : Ctx) → Γ₀ ≡
                    → (e  : Γ₁ ++ᶜ Θ₁ ≡ Γ₀ ++ᶜ Θ₀)
                    → (e' : (Γ₀ ∷ B) ++ᶜ Θ₀ ≡ (Γ₁ ∷ B) ++ᶜ Θ₁)
                    → cong-ren {Γ'' = Θ₁} (wk-ren {A = B})
-                   ≐ʳ (eq-ren e' ∘ʳ cong-ren {Γ'' = Θ₀} (wk-ren {A = B})
-                                 ∘ʳ eq-ren e)
+                   ≐ʳ (eq-ren e ∘ʳ cong-ren {Γ'' = Θ₀} (wk-ren {A = B})
+                                ∘ʳ eq-ren e')
 cong-ren-wk-cast-≐ {B} Γ₀ Γ₁ Θ₀ Θ₁ refl refl e e' =
   ≐ʳ-sym
-    (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ e' refl)
-                    (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ e refl)))
+    (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ e refl)
+                    (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ e' refl)))
               (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _)))
 
-castʳ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren [] (Δ ⟨ ρ ⟩) Γ → Ren [] (Δ ⟨ ρ ⟩) Γ'
+castʳ : ∀ {Γ Γ' Δ ρ} → Γ ≡ Γ' → Ren [] Γ (Δ ⟨ ρ ⟩) → Ren [] Γ' (Δ ⟨ ρ ⟩)
 castʳ refl w = w
 
 cast-unbox : ∀ {Γ Γ' A C ρ Δ} → (e : Γ ≡ Γ')
-           → {w : Ren [] (Δ ⟨ ρ ⟩) Γ} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
+           → {w : Ren [] Γ (Δ ⟨ ρ ⟩)} → {V : Δ ⊢V⦂ [ ρ ] A} → {M : Γ ∷ A ⊢C⦂ C}
            → castᶜ e (unbox w V M)
            ≡ unbox (castʳ e w) V (castᶜ (cong (_∷ A) e) M)
 cast-unbox refl = refl
 
 -- A cast does not move the resource variable an `unbox` names.
 
-unbox-img-castʳ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] (Δ ⟨ ρ ⟩) Γ)
+unbox-img-castʳ : ∀ {Γ Γ' A ρ Δ} → (e : Γ ≡ Γ') → (w : Ren [] Γ (Δ ⟨ ρ ⟩))
                  → (V : Δ ⊢V⦂ [ ρ ] A)
                  → unbox-img (castʳ e w) V
                  ≡ (proj₁ (unbox-img w V)

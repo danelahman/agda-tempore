@@ -45,7 +45,7 @@ open import Syntax.Substitutions.Renaming.Clauses Spec
 
 mutual
 
-  ren-sub-V : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A}
+  ren-sub-V : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A}
             → (U : ((Γ ∷ B) ++ᶜ Θ) ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
             → V-rename (cong-ren {Γ'' = Θ} r)
                 (castᵛ (castOf {Γ} {B} Θ)
@@ -90,7 +90,7 @@ mutual
                                             (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
         (≡→≐ᵛ (sym (cast-lam (castOf {Γ'} {B} Θ) _))))
 
-  ren-sub-C : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {C}
+  ren-sub-C : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {C}
             → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
             → C-rename (cong-ren {Γ'' = Θ} r)
                 (castᶜ (castOf {Γ} {B} Θ)
@@ -233,7 +233,7 @@ mutual
   -- `ren-sub-C` with its context given by an equation, so the `handle` clause
   -- can recurse on the bare clause term (as `sub-wk-C-cast`).
 
-  ren-sub-C-cast : ∀ {Γ Γ' B Γ₀} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+  ren-sub-C-cast : ∀ {Γ Γ' B Γ₀} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
                  → ∀ {C} → (e : Γ₀ ≡ (Γ ∷ B) ++ᶜ Θ) → (M : Γ₀ ⊢C⦂ C)
                  → (W : Γ ⊢V⦂ B)
                  → RenSubC r Θ (subst (_⊢C⦂ C) e M) W

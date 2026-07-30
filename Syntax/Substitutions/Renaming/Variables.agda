@@ -45,15 +45,15 @@ open import Syntax.Substitutions.Weakening   Spec
 -- The three renamings the variable substitution puts in front of its recursive
 -- call are natural in a renaming of the prefix.
 
-wk-ren-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ')
-           → (cong-∷-ren {A = A} r ∘ʳ wk-ren) ≐ʳ (wk-ren ∘ʳ r)
+wk-ren-nat : ∀ {Γ Γ' A} → (r : Ren [] Γ' Γ)
+           → (wk-ren ∘ʳ cong-∷-ren {A = A} r) ≐ʳ (r ∘ʳ wk-ren)
 wk-ren-nat r = mk≐ʳ (λ y → cong-ren-img-l r ([] ∷ _) y)
 
-⟨⟩-ren-nat : ∀ {Γ Γ' ρ} → (r : Ren [] Γ Γ')
-           → (rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩))
+⟨⟩-ren-nat : ∀ {Γ Γ' ρ} → (r : Ren [] Γ' Γ)
+           → (rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀)
            → (∀ {A σ} → (y : A ∈[ σ ] Γ') → var-img rn y ≡ Var-⟨⟩ ρ (σ , y))
            → (∀ {A σ} → (y : A ∈[ σ ] Γ)  → var-img rn y ≡ Var-⟨⟩ ρ (σ , y))
-           → (cong-⟨⟩-ren r ∘ʳ rn) ≐ʳ (rn ∘ʳ r)
+           → (rn ∘ʳ cong-⟨⟩-ren r) ≐ʳ (r ∘ʳ rn)
 ⟨⟩-ren-nat {ρ = ρ} r rn h' h = mk≐ʳ go
   where
     go : ∀ {A σ} → (y : A ∈[ σ ] _) → _
@@ -62,13 +62,13 @@ wk-ren-nat r = mk≐ʳ (λ y → cong-ren-img-l r ([] ∷ _) y)
             (sym (h' (proj₂ (var-img r y))))
 
 hit-⟨⟩-img : ∀ {Γ A σ ρ} → (p : ρ ≾ᵣ uᵣ) → (y : A ∈[ σ ] Γ)
-           → var-img (⟨⟩-≤-ren p ∘ʳ ⟨⟩-η⁻¹-ren {Δ = Γ}) y ≡ Var-⟨⟩ ρ (σ , y)
+           → var-img (⟨⟩-η⁻¹-ren {Δ = Γ} ∘ʳ ⟨⟩-≤-ren p) y ≡ Var-⟨⟩ ρ (σ , y)
 hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 
 -- An eternal extension is natural: it builds only variables, constants, `⋆` and
 -- pairs, so a renaming passes through it.
 
-eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ Γ')
+eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ' Γ)
                     → (V : Γ ⊢V⦂ A)
                     → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
                     ≐ᵛ eternal-val-ext et (V-rename r V)
@@ -84,7 +84,7 @@ eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊ =
 -- suffix — a push the recursion of `⟨_,_⟩[_↦_]var` builds one layer at a time,
 -- and each layer is natural in a renaming of the prefix.
 
-ren-sub-hit : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+ren-sub-hit : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
             → (f f' : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ)
             → V-rename (cong-ren {Γ'' = Θ} r)
                 (castᵛ (castOf {Γ} {B} Θ)
@@ -105,9 +105,9 @@ ren-sub-hit {Γ} {Γ'} {B} r (Θ ∷ C) W f f' =
   ≐ᵛ-trans
     (≡→≐ᵛ (cong (V-rename (cong-∷-ren (cong-ren {Γ'' = Θ} r)))
                 (cast-wk-any (castOf {Γ} {B} (Θ ∷ C)) (castOf {Γ} {B} Θ) _)))
-    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (cong-∷-ren (cong-ren {Γ'' = Θ} r)) wk-ren _))
+    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ wk-ren (cong-∷-ren (cong-ren {Γ'' = Θ} r)) _))
       (≐ᵛ-trans (V-rename-≐ (wk-ren-nat (cong-ren {Γ'' = Θ} r)) _)
-        (≐ᵛ-trans (V-rename-∘ wk-ren (cong-ren {Γ'' = Θ} r) _)
+        (≐ᵛ-trans (V-rename-∘ (cong-ren {Γ'' = Θ} r) wk-ren _)
           (≐ᵛ-trans (V-rename-cong wk-ren (ren-sub-hit r Θ W f f'))
                     (≡→≐ᵛ (sym (cast-wk-any (castOf {Γ'} {B} (Θ ∷ C))
                                             (castOf {Γ'} {B} Θ) _)))))))
@@ -129,29 +129,29 @@ ren-sub-hit {Γ} {Γ'} {B} r (Θ ⟨ ρ ⟩) W f f' with eternal? B
     (≡→≐ᵛ (cong (V-rename (cong-⟨⟩-ren ρ₀))
                 (cast-ren-⟨⟩-any (castOf {Γ} {B} (Θ ⟨ ρ ⟩))
                                  (castOf {Γ} {B} Θ) rn _)))
-    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (cong-⟨⟩-ren ρ₀) rn _))
+    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ rn (cong-⟨⟩-ren ρ₀) _))
       (≐ᵛ-trans (V-rename-≐ (⟨⟩-ren-nat ρ₀ rn (λ y → hit-⟨⟩-img bd y)
                                               (λ y → hit-⟨⟩-img bd y)) _)
-        (≐ᵛ-trans (V-rename-∘ rn ρ₀ _)
+        (≐ᵛ-trans (V-rename-∘ ρ₀ rn _)
           (≐ᵛ-trans (V-rename-cong rn (ren-sub-hit r Θ W _ _))
-            (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ (⟨⟩-≤-ren-≐ _ _) ≐ʳ-refl) _)
+            (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _)) _)
                       (≡→≐ᵛ (sym (cast-ren-⟨⟩-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
                                                   (castOf {Γ'} {B} Θ) rn' _))))))))
   where
     ρ₀ = cong-ren {Γ'' = Θ} r
     bd = ≾ᵣ-zero-productʳ (f ¬et)
 
-    rn : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
-    rn = ⟨⟩-≤-ren bd ∘ʳ ⟨⟩-η⁻¹-ren
+    rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
+    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren bd
 
-    rn' : ∀ {Γ₀ : Ctx} → Ren [] Γ₀ (Γ₀ ⟨ ρ ⟩)
-    rn' = ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬et)) ∘ʳ ⟨⟩-η⁻¹-ren
+    rn' : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
+    rn' = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f' ¬et))
 
 -- The same, taking both variables as equations: what reaches the substitution
 -- on either side is `∈-++ᶜˡ Θ Hd`, which is `split→∈` of the splitting only up
 -- to `split→∈-∈-++ᶜˡ`.
 
-ren-sub-hit′ : ∀ {Γ Γ' B σ σ'} → (r : Ren [] Γ Γ') → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+ren-sub-hit′ : ∀ {Γ Γ' B σ σ'} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
              → (y  : B ∈[ σ  ] ((Γ  ∷ B) ++ᶜ Θ))
              → (y' : B ∈[ σ' ] ((Γ' ∷ B) ++ᶜ Θ))
              → (f  : ¬ Eternal B → σ  ≾ᵣ uᵣ)
@@ -176,7 +176,7 @@ ren-sub-hit′ r Θ W _ _ f f' refl refl = ren-sub-hit r Θ W f f'
 --
 -- Neither the renaming nor the substitution moves it, in either order.
 
-ren-sub-var-r : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ}
+ren-sub-var-r : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A ρ}
               → (z : A ∈[ ρ ] Θ) → (W : Γ ⊢V⦂ B)
               → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
               → V-rename (cong-ren {Γ'' = Θ} r)
@@ -211,7 +211,7 @@ ren-sub-var-r {Γ} {Γ'} {B} r Θ z W f f' =
 -- The substitution fixes it on either side, and the renaming moves it to its
 -- own image, pushed under the suffix.
 
-ren-sub-var-l : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ}
+ren-sub-var-l : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A ρ}
               → (z : A ∈[ ρ ] Γ) → (W : Γ ⊢V⦂ B)
               → (f f' : ¬ Eternal A → grade-++ᶜˡ ρ Θ ≾ᵣ uᵣ)
               → V-rename (cong-ren {Γ'' = Θ} r)
@@ -252,7 +252,7 @@ ren-sub-var-l {Γ} {Γ'} {B} r Θ z W f f' =
 -- `ren-sub-hit` with the variable presented as `∈-++ᶜˡ Θ Hd`, which is where
 -- the splitting leaves it, and the renamed side folded into the same shape.
 
-ren-sub-var-hd : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+ren-sub-var-hd : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
                → (f f' : ¬ Eternal B → grade-++ᶜˡ uᵣ Θ ≾ᵣ uᵣ)
                → V-rename (cong-ren {Γ'' = Θ} r)
                    (castᵛ (castOf {Γ} {B} Θ)
@@ -285,7 +285,7 @@ ren-sub-var-hd {Γ} {Γ'} {B} r Θ W f f' =
 -- Which of the three applies is what `∈-++ᶜ-split` decides, the prefix's own
 -- head being the variable replaced.
 
-ren-sub-var : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ}
+ren-sub-var : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A ρ}
             → (y : A ∈[ ρ ] ((Γ ∷ B) ++ᶜ Θ)) → (W : Γ ⊢V⦂ B)
             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
             → V-rename (cong-ren {Γ'' = Θ} r)
@@ -350,7 +350,7 @@ ren-sub-var {Γ} {Γ'} {B} r Θ {A} {ρ} y W f f'
 -- replaced, and then it is the one inside the substituted value, which is of
 -- box type and so a variable itself.
 
-rvar-hit-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+rvar-hit-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
              → (W : Γ ⊢V⦂ [ ρ ] A)
              → var-img′ (cong-ren {Γ'' = Θ} r)
                  (Var-cast (castOf {Γ} {[ ρ ] A} Θ)
@@ -387,7 +387,7 @@ rvar-hit-ren {Γ} {Γ'} {A} {ρ} r (Θ ⟨ ρ' ⟩) W =
              (Var-cast-irr (cong (_⟨ ρ' ⟩) (castOf {Γ'} {[ ρ ] A} Θ))
                            (castOf {Γ'} {[ ρ ] A} (Θ ⟨ ρ' ⟩)) _)))
 
-rvar-hit-ren′ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
+rvar-hit-ren′ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
               → (W : Γ ⊢V⦂ [ ρ ] A)
               → (c  : [ ρ ] A ∈[ σ ] ((Γ ∷ [ ρ ] A) ++ᶜ Θ))
               → (t' : Var ((Γ' ∷ [ ρ ] A) ++ᶜ Θ) ([ ρ ] A))
@@ -408,7 +408,7 @@ rvar-hit-ren′ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
                                    (V-rename r W)))
 rvar-hit-ren′ r Θ W _ _ refl refl = rvar-hit-ren r Θ W
 
-unbox-rvar-ren : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (Θ : Ctx) → ∀ {A ρ σ}
+unbox-rvar-ren : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A ρ σ}
                → (c : [ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ)) → (W : Γ ⊢V⦂ B)
                → var-img′ (cong-ren {Γ'' = Θ} r)
                    (Var-cast (castOf {Γ} {B} Θ)
@@ -486,8 +486,8 @@ unbox-rvar-ren {Γ} {Γ'} {B} r Θ {A} {ρ} {σ} c W
 -- this can stand outside the induction.
 
 ren-sub-unbox
-  : ∀ {Γ Γ' B A ρ C Δ} → (r : Ren [] Γ Γ') → (Θ : Ctx)
-  → (w : Ren [] (Δ ⟨ ρ ⟩) ((Γ ∷ B) ++ᶜ Θ))
+  : ∀ {Γ Γ' B A ρ C Δ} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
+  → (w : Ren [] ((Γ ∷ B) ++ᶜ Θ) (Δ ⟨ ρ ⟩))
   → (V : Δ ⊢V⦂ [ ρ ] A)
   → (M : (((Γ ∷ B) ++ᶜ Θ) ∷ A) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
   → (ih : C-rename (cong-ren {Γ'' = Θ ∷ A} r)
@@ -529,7 +529,7 @@ ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
                                      (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
       (≐ᶜ-sym
         (≐ᶜ-trans (castᶜ-≐ (castOf {Γ'} {B} Θ)
-                    (sub-unbox (ρ' ∘ʳ w) V (C-rename (cong-∷-ren ρ') M)
+                    (sub-unbox (w ∘ʳ ρ') V (C-rename (cong-∷-ren ρ') M)
                                xR WR relR))
                   (≡→≐ᶜ (cast-unbox (castOf {Γ'} {B} Θ))))))
   where
@@ -547,19 +547,19 @@ ren-sub-unbox {Γ} {Γ'} {B} {A} {ρ} r Θ w V M W ih =
                     (proj₂ (proj₂ (unbox⇒var w V)))
 
     relR = ≾ᵣ-trans
-             (proj₂ (proj₂ (⟨ proj₂ (unbox-img (ρ' ∘ʳ w) V) ⟩[ xR ↦ WR ]rvar)))
-             (proj₂ (proj₂ (unbox⇒var (ρ' ∘ʳ w) V)))
+             (proj₂ (proj₂ (⟨ proj₂ (unbox-img (w ∘ʳ ρ') V) ⟩[ xR ↦ WR ]rvar)))
+             (proj₂ (proj₂ (unbox⇒var (w ∘ʳ ρ') V)))
 
     hd : ∀ {Γ₀ : Ctx} → (Γ₀ ∷ [ ρ ] A) ⊢V⦂ [ ρ ] A
     hd = var (λ _ → ≾ᵣ-refl) Hd
 
     vL = proj₂ (rvar-img cL xL WL)
-    vR = proj₂ (rvar-img (proj₂ (unbox-img (ρ' ∘ʳ w) V)) xR WR)
+    vR = proj₂ (rvar-img (proj₂ (unbox-img (w ∘ʳ ρ') V)) xR WR)
 
     wL = castʳ (castOf {Γ} {B} Θ) (unbox-var-ren vL relL)
     wR = castʳ (castOf {Γ'} {B} Θ) (unbox-var-ren vR relR)
 
-    rvarEq : unbox-img (ρ₀ ∘ʳ wL) hd ≡ unbox-img wR hd
+    rvarEq : unbox-img (wL ∘ʳ ρ₀) hd ≡ unbox-img wR hd
     rvarEq =
       trans (unbox-img-∘ ρ₀ wL hd)
         (trans (cong (var-img′ ρ₀)
