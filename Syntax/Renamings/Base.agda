@@ -122,7 +122,7 @@ extend-ren r p x = cong-∷-ren r ∘ʳ var-ren p x
 
 -- Equality renaming. It runs from `Δ'` to `Δ`, since the action on terms is
 -- contravariant and `castᵛ e` transports a term forwards along `e`
--- (`V-rename-eq-≐`).
+-- (`V-rename-eq-≡`).
 
 eq-ren : ∀ {Ξ Δ Δ'} → Δ ≡ Δ' → Ren Ξ Δ' Δ
 eq-ren refl = id-ren

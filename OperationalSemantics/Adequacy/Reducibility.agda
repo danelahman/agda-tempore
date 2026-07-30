@@ -124,10 +124,10 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 -- allocates a cell, and a function reaching the extended state may be applied
 -- to arguments mentioning it.
 --
--- Both clauses take their transported term up to `_≐_` rather than on the nose.
--- That is what makes `Val-reach` compose two transports: renaming is functorial
--- only up to `_≐ᶜ_` (`unbox` stores a renaming), so with the slack the composite
--- is reached by `≐-trans` instead of needing `Comp` to respect `_≐ᶜ_`.
+-- The `⇒` clause takes its transported term up to a propositional equation
+-- rather than on the nose. That slack is what lets `Val-reach` compose two
+-- transports: the two derived renamings agree only up to `_≐ʳ_`, and
+-- `C-rename-≡` turns that into the equation the clause asks for.
 
 Val : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 Val (Base b)      St V = ⊤
@@ -140,7 +140,7 @@ Val (A ⇒ (B ‼ ε)) St V =
   Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
     (V ≡ lam M)
   × (∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
-     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≐ᶜ reach-under q M
+     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≡ reach-under q M
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
      → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
 -- A box type is the cell the value names: readable at a later state means its
@@ -290,10 +290,10 @@ Val-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
 -- unit-graded) and `reach-∘ᵘ` at `[ ρ ]` (the outer one guarded).
 ------------------------------------------------------------------------
 
-Val-≐ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
-       → V ≐ᵛ V' → Val A St V → Val A St V'
+Val-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
+       → V ≡ V' → Val A St V → Val A St V'
 
-Val-≐ᵛ A refl p = p
+Val-≡ᵛ A refl p = p
 
 Val-reach : ∀ {A St St'} → (q : St ⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
           → Val A St V → Val A St' (reach-val q V)
@@ -307,18 +307,18 @@ Val-reach {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
     _ , refl
   , λ q' M₂ eM₂ W pW →
       f (reach-∘ q' q₀) M₂
-        (≐ᶜ-trans eM₂
-          (≐ᶜ-trans
-            (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (reach-renᵘ q₀))
+        (trans eM₂
+          (trans
+            (sym (C-rename-∘ (cong-∷-ren (reach-renᵘ q₀))
                                 (cong-∷-ren (reach-renᵘ q')) M))
-            (C-rename-≐ (≐ʳ-trans
-                          (≐ʳ-sym (cong-∷-ren-∘-≐ (reach-renᵘ q₀) (reach-renᵘ q')))
-                          (cong-∷-ren-≐ (≐ʳ-sym (reach-renᵘ-∘ q' q₀))))
+            (C-rename-≡ (≐ʳ-trans
+                          (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (reach-renᵘ q₀) (reach-renᵘ q')))
+                          (cong-∷-ren-≐ʳ (≐ʳ-sym (reach-renᵘ-∘ q' q₀))))
                         M)))
         W pW
 Val-reach {[ ρ ] A} q₀ V f {St''} (read e rel) with grad-typ⇒var V
 ... | _ , c , g , refl =
-  Val-≐ᵛ A (≡→≐ᵛ (lookup-body-≡ St'' cellEq rel₁ rel))
+  Val-≡ᵛ A ((lookup-body-≡ St'' cellEq rel₁ rel))
            (f (read (≤ₛ-trans (ext q₀) e) rel₁))
   where
     cellEq = trans (≤ₛ-embed-∘ (ext q₀) e c)
@@ -353,12 +353,12 @@ Valᵍ→Val (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , Valᵍ→Val G₁ V₁ p₁ , Valᵍ→Val G₂ V₂ p₂
 Valᵍ→Val ([ ρ ]ᵍ G)   V p = λ r → Valᵍ→Val G _ (p r)
 
--- Ground reducibility is insensitive to the equivalence, as `Val-≐ᵛ` is.
+-- Ground reducibility is insensitive to the equivalence, as `Val-≡ᵛ` is.
 
-Valᵍ-≐ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂ type-of-gtype G}
-        → V ≐ᵛ V' → Valᵍ G St V → Valᵍ G St V'
+Valᵍ-≡ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂ type-of-gtype G}
+        → V ≡ V' → Valᵍ G St V → Valᵍ G St V'
 
-Valᵍ-≐ᵛ G refl p = p
+Valᵍ-≡ᵛ G refl p = p
 
 -- GROUND VALUES ACROSS THE STATE EQUIVALENCE
 --
@@ -382,24 +382,24 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} (read e rel)
   with grad-typ⇒var V
 ... | _ , c , g , refl with replay (≐ˢ-sym es) e
 ...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
-  Valᵍ-≐ᵛ G (≡→≐ᵛ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
-    (Valᵍ-≐ᵛ G (≐ᵛ-sym bridge)
+  Valᵍ-≡ᵛ G ((sym (lookup-body-≡ St'' cellEq rel rel₀)))
+    (Valᵍ-≡ᵛ G (sym bridge)
       (Valᵍ-≐ˢ (≐ˢ-sym es₂) G _ (f (read e₀ rel₀))))
   where
     cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
     rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
 
     bridge =
-      ≐ᵛ-trans
+      trans
         (lookup-body-≐ˢ es₂ (Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
-        (≡→≐ᵛ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
+        ((castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
 -- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
 --
 -- One lemma carrying *both* relations: the states' and the terms'. They cannot
 -- be separated — the `comp-op` case replays the resumption's reach and recurses,
--- and the two continuations come out of `≐-perform⁻` related only by `_≐ᶜ_`.
+-- and the two continuations come out of `cast-perform⁻` related only by `_≡_`.
 --
 -- Parameterised by the value predicate's transport rather than mutual with
 -- `Val-≐ˢ`, so that both recurse structurally on the *type*.
@@ -407,65 +407,65 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} (read e rel)
 
 -- The reduct a resumption builds, compared across the two states.
 
-resume-≐ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
+resume-≐ˢ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
          → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
          → {q : St ⊑ₛ[ ρ ] St₂} → {q' : St' ⊑ₛ[ ρ ] St₂'}
          → ext q ≤≐ ext q'
          → {M : toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
          → {M' : toCtx St' ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
-         → M ≐ᶜ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B) (sym (toCtx-≐ˢ es))) M'
+         → M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B) (sym (toCtx-≐ˢ es))) M'
          → {W : toCtx St₂ ⊢V⦂ B} → {W' : toCtx St₂' ⊢V⦂ B}
-         → W ≐ᵛ castᵛ (sym (toCtx-≐ˢ es₂)) W'
+         → W ≡ castᵛ (sym (toCtx-≐ˢ es₂)) W'
          -------------------------------------------------------------------
          → resume q M W
-         ≐ᶜ castᶜ (sym (toCtx-≐ˢ es₂)) (resume q' M' W')
+         ≡ castᶜ (sym (toCtx-≐ˢ es₂)) (resume q' M' W')
 
-resume-≐ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
-  ≐ᶜ-trans
-    (sub-≐ᶜ Hd eW
-      (≐ᶜ-trans (C-rename-≐ (cong-∷-ren-≐ (unbox-ren-≐ˢ es es₂ h)) M)
+resume-≐ˢ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
+  trans
+    (sub-≡ᶜ Hd eW
+      (trans (C-rename-≡ (cong-∷-ren-≐ʳ (unbox-ren-≐ˢ es es₂ h)) M)
                 (C-rename-cong (cong-∷-ren _)
-                  (subst (λ z → M ≐ᶜ z)
+                  (subst (λ z → M ≡ z)
                          (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B)
                                           (sym (toCtx-≐ˢ es)))
                                     (cong (_∷ B) e₁) M')
                          eM))))
-    (≡→≐ᶜ (trans (cong (λ z → z [ Hd ↦ castᵛ e₂ W' ]c)
+    ((trans (cong (λ z → z [ Hd ↦ castᵛ e₂ W' ]c)
                        (cast-rename-∷ e₁ e₂ (unbox-ren q') M'))
                  (cast-app-reduct e₂ (C-rename (cong-∷-ren (unbox-ren q')) M') W')))
   where
     e₁ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es))
     e₂ = sym (toCtx-≐ˢ es₂)
 
-Comp-≐ : ∀ {A P ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+Comp-≐ˢ : ∀ {A P ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
        → (tr : ∀ {St₁ St₁' : 𝕊 []} → (es₁ : St₁ ≐ˢ St₁')
              → (V : toCtx St₁ ⊢V⦂ A) → P St₁ V
              → P St₁' (castᵛ (toCtx-≐ˢ es₁) V))
        → (tr≐ : ∀ {St₁ : 𝕊 []} {V V' : toCtx St₁ ⊢V⦂ A}
-              → V ≐ᵛ V' → P St₁ V → P St₁ V')
+              → V ≡ V' → P St₁ V → P St₁ V')
        → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
-       → M ≐ᶜ castᶜ (sym (toCtx-≐ˢ es)) M'
+       → M ≡ castᶜ (sym (toCtx-≐ˢ es)) M'
        -------------------------------------------------------------
        → Comp A P ε St M → Comp A P ε St' M'
 
-Comp-≐ es tr tr≐ eM (comp-ret rs pV) with ↝*-≐ es eM rs
-... | St₁' , N' , es₁ , rs' , eN with ≐-return⁻ (sym (toCtx-≐ˢ es₁)) N' eN
+Comp-≐ˢ es tr tr≐ eM (comp-ret rs pV) with ↝*-≐ˢ es eM rs
+... | St₁' , N' , es₁ , rs' , eN with cast-return⁻ (sym (toCtx-≐ˢ es₁)) N' eN
 ...   | V' , refl , eV =
   comp-ret rs'
-    (tr≐ (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≐ᵛ z)
+    (tr≐ (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≡ z)
                 (castᵛ-castᵛ (sym (toCtx-≐ˢ es₁)) (toCtx-≐ˢ es₁) V')
-                (castᵛ-≐ (toCtx-≐ˢ es₁) eV))
+                (castᵛ-≡ (toCtx-≐ˢ es₁) eV))
          (tr es₁ _ pV))
 
-Comp-≐ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
-  with ↝*-≐ es eM rs
-... | St₁' , N' , es₁ , rs' , eN with ≐-perform⁻ (sym (toCtx-≐ˢ es₁)) N' eN
+Comp-≐ˢ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
+  with ↝*-≐ˢ es eM rs
+... | St₁' , N' , es₁ , rs' , eN with cast-perform⁻ (sym (toCtx-≐ˢ es₁)) N' eN
 ...   | W' , Mk' , refl , eW , eMk =
   comp-op rs'
-    (Valᵍ-≐ᵛ (param op)
-      (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≐ᵛ z)
+    (Valᵍ-≡ᵛ (param op)
+      (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≡ z)
              (castᵛ-castᵛ (sym (toCtx-≐ˢ es₁)) (toCtx-≐ˢ es₁) W')
-             (castᵛ-≐ (toCtx-≐ˢ es₁) eW))
+             (castᵛ-≡ (toCtx-≐ˢ es₁) eW))
       (Valᵍ-≐ˢ es₁ (param op) _ pW))
     (λ q' W'' pW'' → step q' W'' pW'')
   where
@@ -477,19 +477,19 @@ Comp-≐ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
          → Comp A P _ St₂ (resume q' Mk' W'')
     step {St₂} q' W'' pW'' with reach-replay (≐ˢ-sym es₁) q'
     ... | St₃ , q , es₃ , h =
-      Comp-≐ (≐ˢ-sym es₃) tr tr≐
-        (resume-≐ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
-          (subst (λ z → castᵛ (toCtx-≐ˢ es₃) W'' ≐ᵛ z)
+      Comp-≐ˢ (≐ˢ-sym es₃) tr tr≐
+        (resume-≐ˢ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
+          (subst (λ z → castᵛ (toCtx-≐ˢ es₃) W'' ≡ z)
                  (castᵛ-irr (toCtx-≐ˢ es₃)
                             (sym (toCtx-≐ˢ (≐ˢ-sym es₃))) W'')
-                 (≐ᵛ-refl _)))
+                 (refl)))
         (pk q (castᵛ (toCtx-≐ˢ es₃) W'')
              (Valᵍ-≐ˢ es₃ (arity op) W'' pW''))
 
 -- VALUES ACROSS THE STATE EQUIVALENCE
 --
 -- Recursion on the type. Both Kripke clauses replay the other state's extension
--- and transport back; the arrow clause is where `Comp-≐` is called, at the
+-- and transport back; the arrow clause is where `Comp-≐ˢ` is called, at the
 -- smaller type `B`, which is what keeps the two definitions non-mutual.
 
 Val-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (A : VType)
@@ -511,13 +511,13 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
 
     step : ∀ {St'' : 𝕊 []} → (q' : St' ⊑ₛ[ uᵣ ] St'')
          → (M₂ : toCtx St'' ∷ A ⊢C⦂ B ‼ ε)
-         → M₂ ≐ᶜ reach-under q' (castᶜ (cong (_∷ A) e) M)
+         → M₂ ≡ reach-under q' (castᶜ (cong (_∷ A) e) M)
          → (W : toCtx St'' ⊢V⦂ A) → Val A St'' W
          → Comp B (Val B) ε St'' (M₂ [ Hd ↦ W ]c)
     step {St''} q' M₂ eM₂ W pW with reach-replay (≐ˢ-sym es) q'
     ... | St₂ , q , es₂ , h =
-      Comp-≐ (≐ˢ-sym es₂) (λ es₁ V₀ → Val-≐ˢ es₁ B V₀) (Val-≐ᵛ B)
-        (≡→≐ᶜ (trans (cast-app-reduct e₂ M₂ W)
+      Comp-≐ˢ (≐ˢ-sym es₂) (λ es₁ V₀ → Val-≐ˢ es₁ B V₀) (Val-≡ᵛ B)
+        ((trans (cast-app-reduct e₂ M₂ W)
                      (castᶜ-irr e₂ (sym (toCtx-≐ˢ (≐ˢ-sym es₂)))
                                 (M₂ [ Hd ↦ W ]c))))
         (f q (castᶜ (cong (_∷ A) e₂) M₂) eM₃ (castᵛ e₂ W)
@@ -525,19 +525,19 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
       where
         e₂ = toCtx-≐ˢ es₂
 
-        eM₃ : castᶜ (cong (_∷ A) e₂) M₂ ≐ᶜ reach-under q M
+        eM₃ : castᶜ (cong (_∷ A) e₂) M₂ ≡ reach-under q M
         eM₃ =
-          ≐ᶜ-trans (castᶜ-≐ (cong (_∷ A) e₂) eM₂)
-            (≐ᶜ-trans
-              (≡→≐ᶜ (sym (cast-rename-∷ (sym e) e₂ (reach-renᵘ q')
+          trans (castᶜ-≡ (cong (_∷ A) e₂) eM₂)
+            (trans
+              ((sym (cast-rename-∷ (sym e) e₂ (reach-renᵘ q')
                                         (castᶜ (cong (_∷ A) e) M))))
-              (≐ᶜ-trans
-                (≡→≐ᶜ (cong (C-rename
+              (trans
+                ((cong (C-rename
                               (cong-∷-ren (castʳ² (sym e) e₂ (reach-renᵘ q'))))
                             (castᶜ-castᶜ (cong (_∷ A) e) (cong (_∷ A) (sym e)) M)))
-                (≐ᶜ-sym
-                  (C-rename-≐
-                    (cong-∷-ren-≐
+                (sym
+                  (C-rename-≡
+                    (cong-∷-ren-≐ʳ
                       (≐ʳ-trans (reach-renᵘ-≐ˢ es (≐ˢ-sym es₂) (≤≐-sym h))
                                 (castʳ²-irr (sym e) (sym e)
                                             (sym (toCtx-≐ˢ (≐ˢ-sym es₂))) e₂
@@ -548,27 +548,27 @@ Val-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} (read e rel)
   with grad-typ⇒var V
 ... | _ , c , g , refl with replay (≐ˢ-sym es) e
 ...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
-  Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St'' cellEq rel rel₀)))
-    (Val-≐ᵛ A (≐ᵛ-sym bridge)
+  Val-≡ᵛ A ((sym (lookup-body-≡ St'' cellEq rel rel₀)))
+    (Val-≡ᵛ A (sym bridge)
       (Val-≐ˢ (≐ˢ-sym es₂) A _ (f (read e₀ rel₀))))
   where
     cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
     rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
 
     bridge =
-      ≐ᵛ-trans
+      trans
         (lookup-body-≐ˢ es₂ (Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
-        (≡→≐ᵛ (castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
+        ((castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
 -- Hence reducibility is insensitive to the term equivalence: the special case
 -- `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
 
-Comp-≐ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
-        → M ≐ᶜ M' → Comp' A ε St M → Comp' A ε St M'
-Comp-≐ᶜ {A} {ε} {St} {M} {M'} eM pM =
-  Comp-≐ (≐ˢ-refl St) (λ es₁ V₀ → Val-≐ˢ es₁ A V₀) (Val-≐ᵛ A)
-    (subst (λ z → M ≐ᶜ castᶜ (sym z) M') (sym (toCtx-≐ˢ-refl St)) eM)
+Comp-≡ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
+        → M ≡ M' → Comp' A ε St M → Comp' A ε St M'
+Comp-≡ᶜ {A} {ε} {St} {M} {M'} eM pM =
+  Comp-≐ˢ (≐ˢ-refl St) (λ es₁ V₀ → Val-≐ˢ es₁ A V₀) (Val-≡ᵛ A)
+    (subst (λ z → M ≡ castᶜ (sym z) M') (sym (toCtx-≐ˢ-refl St)) eM)
     pM
 
 -- Handling is `Adequacy.Handle`, above `Environment`: as sequencing, plus a
@@ -584,11 +584,11 @@ Comp-≐ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- renaming is seen to send a variable to its own weakening. The new one is the
 -- lookup at the freshly allocated cell.
 
-alloc-var-≐ : ∀ {A A' ρ ρ'} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+alloc-var-≡ : ∀ {A A' ρ ρ'} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → (x : A' ∈[ ρ' ] toCtx St) → (f : ¬ Eternal A' → ρ' ≾ᵣ uᵣ)
-            → reach-val (alloc-reach V) (var f x) ≐ᵛ var f (Tl-∷ x)
-alloc-var-≐ V x f =
-  var-ren-img-≐ (reach-renᵘ (alloc-reach V)) x f
+            → reach-val (alloc-reach V) (var f x) ≡ var f (Tl-∷ x)
+alloc-var-≡ V x f =
+  var-ren-img-≡ (reach-renᵘ (alloc-reach V)) x f
                 (reach-renᵘ-img (alloc-reach V) x) f
 
 -- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ` is
@@ -598,7 +598,7 @@ alloc-var-≐ V x f =
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
 --
--- What is left is one renaming agreement, `alloc-lookup-≐` in `GradedReach` (the module): the two
+-- What is left is one renaming agreement, `alloc-lookup-≡` in `GradedReach` (the module): the two
 -- renamings both push the value's context under everything the state has gained
 -- since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the reach by `≤ₛ-embed`.
 
@@ -610,7 +610,7 @@ store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) 
             → Val ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
 store-fresh {A} {ρ} {St} V pV f {St'} r =
-  Val-≐ᵛ A (≐ᵛ-sym (alloc-lookup-≐ V (extᶜ r) (ready r) q₀ refl)) (pV q₀)
+  Val-≡ᵛ A (sym (alloc-lookup-≡ V (extᶜ r) (ready r) q₀ refl)) (pV q₀)
   where
     e   = extᶜ r
     rel = ready r
@@ -658,7 +658,7 @@ store-alloc {A} {ρ} {St} V pSt pV {St' = St'} Hd r =
   store-fresh V pV (λ _ → ≾ᵣ-refl) r
 
 store-alloc {St = St} V pSt pV {St' = St'} (Tl-∷ x) r =
-  Val-≐ᵛ _ (≡→≐ᵛ (lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
+  Val-≡ᵛ _ ((lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
            (pSt x (read (≤ₛ-trans (∷-suc V id-suc) e) rel₀))
   where
     e   = extᶜ r

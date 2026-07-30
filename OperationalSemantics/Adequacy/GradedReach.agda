@@ -10,7 +10,7 @@
 -- `reach-id` is the unit and `reach-∘ᵍ` multiplies, resting on         --
 -- `≤ₛ-grade` being multiplicative (`≤ₛ-grade-trans`). `unbox-ren` is   --
 -- the renaming a reach licenses and `reach-renᵘ` its unit-budget       --
--- form, with `reach-renᵘ-∘` and `reach-renᵘ-id-≐` the two functor     --
+-- form, with `reach-renᵘ-∘` and `reach-renᵘ-id-≐ʳ` the two functor     --
 -- laws. Where a lock has to be crossed on both sides — the reduct of   --
 -- `SEQ-STEP`/`HANDLE-STEP` — `suc-comp-ren` is used directly, on the   --
 -- two-graded bound `PreservationTheorem` supplies.                     --
@@ -234,18 +234,18 @@ suc-comp-ren-≤ id-suc b b₁ p = mk≐ʳ go
     go (Tl-⟨⟩ x) = refl
 
 suc-comp-ren-≤ (⟨⟩-suc ρ q) b b₁ p =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≤ q _ _ (·ᵣ-monoʳ-≾ᵣ p)) ≐ʳ-refl)
-    (≐ʳ-trans (∘ʳ-assoc-≐ (suc-comp-ren q _) (⟨⟩-≤-ren (·ᵣ-monoʳ-≾ᵣ p))
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≤ q _ _ (·ᵣ-monoʳ-≾ᵣ p)) ≐ʳ-refl)
+    (≐ʳ-trans (∘ʳ-assoc-≐ʳ (suc-comp-ren q _) (⟨⟩-≤-ren (·ᵣ-monoʳ-≾ᵣ p))
                           ⟨⟩-μ-ren)
-      (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (⟨⟩-μ-≤-comm p (·ᵣ-monoʳ-≾ᵣ p)))
-                (≐ʳ-sym (∘ʳ-assoc-≐ (suc-comp-ren q _) ⟨⟩-μ-ren (⟨⟩-≤-ren p)))))
+      (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-μ-≤-comm p (·ᵣ-monoʳ-≾ᵣ p)))
+                (≐ʳ-sym (∘ʳ-assoc-≐ʳ (suc-comp-ren q _) ⟨⟩-μ-ren (⟨⟩-≤-ren p)))))
 
 suc-comp-ren-≤ (∷-suc V q) b b₁ p =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≤ q _ _ p) ≐ʳ-refl)
-    (≐ʳ-trans (∘ʳ-assoc-≐ (suc-comp-ren q _) (⟨⟩-≤-ren p)
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≤ q _ _ p) ≐ʳ-refl)
+    (≐ʳ-trans (∘ʳ-assoc-≐ʳ (suc-comp-ren q _) (⟨⟩-≤-ren p)
                           (cong-⟨⟩-ren wk-ren))
-      (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (wk-≤-comm p))
-                (≐ʳ-sym (∘ʳ-assoc-≐ (suc-comp-ren q _) (cong-⟨⟩-ren wk-ren)
+      (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (wk-≤-comm p))
+                (≐ʳ-sym (∘ʳ-assoc-≐ʳ (suc-comp-ren q _) (cong-⟨⟩-ren wk-ren)
                                     (⟨⟩-≤-ren p)))))
 
 -- Relaxing the *source* grade is pre-composing with a relaxation (the mirror of
@@ -263,17 +263,17 @@ suc-comp-ren-≤ˡ id-suc b b₁ p = mk≐ʳ go
     go (Tl-⟨⟩ x) = refl
 
 suc-comp-ren-≤ˡ (⟨⟩-suc ρ e) b b₁ p =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≤ˡ e _ _ p) ≐ʳ-refl)
-           (∘ʳ-assoc-≐ (⟨⟩-≤-ren p) (suc-comp-ren e _) ⟨⟩-μ-ren)
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≤ˡ e _ _ p) ≐ʳ-refl)
+           (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren p) (suc-comp-ren e _) ⟨⟩-μ-ren)
 
 suc-comp-ren-≤ˡ (∷-suc V e) b b₁ p =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≤ˡ e _ _ p) ≐ʳ-refl)
-           (∘ʳ-assoc-≐ (⟨⟩-≤-ren p) (suc-comp-ren e _)
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≤ˡ e _ _ p) ≐ʳ-refl)
+           (∘ʳ-assoc-≐ʳ (⟨⟩-≤-ren p) (suc-comp-ren e _)
                        (cong-⟨⟩-ren wk-ren))
 
 -- Extending twice is extending once along the composite.
 
-suc-comp-ren-∘-≐ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
+suc-comp-ren-∘-≐ʳ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
                  → (e : St ≤ₛ St₁) → (e' : St₁ ≤ₛ St₂)
                  → (b  : ≤ₛ-grade (≤ₛ-trans e e') ·ᵣ ρ₂ ≾ᵣ ρ₀)
                  → (b₁ : ≤ₛ-grade e  ·ᵣ ρ₁ ≾ᵣ ρ₀)
@@ -283,17 +283,17 @@ suc-comp-ren-∘-≐ : ∀ {St St₁ St₂ : 𝕊 []} {ρ₀ ρ₁ ρ₂ : R}
                  ≐ʳ (suc-comp-ren e b₁ ∘ʳ suc-comp-ren e' b₂)
 
 -- `≤ₛ-trans e id-suc` *is* `e`, so the composite is `e` at a relaxed grade
-suc-comp-ren-∘-≐ {ρ₂ = ρ₂} e id-suc b b₁ b₂ =
+suc-comp-ren-∘-≐ʳ {ρ₂ = ρ₂} e id-suc b b₁ b₂ =
   suc-comp-ren-≤ e b b₁
     (≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ₂))) b₂)
 
-suc-comp-ren-∘-≐ e (⟨⟩-suc ρ e') b b₁ b₂ =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-∘-≐ e e' _ b₁ _) ≐ʳ-refl)
-           (∘ʳ-assoc-≐ (suc-comp-ren e b₁) (suc-comp-ren e' _) ⟨⟩-μ-ren)
+suc-comp-ren-∘-≐ʳ e (⟨⟩-suc ρ e') b b₁ b₂ =
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-∘-≐ʳ e e' _ b₁ _) ≐ʳ-refl)
+           (∘ʳ-assoc-≐ʳ (suc-comp-ren e b₁) (suc-comp-ren e' _) ⟨⟩-μ-ren)
 
-suc-comp-ren-∘-≐ e (∷-suc V e') b b₁ b₂ =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-∘-≐ e e' _ b₁ _) ≐ʳ-refl)
-           (∘ʳ-assoc-≐ (suc-comp-ren e b₁) (suc-comp-ren e' _)
+suc-comp-ren-∘-≐ʳ e (∷-suc V e') b b₁ b₂ =
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-∘-≐ʳ e e' _ b₁ _) ≐ʳ-refl)
+           (∘ʳ-assoc-≐ʳ (suc-comp-ren e b₁) (suc-comp-ren e' _)
                        (cong-⟨⟩-ren wk-ren))
 
 ------------------------------------------------------------------------
@@ -427,7 +427,7 @@ steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 -- Both congruence rules retype the continuation along `suc-comp-ren` of the
 -- step's own extension, so after a run it has been renamed once per step.
 -- The composite is the run's own renaming only up to `_≐ʳ_`
--- (`suc-comp-ren-∘-≐`), and at the empty run it is a grade relaxation rather
+-- (`suc-comp-ren-∘-≐ʳ`), and at the empty run it is a grade relaxation rather
 -- than the identity, so the continuation reached is returned as it stands.
 
 seq-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
@@ -437,10 +437,10 @@ seq-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
           -----------------------------------------------------------------
           → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
               (⟨ St , M ⨟ N ⟩ ↝* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
-            × (N₁ ≐ᶜ C-rename (cong-∷-ren (steps-ren rs)) N)
+            × (N₁ ≡ C-rename (cong-∷-ren (steps-ren rs)) N)
 
 seq-steps ε* N =
-  N , ε* , ≐ᶜ-sym (C-rename-id-≐ (cong-∷-ren-id-≐ (⟨⟩-≤-ren-id-≐ _)) N)
+  N , ε* , sym (C-rename-id-≡ (cong-∷-ren-id-≐ʳ (⟨⟩-≤-ren-id-≐ʳ _)) N)
 
 seq-steps (r ◅ rs) N
   with seq-steps rs
@@ -449,18 +449,18 @@ seq-steps (r ◅ rs) N
 ... | N₁ , rs' , eN₁ =
     N₁
   , SEQ-STEP r (step-grade-≾ r) ◅ rs'
-  , ≐ᶜ-trans eN₁
-      (≐ᶜ-trans
-        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
+  , trans eN₁
+      (trans
+        (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
                                                       (step-grade-≾ r)))
                             (cong-∷-ren (steps-ren rs)) N))
-        (C-rename-≐
+        (C-rename-≡
           (≐ʳ-trans
-            (≐ʳ-sym (cong-∷-ren-∘-≐ (suc-comp-ren (step-extends-state r)
+            (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (suc-comp-ren (step-extends-state r)
                                                   (step-grade-≾ r))
                                     (steps-ren rs)))
-            (cong-∷-ren-≐
-              (≐ʳ-sym (suc-comp-ren-∘-≐ (step-extends-state r)
+            (cong-∷-ren-≐ʳ
+              (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
                                         (steps-extends-state rs)
                                         _ (step-grade-≾ r)
                                         (steps-grade-≾ rs)))))
@@ -491,14 +491,14 @@ handle-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
                     ≡ subst (Cl B op ε₃) (toCtxᴱ-≡ St St₁) (H op ε₃))
-               × (N₁ ≐ᶜ C-rename (cong-∷-ren (steps-ren rs)) N)
+               × (N₁ ≡ C-rename (cong-∷-ren (steps-ren rs)) N)
 
 handle-steps {B = B} {St = St} ε* H N =
     H , N , ε*
   , (λ op ε₃ →
        cong (λ e → subst (Cl B op ε₃) e (H op ε₃))
             (uip {p = refl} {q = toCtxᴱ-≡ St St}))
-  , ≐ᶜ-sym (C-rename-id-≐ (cong-∷-ren-id-≐ (⟨⟩-≤-ren-id-≐ _)) N)
+  , sym (C-rename-id-≡ (cong-∷-ren-id-≐ʳ (⟨⟩-≤-ren-id-≐ʳ _)) N)
 
 handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩} r rs) H N
   with handle-steps rs
@@ -513,18 +513,18 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
        trans (eH₁ op ε₃)
              (subst² (toCtxᴱ-≡ St St') (toCtxᴱ-≡ St' St₁) (toCtxᴱ-≡ St St₁)
                      (H op ε₃)))
-  , ≐ᶜ-trans eN₁
-      (≐ᶜ-trans
-        (≐ᶜ-sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
+  , trans eN₁
+      (trans
+        (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
                                                       (step-grade-≾ r)))
                             (cong-∷-ren (steps-ren rs)) N))
-        (C-rename-≐
+        (C-rename-≡
           (≐ʳ-trans
-            (≐ʳ-sym (cong-∷-ren-∘-≐ (suc-comp-ren (step-extends-state r)
+            (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (suc-comp-ren (step-extends-state r)
                                                   (step-grade-≾ r))
                                     (steps-ren rs)))
-            (cong-∷-ren-≐
-              (≐ʳ-sym (suc-comp-ren-∘-≐ (step-extends-state r)
+            (cong-∷-ren-≐ʳ
+              (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
                                         (steps-extends-state rs)
                                         _ (step-grade-≾ r)
                                         (steps-grade-≾ rs)))))
@@ -541,7 +541,7 @@ suc-comp-ren-grade : ∀ {St St₁ : 𝕊 []} {ρ'' ρ₁ ρ₂ : R} → (e : St
                    → (suc-comp-ren e b₁ ∘ʳ eq-ren (cong (toCtx St₁ ⟨_⟩) eg))
                    ≐ʳ suc-comp-ren e b₂
 suc-comp-ren-grade e refl b₁ b₂ =
-  ≐ʳ-trans (∘ʳ-identityʳ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
+  ≐ʳ-trans (∘ʳ-identityʳ-≐ʳ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
 -- The same on the *source* side: an extension started at a propositionally
 -- equal guard is the same renaming, `eq-ren` being the identity there.
@@ -553,15 +553,15 @@ suc-comp-ren-grade-src : ∀ {St St₁ : 𝕊 []} {ρ₁ ρ₂ ρ₃ : R} → (e
                        → (eq-ren (cong (toCtx St ⟨_⟩) eg) ∘ʳ suc-comp-ren e b₁)
                        ≐ʳ suc-comp-ren e b₂
 suc-comp-ren-grade-src e refl b₁ b₂ =
-  ≐ʳ-trans (∘ʳ-identityˡ-≐ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
+  ≐ʳ-trans (∘ʳ-identityˡ-≐ʳ (suc-comp-ren e b₁)) (suc-comp-ren-irr e b₁ b₂)
 
 -- Crossing a lock and then moving on is crossing it into the later state: both
 -- send `Tl-⟨⟩ x` to the composite extension's embedding.
 
-reach-unbox-ren-≐ : ∀ {ρ} {St St' St'' : 𝕊 []}
+reach-unbox-ren-≐ʳ : ∀ {ρ} {St St' St'' : 𝕊 []}
                   → (q' : St' ⊑ₛ[ uᵣ ] St'') → (q : St ⊑ₛ[ ρ ] St')
                   → (unbox-ren q ∘ʳ reach-renᵘ q') ≐ʳ unbox-ren (reach-∘ q' q)
-reach-unbox-ren-≐ q' q = mk≐ʳ go
+reach-unbox-ren-≐ʳ q' q = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) =
@@ -577,25 +577,25 @@ reach-renᵘ-∘ : ∀ {St St' St'' : 𝕊 []}
              → reach-renᵘ (reach-∘ q' q) ≐ʳ (reach-renᵘ q ∘ʳ reach-renᵘ q')
 reach-renᵘ-∘ q' q =
   ≐ʳ-trans (reach-renᵘ-unbox (reach-∘ q' q))
-    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (≐ʳ-sym (reach-unbox-ren-≐ q' q)))
-      (≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-η⁻¹-ren (unbox-ren q) (reach-renᵘ q')))
-                (∘ʳ-≐ (≐ʳ-sym (reach-renᵘ-unbox q)) ≐ʳ-refl)))
+    (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (≐ʳ-sym (reach-unbox-ren-≐ʳ q' q)))
+      (≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ ⟨⟩-η⁻¹-ren (unbox-ren q) (reach-renᵘ q')))
+                (∘ʳ-≐ʳ (≐ʳ-sym (reach-renᵘ-unbox q)) ≐ʳ-refl)))
 
 -- Allocating a cell renames the old context by weakening past it.
 
-alloc-ren-≐ : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
+alloc-ren-≐ʳ : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → reach-renᵘ (alloc-reach V) ≐ʳ wk-ren
-alloc-ren-≐ V = mk≐ʳ (λ x → reach-renᵘ-img (alloc-reach V) x)
+alloc-ren-≐ʳ V = mk≐ʳ (λ x → reach-renᵘ-img (alloc-reach V) x)
 
 -- The same for the renaming an `unbox` consumes: splitting the guard into the
 -- reach's own part and a residual `σ`, then crossing the lock under `σ`, is the
 -- extension at residual `σ`. Both send `Tl-⟨⟩ x` to the embedding under `σ`.
 
-unbox-ren-μ-≐ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : St ⊑ₛ[ ρ ] St₁)
+unbox-ren-μ-≐ʳ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : St ⊑ₛ[ ρ ] St₁)
               → (b : ≤ₛ-grade (ext q) ·ᵣ σ ≾ᵣ ρ ·ᵣ σ)
               → (⟨⟩-μ-ren ∘ʳ cong-⟨⟩-ren {ρ = σ} (unbox-ren q))
               ≐ʳ suc-comp-ren (ext q) b
-unbox-ren-μ-≐ {σ = σ} q b = mk≐ʳ go
+unbox-ren-μ-≐ʳ {σ = σ} q b = mk≐ʳ go
   where
     go : ∀ {A τ} → (x : A ∈[ τ ] _) → _
     go (Tl-⟨⟩ x) = trans (cong (Var-⟨⟩ σ) (unbox-ren-img q x))
@@ -624,12 +624,12 @@ unbox-ren-unit q p = mk≐ʳ go
 -- variable of a state context cannot be case-split on, so this goes through the
 -- `var-img` layer rather than pointwise.
 
-reach-renᵘ-id-≐ : ∀ {St : 𝕊 []} → reach-renᵘ (reach-id {St}) ≐ʳ id-ren
-reach-renᵘ-id-≐ = mk≐ʳ (λ x → reach-renᵘ-img reach-id x)
+reach-renᵘ-id-≐ʳ : ∀ {St : 𝕊 []} → reach-renᵘ (reach-id {St}) ≐ʳ id-ren
+reach-renᵘ-id-≐ʳ = mk≐ʳ (λ x → reach-renᵘ-img reach-id x)
 
-unbox-ren-delay-≐ : ∀ {ρ} {St : 𝕊 []}
+unbox-ren-delay-≐ʳ : ∀ {ρ} {St : 𝕊 []}
                   → unbox-ren (delay-reach {ρ} {St}) ≐ʳ id-ren
-unbox-ren-delay-≐ = mk≐ʳ go
+unbox-ren-delay-≐ʳ = mk≐ʳ go
   where
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) = unbox-ren-img delay-reach x
@@ -692,7 +692,7 @@ lookup-body {A} {ρ} St (ρ' , z) rel =
 -- Two lookups at corresponding data agree: match the context equalities, and
 -- everything else is proof-irrelevant.
 
-lookup-body′-≐ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
+lookup-body′-≡ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
                → {Γf Γf' Γs Γs' : Ctx} → (eF : Γf' ≡ Γf) → (eS : Γs' ≡ Γs)
                → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
                → (eq' : (Γf' ∷ [ ρ ] A) ++ᶜ Γs' ≡ Γ')
@@ -701,10 +701,10 @@ lookup-body′-≐ : ∀ {A ρ σ} {Γ Γ' : Ctx} → (eΓ : Γ' ≡ Γ)
                → (rel rel' : σ ≾ᵣ ρ)
                → (U : ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A)
                → (U' : ([] ++ᶜ Γf') ⟨ ρ ⟩ ⊢V⦂ A)
-               → U ≐ᵛ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) U'
+               → U ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) U'
                → lookup-body′ Γf Γs eq h rel U
-               ≐ᵛ castᵛ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
-lookup-body′-≐ refl refl refl eq eq' h h' rel rel' U U' eU
+               ≡ castᵛ eΓ (lookup-body′ Γf' Γs' eq' h' rel' U')
+lookup-body′-≡ refl refl refl eq eq' h h' rel rel' U U' eU
   rewrite uip {p = eq} {q = eq'} | uip {p = h} {q = h'}
         | ≾ᵣ-irrelevant rel rel' = V-rename-cong _ eU
 
@@ -886,24 +886,24 @@ alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
                    (cong (λ z → τ' ·ᵣ ρ , z)
                          (subst-Tl-⟨⟩ (++ᶜ-identityˡ {toCtx St}) w))
 
--- Hence the lookup itself. `lookup-body′-≐` moves the lookup's own data — the
+-- Hence the lookup itself. `lookup-body′-≡` moves the lookup's own data — the
 -- state the cell is split off at, what the state gained after it, and the value
 -- stored — onto the data the allocation presents, which `≤ₛ-embed-fst`,
 -- `≤ₛ-embed-snd-ctx` and `≤ₛ-embed-lookup` supply.
 
-alloc-lookup-≐ : ∀ {A ρ} {St St' : 𝕊 []}
+alloc-lookup-≡ : ∀ {A ρ} {St St' : 𝕊 []}
                → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
                → (e : (St ∷ₛ V) ≤ₛ St')
                → (rel : proj₁ (≤ₛ-embed e (Hd {Γ = toCtx St})) ≾ᵣ ρ)
                → (q₀ : St ⊑ₛ[ ρ ] St')
                → ext q₀ ≡ ≤ₛ-trans (∷-suc V id-suc) e
                → lookup-body St' (≤ₛ-embed e (Hd {Γ = toCtx St})) rel
-               ≐ᵛ V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q₀) V
+               ≡ V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q₀) V
 
-alloc-lookup-≐ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
-  ≐ᵛ-trans (lookup-body′-≐ eΓ eF eS _ refl _ h rel rel _ V eU)
-    (≐ᵛ-trans (castᵛ-rename eΓ (lookup-ren′ (toCtx St) Δ refl h rel) V)
-              (V-rename-≐ (alloc-lookup-ren V e h rel q₀ eq₀) V))
+alloc-lookup-≡ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
+  trans (lookup-body′-≡ eΓ eF eS _ refl _ h rel rel _ V eU)
+    (trans (castᵛ-rename eΓ (lookup-ren′ (toCtx St) Δ refl h rel) V)
+              (V-rename-≡ (alloc-lookup-ren V e h rel q₀ eq₀) V))
   where
     Δ  = ≤ₛ-ctx e
     Δ₁ = [] ∷ [ ρ ] A
@@ -917,8 +917,8 @@ alloc-lookup-≐ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
                      (sym (cong proj₁ (≤ₛ-embed-push e (Hd {Γ = toCtx St})))))
 
     eU : resource-lookup St' (proj₂ (≤ₛ-embed e (Hd {Γ = toCtx St})))
-       ≐ᵛ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) V
-    eU = ≡→≐ᵛ (trans (≤ₛ-embed-lookup e (Hd {Γ = toCtx St}))
+       ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) eF) V
+    eU = (trans (≤ₛ-embed-lookup e (Hd {Γ = toCtx St}))
                       (subst-state-castᵛ
                          (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St}))) V))
 

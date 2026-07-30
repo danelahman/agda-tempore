@@ -58,8 +58,8 @@ castᵛ-var-Var : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
               → (x : A ∈[ ρ ] Γ) → (x' : A ∈[ ρ' ] Γ')
               → Var-cast e (ρ , x) ≡ (ρ' , x')
               → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
-              → castᵛ e (var f x) ≐ᵛ var f' x'
-castᵛ-var-Var refl x _ refl f f' = var-≐
+              → castᵛ e (var f x) ≡ var f' x'
+castᵛ-var-Var refl x _ refl f f' = var-≡
 
 -- A cast cancels its own inverse.
 
@@ -71,9 +71,9 @@ castᵛ-sym-cast refl V = refl
 
 castᵛ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ' Γ)
              → (V : Γ ⊢V⦂ A)
-             → castᵛ e (V-rename r V) ≐ᵛ V-rename (r ∘ʳ eq-ren e) V
+             → castᵛ e (V-rename r V) ≡ V-rename (r ∘ʳ eq-ren e) V
 castᵛ-rename refl r V =
-  ≐ᵛ-sym (≐ᵛ-trans (V-rename-∘ r id-ren V) (V-rename-id-≐ ≐ʳ-refl _))
+  sym (trans (V-rename-∘ r id-ren V) (V-rename-id-≡ ≐ʳ-refl _))
 
 -- Relocating a suffix variable along associativity re-brackets the injection.
 
@@ -107,9 +107,9 @@ cong-ren-img-r r (Tl-⟨⟩ {ρ = ρ₁} x) =
 ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
           → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
           → V-rename (cong-ren {Γ'' = Δ} r) (var f (∈-++ᶜʳ {Γ = Γ} x))
-          ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
+          ≡ var f' (∈-++ᶜʳ {Γ = Γ'} x)
 ren-var-r r x f f' =
-  var-ren-img-≐ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-img-r r x) f'
+  var-ren-img-≡ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-img-r r x) f'
 
 -- SUBSTITUTION FIXES A SUFFIX VARIABLE
 --
@@ -173,33 +173,33 @@ sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → castᵛ (castOf {Γ₁} {B} Γ₂)
               (⟨ ∈-++ᶜʳ {Γ = Γ₁ ∷ B} x , f ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})
                                             ↦ W ]var)
-          ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
+          ≡ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
 
 sub-var-r {Γ₁} {B} (Γ₂ ∷ C) Hd W f f' =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (trans (castᵛ-var (castOf {Γ₁} {B} (Γ₂ ∷ C)) f Hd)
+  trans
+    ((trans (castᵛ-var (castOf {Γ₁} {B} (Γ₂ ∷ C)) f Hd)
                  (cong (var f) (subst-Hd-any (castOf {Γ₁} {B} (Γ₂ ∷ C))))))
-    var-≐
+    var-≡
 
 sub-var-r {Γ₁} {B} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
-    (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
-              (var-ren-img-≐ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f'))
+  trans
+    ((cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
+    (trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
+              (var-ren-img-≡ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f'))
 
 sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? A
 
 ... | yes et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
-    (≐ᵛ-trans (eternal-val-ext-cong et
-                (sub-var-r Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≐)
+  trans
+    ((cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
+    (trans (eternal-val-ext-cong et
+                (sub-var-r Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡)
 
 ... | no ¬et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) rn _))
-    (≐ᵛ-trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
-              (var-ren-img-≐ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
+  trans
+    ((cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) rn _))
+    (trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
+              (var-ren-img-≡ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
                  (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
                        (⟨⟩-η⁻¹-img (∈-++ᶜʳ {Γ = Γ₁} x)))
                  f'))
@@ -278,34 +278,34 @@ sub-var-l : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → castᵛ (castOf {Γ₁} {B} Γ₂)
               (⟨ ∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Tl-∷ x) , f
                ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
-          ≐ᵛ var f' (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)
+          ≡ var f' (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)
 
 sub-var-l {Γ₁} {B} [] x W f f' =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (trans (castᵛ-var (castOf {Γ₁} {B} []) f x)
+  trans
+    ((trans (castᵛ-var (castOf {Γ₁} {B} []) f x)
                  (cong (var f) (subst-var-id (castOf {Γ₁} {B} []) x))))
-    var-≐
+    var-≡
 
 sub-var-l {Γ₁} {B} (Γ₂ ∷ C) x W f f' =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
-    (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
-              (var-ren-img-≐ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f'))
+  trans
+    ((cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
+    (trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
+              (var-ren-img-≡ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f'))
 
 sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 
 ... | yes et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
-    (≐ᵛ-trans (eternal-val-ext-cong et
-                (sub-var-l Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≐)
+  trans
+    ((cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
+    (trans (eternal-val-ext-cong et
+                (sub-var-l Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡)
 
 ... | no ¬et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩))
+  trans
+    ((cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩))
                            (castOf {Γ₁} {B} Γ₂) rn _))
-    (≐ᵛ-trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
-              (var-ren-img-≐ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
+    (trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
+              (var-ren-img-≡ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
                  (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
                        (⟨⟩-η⁻¹-img (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
                  f'))
@@ -331,29 +331,29 @@ sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Eternal B
             → castᵛ (castOf {Γ₁} {B} Γ₂)
                 (⟨ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) , f
                  ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
-            ≐ᵛ V-rename (push-ren Γ₂ p)
+            ≡ V-rename (push-ren Γ₂ p)
                  (castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) W)
 
 sub-var-hit {Γ₁} {B} [] ¬et p W f =
-  ≐ᵛ-sym (V-rename-id-≐ ≐ʳ-refl _)
+  sym (V-rename-id-≡ ≐ʳ-refl _)
 
 sub-var-hit {Γ₁} {B} (Γ₂ ∷ C) ¬et p W f =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
-    (≐ᵛ-trans (V-rename-cong wk-ren (sub-var-hit Γ₂ ¬et p W f))
-              (≐ᵛ-sym (V-rename-∘ (push-ren Γ₂ p) wk-ren _)))
+  trans
+    ((cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
+    (trans (V-rename-cong wk-ren (sub-var-hit Γ₂ ¬et p W f))
+              (sym (V-rename-∘ (push-ren Γ₂ p) wk-ren _)))
 
 sub-var-hit {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
 
 ... | yes et = ⊥-elim (¬et et)
 
 ... | no ¬p =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩))
+  trans
+    ((cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩))
                            (castOf {Γ₁} {B} Γ₂) rn _))
-    (≐ᵛ-trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W fᵢ))
-      (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ (push-ren Γ₂ pᵢ) rn _))
-                (V-rename-≐ (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _))) _)))
+    (trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W fᵢ))
+      (trans (sym (V-rename-∘ (push-ren Γ₂ pᵢ) rn _))
+                (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ _))) _)))
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
     rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p))
@@ -375,7 +375,7 @@ sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Eternal B
              → (f : ¬ Eternal B → σ ≾ᵣ uᵣ)
              → castᵛ (castOf {Γ₁} {B} Γ₂)
                  (⟨ y , f ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
-             ≐ᵛ V-rename (push-ren Γ₂ p)
+             ≡ V-rename (push-ren Γ₂ p)
                   (castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) W)
 sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 

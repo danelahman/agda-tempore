@@ -47,7 +47,7 @@ open import Syntax.Substitutions.Equivalence Spec
 -- BIND
 --
 -- Induction on the scrutinee's `Comp` derivation, recursing on the `pk` field
--- exactly as `Comp-≐` does.
+-- exactly as `Comp-≐ˢ` does.
 --
 --   * `comp-ret` runs the scrutinee to a `return` (`seq-steps`), fires
 --     `SEQ-RET`, and hands the value to the sequel premise. The run's own reach
@@ -78,7 +78,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
 ... | N₁ , rs' , eN₁ =
   Comp-expand* rs'
     (Comp-expand SEQ-RET
-      (Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl V) shift) (hN q V pV)))
+      (Comp-≡ᶜ (sub-≡ᶜ Hd (refl) shift) (hN q V pV)))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -97,20 +97,20 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
     R₁ = eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren
 
     eqr : (srs ∘ʳ R₁) ≐ʳ unbox-ren q
-    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ srs (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ))
+    eqr = ≐ʳ-trans (≐ʳ-sym (∘ʳ-assoc-≐ʳ srs (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ))
                                        ⟨⟩-η-ren))
-                   (∘ʳ-≐ (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
+                   (∘ʳ-≐ʳ (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
                                              (reach-bound q))
                          ≐ʳ-refl)
 
     shift : C-rename (cong-∷-ren (unbox-ren q)) N
-          ≐ᶜ C-rename (cong-∷-ren R₁) N₁
+          ≡ C-rename (cong-∷-ren R₁) N₁
     shift =
-      ≐ᶜ-sym
-        (≐ᶜ-trans (C-rename-cong (cong-∷-ren R₁) eN₁)
-          (≐ᶜ-trans (≐ᶜ-sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
-            (C-rename-≐ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ srs R₁))
-                                  (cong-∷-ren-≐ eqr)) N)))
+      sym
+        (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
+          (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
+            (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs R₁))
+                                  (cong-∷-ren-≐ʳ eqr)) N)))
 
 -- The scrutinee gets stuck on an operation.
 
@@ -166,48 +166,48 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
 
         eW₁ : W₁ ≐ʳ suc-comp-ren (ext q) B₁
         eW₁ =
-          ≐ʳ-trans (∘ʳ-assoc-≐ (eq-ren emap) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
-            (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (unbox-ren-μ-≐ q B₁'))
+          ≐ʳ-trans (∘ʳ-assoc-≐ʳ (eq-ren emap) ⟨⟩-μ-ren (cong-⟨⟩-ren sq))
+            (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (unbox-ren-μ-≐ʳ q B₁'))
                       (suc-comp-ren-grade-src (ext q) map-·ᵉ B₁' B₁))
 
         -- the sequel the recursion needs is the original one, renamed
-        eN₃ : N₃ ≐ᶜ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
+        eN₃ : N₃ ≡ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
         eN₃ =
-          ≐ᶜ-trans (sub-≐ᶜ (Tl-∷ (Tl-⟨⟩ Hd)) (≐ᵛ-refl W') split-off)
-            (≐ᶜ-trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
+          trans (sub-≡ᶜ (Tl-∷ (Tl-⟨⟩ Hd)) (refl) split-off)
+            (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
                                 (C-rename (cong-∷-ren W₁) N₁) W')
-              (≐ᶜ-trans (C-rename-cong (cong-∷-ren W₁) eN₁)
-                (≐ᶜ-trans (≐ᶜ-sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren W₁) N))
-                          (C-rename-≐ (≐ʳ-sym (cong-∷-ren-∘-≐ srs W₁)) N))))
+              (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
+                (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren W₁) N))
+                          (C-rename-≡ (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs W₁)) N))))
           where
             inner : (κ ∘ʳ cong-⟨⟩-ren (cong-∷-ren sq))
                   ≐ʳ (W₁ ∘ʳ cong-⟨⟩-ren wk-ren)
             inner =
-              ≐ʳ-trans (∘ʳ-assoc-≐ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+              ≐ʳ-trans (∘ʳ-assoc-≐ʳ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
                                    (cong-⟨⟩-ren wk-ren)
                                    (cong-⟨⟩-ren (cong-∷-ren sq)))
                 (≐ʳ-trans
-                  (∘ʳ-≐ ≐ʳ-refl
-                    (≐ʳ-trans (≐ʳ-sym (cong-⟨⟩-ren-∘-≐ wk-ren (cong-∷-ren sq)))
-                      (≐ʳ-trans (cong-⟨⟩-ren-≐ (wk-ren-nat-≐ sq))
-                                (cong-⟨⟩-ren-∘-≐ sq wk-ren))))
-                  (≐ʳ-sym (∘ʳ-assoc-≐ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
+                  (∘ʳ-≐ʳ ≐ʳ-refl
+                    (≐ʳ-trans (≐ʳ-sym (cong-⟨⟩-ren-∘-≐ʳ wk-ren (cong-∷-ren sq)))
+                      (≐ʳ-trans (cong-⟨⟩-ren-≐ʳ (wk-ren-nat-≐ʳ sq))
+                                (cong-⟨⟩-ren-∘-≐ʳ sq wk-ren))))
+                  (≐ʳ-sym (∘ʳ-assoc-≐ʳ (eq-ren emap ∘ʳ ⟨⟩-μ-ren)
                                       (cong-⟨⟩-ren sq)
                                       (cong-⟨⟩-ren wk-ren))))
 
             split-off : C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₂
-                      ≐ᶜ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren))
+                      ≡ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren))
                            (C-rename (cong-∷-ren W₁) N₁)
             split-off =
-              ≐ᶜ-trans
-                (≐ᶜ-sym (C-rename-∘ (cong-∷-ren κ)
+              trans
+                (sym (C-rename-∘ (cong-∷-ren κ)
                                     (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁))
-                (≐ᶜ-trans
-                  (C-rename-≐
+                (trans
+                  (C-rename-≡
                     (≐ʳ-trans
-                      (≐ʳ-sym (cong-∷-ren-∘-≐ κ (cong-⟨⟩-ren (cong-∷-ren sq))))
-                      (≐ʳ-trans (cong-∷-ren-≐ inner)
-                                (cong-∷-ren-∘-≐ W₁ (cong-⟨⟩-ren wk-ren))))
+                      (≐ʳ-sym (cong-∷-ren-∘-≐ʳ κ (cong-⟨⟩-ren (cong-∷-ren sq))))
+                      (≐ʳ-trans (cong-∷-ren-≐ʳ inner)
+                                (cong-∷-ren-∘-≐ʳ W₁ (cong-⟨⟩-ren wk-ren))))
                     N₁)
                   (C-rename-∘ (cong-∷-ren W₁) (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N₁))
 
@@ -217,7 +217,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ Hd ↦ V ]c)
 
         hN₃ {St₃} q' V pV =
-          Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl V) shift) (hN q₁ V pV)
+          Comp-≡ᶜ (sub-≡ᶜ Hd (refl) shift) (hN q₁ V pV)
           where
             -- the run and the clause's own reach accumulate: the grades multiply
             -- and each is bounded, so the composite stays under `ε₁`
@@ -240,26 +240,26 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                       ≐ʳ ((srs ∘ʳ W₁) ∘ʳ suc-comp-ren (ext q') (reach-bound q'))
             composite =
               ≐ʳ-trans
-                (suc-comp-ren-∘-≐ (≤ₛ-trans E₀ (ext q)) (ext q')
+                (suc-comp-ren-∘-≐ʳ (≤ₛ-trans E₀ (ext q)) (ext q')
                                   (reach-bound q₁) B₂ (reach-bound q'))
-                (∘ʳ-≐ (≐ʳ-trans (suc-comp-ren-∘-≐ E₀ (ext q) B₂ b₀ B₁)
-                                (∘ʳ-≐ ≐ʳ-refl (≐ʳ-sym eW₁)))
+                (∘ʳ-≐ʳ (≐ʳ-trans (suc-comp-ren-∘-≐ʳ E₀ (ext q) B₂ b₀ B₁)
+                                (∘ʳ-≐ʳ ≐ʳ-refl (≐ʳ-sym eW₁)))
                       ≐ʳ-refl)
 
             finalEq : unbox-ren q₁ ≐ʳ ((srs ∘ʳ W₁) ∘ʳ unbox-ren q')
             finalEq =
-              ≐ʳ-trans (∘ʳ-≐ composite (≐ʳ-refl {r = ⟨⟩-η-ren}))
-                (∘ʳ-assoc-≐ (srs ∘ʳ W₁)
+              ≐ʳ-trans (∘ʳ-≐ʳ composite (≐ʳ-refl {r = ⟨⟩-η-ren}))
+                (∘ʳ-assoc-≐ʳ (srs ∘ʳ W₁)
                             (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren)
 
             shift : C-rename (cong-∷-ren (unbox-ren q₁)) N
-                  ≐ᶜ C-rename (cong-∷-ren (unbox-ren q')) N₃
+                  ≡ C-rename (cong-∷-ren (unbox-ren q')) N₃
             shift =
-              ≐ᶜ-trans
-                (C-rename-≐
-                  (≐ʳ-trans (cong-∷-ren-≐ finalEq)
-                            (cong-∷-ren-∘-≐ (srs ∘ʳ W₁) (unbox-ren q'))) N)
-                (≐ᶜ-trans
+              trans
+                (C-rename-≡
+                  (≐ʳ-trans (cong-∷-ren-≐ʳ finalEq)
+                            (cong-∷-ren-∘-≐ʳ (srs ∘ʳ W₁) (unbox-ren q'))) N)
+                (trans
                   (C-rename-∘ (cong-∷-ren (srs ∘ʳ W₁))
                               (cong-∷-ren (unbox-ren q')) N)
-                  (C-rename-cong (cong-∷-ren (unbox-ren q')) (≐ᶜ-sym eN₃)))
+                  (C-rename-cong (cong-∷-ren (unbox-ren q')) (sym eN₃)))

@@ -6,8 +6,8 @@
 -- defined by matching on the proof, a cast computes away at `refl`,   --
 -- which is what lets the inversion lemmas match it off.               --
 --                                                                    --
--- Up to `_≐ᵛ_` a cast is the renaming action along `eq-ren`           --
--- (`V-rename-eq-≐`), so this family is the action of the subgroupoid  --
+-- A cast is the renaming action along `eq-ren`                       --
+-- (`V-rename-eq-≡`), so this family is the action of the subgroupoid  --
 -- of context equalities.                                             --
 ------------------------------------------------------------------------
 
@@ -232,17 +232,17 @@ subst-subst-sym′ refl w = refl
 -- identity-like, and any two proofs of the (only propositional) context
 -- equations agree by `uip`.
 
-cong-ren-wk-cast-≐ : ∀ {B} → (Γ₀ Γ₁ Θ₀ Θ₁ : Ctx) → Γ₀ ≡ Γ₁ → Θ₀ ≡ Θ₁
+cong-ren-wk-cast-≐ʳ : ∀ {B} → (Γ₀ Γ₁ Θ₀ Θ₁ : Ctx) → Γ₀ ≡ Γ₁ → Θ₀ ≡ Θ₁
                    → (e  : Γ₁ ++ᶜ Θ₁ ≡ Γ₀ ++ᶜ Θ₀)
                    → (e' : (Γ₀ ∷ B) ++ᶜ Θ₀ ≡ (Γ₁ ∷ B) ++ᶜ Θ₁)
                    → cong-ren {Γ'' = Θ₁} (wk-ren {A = B})
                    ≐ʳ (eq-ren e ∘ʳ cong-ren {Γ'' = Θ₀} (wk-ren {A = B})
                                 ∘ʳ eq-ren e')
-cong-ren-wk-cast-≐ {B} Γ₀ Γ₁ Θ₀ Θ₁ refl refl e e' =
+cong-ren-wk-cast-≐ʳ {B} Γ₀ Γ₁ Θ₀ Θ₁ refl refl e e' =
   ≐ʳ-sym
-    (≐ʳ-trans (∘ʳ-≐ (eq-ren-≐ e refl)
-                    (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ e' refl)))
-              (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _)))
+    (≐ʳ-trans (∘ʳ-≐ʳ (eq-ren-≐ʳ e refl)
+                    (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ e' refl)))
+              (≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-identityʳ-≐ʳ _)))
 
 castʳ : ∀ {Γ Γ' Δ} → Γ ≡ Γ' → Ren [] Γ Δ → Ren [] Γ' Δ
 castʳ refl w = w
@@ -287,13 +287,13 @@ Cl-cast {B = B} op ε e X =
 
 -- Transport is a congruence for the term equivalence.
 
-castᶜ-≐ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {M M' : Γ ⊢C⦂ C}
-        → M ≐ᶜ M' → castᶜ e M ≐ᶜ castᶜ e M'
-castᶜ-≐ refl eM = eM
+castᶜ-≡ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {M M' : Γ ⊢C⦂ C}
+        → M ≡ M' → castᶜ e M ≡ castᶜ e M'
+castᶜ-≡ e = cong (castᶜ e)
 
-castᵛ-≐ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
-        → V ≐ᵛ V' → castᵛ e V ≐ᵛ castᵛ e V'
-castᵛ-≐ refl eV = eV
+castᵛ-≡ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
+        → V ≡ V' → castᵛ e V ≡ castᵛ e V'
+castᵛ-≡ e = cong (castᵛ e)
 
 ------------------------------------------------------------------------
 -- VALUE-LEVEL TRANSPORT ALGEBRA

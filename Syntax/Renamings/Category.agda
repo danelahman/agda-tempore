@@ -42,9 +42,9 @@ open import Syntax.Terms.Equivalence     Spec
 -- The three laws hold by computation at the level of `var-img`, which is
 -- what makes this quotient the right one:
 --
---   `∘ʳ-assoc-≐`, `∘ʳ-identityˡ-≐`, `∘ʳ-identityʳ-≐`   (Equivalence)
+--   `∘ʳ-assoc-≐ʳ`, `∘ʳ-identityˡ-≐ʳ`, `∘ʳ-identityʳ-≐ʳ`   (Equivalence)
 --
--- and `∘ʳ-≐` is composition's congruence, i.e. `_≐ʳ_` is a congruence for
+-- and `∘ʳ-≐ʳ` is composition's congruence, i.e. `_≐ʳ_` is a congruence for
 -- the category structure. `var-img` itself is the faithful functor into
 -- the presheaf of variables that defines the quotient.
 ------------------------------------------------------------------------
@@ -94,14 +94,14 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- Extending the *local* part on the right is the action of contexts on each
 -- fibre. Unlike the two above it is functorial only up to `_≐ʳ_`, since
 -- `cong-ren` recurses on the suffix and so does not commute with `_∘ʳ_` on
--- the nose: that is `cong-ren-∘-≐` and `cong-ren-id-≐` (Coherence).
+-- the nose: that is `cong-ren-∘-≐ʳ` and `cong-ren-id-≐ʳ` (Coherence).
 
 ------------------------------------------------------------------------
 -- THE ETERNAL RESTRICTION IS AN IDEMPOTENT MONAD
 --
 -- Object map `_ᴱ` (Contexts), morphism map `restrict-ren` (Renamings), and
--- unit `ᴱ-ren : Ren [] Γ (Γ ᴱ)`. The functor laws are `restrict-ren-∘-≐`,
--- `restrict-ren-id-≐` and `restrict-ren-≐`; idempotence on objects is
+-- unit `ᴱ-ren : Ren [] Γ (Γ ᴱ)`. The functor laws are `restrict-ren-∘-≐ʳ`,
+-- `restrict-ren-id-≐ʳ` and `restrict-ren-≐ʳ`; idempotence on objects is
 -- `ᴱ-idem`. What is proved here is the unit's naturality, the one law the
 -- development used only in special cases.
 ------------------------------------------------------------------------
@@ -147,13 +147,13 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- TERMS ARE PRESHEAVES
 --
 -- `Γ ⊢V⦂ A` and `Γ ⊢C⦂ C` are presheaves on the category above. The action is
--- `V-rename`/`C-rename`; the laws are `V-rename-∘`, `V-rename-id-≐` (the
+-- `V-rename`/`C-rename`; the laws are `V-rename-∘`, `V-rename-id-≡` (the
 -- action respects the quotient on renamings) and `V-rename-cong`, and likewise
 -- for `C`. Everything a term stores is either shape or a proof-irrelevant
 -- bound, so the laws hold at `_≡_`.
 --
 -- Transport along a context equality is this action restricted to the
--- subgroupoid of equalities: `castᵛ e V ≐ᵛ V-rename (eq-ren e) V`
--- (`V-rename-eq-≐`), with `eq-ren` the functor from that subgroupoid
--- (`eq-ren-∘-≐`, `eq-ren-≐`).
+-- subgroupoid of equalities: `castᵛ e V ≡ V-rename (eq-ren e) V`
+-- (`V-rename-eq-≡`), with `eq-ren` the functor from that subgroupoid
+-- (`eq-ren-∘-≐ʳ`, `eq-ren-≐ʳ`).
 ------------------------------------------------------------------------

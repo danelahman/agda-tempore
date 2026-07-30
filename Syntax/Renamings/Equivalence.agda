@@ -113,33 +113,33 @@ open _≐ʳ_ public
 -- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₂` and then with `r₁`,
 -- so all three laws below hold at the level of `var-img` by computation.
 
-∘ʳ-≐ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren [] Γ' Γ''} {r₁ r₁' : Ren [] Γ Γ'}
+∘ʳ-≐ʳ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren [] Γ' Γ''} {r₁ r₁' : Ren [] Γ Γ'}
      → r₂ ≐ʳ r₂' → r₁ ≐ʳ r₁'
      -------------------------------
      → (r₂ ∘ʳ r₁) ≐ʳ (r₂' ∘ʳ r₁')
-∘ʳ-≐ {r₁ = r₁} h₂ h₁ =
+∘ʳ-≐ʳ {r₁ = r₁} h₂ h₁ =
   mk≐ʳ (λ x → trans (cong (var-img′ r₁) (at h₂ x)) (at h₁ _))
 
-∘ʳ-assoc-≐ : ∀ {Γ Γ' Γ'' Γ'''}
+∘ʳ-assoc-≐ʳ : ∀ {Γ Γ' Γ'' Γ'''}
            → (r₃ : Ren [] Γ'' Γ''') → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
            ----------------------------------------------------------
            → ((r₃ ∘ʳ r₂) ∘ʳ r₁) ≐ʳ (r₃ ∘ʳ (r₂ ∘ʳ r₁))
-∘ʳ-assoc-≐ r₃ r₂ r₁ = mk≐ʳ (λ x → refl)
+∘ʳ-assoc-≐ʳ r₃ r₂ r₁ = mk≐ʳ (λ x → refl)
 
-∘ʳ-identityˡ-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (id-ren ∘ʳ r) ≐ʳ r
-∘ʳ-identityˡ-≐ r = mk≐ʳ (λ x → refl)
+∘ʳ-identityˡ-≐ʳ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (id-ren ∘ʳ r) ≐ʳ r
+∘ʳ-identityˡ-≐ʳ r = mk≐ʳ (λ x → refl)
 
-∘ʳ-identityʳ-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (r ∘ʳ id-ren) ≐ʳ r
-∘ʳ-identityʳ-≐ r = mk≐ʳ (λ x → refl)
+∘ʳ-identityʳ-≐ʳ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (r ∘ʳ id-ren) ≐ʳ r
+∘ʳ-identityʳ-≐ʳ r = mk≐ʳ (λ x → refl)
 
 -- GRADE BOUNDS ARE INVISIBLE TO `_≐ʳ_`
 --
 -- `⟨⟩-≤-ren` stores a `≾ᵣ` proof, but sends a variable to itself at a grade
 -- fixed by the renaming's indices, so the proof is not observable.
 
-⟨⟩-≤-ren-≐ : ∀ {Γ ρ ρ'} → (p p' : ρ' ≾ᵣ ρ)
+⟨⟩-≤-ren-≐ʳ : ∀ {Γ ρ ρ'} → (p p' : ρ' ≾ᵣ ρ)
            → ⟨⟩-≤-ren {Δ = Γ} p ≐ʳ ⟨⟩-≤-ren p'
-⟨⟩-≤-ren-≐ p p' = mk≐ʳ go
+⟨⟩-≤-ren-≐ʳ p p' = mk≐ʳ go
   where
     go : ∀ {A ρ₀} → (x : A ∈[ ρ₀ ] _) → _
     go (Tl-⟨⟩ x) = refl
@@ -358,12 +358,12 @@ push-ren-img (Δ ⟨ ρ' ⟩) p y =
 
 push-ren-∷ : ∀ {Γ₀ B} → (p : ctx-grade ([] ∷ B) ≾ᵣ uᵣ)
            → push-ren {Γ₀} ([] ∷ B) p ≐ʳ wk-ren
-push-ren-∷ p = ∘ʳ-identityˡ-≐ wk-ren
+push-ren-∷ p = ∘ʳ-identityˡ-≐ʳ wk-ren
 
 push-ren-⟨⟩ : ∀ {Γ₀ ρ} → (p : ctx-grade ([] ⟨ ρ ⟩) ≾ᵣ uᵣ) → (p' : ρ ≾ᵣ uᵣ)
             → push-ren {Γ₀} ([] ⟨ ρ ⟩) p ≐ʳ (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p')
 push-ren-⟨⟩ p p' =
-  ≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ p'))
+  ≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ p'))
 
 -- Pushing is natural: renaming the prefix and then pushing is pushing and then
 -- renaming the prefix under the suffix.
@@ -405,40 +405,40 @@ push-ren-++ᶜ {Γ₀} Δ₁ Δ₂ p p₁ p₂ = mk≐ʳ go
 -- composition up to it (`cong-∷-ren (r ∘ʳ r')` and `cong-∷-ren r ∘ʳ cong-∷-ren r'`
 -- are distinct renamings acting alike).
 
-cong-∷-ren-≐ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'}
+cong-∷-ren-≐ʳ : ∀ {Γ Γ' A} {r r' : Ren [] Γ Γ'}
              → r ≐ʳ r' → cong-∷-ren {A = A} r ≐ʳ cong-∷-ren r'
-cong-∷-ren-≐ h = mk≐ʳ go
+cong-∷-ren-≐ʳ h = mk≐ʳ go
   where
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go Hd       = refl
     go (Tl-∷ x) = cong (λ z → proj₁ z , Tl-∷ (proj₂ z)) (at h x)
 
-cong-⟨⟩-ren-≐ : ∀ {Γ Γ' ρ} {r r' : Ren [] Γ Γ'}
+cong-⟨⟩-ren-≐ʳ : ∀ {Γ Γ' ρ} {r r' : Ren [] Γ Γ'}
               → r ≐ʳ r' → cong-⟨⟩-ren {ρ = ρ} r ≐ʳ cong-⟨⟩-ren r'
-cong-⟨⟩-ren-≐ {ρ = ρ} h = mk≐ʳ go
+cong-⟨⟩-ren-≐ʳ {ρ = ρ} h = mk≐ʳ go
   where
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go (Tl-⟨⟩ x) = cong (λ z → proj₁ z ·ᵣ ρ , Tl-⟨⟩ (proj₂ z)) (at h x)
 
-cong-ren-≐ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → (Γ₀ : Ctx)
+cong-ren-≐ʳ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → (Γ₀ : Ctx)
            → r ≐ʳ r' → cong-ren {Γ'' = Γ₀} r ≐ʳ cong-ren r'
-cong-ren-≐ []         h = h
-cong-ren-≐ (Γ₀ ∷ A)   h = cong-∷-ren-≐ (cong-ren-≐ Γ₀ h)
-cong-ren-≐ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-≐ (cong-ren-≐ Γ₀ h)
+cong-ren-≐ʳ []         h = h
+cong-ren-≐ʳ (Γ₀ ∷ A)   h = cong-∷-ren-≐ʳ (cong-ren-≐ʳ Γ₀ h)
+cong-ren-≐ʳ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-≐ʳ (cong-ren-≐ʳ Γ₀ h)
 
-cong-∷-ren-∘-≐ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
+cong-∷-ren-∘-≐ʳ : ∀ {Γ Γ' Γ'' A} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
                → cong-∷-ren {A = A} (r₂ ∘ʳ r₁)
                ≐ʳ (cong-∷-ren r₂ ∘ʳ cong-∷-ren r₁)
-cong-∷-ren-∘-≐ r₂ r₁ = mk≐ʳ go
+cong-∷-ren-∘-≐ʳ r₂ r₁ = mk≐ʳ go
   where
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go Hd       = refl
     go (Tl-∷ x) = refl
 
-cong-⟨⟩-ren-∘-≐ : ∀ {Γ Γ' Γ'' ρ} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
+cong-⟨⟩-ren-∘-≐ʳ : ∀ {Γ Γ' Γ'' ρ} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
                 → cong-⟨⟩-ren {ρ = ρ} (r₂ ∘ʳ r₁)
                 ≐ʳ (cong-⟨⟩-ren r₂ ∘ʳ cong-⟨⟩-ren r₁)
-cong-⟨⟩-ren-∘-≐ {ρ = ρ} r₂ r₁ = mk≐ʳ go
+cong-⟨⟩-ren-∘-≐ʳ {ρ = ρ} r₂ r₁ = mk≐ʳ go
   where
     go : ∀ {A' ρ'} (x : A' ∈[ ρ' ] _) → _
     go (Tl-⟨⟩ x) = refl
@@ -446,33 +446,33 @@ cong-⟨⟩-ren-∘-≐ {ρ = ρ} r₂ r₁ = mk≐ʳ go
 -- Weakening is natural: renaming the prefix and then weakening is weakening
 -- and then renaming under the new binder.
 
-wk-ren-nat-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ')
+wk-ren-nat-≐ʳ : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ')
              → (wk-ren ∘ʳ cong-∷-ren {A = B} r) ≐ʳ (r ∘ʳ wk-ren)
-wk-ren-nat-≐ r = mk≐ʳ (λ y → refl)
+wk-ren-nat-≐ʳ r = mk≐ʳ (λ y → refl)
 
-cong-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (Γ₀ : Ctx)
+cong-ren-∘-≐ʳ : ∀ {Γ Γ' Γ''} → (Γ₀ : Ctx)
              → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
              → cong-ren {Γ'' = Γ₀} (r₂ ∘ʳ r₁)
              ≐ʳ (cong-ren {Γ'' = Γ₀} r₂ ∘ʳ cong-ren {Γ'' = Γ₀} r₁)
-cong-ren-∘-≐ []         r₂ r₁ = ≐ʳ-refl
-cong-ren-∘-≐ (Γ₀ ∷ A)   r₂ r₁ =
-  ≐ʳ-trans (cong-∷-ren-≐ (cong-ren-∘-≐ Γ₀ r₂ r₁))
-           (cong-∷-ren-∘-≐ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
-cong-ren-∘-≐ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
-  ≐ʳ-trans (cong-⟨⟩-ren-≐ (cong-ren-∘-≐ Γ₀ r₂ r₁))
-           (cong-⟨⟩-ren-∘-≐ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
+cong-ren-∘-≐ʳ []         r₂ r₁ = ≐ʳ-refl
+cong-ren-∘-≐ʳ (Γ₀ ∷ A)   r₂ r₁ =
+  ≐ʳ-trans (cong-∷-ren-≐ʳ (cong-ren-∘-≐ʳ Γ₀ r₂ r₁))
+           (cong-∷-ren-∘-≐ʳ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
+cong-ren-∘-≐ʳ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
+  ≐ʳ-trans (cong-⟨⟩-ren-≐ʳ (cong-ren-∘-≐ʳ Γ₀ r₂ r₁))
+           (cong-⟨⟩-ren-∘-≐ʳ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
 
 -- The eternal restriction is compositional by definition.
 
-restrict-ren-∘-≐ : ∀ {Γ Γ' Γ''} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
+restrict-ren-∘-≐ʳ : ∀ {Γ Γ' Γ''} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
                  → restrict-ren (r₂ ∘ʳ r₁)
                  ≐ʳ (restrict-ren r₂ ∘ʳ restrict-ren r₁)
-restrict-ren-∘-≐ r₂ r₁ = ≐ʳ-refl
+restrict-ren-∘-≐ʳ r₂ r₁ = ≐ʳ-refl
 
 ------------------------------------------------------------------------
 -- THE ETERNAL RESTRICTION
 --
--- `restrict-ren` recurses on the *renaming*, so `restrict-ren-≐` is not a
+-- `restrict-ren` recurses on the *renaming*, so `restrict-ren-≐ʳ` is not a
 -- congruence of a function of `var-img`. It goes through the *reflection* of a
 -- restricted variable, `∈-ᴱ⁻`: restricting commutes with it (`restrict-img⁻`),
 -- so `var-img (restrict-ren r) x` is determined by `var-img r` up to
@@ -624,10 +624,10 @@ restrict-img⁻ (⟨⟩-ext-ctx _ _) x = refl
 
 -- The eternal restriction respects acting alike.
 
-restrict-ren-≐ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'}
+restrict-ren-≐ʳ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'}
                → r ≐ʳ r' → restrict-ren r ≐ʳ restrict-ren r'
 
-restrict-ren-≐ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
+restrict-ren-≐ʳ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
   where
     go : ∀ {A ρ} → (x : A ∈[ ρ ] Γ' ᴱ)
        → var-img (restrict-ren r) x ≡ var-img (restrict-ren r') x

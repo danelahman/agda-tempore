@@ -69,12 +69,12 @@ replay es (∷-suc {ρ = ρ} V q) with replay es q
 ... | St₂' , q' , es₂ , h =
     St₂' ∷ₛ V'
   , ∷-suc V' q'
-  , ∷-≐ˢ es₂ (subst (λ z → V ≐ᵛ z)
+  , ∷-≐ˢ es₂ (subst (λ z → V ≡ z)
                     (sym (castᵛ-castᵛ
                            (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (toCtx-≐ˢ es₂))
                            (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ es₂)))
                            V))
-                    (≐ᵛ-refl V))
+                    (refl {x = V}))
   , ∷-≤≐ h
   where
     V' = castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (toCtx-≐ˢ es₂)) V
@@ -92,7 +92,7 @@ reach-replay es (reach e b) with replay es e
     St₂' , reach e' (subst (_≾ᵣ _) (≤ₛ-grade-≤≐ h) b) , es₂ , h
 
 -- What a replayed reach does to an `unbox`: the two consulted renamings agree,
--- up to the two states' context equalities. This is `suc-comp-ren-≐` with the
+-- up to the two states' context equalities. This is `suc-comp-ren-≐ʳ` with the
 -- `⟨⟩-η-ren` that `unbox-ren` puts in front pushed through the cast.
 
 ⟨⟩-η-ren-cast : ∀ {Γ Γ'} → (e : Γ' ≡ Γ)
@@ -111,7 +111,7 @@ unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
 
 unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
   ≐ʳ-trans
-    (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q'))
+    (∘ʳ-≐ʳ (suc-comp-ren-≐ʳ h es es₂ (reach-bound q) (reach-bound q'))
           (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂))))
     (≐ʳ-sym
       (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
@@ -128,7 +128,7 @@ castʳ²-cancel : ∀ {Γ Γ' Δ Δ' ρ} → (a : Γ ≡ Γ') → (b : Δ ≡ Δ
               → (r : Ren [] Δ (Γ ⟨ ρ ⟩))
               → (cong-⟨⟩-ren (eq-ren a) ∘ʳ castʳ² (cong (_⟨ ρ ⟩) a) b r)
               ≐ʳ castʳ b r
-castʳ²-cancel refl refl r = ∘ʳ-id-≐ r (cong-⟨⟩-ren-id-≐ ≐ʳ-refl)
+castʳ²-cancel refl refl r = ∘ʳ-idˡ-≐ʳ r (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
 
 unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
                  → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
@@ -141,7 +141,7 @@ unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
 unbox-ren-bridge {ρ} es es₂ {q'} {q} h
   rewrite uip {p = toCtx-≐ˢ es} {q = sym (toCtx-≐ˢ (≐ˢ-sym es))} =
   ≐ʳ-trans
-    (∘ʳ-≐ ≐ʳ-refl (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h))
+    (∘ʳ-≐ʳ ≐ʳ-refl (unbox-ren-≐ˢ (≐ˢ-sym es) es₂ h))
     (castʳ²-cancel (sym (toCtx-≐ˢ (≐ˢ-sym es))) (sym (toCtx-≐ˢ es₂))
                    (unbox-ren q))
 
@@ -164,11 +164,11 @@ reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
 
 reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
   ≐ʳ-trans
-    (∘ʳ-≐ (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))
-      (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q'))
+    (∘ʳ-≐ʳ (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))
+      (∘ʳ-≐ʳ (suc-comp-ren-≐ʳ h es es₂ (reach-bound q) (reach-bound q'))
             (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))))
     (≐ʳ-trans
-      (∘ʳ-≐ ≐ʳ-refl
+      (∘ʳ-≐ʳ ≐ʳ-refl
         (≐ʳ-sym
           (castʳ²-∘ʳ (sym (toCtx-≐ˢ es₂))
                      (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))

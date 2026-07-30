@@ -66,9 +66,9 @@ Lock-free-irr (lf-∷ p)  (lf-∷ q)   = cong lf-∷ (Lock-free-irr p q)
 
 -- A renaming out of a provably empty context acts like any transport.
 
-empty-src-≐ : ∀ {Γ₀ Γ₁} → (e₀ : Γ₀ ≡ []) → (r : Ren [] Γ₁ Γ₀)
+empty-src-≐ʳ : ∀ {Γ₀ Γ₁} → (e₀ : Γ₀ ≡ []) → (r : Ren [] Γ₁ Γ₀)
             → (e : Γ₀ ≡ Γ₁) → r ≐ʳ eq-ren e
-empty-src-≐ e₀ r e =
+empty-src-≐ʳ e₀ r e =
   mk≐ʳ (λ x → ⊥-elim (not-in-empty-ctx
                        (subst (λ Γ₂ → _ ∈[ _ ] Γ₂) e₀ x)))
 
@@ -95,16 +95,16 @@ env-eternal-C-suffix refl lf η M = refl
 
 -- Fusing a conjugation whose core is itself an `eq-ren`.
 
-conj-eq-≐ : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'}
+conj-eq-≐ʳ : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'}
           → {R : Ren [] Γ₂' Γ₁} → (e : Γ₁ ≡ Γ₁') → (e₀ : Γ₁' ≡ Γ₂)
           → (e' : Γ₂ ≡ Γ₂')
           → R ≐ʳconj⟨ e , eq-ren e₀ , e' ⟩
           → R ≐ʳ eq-ren (trans e (trans e₀ e'))
-conj-eq-≐ e e₀ e' h =
+conj-eq-≐ʳ e e₀ e' h =
   ≐ʳ-trans h
-    (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl (eq-ren-∘-≐ e₀ e'))
-              (≐ʳ-trans (eq-ren-∘-≐ e (trans e₀ e'))
-                        (eq-ren-≐ _ _)))
+    (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-∘-≐ʳ e₀ e'))
+              (≐ʳ-trans (eq-ren-∘-≐ʳ e (trans e₀ e'))
+                        (eq-ren-≐ʳ _ _)))
 
 -- A loop of four casts is the identity.
 
@@ -162,16 +162,13 @@ eStar {B} St Δ op ε =
                             (type-of-gtype (arity op) ⇒ B ‼ ε))
               (sym (toCtxᴱ-++ᶜ St Δ)))
 
--- The eternal-values action respects the equivalence (the computation
--- counterpart of `env-eternal-V-≐`).
+-- The eternal-values action respects equality (the computation counterpart of
+-- `env-eternal-V-≡`).
 
-env-eternal-C-≐ : ∀ {Δ Γ C} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-                → {M M' : (Δ ++ᶜ Γ) ⊢C⦂ C} → M ≐ᶜ M'
-                → env-eternal-C lf η M ≐ᶜ env-eternal-C lf η M'
-env-eternal-C-≐ lf-[]                 η eM = castᶜ-≐ ++ᶜ-identityˡ eM
-env-eternal-C-≐ {Δ ∷ B} {Γ} (lf-∷ lf) η eM =
-  env-eternal-C-≐ lf (λ x → η (Tl-∷ x))
-    (castᶜ-≐ _ (sub-≐ᶜ (split→∈ (split-≡-++ᶜ {Δ ∷ B} {Γ})) (≐ᵛ-refl _) eM))
+env-eternal-C-≡ : ∀ {Δ Γ C} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+                → {M M' : (Δ ++ᶜ Γ) ⊢C⦂ C} → M ≡ M'
+                → env-eternal-C lf η M ≡ env-eternal-C lf η M'
+env-eternal-C-≡ lf η = cong (env-eternal-C lf η)
 
 ------------------------------------------------------------------------
 -- ONE SUBSTITUTION PAST THE ETERNAL CHAIN
@@ -195,32 +192,32 @@ env-eternal-C-swap : ∀ {Δ₀ A C} → (lf : Lock-free Δ₀) → (η : Closed
                        (sub-atᶜ {[]} {A} Θ'
                          (env-eternal-C lf η
                            (castᶜ (++ᶜ-assoc Δ₀ ([] ∷ A) Θ') M)) V)
-                   ≐ᶜ env-eternal-C lf η
+                   ≡ env-eternal-C lf η
                         (sub-atᶜ {Δ₀} {A} Θ' M (V-rename (empty-ren lf) V))
 
 env-eternal-C-swap {Δ₀} {A} {C} lf-[] η Θ' V M =
-  ≐ᶜ-trans
-    (castᶜ-≐ (++ᶜ-identityˡ {Θ'})
-      (sub-atᶜ-≐ {[]} {A} Θ' V
-        (≡→≐ᶜ (cast-loop₂ (++ᶜ-assoc [] ([] ∷ A) Θ') (++ᶜ-identityˡ) M))))
-    (castᶜ-≐ (++ᶜ-identityˡ {Θ'})
-      (sub-atᶜ-≐ᵥ {[]} {A} Θ' M (≐ᵛ-sym (V-rename-id-≐ ≐ʳ-refl V))))
+  trans
+    (castᶜ-≡ (++ᶜ-identityˡ {Θ'})
+      (sub-atᶜ-≡ {[]} {A} Θ' V
+        ((cast-loop₂ (++ᶜ-assoc [] ([] ∷ A) Θ') (++ᶜ-identityˡ) M))))
+    (castᶜ-≡ (++ᶜ-identityˡ {Θ'})
+      (sub-atᶜ-≡ᵥ {[]} {A} Θ' M (sym (V-rename-id-≡ ≐ʳ-refl V))))
 
 env-eternal-C-swap {Δ ∷ B} {A} {C} (lf-∷ lf) η Θ' V M =
-  ≐ᶜ-trans
-    (≡→≐ᶜ (cong (λ z → castᶜ (++ᶜ-identityˡ {Θ'})
+  trans
+    ((cong (λ z → castᶜ (++ᶜ-identityˡ {Θ'})
                          (sub-atᶜ {[]} {A} Θ' (env-eternal-C lf η' z) V))
                 (sym (cast-loop₂ (sym (++ᶜ-assoc Δ ([] ∷ A) Θ'))
                                  (++ᶜ-assoc Δ ([] ∷ A) Θ')
                                  (sub-atᶜ {Δ} {B} (([] ∷ A) ++ᶜ Θ')
                                     (castᶜ (++ᶜ-assoc (Δ ∷ B) ([] ∷ A) Θ') M)
                                     W₁)))))
-    (≐ᶜ-trans (env-eternal-C-swap lf η' Θ' V (inner₀ᶜ Θ' M W₁))
-      (env-eternal-C-≐ lf η'
-        (≐ᶜ-trans (≐ᶜ-sym (sub-swap-C Θ' M W₂ W₁))
-                  (sub-atᶜ-≐ {Δ} {B} Θ' W₁
-                    (sub-atᶜ-≐ᵥ {Δ ∷ B} {A} Θ' M
-                      (≐ᵛ-sym (V-rename-∘ (empty-ren lf)
+    (trans (env-eternal-C-swap lf η' Θ' V (inner₀ᶜ Θ' M W₁))
+      (env-eternal-C-≡ lf η'
+        (trans (sym (sub-swap-C Θ' M W₂ W₁))
+                  (sub-atᶜ-≡ {Δ} {B} Θ' W₁
+                    (sub-atᶜ-≡ᵥ {Δ ∷ B} {A} Θ' M
+                      (sym (V-rename-∘ (empty-ren lf)
                                           (wk-ren {A = B}) V)))))))
   where
     η' : ClosedVals Δ
@@ -302,24 +299,24 @@ env-eternal-C-++ : ∀ {Δ₁ Δ₂ Θ C} → (lf₁ : Lock-free Δ₁) → (lf�
                  → (η₁ : ClosedVals Δ₁) → (η₂ : ClosedVals Δ₂)
                  → (M : ((Δ₁ ++ᶜ Δ₂) ++ᶜ Θ) ⊢C⦂ C)
                  → env-eternal-C lf₁₂ (++ᶜᵛ lf₂ η₁ η₂) M
-                 ≐ᶜ env-eternal-C lf₂ η₂
+                 ≡ env-eternal-C lf₂ η₂
                       (env-eternal-C lf₁ η₁ (castᶜ (++ᶜ-assoc Δ₁ Δ₂ Θ) M))
 
 env-eternal-C-++ {Δ₁} {[]} {Θ} lf₁ lf-[] lf₁₂ η₁ η₂ M =
-  ≐ᶜ-trans (≡→≐ᶜ (env-eternal-C-pre refl lf₁₂ lf₁ _ η₁ (λ x → refl) M))
-    (≡→≐ᶜ (sym
+  trans ((env-eternal-C-pre refl lf₁₂ lf₁ _ η₁ (λ x → refl) M))
+    ((sym
       (trans (env-eternal-C-suffix (++ᶜ-identityˡ {Θ}) lf₁ η₁ _)
              (cong (env-eternal-C lf₁ η₁)
                    (cast-loop₂ (++ᶜ-assoc Δ₁ [] Θ)
                                (cong (Δ₁ ++ᶜ_) (++ᶜ-identityˡ {Θ})) M)))))
 
 env-eternal-C-++ {Δ₁} {Δ₂ ∷ B} {Θ} {C} lf₁ (lf-∷ lf₂) (lf-∷ lf₁₂) η₁ η₂ M =
-  ≐ᶜ-trans (≐ᶜ-sym (env-eternal-C-swap lf₁₂ (++ᶜᵛ lf₂ η₁ η₂') Θ (η₂ Hd) M))
-    (≐ᶜ-trans
-      (castᶜ-≐ (++ᶜ-identityˡ {Θ})
-        (sub-atᶜ-≐ {[]} {B} Θ (η₂ Hd)
-          (≐ᶜ-trans (env-eternal-C-++ lf₁ lf₂ lf₁₂ η₁ η₂' (castᶜ c₂ M))
-                    (env-eternal-C-≐ lf₂ η₂' (≡→≐ᶜ qeq)))))
+  trans (sym (env-eternal-C-swap lf₁₂ (++ᶜᵛ lf₂ η₁ η₂') Θ (η₂ Hd) M))
+    (trans
+      (castᶜ-≡ (++ᶜ-identityˡ {Θ})
+        (sub-atᶜ-≡ {[]} {B} Θ (η₂ Hd)
+          (trans (env-eternal-C-++ lf₁ lf₂ lf₁₂ η₁ η₂' (castᶜ c₂ M))
+                    (env-eternal-C-≡ lf₂ η₂' (qeq)))))
       (env-eternal-C-swap lf₂ η₂' Θ (η₂ Hd) M̃))
   where
     η₂' : ClosedVals Δ₂
@@ -394,12 +391,12 @@ env-eternal-H-C-∷ : ∀ {B₀ Δ Γc B} → (lf : Lock-free Δ)
                         ≡ (ᴱ-∷ (Δ ᴱ) B₀ d ++ᶜ (Γc ᴱ ++ᶜ Dcl B op ε)))
                   → (ih : (K₀ : Fam B ((Δ ++ᶜ Γc) ᴱ))
                         → env-eternal-H {_} {Γc} lf (λ x → η (Tl-∷ x)) K₀ op ε
-                        ≐ᶜ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
+                        ≡ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
                              (ᴱ-lock-free Δ) (ηᴱ (λ x → η (Tl-∷ x)))
                              (castᶜ (eH Δ Γc B op ε) (K₀ op ε)))
                   → env-eternal-H {_} {Γc} lf (λ x → η (Tl-∷ x))
                        (sub-atᴴ′ d Γc K (V-rename (empty-ren lf) (η Hd))) op ε
-                  ≐ᶜ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
+                  ≡ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
                        (ᴱ-lock-free-∷ Δ B₀ d)
                        (λ y → η (proj₂ (∈-ᴱ⁻-∷ Δ B₀ d y)))
                        (castᶜ e₁ (K op ε))
@@ -407,13 +404,12 @@ env-eternal-H-C-∷ : ∀ {B₀ Δ Γc B} → (lf : Lock-free Δ)
 env-eternal-H-C : ∀ {Δ₀ Γc B} → (lf : Lock-free Δ₀) → (η : ClosedVals Δ₀)
                 → (K : Fam B ((Δ₀ ++ᶜ Γc) ᴱ)) → (op : Op) → (ε : E)
                 → env-eternal-H {_} {Γc} lf η K op ε
-                ≐ᶜ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
+                ≡ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
                      (ᴱ-lock-free Δ₀) (ηᴱ η)
                      (castᶜ (eH Δ₀ Γc B op ε) (K op ε))
 
 env-eternal-H-C {[]} {Γc} {B} lf-[] η K op ε =
-  ≐ᶜ-sym (≡→≐ᶜ
-    (trans (cast-chain₂ (eH [] Γc B op ε)
+  sym (    (trans (cast-chain₂ (eH [] Γc B op ε)
                         (++ᶜ-identityˡ {Γc ᴱ ++ᶜ Dcl B op ε}) (K op ε))
       (trans (cong (λ p → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) p (K op ε)) uip)
              (sym (castᶜ≡subst
@@ -431,7 +427,7 @@ env-eternal-H-C {Δ ∷ B₀} {Γc} {B} (lf-∷ lf) η K op ε =
 -- transport and the entry is absent from the restricted prefix
 
 env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
-  ≐ᶜ-trans (ih K₄) (≡→≐ᶜ (cong (env-eternal-C (ᴱ-lock-free Δ) (ηᴱ η')) inner))
+  trans (ih K₄) ((cong (env-eternal-C (ᴱ-lock-free Δ) (ηᴱ η')) inner))
   where
     CT = B ‼ (op-grade op ·ₑ ε)
     Dc = Dcl B op ε
@@ -465,12 +461,12 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
                      (sym (castᶜ≡subst e₁ (K op ε)))))))
 
 -- at an eternal one both sides substitute the restricted value, and both
--- do it first, so `cl-yes` and `sub-at-≐` align them where they stand
+-- do it first, so `cl-yes` and `sub-at-≡` align them where they stand
 
 env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
-  ≐ᶜ-trans (ih K₄)
-    (env-eternal-C-≐ (ᴱ-lock-free Δ) (ηᴱ η')
-      (isSub-≐ (isSub-reassoc isL isMid) (isSub-refl S₂) (≐ᶜ-sym swapStep)))
+  trans (ih K₄)
+    (env-eternal-C-≡ (ᴱ-lock-free Δ) (ηᴱ η')
+      (isSub-≡ (isSub-reassoc isL isMid) (isSub-refl S₂) (sym swapStep)))
   where
     CT = B ‼ (op-grade op ·ₑ ε)
     Dc = Dcl B op ε
@@ -507,17 +503,16 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
     e' = cong₂ _++ᶜ_ eΓ eΘ
 
     -- both are transports of the same clause
-    mid : X₂ ≐ᶜ subst (_⊢C⦂ CT) e X₁
+    mid : X₂ ≡ subst (_⊢C⦂ CT) e X₁
     mid =
-      ≡→≐ᶜ (trans (castᶜ≡subst e₁ (K op ε))
+      (trans (castᶜ≡subst e₁ (K op ε))
              (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
                     (sym (subst-fuseᶜ eclx e (K op ε)))))
 
-    eVal : subst (_⊢V⦂ B₀) eΓ (eternal-val-restrict et Wv) ≐ᵛ V₂
+    eVal : subst (_⊢V⦂ B₀) eΓ (eternal-val-restrict et Wv) ≡ V₂
     eVal =
-      ≐ᵛ-trans
-        (≡→≐ᵛ
-          (trans (cong (λ z → subst (_⊢V⦂ B₀) eΓ (eternal-val-restrict et z))
+      trans
+        (          (trans (cong (λ z → subst (_⊢V⦂ B₀) eΓ (eternal-val-restrict et z))
                        (castᵛ≡subst (sym sl) W₀))
             (trans (cong (subst (_⊢V⦂ B₀) eΓ)
                          (restrict-substᵛ (sym sl) et W₀))
@@ -525,11 +520,11 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
                                   (eternal-val-restrict et W₀))
                      (substᵛ-irr (trans (cong _ᴱ (sym sl)) eΓ) refl
                                  (eternal-val-restrict et W₀))))))
-        (≐ᵛ-trans (eternal-val-restrict-ren et (empty-ren lf) (η Hd))
-          (≐ᵛ-trans
-            (≡→≐ᵛ (cong (V-rename (restrict-ren (empty-ren lf)))
+        (trans (eternal-val-restrict-ren et (empty-ren lf) (η Hd))
+          (trans
+            ((cong (V-rename (restrict-ren (empty-ren lf)))
                         (restrict-closed et (η Hd))))
-            (V-rename-≐ (∅-ren-≐ (restrict-ren (empty-ren lf))
+            (V-rename-≡ (∅-ren-≐ʳ (restrict-ren (empty-ren lf))
                                      (empty-ren (ᴱ-lock-free Δ)))
                         (η Hd))))
 
@@ -538,9 +533,9 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
 
     S₂ = sub-atᶜ {Δ ᴱ} {B₀} Θᴱ X₂ V₂
 
-    swapStep : S₂ ≐ᶜ subst (_⊢C⦂ CT) e' S₁
+    swapStep : S₂ ≡ subst (_⊢C⦂ CT) e' S₁
     swapStep =
-      sub-at-≐ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
+      sub-at-≡ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
 
     isL = isSub-cast _ (eH Δ Γc B op ε)
             (isSub-Cl op ε _ (castOf {Δ} {B₀} Γc)
@@ -567,19 +562,19 @@ env-Hˢ-ᴱ-∷ : ∀ {St Γ A B} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂
            → (d : Dec (Eternal A)) → eternal? A ≡ d
            → (ih : (Δ₀ : Ctx) → (K₀ : Fam B ((Γ ++ᶜ Δ₀) ᴱ))
                  → env-Hˢ γ Δ₀ K₀ op ε
-                 ≐ᶜ castᶜ (eStar St Δ₀ op ε)
+                 ≡ castᶜ (eStar St Δ₀ op ε)
                       (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
                         (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ₀ B op ε))
                           (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ₀) (K₀ op ε)))))
            → env-Hˢ (γ ∷ᵉ W) Δ K op ε
-           ≐ᶜ castᶜ (eStar St Δ op ε)
+           ≡ castᶜ (eStar St Δ op ε)
                 (env-eternal-C (ᴱ-lock-free (Γ ∷ A)) (env-ᴱ (γ ∷ᵉ W))
                   (castᶜ e₁ (K op ε)))
 
 env-Hˢ-ᴱ : ∀ {St Γ B} → (γ : Env St Γ) → (Δ : Ctx)
          → (K : Fam B ((Γ ++ᶜ Δ) ᴱ)) → (op : Op) → (ε : E)
          → env-Hˢ γ Δ K op ε
-         ≐ᶜ castᶜ (eStar St Δ op ε)
+         ≡ castᶜ (eStar St Δ op ε)
              (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ)
                (castᶜ (++ᶜ-assoc (Γ ᴱ) [] (D~ Δ B op ε))
                  (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε))))
@@ -588,8 +583,7 @@ env-Hˢ-ᴱ : ∀ {St Γ B} → (γ : Env St Γ) → (Δ : Ctx)
 -- transport loops back to the clause itself
 
 env-Hˢ-ᴱ {B = B} ⌊ St ⌋ Δ K op ε =
-  ≐ᶜ-sym (≡→≐ᶜ
-    (trans (cong (castᶜ (eStar St Δ op ε))
+  sym (    (trans (cong (castᶜ (eStar St Δ op ε))
                  (env-eternal-C-empty (toCtxᴱ-[] St)
                                       (ᴱ-lock-free (toCtx St)) _ _))
            (cast-loop₄
@@ -604,9 +598,9 @@ env-Hˢ-ᴱ {B = B} ⌊ St ⌋ Δ K op ε =
 -- the base weakening restricts to a transport ([] has no variables)
 
 env-Hˢ-ᴱ {B = B} (∅ᵉ St) Δ K op ε =
-  ≐ᶜ-trans
-    (C-rename-eq-≐ (cong (_++ᶜ Dcl B op ε) Efull) hren (K op ε))
-    (≡→≐ᶜ (sym rhs-eq))
+  trans
+    (C-rename-eq-≡ (cong (_++ᶜ Dcl B op ε) Efull) hren (K op ε))
+    ((sym rhs-eq))
   where
     Efull = trans (ᴱ-++ᶜ [] Δ)
                   (trans (cong (_++ᶜ Δ ᴱ) (sym (toCtxᴱ-[] St)))
@@ -616,23 +610,23 @@ env-Hˢ-ᴱ {B = B} (∅ᵉ St) Δ K op ε =
              (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (∅-ren St))))
          ≐ʳ eq-ren (cong (_++ᶜ Dcl B op ε) Efull)
     hren =
-      ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
-               (cong-ren-eq-ren-≐ (Dcl B op ε) Efull)
+      ≐ʳ-trans (cong-ren-≐ʳ (Dcl B op ε) inner)
+               (cong-ren-eq-ren-≐ʳ (Dcl B op ε) Efull)
       where
         inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (∅-ren St))
               ≐ʳ eq-ren Efull
         inner =
-          conj-eq-≐ (ᴱ-++ᶜ [] Δ)
+          conj-eq-≐ʳ (ᴱ-++ᶜ [] Δ)
                     (cong (_++ᶜ Δ ᴱ) (sym (toCtxᴱ-[] St)))
                     (sym (ᴱ-++ᶜ (toCtx St) Δ))
             (≐ʳ-trans
-              (restrict-cong-≐ (∅-ren St) Δ (ᴱ-++ᶜ [] Δ)
+              (restrict-cong-≐ʳ (∅-ren St) Δ (ᴱ-++ᶜ [] Δ)
                                             (ᴱ-++ᶜ (toCtx St) Δ))
-              (∘ʳ-≐ ≐ʳ-refl
-                (∘ʳ-≐ (≐ʳ-trans
-                         (cong-ren-≐ (Δ ᴱ)
-                           (∅-ren-≐ _ (eq-ren (sym (toCtxᴱ-[] St)))))
-                         (cong-ren-eq-ren-≐ (Δ ᴱ) (sym (toCtxᴱ-[] St))))
+              (∘ʳ-≐ʳ ≐ʳ-refl
+                (∘ʳ-≐ʳ (≐ʳ-trans
+                         (cong-ren-≐ʳ (Δ ᴱ)
+                           (∅-ren-≐ʳ _ (eq-ren (sym (toCtxᴱ-[] St)))))
+                         (cong-ren-eq-ren-≐ʳ (Δ ᴱ) (sym (toCtxᴱ-[] St))))
                       ≐ʳ-refl)))
 
     rhs-eq : castᶜ (eStar St Δ op ε)
@@ -659,9 +653,9 @@ env-Hˢ-ᴱ {B = B} (∅ᵉ St) Δ K op ε =
 -- a reach's restriction is a transport between provably-empty state parts
 
 env-Hˢ-ᴱ {B = B} (reachᵉ {St} {St'} γ q) Δ K op ε =
-  ≐ᶜ-trans (C-rename-eq-≐ Ewhole hren (env-Hˢ γ Δ K op ε))
-    (≐ᶜ-trans (substᶜ-≐ Ewhole (env-Hˢ-ᴱ γ Δ K op ε))
-      (≡→≐ᶜ (trans (cong (subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) Ewhole)
+  trans (C-rename-eq-≡ Ewhole hren (env-Hˢ γ Δ K op ε))
+    (trans (substᶜ-≡ Ewhole (env-Hˢ-ᴱ γ Δ K op ε))
+      ((trans (cong (subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) Ewhole)
                          (castᶜ≡subst (eStar St Δ op ε) _))
               (trans (subst-fuseᶜ (eStar St Δ op ε) Ewhole _)
                 (trans (cong (λ p → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε)) p _)
@@ -681,32 +675,32 @@ env-Hˢ-ᴱ {B = B} (reachᵉ {St} {St'} γ q) Δ K op ε =
              (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (reach-renᵘ q))))
          ≐ʳ eq-ren Ewhole
     hren =
-      ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
-               (cong-ren-eq-ren-≐ (Dcl B op ε) Einner)
+      ≐ʳ-trans (cong-ren-≐ʳ (Dcl B op ε) inner)
+               (cong-ren-eq-ren-≐ʳ (Dcl B op ε) Einner)
       where
         inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (reach-renᵘ q))
               ≐ʳ eq-ren Einner
         inner =
-          conj-eq-≐ (ᴱ-++ᶜ (toCtx St) Δ) (cong (_++ᶜ Δ ᴱ) EStSt')
+          conj-eq-≐ʳ (ᴱ-++ᶜ (toCtx St) Δ) (cong (_++ᶜ Δ ᴱ) EStSt')
                     (sym (ᴱ-++ᶜ (toCtx St') Δ))
             (≐ʳ-trans
-              (restrict-cong-≐ (reach-renᵘ q) Δ (ᴱ-++ᶜ (toCtx St) Δ)
+              (restrict-cong-≐ʳ (reach-renᵘ q) Δ (ᴱ-++ᶜ (toCtx St) Δ)
                                                 (ᴱ-++ᶜ (toCtx St') Δ))
-              (∘ʳ-≐ ≐ʳ-refl
-                (∘ʳ-≐ (≐ʳ-trans
-                         (cong-ren-≐ (Δ ᴱ)
-                           (empty-src-≐ (toCtxᴱ-[] St) _ EStSt'))
-                         (cong-ren-eq-ren-≐ (Δ ᴱ) EStSt'))
+              (∘ʳ-≐ʳ ≐ʳ-refl
+                (∘ʳ-≐ʳ (≐ʳ-trans
+                         (cong-ren-≐ʳ (Δ ᴱ)
+                           (empty-src-≐ʳ (toCtxᴱ-[] St) _ EStSt'))
+                         (cong-ren-eq-ren-≐ʳ (Δ ᴱ) EStSt'))
                       ≐ʳ-refl)))
 -- a lock: the recursion at the lock-absorbing suffix; the crossing
 -- renaming restricts to a transport, and the suffix relocation moves
 -- inside `env-eternal-C`
 
 env-Hˢ-ᴱ {B = B} (_⟨_⟩ᵉ {St} {St'} {Γ} {ρ} γ q) Δ K op ε =
-  ≐ᶜ-trans (C-rename-eq-≐ EW hren _)
-    (≐ᶜ-trans
-      (substᶜ-≐ EW (castᶜ-≐ eo (env-Hˢ-ᴱ γ Δ' K' op ε)))
-      (≡→≐ᶜ step))
+  trans (C-rename-eq-≡ EW hren _)
+    (trans
+      (substᶜ-≡ EW (castᶜ-≡ eo (env-Hˢ-ᴱ γ Δ' K' op ε)))
+      (step))
   where
     CT = B ‼ (op-grade op ·ₑ ε)
 
@@ -732,22 +726,22 @@ env-Hˢ-ᴱ {B = B} (_⟨_⟩ᵉ {St} {St'} {Γ} {ρ} γ q) Δ K op ε =
              (restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (unbox-ren q))))
          ≐ʳ eq-ren EW
     hren =
-      ≐ʳ-trans (cong-ren-≐ (Dcl B op ε) inner)
-               (cong-ren-eq-ren-≐ (Dcl B op ε) EI)
+      ≐ʳ-trans (cong-ren-≐ʳ (Dcl B op ε) inner)
+               (cong-ren-eq-ren-≐ʳ (Dcl B op ε) EI)
       where
         inner : restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (unbox-ren q))
               ≐ʳ eq-ren EI
         inner =
-          conj-eq-≐ (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ) (cong (_++ᶜ Δ ᴱ) E₁₂)
+          conj-eq-≐ʳ (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ) (cong (_++ᶜ Δ ᴱ) E₁₂)
                     (sym (ᴱ-++ᶜ (toCtx St') Δ))
             (≐ʳ-trans
-              (restrict-cong-≐ (unbox-ren q) Δ (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ)
+              (restrict-cong-≐ʳ (unbox-ren q) Δ (ᴱ-++ᶜ (toCtx St ⟨ ρ ⟩) Δ)
                                                (ᴱ-++ᶜ (toCtx St') Δ))
-              (∘ʳ-≐ ≐ʳ-refl
-                (∘ʳ-≐ (≐ʳ-trans
-                         (cong-ren-≐ (Δ ᴱ)
-                           (empty-src-≐ (toCtxᴱ-[] St) _ E₁₂))
-                         (cong-ren-eq-ren-≐ (Δ ᴱ) E₁₂))
+              (∘ʳ-≐ʳ ≐ʳ-refl
+                (∘ʳ-≐ʳ (≐ʳ-trans
+                         (cong-ren-≐ʳ (Δ ᴱ)
+                           (empty-src-≐ʳ (toCtxᴱ-[] St) _ E₁₂))
+                         (cong-ren-eq-ren-≐ʳ (Δ ᴱ) E₁₂))
                       ≐ʳ-refl)))
 
     eΔ'Δ : Δ' ᴱ ≡ Δ ᴱ
@@ -813,7 +807,7 @@ env-Hˢ-ᴱ {B = B} (_⟨_⟩ᵉ {St} {St'} {Γ} {ρ} γ q) Δ K op ε =
 -- need and why `with eternal? A` is not the way in.
 
 env-Hˢ-ᴱ {B = B} (_∷ᵉ_ {St} {Γ} {A} γ W) Δ K op ε =
-  ≐ᶜ-trans
+  trans
     (env-Hˢ-ᴱ-∷ γ W Δ K op ε
        (trans (cong (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ]
@@ -821,7 +815,7 @@ env-Hˢ-ᴱ {B = B} (_∷ᵉ_ {St} {Γ} {A} γ W) Δ K op ε =
                     (ᴱ-++ᶜ (Γ ∷ A) Δ))
               (++ᶜ-assoc ((Γ ∷ A) ᴱ) [] (D~ Δ B op ε)))
        (eternal? A) refl (λ Δ₀ K₀ → env-Hˢ-ᴱ γ Δ₀ K₀ op ε))
-    (≡→≐ᶜ (cong (λ z → castᶜ (eStar St Δ op ε)
+    ((cong (λ z → castᶜ (eStar St Δ op ε)
                          (env-eternal-C (ᴱ-lock-free (Γ ∷ A))
                                         (env-ᴱ (γ ∷ᵉ W)) z))
                 (trans (castᶜ≡subst _ (K op ε))
@@ -835,7 +829,7 @@ env-Hˢ-ᴱ {B = B} (_∷ᵉ_ {St} {Γ} {A} γ W) Δ K op ε =
                           (K op ε))))))
 
 env-Hˢ-ᴱ {B = B} (liftᵉ {St} {Γ} {A} {ρ} V γ) Δ K op ε =
-  ≐ᶜ-trans (castᶜ-≐ eo (env-Hˢ-ᴱ γ Δ' K' op ε)) (≡→≐ᶜ step)
+  trans (castᶜ-≡ eo (env-Hˢ-ᴱ γ Δ' K' op ε)) (step)
   where
     CT = B ‼ (op-grade op ·ₑ ε)
 
@@ -910,17 +904,17 @@ env-Hˢ-ᴱ {B = B} (liftᵉ {St} {Γ} {A} {ρ} V γ) Δ K op ε =
 -- restriction's own chain at `Δ₀ ᴱ ++ᶜ Γ ᴱ` into the same two halves.
 
 env-Hˢ-ᴱ {St} {B = B} (eternalˡ {Γ = Γ} Δ₀ lf η γ) Δ K op ε =
-  ≐ᶜ-trans (env-Hˢ-ᴱ γ Δ K₂ op ε)
-    (castᶜ-≐ (eStar St Δ op ε)
-      (≐ᶜ-trans
-        (env-eternal-C-≐ (ᴱ-lock-free Γ) (env-ᴱ γ)
-          (≐ᶜ-trans
-            (castᶜ-≐ a₁ (castᶜ-≐ cR (env-eternal-H-C lf η K₃ op ε)))
-            (≡→≐ᶜ midEq)))
-        (≐ᶜ-trans
-          (≐ᶜ-sym (env-eternal-C-++ (ᴱ-lock-free Δ₀) (ᴱ-lock-free Γ)
+  trans (env-Hˢ-ᴱ γ Δ K₂ op ε)
+    (castᶜ-≡ (eStar St Δ op ε)
+      (trans
+        (env-eternal-C-≡ (ᴱ-lock-free Γ) (env-ᴱ γ)
+          (trans
+            (castᶜ-≡ a₁ (castᶜ-≡ cR (env-eternal-H-C lf η K₃ op ε)))
+            (midEq)))
+        (trans
+          (sym (env-eternal-C-++ (ᴱ-lock-free Δ₀) (ᴱ-lock-free Γ)
                      lf₁₂ (ηᴱ η) (env-ᴱ γ) M₀))
-          (≡→≐ᶜ preEq))))
+          (preEq))))
   where
     CT = B ‼ (op-grade op ·ₑ ε)
     Θ  = [] ++ᶜ D~ Δ B op ε
@@ -1027,20 +1021,19 @@ env-Hˢ-clause : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 []) → (�
                → C-rename (cong-∷-ren (cong-∷-ren
                              (eq-ren (toCtxᴱ-++ᶜ St Δ) ∘ʳ clause-ren St₁ Δ)))
                           (env-Hˢ γ Δ K op ε)
-               ≐ᶜ env-Cˢ (env-clause γ St₁)
+               ≡ env-Cˢ (env-clause γ St₁)
                          (Δ ᴱ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ]
                                   (type-of-gtype (arity op) ⇒ B ‼ ε))
                          (Cl-castᴿ op ε (ᴱ-++ᶜ Γ Δ) (K op ε))
 
 env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
-  ≐ᶜ-trans
+  trans
     (C-rename-cong _ (env-Hˢ-ᴱ γ Δ K op ε))
-    (≐ᶜ-trans
+    (trans
       (C-rename-conj eIn eOut hconj
          (castᶜ (eStar St Δ op ε) X))
-      (≡→≐ᶜ
-        (trans (cong (subst (_⊢C⦂ CT) eOut)
+      (        (trans (cong (subst (_⊢C⦂ CT) eOut)
                  (cong (C-rename (cong-ren {Γ'' = D~ Δ B op ε} (∅-ren St₁)))
                    (trans (cong (subst (_⊢C⦂ CT) eIn)
                                 (castᶜ≡subst (eStar St Δ op ε) X))
@@ -1071,18 +1064,18 @@ env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
       ≐ʳ-trans
         (conj-cong-ren (Dcl B op ε) EA refl
           (≐ʳ-trans
-            (≐ʳ-trans (∘ʳ-≐ ≐ʳ-refl hsplit) (≐ʳ-sym (∘ʳ-assoc-≐ _ _ _)))
+            (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl hsplit) (≐ʳ-sym (∘ʳ-assoc-≐ʳ _ _ _)))
             (≐ʳ-trans
-              (∘ʳ-≐ (eq-ren-∘-≐ (toCtxᴱ-++ᶜ St Δ)
+              (∘ʳ-≐ʳ (eq-ren-∘-≐ʳ (toCtxᴱ-++ᶜ St Δ)
                                 (sym (++ᶜ-identityˡ {Δ ᴱ})))
                     ≐ʳ-refl)
-              (∘ʳ-≐ (eq-ren-≐ _ EA) (≐ʳ-sym (∘ʳ-identityʳ-≐ _))))))
+              (∘ʳ-≐ʳ (eq-ren-≐ʳ _ EA) (≐ʳ-sym (∘ʳ-identityʳ-≐ʳ _))))))
         (≐ʳ-trans
           (conj-fuse (cong (_++ᶜ Dcl B op ε) EA) refl
              (++ᶜ-assoc [] (Δ ᴱ) (Dcl B op ε))
              (sym (++ᶜ-assoc (toCtx St₁) (Δ ᴱ) (Dcl B op ε)))
-             (cong-ren-assoc-≐ (Δ ᴱ) (Dcl B op ε) (∅-ren St₁)))
-          (∘ʳ-≐ (eq-ren-≐ _ eIn) (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ eOut))))
+             (cong-ren-assoc-≐ʳ (Δ ᴱ) (Dcl B op ε) (∅-ren St₁)))
+          (∘ʳ-≐ʳ (eq-ren-≐ʳ _ eIn) (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ _ eOut))))
       where
         EA = trans (toCtxᴱ-++ᶜ St Δ) (sym (++ᶜ-identityˡ {Δ ᴱ}))
 
@@ -1096,11 +1089,11 @@ env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
 -- to the restriction, so this is `liftᵉ`'s case with one transport more
 
 env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (no ¬et) eq ih rewrite eq =
-  ≐ᶜ-trans
-    (castᶜ-≐ cOut
-      (substᶜ-≐′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
-        (castᶜ-≐ eo (ih Δ' K'))))
-    (≡→≐ᶜ step)
+  trans
+    (castᶜ-≡ cOut
+      (substᶜ-≡′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
+        (castᶜ-≡ eo (ih Δ' K'))))
+    (step)
   where
     CT = B ‼ (op-grade op ·ₑ ε)
     Dc = Dcl B op ε
@@ -1184,12 +1177,12 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (no ¬et) eq ih rewrite e
 -- at an eternal entry both sides substitute the restricted value, but at
 -- different prefixes: the clause zone at the state's (provably empty)
 -- one, `env-eternal-C` at `Γ ᴱ`, and only after the chain to its left.
--- `cl-yes` presents the former as a `sub-atᶜ`, `sub-at-≐` aligns the two,
+-- `cl-yes` presents the former as a `sub-atᶜ`, `sub-at-≡` aligns the two,
 -- and `env-eternal-C-swap` moves the latter past the chain.
 
 env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq =
-  ≐ᶜ-trans lhs-step
-    (castᶜ-≐ (eStar St Δ op ε)
+  trans lhs-step
+    (castᶜ-≡ (eStar St Δ op ε)
       (env-eternal-C-swap lf (env-ᴱ γ) Θ' V₂ (castᶜ e₁ (K op ε))))
   where
     CT = B ‼ (op-grade op ·ₑ ε)
@@ -1290,16 +1283,15 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq
                 (trans (env-eternal-C-suffix eSuf lf (env-ᴱ γ) _)
                        (cong (env-eternal-C lf (env-ᴱ γ)) inner-eq))))))
 
-    mid : X₂ ≐ᶜ subst (_⊢C⦂ CT) e X₁
+    mid : X₂ ≡ subst (_⊢C⦂ CT) e X₁
     mid =
-      ≐ᶜ-sym
-        (≐ᶜ-trans (substᶜ-≐ e (substᶜ-≐ eclx (castᶜ-≐ cAssoc (ih Δ' K'))))
-                  (≡→≐ᶜ collapse))
+      sym
+        (trans (substᶜ-≡ e (substᶜ-≡ eclx (castᶜ-≡ cAssoc (ih Δ' K'))))
+                  (collapse))
 
-    eVal : subst (_⊢V⦂ A) eΓ (eternal-val-restrict et Wv) ≐ᵛ V₂
+    eVal : subst (_⊢V⦂ A) eΓ (eternal-val-restrict et Wv) ≡ V₂
     eVal =
-      ≡→≐ᵛ
-        (trans (cong (λ z → subst (_⊢V⦂ A) eΓ (eternal-val-restrict et z))
+              (trans (cong (λ z → subst (_⊢V⦂ A) eΓ (eternal-val-restrict et z))
                      (castᵛ≡subst (sym sl) W))
           (trans (cong (subst (_⊢V⦂ A) eΓ) (restrict-substᵛ (sym sl) et W))
             (trans (subst-fuseᵛ (cong _ᴱ (sym sl)) eΓ
@@ -1313,9 +1305,9 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq
 
     S₂ = sub-atᶜ {[]} {A} Θ' X₂ V₂
 
-    swapStep : S₂ ≐ᶜ subst (_⊢C⦂ CT) e' S₁
+    swapStep : S₂ ≡ subst (_⊢C⦂ CT) e' S₁
     swapStep =
-      sub-at-≐ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
+      sub-at-≡ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
 
     isL = isSub-Cl op ε _ (castOf {toCtx St} {A} Δ)
             (cl-yes et x Wv Krec op ε eclx)
@@ -1326,5 +1318,5 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq
     isR = isSub-cast _ (eStar St Δ op ε)
             (isSub-cast _ (++ᶜ-identityˡ {Θ'}) (isSub-refl S₂))
 
-    lhs-step = isSub-≐ (isSub-reassoc isL isMid) isR (≐ᶜ-sym swapStep)
+    lhs-step = isSub-≡ (isSub-reassoc isL isMid) isR (sym swapStep)
 

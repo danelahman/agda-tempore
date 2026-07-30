@@ -51,7 +51,7 @@ mutual
           → {V  : ([] ++ᶜ toCtx St  ⟨ ρ ⟩) ⊢V⦂ A}
           → {V' : ([] ++ᶜ toCtx St' ⟨ ρ ⟩) ⊢V⦂ A}
           → (e : St ≐ˢ St')
-          → V ≐ᵛ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ e))) V'
+          → V ≡ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ e))) V'
           → (St ∷ₛ V) ≐ˢ (St' ∷ₛ V')
 
   -- Related states have the same context: `toCtx` reads the skeleton only.
@@ -70,8 +70,8 @@ mutual
   ≐ˢ-refl (St ⟨ ρ ⟩ₛ)  = ⟨⟩-≐ˢ ρ (≐ˢ-refl St)
   ≐ˢ-refl (St ∷ₛ V)   =
     ∷-≐ˢ (≐ˢ-refl St)
-      (subst (λ e → V ≐ᵛ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ _ ⟩) (sym e)) V)
-             (sym (toCtx-≐ˢ-refl St)) (≐ᵛ-refl V))
+      (subst (λ e → V ≡ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ _ ⟩) (sym e)) V)
+             (sym (toCtx-≐ˢ-refl St)) (refl {x = V}))
 
   toCtx-≐ˢ-refl : (St : 𝕊 []) → toCtx-≐ˢ (≐ˢ-refl St) ≡ refl
   toCtx-≐ˢ-refl ∅          = refl
@@ -83,10 +83,10 @@ mutual
 -- needed because `Val`'s Kripke clauses have to replay an extension of the
 -- *other* state (`reach-replay` runs in one direction only).
 
-≐ᵛ-shift : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ)
+≡-shift : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ)
          → {V : Γ' ⊢V⦂ A} → {W : Γ ⊢V⦂ A}
-         → castᵛ e' V ≐ᵛ W → V ≐ᵛ castᵛ e W
-≐ᵛ-shift refl e' {V} {W} eV
+         → castᵛ e' V ≡ W → V ≡ castᵛ e W
+≡-shift refl e' {V} {W} eV
   rewrite uip {p = e'} {q = refl} = eV
 
 ≐ˢ-sym : ∀ {St St' : 𝕊 []} → St ≐ˢ St' → St' ≐ˢ St
@@ -94,105 +94,105 @@ mutual
 ≐ˢ-sym (⟨⟩-≐ˢ ρ e)   = ⟨⟩-≐ˢ ρ (≐ˢ-sym e)
 ≐ˢ-sym (∷-≐ˢ {A = A} {ρ = ρ} e eV) =
   ∷-≐ˢ (≐ˢ-sym e)
-    (≐ᵛ-shift (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ (≐ˢ-sym e))))
+    (≡-shift (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ (≐ˢ-sym e))))
               (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ e)))
-              (≐ᵛ-sym eV))
+              (sym eV))
 
 ------------------------------------------------------------------------
 -- INVERTING A CAST
 --
 -- The bisimulation cases on the reduction, which fixes the shape of the
 -- left-hand term; the shape of the right-hand one has to be read back out of
--- `M ≐ᶜ castᶜ e M'`. A cast along a *neutral* equality does not reduce, so this
+-- `M ≡ castᶜ e M'`. A cast along a *neutral* equality does not reduce, so this
 -- cannot be done in place — but each inversion is one line as a standalone
 -- lemma over abstract contexts, where the equality can be matched.
 ------------------------------------------------------------------------
 
-≐-lam⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → {M : Γ ∷ A ⊢C⦂ B ‼ ε}
+cast-lam⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → {M : Γ ∷ A ⊢C⦂ B ‼ ε}
        → (V' : Γ' ⊢V⦂ A ⇒ B ‼ ε)
-       → lam M ≐ᵛ castᵛ e V'
+       → lam M ≡ castᵛ e V'
        → Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ B ‼ ε) ]
-           (V' ≡ lam M') × (M ≐ᶜ castᶜ (cong (_∷ A) e) M')
-≐-lam⁻ refl _ refl = _ , refl , refl
+           (V' ≡ lam M') × (M ≡ castᶜ (cong (_∷ A) e) M')
+cast-lam⁻ refl _ refl = _ , refl , refl
 
-≐-pair⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ B}
+cast-pair⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ B}
         → (U' : Γ' ⊢V⦂ A |×| B)
-        → ⦉ V , W ⦊ ≐ᵛ castᵛ e U'
+        → ⦉ V , W ⦊ ≡ castᵛ e U'
         → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] Σ[ W' ∈ (Γ' ⊢V⦂ B) ]
-            (U' ≡ ⦉ V' , W' ⦊) × (V ≐ᵛ castᵛ e V') × (W ≐ᵛ castᵛ e W')
-≐-pair⁻ refl _ refl = _ , _ , refl , refl , refl
+            (U' ≡ ⦉ V' , W' ⦊) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
+cast-pair⁻ refl _ refl = _ , _ , refl , refl , refl
 
-≐-return⁻ : ∀ {Γ Γ' A} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A}
+cast-return⁻ : ∀ {Γ Γ' A} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A}
           → (M' : Γ' ⊢C⦂ A ‼ uₑ)
-          → return V ≐ᶜ castᶜ e M'
-          → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] (M' ≡ return V') × (V ≐ᵛ castᵛ e V')
-≐-return⁻ refl _ refl = _ , refl , refl
+          → return V ≡ castᶜ e M'
+          → Σ[ V' ∈ (Γ' ⊢V⦂ A) ] (M' ≡ return V') × (V ≡ castᵛ e V')
+cast-return⁻ refl _ refl = _ , refl , refl
 
-≐-app⁻ : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A ⇒ C} → {W : Γ ⊢V⦂ A}
+cast-app⁻ : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A ⇒ C} → {W : Γ ⊢V⦂ A}
        → (M' : Γ' ⊢C⦂ C)
-       → (V · W) ≐ᶜ castᶜ e M'
+       → (V · W) ≡ castᶜ e M'
        → Σ[ V' ∈ (Γ' ⊢V⦂ A ⇒ C) ] Σ[ W' ∈ (Γ' ⊢V⦂ A) ]
-           (M' ≡ V' · W') × (V ≐ᵛ castᵛ e V') × (W ≐ᵛ castᵛ e W')
-≐-app⁻ refl _ refl = _ , _ , refl , refl , refl
+           (M' ≡ V' · W') × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
+cast-app⁻ refl _ refl = _ , _ , refl , refl , refl
 
-≐-seq⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
+cast-seq⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
        → {M : Γ ⊢C⦂ A ‼ ε} → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
        → (P' : Γ' ⊢C⦂ B ‼ (ε ·ₑ ε'))
-       → (M ⨟ N) ≐ᶜ castᶜ e P'
+       → (M ⨟ N) ≡ castᶜ e P'
        → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ] Σ[ N' ∈ (Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
-           (P' ≡ (M' ⨟ N')) × (M ≐ᶜ castᶜ e M')
-         × (N ≐ᶜ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
-≐-seq⁻ refl _ refl = _ , _ , refl , refl , refl
+           (P' ≡ (M' ⨟ N')) × (M ≡ castᶜ e M')
+         × (N ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
+cast-seq⁻ refl _ refl = _ , _ , refl , refl , refl
 
-≐-match⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
+cast-match⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
          → {V : Γ ⊢V⦂ A |×| B} → {M : Γ ∷ A ∷ B ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
-         → (match V `in M) ≐ᶜ castᶜ e P'
+         → (match V `in M) ≡ castᶜ e P'
          → Σ[ V' ∈ (Γ' ⊢V⦂ A |×| B) ] Σ[ M' ∈ (Γ' ∷ A ∷ B ⊢C⦂ C) ]
-             (P' ≡ (match V' `in M')) × (V ≐ᵛ castᵛ e V')
-           × (M ≐ᶜ castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
-≐-match⁻ refl _ refl = _ , _ , refl , refl , refl
+             (P' ≡ (match V' `in M')) × (V ≡ castᵛ e V')
+           × (M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
+cast-match⁻ refl _ refl = _ , _ , refl , refl , refl
 
-≐-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
+cast-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
            → {V : Γ ⊢V⦂ type-of-gtype (param op)}
            → {M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
            → (P' : Γ' ⊢C⦂ A ‼ (op-grade op ·ₑ ε))
-           → perform op V M ≐ᶜ castᶜ e P'
+           → perform op V M ≡ castᶜ e P'
            → Σ[ V' ∈ (Γ' ⊢V⦂ type-of-gtype (param op)) ]
              Σ[ M' ∈ (Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                         ⊢C⦂ A ‼ ε) ]
-               (P' ≡ perform op V' M') × (V ≐ᵛ castᵛ e V')
-             × (M ≐ᶜ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
+               (P' ≡ perform op V' M') × (V ≡ castᵛ e V')
+             × (M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
                                             ∷ type-of-gtype (arity op)) e) M')
-≐-perform⁻ refl _ refl = _ , _ , refl , refl , refl
+cast-perform⁻ refl _ refl = _ , _ , refl , refl , refl
 
-≐-delay⁻ : ∀ {Γ Γ' A ε τ} → (e : Γ' ≡ Γ)
+cast-delay⁻ : ∀ {Γ Γ' A ε τ} → (e : Γ' ≡ Γ)
          → {M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε}
          → (P' : Γ' ⊢C⦂ A ‼ (of-natᵉ τ ·ₑ ε))
-         → delay τ M ≐ᶜ castᶜ e P'
+         → delay τ M ≡ castᶜ e P'
          → Σ[ M' ∈ (Γ' ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε) ]
              (P' ≡ delay τ M')
-           × (M ≐ᶜ castᶜ (cong (_⟨ of-natʳ τ ⟩) e) M')
-≐-delay⁻ refl _ refl = _ , refl , refl
+           × (M ≡ castᶜ (cong (_⟨ of-natʳ τ ⟩) e) M')
+cast-delay⁻ refl _ refl = _ , refl , refl
 
-≐-box⁻ : ∀ {Γ Γ' A C ρ} → (e : Γ' ≡ Γ)
+cast-box⁻ : ∀ {Γ Γ' A C ρ} → (e : Γ' ≡ Γ)
        → {V : Γ ⟨ ρ ⟩ ⊢V⦂ A} → {M : Γ ∷ [ ρ ] A ⊢C⦂ C}
        → (P' : Γ' ⊢C⦂ C)
-       → box V M ≐ᶜ castᶜ e P'
+       → box V M ≡ castᶜ e P'
        → Σ[ V' ∈ (Γ' ⟨ ρ ⟩ ⊢V⦂ A) ] Σ[ M' ∈ (Γ' ∷ [ ρ ] A ⊢C⦂ C) ]
-           (P' ≡ box V' M') × (V ≐ᵛ castᵛ (cong (_⟨ ρ ⟩) e) V')
-         × (M ≐ᶜ castᶜ (cong (_∷ [ ρ ] A) e) M')
-≐-box⁻ refl _ refl = _ , _ , refl , refl , refl
+           (P' ≡ box V' M') × (V ≡ castᵛ (cong (_⟨ ρ ⟩) e) V')
+         × (M ≡ castᶜ (cong (_∷ [ ρ ] A) e) M')
+cast-box⁻ refl _ refl = _ , _ , refl , refl , refl
 
-≐-coerce⁻ : ∀ {Γ Γ' A ε ε'} → (e : Γ' ≡ Γ) → {p : ε ≾ₑ ε'}
+cast-coerce⁻ : ∀ {Γ Γ' A ε ε'} → (e : Γ' ≡ Γ) → {p : ε ≾ₑ ε'}
           → {M : Γ ⊢C⦂ A ‼ ε}
           → (P' : Γ' ⊢C⦂ A ‼ ε')
-          → coerce p M ≐ᶜ castᶜ e P'
+          → coerce p M ≡ castᶜ e P'
           → Σ[ p' ∈ (ε ≾ₑ ε') ] Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ]
-              (P' ≡ coerce p' M') × (M ≐ᶜ castᶜ e M')
-≐-coerce⁻ refl _ refl = _ , _ , refl , refl
+              (P' ≡ coerce p' M') × (M ≡ castᶜ e M')
+cast-coerce⁻ refl _ refl = _ , _ , refl , refl
 
-≐-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
+cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
           → {M : Γ ⊢C⦂ A ‼ ε}
           → {H : (op : Op) → (ε'' : E) →
                    Γ ᴱ ∷ type-of-gtype (param op)
@@ -201,7 +201,7 @@ mutual
                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
           → {N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
           → (P' : Γ' ⊢C⦂ B ‼ (ε ·ₑ ε'))
-          → (handle M `with H `in N) ≐ᶜ castᶜ e P'
+          → (handle M `with H `in N) ≡ castᶜ e P'
           → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ]
             Σ[ H' ∈ ((op : Op) → (ε'' : E) →
                        Γ' ᴱ ∷ type-of-gtype (param op)
@@ -210,26 +210,26 @@ mutual
                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) ]
             Σ[ N' ∈ (Γ' ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε') ]
               (P' ≡ (handle M' `with H' `in N'))
-            × (M ≐ᶜ castᶜ e M')
+            × (M ≡ castᶜ e M')
             × (∀ op ε'' → H op ε''
-                 ≐ᶜ castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                 ≡ castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
                                           ∷ [ mapᵉ (op-grade op) ]
                                               (type-of-gtype (arity op) ⇒ B ‼ ε''))
                                 e)
                           (H' op ε''))
-            × (N ≐ᶜ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
-≐-handle⁻ refl _ refl = _ , _ , _ , refl , refl , (λ op ε'' → refl) , refl
+            × (N ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
+cast-handle⁻ refl _ refl = _ , _ , _ , refl , refl , (λ op ε'' → refl) , refl
 
-≐-unbox⁻ : ∀ {Γ Γ' A C ρ ρ'} → (e : Γ' ≡ Γ)
+cast-unbox⁻ : ∀ {Γ Γ' A C ρ ρ'} → (e : Γ' ≡ Γ)
          → {x : [ ρ ] A ∈[ ρ' ] Γ} → {rel : ρ' ≾ᵣ ρ} → {M : Γ ∷ A ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
-         → unbox x rel M ≐ᶜ castᶜ e P'
+         → unbox x rel M ≡ castᶜ e P'
          → Σ[ ρ'' ∈ R ] Σ[ x' ∈ ([ ρ ] A ∈[ ρ'' ] Γ') ] Σ[ rel' ∈ (ρ'' ≾ᵣ ρ) ]
            Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
              (P' ≡ unbox x' rel' M')
            × (_≡_ {A = Var Γ ([ ρ ] A)} (ρ' , x) (Var-cast e (ρ'' , x')))
-           × (M ≐ᶜ castᶜ (cong (_∷ A) e) M')
-≐-unbox⁻ refl _ refl = _ , _ , _ , _ , refl , refl , refl
+           × (M ≡ castᶜ (cong (_∷ A) e) M')
+cast-unbox⁻ refl _ refl = _ , _ , _ , _ , refl , refl , refl
 
 ------------------------------------------------------------------------
 -- CASTS AND THE REDUCTS

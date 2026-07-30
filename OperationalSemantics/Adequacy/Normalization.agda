@@ -76,7 +76,7 @@ FL-unbox : ∀ {St Γ A D ρ σ ε} → (γ : Env St Γ) → Rel-Env γ
          → Comp' D ε St (env-C γ (unbox x rel M))
 
 FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
-  Comp-≐ᶜ (≐ᶜ-sym (env-Cˢ-unbox γ [] x rel M rel₁))
+  Comp-≡ᶜ (sym (env-Cˢ-unbox γ [] x rel M rel₁))
           (Comp-expand UNBOX (pM (γ ∷ᵉ U) (pγ , pU)))
   where
     rel₁ = env-cell-rel γ [] (σ , x) rel
@@ -90,7 +90,7 @@ FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
     rel₂ = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel₁
 
     pU : Val A St U
-    pU = Val-≐ᵛ A (≡→≐ᵛ (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
+    pU = Val-≡ᵛ A ( (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
                   (env-cell₀-val γ pγ (σ , x) id-suc rel₂)
 
 -- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components
@@ -112,12 +112,12 @@ FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
   subst (Comp' _ _ St) (sym (env-Cˢ-match γ [] V M))
     (subst (λ z → Comp' _ _ St (match z `in M₀)) (sym eV)
       (Comp-expand MATCH
-        (Comp-≐ᶜ (≐ᶜ-sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂)))))
+        (Comp-≡ᶜ (sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂)))))
   where
     M₀ = env-Cˢ γ ([] ∷ A ∷ B) M
 
     step : (M₀ [ Hd ↦ V-rename wk-ren U₂ ]c) [ Hd ↦ U₁ ]c
-         ≐ᶜ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
+         ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
 
 -- Handling: `env-Cˢ-handle` splits the action, `handle-Comp` runs the scrutinee
@@ -160,12 +160,12 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
     -- The clause the machine fires and the clause the environment closes agree
     -- only up to the equivalence: the substituted values match on the nose, the
     -- *renamings* reaching the state's context do not (`ᴱ-ren (toCtx St₁)`
-    -- against `∅-ren St₁`), and only `≐ᶜ` identifies those. Hence `Comp-≐ᶜ`
+    -- against `∅-ren St₁`), and only `≡` identifies those. Hence `Comp-≡ᶜ`
     -- rather than a transport.
 
     clause : Clause-Prem B St Hγ
     clause {St₁} {op} {ε₃} V₀ bv W pW =
-      Comp-≐ᶜ (≐ᶜ-sym (env-Hˢ-fired γ St₁ H V₀ W))
+      Comp-≡ᶜ (sym (env-Hˢ-fired γ St₁ H V₀ W))
         (pH (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W))
             ((env-clause-rel γ St₁ , pW) , bv))
 
@@ -201,25 +201,25 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
     -- the two `eq-ren`s the allocation and the lookup insert cancel
     cancel : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
            → V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀
-           ≐ᵛ V-rename (unbox-ren q) V'
+           ≡ V-rename (unbox-ren q) V'
     cancel q =
-      ≐ᵛ-trans
-        (≐ᵛ-sym (V-rename-∘ (eq-ren (sym ++ᶜ-identityˡ))
+      trans
+        (sym (V-rename-∘ (eq-ren (sym ++ᶜ-identityˡ))
                             (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V'))
-        (V-rename-≐
+        (V-rename-≡
           (≐ʳ-trans
-            (≐ʳ-sym (∘ʳ-assoc-≐ (eq-ren (sym ++ᶜ-identityˡ))
+            (≐ʳ-sym (∘ʳ-assoc-≐ʳ (eq-ren (sym ++ᶜ-identityˡ))
                                 (eq-ren ++ᶜ-identityˡ) (unbox-ren q)))
-            (∘ʳ-id-≐ (unbox-ren q)
+            (∘ʳ-idˡ-≐ʳ (unbox-ren q)
               (≐ʳ-trans
-                (eq-ren-∘-≐ (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))
+                (eq-ren-∘-≐ʳ (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))
                             ++ᶜ-identityˡ)
-                (eq-ren-≐ _ refl))))
+                (eq-ren-≐ʳ _ refl))))
           V')
 
     cell : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
          → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
-    cell q = Val-≐ᵛ A (≐ᵛ-sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
+    cell q = Val-≡ᵛ A (sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
 
 -- Performing: already a weak head normal form, so this is `comp-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
@@ -270,7 +270,7 @@ mutual
   -- gains the argument (`reachᵉ`, `_∷ᵉ_`) — and that is the whole reason the
   -- reach is *recorded* in the environment: the clause supplies no store for
   -- the later state, and a recorded reach needs none. The reduct the clause asks
-  -- for is the action's body up to `_≐ᶜ_`, whence `Comp-≐ᶜ`.
+  -- for is the action's body up to `_≡_`, whence `Comp-≡ᶜ`.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⊢V⦂ A)
@@ -286,7 +286,7 @@ mutual
   FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) =
       _ , env-Vˢ-lam γ [] M
     , λ q M₂ eM₂ W pW →
-        Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl W) (≐ᶜ-sym eM₂))
+        Comp-≡ᶜ (sub-≡ᶜ Hd (refl) (sym eM₂))
                 (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M)
 
   -- The computation half. `return` is a weak head normal form; `coerce`,
@@ -296,7 +296,7 @@ mutual
   -- Application instantiates the function's Kripke clause at the state it
   -- already stands in, and `delay` at the reach the lock it passes gives. In
   -- both, the renaming the clause inserts is identity-like, so the reduct is
-  -- the action itself up to `_≐ᶜ_`.
+  -- the action itself up to `_≡_`.
 
   FL-C : ∀ {St Γ A ε} → (γ : Env St Γ) → Rel-Env γ
        → (M : Γ ⊢C⦂ A ‼ ε)
@@ -317,17 +317,17 @@ mutual
     subst (Comp' _ _ _) (sym (env-Cˢ-app γ [] V W))
       (subst (λ z → Comp' _ _ _ (z · env-V γ W)) (sym eq)
         (Comp-expand APP
-          (Comp-≐ᶜ
-            (sub-≐ᶜ Hd (≐ᵛ-refl (env-V γ W))
-              (C-rename-id-≐ (cong-∷-ren-id-≐ reach-renᵘ-id-≐) M₀))
-            (f reach-id (reach-under reach-id M₀) (≐ᶜ-refl _)
+          (Comp-≡ᶜ
+            (sub-≡ᶜ Hd (refl)
+              (C-rename-id-≡ (cong-∷-ren-id-≐ʳ reach-renᵘ-id-≐ʳ) M₀))
+            (f reach-id (reach-under reach-id M₀) (refl)
                (env-V γ W) (FL-V γ pγ W)))))
 
   FL-C {St = St} γ pγ (delay τ M) =
     subst (Comp' _ _ _) (sym (env-Cˢ-delay γ [] M))
       (Comp-expand DELAY
-        (Comp-≐ᶜ
-          (C-rename-id-≐ unbox-ren-delay-≐ (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩) M))
+        (Comp-≡ᶜ
+          (C-rename-id-≡ unbox-ren-delay-≐ʳ (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩) M))
           (subst (Comp' _ _ _) eqδ (FL-C (γ ⟨ delay-reach ⟩ᵉ) pγ M))))
     where
       eqδ = cong (C-rename (unbox-ren (delay-reach {of-natʳ τ} {St})))

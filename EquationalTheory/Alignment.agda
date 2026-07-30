@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- The syntactic equivalence is contained in the equational theory.    --
 --                                                                    --
--- `_≐ᵛ_`/`_≐ᶜ_` are propositional equality of terms, and `_==_` is    --
+-- Equality of terms is propositional equality, and `_==_` is         --
 -- reflexive, so the inclusion is one line each way round the mutual   --
 -- pair. The converse fails, and should: `_==_` has the βη axioms.     --
 ------------------------------------------------------------------------
@@ -29,8 +29,8 @@ open import Syntax.Terms.Equivalence S
 
 open import EquationalTheory.EquationalTheory S
 
-≐ᵛ→== : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≐ᵛ V' → Γ ⊢V⦂ V == V'
-≐ᵛ→== refl = V-refl
+≡→==ᵛ : ∀ {Γ A} {V V' : Γ ⊢V⦂ A} → V ≡ V' → Γ ⊢V⦂ V == V'
+≡→==ᵛ refl = V-refl
 
-≐ᶜ→== : ∀ {Γ C} {M M' : Γ ⊢C⦂ C} → M ≐ᶜ M' → Γ ⊢C⦂ M == M'
-≐ᶜ→== refl = C-refl
+≡→==ᶜ : ∀ {Γ C} {M M' : Γ ⊢C⦂ C} → M ≡ M' → Γ ⊢C⦂ M == M'
+≡→==ᶜ refl = C-refl

@@ -71,12 +71,12 @@ hit-⟨⟩-img p y = cong (var-img′ (⟨⟩-≤-ren p)) (⟨⟩-η⁻¹-img y)
 eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ' Γ)
                     → (V : Γ ⊢V⦂ A)
                     → V-rename (cong-⟨⟩-ren {ρ = ρ} r) (eternal-val-ext et V)
-                    ≐ᵛ eternal-val-ext et (V-rename r V)
-eternal-val-ext-ren et             r (var f x)   = var-≐
-eternal-val-ext-ren et             r (const c)   = const-≐
-eternal-val-ext-ren et             r ⋆           = ⋆-≐
+                    ≡ eternal-val-ext et (V-rename r V)
+eternal-val-ext-ren et             r (var f x)   = var-≡
+eternal-val-ext-ren et             r (const c)   = refl
+eternal-val-ext-ren et             r ⋆           = refl
 eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊ =
-  pair-≐ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
+  cong₂ ⦉_,_⦊ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
 
 -- THE VARIABLE SUBSTITUTED FOR
 --
@@ -92,50 +92,50 @@ ren-sub-hit : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → (W : Γ 
                    ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                       ↦ castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W
                     ]var))
-            ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+            ≡ castᵛ (castOf {Γ'} {B} Θ)
                  (⟨ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ}) , f'
                   ⟩[ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
                      ↦ castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
                              (V-rename r W)
                    ]var)
 
-ren-sub-hit r [] W f f' = ≐ᵛ-refl _
+ren-sub-hit r [] W f f' = refl
 
 ren-sub-hit {Γ} {Γ'} {B} r (Θ ∷ C) W f f' =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cong (V-rename (cong-∷-ren (cong-ren {Γ'' = Θ} r)))
+  trans
+    ((cong (V-rename (cong-∷-ren (cong-ren {Γ'' = Θ} r)))
                 (cast-wk-any (castOf {Γ} {B} (Θ ∷ C)) (castOf {Γ} {B} Θ) _)))
-    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ wk-ren (cong-∷-ren (cong-ren {Γ'' = Θ} r)) _))
-      (≐ᵛ-trans (V-rename-≐ (wk-ren-nat (cong-ren {Γ'' = Θ} r)) _)
-        (≐ᵛ-trans (V-rename-∘ (cong-ren {Γ'' = Θ} r) wk-ren _)
-          (≐ᵛ-trans (V-rename-cong wk-ren (ren-sub-hit r Θ W f f'))
-                    (≡→≐ᵛ (sym (cast-wk-any (castOf {Γ'} {B} (Θ ∷ C))
+    (trans (sym (V-rename-∘ wk-ren (cong-∷-ren (cong-ren {Γ'' = Θ} r)) _))
+      (trans (V-rename-≡ (wk-ren-nat (cong-ren {Γ'' = Θ} r)) _)
+        (trans (V-rename-∘ (cong-ren {Γ'' = Θ} r) wk-ren _)
+          (trans (V-rename-cong wk-ren (ren-sub-hit r Θ W f f'))
+                    ((sym (cast-wk-any (castOf {Γ'} {B} (Θ ∷ C))
                                             (castOf {Γ'} {B} Θ) _)))))))
 
 ren-sub-hit {Γ} {Γ'} {B} r (Θ ⟨ ρ ⟩) W f f' with eternal? B
 
 ... | yes et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cong (V-rename (cong-⟨⟩-ren (cong-ren {Γ'' = Θ} r)))
+  trans
+    ((cong (V-rename (cong-⟨⟩-ren (cong-ren {Γ'' = Θ} r)))
                 (cast-ext-any (castOf {Γ} {B} (Θ ⟨ ρ ⟩))
                               (castOf {Γ} {B} Θ) et _)))
-    (≐ᵛ-trans (eternal-val-ext-ren et (cong-ren {Γ'' = Θ} r) _)
-      (≐ᵛ-trans (eternal-val-ext-cong et (ren-sub-hit r Θ W _ _))
-                (≡→≐ᵛ (sym (cast-ext-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
+    (trans (eternal-val-ext-ren et (cong-ren {Γ'' = Θ} r) _)
+      (trans (eternal-val-ext-cong et (ren-sub-hit r Θ W _ _))
+                ((sym (cast-ext-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
                                          (castOf {Γ'} {B} Θ) et _)))))
 
 ... | no ¬et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cong (V-rename (cong-⟨⟩-ren ρ₀))
+  trans
+    ((cong (V-rename (cong-⟨⟩-ren ρ₀))
                 (cast-ren-⟨⟩-any (castOf {Γ} {B} (Θ ⟨ ρ ⟩))
                                  (castOf {Γ} {B} Θ) rn _)))
-    (≐ᵛ-trans (≐ᵛ-sym (V-rename-∘ rn (cong-⟨⟩-ren ρ₀) _))
-      (≐ᵛ-trans (V-rename-≐ (⟨⟩-ren-nat ρ₀ rn (λ y → hit-⟨⟩-img bd y)
+    (trans (sym (V-rename-∘ rn (cong-⟨⟩-ren ρ₀) _))
+      (trans (V-rename-≡ (⟨⟩-ren-nat ρ₀ rn (λ y → hit-⟨⟩-img bd y)
                                               (λ y → hit-⟨⟩-img bd y)) _)
-        (≐ᵛ-trans (V-rename-∘ ρ₀ rn _)
-          (≐ᵛ-trans (V-rename-cong rn (ren-sub-hit r Θ W _ _))
-            (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _)) _)
-                      (≡→≐ᵛ (sym (cast-ren-⟨⟩-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
+        (trans (V-rename-∘ ρ₀ rn _)
+          (trans (V-rename-cong rn (ren-sub-hit r Θ W _ _))
+            (trans (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ _)) _)
+                      ((sym (cast-ren-⟨⟩-any (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
                                                   (castOf {Γ'} {B} Θ) rn' _))))))))
   where
     ρ₀ = cong-ren {Γ'' = Θ} r
@@ -165,7 +165,7 @@ ren-sub-hit′ : ∀ {Γ Γ' B σ σ'} → (r : Ren [] Γ' Γ) → (Θ : Ctx) �
                    (⟨ y , f ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                                ↦ castᵛ (sym (split→∈-split-l
                                                (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-             ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+             ≡ castᵛ (castOf {Γ'} {B} Θ)
                   (⟨ y' , f' ⟩[ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
                                 ↦ castᵛ (sym (split→∈-split-l
                                                 (split-≡-++ᶜ {Γ' ∷ B} {Θ})))
@@ -185,7 +185,7 @@ ren-sub-var-r : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A
                      ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                         ↦ castᵛ (sym (split→∈-split-l
                                         (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-              ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+              ≡ castᵛ (castOf {Γ'} {B} Θ)
                    ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                               (var f' (∈-++ᶜʳ {Γ = Γ ∷ B} z)))
                       [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
@@ -194,14 +194,14 @@ ren-sub-var-r : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A
                                 (V-rename r W) ]v)
 
 ren-sub-var-r {Γ} {Γ'} {B} r Θ z W f f' =
-  ≐ᵛ-trans (V-rename-cong (cong-ren {Γ'' = Θ} r) (sub-var-r Θ z _ f f))
-    (≐ᵛ-trans (var-ren-img-≐ (cong-ren {Γ'' = Θ} r) (∈-++ᶜʳ {Γ = Γ} z) f
+  trans (V-rename-cong (cong-ren {Γ'' = Θ} r) (sub-var-r Θ z _ f f))
+    (trans (var-ren-img-≡ (cong-ren {Γ'' = Θ} r) (∈-++ᶜʳ {Γ = Γ} z) f
                              (cong-ren-img-r r z) f)
-      (≐ᵛ-sym
-        (≐ᵛ-trans
-          (castᵛ-≐ (castOf {Γ'} {B} Θ)
-            (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (≐ᵛ-refl _)
-              (var-ren-img-≐ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+      (sym
+        (trans
+          (castᵛ-≡ (castOf {Γ'} {B} Θ)
+            (sub-≡ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (refl)
+              (var-ren-img-≡ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                              (∈-++ᶜʳ {Γ = Γ ∷ B} z) f'
                              (cong-ren-img-r (cong-∷-ren r) z) f')))
           (sub-var-r Θ z _ f' f))))
@@ -220,7 +220,7 @@ ren-sub-var-l : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A
                      ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                         ↦ castᵛ (sym (split→∈-split-l
                                         (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-              ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+              ≡ castᵛ (castOf {Γ'} {B} Θ)
                    ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                               (var f' (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))))
                       [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
@@ -229,14 +229,14 @@ ren-sub-var-l : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A
                                 (V-rename r W) ]v)
 
 ren-sub-var-l {Γ} {Γ'} {B} r Θ z W f f' =
-  ≐ᵛ-trans (V-rename-cong (cong-ren {Γ'' = Θ} r) (sub-var-l Θ z _ f f))
-    (≐ᵛ-trans (var-ren-img-≐ (cong-ren {Γ'' = Θ} r) (∈-++ᶜˡ {Γ = Γ} Θ z) f
+  trans (V-rename-cong (cong-ren {Γ'' = Θ} r) (sub-var-l Θ z _ f f))
+    (trans (var-ren-img-≡ (cong-ren {Γ'' = Θ} r) (∈-++ᶜˡ {Γ = Γ} Θ z) f
                              (cong-ren-img-l r Θ z) fr)
-      (≐ᵛ-sym
-        (≐ᵛ-trans
-          (castᵛ-≐ (castOf {Γ'} {B} Θ)
-            (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (≐ᵛ-refl _)
-              (var-ren-img-≐ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+      (sym
+        (trans
+          (castᵛ-≡ (castOf {Γ'} {B} Θ)
+            (sub-≡ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (refl)
+              (var-ren-img-≡ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                              (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z)) f'
                              (cong-ren-img-l (cong-∷-ren r) Θ (Tl-∷ z)) fr)))
           (sub-var-l Θ (proj₂ (var-img r z)) _ fr fr))))
@@ -260,7 +260,7 @@ ren-sub-var-hd : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → (W : 
                       ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                          ↦ castᵛ (sym (split→∈-split-l
                                          (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-               ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+               ≡ castᵛ (castOf {Γ'} {B} Θ)
                     ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                                (var f' (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ}))))
                        [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
@@ -269,14 +269,14 @@ ren-sub-var-hd : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → (W : 
                                  (V-rename r W) ]v)
 
 ren-sub-var-hd {Γ} {Γ'} {B} r Θ W f f' =
-  ≐ᵛ-trans
+  trans
     (ren-sub-hit′ r Θ W (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ}))
                         (∈-++ᶜˡ {Γ = Γ' ∷ B} Θ (Hd {Γ = Γ'})) f f'
                   (sym (split→∈-∈-++ᶜˡ Γ B Θ)) (sym (split→∈-∈-++ᶜˡ Γ' B Θ)))
-    (≐ᵛ-sym
-      (castᵛ-≐ (castOf {Γ'} {B} Θ)
-        (sub-≐ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (≐ᵛ-refl _)
-          (var-ren-img-≐ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
+    (sym
+      (castᵛ-≡ (castOf {Γ'} {B} Θ)
+        (sub-≡ᵛ (split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})) (refl)
+          (var-ren-img-≡ (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                          (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Hd {Γ = Γ})) f'
                          (cong-ren-img-l (cong-∷-ren r) Θ (Hd {Γ = Γ})) f'))))
 
@@ -293,7 +293,7 @@ ren-sub-var : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {A �
                   (⟨ y , f ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                               ↦ castᵛ (sym (split→∈-split-l
                                               (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-            ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+            ≡ castᵛ (castOf {Γ'} {B} Θ)
                  ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) (var f' y))
                     [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
                       ↦ castᵛ (sym (split→∈-split-l
@@ -314,7 +314,7 @@ ren-sub-var {Γ} {Γ'} {B} r Θ {A} {ρ} y W f f'
                     ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                        ↦ castᵛ (sym (split→∈-split-l
                                        (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-             ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+             ≡ castᵛ (castOf {Γ'} {B} Θ)
                   ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                              (var f'u (proj₂ t)))
                      [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
@@ -333,7 +333,7 @@ ren-sub-var {Γ} {Γ'} {B} r Θ {A} {ρ} y W f f'
               ⟩[ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                  ↦ castᵛ (sym (split→∈-split-l
                                  (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]var))
-       ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+       ≡ castᵛ (castOf {Γ'} {B} Θ)
             ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r))
                        (var f'u (∈-++ᶜˡ {Γ = Γ ∷ B} Θ z₀)))
                [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
@@ -494,7 +494,7 @@ ren-sub-unbox
               (M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ ∷ A})
                    ↦ castᵛ (sym (split→∈-split-l
                                    (split-≡-++ᶜ {Γ ∷ B} {Θ ∷ A}))) W ]c))
-          ≐ᶜ castᶜ (castOf {Γ'} {B} (Θ ∷ A))
+          ≡ castᶜ (castOf {Γ'} {B} (Θ ∷ A))
                ((C-rename (cong-ren {Γ'' = Θ ∷ A} (cong-∷-ren r)) M)
                   [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ ∷ A})
                     ↦ castᵛ (sym (split→∈-split-l
@@ -505,7 +505,7 @@ ren-sub-unbox
         (unbox c rel M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                          ↦ castᵛ (sym (split→∈-split-l
                                          (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
-  ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
+  ≡ castᶜ (castOf {Γ'} {B} Θ)
        ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) (unbox c rel M))
           [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
             ↦ castᵛ (sym (split→∈-split-l
@@ -513,17 +513,17 @@ ren-sub-unbox
                     (V-rename r W) ]c)
 
 ren-sub-unbox {Γ} {Γ'} {B} {A} r Θ c rel M W ih =
-  ≐ᶜ-trans
-    (C-rename-cong (cong-ren {Γ'' = Θ} r) (≡→≐ᶜ (cast-unbox (castOf {Γ} {B} Θ))))
-    (≐ᶜ-trans
-      (unbox-≐ (unbox-rvar-ren r Θ c W)
-        (≐ᶜ-trans
-          (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
+  trans
+    (C-rename-cong (cong-ren {Γ'' = Θ} r) ((cast-unbox (castOf {Γ} {B} Θ))))
+    (trans
+      (unbox-≡ (unbox-rvar-ren r Θ c W)
+        (trans
+          ((cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
                       (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
                                  (castOf {Γ} {B} (Θ ∷ A)) _)))
-          (≐ᶜ-trans ih
-                    (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
+          (trans ih
+                    ((castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
                                      (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
-      (≐ᶜ-sym (≡→≐ᶜ (cast-unbox (castOf {Γ'} {B} Θ)))))
+      (sym ((cast-unbox (castOf {Γ'} {B} Θ)))))
 
 ------------------------------------------------------------------------

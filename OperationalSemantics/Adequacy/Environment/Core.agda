@@ -90,13 +90,13 @@ eternal-wk lf (Γ ⟨ ρ ⟩) = cong-⟨⟩-ren (eternal-wk lf Γ)
 -- Weakening a *closed* term into a state's context. Locks are crossed by
 -- `⟨⟩-ext-ctx`, which asks for everything to their left to be eternal — and here
 -- that is `[]`, vacuously. Which such renaming is chosen never matters: `_≐ʳ_`
--- compares renamings on variables, and `[]` has none (`∅-ren-≐`).
+-- compares renamings on variables, and `[]` has none (`∅-ren-≐ʳ`).
 
 ∅-ren : (St : 𝕊 []) → Ren [] (toCtx St) []
 ∅-ren St = wk-ctx-ren ec-[] (toCtx St)
 
-∅-ren-≐ : ∀ {Γ} → (r r' : Ren [] Γ []) → r ≐ʳ r'
-∅-ren-≐ r r' = mk≐ʳ (λ ())
+∅-ren-≐ʳ : ∀ {Γ} → (r r' : Ren [] Γ []) → r ≐ʳ r'
+∅-ren-≐ʳ r r' = mk≐ʳ (λ ())
 
 -- A closing environment: how `Γ` is closed down to the state context.
 

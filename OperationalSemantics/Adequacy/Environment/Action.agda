@@ -2021,7 +2021,7 @@ env-clause-rel {Γ = Γ} γ St₁ = tt , ᴱ-eternal Γ
 -- `restrict-ren` or — at the substituting zones — its `⟨_⟩[_↦_]cl`, and the
 -- weakening into a state's context comes only afterwards (`Fired`).
 -- `env-clause γ St₁` instead substitutes every closed value `env-ᴱ γ` computes
--- and weakens once, at the base. The two agree, and only up to `≐ᶜ`: lining them
+-- and weakens once, at the base. The two agree, and only up to `≡`: lining them
 -- up moves each zone's renaming past the substitutions to its right, which
 -- `Ren` being unquotiented does not do on the nose.
 --

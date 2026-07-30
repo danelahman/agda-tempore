@@ -41,28 +41,28 @@ open import Syntax.Substitutions.Renaming.Variables Spec
 -- by `eq-ren`s at the (only propositional) context equalities.
 ------------------------------------------------------------------------
 
-restrict-∷-et-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (et : Eternal B)
+restrict-∷-et-≐ʳ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (et : Eternal B)
                 → (e₁ : (Γ ∷ B) ᴱ ≡ Γ ᴱ ∷ B)
                 → (e₂ : (Γ' ∷ B) ᴱ ≡ Γ' ᴱ ∷ B)
                 → restrict-ren {Ξ = []} (cong-∷-ren {A = B} r)
                 ≐ʳ (eq-ren e₁
                     ∘ʳ cong-∷-ren {A = B} (restrict-ren r) ∘ʳ eq-ren (sym e₂))
 
-restrict-∷-et-≐ r et e₁ e₂
+restrict-∷-et-≐ʳ r et e₁ e₂
   rewrite eternal?-yes et
         | uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
-  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-identityʳ-≐ʳ _))
 
-restrict-∷-ne-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (¬et : ¬ Eternal B)
+restrict-∷-ne-≐ʳ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (¬et : ¬ Eternal B)
                 → (e₁ : (Γ ∷ B) ᴱ ≡ Γ ᴱ)
                 → (e₂ : (Γ' ∷ B) ᴱ ≡ Γ' ᴱ)
                 → restrict-ren {Ξ = []} (cong-∷-ren {A = B} r)
                 ≐ʳ (eq-ren e₁ ∘ʳ restrict-ren r ∘ʳ eq-ren (sym e₂))
 
-restrict-∷-ne-≐ r ¬et e₁ e₂
+restrict-∷-ne-≐ʳ r ¬et e₁ e₂
   rewrite eternal?-no ¬et
         | uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
-  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ _) (∘ʳ-identityʳ-≐ _))
+  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-identityʳ-≐ʳ _))
 
 ------------------------------------------------------------------------
 -- SPLITTING UNIQUENESS ACROSS TRANSPORTED HALVES
@@ -121,12 +121,12 @@ sub-cast-C″ refl e M x y ey U U' eU = sub-cast-C′ e M x y ey U U' eU
 eternal-val-restrict-ren : ∀ {Γ Γ' A} → (et : Eternal A)
                          → (r : Ren [] Γ' Γ) → (W : Γ ⊢V⦂ A)
                          → eternal-val-restrict et (V-rename r W)
-                         ≐ᵛ V-rename (restrict-ren r) (eternal-val-restrict et W)
+                         ≡ V-rename (restrict-ren r) (eternal-val-restrict et W)
 
 eternal-val-restrict-ren {Γ} {Γ'} et r (var f x) =
-  ≐ᵛ-trans
-    (eternal-val-restrict-cong et (var-ren-≐ r x f fet))
-    (≐ᵛ-sym (var-ren-img-≐ (restrict-ren r) (∈-ᴱ et x) fet
+  trans
+    (eternal-val-restrict-cong et (var-ren-≡ r x f fet))
+    (sym (var-ren-img-≡ (restrict-ren r) (∈-ᴱ et x) fet
                            (sym tgt-eq) fet))
   where
     fet : ∀ {ρ₀} → ¬ Eternal _ → ρ₀ ≾ᵣ uᵣ
@@ -141,10 +141,10 @@ eternal-val-restrict-ren {Γ} {Γ'} et r (var f x) =
           (sym (trans (restrict-img⁻ r (∈-ᴱ et x))
                       (cong (var-img′ r) (∈-ᴱ⁻-∈-ᴱ Γ et x)))))
 
-eternal-val-restrict-ren et r (const c) = ≐ᵛ-refl _
-eternal-val-restrict-ren et r ⋆         = ≐ᵛ-refl _
+eternal-val-restrict-ren et r (const c) = refl
+eternal-val-restrict-ren et r ⋆         = refl
 eternal-val-restrict-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊ =
-  pair-≐ (eternal-val-restrict-ren et₁ r V₁)
+  cong₂ ⦉_,_⦊ (eternal-val-restrict-ren et₁ r V₁)
          (eternal-val-restrict-ren et₂ r V₂)
 
 ------------------------------------------------------------------------
@@ -159,7 +159,7 @@ RenSubC {Γ} {Γ'} {B} r Θ M W =
         (M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
              ↦ castᵛ (sym (split→∈-split-l
                              (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
-  ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
+  ≡ castᶜ (castOf {Γ'} {B} Θ)
        ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) M)
           [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
             ↦ castᵛ (sym (split→∈-split-l
@@ -205,10 +205,10 @@ conj-fuse : ∀ {Γ₁ Γ₀ Γ₀' Γ₂ Γ₂' Γ₃}
           → R ≐ʳconj⟨ b , K , b' ⟩
           → (eq-ren a ∘ʳ R ∘ʳ eq-ren a') ≐ʳconj⟨ trans a b , K , trans b' a' ⟩
 conj-fuse {R = R} refl refl {K = K} b b' h =
-  ≐ʳ-trans (∘ʳ-identityˡ-≐ _)
-    (≐ʳ-trans (∘ʳ-identityʳ-≐ _)
+  ≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _)
+    (≐ʳ-trans (∘ʳ-identityʳ-≐ʳ _)
       (≐ʳ-trans h
-        (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ b' (trans b' refl))))))
+        (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ b' (trans b' refl))))))
 
 -- Extending a conjugation by a suffix.
 
@@ -220,11 +220,11 @@ conj-cong-ren : ∀ {Γ₁ Γ₁' Γ₂ Γ₂'} → (Δ : Ctx)
                   ≐ʳconj⟨ cong (_++ᶜ Δ) e , cong-ren {Γ'' = Δ} K
                         , cong (_++ᶜ Δ) e' ⟩
 conj-cong-ren Δ e e' h =
-  ≐ʳ-trans (cong-ren-≐ Δ h)
-    (≐ʳ-trans (cong-ren-∘-≐ Δ _ _)
-      (∘ʳ-≐ (cong-ren-eq-ren-≐ Δ e)
-            (≐ʳ-trans (cong-ren-∘-≐ Δ _ _)
-                      (∘ʳ-≐ ≐ʳ-refl (cong-ren-eq-ren-≐ Δ e')))))
+  ≐ʳ-trans (cong-ren-≐ʳ Δ h)
+    (≐ʳ-trans (cong-ren-∘-≐ʳ Δ _ _)
+      (∘ʳ-≐ʳ (cong-ren-eq-ren-≐ʳ Δ e)
+            (≐ʳ-trans (cong-ren-∘-≐ʳ Δ _ _)
+                      (∘ʳ-≐ʳ ≐ʳ-refl (cong-ren-eq-ren-≐ʳ Δ e')))))
 
 -- The action of a conjugated renaming is the core's action between the
 -- two transports.
@@ -235,14 +235,14 @@ C-rename-conj : ∀ {Γ₁ Γ₁' Γ₂ Γ₂' C}
               → R ≐ʳconj⟨ e , K , e' ⟩
               → (X : Γ₁ ⊢C⦂ C)
               → C-rename R X
-              ≐ᶜ subst (_⊢C⦂ C) e' (C-rename K (subst (_⊢C⦂ C) e X))
+              ≡ subst (_⊢C⦂ C) e' (C-rename K (subst (_⊢C⦂ C) e X))
 C-rename-conj e {K = K} e' h X =
-  ≐ᶜ-trans (C-rename-≐ h X)
-    (≐ᶜ-trans (C-rename-∘ (eq-ren e) (K ∘ʳ eq-ren e') X)
-      (≐ᶜ-trans
-        (C-rename-cong (K ∘ʳ eq-ren e') (C-rename-eq-≐ e ≐ʳ-refl X))
-        (≐ᶜ-trans (C-rename-∘ K (eq-ren e') _)
-                  (C-rename-eq-≐ e' ≐ʳ-refl _))))
+  trans (C-rename-≡ h X)
+    (trans (C-rename-∘ (eq-ren e) (K ∘ʳ eq-ren e') X)
+      (trans
+        (C-rename-cong (K ∘ʳ eq-ren e') (C-rename-eq-≡ e ≐ʳ-refl X))
+        (trans (C-rename-∘ K (eq-ren e') _)
+                  (C-rename-eq-≡ e' ≐ʳ-refl _))))
 
 ------------------------------------------------------------------------
 -- THE TWO CLAUSE RENAMINGS, DECOMPOSED
@@ -255,7 +255,7 @@ C-rename-conj e {K = K} e' h X =
 -- The left side: `restrict-ren (cong-ren {Θ} r)`, extended by the two
 -- clause binders.
 
-clause-ren-l-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Θ Δ : Ctx)
+clause-ren-l-≐ʳ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Θ Δ : Ctx)
                → cong-ren {Γ'' = Δ}
                    (restrict-ren {Ξ = []} (cong-ren {Γ'' = Θ} r))
                ≐ʳconj⟨ trans (cong (_++ᶜ Δ) (ᴱ-++ᶜ Γ Θ))
@@ -263,22 +263,22 @@ clause-ren-l-≐ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Θ Δ : Ctx)
                      , cong-ren {Γ'' = Θ ᴱ ++ᶜ Δ} (restrict-ren {Ξ = []} r)
                      , sym (trans (cong (_++ᶜ Δ) (ᴱ-++ᶜ Γ' Θ))
                                   (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ)) ⟩
-clause-ren-l-≐ {Γ} {Γ'} r Θ Δ =
+clause-ren-l-≐ʳ {Γ} {Γ'} r Θ Δ =
   ≐ʳ-trans
     (conj-cong-ren Δ (ᴱ-++ᶜ Γ Θ) (sym (ᴱ-++ᶜ Γ' Θ))
-       (restrict-cong-≐ r Θ (ᴱ-++ᶜ Γ Θ) (ᴱ-++ᶜ Γ' Θ)))
+       (restrict-cong-≐ʳ r Θ (ᴱ-++ᶜ Γ Θ) (ᴱ-++ᶜ Γ' Θ)))
     (≐ʳ-trans
       (conj-fuse (cong (_++ᶜ Δ) (ᴱ-++ᶜ Γ Θ))
                  (cong (_++ᶜ Δ) (sym (ᴱ-++ᶜ Γ' Θ)))
                  (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) Δ)
                  (sym (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ))
-                 (cong-ren-assoc-≐ (Θ ᴱ) Δ (restrict-ren {Ξ = []} r)))
-      (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ _))))
+                 (cong-ren-assoc-≐ʳ (Θ ᴱ) Δ (restrict-ren {Ξ = []} r)))
+      (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ _ _))))
 
 -- The right side: `restrict-ren (cong-ren {Θ} (cong-∷-ren r))` at an
 -- eternal substituted type — the restriction keeps the binder.
 
-clause-ren-r-et-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (et : Eternal B)
+clause-ren-r-et-≐ʳ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (et : Eternal B)
                   → (Θ Δ : Ctx)
                   → cong-ren {Γ'' = Δ}
                       (restrict-ren {Ξ = []}
@@ -287,29 +287,29 @@ clause-ren-r-et-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (et : Eternal B
                         , cong-ren {Γ'' = Θ ᴱ ++ᶜ Δ}
                             (cong-∷-ren {A = B} (restrict-ren {Ξ = []} r))
                         , sym (ren-sub-eTot {Γ'} {B} Θ et Δ) ⟩
-clause-ren-r-et-≐ {Γ} {Γ'} {B} r et Θ Δ =
+clause-ren-r-et-≐ʳ {Γ} {Γ'} {B} r et Θ Δ =
   ≐ʳ-trans
     (conj-cong-ren Δ _ _
       (≐ʳ-trans
-        (restrict-cong-≐ (cong-∷-ren {A = B} r) Θ
+        (restrict-cong-≐ʳ (cong-∷-ren {A = B} r) Θ
            (ᴱ-++ᶜ (Γ ∷ B) Θ) (ᴱ-++ᶜ (Γ' ∷ B) Θ))
         (conj-fuse (ᴱ-++ᶜ (Γ ∷ B) Θ) (sym (ᴱ-++ᶜ (Γ' ∷ B) Θ))
            (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-keep {Γ} {B} et))
            (cong (_++ᶜ Θ ᴱ) (sym (ᴱ-∷-keep {Γ'} {B} et)))
            (conj-cong-ren (Θ ᴱ) (ᴱ-∷-keep {Γ} {B} et)
               (sym (ᴱ-∷-keep {Γ'} {B} et))
-              (restrict-∷-et-≐ r et (ᴱ-∷-keep {Γ} {B} et)
+              (restrict-∷-et-≐ʳ r et (ᴱ-∷-keep {Γ} {B} et)
                                     (ᴱ-∷-keep {Γ'} {B} et))))))
     (≐ʳ-trans
       (conj-fuse _ _
          (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) Δ)
          (sym (++ᶜ-assoc (Γ' ᴱ ∷ B) (Θ ᴱ) Δ))
-         (cong-ren-assoc-≐ (Θ ᴱ) Δ (cong-∷-ren {A = B} (restrict-ren {Ξ = []} r))))
-      (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ _))))
+         (cong-ren-assoc-≐ʳ (Θ ᴱ) Δ (cong-∷-ren {A = B} (restrict-ren {Ξ = []} r))))
+      (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ _ _))))
 
 -- The same at a non-eternal substituted type — the restriction drops it.
 
-clause-ren-r-ne-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (¬et : ¬ Eternal B)
+clause-ren-r-ne-≐ʳ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (¬et : ¬ Eternal B)
                   → (Θ Δ : Ctx)
                   → cong-ren {Γ'' = Δ}
                       (restrict-ren {Ξ = []}
@@ -324,25 +324,25 @@ clause-ren-r-ne-≐ : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (¬et : ¬ Eter
                                          (cong (_++ᶜ Θ ᴱ)
                                                (ᴱ-∷-drop {Γ'} {B} ¬et))))
                                      (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ)) ⟩
-clause-ren-r-ne-≐ {Γ} {Γ'} {B} r ¬et Θ Δ =
+clause-ren-r-ne-≐ʳ {Γ} {Γ'} {B} r ¬et Θ Δ =
   ≐ʳ-trans
     (conj-cong-ren Δ _ _
       (≐ʳ-trans
-        (restrict-cong-≐ (cong-∷-ren {A = B} r) Θ
+        (restrict-cong-≐ʳ (cong-∷-ren {A = B} r) Θ
            (ᴱ-++ᶜ (Γ ∷ B) Θ) (ᴱ-++ᶜ (Γ' ∷ B) Θ))
         (conj-fuse (ᴱ-++ᶜ (Γ ∷ B) Θ) (sym (ᴱ-++ᶜ (Γ' ∷ B) Θ))
            (cong (_++ᶜ Θ ᴱ) (ᴱ-∷-drop {Γ} {B} ¬et))
            (cong (_++ᶜ Θ ᴱ) (sym (ᴱ-∷-drop {Γ'} {B} ¬et)))
            (conj-cong-ren (Θ ᴱ) (ᴱ-∷-drop {Γ} {B} ¬et)
               (sym (ᴱ-∷-drop {Γ'} {B} ¬et))
-              (restrict-∷-ne-≐ r ¬et (ᴱ-∷-drop {Γ} {B} ¬et)
+              (restrict-∷-ne-≐ʳ r ¬et (ᴱ-∷-drop {Γ} {B} ¬et)
                                      (ᴱ-∷-drop {Γ'} {B} ¬et))))))
     (≐ʳ-trans
       (conj-fuse _ _
          (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) Δ)
          (sym (++ᶜ-assoc (Γ' ᴱ) (Θ ᴱ) Δ))
-         (cong-ren-assoc-≐ (Θ ᴱ) Δ (restrict-ren {Ξ = []} r)))
-      (∘ʳ-≐ ≐ʳ-refl (∘ʳ-≐ ≐ʳ-refl (eq-ren-≐ _ _))))
+         (cong-ren-assoc-≐ʳ (Θ ᴱ) Δ (restrict-ren {Ξ = []} r)))
+      (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ _ _))))
 
 ------------------------------------------------------------------------
 -- `handle`, NON-ETERNAL
@@ -350,7 +350,7 @@ clause-ren-r-ne-≐ {Γ} {Γ'} {B} r ¬et Θ Δ =
 -- Both sides' clause components are the same core renaming
 -- `cong-ren {Θ ᴱ ++ᶜ D₀} (restrict-ren r)` of the clause, inside
 -- transport chains with the same endpoints, so after both are decomposed
--- (`clause-ren-l-≐`/`clause-ren-r-ne-≐`) `uip` closes the comparison.
+-- (`clause-ren-l-≐ʳ`/`clause-ren-r-ne-≐ʳ`) `uip` closes the comparison.
 ------------------------------------------------------------------------
 
 ren-sub-handle-ne : ∀ {Γ Γ' B A B' ε ε'} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
@@ -369,39 +369,39 @@ ren-sub-handle-ne : ∀ {Γ Γ' B A B' ε ε'} → (r : Ren [] Γ' Γ) → (Θ :
 
 ren-sub-handle-ne {Γ} {Γ'} {B} {A} {B'} {ε} r Θ ¬et M H N W hM hN
   rewrite eternal?-no ¬et =
-  ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+  trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                        (cast-handle (castOf {Γ} {B} Θ))))
-    (≐ᶜ-trans
-      (handle-≐ hM (λ op ε'' → clause op ε'')
-        (≐ᶜ-trans
-          (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
+    (trans
+      (handle-≡ hM (λ op ε'' → clause op ε'')
+        (trans
+          ((cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
                       (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
                                        (castOf {Γ} {B} Θ))
                                  (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
-          (≐ᶜ-trans hN
-            (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
+          (trans hN
+            ((castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
                              (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
                                    (castOf {Γ'} {B} Θ)) _)))))
-      (≡→≐ᶜ (sym (cast-handle (castOf {Γ'} {B} Θ)))))
+      ((sym (cast-handle (castOf {Γ'} {B} Θ)))))
   where
     z₀  = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
     z₀' = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
 
     clause : (op : Op) → (ε'' : E) → _
     clause op ε'' =
-      ≐ᶜ-trans
-        (C-rename-conj eLL eLL' (clause-ren-l-≐ r Θ D₀) _)
-        (≐ᶜ-trans
-          (≡→≐ᶜ (cong (λ z → subst (_⊢C⦂ CT) eLL' (C-rename K z)) inner-eq))
-          (≐ᶜ-trans
-            (≡→≐ᶜ uip²)
-            (≐ᶜ-sym
-              (≐ᶜ-trans (≡→≐ᶜ r1)
-                (≐ᶜ-trans
-                  (substᶜ-≐ TRout
+      trans
+        (C-rename-conj eLL eLL' (clause-ren-l-≐ʳ r Θ D₀) _)
+        (trans
+          ((cong (λ z → subst (_⊢C⦂ CT) eLL' (C-rename K z)) inner-eq))
+          (trans
+            (uip²)
+            (sym
+              (trans (r1)
+                (trans
+                  (substᶜ-≡ TRout
                     (C-rename-conj eRR eRR'
-                       (clause-ren-r-ne-≐ r ¬et Θ D₀) (H op ε'')))
-                  (≡→≐ᶜ (subst-fuseᶜ eRR' TRout _)))))))
+                       (clause-ren-r-ne-≐ʳ r ¬et Θ D₀) (H op ε'')))
+                  ((subst-fuseᶜ eRR' TRout _)))))))
       where
         D₀ = [] ∷ type-of-gtype (param op)
                 ∷ [ mapᵉ (op-grade op) ]
@@ -527,20 +527,20 @@ ren-sub-handle-et : ∀ {Γ Γ' B A B' ε ε'} → (r : Ren [] Γ' Γ) → (Θ :
                   → RenSubC r Θ (handle M `with H `in N) W
 
 ren-sub-handle-et {Γ} {Γ'} {B} {A} {B'} {ε} r Θ et M H N W hM hN hH =
-  ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+  trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                        (cast-handle (castOf {Γ} {B} Θ))))
-    (≐ᶜ-trans
-      (handle-≐ hM (λ op ε'' → clause op ε'')
-        (≐ᶜ-trans
-          (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
+    (trans
+      (handle-≡ hM (λ op ε'' → clause op ε'')
+        (trans
+          ((cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
                       (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
                                        (castOf {Γ} {B} Θ))
                                  (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
-          (≐ᶜ-trans hN
-            (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
+          (trans hN
+            ((castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
                              (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
                                    (castOf {Γ'} {B} Θ)) _)))))
-      (≡→≐ᶜ (sym (cast-handle (castOf {Γ'} {B} Θ)))))
+      ((sym (cast-handle (castOf {Γ'} {B} Θ)))))
   where
     z₀  = split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
     z₀' = split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
@@ -550,25 +550,25 @@ ren-sub-handle-et {Γ} {Γ'} {B} {A} {B'} {ε} r Θ et M H N W hM hN hH =
 
     clause : (op : Op) → (ε'' : E) → _
     clause op ε'' =
-      ≐ᶜ-trans
-        (≡→≐ᶜ (cong (λ d → C-rename
+      trans
+        ((cong (λ d → C-rename
                              (cong-∷-ren (cong-∷-ren
                                (restrict-ren {Ξ = []}
                                  (cong-ren {Γ'' = Θ} r))))
                              (castᶜ cDL
                                (⟨ d ⟩[ z₀ ↦ castᵛ cWL W ]cl H op ε'')))
                     (eternal?-yes et)))
-        (≐ᶜ-trans
-          (C-rename-conj eLL eLL' (clause-ren-l-≐ r Θ D₀) _)
-          (≐ᶜ-trans
-            (≡→≐ᶜ (cong (λ z → subst (_⊢C⦂ CT) eLL' (C-rename KL z))
+        (trans
+          (C-rename-conj eLL eLL' (clause-ren-l-≐ʳ r Θ D₀) _)
+          (trans
+            ((cong (λ z → subst (_⊢C⦂ CT) eLL' (C-rename KL z))
                         inner-eq-L))
-            (≐ᶜ-trans
-              (substᶜ-≐ eLL' (hH op ε''))
-              (≐ᶜ-trans (≡→≐ᶜ out-eq)
-                (≐ᶜ-sym
-                  (≐ᶜ-trans
-                    (≡→≐ᶜ (cong (λ d → castᶜ cDR
+            (trans
+              (substᶜ-≡ eLL' (hH op ε''))
+              (trans (out-eq)
+                (sym
+                  (trans
+                    ((cong (λ d → castᶜ cDR
                                          (⟨ d ⟩[ z₀'
                                                ↦ castᵛ cWR (V-rename r W)
                                                ]cl
@@ -734,15 +734,15 @@ ren-sub-handle-et {Γ} {Γ'} {B} {A} {B'} {ε} r Θ et M H N W hM hN hH =
         subCR = sub-cast-C″ eρR (sym eTΓ') (C-rename KR H⁺) y₂ xR eyR
                             U₂ VR″ refl
 
-        eVR : VR ≐ᵛ VR″
+        eVR : VR ≡ VR″
         eVR =
-          ≐ᵛ-trans
-            (≡→≐ᵛ (cong (subst (_⊢V⦂ B) (sym (split→∈-split-l sR)))
+          trans
+            ((cong (subst (_⊢V⦂ B) (sym (split→∈-split-l sR)))
                         (restrict-castᵛ cWR et (V-rename r W))))
-            (≐ᵛ-trans
-              (substᵛ-≐ (sym (split→∈-split-l sR))
-                 (castᵛ-≐ (cong _ᴱ cWR) (eternal-val-restrict-ren et r W)))
-              (≡→≐ᵛ
+            (trans
+              (substᵛ-≡ (sym (split→∈-split-l sR))
+                 (castᵛ-≡ (cong _ᴱ cWR) (eternal-val-restrict-ren et r W)))
+              (
                 (trans (cong (subst (_⊢V⦂ B) (sym (split→∈-split-l sR)))
                              (castᵛ≡subst (cong _ᴱ cWR)
                                (V-rename (restrict-ren {Ξ = []} r)
@@ -784,16 +784,16 @@ ren-sub-handle-et {Γ} {Γ'} {B} {A} {B'} {ε} r Θ et M H N W hM hN hH =
                                       (cong-ren {Γ'' = Θ} (cong-∷-ren r)))))
                                   Ĥ)
                           [ xR ↦ VR ]c))
-                 ≐ᶜ subst (_⊢C⦂ CT) TRfin X₂
+                 ≡ subst (_⊢C⦂ CT) TRfin X₂
         gr-chain =
-          ≐ᶜ-trans
-            (castᶜ-≐ cDR (substᶜ-≐ bigER
-              (sub-≐ᶜ xR eVR
+          trans
+            (castᶜ-≡ cDR (substᶜ-≡ bigER
+              (sub-≡ᶜ xR eVR
                  (C-rename-conj eT (sym eTΓ')
-                    (clause-ren-r-et-≐ r et Θ D₀) Ĥ))))
-            (≐ᶜ-trans
-              (≡→≐ᶜ (cong (λ z → castᶜ cDR (subst (_⊢C⦂ CT) bigER z)) subCR))
-              (≡→≐ᶜ (trans (cong (castᶜ cDR)
+                    (clause-ren-r-et-≐ʳ r et Θ D₀) Ĥ))))
+            (trans
+              ((cong (λ z → castᶜ cDR (subst (_⊢C⦂ CT) bigER z)) subCR))
+              ((trans (cong (castᶜ cDR)
                               (subst-fuseᶜ (cong₂ _++ᶜ_ slR
                                              (sr-eq eρR (sym eTΓ') y₂ xR eyR))
                                            bigER X₂))

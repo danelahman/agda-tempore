@@ -97,7 +97,7 @@ castʳ²-irr e₁ e₁' e₂ e₂' r
 ⟨⟩-≤-ren-cast : ∀ {Γ Γ' ρ ρ'} → (e : Γ' ≡ Γ) → (p p' : ρ' ≾ᵣ ρ)
               → ⟨⟩-≤-ren {Δ = Γ} p
               ≐ʳ castʳ² (cong (_⟨ ρ ⟩) e) (cong (_⟨ ρ' ⟩) e) (⟨⟩-≤-ren p')
-⟨⟩-≤-ren-cast refl p p' = ⟨⟩-≤-ren-≐ p p'
+⟨⟩-≤-ren-cast refl p p' = ⟨⟩-≤-ren-≐ʳ p p'
 
 ⟨⟩-μ-ren-cast : ∀ {Γ Γ' ρ ρ'} → (e : Γ' ≡ Γ)
               → ⟨⟩-μ-ren {Δ = Γ} {ρ = ρ} {ρ' = ρ'}
@@ -113,7 +113,7 @@ cong-⟨⟩-wk-cast refl = ≐ʳ-refl
 
 -- Extensions of the same shape induce `_≐ʳ_`-equal renamings.
 
-suc-comp-ren-≐ : ∀ {St St₁ St' St₁' : 𝕊 []} {ρ'' ρ''' : R}
+suc-comp-ren-≐ʳ : ∀ {St St₁ St' St₁' : 𝕊 []} {ρ'' ρ''' : R}
                → {q : St ≤ₛ St₁} → {q' : St' ≤ₛ St₁'}
                → (h : q ≤≐ q')
                → (es : St ≐ˢ St') → (es₁ : St₁ ≐ˢ St₁')
@@ -124,13 +124,13 @@ suc-comp-ren-≐ : ∀ {St St₁ St' St₁' : 𝕊 []} {ρ'' ρ''' : R}
                          (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
                          (suc-comp-ren q' c')
 
-suc-comp-ren-≐ id-≤≐ es es₁ c c' =
+suc-comp-ren-≐ʳ id-≤≐ es es₁ c c' =
   ≐ʳ-trans (⟨⟩-≤-ren-cast (sym (toCtx-≐ˢ es)) _ _)
            (castʳ²-irr _ _ _ _ (⟨⟩-≤-ren _))
 
-suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} (⟨⟩-≤≐ {q' = q'} ρ h) es
+suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''} (⟨⟩-≤≐ {q' = q'} ρ h) es
                (⟨⟩-≐ˢ .ρ es₁) c c' =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ ·ᵣ ρ'''} h es es₁ _ _)
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ ·ᵣ ρ'''} h es es₁ _ _)
                  (⟨⟩-μ-ren-cast {ρ = ρ} {ρ' = ρ'''} (sym (toCtx-≐ˢ es₁))))
     (≐ʳ-trans
       (≐ʳ-sym (castʳ²-∘ʳ (cong (λ Γ₀ → (Γ₀ ⟨ ρ ⟩) ⟨ ρ''' ⟩) (sym (toCtx-≐ˢ es₁)))
@@ -143,10 +143,10 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} (⟨⟩-≤≐ {q' = q'} ρ h) es
                   (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ (⟨⟩-≐ˢ ρ es₁))))
                   (suc-comp-ren (⟨⟩-suc ρ q') c')))
 
-suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
+suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
                (∷-≤≐ {A = A} {ρ = ρ} {q' = q'} {V' = V'} h) es
                (∷-≐ˢ es₁ eV) c c' =
-  ≐ʳ-trans (∘ʳ-≐ (suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''} h es es₁ _ _)
+  ≐ʳ-trans (∘ʳ-≐ʳ (suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''} h es es₁ _ _)
                  (cong-⟨⟩-wk-cast {A = [ ρ ] A} {ρ = ρ'''}
                    (sym (toCtx-≐ˢ es₁))))
     (≐ʳ-trans
@@ -165,7 +165,7 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 -- RELATED STATES HOLD RELATED VALUES
 --
 -- A cell of `St` is a cell of `St'`, split off at related states and holding
--- `_≐ᵛ_`-related values — which at the cell itself is exactly what `∷-≐ˢ`
+-- equal values — which at the cell itself is exactly what `∷-≐ˢ`
 -- stores. Induction on the relation and the variable together; `toCtx-≐ˢ` is
 -- built by `cong`, so relocating the variable is `subst-Hd`/`subst-Tl-*`.
 ------------------------------------------------------------------------
@@ -189,7 +189,7 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 ≐ˢ-lookup : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
           → (z : [ ρ ] A ∈[ σ ] toCtx St)
           → resource-lookup St z
-          ≐ᵛ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩)
+          ≡ castᵛ (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩)
                          (sym (toCtx-≐ˢ (≐ˢ-fst es z))))
                    (resource-lookup St' (≐ˢ-var es z))
 
@@ -234,7 +234,7 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
            → (z : [ ρ ] A ∈[ σ ] toCtx St) → (z' : [ ρ ] A ∈[ σ ] toCtx St')
            → (e : ≐ˢ-var es z ≡ z')
            → resource-lookup St z
-           ≐ᵛ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩)
+           ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩)
                           (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' e))))
                     (resource-lookup St' z')
 ≐ˢ-lookup₂ es z z' refl = ≐ˢ-lookup es z
@@ -244,11 +244,11 @@ suc-comp-ren-≐ {ρ'' = ρ''} {ρ''' = ρ'''}
 --
 -- `UNBOX` reads the store; related states hold related values. Unfolding both
 -- lookups (`unbox-lookup-≡`) leaves `lookup-body′` at corresponding data,
--- which `lookup-body′-≐` compares.
+-- which `lookup-body′-≡` compares.
 ------------------------------------------------------------------------
 
 -- Stated on cells, which is what a `Val` stated on readability needs;
--- `unbox-lookup-≐` below is the same at an `unbox` node's variable.
+-- `unbox-lookup-≐ˢ` below is the same at an `unbox` node's variable.
 
 lookup-body-≐ˢ : ∀ {A ρ} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
@@ -257,12 +257,12 @@ lookup-body-≐ˢ : ∀ {A ρ} {St St' : 𝕊 []}
                → (rel : proj₁ t ≾ᵣ ρ) → (rel' : proj₁ t' ≾ᵣ ρ)
                -------------------------------------------------------
                → lookup-body St t rel
-               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel')
+               ≡ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel')
 
 lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
-  subst (λ u → u ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel'))
+  subst (λ u → u ≡ castᵛ (sym (toCtx-≐ˢ es)) (lookup-body St' t' rel'))
         (sym (lookup-body-≡ St ht rel rel'))
-        (lookup-body′-≐
+        (lookup-body′-≡
            (sym (toCtx-≐ˢ es))
            (sym (toCtx-≐ˢ (≐ˢ-fst₂ es z z' zz))) (≐ˢ-snd-ctx₂ es z z' zz)
            _ _ _ _ rel' rel' _ _
@@ -275,7 +275,7 @@ lookup-body-≐ˢ {A} {ρ} {St = St} {St' = St'} es t t' ht rel rel' =
     zz : ≐ˢ-var es z ≡ z'
     zz = subst-subst-sym (toCtx-≐ˢ es)
 
-unbox-lookup-≐ : ∀ {A ρ ρ' ρ''} {St St' : 𝕊 []}
+unbox-lookup-≐ˢ : ∀ {A ρ ρ' ρ''} {St St' : 𝕊 []}
                → (es : St ≐ˢ St')
                → {x : [ ρ ] A ∈[ ρ' ] toCtx St} → {x' : [ ρ ] A ∈[ ρ'' ] toCtx St'}
                → {rel : ρ' ≾ᵣ ρ} → {rel' : ρ'' ≾ᵣ ρ}
@@ -283,8 +283,8 @@ unbox-lookup-≐ : ∀ {A ρ ρ' ρ''} {St St' : 𝕊 []}
                      (ρ' , x) (Var-cast (sym (toCtx-≐ˢ es)) (ρ'' , x'))
                -------------------------------------------------------
                → unbox-lookup St x rel
-               ≐ᵛ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' x' rel')
+               ≡ castᵛ (sym (toCtx-≐ˢ es)) (unbox-lookup St' x' rel')
 
-unbox-lookup-≐ es {x} {x'} {rel} {rel'} h =
+unbox-lookup-≐ˢ es {x} {x'} {rel} {rel'} h =
   lookup-body-≐ˢ es (_ , x) (_ , x') h rel rel'
 

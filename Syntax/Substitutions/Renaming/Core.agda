@@ -52,7 +52,7 @@ mutual
                   (U [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                        ↦ castᵛ (sym (split→∈-split-l
                                        (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]v))
-            ≐ᵛ castᵛ (castOf {Γ'} {B} Θ)
+            ≡ castᵛ (castOf {Γ'} {B} Θ)
                  ((V-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) U)
                     [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
                       ↦ castᵛ (sym (split→∈-split-l
@@ -62,33 +62,33 @@ mutual
   ren-sub-V {Γ} {Γ'} {B} r Θ (var f y) W = ren-sub-var r Θ y W f f
 
   ren-sub-V {Γ} {Γ'} {B} r Θ (const c) W =
-    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (V-rename (cong-ren {Γ'' = Θ} r))
                          (cast-const (castOf {Γ} {B} Θ))))
-             (≡→≐ᵛ (sym (cast-const (castOf {Γ'} {B} Θ))))
+             ((sym (cast-const (castOf {Γ'} {B} Θ))))
 
   ren-sub-V {Γ} {Γ'} {B} r Θ ⋆ W =
-    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (V-rename (cong-ren {Γ'' = Θ} r))
                          (cast-⋆ (castOf {Γ} {B} Θ))))
-             (≡→≐ᵛ (sym (cast-⋆ (castOf {Γ'} {B} Θ))))
+             ((sym (cast-⋆ (castOf {Γ'} {B} Θ))))
 
   ren-sub-V {Γ} {Γ'} {B} r Θ ⦉ V₁ , V₂ ⦊ W =
-    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (V-rename (cong-ren {Γ'' = Θ} r))
                          (cast-pair (castOf {Γ} {B} Θ))))
-      (≐ᵛ-trans (pair-≐ (ren-sub-V r Θ V₁ W) (ren-sub-V r Θ V₂ W))
-                (≡→≐ᵛ (sym (cast-pair (castOf {Γ'} {B} Θ)))))
+      (trans (cong₂ ⦉_,_⦊ (ren-sub-V r Θ V₁ W) (ren-sub-V r Θ V₂ W))
+                ((sym (cast-pair (castOf {Γ'} {B} Θ)))))
 
   ren-sub-V {Γ} {Γ'} {B} r Θ {A = A ⇒ C} (lam M) W =
-    ≐ᵛ-trans (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (V-rename (cong-ren {Γ'' = Θ} r))
                          (cast-lam (castOf {Γ} {B} Θ) _)))
-      (≐ᵛ-trans
-        (lam-≐ (≐ᶜ-trans
-                 (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
+      (trans
+        (cong lam (trans
+                 ((cong (C-rename (cong-ren {Γ'' = Θ ∷ A} r))
                              (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B} Θ))
                                         (castOf {Γ} {B} (Θ ∷ A)) _)))
-                 (≐ᶜ-trans (ren-sub-C r (Θ ∷ A) M W)
-                           (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
+                 (trans (ren-sub-C r (Θ ∷ A) M W)
+                           ((castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A))
                                             (cong (_∷ A) (castOf {Γ'} {B} Θ)) _)))))
-        (≡→≐ᵛ (sym (cast-lam (castOf {Γ'} {B} Θ) _))))
+        ((sym (cast-lam (castOf {Γ'} {B} Θ) _))))
 
   ren-sub-C : ∀ {Γ Γ' B} → (r : Ren [] Γ' Γ) → (Θ : Ctx) → ∀ {C}
             → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
@@ -97,7 +97,7 @@ mutual
                   (M [ split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})
                        ↦ castᵛ (sym (split→∈-split-l
                                        (split-≡-++ᶜ {Γ ∷ B} {Θ}))) W ]c))
-            ≐ᶜ castᶜ (castOf {Γ'} {B} Θ)
+            ≡ castᶜ (castOf {Γ'} {B} Θ)
                  ((C-rename (cong-ren {Γ'' = Θ} (cong-∷-ren r)) M)
                     [ split→∈ (split-≡-++ᶜ {Γ' ∷ B} {Θ})
                       ↦ castᵛ (sym (split→∈-split-l
@@ -105,117 +105,117 @@ mutual
                               (V-rename r W) ]c)
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (return V) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-ret (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans (return-≐ (ren-sub-V r Θ V W))
-                (≡→≐ᶜ (sym (cast-ret (castOf {Γ'} {B} Θ)))))
+      (trans (cong return (ren-sub-V r Θ V W))
+                ((sym (cast-ret (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (_⨟_ {A = A} {ε = ε} M N) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-seq (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans
-        (seq-≐ (ren-sub-C r Θ M W)
-               (≐ᶜ-trans
-                 (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
+      (trans
+        (cong₂ _⨟_ (ren-sub-C r Θ M W)
+               (trans
+                 ((cong (C-rename (cong-ren {Γ'' = Θ ⟨ mapᵉ ε ⟩ ∷ A} r))
                              (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
                                               (castOf {Γ} {B} Θ))
                                         (castOf {Γ} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A)) _)))
-                 (≐ᶜ-trans (ren-sub-C r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
-                           (≡→≐ᶜ (castᶜ-irr
+                 (trans (ren-sub-C r (Θ ⟨ mapᵉ ε ⟩ ∷ A) N W)
+                           ((castᶜ-irr
                                     (castOf {Γ'} {B} (Θ ⟨ mapᵉ ε ⟩ ∷ A))
                                     (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε ⟩ ∷ A)
                                           (castOf {Γ'} {B} Θ)) _)))))
-        (≡→≐ᶜ (sym (cast-seq (castOf {Γ'} {B} Θ)))))
+        ((sym (cast-seq (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (V₁ · V₂) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-app (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans (app-≐ (ren-sub-V r Θ V₁ W) (ren-sub-V r Θ V₂ W))
-                (≡→≐ᶜ (sym (cast-app (castOf {Γ'} {B} Θ)))))
+      (trans (cong₂ _·_ (ren-sub-V r Θ V₁ W) (ren-sub-V r Θ V₂ W))
+                ((sym (cast-app (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (match_`in_ {A = A} {B = B'} V N) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-match (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans
-        (match-≐ (ren-sub-V r Θ V W)
-                 (≐ᶜ-trans
-                   (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ A ∷ B'} r))
+      (trans
+        (cong₂ match_`in_ (ren-sub-V r Θ V W)
+                 (trans
+                   ((cong (C-rename (cong-ren {Γ'' = Θ ∷ A ∷ B'} r))
                                (castᶜ-irr (cong (λ Γ₀ → Γ₀ ∷ A ∷ B')
                                                 (castOf {Γ} {B} Θ))
                                           (castOf {Γ} {B} (Θ ∷ A ∷ B')) _)))
-                   (≐ᶜ-trans (ren-sub-C r (Θ ∷ A ∷ B') N W)
-                             (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A ∷ B'))
+                   (trans (ren-sub-C r (Θ ∷ A ∷ B') N W)
+                             ((castᶜ-irr (castOf {Γ'} {B} (Θ ∷ A ∷ B'))
                                               (cong (λ Γ₀ → Γ₀ ∷ A ∷ B')
                                                     (castOf {Γ'} {B} Θ)) _)))))
-        (≡→≐ᶜ (sym (cast-match (castOf {Γ'} {B} Θ)))))
+        ((sym (cast-match (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (absurd V) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-absurd (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans (absurd-≐ (ren-sub-V r Θ V W))
-                (≡→≐ᶜ (sym (cast-absurd (castOf {Γ'} {B} Θ)))))
+      (trans (cong absurd (ren-sub-V r Θ V W))
+                ((sym (cast-absurd (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (perform op V M) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-perform (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans
-        (perform-≐ (ren-sub-V r Θ V W)
-                   (≐ᶜ-trans
-                     (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ'} r))
+      (trans
+        (cong₂ (perform _) (ren-sub-V r Θ V W)
+                   (trans
+                     ((cong (C-rename (cong-ren {Γ'' = Θ'} r))
                                  (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
                                                             ∷ type-of-gtype (arity op))
                                                   (castOf {Γ} {B} Θ))
                                             (castOf {Γ} {B} Θ') _)))
-                     (≐ᶜ-trans (ren-sub-C r Θ' M W)
-                               (≡→≐ᶜ (castᶜ-irr
+                     (trans (ren-sub-C r Θ' M W)
+                               ((castᶜ-irr
                                         (castOf {Γ'} {B} Θ')
                                         (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op) ⟩
                                                         ∷ type-of-gtype (arity op))
                                               (castOf {Γ'} {B} Θ)) _)))))
-        (≡→≐ᶜ (sym (cast-perform (castOf {Γ'} {B} Θ)))))
+        ((sym (cast-perform (castOf {Γ'} {B} Θ)))))
     where
       Θ' = Θ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (delay τ M) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-delay (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans
-        (delay-≐ (≐ᶜ-trans
-                   (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ⟨ of-natʳ τ ⟩} r))
+      (trans
+        (cong (delay _) (trans
+                   ((cong (C-rename (cong-ren {Γ'' = Θ ⟨ of-natʳ τ ⟩} r))
                                (castᶜ-irr (cong (_⟨ of-natʳ τ ⟩) (castOf {Γ} {B} Θ))
                                           (castOf {Γ} {B} (Θ ⟨ of-natʳ τ ⟩)) _)))
-                   (≐ᶜ-trans (ren-sub-C r (Θ ⟨ of-natʳ τ ⟩) M W)
-                             (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ of-natʳ τ ⟩))
+                   (trans (ren-sub-C r (Θ ⟨ of-natʳ τ ⟩) M W)
+                             ((castᶜ-irr (castOf {Γ'} {B} (Θ ⟨ of-natʳ τ ⟩))
                                               (cong (_⟨ of-natʳ τ ⟩)
                                                     (castOf {Γ'} {B} Θ)) _)))))
-        (≡→≐ᶜ (sym (cast-delay (castOf {Γ'} {B} Θ)))))
+        ((sym (cast-delay (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (box {A = A} {ρ = ρ} V M) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-box (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans
-        (box-≐ (≐ᵛ-trans
-                 (≡→≐ᵛ (cong (V-rename (cong-ren {Γ'' = Θ ⟨ ρ ⟩} r))
+      (trans
+        (cong₂ box (trans
+                 ((cong (V-rename (cong-ren {Γ'' = Θ ⟨ ρ ⟩} r))
                              (castᵛ-irr (cong (_⟨ ρ ⟩) (castOf {Γ} {B} Θ))
                                         (castOf {Γ} {B} (Θ ⟨ ρ ⟩)) _)))
-                 (≐ᵛ-trans (ren-sub-V r (Θ ⟨ ρ ⟩) V W)
-                           (≡→≐ᵛ (castᵛ-irr (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
+                 (trans (ren-sub-V r (Θ ⟨ ρ ⟩) V W)
+                           ((castᵛ-irr (castOf {Γ'} {B} (Θ ⟨ ρ ⟩))
                                             (cong (_⟨ ρ ⟩) (castOf {Γ'} {B} Θ)) _))))
-               (≐ᶜ-trans
-                 (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ ∷ [ ρ ] A} r))
+               (trans
+                 ((cong (C-rename (cong-ren {Γ'' = Θ ∷ [ ρ ] A} r))
                              (castᶜ-irr (cong (_∷ [ ρ ] A) (castOf {Γ} {B} Θ))
                                         (castOf {Γ} {B} (Θ ∷ [ ρ ] A)) _)))
-                 (≐ᶜ-trans (ren-sub-C r (Θ ∷ [ ρ ] A) M W)
-                           (≡→≐ᶜ (castᶜ-irr (castOf {Γ'} {B} (Θ ∷ [ ρ ] A))
+                 (trans (ren-sub-C r (Θ ∷ [ ρ ] A) M W)
+                           ((castᶜ-irr (castOf {Γ'} {B} (Θ ∷ [ ρ ] A))
                                             (cong (_∷ [ ρ ] A)
                                                   (castOf {Γ'} {B} Θ)) _)))))
-        (≡→≐ᶜ (sym (cast-box (castOf {Γ'} {B} Θ)))))
+        ((sym (cast-box (castOf {Γ'} {B} Θ)))))
 
   ren-sub-C {Γ} {Γ'} {B} r Θ (coerce p M) W =
-    ≐ᶜ-trans (≡→≐ᶜ (cong (C-rename (cong-ren {Γ'' = Θ} r))
+    trans ((cong (C-rename (cong-ren {Γ'' = Θ} r))
                          (cast-coerce (castOf {Γ} {B} Θ))))
-      (≐ᶜ-trans (coerce-≐ (ren-sub-C r Θ M W))
-                (≡→≐ᶜ (sym (cast-coerce (castOf {Γ'} {B} Θ)))))
+      (trans (coerce-≡ (ren-sub-C r Θ M W))
+                ((sym (cast-coerce (castOf {Γ'} {B} Θ)))))
 
   -- the clause hypothesis is the recursion at the canonical restricted
   -- contexts, threaded through `ren-sub-C-cast` so it runs on the bare clause

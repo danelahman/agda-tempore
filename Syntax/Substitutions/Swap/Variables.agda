@@ -40,11 +40,11 @@ open import Syntax.Substitutions.Swap.Base Spec
 
 SubSwapV : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
          → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set
-SubSwapV Θ U W₂ W₁ = outerᵛ Θ U W₂ W₁ ≐ᵛ innerᵛ Θ U W₂ W₁
+SubSwapV Θ U W₂ W₁ = outerᵛ Θ U W₂ W₁ ≡ innerᵛ Θ U W₂ W₁
 
 SubSwapC : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
          → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set
-SubSwapC Θ M W₂ W₁ = outerᶜ Θ M W₂ W₁ ≐ᶜ innerᶜ Θ M W₂ W₁
+SubSwapC Θ M W₂ W₁ = outerᶜ Θ M W₂ W₁ ≡ innerᶜ Θ M W₂ W₁
 
 ------------------------------------------------------------------------
 -- THE SWAP
@@ -65,13 +65,13 @@ subst-flip : ∀ {a p} {X : Set a} {P : X → Set p} {u v : X}
            → subst P e m ≡ n → subst P (sym e) n ≡ m
 subst-flip refl m n q = sym q
 
-sub-atᵛ-≐ : ∀ {Γ' B A} → (Θ : Ctx) → {U U' : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A}
-          → (W : Γ' ⊢V⦂ B) → U ≐ᵛ U' → sub-atᵛ Θ U W ≐ᵛ sub-atᵛ Θ U' W
-sub-atᵛ-≐ Θ W e = castᵛ-≐ _ (sub-≐ᵛ _ (≐ᵛ-refl _) e)
+sub-atᵛ-≡ : ∀ {Γ' B A} → (Θ : Ctx) → {U U' : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A}
+          → (W : Γ' ⊢V⦂ B) → U ≡ U' → sub-atᵛ Θ U W ≡ sub-atᵛ Θ U' W
+sub-atᵛ-≡ Θ W e = castᵛ-≡ _ (sub-≡ᵛ _ (refl) e)
 
-sub-atᶜ-≐ : ∀ {Γ' B C} → (Θ : Ctx) → {M M' : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C}
-          → (W : Γ' ⊢V⦂ B) → M ≐ᶜ M' → sub-atᶜ Θ M W ≐ᶜ sub-atᶜ Θ M' W
-sub-atᶜ-≐ Θ W e = castᶜ-≐ _ (sub-≐ᶜ _ (≐ᵛ-refl _) e)
+sub-atᶜ-≡ : ∀ {Γ' B C} → (Θ : Ctx) → {M M' : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C}
+          → (W : Γ' ⊢V⦂ B) → M ≡ M' → sub-atᶜ Θ M W ≡ sub-atᶜ Θ M' W
+sub-atᶜ-≡ Θ W e = castᶜ-≡ _ (sub-≡ᶜ _ (refl) e)
 
 ------------------------------------------------------------------------
 -- THE VARIABLE CASE
@@ -115,43 +115,43 @@ hit-∷-++ᶜ : ∀ {Γ' B B₀} → (Θ : Ctx) → (W : Γ' ⊢V⦂ B)
           → castᵛ E (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , g
                      ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
                         ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)
-          ≐ᵛ hitᵛ {Γ' ∷ B₀} Θ (V-rename (wk-ren {A = B₀}) W) g'
+          ≡ hitᵛ {Γ' ∷ B₀} Θ (V-rename (wk-ren {A = B₀}) W) g'
 
-hit-∷-++ᶜ {Γ'} {B} {B₀} [] W g g' E = ≡→≐ᵛ (castᵛ-irr E refl _)
+hit-∷-++ᶜ {Γ'} {B} {B₀} [] W g g' E =  (castᵛ-irr E refl _)
 
 hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ∷ C) W g g' E =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-wk-any E (Ehit B B₀ Θ)
+  trans
+    ( (cast-wk-any E (Ehit B B₀ Θ)
              (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , g
               ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
                  ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
-    (≐ᵛ-trans
+    (trans
       (V-rename-cong wk-ren (hit-∷-++ᶜ Θ W g g' (Ehit B B₀ Θ)))
-      (≡→≐ᵛ (sym (cast-wk-any (castOf {Γ' ∷ B₀} {B} (Θ ∷ C))
+      ( (sym (cast-wk-any (castOf {Γ' ∷ B₀} {B} (Θ ∷ C))
                               (castOf {Γ' ∷ B₀} {B} Θ) _))))
 
 hit-∷-++ᶜ {Γ'} {B} {B₀} (Θ ⟨ ρ ⟩) W g g' E with eternal? B
 
 ... | yes et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ext-any E (Ehit B B₀ Θ) et
+  trans
+    ( (cast-ext-any E (Ehit B B₀ Θ) et
              (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , _
               ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
                  ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
-    (≐ᵛ-trans
+    (trans
       (eternal-val-ext-cong et (hit-∷-++ᶜ Θ W _ _ (Ehit B B₀ Θ)))
-      (≡→≐ᵛ (sym (cast-ext-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
+      ( (sym (cast-ext-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
                                (castOf {Γ' ∷ B₀} {B} Θ) et _))))
 
 ... | no ¬et =
-  ≐ᵛ-trans
-    (≡→≐ᵛ (cast-ren-⟨⟩-any E (Ehit B B₀ Θ) rn
+  trans
+    ( (cast-ren-⟨⟩-any E (Ehit B B₀ Θ) rn
              (⟨ bvar B (([] ∷ B₀) ++ᶜ Θ) , _
               ⟩[ bvar B (([] ∷ B₀) ++ᶜ Θ)
                  ↦ bval (([] ∷ B₀) ++ᶜ Θ) W ]var)))
-    (≐ᵛ-trans (V-rename-cong rn (hit-∷-++ᶜ Θ W _ _ (Ehit B B₀ Θ)))
-      (≐ᵛ-trans (V-rename-≐ (∘ʳ-≐ ≐ʳ-refl (⟨⟩-≤-ren-≐ _ _)) _)
-                (≡→≐ᵛ (sym (cast-ren-⟨⟩-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
+    (trans (V-rename-cong rn (hit-∷-++ᶜ Θ W _ _ (Ehit B B₀ Θ)))
+      (trans (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ _)) _)
+                ( (sym (cast-ren-⟨⟩-any (castOf {Γ' ∷ B₀} {B} (Θ ⟨ ρ ⟩))
                                             (castOf {Γ' ∷ B₀} {B} Θ) rn' _)))))
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
@@ -167,8 +167,8 @@ castᵛ-var-img : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ
               → (t : Var Γ' A) → Var-cast e (ρ , x) ≡ t
               → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
               → (f' : ¬ Eternal A → proj₁ t ≾ᵣ uᵣ)
-              → castᵛ e (var f x) ≐ᵛ var f' (proj₂ t)
-castᵛ-var-img refl x .(_ , x) refl f f' = var-≐
+              → castᵛ e (var f x) ≡ var f' (proj₂ t)
+castᵛ-var-img refl x .(_ , x) refl f f' = var-≡
 
 -- The three positions the substitution distinguishes, each taking where
 -- the variable sits as a `Var` equation.
@@ -177,14 +177,14 @@ sub-at-varᵣ : ∀ {Γ' B A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Θ)
             → (y : A ∈[ ρ ] ((Γ' ∷ B) ++ᶜ Θ)) → y ≡ ∈-++ᶜʳ {Γ = Γ' ∷ B} x
             → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ) → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
             → (W : Γ' ⊢V⦂ B)
-            → sub-atᵛ Θ (var f y) W ≐ᵛ var f' (∈-++ᶜʳ {Γ = Γ'} x)
+            → sub-atᵛ Θ (var f y) W ≡ var f' (∈-++ᶜʳ {Γ = Γ'} x)
 sub-at-varᵣ Θ x _ refl f f' W = sub-var-r Θ x (bval Θ W) f f'
 
 sub-at-varₗ : ∀ {Γ' B A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Γ')
             → (y : A ∈[ grade-++ᶜˡ ρ Θ ] ((Γ' ∷ B) ++ᶜ Θ))
             → y ≡ ∈-++ᶜˡ {Γ = Γ' ∷ B} Θ (Tl-∷ x)
             → (f f' : ¬ Eternal A → grade-++ᶜˡ ρ Θ ≾ᵣ uᵣ) → (W : Γ' ⊢V⦂ B)
-            → sub-atᵛ Θ (var f y) W ≐ᵛ var f' (∈-++ᶜˡ {Γ = Γ'} Θ x)
+            → sub-atᵛ Θ (var f y) W ≡ var f' (∈-++ᶜˡ {Γ = Γ'} Θ x)
 sub-at-varₗ Θ x _ refl f f' W = sub-var-l Θ x (bval Θ W) f f'
 
 sub-at-varₕ : ∀ {Γ' B ρ} → (Θ : Ctx) → (y : B ∈[ ρ ] ((Γ' ∷ B) ++ᶜ Θ))
@@ -192,9 +192,9 @@ sub-at-varₕ : ∀ {Γ' B ρ} → (Θ : Ctx) → (y : B ∈[ ρ ] ((Γ' ∷ B) 
                   (ρ , y) (ctx-grade Θ , bvar B Θ)
             → (f : ¬ Eternal B → ρ ≾ᵣ uᵣ)
             → (f' : ¬ Eternal B → ctx-grade Θ ≾ᵣ uᵣ) → (W : Γ' ⊢V⦂ B)
-            → sub-atᵛ Θ (var f y) W ≐ᵛ hitᵛ Θ W f'
+            → sub-atᵛ Θ (var f y) W ≡ hitᵛ Θ W f'
 sub-at-varₕ Θ .(bvar _ Θ) refl f f' W
-  rewrite bound-irr f f' = ≐ᵛ-refl _
+  rewrite bound-irr f f' = refl
 
 ------------------------------------------------------------------------
 -- The four positions.
@@ -205,16 +205,16 @@ swap-var-r : ∀ {Γ B₁ B₂ A ρ} → (Θ : Ctx) → (x : A ∈[ ρ ] Θ)
            → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
            → SubSwapV Θ (var f (∈-++ᶜʳ {Γ = Γ ∷ B₁ ∷ B₂} x)) W₂ W₁
 swap-var-r {Γ} {B₁} {B₂} Θ x f W₂ W₁ =
-  ≐ᵛ-trans
-    (≐ᵛ-trans (sub-atᵛ-≐ Θ W₁ (sub-at-varᵣ Θ x _ refl f f _))
+  trans
+    (trans (sub-atᵛ-≡ Θ W₁ (sub-at-varᵣ Θ x _ refl f f _))
               (sub-at-varᵣ Θ x _ refl f f W₁))
-    (≐ᵛ-sym
-      (≐ᵛ-trans
-        (sub-atᵛ-≐ Θ W₂
-          (≐ᵛ-trans
-            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
-              (≐ᵛ-trans
-                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+    (sym
+      (trans
+        (sub-atᵛ-≡ Θ W₂
+          (trans
+            (castᵛ-≡ (assocᴮ⁻ Γ B₂ Θ)
+              (trans
+                (sub-atᵛ-≡ (([] ∷ B₂) ++ᶜ Θ) W₁
                    (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
                       (cong (λ z → _ , z) (∈-++ᶜʳ-assoc (Γ ∷ B₁) ([] ∷ B₂) x))
                       f f))
@@ -233,16 +233,16 @@ swap-var-l : ∀ {Γ B₁ B₂ A ρ} → (Θ : Ctx) → (v : A ∈[ ρ ] Γ)
            → SubSwapV Θ (var f (∈-++ᶜˡ {Γ = Γ ∷ B₁ ∷ B₂} Θ (Tl-∷ (Tl-∷ v))))
                         W₂ W₁
 swap-var-l {Γ} {B₁} {B₂} Θ v f W₂ W₁ =
-  ≐ᵛ-trans
-    (≐ᵛ-trans (sub-atᵛ-≐ Θ W₁ (sub-at-varₗ Θ (Tl-∷ v) _ refl f f _))
+  trans
+    (trans (sub-atᵛ-≡ Θ W₁ (sub-at-varₗ Θ (Tl-∷ v) _ refl f f _))
               (sub-at-varₗ Θ v _ refl f f W₁))
-    (≐ᵛ-sym
-      (≐ᵛ-trans
-        (sub-atᵛ-≐ Θ W₂
-          (≐ᵛ-trans
-            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
-              (≐ᵛ-trans
-                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+    (sym
+      (trans
+        (sub-atᵛ-≡ Θ W₂
+          (trans
+            (castᵛ-≡ (assocᴮ⁻ Γ B₂ Θ)
+              (trans
+                (sub-atᵛ-≡ (([] ∷ B₂) ++ᶜ Θ) W₁
                    (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
                       (Var-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
                          (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Tl-∷ v)))
@@ -263,21 +263,21 @@ swap-var-B₂ : ∀ {Γ B₁ B₂ ρ} → (Θ : Ctx)
             → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
             → SubSwapV Θ (var f y) W₂ W₁
 swap-var-B₂ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ Hd) refl W₂ W₁ =
-  ≐ᵛ-trans
-    (≐ᵛ-trans
-      (sub-atᵛ-≐ Θ W₁
+  trans
+    (trans
+      (sub-atᵛ-≡ Θ W₁
         (sub-at-varₕ Θ _ (sym (split→∈-∈-++ᶜˡ (Γ ∷ B₁) B₂ Θ)) f fΘ _))
-      (≐ᵛ-trans
-        (sub-atᵛ-≐ Θ W₁
-          (≐ᵛ-sym (ren-sub-hit (wk-ren {A = B₁}) Θ W₂ fΘ fΘ)))
+      (trans
+        (sub-atᵛ-≡ Θ W₁
+          (sym (ren-sub-hit (wk-ren {A = B₁}) Θ W₂ fΘ fΘ)))
         (sub-wk-V Θ (hitᵛ Θ W₂ fΘ) (bval Θ W₁))))
-    (≐ᵛ-sym
-      (≐ᵛ-trans
-        (sub-atᵛ-≐ Θ W₂
-          (≐ᵛ-trans
-            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
-              (≐ᵛ-trans
-                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+    (sym
+      (trans
+        (sub-atᵛ-≡ Θ W₂
+          (trans
+            (castᵛ-≡ (assocᴮ⁻ Γ B₂ Θ)
+              (trans
+                (sub-atᵛ-≡ (([] ∷ B₂) ++ᶜ Θ) W₁
                    (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
                       (∈-++ᶜˡ-++ᶜʳ (Γ ∷ B₁) ([] ∷ B₂) Θ (Hd {Γ = []}))
                       f f))
@@ -301,28 +301,28 @@ swap-var-B₁ : ∀ {Γ B₁ B₂ ρ} → (Θ : Ctx)
             → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
             → SubSwapV Θ (var f y) W₂ W₁
 swap-var-B₁ {Γ} {B₁} {B₂} Θ f .(∈-++ᶜˡ Θ (Tl-∷ Hd)) refl W₂ W₁ =
-  ≐ᵛ-trans
-    (≐ᵛ-trans (sub-atᵛ-≐ Θ W₁ (sub-at-varₗ Θ (Hd {Γ = Γ}) _ refl f f _))
+  trans
+    (trans (sub-atᵛ-≡ Θ W₁ (sub-at-varₗ Θ (Hd {Γ = Γ}) _ refl f f _))
               (sub-at-varₕ Θ _ (sym (split→∈-∈-++ᶜˡ Γ B₁ Θ)) f fΘ W₁))
-    (≐ᵛ-sym
-      (≐ᵛ-trans
-        (sub-atᵛ-≐ Θ W₂
-          (≐ᵛ-trans
-            (castᵛ-≐ (assocᴮ⁻ Γ B₂ Θ)
-              (≐ᵛ-trans
-                (sub-atᵛ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
+    (sym
+      (trans
+        (sub-atᵛ-≡ Θ W₂
+          (trans
+            (castᵛ-≡ (assocᴮ⁻ Γ B₂ Θ)
+              (trans
+                (sub-atᵛ-≡ (([] ∷ B₂) ++ᶜ Θ) W₁
                    (castᵛ-var-img (assocᴮ Γ B₁ B₂ Θ) _ _
                       (Var-cast-flip⁻ (++ᶜ-assoc (Γ ∷ B₁) ([] ∷ B₂) Θ) _ _
                          (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ (Hd {Γ = Γ})))
                       f fΔ))
                 (sub-at-varₕ (([] ∷ B₂) ++ᶜ Θ) _
                    (sym (split→∈-∈-++ᶜˡ Γ B₁ (([] ∷ B₂) ++ᶜ Θ))) fΔ g W₁)))
-            (≐ᵛ-trans
-              (≡→≐ᵛ (castᵛ-fuse (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
+            (trans
+              ( (castᵛ-fuse (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))
                                 (assocᴮ⁻ Γ B₂ Θ) _))
               (hit-∷-++ᶜ Θ W₁ g fΘ (Ehit B₁ B₂ Θ)))))
-        (≐ᵛ-trans
-          (sub-atᵛ-≐ Θ W₂ (≐ᵛ-sym (ren-sub-hit (wk-ren {A = B₂}) Θ W₁ fΘ fΘ)))
+        (trans
+          (sub-atᵛ-≡ Θ W₂ (sym (ren-sub-hit (wk-ren {A = B₂}) Θ W₁ fΘ fΘ)))
           (sub-wk-V Θ (hitᵛ Θ W₁ fΘ) (bval Θ W₂)))))
   where
     fΘ : ¬ Eternal B₁ → ctx-grade Θ ≾ᵣ uᵣ
@@ -579,7 +579,7 @@ unbox-rvar-swap {Γ} {B₁} {B₂} {A} {ρ} {σ} Θ c W₂ W₁
                       (∈-++ᶜˡ-assoc ([] ∷ B₂) Θ c₀))
                 (sub-rvar-l {Γ = Γ} {B = B₂} Θ c₀ (bval Θ W₂))))))
 
--- `unbox`: `unbox-≐` reduces the case to `unbox-rvar-swap` for the resource
+-- `unbox`: `unbox-≡` reduces the case to `unbox-rvar-swap` for the resource
 -- variable and the induction hypothesis for the body.
 
 sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ σ} → (Θ : Ctx)
@@ -591,43 +591,43 @@ sub-swap-unbox : ∀ {Γ B₁ B₂ A C ρ σ} → (Θ : Ctx)
                → SubSwapC Θ (unbox c rel M) W₂ W₁
 
 sub-swap-unbox {Γ} {B₁} {B₂} {A} {C} Θ c rel M W₂ W₁ ih =
-  ≐ᶜ-trans
-    (≐ᶜ-trans
-      (sub-atᶜ-≐ Θ W₁ (≡→≐ᶜ (cast-unbox (castOf {Γ ∷ B₁} {B₂} Θ))))
-      (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₁} Θ))))
-    (≐ᶜ-trans
-      (unbox-≐ (unbox-rvar-swap Θ c W₂ W₁)
-        (≐ᶜ-trans
-          (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B₁} Θ))
+  trans
+    (trans
+      (sub-atᶜ-≡ Θ W₁ ( (cast-unbox (castOf {Γ ∷ B₁} {B₂} Θ))))
+      ( (cast-unbox (castOf {Γ} {B₁} Θ))))
+    (trans
+      (unbox-≡ (unbox-rvar-swap Θ c W₂ W₁)
+        (trans
+          ( (castᶜ-irr (cong (_∷ A) (castOf {Γ} {B₁} Θ))
                            (castOf {Γ} {B₁} (Θ ∷ A)) _))
-          (≐ᶜ-trans
-            (sub-atᶜ-≐ (Θ ∷ A) W₁
-              (≡→≐ᶜ (castᶜ-irr (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
+          (trans
+            (sub-atᶜ-≡ (Θ ∷ A) W₁
+              ( (castᶜ-irr (cong (_∷ A) (castOf {Γ ∷ B₁} {B₂} Θ))
                                (castOf {Γ ∷ B₁} {B₂} (Θ ∷ A)) _)))
-            (≐ᶜ-trans ih
-              (≐ᶜ-trans
-                (sub-atᶜ-≐ (Θ ∷ A) W₂
-                  (≡→≐ᶜ (trans
+            (trans ih
+              (trans
+                (sub-atᶜ-≡ (Θ ∷ A) W₂
+                  ( (trans
                     (cong (castᶜ (assocᴮ⁻ Γ B₂ (Θ ∷ A)))
                       (castᶜ-irr (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ (Θ ∷ A)))
                                  (cong (_∷ A)
                                        (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))) _))
                     (castᶜ-irr (assocᴮ⁻ Γ B₂ (Θ ∷ A))
                                (cong (_∷ A) (assocᴮ⁻ Γ B₂ Θ)) _))))
-                (≡→≐ᶜ (castᶜ-irr (castOf {Γ} {B₂} (Θ ∷ A))
+                ( (castᶜ-irr (castOf {Γ} {B₂} (Θ ∷ A))
                                  (cong (_∷ A) (castOf {Γ} {B₂} Θ)) _)))))))
-      (≐ᶜ-sym
-        (≐ᶜ-trans
-          (sub-atᶜ-≐ Θ W₂
-            (≐ᶜ-trans
-              (castᶜ-≐ (assocᴮ⁻ Γ B₂ Θ)
-                (≐ᶜ-trans
-                  (sub-atᶜ-≐ (([] ∷ B₂) ++ᶜ Θ) W₁
-                    (≡→≐ᶜ (cast-unbox (assocᴮ Γ B₁ B₂ Θ))))
-                  (≡→≐ᶜ (cast-unbox
+      (sym
+        (trans
+          (sub-atᶜ-≡ Θ W₂
+            (trans
+              (castᶜ-≡ (assocᴮ⁻ Γ B₂ Θ)
+                (trans
+                  (sub-atᶜ-≡ (([] ∷ B₂) ++ᶜ Θ) W₁
+                    ( (cast-unbox (assocᴮ Γ B₁ B₂ Θ))))
+                  ( (cast-unbox
                            (castOf {Γ} {B₁} (([] ∷ B₂) ++ᶜ Θ))))))
-              (≡→≐ᶜ (cast-unbox (assocᴮ⁻ Γ B₂ Θ)))))
-          (≡→≐ᶜ (cast-unbox (castOf {Γ} {B₂} Θ))))))
+              ( (cast-unbox (assocᴮ⁻ Γ B₂ Θ)))))
+          ( (cast-unbox (castOf {Γ} {B₂} Θ))))))
 
 -- `handle`: the scrutinee and the sequel are the induction hypotheses at
 -- their own suffixes, so the whole content is the clauses — the same swap
@@ -680,6 +680,6 @@ ClSwap : ∀ {Γ B₁ B₂ D} → Dec (Eternal B₁) → Dec (Eternal B₂) → 
        → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ) → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁
        → (op : Op) → (ε : E) → Set
 ClSwap dec₁ dec₂ Θ H W₂ W₁ op ε =
-  outerᴴ′ dec₁ dec₂ Θ H W₂ W₁ op ε ≐ᶜ innerᴴ′ dec₁ dec₂ Θ H W₂ W₁ op ε
+  outerᴴ′ dec₁ dec₂ Θ H W₂ W₁ op ε ≡ innerᴴ′ dec₁ dec₂ Θ H W₂ W₁ op ε
 
 ------------------------------------------------------------------------
