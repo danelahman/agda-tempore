@@ -126,14 +126,14 @@ data Env : (St : 𝕊 []) → Ctx → Set where
   -- supplies.
 
   reachᵉ   : ∀ {St St' Γ}
-           → Env St Γ → St [ uᵣ ]⊑ₛ[ uᵣ ] St'
+           → Env St Γ → St ⊑ₛ[ uᵣ ] St'
            ------------------------------
            → Env St' Γ
 
   -- a lock, matched by any state far enough ahead
 
   _⟨_⟩ᵉ    : ∀ {St St' Γ ρ}
-           → Env St Γ → St [ ρ ]⊑ₛ[ uᵣ ] St'
+           → Env St Γ → St ⊑ₛ[ ρ ] St'
            ------------------------------
            → Env St' (Γ ⟨ ρ ⟩)
 
@@ -172,7 +172,7 @@ Rel-Env (γ ⟨ q ⟩ᵉ)             = Rel-Env γ
 Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × Val A St V
 Rel-Env (liftᵉ {St} {Γ} {A} {ρ} V γ) =
   Rel-Env γ
-  × (∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+  × (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
        → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
 Rel-Env (reachᵉ γ q)           = Rel-Env γ
 Rel-Env (eternalˡ Δ lf η γ)    =

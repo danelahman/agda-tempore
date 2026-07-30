@@ -471,13 +471,13 @@ env-var-tl {St = St} {A₀ = A₀} γ W eγ ¬et x f f' =
                   (V-rename-≐ (push-ren-∷ ≾ᵣ-refl) _))))
     (sub-wk-V [] (env-Vˢ γ [] (var f' x)) _)
 
-env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[ ρ ] St')
              → Eternal-Env γ → ¬ Eternal A
              → (p : ρ ≾ᵣ uᵣ) → (x : A ∈[ ρ' ] Γ)
              → (f  : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
              → (f' : ¬ Eternal A → ρ' ≾ᵣ uᵣ)
              → env-V (γ ⟨ q ⟩ᵉ) (var f (Tl-⟨⟩ x))
-             ≐ᵛ reach-val (reach-unit q p) (env-V γ (var f' x))
+             ≐ᵛ reach-val (reach-≤ q p) (env-V γ (var f' x))
 
 -- The cell zone's own instance: `Δ := [] ∷ [ ρ ] A₀`, where the push is the
 -- weakening past the new cell and there is nothing to cancel — `liftᵉ` keeps the
@@ -557,7 +557,7 @@ env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
 ... | yes et = Val-eternal et _
 ... | no ¬et =
   Val-≐ᵛ _ (≐ᵛ-sym (env-var-lock γ q (Rel-Env-eternal γ pγ) ¬et p x f f'))
-           (Val-reach (reach-unit q p) _ (env-var γ pγ x f'))
+           (Val-reach (reach-≤ q p) _ (env-var γ pγ x f'))
   where
     p  = ≾ᵣ-zero-productʳ (f ¬et)
     f' = λ _ → ≾ᵣ-zero-productˡ (f ¬et)

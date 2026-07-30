@@ -82,14 +82,14 @@ replay es (∷-suc {ρ = ρ} V q) with replay es q
 -- The same at the reach level: the grade bound transports along the shape's
 -- grade equality (`≤ₛ-grade-≤≐`).
 
-reach-replay : ∀ {St St' St₂ : 𝕊 []} {ρ ρ' : R}
-             → (es : St ≐ˢ St') → (q : St [ ρ ]⊑ₛ[ ρ' ] St₂)
-             → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' [ ρ ]⊑ₛ[ ρ' ] St₂' ]
+reach-replay : ∀ {St St' St₂ : 𝕊 []} {ρ : R}
+             → (es : St ≐ˢ St') → (q : St ⊑ₛ[ ρ ] St₂)
+             → Σ[ St₂' ∈ 𝕊 [] ] Σ[ q' ∈ St' ⊑ₛ[ ρ ] St₂' ]
                Σ[ es₂ ∈ St₂ ≐ˢ St₂' ]
                  (ext q ≤≐ ext q')
-reach-replay {ρ' = ρ'} es (reach e b) with replay es e
+reach-replay es (reach e b) with replay es e
 ... | St₂' , e' , es₂ , h =
-    St₂' , reach e' (subst (λ z → z ·ᵣ ρ' ≾ᵣ _) (≤ₛ-grade-≤≐ h) b) , es₂ , h
+    St₂' , reach e' (subst (_≾ᵣ _) (≤ₛ-grade-≤≐ h) b) , es₂ , h
 
 -- What a replayed reach does to an `unbox`: the two consulted renamings agree,
 -- up to the two states' context equalities. This is `suc-comp-ren-≐` with the
@@ -102,7 +102,7 @@ reach-replay {ρ' = ρ'} es (reach e b) with replay es e
 
 unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
              → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-             → {q : St [ ρ ]⊑ₛ[ uᵣ ] St₂} → {q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂'}
+             → {q : St ⊑ₛ[ ρ ] St₂} → {q' : St' ⊑ₛ[ ρ ] St₂'}
              → ext q ≤≐ ext q'
              -------------------------------------------------------------
              → unbox-ren q
@@ -112,12 +112,12 @@ unbox-ren-≐ˢ : ∀ {ρ} {St St' St₂ St₂' : 𝕊 []}
 unbox-ren-≐ˢ {ρ} es es₂ {q} {q'} h =
   ≐ʳ-trans
     (∘ʳ-≐ (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))
-          (suc-comp-ren-≐ h es es₂ (bound q) (bound q')))
+          (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q')))
     (≐ʳ-sym
       (castʳ²-∘ʳ (cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es)))
                  (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
                  (sym (toCtx-≐ˢ es₂))
-                 ⟨⟩-η-ren (suc-comp-ren (ext q') (bound q'))))
+                 ⟨⟩-η-ren (suc-comp-ren (ext q') (reach-bound q'))))
 
 -- The form the Kripke clauses use. A clause transported along `_≐ˢ_` moves its
 -- boxed value to the other state too, so the renaming consulted there is
@@ -132,7 +132,7 @@ castʳ²-cancel refl refl r = ∘ʳ-id-≐ʳ r (cong-⟨⟩-ren-id-≐ ≐ʳ-ref
 
 unbox-ren-bridge : ∀ {ρ} {St St' St'' St₂ : 𝕊 []}
                  → (es : St ≐ˢ St') → (es₂ : St'' ≐ˢ St₂)
-                 → {q' : St' [ ρ ]⊑ₛ[ uᵣ ] St''} → {q : St [ ρ ]⊑ₛ[ uᵣ ] St₂}
+                 → {q' : St' ⊑ₛ[ ρ ] St''} → {q : St ⊑ₛ[ ρ ] St₂}
                  → ext q' ≤≐ ext q
                  -------------------------------------------------------------
                  → (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
@@ -156,7 +156,7 @@ unbox-ren-bridge {ρ} es es₂ {q'} {q} h
 
 reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
               → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-              → {q : St [ uᵣ ]⊑ₛ[ uᵣ ] St₂} → {q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St₂'}
+              → {q : St ⊑ₛ[ uᵣ ] St₂} → {q' : St' ⊑ₛ[ uᵣ ] St₂'}
               → ext q ≤≐ ext q'
               -------------------------------------------------------------
               → reach-renᵘ q
@@ -165,7 +165,7 @@ reach-renᵘ-≐ˢ : ∀ {St St' St₂ St₂' : 𝕊 []}
 reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
   ≐ʳ-trans
     (∘ʳ-≐ (⟨⟩-η-ren-cast (sym (toCtx-≐ˢ es₂)))
-      (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (bound q) (bound q'))
+      (∘ʳ-≐ (suc-comp-ren-≐ h es es₂ (reach-bound q) (reach-bound q'))
             (⟨⟩-η⁻¹-ren-cast (sym (toCtx-≐ˢ es)))))
     (≐ʳ-trans
       (∘ʳ-≐ ≐ʳ-refl
@@ -173,12 +173,13 @@ reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
           (castʳ²-∘ʳ (sym (toCtx-≐ˢ es))
                      (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es)))
                      (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
-                     (suc-comp-ren (ext q') (bound q')) ⟨⟩-η⁻¹-ren)))
+                     (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η⁻¹-ren)))
       (≐ʳ-sym
         (castʳ²-∘ʳ (sym (toCtx-≐ˢ es))
                    (cong (_⟨ uᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
                    (sym (toCtx-≐ˢ es₂))
-                   ⟨⟩-η-ren (suc-comp-ren (ext q') (bound q') ∘ʳ ⟨⟩-η⁻¹-ren))))
+                   ⟨⟩-η-ren
+                   (suc-comp-ren (ext q') (reach-bound q') ∘ʳ ⟨⟩-η⁻¹-ren))))
 
 -- WHERE A CELL GETS TO, ACROSS THE EQUIVALENCE
 --
@@ -211,8 +212,8 @@ cong-⟨⟩-eq-img refl x = refl
   trans (sym stepL) (trans (at (unbox-ren-bridge es es₂ {q'} {q} h) (Tl-⟨⟩ x))
                            stepR)
   where
-    q' = reach e' (≾ᵣ-refl {≤ₛ-grade e' ·ᵣ uᵣ})
-    q  = reach e  (≾ᵣ-reflexive (cong (_·ᵣ uᵣ) (sym (≤ₛ-grade-≤≐ h))))
+    q' = reach e' (≾ᵣ-refl {≤ₛ-grade e'})
+    q  = reach e  (≾ᵣ-reflexive (sym (≤ₛ-grade-≤≐ h)))
 
     stepL : var-img (unbox-ren q' ∘ʳ cong-⟨⟩-ren (eq-ren (toCtx-≐ˢ es)))
                     (Tl-⟨⟩ x)

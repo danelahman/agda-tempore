@@ -201,7 +201,7 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
     V₀ = V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V'
 
     -- the two `eq-ren`s the allocation and the lookup insert cancel
-    cancel : ∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+    cancel : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
            → V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀
            ≐ᵛ V-rename (unbox-ren q) V'
     cancel q =
@@ -219,7 +219,7 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
                 (eq-ren-≐ _ refl))))
           V')
 
-    cell : ∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+    cell : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
          → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
     cell q = Val-≐ᵛ A (≐ᵛ-sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
 
@@ -253,7 +253,7 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
 
     -- the action at the resumption's environment *is* the resumption, once the
     -- two `++ᶜ`-associativity casts are seen to be the identity
-    resumeq : ∀ {St₂ : 𝕊 []} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St₂)
+    resumeq : ∀ {St₂ : 𝕊 []} → (q : St ⊑ₛ[ ρ ] St₂)
             → (W' : toCtx St₂ ⊢V⦂ Ar)
             → env-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') M ≡ resume q M₀ W'
     resumeq q W' =

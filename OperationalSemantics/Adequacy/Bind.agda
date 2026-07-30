@@ -63,7 +63,7 @@ seq-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε₁}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
          → Comp' A ε₁ St M
-         → (∀ {St₁ : 𝕊 []} → (q : St [ mapᵉ ε₁ ]⊑ₛ[ uᵣ ] St₁)
+         → (∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
               → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
               → Comp' B ε₂ St₁
                   ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c))
@@ -83,9 +83,12 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
 
-    b : ≤ₛ-grade E₀ ·ᵣ uᵣ ≾ᵣ mapᵉ ε₁
-    b = ≾ᵣ-trans (≾ᵣ-reflexive (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ)))
-                 (steps-grade-≾ rs)
+    b : ≤ₛ-grade E₀ ≾ᵣ mapᵉ ε₁
+    b = ≾ᵣ-trans
+          (≾ᵣ-reflexive
+            (trans (sym (·ᵣ-identityʳ (≤ₛ-grade E₀)))
+                   (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ))))
+          (steps-grade-≾ rs)
 
     q = reach E₀ b
 
@@ -96,7 +99,8 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
     eqr : (R₁ ∘ʳ srs) ≐ʳ unbox-ren q
     eqr = ≐ʳ-trans (∘ʳ-assoc-≐ ⟨⟩-η-ren (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ)) srs)
                    (∘ʳ-≐ ≐ʳ-refl
-                     (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs) b))
+                     (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
+                                         (reach-bound q)))
 
     shift : C-rename (cong-∷-ren (unbox-ren q)) N
           ≐ᶜ C-rename (cong-∷-ren R₁) N₁
@@ -136,7 +140,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
 
     N₂ = C-rename (cong-∷-ren κ) N₁
 
-    resump : ∀ {St₂ : 𝕊 []} → (q : St₁ [ ρₒ ]⊑ₛ[ uᵣ ] St₂)
+    resump : ∀ {St₂ : 𝕊 []} → (q : St₁ ⊑ₛ[ ρₒ ] St₂)
            → (W' : toCtx St₂ ⊢V⦂ Ar)
            → Valᵍ (arity op) St₂ W'
            → Comp' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
@@ -148,18 +152,11 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         N₃ = (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₂)
                [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c
 
-        bq : ≤ₛ-grade (ext q) ≾ᵣ ρₒ
-        bq = ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (≤ₛ-grade (ext q)))))
-                      (bound q)
-
         B₁' : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ ρₒ ·ᵣ mapᵉ ε₃
-        B₁' = ·ᵣ-monoˡ-≾ᵣ bq
+        B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q)
 
         B₁ : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
         B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
-
-        sB : St₁ [ mapᵉ (op-grade op ·ₑ ε₃) ]⊑ₛ[ mapᵉ ε₃ ] St₂
-        sB = reach (ext q) B₁
 
         -- what is left of the sequel's renaming once the arity variable is gone
         W₁ : Ren [] (toCtx St₁ ⟨ mapᵉ (op-grade op ·ₑ ε₃) ⟩)
@@ -212,7 +209,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                     N₁)
                   (C-rename-∘ (cong-∷-ren (cong-⟨⟩-ren wk-ren)) (cong-∷-ren W₁) N₁))
 
-        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ [ mapᵉ ε₃ ]⊑ₛ[ uᵣ ] St₃)
+        hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ ⊑ₛ[ mapᵉ ε₃ ] St₃)
             → (V : toCtx St₃ ⊢V⦂ A) → Val A St₃ V
             → Comp' B ε₂ St₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ Hd ↦ V ]c)
@@ -220,24 +217,38 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         hN₃ {St₃} q' V pV =
           Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl V) shift) (hN q₁ V pV)
           where
-            s₁₂ = reach-∘ sB (steps-reach rs)
-            q₁  = reach-∘ q' s₁₂
+            -- the run and the clause's own reach accumulate: the grades multiply
+            -- and each is bounded, so the composite stays under `ε₁`
+            B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q)) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
+            B₂ =
+              ≾ᵣ-trans
+                (≾ᵣ-reflexive
+                  (trans (cong (_·ᵣ mapᵉ ε₃) (≤ₛ-grade-trans E₀ (ext q)))
+                         (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q)) (mapᵉ ε₃))))
+                (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
-            composite : suc-comp-ren (ext q₁) (bound q₁)
-                      ≐ʳ (suc-comp-ren (ext q') (bound q') ∘ʳ (W₁ ∘ʳ srs))
+            q₁ : St ⊑ₛ[ mapᵉ ε₁ ] St₃
+            q₁ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q)) (ext q'))
+                   (≾ᵣ-trans
+                     (≾ᵣ-reflexive
+                       (≤ₛ-grade-trans (≤ₛ-trans E₀ (ext q)) (ext q')))
+                     (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q')) B₂))
+
+            composite : suc-comp-ren (ext q₁) (reach-bound q₁)
+                      ≐ʳ (suc-comp-ren (ext q') (reach-bound q') ∘ʳ (W₁ ∘ʳ srs))
             composite =
               ≐ʳ-trans
                 (suc-comp-ren-∘-≐ (≤ₛ-trans E₀ (ext q)) (ext q')
-                                  (bound q₁) (bound s₁₂) (bound q'))
+                                  (reach-bound q₁) B₂ (reach-bound q'))
                 (∘ʳ-≐ ≐ʳ-refl
-                  (≐ʳ-trans (suc-comp-ren-∘-≐ E₀ (ext q) (bound s₁₂) b₀ B₁)
+                  (≐ʳ-trans (suc-comp-ren-∘-≐ E₀ (ext q) B₂ b₀ B₁)
                             (∘ʳ-≐ (≐ʳ-sym eW₁) ≐ʳ-refl)))
 
             finalEq : unbox-ren q₁ ≐ʳ (unbox-ren q' ∘ʳ (W₁ ∘ʳ srs))
             finalEq =
               ≐ʳ-trans (∘ʳ-≐ (≐ʳ-refl {r = ⟨⟩-η-ren}) composite)
                 (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-η-ren
-                           (suc-comp-ren (ext q') (bound q')) (W₁ ∘ʳ srs)))
+                           (suc-comp-ren (ext q') (reach-bound q')) (W₁ ∘ʳ srs)))
 
             shift : C-rename (cong-∷-ren (unbox-ren q₁)) N
                   ≐ᶜ C-rename (cong-∷-ren (unbox-ren q')) N₃

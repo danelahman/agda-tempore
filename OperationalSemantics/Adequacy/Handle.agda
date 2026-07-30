@@ -69,7 +69,7 @@ Boxed B op ε₃ St₁ =
 Boxed-Val : (B : VType) → (op : Op) → (ε₃ : E)
           → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
 Boxed-Val B op ε₃ St₁ V₀ =
-  ∀ {St'} → (q : St₁ [ mapᵉ (op-grade op) ]⊑ₛ[ uᵣ ] St')
+  ∀ {St'} → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St')
     → Val (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
           (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V₀)
 
@@ -101,7 +101,7 @@ Clause-Prem B St H =
 Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → Set
 Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
-  ∀ {St₁ : 𝕊 []} → (q : St [ mapᵉ ε₁ ]⊑ₛ[ uᵣ ] St₁)
+  ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
     → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
     → Comp' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c)
 
@@ -234,9 +234,12 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
 
-    b : ≤ₛ-grade E₀ ·ᵣ uᵣ ≾ᵣ mapᵉ ε₁
-    b = ≾ᵣ-trans (≾ᵣ-reflexive (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ)))
-                 (steps-grade-≾ rs)
+    b : ≤ₛ-grade E₀ ≾ᵣ mapᵉ ε₁
+    b = ≾ᵣ-trans
+          (≾ᵣ-reflexive
+            (trans (sym (·ᵣ-identityʳ (≤ₛ-grade E₀)))
+                   (cong (≤ₛ-grade E₀ ·ᵣ_) (sym map-uᵉ))))
+          (steps-grade-≾ rs)
 
     q = reach E₀ b
 
@@ -246,7 +249,8 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
     eqr : (R₁ ∘ʳ srs) ≐ʳ unbox-ren q
     eqr = ≐ʳ-trans (∘ʳ-assoc-≐ ⟨⟩-η-ren (eq-ren (cong (toCtx St₁ ⟨_⟩) map-uᵉ)) srs)
                    (∘ʳ-≐ ≐ʳ-refl
-                     (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs) b))
+                     (suc-comp-ren-grade E₀ map-uᵉ (steps-grade-≾ rs)
+                                         (reach-bound q)))
 
     shift : C-rename (cong-∷-ren (unbox-ren q)) N
           ≐ᶜ C-rename (cong-∷-ren R₁) N₁
@@ -332,7 +336,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                (C-rename (cong-∷-ren (eq-ren (sym (++ᶜ-identityˡ
                                                     {toCtx St₁ ⟨ ρₒ ⟩})))) Body)
 
-        resump : ∀ {St'' : 𝕊 []} → (q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St'')
+        resump : ∀ {St'' : 𝕊 []} → (q' : St' ⊑ₛ[ uᵣ ] St'')
                → (M₂ : toCtx St'' ∷ Ar ⊢C⦂ B ‼ (ε₃ ·ₑ ε₂))
                → M₂ ≐ᶜ reach-under q' Mq
                → (W' : toCtx St'' ⊢V⦂ Ar) → Val Ar St'' W'
@@ -398,20 +402,12 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
               where
                 sq = unbox-ren q₂
 
-                bq : ≤ₛ-grade (ext q₂) ≾ᵣ ρₒ
-                bq = ≾ᵣ-trans
-                       (≾ᵣ-reflexive (sym (·ᵣ-identityʳ (≤ₛ-grade (ext q₂)))))
-                       (bound q₂)
-
                 B₁' : ≤ₛ-grade (ext q₂) ·ᵣ mapᵉ ε₃ ≾ᵣ ρₒ ·ᵣ mapᵉ ε₃
-                B₁' = ·ᵣ-monoˡ-≾ᵣ bq
+                B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q₂)
 
                 B₁ : ≤ₛ-grade (ext q₂) ·ᵣ mapᵉ ε₃
                    ≾ᵣ mapᵉ (op-grade op ·ₑ ε₃)
                 B₁ = ≾ᵣ-trans B₁' (≾ᵣ-reflexive (sym map-·ᵉ))
-
-                sB : St₁ [ mapᵉ (op-grade op ·ₑ ε₃) ]⊑ₛ[ mapᵉ ε₃ ] St''
-                sB = reach (ext q₂) B₁
 
                 -- what is left of the sequel's renaming once the arity variable
                 -- is gone
@@ -484,26 +480,43 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 hN₂ {St₃} q₃ V pV =
                   Comp-≐ᶜ (sub-≐ᶜ Hd (≐ᵛ-refl V) shift) (hN q₄ V pV)
                   where
-                    s₁₂ = reach-∘ sB (steps-reach rs)
-                    q₄  = reach-∘ q₃ s₁₂
+                    -- the run and the clause's own reach accumulate: the grades
+                    -- multiply and each is bounded, so the composite stays
+                    -- under `ε₁`
+                    B₂ : ≤ₛ-grade (≤ₛ-trans E₀ (ext q₂)) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
+                    B₂ =
+                      ≾ᵣ-trans
+                        (≾ᵣ-reflexive
+                          (trans (cong (_·ᵣ mapᵉ ε₃)
+                                       (≤ₛ-grade-trans E₀ (ext q₂)))
+                                 (·ᵣ-assoc (≤ₛ-grade E₀) (≤ₛ-grade (ext q₂))
+                                           (mapᵉ ε₃))))
+                        (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ B₁) b₀)
 
-                    composite : suc-comp-ren (ext q₄) (bound q₄)
-                              ≐ʳ (suc-comp-ren (ext q₃) (bound q₃)
+                    q₄ : St ⊑ₛ[ mapᵉ ε₁ ] St₃
+                    q₄ = reach (≤ₛ-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃))
+                           (≾ᵣ-trans
+                             (≾ᵣ-reflexive
+                               (≤ₛ-grade-trans (≤ₛ-trans E₀ (ext q₂)) (ext q₃)))
+                             (≾ᵣ-trans (·ᵣ-monoʳ-≾ᵣ (bound q₃)) B₂))
+
+                    composite : suc-comp-ren (ext q₄) (reach-bound q₄)
+                              ≐ʳ (suc-comp-ren (ext q₃) (reach-bound q₃)
                                     ∘ʳ (W₁ ∘ʳ srs))
                     composite =
                       ≐ʳ-trans
                         (suc-comp-ren-∘-≐ (≤ₛ-trans E₀ (ext q₂)) (ext q₃)
-                                          (bound q₄) (bound s₁₂) (bound q₃))
+                                          (reach-bound q₄) B₂ (reach-bound q₃))
                         (∘ʳ-≐ ≐ʳ-refl
                           (≐ʳ-trans
-                            (suc-comp-ren-∘-≐ E₀ (ext q₂) (bound s₁₂) b₀ B₁)
+                            (suc-comp-ren-∘-≐ E₀ (ext q₂) B₂ b₀ B₁)
                             (∘ʳ-≐ (≐ʳ-sym eW₁) ≐ʳ-refl)))
 
                     finalEq : unbox-ren q₄ ≐ʳ (unbox-ren q₃ ∘ʳ (W₁ ∘ʳ srs))
                     finalEq =
                       ≐ʳ-trans (∘ʳ-≐ (≐ʳ-refl {r = ⟨⟩-η-ren}) composite)
                         (≐ʳ-sym (∘ʳ-assoc-≐ ⟨⟩-η-ren
-                                   (suc-comp-ren (ext q₃) (bound q₃))
+                                   (suc-comp-ren (ext q₃) (reach-bound q₃))
                                    (W₁ ∘ʳ srs)))
 
                     shift : C-rename (cong-∷-ren (unbox-ren q₄)) N

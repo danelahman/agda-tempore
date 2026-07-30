@@ -106,7 +106,7 @@ data Comp (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
           → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
           → Valᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
-             → (q : St₁ [ mapᵉ (op-grade op) ]⊑ₛ[ uᵣ ] St₂)
+             → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St₂)
              → (W' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
              → Valᵍ (arity op) St₂ W'
              → Comp A P ε₁ St₂ (resume q M' W'))
@@ -139,13 +139,13 @@ Val (A |×| B)     St V =
 Val (A ⇒ (B ‼ ε)) St V =
   Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
     (V ≡ lam M)
-  × (∀ {St'} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St')
+  × (∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
      → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≐ᶜ reach-under q M
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
      → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
 -- A box type is the cell the value names: readable at a later state means its
 -- content is reducible there. This is `Store` below, per cell — `store-var`.
--- Quantifying over `St [ ρ ]⊑ₛ[ uᵣ ] St'` instead would demand more than
+-- Quantifying over `St ⊑ₛ[ ρ ] St'` instead would demand more than
 -- readability: that bound is `≤ₛ-grade e ≾ᵣ ρ`, whereas reading a cell gives
 -- `proj₁ (≤ₛ-embed e c) ≾ᵣ ρ`, i.e. `σ_c ·ᵣ ≤ₛ-grade e ≾ᵣ ρ`, and with
 -- `σ_c ≾ᵣ uᵣ` the latter is strictly weaker.
@@ -179,7 +179,7 @@ Comp' A = Comp A (Val A)
 --     same condition at a later state, not a separate assumption.
 --
 -- Keeping only the second would not do: instantiating it at the current state
--- needs `St [ ρ ]⊑ₛ[ uᵣ ] St`, whose bound is `uᵣ ≾ᵣ ρ`, and `Grade` has no such
+-- needs `St ⊑ₛ[ ρ ] St`, whose bound is `uᵣ ≾ᵣ ρ`, and `Grade` has no such
 -- law — rightly, since it would say every box is ready immediately.
 
 Store : 𝕊 [] → Set
@@ -254,7 +254,7 @@ unbox-lookup-val-≐ {St = St} w (var-≐ {x = x})
 -- irrelevant — so the two values are equal, not merely equivalent.
 
 unbox-lookup-ren : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-                 → (q₀ : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂)
+                 → (q₀ : St ⊑ₛ[ uᵣ ] St') → (q' : St' ⊑ₛ[ ρ ] St₂)
                  → (V : toCtx St ⊢V⦂ [ ρ ] A)
                  → unbox-lookup St₂ (unbox-ren q') (reach-val q₀ V)
                  ≡ unbox-lookup St₂ (unbox-ren (reach-∘ᵘ q' q₀)) V
@@ -319,7 +319,7 @@ Val-≐ᵛ ([ ρ ] A) {V} {V'} eV f
 ... | _ , x , g , refl | _ , x' , g' , refl with eV
 ...   | var-≐ = f
 
-Val-reach : ∀ {A St St'} → (q : St [ uᵣ ]⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
+Val-reach : ∀ {A St St'} → (q : St ⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
           → Val A St V → Val A St' (reach-val q V)
 
 Val-reach {Base b}  q V p = tt
@@ -442,7 +442,7 @@ Valᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} (read e rel)
 
 resume-≐ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
          → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-         → {q : St [ ρ ]⊑ₛ[ uᵣ ] St₂} → {q' : St' [ ρ ]⊑ₛ[ uᵣ ] St₂'}
+         → {q : St ⊑ₛ[ ρ ] St₂} → {q' : St' ⊑ₛ[ ρ ] St₂'}
          → ext q ≤≐ ext q'
          → {M : toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
          → {M' : toCtx St' ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
@@ -504,7 +504,7 @@ Comp-≐ {A} {P} es tr tr≐ eM (comp-op {op = op} {M' = Mk} rs pW pk)
   where
     ρ = mapᵉ (op-grade op)
 
-    step : ∀ {St₂ : 𝕊 []} → (q' : _ [ ρ ]⊑ₛ[ uᵣ ] St₂)
+    step : ∀ {St₂ : 𝕊 []} → (q' : _ ⊑ₛ[ ρ ] St₂)
          → (W'' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
          → Valᵍ (arity op) St₂ W''
          → Comp A P _ St₂ (resume q' Mk' W'')
@@ -542,7 +542,7 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
   where
     e = toCtx-≐ˢ es
 
-    step : ∀ {St'' : 𝕊 []} → (q' : St' [ uᵣ ]⊑ₛ[ uᵣ ] St'')
+    step : ∀ {St'' : 𝕊 []} → (q' : St' ⊑ₛ[ uᵣ ] St'')
          → (M₂ : toCtx St'' ∷ A ⊢C⦂ B ‼ ε)
          → M₂ ≐ᶜ reach-under q' (castᶜ (cong (_∷ A) e) M)
          → (W : toCtx St'' ⊢V⦂ A) → Val A St'' W
@@ -636,7 +636,7 @@ alloc-var-≐ V x f =
 -- since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the reach by `≤ₛ-embed`.
 
 store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-            → (∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+            → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
                  → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
             → (f : ¬ Eternal ([ ρ ] A) → uᵣ ≾ᵣ uᵣ)
             ------------------------------------------
@@ -649,13 +649,12 @@ store-fresh {A} {ρ} {St} V pV f {St'} r =
     rel = ready r
     -- the allocation accumulates nothing, so the cell's readability at `St'`
     -- *is* the bound the reach back to `St` needs
-    q₀ : St [ ρ ]⊑ₛ[ uᵣ ] St'
+    q₀ : St ⊑ₛ[ ρ ] St'
     q₀ = reach (≤ₛ-trans (∷-suc V id-suc) e)
                (≾ᵣ-trans
                  (≾ᵣ-reflexive
-                   (trans (·ᵣ-identityʳ (≤ₛ-grade (≤ₛ-trans (∷-suc V id-suc) e)))
-                     (trans (≤ₛ-grade-trans (∷-suc V id-suc) e)
-                            (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St}))))))
+                   (trans (≤ₛ-grade-trans (∷-suc V id-suc) e)
+                          (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St})))))
                  rel)
 
 -- THE STORE ON VARIABLES
@@ -683,7 +682,7 @@ store-var {[ ρ ] A} pSt x f r = pSt x r
 
 store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → Store St
-            → (∀ {St'} → (q : St [ ρ ]⊑ₛ[ uᵣ ] St')
+            → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
                  → Val A St' (V-rename (unbox-ren q ∘ʳ eq-ren ++ᶜ-identityˡ) V))
             ------------------------------------------------------------------
             → Store (St ∷ₛ V)
