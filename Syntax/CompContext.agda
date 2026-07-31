@@ -91,7 +91,18 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         --------------------
           Γ ⊢K[ f ◁ CH ]⦂ CH
 
-    -- TODO: should coerce also be part of these contexts?
+    -- sub-effecting coercions
+    --
+    -- Neither an evaluation nor a state-induced former, hence available only
+    -- at `all`: reduction discards a coercion outright (`COERCE`) rather than
+    -- descending into it, and a state's telescope carries no coercion.
+
+    coerce[_]ₖ : ∀ {A ε ε'}
+        → all ≤ᶠ f
+        → ε ≾ₑ ε'
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε
+        --------------------------
+        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε'
 
     -- state specific computation term contexts
 
@@ -155,6 +166,8 @@ rel-hole-ctx : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Ctx → Ctx
 
 rel-hole-ctx []ₖ Γ' =
   Γ'
+rel-hole-ctx (coerce[ p ]ₖ q K) Γ' =
+  rel-hole-ctx K Γ'
 rel-hole-ctx (K ₖ[ p ]⨟ N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (perform[_]ₖ p op V K) Γ' =
@@ -182,6 +195,8 @@ rel-hole-ctx-++ᶜ : ∀ {Γ Γ' Γ'' f CH C}
 
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} []ₖ =
   refl
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (coerce[ p ]ₖ q K) =
+  rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (K ₖ[ p ]⨟ N) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (perform[ p ]ₖ op V K) =
@@ -204,6 +219,8 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
       
 ◁-mon {f = f} {f' = f'} p []ₖ =
   []ₖ
+◁-mon {f = f} {f' = f'} p (coerce[ q ]ₖ r K) =
+  coerce[ ≤ᶠ-trans q p ]ₖ r (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (K ₖ[ q ]⨟ N) =
   (◁-mon p K) ₖ[ ≤ᶠ-trans q p ]⨟ N
 ◁-mon {f = f} {f' = f'} p (perform[ q ]ₖ op V K) =
@@ -227,6 +244,8 @@ K-rename : ∀ {Γ Γ' CH C f}
 
 K-rename r []ₖ =
   []ₖ
+K-rename r (coerce[ p ]ₖ q K) =
+  coerce[ p ]ₖ q (K-rename r K)
 K-rename r (K ₖ[ p ]⨟ N) =
   (K-rename r K) ₖ[ p ]⨟ (C-rename (cong-ren r) N)
 K-rename r (perform[ p ]ₖ op V K) =
@@ -254,6 +273,8 @@ _[_]ₖ : ∀ {Γ CH CH' C f f'}
 
 []ₖ [ L ]ₖ =
   ◁-mon ∨ᶠ-inr L
+coerce[ p ]ₖ q K [ L ]ₖ =
+  coerce[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ q (K [ L ]ₖ)
 (K ₖ[ p ]⨟ N) [ L ]ₖ =
   (K [ L ]ₖ) ₖ[ ≤ᶠ-trans p ∨ᶠ-inl ]⨟ N
 perform[ p ]ₖ op V K [ L ]ₖ =
@@ -292,6 +313,8 @@ _[_] : ∀ {Γ CH C f}
 
 []ₖ [ N ] =
   N
+coerce[ p ]ₖ q K [ N ] =
+  coerce q (K [ N ])
 (K ₖ[ p ]⨟ M) [ N ] =
   (K [ N ]) ⨟ M
 perform[ p ]ₖ op V K [ N ] =

@@ -83,6 +83,7 @@ open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 
 Paramᵏ : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Set
 Paramᵏ []ₖ                        = ⊤
+Paramᵏ (coerce[ p ]ₖ q K)         = Paramᵏ K
 Paramᵏ (K ₖ[ p ]⨟ N)              = Paramᵏ K × Paramᶜ N
 Paramᵏ (perform[ p ]ₖ op V K)     = Paramᵛ V × Paramᵏ K
 Paramᵏ (delay[ p ]ₖ τ K)          = Paramᵏ K
@@ -98,6 +99,7 @@ fillᴾ : ∀ {Γ f CH C} → (K : Γ ⊢K[ f ◁ CH ]⦂ C) → Paramᵏ K
       → (N : Γ ++ᶜ hole-ctx K ⊢C⦂ CH) → Paramᶜ N
       → Paramᶜ (K [ N ])
 fillᴾ []ₖ                    _          N pN = pN
+fillᴾ (coerce[ p ]ₖ q K)     pK         N pN = fillᴾ K pK N pN
 fillᴾ (K ₖ[ p ]⨟ M)          (pK , pM)  N pN = fillᴾ K pK N pN , pM
 fillᴾ (perform[ p ]ₖ op V K) (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _ N pN)
 fillᴾ (delay[ p ]ₖ τ K)      pK         N pN = fillᴾ K pK _ (renᶜ _ N pN)
@@ -172,6 +174,12 @@ fill-cong-env : (Γ : Ctx) → ∀ {Γ' f CH C} → (K : Γ' ⊢K[ f ◁ CH ]⦂
               ≈ᵐ ⟦ K [ N' ] ⟧ᶜᵗ (fillᴾ K pK N' pN') ∘ᵐ g
 
 fill-cong-env Γ []ₖ _ N N' pN pN' g eq = eq
+
+-- a coercion denotes `T-≤ q`, which the two sides share
+fill-cong-env Γ (coerce[ p ]ₖ q K) pK N N' pN pN' g eq =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (fill-cong-env Γ K pK N N' pN pN' g eq)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
 fill-cong-env Γ (K ₖ[ p ]⨟ M) (pK , pM) N N' pN pN' g eq =
     ∘ᵐ-assoc _ _ _
