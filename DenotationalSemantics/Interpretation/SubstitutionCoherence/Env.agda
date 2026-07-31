@@ -89,18 +89,20 @@ Paramˢ₀ (cong-⟨⟩-sub s) = Paramˢ₀ s
 ⟦ cong-∷-sub s ⟧ˢ₀            p  = mapˣᵐ (⟦ s ⟧ˢ₀ p) idᵐ
 ⟦ cong-⟨⟩-sub {ρ = ρ} s ⟧ˢ₀   p  = ⟨ ρ ⟩ᶠ (⟦ s ⟧ˢ₀ p)
 
--- Replacing one variable is a parametric substitution, and its environment
--- morphism is `sub-env` — on the nose, both recursions being `var-split`'s.
+-- Replacing the entry a splitting names is a parametric substitution, and at a
+-- variable's own splitting its environment morphism is `sub-env` — on the nose,
+-- both recursions being `var-split`'s.
 
-sub-at₀ᴾ : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A) → Paramᵛ W
-         → Paramˢ₀ (sub-at₀ x W)
-sub-at₀ᴾ Hd        W pW = pW
-sub-at₀ᴾ (Tl-∷ x)  W pW = sub-at₀ᴾ x W pW
-sub-at₀ᴾ (Tl-⟨⟩ x) W pW = sub-at₀ᴾ x W pW
+sub-split₀ᴾ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
+            → Paramᵛ W → Paramˢ₀ (sub-split₀ s W)
+sub-split₀ᴾ split-[]     W pW = pW
+sub-split₀ᴾ (split-∷ s)  W pW = sub-split₀ᴾ s W pW
+sub-split₀ᴾ (split-⟨⟩ s) W pW = sub-split₀ᴾ s W pW
 
 sub-env-is-⟦⟧ˢ₀ : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
                → (pW : Paramᵛ W)
-               → ⟦ sub-at₀ x W ⟧ˢ₀ (sub-at₀ᴾ x W pW) ≈ᵐ sub-env x W pW
+               → ⟦ sub-split₀ (split-pf x) W ⟧ˢ₀ (sub-split₀ᴾ (split-pf x) W pW)
+               ≈ᵐ sub-env x W pW
 sub-env-is-⟦⟧ˢ₀ Hd        W pW = ≈ᵐ-refl
 sub-env-is-⟦⟧ˢ₀ (Tl-∷ x)  W pW = mapˣᵐ-cong (sub-env-is-⟦⟧ˢ₀ x W pW) ≈ᵐ-refl
 sub-env-is-⟦⟧ˢ₀ (Tl-⟨⟩ x) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧ˢ₀ x W pW)

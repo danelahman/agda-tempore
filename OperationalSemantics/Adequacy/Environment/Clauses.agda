@@ -449,7 +449,8 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
 
     inner : castᶜ (eH Δ Γc B op ε) (K₄ op ε) ≡ castᶜ e₁ (K op ε)
     inner =
-      trans (cong (λ z → castᶜ (eH Δ Γc B op ε) (castᶜ cCl z))
+      trans (cong (castᶜ (eH Δ Γc B op ε)) (sym (bvar-≡ᴴ Γc K W₀ op ε)))
+       (trans (cong (λ z → castᶜ (eH Δ Γc B op ε) (castᶜ cCl z))
                   (trans (cl-ne-≡ ¬et (bvar {Δ} B₀ Γc) (bval {Δ} {B₀} Γc W₀)
                                   K op ε)
                          (subst-++ᶜʳ Dc dropM (K op ε))))
@@ -460,7 +461,7 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
             (trans (subst-fuseᶜ (trans (cong (_++ᶜ Dc) dropM) cCl)
                                 (eH Δ Γc B op ε) (K op ε))
               (trans (cong (λ p → subst (_⊢C⦂ CT) p (K op ε)) uip)
-                     (sym (castᶜ≡subst e₁ (K op ε)))))))
+                     (sym (castᶜ≡subst e₁ (K op ε))))))))
 
 -- at an eternal one both sides substitute the restricted value, and both
 -- do it first, so `cl-yes` and `sub-at-≡` align them where they stand
@@ -540,8 +541,9 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
       sub-at-≡ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
 
     isL = isSub-cast _ (eH Δ Γc B op ε)
-            (isSub-Cl op ε _ (castOf {Δ} {B₀} Γc)
-              (cl-yes et x Wv K op ε eclx))
+            (subst (IsSub S₁) (bvar-≡ᴴ Γc K W₀ op ε)
+              (isSub-Cl op ε _ (castOf {Δ} {B₀} Γc)
+                (cl-yes et x Wv K op ε eclx)))
 
     isMid : IsSub S₁ (subst (_⊢C⦂ CT) e' S₁)
     isMid = e' , refl
@@ -1091,13 +1093,14 @@ env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
 -- to the restriction, so this is `liftᵉ`'s case with one transport more
 
 env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (no ¬et) eq ih rewrite eq =
-  trans
-    (castᶜ-≡ cOut
-      (trans (cl-ne-≡ ¬et (bvar {toCtx St} A Δ) (bval {toCtx St} {A} Δ W)
-                      Kᵢ op ε)
-             (substᶜ-≡′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
-               (castᶜ-≡ eo (ih Δ' K')))))
-    (step)
+  trans (sym (bvar-≡ᴴ Δ Kᵢ W op ε))
+   (trans
+     (castᶜ-≡ cOut
+       (trans (cl-ne-≡ ¬et (bvar {toCtx St} A Δ) (bval {toCtx St} {A} Δ W)
+                       Kᵢ op ε)
+              (substᶜ-≡′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
+                (castᶜ-≡ eo (ih Δ' K')))))
+     (step))
   where
     CT = B ‼ (op-grade op ·ₑ ε)
     Dc = Dcl B op ε
@@ -1318,8 +1321,9 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (yes et) eq ih rewrite eq
     swapStep =
       sub-at-≡ eΓ eΘ X₁ X₂ e mid (eternal-val-restrict et Wv) V₂ eVal e'
 
-    isL = isSub-Cl op ε _ (castOf {toCtx St} {A} Δ)
-            (cl-yes et x Wv Krec op ε eclx)
+    isL = subst (IsSub S₁) (bvar-≡ᴴ Δ Krec W op ε)
+            (isSub-Cl op ε _ (castOf {toCtx St} {A} Δ)
+              (cl-yes et x Wv Krec op ε eclx))
 
     isMid : IsSub S₁ (subst (_⊢C⦂ CT) e' S₁)
     isMid = e' , refl

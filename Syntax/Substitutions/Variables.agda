@@ -31,6 +31,8 @@ open import Syntax.Renamings.Equivalence    Spec
 open import Syntax.Renamings.Coherence      Spec
 open import Syntax.Terms.Equivalence        Spec
 open import Syntax.Terms.Transport          Spec
+open import Syntax.Substitutions.Base        Spec
+open import Syntax.Substitutions.Lookup      Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 
@@ -156,6 +158,24 @@ cast-ren-⟨⟩-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ �
                 → castᵛ e (V-rename r V) ≡ V-rename r (castᵛ e₀ V)
 cast-ren-⟨⟩-any refl e₀ r V rewrite uip {p = e₀} {q = refl} = refl
 
+-- TWO SPLITTINGS OF THE SAME CONTEXT GIVE THE SAME SUBSTITUTION
+--
+-- `sub-split₀` reads its result context off the splitting, so identifying the
+-- two halves identifies the substitutions — `split-unique`, since a splitting
+-- is determined by its indices. This is what relates the substitution at a
+-- boundary to the substitution at the variable that boundary names.
+
+sub-split-subst : ∀ {Γ Γ₁ Γ₁' Γ₂ Γ₂' A}
+                → (e₁ : Γ₁ ≡ Γ₁') → (e₂ : Γ₂ ≡ Γ₂')
+                → (s  : Γ₁  ∷ A , Γ₂  split Γ)
+                → (s' : Γ₁' ∷ A , Γ₂' split Γ)
+                → (W : Γ₁ ⊢V⦂ A)
+                → subst (λ Δ → Sub₀ [] Δ Γ) (cong₂ _++ᶜ_ e₁ e₂)
+                        (sub-split₀ s W)
+                ≡ sub-split₀ s' (subst (_⊢V⦂ A) e₁ W)
+sub-split-subst refl refl s s' W =
+  cong (λ z → sub-split₀ z W) (split-unique s s')
+
 -- The context equality the substitution's result is presented along.
 
 castOf : ∀ {Γ₁ B} → (Γ₂ : Ctx)
@@ -168,41 +188,29 @@ castOf {Γ₁} {B} Γ₂ =
 
 sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → (x : A ∈[ ρ ] Γ₂)
-          → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
+          → (W : Γ₁ ⊢V⦂ B)
           → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-          → castᵛ (castOf {Γ₁} {B} Γ₂)
-              (⟨ ∈-++ᶜʳ {Γ = Γ₁ ∷ B} x , f ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})
-                                            ↦ W ]var)
+          → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) (∈-++ᶜʳ {Γ = Γ₁ ∷ B} x) f
           ≡ var f' (∈-++ᶜʳ {Γ = Γ₁} x)
 
-sub-var-r {Γ₁} {B} (Γ₂ ∷ C) Hd W f f' =
-  trans
-    ((trans (castᵛ-var (castOf {Γ₁} {B} (Γ₂ ∷ C)) f Hd)
-                 (cong (var f) (subst-Hd-any (castOf {Γ₁} {B} (Γ₂ ∷ C))))))
-    var-≡
+sub-var-r (Γ₂ ∷ C) Hd W f f' = var-≡
 
-sub-var-r {Γ₁} {B} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
-  trans
-    ((cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
-    (trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
-              (var-ren-img-≡ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f'))
+sub-var-r {Γ₁} (Γ₂ ∷ C) (Tl-∷ x) W f f' =
+  trans (V-rename-cong wk-ren (sub-var-r Γ₂ x W f f))
+        (var-ren-img-≡ wk-ren (∈-++ᶜʳ {Γ = Γ₁} x) f refl f')
 
-sub-var-r {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? A
+sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? A
 
 ... | yes et =
-  trans
-    ((cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
-    (trans (eternal-val-ext-cong et
-                (sub-var-r Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡)
+  trans (eternal-val-ext-cong et
+          (sub-var-r Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡
 
 ... | no ¬et =
-  trans
-    ((cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩)) (castOf {Γ₁} {B} Γ₂) rn _))
-    (trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
-              (var-ren-img-≡ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
-                 (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
-                       (⟨⟩-η⁻¹-img (∈-++ᶜʳ {Γ = Γ₁} x)))
-                 f'))
+  trans (V-rename-cong rn (sub-var-r Γ₂ x W fᵢ fᵢ))
+        (var-ren-img-≡ rn (∈-++ᶜʳ {Γ = Γ₁} x) fᵢ
+           (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+                 (⟨⟩-η⁻¹-img (∈-++ᶜʳ {Γ = Γ₁} x)))
+           f')
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
     rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))
@@ -326,34 +334,27 @@ sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 
 sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Eternal B
             → (p : ctx-grade Γ₂ ≾ᵣ uᵣ)
-            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
+            → (W : Γ₁ ⊢V⦂ B)
             → (f : ¬ Eternal B → ctx-grade Γ₂ ≾ᵣ uᵣ)
-            → castᵛ (castOf {Γ₁} {B} Γ₂)
-                (⟨ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) , f
-                 ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
-            ≡ V-rename (push-ren Γ₂ p)
-                 (castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) W)
+            → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W)
+                       (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) f
+            ≡ V-rename (push-ren Γ₂ p) W
 
-sub-var-hit {Γ₁} {B} [] ¬et p W f =
+sub-var-hit [] ¬et p W f =
   sym (V-rename-id-≡ ≐ʳ-refl _)
 
-sub-var-hit {Γ₁} {B} (Γ₂ ∷ C) ¬et p W f =
-  trans
-    ((cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
-    (trans (V-rename-cong wk-ren (sub-var-hit Γ₂ ¬et p W f))
-              (sym (V-rename-∘ (push-ren Γ₂ p) wk-ren _)))
+sub-var-hit (Γ₂ ∷ C) ¬et p W f =
+  trans (V-rename-cong wk-ren (sub-var-hit Γ₂ ¬et p W f))
+        (sym (V-rename-∘ (push-ren Γ₂ p) wk-ren _))
 
-sub-var-hit {Γ₁} {B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
+sub-var-hit {B = B} (Γ₂ ⟨ ρ ⟩) ¬et p W f with eternal? B
 
 ... | yes et = ⊥-elim (¬et et)
 
 ... | no ¬p =
-  trans
-    ((cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ ⟩))
-                           (castOf {Γ₁} {B} Γ₂) rn _))
-    (trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W fᵢ))
-      (trans (sym (V-rename-∘ (push-ren Γ₂ pᵢ) rn _))
-                (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ _))) _)))
+  trans (V-rename-cong rn (sub-var-hit Γ₂ ¬et pᵢ W fᵢ))
+    (trans (sym (V-rename-∘ (push-ren Γ₂ pᵢ) rn _))
+              (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ _))) _))
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀
     rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p))
@@ -371,12 +372,10 @@ sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Eternal B
              → _≡_ {A = Var ((Γ₁ ∷ B) ++ᶜ Γ₂) B}
                  (σ , y)
                  (ctx-grade Γ₂ , split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
-             → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
+             → (W : Γ₁ ⊢V⦂ B)
              → (f : ¬ Eternal B → σ ≾ᵣ uᵣ)
-             → castᵛ (castOf {Γ₁} {B} Γ₂)
-                 (⟨ y , f ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
-             ≡ V-rename (push-ren Γ₂ p)
-                  (castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) W)
+             → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W) y f
+             ≡ V-rename (push-ren Γ₂ p) W
 sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 
 -- SUBSTITUTION FIXES A RESOURCE VARIABLE
@@ -385,49 +384,29 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 -- same resource variable when the variable it replaces is a different one. Simpler than the
 -- value versions — a box type is never eternal, so there is no `eternal?` split.
 
+-- The cell the boundary substitution puts a resource variable at.
+
+atᴿ : ∀ {Γ B A ρ σ} → (Θ : Ctx) → ([ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ)) → Γ ⊢V⦂ B
+    → Var (Γ ++ᶜ Θ) ([ ρ ] A)
+atᴿ Θ z W = proj₁ (sub-tgt₀ (sub-atˢ₀ Θ W) z)
+          , proj₁ (proj₂ (sub-tgt₀ (sub-atˢ₀ Θ W) z))
+
 sub-rvar-r : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
-           → (z : [ ρ ] A ∈[ σ ] Θ)
-           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-           → Var-cast (castOf {Γ} {B} Θ)
-               (rvar-img (∈-++ᶜʳ {Γ = Γ ∷ B} z)
-                         (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
-           ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
+           → (z : [ ρ ] A ∈[ σ ] Θ) → (W : Γ ⊢V⦂ B)
+           → atᴿ {Γ} {B} Θ (∈-++ᶜʳ {Γ = Γ ∷ B} z) W ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
 
-sub-rvar-r {Γ} {B} (Θ ∷ C) Hd W = Var-cast-Hd (castOf {Γ} {B} (Θ ∷ C))
-
-sub-rvar-r {Γ} {B} (Θ ∷ C) (Tl-∷ z) W =
-  trans (Var-cast-irr (castOf {Γ} {B} (Θ ∷ C))
-                      (cong (_∷ C) (castOf {Γ} {B} Θ)) _)
-    (trans (Var-cast-∷ (castOf {Γ} {B} Θ) _)
-           (cong Var-∷ (sub-rvar-r Θ z W)))
-
-sub-rvar-r {Γ} {B} (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W =
-  trans (Var-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
-                      (cong (_⟨ ρ' ⟩) (castOf {Γ} {B} Θ)) _)
-    (trans (Var-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
-           (cong (Var-⟨⟩ ρ') (sub-rvar-r Θ z W)))
+sub-rvar-r (Θ ∷ C)   Hd       W = refl
+sub-rvar-r (Θ ∷ C)   (Tl-∷ z) W = cong Var-∷ (sub-rvar-r Θ z W)
+sub-rvar-r (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W = cong (Var-⟨⟩ ρ') (sub-rvar-r Θ z W)
 
 sub-rvar-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
-           → (z : [ ρ ] A ∈[ σ ] Γ)
-           → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-           → Var-cast (castOf {Γ} {B} Θ)
-               (rvar-img (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
-                         (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+           → (z : [ ρ ] A ∈[ σ ] Γ) → (W : Γ ⊢V⦂ B)
+           → atᴿ {Γ} {B} Θ (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z)) W
            ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 
-sub-rvar-l {Γ} {B} [] z W = refl
-
-sub-rvar-l {Γ} {B} (Θ ∷ C) z W =
-  trans (Var-cast-irr (castOf {Γ} {B} (Θ ∷ C))
-                      (cong (_∷ C) (castOf {Γ} {B} Θ)) _)
-    (trans (Var-cast-∷ (castOf {Γ} {B} Θ) _)
-           (cong Var-∷ (sub-rvar-l Θ z W)))
-
-sub-rvar-l {Γ} {B} (Θ ⟨ ρ' ⟩) z W =
-  trans (Var-cast-irr (castOf {Γ} {B} (Θ ⟨ ρ' ⟩))
-                      (cong (_⟨ ρ' ⟩) (castOf {Γ} {B} Θ)) _)
-    (trans (Var-cast-⟨⟩ ρ' (castOf {Γ} {B} Θ) _)
-           (cong (Var-⟨⟩ ρ') (sub-rvar-l Θ z W)))
+sub-rvar-l []         z W = refl
+sub-rvar-l (Θ ∷ C)    z W = cong Var-∷ (sub-rvar-l Θ z W)
+sub-rvar-l (Θ ⟨ ρ' ⟩) z W = cong (Var-⟨⟩ ρ') (sub-rvar-l Θ z W)
 
 -- The same, taking the resource variable's location as an equation rather than reading it off
 -- with `proj₂` — which is dependent, so `cong proj₂` is not available.
@@ -435,18 +414,15 @@ sub-rvar-l {Γ} {B} (Θ ⟨ ρ' ⟩) z W =
 sub-rvar-r′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Θ)
             → (t : Var ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
             → t ≡ (σ , ∈-++ᶜʳ {Γ = Γ ∷ B} z)
-            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-            → Var-cast (castOf {Γ} {B} Θ)
-                (rvar-img (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
-            ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
+            → (W : Γ ⊢V⦂ B)
+            → atᴿ {Γ} {B} Θ (proj₂ t) W ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
 sub-rvar-r′ Θ z t refl W = sub-rvar-r Θ z W
 
 sub-rvar-l′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Γ)
             → (t : Var ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
             → t ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
-            → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-            → Var-cast (castOf {Γ} {B} Θ)
-                (rvar-img (proj₂ t) (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+            → (W : Γ ⊢V⦂ B)
+            → atᴿ {Γ} {B} Θ (proj₂ t) W
             ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 sub-rvar-l′ Θ z t refl W = sub-rvar-l Θ z W
 
@@ -455,12 +431,9 @@ sub-rvar-l′ Θ z t refl W = sub-rvar-l Θ z W
 -- came from) and the substitution puts it back (`sub-rvar-r`/`-l`).
 
 unbox-rvar-wk : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
-              → (c : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Θ))
-              → (W : split-l (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) ⊢V⦂ B)
-              → Var-cast (castOf {Γ} {B} Θ)
-                  (rvar-img
-                     (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) c))
-                     (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+              → (c : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Θ)) → (W : Γ ⊢V⦂ B)
+              → atᴿ {Γ} {B} Θ
+                  (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) c)) W
               ≡ (σ , c)
 
 unbox-rvar-wk {Γ} {B} Θ c W with ∈-++ᶜ-split Γ Θ c in eqc
@@ -470,10 +443,9 @@ unbox-rvar-wk {Γ} {B} Θ c W with ∈-++ᶜ-split Γ Θ c in eqc
   sub-rvar-r′ Θ c' _ (cong-ren-img-r (wk-ren {A = B}) c') W
 
 ... | inj₁ (σ' , c') =
-  subst (λ t → Var-cast (castOf {Γ} {B} Θ)
-                 (rvar-img (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
-                                           (proj₂ t)))
-                           (split→∈ (split-≡-++ᶜ {Γ ∷ B} {Θ})) W)
+  subst (λ t → atᴿ {Γ} {B} Θ
+                 (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                                 (proj₂ t))) W
              ≡ t)
         (sym (∈-++ᶜ-split-inj₁ Γ Θ c c' eqc))
         (sub-rvar-l′ Θ c' _ (cong-ren-img-l (wk-ren {A = B}) Θ c') W)

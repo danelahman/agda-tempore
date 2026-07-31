@@ -111,7 +111,7 @@ restrict-∷-sub-ne Γ Δ (no  _) e₀ h e =
 restrict-sub-at-ne : ∀ {Γ A ρ} → (¬et : ¬ Eternal A) → (x : A ∈[ ρ ] Γ)
                    → (W : split-l x ⊢V⦂ A)
                    → (e : Γ ᴱ ≡ (split-l x ++ᶜ split-r x) ᴱ)
-                   → restrict-sub₀ (sub-at₀ x W) ≐ˢ₀ ⌜ eq-ren e ⌝
+                   → restrict-sub₀ (sub-split₀ (split-pf x) W) ≐ˢ₀ ⌜ eq-ren e ⌝
 
 restrict-sub-at-ne {A = A} ¬et Hd W e =
   restrict-val-sub-ne (eternal? A) ¬et W e
@@ -184,8 +184,9 @@ restrict-sub-at-et₀ : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] 
                              ++ᶜ split-r (split→∈ (∈-ᴱ-split et x))
                          ≡ (split-l x ++ᶜ split-r x) ᴱ)
                     → (⌜ eq-ren e ⌝
-                       ◅ [ sub-at₀ (split→∈ (∈-ᴱ-split et x)) (Wᴱ [] et x W) ]ˢ)
-                    ≐ˢ [ restrict-sub₀ (sub-at₀ x W) ]ˢ
+                       ◅ [ sub-split₀ (split-pf (split→∈ (∈-ᴱ-split et x)))
+                                      (Wᴱ [] et x W) ]ˢ)
+                    ≐ˢ [ restrict-sub₀ (sub-split₀ (split-pf x) W) ]ˢ
 
 restrict-sub-at-et₀ {A = A} et Hd W with eternal? A
 ... | yes a  = λ e →
@@ -211,9 +212,10 @@ restrict-sub-at-et : ∀ {Γ A ρ} → (D : Ctx) → (et : Eternal A) → (x : A
                             ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) D))
                         ≡ (split-l x ++ᶜ split-r x) ᴱ ++ᶜ D)
                    → (⌜ eq-ren e ⌝
-                      ◅ [ sub-at₀ (split→∈ (split-++ʳ (∈-ᴱ-split et x) D))
-                                  (Wᴱ D et x W) ]ˢ)
-                   ≐ˢ [ cong-sub₀ {Γ'' = D} (restrict-sub₀ (sub-at₀ x W)) ]ˢ
+                      ◅ [ sub-split₀ (split-pf (split→∈
+                                        (split-++ʳ (∈-ᴱ-split et x) D)))
+                                     (Wᴱ D et x W) ]ˢ)
+                   ≐ˢ [ cong-sub₀ {Γ'' = D} (restrict-sub₀ (sub-split₀ (split-pf x) W)) ]ˢ
 
 restrict-sub-at-et []        et x W e = restrict-sub-at-et₀ et x W e
 restrict-sub-at-et (D ∷ B)   et x W e =

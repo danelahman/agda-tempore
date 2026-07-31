@@ -154,20 +154,15 @@ env-Vˢ-var-r (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V γ) Δ x f f' 
                  (subst-sym-subst′ (++ᶜ-assoc (toCtx St) Δ₁ Δ) (∈-++ᶜʳ x))))
 
 env-Vˢ-var-r (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x f f' =
-  trans ((cong (λ z → castᵛ (castOf Δ)
-                                (castᵛ eIn (env-Vˢ γ Δ'' z) [ split→∈ t ↦ Ŵ ]v))
-                       inner))
+  trans ((cong (λ z → sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ'' z)) W) inner))
     (trans
-      (castᵛ-≡ (castOf Δ)
-        (sub-≡ᵛ (split→∈ t) (refl)
-          (trans (castᵛ-≡ eIn (env-Vˢ-var-r γ Δ'' y f f)) (outer))))
-      (sub-var-r Δ x Ŵ f f'))
+      (sub-atᵛ-≡ Δ W
+        (trans (castᵛ-≡ eIn (env-Vˢ-var-r γ Δ'' y f f)) (outer)))
+      (sub-var-r Δ x W f f'))
   where
     Δ'' = [] ∷ A₀ ++ᶜ Δ
     eIn = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
     eA  = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
-    t   = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}
-    Ŵ   = castᵛ (sym (split→∈-split-l t)) W
     y   = ∈-++ᶜʳ {Γ = [] ∷ A₀} x
 
     inner : castᵛ eA (var f (∈-++ᶜʳ {Γ = Γ ∷ A₀} x))
@@ -340,32 +335,28 @@ env-Vˢ-var-l (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₁} V γ) Δ eγ 
 
 env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ eγ ¬et p (Tl-∷ x) f f' =
   trans
-    (castᵛ-≡ (castOf {toCtx St} {A₀} Δ)
-      (sub-≡ᵛ (split→∈ t) (refl)
-        (trans (castᵛ-≡ eo (env-Vˢ-≡ γ (Δ₁ ++ᶜ Δ) inner))
-          (trans (castᵛ-≡ eo (env-Vˢ-var-l γ (Δ₁ ++ᶜ Δ) eγ ¬et p₁ x f₁ f'))
-            (trans (castᵛ-rename eo (push-ren (Δ₁ ++ᶜ Δ) p₁) _)
-              (trans (V-rename-≡ (push-ren-++ᶜ Δ₁ Δ p₁ pₗ p) _)
-                (trans
-                  (V-rename-≡
-                    (≐ʳ-trans (∘ʳ-≐ʳ (push-ren-∷ pₗ) ≐ʳ-refl)
-                              (≐ʳ-sym (push-ren-nat wk-ren Δ p))) _)
-                  (V-rename-∘ (push-ren Δ p) (cong-ren {Γ'' = Δ} wk-ren) _))))))))
-    (trans (sub-wk-V Δ (V-rename (push-ren Δ p) Z) _)
+    (sub-atᵛ-≡ Δ W
+      (trans (castᵛ-≡ eo (env-Vˢ-≡ γ (Δ₁ ++ᶜ Δ) inner))
+        (trans (castᵛ-≡ eo (env-Vˢ-var-l γ (Δ₁ ++ᶜ Δ) eγ ¬et p₁ x f₁ f'))
+          (trans (castᵛ-rename eo (push-ren (Δ₁ ++ᶜ Δ) p₁) _)
+            (trans (V-rename-≡ (push-ren-++ᶜ Δ₁ Δ p₁ pₗ p) _)
+              (trans
+                (V-rename-≡
+                  (≐ʳ-trans (∘ʳ-≐ʳ (push-ren-∷ pₗ) ≐ʳ-refl)
+                            (≐ʳ-sym (push-ren-nat wk-ren Δ p))) _)
+                (V-rename-∘ (push-ren Δ p) (cong-ren {Γ'' = Δ} wk-ren) _)))))))
+    (trans (sub-wk-V Δ (V-rename (push-ren Δ p) Z) W)
       (V-rename-cong (push-ren Δ p)
         (sym
           (trans
-            (castᵛ-≡ (castOf {toCtx St} {A₀} [])
-              (sub-≡ᵛ (split→∈ t₀) (refl)
-                (trans (env-Vˢ-var-l γ Δ₁ eγ ¬et pₗ x f' f')
-                          (V-rename-≡ (push-ren-∷ pₗ) _))))
-            (sub-wk-V [] Z _)))))
+            (sub-atᵛ-≡ [] W
+              (trans (env-Vˢ-var-l γ Δ₁ eγ ¬et pₗ x f' f')
+                        (V-rename-≡ (push-ren-∷ pₗ) _)))
+            (sub-wk-V [] Z W)))))
   where
     Δ₁ = [] ∷ A₀
     eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei = ++ᶜ-assoc Γ Δ₁ Δ
-    t  = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}
-    t₀ = split-≡-++ᶜ {toCtx St ∷ A₀} {[]}
     Z  = env-Vˢ γ [] (var f' x)
 
     pₗ = ≾ᵣ-refl
@@ -382,22 +373,18 @@ env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ eγ ¬et p (Tl-�
 
 env-Vˢ-var-l (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ eγ ¬et p Hd f f' =
   trans
-    (castᵛ-≡ (castOf {toCtx St} {A₀} Δ)
-      (sub-≡ᵛ (split→∈ t) (refl)
-        (trans (castᵛ-≡ eo (env-Vˢ-≡ γ (Δ₁ ++ᶜ Δ) inner))
-          (trans (castᵛ-≡ eo (env-Vˢ-var-r γ (Δ₁ ++ᶜ Δ) hd f f))
-                    outer))))
+    (sub-atᵛ-≡ Δ W
+      (trans (castᵛ-≡ eo (env-Vˢ-≡ γ (Δ₁ ++ᶜ Δ) inner))
+        (trans (castᵛ-≡ eo (env-Vˢ-var-r γ (Δ₁ ++ᶜ Δ) hd f f))
+                  outer)))
     (trans
       (sub-var-hit′ Δ ¬et p (∈-++ᶜˡ Δ (Hd {Γ = toCtx St}))
-                    (sym (split→∈-∈-++ᶜˡ (toCtx St) A₀ Δ)) _ f)
-      (trans (V-rename-cong (push-ren Δ p)
-                  ((castᵛ-sym-cast (split→∈-split-l t) W)))
-                (V-rename-cong (push-ren Δ p) (sym (env-var-hd γ W f')))))
+                    (sym (split→∈-∈-++ᶜˡ (toCtx St) A₀ Δ)) W f)
+      (V-rename-cong (push-ren Δ p) (sym (env-var-hd γ W f'))))
   where
     Δ₁ = [] ∷ A₀
     eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
     ei = ++ᶜ-assoc Γ Δ₁ Δ
-    t  = split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}
     hd = ∈-++ᶜˡ {Γ = Δ₁} Δ (Hd {Γ = []})
 
     inner = castᵛ-var-Var ei (∈-++ᶜˡ Δ (∈-++ᶜʳ {Γ = Γ} (Hd {Γ = []})))
@@ -443,13 +430,12 @@ env-var-tl : ∀ {St Γ A A₀ ρ} → (γ : Env St Γ) → (W : toCtx St ⊢V�
            → (f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
            → env-V (γ ∷ᵉ W) (var f (Tl-∷ x)) ≡ env-V γ (var f' x)
 
-env-var-tl {St = St} {A₀ = A₀} γ W eγ ¬et x f f' =
+env-var-tl γ W eγ ¬et x f f' =
   trans
-    (castᵛ-≡ (castOf {toCtx St} {A₀} [])
-      (sub-≡ᵛ (split→∈ (split-≡-++ᶜ {toCtx St ∷ A₀} {[]})) (refl)
-        (trans (env-Vˢ-var-l γ ([] ∷ A₀) eγ ¬et ≾ᵣ-refl x f f')
-                  (V-rename-≡ (push-ren-∷ ≾ᵣ-refl) _))))
-    (sub-wk-V [] (env-Vˢ γ [] (var f' x)) _)
+    (sub-atᵛ-≡ [] W
+      (trans (env-Vˢ-var-l γ ([] ∷ _) eγ ¬et ≾ᵣ-refl x f f')
+                (V-rename-≡ (push-ren-∷ ≾ᵣ-refl) _)))
+    (sub-wk-V [] (env-Vˢ γ [] (var f' x)) W)
 
 env-var-lock : ∀ {St St' Γ A ρ ρ'} → (γ : Env St Γ) → (q : St ⊑ₛ[ ρ ] St')
              → Eternal-Env γ → ¬ Eternal A

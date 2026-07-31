@@ -68,10 +68,9 @@ env-eternal-cell lf-[] η t = Var-cast ++ᶜ-identityˡ t
 
 env-eternal-cell {Δ ∷ B} {Γc} (lf-∷ lf) η (σ , z) =
   env-eternal-cell lf (λ x → η (Tl-∷ x))
-    (Var-cast (castOf {Δ} {B} Γc)
-      (proj₁ (⟨ z ⟩[ bvar B Γc ↦ bval Γc (V-rename (empty-ren lf) (η Hd)) ]rvar)
-      , proj₁ (proj₂ (⟨ z ⟩[ bvar B Γc
-                             ↦ bval Γc (V-rename (empty-ren lf) (η Hd)) ]rvar))))
+    (proj₁ (sub-atᴿ Γc z W) , proj₁ (proj₂ (sub-atᴿ Γc z W)))
+  where
+    W = V-rename (empty-ren lf) (η Hd)
 
 env-cell : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
          → Var (Γ ++ᶜ Δ) ([ ρ ] A) → Var (toCtx St ++ᶜ Δ) ([ ρ ] A)
@@ -93,9 +92,7 @@ env-cell (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ t =
       (Var-cast (++ᶜ-assoc Γ ([] ∷ [ ρ₀ ] A₀) Δ) t))
 
 env-cell (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t =
-  Var-cast (castOf {toCtx St} {A₀} Δ)
-    (proj₁ (⟨ z ⟩[ bvar A₀ Δ ↦ bval Δ W ]rvar)
-    , proj₁ (proj₂ (⟨ z ⟩[ bvar A₀ Δ ↦ bval Δ W ]rvar)))
+  proj₁ (sub-atᴿ Δ z W) , proj₁ (proj₂ (sub-atᴿ Δ z W))
   where
     z = proj₂ (Var-cast (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ))
                  (env-cell γ ([] ∷ A₀ ++ᶜ Δ)
@@ -124,8 +121,7 @@ env-eternal-cell-rel lf-[] η t rel = rel
 env-eternal-cell-rel {Δ ∷ B} {Γc} (lf-∷ lf) η (σ , z) rel =
   env-eternal-cell-rel lf (λ x → η (Tl-∷ x)) _
     (≾ᵣ-trans
-      (proj₂ (proj₂ (⟨ z ⟩[ bvar B Γc
-                            ↦ bval Γc (V-rename (empty-ren lf) (η Hd)) ]rvar)))
+      (proj₂ (proj₂ (sub-atᴿ Γc z (V-rename (empty-ren lf) (η Hd)))))
       rel)
 
 env-cell-rel : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
@@ -155,7 +151,7 @@ env-cell-rel (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ t rel
 
 env-cell-rel (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t rel =
   ≾ᵣ-trans
-    (proj₂ (proj₂ (⟨ z ⟩[ bvar A₀ Δ ↦ bval Δ W ]rvar)))
+    (proj₂ (proj₂ (sub-atᴿ Δ z W)))
     (env-cell-rel γ ([] ∷ A₀ ++ᶜ Δ) (Var-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t) rel)
   where
     z = proj₂ (Var-cast (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ))
@@ -197,18 +193,7 @@ env-eternal-C-unbox {[]} {Γc} {A = A} lf-[] η x rel M rel' =
                        (++ᶜ-identityˡ {Γc ∷ A}) M)))
 
 env-eternal-C-unbox {Δ ∷ B} {Γc} {A = A} (lf-∷ lf) η x rel M rel' =
-  trans
-    (env-eternal-C-≡ lf η'
-      ((cast-unbox (castOf {Δ} {B} Γc))))
-    (trans
-      (env-eternal-C-unbox lf η' _ _ _ rel')
-      (unbox-≡ refl
-        (env-eternal-C-≡ lf η'
-          ((castᶜ-irr (cong (_∷ A) (castOf {Δ} {B} Γc))
-                           (castOf {Δ} {B} (Γc ∷ A)) _)))))
-  where
-    η' : ClosedVals Δ
-    η' y = η (Tl-∷ y)
+  env-eternal-C-unbox lf (λ y → η (Tl-∷ y)) _ _ _ rel'
 
 env-Cˢ-unbox : ∀ {St Γ A C ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
              → (x : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Δ)) → (rel : σ ≾ᵣ ρ)
@@ -276,30 +261,22 @@ env-Cˢ-unbox (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ x rel M rel' =
 
 env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x rel M rel' =
   trans
-    (castᶜ-≡ cOf
-      (sub-≡ᶜ (bvar A₀ Δ) (refl)
-        (trans
-          (castᶜ-≡ eOut
-            (trans
-              (env-Cˢ-≡ γ ([] ∷ A₀ ++ᶜ Δ)
-                ((cast-unbox (++ᶜ-assoc Γ ([] ∷ A₀) Δ))))
-              (env-Cˢ-unbox γ ([] ∷ A₀ ++ᶜ Δ) _ _ _
-                (env-cell-rel γ ([] ∷ A₀ ++ᶜ Δ) _ rel))))
-          ((cast-unbox eOut)))))
-    (trans ((cast-unbox cOf))
-      (unbox-≡ refl
-        (trans
-          ((castᶜ-irr (cong (_∷ A) cOf)
-                   (castOf {toCtx St} {A₀} (Δ ∷ A)) _))
-          (castᶜ-≡ (castOf {toCtx St} {A₀} (Δ ∷ A))
-            (sub-≡ᶜ (bvar A₀ (Δ ∷ A))
-              ((castᵛ-irr _ _ W))
-              ((castᶜ-irr (cong (_∷ A) eOut)
-                       (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ∷ A)))
-                       _)))))))
+    (sub-atᶜ-≡ Δ W
+      (trans
+        (castᶜ-≡ eOut
+          (trans
+            (env-Cˢ-≡ γ ([] ∷ A₀ ++ᶜ Δ)
+              ((cast-unbox (++ᶜ-assoc Γ ([] ∷ A₀) Δ))))
+            (env-Cˢ-unbox γ ([] ∷ A₀ ++ᶜ Δ) _ _ _
+              (env-cell-rel γ ([] ∷ A₀ ++ᶜ Δ) _ rel))))
+        ((cast-unbox eOut))))
+    (unbox-≡ refl
+      (sub-atᶜ-≡ (Δ ∷ A) W
+        ((castᶜ-irr (cong (_∷ A) eOut)
+                 (sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) (Δ ∷ A)))
+                 _))))
   where
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
-    cOf  = castOf {toCtx St} {A₀} Δ
 
 ------------------------------------------------------------------------
 -- THE CELL ACTION, SUFFIX-FREE
@@ -436,10 +413,9 @@ Var-cast-loop refl t = refl
 -- put in the variable's place is of box type, hence a variable itself, and the
 -- result is that variable pushed back under the suffix.
 
-rvar-hit : ∀ {Γ A ρ} → (Θ : Ctx)
-         → (W : split-l (bvar {Γ} ([ ρ ] A) Θ) ⊢V⦂ [ ρ ] A)
-         → rvar-img (bvar {Γ} ([ ρ ] A) Θ) (bvar {Γ} ([ ρ ] A) Θ) W
-         ≡ Var-++ᶜˡ (split-r (bvar {Γ} ([ ρ ] A) Θ)) (val-cell W)
+rvar-hit : ∀ {Γ A ρ} → (Θ : Ctx) → (W : Γ ⊢V⦂ [ ρ ] A)
+         → atᴿ {Γ} Θ (bvar ([ ρ ] A) Θ) W
+         ≡ Var-++ᶜˡ Θ (val-cell W)
 
 rvar-hit []        W = refl
 rvar-hit (Θ ∷ C)   W = cong Var-∷ (rvar-hit Θ W)
@@ -478,7 +454,7 @@ env-eternal-cell-suffix lf-[] η z =
   cong (λ v → _ , v) (∈-++ᶜʳ-[] z)
 env-eternal-cell-suffix {Δ ∷ B} {Γc} (lf-∷ lf) η z =
   trans (cong (env-eternal-cell lf (λ x → η (Tl-∷ x)))
-              (sub-rvar-r Γc z (bval Γc (V-rename (empty-ren lf) (η Hd)))))
+              (sub-rvar-r Γc z (V-rename (empty-ren lf) (η Hd))))
         (env-eternal-cell-suffix lf (λ x → η (Tl-∷ x)) z)
 
 env-cell-suffix : ∀ {St Γ A ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
@@ -516,18 +492,13 @@ env-cell-suffix (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ z 
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ₀ ] A₀) Δ)
 
 env-cell-suffix (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ z =
-  trans (cong (λ v → Var-cast (castOf {toCtx St} {A₀} Δ)
-                       (rvar-img (proj₂ (Var-cast eOut (env-cell γ Δ' (_ , v))))
-                                 (bvar A₀ Δ) (bval Δ W)))
+  trans (cong (λ v → atᴿ Δ (proj₂ (Var-cast eOut (env-cell γ Δ' (_ , v)))) W)
               (∈-++ᶜʳ-assoc Γ ([] ∷ A₀) z))
-    (trans (cong (λ v → Var-cast (castOf {toCtx St} {A₀} Δ)
-                          (rvar-img (proj₂ (Var-cast eOut v))
-                                    (bvar A₀ Δ) (bval Δ W)))
+    (trans (cong (λ v → atᴿ Δ (proj₂ (Var-cast eOut v)) W)
                  (env-cell-suffix γ Δ' (∈-++ᶜʳ {Γ = [] ∷ A₀} z)))
-      (trans (cong (λ v → Var-cast (castOf {toCtx St} {A₀} Δ)
-                            (rvar-img v (bvar A₀ Δ) (bval Δ W)))
+      (trans (cong (λ v → atᴿ Δ v W)
                    (∈-++ᶜʳ-assoc⁻ (toCtx St) ([] ∷ A₀) z))
-             (sub-rvar-r Δ z (bval Δ W))))
+             (sub-rvar-r Δ z W)))
   where
     Δ'   = [] ∷ A₀ ++ᶜ Δ
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
@@ -584,18 +555,13 @@ env-cell-push (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ (σ , Tl-�
                   (sym (∈-++ᶜˡ-assoc {Γ = Γ} ([] ⟨ ρ₀ ⟩) Δ y)))
             (Var-cast-loop eIn (Var-++ᶜˡ Δ' (_ , y)))
 env-cell-push (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ (σ , Tl-∷ y) =
-  trans (cong (λ z → Var-cast (castOf {toCtx St} {A₀} Δ)
-                       (rvar-img (proj₂ (Var-cast eOut (env-cell γ Δ' z)))
-                                 (bvar A₀ Δ) (bval Δ W)))
+  trans (cong (λ z → atᴿ Δ (proj₂ (Var-cast eOut (env-cell γ Δ' z))) W)
               step-in)
-    (trans (cong (λ z → Var-cast (castOf {toCtx St} {A₀} Δ)
-                          (rvar-img (proj₂ (Var-cast eOut z))
-                                    (bvar A₀ Δ) (bval Δ W)))
+    (trans (cong (λ z → atᴿ Δ (proj₂ (Var-cast eOut z)) W)
                  (env-cell-push γ Δ' (σ , y)))
-      (trans (cong (λ z → Var-cast (castOf {toCtx St} {A₀} Δ)
-                            (rvar-img (proj₂ z) (bvar A₀ Δ) (bval Δ W)))
+      (trans (cong (λ z → atᴿ Δ (proj₂ z) W)
                    (∈-++ᶜˡ-assoc {Γ = toCtx St} ([] ∷ A₀) Δ c))
-             (sub-rvar-l Δ c (bval Δ W))))
+             (sub-rvar-l Δ c W)))
   where
     Δ'   = [] ∷ A₀ ++ᶜ Δ
     eIn  = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
@@ -609,20 +575,13 @@ env-cell-push (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ (σ , Tl-∷ y) 
             (Var-cast-loop eIn (Var-++ᶜˡ Δ' (σ , y)))
 
 env-cell-push (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ (σ , Hd) =
-  trans (cong (λ z → Var-cast (castOf {toCtx St} {A₀} Δ)
-                       (rvar-img (proj₂ (Var-cast eOut (env-cell γ Δ' z)))
-                                 (bvar A₀ Δ) (bval Δ W)))
+  trans (cong (λ z → atᴿ Δ (proj₂ (Var-cast eOut (env-cell γ Δ' z))) W)
               (∈-++ᶜˡ-++ᶜʳ Γ ([] ∷ A₀) Δ Hd))
-    (trans (cong (λ z → Var-cast (castOf {toCtx St} {A₀} Δ)
-                          (rvar-img (proj₂ (Var-cast eOut z))
-                                    (bvar A₀ Δ) (bval Δ W)))
+    (trans (cong (λ z → atᴿ Δ (proj₂ (Var-cast eOut z)) W)
                  (env-cell-suffix γ Δ' bnd))
-      (trans (cong (λ z → Var-cast (castOf {toCtx St} {A₀} Δ)
-                            (rvar-img (proj₂ z) (bvar A₀ Δ) (bval Δ W)))
+      (trans (cong (λ z → atᴿ Δ (proj₂ z) W)
                    (trans step-out (sym (split→∈-∈-++ᶜˡ (toCtx St) A₀ Δ))))
-        (trans (cong (Var-cast (castOf {toCtx St} {A₀} Δ))
-                     (rvar-hit Δ (bval Δ W)))
-               fin)))
+             (rvar-hit Δ W)))
   where
     Δ'   = [] ∷ A₀ ++ᶜ Δ
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
@@ -635,23 +594,6 @@ env-cell-push (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ (σ , Hd) =
     step-out =
       Var-cast-flip (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ) _ _
                     (∈-++ᶜˡ-++ᶜʳ (toCtx St) ([] ∷ A₀) Δ Hd)
-
-    -- `bval` transports the value into `split-l`; `castOf` transports it back
-    fin : Var-cast (castOf {toCtx St} {A₀} Δ)
-            (Var-++ᶜˡ (split-r (bvar {toCtx St} A₀ Δ)) (val-cell (bval Δ W)))
-        ≡ Var-++ᶜˡ Δ (val-cell W)
-    fin =
-      trans (Var-cast-++ᶜˡ (split→∈-split-l (split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}))
-                           (split→∈-split-r (split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}))
-                           (val-cell (bval Δ W)))
-            (cong (Var-++ᶜˡ Δ)
-              (trans (cong (Var-cast (split→∈-split-l
-                                        (split-≡-++ᶜ {toCtx St ∷ A₀} {Δ})))
-                           (val-cell-cast (sym (split→∈-split-l
-                                        (split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}))) W))
-                     (Var-cast-loop (split→∈-split-l
-                                      (split-≡-++ᶜ {toCtx St ∷ A₀} {Δ}))
-                                    (val-cell W))))
 
 env-cell-push (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ (σ , Tl-∷ y) =
   trans (cong (λ z → Var-cast eOut (env-cell γ Δ' z)) step-in)

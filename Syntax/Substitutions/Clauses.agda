@@ -284,8 +284,9 @@ cl-yes-sub : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
                             (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
                             (eternal-val-restrict et W))
 cl-yes-sub {Γ₀} {A} {ρ} {D} et x W H op ε e =
-  isSub-cast _ (castOf {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε))
-    (_ , sub-cast-C′ e (H op ε) v y ey U U' eU)
+  subst (IsSub (clBody et x W H op ε)) atᶜ-≡
+    (isSub-cast _ (castOf {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε))
+      (_ , sub-cast-C′ e (H op ε) v y ey U U' eU))
   where
     Dc = Dcl D op ε
     Γ₀' = split-l x ᴱ
@@ -313,6 +314,14 @@ cl-yes-sub {Γ₀} {A} {ρ} {D} et x W H op ε e =
                   (sym (split→∈-split-l (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})))
                   (eternal-val-restrict et W))
                (sym (castᵛ≡subst _ (eternal-val-restrict et W))))
+
+    -- the boundary substitution, from the spelling at `bvar` to `sub-atᶜ`
+    atᶜ-≡ : castᶜ (castOf {Γ₀'} {A} Θ₀')
+              ((subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
+                 [ bvar A Θ₀' ↦ bval Θ₀' (eternal-val-restrict et W) ]c)
+          ≡ sub-atᶜ Θ₀' (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
+                        (eternal-val-restrict et W)
+    atᶜ-≡ = bvar-≡ᶜ Θ₀' _ (eternal-val-restrict et W)
 
 cl-yes : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
        → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)

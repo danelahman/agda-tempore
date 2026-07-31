@@ -7,8 +7,8 @@
 -- is defined by recursion on the substitution alone, and no transports     --
 -- along context equalities are needed.                                     --
 --                                                                          --
--- Replacing one variable is the instance at `sub-at₀ x W`, whose            --
--- environment morphism is `sub-env x W`.                                    --
+-- Replacing one variable is the instance at `sub-split₀ (split-pf x) W`,    --
+-- whose environment morphism is `sub-env x W`.                              --
 ------------------------------------------------------------------------
 -- The four parts below are the eternal-value lemmas, the substitution's
 -- environment morphism and the theorem, the transports, and the

@@ -71,34 +71,46 @@ bval : ∀ {Γ' B} → (Θ : Ctx) → Γ' ⊢V⦂ B
 bval {Γ'} {B} Θ W =
   castᵛ (sym (split→∈-split-l (split-≡-++ᶜ {Γ' ∷ B} {Θ}))) W
 
+-- The action of `sub-atˢ₀`, i.e. the substitution at the boundary. It lands at
+-- `Γ' ++ᶜ Θ` with no retyping, the splitting's halves being given.
+
 sub-atᵛ : ∀ {Γ' B A} → (Θ : Ctx) → ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A → Γ' ⊢V⦂ B
         → (Γ' ++ᶜ Θ) ⊢V⦂ A
-sub-atᵛ {Γ'} {B} Θ U W =
-  castᵛ (castOf {Γ'} {B} Θ) (U [ bvar B Θ ↦ bval Θ W ]v)
+sub-atᵛ Θ U W = V-sub₀ (sub-atˢ₀ Θ W) U
 
 sub-atᶜ : ∀ {Γ' B C} → (Θ : Ctx) → ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C → Γ' ⊢V⦂ B
         → (Γ' ++ᶜ Θ) ⊢C⦂ C
-sub-atᶜ {Γ'} {B} Θ M W =
-  castᶜ (castOf {Γ'} {B} Θ) (M [ bvar B Θ ↦ bval Θ W ]c)
+sub-atᶜ Θ M W = C-sub₀ (sub-atˢ₀ Θ W) M
 
--- and on a clause family, where the substitution reaches through
--- `_[_↦_]cl` and the transport is `Cl-cast`, i.e. exactly the shape
--- `cast-handle` produces
+-- and on a resource variable, i.e. the cell an `unbox` names
+
+sub-atᴿ : ∀ {Γ' B A ρ σ} → (Θ : Ctx)
+        → ([ ρ ] A ∈[ σ ] ((Γ' ∷ B) ++ᶜ Θ)) → Γ' ⊢V⦂ B
+        → Σ[ σ' ∈ R ] (([ ρ ] A ∈[ σ' ] (Γ' ++ᶜ Θ)) × (σ' ≾ᵣ σ))
+sub-atᴿ Θ z W = sub-tgt₀ (sub-atˢ₀ Θ W) z
+
+-- and on a clause family, where the substitution restricts to the eternal part
+-- and is extended by the clause's two binders, as in `_[_↦_]cl`
 
 sub-atᴴ : ∀ {Γ' B D} → (Θ : Ctx) → Fam D (((Γ' ∷ B) ++ᶜ Θ) ᴱ) → Γ' ⊢V⦂ B
         → Fam D ((Γ' ++ᶜ Θ) ᴱ)
-sub-atᴴ {Γ'} {B} Θ H W op ε =
-  Cl-cast op ε (castOf {Γ'} {B} Θ) ((H [ bvar B Θ ↦ bval Θ W ]cl) op ε)
+sub-atᴴ Θ H W op ε =
+  C-sub₀ (cong-∷-sub (cong-∷-sub (restrict-sub₀ (sub-atˢ₀ Θ W)))) (H op ε)
 
 -- Congruences.
 
 sub-atᵛ-≡ : ∀ {Γ' B A} → (Θ : Ctx) → {U U' : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A}
           → (W : Γ' ⊢V⦂ B) → U ≡ U' → sub-atᵛ Θ U W ≡ sub-atᵛ Θ U' W
-sub-atᵛ-≡ Θ W e = castᵛ-≡ _ (sub-≡ᵛ _ refl e)
+sub-atᵛ-≡ Θ W e = cong (V-sub₀ (sub-atˢ₀ Θ W)) e
+
+sub-atᵛ-≡ᵥ : ∀ {Γ' B A} → (Θ : Ctx) → (U : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A)
+           → {W W' : Γ' ⊢V⦂ B} → W ≡ W'
+           → sub-atᵛ Θ U W ≡ sub-atᵛ Θ U W'
+sub-atᵛ-≡ᵥ Θ U refl = refl
 
 sub-atᶜ-≡ : ∀ {Γ' B C} → (Θ : Ctx) → {M M' : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C}
           → (W : Γ' ⊢V⦂ B) → M ≡ M' → sub-atᶜ Θ M W ≡ sub-atᶜ Θ M' W
-sub-atᶜ-≡ Θ W e = castᶜ-≡ _ (sub-≡ᶜ _ refl e)
+sub-atᶜ-≡ Θ W e = cong (C-sub₀ (sub-atˢ₀ Θ W)) e
 
 sub-atᶜ-≡ᵥ : ∀ {Γ' B C} → (Θ : Ctx) → (X : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C)
            → {W W' : Γ' ⊢V⦂ B} → W ≡ W'
@@ -108,94 +120,123 @@ sub-atᶜ-≡ᵥ Θ X refl = refl
 ------------------------------------------------------------------------
 -- THE BOUNDARY SUBSTITUTION IS `cong-sub₀ (val-sub W)`
 --
--- `bvar B Θ` is `Hd` under one `Tl` per entry of `Θ`, so `sub-at₀` of it is
--- `cong-sub₀ {Θ} (val-sub W)` — up to the retyping `castOf`, which the two
--- halves of the splitting only agree with propositionally. Induction on the
--- suffix; each step moves the retyping past one congruence.
+-- `split-≡-++ᶜ` is `≡-split refl`, which recurses on the suffix exactly as
+-- `cong-sub₀` does, so the two agree by induction on it.
 ------------------------------------------------------------------------
 
-sub-atˢ-≐ˢ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
-           → (⌜ eq-ren (castOf {Γ} {B} Θ) ⌝
-              ◅ [ sub-at₀ (bvar B Θ) (bval Θ W) ]ˢ)
-           ≐ˢ [ cong-sub₀ {Γ'' = Θ} (val-sub W) ]ˢ
-
-sub-atˢ-≐ˢ [] W = id-◅-≐ˢ (eq-ren-≐ʳ _ refl) _
-sub-atˢ-≐ˢ {Γ} {B} (Θ ∷ A) W =
-  ≐ˢ-trans (head-∷-≐ˢ _ (castOf {Γ} {B} Θ) (castOf {Γ} {B} (Θ ∷ A)))
-           (cong-∷-subˢ-≐ˢ (sub-atˢ-≐ˢ Θ W))
-sub-atˢ-≐ˢ {Γ} {B} (Θ ⟨ ρ ⟩) W =
-  ≐ˢ-trans (head-⟨⟩-≐ˢ _ (castOf {Γ} {B} Θ) (castOf {Γ} {B} (Θ ⟨ ρ ⟩)))
-           (cong-⟨⟩-subˢ-≐ˢ (sub-atˢ-≐ˢ Θ W))
+sub-at-≡ˢ₀ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+           → sub-atˢ₀ {B = B} Θ W ≡ cong-sub₀ {Γ'' = Θ} (val-sub W)
+sub-at-≡ˢ₀ []        W = refl
+sub-at-≡ˢ₀ (Θ ∷ A)   W = cong cong-∷-sub  (sub-at-≡ˢ₀ Θ W)
+sub-at-≡ˢ₀ (Θ ⟨ ρ ⟩) W = cong cong-⟨⟩-sub (sub-at-≡ˢ₀ Θ W)
 
 -- Hence what the boundary substitution does to a term.
 
 sub-at-≡ᵛ : ∀ {Γ B A} → (Θ : Ctx) → (U : ((Γ ∷ B) ++ᶜ Θ) ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
           → sub-atᵛ Θ U W ≡ V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W)) U
-sub-at-≡ᵛ {Γ} {B} Θ U W =
-  trans (sym (V-rename-castᵛ (castOf {Γ} {B} Θ) _))
-    (trans (sym (V-sub₀-⌜⌝ (eq-ren (castOf {Γ} {B} Θ)) _))
-           (V-sub-≐ˢ (sub-atˢ-≐ˢ Θ W) U))
+sub-at-≡ᵛ Θ U W = cong (λ s → V-sub₀ s U) (sub-at-≡ˢ₀ Θ W)
 
 sub-at-≡ᶜ : ∀ {Γ B C} → (Θ : Ctx) → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
           → sub-atᶜ Θ M W ≡ C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W)) M
-sub-at-≡ᶜ {Γ} {B} Θ M W =
-  trans (sym (C-rename-castᶜ (castOf {Γ} {B} Θ) _))
-    (trans (sym (C-sub₀-⌜⌝ (eq-ren (castOf {Γ} {B} Θ)) _))
-           (C-sub-≐ˢ (sub-atˢ-≐ˢ Θ W) M))
+sub-at-≡ᶜ Θ M W = cong (λ s → C-sub₀ s M) (sub-at-≡ˢ₀ Θ W)
+
+------------------------------------------------------------------------
+-- THE SAME, WRITTEN AT THE BOUNDARY VARIABLE
+--
+-- `bvar B Θ` is `Hd` under one `Tl` per entry of `Θ`, and its splitting agrees
+-- with the boundary's only up to `castOf`, the two halves being read off
+-- `var-split` rather than given. Induction on the suffix; each step moves the
+-- retyping past one congruence. This is the only place that retyping is paid.
+------------------------------------------------------------------------
+
+-- Retyping the result of an action is retyping the substitution it acts by.
+
+cast-V-sub₀ : ∀ {Γ₀ Γ₀' Γ₁ A} → (e : Γ₀ ≡ Γ₀') → (s : Sub₀ [] Γ₀ Γ₁)
+            → (U : Γ₁ ⊢V⦂ A)
+            → castᵛ e (V-sub₀ s U)
+            ≡ V-sub₀ (subst (λ Δ → Sub₀ [] Δ Γ₁) e s) U
+cast-V-sub₀ refl s U = refl
+
+cast-C-sub₀ : ∀ {Γ₀ Γ₀' Γ₁ C} → (e : Γ₀ ≡ Γ₀') → (s : Sub₀ [] Γ₀ Γ₁)
+            → (M : Γ₁ ⊢C⦂ C)
+            → castᶜ e (C-sub₀ s M)
+            ≡ C-sub₀ (subst (λ Δ → Sub₀ [] Δ Γ₁) e s) M
+cast-C-sub₀ refl s M = refl
+
+cast-Cl-sub₀ : ∀ {Γ₀ Γ₀' Γ₁ D} → (op : Op) → (ε : E)
+             → (e : Γ₀ ≡ Γ₀') → (s : Sub₀ [] Γ₀ Γ₁) → (M : Cl D op ε (Γ₁ ᴱ))
+             → Cl-cast op ε e
+                 (C-sub₀ (cong-∷-sub (cong-∷-sub (restrict-sub₀ s))) M)
+             ≡ C-sub₀ (cong-∷-sub (cong-∷-sub
+                         (restrict-sub₀ (subst (λ Δ → Sub₀ [] Δ Γ₁) e s)))) M
+cast-Cl-sub₀ op ε refl s M = refl
+
+-- The substitution at `bvar B Θ`, retyped along `castOf`, IS the one at the
+-- boundary: `sub-split-subst` at the splitting's two halves, the value coming
+-- back from `bval` by `castᵛ-sym-cast`.
+
+bvar-sub-≡ : ∀ {Γ B} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
+           → subst (λ Δ → Sub₀ [] Δ ((Γ ∷ B) ++ᶜ Θ)) (castOf {Γ} {B} Θ)
+                   (sub-split₀ (split-pf (bvar B Θ)) (bval Θ W))
+           ≡ sub-atˢ₀ Θ W
+bvar-sub-≡ {Γ} {B} Θ W =
+  trans (sub-split-subst (split→∈-split-l t) (split→∈-split-r t)
+                         (split-pf (bvar B Θ)) t (bval Θ W))
+        (cong (sub-split₀ t)
+              (trans (sym (castᵛ≡subst (split→∈-split-l t) _))
+                     (castᵛ-sym-cast (split→∈-split-l t) W)))
+  where
+    t = split-≡-++ᶜ {Γ ∷ B} {Θ}
+
+-- Hence what each of the three actions does, in the `bvar` spelling.
+
+bvar-≡ᵛ : ∀ {Γ B A} → (Θ : Ctx) → (U : ((Γ ∷ B) ++ᶜ Θ) ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+        → castᵛ (castOf {Γ} {B} Θ) (U [ bvar B Θ ↦ bval Θ W ]v)
+        ≡ sub-atᵛ Θ U W
+bvar-≡ᵛ {Γ} {B} Θ U W =
+  trans (cast-V-sub₀ (castOf {Γ} {B} Θ) _ U)
+        (cong (λ s → V-sub₀ s U) (bvar-sub-≡ Θ W))
+
+bvar-≡ᶜ : ∀ {Γ B C} → (Θ : Ctx) → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
+        → castᶜ (castOf {Γ} {B} Θ) (M [ bvar B Θ ↦ bval Θ W ]c)
+        ≡ sub-atᶜ Θ M W
+bvar-≡ᶜ {Γ} {B} Θ M W =
+  trans (cast-C-sub₀ (castOf {Γ} {B} Θ) _ M)
+        (cong (λ s → C-sub₀ s M) (bvar-sub-≡ Θ W))
+
+bvar-≡ᴴ : ∀ {Γ B D} → (Θ : Ctx) → (H : Fam D (((Γ ∷ B) ++ᶜ Θ) ᴱ))
+        → (W : Γ ⊢V⦂ B) → (op : Op) → (ε : E)
+        → Cl-cast op ε (castOf {Γ} {B} Θ) ((H [ bvar B Θ ↦ bval Θ W ]cl) op ε)
+        ≡ sub-atᴴ Θ H W op ε
+bvar-≡ᴴ {Γ} {B} Θ H W op ε =
+  trans (cast-Cl-sub₀ op ε (castOf {Γ} {B} Θ) _ (H op ε))
+        (cong (λ s → C-sub₀ (cong-∷-sub (cong-∷-sub (restrict-sub₀ s))) (H op ε))
+              (bvar-sub-≡ Θ W))
 
 ------------------------------------------------------------------------
 -- `sub-wk`: SUBSTITUTING FOR A VARIABLE NOBODY MENTIONS
 --
--- Weakening at the boundary and then substituting there is the identity. The
--- value is given at the splitting's own left half, so it is `bval` of its own
--- relocation.
+-- Weakening at the boundary and then substituting there is the identity.
 ------------------------------------------------------------------------
 
-castᵛ-cast-sym : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
-               → castᵛ (sym e) (castᵛ e V) ≡ V
-castᵛ-cast-sym refl V = refl
+sub-wk-V : ∀ {Γ B} → (Θ : Ctx) → ∀ {A} → (U : (Γ ++ᶜ Θ) ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+         → sub-atᵛ Θ (V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U) W ≡ U
+sub-wk-V {B = B} Θ U W =
+  trans (sub-at-≡ᵛ Θ (V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U) W)
+        (sub-wk-≡ᵛ Θ W U)
 
-sub-wk-V : ∀ {Γ B} → (Θ : Ctx) → ∀ {A} → (U : (Γ ++ᶜ Θ) ⊢V⦂ A)
-         → (W : split-l (bvar {Γ} B Θ) ⊢V⦂ B)
-         → castᵛ (castOf {Γ} {B} Θ)
-             ((V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U)
-                [ bvar B Θ ↦ W ]v)
-         ≡ U
-sub-wk-V {Γ} {B} Θ U W =
-  trans (castᵛ-≡ (castOf {Γ} {B} Θ)
-          (sub-≡ᵛ (bvar B Θ)
-            (sym (castᵛ-cast-sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
-            (refl {x = V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U})))
-    (trans (sub-at-≡ᵛ Θ (V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U) W₀)
-           (sub-wk-≡ᵛ Θ W₀ U))
-  where
-    W₀ = castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ})) W
-
-sub-wk-C : ∀ {Γ B} → (Θ : Ctx) → ∀ {C} → (M : (Γ ++ᶜ Θ) ⊢C⦂ C)
-         → (W : split-l (bvar {Γ} B Θ) ⊢V⦂ B)
-         → castᶜ (castOf {Γ} {B} Θ)
-             ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M)
-                [ bvar B Θ ↦ W ]c)
-         ≡ M
-sub-wk-C {Γ} {B} Θ M W =
-  trans (castᶜ-≡ (castOf {Γ} {B} Θ)
-          (sub-≡ᶜ (bvar B Θ)
-            (sym (castᵛ-cast-sym (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ})) W))
-            (refl {x = C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M})))
-    (trans (sub-at-≡ᶜ Θ (C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M) W₀)
-           (sub-wk-≡ᶜ Θ W₀ M))
-  where
-    W₀ = castᵛ (split→∈-split-l (split-≡-++ᶜ {Γ ∷ B} {Θ})) W
+sub-wk-C : ∀ {Γ B} → (Θ : Ctx) → ∀ {C} → (M : (Γ ++ᶜ Θ) ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
+         → sub-atᶜ Θ (C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M) W ≡ M
+sub-wk-C {B = B} Θ M W =
+  trans (sub-at-≡ᶜ Θ (C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M) W)
+        (sub-wk-≡ᶜ Θ W M)
 
 -- The same with the term's context given by an equation rather than literally.
 
 sub-wk-C-cast : ∀ {Γ B Γ₀} → (Θ : Ctx) → (e : Γ₀ ≡ Γ ++ᶜ Θ) → ∀ {C}
-              → (M : Γ₀ ⊢C⦂ C)
-              → (W : split-l (bvar {Γ} B Θ) ⊢V⦂ B)
-              → castᶜ (castOf {Γ} {B} Θ)
-                  ((C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
-                             (subst (_⊢C⦂ C) e M))
-                     [ bvar B Θ ↦ W ]c)
+              → (M : Γ₀ ⊢C⦂ C) → (W : Γ ⊢V⦂ B)
+              → sub-atᶜ Θ (C-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
+                             (subst (_⊢C⦂ C) e M)) W
               ≡ subst (_⊢C⦂ C) e M
 sub-wk-C-cast Θ refl M W = sub-wk-C Θ M W
 
@@ -215,21 +256,10 @@ assocᴮ⁻ : (Γ : Ctx) → (B₂ : VType) → (Θ : Ctx)
         → (Γ ++ᶜ (([] ∷ B₂) ++ᶜ Θ)) ≡ ((Γ ∷ B₂) ++ᶜ Θ)
 assocᴮ⁻ Γ B₂ Θ = sym (++ᶜ-assoc Γ ([] ∷ B₂) Θ)
 
-outerᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
-       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢V⦂ A
-outerᵛ {B₁ = B₁} Θ U W₂ W₁ =
-  sub-atᵛ Θ (sub-atᵛ Θ U (V-rename (wk-ren {A = B₁}) W₂)) W₁
-
 outerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
        → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢C⦂ C
 outerᶜ {B₁ = B₁} Θ M W₂ W₁ =
   sub-atᶜ Θ (sub-atᶜ Θ M (V-rename (wk-ren {A = B₁}) W₂)) W₁
-
-inner₀ᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
-        → Γ ⊢V⦂ B₁ → ((Γ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
-inner₀ᵛ {Γ} {B₁} {B₂} Θ U W₁ =
-  castᵛ (assocᴮ⁻ Γ B₂ Θ)
-    (sub-atᵛ (([] ∷ B₂) ++ᶜ Θ) (castᵛ (assocᴮ Γ B₁ B₂ Θ) U) W₁)
 
 inner₀ᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
         → Γ ⊢V⦂ B₁ → ((Γ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
@@ -243,10 +273,6 @@ inner₀ᴴ {Γ} {B₁} {B₂} Θ H W₁ op ε =
   Cl-cast op ε (assocᴮ⁻ Γ B₂ Θ)
     (sub-atᴴ (([] ∷ B₂) ++ᶜ Θ)
        (λ op' ε' → Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε')) W₁ op ε)
-
-innerᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
-       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢V⦂ A
-innerᵛ Θ U W₂ W₁ = sub-atᵛ Θ (inner₀ᵛ Θ U W₁) W₂
 
 innerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
        → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢C⦂ C
@@ -299,23 +325,6 @@ assoc-≐ˢ {Γ} {B₁} {B₂} (Θ ⟨ ρ ⟩) W₁ =
 
 -- Hence what `inner₀` does to a term.
 
-inner₀-≡ᵛ : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → (U : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A)
-          → (W₁ : Γ ⊢V⦂ B₁)
-          → inner₀ᵛ {B₂ = B₂} Θ U W₁
-          ≡ V-sub₀ (cong-sub₀ {Γ'' = Θ} (cong-∷-sub {A = B₂} (val-sub W₁))) U
-inner₀-≡ᵛ {Γ} {B₁} {B₂} Θ U W₁ =
-  trans (cong (castᵛ (assocᴮ⁻ Γ B₂ Θ))
-              (trans (sub-atᵛ-≡ (([] ∷ B₂) ++ᶜ Θ) W₁
-                       (sym (V-rename-castᵛ (assocᴮ Γ B₁ B₂ Θ) U)))
-                     (sub-at-≡ᵛ (([] ∷ B₂) ++ᶜ Θ)
-                                (V-rename (eq-ren (assocᴮ Γ B₁ B₂ Θ)) U) W₁)))
-    (trans (cong (castᵛ (assocᴮ⁻ Γ B₂ Θ))
-                 (cong (V-sub₀ (cong-sub₀ {Γ'' = ([] ∷ B₂) ++ᶜ Θ} (val-sub W₁)))
-                       (sym (V-sub₀-⌜⌝ (eq-ren (assocᴮ Γ B₁ B₂ Θ)) U))))
-      (trans (sym (V-rename-castᵛ (assocᴮ⁻ Γ B₂ Θ) _))
-        (trans (sym (V-sub₀-⌜⌝ (eq-ren (assocᴮ⁻ Γ B₂ Θ)) _))
-               (V-sub-≐ˢ (assoc-≐ˢ Θ W₁) U))))
-
 inner₀-≡ᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C)
           → (W₁ : Γ ⊢V⦂ B₁)
           → inner₀ᶜ {B₂ = B₂} Θ M W₁
@@ -341,29 +350,9 @@ inner₀-≡ᶜ {Γ} {B₁} {B₂} Θ M W₁ =
 -- `W₁` into `W₂` weakened past `B₁` gives `W₂` again.
 ------------------------------------------------------------------------
 
-SubSwapV : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A
-         → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set
-SubSwapV Θ U W₂ W₁ = outerᵛ Θ U W₂ W₁ ≡ innerᵛ Θ U W₂ W₁
-
 SubSwapC : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
          → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set
 SubSwapC Θ M W₂ W₁ = outerᶜ Θ M W₂ W₁ ≡ innerᶜ Θ M W₂ W₁
-
-sub-swap-V : ∀ {Γ B₁ B₂ A} → (Θ : Ctx) → (U : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢V⦂ A)
-           → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
-           → SubSwapV Θ U W₂ W₁
-sub-swap-V {Γ} {B₁} {B₂} Θ U W₂ W₁ =
-  trans (trans (sub-atᵛ-≡ Θ W₁ (sub-at-≡ᵛ Θ U (V-rename (wk-ren {A = B₁}) W₂)))
-               (sub-at-≡ᵛ Θ (V-sub₀ (cong-sub₀ {Γ'' = Θ}
-                               (val-sub (V-rename (wk-ren {A = B₁}) W₂))) U) W₁))
-    (trans (sub-swap-at-≡ᵛ Θ W₁ (V-rename (wk-ren {A = B₁}) W₂) U)
-      (trans (cong (λ V → V-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub V))
-                                 (V-sub₀ (cong-sub₀ {Γ'' = Θ}
-                                            (cong-∷-sub (val-sub W₁))) U))
-                   (sub-wk-≡ᵛ [] W₁ W₂))
-             (sym (trans (sub-atᵛ-≡ Θ W₂ (inner₀-≡ᵛ Θ U W₁))
-                         (sub-at-≡ᵛ Θ (V-sub₀ (cong-sub₀ {Γ'' = Θ}
-                                         (cong-∷-sub (val-sub W₁))) U) W₂)))))
 
 sub-swap-C : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → (M : ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C)
            → (W₂ : Γ ⊢V⦂ B₂) → (W₁ : Γ ⊢V⦂ B₁)
