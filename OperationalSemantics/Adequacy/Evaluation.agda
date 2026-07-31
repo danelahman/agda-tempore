@@ -216,36 +216,12 @@ handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-gra
 ↝-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
 ↝-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
 
--- RUNS TO A WHNF ARE UNIQUE
---
--- Packed as above, so state, value/operation and time follow by `cong`.
-
-Ret-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
-Ret-run {A} cf =
-  Σ[ St ∈ 𝕊 [] ] Σ[ V ∈ toCtx St ⊢V⦂ A ] (cf ↝* ⟨ St , return V ⟩)
-
 Op-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Op-run {A} cf =
   Σ[ St ∈ 𝕊 [] ] Σ[ op ∈ Op ] Σ[ ε' ∈ E ]
   Σ[ W ∈ toCtx St ⊢V⦂ type-of-gtype (param op) ]
   Σ[ M ∈ (toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε') ]
     (cf ↝* ⟨ St , perform op W M ⟩)
-
-ret-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
-            → {St₁ St₂ : 𝕊 []}
-            → {V₁ : toCtx St₁ ⊢V⦂ A} → {V₂ : toCtx St₂ ⊢V⦂ A}
-            → (rs₁ : cf ↝* ⟨ St₁ , return V₁ ⟩)
-            → (rs₂ : cf ↝* ⟨ St₂ , return V₂ ⟩)
-            ------------------------------------------------------------
-            → _≡_ {A = Ret-run cf} (St₁ , V₁ , rs₁) (St₂ , V₂ , rs₂)
-
-ret-run-det ε*         ε*         = refl
-ret-run-det ε*         (r ◅ _)    = ⊥-elim (finality-ret r)
-ret-run-det (r ◅ _)    ε*         = ⊥-elim (finality-ret r)
-ret-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
-... | refl =
-  cong (λ z → proj₁ z , proj₁ (proj₂ z) , r₁ ◅ proj₂ (proj₂ z))
-       (ret-run-det rs₁ rs₂)
 
 op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
            → {St₁ St₂ : 𝕊 []} → {op₁ op₂ : Op} → {ε₁' ε₂' : E}

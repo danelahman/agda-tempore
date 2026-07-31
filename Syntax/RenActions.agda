@@ -30,7 +30,7 @@ open import Syntax.Types     S
 -- Stated at the empty ambient, which is where all of the language's renamings
 -- and every derived one live: `[] ᴱ` is `[]`, and the congruences preserve it,
 -- so nothing here is transported and every clause reduces. Ambient-indexed
--- renamings act through `expose-ren-[]` (see `V-renameᴬ` below).
+-- renamings act through `expose-ren-[]`.
 --
 -- `⟨⟩-ext-ctx` is the one rule whose variable is not analysed: it accepts any
 -- variable of the context to its left, and pays for it by that variable being
@@ -135,16 +135,3 @@ mutual
           (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (coerce rel M) = coerce rel (C-rename r M)
-
--- ACTING BY AN AMBIENT-INDEXED RENAMING
---
--- A renaming that fixes an ambient acts by first forgetting what it fixes:
--- `expose-ren-[]` reassociates `Ren Ξ Δ Δ'` into a renaming of `Ξ ++ᶜ Δ` proper,
--- which is the context such a term has. This is the form the eternal weakening
--- takes, `wk-ren-ctx` being ambient-indexed.
-
-V-renameᴬ : ∀ {Ξ Δ Δ' A} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢V⦂ A → (Ξ ++ᶜ Δ) ⊢V⦂ A
-V-renameᴬ r V = V-rename (expose-ren-[] r) V
-
-C-renameᴬ : ∀ {Ξ Δ Δ' C} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢C⦂ C → (Ξ ++ᶜ Δ) ⊢C⦂ C
-C-renameᴬ r M = C-rename (expose-ren-[] r) M

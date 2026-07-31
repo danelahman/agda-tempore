@@ -106,16 +106,6 @@ fillᴾ (box[ p ]ₖ V K)        (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _
 fillᴾ (handle[ p ]ₖ K `with H `in M) (pK , pM , pH , uH) N pN =
   fillᴾ K pK N pN , pM , pH , uH
 
-ren-cong : ∀ {Γ Γ' CH} → (r : Ren [] Γ' Γ)
-         → (N N' : Γ ⊢C⦂ CH) → (pN : Paramᶜ N) → (pN' : Paramᶜ N')
-         → ⟦ N ⟧ᶜᵗ pN ≈ᵐ ⟦ N' ⟧ᶜᵗ pN'
-         → ⟦ C-rename r N ⟧ᶜᵗ (renᶜ r N pN)
-         ≈ᵐ ⟦ C-rename r N' ⟧ᶜᵗ (renᶜ r N' pN')
-ren-cong r N N' pN pN' eq =
-    C-rename-nat r N pN
-  ∙ ∘ᵐ-congˡ eq
-  ∙ ≈ᵐ-sym (C-rename-nat r N' pN')
-
 -- The two coercions `_[_]` inserts at a binder, combined.
 
 fill-ext : (Γ Γ' Θ₁ : Ctx) → ∀ {Δ f CH C} → (K : Δ ⊢K[ f ◁ CH ]⦂ C)

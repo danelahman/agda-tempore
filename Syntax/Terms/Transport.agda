@@ -65,13 +65,6 @@ cast-lam : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → (M : Γ ∷ A ⊢C⦂ C)
          → castᵛ e (lam M) ≡ lam (castᶜ (cong (_∷ A) e) M)
 cast-lam refl M = refl
 
-cast-const : ∀ {Γ Γ' b} → (e : Γ ≡ Γ') → {c : BaseConstants b}
-           → castᵛ e (const c) ≡ const c
-cast-const refl = refl
-
-cast-⋆ : ∀ {Γ Γ'} → (e : Γ ≡ Γ') → castᵛ e ⋆ ≡ ⋆
-cast-⋆ refl = refl
-
 cast-pair : ∀ {Γ Γ' A B} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A} → {W : Γ ⊢V⦂ B}
           → castᵛ e ⦉ V , W ⦊ ≡ ⦉ castᵛ e V , castᵛ e W ⦊
 cast-pair refl = refl
@@ -83,10 +76,6 @@ cast-ret refl = refl
 cast-app : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A ⇒ C} → {W : Γ ⊢V⦂ A}
          → castᶜ e (V · W) ≡ (castᵛ e V) · (castᵛ e W)
 cast-app refl = refl
-
-cast-absurd : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ Empty}
-            → castᶜ {C = C} e (absurd V) ≡ absurd (castᵛ e V)
-cast-absurd refl = refl
 
 cast-coerce : ∀ {Γ Γ' A ε ε'} → (e : Γ ≡ Γ') → {p : ε ≾ₑ ε'} → {M : Γ ⊢C⦂ A ‼ ε}
             → castᶜ e (coerce p M) ≡ coerce p (castᶜ e M)

@@ -249,25 +249,6 @@ env-Vˢ-lam {A = A} (eternalˡ Δ₀ lf η γ) Δ M =
     e  = ++ᶜ-assoc Δ₀ _ Δ
     e' = ++ᶜ-assoc Δ₀ _ (Δ ∷ A)
 
--- THE ACTION COMMUTES WITH THE NON-BINDING FORMERS
---
--- The suffix does not grow, so both sides carry the same cast proofs and no
--- `castᶜ-irr` step is needed.
-
-env-eternal-const : ∀ {Δ Γ b} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-                  → (c : BaseConstants b)
-                  → env-eternal-V {Γ = Γ} lf η (const c) ≡ const c
-env-eternal-const lf-[]     η c = cast-const ++ᶜ-identityˡ
-env-eternal-const (lf-∷ lf) η c =
-  trans (cong (env-eternal-V lf _) (cast-const _))
-        (env-eternal-const lf _ c)
-
-env-eternal-⋆ : ∀ {Δ Γ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-              → env-eternal-V {Γ = Γ} lf η ⋆ ≡ ⋆
-env-eternal-⋆ lf-[]     η = cast-⋆ ++ᶜ-identityˡ
-env-eternal-⋆ (lf-∷ lf) η =
-  trans (cong (env-eternal-V lf _) (cast-⋆ _)) (env-eternal-⋆ lf _)
-
 env-eternal-pair : ∀ {Δ Γ A B} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
                  → (V : (Δ ++ᶜ Γ) ⊢V⦂ A) → (W : (Δ ++ᶜ Γ) ⊢V⦂ B)
                  → env-eternal-V lf η ⦉ V , W ⦊
@@ -291,15 +272,6 @@ env-eternal-app : ∀ {Δ Γ A C} → (lf : Lock-free Δ) → (η : ClosedVals �
 env-eternal-app lf-[]     η V W = cast-app ++ᶜ-identityˡ
 env-eternal-app (lf-∷ lf) η V W =
   trans (cong (env-eternal-C lf _) (cast-app _)) (env-eternal-app lf _ _ _)
-
-env-eternal-absurd : ∀ {Δ Γ C} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-                   → (V : (Δ ++ᶜ Γ) ⊢V⦂ Empty)
-                   → env-eternal-C {C = C} lf η (absurd V)
-                   ≡ absurd (env-eternal-V lf η V)
-env-eternal-absurd lf-[]     η V = cast-absurd ++ᶜ-identityˡ
-env-eternal-absurd (lf-∷ lf) η V =
-  trans (cong (env-eternal-C lf _) (cast-absurd _))
-        (env-eternal-absurd lf _ _)
 
 env-eternal-coerce : ∀ {Δ Γ A ε ε'} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
                    → {p : ε ≾ₑ ε'} → (M : (Δ ++ᶜ Γ) ⊢C⦂ A ‼ ε)
@@ -1642,11 +1614,4 @@ Cl-castᴿ {B = B} op ε e X =
 -- action already produced, and moving the environment is recording the
 -- allocation reach.
 ------------------------------------------------------------------------
-
-env-alloc : ∀ {St Γ A ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-          → Env St Γ
-          ---------------------
-          → Env (St ∷ₛ V) Γ
-
-env-alloc V γ = reachᵉ γ (alloc-reach V)
 

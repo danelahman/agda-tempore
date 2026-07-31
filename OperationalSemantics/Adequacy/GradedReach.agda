@@ -165,10 +165,6 @@ reach-∘ : ∀ {St St' St'' ρ} → St' ⊑ₛ[ uᵣ ] St'' → St ⊑ₛ[ ρ ]
         → St ⊑ₛ[ ρ ] St''
 reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≾ᵣ-reflexive (·ᵣ-identityʳ ρ))
 
-reach-∘ᵘ : ∀ {St St' St'' ρ} → St' ⊑ₛ[ ρ ] St'' → St ⊑ₛ[ uᵣ ] St'
-         → St ⊑ₛ[ ρ ] St''
-reach-∘ᵘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
-
 -- THE REACHES THE MACHINE PRODUCES
 --
 -- Allocating a cell accumulates nothing (`BOX`); letting time pass costs
@@ -367,20 +363,6 @@ unbox-ren-img : ∀ {St St' : 𝕊 []} {ρ : R} → (q : St ⊑ₛ[ ρ ] St')
               → var-img (unbox-ren q) (Tl-⟨⟩ x) ≡ ≤ₛ-embed (ext q) x
 unbox-ren-img q x =
   cong (var-img′ ⟨⟩-η-ren) (suc-comp-ren-img (ext q) (reach-bound q) x)
-
--- Looking a resource up after transporting it along a reach
--- reaches the same cell as looking it up along the composite.
-
-unbox-cells : ∀ {A ρ} {St St' St₂ : 𝕊 []}
-            → (q₀ : St ⊑ₛ[ uᵣ ] St') → (q' : St' ⊑ₛ[ ρ ] St₂)
-            → ∀ {σ} → (x : [ ρ ] A ∈[ σ ] toCtx St)
-            → var-img (unbox-ren q') (Tl-⟨⟩ (proj₂ (var-img (reach-renᵘ q₀) x)))
-            ≡ var-img (unbox-ren (reach-∘ᵘ q' q₀)) (Tl-⟨⟩ x)
-unbox-cells q₀ q' x =
-  trans (unbox-ren-img q' (proj₂ (var-img (reach-renᵘ q₀) x)))
-    (trans (cong (λ t → ≤ₛ-embed (ext q') (proj₂ t)) (reach-renᵘ-img q₀ x))
-      (trans (sym (≤ₛ-embed-∘ (ext q₀) (ext q') x))
-             (sym (unbox-ren-img (reach-∘ᵘ q' q₀) x))))
 
 ------------------------------------------------------------------------
 -- RUNS

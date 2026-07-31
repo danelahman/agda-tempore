@@ -408,16 +408,6 @@ eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Eternal A) → {V V' : Γ ⊢V⦂
                      → eternal-val-ext {ρ = ρ} et V ≡ eternal-val-ext et V'
 eternal-val-ext-cong et = cong (eternal-val-ext et)
 
--- SUBSTITUTING INTO A RESOURCE VARIABLE
---
--- `⟨_⟩[_↦_]rvar` returns a variable and a grade bound; only the variable is
--- observable, and that is what an `unbox` node stores.
-
-rvar-img : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
-         → ([ ρ ] B ∈[ σ ] Γ) → (s : Γ₁ ∷ A , Γ₂ split Γ) → Γ₁ ⊢V⦂ A
-         → Var (Γ₁ ++ᶜ Γ₂) ([ ρ ] B)
-rvar-img y s W = proj₁ (⟨ y ⟩[ s ↦ W ]rvar) , proj₁ (proj₂ (⟨ y ⟩[ s ↦ W ]rvar))
-
 substᶜ-≡ : ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : Γ₁ ⊢C⦂ C}
          → M ≡ M' → subst (_⊢C⦂ C) e M ≡ subst (_⊢C⦂ C) e M'
 substᶜ-≡ {C} e = cong (subst (_⊢C⦂ C) e)

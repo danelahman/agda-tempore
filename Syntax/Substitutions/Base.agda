@@ -55,9 +55,6 @@ data Sub₀ (Ξ : Ctx) : Ctx → Ctx → Set where
 id-sub₀ : ∀ {Ξ Δ} → Sub₀ Ξ Δ Δ
 id-sub₀ = ⌜ id-ren ⌝
 
-eq-sub₀ : ∀ {Ξ Δ Δ'} → Δ ≡ Δ' → Sub₀ Ξ Δ' Δ
-eq-sub₀ e = ⌜ eq-ren e ⌝
-
 -- Congruence for a general context extension. Recursion on the suffix, so the
 -- ambient is untouched.
 

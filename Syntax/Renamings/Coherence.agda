@@ -223,14 +223,6 @@ split-unique split-[]     split-[]      = refl
 split-unique (split-∷ s)  (split-∷ s')  = cong split-∷ (split-unique s s')
 split-unique (split-⟨⟩ s) (split-⟨⟩ s') = cong split-⟨⟩ (split-unique s s')
 
--- Hence the variables they name agree, once the two contexts are identified.
-
-split→∈-subst : ∀ {Γ Γ' Γ₁ Γ₂ A} → (e : Γ ≡ Γ')
-              → (s : Γ₁ ∷ A , Γ₂ split Γ)
-              → split→∈ (subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s)
-              ≡ subst (λ Γ₀ → A ∈[ ctx-grade Γ₂ ] Γ₀) e (split→∈ s)
-split→∈-subst refl s = refl
-
 -- `cong-ren` at nested suffixes is `cong-ren` at their concatenation — but only
 -- up to `++ᶜ-assoc`, so conjugated by `eq-ren`s.
 

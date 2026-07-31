@@ -174,13 +174,6 @@ inner₀ᶜ {Γ} {B₁} {B₂} Θ M W₁ =
     ((castᶜ (assocᴮ Γ B₁ B₂ Θ) M)
        [ split-≡-++ᶜ {Γ ∷ B₁} {([] ∷ B₂) ++ᶜ Θ} ↦ W₁ ]c)
 
-inner₀ᴴ : ∀ {Γ B₁ B₂ D} → (Θ : Ctx) → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ)
-        → Γ ⊢V⦂ B₁ → Fam D (((Γ ∷ B₂) ++ᶜ Θ) ᴱ)
-inner₀ᴴ {Γ} {B₁} {B₂} Θ H W₁ op ε =
-  Cl-cast op ε (assocᴮ⁻ Γ B₂ Θ)
-    (((λ op' ε' → Cl-cast op' ε' (assocᴮ Γ B₁ B₂ Θ) (H op' ε'))
-        [ split-≡-++ᶜ {Γ ∷ B₁} {([] ∷ B₂) ++ᶜ Θ} ↦ W₁ ]cl) op ε)
-
 innerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
        → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢C⦂ C
 innerᶜ {Γ} {B₂ = B₂} Θ M W₂ W₁ =

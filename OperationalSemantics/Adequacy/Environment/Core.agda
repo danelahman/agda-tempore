@@ -112,8 +112,8 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            --------------
            → Env St []
 
-  -- postcomposition with a reach: what makes `Env` functorial in the *state*
-  -- (`env-alloc`). Recorded rather than pushed into the base, so that a
+  -- postcomposition with a reach: what makes `Env` functorial in the *state*.
+  -- Recorded rather than pushed into the base, so that a
   -- reducible environment stays reducible when the state grows: its values
   -- still come from the earlier state, and `Val-reach` moves them. Pushing it
   -- into `⌊_⌋` would instead demand the *later* state's store, which nothing

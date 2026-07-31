@@ -90,29 +90,6 @@ restrict-ren (⟨⟩-ext-ctx ecΞ ecΔ) =
 ren-ᴱ-∷ : ∀ {Δ Ξ} → (A : VType) → Ren Ξ ((Δ ∷ A) ᴱ) (Δ ᴱ)
 ren-ᴱ-∷ {Δ} {Ξ} A = ren-ᴱ-∷′ {Δ} {Ξ} A (eternal? A)
 
--- Bringing a variable buried under a suffix context `Θ` up to the top. The
--- `∷`-case swaps it past the intervening variable (`exch-ren`), the `⟨⟩`-case
--- extrudes it out of the lock (`⟨⟩-ext-ren`), which requires it to be eternal.
-
-bring-up : ∀ {Δ A Ξ} → Eternal A → (Θ : Ctx)
-         → Ren Ξ ((Δ ++ᶜ Θ) ∷ A) ((Δ ∷ A) ++ᶜ Θ)
-bring-up et []        = id-ren
-bring-up et (Θ ∷ B)   = cong-∷-ren (bring-up et Θ) ∘ʳ exch-ren
-bring-up et (Θ ⟨ ρ ⟩) = cong-⟨⟩-ren (bring-up et Θ) ∘ʳ ⟨⟩-ext-ren et
-
--- Contracting the eternal restriction prefix `Δ ᴱ` back into `Δ`'s own
--- variables. Each eternal variable duplicated by the prefix is brought up to
--- the top and contracted against its original occurrence in `Δ`.
-
-contract : ∀ {Ξ} → (Δ : Ctx) → Ren Ξ Δ (Δ ᴱ ++ᶜ Δ)
-contract []        = id-ren
-contract {Ξ} (Δ ∷ A)   with eternal? A
-... | yes eA = (cong-∷-ren (bring-up eA Δ)
-            ∘ʳ var-ren (λ _ → ≾ᵣ-refl) (∈-⋈ᶜ Ξ Hd))
-            ∘ʳ cong-∷-ren (contract Δ)
-... | no  _  = cong-∷-ren (contract Δ)
-contract (Δ ⟨ ρ ⟩) = cong-⟨⟩-ren (contract Δ)
-
 -- THE ETERNAL INCLUSION
 --
 -- Weakening the eternal restriction `Δ ᴱ` back into `Δ`: non-eternal entries
@@ -143,8 +120,3 @@ wk-ctx-ren : ∀ {Ξ} → EternalCtx Ξ → (Γ' : Ctx) → Ren Ξ Γ' []
 wk-ctx-ren ec []         = id-ren
 wk-ctx-ren ec (Γ' ∷ A)   = wk-ren ∘ʳ cong-∷-ren (wk-ctx-ren ec Γ')
 wk-ctx-ren ec (Γ' ⟨ ρ ⟩) = ⟨⟩-ext-ctx ec ec-[] ∘ʳ cong-⟨⟩-ren (wk-ctx-ren ec Γ')
-
-wk-ren-ctx : ∀ {Ξ} → EternalCtx Ξ → (Γ' Θ : Ctx) → Ren Ξ (Γ' ++ᶜ Θ) Θ
-wk-ren-ctx ec Γ' []        = wk-ctx-ren ec Γ'
-wk-ren-ctx ec Γ' (Θ ∷ A)   = cong-∷-ren (wk-ren-ctx ec Γ' Θ)
-wk-ren-ctx ec Γ' (Θ ⟨ ρ ⟩) = cong-⟨⟩-ren (wk-ren-ctx ec Γ' Θ)

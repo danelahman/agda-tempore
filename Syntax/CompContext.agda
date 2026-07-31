@@ -174,12 +174,6 @@ rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =
 hole-ctx : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Ctx
 hole-ctx K = rel-hole-ctx K []
 
--- Contexts of the hole in a computation term context
--- (the absolute version, it includes Γ as its prefix)
-
-abs-hole-ctx : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Ctx
-abs-hole-ctx {Γ} K = rel-hole-ctx K Γ
-
 -- Relating the absolute and relative versions of hole-ctx
 
 rel-hole-ctx-++ᶜ : ∀ {Γ Γ' Γ'' f CH C}
@@ -200,18 +194,6 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x rel K) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   rel-hole-ctx-++ᶜ K
-
--- For evaluation contexts, holes do not bind any variables
-
-eval-hole-ctx : ∀ {Γ CH C}
-              → (K : Γ ⊢K[ eval ◁ CH ]⦂ C)
-              → hole-ctx K ≡ []
-eval-hole-ctx []ₖ =
-  refl
-eval-hole-ctx (K ₖ[ p ]⨟ N) =
-  eval-hole-ctx K
-eval-hole-ctx (handle[ p ]ₖ K `with H `in N) =
-  eval-hole-ctx K
 
 -- Monotonicity of computation term contexts with respect to flags
 

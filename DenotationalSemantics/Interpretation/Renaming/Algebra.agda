@@ -166,8 +166,8 @@ ec-var-alg (ec-∷ ec et') et (Tl-∷ y) =
 
 -- Renamings are interpreted at the empty ambient: that is where the language's
 -- own renamings (`unbox`'s certificate) and every derived one live, `[] ᴱ`,
--- `cong-ren`, `restrict-ren` and `contract` all preserving it. An
--- ambient-indexed renaming reaches the semantics through `expose-ren-[]`.
+-- `cong-ren` and `restrict-ren` all preserving it. An ambient-indexed renaming
+-- reaches the semantics through `expose-ren-[]`.
 
 ⟦_⟧ʳ : ∀ {Γ Γ'} → Ren [] Γ Γ' → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ
 ⟦ id-ren ⟧ʳ              = idᵐ

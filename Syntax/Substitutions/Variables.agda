@@ -173,36 +173,6 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
     | inj₂ y' with eq
 ...   | refl = cong Tl-⟨⟩ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
 
--- A variable the splitting sends left is that variable pushed under the suffix.
--- Stated as a `Var` equality, so the grade travels with the position.
-
-∈-++ᶜ-split-inj₁ : ∀ {A ρ ρ'} → (Δ₁ Δ₂ : Ctx) → (x : A ∈[ ρ ] (Δ₁ ++ᶜ Δ₂))
-                 → (z : A ∈[ ρ' ] Δ₁)
-                 → ∈-++ᶜ-split Δ₁ Δ₂ x ≡ inj₁ (ρ' , z)
-                 → (ρ , x) ≡ (grade-++ᶜˡ ρ' Δ₂ , ∈-++ᶜˡ Δ₂ z)
-
-∈-++ᶜ-split-inj₁ Δ₁ []       x .x refl = refl
-
-∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ∷ B) Hd       z eq with eq
-... | ()
-∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ∷ B) (Tl-∷ x) z eq
-  with ∈-++ᶜ-split Δ₁ Δ₂ x in eq'
-... | inj₂ _  with eq
-...   | ()
-∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ∷ B) (Tl-∷ x) z eq
-    | inj₁ (ρ'' , z') with eq
-...   | refl =
-  cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (∈-++ᶜ-split-inj₁ Δ₁ Δ₂ x z' eq')
-
-∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ⟨ ρ₁ ⟩) (Tl-⟨⟩ x) z eq
-  with ∈-++ᶜ-split Δ₁ Δ₂ x in eq'
-... | inj₂ _  with eq
-...   | ()
-∈-++ᶜ-split-inj₁ Δ₁ (Δ₂ ⟨ ρ₁ ⟩) (Tl-⟨⟩ x) z eq
-    | inj₁ (ρ'' , z') with eq
-...   | refl =
-  cong (λ t → proj₁ t ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ t))
-       (∈-++ᶜ-split-inj₁ Δ₁ Δ₂ x z' eq')
 -- SUBSTITUTION AT THE VARIABLE IT REPLACES
 --
 -- The third possibility: the variable looked up *is* the one being replaced, so
@@ -287,22 +257,4 @@ sub-rvar-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
 sub-rvar-l []         z W = refl
 sub-rvar-l (Θ ∷ C)    z W = cong Var-∷ (sub-rvar-l Θ z W)
 sub-rvar-l (Θ ⟨ ρ' ⟩) z W = cong (Var-⟨⟩ ρ') (sub-rvar-l Θ z W)
-
--- The same, taking the resource variable's location as an equation rather than reading it off
--- with `proj₂` — which is dependent, so `cong proj₂` is not available.
-
-sub-rvar-r′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Θ)
-            → (t : Var ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
-            → t ≡ (σ , ∈-++ᶜʳ {Γ = Γ ∷ B} z)
-            → (W : Γ ⊢V⦂ B)
-            → atᴿ {Γ} {B} Θ (proj₂ t) W ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
-sub-rvar-r′ Θ z t refl W = sub-rvar-r Θ z W
-
-sub-rvar-l′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A ∈[ σ ] Γ)
-            → (t : Var ((Γ ∷ B) ++ᶜ Θ) ([ ρ ] A))
-            → t ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z))
-            → (W : Γ ⊢V⦂ B)
-            → atᴿ {Γ} {B} Θ (proj₂ t) W
-            ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
-sub-rvar-l′ Θ z t refl W = sub-rvar-l Θ z W
 

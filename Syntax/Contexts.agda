@@ -196,28 +196,6 @@ split-pf x = proj₁ (proj₂ (proj₂ (var-split x)))
 split-grade-≡ : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → ctx-grade (split-r x) ≡ ρ
 split-grade-≡ x = proj₂ (proj₂ (proj₂ (var-split x)))
   
--- No variable belongs to the empty context
-
-var-not-in-empty-ctx : ∀ {A} → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] []))
-var-not-in-empty-ctx = λ ()
-
-
--- If a variable is not in a context Γ and its type doesn't coincide with the type of the head of Γ,
--- then it's not in Γ
-
-var-not-in-ctx-∷ : ∀ {Γ A B}
-                 → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] Γ))
-                 → ¬ (B ≡ A)
-                 → ¬ (Σ[ ρ' ∈ R ] (A ∈[ ρ' ] Γ ∷ B))
-var-not-in-ctx-∷ ¬p ¬q (_ , Hd)     = ¬q refl
-var-not-in-ctx-∷ ¬p ¬q (_ , Tl-∷ x) = ¬p (_ , x)
-
--- If a variable is not in a context Γ then it's not in Γ ⟨ ρ ⟩
-
-var-not-in-ctx-⟨⟩ : ∀ {Γ A ρ}
-                  → (¬ (Σ[ ρ' ∈ R ] (A ∈[ ρ' ] Γ)))
-                  → ¬ (Σ[ ρ'' ∈ R ] (A ∈[ ρ'' ] Γ ⟨ ρ ⟩))
-var-not-in-ctx-⟨⟩ {ρ = ρ} ¬p (_ , Tl-⟨⟩ x) = ¬p (_ , x)
 
 -- Grade-only contexts
 
@@ -311,16 +289,6 @@ infix 34 _ᴱ
 ᴱ-∷-keep {A = A} et with eternal? A
 ... | yes _  = refl
 ... | no ¬et = ⊥-elim (¬et et)
-
--- The eternal restriction is idempotent: `Γ ᴱ` is already lock-free with only
--- eternal variables, so restricting it again changes nothing.
-
-ᴱ-idem : (Γ : Ctx) → (Γ ᴱ) ᴱ ≡ Γ ᴱ
-ᴱ-idem []        = refl
-ᴱ-idem (Γ ∷ A)   with eternal? A
-... | yes et rewrite ᴱ-∷-keep {Γ ᴱ} et = cong (_∷ A) (ᴱ-idem Γ)
-... | no  _ = ᴱ-idem Γ
-ᴱ-idem (Γ ⟨ ρ ⟩) = ᴱ-idem Γ
 
 -- Appending a context on the right of a split.
 

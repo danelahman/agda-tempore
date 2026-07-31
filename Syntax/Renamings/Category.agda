@@ -101,9 +101,8 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 --
 -- Object map `_ᴱ` (Contexts), morphism map `restrict-ren` (Renamings), and
 -- unit `ᴱ-ren : Ren [] Γ (Γ ᴱ)`. The functor laws are `restrict-ren-∘-≐ʳ`,
--- `restrict-ren-id-≐ʳ` and `restrict-ren-≐ʳ`; idempotence on objects is
--- `ᴱ-idem`. What is proved here is the unit's naturality, the one law the
--- development used only in special cases.
+-- `restrict-ren-id-≐ʳ` and `restrict-ren-≐ʳ`. What is proved here is the unit's
+-- naturality, the one law the development used only in special cases.
 ------------------------------------------------------------------------
 
 -- The inclusion acts on a variable as the reflection `∈-ᴱ⁻` does: both

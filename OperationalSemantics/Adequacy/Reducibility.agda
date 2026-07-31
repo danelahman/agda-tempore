@@ -265,7 +265,7 @@ Val-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
 -- Both are recursions on the type, and both are almost free: the slack in the
 -- two Kripke clauses absorbs exactly the mismatch, so nothing has to be
 -- transported. `Val-reach` composes the two reaches — `reach-∘` at `⇒` (both
--- unit-graded) and `reach-∘ᵘ` at `[ ρ ]` (the outer one guarded).
+-- unit-graded), and at `[ ρ ]` the read's own `≤ₛ-trans`.
 ------------------------------------------------------------------------
 
 Val-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
@@ -553,8 +553,8 @@ Comp-≡ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- clause premise, and needing `sub-wk-C` for the same reason.
 
 -- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ` is
--- one out of `St` (`reach-∘ᵘ` against `alloc-reach`), and reading the cell back
--- returns the stored value. Which cell is read is settled — `unbox-ren-img`
+-- one out of `St` (the allocation accumulates nothing), and reading the cell
+-- back returns the stored value. Which cell is read is settled — `unbox-ren-img`
 -- sends it to `≤ₛ-embed (ext q) Hd` — and what it holds is settled too, by
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
