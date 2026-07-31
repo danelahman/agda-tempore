@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The environment morphism of a substitution, and eternal values.
+-- Eternal values, resource lookups, and the one-variable environment.
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -40,7 +40,7 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.RenActions    S
 open import Syntax.Substitutions S
-open import Syntax.Renamings.Equivalence S using (eternal?-no)
+open import Syntax.Renamings.Equivalence S using (Var)
 
 open Category Cat
 open Future Fut
@@ -128,22 +128,6 @@ eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
             (∘ᵐ-congˡ (≈ᵐ-sym (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁)
                                               (eternalᵛ-Eternalᵒ et₂))))))))
 
--- The eternal-parameter transform induced by a substitution: the restriction
--- of `sub-env` to the eternal skeletons. Defined by recursion on the variable,
--- mirroring `sub-env`; at the head an eternal-typed substituend contributes its
--- restricted value, and locks are dropped. This is the substitution analog of
--- `restrict-ren`'s interpretation.
-
-restrict-sub-env : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
-                 → ⟦ (split-l x ++ᶜ split-r x) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-restrict-sub-env {A = A} Hd W with eternal? A
-... | yes et = ⟨ idᵐ , ⟦ eternal-val-restrict et W ⟧ᵛᵗ (eternal-val-restrictᴾ et W) ⟩ᵐ
-... | no  _  = idᵐ
-restrict-sub-env (Tl-∷ {B = B} x) W with eternal? B
-... | yes _ = mapˣᵐ (restrict-sub-env x W) idᵐ
-... | no  _ = restrict-sub-env x W
-restrict-sub-env (Tl-⟨⟩ x) W = restrict-sub-env x W
-
 -- An eternal value's interpretation factors through the eternal projection:
 -- the value-level counterpart of `var-projᴱ` (and the value analog of
 -- `eternal-val-ext-nat`). This carries the substituted eternal value onto the
@@ -155,8 +139,8 @@ eternal-val-restrict-nat : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A
                               ∘ᵐ projᴱ Γ
 -- The interpretation of a *restricted* eternal value is a morphism of eternal
 -- objects (commutes with the extractions). Its variables are all `∈-ᴱ` images,
--- so the variable case is exactly `eternal-mor`. This is what makes
--- `restrict-sub-env` a coalgebra morphism at the head.
+-- so the variable case is exactly `eternal-mor`. This is what makes the
+-- restricted substitution a coalgebra morphism at the head.
 
 restrict-val-mor : ∀ {Γ A} → (et : Eternal A) → (W : Γ ⊢V⦂ A) → ∀ {ρ}
                  → eternalᵛ-extᵉ et {ρ}
@@ -205,121 +189,6 @@ eternal-val-restrict-nat _ ⋆ _ =
 eternal-val-restrict-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
   ≈ᵐ-trans (⟨ eternal-val-restrict-nat et₁ V₁ p₁ , eternal-val-restrict-nat et₂ V₂ p₂ ⟩ᵐ-cong)
            (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
-
--- `restrict-sub-env` is a morphism of eternal objects (commutes with the
--- extractions). Recursion on the variable, mirroring `restrict-ren-mor`; the
--- head-eternal case uses `restrict-val-mor` for the substituted value.
-
-restrict-sub-env-extᵉ : ∀ {Γ A ρ₀} → (x : A ∈[ ρ₀ ] Γ) → (W : split-l x ⊢V⦂ A) → ∀ {ρ}
-                      → projᴱ-extᵉ Γ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (restrict-sub-env x W)
-                      ≈ᵐ restrict-sub-env x W ∘ᵐ projᴱ-extᵉ (split-l x ++ᶜ split-r x) {ρ}
-restrict-sub-env-extᵉ {Γ ∷ A} Hd W {ρ} with eternal? A
-... | yes et =
-  prod-ext
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ} {A} et {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
-    (≈ᵐ-trans (∘ᵐ-identityʳ _)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)))
-              (∘ᵐ-assoc _ _ _))))))))))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ} {A} et {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
-    (≈ᵐ-trans (restrict-val-mor et W)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)))
-              (∘ᵐ-assoc _ _ _))))))))
-... | no  _  =
-  ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
-  (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
-restrict-sub-env-extᵉ (Tl-∷ {Γ = Γ₀} {B = B} x) W {ρ} with eternal? B
-... | yes etB =
-  prod-ext
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ₀} {B} etB {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉ x W))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (projᴱ-extᵉ-fst {split-l x ++ᶜ split-r x} {B} etB {ρ})))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)))
-              (∘ᵐ-assoc _ _ _)))))))))))))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ₀} {B} etB {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-identityˡ _)))
-    (≈ᵐ-sym (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
-                      (×-eternalᵒ-sndᵉ {split-l x ++ᶜ split-r x} {B} etB {ρ})))))))))))
-... | no  _  = restrict-sub-env-extᵉ x W
-restrict-sub-env-extᵉ (Tl-⟨⟩ x) W = restrict-sub-env-extᵉ x W
-
--- The `necᵉ`/`Future` mate (as `restrict-ren-necᵉ` from `restrict-ren-mor`).
-
-restrict-sub-env-necᵉ : ∀ {Γ A ρ₀} → (x : A ∈[ ρ₀ ] Γ) → (W : split-l x ⊢V⦂ A) → ∀ {ρ}
-                      → [ ρ ]ᶠ (restrict-sub-env x W)
-                          ∘ᵐ Eternalᵒ.necᵉ (⟦ split-l x ++ᶜ split-r x ⟧ᴱ-Eternalᵒ) {ρ}
-                      ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ} ∘ᵐ restrict-sub-env x W
-restrict-sub-env-necᵉ {Γ} x W {ρ} =
-  ≈ᵐ-trans (∘ᵐ-congʳ (Eternalᵒ.necᵉ-mate (⟦ split-l x ++ᶜ split-r x ⟧ᴱ-Eternalᵒ)))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (restrict-sub-env-extᵉ x W))))
-  (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (∘ᵐ-congˡ (≈ᵐ-sym (Eternalᵒ.necᵉ-mate (⟦ Γ ⟧ᴱ-Eternalᵒ)))))))))))
-
--- Naturality of the eternal projection along a substitution (as `projᴱ-nat`
--- for renamings). The head-eternal case uses `eternal-val-restrict-nat`; the
--- lock case uses `restrict-sub-env-extᵉ`.
-
-projᴱ-subst-nat : ∀ {Γ A ρ₀} → (x : A ∈[ ρ₀ ] Γ) → (W : split-l x ⊢V⦂ A)
-                → (pW : Paramᵛ W)
-                → projᴱ Γ ∘ᵐ sub-env x W pW
-                ≈ᵐ restrict-sub-env x W ∘ᵐ projᴱ (split-l x ++ᶜ split-r x)
-projᴱ-subst-nat {Γ ∷ A} Hd W pW with eternal? A
-... | yes et =
-  ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
-  (≈ᵐ-trans (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-  (≈ᵐ-trans (⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , eternal-val-restrict-nat et W pW ⟩ᵐ-cong)
-            (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
-... | no  _ =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-  (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
-projᴱ-subst-nat (Tl-∷ {B = B} x) W pW with eternal? B
-... | yes _ =
-  ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-  (≈ᵐ-trans (mapˣᵐ-cong (projᴱ-subst-nat x W pW) ≈ᵐ-refl)
-            (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
-... | no  _ =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-subst-nat x W pW))
-            (∘ᵐ-assoc _ _ _))))
-projᴱ-subst-nat (Tl-⟨⟩ x) W pW =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (projᴱ-subst-nat x W pW)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉ x W))
-            (∘ᵐ-assoc _ _ _))))))
 
 -- (`eq-ren-∷` / `eq-ren-⟨⟩` / `eq-ren-irr` live with the other renaming
 -- denotation lemmas in `Interpretation.Renaming`.)
@@ -403,3 +272,68 @@ split-lookup z =
   ≈ᵐ-trans (split-lookup-e (split-pf z) (split-grade-≡ z))
            (≡→≈ᵐ (cong var-proj (split-var-≡ z)))
 
+
+-- The resource lookup morphism of an `unbox`.
+
+lk : ∀ {Γ A ρ ρ'} → [ ρ ] A ∈[ ρ' ] Γ → ρ' ≾ᵣ ρ → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
+lk z rel = ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj z
+
+-- It depends on the cell alone, the bound being irrelevant.
+
+lk-irr : ∀ {Γ A ρ} → {t t' : Var Γ ([ ρ ] A)} → t ≡ t'
+       → (b : proj₁ t ≾ᵣ ρ) → (b' : proj₁ t' ≾ᵣ ρ)
+       → lk (proj₂ t) b ≈ᵐ lk (proj₂ t') b'
+lk-irr refl b b' rewrite ≾ᵣ-irrelevant b b' = ≈ᵐ-refl
+
+-- Projecting the head variable through one lock and relaxing the redundant
+-- `uᵣ ·ᵣ ρ` back to `ρ` is just the (locked) second projection.
+
+hd-lookup : ∀ {Δ₀ B ρ} → (c : uᵣ ·ᵣ ρ ≾ᵣ ρ)
+          → ⟨⟩-≤ c ∘ᵐ var-proj (Tl-⟨⟩ {Γ = Δ₀ ∷ B} {ρ = ρ} Hd) ≈ᵐ ⟨ ρ ⟩ᶠ sndᵐ
+hd-lookup c =
+  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ η sndᵐ)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ ⟨⟩-μ∘Tη≡id))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans _ c))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl))
+  (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+            (∘ᵐ-identityˡ _)))))))
+
+-- Given that the continuation and the resource lookup each commute with the
+-- substitution, so does the whole unboxing.
+
+unbox-step : ∀ {Γ Γ' A C} → {M' : Γ' ∷ A ⊢C⦂ C} → {M : Γ ∷ A ⊢C⦂ C}
+           → {σ : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ}
+           → {lk' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ} → {lkᵒ : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ}
+           → {pM' : Paramᶜ M'} → {pM : Paramᶜ M}
+           → ⟦ M' ⟧ᶜᵗ pM' ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ mapˣᵐ σ idᵐ
+           → lk' ≈ᵐ lkᵒ ∘ᵐ σ
+           → ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟨ idᵐ , lk' ⟩ᵐ ≈ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , lkᵒ ⟩ᵐ) ∘ᵐ σ
+unbox-step {σ = σ} {lkᵒ = lkᵒ} eM elk =
+  ≈ᵐ-trans (∘ᵐ-congˡ eM)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ
+              (⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
+               , ≈ᵐ-trans (∘ᵐ-identityˡ _) elk ⟩ᵐ-cong))
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ idᵐ lkᵒ σ)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
+
+-- Unfoldings of `var-morphism` once eternality has been decided. (Stating
+-- them as lemmas is what lets the `eternal?` split reduce `var-morphism`
+-- inside a recursive call's type.)
+
+var-morphism-et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
+                → (et : Eternal B)
+                → var-morphism f y ≈ᵐ eternalᵛ-extᵉ et ∘ᵐ var-proj y
+var-morphism-et {B = B} y f et with eternal? B
+... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
+... | no ¬et' = ⊥-elim (¬et' et)
+
+var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
+                 → (¬et : ¬ Eternal B)
+                 → var-morphism f y ≈ᵐ εᵘ ∘ᵐ ⟨⟩-≤ (f ¬et) ∘ᵐ var-proj y
+var-morphism-¬et {B = B} y f ¬et with eternal? B
+... | yes et'  = ⊥-elim (¬et et')
+... | no ¬et'' = ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))

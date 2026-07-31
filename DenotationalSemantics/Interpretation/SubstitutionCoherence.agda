@@ -1,16 +1,18 @@
 ------------------------------------------------------------------------
 -- The interpretation is natural in substitutions:                      --
---   ⟦ M [ x ↦ W ]c ⟧ᶜᵗ ≈ ⟦ M ⟧ᶜᵗ ∘ᵐ sub-env x W   (dually for values). --
+--   ⟦ C-sub₀ s M ⟧ᶜᵗ ≈ ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ s ⟧ˢ₀        (dually for values). --
 --                                                                    --
--- `sub-env x W : ⟦ split-l x ++ᶜ split-r x ⟧ →ᵐ ⟦ Γ ⟧` is the semantic  --
--- counterpart of the substitution: it reconstructs the environment for   --
--- `Γ` by inserting `⟦ W ⟧` at the position of `x`. It is defined by       --
--- structural recursion on `x` (the context splitting computes on `x`,     --
--- and the context interpretation distributes over `++ᶜ`), so no           --
--- transports along context equalities are needed.                         --
+-- `⟦ s ⟧ˢ₀ : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ` is the semantic counterpart of a    --
+-- `Sub₀ [] Γ Γ'`: each generator is a structural map of the model, so it  --
+-- is defined by recursion on the substitution alone, and no transports     --
+-- along context equalities are needed.                                     --
+--                                                                          --
+-- Replacing one variable is the instance at `sub-at₀ x W`, whose            --
+-- environment morphism is `sub-env x W`.                                    --
 ------------------------------------------------------------------------
--- The four parts below are the substitution's environment morphism, the
--- `unbox` and variable cases, the transports, and the theorem itself.
+-- The four parts below are the eternal-value lemmas, the substitution's
+-- environment morphism and the theorem, the transports, and the
+-- one-variable instance.
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -37,6 +39,6 @@ module DenotationalSemantics.Interpretation.SubstitutionCoherence
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base S Cat Fut Pst Adj GTy Mon GE public
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Unbox S Cat Fut Pst Adj GTy Mon GE public
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Env S Cat Fut Pst Adj GTy Mon GE public
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport S Cat Fut Pst Adj GTy Mon GE public
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Core S Cat Fut Pst Adj GTy Mon GE public

@@ -235,7 +235,7 @@ open import DenotationalSemantics.Interpretation.Renaming.Structural
 open import DenotationalSemantics.Interpretation.Renaming
 open import DenotationalSemantics.Interpretation.RenamingCoherence
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base
-open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Unbox
+open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Env
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Transport
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Core
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence
