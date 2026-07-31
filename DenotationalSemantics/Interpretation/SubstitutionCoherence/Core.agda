@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- Replacing one variable, as an instance of the general theorem.
 --
--- `_[ x ↦ W ]v`/`_[ x ↦ W ]c` is `sub-split₀ (split-pf x) W` acting, and
+-- `_[ split-pf x ↦ W ]v`/`_[ split-pf x ↦ W ]c` is `sub-split₀ (split-pf x) W` acting, and
 -- `sub-env x W` is that substitution's environment morphism
 -- (`sub-env-is-⟦⟧ˢ₀`), so both statements are the general ones read there.
 ------------------------------------------------------------------------
@@ -49,26 +49,30 @@ open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Env S Cat Fut Pst Adj GTy Mon GE
 
-subᵛ : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
-     → Paramᵛ V → Paramᵛ W → Paramᵛ (V [ x ↦ W ]v)
-subᵛ V x W pV pW = subᵛˢ (sub-split₀ (split-pf x) W) (sub-split₀ᴾ (split-pf x) W pW) V pV
+subᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (V : Γ ⊢V⦂ B) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+     → (W : Γ₁ ⊢V⦂ A)
+     → Paramᵛ V → Paramᵛ W → Paramᵛ (V [ s ↦ W ]v)
+subᵛ V s W pV pW = subᵛˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) V pV
 
-subᶜ : ∀ {Γ A C ρ} → (M : Γ ⊢C⦂ C) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
-     → Paramᶜ M → Paramᵛ W → Paramᶜ (M [ x ↦ W ]c)
-subᶜ M x W pM pW = subᶜˢ (sub-split₀ (split-pf x) W) (sub-split₀ᴾ (split-pf x) W pW) M pM
+subᶜ : ∀ {Γ Γ₁ Γ₂ A C} → (M : Γ ⊢C⦂ C) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+     → (W : Γ₁ ⊢V⦂ A)
+     → Paramᶜ M → Paramᵛ W → Paramᶜ (M [ s ↦ W ]c)
+subᶜ M s W pM pW = subᶜˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) M pM
 
-V-subst-nat : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+V-subst-nat : ∀ {Γ Γ₁ Γ₂ A B} → (V : Γ ⊢V⦂ B) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+            → (W : Γ₁ ⊢V⦂ A)
             → (pV : Paramᵛ V) → (pW : Paramᵛ W)
-            → ⟦ V [ x ↦ W ]v ⟧ᵛᵗ (subᵛ V x W pV pW)
-            ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ sub-env x W pW
-V-subst-nat V x W pV pW =
-  ≈ᵐ-trans (V-subst-natˢ (sub-split₀ (split-pf x) W) (sub-split₀ᴾ (split-pf x) W pW) V pV)
-           (∘ᵐ-congʳ (sub-env-is-⟦⟧ˢ₀ x W pW))
+            → ⟦ V [ s ↦ W ]v ⟧ᵛᵗ (subᵛ V s W pV pW)
+            ≈ᵐ ⟦ V ⟧ᵛᵗ pV ∘ᵐ sub-env s W pW
+V-subst-nat V s W pV pW =
+  ≈ᵐ-trans (V-subst-natˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) V pV)
+           (∘ᵐ-congʳ (sub-env-is-⟦⟧ˢ₀ s W pW))
 
-C-subst-nat : ∀ {Γ A C ρ} → (M : Γ ⊢C⦂ C) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+C-subst-nat : ∀ {Γ Γ₁ Γ₂ A C} → (M : Γ ⊢C⦂ C) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+            → (W : Γ₁ ⊢V⦂ A)
             → (pM : Paramᶜ M) → (pW : Paramᵛ W)
-            → ⟦ M [ x ↦ W ]c ⟧ᶜᵗ (subᶜ M x W pM pW)
-            ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ sub-env x W pW
-C-subst-nat M x W pM pW =
-  ≈ᵐ-trans (C-subst-natˢ (sub-split₀ (split-pf x) W) (sub-split₀ᴾ (split-pf x) W pW) M pM)
-           (∘ᵐ-congʳ (sub-env-is-⟦⟧ˢ₀ x W pW))
+            → ⟦ M [ s ↦ W ]c ⟧ᶜᵗ (subᶜ M s W pM pW)
+            ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ sub-env s W pW
+C-subst-nat M s W pM pW =
+  ≈ᵐ-trans (C-subst-natˢ (sub-split₀ s W) (sub-split₀ᴾ s W pW) M pM)
+           (∘ᵐ-congʳ (sub-env-is-⟦⟧ˢ₀ s W pW))

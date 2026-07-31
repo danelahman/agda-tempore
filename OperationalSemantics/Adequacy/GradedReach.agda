@@ -103,7 +103,7 @@ resume : ∀ {St St' ρ A ε B}
        → toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε
        → toCtx St' ⊢V⦂ B
        → toCtx St' ⊢C⦂ A ‼ ε
-resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ Hd ↦ W ]c
+resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 
 -- TRANSITIVITY OF STATE EXTENSION
 --

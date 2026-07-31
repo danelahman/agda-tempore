@@ -85,7 +85,7 @@ Fired : ∀ {B} → (St : 𝕊 []) → (op : Op) → (ε₃ : E)
 Fired {B} St op ε₃ H St₁ V₀ W =
   (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₁))))
      (subst (Cl B op ε₃) (toCtxᴱ-≡ St St₁) (H op ε₃)))
-    [ Tl-∷ Hd ↦ W ]c
+    [ split-∷ split-[] ↦ W ]c
 
 Clause-Prem : (B : VType) → (St : 𝕊 [])
             → ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ)) → Set
@@ -103,7 +103,7 @@ Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
 Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
   ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
     → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
-    → Comp' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c)
+    → Comp' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
 ------------------------------------------------------------------------
 -- RENAMINGS BETWEEN CLAUSE CONTEXTS OVER A STATE
@@ -183,19 +183,18 @@ subst-collapse-cl refl refl refl e₄ X =
 -- being matched.
 ------------------------------------------------------------------------
 
-cl-cancel : ∀ {Γ A B ρ}
-          → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+cl-cancel : ∀ {Γ Γ₁ Γ₂ A B}
+          → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
           → (H : (op : Op) → (ε : E) → Cl B op ε (Γ ᴱ))
-          → (K : (op : Op) → (ε : E)
-                   → Cl B op ε ((split-l x ++ᶜ split-r x) ᴱ))
+          → (K : (op : Op) → (ε : E) → Cl B op ε ((Γ₁ ++ᶜ Γ₂) ᴱ))
           → ((¬et : ¬ Eternal A) → (op : Op) → (ε : E)
-               → (H [ x ↦ W ]cl) op ε ≡ K op ε)
+               → (H [ s ↦ W ]cl) op ε ≡ K op ε)
           → ((et : Eternal A) → (op : Op) → (ε : E)
-               → (H [ x ↦ W ]cl) op ε ≡ K op ε)
+               → (H [ s ↦ W ]cl) op ε ≡ K op ε)
           → (op : Op) → (ε : E)
-          → (H [ x ↦ W ]cl) op ε ≡ K op ε
+          → (H [ s ↦ W ]cl) op ε ≡ K op ε
 
-cl-cancel {A = A} x W H K hne het op ε with eternal? A
+cl-cancel {A = A} s W H K hne het op ε with eternal? A
 ... | no ¬et = hne ¬et op ε
 ... | yes et = het et op ε
 
@@ -227,7 +226,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
   Comp-expand* rs'
     (Comp-expand HANDLE-RET
-      (Comp-≡ᶜ (sub-≡ᶜ Hd (refl) shift) (hN q V pV)))
+      (Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -318,10 +317,10 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
     fired : Fired St op (ε₃ ·ₑ ε₂) H St₁ V₀ W
           ≡ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₁))))
-               (H₁ op (ε₃ ·ₑ ε₂))) [ Tl-∷ Hd ↦ W ]c
+               (H₁ op (ε₃ ·ₑ ε₂))) [ split-∷ split-[] ↦ W ]c
     fired =
       cong (λ z → (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₁)))) z)
-                    [ Tl-∷ Hd ↦ W ]c)
+                    [ split-∷ split-[] ↦ W ]c)
            (sym (eH₁ op (ε₃ ·ₑ ε₂)))
 
     -- The boxed resumption *is* a lambda, so `Val`'s arrow clause is met by its
@@ -339,10 +338,10 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                → (M₂ : toCtx St'' ∷ Ar ⊢C⦂ B ‼ (ε₃ ·ₑ ε₂))
                → M₂ ≡ reach-under q' Mq
                → (W' : toCtx St'' ⊢V⦂ Ar) → Val Ar St'' W'
-               → Comp' B (ε₃ ·ₑ ε₂) St'' (M₂ [ Hd ↦ W' ]c)
+               → Comp' B (ε₃ ·ₑ ε₂) St'' (M₂ [ split-[] ↦ W' ]c)
 
         resump {St''} q' M₂ eM₂ W' pW' =
-          Comp-≡ᶜ (sym (sub-≡ᶜ Hd (refl) collapse)) inner
+          Comp-≡ᶜ (sym (sub-≡ᶜ split-[] (refl) collapse)) inner
           where
             q₂ = reach-∘ q' q
 
@@ -396,7 +395,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
             -- is `resume q₂ M' W'`.
             inner : Comp' B (ε₃ ·ₑ ε₂) St''
                       ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
-                         [ Hd ↦ W' ]c)
+                         [ split-[] ↦ W' ]c)
             inner =
               handle-Comp _ _ (pk q₂ W' (Val→Valᵍ (arity op) W' pW')) hH₂ hN₂
               where
@@ -426,10 +425,10 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 -- `HANDLE-OP` weakens it past the arity variable and `resume`
                 -- substitutes for exactly that variable, so the two cancel
                 eN₂ : (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
-                        [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c
+                        [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c
                     ≡ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
                 eN₂ =
-                  trans (sub-≡ᶜ (Tl-∷ (Tl-⟨⟩ Hd)) (refl) split-off)
+                  trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
                     (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
                                         (C-rename (cong-∷-ren W₁) N₁) W')
                       (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
@@ -478,9 +477,9 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
                 hN₂ : Seq-Prem ((C-rename
                                    (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
-                                  [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c)
+                                  [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c)
                 hN₂ {St₃} q₃ V pV =
-                  Comp-≡ᶜ (sub-≡ᶜ Hd (refl) shift) (hN q₄ V pV)
+                  Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₄ V pV)
                   where
                     -- the run and the clause's own reach accumulate: the grades
                     -- multiply and each is bounded, so the composite stays
@@ -526,7 +525,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                           ≡ C-rename (cong-∷-ren (unbox-ren q₃))
                                ((C-rename
                                    (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
-                                  [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c)
+                                  [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c)
                     shift =
                       trans
                         (C-rename-≡
@@ -550,7 +549,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 --
                 -- where `H₂` is `H` pushed along: `eH₁`'s transport, the
                 -- `ren-ᴱ-∷ Ar` inclusion, `restrict-ren (cong-∷-ren sq)`, and
-                -- `_[ Hd ↦ W' ]cl`.
+                -- `_[ split-[] ↦ W' ]cl`.
                 --
                 -- Two lemmas close it, and both are within reach now that `_ᴱ`
                 -- and `_[_↦_]c` expose the decision:
@@ -582,10 +581,10 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                           (restrict-ren
                                             (cong-∷-ren (unbox-ren q₂)))))
                                 (H₁' op' ε'))
-                          [ Hd {Γ = toCtx St''} ↦ W' ]cl))
+                          [ split-[] {toCtx St'' ∷ _} ↦ W' ]cl))
                 hH₂ {St₃} {op₃} {ε₄} V₀' bv W₃ pW₃ =
                   Comp-≡ᶜ
-                    (sub-≡ᶜ (Tl-∷ Hd) (refl)
+                    (sub-≡ᶜ (split-∷ split-[]) (refl)
                       (C-rename-cong
                         (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₃)))) step))
                     (hH V₀' bv W₃ pW₃)
@@ -638,11 +637,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                            (restrict-ren
                                              (cong-∷-ren (unbox-ren q₂)))))
                                  (H₁' op'' ε''))
-                            [ Hd {Γ = toCtx St''} ↦ W' ]cl) op' ε'
+                            [ split-[] {toCtx St'' ∷ _} ↦ W' ]cl) op' ε'
                         ≡ K op' ε'
                     hne ¬et op' ε' =
                       trans
-                       (cl-ne-≡ ¬et (Hd {Γ = toCtx St''}) W'
+                       (cl-ne-≡ ¬et (split-[] {toCtx St'' ∷ Ar}) W'
                           (λ op'' ε'' →
                              C-rename (cong-∷-ren (cong-∷-ren
                                          (restrict-ren
@@ -684,7 +683,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                            (toCtxᴱ-[] St'')))
 
                         eD : (toCtx St'' ∷ Ar) ᴱ ≡ toCtx St'' ᴱ
-                        eD = ᴱ-drop-split {A = Ar} ¬et (Hd {Γ = toCtx St''})
+                        eD = ᴱ-drop-split {A = Ar} ¬et (split-[] {toCtx St'' ∷ Ar})
 
                         collapse-ne :
                             subst (Cl B op' ε') eD
@@ -737,11 +736,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                            (restrict-ren
                                              (cong-∷-ren (unbox-ren q₂)))))
                                  (H₁' op'' ε''))
-                            [ Hd {Γ = toCtx St''} ↦ W' ]cl) op' ε'
+                            [ split-[] {toCtx St'' ∷ _} ↦ W' ]cl) op' ε'
                         ≡ K op' ε'
                     het et op' ε' =
                       trans
-                       (cl-et-≡ et (Hd {Γ = toCtx St''}) W'
+                       (cl-et-≡ et (split-[] {toCtx St'' ∷ Ar}) W'
                           (λ op'' ε'' →
                              C-rename (cong-∷-ren (cong-∷-ren
                                          (restrict-ren
@@ -750,58 +749,36 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                           op' ε' eOut)
                       (trans
                         (substᶜ-≡ eOut
-                          (sub-≡ᶜ (split→∈ sp) (refl) factor))
+                          (sub-≡ᶜ sp (refl) factor))
                         (trans
                           ( (cong (subst (_⊢C⦂ CT) eOut)
-                                   (sub-cast-C′ eKD Mwk (split→∈ tp) (split→∈ sp)
-                                                ey Wt Ws eW)))
-                          (trans
-                            ( (subst-fuseᶜ eSub eOut
-                                     (Mwk [ split→∈ tp ↦ Wt ]c)))
-                            (trans
-                              ( (trans
-                                (cong (λ z → subst (_⊢C⦂ CT) z
-                                               (Mwk [ split→∈ tp ↦ Wt ]c)) uip)
-                                (sym (castᶜ≡subst
-                                       (castOf {toCtx St'' ᴱ} {Ar} D) _))))
-                              (trans (sub-wk-C-cast D eG (H₁ op' ε') Wt)
-                                        ( collapse-et))))))
+                                   (sub-cast-C′ eKD Mwk tp sp Ws)))
+                          (trans (cong (λ z → subst (_⊢C⦂ CT) eOut z)
+                                       (sub-wk-C-cast D eG (H₁ op' ε') Ws))
+                                 ( collapse-et))))
                       where
                         D  = Dof op' ε'
                         CT = B ‼ (op-grade op' ·ₑ ε')
 
                         -- the two splittings of the clause's context: the one
-                        -- `cl-et-≡` names, and the one `sub-wk-C` wants
-                        sp = split-++ʳ (∈-ᴱ-split et (Hd {Γ = toCtx St''})) D
+                        -- `cl-et-≡` names, and the one `sub-wk-C` wants. Both
+                        -- have halves `toCtx St'' ᴱ` and `D`, so `split-unique`
+                        -- relates them and no retyping of the value is needed.
+                        sp = split-++ʳ (∈-ᴱ-split et (split-[] {toCtx St'' ∷ Ar})) D
                         tp = split-≡-++ᶜ {toCtx St'' ᴱ ∷ Ar} {D}
 
                         -- `∈-ᴱ-split`'s own type identifies the two contexts —
                         -- no `eternal?` reduction needed
                         eKD = cong (_++ᶜ D)
-                                (split-≡ (∈-ᴱ-split et (Hd {Γ = toCtx St''})))
+                                (split-≡ (∈-ᴱ-split et (split-[] {toCtx St'' ∷ Ar})))
                         eG  = cong (_++ᶜ D) (toCtxᴱ-≡ St₁ St'')
 
                         Mwk = C-rename (cong-ren {Γ'' = D} (wk-ren {A = Ar}))
                                 (subst (_⊢C⦂ CT) eG (H₁ op' ε'))
 
-                        ey = split→∈-unique eKD tp sp
-                        eL = trans (split-l-cast eKD (split→∈ tp)) (cong split-l ey)
+                        Ws = eternal-val-restrict et W'
 
-                        eSub = cong₂ _++ᶜ_ eL
-                                 (trans (split-r-cast eKD (split→∈ tp))
-                                        (cong split-r ey))
-
-                        Ws = subst (_⊢V⦂ Ar) (sym (split→∈-split-l sp))
-                               (eternal-val-restrict et W')
-                        Wt = subst (_⊢V⦂ Ar) (sym eL) Ws
-                        eW = subst-subst-sym′ eL Ws
-
-                        eOut =
-                          trans (cong₂ _++ᶜ_ (split→∈-split-l sp)
-                                             (split→∈-split-r sp))
-                            (trans (sym (++ᶜ-assoc ((toCtx St'') ᴱ) ([] ᴱ) D))
-                                   (cong (_++ᶜ D)
-                                     (sym (ᴱ-++ᶜ (toCtx St'') []))))
+                        eOut = cong (toCtx St'' ᴱ ++ᶜ_) (++ᶜ-identityˡ {D})
 
                         -- the renaming factors through `wk-ren`: `cl-ren-≐ʳ`
                         -- again, both sides fixing `D`'s two variables
@@ -885,7 +862,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                                 (restrict-ren
                                                   (cong-∷-ren (unbox-ren q₂)))))
                                       (H₁' op' ε'))
-                                 [ Hd {Γ = toCtx St''} ↦ W' ]cl) op₃ ε₄)
+                                 [ split-[] {toCtx St'' ∷ _} ↦ W' ]cl) op₃ ε₄)
                     step =
                       trans ( (sym fuse))
                         (substᶜ-≡′
@@ -894,7 +871,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                          (type-of-gtype (arity op₃) ⇒ B ‼ ε₄))
                           (toCtxᴱ-≡ St'' St₃)
                           (sym
-                            (cl-cancel (Hd {Γ = toCtx St''}) W' _ K
+                            (cl-cancel (split-[] {toCtx St'' ∷ Ar}) W' _ K
                                        hne het op₃ ε₄)))
 
 
@@ -938,7 +915,7 @@ env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → (St₁ : 𝕊 [])
              ≡ env-C (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)) (H op ε)
 
 env-Hˢ-fired {St} {Γ} {B} γ St₁ H {op} {ε} V₀ W =
-  sub-≡ᶜ (Tl-∷ Hd) (refl)
+  sub-≡ᶜ (split-∷ split-[]) (refl)
     (trans
       (subst-Cl-ren (toCtxᴱ-≡ St St₁) (ᴱ-ren (toCtx St₁))
                     (eq-ren (toCtxᴱ-++ᶜ St []) ∘ʳ clause-ren St₁ [])

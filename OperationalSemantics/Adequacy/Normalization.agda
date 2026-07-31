@@ -115,7 +115,7 @@ FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
   where
     M₀ = env-Cˢ γ ([] ∷ A ∷ B) M
 
-    step : (M₀ [ Hd ↦ V-rename wk-ren U₂ ]c) [ Hd ↦ U₁ ]c
+    step : (M₀ [ split-[] ↦ V-rename wk-ren U₂ ]c) [ split-[] ↦ U₁ ]c
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
 
@@ -254,7 +254,7 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
             → (W' : toCtx St₂ ⊢V⦂ Ar)
             → env-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') M ≡ resume q M₀ W'
     resumeq q W' =
-      cong (λ z → (C-rename (cong-∷-ren (unbox-ren q)) z) [ Hd ↦ W' ]c)
+      cong (λ z → (C-rename (cong-∷-ren (unbox-ren q)) z) [ split-[] ↦ W' ]c)
         (trans (castᶜ-irr (sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) ([] ∷ Ar)))
                           refl _)
                (cong (env-Cˢ γ ([] ⟨ ρ ⟩ ∷ Ar))
@@ -285,7 +285,7 @@ mutual
   FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) =
       _ , env-Vˢ-lam γ [] M
     , λ q M₂ eM₂ W pW →
-        Comp-≡ᶜ (sub-≡ᶜ Hd (refl) (sym eM₂))
+        Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) (sym eM₂))
                 (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M)
 
   -- The computation half. `return` is a weak head normal form; `coerce`,
@@ -317,7 +317,7 @@ mutual
       (subst (λ z → Comp' _ _ _ (z · env-V γ W)) (sym eq)
         (Comp-expand APP
           (Comp-≡ᶜ
-            (sub-≡ᶜ Hd (refl)
+            (sub-≡ᶜ split-[] (refl)
               (C-rename-id-≡ (cong-∷-ren-id-≐ʳ reach-renᵘ-id-≐ʳ) M₀))
             (f reach-id (reach-under reach-id M₀) (refl)
                (env-V γ W) (FL-V γ pγ W)))))

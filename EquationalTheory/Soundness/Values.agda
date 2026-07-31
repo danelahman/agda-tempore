@@ -9,7 +9,7 @@
 -- value in scope every computation is the same one.                    --
 --                                                                    --
 -- The substitutions on the right-hand sides are discharged by           --
--- `V-subst-nat`/`C-subst-nat`: `sub-env Hd W` is the pairing            --
+-- `V-subst-nat`/`C-subst-nat`: `sub-env split-[] W` is the pairing           --
 -- `⟨ idᵐ , ⟦ W ⟧ ⟩ᵐ`, so each beta rule reduces to a product            --
 -- manipulation.                                                        --
 ------------------------------------------------------------------------
@@ -93,8 +93,8 @@ sound-fun-beta : ∀ {Γ A C} → (M : Γ ∷ A ⊢C⦂ C) → (W : Γ ⊢V⦂ A
                → Soundᶜ== (fun-beta M W)
 sound-fun-beta M W (pM , pW) pR =
     βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ W ⟧ᵛᵗ pW)
-  ∙ ≈ᵐ-sym (C-subst-nat M Hd W pM pW)
-  ∙ ⟦⟧ᶜᵗ-irr (M [ Hd ↦ W ]c) (subᶜ M Hd W pM pW) pR
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] W pM pW)
+  ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ W ]c) (subᶜ M split-[] W pM pW) pR
 
 sound-absurd-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ Empty) → (M : Γ ∷ Empty ⊢C⦂ C)
                  → Soundᶜ== (absurd-eta V M)
@@ -108,15 +108,15 @@ sound-absurd-eta V M pV pR = 𝟘ᵐ-strict (⟦ V ⟧ᵛᵗ pV) _ _
 sound-match-eta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A |×| B ⊢C⦂ C)
                 → Paramᶜ M → Soundᶜ== (match-eta V M)
 sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
-    ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr ((C-rename ρ M) [ Hd ↦ pair ]c) pB
-                  (subᶜ (C-rename ρ M) Hd pair (renᶜ ρ M pM) (tt , tt))
-              ∙ C-subst-nat (C-rename ρ M) Hd pair (renᶜ ρ M pM) (tt , tt)
+    ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr ((C-rename ρ M) [ split-[] ↦ pair ]c) pB
+                  (subᶜ (C-rename ρ M) split-[] pair (renᶜ ρ M pM) (tt , tt))
+              ∙ C-subst-nat (C-rename ρ M) split-[] pair (renᶜ ρ M pM) (tt , tt)
               ∙ ∘ᵐ-congˡ (C-rename-nat ρ M pM))
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ cart)
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (M [ Hd ↦ V ]c) pR (subᶜ M Hd V pM pV)
-            ∙ C-subst-nat M Hd V pM pV)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) pR (subᶜ M split-[] V pM pV)
+            ∙ C-subst-nat M split-[] V pM pV)
   where
     ρ    = wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren
     pair = ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊
@@ -138,7 +138,7 @@ sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
 
     -- Substituting the re-paired components into the matched environment
     -- rebuilds the matched value: this is the product's eta.
-    re-pair : sub-env Hd pair (tt , tt)
+    re-pair : sub-env split-[] pair (tt , tt)
                 ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ v ⟩ᵐ , sndᵐ ∘ᵐ v ⟩ᵐ
             ≈ᵐ ⟨ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ v ⟩ᵐ , sndᵐ ∘ᵐ v ⟩ᵐ , v ⟩ᵐ
     re-pair =
@@ -153,9 +153,9 @@ sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
             , ∘ᵐ-congˡ (var-morphism-Hd {Γ ∷ A} {B} _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong
           ∙ ≈ᵐ-sym (⟨⟩ᵐ-unique _ _ v ≈ᵐ-refl ≈ᵐ-refl) ⟩ᵐ-cong
 
-    cart : ⟦ ρ ⟧ʳ ∘ᵐ sub-env Hd pair (tt , tt)
+    cart : ⟦ ρ ⟧ʳ ∘ᵐ sub-env split-[] pair (tt , tt)
                      ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ v ⟩ᵐ , sndᵐ ∘ᵐ v ⟩ᵐ
-         ≈ᵐ sub-env Hd V pV
+         ≈ᵐ sub-env split-[] V pV
     cart =
         ∘ᵐ-congˡ ρ-mor
       ∙ ∘ᵐ-congʳ re-pair
@@ -171,12 +171,12 @@ sound-match-beta V W M ((pV , pW) , pM) pR =
     -- the two projections of the pair being matched
     ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
     -- the two substitutions, composed and reassociated
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr ((M [ Hd ↦ V-rename wk-ren W ]c) [ Hd ↦ V ]c) pR
-                (subᶜ (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
-                   (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
-            ∙ C-subst-nat (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
-                (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
-            ∙ ∘ᵐ-congˡ (  C-subst-nat M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr ((M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) pR
+                (subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+                   (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
+            ∙ C-subst-nat (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+                (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
+            ∙ ∘ᵐ-congˡ (  C-subst-nat M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)
                         ∙ ∘ᵐ-congʳ ⟨ ≈ᵐ-refl , V-rename-nat wk-ren W pW ⟩ᵐ-cong)
             ∙ ∘ᵐ-assoc _ _ _
             ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _

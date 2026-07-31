@@ -63,7 +63,7 @@ mutual
                    → {M : ((toCtx S) ∷ A) ⊢C⦂ B ‼ ε}
                    → {V : (toCtx S) ⊢V⦂ A}
                      -----------------------------------------
-                   → ⟨ S , lam M · V ⟩ ↝ ⟨ S , M [ Hd ↦ V ]c ⟩
+                   → ⟨ S , lam M · V ⟩ ↝ ⟨ S , M [ split-[] ↦ V ]c ⟩
 
         -- usual step for match on pair 
         MATCH      : ∀ {A B C}
@@ -73,7 +73,7 @@ mutual
                    → {M : toCtx S ∷ A ∷ B ⊢C⦂ C} 
                      ---------------------------------------------------
                    → ⟨ S , match ⦉ V , W ⦊ `in M ⟩ ↝ 
-                     ⟨ S , (M [ Hd ↦ V-rename wk-ren W ]c) [ Hd ↦ V ]c ⟩
+                     ⟨ S , (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
 
         -- step for sequencing (time and state must go on)
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
@@ -100,7 +100,7 @@ mutual
                      ⟨ S , (C-rename
                              (cong-∷-ren
                                ((eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)))
-                              N) [ Hd ↦ V ]c ⟩
+                              N) [ split-[] ↦ V ]c ⟩
 
         -- usual performing operation in sequencing
         SEQ-OP     : ∀ {A B ε ε' op} 
@@ -140,7 +140,7 @@ mutual
                      ⟨ S , (C-rename
                              (cong-∷-ren
                                (eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
-                             N) [ Hd ↦ V ]c ⟩
+                             N) [ split-[] ↦ V ]c ⟩
                      
         -- step on computation in handle. time and state must go on
         HANDLE-STEP : ∀ {A B ε₁ ε₂ ε₁'}
@@ -201,7 +201,7 @@ mutual
                              -- when the operation is handled
                              (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S))))
                                        (H op (ε ·ₑ ε''))
-                              [ Tl-∷ Hd ↦ V ]c) ⟩
+                              [ split-∷ split-[] ↦ V ]c) ⟩
 
         -- step for box: we just extend our state with new resource
         BOX         : ∀ {A B ρ' ε} → {S : 𝕊 []}
@@ -221,7 +221,7 @@ mutual
                     → {M : toCtx S ∷ A ⊢C⦂ C}
                       ----------------------------------------------------------
                     → ⟨ S , unbox z rel M ⟩ ↝
-                      ⟨ S , M [ Hd ↦ unbox-lookup S z rel ]c ⟩
+                      ⟨ S , M [ split-[] ↦ unbox-lookup S z rel ]c ⟩
 
         -- during execution coerces are peeled off and
         -- the computation's effect becomes more precise

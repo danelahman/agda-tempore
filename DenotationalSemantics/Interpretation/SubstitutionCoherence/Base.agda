@@ -84,11 +84,11 @@ eternal-val-restrictᴾ _  ⋆                       = tt
 eternal-val-restrictᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   eternal-val-restrictᴾ et₁ V₁ , eternal-val-restrictᴾ et₂ V₂
 
-sub-env : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A) → Paramᵛ W
-        → ⟦ split-l x ++ᶜ split-r x ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
-sub-env Hd                W pW = ⟨ idᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
-sub-env (Tl-∷ x)          W pW = mapˣᵐ (sub-env x W pW) idᵐ
-sub-env (Tl-⟨⟩ {ρ = ρ} x) W pW = ⟨ ρ ⟩ᶠ (sub-env x W pW)
+sub-env : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A) → Paramᵛ W
+        → ⟦ Γ₁ ++ᶜ Γ₂ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
+sub-env split-[]              W pW = ⟨ idᵐ , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
+sub-env (split-∷ s)           W pW = mapˣᵐ (sub-env s W pW) idᵐ
+sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 
 -- (`var-morphism-Tl-∷` lives in `Interpretation.Variables`.)
 

@@ -242,25 +242,25 @@ cast-unbox⁻ refl _ refl = _ , _ , _ , _ , refl , refl , refl
 
 cast-app-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
          → (M' : Γ' ∷ A ⊢C⦂ C) → (W' : Γ' ⊢V⦂ A)
-         → (castᶜ (cong (_∷ A) e) M') [ Hd ↦ castᵛ e W' ]c
-         ≡ castᶜ e (M' [ Hd ↦ W' ]c)
+         → (castᶜ (cong (_∷ A) e) M') [ split-[] ↦ castᵛ e W' ]c
+         ≡ castᶜ e (M' [ split-[] ↦ W' ]c)
 cast-app-reduct refl M' W' = refl
 
 cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢C⦂ C) → (V' : Γ' ⊢V⦂ A) → (W' : Γ' ⊢V⦂ B)
            → ((castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
-                [ Hd ↦ V-rename wk-ren (castᵛ e W') ]c) [ Hd ↦ castᵛ e V' ]c
-           ≡ castᶜ e ((M' [ Hd ↦ V-rename wk-ren W' ]c) [ Hd ↦ V' ]c)
+                [ split-[] ↦ V-rename wk-ren (castᵛ e W') ]c) [ split-[] ↦ castᵛ e V' ]c
+           ≡ castᶜ e ((M' [ split-[] ↦ V-rename wk-ren W' ]c) [ split-[] ↦ V' ]c)
 cast-match-reduct refl M' V' W' = refl
 
 cast-seq-ret : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ)
              → (N' : Γ' ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε) → (V' : Γ' ⊢V⦂ A)
              → (C-rename (cong-∷-ren (eq-ren (cong (_⟨_⟩ Γ) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                  (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ uₑ ⟩ ∷ A) e) N'))
-                   [ Hd ↦ castᵛ e V' ]c
+                   [ split-[] ↦ castᵛ e V' ]c
              ≡ castᶜ e ((C-rename
                           (cong-∷-ren (eq-ren (cong (_⟨_⟩ Γ') map-uᵉ) ∘ʳ ⟨⟩-η-ren))
-                          N') [ Hd ↦ V' ]c)
+                          N') [ split-[] ↦ V' ]c)
 cast-seq-ret refl N' V' = refl
 
 cast-box-val : ∀ {Γ Γ' A ρ} → (e : Γ' ≡ Γ) → (V' : Γ' ⟨ ρ ⟩ ⊢V⦂ A)

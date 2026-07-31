@@ -156,39 +156,33 @@ split-r-cast : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
              → split-r x ≡ split-r (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 split-r-cast refl x = refl
 
-sub-cast-C : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C) → (x : A ∈[ ρ ] Γ)
-           → (W : split-l x ⊢V⦂ A)
-           → subst (_⊢C⦂ C) (cong₂ _++ᶜ_ (split-l-cast e x) (split-r-cast e x))
-               (M [ x ↦ W ]c)
+-- A splitting names its two halves outright, so transporting the term it is a
+-- splitting of moves the splitting but not the result context: no transport
+-- appears on either side of the substitution's own result.
+
+sub-cast-C : ∀ {Γ Γ' Γ₁ Γ₂ A C} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
+           → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
+           → M [ s ↦ W ]c
            ≡ (subst (_⊢C⦂ C) e M)
-               [ subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
-               ↦ subst (_⊢V⦂ A) (split-l-cast e x) W ]c
-sub-cast-C refl M x W = refl
+               [ subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s ↦ W ]c
+sub-cast-C refl M s W = refl
 
-sub-cast-V : ∀ {Γ Γ' A B ρ} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ)
-           → (W : split-l x ⊢V⦂ A)
-           → subst (_⊢V⦂ B) (cong₂ _++ᶜ_ (split-l-cast e x) (split-r-cast e x))
-               (V [ x ↦ W ]v)
+sub-cast-V : ∀ {Γ Γ' Γ₁ Γ₂ A B} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ B)
+           → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
+           → V [ s ↦ W ]v
            ≡ (subst (_⊢V⦂ B) e V)
-               [ subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
-               ↦ subst (_⊢V⦂ A) (split-l-cast e x) W ]v
-sub-cast-V refl V x W = refl
+               [ subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s ↦ W ]v
+sub-cast-V refl V s W = refl
 
--- The same, packaged for a caller that knows where the transport sends the
--- substituted variable and what value it carries there. Both equations are
--- matched, so the two substitutions are literally the same one.
+-- The same, for a caller that has the transported splitting in hand rather than
+-- as a transport. Two splittings of the same context agree (`split-unique`), so
+-- no equation relating them is needed.
 
-sub-cast-C′ : ∀ {Γ Γ' A C ρ} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
-            → (x : A ∈[ ρ ] Γ) → (y : A ∈[ ρ ] Γ')
-            → (ey : subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x ≡ y)
-            → (U : split-l x ⊢V⦂ A) → (U' : split-l y ⊢V⦂ A)
-            → subst (_⊢V⦂ A) (trans (split-l-cast e x) (cong split-l ey)) U ≡ U'
-            → (subst (_⊢C⦂ C) e M) [ y ↦ U' ]c
-            ≡ subst (_⊢C⦂ C)
-                (cong₂ _++ᶜ_ (trans (split-l-cast e x) (cong split-l ey))
-                             (trans (split-r-cast e x) (cong split-r ey)))
-                (M [ x ↦ U ]c)
-sub-cast-C′ refl M x .x refl U .U refl = refl
+sub-cast-C′ : ∀ {Γ Γ' Γ₁ Γ₂ A C} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
+            → (s : Γ₁ ∷ A , Γ₂ split Γ) → (s' : Γ₁ ∷ A , Γ₂ split Γ')
+            → (W : Γ₁ ⊢V⦂ A)
+            → (subst (_⊢C⦂ C) e M) [ s' ↦ W ]c ≡ M [ s ↦ W ]c
+sub-cast-C′ refl M s s' W = cong (λ z → M [ z ↦ W ]c) (split-unique s' s)
 
 -- Transports along context equalities, all normalised to `subst` so that a
 -- chain of them fuses and collapses by `uip`.

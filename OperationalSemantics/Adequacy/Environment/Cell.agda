@@ -414,7 +414,7 @@ Var-cast-loop refl t = refl
 -- result is that variable pushed back under the suffix.
 
 rvar-hit : ∀ {Γ A ρ} → (Θ : Ctx) → (W : Γ ⊢V⦂ [ ρ ] A)
-         → atᴿ {Γ} Θ (bvar ([ ρ ] A) Θ) W
+         → atᴿ {Γ} Θ (split→∈ (split-≡-++ᶜ {Γ ∷ [ ρ ] A} {Θ})) W
          ≡ Var-++ᶜˡ Θ (val-cell W)
 
 rvar-hit []        W = refl

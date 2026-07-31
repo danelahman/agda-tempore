@@ -267,10 +267,10 @@ Uniform↝ COERCE              _            = ⊤
 stepᴾᶜ : ∀ {ε ε' A} {S S' : 𝕊 []}
        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramᶜ M'
-stepᴾᶜ (APP {M = M} {V = V})            pS (pM , pV)  = subᶜ M Hd V pM pV
+stepᴾᶜ (APP {M = M} {V = V})            pS (pM , pV)  = subᶜ M split-[] V pM pV
 stepᴾᶜ (MATCH {V = V} {W = W} {M = M})  pS ((pV , pW) , pM) =
-  subᶜ (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
-    (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
+  subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+    (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
 stepᴾᶜ (SEQ-STEP {N = N} r c)           pS (pM , pN)  =
   stepᴾᶜ r pS pM
   , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
@@ -294,13 +294,13 @@ stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} 
     , ren-clauses-uniform
         (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH)
   , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S)))) (H op (ε ·ₑ ε'')))
-         (Tl-∷ Hd) V
+         (split-∷ split-[]) V
          (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S))))
                (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
          pV
 stepᴾᶜ BOX                              pS (pV , pM)  = pM
 stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {M = M}) pS pM =
-  subᶜ M Hd (unbox-lookup S z rel) pM (unbox-lookupᴾ S z rel pS)
+  subᶜ M split-[] (unbox-lookup S z rel) pM (unbox-lookupᴾ S z rel pS)
 stepᴾᶜ COERCE                           pS pM         = pM
 
 -- Both halves at once, for a configuration.

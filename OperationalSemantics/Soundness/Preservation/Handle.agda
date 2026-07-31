@@ -1035,7 +1035,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                                            ∘ʳ cong-⟨⟩-ren wk-ren)) N)))
                             (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                                        (H op (ε ·ₑ ε''))
-                             [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
+                             [ split-∷ split-[] ↦ V ]c) ⟧ᶜᵗ
                      ( (pM
                        , renᶜ (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
                        , (λ op' ε' →
@@ -1045,7 +1045,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                            H pH uH)
                      , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                                      (H op (ε ·ₑ ε'')))
-                            (Tl-∷ Hd) V
+                            (split-∷ split-[]) V
                             (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                                   (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
                             pV )
@@ -1096,14 +1096,14 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} e op V M H N pV pM pN pH uH =
                                             (type-of-gtype (arity op)))))
                                    (H op' ε'))
                         `in (C-rename (cong-∷-ren ren) N)))
-                 (Hwk [ Tl-∷ Hd ↦ V ]c) ⟧ᶜᵗ
+                 (Hwk [ split-∷ split-[] ↦ V ]c) ⟧ᶜᵗ
              ( (pM
                , renᶜ (cong-∷-ren ren) N pN
                , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
                , ren-clauses-uniform
                    (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))
                    H pH uH)
-             , subᶜ Hwk (Tl-∷ Hd) V pHwk pV )
+             , subᶜ Hwk (split-∷ split-[]) V pHwk pV )
     tgt =
         ≈ᵐ-sym (clause-sound e op H pH uH V pV _)
       ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl

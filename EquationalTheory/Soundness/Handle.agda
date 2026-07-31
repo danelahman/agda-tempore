@@ -113,10 +113,10 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
     -- which is what the right-hand side's renaming and substitution build
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e ((C-rename r N) [ Hd ↦ V ]c))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e ((C-rename r N) [ split-[] ↦ V ]c))
                 pR (ε-substᴾ e _ pRc)
-            ∙ sound-ε-subst e ((C-rename r N) [ Hd ↦ V ]c) pRc
-            ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r N) Hd V (renᶜ r N pN) pV
+            ∙ sound-ε-subst e ((C-rename r N) [ split-[] ↦ V ]c) pRc
+            ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r N) split-[] V (renᶜ r N pN) pV
                         ∙ ∘ᵐ-congˡ (C-rename-nat r N pN)
                         ∙ ∘ᵐ-assoc _ _ _
                         ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
@@ -126,7 +126,7 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
   where
     e   = sym (·ₑ-identityˡ ε)
     r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
-    pRc = subᶜ (C-rename r N) Hd V (renᶜ r N pN) pV
+    pRc = subᶜ (C-rename r N) split-[] V (renᶜ r N pN) pV
 
 -- `handle-box`: a `box` binder commutes with handling. The binder denotes an
 -- environment extension `g` undone by `fstᵐ`, so the handled computation and

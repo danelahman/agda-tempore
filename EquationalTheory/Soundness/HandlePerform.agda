@@ -236,13 +236,13 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     pBody = pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH'
 
     pBox : Paramᶜ (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
-                       (CL [ Tl-∷ Hd ↦ V ]c))
-    pBox = pBody , subᶜ CL (Tl-∷ Hd) V pCL pV
+                       (CL [ split-∷ split-[] ↦ V ]c))
+    pBox = pBody , subᶜ CL (split-∷ split-[]) V pCL pV
 
     -- the clause, contracted and substituted, is the clause at the empty
     -- extension applied to the eternal projection and the operation's value
     rhs-left =
-        ∘ᵐ-congˡ (  C-subst-nat CL (Tl-∷ Hd) V pCL pV
+        ∘ᵐ-congˡ (  C-subst-nat CL (split-∷ split-[]) V pCL pV
                   ∙ ∘ᵐ-congˡ (  C-rename-nat Cren (H op (ε ·ₑ ε'))
                                   (pH op (ε ·ₑ ε'))
                               ∙ ᴱ-ren-clause {Γ} {B} H pH op (ε ·ₑ ε')))
@@ -347,10 +347,10 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
       ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr
                     (ε-subst e
                       (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
-                           (CL [ Tl-∷ Hd ↦ V ]c)))
+                           (CL [ split-∷ split-[] ↦ V ]c)))
                     pR (ε-substᴾ e _ pBox)
                 ∙ sound-ε-subst e
                     (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))
-                         (CL [ Tl-∷ Hd ↦ V ]c))
+                         (CL [ split-∷ split-[] ↦ V ]c))
                     pBox
                 ∙ ∘ᵐ-congʳ rhs-inner)

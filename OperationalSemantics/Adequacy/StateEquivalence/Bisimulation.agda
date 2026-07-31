@@ -79,7 +79,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ...   | M₀' , refl , eM₀ =
     _ , _ , es , APP , id-≤≐
   , subst (λ z → _ ≡ z) (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' W')
-          (sub-≡ᶜ Hd eW eM₀)
+          (sub-≡ᶜ split-[] eW eM₀)
 
 -- a delay moves the lock into the state, so the two states are related by
 -- `⟨⟩-≐ˢ` and the extensions by `⟨⟩-≤≐`
@@ -125,8 +125,8 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ...   | V' , W' , refl , eV , eW =
     _ , _ , es , MATCH , id-≤≐
   , subst (λ z → _ ≡ z) (cast-match-reduct (sym (toCtx-≐ˢ es)) M₀' V' W')
-      (sub-≡ᶜ Hd eV
-        (sub-≡ᶜ Hd (V-rename-cong wk-ren eW) eM₀))
+      (sub-≡ᶜ split-[] eV
+        (sub-≡ᶜ split-[] (V-rename-cong wk-ren eW) eM₀))
 
 -- sequencing a returned value: the continuation is retyped by a renaming that
 -- mentions the context, so `cast-seq-ret` is what moves the cast past it.
@@ -141,7 +141,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ...   | V' , refl , eV =
     _ , _ , es , SEQ-RET , id-≤≐
   , subst (λ z → _ ≡ z) (cast-seq-ret (sym (toCtx-≐ˢ es)) N' V')
-      (sub-≡ᶜ Hd eV (C-rename-cong (cong-∷-ren _) eN))
+      (sub-≡ᶜ split-[] eV (C-rename-cong (cong-∷-ren _) eN))
 
 -- handling a returned value: as `SEQ-RET`, with the handler discarded.
 
@@ -162,7 +162,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ...   | V' , refl , eV =
     _ , _ , es , HANDLE-RET , id-≤≐
   , subst (λ z → _ ≡ z) (cast-seq-ret (sym (toCtx-≐ˢ es)) N' V')
-      (sub-≡ᶜ Hd eV (C-rename-cong (cong-∷-ren _) eN))
+      (sub-≡ᶜ split-[] eV (C-rename-cong (cong-∷-ren _) eN))
 
 -- unboxing: the store is read at the same cell, so the substituted values are
 -- related (`unbox-lookup-≐ˢ`).
@@ -179,7 +179,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
     _ , _ , es , UNBOX , id-≤≐
   , subst (λ z → _ ≡ z)
       (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' x' rel'))
-      (sub-≡ᶜ Hd (unbox-lookup-≐ˢ es {x = x} {x' = x'} {rel = rel} {rel' = rel'} hw)
+      (sub-≡ᶜ split-[] (unbox-lookup-≐ˢ es {x = x} {x' = x'} {rel = rel} {rel' = rel'} hw)
                  eM₀)
 
 -- sequencing an operation: the operation floats out, its continuation gaining
@@ -290,7 +290,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                                       ⇒ B ‼ (ε ·ₑ ε'')))
                                      e)
                                (H' op (ε ·ₑ ε'')))
-                       [ Tl-∷ Hd ↦ castᵛ e V' ]c)
+                       [ split-∷ split-[] ↦ castᵛ e V' ]c)
                ≡ castᶜ e
                    (box (lam
                           (handle M'
@@ -307,7 +307,7 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                                 N')))
                          (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ')))
                                    (H' op (ε ·ₑ ε''))
-                          [ Tl-∷ Hd ↦ V' ]c))
+                          [ split-∷ split-[] ↦ V' ]c))
 cast-handle-op refl V' M' H' N' = refl
 
 -- `HANDLE-OP` fires a clause: the state is unchanged, and every piece of the
@@ -345,7 +345,7 @@ cast-handle-op refl V' M' H' N' = refl
                                (ren-ᴱ-∷ (type-of-gtype (arity op)))))
                              (eH op' ε'))
             (C-rename-cong (cong-∷-ren _) eN)))
-        (sub-≡ᶜ (Tl-∷ Hd) eV
+        (sub-≡ᶜ (split-∷ split-[]) eV
           (C-rename-cong (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St))))
                          (eH op (ε ·ₑ ε'')))))
 

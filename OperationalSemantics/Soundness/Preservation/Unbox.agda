@@ -339,8 +339,8 @@ sound-UNBOX : ∀ {A C ρ ρ'} → (St : 𝕊 [])
             → (M : toCtx St ∷ A ⊢C⦂ C)
             → (pSt : Paramˢ St) → (pM : Paramᶜ M)
             → ⟦ unbox x rel M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
-            ≈ᵐ ⟦ M [ Hd ↦ unbox-lookup St x rel ]c ⟧ᶜᵗ
-                 (subᶜ M Hd (unbox-lookup St x rel) pM (unbox-lookupᴾ St x rel pSt))
+            ≈ᵐ ⟦ M [ split-[] ↦ unbox-lookup St x rel ]c ⟧ᶜᵗ
+                 (subᶜ M split-[] (unbox-lookup St x rel) pM (unbox-lookupᴾ St x rel pSt))
                ∘ᵐ ⟦ St ⟧ˢ pSt
 sound-UNBOX St x rel M pSt pM =
     ∘ᵐ-congˡ (unbox-def x rel M pM)
@@ -349,6 +349,6 @@ sound-UNBOX St x rel M pSt pM =
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-lookup-sound St x rel pSt) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M Hd (unbox-lookup St x rel) pM
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M split-[] (unbox-lookup St x rel) pM
                         (unbox-lookupᴾ St x rel pSt)))
 

@@ -166,10 +166,10 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
     -- which is what the right-hand side's renaming and substitution build
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst (sym (·ₑ-identityˡ ε)) ((C-rename r M) [ Hd ↦ V ]c))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst (sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c))
                 pR (ε-substᴾ (sym (·ₑ-identityˡ ε)) _ pRc)
-            ∙ sound-ε-subst (sym (·ₑ-identityˡ ε)) ((C-rename r M) [ Hd ↦ V ]c) pRc
-            ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r M) Hd V (renᶜ r M pM) pV
+            ∙ sound-ε-subst (sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c) pRc
+            ∙ ∘ᵐ-congʳ (  C-subst-nat (C-rename r M) split-[] V (renᶜ r M pM) pV
                         ∙ ∘ᵐ-congˡ (C-rename-nat r M pM)
                         ∙ ∘ᵐ-assoc _ _ _
                         ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
@@ -178,7 +178,7 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
   where
     r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
-    pRc = subᶜ (C-rename r M) Hd V (renᶜ r M pM) pV
+    pRc = subᶜ (C-rename r M) split-[] V (renᶜ r M pM) pV
 
 -- The counit law: sequencing a `return` of the bound variable is the identity.
 

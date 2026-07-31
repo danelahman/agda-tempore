@@ -145,10 +145,10 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
     W = V-rename r₁ V
 
     Y : (Γ ∷ [ ρ ] A) ++ᶜ Θ ⊢C⦂ D
-    Y = N [ Hd ↦ W ]c
+    Y = N [ split-[] ↦ W ]c
 
     pY : Paramᶜ Y
-    pY = subᶜ N Hd W pN (renᵛ r₁ V pV)
+    pY = subᶜ N split-[] W pN (renᵛ r₁ V pV)
 
     -- the environment `box V` installs
     g : ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ∷ [ ρ ] A ⟧ᶜᵗˣ
@@ -224,4 +224,4 @@ sound-unbox-beta {Γ} {A} {C} {D} {ρ} V K p N pK pN (pV , pL) (pV' , pR) =
                               ∙ ∘ᵐ-assoc _ _ _) ⟩ᵐ-cong
                   ∙ ≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat N Hd W pN (renᵛ r₁ V pV)))
+      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat N split-[] W pN (renᵛ r₁ V pV)))

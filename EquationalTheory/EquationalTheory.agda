@@ -57,15 +57,15 @@ mutual
 
     -- substitutivity
 
-    V-subst : ∀ {Γ' A B ρ}
+    V-subst : ∀ {Γ' Γ₁ Γ₂ A B}
             → {V W : Γ' ⊢V⦂ B}
             → (p : Γ' ⊢V⦂ V == W)
-            → (x : A ∈[ ρ ] Γ')
-            → (q : split-l x ++ᶜ split-r x ≡ Γ)
-            → (U : split-l x ⊢V⦂ A)
+            → (s : Γ₁ ∷ A , Γ₂ split Γ')
+            → (q : Γ₁ ++ᶜ Γ₂ ≡ Γ)
+            → (U : Γ₁ ⊢V⦂ A)
             ---------------------------------------------------------------
-            → Γ ⊢V⦂ subst (_⊢V⦂ B) q (V [ x ↦ U ]v)
-                == subst (_⊢V⦂ B) q (W [ x ↦ U ]v)
+            → Γ ⊢V⦂ subst (_⊢V⦂ B) q (V [ s ↦ U ]v)
+                == subst (_⊢V⦂ B) q (W [ s ↦ U ]v)
 
     -- congruence equations
 
@@ -123,15 +123,15 @@ mutual
 
     -- substitutivity
 
-    C-subst : ∀ {Γ' A C ρ}
+    C-subst : ∀ {Γ' Γ₁ Γ₂ A C}
             → {M N : Γ' ⊢C⦂ C}
             → (p : Γ' ⊢C⦂ M == N)
-            → (x : A ∈[ ρ ] Γ')
-            → (q : split-l x ++ᶜ split-r x ≡ Γ)
-            → (V : split-l x ⊢V⦂ A)
+            → (s : Γ₁ ∷ A , Γ₂ split Γ')
+            → (q : Γ₁ ++ᶜ Γ₂ ≡ Γ)
+            → (V : Γ₁ ⊢V⦂ A)
             ---------------------------------------------------------------
-            → Γ ⊢C⦂ subst (_⊢C⦂ C) q (M [ x ↦ V ]c)
-                == subst (_⊢C⦂ C) q (N [ x ↦ V ]c)
+            → Γ ⊢C⦂ subst (_⊢C⦂ C) q (M [ s ↦ V ]c)
+                == subst (_⊢C⦂ C) q (N [ s ↦ V ]c)
 
     -- congruence equations
 
@@ -239,7 +239,7 @@ mutual
                            (cong-∷-ren
                              (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                            M)
-                         [ Hd ↦ V ]c)
+                         [ split-[] ↦ V ]c)
 
     seq-perform : ∀ {A B ε ε' op}
                 → (V : Γ ⊢V⦂ type-of-gtype (param op))
@@ -321,7 +321,7 @@ mutual
              → (W : Γ ⊢V⦂ A)
              ----------------------
              → Γ ⊢C⦂ lam M · W
-                 == M [ Hd ↦ W ]c
+                 == M [ split-[] ↦ W ]c
 
     -- beta-equation for pattern-matching
 
@@ -331,8 +331,8 @@ mutual
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ------------------------------------
                → Γ ⊢C⦂ match ⦉ V , W ⦊ `in M
-                   == M [ Hd ↦ V-rename wk-ren W ]c
-                        [ Hd ↦ V ]c
+                   == M [ split-[] ↦ V-rename wk-ren W ]c
+                        [ split-[] ↦ V ]c
 
     -- eta-equation for pattern-matching
 
@@ -342,8 +342,8 @@ mutual
               -------------------------------------------------------------
               → Γ ⊢C⦂ match V `in
                        ((C-rename (wk-ren ∘ʳ exch-ren ∘ʳ wk-ren ∘ʳ exch-ren)
-                         M) [ Hd ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
-                  == M [ Hd ↦ V ]c
+                         M) [ split-[] ↦ ⦉ var (λ _ → ≾ᵣ-refl) (Tl-∷ Hd) , var (λ _ → ≾ᵣ-refl) Hd ⦊ ]c)
+                  == M [ split-[] ↦ V ]c
 
     -- eta-equation for empty type elimination
 
@@ -352,7 +352,7 @@ mutual
                → (M : Γ ∷ Empty ⊢C⦂ C)
                -----------------------
                → Γ ⊢C⦂ absurd {C = C} V
-                   == M [ Hd ↦ V ]c
+                   == M [ split-[] ↦ V ]c
 
     -- computational/beta-equations for effect handling
 
@@ -370,7 +370,7 @@ mutual
                               (cong-∷-ren
                                 (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                               N)
-                            [ Hd ↦ V ]c)
+                            [ split-[] ↦ V ]c)
 
     handle-perform : ∀ {A B ε ε' op}
                    → (V : Γ ⊢V⦂ type-of-gtype (param op))
@@ -399,7 +399,7 @@ mutual
                                          N)))
                                   (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                                     (H op (ε ·ₑ ε'))
-                                   [ Tl-∷ Hd ↦ V ]c))
+                                   [ split-∷ split-[] ↦ V ]c))
 
     handle-delay : ∀ {A B τ ε ε'}
                  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
@@ -468,7 +468,7 @@ mutual
                                                     (grade-++ᶜˡ-uᵣ (hole-ctx K)))
                                                   p)
                                         N ])
-                   == box V (K [ N [ Hd ↦ V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V ]c ])
+                   == box V (K [ N [ split-[] ↦ V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V ]c ])
 
 
     -- unboxing non-related values commute

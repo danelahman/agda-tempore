@@ -273,9 +273,9 @@ eq-ren-inv refl = ∘ᵐ-identityˡ idᵐ
 
 sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (V : Γ ⊢V⦂ A)
           → (pM : Paramᶜ M) → (pV : Paramᵛ V)
-          → ⟦ lam M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ Hd ↦ V ]c ⟧ᶜᵗ (subᶜ M Hd V pM pV)
+          → ⟦ lam M · V ⟧ᶜᵗ (pM , pV) ≈ᵐ ⟦ M [ split-[] ↦ V ]c ⟧ᶜᵗ (subᶜ M split-[] V pM pV)
 sound-APP M V pM pV =
-  ≈ᵐ-trans (βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ V ⟧ᵛᵗ pV)) (≈ᵐ-sym (C-subst-nat M Hd V pM pV))
+  ≈ᵐ-trans (βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ V ⟧ᵛᵗ pV)) (≈ᵐ-sym (C-subst-nat M split-[] V pM pV))
 
 -- MATCH: destructing a pair is the two substitutions in sequence. The inner
 -- one substitutes `W` weakened past `A`, which reindexes it by `fstᵐ`; that
@@ -284,16 +284,16 @@ sound-APP M V pM pV =
 sound-MATCH : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
             → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M)
             → ⟦ match ⦉ V , W ⦊ `in M ⟧ᶜᵗ ((pV , pW) , pM)
-            ≈ᵐ ⟦ (M [ Hd ↦ V-rename wk-ren W ]c) [ Hd ↦ V ]c ⟧ᶜᵗ
-                 (subᶜ (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
-                    (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
+            ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
+                 (subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+                    (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
 sound-MATCH V W M pV pW pM =
   ≈ᵐ-trans
     (∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong))
     (≈ᵐ-sym
-      (≈ᵐ-trans (C-subst-nat (M [ Hd ↦ V-rename wk-ren W ]c) Hd V
-                   (subᶜ M Hd (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
-      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M Hd (V-rename wk-ren W) pM
+      (≈ᵐ-trans (C-subst-nat (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
+                   (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
+      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M split-[] (V-rename wk-ren W) pM
                              (renᵛ wk-ren W pW)))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                 (∘ᵐ-congʳ
@@ -479,11 +479,11 @@ ret-env refl =
 
 sub-ren : ∀ {Γ Γ' A C} → (r : Ren [] Γ' Γ) → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ' ⊢V⦂ A)
         → (pN : Paramᶜ N) → (pV : Paramᵛ V)
-        → ⟦ C-rename (cong-∷-ren r) N [ Hd ↦ V ]c ⟧ᶜᵗ
-             (subᶜ (C-rename (cong-∷-ren r) N) Hd V (renᶜ (cong-∷-ren r) N pN) pV)
+        → ⟦ C-rename (cong-∷-ren r) N [ split-[] ↦ V ]c ⟧ᶜᵗ
+             (subᶜ (C-rename (cong-∷-ren r) N) split-[] V (renᶜ (cong-∷-ren r) N pN) pV)
         ≈ᵐ ⟦ N ⟧ᶜᵗ pN ∘ᵐ ⟨ ⟦ r ⟧ʳ , ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
 sub-ren r N V pN pV =
-    C-subst-nat (C-rename (cong-∷-ren r) N) Hd V (renᶜ (cong-∷-ren r) N pN) pV
+    C-subst-nat (C-rename (cong-∷-ren r) N) split-[] V (renᶜ (cong-∷-ren r) N pN) pV
   ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) N pN)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
@@ -501,9 +501,10 @@ sub-ren r N V pN pV =
 ret-subᴾ : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
          → Paramᵛ V → Paramᶜ N
          → Paramᶜ (C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                     [ Hd ↦ V ]c)
+                     [ split-[] ↦ V ]c)
 ret-subᴾ {Γ} V N pV pN =
-  subᶜ (C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N) Hd V
+  subᶜ (C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N)
+       split-[] V
     (renᶜ (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N pN) pV
 
 ret-step : ∀ {Γ A B ε}
@@ -515,7 +516,7 @@ ret-step : ∀ {Γ A B ε}
          → alg ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
          ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
             ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                   [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                   [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step {Γ} alg alg-η V N pV pN =
     ∘ᵐ-congʳ ret-massage
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -526,7 +527,7 @@ ret-step {Γ} alg alg-η V N pV pN =
     -- syntax's re-locking renaming (`ret-env`), leaving `ηᵀ ∘ (renamed subst)`.
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
           (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
@@ -555,7 +556,7 @@ ret-step-P : ∀ {Γ A B ε P}
            → alg ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ ⟩ᵐ
            ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
               ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                     [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                     [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 ret-step-P {Γ} pv alg alg-η V N pV pN =
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ret-massage ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
@@ -566,7 +567,7 @@ ret-step-P {Γ} pv alg alg-η V N pV pN =
   where
     ret-massage : Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
                 ≈ᵐ ηᵀ ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                            [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
     ret-massage =
         ∘ᵐ-congʳ (∘ᵐ-congʳ
           (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
@@ -589,7 +590,7 @@ sound-SEQ-RET : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (N : Γ ⟨ mapᵉ u�
               → ⟦ return V ⨟ N ⟧ᶜᵗ (pV , pN)
               ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                  ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                        [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                        [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 
 sound-HANDLE-RET : ∀ {Γ A B ε}
@@ -605,7 +606,7 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                  → ⟦ handle return V `with H `in N ⟧ᶜᵗ (pV , pN , pH , uH)
                  ≈ᵐ ε-substᵀ (sym (·ₑ-identityˡ ε))
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
-                           [ Hd ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
+                           [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-HANDLE-RET {Γ} V H N pV pN pH uH =
   ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
              (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)) V N pV pN

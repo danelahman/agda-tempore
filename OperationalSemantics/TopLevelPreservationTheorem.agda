@@ -47,7 +47,7 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
             → {V : (toCtx S) ⊢V⦂ type-of-gtype (param op)} 
             → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε} 
             → ⟨ S , perform op V M ⟩ ⟿
-              ⟨ grade-pass S (mapᵉ (op-grade op)) , M [ Hd ↦ op-sem op V ]c ⟩
+              ⟨ grade-pass S (mapᵉ (op-grade op)) , M [ split-[] ↦ op-sem op V ]c ⟩
 
   -- Reflexive-transitive closure: a run of the top-level machine.
 

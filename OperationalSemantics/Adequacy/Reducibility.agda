@@ -142,7 +142,7 @@ Val (A ⇒ (B ‼ ε)) St V =
   × (∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
      → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≡ reach-under q M
      → (W : toCtx St' ⊢V⦂ A) → Val A St' W
-     → Comp B (Val B) ε St' (M₂ [ Hd ↦ W ]c))
+     → Comp B (Val B) ε St' (M₂ [ split-[] ↦ W ]c))
 -- A box type is the cell the value names: readable at a later state means its
 -- content is reducible there. This is `Store` below, per cell — `store-var`.
 -- Quantifying over `St ⊑ₛ[ ρ ] St'` instead would demand more than
@@ -422,7 +422,7 @@ resume-≐ˢ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
 
 resume-≐ˢ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
   trans
-    (sub-≡ᶜ Hd eW
+    (sub-≡ᶜ split-[] eW
       (trans (C-rename-≡ (cong-∷-ren-≐ʳ (unbox-ren-≐ˢ es es₂ h)) M)
                 (C-rename-cong (cong-∷-ren _)
                   (subst (λ z → M ≡ z)
@@ -430,7 +430,7 @@ resume-≐ˢ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
                                           (sym (toCtx-≐ˢ es)))
                                     (cong (_∷ B) e₁) M')
                          eM))))
-    ((trans (cong (λ z → z [ Hd ↦ castᵛ e₂ W' ]c)
+    ((trans (cong (λ z → z [ split-[] ↦ castᵛ e₂ W' ]c)
                        (cast-rename-∷ e₁ e₂ (unbox-ren q') M'))
                  (cast-app-reduct e₂ (C-rename (cong-∷-ren (unbox-ren q')) M') W')))
   where
@@ -513,13 +513,13 @@ Val-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
          → (M₂ : toCtx St'' ∷ A ⊢C⦂ B ‼ ε)
          → M₂ ≡ reach-under q' (castᶜ (cong (_∷ A) e) M)
          → (W : toCtx St'' ⊢V⦂ A) → Val A St'' W
-         → Comp B (Val B) ε St'' (M₂ [ Hd ↦ W ]c)
+         → Comp B (Val B) ε St'' (M₂ [ split-[] ↦ W ]c)
     step {St''} q' M₂ eM₂ W pW with reach-replay (≐ˢ-sym es) q'
     ... | St₂ , q , es₂ , h =
       Comp-≐ˢ (≐ˢ-sym es₂) (λ es₁ V₀ → Val-≐ˢ es₁ B V₀) (Val-≡ᵛ B)
         ((trans (cast-app-reduct e₂ M₂ W)
                      (castᶜ-irr e₂ (sym (toCtx-≐ˢ (≐ˢ-sym es₂)))
-                                (M₂ [ Hd ↦ W ]c))))
+                                (M₂ [ split-[] ↦ W ]c))))
         (f q (castᶜ (cong (_∷ A) e₂) M₂) eM₃ (castᵛ e₂ W)
              (Val-≐ˢ es₂ A W pW))
       where

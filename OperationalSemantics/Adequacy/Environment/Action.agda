@@ -60,7 +60,7 @@ open import OperationalSemantics.Adequacy.Environment.Core Spec
 --   * a telescope entry is substituted *last*: it rides along in the suffix
 --     (`[] ∷ A ++ᶜ Δ`) and its variable is substituted afterwards. Its value
 --     already lives over the prefix `toCtx St`, so it needs no weakening, and
---     `env-C (γ ∷ᵉ W) M ≡ (env-Cˢ γ ([] ∷ A) M) [ Hd ↦ W ]c` holds
+--     `env-C (γ ∷ᵉ W) M ≡ (env-Cˢ γ ([] ∷ A) M) [ split-[] ↦ W ]c` holds
 --     definitionally — the order `APP` wants.
 ------------------------------------------------------------------------
 
@@ -1552,7 +1552,7 @@ env-C-id M = refl
 
 env-Cˢ-head : ∀ {St Γ A C} → (γ : Env St Γ) → (M : Γ ∷ A ⊢C⦂ C)
             → (W : toCtx St ⊢V⦂ A)
-            → (env-Cˢ γ ([] ∷ A) M) [ Hd ↦ W ]c ≡ env-C (γ ∷ᵉ W) M
+            → (env-Cˢ γ ([] ∷ A) M) [ split-[] ↦ W ]c ≡ env-C (γ ∷ᵉ W) M
 env-Cˢ-head γ M W = refl
 
 -- The same for a freshly allocated cell, and this is the point of `liftᵉ`: the

@@ -66,7 +66,7 @@ seq-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → (∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
               → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
               → Comp' B ε₂ St₁
-                  ((C-rename (cong-∷-ren (unbox-ren q)) N) [ Hd ↦ V ]c))
+                  ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c))
          ------------------------------------------------------------------
          → Comp' B (ε₁ ·ₑ ε₂) St (M ⨟ N)
 
@@ -78,7 +78,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
 ... | N₁ , rs' , eN₁ =
   Comp-expand* rs'
     (Comp-expand SEQ-RET
-      (Comp-≡ᶜ (sub-≡ᶜ Hd (refl) shift) (hN q V pV)))
+      (Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -151,7 +151,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         sq = unbox-ren q
 
         N₃ = (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₂)
-               [ Tl-∷ (Tl-⟨⟩ Hd) ↦ W' ]c
+               [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c
 
         B₁' : ≤ₛ-grade (ext q) ·ᵣ mapᵉ ε₃ ≾ᵣ ρₒ ·ᵣ mapᵉ ε₃
         B₁' = ·ᵣ-monoˡ-≾ᵣ (bound q)
@@ -173,7 +173,7 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         -- the sequel the recursion needs is the original one, renamed
         eN₃ : N₃ ≡ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
         eN₃ =
-          trans (sub-≡ᶜ (Tl-∷ (Tl-⟨⟩ Hd)) (refl) split-off)
+          trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
             (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
                                 (C-rename (cong-∷-ren W₁) N₁) W')
               (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
@@ -214,10 +214,10 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
         hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ ⊑ₛ[ mapᵉ ε₃ ] St₃)
             → (V : toCtx St₃ ⊢V⦂ A) → Val A St₃ V
             → Comp' B ε₂ St₃
-                ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ Hd ↦ V ]c)
+                ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ split-[] ↦ V ]c)
 
         hN₃ {St₃} q' V pV =
-          Comp-≡ᶜ (sub-≡ᶜ Hd (refl) shift) (hN q₁ V pV)
+          Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₁ V pV)
           where
             -- the run and the clause's own reach accumulate: the grades multiply
             -- and each is bounded, so the composite stays under `ε₁`

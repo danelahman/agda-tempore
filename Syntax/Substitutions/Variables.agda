@@ -63,12 +63,6 @@ castᵛ-var-Var : ∀ {Γ Γ' A ρ ρ'} → (e : Γ ≡ Γ')
               → castᵛ e (var f x) ≡ var f' x'
 castᵛ-var-Var refl x _ refl f f' = var-≡
 
--- A cast cancels its own inverse.
-
-castᵛ-sym-cast : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ' ⊢V⦂ A)
-               → castᵛ e (castᵛ (sym e) V) ≡ V
-castᵛ-sym-cast refl V = refl
-
 -- Casting the target of a renaming is prefixing it with an `eq-ren`.
 
 castᵛ-rename : ∀ {Γ Γ' Γ'' A} → (e : Γ' ≡ Γ'') → (r : Ren [] Γ' Γ)
@@ -120,71 +114,8 @@ ren-var-r r x f f' =
 -- grade bound recomputed. Induction on the suffix variable, which is also the
 -- recursion of `split-≡-++ᶜ = ≡-split refl` and of `⟨_,_⟩[_↦_]var`.
 
--- Relocating a variable along an equality of *extended* contexts: the equality
--- must have come from one of the smaller contexts, and any two proofs agree.
-
--- Relocating a variable along a proof that its context is what it is.
-
-subst-var-id : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
-             → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
-             ≡ subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x
-subst-var-id e x = refl
-
-subst-Hd-any : ∀ {Γ Γ' A} → (e : Γ ∷ A ≡ Γ' ∷ A)
-             → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) e Hd ≡ Hd
-subst-Hd-any {A = A} e =
-  trans (cong (λ z → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) z Hd)
-              (uip {p = e} {q = cong (_∷ A) (∷ᶜ-injective-ctx e)}))
-        (subst-Hd (∷ᶜ-injective-ctx e))
-
--- A cast commutes with the three things the substitution puts in front of the
--- recursive call: a weakening, an eternal extension, and a lock-crossing
--- renaming. Each is uniform in its context, so matching the equality suffices.
-
-cast-wk-any : ∀ {Γ Γ' A C} → (e : Γ ∷ C ≡ Γ' ∷ C) → (e₀ : Γ ≡ Γ')
-            → (V : Γ ⊢V⦂ A)
-            → castᵛ e (V-rename (wk-ren {A = C}) V)
-            ≡ V-rename wk-ren (castᵛ e₀ V)
-cast-wk-any refl e₀ V rewrite uip {p = e₀} {q = refl} = refl
-
-cast-ext-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → (e₀ : Γ ≡ Γ')
-             → (et : Eternal A) → (V : Γ ⊢V⦂ A)
-             → castᵛ e (eternal-val-ext {ρ = ρ} et V)
-             ≡ eternal-val-ext et (castᵛ e₀ V)
-cast-ext-any refl e₀ et V rewrite uip {p = e₀} {q = refl} = refl
-
-cast-ren-⟨⟩-any : ∀ {Γ Γ' A ρ} → (e : Γ ⟨ ρ ⟩ ≡ Γ' ⟨ ρ ⟩) → (e₀ : Γ ≡ Γ')
-                → (r : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ ⟩) Γ₀) → (V : Γ ⊢V⦂ A)
-                → castᵛ e (V-rename r V) ≡ V-rename r (castᵛ e₀ V)
-cast-ren-⟨⟩-any refl e₀ r V rewrite uip {p = e₀} {q = refl} = refl
-
--- TWO SPLITTINGS OF THE SAME CONTEXT GIVE THE SAME SUBSTITUTION
---
--- `sub-split₀` reads its result context off the splitting, so identifying the
--- two halves identifies the substitutions — `split-unique`, since a splitting
--- is determined by its indices. This is what relates the substitution at a
--- boundary to the substitution at the variable that boundary names.
-
-sub-split-subst : ∀ {Γ Γ₁ Γ₁' Γ₂ Γ₂' A}
-                → (e₁ : Γ₁ ≡ Γ₁') → (e₂ : Γ₂ ≡ Γ₂')
-                → (s  : Γ₁  ∷ A , Γ₂  split Γ)
-                → (s' : Γ₁' ∷ A , Γ₂' split Γ)
-                → (W : Γ₁ ⊢V⦂ A)
-                → subst (λ Δ → Sub₀ [] Δ Γ) (cong₂ _++ᶜ_ e₁ e₂)
-                        (sub-split₀ s W)
-                ≡ sub-split₀ s' (subst (_⊢V⦂ A) e₁ W)
-sub-split-subst refl refl s s' W =
-  cong (λ z → sub-split₀ z W) (split-unique s s')
-
--- The context equality the substitution's result is presented along.
-
-castOf : ∀ {Γ₁ B} → (Γ₂ : Ctx)
-       → (split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
-            ++ᶜ split-r (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})))
-       ≡ (Γ₁ ++ᶜ Γ₂)
-castOf {Γ₁} {B} Γ₂ =
-  cong₂ _++ᶜ_ (split→∈-split-l (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
-              (split→∈-split-r (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}))
+-- Since the substitution reads its result context off the splitting, the two
+-- halves are given rather than computed, and no retyping appears at all.
 
 sub-var-r : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
           → (x : A ∈[ ρ ] Γ₂)
@@ -279,44 +210,31 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 -- corresponding position of the shorter prefix. Same induction on the suffix.
 
 sub-var-l : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
-          → (x : A ∈[ ρ ] Γ₁)
-          → (W : split-l (split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂})) ⊢V⦂ B)
+          → (x : A ∈[ ρ ] Γ₁) → (W : Γ₁ ⊢V⦂ B)
           → (f  : ¬ Eternal A → grade-++ᶜˡ ρ Γ₂ ≾ᵣ uᵣ)
           → (f' : ¬ Eternal A → grade-++ᶜˡ ρ Γ₂ ≾ᵣ uᵣ)
-          → castᵛ (castOf {Γ₁} {B} Γ₂)
-              (⟨ ∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Tl-∷ x) , f
-               ⟩[ split→∈ (split-≡-++ᶜ {Γ₁ ∷ B} {Γ₂}) ↦ W ]var)
+          → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W)
+                     (∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Tl-∷ x)) f
           ≡ var f' (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)
 
-sub-var-l {Γ₁} {B} [] x W f f' =
-  trans
-    ((trans (castᵛ-var (castOf {Γ₁} {B} []) f x)
-                 (cong (var f) (subst-var-id (castOf {Γ₁} {B} []) x))))
-    var-≡
+sub-var-l [] x W f f' = var-≡
 
-sub-var-l {Γ₁} {B} (Γ₂ ∷ C) x W f f' =
-  trans
-    ((cast-wk-any (castOf {Γ₁} {B} (Γ₂ ∷ C)) (castOf {Γ₁} {B} Γ₂) _))
-    (trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
-              (var-ren-img-≡ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f'))
+sub-var-l {Γ₁} (Γ₂ ∷ C) x W f f' =
+  trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
+        (var-ren-img-≡ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f')
 
-sub-var-l {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
+sub-var-l {Γ₁} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
 
 ... | yes et =
-  trans
-    ((cast-ext-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩)) (castOf {Γ₁} {B} Γ₂) et _))
-    (trans (eternal-val-ext-cong et
-                (sub-var-l Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡)
+  trans (eternal-val-ext-cong et
+          (sub-var-l Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡
 
 ... | no ¬et =
-  trans
-    ((cast-ren-⟨⟩-any (castOf {Γ₁} {B} (Γ₂ ⟨ ρ' ⟩))
-                           (castOf {Γ₁} {B} Γ₂) rn _))
-    (trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
-              (var-ren-img-≡ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
-                 (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
-                       (⟨⟩-η⁻¹-img (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
-                 f'))
+  trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
+        (var-ren-img-≡ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
+           (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
+                 (⟨⟩-η⁻¹-img (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
+           f')
   where
     rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ' ⟩) Γ₀
     rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))

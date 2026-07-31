@@ -99,13 +99,13 @@ sub-split₀ᴾ split-[]     W pW = pW
 sub-split₀ᴾ (split-∷ s)  W pW = sub-split₀ᴾ s W pW
 sub-split₀ᴾ (split-⟨⟩ s) W pW = sub-split₀ᴾ s W pW
 
-sub-env-is-⟦⟧ˢ₀ : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
+sub-env-is-⟦⟧ˢ₀ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
                → (pW : Paramᵛ W)
-               → ⟦ sub-split₀ (split-pf x) W ⟧ˢ₀ (sub-split₀ᴾ (split-pf x) W pW)
-               ≈ᵐ sub-env x W pW
-sub-env-is-⟦⟧ˢ₀ Hd        W pW = ≈ᵐ-refl
-sub-env-is-⟦⟧ˢ₀ (Tl-∷ x)  W pW = mapˣᵐ-cong (sub-env-is-⟦⟧ˢ₀ x W pW) ≈ᵐ-refl
-sub-env-is-⟦⟧ˢ₀ (Tl-⟨⟩ x) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧ˢ₀ x W pW)
+               → ⟦ sub-split₀ s W ⟧ˢ₀ (sub-split₀ᴾ s W pW)
+               ≈ᵐ sub-env s W pW
+sub-env-is-⟦⟧ˢ₀ split-[]     W pW = ≈ᵐ-refl
+sub-env-is-⟦⟧ˢ₀ (split-∷ s)  W pW = mapˣᵐ-cong (sub-env-is-⟦⟧ˢ₀ s W pW) ≈ᵐ-refl
+sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧ˢ₀ s W pW)
 
 ------------------------------------------------------------------------
 -- THE CONGRUENCES AND THE ETERNAL RESTRICTION

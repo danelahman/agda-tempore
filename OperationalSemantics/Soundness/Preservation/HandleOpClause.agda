@@ -106,9 +106,9 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
              → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε''))
-                     [ Tl-∷ Hd ↦ V ]c ⟧ᶜᵗ
+                     [ split-∷ split-[] ↦ V ]c ⟧ᶜᵗ
                  (subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε''))
-                       (Tl-∷ Hd) V
+                       (split-∷ split-[]) V
                        (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
                              (H op ε'') (pH op ε''))
                        pV)
@@ -122,7 +122,7 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                   ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
                      , W ⟩ᵐ
 clause-sound {Γ} {B} {ε''} e op H pH uH V pV W =
-    ∘ᵐ-congˡ (C-subst-nat Hcl (Tl-∷ Hd) V pHcl pV)
+    ∘ᵐ-congˡ (C-subst-nat Hcl (split-∷ split-[]) V pHcl pV)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ mid)
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (mapˣᵐ-∘ _ _ _ _))

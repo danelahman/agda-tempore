@@ -191,9 +191,9 @@ isSub-≡ {C = C} {M' = M'} (e , q) (e' , q') eM =
 -- ALIGNING TWO BOUNDARY SUBSTITUTIONS
 ------------------------------------------------------------------------
 
--- `sub-atᶜ` is natural in a transport of its prefix, its suffix, its term and
--- its value. Proved by matching the two context equations; the `IsSub` premise
--- then forces the terms equal, its own equation being a loop.
+-- The boundary substitution is natural in a transport of its prefix, its
+-- suffix, its term and its value. Proved by matching the two context equations;
+-- the `IsSub` premise then forces the terms equal, its own equation being a loop.
 
 sub-at-IsSub : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) → (eΘ : Θ₁ ≡ Θ₂)
              → (X₁ : ((Γ₁ ∷ B) ++ᶜ Θ₁) ⊢C⦂ C)
@@ -201,9 +201,10 @@ sub-at-IsSub : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) →
              → IsSub X₁ X₂
              → (V₁ : Γ₁ ⊢V⦂ B) → (V₂ : Γ₂ ⊢V⦂ B)
              → subst (_⊢V⦂ B) eΓ V₁ ≡ V₂
-             → IsSub (sub-atᶜ Θ₁ X₁ V₁) (sub-atᶜ Θ₂ X₂ V₂)
+             → IsSub (X₁ [ split-≡-++ᶜ {Γ₁ ∷ B} {Θ₁} ↦ V₁ ]c)
+                     (X₂ [ split-≡-++ᶜ {Γ₂ ∷ B} {Θ₂} ↦ V₂ ]c)
 sub-at-IsSub refl refl X₁ X₂ (e , q) V .V refl =
-  refl , cong (λ z → sub-atᶜ _ z V) (trans q (subst-loopᶜ e X₁))
+  refl , cong (λ z → z [ split-≡-++ᶜ ↦ V ]c) (trans q (subst-loopᶜ e X₁))
 
 -- The `_≡_`-flavoured alignment, taking the terms and the values related only
 -- up to `_≡_`.
@@ -215,10 +216,11 @@ sub-at-≡ : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) → (
          → (V₁ : Γ₁ ⊢V⦂ B) → (V₂ : Γ₂ ⊢V⦂ B)
          → subst (_⊢V⦂ B) eΓ V₁ ≡ V₂
          → (e' : (Γ₁ ++ᶜ Θ₁) ≡ (Γ₂ ++ᶜ Θ₂))
-         → sub-atᶜ Θ₂ X₂ V₂ ≡ subst (_⊢C⦂ C) e' (sub-atᶜ Θ₁ X₁ V₁)
+         → X₂ [ split-≡-++ᶜ {Γ₂ ∷ B} {Θ₂} ↦ V₂ ]c
+         ≡ subst (_⊢C⦂ C) e' (X₁ [ split-≡-++ᶜ {Γ₁ ∷ B} {Θ₁} ↦ V₁ ]c)
 sub-at-≡ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
   rewrite uip {p = e} {q = refl} | uip {p = e'} {q = refl} =
-  trans (sub-atᶜ-≡ _ V₂ eX) (sub-atᶜ-≡ᵥ _ X₁ (sym eV))
+  sub-≡ᶜ split-≡-++ᶜ (sym eV) eX
 
 -- The eternal restriction respects a transport of its context.
 
@@ -241,104 +243,66 @@ restrict-substᵛ refl et V = refl
 -- The context equation between the clause's own context and the one the
 -- splitting names it at.
 
-bigEqCl : ∀ {Γ₀ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀) → (D : VType)
-        → (op : Op) → (ε : E)
-        → (split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε)))
-             ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))))
-        ≡ ((split-l x ++ᶜ split-r x) ᴱ ++ᶜ Dcl D op ε)
-bigEqCl {Γ₀} {A} et x D op ε =
-  trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
-    (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) (Dcl D op ε)))
-           (cong (_++ᶜ Dcl D op ε) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
-  where
-    s = split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε)
+bigEqCl : ∀ {Γ₀ Γ₁ Γ₂ A} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
+        → (D : VType) → (op : Op) → (ε : E)
+        → (Γ₁ ᴱ ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε))
+        ≡ ((Γ₁ ++ᶜ Γ₂) ᴱ ++ᶜ Dcl D op ε)
+bigEqCl {Γ₁ = Γ₁} {Γ₂} et s D op ε =
+  trans (sym (++ᶜ-assoc (Γ₁ ᴱ) (Γ₂ ᴱ) (Dcl D op ε)))
+        (cong (_++ᶜ Dcl D op ε) (sym (ᴱ-++ᶜ Γ₁ Γ₂)))
 
-clBody : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
-       → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
-       → (split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε)))
-            ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))))
-         ⊢C⦂ D ‼ (op-grade op ·ₑ ε)
-clBody {D = D} et x W H op ε =
-  (H op ε) [ split→∈ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))
-             ↦ subst (_⊢V⦂ _)
-                 (sym (split→∈-split-l
-                        (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε))))
-                 (eternal-val-restrict et W) ]c
+clBody : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
+       → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+       → (Γ₁ ᴱ ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε)) ⊢C⦂ D ‼ (op-grade op ·ₑ ε)
+clBody {D = D} et s W H op ε =
+  (H op ε) [ split-++ʳ (∈-ᴱ-split et s) (Dcl D op ε)
+             ↦ eternal-val-restrict et W ]c
 
 -- The clause substitution is that body, transported: at an eternal type the
--- restricted substitution *is* the restricted value put in for the variable
+-- restricted substitution *is* the restricted value put in for the entry
 -- `∈-ᴱ-split` names, which is `restrict-sub-at-et`.
 
-cl-yes-raw : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
-           → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
-           → IsSub (clBody et x W H op ε) ((H [ x ↦ W ]cl) op ε)
-cl-yes-raw {D = D} et x W H op ε =
-  bigEqCl et x D op ε , cl-et-≡ et x W H op ε (bigEqCl et x D op ε)
+cl-yes-raw : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
+           → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+           → IsSub (clBody et s W H op ε) ((H [ s ↦ W ]cl) op ε)
+cl-yes-raw {D = D} et s W H op ε =
+  bigEqCl et s D op ε , cl-et-≡ et s W H op ε (bigEqCl et s D op ε)
 
-cl-yes-sub : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
-           → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+-- Both splittings have the same halves, so the substitution at the boundary and
+-- the one the clause names sit at the *same* context: `IsSub` at `refl`, and
+-- the equation is `sub-cast-C′` — two splittings of one context agree.
+
+cl-yes-sub : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
+           → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
            → (e : (Γ₀ ᴱ ++ᶜ Dcl D op ε)
-                ≡ ((split-l x ᴱ ∷ A) ++ᶜ (split-r x ᴱ ++ᶜ Dcl D op ε)))
-           → IsSub (clBody et x W H op ε)
-                   (sub-atᶜ {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε)
-                            (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
-                            (eternal-val-restrict et W))
-cl-yes-sub {Γ₀} {A} {ρ} {D} et x W H op ε e =
-  subst (IsSub (clBody et x W H op ε)) atᶜ-≡
-    (isSub-cast _ (castOf {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε))
-      (_ , sub-cast-C′ e (H op ε) v y ey U U' eU))
+                ≡ ((Γ₁ ᴱ ∷ A) ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε)))
+           → IsSub (clBody et s W H op ε)
+                   ((subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
+                      [ split-≡-++ᶜ {Γ₁ ᴱ ∷ A} {Γ₂ ᴱ ++ᶜ Dcl D op ε}
+                      ↦ eternal-val-restrict et W ]c)
+cl-yes-sub {D = D} et s W H op ε e =
+  refl
+  , sub-cast-C′ e (H op ε) (split-++ʳ (∈-ᴱ-split et s) (Dcl D op ε))
+      (split-≡-++ᶜ {_ ∷ A'} {_}) (eternal-val-restrict et W)
   where
-    Dc = Dcl D op ε
-    Γ₀' = split-l x ᴱ
-    Θ₀' = split-r x ᴱ ++ᶜ Dc
+    A' = _
 
-    s = split-++ʳ (∈-ᴱ-split et x) Dc
-    v = split→∈ s
-    y = split→∈ (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})
-
-    ey : subst (λ Γ₁ → A ∈[ ctx-grade Θ₀' ] Γ₁) e v ≡ y
-    ey = split→∈-unique e s (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})
-
-    U : split-l v ⊢V⦂ A
-    U = subst (_⊢V⦂ A) (sym (split→∈-split-l s)) (eternal-val-restrict et W)
-
-    U' : split-l y ⊢V⦂ A
-    U' = bval Θ₀' (eternal-val-restrict et W)
-
-    eU : subst (_⊢V⦂ A) (trans (split-l-cast e v) (cong split-l ey)) U ≡ U'
-    eU =
-      trans (subst-fuseᵛ (sym (split→∈-split-l s))
-                         (trans (split-l-cast e v) (cong split-l ey))
-                         (eternal-val-restrict et W))
-        (trans (substᵛ-irr _
-                  (sym (split→∈-split-l (split-≡-++ᶜ {Γ₀' ∷ A} {Θ₀'})))
-                  (eternal-val-restrict et W))
-               (sym (castᵛ≡subst _ (eternal-val-restrict et W))))
-
-    -- the boundary substitution, from the spelling at `bvar` to `sub-atᶜ`
-    atᶜ-≡ : castᶜ (castOf {Γ₀'} {A} Θ₀')
-              ((subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
-                 [ bvar A Θ₀' ↦ bval Θ₀' (eternal-val-restrict et W) ]c)
-          ≡ sub-atᶜ Θ₀' (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
-                        (eternal-val-restrict et W)
-    atᶜ-≡ = bvar-≡ᶜ Θ₀' _ (eternal-val-restrict et W)
-
-cl-yes : ∀ {Γ₀ A ρ D} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀)
-       → (W : split-l x ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
+cl-yes : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
+       → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
        → (e : (Γ₀ ᴱ ++ᶜ Dcl D op ε)
-            ≡ ((split-l x ᴱ ∷ A) ++ᶜ (split-r x ᴱ ++ᶜ Dcl D op ε)))
-       → IsSub (sub-atᶜ {split-l x ᴱ} {A} (split-r x ᴱ ++ᶜ Dcl D op ε)
-                        (subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
-                        (eternal-val-restrict et W))
-               ((H [ x ↦ W ]cl) op ε)
-cl-yes et x W H op ε e =
-  isSub-reassoc (cl-yes-raw et x W H op ε) (cl-yes-sub et x W H op ε e)
+            ≡ ((Γ₁ ᴱ ∷ A) ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε)))
+       → IsSub ((subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
+                  [ split-≡-++ᶜ {Γ₁ ᴱ ∷ A} {Γ₂ ᴱ ++ᶜ Dcl D op ε}
+                  ↦ eternal-val-restrict et W ]c)
+               ((H [ s ↦ W ]cl) op ε)
+cl-yes et s W H op ε e =
+  isSub-reassoc (cl-yes-raw et s W H op ε) (cl-yes-sub et s W H op ε e)
 
 -- The equation `cl-yes` wants is the splitting's own.
 
-eCl : ∀ {Γ₀ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ₀) → (D : VType)
-    → (op : Op) → (ε : E)
+eCl : ∀ {Γ₀ Γ₁ Γ₂ A} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
+    → (D : VType) → (op : Op) → (ε : E)
     → (Γ₀ ᴱ ++ᶜ Dcl D op ε)
-    ≡ ((split-l x ᴱ ∷ A) ++ᶜ (split-r x ᴱ ++ᶜ Dcl D op ε))
-eCl et x D op ε =
-  sym (split-≡ (split-++ʳ (∈-ᴱ-split et x) (Dcl D op ε)))
+    ≡ ((Γ₁ ᴱ ∷ A) ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε))
+eCl et s D op ε =
+  sym (split-≡ (split-++ʳ (∈-ᴱ-split et s) (Dcl D op ε)))

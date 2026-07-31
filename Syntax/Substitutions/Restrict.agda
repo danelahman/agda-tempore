@@ -108,19 +108,20 @@ restrict-∷-sub-ne Γ Δ (yes _) e₀ h e =
 restrict-∷-sub-ne Γ Δ (no  _) e₀ h e =
   ≐ˢ₀-trans h (⌜⌝-≐ˢ₀ (eq-ren-≐ʳ e₀ e))
 
-restrict-sub-at-ne : ∀ {Γ A ρ} → (¬et : ¬ Eternal A) → (x : A ∈[ ρ ] Γ)
-                   → (W : split-l x ⊢V⦂ A)
-                   → (e : Γ ᴱ ≡ (split-l x ++ᶜ split-r x) ᴱ)
-                   → restrict-sub₀ (sub-split₀ (split-pf x) W) ≐ˢ₀ ⌜ eq-ren e ⌝
+restrict-sub-at-ne : ∀ {Γ Γ₁ Γ₂ A} → (¬et : ¬ Eternal A)
+                   → (s : Γ₁ ∷ A , Γ₂ split Γ)
+                   → (W : Γ₁ ⊢V⦂ A)
+                   → (e : Γ ᴱ ≡ (Γ₁ ++ᶜ Γ₂) ᴱ)
+                   → restrict-sub₀ (sub-split₀ s W) ≐ˢ₀ ⌜ eq-ren e ⌝
 
-restrict-sub-at-ne {A = A} ¬et Hd W e =
+restrict-sub-at-ne {A = A} ¬et split-[] W e =
   restrict-val-sub-ne (eternal? A) ¬et W e
-restrict-sub-at-ne {Γ₀ ∷ B} ¬et (Tl-∷ x) W e =
-  restrict-∷-sub-ne Γ₀ (split-l x ++ᶜ split-r x) (eternal? B)
-                    (ᴱ-drop-split ¬et x)
-                    (restrict-sub-at-ne ¬et x W (ᴱ-drop-split ¬et x)) e
-restrict-sub-at-ne ¬et (Tl-⟨⟩ x) W e =
-  restrict-sub-at-ne ¬et x W e
+restrict-sub-at-ne ¬et (split-∷ {A = B} s) W e =
+  restrict-∷-sub-ne _ _ (eternal? B)
+                    (ᴱ-drop-split ¬et s)
+                    (restrict-sub-at-ne ¬et s W (ᴱ-drop-split ¬et s)) e
+restrict-sub-at-ne ¬et (split-⟨⟩ s) W e =
+  restrict-sub-at-ne ¬et s W e
 
 ------------------------------------------------------------------------
 -- At an *eternal* type the substituted variable does survive, restricted:
@@ -166,64 +167,56 @@ val-sub-≐ˢ : ∀ {Γ A} → {V V' : Γ ⊢V⦂ A}
            → V ≡ V' → [ val-sub {Ξ = []} {Δ = Γ} {A = A} V ]ˢ ≐ˢ [ val-sub V' ]ˢ
 val-sub-≐ˢ refl = ≐ˢ-refl
 
--- The restricted value, at the position the clause substitution reaches it.
-
-Wᴱ : ∀ {Γ A ρ} → (D : Ctx) → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
-   → (W : split-l x ⊢V⦂ A)
-   → split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) D)) ⊢V⦂ A
-Wᴱ {A = A} D et x W =
-  subst (_⊢V⦂ A) (sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) D)))
-        (eternal-val-restrict et W)
-
 -- The suffix-free case. Each `eternal?` is decided *before* the equality
 -- argument is taken, so the `with` abstracts it in the equality's type too.
+--
+-- The two sides differ only by `ᴱ`'s distribution over `_++ᶜ_`, which the
+-- equality argument carries; no retyping of the value is needed, both sides
+-- taking it at `Γ₁ ᴱ`.
 
-restrict-sub-at-et₀ : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
-                    → (W : split-l x ⊢V⦂ A)
-                    → (e : split-l (split→∈ (∈-ᴱ-split et x))
-                             ++ᶜ split-r (split→∈ (∈-ᴱ-split et x))
-                         ≡ (split-l x ++ᶜ split-r x) ᴱ)
+restrict-sub-at-et₀ : ∀ {Γ Γ₁ Γ₂ A} → (et : Eternal A)
+                    → (s : Γ₁ ∷ A , Γ₂ split Γ)
+                    → (W : Γ₁ ⊢V⦂ A)
+                    → (e : Γ₁ ᴱ ++ᶜ Γ₂ ᴱ ≡ (Γ₁ ++ᶜ Γ₂) ᴱ)
                     → (⌜ eq-ren e ⌝
-                       ◅ [ sub-split₀ (split-pf (split→∈ (∈-ᴱ-split et x)))
-                                      (Wᴱ [] et x W) ]ˢ)
-                    ≐ˢ [ restrict-sub₀ (sub-split₀ (split-pf x) W) ]ˢ
+                       ◅ [ sub-split₀ (∈-ᴱ-split et s)
+                                      (eternal-val-restrict et W) ]ˢ)
+                    ≐ˢ [ restrict-sub₀ (sub-split₀ s W) ]ˢ
 
-restrict-sub-at-et₀ {A = A} et Hd W with eternal? A
+restrict-sub-at-et₀ {A = A} et split-[] W with eternal? A
 ... | yes a  = λ e →
   ≐ˢ-trans (id-◅-≐ˢ (eq-ren-≐ʳ e refl) _)
            (val-sub-≐ˢ (cong (λ p → eternal-val-restrict p W)
                              (eternal-irrelevant et a)))
 ... | no ¬et = ⊥-elim (¬et et)
 
-restrict-sub-at-et₀ et (Tl-∷ {B = B} x) W with eternal? B
+restrict-sub-at-et₀ et (split-∷ {A = B} s) W with eternal? B
 ... | yes _ = λ e →
   ≐ˢ-trans (head-∷-≐ˢ _ (∷ᶜ-injective-ctx e) e)
-           (cong-∷-subˢ-≐ˢ (restrict-sub-at-et₀ et x W (∷ᶜ-injective-ctx e)))
-... | no  _ = λ e → restrict-sub-at-et₀ et x W e
+           (cong-∷-subˢ-≐ˢ (restrict-sub-at-et₀ et s W (∷ᶜ-injective-ctx e)))
+... | no  _ = λ e → restrict-sub-at-et₀ et s W e
 
-restrict-sub-at-et₀ et (Tl-⟨⟩ x) W e = restrict-sub-at-et₀ et x W e
+restrict-sub-at-et₀ et (split-⟨⟩ s) W e = restrict-sub-at-et₀ et s W e
 
 -- and under a suffix, by induction on it: each step is the matching chain
 -- congruence, the retyping moving through by `head-∷-≐ˢ`/`head-⟨⟩-≐ˢ`.
 
-restrict-sub-at-et : ∀ {Γ A ρ} → (D : Ctx) → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
-                   → (W : split-l x ⊢V⦂ A)
-                   → (e : split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x) D))
-                            ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x) D))
-                        ≡ (split-l x ++ᶜ split-r x) ᴱ ++ᶜ D)
+restrict-sub-at-et : ∀ {Γ Γ₁ Γ₂ A} → (D : Ctx) → (et : Eternal A)
+                   → (s : Γ₁ ∷ A , Γ₂ split Γ)
+                   → (W : Γ₁ ⊢V⦂ A)
+                   → (e : Γ₁ ᴱ ++ᶜ (Γ₂ ᴱ ++ᶜ D) ≡ (Γ₁ ++ᶜ Γ₂) ᴱ ++ᶜ D)
                    → (⌜ eq-ren e ⌝
-                      ◅ [ sub-split₀ (split-pf (split→∈
-                                        (split-++ʳ (∈-ᴱ-split et x) D)))
-                                     (Wᴱ D et x W) ]ˢ)
-                   ≐ˢ [ cong-sub₀ {Γ'' = D} (restrict-sub₀ (sub-split₀ (split-pf x) W)) ]ˢ
+                      ◅ [ sub-split₀ (split-++ʳ (∈-ᴱ-split et s) D)
+                                     (eternal-val-restrict et W) ]ˢ)
+                   ≐ˢ [ cong-sub₀ {Γ'' = D} (restrict-sub₀ (sub-split₀ s W)) ]ˢ
 
-restrict-sub-at-et []        et x W e = restrict-sub-at-et₀ et x W e
-restrict-sub-at-et (D ∷ B)   et x W e =
+restrict-sub-at-et []        et s W e = restrict-sub-at-et₀ et s W e
+restrict-sub-at-et (D ∷ B)   et s W e =
   ≐ˢ-trans (head-∷-≐ˢ _ (∷ᶜ-injective-ctx e) e)
-           (cong-∷-subˢ-≐ˢ (restrict-sub-at-et D et x W (∷ᶜ-injective-ctx e)))
-restrict-sub-at-et (D ⟨ ρ ⟩) et x W e =
+           (cong-∷-subˢ-≐ˢ (restrict-sub-at-et D et s W (∷ᶜ-injective-ctx e)))
+restrict-sub-at-et (D ⟨ ρ ⟩) et s W e =
   ≐ˢ-trans (head-⟨⟩-≐ˢ _ (⟨⟩-injective-ctx e) e)
-           (cong-⟨⟩-subˢ-≐ˢ (restrict-sub-at-et D et x W (⟨⟩-injective-ctx e)))
+           (cong-⟨⟩-subˢ-≐ˢ (restrict-sub-at-et D et s W (⟨⟩-injective-ctx e)))
 
 ------------------------------------------------------------------------
 -- WHAT THE CLAUSE SUBSTITUTION IS
@@ -238,23 +231,23 @@ subst-ctx-cong : ∀ {C} → (F : Ctx → Ctx) → ∀ {Γ Γ'} → (e : Γ ≡ 
                → subst (λ Γ₀ → F Γ₀ ⊢C⦂ C) e M ≡ subst (_⊢C⦂ C) (cong F e) M
 subst-ctx-cong F refl M = refl
 
-cl-ne-≡ : ∀ {Γ A B ρ} → (¬et : ¬ Eternal A) → (x : A ∈[ ρ ] Γ)
-        → (W : split-l x ⊢V⦂ A)
+cl-ne-≡ : ∀ {Γ Γ₁ Γ₂ A B} → (¬et : ¬ Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+        → (W : Γ₁ ⊢V⦂ A)
         → (H : (op : Op) → (ε'' : E)
              → Γ ᴱ ∷ type-of-gtype (param op)
                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
         → (op : Op) → (ε'' : E)
-        → (H [ x ↦ W ]cl) op ε''
+        → (H [ s ↦ W ]cl) op ε''
         ≡ subst (λ Γ₀ → Γ₀ ++ᶜ ([] ∷ type-of-gtype (param op)
                                    ∷ [ mapᵉ (op-grade op) ]
                                        (type-of-gtype (arity op) ⇒ B ‼ ε''))
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                (ᴱ-drop-split ¬et x) (H op ε'')
+                (ᴱ-drop-split ¬et s) (H op ε'')
 
-cl-ne-≡ {B = B} ¬et x W H op ε'' =
+cl-ne-≡ {B = B} ¬et s W H op ε'' =
   trans (C-sub₀-≐ˢ₀
-          (≐ˢ₀-trans (cong-sub₀-≐ˢ₀ D (restrict-sub-at-ne ¬et x W eᴱ))
+          (≐ˢ₀-trans (cong-sub₀-≐ˢ₀ D (restrict-sub-at-ne ¬et s W eᴱ))
                      (cong-sub₀-⌜⌝ D (eq-ren eᴱ)))
           (H op ε''))
     (trans (C-sub₀-⌜⌝ (cong-ren {Γ'' = D} (eq-ren eᴱ)) (H op ε''))
@@ -264,43 +257,36 @@ cl-ne-≡ {B = B} ¬et x W H op ε'' =
     D = [] ∷ type-of-gtype (param op)
            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
 
-    eᴱ = ᴱ-drop-split ¬et x
+    eᴱ = ᴱ-drop-split ¬et s
 
-cl-et-≡ : ∀ {Γ A B ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
-        → (W : split-l x ⊢V⦂ A)
+cl-et-≡ : ∀ {Γ Γ₁ Γ₂ A B} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+        → (W : Γ₁ ⊢V⦂ A)
         → (H : (op : Op) → (ε'' : E)
              → Γ ᴱ ∷ type-of-gtype (param op)
                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
         → (op : Op) → (ε'' : E)
-        → (e : split-l (split→∈ (split-++ʳ (∈-ᴱ-split et x)
-                                  ([] ∷ type-of-gtype (param op)
+        → (e : Γ₁ ᴱ ++ᶜ (Γ₂ ᴱ ++ᶜ ([] ∷ type-of-gtype (param op)
                                       ∷ [ mapᵉ (op-grade op) ]
-                                          (type-of-gtype (arity op) ⇒ B ‼ ε''))))
-                 ++ᶜ split-r (split→∈ (split-++ʳ (∈-ᴱ-split et x)
-                                        ([] ∷ type-of-gtype (param op)
-                                            ∷ [ mapᵉ (op-grade op) ]
-                                                (type-of-gtype (arity op) ⇒ B ‼ ε''))))
-             ≡ (split-l x ++ᶜ split-r x) ᴱ
+                                          (type-of-gtype (arity op) ⇒ B ‼ ε'')))
+             ≡ (Γ₁ ++ᶜ Γ₂) ᴱ
                  ++ᶜ ([] ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ]
                              (type-of-gtype (arity op) ⇒ B ‼ ε'')))
-        → (H [ x ↦ W ]cl) op ε''
+        → (H [ s ↦ W ]cl) op ε''
         ≡ subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) e
-            ((H op ε'') [ split→∈ (split-++ʳ (∈-ᴱ-split et x)
-                                    ([] ∷ type-of-gtype (param op)
-                                        ∷ [ mapᵉ (op-grade op) ]
-                                            (type-of-gtype (arity op) ⇒ B ‼ ε'')))
-                          ↦ Wᴱ ([] ∷ type-of-gtype (param op)
-                                   ∷ [ mapᵉ (op-grade op) ]
-                                       (type-of-gtype (arity op) ⇒ B ‼ ε''))
-                               et x W ]c)
+            ((H op ε'')
+               [ split-++ʳ (∈-ᴱ-split et s)
+                   ([] ∷ type-of-gtype (param op)
+                       ∷ [ mapᵉ (op-grade op) ]
+                           (type-of-gtype (arity op) ⇒ B ‼ ε''))
+               ↦ eternal-val-restrict et W ]c)
 
-cl-et-≡ {B = B} et x W H op ε'' e =
-  trans (sym (C-sub-≐ˢ (restrict-sub-at-et D et x W e) (H op ε'')))
+cl-et-≡ {B = B} et s W H op ε'' e =
+  trans (sym (C-sub-≐ˢ (restrict-sub-at-et D et s W e) (H op ε'')))
     (trans (C-sub₀-⌜⌝ (eq-ren e) X) (C-rename-eq-≡ e ≐ʳ-refl X))
   where
     D = [] ∷ type-of-gtype (param op)
            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
 
-    X = (H op ε'') [ split→∈ (split-++ʳ (∈-ᴱ-split et x) D) ↦ Wᴱ D et x W ]c
+    X = (H op ε'') [ split-++ʳ (∈-ᴱ-split et s) D ↦ eternal-val-restrict et W ]c

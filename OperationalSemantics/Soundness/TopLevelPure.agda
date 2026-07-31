@@ -6,7 +6,7 @@
 -- step `↝-STEP`, and                                                    --
 --                                                                    --
 --   OP-STEP : ⟨ S , perform op V M ⟩                                    --
---           ⟿ ⟨ S ⟨ mapᵉ (op-grade op) ⟩ₛ , M [ Hd ↦ op-sem op V ]c ⟩   --
+--           ⟿ ⟨ S ⟨ mapᵉ (op-grade op) ⟩ₛ , M [ split-[] ↦ op-sem op V ]c ⟩   --
 --                                                                    --
 -- which replaces the operation call by the value the implementation      --
 -- computes, and locks the state: performing the operation took           --
@@ -151,7 +151,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
            → Paramᶜᶠ (⟨ St , M ⟩) → Paramᶜᶠ (⟨ St' , M' ⟩)
     topᴾᶜᶠ (↝-STEP r) p = stepᴾᶜᶠ r p
     topᴾᶜᶠ (OP-STEP {op = op} {S = St} {V = V} {M = M}) (pSt , (pV , pM)) =
-      pSt , subᶜ M Hd (op-sem op V) pM (op-par op St V)
+      pSt , subᶜ M split-[] (op-sem op V) pM (op-par op St V)
 
     -- THE TOP-LEVEL STEP'S GRADE, TRANSITION AND REFINEMENT
     --
@@ -212,8 +212,8 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                              {⟦ hist St ⟨ mapᵉ (op-grade op) ⟩ ⟧ᶜᵗˣ}
                              {⟦ A ⟧ᵛ} {op-grade op ·ₑ uₑ} {ε}
                              (⟦ ⟨ grade-pass St (mapᵉ (op-grade op))
-                                , M [ Hd ↦ op-sem op V ]c ⟩ ⟧ᵏᶜᶠ
-                                (pSt , subᶜ M Hd (op-sem op V) pM (op-par op St V)))
+                                , M [ split-[] ↦ op-sem op V ]c ⟩ ⟧ᵏᶜᶠ
+                                (pSt , subᶜ M split-[] (op-sem op V) pM (op-par op St V)))
                              (top-stepᵏ (OP-STEP {op = op} {S = St} {V = V} {M = M}))
     sound-OP-STEP {A} {ε} op St V M pSt pV pM =
       -- run the operation away
@@ -234,22 +234,22 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
         d = op-grade op
 
         cf' : Config (A ‼ ε)
-        cf' = ⟨ grade-pass St (mapᵉ d) , M [ Hd ↦ op-sem op V ]c ⟩
+        cf' = ⟨ grade-pass St (mapᵉ d) , M [ split-[] ↦ op-sem op V ]c ⟩
 
         pcf' : Paramᶜᶠ cf'
-        pcf' = pSt , subᶜ M Hd (op-sem op V) pM (op-par op St V)
+        pcf' = pSt , subᶜ M split-[] (op-sem op V) pM (op-par op St V)
 
         -- the operation's continuation, fed `op-semᵐ`'s value, IS the reduct
         cont : subst (λ O → (⟨ mapᵉ d ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
                      (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
                  ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V pV) ⟩ᵐ
-             ≈ᵐ ⟦ M [ Hd ↦ op-sem op V ]c ⟧ᶜᵗ
-                  (subᶜ M Hd (op-sem op V) pM (op-par op St V))
+             ≈ᵐ ⟦ M [ split-[] ↦ op-sem op V ]c ⟧ᶜᵗ
+                  (subᶜ M split-[] (op-sem op V) pM (op-par op St V))
         cont =
             ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (op-coh op St V pV) ⟩ᵐ-cong)
           ∙ᵏ substᵈ-⟨⟩ (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
                (⟦ op-sem op V ⟧ᵛᵗ (op-par op St V))
-          ∙ᵏ ≈ᵐ-sym (C-subst-nat M Hd (op-sem op V) pM (op-par op St V))
+          ∙ᵏ ≈ᵐ-sym (C-subst-nat M split-[] (op-sem op V) pM (op-par op St V))
 
         -- the coercions collapse: the source's grade is reached exactly
         coe : T-≤ᵏ (top-≾ (OP-STEP {op = op} {S = St} {V = V} {M = M}))

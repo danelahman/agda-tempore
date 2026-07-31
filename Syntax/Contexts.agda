@@ -424,18 +424,19 @@ split-++ʳ s []        = s
 split-++ʳ s (D ∷ B)   = split-∷ (split-++ʳ s D)
 split-++ʳ s (D ⟨ ρ ⟩) = split-⟨⟩ (split-++ʳ s D)
 
--- Splitting Γ at an eternal variable, restricted: `x` splits `Γ ᴱ` into the
--- eternal restrictions of the two halves it splits `Γ` into.
+-- Restricting a splitting at an eternal entry: the entry survives, and the two
+-- halves become their own eternal restrictions. A lock contributes nothing, and
+-- a non-eternal binder drops out of the suffix.
 
-∈-ᴱ-split : ∀ {Γ A ρ} → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
-          → (split-l x) ᴱ ∷ A , (split-r x) ᴱ split (Γ ᴱ)
-∈-ᴱ-split {Γ ∷ A} et Hd       with eternal? A
+∈-ᴱ-split : ∀ {Γ Γ₁ Γ₂ A} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+          → Γ₁ ᴱ ∷ A , Γ₂ ᴱ split (Γ ᴱ)
+∈-ᴱ-split {A = A} et split-[] with eternal? A
 ... | yes _  = split-[]
 ... | no ¬et = ⊥-elim (¬et et)
-∈-ᴱ-split {Γ ∷ B} et (Tl-∷ x) with eternal? B
-... | yes _  = split-∷ (∈-ᴱ-split et x)
-... | no  _  = ∈-ᴱ-split et x
-∈-ᴱ-split {Γ ⟨ ρ ⟩} et (Tl-⟨⟩ x) = ∈-ᴱ-split et x
+∈-ᴱ-split et (split-∷ {A = B} s) with eternal? B
+... | yes _  = split-∷ (∈-ᴱ-split et s)
+... | no  _  = ∈-ᴱ-split et s
+∈-ᴱ-split et (split-⟨⟩ s) = ∈-ᴱ-split et s
 
 -- The variable a split points at. Its two halves are read back by
 -- `split→∈-split-l`/`-r` (Σ-eta makes `split-l`/`split-r` commute through the
@@ -461,10 +462,10 @@ split→∈-split-r (split-⟨⟩ {ρ = ρ} s)  = cong (_⟨ ρ ⟩) (split→�
 -- When the split variable is *not* eternal, the eternal restriction is
 -- unchanged by removing it, i.e. it is the restriction of the two halves.
 
-ᴱ-drop-split : ∀ {Γ A ρ} → ¬ Eternal A → (x : A ∈[ ρ ] Γ)
-             → Γ ᴱ ≡ (split-l x ++ᶜ split-r x) ᴱ
-ᴱ-drop-split {Γ} {A} ¬et x =
-  trans (cong _ᴱ (sym (split-≡ (split-pf x))))
-    (trans (ᴱ-++ᶜ (split-l x ∷ A) (split-r x))
-      (trans (cong (_++ᶜ (split-r x) ᴱ) (ᴱ-∷-drop {split-l x} {A} ¬et))
-        (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+ᴱ-drop-split : ∀ {Γ Γ₁ Γ₂ A} → ¬ Eternal A → (s : Γ₁ ∷ A , Γ₂ split Γ)
+             → Γ ᴱ ≡ (Γ₁ ++ᶜ Γ₂) ᴱ
+ᴱ-drop-split {Γ₁ = Γ₁} {Γ₂} {A} ¬et s =
+  trans (cong _ᴱ (sym (split-≡ s)))
+    (trans (ᴱ-++ᶜ (Γ₁ ∷ A) Γ₂)
+      (trans (cong (_++ᶜ Γ₂ ᴱ) (ᴱ-∷-drop {Γ₁} {A} ¬et))
+        (sym (ᴱ-++ᶜ Γ₁ Γ₂))))

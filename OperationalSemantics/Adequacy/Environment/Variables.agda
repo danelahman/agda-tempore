@@ -207,7 +207,7 @@ env-var-hd : ∀ {St Γ A} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
            → (f : ¬ Eternal A → uᵣ ≾ᵣ uᵣ)
            → env-V (γ ∷ᵉ W) (var f Hd) ≡ W
 env-var-hd γ W f =
-  sub-≡ᵛ Hd (refl) (env-Vˢ-var-r γ ([] ∷ _) Hd f f)
+  sub-≡ᵛ split-[] (refl) (env-Vˢ-var-r γ ([] ∷ _) Hd f f)
 
 -- Any other variable is untouched by the entry, and is the action of the rest.
 --

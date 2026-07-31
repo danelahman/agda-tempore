@@ -418,33 +418,33 @@ eternal-val-restrict-cong et = cong (eternal-val-restrict et)
 -- The substitution reads the variable's grade bound (at the lock case, to build
 -- a `⟨⟩-≤-ren`), so the two bounds must be identified — by `bound-irr`.
 
-sub-var-≡ : ∀ {Γ A B ρ ρ'}
+sub-var-≡ : ∀ {Γ Γ₁ Γ₂ A B ρ'}
           → (y : B ∈[ ρ' ] Γ) → (f f' : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
-          → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
+          → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
           → W ≡ W'
           --------------------------------------------------------
-          → ⟨ y , f ⟩[ x ↦ W ]var ≡ ⟨ y , f' ⟩[ x ↦ W' ]var
+          → ⟨ y , f ⟩[ s ↦ W ]var ≡ ⟨ y , f' ⟩[ s ↦ W' ]var
 
-sub-var-≡ y f f' x eW =
-  cong₂ (λ g U → ⟨ y , g ⟩[ x ↦ U ]var) (bound-irr f f') eW
+sub-var-≡ y f f' s eW =
+  cong₂ (λ g U → ⟨ y , g ⟩[ s ↦ U ]var) (bound-irr f f') eW
 
 -- SUBSTITUTING INTO A RESOURCE VARIABLE
 --
 -- `⟨_⟩[_↦_]rvar` returns a variable and a grade bound; only the variable is
 -- observable, and that is what an `unbox` node stores.
 
-rvar-img : ∀ {Γ A B ρ σ τ}
-         → ([ ρ ] B ∈[ σ ] Γ) → (x : A ∈[ τ ] Γ) → split-l x ⊢V⦂ A
-         → Var (split-l x ++ᶜ split-r x) ([ ρ ] B)
-rvar-img y x W = proj₁ (⟨ y ⟩[ x ↦ W ]rvar) , proj₁ (proj₂ (⟨ y ⟩[ x ↦ W ]rvar))
+rvar-img : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
+         → ([ ρ ] B ∈[ σ ] Γ) → (s : Γ₁ ∷ A , Γ₂ split Γ) → Γ₁ ⊢V⦂ A
+         → Var (Γ₁ ++ᶜ Γ₂) ([ ρ ] B)
+rvar-img y s W = proj₁ (⟨ y ⟩[ s ↦ W ]rvar) , proj₁ (proj₂ (⟨ y ⟩[ s ↦ W ]rvar))
 
-sub-rvar-≡ : ∀ {Γ A B ρ σ τ}
-           → (y : [ ρ ] B ∈[ σ ] Γ) → (x : A ∈[ τ ] Γ)
-           → {W W' : split-l x ⊢V⦂ A} → W ≡ W'
+sub-rvar-≡ : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
+           → (y : [ ρ ] B ∈[ σ ] Γ) → (s : Γ₁ ∷ A , Γ₂ split Γ)
+           → {W W' : Γ₁ ⊢V⦂ A} → W ≡ W'
            ----------------------------------------
-           → rvar-img y x W ≡ rvar-img y x W'
+           → rvar-img y s W ≡ rvar-img y s W'
 
-sub-rvar-≡ y x = cong (rvar-img y x)
+sub-rvar-≡ y s = cong (rvar-img y s)
 
 -- RETYPING
 
@@ -465,13 +465,13 @@ substᶜ-≡′ f {C} e = cong (subst (λ z → f z ⊢C⦂ C) e)
 -- SUBSTITUTION IS A CONGRUENCE
 ------------------------------------------------------------------------
 
-sub-≡ᵛ : ∀ {Γ A B ρ} → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
+sub-≡ᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
        → W ≡ W' → {V V' : Γ ⊢V⦂ B} → V ≡ V'
-       → (V [ x ↦ W ]v) ≡ (V' [ x ↦ W' ]v)
-sub-≡ᵛ x eW eV = cong₂ (λ U V₀ → V₀ [ x ↦ U ]v) eW eV
+       → (V [ s ↦ W ]v) ≡ (V' [ s ↦ W' ]v)
+sub-≡ᵛ s eW eV = cong₂ (λ U V₀ → V₀ [ s ↦ U ]v) eW eV
 
-sub-≡ᶜ : ∀ {Γ A C ρ} → (x : A ∈[ ρ ] Γ) → {W W' : split-l x ⊢V⦂ A}
+sub-≡ᶜ : ∀ {Γ Γ₁ Γ₂ A C} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
        → W ≡ W' → {M M' : Γ ⊢C⦂ C} → M ≡ M'
-       → (M [ x ↦ W ]c) ≡ (M' [ x ↦ W' ]c)
-sub-≡ᶜ x eW eM = cong₂ (λ U M₀ → M₀ [ x ↦ U ]c) eW eM
+       → (M [ s ↦ W ]c) ≡ (M' [ s ↦ W' ]c)
+sub-≡ᶜ s eW eM = cong₂ (λ U M₀ → M₀ [ s ↦ U ]c) eW eM
 
