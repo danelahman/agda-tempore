@@ -37,9 +37,9 @@ open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
-open import Syntax.Substitutions.Weakening Spec
-open import Syntax.Substitutions.Renaming  Spec
-open import Syntax.Substitutions.Swap      Spec
+open import Syntax.Substitutions.Restrict  Spec
+open import Syntax.Substitutions.At        Spec
+open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
@@ -395,7 +395,7 @@ env-eternal-H-C-∷ : ∀ {B₀ Δ Γc B} → (lf : Lock-free Δ)
                              (ᴱ-lock-free Δ) (ηᴱ (λ x → η (Tl-∷ x)))
                              (castᶜ (eH Δ Γc B op ε) (K₀ op ε)))
                   → env-eternal-H {_} {Γc} lf (λ x → η (Tl-∷ x))
-                       (sub-atᴴ′ d Γc K (V-rename (empty-ren lf) (η Hd))) op ε
+                       (sub-atᴴ Γc K (V-rename (empty-ren lf) (η Hd))) op ε
                   ≡ env-eternal-C {_} {Γc ᴱ ++ᶜ Dcl B op ε}
                        (ᴱ-lock-free-∷ Δ B₀ d)
                        (λ y → η (proj₂ (∈-ᴱ⁻-∷ Δ B₀ d y)))
@@ -438,7 +438,7 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
     W₀ = V-rename (empty-ren lf) (η Hd)
 
     K₄ : Fam B ((Δ ++ᶜ Γc) ᴱ)
-    K₄ = sub-atᴴ′ (no ¬et) Γc K W₀
+    K₄ = sub-atᴴ Γc K W₀
 
     cCl = cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ]
@@ -450,7 +450,9 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (no ¬et) e₁ ih =
     inner : castᶜ (eH Δ Γc B op ε) (K₄ op ε) ≡ castᶜ e₁ (K op ε)
     inner =
       trans (cong (λ z → castᶜ (eH Δ Γc B op ε) (castᶜ cCl z))
-                  (subst-++ᶜʳ Dc dropM (K op ε)))
+                  (trans (cl-ne-≡ ¬et (bvar {Δ} B₀ Γc) (bval {Δ} {B₀} Γc W₀)
+                                  K op ε)
+                         (subst-++ᶜʳ Dc dropM (K op ε))))
         (trans (cong (castᶜ (eH Δ Γc B op ε))
                   (trans (castᶜ≡subst cCl _)
                          (subst-fuseᶜ (cong (_++ᶜ Dc) dropM) cCl (K op ε))))
@@ -478,7 +480,7 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
     W₀ = V-rename (empty-ren lf) (η Hd)
 
     K₄ : Fam B ((Δ ++ᶜ Γc) ᴱ)
-    K₄ = sub-atᴴ′ (yes et) Γc K W₀
+    K₄ = sub-atᴴ Γc K W₀
 
     x  = bvar {Δ} B₀ Γc
     Wv = bval {Δ} {B₀} Γc W₀
@@ -1091,8 +1093,10 @@ env-Hˢ-clause {St} {Γ} {B} γ St₁ Δ K op ε =
 env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (no ¬et) eq ih rewrite eq =
   trans
     (castᶜ-≡ cOut
-      (substᶜ-≡′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
-        (castᶜ-≡ eo (ih Δ' K'))))
+      (trans (cl-ne-≡ ¬et (bvar {toCtx St} A Δ) (bval {toCtx St} {A} Δ W)
+                      Kᵢ op ε)
+             (substᶜ-≡′ (λ Γ₀ → Γ₀ ++ᶜ Dc) dropM
+               (castᶜ-≡ eo (ih Δ' K')))))
     (step)
   where
     CT = B ‼ (op-grade op ·ₑ ε)
@@ -1114,6 +1118,11 @@ env-Hˢ-ᴱ-∷ {St} {Γ} {A} {B} γ W Δ K op ε e₁ (no ¬et) eq ih rewrite e
                         ∷ [ mapᵉ (op-grade op) ]
                             (type-of-gtype (arity op) ⇒ B ‼ ε))
               (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+
+    -- the family the zone's substitution is applied to
+    Kᵢ : Fam B (((toCtx St ∷ A) ++ᶜ Δ) ᴱ)
+    Kᵢ op' ε' = Cl-cast op' ε' (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
+                  (env-Hˢ γ Δ' K' op' ε')
 
     -- `A` is not eternal, so it drops out of the restricted suffix
     eΔ'Δ : Δ' ᴱ ≡ Δ ᴱ

@@ -251,3 +251,40 @@ eternal-bridge-core et (Tl-∷ {B = B} x) W e with eternal? B
 ... | no _ = eternal-bridge-core et x W e
 eternal-bridge-core et (Tl-⟨⟩ x) W e = eternal-bridge-core et x W e
 
+
+------------------------------------------------------------------------
+-- TRANSPORTING ALONG AN EQUALITY OF CLAUSES
+--
+-- The substituted clause family is `_[_↦_]cl`, which the two facts of
+-- `Substitutions.Restrict` identify with a retyping (non-eternal) or with a
+-- substitution at the splitting's own halves (eternal). Both are equalities of
+-- *terms*, so the certificate and its interpretation travel along them.
+------------------------------------------------------------------------
+
+Paramᶜ-≡ : ∀ {Δ C} → {t t' : Δ ⊢C⦂ C} → t ≡ t' → Paramᶜ t → Paramᶜ t'
+Paramᶜ-≡ refl p = p
+
+interp-≡ᶜ : ∀ {Δ C} → {t t' : Δ ⊢C⦂ C} → (e : t ≡ t') → (p : Paramᶜ t)
+          → ⟦ t' ⟧ᶜᵗ (Paramᶜ-≡ e p) ≈ᵐ ⟦ t ⟧ᶜᵗ p
+interp-≡ᶜ refl p = ≈ᵐ-refl
+
+clauses-≡-uniform :
+  ∀ {Δ B}
+  → {H H' : (op : Op) → (ε'' : E)
+          → Δ ∷ type-of-gtype (param op)
+               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+            ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
+  → (e : ∀ op ε'' → H op ε'' ≡ H' op ε'')
+  → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
+  → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+       → ⟦ H op ε₂'' ⟧ᶜᵗ (pH op ε₂'')
+           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+       ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op ε₁'' ⟧ᶜᵗ (pH op ε₁''))
+  → (∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+       → ⟦ H' op ε₂'' ⟧ᶜᵗ (Paramᶜ-≡ (e op ε₂'') (pH op ε₂''))
+           ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+       ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
+           ∘ᵐ ⟦ H' op ε₁'' ⟧ᶜᵗ (Paramᶜ-≡ (e op ε₁'') (pH op ε₁'')))
+clauses-≡-uniform e pH uH op q =
+  ≈ᵐ-trans (∘ᵐ-congˡ (interp-≡ᶜ (e op _) (pH op _)))
+    (≈ᵐ-trans (uH op q) (∘ᵐ-congʳ (≈ᵐ-sym (interp-≡ᶜ (e op _) (pH op _)))))

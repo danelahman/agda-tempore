@@ -46,9 +46,9 @@ open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
-open import Syntax.Substitutions.Weakening Spec
-open import Syntax.Substitutions.Renaming  Spec
-open import Syntax.Substitutions.Swap      Spec
+open import Syntax.Substitutions.Restrict  Spec
+open import Syntax.Substitutions.At        Spec
+open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
@@ -176,30 +176,28 @@ subst-collapse-cl refl refl refl e₄ X =
 ------------------------------------------------------------------------
 -- TAKING THE ETERNALITY SPLIT WHERE THE CONTEXT IS STILL ABSTRACT
 --
--- `⟨_⟩[_↦_]cl`'s clause family sits at `Γ ᴱ` for `Γ` the substituted variable's
--- own context. At a *concrete* `Γ := Γ₀ ∷ A` that reduces and recomputes
--- `eternal? A` independently of the `dec` argument, so a `with` there abstracts
--- one occurrence and not the other and the application stops typechecking.
---
--- Here `Γ` and `x` are parameters, so `Γ ᴱ` does not reduce and the only
--- occurrence is the decision itself. Each branch then has a *literal* `Dec`, so
--- `⟨_⟩[_↦_]cl` computes without any further dispatch at the use site.
+-- `_[_↦_]cl` does not itself dispatch on eternality — the restricted
+-- substitution does — but the two facts identifying it (`cl-ne-≡`, `cl-et-≡`)
+-- do, so the proof still has to split. `Γ` and `x` are parameters here, so
+-- `Γ ᴱ` does not reduce and the only occurrence of the decision is the one
+-- being matched.
 ------------------------------------------------------------------------
 
-cl-cancel : ∀ {Γ A B ρ} → (dec : Dec (Eternal A))
+cl-cancel : ∀ {Γ A B ρ}
           → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
           → (H : (op : Op) → (ε : E) → Cl B op ε (Γ ᴱ))
           → (K : (op : Op) → (ε : E)
                    → Cl B op ε ((split-l x ++ᶜ split-r x) ᴱ))
           → ((¬et : ¬ Eternal A) → (op : Op) → (ε : E)
-               → ⟨ no ¬et ⟩[ x ↦ W ]cl H op ε ≡ K op ε)
+               → (H [ x ↦ W ]cl) op ε ≡ K op ε)
           → ((et : Eternal A) → (op : Op) → (ε : E)
-               → ⟨ yes et ⟩[ x ↦ W ]cl H op ε ≡ K op ε)
+               → (H [ x ↦ W ]cl) op ε ≡ K op ε)
           → (op : Op) → (ε : E)
-          → ⟨ dec ⟩[ x ↦ W ]cl H op ε ≡ K op ε
+          → (H [ x ↦ W ]cl) op ε ≡ K op ε
 
-cl-cancel (no ¬et) x W H K hne het op ε = hne ¬et op ε
-cl-cancel (yes et) x W H K hne het op ε = het et op ε
+cl-cancel {A = A} x W H K hne het op ε with eternal? A
+... | no ¬et = hne ¬et op ε
+... | yes et = het et op ε
 
 ------------------------------------------------------------------------
 -- HANDLING
@@ -394,7 +392,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
             -- The reduct *is* the recursive call: renaming distributes over
             -- `handle` definitionally, `_[_↦_]c` now does too (its eternality
-            -- split having moved into `⟨_⟩[_↦_]cl`), and the scrutinee reached
+            -- split having moved into `_[_↦_]cl`), and the scrutinee reached
             -- is `resume q₂ M' W'`.
             inner : Comp' B (ε₃ ·ₑ ε₂) St''
                       ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
@@ -552,14 +550,14 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 --
                 -- where `H₂` is `H` pushed along: `eH₁`'s transport, the
                 -- `ren-ᴱ-∷ Ar` inclusion, `restrict-ren (cong-∷-ren sq)`, and
-                -- `⟨ eternal? Ar ⟩[ Hd ↦ W' ]cl`.
+                -- `_[ Hd ↦ W' ]cl`.
                 --
                 -- Two lemmas close it, and both are within reach now that `_ᴱ`
                 -- and `_[_↦_]c` expose the decision:
                 --
                 --   * *the inclusion cancels the substitution*: at an eternal
                 --     `Ar`, `ren-ᴱ-∷′ Ar (yes et)` is `wk-ren` and
-                --     `⟨ yes et ⟩[ Hd ↦ W' ]cl` substitutes for exactly that
+                --     the eternal branch substitutes for exactly that
                 --     binder, so `sub-wk-C` cancels them (its splitting
                 --     `split-++ʳ (∈-ᴱ-split et Hd) D` *is* `split-≡-++ᶜ`
                 --     definitionally, `D` being built from `[]`); at a
@@ -579,12 +577,12 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                 K op' ε' = subst (Cl B op' ε') (toCtxᴱ-≡ St St'') (H op' ε')
 
                 hH₂ : Clause-Prem B St''
-                        (⟨ eternal? Ar ⟩[ Hd {Γ = toCtx St''} ↦ W' ]cl
-                           (λ op' ε' →
+                        (((λ op' ε' →
                               C-rename (cong-∷-ren (cong-∷-ren
                                           (restrict-ren
                                             (cong-∷-ren (unbox-ren q₂)))))
-                                (H₁' op' ε')))
+                                (H₁' op' ε'))
+                          [ Hd {Γ = toCtx St''} ↦ W' ]cl))
                 hH₂ {St₃} {op₃} {ε₄} V₀' bv W₃ pW₃ =
                   Comp-≡ᶜ
                     (sub-≡ᶜ (Tl-∷ Hd) (refl)
@@ -635,16 +633,23 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     H₁-≡ = eH₁
 
                     hne : (¬et : ¬ Eternal Ar) → (op' : Op) → (ε' : E)
-                        → ⟨ no ¬et ⟩[ Hd {Γ = toCtx St''} ↦ W' ]cl
-                            (λ op'' ε'' →
+                        → ((λ op'' ε'' →
                                C-rename (cong-∷-ren (cong-∷-ren
                                            (restrict-ren
                                              (cong-∷-ren (unbox-ren q₂)))))
                                  (H₁' op'' ε''))
-                            op' ε'
+                            [ Hd {Γ = toCtx St''} ↦ W' ]cl) op' ε'
                         ≡ K op' ε'
                     hne ¬et op' ε' =
                       trans
+                       (cl-ne-≡ ¬et (Hd {Γ = toCtx St''}) W'
+                          (λ op'' ε'' →
+                             C-rename (cong-∷-ren (cong-∷-ren
+                                         (restrict-ren
+                                           (cong-∷-ren (unbox-ren q₂)))))
+                               (H₁' op'' ε''))
+                          op' ε')
+                      (trans
                         (substᶜ-≡′ (λ Γ₀ → Γ₀ ++ᶜ D)
                           eD
                           (trans (Hᵣ-≡ op' ε')
@@ -668,7 +673,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                 (H₁ op' ε'))
                               ( (cong (subst (_⊢C⦂ CT) (cong (_++ᶜ D) e₀))
                                           (H₁-≡ op' ε'))))))
-                        ( collapse-ne)
+                        ( collapse-ne))
                       where
                         D  = Dof op' ε'
                         CT = B ‼ (op-grade op' ·ₑ ε')
@@ -698,7 +703,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
                     -- THE ETERNAL BRANCH, and what it needs.
                     --
-                    -- Here `⟨ yes et ⟩[ Hd ↦ W' ]cl` substitutes
+                    -- Here the eternal branch substitutes
                     -- `eternal-val-restrict et W'` for the `Ar` variable of the
                     -- renamed clause, at the splitting
                     -- `sp = split-++ʳ (∈-ᴱ-split et Hd) D`.
@@ -727,16 +732,23 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     -- This is the shape of `sub-wk-handle-et` in `Environment`,
                     -- the longest single proof in the development.
                     het : (et : Eternal Ar) → (op' : Op) → (ε' : E)
-                        → ⟨ yes et ⟩[ Hd {Γ = toCtx St''} ↦ W' ]cl
-                            (λ op'' ε'' →
+                        → ((λ op'' ε'' →
                                C-rename (cong-∷-ren (cong-∷-ren
                                            (restrict-ren
                                              (cong-∷-ren (unbox-ren q₂)))))
                                  (H₁' op'' ε''))
-                            op' ε'
+                            [ Hd {Γ = toCtx St''} ↦ W' ]cl) op' ε'
                         ≡ K op' ε'
                     het et op' ε' =
                       trans
+                       (cl-et-≡ et (Hd {Γ = toCtx St''}) W'
+                          (λ op'' ε'' →
+                             C-rename (cong-∷-ren (cong-∷-ren
+                                         (restrict-ren
+                                           (cong-∷-ren (unbox-ren q₂)))))
+                               (H₁' op'' ε''))
+                          op' ε' eOut)
+                      (trans
                         (substᶜ-≡ eOut
                           (sub-≡ᶜ (split→∈ sp) (refl) factor))
                         (trans
@@ -753,13 +765,13 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                 (sym (castᶜ≡subst
                                        (castOf {toCtx St'' ᴱ} {Ar} D) _))))
                               (trans (sub-wk-C-cast D eG (H₁ op' ε') Wt)
-                                        ( collapse-et)))))
+                                        ( collapse-et))))))
                       where
                         D  = Dof op' ε'
                         CT = B ‼ (op-grade op' ·ₑ ε')
 
                         -- the two splittings of the clause's context: the one
-                        -- `⟨ yes et ⟩[_↦_]cl` uses, and the one `sub-wk-C` wants
+                        -- `cl-et-≡` names, and the one `sub-wk-C` wants
                         sp = split-++ʳ (∈-ᴱ-split et (Hd {Γ = toCtx St''})) D
                         tp = split-≡-++ᶜ {toCtx St'' ᴱ ∷ Ar} {D}
 
@@ -868,13 +880,12 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 
                     step : subst (Cl B op₃ ε₄) (toCtxᴱ-≡ St St₃) (H op₃ ε₄)
                          ≡ subst (Cl B op₃ ε₄) (toCtxᴱ-≡ St'' St₃)
-                              (⟨ eternal? Ar ⟩[ Hd {Γ = toCtx St''} ↦ W' ]cl
-                                 (λ op' ε' →
+                              (((λ op' ε' →
                                     C-rename (cong-∷-ren (cong-∷-ren
                                                 (restrict-ren
                                                   (cong-∷-ren (unbox-ren q₂)))))
                                       (H₁' op' ε'))
-                                 op₃ ε₄)
+                                 [ Hd {Γ = toCtx St''} ↦ W' ]cl) op₃ ε₄)
                     step =
                       trans ( (sym fuse))
                         (substᶜ-≡′
@@ -883,7 +894,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                          (type-of-gtype (arity op₃) ⇒ B ‼ ε₄))
                           (toCtxᴱ-≡ St'' St₃)
                           (sym
-                            (cl-cancel (eternal? Ar) (Hd {Γ = toCtx St''}) W' _ K
+                            (cl-cancel (Hd {Γ = toCtx St''}) W' _ K
                                        hne het op₃ ε₄)))
 
 

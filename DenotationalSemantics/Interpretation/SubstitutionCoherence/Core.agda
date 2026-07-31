@@ -40,6 +40,7 @@ open import Syntax.Language      S
 open import Syntax.Renamings     S
 open import Syntax.RenActions    S
 open import Syntax.Substitutions S
+open import Syntax.Substitutions.Restrict S using (cl-ne-≡; cl-et-≡)
 open import Syntax.Renamings.Equivalence S using (eternal?-no)
 
 open Category Cat
@@ -94,44 +95,81 @@ mutual
   ... | no ¬et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
-    , (λ op ε'' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'') (pH op ε''))
-    , subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
+    , (λ op ε'' → Paramᶜ-≡ (sym (cl-ne-≡ ¬et x W H op ε''))
+                    (substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'') (pH op ε'')))
+    , clauses-≡-uniform (λ op ε'' → sym (cl-ne-≡ ¬et x W H op ε''))
+        (λ op ε'' → substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'') (pH op ε''))
+        (subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH)
+  -- At an eternal type the clause substitution is the restricted value put in
+  -- at the variable `∈-ᴱ-split` names (`cl-et-≡`), so the certificate is the
+  -- recursive one transported along that.
   ... | yes et =
       subᶜ M x W pM pW
     , subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW
-    -- The clause retyping is spelled out exactly as in `_[_↦_]c`, so that
-    -- `substᴾᶜ′`'s equality is solved rather than left to inversion.
-    , (λ op ε'' →
-         let D = [] ∷ type-of-gtype (param op)
-                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-             s = split-++ʳ (∈-ᴱ-split et x) D
-             Wv = subst (_⊢V⦂ A) (sym (split→∈-split-l s)) (eternal-val-restrict et W)
-             e = trans (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
-                   (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D))
-                          (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
-         in substᴾᶜ′ {e = e} ((H op ε'') [ split→∈ s ↦ Wv ]c)
-              (subᶜ (H op ε'') (split→∈ s) Wv (pH op ε'')
-                 (substᴾᵛ {e = sym (split→∈-split-l s)}
-                    (eternal-val-restrict et W) (eternal-val-restrictᴾ et W))))
-    , (λ op {ε₁''} {ε₂''} q →
-         let D₁ = [] ∷ type-of-gtype (param op)
-                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₁'')
-             D₂ = [] ∷ type-of-gtype (param op)
-                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₂'')
-             s₁ = split-++ʳ (∈-ᴱ-split et x) D₁
-             s₂ = split-++ʳ (∈-ᴱ-split et x) D₂
-             Wv₁ = subst (_⊢V⦂ A) (sym (split→∈-split-l s₁)) (eternal-val-restrict et W)
-             Wv₂ = subst (_⊢V⦂ A) (sym (split→∈-split-l s₂)) (eternal-val-restrict et W)
-             pWv₁ = substᴾᵛ {e = sym (split→∈-split-l s₁)}
-                      (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
-             pWv₂ = substᴾᵛ {e = sym (split→∈-split-l s₂)}
-                      (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
-             e₁ = trans (cong₂ _++ᶜ_ (split→∈-split-l s₁) (split→∈-split-r s₁))
-                    (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D₁))
-                           (cong (_++ᶜ D₁) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
-             e₂ = trans (cong₂ _++ᶜ_ (split→∈-split-l s₂) (split→∈-split-r s₂))
-                    (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D₂))
-                           (cong (_++ᶜ D₂) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+    , (λ op ε'' → Paramᶜ-≡ (clEq op ε'') (pH₀ op ε''))
+    , clauses-≡-uniform clEq pH₀ uH₀
+    where
+      Dᶜ : Op → E → Ctx
+      Dᶜ op ε'' = [] ∷ type-of-gtype (param op)
+                     ∷ [ mapᵉ (op-grade op) ]
+                         (type-of-gtype (arity op) ⇒ B ‼ ε'')
+
+      sᶜ : (op : Op) → (ε'' : E) → _
+      sᶜ op ε'' = split-++ʳ (∈-ᴱ-split et x) (Dᶜ op ε'')
+
+      Wvᶜ : (op : Op) → (ε'' : E) → split-l (split→∈ (sᶜ op ε'')) ⊢V⦂ A
+      Wvᶜ op ε'' =
+        subst (_⊢V⦂ A) (sym (split→∈-split-l (sᶜ op ε'')))
+              (eternal-val-restrict et W)
+
+      pWvᶜ : (op : Op) → (ε'' : E) → Paramᵛ (Wvᶜ op ε'')
+      pWvᶜ op ε'' =
+        substᴾᵛ {e = sym (split→∈-split-l (sᶜ op ε''))}
+                (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
+
+      eᶜ : (op : Op) → (ε'' : E)
+         → (split-l (split→∈ (sᶜ op ε'')) ++ᶜ split-r (split→∈ (sᶜ op ε'')))
+         ≡ ((split-l x ++ᶜ split-r x) ᴱ ++ᶜ Dᶜ op ε'')
+      eᶜ op ε'' =
+        trans (cong₂ _++ᶜ_ (split→∈-split-l (sᶜ op ε''))
+                           (split→∈-split-r (sᶜ op ε'')))
+          (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) (Dᶜ op ε'')))
+                 (cong (_++ᶜ Dᶜ op ε'') (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+
+      pH₀ : (op : Op) → (ε'' : E)
+          → Paramᶜ (subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) (eᶜ op ε'')
+                     ((H op ε'') [ split→∈ (sᶜ op ε'') ↦ Wvᶜ op ε'' ]c))
+      pH₀ op ε'' =
+        substᴾᶜ′ {e = eᶜ op ε''} ((H op ε'') [ split→∈ (sᶜ op ε'') ↦ Wvᶜ op ε'' ]c)
+          (subᶜ (H op ε'') (split→∈ (sᶜ op ε'')) (Wvᶜ op ε'')
+                (pH op ε'') (pWvᶜ op ε''))
+
+      clEq : (op : Op) → (ε'' : E)
+           → subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) (eᶜ op ε'')
+               ((H op ε'') [ split→∈ (sᶜ op ε'') ↦ Wvᶜ op ε'' ]c)
+           ≡ (H [ x ↦ W ]cl) op ε''
+      clEq op ε'' = sym (cl-et-≡ et x W H op ε'' (eᶜ op ε''))
+
+      uH₀ : ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+          → ⟦ subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε₂'')) (eᶜ op ε₂'')
+                ((H op ε₂'') [ split→∈ (sᶜ op ε₂'') ↦ Wvᶜ op ε₂'' ]c) ⟧ᶜᵗ
+              (pH₀ op ε₂'')
+              ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q)
+              ∘ᵐ ⟦ subst (_⊢C⦂ B ‼ (op-grade op ·ₑ ε₁'')) (eᶜ op ε₁'')
+                     ((H op ε₁'') [ split→∈ (sᶜ op ε₁'') ↦ Wvᶜ op ε₁'' ]c) ⟧ᶜᵗ
+                   (pH₀ op ε₁'')
+      uH₀ op {ε₁''} {ε₂''} q =
+         let D₁ = Dᶜ op ε₁''
+             D₂ = Dᶜ op ε₂''
+             s₁ = sᶜ op ε₁''
+             s₂ = sᶜ op ε₂''
+             Wv₁ = Wvᶜ op ε₁''
+             Wv₂ = Wvᶜ op ε₂''
+             pWv₁ = pWvᶜ op ε₁''
+             pWv₂ = pWvᶜ op ε₂''
+             e₁ = eᶜ op ε₁''
+             e₂ = eᶜ op ε₂''
          in
           ≈ᵐ-trans (∘ᵐ-congˡ (subst-ctx-interp e₂ ((H op ε₂'') [ split→∈ s₂ ↦ Wv₂ ]c)
                                 (subᶜ (H op ε₂'') (split→∈ s₂) Wv₂ (pH op ε₂'') pWv₂)))
@@ -142,7 +180,7 @@ mutual
           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
           (≈ᵐ-trans (∘ᵐ-congˡ (uH op q))
           (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-          ((∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat (H op ε₁'') (split→∈ s₁) Wv₁ (pH op ε₁'') pWv₁))) (≈ᵐ-sym (subst-ctx-interp e₁ ((H op ε₁'') [ split→∈ s₁ ↦ Wv₁ ]c) (subᶜ (H op ε₁'') (split→∈ s₁) Wv₁ (pH op ε₁'') pWv₁)))))))))))))))
+          ((∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat (H op ε₁'') (split→∈ s₁) Wv₁ (pH op ε₁'') pWv₁))) (≈ᵐ-sym (subst-ctx-interp e₁ ((H op ε₁'') [ split→∈ s₁ ↦ Wv₁ ]c) (subᶜ (H op ε₁'') (split→∈ s₁) Wv₁ (pH op ε₁'') pWv₁))))))))))))))
 
   V-subst-nat : ∀ {Γ A B ρ} → (V : Γ ⊢V⦂ B) → (x : A ∈[ ρ ] Γ) → (W : split-l x ⊢V⦂ A)
               → (pV : Paramᵛ V) → (pW : Paramᵛ W)
@@ -248,15 +286,23 @@ mutual
     where
       Γ₀ : Ctx
       Γ₀ = split-l x ++ᶜ split-r x
+      -- the clause family the substitution produces, and the retyping it is
       H' : (op : Op) → (ε'' : E)
          → Γ₀ ᴱ ∷ type-of-gtype (param op)
               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
             ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')
-      H' op ε'' =
+      H' op ε'' = (H [ x ↦ W ]cl) op ε''
+      H₀ : (op : Op) → (ε'' : E)
+         → Γ₀ ᴱ ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+            ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')
+      H₀ op ε'' =
         subst (λ Γ₁ → Γ₁ ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
                        ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε''))
               (ᴱ-drop-split ¬et x) (H op ε'')
+      clEqⁿ : (op : Op) → (ε'' : E) → H₀ op ε'' ≡ H' op ε''
+      clEqⁿ op ε'' = sym (cl-ne-≡ ¬et x W H op ε'')
       seq-nat : Tᶠ (⟦ N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c ⟧ᶜᵗ (subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW))
                   ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M [ x ↦ W ]c ⟧ᶜᵗ (subᶜ M x W pM pW) ⟩ᵐ
               ≈ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ) ∘ᵐ sub-env x W pW
@@ -274,16 +320,19 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+      pH₀ : ∀ op ε'' → Paramᶜ (H₀ op ε'')
+      pH₀ op ε'' = substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'') (pH op ε'')
       pH' : ∀ op ε'' → Paramᶜ (H' op ε'')
-      pH' op ε'' = substᴾᶜ (ᴱ-drop-split ¬et x) (H op ε'') (pH op ε'')
+      pH' op ε'' = Paramᶜ-≡ (clEqⁿ op ε'') (pH₀ op ε'')
       step1 : ∀ op ε''
             → ⟦ H' op ε'' ⟧ᶜᵗ (pH' op ε'')
             ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'')
                  ∘ᵐ mapˣᵐ (mapˣᵐ (restrict-sub-env x W) idᵐ) idᵐ
       step1 op ε'' =
-        ≈ᵐ-trans (subst-clause-interp (ᴱ-drop-split ¬et x) (H op ε'')
+        ≈ᵐ-trans (interp-≡ᶜ (clEqⁿ op ε'') (pH₀ op ε''))
+        (≈ᵐ-trans (subst-clause-interp (ᴱ-drop-split ¬et x) (H op ε'')
                     (pH op ε''))
-                 (∘ᵐ-congʳ ⟦eqren⟧≈)
+                  (∘ᵐ-congʳ ⟦eqren⟧≈))
         where
           ptᵥ = type-of-gtype (param op)
           ktᵥ = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
@@ -302,7 +351,9 @@ mutual
           → ⟦ H' op ε₂'' ⟧ᶜᵗ (pH' op ε₂'')
               ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H' op ε₁'' ⟧ᶜᵗ (pH' op ε₁'')
-      uH' = subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH
+      uH' =
+        clauses-≡-uniform clEqⁿ pH₀
+          (subst-clauses-uniform (ᴱ-drop-split ¬et x) H pH uH)
       ⟦H'⟧ʰᵗ-nat : ∀ op ε''
                  → clauseᵀ (⟦_⟧ʰᵗ {Γ₀} H' pH' uH') op ε''
                  ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''
@@ -326,27 +377,40 @@ mutual
     where
       Γ₀ : Ctx
       Γ₀ = split-l x ++ᶜ split-r x
+      -- the clause family the substitution produces, and the substituted body
+      -- it is a retyping of
+      Dᶜ : Op → E → Ctx
+      Dᶜ op ε'' = [] ∷ type-of-gtype (param op)
+                     ∷ [ mapᵉ (op-grade op) ]
+                         (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+      sᶜ : (op : Op) → (ε'' : E) → _
+      sᶜ op ε'' = split-++ʳ (∈-ᴱ-split et x) (Dᶜ op ε'')
+      Wvᶜ : (op : Op) → (ε'' : E) → split-l (split→∈ (sᶜ op ε'')) ⊢V⦂ A
+      Wvᶜ op ε'' =
+        subst (_⊢V⦂ A) (sym (split→∈-split-l (sᶜ op ε'')))
+              (eternal-val-restrict et W)
+      eᶜ : (op : Op) → (ε'' : E)
+         → (split-l (split→∈ (sᶜ op ε'')) ++ᶜ split-r (split→∈ (sᶜ op ε'')))
+         ≡ (Γ₀ ᴱ ++ᶜ Dᶜ op ε'')
+      eᶜ op ε'' =
+        trans (cong₂ _++ᶜ_ (split→∈-split-l (sᶜ op ε''))
+                           (split→∈-split-r (sᶜ op ε'')))
+          (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) (Dᶜ op ε'')))
+                 (cong (_++ᶜ Dᶜ op ε'') (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
       H' : (op : Op) → (ε'' : E)
          → Γ₀ ᴱ ∷ type-of-gtype (param op)
               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
             ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')
-      H' op ε'' =
-        subst (_⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε''))
-          (trans (cong₂ _++ᶜ_ (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) ([] ∷ type-of-gtype (param op)
-                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε''))))
-                              (split→∈-split-r (split-++ʳ (∈-ᴱ-split et x) ([] ∷ type-of-gtype (param op)
-                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))))
-            (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) ([] ∷ type-of-gtype (param op)
-                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε''))))
-                   (cong (_++ᶜ ([] ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))
-                         (sym (ᴱ-++ᶜ (split-l x) (split-r x))))))
-          ((H op ε'') [ split→∈ (split-++ʳ (∈-ᴱ-split et x) ([] ∷ type-of-gtype (param op)
-                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))
-                         ↦ subst (_⊢V⦂ A)
-                             (sym (split→∈-split-l (split-++ʳ (∈-ᴱ-split et x) ([] ∷ type-of-gtype (param op)
-                                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')))))
-                             (eternal-val-restrict et W) ]c)
+      H' op ε'' = (H [ x ↦ W ]cl) op ε''
+      H₀ : (op : Op) → (ε'' : E)
+         → Γ₀ ᴱ ∷ type-of-gtype (param op)
+              ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
+            ⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')
+      H₀ op ε'' =
+        subst (_⊢C⦂ Bₘ ‼ (op-grade op ·ₑ ε'')) (eᶜ op ε'')
+              ((H op ε'') [ split→∈ (sᶜ op ε'') ↦ Wvᶜ op ε'' ]c)
+      clEqᵉ : (op : Op) → (ε'' : E) → H₀ op ε'' ≡ H' op ε''
+      clEqᵉ op ε'' = sym (cl-et-≡ et x W H op ε'' (eᶜ op ε''))
       seq-nat : Tᶠ (⟦ N [ Tl-∷ (Tl-⟨⟩ x) ↦ W ]c ⟧ᶜᵗ (subᶜ N (Tl-∷ (Tl-⟨⟩ x)) W pN pW))
                   ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M [ x ↦ W ]c ⟧ᶜᵗ (subᶜ M x W pM pW) ⟩ᵐ
               ≈ᵐ (Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ) ∘ᵐ sub-env x W pW
@@ -364,25 +428,21 @@ mutual
         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+      pH₀ : ∀ op ε'' → Paramᶜ (H₀ op ε'')
+      pH₀ op ε'' =
+        substᴾᶜ′ {e = eᶜ op ε''} ((H op ε'') [ split→∈ (sᶜ op ε'') ↦ Wvᶜ op ε'' ]c)
+          (subᶜ (H op ε'') (split→∈ (sᶜ op ε'')) (Wvᶜ op ε'') (pH op ε'')
+             (substᴾᵛ {e = sym (split→∈-split-l (sᶜ op ε''))}
+                (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)))
       pH' : ∀ op ε'' → Paramᶜ (H' op ε'')
-      pH' op ε'' =
-        let D = [] ∷ type-of-gtype (param op)
-                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
-            sp = split-++ʳ (∈-ᴱ-split et x) D
-            Wv = subst (_⊢V⦂ A) (sym (split→∈-split-l sp)) (eternal-val-restrict et W)
-            e = trans (cong₂ _++ᶜ_ (split→∈-split-l sp) (split→∈-split-r sp))
-                  (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D))
-                         (cong (_++ᶜ D) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
-        in substᴾᶜ′ {e = e} ((H op ε'') [ split→∈ sp ↦ Wv ]c)
-             (subᶜ (H op ε'') (split→∈ sp) Wv (pH op ε'')
-                (substᴾᵛ {e = sym (split→∈-split-l sp)}
-                   (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)))
+      pH' op ε'' = Paramᶜ-≡ (clEqᵉ op ε'') (pH₀ op ε'')
       step1 : ∀ op ε''
             → ⟦ H' op ε'' ⟧ᶜᵗ (pH' op ε'')
             ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'')
                  ∘ᵐ mapˣᵐ (mapˣᵐ (restrict-sub-env x W) idᵐ) idᵐ
       step1 op ε'' =
-        ≈ᵐ-trans (subst-ctx-interp ctxEq body _)
+        ≈ᵐ-trans (interp-≡ᶜ (clEqᵉ op ε'') (pH₀ op ε''))
+        (≈ᵐ-trans (subst-ctx-interp ctxEq body _)
         (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat (H op ε'') (split→∈ s₀) Wᴱ₀
                                (pH op ε'') _))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -392,7 +452,7 @@ mutual
                     (mapˣᵐ-cong
                       (≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
                                 (mapˣᵐ-cong (eternal-bridge-core et x W (canon-e et x)) (∘ᵐ-identityˡ _)))
-                      (∘ᵐ-identityˡ _)))))))
+                      (∘ᵐ-identityˡ _))))))))
         where
           ptᵥ = type-of-gtype (param op)
           ktᵥ = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε'')
@@ -407,29 +467,23 @@ mutual
             ≈ᵐ-trans (eq-ren-irr ctxEq (cong (_∷ ktᵥ) (cong (_∷ ptᵥ) (canon-e et x))))
             (≈ᵐ-trans (eq-ren-∷ (cong (_∷ ptᵥ) (canon-e et x)))
                       (mapˣᵐ-cong (eq-ren-∷ (canon-e et x)) ≈ᵐ-refl))
-      uH' : ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
-          → ⟦ H' op ε₂'' ⟧ᶜᵗ (pH' op ε₂'')
+      uH₀ : ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+          → ⟦ H₀ op ε₂'' ⟧ᶜᵗ (pH₀ op ε₂'')
               ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
-          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H' op ε₁'' ⟧ᶜᵗ (pH' op ε₁'')
-      uH' op {ε₁''} {ε₂''} q =
-        let D₁ = [] ∷ type-of-gtype (param op)
-                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε₁'')
-            D₂ = [] ∷ type-of-gtype (param op)
-                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Bₘ ‼ ε₂'')
-            s₁ = split-++ʳ (∈-ᴱ-split et x) D₁
-            s₂ = split-++ʳ (∈-ᴱ-split et x) D₂
-            Wv₁ = subst (_⊢V⦂ A) (sym (split→∈-split-l s₁)) (eternal-val-restrict et W)
-            Wv₂ = subst (_⊢V⦂ A) (sym (split→∈-split-l s₂)) (eternal-val-restrict et W)
+          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H₀ op ε₁'' ⟧ᶜᵗ (pH₀ op ε₁'')
+      uH₀ op {ε₁''} {ε₂''} q =
+        let D₁ = Dᶜ op ε₁''
+            D₂ = Dᶜ op ε₂''
+            s₁ = sᶜ op ε₁''
+            s₂ = sᶜ op ε₂''
+            Wv₁ = Wvᶜ op ε₁''
+            Wv₂ = Wvᶜ op ε₂''
             pWv₁ = substᴾᵛ {e = sym (split→∈-split-l s₁)}
                      (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
             pWv₂ = substᴾᵛ {e = sym (split→∈-split-l s₂)}
                      (eternal-val-restrict et W) (eternal-val-restrictᴾ et W)
-            e₁ = trans (cong₂ _++ᶜ_ (split→∈-split-l s₁) (split→∈-split-r s₁))
-                   (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D₁))
-                          (cong (_++ᶜ D₁) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
-            e₂ = trans (cong₂ _++ᶜ_ (split→∈-split-l s₂) (split→∈-split-r s₂))
-                   (trans (sym (++ᶜ-assoc ((split-l x) ᴱ) ((split-r x) ᴱ) D₂))
-                          (cong (_++ᶜ D₂) (sym (ᴱ-++ᶜ (split-l x) (split-r x)))))
+            e₁ = eᶜ op ε₁''
+            e₂ = eᶜ op ε₂''
         in
          ≈ᵐ-trans (∘ᵐ-congˡ (subst-ctx-interp e₂ ((H op ε₂'') [ split→∈ s₂ ↦ Wv₂ ]c)
                                (subᶜ (H op ε₂'') (split→∈ s₂) Wv₂ (pH op ε₂'') pWv₂)))
@@ -441,6 +495,11 @@ mutual
          (≈ᵐ-trans (∘ᵐ-congˡ (uH op q))
          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
          ((∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _)) (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat (H op ε₁'') (split→∈ s₁) Wv₁ (pH op ε₁'') pWv₁))) (≈ᵐ-sym (subst-ctx-interp e₁ ((H op ε₁'') [ split→∈ s₁ ↦ Wv₁ ]c) (subᶜ (H op ε₁'') (split→∈ s₁) Wv₁ (pH op ε₁'') pWv₁))))))))))))))
+      uH' : ∀ (op : Op) {ε₁'' ε₂''} → (q : ε₁'' ≾ₑ ε₂'')
+          → ⟦ H' op ε₂'' ⟧ᶜᵗ (pH' op ε₂'')
+              ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ q)))
+          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H' op ε₁'' ⟧ᶜᵗ (pH' op ε₁'')
+      uH' = clauses-≡-uniform clEqᵉ pH₀ uH₀
       ⟦H'⟧ʰᵗ-nat : ∀ op ε''
                  → clauseᵀ (⟦_⟧ʰᵗ {Γ₀} H' pH' uH') op ε''
                  ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''

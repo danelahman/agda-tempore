@@ -37,9 +37,8 @@ open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
-open import Syntax.Substitutions.Weakening Spec
-open import Syntax.Substitutions.Renaming  Spec
-open import Syntax.Substitutions.Swap      Spec
+open import Syntax.Substitutions.At        Spec
+open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
@@ -1735,7 +1734,7 @@ env-Vˢ-lift : ∀ {St Γ A B ρ} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V�
 env-Vˢ-lift V γ W = refl
 
 -- The eternal zone's own action on a clause family: each of its substitutions
--- reaches the clauses through `⟨_⟩[_↦_]cl`, as `_∷ᵉ_`'s does.
+-- reaches the clauses through `_[_↦_]cl`, as `_∷ᵉ_`'s does.
 
 env-eternal-H : ∀ {Δ Γ B} → (lf : Lock-free Δ) → ClosedVals Δ
               → Fam B ((Δ ++ᶜ Γ) ᴱ) → Fam B (Γ ᴱ)
@@ -1747,9 +1746,9 @@ env-eternal-H {Δ ∷ B₀} {Γ} {B} (lf-∷ lf) η K =
   env-eternal-H {Δ} {Γ} {B} lf (λ x → η (Tl-∷ x))
     (λ op ε →
        Cl-cast op ε (cong₂ _++ᶜ_ (split→∈-split-l s) (split→∈-split-r s))
-         (⟨ eternal? B₀ ⟩[ split→∈ s
-                          ↦ castᵛ (sym (split→∈-split-l s))
-                              (V-rename (empty-ren lf) (η Hd)) ]cl K op ε))
+         ((K [ split→∈ s
+               ↦ castᵛ (sym (split→∈-split-l s))
+                   (V-rename (empty-ren lf) (η Hd)) ]cl) op ε))
   where
     s = split-≡-++ᶜ {Δ ∷ B₀} {Γ}
 
@@ -1789,7 +1788,7 @@ env-eternal-handle {Δ ∷ B₀} {Γ} {A = A} {ε = ε} (lf-∷ lf) η M H N =
 --
 -- A handler's clauses close over the *eternal* part of the context, so the
 -- action reaches them restricted: each zone contributes `restrict-ren` of its
--- own renaming, or — at the substituting zones — `⟨_⟩[_↦_]cl`, which is why this
+-- own renaming, or — at the substituting zones — `_[_↦_]cl`, which is why this
 -- is stated on a whole family rather than one clause. There is no closed form
 -- for it in terms of `env-Cˢ`: `env-clause γ St` will not do, its action landing
 -- over `toCtx St` where the `handle` former wants `(Γ ++ᶜ Δ) ᴱ`.
@@ -1824,13 +1823,13 @@ env-Hˢ {B = B} (liftᵉ {St = St} {Γ = Γ} {A = A} {ρ = ρ} V γ) Δ K op ε 
 
 env-Hˢ {B = B} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A} γ W) Δ K op ε =
   Cl-cast op ε (cong₂ _++ᶜ_ (split→∈-split-l t) (split→∈-split-r t))
-    (⟨ eternal? A ⟩[ split→∈ t ↦ castᵛ (sym (split→∈-split-l t)) W ]cl
-       (λ op' ε' →
+    (((λ op' ε' →
           Cl-cast op' ε' (sym (++ᶜ-assoc (toCtx St) ([] ∷ A) Δ))
             (env-Hˢ γ ([] ∷ A ++ᶜ Δ)
               (λ op'' ε'' → Cl-cast op'' ε'' (++ᶜ-assoc Γ ([] ∷ A) Δ)
                               (K op'' ε''))
               op' ε'))
+      [ split→∈ t ↦ castᵛ (sym (split→∈-split-l t)) W ]cl)
        op ε)
   where
     t = split-≡-++ᶜ {toCtx St ∷ A} {Δ}
@@ -1847,7 +1846,7 @@ env-Hˢ {B = B} (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ K op ε =
 --
 -- The last of the structural laws. Its clauses need no eternality dispatch —
 -- renaming maps `handle` to `handle` and so does `_[_↦_]c`, its split having
--- moved into `⟨_⟩[_↦_]cl` — and `env-Hˢ`'s transports are `Cl-cast`, which is
+-- moved into `_[_↦_]cl` — and `env-Hˢ`'s transports are `Cl-cast`, which is
 -- exactly what `cast-handle` produces, so the two sides meet on the nose.
 
 env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
@@ -1936,8 +1935,7 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀
     Nγ  = env-Cˢ γ (Δ' ⟨ mapᵉ ε ⟩ ∷ A) (castᶜ eA₂ N)
     Hγc = λ op ε₀ → Cl-cast op ε₀ eIn (Hγ op ε₀)
     Hγo = λ op ε₀ →
-            Cl-cast op ε₀ eOut
-              (⟨ eternal? A₀ ⟩[ x ↦ Ŵ ]cl Hγc op ε₀)
+            Cl-cast op ε₀ eOut ((Hγc [ x ↦ Ŵ ]cl) op ε₀)
 
 env-Cˢ-handle {A = A} {ε = ε} (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ M H N =
   trans (cong (λ z → env-Cˢ γ Δ (env-eternal-C lf η z)) (cast-handle eA))
@@ -2018,7 +2016,7 @@ env-clause-rel {Γ = Γ} γ St₁ = tt , ᴱ-eternal Γ
 -- THE CLAUSE ACTION AGAINST THE CLAUSE ENVIRONMENT
 --
 -- `env-Hˢ γ Δ` reaches a clause zone by zone, each contributing its own
--- `restrict-ren` or — at the substituting zones — its `⟨_⟩[_↦_]cl`, and the
+-- `restrict-ren` or — at the substituting zones — its `_[_↦_]cl`, and the
 -- weakening into a state's context comes only afterwards (`Fired`).
 -- `env-clause γ St₁` instead substitutes every closed value `env-ᴱ γ` computes
 -- and weakens once, at the base. The two agree, and only up to `≡`: lining them

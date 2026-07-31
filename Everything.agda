@@ -74,6 +74,13 @@ open import Syntax.Language
 
 open import Syntax.Renamings
 open import Syntax.RenActions
+
+---- Substitutions: the generating calculus, and replacing one variable as a
+---- notation for it
+
+open import Syntax.Substitutions.Base
+open import Syntax.Substitutions.Lookup
+open import Syntax.Substitutions.Action
 open import Syntax.Substitutions
 
 ---- Equivalence of renamings, of terms, and coherence of the action
@@ -83,17 +90,22 @@ open import Syntax.Terms.Equivalence
 open import Syntax.Renamings.Coherence
 open import Syntax.Renamings.Category
 open import Syntax.Terms.Transport
+
+---- Substitutions: composition, the quotient, and the laws
+
 open import Syntax.Substitutions.Equivalence
+open import Syntax.Substitutions.Chain
+open import Syntax.Substitutions.Interchange
+open import Syntax.Substitutions.ChainEquivalence
+open import Syntax.Substitutions.Restrict
+open import Syntax.Substitutions.Laws
+
+---- Substituting at a context's prefix boundary, which is the form every
+---- consumer uses
+
 open import Syntax.Substitutions.Variables
-open import Syntax.Substitutions.Weakening
-open import Syntax.Substitutions.Renaming.Variables
-open import Syntax.Substitutions.Renaming.Clauses
-open import Syntax.Substitutions.Renaming.Core
-open import Syntax.Substitutions.Renaming
-open import Syntax.Substitutions.Swap.Base
-open import Syntax.Substitutions.Swap.Variables
-open import Syntax.Substitutions.Swap.Clauses
-open import Syntax.Substitutions.Swap
+open import Syntax.Substitutions.At
+open import Syntax.Substitutions.Clauses
 
 ---- Computation term and evaluation contexts
 

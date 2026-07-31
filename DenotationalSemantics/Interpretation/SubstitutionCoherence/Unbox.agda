@@ -223,7 +223,7 @@ subvarᴾ (Tl-∷ y) f Hd        _ pW = tt
 subvarᴾ (Tl-∷ y) f (Tl-∷ x)  W pW =
   renᵛ wk-ren ⟨ y , f ⟩[ x ↦ W ]var (subvarᴾ y f x W pW)
 subvarᴾ {B = B} (Tl-⟨⟩ y) f (Tl-⟨⟩ x) W pW with eternal? B
-... | yes p  = eternal-val-extᴾ p ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f (λ z₁ → z p))) ⟩[ x ↦ W ]var
+... | yes p  = eternal-val-extᴾ p ⟨ y , (λ z → ⊥-elim (z p)) ⟩[ x ↦ W ]var
 ... | no  ¬p = renᵛ (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬p)))
                  ⟨ y , (λ z → ≾ᵣ-zero-productˡ (f z)) ⟩[ x ↦ W ]var
                  (subvarᴾ y (λ z → ≾ᵣ-zero-productˡ (f z)) x W pW)

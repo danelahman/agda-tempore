@@ -44,9 +44,8 @@ open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
-open import Syntax.Substitutions.Weakening Spec
-open import Syntax.Substitutions.Renaming  Spec
-open import Syntax.Substitutions.Swap      Spec
+open import Syntax.Substitutions.At        Spec
+open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
