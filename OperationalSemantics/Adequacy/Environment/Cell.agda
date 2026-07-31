@@ -328,8 +328,7 @@ env-cell₀ (eternalˡ Δ₀ lf η γ) (σ , x)
 -- two substituting zones nothing at all: `_∷ᵉ_`'s cell is the value the zone
 -- substitutes, and `Rel-Env` already says that value is `Val` at its box type;
 -- `liftᵉ`'s is the freshly allocated cell, and `Rel-Env`'s Kripke component is
--- exactly `store-fresh`'s hypothesis. Both were unreachable while `Val` at a
--- box type quantified over a reach rather than over readability.
+-- exactly `store-fresh`'s hypothesis.
 ------------------------------------------------------------------------
 
 env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ

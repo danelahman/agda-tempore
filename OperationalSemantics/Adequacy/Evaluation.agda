@@ -6,8 +6,7 @@
 -- final. Packaged here as evaluation relations on configurations,    --
 -- together with the run's observable time (its *tick total*).        --
 --                                                                    --
--- Purely syntactic: no model parameters. See `notes/adequacy-        --
--- plan.md`.                                                          --
+-- Purely syntactic: no model parameters.                             --
 ------------------------------------------------------------------------
 
 open import Data.Empty

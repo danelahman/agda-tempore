@@ -162,10 +162,9 @@ mutual
     -- The value being unboxed is a variable of box type `[ ρ ] A`: every value of
     -- a graded modal type is one (`grad-typ⇒var` below). That enough time has
     -- passed since it was brought into scope is the grade bound `ρ' ≾ᵣ ρ`, where
-    -- `ρ'` is the product of the locks standing to the variable's right.
-    -- This achieves the same kind of temporal rewinding of the context that the
-    -- original calculus and its formalisation (Ahman & Žajdela MFPS 2024) achieved
-    -- via a recursively defined subtraction operation on contexts on ℕ-grades.
+    -- `ρ'` is the product of the locks standing to the variable's right. Reading
+    -- that product off the context is what rewinds it to the variable's world,
+    -- with no subtraction operation on contexts.
 
     unbox   : {A : VType}
             → {C : CType}

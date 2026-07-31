@@ -488,8 +488,7 @@ restrict-ren-∘-≐ʳ r₂ r₁ = ≐ʳ-refl
 
 -- Forcing a `with eternal?`-defined function to reduce: `rewrite`ing the
 -- scrutinee is cleaner than unfold lemmas whose statements are themselves
--- `_ᴱ`-stuck. (Also in `Interpretation.SubstitutionCoherence`; see the cleanup
--- list in `notes/adequacy-plan.md`.)
+-- `_ᴱ`-stuck.
 
 eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
 eternal?-yes {A} et with eternal? A

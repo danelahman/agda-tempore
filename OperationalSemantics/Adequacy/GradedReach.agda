@@ -108,8 +108,7 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 -- TRANSITIVITY OF STATE EXTENSION
 --
 -- Two general facts about `_≤ₛ_` that `OperationalSemantics.State` does not
--- carry: extensions compose, and their accumulated grades multiply. Kept here
--- while the adequacy development is separate.
+-- carry: extensions compose, and their accumulated grades multiply.
 
 ≤ₛ-trans : ∀ {Γ Γ' Γ''} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'} → {St'' : 𝕊 Γ''}
          → St ≤ₛ St' → St' ≤ₛ St''

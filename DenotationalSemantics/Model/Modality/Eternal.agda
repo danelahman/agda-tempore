@@ -164,8 +164,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
   necᵉ : ∀ {ρ} → A →ᵐ [ ρ ]ᵒ A
   necᵉ {ρ} = [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
 
-  -- `necᵉ` is by definition the transpose of `extᵉ` (kept as a named lemma so
-  -- consumers that referred to the mate need not change).
+  -- `necᵉ` is the transpose of `extᵉ`, by definition.
 
   necᵉ-mate : ∀ {ρ} → necᵉ {ρ} ≈ᵐ [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
   necᵉ-mate = ≈ᵐ-refl

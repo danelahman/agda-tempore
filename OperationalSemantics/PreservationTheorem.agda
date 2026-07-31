@@ -57,7 +57,7 @@ mutual
     -- Small-step operational semantics aka Preservation theorem
     data _↝_ :  {C D : CType} → Config C → Config D → Set where
 
-        -- usual step for function aplication
+        -- application: substitute the argument into the abstraction's body
         APP        : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {M : ((toCtx S) ∷ A) ⊢C⦂ B ‼ ε}
@@ -65,7 +65,7 @@ mutual
                      -----------------------------------------
                    → ⟨ S , lam M · V ⟩ ↝ ⟨ S , M [ split-[] ↦ V ]c ⟩
 
-        -- usual step for match on pair 
+        -- matching: substitute the pair's two components
         MATCH      : ∀ {A B C}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A }
@@ -75,7 +75,7 @@ mutual
                    → ⟨ S , match ⦉ V , W ⦊ `in M ⟩ ↝ 
                      ⟨ S , (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
 
-        -- step for sequencing (time and state must go on)
+        -- sequencing: step the scrutinee, carrying time and state forward
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
                    → {A B : VType}
                    → {S S' : 𝕊 []}
@@ -90,7 +90,7 @@ mutual
                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₃≾ε₁))
                                    N ⟩
 
-        -- usual step for return in sequencing
+        -- sequencing a returned value: substitute it into the sequel
         SEQ-RET    : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A}
@@ -102,7 +102,8 @@ mutual
                                ((eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)))
                               N) [ split-[] ↦ V ]c ⟩
 
-        -- usual performing operation in sequencing
+        -- sequencing an operation: float it out, the sequel joining its
+        -- continuation
         SEQ-OP     : ∀ {A B ε ε' op} 
                    → {S : 𝕊 []} 
                    → {V : (toCtx S) ⊢V⦂ type-of-gtype (param op)} 
@@ -116,14 +117,14 @@ mutual
                                       (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren))
                                       N)) ⟩
 
-        -- delay just pass time further
+        -- delay: let time pass, moving the lock into the state
         DELAY      : ∀ {A τ ε}
                    → {S : 𝕊 []}
                    → {M : toCtx S ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε} → 
                      -------------------------------------------------------------
                      ⟨ S , (delay τ M) ⟩ ↝ ⟨ grade-pass S (of-natʳ τ) , M ⟩
 
-        -- usual step for handle return
+        -- handling a returned value: run the return clause
         HANDLE-RET : ∀ {A B ε}
                    → {S : 𝕊 []}
                    → {V : toCtx S ⊢V⦂ A}
@@ -142,7 +143,7 @@ mutual
                                (eq-ren (cong (toCtx S ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren))
                              N) [ split-[] ↦ V ]c ⟩
                      
-        -- step on computation in handle. time and state must go on
+        -- handling: step the handled computation, carrying time and state forward
         HANDLE-STEP : ∀ {A B ε₁ ε₂ ε₁'}
                     → {S S' : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε₁}
@@ -170,8 +171,9 @@ mutual
                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
                                   N)⟩
 
-        -- operation handle where we box up result so that the resources
-        -- in the result are not used before enough time has passed
+        -- handling an operation: apply its clause, with the rest of the handled
+        -- computation boxed up, so that its resources are not used before enough
+        -- time has passed
         HANDLE-OP   : ∀ {A B ε ε'' op}
                     → {S : 𝕊 []} 
                     → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
@@ -203,7 +205,7 @@ mutual
                                        (H op (ε ·ₑ ε''))
                               [ split-∷ split-[] ↦ V ]c) ⟩
 
-        -- step for box: we just extend our state with new resource
+        -- box: extend the state with a new resource
         BOX         : ∀ {A B ρ' ε} → {S : 𝕊 []}
                     → {V : toCtx S ⟨ ρ' ⟩ ⊢V⦂ A}
                     → {M : toCtx S ∷ [ ρ' ] A ⊢C⦂ B ‼ ε}
@@ -212,8 +214,8 @@ mutual
                       ⟨ extend-state S (V-rename (eq-ren (sym ++ᶜ-identityˡ)) V) , M ⟩
 
 
-        -- step for unbox: we look up the unboxed resource in the state and
-        -- substitute it into the continuation M
+        -- unbox: look the resource up in the state and substitute it into the
+        -- continuation
         UNBOX       : ∀ {A C ρ ρ'}
                     → {S : 𝕊 []}
                     → {z : [ ρ ] A ∈[ ρ' ] toCtx S}
@@ -223,8 +225,7 @@ mutual
                     → ⟨ S , unbox z rel M ⟩ ↝
                       ⟨ S , M [ split-[] ↦ unbox-lookup S z rel ]c ⟩
 
-        -- during execution coerces are peeled off and
-        -- the computation's effect becomes more precise
+        -- coerce: peeled off during execution, refining the computation's effect
         COERCE      : ∀ {A ε ε'}
                     → {S : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε}

@@ -370,7 +370,7 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 -- Handling an operation: the clause is applied, with the handled remainder
 -- boxed up as its continuation. This is the only rule that reads a clause; its
--- parametricity now comes from the term's own `Paramᶜ` certificate.
+-- parametricity comes from the term's own `Paramᶜ` certificate.
 
 ↝-sound {S = S} r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N})
         pS ((pV , pM) , pN , pH , uH) u =

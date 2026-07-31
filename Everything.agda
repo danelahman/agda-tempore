@@ -36,6 +36,12 @@
 --                                                                      --
 --   - soundness of the operational semantics with respect to the       --
 --     denotational semantics                                           --
+--                                                                      --
+--   - soundness of the equational theory with respect to the           --
+--     denotational semantics                                           --
+--                                                                      --
+--   - adequacy of the denotational semantics with respect to the       --
+--     operational semantics, and for the equational theory             --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec

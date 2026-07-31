@@ -376,10 +376,10 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                         (cong-∷-ren-≐ʳ ren-eq))
                       Body)))
 
-            -- The reduct *is* the recursive call: renaming distributes over
-            -- `handle` definitionally, `_[_↦_]c` now does too (its eternality
-            -- split having moved into `_[_↦_]cl`), and the scrutinee reached
-            -- is `resume q₂ M' W'`.
+            -- The reduct *is* the recursive call: renaming and `_[_↦_]c` both
+            -- distribute over `handle` definitionally (the eternality split
+            -- sitting in `_[_↦_]cl`), and the scrutinee reached is
+            -- `resume q₂ M' W'`.
             inner : Comp' B (ε₃ ·ₑ ε₂) St''
                       ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
                          [ split-[] ↦ W' ]c)
@@ -525,37 +525,6 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                           (C-rename-cong (cong-∷-ren (unbox-ren q₃))
                                          (sym eN₂)))
 
-                -- WHAT IS LEFT: the clause premise, rebuilt from `hH`.
-                --
-                -- It suffices that `Fired`'s two clause instances agree, since
-                -- `Fired` is a renaming and a substitution of them, both
-                -- congruences; then `hH₂ = Comp-≡ᶜ … (hH …)`. So the goal is
-                --
-                --   subst (Cl B op₃ ε₄) (toCtxᴱ-≡ St'' St₃) (H₂ op₃ ε₄)
-                --   ≡ subst (Cl B op₃ ε₄) (toCtxᴱ-≡ St   St₃) (H  op₃ ε₄)
-                --
-                -- where `H₂` is `H` pushed along: `eH₁`'s transport, the
-                -- `ren-ᴱ-∷ Ar` inclusion, `restrict-ren (cong-∷-ren sq)`, and
-                -- `_[ split-[] ↦ W' ]cl`.
-                --
-                -- Two lemmas close it, and both are within reach now that `_ᴱ`
-                -- and `_[_↦_]c` expose the decision:
-                --
-                --   * *the inclusion cancels the substitution*: at an eternal
-                --     `Ar`, `ren-ᴱ-∷′ Ar (yes et)` is `wk-ren` and
-                --     the eternal branch substitutes for exactly that
-                --     binder, so `sub-wk-C` cancels them (its splitting
-                --     `split-++ʳ (∈-ᴱ-split et Hd) D` *is* `split-≡-++ᶜ`
-                --     definitionally, `D` being built from `[]`); at a
-                --     non-eternal one the inclusion is `id-ren` and the
-                --     substitution only retypes, so `uip` finishes.
-                --   * *renamings out of a clause context over a state agree when
-                --     they agree on the clause's own two variables*: the eternal
-                --     part is `[]` (`toCtxᴱ-[]`), so `∈-++ᶜ-split` sends every
-                --     variable to `D` and the rest is `∈-++ᶜ-split-inj₂`. This
-                --     is what makes `restrict-ren (cong-∷-ren sq)` and the two
-                --     `toCtxᴱ-≡` transports interchangeable.
-                --
                 -- The clause premise, rebuilt from `hH`. `cl-cancel` supplies
                 -- the dispatch, at `K` := `H` transported to this state; the
                 -- outer step is then a `subst` fusion reconciled by `uip`.
@@ -576,21 +545,6 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                         (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₃)))) step))
                     (hH V₀' bv W₃ pW₃)
                   where
-                    -- WHAT IS LEFT: the two branch facts.
-                    --
-                    -- In both, the clause reached is `H₁ op ε` renamed by
-                    -- `cong-ren {D} (restrict-ren (cong-∷-ren sq) ∘ʳ ren-ᴱ-∷ Ar)`,
-                    -- and `eH₁` links `H₁` back to `H`. Neither branch needs to
-                    -- know what that renaming *is*: `cl-ren-≐ʳ` pins it by what it
-                    -- does to the clause's own two variables, which is nothing.
-                    --
-                    --   * `hne`: source and target eternal parts are both `[]`,
-                    --     so the renaming is a transport and the transports fuse
-                    --     by `uip`;
-                    --   * `het`: the target is `[] ∷ Ar`, so the renaming is
-                    --     `≐ʳ cong-ren {D} (wk-ren ∘ʳ eq-ren _)` — again by
-                    --     `cl-ren-≐ʳ`, both sides fixing `D` — and `sub-wk-C`
-                    --     cancels the `wk-ren` against the substitution.
                     -- the composite the two renamings amount to, and the
                     -- transport it is: source and target eternal parts are both
                     -- `[]`, and `cl-ren-≐ʳ` pins it by `D`'s variables alone
@@ -687,36 +641,12 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                             (subst-collapse-cl (toCtxᴱ-≡ St St₁) e₀ eD
                                                (toCtxᴱ-≡ St St'') (H op' ε'))
 
-                    -- THE ETERNAL BRANCH, and what it needs.
-                    --
-                    -- Here the eternal branch substitutes
-                    -- `eternal-val-restrict et W'` for the `Ar` variable of the
-                    -- renamed clause, at the splitting
-                    -- `sp = split-++ʳ (∈-ᴱ-split et Hd) D`.
-                    --
-                    -- The clause does not contain that variable: its own context
-                    -- is `toCtx St₁ ᴱ`, i.e. `[]`, so every variable it has comes
-                    -- from `D`. So the substitution is the identity, and
-                    -- `sub-wk-C` is the tool — which means presenting the renamed
-                    -- clause as `C-rename (cong-ren {D} (wk-ren {A = Ar})) M₀`
-                    -- with `M₀` the transport of `H₁ op' ε'` to
-                    -- `toCtx St'' ᴱ ++ᶜ D`. `cl-ren-≐ʳ` supplies that (both sides
-                    -- fix `D`, and `ᴱ-∷-keep et` identifies the target
-                    -- `(toCtx St'' ∷ Ar) ᴱ` with `toCtx St'' ᴱ ∷ Ar`).
-                    --
-                    -- Three further steps, all present but none short:
-                    --
-                    --   * push the substitution across that identification
-                    --     (`sub-cast-C′`);
-                    --   * identify its variable with
-                    --     `split→∈ (split-≡-++ᶜ {toCtx St'' ᴱ ∷ Ar} {D})`, which
-                    --     `sub-wk-C` wants — `split-unique`, since two
-                    --     splittings of the same context agree;
-                    --   * fuse the leftover transports (`eOut`, `ᴱ-∷-keep et`,
-                    --     `castOf`, `toCtxᴱ-≡`) by `uip`.
-                    --
-                    -- This is the shape of `sub-wk-handle-et` in `Environment`,
-                    -- the longest single proof in the development.
+                    -- The eternal branch substitutes `eternal-val-restrict et W'`
+                    -- for the `Ar` variable at `split-++ʳ (∈-ᴱ-split et Hd) D`.
+                    -- The clause's own context is `toCtx St₁ ᴱ`, i.e. `[]`, so it
+                    -- has no such variable: `cl-ren-≐ʳ` presents the renamed
+                    -- clause as a `wk-ren` of a transport, `sub-wk-C` cancels the
+                    -- two, and the leftover transports fuse by `uip`.
                     het : (et : Eternal Ar) → (op' : Op) → (ε' : E)
                         → ((λ op'' ε'' →
                                C-rename (cong-∷-ren (cong-∷-ren

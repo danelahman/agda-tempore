@@ -1303,7 +1303,7 @@ env-C-id : ∀ {St C} → (M : toCtx St ⊢C⦂ C) → env-C ⌊ St ⌋ M ≡ M
 env-C-id M = refl
 
 ------------------------------------------------------------------------
--- LEMMAS TO PROVE
+-- CLAUSE FAMILIES AND THE ETERNAL ZONE
 ------------------------------------------------------------------------
 
 -- The action commutes with substituting a telescope entry, definitionally:
@@ -1411,9 +1411,9 @@ env-Hˢ {B = B} (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ K op ε =
 -- THE ACTION COMMUTES WITH `handle`
 --
 -- The last of the structural laws. Its clauses need no eternality dispatch —
--- renaming maps `handle` to `handle` and so does `_[_↦_]c`, its split having
--- moved into `_[_↦_]cl` — and `env-Hˢ`'s transports are `Cl-cast`, which is
--- exactly what `cast-handle` produces, so the two sides meet on the nose.
+-- renaming maps `handle` to `handle` and so does `_[_↦_]c`, the split sitting
+-- in `_[_↦_]cl` — and `env-Hˢ`'s transports are `Cl-cast`, which is exactly
+-- what `cast-handle` produces, so the two sides meet on the nose.
 
 env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
               → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ‼ ε)

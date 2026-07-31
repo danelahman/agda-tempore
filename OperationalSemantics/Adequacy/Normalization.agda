@@ -53,7 +53,7 @@ open import Syntax.Substitutions.Equivalence Spec
 -- THE FUNDAMENTAL LEMMA
 --
 -- Induction on the typing derivation, mutually for values and computations.
--- Six computation cases are open; each is stated as its own lemma taking
+-- Six computation cases are split off, each stated as its own lemma taking
 -- the induction hypotheses it needs — for a binding subterm, at *every*
 -- environment, since the state the subterm is reached at is not the one the
 -- case starts from.
@@ -124,9 +124,9 @@ FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
 --
 -- The sequel premise is `FL-C`'s at `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, as for sequencing.
 --
--- The clause premise is where this session's constructors land. `HANDLE-OP`
--- fires a clause at `St₁` and `BOX` allocates the resumption, so the clause is
--- reached at `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell:
+-- For the clause premise, `HANDLE-OP` fires a clause at `St₁` and `BOX`
+-- allocates the resumption, so the clause is reached at
+-- `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell:
 -- that environment is `liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)` — `env-clause` giving
 -- the clause's own context with no store (`∅ᵉ`), `_∷ᵉ_` the operation's
 -- parameter, and `liftᵉ` the cell. Its `Rel-Env` is

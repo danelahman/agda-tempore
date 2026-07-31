@@ -100,7 +100,7 @@ record Same-whnf {A : VType} {ε : E} (M N : Prog A ε) : Set where
              → Σ[ w' ∈ Op-whnf (⟨ ∅ , N ⟩) ] Op-whnf.oper w ≡ Op-whnf.oper w'
 
 ------------------------------------------------------------------------
--- LEMMAS TO PROVE
+-- THE PROOF
 ------------------------------------------------------------------------
 
 -- SOUNDNESS, PACKAGED. A program is its whnf, run after the run's transition

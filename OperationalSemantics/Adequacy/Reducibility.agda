@@ -226,9 +226,6 @@ store-∅ : Store ∅
 store-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
 ------------------------------------------------------------------------
--- LEMMAS TO PROVE
-------------------------------------------------------------------------
-
 -- ETERNAL TYPES ARE FREE
 --
 -- An eternal type is built from base, unit, empty and products, so `Val` asks
@@ -236,6 +233,7 @@ store-∅ c r = ⊥-elim (not-in-empty-ctx c)
 -- pair, which over a state context it is (`⦉⦊-not-in-toCtx`). This is what
 -- makes the eternal zone of an environment reducible for nothing, and what
 -- covers the variables a lock would otherwise block.
+------------------------------------------------------------------------
 
 pair-canonical : ∀ {A B} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A |×| B)
                → Σ[ V₁ ∈ toCtx St ⊢V⦂ A ] Σ[ V₂ ∈ toCtx St ⊢V⦂ B ]
@@ -559,9 +557,9 @@ Comp-≡ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
 -- however far the state has grown.
 --
--- What is left is one renaming agreement, `alloc-lookup-≡` in `GradedReach` (the module): the two
--- renamings both push the value's context under everything the state has gained
--- since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the reach by `≤ₛ-embed`.
+-- What is left is one renaming agreement, `GradedReach.alloc-lookup-≡`: the
+-- two renamings both push the value's context under everything the state has
+-- gained since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the reach by `≤ₛ-embed`.
 
 store-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
             → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')

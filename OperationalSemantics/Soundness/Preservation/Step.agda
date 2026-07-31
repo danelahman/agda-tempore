@@ -764,10 +764,6 @@ box-merge p q m d h =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-≤-trans p q ∙ []-≤-irr _ m))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
--- The target's denotation, unfolded to the same normal form. The renaming
--- `suc-comp-ren` sits in the continuation, and `strᵀ-natˡ` moves it into the
--- environment box — which is exactly the box `step-box` delivers.
-
 -- The target's denotation, unfolded to the same normal form. Generic in the
 -- algebra: `⨟` uses `μᵀ`, `handle` uses the handler's fold, and they thread the
 -- environment through the strength in exactly the same way. The renaming

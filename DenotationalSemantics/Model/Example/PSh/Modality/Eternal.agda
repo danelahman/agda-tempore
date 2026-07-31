@@ -171,12 +171,10 @@ Kᵖ-eternalᵒ S = record
         ≈-sym A (Eternalᵒ.extᵉ-mate eA (mk⟨⟩ (acc E) (proj₁ (val E))))
       , ≈-sym B (Eternalᵒ.extᵉ-mate eB (mk⟨⟩ (acc E) (proj₂ (val E))))
 
-    -- Both sides feed the two factors' necessitations the same pair of
-    -- accessibility witnesses, so the law holds componentwise, by the
-    -- factors' own algebra laws applied to the projected bundles.
-    -- one factor's component, bridged through that factor's `extᵉ-mate`
-    -- (its `extᵉ` is an abstract field, so it is not *definitionally* the
-    -- mate of its `necᵉ`)
+    -- Necessitating through a composite witness agrees with necessitating
+    -- twice: `extᵉ-μ`, bridged at each end by `extᵉ-mate` (an `Eternalᵒ`'s
+    -- `extᵉ` is an abstract field, hence not *definitionally* the mate of
+    -- its `necᵉ`).
     comp : ∀ {C} → (e : Eternalᵒ C) → ∀ {ρ₁ ρ₂ w}
          → (X : ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ C) w)
          → _≈_ C
@@ -190,6 +188,8 @@ Kᵖ-eternalᵒ S = record
       (≈-trans C (Eternalᵒ.extᵉ-mate e _)
                  (app-cong (Eternalᵒ.necᵉ e) (Eternalᵒ.extᵉ-mate e _) (acc X))))
 
+    -- The product's law holds componentwise: both sides feed the two factors'
+    -- necessitations the same pair of accessibility witnesses.
     alg : ∀ {ρ₁ ρ₂ w} → (E : ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ (A ×ᵖ B)) w)
         → _≈_ (A ×ᵖ B)
             (fun (app nec (val (val E))) (⊑-trans (acc (val E)) (acc E)))

@@ -361,9 +361,3 @@ fill-cong-env Γ {Γ'} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) N N' pN pN' g
           ∙ ∘ᵐ-assoc _ _ _
           ∙ ∘ᵐ-congʳ (η⊣-nat g)
           ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-
-
--- NOTE: the strengthened, environment-pushing congruence `fill-cong-env`
--- (needed for `unbox-beta`, whose two sides agree only under the ambient
--- `box V`) is not yet proved. The pieces it rests on — `ext`, `ext-eq`,
--- `ext-++ᶜ` and `fill-ext` above — are in place.

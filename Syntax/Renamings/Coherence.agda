@@ -216,7 +216,7 @@ eq-ren-⟨⟩-≐ʳ refl = ≐ʳ-sym (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
 -- the right half, so its constructor is forced at each step. This is what
 -- identifies the two ways `sub-wk`'s `handle` case reaches the substituted
 -- variable — `split-++ʳ (∈-ᴱ-split et z₀) D` and `split-≡-++ᶜ` — without
--- computing either. (Pure `Syntax.Contexts` material; see the cleanup list.)
+-- computing either.
 
 split-unique : ∀ {Γ Γ₁ Γ₂} → (s s' : Γ₁ , Γ₂ split Γ) → s ≡ s'
 split-unique split-[]     split-[]      = refl

@@ -219,7 +219,7 @@ record HeadFaithful : Set₂ where
 
 -- The timed refinement: the tick total is observable too. Split off because
 -- proving it needs the Kripke frame to interpolate a composite step, which
--- holds only for coarse-unit frames (`notes/pra-and-unbox.md`).
+-- holds only for coarse-unit frames.
 
 record HeadTimed : Set₂ where
 

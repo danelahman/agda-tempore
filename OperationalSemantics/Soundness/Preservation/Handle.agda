@@ -1004,9 +1004,6 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
 -- So the reduct is a `box`, and the equation is `SEQ-OP`'s with the handler's
 -- fold in place of the monad multiplication: `T-alg-of-handlerᵀ-opᵀ` (apply a
 -- clause) where `SEQ-OP` has `opᵀ-algebraicity` (re-emit the operation).
---
--- HANDLE-OP: the operation is handled by its clause, with the rest of the
--- computation boxed up as the clause's continuation.
 
 sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                 → (V : Γ ⊢V⦂ type-of-gtype (param op))

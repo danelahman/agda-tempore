@@ -764,9 +764,8 @@ env-Hˢ-ᴱ {B = B} (_⟨_⟩ᵉ {St} {St'} {Γ} {ρ} γ q) Δ K op ε =
                                              (env-ᴱ γ) _)
                        (cong (env-eternal-C (ᴱ-lock-free Γ) (env-ᴱ γ))
                              inner-eq))))))
--- a telescope entry, and the eternal prefix. Both are open; see the note
--- below `env-eternal-C-swap` and `notes/adequacy-plan.md` for what they
--- need and why `with eternal? A` is not the way in.
+-- a telescope entry: the eternality dispatch is taken by `env-Hˢ-ᴱ-∷`,
+-- which receives the decision and its naming equation as arguments
 
 env-Hˢ-ᴱ {B = B} (_∷ᵉ_ {St} {Γ} {A} γ W) Δ K op ε =
   trans
