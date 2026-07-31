@@ -292,6 +292,10 @@ open import OperationalSemantics.Adequacy.Normalization
 open import OperationalSemantics.Adequacy.HeadFaithful
 open import OperationalSemantics.Adequacy.Adequacy
 
+---- Adequacy for the equational theory
+
+open import OperationalSemantics.Adequacy.Equational
+
 ---- Head shapes of effect trees in the presheaf model
 
 open import OperationalSemantics.Adequacy.PSh.TreeShape
