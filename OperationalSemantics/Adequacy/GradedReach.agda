@@ -642,8 +642,6 @@ unbox-ren-delay-≐ʳ = mk≐ʳ go
 -- cell agree, the bound being irrelevant.
 ------------------------------------------------------------------------
 
-
-
 -- The lookup's renaming composite depends on the state only through two
 -- contexts, the stored value and three proofs — so it is factored out. That is
 -- what lets two lookups be compared: at corresponding contexts the proofs are
@@ -708,11 +706,6 @@ lookup-body′-≡ refl refl refl eq eq' h h' rel rel' U U' eU
   rewrite uip {p = eq} {q = eq'} | uip {p = h} {q = h'}
         | ≾ᵣ-irrelevant rel rel' = V-rename-cong _ eU
 
-unbox-lookup-≡ : ∀ {A ρ ρ'} → (St : 𝕊 [])
-               → (z : [ ρ ] A ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ)
-               → unbox-lookup St z rel ≡ lookup-body St (ρ' , z) rel
-unbox-lookup-≡ St z rel = refl
-
 -- Same cell, same value: the bound is `≾ᵣ`-irrelevant.
 
 lookup-body-≡ : ∀ {A ρ} → (St : 𝕊 [])
@@ -751,14 +744,6 @@ lookup-body-≡ St refl rel rel' =
 ≤ₛ-embed-lookup id-suc       x = refl
 ≤ₛ-embed-lookup (⟨⟩-suc ρ e) x = ≤ₛ-embed-lookup e x
 ≤ₛ-embed-lookup (∷-suc V e)  x = ≤ₛ-embed-lookup e x
-
-------------------------------------------------------------------------
--- WHAT THE LOOKUP'S WEAKENING DOES TO A VARIABLE
---
--- `wk-ren-⟨ρ⟩-ctx` weakens out of a lock into everything the context holds
--- beyond it, which on a variable is `var-ρ-++ᶜ` — the same push, with the same
--- grade. Recursion on that context, as the renaming's own.
-------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
 -- WHAT AN EXTENSION ADDS AFTER AN ALREADY-ALLOCATED CELL

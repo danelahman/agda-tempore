@@ -81,11 +81,6 @@ empty-ren : ∀ {Δ} → Lock-free Δ → Ren [] Δ []
 empty-ren lf-[]     = id-ren
 empty-ren (lf-∷ lf) = empty-ren lf ∘ʳ wk-ren
 
-eternal-wk : ∀ {Δ} → Lock-free Δ → (Γ : Ctx) → Ren [] (Δ ++ᶜ Γ) Γ
-eternal-wk lf []        = empty-ren lf
-eternal-wk lf (Γ ∷ A)   = cong-∷-ren (eternal-wk lf Γ)
-eternal-wk lf (Γ ⟨ ρ ⟩) = cong-⟨⟩-ren (eternal-wk lf Γ)
-
 -- Weakening a *closed* term into a state's context. Locks are crossed by
 -- `⟨⟩-ext-ctx`, which asks for everything to their left to be eternal — and here
 -- that is `[]`, vacuously. Which such renaming is chosen never matters: `_≐ʳ_`

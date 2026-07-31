@@ -48,13 +48,6 @@ open import Syntax.Substitutions.Restrict         S
 open import Syntax.Substitutions.Laws             S
 open import Syntax.Substitutions.Variables        S
 
--- Renaming along an identity-like renaming is the cast (the `castᵛ`/`castᶜ`
--- form of `C-rename-eq-≡`, which is stated with `subst`).
-
-V-rename-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
-               → V-rename (eq-ren e) V ≡ castᵛ e V
-V-rename-castᵛ refl V = V-rename-id-≡ ≐ʳ-refl V
-
 C-rename-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
                → C-rename (eq-ren e) M ≡ castᶜ e M
 C-rename-castᶜ refl M = C-rename-id-≡ ≐ʳ-refl M
@@ -89,11 +82,6 @@ sub-atᴴ {Γ'} {B} Θ H W = H [ split-≡-++ᶜ {Γ' ∷ B} {Θ} ↦ W ]cl
 sub-atᵛ-≡ : ∀ {Γ' B A} → (Θ : Ctx) → {U U' : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A}
           → (W : Γ' ⊢V⦂ B) → U ≡ U' → sub-atᵛ Θ U W ≡ sub-atᵛ Θ U' W
 sub-atᵛ-≡ Θ W e = sub-≡ᵛ split-≡-++ᶜ refl e
-
-sub-atᵛ-≡ᵥ : ∀ {Γ' B A} → (Θ : Ctx) → (U : ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A)
-           → {W W' : Γ' ⊢V⦂ B} → W ≡ W'
-           → sub-atᵛ Θ U W ≡ sub-atᵛ Θ U W'
-sub-atᵛ-≡ᵥ Θ U refl = refl
 
 sub-atᶜ-≡ : ∀ {Γ' B C} → (Θ : Ctx) → {M M' : ((Γ' ∷ B) ++ᶜ Θ) ⊢C⦂ C}
           → (W : Γ' ⊢V⦂ B) → M ≡ M' → sub-atᶜ Θ M W ≡ sub-atᶜ Θ M' W
@@ -197,17 +185,6 @@ innerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ
        → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → (Γ ++ᶜ Θ) ⊢C⦂ C
 innerᶜ {Γ} {B₂ = B₂} Θ M W₂ W₁ =
   (inner₀ᶜ Θ M W₁) [ split-≡-++ᶜ {Γ ∷ B₂} {Θ} ↦ W₂ ]c
-
-outerᴴ : ∀ {Γ B₁ B₂ D} → (Θ : Ctx) → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ)
-       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Fam D ((Γ ++ᶜ Θ) ᴱ)
-outerᴴ {Γ} {B₁} {B₂} Θ H W₂ W₁ =
-  (H [ split-≡-++ᶜ {Γ ∷ B₁ ∷ B₂} {Θ} ↦ V-rename (wk-ren {A = B₁}) W₂ ]cl)
-    [ split-≡-++ᶜ {Γ ∷ B₁} {Θ} ↦ W₁ ]cl
-
-innerᴴ : ∀ {Γ B₁ B₂ D} → (Θ : Ctx) → Fam D (((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ᴱ)
-       → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Fam D ((Γ ++ᶜ Θ) ᴱ)
-innerᴴ {Γ} {B₂ = B₂} Θ H W₂ W₁ =
-  (inner₀ᴴ Θ H W₁) [ split-≡-++ᶜ {Γ ∷ B₂} {Θ} ↦ W₂ ]cl
 
 ------------------------------------------------------------------------
 -- RE-BRACKETING THE SUFFIX

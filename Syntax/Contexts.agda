@@ -79,23 +79,10 @@ infixl 30 _⋈ᶜ_
 ⋈ᶜ-++ᶜ (Ξ ∷ A)   Δ = refl
 ⋈ᶜ-++ᶜ (Ξ ⟨ ρ ⟩) Δ = refl
 
-++ᶜ-identityʳ : ∀ {Γ} → Γ ++ᶜ [] ≡ Γ
-++ᶜ-identityʳ = refl
-
 ++ᶜ-assoc : (Γ Γ' Γ'' : Ctx) → (Γ ++ᶜ Γ') ++ᶜ Γ'' ≡ Γ ++ᶜ (Γ' ++ᶜ Γ'')
 ++ᶜ-assoc Γ Γ' []          = refl
 ++ᶜ-assoc Γ Γ' (Γ'' ∷ A)   = cong (_∷ A) (++ᶜ-assoc Γ Γ' Γ'')
 ++ᶜ-assoc Γ Γ' (Γ'' ⟨ ρ ⟩) = cong (_⟨ ρ ⟩) (++ᶜ-assoc Γ Γ' Γ'')
-
-++ᶜ-congʳ : (Γ Γ' Γ'' : Ctx) → Γ' ≡ Γ'' → (Γ ++ᶜ Γ') ≡ (Γ ++ᶜ Γ'')
-++ᶜ-congʳ Γ Γ' Γ'' p = cong (Γ ++ᶜ_) p
-
-++ᶜ-identityˡ-unique : ∀ {Γ Γ'} → Γ ≡ Γ' ++ᶜ Γ → Γ' ≡ []
-++ᶜ-identityˡ-unique {[]} {Γ'} p = sym p
-++ᶜ-identityˡ-unique {Γ ∷ A} {Γ'} p =
-  ++ᶜ-identityˡ-unique (∷ᶜ-injective-ctx p)
-++ᶜ-identityˡ-unique {Γ ⟨ ρ ⟩} {Γ'} p =
-  ++ᶜ-identityˡ-unique (⟨⟩-injective-ctx p)
 
 ++ᶜ-identityʳ-unique : ∀ {Γ Γ'} → Γ ≡ Γ ++ᶜ Γ' → Γ' ≡ []
 ++ᶜ-identityʳ-unique {Γ} {[]} p =
@@ -113,14 +100,6 @@ infixl 30 _⋈ᶜ_
 ++ᶜ-identityʳ-unique {Γ ⟨ ρ ⟩} {(Γ' ∷ _) ⟨ ρ' ⟩} p | ()
 ++ᶜ-identityʳ-unique {Γ ⟨ ρ ⟩} {(Γ' ⟨ _ ⟩) ⟨ ρ' ⟩} p | ()
 
-++ᶜ-inj₁ : ∀ {Γ₁ Γ₂ Γ} → Γ₁ ++ᶜ Γ ≡ Γ₂ ++ᶜ Γ → Γ₁ ≡ Γ₂
-++ᶜ-inj₁ {Γ₁} {Γ₂} {[]} p =
-  p
-++ᶜ-inj₁ {Γ₁} {Γ₂} {Γ ∷ A} p =
-  ++ᶜ-inj₁ (∷ᶜ-injective-ctx p)
-++ᶜ-inj₁ {Γ₁} {Γ₂} {Γ ⟨ ρ ⟩} p =
-  ++ᶜ-inj₁ (⟨⟩-injective-ctx p)
-
 ++ᶜ-inj₂ : ∀ {Γ Γ₁ Γ₂} → Γ ++ᶜ Γ₁ ≡ Γ ++ᶜ Γ₂ → Γ₁ ≡ Γ₂
 ++ᶜ-inj₂ {Γ} {[]} {[]} q =
   refl
@@ -136,12 +115,6 @@ infixl 30 _⋈ᶜ_
   ++ᶜ-identityʳ-unique (sym q)
 ++ᶜ-inj₂ {Γ} {Γ₁ ⟨ ρ ⟩} {Γ₂ ⟨ ρ' ⟩} q =
   cong₂ _⟨_⟩ (++ᶜ-inj₂ (⟨⟩-injective-ctx q)) (⟨⟩-injective-rgrade q)
-
-++ᶜ-left-zero-divisor : ∀ {Γ Γ'} → Γ ++ᶜ Γ' ≡ [] → Γ ≡ []
-++ᶜ-left-zero-divisor {Γ} {[]} p = p
-
-++ᶜ-right-zero-divisor : ∀ {Γ Γ'} → Γ ++ᶜ Γ' ≡ [] → Γ' ≡ []
-++ᶜ-right-zero-divisor {Γ} {[]} p = refl
 
 -- Amount of time-passage modelled by a context 
 
@@ -190,17 +163,6 @@ data _∈[_]_ (A : VType) : R → Ctx → Set where
 
 infix 27 _∈[_]_
 
--- Context extension does not decrease variable's grade annotation
-
-var-ρ-++ᶜ : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → A ∈[ ρ ·ᵣ ctx-grade Γ' ] Γ ++ᶜ Γ'
-
-var-ρ-++ᶜ {Γ} {[]} {A} x =
-  subst (A ∈[_] Γ) (sym (·ᵣ-identityʳ _)) x
-var-ρ-++ᶜ {Γ' = Γ' ∷ B} x =
-  Tl-∷ (var-ρ-++ᶜ x)
-var-ρ-++ᶜ {Γ} {Γ' ⟨ ρ' ⟩} {A} {ρ} x =
-  subst (A ∈[_] (Γ ++ᶜ Γ') ⟨ ρ' ⟩) (·ᵣ-assoc ρ (ctx-grade Γ') ρ') (Tl-⟨⟩ (var-ρ-++ᶜ {Γ} {Γ'} x))
-
 ∈-ctx-extensionˡ : ∀ {A ρ} → (Γ : Ctx) → (Γ' : Ctx) → A ∈[ ρ ] Γ' → A ∈[ ρ ] Γ ++ᶜ Γ'
 ∈-ctx-extensionˡ _ _ Hd = Hd
 ∈-ctx-extensionˡ Γ _ (Tl-∷ x) = Tl-∷ (∈-ctx-extensionˡ Γ _ x)
@@ -234,18 +196,6 @@ split-pf x = proj₁ (proj₂ (proj₂ (var-split x)))
 split-grade-≡ : ∀ {Γ A ρ} → (x : A ∈[ ρ ] Γ) → ctx-grade (split-r x) ≡ ρ
 split-grade-≡ x = proj₂ (proj₂ (proj₂ (var-split x)))
   
--- Variable splitting preserves time-passage modelled by a context
-
-split-pres-ctx-grade : ∀ {Γ Γ₁ Γ₂ A}
-                    → Γ₁ ∷ A , Γ₂ split Γ
-                    → ctx-grade Γ ≡ ctx-grade (Γ₁ ++ᶜ Γ₂)
-split-pres-ctx-grade split-[] =
-  refl
-split-pres-ctx-grade (split-∷ c) =
-  split-pres-ctx-grade c
-split-pres-ctx-grade (split-⟨⟩ {ρ = ρ} c) =
-  cong (_·ᵣ ρ) (split-pres-ctx-grade c) 
-
 -- No variable belongs to the empty context
 
 var-not-in-empty-ctx : ∀ {A} → ¬ (Σ[ ρ ∈ R ] (A ∈[ ρ ] []))
@@ -269,57 +219,12 @@ var-not-in-ctx-⟨⟩ : ∀ {Γ A ρ}
                   → ¬ (Σ[ ρ'' ∈ R ] (A ∈[ ρ'' ] Γ ⟨ ρ ⟩))
 var-not-in-ctx-⟨⟩ {ρ = ρ} ¬p (_ , Tl-⟨⟩ x) = ¬p (_ , x)
 
--- Checking whether a variable is in the context before the extension
-
-var-in-ctx? : ∀ {Γ Γ' A ρ} → A ∈[ ρ ] Γ → Dec (Σ[ ρ' ∈ R ] (A ∈[ ρ' ] Γ'))
-var-in-ctx? {Γ} {[]} x = no var-not-in-empty-ctx
-var-in-ctx? {Γ ∷ B} {Γ' ∷ A} Hd with var-in-ctx? {Γ ∷ B} {Γ'} Hd
-... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
-... | no ¬p with A ≡ᵥ? B
-... | yes refl = yes (uᵣ , Hd)
-... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
-var-in-ctx? {Γ ∷ B} {Γ' ∷ A} {A = C} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'} x
-... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
-... | no ¬p with A ≡ᵥ? C
-... | yes refl = yes (uᵣ , Hd)
-... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
-var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ∷ A} {A = B} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
-... | yes (ρ' , y) = yes (ρ' , Tl-∷ y)
-... | no ¬p with A ≡ᵥ? B
-... | yes refl = yes (uᵣ , Hd)
-... | no ¬q = no (var-not-in-ctx-∷ ¬p ¬q)
-var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} Hd with var-in-ctx? {Γ ∷ A} {Γ'} Hd
-... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
-... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
-var-in-ctx? {Γ ∷ A} {Γ' ⟨ ρ'' ⟩} (Tl-∷ x) with var-in-ctx? {Γ} {Γ'} x
-... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
-... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
-var-in-ctx? {Γ ⟨ ρ₁ ⟩} {Γ' ⟨ ρ'' ⟩} (Tl-⟨⟩ x) with var-in-ctx? {Γ} {Γ'} x
-... | yes (ρ' , y) = yes (ρ' ·ᵣ ρ'' , Tl-⟨⟩ y)
-... | no ¬p = no (var-not-in-ctx-⟨⟩ ¬p)
-
 -- Grade-only contexts
 
 data ⟨⟩-Ctx : Ctx → Set where
   is-[] : ⟨⟩-Ctx []
   is-⟨⟩ : ∀ {Γ ρ} → ⟨⟩-Ctx Γ → ⟨⟩-Ctx (Γ ⟨ ρ ⟩)
 
--- The concatenation of two grade-only contexts is a grade-only context
-
-++ᶜ-⟨⟩ : ∀ {Γ₁ Γ₂} → ⟨⟩-Ctx Γ₁ → ⟨⟩-Ctx Γ₂ → ⟨⟩-Ctx (Γ₁ ++ᶜ Γ₂)
-++ᶜ-⟨⟩ {Γ₂ = []} Γ₁' _ =
-  Γ₁'
-++ᶜ-⟨⟩ {Γ₂ = Γ₂ ⟨ ρ ⟩} Γ₁' (is-⟨⟩ Γ₂') =
-  is-⟨⟩ (++ᶜ-⟨⟩ Γ₁' Γ₂')
-
-
--- The left split of a context Γ according to a variable x is the same as
--- the left split of a Γ extended with a context modality.
-
-var-split-≡-var-split-Tl-⟨⟩ : ∀ {Γ A ρ ρ'}
-                            → (x : A ∈[ ρ ] Γ)
-                            → proj₁ (var-split x) ≡ proj₁ (var-split (Tl-⟨⟩ {ρ = ρ'} x))
-var-split-≡-var-split-Tl-⟨⟩ x = refl
 
 -- Eternal restriction of a context: keep only the eternal-typed variables,
 -- dropping non-eternal variables and all locks. Eternal values survive
@@ -438,26 +343,12 @@ split-++ʳ s (D ⟨ ρ ⟩) = split-⟨⟩ (split-++ʳ s D)
 ... | no  _  = ∈-ᴱ-split et s
 ∈-ᴱ-split et (split-⟨⟩ s) = ∈-ᴱ-split et s
 
--- The variable a split points at. Its two halves are read back by
--- `split→∈-split-l`/`-r` (Σ-eta makes `split-l`/`split-r` commute through the
--- `Tl` wrappers), so it can be substituted into by `_[_↦_]c`.
+-- The variable a split points at, so it can be substituted into by `_[_↦_]c`.
 
 split→∈ : ∀ {Γ Γ₁ Γ₂ A} → Γ₁ ∷ A , Γ₂ split Γ → A ∈[ ctx-grade Γ₂ ] Γ
 split→∈ split-[]     = Hd
 split→∈ (split-∷ s)  = Tl-∷ (split→∈ s)
 split→∈ (split-⟨⟩ s) = Tl-⟨⟩ (split→∈ s)
-
-split→∈-split-l : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ)
-                → split-l (split→∈ s) ≡ Γ₁
-split→∈-split-l split-[]     = refl
-split→∈-split-l (split-∷ s)  = split→∈-split-l s
-split→∈-split-l (split-⟨⟩ s) = split→∈-split-l s
-
-split→∈-split-r : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ)
-                → split-r (split→∈ s) ≡ Γ₂
-split→∈-split-r split-[]              = refl
-split→∈-split-r (split-∷ {A = B} s)   = cong (_∷ B) (split→∈-split-r s)
-split→∈-split-r (split-⟨⟩ {ρ = ρ} s)  = cong (_⟨ ρ ⟩) (split→∈-split-r s)
 
 -- When the split variable is *not* eternal, the eternal restriction is
 -- unchanged by removing it, i.e. it is the restriction of the two halves.

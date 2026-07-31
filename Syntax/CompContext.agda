@@ -201,12 +201,6 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x rel K) =
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   rel-hole-ctx-++ᶜ K
 
-hole-ctx-++ᶜ : ∀ {Γ f CH C}
-             → (K : Γ ⊢K[ f ◁ CH ]⦂ C)
-             → abs-hole-ctx K ≡ Γ ++ᶜ hole-ctx K
-
-hole-ctx-++ᶜ {Γ} K = rel-hole-ctx-++ᶜ {Γ} {Γ} {[]} K
-
 -- For evaluation contexts, holes do not bind any variables
 
 eval-hole-ctx : ∀ {Γ CH C}

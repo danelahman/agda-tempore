@@ -25,25 +25,6 @@ open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.Types     S
 
--- Transporting a typing along an equality of contexts
-
-∈-ctx-≡ : ∀ {Γ Γ' A ρ} → Γ ≡ Γ' → A ∈[ ρ ] Γ → A ∈[ ρ ] Γ'
-∈-ctx-≡ refl x = x
-
-V-ctx-≡ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
-V-ctx-≡ refl V = V
-
-C-ctx-≡ : ∀ {Γ Γ' C} → Γ ≡ Γ' → Γ ⊢C⦂ C → Γ' ⊢C⦂ C
-C-ctx-≡ refl M = M
-
--- Splitting the eternal restriction of an ambient-plus-local context, then
--- reassociating a suffix onto the local half. This is the shape an effect
--- handler clause's context takes once the ambient index is in play.
-
-ᴱ-++ᶜ-assoc : (Ξ Δ Θ : Ctx) → ((Ξ ++ᶜ Δ) ᴱ) ++ᶜ Θ ≡ (Ξ ᴱ) ++ᶜ ((Δ ᴱ) ++ᶜ Θ)
-ᴱ-++ᶜ-assoc Ξ Δ Θ =
-  trans (cong (_++ᶜ Θ) (ᴱ-++ᶜ Ξ Δ)) (++ᶜ-assoc (Ξ ᴱ) (Δ ᴱ) Θ)
-
 -- Renaming of variables
 --
 -- Stated at the empty ambient, which is where all of the language's renamings
@@ -167,19 +148,3 @@ V-renameᴬ r V = V-rename (expose-ren-[] r) V
 
 C-renameᴬ : ∀ {Ξ Δ Δ' C} → Ren Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢C⦂ C → (Ξ ++ᶜ Δ) ⊢C⦂ C
 C-renameᴬ r M = C-rename (expose-ren-[] r) M
-
--- THE ETERNAL WEAKENING
---
--- Inserting a context `Γ'` after an all-eternal prefix `Ξ`, under an arbitrary
--- suffix `Θ`. This is an ordinary renaming action: `wk-ren-ctx` introduces the
--- locks of `Γ'` by `⟨⟩-ext-ctx`, which is exactly what the eternal ambient
--- licenses. Its coherence is therefore `C-rename-nat`, and its preservation of
--- `Paramᶜ` is `renᶜ` — no separate recursion over terms.
-
-wkᵛ : ∀ {Ξ A} → EternalCtx Ξ → (Γ' Θ : Ctx)
-    → (Ξ ++ᶜ Θ) ⊢V⦂ A → (Ξ ++ᶜ (Γ' ++ᶜ Θ)) ⊢V⦂ A
-wkᵛ ec Γ' Θ V = V-renameᴬ (wk-ren-ctx ec Γ' Θ) V
-
-wkᶜ : ∀ {Ξ C} → EternalCtx Ξ → (Γ' Θ : Ctx)
-    → (Ξ ++ᶜ Θ) ⊢C⦂ C → (Ξ ++ᶜ (Γ' ++ᶜ Θ)) ⊢C⦂ C
-wkᶜ ec Γ' Θ M = C-renameᴬ (wk-ren-ctx ec Γ' Θ) M

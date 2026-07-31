@@ -285,8 +285,8 @@ step-preserves-type COERCE           = refl
 -- Reduction steps make effects more precise, in cancelled form: the grade δ by
 -- which the state grew, composed with the residual effect ε', stays below the
 -- original effect ε. This is the form the SEQ-STEP and HANDLE-STEP premises
--- take, so those premises are derivable (`seq-step-grade`, `handle-step-grade`).
--- The total form, about the two states' grades, follows by `cancelled⇒total`.
+-- take, so those premises are derivable. The total form, about the two states'
+-- grades, follows by `cancelled⇒total`.
 
 step-grade-≾ : ∀ {A B ε ε'}
              → {S S' : 𝕊 []}
@@ -335,24 +335,6 @@ step-grade-≾ BOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ UNBOX = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (COERCE {ε≾ε' = ε≾ε'}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ ε≾ε')
-
--- The grade premises of SEQ-STEP and HANDLE-STEP, derived.
-
-seq-step-grade : ∀ {A ε₁ ε₃}
-               → {S S' : 𝕊 []}
-               → {M : toCtx S ⊢C⦂ A ‼ ε₁}
-               → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
-               → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-               → ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
-seq-step-grade = step-grade-≾
-
-handle-step-grade : ∀ {A ε₁ ε₁'}
-                  → {S S' : 𝕊 []}
-                  → {M : toCtx S ⊢C⦂ A ‼ ε₁}
-                  → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
-                  → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-                  → ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁
-handle-step-grade = step-grade-≾
 
 -- invariants preserved by the small-step operational semantics, stated in
 -- terms of the two states' grades

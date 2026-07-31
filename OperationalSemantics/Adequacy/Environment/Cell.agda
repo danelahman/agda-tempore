@@ -421,21 +421,6 @@ rvar-hit []        W = refl
 rvar-hit (Θ ∷ C)   W = cong Var-∷ (rvar-hit Θ W)
 rvar-hit (Θ ⟨ ρ' ⟩) W = cong (Var-⟨⟩ ρ') (rvar-hit Θ W)
 
--- A transport of a concatenation acts on the cell by its prefix half and on
--- the push by its suffix half — which is what `castOf`, being a `cong₂`, is.
-
-Var-cast-++ᶜˡ : ∀ {Γ₁ Γ₂ A} → (e₁ : Γ₁ ≡ Γ₂) → {Θ₁ Θ₂ : Ctx} → (e₂ : Θ₁ ≡ Θ₂)
-              → (t : Var Γ₁ A)
-              → Var-cast (cong₂ _++ᶜ_ e₁ e₂) (Var-++ᶜˡ Θ₁ t)
-              ≡ Var-++ᶜˡ Θ₂ (Var-cast e₁ t)
-Var-cast-++ᶜˡ refl refl t = refl
-
--- The cell a box-typed value names travels with a transport of its context.
-
-val-cell-cast : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (W : Γ ⊢V⦂ [ ρ ] A)
-              → val-cell (castᵛ e W) ≡ Var-cast e (val-cell W)
-val-cell-cast refl W = refl
-
 ∈-++ᶜʳ-assoc⁻ : ∀ {A ρ} → (Γ Γ' : Ctx) → {Δ : Ctx} → (x : A ∈[ ρ ] Δ)
               → subst (λ Γ₀ → A ∈[ ρ ] Γ₀) (sym (++ᶜ-assoc Γ Γ' Δ))
                       (∈-++ᶜʳ {Γ = Γ} (∈-++ᶜʳ {Γ = Γ'} x))

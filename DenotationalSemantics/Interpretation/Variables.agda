@@ -124,18 +124,6 @@ eternalᵛ-extᵉ-irr : ∀ {A} → (et et' : Eternal A) → ∀ {ρ}
 eternalᵛ-extᵉ-irr et et' with eternal-irrelevant et et'
 ... | refl = ≈ᵐ-refl
 
--- `η` after eternal extraction at grade `ρ` (with `ρ ≾ uᵣ`) is the grade
--- relaxation `⟨⟩-≤`: the eternal value is available regardless of budget.
-
-eternalᵛ-η-ext : ∀ {A} → (et : Eternal A) → ∀ {ρ} → (p : ρ ≾ᵣ uᵣ)
-               → η ∘ᵐ eternalᵛ-extᵉ et {ρ} ≈ᵐ ⟨⟩-≤ p
-eternalᵛ-η-ext et p =
-  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et p)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et)))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-η∘εᵘ≡id)
-            (∘ᵐ-identityˡ (⟨⟩-≤ p)))))
-
 -- The morphism interpreting a variable: project, then extract.
 
 var-morphism : ∀ {Γ A ρ} → (¬ Eternal A → ρ ≾ᵣ uᵣ) → A ∈[ ρ ] Γ
@@ -203,28 +191,6 @@ private
              → {x y : A} → (e : x ≡ y) → (p : P (f x))
              → subst P (cong f e) p ≡ subst (λ a → P (f a)) e p
   subst-cong P f refl p = refl
-
--- The eternal structure depends only on `_ᴱ`: any equality of eternal bases
--- transports one structure to the other. This is what relates `⟦ Γ ⟧ᴱ` and
--- `⟦ Γ₀ ⟧ᴱ` when a non-eternal substitution retypes a handler along
--- `Γ ᴱ ≡ Γ₀ ᴱ`. Built from `⟦⟧ᴱ-idem` (both bases collapse to their double
--- restriction) and `dcong'` (the double restrictions agree along `cong _ᴱ e`).
-
-Eternalᵒ-coh : ∀ {Γ Γ'} → (e : Γ ᴱ ≡ Γ' ᴱ)
-             → subst (λ Δ → Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ) e (⟦ Γ ⟧ᴱ-Eternalᵒ) ≡ ⟦ Γ' ⟧ᴱ-Eternalᵒ
-Eternalᵒ-coh {Γ} {Γ'} e =
-  let m = λ Δ → Eternalᵒ ⟦ Δ ⟧ᶜᵗˣ
-      bridge : subst m (cong _ᴱ e) (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ) ≡ ⟦ Γ' ᴱ ⟧ᴱ-Eternalᵒ
-      bridge = trans (subst-cong m (λ v → v ᴱ) e (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ))
-                     (dcong (λ Δ → ⟦ Δ ⟧ᴱ-Eternalᵒ) e)
-  in
-  trans (cong (subst m e) (sym (⟦⟧ᴱ-idem Γ (ᴱ-idem Γ))))
-   (trans (subst-subst (ᴱ-idem Γ) {y≡z = e})
-   (trans (cong (λ pf → subst m pf (⟦ Γ ᴱ ⟧ᴱ-Eternalᵒ))
-               (uip {p = trans (ᴱ-idem Γ) e} {q = trans (cong _ᴱ e) (ᴱ-idem Γ')}))
-   (trans (sym (subst-subst (cong _ᴱ e) {y≡z = ᴱ-idem Γ'}))
-   (trans (cong (subst m (ᴱ-idem Γ')) bridge)
-          (⟦⟧ᴱ-idem Γ' (ᴱ-idem Γ'))))))
 
 -- The eternal projection: discard the non-eternal / time-passed part of the
 -- context, keeping the eternal skeleton. Under a lock it uses the eternal
@@ -346,19 +312,6 @@ var-projᴱ {Γ ⟨ ρ' ⟩} et (Tl-⟨⟩ {ρ = ρ'} x) =
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (eternal-mor et x))
             (∘ᵐ-assoc _ _ _))))))))
-
--- The eternal variable case of `projᴱ`-naturality, packaged at `var-morphism`
--- level: a variable of eternal type factors through the eternal projection.
-
-var-morphism-eternal : ∀ {Γ A ρ} → (p : ρ ≾ᵣ uᵣ) → (et : Eternal A) → (x : A ∈[ ρ ] Γ)
-                     → var-morphism (λ _ → p) x
-                     ≈ᵐ var-morphism (λ _ → ≾ᵣ-refl) (∈-ᴱ et x) ∘ᵐ projᴱ Γ
-var-morphism-eternal {A = A} p et x with eternal? A
-... | yes et' =
-  ≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))
-  (≈ᵐ-trans (var-projᴱ et x)
-            (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))
-... | no ¬et = ⊥-elim (¬et et)
 
 -- `var-morphism` of an eternal variable in `Γ ᴱ` is a morphism of eternal
 -- objects (it commutes with the extractions). Unfolds `var-morphism` and
@@ -492,9 +445,6 @@ splitᴱ⁻¹ Γ = splitᴰ⁻¹ (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ)
 
 splitᴱ-iso : (Γ Γ' : Ctx) → splitᴱ Γ Γ' ∘ᵐ splitᴱ⁻¹ Γ Γ' ≈ᵐ idᵐ
 splitᴱ-iso Γ = splitᴰ-iso (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ)
-
-splitᴱ⁻¹-iso : (Γ Γ' : Ctx) → splitᴱ⁻¹ Γ Γ' ∘ᵐ splitᴱ Γ Γ' ≈ᵐ idᵐ
-splitᴱ⁻¹-iso Γ = splitᴰ⁻¹-iso (Γ ᴱ) (⟦ Γ ⟧ᴱ-Eternalᵒ)
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- READING THE TOPMOST VARIABLES

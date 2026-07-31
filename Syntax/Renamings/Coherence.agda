@@ -138,10 +138,6 @@ cong-ren-id-≐ʳ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ʳ (cong-ren-id-�
         → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
 ∘ʳ-idˡ-≐ʳ w h = mk≐ʳ (λ x → cong (var-img′ w) (at h x))
 
-∘ʳ-idʳ-≐ʳ : ∀ {Γ Γ'} {r : Ren [] Γ Γ} → (w : Ren [] Γ Γ')
-         → r ≐ʳ id-ren → (w ∘ʳ r) ≐ʳ w
-∘ʳ-idʳ-≐ʳ w h = mk≐ʳ (λ x → at h (proj₂ (var-img w x)))
-
 restrict-ren-id-≐ʳ : ∀ {Γ} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
 restrict-ren-id-≐ʳ h = restrict-ren-≐ʳ h
 
@@ -234,14 +230,6 @@ split→∈-subst : ∀ {Γ Γ' Γ₁ Γ₂ A} → (e : Γ ≡ Γ')
               → split→∈ (subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s)
               ≡ subst (λ Γ₀ → A ∈[ ctx-grade Γ₂ ] Γ₀) e (split→∈ s)
 split→∈-subst refl s = refl
-
-split→∈-unique : ∀ {Γ Γ' Γ₁ Γ₂ A} → (e : Γ ≡ Γ')
-               → (s : Γ₁ ∷ A , Γ₂ split Γ) → (s' : Γ₁ ∷ A , Γ₂ split Γ')
-               → subst (λ Γ₀ → A ∈[ ctx-grade Γ₂ ] Γ₀) e (split→∈ s)
-               ≡ split→∈ s'
-split→∈-unique e s s' =
-  trans (sym (split→∈-subst e s))
-        (cong split→∈ (split-unique (subst (λ Γ₀ → _ , _ split Γ₀) e s) s'))
 
 -- `cong-ren` at nested suffixes is `cong-ren` at their concatenation — but only
 -- up to `++ᶜ-assoc`, so conjugated by `eq-ren`s.
@@ -359,32 +347,6 @@ restrict-wk-et-≐ʳ {Γ} {B} et (Δ ∷ C) e₁ e₂ with eternal? C
 ... | no  _ = restrict-wk-et-≐ʳ et Δ e₁ e₂
 
 restrict-wk-et-≐ʳ {Γ} {B} et (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-wk-et-≐ʳ et Δ e₁ e₂
-
--- The form `sub-wk`'s eternal `handle` clause needs: the clause's renaming
--- `cong-ren {D} (restrict-ren (cong-ren {Θ} wk-ren))` is `cong-ren` at the
--- concatenated suffix `Θ ᴱ ++ᶜ D`, conjugated by `eq-ren`s. Assembled from
--- `restrict-wk-et-≐ʳ`, `cong-ren-∘-≐ʳ`, `cong-ren-eq-ren-≐ʳ` and
--- `cong-ren-assoc-≐ʳ`, with the `eq-ren`s fused by `eq-ren-∘-≐ʳ` and any two
--- proofs identified by `eq-ren-≐ʳ`.
-
-restrict-wk-clause-≐ʳ : ∀ {Γ B} → (et : Eternal B) → (Θ D : Ctx)
-                     → (e₁ : (Γ ++ᶜ Θ) ᴱ ≡ Γ ᴱ ++ᶜ Θ ᴱ)
-                     → (e₂ : ((Γ ∷ B) ++ᶜ Θ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Θ ᴱ)
-                     → cong-ren {Γ'' = D}
-                         (restrict-ren {Ξ = []} (cong-ren {Γ'' = Θ} (wk-ren {A = B})))
-                     ≐ʳ (eq-ren (cong (_++ᶜ D) e₁)
-                         ∘ʳ (eq-ren (++ᶜ-assoc (Γ ᴱ) (Θ ᴱ) D)
-                             ∘ʳ cong-ren {Γ'' = Θ ᴱ ++ᶜ D} (wk-ren {A = B})
-                             ∘ʳ eq-ren (sym (++ᶜ-assoc (Γ ᴱ ∷ B) (Θ ᴱ) D)))
-                         ∘ʳ eq-ren (cong (_++ᶜ D) (sym e₂)))
-
-restrict-wk-clause-≐ʳ {Γ} {B} et Θ D e₁ e₂ =
-  ≐ʳ-trans (cong-ren-≐ʳ D (restrict-wk-et-≐ʳ et Θ e₁ e₂))
-    (≐ʳ-trans (cong-ren-∘-≐ʳ D _ _)
-      (∘ʳ-≐ʳ (cong-ren-eq-ren-≐ʳ D e₁)
-        (≐ʳ-trans (cong-ren-∘-≐ʳ D _ _)
-                  (∘ʳ-≐ʳ (cong-ren-assoc-≐ʳ (Θ ᴱ) D (wk-ren {A = B}))
-                        (cong-ren-eq-ren-≐ʳ D (sym e₂))))))
 
 -- With a non-eternal `B`, weakening by `B` leaves the eternal restriction
 -- alone: `restrict-ren` walks `cong-ren` down to `restrict-ren wk-ren`, which at

@@ -139,19 +139,6 @@ cl-ren-≐ʳ St D {r} {r'} h = mk≐ʳ go
             ≡ ∈-++ᶜʳ {Γ = Γ'} y
 ∈-++ᶜʳ-cast D refl y = refl
 
--- Hence: a congruence renaming out of such a context is the transport, whatever
--- it is built from — the two agree on `D` by `cong-ren-img-r` and `eq-ren-img`.
-
-cl-ren-eq-≐ʳ : ∀ {Γ₁} → (St : 𝕊 []) → (D : Ctx)
-            → (r₀ : Ren [] Γ₁ (toCtx St ᴱ)) → (e₀ : toCtx St ᴱ ≡ Γ₁)
-            → cong-ren {Γ'' = D} r₀ ≐ʳ eq-ren (cong (_++ᶜ D) e₀)
-
-cl-ren-eq-≐ʳ St D r₀ e₀ =
-  cl-ren-≐ʳ St D
-    (λ y → trans (cong-ren-img-r r₀ y)
-             (sym (trans (eq-ren-img (cong (_++ᶜ D) e₀) (∈-++ᶜʳ y))
-                         (cong (λ z → _ , z) (∈-++ᶜʳ-cast D e₀ y)))))
-
 -- Transports of a clause along its eternal context compose. (`subst-fuseᶜ` is
 -- at the motive `_⊢C⦂ C`; a clause is transported at `Cl B op ε`, which moves
 -- the context *under* two binders.)
@@ -598,8 +585,8 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     -- does to the clause's own two variables, which is nothing.
                     --
                     --   * `hne`: source and target eternal parts are both `[]`,
-                    --     so `cl-ren-eq-≐ʳ` makes the renaming a transport and the
-                    --     transports fuse by `uip`;
+                    --     so the renaming is a transport and the transports fuse
+                    --     by `uip`;
                     --   * `het`: the target is `[] ∷ Ar`, so the renaming is
                     --     `≐ʳ cong-ren {D} (wk-ren ∘ʳ eq-ren _)` — again by
                     --     `cl-ren-≐ʳ`, both sides fixing `D` — and `sub-wk-C`
@@ -720,11 +707,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     -- Three further steps, all present but none short:
                     --
                     --   * push the substitution across that identification
-                    --     (`sub-cast-C`);
+                    --     (`sub-cast-C′`);
                     --   * identify its variable with
                     --     `split→∈ (split-≡-++ᶜ {toCtx St'' ᴱ ∷ Ar} {D})`, which
-                    --     `sub-wk-C` wants — `split-unique`/`split→∈-unique`,
-                    --     since two splittings of the same context agree;
+                    --     `sub-wk-C` wants — `split-unique`, since two
+                    --     splittings of the same context agree;
                     --   * fuse the leftover transports (`eOut`, `ᴱ-∷-keep et`,
                     --     `castOf`, `toCtxᴱ-≡`) by `uip`.
                     --

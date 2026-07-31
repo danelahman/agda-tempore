@@ -127,35 +127,6 @@ extend-ren r p x = cong-∷-ren r ∘ʳ var-ren p x
 eq-ren : ∀ {Ξ Δ Δ'} → Δ ≡ Δ' → Ren Ξ Δ' Δ
 eq-ren refl = id-ren
 
--- Combination of congruence and monotonicity renamings
-
-cong-⟨⟩-≤-ren : ∀ {Ξ Δ Δ' ρ ρ'} → Ren Ξ Δ' Δ → ρ' ≾ᵣ ρ
-              → Ren Ξ (Δ' ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
-cong-⟨⟩-≤-ren id-ren ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ
-cong-⟨⟩-≤-ren (r₂ ∘ʳ r₁) ρ'≾ρ =
-  cong-⟨⟩-≤-ren r₂ ρ'≾ρ ∘ʳ cong-⟨⟩-ren r₁
-cong-⟨⟩-≤-ren wk-ren ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren wk-ren
-cong-⟨⟩-≤-ren (var-ren p x) ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (var-ren p x)
-cong-⟨⟩-≤-ren ⟨⟩-η-ren ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren ⟨⟩-η-ren
-cong-⟨⟩-≤-ren ⟨⟩-η⁻¹-ren ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren ⟨⟩-η⁻¹-ren
-cong-⟨⟩-≤-ren ⟨⟩-μ-ren ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren ⟨⟩-μ-ren
-cong-⟨⟩-≤-ren (⟨⟩-≤-ren rel) ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (⟨⟩-≤-ren rel)
-cong-⟨⟩-≤-ren (cong-∷-ren r) ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (cong-∷-ren r)
-cong-⟨⟩-≤-ren (cong-⟨⟩-ren r) ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (cong-⟨⟩-ren r)
-cong-⟨⟩-≤-ren (⟨⟩-ext-ren et) ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (⟨⟩-ext-ren et)
-cong-⟨⟩-≤-ren (⟨⟩-ext-ctx ecΞ ecΔ) ρ'≾ρ =
-  ⟨⟩-≤-ren ρ'≾ρ ∘ʳ cong-⟨⟩-ren (⟨⟩-ext-ctx ecΞ ecΔ)
-
 -- Congruence renamings for general context extension. Recursion on the suffix,
 -- so the ambient is untouched.
 

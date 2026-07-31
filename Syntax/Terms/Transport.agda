@@ -141,39 +141,6 @@ cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
               `in (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N)
 cast-handle refl = refl
 
--- SUBSTITUTION RESPECTS A CONTEXT TRANSPORT
---
--- Relocating a term's context relocates the variable it is substituted at, and
--- the replacement's own context along with it. All four hold by matching the
--- equality, but they are what lets a substitution be moved across the
--- `ᴱ`/`++ᶜ` transports that `handle`'s eternal clause accumulates.
-
-split-l-cast : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
-             → split-l x ≡ split-l (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
-split-l-cast refl x = refl
-
-split-r-cast : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
-             → split-r x ≡ split-r (subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
-split-r-cast refl x = refl
-
--- A splitting names its two halves outright, so transporting the term it is a
--- splitting of moves the splitting but not the result context: no transport
--- appears on either side of the substitution's own result.
-
-sub-cast-C : ∀ {Γ Γ' Γ₁ Γ₂ A C} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
-           → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
-           → M [ s ↦ W ]c
-           ≡ (subst (_⊢C⦂ C) e M)
-               [ subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s ↦ W ]c
-sub-cast-C refl M s W = refl
-
-sub-cast-V : ∀ {Γ Γ' Γ₁ Γ₂ A B} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ B)
-           → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A)
-           → V [ s ↦ W ]v
-           ≡ (subst (_⊢V⦂ B) e V)
-               [ subst (λ Γ₀ → Γ₁ ∷ A , Γ₂ split Γ₀) e s ↦ W ]v
-sub-cast-V refl V s W = refl
-
 -- The same, for a caller that has the transported splitting in hand rather than
 -- as a transport. Two splittings of the same context agree (`split-unique`), so
 -- no equation relating them is needed.
@@ -196,14 +163,6 @@ subst-++ᶜʳ : ∀ {Γ Γ' C} → (D : Ctx) → (e : Γ ≡ Γ') → (M : (Γ +
            ≡ subst (_⊢C⦂ C) (cong (_++ᶜ D) e) M
 subst-++ᶜʳ D refl M = refl
 
--- Three transports whose composite is a loop are the identity.
-
-subst-loop₃ : ∀ {Γ₁ Γ₂ Γ₃ C} → (e₁ : Γ₁ ≡ Γ₂) → (e₂ : Γ₂ ≡ Γ₃) → (e₃ : Γ₃ ≡ Γ₁)
-            → (M : Γ₁ ⊢C⦂ C)
-            → subst (_⊢C⦂ C) e₃ (subst (_⊢C⦂ C) e₂ (subst (_⊢C⦂ C) e₁ M)) ≡ M
-subst-loop₃ refl refl e₃ M =
-  cong (λ z → subst (_⊢C⦂ _) z M) (uip {p = e₃} {q = refl})
-
 -- Two transports fuse into one; a transport that returns to its own context is
 -- the identity. Together they collapse a tower of any height.
 
@@ -219,24 +178,6 @@ subst-subst-sym′ : ∀ {a p} {X : Set a} {P : X → Set p} {u v : X}
                  → (e : u ≡ v) → (w : P v)
                  → subst P e (subst P (sym e) w) ≡ w
 subst-subst-sym′ refl w = refl
-
--- Relocating a weakening's two contexts. Renaming algebra, so it belongs
--- upstream with `_≐ʳ_` (see the cleanup list); it is here because nothing else
--- uses it yet. With both equalities matched the conjugating renamings are
--- identity-like, and any two proofs of the (only propositional) context
--- equations agree by `uip`.
-
-cong-ren-wk-cast-≐ʳ : ∀ {B} → (Γ₀ Γ₁ Θ₀ Θ₁ : Ctx) → Γ₀ ≡ Γ₁ → Θ₀ ≡ Θ₁
-                   → (e  : Γ₁ ++ᶜ Θ₁ ≡ Γ₀ ++ᶜ Θ₀)
-                   → (e' : (Γ₀ ∷ B) ++ᶜ Θ₀ ≡ (Γ₁ ∷ B) ++ᶜ Θ₁)
-                   → cong-ren {Γ'' = Θ₁} (wk-ren {A = B})
-                   ≐ʳ (eq-ren e ∘ʳ cong-ren {Γ'' = Θ₀} (wk-ren {A = B})
-                                ∘ʳ eq-ren e')
-cong-ren-wk-cast-≐ʳ {B} Γ₀ Γ₁ Θ₀ Θ₁ refl refl e e' =
-  ≐ʳ-sym
-    (≐ʳ-trans (∘ʳ-≐ʳ (eq-ren-≐ʳ e refl)
-                    (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ e' refl)))
-              (≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-identityʳ-≐ʳ _)))
 
 castʳ : ∀ {Γ Γ' Δ} → Γ ≡ Γ' → Ren [] Γ Δ → Ren [] Γ' Δ
 castʳ refl w = w
@@ -297,31 +238,3 @@ castᵛ≡subst : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
             → castᵛ e V ≡ subst (_⊢V⦂ A) e V
 castᵛ≡subst refl V = refl
 
-subst-fuseᵛ : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
-            → subst (_⊢V⦂ A) e' (subst (_⊢V⦂ A) e V)
-            ≡ subst (_⊢V⦂ A) (trans e e') V
-subst-fuseᵛ refl refl V = refl
-
--- Two transport chains out of the same value agree by `uip`.
-
-substᵛ-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
-           → subst (_⊢V⦂ A) e V ≡ subst (_⊢V⦂ A) e' V
-substᵛ-irr e e' V = cong (λ z → subst (_⊢V⦂ _) z V) (uip {p = e} {q = e'})
-
--- The eternal restriction of a value respects a context transport.
-
-restrict-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (et : Eternal A) → (V : Γ ⊢V⦂ A)
-               → eternal-val-restrict et (castᵛ e V)
-               ≡ castᵛ (cong _ᴱ e) (eternal-val-restrict et V)
-restrict-castᵛ refl et V = refl
-
-
--- Fusing two transports, on values and on the target of a variable.
-
-castᵛ-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (V : Γ₁ ⊢V⦂ A)
-           → castᵛ e' (castᵛ e V) ≡ castᵛ (trans e e') V
-castᵛ-fuse refl refl V = refl
-
-Var-cast-fuse : ∀ {Γ₁ Γ₂ Γ₃ A} → (e : Γ₁ ≡ Γ₂) → (e' : Γ₂ ≡ Γ₃) → (t : Var Γ₁ A)
-              → Var-cast e' (Var-cast e t) ≡ Var-cast (trans e e') t
-Var-cast-fuse refl refl t = refl

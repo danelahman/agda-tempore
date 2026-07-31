@@ -2,8 +2,8 @@
 -- Filling a computation term context is a congruence.                  --
 --                                                                    --
 -- `unbox-beta` (unlike the other axioms) equates two terms that differ  --
--- only *inside* an evaluation context `K`, so its soundness needs       --
--- `fill-cong`: denotationally equal fillings give denotationally equal  --
+-- only *inside* an evaluation context `K`, so its soundness needs a     --
+-- congruence: denotationally equal fillings give denotationally equal   --
 -- filled terms. Proved by induction on `K`; every case is the           --
 -- corresponding term former's congruence, with the `C-rename (eq-ren …)` --
 -- that `_[_]` inserts at each binder discharged by `C-rename-nat` on     --
@@ -106,19 +106,6 @@ fillᴾ (box[ p ]ₖ V K)        (pV , pK)  N pN = pV , fillᴾ K pK _ (renᶜ _
 fillᴾ (handle[ p ]ₖ K `with H `in M) (pK , pM , pH , uH) N pN =
   fillᴾ K pK N pN , pM , pH , uH
 
--- Filling is a congruence: replacing the hole's filling by a denotationally
--- equal one leaves the filled term's denotation unchanged.
-
-fill-cong : ∀ {Γ f CH C} → (K : Γ ⊢K[ f ◁ CH ]⦂ C) → (pK : Paramᵏ K)
-          → {N N' : Γ ++ᶜ hole-ctx K ⊢C⦂ CH}
-          → (pN : Paramᶜ N) → (pN' : Paramᶜ N')
-          → ⟦ N ⟧ᶜᵗ pN ≈ᵐ ⟦ N' ⟧ᶜᵗ pN'
-          → ⟦ K [ N ] ⟧ᶜᵗ (fillᴾ K pK N pN) ≈ᵐ ⟦ K [ N' ] ⟧ᶜᵗ (fillᴾ K pK N' pN')
-
--- The filling reindexed by the binder's context coercion — the shape the
--- recursive cases hand to the induction hypothesis. The renaming has to be
--- named at each use (it is the `eq-ren` that `_[_]` inserts): it occurs under
--- `⟦_⟧ᶜᵗ`, which is not injective, so Agda cannot recover it from the goal.
 ren-cong : ∀ {Γ Γ' CH} → (r : Ren [] Γ' Γ)
          → (N N' : Γ ⊢C⦂ CH) → (pN : Paramᶜ N) → (pN' : Paramᶜ N')
          → ⟦ N ⟧ᶜᵗ pN ≈ᵐ ⟦ N' ⟧ᶜᵗ pN'
@@ -390,51 +377,3 @@ fill-cong-env Γ {Γ'} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) N N' pN pN' g
 -- (needed for `unbox-beta`, whose two sides agree only under the ambient
 -- `box V`) is not yet proved. The pieces it rests on — `ext`, `ext-eq`,
 -- `ext-++ᶜ` and `fill-ext` above — are in place.
-
-fill-cong []ₖ _ pN pN' eq = eq
-fill-cong (K ₖ[ p ]⨟ M) (pK , pM) pN pN' eq =
-  ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , fill-cong K pK pN pN' eq ⟩ᵐ-cong))
-fill-cong (handle[ p ]ₖ K `with H `in M) (pK , pM , pH , uH) pN pN' eq =
-  ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-            , ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , fill-cong K pK pN pN' eq ⟩ᵐ-cong)
-            ⟩ᵐ-cong)
-fill-cong {Γ} (perform[_]ₖ {A} {ε} p op V K) (pV , pK) {N} {N'} pN pN' eq =
-  ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-            , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (substᵈ-≈ (ty-gty (arity op))
-                (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN')
-                   (ren-cong r N N' pN pN' eq))))) ⟩ᵐ-cong)
-  where
-    r : Ren [] ((Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ++ᶜ hole-ctx K)
-               (Γ ++ᶜ hole-ctx (perform[ p ]ₖ op V K))
-    r = eq-ren (trans
-          (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
-          (sym (++ᶜ-assoc Γ ([] ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op))
-                            (hole-ctx K))))
-fill-cong {Γ} (delay[_]ₖ {A} {ε} p τ K) pK {N} {N'} pN pN' eq =
-  ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ
-    (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN') (ren-cong r N N' pN pN' eq))))
-  where
-    r : Ren [] ((Γ ⟨ of-natʳ τ ⟩) ++ᶜ hole-ctx K)
-               (Γ ++ᶜ hole-ctx (delay[ p ]ₖ τ K))
-    r = eq-ren (trans
-          (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
-          (sym (++ᶜ-assoc Γ ([] ⟨ of-natʳ τ ⟩) (hole-ctx K))))
-fill-cong {Γ} (unbox[_]ₖ {A} {C} {ρ} p x rel K) pK {N} {N'} pN pN' eq =
-    unbox-def x rel (K [ C-rename r N ]) (fillᴾ K pK (C-rename r N) (renᶜ r N pN))
-  ∙ ∘ᵐ-congˡ (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN')
-                (ren-cong r N N' pN pN' eq))
-  ∙ ≈ᵐ-sym (unbox-def x rel (K [ C-rename r N' ])
-              (fillᴾ K pK (C-rename r N') (renᶜ r N' pN')))
-  where
-    r : Ren [] ((Γ ∷ A) ++ᶜ hole-ctx K) (Γ ++ᶜ hole-ctx (unbox[ p ]ₖ x rel K))
-    r = eq-ren (trans
-          (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
-          (sym (++ᶜ-assoc Γ ([] ∷ A) (hole-ctx K))))
-fill-cong {Γ} (box[_]ₖ {A} {C} {ρ} p V K) (pV , pK) {N} {N'} pN pN' eq =
-  ∘ᵐ-congˡ (fill-cong K pK (renᶜ r N pN) (renᶜ r N' pN')
-              (ren-cong r N N' pN pN' eq))
-  where
-    r : Ren [] ((Γ ∷ [ ρ ] A) ++ᶜ hole-ctx K) (Γ ++ᶜ hole-ctx (box[ p ]ₖ V K))
-    r = eq-ren (trans
-          (cong (Γ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
-          (sym (++ᶜ-assoc Γ ([] ∷ [ ρ ] A) (hole-ctx K))))

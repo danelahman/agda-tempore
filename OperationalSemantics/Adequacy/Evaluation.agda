@@ -291,17 +291,6 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
     no-both (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
     ... | refl = no-both rs₁ rs₂
 
--- And each shape is unique when it is reached, including its time.
-
-ret-whnf-unique : ∀ {A ε} {cf : Config (A ‼ ε)} → (w w' : Ret-whnf cf)
-                → Σ[ e ∈ Ret-whnf.state w ≡ Ret-whnf.state w' ]
-                    (ret-ticks w ≡ ret-ticks w')
-ret-whnf-unique w w' =
-    cong proj₁ eq
-  , cong (λ z → ticks (proj₂ (proj₂ z))) eq
-  where
-    eq = ret-run-det (Ret-whnf.run w) (Ret-whnf.run w')
-
 op-whnf-unique : ∀ {A ε} {cf : Config (A ‼ ε)} → (w w' : Op-whnf cf)
                → Σ[ e ∈ Op-whnf.oper w ≡ Op-whnf.oper w' ]
                    (op-ticks w ≡ op-ticks w')

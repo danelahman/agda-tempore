@@ -229,28 +229,6 @@ store-∅ c r = ⊥-elim (not-in-empty-ctx c)
 -- LEMMAS TO PROVE
 ------------------------------------------------------------------------
 
--- Transporting the resource variable along a reach before looking it up is
--- looking it up along the composed reach. Unfolding the lookup
--- (`unbox-lookup-≡`) leaves the cell, which is the same by `unbox-cells`, and
--- the grade bound, which is irrelevant — so the two values are equal, not
--- merely equivalent.
-
-unbox-lookup-ren : ∀ {A ρ σ} {St St' St₂ : 𝕊 []}
-                 → (q₀ : St ⊑ₛ[ uᵣ ] St') → (q' : St' ⊑ₛ[ ρ ] St₂)
-                 → (x : [ ρ ] A ∈[ σ ] toCtx St)
-                 → (rel  : proj₁ (var-img (unbox-ren q')
-                             (Tl-⟨⟩ (proj₂ (var-img (reach-renᵘ q₀) x)))) ≾ᵣ ρ)
-                 → (rel' : proj₁ (var-img (unbox-ren (reach-∘ᵘ q' q₀))
-                                          (Tl-⟨⟩ x)) ≾ᵣ ρ)
-                 → unbox-lookup St₂
-                     (proj₂ (var-img (unbox-ren q')
-                       (Tl-⟨⟩ (proj₂ (var-img (reach-renᵘ q₀) x))))) rel
-                 ≡ unbox-lookup St₂
-                     (proj₂ (var-img (unbox-ren (reach-∘ᵘ q' q₀)) (Tl-⟨⟩ x))) rel'
-
-unbox-lookup-ren {St₂ = St₂} q₀ q' x rel rel' =
-  lookup-body-≡ St₂ (unbox-cells q₀ q' x) rel rel'
-
 -- ETERNAL TYPES ARE FREE
 --
 -- An eternal type is built from base, unit, empty and products, so `Val` asks
@@ -574,23 +552,6 @@ Comp-≡ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- Handling is `Adequacy.Handle`, above `Environment`: as sequencing, plus a
 -- clause premise, and needing `sub-wk-C` for the same reason.
 
--- ALLOCATION
---
--- `BOX` extends the store with a value that is reducible at every state the
--- lock it was boxed under permits — which is what the fundamental lemma
--- supplies, by running its own value case at each such state.
---
--- The old variables are covered by `Val-reach` along the allocation, once the
--- renaming is seen to send a variable to its own weakening. The new one is the
--- lookup at the freshly allocated cell.
-
-alloc-var-≡ : ∀ {A A' ρ ρ'} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-            → (x : A' ∈[ ρ' ] toCtx St) → (f : ¬ Eternal A' → ρ' ≾ᵣ uᵣ)
-            → reach-val (alloc-reach V) (var f x) ≡ var f (Tl-∷ x)
-alloc-var-≡ V x f =
-  var-ren-img-≡ (reach-renᵘ (alloc-reach V)) x f
-                (reach-renᵘ-img (alloc-reach V) x) f
-
 -- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ` is
 -- one out of `St` (`reach-∘ᵘ` against `alloc-reach`), and reading the cell back
 -- returns the stored value. Which cell is read is settled — `unbox-ren-img`
@@ -646,22 +607,3 @@ store-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 store-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
 
 store-var {[ ρ ] A} pSt x f r = pSt x r
-
-store-alloc : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
-            → Store St
-            → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-                 → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
-            ------------------------------------------------------------------
-            → Store (St ∷ₛ V)
-
-store-alloc {A} {ρ} {St} V pSt pV {St' = St'} Hd r =
-  store-fresh V pV (λ _ → ≾ᵣ-refl) r
-
-store-alloc {St = St} V pSt pV {St' = St'} (Tl-∷ x) r =
-  Val-≡ᵛ _ ((lookup-body-≡ St' (≤ₛ-embed-∘ (∷-suc V id-suc) e x) rel₀ rel))
-           (pSt x (read (≤ₛ-trans (∷-suc V id-suc) e) rel₀))
-  where
-    e   = extᶜ r
-    rel = ready r
-    rel₀ = subst (_≾ᵣ _)
-                 (sym (cong proj₁ (≤ₛ-embed-∘ (∷-suc V id-suc) e x))) rel

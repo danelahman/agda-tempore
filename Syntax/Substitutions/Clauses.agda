@@ -133,28 +133,6 @@ isSub-cast : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → (X : Γ₁ 
 isSub-cast {C = C} X e p =
   subst (IsSub _) (sym (castᶜ≡subst e X)) (isSub-substC X e p)
 
--- the two shapes the clause level actually presents
-
-isSub-Cl : ∀ {Γ₀ Γ₁ Γ₂ D} → (op : Op) → (ε : E)
-         → {h : Γ₀ ⊢C⦂ D ‼ (op-grade op ·ₑ ε)}
-         → (X : Cl D op ε (Γ₁ ᴱ)) → (e : Γ₁ ≡ Γ₂)
-         → IsSub h X → IsSub h (Cl-cast op ε e X)
-isSub-Cl {D = D} op ε X e p =
-  isSub-cast X
-    (cong (λ Γ₃ → Γ₃ ᴱ ∷ type-of-gtype (param op)
-                     ∷ [ mapᵉ (op-grade op) ]
-                         (type-of-gtype (arity op) ⇒ D ‼ ε))
-          e)
-    p
-
-isSub-substD : ∀ {Γ₀ Γ₁ Γ₂ C} → (Dc : Ctx) → {h : Γ₀ ⊢C⦂ C}
-             → (X : (Γ₁ ++ᶜ Dc) ⊢C⦂ C) → (e : Γ₁ ≡ Γ₂)
-             → IsSub h X
-             → IsSub h (subst (λ Γ₃ → (Γ₃ ++ᶜ Dc) ⊢C⦂ C) e X)
-isSub-substD Dc X e p =
-  subst (IsSub _) (sym (subst-++ᶜʳ Dc e X))
-        (isSub-substC X (cong (_++ᶜ Dc) e) p)
-
 isSub-reassoc : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → {X : Γ₁ ⊢C⦂ C} → {Y : Γ₂ ⊢C⦂ C}
               → IsSub h X → IsSub h Y → IsSub Y X
 isSub-reassoc {C = C} {h = h} (e , q) (e' , q') =
@@ -164,18 +142,6 @@ isSub-reassoc {C = C} {h = h} (e , q) (e' , q') =
                    (uip {p = e} {q = trans e' (trans (sym e') e)}))
         (trans (sym (subst-fuseᶜ e' (trans (sym e') e) h))
                (cong (subst (_⊢C⦂ C) (trans (sym e') e)) (sym q'))))
-
-isSub-trans : ∀ {Γ₀ Γ₁ Γ₂ C} → {h : Γ₀ ⊢C⦂ C} → {X : Γ₁ ⊢C⦂ C} → {Y : Γ₂ ⊢C⦂ C}
-            → IsSub h X → IsSub X Y → IsSub h Y
-isSub-trans {C = C} {h = h} (e , q) (e' , q') =
-  trans e e'
-  , trans q' (trans (cong (subst (_⊢C⦂ C) e') q) (subst-fuseᶜ e e' h))
-
-isSub-uniq : ∀ {Γ₀ Γ₁ C} → {h : Γ₀ ⊢C⦂ C} → {X Y : Γ₁ ⊢C⦂ C}
-           → IsSub h X → IsSub h Y → X ≡ Y
-isSub-uniq {C = C} {h = h} (e , q) (e' , q') =
-  trans q (trans (cong (λ z → subst (_⊢C⦂ C) z h) (uip {p = e} {q = e'}))
-                 (sym q'))
 
 -- two transports of `≡`-related terms are `≡`-related
 
@@ -190,21 +156,6 @@ isSub-≡ {C = C} {M' = M'} (e , q) (e' , q') eM =
 ------------------------------------------------------------------------
 -- ALIGNING TWO BOUNDARY SUBSTITUTIONS
 ------------------------------------------------------------------------
-
--- The boundary substitution is natural in a transport of its prefix, its
--- suffix, its term and its value. Proved by matching the two context equations;
--- the `IsSub` premise then forces the terms equal, its own equation being a loop.
-
-sub-at-IsSub : ∀ {Γ₁ Γ₂ B C Θ₁ Θ₂} → (eΓ : Γ₁ ≡ Γ₂) → (eΘ : Θ₁ ≡ Θ₂)
-             → (X₁ : ((Γ₁ ∷ B) ++ᶜ Θ₁) ⊢C⦂ C)
-             → (X₂ : ((Γ₂ ∷ B) ++ᶜ Θ₂) ⊢C⦂ C)
-             → IsSub X₁ X₂
-             → (V₁ : Γ₁ ⊢V⦂ B) → (V₂ : Γ₂ ⊢V⦂ B)
-             → subst (_⊢V⦂ B) eΓ V₁ ≡ V₂
-             → IsSub (X₁ [ split-≡-++ᶜ {Γ₁ ∷ B} {Θ₁} ↦ V₁ ]c)
-                     (X₂ [ split-≡-++ᶜ {Γ₂ ∷ B} {Θ₂} ↦ V₂ ]c)
-sub-at-IsSub refl refl X₁ X₂ (e , q) V .V refl =
-  refl , cong (λ z → z [ split-≡-++ᶜ ↦ V ]c) (trans q (subst-loopᶜ e X₁))
 
 -- The `_≡_`-flavoured alignment, taking the terms and the values related only
 -- up to `_≡_`.
@@ -222,22 +173,15 @@ sub-at-≡ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
   rewrite uip {p = e} {q = refl} | uip {p = e'} {q = refl} =
   sub-≡ᶜ split-≡-++ᶜ (sym eV) eX
 
--- The eternal restriction respects a transport of its context.
-
-restrict-substᵛ : ∀ {Γ₁ Γ₂ A} → (e : Γ₁ ≡ Γ₂) → (et : Eternal A) → (V : Γ₁ ⊢V⦂ A)
-                → eternal-val-restrict et (subst (_⊢V⦂ A) e V)
-                ≡ subst (_⊢V⦂ A) (cong _ᴱ e) (eternal-val-restrict et V)
-restrict-substᵛ refl et V = refl
-
 ------------------------------------------------------------------------
 -- WHAT `_[_↦_]cl` IS AT AN ETERNAL TYPE
 --
 -- It is `sub-atᶜ` at the *restricted* contexts — but at the splitting's own
 -- halves (`split-l x ᴱ`, `split-r x ᴱ ++ᶜ Dcl`), not at the contexts those are
 -- propositionally equal to: only there do `split-++ʳ (∈-ᴱ-split et x) Dcl` and
--- `split-≡-++ᶜ` have literally the same halves, so `split→∈-unique` applies on
+-- `split-≡-++ᶜ` have literally the same halves, so `split-unique` applies on
 -- the nose. Both are transports of one and the same substituted clause, which
--- is what the two lemmas below record; `isSub-uniq` then identifies them.
+-- is what the two lemmas below record; `isSub-reassoc` then identifies them.
 ------------------------------------------------------------------------
 
 -- The context equation between the clause's own context and the one the

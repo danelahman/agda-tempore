@@ -76,20 +76,6 @@ type-of-gtype Empty      = Empty
 type-of-gtype (A |×|ᵍ B) = type-of-gtype A |×| type-of-gtype B
 type-of-gtype ([ ρ ]ᵍ A) = [ ρ ] (type-of-gtype A)
 
--- Type formation rules is injective
-
-⇒-injective-dom : ∀ {A B C D} → A ⇒ C ≡ B ⇒ D → A ≡ B
-⇒-injective-dom refl = refl
-
-⇒-injective-cod : ∀ {A B C D} → A ⇒ C ≡ B ⇒ D → C ≡ D
-⇒-injective-cod refl = refl
-
-‼-injective-ty : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → A ≡ B
-‼-injective-ty refl = refl
-
-‼-injective-egrade : ∀ {A B ε ε'} → (A ‼ ε) ≡ (B ‼ ε') → ε ≡ ε'
-‼-injective-egrade refl = refl
-
 -- (Value) types are decidable
 
 _≡ᵥ?_ : Decidable (_≡_ {A = VType})

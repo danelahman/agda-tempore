@@ -17,7 +17,6 @@ open import Axiom.UniquenessOfIdentityProofs
 
 postulate
   fun-ext  : ∀ {l₁ l₂} → Extensionality l₁ l₂
-  ifun-ext : ∀ {l₁ l₂} → ExtensionalityImplicit l₁ l₂
 
 -- UIP (provable, since the project does not use --without-K)
 

@@ -339,18 +339,6 @@ sound-COERCE : ∀ {Γ A ε ε'} → (p : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A �
              → ⟦ coerce p M ⟧ᶜᵗ pM ≈ᵐ T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-COERCE p M pM = ≈ᵐ-refl
 
--- TRANSPORT ALONG GRADE EQUALITIES
---
--- `ε-substᵀ` is a transport, so it commutes with everything in sight; each
--- of these follows by matching the equality.
-
-ε-substᵀ-nat : ∀ {A B ε ε'} → (e : ε ≡ ε') → (f : A →ᵐ B)
-             → Tᶠ f ∘ᵐ ε-substᵀ e ≈ᵐ ε-substᵀ e ∘ᵐ Tᶠ f
-ε-substᵀ-nat refl f =
-  ≈ᵐ-trans (∘ᵐ-congʳ ε-substᵀ-refl)
-  (≈ᵐ-trans (∘ᵐ-identityʳ _)
-            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congˡ ε-substᵀ-refl) (∘ᵐ-identityˡ _))))
-
 delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : ℕ) → (e : ε ≡ ε')
                 → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (ε-substᵀ e)
                 ≈ᵐ ε-substᵀ (cong (of-natᵉ τ ·ₑ_) e) ∘ᵐ delayᵀ {A} {ε} τ

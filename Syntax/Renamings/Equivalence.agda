@@ -145,7 +145,7 @@ open _≐ʳ_ public
     go (Tl-⟨⟩ x) = refl
 
 -- Relocating a whole `Var` along a context equality, and the pushes it commutes
--- with. `Var-cast-Hd` needs only that any two proofs of a `∷`-equality agree.
+-- with.
 
 Var-cast : ∀ {Γ Γ' A} → Γ ≡ Γ' → Var Γ A → Var Γ' A
 Var-cast {A = A} e (σ , y) = σ , subst (λ Γ₀ → A ∈[ σ ] Γ₀) e y
@@ -153,14 +153,6 @@ Var-cast {A = A} e (σ , y) = σ , subst (λ Γ₀ → A ∈[ σ ] Γ₀) e y
 Var-cast-irr : ∀ {Γ Γ' A} → (e e' : Γ ≡ Γ') → (t : Var Γ A)
              → Var-cast e t ≡ Var-cast e' t
 Var-cast-irr e e' t = cong (λ z → Var-cast z t) uip
-
-Var-cast-Hd : ∀ {Γ Γ' A} → (e : Γ ∷ A ≡ Γ' ∷ A)
-            → Var-cast {A = A} e (uᵣ , Hd) ≡ (uᵣ , Hd)
-Var-cast-Hd {A = A} e =
-  cong (λ y → uᵣ , y)
-       (trans (cong (λ z → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) z Hd)
-                    (uip {p = e} {q = cong (_∷ A) (∷ᶜ-injective-ctx e)}))
-              (subst-Hd (∷ᶜ-injective-ctx e)))
 
 Var-cast-∷ : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → (t : Var Γ A)
            → Var-cast {A = A} (cong (_∷ C) e) (Var-∷ t) ≡ Var-∷ (Var-cast e t)
@@ -199,9 +191,9 @@ eq-ren-img refl x = refl
 -- PUSHING A PREFIX VARIABLE UNDER A SUFFIX
 --
 -- The grade depends only on the suffix, not on the variable, so it is a function
--- of its own — which is what lets the two sides of `sub-var-l` be seen to have
--- the same grade, and what keeps every lemma about the push subst-free (unlike
--- `var-ρ-++ᶜ`, whose `[]` and `⟨⟩` clauses each carry a grade transport).
+-- of its own — which is what lets the two sides of a boundary substitution be
+-- seen to have the same grade, and what keeps every lemma about the push
+-- subst-free.
 
 grade-++ᶜˡ : R → Ctx → R
 grade-++ᶜˡ ρ []         = ρ
@@ -257,17 +249,6 @@ cong-ren-img-l r (Δ ∷ B)    y =
   cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (cong-ren-img-l r Δ y)
 cong-ren-img-l r (Δ ⟨ ρ' ⟩) y =
   cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (cong-ren-img-l r Δ y)
-
--- The suffix's contribution is monotone in the variable's own grade, and a
--- bound on it is a bound on that grade: the two directions a push needs, the
--- first to carry a renaming's grade drop under the suffix, the second to read
--- the suffix's locks off a `var`'s bound.
-
-grade-++ᶜˡ-mono : ∀ {ρ ρ'} → (Δ : Ctx) → ρ ≾ᵣ ρ'
-                → grade-++ᶜˡ ρ Δ ≾ᵣ grade-++ᶜˡ ρ' Δ
-grade-++ᶜˡ-mono []         p = p
-grade-++ᶜˡ-mono (Δ ∷ B)    p = grade-++ᶜˡ-mono Δ p
-grade-++ᶜˡ-mono (Δ ⟨ ρ' ⟩) p = ·ᵣ-monoˡ-≾ᵣ (grade-++ᶜˡ-mono Δ p)
 
 grade-++ᶜˡ-zeroˡ : ∀ {ρ} → (Δ : Ctx) → grade-++ᶜˡ ρ Δ ≾ᵣ uᵣ → ρ ≾ᵣ uᵣ
 grade-++ᶜˡ-zeroˡ []         p = p
@@ -640,12 +621,6 @@ restrict-ren-≐ʳ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
         at-img : ∀ {A} → (t : Var Γ' A) → var-img′ r t ≡ var-img′ r' t
         at-img (_ , y) = at h y
 
--- The unit renamings act on a variable by adding, resp. removing, a lock.
-
-⟨⟩-η-img : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
-         → var-img (⟨⟩-η-ren {Δ = Γ}) (Tl-⟨⟩ x) ≡ (σ , x)
-⟨⟩-η-img x = refl
-
 ⟨⟩-η⁻¹-img : ∀ {Γ A σ} → (x : A ∈[ σ ] Γ)
            → var-img (⟨⟩-η⁻¹-ren {Δ = Γ}) x ≡ (σ ·ᵣ uᵣ , Tl-⟨⟩ x)
 ⟨⟩-η⁻¹-img Hd        = refl
@@ -670,8 +645,8 @@ restrict-ren-≐ʳ {Γ} {Γ'} {r} {r'} h = mk≐ʳ go
 
 -- What the lookup's weakening does to a variable: it is the subst-free push
 -- `∈-++ᶜˡ`, at the grade the suffix's locks contribute. Stated over `∈-++ᶜˡ`
--- rather than `var-ρ-++ᶜ` precisely so that no case needs a grade transport —
--- each is a `cong` of the next.
+-- precisely so that no case needs a grade transport — each is a `cong` of the
+-- next.
 
 wk-ren-⟨ρ⟩-ctx-img : ∀ {Γ A σ ρ} → (Γ' : Ctx) → (h : ctx-grade Γ' ≡ ρ)
                    → (x : A ∈[ σ ] Γ)
@@ -683,30 +658,4 @@ wk-ren-⟨ρ⟩-ctx-img (Γ' ∷ B)   refl x =
   cong (λ t → proj₁ t , Tl-∷ (proj₂ t)) (wk-ren-⟨ρ⟩-ctx-img Γ' refl x)
 wk-ren-⟨ρ⟩-ctx-img (Γ' ⟨ ρ' ⟩) refl x =
   cong (λ t → proj₁ t ·ᵣ ρ' , Tl-⟨⟩ (proj₂ t)) (wk-ren-⟨ρ⟩-ctx-img Γ' refl x)
-
--- THE SPLIT'S HEAD VARIABLE
---
--- Pushing the head variable of `split-l z ∷ A` through `split-r z` and relocating
--- along the split returns `z`. Induction on `z`, i.e. on `var-split`'s own
--- recursion. The syntactic counterpart of `split-lookup` in
--- `Interpretation.SubstitutionCoherence`.
-
-split-lookup-img : ∀ {Γ A ρ ρ'} → (z : [ ρ ] A ∈[ ρ' ] Γ)
-                 → (grade-++ᶜˡ uᵣ (split-r z)
-                   , subst (λ Γ₀ → [ ρ ] A ∈[ grade-++ᶜˡ uᵣ (split-r z) ] Γ₀)
-                           (split-≡ (split-pf z))
-                           (∈-++ᶜˡ (split-r z) (Hd {Γ = split-l z})))
-                 ≡ (ρ' , z)
-
-split-lookup-img Hd = refl
-
-split-lookup-img (Tl-∷ {B = B} z) =
-  trans (cong (λ y → grade-++ᶜˡ uᵣ (split-r z) , y)
-              (subst-Tl-∷ (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd)))
-        (cong Var-∷ (split-lookup-img z))
-
-split-lookup-img (Tl-⟨⟩ {ρ = ρ₁} z) =
-  trans (cong (λ y → grade-++ᶜˡ uᵣ (split-r z) ·ᵣ ρ₁ , y)
-              (subst-Tl-⟨⟩ (split-≡ (split-pf z)) (∈-++ᶜˡ (split-r z) Hd)))
-        (cong (Var-⟨⟩ ρ₁) (split-lookup-img z))
 

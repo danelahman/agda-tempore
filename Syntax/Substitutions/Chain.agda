@@ -51,12 +51,6 @@ data Sub (Ξ : Ctx) : Ctx → Ctx → Set where
 ⌜_⌝ˢ : ∀ {Ξ Δ Δ'} → Ren Ξ Δ Δ' → Sub Ξ Δ Δ'
 ⌜ r ⌝ˢ = [ ⌜ r ⌝ ]ˢ
 
-id-sub : ∀ {Ξ Δ} → Sub Ξ Δ Δ
-id-sub = []ˢ
-
-eq-sub : ∀ {Ξ Δ Δ'} → Δ ≡ Δ' → Sub Ξ Δ' Δ
-eq-sub e = [ eq-sub₀ e ]ˢ
-
 -- Composition is concatenation, recursing on the second argument, so the
 -- right unit law holds definitionally.
 
@@ -114,12 +108,6 @@ V-sub (s ◅ σ) V = V-sub₀ s (V-sub σ V)
 C-sub : ∀ {Γ Γ' C} → Sub [] Γ Γ' → Γ' ⊢C⦂ C → Γ ⊢C⦂ C
 C-sub []ˢ      M = M
 C-sub (s ◅ σ) M = C-sub₀ s (C-sub σ M)
-
-V-subᴬ : ∀ {Ξ Δ Δ' A} → Sub Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢V⦂ A → (Ξ ++ᶜ Δ) ⊢V⦂ A
-V-subᴬ σ V = V-sub (expose-subˢ-[] σ) V
-
-C-subᴬ : ∀ {Ξ Δ Δ' C} → Sub Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢C⦂ C → (Ξ ++ᶜ Δ) ⊢C⦂ C
-C-subᴬ σ M = C-sub (expose-subˢ-[] σ) M
 
 -- OBSERVATIONS
 --

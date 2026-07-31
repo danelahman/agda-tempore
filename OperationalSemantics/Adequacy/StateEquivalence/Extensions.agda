@@ -243,8 +243,8 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
 -- READING THE STORE, UP TO THE EQUIVALENCE
 --
 -- `UNBOX` reads the store; related states hold related values. Unfolding both
--- lookups (`unbox-lookup-≡`) leaves `lookup-body′` at corresponding data,
--- which `lookup-body′-≡` compares.
+-- lookups leaves `lookup-body′` at corresponding data, which `lookup-body′-≡`
+-- compares.
 ------------------------------------------------------------------------
 
 -- Stated on cells, which is what a `Val` stated on readability needs;

@@ -108,14 +108,8 @@ sub-env-is-⟦⟧ˢ₀ (split-∷ s)  W pW = mapˣᵐ-cong (sub-env-is-⟦⟧ˢ�
 sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧ˢ₀ s W pW)
 
 ------------------------------------------------------------------------
--- THE CONGRUENCES AND THE ETERNAL RESTRICTION
+-- THE ETERNAL RESTRICTION
 ------------------------------------------------------------------------
-
-cong-sub₀ᴾ : ∀ {Γ Γ'} {s : Sub₀ [] Γ Γ'} → (Γ₀ : Ctx)
-           → Paramˢ₀ s → Paramˢ₀ (cong-sub₀ {Γ'' = Γ₀} s)
-cong-sub₀ᴾ []         p = p
-cong-sub₀ᴾ (Γ₀ ∷ A)   p = cong-sub₀ᴾ Γ₀ p
-cong-sub₀ᴾ (Γ₀ ⟨ ρ ⟩) p = cong-sub₀ᴾ Γ₀ p
 
 -- The restricted substitution stores only restrictions of stored values, and
 -- those are parametric outright.

@@ -408,26 +408,6 @@ eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Eternal A) → {V V' : Γ ⊢V⦂
                      → eternal-val-ext {ρ = ρ} et V ≡ eternal-val-ext et V'
 eternal-val-ext-cong et = cong (eternal-val-ext et)
 
-eternal-val-restrict-cong : ∀ {Γ A} → (et : Eternal A) → {V V' : Γ ⊢V⦂ A}
-                          → V ≡ V'
-                          → eternal-val-restrict et V ≡ eternal-val-restrict et V'
-eternal-val-restrict-cong et = cong (eternal-val-restrict et)
-
--- SUBSTITUTING INTO A VARIABLE
---
--- The substitution reads the variable's grade bound (at the lock case, to build
--- a `⟨⟩-≤-ren`), so the two bounds must be identified — by `bound-irr`.
-
-sub-var-≡ : ∀ {Γ Γ₁ Γ₂ A B ρ'}
-          → (y : B ∈[ ρ' ] Γ) → (f f' : ¬ Eternal B → ρ' ≾ᵣ uᵣ)
-          → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
-          → W ≡ W'
-          --------------------------------------------------------
-          → ⟨ y , f ⟩[ s ↦ W ]var ≡ ⟨ y , f' ⟩[ s ↦ W' ]var
-
-sub-var-≡ y f f' s eW =
-  cong₂ (λ g U → ⟨ y , g ⟩[ s ↦ U ]var) (bound-irr f f') eW
-
 -- SUBSTITUTING INTO A RESOURCE VARIABLE
 --
 -- `⟨_⟩[_↦_]rvar` returns a variable and a grade bound; only the variable is
@@ -437,20 +417,6 @@ rvar-img : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
          → ([ ρ ] B ∈[ σ ] Γ) → (s : Γ₁ ∷ A , Γ₂ split Γ) → Γ₁ ⊢V⦂ A
          → Var (Γ₁ ++ᶜ Γ₂) ([ ρ ] B)
 rvar-img y s W = proj₁ (⟨ y ⟩[ s ↦ W ]rvar) , proj₁ (proj₂ (⟨ y ⟩[ s ↦ W ]rvar))
-
-sub-rvar-≡ : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
-           → (y : [ ρ ] B ∈[ σ ] Γ) → (s : Γ₁ ∷ A , Γ₂ split Γ)
-           → {W W' : Γ₁ ⊢V⦂ A} → W ≡ W'
-           ----------------------------------------
-           → rvar-img y s W ≡ rvar-img y s W'
-
-sub-rvar-≡ y s = cong (rvar-img y s)
-
--- RETYPING
-
-substᵛ-≡ : ∀ {A Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {V V' : Γ₁ ⊢V⦂ A}
-         → V ≡ V' → subst (_⊢V⦂ A) e V ≡ subst (_⊢V⦂ A) e V'
-substᵛ-≡ {A} e = cong (subst (_⊢V⦂ A) e)
 
 substᶜ-≡ : ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ Γ₂) → {M M' : Γ₁ ⊢C⦂ C}
          → M ≡ M' → subst (_⊢C⦂ C) e M ≡ subst (_⊢C⦂ C) e M'

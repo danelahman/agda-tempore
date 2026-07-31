@@ -51,8 +51,8 @@ open import DenotationalSemantics.Interpretation.Renaming.Algebra S Cat Fut Pst 
 -- EXTENDING AN ENVIRONMENT MORPHISM THROUGH A CONTEXT SUFFIX
 --
 -- `ext Γ Γ' Θ` weakens a morphism `⟦ Γ ⟧ → ⟦ Γ' ⟧` past everything a suffix
--- `Θ` binds. It is the semantic counterpart of the syntactic `cong-ren`
--- (`cong-ren-ext` below), generalised from renaming denotations to arbitrary
+-- `Θ` binds. It is the semantic counterpart of the syntactic `cong-ren`,
+-- generalised from renaming denotations to arbitrary
 -- morphisms — which is what an environment *extension* (e.g. the one `box`
 -- installs) needs, since that is not the denotation of any renaming. It is
 -- also the same recursion as `sub-env`.
@@ -65,14 +65,6 @@ ext : (Γ Γ' Θ : Ctx) → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟧ᶜᵗˣ
 ext Γ Γ' []        g = g
 ext Γ Γ' (Θ ∷ A)   g = mapˣᵐ (ext Γ Γ' Θ g) idᵐ
 ext Γ Γ' (Θ ⟨ ρ ⟩) g = ⟨ ρ ⟩ᶠ (ext Γ Γ' Θ g)
-
--- `ext` on a renaming's denotation is that renaming's `cong-ren`.
-
-cong-ren-ext : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Θ : Ctx)
-             → ⟦ cong-ren {Γ'' = Θ} r ⟧ʳ ≈ᵐ ext Γ' Γ Θ ⟦ r ⟧ʳ
-cong-ren-ext r []        = ≈ᵐ-refl
-cong-ren-ext r (Θ ∷ A)   = mapˣᵐ-cong (cong-ren-ext r Θ) ≈ᵐ-refl
-cong-ren-ext r (Θ ⟨ ρ ⟩) = ⟨⟩-congᶠ (cong-ren-ext r Θ)
 
 -- `ext` is natural in the suffix: a context equality of suffixes commutes
 -- with the extension.
@@ -598,5 +590,4 @@ projᴱ-nat (⟨⟩-ext-ren {Γ} {A} et) with eternal? A
 -- renaming is the identity and the square is `ec-projᴱ-extᵉ`
 projᴱ-nat (⟨⟩-ext-ctx _ ecΓ) =
   ≈ᵐ-trans (ec-projᴱ-extᵉ ecΓ) (≈ᵐ-sym (∘ᵐ-identityˡ _))
-
 

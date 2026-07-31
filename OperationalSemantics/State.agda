@@ -291,12 +291,3 @@ resource-lookup : ∀ {Γ ρ ρ' A}
 resource-lookup (S ⟨ _ ⟩ₛ) (Tl-⟨⟩ x) = resource-lookup S x
 resource-lookup (S ∷ₛ V) Hd          = V
 resource-lookup (S ∷ₛ _) (Tl-∷ x)    = resource-lookup S x
-
-≤ₛ-comp : ∀ {Γ} → {S S' : 𝕊 Γ} → S ≤ₛ S' → Σ[ Γ' ∈ Ctx ] toCtx S' ≡ toCtx S ++ᶜ Γ'
-≤ₛ-comp id-suc = [] , refl
-≤ₛ-comp {S' = S' ⟨ ρ ⟩ₛ} (⟨⟩-suc .ρ S≤ₛS') with ≤ₛ-comp {S' = S'} S≤ₛS'
-... | Γ' , eq =
-  Γ' ⟨ ρ ⟩ , cong (_⟨ ρ ⟩) eq
-≤ₛ-comp {S' = S' ∷ₛ V} (∷-suc .V S≤ₛS') with ≤ₛ-comp {S' = S'} S≤ₛS'
-≤ₛ-comp {S = _} {_∷ₛ_ {A} {ρ} S' V} (∷-suc .V S≤ₛS') | Γ' , eq =
-  Γ' ∷ [ ρ ] A , cong (_∷ [ ρ ] A) eq

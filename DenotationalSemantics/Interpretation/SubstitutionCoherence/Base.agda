@@ -253,8 +253,7 @@ split-var-≡ (Tl-⟨⟩ z)  =
 -- and hence the lookup lemma in the form the `unbox` cases need.
 
 -- (the grade is an independent variable here, so the equality proof can be
--- matched against `refl` — it cannot be in `split-lookup` below, where the
--- grade also occurs inside `split-r z`)
+-- matched against `refl`)
 
 split-lookup-e : ∀ {Γ Γ₁ Γ₂ A ρ} → (c : Γ₁ ∷ A , Γ₂ split Γ) → (e : ctx-grade Γ₂ ≡ ρ)
                → ⟨ ρ ⟩ᶠ sndᵐ
@@ -262,15 +261,6 @@ split-lookup-e : ∀ {Γ Γ₁ Γ₂ A ρ} → (c : Γ₁ ∷ A , Γ₂ split Γ
                    ∘ᵐ ⟦ eq-ren (split-≡ c) ⟧ʳ
                  ≈ᵐ var-proj (subst (A ∈[_] Γ) e (split-var c))
 split-lookup-e c refl = split-lookup-gen c
-
-split-lookup : ∀ {Γ A ρ} → (z : A ∈[ ρ ] Γ)
-             → ⟨ ρ ⟩ᶠ sndᵐ
-                 ∘ᵐ ⟦ wk-ren-⟨ρ⟩-ctx {split-l z ∷ A} {split-r z} (split-grade-≡ z) ⟧ʳ
-                 ∘ᵐ ⟦ eq-ren (split-≡ (split-pf z)) ⟧ʳ
-               ≈ᵐ var-proj z
-split-lookup z =
-  ≈ᵐ-trans (split-lookup-e (split-pf z) (split-grade-≡ z))
-           (≡→≈ᵐ (cong var-proj (split-var-≡ z)))
 
 
 -- The resource lookup morphism of an `unbox`.

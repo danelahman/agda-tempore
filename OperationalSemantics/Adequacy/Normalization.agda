@@ -175,7 +175,7 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
 
 -- Boxing: `BOX` allocates, and the reduct already lives over the *new* state's
 -- context — so the environment must keep the binder as the fresh cell rather than
--- substitute for it, which is `liftᵉ`. Then `env-Cˢ-lift` is `refl`: the reduct
+-- substitute for it, which is `liftᵉ`. The reduct then
 -- *is* the action at `liftᵉ V₀ γ`, and its `Rel-Env` is the boxed value's
 -- reducibility at every state the lock permits — which is the first hypothesis,
 -- at the environment `γ ⟨ q ⟩ᵉ` (whose action at the empty suffix is

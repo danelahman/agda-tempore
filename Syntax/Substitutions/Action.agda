@@ -78,14 +78,3 @@ mutual
           (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (box V M) = box (V-sub₀ (cong-sub₀ s) V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (coerce rel M) = coerce rel (C-sub₀ s M)
-
--- ACTING BY AN AMBIENT-INDEXED SUBSTITUTION
---
--- As for renamings, a substitution that fixes an ambient acts by first
--- forgetting what it fixes (`expose-sub₀-[]`).
-
-V-sub₀ᴬ : ∀ {Ξ Δ Δ' A} → Sub₀ Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢V⦂ A → (Ξ ++ᶜ Δ) ⊢V⦂ A
-V-sub₀ᴬ s V = V-sub₀ (expose-sub₀-[] s) V
-
-C-sub₀ᴬ : ∀ {Ξ Δ Δ' C} → Sub₀ Ξ Δ Δ' → (Ξ ++ᶜ Δ') ⊢C⦂ C → (Ξ ++ᶜ Δ) ⊢C⦂ C
-C-sub₀ᴬ s M = C-sub₀ (expose-sub₀-[] s) M

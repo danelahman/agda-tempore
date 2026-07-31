@@ -54,10 +54,6 @@ infixl 25 _⋄ᵏ_
 _⋄ᵏ_ : ∀ {X Y A ε ε'} → (Y →ᵐ Tᵏ A ε') → (X →ᵐ Tᵏ Y ε) → X →ᵐ Tᵏ A (ε ·ₑ ε')
 f ⋄ᵏ t = μᵏ ∘ᵐ Tᵏᶠ f ∘ᵐ t
 
-T-≤ᵏ-irr : ∀ {A ε ε'} → (p q : ε ≾ₑ ε') → T-≤ᵏ {A} p ≈ᵐ T-≤ᵏ {A} q
-T-≤ᵏ-irr {A} p q =
-  subst (λ z → T-≤ᵏ {A} p ≈ᵐ T-≤ᵏ {A} z) (≾ₑ-irrelevant p q) ≈ᵐ-refl
-
 ⋄ᵏ-ηᵏ : ∀ {X A ε'} → (f : X →ᵐ Tᵏ A ε')
       → f ⋄ᵏ ηᵏ ≈ᵐ ε-substᵏ (sym (·ₑ-identityˡ ε')) ∘ᵐ f
 ⋄ᵏ-ηᵏ f =

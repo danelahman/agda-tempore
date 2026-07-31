@@ -203,44 +203,6 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
 ...   | refl =
   cong (λ t → proj₁ t ·ᵣ ρ₁ , Tl-⟨⟩ (proj₂ t))
        (∈-++ᶜ-split-inj₁ Δ₁ Δ₂ x z' eq')
--- SUBSTITUTION FIXES A PREFIX VARIABLE
---
--- The mirror of `sub-var-r`: the variable being replaced is the `B` sitting at
--- the boundary, so a variable of the prefix survives it too, landing at the
--- corresponding position of the shorter prefix. Same induction on the suffix.
-
-sub-var-l : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ∀ {A ρ}
-          → (x : A ∈[ ρ ] Γ₁) → (W : Γ₁ ⊢V⦂ B)
-          → (f  : ¬ Eternal A → grade-++ᶜˡ ρ Γ₂ ≾ᵣ uᵣ)
-          → (f' : ¬ Eternal A → grade-++ᶜˡ ρ Γ₂ ≾ᵣ uᵣ)
-          → sub-var₀ (sub-atˢ₀ {Γ₁} {B} Γ₂ W)
-                     (∈-++ᶜˡ {Γ = Γ₁ ∷ B} Γ₂ (Tl-∷ x)) f
-          ≡ var f' (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)
-
-sub-var-l [] x W f f' = var-≡
-
-sub-var-l {Γ₁} (Γ₂ ∷ C) x W f f' =
-  trans (V-rename-cong wk-ren (sub-var-l Γ₂ x W f f))
-        (var-ren-img-≡ wk-ren (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) f refl f')
-
-sub-var-l {Γ₁} (Γ₂ ⟨ ρ' ⟩) {A = A} x W f f' with eternal? A
-
-... | yes et =
-  trans (eternal-val-ext-cong et
-          (sub-var-l Γ₂ x W _ (λ z → ⊥-elim (z et)))) var-≡
-
-... | no ¬et =
-  trans (V-rename-cong rn (sub-var-l Γ₂ x W fᵢ fᵢ))
-        (var-ren-img-≡ rn (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x) fᵢ
-           (cong (var-img′ (⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))))
-                 (⟨⟩-η⁻¹-img (∈-++ᶜˡ {Γ = Γ₁} Γ₂ x)))
-           f')
-  where
-    rn : ∀ {Γ₀ : Ctx} → Ren [] (Γ₀ ⟨ ρ' ⟩) Γ₀
-    rn = ⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et))
-
-    fᵢ = λ z → ≾ᵣ-zero-productˡ (f z)
-
 -- SUBSTITUTION AT THE VARIABLE IT REPLACES
 --
 -- The third possibility: the variable looked up *is* the one being replaced, so
@@ -298,7 +260,7 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 
 -- SUBSTITUTION FIXES A RESOURCE VARIABLE
 --
--- The `rvar` counterparts of `sub-var-r`/`sub-var-l`: `⟨_⟩[_↦_]rvar` returns the
+-- The `rvar` counterpart of `sub-var-r`: `⟨_⟩[_↦_]rvar` returns the
 -- same resource variable when the variable it replaces is a different one. Simpler than the
 -- value versions — a box type is never eternal, so there is no `eternal?` split.
 
@@ -343,28 +305,4 @@ sub-rvar-l′ : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ} → (z : [ ρ ] A �
             → atᴿ {Γ} {B} Θ (proj₂ t) W
             ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 sub-rvar-l′ Θ z t refl W = sub-rvar-l Θ z W
-
--- The resource variable a weakened-then-substituted `unbox` names is the original one: the
--- renaming pushes it (`cong-ren-img-r`/`-l`, by which side `∈-++ᶜ-split` says it
--- came from) and the substitution puts it back (`sub-rvar-r`/`-l`).
-
-unbox-rvar-wk : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
-              → (c : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Θ)) → (W : Γ ⊢V⦂ B)
-              → atᴿ {Γ} {B} Θ
-                  (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) c)) W
-              ≡ (σ , c)
-
-unbox-rvar-wk {Γ} {B} Θ c W with ∈-++ᶜ-split Γ Θ c in eqc
-
-... | inj₂ c'
-  rewrite ∈-++ᶜ-split-inj₂ Γ Θ c c' eqc =
-  sub-rvar-r′ Θ c' _ (cong-ren-img-r (wk-ren {A = B}) c') W
-
-... | inj₁ (σ' , c') =
-  subst (λ t → atᴿ {Γ} {B} Θ
-                 (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B}))
-                                 (proj₂ t))) W
-             ≡ t)
-        (sym (∈-++ᶜ-split-inj₁ Γ Θ c c' eqc))
-        (sub-rvar-l′ Θ c' _ (cong-ren-img-l (wk-ren {A = B}) Θ c') W)
 
