@@ -140,11 +140,13 @@ open import Syntax.Grades.Traces.Durations
 open import Syntax.Grades.Traces.MaxDuration
 open import Syntax.Grades.Traces.MinDuration
 open import Syntax.Grades.Traces.Subtrace
+open import Syntax.Grades.Traces.SubtraceDuration
 
 ---- Examples of trace-based grades
 
 open import Syntax.Grades.SetOfTraces
 open import Syntax.Grades.SetOfTracesUpToSubtrace
+open import Syntax.Grades.SetOfTracesConvex
 
 ---- Examples of grade systems
 
@@ -323,3 +325,5 @@ open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTrace
 open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithInfinityWithTraceHistories
 open import DenotationalSemantics.Model.Example.World.SetOfTracesWithTraceHistories
 open import DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTraceHistories
+open import DenotationalSemantics.Model.Example.World.SetOfTracesConvexWithTraceHistories
+open import DenotationalSemantics.Model.Example.World.SetOfTracesConvexWithMayMustHistories
