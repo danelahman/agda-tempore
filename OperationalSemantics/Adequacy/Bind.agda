@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- Bind: sequencing preserves reducibility.                           --
 --                                                                    --
--- Stated about `Comp` alone — over the sequel *term* and its effect,  --
+-- Stated about `CRed` alone — over the sequel *term* and its effect,  --
 -- at an arbitrary state — rather than over closing environments,     --
 -- because `SEQ-OP` floats the operation out and leaves the sequel at  --
 -- a context no environment reaches. Above `Environment` because the   --
--- `comp-op` case needs `sub-wk-C`.                                    --
+-- `cred-op` case needs `sub-wk-C`.                                    --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -46,39 +46,39 @@ open import Syntax.Substitutions.Equivalence Spec
 ------------------------------------------------------------------------
 -- BIND
 --
--- Induction on the scrutinee's `Comp` derivation, recursing on the `pk` field
--- exactly as `Comp-≐ˢ` does.
+-- Induction on the scrutinee's `CRed` derivation, recursing on the `pk` field
+-- exactly as `CRed-≐ˢ` does.
 --
---   * `comp-ret` runs the scrutinee to a `return` (`seq-steps`), fires
+--   * `cred-ret` runs the scrutinee to a `return` (`seq-steps`), fires
 --     `SEQ-RET`, and hands the value to the sequel premise. The run's own reach
 --     lands at `mapᵉ uₑ` where a graded reach wants `uᵣ`, which `suc-comp-ren-grade`
 --     reconciles.
---   * `comp-op` runs it to a `perform`, floats the operation out with `SEQ-OP`
+--   * `cred-op` runs it to a `perform`, floats the operation out with `SEQ-OP`
 --     and recurses at the resumption. The sequel the recursion needs is the
 --     original one weakened past the operation's arity variable, so firing the
 --     outer sequel premise means *undoing* that weakening — which is `sub-wk-C`.
 ------------------------------------------------------------------------
 
-seq-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
+seq-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε₁}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-         → Comp' A ε₁ St M
+         → CRed' A ε₁ St M
          → (∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
-              → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
-              → Comp' B ε₂ St₁
+              → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
+              → CRed' B ε₂ St₁
                   ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c))
          ------------------------------------------------------------------
-         → Comp' B (ε₁ ·ₑ ε₂) St (M ⨟ N)
+         → CRed' B (ε₁ ·ₑ ε₂) St (M ⨟ N)
 
 -- The scrutinee returns.
 
-seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV) hN
+seq-CRed {A} {B} {ε₁} {ε₂} {St} N (cred-ret {St₁ = St₁} {V = V} rs pV) hN
   with seq-steps rs N
 
 ... | N₁ , rs' , eN₁ =
-  Comp-expand* rs'
-    (Comp-expand SEQ-RET
-      (Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
+  CRed-expand* rs'
+    (CRed-expand SEQ-RET
+      (CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -114,15 +114,15 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N (comp-ret {St₁ = St₁} {V = V} rs pV)
 
 -- The scrutinee gets stuck on an operation.
 
-seq-Comp {A} {B} {ε₁} {ε₂} {St} N
-         (comp-op {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'} rs pW pk) hN
+seq-CRed {A} {B} {ε₁} {ε₂} {St} N
+         (cred-op {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'} rs pW pk) hN
   with seq-steps rs N
 
 ... | N₁ , rs' , eN₁ =
-  Comp-expand* rs'
-    (Comp-expand SEQ-OP
-      (Comp-ε-subst (sym (·ₑ-assoc (op-grade op) ε₃ ε₂))
-        (comp-op ε* pW resump)))
+  CRed-expand* rs'
+    (CRed-expand SEQ-OP
+      (CRed-ε-subst (sym (·ₑ-assoc (op-grade op) ε₃ ε₂))
+        (cred-op ε* pW resump)))
   where
     ρₒ  = mapᵉ (op-grade op)
     Ar  = type-of-gtype (arity op)
@@ -143,10 +143,10 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
 
     resump : ∀ {St₂ : 𝕊 []} → (q : St₁ ⊑ₛ[ ρₒ ] St₂)
            → (W' : toCtx St₂ ⊢V⦂ Ar)
-           → Valᵍ (arity op) St₂ W'
-           → Comp' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
+           → VRedᵍ (arity op) St₂ W'
+           → CRed' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
 
-    resump {St₂} q W' pW' = seq-Comp N₃ (pk q W' pW') hN₃
+    resump {St₂} q W' pW' = seq-CRed N₃ (pk q W' pW') hN₃
       where
         sq = unbox-ren q
 
@@ -212,12 +212,12 @@ seq-Comp {A} {B} {ε₁} {ε₂} {St} N
                   (C-rename-∘ (cong-∷-ren W₁) (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N₁))
 
         hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ ⊑ₛ[ mapᵉ ε₃ ] St₃)
-            → (V : toCtx St₃ ⊢V⦂ A) → Val A St₃ V
-            → Comp' B ε₂ St₃
+            → (V : toCtx St₃ ⊢V⦂ A) → VRed A St₃ V
+            → CRed' B ε₂ St₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ split-[] ↦ V ]c)
 
         hN₃ {St₃} q' V pV =
-          Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₁ V pV)
+          CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₁ V pV)
           where
             -- the run and the clause's own reach accumulate: the grades multiply
             -- and each is bounded, so the composite stays under `ε₁`

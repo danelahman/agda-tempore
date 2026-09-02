@@ -4,7 +4,7 @@
 -- The language has no recursion, so termination is syntactic.        --
 -- Reducibility is needed, since substitution can grow a term.        --
 --                                                                    --
--- The `handle` case is an induction on the scrutinee's `Comp`        --
+-- The `handle` case is an induction on the scrutinee's `CRed`        --
 -- derivation: each `HANDLE-OP` consumes one resumption premise.      --
 ------------------------------------------------------------------------
 
@@ -70,13 +70,13 @@ FL-unbox : ∀ {St Γ A D ρ σ ε} → (γ : Env St Γ) → Rel-Env γ
          → (x : [ ρ ] A ∈[ σ ] Γ) → (rel : σ ≾ᵣ ρ)
          → (M : Γ ∷ A ⊢C⦂ D ‼ ε)
          → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
-              → Comp' D ε St' (env-C γ' M))
+              → CRed' D ε St' (env-C γ' M))
          --------------------------------------------------------------
-         → Comp' D ε St (env-C γ (unbox x rel M))
+         → CRed' D ε St (env-C γ (unbox x rel M))
 
 FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
-  Comp-≡ᶜ (sym (env-Cˢ-unbox γ [] x rel M rel₁))
-          (Comp-expand UNBOX (pM (γ ∷ᵉ U) (pγ , pU)))
+  CRed-≡ᶜ (sym (env-Cˢ-unbox γ [] x rel M rel₁))
+          (CRed-expand UNBOX (pM (γ ∷ᵉ U) (pγ , pU)))
   where
     rel₁ = env-cell-rel γ [] (σ , x) rel
 
@@ -88,9 +88,9 @@ FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
 
     rel₂ = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel₁
 
-    pU : Val A St U
-    pU = Val-≡ᵛ A ( (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
-                  (env-cell₀-val γ pγ (σ , x) id-suc rel₂)
+    pU : VRed A St U
+    pU = VRed-≡ᵛ A ( (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
+                   (env-cell₀-val γ pγ (σ , x) id-suc rel₂)
 
 -- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components
 -- in the *opposite* order from the environment — the rule replaces `B` (its
@@ -100,18 +100,18 @@ FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
 
 FL-match : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
          → (V : Γ ⊢V⦂ A |×| B) → (M : Γ ∷ A ∷ B ⊢C⦂ D ‼ ε)
-         → Val (A |×| B) St (env-V γ V)
+         → VRed (A |×| B) St (env-V γ V)
          → (∀ {St'} → (γ' : Env St' (Γ ∷ A ∷ B)) → Rel-Env γ'
-              → Comp' D ε St' (env-C γ' M))
+              → CRed' D ε St' (env-C γ' M))
          --------------------------------------------------------------
-         → Comp' D ε St (env-C γ (match V `in M))
+         → CRed' D ε St (env-C γ (match V `in M))
 
 FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
          (U₁ , U₂ , eV , p₁ , p₂) pM =
-  subst (Comp' _ _ St) (sym (env-Cˢ-match γ [] V M))
-    (subst (λ z → Comp' _ _ St (match z `in M₀)) (sym eV)
-      (Comp-expand MATCH
-        (Comp-≡ᶜ (sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂)))))
+  subst (CRed' _ _ St) (sym (env-Cˢ-match γ [] V M))
+    (subst (λ z → CRed' _ _ St (match z `in M₀)) (sym eV)
+      (CRed-expand MATCH
+        (CRed-≡ᶜ (sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂)))))
   where
     M₀ = env-Cˢ γ ([] ∷ A ∷ B) M
 
@@ -119,7 +119,7 @@ FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
     step = sub-swap-C [] M₀ U₂ U₁
 
--- Handling: `env-Cˢ-handle` splits the action, `handle-Comp` runs the scrutinee
+-- Handling: `env-Cˢ-handle` splits the action, `handle-CRed` runs the scrutinee
 -- and then the clauses and the sequel.
 --
 -- The sequel premise is `FL-C`'s at `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, as for sequencing.
@@ -131,27 +131,27 @@ FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
 -- the clause's own context with no store (`∅ᵉ`), `_∷ᵉ_` the operation's
 -- parameter, and `liftᵉ` the cell. Its `Rel-Env` is
 -- `((env-clause-rel γ St₁ , pW) , bv)`, whose last component is exactly the
--- `Boxed-Val` argument `handle-Comp` supplies.
+-- `Boxed-VRed` argument `handle-CRed` supplies.
 
 FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
           → (M : Γ ⊢C⦂ A ‼ ε₁)
           → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (Γ ᴱ))
           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-          → Comp' A ε₁ St (env-C γ M)
+          → CRed' A ε₁ St (env-C γ M)
           → (∀ {St'} {op : Op} {ε₃ : E}
                → (γ' : Env St' (Γ ᴱ ∷ type-of-gtype (param op)
                                   ∷ [ mapᵉ (op-grade op) ]
                                       (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
                → Rel-Env γ'
-               → Comp' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
+               → CRed' B (op-grade op ·ₑ ε₃) St' (env-C γ' (H op ε₃)))
           → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ ε₁ ⟩ ∷ A)) → Rel-Env γ'
-               → Comp' B ε₂ St' (env-C γ' N))
+               → CRed' B ε₂ St' (env-C γ' N))
           --------------------------------------------------------------
-          → Comp' B (ε₁ ·ₑ ε₂) St (env-C γ (handle M `with H `in N))
+          → CRed' B (ε₁ ·ₑ ε₂) St (env-C γ (handle M `with H `in N))
 
 FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH pN =
-  subst (Comp' _ _ St) (sym (env-Cˢ-handle γ [] M H N))
-    (handle-Comp Hγ (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) pM clause sequel)
+  subst (CRed' _ _ St) (sym (env-Cˢ-handle γ [] M H N))
+    (handle-CRed Hγ (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) pM clause sequel)
   where
     Hγ : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ)
     Hγ = env-Hˢ γ [] H
@@ -159,18 +159,18 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
     -- The clause the machine fires and the clause the environment closes agree
     -- only up to the equivalence: the substituted values match on the nose, the
     -- *renamings* reaching the state's context do not (`ᴱ-ren (toCtx St₁)`
-    -- against `∅-ren St₁`), and only `≡` identifies those. Hence `Comp-≡ᶜ`
+    -- against `∅-ren St₁`), and only `≡` identifies those. Hence `CRed-≡ᶜ`
     -- rather than a transport.
 
     clause : Clause-Prem B St Hγ
     clause {St₁} {op} {ε₃} V₀ bv W pW =
-      Comp-≡ᶜ (sym (env-Hˢ-fired γ St₁ H V₀ W))
+      CRed-≡ᶜ (sym (env-Hˢ-fired γ St₁ H V₀ W))
         (pH (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W))
             ((env-clause-rel γ St₁ , pW) , bv))
 
     sequel : Seq-Prem (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N)
     sequel q V pV =
-      subst (Comp' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
+      subst (CRed' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
             (pN ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV))
 
 -- Boxing: `BOX` allocates, and the reduct already lives over the *new* state's
@@ -184,15 +184,15 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
 FL-box : ∀ {St Γ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ D ‼ ε)
        → (∀ {St'} → (γ' : Env St' (Γ ⟨ ρ ⟩)) → Rel-Env γ'
-            → Val A St' (env-V γ' V))
+            → VRed A St' (env-V γ' V))
        → (∀ {St'} → (γ' : Env St' (Γ ∷ [ ρ ] A)) → Rel-Env γ'
-            → Comp' D ε St' (env-C γ' M))
+            → CRed' D ε St' (env-C γ' M))
        --------------------------------------------------------------
-       → Comp' D ε St (env-C γ (box V M))
+       → CRed' D ε St (env-C γ (box V M))
 
 FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
-  subst (Comp' _ _ St) (sym (env-Cˢ-box γ [] V M))
-    (Comp-expand BOX (pM (liftᵉ V₀ γ) (pγ , cell)))
+  subst (CRed' _ _ St) (sym (env-Cˢ-box γ [] V M))
+    (CRed-expand BOX (pM (liftᵉ V₀ γ) (pγ , cell)))
   where
     V' = env-Vˢ γ ([] ⟨ ρ ⟩) V
     V₀ = V-rename (eq-ren (sym (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩}))) V'
@@ -217,10 +217,10 @@ FL-box {St = St} {Γ = Γ} {A = A} {ρ = ρ} γ pγ V M pV pM =
           V')
 
     cell : ∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-         → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
-    cell q = Val-≡ᵛ A (sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
+         → VRed A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
+    cell q = VRed-≡ᵛ A (sym (cancel q)) (pV (γ ⟨ q ⟩ᵉ) pγ)
 
--- Performing: already a weak head normal form, so this is `comp-op` at the empty
+-- Performing: already a weak head normal form, so this is `cred-op` at the empty
 -- run. Its resumption premise is the induction hypothesis at the environment a
 -- `resume` amounts to — the lock the operation is performed under, matched by
 -- the resumption's own reach, and the arity value on top — which the action
@@ -230,19 +230,19 @@ FL-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → Rel-Env γ
            → (V : Γ ⊢V⦂ type-of-gtype (param op))
            → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                     ⊢C⦂ A ‼ ε)
-           → Val (type-of-gtype (param op)) St (env-V γ V)
+           → VRed (type-of-gtype (param op)) St (env-V γ V)
            → (∀ {St'} → (γ' : Env St' (Γ ⟨ mapᵉ (op-grade op) ⟩
                                          ∷ type-of-gtype (arity op)))
-                → Rel-Env γ' → Comp' A ε St' (env-C γ' M))
+                → Rel-Env γ' → CRed' A ε St' (env-C γ' M))
            --------------------------------------------------------------
-           → Comp' A (op-grade op ·ₑ ε) St (env-C γ (perform op V M))
+           → CRed' A (op-grade op ·ₑ ε) St (env-C γ (perform op V M))
 
 FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
-  subst (Comp' _ _ _) (sym (env-Cˢ-perform γ [] V M))
-    (comp-op ε* (Val→Valᵍ (param op) (env-V γ V) pV)
+  subst (CRed' _ _ _) (sym (env-Cˢ-perform γ [] V M))
+    (cred-op ε* (VRed→VRedᵍ (param op) (env-V γ V) pV)
       (λ q W' pW' →
-         subst (Comp' _ _ _) (resumeq q W')
-           (pM ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') (pγ , Valᵍ→Val (arity op) W' pW'))))
+         subst (CRed' _ _ _) (resumeq q W')
+           (pM ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') (pγ , VRedᵍ→VRed (arity op) W' pW'))))
   where
     ρ  = mapᵉ (op-grade op)
     Ar = type-of-gtype (arity op)
@@ -269,12 +269,12 @@ mutual
   -- gains the argument (`reachᵉ`, `_∷ᵉ_`) — and that is the whole reason the
   -- reach is *recorded* in the environment: the clause supplies no store for
   -- the later state, and a recorded reach needs none. The reduct the clause asks
-  -- for is the action's body up to `_≡_`, whence `Comp-≡ᶜ`.
+  -- for is the action's body up to `_≡_`, whence `CRed-≡ᶜ`.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⊢V⦂ A)
        -------------------------------
-       → Val A St (env-V γ V)
+       → VRed A St (env-V γ V)
 
   FL-V γ pγ (var f x)  = env-var γ pγ x f
   FL-V γ pγ (const c)  = tt
@@ -285,7 +285,7 @@ mutual
   FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) =
       _ , env-Vˢ-lam γ [] M
     , λ q M₂ eM₂ W pW →
-        Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) (sym eM₂))
+        CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) (sym eM₂))
                 (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M)
 
   -- The computation half. `return` is a weak head normal form; `coerce`,
@@ -300,34 +300,34 @@ mutual
   FL-C : ∀ {St Γ A ε} → (γ : Env St Γ) → Rel-Env γ
        → (M : Γ ⊢C⦂ A ‼ ε)
        -------------------------------
-       → Comp' A ε St (env-C γ M)
+       → CRed' A ε St (env-C γ M)
 
   FL-C γ pγ (return V) =
-    subst (Comp' _ _ _) (sym (env-Cˢ-ret γ [] V)) (comp-ret ε* (FL-V γ pγ V))
+    subst (CRed' _ _ _) (sym (env-Cˢ-ret γ [] V)) (cred-ret ε* (FL-V γ pγ V))
 
   FL-C γ pγ (coerce p M) =
-    subst (Comp' _ _ _) (sym (env-Cˢ-coerce γ [] M))
-      (Comp-expand COERCE (FL-C γ pγ M))
+    subst (CRed' _ _ _) (sym (env-Cˢ-coerce γ [] M))
+      (CRed-expand COERCE (FL-C γ pγ M))
 
   FL-C γ pγ (absurd V) = ⊥-elim (empty-canonical (env-V γ V))
 
   FL-C γ pγ (V · W) with FL-V γ pγ V
   ... | M₀ , eq , f =
-    subst (Comp' _ _ _) (sym (env-Cˢ-app γ [] V W))
-      (subst (λ z → Comp' _ _ _ (z · env-V γ W)) (sym eq)
-        (Comp-expand APP
-          (Comp-≡ᶜ
+    subst (CRed' _ _ _) (sym (env-Cˢ-app γ [] V W))
+      (subst (λ z → CRed' _ _ _ (z · env-V γ W)) (sym eq)
+        (CRed-expand APP
+          (CRed-≡ᶜ
             (sub-≡ᶜ split-[] (refl)
               (C-rename-id-≡ (cong-∷-ren-id-≐ʳ reach-renᵘ-id-≐ʳ) M₀))
             (f reach-id (reach-under reach-id M₀) (refl)
                (env-V γ W) (FL-V γ pγ W)))))
 
   FL-C {St = St} γ pγ (delay τ M) =
-    subst (Comp' _ _ _) (sym (env-Cˢ-delay γ [] M))
-      (Comp-expand DELAY
-        (Comp-≡ᶜ
+    subst (CRed' _ _ _) (sym (env-Cˢ-delay γ [] M))
+      (CRed-expand DELAY
+        (CRed-≡ᶜ
           (C-rename-id-≡ unbox-ren-delay-≐ʳ (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩) M))
-          (subst (Comp' _ _ _) eqδ (FL-C (γ ⟨ delay-reach ⟩ᵉ) pγ M))))
+          (subst (CRed' _ _ _) eqδ (FL-C (γ ⟨ delay-reach ⟩ᵉ) pγ M))))
     where
       eqδ = cong (C-rename (unbox-ren (delay-reach {of-natʳ τ} {St})))
               (trans
@@ -336,17 +336,17 @@ mutual
                 (cong (env-Cˢ γ ([] ⟨ of-natʳ τ ⟩))
                       (castᶜ-irr (++ᶜ-assoc _ ([] ⟨ of-natʳ τ ⟩) []) refl M)))
 
-  -- Sequencing: `env-Cˢ-seq` splits the action, `seq-Comp` runs the scrutinee and
+  -- Sequencing: `env-Cˢ-seq` splits the action, `seq-CRed` runs the scrutinee and
   -- then the sequel. The environment the sequel needs is `(γ ⟨ q ⟩ᵉ) ∷ᵉ V` — and
   -- `env-Cˢ (γ ⟨ q ⟩ᵉ) ([] ∷ A)` *is* `C-rename (cong-∷-ren (unbox-ren q))` of the
   -- action at suffix `[] ⟨ mapᵉ ε₁ ⟩ ∷ A`, definitionally (both of `env-Cˢ`'s
   -- casts are `refl` at the empty suffix), so only `env-Cˢ-head` is needed.
 
   FL-C {St = St} {ε = ε} γ pγ (_⨟_ {A = A} {ε = ε₁} M N) =
-    subst (Comp' _ _ St) (sym (env-Cˢ-seq γ [] M N))
-      (seq-Comp (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) (FL-C γ pγ M)
+    subst (CRed' _ _ St) (sym (env-Cˢ-seq γ [] M N))
+      (seq-CRed (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) (FL-C γ pγ M)
         (λ q V pV →
-           subst (Comp' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
+           subst (CRed' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
                  (FL-C ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV) N)))
 
   FL-C γ pγ (handle M `with H `in N) =
@@ -370,25 +370,25 @@ mutual
 ------------------------------------------------------------------------
 
 -- A reducible computation halts: its run *is* the evaluation, and which of the
--- two shapes it halts in is which `Comp` constructor it is. The reducibility
+-- two shapes it halts in is which `CRed` constructor it is. The reducibility
 -- of the components plays no part — normalization is all that is read off.
 
-Comp-halts : ∀ {A P ε} {St : 𝕊 []} → {M : toCtx St ⊢C⦂ A ‼ ε}
-           → Comp A P ε St M
+CRed-halts : ∀ {A P ε} {St : 𝕊 []} → {M : toCtx St ⊢C⦂ A ‼ ε}
+           → CRed A P ε St M
            -------------------
            → Halts (⟨ St , M ⟩)
 
-Comp-halts (comp-ret rs _)  = halts-ret (ret-whnf _ _ rs)
-Comp-halts (comp-op rs _ _) = halts-op (op-whnf _ _ _ _ _ rs)
+CRed-halts (cred-ret rs _)  = halts-ret (ret-whnf _ _ rs)
+CRed-halts (cred-op rs _ _) = halts-op (op-whnf _ _ _ _ _ rs)
 
 -- A closed program is reducible at the empty state: `Γ = []`, `St = ∅`, and
--- `toCtx ∅` has no variables to make reducible (`store-∅`).
+-- `toCtx ∅` has no variables to make reducible (`SRed-∅`).
 
-normalize : ∀ {A ε} → (M : Prog A ε) → Comp' A ε ∅ M
-normalize M = subst (Comp' _ _ ∅) (env-C-id M) (FL-C ⌊ ∅ ⌋ store-∅ M)
+normalize : ∀ {A ε} → (M : Prog A ε) → CRed' A ε ∅ M
+normalize M = subst (CRed' _ _ ∅) (env-C-id M) (FL-C ⌊ ∅ ⌋ SRed-∅ M)
 
 -- Hence every closed program reaches a weak head normal form: it returns a
 -- value, or it gets stuck on an unhandled operation.
 
 halts : ∀ {A ε} → (M : Prog A ε) → Halts (⟨ ∅ , M ⟩)
-halts M = Comp-halts (normalize M)
+halts M = CRed-halts (normalize M)

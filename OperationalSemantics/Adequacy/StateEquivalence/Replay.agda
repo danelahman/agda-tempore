@@ -42,7 +42,7 @@ open import OperationalSemantics.Adequacy.StateEquivalence.Bisimulation Spec
 ------------------------------------------------------------------------
 -- REPLAYING AN EXTENSION
 --
--- `Val`'s Kripke clauses quantify over extensions of the state, so transporting
+-- `VRed`'s Kripke clauses quantify over extensions of the state, so transporting
 -- one along `_≐ˢ_` means replaying its extension on the other state: the shape
 -- is copied, and each cell's value is transported along the contexts' equality.
 ------------------------------------------------------------------------
@@ -183,7 +183,7 @@ reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
 
 -- WHERE A CELL GETS TO, ACROSS THE EQUIVALENCE
 --
--- The `≤ₛ`-level counterpart of `unbox-ren-bridge`, which is what a `Val`
+-- The `≤ₛ`-level counterpart of `unbox-ren-bridge`, which is what a `VRed`
 -- stated on cell readability needs. Derived from it rather than by a fresh
 -- induction: an arbitrary extension is the extension of *some* reach — take
 -- the guard to be its own accumulated grade, where the bound is reflexivity —

@@ -115,7 +115,7 @@ data Env : (St : 𝕊 []) → Ctx → Set where
   -- postcomposition with a reach: what makes `Env` functorial in the *state*.
   -- Recorded rather than pushed into the base, so that a
   -- reducible environment stays reducible when the state grows: its values
-  -- still come from the earlier state, and `Val-reach` moves them. Pushing it
+  -- still come from the earlier state, and `VRed-reach` moves them. Pushing it
   -- into `⌊_⌋` would instead demand the *later* state's store, which nothing
   -- supplies.
 
@@ -156,18 +156,18 @@ data Env : (St : 𝕊 []) → Ctx → Set where
 --
 -- The state's own part is the store; each instantiated binder holds a
 -- reducible value. Of the eternal prefix nothing is asked beyond its types
--- being eternal, at which `Val` holds of everything (`Val-eternal`) — that is
+-- being eternal, at which `VRed` holds of everything (`VRed-eternal`) — that is
 -- the only thing that makes a *closed* value usable where a lock stands.
 
 Rel-Env : ∀ {St Γ} → Env St Γ → Set
-Rel-Env ⌊ St ⌋                = Store St
+Rel-Env ⌊ St ⌋                = SRed St
 Rel-Env (∅ᵉ St)                = ⊤
 Rel-Env (γ ⟨ q ⟩ᵉ)             = Rel-Env γ
-Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × Val A St V
+Rel-Env (_∷ᵉ_ {St} {Γ} {A} γ V) = Rel-Env γ × VRed A St V
 Rel-Env (liftᵉ {St} {Γ} {A} {ρ} V γ) =
   Rel-Env γ
   × (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
-       → Val A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
+       → VRed A St' (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V))
 Rel-Env (reachᵉ γ q)           = Rel-Env γ
 Rel-Env (eternalˡ Δ lf η γ)    =
   Rel-Env γ × (∀ {A ρ} → A ∈[ ρ ] Δ → Eternal A)

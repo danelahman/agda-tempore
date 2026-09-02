@@ -324,11 +324,11 @@ env-cell₀ (eternalˡ Δ₀ lf η γ) (σ , x)
 ------------------------------------------------------------------------
 -- THE CELL THE ENVIRONMENT SENDS A CELL TO IS REDUCIBLE
 --
--- This is `Val` at the box type, for `env-cell₀ γ t` — which is what makes the
+-- This is `VRed` at the box type, for `env-cell₀ γ t` — which is what makes the
 -- two substituting zones nothing at all: `_∷ᵉ_`'s cell is the value the zone
--- substitutes, and `Rel-Env` already says that value is `Val` at its box type;
+-- substitutes, and `Rel-Env` already says that value is `VRed` at its box type;
 -- `liftᵉ`'s is the freshly allocated cell, and `Rel-Env`'s Kripke component is
--- exactly `store-fresh`'s hypothesis.
+-- exactly `SRed-fresh`'s hypothesis.
 ------------------------------------------------------------------------
 
 env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
@@ -336,15 +336,15 @@ env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
               → ∀ {St'} → (e : St ≤ₛ St')
               → (rel : proj₁ (≤ₛ-embed e (proj₂ (env-cell₀ γ t))) ≾ᵣ ρ)
               --------------------------------------------------------------
-              → Val A St' (lookup-body St' (≤ₛ-embed e (proj₂ (env-cell₀ γ t)))
-                                       rel)
+              → VRed A St' (lookup-body St' (≤ₛ-embed e (proj₂ (env-cell₀ γ t)))
+                                        rel)
 
 env-cell₀-val ⌊ St ⌋   pγ t       e rel = pγ (proj₂ t) (read e rel)
 env-cell₀-val (∅ᵉ St)  pγ (σ , x) e rel = ⊥-elim (not-in-empty-ctx x)
 
 env-cell₀-val {A = A} {ρ = ρ} (reachᵉ γ q) pγ t {St'} e rel =
-  Val-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
-           (env-cell₀-val γ pγ t (≤ₛ-trans (ext q) e) rel₁)
+  VRed-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
+            (env-cell₀-val γ pγ t (≤ₛ-trans (ext q) e) rel₁)
   where
     c = proj₂ (env-cell₀ γ t)
 
@@ -354,8 +354,8 @@ env-cell₀-val {A = A} {ρ = ρ} (reachᵉ γ q) pγ t {St'} e rel =
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
 env-cell₀-val {A = A} {ρ = ρ} (_⟨_⟩ᵉ {ρ = ρ₀} γ q) pγ (σ , Tl-⟨⟩ y) {St'} e rel =
-  Val-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
-           (env-cell₀-val γ pγ (_ , y) (≤ₛ-trans (ext q) e) rel₁)
+  VRed-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
+            (env-cell₀-val γ pγ (_ , y) (≤ₛ-trans (ext q) e) rel₁)
   where
     c = proj₂ (env-cell₀ γ (_ , y))
 
@@ -369,11 +369,11 @@ env-cell₀-val (γ ∷ᵉ W) (pγ , pW) (σ , Tl-∷ y) e rel =
   env-cell₀-val γ pγ (σ , y) e rel
 
 env-cell₀-val (liftᵉ V γ) (pγ , pV) (σ , Hd) e rel =
-  store-fresh V pV (λ _ → ≾ᵣ-refl) (read e rel)
+  SRed-fresh V pV (λ _ → ≾ᵣ-refl) (read e rel)
 
 env-cell₀-val {A = A} {ρ = ρ} (liftᵉ V γ) (pγ , pV) (σ , Tl-∷ y) {St'} e rel =
-  Val-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
-           (env-cell₀-val γ pγ (σ , y) (≤ₛ-trans (∷-suc V id-suc) e) rel₁)
+  VRed-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
+            (env-cell₀-val γ pγ (σ , y) (≤ₛ-trans (∷-suc V id-suc) e) rel₁)
   where
     c = proj₂ (env-cell₀ γ (σ , y))
 

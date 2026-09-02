@@ -58,7 +58,7 @@ open import Syntax.Substitutions.Equivalence Spec
 -- The clause premise: at the state the operation is handled at, with the
 -- resumption already boxed and allocated. `V₀` is the boxed resumption in the
 -- shape `_∷ₛ_` stores it, and the hypothesis about it is exactly
--- `store-fresh`'s — reducible at every state the lock permits.
+-- `SRed-fresh`'s — reducible at every state the lock permits.
 ------------------------------------------------------------------------
 
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → 𝕊 [] → Set
@@ -66,12 +66,12 @@ Boxed B op ε₃ St₁ =
   ([] ++ᶜ toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩)
   ⊢V⦂ (type-of-gtype (arity op) ⇒ B ‼ ε₃)
 
-Boxed-Val : (B : VType) → (op : Op) → (ε₃ : E)
-          → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
-Boxed-Val B op ε₃ St₁ V₀ =
+Boxed-VRed : (B : VType) → (op : Op) → (ε₃ : E)
+           → (St₁ : 𝕊 []) → Boxed B op ε₃ St₁ → Set
+Boxed-VRed B op ε₃ St₁ V₀ =
   ∀ {St'} → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St')
-    → Val (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
-          (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
+    → VRed (type-of-gtype (arity op) ⇒ B ‼ ε₃) St'
+           (V-rename (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q) V₀)
 
 -- The clause, included into the context it fires at and given the operation's
 -- parameter. Its continuation binder is the cell `BOX` just allocated, so this
@@ -91,10 +91,10 @@ Clause-Prem : (B : VType) → (St : 𝕊 [])
             → ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ)) → Set
 Clause-Prem B St H =
   ∀ {St₁ : 𝕊 []} {op : Op} {ε₃ : E}
-    → (V₀ : Boxed B op ε₃ St₁) → Boxed-Val B op ε₃ St₁ V₀
+    → (V₀ : Boxed B op ε₃ St₁) → Boxed-VRed B op ε₃ St₁ V₀
     → (W : toCtx St₁ ⊢V⦂ type-of-gtype (param op))
-    → Val (type-of-gtype (param op)) St₁ W
-    → Comp' B (op-grade op ·ₑ ε₃) (St₁ ∷ₛ V₀) (Fired St op ε₃ H St₁ V₀ W)
+    → VRed (type-of-gtype (param op)) St₁ W
+    → CRed' B (op-grade op ·ₑ ε₃) (St₁ ∷ₛ V₀) (Fired St op ε₃ H St₁ V₀ W)
 
 -- The sequel premise, as in `Bind`.
 
@@ -102,8 +102,8 @@ Seq-Prem : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → Set
 Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
   ∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
-    → (V : toCtx St₁ ⊢V⦂ A) → Val A St₁ V
-    → Comp' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
+    → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
+    → CRed' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
 ------------------------------------------------------------------------
 -- RENAMINGS BETWEEN CLAUSE CONTEXTS OVER A STATE
@@ -188,32 +188,32 @@ cl-cancel {A = A} s W H K hne het op ε with eternal? A
 ------------------------------------------------------------------------
 -- HANDLING
 --
--- Induction on the scrutinee's `Comp` derivation. `comp-ret` fires `HANDLE-RET`
--- and is `Bind`'s `comp-ret` verbatim — the sequel premise consumes the value
+-- Induction on the scrutinee's `CRed` derivation. `cred-ret` fires `HANDLE-RET`
+-- and is `Bind`'s `cred-ret` verbatim — the sequel premise consumes the value
 -- and the run's `mapᵉ uₑ` is reconciled with the reach's `uᵣ` by
 -- `suc-comp-ren-grade`.
 ------------------------------------------------------------------------
 
-handle-Comp : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
+handle-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε₁}
             → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ))
             → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-            → Comp' A ε₁ St M
+            → CRed' A ε₁ St M
             → Clause-Prem B St H
             → Seq-Prem N
             ------------------------------------------------------------
-            → Comp' B (ε₁ ·ₑ ε₂) St (handle M `with H `in N)
+            → CRed' B (ε₁ ·ₑ ε₂) St (handle M `with H `in N)
 
 -- The scrutinee returns: `HANDLE-RET`, and the clauses are discarded.
 
-handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
-            (comp-ret {St₁ = St₁} {V = V} rs pV) hH hN
+handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
+            (cred-ret {St₁ = St₁} {V = V} rs pV) hH hN
   with handle-steps rs H N
 
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
-  Comp-expand* rs'
-    (Comp-expand HANDLE-RET
-      (Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
+  CRed-expand* rs'
+    (CRed-expand HANDLE-RET
+      (CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -258,17 +258,17 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
 -- configurations at different effects, and `box`'s body carries
 -- `op-grade op ·ₑ (ε₃ ·ₑ ε₂)` where the redex carries `(op-grade op ·ₑ ε₃) ·ₑ ε₂`.
 
-handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
-            (comp-op {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'} rs pW pk)
+handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
+            (cred-op {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'} rs pW pk)
             hH hN
   with handle-steps rs H N
 
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
-  Comp-expand* rs'
-    (Comp-expand HANDLE-OP
-      (Comp-expand BOX
-        (subst (Comp' B _ (St₁ ∷ₛ V₀)) fired
-          (hH V₀ bv W (Valᵍ→Val (param op) W pW)))))
+  CRed-expand* rs'
+    (CRed-expand HANDLE-OP
+      (CRed-expand BOX
+        (subst (CRed' B _ (St₁ ∷ₛ V₀)) fired
+          (hH V₀ bv W (VRedᵍ→VRed (param op) W pW)))))
   where
     ρₒ  = mapᵉ (op-grade op)
     Ar  = type-of-gtype (arity op)
@@ -310,11 +310,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                     [ split-∷ split-[] ↦ W ]c)
            (sym (eH₁ op (ε₃ ·ₑ ε₂)))
 
-    -- The boxed resumption *is* a lambda, so `Val`'s arrow clause is met by its
+    -- The boxed resumption *is* a lambda, so `VRed`'s arrow clause is met by its
     -- own body; the two `eq-ren`s cancel and `reach-unbox-ren-≐ʳ` composes the
     -- unboxing with the clause's own reach.
 
-    bv : Boxed-Val B op (ε₃ ·ₑ ε₂) St₁ V₀
+    bv : Boxed-VRed B op (ε₃ ·ₑ ε₂) St₁ V₀
     bv {St'} q = _ , refl , resump
       where
         Mq = C-rename (cong-∷-ren (eq-ren ++ᶜ-identityˡ ∘ʳ unbox-ren q))
@@ -324,11 +324,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
         resump : ∀ {St'' : 𝕊 []} → (q' : St' ⊑ₛ[ uᵣ ] St'')
                → (M₂ : toCtx St'' ∷ Ar ⊢C⦂ B ‼ (ε₃ ·ₑ ε₂))
                → M₂ ≡ reach-under q' Mq
-               → (W' : toCtx St'' ⊢V⦂ Ar) → Val Ar St'' W'
-               → Comp' B (ε₃ ·ₑ ε₂) St'' (M₂ [ split-[] ↦ W' ]c)
+               → (W' : toCtx St'' ⊢V⦂ Ar) → VRed Ar St'' W'
+               → CRed' B (ε₃ ·ₑ ε₂) St'' (M₂ [ split-[] ↦ W' ]c)
 
         resump {St''} q' M₂ eM₂ W' pW' =
-          Comp-≡ᶜ (sym (sub-≡ᶜ split-[] (refl) collapse)) inner
+          CRed-≡ᶜ (sym (sub-≡ᶜ split-[] (refl) collapse)) inner
           where
             q₂ = reach-∘ q' q
 
@@ -380,11 +380,11 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
             -- distribute over `handle` definitionally (the eternality split
             -- sitting in `_[_↦_]cl`), and the scrutinee reached is
             -- `resume q₂ M' W'`.
-            inner : Comp' B (ε₃ ·ₑ ε₂) St''
+            inner : CRed' B (ε₃ ·ₑ ε₂) St''
                       ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
                          [ split-[] ↦ W' ]c)
             inner =
-              handle-Comp _ _ (pk q₂ W' (Val→Valᵍ (arity op) W' pW')) hH₂ hN₂
+              handle-CRed _ _ (pk q₂ W' (VRed→VRedᵍ (arity op) W' pW')) hH₂ hN₂
               where
                 sq = unbox-ren q₂
 
@@ -466,7 +466,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                    (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                                   [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c)
                 hN₂ {St₃} q₃ V pV =
-                  Comp-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₄ V pV)
+                  CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₄ V pV)
                   where
                     -- the run and the clause's own reach accumulate: the grades
                     -- multiply and each is bounded, so the composite stays
@@ -539,7 +539,7 @@ handle-Comp {A} {B} {ε₁} {ε₂} {St} H N
                                 (H₁' op' ε'))
                           [ split-[] {toCtx St'' ∷ _} ↦ W' ]cl))
                 hH₂ {St₃} {op₃} {ε₄} V₀' bv W₃ pW₃ =
-                  Comp-≡ᶜ
+                  CRed-≡ᶜ
                     (sub-≡ᶜ (split-∷ split-[]) (refl)
                       (C-rename-cong
                         (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St₃)))) step))

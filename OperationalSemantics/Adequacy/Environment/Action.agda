@@ -1555,7 +1555,7 @@ env-ᴱ (eternalˡ {Γ = Γ} Δ lf η γ) x
 -- What `∅ᵉ` is for. A handler clause closes over `Γ ᴱ`, whose values are the
 -- closed ones `env-ᴱ` supplies; the state contributes nothing, so its zone is
 -- `∅ᵉ` and the reducibility asks for no store. Routing through `⌊ St₁ ⌋` instead
--- would demand `Store St₁`, for cells the clause cannot mention.
+-- would demand `SRed St₁`, for cells the clause cannot mention.
 
 env-clause : ∀ {St Γ} → (γ : Env St Γ) → (St₁ : 𝕊 []) → Env St₁ (Γ ᴱ)
 env-clause {Γ = Γ} γ St₁ =

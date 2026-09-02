@@ -488,49 +488,49 @@ env-var-eternalˡ Δ lf η γ x y eq f =
 
 -- Every variable of a reducible environment's context becomes a reducible
 -- value: the fundamental lemma's variable case. The eternal cases are the two
--- that need no law — `Val` holds of everything at an eternal type, which is
+-- that need no law — `VRed` holds of everything at an eternal type, which is
 -- also why a locked variable of eternal type needs no reach.
 
 env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
         → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
         ------------------------------------------------
-        → Val A St (env-V γ (var f x))
+        → VRed A St (env-V γ (var f x))
 
-env-var ⌊ St ⌋       pγ x f = store-var pγ x f
+env-var ⌊ St ⌋       pγ x f = SRed-var pγ x f
 
 env-var (∅ᵉ St)       pγ x f = ⊥-elim (not-in-empty-ctx x)
 
-env-var (reachᵉ γ q) pγ x f = Val-reach q _ (env-var γ pγ x f)
+env-var (reachᵉ γ q) pγ x f = VRed-reach q _ (env-var γ pγ x f)
 
 env-var (γ ∷ᵉ W) (pγ , pW) Hd       f =
-  Val-≡ᵛ _ (sym (env-var-hd γ W f)) pW
+  VRed-≡ᵛ _ (sym (env-var-hd γ W f)) pW
 env-var {A = A} (γ ∷ᵉ W) (pγ , pW) (Tl-∷ x) f with eternal? A
-... | yes et = Val-eternal et _
+... | yes et = VRed-eternal et _
 ... | no ¬et =
-  Val-≡ᵛ _ (sym (env-var-tl γ W (Rel-Env-eternal γ pγ) ¬et x f f))
-           (env-var γ pγ x f)
+  VRed-≡ᵛ _ (sym (env-var-tl γ W (Rel-Env-eternal γ pγ) ¬et x f f))
+            (env-var γ pγ x f)
 
 env-var (liftᵉ V γ) (pγ , pV) Hd f =
-  Val-≡ᵛ _ (sym (env-Vˢ-var-r γ ([] ∷ _) Hd f f)) (store-fresh V pV f)
+  VRed-≡ᵛ _ (sym (env-Vˢ-var-r γ ([] ∷ _) Hd f f)) (SRed-fresh V pV f)
 env-var {A = A} (liftᵉ V γ) (pγ , pV) (Tl-∷ x) f with eternal? A
-... | yes et = Val-eternal et _
+... | yes et = VRed-eternal et _
 ... | no ¬et =
-  Val-≡ᵛ _ (sym (env-var-lift V γ (Rel-Env-eternal γ pγ) ¬et x f f))
-    (Val-≡ᵛ _ (V-rename-≡ (alloc-ren-≐ʳ V) _)
-      (Val-reach (alloc-reach V) _ (env-var γ pγ x f)))
+  VRed-≡ᵛ _ (sym (env-var-lift V γ (Rel-Env-eternal γ pγ) ¬et x f f))
+    (VRed-≡ᵛ _ (V-rename-≡ (alloc-ren-≐ʳ V) _)
+      (VRed-reach (alloc-reach V) _ (env-var γ pγ x f)))
 
 env-var {A = A} (γ ⟨ q ⟩ᵉ) pγ (Tl-⟨⟩ x) f with eternal? A
-... | yes et = Val-eternal et _
+... | yes et = VRed-eternal et _
 ... | no ¬et =
-  Val-≡ᵛ _ (sym (env-var-lock γ q (Rel-Env-eternal γ pγ) ¬et p x f f'))
-           (Val-reach (reach-≤ q p) _ (env-var γ pγ x f'))
+  VRed-≡ᵛ _ (sym (env-var-lock γ q (Rel-Env-eternal γ pγ) ¬et p x f f'))
+            (VRed-reach (reach-≤ q p) _ (env-var γ pγ x f'))
   where
     p  = ≾ᵣ-zero-productʳ (f ¬et)
     f' = λ _ → ≾ᵣ-zero-productˡ (f ¬et)
 
 env-var {A = A} (eternalˡ Δ lf η γ) (pγ , et) x f
   with ∈-++ᶜ-split Δ _ x in eq
-... | inj₁ (ρ' , y) = Val-eternal (et y) _
+... | inj₁ (ρ' , y) = VRed-eternal (et y) _
 ... | inj₂ y        =
-  Val-≡ᵛ _ (sym (env-var-eternalˡ Δ lf η γ x y eq f)) (env-var γ pγ y f)
+  VRed-≡ᵛ _ (sym (env-var-eternalˡ Δ lf η γ x y eq f)) (env-var γ pγ y f)
 

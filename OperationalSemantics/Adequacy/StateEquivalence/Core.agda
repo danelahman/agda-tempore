@@ -80,7 +80,7 @@ mutual
     cong (cong (_∷ [ ρ ] A)) (toCtx-≐ˢ-refl St)
 
 -- Shifting a cast across the relation, and symmetry of `_≐ˢ_`. Symmetry is
--- needed because `Val`'s Kripke clauses have to replay an extension of the
+-- needed because `VRed`'s Kripke clauses have to replay an extension of the
 -- *other* state (`reach-replay` runs in one direction only).
 
 ≡-shift : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ)

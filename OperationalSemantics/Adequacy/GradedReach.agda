@@ -184,7 +184,7 @@ delay-reach {ρ} = reach (⟨⟩-suc ρ id-suc) (≾ᵣ-reflexive (·ᵣ-identit
 ------------------------------------------------------------------------
 -- COMPOSING EXTENSIONS
 --
--- `Val`'s Kripke clauses compose two transports, and the composite has to be
+-- `VRed`'s Kripke clauses compose two transports, and the composite has to be
 -- recognised as one: extending twice is extending once along the composite.
 -- Everything here is cast-free — both sides are renamings between the same
 -- contexts — so it is a statement about `suc-comp-ren` alone.
@@ -648,7 +648,7 @@ lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
              → Γ ⊢V⦂ A
 lookup-body′ Γf Γs eq h rel U = V-rename (lookup-ren′ Γf Γs eq h rel) U
 
--- What is left for `store-fresh` is `var-img` of this: `eq-ren ++ᶜ-identityˡ`
+-- What is left for `SRed-fresh` is `var-img` of this: `eq-ren ++ᶜ-identityˡ`
 -- (`eq-ren-img`, then `∈-++ᶜʳ-[]`), `⟨⟩-≤-ren`, the push
 -- `wk-ren-⟨ρ⟩-ctx-img` computes, and the two relocations (`eq-ren-img`).
 
@@ -729,7 +729,7 @@ lookup-body-≡ St refl rel rel' =
 ------------------------------------------------------------------------
 -- WHAT AN EXTENSION ADDS AFTER AN ALREADY-ALLOCATED CELL
 --
--- `store-fresh` compares the lookup at a later state with the value that was
+-- `SRed-fresh` compares the lookup at a later state with the value that was
 -- stored. `≤ₛ-embed-fst` already says the cell is split off at the same state;
 -- what is left is that the part *after* it grows by exactly the context the
 -- extension adds. Three cases, each a `cong` of the next.
@@ -780,7 +780,7 @@ lookup-body-≡ St refl rel rel' =
 ------------------------------------------------------------------------
 -- READING BACK A FRESHLY ALLOCATED CELL
 --
--- What `store-fresh` needs. Looking up, at whatever state the run has reached,
+-- What `SRed-fresh` needs. Looking up, at whatever state the run has reached,
 -- the cell `BOX` just allocated returns the value that was stored — renamed.
 -- Both sides are that value renamed, so the content is a renaming agreement,
 -- and both renamings *push* the value's context under everything the state has
@@ -897,8 +897,8 @@ alloc-lookup-≡ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
 -- so its bound carries the cell's own grade as a prefix (`σ ·ᵣ ≤ₛ-grade e`
 -- against `≤ₛ-grade e`) and the two cannot be identified.
 --
--- Packaging the pair is what makes `Store` and `Val` at a box type the same
--- statement at different cells (`store-var`).
+-- Packaging the pair is what makes `SRed` and `VRed` at a box type the same
+-- statement at different cells (`SRed-var`).
 ------------------------------------------------------------------------
 
 infix 4 _[_]⊑ᶜ_

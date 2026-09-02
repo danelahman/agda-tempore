@@ -247,7 +247,7 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
 -- compares.
 ------------------------------------------------------------------------
 
--- Stated on cells, which is what a `Val` stated on readability needs;
+-- Stated on cells, which is what a `VRed` stated on readability needs;
 -- `unbox-lookup-≐ˢ` below is the same at an `unbox` node's variable.
 
 lookup-body-≐ˢ : ∀ {A ρ} {St St' : 𝕊 []}
