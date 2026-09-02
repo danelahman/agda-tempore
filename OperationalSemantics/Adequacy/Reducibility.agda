@@ -140,8 +140,10 @@ Val (A ⇒ (B ‼ ε)) St V =
   Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
     (V ≡ lam M)
   × (∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
-     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε) → M₂ ≡ reach-under q M
-     → (W : toCtx St' ⊢V⦂ A) → Val A St' W
+     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε)
+     → M₂ ≡ reach-under q M
+     → (W : toCtx St' ⊢V⦂ A)
+     → Val A St' W
      → Comp B (Val B) ε St' (M₂ [ split-[] ↦ W ]c))
 -- A box type is the cell the value names: readable at a later state means its
 -- content is reducible there. This is `Store` below, per cell — `store-var`.
