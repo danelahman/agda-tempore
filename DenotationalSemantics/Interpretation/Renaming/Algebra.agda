@@ -41,7 +41,9 @@ open Category Cat
 open Past Pst
 open GroundEternal GE
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨u≈⟩-unit; ⟨u≈⟩-counit; ⟨u≈⟩-counit-unit;
+              ⟨u≈⟩-eternalᵒ; ⟨u≈⟩-eternalᵒ-extᵉ)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -56,8 +58,9 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 -- `⟨⟩-ext-ctx` alone constrains it.
 
 ec-Eternalᵒ : ∀ {Γ} → EternalCtx Γ → Eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
-ec-Eternalᵒ ec-[]        = 𝟙-eternalᵒ
-ec-Eternalᵒ (ec-∷ ec et) = ×-eternalᵒ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)
+ec-Eternalᵒ ec-[]          = 𝟙-eternalᵒ
+ec-Eternalᵒ (ec-∷ ec et)   = ×-eternalᵒ (ec-Eternalᵒ ec) (eternalᵛ-Eternalᵒ et)
+ec-Eternalᵒ (ec-⟨⟩ q p ec) = ⟨u≈⟩-eternalᵒ q p (ec-Eternalᵒ ec)
 
 ec-extᵉ : ∀ {Γ} → EternalCtx Γ → ∀ {ρ} → ⟨ ρ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
 ec-extᵉ ec = Eternalᵒ.extᵉ (ec-Eternalᵒ ec)
@@ -92,6 +95,38 @@ prod-ext : ∀ {X A B} {h k : X →ᵐ A ×ᵐ B}
 prod-ext pf ps =
   ≈ᵐ-trans (⟨⟩ᵐ-unique _ _ _ ≈ᵐ-refl ≈ᵐ-refl)
            (≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ (≈ᵐ-sym pf) (≈ᵐ-sym ps)))
+
+-- A UNIT-EQUIVALENT LOCK IS INVISIBLE TO THE ETERNAL PROJECTION
+--
+-- `Γ ᴱ` drops the lock, so `projᴱ (Γ ⟨ ρ₀ ⟩)` and `projᴱ Γ` have the same
+-- target, and the lock's unit/counit carry one to the other. Both directions
+-- use that `⟦ Γ ᴱ ⟧`'s own extraction is `εᵘ` at the unit grade.
+
+ec-projᴱ-unit : ∀ {ρ₀} → (Γ : Ctx) → (q : uᵣ ≾ᵣ ρ₀)
+              → projᴱ (Γ ⟨ ρ₀ ⟩) ∘ᵐ ⟨u≈⟩-unit q ≈ᵐ projᴱ Γ
+ec-projᴱ-unit Γ q =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-nat _ q)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-η-nat _)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (Eternalᵒ.extᵉ-≤ (⟦ Γ ⟧ᴱ-Eternalᵒ) q))
+  (≈ᵐ-trans (∘ᵐ-congˡ (Eternalᵒ.extᵉ-u (⟦ Γ ⟧ᴱ-Eternalᵒ)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-εᵘ∘η≡id)
+            (∘ᵐ-identityˡ _))))))))))
+
+ec-projᴱ-counit : ∀ {ρ₀} → (Γ : Ctx) → (p : ρ₀ ≾ᵣ uᵣ)
+                → projᴱ Γ ∘ᵐ ⟨u≈⟩-counit p ≈ᵐ projᴱ (Γ ⟨ ρ₀ ⟩)
+ec-projᴱ-counit Γ p =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (εᵘ-nat _))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat _ p))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (Eternalᵒ.extᵉ-u (⟦ Γ ⟧ᴱ-Eternalᵒ))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (∘ᵐ-congˡ (Eternalᵒ.extᵉ-≤ (⟦ Γ ⟧ᴱ-Eternalᵒ) p)))))))
 
 -- THE ETERNAL PROJECTION OF AN ETERNAL CONTEXT IS AN ALGEBRA MORPHISM
 --
@@ -137,12 +172,43 @@ ec-projᴱ-extᵉ (ec-∷ {Δ = Γ₀} {A = A} ec et) {ρ} rewrite eternal?-yes 
         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
                   (∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))))))))
 
+ec-projᴱ-extᵉ (ec-⟨⟩ {Δ = Γ₀} q p ec) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨u≈⟩-eternalᵒ-extᵉ q p (ec-Eternalᵒ ec)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (ec-projᴱ-unit Γ₀ q))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (ec-projᴱ-extᵉ ec))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+            (∘ᵐ-congʳ (⟨⟩-congᶠ (ec-projᴱ-counit Γ₀ p)))))))))
+
+-- Crossing a unit-equivalent lock: the morphism of a variable under the lock is
+-- the one below it, precomposed with the lock's counit.
+
+ec-var-lock : ∀ {Γ A ρ' ρ₀} → (p : ρ₀ ≾ᵣ uᵣ) → (et : Eternal A)
+            → (y : A ∈[ ρ' ] Γ)
+            → eternalᵛ-extᵉ et ∘ᵐ var-proj (Tl-⟨⟩ {ρ = ρ₀} y)
+            ≈ᵐ (eternalᵛ-extᵉ et ∘ᵐ var-proj y) ∘ᵐ ⟨u≈⟩-counit p
+ec-var-lock p et y =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-μ et))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (≈ᵐ-sym (eternalᵛ-extᵉ-≤ et p))
+                                  (∘ᵐ-congˡ (eternalᵛ-extᵉ-u et))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat _ p)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (εᵘ-nat _)))
+            (∘ᵐ-assoc _ _ _)))))))))
+
 -- AN ETERNAL VARIABLE'S MORPHISM IS AN ALGEBRA MORPHISM
 --
 -- `extᵉ ∘ᵐ var-proj y`, which is `var-morphism` at an eternal type, carries the
 -- context's `⟨_⟩`-algebra to the type's. This is what `⟨⟩-ext-ctx` needs of its
 -- ambient: `extᵉ` has no naturality law, so only algebra morphisms commute with
--- it. Two cases, `EternalCtx` being lock-free.
+-- it. One case per `EternalCtx` former; the lock case crosses the lock with
+-- its counit (`ec-var-lock`).
 
 ec-var-alg : ∀ {Γ A ρ σ} → (ec : EternalCtx Γ) → (et : Eternal A) → (y : A ∈[ ρ ] Γ)
            → eternalᵛ-extᵉ et ∘ᵐ ⟨ σ ⟩ᶠ (eternalᵛ-extᵉ et ∘ᵐ var-proj y)
@@ -163,6 +229,20 @@ ec-var-alg (ec-∷ ec et') et (Tl-∷ y) =
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (ec-extᵉ-fstᵐ ec et')))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))))))))
+
+ec-var-alg (ec-⟨⟩ q p ec) et (Tl-⟨⟩ y) =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (ec-var-lock p et y)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-alg ec et y))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨u≈⟩-eternalᵒ-extᵉ q p (ec-Eternalᵒ ec)))
+      (≈ᵐ-trans (∘ᵐ-congˡ (ec-var-lock p et y))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨u≈⟩-counit-unit q p)))
+                (∘ᵐ-congʳ (∘ᵐ-identityˡ _))))))))))))
 
 -- Renamings are interpreted at the empty ambient: that is where the language's
 -- own renamings (`unbox`'s certificate) and every derived one live, `[] ᴱ`,

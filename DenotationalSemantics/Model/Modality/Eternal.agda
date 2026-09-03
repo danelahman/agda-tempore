@@ -515,3 +515,195 @@ module ×-strength {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
 
     costrᵉ-strᵉ-× : ∀ {ρ X} → strᵉ-× {ρ} {X} ∘ᵐ canon-× {ρ} {X} ≈ᵐ idᵐ
     costrᵉ-strᵉ-× = ≈ᵐ-trans (∘ᵐ-congʳ bridge) strᵉ-×-costr-×
+
+
+-- ETERNALITY TRANSPORTS ALONG AN ISOMORPHISM
+--
+-- Being eternal is invariant under isomorphism: conjugating the algebra `extᵉ`
+-- and the strength `strᵉ` by an iso preserves every law. The induced costrength
+-- is the original one conjugated the same way (`costr-conj`), which is what
+-- carries the two distributivity-iso laws across.
+
+module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
+         (fg : f ∘ᵐ g ≈ᵐ idᵐ) (gf : g ∘ᵐ f ≈ᵐ idᵐ)
+         (eA : Eternalᵒ A) where
+
+  private
+    module EA = Eternalᵒ eA
+
+    -- the iso on a product factor, and its two cancellation laws
+
+    Ff : ∀ {X} → X ×ᵐ A →ᵐ X ×ᵐ B
+    Ff = mapˣᵐ idᵐ f
+
+    Fg : ∀ {X} → X ×ᵐ B →ᵐ X ×ᵐ A
+    Fg = mapˣᵐ idᵐ g
+
+    Ff∘Fg : ∀ {X} → Ff {X} ∘ᵐ Fg ≈ᵐ idᵐ
+    Ff∘Fg = ≈ᵐ-trans (mapˣᵐ-∘ idᵐ f idᵐ g)
+            (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ idᵐ) fg) mapˣᵐ-idᵐ)
+
+    Fg∘Ff : ∀ {X} → Fg {X} ∘ᵐ Ff ≈ᵐ idᵐ
+    Fg∘Ff = ≈ᵐ-trans (mapˣᵐ-∘ idᵐ g idᵐ f)
+            (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ idᵐ) gf) mapˣᵐ-idᵐ)
+
+    ext' : ∀ {ρ} → ⟨ ρ ⟩ᵒ B →ᵐ B
+    ext' {ρ} = f ∘ᵐ EA.extᵉ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ g
+
+    str' : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ B →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ B)
+    str' {ρ} {X} = ⟨ ρ ⟩ᶠ Ff ∘ᵐ EA.strᵉ ∘ᵐ Fg
+
+    costr-conj : ∀ {ρ X}
+               → ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ext' {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (sndᵐ {A = X} {B}) ⟩ᵐ
+               ≈ᵐ Ff ∘ᵐ EA.costrᵉ {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ Fg
+    costr-conj {ρ} {X} = ≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ C1 C2)
+      where
+        C1 : fstᵐ ∘ᵐ Ff ∘ᵐ EA.costrᵉ {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ Fg ≈ᵐ ⟨ ρ ⟩ᶠ fstᵐ
+        C1 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
+             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
+             (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+                       (⟨⟩-congᶠ
+               (≈ᵐ-trans (⟨⟩ᵐ-fstᵐ _ _)
+                                    (∘ᵐ-identityˡ _))))))))
+
+        C2 : sndᵐ ∘ᵐ Ff ∘ᵐ EA.costrᵉ {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ Fg
+           ≈ᵐ ext' {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (sndᵐ {A = X} {B})
+        C2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+             (≈ᵐ-trans (∘ᵐ-congʳ
+               (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                     (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
+                     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                     (≈ᵐ-trans (∘ᵐ-congʳ
+                       (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+                               (≈ᵐ-trans (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _))
+                                         (⟨⟩-∘ᵐ _ _))))
+                               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+                       (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
+  iso-eternalᵒ : Eternalᵒ B
+  iso-eternalᵒ = record
+    { extᵉ = ext'
+    ; strᵉ = str'
+    ; extᵉ-≤ = λ p →
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                  (∘ᵐ-congʳ
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat g p))
+            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (∘ᵐ-congˡ (EA.extᵉ-≤ p))))))
+    ; extᵉ-u =
+        ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ EA.extᵉ-u))
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (εᵘ-nat g)))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ fg)
+                  (∘ᵐ-identityˡ _))))
+    ; extᵉ-μ =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ-nat g))
+            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (≈ᵐ-trans (∘ᵐ-congˡ EA.extᵉ-μ)
+            (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                      (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))))))))
+                  (≈ᵐ-sym
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                        (∘ᵐ-congʳ
+             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                            (∘ᵐ-congʳ
+                 (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+                                (⟨⟩-congᶠ
+                     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                          (≈ᵐ-trans (∘ᵐ-congˡ gf)
+                                    (∘ᵐ-identityˡ _)))))))))))
+    ; strᵉ-costrᵉ =
+        ≈ᵐ-trans (∘ᵐ-congˡ costr-conj)
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ
+           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                    (≈ᵐ-trans (∘ᵐ-congˡ
+               (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+                        (≈ᵐ-trans (⟨⟩-congᶠ Fg∘Ff)
+                                  (⟨⟩-idᵐ))))
+                              (∘ᵐ-identityˡ _))))
+            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (≈ᵐ-trans (∘ᵐ-congˡ EA.strᵉ-costrᵉ)
+                      (∘ᵐ-identityˡ _))))))
+                  (Ff∘Fg)))
+    ; costrᵉ-strᵉ =
+        ≈ᵐ-trans (∘ᵐ-congʳ costr-conj)
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ
+          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (≈ᵐ-trans (∘ᵐ-congʳ
+           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                    (≈ᵐ-trans (∘ᵐ-congˡ Fg∘Ff)
+                              (∘ᵐ-identityˡ _))))
+            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+            (≈ᵐ-trans (∘ᵐ-congˡ EA.costrᵉ-strᵉ)
+                      (∘ᵐ-identityˡ _))))))
+        (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+        (≈ᵐ-trans (⟨⟩-congᶠ Ff∘Fg)
+                  (⟨⟩-idᵐ)))))
+    }
+
+
+-- UNIT-EQUIVALENT GRADES
+--
+-- At a grade `ρ` that is ≾-equivalent to the unit, `⟨ ρ ⟩ᵒ` is isomorphic to
+-- the identity: `η` relaxed up to `ρ`, and `εᵘ` relaxed down from it, are
+-- mutually inverse. So `⟨ ρ ⟩ᵒ A` is eternal whenever `A` is, which is what
+-- makes a lock at such a grade admissible inside an eternal context.
+
+⟨u≈⟩-unit : ∀ {A ρ} → u ≾ ρ → A →ᵐ ⟨ ρ ⟩ᵒ A
+⟨u≈⟩-unit q = ⟨⟩-≤ q ∘ᵐ η
+
+⟨u≈⟩-counit : ∀ {A ρ} → ρ ≾ u → ⟨ ρ ⟩ᵒ A →ᵐ A
+⟨u≈⟩-counit p = εᵘ ∘ᵐ ⟨⟩-≤ p
+
+⟨u≈⟩-counit-unit : ∀ {A ρ} → (q : u ≾ ρ) → (p : ρ ≾ u)
+                 → ⟨u≈⟩-counit {A} p ∘ᵐ ⟨u≈⟩-unit q ≈ᵐ idᵐ
+⟨u≈⟩-counit-unit q p =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ
+     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+               (≈ᵐ-trans (∘ᵐ-congˡ
+               (≈ᵐ-trans (⟨⟩-≤-trans q p)
+                    (≈ᵐ-trans (⟨⟩-≤-irr _ ≾-refl)
+                              (⟨⟩-≤-refl))))
+                         (∘ᵐ-identityˡ _))))
+            (⟨⟩-εᵘ∘η≡id))
+
+⟨u≈⟩-unit-counit : ∀ {A ρ} → (q : u ≾ ρ) → (p : ρ ≾ u)
+                 → ⟨u≈⟩-unit {A} q ∘ᵐ ⟨u≈⟩-counit p ≈ᵐ idᵐ
+⟨u≈⟩-unit-counit q p =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ
+     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+               (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-η∘εᵘ≡id)
+                         (∘ᵐ-identityˡ _))))
+  (≈ᵐ-trans (⟨⟩-≤-trans p q)
+  (≈ᵐ-trans (⟨⟩-≤-irr _ ≾-refl)
+            (⟨⟩-≤-refl))))
+
+⟨u≈⟩-eternalᵒ : ∀ {A ρ} → (q : u ≾ ρ) → (p : ρ ≾ u)
+              → Eternalᵒ A → Eternalᵒ (⟨ ρ ⟩ᵒ A)
+⟨u≈⟩-eternalᵒ q p =
+  iso-eternalᵒ (⟨u≈⟩-unit q) (⟨u≈⟩-counit p)
+    (⟨u≈⟩-unit-counit q p) (⟨u≈⟩-counit-unit q p)
+
+-- Its extraction, unfolded: relax into the lock pointwise, extract underneath,
+-- relax back out.
+
+⟨u≈⟩-eternalᵒ-extᵉ : ∀ {A ρ σ} → (q : u ≾ ρ) → (p : ρ ≾ u) → (eA : Eternalᵒ A)
+                   → Eternalᵒ.extᵉ (⟨u≈⟩-eternalᵒ q p eA) {σ}
+                   ≈ᵐ ⟨u≈⟩-unit q ∘ᵐ Eternalᵒ.extᵉ eA {σ}
+                        ∘ᵐ ⟨ σ ⟩ᶠ (⟨u≈⟩-counit p)
+⟨u≈⟩-eternalᵒ-extᵉ q p eA = ≈ᵐ-refl

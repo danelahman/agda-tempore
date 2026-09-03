@@ -23,13 +23,22 @@ open import Syntax.Types     S
 
 -- ETERNAL CONTEXTS
 --
--- Lock-free and all-eternal. Interprets to a graded `⟨_⟩`-algebra (`𝟙ᵐ` and
--- `×ᵐ` are eternal objects), which is what a lock-introducing renaming needs of
--- the context standing to its left.
+-- All-eternal, and lock-free apart from locks at a grade ≾-equivalent to the
+-- unit. Interprets to a graded `⟨_⟩`-algebra (`𝟙ᵐ` and `×ᵐ` are eternal
+-- objects, and `⟨ ρ ⟩ᵒ` is the identity up to isomorphism at a unit-equivalent
+-- `ρ`), which is what a lock-introducing renaming needs of the context standing
+-- to its left.
+--
+-- A unit-equivalent lock is admissible rather than new: `⟨⟩-η-ren`/`⟨⟩-η⁻¹-ren`
+-- and `⟨⟩-≤-ren` already move a context across it in both directions. Carrying
+-- it as a constructor saves that shuffle at the use sites. Both bounds are
+-- needed — `ρ ≾ᵣ uᵣ` alone would admit *every* lock in a grade system whose
+-- order bottoms out at the unit (e.g. `Syntax.Grades.LeftSidedTimeIntervals`).
 
 data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []
   ec-∷  : ∀ {Δ A} → EternalCtx Δ → Eternal A → EternalCtx (Δ ∷ A)
+  ec-⟨⟩ : ∀ {Δ ρ} → uᵣ ≾ᵣ ρ → ρ ≾ᵣ uᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
 -- The eternal restriction is an eternal context: it is lock-free and keeps only
 -- eternal-typed variables. This is what licenses the lock in `ᴱ-ren`, along
@@ -43,20 +52,28 @@ data EternalCtx : Ctx → Set where
 ... | no  _  = ᴱ-EternalCtx Δ
 ᴱ-EternalCtx (Δ ⟨ ρ ⟩) = ᴱ-EternalCtx Δ
 
+-- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`.
+
+ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ uᵣ ⟩)
+ec-⟨⟩ᵘ = ec-⟨⟩ ≾ᵣ-refl ≾ᵣ-refl
+
 ec-eternal : ∀ {Δ A ρ} → EternalCtx Δ → A ∈[ ρ ] Δ → Eternal A
-ec-eternal (ec-∷ ec et) Hd       = et
-ec-eternal (ec-∷ ec et) (Tl-∷ x) = ec-eternal ec x
+ec-eternal (ec-∷ ec et)   Hd        = et
+ec-eternal (ec-∷ ec et)   (Tl-∷ x)  = ec-eternal ec x
+ec-eternal (ec-⟨⟩ q p ec) (Tl-⟨⟩ x) = ec-eternal ec x
 
 ec-++ᶜ : ∀ {Δ Δ'} → EternalCtx Δ → EternalCtx Δ' → EternalCtx (Δ ++ᶜ Δ')
-ec-++ᶜ ec ec-[]         = ec
-ec-++ᶜ ec (ec-∷ ec' et) = ec-∷ (ec-++ᶜ ec ec') et
+ec-++ᶜ ec ec-[]           = ec
+ec-++ᶜ ec (ec-∷ ec' et)   = ec-∷ (ec-++ᶜ ec ec') et
+ec-++ᶜ ec (ec-⟨⟩ q p ec') = ec-⟨⟩ q p (ec-++ᶜ ec ec')
 
 ec-split : ∀ {Δ} → (Δ' : Ctx) → EternalCtx (Δ ++ᶜ Δ')
          → EternalCtx Δ × EternalCtx Δ'
-ec-split []         ec           = ec , ec-[]
-ec-split (Δ' ∷ A)   (ec-∷ ec et) =
+ec-split []         ec             = ec , ec-[]
+ec-split (Δ' ∷ A)   (ec-∷ ec et)   =
   proj₁ (ec-split Δ' ec) , ec-∷ (proj₂ (ec-split Δ' ec)) et
-ec-split (Δ' ⟨ ρ ⟩) ()
+ec-split (Δ' ⟨ ρ ⟩) (ec-⟨⟩ q p ec) =
+  proj₁ (ec-split Δ' ec) , ec-⟨⟩ q p (proj₂ (ec-split Δ' ec))
 
 -- Variable renamings (as the smallest relation closed under
 -- identities, composition, congruences, ordinary variable
