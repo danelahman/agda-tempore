@@ -52,10 +52,15 @@ data EternalCtx : Ctx → Set where
 ... | no  _  = ᴱ-EternalCtx Δ
 ᴱ-EternalCtx (Δ ⟨ ρ ⟩) = ᴱ-EternalCtx Δ
 
--- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`.
+-- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`, and the case of a
+-- grade only propositionally equal to the unit, which is the form the grades
+-- standing in a context take (`of-natʳ-zero`, `map-uᵉ`).
 
 ec-⟨⟩ᵘ : ∀ {Δ} → EternalCtx Δ → EternalCtx (Δ ⟨ uᵣ ⟩)
 ec-⟨⟩ᵘ = ec-⟨⟩ ≾ᵣ-refl ≾ᵣ-refl
+
+ec-⟨⟩≡ : ∀ {Δ ρ} → ρ ≡ uᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
+ec-⟨⟩≡ e = ec-⟨⟩ (≾ᵣ-reflexive (sym e)) (≾ᵣ-reflexive e)
 
 ec-eternal : ∀ {Δ A ρ} → EternalCtx Δ → A ∈[ ρ ] Δ → Eternal A
 ec-eternal (ec-∷ ec et)   Hd        = et
