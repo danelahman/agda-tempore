@@ -1,6 +1,15 @@
--------------------------------------------------------------------
--- Restricting timed traces along a predicate on operation names --
--------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Restricting timed traces along a predicate on operation names.      --
+--                                                                     --
+-- The sub-alphabet `Op'` is the operations the predicate admits, and   --
+-- restriction drops every event outside it while keeping the delays,   --
+-- merging the delays that surrounded a dropped operation. Sequencing   --
+-- and the language product are preserved, so restriction is a monoid   --
+-- map -- which is what makes it a grade morphism.                      --
+--                                                                     --
+-- Both alphabets are in play at once, so this module opens the trace   --
+-- toolkit *unapplied* and names the alphabet at each use.              --
+------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (yes; no)
@@ -20,7 +29,7 @@ open import Util.Equality
 module Syntax.Grades.Traces.Restriction
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (OpPred : Op → Bool) where
 
-open import Syntax.Grades.Traces.Base
+open import Syntax.Grades.Traces.Sets
 
 Op' : Set
 Op' = Σ[ op ∈ Op ] T (OpPred op)
@@ -38,9 +47,9 @@ _≟ₒ'_ : DecidableEquality Op'
 operation' : (op : Op) → T (OpPred op) → Op'
 operation' op p = op , p
 
-restrict-delay : ℕ⁺ Op → ℕ⁺ Op'
-restrict-delay 𝟏        = 𝟏
-restrict-delay (suc⁺ n) = suc⁺ (restrict-delay n)
+-- Restricting a trace keeps the operations the predicate admits, drops
+-- the rest, and leaves the delays alone -- a delay's duration is a plain
+-- positive natural, shared by both alphabets.
 
 mutual
   restrict-trace : Trace Op → Trace Op'
@@ -48,7 +57,7 @@ mutual
   restrict-trace (operation op t) with T? (OpPred op)
   ... | yes p = operation (operation' op p) (restrict-trace t)
   ... | no  _ = restrict-trace t
-  restrict-trace (delay τ t) = prepend _ (restrict-delay τ) (restrict-trace⁻ t)
+  restrict-trace (delay τ t) = prepend _ τ (restrict-trace⁻ t)
 
   restrict-trace⁻ : Trace⁻ Op → Trace Op'
   restrict-trace⁻ ε⁻ = ε
@@ -78,21 +87,14 @@ restrict-op⁻ op t with T? (OpPred op)
 ... | yes _ = refl
 ... | no  _ = refl
 
-restrict-+⁺ : (d e : ℕ⁺ Op)
-            → restrict-delay (_+⁺_ Op d e) ≡ _+⁺_ Op' (restrict-delay d) (restrict-delay e)
-restrict-+⁺ 𝟏        e = refl
-restrict-+⁺ (suc⁺ d) e = cong suc⁺ (restrict-+⁺ d e)
-
 restrict-prepend : (d : ℕ⁺ Op) (t : Trace Op)
                  → restrict-trace (prepend Op d t)
-                 ≡ prepend Op' (restrict-delay d) (restrict-trace t)
+                 ≡ prepend Op' d (restrict-trace t)
 restrict-prepend d ε                = refl
 restrict-prepend d (operation op t) =
-  cong (prepend Op' (restrict-delay d)) (restrict-op⁻ op t)
+  cong (prepend Op' d) (restrict-op⁻ op t)
 restrict-prepend d (delay e t)      =
-  trans
-    (cong (λ z → prepend Op' z (restrict-trace⁻ t)) (restrict-+⁺ d e))
-    (prepend-+⁺ Op' (restrict-delay d) (restrict-delay e) (restrict-trace⁻ t))
+  prepend-+⁺ Op' d e (restrict-trace⁻ t)
 
 restrict-∙ : (s t : Trace Op)
            → restrict-trace (_∙_ Op s t)
@@ -103,12 +105,12 @@ restrict-∙ (operation o s) t with T? (OpPred o)
 ... | no  _ = restrict-∙ s t
 restrict-∙ (delay d ε⁻)    t = restrict-prepend d t
 restrict-∙ (delay d (operation⁻ o s)) t with T? (OpPred o)
-... | yes p = cong (λ z → delay (restrict-delay d) (operation⁻ (operation' o p) z))
+... | yes p = cong (λ z → delay d (operation⁻ (operation' o p) z))
                    (restrict-∙ s t)
 ... | no  _ =
       trans
-        (cong (prepend Op' (restrict-delay d)) (restrict-∙ s t))
-        (sym (prepend-∙ Op' (restrict-delay d) (restrict-trace s) (restrict-trace t)))
+        (cong (prepend Op' d) (restrict-∙ s t))
+        (sym (prepend-∙ Op' d (restrict-trace s) (restrict-trace t)))
 
 restrict-map-∙ : (x : Trace Op) (ys : List (Trace Op))
                → restrict-traces (Data.List.map (_∙_ Op x) ys)
@@ -125,10 +127,6 @@ restrict-·ˢ (x ∷ xs) ys =
     (map-++ restrict-trace (Data.List.map (_∙_ Op x) ys) (_·ˢ_ Op xs ys))
     (cong₂ _++_ (restrict-map-∙ x ys) (restrict-·ˢ xs ys))
 
-restrict-1+ : (n : ℕ) → restrict-delay (1+_ Op n) ≡ 1+_ Op' n
-restrict-1+ zero    = refl
-restrict-1+ (suc n) = cong suc⁺ (restrict-1+ n)
-
 restrict-⟨⟩ : (n : ℕ) → restrict-trace (⟨_⟩ Op n) ≡ ⟨_⟩ Op' n
 restrict-⟨⟩ zero    = refl
-restrict-⟨⟩ (suc n) = cong (λ d → delay d ε⁻) (restrict-1+ n)
+restrict-⟨⟩ (suc n) = refl

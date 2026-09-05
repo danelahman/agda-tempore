@@ -1,8 +1,13 @@
-----------------------------------------------------
--- (Right) One-sided (closed) intervals as grades --
-----------------------------------------------------
+------------------------------------------------------------------------
+-- (Right) one-sided (closed) intervals as grades.                     --
+--                                                                     --
+-- A grade `[0, n ]` is an upper bound: "at most `n` time steps".       --
+-- Multiplication adds the bounds and the order is `≤` on them, so a    --
+-- *larger* bound is the weaker grade -- the mirror image of the        --
+-- left-sided intervals.                                               --
+------------------------------------------------------------------------
 
-module Syntax.Grades.RightSidedTimeIntervals where
+module Syntax.Grades.Example.Interval.RightSided where
 
 open import Data.Nat
 open import Data.Nat.Properties

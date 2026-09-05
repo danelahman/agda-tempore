@@ -1,20 +1,25 @@
--------------------------------------------------------------------------------
--- Example grade system of (non-empty) sets of timed traces as effect grades --
--- and two-sided time intervals as resource grades.                          --
--------------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- A grade system in which the resource grades measure only time.      --
+--                                                                     --
+-- Effect grades are (non-empty) sets of timed traces, recording which  --
+-- runs a computation may have; resource grades are two-sided time      --
+-- intervals. The projection reads a set of traces against a per-       --
+-- operation interval of execution times, and returns the window        --
+-- between its best-case and worst-case duration.                       --
+------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
 open import Data.Nat.Properties using (≤-trans; ⊔-identityʳ)
 open import Data.Product using (_,_)
 
 open import Syntax.Grades
-open import Syntax.Grades.TwoSidedTimeIntervals
+open import Syntax.Grades.Example.Interval.TwoSided
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
 open import Util.Equality
 
-module Syntax.Grades.GradeSystem.TracesToTimeIntervals (S : LanguageSpec) where
+module Syntax.Grades.Example.System.TracesToTimeIntervals (S : LanguageSpec) where
 
 open LanguageSpec S
 open Operations Ops
@@ -36,8 +41,8 @@ module _ (opTime : Op → Interval) where
   -- the (non-empty) sets of timed traces provide the effect grades, 
   -- the two-sided time intervals provide the resource grades
 
-  open import Syntax.Grades.SetOfTraces Op _≟ₒ_
-  open import Syntax.Grades.Traces.Base Op
+  open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
+  open import Syntax.Grades.Traces.Sets Op
   open import Syntax.Grades.Traces.Durations Op
   open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
   open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_

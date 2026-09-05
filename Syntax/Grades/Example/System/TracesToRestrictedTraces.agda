@@ -1,8 +1,14 @@
-------------------------------------------------------------------------------
--- Example grade system of (non-empty) sets of timed traces over all        --
--- operations as effect grades and sets of timed traces over a sub-alphabet --
--- of operation names (picked out by a predicate) as resource grades.       --
-------------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- A grade system in which the resource grades observe less than the   --
+-- effect grades do.                                                   --
+--                                                                     --
+-- Effect grades are (non-empty) sets of timed traces over all          --
+-- operations; resource grades are sets of timed traces over the        --
+-- sub-alphabet a predicate picks out. The projection restricts each    --
+-- trace, keeping the delays and the admitted operations and dropping   --
+-- the rest -- so a resource grade records only the part of a           --
+-- computation's behaviour that is being accounted for.                 --
+------------------------------------------------------------------------
 
 open import Data.Bool
 open import Data.List
@@ -14,7 +20,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-module Syntax.Grades.GradeSystem.TracesToRestrictedTraces (S : LanguageSpec) where
+module Syntax.Grades.Example.System.TracesToRestrictedTraces (S : LanguageSpec) where
 
 open LanguageSpec S
 open Operations Ops
@@ -28,10 +34,12 @@ module _ (OpPred : Op → Bool) where
   -- the (non-empty) sets of timed traces over all operations provide the
   -- effect grades, those over the `OpPred`-operations the resource grades
 
-  open import Syntax.Grades.SetOfTraces Op  _≟ₒ_  using () renaming (right-sided-traces to traces-E)
-  open import Syntax.Grades.SetOfTraces Op' _≟ₒ'_ using () renaming (right-sided-traces to traces-R)
+  open import Syntax.Grades.Example.TraceSet.Inclusion Op  _≟ₒ_
+    using () renaming (right-sided-traces to traces-E)
+  open import Syntax.Grades.Example.TraceSet.Inclusion Op' _≟ₒ'_
+    using () renaming (right-sided-traces to traces-R)
 
-  open import Syntax.Grades.Traces.Base
+  open import Syntax.Grades.Traces.Sets
 
   -- a set of traces is sent to the set of its restrictions to the
   -- sub-alphabet; monotonicity and the homomorphism laws follow from the

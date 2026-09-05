@@ -1,8 +1,13 @@
---------------------------------------------
--- Two-sided (closed) intervals as grades --
---------------------------------------------
+------------------------------------------------------------------------
+-- Two-sided (closed) intervals as grades.                             --
+--                                                                     --
+-- A grade `[ min , max ]` bounds the elapsed time from both sides:     --
+-- "between `min` and `max` time steps". Multiplication adds the two    --
+-- endpoints, and one interval is below another when it is contained    --
+-- in it, so a *wider* window is the weaker grade.                      --
+------------------------------------------------------------------------
 
-module Syntax.Grades.TwoSidedTimeIntervals where
+module Syntax.Grades.Example.Interval.TwoSided where
 
 open import Data.Nat
 open import Data.Nat.Properties

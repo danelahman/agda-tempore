@@ -18,14 +18,14 @@
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 
-module DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithInfinityWithTraceHistories
+module DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedIntervalsWithInfinity
   (Op : Set) (c : Op → ℕ) where
 
 open import Data.Nat.Properties
   using (≤-trans; ≤-reflexive; ≤-irrelevant; +-mono-≤)
 open import Data.Product using (_,_)
 
-open import Syntax.Grades.TwoSidedTimeIntervalsWithInfinity
+open import Syntax.Grades.Example.Interval.TwoSidedWithInfinity
   using (Interval∞; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals-with-∞;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant)
 

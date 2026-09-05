@@ -12,7 +12,7 @@
 -- accessibilities advances the world into the summed window.            --
 ------------------------------------------------------------------------
 
-module DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTicks where
+module DenotationalSemantics.Model.Example.World.Ticks.TwoSidedIntervals where
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 open import Data.Nat.Properties
@@ -20,7 +20,7 @@ open import Data.Nat.Properties
          +-monoˡ-≤; +-monoʳ-≤; +-comm; +-assoc)
 open import Data.Product using (_×_; _,_)
 
-open import Syntax.Grades.TwoSidedTimeIntervals
+open import Syntax.Grades.Example.Interval.TwoSided
   using (Interval; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals)
 
 open import Util.Equality

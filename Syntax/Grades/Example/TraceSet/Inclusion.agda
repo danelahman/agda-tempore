@@ -1,12 +1,19 @@
---------------------------------------------------
--- Sets of timed traces of operations as grades --
---------------------------------------------------
+------------------------------------------------------------------------
+-- Sets of timed traces, ordered by inclusion:                         --
+--                                                                     --
+--   P ≾ Q   iff   every trace of P is a member of Q.                  --
+--                                                                     --
+-- The coarsest of the three orders on sets of traces, and the only    --
+-- one that needs no cost on the operations: a grade records exactly   --
+-- which runs a computation may have, and weakening it only adds runs.  --
+------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.SetOfTraces (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+module Syntax.Grades.Example.TraceSet.Inclusion
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
@@ -18,11 +25,11 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
 
--- the timed-trace monoid and the set-of-traces monoid are shared; the
--- monoid structure (`_·_`, `u`, `of-nat`, and their laws) and decidable
--- equality `_≟ᴺ_` are provided directly on `NeTraces` by the Base module
+-- the carrier and the monoid structure (`_·_`, `u`, `of-nat`, and their
+-- laws), together with decidable equality `_≟ᴺ_`, come from the shared
+-- set-of-traces module; only the order below is specific to this grade
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Sets Op
 
 ------------------------------------------------------------------------
 -- The grade

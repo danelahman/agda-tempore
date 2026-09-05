@@ -1,9 +1,12 @@
------------------------------------------------------------------
--- Sets of timed traces, ordered up to the sub-trace preorder: --
---                                                             --
---   P ≾ Q   iff   every trace of P is `≼` some trace of Q.    --
---                                                             --
------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Sets of timed traces, ordered up to the sub-trace preorder:         --
+--                                                                     --
+--   P ≾ Q   iff   every trace of P is `≼` some trace of Q.            --
+--                                                                     --
+-- This is the Hoare lower lift of `Traces.Subtrace`'s preorder. A      --
+-- grade is read as a set of schedules, and weakening it lets a trace   --
+-- shrink to anything that fits inside a schedule already present.      --
+------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; _+_; _≤_)
 
@@ -11,7 +14,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.SetOfTracesUpToSubtrace
+module Syntax.Grades.Example.TraceSet.UpToSubtrace
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.Nat.Properties using (≤-reflexive; n≤0⇒n≡0; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
@@ -29,7 +32,7 @@ open import Syntax.Grades
 -- the timed-trace monoid, decidable equality of sets of traces, and the
 -- inclusion of the naturals as pure delays are shared with plain traces
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op cost
 open import Syntax.Grades.Traces.SubtraceDuration Op cost

@@ -17,7 +17,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.SetOfTracesWithTraceHistories
+module DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTraces
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Data.List.Membership.Propositional using (_∈_)
@@ -27,8 +27,9 @@ open import Data.List.Relation.Unary.Any using (here)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.SetOfTraces Op _≟ₒ_ using (right-sided-traces; _≾_)
+open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
+  using (right-sided-traces; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 

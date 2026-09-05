@@ -1,15 +1,15 @@
-------------------------------------------------------------------
--- Sets of timed traces, ordered by the convex (Egli-Milner) lift --
--- of the sub-trace preorder:                                     --
---                                                                --
---   P ≾ Q   iff   every trace of P is `≼` some trace of Q        --
---            and  every trace of Q is `≽` some trace of P.       --
---                                                                --
--- The first conjunct is the Hoare lower lift, shared with        --
--- `Syntax.Grades.SetOfTracesUpToSubtrace`; the second is the      --
--- Smyth upper lift. Weakening a grade may add traces only        --
--- between traces already present: the extremes are exact.        --
-------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Sets of timed traces, ordered by the convex (Egli-Milner) lift of   --
+-- the sub-trace preorder:                                             --
+--                                                                     --
+--   P ≾ Q   iff   every trace of P is `≼` some trace of Q             --
+--            and  every trace of Q is `≽` some trace of P.            --
+--                                                                     --
+-- The first conjunct is the Hoare lower lift, shared with             --
+-- `TraceSet.UpToSubtrace`; the second is the Smyth upper lift.        --
+-- Weakening a grade may add traces only between traces already        --
+-- present: the extremes are exact.                                    --
+------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero)
 
@@ -17,7 +17,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.SetOfTracesConvex
+module Syntax.Grades.Example.TraceSet.Convex
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.Nat.Properties using (n≤0⇒n≡0)
@@ -37,10 +37,10 @@ open import Syntax.Grades
 -- the timed-trace monoid, the sub-trace preorder, and the Hoare half of
 -- the order are shared with the Hoare-ordered sets of traces
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op cost
 
-open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ cost
+open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ cost
   using (_≼ˢ_; ≼ˢ-refl; ≼ˢ-trans; ≼ˢ-·ˢ)
   renaming (≾ᵗ-zero-productˡ to ≼ˢ-zero-productˡ;
             ≾ᵗ-zero-productʳ to ≼ˢ-zero-productʳ)

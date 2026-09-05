@@ -11,14 +11,14 @@
 -- accessibilities advances the world by the sum of their ticks.         --
 ------------------------------------------------------------------------
 
-module DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks where
+module DenotationalSemantics.Model.Example.World.Ticks.LeftSidedIntervals where
 
 open import Data.Nat using (ℕ; _+_; _≤_)
 open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant;
          +-monoˡ-≤; +-monoʳ-≤; +-comm; +-assoc)
 
-open import Syntax.Grades.LeftSidedTimeIntervals
+open import Syntax.Grades.Example.Interval.LeftSided
   using (𝕀; [_,+∞⟩; _·ₒ_; _≾ₒ_; left-sided-intervals)
 
 open import Util.Equality

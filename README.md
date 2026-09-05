@@ -64,37 +64,53 @@ a grade system, a signature of base types, and operations' signatures.
   resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the
   latter), together with a convenience interface `GradeSystemInterface`.
 
-- Concrete examples of time-based grades (left-, right-, and two-sided time
-  intervals, and two-sided intervals with infinity) live directly under
-  `Syntax/Grades/`, e.g. `Syntax/Grades/TwoSidedTimeIntervals.agda`.
+- `Syntax/Grades/Example.agda` indexes the example grades and grade systems,
+  and explains how they relate. They fall into three groups.
 
-- The trace-based grade of (non-empty) sets of timed traces lives in
-  `Syntax/Grades/SetOfTraces.agda`, built on the timed-trace monoid and
-  auxiliary trace constructions in `Syntax/Grades/Traces/`
+- `Syntax/Grades/Example/Interval/` holds the grades that measure only elapsed
+  time: `LeftSided` ("at least `n` steps"), `RightSided` ("at most `n`"),
+  `TwoSided` (a window `[ min , max ]`), and `TwoSidedWithInfinity`, whose
+  upper endpoint may be `∞` (its extended-natural arithmetic is in
+  `ExtendedNat.agda`).
+
+- `Syntax/Grades/Example/TraceSet/` holds the grades that record *which runs* a
+  computation may have, as a non-empty finite set of timed traces. All three
+  share their carrier and monoid and differ only in the order:
+  `Inclusion.agda` orders sets by inclusion, `UpToSubtrace.agda` by the Hoare
+  lift of the sub-trace preorder, and `Convex.agda` by its Egli-Milner lift.
+
+- `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
+  built on: `Positive` (the strictly positive durations a delay carries),
+  `Base` (timed traces and their sequencing monoid), `Sets` (non-empty finite
+  sets of traces and the language product), `Restriction`, and the
+  duration/sub-trace machinery below.
 
 - The *cost-aware* trace-based grades read a set of timed traces against the
   operations' prescribed execution times, given by a map `cost : Op → ℕ`. The
-  sub-trace preorder `Syntax/Grades/Traces/Subtrace.agda` is parameterised by
+  sub-trace preorder `Syntax/Grades/Traces/Subtrace/` is parameterised by
   that map: alongside `use-delay`, spending slack on a leading delay of the
   smaller trace, a `use-op` rule spends slack on a leading *operation*, at the
   time that operation takes. So an operation performed fits inside a pure time
   budget, `⌈ o ⌉ ≼ ⟨ n ⟩` as soon as `cost o ≤ n`. Slack is created only by
   absorbing the *delays* of the larger trace, so the converse fails: a schedule
   calling for an operation is not met by spending the same time on anything
-  else (`⟨suc⟩-⋠` in the same module). `SubtraceDuration.agda` proves the two
-  bounds exact — `s ≼[ k ] ⟨ n ⟩` holds precisely when `duration s ≤ n + k` —
-  and `SubtraceCost.agda` that lowering the cost only widens the order.
-  `SetOfTracesUpToSubtrace.agda` and `SetOfTracesConvex.agda` lift the preorder
-  to sets of traces, by its Hoare and Egli-Milner lifts respectively.
+  else (`⟨suc⟩-⋠` in `Subtrace/Moves.agda`). The preorder itself and its
+  reflexivity/weakening/transitivity are in `Subtrace/Core.agda`, the moves
+  building sub-trace proofs in `Subtrace/Moves.agda`, and the decision
+  procedure in `Subtrace/Decidable.agda`. `SubtraceDuration.agda` proves the
+  two bounds exact — `s ≼[ k ] ⟨ n ⟩` holds precisely when
+  `duration s ≤ n + k` — and `SubtraceCost.agda` that lowering the cost only
+  widens the order.
 
-- `Syntax/Grades/GradeSystem/` assembles full example grade systems and grade
-  morphisms between their effect and resource grades:
-  `TwoSidedIntervalsToLeftSidedIntervals`, `TracesToRestrictedTraces` (sets of
+- `Syntax/Grades/Example/System/` assembles full example grade systems and
+  grade morphisms between their effect and resource grades:
+  `IntervalsToLeftSidedIntervals`, `TracesToRestrictedTraces` (sets of
   traces over all operations to sets of traces over a sub-alphabet),
   `TracesToTimeIntervals` (sets of traces to two-sided time intervals), and
   `TracesToCostAwareTraces` (sets of traces ordered by inclusion to the same
   sets ordered up to the cost-aware sub-trace preorder, and one cost model to
-  a cheaper one).
+  a cheaper one). Each projection says what a resource grade is allowed to
+  forget about the effect grade it comes from.
 
 ### Core language, type system
 

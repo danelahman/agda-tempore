@@ -25,7 +25,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTicks
+module DenotationalSemantics.Model.Example.World.Ticks.SetOfTracesUpToSubtrace
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Nat using (_+_; _∸_; _≤_; _≤?_; z≤n)
@@ -40,12 +40,12 @@ open import Data.Product using (_×_; _,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; _×-dec_)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ c
+open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c
   using (traces-up-to-subtrace; _≾_)
 
 open import DenotationalSemantics.Model.World

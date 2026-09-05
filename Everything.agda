@@ -121,43 +121,20 @@ open import Syntax.CompContext
 -- GRADES
 ---------
 
----- Grades and grade morphisms
+---- Grades, grade morphisms, and grade systems
 
 open import Syntax.Grades
 
----- Examples of time-based grades
+---- The timed-trace toolkit the trace-based grades are built from
+---- (see the module for how its pieces fit together)
 
-open import Syntax.Grades.LeftSidedTimeIntervals
-open import Syntax.Grades.RightSidedTimeIntervals
-open import Syntax.Grades.TwoSidedTimeIntervals
-open import Syntax.Grades.TwoSidedTimeIntervalsWithInfinity
+import Syntax.Grades.Traces
 
----- Utilities for trace-based grades
+---- Example grades and grade systems: time intervals, sets of timed
+---- traces, and the projections pairing them up
+---- (see the module for what each example is and how they relate)
 
-open import Syntax.Grades.Traces.Base
-open import Syntax.Grades.Traces.Restriction
-open import Syntax.Grades.Traces.Durations
-open import Syntax.Grades.Traces.MaxDuration
-open import Syntax.Grades.Traces.MinDuration
-open import Syntax.Grades.Traces.Subtrace
-open import Syntax.Grades.Traces.SubtraceDuration
-open import Syntax.Grades.Traces.SubtraceCost
-
----- Examples of trace-based grades
-
-open import Syntax.Grades.SetOfTraces
-open import Syntax.Grades.SetOfTracesUpToSubtrace
-open import Syntax.Grades.SetOfTracesConvex
-
----- Examples of grade systems
-
-open import Syntax.Grades.GradeSystem.TwoSidedIntervalsToLeftSidedIntervals
-
-open import Syntax.Grades.GradeSystem.TracesToRestrictedTraces
-
-open import Syntax.Grades.GradeSystem.TracesToTimeIntervals
-
-open import Syntax.Grades.GradeSystem.TracesToCostAwareTraces
+import Syntax.Grades.Example
 
 -- OPERATIONAL SEMANTICS
 ------------------------
@@ -314,19 +291,8 @@ open import OperationalSemantics.Adequacy.PSh.TreeHead
 open import OperationalSemantics.Adequacy.PSh.HeadFaithful
 open import OperationalSemantics.Adequacy.PSh.TickFrames
 
----- Concrete time-ticks Kripke frames
+---- Concrete Kripke frames: time-ticks worlds and trace-history worlds,
+---- one of each per example grade
+---- (see the module for the contrast between the two families)
 
-open import DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks
-open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTicks
-open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithInfinityWithTicks
-open import DenotationalSemantics.Model.Example.World.SetOfTracesWithTicks
-open import DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTicks
-
----- Concrete trace-history Kripke frames
-
-open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTraceHistories
-open import DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithInfinityWithTraceHistories
-open import DenotationalSemantics.Model.Example.World.SetOfTracesWithTraceHistories
-open import DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTraceHistories
-open import DenotationalSemantics.Model.Example.World.SetOfTracesConvexWithTraceHistories
-open import DenotationalSemantics.Model.Example.World.SetOfTracesConvexWithMayMustHistories
+import DenotationalSemantics.Model.Example.World

@@ -20,7 +20,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.SetOfTracesWithTicks
+module DenotationalSemantics.Model.Example.World.Ticks.SetOfTraces
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Nat using (_+_; _≟_)
@@ -33,10 +33,11 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 
-open import Syntax.Grades.SetOfTraces Op _≟ₒ_ using (right-sided-traces; _≾_)
+open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
+  using (right-sided-traces; _≾_)
 
 open import DenotationalSemantics.Model.World
 

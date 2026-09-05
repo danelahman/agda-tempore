@@ -7,7 +7,7 @@
 -- `reachable⇒tick` asks for — *some* world is reachable at every      --
 -- grade — for the simplest concrete frame.                            --
 --                                                                    --
--- Every frame in `Model.Example.World.*WithTicks` has `W = ℕ` and is  --
+-- Every frame in `Model.Example.World.Ticks` has `W = ℕ` and is       --
 -- reachable in the same way: the two-sided intervals land at          --
 -- `min i + w` (inside `max i + w` since `min i ≤ max i`), and the     --
 -- trace frames at `w + duration t` for any trace `t` of the grade,    --
@@ -20,9 +20,9 @@ open import Data.Nat using (ℕ; _+_)
 open import Data.Nat.Properties using (≤-refl)
 open import Data.Product
 
-open import Syntax.Grades.LeftSidedTimeIntervals using (𝕀; [_,+∞⟩)
+open import Syntax.Grades.Example.Interval.LeftSided using (𝕀; [_,+∞⟩)
 
-open import DenotationalSemantics.Model.Example.World.LeftSidedIntervalsWithTicks
+open import DenotationalSemantics.Model.Example.World.Ticks.LeftSidedIntervals
   using (_⊑ᵗ[_]_)
 
 -- "at least `n` ticks" reaches exactly `n` ticks ahead

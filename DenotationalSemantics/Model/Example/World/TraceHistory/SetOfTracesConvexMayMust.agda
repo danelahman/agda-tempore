@@ -24,7 +24,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.SetOfTracesConvexWithMayMustHistories
+module DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvexMayMust
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
@@ -40,12 +40,12 @@ open import Data.Product using (_,_)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Base Op
+open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.SetOfTracesConvex Op _≟ₒ_ c
+open import Syntax.Grades.Example.TraceSet.Convex Op _≟ₒ_ c
   using (traces-convex; _≾_; module Separation)
 
 open Durations c

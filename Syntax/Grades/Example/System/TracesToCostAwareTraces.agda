@@ -1,15 +1,20 @@
--------------------------------------------------------------------------------
--- Example grade systems of (non-empty) sets of timed traces as effect grades --
--- and cost-aware sets of timed traces as resource grades.                    --
---                                                                           --
--- The effect grades record *what* a computation may do -- sets of timed      --
--- traces compared by inclusion. The resource grades read the same sets       --
--- against the operations' prescribed execution times: a trace lies below     --
--- another when it fits inside the schedule the other describes, with an      --
--- operation performed charged the time it takes. Time spent is thereby       --
--- accounted for by operations as well as by delays, while a schedule that    --
--- calls for an operation is still not met by time spent on anything else.    --
--------------------------------------------------------------------------------
+------------------------------------------------------------------------
+-- Grade systems in which the resource grades read the same sets of    --
+-- traces against a cost model.                                        --
+--                                                                     --
+-- The effect grades record *what* a computation may do -- sets of      --
+-- timed traces compared by inclusion. The resource grades read the     --
+-- same sets against the operations' prescribed execution times: a      --
+-- trace lies below another when it fits inside the schedule the other  --
+-- describes, with an operation performed charged the time it takes.    --
+-- Time spent is thereby accounted for by operations as well as by      --
+-- delays, while a schedule that calls for an operation is still not    --
+-- met by time spent on anything else.                                  --
+--                                                                     --
+-- Two systems are built here: one reinterpreting an effect grade as a  --
+-- resource grade at a fixed cost model, and one relating the           --
+-- cost-aware grades at two different cost models.                      --
+------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
 
@@ -23,7 +28,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-module Syntax.Grades.GradeSystem.TracesToCostAwareTraces (S : LanguageSpec) where
+module Syntax.Grades.Example.System.TracesToCostAwareTraces (S : LanguageSpec) where
 
 open LanguageSpec S
 open Operations Ops
@@ -36,16 +41,16 @@ open Operations Ops
 
 module _ (opTime : Op → ℕ) where
 
-  open import Syntax.Grades.Traces.Base Op
+  open import Syntax.Grades.Traces.Sets Op
   open import Syntax.Grades.Traces.Subtrace Op opTime using (_≼_; ≼-refl)
 
   -- the sets of timed traces ordered by inclusion provide the effect
   -- grades, the same sets ordered up to the cost-aware sub-trace
   -- preorder the resource grades
 
-  open import Syntax.Grades.SetOfTraces Op _≟ₒ_
+  open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
     using (right-sided-traces) renaming (_≾_ to _≾ˢ_)
-  open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ opTime
+  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ opTime
     using (traces-up-to-subtrace) renaming (_≾_ to _≾ᶜ_)
 
   -- a trace of the smaller set is a member of the larger one, and covers
@@ -85,13 +90,13 @@ module _ (opTime : Op → ℕ) where
 
 module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
 
-  open import Syntax.Grades.Traces.Base Op
+  open import Syntax.Grades.Traces.Sets Op
   open import Syntax.Grades.Traces.SubtraceCost Op c c' c≤c'
     using (≼-cost-anti₀)
 
-  open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ c'
+  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c'
     using () renaming (traces-up-to-subtrace to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
-  open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ c
+  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c
     using () renaming (traces-up-to-subtrace to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
 
   ≾-cost-anti : {P Q : NeTraces} → P ≾ˢˡᵒʷ Q → P ≾ᶠᵃˢᵗ Q

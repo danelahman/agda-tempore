@@ -15,14 +15,14 @@
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 
-module DenotationalSemantics.Model.Example.World.TwoSidedIntervalsWithTraceHistories
+module DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedIntervals
   (Op : Set) (c : Op → ℕ) where
 
 open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant; +-mono-≤)
 open import Data.Product using (_,_)
 
-open import Syntax.Grades.TwoSidedTimeIntervals
+open import Syntax.Grades.Example.Interval.TwoSided
   using (Interval; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals)
 
 open import Syntax.Grades.Traces.Base Op
