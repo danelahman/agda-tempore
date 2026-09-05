@@ -5,13 +5,16 @@
 --                                                             --
 -----------------------------------------------------------------
 
+open import Data.Nat.Base using (ℕ; zero; _+_; _≤_)
+
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
 module Syntax.Grades.SetOfTracesUpToSubtrace
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
+open import Data.Nat.Properties using (≤-reflexive; n≤0⇒n≡0; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
 open import Data.List.Base using (List)
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
@@ -27,8 +30,11 @@ open import Syntax.Grades
 -- inclusion of the naturals as pure delays are shared with plain traces
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Subtrace Op
+open import Syntax.Grades.Traces.Durations Op
+open import Syntax.Grades.Traces.Subtrace Op cost
+open import Syntax.Grades.Traces.SubtraceDuration Op cost
 
+open Durations cost
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; _∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
 
@@ -104,8 +110,9 @@ infix 5 _≾_
 -- Zero-product property
 --
 -- If `P · Q` lies below `{ ε }`, then every trace of `P` sequenced with
--- some trace of `Q` is `≼ ε`, hence (by minimality of `ε`) equal to the
--- empty trace, so `P` itself lies below `{ ε }` -- and symmetrically.
+-- some trace of `Q` fits inside the empty budget, so it takes no time;
+-- durations add along sequencing, hence each factor takes no time and
+-- fits inside the empty budget on its own.
 
 ≾ᵗ-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
 ≾ᵗ-zero-productˡ {P} {Q} hyp s m
@@ -114,13 +121,16 @@ infix 5 _≾_
         with find (toWitness (hyp (s ∙ y)
                      (fromWitness (∈-cartesianProductWith⁺ _∙_ (toWitness m) y∈Q))))
 ...     | t , t∈[ε] , sy≼t =
-          fromWitness (here (subst (_≼ ε) (sym s≡ε) (≼-refl ε)))
+          fromWitness (here (≼-ε s dur-s))
   where
-    sy≡ε : (s ∙ y) ≡ ε
-    sy≡ε = ≼ε→≡ε (subst ((s ∙ y) ≼_) (∈-[ε]⁻ t∈[ε]) sy≼t)
+    sy≼ε : (s ∙ y) ≼ ε
+    sy≼ε = subst ((s ∙ y) ≼_) (∈-[ε]⁻ t∈[ε]) sy≼t
 
-    s≡ε : s ≡ ε
-    s≡ε = ∙-conicalˡ {s} {y} sy≡ε
+    dur-sy : duration s + duration y ≡ zero
+    dur-sy = n≤0⇒n≡0 (subst (_≤ zero) (duration-∙ s y) (duration-≼ sy≼ε))
+
+    dur-s : duration s ≤ zero
+    dur-s = ≤-reflexive (m+n≡0⇒m≡0 (duration s) dur-sy)
 
 ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
 ≾ᵗ-zero-productʳ {P} {Q} hyp s m
@@ -129,13 +139,16 @@ infix 5 _≾_
         with find (toWitness (hyp (x ∙ s)
                      (fromWitness (∈-cartesianProductWith⁺ _∙_ x∈P (toWitness m)))))
 ...     | t , t∈[ε] , xs≼t =
-          fromWitness (here (subst (_≼ ε) (sym s≡ε) (≼-refl ε)))
+          fromWitness (here (≼-ε s dur-s))
   where
-    xs≡ε : (x ∙ s) ≡ ε
-    xs≡ε = ≼ε→≡ε (subst ((x ∙ s) ≼_) (∈-[ε]⁻ t∈[ε]) xs≼t)
+    xs≼ε : (x ∙ s) ≼ ε
+    xs≼ε = subst ((x ∙ s) ≼_) (∈-[ε]⁻ t∈[ε]) xs≼t
 
-    s≡ε : s ≡ ε
-    s≡ε = ∙-conicalʳ {x} {s} xs≡ε
+    dur-xs : duration x + duration s ≡ zero
+    dur-xs = n≤0⇒n≡0 (subst (_≤ zero) (duration-∙ x s) (duration-≼ xs≼ε))
+
+    dur-s : duration s ≤ zero
+    dur-s = ≤-reflexive (m+n≡0⇒n≡0 (duration x) dur-xs)
 
 -- the grade order is proof-irrelevant
 

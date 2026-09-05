@@ -103,6 +103,12 @@ mutual
 ⌈_⌉ : Op → Trace
 ⌈ op ⌉ = operation op ε
 
+-- the delay-free injection of `Trace⁻` into `Trace`
+
+inj⁻ : Trace⁻ → Trace
+inj⁻ ε⁻               = ε
+inj⁻ (operation⁻ o t) = operation o t
+
 -- prepending a positive delay to a trace,
 -- merging it with the leading delay of the trace
 

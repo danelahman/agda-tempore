@@ -4,12 +4,15 @@
 --                                                                    --
 -- Worlds are time points `ℕ`. A tick world records only the elapsed   --
 -- time, not which continuation trace produced it. Since the order on   --
--- this grade lets a trace of `P` shrink to any of its sub-traces, the  --
--- world may advance by *anything up to* the duration of a trace of     --
--- `P` -- a window rather than an exact tick:                           --
+-- this grade lets a trace of `P` shrink to anything that fits inside   --
+-- its schedule, the world may advance by *anything up to* the duration --
+-- of a trace of `P` -- a window rather than an exact tick:              --
 --                                                                    --
 --   w ⊑ᵗ[ P ] w'   iff   w ≤ w' ≤ w + duration t   for some trace t    --
 --                        of P                                          --
+--                                                                    --
+-- Grade order and duration charge an operation the same execution      --
+-- time `c o`, which is what makes `⊑-mono` hold.                       --
 --                                                                    --
 -- The window bounds are decidable and the traces form a finite set,    --
 -- so the accessibility is phrased in the proof-irrelevant              --
@@ -39,9 +42,10 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; _×-
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.Subtrace Op
+open import Syntax.Grades.Traces.Subtrace Op c
+open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_
+open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ c
   using (traces-up-to-subtrace; _≾_)
 
 open import DenotationalSemantics.Model.World
@@ -49,67 +53,6 @@ open import DenotationalSemantics.Model.World
 open Durations c
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
-
-------------------------------------------------------------------------
--- The duration of a delay-free-headed trace agrees with its injection
-
-duration-inj⁻ : (t⁻ : Trace⁻) → duration (inj⁻ t⁻) ≡ duration⁻ t⁻
-duration-inj⁻ ε⁻               = refl
-duration-inj⁻ (operation⁻ o t) = refl
-
-------------------------------------------------------------------------
--- Duration monotonicity under the slack-indexed sub-trace order
---
--- A sub-trace can only drop operations and shrink delays, so its
--- duration is bounded by that of the larger trace plus the slack.
-
-duration-≼ : ∀ {k s t} → s ≼[ k ] t → duration s ≤ duration t + k
-duration-≼ nil = z≤n
-duration-≼ (keep {k = k} {t = t} d) =
-  ≤-trans (+-mono-≤ ≤-refl (duration-≼ d))
-          (≤-reflexive (sym (+-assoc _ (duration t) k)))
-duration-≼ (del-op {k = k} {o = o} {t = t} d) =
-  ≤-trans (duration-≼ d)
-          (+-mono-≤ (m≤n+m (duration t) (c o)) ≤-refl)
-duration-≼ (del-delay {k = k} {e = e} {t⁻ = t⁻} d) =
-  ≤-trans (duration-≼ d) (≤-reflexive eq)
-  where
-    eq : duration (inj⁻ t⁻) + (k + ∣ e ∣⁺) ≡ (∣ e ∣⁺ + duration⁻ t⁻) + k
-    eq = begin
-           duration (inj⁻ t⁻) + (k + ∣ e ∣⁺)
-         ≡⟨ cong (_+ (k + ∣ e ∣⁺)) (duration-inj⁻ t⁻) ⟩
-           duration⁻ t⁻ + (k + ∣ e ∣⁺)
-         ≡⟨ cong (duration⁻ t⁻ +_) (+-comm k ∣ e ∣⁺) ⟩
-           duration⁻ t⁻ + (∣ e ∣⁺ + k)
-         ≡⟨ sym (+-assoc (duration⁻ t⁻) ∣ e ∣⁺ k) ⟩
-           (duration⁻ t⁻ + ∣ e ∣⁺) + k
-         ≡⟨ cong (_+ k) (+-comm (duration⁻ t⁻) ∣ e ∣⁺) ⟩
-           (∣ e ∣⁺ + duration⁻ t⁻) + k
-         ∎
-duration-≼ (use-delay {k = k} {d = d} {s⁻ = s⁻} {t = t} p d') =
-  ≤-trans (+-mono-≤ ≤-refl ih) (≤-reflexive eq)
-  where
-    ih : duration⁻ s⁻ ≤ duration t + (k ∸ ∣ d ∣⁺)
-    ih = subst (_≤ duration t + (k ∸ ∣ d ∣⁺)) (duration-inj⁻ s⁻) (duration-≼ d')
-
-    eq : ∣ d ∣⁺ + (duration t + (k ∸ ∣ d ∣⁺)) ≡ duration t + k
-    eq = begin
-           ∣ d ∣⁺ + (duration t + (k ∸ ∣ d ∣⁺))
-         ≡⟨ sym (+-assoc ∣ d ∣⁺ (duration t) (k ∸ ∣ d ∣⁺)) ⟩
-           (∣ d ∣⁺ + duration t) + (k ∸ ∣ d ∣⁺)
-         ≡⟨ cong (_+ (k ∸ ∣ d ∣⁺)) (+-comm ∣ d ∣⁺ (duration t)) ⟩
-           (duration t + ∣ d ∣⁺) + (k ∸ ∣ d ∣⁺)
-         ≡⟨ +-assoc (duration t) ∣ d ∣⁺ (k ∸ ∣ d ∣⁺) ⟩
-           duration t + (∣ d ∣⁺ + (k ∸ ∣ d ∣⁺))
-         ≡⟨ cong (duration t +_) (m+[n∸m]≡n p) ⟩
-           duration t + k
-         ∎
-
--- the sub-trace order proper (no slack) bounds durations directly
-
-duration-≼₀ : ∀ {s t} → s ≼ t → duration s ≤ duration t
-duration-≼₀ {s} {t} p =
-  ≤-trans (duration-≼ p) (≤-reflexive (+-identityʳ (duration t)))
 
 ------------------------------------------------------------------------
 -- The frame
@@ -168,7 +111,7 @@ w ⊑ᵗ[ P ] w' =
               t'∈Q)
   where
     upper : w' ≤ w + duration t'
-    upper = ≤-trans w'≤w+dₜ (+-mono-≤ ≤-refl (duration-≼₀ t≼t'))
+    upper = ≤-trans w'≤w+dₜ (+-mono-≤ ≤-refl (duration-≼ t≼t'))
 
 -- proof irrelevance of the witnesses
 

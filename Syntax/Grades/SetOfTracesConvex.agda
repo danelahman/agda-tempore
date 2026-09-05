@@ -11,13 +11,16 @@
 -- between traces already present: the extremes are exact.        --
 ------------------------------------------------------------------
 
+open import Data.Nat.Base using (ℕ; zero)
+
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
 module Syntax.Grades.SetOfTracesConvex
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
+open import Data.Nat.Properties using (n≤0⇒n≡0)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
@@ -35,9 +38,9 @@ open import Syntax.Grades
 -- the order are shared with the Hoare-ordered sets of traces
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Subtrace Op
+open import Syntax.Grades.Traces.Subtrace Op cost
 
-open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_
+open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ cost
   using (_≼ˢ_; ≼ˢ-refl; ≼ˢ-trans; ≼ˢ-·ˢ)
   renaming (≾ᵗ-zero-productˡ to ≼ˢ-zero-productˡ;
             ≾ᵗ-zero-productʳ to ≼ˢ-zero-productʳ)
@@ -203,12 +206,14 @@ traces-convex = record
 ------------------------------------------------------------------------
 -- The convex order is strictly finer than either of its halves
 --
--- Given any operation symbol `o`, the sets `{ o }`, `{ ε , o }` and
--- `{ ε }` separate the two lifts: adding a trace *below* everything
--- present is allowed by the Hoare half alone, and dropping one is
--- allowed by the Smyth half alone. Both are ruled out by `_≾_`.
+-- Given an operation symbol `o` that takes time, the sets `{ o }`,
+-- `{ ε , o }` and `{ ε }` separate the two lifts: adding a trace
+-- *below* everything present is allowed by the Hoare half alone, and
+-- dropping one is allowed by the Smyth half alone. Both are ruled out
+-- by `_≾_`. The operation has to take time, since an instantaneous one
+-- is covered by the empty trace.
 
-module Separation (o : Op) where
+module Separation (o : Op) (co : ¬ (cost o ≡ zero)) where
 
   ⟨o⟩ : Trace
   ⟨o⟩ = operation o ε
@@ -227,11 +232,19 @@ module Separation (o : Op) where
       cover .⟨o⟩ (here refl) = there (here (≼-refl ⟨o⟩))
       cover _    (there ())
 
-  -- `ε` is covered by nothing in `{ o }`, so the lifted relation is the
-  -- empty type and the hypothesis is directly absurd
+  -- an operation that takes time is not covered by the empty trace,
+  -- which has no slack to pay for it
+
+  ¬⟨o⟩≼ε : ¬ (⟨o⟩ ≼ ε)
+  ¬⟨o⟩≼ε (use-op p _) = co (n≤0⇒n≡0 p)
+
+  -- `ε` is covered by nothing in `{ o }`
 
   ¬P≽Q : ¬ (traces P ≽ˢ traces Q)
-  ¬P≽Q h = h ε (fromWitness {a? = ε ∈? traces Q} (here refl))
+  ¬P≽Q h
+    with find (toWitness (h ε (fromWitness {a? = ε ∈? traces Q} (here refl))))
+  ... | s , here refl , s≼ε = ¬⟨o⟩≼ε s≼ε
+  ... | s , there ()  , _
 
   -- `{ ε , o } ≽ˢ { ε }`, but the operation of the larger set is
   -- covered by nothing in the unit
@@ -246,4 +259,8 @@ module Separation (o : Op) where
       cover _  (there ())
 
   ¬Q≼u : ¬ (traces Q ≼ˢ traces u)
-  ¬Q≼u h = h ⟨o⟩ (fromWitness {a? = ⟨o⟩ ∈? traces Q} (there (here refl)))
+  ¬Q≼u h
+    with find (toWitness
+                (h ⟨o⟩ (fromWitness {a? = ⟨o⟩ ∈? traces Q} (there (here refl)))))
+  ... | t , here refl , ⟨o⟩≼t = ¬⟨o⟩≼ε ⟨o⟩≼t
+  ... | t , there ()  , _

@@ -11,20 +11,22 @@
 -- not which worlds a grade reaches.                                    --
 ------------------------------------------------------------------------
 
+open import Data.Nat.Base using (ℕ)
+
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 module DenotationalSemantics.Model.Example.World.SetOfTracesConvexWithTraceHistories
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Product using (proj₁)
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.SetOfTracesConvex Op _≟ₒ_ using (traces-convex)
+open import Syntax.Grades.SetOfTracesConvex Op _≟ₒ_ c using (traces-convex)
 
 open import DenotationalSemantics.Model.World
 
 open import DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTraceHistories
-  Op _≟ₒ_ using (_⊑ʰ[_]_; ⊑ʰ-refl; ⊑ʰ-trans; ⊑ʰ-mono; ⊑ʰ-irrelevant)
+  Op _≟ₒ_ c using (_⊑ʰ[_]_; ⊑ʰ-refl; ⊑ʰ-trans; ⊑ʰ-mono; ⊑ʰ-irrelevant)
 
 histories : World traces-convex
 histories = record

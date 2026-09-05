@@ -42,10 +42,10 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.Subtrace Op
+open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.SetOfTracesConvex Op _≟ₒ_
+open import Syntax.Grades.SetOfTracesConvex Op _≟ₒ_ c
   using (traces-convex; _≾_; module Separation)
 
 open Durations c
@@ -173,7 +173,7 @@ histories = record
 
 module MustSeparation (o : Op) (co : ¬ (c o ≡ 0)) where
 
-  open Separation o using (⟨o⟩; P; Q)
+  open Separation o co using (⟨o⟩; P; Q)
 
   step : ε ⊑ᶜ[ P ] ⟨o⟩
   step =

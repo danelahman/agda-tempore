@@ -72,11 +72,29 @@ a grade system, a signature of base types, and operations' signatures.
   `Syntax/Grades/SetOfTraces.agda`, built on the timed-trace monoid and
   auxiliary trace constructions in `Syntax/Grades/Traces/`
 
+- The *cost-aware* trace-based grades read a set of timed traces against the
+  operations' prescribed execution times, given by a map `cost : Op → ℕ`. The
+  sub-trace preorder `Syntax/Grades/Traces/Subtrace.agda` is parameterised by
+  that map: alongside `use-delay`, spending slack on a leading delay of the
+  smaller trace, a `use-op` rule spends slack on a leading *operation*, at the
+  time that operation takes. So an operation performed fits inside a pure time
+  budget, `⌈ o ⌉ ≼ ⟨ n ⟩` as soon as `cost o ≤ n`. Slack is created only by
+  absorbing the *delays* of the larger trace, so the converse fails: a schedule
+  calling for an operation is not met by spending the same time on anything
+  else (`⟨suc⟩-⋠` in the same module). `SubtraceDuration.agda` proves the two
+  bounds exact — `s ≼[ k ] ⟨ n ⟩` holds precisely when `duration s ≤ n + k` —
+  and `SubtraceCost.agda` that lowering the cost only widens the order.
+  `SetOfTracesUpToSubtrace.agda` and `SetOfTracesConvex.agda` lift the preorder
+  to sets of traces, by its Hoare and Egli-Milner lifts respectively.
+
 - `Syntax/Grades/GradeSystem/` assembles full example grade systems and grade
   morphisms between their effect and resource grades:
   `TwoSidedIntervalsToLeftSidedIntervals`, `TracesToRestrictedTraces` (sets of
-  traces over all operations to sets of traces over a sub-alphabet), and
-  `TracesToTimeIntervals` (sets of traces to two-sided time intervals).
+  traces over all operations to sets of traces over a sub-alphabet),
+  `TracesToTimeIntervals` (sets of traces to two-sided time intervals), and
+  `TracesToCostAwareTraces` (sets of traces ordered by inclusion to the same
+  sets ordered up to the cost-aware sub-trace preorder, and one cost model to
+  a cheaper one).
 
 ### Core language, type system
 

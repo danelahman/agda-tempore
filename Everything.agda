@@ -141,6 +141,7 @@ open import Syntax.Grades.Traces.MaxDuration
 open import Syntax.Grades.Traces.MinDuration
 open import Syntax.Grades.Traces.Subtrace
 open import Syntax.Grades.Traces.SubtraceDuration
+open import Syntax.Grades.Traces.SubtraceCost
 
 ---- Examples of trace-based grades
 
@@ -155,6 +156,8 @@ open import Syntax.Grades.GradeSystem.TwoSidedIntervalsToLeftSidedIntervals
 open import Syntax.Grades.GradeSystem.TracesToRestrictedTraces
 
 open import Syntax.Grades.GradeSystem.TracesToTimeIntervals
+
+open import Syntax.Grades.GradeSystem.TracesToCostAwareTraces
 
 -- OPERATIONAL SEMANTICS
 ------------------------

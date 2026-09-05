@@ -1,24 +1,40 @@
-------------------------------------------
--- A sub-trace preorder on timed traces --
-------------------------------------------
+------------------------------------------------------------------------
+-- A sub-trace preorder on timed traces, relative to a cost on         --
+-- operation symbols                                                    --
+--                                                                    --
+-- Operations come with a prescribed execution time: performing `o`     --
+-- takes `cost o` units. A leading operation of the *left-hand* trace   --
+-- may therefore be paid for out of the slack, at its execution time,   --
+-- exactly as a leading delay is (`use-op` alongside `use-delay`). An   --
+-- operation performed thus fits inside a pure time budget on the       --
+-- right, `⌈ o ⌉ ≼ ⟨ n ⟩` as soon as `cost o ≤ n`.                     --
+--                                                                    --
+-- The converse never holds: slack is created only by absorbing the     --
+-- *delays* of the right-hand trace (`del-delay`), and deleting one of  --
+-- its operations (`del-op`) frees none. A right-hand trace that calls  --
+-- for an operation is therefore not met by spending the same amount of --
+-- time on anything else.                                              --
+------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties
   using (+-comm; +-assoc; ≤-refl; ≤-trans; m≤m+n; m≤n+m; +-∸-comm;
-         m+n∸n≡m; m+[n∸m]≡n; m∸n+n≡m; +-monoʳ-≤; ∸-+-assoc;
+         m+n∸n≡m; m+[n∸m]≡n; m∸n+n≡m; +-monoʳ-≤; ∸-+-assoc; +-∸-assoc;
          _≤?_; +-suc; n≤1+n)
+open import Data.Product using (_×_; _,_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (Dec; yes; no; ¬_)
 
 open import Util.Equality
 
--- Sub-trace orders are parameterised by a set `Op` of operation names.
+-- Sub-trace orders are parameterised by a set `Op` of operation names
+-- and by the map `cost` giving each operation its execution time.
 
-module Syntax.Grades.Traces.Subtrace (Op : Set) where
+module Syntax.Grades.Traces.Subtrace (Op : Set) (cost : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺)
+open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺; ∣1+∣⁺)
 
 ------------------------------------------------------------------------
 -- Small arithmetic helpers
@@ -40,13 +56,6 @@ lem-swap a b c =
 
 ≤-bump : (D E m : ℕ) → E ≤ m → D + E ≤ m + D
 ≤-bump D E m E≤m = subst (D + E ≤_) (+-comm D m) (+-monoʳ-≤ D E≤m)
-
-------------------------------------------------------------------------
--- The delay-free injection of `Trace⁻` into `Trace`
-
-inj⁻ : Trace⁻ → Trace
-inj⁻ ε⁻               = ε
-inj⁻ (operation⁻ o t) = operation o t
 
 ------------------------------------------------------------------------
 -- A structural size measure on traces
@@ -105,9 +114,17 @@ data _≼[_]_ : Trace → ℕ → Trace → Set where
             ---------------------------
             → s ≼[ k ] delay e t⁻
 
+  -- spend slack to cover the leading operation of the left-hand trace,
+  -- at the execution time that operation takes
+  use-op    : ∀ {k o s t}
+            → cost o ≤ k
+            → s ≼[ k ∸ cost o ] t
+            ------------------------
+            → operation o s ≼[ k ] t
+
   -- spend slack to cover the leading delay of the left-hand trace
-  use-delay : ∀ {k d s⁻ t} 
-            → ∣ d ∣⁺ ≤ k 
+  use-delay : ∀ {k d s⁻ t}
+            → ∣ d ∣⁺ ≤ k
             → inj⁻ s⁻ ≼[ k ∸ ∣ d ∣⁺ ] t
             ---------------------------
             → delay d s⁻ ≼[ k ] t
@@ -149,6 +166,9 @@ weaken m (keep d)                  = keep (weaken m d)
 weaken m (del-op d)                = del-op (weaken m d)
 weaken {j} m (del-delay {e = e} d) =
   del-delay (coe (lem-swap j ∣ e ∣⁺ m) (weaken m d))
+weaken {j} m (use-op p d') =
+  use-op (≤-trans p (m≤m+n j m))
+         (coe (sym (+-∸-comm m p)) (weaken m d'))
 weaken {j} m (use-delay {d = d} p d') =
   use-delay (≤-trans p (m≤m+n j m))
             (coe (sym (+-∸-comm m p)) (weaken m d'))
@@ -160,12 +180,19 @@ weaken {j} m (use-delay {d = d} p d') =
 ≼-trans nil                       _                       = nil
 -- left factor keeps an operation
 ≼-trans (keep d1)        (keep d2)                        = keep (≼-trans d1 d2)
+≼-trans {j} {k} (keep d1) (use-op p d2)                   =
+  use-op (≤-trans p (m≤n+m k j))
+         (coe (sym (+-∸-assoc j p)) (≼-trans d1 d2))
 ≼-trans (keep d1)        (del-op d2)                      = del-op (≼-trans (keep d1) d2)
 ≼-trans {j} {k} (keep d1) (del-delay {e = e} d2)          =
   del-delay (coe (sym (+-assoc j k ∣ e ∣⁺))
             (≼-trans (keep d1) d2))
 -- left factor deletes an operation of the middle trace
 ≼-trans (del-op d1)      (keep d2)                        = del-op (≼-trans d1 d2)
+≼-trans {j} {k} (del-op d1) (use-op {o = o} p d2)         =
+  coe (trans (+-assoc j (k ∸ cost o) (cost o))
+             (cong (j +_) (m∸n+n≡m p)))
+      (weaken (cost o) (≼-trans d1 d2))
 ≼-trans (del-op d1)      (del-op d2)                      = del-op (≼-trans (del-op d1) d2)
 ≼-trans {j} {k} (del-op d1) (del-delay {e = e} d2)        =
   del-delay (coe (sym (+-assoc j k ∣ e ∣⁺))
@@ -179,18 +206,35 @@ weaken {j} m (use-delay {d = d} p d') =
 ≼-trans {j} {k} (del-delay d1) (del-delay {e = f} d2)     =
   del-delay (coe (sym (+-assoc j k ∣ f ∣⁺))
             (≼-trans (del-delay d1) d2))
--- left factor spends slack on its own leading delay
+-- left factor spends slack on its own leading operation or delay
+≼-trans {j} {k} (use-op p d1) D2                          =
+  use-op (≤-trans p (m≤m+n j k))
+         (coe (sym (+-∸-comm k p)) (≼-trans d1 D2))
 ≼-trans {j} {k} (use-delay {d = d} p d1) D2               =
   use-delay (≤-trans p (m≤m+n j k))
             (coe (sym (+-∸-comm k p)) (≼-trans d1 D2))
 
 ------------------------------------------------------------------------
--- ε is minimal: nothing but ε lies below ε at zero slack
+-- Operations do not pay for delays
+--
+-- Slack is created by `del-delay` alone, so a right-hand trace built
+-- from operations offers none, however long those operations take, and
+-- the leading delay of `⟨ suc n ⟩` cannot be covered. Time spent on
+-- operations therefore never stands in for a schedule's delay -- the
+-- converse of `use-op` letting an operation be covered by a delay.
 
-≼ε→≡ε : {s : Trace} → s ≼ ε → s ≡ ε
-≼ε→≡ε nil                       = refl
-≼ε→≡ε (use-delay {d = 𝟏}    () _)
-≼ε→≡ε (use-delay {d = suc⁺ n} () _)
+data Delay-free : Trace → Set where
+  ε-free  : Delay-free ε
+  op-free : ∀ {o t} → Delay-free t → Delay-free (operation o t)
+
+1+≰0 : (n : ℕ) → ¬ (∣ 1+ n ∣⁺ ≤ zero)
+1+≰0 n p with subst (_≤ zero) (∣1+∣⁺ n) p
+... | ()
+
+⟨suc⟩-⋠ : (n : ℕ) {t : Trace} → Delay-free t → ¬ (⟨ suc n ⟩ ≼ t)
+⟨suc⟩-⋠ n ε-free      (use-delay p _) = 1+≰0 n p
+⟨suc⟩-⋠ n (op-free _) (use-delay p _) = 1+≰0 n p
+⟨suc⟩-⋠ n (op-free f) (del-op d)      = ⟨suc⟩-⋠ n f d
 
 ------------------------------------------------------------------------
 -- Inversion of `del-delay`: a leading delay on the right can always be
@@ -199,6 +243,9 @@ weaken {j} m (use-delay {d = d} p d') =
 del-delay-inv : ∀ {k e t t⁻} → t ≼[ k ] delay e t⁻ → t ≼[ k + ∣ e ∣⁺ ] inj⁻ t⁻
 del-delay-inv nil               = nil
 del-delay-inv (del-delay d)     = d
+del-delay-inv {k} {e} (use-op p d') =
+  use-op (≤-trans p (m≤m+n k ∣ e ∣⁺))
+         (coe (sym (+-∸-comm ∣ e ∣⁺ p)) (del-delay-inv d'))
 del-delay-inv {k} {e} (use-delay {d = d} p d') =
   use-delay (≤-trans p (m≤m+n k ∣ e ∣⁺))
             (coe (sym (+-∸-comm ∣ e ∣⁺ p)) (del-delay-inv d'))
@@ -267,9 +314,12 @@ pad-left {k} (delay d (operation⁻ o c'')) D =
 
 prepend-left : ∀ {c sₐ} (t : Trace) → sₐ ≼[ c ] ε → (sₐ ∙ t) ≼[ c ] t
 prepend-left t nil                                       = ≼-refl t
+prepend-left t (use-op p d)                              =
+  use-op p (prepend-left t d)
 prepend-left {c} t (use-delay {d = d} {s⁻ = ε⁻} p _)     =
   spendL d t p (≼-refl t)
-prepend-left t (use-delay {s⁻ = operation⁻ o s''} _ ())
+prepend-left t (use-delay {s⁻ = operation⁻ o s''} p d')  =
+  use-delay p (prepend-left t d')
 
 ------------------------------------------------------------------------
 -- Monotonicity of the trace product (the slacks add up)
@@ -286,6 +336,9 @@ mono-∙ {j} {k} {t' = t'} (del-delay {e = e} {t⁻ = ε⁻} d1) D2 =
            (≼-trans (prepend-left _ d1) D2))
 mono-∙ {j} {k} (del-delay {e = e} {t⁻ = operation⁻ o s'''} d1) D2 =
   del-delay (coe (lem-swap j ∣ e ∣⁺ k) (mono-∙ d1 D2))
+mono-∙ {j} {k} (use-op p d1) D2 =
+  use-op (≤-trans p (m≤m+n j k))
+         (coe (sym (+-∸-comm k p)) (mono-∙ d1 D2))
 mono-∙ {j} {k} {s' = s'} (use-delay {d = d} {s⁻ = ε⁻} p d1) D2 =
   spendL d _ (≤-trans p (m≤m+n j k))
     (coe
@@ -313,36 +366,68 @@ module DecSubtrace (_≟ₒ_ : DecidableEquality Op) where
   dec : (n : ℕ) (s : Trace) (k : ℕ) (t : Trace)
       → size s + size t ≤ n → Dec (s ≼[ k ] t)
 
+  -- Deciding whether the leading operation of the left-hand trace can be
+  -- paid for out of the slack. Each of the three clauses with an operation
+  -- on the left consults this once, so the alternatives left to them are
+  -- fixed by the shape of the right-hand trace alone.
+
+  dec-use-op : (n : ℕ) (o : Op) (s' : Trace) (k : ℕ) (t : Trace)
+             → size s' + size t ≤ n
+             → Dec ((cost o ≤ k) × (s' ≼[ k ∸ cost o ] t))
+
+  dec-use-op n o s' k t le
+    with cost o ≤? k
+  ... | no ¬p = no (λ { (p , _) → ¬p p })
+  ... | yes p
+          with dec n s' (k ∸ cost o) t le
+  ...     | yes d  = yes (p , d)
+  ...     | no ¬d = no (λ { (_ , d) → ¬d d })
+
   -- the empty trace lies below anything
   dec n ε k t le = yes nil
 
-  -- a leading operation on the left, nothing on the right
-  dec n (operation o s') k ε le = no (λ ())
+  -- a leading operation on the left, nothing on the right: the operation
+  -- has to be paid for out of the slack
+  dec (suc n) (operation o s') k ε (s≤s le)
+    with dec-use-op n o s' k ε le
+  ... | yes (p , d) = yes (use-op p d)
+  ... | no ¬u      = no (λ { (use-op p d) → ¬u (p , d) })
 
-  -- a leading operation on both sides: delete it on the right (`del-op`)
-  -- or keep it (`keep`, once the two operation symbols agree)
+  -- a leading operation on both sides: pay for it out of the slack
+  -- (`use-op`), delete it on the right (`del-op`), or keep it (`keep`,
+  -- once the two operation symbols agree)
   dec (suc n) (operation o s') k (operation o' t') (s≤s le)
-    with dec n (operation o s') k t'
-                (subst (_≤ n) (+-suc (size s') (size t')) le)
-  ... | yes d = yes (del-op d)
-  ... | no ¬d with o ≟ₒ o'
-  ...   | no ¬eq = no (λ { (keep _)  → ¬eq refl
-                        ; (del-op d) → ¬d d })
-  ...   | yes refl
-          with dec n s' k t'
-                   (≤-trans (+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
-  ...     | yes d  = yes (keep d)
-  ...     | no ¬d' = no (λ { (keep d)   → ¬d' d
-                          ; (del-op d) → ¬d d })
+    with dec-use-op n o s' k (operation o' t') le
+  ... | yes (p , d) = yes (use-op p d)
+  ... | no ¬u
+          with dec n (operation o s') k t'
+                      (subst (_≤ n) (+-suc (size s') (size t')) le)
+  ...     | yes d = yes (del-op d)
+  ...     | no ¬d with o ≟ₒ o'
+  ...       | no ¬eq = no (λ { (keep _)      → ¬eq refl
+                            ; (use-op p d)  → ¬u (p , d)
+                            ; (del-op d)    → ¬d d })
+  ...       | yes refl
+                with dec n s' k t'
+                         (≤-trans (+-monoʳ-≤ (size s') (n≤1+n (size t'))) le)
+  ...         | yes d'  = yes (keep d')
+  ...         | no ¬d' = no (λ { (keep d')     → ¬d' d'
+                              ; (use-op p d)  → ¬u (p , d)
+                              ; (del-op d)    → ¬d d })
 
-  -- a leading operation on the left, a leading delay on the right:
-  -- absorb the delay into the slack (`del-delay`)
+  -- a leading operation on the left, a leading delay on the right: pay
+  -- for the operation out of the slack (`use-op`) or absorb the delay
+  -- into the slack (`del-delay`)
   dec (suc n) (operation o s') k (delay e t⁻) (s≤s le)
-    with dec n (operation o s') (k + ∣ e ∣⁺) (inj⁻ t⁻)
-                (subst (λ z → suc (size s') + z ≤ n) (sym (size-inj⁻ t⁻))
-                       (subst (_≤ n) (+-suc (size s') (size⁻ t⁻)) le))
-  ... | yes d  = yes (del-delay d)
-  ... | no ¬d = no (λ { (del-delay d) → ¬d d })
+    with dec-use-op n o s' k (delay e t⁻) le
+  ... | yes (p , d) = yes (use-op p d)
+  ... | no ¬u
+          with dec n (operation o s') (k + ∣ e ∣⁺) (inj⁻ t⁻)
+                      (subst (λ z → suc (size s') + z ≤ n) (sym (size-inj⁻ t⁻))
+                             (subst (_≤ n) (+-suc (size s') (size⁻ t⁻)) le))
+  ...     | yes d  = yes (del-delay d)
+  ...     | no ¬d = no (λ { (del-delay d) → ¬d d
+                          ; (use-op p d)  → ¬u (p , d) })
 
   -- a leading delay on the left, nothing on the right: spend slack on it
   dec (suc n) (delay d s⁻) k ε (s≤s le)

@@ -15,12 +15,14 @@
 -- which is exactly the grade order.                                    --
 ------------------------------------------------------------------------
 
+open import Data.Nat.Base using (ℕ)
+
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.SetOfTracesUpToSubtraceWithTraceHistories
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
@@ -31,8 +33,8 @@ open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Subtrace Op
-open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_
+open import Syntax.Grades.Traces.Subtrace Op c
+open import Syntax.Grades.SetOfTracesUpToSubtrace Op _≟ₒ_ c
   using (traces-up-to-subtrace; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
