@@ -107,8 +107,8 @@ infix 5 _≾_
 
 -- the grade of (non-empty) sets of timed traces, ordered by inclusion
 
-right-sided-traces : Grade
-right-sided-traces = record
+traces-by-inclusion : Grade
+traces-by-inclusion = record
   { Carrier         = NeTraces
   ; _·_             = _·_
   ; u               = u

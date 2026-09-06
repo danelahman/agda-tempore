@@ -6,12 +6,12 @@
 --            and  every trace of P has some trace of Q inside it.     --
 --                                                                     --
 -- The second conjunct is the Smyth upper lift, shared with            --
--- `TraceSet.UpToSubtrace`, which is the order proper; the first is    --
+-- `TraceSet.LeftSided`, which is the order proper; the first is    --
 -- the Hoare lower lift, which additionally caps how far the two sets  --
 -- may drift apart. Weakening a grade may therefore ask for less only  --
 -- between traces already present: the extremes are exact.             --
 --                                                                     --
--- As in `TraceSet.UpToSubtrace`, a grade is read as a lower bound on  --
+-- As in `TraceSet.LeftSided`, a grade is read as a lower bound on  --
 -- what must have happened, so that `unbox`'s premise `ρ' ≾ᵣ ρ` admits --
 -- a run that does more than `ρ` asks for and never one that does less. --
 --                                                                     --
@@ -61,7 +61,7 @@ open DecSubtrace _≟ₒ_ using (_≼?_)
 -- The convex order on (non-empty) sets of traces
 --
 -- Both halves compare the two sets in the same direction as
--- `TraceSet.UpToSubtrace` does, i.e. with `Q` on the left.
+-- `TraceSet.LeftSided` does, i.e. with `Q` on the left.
 
 infix 5 _≾_
 
@@ -141,12 +141,11 @@ traces-convex = record
 ------------------------------------------------------------------------
 -- The convex order is strictly finer than either of its halves
 --
--- Given an operation symbol `o` that takes time, the sets `{ o }`,
--- `{ ε , o }` and `{ ε }` separate the two lifts: adding a trace
--- *below* everything present is allowed by the Hoare half alone, and
--- dropping one is allowed by the Smyth half alone. Both are ruled out
--- by `_≾_`. The operation has to take time, since an instantaneous one
--- is covered by the empty trace.
+-- The sets `{ o }`, `{ ε , o }` and `{ ε }` separate the two lifts:
+-- adding a trace *below* everything present is allowed by the Hoare
+-- half alone, and dropping one is allowed by the Smyth half alone.
+-- Both are ruled out by `_≾_`. No condition on the operation's cost is
+-- needed: a demand naming an operation is met by no spent run at all.
 
 module Separation (o : Op) (co : ¬ (cost o ≡ zero)) where
 
@@ -167,17 +166,17 @@ module Separation (o : Op) (co : ¬ (cost o ≡ zero)) where
       cover .⟨o⟩ (here refl) = there (here (≼-refl ⟨o⟩))
       cover _    (there ())
 
-  -- an operation that takes time is not covered by the empty trace,
-  -- which has no slack to pay for it
+  -- a demand naming an operation is met by no spent run
 
   ¬⟨o⟩≼ε : ¬ (⟨o⟩ ≼ ε)
-  ¬⟨o⟩≼ε (use-op p _) = co (n≤0⇒n≡0 p)
+  ¬⟨o⟩≼ε ()
 
   -- `ε` is covered by nothing in `{ o }`
 
   ¬P≽Q : ¬ (traces P ≽ˢ traces Q)
   ¬P≽Q h
-    with find (toWitness (h ε (fromWitness {a? = ε ∈? traces Q} (here refl))))
+    with find (toWitness {a? = any? (λ s → s ≼? ε) (traces P)}
+                (h ε (fromWitness {a? = ε ∈? traces Q} (here refl))))
   ... | s , here refl , s≼ε = ¬⟨o⟩≼ε s≼ε
   ... | s , there ()  , _
 
@@ -195,7 +194,7 @@ module Separation (o : Op) (co : ¬ (cost o ≡ zero)) where
 
   ¬Q≼u : ¬ (traces Q ≼ˢ traces u)
   ¬Q≼u h
-    with find (toWitness
+    with find (toWitness {a? = any? (λ t → ⟨o⟩ ≼? t) (traces u)}
                 (h ⟨o⟩ (fromWitness {a? = ⟨o⟩ ∈? traces Q} (there (here refl)))))
   ... | t , here refl , ⟨o⟩≼t = ¬⟨o⟩≼ε ⟨o⟩≼t
   ... | t , there ()  , _

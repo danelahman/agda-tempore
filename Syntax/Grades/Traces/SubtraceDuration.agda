@@ -1,21 +1,24 @@
 ------------------------------------------------------------------------
 -- Durations along the sub-trace preorder                              --
 --                                                                    --
--- A sub-trace is no longer than its host, up to the slack it was      --
--- granted: `s ≼[ k ] t` gives `duration s ≤ duration t + k`, where    --
--- both durations charge an operation its execution time. At zero      --
--- slack this is monotonicity of `duration` for `_≼_`.                 --
+-- A demand is no longer than the run that meets it, up to the slack   --
+-- already banked: `s ≼[ k ] t` gives `duration s ≤ duration t + k`,    --
+-- where both durations charge an operation its execution time. At     --
+-- zero slack this is monotonicity of `duration` for `_≼_`.            --
 --                                                                    --
--- Against a *pure delay* the bound is exact: `s ≼[ k ] ⟨ n ⟩` holds   --
--- precisely when `duration s ≤ n + k`. A time budget on the right is  --
--- therefore met by whatever mixture of delays and operations fits in  --
--- it -- this is the sense in which operations pay for time.           --
+-- Against a demanded *pure delay* the bound is exact: `⟨ n ⟩ ≼[ k ] t` --
+-- holds precisely when `n ≤ duration t + k`. A demand for time is     --
+-- therefore met by whatever mixture of delays and operations elapsed  --
+-- -- this is the sense in which time spent pays for time demanded.    --
 ------------------------------------------------------------------------
 
+open import Data.Empty using (⊥-elim)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n)
 open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-comm; +-identityʳ;
          +-monoʳ-≤; +-monoˡ-≤; m≤m+n; m≤n+m; m+[n∸m]≡n; m+n≤o⇒m≤o∸n)
+
+open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
@@ -32,6 +35,14 @@ open Durations cost
 
 -- the leading delay absorbed by `del-delay` moves to the front
 
+-- moving what the run's head contributes out of its duration and into
+-- the slack the premise carries
+
+shift : (a b k : ℕ) → (a + b) + k ≡ b + (k + a)
+shift a b k =
+  trans (cong (_+ k) (+-comm a b))
+        (trans (+-assoc b a k) (cong (b +_) (+-comm a k)))
+
 lem-front : (d k e : ℕ) → d + (k + e) ≡ (e + d) + k
 lem-front d k e =
   trans (cong (d +_) (+-comm k e))
@@ -43,8 +54,7 @@ lem-front d k e =
 +≤⇒≤∸ : ∀ {a b k} → a + b ≤ k → b ≤ k ∸ a
 +≤⇒≤∸ {a} {b} {k} le = m+n≤o⇒m≤o∸n b (subst (_≤ k) (+-comm a b) le)
 
--- the leading delay or operation spent by `use-delay` resp. `use-op`
--- moves past the host's duration
+-- the leading delay spent by `use-delay` moves past the run's duration
 
 lem-past : (a b e : ℕ) → a + (b + e) ≡ b + (a + e)
 lem-past a b e =
@@ -71,10 +81,14 @@ duration-slack {k} (keep {o = o} {t = t} p) =
   ≤-trans (+-monoʳ-≤ (cost o) (duration-slack p))
           (≤-reflexive (sym (+-assoc (cost o) (duration t) k)))
 
--- a deleted operation only adds to the host's duration
-duration-slack {k} (del-op {o = o} {t = t} p) =
+-- a banked operation moves its execution time from the slack the
+-- premise carries into the run's own duration
+duration-slack {k} (pay-op {o = o} {t = t} p) =
   ≤-trans (duration-slack p)
-          (+-monoˡ-≤ k (m≤n+m (duration t) (cost o)))
+          (≤-reflexive
+            (trans (sym (+-assoc (duration t) k (cost o)))
+                   (trans (+-comm (duration t + k) (cost o))
+                          (sym (+-assoc (cost o) (duration t) k)))))
 
 -- an absorbed delay is already counted in the slack the premise carries
 duration-slack {k} (del-delay {e = e} {t⁻ = t⁻} p) =
@@ -82,13 +96,6 @@ duration-slack {k} (del-delay {e = e} {t⁻ = t⁻} p) =
           (≤-reflexive
             (trans (cong (_+ (k + ∣ e ∣⁺)) (duration-inj⁻ t⁻))
                    (lem-front (duration⁻ t⁻) k ∣ e ∣⁺)))
-
--- a spent operation is paid for out of the slack, which the premise loses
-duration-slack {k} (use-op {o = o} {s = s} {t = t} le p) =
-  ≤-trans (+-monoʳ-≤ (cost o) (duration-slack p))
-          (≤-reflexive
-            (trans (lem-past (cost o) (duration t) (k ∸ cost o))
-                   (cong (duration t +_) (m+[n∸m]≡n le))))
 
 -- a spent delay is paid for out of the slack, which the premise loses
 duration-slack {k} (use-delay {d = d} {s⁻ = s⁻} {t = t} le p) =
@@ -106,57 +113,64 @@ duration-≼ {s} {t} p =
   subst (duration s ≤_) (+-identityʳ (duration t)) (duration-slack p)
 
 ------------------------------------------------------------------------
--- The converse, against the empty host
+-- Nothing but the empty demand is met by a spent run
 --
--- With nothing on the right to match against, every event of the trace
--- has to be paid for out of the slack, and the slack suffices exactly
--- when it covers the trace's duration.
+-- With nothing left of the run, a demanded operation has nothing to
+-- match and a demanded delay has no slack to be paid from.
+
+∣∣⁺-pos : (d : ℕ⁺) → ¬ (∣ d ∣⁺ ≤ zero)
+∣∣⁺-pos 𝟏        ()
+∣∣⁺-pos (suc⁺ d) ()
+
+≼-ε-inv : {s : Trace} → s ≼ ε → s ≡ ε
+≼-ε-inv nil                     = refl
+≼-ε-inv (use-delay {d = d} p _) = ⊥-elim (∣∣⁺-pos d p)
+
+------------------------------------------------------------------------
+-- The characterisation against a demanded pure delay
+--
+-- A demand for `⟨ n ⟩` -- that `n` units of time have passed, however
+-- spent -- is met by a run at slack `k` exactly when the run's
+-- duration, operations charged at their execution time, reaches `n`
+-- given `k`.
+
+⟨⟩-≼ : ∀ {k n} {t : Trace} → ⟨ n ⟩ ≼[ k ] t → n ≤ duration t + k
+⟨⟩-≼ {k} {n} {t} p =
+  subst (λ z → z ≤ duration t + k) (duration-⟨⟩ n) (duration-slack p)
 
 mutual
 
-  ≼-ε : ∀ {k} (s : Trace) → duration s ≤ k → s ≼[ k ] ε
-  ≼-ε ε               le = nil
-  ≼-ε (operation o s) le =
-    use-op (≤-trans (m≤m+n (cost o) (duration s)) le)
-           (≼-ε s (+≤⇒≤∸ le))
-  ≼-ε (delay d s⁻)    le =
-    use-delay (≤-trans (m≤m+n ∣ d ∣⁺ (duration⁻ s⁻)) le)
-              (≼-ε⁻ s⁻ (+≤⇒≤∸ le))
+  ≼-⟨⟩ : ∀ {k} (n : ℕ) (t : Trace) → n ≤ duration t + k → ⟨ n ⟩ ≼[ k ] t
+  ≼-⟨⟩ zero        t              le = nil
+  ≼-⟨⟩ {k} (suc m) ε              le =
+    use-delay (subst (_≤ k) (sym (∣1+∣⁺ m)) le) nil
+  ≼-⟨⟩ {k} (suc m) (operation o t) le =
+    pay-op (≼-⟨⟩ (suc m) t (≤-trans le (≤-reflexive (shift (cost o) (duration t) k))))
+  ≼-⟨⟩ {k} (suc m) (delay e t⁻)   le =
+    del-delay (≼-⟨⟩⁻ (suc m) t⁻
+                (≤-trans le (≤-reflexive (shift ∣ e ∣⁺ (duration⁻ t⁻) k))))
 
-  ≼-ε⁻ : ∀ {k} (s⁻ : Trace⁻) → duration⁻ s⁻ ≤ k → inj⁻ s⁻ ≼[ k ] ε
-  ≼-ε⁻ ε⁻               le = nil
-  ≼-ε⁻ (operation⁻ o s) le =
-    use-op (≤-trans (m≤m+n (cost o) (duration s)) le)
-           (≼-ε s (+≤⇒≤∸ le))
+  ≼-⟨⟩⁻ : ∀ {k} (n : ℕ) (t⁻ : Trace⁻)
+        → n ≤ duration⁻ t⁻ + k → ⟨ n ⟩ ≼[ k ] inj⁻ t⁻
+  ≼-⟨⟩⁻ zero        t⁻               le = nil
+  ≼-⟨⟩⁻ {k} (suc m) ε⁻               le =
+    use-delay (subst (_≤ k) (sym (∣1+∣⁺ m)) le) nil
+  ≼-⟨⟩⁻ {k} (suc m) (operation⁻ o t) le =
+    pay-op (≼-⟨⟩ (suc m) t (≤-trans le (≤-reflexive (shift (cost o) (duration t) k))))
 
 ------------------------------------------------------------------------
--- The characterisation against a pure delay
+-- A demand for time is met by a single operation exactly when that
+-- operation takes at least as long
 --
--- A trace lies below the pure delay `⟨ n ⟩` at slack `k` exactly when
--- its duration -- operations charged at their execution time -- fits in
--- `n + k`.
+-- This is the side condition on `ρ' = { ⌈ o ⌉ }` discharging
+-- `ρ = { ⟨ n ⟩ }` in the `unbox` rule.
 
-≼-⟨⟩ : ∀ {k} (s : Trace) (n : ℕ) → duration s ≤ n + k → s ≼[ k ] ⟨ n ⟩
-≼-⟨⟩     s zero    le = ≼-ε s le
-≼-⟨⟩ {k} s (suc m) le =
-  del-delay (≼-ε s (subst (duration s ≤_) eq le))
-  where
-    eq : suc m + k ≡ k + ∣ 1+ m ∣⁺
-    eq = trans (+-comm (suc m) k) (cong (k +_) (sym (∣1+∣⁺ m)))
+dur-⌈⌉ : (o : Op) → duration ⌈ o ⌉ + zero ≡ cost o
+dur-⌈⌉ o = trans (+-identityʳ (cost o + zero)) (+-identityʳ (cost o))
 
-⟨⟩-≼ : ∀ {k n} {s : Trace} → s ≼[ k ] ⟨ n ⟩ → duration s ≤ n + k
-⟨⟩-≼ {k} {n} {s} p =
-  subst (λ z → duration s ≤ z + k) (duration-⟨⟩ n) (duration-slack p)
+⟨⟩-≼-⌈⌉ : (n : ℕ) (o : Op) → n ≤ cost o → ⟨ n ⟩ ≼ ⌈ o ⌉
+⟨⟩-≼-⌈⌉ n o le = ≼-⟨⟩ n ⌈ o ⌉ (≤-trans le (≤-reflexive (sym (dur-⌈⌉ o))))
 
-------------------------------------------------------------------------
--- An operation fits inside a pure time budget exactly when the budget
--- covers its execution time
-
-⌈⌉-≼-⟨⟩ : (o : Op) (n : ℕ) → cost o ≤ n → ⌈ o ⌉ ≼ ⟨ n ⟩
-⌈⌉-≼-⟨⟩ o n le =
-  ≼-⟨⟩ ⌈ o ⌉ n
-       (subst₂ _≤_ (sym (+-identityʳ (cost o))) (sym (+-identityʳ n)) le)
-
-⌈⌉-≼-⟨⟩⁻ : (o : Op) (n : ℕ) → ⌈ o ⌉ ≼ ⟨ n ⟩ → cost o ≤ n
-⌈⌉-≼-⟨⟩⁻ o n p =
-  subst₂ _≤_ (+-identityʳ (cost o)) (+-identityʳ n) (⟨⟩-≼ {s = ⌈ o ⌉} p)
+⟨⟩-≼-⌈⌉⁻ : (n : ℕ) (o : Op) → ⟨ n ⟩ ≼ ⌈ o ⌉ → n ≤ cost o
+⟨⟩-≼-⌈⌉⁻ n o p =
+  ≤-trans (⟨⟩-≼ {t = ⌈ o ⌉} p) (≤-reflexive (dur-⌈⌉ o))

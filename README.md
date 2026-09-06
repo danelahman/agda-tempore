@@ -74,26 +74,26 @@ a grade system, a signature of base types, and operations' signatures.
   `ExtendedNat.agda`).
 
 - `Syntax/Grades/Example/TraceSet/` holds the grades that record *which runs* a
-  computation must have had, as non-empty finite sets of timed traces. The
-  first three share their carrier and monoid and differ only in the order:
-  `Inclusion.agda` orders sets by inclusion, `UpToSubtrace.agda` by the Smyth
-  lift of the sub-trace preorder, and `Convex.agda` by its Egli-Milner lift.
-  Despite its name the convex order is *not* a two-sided interval and never
-  caps a run from above — both its halves orient `≼` the same way.
-  `TwoSided.agda` is the two-sided interval: its carrier is a *pair* of sets,
-  a floor and a cap, with a consistency field `lo≼hi` playing the role of
-  `min≤max`, so a run must cover a trace of the floor and fit inside a trace
-  of the cap. It is the trace analogue of `Interval/TwoSided.agda`, with `≼`
-  in place of `≤`.
+  computation had, as non-empty finite sets of timed traces, and its module
+  names mirror `Interval/` one for one. `LeftSided.agda` reads a grade as a
+  *floor* under what must have happened and `RightSided.agda` as a *cap* on
+  what may have; `TwoSided.agda` pairs the two, its carrier a pair of sets with
+  a consistency field `lo≼hi` playing the role of `min≤max`. `Inclusion.agda`
+  is the odd one out — it compares sets by membership alone, so it is not an
+  interval in either direction — and `Convex.agda` is the Egli-Milner lift,
+  which despite the name is *not* a two-sided interval and never caps a run
+  from above. The two lifts to sets of traces are in
+  `Syntax/Grades/Traces/SubtraceLift.agda`: the floor takes the Smyth one and
+  the cap the Hoare one, mirroring `min i₂ ≤ min i₁` against `max i₁ ≤ max i₂`.
 
-- All the grade orders run the same way round, which is what `unbox`'s premise
-  `ρ' ≾ᵣ ρ` needs: `ρ'` records the effects that actually elapsed since the
-  boxed resource came into scope, `ρ` is the grade on the box, and a grade is
-  a *lower* bound on what must have happened. So having done more than `ρ` asks
-  for still opens the box, and having done less never does — mirroring
-  `[ m ,+∞⟩ ≾ [ n ,+∞⟩` iff `n ≤ m` for the left-sided intervals. The two lifts
-  of the sub-trace preorder used to build these orders are in
-  `Syntax/Grades/Traces/SubtraceLift.agda`.
+- The orders all run the way `unbox`'s premise `ρ' ≾ᵣ ρ` needs, with `ρ'` the
+  effects that actually elapsed and `ρ` the grade on the box. `s ≼ t` reads
+  "the run `t` does at least what `s` asks for": every operation `s` names must
+  genuinely occur in `t`, while every delay it names is paid out of the time
+  `t` spent, operations included at their execution time. So having done more
+  than the box asks for still opens it, having done less never does, elapsed
+  time discharges a demand for time — and nothing but the operation itself
+  discharges a demand for an operation.
 
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
   built on: `Positive` (the strictly positive durations a delay carries),
@@ -104,21 +104,18 @@ a grade system, a signature of base types, and operations' signatures.
 - The *cost-aware* trace-based grades read a set of timed traces against the
   operations' prescribed execution times, given by a map `cost : Op → ℕ`. The
   sub-trace preorder `Syntax/Grades/Traces/Subtrace/` is parameterised by
-  that map: alongside `use-delay`, spending slack on a leading delay of the
-  smaller trace, a `use-op` rule spends slack on a leading *operation*, at the
-  time that operation takes. So an operation performed fits inside a pure time
-  budget, `⌈ o ⌉ ≼ ⟨ n ⟩` as soon as `cost o ≤ n`. Slack is created only by
-  absorbing the *delays* of the larger trace, so the converse fails: a schedule
-  calling for an operation is not met by spending the same time on anything
-  else (`⟨suc⟩-⋠` in `Subtrace/Moves.agda`) — so a demand for an operation is
-  discharged by enough time passing, while a demand for elapsed time is not
-  discharged by having spent it on operations. The preorder itself and its
+  that map: an unmatched operation of the *elapsed* run banks `cost o` units of
+  slack (`pay-op`) alongside its delays (`del-delay`), and a demanded delay is
+  paid out of that slack (`use-delay`). So `⟨ n ⟩ ≼ ⌈ o ⌉` exactly when
+  `cost o ≥ n`. There is no rule spending slack on a demanded *operation*, so
+  the converse fails: `⌈ o ⌉ ≼ ⟨ n ⟩` never holds (`op-⋠` in
+  `Subtrace/Moves.agda`). The preorder itself and its
   reflexivity/weakening/transitivity are in `Subtrace/Core.agda`, the moves
   building sub-trace proofs in `Subtrace/Moves.agda`, and the decision
   procedure in `Subtrace/Decidable.agda`. `SubtraceDuration.agda` proves the
-  two bounds exact — `s ≼[ k ] ⟨ n ⟩` holds precisely when
-  `duration s ≤ n + k` — and `SubtraceCost.agda` that lowering the cost only
-  widens the order.
+  bound against a demanded pure delay exact — `⟨ n ⟩ ≼[ k ] t` holds precisely
+  when `n ≤ duration t + k` — and `SubtraceCost.agda` that *raising* the cost
+  widens the order, since a dearer operation banks more time.
 
 - `Syntax/Grades/Example/System/` assembles full example grade systems and
   grade morphisms between their effect and resource grades:
@@ -127,7 +124,7 @@ a grade system, a signature of base types, and operations' signatures.
   `TracesToTimeIntervals` (sets of traces to two-sided time intervals), and
   `TracesToCostAwareTraces` (sets of traces ordered by inclusion to the same
   sets ordered up to the cost-aware sub-trace preorder, and one cost model to
-  a cheaper one), and `TraceIntervalsToTraceSets` (two-sided trace intervals
+  a dearer one), and `TraceIntervalsToTraceSets` (two-sided trace intervals
   to one-sided ones, forgetting the cap — the trace counterpart of the first).
   Each projection says what a resource grade is allowed to forget about the
   effect grade it comes from.

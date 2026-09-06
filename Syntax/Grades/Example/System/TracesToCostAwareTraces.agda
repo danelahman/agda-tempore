@@ -49,9 +49,9 @@ module _ (opTime : Op → ℕ) where
   -- preorder the resource grades
 
   open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
-    using (right-sided-traces) renaming (_≾_ to _≾ˢ_)
-  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ opTime
-    using (traces-up-to-subtrace) renaming (_≾_ to _≾ᶜ_)
+    using (traces-by-inclusion) renaming (_≾_ to _≾ˢ_)
+  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ opTime
+    using (left-sided-traces) renaming (_≾_ to _≾ᶜ_)
 
   -- a trace of the smaller set is a member of the larger one, and is
   -- covered by itself there, so inclusion is contained in the sub-trace
@@ -65,7 +65,7 @@ module _ (opTime : Op → ℕ) where
   -- the two grades share their carrier and their monoid structure, so
   -- the reinterpretation is the identity on sets of traces
 
-  traces→cost-aware-traces : right-sided-traces →ᵍ traces-up-to-subtrace
+  traces→cost-aware-traces : traces-by-inclusion →ᵍ left-sided-traces
   traces→cost-aware-traces = record
     { map          = λ P → P
     ; map-monotone = λ {P} {Q} → ⊆⇒≼ {P} {Q}
@@ -76,8 +76,8 @@ module _ (opTime : Op → ℕ) where
 
   tracesToCostAwareTracesGradeSystem : GradeSystem
   tracesToCostAwareTracesGradeSystem = record
-    { RGrade = traces-up-to-subtrace
-    ; EGrade = right-sided-traces
+    { RGrade = left-sided-traces
+    ; EGrade = traces-by-inclusion
     ; ∣_∣ᵉ   = traces→cost-aware-traces
     }
 
@@ -85,29 +85,29 @@ module _ (opTime : Op → ℕ) where
 -- Reinterpreting one cost model as another
 --
 -- The cost-aware grades form a family indexed by the execution times.
--- Cheaper operations are easier to fit inside a schedule, so the order
--- widens as the cost falls and the identity on sets of traces is a
--- grade morphism from the grade at the slower cost to the faster one.
+-- Dearer operations bank more time when they elapse unmatched, so the
+-- order widens as the cost rises and the identity on sets of traces is
+-- a grade morphism from the grade at the cheaper cost to the dearer.
 
 module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
 
   open import Syntax.Grades.Traces.Sets Op
   open import Syntax.Grades.Traces.SubtraceCost Op c c' c≤c'
-    using (≼-cost-anti₀)
+    using (≼-cost-mono₀)
 
-  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c'
-    using () renaming (traces-up-to-subtrace to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
-  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c
-    using () renaming (traces-up-to-subtrace to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
+  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c'
+    using () renaming (left-sided-traces to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
+  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
+    using () renaming (left-sided-traces to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
 
-  ≾-cost-anti : {P Q : NeTraces} → P ≾ˢˡᵒʷ Q → P ≾ᶠᵃˢᵗ Q
-  ≾-cost-anti {P} {Q} rel s m =
-    fromWitness (Any.map ≼-cost-anti₀ (toWitness (rel s m)))
+  ≾-cost-mono : {P Q : NeTraces} → P ≾ᶠᵃˢᵗ Q → P ≾ˢˡᵒʷ Q
+  ≾-cost-mono {P} {Q} rel t m =
+    fromWitness (Any.map ≼-cost-mono₀ (toWitness (rel t m)))
 
-  slow-traces→fast-traces : traces-slow →ᵍ traces-fast
-  slow-traces→fast-traces = record
+  fast-traces→slow-traces : traces-fast →ᵍ traces-slow
+  fast-traces→slow-traces = record
     { map          = λ P → P
-    ; map-monotone = λ {P} {Q} → ≾-cost-anti {P} {Q}
+    ; map-monotone = λ {P} {Q} → ≾-cost-mono {P} {Q}
     ; map-u        = refl
     ; map-·        = refl
     ; map-of-nat   = refl
@@ -115,7 +115,7 @@ module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
 
   costAwareTracesGradeSystem : GradeSystem
   costAwareTracesGradeSystem = record
-    { RGrade = traces-fast
-    ; EGrade = traces-slow
-    ; ∣_∣ᵉ   = slow-traces→fast-traces
+    { RGrade = traces-slow
+    ; EGrade = traces-fast
+    ; ∣_∣ᵉ   = fast-traces→slow-traces
     }

@@ -8,14 +8,16 @@
 -- monotonicity of the trace product, which is what makes the           --
 -- sub-trace lift of the order compatible with the language product.    --
 --                                                                     --
--- The section on delay-free traces records the asymmetry the order is  --
--- built around: slack comes from delays alone, so time spent on        --
--- operations never stands in for a schedule's delay.                   --
+-- The section on operation-free runs records the asymmetry the order   --
+-- is built around: a demanded operation is met only by that operation  --
+-- occurring, so no amount of elapsed time stands in for it.            --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
 open import Data.Nat.Properties
   using (+-comm; +-assoc; ≤-trans; m≤m+n; m+[n∸m]≡n; m∸n+n≡m; +-∸-comm)
+
+open import Data.Empty using (⊥-elim)
 
 open import Relation.Nullary using (¬_)
 
@@ -29,26 +31,32 @@ open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺;
 open import Syntax.Grades.Traces.Subtrace.Core Op cost
 
 ------------------------------------------------------------------------
--- Operations do not pay for delays
+-- Time does not pay for operations
 --
--- Slack is created by `del-delay` alone, so a right-hand trace built
--- from operations offers none, however long those operations take, and
--- the leading delay of `⟨ suc n ⟩` cannot be covered. Time spent on
--- operations therefore never stands in for a schedule's delay -- the
--- converse of `use-op` letting an operation be covered by a delay.
+-- A demanded operation is discharged only by `keep`, which needs that
+-- very operation to occur in the run. So a run that performs none --
+-- however long it idles -- meets no demand that names one. This is the
+-- asymmetry the order is built around, and the converse of `use-delay`
+-- letting a demanded delay be met by any elapsed time.
 
-data Delay-free : Trace → Set where
-  ε-free  : Delay-free ε
-  op-free : ∀ {o t} → Delay-free t → Delay-free (operation o t)
+data Op-free : Trace → Set where
+  ε-free   : Op-free ε
+  del-free : ∀ {d} → Op-free (delay d ε⁻)
 
-1+≰0 : (n : ℕ) → ¬ (∣ 1+ n ∣⁺ ≤ zero)
-1+≰0 n p with subst (_≤ zero) (∣1+∣⁺ n) p
-... | ()
+-- nothing meets a demand that names an operation once the run is spent
 
-⟨suc⟩-⋠ : (n : ℕ) {t : Trace} → Delay-free t → ¬ (⟨ suc n ⟩ ≼ t)
-⟨suc⟩-⋠ n ε-free      (use-delay p _) = 1+≰0 n p
-⟨suc⟩-⋠ n (op-free _) (use-delay p _) = 1+≰0 n p
-⟨suc⟩-⋠ n (op-free f) (del-op d)      = ⟨suc⟩-⋠ n f d
+op-⋠-ε : ∀ {k o s} → ¬ (operation o s ≼[ k ] ε)
+op-⋠-ε ()
+
+op-⋠ : ∀ {k o s t} → Op-free t → ¬ (operation o s ≼[ k ] t)
+op-⋠ ε-free   d               = op-⋠-ε d
+op-⋠ del-free (del-delay d)   = op-⋠-ε d
+
+-- in particular, no pure delay meets a demand for an operation
+
+⌈⌉-⋠⟨⟩ : ∀ {k} (o : Op) (n : ℕ) → ¬ (⌈ o ⌉ ≼[ k ] ⟨ n ⟩)
+⌈⌉-⋠⟨⟩ o zero    = op-⋠ ε-free
+⌈⌉-⋠⟨⟩ o (suc n) = op-⋠ del-free
 
 ------------------------------------------------------------------------
 -- Inversion of `del-delay`: a leading delay on the right can always be
@@ -57,9 +65,6 @@ data Delay-free : Trace → Set where
 del-delay-inv : ∀ {k e t t⁻} → t ≼[ k ] delay e t⁻ → t ≼[ k + ∣ e ∣⁺ ] inj⁻ t⁻
 del-delay-inv nil               = nil
 del-delay-inv (del-delay d)     = d
-del-delay-inv {k} {e} (use-op p d') =
-  use-op (≤-trans p (m≤m+n k ∣ e ∣⁺))
-         (coe (sym (+-∸-comm ∣ e ∣⁺ p)) (del-delay-inv d'))
 del-delay-inv {k} {e} (use-delay {d = d} p d') =
   use-delay (≤-trans p (m≤m+n k ∣ e ∣⁺))
             (coe (sym (+-∸-comm ∣ e ∣⁺ p)) (del-delay-inv d'))
@@ -92,7 +97,8 @@ bumpL {m} d (use-delay {d = e} p prem) =
            (sym (trans (cong ((m + ∣ d ∣⁺) ∸_) (∣∣⁺-+⁺ d e))
                        (∸-cancel m ∣ d ∣⁺ ∣ e ∣⁺)))
            prem)
-bumpL d (del-op prem)               = del-op (bumpL d prem)
+bumpL {m} d (pay-op {o = o} prem)   =
+  pay-op (coe (lem-swap m (cost o) ∣ d ∣⁺) (bumpL d prem))
 bumpL {m} d (del-delay {e = f} prem) =
   del-delay (coe (lem-swap m ∣ f ∣⁺ ∣ d ∣⁺) (bumpL d prem))
 
@@ -128,12 +134,10 @@ pad-left {k} (delay d (operation⁻ o c'')) D =
 
 prepend-left : ∀ {c sₐ} (t : Trace) → sₐ ≼[ c ] ε → (sₐ ∙ t) ≼[ c ] t
 prepend-left t nil                                       = ≼-refl t
-prepend-left t (use-op p d)                              =
-  use-op p (prepend-left t d)
 prepend-left {c} t (use-delay {d = d} {s⁻ = ε⁻} p _)     =
   spendL d t p (≼-refl t)
 prepend-left t (use-delay {s⁻ = operation⁻ o s''} p d')  =
-  use-delay p (prepend-left t d')
+  ⊥-elim (op-⋠-ε d')
 
 ------------------------------------------------------------------------
 -- Monotonicity of the trace product (the slacks add up)
@@ -143,16 +147,14 @@ mono-∙ : ∀ {j k s s' t t'}
 mono-∙ {j} {k} {s' = s'} nil D2 =
   coe (+-comm k j) (weaken j (pad-left s' D2))
 mono-∙ (keep d1)   D2 = keep   (mono-∙ d1 D2)
-mono-∙ (del-op d1) D2 = del-op (mono-∙ d1 D2)
+mono-∙ {j} {k} (pay-op {o = o} d1) D2 =
+  pay-op (coe (lem-swap j (cost o) k) (mono-∙ d1 D2))
 mono-∙ {j} {k} {t' = t'} (del-delay {e = e} {t⁻ = ε⁻} d1) D2 =
   absorbR e _
     (coe (lem-swap j ∣ e ∣⁺ k)
            (≼-trans (prepend-left _ d1) D2))
 mono-∙ {j} {k} (del-delay {e = e} {t⁻ = operation⁻ o s'''} d1) D2 =
   del-delay (coe (lem-swap j ∣ e ∣⁺ k) (mono-∙ d1 D2))
-mono-∙ {j} {k} (use-op p d1) D2 =
-  use-op (≤-trans p (m≤m+n j k))
-         (coe (sym (+-∸-comm k p)) (mono-∙ d1 D2))
 mono-∙ {j} {k} {s' = s'} (use-delay {d = d} {s⁻ = ε⁻} p d1) D2 =
   spendL d _ (≤-trans p (m≤m+n j k))
     (coe

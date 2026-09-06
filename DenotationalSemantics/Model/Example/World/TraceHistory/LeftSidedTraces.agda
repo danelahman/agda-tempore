@@ -21,7 +21,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesUpToSubtrace
+module DenotationalSemantics.Model.Example.World.TraceHistory.LeftSidedTraces
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (find)
@@ -34,8 +34,8 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op c
-open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c
-  using (traces-up-to-subtrace; _≾_)
+open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
+  using (left-sided-traces; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -114,7 +114,7 @@ open _⊑ʰ[_]_
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World traces-up-to-subtrace
+histories : World left-sided-traces
 histories = record
   { W             = Trace
   ; _⊑[_]_       = _⊑ʰ[_]_

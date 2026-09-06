@@ -37,7 +37,7 @@ open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 
 open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
-  using (right-sided-traces; _≾_)
+  using (traces-by-inclusion; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -101,7 +101,7 @@ w ⊑ᵗ[ P ] w' = True (any? (λ t → w' ≟ (w + duration t)) (traces P))
 
 -- The frame.
 
-ticks : World right-sided-traces
+ticks : World traces-by-inclusion
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

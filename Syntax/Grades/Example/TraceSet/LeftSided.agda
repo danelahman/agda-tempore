@@ -26,7 +26,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.TraceSet.UpToSubtrace
+module Syntax.Grades.Example.TraceSet.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.List.Relation.Unary.Any using (any?)
@@ -98,8 +98,8 @@ P ≾ Q = traces Q ≽ˢ traces P
 -- The grade of (non-empty) sets of timed traces, ordered up to the
 -- sub-trace preorder
 
-traces-up-to-subtrace : Grade
-traces-up-to-subtrace = record
+left-sided-traces : Grade
+left-sided-traces = record
   { Carrier         = NeTraces
   ; _·_             = _·_
   ; u               = u

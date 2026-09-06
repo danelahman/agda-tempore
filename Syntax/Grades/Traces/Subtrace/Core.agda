@@ -1,10 +1,20 @@
 ------------------------------------------------------------------------
 -- The slack-indexed sub-trace relation, and its preorder structure.   --
 --                                                                     --
--- `s ≼[ k ] t` reads: the trace `s` fits inside the schedule `t` given --
--- `k` extra units of slack to spend. Slack is created by absorbing a   --
--- delay of the right-hand trace and spent on a leading delay or        --
--- operation of the left-hand one, at that operation's execution time.  --
+-- `s ≼[ k ] t` reads: the run `t` does at least what `s` asks for,     --
+-- given `k` units of slack already banked. Read as a demand `s` and    --
+-- an elapsed run `t`:                                                  --
+--                                                                     --
+--   * every operation `s` demands must genuinely occur in `t`, in      --
+--     order (`keep`) -- it is never bought with time;                  --
+--   * every delay `s` demands is paid out of slack (`use-delay`),      --
+--     and slack is banked from whatever `t` did that `s` did not ask   --
+--     for: its unmatched operations at their execution time            --
+--     (`pay-op`) and its delays at their length (`del-delay`).         --
+--                                                                     --
+-- So `s` is a subsequence of `t` whose demanded delays are covered by  --
+-- the elapsed time in between. Time discharges a demand for time;      --
+-- nothing discharges a demand for an operation but the operation.      --
 --                                                                     --
 -- The relation is a preorder at the slacks: reflexive at any slack,    --
 -- weakenable to more slack, and transitive with the slacks adding up.  --
@@ -80,41 +90,33 @@ infix 4 _≼[_]_
 
 data _≼[_]_ : Trace → ℕ → Trace → Set where
 
-  -- the empty trace lies below anything: drop all operations of `t` and
-  -- decrease all of its delays to zero
+  -- the empty trace demands nothing, so anything meets it
   nil       : ∀ {k t}
             ------------
             → ε ≼[ k ] t
 
-  -- keep a leading operation (no leading delay on either side)
+  -- a demanded operation is met by the same operation occurring
   keep      : ∀ {k o s t}
             → s ≼[ k ] t
             ------------------------------------
             → operation o s ≼[ k ] operation o t
 
-  -- delete the leading operation of the right-hand trace
-  del-op    : ∀ {k o s t}
-            → s ≼[ k ] t
+  -- an operation of the right-hand run that was not demanded is banked
+  -- as slack, at the execution time it takes
+  pay-op    : ∀ {k o s t}
+            → s ≼[ k + cost o ] t
             ------------------------
             → s ≼[ k ] operation o t
 
-  -- absorb the leading delay of the right-hand trace into the slack;
-  -- this is what lets several right-hand delays collapse together as the
-  -- operations between them are deleted
+  -- likewise a delay of the right-hand run, at its length; this is what
+  -- lets several right-hand delays collapse together as the operations
+  -- between them are banked
   del-delay : ∀ {k e s t⁻}
             → s ≼[ k + ∣ e ∣⁺ ] inj⁻ t⁻
             ---------------------------
             → s ≼[ k ] delay e t⁻
 
-  -- spend slack to cover the leading operation of the left-hand trace,
-  -- at the execution time that operation takes
-  use-op    : ∀ {k o s t}
-            → cost o ≤ k
-            → s ≼[ k ∸ cost o ] t
-            ------------------------
-            → operation o s ≼[ k ] t
-
-  -- spend slack to cover the leading delay of the left-hand trace
+  -- spend slack to meet a demanded delay
   use-delay : ∀ {k d s⁻ t}
             → ∣ d ∣⁺ ≤ k
             → inj⁻ s⁻ ≼[ k ∸ ∣ d ∣⁺ ] t
@@ -155,53 +157,50 @@ mutual
 weaken : ∀ {j s t} (m : ℕ) → s ≼[ j ] t → s ≼[ j + m ] t
 weaken m nil                       = nil
 weaken m (keep d)                  = keep (weaken m d)
-weaken m (del-op d)                = del-op (weaken m d)
+weaken {j} m (pay-op {o = o} d)    =
+  pay-op (coe (lem-swap j (cost o) m) (weaken m d))
 weaken {j} m (del-delay {e = e} d) =
   del-delay (coe (lem-swap j ∣ e ∣⁺ m) (weaken m d))
-weaken {j} m (use-op p d') =
-  use-op (≤-trans p (m≤m+n j m))
-         (coe (sym (+-∸-comm m p)) (weaken m d'))
 weaken {j} m (use-delay {d = d} p d') =
   use-delay (≤-trans p (m≤m+n j m))
             (coe (sym (+-∸-comm m p)) (weaken m d'))
+
+-- Dropping an operation of the right-hand run without spending what it
+-- banks is the special case that only weakens the slack.
+
+del-op : ∀ {k o s t} → s ≼[ k ] t → s ≼[ k ] operation o t
+del-op {k} {o} d = pay-op (weaken (cost o) d)
 
 ------------------------------------------------------------------------
 -- Transitivity: the slacks add up
 
 ≼-trans : ∀ {j k s t u} → s ≼[ j ] t → t ≼[ k ] u → s ≼[ j + k ] u
 ≼-trans nil                       _                       = nil
--- left factor keeps an operation
+-- the demand keeps an operation, which the middle run has
 ≼-trans (keep d1)        (keep d2)                        = keep (≼-trans d1 d2)
-≼-trans {j} {k} (keep d1) (use-op p d2)                   =
-  use-op (≤-trans p (m≤n+m k j))
-         (coe (sym (+-∸-assoc j p)) (≼-trans d1 d2))
-≼-trans (keep d1)        (del-op d2)                      = del-op (≼-trans (keep d1) d2)
+≼-trans {j} {k} (keep d1) (pay-op {o = o} d2)             =
+  pay-op (coe (sym (+-assoc j k (cost o))) (≼-trans (keep d1) d2))
 ≼-trans {j} {k} (keep d1) (del-delay {e = e} d2)          =
-  del-delay (coe (sym (+-assoc j k ∣ e ∣⁺))
-            (≼-trans (keep d1) d2))
--- left factor deletes an operation of the middle trace
-≼-trans (del-op d1)      (keep d2)                        = del-op (≼-trans d1 d2)
-≼-trans {j} {k} (del-op d1) (use-op {o = o} p d2)         =
-  coe (trans (+-assoc j (k ∸ cost o) (cost o))
-             (cong (j +_) (m∸n+n≡m p)))
-      (weaken (cost o) (≼-trans d1 d2))
-≼-trans (del-op d1)      (del-op d2)                      = del-op (≼-trans (del-op d1) d2)
-≼-trans {j} {k} (del-op d1) (del-delay {e = e} d2)        =
-  del-delay (coe (sym (+-assoc j k ∣ e ∣⁺))
-            (≼-trans (del-op d1) d2))
--- left factor absorbs the leading delay of the middle trace
+  del-delay (coe (sym (+-assoc j k ∣ e ∣⁺)) (≼-trans (keep d1) d2))
+-- the demand banks an operation of the middle run, which the right-hand
+-- run must therefore also have
+≼-trans {j} {k} (pay-op {o = o} d1) (keep d2)             =
+  pay-op (coe (lem-swap j (cost o) k) (≼-trans d1 d2))
+≼-trans {j} {k} (pay-op d1) (pay-op {o = o} d2)           =
+  pay-op (coe (sym (+-assoc j k (cost o))) (≼-trans (pay-op d1) d2))
+≼-trans {j} {k} (pay-op d1) (del-delay {e = e} d2)        =
+  del-delay (coe (sym (+-assoc j k ∣ e ∣⁺)) (≼-trans (pay-op d1) d2))
+-- the demand banks a delay of the middle run
 ≼-trans {j} {k} (del-delay {e = e} d1) (use-delay p d2)   =
   coe
         (trans (+-assoc j ∣ e ∣⁺ (k ∸ ∣ e ∣⁺)) (cong (j +_) (m+[n∸m]≡n p)))
         (≼-trans d1 d2)
-≼-trans (del-delay d1)   (del-op d2)                      = del-op (≼-trans (del-delay d1) d2)
+≼-trans {j} {k} (del-delay d1) (pay-op {o = o} d2)        =
+  pay-op (coe (sym (+-assoc j k (cost o))) (≼-trans (del-delay d1) d2))
 ≼-trans {j} {k} (del-delay d1) (del-delay {e = f} d2)     =
   del-delay (coe (sym (+-assoc j k ∣ f ∣⁺))
             (≼-trans (del-delay d1) d2))
--- left factor spends slack on its own leading operation or delay
-≼-trans {j} {k} (use-op p d1) D2                          =
-  use-op (≤-trans p (m≤m+n j k))
-         (coe (sym (+-∸-comm k p)) (≼-trans d1 D2))
+-- the demand spends slack on its own leading delay
 ≼-trans {j} {k} (use-delay {d = d} p d1) D2               =
   use-delay (≤-trans p (m≤m+n j k))
             (coe (sym (+-∸-comm k p)) (≼-trans d1 D2))

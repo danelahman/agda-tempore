@@ -69,10 +69,15 @@ import Syntax.Grades.Example.Interval.TwoSidedWithInfinity
 
 import Syntax.Grades.Example.TraceSet.Inclusion
 
--- ordered by the Smyth lift of the sub-trace preorder: a demand is
--- discharged by having done at least what one of its runs asks for
+-- a floor: a demand is discharged by having done at least what one of
+-- its runs asks for.  The trace analogue of `Interval.LeftSided`
 
-import Syntax.Grades.Example.TraceSet.UpToSubtrace
+import Syntax.Grades.Example.TraceSet.LeftSided
+
+-- a cap: a run stays within the grade by doing at most what one of its
+-- runs allows.  The trace analogue of `Interval.RightSided`
+
+import Syntax.Grades.Example.TraceSet.RightSided
 
 -- ordered by the convex (Egli-Milner) lift: as above, and additionally
 -- every listed demand must be achievable by a run already present.
@@ -80,8 +85,8 @@ import Syntax.Grades.Example.TraceSet.UpToSubtrace
 
 import Syntax.Grades.Example.TraceSet.Convex
 
--- a *pair* of sets, a floor and a cap, bounding a run from both sides
--- by the sub-trace preorder: the trace analogue of `Interval.TwoSided`
+-- a *pair* of sets, one of each of the two above, bounding a run from
+-- both sides: the trace analogue of `Interval.TwoSided`
 
 import Syntax.Grades.Example.TraceSet.TwoSided
 

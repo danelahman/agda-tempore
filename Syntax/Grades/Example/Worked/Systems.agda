@@ -21,12 +21,13 @@ module Syntax.Grades.Example.Worked.Systems where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List.Base using ([]; _∷_)
-open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.Product using (_,_)
 open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_)
-open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse)
+open import Relation.Nullary.Decidable using (toWitness; toWitnessFalse; fromWitness)
 
 open import Syntax.Grades using (_→ᵍ_)
 
@@ -98,7 +99,15 @@ open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
   using () renaming (_≾_ to _≾ⁱ_)
 
 open import Syntax.Grades.Example.Worked.TraceSets
-  using (did-uplink; incl; meets; write-by-waiting)
+  using (module Inclusion; module LeftSided)
+
+open Inclusion using () renaming (listed to incl)
+open LeftSided using () renaming (_≾!_ to _≾ˡᵒ!_)
+
+-- the node either polls or does the full uplink
+
+did-uplink : NeTraces
+did-uplink = set₁ uplink
 
 -- the node either polls or does the full uplink, and offering only the
 -- uplink is an inclusion into that
@@ -199,9 +208,9 @@ restricted-grade = refl
 -- strict, so this projection really does coarsen.
 
 open import Syntax.Grades.Example.System.TracesToCostAwareTraces spec
-  using (traces→cost-aware-traces; slow-traces→fast-traces)
+  using (traces→cost-aware-traces; fast-traces→slow-traces)
 
-open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ cost
+open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ˢ_)
 
 -- the carrier is untouched
@@ -235,39 +244,44 @@ open import Syntax.Grades.Traces.Subtrace Op slow
 open DecFast _≟ₒ_ using () renaming (_≼?_ to _≼ᶠ?_)
 open DecSlow _≟ₒ_ using () renaming (_≼?_ to _≼ˢˡ?_)
 
-open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ fast
+open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ fast
   using () renaming (_≾_ to _≾ᶠ_)
 
--- A demand for a write is discharged by enough time passing, at the
--- write's execution time. That is 3 ticks under `slow` and 2 under
--- `fast`, so two ticks suffice only in the fast model.
+-- An elapsed write banks its execution time -- 2 ticks under `fast`,
+-- 3 under `slow` -- so a demand for three ticks is discharged by a
+-- write only in the dearer model.
 
-write-fits-fast : ⌈ write ⌉ ≼ᶠ ⟨ 2 ⟩
-write-fits-fast = toWitness {a? = ⌈ write ⌉ ≼ᶠ? ⟨ 2 ⟩} tt
+write-banks-two : ⟨ 2 ⟩ ≼ᶠ ⌈ write ⌉
+write-banks-two = toWitness {a? = ⟨ 2 ⟩ ≼ᶠ? ⌈ write ⌉} tt
 
-write-misses-slow : ¬ (⌈ write ⌉ ≼ˢˡ ⟨ 2 ⟩)
-write-misses-slow = toWitnessFalse {a? = ⌈ write ⌉ ≼ˢˡ? ⟨ 2 ⟩} tt
+write-banks-no-three-fast : ¬ (⟨ 3 ⟩ ≼ᶠ ⌈ write ⌉)
+write-banks-no-three-fast = toWitnessFalse {a? = ⟨ 3 ⟩ ≼ᶠ? ⌈ write ⌉} tt
 
--- three ticks discharge it in both, and the morphism is what carries
--- the slow ordering over to the fast model
+write-banks-three-slow : ⟨ 3 ⟩ ≼ˢˡ ⌈ write ⌉
+write-banks-three-slow = toWitness {a? = ⟨ 3 ⟩ ≼ˢˡ? ⌈ write ⌉} tt
 
-waited-three : NeTraces
-waited-three = set₁ ⟨ 3 ⟩
+-- so the dearer model has the wider order, and the morphism carries a
+-- cheap-model ordering into it
 
-demand-write : NeTraces
-demand-write = set₁ ⌈ write ⌉
+meets-fast : {P Q : NeTraces}
+           → ({t : Trace} → t ∈ traces P → Any (_≼ᶠ t) (traces Q)) → P ≾ᶠ Q
+meets-fast f t m = fromWitness (f (toWitness m))
 
-write-slow : waited-three ≾ˢ demand-write
-write-slow = meets λ { (here refl) → here write-by-waiting }
+did-write demand-two : NeTraces
+did-write  = set₁ ⌈ write ⌉
+demand-two = set₁ ⟨ 2 ⟩
 
-cheaper-keeps-order : waited-three ≾ᶠ demand-write
-cheaper-keeps-order =
-  map-monotone (slow-traces→fast-traces fast slow fast≤slow)
-               {waited-three} {demand-write} write-slow
+write-fast : did-write ≾ᶠ demand-two
+write-fast =
+  meets-fast {did-write} {demand-two} λ { (here refl) → here write-banks-two }
 
--- the converse is not a morphism: two ticks discharge the demand in the
--- fast model and not in the slow one, so the fast order is strictly the
--- wider of the two
+dearer-keeps-order : did-write ≾ˢ demand-two
+dearer-keeps-order =
+  map-monotone (fast-traces→slow-traces fast slow fast≤slow)
+               {did-write} {demand-two} write-fast
 
-fast-order-is-wider : ¬ (⌈ write ⌉ ≼ˢˡ ⟨ 2 ⟩)
-fast-order-is-wider = write-misses-slow
+-- the converse is not a morphism: three ticks are discharged by a write
+-- in the slow model and not in the fast one
+
+slow-order-is-wider : ¬ (⟨ 3 ⟩ ≼ᶠ ⌈ write ⌉)
+slow-order-is-wider = write-banks-no-three-fast

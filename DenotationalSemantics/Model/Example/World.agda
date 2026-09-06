@@ -59,7 +59,12 @@ import DenotationalSemantics.Model.Example.World.Ticks.SetOfTraces
 -- reach *at least* a trace duration ahead: the sub-trace order reads a
 -- grade as a floor, so the reach has the left-sided interval's shape
 
-import DenotationalSemantics.Model.Example.World.Ticks.SetOfTracesUpToSubtrace
+import DenotationalSemantics.Model.Example.World.Ticks.LeftSidedTraces
+
+-- advance at most a cap-trace's duration ahead: the right-sided
+-- interval frame, with the bound read off a trace of the grade
+
+import DenotationalSemantics.Model.Example.World.Ticks.RightSidedTraces
 
 -- reach into the window between a floor-trace's and a cap-trace's
 -- duration: the two-sided interval frame, with both endpoints read off
@@ -88,7 +93,7 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTraces
 
 -- append a continuation that has some member of the grade inside it
 
-import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesUpToSubtrace
+import DenotationalSemantics.Model.Example.World.TraceHistory.LeftSidedTraces
 
 -- the convex order reaches the same worlds: only its Smyth half is read
 -- by the frame, the Hoare half constraining which coercions exist
@@ -100,7 +105,11 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvex
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvexMayMust
 
+-- append a continuation that stays within some member of the cap
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.RightSidedTraces
+
 -- append a continuation bounded on both sides: it covers a member of
--- the floor and fits inside a member of the cap
+-- the floor and stays within a member of the cap
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedTraces

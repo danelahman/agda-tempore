@@ -89,7 +89,7 @@ module _ (opTime : Op → Interval) where
     eqᵢ (Lo.minSetDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
         (Hi.setDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
 
-  traces→time-intervals : right-sided-traces →ᵍ two-sided-intervals
+  traces→time-intervals : traces-by-inclusion →ᵍ two-sided-intervals
   traces→time-intervals = record
     { map          = mapᵢ
     ; map-monotone = λ {P} {Q} → mapᵢ-monotone {P} {Q}
@@ -102,6 +102,6 @@ module _ (opTime : Op → Interval) where
   traceToIntervalsGradeSystem : GradeSystem
   traceToIntervalsGradeSystem = record
     { RGrade = two-sided-intervals
-    ; EGrade = right-sided-traces
+    ; EGrade = traces-by-inclusion
     ; ∣_∣ᵉ   = traces→time-intervals
     }

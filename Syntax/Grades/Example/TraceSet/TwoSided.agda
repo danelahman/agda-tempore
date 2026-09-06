@@ -16,7 +16,7 @@
 -- The order weakens each endpoint outwards, again mirroring            --
 -- `min i₂ ≤ min i₁ × max i₁ ≤ max i₂`:                                --
 --                                                                     --
---   [ L₁ , U₁ ] ≾ [ L₂ , U₂ ]   iff   L₁ ≾ L₂ in `TraceSet.UpToSubtrace` --
+--   [ L₁ , U₁ ] ≾ [ L₂ , U₂ ]   iff   L₁ ≾ L₂ in `TraceSet.LeftSided` --
 --                                and  U₁ ≼ˢ U₂                        --
 --                                                                     --
 -- so the floor may drop and the cap may rise. `unbox`'s premise        --
@@ -49,10 +49,13 @@ open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op cost using (_≼_; module DecSubtrace)
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 
--- the floor is ordered exactly as the one-sided trace grade is
+-- each endpoint is ordered exactly as the corresponding one-sided
+-- trace grade orders it
 
-open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ cost
+open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ˡᵒ_)
+open import Syntax.Grades.Example.TraceSet.RightSided Op _≟ₒ_ cost
+  using () renaming (_≾_ to _≾ʰⁱ_)
 
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -116,7 +119,7 @@ uᵗⁱ = [ u , u , ≼ˢ-refl {traces u} ]
 infix 5 _≾ᵗⁱ_
 
 _≾ᵗⁱ_ : TraceInterval → TraceInterval → Set
-i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (traces (hi i₁) ≼ˢ traces (hi i₂))
+i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 
 ≾ᵗⁱ-refl : {i : TraceInterval} → i ≾ᵗⁱ i
 ≾ᵗⁱ-refl {i} = ≽ˢ-refl {traces (lo i)} , ≼ˢ-refl {traces (hi i)}
@@ -148,7 +151,7 @@ i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (traces (hi i₁) ≼ˢ trac
 -- Only the cap carries information at the unit: `[ L , U ] ≾ uᵗⁱ` asks
 -- that every trace of `U` take no time, and durations add along
 -- sequencing, so a product below the unit has both factors below it.
--- The floor half is vacuous, as it is in `TraceSet.UpToSubtrace`.
+-- The floor half is vacuous, as it is in `TraceSet.LeftSided`.
 
 ≾ᵗⁱ-zero-productˡ : {i₁ i₂ : TraceInterval} → (i₁ ·ᵗⁱ i₂) ≾ᵗⁱ uᵗⁱ → i₁ ≾ᵗⁱ uᵗⁱ
 ≾ᵗⁱ-zero-productˡ {i₁} {i₂} (_ , h) =

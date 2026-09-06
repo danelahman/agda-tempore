@@ -5,7 +5,7 @@
 -- `System.IntervalsToLeftSidedIntervals`. Effect grades are two-sided  --
 -- trace intervals, bounding a computation's runs from both sides;      --
 -- resource grades are the one-sided trace grades of                    --
--- `TraceSet.UpToSubtrace`, which keep the floor alone. The projection  --
+-- `TraceSet.LeftSided`, which keep the floor alone. The projection  --
 -- forgets the cap, so a resource grade says only what a computation is --
 -- guaranteed to have done, not what it is forbidden from doing.        --
 --                                                                     --
@@ -36,12 +36,12 @@ module _ (opTime : Op → ℕ) where
 
   open import Syntax.Grades.Example.TraceSet.TwoSided Op _≟ₒ_ opTime
     using (two-sided-traces; lo)
-  open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ opTime
-    using (traces-up-to-subtrace)
+  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ opTime
+    using (left-sided-traces)
 
   -- the projection reads off the floor
 
-  trace-intervals→traces : two-sided-traces →ᵍ traces-up-to-subtrace
+  trace-intervals→traces : two-sided-traces →ᵍ left-sided-traces
   trace-intervals→traces = record
     { map          = lo
     ; map-monotone = proj₁
@@ -52,7 +52,7 @@ module _ (opTime : Op → ℕ) where
 
   traceIntervalsToTraceSetsGradeSystem : GradeSystem
   traceIntervalsToTraceSetsGradeSystem = record
-    { RGrade = traces-up-to-subtrace
+    { RGrade = left-sided-traces
     ; EGrade = two-sided-traces
     ; ∣_∣ᵉ   = trace-intervals→traces
     }

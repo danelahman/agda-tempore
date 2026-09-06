@@ -27,7 +27,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.Ticks.SetOfTracesUpToSubtrace
+module DenotationalSemantics.Model.Example.World.Ticks.LeftSidedTraces
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Nat using (_+_; _≤_; _≤?_)
@@ -46,8 +46,8 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ c
-  using (traces-up-to-subtrace; _≾_)
+open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
+  using (left-sided-traces; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -116,7 +116,7 @@ w ⊑ᵗ[ P ] w' = True (any? (λ t → (w + duration t) ≤? w') (traces P))
 ⊑ᵗ-irrelevant {P} {w} {w'} p q =
   True-irr (any? (λ t → (w + duration t) ≤? w') (traces P)) p q
 
-ticks : World traces-up-to-subtrace
+ticks : World left-sided-traces
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

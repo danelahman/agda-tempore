@@ -25,7 +25,7 @@ open import Syntax.Grades.Example.TraceSet.Convex Op _≟ₒ_ c using (traces-co
 
 open import DenotationalSemantics.Model.World
 
-open import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesUpToSubtrace
+open import DenotationalSemantics.Model.Example.World.TraceHistory.LeftSidedTraces
   Op _≟ₒ_ c using (_⊑ʰ[_]_; ⊑ʰ-refl; ⊑ʰ-trans; ⊑ʰ-mono; ⊑ʰ-irrelevant)
 
 histories : World traces-convex

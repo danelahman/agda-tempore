@@ -35,9 +35,9 @@ module _ (OpPred : Op → Bool) where
   -- effect grades, those over the `OpPred`-operations the resource grades
 
   open import Syntax.Grades.Example.TraceSet.Inclusion Op  _≟ₒ_
-    using () renaming (right-sided-traces to traces-E)
+    using () renaming (traces-by-inclusion to traces-E)
   open import Syntax.Grades.Example.TraceSet.Inclusion Op' _≟ₒ'_
-    using () renaming (right-sided-traces to traces-R)
+    using () renaming (traces-by-inclusion to traces-R)
 
   open import Syntax.Grades.Traces.Sets
 
