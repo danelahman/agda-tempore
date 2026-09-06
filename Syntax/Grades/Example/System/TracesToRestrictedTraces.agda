@@ -34,10 +34,10 @@ module _ (OpPred : Op → Bool) where
   -- the (non-empty) sets of timed traces over all operations provide the
   -- effect grades, those over the `OpPred`-operations the resource grades
 
-  open import Syntax.Grades.Example.TraceSet.Inclusion Op  _≟ₒ_
-    using () renaming (traces-by-inclusion to traces-E)
-  open import Syntax.Grades.Example.TraceSet.Inclusion Op' _≟ₒ'_
-    using () renaming (traces-by-inclusion to traces-R)
+  open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op  _≟ₒ_
+    using () renaming (inclusion-right-sided to traces-E)
+  open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op' _≟ₒ'_
+    using () renaming (inclusion-right-sided to traces-R)
 
   open import Syntax.Grades.Traces.Sets
 

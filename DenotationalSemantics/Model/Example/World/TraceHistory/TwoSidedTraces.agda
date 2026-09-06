@@ -8,13 +8,15 @@
 -- the sub-trace preorder:                                             --
 --                                                                    --
 --   w ⊑ᵇ[ [ L , U ] ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'              --
---                                  and  t ≼ cont   for some  t ∈ L    --
+--                                  and  t ≼ cont   for every t ∈ L    --
 --                                  and  cont ≼ s   for some  s ∈ U    --
 --                                                                    --
--- The floor half is covariant along the Smyth lift and the cap half    --
--- along the Hoare lift, which is exactly how the grade order pairs     --
--- them, so `⊑-mono` consumes one half of the order per half of the     --
--- relation. This is the trace-level counterpart of                     --
+-- The two quantifiers differ because the grade compares its endpoints  --
+-- in opposite directions: weakening replaces each floor demand by one  --
+-- already covered, so all of them must be met, while it replaces some  --
+-- cap allowance by a larger one, so one suffices. `⊑-mono` therefore   --
+-- consumes one half of the order per half of the relation. This is     --
+-- the trace-level counterpart of                                       --
 -- `TraceHistory.TwoSidedIntervals`, whose two conditions bound         --
 -- `duration cont` between `min i` and `max i`.                         --
 ------------------------------------------------------------------------
@@ -28,9 +30,10 @@ open import Util.Equality
 module DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedTraces
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
-open import Data.List.Membership.Propositional using (find)
+open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺)
+  using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
+open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
 
@@ -40,8 +43,8 @@ open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ c using (_≼ˢ_; _≽ˢ_)
 
-open import Syntax.Grades.Example.TraceSet.TwoSided Op _≟ₒ_ c
-  using (TraceInterval; lo; hi; two-sided-traces; _≾ᵗⁱ_; _·ᵗⁱ_; uᵗⁱ)
+open import Syntax.Grades.Example.Traces.Subtrace.TwoSided Op _≟ₒ_ c
+  using (TraceInterval; lo; hi; subtrace-two-sided; _≾ᵗⁱ_; _·ᵗⁱ_; uᵗⁱ)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -60,8 +63,8 @@ record _⊑ᵇ[_]_ (w : Trace) (i : TraceInterval) (w' : Trace) : Set where
   constructor mkᵇ
   field
     cont    : Trace                                            -- continuation
-    floor   : True (any? (λ t → t ≼? cont) (traces (lo i)))    -- covers the floor
-    cap     : True (any? (λ s → cont ≼? s) (traces (hi i)))    -- fits in the cap
+    floor   : True (all? (λ t → t ≼? cont) (traces (lo i)))    -- covers every floor member
+    cap     : True (any? (λ s → cont ≼? s) (traces (hi i)))    -- fits in some cap member
     extends : w ∙ cont ≡ w'                                    -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
@@ -72,7 +75,8 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ uᵗⁱ ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
-      (fromWitness {a? = any? (λ t → t ≼? ε) (traces u)} (here (≼-refl ε)))
+      (fromWitness {a? = all? (λ t → t ≼? ε) (traces u)}
+                   (≼-refl ε All.∷ All.[]))
       (fromWitness {a? = any? (λ s → ε ≼? s) (traces u)} (here (≼-refl ε)))
       (∙-identityʳ w)
 
@@ -82,17 +86,22 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-trans : ∀ {i j w w' w''}
          → w ⊑ᵇ[ i ] w' → w' ⊑ᵇ[ j ] w'' → w ⊑ᵇ[ i ·ᵗⁱ j ] w''
 ⊑ᵇ-trans {i} {j} {w} (mkᵇ t₁ fl₁ cp₁ eq₁) (mkᵇ t₂ fl₂ cp₂ eq₂)
-  with find (toWitness fl₁) | find (toWitness fl₂)
-     | find (toWitness cp₁) | find (toWitness cp₂)
-... | a , a∈L , a≼t₁ | b , b∈L' , b≼t₂ | x , x∈U , t₁≼x | y , y∈U' , t₂≼y =
+  with find (toWitness cp₁) | find (toWitness cp₂)
+... | x , x∈U , t₁≼x | y , y∈U' , t₂≼y =
       mkᵇ (t₁ ∙ t₂)
-          (fromWitness
-            (Any.map (λ eq → subst (_≼ (t₁ ∙ t₂)) eq (mono-∙ a≼t₁ b≼t₂))
-                     (∈-cartesianProductWith⁺ _∙_ a∈L b∈L')))
+          (fromWitness (All.tabulate floor-step))
           (fromWitness
             (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼_) eq (mono-∙ t₁≼x t₂≼y))
                      (∈-cartesianProductWith⁺ _∙_ x∈U y∈U')))
           (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+  where
+    floor-step : ∀ {r} → r ∈ (traces (lo i) ·ˢ traces (lo j))
+               → r ≼ (t₁ ∙ t₂)
+    floor-step {r} r∈
+      with ∈-cartesianProductWith⁻ _∙_ (traces (lo i)) (traces (lo j)) r∈
+    ... | a , b , a∈L , b∈L' , refl =
+          mono-∙ (All.lookup (toWitness fl₁) a∈L)
+                 (All.lookup (toWitness fl₂) b∈L')
 
 -- covariance: the floor half travels along the Smyth lift on `lo`, the
 -- cap half along the Hoare lift on `hi`
@@ -101,12 +110,13 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-mono {i} {j} (l , h) (mkᵇ cont fl cp eq) =
   mkᵇ cont (fromWitness floor') (fromWitness cap') eq
   where
-    floor' : Any (λ t → t ≼ cont) (traces (lo j))
-    floor' with find (toWitness fl)
-    ... | t , t∈L , t≼cont
-            with find (toWitness (l t (fromWitness t∈L)))
-    ...     | t' , t'∈L' , t'≼t =
-              Any.map (λ e → subst (_≼ cont) e (≼-trans t'≼t t≼cont)) t'∈L'
+    floor' : All (λ t → t ≼ cont) (traces (lo j))
+    floor' = All.tabulate step
+      where
+        step : ∀ {t'} → t' ∈ traces (lo j) → t' ≼ cont
+        step {t'} t'∈L'
+          with find (toWitness (l t' (fromWitness t'∈L')))
+        ... | t , t∈L , t'≼t = ≼-trans t'≼t (All.lookup (toWitness fl) t∈L)
 
     cap' : Any (λ s → cont ≼ s) (traces (hi j))
     cap' with find (toWitness cp)
@@ -124,13 +134,13 @@ open _⊑ᵇ[_]_
 ... | refl with eq'
 ... | refl =
         cong₂ (λ z z' → mkᵇ cont z z' refl)
-              (True-irr (any? (λ t → t ≼? cont) (traces (lo i))) fl fl')
+              (True-irr (all? (λ t → t ≼? cont) (traces (lo i))) fl fl')
               (True-irr (any? (λ s → cont ≼? s) (traces (hi i))) cp cp')
 
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World two-sided-traces
+histories : World subtrace-two-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_        = _⊑ᵇ[_]_

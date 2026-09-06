@@ -33,7 +33,7 @@ open import Syntax.Types     S
 -- and `⟨⟩-≤-ren` already move a context across it in both directions. Carrying
 -- it as a constructor saves that shuffle at the use sites. Both bounds are
 -- needed — `ρ ≾ᵣ uᵣ` alone would admit *every* lock in a grade system whose
--- order bottoms out at the unit (e.g. `Grades.Example.Interval.LeftSided`).
+-- order bottoms out at the unit (e.g. `Grades.Example.Time.LeftSided`).
 
 data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []

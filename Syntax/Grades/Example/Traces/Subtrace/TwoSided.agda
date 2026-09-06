@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- Two-sided trace intervals as grades: the trace analogue of          --
--- `Interval.TwoSided`.                                                --
+-- `Time.TwoSided`.                                                    --
 --                                                                     --
 -- A grade is a *pair* of sets of traces, `[ lo , hi ]`, bounding a run --
 -- from both sides by the sub-trace preorder:                          --
 --                                                                     --
---   * `lo` is a floor -- the run must cover some trace of `lo`;       --
+--   * `lo` is a floor -- the run must cover the traces of `lo`;       --
 --   * `hi` is a cap  -- the run must fit inside some trace of `hi`.   --
 --                                                                     --
 -- This is exactly what the two endpoints of `[ min , max ]` do for     --
@@ -16,16 +16,16 @@
 -- The order weakens each endpoint outwards, again mirroring            --
 -- `min i₂ ≤ min i₁ × max i₁ ≤ max i₂`:                                --
 --                                                                     --
---   [ L₁ , U₁ ] ≾ [ L₂ , U₂ ]   iff   L₁ ≾ L₂ in `TraceSet.LeftSided` --
---                                and  U₁ ≼ˢ U₂                        --
+--   [ L₁ , U₁ ] ≾ [ L₂ , U₂ ]   iff   L₂ ≼ˢ L₁   and   U₁ ≼ˢ U₂      --
 --                                                                     --
--- so the floor may drop and the cap may rise. `unbox`'s premise        --
+-- one comparison on each endpoint, in opposite argument orders, so     --
+-- that the floor may drop and the cap may rise. `unbox`'s premise      --
 -- `ρ' ≾ᵣ ρ` therefore reads: what elapsed did at least what `ρ`'s      --
 -- floor asks for, *and* no more than its cap allows.                   --
 --                                                                     --
--- Only `TraceSet.Convex` also mentions both lifts, and it is a         --
--- different grade: it puts both on a single set and orients them the   --
--- same way, so it never caps (see its header).                         --
+-- `Inclusion.TwoSided` is the same shape with `_≡_` in place of `_≼_`, --
+-- and `Convex.TwoSided` the same shape with each endpoint convexly     --
+-- compared.                                                            --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -34,7 +34,7 @@ open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.TraceSet.TwoSided
+module Syntax.Grades.Example.Traces.Subtrace.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
@@ -50,10 +50,14 @@ open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 -- each endpoint is ordered exactly as the corresponding one-sided
 -- trace grade orders it
 
-open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ cost
-  using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_)
-open import Syntax.Grades.Example.TraceSet.RightSided Op _≟ₒ_ cost
-  using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_)
+open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ cost
+  using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_;
+                     ≾ᵗ-zero-productˡ to ≾ˡᵒ-zero-productˡ;
+                     ≾ᵗ-zero-productʳ to ≾ˡᵒ-zero-productʳ)
+open import Syntax.Grades.Example.Traces.Subtrace.RightSided Op _≟ₒ_ cost
+  using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
+                     ≾ᵗ-zero-productˡ to ≾ʰⁱ-zero-productˡ;
+                     ≾ᵗ-zero-productʳ to ≾ʰⁱ-zero-productʳ)
 
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 
@@ -117,26 +121,26 @@ _≾ᵗⁱ_ : TraceInterval → TraceInterval → Set
 i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 
 ≾ᵗⁱ-refl : {i : TraceInterval} → i ≾ᵗⁱ i
-≾ᵗⁱ-refl {i} = ≽ˢ-refl {traces (lo i)} , ≼ˢ-refl {traces (hi i)}
+≾ᵗⁱ-refl {i} = ≼ˢ-refl {traces (lo i)} , ≼ˢ-refl {traces (hi i)}
 
 ≾ᵗⁱ-trans : {i₁ i₂ i₃ : TraceInterval} → i₁ ≾ᵗⁱ i₂ → i₂ ≾ᵗⁱ i₃ → i₁ ≾ᵗⁱ i₃
 ≾ᵗⁱ-trans {i₁} {i₂} {i₃} (l₁ , h₁) (l₂ , h₂) =
-    ≽ˢ-trans {traces (lo i₃)} {traces (lo i₂)} {traces (lo i₁)} l₂ l₁
+    ≼ˢ-trans {traces (lo i₃)} {traces (lo i₂)} {traces (lo i₁)} l₂ l₁
   , ≼ˢ-trans {traces (hi i₁)} {traces (hi i₂)} {traces (hi i₃)} h₁ h₂
 
 -- the product is monotone endpoint by endpoint
 
 ·ᵗⁱ-monoˡ : {c i₁ i₂ : TraceInterval} → i₁ ≾ᵗⁱ i₂ → (i₁ ·ᵗⁱ c) ≾ᵗⁱ (i₂ ·ᵗⁱ c)
 ·ᵗⁱ-monoˡ {c} {i₁} {i₂} (l , h) =
-    ≽ˢ-·ˢ {traces (lo i₂)} {traces (lo i₁)} {traces (lo c)} {traces (lo c)}
-          l (≽ˢ-refl {traces (lo c)})
+    ≼ˢ-·ˢ {traces (lo i₂)} {traces (lo i₁)} {traces (lo c)} {traces (lo c)}
+          l (≼ˢ-refl {traces (lo c)})
   , ≼ˢ-·ˢ {traces (hi i₁)} {traces (hi i₂)} {traces (hi c)} {traces (hi c)}
           h (≼ˢ-refl {traces (hi c)})
 
 ·ᵗⁱ-monoʳ : {c i₁ i₂ : TraceInterval} → i₁ ≾ᵗⁱ i₂ → (c ·ᵗⁱ i₁) ≾ᵗⁱ (c ·ᵗⁱ i₂)
 ·ᵗⁱ-monoʳ {c} {i₁} {i₂} (l , h) =
-    ≽ˢ-·ˢ {traces (lo c)} {traces (lo c)} {traces (lo i₂)} {traces (lo i₁)}
-          (≽ˢ-refl {traces (lo c)}) l
+    ≼ˢ-·ˢ {traces (lo c)} {traces (lo c)} {traces (lo i₂)} {traces (lo i₁)}
+          (≼ˢ-refl {traces (lo c)}) l
   , ≼ˢ-·ˢ {traces (hi c)} {traces (hi c)} {traces (hi i₁)} {traces (hi i₂)}
           (≼ˢ-refl {traces (hi c)}) h
 
@@ -146,17 +150,18 @@ i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 -- Only the cap carries information at the unit: `[ L , U ] ≾ uᵗⁱ` asks
 -- that every trace of `U` take no time, and durations add along
 -- sequencing, so a product below the unit has both factors below it.
--- The floor half is vacuous, as it is in `TraceSet.LeftSided`.
+-- The floor half is vacuous, as it is in `Subtrace.LeftSided`, whose
+-- own zero-product it is.
 
 ≾ᵗⁱ-zero-productˡ : {i₁ i₂ : TraceInterval} → (i₁ ·ᵗⁱ i₂) ≾ᵗⁱ uᵗⁱ → i₁ ≾ᵗⁱ uᵗⁱ
-≾ᵗⁱ-zero-productˡ {i₁} {i₂} (_ , h) =
-    u-≽ˢ (traces (lo i₁))
-  , ≼ˢ-zero-productˡ {traces (hi i₁)} {traces (hi i₂)} (nonempty (hi i₂)) h
+≾ᵗⁱ-zero-productˡ {i₁} {i₂} (l , h) =
+    ≾ˡᵒ-zero-productˡ {lo i₁} {lo i₂} l
+  , ≾ʰⁱ-zero-productˡ {hi i₁} {hi i₂} h
 
 ≾ᵗⁱ-zero-productʳ : {i₁ i₂ : TraceInterval} → (i₁ ·ᵗⁱ i₂) ≾ᵗⁱ uᵗⁱ → i₂ ≾ᵗⁱ uᵗⁱ
-≾ᵗⁱ-zero-productʳ {i₁} {i₂} (_ , h) =
-    u-≽ˢ (traces (lo i₂))
-  , ≼ˢ-zero-productʳ {traces (hi i₁)} {traces (hi i₂)} (nonempty (hi i₁)) h
+≾ᵗⁱ-zero-productʳ {i₁} {i₂} (l , h) =
+    ≾ˡᵒ-zero-productʳ {lo i₁} {lo i₂} l
+  , ≾ʰⁱ-zero-productʳ {hi i₁} {hi i₂} h
 
 -- both halves are decided, so the order is proof-irrelevant
 
@@ -192,8 +197,8 @@ i₁ ≾ᵗⁱ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
 
-two-sided-traces : Grade
-two-sided-traces = record
+subtrace-two-sided : Grade
+subtrace-two-sided = record
   { Carrier         = TraceInterval
   ; _·_             = _·ᵗⁱ_
   ; u               = uᵗⁱ

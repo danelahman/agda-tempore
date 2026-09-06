@@ -33,7 +33,7 @@ module Syntax.Grades.Traces.SubtraceLift
 open import Data.List.Base using (List)
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺)
+  using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
 
@@ -173,6 +173,44 @@ u-≼ˢ xs ne s m
 
     s≼ε : s ≼ ε
     s≼ε = subst (_≼ ε) (sym (∙-conicalʳ {x} {s} (≼-ε-inv xs≼ε))) nil
+
+-- The Smyth lift says something at the unit in the other direction: it
+-- asks for *one* member below `ε`, which the trace monoid being conical
+-- again forces to be `ε` itself, and which one factor of a language
+-- product supplies. This is the zero-product property for the "at most"
+-- half of the convex order, whose Hoare half uses the two above.
+
+≽ˢ-zero-productˡ : {xs ys : List Trace} → NonEmpty ys
+                 → (xs ·ˢ ys) ≽ˢ traces u → xs ≽ˢ traces u
+≽ˢ-zero-productˡ {xs} {ys} ne hyp s m
+  with ∈-[ε]⁻ (toWitness {a? = s ∈? traces u} m)
+... | refl
+        with find (toWitness (hyp ε m))
+...     | r , r∈ , r≼ε
+            with ∈-cartesianProductWith⁻ _∙_ xs ys r∈ | r≼ε
+...         | a , b , a∈xs , b∈ys , refl | ab≼ε =
+              fromWitness
+                (Any.map
+                  (λ eq → subst (_≼ ε) eq
+                            (subst (_≼ ε)
+                              (sym (∙-conicalˡ {a} {b} (≼-ε-inv ab≼ε))) nil))
+                  a∈xs)
+
+≽ˢ-zero-productʳ : {xs ys : List Trace} → NonEmpty xs
+                 → (xs ·ˢ ys) ≽ˢ traces u → ys ≽ˢ traces u
+≽ˢ-zero-productʳ {xs} {ys} ne hyp s m
+  with ∈-[ε]⁻ (toWitness {a? = s ∈? traces u} m)
+... | refl
+        with find (toWitness (hyp ε m))
+...     | r , r∈ , r≼ε
+            with ∈-cartesianProductWith⁻ _∙_ xs ys r∈ | r≼ε
+...         | a , b , a∈xs , b∈ys , refl | ab≼ε =
+              fromWitness
+                (Any.map
+                  (λ eq → subst (_≼ ε) eq
+                            (subst (_≼ ε)
+                              (sym (∙-conicalʳ {a} {b} (≼-ε-inv ab≼ε))) nil))
+                  b∈ys)
 
 ------------------------------------------------------------------------
 -- Both lifts are decidable, being `liftˢ` at a decided relation

@@ -4,15 +4,18 @@
 --                                                                      --
 -- Worlds are timed traces `Trace`, recording the history observed so   --
 -- far. A resource grade `P` reaches the histories obtained by          --
--- appending a continuation trace `cont` that does at least what some   --
+-- appending a continuation trace `cont` that does at least what every  --
 -- member of the set `P` asks for:                                      --
 --                                                                      --
 --   w ⊑ʰ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                       --
---                          and   t ≼ cont   for some   t ∈ P           --
+--                          and   t ≼ cont   for every   t ∈ P          --
 --                                                                      --
 -- Reading `P` as a floor under what must have happened, rather than a  --
 -- cap on what may, is what keeps the relation covariant along the      --
--- Smyth lift of the sub-trace preorder, which is the grade order.      --
+-- grade order. The quantifier is universal because that order          --
+-- (`Subtrace.LeftSided`) compares its two sets *exchanged*: weakening  --
+-- a floor replaces each of its demands by one already covered, so what --
+-- carries over is having covered all of them, not one of them.         --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -24,18 +27,18 @@ open import Util.Equality
 module DenotationalSemantics.Model.Example.World.TraceHistory.LeftSidedTraces
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
-open import Data.List.Membership.Propositional using (find)
+open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺)
-open import Data.List.Relation.Unary.Any as Any using (Any; here; there; any?)
+  using (∈-cartesianProductWith⁻)
+open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op c
-open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
-  using (left-sided-traces; _≾_)
+open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c
+  using (subtrace-left-sided; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -54,7 +57,7 @@ record _⊑ʰ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
   constructor mkʰ
   field
     cont    : Trace                                          -- continuation
-    covered : True (any? (λ t → t ≼? cont) (traces P))       -- covers a member
+    covered : True (all? (λ t → t ≼? cont) (traces P))       -- covers every member
     extends : w ∙ cont ≡ w'                                  -- `w'` extends `w`
 
 open _⊑ʰ[_]_
@@ -63,42 +66,41 @@ open _⊑ʰ[_]_
 -- already covers the sole member `ε` of the unit set of traces
 
 ⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ u ] w
-⊑ʰ-refl {w} = mkʰ ε (fromWitness {a? = any? (λ t → t ≼? ε) (traces u)} εcov)
+⊑ʰ-refl {w} = mkʰ ε (fromWitness {a? = all? (λ t → t ≼? ε) (traces u)}
+                                 (≼-refl ε All.∷ All.[]))
                     (∙-identityʳ w)
-  where
-    εcov : Any (λ t → t ≼ ε) (traces u)
-    εcov = here (≼-refl ε)
 
 -- transitivity multiplies the grades (the language product), sequencing
--- the two continuations; monotonicity of the trace product has the
--- product of the two covered members inside the sequenced continuation
+-- the two continuations; monotonicity of the trace product has each
+-- sequenced member inside the sequenced continuation
 
 ⊑ʰ-trans : ∀ {P Q w w' w''}
          → w ⊑ʰ[ P ] w' → w' ⊑ʰ[ Q ] w'' → w ⊑ʰ[ P · Q ] w''
-⊑ʰ-trans {P} {Q} {w} (mkʰ t₁ cov₁ eq₁) (mkʰ t₂ cov₂ eq₂)
-  with find (toWitness cov₁) | find (toWitness cov₂)
-... | a , a∈P , a≼t₁ | b , b∈Q , b≼t₂ =
-      mkʰ (t₁ ∙ t₂)
-          (fromWitness
-            (Any.map (λ eq → subst (_≼ (t₁ ∙ t₂)) eq (mono-∙ a≼t₁ b≼t₂))
-                     (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
-          (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+⊑ʰ-trans {P} {Q} {w} (mkʰ t₁ cov₁ eq₁) (mkʰ t₂ cov₂ eq₂) =
+  mkʰ (t₁ ∙ t₂)
+      (fromWitness (All.tabulate step))
+      (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+  where
+    step : ∀ {r} → r ∈ (traces P ·ˢ traces Q) → r ≼ (t₁ ∙ t₂)
+    step {r} r∈
+      with ∈-cartesianProductWith⁻ _∙_ (traces P) (traces Q) r∈
+    ... | a , b , a∈P , b∈Q , refl =
+          mono-∙ (All.lookup (toWitness cov₁) a∈P)
+                 (All.lookup (toWitness cov₂) b∈Q)
 
--- covariance: a grade that asks for less gives a larger relation, since
--- a member sitting inside the covered one sits inside the continuation
--- too, by transitivity of the sub-trace preorder
+-- covariance: a grade that asks for less gives a larger relation. Each
+-- member of `Q` sits inside one of `P`'s, which the continuation
+-- already covers, so transitivity of the sub-trace preorder carries it.
 
 ⊑ʰ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ʰ[ P ] w' → w ⊑ʰ[ Q ] w'
-⊑ʰ-mono {P} {Q} rel (mkʰ cont cov eq)
-  with find (toWitness cov)
-... | t , t∈P , t≼cont
-        with find (toWitness (rel t (fromWitness t∈P)))
-...     | t' , t'∈Q , t'≼t =
-          mkʰ cont
-              (fromWitness
-                (Any.map (λ eq' → subst (_≼ cont) eq' (≼-trans t'≼t t≼cont))
-                         t'∈Q))
-              eq
+⊑ʰ-mono {P} {Q} rel (mkʰ cont cov eq) =
+  mkʰ cont (fromWitness (All.tabulate step)) eq
+  where
+    step : ∀ {t'} → t' ∈ traces Q → t' ≼ cont
+    step {t'} t'∈Q
+      with find (toWitness (rel t' (fromWitness t'∈Q)))
+    ... | t , t∈P , t'≼t =
+          ≼-trans t'≼t (All.lookup (toWitness cov) t∈P)
 
 -- proof irrelevance of the witnesses: the continuation is determined by
 -- left cancellation, and the covering witness is an irrelevant proof
@@ -109,12 +111,12 @@ open _⊑ʰ[_]_
 ... | refl with eq'
 ... | refl =
         cong (λ z → mkʰ cont z refl)
-             (True-irr (any? (λ t → t ≼? cont) (traces P)) cov cov')
+             (True-irr (all? (λ t → t ≼? cont) (traces P)) cov cov')
 
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World left-sided-traces
+histories : World subtrace-left-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_       = _⊑ʰ[_]_

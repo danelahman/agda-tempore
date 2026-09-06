@@ -5,9 +5,10 @@
 -- `System.IntervalsToLeftSidedIntervals`. Effect grades are two-sided  --
 -- trace intervals, bounding a computation's runs from both sides;      --
 -- resource grades are the one-sided trace grades of                    --
--- `TraceSet.LeftSided`, which keep the floor alone. The projection  --
--- forgets the cap, so a resource grade says only what a computation is --
--- guaranteed to have done, not what it is forbidden from doing.        --
+-- `Traces.Subtrace.LeftSided`, which keeps the floor alone. The        --
+-- projection forgets the cap, so a resource grade says only what a     --
+-- computation is guaranteed to have done, not what it is forbidden     --
+-- from doing.                                                          --
 --                                                                     --
 -- As there, monotonicity is the first component of the interval order  --
 -- and the monoid laws hold on the nose, the product being computed     --
@@ -34,14 +35,14 @@ open Operations Ops
 
 module _ (opTime : Op → ℕ) where
 
-  open import Syntax.Grades.Example.TraceSet.TwoSided Op _≟ₒ_ opTime
-    using (two-sided-traces; lo)
-  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ opTime
-    using (left-sided-traces)
+  open import Syntax.Grades.Example.Traces.Subtrace.TwoSided Op _≟ₒ_ opTime
+    using (subtrace-two-sided; lo)
+  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ opTime
+    using (subtrace-left-sided)
 
   -- the projection reads off the floor
 
-  trace-intervals→traces : two-sided-traces →ᵍ left-sided-traces
+  trace-intervals→traces : subtrace-two-sided →ᵍ subtrace-left-sided
   trace-intervals→traces = record
     { map          = lo
     ; map-monotone = proj₁
@@ -52,7 +53,7 @@ module _ (opTime : Op → ℕ) where
 
   traceIntervalsToTraceSetsGradeSystem : GradeSystem
   traceIntervalsToTraceSetsGradeSystem = record
-    { RGrade = left-sided-traces
-    ; EGrade = two-sided-traces
+    { RGrade = subtrace-left-sided
+    ; EGrade = subtrace-two-sided
     ; ∣_∣ᵉ   = trace-intervals→traces
     }

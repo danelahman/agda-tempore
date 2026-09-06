@@ -39,8 +39,8 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.Example.TraceSet.RightSided Op _≟ₒ_ c
-  using (right-sided-traces; _≾_)
+open import Syntax.Grades.Example.Traces.Subtrace.RightSided Op _≟ₒ_ c
+  using (subtrace-right-sided; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -101,7 +101,7 @@ w ⊑ᵗ[ U ] w' = True (any? (λ s → w' ≤? (w + duration s)) (traces U))
 ⊑ᵗ-irrelevant {U} {w} {w'} p q =
   True-irr (any? (λ s → w' ≤? (w + duration s)) (traces U)) p q
 
-ticks : World right-sided-traces
+ticks : World subtrace-right-sided
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

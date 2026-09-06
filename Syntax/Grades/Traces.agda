@@ -4,7 +4,7 @@
 -- A timed trace records one run of a computation as it is observed     --
 -- from outside: an alternation of delays and operations. A grade is a  --
 -- non-empty finite *set* of such traces -- the runs a computation may  --
--- have -- and every trace-based grade in `Grades.Example.TraceSet`     --
+-- have -- and every trace-based grade in `Grades.Example.Traces`     --
 -- has that same carrier and the same monoid on it. What distinguishes  --
 -- them is the order, and the orders are built from the machinery       --
 -- collected here.                                                      --

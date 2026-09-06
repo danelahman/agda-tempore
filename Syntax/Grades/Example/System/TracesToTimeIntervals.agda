@@ -13,7 +13,7 @@ open import Data.Nat.Properties using (≤-trans; ⊔-identityʳ)
 open import Data.Product using (_,_)
 
 open import Syntax.Grades
-open import Syntax.Grades.Example.Interval.TwoSided
+open import Syntax.Grades.Example.Time.TwoSided
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
@@ -41,7 +41,7 @@ module _ (opTime : Op → Interval) where
   -- the (non-empty) sets of timed traces provide the effect grades, 
   -- the two-sided time intervals provide the resource grades
 
-  open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
+  open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op _≟ₒ_
   open import Syntax.Grades.Traces.Sets Op
   open import Syntax.Grades.Traces.Durations Op
   open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
@@ -89,7 +89,7 @@ module _ (opTime : Op → Interval) where
     eqᵢ (Lo.minSetDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
         (Hi.setDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
 
-  traces→time-intervals : traces-by-inclusion →ᵍ two-sided-intervals
+  traces→time-intervals : inclusion-right-sided →ᵍ two-sided-intervals
   traces→time-intervals = record
     { map          = mapᵢ
     ; map-monotone = λ {P} {Q} → mapᵢ-monotone {P} {Q}
@@ -102,6 +102,6 @@ module _ (opTime : Op → Interval) where
   traceToIntervalsGradeSystem : GradeSystem
   traceToIntervalsGradeSystem = record
     { RGrade = two-sided-intervals
-    ; EGrade = traces-by-inclusion
+    ; EGrade = inclusion-right-sided
     ; ∣_∣ᵉ   = traces→time-intervals
     }

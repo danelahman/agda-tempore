@@ -7,7 +7,7 @@
 -- left-sided intervals.                                               --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Interval.RightSided where
+module Syntax.Grades.Example.Time.RightSided where
 
 open import Data.Nat
 open import Data.Nat.Properties

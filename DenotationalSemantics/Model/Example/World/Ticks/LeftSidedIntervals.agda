@@ -18,7 +18,7 @@ open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant;
          +-monoˡ-≤; +-monoʳ-≤; +-comm; +-assoc)
 
-open import Syntax.Grades.Example.Interval.LeftSided
+open import Syntax.Grades.Example.Time.LeftSided
   using (𝕀; [_,+∞⟩; _·ₒ_; _≾ₒ_; left-sided-intervals)
 
 open import Util.Equality

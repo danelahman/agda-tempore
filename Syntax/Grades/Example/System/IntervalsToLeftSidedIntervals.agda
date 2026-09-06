@@ -13,8 +13,8 @@ module Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals where
 open import Data.Product
 
 open import Syntax.Grades
-open import Syntax.Grades.Example.Interval.LeftSided
-open import Syntax.Grades.Example.Interval.TwoSided
+open import Syntax.Grades.Example.Time.LeftSided
+open import Syntax.Grades.Example.Time.TwoSided
 
 open import Util.Equality
 

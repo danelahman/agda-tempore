@@ -9,7 +9,7 @@
 -- monoid, so it is kept apart from the grade built on top of it.       --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Interval.ExtendedNat where
+module Syntax.Grades.Example.Time.ExtendedNat where
 
 open import Data.Empty
 open import Data.Nat

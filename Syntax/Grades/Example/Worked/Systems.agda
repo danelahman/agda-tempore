@@ -47,16 +47,16 @@ open _→ᵍ_ using (map; map-monotone)
 -- a box modality needs, since it is about data having become available,
 -- not about a deadline.
 
-open import Syntax.Grades.Example.Interval.TwoSided
+open import Syntax.Grades.Example.Time.TwoSided
   using ([_,_,_]; eqᵢ; _·ᵢ_; _≾ᵢ_)
 
-open import Syntax.Grades.Example.Interval.LeftSided
+open import Syntax.Grades.Example.Time.LeftSided
   using ([_,+∞⟩; _·ₒ_; _≾ₒ_)
 
 open import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
   using (tsi→lsi)
 
-open import Syntax.Grades.Example.Worked.Intervals
+open import Syntax.Grades.Example.Worked.Time
   using (≤!; uplink-window)
 
 -- the projection reads off the lower endpoint
@@ -95,11 +95,12 @@ forget-max-· = refl
 open import Syntax.Grades.Example.System.TracesToTimeIntervals spec
   using (mapᵢ; traces→time-intervals)
 
-open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
+open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op _≟ₒ_
   using () renaming (_≾_ to _≾ⁱ_)
 
-open import Syntax.Grades.Example.Worked.TraceSets using (module Inclusion)
-open import Syntax.Grades.Example.Worked.TraceIntervals using (module LeftSided)
+open import Syntax.Grades.Example.Worked.Traces.Inclusion
+  using () renaming (module RightSided to Inclusion; module LeftSided to InclusionFloor)
+open import Syntax.Grades.Example.Worked.Traces.Subtrace using (module LeftSided)
 
 -- the node either polls or does the full uplink
 
@@ -115,7 +116,7 @@ poll-or-uplink = ⟅ poll ∣ uplink ⟆
 uplink-listed : did-uplink ≾ⁱ poll-or-uplink
 uplink-listed = Inclusion.holds
 
--- the uplink alone spans exactly the window `Worked.Intervals` names:
+-- the uplink alone spans exactly the window `Worked.Time` names:
 -- 1 + 2 + 4 at the bottom, 1 + 2 + 6 at the top
 
 uplink-spans : mapᵢ opTime did-uplink ≡ uplink-window
@@ -200,14 +201,14 @@ restricted-grade = refl
 -- `TracesToCostAwareTraces` is the identity on carriers: effect and
 -- resource grades are the very same sets of traces. All it does is
 -- reinterpret the order, from inclusion to the cost-aware sub-trace
--- lift. Monotonicity is then the statement that inclusion is contained
--- in that lift -- and `Worked.TraceSets` row 1 shows the containment is
--- strict, so this projection really does coarsen.
+-- lift. Both grades read their sets as a *floor*, so both compare them
+-- with the sets exchanged; monotonicity is then the statement that
+-- being a member is a special case of being covered.
 
 open import Syntax.Grades.Example.System.TracesToCostAwareTraces spec
   using (traces→cost-aware-traces; fast-traces→slow-traces)
 
-open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ˢ_)
 
 -- the carrier is untouched
@@ -216,12 +217,17 @@ cost-aware-identity : map (traces→cost-aware-traces cost) poll-or-uplink
                     ≡ poll-or-uplink
 cost-aware-identity = refl
 
--- and every inclusion survives as a sub-trace ordering
+-- and every inclusion survives as a sub-trace ordering. Both orders
+-- exchange their two sets, so the ordering that travels is the one
+-- pointing from the offer to the requirement it discharges.
 
-inclusion-survives : did-uplink ≾ˢ poll-or-uplink
+uplink-required : InclusionFloor._≾_ poll-or-uplink did-uplink
+uplink-required = InclusionFloor.holds
+
+inclusion-survives : poll-or-uplink ≾ˢ did-uplink
 inclusion-survives =
   map-monotone (traces→cost-aware-traces cost)
-               {did-uplink} {poll-or-uplink} uplink-listed
+               {poll-or-uplink} {did-uplink} uplink-required
 
 ------------------------------------------------------------------------
 -- Reinterpreting one cost model as another
@@ -241,7 +247,7 @@ open import Syntax.Grades.Traces.Subtrace Op slow
 open DecFast _≟ₒ_ using () renaming (_≼?_ to _≼ᶠ?_)
 open DecSlow _≟ₒ_ using () renaming (_≼?_ to _≼ˢˡ?_)
 
-open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ fast
+open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ fast
   using () renaming (_≾_ to _≾ᶠ_)
 
 -- An elapsed write banks its execution time -- 2 ticks under `fast`,
@@ -260,8 +266,11 @@ write-banks-three-slow = toWitness {a? = ⟨ 3 ⟩ ≼ˢˡ? ⌈ write ⌉} tt
 -- so the dearer model has the wider order, and the morphism carries a
 -- cheap-model ordering into it
 
+-- the floor compares its two sets exchanged, so the premise runs over
+-- the demands of `Q` and finds them covered among the offers of `P`
+
 meets-fast : {P Q : NeTraces}
-           → ({t : Trace} → t ∈ traces P → Any (_≼ᶠ t) (traces Q)) → P ≾ᶠ Q
+           → ({t : Trace} → t ∈ traces Q → Any (t ≼ᶠ_) (traces P)) → P ≾ᶠ Q
 meets-fast f t m = fromWitness (f (toWitness m))
 
 did-write demand-two : NeTraces

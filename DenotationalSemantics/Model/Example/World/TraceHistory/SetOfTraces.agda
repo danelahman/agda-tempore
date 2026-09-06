@@ -28,8 +28,8 @@ open import Data.List.Relation.Unary.Any using (here)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
-  using (traces-by-inclusion; _≾_)
+open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op _≟ₒ_
+  using (inclusion-right-sided; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 
@@ -91,7 +91,7 @@ open _⊑ʰ[_]_
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World traces-by-inclusion
+histories : World inclusion-right-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_       = _⊑ʰ[_]_

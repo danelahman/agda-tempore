@@ -1,19 +1,24 @@
 ------------------------------------------------------------------------
--- Sets of timed traces, ordered by inclusion:                         --
+-- Right-sided (capping) sets of timed traces, compared by inclusion:  --
 --                                                                     --
 --   P ≾ Q   iff   every trace of P is a member of Q.                  --
 --                                                                     --
--- The only order on sets of traces that needs no cost on the          --
--- operations: it never consults the sub-trace preorder, so a demand    --
--- is discharged only by having done exactly one of the runs listed.    --
--- Weakening a grade only lengthens that list.                          --
+-- The grade is a *cap*: it lists the runs a computation is permitted   --
+-- to have, and weakening permits more, so the comparison runs `P ⊆ Q`  --
+-- -- the sets in the order they are written.                          --
+--                                                                     --
+-- The only comparison in the `Traces` grid that needs no cost on the --
+-- operations: it never consults the sub-trace preorder, so a demand is --
+-- discharged only by having done exactly one of the runs listed.       --
+-- `Inclusion.LeftSided` is the same comparison with the two sets       --
+-- exchanged, and `Subtrace.RightSided` is this one relaxed by `_≼_`.   --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.TraceSet.Inclusion
+module Syntax.Grades.Example.Traces.Inclusion.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Data.List.Membership.Propositional using (_∈_)
@@ -113,10 +118,11 @@ infix 5 _≾?_
 _≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
 P ≾? Q = traces P ⊑? traces Q
 
--- the grade of (non-empty) sets of timed traces, ordered by inclusion
+-- the grade of (non-empty) sets of timed traces, read as a cap and
+-- compared by inclusion
 
-traces-by-inclusion : Grade
-traces-by-inclusion = record
+inclusion-right-sided : Grade
+inclusion-right-sided = record
   { Carrier         = NeTraces
   ; _·_             = _·_
   ; u               = u

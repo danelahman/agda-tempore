@@ -17,7 +17,7 @@
 -- per grade, and that is what the examples below pin down.             --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Worked.Intervals where
+module Syntax.Grades.Example.Worked.Time where
 
 open import Data.Nat.Base using (ℕ; _≤_)
 open import Data.Nat.Properties using (_≤?_)
@@ -31,19 +31,19 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
-open import Syntax.Grades.Example.Interval.LeftSided
+open import Syntax.Grades.Example.Time.LeftSided
   using ([_,+∞⟩; left-sided-intervals)
   renaming (𝕀 to 𝕀ˡ; _·ₒ_ to _·ˡ_; uₒ to uˡ; _≾ₒ_ to _≾ˡ_)
 
-open import Syntax.Grades.Example.Interval.RightSided
+open import Syntax.Grades.Example.Time.RightSided
   using ([0,_]; right-sided-intervals)
   renaming (𝕀ᵣ to 𝕀ʳ; _·ₒ_ to _·ʳ_; uₒ to uʳ; _≾ₒ_ to _≾ʳ_)
 
-open import Syntax.Grades.Example.Interval.TwoSided
+open import Syntax.Grades.Example.Time.TwoSided
   using (Interval; [_,_,_]; eqᵢ; two-sided-intervals)
   renaming (_·ᵢ_ to _·²_; _≾ᵢ_ to _≾²_)
 
-open import Syntax.Grades.Example.Interval.TwoSidedWithInfinity
+open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
   using (Interval∞; ↑_; ∞; two-sided-intervals-with-∞)
   renaming ([_,_,_] to [_,_,_]∞; eqᵢ to eq∞; _·ᵢ_ to _·∞_; _≾ᵢ_ to _≾∞_)
 

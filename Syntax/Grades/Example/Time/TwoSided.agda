@@ -7,7 +7,7 @@
 -- in it, so a *wider* window is the weaker grade.                      --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Interval.TwoSided where
+module Syntax.Grades.Example.Time.TwoSided where
 
 open import Data.Nat
 open import Data.Nat.Properties

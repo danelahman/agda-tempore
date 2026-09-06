@@ -27,7 +27,7 @@ open import Data.Unit using (tt)
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (yes; no)
 
-open import Syntax.Grades.Example.Interval.TwoSided using (Interval; [_,_,_])
+open import Syntax.Grades.Example.Time.TwoSided using (Interval; [_,_,_])
 
 open import Util.Equality
 

@@ -17,21 +17,22 @@
 -- round does not typecheck. The tables in the module headers are       --
 -- therefore checked, not annotations.                                  --
 --                                                                     --
--- Two findings the examples pin down are worth having in advance:      --
+-- Three findings the examples pin down are worth having in advance:    --
 --                                                                     --
 --   * Every grade order runs so that `unbox`'s premise `ρ' ≾ᵣ ρ` --    --
 --     what elapsed, below what the box demands -- is discharged by     --
 --     having done *more* than `ρ` asks for, and never by less. See     --
---     `TraceSets` rows 1 and 2.                                        --
+--     `Traces.Subtrace`.                                               --
 --                                                                     --
 --   * Time discharges a demand for an operation, at that operation's   --
 --     execution time, but doing operations does not discharge a demand --
 --     for time. The `uplink` run takes nine ticks, yet does not meet a --
 --     demand for three ticks of waiting: its only idle time is the two --
---     ticks it actually idles for. See `TraceSets`.                    --
+--     ticks it actually idles for. See `Traces.Subtrace`.              --
 --                                                                     --
---   * Inclusion and the convex order are incomparable, and both sit    --
---     inside the sub-trace order. See `TraceSets` rows 1 and 4.        --
+--   * The three columns part company only once a grade lists           --
+--     alternatives: on singletons they agree. See the last section of  --
+--     each of `Traces.Inclusion` and `Traces.Convex`.                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked where
@@ -43,18 +44,13 @@ import Syntax.Grades.Example.Worked.Operations
 -- Orderings and products in the four interval grades: which way
 -- weakening points in each, and which windows are incomparable.
 
-import Syntax.Grades.Example.Worked.Intervals
+import Syntax.Grades.Example.Worked.Time
 
--- The trace-based interval grades, one submodule per grade: a floor
--- under what must have happened, a cap on what may have, and the pair
--- of them.
+-- The trace-set grades, one submodule per column of the grid and, in
+-- each, one per sidedness: a floor under what must have happened, a cap
+-- on what may have, and the pair of them.
 
-import Syntax.Grades.Example.Worked.TraceIntervals
-
--- The two trace-set grades that are not intervals -- inclusion and the
--- convex order -- and how they sit against the left-sided one.
-
-import Syntax.Grades.Example.Worked.TraceSets
+import Syntax.Grades.Example.Worked.Traces
 
 -- A language specification over the alphabet, which the trace-based
 -- grade systems need in order to be instantiated.

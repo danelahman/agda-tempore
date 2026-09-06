@@ -5,10 +5,10 @@
 -- As for the all-finite two-sided intervals, a grade `[ min , max ]`   --
 -- bounds the elapsed time from both sides, except that `max` may now   --
 -- be `∞`, imposing no upper bound at all. The arithmetic of the        --
--- endpoints lives in `Interval.ExtendedNat` and is re-exported here.   --
+-- endpoints lives in `Time.ExtendedNat` and is re-exported here.   --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Interval.TwoSidedWithInfinity where
+module Syntax.Grades.Example.Time.TwoSidedWithInfinity where
 
 open import Data.Nat
 open import Data.Nat.Properties
@@ -26,7 +26,7 @@ open import Util.Equality
 
 -- the endpoints are extended naturals
 
-open import Syntax.Grades.Example.Interval.ExtendedNat public
+open import Syntax.Grades.Example.Time.ExtendedNat public
 
 ------------------------------------------------------------------------
 -- Intervals with infinite max

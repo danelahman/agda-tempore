@@ -20,7 +20,7 @@ open import Data.Nat.Properties
          +-monoˡ-≤; +-monoʳ-≤; +-comm; +-assoc)
 open import Data.Product using (_×_; _,_)
 
-open import Syntax.Grades.Example.Interval.TwoSided
+open import Syntax.Grades.Example.Time.TwoSided
   using (Interval; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals)
 
 open import Util.Equality

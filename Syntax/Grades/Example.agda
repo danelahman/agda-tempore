@@ -9,10 +9,10 @@
 --                                                                     --
 -- The examples come in two families:                                   --
 --                                                                     --
---   * `Interval.*`  -- grades that measure only elapsed time, as a     --
+--   * `Time.*`  -- grades that measure only elapsed time, as a     --
 --     bound or a window of time steps. Small and self-contained.       --
 --                                                                     --
---   * `TraceSet.*`  -- grades that record *which runs* a computation   --
+--   * `Traces.*`  -- grades that record *which runs* a computation   --
 --     must have had, as a set of timed traces. All three share their   --
 --     carrier and monoid (from `Grades.Traces.Sets`) and differ only   --
 --     in the order they put on it.                                     --
@@ -40,55 +40,32 @@ module Syntax.Grades.Example where
 
 -- "at least `n` time steps"; a smaller bound is the weaker grade
 
-import Syntax.Grades.Example.Interval.LeftSided
+import Syntax.Grades.Example.Time.LeftSided
 
 -- "at most `n` time steps"; the mirror image
 
-import Syntax.Grades.Example.Interval.RightSided
+import Syntax.Grades.Example.Time.RightSided
 
 -- "between `min` and `max` time steps"; a wider window is weaker
 
-import Syntax.Grades.Example.Interval.TwoSided
+import Syntax.Grades.Example.Time.TwoSided
 
 -- the same, with `max` allowed to be `∞`, which imposes no upper bound
 
-import Syntax.Grades.Example.Interval.ExtendedNat
-import Syntax.Grades.Example.Interval.TwoSidedWithInfinity
+import Syntax.Grades.Example.Time.ExtendedNat
+import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 
 ------------------------------------------------------------------------
 -- Sets of timed traces
 --
--- A grade records which runs a computation must have had, and the order
--- says what weakening one is allowed to ask for instead. The first
--- three put an order on a single set; the fourth pairs two of them into
--- an interval, bounding a run from below and above at once.
+-- A grade records which runs a computation must or may have had, and
+-- the order says what weakening one is allowed to ask for instead.
+-- These form a grid: three comparisons (by membership, up to the
+-- sub-trace preorder, and the convex lift of it) against the same three
+-- sidednesses as the intervals above (a floor, a cap, a pair of both).
+-- `Traces` is the index; each column has its own.
 
--- ordered by inclusion: a demand is discharged only by having done
--- literally one of the runs listed, and the operations need no
--- execution times at all
-
-import Syntax.Grades.Example.TraceSet.Inclusion
-
--- a floor: a demand is discharged by having done at least what one of
--- its runs asks for.  The trace analogue of `Interval.LeftSided`
-
-import Syntax.Grades.Example.TraceSet.LeftSided
-
--- a cap: a run stays within the grade by doing at most what one of its
--- runs allows.  The trace analogue of `Interval.RightSided`
-
-import Syntax.Grades.Example.TraceSet.RightSided
-
--- ordered by the convex (Egli-Milner) lift: as above, and additionally
--- every listed demand must be achievable by a run already present.
--- Despite the name this is not a two-sided interval and never caps
-
-import Syntax.Grades.Example.TraceSet.Convex
-
--- a *pair* of sets, one of each of the two above, bounding a run from
--- both sides: the trace analogue of `Interval.TwoSided`
-
-import Syntax.Grades.Example.TraceSet.TwoSided
+import Syntax.Grades.Example.Traces
 
 ------------------------------------------------------------------------
 -- Grade systems

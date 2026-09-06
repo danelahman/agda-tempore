@@ -5,16 +5,22 @@
 -- Worlds are time points `ℕ`. A tick world records only the elapsed   --
 -- time, not which continuation trace produced it. The grade is a floor --
 -- under what must have happened, so the world must advance by *at      --
--- least* the duration of one of `P`'s traces:                          --
+-- least* the duration of each of `P`'s traces:                         --
 --                                                                    --
---   w ⊑ᵗ[ P ] w'   iff   w + duration t ≤ w'   for some trace t of P   --
+--   w ⊑ᵗ[ P ] w'   iff   w + duration t ≤ w'   for every trace t of P  --
 --                                                                    --
 -- which is the shape of the left-sided interval frame, with the        --
--- interval's bound read off a trace of `P` instead of given outright.  --
+-- interval's bound read off the traces of `P` instead of given         --
+-- outright.                                                           --
+--                                                                    --
+-- The quantifier is universal because `Subtrace.LeftSided` compares    --
+-- its two sets *exchanged*: weakening a floor replaces each of its     --
+-- demands by one already covered, so it is advancing past all of the   --
+-- demands that carries over, not advancing past one of them.           --
 --                                                                    --
 -- Grade order and duration charge an operation the same execution      --
 -- time `c o`, which is what makes `⊑-mono` hold: a grade that asks     --
--- for less is met by a trace of no greater duration.                   --
+-- for less is met by traces of no greater duration.                    --
 --                                                                    --
 -- The bound is decidable and the traces form a finite set, so the      --
 -- accessibility is phrased in the proof-irrelevant                     --
@@ -33,10 +39,10 @@ module DenotationalSemantics.Model.Example.World.Ticks.LeftSidedTraces
 open import Data.Nat using (_+_; _≤_; _≤?_)
 open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-mono-≤; +-identityʳ)
-open import Data.List.Membership.Propositional using (find)
+open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺)
-open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
+  using (∈-cartesianProductWith⁻)
+open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
@@ -46,8 +52,8 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
-  using (left-sided-traces; _≾_)
+open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c
+  using (subtrace-left-sided; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -58,65 +64,68 @@ open DecSubtrace _≟ₒ_ using (_≼?_)
 ------------------------------------------------------------------------
 -- The frame
 
--- Accessibility on time ticks: reach the worlds at least a trace
+-- Accessibility on time ticks: reach the worlds at least *every* trace
 -- duration of `P` ahead.
+--
+-- The quantifier is universal because the grade's order is
+-- `Subtrace.LeftSided`'s, which compares the two sets exchanged: a
+-- weaker floor's demands are each covered by one of the stronger
+-- floor's, so it is by having advanced past all of them that advancing
+-- past all of a weaker floor's follows. Reading the set disjunctively
+-- instead would not give `⊑-mono` here.
 
 _⊑ᵗ[_]_ : ℕ → NeTraces → ℕ → Set
-w ⊑ᵗ[ P ] w' = True (any? (λ t → (w + duration t) ≤? w') (traces P))
+w ⊑ᵗ[ P ] w' = True (all? (λ t → (w + duration t) ≤? w') (traces P))
 
 -- reflexivity at the unit grade `{ ε }`: the empty trace has duration
 -- zero, so it asks the world to advance by nothing
 
 ⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ u ] w
-⊑ᵗ-refl {w} = fromWitness (here (≤-reflexive (+-identityʳ w)))
+⊑ᵗ-refl {w} =
+  fromWitness (≤-reflexive (+-identityʳ w) All.∷ All.[])
 
 -- transitivity multiplies the grades: the two advances compose into the
--- advance asked for by the sequenced trace, whose duration is the sum
+-- advance asked for by each sequenced trace, whose duration is the sum
 
 ⊑ᵗ-trans : ∀ {P Q w w' w''}
          → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P · Q ] w''
-⊑ᵗ-trans {P} {Q} {w} {w'} {w''} p q
-  with find (toWitness p) | find (toWitness q)
-... | t₁ , t₁∈P , w+d₁≤w' | t₂ , t₂∈Q , w'+d₂≤w'' =
-      fromWitness
-        (Any.map
-          (λ r → subst (λ z → w + duration z ≤ w'') r bound)
-          (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q))
+⊑ᵗ-trans {P} {Q} {w} {w'} {w''} p q =
+  fromWitness (All.tabulate step)
   where
-    bound : w + duration (t₁ ∙ t₂) ≤ w''
-    bound =
-      ≤-trans (≤-reflexive eqU)
-              (≤-trans (+-mono-≤ w+d₁≤w' ≤-refl) w'+d₂≤w'')
+    step : ∀ {r} → r ∈ (traces P ·ˢ traces Q) → w + duration r ≤ w''
+    step {r} r∈
+      with ∈-cartesianProductWith⁻ _∙_ (traces P) (traces Q) r∈
+    ... | t₁ , t₂ , t₁∈P , t₂∈Q , refl =
+          ≤-trans (≤-reflexive eqU)
+                  (≤-trans (+-mono-≤ (All.lookup (toWitness p) t₁∈P) ≤-refl)
+                           (All.lookup (toWitness q) t₂∈Q))
       where
         eqU : w + duration (t₁ ∙ t₂) ≡ (w + duration t₁) + duration t₂
         eqU = trans (cong (w +_) (duration-∙ t₁ t₂))
                     (sym (+-assoc w (duration t₁) (duration t₂)))
 
 -- covariance: a grade that asks for less gives a larger accessibility.
--- The witnessing trace of `P` has some trace of `Q` inside it, whose
--- (smaller) duration is therefore also advanced past.
+-- Each trace of `Q` has some trace of `P` above it, whose duration the
+-- world has already advanced past, and durations are monotone for `_≼_`.
 
 ⊑ᵗ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵗ[ P ] w' → w ⊑ᵗ[ Q ] w'
-⊑ᵗ-mono {P} {Q} {w} {w'} rel p
-  with find (toWitness p)
-... | t , t∈P , w+dₜ≤w'
-        with find (toWitness (rel t (fromWitness t∈P)))
-...     | t' , t'∈Q , t'≼t =
-          fromWitness
-            (Any.map
-              (λ r → subst (λ z → w + duration z ≤ w') r bound)
-              t'∈Q)
+⊑ᵗ-mono {P} {Q} {w} {w'} rel p =
+  fromWitness (All.tabulate step)
   where
-    bound : w + duration t' ≤ w'
-    bound = ≤-trans (+-mono-≤ ≤-refl (duration-≼ t'≼t)) w+dₜ≤w'
+    step : ∀ {t'} → t' ∈ traces Q → w + duration t' ≤ w'
+    step {t'} t'∈Q
+      with find (toWitness (rel t' (fromWitness t'∈Q)))
+    ... | t , t∈P , t'≼t =
+          ≤-trans (+-mono-≤ ≤-refl (duration-≼ t'≼t))
+                  (All.lookup (toWitness p) t∈P)
 
 -- proof irrelevance of the witnesses
 
 ⊑ᵗ-irrelevant : ∀ {P w w'} → (p q : w ⊑ᵗ[ P ] w') → p ≡ q
 ⊑ᵗ-irrelevant {P} {w} {w'} p q =
-  True-irr (any? (λ t → (w + duration t) ≤? w') (traces P)) p q
+  True-irr (all? (λ t → (w + duration t) ≤? w') (traces P)) p q
 
-ticks : World left-sided-traces
+ticks : World subtrace-left-sided
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

@@ -5,25 +5,23 @@
 --   P ≾ Q   iff   every trace of Q fits inside some trace of P        --
 --            and  every trace of P has some trace of Q inside it.     --
 --                                                                     --
--- The second conjunct is the Smyth upper lift, shared with            --
--- `TraceSet.LeftSided`, which is the order proper; the first is    --
--- the Hoare lower lift, which additionally caps how far the two sets  --
--- may drift apart. Weakening a grade may therefore ask for less only  --
--- between traces already present: the extremes are exact.             --
+-- The first conjunct is `Subtrace.LeftSided`'s order, the floor        --
+-- proper; the second is its Smyth partner, which additionally caps how --
+-- far the two sets may drift apart. Weakening a grade may therefore    --
+-- ask for less only between traces already present: the extremes are   --
+-- exact.                                                               --
 --                                                                     --
--- As in `TraceSet.LeftSided`, a grade is read as a lower bound on  --
+-- As in `Subtrace.LeftSided`, a grade is read as a lower bound on      --
 -- what must have happened, so that `unbox`'s premise `ρ' ≾ᵣ ρ` admits --
 -- a run that does more than `ρ` asks for and never one that does less. --
 --                                                                     --
--- Despite the name, this is *not* the trace analogue of a two-sided    --
--- time interval, and it does not bound a run from above: both halves   --
--- orient `_≼_` the same way and differ only in which set the           --
--- quantifier runs over, so a run that does far more than `Q` asks for  --
--- is still admitted. What the extra half buys is that every listed     --
+-- This is a floor only: it does not bound a run from above, both       --
+-- halves orienting `_≼_` the same way and differing only in which set  --
+-- the quantifier runs over, so a run that does far more than `Q` asks  --
+-- for is still admitted. What the extra half buys is that every listed --
 -- demand be achievable by a run already present, so weakening may fill --
--- in between demands but not extend past them. The two-sided analogue  --
--- carries a *pair* of sets, a floor and a cap, and is                  --
--- `TraceSet.TwoSided`.                                                 --
+-- in between demands but not extend past them. `Convex.RightSided` is  --
+-- the mirror image, and `Convex.TwoSided` pairs the two.               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero)
@@ -32,7 +30,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.TraceSet.Convex
+module Syntax.Grades.Example.Traces.Convex.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.Nat.Properties using (n≤0⇒n≡0)
@@ -62,7 +60,7 @@ open DecSubtrace _≟ₒ_ using (_≼?_)
 -- The convex order on (non-empty) sets of traces
 --
 -- Both halves compare the two sets in the same direction as
--- `TraceSet.LeftSided` does, i.e. with `Q` on the left.
+-- `Subtrace.LeftSided` does, i.e. with `Q` on the left.
 
 infix 5 _≾_
 
@@ -121,8 +119,8 @@ P ≾? Q = (traces Q ≼ˢ? traces P) ×-dec (traces Q ≽ˢ? traces P)
 ------------------------------------------------------------------------
 -- The grade of (non-empty) sets of timed traces, convexly ordered
 
-traces-convex : Grade
-traces-convex = record
+convex-left-sided : Grade
+convex-left-sided = record
   { Carrier         = NeTraces
   ; _·_             = _·_
   ; u               = u

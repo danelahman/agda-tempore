@@ -6,8 +6,8 @@
 -- monoid is the language product, which sequences each trace of one     --
 -- set with each trace of the other, with unit `{ ε }`. The grades       --
 -- differ in the *order* they put on this carrier -- that is what the    --
--- modules under `Grades.Example.TraceSet` do -- and `TraceSet.TwoSided` --
--- pairs two such sets, as a floor and a cap.                            --
+-- modules under `Grades.Example.Traces` do -- and the two-sided       --
+-- grades there pair two such sets, as a floor and a cap.                --
 --                                                                     --
 -- Deciding membership -- hence any order phrased through it -- needs   --
 -- decidable equality of operation symbols, which the `WithDecEq`       --
@@ -362,6 +362,9 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
   ⊑-refl : {xs : List Trace} → xs ⊑ xs
   ⊑-refl = liftˢ-refl _≟ᵀ_ (λ _ → refl)
+
+  ⊑-trans : {xs ys zs : List Trace} → xs ⊑ ys → ys ⊑ zs → xs ⊑ zs
+  ⊑-trans = liftˢ-trans _≟ᵀ_ trans
 
   -- the language product is monotone in both arguments
 

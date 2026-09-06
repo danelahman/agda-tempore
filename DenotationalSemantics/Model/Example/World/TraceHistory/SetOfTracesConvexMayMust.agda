@@ -46,8 +46,8 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.Example.TraceSet.Convex Op _≟ₒ_ c
-  using (traces-convex; _≾_; module Separation)
+open import Syntax.Grades.Example.Traces.Convex.LeftSided Op _≟ₒ_ c
+  using (convex-left-sided; _≾_; module Separation)
 
 open Durations c
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
@@ -153,7 +153,7 @@ open _⊑ᶜ[_]_
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World traces-convex
+histories : World convex-left-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_        = _⊑ᶜ[_]_

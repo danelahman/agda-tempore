@@ -6,7 +6,7 @@
 -- so a *smaller* bound is the weaker grade.                            --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Interval.LeftSided where
+module Syntax.Grades.Example.Time.LeftSided where
 
 open import Data.Nat
 open import Data.Nat.Properties

@@ -36,8 +36,8 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 
-open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
-  using (traces-by-inclusion; _≾_)
+open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op _≟ₒ_
+  using (inclusion-right-sided; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -101,7 +101,7 @@ w ⊑ᵗ[ P ] w' = True (any? (λ t → w' ≟ (w + duration t)) (traces P))
 
 -- The frame.
 
-ticks : World traces-by-inclusion
+ticks : World inclusion-right-sided
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

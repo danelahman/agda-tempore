@@ -38,33 +38,35 @@ open Operations Ops
 module _ (opTime : Op → ℕ) where
 
   open import Syntax.Grades.Traces.Sets Op
-  open import Syntax.Grades.Traces.Subtrace Op opTime using (_≼_; ≼-refl)
-  open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ opTime using (_≽?_)
+  open import Syntax.Grades.Traces.Subtrace Op opTime
+    using (_≼_; ≼-refl; module DecSubtrace)
 
   open WithDecEq _≟ₒ_ using (_≟ᵀ_; liftˢ-mono)
+  open DecSubtrace _≟ₒ_ using (_≼?_)
 
-  -- the sets of timed traces ordered by inclusion provide the effect
-  -- grades, the same sets ordered up to the cost-aware sub-trace
-  -- preorder the resource grades
+  -- both grades read their sets as a *floor*, so both compare them with
+  -- the two sets exchanged; they differ only in how a listed run is
+  -- matched. The effect grade asks to have had it exactly, the resource
+  -- grade only to have covered it, at the operations' execution times.
 
-  open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
-    using (traces-by-inclusion) renaming (_≾_ to _≾ˢ_)
-  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ opTime
-    using (left-sided-traces) renaming (_≾_ to _≾ᶜ_)
+  open import Syntax.Grades.Example.Traces.Inclusion.LeftSided Op _≟ₒ_
+    using (inclusion-left-sided) renaming (_≾_ to _≾ˢ_)
+  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ opTime
+    using (subtrace-left-sided) renaming (_≾_ to _≾ᶜ_)
 
-  -- a trace of the smaller set is a member of the larger one, and is
-  -- covered by itself there, so inclusion is contained in the sub-trace
-  -- lift. Both orders are `liftˢ` -- at `_≡_` and at the converse of
-  -- `_≼_` -- so this is the lift's monotonicity in the relation.
+  -- a run covers itself, so being a member is a special case of being
+  -- covered. Both orders are `liftˢ` on the same two sets in the same
+  -- order -- at `_≡_` and at `_≼_` -- so this is exactly the lift's
+  -- monotonicity in the relation compared.
 
   ⊆⇒≼ : {P Q : NeTraces} → P ≾ˢ Q → P ≾ᶜ Q
   ⊆⇒≼ {P} {Q} =
-    liftˢ-mono _≟ᵀ_ _≽?_ (λ {s} eq → subst (_≼ s) eq (≼-refl s))
+    liftˢ-mono _≟ᵀ_ _≼?_ (λ {s} eq → subst (s ≼_) eq (≼-refl s))
 
   -- the two grades share their carrier and their monoid structure, so
   -- the reinterpretation is the identity on sets of traces
 
-  traces→cost-aware-traces : traces-by-inclusion →ᵍ left-sided-traces
+  traces→cost-aware-traces : inclusion-left-sided →ᵍ subtrace-left-sided
   traces→cost-aware-traces = record
     { map          = λ P → P
     ; map-monotone = λ {P} {Q} → ⊆⇒≼ {P} {Q}
@@ -75,8 +77,8 @@ module _ (opTime : Op → ℕ) where
 
   tracesToCostAwareTracesGradeSystem : GradeSystem
   tracesToCostAwareTracesGradeSystem = record
-    { RGrade = left-sided-traces
-    ; EGrade = traces-by-inclusion
+    { RGrade = subtrace-left-sided
+    ; EGrade = inclusion-left-sided
     ; ∣_∣ᵉ   = traces→cost-aware-traces
     }
 
@@ -94,23 +96,26 @@ module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
   open import Syntax.Grades.Traces.SubtraceCost Op c c' c≤c'
     using (≼-cost-mono₀)
 
-  open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ c
-    using () renaming (_≽?_ to _≽ᶠᵃˢᵗ?_)
-  open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ c'
-    using () renaming (_≽?_ to _≽ˢˡᵒʷ?_)
+  open import Syntax.Grades.Traces.Subtrace Op c
+    using () renaming (module DecSubtrace to DecFast)
+  open import Syntax.Grades.Traces.Subtrace Op c'
+    using () renaming (module DecSubtrace to DecSlow)
+
+  open DecFast _≟ₒ_ using () renaming (_≼?_ to _≼ᶠᵃˢᵗ?_)
+  open DecSlow _≟ₒ_ using () renaming (_≼?_ to _≼ˢˡᵒʷ?_)
 
   open WithDecEq _≟ₒ_ using (liftˢ-mono)
 
-  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c'
-    using () renaming (left-sided-traces to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
-  open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
-    using () renaming (left-sided-traces to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
+  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c'
+    using () renaming (subtrace-left-sided to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
+  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c
+    using () renaming (subtrace-left-sided to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
 
-  -- both orders are `liftˢ` at the converse sub-trace preorder, one per
-  -- cost model, so widening the preorder widens the order
+  -- both orders are `liftˢ` at the sub-trace preorder on the same two
+  -- sets, one per cost model, so widening the preorder widens the order
 
   ≾-cost-mono : {P Q : NeTraces} → P ≾ᶠᵃˢᵗ Q → P ≾ˢˡᵒʷ Q
-  ≾-cost-mono {P} {Q} = liftˢ-mono _≽ᶠᵃˢᵗ?_ _≽ˢˡᵒʷ?_ ≼-cost-mono₀
+  ≾-cost-mono {P} {Q} = liftˢ-mono _≼ᶠᵃˢᵗ?_ _≼ˢˡᵒʷ?_ ≼-cost-mono₀
 
   fast-traces→slow-traces : traces-fast →ᵍ traces-slow
   fast-traces→slow-traces = record

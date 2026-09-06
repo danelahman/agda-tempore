@@ -20,7 +20,7 @@ open import Data.Nat using (ℕ; _+_)
 open import Data.Nat.Properties using (≤-refl)
 open import Data.Product
 
-open import Syntax.Grades.Example.Interval.LeftSided using (𝕀; [_,+∞⟩)
+open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩)
 
 open import DenotationalSemantics.Model.Example.World.Ticks.LeftSidedIntervals
   using (_⊑ᵗ[_]_)

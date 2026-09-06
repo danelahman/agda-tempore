@@ -22,7 +22,7 @@ open import Data.Nat.Properties
   using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant; +-mono-≤)
 open import Data.Product using (_,_)
 
-open import Syntax.Grades.Example.Interval.TwoSided
+open import Syntax.Grades.Example.Time.TwoSided
   using (Interval; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals)
 
 open import Syntax.Grades.Traces.Base Op

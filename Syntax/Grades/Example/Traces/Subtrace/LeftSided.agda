@@ -1,25 +1,19 @@
 ------------------------------------------------------------------------
--- (Right) one-sided sets of timed traces as grades:                   --
+-- Left-sided (flooring) sets of timed traces, compared up to the      --
+-- sub-trace preorder:                                                 --
 --                                                                     --
---   P ≾ Q   iff   every trace of P has some trace of Q above it.      --
+--   P ≾ Q   iff   every trace of Q fits inside some trace of P.       --
 --                                                                     --
--- The mirror image of `TraceSet.LeftSided`. A grade is read as a       --
--- *cap*: `P` records what a computation is permitted to have done,     --
--- and a run stays within it by doing at most what one of its traces    --
--- allows. Weakening a grade therefore permits more, exactly as         --
--- `[0, m ] ≾ [0, n ]` weakens a right-sided interval by raising its    --
--- bound.                                                               --
+-- `Inclusion.LeftSided` relaxed by `_≼_`: where that one asks each     --
+-- required run of `Q` to be *literally* one of `P`'s, this one asks    --
+-- only that it be covered by one of `P`'s. The two sets stay exchanged --
+-- exactly as they are there, which is what makes the floor a floor --  --
+-- a weaker grade requires less, and `P ≾ Q` says `P`'s demands         --
+-- dominate `Q`'s.                                                     --
 --                                                                     --
--- This is the Hoare lower lift of `Traces.Subtrace`'s preorder, where  --
--- the left-sided grade takes the Smyth upper one. Since `s ≼ t` reads  --
--- "the run `t` does at least what `s` asks for", the two lifts differ  --
--- only in which way the relation runs between the sets -- the trace    --
--- counterpart of `min i₂ ≤ min i₁` against `max i₁ ≤ max i₂`.          --
---                                                                     --
--- The unit `{ ε }` is the *least* grade here, permitting nothing but   --
--- an instantaneous run, just as `[0, 0 ]` is the least right-sided     --
--- interval. That is what makes the zero-product property say           --
--- something, unlike in the left-sided grade where it is vacuous.       --
+-- `Subtrace.RightSided` is the mirror image, the same comparison with  --
+-- the sets in the order they are written, and `Convex.LeftSided` is    --
+-- this one strengthened by its Smyth partner.                         --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -28,13 +22,17 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.TraceSet.RightSided
+module Syntax.Grades.Example.Traces.Subtrace.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Relation.Nullary using (Dec)
-open import Relation.Nullary.Decidable using (True)
 
 open import Syntax.Grades
+
+-- the carrier and the monoid structure (`_·_`, `u`, `of-nat`, and their
+-- laws), decidable equality `_≟ᴺ_`, and the irrelevance of the set-level
+-- lift come from the shared set-of-traces module; only the order below
+-- is specific to this grade
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
@@ -44,46 +42,44 @@ open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 ------------------------------------------------------------------------
 -- The grade order on (non-empty) sets of traces
 --
--- `P ≾ Q` asks that every trace of `P` be covered by some trace of `Q`,
--- which is `_≼ˢ_` with the sets in the order they are written -- that
--- is, `Sets.liftˢ` at `_≼_`. `LeftSided`'s order is the same lift at the
--- converse preorder, so the two differ only in the direction of `_≼_`.
+-- `P ≾ Q` asks that every demand of `Q` be covered by some demand of
+-- `P`, i.e. `_≼ˢ_` with the two sets exchanged.
 
 infix 5 _≾_
 
 _≾_ : NeTraces → NeTraces → Set
-P ≾ Q = traces P ≼ˢ traces Q
+P ≾ Q = traces Q ≼ˢ traces P
 
 ≾ᵗ-refl : {P : NeTraces} → P ≾ P
 ≾ᵗ-refl {P} = ≼ˢ-refl {traces P}
 
 ≾ᵗ-trans : {P Q R : NeTraces} → P ≾ Q → Q ≾ R → P ≾ R
-≾ᵗ-trans {P} {Q} {R} = ≼ˢ-trans {traces P} {traces Q} {traces R}
+≾ᵗ-trans {P} {Q} {R} pq qr =
+  ≼ˢ-trans {traces R} {traces Q} {traces P} qr pq
 
 -- the language product is monotone in both arguments
 
 ·-monoˡ : {C P Q : NeTraces} → P ≾ Q → (P · C) ≾ (Q · C)
 ·-monoˡ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces P} {traces Q} {traces C} {traces C} rel (≼ˢ-refl {traces C})
+  ≼ˢ-·ˢ {traces Q} {traces P} {traces C} {traces C} rel (≼ˢ-refl {traces C})
 
 ·-monoʳ : {C P Q : NeTraces} → P ≾ Q → (C · P) ≾ (C · Q)
 ·-monoʳ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces C} {traces C} {traces P} {traces Q} (≼ˢ-refl {traces C}) rel
+  ≼ˢ-·ˢ {traces C} {traces C} {traces Q} {traces P} (≼ˢ-refl {traces C}) rel
 
 ------------------------------------------------------------------------
 -- Zero-product property
 --
--- A cap of `{ ε }` permits only the instantaneous run, and the trace
--- monoid is conical, so a product capped at the unit has both factors
--- capped there.
+-- The unit `{ ε }` demands nothing, and the empty trace fits inside
+-- every trace, so every grade lies below it and the property is
+-- vacuous -- as it is for the left-sided intervals, whose unit
+-- `[ 0 ,+∞⟩` is likewise the greatest grade.
 
 ≾ᵗ-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
-≾ᵗ-zero-productˡ {P} {Q} =
-  ≼ˢ-zero-productˡ {traces P} {traces Q} (nonempty Q)
+≾ᵗ-zero-productˡ {P} {Q} _ = u-≼ˢ (traces P) (nonempty P)
 
 ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
-≾ᵗ-zero-productʳ {P} {Q} =
-  ≼ˢ-zero-productʳ {traces P} {traces Q} (nonempty P)
+≾ᵗ-zero-productʳ {P} {Q} _ = u-≼ˢ (traces Q) (nonempty Q)
 
 -- the grade order is proof-irrelevant
 
@@ -92,17 +88,22 @@ P ≾ Q = traces P ≼ˢ traces Q
 
 ------------------------------------------------------------------------
 -- The order is decidable
+--
+-- Both membership and the sub-trace preorder are decided and the sets
+-- are finite, so an ordering between two written-out grades is settled
+-- by computation.
 
 infix 5 _≾?_
 
 _≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
-P ≾? Q = traces P ≼ˢ? traces Q
+P ≾? Q = traces Q ≼ˢ? traces P
 
 ------------------------------------------------------------------------
--- The grade of (non-empty) sets of timed traces, read as a cap
+-- The grade of (non-empty) sets of timed traces, read as a floor and
+-- compared up to the sub-trace preorder
 
-right-sided-traces : Grade
-right-sided-traces = record
+subtrace-left-sided : Grade
+subtrace-left-sided = record
   { Carrier         = NeTraces
   ; _·_             = _·_
   ; u               = u
