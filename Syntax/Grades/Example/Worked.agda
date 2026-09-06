@@ -22,13 +22,13 @@
 --   * Every grade order runs so that `unbox`'s premise `ρ' ≾ᵣ ρ` --    --
 --     what elapsed, below what the box demands -- is discharged by     --
 --     having done *more* than `ρ` asks for, and never by less. See     --
---     `Traces.Subtrace`.                                               --
+--     `Traces.LowerLift`.                                               --
 --                                                                     --
 --   * Time discharges a demand for an operation, at that operation's   --
 --     execution time, but doing operations does not discharge a demand --
 --     for time. The `uplink` run takes nine ticks, yet does not meet a --
 --     demand for three ticks of waiting: its only idle time is the two --
---     ticks it actually idles for. See `Traces.Subtrace`.              --
+--     ticks it actually idles for. See `Traces.LowerLift`.              --
 --                                                                     --
 --   * The three columns part company only once a grade lists           --
 --     alternatives: on singletons they agree. See the last section of  --

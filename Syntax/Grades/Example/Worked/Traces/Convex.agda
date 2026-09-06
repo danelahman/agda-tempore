@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
 -- Worked instances of the convex column.                              --
 --                                                                     --
--- `Grades.Example.Traces.Convex`: each grade of `Subtrace`           --
+-- `Grades.Example.Traces.Convex`: each grade of `LowerLift`           --
 -- strengthened by the Smyth partner of its comparison, so that as well --
 -- as every trace on one side being matched on the other, every trace   --
 -- on the other side is matched back.                                   --
 --                                                                     --
 -- Between singleton grades the extra half is vacuous and the column    --
--- agrees with `Subtrace`; the examples below are chosen so that they   --
+-- agrees with `LowerLift`; the examples below are chosen so that they   --
 -- part company as soon as either side offers alternatives.            --
 ------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 ------------------------------------------------------------------------
 -- A floor, convexly compared
 --
--- `Convex.LeftSided`. `Subtrace.LeftSided`'s floor plus the demand that
+-- `Convex.LeftSided`. `LowerLift.LeftSided`'s floor plus the demand that
 -- every listed alternative be achievable by a run already on offer.
 
 module LeftSided where
@@ -75,7 +75,7 @@ module LeftSided where
 ------------------------------------------------------------------------
 -- A cap, convexly compared
 --
--- `Convex.RightSided`, the mirror image: `Subtrace.RightSided`'s cap
+-- `Convex.RightSided`, the mirror image: `LowerLift.RightSided`'s cap
 -- plus the demand that every listed allowance be realised by one
 -- already present.
 
@@ -84,7 +84,7 @@ module RightSided where
   open import Syntax.Grades.Example.Traces.Convex.RightSided Op _≟ₒ_ cost
     using (convex-right-sided; _≾_; _≾?_) public
 
-  open import Syntax.Grades.Example.Traces.Subtrace.RightSided Op _≟ₒ_ cost
+  open import Syntax.Grades.Example.Traces.LowerLift.RightSided Op _≟ₒ_ cost
     using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_)
 
   order : Grade._≾_ convex-right-sided ≡ _≾_

@@ -11,7 +11,7 @@
 -- operations: it never consults the sub-trace preorder, so a demand is --
 -- discharged only by having done exactly one of the runs listed.       --
 -- `Inclusion.LeftSided` is the same comparison with the two sets       --
--- exchanged, and `Subtrace.RightSided` is this one relaxed by `_≼_`.   --
+-- exchanged, and `LowerLift.RightSided` is this one relaxed by `_≼_`. --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

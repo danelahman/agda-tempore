@@ -43,8 +43,8 @@ open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ c using (_≼ˢ_; _≽ˢ_)
 
-open import Syntax.Grades.Example.Traces.Subtrace.TwoSided Op _≟ₒ_ c
-  using (TraceInterval; lo; hi; subtrace-two-sided; _≾ᵗⁱ_; _·ᵗⁱ_; uᵗⁱ)
+open import Syntax.Grades.Example.Traces.LowerLift.TwoSided Op _≟ₒ_ c
+  using (TraceInterval; lo; hi; lower-lift-two-sided; _≾ᵗⁱ_; _·ᵗⁱ_; uᵗⁱ)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -140,7 +140,7 @@ open _⊑ᵇ[_]_
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World subtrace-two-sided
+histories : World lower-lift-two-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_        = _⊑ᵇ[_]_

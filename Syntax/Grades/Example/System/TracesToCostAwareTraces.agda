@@ -51,8 +51,8 @@ module _ (opTime : Op → ℕ) where
 
   open import Syntax.Grades.Example.Traces.Inclusion.LeftSided Op _≟ₒ_
     using (inclusion-left-sided) renaming (_≾_ to _≾ˢ_)
-  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ opTime
-    using (subtrace-left-sided) renaming (_≾_ to _≾ᶜ_)
+  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ opTime
+    using (lower-lift-left-sided) renaming (_≾_ to _≾ᶜ_)
 
   -- a run covers itself, so being a member is a special case of being
   -- covered. Both orders are `liftˢ` on the same two sets in the same
@@ -66,7 +66,7 @@ module _ (opTime : Op → ℕ) where
   -- the two grades share their carrier and their monoid structure, so
   -- the reinterpretation is the identity on sets of traces
 
-  traces→cost-aware-traces : inclusion-left-sided →ᵍ subtrace-left-sided
+  traces→cost-aware-traces : inclusion-left-sided →ᵍ lower-lift-left-sided
   traces→cost-aware-traces = record
     { map          = λ P → P
     ; map-monotone = λ {P} {Q} → ⊆⇒≼ {P} {Q}
@@ -77,7 +77,7 @@ module _ (opTime : Op → ℕ) where
 
   tracesToCostAwareTracesGradeSystem : GradeSystem
   tracesToCostAwareTracesGradeSystem = record
-    { RGrade = subtrace-left-sided
+    { RGrade = lower-lift-left-sided
     ; EGrade = inclusion-left-sided
     ; ∣_∣ᵉ   = traces→cost-aware-traces
     }
@@ -106,10 +106,10 @@ module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
 
   open WithDecEq _≟ₒ_ using (liftˢ-mono)
 
-  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c'
-    using () renaming (subtrace-left-sided to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
-  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c
-    using () renaming (subtrace-left-sided to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
+  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ c'
+    using () renaming (lower-lift-left-sided to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
+  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ c
+    using () renaming (lower-lift-left-sided to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
 
   -- both orders are `liftˢ` at the sub-trace preorder on the same two
   -- sets, one per cost model, so widening the preorder widens the order

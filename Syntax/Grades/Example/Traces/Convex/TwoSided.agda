@@ -2,7 +2,7 @@
 -- Two-sided convex trace intervals as grades.                         --
 --                                                                     --
 -- A grade is a *pair* of sets of traces, `[ lo , hi ]`, bounding a run --
--- from both sides as `Subtrace.TwoSided` does, but with each endpoint  --
+-- from both sides as `LowerLift.TwoSided` does, but with each endpoint  --
 -- compared by the convex (Egli-Milner) lift rather than the Hoare one  --
 -- alone:                                                              --
 --                                                                     --
@@ -15,7 +15,7 @@
 -- the one-sided convex grades.                                        --
 --                                                                     --
 -- The consistency field is the convex comparison of the two endpoints, --
--- the analogue of `Subtrace.TwoSided`'s `lo≼hi` and of `min≤max`.      --
+-- the analogue of `LowerLift.TwoSided`'s `lo≼hi` and of `min≤max`.    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

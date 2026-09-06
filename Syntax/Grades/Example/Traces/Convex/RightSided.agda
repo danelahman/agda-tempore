@@ -7,7 +7,7 @@
 --                                                                     --
 -- The mirror image of `Convex.LeftSided`: the same conjunction with    --
 -- the two sets in the order they are written. The first conjunct is    --
--- `Subtrace.RightSided`'s order, the cap proper; the second is its     --
+-- `LowerLift.RightSided`'s order, the cap proper; the second is its     --
 -- Smyth partner, which additionally stops the two sets drifting apart, --
 -- so weakening may fill in between the listed allowances but not       --
 -- extend past them.                                                   --
@@ -43,7 +43,7 @@ open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 -- The convex order on (non-empty) sets of traces
 --
 -- Both halves compare the two sets in the order they are written, i.e.
--- with `P` on the left, as `Subtrace.RightSided` does.
+-- with `P` on the left, as `LowerLift.RightSided` does.
 
 infix 5 _≾_
 

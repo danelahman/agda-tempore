@@ -47,8 +47,8 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.Example.Traces.Subtrace.TwoSided Op _≟ₒ_ c
-  using (TraceInterval; lo; hi; subtrace-two-sided; _≾ᵗⁱ_; _·ᵗⁱ_; uᵗⁱ)
+open import Syntax.Grades.Example.Traces.LowerLift.TwoSided Op _≟ₒ_ c
+  using (TraceInterval; lo; hi; lower-lift-two-sided; _≾ᵗⁱ_; _·ᵗⁱ_; uᵗⁱ)
 
 open import DenotationalSemantics.Model.World
 
@@ -138,7 +138,7 @@ w ⊑ᵗ[ i ] w' =
     (True-irr (all? (λ t → (w + duration t) ≤? w') (traces (lo i))) fl fl')
     (True-irr (any? (λ s → w' ≤? (w + duration s)) (traces (hi i))) cp cp')
 
-ticks : World subtrace-two-sided
+ticks : World lower-lift-two-sided
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

@@ -26,7 +26,7 @@
 --   chatty-uplink  read · ⟨ 2 ⟩ · send · send          15 ticks       --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Worked.Traces.Subtrace where
+module Syntax.Grades.Example.Worked.Traces.LowerLift where
 
 open import Data.Product using (_,_)
 open import Data.Unit using (tt)
@@ -47,16 +47,16 @@ open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 ------------------------------------------------------------------------
 -- A floor under what must have happened
 --
--- `Grades.Example.Traces.Subtrace.LeftSided`, the trace counterpart of
+-- `Grades.Example.Traces.LowerLift.LeftSided`, the trace counterpart of
 -- `[ n ,+∞⟩`. The grade lists alternative demands, and a run discharges
 -- it by doing at least what one of them asks for.
 
 module LeftSided where
 
-  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ cost
-    using (subtrace-left-sided; _≾_; _≾?_) public
+  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ cost
+    using (lower-lift-left-sided; _≾_; _≾?_) public
 
-  order : Grade._≾_ subtrace-left-sided ≡ _≾_
+  order : Grade._≾_ lower-lift-left-sided ≡ _≾_
   order = refl
 
   holds : {P Q : NeTraces} {p : True (P ≾? Q)} → P ≾ Q
@@ -144,17 +144,17 @@ module LeftSided where
 ------------------------------------------------------------------------
 -- A cap on what may have happened
 --
--- `Grades.Example.Traces.Subtrace.RightSided`, the mirror image and
+-- `Grades.Example.Traces.LowerLift.RightSided`, the mirror image and
 -- the trace counterpart of `[0, n ]`. The grade lists alternative
 -- permissions, and a run stays within it by doing at most what one of
 -- them allows.
 
 module RightSided where
 
-  open import Syntax.Grades.Example.Traces.Subtrace.RightSided Op _≟ₒ_ cost
-    using (subtrace-right-sided; _≾_; _≾?_) public
+  open import Syntax.Grades.Example.Traces.LowerLift.RightSided Op _≟ₒ_ cost
+    using (lower-lift-right-sided; _≾_; _≾?_) public
 
-  order : Grade._≾_ subtrace-right-sided ≡ _≾_
+  order : Grade._≾_ lower-lift-right-sided ≡ _≾_
   order = refl
 
   holds : {P Q : NeTraces} {p : True (P ≾? Q)} → P ≾ Q
@@ -209,17 +209,17 @@ module RightSided where
 ------------------------------------------------------------------------
 -- Both bounds at once
 --
--- `Grades.Example.Traces.Subtrace.TwoSided`, the trace counterpart of
+-- `Grades.Example.Traces.LowerLift.TwoSided`, the trace counterpart of
 -- `[ min , max ]`. A grade is a pair of the two above, and its order is
 -- their pair: the floor may drop and the cap may rise.
 
 module TwoSided where
 
-  open import Syntax.Grades.Example.Traces.Subtrace.TwoSided Op _≟ₒ_ cost
-    using (TraceInterval; [_,_,_]; lo; hi; subtrace-two-sided;
+  open import Syntax.Grades.Example.Traces.LowerLift.TwoSided Op _≟ₒ_ cost
+    using (TraceInterval; [_,_,_]; lo; hi; lower-lift-two-sided;
            _≾ᵗⁱ_; _≾ᵗⁱ?_; _·ᵗⁱ_; uᵗⁱ; eqᵗⁱ) public
 
-  order : Grade._≾_ subtrace-two-sided ≡ _≾ᵗⁱ_
+  order : Grade._≾_ lower-lift-two-sided ≡ _≾ᵗⁱ_
   order = refl
 
   -- the order unfolds through the endpoint projections, so unlike the
@@ -312,10 +312,10 @@ module TwoSided where
   sequencing : exactly poll ·ᵗⁱ exactly ⌈ write ⌉ ≡ exactly logged
   sequencing = eqᵗⁱ refl refl
 
-  unit : Grade.u subtrace-two-sided ≡ exactly ⟨ 0 ⟩
+  unit : Grade.u lower-lift-two-sided ≡ exactly ⟨ 0 ⟩
   unit = eqᵗⁱ refl refl
 
-  two-time-steps : Grade.of-nat subtrace-two-sided 2 ≡ exactly ⟨ 2 ⟩
+  two-time-steps : Grade.of-nat lower-lift-two-sided 2 ≡ exactly ⟨ 2 ⟩
   two-time-steps = eqᵗⁱ refl refl
 
   nothing-below-the-unit : ¬ (exactly uplink ≾ᵗⁱ uᵗⁱ)

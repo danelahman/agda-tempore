@@ -36,8 +36,8 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op c
 
-open import Syntax.Grades.Example.Traces.Subtrace.RightSided Op _≟ₒ_ c
-  using (subtrace-right-sided; _≾_)
+open import Syntax.Grades.Example.Traces.LowerLift.RightSided Op _≟ₒ_ c
+  using (lower-lift-right-sided; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -110,7 +110,7 @@ open _⊑ʳ[_]_
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World subtrace-right-sided
+histories : World lower-lift-right-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_        = _⊑ʳ[_]_

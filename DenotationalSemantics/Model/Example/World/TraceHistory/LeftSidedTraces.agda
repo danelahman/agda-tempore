@@ -13,7 +13,7 @@
 -- Reading `P` as a floor under what must have happened, rather than a  --
 -- cap on what may, is what keeps the relation covariant along the      --
 -- grade order. The quantifier is universal because that order          --
--- (`Subtrace.LeftSided`) compares its two sets *exchanged*: weakening  --
+-- (`LowerLift.LeftSided`) compares its two sets *exchanged*: weakening  --
 -- a floor replaces each of its demands by one already covered, so what --
 -- carries over is having covered all of them, not one of them.         --
 ------------------------------------------------------------------------
@@ -37,8 +37,8 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op c
-open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c
-  using (subtrace-left-sided; _≾_)
+open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ c
+  using (lower-lift-left-sided; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -116,7 +116,7 @@ open _⊑ʰ[_]_
 ------------------------------------------------------------------------
 -- The frame.
 
-histories : World subtrace-left-sided
+histories : World lower-lift-left-sided
 histories = record
   { W             = Trace
   ; _⊑[_]_       = _⊑ʰ[_]_

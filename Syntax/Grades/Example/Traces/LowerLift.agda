@@ -18,16 +18,16 @@
 -- comparison.                                                         --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Traces.Subtrace where
+module Syntax.Grades.Example.Traces.LowerLift where
 
 -- a floor: what must have happened
 
-import Syntax.Grades.Example.Traces.Subtrace.LeftSided
+import Syntax.Grades.Example.Traces.LowerLift.LeftSided
 
 -- a cap: what may have happened
 
-import Syntax.Grades.Example.Traces.Subtrace.RightSided
+import Syntax.Grades.Example.Traces.LowerLift.RightSided
 
 -- both at once, as a pair of endpoints
 
-import Syntax.Grades.Example.Traces.Subtrace.TwoSided
+import Syntax.Grades.Example.Traces.LowerLift.TwoSided

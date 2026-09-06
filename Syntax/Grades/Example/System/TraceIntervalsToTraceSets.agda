@@ -5,7 +5,7 @@
 -- `System.IntervalsToLeftSidedIntervals`. Effect grades are two-sided  --
 -- trace intervals, bounding a computation's runs from both sides;      --
 -- resource grades are the one-sided trace grades of                    --
--- `Traces.Subtrace.LeftSided`, which keeps the floor alone. The        --
+-- `Traces.LowerLift.LeftSided`, which keeps the floor alone. The        --
 -- projection forgets the cap, so a resource grade says only what a     --
 -- computation is guaranteed to have done, not what it is forbidden     --
 -- from doing.                                                          --
@@ -35,14 +35,14 @@ open Operations Ops
 
 module _ (opTime : Op → ℕ) where
 
-  open import Syntax.Grades.Example.Traces.Subtrace.TwoSided Op _≟ₒ_ opTime
-    using (subtrace-two-sided; lo)
-  open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ opTime
-    using (subtrace-left-sided)
+  open import Syntax.Grades.Example.Traces.LowerLift.TwoSided Op _≟ₒ_ opTime
+    using (lower-lift-two-sided; lo)
+  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ opTime
+    using (lower-lift-left-sided)
 
   -- the projection reads off the floor
 
-  trace-intervals→traces : subtrace-two-sided →ᵍ subtrace-left-sided
+  trace-intervals→traces : lower-lift-two-sided →ᵍ lower-lift-left-sided
   trace-intervals→traces = record
     { map          = lo
     ; map-monotone = proj₁
@@ -53,7 +53,7 @@ module _ (opTime : Op → ℕ) where
 
   traceIntervalsToTraceSetsGradeSystem : GradeSystem
   traceIntervalsToTraceSetsGradeSystem = record
-    { RGrade = subtrace-left-sided
-    ; EGrade = subtrace-two-sided
+    { RGrade = lower-lift-left-sided
+    ; EGrade = lower-lift-two-sided
     ; ∣_∣ᵉ   = trace-intervals→traces
     }

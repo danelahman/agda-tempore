@@ -11,7 +11,7 @@
 -- Exchanging the sets is what separates the two one-sided grades of    --
 -- this family, and it has to be: flipping the *relation* instead would --
 -- not, `_≡_` being symmetric, so the cap's comparison read backwards   --
--- is the cap's comparison again. `Subtrace.LeftSided` relaxes this one --
+-- is the cap's comparison again. `LowerLift.LeftSided` relaxes this one --
 -- by `_≼_`, in the same exchanged argument order.                     --
 ------------------------------------------------------------------------
 

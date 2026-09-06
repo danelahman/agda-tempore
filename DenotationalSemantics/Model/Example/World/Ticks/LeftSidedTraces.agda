@@ -13,7 +13,7 @@
 -- interval's bound read off the traces of `P` instead of given         --
 -- outright.                                                           --
 --                                                                    --
--- The quantifier is universal because `Subtrace.LeftSided` compares    --
+-- The quantifier is universal because `LowerLift.LeftSided` compares    --
 -- its two sets *exchanged*: weakening a floor replaces each of its     --
 -- demands by one already covered, so it is advancing past all of the   --
 -- demands that carries over, not advancing past one of them.           --
@@ -52,8 +52,8 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op c
 open import Syntax.Grades.Traces.SubtraceDuration Op c using (duration-≼)
 
-open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ c
-  using (subtrace-left-sided; _≾_)
+open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ c
+  using (lower-lift-left-sided; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -68,7 +68,7 @@ open DecSubtrace _≟ₒ_ using (_≼?_)
 -- duration of `P` ahead.
 --
 -- The quantifier is universal because the grade's order is
--- `Subtrace.LeftSided`'s, which compares the two sets exchanged: a
+-- `LowerLift.LeftSided`'s, which compares the two sets exchanged: a
 -- weaker floor's demands are each covered by one of the stronger
 -- floor's, so it is by having advanced past all of them that advancing
 -- past all of a weaker floor's follows. Reading the set disjunctively
@@ -125,7 +125,7 @@ w ⊑ᵗ[ P ] w' = True (all? (λ t → (w + duration t) ≤? w') (traces P))
 ⊑ᵗ-irrelevant {P} {w} {w'} p q =
   True-irr (all? (λ t → (w + duration t) ≤? w') (traces P)) p q
 
-ticks : World subtrace-left-sided
+ticks : World lower-lift-left-sided
 ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_

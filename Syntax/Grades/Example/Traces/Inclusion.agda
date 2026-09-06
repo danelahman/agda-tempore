@@ -17,7 +17,7 @@
 -- relation flipped: `_≡_` is symmetric, so flipping it changes         --
 -- nothing, and the two grades would coincide.                         --
 --                                                                     --
--- `Subtrace` is this family with the comparison relaxed by `_≼_`, in   --
+-- `LowerLift` is this family with the comparison relaxed by `_≼_`, in --
 -- the same two argument orders.                                       --
 ------------------------------------------------------------------------
 

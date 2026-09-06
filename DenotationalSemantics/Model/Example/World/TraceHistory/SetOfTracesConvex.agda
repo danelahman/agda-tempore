@@ -2,7 +2,7 @@
 -- A trace-history Kripke frame for convexly ordered sets of traces as  --
 -- the resource grades.                                                 --
 --                                                                    --
--- Worlds and accessibility are those of `Subtrace.LeftSided`:          --
+-- Worlds and accessibility are those of `LowerLift.LeftSided`:          --
 -- `w ⊑ʰ[ P ] w'` asks for a continuation that covers *every* member    --
 -- of `P`. That relation is covariant along the floor order, and the    --
 -- convex order has the floor order as its first conjunct, so `⊑-mono`  --

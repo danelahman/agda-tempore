@@ -2,7 +2,7 @@
 -- Sets of timed traces compared by the convex (Egli-Milner) lift of   --
 -- the sub-trace preorder.                                             --
 --                                                                     --
--- Each grade of `Subtrace` strengthened by the Smyth partner of its    --
+-- Each grade of `LowerLift` strengthened by the Smyth partner of its    --
 -- comparison: as well as every trace on one side being matched on the  --
 -- other, every trace on the other side must be matched back. Weakening --
 -- may therefore fill in between the listed alternatives but not extend --

@@ -9,7 +9,7 @@
 --                                                                     --
 -- The consistency field `lo⊑hi` is the analogue of `min≤max`: what is  --
 -- required must be permitted, or the interval is empty. It is stricter --
--- than `Subtrace.TwoSided`'s `lo≼hi`, which asks only that the floor    --
+-- than `LowerLift.TwoSided`'s `lo≼hi`, which asks only that the floor  --
 -- be *covered* by the cap, so a pair well-formed there need not be     --
 -- well-formed here: `[ { ab , a } , { abcd } ]` is a subtrace interval  --
 -- and not an inclusion one. That is the column's defining property     --
@@ -22,7 +22,7 @@
 --   [ L₁ , U₁ ] ≾ [ L₂ , U₂ ]   iff   L₂ ⊆ L₁   and   U₁ ⊆ U₂        --
 --                                                                     --
 -- so the floor may drop a requirement and the cap may gain a           --
--- permission. `Subtrace.TwoSided` is this grade with both endpoints    --
+-- permission. `LowerLift.TwoSided` is this grade with both endpoints    --
 -- relaxed by `_≼_`, in the same two argument orders.                  --
 ------------------------------------------------------------------------
 
@@ -144,7 +144,7 @@ i₁ ≾ⁱⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 -- Zero-product property
 --
 -- Both endpoints say something at the unit, unlike in
--- `Subtrace.TwoSided` where the floor half is vacuous: the floor asks
+-- `LowerLift.TwoSided` where the floor half is vacuous: the floor asks
 -- that the instantaneous run be required, the cap that nothing else be
 -- permitted. The trace monoid being conical, each descends to the two
 -- factors of a product.

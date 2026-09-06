@@ -5,13 +5,13 @@
 --   P ≾ Q   iff   every trace of Q fits inside some trace of P        --
 --            and  every trace of P has some trace of Q inside it.     --
 --                                                                     --
--- The first conjunct is `Subtrace.LeftSided`'s order, the floor        --
+-- The first conjunct is `LowerLift.LeftSided`'s order, the floor        --
 -- proper; the second is its Smyth partner, which additionally caps how --
 -- far the two sets may drift apart. Weakening a grade may therefore    --
 -- ask for less only between traces already present: the extremes are   --
 -- exact.                                                               --
 --                                                                     --
--- As in `Subtrace.LeftSided`, a grade is read as a lower bound on      --
+-- As in `LowerLift.LeftSided`, a grade is read as a lower bound on      --
 -- what must have happened, so that `unbox`'s premise `ρ' ≾ᵣ ρ` admits --
 -- a run that does more than `ρ` asks for and never one that does less. --
 --                                                                     --
@@ -60,7 +60,7 @@ open DecSubtrace _≟ₒ_ using (_≼?_)
 -- The convex order on (non-empty) sets of traces
 --
 -- Both halves compare the two sets in the same direction as
--- `Subtrace.LeftSided` does, i.e. with `Q` on the left.
+-- `LowerLift.LeftSided` does, i.e. with `Q` on the left.
 
 infix 5 _≾_
 

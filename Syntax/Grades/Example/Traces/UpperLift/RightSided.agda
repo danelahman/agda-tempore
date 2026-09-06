@@ -1,19 +1,18 @@
 ------------------------------------------------------------------------
--- Left-sided (flooring) sets of timed traces, compared up to the      --
--- sub-trace preorder:                                                 --
+-- Right-sided (capping) sets of timed traces, compared by the Smyth   --
+-- upper lift of the sub-trace preorder:                               --
 --                                                                     --
---   P ≾ Q   iff   every trace of Q fits inside some trace of P.       --
+--   P ≾ Q   iff   every trace of Q has some trace of P inside it.     --
 --                                                                     --
--- `Inclusion.LeftSided` relaxed by `_≼_`: where that one asks each     --
--- required run of `Q` to be *literally* one of `P`'s, this one asks    --
--- only that it be covered by one of `P`'s. The two sets stay exchanged --
--- exactly as they are there, which is what makes the floor a floor --  --
--- a weaker grade requires less, and `P ≾ Q` says `P`'s demands         --
--- dominate `Q`'s.                                                     --
+-- The mirror of `LowerLift.RightSided`: the same two sets in the same  --
+-- order, but with the quantifier running over the *right-hand* set     --
+-- rather than the left. Where the Hoare lift asks each trace on the    --
+-- left to be covered somewhere on the right, this one asks each trace  --
+-- on the right to be justified by something on the left -- the "must"  --
+-- reading against the Hoare lift's "may".                             --
 --                                                                     --
--- `Subtrace.RightSided` is the mirror image, the same comparison with  --
--- the sets in the order they are written, and `Convex.LeftSided` is    --
--- this one strengthened by its Smyth partner.                         --
+-- `UpperLift.LeftSided` is this comparison with the sets exchanged,    --
+-- and `Convex.RightSided` is the two of them conjoined.               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -22,7 +21,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.Traces.Subtrace.LeftSided
+module Syntax.Grades.Example.Traces.UpperLift.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Relation.Nullary using (Dec)
@@ -42,44 +41,44 @@ open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 ------------------------------------------------------------------------
 -- The grade order on (non-empty) sets of traces
 --
--- `P ≾ Q` asks that every demand of `Q` be covered by some demand of
--- `P`, i.e. `_≼ˢ_` with the two sets exchanged.
+-- `P ≾ Q` asks that every allowance of `Q` be realised by something `P`
+-- already offers, i.e. `_≽ˢ_` with the sets in the order written.
 
 infix 5 _≾_
 
 _≾_ : NeTraces → NeTraces → Set
-P ≾ Q = traces Q ≼ˢ traces P
+P ≾ Q = traces P ≽ˢ traces Q
 
 ≾ᵗ-refl : {P : NeTraces} → P ≾ P
-≾ᵗ-refl {P} = ≼ˢ-refl {traces P}
+≾ᵗ-refl {P} = ≽ˢ-refl {traces P}
 
 ≾ᵗ-trans : {P Q R : NeTraces} → P ≾ Q → Q ≾ R → P ≾ R
-≾ᵗ-trans {P} {Q} {R} pq qr =
-  ≼ˢ-trans {traces R} {traces Q} {traces P} qr pq
+≾ᵗ-trans {P} {Q} {R} = ≽ˢ-trans {traces P} {traces Q} {traces R}
 
 -- the language product is monotone in both arguments
 
 ·-monoˡ : {C P Q : NeTraces} → P ≾ Q → (P · C) ≾ (Q · C)
 ·-monoˡ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces Q} {traces P} {traces C} {traces C} rel (≼ˢ-refl {traces C})
+  ≽ˢ-·ˢ {traces P} {traces Q} {traces C} {traces C} rel (≽ˢ-refl {traces C})
 
 ·-monoʳ : {C P Q : NeTraces} → P ≾ Q → (C · P) ≾ (C · Q)
 ·-monoʳ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces C} {traces C} {traces Q} {traces P} (≼ˢ-refl {traces C}) rel
+  ≽ˢ-·ˢ {traces C} {traces C} {traces P} {traces Q} (≽ˢ-refl {traces C}) rel
 
 ------------------------------------------------------------------------
 -- Zero-product property
 --
--- The unit `{ ε }` demands nothing, and the empty trace fits inside
--- every trace, so every grade lies below it and the property is
--- vacuous -- as it is for the left-sided intervals, whose unit
--- `[ 0 ,+∞⟩` is likewise the greatest grade.
+-- A cap of `{ ε }` asks for one member below the empty trace, which the
+-- trace monoid being conical forces to be `ε` itself; one factor of a
+-- language product supplies it, so the property descends to both.
 
 ≾ᵗ-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
-≾ᵗ-zero-productˡ {P} {Q} _ = u-≼ˢ (traces P) (nonempty P)
+≾ᵗ-zero-productˡ {P} {Q} =
+  ≽ˢ-zero-productˡ {traces P} {traces Q} (nonempty Q)
 
 ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
-≾ᵗ-zero-productʳ {P} {Q} _ = u-≼ˢ (traces Q) (nonempty Q)
+≾ᵗ-zero-productʳ {P} {Q} =
+  ≽ˢ-zero-productʳ {traces P} {traces Q} (nonempty P)
 
 -- the grade order is proof-irrelevant
 
@@ -88,22 +87,18 @@ P ≾ Q = traces Q ≼ˢ traces P
 
 ------------------------------------------------------------------------
 -- The order is decidable
---
--- Both membership and the sub-trace preorder are decided and the sets
--- are finite, so an ordering between two written-out grades is settled
--- by computation.
 
 infix 5 _≾?_
 
 _≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
-P ≾? Q = traces Q ≼ˢ? traces P
+P ≾? Q = traces P ≽ˢ? traces Q
 
 ------------------------------------------------------------------------
--- The grade of (non-empty) sets of timed traces, read as a floor and
--- compared up to the sub-trace preorder
+-- The grade of (non-empty) sets of timed traces, read as a cap and
+-- compared by the Smyth upper lift
 
-subtrace-left-sided : Grade
-subtrace-left-sided = record
+upper-lift-right-sided : Grade
+upper-lift-right-sided = record
   { Carrier         = NeTraces
   ; _·_             = _·_
   ; u               = u

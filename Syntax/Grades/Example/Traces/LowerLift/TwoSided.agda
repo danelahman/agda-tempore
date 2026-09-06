@@ -34,7 +34,7 @@ open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
 
 open import Util.Equality
 
-module Syntax.Grades.Example.Traces.Subtrace.TwoSided
+module Syntax.Grades.Example.Traces.LowerLift.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
@@ -50,11 +50,11 @@ open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 -- each endpoint is ordered exactly as the corresponding one-sided
 -- trace grade orders it
 
-open import Syntax.Grades.Example.Traces.Subtrace.LeftSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_;
                      ≾ᵗ-zero-productˡ to ≾ˡᵒ-zero-productˡ;
                      ≾ᵗ-zero-productʳ to ≾ˡᵒ-zero-productʳ)
-open import Syntax.Grades.Example.Traces.Subtrace.RightSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.Traces.LowerLift.RightSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
                      ≾ᵗ-zero-productˡ to ≾ʰⁱ-zero-productˡ;
                      ≾ᵗ-zero-productʳ to ≾ʰⁱ-zero-productʳ)
@@ -150,7 +150,7 @@ i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 -- Only the cap carries information at the unit: `[ L , U ] ≾ uᵗⁱ` asks
 -- that every trace of `U` take no time, and durations add along
 -- sequencing, so a product below the unit has both factors below it.
--- The floor half is vacuous, as it is in `Subtrace.LeftSided`, whose
+-- The floor half is vacuous, as it is in `LowerLift.LeftSided`, whose
 -- own zero-product it is.
 
 ≾ᵗⁱ-zero-productˡ : {i₁ i₂ : TraceInterval} → (i₁ ·ᵗⁱ i₂) ≾ᵗⁱ uᵗⁱ → i₁ ≾ᵗⁱ uᵗⁱ
@@ -197,8 +197,8 @@ i₁ ≾ᵗⁱ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
 
-subtrace-two-sided : Grade
-subtrace-two-sided = record
+lower-lift-two-sided : Grade
+lower-lift-two-sided = record
   { Carrier         = TraceInterval
   ; _·_             = _·ᵗⁱ_
   ; u               = uᵗⁱ
