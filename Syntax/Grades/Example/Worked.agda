@@ -50,6 +50,12 @@ import Syntax.Grades.Example.Worked.Intervals
 
 import Syntax.Grades.Example.Worked.TraceSets
 
+-- The two-sided trace intervals: a run within both bounds, one under
+-- the floor, and one over the cap -- the last being what no order on a
+-- single set of traces can reject.
+
+import Syntax.Grades.Example.Worked.TraceIntervals
+
 -- A language specification over the alphabet, which the trace-based
 -- grade systems need in order to be instantiated.
 

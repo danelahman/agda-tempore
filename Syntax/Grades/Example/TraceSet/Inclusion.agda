@@ -3,9 +3,10 @@
 --                                                                     --
 --   P ≾ Q   iff   every trace of P is a member of Q.                  --
 --                                                                     --
--- The coarsest of the three orders on sets of traces, and the only    --
--- one that needs no cost on the operations: a grade records exactly   --
--- which runs a computation may have, and weakening it only adds runs.  --
+-- The only order on sets of traces that needs no cost on the          --
+-- operations: it never consults the sub-trace preorder, so a demand    --
+-- is discharged only by having done exactly one of the runs listed.    --
+-- Weakening a grade only lengthens that list.                          --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -34,10 +35,12 @@ open import Syntax.Grades.Traces.Sets Op
 ------------------------------------------------------------------------
 -- The grade
 --
--- A grade is a non-empty set of traces `P`, read as the upper endpoint
--- of the right-sided trace interval `[ε, P ]` whose lower endpoint is
--- fixed at the unit `{ ε }` -- the analogue of the time interval
--- `[0, n ]`. The monoid is the language product on this upper set.
+-- A grade is a non-empty set of traces `P`, read as an enumeration of
+-- the runs after which a boxed resource is available. It is not an
+-- interval in either direction: the order compares sets by membership
+-- alone, never by the sub-trace preorder, so nothing is bounded above
+-- or below -- a demand is discharged only by having done exactly one of
+-- the runs listed. The monoid is the language product.
 
 ------------------------------------------------------------------------
 -- The subset order
@@ -47,7 +50,7 @@ open import Syntax.Grades.Traces.Sets Op
 
 open WithDecEq _≟ₒ_
 
--- the order on grades is the subset order on the upper set
+-- the order on grades is the subset order on the listed runs
 
 _≾_ : NeTraces → NeTraces → Set
 P ≾ Q = traces P ⊑ traces Q

@@ -26,6 +26,8 @@ module Syntax.Grades.Traces.SubtraceLift
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.List.Base using (List)
+open import Data.Nat.Base using (zero; _+_; _≤_)
+open import Data.Nat.Properties using (≤-reflexive; n≤0⇒n≡0; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
@@ -35,7 +37,11 @@ open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Subtrace Op cost
+open import Syntax.Grades.Traces.SubtraceDuration Op cost using (duration-≼; ≼-ε)
+
+open Durations cost
 
 open WithDecEq _≟ₒ_ using (_∈?_)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -136,3 +142,50 @@ u-≼ˢ xs ne s m
         with neHead xs ne
 ...     | t , t∈xs =
           fromWitness (Any.map (λ eq → subst (ε ≼_) eq nil) t∈xs)
+
+------------------------------------------------------------------------
+-- The unit is a zero for the Hoare lift
+--
+-- Unlike `_≽ˢ_`, the Hoare lift says something at the unit: `xs ≼ˢ { ε }`
+-- forces every trace of `xs` to take no time. So if a language product
+-- lies below `{ ε }`, so does each factor -- durations add along
+-- sequencing, and a sum that is zero has zero summands. This is the
+-- zero-product property for any grade whose order caps by `_≼ˢ_`.
+
+≼ˢ-zero-productˡ : {xs ys : List Trace} → NonEmpty ys
+                 → (xs ·ˢ ys) ≼ˢ traces u → xs ≼ˢ traces u
+≼ˢ-zero-productˡ {xs} {ys} ne hyp s m
+  with neHead ys ne
+... | y , y∈ys
+        with find (toWitness (hyp (s ∙ y)
+                     (fromWitness (∈-cartesianProductWith⁺ _∙_ (toWitness m) y∈ys))))
+...     | t , t∈[ε] , sy≼t =
+          fromWitness {a? = any? (λ t' → s ≼? t') (traces u)} (here (≼-ε s dur-s))
+  where
+    sy≼ε : (s ∙ y) ≼ ε
+    sy≼ε = subst ((s ∙ y) ≼_) (∈-[ε]⁻ t∈[ε]) sy≼t
+
+    dur-sy : duration s + duration y ≡ zero
+    dur-sy = n≤0⇒n≡0 (subst (_≤ zero) (duration-∙ s y) (duration-≼ sy≼ε))
+
+    dur-s : duration s ≤ zero
+    dur-s = ≤-reflexive (m+n≡0⇒m≡0 (duration s) dur-sy)
+
+≼ˢ-zero-productʳ : {xs ys : List Trace} → NonEmpty xs
+                 → (xs ·ˢ ys) ≼ˢ traces u → ys ≼ˢ traces u
+≼ˢ-zero-productʳ {xs} {ys} ne hyp s m
+  with neHead xs ne
+... | x , x∈xs
+        with find (toWitness (hyp (x ∙ s)
+                     (fromWitness (∈-cartesianProductWith⁺ _∙_ x∈xs (toWitness m)))))
+...     | t , t∈[ε] , xs≼t =
+          fromWitness {a? = any? (λ t' → s ≼? t') (traces u)} (here (≼-ε s dur-s))
+  where
+    xs≼ε : (x ∙ s) ≼ ε
+    xs≼ε = subst ((x ∙ s) ≼_) (∈-[ε]⁻ t∈[ε]) xs≼t
+
+    dur-xs : duration x + duration s ≡ zero
+    dur-xs = n≤0⇒n≡0 (subst (_≤ zero) (duration-∙ x s) (duration-≼ xs≼ε))
+
+    dur-s : duration s ≤ zero
+    dur-s = ≤-reflexive (m+n≡0⇒n≡0 (duration x) dur-xs)

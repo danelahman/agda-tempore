@@ -14,6 +14,16 @@
 -- As in `TraceSet.UpToSubtrace`, a grade is read as a lower bound on  --
 -- what must have happened, so that `unbox`'s premise `ρ' ≾ᵣ ρ` admits --
 -- a run that does more than `ρ` asks for and never one that does less. --
+--                                                                     --
+-- Despite the name, this is *not* the trace analogue of a two-sided    --
+-- time interval, and it does not bound a run from above: both halves   --
+-- orient `_≼_` the same way and differ only in which set the           --
+-- quantifier runs over, so a run that does far more than `Q` asks for  --
+-- is still admitted. What the extra half buys is that every listed     --
+-- demand be achievable by a run already present, so weakening may fill --
+-- in between demands but not extend past them. The two-sided analogue  --
+-- carries a *pair* of sets, a floor and a cap, and is                  --
+-- `TraceSet.TwoSided`.                                                 --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero)

@@ -61,6 +61,12 @@ import DenotationalSemantics.Model.Example.World.Ticks.SetOfTraces
 
 import DenotationalSemantics.Model.Example.World.Ticks.SetOfTracesUpToSubtrace
 
+-- reach into the window between a floor-trace's and a cap-trace's
+-- duration: the two-sided interval frame, with both endpoints read off
+-- traces
+
+import DenotationalSemantics.Model.Example.World.Ticks.TwoSidedTraces
+
 ------------------------------------------------------------------------
 -- Trace-history frames: worlds are timed traces
 --
@@ -93,3 +99,8 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvex
 -- cover *some* demand and to take at least *every* demand's time
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvexMayMust
+
+-- append a continuation bounded on both sides: it covers a member of
+-- the floor and fits inside a member of the cap
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedTraces

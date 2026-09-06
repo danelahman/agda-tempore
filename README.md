@@ -74,10 +74,17 @@ a grade system, a signature of base types, and operations' signatures.
   `ExtendedNat.agda`).
 
 - `Syntax/Grades/Example/TraceSet/` holds the grades that record *which runs* a
-  computation must have had, as a non-empty finite set of timed traces. All
-  three share their carrier and monoid and differ only in the order:
+  computation must have had, as non-empty finite sets of timed traces. The
+  first three share their carrier and monoid and differ only in the order:
   `Inclusion.agda` orders sets by inclusion, `UpToSubtrace.agda` by the Smyth
   lift of the sub-trace preorder, and `Convex.agda` by its Egli-Milner lift.
+  Despite its name the convex order is *not* a two-sided interval and never
+  caps a run from above — both its halves orient `≼` the same way.
+  `TwoSided.agda` is the two-sided interval: its carrier is a *pair* of sets,
+  a floor and a cap, with a consistency field `lo≼hi` playing the role of
+  `min≤max`, so a run must cover a trace of the floor and fit inside a trace
+  of the cap. It is the trace analogue of `Interval/TwoSided.agda`, with `≼`
+  in place of `≤`.
 
 - All the grade orders run the same way round, which is what `unbox`'s premise
   `ρ' ≾ᵣ ρ` needs: `ρ'` records the effects that actually elapsed since the
@@ -120,8 +127,10 @@ a grade system, a signature of base types, and operations' signatures.
   `TracesToTimeIntervals` (sets of traces to two-sided time intervals), and
   `TracesToCostAwareTraces` (sets of traces ordered by inclusion to the same
   sets ordered up to the cost-aware sub-trace preorder, and one cost model to
-  a cheaper one). Each projection says what a resource grade is allowed to
-  forget about the effect grade it comes from.
+  a cheaper one), and `TraceIntervalsToTraceSets` (two-sided trace intervals
+  to one-sided ones, forgetting the cap — the trace counterpart of the first).
+  Each projection says what a resource grade is allowed to forget about the
+  effect grade it comes from.
 
 ### Core language, type system
 

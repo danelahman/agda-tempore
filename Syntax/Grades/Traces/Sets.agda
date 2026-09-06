@@ -1,12 +1,13 @@
 ------------------------------------------------------------------------
 -- Non-empty finite sets of timed traces, and their monoid structure.  --
 --                                                                     --
--- Every trace-based grade has the same carrier: a non-empty finite set --
--- of timed traces, read as the set of schedules a computation may      --
--- realise. The monoid is the language product, which sequences each    --
--- trace of one set with each trace of the other, with unit `{ ε }`.    --
--- The grades differ only in the *order* they put on this carrier, and  --
--- that is what the three modules under `Grades.Example.TraceSet` do.   --
+-- Every trace-based grade is built from the same carrier: a non-empty  --
+-- finite set of timed traces, read as a set of alternative runs. The    --
+-- monoid is the language product, which sequences each trace of one     --
+-- set with each trace of the other, with unit `{ ε }`. The grades       --
+-- differ in the *order* they put on this carrier -- that is what the    --
+-- modules under `Grades.Example.TraceSet` do -- and `TraceSet.TwoSided` --
+-- pairs two such sets, as a floor and a cap.                            --
 --                                                                     --
 -- Deciding membership -- hence any order phrased through it -- needs   --
 -- decidable equality of operation symbols, which the `WithDecEq`       --

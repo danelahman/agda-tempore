@@ -58,9 +58,10 @@ import Syntax.Grades.Example.Interval.TwoSidedWithInfinity
 ------------------------------------------------------------------------
 -- Sets of timed traces
 --
--- One carrier, three orders. Each order says what weakening a grade is
--- allowed to add, and so how much a computation may deviate from the
--- schedule its grade prescribes.
+-- A grade records which runs a computation must have had, and the order
+-- says what weakening one is allowed to ask for instead. The first
+-- three put an order on a single set; the fourth pairs two of them into
+-- an interval, bounding a run from below and above at once.
 
 -- ordered by inclusion: a demand is discharged only by having done
 -- literally one of the runs listed, and the operations need no
@@ -74,9 +75,15 @@ import Syntax.Grades.Example.TraceSet.Inclusion
 import Syntax.Grades.Example.TraceSet.UpToSubtrace
 
 -- ordered by the convex (Egli-Milner) lift: as above, and additionally
--- every listed demand must be achievable by a run already present
+-- every listed demand must be achievable by a run already present.
+-- Despite the name this is not a two-sided interval and never caps
 
 import Syntax.Grades.Example.TraceSet.Convex
+
+-- a *pair* of sets, a floor and a cap, bounding a run from both sides
+-- by the sub-trace preorder: the trace analogue of `Interval.TwoSided`
+
+import Syntax.Grades.Example.TraceSet.TwoSided
 
 ------------------------------------------------------------------------
 -- Grade systems
@@ -103,6 +110,11 @@ import Syntax.Grades.Example.System.TracesToTimeIntervals
 -- nothing, but compare the runs up to what fits inside a schedule
 
 import Syntax.Grades.Example.System.TracesToCostAwareTraces
+
+-- two-sided trace intervals to one-sided ones: forget the cap, keep the
+-- floor -- the trace analogue of the first system above
+
+import Syntax.Grades.Example.System.TraceIntervalsToTraceSets
 
 ------------------------------------------------------------------------
 -- Worked instances

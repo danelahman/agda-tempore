@@ -3,13 +3,13 @@
 -- traces against a cost model.                                        --
 --                                                                     --
 -- The effect grades record *what* a computation may do -- sets of      --
--- timed traces compared by inclusion. The resource grades read the     --
--- same sets against the operations' prescribed execution times: a      --
--- trace lies below another when it fits inside the schedule the other  --
--- describes, with an operation performed charged the time it takes.    --
--- Time spent is thereby accounted for by operations as well as by      --
--- delays, while a schedule that calls for an operation is still not    --
--- met by time spent on anything else.                                  --
+-- timed traces compared by inclusion. The resource grades read the      --
+-- same sets against the operations' prescribed execution times: a run   --
+-- discharges a demand when it does at least what the demand asks for,   --
+-- with an operation performed charged the time it takes. A demand for   --
+-- an operation is thereby discharged by time spent as well as by the    --
+-- operation itself, while a demand for elapsed time is still not        --
+-- discharged by having spent it on anything else.                       --
 --                                                                     --
 -- Two systems are built here: one reinterpreting an effect grade as a  --
 -- resource grade at a fixed cost model, and one relating the           --
