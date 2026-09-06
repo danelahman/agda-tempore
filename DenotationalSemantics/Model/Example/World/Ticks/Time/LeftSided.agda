@@ -11,7 +11,7 @@
 -- accessibilities advances the world by the sum of their ticks.         --
 ------------------------------------------------------------------------
 
-module DenotationalSemantics.Model.Example.World.Ticks.LeftSidedIntervals where
+module DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided where
 
 open import Data.Nat using (ℕ; _+_; _≤_)
 open import Data.Nat.Properties

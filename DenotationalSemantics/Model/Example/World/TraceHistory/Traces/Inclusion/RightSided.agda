@@ -17,7 +17,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTraces
+module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Inclusion.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Data.List.Membership.Propositional using (_∈_)

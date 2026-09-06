@@ -15,7 +15,7 @@ open import Data.Nat.Base using (ℕ)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvex
+module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Convex.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Product using (proj₁)
@@ -25,7 +25,7 @@ open import Syntax.Grades.Example.Traces.Convex.LeftSided Op _≟ₒ_ c using (c
 
 open import DenotationalSemantics.Model.World
 
-open import DenotationalSemantics.Model.Example.World.TraceHistory.LeftSidedTraces
+open import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.LowerLift.LeftSided
   Op _≟ₒ_ c using (_⊑ʰ[_]_; ⊑ʰ-refl; ⊑ʰ-trans; ⊑ʰ-mono; ⊑ʰ-irrelevant)
 
 histories : World convex-left-sided

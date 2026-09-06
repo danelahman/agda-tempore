@@ -27,7 +27,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedTraces
+module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.LowerLift.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)

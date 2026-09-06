@@ -25,7 +25,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvexMayMust
+module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Convex.LeftSidedMayMust
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)

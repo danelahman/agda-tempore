@@ -22,7 +22,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.RightSidedTraces
+module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.LowerLift.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (find)

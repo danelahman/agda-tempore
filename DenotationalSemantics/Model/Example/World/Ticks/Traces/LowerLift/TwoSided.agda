@@ -26,7 +26,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.Ticks.TwoSidedTraces
+module DenotationalSemantics.Model.Example.World.Ticks.Traces.LowerLift.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Nat using (_+_; _≤_; _≤?_)

@@ -12,7 +12,7 @@
 -- accessibilities advances the world into the summed window.            --
 ------------------------------------------------------------------------
 
-module DenotationalSemantics.Model.Example.World.Ticks.TwoSidedIntervals where
+module DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSided where
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 open import Data.Nat.Properties

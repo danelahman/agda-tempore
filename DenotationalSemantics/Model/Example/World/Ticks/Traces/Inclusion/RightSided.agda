@@ -20,7 +20,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.Ticks.SetOfTraces
+module DenotationalSemantics.Model.Example.World.Ticks.Traces.Inclusion.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (c : Op → ℕ) where
 
 open import Data.Nat using (_+_; _≟_)

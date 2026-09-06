@@ -22,7 +22,7 @@ open import Data.Product
 
 open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩)
 
-open import DenotationalSemantics.Model.Example.World.Ticks.LeftSidedIntervals
+open import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided
   using (_⊑ᵗ[_]_)
 
 -- "at least `n` ticks" reaches exactly `n` ticks ahead
