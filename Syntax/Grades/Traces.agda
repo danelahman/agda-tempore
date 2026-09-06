@@ -65,9 +65,18 @@ import Syntax.Grades.Traces.MinDuration
 
 import Syntax.Grades.Traces.Subtrace
 
--- Its two lifts to sets of traces -- Hoare and Smyth -- which the
--- trace-based grades pick their orders from.
+-- What an order on traces has to supply to carry grades, and its two
+-- lifts to sets of traces -- Hoare and Smyth -- which the trace-based
+-- grades pick their orders from. Neither mentions a particular order,
+-- so each sub-trace order below meets the interface once and inherits
+-- both lifts with all their laws.
 
+import Syntax.Grades.Traces.Order
+import Syntax.Grades.Traces.OrderLift
+
+-- The sub-trace order as such an interface, and its lifts.
+
+import Syntax.Grades.Traces.Subtrace.AsOrder
 import Syntax.Grades.Traces.SubtraceLift
 
 -- A sub-trace is no longer than its host, up to the slack it was
@@ -79,3 +88,22 @@ import Syntax.Grades.Traces.SubtraceDuration
 -- an operation narrows the order.
 
 import Syntax.Grades.Traces.SubtraceCost
+
+-- The prefix order, and a checked proof that it carries no grade: the
+-- language product is not monotone for it, so `·-monoˡ-≾` fails. Any
+-- order demanding contiguity fails the same way, which is why the
+-- sub-trace order above tolerates unmatched operations in the middle.
+
+import Syntax.Grades.Traces.Prefix
+
+-- The time-strict sub-trace order: the same rules, except that a
+-- matched operation does not carry banked slack across it, so a
+-- demanded delay is payable only by what the run does between the same
+-- two matched operations.
+
+import Syntax.Grades.Traces.SubtraceTimed
+
+-- Its interface instance and lifts, exactly as for the lenient order.
+
+import Syntax.Grades.Traces.SubtraceTimed.AsOrder
+import Syntax.Grades.Traces.SubtraceTimedLift

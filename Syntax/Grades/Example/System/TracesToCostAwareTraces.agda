@@ -51,7 +51,7 @@ module _ (opTime : Op → ℕ) where
 
   open import Syntax.Grades.Example.Traces.Inclusion.LeftSided Op _≟ₒ_
     using (inclusion-left-sided) renaming (_≾_ to _≾ˢ_)
-  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ opTime
+  open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.LeftSided Op _≟ₒ_ opTime
     using (lower-lift-left-sided) renaming (_≾_ to _≾ᶜ_)
 
   -- a run covers itself, so being a member is a special case of being
@@ -106,9 +106,9 @@ module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
 
   open WithDecEq _≟ₒ_ using (liftˢ-mono)
 
-  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ c'
+  open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.LeftSided Op _≟ₒ_ c'
     using () renaming (lower-lift-left-sided to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
-  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ c
+  open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.LeftSided Op _≟ₒ_ c
     using () renaming (lower-lift-left-sided to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
 
   -- both orders are `liftˢ` at the sub-trace preorder on the same two

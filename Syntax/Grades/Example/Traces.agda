@@ -2,18 +2,25 @@
 -- Grades that are (non-empty) sets of timed traces.                   --
 --                                                                     --
 -- A grade records *which runs* a computation must or may have. The     --
--- examples form a grid of two axes.                                    --
+-- examples form a grid of three axes.                                  --
 --                                                                     --
--- Across, how a listed run is matched -- the comparison:               --
+-- First, which order on traces is lifted -- how loosely a listed run   --
+-- is matched:                                                          --
 --                                                                     --
---   Inclusion   by being it                          (`_≡_`)          --
---   LowerLift   by covering it, at the operations'   (Hoare, `_≼_`)   --
---               execution times                                       --
---   UpperLift   the same, quantified over the other  (Smyth, `_≼_`)   --
---               set: each listed bound justified back                 --
---   Convex      both of the two above at once        (Egli-Milner)    --
+--   Inclusion       not at all: a run matches by being listed (`_≡_`)  --
+--   Subtrace        the lenient sub-trace order, which lets time       --
+--                   banked anywhere pay for a delay demanded later     --
+--   SubtraceTimed   its time-strict restriction, which pays a delay    --
+--                   only out of time spent in the same window          --
 --                                                                     --
--- Down, what the set bounds -- the sidedness, mirroring `Time`:        --
+-- Then, within each of the two sub-trace families, how a listed run is --
+-- matched -- the lift:                                                 --
+--                                                                     --
+--   LowerLift   every trace on the left matched on the right  (Hoare)  --
+--   UpperLift   every trace on the right matched on the left  (Smyth)  --
+--   Convex      both at once                            (Egli-Milner)  --
+--                                                                     --
+-- And finally what the set bounds -- the sidedness, mirroring `Time`:  --
 --                                                                     --
 --   LeftSided   a floor, "at least"                                   --
 --   RightSided  a cap, "at most"                                      --
@@ -25,11 +32,25 @@
 -- That is what makes the columns analogues of one another -- only how  --
 -- a run is matched changes -- and it is why `Inclusion` is the whole   --
 -- grid at `_≡_`, where `LowerLift` and `UpperLift` coincide.           --
+--                                                                     --
+-- Since only the comparison changes along the first axis, the grid is  --
+-- built once in `Traces.Lifted`, over an arbitrary trace order, and    --
+-- `Traces.Subtrace` and `Traces.SubtraceTimed` instantiate it. That    --
+-- `_≡_` is not such an order -- `ε ≡ t` fails -- is exactly why        --
+-- `Inclusion` stands outside the axis and is written out separately.   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Traces where
 
+-- matched exactly
+
 import Syntax.Grades.Example.Traces.Inclusion
-import Syntax.Grades.Example.Traces.LowerLift
-import Syntax.Grades.Example.Traces.UpperLift
-import Syntax.Grades.Example.Traces.Convex
+
+-- the grid over an arbitrary trace order
+
+import Syntax.Grades.Example.Traces.Lifted
+
+-- that grid at each of the two sub-trace orders
+
+import Syntax.Grades.Example.Traces.Subtrace
+import Syntax.Grades.Example.Traces.SubtraceTimed

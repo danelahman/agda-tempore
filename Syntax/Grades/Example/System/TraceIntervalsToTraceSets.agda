@@ -35,9 +35,9 @@ open Operations Ops
 
 module _ (opTime : Op → ℕ) where
 
-  open import Syntax.Grades.Example.Traces.LowerLift.TwoSided Op _≟ₒ_ opTime
+  open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.TwoSided Op _≟ₒ_ opTime
     using (lower-lift-two-sided; lo)
-  open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ opTime
+  open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.LeftSided Op _≟ₒ_ opTime
     using (lower-lift-left-sided)
 
   -- the projection reads off the floor

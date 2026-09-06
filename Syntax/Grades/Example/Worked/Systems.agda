@@ -100,7 +100,8 @@ open import Syntax.Grades.Example.Traces.Inclusion.RightSided Op _≟ₒ_
 
 open import Syntax.Grades.Example.Worked.Traces.Inclusion
   using () renaming (module RightSided to Inclusion; module LeftSided to InclusionFloor)
-open import Syntax.Grades.Example.Worked.Traces.LowerLift using (module LeftSided)
+open import Syntax.Grades.Example.Worked.Traces.Subtrace.LowerLift
+  using (module LeftSided)
 
 -- the node either polls or does the full uplink
 
@@ -208,7 +209,7 @@ restricted-grade = refl
 open import Syntax.Grades.Example.System.TracesToCostAwareTraces spec
   using (traces→cost-aware-traces; fast-traces→slow-traces)
 
-open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.LeftSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ˢ_)
 
 -- the carrier is untouched
@@ -247,7 +248,7 @@ open import Syntax.Grades.Traces.Subtrace Op slow
 open DecFast _≟ₒ_ using () renaming (_≼?_ to _≼ᶠ?_)
 open DecSlow _≟ₒ_ using () renaming (_≼?_ to _≼ˢˡ?_)
 
-open import Syntax.Grades.Example.Traces.LowerLift.LeftSided Op _≟ₒ_ fast
+open import Syntax.Grades.Example.Traces.Subtrace.LowerLift.LeftSided Op _≟ₒ_ fast
   using () renaming (_≾_ to _≾ᶠ_)
 
 -- An elapsed write banks its execution time -- 2 ticks under `fast`,
