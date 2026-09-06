@@ -1,9 +1,8 @@
 ------------------------------------------------------------------------
 -- Worked instances of the trace-based interval grades.                --
 --                                                                     --
--- The trace counterpart of `Worked.Time`, one submodule per       --
--- grade: `LeftSided` (a floor), `RightSided` (a cap), `TwoSided`       --
--- (both).                                                             --
+-- The trace counterpart of `Worked.Time`, one submodule per grade:    --
+-- `LeftSided` (a floor), `RightSided` (a cap), `TwoSided` (both).      --
 --                                                                     --
 -- Every claim is stated with the grade's own order `_≾_`, between two  --
 -- sets of traces written out in full, in the form `unbox` reads it:    --
@@ -16,14 +15,17 @@
 -- claims by computation -- a claim asserted the wrong way round simply --
 -- does not typecheck.                                                  --
 --                                                                     --
--- The runs come from `Worked.Operations`:                              --
+-- The runs are written out in full in every claim rather than through  --
+-- the shorthands of `Worked.Operations`, so that a claim can be read   --
+-- without looking anything up. Their durations under `cost` -- read 1, --
+-- write 3, send 6 -- are:                                              --
 --                                                                     --
---   poll           read                                 1 tick        --
---   logged         read · write                         4 ticks       --
---   idle           ⟨ 2 ⟩                                2 ticks       --
---   uplink         read · ⟨ 2 ⟩ · send                  9 ticks       --
---   logged-uplink  read · write · ⟨ 2 ⟩ · send         12 ticks       --
---   chatty-uplink  read · ⟨ 2 ⟩ · send · send          15 ticks       --
+--   ⌈ read ⌉                                          1 tick          --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉                              4 ticks         --
+--   ⟨ 2 ⟩                                             2 ticks         --
+--   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉                       9 ticks         --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉          12 ticks         --
+--   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉           15 ticks         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.LowerLift where
@@ -68,19 +70,23 @@ module LeftSided where
   ----------------------------------------------------------------------
   -- Doing more than was demanded discharges the demand
 
-  did-the-uplink-demanded-a-read : ⟅ uplink ⟆ ≾ ⟅ ⌈ read ⌉ ⟆
+  did-the-uplink-demanded-a-read : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                                   ≾ ⟅ ⌈ read ⌉ ⟆
   did-the-uplink-demanded-a-read = holds
 
-  logged-on-the-way : ⟅ logged-uplink ⟆ ≾ ⟅ uplink ⟆
+  logged-on-the-way : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                      ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   logged-on-the-way = holds
 
   ----------------------------------------------------------------------
   -- Doing less does not
 
-  did-a-poll-demanded-the-uplink : ¬ (⟅ poll ⟆ ≾ ⟅ uplink ⟆)
+  did-a-poll-demanded-the-uplink : ¬ (⟅ ⌈ read ⌉ ⟆
+                                     ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   did-a-poll-demanded-the-uplink = fails
 
-  dropped-the-write : ¬ (⟅ uplink ⟆ ≾ ⟅ logged-uplink ⟆)
+  dropped-the-write : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                        ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   dropped-the-write = fails
 
   ----------------------------------------------------------------------
@@ -96,10 +102,10 @@ module LeftSided where
   write-covers-three-ticks : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆
   write-covers-three-ticks = holds
 
-  uplink-covers-nine-ticks : ⟅ uplink ⟆ ≾ ⟅ ⟨ 9 ⟩ ⟆
+  uplink-covers-nine-ticks : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⟨ 9 ⟩ ⟆
   uplink-covers-nine-ticks = holds
 
-  uplink-covers-no-ten : ¬ (⟅ uplink ⟆ ≾ ⟅ ⟨ 10 ⟩ ⟆)
+  uplink-covers-no-ten : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⟨ 10 ⟩ ⟆)
   uplink-covers-no-ten = fails
 
   ----------------------------------------------------------------------
@@ -109,7 +115,7 @@ module LeftSided where
   idling-is-no-read : ¬ (⟅ ⟨ 100 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
   idling-is-no-read = fails
 
-  idling-is-no-uplink : ¬ (⟅ ⟨ 100 ⟩ ⟆ ≾ ⟅ uplink ⟆)
+  idling-is-no-uplink : ¬ (⟅ ⟨ 100 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   idling-is-no-uplink = fails
 
   ----------------------------------------------------------------------
@@ -121,25 +127,28 @@ module LeftSided where
   -- right strengthens the grade rather than weakening it: the uplink
   -- covers the read but not twenty ticks of idling.
 
-  not-both-of-those : ¬ (⟅ uplink ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆)
+  not-both-of-those : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                        ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆)
   not-both-of-those = fails
 
-  either-way-of-opening-it : ⟅ uplink ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 9 ⟩ ⟆
+  either-way-of-opening-it : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                             ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 9 ⟩ ⟆
   either-way-of-opening-it = holds
 
   -- and listing an extra alternative on the *left* weakens it: the
   -- demand for an uplink is covered by the uplink among what was done,
   -- whether or not a mere poll was also possible
 
-  polled-or-uplinked : ⟅ poll ∣ uplink ⟆ ≾ ⟅ uplink ⟆
+  polled-or-uplinked : ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                       ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   polled-or-uplinked = holds
 
   ----------------------------------------------------------------------
   -- The unit demands nothing, so it is the greatest grade -- as
   -- `[ 0 ,+∞⟩` is for the left-sided time intervals
 
-  everything-opens-the-unit : ⟅ uplink ⟆ ≾ ⟅ ⟨ 0 ⟩ ⟆
-  everything-opens-the-unit = holds {⟅ uplink ⟆} {⟅ ⟨ 0 ⟩ ⟆}
+  everything-opens-the-unit : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⟨ 0 ⟩ ⟆
+  everything-opens-the-unit = holds {⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} {⟅ ⟨ 0 ⟩ ⟆}
 
 ------------------------------------------------------------------------
 -- A cap on what may have happened
@@ -166,16 +175,18 @@ module RightSided where
   ----------------------------------------------------------------------
   -- Doing less than the cap permits stays within it
 
-  polled-under-an-uplink : ⟅ poll ⟆ ≾ ⟅ uplink ⟆
+  polled-under-an-uplink : ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   polled-under-an-uplink = holds
 
-  uplink-under-a-logged-uplink : ⟅ uplink ⟆ ≾ ⟅ logged-uplink ⟆
+  uplink-under-a-logged-uplink : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                                 ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   uplink-under-a-logged-uplink = holds
 
   ----------------------------------------------------------------------
   -- Doing more does not
 
-  transmitted-twice : ¬ (⟅ chatty-uplink ⟆ ≾ ⟅ uplink ⟆)
+  transmitted-twice : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+                        ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   transmitted-twice = fails
 
   ----------------------------------------------------------------------
@@ -205,6 +216,33 @@ module RightSided where
 
   instant-does : ⟅ ⟨ 0 ⟩ ⟆ ≾ ⟅ ⟨ 0 ⟩ ⟆
   instant-does = holds
+
+  ----------------------------------------------------------------------
+  -- Alternatives. The cap quantifies over the *elapsed* set and finds
+  -- its witness in the demanded one, so every run offered must fit
+  -- inside some permitted one -- and a single permission may serve
+  -- several offered runs at once.
+
+  both-under-one-cap : ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+                     ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  both-under-one-cap = holds
+
+  -- one run over the cap breaks it, however well the others fit
+
+  one-run-over-the-cap :
+    ¬ (⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+      ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
+  one-run-over-the-cap = fails
+
+  -- adding a permission is a weakening: the offered run picks whichever
+  -- of them it fits inside
+
+  picks-a-permission : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                     ≾ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  picks-a-permission = holds
+
+  -- which is the direction the *floor* refuses: `LowerLift.LeftSided`
+  -- would ask every listed alternative to be covered instead
 
 ------------------------------------------------------------------------
 -- Both bounds at once
@@ -250,8 +288,8 @@ module TwoSided where
   sensed : TraceInterval
   sensed =
     [ ⟅ ⌈ read ⌉ ⟆
-    , ⟅ uplink ⟆
-    , toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≼ˢ? traces ⟅ uplink ⟆} tt
+    , ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≼ˢ? traces ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
     ]
 
   -- at least one tick, at most a logged uplink: wider at both ends
@@ -259,15 +297,57 @@ module TwoSided where
   loose : TraceInterval
   loose =
     [ ⟅ ⟨ 1 ⟩ ⟆
-    , ⟅ logged-uplink ⟆
-    , toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≼ˢ? traces ⟅ logged-uplink ⟆} tt
+    , ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≼ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
     ]
+
+  -- an interval listing alternatives at *both* endpoints: at least a
+  -- read or a tick, at most a store-and-stop or a full uplink
+
+  branching : TraceInterval
+  branching =
+    [ ⟅ ⌈ read ⌉ ∣ ⟨ 1 ⟩ ⟆
+    , ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , toWitness
+        {a? = traces ⟅ ⌈ read ⌉ ∣ ⟨ 1 ⟩ ⟆
+           ≼ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉
+                      ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
+    ]
+
+  ----------------------------------------------------------------------
+  -- What alternatives buy at each endpoint, and what they do not.
+  --
+  -- The two endpoints quantify over opposite sets, so listing an extra
+  -- alternative *strengthens* the floor and *weakens* the cap. An
+  -- interval that branches is therefore not comparable with one that
+  -- does not just because its endpoints look wider.
+
+  -- the singleton uplink sits inside `branching`: it clears the read on
+  -- the floor and fits the uplink on the cap
+
+  uplink-in-branching : exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉) ≾ᵗⁱ branching
+  uplink-in-branching =
+    holds (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)) branching
+
+  -- but `branching` is *not* below `sensed`, though `sensed`'s endpoints
+  -- are each one of `branching`'s: the extra floor alternative `⟨ 1 ⟩` is
+  -- a demand `sensed`'s floor does not make, and the floor compares its
+  -- sets exchanged, so it must be covered too
+
+  branching-not-below-sensed : ¬ (branching ≾ᵗⁱ sensed)
+  branching-not-below-sensed = fails branching sensed
+
+  -- the other way round does hold: dropping the extra floor alternative
+  -- and keeping only the larger cap is a weakening in both endpoints
+
+  sensed-below-branching : sensed ≾ᵗⁱ branching
+  sensed-below-branching = holds sensed branching
 
   ----------------------------------------------------------------------
   -- Within both bounds: the uplink reads, and is itself the cap
 
-  the-uplink : exactly uplink ≾ᵗⁱ sensed
-  the-uplink = holds (exactly uplink) sensed
+  the-uplink : exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉) ≾ᵗⁱ sensed
+  the-uplink = holds (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)) sensed
 
   ----------------------------------------------------------------------
   -- Under the floor: nothing has happened, so no reading was taken.
@@ -276,21 +356,22 @@ module TwoSided where
   nothing-yet : ¬ (exactly ⟨ 0 ⟩ ≾ᵗⁱ sensed)
   nothing-yet = fails (exactly ⟨ 0 ⟩) sensed
 
-  only-idled : ¬ (exactly idle ≾ᵗⁱ sensed)
-  only-idled = fails (exactly idle) sensed
+  only-idled : ¬ (exactly ⟨ 2 ⟩ ≾ᵗⁱ sensed)
+  only-idled = fails (exactly ⟨ 2 ⟩) sensed
 
   ----------------------------------------------------------------------
   -- Over the cap: `chatty-uplink` reads, waits and sends -- and then
   -- sends again. It clears the floor comfortably, and the one-sided
   -- grade accepts it; the cap does not.
 
-  transmitted-twice : ¬ (exactly chatty-uplink ≾ᵗⁱ sensed)
-  transmitted-twice = fails (exactly chatty-uplink) sensed
+  transmitted-twice : ¬ (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉)
+                        ≾ᵗⁱ sensed)
+  transmitted-twice = fails (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉)) sensed
 
-  clears-the-floor : LeftSided._≾_ ⟅ chatty-uplink ⟆ ⟅ ⌈ read ⌉ ⟆
+  clears-the-floor : LeftSided._≾_ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ⟅ ⌈ read ⌉ ⟆
   clears-the-floor = LeftSided.holds
 
-  breaks-the-cap : ¬ (RightSided._≾_ ⟅ chatty-uplink ⟆ ⟅ uplink ⟆)
+  breaks-the-cap : ¬ (RightSided._≾_ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   breaks-the-cap = RightSided.fails
 
   ----------------------------------------------------------------------
@@ -309,7 +390,7 @@ module TwoSided where
   -- is the singleton interval at the empty run: it demands nothing, but
   -- permits nothing either.
 
-  sequencing : exactly poll ·ᵗⁱ exactly ⌈ write ⌉ ≡ exactly logged
+  sequencing : exactly ⌈ read ⌉ ·ᵗⁱ exactly ⌈ write ⌉ ≡ exactly (⌈ read ⌉ ∙ ⌈ write ⌉)
   sequencing = eqᵗⁱ refl refl
 
   unit : Grade.u lower-lift-two-sided ≡ exactly ⟨ 0 ⟩
@@ -318,8 +399,8 @@ module TwoSided where
   two-time-steps : Grade.of-nat lower-lift-two-sided 2 ≡ exactly ⟨ 2 ⟩
   two-time-steps = eqᵗⁱ refl refl
 
-  nothing-below-the-unit : ¬ (exactly uplink ≾ᵗⁱ uᵗⁱ)
-  nothing-below-the-unit = fails (exactly uplink) uᵗⁱ
+  nothing-below-the-unit : ¬ (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉) ≾ᵗⁱ uᵗⁱ)
+  nothing-below-the-unit = fails (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)) uᵗⁱ
 
 ------------------------------------------------------------------------
 -- Forgetting the cap
@@ -351,7 +432,7 @@ module ForgettingTheCap where
 
   -- and monotonicity carries the interval ordering across
 
-  projected : LeftSided._≾_ ⟅ uplink ⟆ ⟅ ⌈ read ⌉ ⟆
+  projected : LeftSided._≾_ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ⟅ ⌈ read ⌉ ⟆
   projected =
     map-monotone (trace-intervals→traces cost)
-                 {exactly uplink} {sensed} the-uplink
+                 {exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)} {sensed} the-uplink

@@ -61,10 +61,12 @@ module LeftSided where
   -- On singletons it is the plain floor, as `LowerLift.LeftSided` is:
   -- doing more discharges the demand, doing less does not
 
-  logged-on-the-way : ⟅ logged-uplink ⟆ ≾ ⟅ uplink ⟆
+  logged-on-the-way : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                      ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   logged-on-the-way = holds
 
-  did-a-poll-demanded-the-uplink : ¬ (⟅ poll ⟆ ≾ ⟅ uplink ⟆)
+  did-a-poll-demanded-the-uplink : ¬ (⟅ ⌈ read ⌉ ⟆
+                                     ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   did-a-poll-demanded-the-uplink = fails
 
   idling-is-no-read : ¬ (⟅ ⟨ 100 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
@@ -76,10 +78,12 @@ module LeftSided where
   -- uplink covers the read; the lower lift asks for every alternative
   -- to be covered, and nothing the uplink does is twenty ticks of idling
 
-  one-alternative-suffices : ⟅ uplink ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆
+  one-alternative-suffices : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                             ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆
   one-alternative-suffices = holds
 
-  lower-lift-wants-both : ¬ (⟅ uplink ⟆ ≾ˡᵒʷ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆)
+  lower-lift-wants-both : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                            ≾ˡᵒʷ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆)
   lower-lift-wants-both = failsˡᵒʷ
 
   -- and symmetrically, an elapsed grade offering alternatives must have
@@ -87,17 +91,19 @@ module LeftSided where
   -- content that one does: a run that might only have polled does not
   -- open a box demanding the uplink
 
-  might-only-have-polled : ¬ (⟅ poll ∣ uplink ⟆ ≾ ⟅ uplink ⟆)
+  might-only-have-polled : ¬ (⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                             ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   might-only-have-polled = fails
 
-  lower-lift-accepts-it : ⟅ poll ∣ uplink ⟆ ≾ˡᵒʷ ⟅ uplink ⟆
+  lower-lift-accepts-it : ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                          ≾ˡᵒʷ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   lower-lift-accepts-it = holdsˡᵒʷ
 
   ----------------------------------------------------------------------
   -- The unit demands nothing, so it is the greatest grade
 
-  everything-opens-the-unit : ⟅ uplink ⟆ ≾ ⟅ ⟨ 0 ⟩ ⟆
-  everything-opens-the-unit = holds {⟅ uplink ⟆} {⟅ ⟨ 0 ⟩ ⟆}
+  everything-opens-the-unit : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⟨ 0 ⟩ ⟆
+  everything-opens-the-unit = holds {⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} {⟅ ⟨ 0 ⟩ ⟆}
 
 ------------------------------------------------------------------------
 -- A cap on what may have happened
@@ -128,10 +134,12 @@ module RightSided where
   ----------------------------------------------------------------------
   -- On singletons it is the plain cap
 
-  within-a-larger-cap : ⟅ uplink ⟆ ≾ ⟅ logged-uplink ⟆
+  within-a-larger-cap : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                        ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   within-a-larger-cap = holds
 
-  over-the-cap : ¬ (⟅ chatty-uplink ⟆ ≾ ⟅ uplink ⟆)
+  over-the-cap : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+                   ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   over-the-cap = fails
 
   ----------------------------------------------------------------------
@@ -139,10 +147,12 @@ module RightSided where
   -- elapsed realises. The lower lift only needs the run to fit inside
   -- *some* allowance; this one asks each allowance to be justified.
 
-  unrealised-allowance : ¬ (⟅ uplink ⟆ ≾ ⟅ uplink ∣ ⟨ 100 ⟩ ⟆)
+  unrealised-allowance : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                           ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∣ ⟨ 100 ⟩ ⟆)
   unrealised-allowance = fails
 
-  lower-lift-accepts-it : ⟅ uplink ⟆ ≾ˡᵒʷ ⟅ uplink ∣ ⟨ 100 ⟩ ⟆
+  lower-lift-accepts-it : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                          ≾ˡᵒʷ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∣ ⟨ 100 ⟩ ⟆
   lower-lift-accepts-it = holdsˡᵒʷ
 
 ------------------------------------------------------------------------
@@ -177,30 +187,31 @@ module TwoSided where
 
   sensed : UpperInterval
   sensed =
-    [ ⟅ ⌈ read ⌉ ⟆ , ⟅ uplink ⟆
-    , toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≽ˢ? traces ⟅ uplink ⟆} tt
+    [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≽ˢ? traces ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
     ]
 
   -- at least a tick, at most the logged uplink: wider at both ends
 
   loose : UpperInterval
   loose =
-    [ ⟅ ⟨ 1 ⟩ ⟆ , ⟅ logged-uplink ⟆
-    , toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≽ˢ? traces ⟅ logged-uplink ⟆} tt
+    [ ⟅ ⟨ 1 ⟩ ⟆ , ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≽ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
     ]
 
   -- within both bounds
 
-  the-uplink : exactly uplink ≾ᵘⁱ sensed
-  the-uplink = holds (exactly uplink) sensed
+  the-uplink : exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉) ≾ᵘⁱ sensed
+  the-uplink = holds (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)) sensed
 
   -- under the floor, and over the cap
 
-  only-idled : ¬ (exactly idle ≾ᵘⁱ sensed)
-  only-idled = fails (exactly idle) sensed
+  only-idled : ¬ (exactly ⟨ 2 ⟩ ≾ᵘⁱ sensed)
+  only-idled = fails (exactly ⟨ 2 ⟩) sensed
 
-  transmitted-twice : ¬ (exactly chatty-uplink ≾ᵘⁱ sensed)
-  transmitted-twice = fails (exactly chatty-uplink) sensed
+  transmitted-twice : ¬ (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉)
+                        ≾ᵘⁱ sensed)
+  transmitted-twice = fails (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉)) sensed
 
   -- widening the interval weakens it, each endpoint outwards
 

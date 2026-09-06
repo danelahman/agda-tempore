@@ -53,10 +53,11 @@ module LeftSided where
   -- agrees with the plain floor: doing more opens the box, doing less
   -- does not, and idling never buys an operation
 
-  logged-on-the-way : ⟅ logged-uplink ⟆ ≾ ⟅ uplink ⟆
+  logged-on-the-way : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                      ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   logged-on-the-way = holds
 
-  only-polled : ¬ (⟅ poll ⟆ ≾ ⟅ uplink ⟆)
+  only-polled : ¬ (⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   only-polled = fails
 
   idling-is-no-read : ¬ (⟅ ⟨ 100 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
@@ -66,10 +67,12 @@ module LeftSided where
   -- uplink does amounts to twenty ticks, so that alternative is not
   -- achievable and the convex order rejects it
 
-  unreachable-alternative : ¬ (⟅ uplink ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆)
+  unreachable-alternative : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                              ≾ ⟅ ⌈ read ⌉ ∣ ⟨ 20 ⟩ ⟆)
   unreachable-alternative = fails
 
-  reachable-alternatives : ⟅ logged-uplink ⟆ ≾ ⟅ ⌈ read ⌉ ∣ uplink ⟆
+  reachable-alternatives : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                           ≾ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   reachable-alternatives = holds
 
 ------------------------------------------------------------------------
@@ -102,10 +105,12 @@ module RightSided where
   -- between singletons, as before, the plain cap: staying within a
   -- larger allowance is weaker
 
-  within-a-larger-cap : ⟅ uplink ⟆ ≾ ⟅ chatty-uplink ⟆
+  within-a-larger-cap : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                        ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
   within-a-larger-cap = holds
 
-  over-the-cap : ¬ (⟅ chatty-uplink ⟆ ≾ ⟅ uplink ⟆)
+  over-the-cap : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+                   ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆)
   over-the-cap = fails
 
   -- and they part company once the cap offers alternatives: a cap that
@@ -113,10 +118,12 @@ module RightSided where
   -- order, but the convex one asks that idling too be realised by
   -- something already permitted, and the uplink is not idling
 
-  unrealised-allowance : ¬ (⟅ uplink ⟆ ≾ ⟅ uplink ∣ ⟨ 100 ⟩ ⟆)
+  unrealised-allowance : ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                           ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∣ ⟨ 100 ⟩ ⟆)
   unrealised-allowance = fails
 
-  plain-cap-accepts-it : ⟅ uplink ⟆ ≾ʰⁱ ⟅ uplink ∣ ⟨ 100 ⟩ ⟆
+  plain-cap-accepts-it : ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                         ≾ʰⁱ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∣ ⟨ 100 ⟩ ⟆
   plain-cap-accepts-it = holdsʰⁱ
 
 ------------------------------------------------------------------------
@@ -155,32 +162,71 @@ module TwoSided where
 
   sensed : ConvexInterval
   sensed =
-    [ ⟅ ⌈ read ⌉ ⟆ , ⟅ uplink ⟆
-    , ( toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≼ˢ? traces ⟅ uplink ⟆} tt
-      , toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≽ˢ? traces ⟅ uplink ⟆} tt )
+    [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , ( toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≼ˢ? traces ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
+      , toWitness {a? = traces ⟅ ⌈ read ⌉ ⟆ ≽ˢ? traces ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt )
     ]
 
   -- at least a tick, at most the logged uplink: wider at both ends
 
   loose : ConvexInterval
   loose =
-    [ ⟅ ⟨ 1 ⟩ ⟆ , ⟅ logged-uplink ⟆
-    , ( toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≼ˢ? traces ⟅ logged-uplink ⟆} tt
-      , toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≽ˢ? traces ⟅ logged-uplink ⟆} tt )
+    [ ⟅ ⟨ 1 ⟩ ⟆ , ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , ( toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≼ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
+      , toWitness {a? = traces ⟅ ⟨ 1 ⟩ ⟆ ≽ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt )
     ]
+
+  -- an interval listing alternatives at both endpoints. The consistency
+  -- field is convex here, so it asks more than `LowerLift.TwoSided`'s:
+  -- as well as each floor run fitting inside some cap run, each cap run
+  -- must have some floor run inside it.
+
+  branching : ConvexInterval
+  branching =
+    [ ⟅ ⌈ read ⌉ ∣ ⟨ 1 ⟩ ⟆
+    , ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+    , ( toWitness
+          {a? = traces ⟅ ⌈ read ⌉ ∣ ⟨ 1 ⟩ ⟆
+             ≼ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉
+                        ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt
+      , toWitness
+          {a? = traces ⟅ ⌈ read ⌉ ∣ ⟨ 1 ⟩ ⟆
+             ≽ˢ? traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉
+                        ∣ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} tt )
+    ]
+
+  ----------------------------------------------------------------------
+  -- What the convex column refuses that the lower lift allows.
+  --
+  -- Widening a cap by an allowance nothing already permitted realises
+  -- is a weakening for `LowerLift.TwoSided` and not for this one: the
+  -- Smyth half of the cap comparison asks each new allowance to be
+  -- justified by an old one, and the uplink is not a store-and-stop.
+
+  uplink-not-into-branching :
+    ¬ (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉) ≾ᶜⁱ branching)
+  uplink-not-into-branching =
+    fails (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)) branching
+
+  -- a branching interval is still below itself, so the refusal above is
+  -- about the pair and not about branching intervals as such
+
+  branching-reflexive : branching ≾ᶜⁱ branching
+  branching-reflexive = holds branching branching
 
   -- within both bounds
 
-  the-uplink : exactly uplink ≾ᶜⁱ sensed
-  the-uplink = holds (exactly uplink) sensed
+  the-uplink : exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉) ≾ᶜⁱ sensed
+  the-uplink = holds (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)) sensed
 
   -- under the floor, and over the cap
 
-  only-idled : ¬ (exactly idle ≾ᶜⁱ sensed)
-  only-idled = fails (exactly idle) sensed
+  only-idled : ¬ (exactly ⟨ 2 ⟩ ≾ᶜⁱ sensed)
+  only-idled = fails (exactly ⟨ 2 ⟩) sensed
 
-  transmitted-twice : ¬ (exactly chatty-uplink ≾ᶜⁱ sensed)
-  transmitted-twice = fails (exactly chatty-uplink) sensed
+  transmitted-twice : ¬ (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉)
+                        ≾ᶜⁱ sensed)
+  transmitted-twice = fails (exactly (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉)) sensed
 
   -- widening the interval weakens it, each endpoint outwards
 
