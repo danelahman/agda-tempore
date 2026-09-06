@@ -98,3 +98,12 @@ import Syntax.Grades.Example.System.TracesToTimeIntervals
 -- nothing, but compare the runs up to what fits inside a schedule
 
 import Syntax.Grades.Example.System.TracesToCostAwareTraces
+
+------------------------------------------------------------------------
+-- Worked instances
+--
+-- All of the above at one fixed alphabet, with the orderings that hold
+-- between concrete grades and the effect of each morphism on them
+-- exhibited as checked terms. A reader's tour of this whole subtree.
+
+import Syntax.Grades.Example.Worked
