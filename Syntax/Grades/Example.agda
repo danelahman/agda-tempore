@@ -13,9 +13,13 @@
 --     bound or a window of time steps. Small and self-contained.       --
 --                                                                     --
 --   * `TraceSet.*`  -- grades that record *which runs* a computation   --
---     may have, as a set of timed traces. All three share their        --
+--     must have had, as a set of timed traces. All three share their   --
 --     carrier and monoid (from `Grades.Traces.Sets`) and differ only   --
---     in the order they put on it, from coarsest to finest.            --
+--     in the order they put on it.                                     --
+--                                                                     --
+-- Every order runs the same way: a grade is a *lower* bound, so that   --
+-- `unbox`'s premise `ρ' ≾ᵣ ρ` -- elapsed below demanded -- is          --
+-- discharged by having done more than `ρ` asks for and never by less.  --
 --                                                                     --
 -- `System.*` then pairs them up. Reading the projections tells the     --
 -- story of the development: each one says what a resource grade is     --
@@ -58,18 +62,19 @@ import Syntax.Grades.Example.Interval.TwoSidedWithInfinity
 -- allowed to add, and so how much a computation may deviate from the
 -- schedule its grade prescribes.
 
--- ordered by inclusion: weakening only adds runs, and the operations
--- need no execution times at all
+-- ordered by inclusion: a demand is discharged only by having done
+-- literally one of the runs listed, and the operations need no
+-- execution times at all
 
 import Syntax.Grades.Example.TraceSet.Inclusion
 
--- ordered by the Hoare lift of the sub-trace preorder: a run may also
--- shrink to anything that fits inside a schedule already present
+-- ordered by the Smyth lift of the sub-trace preorder: a demand is
+-- discharged by having done at least what one of its runs asks for
 
 import Syntax.Grades.Example.TraceSet.UpToSubtrace
 
--- ordered by the convex (Egli-Milner) lift: shrinking is allowed only
--- between runs already present, so the extremes stay exact
+-- ordered by the convex (Egli-Milner) lift: as above, and additionally
+-- every listed demand must be achievable by a run already present
 
 import Syntax.Grades.Example.TraceSet.Convex
 

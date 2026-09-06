@@ -56,8 +56,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.TwoSidedIntervalsWithInfi
 
 import DenotationalSemantics.Model.Example.World.Ticks.SetOfTraces
 
--- reach *anything up to* a trace duration ahead: the sub-trace order
--- lets a run shrink inside its schedule, so the reach is a window
+-- reach *at least* a trace duration ahead: the sub-trace order reads a
+-- grade as a floor, so the reach has the left-sided interval's shape
 
 import DenotationalSemantics.Model.Example.World.Ticks.SetOfTracesUpToSubtrace
 
@@ -80,16 +80,16 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.TwoSidedIntervalsW
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTraces
 
--- append a continuation that is a sub-trace of some member
+-- append a continuation that has some member of the grade inside it
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesUpToSubtrace
 
--- the convex order reaches the same worlds: only its Hoare half is read
--- by the frame, the Smyth half constraining which coercions exist
+-- the convex order reaches the same worlds: only its Smyth half is read
+-- by the frame, the Hoare half constraining which coercions exist
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvex
 
--- a stricter reading of the convex grade, asking the continuation to be
--- permitted by *some* schedule and within *every* schedule's budget
+-- a stricter reading of the convex grade, asking the continuation to
+-- cover *some* demand and to take at least *every* demand's time
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.SetOfTracesConvexMayMust

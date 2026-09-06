@@ -1,14 +1,26 @@
 ------------------------------------------------------------------------
 -- Sets of timed traces, ordered up to the sub-trace preorder:         --
 --                                                                     --
---   P ≾ Q   iff   every trace of P is `≼` some trace of Q.            --
+--   P ≾ Q   iff   every trace of P has some trace of Q inside it.     --
 --                                                                     --
--- This is the Hoare lower lift of `Traces.Subtrace`'s preorder. A      --
--- grade is read as a set of schedules, and weakening it lets a trace   --
--- shrink to anything that fits inside a schedule already present.      --
+-- This is the Smyth upper lift of `Traces.Subtrace`'s preorder, and a  --
+-- grade is read as a *lower* bound: `P` records what must have         --
+-- happened, and a run realises `P` by doing at least what one of its   --
+-- traces asks for. Weakening a grade therefore asks for less, exactly  --
+-- as `[ m ,+∞⟩ ≾ [ n ,+∞⟩` weakens a left-sided interval by lowering   --
+-- its bound.                                                           --
+--                                                                     --
+-- The direction matters for `unbox`, whose premise is `ρ' ≾ᵣ ρ` with   --
+-- `ρ'` the effects that actually elapsed and `ρ` the box's grade. Read --
+-- this way, a run that does *more* than `ρ` asks for still unboxes,    --
+-- and one that does less never does.                                   --
+--                                                                     --
+-- The Hoare lower lift is the opposite reading -- a cap on what may     --
+-- happen rather than a floor under what must -- and enters here only   --
+-- as the second half of `TraceSet.Convex`.                             --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; zero; _+_; _≤_)
+open import Data.Nat.Base using (ℕ)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
@@ -17,148 +29,70 @@ open import Util.Equality
 module Syntax.Grades.Example.TraceSet.UpToSubtrace
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
-open import Data.Nat.Properties using (≤-reflexive; n≤0⇒n≡0; m+n≡0⇒m≡0; m+n≡0⇒n≡0)
-open import Data.List.Base using (List)
-open import Data.List.Membership.Propositional using (find)
-open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
-open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
-open import Data.Product using (_,_)
+open import Data.List.Relation.Unary.Any using (any?)
 
-open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
+open import Relation.Nullary.Decidable using (True)
 
 open import Syntax.Grades
 
--- the timed-trace monoid, decidable equality of sets of traces, and the
--- inclusion of the naturals as pure delays are shared with plain traces
+-- the carrier and the monoid structure (`_·_`, `u`, `of-nat`, and their
+-- laws), together with decidable equality `_≟ᴺ_`, come from the shared
+-- set-of-traces module; only the order below is specific to this grade
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.Subtrace Op cost
-open import Syntax.Grades.Traces.SubtraceDuration Op cost
+open import Syntax.Grades.Traces.Subtrace Op cost using (_≼_; module DecSubtrace)
+open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 
-open Durations cost
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; _∈?_; True-irr)
+open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
 
 ------------------------------------------------------------------------
--- The Hoare lower lift of the sub-trace preorder
-
--- membership and the lifted order are decided, so the lift is stated in
--- the proof-irrelevant `True`-based form: a trace of `xs` is witnessed
--- to be `≼` some trace of `ys` by a `True (any? ...)` proof
-
-infix 5 _≼ˢ_
-
-_≼ˢ_ : List Trace → List Trace → Set
-xs ≼ˢ ys = (s : Trace) → True (s ∈? xs) → True (any? (λ t → s ≼? t) ys)
-
--- the lift of a reflexive relation is reflexive
-
-≼ˢ-refl : {xs : List Trace} → xs ≼ˢ xs
-≼ˢ-refl {xs} s m =
-  fromWitness (Any.map (λ eq → subst (s ≼_) eq (≼-refl s)) (toWitness m))
-
--- the lift of a transitive relation is transitive
-
-≼ˢ-trans : {xs ys zs : List Trace} → xs ≼ˢ ys → ys ≼ˢ zs → xs ≼ˢ zs
-≼ˢ-trans {xs} {ys} {zs} xy yz s m
-  with find (toWitness (xy s m))
-... | y , y∈ys , s≼y
-        with find (toWitness (yz y (fromWitness y∈ys)))
-...     | z , z∈zs , y≼z =
-          fromWitness
-            (Any.map (λ eq → subst (s ≼_) eq (≼-trans s≼y y≼z)) z∈zs)
-
--- the language product is monotone for the lift (in both arguments at
--- once), since the trace product is monotone for `_≼_`
-
-≼ˢ-·ˢ : {xs xs' ys ys' : List Trace}
-      → xs ≼ˢ xs' → ys ≼ˢ ys' → (xs ·ˢ ys) ≼ˢ (xs' ·ˢ ys')
-≼ˢ-·ˢ {xs} {xs'} {ys} {ys'} pxs pys r m
-  with ∈-cartesianProductWith⁻ _∙_ xs ys (toWitness m)
-... | a , b , a∈xs , b∈ys , refl
-        with find (toWitness (pxs a (fromWitness a∈xs)))
-           | find (toWitness (pys b (fromWitness b∈ys)))
-...     | a' , a'∈ , a≼a' | b' , b'∈ , b≼b' =
-          fromWitness
-            (Any.map (λ eq → subst ((a ∙ b) ≼_) eq (mono-∙ a≼a' b≼b'))
-                     (∈-cartesianProductWith⁺ _∙_ a'∈ b'∈))
-
-------------------------------------------------------------------------
 -- The grade order on (non-empty) sets of traces
-
-_≾_ : NeTraces → NeTraces → Set
-P ≾ Q = traces P ≼ˢ traces Q
+--
+-- `P ≾ Q` asks that every trace of `P` cover some trace of `Q`, which
+-- is `_≽ˢ_` with the two sets the other way round.
 
 infix 5 _≾_
 
+_≾_ : NeTraces → NeTraces → Set
+P ≾ Q = traces Q ≽ˢ traces P
+
 ≾ᵗ-refl : {P : NeTraces} → P ≾ P
-≾ᵗ-refl {P} = ≼ˢ-refl {traces P}
+≾ᵗ-refl {P} = ≽ˢ-refl {traces P}
 
 ≾ᵗ-trans : {P Q R : NeTraces} → P ≾ Q → Q ≾ R → P ≾ R
-≾ᵗ-trans {P} {Q} {R} = ≼ˢ-trans {traces P} {traces Q} {traces R}
+≾ᵗ-trans {P} {Q} {R} pq qr =
+  ≽ˢ-trans {traces R} {traces Q} {traces P} qr pq
 
 -- the language product is monotone in both arguments
 
 ·-monoˡ : {C P Q : NeTraces} → P ≾ Q → (P · C) ≾ (Q · C)
 ·-monoˡ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces P} {traces Q} {traces C} {traces C} rel (≼ˢ-refl {traces C})
+  ≽ˢ-·ˢ {traces Q} {traces P} {traces C} {traces C} rel (≽ˢ-refl {traces C})
 
 ·-monoʳ : {C P Q : NeTraces} → P ≾ Q → (C · P) ≾ (C · Q)
 ·-monoʳ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces C} {traces C} {traces P} {traces Q} (≼ˢ-refl {traces C}) rel
+  ≽ˢ-·ˢ {traces C} {traces C} {traces Q} {traces P} (≽ˢ-refl {traces C}) rel
 
 ------------------------------------------------------------------------
 -- Zero-product property
 --
--- If `P · Q` lies below `{ ε }`, then every trace of `P` sequenced with
--- some trace of `Q` fits inside the empty budget, so it takes no time;
--- durations add along sequencing, hence each factor takes no time and
--- fits inside the empty budget on its own.
+-- The unit `{ ε }` asks for nothing, so every grade lies below it and
+-- the zero-product property is vacuous -- as it is for the left-sided
+-- intervals, whose unit `[ 0 ,+∞⟩` is likewise the greatest grade.
 
 ≾ᵗ-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
-≾ᵗ-zero-productˡ {P} {Q} hyp s m
-  with neHead (traces Q) (nonempty Q)
-... | y , y∈Q
-        with find (toWitness (hyp (s ∙ y)
-                     (fromWitness (∈-cartesianProductWith⁺ _∙_ (toWitness m) y∈Q))))
-...     | t , t∈[ε] , sy≼t =
-          fromWitness (here (≼-ε s dur-s))
-  where
-    sy≼ε : (s ∙ y) ≼ ε
-    sy≼ε = subst ((s ∙ y) ≼_) (∈-[ε]⁻ t∈[ε]) sy≼t
-
-    dur-sy : duration s + duration y ≡ zero
-    dur-sy = n≤0⇒n≡0 (subst (_≤ zero) (duration-∙ s y) (duration-≼ sy≼ε))
-
-    dur-s : duration s ≤ zero
-    dur-s = ≤-reflexive (m+n≡0⇒m≡0 (duration s) dur-sy)
+≾ᵗ-zero-productˡ {P} {Q} _ = u-≽ˢ (traces P)
 
 ≾ᵗ-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
-≾ᵗ-zero-productʳ {P} {Q} hyp s m
-  with neHead (traces P) (nonempty P)
-... | x , x∈P
-        with find (toWitness (hyp (x ∙ s)
-                     (fromWitness (∈-cartesianProductWith⁺ _∙_ x∈P (toWitness m)))))
-...     | t , t∈[ε] , xs≼t =
-          fromWitness (here (≼-ε s dur-s))
-  where
-    xs≼ε : (x ∙ s) ≼ ε
-    xs≼ε = subst ((x ∙ s) ≼_) (∈-[ε]⁻ t∈[ε]) xs≼t
-
-    dur-xs : duration x + duration s ≡ zero
-    dur-xs = n≤0⇒n≡0 (subst (_≤ zero) (duration-∙ x s) (duration-≼ xs≼ε))
-
-    dur-s : duration s ≤ zero
-    dur-s = ≤-reflexive (m+n≡0⇒n≡0 (duration x) dur-xs)
+≾ᵗ-zero-productʳ {P} {Q} _ = u-≽ˢ (traces Q)
 
 -- the grade order is proof-irrelevant
 
 ≾ᵗ-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
 ≾ᵗ-irrelevant {P} {Q} p q =
-  fun-ext (λ s → fun-ext (λ m →
-    True-irr (any? (λ t → s ≼? t) (traces Q)) (p s m) (q s m)))
+  fun-ext (λ t → fun-ext (λ m →
+    True-irr (any? (λ s → s ≼? t) (traces Q)) (p t m) (q t m)))
 
 ------------------------------------------------------------------------
 -- The grade of (non-empty) sets of timed traces, ordered up to the

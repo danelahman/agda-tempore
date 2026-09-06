@@ -21,7 +21,7 @@ module Syntax.Grades.Example.Worked.Systems where
 
 open import Data.Bool using (Bool; true; false)
 open import Data.List.Base using ([]; _∷_)
-open import Data.List.Relation.Unary.Any using (here)
+open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Product using (_,_)
 open import Data.Unit using (tt)
 
@@ -94,13 +94,25 @@ forget-max-· = refl
 open import Syntax.Grades.Example.System.TracesToTimeIntervals spec
   using (mapᵢ; traces→time-intervals)
 
+open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
+  using () renaming (_≾_ to _≾ⁱ_)
+
 open import Syntax.Grades.Example.Worked.TraceSets
-  using (only-uplink; poll-or-uplink; faster-inclusion; hoare; _≼!_)
+  using (did-uplink; incl; meets; write-by-waiting)
+
+-- the node either polls or does the full uplink, and offering only the
+-- uplink is an inclusion into that
+
+poll-or-uplink : NeTraces
+poll-or-uplink = set₂ poll uplink
+
+uplink-listed : did-uplink ≾ⁱ poll-or-uplink
+uplink-listed = incl λ { (here refl) → there (here refl) }
 
 -- the uplink alone spans exactly the window `Worked.Intervals` names:
 -- 1 + 2 + 4 at the bottom, 1 + 2 + 6 at the top
 
-uplink-spans : mapᵢ opTime only-uplink ≡ uplink-window
+uplink-spans : mapᵢ opTime did-uplink ≡ uplink-window
 uplink-spans = eqᵢ refl refl
 
 -- adding the much faster `poll` run drops the lower endpoint to 1 and
@@ -109,13 +121,13 @@ uplink-spans = eqᵢ refl refl
 both-span : mapᵢ opTime poll-or-uplink ≡ [ 1 , 9 , ≤! ]
 both-span = eqᵢ refl refl
 
--- which is monotonicity at work: the inclusion of row 1 in
--- `Worked.TraceSets` becomes the containment `[ 7 , 9 ] ⊆ [ 1 , 9 ]`
+-- which is monotonicity at work: the inclusion above becomes the
+-- containment `[ 7 , 9 ] ⊆ [ 1 , 9 ]`
 
-both-span-mono : mapᵢ opTime only-uplink ≾ᵢ mapᵢ opTime poll-or-uplink
+both-span-mono : mapᵢ opTime did-uplink ≾ᵢ mapᵢ opTime poll-or-uplink
 both-span-mono =
-  map-monotone (traces→time-intervals opTime) {only-uplink} {poll-or-uplink}
-               faster-inclusion
+  map-monotone (traces→time-intervals opTime) {did-uplink} {poll-or-uplink}
+               uplink-listed
 
 -- the projection loses the runs themselves: a grade offering a poll or
 -- an uplink, and one offering a one-tick or a nine-tick wait, span the
@@ -183,7 +195,7 @@ restricted-grade = refl
 -- resource grades are the very same sets of traces. All it does is
 -- reinterpret the order, from inclusion to the cost-aware sub-trace
 -- lift. Monotonicity is then the statement that inclusion is contained
--- in that lift -- and `Worked.TraceSets` row 2 shows the containment is
+-- in that lift -- and `Worked.TraceSets` row 1 shows the containment is
 -- strict, so this projection really does coarsen.
 
 open import Syntax.Grades.Example.System.TracesToCostAwareTraces spec
@@ -200,10 +212,10 @@ cost-aware-identity = refl
 
 -- and every inclusion survives as a sub-trace ordering
 
-inclusion-survives : only-uplink ≾ˢ poll-or-uplink
+inclusion-survives : did-uplink ≾ˢ poll-or-uplink
 inclusion-survives =
   map-monotone (traces→cost-aware-traces cost)
-               {only-uplink} {poll-or-uplink} faster-inclusion
+               {did-uplink} {poll-or-uplink} uplink-listed
 
 ------------------------------------------------------------------------
 -- Reinterpreting one cost model as another
@@ -226,8 +238,9 @@ open DecSlow _≟ₒ_ using () renaming (_≼?_ to _≼ˢˡ?_)
 open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ fast
   using () renaming (_≾_ to _≾ᶠ_)
 
--- a write costs 3 under `slow` and 2 under `fast`, so a two-tick budget
--- accommodates it only in the fast model
+-- A demand for a write is discharged by enough time passing, at the
+-- write's execution time. That is 3 ticks under `slow` and 2 under
+-- `fast`, so two ticks suffice only in the fast model.
 
 write-fits-fast : ⌈ write ⌉ ≼ᶠ ⟨ 2 ⟩
 write-fits-fast = toWitness {a? = ⌈ write ⌉ ≼ᶠ? ⟨ 2 ⟩} tt
@@ -235,20 +248,26 @@ write-fits-fast = toWitness {a? = ⌈ write ⌉ ≼ᶠ? ⟨ 2 ⟩} tt
 write-misses-slow : ¬ (⌈ write ⌉ ≼ˢˡ ⟨ 2 ⟩)
 write-misses-slow = toWitnessFalse {a? = ⌈ write ⌉ ≼ˢˡ? ⟨ 2 ⟩} tt
 
--- a three-tick budget accommodates it in both, and the morphism is what
--- carries the slow ordering over to the fast model
+-- three ticks discharge it in both, and the morphism is what carries
+-- the slow ordering over to the fast model
 
-write-slow : set₁ ⌈ write ⌉ ≾ˢ set₁ ⟨ 3 ⟩
-write-slow = hoare λ { (here refl) → here (⌈ write ⌉ ≼! ⟨ 3 ⟩) }
+waited-three : NeTraces
+waited-three = set₁ ⟨ 3 ⟩
 
-cheaper-keeps-order : set₁ ⌈ write ⌉ ≾ᶠ set₁ ⟨ 3 ⟩
+demand-write : NeTraces
+demand-write = set₁ ⌈ write ⌉
+
+write-slow : waited-three ≾ˢ demand-write
+write-slow = meets λ { (here refl) → here write-by-waiting }
+
+cheaper-keeps-order : waited-three ≾ᶠ demand-write
 cheaper-keeps-order =
   map-monotone (slow-traces→fast-traces fast slow fast≤slow)
-               {set₁ ⌈ write ⌉} {set₁ ⟨ 3 ⟩} write-slow
+               {waited-three} {demand-write} write-slow
 
--- the converse is not a morphism: `{ ⌈ write ⌉ } ≾ { ⟨ 2 ⟩ }` holds in
--- the fast model and fails in the slow one, so the fast order is
--- strictly the wider of the two
+-- the converse is not a morphism: two ticks discharge the demand in the
+-- fast model and not in the slow one, so the fast order is strictly the
+-- wider of the two
 
 fast-order-is-wider : ¬ (⌈ write ⌉ ≼ˢˡ ⟨ 2 ⟩)
 fast-order-is-wider = write-misses-slow

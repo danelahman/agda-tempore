@@ -74,10 +74,19 @@ a grade system, a signature of base types, and operations' signatures.
   `ExtendedNat.agda`).
 
 - `Syntax/Grades/Example/TraceSet/` holds the grades that record *which runs* a
-  computation may have, as a non-empty finite set of timed traces. All three
-  share their carrier and monoid and differ only in the order:
-  `Inclusion.agda` orders sets by inclusion, `UpToSubtrace.agda` by the Hoare
+  computation must have had, as a non-empty finite set of timed traces. All
+  three share their carrier and monoid and differ only in the order:
+  `Inclusion.agda` orders sets by inclusion, `UpToSubtrace.agda` by the Smyth
   lift of the sub-trace preorder, and `Convex.agda` by its Egli-Milner lift.
+
+- All the grade orders run the same way round, which is what `unbox`'s premise
+  `ρ' ≾ᵣ ρ` needs: `ρ'` records the effects that actually elapsed since the
+  boxed resource came into scope, `ρ` is the grade on the box, and a grade is
+  a *lower* bound on what must have happened. So having done more than `ρ` asks
+  for still opens the box, and having done less never does — mirroring
+  `[ m ,+∞⟩ ≾ [ n ,+∞⟩` iff `n ≤ m` for the left-sided intervals. The two lifts
+  of the sub-trace preorder used to build these orders are in
+  `Syntax/Grades/Traces/SubtraceLift.agda`.
 
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
   built on: `Positive` (the strictly positive durations a delay carries),
@@ -94,7 +103,9 @@ a grade system, a signature of base types, and operations' signatures.
   budget, `⌈ o ⌉ ≼ ⟨ n ⟩` as soon as `cost o ≤ n`. Slack is created only by
   absorbing the *delays* of the larger trace, so the converse fails: a schedule
   calling for an operation is not met by spending the same time on anything
-  else (`⟨suc⟩-⋠` in `Subtrace/Moves.agda`). The preorder itself and its
+  else (`⟨suc⟩-⋠` in `Subtrace/Moves.agda`) — so a demand for an operation is
+  discharged by enough time passing, while a demand for elapsed time is not
+  discharged by having spent it on operations. The preorder itself and its
   reflexivity/weakening/transitivity are in `Subtrace/Core.agda`, the moves
   building sub-trace proofs in `Subtrace/Moves.agda`, and the decision
   procedure in `Subtrace/Decidable.agda`. `SubtraceDuration.agda` proves the

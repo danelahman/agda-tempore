@@ -3,16 +3,16 @@
 -- sub-trace preorder as the resource grades.                          --
 --                                                                      --
 -- Worlds are timed traces `Trace`, recording the history observed so   --
--- far. A resource grade `P` reaches exactly the histories obtained by  --
--- appending a continuation trace `cont` that is a sub-trace of some    --
--- member of the set `P`:                                               --
+-- far. A resource grade `P` reaches the histories obtained by          --
+-- appending a continuation trace `cont` that does at least what some   --
+-- member of the set `P` asks for:                                      --
 --                                                                      --
 --   w ⊑ʰ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                       --
---                          and   cont ≼ t   for some   t ∈ P           --
+--                          and   t ≼ cont   for some   t ∈ P           --
 --                                                                      --
--- Covering the continuation by a sub-trace of a member keeps the       --
--- relation covariant along the Hoare lift of the sub-trace preorder,   --
--- which is exactly the grade order.                                    --
+-- Reading `P` as a floor under what must have happened, rather than a  --
+-- cap on what may, is what keeps the relation covariant along the      --
+-- Smyth lift of the sub-trace preorder, which is the grade order.      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -45,8 +45,8 @@ open import DenotationalSemantics.Model.World
 ------------------------------------------------------------------------
 -- Accessibility on trace histories
 --
--- Reach `w'` from `w` by appending a continuation `cont` that is a
--- sub-trace of some member of the set of traces `P`.
+-- Reach `w'` from `w` by appending a continuation `cont` that has some
+-- member of the set of traces `P` inside it.
 
 infix 5 _⊑ʰ[_]_
 
@@ -54,49 +54,49 @@ record _⊑ʰ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
   constructor mkʰ
   field
     cont    : Trace                                          -- continuation
-    covered : True (any? (λ t → cont ≼? t) (traces P))       -- ≼ some member
+    covered : True (any? (λ t → t ≼? cont) (traces P))       -- covers a member
     extends : w ∙ cont ≡ w'                                  -- `w'` extends `w`
 
 open _⊑ʰ[_]_
 
 -- reflexivity at the unit grade `{ ε }`: the empty continuation, which
--- is a sub-trace of the sole member `ε` of the unit set of traces
+-- already covers the sole member `ε` of the unit set of traces
 
 ⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ u ] w
-⊑ʰ-refl {w} = mkʰ ε (fromWitness {a? = any? (λ t → ε ≼? t) (traces u)} εcov)
+⊑ʰ-refl {w} = mkʰ ε (fromWitness {a? = any? (λ t → t ≼? ε) (traces u)} εcov)
                     (∙-identityʳ w)
   where
-    εcov : Any (λ t → ε ≼ t) (traces u)
+    εcov : Any (λ t → t ≼ ε) (traces u)
     εcov = here (≼-refl ε)
 
 -- transitivity multiplies the grades (the language product), sequencing
--- the two continuations; monotonicity of the trace product covers the
--- sequenced continuation by the product of the two covering members
+-- the two continuations; monotonicity of the trace product has the
+-- product of the two covered members inside the sequenced continuation
 
 ⊑ʰ-trans : ∀ {P Q w w' w''}
          → w ⊑ʰ[ P ] w' → w' ⊑ʰ[ Q ] w'' → w ⊑ʰ[ P · Q ] w''
 ⊑ʰ-trans {P} {Q} {w} (mkʰ t₁ cov₁ eq₁) (mkʰ t₂ cov₂ eq₂)
   with find (toWitness cov₁) | find (toWitness cov₂)
-... | a , a∈P , t₁≼a | b , b∈Q , t₂≼b =
+... | a , a∈P , a≼t₁ | b , b∈Q , b≼t₂ =
       mkʰ (t₁ ∙ t₂)
           (fromWitness
-            (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼_) eq (mono-∙ t₁≼a t₂≼b))
+            (Any.map (λ eq → subst (_≼ (t₁ ∙ t₂)) eq (mono-∙ a≼t₁ b≼t₂))
                      (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
           (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
 
--- covariance: a larger set (up to sub-traces) gives a larger relation,
--- since the covering member's sub-trace is again covered, by transitivity
--- of the sub-trace preorder
+-- covariance: a grade that asks for less gives a larger relation, since
+-- a member sitting inside the covered one sits inside the continuation
+-- too, by transitivity of the sub-trace preorder
 
 ⊑ʰ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ʰ[ P ] w' → w ⊑ʰ[ Q ] w'
 ⊑ʰ-mono {P} {Q} rel (mkʰ cont cov eq)
   with find (toWitness cov)
-... | t , t∈P , cont≼t
+... | t , t∈P , t≼cont
         with find (toWitness (rel t (fromWitness t∈P)))
-...     | t' , t'∈Q , t≼t' =
+...     | t' , t'∈Q , t'≼t =
           mkʰ cont
               (fromWitness
-                (Any.map (λ eq' → subst (cont ≼_) eq' (≼-trans cont≼t t≼t'))
+                (Any.map (λ eq' → subst (_≼ cont) eq' (≼-trans t'≼t t≼cont))
                          t'∈Q))
               eq
 
@@ -109,7 +109,7 @@ open _⊑ʰ[_]_
 ... | refl with eq'
 ... | refl =
         cong (λ z → mkʰ cont z refl)
-             (True-irr (any? (λ t → cont ≼? t) (traces P)) cov cov')
+             (True-irr (any? (λ t → t ≼? cont) (traces P)) cov cov')
 
 ------------------------------------------------------------------------
 -- The frame.

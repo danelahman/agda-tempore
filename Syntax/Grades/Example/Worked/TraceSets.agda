@@ -3,22 +3,29 @@
 --                                                                     --
 -- All three have the same carrier -- a non-empty finite set of timed   --
 -- traces -- and the same monoid. They differ only in what weakening a  --
--- grade is allowed to add, and the examples below pin that down:       --
+-- grade is allowed to do.                                             --
 --                                                                     --
---                                        inclusion  sub-trace  convex  --
---   { uplink }   ≾ { poll , uplink }         yes       yes       no    --
---   { uplink }   ≾ { ⟨ 9 ⟩ }                 no        yes       yes   --
---   { ⟨ 9 ⟩ }    ≾ { uplink }                no        no        no    --
---   { poll , uplink } ≾ { poll , logged , uplink }                     --
---                                            yes       yes       yes   --
+-- The examples are laid out the way `unbox` reads them. Its premise is --
+-- `ρ' ≾ᵣ ρ`, where `ρ'` records the effects that actually elapsed and  --
+-- `ρ` is the grade on the box being opened, so each row below asks:    --
+-- does *this much having happened* discharge *that demand*?            --
 --                                                                     --
--- So inclusion and the convex order are *incomparable*, and both are   --
--- contained in the sub-trace order, which is the coarsest of the       --
--- three. Reading down the first column: inclusion cares only about     --
--- which runs are listed; the sub-trace order lets a run be replaced by --
--- anything that fits inside its time budget; and the convex order      --
--- allows that only between runs already present, so it cannot be       --
--- weakened by offering a strictly faster run.                          --
+--                                            inclusion sub-trace convex --
+--   { uplink } ≾ { ⌈read⌉ }                     no      yes     yes   --
+--   { poll }   ≾ { uplink }                     no      no      no    --
+--   { uplink } ≾ { ⌈read⌉ , ⟨ 9 ⟩ }             no      yes     no    --
+--   { ⌈read⌉ } ≾ { ⌈read⌉ , ⟨ 9 ⟩ }             yes     yes     no    --
+--                                                                     --
+-- Rows 1 and 4 show inclusion and the convex order are incomparable,   --
+-- and both sit inside the sub-trace order. Reading down: inclusion     --
+-- discharges a demand only by having done literally one of the runs    --
+-- listed; the sub-trace order discharges it by having done at least    --
+-- what one of them asks for; and the convex order additionally         --
+-- requires every listed demand to be achievable by something the       --
+-- elapsed grade offers.                                                --
+--                                                                     --
+-- No row lets *less* than the demand discharge it -- that is the point --
+-- of the direction, and row 2 is the witness.                          --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.TraceSets where
@@ -26,7 +33,7 @@ module Syntax.Grades.Example.Worked.TraceSets where
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
-open import Data.Product using (_,_; proj₁)
+open import Data.Product using (_,_; proj₂)
 
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
@@ -38,8 +45,10 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Traces.Subtrace Op cost using (_≼_)
-open import Syntax.Grades.Traces.Subtrace Op cost using (module DecSubtrace)
+open import Syntax.Grades.Traces.Subtrace Op cost
+  using (_≼_; module DecSubtrace)
+open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
+  using (_≼ˢ_; _≽ˢ_; u-≽ˢ)
 open DecSubtrace _≟ₒ_ using (_≼?_)
 
 open WithDecEq _≟ₒ_ using (_∈?_)
@@ -48,10 +57,10 @@ open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
   using (right-sided-traces) renaming (_≾_ to _≾ⁱ_)
 
 open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ cost
-  using (_≼ˢ_; traces-up-to-subtrace) renaming (_≾_ to _≾ˢ_)
+  using (traces-up-to-subtrace) renaming (_≾_ to _≾ˢ_)
 
 open import Syntax.Grades.Example.TraceSet.Convex Op _≟ₒ_ cost
-  using (_≽ˢ_; traces-convex) renaming (_≾_ to _≾ᶜ_)
+  using (traces-convex) renaming (_≾_ to _≾ᶜ_)
 
 -- the three abbreviations above are exactly the orders the three grades
 -- carry, so every example below is a fact about the grades themselves
@@ -71,7 +80,7 @@ order-of-convex = refl
 -- `s ≼! t` asserts a sub-trace fact and closes it by running `_≼?_`;
 -- `s ⋠! t` asserts its negation and closes it by running the same
 -- decision the other way. An example claimed the wrong way round simply
--- will not typecheck, so the tables below are checked, not asserted.
+-- will not typecheck, so the tables here are checked, not asserted.
 
 infix 4 _≼!_ _⋠!_
 
@@ -83,26 +92,30 @@ _⋠!_ : (s t : Trace) {p : False (s ≼? t)} → ¬ (s ≼ t)
 
 -- The set-level orders quantify over *all* traces, so they are not
 -- themselves decidable. Each is nevertheless determined by a finite
--- amount of data, which these three take as input: a membership map for
--- inclusion, a covering for the Hoare half, and a co-covering for the
--- Smyth half.
+-- amount of data, which these three take as input.
+
+-- inclusion: a membership map
 
 incl : {P Q : NeTraces}
      → ({s : Trace} → s ∈ traces P → s ∈ traces Q) → P ≾ⁱ Q
 incl f s m = fromWitness (f (toWitness m))
 
-hoare : {xs ys : List Trace}
-      → ({s : Trace} → s ∈ xs → Any (s ≼_) ys) → xs ≼ˢ ys
-hoare f s m = fromWitness (f (toWitness m))
+-- the sub-trace order: every run of `P` meets some demand of `Q`
 
-smyth : {xs ys : List Trace}
-      → ({t : Trace} → t ∈ ys → Any (_≼ t) xs) → xs ≽ˢ ys
-smyth f t m = fromWitness (f (toWitness m))
+meets : {P Q : NeTraces}
+      → ({t : Trace} → t ∈ traces P → Any (_≼ t) (traces Q)) → P ≾ˢ Q
+meets f t m = fromWitness (f (toWitness m))
 
--- To refute an ordering, feed it a run of the smaller grade: what comes
+-- the extra half the convex order asks for: every demand of `Q` is
+-- achieved by some run of `P`
+
+achieves : {P Q : NeTraces}
+         → ({s : Trace} → s ∈ traces Q → Any (s ≼_) (traces P))
+         → traces Q ≼ˢ traces P
+achieves f s m = fromWitness (f (toWitness m))
+
+-- To refute an ordering, feed it a run of the elapsed grade: what comes
 -- back is a decision that has already computed to `no`, hence absurd.
--- `mem P s` is the membership premise those refutations need, in the
--- `True`-of-a-decision form the orders are phrased in.
 
 mem : (P : NeTraces) (s : Trace) → s ∈ traces P → True (s ∈? traces P)
 mem P s m = fromWitness {a? = s ∈? traces P} m
@@ -111,147 +124,142 @@ mem P s m = fromWitness {a? = s ∈? traces P} m
 -- What the sub-trace preorder does and does not allow
 --
 -- Slack is created only by absorbing a *delay* of the right-hand trace,
--- and it pays for anything on the left. So the whole uplink run fits
--- inside a nine-tick budget -- its operations are charged the time they
--- take -- while a nine-tick delay does not fit inside the uplink run,
--- whose only delay is the two ticks it idles for.
+-- and it pays for anything on the left. Read as "the demand `s` is
+-- discharged by having done `t`", that means a demand for an operation
+-- is discharged by enough time passing, but a demand for time is not
+-- discharged by having spent it on operations.
 
--- the operations of the left-hand trace are paid for by time on the right
+-- the uplink does a read, and idles for the two ticks it idles for
 
-uplink-fits : uplink ≼ ⟨ 9 ⟩
-uplink-fits = uplink ≼! ⟨ 9 ⟩
+read-done : ⌈ read ⌉ ≼ uplink
+read-done = ⌈ read ⌉ ≼! uplink
 
--- and not by less time than they take: the uplink needs all nine ticks
+idle-done : ⟨ 2 ⟩ ≼ uplink
+idle-done = ⟨ 2 ⟩ ≼! uplink
 
-uplink-needs-9 : ¬ (uplink ≼ ⟨ 8 ⟩)
-uplink-needs-9 = uplink ⋠! ⟨ 8 ⟩
+-- but not a third tick of idling, though the uplink takes nine ticks
+-- in all: the rest of that time went on operations
 
--- the operations of the *right-hand* trace pay for nothing: only the
--- two ticks the uplink idles for are available as slack
+idle-not-done : ¬ (⟨ 3 ⟩ ≼ uplink)
+idle-not-done = ⟨ 3 ⟩ ⋠! uplink
 
-delay-fits : ⟨ 2 ⟩ ≼ uplink
-delay-fits = ⟨ 2 ⟩ ≼! uplink
+nine-not-done : ¬ (⟨ 9 ⟩ ≼ uplink)
+nine-not-done = ⟨ 9 ⟩ ⋠! uplink
 
-delay-does-not-fit : ¬ (⟨ 3 ⟩ ≼ uplink)
-delay-does-not-fit = ⟨ 3 ⟩ ⋠! uplink
+-- conversely, a demand for an operation *is* discharged by time, at the
+-- operation's execution time: a write costs three ticks
 
--- so, although the uplink takes nine ticks, it does not meet a schedule
--- that asks for nine ticks to elapse
+write-by-waiting : ⌈ write ⌉ ≼ ⟨ 3 ⟩
+write-by-waiting = ⌈ write ⌉ ≼! ⟨ 3 ⟩
 
-no-op-for-delay : ¬ (⟨ 9 ⟩ ≼ uplink)
-no-op-for-delay = ⟨ 9 ⟩ ⋠! uplink
+write-needs-three : ¬ (⌈ write ⌉ ≼ ⟨ 2 ⟩)
+write-needs-three = ⌈ write ⌉ ⋠! ⟨ 2 ⟩
 
--- deleting operations on the right is free, which is what makes the
--- shorter runs sub-traces of the longer ones
+-- a shorter run does not discharge a demand for a longer one
 
-poll-below-logged : poll ≼ logged
-poll-below-logged = poll ≼! logged
-
-poll-below-uplink : poll ≼ uplink
-poll-below-uplink = poll ≼! uplink
+uplink-not-by-poll : ¬ (uplink ≼ poll)
+uplink-not-by-poll = uplink ⋠! poll
 
 ------------------------------------------------------------------------
--- Row 1: offering a strictly faster run
+-- Row 1: doing more than was demanded
 --
--- `{ uplink } ≾ { poll , uplink }`. Inclusion and the sub-trace order
--- both allow it. The convex order does not: `poll` is faster than
--- everything the smaller grade offers, so the Smyth half has nothing to
--- cover it with.
+-- `{ uplink } ≾ { ⌈read⌉ }`: the box asks that a reading have been
+-- taken, and the elapsed uplink took one -- along with a good deal
+-- more. Inclusion cannot see that, because the uplink is not literally
+-- the listed run; both cost-aware orders can.
 
-only-uplink poll-or-uplink : NeTraces
-only-uplink    = set₁ uplink
-poll-or-uplink = set₂ poll uplink
+did-uplink demand-read : NeTraces
+did-uplink  = set₁ uplink
+demand-read = set₁ ⌈ read ⌉
 
-faster-inclusion : only-uplink ≾ⁱ poll-or-uplink
-faster-inclusion = incl λ { (here refl) → there (here refl) }
+more-not-inclusion : ¬ (did-uplink ≾ⁱ demand-read)
+more-not-inclusion rel = rel uplink (mem did-uplink uplink (here refl))
 
-faster-subtrace : only-uplink ≾ˢ poll-or-uplink
-faster-subtrace = hoare λ { (here refl) → there (here (uplink ≼! uplink)) }
+more-subtrace : did-uplink ≾ˢ demand-read
+more-subtrace = meets λ { (here refl) → here read-done }
 
--- `poll` is a member of the larger grade, and the Smyth half would have
--- to cover it from the smaller one -- that is, `uplink ≼ poll`. The
--- decision procedure says no, so the premise is already absurd.
-
-faster-not-convex : ¬ (only-uplink ≾ᶜ poll-or-uplink)
-faster-not-convex (_ , sm) = sm poll (mem poll-or-uplink poll (here refl))
+more-convex : did-uplink ≾ᶜ demand-read
+more-convex = achieves (λ { (here refl) → here read-done })
+            , meets    (λ { (here refl) → here read-done })
 
 ------------------------------------------------------------------------
--- Row 2: replacing a run by a budget it fits in
+-- Row 2: doing less than was demanded
 --
--- `{ uplink } ≾ { ⟨ 9 ⟩ }`. Inclusion fails -- the uplink is simply not
--- a member -- but both cost-aware orders accept it, because the uplink
--- fits inside nine ticks and nine ticks is covered by the uplink from
--- the other side too.
+-- `{ poll } ≾ { uplink }` fails in all three orders. This is the
+-- direction the whole reading turns on: having merely polled does not
+-- discharge a box that asks for a full uplink.
 
-budget : NeTraces
-budget = set₁ ⟨ 9 ⟩
+did-poll demand-uplink : NeTraces
+did-poll      = set₁ poll
+demand-uplink = set₁ uplink
 
-budget-not-inclusion : ¬ (only-uplink ≾ⁱ budget)
-budget-not-inclusion rel = rel uplink (mem only-uplink uplink (here refl))
+less-not-inclusion : ¬ (did-poll ≾ⁱ demand-uplink)
+less-not-inclusion rel = rel poll (mem did-poll poll (here refl))
 
-budget-subtrace : only-uplink ≾ˢ budget
-budget-subtrace = hoare λ { (here refl) → here uplink-fits }
+less-not-subtrace : ¬ (did-poll ≾ˢ demand-uplink)
+less-not-subtrace rel = rel poll (mem did-poll poll (here refl))
 
-budget-convex : only-uplink ≾ᶜ budget
-budget-convex =
-    hoare (λ { (here refl) → here uplink-fits })
-  , smyth (λ { (here refl) → here uplink-fits })
+less-not-convex : ¬ (did-poll ≾ᶜ demand-uplink)
+less-not-convex rel = less-not-subtrace (proj₂ rel)
+
+-- nor does spending the same amount of time a different way: the uplink
+-- takes nine ticks, and still does not discharge a demand for nine
+-- ticks of waiting
+
+did-uplink-vs-waiting : ¬ (did-uplink ≾ˢ set₁ ⟨ 9 ⟩)
+did-uplink-vs-waiting rel = rel uplink (mem did-uplink uplink (here refl))
 
 ------------------------------------------------------------------------
--- Row 3: asking for time to pass, and doing work instead
+-- Row 3: a demand with an unachievable alternative
 --
--- `{ ⟨ 9 ⟩ } ≾ { uplink }` fails in all three orders. This is the one
--- asymmetry the cost-aware orders keep: a schedule that calls for nine
--- ticks of *waiting* is not met by nine ticks of *working*.
+-- `{ uplink } ≾ { ⌈read⌉ , ⟨ 9 ⟩ }`: the box offers two ways to be
+-- opened and the uplink takes the first. The sub-trace order is content
+-- with that. The convex order is not: it also asks that every listed
+-- alternative be achievable by some run the elapsed grade offers, and
+-- nothing the uplink does amounts to nine ticks of waiting.
 
-work-not-inclusion : ¬ (budget ≾ⁱ only-uplink)
-work-not-inclusion rel = rel ⟨ 9 ⟩ (mem budget ⟨ 9 ⟩ (here refl))
+demand-either : NeTraces
+demand-either = set₂ ⌈ read ⌉ ⟨ 9 ⟩
 
-work-not-subtrace : ¬ (budget ≾ˢ only-uplink)
-work-not-subtrace rel = rel ⟨ 9 ⟩ (mem budget ⟨ 9 ⟩ (here refl))
+either-subtrace : did-uplink ≾ˢ demand-either
+either-subtrace = meets λ { (here refl) → here read-done }
 
-work-not-convex : ¬ (budget ≾ᶜ only-uplink)
-work-not-convex rel = work-not-subtrace (proj₁ rel)
+either-not-convex : ¬ (did-uplink ≾ᶜ demand-either)
+either-not-convex (h , _) =
+  h ⟨ 9 ⟩ (mem demand-either ⟨ 9 ⟩ (there (here refl)))
 
 ------------------------------------------------------------------------
--- Row 4: offering a run between two already present
+-- Row 4: the same demand, discharged by inclusion
 --
--- `{ poll , uplink } ≾ { poll , logged , uplink }`. All three orders
--- accept it. The convex order does because `logged` is covered from
--- below by `poll`, which the smaller grade already offers -- this is
--- exactly what "convex" means: weakening may fill in, but not extend.
+-- `{ ⌈read⌉ } ≾ { ⌈read⌉ , ⟨ 9 ⟩ }` holds for inclusion outright, and
+-- hence for the sub-trace order. It still fails convexly, for the same
+-- reason as row 3 -- which is what makes inclusion and the convex order
+-- incomparable, row 1 being the other direction.
 
-with-logged : NeTraces
-with-logged = set₃ poll logged uplink
+did-read : NeTraces
+did-read = set₁ ⌈ read ⌉
 
-between-inclusion : poll-or-uplink ≾ⁱ with-logged
-between-inclusion =
-  incl λ { (here refl)        → here refl
-         ; (there (here refl)) → there (there (here refl)) }
+listed-inclusion : did-read ≾ⁱ demand-either
+listed-inclusion = incl λ { (here refl) → here refl }
 
-between-convex : poll-or-uplink ≾ᶜ with-logged
-between-convex =
-    hoare (λ { (here refl)         → here (poll ≼! poll)
-             ; (there (here refl)) → there (there (here (uplink ≼! uplink))) })
-  , smyth (λ { (here refl)                 → here (poll ≼! poll)
-             ; (there (here refl))         → here poll-below-logged
-             ; (there (there (here refl))) → there (here (uplink ≼! uplink)) })
+listed-subtrace : did-read ≾ˢ demand-either
+listed-subtrace = meets λ { (here refl) → here (⌈ read ⌉ ≼! ⌈ read ⌉) }
 
-between-subtrace : poll-or-uplink ≾ˢ with-logged
-between-subtrace = proj₁ between-convex
+listed-not-convex : ¬ (did-read ≾ᶜ demand-either)
+listed-not-convex (h , _) =
+  h ⟨ 9 ⟩ (mem demand-either ⟨ 9 ⟩ (there (here refl)))
 
 ------------------------------------------------------------------------
 -- How the three orders are related
 --
--- The convex order is the sub-trace order plus its Smyth half, so it is
+-- The convex order is the sub-trace order plus its Hoare half, so it is
 -- contained in it. Inclusion is contained in it too (that containment
--- is a grade morphism -- see `Worked.Systems`). Rows 1 and 2 show the
--- two containments are strict, and that inclusion and the convex order
--- are incomparable: row 1 holds for inclusion but not convexly, row 2
--- convexly but not for inclusion.
+-- is a grade morphism -- see `Worked.Systems`). Rows 1 and 4 show the
+-- two containments are strict and that inclusion and the convex order
+-- are incomparable.
 
 convex⇒subtrace : {P Q : NeTraces} → P ≾ᶜ Q → P ≾ˢ Q
-convex⇒subtrace = proj₁
+convex⇒subtrace = proj₂
 
 ------------------------------------------------------------------------
 -- The monoid, which all three share
@@ -264,17 +272,23 @@ convex⇒subtrace = proj₁
 seq-runs : set₁ poll · set₁ ⌈ write ⌉ ≡ set₁ logged
 seq-runs = refl
 
--- the unit is the singleton set containing the empty run, and `n` time
--- steps is the singleton set containing the pure delay of length `n`
+-- the unit demands nothing, and `n` time steps is the singleton set
+-- containing the pure delay of length `n`
 
-trace-unit : Grade.u right-sided-traces ≡ set₁ ⟨ 0 ⟩
+trace-unit : Grade.u traces-up-to-subtrace ≡ set₁ ⟨ 0 ⟩
 trace-unit = refl
 
-trace-of-nat : Grade.of-nat right-sided-traces 2 ≡ set₁ ⟨ 2 ⟩
+trace-of-nat : Grade.of-nat traces-up-to-subtrace 2 ≡ set₁ ⟨ 2 ⟩
 trace-of-nat = refl
+
+-- every grade discharges the unit's demand, so `{ ε }` is the greatest
+-- grade -- exactly as `[ 0 ,+∞⟩` is the greatest left-sided interval
+
+anything-meets-unit : did-uplink ≾ˢ u
+anything-meets-unit = u-≽ˢ (traces did-uplink)
 
 -- a two-run grade sequenced with a one-run grade has two runs
 
-seq-branches : traces (poll-or-uplink · set₁ ⟨ 1 ⟩)
+seq-branches : traces (set₂ poll uplink · set₁ ⟨ 1 ⟩)
              ≡ (poll ∙ ⟨ 1 ⟩) ∷ (uplink ∙ ⟨ 1 ⟩) ∷ []
 seq-branches = refl

@@ -65,6 +65,11 @@ import Syntax.Grades.Traces.MinDuration
 
 import Syntax.Grades.Traces.Subtrace
 
+-- Its two lifts to sets of traces -- Hoare and Smyth -- which the
+-- trace-based grades pick their orders from.
+
+import Syntax.Grades.Traces.SubtraceLift
+
 -- A sub-trace is no longer than its host, up to the slack it was
 -- granted -- what connects the preorder to the durations above.
 

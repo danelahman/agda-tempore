@@ -53,13 +53,14 @@ module _ (opTime : Op → ℕ) where
   open import Syntax.Grades.Example.TraceSet.UpToSubtrace Op _≟ₒ_ opTime
     using (traces-up-to-subtrace) renaming (_≾_ to _≾ᶜ_)
 
-  -- a trace of the smaller set is a member of the larger one, and covers
-  -- itself there, so inclusion is contained in the sub-trace lift
+  -- a trace of the smaller set is a member of the larger one, and is
+  -- covered by itself there, so inclusion is contained in the sub-trace
+  -- lift
 
   ⊆⇒≼ : {P Q : NeTraces} → P ≾ˢ Q → P ≾ᶜ Q
-  ⊆⇒≼ {P} {Q} rel s m =
+  ⊆⇒≼ {P} {Q} rel t m =
     fromWitness
-      (Any.map (λ eq → subst (s ≼_) eq (≼-refl s)) (toWitness (rel s m)))
+      (Any.map (λ eq → subst (_≼ t) eq (≼-refl t)) (toWitness (rel t m)))
 
   -- the two grades share their carrier and their monoid structure, so
   -- the reinterpretation is the identity on sets of traces

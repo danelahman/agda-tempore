@@ -19,17 +19,19 @@
 --                                                                     --
 -- Two findings the examples pin down are worth having in advance:      --
 --                                                                     --
---   * Operations pay for time, but time does not pay for operations.   --
---     The `uplink` run fits inside a nine-tick budget -- each of its   --
---     operations is charged the time it takes -- yet a nine-tick wait  --
---     does *not* fit inside the `uplink` run, whose only slack is the  --
---     two ticks it idles for. See `TraceSets`.                         --
+--   * Every grade order runs so that `unbox`'s premise `ρ' ≾ᵣ ρ` --    --
+--     what elapsed, below what the box demands -- is discharged by     --
+--     having done *more* than `ρ` asks for, and never by less. See     --
+--     `TraceSets` rows 1 and 2.                                        --
+--                                                                     --
+--   * Time discharges a demand for an operation, at that operation's   --
+--     execution time, but doing operations does not discharge a demand --
+--     for time. The `uplink` run takes nine ticks, yet does not meet a --
+--     demand for three ticks of waiting: its only idle time is the two --
+--     ticks it actually idles for. See `TraceSets`.                    --
 --                                                                     --
 --   * Inclusion and the convex order are incomparable, and both sit    --
---     inside the sub-trace order. Weakening by offering a strictly     --
---     faster run is allowed by inclusion but not convexly; weakening   --
---     by replacing a run with a budget it fits in is allowed convexly  --
---     but not by inclusion. See `TraceSets` rows 1 and 2.              --
+--     inside the sub-trace order. See `TraceSets` rows 1 and 4.        --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked where
