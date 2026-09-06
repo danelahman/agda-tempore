@@ -43,7 +43,8 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_)
-open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
+open import Relation.Nullary using (Dec)
+open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; _×-dec_)
 
 open import Syntax.Grades
 
@@ -112,6 +113,14 @@ P ≾ Q = (traces Q ≼ˢ traces P) × (traces Q ≽ˢ traces P)
        True-irr (any? (λ t' → t ≼? t') (traces P)) (h t m) (h' t m))))
     (fun-ext (λ t → fun-ext (λ m →
        True-irr (any? (λ s' → s' ≼? t) (traces Q)) (s t m) (s' t m))))
+
+------------------------------------------------------------------------
+-- The order is decidable, half by half
+
+infix 5 _≾?_
+
+_≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
+P ≾? Q = (traces Q ≼ˢ? traces P) ×-dec (traces Q ≽ˢ? traces P)
 
 ------------------------------------------------------------------------
 -- The grade of (non-empty) sets of timed traces, convexly ordered

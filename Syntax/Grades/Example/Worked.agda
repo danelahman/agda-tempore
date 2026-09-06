@@ -45,16 +45,16 @@ import Syntax.Grades.Example.Worked.Operations
 
 import Syntax.Grades.Example.Worked.Intervals
 
--- The three trace-set grades side by side on the same four pairs of
--- grades, showing where they agree and where they come apart.
-
-import Syntax.Grades.Example.Worked.TraceSets
-
--- The two-sided trace intervals: a run within both bounds, one under
--- the floor, and one over the cap -- the last being what no order on a
--- single set of traces can reject.
+-- The trace-based interval grades, one submodule per grade: a floor
+-- under what must have happened, a cap on what may have, and the pair
+-- of them.
 
 import Syntax.Grades.Example.Worked.TraceIntervals
+
+-- The two trace-set grades that are not intervals -- inclusion and the
+-- convex order -- and how they sit against the left-sided one.
+
+import Syntax.Grades.Example.Worked.TraceSets
 
 -- A language specification over the alphabet, which the trace-based
 -- grade systems need in order to be instantiated.

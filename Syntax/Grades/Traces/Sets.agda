@@ -29,6 +29,7 @@ open import Data.List.Properties
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
+open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Nat.Base using (ℕ; _+_)
 open import Data.Product using (_,_; Σ)
@@ -36,7 +37,7 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
-open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
+open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; map′)
 
 -- the timed traces the sets are made of
 
@@ -275,6 +276,20 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   True-irr : {A : Set} (a? : Dec A) (p q : True a?) → p ≡ q
   True-irr (yes _) _  _ = refl
   True-irr (no  _) ()
+
+  -- the subset preorder is decidable: only the finitely many members of
+  -- the left-hand list satisfy the quantifier's premise
+
+  infix 5 _⊑?_
+
+  _⊑?_ : (xs ys : List Trace) → Dec (xs ⊑ ys)
+  xs ⊑? ys = map′ from to (all? (_∈? ys) xs)
+    where
+      from : All (_∈ ys) xs → xs ⊑ ys
+      from as s m = fromWitness (All.lookup as (toWitness m))
+
+      to : xs ⊑ ys → All (_∈ ys) xs
+      to f = All.tabulate (λ {s} s∈xs → toWitness (f s (fromWitness s∈xs)))
 
   -- decidable equality of sets of traces
 

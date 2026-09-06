@@ -98,25 +98,22 @@ open import Syntax.Grades.Example.System.TracesToTimeIntervals spec
 open import Syntax.Grades.Example.TraceSet.Inclusion Op _≟ₒ_
   using () renaming (_≾_ to _≾ⁱ_)
 
-open import Syntax.Grades.Example.Worked.TraceSets
-  using (module Inclusion; module LeftSided)
-
-open Inclusion using () renaming (listed to incl)
-open LeftSided using () renaming (_≾!_ to _≾ˡᵒ!_)
+open import Syntax.Grades.Example.Worked.TraceSets using (module Inclusion)
+open import Syntax.Grades.Example.Worked.TraceIntervals using (module LeftSided)
 
 -- the node either polls or does the full uplink
 
 did-uplink : NeTraces
-did-uplink = set₁ uplink
+did-uplink = ⟅ uplink ⟆
 
 -- the node either polls or does the full uplink, and offering only the
 -- uplink is an inclusion into that
 
 poll-or-uplink : NeTraces
-poll-or-uplink = set₂ poll uplink
+poll-or-uplink = ⟅ poll ∣ uplink ⟆
 
 uplink-listed : did-uplink ≾ⁱ poll-or-uplink
-uplink-listed = incl λ { (here refl) → there (here refl) }
+uplink-listed = Inclusion.holds
 
 -- the uplink alone spans exactly the window `Worked.Intervals` names:
 -- 1 + 2 + 4 at the bottom, 1 + 2 + 6 at the top
@@ -143,7 +140,7 @@ both-span-mono =
 -- same window and are indistinguishable downstream
 
 window-forgets-runs :
-  mapᵢ opTime poll-or-uplink ≡ mapᵢ opTime (set₂ ⟨ 1 ⟩ ⟨ 9 ⟩)
+  mapᵢ opTime poll-or-uplink ≡ mapᵢ opTime (⟅ ⟨ 1 ⟩ ∣ ⟨ 9 ⟩ ⟆)
 window-forgets-runs = eqᵢ refl refl
 
 ------------------------------------------------------------------------
@@ -268,8 +265,8 @@ meets-fast : {P Q : NeTraces}
 meets-fast f t m = fromWitness (f (toWitness m))
 
 did-write demand-two : NeTraces
-did-write  = set₁ ⌈ write ⌉
-demand-two = set₁ ⟨ 2 ⟩
+did-write  = ⟅ ⌈ write ⌉ ⟆
+demand-two = ⟅ ⟨ 2 ⟩ ⟆
 
 write-fast : did-write ≾ᶠ demand-two
 write-fast =

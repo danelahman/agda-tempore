@@ -31,6 +31,7 @@ module Syntax.Grades.Example.TraceSet.LeftSided
 
 open import Data.List.Relation.Unary.Any using (any?)
 
+open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (True)
 
 open import Syntax.Grades
@@ -93,6 +94,18 @@ P ≾ Q = traces Q ≽ˢ traces P
 ≾ᵗ-irrelevant {P} {Q} p q =
   fun-ext (λ t → fun-ext (λ m →
     True-irr (any? (λ s → s ≼? t) (traces Q)) (p t m) (q t m)))
+
+------------------------------------------------------------------------
+-- The order is decidable
+--
+-- Both the membership and the sub-trace preorder are decided and the
+-- sets are finite, so an ordering between two written-out grades is
+-- settled by computation.
+
+infix 5 _≾?_
+
+_≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
+P ≾? Q = traces Q ≽ˢ? traces P
 
 ------------------------------------------------------------------------
 -- The grade of (non-empty) sets of timed traces, ordered up to the

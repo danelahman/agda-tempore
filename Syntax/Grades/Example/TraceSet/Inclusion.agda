@@ -22,6 +22,7 @@ open import Data.List.Membership.Propositional.Properties
 open import Data.List.Relation.Unary.Any using (here)
 open import Data.Product using (_,_)
 
+open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
@@ -104,6 +105,14 @@ infix 5 _≾_
 
     s≡ε : s ≡ ε
     s≡ε = ∙-conicalʳ {x} {s} (∈-[ε]⁻ (toWitness (hyp (x ∙ s) (fromWitness xs∈))))
+
+-- the order is decidable, so an ordering between two written-out sets
+-- of traces is settled by computation
+
+infix 5 _≾?_
+
+_≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
+P ≾? Q = traces P ⊑? traces Q
 
 -- the grade of (non-empty) sets of timed traces, ordered by inclusion
 

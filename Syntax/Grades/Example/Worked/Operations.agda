@@ -95,17 +95,17 @@ open Durations cost public using (duration)
 ------------------------------------------------------------------------
 -- Writing down finite sets of traces
 --
--- A grade is a non-empty finite set; at these sizes, spelling out the
--- list is clearer than any notation for it.
+-- `⟅ t ∣ u ⟆` is the set whose members are `t` and `u`. At these sizes
+-- writing the members out is the clearest thing to do.
 
-set₁ : Trace → NeTraces
-set₁ t = neTraces (t ∷ []) tt
+⟅_⟆ : Trace → NeTraces
+⟅ t ⟆ = neTraces (t ∷ []) tt
 
-set₂ : Trace → Trace → NeTraces
-set₂ t u = neTraces (t ∷ u ∷ []) tt
+⟅_∣_⟆ : Trace → Trace → NeTraces
+⟅ t ∣ u ⟆ = neTraces (t ∷ u ∷ []) tt
 
-set₃ : Trace → Trace → Trace → NeTraces
-set₃ t u v = neTraces (t ∷ u ∷ v ∷ []) tt
+⟅_∣_∣_⟆ : Trace → Trace → Trace → NeTraces
+⟅ t ∣ u ∣ v ⟆ = neTraces (t ∷ u ∷ v ∷ []) tt
 
 ------------------------------------------------------------------------
 -- Some named runs of the node
@@ -125,6 +125,21 @@ logged = ⌈ read ⌉ ∙ ⌈ write ⌉
 uplink : Trace
 uplink = ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉
 
+-- the uplink with the reading also stored on the way
+
+logged-uplink : Trace
+logged-uplink = ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉
+
+-- the uplink, transmitting twice
+
+chatty-uplink : Trace
+chatty-uplink = uplink ∙ ⌈ send ⌉
+
+-- idling for two ticks and doing nothing at all
+
+idle : Trace
+idle = ⟨ 2 ⟩
+
 -- their durations under `cost`, by computation
 
 poll-takes-1 : duration poll ≡ 1
@@ -135,3 +150,9 @@ logged-takes-4 = refl
 
 uplink-takes-9 : duration uplink ≡ 9
 uplink-takes-9 = refl
+
+logged-uplink-takes-12 : duration logged-uplink ≡ 12
+logged-uplink-takes-12 = refl
+
+chatty-uplink-takes-15 : duration chatty-uplink ≡ 15
+chatty-uplink-takes-15 = refl

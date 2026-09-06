@@ -41,7 +41,7 @@ open import Data.List.Relation.Unary.Any using (any?)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Relation.Nullary using (Dec; yes; no)
-open import Relation.Nullary.Decidable using (True)
+open import Relation.Nullary.Decidable using (True; _×-dec_)
 
 open import Syntax.Grades
 
@@ -53,9 +53,9 @@ open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 -- trace grade orders it
 
 open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ cost
-  using () renaming (_≾_ to _≾ˡᵒ_)
+  using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_)
 open import Syntax.Grades.Example.TraceSet.RightSided Op _≟ₒ_ cost
-  using () renaming (_≾_ to _≾ʰⁱ_)
+  using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_)
 
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
 open DecSubtrace _≟ₒ_ using (_≼?_)
@@ -189,6 +189,14 @@ i₁ ≟ᵗⁱ i₂ with lo i₁ ≟ᴺ lo i₂ | hi i₁ ≟ᴺ hi i₂
 
 of-natᵗⁱ : ℕ → TraceInterval
 of-natᵗⁱ n = [ of-nat n , of-nat n , ≼ˢ-refl {traces (of-nat n)} ]
+
+------------------------------------------------------------------------
+-- The order is decidable, endpoint by endpoint
+
+infix 5 _≾ᵗⁱ?_
+
+_≾ᵗⁱ?_ : (i₁ i₂ : TraceInterval) → Dec (i₁ ≾ᵗⁱ i₂)
+i₁ ≾ᵗⁱ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i₂)
 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals

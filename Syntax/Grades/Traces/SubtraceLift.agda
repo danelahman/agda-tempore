@@ -31,10 +31,12 @@ open import Data.Nat.Properties using (≤-reflexive; n≤0⇒n≡0; m+n≡0⇒m
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
+open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
 
-open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
+open import Relation.Nullary using (Dec)
+open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; map′)
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
@@ -183,3 +185,31 @@ u-≼ˢ xs ne s m
 
     s≼ε : s ≼ ε
     s≼ε = subst (_≼ ε) (sym (∙-conicalʳ {x} {s} (≼-ε-inv xs≼ε))) nil
+
+------------------------------------------------------------------------
+-- Both lifts are decidable
+--
+-- The quantifier ranges over all traces, but only the finitely many
+-- members of the left-hand list satisfy its premise. Reading the lift
+-- as an `All` over that list makes it decidable, so an ordering between
+-- two written-out sets of traces is settled by computation.
+
+≼ˢ-all : {xs ys : List Trace} → All (λ s → Any (s ≼_) ys) xs → xs ≼ˢ ys
+≼ˢ-all as s m = fromWitness (All.lookup as (toWitness m))
+
+all-≼ˢ : {xs ys : List Trace} → xs ≼ˢ ys → All (λ s → Any (s ≼_) ys) xs
+all-≼ˢ {xs} {ys} f = All.tabulate (λ {s} s∈xs → toWitness (f s (fromWitness s∈xs)))
+
+infix 5 _≼ˢ?_ _≽ˢ?_
+
+_≼ˢ?_ : (xs ys : List Trace) → Dec (xs ≼ˢ ys)
+xs ≼ˢ? ys = map′ ≼ˢ-all all-≼ˢ (all? (λ s → any? (λ t → s ≼? t) ys) xs)
+
+≽ˢ-all : {xs ys : List Trace} → All (λ t → Any (_≼ t) xs) ys → xs ≽ˢ ys
+≽ˢ-all as t m = fromWitness (All.lookup as (toWitness m))
+
+all-≽ˢ : {xs ys : List Trace} → xs ≽ˢ ys → All (λ t → Any (_≼ t) xs) ys
+all-≽ˢ {xs} {ys} f = All.tabulate (λ {t} t∈ys → toWitness (f t (fromWitness t∈ys)))
+
+_≽ˢ?_ : (xs ys : List Trace) → Dec (xs ≽ˢ ys)
+xs ≽ˢ? ys = map′ ≽ˢ-all all-≽ˢ (all? (λ t → any? (λ s → s ≼? t) xs) ys)
