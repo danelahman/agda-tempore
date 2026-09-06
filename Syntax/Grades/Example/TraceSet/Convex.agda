@@ -55,7 +55,7 @@ open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Subtrace Op cost
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; _∈?_; True-irr)
+open WithDecEq _≟ₒ_ using (_≟ᴺ_; _∈?_; liftˢ-irrelevant)
 open DecSubtrace _≟ₒ_ using (_≼?_)
 
 ------------------------------------------------------------------------
@@ -108,11 +108,7 @@ P ≾ Q = (traces Q ≼ˢ traces P) × (traces Q ≽ˢ traces P)
 
 ≾ᶜ-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
 ≾ᶜ-irrelevant {P} {Q} (h , s) (h' , s') =
-  cong₂ _,_
-    (fun-ext (λ t → fun-ext (λ m →
-       True-irr (any? (λ t' → t ≼? t') (traces P)) (h t m) (h' t m))))
-    (fun-ext (λ t → fun-ext (λ m →
-       True-irr (any? (λ s' → s' ≼? t) (traces Q)) (s t m) (s' t m))))
+  cong₂ _,_ (liftˢ-irrelevant h h') (liftˢ-irrelevant s s')
 
 ------------------------------------------------------------------------
 -- The order is decidable, half by half

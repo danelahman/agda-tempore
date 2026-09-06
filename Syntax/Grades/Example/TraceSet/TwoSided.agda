@@ -37,7 +37,6 @@ open import Util.Equality
 module Syntax.Grades.Example.TraceSet.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
-open import Data.List.Relation.Unary.Any using (any?)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Relation.Nullary using (Dec; yes; no)
@@ -46,7 +45,6 @@ open import Relation.Nullary.Decidable using (True; _×-dec_)
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.Subtrace Op cost using (_≼_; module DecSubtrace)
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 
 -- each endpoint is ordered exactly as the corresponding one-sided
@@ -57,8 +55,7 @@ open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ cost
 open import Syntax.Grades.Example.TraceSet.RightSided Op _≟ₒ_ cost
   using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_)
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
-open DecSubtrace _≟ₒ_ using (_≼?_)
+open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 
 ------------------------------------------------------------------------
 -- The carrier
@@ -77,9 +74,7 @@ open TraceInterval public
 -- consistency witness is a `True`-of-a-decision, hence irrelevant
 
 lo≼hi-irr : {L U : NeTraces} (p q : traces L ≼ˢ traces U) → p ≡ q
-lo≼hi-irr {L} {U} p q =
-  fun-ext (λ s → fun-ext (λ m →
-    True-irr (any? (λ t → s ≼? t) (traces U)) (p s m) (q s m)))
+lo≼hi-irr {L} {U} = liftˢ-irrelevant
 
 eqᵗⁱ : {i₁ i₂ : TraceInterval} → lo i₁ ≡ lo i₂ → hi i₁ ≡ hi i₂ → i₁ ≡ i₂
 eqᵗⁱ {[ L , U , p ]} {[ .L , .U , q ]} refl refl =
@@ -167,11 +162,7 @@ i₁ ≾ᵗⁱ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 
 ≾ᵗⁱ-irrelevant : {i₁ i₂ : TraceInterval} → (p q : i₁ ≾ᵗⁱ i₂) → p ≡ q
 ≾ᵗⁱ-irrelevant {i₁} {i₂} (l , h) (l' , h') =
-  cong₂ _,_
-    (fun-ext (λ t → fun-ext (λ m →
-       True-irr (any? (λ s → s ≼? t) (traces (lo i₂))) (l t m) (l' t m))))
-    (fun-ext (λ s → fun-ext (λ m →
-       True-irr (any? (λ t → s ≼? t) (traces (hi i₂))) (h s m) (h' s m))))
+  cong₂ _,_ (liftˢ-irrelevant l l') (liftˢ-irrelevant h h')
 
 -- decidable equality, endpoint by endpoint
 

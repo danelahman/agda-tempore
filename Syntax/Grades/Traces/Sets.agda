@@ -26,16 +26,16 @@ open import Data.List.Base
 open import Data.List.Properties
   using (++-identityʳ; ++-conicalˡ; ++-conicalʳ; map-++; map-id; map-cong;
          ∷-injectiveˡ; ∷-injectiveʳ; cartesianProductWith-distribʳ-++; ≡-dec)
-open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.All as All using (All; all?)
-open import Data.List.Relation.Unary.Any using (here; there)
+open import Data.List.Relation.Unary.Any as Any using (Any; here; there; any?)
 open import Data.Nat.Base using (ℕ; _+_)
 open import Data.Product using (_,_; Σ)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness; map′)
 
@@ -242,8 +242,9 @@ of-nat-plus {m} {n} =
 -- What decidable equality of operation symbols buys
 --
 -- Membership in a finite set of traces becomes decidable, and with it
--- the subset preorder `_⊑_` on the underlying lists and decidable
--- equality of sets of traces.
+-- the set-level lift `liftˢ` that every trace grade's order is an
+-- instance of, the subset preorder `_⊑_` on the underlying lists (the
+-- lift at equality), and decidable equality of sets of traces.
 
 module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
@@ -251,45 +252,127 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
   open import Data.List.Membership.DecPropositional _≟ᵀ_ public using (_∈?_)
 
-  -- the subset preorder on lists of traces
+  ----------------------------------------------------------------------
+  -- The set-level lift of a relation on traces
+  --
+  -- Every order the trace grades put on sets of traces has one shape:
+  -- every trace of the left-hand set is related to *some* trace of the
+  -- right-hand one. Only the relation lifted differs -- `_≡_` below, and
+  -- `Subtrace`'s `_≼_` together with its converse in `SubtraceLift` --
+  -- so the properties are proved here once and instantiated there.
+  --
+  -- The superscript marks the level, not one of the instances: at `_≡_`
+  -- the lift is the subset preorder, at `_≼_` it is the Hoare lower
+  -- lift, and at the converse of `_≼_` it is the Smyth upper lift read
+  -- backwards. Swapping the two sets alone does *not* take one of the
+  -- latter two to the other -- the relation has to be reversed as well.
+  --
+  -- Membership and `R` are both decided, so the lift is stated in the
+  -- proof-irrelevant `True`-of-a-decision form.
 
-  _⊑_ : List Trace → List Trace → Set
-  xs ⊑ ys = (s : Trace) → True (s ∈? xs) → True (s ∈? ys)
+  liftˢ : (R : Trace → Trace → Set) → Decidable R
+        → List Trace → List Trace → Set
+  liftˢ R R? xs ys = (s : Trace) → True (s ∈? xs) → True (any? (R? s) ys)
 
-  ⊑-refl : {xs : List Trace} → xs ⊑ xs
-  ⊑-refl s m = m
+  -- reflexivity, transitivity, and monotonicity for the language
+  -- product are inherited from the relation being lifted
 
-  -- the language product is monotone in both arguments
+  liftˢ-refl : {R : Trace → Trace → Set} → (R? : Decidable R)
+             → ((s : Trace) → R s s)
+             → {xs : List Trace} → liftˢ R R? xs xs
+  liftˢ-refl {R} R? rfl s m =
+    fromWitness (Any.map (λ eq → subst (R s) eq (rfl s)) (toWitness m))
 
-  ⊑-·ˢ : {xs xs' ys ys' : List Trace}
-       → xs ⊑ xs' → ys ⊑ ys' → (xs ·ˢ ys) ⊑ (xs' ·ˢ ys')
-  ⊑-·ˢ {xs} {xs'} {ys} {ys'} pxs pys s mem
-    with ∈-cartesianProductWith⁻ _∙_ xs ys (toWitness mem)
-  ... | a , b , a∈xs , b∈ys , refl =
-        fromWitness
-          (∈-cartesianProductWith⁺ _∙_
-            (toWitness (pxs a (fromWitness a∈xs)))
-            (toWitness (pys b (fromWitness b∈ys))))
+  liftˢ-trans : {R : Trace → Trace → Set} → (R? : Decidable R)
+              → ({s t u : Trace} → R s t → R t u → R s u)
+              → {xs ys zs : List Trace}
+              → liftˢ R R? xs ys → liftˢ R R? ys zs → liftˢ R R? xs zs
+  liftˢ-trans {R} R? tr xy yz s m
+    with find (toWitness (xy s m))
+  ... | y , y∈ys , sRy
+          with find (toWitness (yz y (fromWitness y∈ys)))
+  ...     | z , z∈zs , yRz =
+            fromWitness
+              (Any.map (λ eq → subst (R s) eq (tr sRy yRz)) z∈zs)
 
-  -- the orders built from `_⊑_` are proof-irrelevant
+  liftˢ-·ˢ : {R : Trace → Trace → Set} → (R? : Decidable R)
+           → ({a a' b b' : Trace} → R a a' → R b b' → R (a ∙ b) (a' ∙ b'))
+           → {xs xs' ys ys' : List Trace}
+           → liftˢ R R? xs xs' → liftˢ R R? ys ys'
+           → liftˢ R R? (xs ·ˢ ys) (xs' ·ˢ ys')
+  liftˢ-·ˢ {R} R? mono {xs} {xs'} {ys} {ys'} pxs pys r m
+    with ∈-cartesianProductWith⁻ _∙_ xs ys (toWitness m)
+  ... | a , b , a∈xs , b∈ys , refl
+          with find (toWitness (pxs a (fromWitness a∈xs)))
+             | find (toWitness (pys b (fromWitness b∈ys)))
+  ...     | a' , a'∈ , aRa' | b' , b'∈ , bRb' =
+            fromWitness
+              (Any.map (λ eq → subst (R (a ∙ b)) eq (mono aRa' bRb'))
+                       (∈-cartesianProductWith⁺ _∙_ a'∈ b'∈))
+
+  -- weakening the relation weakens the lift, which is what relates two
+  -- of the trace grades to a third built on a coarser relation
+
+  liftˢ-mono : {R R' : Trace → Trace → Set}
+             → (R? : Decidable R) → (R'? : Decidable R')
+             → ({s t : Trace} → R s t → R' s t)
+             → {xs ys : List Trace}
+             → liftˢ R R? xs ys → liftˢ R' R'? xs ys
+  liftˢ-mono R? R'? f p s m =
+    fromWitness (Any.map f (toWitness (p s m)))
+
+  -- the orders built from the lift are proof-irrelevant
 
   True-irr : {A : Set} (a? : Dec A) (p q : True a?) → p ≡ q
   True-irr (yes _) _  _ = refl
   True-irr (no  _) ()
 
-  -- the subset preorder is decidable: only the finitely many members of
-  -- the left-hand list satisfy the quantifier's premise
+  -- so the lift is too, pointwise -- which is every trace grade's
+  -- `≾-irrelevant`, one endpoint at a time
+
+  liftˢ-irrelevant : {R : Trace → Trace → Set} → {R? : Decidable R}
+                   → {xs ys : List Trace}
+                   → (p q : liftˢ R R? xs ys) → p ≡ q
+  liftˢ-irrelevant {R} {R?} {xs} {ys} p q =
+    fun-ext (λ s → fun-ext (λ m → True-irr (any? (R? s) ys) (p s m) (q s m)))
+
+  -- the lift is decidable: the quantifier ranges over all traces, but
+  -- only the finitely many members of the left-hand list satisfy its
+  -- premise, so reading it as an `All` over that list decides it
+
+  liftˢ-all : {R : Trace → Trace → Set} → {R? : Decidable R}
+            → {xs ys : List Trace}
+            → All (λ s → Any (R s) ys) xs → liftˢ R R? xs ys
+  liftˢ-all as s m = fromWitness (All.lookup as (toWitness m))
+
+  all-liftˢ : {R : Trace → Trace → Set} → {R? : Decidable R}
+            → {xs ys : List Trace}
+            → liftˢ R R? xs ys → All (λ s → Any (R s) ys) xs
+  all-liftˢ f = All.tabulate (λ {s} s∈xs → toWitness (f s (fromWitness s∈xs)))
+
+  liftˢ? : {R : Trace → Trace → Set} → (R? : Decidable R)
+         → (xs ys : List Trace) → Dec (liftˢ R R? xs ys)
+  liftˢ? R? xs ys = map′ liftˢ-all all-liftˢ (all? (λ s → any? (R? s) ys) xs)
+
+  ----------------------------------------------------------------------
+  -- The subset preorder is the lift at equality
+
+  _⊑_ : List Trace → List Trace → Set
+  _⊑_ = liftˢ _≡_ _≟ᵀ_
+
+  ⊑-refl : {xs : List Trace} → xs ⊑ xs
+  ⊑-refl = liftˢ-refl _≟ᵀ_ (λ _ → refl)
+
+  -- the language product is monotone in both arguments
+
+  ⊑-·ˢ : {xs xs' ys ys' : List Trace}
+       → xs ⊑ xs' → ys ⊑ ys' → (xs ·ˢ ys) ⊑ (xs' ·ˢ ys')
+  ⊑-·ˢ = liftˢ-·ˢ _≟ᵀ_ (cong₂ _∙_)
 
   infix 5 _⊑?_
 
   _⊑?_ : (xs ys : List Trace) → Dec (xs ⊑ ys)
-  xs ⊑? ys = map′ from to (all? (_∈? ys) xs)
-    where
-      from : All (_∈ ys) xs → xs ⊑ ys
-      from as s m = fromWitness (All.lookup as (toWitness m))
-
-      to : xs ⊑ ys → All (_∈ ys) xs
-      to f = All.tabulate (λ {s} s∈xs → toWitness (f s (fromWitness s∈xs)))
+  _⊑?_ = liftˢ? _≟ᵀ_
 
   -- decidable equality of sets of traces
 

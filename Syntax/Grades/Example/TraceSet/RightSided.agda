@@ -31,25 +31,23 @@ open import Util.Equality
 module Syntax.Grades.Example.TraceSet.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
-open import Data.List.Relation.Unary.Any using (any?)
-
 open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (True)
 
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.Subtrace Op cost using (_≼_; module DecSubtrace)
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
-open DecSubtrace _≟ₒ_ using (_≼?_)
+open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 
 ------------------------------------------------------------------------
 -- The grade order on (non-empty) sets of traces
 --
 -- `P ≾ Q` asks that every trace of `P` be covered by some trace of `Q`,
--- which is `_≼ˢ_` with the sets in the order they are written.
+-- which is `_≼ˢ_` with the sets in the order they are written -- that
+-- is, `Sets.liftˢ` at `_≼_`. `LeftSided`'s order is the same lift at the
+-- converse preorder, so the two differ only in the direction of `_≼_`.
 
 infix 5 _≾_
 
@@ -90,9 +88,7 @@ P ≾ Q = traces P ≼ˢ traces Q
 -- the grade order is proof-irrelevant
 
 ≾ᵗ-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
-≾ᵗ-irrelevant {P} {Q} p q =
-  fun-ext (λ s → fun-ext (λ m →
-    True-irr (any? (λ t → s ≼? t) (traces Q)) (p s m) (q s m)))
+≾ᵗ-irrelevant {P} {Q} = liftˢ-irrelevant
 
 ------------------------------------------------------------------------
 -- The order is decidable

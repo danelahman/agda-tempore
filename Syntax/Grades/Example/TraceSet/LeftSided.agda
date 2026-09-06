@@ -29,29 +29,31 @@ open import Util.Equality
 module Syntax.Grades.Example.TraceSet.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
-open import Data.List.Relation.Unary.Any using (any?)
-
 open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (True)
 
 open import Syntax.Grades
 
 -- the carrier and the monoid structure (`_·_`, `u`, `of-nat`, and their
--- laws), together with decidable equality `_≟ᴺ_`, come from the shared
--- set-of-traces module; only the order below is specific to this grade
+-- laws), decidable equality `_≟ᴺ_`, and the irrelevance of the set-level
+-- lift come from the shared set-of-traces module; only the order below
+-- is specific to this grade
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.Subtrace Op cost using (_≼_; module DecSubtrace)
 open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ cost
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
-open DecSubtrace _≟ₒ_ using (_≼?_)
+open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 
 ------------------------------------------------------------------------
 -- The grade order on (non-empty) sets of traces
 --
 -- `P ≾ Q` asks that every trace of `P` cover some trace of `Q`, which
--- is `_≽ˢ_` with the two sets the other way round.
+-- is `_≽ˢ_` with the two sets the other way round. Unfolded, that is
+-- `Sets.liftˢ` at the *converse* sub-trace preorder with `P` and `Q` in
+-- the order written -- the same shape as `RightSided`'s order, which is
+-- the lift at `_≼_` itself. At the level of the grades the two
+-- one-sided orders therefore differ only in the direction of `_≼_`, and
+-- not in which set the quantifier runs over.
 
 infix 5 _≾_
 
@@ -91,9 +93,7 @@ P ≾ Q = traces Q ≽ˢ traces P
 -- the grade order is proof-irrelevant
 
 ≾ᵗ-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
-≾ᵗ-irrelevant {P} {Q} p q =
-  fun-ext (λ t → fun-ext (λ m →
-    True-irr (any? (λ s → s ≼? t) (traces Q)) (p t m) (q t m)))
+≾ᵗ-irrelevant {P} {Q} = liftˢ-irrelevant
 
 ------------------------------------------------------------------------
 -- The order is decidable

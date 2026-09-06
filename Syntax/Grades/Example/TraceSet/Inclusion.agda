@@ -77,8 +77,7 @@ infix 5 _≾_
 -- the order is proof-irrelevant
 
 ≾ᵗ-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
-≾ᵗ-irrelevant {P} {Q} p q =
-  fun-ext (λ s → fun-ext (λ m → True-irr (s ∈? traces Q) (p s m) (q s m)))
+≾ᵗ-irrelevant {P} {Q} = liftˢ-irrelevant
 
 -- zero-product property of the order: if `P · Q ⊆ { ε }` then, since
 -- `Q` is non-empty, every trace of `P` sequenced with some trace of

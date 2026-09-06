@@ -18,10 +18,6 @@
 
 open import Data.Nat.Base using (ℕ; _≤_)
 
-open import Data.List.Relation.Unary.Any as Any using (Any)
-
-open import Relation.Nullary.Decidable using (toWitness; fromWitness)
-
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -43,6 +39,9 @@ module _ (opTime : Op → ℕ) where
 
   open import Syntax.Grades.Traces.Sets Op
   open import Syntax.Grades.Traces.Subtrace Op opTime using (_≼_; ≼-refl)
+  open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ opTime using (_≽?_)
+
+  open WithDecEq _≟ₒ_ using (_≟ᵀ_; liftˢ-mono)
 
   -- the sets of timed traces ordered by inclusion provide the effect
   -- grades, the same sets ordered up to the cost-aware sub-trace
@@ -55,12 +54,12 @@ module _ (opTime : Op → ℕ) where
 
   -- a trace of the smaller set is a member of the larger one, and is
   -- covered by itself there, so inclusion is contained in the sub-trace
-  -- lift
+  -- lift. Both orders are `liftˢ` -- at `_≡_` and at the converse of
+  -- `_≼_` -- so this is the lift's monotonicity in the relation.
 
   ⊆⇒≼ : {P Q : NeTraces} → P ≾ˢ Q → P ≾ᶜ Q
-  ⊆⇒≼ {P} {Q} rel t m =
-    fromWitness
-      (Any.map (λ eq → subst (_≼ t) eq (≼-refl t)) (toWitness (rel t m)))
+  ⊆⇒≼ {P} {Q} =
+    liftˢ-mono _≟ᵀ_ _≽?_ (λ {s} eq → subst (_≼ s) eq (≼-refl s))
 
   -- the two grades share their carrier and their monoid structure, so
   -- the reinterpretation is the identity on sets of traces
@@ -95,14 +94,23 @@ module _ (c c' : Op → ℕ) (c≤c' : (o : Op) → c o ≤ c' o) where
   open import Syntax.Grades.Traces.SubtraceCost Op c c' c≤c'
     using (≼-cost-mono₀)
 
+  open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ c
+    using () renaming (_≽?_ to _≽ᶠᵃˢᵗ?_)
+  open import Syntax.Grades.Traces.SubtraceLift Op _≟ₒ_ c'
+    using () renaming (_≽?_ to _≽ˢˡᵒʷ?_)
+
+  open WithDecEq _≟ₒ_ using (liftˢ-mono)
+
   open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c'
     using () renaming (left-sided-traces to traces-slow; _≾_ to _≾ˢˡᵒʷ_)
   open import Syntax.Grades.Example.TraceSet.LeftSided Op _≟ₒ_ c
     using () renaming (left-sided-traces to traces-fast; _≾_ to _≾ᶠᵃˢᵗ_)
 
+  -- both orders are `liftˢ` at the converse sub-trace preorder, one per
+  -- cost model, so widening the preorder widens the order
+
   ≾-cost-mono : {P Q : NeTraces} → P ≾ᶠᵃˢᵗ Q → P ≾ˢˡᵒʷ Q
-  ≾-cost-mono {P} {Q} rel t m =
-    fromWitness (Any.map ≼-cost-mono₀ (toWitness (rel t m)))
+  ≾-cost-mono {P} {Q} = liftˢ-mono _≽ᶠᵃˢᵗ?_ _≽ˢˡᵒʷ?_ ≼-cost-mono₀
 
   fast-traces→slow-traces : traces-fast →ᵍ traces-slow
   fast-traces→slow-traces = record
