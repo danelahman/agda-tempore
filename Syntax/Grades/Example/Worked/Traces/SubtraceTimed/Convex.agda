@@ -70,6 +70,14 @@ module LeftSided where
   -- Between singleton grades the two halves coincide, so all that is
   -- left is the window discipline
 
+  -- an operation interleaved in the middle is still tolerated: what is
+  -- restricted is when a run may spend time, not what it may do on the
+  -- way (`SubtraceTimed.LowerLift.LeftSided.logged-on-the-way`)
+
+  logged-on-the-way : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                      ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  logged-on-the-way = holds
+
   logged-in-the-window : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
                          ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
   logged-in-the-window = holds

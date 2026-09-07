@@ -78,11 +78,35 @@ module LeftSided where
   failsˡᵉⁿ {p = p} = toWitnessFalse p
 
   ----------------------------------------------------------------------
+  -- Unmatched operations in the middle are still tolerated
+  --
+  -- The run does everything the demand asks for and logs on the way,
+  -- and the demand is still discharged. This order restricts *when* a
+  -- run may spend time, not which operations it may interleave: the
+  -- match is still a subsequence match.
+  --
+  -- Contiguity is not available to restrict instead. `Traces.Prefix`
+  -- exhibits the failure of `·-monoˡ-≾` for the prefix order, and the
+  -- same argument covers any order asking the demanded events to be
+  -- adjacent -- so tolerating a write on the way is what makes these
+  -- grades monoid-graded, not a looseness left over.
+
+  logged-on-the-way : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                      ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  logged-on-the-way = holds
+
+  logged-on-the-way-leniently : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+                                ≾ˡᵉⁿ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  logged-on-the-way-leniently = holdsˡᵉⁿ
+
+  ----------------------------------------------------------------------
   -- The separation, at the grade level
   --
   -- The demand asks for a read, then two ticks, then a send. A write
   -- takes three ticks, so wherever it falls there is time enough; the
-  -- question is whether it falls where the demand puts it.
+  -- question is whether it falls where the demand puts it. Dropping the
+  -- delay the run idles for, so that the write has to cover the two
+  -- ticks by itself, is what brings that question into view.
 
   -- between the two: accepted by both orders
 
