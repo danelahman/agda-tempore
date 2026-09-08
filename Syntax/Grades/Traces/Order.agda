@@ -1,10 +1,11 @@
 ------------------------------------------------------------------------
 -- What a trace order has to supply to carry grades.                   --
 --                                                                     --
--- Several preorders on timed traces are in play -- the lenient         --
--- sub-trace order of `Traces.Subtrace`, its time-strict restriction in --
--- `Traces.SubtraceTimed` -- and the grades built over them differ only --
--- in which one they lift. This record is the interface they meet:      --
+-- Several preorders on timed traces are in play -- the allowance order --
+-- of `Traces.Allowance`, its time-strict restriction in                --
+-- `Traces.AllowanceTimed`, and the sub-trace orders parked under       --
+-- `backup/` -- and the grades built over them differ only in which one --
+-- they lift. This record is the interface they meet:                   --
 -- decidability, the preorder laws, monotonicity for the trace product, --
 -- and the two facts about the unit that the zero-product properties    --
 -- rest on.                                                            --

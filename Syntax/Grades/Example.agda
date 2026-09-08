@@ -13,13 +13,16 @@
 --     bound or a window of time steps. Small and self-contained.       --
 --                                                                     --
 --   * `Traces.*`  -- grades that record *which runs* a computation   --
---     must have had, as a set of timed traces. All three share their   --
---     carrier and monoid (from `Grades.Traces.Sets`) and differ only   --
---     in the order they put on it.                                     --
+--     may have had, as a set of timed traces, sharing their carrier    --
+--     and monoid (from `Grades.Traces.Sets`) and differing in the      --
+--     order they put on it.                                            --
 --                                                                     --
--- Every order runs the same way: a grade is a *lower* bound, so that   --
--- `unbox`'s premise `ρ' ≾ᵣ ρ` -- elapsed below demanded -- is          --
--- discharged by having done more than `ρ` asks for and never by less.  --
+-- The trace family is being rebuilt one grade at a time, starting from --
+-- the allowance order and its right-sided intervals. The grid that     --
+-- preceded it -- four lifts against three sidednesses, over the        --
+-- sub-trace orders -- is parked under `backup/`, along with its worked --
+-- examples, Kripke frames and grade systems, and is not imported from  --
+-- anywhere.                                                            --
 --                                                                     --
 -- `System.*` then pairs them up. Reading the projections tells the     --
 -- story of the development: each one says what a resource grade is     --
@@ -58,12 +61,9 @@ import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 ------------------------------------------------------------------------
 -- Sets of timed traces
 --
--- A grade records which runs a computation must or may have had, and
--- the order says what weakening one is allowed to ask for instead.
--- These form a grid: three comparisons (by membership, up to the
--- sub-trace preorder, and the convex lift of it) against the same three
--- sidednesses as the intervals above (a floor, a cap, a pair of both).
--- `Traces` is the index; each column has its own.
+-- A grade records which runs a computation may have had, and the order
+-- says what weakening one is allowed to ask for instead. `Traces` is
+-- the index.
 
 import Syntax.Grades.Example.Traces
 
@@ -77,26 +77,6 @@ import Syntax.Grades.Example.Traces
 -- the guarantee that at least so much time has passed
 
 import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
-
--- sets of traces to sets of traces over a sub-alphabet: forget the
--- operations that are not being accounted for
-
-import Syntax.Grades.Example.System.TracesToRestrictedTraces
-
--- sets of traces to time intervals: forget which runs there were, keep
--- the window between their best-case and worst-case durations
-
-import Syntax.Grades.Example.System.TracesToTimeIntervals
-
--- sets of traces to the same sets read against a cost model: forget
--- nothing, but compare the runs up to what fits inside a schedule
-
-import Syntax.Grades.Example.System.TracesToCostAwareTraces
-
--- two-sided trace intervals to one-sided ones: forget the cap, keep the
--- floor -- the trace analogue of the first system above
-
-import Syntax.Grades.Example.System.TraceIntervalsToTraceSets
 
 ------------------------------------------------------------------------
 -- Worked instances

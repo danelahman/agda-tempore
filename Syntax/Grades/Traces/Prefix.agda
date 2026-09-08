@@ -1,13 +1,14 @@
 ------------------------------------------------------------------------
 -- The prefix order on timed traces, and why it carries no grade.      --
 --                                                                     --
--- `Traces.Subtrace`'s `_≼_` matches a demand against a run as a        --
--- *subsequence*: the demanded operations must occur in order, but the  --
--- run may do others in between. That is what lets a demand for         --
--- `read · ⟨ 2 ⟩ · send` be met by a run that also stores on the way.   --
+-- The orders the trace grades are built from match one trace against   --
+-- another as a *subsequence*: the events named must occur in order,     --
+-- but others may occur in between. That is what lets a demand for       --
+-- `read · ⟨ 2 ⟩ · send` be met by a run that also stores on the way,    --
+-- and what lets a bound permit a run that skips what it offers.         --
 --                                                                     --
--- The obvious strengthening is to ask the demand to be a *prefix*:     --
--- the events must happen from the start, with nothing skipped.         --
+-- The obvious strengthening is to ask for a *prefix*: the events must   --
+-- happen from the start, with nothing skipped.                         --
 --                                                                     --
 --   s ⊑ᵖ t   iff   t ≡ s ∙ r   for some continuation r                --
 --                                                                     --
@@ -25,9 +26,9 @@
 -- under the language product, and monotonicity for that product is     --
 -- what the grade construction needs.                                  --
 --                                                                     --
--- So the sub-trace order's tolerance of unmatched operations in the    --
--- middle is not a looseness that could be tightened away; it is what   --
--- makes the trace grades monoid-graded at all.                        --
+-- So an order's tolerance of unmatched operations in the middle is not --
+-- a looseness that could be tightened away; it is what makes the trace --
+-- grades monoid-graded at all.                                        --
 ------------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)

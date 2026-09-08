@@ -17,22 +17,19 @@
 -- round does not typecheck. The tables in the module headers are       --
 -- therefore checked, not annotations.                                  --
 --                                                                     --
--- Three findings the examples pin down are worth having in advance:    --
+-- Two findings the trace examples pin down are worth having in         --
+-- advance:                                                             --
 --                                                                     --
---   * Every grade order runs so that `unbox`'s premise `ρ' ≾ᵣ ρ` --    --
---     what elapsed, below what the box demands -- is discharged by     --
---     having done *more* than `ρ` asks for, and never by less. See     --
---     `Traces.LowerLift`.                                               --
+--   * A bound's operations are permissions and its delays are budget.  --
+--     Time buys any work that costs no more -- `⌈ write ⌉` stays       --
+--     within `⟨ 3 ⟩` -- and a permitted operation buys no time, so     --
+--     `⟨ 3 ⟩` does not stay within `⌈ write ⌉`. See                    --
+--     `Traces.Allowance`.                                              --
 --                                                                     --
---   * Time discharges a demand for an operation, at that operation's   --
---     execution time, but doing operations does not discharge a demand --
---     for time. The `uplink` run takes nine ticks, yet does not meet a --
---     demand for three ticks of waiting: its only idle time is the two --
---     ticks it actually idles for. See `Traces.LowerLift`.              --
---                                                                     --
---   * The three columns part company only once a grade lists           --
---     alternatives: on singletons they agree. See the last section of  --
---     each of `Traces.Inclusion` and `Traces.Convex`.                  --
+--   * Read as a resource grade, such a bound is a permit that          --
+--     *expires*: `unbox`'s premise `ρ' ≾ᵣ ρ` asks what elapsed to be   --
+--     still within what the box allows, so overspending closes the     --
+--     box rather than opening it. See the same module.                 --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked where
@@ -46,18 +43,17 @@ import Syntax.Grades.Example.Worked.Operations
 
 import Syntax.Grades.Example.Worked.Time
 
--- The trace-set grades, one submodule per column of the grid and, in
--- each, one per sidedness: a floor under what must have happened, a cap
--- on what may have, and the pair of them.
-
-import Syntax.Grades.Example.Worked.Traces
-
 -- A language specification over the alphabet, which the trace-based
 -- grade systems need in order to be instantiated.
 
 import Syntax.Grades.Example.Worked.Spec
 
--- The four grade morphisms, computed on the node's own grades, and
--- their monotonicity carrying the orderings above across.
+-- The grade morphisms, computed on the node's own grades, and their
+-- monotonicity carrying the orderings above across.
 
 import Syntax.Grades.Example.Worked.Systems
+
+-- The trace grades, as they are rebuilt: at present the grade of upper
+-- bounds at the allowance order, read both ways.
+
+import Syntax.Grades.Example.Worked.Traces

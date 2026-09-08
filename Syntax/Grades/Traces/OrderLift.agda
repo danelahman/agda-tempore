@@ -21,9 +21,9 @@
 -- not symmetric between them.                                         --
 --                                                                     --
 -- Nothing below inspects the comparison, so this is proved once and    --
--- instantiated at each order: `Traces.SubtraceLift` is it at the       --
--- lenient sub-trace order, `Traces.SubtraceTimedLift` at the           --
--- time-strict one.                                                    --
+-- instantiated at each order: `Traces.AllowanceLift` is it at the      --
+-- allowance order, `Traces.AllowanceTimedLift` at its time-strict      --
+-- restriction.                                                        --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

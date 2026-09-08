@@ -258,8 +258,8 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   -- Every order the trace grades put on sets of traces has one shape:
   -- every trace of the left-hand set is related to *some* trace of the
   -- right-hand one. Only the relation lifted differs -- `_≡_` below, and
-  -- `Subtrace`'s `_≼_` together with its converse in `SubtraceLift` --
-  -- so the properties are proved here once and instantiated there.
+  -- `Allowance`'s `_≼ᵃ_` together with its converse in `AllowanceLift`
+  -- -- so the properties are proved here once and instantiated there.
   --
   -- The superscript marks the level, not one of the instances: at `_≡_`
   -- the lift is the subset preorder, at `_≼_` it is the Hoare lower

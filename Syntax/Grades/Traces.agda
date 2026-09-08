@@ -58,52 +58,55 @@ import Syntax.Grades.Traces.MaxDuration
 import Syntax.Grades.Traces.MinDuration
 
 ------------------------------------------------------------------------
--- Fitting inside a schedule
+-- What an order on traces has to supply
 --
--- The sub-trace preorder: when one trace fits inside the schedule
--- another describes, with operations charged the time they take.
-
-import Syntax.Grades.Traces.Subtrace
-
--- What an order on traces has to supply to carry grades, and its two
--- lifts to sets of traces -- Hoare and Smyth -- which the trace-based
--- grades pick their orders from. Neither mentions a particular order,
--- so each sub-trace order below meets the interface once and inherits
--- both lifts with all their laws.
+-- The interface the grades take their order from, and its two lifts to
+-- sets of traces -- Hoare and Smyth. Neither mentions a particular
+-- order, so each order below meets the interface once and inherits both
+-- lifts with all their laws.
 
 import Syntax.Grades.Traces.Order
 import Syntax.Grades.Traces.OrderLift
 
--- The sub-trace order as such an interface, and its lifts.
+------------------------------------------------------------------------
+-- Staying inside an allowance
+--
+-- The allowance order: when a bound permits a run. The bound's
+-- operations are permissions and its delays are a budget, which the run
+-- spends on its own idling and on operations the bound does not name,
+-- at their execution time. Going up the order an operation turns into a
+-- delay long enough to cover it, and a delay grows.
 
-import Syntax.Grades.Traces.Subtrace.AsOrder
-import Syntax.Grades.Traces.SubtraceLift
+import Syntax.Grades.Traces.Allowance
 
--- A sub-trace is no longer than its host, up to the slack it was
--- granted -- what connects the preorder to the durations above.
+-- Its time-strict restriction, in which budget does not cross an
+-- operation the bound names, so a bound says when its slack is
+-- available and not merely how much of it there is.
 
-import Syntax.Grades.Traces.SubtraceDuration
+import Syntax.Grades.Traces.AllowanceTimed
 
--- Comparing the preorder across two cost models: raising the cost of
--- an operation narrows the order.
+-- Their interface instances and lifts. Both ask every operation to cost
+-- something, which is what makes the empty bound permit nothing but the
+-- empty run, and what the grades' zero-product law rests on.
 
-import Syntax.Grades.Traces.SubtraceCost
+import Syntax.Grades.Traces.Allowance.AsOrder
+import Syntax.Grades.Traces.AllowanceTimed.AsOrder
+import Syntax.Grades.Traces.AllowanceLift
+import Syntax.Grades.Traces.AllowanceTimedLift
 
--- The prefix order, and a checked proof that it carries no grade: the
--- language product is not monotone for it, so `·-monoˡ-≾` fails. Any
--- order demanding contiguity fails the same way, which is why the
--- sub-trace order above tolerates unmatched operations in the middle.
+------------------------------------------------------------------------
+-- An order that carries no grade
+--
+-- The prefix order, and a checked proof that the language product is
+-- not monotone for it, so `·-monoˡ-≾` fails. Any order demanding
+-- contiguity fails the same way.
 
 import Syntax.Grades.Traces.Prefix
 
--- The time-strict sub-trace order: the same rules, except that a
--- matched operation does not carry banked slack across it, so a
--- demanded delay is payable only by what the run does between the same
--- two matched operations.
-
-import Syntax.Grades.Traces.SubtraceTimed
-
--- Its interface instance and lifts, exactly as for the lenient order.
-
-import Syntax.Grades.Traces.SubtraceTimed.AsOrder
-import Syntax.Grades.Traces.SubtraceTimedLift
+------------------------------------------------------------------------
+-- Parked
+--
+-- The sub-trace orders -- where a *demand* is met by a run that does at
+-- least as much, the reading a floor wants -- are under `backup/` while
+-- the trace grades are rebuilt from their upper-bound end, along with
+-- their lifts, durations and cost-model comparison.

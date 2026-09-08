@@ -1,56 +1,29 @@
 ------------------------------------------------------------------------
 -- Grades that are (non-empty) sets of timed traces.                   --
 --                                                                     --
--- A grade records *which runs* a computation must or may have. The     --
--- examples form a grid of three axes.                                  --
+-- A grade records which runs a computation may have. At present there --
+-- is one such grade, read as an upper bound:                          --
 --                                                                     --
--- First, which order on traces is lifted -- how loosely a listed run   --
--- is matched:                                                          --
+--   every run stays within one of the listed bounds                   --
 --                                                                     --
---   Inclusion       not at all: a run matches by being listed (`_≡_`)  --
---   Subtrace        the lenient sub-trace order, which lets time       --
---                   banked anywhere pay for a delay demanded later     --
---   SubtraceTimed   its time-strict restriction, which pays a delay    --
---                   only out of time spent in the same window          --
+-- built once in `Traces.Lifted.RightSided`, over an arbitrary order    --
+-- on traces, and instantiated at the two allowance orders --          --
+-- `Traces.Allowance`, whose budget is global, and                     --
+-- `Traces.AllowanceTimed`, whose budget is available only where the   --
+-- bound places it.                                                    --
 --                                                                     --
--- Then, within each of the two sub-trace families, how a listed run is --
--- matched -- the lift:                                                 --
---                                                                     --
---   LowerLift   every trace on the left matched on the right  (Hoare)  --
---   UpperLift   every trace on the right matched on the left  (Smyth)  --
---   Convex      both at once                            (Egli-Milner)  --
---                                                                     --
--- And finally what the set bounds -- the sidedness, mirroring `Time`:  --
---                                                                     --
---   LeftSided   a floor, "at least"                                   --
---   RightSided  a cap, "at most"                                      --
---   TwoSided    a pair of endpoints, "between"                        --
---                                                                     --
--- Every cell is built the same way: the cap compares the two sets in   --
--- the order written, the floor compares them exchanged, and the pair   --
--- uses one comparison on each endpoint in those opposite directions.   --
--- That is what makes the columns analogues of one another -- only how  --
--- a run is matched changes -- and it is why `Inclusion` is the whole   --
--- grid at `_≡_`, where `LowerLift` and `UpperLift` coincide.           --
---                                                                     --
--- Since only the comparison changes along the first axis, the grid is  --
--- built once in `Traces.Lifted`, over an arbitrary trace order, and    --
--- `Traces.Subtrace` and `Traces.SubtraceTimed` instantiate it. That    --
--- `_≡_` is not such an order -- `ε ≡ t` fails -- is exactly why        --
--- `Inclusion` stands outside the axis and is written out separately.   --
+-- The grades that read a set of traces as a *lower* bound, and the     --
+-- two-sided ones that pair the two readings, are being rebuilt one at  --
+-- a time; the earlier grid of them is parked under `backup/`.          --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Traces where
 
--- matched exactly
+-- upper bounds over an arbitrary order on traces
 
-import Syntax.Grades.Example.Traces.Inclusion
+import Syntax.Grades.Example.Traces.Lifted.RightSided
 
--- the grid over an arbitrary trace order
+-- at the allowance order, and at its time-strict restriction
 
-import Syntax.Grades.Example.Traces.Lifted
-
--- that grid at each of the two sub-trace orders
-
-import Syntax.Grades.Example.Traces.Subtrace
-import Syntax.Grades.Example.Traces.SubtraceTimed
+import Syntax.Grades.Example.Traces.Allowance.RightSided
+import Syntax.Grades.Example.Traces.AllowanceTimed.RightSided

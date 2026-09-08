@@ -21,7 +21,7 @@
 module Syntax.Grades.Example.Worked.Operations where
 
 open import Data.List.Base using ([]; _∷_)
-open import Data.Nat.Base using (ℕ; _≤_; s≤s; z≤n)
+open import Data.Nat.Base using (ℕ; _≤_; _<_; s≤s; z≤n)
 open import Data.Unit using (tt)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -81,6 +81,14 @@ fast≤slow send  = s≤s (s≤s (s≤s (s≤s z≤n)))
 
 cost : Op → ℕ
 cost = slow
+
+-- every operation takes time, which is what makes an empty allowance
+-- permit nothing but the empty run
+
+cost-pos : (o : Op) → 0 < cost o
+cost-pos read  = s≤s z≤n
+cost-pos write = s≤s z≤n
+cost-pos send  = s≤s z≤n
 
 ------------------------------------------------------------------------
 -- Timed traces over this alphabet
