@@ -75,24 +75,18 @@ import Syntax.Grades.Traces.OrderLift
 -- operations are permissions and its delays are a budget, which the run
 -- spends on its own idling and on operations the bound does not name,
 -- at their execution time. Going up the order an operation turns into a
--- delay long enough to cover it, and a delay grows.
+-- delay long enough to cover it, and a delay grows. Budget does not
+-- cross an operation the bound names, so a bound says when its slack is
+-- available and not merely how much of it there is.
 
 import Syntax.Grades.Traces.Allowance
 
--- Its time-strict restriction, in which budget does not cross an
--- operation the bound names, so a bound says when its slack is
--- available and not merely how much of it there is.
-
-import Syntax.Grades.Traces.AllowanceTimed
-
--- Their interface instances and lifts. Both ask every operation to cost
+-- Its interface instance and lifts. Both ask every operation to cost
 -- something, which is what makes the empty bound permit nothing but the
 -- empty run, and what the grades' zero-product law rests on.
 
 import Syntax.Grades.Traces.Allowance.AsOrder
-import Syntax.Grades.Traces.AllowanceTimed.AsOrder
 import Syntax.Grades.Traces.AllowanceLift
-import Syntax.Grades.Traces.AllowanceTimedLift
 
 ------------------------------------------------------------------------
 -- An order that carries no grade

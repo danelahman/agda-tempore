@@ -78,6 +78,12 @@ import Syntax.Grades.Example.Traces
 
 import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
 
+-- trace bounds to right-sided intervals: forget which runs a grade
+-- permits and which operations they perform, keep the deadline its
+-- slowest bound imposes
+
+import Syntax.Grades.Example.System.TracesToRightSidedIntervals
+
 ------------------------------------------------------------------------
 -- Worked instances
 --

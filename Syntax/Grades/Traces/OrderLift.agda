@@ -22,8 +22,7 @@
 --                                                                     --
 -- Nothing below inspects the comparison, so this is proved once and    --
 -- instantiated at each order: `Traces.AllowanceLift` is it at the      --
--- allowance order, `Traces.AllowanceTimedLift` at its time-strict      --
--- restriction.                                                        --
+-- allowance order.                                                    --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

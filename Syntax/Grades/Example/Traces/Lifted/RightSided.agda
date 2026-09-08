@@ -17,11 +17,11 @@
 -- makes the union of two grades their join.                            --
 --                                                                     --
 -- Nothing here inspects the order, so the construction is written once --
--- and instantiated: `Example.Traces.Allowance` at the allowance order  --
--- and `Example.Traces.AllowanceTimed` at its time-strict restriction.  --
--- What the order decides is what "staying within a bound" means, and   --
--- with an allowance order it means the bound's operations permit the   --
--- run's and its delays are a budget the run may spend.                 --
+-- and instantiated -- `Example.Traces.Allowance` at the allowance      --
+-- order. What the order decides is what "staying within a bound"       --
+-- means, and there it means the bound's operations permit the run's    --
+-- and its delays are a budget the run may spend where the bound places --
+-- it.                                                                  --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

@@ -13,11 +13,10 @@
 -- unspent.                                                           --
 --                                                                    --
 -- The module closes with the inversion that nothing but the empty run --
--- is permitted by the empty bound. That needs every operation to      --
--- cost something -- a free operation could be paid for out of no      --
--- budget at all -- so the positivity of `cost` is taken as an         --
--- argument where it is used, and it is what the grade's zero-product  --
--- law ultimately rests on.                                           --
+-- is permitted by the empty bound. That needs every operation to cost --
+-- something -- a free operation could be paid for out of no budget at --
+-- all -- so the positivity of `cost` is taken as an argument where it --
+-- is used, and it is what the grade's zero-product law rests on.      --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -71,10 +70,13 @@ duration-slack : ∀ {k s t} → s ≼ᵃ[ k ] t → duration s ≤ duration t +
 -- the empty run has no duration to account for
 duration-slack nil = z≤n
 
--- an operation the bound names costs the same on both sides
-duration-slack {k} (keep {o = o} {t = t} p) =
-  ≤-trans (+-monoʳ-≤ (cost o) (duration-slack p))
-          (≤-reflexive (sym (+-assoc (cost o) (duration t) k)))
+-- an operation the bound names costs the same on both sides, and the
+-- premise arrives with no budget, so the conclusion's is spare
+duration-slack {k} (keep {o = o} {s = s} {t = t} p) =
+  ≤-trans (+-monoʳ-≤ (cost o)
+                     (subst (duration s ≤_) (+-identityʳ (duration t))
+                            (duration-slack p)))
+          (m≤m+n (cost o + duration t) k)
 
 -- one the run skips only makes the bound longer
 duration-slack {k} (skip-op {o = o} {t = t} p) =
@@ -124,7 +126,7 @@ duration-≼ᵃ {s} {t} p =
 ∣∣⁺-pos 𝟏        ()
 ∣∣⁺-pos (suc⁺ d) ()
 
-≼ᵃ-ε-inv : (∀ o → 0 < cost o) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
+≼ᵃ-ε-inv : ((o : Op) → 0 < cost o) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
 ≼ᵃ-ε-inv pos nil                      = refl
 ≼ᵃ-ε-inv pos (use-delay {d = d} le _) = ⊥-elim (∣∣⁺-pos d le)
 ≼ᵃ-ε-inv pos (use-op {o = o} le _)    =

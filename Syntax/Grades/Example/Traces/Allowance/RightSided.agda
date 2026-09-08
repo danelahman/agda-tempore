@@ -5,8 +5,9 @@
 -- A grade lists bounds, and a run stays within one of them when the   --
 -- bound names every operation the run performs, or leaves enough      --
 -- budget to cover the ones it does not, and enough for the run's own  --
--- idling. Budget is banked globally: a delay the bound offers          --
--- anywhere pays for work the run does anywhere.                       --
+-- idling. Budget is local: what the bound offers between two          --
+-- operations it names pays only for what the run does between those   --
+-- same two, so a bound says when its slack is available.              --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _<_)

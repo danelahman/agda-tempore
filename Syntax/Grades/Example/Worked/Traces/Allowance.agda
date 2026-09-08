@@ -13,6 +13,11 @@
 -- it says what must be possible and caps the rest by time rather than  --
 -- by naming it.                                                       --
 --                                                                     --
+-- Budget is *local*: what a bound offers between two operations it     --
+-- names pays only for what the run does between those same two. A      --
+-- bound therefore says when its slack is available, and not merely how --
+-- much of it there is -- the last section below turns on that alone.   --
+--                                                                     --
 -- Under `cost` -- read 1, write 3, send 6 -- the runs below take       --
 --                                                                     --
 --   ⌈ read ⌉                                  1 tick                  --
@@ -270,3 +275,57 @@ trimming = holds
 untrimming :
   ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
 untrimming = holds
+
+------------------------------------------------------------------------
+-- Where the budget sits
+--
+-- Budget does not cross an operation the bound names, so a bound
+-- prescribes when its spare time is available. Two bounds differing
+-- only in where six ticks sit, against two runs differing only in where
+-- the store falls -- all four traces performing a read, a store and a
+-- transmission, and all taking ten ticks -- and each bound admits
+-- exactly one of the runs.
+
+storing-in-the-window :
+  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ⟆
+storing-in-the-window = holds
+
+storing-afterwards-does-not :
+  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+     ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ⟆)
+storing-afterwards-does-not = fails
+
+-- moving the three ticks the store needs to the far side of the
+-- transmission exchanges which run is permitted
+
+storing-afterwards :
+  ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
+storing-afterwards = holds
+
+storing-in-the-window-does-not :
+  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+     ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆)
+storing-in-the-window-does-not = fails
+
+-- so a computation that may do either needs a grade listing both, and
+-- then each run stays within the bound that budgets where it spends
+
+either-placement :
+  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
+either-placement = holds
+
+-- Placement binds only while the budget is tight. Widen the window to
+-- nine ticks and the run that stores afterwards is permitted again --
+-- but not because its store moved: nine buys the transmission outright
+-- (six) and the store after it (three), so the bound's own `⌈ send ⌉`
+-- goes unmatched and there is no match left for budget to fail to
+-- cross. Eight ticks buy only one of the two.
+
+nine-ticks-buy-both-operations :
+  ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ∙ ⌈ send ⌉ ⟆
+nine-ticks-buy-both-operations = holds
+
+eight-do-not :
+  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 8 ⟩ ∙ ⌈ send ⌉ ⟆)
+eight-do-not = fails

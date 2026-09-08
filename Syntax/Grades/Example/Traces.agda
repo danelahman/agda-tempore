@@ -7,10 +7,9 @@
 --   every run stays within one of the listed bounds                   --
 --                                                                     --
 -- built once in `Traces.Lifted.RightSided`, over an arbitrary order    --
--- on traces, and instantiated at the two allowance orders --          --
--- `Traces.Allowance`, whose budget is global, and                     --
--- `Traces.AllowanceTimed`, whose budget is available only where the   --
--- bound places it.                                                    --
+-- on traces, and instantiated at `Traces.Allowance` -- where a bound's --
+-- operations are permissions and its delays a budget, available only  --
+-- where the bound places it.                                          --
 --                                                                     --
 -- The grades that read a set of traces as a *lower* bound, and the     --
 -- two-sided ones that pair the two readings, are being rebuilt one at  --
@@ -23,7 +22,6 @@ module Syntax.Grades.Example.Traces where
 
 import Syntax.Grades.Example.Traces.Lifted.RightSided
 
--- at the allowance order, and at its time-strict restriction
+-- at the allowance order
 
 import Syntax.Grades.Example.Traces.Allowance.RightSided
-import Syntax.Grades.Example.Traces.AllowanceTimed.RightSided
