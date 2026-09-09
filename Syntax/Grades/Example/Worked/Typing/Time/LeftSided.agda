@@ -261,6 +261,79 @@ either-way =
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
 
 ------------------------------------------------------------------------
+-- Sub-effecting against unboxing
+--
+-- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
+-- `ε` is the grade the first part is *typed at*. So a `coerce` on that
+-- first part changes what the continuation may claim, and at these
+-- grades it can only take claims away: coercing forgets time, and time
+-- is what the box is compared against. `coercion-only-closes` is the
+-- general statement; here is what it comes to.
+
+-- a reading and a store guarantee three ticks, which is what the box
+-- asks for
+
+claim-after-a-store : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
+claim-after-a-store =
+  box {ρ = [ 3 ,+∞⟩} (const 42)
+    ((perform read ⋆ (perform write here (return ⋆)))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+          (perform send here (return ⋆)))
+
+-- forgetting one of those ticks first puts the box out of reach: the
+-- lock the continuation is typed under is the coerced grade
+
+coercing-closes-it : ¬ (uᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 3 ,+∞⟩)
+coercing-closes-it = ≰!
+
+-- the same program with the coercion, claiming a box that asks for no
+-- more than the coerced grade guarantees
+
+claim-after-a-coerced-store : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+claim-after-a-coerced-store =
+  box {ρ = [ 2 ,+∞⟩} (const 42)
+    (coerce {ε' = [ 2 ,+∞⟩} ≤!
+       (perform read ⋆ (perform write here (return ⋆)))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+          (perform send here (return ⋆)))
+
+-- and that box was within the uncoerced program's reach as well, which
+-- is the direction `coercion-only-closes` gives at every grade
+
+claim-without-coercing : uᵣ ·ᵣ [ 3 ,+∞⟩ ≾ᵣ [ 2 ,+∞⟩
+claim-without-coercing = ≤!
+
+------------------------------------------------------------------------
+-- Joining branches, and what survives the join
+--
+-- The grade of a conditional is the join of its branches', which at
+-- these intervals is the smaller floor. Sequencing after it locks the
+-- continuation by that join, so a box claimed there has to have been
+-- discharged by *both* branches: what one of them guaranteed on its own
+-- is no longer available. (At the trace grades the join is a union of
+-- runs and the same thing happens, member by member -- see
+-- `Traces.Timed.LeftSided`.)
+
+-- the conditional guarantees two ticks, and the box asks for one, so
+-- the claim goes through with a tick to spare
+
+claim-after-a-branch : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+claim-after-a-branch =
+  box {ρ = [ 1 ,+∞⟩} (const 42)
+    ((if eternal-var Boolₑ (Tl-∷ Hd)
+        `then coerce {ε' = [ 2 ,+∞⟩} ≤! (perform send (const 0) (return ⋆))
+        `else delay 2 (return ⋆))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+          (perform send here (return ⋆)))
+
+-- the transmitting branch guarantees four ticks on its own -- that is
+-- `reachable-after-a-transmission` above -- and the join loses them to
+-- the branch that only idles
+
+four-ticks-lost-at-the-join : ¬ (uᵣ ·ᵣ [ 2 ,+∞⟩ ≾ᵣ [ 4 ,+∞⟩)
+four-ticks-lost-at-the-join = ≰!
+
+------------------------------------------------------------------------
 -- Programs written at these intervals
 --
 -- A lower bound counts time and nothing else, so what a run does

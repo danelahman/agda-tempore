@@ -79,6 +79,18 @@
 --                                                                     --
 -- Each entry is a proof or a refutation in the instance concerned.      --
 --                                                                     --
+-- A third rule meets `unbox` obliquely. Sequencing types its           --
+-- continuation under the lock `⟨ mapᵉ ε ⟩`, `ε` being the grade its    --
+-- first part is *typed at*, so a `coerce` there changes what the       --
+-- continuation may claim -- and only ever for the worse, which         --
+-- `Core`'s `coercion-only-closes` proves at every grade. Each          --
+-- instance shows the converse failing, and what a coercion costs: at   --
+-- the lower bounds it forgets time the box was waiting for, at the     --
+-- upper bounds it spends lease the box had left, at the windows it     --
+-- drops the floor below what the box asks, and at the coverage order   --
+-- it trades away the *operation* the box demanded for the tick it      --
+-- took.                                                                --
+--                                                                     --
 -- The two subset floors are the ones the calculus fits worst, and both --
 -- say so in the same way. Every computation's grade there is the       --
 -- singleton of its run, and `no-common-grade` -- proved, not decided --  --

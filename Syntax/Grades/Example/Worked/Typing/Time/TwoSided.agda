@@ -221,6 +221,44 @@ claimed-in-both-branches =
                   (perform send here (return ⋆)))))
 
 ------------------------------------------------------------------------
+-- Sub-effecting against unboxing
+--
+-- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
+-- `ε` is the grade the first part is *typed at*, so a `coerce` on that
+-- first part changes what the continuation may claim -- and here the
+-- coercion moves both endpoints, so it can close a box from either
+-- side. Below it is the floor that gives way: widening the prefix's
+-- window lowers what it guarantees, and the box is no longer late
+-- enough to be claimed.
+
+-- a reading and a store take between three and four ticks, which lands
+-- inside the box's window
+
+claim-after-a-store : [] ⊢C⦂ Unit ‼ [ 7 , 10 , ≤! ]
+claim-after-a-store =
+  box {ρ = [ 3 , 6 , ≤! ]} (const 42)
+    ((perform read ⋆ (perform write here (return ⋆)))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+          (perform send here (return ⋆)))
+
+-- widening that to `[ 2 , 6 ]` first drops its floor to two, and the
+-- box asks for three
+
+coercing-closes-it : ¬ (uᵣ ·ᵣ [ 2 , 6 , ≤! ] ≾ᵣ [ 3 , 6 , ≤! ])
+coercing-closes-it (lo , _) = ≰! lo
+
+-- the same program with the coercion, against a box whose window opens
+-- where the coerced grade does
+
+claim-after-a-coerced-store : [] ⊢C⦂ Unit ‼ [ 6 , 12 , ≤! ]
+claim-after-a-coerced-store =
+  box {ρ = [ 2 , 6 , ≤! ]} (const 42)
+    (coerce {ε' = [ 2 , 6 , ≤! ]} (≤! , ≤!)
+       (perform read ⋆ (perform write here (return ⋆)))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+          (perform send here (return ⋆)))
+
+------------------------------------------------------------------------
 -- Programs written at these windows
 --
 -- Both ends of a window in one `if`: the branch that idles two ticks

@@ -188,6 +188,19 @@ handed-over =
              (perform send here (return ⋆))))
       · here)
 
+-- and the claim survives extra work in between: two readings cover a
+-- demand for one, so the function may sample again before claiming
+-- what it was handed
+
+handed-over' : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over' =
+  box {ρ = demand} (const 42)
+    (lam (perform read ⋆
+           (perform read ⋆
+             (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
+               (perform send here (return ⋆)))))
+      · here)
+
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
   box {ρ = demand} (const 42)
@@ -255,6 +268,94 @@ sampling-branch-covers-it = holds
 
 transmitting-branch-does-not : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ demand)
 transmitting-branch-does-not = fails
+
+------------------------------------------------------------------------
+-- Sub-effecting against unboxing
+--
+-- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
+-- `ε` is the grade the first part is *typed at*, so a `coerce` on that
+-- first part changes what the continuation may claim -- and can only
+-- take claims away, which is `coercion-only-closes`. What a coercion
+-- forgets here is not time but the operation: a reading may be traded
+-- for the tick it took, and a box asking for the reading is then out of
+-- reach.
+
+claim-after-a-reading : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-a-reading =
+  box {ρ = demand} (const 42)
+    ((perform read ⋆ (return here))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+          (perform send here (return ⋆)))
+
+-- the coercion that trades the reading for its tick is available
+
+trading-it-for-a-tick : opTime read ·ₑ uₑ ≾ₑ of-natᵉ 1 ·ₑ uₑ
+trading-it-for-a-tick = holds
+
+-- and taking it closes the box, a tick covering no reading
+
+forgetting-the-reading-closes-it : ¬ (uᵣ ·ᵣ of-natʳ 1 ≾ᵣ demand)
+forgetting-the-reading-closes-it = fails
+
+------------------------------------------------------------------------
+-- Non-singleton grades
+--
+-- A grade with several members is read disjunctively: each run of the
+-- computation covers one of them. `if` is what produces one, its grade
+-- being the join of the branches' and the union being that join. And
+-- sequencing after the join locks its continuation by the union, so an
+-- `unbox` there is discharged only if *every* branch discharges it --
+-- the condition being universal in the elapsed set and existential in
+-- the box's.
+
+-- the grade of the conditional: the join of what its branches
+-- guarantee, which is their union
+
+after-the-join : E
+after-the-join = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+
+-- and the grade on the box, which is a different element of the same
+-- monoid -- the two are the same carrier only because the grade system
+-- is the identity one, and they are doing different jobs. This one asks
+-- for a reading *or* for three ticks, and the two branches meet it by
+-- different members: the sampling branch covers the reading and cannot
+-- cover the ticks (`sampling-branch-covers-it`,
+-- `sampling-branch-too-little`), the storing branch the other way
+-- round.
+
+mixed-demand : R
+mixed-demand = ⟅ ⌈ read ⌉ ∣ ⟨ 3 ⟩ ⟆
+
+storing-branch-takes-the-ticks : uᵣ ·ᵣ opTime write ≾ᵣ ⟅ ⟨ 3 ⟩ ⟆
+storing-branch-takes-the-ticks = holds
+
+storing-branch-not-the-reading : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ demand)
+storing-branch-not-the-reading = fails
+
+claim-after-a-branch :
+  [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-a-branch =
+  box {ρ = mixed-demand} (const 42)
+    ((if eternal-var Boolₑ (Tl-∷ Hd)
+        `then coerce {ε' = after-the-join} holds (perform read ⋆ (return ⋆))
+        `else coerce holds (perform write (const 0) (return ⋆)))               -- : Unit ‼ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+          (perform send here (return ⋆)))
+
+-- both of the box's members are needed, one for each branch: dropping
+-- either closes it
+
+the-reading-alone : ¬ (uᵣ ·ᵣ after-the-join ≾ᵣ demand)
+the-reading-alone = fails
+
+the-ticks-alone : ¬ (uᵣ ·ᵣ after-the-join ≾ᵣ ⟅ ⟨ 3 ⟩ ⟆)
+the-ticks-alone = fails
+
+-- a box with one member does survive the join when both branches reach
+-- that member: a tick is spent either way
+
+a-tick-either-way : uᵣ ·ᵣ after-the-join ≾ᵣ ⟅ ⟨ 1 ⟩ ⟆
+a-tick-either-way = holds
 
 ------------------------------------------------------------------------
 -- Programs written at these guarantees

@@ -184,6 +184,12 @@ either-way =
 storing-as-well : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ demand)
 storing-as-well = fails
 
+-- a second reading is not the one reading it demands either, though at
+-- the coverage order of `Traces.Timed.LeftSided` it would be
+
+two-readings-as-well : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime read ≾ᵣ demand)
+two-readings-as-well = fails
+
 idling-instead : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ demand)
 idling-instead = fails
 

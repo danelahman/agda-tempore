@@ -160,7 +160,10 @@ a grade system, a signature of base types, and operations' signatures.
   meeting `var`'s bound, and the operation clauses handed to `handle`. The
   index module `Typing.agda` tabulates how the instances differ: what a box
   means at each grade, whether an ordinary variable goes stale, and whether a
-  handler clause may drop its continuation.
+  handler clause may drop its continuation. It also records how sub-effecting
+  meets the modality — sequencing locks its continuation by the grade its first
+  part is *typed at*, so coercing that part changes what the continuation may
+  unbox, and only ever for the worse (`coercion-only-closes`).
 
 ### Core language, type system
 

@@ -243,6 +243,40 @@ claimed-in-both-branches =
                   (perform send here (return ⋆)))))
 
 ------------------------------------------------------------------------
+-- Sub-effecting against unboxing
+--
+-- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
+-- `ε` is the grade the first part is *typed at*, so a `coerce` on that
+-- first part changes what the continuation may claim. Here too it can
+-- only take claims away, for the opposite reason: coercing relaxes the
+-- deadline, and the lease is spent against whatever the lock says.
+
+-- a reading spends one of the four the lease allows
+
+claim-after-a-reading : [] ⊢C⦂ Unit ‼ [0, 7 ]
+claim-after-a-reading =
+  box {ρ = [0, 4 ]} (const 42)
+    ((perform read ⋆ (return here))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+          (perform send here (return ⋆)))
+
+-- relaxing that reading's deadline to six spends six of them, and the
+-- lease does not cover it
+
+coercing-closes-it : ¬ (uᵣ ·ᵣ [0, 6 ] ≾ᵣ [0, 4 ])
+coercing-closes-it = ≰!
+
+-- the same program with the coercion, against a lease long enough for
+-- what it now claims to have spent
+
+claim-after-a-coerced-reading : [] ⊢C⦂ Unit ‼ [0, 12 ]
+claim-after-a-coerced-reading =
+  box {ρ = [0, 6 ]} (const 42)
+    (coerce {ε' = [0, 6 ]} ≤! (perform read ⋆ (return here))
+      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+          (perform send here (return ⋆)))
+
+------------------------------------------------------------------------
 -- Programs written at these intervals
 --
 -- What a reading cannot do here, a lease can: the run below takes a
