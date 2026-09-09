@@ -16,6 +16,7 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_)
@@ -232,6 +233,84 @@ adequacy-base {M = M} {N = N} pM pN e wM wN
   with const-inj (leaf-const ndM ndN rM rN
                     (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN)))
 ... | refl = cM , sM , sN
+
+-- A `Bool`-typed value's leaf is one of the two constants' (`bool-canonical`);
+-- the state's environment is absorbed by the terminal object, as at a base
+-- constant. Which constant it is has to be carried along, since the two give
+-- different leaves.
+
+bool-leaf-value : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
+                → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+                → ((V ≡ true)
+                   × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                        ≈ᵐ leafᵐ (trueᵐ ∘ᵐ terminalᵐ)))
+                ⊎ ((V ≡ false)
+                   × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                        ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
+
+bool-leaf-value {St = St} V pSt pV with bool-canonical V
+... | inj₁ refl =
+  inj₁ (refl
+       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
+           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc trueᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
+                               (∘ᵐ-congʳ terminalᵐ-unique))))
+... | inj₂ refl =
+  inj₂ (refl
+       , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
+           (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
+                               (∘ᵐ-congʳ terminalᵐ-unique))))
+
+-- The head presentation at `Bool`, with the boolean it returns.
+
+bool-presentation : ∀ {ε} → (M : Prog Bool ε) → (pM : Paramᶜ M)
+                  → (w : Ret-whnf (⟨ ∅ , M ⟩))
+                  → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
+                    Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
+                    Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
+                      ( ((Ret-whnf.value w ≡ true)
+                         × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (trueᵐ ∘ᵐ terminalᵐ)) d r))
+                      ⊎ ((Ret-whnf.value w ≡ false)
+                         × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (falseᵐ ∘ᵐ terminalᵐ)) d r)) )
+
+bool-presentation M pM (ret-whnf St V rs) with bool-leaf-value V _ _
+... | inj₁ (sv , qv) =
+    _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
+  , inj₁ (sv , ≈ᵐ-trans (program-run-sound M pM rs)
+                 (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs) qv))
+... | inj₂ (sv , qv) =
+    _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
+  , inj₂ (sv , ≈ᵐ-trans (program-run-sound M pM rs)
+                 (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs) qv))
+
+-- ADEQUACY AT `Bool`. The returned answers are the same boolean: the two
+-- matching cases are read straight off the presentations, and a mixed one
+-- would make `trueᵐ` and `falseᵐ` the same morphism (`leaf-bool`), which
+-- `true≉false` forbids.
+
+adequacy-bool : ∀ {ε} → {M N : Prog Bool ε}
+              → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+              → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+              → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+              ------------------------------------------------------------
+              → ((Ret-whnf.value wM ≡ true)  × (Ret-whnf.value wN ≡ true))
+              ⊎ ((Ret-whnf.value wM ≡ false) × (Ret-whnf.value wN ≡ false))
+
+adequacy-bool {M = M} {N = N} pM pN e wM wN
+  with bool-presentation M pM wM | bool-presentation N pN wN
+... | _ , _ , _ , ndM , rM , inj₁ (sM , eM)
+    | _ , _ , _ , ndN , rN , inj₁ (sN , eN) = inj₁ (sM , sN)
+... | _ , _ , _ , ndM , rM , inj₂ (sM , eM)
+    | _ , _ , _ , ndN , rN , inj₂ (sN , eN) = inj₂ (sM , sN)
+... | _ , _ , _ , ndM , rM , inj₁ (sM , eM)
+    | _ , _ , _ , ndN , rN , inj₂ (sN , eN) =
+      ⊥-elim (true≉false
+        (leaf-bool ndM ndN rM rN
+          (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))))
+... | _ , _ , _ , ndM , rM , inj₂ (sM , eM)
+    | _ , _ , _ , ndN , rN , inj₁ (sN , eN) =
+      ⊥-elim (true≉false
+        (leaf-bool ndN ndM rN rM
+          (≈ᵐ-trans (≈ᵐ-sym eN) (≈ᵐ-trans (≈ᵐ-sym e) eM))))
 
 -- THE HYPOTHESIS FORM. A point presented as a delayed leaf, resp. a delayed
 -- operation node, dictates how the program halts.

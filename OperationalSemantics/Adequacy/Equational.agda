@@ -5,7 +5,8 @@
 -- derivation `[] ⊢C⦂ M == N` between closed programs denotes an      --
 -- equality of global points (`soundᶜ`), and `adequacy` reads that    --
 -- back off the machine — the two programs halt in the same shape, on --
--- the same operation, and at base type with the same constant.       --
+-- the same operation, and at an answer type with the same answer:    --
+-- the same constant at a base type, the same boolean at `Bool`.      --
 --                                                                    --
 -- The two theorems meet at `⟦ M ⟧ᵖ ≈ᵐ ⟦ N ⟧ᵖ`; everything here is    --
 -- their composition.                                                 --
@@ -13,6 +14,7 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (inj₁; inj₂)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -196,6 +198,44 @@ data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
     go : Halts (⟨ ∅ , M ⟩) → Halts (⟨ ∅ , N ⟩) → Same-answer M N
     go (halts-ret wM) (halts-ret wN) with adequacy-base pM pN e wM wN
     ... | c , sM , sN = both-ret wM wN c sM sN
+    go (halts-ret wM) (halts-op wN)  = ⊥-elim (ret-not-op pM pN e wM wN)
+    go (halts-op wM)  (halts-ret wN) = ⊥-elim (ret-not-op pN pM (≈ᵐ-sym e) wN wM)
+    go (halts-op wM)  (halts-op wN)  = both-op wM wN (same-operation pM pN e wM wN)
+
+-- The same at `Bool`, where the returned answer is one of the two constants
+-- rather than an element of a base signature.
+
+data Same-answer-bool {ε : E} (M N : Prog Bool ε) : Set where
+
+  both-true  : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+             → Ret-whnf.value wM ≡ true
+             → Ret-whnf.value wN ≡ true
+             → Same-answer-bool M N
+
+  both-false : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
+             → Ret-whnf.value wM ≡ false
+             → Ret-whnf.value wN ≡ false
+             → Same-answer-bool M N
+
+  both-op    : (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
+             → Op-whnf.oper wM ≡ Op-whnf.oper wN
+             → Same-answer-bool M N
+
+==-same-answer-bool : ∀ {ε} → {M N : Prog Bool ε}
+                    → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
+                    → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+                    ---------------------------------------
+                    → Same-answer-bool M N
+
+==-same-answer-bool {M = M} {N = N} p mp pM pN = go (halts M) (halts N)
+  where
+    e : ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
+    e = ==-denotation p mp pM pN
+
+    go : Halts (⟨ ∅ , M ⟩) → Halts (⟨ ∅ , N ⟩) → Same-answer-bool M N
+    go (halts-ret wM) (halts-ret wN) with adequacy-bool pM pN e wM wN
+    ... | inj₁ (sM , sN) = both-true  wM wN sM sN
+    ... | inj₂ (sM , sN) = both-false wM wN sM sN
     go (halts-ret wM) (halts-op wN)  = ⊥-elim (ret-not-op pM pN e wM wN)
     go (halts-op wM)  (halts-ret wN) = ⊥-elim (ret-not-op pN pM (≈ᵐ-sym e) wN wM)
     go (halts-op wM)  (halts-op wN)  = both-op wM wN (same-operation pM pN e wM wN)

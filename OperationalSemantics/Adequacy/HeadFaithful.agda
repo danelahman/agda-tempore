@@ -219,6 +219,22 @@ record HeadFaithful : Set₂ where
                -----------------------------------------------------------
                → ⟦ c₁ ⟧ᵇᶜ ≈ᵐ ⟦ c₂ ⟧ᵇᶜ
 
+    -- The boolean leaves likewise: what makes the returned answer at `Bool`
+    -- observable. Stated at the two constants rather than at arbitrary global
+    -- elements of `𝔹ᵐ`, because those are the only leaves a `Bool`-typed value
+    -- over a state context produces. The two matching cases need nothing, so
+    -- only the mixed one is asked for.
+
+    leaf-bool : ∀ {Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+              → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
+              → {d₂ : 𝟙ᵐ →ᵐ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
+              → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
+              → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+              → delayedᵐ (leafᵐ (trueᵐ  ∘ᵐ terminalᵐ)) d₁ r₁
+              ≈ᵐ delayedᵐ (leafᵐ (falseᵐ ∘ᵐ terminalᵐ)) d₂ r₂
+              -----------------------------------------------------------
+              → trueᵐ ≈ᵐ falseᵐ
+
 -- The timed refinement: the tick total is observable too. Split off because
 -- proving it needs the Kripke frame to interpolate a composite step, which
 -- holds only for coarse-unit frames.
@@ -250,8 +266,11 @@ record HeadTimed : Set₂ where
                 ---------------------------------------------------------------------
                 → n₁ ≡ n₂
 
--- Faithfulness of the base-constant interpretation: an assumption on the
--- `GroundTypes` parameter, not a theorem.
+-- Faithfulness of the interpretation at the *answer* types: the base
+-- constants, an assumption on the `GroundTypes` parameter, and the two
+-- booleans, one on `Cat`. Neither is a theorem — a model may collapse them —
+-- and both are what turns an equality of denotations into an equality of
+-- returned answers.
 
 record BaseFaithful : Set where
 
@@ -261,6 +280,8 @@ record BaseFaithful : Set where
               → ⟦ c₁ ⟧ᵇᶜ ≈ᵐ ⟦ c₂ ⟧ᵇᶜ
               ----------------------
               → c₁ ≡ c₂
+
+    true≉false : ¬ (trueᵐ ≈ᵐ falseᵐ)
 
 -- UNIFORMITY IS FREE
 --

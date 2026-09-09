@@ -247,23 +247,77 @@ module _ (TF : TickFrame) where
       (delayedᵐ-head (isOp-closed {X} {op₁}) (nodeᵐ-head op₁ v₁ k₁) nd₁ r₁ p le₁)
       (delayedᵐ-head (isOp-closed {X} {op₂}) (nodeᵐ-head op₂ v₂ k₂) nd₂ r₂ p le₂)
 
-  -- THE RETURNED CONSTANT
+  -- THE RETURNED ANSWER
   --
-  -- The predicate says the leaf *is* that constant, which the observation
-  -- carries to whatever world the delays reach; `const-≈-reflect` brings the
-  -- comparison back to the world the statement is about.
+  -- The predicate says the leaf *is* that global element, which the
+  -- observation carries to whatever world the delays reach. Stated for an
+  -- arbitrary `g : 𝟙ᵖ →ᵖ X`, since both answer types return one: a base
+  -- constant `⟦ c ⟧ᵇᶜ` and a boolean `trueᵖ`/`falseᵖ`.
 
-  isC : ∀ {b : BaseType} → BaseConstants b → Pred ⟦ b ⟧ᵇ
-  isC {b} c (ret-res x) = _≈_ ⟦ b ⟧ᵇ x (app ⟦ c ⟧ᵇᶜ tt)
-  isC {b} c (op-res _)  = ⊥
+  isG : ∀ {X : PSh} → (g : 𝟙ᵖ →ᵖ X) → Pred X
+  isG {X} g (ret-res x) = _≈_ X x (app g tt)
+  isG     g (op-res _)  = ⊥
 
-  isC-closed : ∀ {b : BaseType} → (c : BaseConstants b) → ≈-closed ⟦ b ⟧ᵇ (isC c)
-  isC-closed {b} c e px = ≈-trans ⟦ b ⟧ᵇ (≈-sym ⟦ b ⟧ᵇ e) px
+  isG-closed : ∀ {X : PSh} → (g : 𝟙ᵖ →ᵖ X) → ≈-closed X (isG g)
+  isG-closed {X} g e px = ≈-trans X (≈-sym X e) px
 
-  isC-head : ∀ {b : BaseType} {Y : PSh} → (c : BaseConstants b)
+  isG-head : ∀ {X Y : PSh} → (g : 𝟙ᵖ →ᵖ X)
            → ∀ {w we} (y : carrier Y w) (p : Path w we)
-           → Head (isC c) (app (leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵖ terminalᵖ {Y})) y) p 0
-  isC-head {b} c y p = h-leaf (≈-refl ⟦ b ⟧ᵇ)
+           → Head (isG g) (app (leafᵐ (g ∘ᵖ terminalᵖ {Y})) y) p 0
+  isG-head {X} g y p = h-leaf (≈-refl X)
+
+  -- THE RETURNED BOOLEAN
+  --
+  -- `𝔹ᵖ` is the constant presheaf on `Bool`, so `app trueᵖ tt` is `true` at
+  -- every world and its equivalence is `_≡_`. The comparison the observation
+  -- lands on is therefore already world-independent, and no reflection
+  -- assumption (the `ConstFrame` the base constants need) arises.
+
+  -- Two leaves with the same delayed denotation carry the same answer, at
+  -- *some* world the delays reach. Both answer types read their observation
+  -- off this; what separates them is whether that world can be left again.
+
+  globals-meet : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+               → {g₁ g₂ : 𝟙ᵖ →ᵖ X}
+               → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
+               → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
+               → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
+               → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+               → delayedᵐ (leafᵐ (g₁ ∘ᵖ terminalᵖ {Y₁})) d₁ r₁
+               ≈ᵖ delayedᵐ (leafᵐ (g₂ ∘ᵖ terminalᵖ {Y₂})) d₂ r₂
+               → (w : W)
+               ------------------------------------------------------------
+               → Σ[ w' ∈ W ] Σ[ ρ ∈ R ]
+                   (w ⊑[ ρ ] w') × _≈_ X {w'} (app g₁ tt) (app g₂ tt)
+
+  globals-meet {X} {Y₁} {Y₂} {n₁ = n₁} {n₂ = n₂} {g₁ = g₁} {g₂ = g₂}
+               nd₁ nd₂ r₁ r₂ eq w
+    with two-paths w n₁ n₂
+  ... | _ , p , le₁ , le₂
+    with heads-meet (isG-closed g₁) (eq tt)
+           (delayedᵐ-head (isG-closed g₁) (isG-head {Y = Y₁} g₁) nd₁ r₁ p le₁)
+           (delayedᵐ-head (isG-closed g₂) (isG-head {Y = Y₂} g₂) nd₂ r₂ p le₂)
+  ...   | _ , w' , ρ , acc , ret-res x , (e₁ , e₂) =
+          w' , ρ , acc , ≈-trans X (≈-sym X e₁) e₂
+  ...   | _ , _ , _ , acc , op-res _ , (() , _)
+
+  -- At `𝔹ᵖ` the answer is world-independent — the carrier is `Bool` at every
+  -- world and its equivalence is `_≡_` — so the world `globals-meet` lands at
+  -- does not matter and no reflection assumption arises.
+
+  lbool : ∀ {Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
+        → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
+        → {d₂ : 𝟙ᵖ →ᵖ Tᵒ Y₂ δ₂} → Delaysᵐ d₂ n₂
+        → (r₁ : δ₁ ·ₑ uₑ ≾ₑ ε)
+        → (r₂ : δ₂ ·ₑ uₑ ≾ₑ ε)
+        → delayedᵐ (leafᵐ (trueᵖ  ∘ᵖ terminalᵖ {Y₁})) d₁ r₁
+        ≈ᵖ delayedᵐ (leafᵐ (falseᵖ ∘ᵖ terminalᵖ {Y₂})) d₂ r₂
+        ------------------------------------------------------------
+        → trueᵖ ≈ᵖ falseᵖ
+
+  lbool {Y₁} {Y₂} nd₁ nd₂ r₁ r₂ eq {w} tt =
+    proj₂ (proj₂ (proj₂ (globals-meet {𝔹ᵖ} {Y₁} {Y₂} {g₁ = trueᵖ} {g₂ = falseᵖ}
+                                      nd₁ nd₂ r₁ r₂ eq w)))
 
   module _ (CF : ConstFrame) where
 
@@ -280,16 +334,10 @@ module _ (TF : TickFrame) where
            ------------------------------------------------------------
            → ⟦ c₁ ⟧ᵇᶜ ≈ᵖ ⟦ c₂ ⟧ᵇᶜ
 
-    lconst {Y₁} {Y₂} {b} {n₁ = n₁} {n₂ = n₂} {c₁ = c₁} {c₂ = c₂}
-           nd₁ nd₂ r₁ r₂ eq {w} tt
-      with two-paths w n₁ n₂
-    ... | _ , p , le₁ , le₂
-      with heads-meet (isC-closed c₁) (eq tt)
-             (delayedᵐ-head (isC-closed c₁) (isC-head {Y = Y₁} c₁) nd₁ r₁ p le₁)
-             (delayedᵐ-head (isC-closed c₂) (isC-head {Y = Y₂} c₂) nd₂ r₂ p le₂)
-    ...   | _ , _ , _ , acc , ret-res x , (e₁ , e₂) =
-            const-≈-reflect acc (≈-trans ⟦ b ⟧ᵇ (≈-sym ⟦ b ⟧ᵇ e₁) e₂)
-    ...   | _ , _ , _ , acc , op-res _ , (() , _)
+    lconst {Y₁} {Y₂} {b} {c₁ = c₁} {c₂ = c₂} nd₁ nd₂ r₁ r₂ eq {w} tt
+      with globals-meet {⟦ b ⟧ᵇ} {Y₁} {Y₂} {g₁ = ⟦ c₁ ⟧ᵇᶜ} {g₂ = ⟦ c₂ ⟧ᵇᶜ}
+                        nd₁ nd₂ r₁ r₂ eq w
+    ... | _ , _ , acc , e = const-≈-reflect acc e
 
     -- The two `op`-shaped fields must have their implicits bound explicitly:
     -- `k` occurs only under `nodeᵐ`, which applies it, so a metavariable in
@@ -304,6 +352,7 @@ module _ (TF : TickFrame) where
                    oinj {X} {Y₁} {Y₂} {ε} {ε₁} {ε₂} {δ₁} {δ₂} {n₁} {n₂}
                         {op₁} {op₂} {v₁} {k₁} {v₂} {k₂}
       ; leaf-const = lconst
+      ; leaf-bool  = lbool
       }
 
   -- THE TIMED REFINEMENT
