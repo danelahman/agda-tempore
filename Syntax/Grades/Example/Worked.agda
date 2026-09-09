@@ -30,6 +30,12 @@
 --     *expires*: `unbox`'s premise `ρ' ≾ᵣ ρ` asks what elapsed to be   --
 --     still within what the box allows, so overspending closes the     --
 --     box rather than opening it. See the same module.                 --
+--                                                                     --
+--   * A guarantee is sensitive to the opposite thing, so it takes the  --
+--     other order: extra work keeps a guarantee (`⌈ read ⌉` is still   --
+--     covered by `⌈ read ⌉ ∙ ⌈ write ⌉`) and breaks an allowance. That --
+--     is why the two endpoints of a two-sided grade cannot share one   --
+--     order. See `Traces.Coverage` and `Traces.TwoSided`.              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked where
@@ -53,7 +59,7 @@ import Syntax.Grades.Example.Worked.Spec
 
 import Syntax.Grades.Example.Worked.Systems
 
--- The trace grades, as they are rebuilt: at present the grade of upper
--- bounds at the allowance order, read both ways.
+-- The three trace grades -- guarantees, allowances, and both at once --
+-- each read as an effect grade and as a resource grade.
 
 import Syntax.Grades.Example.Worked.Traces

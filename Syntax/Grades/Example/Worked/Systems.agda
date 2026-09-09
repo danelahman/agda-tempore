@@ -10,8 +10,14 @@
 -- and then exercises its monotonicity: an ordering between two effect  --
 -- grades must still hold between their images.                        --
 --                                                                     --
--- The systems that went with the earlier trace grid are parked under   --
--- `backup/` while the trace grades are rebuilt.                        --
+-- There are four: one between time intervals, and one for each of the  --
+-- three trace grades. The three trace projections all measure a set of  --
+-- traces by a duration, and each aggregates in the direction its        --
+-- endpoint is read -- the slowest allowance above, the fastest          --
+-- guarantee below.                                                      --
+--                                                                      --
+-- The systems that went with the earlier trace grid are parked under    --
+-- `backup/`.                                                            --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Systems where
@@ -135,3 +141,120 @@ deadlines-add :
   ≡ map traces→right-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
     ·ᵣ map traces→right-sided-intervals ⟅ ⌈ send ⌉ ⟆
 deadlines-add = refl
+
+------------------------------------------------------------------------
+-- Forgetting the runs, keeping the guarantee
+--
+-- `TracesToLeftSidedIntervals` measures a grade of guarantees by its
+-- *fastest* one. The set is read disjunctively -- which listed trace
+-- was covered is not known -- so all that is guaranteed about the time
+-- is what the cheapest member takes.
+
+open import Syntax.Grades.Example.System.TracesToLeftSidedIntervals
+  Op _≟ₒ_ cost using (traces→left-sided-intervals)
+
+open import Syntax.Grades.Example.Worked.Traces.Coverage
+  using () renaming (holds to holdsᶜ)
+
+-- a reading, two ticks' settling and a transmission guarantee nine ticks
+
+guarantee-measured :
+  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≡ [ 9 ,+∞⟩
+guarantee-measured = refl
+
+-- and a grade listing alternatives is measured by the fastest of them,
+-- which is the reverse of what the cap's projection does
+
+alternatives-measured-below :
+  map traces→left-sided-intervals
+      ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ⟆
+  ≡ [ 1 ,+∞⟩
+alternatives-measured-below = refl
+
+-- what the projection forgets is again which operations occurred: a
+-- guarantee that a store happened and one that three ticks passed
+-- become the same lower bound, though only the first guarantees the
+-- store
+
+stores-forgotten :
+  map traces→left-sided-intervals ⟅ ⌈ write ⌉ ⟆
+  ≡ map traces→left-sided-intervals ⟅ ⟨ 3 ⟩ ⟆
+stores-forgotten = refl
+
+-- monotonicity: dropping to the reading alone drops the guarantee from
+-- nine ticks to one
+
+guarantee-falls :
+  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  ≾ₒ map traces→left-sided-intervals ⟅ ⌈ read ⌉ ⟆
+guarantee-falls =
+  map-monotone traces→left-sided-intervals
+               {⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} {⟅ ⌈ read ⌉ ⟆} holdsᶜ
+
+-- and it is a monoid map: sequencing before or after measuring agrees
+
+guarantees-add :
+  map traces→left-sided-intervals (⟅ ⌈ read ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆)
+  ≡ map traces→left-sided-intervals ⟅ ⌈ read ⌉ ⟆
+    ·ₒ map traces→left-sided-intervals ⟅ ⌈ send ⌉ ⟆
+guarantees-add = refl
+
+------------------------------------------------------------------------
+-- Keeping both endpoints
+--
+-- `TracesToTwoSidedIntervals` is the pair of the two projections above,
+-- and lands in a time interval only because the grade's coherence field
+-- makes the fastest guarantee no slower than the slowest allowance.
+
+open import Data.Unit using (tt)
+
+open import Syntax.Grades.Example.System.TracesToTwoSidedIntervals
+  Op _≟ₒ_ cost cost-pos using (two-sided-traces→intervals)
+
+open import Syntax.Grades.Example.Worked.Traces.TwoSided
+  using (exact; _·ᵗˢ_) renaming ([_,_,_] to ⟪_,_,_⟫; holds to holdsᵗˢ)
+
+-- a contract that guarantees a reading and permits it six ticks' more
+-- work becomes the window between one tick and seven
+
+contract-measured :
+  map two-sided-traces→intervals ⟪ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+  ≡ [ 1 , 7 , ≤! ]
+contract-measured = refl
+
+-- listing alternatives widens the window at both ends at once, each end
+-- aggregating its own way
+
+alternatives-measured-both :
+  map two-sided-traces→intervals
+      ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+      , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ⟫
+  ≡ [ 1 , 12 , ≤! ]
+alternatives-measured-both = refl
+
+-- a grade whose two endpoints coincide becomes an exact duration
+
+exact-measured : map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
+               ≡ [ 4 , 4 , ≤! ]
+exact-measured = refl
+
+-- monotonicity: a computation known to take a reading and a store sits
+-- inside the contract's window
+
+window-contains :
+  map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
+  ≾ᵢ map two-sided-traces→intervals
+         ⟪ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+window-contains =
+  map-monotone two-sided-traces→intervals
+               {exact (⌈ read ⌉ ∙ ⌈ write ⌉)}
+               {⟪ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫}
+               (holdsᵗˢ _ _)
+
+-- and it is a monoid map: sequencing before or after measuring agrees
+
+windows-add :
+  map two-sided-traces→intervals (exact ⌈ read ⌉ ·ᵗˢ exact ⌈ send ⌉)
+  ≡ map two-sided-traces→intervals (exact ⌈ read ⌉)
+    ·ᵢ map two-sided-traces→intervals (exact ⌈ send ⌉)
+windows-add = refl

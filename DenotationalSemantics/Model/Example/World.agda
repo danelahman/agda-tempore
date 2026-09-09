@@ -21,9 +21,9 @@
 --     admits. These frames see the operations a grade prescribes,      --
 --     which the tick frames cannot.                                    --
 --                                                                     --
--- The frames for the trace grades are being rebuilt alongside the      --
--- grades themselves; the ones that went with the earlier grid are      --
--- parked under `backup/` and imported from nowhere.                   --
+-- Each trace grade has a frame of either kind. The ones that went with --
+-- the earlier grid are parked under `backup/` and imported from        --
+-- nowhere.                                                             --
 --                                                                     --
 -- This module is only an index -- the trace-based frames are           --
 -- parameterised by the alphabet `Op`, so it lists the pieces rather    --
@@ -60,6 +60,15 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Allowance.RightSided
 
+-- advance at least as far as one of the guarantees a trace grade lists:
+-- the mirror image, with the bound read off a trace
+
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Coverage.LeftSided
+
+-- both at once, the two witnesses independent
+
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.TwoSided
+
 ------------------------------------------------------------------------
 -- Trace-history frames: worlds are timed traces
 --
@@ -80,3 +89,13 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithI
 -- the grade admits"
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Allowance.RightSided
+
+-- append a continuation that covers one of the guarantees a trace grade
+-- lists: the comparison runs the other way round
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Coverage.LeftSided
+
+-- append one continuation answering to both endpoints at once, which is
+-- what a history frame can say and a tick frame cannot
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TwoSided

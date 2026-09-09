@@ -69,6 +69,17 @@ import Syntax.Grades.Traces.Order
 import Syntax.Grades.Traces.OrderLift
 
 ------------------------------------------------------------------------
+-- The two orders on traces
+--
+-- Both are indexed by a running number of time units and share the
+-- arithmetic that manipulates it.
+
+-- The slack arithmetic and the size measure the two relations induct
+-- on, stated once.
+
+import Syntax.Grades.Traces.Slack
+
+------------------------------------------------------------------------
 -- Staying inside an allowance
 --
 -- The allowance order: when a bound permits a run. The bound's
@@ -89,6 +100,30 @@ import Syntax.Grades.Traces.Allowance.AsOrder
 import Syntax.Grades.Traces.AllowanceLift
 
 ------------------------------------------------------------------------
+-- Covering a guarantee
+--
+-- The coverage order: when a run covers a trace. Every operation the
+-- trace names must genuinely occur in the run, in order -- time never
+-- buys one -- and every delay it names is met by what the run does
+-- between the same two operations it names. Slack does not cross a
+-- named operation, so a demand for time is met only where it is placed.
+--
+-- This is the order a guarantee wants, and it is deliberately not the
+-- converse of the allowance order: there a bound's delays buy the run's
+-- operations, which read as a guarantee would let a run that merely
+-- idles discharge "a reading was taken". The two are incomparable.
+
+import Syntax.Grades.Traces.Coverage
+
+-- Its interface instance and lifts. Unlike the allowance order these
+-- need no assumption about `cost`: an operation is never bought here,
+-- at any price, so a spent run covers nothing but the empty guarantee
+-- outright.
+
+import Syntax.Grades.Traces.Coverage.AsOrder
+import Syntax.Grades.Traces.CoverageLift
+
+------------------------------------------------------------------------
 -- An order that carries no grade
 --
 -- The prefix order, and a checked proof that the language product is
@@ -100,7 +135,5 @@ import Syntax.Grades.Traces.Prefix
 ------------------------------------------------------------------------
 -- Parked
 --
--- The sub-trace orders -- where a *demand* is met by a run that does at
--- least as much, the reading a floor wants -- are under `backup/` while
--- the trace grades are rebuilt from their upper-bound end, along with
--- their lifts, durations and cost-model comparison.
+-- The sub-trace orders are under `backup/`, along with their lifts,
+-- durations and cost-model comparison, and are imported from nowhere.

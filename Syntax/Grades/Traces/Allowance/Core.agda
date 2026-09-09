@@ -44,51 +44,10 @@ module Syntax.Grades.Traces.Allowance.Core (Op : Set) (cost : Op → ℕ) where
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
 
-------------------------------------------------------------------------
--- Small arithmetic helpers
+-- the slack arithmetic and the size measure are the same for either
+-- order on traces, so they are shared rather than restated
 
--- swapping the two trailing summands
-
-lem-swap : (a b c : ℕ) → (a + b) + c ≡ (a + c) + b
-lem-swap a b c =
-  trans (+-assoc a b c)
-        (trans (cong (a +_) (+-comm b c)) (sym (+-assoc a c b)))
-
--- cancelling a common summand under truncated subtraction
-
-∸-cancel : (m d e : ℕ) → (m + d) ∸ (d + e) ≡ m ∸ e
-∸-cancel m d e =
-  trans (sym (∸-+-assoc (m + d) d e)) (cong (_∸ e) (m+n∸n≡m m d))
-
--- monotonicity used when bumping a leading delay
-
-≤-bump : (D E m : ℕ) → E ≤ m → D + E ≤ m + D
-≤-bump D E m E≤m = subst (D + E ≤_) (+-comm D m) (+-monoʳ-≤ D E≤m)
-
-------------------------------------------------------------------------
--- A structural size measure on traces
---
--- Each node counts as one; a leading delay counts the size of its
--- delay-free-headed continuation. This measure drives the fuelled
--- decision procedure in `Allowance.Decidable`: every rule strictly
--- decreases the combined size of the two traces.
-
-mutual
-
-  size  : Trace  → ℕ
-  size ε               = 0
-  size (operation o t) = suc (size t)
-  size (delay d t⁻)    = suc (size⁻ t⁻)
-
-  size⁻ : Trace⁻ → ℕ
-  size⁻ ε⁻               = 0
-  size⁻ (operation⁻ o t) = suc (size t)
-
--- the delay-free injection preserves the size
-
-size-inj⁻ : (t⁻ : Trace⁻) → size (inj⁻ t⁻) ≡ size⁻ t⁻
-size-inj⁻ ε⁻               = refl
-size-inj⁻ (operation⁻ o t) = refl
+open import Syntax.Grades.Traces.Slack Op public
 
 ------------------------------------------------------------------------
 -- The relation

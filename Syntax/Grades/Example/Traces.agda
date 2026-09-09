@@ -1,27 +1,47 @@
 ------------------------------------------------------------------------
 -- Grades that are (non-empty) sets of timed traces.                   --
 --                                                                     --
--- A grade records which runs a computation may have. At present there --
--- is one such grade, read as an upper bound:                          --
+-- A grade records which runs a computation may have. There are three,  --
+-- built over the two orders on traces:                                --
 --                                                                     --
---   every run stays within one of the listed bounds                   --
+--   Coverage.LeftSided    a floor: whatever happened, it covered one   --
+--                         of the listed traces                        --
+--   Allowance.RightSided  a cap: whatever happened, it stayed within   --
+--                         one of them                                 --
+--   TwoSided              both at once                                --
 --                                                                     --
--- built once in `Traces.Lifted.RightSided`, over an arbitrary order    --
--- on traces, and instantiated at `Traces.Allowance` -- where a bound's --
--- operations are permissions and its delays a budget, available only  --
--- where the bound places it.                                          --
+-- Every set is read *disjunctively*, at either endpoint -- one listed  --
+-- trace carries it -- so every endpoint weakens by gaining members and --
+-- the union of two grades is their join. That is what a branching      --
+-- construct would need, and it is why the floor is lifted the way it   --
+-- is rather than conjunctively.                                       --
 --                                                                     --
--- The grades that read a set of traces as a *lower* bound, and the     --
--- two-sided ones that pair the two readings, are being rebuilt one at  --
--- a time; the earlier grid of them is parked under `backup/`.          --
+-- The two endpoints take different orders and must: a guarantee wants  --
+-- one in which time never buys an operation, an allowance one in which --
+-- a listed delay is a budget that buys them. The constructions in      --
+-- `Traces.Lifted.*` are over an arbitrary order, or an arbitrary pair  --
+-- of them, and the modules beside them instantiate.                    --
+--                                                                     --
+-- The earlier grid -- four lifts against three sidednesses over the    --
+-- sub-trace orders -- is parked under `backup/`.                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Traces where
 
--- upper bounds over an arbitrary order on traces
+-- the constructions, over an arbitrary order (or pair of orders)
 
+import Syntax.Grades.Example.Traces.Lifted.LeftSided
 import Syntax.Grades.Example.Traces.Lifted.RightSided
+import Syntax.Grades.Example.Traces.Lifted.TwoSided
 
--- at the allowance order
+-- guarantees, at the coverage order
+
+import Syntax.Grades.Example.Traces.Coverage.LeftSided
+
+-- allowances, at the allowance order
 
 import Syntax.Grades.Example.Traces.Allowance.RightSided
+
+-- and both at once
+
+import Syntax.Grades.Example.Traces.TwoSided

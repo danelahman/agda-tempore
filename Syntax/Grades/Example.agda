@@ -17,12 +17,12 @@
 --     and monoid (from `Grades.Traces.Sets`) and differing in the      --
 --     order they put on it.                                            --
 --                                                                     --
--- The trace family is being rebuilt one grade at a time, starting from --
--- the allowance order and its right-sided intervals. The grid that     --
--- preceded it -- four lifts against three sidednesses, over the        --
--- sub-trace orders -- is parked under `backup/`, along with its worked --
--- examples, Kripke frames and grade systems, and is not imported from  --
--- anywhere.                                                            --
+-- The trace family is three grades over two orders on traces: a floor  --
+-- at the coverage order, a cap at the allowance order, and the pair of --
+-- them. The grid that preceded it -- four lifts against three          --
+-- sidednesses, over the sub-trace orders -- is parked under            --
+-- `backup/`, along with its worked examples, Kripke frames and grade   --
+-- systems, and is not imported from anywhere.                          --
 --                                                                     --
 -- `System.*` then pairs them up. Reading the projections tells the     --
 -- story of the development: each one says what a resource grade is     --
@@ -83,6 +83,18 @@ import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
 -- slowest bound imposes
 
 import Syntax.Grades.Example.System.TracesToRightSidedIntervals
+
+-- trace guarantees to left-sided intervals: the mirror image, keeping
+-- what its *fastest* guarantee takes, the set being read disjunctively
+
+import Syntax.Grades.Example.System.TracesToLeftSidedIntervals
+
+-- two-sided trace intervals to two-sided time intervals: the pair of
+-- the two above, which lands in an interval at all because the grade's
+-- coherence field puts the fastest guarantee below the slowest
+-- allowance
+
+import Syntax.Grades.Example.System.TracesToTwoSidedIntervals
 
 ------------------------------------------------------------------------
 -- Worked instances
