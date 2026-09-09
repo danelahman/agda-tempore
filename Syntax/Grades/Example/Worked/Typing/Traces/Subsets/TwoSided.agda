@@ -16,6 +16,11 @@
 -- that no grade types a conditional whose branches perform different   --
 -- operations. Branching over *data* is what is left, and it needs no   --
 -- coercion at all.                                                     --
+--                                                                     --
+-- The comments inside the programs say what each former appends to the --
+-- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
+-- binding. A grade with a name of its own is named there rather than   --
+-- written out, these being pairs of trace sets.                        --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.TwoSided where
@@ -52,21 +57,31 @@ open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime
 -- Effectful computations
 --
 -- A computation with one run is pinned exactly: its run is the only one
--- reachable and the only one permitted.
+-- reachable and the only one permitted, and each lock is the one-event
+-- pair of the operation that put it up.
 
 sampling : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
-sampling = perform read ⋆ (return here)
+sampling =
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (return here)
 
 storing : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-storing = perform read ⋆ (perform write here (return ⋆))
+storing =
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (perform write here              -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
+      (return ⋆))
 
 relaying : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
-relaying = perform read ⋆ (perform send here (return ⋆))
+relaying =
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (perform send here               -- ⟨ exact ⌈ send ⌉ ⟩ ∷ Unit
+      (return ⋆))
 
 tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 tagged-relaying =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+                                     -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 ------------------------------------------------------------------------
@@ -77,7 +92,8 @@ reading-stale-after-an-operation = fails (uᵣ ·ᵣ opTime read) uᵣ
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
 carried-id =
-  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting
@@ -120,7 +136,7 @@ no-common-grade grade send-fits write-fits with member (lo grade)
 ...     | ()
 
 -- branching over data instead: both branches make the same run, so
--- neither is coerced
+-- neither is coerced and neither locks the context
 
 either-reading :
   [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ exact ⌈ send ⌉
@@ -134,31 +150,36 @@ either-reading =
 --
 -- `unbox`'s premise asks the box's demanded runs to be among those the
 -- computation exhibited and its own run to be permitted. The first pins
--- the elapsed run, and coherence then settles the second.
+-- the elapsed run -- the product of the locks in between -- and
+-- coherence then settles the second.
 
 demand : R
 demand = [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ , tt ]
 
 claim-after-sampling : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 claim-after-sampling =
-  box {ρ = demand} (const 42)
-    (perform read ⋆
+  box {ρ = demand} (const 42)        -- ∷ [ demand ] Reading
+    (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 handed-over =
-  box {ρ = demand} (const 42)
-    (lam (perform read ⋆
-           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
-             (perform send here (return ⋆))))
+  box {ρ = demand} (const 42)        -- ∷ [ demand ] Reading
+    (lam                             -- ∷ [ demand ] Reading
+       (perform read ⋆               -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
+           (perform send here (return ⋆))))
       · here)
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
-  box {ρ = demand} (const 42)
-    (perform read ⋆
+  box {ρ = demand} (const 42)        -- ∷ [ demand ] Reading
+    (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -179,8 +200,9 @@ claiming-at-once = fails uᵣ demand
 -- Programs written at these intervals
 --
 -- The box demands a reading and a store; the run makes exactly that
--- before claiming it, and the `if` afterwards picks what to transmit
--- without touching the grade.
+-- before claiming it -- two locks multiplying to the demanded run --
+-- and the `if` afterwards picks what to transmit without touching the
+-- grade.
 
 logged : R
 logged = exact (⌈ read ⌉ ∙ ⌈ write ⌉)
@@ -188,10 +210,11 @@ logged = exact (⌈ read ⌉ ∙ ⌈ write ⌉)
 log-then-claim :
   [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
 log-then-claim =
-  box {ρ = logged} (const 42)
-    (perform read ⋆
-      (perform write here
+  box {ρ = logged} (const 42)        -- ∷ [ logged ] Reading
+    (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+      (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
+                                     -- ∷ Reading
           (if eternal-var Boolₑ
                 (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
             `then perform send here (return ⋆)
@@ -206,18 +229,23 @@ transmitting-instead = fails (uᵣ ·ᵣ opTime read ·ᵣ opTime send) logged
 
 ------------------------------------------------------------------------
 -- Effect handling
+--
+-- Handling locks its `in` part by the handled computation's grade,
+-- exactly as sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in (return here)
+    `in                              -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+      (return here)
 
 identified : Node ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+    `in                              -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+      (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
 no-discarding = fails uₑ (op-grade read ·ₑ uₑ)

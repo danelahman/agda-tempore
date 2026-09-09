@@ -12,6 +12,11 @@
 -- to have been done *and* for no more than its allowance to have been  --
 -- spent since, so a claim can be refused for having done too little    --
 -- and for having done too much, and the examples below exhibit both.   --
+--                                                                     --
+-- The comments inside the programs say what each former appends to the --
+-- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
+-- binding. A grade with a name of its own is named there rather than   --
+-- written out, these being pairs of trace sets.                        --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided where
@@ -38,41 +43,54 @@ open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime
 -- Effectful computations
 --
 -- A computation with one run is pinned exactly: its run is both the
--- guarantee it meets and the allowance it stays within.
+-- guarantee it meets and the allowance it stays within, and each lock
+-- is the one-event interval of the operation that put it up.
 
 sampling : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
-sampling = perform read ⋆ (return here)
+sampling =
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (return here)
 
 storing : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-storing = perform read ⋆ (perform write here (return ⋆))
+storing =
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (perform write here              -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
+      (return ⋆))
 
 relaying : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
-relaying = perform read ⋆ (perform send here (return ⋆))
+relaying =
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (perform send here               -- ⟨ exact ⌈ send ⌉ ⟩ ∷ Unit
+      (return ⋆))
 
 tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 tagged-relaying =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+                                     -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Readings go stale
 --
 -- `ρ ≾ᵣ uᵣ` asks the cap to permit nothing but the empty run, which is
--- the upper endpoint deciding it, as at the two-sided windows.
+-- the upper endpoint deciding it, as at the two-sided windows. So no
+-- lock but the unit may stand over a reading in use.
 
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
 reading-stale-after-an-operation = fails (uᵣ ·ᵣ opTime read) uᵣ
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
 carried-id =
-  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+  perform read ⋆                     -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+    (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting
 --
 -- `coerce` weakens both endpoints at once, in opposite directions: the
--- guarantee may be forgotten down and the allowance relaxed up.
+-- guarantee may be forgotten down and the allowance relaxed up. The
+-- context is untouched.
 
 contract : E
 contract = [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
@@ -125,30 +143,35 @@ either-reading =
 ------------------------------------------------------------------------
 -- Unboxing: a resource with a contract
 --
--- `unbox`'s premise asks what elapsed to cover the box's guarantee and
--- stay within its allowance. The box below asks for a reading, and
--- allows a reading and six ticks' worth of other work.
+-- `unbox`'s premise asks what elapsed -- the product of the locks
+-- between the box's binding and the claim -- to cover the box's
+-- guarantee and stay within its allowance. The box below asks for a
+-- reading, and allows a reading and six ticks' worth of other work.
 
 claim-after-sampling : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 claim-after-sampling =
-  box {ρ = contract} (const 42)
-    (perform read ⋆
+  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+    (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 handed-over =
-  box {ρ = contract} (const 42)
-    (lam (perform read ⋆
-           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
-             (perform send here (return ⋆))))
+  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+    (lam                             -- ∷ [ contract ] Reading
+       (perform read ⋆               -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
+           (perform send here (return ⋆))))
       · here)
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
-  box {ρ = contract} (const 42)
-    (perform read ⋆
+  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
+    (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -186,15 +209,18 @@ alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt 
 claimed-in-both-branches :
   [] ⊢C⦂ Unit ‼ [ ⟅ ⌈ send ⌉ ⟆ , ⟅ ⟨ 12 ⟩ ⟆ , tt ]
 claimed-in-both-branches =
-  box {ρ = alternatives} (const 42)
+  box {ρ = alternatives} (const 42)  -- ∷ [ alternatives ] Reading
     (if true
       `then coerce (holds _ _)
-              (perform read ⋆
+              (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce (holds _ _)
               (perform send (const 0)
+                                     -- ⟨ exact ⌈ send ⌉ ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 -- dropping the transmission from the guarantee closes that branch,
@@ -219,16 +245,18 @@ transmitting-branch-overspends = fails _ _
 
 store-or-not : [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ , tt ]
 store-or-not =
-  box {ρ = contract} (const 42)
+  box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (holds _ _)
-              (perform read ⋆
+              (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce (holds _ _)
-              (perform read ⋆
-                (perform write here
+              (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+                (perform write here  -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
                   (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
+                                     -- ∷ Reading
                     (perform send here (return ⋆))))))
 
 -- the storing branch has to claim before it transmits: a store and a
@@ -246,13 +274,15 @@ forwarded : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in (return here)
+    `in                              -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+      (return here)
 
 identified : Node ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+    `in                              -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
+      (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- no clause may drop its continuation: the floor asks for the
 -- operation, and returning at once covers nothing

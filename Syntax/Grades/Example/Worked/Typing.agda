@@ -14,6 +14,18 @@
 -- `unbox`'s premise compares what a computation did with the grade on  --
 -- the box. The instances then differ only in that monoid.              --
 --                                                                     --
+-- READING A PROGRAM. Comments inside the programs say what each        --
+-- former appends to the context its subcomputation is typed in:        --
+-- `⟨ ρ ⟩` a lock, `∷ A` a binding. `perform` and `delay` put up a lock --
+-- and `perform` binds a result; `⨟` and `handle`'s `in` part put up a  --
+-- lock at the grade the part before them was *typed at* and bind its   --
+-- result; `box`, `unbox`, `lam` and `match` bind without locking; `if` --
+-- and `coerce` do neither. Reading the comments off downwards gives    --
+-- the context at any point, and the locks between a box's binding and  --
+-- its `unbox` are what that rule's premise weighs against the box's    --
+-- own grade -- so the annotations are also the elapsed-grade           --
+-- calculation the premise performs.                                    --
+--                                                                     --
 -- Each instance writes its programs out in full, at its own grades,    --
 -- exercising the language's features -- operations, sequencing,        --
 -- `delay`, `if`, pattern matching, functions, `box`/`unbox`, and       --

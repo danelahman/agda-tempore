@@ -214,7 +214,9 @@ forwarding : ∀ {Γ B} → (op : Op) → (ε'' : E)
              ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
 forwarding op ε'' =
   perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
+                                     -- ⟨ op-grade op ⟩ ∷ arity op
     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+                                     -- ∷ arity op ⇒ B ‼ ε''
       (here · fresh-var ≾ᵣ-refl (Tl-∷ Hd)))
 
 -- Resume, and then answer with the identifier the clause closed over.
@@ -228,9 +230,12 @@ identifying : (op : Op) → (ε'' : E)
 identifying op ε'' =
   ε-subst (cong (op-grade op ·ₑ_) (·ₑ-identityʳ ε''))
     (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
+                                     -- ⟨ op-grade op ⟩ ∷ arity op
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+                                     -- ∷ arity op ⇒ NodeId ‼ ε''
         ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
-          ⨟ return (eternal-var nodeid-eternal
+          ⨟                          -- ⟨ ε'' ⟩ ∷ NodeId
+            return (eternal-var nodeid-eternal
                      (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))))))))))
 
 -- Drop the continuation and return straight away. The clause still has

@@ -19,6 +19,12 @@
 -- As at the lower bounds, nothing goes stale (every run covers the     --
 -- empty guarantee) and no handler clause may drop its continuation     --
 -- (returning at once covers nothing).                                  --
+--                                                                     --
+-- The comments inside the programs say what each former appends to the --
+-- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
+-- binding. Here a lock records which operation ran, not merely that    --
+-- time passed, and it is the product of the locks between a box's      --
+-- binding and its `unbox` that the premise weighs against the box.     --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.LeftSided where
@@ -50,30 +56,41 @@ open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
 -- Effectful computations
 
 sampling : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
-sampling = perform read ⋆ (return here)
+sampling =
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (return here)
 
 storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
-storing = perform read ⋆ (perform write here (return ⋆))
+storing =
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform write here              -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+      (return ⋆))
 
 relaying : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
-relaying = perform read ⋆ (perform send here (return ⋆))
+relaying =
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform send here               -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+      (return ⋆))
 
 tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+                                     -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 -- a computation that only idles, which guarantees time and no work
 
 idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 5 ⟩ ⟆
-idling = delay 5 (return ⋆)
+idling =
+  delay 5                            -- ⟨ ⟅ ⟨ 5 ⟩ ⟆ ⟩
+    (return ⋆)
 
 ------------------------------------------------------------------------
 -- Nothing goes stale
 --
 -- `var`'s bound is `ρ ≾ᵣ uᵣ`, and every run covers the empty
--- guarantee, so a reading survives whatever happens after it.
+-- guarantee, so a reading survives whatever locks stand over it.
 
 nothing-goes-stale : (ρ : R) → ρ ≾ᵣ uᵣ
 nothing-goes-stale ρ = u-≽ˢ (traces ρ)
@@ -83,26 +100,28 @@ nothing-goes-stale ρ = u-≽ˢ (traces ρ)
 
 idle-then-transmit : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 idle-then-transmit =
-  perform read ⋆
-    (delay 2
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (delay 2                         -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
       (perform send (fresh-var (nothing-goes-stale _) (Tl-⟨⟩ Hd))
+                                     -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
         (return ⋆)))
 
 carried-reading : [] ∷ Reading ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
 carried-reading =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (fresh-var (nothing-goes-stale _) (Tl-∷ (Tl-⟨⟩ Hd))))
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
 carried-id =
-  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting
 --
 -- `coerce` moves up the order, and up means "guarantees less": a run
 -- may forget the operations it performed, or trade them for the time
--- they took.
+-- they took. The context is untouched.
 
 forgetting-the-store : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ⟆
 forgetting-the-store =
@@ -127,7 +146,8 @@ idling-guarantees-no-reading = fails
 --
 -- The conditional's grade has to be guaranteed by both branches. The
 -- union does it, each branch guaranteeing its own run; so does the time
--- the two branches are both bound to spend.
+-- the two branches are both bound to spend. Neither branch locks the
+-- context.
 
 branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
@@ -158,7 +178,7 @@ either-reading =
 sampling-then-branching :
   [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 sampling-then-branching =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (if true
       `then coerce holds (perform send  here (return ⋆))
       `else coerce holds (perform write here (return ⋆)))
@@ -167,45 +187,50 @@ sampling-then-branching =
 -- Unboxing: a resource that comes due when work has been done
 --
 -- `unbox`'s premise is `elapsed ≾ᵣ ρ`: what the computation did between
--- boxing the resource and claiming it has to cover what the box asks
--- for. The box below asks for a reading.
+-- boxing the resource and claiming it -- the locks the comments show --
+-- has to cover what the box asks for. The box below asks for a reading.
 
 demand : R
 demand = ⟅ ⌈ read ⌉ ⟆
 
 claim-after-sampling : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
-  box {ρ = demand} (const 42)
-    (perform read ⋆
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box {ρ = demand} (const 42)
-    (lam (perform read ⋆
-           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-             (perform send here (return ⋆))))
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+       (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
+           (perform send here (return ⋆))))
       · here)
 
 -- and the claim survives extra work in between: two readings cover a
 -- demand for one, so the function may sample again before claiming
--- what it was handed
+-- what it was handed. Two locks stand between the binding and the
+-- claim, and their product is `⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ⟆`.
 
 handed-over' : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over' =
-  box {ρ = demand} (const 42)
-    (lam (perform read ⋆
-           (perform read ⋆
-             (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
-               (perform send here (return ⋆)))))
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+       (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+         (perform read ⋆             -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+           (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
+                                     -- ∷ Reading
+             (perform send here (return ⋆)))))
       · here)
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box {ρ = demand} (const 42)
-    (perform read ⋆
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -216,7 +241,8 @@ either-way =
 idling-does-not-discharge-it : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ demand)
 idling-does-not-discharge-it = fails
 
--- and neither does doing nothing at all
+-- and neither does doing nothing at all: with no lock in between there
+-- is nothing to cover the demand with
 
 claiming-at-once : ¬ (uᵣ ≾ᵣ demand)
 claiming-at-once = failsᵉ uᵣ demand
@@ -229,9 +255,9 @@ waiting = ⟅ ⟨ 2 ⟩ ⟆
 
 claim-after-idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
-  box {ρ = waiting} (const 42)
-    (delay 2
-      (unbox (Tl-⟨⟩ Hd) holds
+  box {ρ = waiting} (const 42)       -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
+    (delay 2                         -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
+      (unbox (Tl-⟨⟩ Hd) holds        -- ∷ Reading
         (perform send here (return ⋆))))
 
 storing-covers-it : uᵣ ·ᵣ opTime write ≾ᵣ waiting
@@ -250,14 +276,18 @@ alternatives = ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
   box {ρ = alternatives} (const 42)
+                                     -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
     (if true
       `then coerce holds
-              (perform read ⋆
+              (perform read ⋆        -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
               (perform send (const 0)
+                                     -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 -- asking for the reading alone puts it out of the transmitting
@@ -272,19 +302,21 @@ transmitting-branch-does-not = fails
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
--- `ε` is the grade the first part is *typed at*, so a `coerce` on that
--- first part changes what the continuation may claim -- and can only
--- take claims away, which is `coercion-only-closes`. What a coercion
--- forgets here is not time but the operation: a reading may be traded
--- for the tick it took, and a box asking for the reading is then out of
--- reach.
+-- Sequencing locks its continuation by the grade the first part is
+-- *typed at* and binds that part's result -- the `⟨ … ⟩ ∷ …` on the
+-- `⨟` line below. So a `coerce` on the first part changes the lock, and
+-- can only take claims away, which is `coercion-only-closes`. What a
+-- coercion forgets here is not time but the operation: a reading may be
+-- traded for the tick it took, and a box asking for the reading is then
+-- out of reach.
 
 claim-after-a-reading : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-reading =
-  box {ρ = demand} (const 42)
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     ((perform read ⋆ (return here))
-      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+      ⨟                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- the coercion that trades the reading for its tick is available
@@ -292,7 +324,8 @@ claim-after-a-reading =
 trading-it-for-a-tick : opTime read ·ₑ uₑ ≾ₑ of-natᵉ 1 ·ₑ uₑ
 trading-it-for-a-tick = holds
 
--- and taking it closes the box, a tick covering no reading
+-- and taking it makes the lock `⟨ ⟅ ⟨ 1 ⟩ ⟆ ⟩`, which covers no
+-- reading, so the box is closed
 
 forgetting-the-reading-closes-it : ¬ (uᵣ ·ᵣ of-natʳ 1 ≾ᵣ demand)
 forgetting-the-reading-closes-it = fails
@@ -336,10 +369,13 @@ claim-after-a-branch :
   [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-branch =
   box {ρ = mixed-demand} (const 42)
+                                     -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 3 ⟩ ⟆ ] Reading
     ((if eternal-var Boolₑ (Tl-∷ Hd)
         `then coerce {ε' = after-the-join} holds (perform read ⋆ (return ⋆))
-        `else coerce holds (perform write (const 0) (return ⋆)))               -- : Unit ‼ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
-      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+        `else coerce holds (perform write (const 0) (return ⋆)))
+      ⨟                              -- ⟨ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- both of the box's members are needed, one for each branch: dropping
@@ -370,15 +406,18 @@ three-ticks = ⟅ ⟨ 3 ⟩ ⟆
 
 work-or-wait : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⟨ 9 ⟩ ⟆
 work-or-wait =
-  box {ρ = three-ticks} (const 42)
+  box {ρ = three-ticks} (const 42)   -- ∷ [ ⟅ ⟨ 3 ⟩ ⟆ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform write (const 0)
+                                     -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
-              (delay 3
+              (delay 3               -- ⟨ ⟅ ⟨ 3 ⟩ ⟆ ⟩
                 (unbox (Tl-⟨⟩ Hd) holds
+                                     -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 -- ten ticks are more than either branch guarantees
@@ -395,18 +434,23 @@ sampling-branch-too-little = fails
 
 ------------------------------------------------------------------------
 -- Effect handling
+--
+-- Handling locks its `in` part by the handled computation's grade,
+-- exactly as sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in (return here)
+    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (return here)
 
 identified : Node ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- no clause may drop its continuation: it is graded by a guarantee that
 -- names the operation, and returning at once covers nothing

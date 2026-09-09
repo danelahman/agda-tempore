@@ -17,6 +17,12 @@
 -- operations, since the two coercions would make one non-empty set a   --
 -- subset of two disjoint singletons. What `if` can still do here is    --
 -- branch over *data*, both branches making the same run.               --
+--                                                                     --
+-- The comments inside the programs say what each former appends to the --
+-- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
+-- binding. The locks between a box's binding and its `unbox` multiply  --
+-- to the run that elapsed, and here that run has to be the run the box --
+-- demands, exactly.                                                    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.LeftSided where
@@ -51,28 +57,38 @@ open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
 ------------------------------------------------------------------------
 -- Effectful computations
 --
--- The grade of a computation is the one run it makes, demanded.
+-- The grade of a computation is the one run it makes, demanded, and the
+-- locks along it are that run one event at a time.
 
 sampling : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
-sampling = perform read ⋆ (return here)
+sampling =
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (return here)
 
 storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
-storing = perform read ⋆ (perform write here (return ⋆))
+storing =
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform write here              -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+      (return ⋆))
 
 relaying : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
-relaying = perform read ⋆ (perform send here (return ⋆))
+relaying =
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform send here               -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+      (return ⋆))
 
 tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+                                     -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Readings go stale
 --
 -- `ρ ≾ᵣ uᵣ` asks the empty run to be among the elapsed ones, which it
--- is only where nothing happened.
+-- is only where no lock stands in the way.
 
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
 reading-stale-after-an-operation = fails
@@ -82,7 +98,8 @@ reading-stale-after-idling = fails
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
 carried-id =
-  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting
@@ -135,7 +152,8 @@ neither-at-the-union : ¬ (opTime send ·ₑ uₑ ≾ₑ ⟅ ⌈ send ⌉ ∣ �
 neither-at-the-union = fails
 
 -- what `if` can do here is branch over data: both branches make the
--- same run, so they are already at one grade
+-- same run, so they are already at one grade, and neither locks the
+-- context
 
 either-reading : [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
 either-reading =
@@ -148,32 +166,35 @@ either-reading =
 --
 -- `unbox`'s premise is `elapsed ≾ᵣ ρ`, which here asks every run the
 -- box demands to be one the computation exhibited. With both sides
--- singletons that is equality: the box names the run that has to have
--- happened, and nothing else will do.
+-- singletons that is equality: the locks between the binding and the
+-- claim have to multiply to the run the box names, and nothing else
+-- will do.
 
 demand : R
 demand = ⟅ ⌈ read ⌉ ⟆
 
 claim-after-sampling : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
-  box {ρ = demand} (const 42)
-    (perform read ⋆
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box {ρ = demand} (const 42)
-    (lam (perform read ⋆
-           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-             (perform send here (return ⋆))))
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+       (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
+           (perform send here (return ⋆))))
       · here)
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box {ρ = demand} (const 42)
-    (perform read ⋆
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -197,7 +218,7 @@ claiming-at-once : ¬ (uᵣ ≾ᵣ demand)
 claiming-at-once = failsᵉ uᵣ demand
 
 -- and a box demanding nothing but the empty run is the one claimable
--- at once
+-- at once, with no lock in between
 
 nothing-demanded : R
 nothing-demanded = ⟅ ε ⟆
@@ -205,7 +226,9 @@ nothing-demanded = ⟅ ε ⟆
 claiming-now : [] ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box {ρ = nothing-demanded} (const 42)
+                                     -- ∷ [ ⟅ ε ⟆ ] Reading
     (unbox Hd (holdsᵉ uᵣ nothing-demanded)
+                                     -- ∷ Reading
       (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
@@ -224,9 +247,10 @@ transmitting-branch-cannot-meet-it = fails
 ------------------------------------------------------------------------
 -- Programs written at these demands
 --
--- The box demands a reading and a store, which the run makes before
--- claiming it; the `if` afterwards chooses what to transmit and leaves
--- the grade alone.
+-- The box demands a reading and a store; the run makes exactly that
+-- before claiming it -- two locks multiplying to the demanded run --
+-- and the `if` afterwards chooses what to transmit without touching
+-- the grade.
 
 logged : R
 logged = ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
@@ -234,10 +258,11 @@ logged = ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 log-then-claim :
   [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 log-then-claim =
-  box {ρ = logged} (const 42)
-    (perform read ⋆
-      (perform write here
+  box {ρ = logged} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ] Reading
+    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (perform write here            -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
+                                     -- ∷ Reading
           (if eternal-var Boolₑ
                 (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
             `then perform send here (return ⋆)
@@ -255,18 +280,23 @@ transmitting-instead = fails
 
 ------------------------------------------------------------------------
 -- Effect handling
+--
+-- Handling locks its `in` part by the handled computation's grade,
+-- exactly as sequencing does.
 
 forwarded : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in (return here)
+    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (return here)
 
 identified : Node ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- no clause may drop its continuation: its grade demands a run that
 -- performs the operation, and returning at once makes the empty run

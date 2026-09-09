@@ -22,6 +22,11 @@
 --   * a handler clause cannot drop its continuation, `uₑ ≾ₑ ε` forcing --
 --     `min ε` to `0` -- the lower endpoint deciding it, as at the      --
 --     lower bounds.                                                    --
+--                                                                     --
+-- The comments inside the programs say what each former appends to the --
+-- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
+-- binding. They write an interval as `[ min , max ]`, without the      --
+-- `min ≤ max` proof the constructor also carries.                      --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Time.TwoSided where
@@ -52,29 +57,39 @@ open import Syntax.Grades.Example.Worked.Typing.Core two-sided-intervals opTime
 -- Effectful computations
 --
 -- Sequencing adds both endpoints, so the grade of a run is the window
--- its total time falls in.
+-- its total time falls in, and each `perform` locks the context by the
+-- window its own operation takes.
 
 sampling : [] ⊢C⦂ Reading ‼ [ 1 , 1 , ≤! ]
-sampling = perform read ⋆ (return here)
+sampling =
+  perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+    (return here)
 
 storing : [] ⊢C⦂ Unit ‼ [ 3 , 4 , ≤! ]
-storing = perform read ⋆ (perform write here (return ⋆))
+storing =
+  perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+    (perform write here              -- ⟨ [ 2 , 3 ] ⟩ ∷ Unit
+      (return ⋆))
 
 relaying : [] ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
-relaying = perform read ⋆ (perform send here (return ⋆))
+relaying =
+  perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+    (perform send here               -- ⟨ [ 4 , 6 ] ⟩ ∷ Unit
+      (return ⋆))
 
 tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
 tagged-relaying =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+                                     -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 ------------------------------------------------------------------------
 -- Readings go stale
 --
 -- `ρ ≾ᵣ uᵣ` is `0 ≤ min ρ × max ρ ≤ 0`: the upper endpoint has to be
--- `0`, so a reading is usable only where nothing may have happened
--- since it was taken.
+-- `0`, so a reading is usable only where no lock stands between its
+-- binding and its use.
 
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
 reading-stale-after-an-operation (_ , hi) = ≰! hi
@@ -86,13 +101,14 @@ reading-stale-after-idling (_ , hi) = ≰! hi
 
 carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ [ 1 , 1 , ≤! ]
 carried-id =
-  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+  perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+    (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting
 --
 -- `coerce` widens the window: it may forget the floor downwards and the
--- deadline upwards, and neither the other way.
+-- deadline upwards, and neither the other way. The context is untouched.
 
 widening : [] ⊢C⦂ Unit ‼ [ 2 , 6 , ≤! ]
 widening =
@@ -136,7 +152,7 @@ either-reading =
 
 sampling-then-branching : [] ⊢C⦂ Unit ‼ [ 3 , 7 , ≤! ]
 sampling-then-branching =
-  perform read ⋆
+  perform read ⋆                     -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
     (if true
       `then coerce (≤! , ≤!) (perform send  here (return ⋆))
       `else coerce (≤! , ≤!) (perform write here (return ⋆)))
@@ -145,15 +161,17 @@ sampling-then-branching =
 -- Unboxing: a resource with a window
 --
 -- A box graded `[ 2 , 6 ]` is available from two ticks and gone after
--- six. Idling two ticks lands in the window; claiming it at once is too
--- early; a reading and a transmission spend up to seven, which is too
--- late.
+-- six, and what it is compared against is the product of the locks
+-- between its binding and the claim. Idling two ticks lands in the
+-- window; claiming it at once is too early; a reading and a
+-- transmission spend up to seven, which is too late.
 
 claim-in-the-window : [] ⊢C⦂ Unit ‼ [ 6 , 8 , ≤! ]
 claim-in-the-window =
   box {ρ = [ 2 , 6 , ≤! ]} (const 42)
-    (delay 2
-      (unbox (Tl-⟨⟩ Hd) (≤! , ≤!)
+                                     -- ∷ [ [ 2 , 6 ] ] Reading
+    (delay 2                         -- ⟨ [ 2 , 2 ] ⟩
+      (unbox (Tl-⟨⟩ Hd) (≤! , ≤!)    -- ∷ Reading
         (perform send here (return ⋆))))
 
 claim-too-early : ¬ (uᵣ ≾ᵣ [ 2 , 6 , ≤! ])
@@ -170,16 +188,21 @@ claim-too-late (_ , hi) = ≰! hi
 claim-after-sampling : [] ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
 claim-after-sampling =
   box {ρ = [ 1 , 6 , ≤! ]} (const 42)
-    (perform read ⋆
+                                     -- ∷ [ [ 1 , 6 ] ] Reading
+    (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
 handed-over =
   box {ρ = [ 1 , 6 , ≤! ]} (const 42)
-    (lam (perform read ⋆
-           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
-             (perform send here (return ⋆))))
+                                     -- ∷ [ [ 1 , 6 ] ] Reading
+    (lam                             -- ∷ [ [ 1 , 6 ] ] Reading
+       (perform read ⋆               -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
+           (perform send here (return ⋆))))
       · here)
 
 -- and one claimable at once is one whose window is open from the start
@@ -187,7 +210,9 @@ handed-over =
 claiming-now : [] ⊢C⦂ Unit ‼ [ 4 , 6 , ≤! ]
 claiming-now =
   box {ρ = [ 0 , 6 , ≤! ]} (const 42)
-    (unbox Hd (≤! , ≤!) (perform send here (return ⋆)))
+                                     -- ∷ [ [ 0 , 6 ] ] Reading
+    (unbox Hd (≤! , ≤!)              -- ∷ Reading
+      (perform send here (return ⋆)))
 
 -- claiming the resource and then choosing what to transmit, with both
 -- branches making the same run
@@ -195,8 +220,10 @@ claiming-now =
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
 either-way =
   box {ρ = [ 1 , 6 , ≤! ]} (const 42)
-    (perform read ⋆
+                                     -- ∷ [ [ 1 , 6 ] ] Reading
+    (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var (≤! , ≤!) (Tl-∷ Hd)) (return ⋆))))
@@ -210,23 +237,26 @@ either-way =
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 5 , 12 , ≤! ]
 claimed-in-both-branches =
   box {ρ = [ 1 , 6 , ≤! ]} (const 42)
+                                     -- ∷ [ [ 1 , 6 ] ] Reading
     (if true
       `then coerce (≤! , ≤!)
-              (perform read ⋆
+              (perform read ⋆        -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce (≤! , ≤!)
               (perform send (const 0)
+                                     -- ⟨ [ 4 , 6 ] ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
 --
--- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
--- `ε` is the grade the first part is *typed at*, so a `coerce` on that
--- first part changes what the continuation may claim -- and here the
--- coercion moves both endpoints, so it can close a box from either
+-- Sequencing locks its continuation by the grade the first part is
+-- *typed at*, so a `coerce` on that part changes the lock -- and here
+-- the coercion moves both endpoints, so it can close a box from either
 -- side. Below it is the floor that gives way: widening the prefix's
 -- window lowers what it guarantees, and the box is no longer late
 -- enough to be claimed.
@@ -237,8 +267,11 @@ claimed-in-both-branches =
 claim-after-a-store : [] ⊢C⦂ Unit ‼ [ 7 , 10 , ≤! ]
 claim-after-a-store =
   box {ρ = [ 3 , 6 , ≤! ]} (const 42)
+                                     -- ∷ [ [ 3 , 6 ] ] Reading
     ((perform read ⋆ (perform write here (return ⋆)))
-      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+      ⨟                              -- ⟨ [ 3 , 4 ] ⟩ ∷ Unit
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- widening that to `[ 2 , 6 ]` first drops its floor to two, and the
@@ -253,9 +286,12 @@ coercing-closes-it (lo , _) = ≰! lo
 claim-after-a-coerced-store : [] ⊢C⦂ Unit ‼ [ 6 , 12 , ≤! ]
 claim-after-a-coerced-store =
   box {ρ = [ 2 , 6 , ≤! ]} (const 42)
+                                     -- ∷ [ [ 2 , 6 ] ] Reading
     (coerce {ε' = [ 2 , 6 , ≤! ]} (≤! , ≤!)
        (perform read ⋆ (perform write here (return ⋆)))
-      ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+      ⨟                              -- ⟨ [ 2 , 6 ] ⟩ ∷ Unit
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
@@ -268,14 +304,18 @@ claim-after-a-coerced-store =
 window-in-a-branch : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 , 12 , ≤! ]
 window-in-a-branch =
   box {ρ = [ 2 , 6 , ≤! ]} (const 42)
+                                     -- ∷ [ [ 2 , 6 ] ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (≤! , ≤!)
-              (delay 2
+              (delay 2               -- ⟨ [ 2 , 2 ] ⟩
                 (unbox (Tl-⟨⟩ Hd) (≤! , ≤!)
+                                     -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce (≤! , ≤!)
               (perform send (const 0)
+                                     -- ⟨ [ 4 , 6 ] ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+                                     -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 -- one reading more in the transmitting branch and the window has closed
@@ -285,16 +325,20 @@ one-reading-too-many (_ , hi) = ≰! hi
 
 -- Two staggered resources, each claimed at the one point of the run
 -- where its own window is open: the first after idling two ticks, the
--- second after transmitting the first as well.
+-- second after transmitting the first as well. Two box bindings stand
+-- in the context, and the indices tell them apart.
 
 staggered : [] ⊢C⦂ Unit ‼ [ 10 , 14 , ≤! ]
 staggered =
-  box {ρ = [ 2 , 6 , ≤! ]} (const 1)
+  box {ρ = [ 2 , 6 , ≤! ]} (const 1) -- ∷ [ [ 2 , 6 ] ] Reading
     (box {ρ = [ 6 , 12 , ≤! ]} (const 2)
-      (delay 2
+                                     -- ∷ [ [ 6 , 12 ] ] Reading
+      (delay 2                       -- ⟨ [ 2 , 2 ] ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ Hd)) (≤! , ≤!)
-          (perform send here
+                                     -- ∷ Reading
+          (perform send here         -- ⟨ [ 4 , 6 ] ⟩ ∷ Unit
             (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ≤!)
+                                     -- ∷ Reading
               (perform send here (return ⋆)))))))
 
 -- the points cannot be swapped: at the earlier one the second window
@@ -313,13 +357,15 @@ forwarded : [] ⊢C⦂ Reading ‼ [ 1 , 1 , ≤! ]
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in (return here)
+    `in                              -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+      (return here)
 
 identified : Node ⊢C⦂ NodeId ‼ [ 1 , 1 , ≤! ]
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+    `in                              -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+      (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- and no clause may drop its continuation: `uₑ ≾ₑ op-grade op ·ₑ ε''`
 -- asks the clause's floor to be `0`, and an operation's is not
