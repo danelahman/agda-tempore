@@ -20,7 +20,7 @@
 --   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉          9 ticks                      --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Worked.Traces.TwoSided where
+module Syntax.Grades.Example.Worked.Traces.Timed.TwoSided where
 
 open import Data.Unit using (tt)
 
@@ -34,7 +34,7 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
   using (TwoSided; [_,_,_]; lo; hi; _◇ˢ_; ◇ˢ-refl; _·ᵗˢ_;
          two-sided; _≾ᵗˢ_; _≾ᵗˢ?_) public
 

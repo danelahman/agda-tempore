@@ -22,7 +22,7 @@
 -- are therefore read disjunctively, both weaken by gaining members,    --
 -- and the union of two grades is their join at either.                 --
 --                                                                     --
--- Nothing here inspects the order; `Example.Traces.Coverage` is this   --
+-- Nothing here inspects the order; `Example.Traces.Timed.LeftSided` is   --
 -- construction at the coverage order, which is the one a guarantee     --
 -- wants, since there nothing but an operation covers a demand for it.  --
 ------------------------------------------------------------------------

@@ -17,12 +17,12 @@
 --     and monoid (from `Grades.Traces.Sets`) and differing in the      --
 --     order they put on it.                                            --
 --                                                                     --
--- The trace family is three grades over two orders on traces: a floor  --
--- at the coverage order, a cap at the allowance order, and the pair of --
--- them. The grid that preceded it -- four lifts against three          --
--- sidednesses, over the sub-trace orders -- is parked under            --
--- `backup/`, along with its worked examples, Kripke frames and grade   --
--- systems, and is not imported from anywhere.                          --
+-- The trace family is two families of three: `Timed.*` over the        --
+-- cost-sensitive orders on traces, and `Subsets.*` over equality, each --
+-- with a floor, a cap and their pairing. The grid that preceded them   --
+-- -- four lifts against three sidednesses, over the sub-trace orders --  --
+-- is parked under `backup/`, along with its worked examples, Kripke    --
+-- frames and grade systems, and is not imported from anywhere.         --
 --                                                                     --
 -- `System.*` then pairs them up. Reading the projections tells the     --
 -- story of the development: each one says what a resource grade is     --
@@ -78,23 +78,26 @@ import Syntax.Grades.Example.Traces
 
 import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
 
--- trace bounds to right-sided intervals: forget which runs a grade
--- permits and which operations they perform, keep the deadline its
--- slowest bound imposes
+-- the timed trace grades to time intervals: forget which runs a grade
+-- mentions and which operations they perform, keep what their
+-- durations say. The cap keeps the deadline its slowest bound imposes,
+-- the floor what its *fastest* guarantee takes -- the set being read
+-- disjunctively at both ends -- and the two-sided one is their pair,
+-- which lands in an interval at all because the coherence field puts
+-- the fastest guarantee below the slowest allowance
 
-import Syntax.Grades.Example.System.TracesToRightSidedIntervals
+import Syntax.Grades.Example.System.Traces.Timed.RightSided
+import Syntax.Grades.Example.System.Traces.Timed.LeftSided
+import Syntax.Grades.Example.System.Traces.Timed.TwoSided
 
--- trace guarantees to left-sided intervals: the mirror image, keeping
--- what its *fastest* guarantee takes, the set being read disjunctively
+-- the subset grades to time intervals: the same, except that every
+-- endpoint is measured by its *slowest* member. Above for the usual
+-- reason, below because that floor is read conjunctively -- so the
+-- aggregation follows how a set is read, not which side it bounds
 
-import Syntax.Grades.Example.System.TracesToLeftSidedIntervals
-
--- two-sided trace intervals to two-sided time intervals: the pair of
--- the two above, which lands in an interval at all because the grade's
--- coherence field puts the fastest guarantee below the slowest
--- allowance
-
-import Syntax.Grades.Example.System.TracesToTwoSidedIntervals
+import Syntax.Grades.Example.System.Traces.Subsets.RightSided
+import Syntax.Grades.Example.System.Traces.Subsets.LeftSided
+import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
 
 ------------------------------------------------------------------------
 -- Worked instances

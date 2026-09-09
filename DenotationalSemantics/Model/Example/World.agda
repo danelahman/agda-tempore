@@ -21,9 +21,11 @@
 --     admits. These frames see the operations a grade prescribes,      --
 --     which the tick frames cannot.                                    --
 --                                                                     --
--- Each trace grade has a frame of either kind. The ones that went with --
--- the earlier grid are parked under `backup/` and imported from        --
--- nowhere.                                                             --
+-- Each trace grade has a frame of either kind, and reading the two     --
+-- against each other is how the tick worlds' blindness shows: they see --
+-- a grade only through durations, so distinctions the histories keep   --
+-- collapse. The frames that went with the earlier grid are parked      --
+-- under `backup/` and imported from nowhere.                           --
 --                                                                     --
 -- This module is only an index -- the trace-based frames are           --
 -- parameterised by the alphabet `Op`, so it lists the pieces rather    --
@@ -58,16 +60,26 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
 -- advance no further than one of the bounds a trace grade lists: the
 -- right-sided interval frame, with the bound read off a trace
 
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.Allowance.RightSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
 
 -- advance at least as far as one of the guarantees a trace grade lists:
 -- the mirror image, with the bound read off a trace
 
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.Coverage.LeftSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
 
 -- both at once, the two witnesses independent
 
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.TwoSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
+
+-- the same three at the subset order. The quantifier over the listed
+-- runs follows the direction of inclusion the grade weakens along, so
+-- the cap's frame is existential and the floor's universal -- the
+-- floor's condition being asked of every demanded run, which is what
+-- makes a tick world read it as "at least as long as the slowest"
+
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.LeftSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.TwoSided
 
 ------------------------------------------------------------------------
 -- Trace-history frames: worlds are timed traces
@@ -88,14 +100,26 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithI
 -- grade lists -- accessibility is then just "the continuation is a run
 -- the grade admits"
 
-import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Allowance.RightSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.RightSided
 
 -- append a continuation that covers one of the guarantees a trace grade
 -- lists: the comparison runs the other way round
 
-import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Coverage.LeftSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftSided
 
 -- append one continuation answering to both endpoints at once, which is
 -- what a history frame can say and a tick frame cannot
 
-import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TwoSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
+
+-- the same three at the subset order, where accessibility is membership
+-- outright, there being no comparison between the continuation and a
+-- listed run to make. The floor's frame is the informative one: it asks
+-- every demanded run to *be* the continuation, so a non-singleton grade
+-- reaches no world at all -- one history is one run, and cannot be two.
+-- The tick frame cannot see that, several demanded runs collapsing
+-- there into their slowest
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.RightSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.LeftSided
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.TwoSided

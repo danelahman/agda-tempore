@@ -14,7 +14,7 @@ open import Data.Nat.Base using (ℕ; _<_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
-module Syntax.Grades.Example.Traces.Allowance.RightSided
+module Syntax.Grades.Example.Traces.Timed.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
   (cost-pos : (o : Op) → 0 < cost o) where
 

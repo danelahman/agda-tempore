@@ -2,7 +2,7 @@
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
 -- Effect grades are the sets of timed traces of                       --
--- `Traces.Coverage.LeftSided`, read as guarantees: whatever a          --
+-- `Traces.Timed.LeftSided`, read as guarantees: whatever a          --
 -- computation did, it covered one of the listed traces. Resource       --
 -- grades are the left-sided time intervals, "at least `n` time steps". --
 --                                                                     --
@@ -36,7 +36,7 @@ open import Syntax.Grades.Example.Time.LeftSided
 
 open import Util.Equality
 
-module Syntax.Grades.Example.System.TracesToLeftSidedIntervals
+module Syntax.Grades.Example.System.Traces.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
@@ -49,7 +49,7 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
 open import Syntax.Grades.Traces.Coverage Op cost using (duration-≼ᶜ)
 
-open import Syntax.Grades.Example.Traces.Coverage.LeftSided
+open import Syntax.Grades.Example.Traces.Timed.LeftSided
   Op _≟ₒ_ cost using (left-sided; _≾_)
 
 open MinDurations cost

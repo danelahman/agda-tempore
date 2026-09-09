@@ -1,0 +1,162 @@
+------------------------------------------------------------------------
+-- Worked instances of the subset grade of upper bounds.               --
+--                                                                     --
+-- A grade lists runs, and every run the computation has is one of      --
+-- them: `X ⊆ Q`. The comparison between a run and a listed trace is    --
+-- equality, so nothing is approximated -- which is the whole           --
+-- difference from `Worked.Traces.Timed.RightSided`, where a listed     --
+-- delay is a budget that buys unlisted work.                           --
+--                                                                     --
+-- The set is read *disjunctively*: a longer list permits more, so the  --
+-- union of two grades is their join and `{ ε }` is the least grade.    --
+--                                                                     --
+-- Every run is written out in full in every claim, and every claim is  --
+-- closed by running the grade's own decision procedure.                --
+------------------------------------------------------------------------
+
+module Syntax.Grades.Example.Worked.Traces.Subsets.RightSided where
+
+open import Relation.Nullary using (¬_)
+open import Relation.Nullary.Decidable
+  using (True; False; toWitness; toWitnessFalse)
+
+open import Syntax.Grades using (Grade)
+
+open import Util.Equality
+
+open import Syntax.Grades.Example.Worked.Operations
+
+open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
+  using (right-sided; _≾_; _≾?_) public
+
+order : Grade._≾_ right-sided ≡ _≾_
+order = refl
+
+holds : {P Q : NeTraces} {p : True (P ≾? Q)} → P ≾ Q
+holds {p = p} = toWitness p
+
+fails : {P Q : NeTraces} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+fails {p = p} = toWitnessFalse p
+
+-- `⟅ ε ⟆` leaves too little for the implicit arguments to be found, so
+-- the endpoints are given explicitly where it appears
+
+holdsᵉ : (P Q : NeTraces) {p : True (P ≾? Q)} → P ≾ Q
+holdsᵉ P Q {p} = toWitness p
+
+failsᵉ : (P Q : NeTraces) {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+failsᵉ P Q {p} = toWitnessFalse p
+
+------------------------------------------------------------------------
+-- Permitting more
+--
+-- Read as an *effect* grade: `coerce` moves along `≾`, and here that
+-- means adding runs to the list of runs a computation may have. It can
+-- never mean allowing a run that is not listed.
+
+permit-a-second-run :
+  ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+permit-a-second-run = holds
+
+no-narrowing :
+  ¬ (⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
+no-narrowing = fails
+
+-- `return` has grade `{ ε }`, and it weakens only to grades that list
+-- the empty run: `{ ε }` is the least grade, not a unit that fits
+-- anywhere
+
+pure-fits-where-stopping-is-listed :
+  ⟅ ε ⟆ ≾ ⟅ ε ∣ ⌈ read ⌉ ⟆
+pure-fits-where-stopping-is-listed = holdsᵉ ⟅ ε ⟆ ⟅ ε ∣ ⌈ read ⌉ ⟆
+
+pure-does-not-fit-elsewhere :
+  ¬ (⟅ ε ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
+pure-does-not-fit-elsewhere = failsᵉ ⟅ ε ⟆ ⟅ ⌈ read ⌉ ⟆
+
+------------------------------------------------------------------------
+-- Nothing is approximated
+--
+-- The comparison is equality, so a listed delay buys no work and a
+-- listed operation permits nothing but itself. Both of the following
+-- hold in `Traces.Timed.RightSided`, where the allowance order lets
+-- time pay for operations; here neither does.
+
+a-store-is-not-three-ticks :
+  ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆)
+a-store-is-not-three-ticks = fails
+
+a-budget-buys-nothing :
+  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+a-budget-buys-nothing = fails
+
+-- what a grade must do instead is list the run outright
+
+listing-it-works :
+  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+listing-it-works = holds
+
+------------------------------------------------------------------------
+-- Unions are joins
+--
+-- Each branch's runs are permitted by the union, and any grade
+-- permitting both permits it -- so a branching construct would grade
+-- its result by listing what each branch may do.
+
+union-is-a-join-inˡ :
+  ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+union-is-a-join-inˡ = holds
+
+union-is-a-join-inʳ :
+  ⟅ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+union-is-a-join-inʳ = holds
+
+union-is-a-join-least :
+  ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆
+union-is-a-join-least = holds
+
+------------------------------------------------------------------------
+-- Sequencing
+--
+-- The monoid is the language product, so sequencing a branching
+-- computation with a further step pairs every listed run with every
+-- listed continuation.
+
+sequencing-pairs-the-runs :
+  (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆)
+  ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+sequencing-pairs-the-runs = holds
+
+sequencing-adds-nothing-else :
+  ¬ ((⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆) ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆)
+sequencing-adds-nothing-else = fails
+
+------------------------------------------------------------------------
+-- As a resource grade
+--
+-- Read the other way: a box carries a grade `ρ` and `unbox` asks the
+-- grade `ρ'` of what has elapsed to satisfy `ρ' ≾ᵣ ρ`. So the box
+-- names the runs it will tolerate, and the box opens exactly when
+-- every run that may have happened is one of them.
+
+the-box-tolerates : NeTraces
+the-box-tolerates = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+
+a-listed-run-opens-the-box :
+  ⟅ ⌈ read ⌉ ⟆ ≾ the-box-tolerates
+a-listed-run-opens-the-box = holds
+
+an-unlisted-run-does-not :
+  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
+an-unlisted-run-does-not = fails
+
+-- and a branching computation opens it only if *every* branch is
+-- listed, the elapsed grade being read disjunctively too
+
+both-branches-listed :
+  ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ the-box-tolerates
+both-branches-listed = holds
+
+one-branch-not-listed :
+  ¬ (⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
+one-branch-not-listed = fails

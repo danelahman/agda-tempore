@@ -2,7 +2,7 @@
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
 -- Effect grades are the sets of timed traces of                       --
--- `Traces.Allowance.RightSided`, read as upper bounds: every run of a  --
+-- `Traces.Timed.RightSided`, read as upper bounds: every run of a  --
 -- computation stays within one of the listed bounds. Resource grades   --
 -- are the right-sided time intervals, "at most `n` time steps".        --
 --                                                                     --
@@ -32,7 +32,7 @@ open import Syntax.Grades.Example.Time.RightSided
 
 open import Util.Equality
 
-module Syntax.Grades.Example.System.TracesToRightSidedIntervals
+module Syntax.Grades.Example.System.Traces.Timed.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
   (cost-pos : (o : Op) → 0 < cost o) where
 
@@ -46,7 +46,7 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
 open import Syntax.Grades.Traces.Allowance Op cost using (duration-≼ᵃ)
 
-open import Syntax.Grades.Example.Traces.Allowance.RightSided
+open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ cost cost-pos using (right-sided; _≾_)
 
 open MaxDurations cost

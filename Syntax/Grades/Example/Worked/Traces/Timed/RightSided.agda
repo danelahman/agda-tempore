@@ -32,7 +32,7 @@
 -- asserted the wrong way round does not typecheck.                     --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Worked.Traces.Allowance where
+module Syntax.Grades.Example.Worked.Traces.Timed.RightSided where
 
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
@@ -44,7 +44,7 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.Allowance.RightSided
+open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ cost cost-pos
   using (right-sided; _≾_; _≾?_) public
 

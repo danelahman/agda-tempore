@@ -15,8 +15,8 @@
 -- Both sets being read disjunctively, the guarantee is only as strong  --
 -- as its cheapest member and the allowance only as tight as its        --
 -- slowest. So this is the pair of the two one-sided projections --      --
--- `System.TracesToLeftSidedIntervals` and                              --
--- `System.TracesToRightSidedIntervals` -- and every law is theirs.     --
+-- `System.Traces.Timed.LeftSided` and                              --
+-- `System.Traces.Timed.RightSided` -- and every law is theirs.     --
 --                                                                     --
 -- The target's `min ≤ max` is exactly what the grade's coherence field --
 -- supplies: some listed guarantee takes no longer than some listed     --
@@ -36,7 +36,7 @@ open import Syntax.Grades.Example.Time.TwoSided
 
 open import Util.Equality
 
-module Syntax.Grades.Example.System.TracesToTwoSidedIntervals
+module Syntax.Grades.Example.System.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
   (cost-pos : (o : Op) → 0 < cost o) where
 
@@ -51,15 +51,15 @@ open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
   using (bigMax-mem; module MaxDurations)
 
-open import Syntax.Grades.Example.Traces.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
   using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are
 
-open import Syntax.Grades.Example.System.TracesToLeftSidedIntervals
+open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
   Op _≟ₒ_ cost using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
-open import Syntax.Grades.Example.System.TracesToRightSidedIntervals
+open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   Op _≟ₒ_ cost cost-pos using () renaming (mapₒ-monotone to mapʰⁱ-monotone)
 
 open MinDurations cost

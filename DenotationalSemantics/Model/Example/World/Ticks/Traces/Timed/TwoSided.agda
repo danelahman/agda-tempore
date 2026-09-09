@@ -8,8 +8,8 @@
 --                          and   w' ≤ w + duration q  for some q ∈ Q --
 --                                                                    --
 -- Each half is the corresponding one-sided frame -- the floor's from  --
--- `Ticks.Traces.Coverage.LeftSided`, the cap's from                   --
--- `Ticks.Traces.Allowance.RightSided` -- and every frame condition is --
+-- `Ticks.Traces.Timed.LeftSided`, the cap's from                   --
+-- `Ticks.Traces.Timed.RightSided` -- and every frame condition is --
 -- the pair of theirs, the grade's monoid and order both acting        --
 -- endpointwise.                                                      --
 --                                                                    --
@@ -26,22 +26,22 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.Ticks.Traces.TwoSided
+module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
   (cost-pos : (o : Op) → 0 < cost o) where
 
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
-open import Syntax.Grades.Example.Traces.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open import DenotationalSemantics.Model.World
 
 -- the two halves, each at its own order
 
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.Coverage.LeftSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
   as Lo
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.Allowance.RightSided
+import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
   as Hi
 
 open Lo Op _≟ₒ_ cost using () renaming

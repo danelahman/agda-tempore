@@ -12,7 +12,7 @@ open import Data.Nat.Base using (ℕ)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
-module Syntax.Grades.Example.Traces.Coverage.LeftSided
+module Syntax.Grades.Example.Traces.Timed.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ cost

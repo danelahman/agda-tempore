@@ -26,7 +26,7 @@
 -- closed by running the grade's own decision procedure.                --
 ------------------------------------------------------------------------
 
-module Syntax.Grades.Example.Worked.Traces.Coverage where
+module Syntax.Grades.Example.Worked.Traces.Timed.LeftSided where
 
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable
@@ -38,7 +38,7 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.Coverage.LeftSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.Traces.Timed.LeftSided Op _≟ₒ_ cost
   using (left-sided; _≾_; _≾?_) public
 
 order : Grade._≾_ left-sided ≡ _≾_

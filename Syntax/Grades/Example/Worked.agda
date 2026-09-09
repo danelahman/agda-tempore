@@ -35,7 +35,15 @@
 --     other order: extra work keeps a guarantee (`⌈ read ⌉` is still   --
 --     covered by `⌈ read ⌉ ∙ ⌈ write ⌉`) and breaks an allowance. That --
 --     is why the two endpoints of a two-sided grade cannot share one   --
---     order. See `Traces.Coverage` and `Traces.TwoSided`.              --
+--     order. See `Traces.Coverage` and `Traces.Timed.TwoSided`.        --
+--                                                                     --
+--   * With equality as the comparison there is nothing left for the    --
+--     two endpoints to differ about, and the disjunctive floor         --
+--     condition collapses onto the cap's. So the subset floor is read  --
+--     conjunctively instead -- every listed run separately demanded -- --
+--     which weakens by losing members and needs a branching rule that  --
+--     unions its branches' grades rather than coercing both to one.    --
+--     See `Traces.Subsets.LeftSided`.                                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked where
@@ -59,7 +67,8 @@ import Syntax.Grades.Example.Worked.Spec
 
 import Syntax.Grades.Example.Worked.Systems
 
--- The three trace grades -- guarantees, allowances, and both at once --
--- each read as an effect grade and as a resource grade.
+-- The six trace grades -- a floor, a cap and their pairing, at the
+-- cost-sensitive orders and at the subset order -- each read as an
+-- effect grade and as a resource grade.
 
 import Syntax.Grades.Example.Worked.Traces

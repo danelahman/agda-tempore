@@ -10,11 +10,13 @@
 -- and then exercises its monotonicity: an ordering between two effect  --
 -- grades must still hold between their images.                        --
 --                                                                     --
--- There are four: one between time intervals, and one for each of the  --
--- three trace grades. The three trace projections all measure a set of  --
--- traces by a duration, and each aggregates in the direction its        --
--- endpoint is read -- the slowest allowance above, the fastest          --
--- guarantee below.                                                      --
+-- There are seven: one between time intervals, and one for each of the --
+-- six trace grades. Every trace projection measures a set of traces by  --
+-- a duration, and each aggregates in the direction its endpoint is      --
+-- *read* rather than in the direction it bounds -- so a disjunctive     --
+-- endpoint takes the slowest or fastest member according to which way   --
+-- its quantifier runs, and the one conjunctive endpoint in the          --
+-- development, the subset floor, takes the slowest.                     --
 --                                                                      --
 -- The systems that went with the earlier trace grid are parked under    --
 -- `backup/`.                                                            --
@@ -81,7 +83,7 @@ forget-max-· = refl
 ------------------------------------------------------------------------
 -- Forgetting the runs, keeping the deadline
 --
--- `TracesToRightSidedIntervals` measures a grade of trace bounds by its
+-- `System.Traces.Timed.RightSided` measures a grade of trace bounds by its
 -- slowest bound. The effect grade still says which runs are permitted
 -- and which operations they may perform; the resource grade keeps only
 -- how long they may take.
@@ -89,10 +91,10 @@ forget-max-· = refl
 open import Syntax.Grades.Example.Time.RightSided
   using ([0,_]) renaming (_≾ₒ_ to _≾ᵣ_; _·ₒ_ to _·ᵣ_)
 
-open import Syntax.Grades.Example.System.TracesToRightSidedIntervals
+open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   Op _≟ₒ_ cost cost-pos using (traces→right-sided-intervals)
 
-open import Syntax.Grades.Example.Worked.Traces.Allowance
+open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (_≾_; holds)
 
 -- a reading and six ticks' worth of work is a seven-tick deadline
@@ -145,15 +147,15 @@ deadlines-add = refl
 ------------------------------------------------------------------------
 -- Forgetting the runs, keeping the guarantee
 --
--- `TracesToLeftSidedIntervals` measures a grade of guarantees by its
+-- `System.Traces.Timed.LeftSided` measures a grade of guarantees by its
 -- *fastest* one. The set is read disjunctively -- which listed trace
 -- was covered is not known -- so all that is guaranteed about the time
 -- is what the cheapest member takes.
 
-open import Syntax.Grades.Example.System.TracesToLeftSidedIntervals
+open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
   Op _≟ₒ_ cost using (traces→left-sided-intervals)
 
-open import Syntax.Grades.Example.Worked.Traces.Coverage
+open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using () renaming (holds to holdsᶜ)
 
 -- a reading, two ticks' settling and a transmission guarantee nine ticks
@@ -202,16 +204,16 @@ guarantees-add = refl
 ------------------------------------------------------------------------
 -- Keeping both endpoints
 --
--- `TracesToTwoSidedIntervals` is the pair of the two projections above,
+-- `System.Traces.Timed.TwoSided` is the pair of the two projections above,
 -- and lands in a time interval only because the grade's coherence field
 -- makes the fastest guarantee no slower than the slowest allowance.
 
 open import Data.Unit using (tt)
 
-open import Syntax.Grades.Example.System.TracesToTwoSidedIntervals
+open import Syntax.Grades.Example.System.Traces.Timed.TwoSided
   Op _≟ₒ_ cost cost-pos using (two-sided-traces→intervals)
 
-open import Syntax.Grades.Example.Worked.Traces.TwoSided
+open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
   using (exact; _·ᵗˢ_) renaming ([_,_,_] to ⟪_,_,_⟫; holds to holdsᵗˢ)
 
 -- a contract that guarantees a reading and permits it six ticks' more
@@ -258,3 +260,89 @@ windows-add :
   ≡ map two-sided-traces→intervals (exact ⌈ read ⌉)
     ·ᵢ map two-sided-traces→intervals (exact ⌈ send ⌉)
 windows-add = refl
+
+------------------------------------------------------------------------
+-- The subset grades, and where they read a set differently
+--
+-- The subset projections measure by the slowest member at *every*
+-- endpoint. Above that is the usual reason -- any listed run may occur,
+-- so the deadline must cover the slowest. Below it is the opposite
+-- reason: the subset floor is read conjunctively, every listed run
+-- being separately demanded, so the guarantee is what the slowest of
+-- them takes.
+--
+-- The timed floor, read disjunctively, takes the fastest instead. Same
+-- source set, same target grade, opposite aggregation -- the direction
+-- follows the reading of the set, not the side of the interval.
+
+open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
+  Op _≟ₒ_ cost using (subsets→right-sided-intervals)
+open import Syntax.Grades.Example.System.Traces.Subsets.LeftSided
+  Op _≟ₒ_ cost using (subsets→left-sided-intervals)
+open import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
+  Op _≟ₒ_ cost using (subsets→intervals)
+
+open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
+  using () renaming (holds to holdsˢʰ)
+open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
+  using () renaming (holds to holdsˢˡ)
+open import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided
+  using (branching; contract; _·ᵇ_) renaming (holds to holdsˢᵇ)
+
+-- the two branches take one and four ticks
+
+the-branches : NeTraces
+the-branches = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+
+-- above, the deadline is the slower branch
+
+cap-measured : map subsets→right-sided-intervals the-branches ≡ [0, 4 ]
+cap-measured = refl
+
+-- below, so is the guarantee -- because both branches are demanded
+
+floor-measured : map subsets→left-sided-intervals the-branches ≡ [ 4 ,+∞⟩
+floor-measured = refl
+
+-- where the timed floor, listing alternatives rather than demands,
+-- guarantees only what the faster of them takes
+
+timed-floor-measured :
+  map traces→left-sided-intervals the-branches ≡ [ 1 ,+∞⟩
+timed-floor-measured = refl
+
+-- monotonicity, above: permitting a further run raises the deadline
+
+cap-deadline-rises :
+  map subsets→right-sided-intervals ⟅ ⌈ read ⌉ ⟆
+  ≾ᵣ map subsets→right-sided-intervals the-branches
+cap-deadline-rises =
+  map-monotone subsets→right-sided-intervals
+               {⟅ ⌈ read ⌉ ⟆} {the-branches} holdsˢʰ
+
+-- and below: forgetting a demanded run lowers the guarantee
+
+floor-guarantee-falls :
+  map subsets→left-sided-intervals the-branches
+  ≾ₒ map subsets→left-sided-intervals ⟅ ⌈ read ⌉ ⟆
+floor-guarantee-falls =
+  map-monotone subsets→left-sided-intervals
+               {the-branches} {⟅ ⌈ read ⌉ ⟆} holdsˢˡ
+
+-- the two-sided projection is the pair, and the window it lands in is
+-- non-degenerate because the grade's coherence field is
+
+subset-contract-measured : map subsets→intervals contract ≡ [ 1 , 4 , ≤! ]
+subset-contract-measured = refl
+
+branching-inside-the-contract :
+  map subsets→intervals branching ≾ᵢ map subsets→intervals contract
+branching-inside-the-contract =
+  map-monotone subsets→intervals {branching} {contract} (holdsˢᵇ _ _)
+
+-- and it is a monoid map at both endpoints
+
+subset-windows-add :
+  map subsets→intervals (branching ·ᵇ contract)
+  ≡ map subsets→intervals branching ·ᵢ map subsets→intervals contract
+subset-windows-add = refl

@@ -9,8 +9,8 @@
 --   and stayed within one of the traces in `Q`                        --
 --                                                                    --
 -- with both sets read disjunctively, so both weaken by gaining        --
--- members. `Example.Traces.Coverage.LeftSided` and                    --
--- `Example.Traces.Allowance.RightSided` are its two endpoints read    --
+-- members. `Example.Traces.Timed.LeftSided` and                    --
+-- `Example.Traces.Timed.RightSided` are its two endpoints read    --
 -- alone.                                                              --
 ------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ open import Data.Nat.Base using (ℕ; _<_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
-module Syntax.Grades.Example.Traces.TwoSided
+module Syntax.Grades.Example.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
   (cost-pos : (o : Op) → 0 < cost o) where
 

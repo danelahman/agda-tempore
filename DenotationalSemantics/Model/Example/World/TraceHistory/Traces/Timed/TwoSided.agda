@@ -27,7 +27,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
-module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.TwoSided
+module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
   (cost-pos : (o : Op) → 0 < cost o) where
 
@@ -51,7 +51,7 @@ open import Syntax.Grades.Traces.Allowance Op cost
 open import Syntax.Grades.Traces.Allowance.Decidable Op cost
   using (module DecAllowance)
 
-open import Syntax.Grades.Example.Traces.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
