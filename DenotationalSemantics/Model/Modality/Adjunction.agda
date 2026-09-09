@@ -133,7 +133,7 @@ record Adjunction : Set₁ where
 
   -- The unit-side compatibility, *derived* from the counit-side `ε⊣-μ` by
   -- transposing across both box layers (`mate-inj` twice). This is the form
-  -- consumed by `Eternalᵒ.necᵉ-δ` and `Preservation.box-split`.
+  -- consumed by `Eternalᵒ.necᵉ-δ` and `Preservation.Step.box-split`.
 
   η⊣-δ : ∀ {A ρ₁ ρ₂}
        → δ ∘ᵐ η⊣ {A} {ρ₁ · ρ₂}

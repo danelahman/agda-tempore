@@ -6,25 +6,24 @@
 -- use a variable of eternal type at *any* grade `ρ`, not only at grades --
 -- below the unit `u`. Semantically this is the grade-`u` isomorphism    --
 -- `[ u ]ᵒ A ≅ A` (the box counit `ε` / unit `ηᵘ`) generalised to hold   --
--- at every grade — but only *one-directionally*, as a graded comonad    --
--- coalgebra, not as an isomorphism (see the note below).               --
+-- at every grade — but only *one-directionally*, as a graded            --
+-- `⟨_⟩`-algebra, not as an isomorphism (see the note below).           --
 --                                                                    --
 -- Concretely (`Example.PSh`) eternal types are the constant             --
 -- presheaves: their value is the same at every world, so it can be      --
 -- necessitated into, and extracted from, the box / context modality at  --
 -- an arbitrary grade.                                                   --
 --                                                                    --
--- We carry *both* transposes of the structure, tied by the graded       --
--- adjunction `⟨ ρ ⟩ ⊣ [ ρ ]`:                                          --
+-- The structure carried is one half of an adjoint pair:                --
 --                                                                    --
---   * `necᵉ : A →ᵐ [ ρ ]ᵒ A`  — necessitation at every grade, the       --
---     graded `[_]`-coalgebra generalising `ηᵘ`;                         --
 --   * `extᵉ : ⟨ ρ ⟩ᵒ A →ᵐ A`  — extraction at every grade, the graded   --
 --     `⟨_⟩`-algebra generalising `εᵘ`, which is what the variable rule   --
---     consumes directly.                                                --
+--     consumes directly. This is the primitive.                         --
 --                                                                    --
--- A single law `extᵉ-mate` states they are adjoint mates; the reverse   --
--- mate `necᵉ-mate` is then derivable from the triangle identities.      --
+-- Its transpose under `⟨ ρ ⟩ ⊣ [ ρ ]`, necessitation                    --
+-- `necᵉ : A →ᵐ [ ρ ]ᵒ A` — the graded `[_]`-coalgebra generalising      --
+-- `ηᵘ` — is *derived*, along with the mate laws `necᵉ-mate` /           --
+-- `extᵉ-mate` and the coalgebra laws, so a model supplies only `extᵉ`.  --
 --                                                                    --
 -- We additionally carry the *other direction* as a STRENGTH condition:  --
 --                                                                    --

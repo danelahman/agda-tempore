@@ -33,7 +33,7 @@ open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_; cost;
-         NeTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+         NeTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using (left-sided; holds; fails; failsᵉ)
@@ -193,12 +193,18 @@ sampling-then-branching =
 demand : R
 demand = ⟅ ⌈ read ⌉ ⟆
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
-claim-after-sampling =
+-- the run stores the reading as well before claiming, so the premise
+-- is not an equality: `⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆` covers the demand for
+-- a reading with the store left over
+
+claim-after-storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-storing =
   box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
-        (perform send here (return ⋆))))
+      (perform write here            -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
+                                     -- ∷ Reading
+          (perform send here (return ⋆)))))
 
 handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
@@ -253,10 +259,10 @@ claiming-at-once = failsᵉ uᵣ demand
 waiting : R
 waiting = ⟅ ⟨ 2 ⟩ ⟆
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+claim-after-idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
   box {ρ = waiting} (const 42)       -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
-    (delay 2                         -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
+    (delay 3                         -- ⟨ ⟅ ⟨ 3 ⟩ ⟆ ⟩
       (unbox (Tl-⟨⟩ Hd) holds        -- ∷ Reading
         (perform send here (return ⋆))))
 
@@ -392,6 +398,42 @@ the-ticks-alone = fails
 
 a-tick-either-way : uᵣ ·ᵣ after-the-join ≾ᵣ ⟅ ⟨ 1 ⟩ ⟆
 a-tick-either-way = holds
+
+-- Nesting the conditionals gives a grade with three members, and the
+-- three runs have nothing in common but the tick they each spend. So a
+-- box asking for a tick survives both joins, and one asking for two
+-- does not: the sampling branch spends only one.
+
+three-ways : E
+three-ways = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆
+
+sampling-branch-joins : opTime read ·ₑ uₑ ≾ₑ three-ways
+sampling-branch-joins = holds
+
+storing-branch-joins : opTime write ·ₑ uₑ ≾ₑ three-ways
+storing-branch-joins = holds
+
+claim-after-three-ways :
+  [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉
+                       ∣ ⌈ write ⌉ ∙ ⌈ send ⌉
+                       ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-three-ways =
+  box {ρ = ⟅ ⟨ 1 ⟩ ⟆} (const 42)     -- ∷ [ ⟅ ⟨ 1 ⟩ ⟆ ] Reading
+    ((if eternal-var Boolₑ (Tl-∷ Hd)
+        `then coerce {ε' = three-ways} holds (perform read ⋆ (return ⋆))
+        `else (if eternal-var Boolₑ (Tl-∷ Hd)
+                `then coerce holds (perform write (const 0) (return ⋆))
+                `else coerce holds (perform send (const 0) (return ⋆))))
+      ⨟                              -- ⟨ three-ways ⟩ ∷ Unit
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                                     -- ∷ Reading
+          (perform send here (return ⋆)))
+
+-- two ticks are more than the sampling branch spends, so a box asking
+-- for them does not survive the joins
+
+two-ticks-do-not : ¬ (uᵣ ·ᵣ three-ways ≾ᵣ ⟅ ⟨ 2 ⟩ ⟆)
+two-ticks-do-not = fails
 
 ------------------------------------------------------------------------
 -- Programs written at these guarantees

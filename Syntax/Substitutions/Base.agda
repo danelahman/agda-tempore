@@ -34,8 +34,8 @@ open import Syntax.Types     S
 -- composition case would have to run the term action on the value the first
 -- component produces, while the term action grows the substitution at every
 -- binder; the two recursions admit no shared order. Composition is instead
--- taken freely one layer up (`Parallel.Chain`), where it is a list and neither
--- recursion sees it.
+-- taken freely one layer up (`Substitutions.Chain`), where it is a list and
+-- neither recursion sees it.
 --
 -- The two congruences must be generators: `val-sub` only ever produces a target
 -- of shape `Δ ∷ A` from source `Δ`, so neither can be defined by recursion.

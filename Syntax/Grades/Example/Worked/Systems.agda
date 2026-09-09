@@ -18,8 +18,7 @@
 -- its quantifier runs, and the one conjunctive endpoint in the          --
 -- development, the subset floor, takes the slowest.                     --
 --                                                                      --
--- The systems that went with the earlier trace grid are parked under    --
--- `backup/`.                                                            --
+-- Systems for the sub-trace-order grid are parked under `backup/`.      --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Systems where

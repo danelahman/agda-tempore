@@ -510,9 +510,9 @@ env-cell-push (reachᵉ γ q) Δ t =
 -- zone's own boundary variable, which `∈-++ᶜˡ-++ᶜʳ` recognises as a *suffix*
 -- variable of the grown suffix, so `env-cell-suffix` carries it across. At
 -- `_∷ᵉ_` the substitution then hits it (`split→∈-∈-++ᶜˡ` identifies the pushed
--- boundary variable with `bvar`, and `rvar-hit` reads off the substituted
--- value's own cell); at `liftᵉ` nothing substitutes and it stays the fresh
--- cell. The eternal zone has no cell of its own at all.
+-- boundary variable with the one the splitting names, and `rvar-hit` reads off
+-- the substituted value's own cell); at `liftᵉ` nothing substitutes and it
+-- stays the fresh cell. The eternal zone has no cell of its own at all.
 
 env-cell-push (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ (σ , Tl-⟨⟩ y) =
   trans (cong (λ z → var-img′ (cong-ren (unbox-ren q))

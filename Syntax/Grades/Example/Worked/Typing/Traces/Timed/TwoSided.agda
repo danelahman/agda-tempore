@@ -148,13 +148,19 @@ either-reading =
 -- guarantee and stay within its allowance. The box below asks for a
 -- reading, and allows a reading and six ticks' worth of other work.
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
-claim-after-sampling =
+-- the run stores the reading as well before claiming, so neither
+-- endpoint is met exactly: it covers the demanded reading with the
+-- store left over, and spends three of the six the allowance leaves
+
+claim-after-storing :
+  [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉)
+claim-after-storing =
   box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+      (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
                                      -- ∷ Reading
-        (perform send here (return ⋆))))
+          (perform send here (return ⋆)))))
 
 handed-over : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 handed-over =
@@ -233,6 +239,43 @@ transmitting-branch-covers-nothing = fails _ _
 transmitting-branch-overspends :
   ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ , ⟅ ⟨ 1 ⟩ ⟆ , tt ])
 transmitting-branch-overspends = fails _ _
+
+------------------------------------------------------------------------
+-- Non-singleton grades at both endpoints
+--
+-- `if` joins its branches by taking the union at each endpoint, so a
+-- conditional's grade lists what each branch does on both sides. The
+-- box's floor is then met member by member -- the sampling branch
+-- covers the demanded reading, the storing branch the three ticks --
+-- while its six ticks of allowance cover both branches at once.
+
+branch-join : E
+branch-join = [ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , tt ]
+
+mixed-contract : R
+mixed-contract = [ ⟅ ⌈ read ⌉ ∣ ⟨ 3 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ⟆ , tt ]
+
+sampling-branch-joins : opTime read ·ₑ uₑ ≾ₑ branch-join
+sampling-branch-joins = holds _ _
+
+storing-branch-joins : opTime write ·ₑ uₑ ≾ₑ branch-join
+storing-branch-joins = holds _ _
+
+claim-after-a-branch :
+  [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+                       , ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+                       , tt ]
+claim-after-a-branch =
+  box {ρ = mixed-contract} (const 42)
+                                     -- ∷ [ mixed-contract ] Reading
+    ((if eternal-var Boolₑ (Tl-∷ Hd)
+        `then coerce {ε' = branch-join} (holds _ _)
+                (perform read ⋆ (return ⋆))
+        `else coerce (holds _ _) (perform write (const 0) (return ⋆)))
+      ⨟                              -- ⟨ branch-join ⟩ ∷ Unit
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                                     -- ∷ Reading
+          (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
 -- Programs written at these contracts

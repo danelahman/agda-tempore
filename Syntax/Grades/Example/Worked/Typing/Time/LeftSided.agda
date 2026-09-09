@@ -195,13 +195,14 @@ sampling-then-branching =
 -- The boxed value is a constant, which is what "available in `Γ ⟨ ρ ⟩`"
 -- comes to for data the environment supplies.
 
--- a reading promised in two ticks, claimed after idling exactly that
--- long, and transmitted
+-- a reading promised in two ticks, claimed after idling three: the
+-- premise is `2 ≤ 3`, and waiting longer than the box asks for is
+-- always allowed
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
+claim-after-idling : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
 claim-after-idling =
   box {ρ = [ 2 ,+∞⟩} (const 42)      -- ∷ [ [ 2 ,+∞⟩ ] Reading
-    (delay 2                         -- ⟨ [ 2 ,+∞⟩ ⟩
+    (delay 3                         -- ⟨ [ 3 ,+∞⟩ ⟩
       (unbox (Tl-⟨⟩ Hd) ≤!           -- ∷ Reading
         (perform send here (return ⋆))))
 
@@ -217,7 +218,8 @@ claim-at-once-fails : ¬ (uᵣ ≾ᵣ [ 2 ,+∞⟩)
 claim-at-once-fails = ≰!
 
 -- a resource promised in one tick is claimable after a reading, since
--- performing an operation is how time passes
+-- performing an operation is how time passes. The premise is an
+-- equality: the reading takes exactly the tick the box asks for.
 
 claim-after-sampling : [] ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
 claim-after-sampling =
@@ -237,13 +239,14 @@ claiming-now =
       (perform send here (return ⋆)))
 
 -- a boxed resource crosses a binder as an ordinary value: the function
--- takes the box and makes the claim itself
+-- takes the box, stores a reading of its own, and then claims it --
+-- two ticks against the one the box asks for
 
-handed-over : [] ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
+handed-over : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
 handed-over =
   box {ρ = [ 1 ,+∞⟩} (const 42)      -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (lam                             -- ∷ [ [ 1 ,+∞⟩ ] Reading
-       (perform read ⋆               -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
+       (perform write (const 0)      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
@@ -262,15 +265,17 @@ reachable-after-a-transmission = ≤!
 unreachable-after-a-reading : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ [ 4 ,+∞⟩)
 unreachable-after-a-reading = ≰!
 
--- promised in one tick instead, both branches reach it, and the
--- conditional is graded at the floor of the two
+-- promised in one tick instead, both branches reach it with time to
+-- spare -- two ticks in one, four in the other -- and the conditional
+-- is graded at the floor of the two
 
-claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
+claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
 claimed-in-both-branches =
   box {ρ = [ 1 ,+∞⟩} (const 42)      -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (if true
       `then coerce ≤!
-              (perform read ⋆        -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
+              (perform write (const 0)
+                                     -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
@@ -285,14 +290,16 @@ claimed-in-both-branches =
 -- claimed reading or one taken along the way -- with both branches
 -- making the same run
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
+either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 ,+∞⟩
 either-way =
   box {ρ = [ 1 ,+∞⟩} (const 42)      -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!    -- ∷ Reading
-        (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
-          `then perform send here (return ⋆)
-          `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
+      (delay 1                       -- ⟨ [ 1 ,+∞⟩ ⟩
+        (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤!
+                                     -- ∷ Reading
+          (if eternal-var Boolₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+            `then perform send here (return ⋆)
+            `else perform send (fresh-var ≤! (Tl-∷ (Tl-⟨⟩ Hd))) (return ⋆)))))
 
 ------------------------------------------------------------------------
 -- Sub-effecting against unboxing
@@ -304,8 +311,8 @@ either-way =
 -- and time is what the box is compared against. `coercion-only-closes`
 -- is the general statement; here is what it comes to.
 
--- a reading and a store guarantee three ticks, which is what the box
--- asks for
+-- a reading and a store guarantee three ticks, exactly what the box
+-- asks for, so the claim has no slack to survive a coercion
 
 claim-after-a-store : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
 claim-after-a-store =
@@ -379,12 +386,13 @@ four-ticks-lost-at-the-join = ≰!
 -- working and one by waiting: the locks between the binding and the
 -- claim multiply to `[ 5 ,+∞⟩` either way.
 
--- a resource promised in five ticks, reached by working: a reading and
--- a store are three ticks, and two of idling make five
+-- a resource promised in four ticks, reached by working: a reading and
+-- a store are three ticks, and two of idling make five, a tick more
+-- than the box asks for
 
 duty-cycle : [] ⊢C⦂ Unit ‼ [ 9 ,+∞⟩
 duty-cycle =
-  box {ρ = [ 5 ,+∞⟩} (const 42)      -- ∷ [ [ 5 ,+∞⟩ ] Reading
+  box {ρ = [ 4 ,+∞⟩} (const 42)      -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (perform write here            -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
         (delay 2                     -- ⟨ [ 2 ,+∞⟩ ⟩
@@ -396,47 +404,52 @@ duty-cycle =
 
 waiting-instead : [] ⊢C⦂ Unit ‼ [ 9 ,+∞⟩
 waiting-instead =
-  box {ρ = [ 5 ,+∞⟩} (const 42)      -- ∷ [ [ 5 ,+∞⟩ ] Reading
+  box {ρ = [ 4 ,+∞⟩} (const 42)      -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (delay 5                         -- ⟨ [ 5 ,+∞⟩ ⟩
       (unbox (Tl-⟨⟩ Hd) ≤!           -- ∷ Reading
         (perform send here (return ⋆))))
 
 -- one tick short of it, the claim is refused: dropping the store from
--- `duty-cycle` leaves four ticks against a resource promised in five
+-- `duty-cycle` leaves three ticks against a resource promised in four
 
-one-tick-short : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-natʳ 2 ≾ᵣ [ 5 ,+∞⟩)
+one-tick-short : ¬ (uᵣ ·ᵣ opTime read ·ᵣ of-natʳ 2 ≾ᵣ [ 4 ,+∞⟩)
 one-tick-short = ≰!
 
 -- two resources on different schedules, claimed at the two points of
--- one run where each has come due: the first after a reading, the
--- second after transmitting as well. Two box bindings stand in the
--- context, and the indices tell them apart.
+-- one run where each has come due: the first after a reading and a
+-- store, the second after transmitting as well. Two box bindings stand
+-- in the context, and the indices tell them apart. Neither premise is
+-- an equality: three ticks have passed against a promise of two, and
+-- seven against a promise of six.
 
-two-schedules : [] ⊢C⦂ Unit ‼ [ 9 ,+∞⟩
+two-schedules : [] ⊢C⦂ Unit ‼ [ 11 ,+∞⟩
 two-schedules =
-  box {ρ = [ 1 ,+∞⟩} (const 1)       -- ∷ [ [ 1 ,+∞⟩ ] Reading
-    (box {ρ = [ 5 ,+∞⟩} (const 2)    -- ∷ [ [ 5 ,+∞⟩ ] Reading
+  box {ρ = [ 2 ,+∞⟩} (const 1)       -- ∷ [ [ 2 ,+∞⟩ ] Reading
+    (box {ρ = [ 6 ,+∞⟩} (const 2)    -- ∷ [ [ 6 ,+∞⟩ ] Reading
       (perform read ⋆                -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) ≤!
+        (perform write here          -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
+          (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) ≤!
                                      -- ∷ Reading
-          (perform send here         -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
-            (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd))))) ≤!
+            (perform send here       -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
+              (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))))
+                     ≤!
                                      -- ∷ Reading
-              (perform send here (return ⋆)))))))
+                (perform send here (return ⋆))))))))
 
 -- and the later one is out of reach at the earlier point
 
-not-due-yet : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ [ 5 ,+∞⟩)
+not-due-yet : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ [ 6 ,+∞⟩)
 not-due-yet = ≰!
 
--- a resource promised in four ticks, claimed on both sides of an `if`:
--- transmitting takes the four outright, while taking a reading takes
+-- a resource promised in three ticks, claimed on both sides of an
+-- `if`: transmitting takes four outright, while taking a reading takes
 -- one and has to be followed by three of idling. The two branches reach
--- the same floor, so the conditional needs no coercion at all.
+-- the same floor, so the conditional needs no coercion at all, and each
+-- passes the premise with a tick to spare.
 
 scheduled-choice : [] ∷ Bool ⊢C⦂ Unit ‼ [ 8 ,+∞⟩
 scheduled-choice =
-  box {ρ = [ 4 ,+∞⟩} (const 42)      -- ∷ [ [ 4 ,+∞⟩ ] Reading
+  box {ρ = [ 3 ,+∞⟩} (const 42)      -- ∷ [ [ 3 ,+∞⟩ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then perform send (const 0)   -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
               (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
@@ -448,8 +461,7 @@ scheduled-choice =
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 
--- without the idling the sampling branch would be three ticks short:
--- `unreachable-after-a-reading` above is what it would need
+-- without the idling the sampling branch would be two ticks short
 
 ------------------------------------------------------------------------
 -- Effect handling

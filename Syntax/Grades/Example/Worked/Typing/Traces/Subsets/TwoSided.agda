@@ -38,7 +38,8 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_;
-         Trace; NeTraces; neTraces; traces; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+         Trace; NeTraces; neTraces; traces; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆;
+         ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided
   using (TwoSided; [_,_,_]; lo; two-sided; holds; fails; exact)
@@ -197,7 +198,41 @@ claiming-at-once : ¬ (uᵣ ≾ᵣ demand)
 claiming-at-once = fails uᵣ demand
 
 ------------------------------------------------------------------------
--- Programs written at these intervals
+-- Which endpoint the comparison can move at
+--
+-- The floor is pinned: a computation's runs are the singleton of the
+-- run it makes, `P ⊆ X` forces `P` to be that singleton, and so every
+-- run the box demands is the run that elapsed. What is left free is the
+-- cap, which may list as many runs as it likes -- and there the
+-- comparison is a genuine inclusion rather than an equality.
+
+every-demand-is-the-elapsed-run :
+  (t : Trace) (ρ : R) → exact t ≾ᵣ ρ → (s : Trace) → s ∈ traces (lo ρ) → s ≡ t
+every-demand-is-the-elapsed-run t ρ sub s s∈ρ =
+  only-member (∈-⊑ (proj₁ sub) s∈ρ)
+
+-- so a box demanding two runs is out of reach of any one of them
+
+two-run-demand :
+  ¬ (uᵣ ·ᵣ opTime read
+     ≾ᵣ [ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , tt ])
+two-run-demand =
+  fails (uᵣ ·ᵣ opTime read)
+        [ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , tt ]
+
+-- while a cap listing three runs is met by the one that elapsed, the
+-- inclusion being proper at that endpoint
+
+wide-cap : R
+wide-cap =
+  [ ⟅ ⌈ read ⌉ ⟆
+  , ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ , tt ]
+
+claim-against-a-wide-cap : uᵣ ·ᵣ opTime read ≾ᵣ wide-cap
+claim-against-a-wide-cap = holds (uᵣ ·ᵣ opTime read) wide-cap
+
+------------------------------------------------------------------------
+-- Programs written at these grades
 --
 -- The box demands a reading and a store; the run makes exactly that
 -- before claiming it -- two locks multiplying to the demanded run --

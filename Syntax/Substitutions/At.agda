@@ -3,9 +3,9 @@
 --                                                                     --
 -- Replacing the entry sitting between `Γ'` and a suffix `Θ` by a value --
 -- over `Γ'`, presenting the result over `Γ' ++ᶜ Θ`. This is the form   --
--- every consumer of substitution actually uses, and the boundary       --
--- variable it names is `cong-sub₀ (val-sub W)` under the retyping      --
--- `castOf` — which is what carries the parallel laws over to it.       --
+-- every consumer of substitution actually uses: the one substitution   --
+-- operator at the splitting `split-≡-++ᶜ`, which is what carries the   --
+-- parallel laws over to it.                                            --
 ------------------------------------------------------------------------
 
 open import Data.Empty

@@ -17,8 +17,9 @@
 -- in full, at its own grades, with every side condition discharged at  --
 -- the point the rule imposes it. What this module keeps is what the    --
 -- programs are written *with* -- the three ways of meeting `var`'s     --
--- bound, and the operation clauses handed to `handle`, whose typing is --
--- intricate and identical at every grade.                              --
+-- bound, the coercion lemma every instance instantiates, and the       --
+-- operation clauses handed to `handle`, whose typing is intricate and  --
+-- identical at every grade.                                            --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

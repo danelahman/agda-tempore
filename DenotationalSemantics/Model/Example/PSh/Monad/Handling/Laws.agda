@@ -196,11 +196,11 @@ T-alg-of-handlerᵀ-natᴾ′ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h h' ceq x 
     (T-alg-of-handlerᵀ-natᴾ {P} {P'} {A} {ε} {ε'} bc bc' f fcomm h x)
 
 -- Sub-effecting in the *inner* grade. The handler must be *ambivalent* in the
--- residual grade (`hmono`); the fold selects `h op` by that grade, so at an
+-- residual grade (`Monoˢ`); the fold selects `h op` by that grade, so at an
 -- `op`-node the coerced continuation is folded by the *higher-grade* clause,
--- and `hmono` moves the coercion back out (`·ₑ-monoʳ`) so it may be shared with
--- the other cases. Leaves / delays / subs commute the coercion through the
--- `sub`/`ε-subst` machinery (`sub-ε-substᵗ`, `sub-delay`, `sub-∘`).
+-- and `clause-mono` moves the coercion back out (`·ₑ-monoʳ`) so it may be
+-- shared with the other cases. Leaves / delays / subs commute the coercion
+-- through the `sub`/`ε-subst` machinery (`sub-ε-substᵗ`, `sub-delay`, `sub-∘`).
 
 {-# TERMINATING #-}
 T-alg-of-handlerˢ-≤ⁱ : ∀ {P A ε ε₁' ε₂' w} (bc : Eternalᵒ P) (h : Handlerˢ P A)

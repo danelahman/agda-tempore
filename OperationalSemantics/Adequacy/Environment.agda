@@ -1,12 +1,11 @@
 ------------------------------------------------------------------------
 -- Closing environments over a state.                                 --
 --                                                                    --
--- `Syntax.Substitutions` provides single-variable substitution whose --
--- replacement is *prefix-typed*: typed in the context left of the    --
--- variable it replaces, which the substitution removes. A closing    --
--- environment is therefore not a `Sub` but a description of how a    --
--- context is built from a state, realised by iterated single         --
--- substitutions.                                                     --
+-- `Syntax.Substitutions` substitutes at a context's prefix boundary: --
+-- the replacement is typed in the context left of the variable it    --
+-- replaces, which the substitution removes. A closing environment is --
+-- therefore not a `Sub` but a description of how a context is built  --
+-- from a state, realised by iterated boundary substitutions.         --
 --                                                                    --
 -- The zones a context of the fundamental lemma has:                  --
 --                                                                    --

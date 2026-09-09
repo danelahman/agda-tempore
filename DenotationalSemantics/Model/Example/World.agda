@@ -24,8 +24,8 @@
 -- Each trace grade has a frame of either kind, and reading the two     --
 -- against each other is how the tick worlds' blindness shows: they see --
 -- a grade only through durations, so distinctions the histories keep   --
--- collapse. The frames that went with the earlier grid are parked      --
--- under `backup/` and imported from nowhere.                           --
+-- collapse. Frames for the sub-trace-order grid are parked under       --
+-- `backup/` and imported from nowhere.                                 --
 --                                                                     --
 -- This module is only an index -- the trace-based frames are           --
 -- parameterised by the alphabet `Op`, so it lists the pieces rather    --

@@ -19,10 +19,10 @@
 --                                                                     --
 -- The trace family is two families of three: `Timed.*` over the        --
 -- cost-sensitive orders on traces, and `Subsets.*` over equality, each --
--- with a floor, a cap and their pairing. The grid that preceded them   --
--- -- four lifts against three sidednesses, over the sub-trace orders --  --
--- is parked under `backup/`, along with its worked examples, Kripke    --
--- frames and grade systems, and is not imported from anywhere.         --
+-- with a floor, a cap and their pairing. A grid over the sub-trace     --
+-- orders -- four lifts against three sidednesses -- is parked under    --
+-- `backup/`, along with its worked examples, Kripke frames and grade   --
+-- systems, and is imported from nowhere.                               --
 --                                                                     --
 -- `System.*` then pairs them up. Reading the projections tells the     --
 -- story of the development: each one says what a resource grade is     --

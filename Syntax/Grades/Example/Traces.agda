@@ -33,8 +33,8 @@
 -- order; the `Subsets.*` ones are built directly on `Sets`' `_⊑_`,     --
 -- the discrete order not being a `TraceOrder` (it has no `≼-nil`).     --
 --                                                                     --
--- The earlier grid -- four lifts against three sidednesses over the    --
--- sub-trace orders -- is parked under `backup/`.                       --
+-- A grid of four lifts against three sidednesses, over the sub-trace   --
+-- orders, is parked under `backup/`.                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Traces where

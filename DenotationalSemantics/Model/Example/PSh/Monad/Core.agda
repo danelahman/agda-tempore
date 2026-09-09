@@ -185,7 +185,7 @@ mutual
     -- `μ` monotone in the inner grade.
     --
     -- Soundness of this rule rests on handlers being *ambivalent* in the
-    -- residual grade (`Handlerˢ.clause-mono`): the fold selects the clause
+    -- residual grade (`Monoˢ`): the fold selects the clause
     -- `h op ε''` by the residual grade, so a coercion pushed under an operation
     -- changes which clause is applied, and only a handler whose clauses agree
     -- across such a coercion is left unaffected.
@@ -1006,7 +1006,7 @@ mutual
   -- The strength preserves grades, so it leaves both delay collapses in place;
   -- only the box it carries has to be recognised as the same one, read at a
   -- different accessibility witness (`[]-fun-irr`) and through the collapse's
-  -- own grade transport (`fun-substᵇ`).
+  -- own grade transport (`strˢ-ε-substˢ`).
   strˢ-congᵗ A {box} {box'} hb (delay-zero {k = k} {q₀ = q₀} e) =
     ≈ᵗ-trans (delay-zero {q₀ = q₀} e)
     (≈ᵗ-trans (ε-substˢ-congᵗ e

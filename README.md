@@ -155,7 +155,11 @@ a grade system, a signature of base types, and operations' signatures.
   the point it imposes it, by running the grade's own decision procedure; where
   a grade refuses a program, a refutation of the bound it would have needed
   stands in its place. So what a grade lets a program do, and what it refuses,
-  is settled by whether the program typechecks. `Typing/Core.agda` holds what
+  is settled by whether the program typechecks.
+  `Typing/Traces/Subsets/LeftSided/Retrying.agda` re-runs the conjunctive floor
+  at a signature grading one operation by two runs — a transmitter that may
+  retry — which is where that floor's non-singleton grades come from.
+  `Typing/Core.agda` holds what
   the programs are written *with*: the language itself, the three ways of
   meeting `var`'s bound, and the operation clauses handed to `handle`. The
   index module `Typing.agda` tabulates how the instances differ: what a box
@@ -184,10 +188,12 @@ a grade system, a signature of base types, and operations' signatures.
   laws of the action with respect to it, and `Category.agda` the categorical
   structure this all amounts to.
 - `Syntax/RenActions.agda` defines renamings' action on well-typed terms.
-- `Syntax/Terms/Equivalence.agda` defines equality of terms (`_≐ᵛ_`/`_≐ᶜ_`,
-  which are propositional equality: the grade bounds a term stores are
-  proof-irrelevant) together with a congruence per former, and
-  `Syntax/Terms/Transport.agda` retyping a term along an equality of contexts.
+- `Syntax/Terms/Equivalence.agda` records that equality of terms is
+  propositional equality — the data a term stores that no rule inspects (a
+  `var`'s and an `unbox`'s grade bounds, a `coerce`'s ordering) is
+  proof-irrelevant — so the congruences are `cong`/`cong₂` and only the three
+  irrelevance laws and `handle-≡` are named. `Syntax/Terms/Transport.agda`
+  retypes a term along an equality of contexts.
 - `Syntax/Substitutions/` defines parallel substitutions and their metatheory:
   `Base.agda` the substitutions themselves, `Lookup.agda` what one does to a
   variable, `Action.agda` its action on terms, `Equivalence.agda` when two act

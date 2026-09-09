@@ -13,14 +13,15 @@
 -- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a   --
 -- reading to local memory (2-3), `send` one over the radio (4-6). Its  --
 -- runs are `poll` (just a read), `logged` (read then write), and       --
--- `uplink` (read, idle two ticks, send), which takes 9 ticks at worst. --
+-- `uplink` (read, idle two ticks, send), which takes 9 ticks at worst, --
+-- together with `logged-uplink`, `chatty-uplink` and `idle`.           --
 --                                                                     --
 -- Positive and negative claims are both discharged by *running* the    --
 -- relevant decision procedure, so an example asserted the wrong way    --
 -- round does not typecheck. The tables in the module headers are       --
 -- therefore checked, not annotations.                                  --
 --                                                                     --
--- Two findings the trace examples pin down are worth having in         --
+-- Four findings the trace examples pin down are worth having in        --
 -- advance:                                                             --
 --                                                                     --
 --   * A bound's operations are permissions and its delays are budget.  --

@@ -54,10 +54,10 @@ open import Syntax.Substitutions.Equivalence Spec
 -- THE FUNDAMENTAL LEMMA
 --
 -- Induction on the typing derivation, mutually for values and computations.
--- Six computation cases are split off, each stated as its own lemma taking
--- the induction hypotheses it needs — for a binding subterm, at *every*
+-- Five computation cases are split off here, each stated as its own lemma
+-- taking the induction hypotheses it needs — for a binding subterm, at *every*
 -- environment, since the state the subterm is reached at is not the one the
--- case starts from.
+-- case starts from. Sequencing is `Adequacy.Bind`'s `seq-CRed`.
 ------------------------------------------------------------------------
 
 -- Unboxing: read the store. `env-Cˢ-unbox` sends the action to an `unbox` at

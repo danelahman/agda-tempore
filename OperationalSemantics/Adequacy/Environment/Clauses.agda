@@ -513,11 +513,12 @@ env-eternal-H-C-∷ {B₀} {Δ} {Γc} {B} lf η K op ε (yes et) e₁ ih =
 --
 -- The clause is split off, taking the eternality decision *and* the
 -- equation naming it, plus its own induction hypothesis (as
--- `ren-sub-unbox` does). That is the only way in: a bare `with eternal? A`
--- on the `_∷ᵉ_` clause hoists the decision ahead of `St`, `Γ`, `γ`, `W`,
--- `Δ`, `K` and leaves an occurrence un-abstracted, because the statement
--- mentions fixed proof terms whose types mention `(Γ ∷ A) ᴱ`. Here every
--- variable is already fixed, so `rewrite` touches the goal alone.
+-- `env-eternal-H-C-∷` does). That is the only way in: a bare
+-- `with eternal? A` on the `_∷ᵉ_` clause hoists the decision ahead of
+-- `St`, `Γ`, `γ`, `W`, `Δ`, `K` and leaves an occurrence un-abstracted,
+-- because the statement mentions fixed proof terms whose types mention
+-- `(Γ ∷ A) ᴱ`. Here every variable is already fixed, so `rewrite`
+-- touches the goal alone.
 
 env-Hˢ-ᴱ-∷ : ∀ {St Γ A B} → (γ : Env St Γ) → (W : toCtx St ⊢V⦂ A)
            → (Δ : Ctx) → (K : Fam B (((Γ ∷ A) ++ᶜ Δ) ᴱ))

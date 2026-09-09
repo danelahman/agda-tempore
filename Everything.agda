@@ -5,17 +5,17 @@
 -- The language has:                                                    --
 --                                                                      --
 --   - a modality on types that specifies that data might not yet be    --
---     available, but is guaranteed to be in at most τ time steps       --
+--     available, but will be once a resource grade ρ has elapsed      --
 --                                                                      --
---   - a modality on contexts describing that at least τ time steps     --
---     have passed (allowing new data to become available)              --
+--   - a modality on contexts describing that a resource grade has      --
+--     elapsed (allowing new data to become available)                  --
 --                                                                      --
 --   - features facilitating the interaction of these two modalities    --
 --     based on adjunctions (i.e., Fitch-style modal type systems)      --
 --                                                                      --
 --   - computational effects modelled using algebraic operations with   --
---     prescribed execution times and whose execution makes time pass   --
---     (both in the semantics and also in the static typing rules)      --
+--     prescribed effect grades, whose execution makes those grades     --
+--     elapse (both in the semantics and in the static typing rules)    --
 --                                                                      --
 -- The formalisation includes:                                          --
 --                                                                      --

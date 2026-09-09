@@ -162,15 +162,15 @@ sampling-then-branching =
 --
 -- A box graded `[ 2 , 6 ]` is available from two ticks and gone after
 -- six, and what it is compared against is the product of the locks
--- between its binding and the claim. Idling two ticks lands in the
--- window; claiming it at once is too early; a reading and a
--- transmission spend up to seven, which is too late.
+-- between its binding and the claim. Idling three ticks lands inside
+-- the window, clear of both endpoints; claiming it at once is too
+-- early; a reading and a transmission spend up to seven, too late.
 
-claim-in-the-window : [] ⊢C⦂ Unit ‼ [ 6 , 8 , ≤! ]
+claim-in-the-window : [] ⊢C⦂ Unit ‼ [ 7 , 9 , ≤! ]
 claim-in-the-window =
   box {ρ = [ 2 , 6 , ≤! ]} (const 42)
                                      -- ∷ [ [ 2 , 6 ] ] Reading
-    (delay 2                         -- ⟨ [ 2 , 2 ] ⟩
+    (delay 3                         -- ⟨ [ 3 , 3 ] ⟩
       (unbox (Tl-⟨⟩ Hd) (≤! , ≤!)    -- ∷ Reading
         (perform send here (return ⋆))))
 
@@ -183,23 +183,26 @@ claim-after-a-reading-too-early (lo , _) = ≰! lo
 claim-too-late : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ [ 2 , 6 , ≤! ])
 claim-too-late (_ , hi) = ≰! hi
 
--- a window that opens at one tick is within reach of a single reading
+-- a window that opens at one tick is within reach of a reading and a
+-- store, which take between three and four: past the floor and inside
+-- the deadline, with neither endpoint met exactly
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
-claim-after-sampling =
+claim-after-storing : [] ⊢C⦂ Unit ‼ [ 7 , 10 , ≤! ]
+claim-after-storing =
   box {ρ = [ 1 , 6 , ≤! ]} (const 42)
                                      -- ∷ [ [ 1 , 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
+      (perform write here            -- ⟨ [ 2 , 3 ] ⟩ ∷ Unit
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (≤! , ≤!)
                                      -- ∷ Reading
-        (perform send here (return ⋆))))
+          (perform send here (return ⋆)))))
 
-handed-over : [] ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
+handed-over : [] ⊢C⦂ Unit ‼ [ 6 , 9 , ≤! ]
 handed-over =
   box {ρ = [ 1 , 6 , ≤! ]} (const 42)
                                      -- ∷ [ [ 1 , 6 ] ] Reading
     (lam                             -- ∷ [ [ 1 , 6 ] ] Reading
-       (perform read ⋆               -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
+       (perform write (const 0)      -- ⟨ [ 2 , 3 ] ⟩ ∷ Unit
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
                                      -- ∷ Reading
            (perform send here (return ⋆))))
@@ -219,8 +222,8 @@ claiming-now =
 
 either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [ 5 , 7 , ≤! ]
 either-way =
-  box {ρ = [ 1 , 6 , ≤! ]} (const 42)
-                                     -- ∷ [ [ 1 , 6 ] ] Reading
+  box {ρ = [ 0 , 6 , ≤! ]} (const 42)
+                                     -- ∷ [ [ 0 , 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≤! , ≤!)
                                      -- ∷ Reading
@@ -231,13 +234,14 @@ either-way =
 ------------------------------------------------------------------------
 -- Unboxing under a branch
 --
--- Against the window `[ 1 , 6 ]`, a reading is inside it and so is a
--- transmission, so both branches may claim the resource.
+-- Against the window `[ 0 , 8 ]`, a reading is inside it and so is a
+-- transmission, so both branches may claim the resource -- and neither
+-- meets an endpoint exactly.
 
 claimed-in-both-branches : [] ⊢C⦂ Unit ‼ [ 5 , 12 , ≤! ]
 claimed-in-both-branches =
-  box {ρ = [ 1 , 6 , ≤! ]} (const 42)
-                                     -- ∷ [ [ 1 , 6 ] ] Reading
+  box {ρ = [ 0 , 8 , ≤! ]} (const 42)
+                                     -- ∷ [ [ 0 , 8 ] ] Reading
     (if true
       `then coerce (≤! , ≤!)
               (perform read ⋆        -- ⟨ [ 1 , 1 ] ⟩ ∷ Reading
@@ -297,9 +301,9 @@ claim-after-a-coerced-store =
 ------------------------------------------------------------------------
 -- Programs written at these windows
 --
--- Both ends of a window in one `if`: the branch that idles two ticks
--- opens it, the branch that transmits lands on its far edge, and the
--- conditional is graded at the hull of the two.
+-- Both ends of a window in one `if`: the branch that idles three ticks
+-- claims it clear of both endpoints, the branch that transmits lands on
+-- its far edge, and both are coerced to a window containing the two.
 
 window-in-a-branch : [] ∷ Bool ⊢C⦂ Unit ‼ [ 6 , 12 , ≤! ]
 window-in-a-branch =
@@ -307,7 +311,7 @@ window-in-a-branch =
                                      -- ∷ [ [ 2 , 6 ] ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (≤! , ≤!)
-              (delay 2               -- ⟨ [ 2 , 2 ] ⟩
+              (delay 3               -- ⟨ [ 3 , 3 ] ⟩
                 (unbox (Tl-⟨⟩ Hd) (≤! , ≤!)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
@@ -324,16 +328,16 @@ one-reading-too-many : ¬ (uᵣ ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ [ 2 ,
 one-reading-too-many (_ , hi) = ≰! hi
 
 -- Two staggered resources, each claimed at the one point of the run
--- where its own window is open: the first after idling two ticks, the
+-- where its own window is open: the first after idling three ticks, the
 -- second after transmitting the first as well. Two box bindings stand
 -- in the context, and the indices tell them apart.
 
-staggered : [] ⊢C⦂ Unit ‼ [ 10 , 14 , ≤! ]
+staggered : [] ⊢C⦂ Unit ‼ [ 11 , 15 , ≤! ]
 staggered =
   box {ρ = [ 2 , 6 , ≤! ]} (const 1) -- ∷ [ [ 2 , 6 ] ] Reading
     (box {ρ = [ 6 , 12 , ≤! ]} (const 2)
                                      -- ∷ [ [ 6 , 12 ] ] Reading
-      (delay 2                       -- ⟨ [ 2 , 2 ] ⟩
+      (delay 3                       -- ⟨ [ 3 , 3 ] ⟩
         (unbox (Tl-⟨⟩ (Tl-∷ Hd)) (≤! , ≤!)
                                      -- ∷ Reading
           (perform send here         -- ⟨ [ 4 , 6 ] ⟩ ∷ Unit
@@ -344,10 +348,10 @@ staggered =
 -- the points cannot be swapped: at the earlier one the second window
 -- has not opened, and at the later one the first has closed
 
-second-not-open-yet : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ [ 6 , 12 , ≤! ])
+second-not-open-yet : ¬ (uᵣ ·ᵣ of-natʳ 3 ≾ᵣ [ 6 , 12 , ≤! ])
 second-not-open-yet (lo , _) = ≰! lo
 
-first-closed-by-then : ¬ (uᵣ ·ᵣ of-natʳ 2 ·ᵣ opTime send ≾ᵣ [ 2 , 6 , ≤! ])
+first-closed-by-then : ¬ (uᵣ ·ᵣ of-natʳ 3 ·ᵣ opTime send ≾ᵣ [ 2 , 6 , ≤! ])
 first-closed-by-then (_ , hi) = ≰! hi
 
 ------------------------------------------------------------------------

@@ -2,10 +2,10 @@
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
 -- Effect grades are the two-sided trace intervals of                   --
--- `Example.Traces.TwoSided`: a grade `[ P , Q ]` says that whatever    --
--- the computation did, it covered one of the traces in `P` and stayed  --
--- within one of those in `Q`. Resource grades are the two-sided time   --
--- intervals, "between `min` and `max` time steps".                     --
+-- `Example.Traces.Timed.TwoSided`: a grade `[ P , Q ]` says that       --
+-- whatever the computation did, it covered one of the traces in `P`    --
+-- and stayed within one of those in `Q`. Resource grades are the       --
+-- two-sided time intervals, "between `min` and `max` time steps".      --
 --                                                                     --
 -- The projection reads each endpoint through durations, and each one   --
 -- in the direction its set is read:                                    --
@@ -14,9 +14,9 @@
 --                                                                     --
 -- Both sets being read disjunctively, the guarantee is only as strong  --
 -- as its cheapest member and the allowance only as tight as its        --
--- slowest. So this is the pair of the two one-sided projections --      --
--- `System.Traces.Timed.LeftSided` and                              --
--- `System.Traces.Timed.RightSided` -- and every law is theirs.     --
+-- slowest. So this is the pair of the two one-sided projections --     --
+-- `System.Traces.Timed.LeftSided` and `System.Traces.Timed.RightSided` --
+-- -- and every law is theirs.                                          --
 --                                                                     --
 -- The target's `min ≤ max` is exactly what the grade's coherence field --
 -- supplies: some listed guarantee takes no longer than some listed     --

@@ -18,8 +18,8 @@
 -- wants an order in which time never buys an operation, and an         --
 -- allowance one in which a listed delay is a budget that buys them; a  --
 -- single order cannot do both. So the construction takes `Oᶠ` and `Oᶜ` --
--- separately, and `Example.Traces.TwoSided` instantiates them at       --
--- `Traces.Coverage` and `Traces.Allowance`. Those two are             --
+-- separately, and `Example.Traces.Timed.TwoSided` instantiates them at --
+-- `Traces.Coverage` and `Traces.Allowance`. Those two are              --
 -- incomparable -- neither contains the other -- which is what the      --
 -- coherence field below has to work around.                            --
 --                                                                     --

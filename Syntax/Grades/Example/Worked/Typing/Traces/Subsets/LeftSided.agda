@@ -3,8 +3,8 @@
 --                                                                     --
 -- A grade `P` is read against the runs `X` a computation may have as   --
 -- `P ⊆ X`: every listed trace is a run it can exhibit. The set is read --
--- *conjunctively*, so weakening drops members and `{ ε }` -- demanding --
--- only that stopping is possible -- is the greatest grade.             --
+-- *conjunctively*, so weakening drops members and `⟅ ε ⟆` --          --
+-- demanding only that stopping is possible -- is the greatest grade.   --
 --                                                                     --
 -- The calculus meets this grade at its most rigid. Every operation is  --
 -- graded by a singleton, products of singletons are singletons, and a  --
@@ -30,7 +30,8 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.LeftSided where
 open import Data.Empty using (⊥)
 open import Data.List.Base using () renaming (_∷_ to _∷ˡ_; [] to []ˡ)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Relation.Unary.Any using () renaming (here to hereᴬ)
+open import Data.List.Relation.Unary.Any using ()
+  renaming (here to hereᴬ; there to thereᴬ)
 open import Data.Product using (Σ; _,_)
 
 open import Relation.Nullary using (¬_)
@@ -39,12 +40,14 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_;
-         Trace; NeTraces; neTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+         Trace; NeTraces; neTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆;
+         ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
   using (left-sided; holds; fails; holdsᵉ; failsᵉ)
 
-open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
+open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
+  using (∈-⊑; ⊑-∈)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
@@ -230,6 +233,101 @@ claiming-now =
     (unbox Hd (holdsᵉ uᵣ nothing-demanded)
                                      -- ∷ Reading
       (perform send here (return ⋆)))
+
+------------------------------------------------------------------------
+-- Why every claim here is an equality
+--
+-- The claims above all compare a grade with itself, and that is forced
+-- rather than chosen. A computation's grade is the singleton of its
+-- run, so the elapsed grade at any `unbox` is a singleton; the premise
+-- `elapsed ≾ᵣ ρ` asks `ρ ⊆ elapsed`; and so every run the box demands
+-- is the run that elapsed. There is no room here for the non-reflexive
+-- comparisons the ordered families allow.
+
+every-demand-is-the-elapsed-run :
+  (t : Trace) (ρ : R) → ⟅ t ⟆ ≾ᵣ ρ → (s : Trace) → s ∈ traces ρ → s ≡ t
+every-demand-is-the-elapsed-run t ρ sub s s∈ρ = only-member (∈-⊑ sub s∈ρ)
+
+-- so a box demanding two runs is out of reach of any one of them, and
+-- of every program in this calculus
+
+two-run-demand : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆)
+two-run-demand = fails
+
+------------------------------------------------------------------------
+-- Non-singleton grades
+--
+-- A grade with several members demands each of them separately, and
+-- that is what sets this floor apart from the other five endpoints:
+-- there the union of two grades is their join, here it is their *meet*.
+-- The calculus cannot hand a computation such a grade -- `if` would
+-- have to union its branches and `no-common-grade` says it cannot --
+-- but the order is defined on them all the same, and the facts below
+-- are what a branching rule that did take unions would be working with.
+
+-- weakening drops demands, so a two-run grade sits below each of the
+-- singletons it is made of
+
+dropping-the-store : ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ⟆
+dropping-the-store = holds
+
+dropping-the-reading : ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ write ⌉ ⟆
+dropping-the-reading = holds
+
+-- and it is the greatest grade that does: anything demanding both runs
+-- demands the union, so the union is their meet
+
+union-is-the-meet :
+  (P : R) → P ≾ᵣ ⟅ ⌈ read ⌉ ⟆
+          → P ≾ᵣ ⟅ ⌈ write ⌉ ⟆
+          → P ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+union-is-the-meet P reads writes = ⊑-∈ step
+  where
+    step : (s : Trace)
+         → s ∈ traces ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ → s ∈ traces P
+    step _ (hereᴬ refl)          = ∈-⊑ reads  (hereᴬ refl)
+    step _ (thereᴬ (hereᴬ refl)) = ∈-⊑ writes (hereᴬ refl)
+
+-- a longer list demands more, so it too sits below a shorter one
+
+three-runs-below-two :
+  ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+three-runs-below-two = holds
+
+two-runs-not-below-three :
+  ¬ (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆)
+two-runs-not-below-three = fails
+
+-- the unit demands only that stopping be possible, so it is the
+-- greatest grade, and a list that includes the empty run weakens to it
+
+listing-stopping : ⟅ ε ∣ ⌈ read ⌉ ⟆ ≾ᵣ ⟅ ε ⟆
+listing-stopping = holdsᵉ ⟅ ε ∣ ⌈ read ⌉ ⟆ ⟅ ε ⟆
+
+-- sequencing distributes over the demands: each demanded run is
+-- followed by what comes next
+
+demands-sequence :
+  (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵣ ⟅ ⌈ send ⌉ ⟆) ≾ᵣ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+demands-sequence = holds
+
+-- None of that is reachable from a program *here*, though. With every
+-- operation graded by the single run that performs it, the only
+-- non-singleton grade a computation can be given is a list padded with
+-- copies of the run that happened -- which demands nothing new:
+
+sampling-listed-twice : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ⟆
+sampling-listed-twice =
+  coerce holds
+    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (return here))
+
+-- Two *different* runs in one grade have to come from the signature,
+-- an operation being asked to have several runs available -- which is
+-- what a floor read conjunctively is for.
+-- `Subsets.LeftSided.Retrying` grades the transmitter that way, and
+-- there the programs, the coercions and the `unbox` premises are all
+-- between grades listing two runs.
 
 ------------------------------------------------------------------------
 -- Unboxing under a branch
