@@ -73,6 +73,11 @@ import Syntax.Grades.Example.Traces
 -- Each pairs an effect grade with a resource grade, along a projection
 -- saying what the resource grade forgets.
 
+-- a grade read as both components, the projection being the identity:
+-- nothing is forgotten, and `mapᵉ` drops out of the typing rules
+
+import Syntax.Grades.Example.System.Identity
+
 -- two-sided intervals to left-sided ones: forget the upper bound, keep
 -- the guarantee that at least so much time has passed
 
@@ -104,6 +109,7 @@ import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
 --
 -- All of the above at one fixed alphabet, with the orderings that hold
 -- between concrete grades and the effect of each morphism on them
--- exhibited as checked terms. A reader's tour of this whole subtree.
+-- exhibited as checked terms, and example computations typed against
+-- the grades. A reader's tour of this whole subtree.
 
 import Syntax.Grades.Example.Worked

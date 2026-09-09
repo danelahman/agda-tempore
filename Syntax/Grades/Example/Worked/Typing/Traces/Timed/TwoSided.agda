@@ -1,0 +1,261 @@
+------------------------------------------------------------------------
+-- Typed example computations at the grade of trace contracts.         --
+--                                                                     --
+-- A grade `[ P , Q ]` pairs a coverage floor with an allowance cap:    --
+-- whatever the computation did, it covered one of the guarantees in    --
+-- `P` and stayed within one of the allowances in `Q`. Each operation   --
+-- is graded by the one-event run that performs it, at both endpoints.  --
+--                                                                     --
+-- This is the trace counterpart of the two-sided time windows, and the --
+-- two endpoints refuse for independent reasons -- but now over which   --
+-- operations ran, not merely how long they took. A box asks for work   --
+-- to have been done *and* for no more than its allowance to have been  --
+-- spent since, so a claim can be refused for having done too little    --
+-- and for having done too much, and the examples below exhibit both.   --
+------------------------------------------------------------------------
+
+module Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided where
+
+open import Data.Unit using (tt)
+
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Grades.Example.Worked.Operations
+  using (Op; read; write; send; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+
+open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
+  using (TwoSided; [_,_,_]; two-sided; holds; fails; exact)
+
+------------------------------------------------------------------------
+-- The operations, graded by the run that performs them, at both ends
+
+opTime : Op → TwoSided
+opTime o = exact ⌈ o ⌉
+
+open import Syntax.Grades.Example.Worked.Typing.Core two-sided opTime
+
+------------------------------------------------------------------------
+-- Effectful computations
+--
+-- A computation with one run is pinned exactly: its run is both the
+-- guarantee it meets and the allowance it stays within.
+
+sampling : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
+sampling = perform read ⋆ (return here)
+
+storing : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ write ⌉)
+storing = perform read ⋆ (perform write here (return ⋆))
+
+relaying : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+relaying = perform read ⋆ (perform send here (return ⋆))
+
+tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+tagged-relaying =
+  perform read ⋆
+    (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+      `in perform send here (return ⋆))
+
+------------------------------------------------------------------------
+-- Readings go stale
+--
+-- `ρ ≾ᵣ uᵣ` asks the cap to permit nothing but the empty run, which is
+-- the upper endpoint deciding it, as at the two-sided windows.
+
+reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-an-operation = fails (uᵣ ·ᵣ opTime read) uᵣ
+
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
+carried-id =
+  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+
+------------------------------------------------------------------------
+-- Sub-effecting
+--
+-- `coerce` weakens both endpoints at once, in opposite directions: the
+-- guarantee may be forgotten down and the allowance relaxed up.
+
+contract : E
+contract = [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+
+meeting-the-contract : [] ⊢C⦂ Unit ‼ contract
+meeting-the-contract =
+  coerce (holds _ _) (perform read ⋆ (perform write here (return ⋆)))
+
+-- the floor refuses a run that takes no reading, and the cap a run that
+-- spends more than the allowance, each with the other endpoint met
+
+idling-fails-the-floor : ¬ (of-natᵉ 5 ·ₑ uₑ ≾ₑ contract)
+idling-fails-the-floor = fails _ _
+
+transmitting-twice-fails-the-cap :
+  ¬ (opTime read ·ₑ (opTime send ·ₑ (opTime read ·ₑ uₑ)) ≾ₑ contract)
+transmitting-twice-fails-the-cap = fails _ _
+
+------------------------------------------------------------------------
+-- Conditional branching
+--
+-- Both branches are coerced to one contract, so its floor is what both
+-- guarantee and its cap what neither exceeds. Three ticks and six do
+-- for a store against a transmission.
+
+window : E
+window = [ ⟅ ⟨ 3 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ]
+
+branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ window
+branching =
+  if eternal-var Boolₑ (Tl-∷ Hd)
+    `then coerce (holds _ _) (perform send  here (return ⋆))
+    `else coerce (holds _ _) (perform write here (return ⋆))
+
+-- four ticks are more than the storing branch guarantees
+
+four-ticks-not-guaranteed :
+  ¬ (opTime write ·ₑ uₑ ≾ₑ [ ⟅ ⟨ 4 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ])
+four-ticks-not-guaranteed = fails _ _
+
+-- an `if` over data alone needs no contract found for it
+
+either-reading :
+  [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ exact ⌈ send ⌉
+either-reading =
+  if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
+    `then perform send here (return ⋆)
+    `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
+
+------------------------------------------------------------------------
+-- Unboxing: a resource with a contract
+--
+-- `unbox`'s premise asks what elapsed to cover the box's guarantee and
+-- stay within its allowance. The box below asks for a reading, and
+-- allows a reading and six ticks' worth of other work.
+
+claim-after-sampling : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+claim-after-sampling =
+  box {ρ = contract} (const 42)
+    (perform read ⋆
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+        (perform send here (return ⋆))))
+
+handed-over : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+handed-over =
+  box {ρ = contract} (const 42)
+    (lam (perform read ⋆
+           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+             (perform send here (return ⋆))))
+      · here)
+
+either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
+either-way =
+  box {ρ = contract} (const 42)
+    (perform read ⋆
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+        (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
+          `then perform send here (return ⋆)
+          `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
+
+-- too little: idling covers no reading, though it is well inside the
+-- allowance
+
+idling-covers-nothing : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ contract)
+idling-covers-nothing = fails _ _
+
+claiming-at-once : ¬ (uᵣ ≾ᵣ contract)
+claiming-at-once = fails _ _
+
+-- too much: a reading, a transmission and a reading take seven ticks
+-- beyond the named reading, and the allowance is six
+
+overspending : ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime read ≾ᵣ contract)
+overspending = fails _ _
+
+-- between the two, a store fits: it covers the reading and its three
+-- ticks come out of the six
+
+storing-fits : uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ contract
+storing-fits = holds _ _
+
+------------------------------------------------------------------------
+-- Unboxing under a branch
+--
+-- A box whose guarantee lists both branches' runs and whose allowance
+-- covers the costlier of them is within both branches' reach.
+
+alternatives : R
+alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ]
+
+claimed-in-both-branches :
+  [] ⊢C⦂ Unit ‼ [ ⟅ ⌈ send ⌉ ⟆ , ⟅ ⟨ 12 ⟩ ⟆ , tt ]
+claimed-in-both-branches =
+  box {ρ = alternatives} (const 42)
+    (if true
+      `then coerce (holds _ _)
+              (perform read ⋆
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                  (perform send here (return ⋆))))
+      `else coerce (holds _ _)
+              (perform send (const 0)
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                  (perform send here (return ⋆)))))
+
+-- dropping the transmission from the guarantee closes that branch,
+-- and tightening the allowance to a single tick closes it too
+
+transmitting-branch-covers-nothing :
+  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ])
+transmitting-branch-covers-nothing = fails _ _
+
+transmitting-branch-overspends :
+  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ , ⟅ ⟨ 1 ⟩ ⟆ , tt ])
+transmitting-branch-overspends = fails _ _
+
+------------------------------------------------------------------------
+-- Programs written at these contracts
+--
+-- The contract claimed on both sides of an `if`: one branch takes the
+-- reading it asks for, the other takes the reading and stores it,
+-- spending three of the six the allowance leaves. Both then transmit,
+-- so the conditional keeps the reading as its guarantee and needs nine
+-- ticks of allowance for the slower branch.
+
+store-or-not : [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ , tt ]
+store-or-not =
+  box {ρ = contract} (const 42)
+    (if eternal-var Boolₑ (Tl-∷ Hd)
+      `then coerce (holds _ _)
+              (perform read ⋆
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                  (perform send here (return ⋆))))
+      `else coerce (holds _ _)
+              (perform read ⋆
+                (perform write here
+                  (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
+                    (perform send here (return ⋆))))))
+
+-- the storing branch has to claim before it transmits: a store and a
+-- transmission spend nine of an allowance that leaves six
+
+storing-then-transmitting-first :
+  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime write ·ᵣ opTime send ≾ᵣ contract)
+storing-then-transmitting-first =
+  fails (uᵣ ·ᵣ opTime read ·ᵣ opTime write ·ᵣ opTime send) contract
+
+------------------------------------------------------------------------
+-- Effect handling
+
+forwarded : [] ⊢C⦂ Reading ‼ exact ⌈ read ⌉
+forwarded =
+  handle perform read ⋆ (return here)
+    `with forwarding {[]}
+    `in (return here)
+
+identified : Node ⊢C⦂ NodeId ‼ exact ⌈ read ⌉
+identified =
+  handle perform read ⋆ (return here)
+    `with identifying
+    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+
+-- no clause may drop its continuation: the floor asks for the
+-- operation, and returning at once covers nothing
+
+no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
+no-discarding = fails uₑ (op-grade read ·ₑ uₑ)

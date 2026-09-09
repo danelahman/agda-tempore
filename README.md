@@ -53,81 +53,114 @@ a grade system, a signature of base types, and operations' signatures.
 ### Utilities
 
 - `Util/Equality.agda` collects equality-related auxiliary proofs and postulates
-  function extensionality.
-- `Util/Time.agda` defines time (as natural numbers) and auxiliary lemmas.
+  function extensionality — the development's only postulate.
 - `Util/Monad.agda` defines monads, used in the top-level operational semantics.
 
 ### Grades and grade systems
 
-- `Syntax/Grades.agda` defines the notion of a `Grade` (an ordered
-  monoid), grade morphisms `_→ᵍ_`, and a `GradeSystem` (effect grades `EGrade`,
-  resource grades `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the
-  latter), together with a convenience interface `GradeSystemInterface`.
+- `Syntax/Grades.agda` defines the notion of a `Grade` (an ordered monoid with
+  an inclusion of ℕ as "so many time steps"), grade morphisms `_→ᵍ_`, and a
+  `GradeSystem` (effect grades `EGrade`, resource grades `RGrade`, and a grade
+  morphism `∣_∣ᵉ` from the former to the latter), together with a convenience
+  interface `GradeSystemInterface`.
 
-- `Syntax/Grades/Example.agda` indexes the example grades and grade systems,
-  and explains how they relate. They fall into three groups.
+- `Syntax/Grades/Example.agda` indexes the example grades, which come in two
+  families, and the grade systems assembled from them.
 
-- `Syntax/Grades/Example/Interval/` holds the grades that measure only elapsed
+- `Syntax/Grades/Example/Time/` holds the grades that measure only elapsed
   time: `LeftSided` ("at least `n` steps"), `RightSided` ("at most `n`"),
   `TwoSided` (a window `[ min , max ]`), and `TwoSidedWithInfinity`, whose
   upper endpoint may be `∞` (its extended-natural arithmetic is in
   `ExtendedNat.agda`).
 
-- `Syntax/Grades/Example/TraceSet/` holds the grades that record *which runs* a
-  computation had, as non-empty finite sets of timed traces, and its module
-  names mirror `Interval/` one for one. `LeftSided.agda` reads a grade as a
-  *floor* under what must have happened and `RightSided.agda` as a *cap* on
-  what may have; `TwoSided.agda` pairs the two, its carrier a pair of sets with
-  a consistency field `lo≼hi` playing the role of `min≤max`. `Inclusion.agda`
-  is the odd one out — it compares sets by membership alone, so it is not an
-  interval in either direction — and `Convex.agda` is the Egli-Milner lift,
-  which despite the name is *not* a two-sided interval and never caps a run
-  from above. The two lifts to sets of traces are in
-  `Syntax/Grades/Traces/SubtraceLift.agda`: the floor takes the Smyth one and
-  the cap the Hoare one, mirroring `min i₂ ≤ min i₁` against `max i₁ ≤ max i₂`.
+- `Syntax/Grades/Example/Traces/` holds the grades that record *which runs* a
+  computation may have had, as non-empty finite sets of timed traces. All six
+  share the carrier and the monoid of `Syntax/Grades/Traces/Sets.agda` and
+  differ only in the order on it. `Lifted/{LeftSided,RightSided,TwoSided}.agda`
+  are the constructions, parameterised by an order on traces; `Timed/*`
+  instantiate them at the two cost-sensitive orders below and `Subsets/*` at
+  equality — each family with a floor, a cap, and their pairing under a
+  coherence field.
 
-- The orders all run the way `unbox`'s premise `ρ' ≾ᵣ ρ` needs, with `ρ'` the
-  effects that actually elapsed and `ρ` the grade on the box. `s ≼ t` reads
-  "the run `t` does at least what `s` asks for": every operation `s` names must
-  genuinely occur in `t`, while every delay it names is paid out of the time
-  `t` spent, operations included at their execution time. So having done more
-  than the box asks for still opens it, having done less never does, elapsed
-  time discharges a demand for time — and nothing but the operation itself
-  discharges a demand for an operation.
+- Five of the six endpoints are read *disjunctively*, one listed trace carrying
+  the grade, so they weaken by gaining members and a union of grades is their
+  join — which is what a branching construct wants.
+  `Traces/Subsets/LeftSided.agda` is the exception: with equality as the
+  comparison the disjunctive floor condition coincides with the cap's, so that
+  floor is read conjunctively and weakens by *losing* members instead.
 
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
-  built on: `Positive` (the strictly positive durations a delay carries),
-  `Base` (timed traces and their sequencing monoid), `Sets` (non-empty finite
-  sets of traces and the language product), `Restriction`, and the
-  duration/sub-trace machinery below.
+  built on: `Positive` (the strictly positive duration a delay carries), `Base`
+  (timed traces and their sequencing monoid), `Sets` (non-empty finite sets of
+  traces, the language product, and subset inclusion), `Restriction`
+  (restriction along a sub-alphabet), `Durations` with `MaxDuration` and
+  `MinDuration` (worst- and best-case aggregation over a set), and
+  `Order`/`OrderLift` (the interface a trace order supplies, and its Hoare and
+  Smyth lifts to sets — stated once, so each order below meets the interface
+  once and inherits both lifts with their laws).
 
-- The *cost-aware* trace-based grades read a set of timed traces against the
-  operations' prescribed execution times, given by a map `cost : Op → ℕ`. The
-  sub-trace preorder `Syntax/Grades/Traces/Subtrace/` is parameterised by
-  that map: an unmatched operation of the *elapsed* run banks `cost o` units of
-  slack (`pay-op`) alongside its delays (`del-delay`), and a demanded delay is
-  paid out of that slack (`use-delay`). So `⟨ n ⟩ ≼ ⌈ o ⌉` exactly when
-  `cost o ≥ n`. There is no rule spending slack on a demanded *operation*, so
-  the converse fails: `⌈ o ⌉ ≼ ⟨ n ⟩` never holds (`op-⋠` in
-  `Subtrace/Moves.agda`). The preorder itself and its
-  reflexivity/weakening/transitivity are in `Subtrace/Core.agda`, the moves
-  building sub-trace proofs in `Subtrace/Moves.agda`, and the decision
-  procedure in `Subtrace/Decidable.agda`. `SubtraceDuration.agda` proves the
-  bound against a demanded pure delay exact — `⟨ n ⟩ ≼[ k ] t` holds precisely
-  when `n ≤ duration t + k` — and `SubtraceCost.agda` that *raising* the cost
-  widens the order, since a dearer operation banks more time.
+- The two cost-sensitive orders on traces live in `Syntax/Grades/Traces/Allowance/`
+  and `Syntax/Grades/Traces/Coverage/`. Both are parameterised by a cost model
+  `cost : Op → ℕ` and both induct on a running number of time units,
+  whose arithmetic is shared in `Slack.agda`; each has `Core`, `Moves`,
+  `Decidable` and `Duration` submodules, with `AsOrder.agda` packaging it as a
+  `TraceOrder` and `AllowanceLift`/`CoverageLift` supplying the set-level laws.
 
-- `Syntax/Grades/Example/System/` assembles full example grade systems and
-  grade morphisms between their effect and resource grades:
-  `IntervalsToLeftSidedIntervals`, `TracesToRestrictedTraces` (sets of
-  traces over all operations to sets of traces over a sub-alphabet),
-  `TracesToTimeIntervals` (sets of traces to two-sided time intervals), and
-  `TracesToCostAwareTraces` (sets of traces ordered by inclusion to the same
-  sets ordered up to the cost-aware sub-trace preorder, and one cost model to
-  a dearer one), and `TraceIntervalsToTraceSets` (two-sided trace intervals
-  to one-sided ones, forgetting the cap — the trace counterpart of the first).
-  Each projection says what a resource grade is allowed to forget about the
-  effect grade it comes from.
+- Under the **allowance** order `_≼ᵃ_` a bound's operations are permissions and
+  its delays are a budget, which the run spends on idling and on operations the
+  bound does not name, at their execution time. So `⌈ o ⌉ ≼ᵃ ⟨ n ⟩` exactly when
+  `cost o ≤ n`, and never the other way round: a permitted operation buys no
+  time. Budget does not cross an operation the bound names, so a bound says
+  *when* its slack is available and not merely how much of it there is.
+
+- Under the **coverage** order `_≼ᶜ_` a run covers a guarantee when every
+  operation the guarantee names genuinely occurs in it, in order, and every
+  delay it names is met by what the run does between the same two named
+  operations. So doing more than was asked still covers, and time never buys an
+  operation — idling does not discharge "a reading was taken".
+
+- The two are incomparable, and deliberately so: this is why a two-sided trace
+  grade takes one order at each endpoint. An allowance wants a listed delay to
+  buy the run's operations; a guarantee read the same way would let a run that
+  merely idles discharge a demand for a reading. `Traces/Prefix.agda` records
+  the other side of this: a contiguity-demanding order carries no grade at all,
+  with a checked proof that the language product is not monotone for it.
+
+- `Syntax/Grades/Example/System/` assembles full grade systems, pairing an
+  effect grade with a resource grade along a projection saying what the
+  resource grade may forget. `Identity.agda` forgets nothing — one grade read
+  as both components, so that `mapᵉ` drops out of the typing rules.
+  `IntervalsToLeftSidedIntervals.agda` keeps a two-sided interval's lower
+  endpoint, discarding the deadline. `Traces/Timed/*` and `Traces/Subsets/*`
+  measure a set of traces by a duration, each endpoint aggregated in the
+  direction it is *read* rather than the direction it bounds.
+
+- `Syntax/Grades/Example/Worked/` instantiates all of the above at one fixed
+  alphabet — a sensor node that can `read` (1 tick), `write` (2–3) and `send`
+  (4–6) — and exhibits as checked Agda terms which orderings hold between
+  concrete grades and what each morphism does to them: `Operations.agda` fixes
+  the alphabet and its runs, `Time.agda` and `Traces/*` work out the orderings
+  one grade at a time, `Spec.agda` gives a language specification over it, and
+  `Systems.agda` computes the projections. Positive and negative claims are
+  both discharged by *running* the relevant decision procedure, so a table
+  asserted the wrong way round does not typecheck.
+
+- `Syntax/Grades/Example/Worked/Typing/` then fixes a language over that
+  alphabet and types example computations against these grades, exercising
+  operations, sequencing, `delay`, `if`, pattern matching, functions,
+  `box`/`unbox` and effect handlers. Each of the nine instances (three time
+  grades and all six trace grades, each over its identity grade system) writes
+  its programs out in full at its own grades, discharging every side condition
+  a rule imposes — `var`'s bound, `unbox`'s premise, `coerce`'s ordering — at
+  the point it imposes it, by running the grade's own decision procedure; where
+  a grade refuses a program, a refutation of the bound it would have needed
+  stands in its place. So what a grade lets a program do, and what it refuses,
+  is settled by whether the program typechecks. `Typing/Core.agda` holds what
+  the programs are written *with*: the language itself, the three ways of
+  meeting `var`'s bound, and the operation clauses handed to `handle`. The
+  index module `Typing.agda` tabulates how the instances differ: what a box
+  means at each grade, whether an ordinary variable goes stale, and whether a
+  handler clause may drop its continuation.
 
 ### Core language, type system
 
@@ -152,11 +185,16 @@ a grade system, a signature of base types, and operations' signatures.
   which are propositional equality: the grade bounds a term stores are
   proof-irrelevant) together with a congruence per former, and
   `Syntax/Terms/Transport.agda` retyping a term along an equality of contexts.
-- `Syntax/Substitutions.agda` defines the action of substituting, and
-  `Syntax/Substitutions/` its metatheory: `Variables.agda` how a substitution
-  acts on a variable, `Weakening.agda` that substituting for a freshly weakened
-  variable is the identity, `Renaming/` that renaming commutes with
-  substitution, and `Swap/` that two adjacent prefix substitutions commute.
+- `Syntax/Substitutions/` defines parallel substitutions and their metatheory:
+  `Base.agda` the substitutions themselves, `Lookup.agda` what one does to a
+  variable, `Action.agda` its action on terms, `Equivalence.agda` when two act
+  alike, `Chain.agda` and `ChainEquivalence.agda` their composition,
+  `Interchange.agda` that renaming and substitution commute, `Restrict.agda`
+  the eternal restriction's action, and `Laws.agda` the resulting laws.
+  `Variables.agda`, `At.agda` and `Clauses.agda` then specialise all of this to
+  substituting at a context's prefix boundary, which is the form every consumer
+  uses; `Syntax/Substitutions.agda` re-exports that, with replacing a single
+  variable as notation over it.
 - `Syntax/CompContext.agda` defines computation term and evaluation contexts.
 
 ### Operational semantics, progress and preservation theorems
@@ -176,8 +214,53 @@ a grade system, a signature of base types, and operations' signatures.
 
 - `EquationalTheory/EquationalTheory.agda` defines an equational theory for the
   language inspired by the standard equational presentations of local state.
+- `EquationalTheory/Alignment.agda` shows that the syntactic equivalence of
+  terms is contained in the equational theory.
 
-## Work in progress
+### Denotational semantics
 
-The equational soundness proof (`EquationalTheory/EquationalSoundness.agda`)
-and its formalisation remain currently a work in progress.
+- `DenotationalSemantics/Model/` gives an abstract model interface, which the
+  interpretation is parameterised over: `Category.agda` the ambient category,
+  `World.agda` the Kripke frame of worlds (a single family of preorders
+  `_⊑[ ρ ]_` graded by the resource grades — the frame itself carries no monoid
+  structure), `Modality/{Future,Past,Adjunction,Eternal}.agda` the box and
+  context modalities and the adjunction between them, `GroundTypes.agda` and
+  `GroundEternal.agda` the interpretation of ground types,
+  `Monad.agda` a graded monad with algebraic operations and handling (with
+  `Monad/Enrichment.agda` relating its strength to an enrichment),
+  `HandlerAlgebra.agda` the algebras a handler folds with, `TickMonad.agda` the
+  monad the top-level machine runs in, and `Implementation.agda` bundling it
+  all.
+- `DenotationalSemantics/Model/Example/PSh/` is a concrete model on
+  setoid-valued presheaves over the worlds: `Base.agda` the category,
+  `Modality/*` the modalities, `Monad/*` the effect-tree monad with its
+  handling and its laws, and `TickMonad.agda`, `Implementation.agda`,
+  `TopLevelInstance.agda` the instances.
+- `DenotationalSemantics/Model/Example/World/` gives concrete Kripke frames,
+  one per example grade and in two families: `Ticks/*`, whose worlds are
+  elapsed time, and `TraceHistory/*`, whose worlds are the run so far.
+- `DenotationalSemantics/Interpretation/` interprets the language in any such
+  model — `Types.agda`, `Contexts.agda`, `Variables.agda`, `Terms.agda` — and
+  proves the interpretation coherent with the syntactic structural operations:
+  `Renaming/` and `RenamingCoherence.agda` for renamings,
+  `SubstitutionCoherence/` for substitutions. `State.agda` interprets the
+  states of the operational semantics.
+
+### Soundness and adequacy
+
+- `EquationalTheory/Soundness.agda` (with `Soundness/`) proves the equational
+  theory sound for the denotational semantics: every derivable equation
+  `M == N` denotes an equality of morphisms `⟦M⟧ ≈ᵐ ⟦N⟧`.
+- `OperationalSemantics/Soundness/Preservation.agda` (with `Preservation/`)
+  proves the small-step semantics sound: a step relates denotationally equal
+  configurations, a configuration `⟨ S , M ⟩` interpreting as `M` with its
+  context plugged by the state. `Soundness/TopLevelPure.agda` does the same for
+  the pure top-level machine.
+- `OperationalSemantics/Adequacy/` proves the converse direction: two programs
+  with equal denotations halt with the same shape, at the same operation, and
+  with the same answer. It is assembled from `Normalization.agda` (a weak head
+  normal form exists), the soundness above, and head faithfulness
+  (`HeadFaithful.agda` abstractly, `PSh/*` for the presheaf model), over the
+  logical relation in `Reducibility.agda` and `Environment/`.
+  `Adequacy/Equational.agda` reads this back for the equational theory:
+  reasoning in it is observationally valid.

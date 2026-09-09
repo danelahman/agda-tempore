@@ -4,7 +4,10 @@
 -- `Grades.Example` gives the constructions; this subtree instantiates  --
 -- them all at one fixed alphabet and exhibits, as checked Agda terms,  --
 -- which orderings hold between which grades and what each grade        --
--- morphism does to them. Nothing here is used elsewhere -- it is a     --
+-- morphism does to them. `Typing` then writes example computations in  --
+-- a language over that alphabet and types them against these grades,   --
+-- so that what a grade permits a program to do is settled by whether   --
+-- the program typechecks. Nothing here is used elsewhere -- it is a    --
 -- reader's tour of the grade layer.                                    --
 --                                                                     --
 -- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a   --
@@ -72,3 +75,8 @@ import Syntax.Grades.Example.Worked.Systems
 -- effect grade and as a resource grade.
 
 import Syntax.Grades.Example.Worked.Traces
+
+-- Example computations typed against these grades, over identity grade
+-- systems: what each grade lets a program do, and what it refuses.
+
+import Syntax.Grades.Example.Worked.Typing

@@ -1,0 +1,321 @@
+------------------------------------------------------------------------
+-- Typed example computations at the grade of trace allowances.        --
+--                                                                     --
+-- Effect grades and resource grades are both sets of timed traces at   --
+-- the allowance order, and each operation is graded by the one-event   --
+-- run that performs it. A grade is then a set of bounds, and a         --
+-- computation sits below it when each of its runs stays within one:    --
+-- the bound's operations are permissions and its delays a budget,      --
+-- spent on idling and on operations the bound does not name, at        --
+-- `cost` -- read 1, write 3, send 6.                                   --
+--                                                                     --
+-- What this grade sees that a time bound cannot is *which* operations  --
+-- a run performed and *where*. So `unbox`'s premise asks that the run  --
+-- that actually elapsed be one the box permits, and a claim can be     --
+-- refused not for taking too long but for doing the wrong thing, or    --
+-- the right things in the wrong order. Both refusals are below.        --
+--                                                                     --
+-- Sub-effecting is the same order read the other way, and a union is a --
+-- join, so a conditional is graded by the union of its branches'       --
+-- grades -- where the interval grades had to take a numeric bound      --
+-- covering both.                                                       --
+------------------------------------------------------------------------
+
+module Syntax.Grades.Example.Worked.Typing.Traces.Timed.RightSided where
+
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Grades.Example.Worked.Operations
+  using (Op; read; write; send; _≟ₒ_; cost; cost-pos;
+         NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+
+open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
+  using (right-sided; holds; fails)
+
+open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ cost cost-pos
+  using (allowanceOrder)
+
+open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ allowanceOrder
+  using (u-≼ˢ)
+
+------------------------------------------------------------------------
+-- The operations, graded by the run that performs them
+
+opTime : Op → NeTraces
+opTime o = ⟅ ⌈ o ⌉ ⟆
+
+open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
+
+------------------------------------------------------------------------
+-- Effectful computations
+--
+-- Sequencing is the language product, so at singleton grades the grade
+-- of a computation is the run it makes.
+
+sampling : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
+sampling = perform read ⋆ (return here)
+
+storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+storing = perform read ⋆ (perform write here (return ⋆))
+
+relaying : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+relaying = perform read ⋆ (perform send here (return ⋆))
+
+tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+tagged-relaying =
+  perform read ⋆
+    (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
+      `in perform send here (return ⋆))
+
+------------------------------------------------------------------------
+-- Readings go stale
+--
+-- `var`'s bound is `ρ ≾ᵣ uᵣ`, and the unit permits nothing but the
+-- empty run. So a reading is usable only where no operation and no
+-- idling stand between it and its use.
+
+reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
+reading-stale-after-idling = fails
+
+reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
+reading-stale-after-an-operation = fails
+
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
+carried-id =
+  perform read ⋆ (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
+
+------------------------------------------------------------------------
+-- Sub-effecting
+--
+-- `coerce` moves up the order: an operation becomes a delay long enough
+-- to cover it, and a delay grows. Neither direction is reversible.
+
+exact-run-to-budget : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
+exact-run-to-budget =
+  coerce holds (perform read ⋆ (perform write here (return ⋆)))
+
+budget-back-to-the-run :
+  ¬ (opTime read ·ₑ (of-natᵉ 3 ·ₑ uₑ) ≾ₑ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+budget-back-to-the-run = fails
+
+------------------------------------------------------------------------
+-- Conditional branching
+--
+-- The union of two grades is their join, so the conditional's grade may
+-- simply list what each branch does.
+
+branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
+branching =
+  if eternal-var Boolₑ (Tl-∷ Hd)
+    `then coerce holds (perform send  here (return ⋆))
+    `else coerce holds (perform write here (return ⋆))
+
+-- neither branch's own grade will do for the other, an operation being
+-- no payment for a different one
+
+transmitting-is-not-storing : ¬ (opTime send ·ₑ uₑ ≾ₑ ⟅ ⌈ write ⌉ ⟆)
+transmitting-is-not-storing = fails
+
+storing-is-not-transmitting : ¬ (opTime write ·ₑ uₑ ≾ₑ ⟅ ⌈ send ⌉ ⟆)
+storing-is-not-transmitting = fails
+
+-- a budget covering the costlier branch does for both, since time buys
+-- any work that costs no more
+
+timed-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⟨ 6 ⟩ ⟆
+timed-branching =
+  if eternal-var Boolₑ (Tl-∷ Hd)
+    `then coerce holds (perform send  here (return ⋆))
+    `else coerce holds (perform write here (return ⋆))
+
+-- five ticks do not buy a transmission
+
+five-ticks-are-short : ¬ (opTime send ·ₑ uₑ ≾ₑ ⟅ ⟨ 5 ⟩ ⟆)
+five-ticks-are-short = fails
+
+-- an `if` over data alone: both branches make the same run, so neither
+-- is coerced
+
+either-reading : [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
+either-reading =
+  if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
+    `then perform send here (return ⋆)
+    `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
+
+sampling-then-branching :
+  [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+sampling-then-branching =
+  perform read ⋆
+    (if true
+      `then coerce holds (perform send  here (return ⋆))
+      `else coerce holds (perform write here (return ⋆)))
+
+------------------------------------------------------------------------
+-- Unboxing: a permit for a particular run
+--
+-- `unbox`'s premise is `elapsed ≾ᵣ ρ`: what the computation did between
+-- boxing the resource and claiming it has to be a run the box permits.
+-- The permit below names a reading and budgets three ticks for whatever
+-- else happens.
+
+permit : R
+permit = ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
+
+-- the reading the permit names, two ticks of its budget, and the empty
+-- run all keep it open
+
+claim-after-sampling : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-sampling =
+  box {ρ = permit} (const 42)
+    (perform read ⋆
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+        (perform send here (return ⋆))))
+
+claim-after-idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+claim-after-idling =
+  box {ρ = permit} (const 42)
+    (delay 2
+      (unbox (Tl-⟨⟩ Hd) holds
+        (perform send here (return ⋆))))
+
+claiming-now : [] ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
+claiming-now =
+  box {ρ = permit} (const 42)
+    (unbox Hd holds (perform send here (return ⋆)))
+
+storing-keeps-it-open : uᵣ ·ᵣ opTime read ·ᵣ opTime write ≾ᵣ permit
+storing-keeps-it-open = holds
+
+-- a transmission closes it: it is not named, and six ticks is more than
+-- the permit budgets
+
+transmitting-closes-it : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ permit)
+transmitting-closes-it = fails
+
+transmitting-after-the-reading-too :
+  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ≾ᵣ permit)
+transmitting-after-the-reading-too = fails
+
+handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over =
+  box {ρ = permit} (const 42)
+    (lam (perform read ⋆
+           (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+             (perform send here (return ⋆))))
+      · here)
+
+either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+either-way =
+  box {ρ = permit} (const 42)
+    (perform read ⋆
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+        (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
+          `then perform send here (return ⋆)
+          `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
+
+------------------------------------------------------------------------
+-- Unboxing under a branch
+--
+-- A permit may list alternatives, and then each branch need only match
+-- one of them. Listing the reading and the transmission separately puts
+-- the resource within both branches' reach.
+
+alternatives : R
+alternatives = ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+
+claimed-in-both-branches :
+  [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+claimed-in-both-branches =
+  box {ρ = alternatives} (const 42)
+    (if true
+      `then coerce holds
+              (perform read ⋆
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                  (perform send here (return ⋆))))
+      `else coerce holds
+              (perform send (const 0)
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                  (perform send here (return ⋆)))))
+
+-- with the reading alone permitted, only one branch reaches it
+
+sampling-branch-reaches : uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⌈ read ⌉ ⟆
+sampling-branch-reaches = holds
+
+transmitting-branch-does-not : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ ⟅ ⌈ read ⌉ ⟆)
+transmitting-branch-does-not = fails
+
+------------------------------------------------------------------------
+-- Programs written at these allowances
+--
+-- The permit claimed on both sides of an `if`: one branch takes the
+-- reading it names, the other spends two of its three ticks idling, and
+-- the conditional is graded by the union of the two runs.
+
+permit-in-a-branch :
+  [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+permit-in-a-branch =
+  box {ρ = permit} (const 42)
+    (if eternal-var Boolₑ (Tl-∷ Hd)
+      `then coerce holds
+              (perform read ⋆
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                  (perform send here (return ⋆))))
+      `else coerce holds
+              (delay 2
+                (unbox (Tl-⟨⟩ Hd) holds
+                  (perform send here (return ⋆)))))
+
+-- a third branch transmitting before the claim is not available:
+-- `transmitting-closes-it` above is what it would need
+
+-- Where the budget sits is part of the permit. This one names a
+-- reading, then budgets three ticks, then names a transmission, and the
+-- run below spends its store inside that window.
+
+scheduled : R
+scheduled = ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ∙ ⌈ send ⌉ ⟆
+
+in-order : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+in-order =
+  box {ρ = scheduled} (const 42)
+    (perform read ⋆
+      (perform write here
+        (perform send (const 0)
+          (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))) holds
+            (perform send here (return ⋆))))))
+
+-- the same three operations with the store after the transmission
+-- overrun the permit, budget not crossing an operation it names
+
+out-of-order :
+  ¬ (uᵣ ·ᵣ opTime read ·ᵣ opTime send ·ᵣ opTime write ≾ᵣ scheduled)
+out-of-order = fails
+
+------------------------------------------------------------------------
+-- Effect handling
+
+forwarded : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
+forwarded =
+  handle perform read ⋆ (return here)
+    `with forwarding {[]}
+    `in (return here)
+
+identified : Node ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
+identified =
+  handle perform read ⋆ (return here)
+    `with identifying
+    `in (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
+
+-- a clause may drop its continuation: the empty run stays within every
+-- allowance, so the coercion a discarding clause needs always exists
+
+nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
+nothing-fits op ε'' =
+  u-≼ˢ (traces (op-grade op ·ₑ ε'')) (nonempty (op-grade op ·ₑ ε''))
+
+suppressed : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+suppressed =
+  handle perform read ⋆ (perform write here (return ⋆))
+    `with discarding {[]} nothing-fits
+    `in (return ⋆)
