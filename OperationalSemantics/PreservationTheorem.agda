@@ -75,6 +75,19 @@ mutual
                    → ⟨ S , match ⦉ V , W ⦊ `in M ⟩ ↝ 
                      ⟨ S , (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
 
+        -- boolean elimination: take the branch the scrutinee names
+        IF-TRUE    : ∀ {C}
+                   → {S : 𝕊 []}
+                   → {M N : toCtx S ⊢C⦂ C}
+                     -------------------------------------------
+                   → ⟨ S , if true `then M `else N ⟩ ↝ ⟨ S , M ⟩
+
+        IF-FALSE   : ∀ {C}
+                   → {S : 𝕊 []}
+                   → {M N : toCtx S ⊢C⦂ C}
+                     --------------------------------------------
+                   → ⟨ S , if false `then M `else N ⟩ ↝ ⟨ S , N ⟩
+
         -- sequencing: step the scrutinee, carrying time and state forward
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
                    → {A B : VType}
@@ -249,6 +262,8 @@ mutual
                        
     step-extends-state APP                  = id-suc
     step-extends-state MATCH                = id-suc
+    step-extends-state IF-TRUE              = id-suc
+    step-extends-state IF-FALSE             = id-suc
     step-extends-state (SEQ-STEP M↝M' _)    = step-extends-state M↝M'
     step-extends-state SEQ-RET              = id-suc
     step-extends-state SEQ-OP               = id-suc
@@ -272,6 +287,8 @@ step-preserves-type : ∀ {A B ε ε'}
 
 step-preserves-type APP              = refl
 step-preserves-type MATCH            = refl
+step-preserves-type IF-TRUE          = refl
+step-preserves-type IF-FALSE         = refl
 step-preserves-type (SEQ-STEP _ _)   = refl
 step-preserves-type SEQ-RET          = refl
 step-preserves-type SEQ-OP           = refl
@@ -299,6 +316,8 @@ step-grade-≾ : ∀ {A B ε ε'}
 
 step-grade-≾ APP   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ MATCH = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ IF-TRUE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ IF-FALSE = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ (SEQ-STEP {ε₁ = ε₁} {ε₂ = ε₂} {ε₃ = ε₃} step _) =
   ≾ᵣ-trans
     (≾ᵣ-reflexive

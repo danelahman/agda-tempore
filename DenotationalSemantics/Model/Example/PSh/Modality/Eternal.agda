@@ -23,10 +23,12 @@ open import DenotationalSemantics.Model.World
 module DenotationalSemantics.Model.Example.PSh.Modality.Eternal (GS : GradeSystem) (Wld : World (GradeSystem.RGrade GS)) where
 
 open import Level using (0ℓ)
+open import Data.Bool using (Bool)
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥-elim)
 open import Data.Product using (_,_; proj₁; proj₂)
 open import Relation.Binary.Bundles using (Setoid)
+open import Relation.Binary.PropositionalEquality using (setoid)
 open import Relation.Binary.Construct.Closure.Equivalence using (EqClosure; return; gmap)
 open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (_◅◅_)
 
@@ -140,6 +142,12 @@ Kᵖ-eternalᵒ S = record
   ; strᵉ-costrᵉ = λ {ρ} {X} {w} x → ⊥-elim (proj₂ x)
   ; costrᵉ-strᵉ = λ {ρ} {X} E → ⊥-elim (proj₂ (val E))
   }
+
+-- Closure: the boolean object. `𝔹ᵖ` *is* the constant presheaf on the
+-- booleans, so its eternal structure is `Kᵖ-eternalᵒ` at that setoid.
+
+𝔹ᵖ-eternalᵒ : Eternalᵒ 𝔹ᵖ
+𝔹ᵖ-eternalᵒ = Kᵖ-eternalᵒ (setoid Bool)
 
 -- Closure: binary products of eternal objects. `necᵉ` combines the
 -- factors' necessitations through the box's lax monoidality, and every

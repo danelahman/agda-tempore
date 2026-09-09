@@ -63,6 +63,8 @@ step-ticks : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
            → ℕ
 step-ticks APP                 = 0
 step-ticks MATCH               = 0
+step-ticks IF-TRUE             = 0
+step-ticks IF-FALSE            = 0
 step-ticks (SEQ-STEP r _)      = step-ticks r
 step-ticks SEQ-RET             = 0
 step-ticks SEQ-OP              = 0
@@ -187,6 +189,8 @@ handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-gra
 -- the rules that fire on a determined term shape
 ↝-det APP        APP        = refl
 ↝-det MATCH      MATCH      = refl
+↝-det IF-TRUE    IF-TRUE    = refl
+↝-det IF-FALSE   IF-FALSE   = refl
 ↝-det SEQ-RET    SEQ-RET    = refl
 ↝-det SEQ-OP     SEQ-OP     = refl
 ↝-det DELAY      DELAY      = refl

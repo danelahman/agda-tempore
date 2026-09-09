@@ -14,6 +14,7 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_)
@@ -66,6 +67,7 @@ val-cell V = proj₁ (grad-typ⇒var V) , proj₁ (proj₂ (grad-typ⇒var V))
 VRedᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ type-of-gtype G → Set
 VRedᵍ (Base b)      St V = ⊤
 VRedᵍ Unit          St V = ⊤
+VRedᵍ Bool          St V = ⊤
 VRedᵍ Empty         St V = ⊤
 VRedᵍ (G₁ |×|ᵍ G₂)  St V =
   Σ[ V₁ ∈ toCtx St ⊢V⦂ type-of-gtype G₁ ]
@@ -132,6 +134,7 @@ data CRed (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
 VRed : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 VRed (Base b)      St V = ⊤
 VRed Unit          St V = ⊤
+VRed Bool          St V = ⊤
 VRed Empty         St V = ⊤
 VRed (A |×| B)     St V =
   Σ[ V₁ ∈ toCtx St ⊢V⦂ A ] Σ[ V₂ ∈ toCtx St ⊢V⦂ B ]
@@ -250,10 +253,21 @@ pair-canonical ⦉ V , W ⦊  = V , W , refl
 empty-canonical : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ Empty → ⊥
 empty-canonical (var f x) = Empty-not-in-toCtx x
 
+-- A boolean over a state context is one of the two constants: a variable is
+-- ruled out by `Bool-not-in-toCtx`. This is what lets `if` take a branch in
+-- the fundamental lemma, the way `pair-canonical` lets `match` fire.
+
+bool-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
+               → (V ≡ true) ⊎ (V ≡ false)
+bool-canonical (var f x) = ⊥-elim (Bool-not-in-toCtx x)
+bool-canonical true      = inj₁ refl
+bool-canonical false     = inj₂ refl
+
 VRed-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → VRed A St V
 
 VRed-eternal (Baseₑ b _)      V = tt
 VRed-eternal Unitₑ            V = tt
+VRed-eternal Boolₑ            V = tt
 VRed-eternal Emptyₑ           V = tt
 VRed-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
 ... | V₁ , V₂ , refl           =
@@ -278,6 +292,7 @@ VRed-reach : ∀ {A St St'} → (q : St ⊑ₛ[ uᵣ ] St') → (V : toCtx St �
 
 VRed-reach {Base b}  q V p = tt
 VRed-reach {Unit}    q V p = tt
+VRed-reach {Bool}    q V p = tt
 VRed-reach {Empty}   q V p = tt
 VRed-reach {A |×| B} q .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
   _ , _ , refl , VRed-reach q V₁ p₁ , VRed-reach q V₂ p₂
@@ -316,6 +331,7 @@ VRed→VRedᵍ : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-o
 
 VRed→VRedᵍ (Base b)     V p = tt
 VRed→VRedᵍ Unit         V p = tt
+VRed→VRedᵍ Bool         V p = tt
 VRed→VRedᵍ Empty        V p = tt
 VRed→VRedᵍ (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , VRed→VRedᵍ G₁ V₁ p₁ , VRed→VRedᵍ G₂ V₂ p₂
@@ -326,6 +342,7 @@ VRedᵍ→VRed : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-o
 
 VRedᵍ→VRed (Base b)     V p = tt
 VRedᵍ→VRed Unit         V p = tt
+VRedᵍ→VRed Bool         V p = tt
 VRedᵍ→VRed Empty        V p = tt
 VRedᵍ→VRed (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
   V₁ , V₂ , refl , VRedᵍ→VRed G₁ V₁ p₁ , VRedᵍ→VRed G₂ V₂ p₂
@@ -351,6 +368,7 @@ VRedᵍ-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (G : GType)
 
 VRedᵍ-≐ˢ es (Base b)     V p = tt
 VRedᵍ-≐ˢ es Unit         V p = tt
+VRedᵍ-≐ˢ es Bool         V p = tt
 VRedᵍ-≐ˢ es Empty        V p = tt
 VRedᵍ-≐ˢ es (G₁ |×|ᵍ G₂) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
   _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
@@ -476,6 +494,7 @@ VRed-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (A : VType)
 
 VRed-≐ˢ es (Base b)  V p = tt
 VRed-≐ˢ es Unit      V p = tt
+VRed-≐ˢ es Bool      V p = tt
 VRed-≐ˢ es Empty     V p = tt
 VRed-≐ˢ es (A |×| B) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
   _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
@@ -602,6 +621,7 @@ SRed-var : ∀ {A ρ} {St : 𝕊 []} → SRed St
 
 SRed-var {Base b}    pSt x f = tt
 SRed-var {Unit}      pSt x f = tt
+SRed-var {Bool}      pSt x f = tt
 SRed-var {Empty}     pSt x f = tt
 SRed-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 SRed-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)

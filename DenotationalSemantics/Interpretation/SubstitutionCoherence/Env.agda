@@ -494,6 +494,8 @@ mutual
   subᵛˢ s p (var f x)   _         = sub-varᴾ s p x f
   subᵛˢ s p (const c)   _         = tt
   subᵛˢ s p ⋆           _         = tt
+  subᵛˢ s p true        _         = tt
+  subᵛˢ s p false       _         = tt
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (lam M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
 
@@ -506,6 +508,8 @@ mutual
   subᶜˢ s p (match V `in M)  (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-∷-sub s)) p M pM
   subᶜˢ s p (absurd V)       pV        = subᵛˢ s p V pV
+  subᶜˢ s p (if V `then M `else N) (pV , pM , pN) =
+    subᵛˢ s p V pV , subᶜˢ s p M pM , subᶜˢ s p N pN
   subᶜˢ s p (perform op V M) (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p M pM
   subᶜˢ s p (delay τ M)      pM        = subᶜˢ (cong-⟨⟩-sub s) p M pM
@@ -562,6 +566,10 @@ mutual
   V-subst-natˢ s p (const c) _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-subst-natˢ s p ⋆ _ = ≈ᵐ-sym terminalᵐ-unique
+  V-subst-natˢ s p true _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-subst-natˢ s p false _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-subst-natˢ s p ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-subst-natˢ s p V pV , V-subst-natˢ s p W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -612,6 +620,11 @@ mutual
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
   C-subst-natˢ s p (absurd V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  -- the substitution distributes over the branches: `ifᵐ-∘`
+  C-subst-natˢ s p (if V `then M `else N) (pV , pM , pN) =
+    ≈ᵐ-trans (ifᵐ-cong (V-subst-natˢ s p V pV)
+                       (C-subst-natˢ s p M pM) (C-subst-natˢ s p N pN))
+             (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
   C-subst-natˢ s p (perform op V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congʳ
       (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-subst-natˢ s p V pV))

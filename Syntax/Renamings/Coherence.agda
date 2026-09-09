@@ -70,6 +70,8 @@ mutual
   ... | _ | _ | refl = var-≡
   V-rename-≡ h (const c)  = refl
   V-rename-≡ h ⋆          = refl
+  V-rename-≡ h true       = refl
+  V-rename-≡ h false      = refl
   V-rename-≡ h ⦉ V , W ⦊   = cong₂ ⦉_,_⦊ (V-rename-≡ h V) (V-rename-≡ h W)
   V-rename-≡ h (lam M)    = cong lam (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
 
@@ -83,6 +85,9 @@ mutual
   C-rename-≡ h (match V `in M) =
     cong₂ match_`in_ (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _ ∷ _) h) M)
   C-rename-≡ h (absurd V) = cong absurd (V-rename-≡ h V)
+  C-rename-≡ h (if V `then M `else N) =
+    cong₃ if_`then_`else_
+      (V-rename-≡ h V) (C-rename-≡ h M) (C-rename-≡ h N)
   C-rename-≡ h (perform op V M) =
     cong₂ (perform _) (V-rename-≡ h V) (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) M)
   C-rename-≡ h (delay τ M) =
@@ -150,6 +155,8 @@ mutual
   ... | _ | refl = var-≡
   V-rename-id-≡ h (const c) = refl
   V-rename-id-≡ h ⋆         = refl
+  V-rename-id-≡ h true      = refl
+  V-rename-id-≡ h false     = refl
   V-rename-id-≡ h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-rename-id-≡ h V) (V-rename-id-≡ h W)
   V-rename-id-≡ h (lam M)   = cong lam (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
 
@@ -163,6 +170,9 @@ mutual
   C-rename-id-≡ h (match V `in M) =
     cong₂ match_`in_ (V-rename-id-≡ h V) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _ ∷ _) h) M)
   C-rename-id-≡ h (absurd V) = cong absurd (V-rename-id-≡ h V)
+  C-rename-id-≡ h (if V `then M `else N) =
+    cong₃ if_`then_`else_
+      (V-rename-id-≡ h V) (C-rename-id-≡ h M) (C-rename-id-≡ h N)
   C-rename-id-≡ h (perform op V M) =
     cong₂ (perform _) (V-rename-id-≡ h V)
               (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) M)
@@ -383,6 +393,8 @@ mutual
   ...   | _ , _ , z = var-≡
   V-rename-∘ r₂ r₁ (const c) = refl
   V-rename-∘ r₂ r₁ ⋆         = refl
+  V-rename-∘ r₂ r₁ true      = refl
+  V-rename-∘ r₂ r₁ false     = refl
   V-rename-∘ r₂ r₁ ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-rename-∘ r₂ r₁ V) (V-rename-∘ r₂ r₁ W)
   V-rename-∘ r₂ r₁ (lam M)   =
     cong lam (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
@@ -403,6 +415,9 @@ mutual
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _ ∷ _) r₂ r₁) M)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (absurd V) = cong absurd (V-rename-∘ r₂ r₁ V)
+  C-rename-∘ r₂ r₁ (if V `then M `else N) =
+    cong₃ if_`then_`else_
+      (V-rename-∘ r₂ r₁ V) (C-rename-∘ r₂ r₁ M) (C-rename-∘ r₂ r₁ N)
   C-rename-∘ r₂ r₁ (perform op V M) =
     cong₂ (perform _) (V-rename-∘ r₂ r₁ V)
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) M)

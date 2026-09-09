@@ -77,6 +77,9 @@ progress (lam M · W)               = step-progress APP
 progress (match var ρ≾uᵣ x `in M)  = ⊥-elim (⦉⦊-not-in-toCtx x)
 progress (match ⦉ V₁ , V₂ ⦊ `in M) = step-progress MATCH
 progress (absurd (var ρ≾uᵣ x))     = ⊥-elim (Empty-not-in-toCtx x)
+progress (if var ρ≾uᵣ x `then M `else N) = ⊥-elim (Bool-not-in-toCtx x)
+progress (if true       `then M `else N) = step-progress IF-TRUE
+progress (if false      `then M `else N) = step-progress IF-FALSE
 progress (perform op V M)          = is-op
 progress (delay τ M)               = step-progress DELAY
 progress (handle M `with H `in N) with progress M

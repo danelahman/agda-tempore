@@ -55,6 +55,7 @@ record GroundEternal : Set₁ where
     -- closure of the eternal structure under the eternal type formers
     𝟙-eternalᵒ : Eternalᵒ 𝟙ᵐ
     𝟘-eternalᵒ : Eternalᵒ 𝟘ᵐ
+    𝔹-eternalᵒ : Eternalᵒ 𝔹ᵐ
     ×-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A ×ᵐ B)
 
     -- The product's eternal extraction acts componentwise (the closure is
@@ -70,3 +71,11 @@ record GroundEternal : Set₁ where
     ⟦⟧ᵇᶜ-eternal : ∀ {b} → (eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
                  → Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟦_⟧ᵇᶜ {b} c)
                  ≈ᵐ ⟦_⟧ᵇᶜ {b} c ∘ᵐ terminalᵐ
+
+    -- The two booleans are global elements in the same sense.
+    trueᵐ-eternal : ∀ {ρ}
+                  → Eternalᵒ.extᵉ 𝔹-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ trueᵐ
+                  ≈ᵐ trueᵐ ∘ᵐ terminalᵐ
+    falseᵐ-eternal : ∀ {ρ}
+                   → Eternalᵒ.extᵉ 𝔹-eternalᵒ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ falseᵐ
+                   ≈ᵐ falseᵐ ∘ᵐ terminalᵐ

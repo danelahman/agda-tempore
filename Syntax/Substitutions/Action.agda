@@ -48,6 +48,8 @@ mutual
   V-sub₀ s (var f x)   = sub-var₀ s x f
   V-sub₀ s (const c)   = const c
   V-sub₀ s ⋆           = ⋆
+  V-sub₀ s true        = true
+  V-sub₀ s false       = false
   V-sub₀ s (⦉ V , W ⦊)  = ⦉ V-sub₀ s V , V-sub₀ s W ⦊
   V-sub₀ s (lam M)     = lam (C-sub₀ (cong-sub₀ s) M)
 
@@ -62,6 +64,8 @@ mutual
   C-sub₀ s (V · W)          = V-sub₀ s V · V-sub₀ s W
   C-sub₀ s (match V `in M)  = match V-sub₀ s V `in C-sub₀ (cong-sub₀ s) M
   C-sub₀ s (absurd V)       = absurd (V-sub₀ s V)
+  C-sub₀ s (if V `then M `else N) =
+    if V-sub₀ s V `then C-sub₀ s M `else C-sub₀ s N
   C-sub₀ s (perform op V M) = perform op (V-sub₀ s V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (delay τ M)      = delay τ (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (handle M `with H `in N) =

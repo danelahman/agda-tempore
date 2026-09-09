@@ -122,6 +122,14 @@ cast-pair⁻ : ∀ {Γ Γ' A B} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A} → 
             (U' ≡ ⦉ V' , W' ⦊) × (V ≡ castᵛ e V') × (W ≡ castᵛ e W')
 cast-pair⁻ refl _ refl = _ , _ , refl , refl , refl
 
+cast-true⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Bool)
+        → true ≡ castᵛ e V' → V' ≡ true
+cast-true⁻ refl _ refl = refl
+
+cast-false⁻ : ∀ {Γ Γ'} → (e : Γ' ≡ Γ) → (V' : Γ' ⊢V⦂ Bool)
+         → false ≡ castᵛ e V' → V' ≡ false
+cast-false⁻ refl _ refl = refl
+
 cast-return⁻ : ∀ {Γ Γ' A} → (e : Γ' ≡ Γ) → {V : Γ ⊢V⦂ A}
           → (M' : Γ' ⊢C⦂ A ‼ uₑ)
           → return V ≡ castᶜ e M'
@@ -152,6 +160,15 @@ cast-match⁻ : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
              (P' ≡ (match V' `in M')) × (V ≡ castᵛ e V')
            × (M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ∷ A ∷ B) e) M')
 cast-match⁻ refl _ refl = _ , _ , refl , refl , refl
+
+cast-if⁻ : ∀ {Γ Γ' C} → (e : Γ' ≡ Γ)
+      → {V : Γ ⊢V⦂ Bool} → {M N : Γ ⊢C⦂ C}
+      → (P' : Γ' ⊢C⦂ C)
+      → (if V `then M `else N) ≡ castᶜ e P'
+      → Σ[ V' ∈ (Γ' ⊢V⦂ Bool) ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ] Σ[ N' ∈ (Γ' ⊢C⦂ C) ]
+          (P' ≡ (if V' `then M' `else N')) × (V ≡ castᵛ e V')
+        × (M ≡ castᶜ e M') × (N ≡ castᶜ e N')
+cast-if⁻ refl _ refl = _ , _ , _ , refl , refl , refl , refl
 
 cast-perform⁻ : ∀ {Γ Γ' A ε} → (e : Γ' ≡ Γ) → {op : Op}
            → {V : Γ ⊢V⦂ type-of-gtype (param op)}

@@ -6,7 +6,9 @@
 -- exponential's beta/eta (`βᵐ`, `uncurryᵐ-curryᵐ-iso`),                 --
 -- `match-beta`/`match-eta` the product's, and `absurd-eta` the          --
 -- strictness of the initial object (`𝟘ᵐ-strict`) — with an empty-typed  --
--- value in scope every computation is the same one.                    --
+-- value in scope every computation is the same one. The boolean         --
+-- equations are the boolean object's own laws: `if-beta-true`/          --
+-- `if-beta-false` are `ifᵐ-true`/`ifᵐ-false`, and `if-eta` is `ifᵐ-η`.   --
 --                                                                    --
 -- The substitutions on the right-hand sides are discharged by           --
 -- `V-subst-nat`/`C-subst-nat`: `sub-env split-[] W` is the pairing           --
@@ -99,6 +101,36 @@ sound-fun-beta M W (pM , pW) pR =
 sound-absurd-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ Empty) → (M : Γ ∷ Empty ⊢C⦂ C)
                  → Soundᶜ== (absurd-eta V M)
 sound-absurd-eta V M pV pR = 𝟘ᵐ-strict (⟦ V ⟧ᵛᵗ pV) _ _
+
+-- The two boolean betas are the boolean object's own beta laws, read at the
+-- interpretation `⟦ true ⟧ᵛᵗ = trueᵐ ∘ᵐ terminalᵐ` of the scrutinee.
+
+sound-if-beta-true : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → Soundᶜ== (if-beta-true M N)
+sound-if-beta-true M N (_ , pM , pN) pM' =
+    ifᵐ-true (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ⟦⟧ᶜᵗ-irr M pM pM'
+
+sound-if-beta-false : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → Soundᶜ== (if-beta-false M N)
+sound-if-beta-false M N (_ , pM , pN) pN' =
+    ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+  ∙ ⟦⟧ᶜᵗ-irr N pN pN'
+
+-- `if-eta`: the two branches substitute the two booleans into the same body,
+-- and `sub-env split-[] true` is `⟨ idᵐ , trueᵐ ∘ᵐ terminalᵐ ⟩ᵐ` — exactly the
+-- shape `ifᵐ-η` speaks about. As with `match-eta`, `M` occurs only under a
+-- substitution on both sides, so its certificate comes in separately.
+
+sound-if-eta : ∀ {Γ C} → (V : Γ ⊢V⦂ Bool) → (M : Γ ∷ Bool ⊢C⦂ C)
+             → Paramᶜ M → Soundᶜ== (if-eta V M)
+sound-if-eta V M pM (pV , pT , pF) pR =
+    ifᵐ-cong ≈ᵐ-refl
+      (  ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ true ]c) pT (subᶜ M split-[] true pM tt)
+       ∙ C-subst-nat M split-[] true pM tt)
+      (  ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ false ]c) pF (subᶜ M split-[] false pM tt)
+       ∙ C-subst-nat M split-[] false pM tt)
+  ∙ ≈ᵐ-sym (ifᵐ-η (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM))
+  ∙ ≈ᵐ-sym (C-subst-nat M split-[] V pM pV)
+  ∙ ⟦⟧ᶜᵗ-irr (M [ split-[] ↦ V ]c) (subᶜ M split-[] V pM pV) pR
 
 -- `match-eta`: re-pairing the two bound components rebuilds the matched value
 -- (the product's eta, `⟨⟩ᵐ-unique`). Both sides mention `M` only under a

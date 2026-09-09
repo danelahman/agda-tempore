@@ -240,6 +240,44 @@ record Category : Set₂ where
       (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-sndᵐ _ _))))))
     (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ fstᵐ) (∘ᵐ-identityʳ sndᵐ)))
 
+  -- BOOLEAN OBJECT
+  --
+  -- Taken as primitive, with a three-argument eliminator `ifᵐ` rather than a
+  -- copairing out of a coproduct, since `ifᵐ` is what the interpretation of
+  -- `if_`then_`else_` applies directly. The block sits after the products
+  -- because `ifᵐ-η` speaks about `⟨_,_⟩ᵐ`.
+  --
+  -- `ifᵐ-∘` is stability under precomposition, which is what the renaming and
+  -- substitution coherence proofs consume; `ifᵐ-η` says a morphism out of
+  -- `X ×ᵐ 𝔹ᵐ` is determined by its two instances, which is what makes the
+  -- calculus's eta rule for `if` sound. Together the two say `𝔹ᵐ` is a
+  -- *distributive* coproduct of two copies of `𝟙ᵐ`.
+
+  field
+    𝔹ᵐ : Obj
+
+    trueᵐ  : 𝟙ᵐ →ᵐ 𝔹ᵐ
+    falseᵐ : 𝟙ᵐ →ᵐ 𝔹ᵐ
+
+    ifᵐ : ∀ {X A} → X →ᵐ 𝔹ᵐ → X →ᵐ A → X →ᵐ A → X →ᵐ A
+
+    ifᵐ-cong : ∀ {X A} {b b' : X →ᵐ 𝔹ᵐ} {f f' g g' : X →ᵐ A}
+             → b ≈ᵐ b' → f ≈ᵐ f' → g ≈ᵐ g'
+             → ifᵐ b f g ≈ᵐ ifᵐ b' f' g'
+
+    ifᵐ-true  : ∀ {X A} → (f g : X →ᵐ A)
+              → ifᵐ (trueᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ f
+    ifᵐ-false : ∀ {X A} → (f g : X →ᵐ A)
+              → ifᵐ (falseᵐ ∘ᵐ terminalᵐ) f g ≈ᵐ g
+
+    ifᵐ-∘ : ∀ {X Y A} → (b : X →ᵐ 𝔹ᵐ) → (f g : X →ᵐ A) → (h : Y →ᵐ X)
+          → ifᵐ b f g ∘ᵐ h ≈ᵐ ifᵐ (b ∘ᵐ h) (f ∘ᵐ h) (g ∘ᵐ h)
+
+    ifᵐ-η : ∀ {X A} → (b : X →ᵐ 𝔹ᵐ) → (m : X ×ᵐ 𝔹ᵐ →ᵐ A)
+          → m ∘ᵐ ⟨ idᵐ , b ⟩ᵐ
+          ≈ᵐ ifᵐ b (m ∘ᵐ ⟨ idᵐ , trueᵐ  ∘ᵐ terminalᵐ ⟩ᵐ)
+                   (m ∘ᵐ ⟨ idᵐ , falseᵐ ∘ᵐ terminalᵐ ⟩ᵐ)
+
   -- EXPONENTIALS
 
   field

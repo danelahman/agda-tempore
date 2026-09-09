@@ -77,6 +77,7 @@ var-proj (Tl-⟨⟩ {ρ = ρ} x)     = μ ∘ᵐ ⟨ ρ ⟩ᶠ (var-proj x)
 eternalᵛ-Eternalᵒ : ∀ {A} → Eternal A → Eternalᵒ ⟦ A ⟧ᵛ
 eternalᵛ-Eternalᵒ (Baseₑ b eb)   = ⟦ b ⟧ᵇᵉ eb
 eternalᵛ-Eternalᵒ Unitₑ          = 𝟙-eternalᵒ
+eternalᵛ-Eternalᵒ Boolₑ          = 𝔹-eternalᵒ
 eternalᵛ-Eternalᵒ Emptyₑ         = 𝟘-eternalᵒ
 eternalᵛ-Eternalᵒ (et₁ |×|ₑ et₂) =
   ×-eternalᵒ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)

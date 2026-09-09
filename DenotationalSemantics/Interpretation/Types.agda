@@ -48,6 +48,7 @@ mutual
   ⟦_⟧ᵛ : VType → Obj
   ⟦ Base b   ⟧ᵛ = ⟦ b ⟧ᵇ
   ⟦ Unit     ⟧ᵛ = 𝟙ᵐ
+  ⟦ Bool     ⟧ᵛ = 𝔹ᵐ
   ⟦ A |×| B  ⟧ᵛ = ⟦ A ⟧ᵛ ×ᵐ ⟦ B ⟧ᵛ
   ⟦ Empty    ⟧ᵛ = 𝟘ᵐ
   ⟦ A ⇒ C    ⟧ᵛ = ⟦ A ⟧ᵛ ⇒ᵐ ⟦ C ⟧ᶜ

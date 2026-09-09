@@ -279,6 +279,10 @@ Empty-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Empty ∈[ ρ ] toCtx S → �
 Empty-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Empty-not-in-toCtx x
 Empty-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Empty-not-in-toCtx x
 
+Bool-not-in-toCtx : ∀ {Γ ρ} {S : 𝕊 Γ} → Bool ∈[ ρ ] toCtx S → ⊥
+Bool-not-in-toCtx {S = S ⟨ ρ' ⟩ₛ} (Tl-⟨⟩ x) = Bool-not-in-toCtx x
+Bool-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Bool-not-in-toCtx x
+
 not-in-empty-ctx : {ρ : R} {A : VType} → A ∈[ ρ ] [] → ⊥
 not-in-empty-ctx ()
 

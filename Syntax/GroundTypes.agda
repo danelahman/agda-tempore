@@ -14,6 +14,7 @@ open BaseTypes BTs
 data GType : Set where
   Base   : BaseType → GType                -- base types
   Unit   : GType                           -- unit type
+  Bool   : GType                           -- boolean type
   Empty  : GType                           -- empty type
   _|×|ᵍ_ : GType → GType → GType           -- product type
   [_]ᵍ_  : R → GType → GType               -- box modality: values of type `[ ρ ]ᵍ A`

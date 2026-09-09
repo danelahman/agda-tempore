@@ -10,6 +10,7 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades
@@ -279,6 +280,8 @@ mutual
   FL-V γ pγ (var f x)  = env-var γ pγ x f
   FL-V γ pγ (const c)  = tt
   FL-V γ pγ ⋆          = tt
+  FL-V γ pγ true       = tt
+  FL-V γ pγ false      = tt
   FL-V γ pγ ⦉ V , W ⦊   =
     _ , _ , env-Vˢ-pair γ [] V W , FL-V γ pγ V , FL-V γ pγ W
 
@@ -310,6 +313,19 @@ mutual
       (CRed-expand COERCE (FL-C γ pγ M))
 
   FL-C γ pγ (absurd V) = ⊥-elim (empty-canonical (env-V γ V))
+
+  -- `if` is head expansion off whichever rule the scrutinee names: over a state
+  -- context a boolean *is* one of the two constants (`bool-canonical`).
+
+  FL-C γ pγ (if V `then M `else N) with bool-canonical (env-V γ V)
+  ... | inj₁ eV =
+    subst (CRed' _ _ _) (sym (env-Cˢ-if γ [] V M N))
+      (subst (λ z → CRed' _ _ _ (if z `then env-C γ M `else env-C γ N)) (sym eV)
+        (CRed-expand IF-TRUE (FL-C γ pγ M)))
+  ... | inj₂ eV =
+    subst (CRed' _ _ _) (sym (env-Cˢ-if γ [] V M N))
+      (subst (λ z → CRed' _ _ _ (if z `then env-C γ M `else env-C γ N)) (sym eV)
+        (CRed-expand IF-FALSE (FL-C γ pγ N)))
 
   FL-C γ pγ (V · W) with FL-V γ pγ V
   ... | M₀ , eq , f =

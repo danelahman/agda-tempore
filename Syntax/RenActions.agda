@@ -108,6 +108,8 @@ mutual
   ... | _ , ρ'≾ρ , y = var (λ p → ≾ᵣ-trans (ρ'≾ρ p) (f p)) y
   V-rename r (const c)   = const c
   V-rename r ⋆           = ⋆
+  V-rename r true        = true
+  V-rename r false       = false
   V-rename r (⦉ V , W ⦊)  = ⦉ V-rename r V , V-rename r W ⦊
   V-rename r (lam M)     = lam (C-rename (cong-ren r) M)
 
@@ -122,6 +124,8 @@ mutual
   C-rename r (V · W)          = V-rename r V · V-rename r W
   C-rename r (match V `in M)  = match V-rename r V `in C-rename (cong-ren r) M
   C-rename r (absurd V)       = absurd (V-rename r V)
+  C-rename r (if V `then M `else N) =
+    if V-rename r V `then C-rename r M `else C-rename r N
   C-rename r (perform op V M) = perform op (V-rename r V) (C-rename (cong-ren r) M)
   C-rename r (delay τ M)      = delay τ (C-rename (cong-ren r) M)
   C-rename r (handle M `with H `in N) =

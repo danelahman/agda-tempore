@@ -57,6 +57,8 @@ eternal-val-ext-ren : ∀ {Γ Γ' A ρ} → (et : Eternal A) → (r : Ren [] Γ 
 eternal-val-ext-ren et             r (var f x)   = var-≡
 eternal-val-ext-ren et             r (const c)   = refl
 eternal-val-ext-ren et             r ⋆           = refl
+eternal-val-ext-ren et             r true        = refl
+eternal-val-ext-ren et             r false       = refl
 eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊  =
   cong₂ ⦉_,_⦊ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
 
@@ -114,6 +116,8 @@ mutual
   V-sub₀-⌜⌝ r (var f x) = refl
   V-sub₀-⌜⌝ r (const c) = refl
   V-sub₀-⌜⌝ r ⋆         = refl
+  V-sub₀-⌜⌝ r true      = refl
+  V-sub₀-⌜⌝ r false     = refl
   V-sub₀-⌜⌝ r ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-⌜⌝ r V) (V-sub₀-⌜⌝ r W)
   V-sub₀-⌜⌝ r (lam M)   =
     cong lam (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
@@ -133,6 +137,9 @@ mutual
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _ ∷ _) r) M)
              (C-sub₀-⌜⌝ (cong-ren r) M))
   C-sub₀-⌜⌝ r (absurd V) = cong absurd (V-sub₀-⌜⌝ r V)
+  C-sub₀-⌜⌝ r (if V `then M `else N) =
+    cong₃ if_`then_`else_
+      (V-sub₀-⌜⌝ r V) (C-sub₀-⌜⌝ r M) (C-sub₀-⌜⌝ r N)
   C-sub₀-⌜⌝ r (perform op V M) =
     cong₂ (perform _) (V-sub₀-⌜⌝ r V)
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) M)
@@ -302,6 +309,8 @@ mutual
   V-sub₀-ren h (var f x) = atᵛ h x f
   V-sub₀-ren h (const c) = refl
   V-sub₀-ren h ⋆         = refl
+  V-sub₀-ren h true      = refl
+  V-sub₀-ren h false     = refl
   V-sub₀-ren h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (lam M)   = cong lam (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
 
@@ -317,6 +326,9 @@ mutual
   C-sub₀-ren h (match V `in M) =
     cong₂ match_`in_ (V-sub₀-ren h V) (C-sub₀-ren (⋈-cong ([] ∷ _ ∷ _) h) M)
   C-sub₀-ren h (absurd V) = cong absurd (V-sub₀-ren h V)
+  C-sub₀-ren h (if V `then M `else N) =
+    cong₃ if_`then_`else_
+      (V-sub₀-ren h V) (C-sub₀-ren h M) (C-sub₀-ren h N)
   C-sub₀-ren h (perform op V M) =
     cong₂ (perform _) (V-sub₀-ren h V) (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) M)
   C-sub₀-ren h (delay τ M) =

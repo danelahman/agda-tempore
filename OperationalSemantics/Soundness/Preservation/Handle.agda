@@ -158,6 +158,8 @@ alg-stepᵀ : ∀ {ε ε₂ ε₁' ε₃' A B} {S S' : 𝕊 []}
               ∘ᵐ Tᶠ (alg {ε} ∘ᵐ f) ∘ᵐ stepᵀ r
 alg-stepᵀ alg alg-≤ alg-η alg-delay APP        f = alg-ηᵀ alg alg-≤ alg-η f
 alg-stepᵀ alg alg-≤ alg-η alg-delay MATCH      f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay IF-TRUE    f = alg-ηᵀ alg alg-≤ alg-η f
+alg-stepᵀ alg alg-≤ alg-η alg-delay IF-FALSE   f = alg-ηᵀ alg alg-≤ alg-η f
 alg-stepᵀ alg alg-≤ alg-η alg-delay SEQ-RET    f = alg-ηᵀ alg alg-≤ alg-η f
 alg-stepᵀ alg alg-≤ alg-η alg-delay SEQ-OP     f = alg-ηᵀ alg alg-≤ alg-η f
 alg-stepᵀ alg alg-≤ alg-η alg-delay HANDLE-RET f = alg-ηᵀ alg alg-≤ alg-η f

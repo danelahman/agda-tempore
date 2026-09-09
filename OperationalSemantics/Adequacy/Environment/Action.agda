@@ -273,6 +273,15 @@ env-eternal-app lf-[]     η V W = cast-app ++ᶜ-identityˡ
 env-eternal-app (lf-∷ lf) η V W =
   trans (cong (env-eternal-C lf _) (cast-app _)) (env-eternal-app lf _ _ _)
 
+env-eternal-if : ∀ {Δ Γ C} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
+               → (V : (Δ ++ᶜ Γ) ⊢V⦂ Bool) → (M N : (Δ ++ᶜ Γ) ⊢C⦂ C)
+               → env-eternal-C lf η (if V `then M `else N)
+               ≡ if (env-eternal-V lf η V) `then (env-eternal-C lf η M)
+                                           `else (env-eternal-C lf η N)
+env-eternal-if lf-[]     η V M N = cast-if ++ᶜ-identityˡ
+env-eternal-if (lf-∷ lf) η V M N =
+  trans (cong (env-eternal-C lf _) (cast-if _)) (env-eternal-if lf _ _ _ _)
+
 env-eternal-coerce : ∀ {Δ Γ A ε ε'} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
                    → {p : ε ≾ₑ ε'} → (M : (Δ ++ᶜ Γ) ⊢C⦂ A ‼ ε)
                    → env-eternal-C lf η (coerce p M)
@@ -422,6 +431,106 @@ env-Cˢ-app (eternalˡ Δ₀ lf η γ) Δ V U =
     env-Cˢ γ Δ (env-eternal-V lf η (castᵛ e V) · env-eternal-V lf η (castᵛ e U))
   ≡⟨ env-Cˢ-app γ Δ (env-eternal-V lf η (castᵛ e V)) (env-eternal-V lf η (castᵛ e U)) ⟩
     env-Vˢ γ Δ (env-eternal-V lf η (castᵛ e V)) · env-Vˢ γ Δ (env-eternal-V lf η (castᵛ e U))
+  ∎
+  where
+    e = ++ᶜ-assoc Δ₀ _ Δ
+
+env-Cˢ-if : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx)
+          → (V : (Γ ++ᶜ Δ) ⊢V⦂ Bool) → (M N : (Γ ++ᶜ Δ) ⊢C⦂ C)
+          → env-Cˢ γ Δ (if V `then M `else N)
+          ≡ if (env-Vˢ γ Δ V) `then (env-Cˢ γ Δ M) `else (env-Cˢ γ Δ N)
+
+env-Cˢ-if ⌊ St ⌋ Δ V M N = refl
+env-Cˢ-if (∅ᵉ St) Δ V M N = refl
+env-Cˢ-if (reachᵉ γ q) Δ V M N =
+  cong (C-rename (cong-ren (reach-renᵘ q))) (env-Cˢ-if γ Δ V M N)
+
+env-Cˢ-if (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ} γ q) Δ V M N =
+  cong (C-rename (cong-ren (unbox-ren q)))
+    (begin
+      castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (if V `then M `else N)))
+    ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-if ei) ⟩
+      castᶜ eo (env-Cˢ γ Δ'
+        (if castᵛ ei V `then castᶜ ei M `else castᶜ ei N))
+    ≡⟨ cong (castᶜ eo)
+            (env-Cˢ-if γ Δ' (castᵛ ei V) (castᶜ ei M) (castᶜ ei N)) ⟩
+      castᶜ eo (if env-Vˢ γ Δ' (castᵛ ei V)
+                 `then env-Cˢ γ Δ' (castᶜ ei M)
+                 `else env-Cˢ γ Δ' (castᶜ ei N))
+    ≡⟨ cast-if eo ⟩
+      if castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))
+        `then castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M))
+        `else castᶜ eo (env-Cˢ γ Δ' (castᶜ ei N))
+     ∎)
+  where
+    Δ' = [] ⟨ ρ ⟩ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) ([] ⟨ ρ ⟩) Δ)
+    ei = ++ᶜ-assoc Γ ([] ⟨ ρ ⟩) Δ
+
+env-Cˢ-if (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ} V₀ γ) Δ V M N =
+  begin
+    castᶜ eo (env-Cˢ γ Δ' (castᶜ ei (if V `then M `else N)))
+  ≡⟨ cong (λ z → castᶜ eo (env-Cˢ γ Δ' z)) (cast-if ei) ⟩
+    castᶜ eo (env-Cˢ γ Δ'
+      (if castᵛ ei V `then castᶜ ei M `else castᶜ ei N))
+  ≡⟨ cong (castᶜ eo)
+          (env-Cˢ-if γ Δ' (castᵛ ei V) (castᶜ ei M) (castᶜ ei N)) ⟩
+    castᶜ eo (if env-Vˢ γ Δ' (castᵛ ei V)
+               `then env-Cˢ γ Δ' (castᶜ ei M)
+               `else env-Cˢ γ Δ' (castᶜ ei N))
+  ≡⟨ cast-if eo ⟩
+    if castᵛ eo (env-Vˢ γ Δ' (castᵛ ei V))
+      `then castᶜ eo (env-Cˢ γ Δ' (castᶜ ei M))
+      `else castᶜ eo (env-Cˢ γ Δ' (castᶜ ei N))
+   ∎
+  where
+    Δ₁ = [] ∷ [ ρ ] A₀
+    Δ' = Δ₁ ++ᶜ Δ
+    eo = sym (++ᶜ-assoc (toCtx St) Δ₁ Δ)
+    ei = ++ᶜ-assoc Γ Δ₁ Δ
+
+env-Cˢ-if (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V M N =
+  begin
+    sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA (if V `then M `else N)))) W
+  ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ z)) W) (cast-if eA) ⟩
+    sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁
+      (if castᵛ eA V `then castᶜ eA M `else castᶜ eA N))) W
+  ≡⟨ cong (λ z → sub-atᶜ Δ (castᶜ eIn z) W)
+          (env-Cˢ-if γ Δ₁ (castᵛ eA V) (castᶜ eA M) (castᶜ eA N)) ⟩
+    sub-atᶜ Δ (castᶜ eIn (if env-Vˢ γ Δ₁ (castᵛ eA V)
+                           `then env-Cˢ γ Δ₁ (castᶜ eA M)
+                           `else env-Cˢ γ Δ₁ (castᶜ eA N))) W
+  ≡⟨ cong (λ z → sub-atᶜ Δ z W) (cast-if eIn) ⟩
+    sub-atᶜ Δ (if castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))
+                `then castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M))
+                `else castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA N))) W
+  ≡⟨⟩
+    if sub-atᵛ Δ (castᵛ eIn (env-Vˢ γ Δ₁ (castᵛ eA V))) W
+      `then sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA M))) W
+      `else sub-atᶜ Δ (castᶜ eIn (env-Cˢ γ Δ₁ (castᶜ eA N))) W
+  ∎
+  where
+    Δ₁   = [] ∷ A₀ ++ᶜ Δ
+    eIn  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
+    eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
+
+env-Cˢ-if (eternalˡ Δ₀ lf η γ) Δ V M N =
+  begin
+    env-Cˢ γ Δ (env-eternal-C lf η (castᶜ e (if V `then M `else N)))
+  ≡⟨ cong (λ z → env-Cˢ γ Δ (env-eternal-C lf η z)) (cast-if e) ⟩
+    env-Cˢ γ Δ (env-eternal-C lf η
+      (if castᵛ e V `then castᶜ e M `else castᶜ e N))
+  ≡⟨ cong (env-Cˢ γ Δ)
+          (env-eternal-if lf η (castᵛ e V) (castᶜ e M) (castᶜ e N)) ⟩
+    env-Cˢ γ Δ (if env-eternal-V lf η (castᵛ e V)
+                 `then env-eternal-C lf η (castᶜ e M)
+                 `else env-eternal-C lf η (castᶜ e N))
+  ≡⟨ env-Cˢ-if γ Δ (env-eternal-V lf η (castᵛ e V))
+                   (env-eternal-C lf η (castᶜ e M))
+                   (env-eternal-C lf η (castᶜ e N)) ⟩
+    if env-Vˢ γ Δ (env-eternal-V lf η (castᵛ e V))
+      `then env-Cˢ γ Δ (env-eternal-C lf η (castᶜ e M))
+      `else env-Cˢ γ Δ (env-eternal-C lf η (castᶜ e N))
   ∎
   where
     e = ++ᶜ-assoc Δ₀ _ Δ

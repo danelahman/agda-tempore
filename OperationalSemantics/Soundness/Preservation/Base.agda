@@ -97,6 +97,8 @@ stepᴾˢ : ∀ {ε ε' A} {S S' : 𝕊 []}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
+stepᴾˢ IF-TRUE             pS _              = pS
+stepᴾˢ IF-FALSE            pS _              = pS
 stepᴾˢ (SEQ-STEP r _)      pS (pM , _)       = stepᴾˢ r pS pM
 stepᴾˢ SEQ-RET             pS _              = pS
 stepᴾˢ SEQ-OP              pS _              = pS
@@ -135,6 +137,8 @@ step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
            → E
 step-grade APP                  = uₑ
 step-grade MATCH                = uₑ
+step-grade IF-TRUE              = uₑ
+step-grade IF-FALSE             = uₑ
 step-grade (SEQ-STEP r _)       = step-grade r
 step-grade SEQ-RET              = uₑ
 step-grade SEQ-OP               = uₑ
@@ -156,6 +160,8 @@ stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
       → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
 stepᵀ MATCH             = ηᵀ
+stepᵀ IF-TRUE           = ηᵀ
+stepᵀ IF-FALSE          = ηᵀ
 stepᵀ (SEQ-STEP r _)    = stepᵀ r
 stepᵀ SEQ-RET           = ηᵀ
 stepᵀ SEQ-OP            = ηᵀ
@@ -176,6 +182,8 @@ step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} MATCH  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} IF-TRUE  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} IF-FALSE = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ (SEQ-STEP {ε₂ = ε₂} {ε₃ = ε₃} r _) =
   ≾ₑ-trans
     (≾ₑ-reflexive (sym (·ₑ-assoc (step-grade r) ε₃ ε₂)))
@@ -338,6 +346,16 @@ sound-BOX {ρ = ρ} St V M pSt pV pM =
 sound-COERCE : ∀ {Γ A ε ε'} → (p : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
              → ⟦ coerce p M ⟧ᶜᵗ pM ≈ᵐ T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 sound-COERCE p M pM = ≈ᵐ-refl
+
+-- IF-TRUE / IF-FALSE: taking a branch is the boolean object's beta law.
+
+sound-IF-TRUE : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+              → ⟦ if true `then M `else N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ M ⟧ᶜᵗ pM
+sound-IF-TRUE M N pM pN = ifᵐ-true (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
+
+sound-IF-FALSE : ∀ {Γ C} → (M N : Γ ⊢C⦂ C) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+               → ⟦ if false `then M `else N ⟧ᶜᵗ (tt , pM , pN) ≈ᵐ ⟦ N ⟧ᶜᵗ pN
+sound-IF-FALSE M N pM pN = ifᵐ-false (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
 
 delayᵀ-ε-substᵀ : ∀ {A ε ε'} → (τ : ℕ) → (e : ε ≡ ε')
                 → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (ε-substᵀ e)

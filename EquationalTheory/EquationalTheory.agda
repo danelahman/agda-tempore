@@ -171,6 +171,15 @@ mutual
                 ------------------------------------
                 → Γ ⊢C⦂ absurd {C = C} V == absurd {C = C} W
 
+    if-cong : ∀ {C}
+            → {V W : Γ ⊢V⦂ Bool}
+            → {M M' N N' : Γ ⊢C⦂ C}
+            → Γ ⊢V⦂ V == W
+            → Γ ⊢C⦂ M == M'
+            → Γ ⊢C⦂ N == N'
+            ----------------------------------------------------------
+            → Γ ⊢C⦂ if V `then M `else N == if W `then M' `else N'
+
     perform-cong : ∀ {A ε op}
                  → {V W : Γ ⊢V⦂ type-of-gtype (param op)}
                  → {M N : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
@@ -353,6 +362,31 @@ mutual
                -----------------------
                → Γ ⊢C⦂ absurd {C = C} V
                    == M [ split-[] ↦ V ]c
+
+    -- beta-equations for boolean elimination
+
+    if-beta-true : ∀ {C}
+                 → (M N : Γ ⊢C⦂ C)
+                 -----------------------------------------
+                 → Γ ⊢C⦂ if true `then M `else N == M
+
+    if-beta-false : ∀ {C}
+                  → (M N : Γ ⊢C⦂ C)
+                  -----------------------------------------
+                  → Γ ⊢C⦂ if false `then M `else N == N
+
+    -- eta-equation for boolean elimination
+    --
+    -- Every commuting conversion is an instance: taking `M` to be a sequencing,
+    -- a handling, a coercion, ... pushes that former into the two branches.
+
+    if-eta : ∀ {C}
+           → (V : Γ ⊢V⦂ Bool)
+           → (M : Γ ∷ Bool ⊢C⦂ C)
+           ------------------------------------------------------
+           → Γ ⊢C⦂ if V `then (M [ split-[] ↦ true  ]c)
+                        `else (M [ split-[] ↦ false ]c)
+               == M [ split-[] ↦ V ]c
 
     -- computational/beta-equations for effect handling
 

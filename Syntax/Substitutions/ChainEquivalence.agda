@@ -92,6 +92,8 @@ V-sub₀-ext s et (var f x) rewrite eternal?-yes et =
   cong (eternal-val-ext et) (sub-var₀-irr s x _ f)
 V-sub₀-ext s et (const c) = refl
 V-sub₀-ext s et ⋆         = refl
+V-sub₀-ext s et true      = refl
+V-sub₀-ext s et false     = refl
 V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-ext s et₁ V₁) (V-sub₀-ext s et₂ V₂)
 
@@ -109,6 +111,8 @@ V-sub₀-restrict {Γ' = Γ'} s et (var f x) =
                (sub-var₀-irr s x (et-bound et) f))))
 V-sub₀-restrict s et (const c) = refl
 V-sub₀-restrict s et ⋆         = refl
+V-sub₀-restrict s et true      = refl
+V-sub₀-restrict s et false     = refl
 V-sub₀-restrict s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-restrict s et₁ V₁) (V-sub₀-restrict s et₂ V₂)
 
@@ -175,6 +179,8 @@ eternal-val-ext-≡ : ∀ {Γ A ρ} → (et : Eternal A) → (p : ρ ≾ᵣ uᵣ
 eternal-val-ext-≡ et p (var f x) = var-img-≡ (sym (hit-⟨⟩-img p x)) _ _
 eternal-val-ext-≡ et p (const c) = refl
 eternal-val-ext-≡ et p ⋆         = refl
+eternal-val-ext-≡ et p true      = refl
+eternal-val-ext-≡ et p false     = refl
 eternal-val-ext-≡ (et₁ |×|ₑ et₂) p ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (eternal-val-ext-≡ et₁ p V₁) (eternal-val-ext-≡ et₂ p V₂)
 
@@ -315,6 +321,14 @@ V-sub-⋆ : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → V-sub σ ⋆ ≡ ⋆
 V-sub-⋆ []ˢ      = refl
 V-sub-⋆ (s ◅ σ) = cong (V-sub₀ s) (V-sub-⋆ σ)
 
+V-sub-true : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → V-sub σ true ≡ true
+V-sub-true []ˢ      = refl
+V-sub-true (s ◅ σ) = cong (V-sub₀ s) (V-sub-true σ)
+
+V-sub-false : ∀ {Γ Γ'} → (σ : Sub [] Γ Γ') → V-sub σ false ≡ false
+V-sub-false []ˢ      = refl
+V-sub-false (s ◅ σ) = cong (V-sub₀ s) (V-sub-false σ)
+
 V-sub-⦉⦊ : ∀ {Γ Γ' A B} → (σ : Sub [] Γ Γ')
          → (V : Γ' ⊢V⦂ A) → (W : Γ' ⊢V⦂ B)
          → V-sub σ ⦉ V , W ⦊ ≡ ⦉ V-sub σ V , V-sub σ W ⦊
@@ -355,6 +369,13 @@ C-sub-absurd : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ Empt
              → C-sub σ (absurd {C = C} V) ≡ absurd (V-sub σ V)
 C-sub-absurd []ˢ      V = refl
 C-sub-absurd (s ◅ σ) V = cong (C-sub₀ s) (C-sub-absurd σ V)
+
+C-sub-if : ∀ {Γ Γ' C} → (σ : Sub [] Γ Γ')
+         → (V : Γ' ⊢V⦂ Bool) → (M N : Γ' ⊢C⦂ C)
+         → C-sub σ (if V `then M `else N)
+         ≡ if V-sub σ V `then C-sub σ M `else C-sub σ N
+C-sub-if []ˢ      V M N = refl
+C-sub-if (s ◅ σ) V M N = cong (C-sub₀ s) (C-sub-if σ V M N)
 
 C-sub-perform : ∀ {Γ Γ' A ε} → (σ : Sub [] Γ Γ') → (op : Op)
               → (V : Γ' ⊢V⦂ type-of-gtype (param op))
@@ -428,6 +449,10 @@ mutual
     trans (V-sub-const σ c) (sym (V-sub-const σ' c))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h ⋆ =
     trans (V-sub-⋆ σ) (sym (V-sub-⋆ σ'))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h true =
+    trans (V-sub-true σ) (sym (V-sub-true σ'))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h false =
+    trans (V-sub-false σ) (sym (V-sub-false σ'))
   V-sub-≐ˢ {σ = σ} {σ' = σ'} h ⦉ V , W ⦊ =
     trans (V-sub-⦉⦊ σ V W)
       (trans (cong₂ ⦉_,_⦊ (V-sub-≐ˢ h V) (V-sub-≐ˢ h W))
@@ -459,6 +484,11 @@ mutual
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (absurd V) =
     trans (C-sub-absurd σ V)
       (trans (cong absurd (V-sub-≐ˢ h V)) (sym (C-sub-absurd σ' V)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (if V `then M `else N) =
+    trans (C-sub-if σ V M N)
+      (trans (cong₃ if_`then_`else_
+                (V-sub-≐ˢ h V) (C-sub-≐ˢ h M) (C-sub-≐ˢ h N))
+             (sym (C-sub-if σ' V M N)))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (perform op V M) =
     trans (C-sub-perform σ op V M)
       (trans (cong₂ (perform op) (V-sub-≐ˢ h V)

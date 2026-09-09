@@ -25,6 +25,7 @@ open import DenotationalSemantics.Model.World
 
 module DenotationalSemantics.Model.Example.PSh.Base (GS : GradeSystem) (Wld : World (GradeSystem.RGrade GS)) where
 
+open import Data.Bool using (Bool; true; false; if_then_else_)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
@@ -224,6 +225,102 @@ sndᵖ {A} {B} = pmap proj₂ (λ e → proj₂ e) (λ p x → ≈-refl B)
            → fstᵖ ∘ᵖ h ≈ᵖ f → sndᵖ ∘ᵖ h ≈ᵖ g → h ≈ᵖ ⟨ f , g ⟩ᵖ
 ⟨⟩ᵖ-unique f g h p q x = p x , q x
 
+-- Boolean object
+--
+-- The constant presheaf on `Data.Bool`: propositional equality per world and
+-- identity transport. Constancy is what makes the eliminator a presheaf map —
+-- its `nat` obligation rewrites the scrutinee away — and it is also what makes
+-- `𝔹ᵖ` eternal (`Modality.Eternal`).
+
+𝔹ᵖ : PSh
+𝔹ᵖ = record
+  { carrier         = λ _ → Bool
+  ; _≈_             = _≡_
+  ; ≈-refl          = refl
+  ; ≈-sym           = sym
+  ; ≈-trans         = trans
+  ; transport       = λ _ x → x
+  ; transport-cong  = λ _ e → e
+  ; transport-refl  = λ _ → refl
+  ; transport-trans = λ _ _ _ → refl
+  }
+
+trueᵖ : 𝟙ᵖ →ᵖ 𝔹ᵖ
+trueᵖ = pmap (λ _ → true) (λ _ → refl) (λ _ _ → refl)
+
+falseᵖ : 𝟙ᵖ →ᵖ 𝔹ᵖ
+falseᵖ = pmap (λ _ → false) (λ _ → refl) (λ _ _ → refl)
+
+-- Both obligations follow the same shape: case on the scrutinee's *value*
+-- through a helper, then move that value along the equation the scrutinee's
+-- own `app-cong`/`nat` supplies.
+
+ifᵖ : ∀ {X A} → X →ᵖ 𝔹ᵖ → X →ᵖ A → X →ᵖ A → X →ᵖ A
+ifᵖ {X} {A} b f g = pmap
+  (λ x → if app b x then app f x else app g x)
+  (λ {w} {x} {y} e →
+     subst (λ c → _≈_ A (if app b x then app f x else app g x)
+                        (if c then app f y else app g y))
+           (app-cong b e)
+           (go-cong e (app b x)))
+  (λ {w} {w'} p x →
+     subst (λ c → _≈_ A (if c then app f (transport X p x)
+                              else app g (transport X p x))
+                        (transport A p (if app b x then app f x else app g x)))
+           (sym (nat b p x))
+           (go-nat p x (app b x)))
+  where
+    go-cong : ∀ {w} {x y : carrier X w} → _≈_ X x y → (c : Bool)
+            → _≈_ A (if c then app f x else app g x)
+                    (if c then app f y else app g y)
+    go-cong e true  = app-cong f e
+    go-cong e false = app-cong g e
+
+    go-nat : ∀ {w w'} → (p : w ⊑[ uᵣ ] w') → (x : carrier X w) → (c : Bool)
+           → _≈_ A (if c then app f (transport X p x) else app g (transport X p x))
+                   (transport A p (if c then app f x else app g x))
+    go-nat p x true  = nat f p x
+    go-nat p x false = nat g p x
+
+ifᵖ-cong : ∀ {X A} {b b' : X →ᵖ 𝔹ᵖ} {f f' g g' : X →ᵖ A}
+         → b ≈ᵖ b' → f ≈ᵖ f' → g ≈ᵖ g'
+         → ifᵖ b f g ≈ᵖ ifᵖ b' f' g'
+ifᵖ-cong {X} {A} {b} {b'} {f} {f'} {g} {g'} pb pf pg {w} x =
+  subst (λ c → _≈_ A (if app b x then app f x else app g x)
+                     (if c then app f' x else app g' x))
+        (pb x)
+        (go (app b x))
+  where
+    go : (c : Bool) → _≈_ A (if c then app f x else app g x)
+                            (if c then app f' x else app g' x)
+    go true  = pf x
+    go false = pg x
+
+ifᵖ-true : ∀ {X A} → (f g : X →ᵖ A) → ifᵖ (trueᵖ ∘ᵖ terminalᵖ) f g ≈ᵖ f
+ifᵖ-true {A = A} f g x = ≈-refl A
+
+ifᵖ-false : ∀ {X A} → (f g : X →ᵖ A) → ifᵖ (falseᵖ ∘ᵖ terminalᵖ) f g ≈ᵖ g
+ifᵖ-false {A = A} f g x = ≈-refl A
+
+ifᵖ-∘ : ∀ {X Y A} → (b : X →ᵖ 𝔹ᵖ) → (f g : X →ᵖ A) → (h : Y →ᵖ X)
+      → ifᵖ b f g ∘ᵖ h ≈ᵖ ifᵖ (b ∘ᵖ h) (f ∘ᵖ h) (g ∘ᵖ h)
+ifᵖ-∘ {A = A} b f g h x = ≈-refl A
+
+-- A map out of `X ×ᵖ 𝔹ᵖ` is determined by its two instances: at each world the
+-- second component *is* a boolean, so the case split is on that value.
+
+ifᵖ-η : ∀ {X A} → (b : X →ᵖ 𝔹ᵖ) → (m : X ×ᵖ 𝔹ᵖ →ᵖ A)
+      → m ∘ᵖ ⟨ idᵖ , b ⟩ᵖ
+      ≈ᵖ ifᵖ b (m ∘ᵖ ⟨ idᵖ , trueᵖ  ∘ᵖ terminalᵖ ⟩ᵖ)
+               (m ∘ᵖ ⟨ idᵖ , falseᵖ ∘ᵖ terminalᵖ ⟩ᵖ)
+ifᵖ-η {X} {A} b m {w} x = go (app b x)
+  where
+    go : (c : Bool)
+       → _≈_ A (app m (x , c))
+               (if c then app m (x , true) else app m (x , false))
+    go true  = ≈-refl A
+    go false = ≈-refl A
+
 -- Kripke exponentials
 --
 -- An element of the exponential `A ⇒ᵖ B` at a world `w` is a Kripke
@@ -375,6 +472,16 @@ PShCat = record
   ; ⟨⟩ᵐ-fstᵐ     = ⟨⟩ᵖ-fstᵖ
   ; ⟨⟩ᵐ-sndᵐ     = ⟨⟩ᵖ-sndᵖ
   ; ⟨⟩ᵐ-unique   = ⟨⟩ᵖ-unique
+  ; 𝔹ᵐ           = 𝔹ᵖ
+  ; trueᵐ        = trueᵖ
+  ; falseᵐ       = falseᵖ
+  ; ifᵐ          = ifᵖ
+  ; ifᵐ-cong     = λ {X} {A} {b} {b'} {f} {f'} {g} {g'} →
+                     ifᵖ-cong {b = b} {b' = b'} {f = f} {f' = f'} {g = g} {g' = g'}
+  ; ifᵐ-true     = ifᵖ-true
+  ; ifᵐ-false    = ifᵖ-false
+  ; ifᵐ-∘        = ifᵖ-∘
+  ; ifᵐ-η        = ifᵖ-η
   ; _⇒ᵐ_         = _⇒ᵖ_
   ; curryᵐ       = curryᵖ
   ; curryᵐ-cong  = λ {A} {B} {C} {f} {g} → curryᵖ-cong {f = f} {g = g}

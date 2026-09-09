@@ -82,6 +82,8 @@ mutual
   ⟦⟧ᵛᵗ-irr (var f x)  _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr (const c)  _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr ⋆          _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr true       _ _ = ≈ᵐ-refl
+  ⟦⟧ᵛᵗ-irr false      _ _ = ≈ᵐ-refl
   ⟦⟧ᵛᵗ-irr ⦉ V , W ⦊ (pV , pW) (pV' , pW') =
     ⟨ ⟦⟧ᵛᵗ-irr V pV pV' , ⟦⟧ᵛᵗ-irr W pW pW' ⟩ᵐ-cong
   ⟦⟧ᵛᵗ-irr (lam M)   pM pM' = curryᵐ-cong (⟦⟧ᶜᵗ-irr M pM pM')
@@ -99,6 +101,8 @@ mutual
             (⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV') ⟩ᵐ-cong
              , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV') ⟩ᵐ-cong)
   ⟦⟧ᶜᵗ-irr (absurd V) pV pV' = ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
+  ⟦⟧ᶜᵗ-irr (if V `then M `else N) (pV , pM , pN) (pV' , pM' , pN') =
+    ifᵐ-cong (⟦⟧ᵛᵗ-irr V pV pV') (⟦⟧ᶜᵗ-irr M pM pM') (⟦⟧ᶜᵗ-irr N pN pN')
   ⟦⟧ᶜᵗ-irr (perform op V M) (pV , pM) (pV' , pM') =
     ∘ᵐ-congʳ (⟨ substᶜ-≈ (ty-gty (param op)) (⟦⟧ᵛᵗ-irr V pV pV')
               , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong

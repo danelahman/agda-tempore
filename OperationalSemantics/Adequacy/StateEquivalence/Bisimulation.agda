@@ -66,6 +66,29 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ↝-≐ˢ-coerce es P' eM with cast-coerce⁻ (sym (toCtx-≐ˢ es)) P' eM
 ... | p' , M₀' , refl , eM₀ = _ , _ , es , COERCE , id-≤≐ , eM₀
 
+-- boolean elimination: the scrutinee is the same constant on both sides
+-- (`cast-true⁻`/`cast-false⁻`), and the reduct is the branch it names.
+
+↝-≐ˢ-if-true : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → {M N : toCtx St ⊢C⦂ A ‼ ε}
+            → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+            → (if true `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+            → Sim es P' (IF-TRUE {M = M} {N = N})
+↝-≐ˢ-if-true es P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | V' , M₀' , N₀' , refl , eV , eM₀ , eN₀
+      with cast-true⁻ (sym (toCtx-≐ˢ es)) V' eV
+...     | refl = _ , _ , es , IF-TRUE , id-≤≐ , eM₀
+
+↝-≐ˢ-if-false : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+             → {M N : toCtx St ⊢C⦂ A ‼ ε}
+             → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+             → (if false `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+             → Sim es P' (IF-FALSE {M = M} {N = N})
+↝-≐ˢ-if-false es P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | V' , M₀' , N₀' , refl , eV , eM₀ , eN₀
+      with cast-false⁻ (sym (toCtx-≐ˢ es)) V' eV
+...     | refl = _ , _ , es , IF-FALSE , id-≤≐ , eN₀
+
 -- application: the function is a lambda on both sides, and the reducts are the
 -- same substitution (`sub-≡ᶜ`), the cast commuting with it (`cast-app-reduct`).
 
@@ -436,6 +459,8 @@ cast-handle-op refl V' M' H' N' = refl
 
 ↝-≐ˢ es eM APP         = ↝-≐ˢ-app es _ eM
 ↝-≐ˢ es eM MATCH       = ↝-≐ˢ-match es _ eM
+↝-≐ˢ es eM IF-TRUE     = ↝-≐ˢ-if-true es _ eM
+↝-≐ˢ es eM IF-FALSE    = ↝-≐ˢ-if-false es _ eM
 ↝-≐ˢ es eM SEQ-RET     = ↝-≐ˢ-seq-ret es _ eM
 ↝-≐ˢ es eM SEQ-OP      = ↝-≐ˢ-seq-op es _ eM
 ↝-≐ˢ es eM DELAY       = ↝-≐ˢ-delay es _ eM

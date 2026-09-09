@@ -111,6 +111,8 @@ step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A : VType}
 
 step-delays APP                d = η-step d
 step-delays MATCH              d = η-step d
+step-delays IF-TRUE            d = η-step d
+step-delays IF-FALSE           d = η-step d
 step-delays (SEQ-STEP r _)     d = step-delays r d
 step-delays SEQ-RET            d = η-step d
 step-delays SEQ-OP             d = η-step d
@@ -273,6 +275,8 @@ uniform↝ : ∀ {A ε ε'} {St St' : 𝕊 []}
 
 uniform↝ APP                 _         = tt
 uniform↝ MATCH               _         = tt
+uniform↝ IF-TRUE             _         = tt
+uniform↝ IF-FALSE            _         = tt
 uniform↝ (SEQ-STEP r _)      (pM , _)  = uniform↝ r pM
 uniform↝ SEQ-RET             _         = tt
 uniform↝ SEQ-OP              _         = tt

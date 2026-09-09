@@ -366,6 +366,8 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
                   ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (implᵐ ∘ᵐ stepᵀ r)
     T-≤ᵏ-implstep B APP        g q = ηᵀ-step g q
     T-≤ᵏ-implstep B MATCH      g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B IF-TRUE    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B IF-FALSE   g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SEQ-RET    g q = ηᵀ-step g q
     T-≤ᵏ-implstep B SEQ-OP     g q = ηᵀ-step g q
     T-≤ᵏ-implstep B HANDLE-RET g q = ηᵀ-step g q

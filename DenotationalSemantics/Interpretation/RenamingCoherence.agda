@@ -187,6 +187,8 @@ mutual
   renᵛ r (var f x) _ = tt
   renᵛ r (const c) _ = tt
   renᵛ r ⋆        _ = tt
+  renᵛ r true     _ = tt
+  renᵛ r false    _ = tt
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (lam M)   pM = renᶜ (cong-∷-ren r) M pM
 
@@ -198,6 +200,8 @@ mutual
   renᶜ r (match V `in M)  (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-∷-ren r)) M pM
   renᶜ r (absurd V)       pV        = renᵛ r V pV
+  renᶜ r (if V `then M `else N) (pV , pM , pN) =
+    renᵛ r V pV , renᶜ r M pM , renᶜ r N pN
   renᶜ r (perform op V M) (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) M pM
   renᶜ r (delay τ M)      pM        = renᶜ (cong-⟨⟩-ren r) M pM
@@ -255,6 +259,10 @@ mutual
   V-rename-nat r (const c) _ =
     ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-rename-nat r ⋆ _ = ≈ᵐ-sym terminalᵐ-unique
+  V-rename-nat r true _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+  V-rename-nat r false _ =
+    ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
   V-rename-nat r ⦉ V , W ⦊ (pV , pW) =
     ≈ᵐ-trans (⟨ V-rename-nat r V pV , V-rename-nat r W pW ⟩ᵐ-cong)
              (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
@@ -303,6 +311,11 @@ mutual
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
   C-rename-nat r (absurd V) pV =
     ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  -- the renaming distributes over the branches: `ifᵐ-∘`
+  C-rename-nat r (if V `then M `else N) (pV , pM , pN) =
+    ≈ᵐ-trans (ifᵐ-cong (V-rename-nat r V pV)
+                       (C-rename-nat r M pM) (C-rename-nat r N pN))
+             (≈ᵐ-sym (ifᵐ-∘ _ _ _ _))
   C-rename-nat r (perform op V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congʳ
       (⟨ ≈ᵐ-trans (substᶜ-≈ (ty-gty (param op)) (V-rename-nat r V pV))

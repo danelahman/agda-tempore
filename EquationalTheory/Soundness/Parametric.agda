@@ -94,6 +94,7 @@ mutual
   Midᶜ (app-cong p q)                    = Midᵛ p × Midᵛ q
   Midᶜ (match-cong p q)                  = Midᵛ p × Midᶜ q
   Midᶜ (absurd-cong p)                   = Midᵛ p
+  Midᶜ (if-cong p q r)                   = Midᵛ p × Midᶜ q × Midᶜ r
   Midᶜ (perform-cong p q)                = Midᵛ p × Midᶜ q
   Midᶜ (delay-cong p)                    = Midᶜ p
   Midᶜ (handle-cong p hs q)              =
@@ -107,6 +108,7 @@ mutual
   -- substituted on both sides, and `delay-delay`'s occurs renamed on the left
   -- and under an `ε-subst` on the right.
   Midᶜ (match-eta V M)                   = Paramᶜ M
+  Midᶜ (if-eta V M)                      = Paramᶜ M
   Midᶜ (delay-delay M)                   = Paramᶜ M
   -- `unbox-beta` mentions `K` and `N` only inside the filled context.
   Midᶜ (unbox-beta V K p N)              = Paramᵏ K × Paramᶜ N

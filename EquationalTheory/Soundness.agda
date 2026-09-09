@@ -139,6 +139,9 @@ mutual
             (⟨ ⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (soundᵛ p mp pV pV') ⟩ᵐ-cong
              , ∘ᵐ-congʳ (soundᵛ p mp pV pV') ⟩ᵐ-cong)
   soundᶜ (absurd-cong p)      mp           pV pV' = ∘ᵐ-congʳ (soundᵛ p mp pV pV')
+  soundᶜ (if-cong p q r)      (mp , mq , mr)
+         (pV , pM , pN) (pV' , pM' , pN') =
+    ifᵐ-cong (soundᵛ p mp pV pV') (soundᶜ q mq pM pM') (soundᶜ r mr pN pN')
   soundᶜ (perform-cong p q)   (mp , mq)    (pV , pM) (pV' , pM') =
     ∘ᵐ-congʳ (⟨ substᶜ-≈ (ty-gty (param _)) (soundᵛ p mp pV pV')
               , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
@@ -181,6 +184,9 @@ mutual
   soundᶜ (match-beta V W M)   _  = sound-match-beta V W M
   soundᶜ (match-eta V M)      m  = sound-match-eta V M m
   soundᶜ (absurd-eta V M)     _  = sound-absurd-eta V M
+  soundᶜ (if-beta-true M N)   _  = sound-if-beta-true M N
+  soundᶜ (if-beta-false M N)  _  = sound-if-beta-false M N
+  soundᶜ (if-eta V M)         m  = sound-if-eta V M m
   -- axioms — handling
   soundᶜ (handle-return V H N)   _ = sound-handle-return V H N
   soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N

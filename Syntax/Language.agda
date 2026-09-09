@@ -56,6 +56,16 @@ mutual
               -----------
               Γ ⊢V⦂ Unit
 
+    -- booleans
+
+    true    :
+              -----------
+              Γ ⊢V⦂ Bool
+
+    false   :
+              -----------
+              Γ ⊢V⦂ Bool
+
     -- pairing
 
     ⦉_,_⦊    : {A B : VType}
@@ -115,6 +125,19 @@ mutual
     absurd  : {C : CType}
             → Γ ⊢V⦂ Empty
             -------------
+            → Γ ⊢C⦂ C
+
+    -- boolean elimination
+
+    -- Both branches are typed at the same computation type `C`, so they carry
+    -- the same effect grade; differing grades are equalised by `coerce`.
+
+    if_`then_`else_
+            : {C : CType}
+            → Γ ⊢V⦂ Bool
+            → Γ ⊢C⦂ C
+            → Γ ⊢C⦂ C
+            ------------
             → Γ ⊢C⦂ C
 
     -- performing algebraic operations
@@ -221,6 +244,10 @@ eternal-val-ext _ (const b) =
   const b
 eternal-val-ext _ ⋆ =
   ⋆
+eternal-val-ext _ true =
+  true
+eternal-val-ext _ false =
+  false
 eternal-val-ext (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ⦉ eternal-val-ext et₁ V₁ , eternal-val-ext et₂ V₂ ⦊
 
@@ -236,5 +263,9 @@ eternal-val-restrict _ (const b) =
   const b
 eternal-val-restrict _ ⋆ =
   ⋆
+eternal-val-restrict _ true =
+  true
+eternal-val-restrict _ false =
+  false
 eternal-val-restrict (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ⦉ eternal-val-restrict et₁ V₁ , eternal-val-restrict et₂ V₂ ⦊

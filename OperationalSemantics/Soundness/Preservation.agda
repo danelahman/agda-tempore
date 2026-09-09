@@ -181,6 +181,8 @@ T-≤-stepᵀ : ∀ {ε ε' εa εb A} {S S' : 𝕊 []} → (B : Obj)
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵀ ∘ᵐ Tᶠ g ∘ᵐ stepᵀ r
 T-≤-stepᵀ B APP         g q = ηᵀ-case g q
 T-≤-stepᵀ B MATCH       g q = ηᵀ-case g q
+T-≤-stepᵀ B IF-TRUE     g q = ηᵀ-case g q
+T-≤-stepᵀ B IF-FALSE    g q = ηᵀ-case g q
 T-≤-stepᵀ B SEQ-RET     g q = ηᵀ-case g q
 T-≤-stepᵀ B SEQ-OP      g q = ηᵀ-case g q
 T-≤-stepᵀ B HANDLE-RET  g q = ηᵀ-case g q
@@ -252,6 +254,8 @@ Uniform↝ (SEQ-STEP r _)      (pM , _)     = Uniform↝ r pM
 Uniform↝ (HANDLE-STEP r _)   (pM , _)     = Uniform↝ r pM
 Uniform↝ APP                 _            = ⊤
 Uniform↝ MATCH               _            = ⊤
+Uniform↝ IF-TRUE             _            = ⊤
+Uniform↝ IF-FALSE            _            = ⊤
 Uniform↝ SEQ-RET             _            = ⊤
 Uniform↝ SEQ-OP              _            = ⊤
 Uniform↝ DELAY               _            = ⊤
@@ -279,6 +283,8 @@ stepᴾᶜ (SEQ-OP {op = op} {S = S} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN
   ε-substᴾ (sym (·ₑ-assoc (op-grade op) _ _))
     (perform op V (M ⨟ C-rename (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N))
     (pV , pM , renᶜ (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN)
+stepᴾᶜ IF-TRUE                          pS (_ , pM , pN) = pM
+stepᴾᶜ IF-FALSE                         pS (_ , pM , pN) = pN
 stepᴾᶜ DELAY                            pS pM         = pM
 stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ V N pV pN
 stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
@@ -330,6 +336,10 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH V W M pV pW pM))
 ↝-sound r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SEQ-OP op V M N pV pM pN))
+↝-sound r@(IF-TRUE {M = M} {N = N}) pS (_ , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-TRUE M N pM pN))
+↝-sound r@(IF-FALSE {M = M} {N = N}) pS (_ , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-FALSE M N pM pN))
 
 -- Allocation and lookup: also plain equations, but ones that mention the store.
 

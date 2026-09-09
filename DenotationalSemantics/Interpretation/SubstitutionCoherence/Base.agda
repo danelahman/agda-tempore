@@ -73,6 +73,8 @@ eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
 eternal-val-extᴾ et (var _ x)                  = tt
 eternal-val-extᴾ _  (const b)                  = tt
 eternal-val-extᴾ _  ⋆                          = tt
+eternal-val-extᴾ _  true                       = tt
+eternal-val-extᴾ _  false                      = tt
 eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
 
@@ -81,6 +83,8 @@ eternal-val-restrictᴾ : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
 eternal-val-restrictᴾ et (var _ x)               = tt
 eternal-val-restrictᴾ _  (const b)               = tt
 eternal-val-restrictᴾ _  ⋆                       = tt
+eternal-val-restrictᴾ _  true                    = tt
+eternal-val-restrictᴾ _  false                   = tt
 eternal-val-restrictᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   eternal-val-restrictᴾ et₁ V₁ , eternal-val-restrictᴾ et₂ V₂
 
@@ -118,6 +122,20 @@ eternal-val-ext-nat (Baseₑ b eb) (const c) _ =
               (∘ᵐ-congʳ terminalᵐ-unique)))))
 eternal-val-ext-nat Unitₑ ⋆ _ =
   ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
+eternal-val-ext-nat Boolₑ true _ =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ trueᵐ-eternal)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (∘ᵐ-congʳ terminalᵐ-unique)))))
+eternal-val-ext-nat Boolₑ false _ =
+  ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ falseᵐ-eternal)
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+              (∘ᵐ-congʳ terminalᵐ-unique)))))
 eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
   ≈ᵐ-trans (⟨ eternal-val-ext-nat et₁ V₁ p₁ , eternal-val-ext-nat et₂ V₂ p₂ ⟩ᵐ-cong)
   (≈ᵐ-trans (⟨ ∘ᵐ-congʳ (⟨⟩-congᶠ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
@@ -162,6 +180,20 @@ restrict-val-mor (Baseₑ b eb) (const c) =
             (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique)))))))
 restrict-val-mor Unitₑ ⋆ =
   ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
+restrict-val-mor Boolₑ true =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ trueᵐ-eternal)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ terminalᵐ-unique)
+            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique)))))))
+restrict-val-mor Boolₑ false =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ falseᵐ-eternal)
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ terminalᵐ-unique)
+            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique)))))))
 restrict-val-mor (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)))
   (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
@@ -186,6 +218,10 @@ eternal-val-restrict-nat _ (const c) _ =
   ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
 eternal-val-restrict-nat _ ⋆ _ =
   ≈ᵐ-sym terminalᵐ-unique
+eternal-val-restrict-nat _ true _ =
+  ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
+eternal-val-restrict-nat _ false _ =
+  ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
 eternal-val-restrict-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
   ≈ᵐ-trans (⟨ eternal-val-restrict-nat et₁ V₁ p₁ , eternal-val-restrict-nat et₂ V₂ p₂ ⟩ᵐ-cong)
            (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))

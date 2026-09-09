@@ -81,6 +81,12 @@ cast-coerce : ∀ {Γ Γ' A ε ε'} → (e : Γ ≡ Γ') → {p : ε ≾ₑ ε'}
             → castᶜ e (coerce p M) ≡ coerce p (castᶜ e M)
 cast-coerce refl = refl
 
+cast-if : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
+        → {V : Γ ⊢V⦂ Bool} → {M N : Γ ⊢C⦂ C}
+        → castᶜ e (if V `then M `else N)
+        ≡ if (castᵛ e V) `then (castᶜ e M) `else (castᶜ e N)
+cast-if refl = refl
+
 -- The binding formers put their body at an *extended* context, so the cast
 -- transported there is `cong` of the extension.
 

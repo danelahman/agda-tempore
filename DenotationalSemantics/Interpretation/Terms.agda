@@ -69,6 +69,7 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 ty-gty : ∀ (G : GType) → ⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ
 ty-gty (Base b)     = refl
 ty-gty Unit         = refl
+ty-gty Bool         = refl
 ty-gty Empty        = refl
 ty-gty (G₁ |×|ᵍ G₂) = cong₂ _×ᵐ_ (ty-gty G₁) (ty-gty G₂)
 ty-gty ([ ρ ]ᵍ G)   = cong (λ O → [ ρ ]ᵒ O) (ty-gty G)
@@ -131,6 +132,8 @@ mutual
   Paramᵛ (var f x)  = ⊤
   Paramᵛ (const c)  = ⊤
   Paramᵛ ⋆          = ⊤
+  Paramᵛ true       = ⊤
+  Paramᵛ false      = ⊤
   Paramᵛ ⦉ V , W ⦊  = Paramᵛ V × Paramᵛ W
   Paramᵛ (lam M)    = Paramᶜ M
 
@@ -140,6 +143,7 @@ mutual
   Paramᶜ (V · W)          = Paramᵛ V × Paramᵛ W
   Paramᶜ (match V `in M)  = Paramᵛ V × Paramᶜ M
   Paramᶜ (absurd V)       = Paramᵛ V
+  Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
   Paramᶜ (unbox x rel M)  = Paramᶜ M
@@ -173,6 +177,8 @@ mutual
   ⟦ var f x  ⟧ᵛᵗ _ = var-morphism f x
   ⟦ const c  ⟧ᵛᵗ _ = ⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ
   ⟦ ⋆        ⟧ᵛᵗ _ = terminalᵐ
+  ⟦ true     ⟧ᵛᵗ _ = trueᵐ ∘ᵐ terminalᵐ
+  ⟦ false    ⟧ᵛᵗ _ = falseᵐ ∘ᵐ terminalᵐ
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ lam M    ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
 
@@ -184,6 +190,8 @@ mutual
   ⟦ match V `in M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ ⟨ idᵐ , fstᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ , sndᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV ⟩ᵐ
   ⟦ absurd V ⟧ᶜᵗ pV = initialᵐ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
+  ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN) =
+    ifᵐ (⟦ V ⟧ᵛᵗ pV) (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
   ⟦_⟧ᶜᵗ {Γ} (perform {A} {ε} op V M) (pV , pM) =
     opᵀ op ∘ᵐ
       ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
