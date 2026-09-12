@@ -34,7 +34,7 @@ open import Syntax.Grades.Example.Time.LeftSided
 open import Util.Equality
 
 module Syntax.Grades.Example.System.Traces.Subsets.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
@@ -43,7 +43,7 @@ open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
 open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
   using (left-sided; _≾_)
 
-open MaxDurations cost
+open MaxDurations costˡᵒ
 
 ------------------------------------------------------------------------
 -- The projection: a grade is measured by its slowest demanded run

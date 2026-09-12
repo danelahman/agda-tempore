@@ -11,8 +11,10 @@
 --                                                                     --
 -- Two cost models are read off those figures -- `fast`, the best case, --
 -- and `slow`, the worst case -- and `opTime` packages them as the      --
--- interval an operation's execution time falls in. `cost` is `slow`:   --
--- the conservative model, which is what a schedule must budget for.    --
+-- interval an operation's execution time falls in. A guarantee is      --
+-- credited at `costˡᵒ = fast`, since that is all an operation is       --
+-- certain to take; an allowance is charged `costʰⁱ = slow`, which is   --
+-- what a schedule must budget for.                                     --
 --                                                                     --
 -- Everything about timed traces over this alphabet is re-exported, so  --
 -- the sibling modules need only import this one.                       --
@@ -22,6 +24,7 @@ module Syntax.Grades.Example.Worked.Operations where
 
 open import Data.List.Base using ([]; _∷_)
 open import Data.Nat.Base using (ℕ; _≤_; _<_; s≤s; z≤n)
+open import Data.Product using (_×_; _,_)
 open import Data.Unit using (tt)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -76,19 +79,24 @@ fast≤slow read  = s≤s z≤n
 fast≤slow write = s≤s (s≤s z≤n)
 fast≤slow send  = s≤s (s≤s (s≤s (s≤s z≤n)))
 
--- the cost model the worked examples use: the conservative one, which
--- is what a schedule has to budget for
+-- the two cost models the worked examples use, one per side of an
+-- interval: a floor credits an operation with its best case, a cap
+-- charges it its worst
 
-cost : Op → ℕ
-cost = slow
+costˡᵒ costʰⁱ : Op → ℕ
+costˡᵒ = fast
+costʰⁱ = slow
+
+cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o
+cost-≤ = fast≤slow
 
 -- every operation takes time, which is what makes an empty allowance
 -- permit nothing but the empty run
 
-cost-pos : (o : Op) → 0 < cost o
-cost-pos read  = s≤s z≤n
-cost-pos write = s≤s z≤n
-cost-pos send  = s≤s z≤n
+costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o
+costʰⁱ-pos read  = s≤s z≤n
+costʰⁱ-pos write = s≤s z≤n
+costʰⁱ-pos send  = s≤s z≤n
 
 ------------------------------------------------------------------------
 -- Timed traces over this alphabet
@@ -96,9 +104,10 @@ cost-pos send  = s≤s z≤n
 open import Syntax.Grades.Traces.Sets Op public
 open import Syntax.Grades.Traces.Durations Op public
 
--- `duration` measures a trace against `cost` unless said otherwise
+-- a trace is measured at either cost model
 
-open Durations cost public using (duration)
+open Durations costˡᵒ public using () renaming (duration to durationˡᵒ)
+open Durations costʰⁱ public using () renaming (duration to durationʰⁱ)
 
 ------------------------------------------------------------------------
 -- Writing down finite sets of traces
@@ -148,19 +157,21 @@ chatty-uplink = uplink ∙ ⌈ send ⌉
 idle : Trace
 idle = ⟨ 2 ⟩
 
--- their durations under `cost`, by computation
+-- their best- and worst-case durations, by computation
 
-poll-takes-1 : duration poll ≡ 1
-poll-takes-1 = refl
+poll-takes-1-to-1 : durationˡᵒ poll ≡ 1 × durationʰⁱ poll ≡ 1
+poll-takes-1-to-1 = refl , refl
 
-logged-takes-4 : duration logged ≡ 4
-logged-takes-4 = refl
+logged-takes-3-to-4 : durationˡᵒ logged ≡ 3 × durationʰⁱ logged ≡ 4
+logged-takes-3-to-4 = refl , refl
 
-uplink-takes-9 : duration uplink ≡ 9
-uplink-takes-9 = refl
+uplink-takes-7-to-9 : durationˡᵒ uplink ≡ 7 × durationʰⁱ uplink ≡ 9
+uplink-takes-7-to-9 = refl , refl
 
-logged-uplink-takes-12 : duration logged-uplink ≡ 12
-logged-uplink-takes-12 = refl
+logged-uplink-takes-9-to-12 :
+  durationˡᵒ logged-uplink ≡ 9 × durationʰⁱ logged-uplink ≡ 12
+logged-uplink-takes-9-to-12 = refl , refl
 
-chatty-uplink-takes-15 : duration chatty-uplink ≡ 15
-chatty-uplink-takes-15 = refl
+chatty-uplink-takes-11-to-15 :
+  durationˡᵒ chatty-uplink ≡ 11 × durationʰⁱ chatty-uplink ≡ 15
+chatty-uplink-takes-11-to-15 = refl , refl

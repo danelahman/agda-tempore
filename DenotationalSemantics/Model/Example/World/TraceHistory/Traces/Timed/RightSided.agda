@@ -26,8 +26,8 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
-  (cost-pos : (o : Op) → 0 < cost o) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costʰⁱ : Op → ℕ)
+  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
@@ -38,13 +38,13 @@ open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.Allowance Op cost
+open import Syntax.Grades.Traces.Allowance Op costʰⁱ
   using (_≼ᵃ_; ≼ᵃ-refl; ≼ᵃ-trans; mono-∙)
-open import Syntax.Grades.Traces.Allowance.Decidable Op cost
+open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ cost cost-pos using (right-sided; _≾_)
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (right-sided; _≾_)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 open WithDecEq _≟ₒ_ using (True-irr)

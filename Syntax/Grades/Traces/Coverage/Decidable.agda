@@ -20,13 +20,13 @@ open import Relation.Nullary using (Dec; yes; no)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Coverage.Decidable (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Decidable (Op : Set) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
 
 
-open import Syntax.Grades.Traces.Coverage.Core Op cost
+open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
 
 module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
 
@@ -43,7 +43,7 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- a demanded operation against an operation of the run: bank the
   -- run's operation, or match it once the two symbols agree
   dec (suc n) (operation o s') k (operation o' t') (s≤s le)
-    with dec n (operation o s') (k + cost o') t'
+    with dec n (operation o s') (k + costˡᵒ o') t'
                 (subst (_≤ n) (+-suc (size s') (size t')) le)
   ... | yes d = yes (pay-op d)
   ... | no ¬d with o ≟ₒ o'
@@ -78,7 +78,7 @@ module DecCoverage (_≟ₒ_ : DecidableEquality Op) where
   -- a demanded delay against an operation of the run: pay the delay out
   -- of the slack, or bank the operation into it
   dec (suc n) (delay d s⁻) k (operation o' t') (s≤s le)
-    with dec n (delay d s⁻) (k + cost o') t'
+    with dec n (delay d s⁻) (k + costˡᵒ o') t'
                (subst (_≤ n) (+-suc (size⁻ s⁻) (size t')) le)
   ... | yes d'' = yes (pay-op d'')
   ... | no ¬d'' with ∣ d ∣⁺ ≤? k

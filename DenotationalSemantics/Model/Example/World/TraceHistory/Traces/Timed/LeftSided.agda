@@ -27,7 +27,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
@@ -38,13 +38,13 @@ open import Data.Product using (_,_)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.Coverage Op cost
+open import Syntax.Grades.Traces.Coverage Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans; mono-∙)
-open import Syntax.Grades.Traces.Coverage.Decidable Op cost
+open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
   using (module DecCoverage)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ cost using (left-sided; _≾_)
+  Op _≟ₒ_ costˡᵒ using (left-sided; _≾_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 open WithDecEq _≟ₒ_ using (True-irr)

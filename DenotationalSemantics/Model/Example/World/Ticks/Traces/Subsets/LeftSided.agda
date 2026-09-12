@@ -25,7 +25,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
 
 open import Data.Nat using (_+_; _≤?_)
 open import Data.Nat.Properties
@@ -47,7 +47,7 @@ open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
 
 open import DenotationalSemantics.Model.World
 
-open Durations cost
+open Durations costˡᵒ
 open WithDecEq _≟ₒ_ using (True-irr)
 
 ------------------------------------------------------------------------

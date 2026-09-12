@@ -41,7 +41,7 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Coverage.Moves (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Moves (Op : Set) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺; ∣1+∣⁺)
@@ -50,7 +50,7 @@ open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺;
 -- the allowance order rather than restated
 
 
-open import Syntax.Grades.Traces.Coverage.Core Op cost
+open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
 
 ------------------------------------------------------------------------
 -- Nothing meets a demand that names an operation once the run is spent
@@ -93,7 +93,7 @@ bumpL {m} d (use-delay {d = e} p prem) =
                      (∸-cancel m ∣ d ∣⁺ ∣ e ∣⁺)))
          prem)
 bumpL {m} d (pay-op {o = o} prem) =
-  pay-op (coe (lem-swap m (cost o) ∣ d ∣⁺) (bumpL d prem))
+  pay-op (coe (lem-swap m (costˡᵒ o) ∣ d ∣⁺) (bumpL d prem))
 bumpL {m} d (del-delay {e = f} prem) =
   del-delay (coe (lem-swap m ∣ f ∣⁺ ∣ d ∣⁺) (bumpL d prem))
 

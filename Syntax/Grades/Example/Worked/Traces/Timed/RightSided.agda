@@ -18,7 +18,8 @@
 -- bound therefore says when its slack is available, and not merely how --
 -- much of it there is -- the last section below turns on that alone.   --
 --                                                                     --
--- Under `cost` -- read 1, write 3, send 6 -- the runs below take       --
+-- A bound is charged at `costʰⁱ` -- read 1, write 3, send 6 -- since   --
+-- that is what it must budget for. The runs below then take            --
 --                                                                     --
 --   ⌈ read ⌉                                  1 tick                  --
 --   ⌈ read ⌉ ∙ ⟨ 4 ⟩                          5 ticks                 --
@@ -45,7 +46,7 @@ open import Util.Equality
 open import Syntax.Grades.Example.Worked.Operations
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ cost cost-pos
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
   using (right-sided; _≾_; _≾?_) public
 
 order : Grade._≾_ right-sided ≡ _≾_

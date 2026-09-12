@@ -12,12 +12,19 @@
 -- the cap satisfied, and the uplink by the cap with the floor          --
 -- satisfied.                                                          --
 --                                                                     --
--- Under `cost` -- read 1, write 3, send 6 -- the runs below take       --
+-- Each endpoint is measured at its own cost model -- the floor at      --
+-- `costˡᵒ` (read 1, write 2, send 4), the cap at `costʰⁱ` (read 1,     --
+-- write 3, send 6) -- so the runs below take                           --
 --                                                                     --
---   ⌈ read ⌉                             1 tick                       --
---   ⟨ 5 ⟩                                5 ticks                      --
---   ⌈ read ⌉ ∙ ⌈ write ⌉                 4 ticks                      --
---   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉          9 ticks                      --
+--                                        guaranteed    budgeted       --
+--   ⌈ read ⌉                              1 tick        1 tick        --
+--   ⟨ 5 ⟩                                 5 ticks       5 ticks       --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉                  3 ticks       4 ticks       --
+--   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉           7 ticks       9 ticks       --
+--                                                                     --
+-- The coherence field straddles the two columns: it asks some listed   --
+-- guarantee, read in the left one, to be no greater than some listed   --
+-- allowance read in the right.                                         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Timed.TwoSided where
@@ -34,7 +41,8 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; [_,_,_]; lo; hi; _◇ˢ_; ◇ˢ-refl; _·ᵗˢ_;
          two-sided; _≾ᵗˢ_; _≾ᵗˢ?_) public
 
@@ -175,8 +183,8 @@ read-then-store-meets-the-contract = holds _ _
 
 -- what cannot be done is to put the two runs at the endpoints the other
 -- way round: guaranteeing the store under an allowance of a reading
--- alone is refused by the coherence field, four ticks being no less
--- than one
+-- alone is refused by the coherence field, three ticks guaranteed
+-- being no less than the one tick budgeted
 
 inverted-is-not-a-grade :
   ¬ (traces ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ◇ˢ traces ⟅ ⌈ read ⌉ ⟆)

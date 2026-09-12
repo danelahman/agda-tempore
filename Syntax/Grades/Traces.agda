@@ -116,7 +116,7 @@ import Syntax.Grades.Traces.AllowanceLift
 import Syntax.Grades.Traces.Coverage
 
 -- Its interface instance and lifts. Unlike the allowance order these
--- need no assumption about `cost`: an operation is never bought here,
+-- need no assumption about `costˡᵒ`: an operation is never bought here,
 -- at any price, so a spent run covers nothing but the empty guarantee
 -- outright.
 

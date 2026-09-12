@@ -12,9 +12,9 @@ open import Data.Nat.Base using (ℕ)
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 module Syntax.Grades.Traces.CoverageLift
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ cost
+open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ costˡᵒ
   using (coverageOrder)
 
 open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ coverageOrder public

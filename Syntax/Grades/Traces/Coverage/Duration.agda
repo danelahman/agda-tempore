@@ -12,7 +12,7 @@
 -- Nothing but the empty guarantee is covered by a spent run: with no  --
 -- slack there is nothing to pay a named delay with, and a run that    --
 -- has ended performs no operation to match. Unlike the allowance      --
--- order this needs no assumption about `cost` -- an operation is      --
+-- order this needs no assumption about `costˡᵒ` -- an operation is    --
 -- never bought here, at any price.                                   --
 ------------------------------------------------------------------------
 
@@ -26,13 +26,13 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Coverage.Duration (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Duration (Op : Set) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.Coverage.Core Op cost
+open import Syntax.Grades.Traces.Coverage.Core Op costˡᵒ
 
-open Durations cost
+open Durations costˡᵒ
 
 ------------------------------------------------------------------------
 -- Small arithmetic helpers
@@ -70,16 +70,16 @@ duration-slack nil = z≤n
 -- a matched operation costs the same on both sides, and the premise
 -- arrives with no slack, so the conclusion's is spare
 duration-slack {k} (keep {o = o} {s = s} {t = t} p) =
-  ≤-trans (+-monoʳ-≤ (cost o)
+  ≤-trans (+-monoʳ-≤ (costˡᵒ o)
                      (subst (duration s ≤_) (+-identityʳ (duration t))
                             (duration-slack p)))
-          (m≤m+n (cost o + duration t) k)
+          (m≤m+n (costˡᵒ o + duration t) k)
 
 -- an unmatched operation of the run moves from its duration into the
 -- slack, at its execution time
 duration-slack {k} (pay-op {o = o} {t = t} p) =
   ≤-trans (duration-slack p)
-          (≤-reflexive (lem-front (duration t) k (cost o)))
+          (≤-reflexive (lem-front (duration t) k (costˡᵒ o)))
 
 -- and so does a delay of the run, at its length
 duration-slack {k} (del-delay {e = e} {t⁻ = t⁻} p) =

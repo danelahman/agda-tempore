@@ -14,13 +14,15 @@
 -- the union of two grades their join, and it is the reading a          --
 -- branching construct needs.                                          --
 --                                                                     --
--- Under `cost` -- read 1, write 3, send 6 -- the runs below take       --
+-- A guarantee is credited at `costˡᵒ` -- read 1, write 2, send 4 --    --
+-- since that is all an operation is certain to take. The runs below    --
+-- are then guaranteed                                                  --
 --                                                                     --
 --   ⌈ read ⌉                                       1 tick             --
---   ⌈ write ⌉                                      3 ticks            --
---   ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉               10 ticks            --
---   ⌈ write ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉               10 ticks            --
---   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉                    9 ticks            --
+--   ⌈ write ⌉                                      2 ticks            --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉                7 ticks            --
+--   ⌈ write ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉                7 ticks            --
+--   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉                    7 ticks            --
 --                                                                     --
 -- Every run is written out in full in every claim, and every claim is  --
 -- closed by running the grade's own decision procedure.                --
@@ -38,7 +40,7 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.Timed.LeftSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.Traces.Timed.LeftSided Op _≟ₒ_ costˡᵒ
   using (left-sided; _≾_; _≾?_) public
 
 order : Grade._≾_ left-sided ≡ _≾_
@@ -87,20 +89,21 @@ everything-guarantees-the-empty-trace = holdsᵉ ⟅ ⌈ read ⌉ ⟆ ⟅ ε ⟆
 -- An operation guarantees the time it takes
 --
 -- The direction that holds is operation to time: a store covers a
--- three-tick guarantee, at its execution time. Time never covers an
--- operation, which is what a guarantee needs and what the allowance
--- order deliberately does not have.
+-- two-tick guarantee, at its best-case execution time. Time never
+-- covers an operation, which is what a guarantee needs and what the
+-- allowance order deliberately does not have.
 
-a-store-guarantees-three-ticks : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆
-a-store-guarantees-three-ticks = holds
+a-store-guarantees-two-ticks : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 2 ⟩ ⟆
+a-store-guarantees-two-ticks = holds
 
-three-ticks-guarantee-no-store : ¬ (⟅ ⟨ 3 ⟩ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆)
-three-ticks-guarantee-no-store = fails
+two-ticks-guarantee-no-store : ¬ (⟅ ⟨ 2 ⟩ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆)
+two-ticks-guarantee-no-store = fails
 
--- and not more time than it takes
+-- and not more time than it is certain to take: a store may run to
+-- three ticks, but only two of them are guaranteed
 
-a-store-guarantees-no-fourth-tick : ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 4 ⟩ ⟆)
-a-store-guarantees-no-fourth-tick = fails
+a-store-guarantees-no-third-tick : ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆)
+a-store-guarantees-no-third-tick = fails
 
 ------------------------------------------------------------------------
 -- A named delay counts only where it is named

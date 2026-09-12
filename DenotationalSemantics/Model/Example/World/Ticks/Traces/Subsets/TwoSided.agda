@@ -4,16 +4,16 @@
 -- Worlds are time points `ℕ`, and a grade `[ P , Q ]` fences the      --
 -- advance in from both sides:                                        --
 --                                                                    --
---   w ⊑ᵗ[ [ P , Q ] ] w'   iff   w + duration p ≤ w'  for *all* p ∈ P --
---                          and   w' ≤ w + duration q  for *some* q ∈ Q --
+--   w ⊑ᵗ[ [ P , Q ] ] w'  iff  w + durationˡᵒ p ≤ w'  for *all* p ∈ P --
+--                         and  w' ≤ w + durationʰⁱ q  for *some* q ∈ Q --
 --                                                                    --
 -- The two quantifiers differ because the two endpoints weaken in      --
 -- opposite directions of inclusion: below, weakening drops members,   --
 -- so the condition must be asked of all of them; above, weakening     --
 -- adds members, so one is enough.                                    --
 --                                                                    --
--- Each half is the corresponding one-sided frame, and every frame     --
--- condition is the pair of theirs.                                    --
+-- Each half is the corresponding one-sided frame, at its own cost     --
+-- model, and every frame condition is the pair of theirs.             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -23,7 +23,7 @@ open import Relation.Binary.Definitions using (DecidableEquality)
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ costʰⁱ : Op → ℕ) where
 
 open import Data.Product using (_×_; _,_)
 
@@ -37,10 +37,10 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.LeftSided
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
   as Hi
 
-open Lo Op _≟ₒ_ cost using () renaming
+open Lo Op _≟ₒ_ costˡᵒ using () renaming
   (_⊑ᵗ[_]_ to _⊑ˡᵒ[_]_; ⊑ᵗ-refl to ⊑ˡᵒ-refl; ⊑ᵗ-trans to ⊑ˡᵒ-trans;
    ⊑ᵗ-mono to ⊑ˡᵒ-mono; ⊑ᵗ-irrelevant to ⊑ˡᵒ-irrelevant)
-open Hi Op _≟ₒ_ cost using () renaming
+open Hi Op _≟ₒ_ costʰⁱ using () renaming
   (_⊑ᵗ[_]_ to _⊑ʰⁱ[_]_; ⊑ᵗ-refl to ⊑ʰⁱ-refl; ⊑ᵗ-trans to ⊑ʰⁱ-trans;
    ⊑ᵗ-mono to ⊑ʰⁱ-mono; ⊑ᵗ-irrelevant to ⊑ʰⁱ-irrelevant)
 

@@ -37,7 +37,7 @@ open import Syntax.Grades.Example.Time.LeftSided
 open import Util.Equality
 
 module Syntax.Grades.Example.System.Traces.Timed.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.Product using (_,_)
@@ -47,12 +47,12 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
-open import Syntax.Grades.Traces.Coverage Op cost using (duration-≼ᶜ)
+open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ cost using (left-sided; _≾_)
+  Op _≟ₒ_ costˡᵒ using (left-sided; _≾_)
 
-open MinDurations cost
+open MinDurations costˡᵒ
 
 ------------------------------------------------------------------------
 -- The projection: a grade is measured by its fastest guarantee

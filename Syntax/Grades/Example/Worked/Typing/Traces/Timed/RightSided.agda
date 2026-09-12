@@ -7,7 +7,7 @@
 -- computation sits below it when each of its runs stays within one:    --
 -- the bound's operations are permissions and its delays a budget,      --
 -- spent on idling and on operations the bound does not name, at        --
--- `cost` -- read 1, write 3, send 6.                                   --
+-- `costʰⁱ` -- read 1, write 3, send 6.                                 --
 --                                                                     --
 -- What this grade sees that a time bound cannot is *which* operations  --
 -- a run performed and *where*. So `unbox`'s premise asks that the run  --
@@ -32,13 +32,13 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Timed.RightSided where
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; _≟ₒ_; cost; cost-pos;
+  using (Op; read; write; send; _≟ₒ_; costʰⁱ; costʰⁱ-pos;
          NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (right-sided; holds; fails)
 
-open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
 
 open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ allowanceOrder

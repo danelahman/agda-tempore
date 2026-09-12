@@ -21,15 +21,17 @@
 -- continuation stays within the allowance.                           --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _<_)
+open import Data.Nat.Base using (ℕ; _≤_; _<_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
-  (cost-pos : (o : Op) → 0 < cost o) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (costˡᵒ costʰⁱ : Op → ℕ)
+  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
+  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
@@ -41,17 +43,18 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
 
-open import Syntax.Grades.Traces.Coverage Op cost
+open import Syntax.Grades.Traces.Coverage Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans) renaming (mono-∙ to mono-∙ᶜ)
-open import Syntax.Grades.Traces.Coverage.Decidable Op cost
+open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
   using (module DecCoverage)
 
-open import Syntax.Grades.Traces.Allowance Op cost
+open import Syntax.Grades.Traces.Allowance Op costʰⁱ
   using (_≼ᵃ_; ≼ᵃ-refl; ≼ᵃ-trans) renaming (mono-∙ to mono-∙ᵃ)
-open import Syntax.Grades.Traces.Allowance.Decidable Op cost
+open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
   using (module DecAllowance)
 
-open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)

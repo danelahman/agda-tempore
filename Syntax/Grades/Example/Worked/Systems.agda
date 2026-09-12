@@ -91,7 +91,7 @@ open import Syntax.Grades.Example.Time.RightSided
   using ([0,_]) renaming (_≾ₒ_ to _≾ᵣ_; _·ₒ_ to _·ᵣ_)
 
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
-  Op _≟ₒ_ cost cost-pos using (traces→right-sided-intervals)
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (traces→right-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (_≾_; holds)
@@ -152,15 +152,16 @@ deadlines-add = refl
 -- is what the cheapest member takes.
 
 open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
-  Op _≟ₒ_ cost using (traces→left-sided-intervals)
+  Op _≟ₒ_ costˡᵒ using (traces→left-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using () renaming (holds to holdsᶜ)
 
--- a reading, two ticks' settling and a transmission guarantee nine ticks
+-- a reading, two ticks' settling and a transmission guarantee seven
+-- ticks, the two operations credited at their best case
 
 guarantee-measured :
-  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≡ [ 9 ,+∞⟩
+  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≡ [ 7 ,+∞⟩
 guarantee-measured = refl
 
 -- and a grade listing alternatives is measured by the fastest of them,
@@ -173,17 +174,17 @@ alternatives-measured-below :
 alternatives-measured-below = refl
 
 -- what the projection forgets is again which operations occurred: a
--- guarantee that a store happened and one that three ticks passed
+-- guarantee that a store happened and one that two ticks passed
 -- become the same lower bound, though only the first guarantees the
 -- store
 
 stores-forgotten :
   map traces→left-sided-intervals ⟅ ⌈ write ⌉ ⟆
-  ≡ map traces→left-sided-intervals ⟅ ⟨ 3 ⟩ ⟆
+  ≡ map traces→left-sided-intervals ⟅ ⟨ 2 ⟩ ⟆
 stores-forgotten = refl
 
 -- monotonicity: dropping to the reading alone drops the guarantee from
--- nine ticks to one
+-- seven ticks to one
 
 guarantee-falls :
   map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
@@ -210,7 +211,7 @@ guarantees-add = refl
 open import Data.Unit using (tt)
 
 open import Syntax.Grades.Example.System.Traces.Timed.TwoSided
-  Op _≟ₒ_ cost cost-pos using (two-sided-traces→intervals)
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos using (two-sided-traces→intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
   using (exact; _·ᵗˢ_) renaming ([_,_,_] to ⟪_,_,_⟫; holds to holdsᵗˢ)
@@ -233,10 +234,12 @@ alternatives-measured-both :
   ≡ [ 1 , 12 , ≤! ]
 alternatives-measured-both = refl
 
--- a grade whose two endpoints coincide becomes an exact duration
+-- a grade whose two endpoints coincide still becomes a window, the two
+-- cost models pulling its ends apart: a reading and a store are certain
+-- to take three ticks and may take four
 
 exact-measured : map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
-               ≡ [ 4 , 4 , ≤! ]
+               ≡ [ 3 , 4 , ≤! ]
 exact-measured = refl
 
 -- monotonicity: a computation known to take a reading and a store sits
@@ -275,11 +278,11 @@ windows-add = refl
 -- follows the reading of the set, not the side of the interval.
 
 open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
-  Op _≟ₒ_ cost using (subsets→right-sided-intervals)
+  Op _≟ₒ_ costʰⁱ using (subsets→right-sided-intervals)
 open import Syntax.Grades.Example.System.Traces.Subsets.LeftSided
-  Op _≟ₒ_ cost using (subsets→left-sided-intervals)
+  Op _≟ₒ_ costˡᵒ using (subsets→left-sided-intervals)
 open import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
-  Op _≟ₒ_ cost using (subsets→intervals)
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ using (subsets→intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
   using () renaming (holds to holdsˢʰ)
@@ -288,19 +291,20 @@ open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
 open import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided
   using (branching; contract; _·ᵇ_) renaming (holds to holdsˢᵇ)
 
--- the two branches take one and four ticks
+-- the two branches take one tick and three-to-four ticks
 
 the-branches : NeTraces
 the-branches = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 
--- above, the deadline is the slower branch
+-- above, the deadline is the slower branch at its worst case
 
 cap-measured : map subsets→right-sided-intervals the-branches ≡ [0, 4 ]
 cap-measured = refl
 
--- below, so is the guarantee -- because both branches are demanded
+-- below, so is the guarantee -- because both branches are demanded --
+-- but read at the best case
 
-floor-measured : map subsets→left-sided-intervals the-branches ≡ [ 4 ,+∞⟩
+floor-measured : map subsets→left-sided-intervals the-branches ≡ [ 3 ,+∞⟩
 floor-measured = refl
 
 -- where the timed floor, listing alternatives rather than demands,

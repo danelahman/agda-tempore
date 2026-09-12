@@ -8,6 +8,8 @@
 -- idling. Budget is local: what the bound offers between two          --
 -- operations it names pays only for what the run does between those   --
 -- same two, so a bound says when its slack is available.              --
+--                                                                     --
+-- A bound charges an operation `costʰⁱ`, the most time it can take.    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _<_)
@@ -15,10 +17,10 @@ open import Data.Nat.Base using (ℕ; _<_)
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 module Syntax.Grades.Example.Traces.Timed.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
-  (cost-pos : (o : Op) → 0 < cost o) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costʰⁱ : Op → ℕ)
+  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
-open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
 
 open import Syntax.Grades.Example.Traces.Lifted.RightSided

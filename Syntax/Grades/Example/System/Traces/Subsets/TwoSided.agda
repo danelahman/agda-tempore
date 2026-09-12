@@ -13,13 +13,14 @@
 -- `System.Traces.Subsets.RightSided`, and every law is theirs.         --
 --                                                                     --
 -- The target's `min ≤ max` is the grade's coherence field `P ⊆ Q`      --
--- read through durations: a larger set has a larger maximum. Since     --
--- that field is exactly the condition for the interval to be           --
--- inhabited, no admissible grade is refused before it reaches here.    --
+-- read through durations: a larger set has a larger maximum, and the   --
+-- floor's cost model is below the cap's. Since that field is exactly   --
+-- the condition for the interval to be inhabited, no admissible grade  --
+-- is refused before it reaches here.                                   --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
-open import Data.Nat.Properties using (⊔-identityʳ)
+open import Data.Nat.Properties using (≤-trans; ⊔-identityʳ)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
@@ -29,7 +30,9 @@ open import Syntax.Grades.Example.Time.TwoSided
 open import Util.Equality
 
 module Syntax.Grades.Example.System.Traces.Subsets.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (costˡᵒ costʰⁱ : Op → ℕ)
+  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o) where
 
 open import Data.Product using (_,_)
 
@@ -45,27 +48,36 @@ open import Syntax.Grades.Example.Traces.Subsets.TwoSided Op _≟ₒ_
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are
 
-open import Syntax.Grades.Example.System.Traces.Subsets.LeftSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.System.Traces.Subsets.LeftSided Op _≟ₒ_ costˡᵒ
   using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
-open import Syntax.Grades.Example.System.Traces.Subsets.RightSided Op _≟ₒ_ cost
+open import Syntax.Grades.Example.System.Traces.Subsets.RightSided Op _≟ₒ_ costʰⁱ
   using () renaming (mapₒ-monotone to mapʰⁱ-monotone)
 
-open MaxDurations cost
+open MaxDurations costˡᵒ using ()
+  renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ;
+            setDuration to setDurationˡᵒ; setDuration-·ˢ to setDuration-·ˢˡᵒ)
+open MaxDurations costʰⁱ using ()
+  renaming (duration to durationʰⁱ; duration-⟨⟩ to duration-⟨⟩ʰⁱ;
+            setDuration to setDurationʰⁱ; setDuration-·ˢ to setDuration-·ˢʰⁱ;
+            setDuration-⊑ to setDuration-⊑ʰⁱ)
 
 ------------------------------------------------------------------------
 -- The coherence field gives the target's `min ≤ max`
+--
+-- Raising the cost model first, then enlarging the set.
 
 coherent : (i : TwoSided)
-         → setDuration (traces (lo i)) ≤ setDuration (traces (hi i))
+         → setDurationˡᵒ (traces (lo i)) ≤ setDurationʰⁱ (traces (hi i))
 coherent i =
-  setDuration-⊑ (traces (lo i)) (traces (hi i)) (toWitness (lo◇hi i))
+  ≤-trans (setDuration-cost costˡᵒ costʰⁱ (traces (lo i)) cost-≤)
+          (setDuration-⊑ʰⁱ (traces (lo i)) (traces (hi i)) (toWitness (lo◇hi i)))
 
 ------------------------------------------------------------------------
 -- The projection: each endpoint by its slowest member
 
 mapₒ : TwoSided → Interval
 mapₒ i =
-  [ setDuration (traces (lo i)) , setDuration (traces (hi i)) , coherent i ]
+  [ setDurationˡᵒ (traces (lo i)) , setDurationʰⁱ (traces (hi i)) , coherent i ]
 
 mapₒ-monotone : {i₁ i₂ : TwoSided} → i₁ ≾ᵇ i₂ → mapₒ i₁ ≾ᵢ mapₒ i₂
 mapₒ-monotone {i₁} {i₂} (l , h) =
@@ -73,10 +85,10 @@ mapₒ-monotone {i₁} {i₂} (l , h) =
 
 mapₒ-· : (i₁ i₂ : TwoSided) → mapₒ (i₁ ·ᵇ i₂) ≡ mapₒ i₁ ·ᵢ mapₒ i₂
 mapₒ-· i₁ i₂ =
-  eqᵢ (setDuration-·ˢ (traces (lo i₁)) (traces (lo i₂))
-                      (nonempty (lo i₁)) (nonempty (lo i₂)))
-      (setDuration-·ˢ (traces (hi i₁)) (traces (hi i₂))
-                      (nonempty (hi i₁)) (nonempty (hi i₂)))
+  eqᵢ (setDuration-·ˢˡᵒ (traces (lo i₁)) (traces (lo i₂))
+                        (nonempty (lo i₁)) (nonempty (lo i₂)))
+      (setDuration-·ˢʰⁱ (traces (hi i₁)) (traces (hi i₂))
+                        (nonempty (hi i₁)) (nonempty (hi i₂)))
 
 subsets→intervals : two-sided →ᵍ two-sided-intervals
 subsets→intervals = record
@@ -85,8 +97,8 @@ subsets→intervals = record
   ; map-u        = eqᵢ refl refl
   ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
   ; map-of-nat   = λ {n} →
-      eqᵢ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n))
-          (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n))
+      eqᵢ (trans (⊔-identityʳ (durationˡᵒ ⟨ n ⟩)) (duration-⟨⟩ˡᵒ n))
+          (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n))
   }
 
 subsetsToIntervalsGradeSystem : GradeSystem

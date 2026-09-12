@@ -26,12 +26,19 @@
 -- The field asks that some listed guarantee take no longer than some   --
 -- listed allowance. That is *necessary* for the grade to admit any run --
 -- at all, since a run covering `p` and staying within `q` has          --
--- `duration p ≤ duration x ≤ duration q`, so no admissible grade is    --
--- refused; and it is what downstream needs, being exactly `min ≤ max`  --
--- for the projection to time intervals. A sufficient condition would   --
--- have to relate the two orders, and with incomparable orders any such --
--- condition refuses grades the order itself reaches -- the trap a      --
--- coherence field stated in one of the two lifts falls into.           --
+-- `durationˡᵒ p ≤ duration x ≤ durationʰⁱ q`, so no admissible grade   --
+-- is refused; and it is what downstream needs, being exactly           --
+-- `min ≤ max` for the projection to time intervals. A sufficient       --
+-- condition would have to relate the two orders, and with incomparable --
+-- orders any such condition refuses grades the order itself reaches -- --
+-- the trap a coherence field stated in one of the two lifts falls      --
+-- into.                                                                --
+--                                                                     --
+-- The two endpoints also take *different* cost models, and must. An    --
+-- operation's execution time is only known to lie in a range, and a    --
+-- guarantee may credit it with no more than its least (`costˡᵒ`) while --
+-- an allowance must budget for its greatest (`costʰⁱ`). The field      --
+-- straddles the two, so it needs `cost-≤` to compare them at all.      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -45,14 +52,16 @@ import Syntax.Grades.Traces.Durations as Dur
 import Syntax.Grades.Traces.Order as Order
 
 module Syntax.Grades.Example.Traces.Lifted.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (costˡᵒ costʰⁱ : Op → ℕ)
+  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
   (Oᶠ Oᶜ : Order.TraceOrder Op)
   (durᶠ : {s t : Base.Trace Op}
         → Order.TraceOrder._≼_ Oᶠ s t
-        → Dur.Durations.duration Op cost s ≤ Dur.Durations.duration Op cost t)
+        → Dur.Durations.duration Op costˡᵒ s ≤ Dur.Durations.duration Op costˡᵒ t)
   (durᶜ : {s t : Base.Trace Op}
         → Order.TraceOrder._≼_ Oᶜ s t
-        → Dur.Durations.duration Op cost s ≤ Dur.Durations.duration Op cost t)
+        → Dur.Durations.duration Op costʰⁱ s ≤ Dur.Durations.duration Op costʰⁱ t)
   where
 
 open import Data.List.Base using (List)
@@ -91,23 +100,35 @@ open import Syntax.Grades.Example.Traces.Lifted.RightSided Op _≟ₒ_ Oᶜ
                      ≾-zero-productʳ to ≾ʰⁱ-zero-productʳ;
                      ≾-irrelevant to ≾ʰⁱ-irrelevant)
 
-open Durations cost
+-- each endpoint is measured at its own cost model
+
+open Durations costˡᵒ using ()
+  renaming (duration to durationˡᵒ; duration-∙ to duration-∙ˡᵒ)
+open Durations costʰⁱ using ()
+  renaming (duration to durationʰⁱ; duration-∙ to duration-∙ʰⁱ)
+
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
+
+-- a trace's floor measure is below its cap measure
+
+durationˡᵒ≤ʰⁱ : (t : Trace) → durationˡᵒ t ≤ durationʰⁱ t
+durationˡᵒ≤ʰⁱ = duration-mono costˡᵒ costʰⁱ cost-≤
 
 ------------------------------------------------------------------------
 -- Coherence
 --
--- `xs ◇ˢ ys` says some trace of `xs` takes no longer than some trace of
--- `ys`. It is decided, hence irrelevant.
+-- `xs ◇ˢ ys` says some trace of `xs` takes no longer, at the floor's
+-- cost model, than some trace of `ys` takes at the cap's. It is
+-- decided, hence irrelevant.
 
 infix 5 _◇ˢ_
 
 _◇ˢ_ : List Trace → List Trace → Set
-xs ◇ˢ ys = True (any? (λ p → any? (λ q → duration p ≤? duration q) ys) xs)
+xs ◇ˢ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
 
 ◇ˢ-irr : {xs ys : List Trace} → (p q : xs ◇ˢ ys) → p ≡ q
 ◇ˢ-irr {xs} {ys} =
-  True-irr (any? (λ p → any? (λ q → duration p ≤? duration q) ys) xs)
+  True-irr (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
 
 -- a set is coherent with itself, at whichever member is to hand
 
@@ -115,11 +136,14 @@ xs ◇ˢ ys = True (any? (λ p → any? (λ q → duration p ≤? duration q) ys
 ◇ˢ-refl P with neHead (traces P) (nonempty P)
 ... | t , t∈P =
       fromWitness
-        (Any.map (λ eq → subst (λ z → Any (λ q → duration z ≤ duration q)
+        (Any.map (λ eq → subst (λ z → Any (λ q → durationˡᵒ z ≤ durationʰⁱ q)
                                             (traces P)) eq inner) t∈P)
   where
-    inner : Any (λ q → duration t ≤ duration q) (traces P)
-    inner = Any.map (λ eq → subst (λ z → duration t ≤ duration z) eq ≤-refl) t∈P
+    inner : Any (λ q → durationˡᵒ t ≤ durationʰⁱ q) (traces P)
+    inner =
+      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq
+                        (durationˡᵒ≤ʰⁱ t))
+              t∈P
 
 -- and coherence survives the language product, durations adding along
 -- sequencing
@@ -137,19 +161,19 @@ xs ◇ˢ ys = True (any? (λ p → any? (λ q → duration p ≤? duration q) ys
 ...             | s' , s'∈ys' , t'≤s' =
                   fromWitness
                     (Any.map
-                      (λ eq → subst (λ z → Any (λ r → duration z ≤ duration r)
+                      (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
                                                 (ys ·ˢ ys')) eq inner)
                       (∈-cartesianProductWith⁺ _∙_ t∈xs t'∈xs'))
   where
-    bound : duration (t ∙ t') ≤ duration (s ∙ s')
+    bound : durationˡᵒ (t ∙ t') ≤ durationʰⁱ (s ∙ s')
     bound =
-      ≤-trans (≤-reflexive (duration-∙ t t'))
+      ≤-trans (≤-reflexive (duration-∙ˡᵒ t t'))
               (≤-trans (+-mono-≤ t≤s t'≤s')
-                       (≤-reflexive (sym (duration-∙ s s'))))
+                       (≤-reflexive (sym (duration-∙ʰⁱ s s'))))
 
-    inner : Any (λ r → duration (t ∙ t') ≤ duration r) (ys ·ˢ ys')
+    inner : Any (λ r → durationˡᵒ (t ∙ t') ≤ durationʰⁱ r) (ys ·ˢ ys')
     inner =
-      Any.map (λ eq → subst (λ z → duration (t ∙ t') ≤ duration z) eq bound)
+      Any.map (λ eq → subst (λ z → durationˡᵒ (t ∙ t') ≤ durationʰⁱ z) eq bound)
               (∈-cartesianProductWith⁺ _∙_ s∈ys s'∈ys')
 
 ------------------------------------------------------------------------
@@ -244,13 +268,13 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 ...             | q' , q'∈U , q≼q' =
                   fromWitness
                     (Any.map
-                      (λ eq → subst (λ z → Any (λ r → duration z ≤ duration r)
+                      (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
                                                 (traces U)) eq inner)
                       p'∈L)
   where
-    inner : Any (λ r → duration p' ≤ duration r) (traces U)
+    inner : Any (λ r → durationˡᵒ p' ≤ durationʰⁱ r) (traces U)
     inner =
-      Any.map (λ eq → subst (λ z → duration p' ≤ duration z) eq
+      Any.map (λ eq → subst (λ z → durationˡᵒ p' ≤ durationʰⁱ z) eq
                         (≤-trans (durᶠ p'≼p) (≤-trans p≤q (durᶜ q≼q'))))
               q'∈U
 

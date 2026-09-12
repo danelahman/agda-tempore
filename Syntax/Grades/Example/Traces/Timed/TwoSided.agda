@@ -12,23 +12,32 @@
 -- members. `Example.Traces.Timed.LeftSided` and                    --
 -- `Example.Traces.Timed.RightSided` are its two endpoints read    --
 -- alone.                                                              --
+--                                                                    --
+-- Each order is taken at the cost model its side of the interval      --
+-- wants: the floor credits an operation with `costˡᵒ`, the least time --
+-- it can take, and the cap charges it `costʰⁱ`, the most. Only the    --
+-- cap needs its costs positive, that being what makes an empty        --
+-- allowance permit nothing but the empty run.                         --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _<_)
+open import Data.Nat.Base using (ℕ; _≤_; _<_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 module Syntax.Grades.Example.Traces.Timed.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
-  (cost-pos : (o : Op) → 0 < cost o) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (costˡᵒ costʰⁱ : Op → ℕ)
+  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
+  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
-open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ cost
+open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ costˡᵒ
   using (coverageOrder)
-open import Syntax.Grades.Traces.Coverage Op cost using (duration-≼ᶜ)
+open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 
-open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
-open import Syntax.Grades.Traces.Allowance Op cost using (duration-≼ᵃ)
+open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Lifted.TwoSided
-  Op _≟ₒ_ cost coverageOrder allowanceOrder duration-≼ᶜ duration-≼ᵃ public
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤
+  coverageOrder allowanceOrder duration-≼ᶜ duration-≼ᵃ public

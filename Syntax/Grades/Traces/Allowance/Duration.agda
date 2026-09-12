@@ -15,8 +15,8 @@
 -- The module closes with the inversion that nothing but the empty run --
 -- is permitted by the empty bound. That needs every operation to cost --
 -- something -- a free operation could be paid for out of no budget at --
--- all -- so the positivity of `cost` is taken as an argument where it --
--- is used, and it is what the grade's zero-product law rests on.      --
+-- all -- so the positivity of `costʰⁱ` is taken as an argument where  --
+-- it is used, and it is what the grade's zero-product law rests on.   --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -29,13 +29,13 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Allowance.Duration (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Duration (Op : Set) (costʰⁱ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.Allowance.Core Op cost
+open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 
-open Durations cost
+open Durations costʰⁱ
 
 ------------------------------------------------------------------------
 -- Small arithmetic helpers
@@ -73,15 +73,15 @@ duration-slack nil = z≤n
 -- an operation the bound names costs the same on both sides, and the
 -- premise arrives with no budget, so the conclusion's is spare
 duration-slack {k} (keep {o = o} {s = s} {t = t} p) =
-  ≤-trans (+-monoʳ-≤ (cost o)
+  ≤-trans (+-monoʳ-≤ (costʰⁱ o)
                      (subst (duration s ≤_) (+-identityʳ (duration t))
                             (duration-slack p)))
-          (m≤m+n (cost o + duration t) k)
+          (m≤m+n (costʰⁱ o + duration t) k)
 
 -- one the run skips only makes the bound longer
 duration-slack {k} (skip-op {o = o} {t = t} p) =
   ≤-trans (duration-slack p)
-          (+-monoˡ-≤ k (m≤n+m (duration t) (cost o)))
+          (+-monoˡ-≤ k (m≤n+m (duration t) (costʰⁱ o)))
 
 -- a delay of the bound moves from its duration into the budget
 duration-slack {k} (bank-delay {e = e} {t⁻ = t⁻} p) =
@@ -101,9 +101,9 @@ duration-slack {k} (use-delay {d = d} {s⁻ = s⁻} {t = t} le p) =
 
 -- and so is an operation the bound does not name, at its execution time
 duration-slack {k} (use-op {o = o} {t = t} le p) =
-  ≤-trans (+-monoʳ-≤ (cost o) (duration-slack p))
+  ≤-trans (+-monoʳ-≤ (costʰⁱ o) (duration-slack p))
           (≤-reflexive
-            (trans (lem-past (cost o) (duration t) (k ∸ cost o))
+            (trans (lem-past (costʰⁱ o) (duration t) (k ∸ costʰⁱ o))
                    (cong (duration t +_) (m+[n∸m]≡n le))))
 
 ------------------------------------------------------------------------
@@ -126,7 +126,7 @@ duration-≼ᵃ {s} {t} p =
 ∣∣⁺-pos 𝟏        ()
 ∣∣⁺-pos (suc⁺ d) ()
 
-≼ᵃ-ε-inv : ((o : Op) → 0 < cost o) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
+≼ᵃ-ε-inv : ((o : Op) → 0 < costʰⁱ o) → {s : Trace} → s ≼ᵃ ε → s ≡ ε
 ≼ᵃ-ε-inv pos nil                      = refl
 ≼ᵃ-ε-inv pos (use-delay {d = d} le _) = ⊥-elim (∣∣⁺-pos d le)
 ≼ᵃ-ε-inv pos (use-op {o = o} le _)    =

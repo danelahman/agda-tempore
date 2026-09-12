@@ -7,7 +7,8 @@
 -- sits below it when each of its runs *covers* one of them: every      --
 -- operation the guarantee names has occurred, and every delay it names --
 -- has been paid out of the run's own time, operations counted at       --
--- `cost` -- read 1, write 3, send 6.                                   --
+-- `costˡᵒ` -- read 1, write 2, send 4 -- since that is all each is     --
+-- certain to take.                                                     --
 --                                                                     --
 -- So this is the trace counterpart of the lower-bound intervals: the   --
 -- grade says what has definitely happened, and `coerce` may forget     --
@@ -32,13 +33,13 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Timed.LeftSided where
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; _≟ₒ_; cost;
+  using (Op; read; write; send; _≟ₒ_; costˡᵒ;
          NeTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using (left-sided; holds; fails; failsᵉ)
 
-open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ cost
+open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ costˡᵒ
   using (coverageOrder)
 
 open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ coverageOrder
@@ -155,16 +156,17 @@ branching =
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
-timed-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⟨ 3 ⟩ ⟆
+timed-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⟨ 2 ⟩ ⟆
 timed-branching =
   if eternal-var Boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
--- four ticks are more than the storing branch guarantees
+-- three ticks are more than the storing branch guarantees, being the
+-- store's worst case rather than its best
 
-four-ticks-not-guaranteed : ¬ (opTime write ·ₑ uₑ ≾ₑ ⟅ ⟨ 4 ⟩ ⟆)
-four-ticks-not-guaranteed = fails
+three-ticks-not-guaranteed : ¬ (opTime write ·ₑ uₑ ≾ₑ ⟅ ⟨ 3 ⟩ ⟆)
+three-ticks-not-guaranteed = fails
 
 -- an `if` over data alone needs no common grade to be found: both
 -- branches make the same run
@@ -356,16 +358,16 @@ after-the-join = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
 -- and the grade on the box, which is a different element of the same
 -- monoid -- the two are the same carrier only because the grade system
 -- is the identity one, and they are doing different jobs. This one asks
--- for a reading *or* for three ticks, and the two branches meet it by
+-- for a reading *or* for two ticks, and the two branches meet it by
 -- different members: the sampling branch covers the reading and cannot
 -- cover the ticks (`sampling-branch-covers-it`,
 -- `sampling-branch-too-little`), the storing branch the other way
 -- round.
 
 mixed-demand : R
-mixed-demand = ⟅ ⌈ read ⌉ ∣ ⟨ 3 ⟩ ⟆
+mixed-demand = ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆
 
-storing-branch-takes-the-ticks : uᵣ ·ᵣ opTime write ≾ᵣ ⟅ ⟨ 3 ⟩ ⟆
+storing-branch-takes-the-ticks : uᵣ ·ᵣ opTime write ≾ᵣ ⟅ ⟨ 2 ⟩ ⟆
 storing-branch-takes-the-ticks = holds
 
 storing-branch-not-the-reading : ¬ (uᵣ ·ᵣ opTime write ≾ᵣ demand)
@@ -375,7 +377,7 @@ claim-after-a-branch :
   [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-branch =
   box {ρ = mixed-demand} (const 42)
-                                     -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 3 ⟩ ⟆ ] Reading
+                                     -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     ((if eternal-var Boolₑ (Tl-∷ Hd)
         `then coerce {ε' = after-the-join} holds (perform read ⋆ (return ⋆))
         `else coerce holds (perform write (const 0) (return ⋆)))
@@ -390,7 +392,7 @@ claim-after-a-branch =
 the-reading-alone : ¬ (uᵣ ·ᵣ after-the-join ≾ᵣ demand)
 the-reading-alone = fails
 
-the-ticks-alone : ¬ (uᵣ ·ᵣ after-the-join ≾ᵣ ⟅ ⟨ 3 ⟩ ⟆)
+the-ticks-alone : ¬ (uᵣ ·ᵣ after-the-join ≾ᵣ ⟅ ⟨ 2 ⟩ ⟆)
 the-ticks-alone = fails
 
 -- a box with one member does survive the join when both branches reach
@@ -438,17 +440,17 @@ two-ticks-do-not = fails
 ------------------------------------------------------------------------
 -- Programs written at these guarantees
 --
--- A box asking for three ticks' worth of work, claimed on both sides of
--- an `if`: one branch stores a reading, which takes three ticks, and
--- the other idles for three. Both then transmit, so both guarantee
--- nine ticks, and that is the conditional's grade.
+-- A box asking for two ticks' worth of work, claimed on both sides of
+-- an `if`: one branch stores a reading, which is certain of two ticks,
+-- and the other idles for two. Both then transmit, so both guarantee
+-- six ticks, and that is the conditional's grade.
 
-three-ticks : R
-three-ticks = ⟅ ⟨ 3 ⟩ ⟆
+two-ticks : R
+two-ticks = ⟅ ⟨ 2 ⟩ ⟆
 
-work-or-wait : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⟨ 9 ⟩ ⟆
+work-or-wait : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⟨ 6 ⟩ ⟆
 work-or-wait =
-  box {ρ = three-ticks} (const 42)   -- ∷ [ ⟅ ⟨ 3 ⟩ ⟆ ] Reading
+  box {ρ = two-ticks} (const 42)     -- ∷ [ ⟅ ⟨ 2 ⟩ ⟆ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform write (const 0)
@@ -457,21 +459,21 @@ work-or-wait =
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
-              (delay 3               -- ⟨ ⟅ ⟨ 3 ⟩ ⟆ ⟩
+              (delay 2               -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
                 (unbox (Tl-⟨⟩ Hd) holds
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 
--- ten ticks are more than either branch guarantees
+-- seven ticks are more than either branch guarantees
 
-ten-ticks-not-guaranteed :
-  ¬ (opTime write ·ₑ (opTime send ·ₑ uₑ) ≾ₑ ⟅ ⟨ 10 ⟩ ⟆)
-ten-ticks-not-guaranteed = fails
+seven-ticks-not-guaranteed :
+  ¬ (opTime write ·ₑ (opTime send ·ₑ uₑ) ≾ₑ ⟅ ⟨ 7 ⟩ ⟆)
+seven-ticks-not-guaranteed = fails
 
 -- and a branch that only takes a reading would not cover the box: one
--- tick against the three it asks for
+-- tick against the two it asks for
 
-sampling-branch-too-little : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ three-ticks)
+sampling-branch-too-little : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ two-ticks)
 sampling-branch-too-little = fails
 
 ------------------------------------------------------------------------

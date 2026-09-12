@@ -26,13 +26,13 @@ open import Relation.Nullary using (Dec; yes; no)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Allowance.Decidable (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Decidable (Op : Set) (costʰⁱ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
 
-open import Syntax.Grades.Traces.Allowance.Core Op cost
-open import Syntax.Grades.Traces.Allowance.Moves Op cost using (bank-delay-inv)
+open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Moves Op costʰⁱ using (bank-delay-inv)
 
 module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
 
@@ -44,10 +44,10 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
 
   -- an operation of the run against a spent bound
   dec (suc n) (operation o s') k ε (s≤s le)
-    with cost o ≤? k
+    with costʰⁱ o ≤? k
   ... | no ¬p = no (λ { (use-op p _) → ¬p p })
   ... | yes p
-          with dec n s' (k ∸ cost o) ε le
+          with dec n s' (k ∸ costʰⁱ o) ε le
   ...     | yes d  = yes (use-op p d)
   ...     | no ¬d = no (λ { (use-op _ d) → ¬d d })
 
@@ -58,9 +58,9 @@ module DecAllowance (_≟ₒ_ : DecidableEquality Op) where
                (subst (_≤ n) (+-suc (size s') (size t')) le)
   ... | yes d = yes (skip-op d)
   ... | no ¬d
-          with cost o ≤? k
+          with costʰⁱ o ≤? k
   ...     | yes p
-              with dec n s' (k ∸ cost o) (operation o' t') le
+              with dec n s' (k ∸ costʰⁱ o) (operation o' t') le
   ...         | yes d' = yes (use-op p d')
   ...         | no ¬d' with o ≟ₒ o'
   ...           | no ¬eq = no (λ { (keep _)      → ¬eq refl

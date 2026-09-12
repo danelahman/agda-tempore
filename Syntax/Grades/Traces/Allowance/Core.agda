@@ -37,9 +37,10 @@ open import Data.Nat.Properties
 open import Util.Equality
 
 -- The allowance order is parameterised by a set `Op` of operation names
--- and by the map `cost` giving each operation its execution time.
+-- and by the map `costʰⁱ` giving each operation the most time it can
+-- take, that being what a bound must budget for.
 
-module Syntax.Grades.Traces.Allowance.Core (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Allowance.Core (Op : Set) (costʰⁱ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
@@ -90,8 +91,8 @@ data _≼ᵃ[_]_ : Trace → ℕ → Trace → Set where
 
   -- and on an operation the bound does not name, at its execution time
   use-op     : ∀ {k o s t}
-             → cost o ≤ k
-             → s ≼ᵃ[ k ∸ cost o ] t
+             → costʰⁱ o ≤ k
+             → s ≼ᵃ[ k ∸ costʰⁱ o ] t
              ------------------------------
              → operation o s ≼ᵃ[ k ] t
 
@@ -165,12 +166,12 @@ weaken {j} m (use-op {o = o} p d')    =
   bank-delay (coe (sym (+-assoc j k ∣ e ∣⁺)) (≼ᵃ-trans d1 d2))
 ≼ᵃ-trans {j} {k} (keep d1)         (use-op {o = o} p d2)   =
   use-op (≤-trans p (m≤n+m k j))
-         (coe (trans (+-comm (k ∸ cost o) j) (sym (+-∸-assoc j p)))
+         (coe (trans (+-comm (k ∸ costʰⁱ o) j) (sym (+-∸-assoc j p)))
               (weaken j (≼ᵃ-trans d1 d2)))
 ≼ᵃ-trans {j} {k} (skip-op d1)      (use-op {o = o} p d2)   =
-  coe (trans (+-assoc j (k ∸ cost o) (cost o))
+  coe (trans (+-assoc j (k ∸ costʰⁱ o) (costʰⁱ o))
              (cong (j +_) (m∸n+n≡m p)))
-      (weaken (cost o) (≼ᵃ-trans d1 d2))
+      (weaken (costʰⁱ o) (≼ᵃ-trans d1 d2))
 ≼ᵃ-trans {j} {k} (bank-delay {e = e} d1) (use-delay p d2)  =
   coe (trans (+-assoc j ∣ e ∣⁺ (k ∸ ∣ e ∣⁺))
              (cong (j +_) (m+[n∸m]≡n p)))

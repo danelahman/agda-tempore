@@ -35,7 +35,7 @@ open import Data.Nat.Properties
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.Coverage.Core (Op : Set) (cost : Op → ℕ) where
+module Syntax.Grades.Traces.Coverage.Core (Op : Set) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
 open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
@@ -66,7 +66,7 @@ data _≼ᶜ[_]_ : Trace → ℕ → Trace → Set where
 
   -- an undemanded operation of the run is banked, at its execution time
   pay-op    : ∀ {k o s t}
-            → s ≼ᶜ[ k + cost o ] t
+            → s ≼ᶜ[ k + costˡᵒ o ] t
             -------------------------
             → s ≼ᶜ[ k ] operation o t
 
@@ -125,7 +125,7 @@ weaken : ∀ {j s t} (m : ℕ) → s ≼ᶜ[ j ] t → s ≼ᶜ[ j + m ] t
 weaken m nil                          = nil
 weaken m (keep d)                     = keep d
 weaken {j} m (pay-op {o = o} d)       =
-  pay-op (coe (lem-swap j (cost o) m) (weaken m d))
+  pay-op (coe (lem-swap j (costˡᵒ o) m) (weaken m d))
 weaken {j} m (del-delay {e = e} d)    =
   del-delay (coe (lem-swap j ∣ e ∣⁺ m) (weaken m d))
 weaken {j} m (use-delay {d = d} p d') =
@@ -135,14 +135,14 @@ weaken {j} m (use-delay {d = d} p d') =
 -- dropping an operation of the run without spending what it banks
 
 del-op : ∀ {k o s t} → s ≼ᶜ[ k ] t → s ≼ᶜ[ k ] operation o t
-del-op {k} {o} d = pay-op (weaken (cost o) d)
+del-op {k} {o} d = pay-op (weaken (costˡᵒ o) d)
 
 ------------------------------------------------------------------------
 -- Transitivity: the slacks add up
 --
 -- The awkward case is `pay-op` against `keep`: the middle run's matched
 -- operation resets the slack, so the inductive hypothesis lands at
--- `(j + cost o) + 0` and has to be weakened by `k` before it can be
+-- `(j + costˡᵒ o) + 0` and has to be weakened by `k` before it can be
 -- re-associated.
 
 ≼ᶜ-trans : ∀ {j k s t u} → s ≼ᶜ[ j ] t → t ≼ᶜ[ k ] u → s ≼ᶜ[ j + k ] u
@@ -151,17 +151,17 @@ del-op {k} {o} d = pay-op (weaken (cost o) d)
 -- of the match are at slack zero, so the composite is too
 ≼ᶜ-trans (keep d1) (keep d2) = keep (≼ᶜ-trans d1 d2)
 ≼ᶜ-trans {j} {k} (keep d1) (pay-op {o = o} d2) =
-  pay-op (coe (sym (+-assoc j k (cost o))) (≼ᶜ-trans {j} (keep d1) d2))
+  pay-op (coe (sym (+-assoc j k (costˡᵒ o))) (≼ᶜ-trans {j} (keep d1) d2))
 ≼ᶜ-trans {j} {k} (keep d1) (del-delay {e = e} d2) =
   del-delay (coe (sym (+-assoc j k ∣ e ∣⁺)) (≼ᶜ-trans {j} (keep d1) d2))
 -- the demand banks an operation of the middle run, which the run must
 -- therefore also have; the match on the right resets the slack, so what
 -- the hypothesis gives has to be weakened back up
 ≼ᶜ-trans {j} {k} (pay-op {o = o} d1) (keep d2) =
-  pay-op (coe (lem-swap j (cost o) k)
-              (weaken k (coe (+-identityʳ (j + cost o)) (≼ᶜ-trans d1 d2))))
+  pay-op (coe (lem-swap j (costˡᵒ o) k)
+              (weaken k (coe (+-identityʳ (j + costˡᵒ o)) (≼ᶜ-trans d1 d2))))
 ≼ᶜ-trans {j} {k} (pay-op d1) (pay-op {o = o} d2) =
-  pay-op (coe (sym (+-assoc j k (cost o))) (≼ᶜ-trans (pay-op d1) d2))
+  pay-op (coe (sym (+-assoc j k (costˡᵒ o))) (≼ᶜ-trans (pay-op d1) d2))
 ≼ᶜ-trans {j} {k} (pay-op d1) (del-delay {e = e} d2) =
   del-delay (coe (sym (+-assoc j k ∣ e ∣⁺)) (≼ᶜ-trans (pay-op d1) d2))
 -- the demand banks a delay of the middle run
@@ -169,7 +169,7 @@ del-op {k} {o} d = pay-op (weaken (cost o) d)
   coe (trans (+-assoc j ∣ e ∣⁺ (k ∸ ∣ e ∣⁺)) (cong (j +_) (m+[n∸m]≡n p)))
       (≼ᶜ-trans d1 d2)
 ≼ᶜ-trans {j} {k} (del-delay d1) (pay-op {o = o} d2) =
-  pay-op (coe (sym (+-assoc j k (cost o))) (≼ᶜ-trans (del-delay d1) d2))
+  pay-op (coe (sym (+-assoc j k (costˡᵒ o))) (≼ᶜ-trans (del-delay d1) d2))
 ≼ᶜ-trans {j} {k} (del-delay d1) (del-delay {e = f} d2) =
   del-delay (coe (sym (+-assoc j k ∣ f ∣⁺)) (≼ᶜ-trans (del-delay d1) d2))
 -- the demand spends slack on its own leading delay

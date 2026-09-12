@@ -24,6 +24,9 @@
 -- while the greatest of `Q` is above that allowance. Without the field --
 -- the projection would not land in the interval grade at all -- which  --
 -- is the concrete reason a two-sided trace grade carries one.          --
+--                                                                     --
+-- Each endpoint is measured at its own cost model: `P` at `costˡᵒ`,    --
+-- `Q` at `costʰⁱ`.                                                     --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
@@ -37,8 +40,10 @@ open import Syntax.Grades.Example.Time.TwoSided
 open import Util.Equality
 
 module Syntax.Grades.Example.System.Traces.Timed.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
-  (cost-pos : (o : Op) → 0 < cost o) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (costˡᵒ costʰⁱ : Op → ℕ)
+  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
+  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.Product using (_,_)
@@ -51,19 +56,22 @@ open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
   using (bigMax-mem; module MaxDurations)
 
-open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 -- the two endpoints are projected exactly as the corresponding
--- one-sided grades are
+-- one-sided grades are, each at its own cost model
 
 open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
-  Op _≟ₒ_ cost using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
+  Op _≟ₒ_ costˡᵒ using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
-  Op _≟ₒ_ cost cost-pos using () renaming (mapₒ-monotone to mapʰⁱ-monotone)
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using () renaming (mapₒ-monotone to mapʰⁱ-monotone)
 
-open MinDurations cost
-open MaxDurations cost using (setDuration; setDuration-·ˢ)
+open MinDurations costˡᵒ using (minSetDuration; minSetDuration-·ˢ)
+  renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ)
+open MaxDurations costʰⁱ using (setDuration; setDuration-·ˢ)
+  renaming (duration to durationʰⁱ; duration-⟨⟩ to duration-⟨⟩ʰⁱ)
 
 ------------------------------------------------------------------------
 -- The coherence field gives the target's `min ≤ max`
@@ -78,8 +86,8 @@ coherent i
 ... | p , p∈P , hit
         with find hit
 ...     | q , q∈Q , p≤q =
-          ≤-trans (bigMin-mem duration p (traces (lo i)) p∈P)
-                  (≤-trans p≤q (bigMax-mem duration q (traces (hi i)) q∈Q))
+          ≤-trans (bigMin-mem durationˡᵒ p (traces (lo i)) p∈P)
+                  (≤-trans p≤q (bigMax-mem durationʰⁱ q (traces (hi i)) q∈Q))
 
 ------------------------------------------------------------------------
 -- The projection: fastest guarantee below, slowest allowance above
@@ -111,8 +119,8 @@ two-sided-traces→intervals = record
   ; map-u        = eqᵢ refl refl
   ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
   ; map-of-nat   = λ {n} →
-      eqᵢ (duration-⟨⟩ n)
-          (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n))
+      eqᵢ (duration-⟨⟩ˡᵒ n)
+          (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n))
   }
 
 tracesToTwoSidedIntervalsGradeSystem : GradeSystem

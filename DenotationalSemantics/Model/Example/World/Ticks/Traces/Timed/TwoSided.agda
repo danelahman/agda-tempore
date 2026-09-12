@@ -4,8 +4,8 @@
 -- Worlds are time points `ℕ`, and a grade `[ P , Q ]` fences the      --
 -- advance in from both sides at once:                                --
 --                                                                    --
---   w ⊑ᵗ[ [ P , Q ] ] w'   iff   w + duration p ≤ w'  for some p ∈ P --
---                          and   w' ≤ w + duration q  for some q ∈ Q --
+--   w ⊑ᵗ[ [ P , Q ] ] w'  iff  w + durationˡᵒ p ≤ w'  for some p ∈ P --
+--                         and  w' ≤ w + durationʰⁱ q  for some q ∈ Q --
 --                                                                    --
 -- Each half is the corresponding one-sided frame -- the floor's from  --
 -- `Ticks.Traces.Timed.LeftSided`, the cap's from                   --
@@ -20,19 +20,22 @@
 -- allowance -- so a world at the far end is reachable at all.         --
 ------------------------------------------------------------------------
 
-open import Data.Nat.Base using (ℕ; _<_)
+open import Data.Nat.Base using (ℕ; _≤_; _<_)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (cost : Op → ℕ)
-  (cost-pos : (o : Op) → 0 < cost o) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (costˡᵒ costʰⁱ : Op → ℕ)
+  (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
+  (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
-open import Syntax.Grades.Example.Traces.Timed.TwoSided Op _≟ₒ_ cost cost-pos
+open import Syntax.Grades.Example.Traces.Timed.TwoSided
+  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open import DenotationalSemantics.Model.World
@@ -44,10 +47,10 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
   as Hi
 
-open Lo Op _≟ₒ_ cost using () renaming
+open Lo Op _≟ₒ_ costˡᵒ using () renaming
   (_⊑ᵗ[_]_ to _⊑ˡᵒ[_]_; ⊑ᵗ-refl to ⊑ˡᵒ-refl; ⊑ᵗ-trans to ⊑ˡᵒ-trans;
    ⊑ᵗ-mono to ⊑ˡᵒ-mono; ⊑ᵗ-irrelevant to ⊑ˡᵒ-irrelevant)
-open Hi Op _≟ₒ_ cost cost-pos using () renaming
+open Hi Op _≟ₒ_ costʰⁱ costʰⁱ-pos using () renaming
   (_⊑ᵗ[_]_ to _⊑ʰⁱ[_]_; ⊑ᵗ-refl to ⊑ʰⁱ-refl; ⊑ᵗ-trans to ⊑ʰⁱ-trans;
    ⊑ᵗ-mono to ⊑ʰⁱ-mono; ⊑ᵗ-irrelevant to ⊑ʰⁱ-irrelevant)
 

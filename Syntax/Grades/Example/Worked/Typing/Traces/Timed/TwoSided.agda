@@ -113,11 +113,12 @@ transmitting-twice-fails-the-cap = fails _ _
 -- Conditional branching
 --
 -- Both branches are coerced to one contract, so its floor is what both
--- guarantee and its cap what neither exceeds. Three ticks and six do
--- for a store against a transmission.
+-- guarantee and its cap what neither exceeds. Two ticks and six do for
+-- a store against a transmission: the store is certain of two and may
+-- run to three.
 
 window : E
-window = [ ⟅ ⟨ 3 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ]
+window = [ ⟅ ⟨ 2 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ]
 
 branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ window
 branching =
@@ -125,11 +126,12 @@ branching =
     `then coerce (holds _ _) (perform send  here (return ⋆))
     `else coerce (holds _ _) (perform write here (return ⋆))
 
--- four ticks are more than the storing branch guarantees
+-- three ticks are more than the storing branch guarantees, being the
+-- store's worst case rather than its best
 
-four-ticks-not-guaranteed :
-  ¬ (opTime write ·ₑ uₑ ≾ₑ [ ⟅ ⟨ 4 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ])
-four-ticks-not-guaranteed = fails _ _
+three-ticks-not-guaranteed :
+  ¬ (opTime write ·ₑ uₑ ≾ₑ [ ⟅ ⟨ 3 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ⟆ , tt ])
+three-ticks-not-guaranteed = fails _ _
 
 -- an `if` over data alone needs no contract found for it
 
@@ -246,14 +248,14 @@ transmitting-branch-overspends = fails _ _
 -- `if` joins its branches by taking the union at each endpoint, so a
 -- conditional's grade lists what each branch does on both sides. The
 -- box's floor is then met member by member -- the sampling branch
--- covers the demanded reading, the storing branch the three ticks --
+-- covers the demanded reading, the storing branch the two ticks --
 -- while its six ticks of allowance cover both branches at once.
 
 branch-join : E
 branch-join = [ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , tt ]
 
 mixed-contract : R
-mixed-contract = [ ⟅ ⌈ read ⌉ ∣ ⟨ 3 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ⟆ , tt ]
+mixed-contract = [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ , ⟅ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ⟆ , tt ]
 
 sampling-branch-joins : opTime read ·ₑ uₑ ≾ₑ branch-join
 sampling-branch-joins = holds _ _
