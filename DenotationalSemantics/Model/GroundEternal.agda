@@ -6,14 +6,15 @@
 -- `Eternalᵒ` structure (in particular the extraction `extᵉ`).           --
 --                                                                    --
 -- The structure is supplied for each *former* of `Syntax.Types.Eternal`: --
--- the eternal base types, and closure under `Unit`, `Empty`, and         --
+-- the eternal base types, and closure under `Unit`, `Bool`, `Empty`, and --
 -- products. `Interpretation.Variables` then assembles an `Eternalᵒ` for  --
 -- every eternal type by recursion on the eternality witness, so all the  --
 -- eternal *laws* (grade-uniformity, the unit grade, the `⟨_⟩`-algebra    --
 -- law) come from `Eternalᵒ` rather than being re-derived per former.     --
 --                                                                    --
--- Concretely (`Example.PSh`) eternal types are the constant presheaves:  --
--- the fields are `Kᵖ-eternalᵒ`, `𝟙ᵖ-eternalᵒ`, `𝟘ᵖ-eternalᵒ`, and         --
+-- In the presheaf model (`Example.PSh.Modality.Eternal`) the constant    --
+-- presheaves `Kᵖ` carry this structure (`Kᵖ-eternalᵒ`), and the formers  --
+-- are covered by `𝟙ᵖ-eternalᵒ`, `𝔹ᵖ-eternalᵒ`, `𝟘ᵖ-eternalᵒ`, and        --
 -- `×ᵖ-eternalᵒ`.                                                         --
 ------------------------------------------------------------------------
 
@@ -50,7 +51,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
 record GroundEternal : Set₁ where
   field
     -- the eternal structure of each eternal base type's interpretation
-    ⟦_⟧ᵇᵉ : (b : BaseType) → EternalBaseType b → Eternalᵒ ⟦ b ⟧ᵇ
+    ⟦_⟧ᵇᵉ : (b : BaseType) → .(EternalBaseType b) → Eternalᵒ ⟦ b ⟧ᵇ
 
     -- closure of the eternal structure under the eternal type formers
     𝟙-eternalᵒ : Eternalᵒ 𝟙ᵐ
@@ -68,7 +69,7 @@ record GroundEternal : Set₁ where
     -- A constant of an eternal base type denotes a *global* element: it is
     -- the same at every world, so the eternal extraction recovers it. This
     -- is what lets a constant be weakened under a lock (`eternal-val-ext`).
-    ⟦⟧ᵇᶜ-eternal : ∀ {b} → (eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
+    ⟦⟧ᵇᶜ-eternal : ∀ {b} → .(eb : EternalBaseType b) → (c : BaseConstants b) → ∀ {ρ}
                  → Eternalᵒ.extᵉ (⟦ b ⟧ᵇᵉ eb) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟦_⟧ᵇᶜ {b} c)
                  ≈ᵐ ⟦_⟧ᵇᶜ {b} c ∘ᵐ terminalᵐ
 

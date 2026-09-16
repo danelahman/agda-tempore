@@ -2,6 +2,7 @@
 -- Types of the language --
 ---------------------------
 
+open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Relation.Binary.Definitions hiding (Empty)
 open import Relation.Nullary
 
@@ -50,18 +51,18 @@ mutual
   infix  31 _‼_
 
 data Eternal : VType → Set where
-  Baseₑ  : (b : BaseType) → EternalBaseType b → Eternal (Base b)
+  Baseₑ  : ∀ {b} → .(EternalBaseType b) → Eternal (Base b)
   Unitₑ  : Eternal Unit
   Boolₑ  : Eternal Bool
   _|×|ₑ_ : ∀ {A₁ A₂} → Eternal A₁ → Eternal A₂ → Eternal (A₁ |×| A₂)
   Emptyₑ : Eternal Empty
 
 -- Eternality is a *property* of a type: any two witnesses coincide
--- (inherited from `eternalBaseType-irrelevant` at the base types).
+-- (the base-type witness is irrelevant).
 
 eternal-irrelevant : ∀ {A} → (et et' : Eternal A) → et ≡ et'
-eternal-irrelevant (Baseₑ b p) (Baseₑ .b q) =
-  cong (Baseₑ b) (eternalBaseType-irrelevant p q)
+eternal-irrelevant (Baseₑ p) (Baseₑ q) =
+  refl
 eternal-irrelevant Unitₑ Unitₑ =
   refl
 eternal-irrelevant Boolₑ Boolₑ =
@@ -156,8 +157,8 @@ Empty ≡ᵥ? ([ ρ' ] B) = no (λ { () })
 
 eternal? : (A : VType) → Dec (Eternal A)
 eternal? (Base b) with eternalBaseType? b
-... | yes p = yes (Baseₑ b p)
-... | no ¬p = no λ { (Baseₑ _ p') → ¬p p' }
+... | yes p = yes (Baseₑ p)
+... | no ¬p = no λ { (Baseₑ p') → ⊥-elim-irr (¬p p') }
 eternal? Unit        = yes Unitₑ
 eternal? Bool        = yes Boolₑ
 eternal? (A₁ |×| A₂) with eternal? A₁ | eternal? A₂

@@ -10,7 +10,7 @@
 --                                                                    --
 -- The `Eternalᵒ` structure of an eternal type is assembled by recursion   --
 -- on the eternality witness from the per-former structure supplied by     --
--- `GroundEternal` (base types, `Unit`, `Empty`, and products). Landing in --
+-- `GroundEternal` (base types, `Unit`, `Bool`, `Empty`, products). Landing in --
 -- `Eternalᵒ` means the eternal laws — grade-uniformity `extᵉ-≤`, the unit --
 -- grade `extᵉ-u`, and the `⟨_⟩`-algebra law `extᵉ-μ` — are inherited      --
 -- rather than re-proved for each former.                                  --
@@ -75,7 +75,7 @@ var-proj (Tl-⟨⟩ {ρ = ρ} x)     = μ ∘ᵐ ⟨ ρ ⟩ᶠ (var-proj x)
 -- being re-proved by induction for each former.
 
 eternalᵛ-Eternalᵒ : ∀ {A} → Eternal A → Eternalᵒ ⟦ A ⟧ᵛ
-eternalᵛ-Eternalᵒ (Baseₑ b eb)   = ⟦ b ⟧ᵇᵉ eb
+eternalᵛ-Eternalᵒ (Baseₑ {b} eb) = ⟦ b ⟧ᵇᵉ eb
 eternalᵛ-Eternalᵒ Unitₑ          = 𝟙-eternalᵒ
 eternalᵛ-Eternalᵒ Boolₑ          = 𝔹-eternalᵒ
 eternalᵛ-Eternalᵒ Emptyₑ         = 𝟘-eternalᵒ

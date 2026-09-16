@@ -75,17 +75,13 @@ eternalBT? : (b : BT) → Dec (EternalBT b)
 eternalBT? reading = no λ ()
 eternalBT? nodeid  = yes tt
 
-eternalBT-irrelevant : ∀ {b} → (p q : EternalBT b) → p ≡ q
-eternalBT-irrelevant {nodeid} tt tt = refl
-
 baseTypes : BaseTypes
 baseTypes = record
-  { BaseType                   = BT
-  ; _≡ᵇ?_                      = _≡ᴮ?_
-  ; EternalBaseType            = EternalBT
-  ; eternalBaseType?           = eternalBT?
-  ; eternalBaseType-irrelevant = eternalBT-irrelevant
-  ; BaseConstants              = λ _ → ℕ
+  { BaseType         = BT
+  ; _≡ᵇ?_            = _≡ᴮ?_
+  ; EternalBaseType  = EternalBT
+  ; eternalBaseType? = eternalBT?
+  ; BaseConstants    = λ _ → ℕ
   }
 
 open import Syntax.GroundTypes grades baseTypes
@@ -136,10 +132,10 @@ Reading = Base reading
 NodeId  = Base nodeid
 
 reading-not-eternal : ¬ Eternal Reading
-reading-not-eternal (Baseₑ _ ())
+reading-not-eternal (Baseₑ ())
 
 nodeid-eternal : Eternal NodeId
-nodeid-eternal = Baseₑ nodeid tt
+nodeid-eternal = Baseₑ tt
 
 ------------------------------------------------------------------------
 -- Variables

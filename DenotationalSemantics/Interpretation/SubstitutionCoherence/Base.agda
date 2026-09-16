@@ -113,7 +113,7 @@ eternal-val-ext-nat {A = A} et (var f y) _ with eternal? A
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
             (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))))))
 ... | no ¬et' = ⊥-elim (¬et' et)
-eternal-val-ext-nat (Baseₑ b eb) (const c) _ =
+eternal-val-ext-nat (Baseₑ eb) (const c) _ =
   ≈ᵐ-sym
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -171,7 +171,7 @@ restrict-val-mor {A = A} et (var f x) with eternal? A
   (≈ᵐ-trans (eternal-mor et x)
             (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))
 ... | no ¬et' = ⊥-elim (¬et' et)
-restrict-val-mor (Baseₑ b eb) (const c) =
+restrict-val-mor (Baseₑ eb) (const c) =
   ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧ᵇᶜ-eternal eb c))

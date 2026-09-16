@@ -51,12 +51,11 @@ data BT : Set where
 
 baseTypes : BaseTypes
 baseTypes = record
-  { BaseType                   = BT
-  ; _≡ᵇ?_                      = λ { reading reading → yes refl }
-  ; EternalBaseType            = λ _ → ⊥
-  ; eternalBaseType?           = λ _ → no λ ()
-  ; eternalBaseType-irrelevant = λ ()
-  ; BaseConstants              = λ _ → ℕ
+  { BaseType         = BT
+  ; _≡ᵇ?_            = λ { reading reading → yes refl }
+  ; EternalBaseType  = λ _ → ⊥
+  ; eternalBaseType? = λ _ → no λ ()
+  ; BaseConstants    = λ _ → ℕ
   }
 
 open import Syntax.GroundTypes grades baseTypes

@@ -265,7 +265,7 @@ bool-canonical false     = inj₂ refl
 
 VRed-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → VRed A St V
 
-VRed-eternal (Baseₑ b _)      V = tt
+VRed-eternal (Baseₑ _)        V = tt
 VRed-eternal Unitₑ            V = tt
 VRed-eternal Boolₑ            V = tt
 VRed-eternal Emptyₑ           V = tt

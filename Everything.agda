@@ -203,6 +203,7 @@ open import DenotationalSemantics.Model.Example.PSh.Modality.Future
 open import DenotationalSemantics.Model.Example.PSh.Modality.Past
 open import DenotationalSemantics.Model.Example.PSh.Modality.Adjunction
 open import DenotationalSemantics.Model.Example.PSh.Modality.Eternal
+open import DenotationalSemantics.Model.Example.PSh.GroundTypes
 open import DenotationalSemantics.Model.Example.PSh.Monad.Core
 open import DenotationalSemantics.Model.Example.PSh.Monad.Effects
 open import DenotationalSemantics.Model.Example.PSh.Monad.Handling

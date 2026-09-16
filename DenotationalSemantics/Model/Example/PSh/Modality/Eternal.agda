@@ -8,13 +8,13 @@
 -- (`Kᵖ-eternalᵒ`). This is what interprets the eternal *base* types.     --
 --                                                                    --
 -- The eternal *type formers* are handled by the closure lemmas:          --
--- `𝟙ᵖ-eternalᵒ` (Unit), `𝟘ᵖ-eternalᵒ` (Empty), and `×ᵖ-eternalᵒ`         --
--- (products, for any two eternal objects). Together they cover exactly   --
--- the `Syntax.Types.Eternal` formers.                                    --
+-- `𝟙ᵖ-eternalᵒ` (Unit), `𝔹ᵖ-eternalᵒ` (Bool), `𝟘ᵖ-eternalᵒ` (Empty), and --
+-- `×ᵖ-eternalᵒ` (products, for any two eternal objects). Together they   --
+-- cover exactly the `Syntax.Types.Eternal` formers.                      --
 --                                                                    --
--- In every case `extᵉ` is taken as the adjoint mate of `necᵉ`, so        --
--- `extᵉ-mate` holds by `≈ᵖ-refl`; the trivial `necᵉ` laws are            --
--- reflexivity, and the product's reduce componentwise to the factors'.   --
+-- In every case `extᵉ` is the mate `ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ nec` of a necessitation --
+-- `nec`; the algebra laws are reflexivity for the constant presheaves    --
+-- and reduce componentwise to the factors' for products.                 --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -85,6 +85,13 @@ Kᵖ-nec S = pmap
   (λ _ _ _ → reflˢ)
   where open Setoid S renaming (refl to reflˢ)
 
+-- A global element of a constant presheaf: the chosen carrier value at
+-- every world.
+
+Kᵖ-const : (S : Setoid 0ℓ 0ℓ) → Setoid.Carrier S → 𝟙ᵖ →ᵖ Kᵖ S
+Kᵖ-const S c = pmap (λ _ → c) (λ _ → reflˢ) (λ _ _ → reflˢ)
+  where open Setoid S renaming (refl to reflˢ)
+
 Kᵖ-eternalᵒ : (S : Setoid 0ℓ 0ℓ) → Eternalᵒ (Kᵖ S)
 Kᵖ-eternalᵒ S = record
   { extᵉ      = λ {ρ} → ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (Kᵖ-nec S {ρ})
@@ -149,36 +156,38 @@ Kᵖ-eternalᵒ S = record
 𝔹ᵖ-eternalᵒ : Eternalᵒ 𝔹ᵖ
 𝔹ᵖ-eternalᵒ = Kᵖ-eternalᵒ (setoid Bool)
 
--- Closure: binary products of eternal objects. `necᵉ` combines the
--- factors' necessitations through the box's lax monoidality, and every
--- law reduces componentwise to the corresponding law of a factor.
+-- Closure: binary products of eternal objects. The product's necessitation
+-- combines the factors' through the box's lax monoidality, and every law
+-- reduces componentwise to the corresponding law of a factor.
+
+×ᵖ-nec : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ} → (A ×ᵖ B) →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
+×ᵖ-nec eA eB {ρ} = []-monoidal ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ eA {ρ}) (Eternalᵒ.necᵉ eB {ρ})
+
+-- The product's extraction, the mate of `×ᵖ-nec`.
+
+×ᵖ-ext : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ} → ⟨ ρ ⟩ᵒ (A ×ᵖ B) →ᵖ (A ×ᵖ B)
+×ᵖ-ext eA eB {ρ} = ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (×ᵖ-nec eA eB {ρ})
+
+-- The product's extraction decomposes into the factors' extractions: each
+-- component reads its factor through the shared accessibility witness,
+-- bridged by that factor's `extᵉ-mate`.
+×ᵖ-ext-dec : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ} → ×ᵖ-ext eA eB {ρ}
+           ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+×ᵖ-ext-dec {A} {B} eA eB {ρ} E =
+    ≈-sym A (Eternalᵒ.extᵉ-mate eA (mk⟨⟩ (acc E) (proj₁ (val E))))
+  , ≈-sym B (Eternalᵒ.extᵉ-mate eB (mk⟨⟩ (acc E) (proj₂ (val E))))
 
 ×ᵖ-eternalᵒ : ∀ {A B} → Eternalᵒ A → Eternalᵒ B → Eternalᵒ (A ×ᵖ B)
 ×ᵖ-eternalᵒ {A} {B} eA eB = record
-  { extᵉ      = ext×
-  ; extᵉ-≤    = ×-strength.product-laws.ext×-≤ eA eB ext× ext×-dec
-  ; extᵉ-u    = ×-strength.product-laws.ext×-u eA eB ext× ext×-dec
+  { extᵉ      = ×ᵖ-ext eA eB
+  ; extᵉ-≤    = ×-strength.product-laws.ext×-≤ eA eB (×ᵖ-ext eA eB) (×ᵖ-ext-dec eA eB)
+  ; extᵉ-u    = ×-strength.product-laws.ext×-u eA eB (×ᵖ-ext eA eB) (×ᵖ-ext-dec eA eB)
   ; extᵉ-μ    = alg
   ; strᵉ      = ×-strength.strᵉ-× eA eB
-  ; strᵉ-costrᵉ = ×-strength.product-laws.strᵉ-costrᵉ-× eA eB ext× ext×-dec
-  ; costrᵉ-strᵉ = ×-strength.product-laws.costrᵉ-strᵉ-× eA eB ext× ext×-dec
+  ; strᵉ-costrᵉ = ×-strength.product-laws.strᵉ-costrᵉ-× eA eB (×ᵖ-ext eA eB) (×ᵖ-ext-dec eA eB)
+  ; costrᵉ-strᵉ = ×-strength.product-laws.costrᵉ-strᵉ-× eA eB (×ᵖ-ext eA eB) (×ᵖ-ext-dec eA eB)
   }
   where
-    nec : ∀ {ρ} → (A ×ᵖ B) →ᵖ [ ρ ]ᵒ (A ×ᵖ B)
-    nec {ρ} = []-monoidal ∘ᵖ mapˣᵐ (Eternalᵒ.necᵉ eA {ρ}) (Eternalᵒ.necᵉ eB {ρ})
-
-    ext× : ∀ {ρ} → ⟨ ρ ⟩ᵒ (A ×ᵖ B) →ᵖ (A ×ᵖ B)
-    ext× {ρ} = ε⊣ ∘ᵖ ⟨ ρ ⟩ᶠ (nec {ρ})
-
-    -- The product's extraction decomposes into the factors' extractions: each
-    -- component reads its factor through the shared accessibility witness,
-    -- bridged by that factor's `extᵉ-mate`.
-    ext×-dec : ∀ {ρ} → ext× {ρ}
-             ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
-    ext×-dec {ρ} E =
-        ≈-sym A (Eternalᵒ.extᵉ-mate eA (mk⟨⟩ (acc E) (proj₁ (val E))))
-      , ≈-sym B (Eternalᵒ.extᵉ-mate eB (mk⟨⟩ (acc E) (proj₂ (val E))))
-
     -- Necessitating through a composite witness agrees with necessitating
     -- twice: `extᵉ-μ`, bridged at each end by `extᵉ-mate` (an `Eternalᵒ`'s
     -- `extᵉ` is an abstract field, hence not *definitionally* the mate of
@@ -200,11 +209,19 @@ Kᵖ-eternalᵒ S = record
     -- necessitations the same pair of accessibility witnesses.
     alg : ∀ {ρ₁ ρ₂ w} → (E : ⟨ ρ₁ ⟩ᶜ (⟨ ρ₂ ⟩ᵒ (A ×ᵖ B)) w)
         → _≈_ (A ×ᵖ B)
-            (fun (app nec (val (val E))) (⊑-trans (acc (val E)) (acc E)))
-            (fun (app nec
+            (fun (app (×ᵖ-nec eA eB) (val (val E))) (⊑-trans (acc (val E)) (acc E)))
+            (fun (app (×ᵖ-nec eA eB)
                    ( fun (app (Eternalᵒ.necᵉ eA) (proj₁ (val (val E)))) (acc (val E))
                    , fun (app (Eternalᵒ.necᵉ eB) (proj₂ (val (val E)))) (acc (val E)) ))
                  (acc E))
     alg E =
         comp eA (mk⟨⟩ (acc E) (mk⟨⟩ (acc (val E)) (proj₁ (val (val E)))))
       , comp eB (mk⟨⟩ (acc E) (mk⟨⟩ (acc (val E)) (proj₂ (val (val E)))))
+
+-- The product's eternal extraction acts componentwise (the closure is
+-- compatible with the projections).
+
+×ᵖ-eternalᵒ-extᵉ : ∀ {A B} → (eA : Eternalᵒ A) → (eB : Eternalᵒ B) → ∀ {ρ}
+                 → Eternalᵒ.extᵉ (×ᵖ-eternalᵒ eA eB) {ρ}
+                 ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+×ᵖ-eternalᵒ-extᵉ eA eB = ×ᵖ-ext-dec eA eB

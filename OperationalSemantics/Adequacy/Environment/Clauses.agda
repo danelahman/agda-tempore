@@ -354,8 +354,8 @@ env-eternal-C-++ {Δ₁} {Δ₂ ∷ B} {Θ} {C} lf₁ (lf-∷ lf₂) (lf-∷ lf�
 
 restrict-closed : ∀ {A} → (et : Eternal A) → (V : [] ⊢V⦂ A)
                 → eternal-val-restrict et V ≡ V
-restrict-closed (Baseₑ b p)    (var f x)   = ⊥-elim (not-in-empty-ctx x)
-restrict-closed (Baseₑ b p)    (const c)   = refl
+restrict-closed (Baseₑ _)      (var f x)   = ⊥-elim (not-in-empty-ctx x)
+restrict-closed (Baseₑ _)      (const c)   = refl
 restrict-closed Unitₑ          (var f x)   = ⊥-elim (not-in-empty-ctx x)
 restrict-closed Unitₑ          ⋆           = refl
 restrict-closed Boolₑ          (var f x)   = ⊥-elim (not-in-empty-ctx x)
