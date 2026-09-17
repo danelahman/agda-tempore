@@ -368,3 +368,9 @@ open import Inference.Infer
 ---- (relative to a grade-naturality assumption on clause denotations)
 
 open import Inference.ParamGround
+
+---- A concrete solver for the generated constraints (sound by construction;
+---- heuristic, so the completeness field of the solver interface is not met)
+
+import Inference.SolverImpl
+import Inference.SolverImpl.Demo
