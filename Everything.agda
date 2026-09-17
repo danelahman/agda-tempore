@@ -42,6 +42,12 @@
 --                                                                      --
 --   - adequacy of the denotational semantics with respect to the       --
 --     operational semantics, and for the equational theory             --
+--                                                                      --
+--   - constraint-based type inference: a mirrored type system with     --
+--     type and grade variables, constraint generation for raw terms,   --
+--     its soundness and completeness, principal typings relative to    --
+--     an axiomatised constraint solver, and a grounding theorem        --
+--     landing inferred typings back in the original type system        --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
@@ -297,3 +303,63 @@ open import OperationalSemantics.Adequacy.PSh.TickFrames
 ---- (see the module for the contrast between the two families)
 
 import DenotationalSemantics.Model.Example.World
+
+
+-- TYPE INFERENCE
+-----------------
+
+---- Scopes of type and grade variables
+
+open import Inference.Scopes
+
+---- Open grade expressions, types, and contexts (with the eternal barrier)
+
+open import Inference.Open.Grades
+open import Inference.Open.Types
+open import Inference.Open.Contexts
+open import Inference.Open.ContextsLemmas
+open import Inference.Open.ClosedContexts
+
+---- Substitutions between scopes
+
+open import Inference.Open.Subst
+
+---- Hypothesis sets and entailment
+
+open import Inference.Open.Hyps
+
+---- The mirrored qualified type system
+
+open import Inference.Open.Language
+
+---- Grounding open judgements into the original type system
+
+open import Inference.Open.Grounding
+open import Inference.Open.GroundingTheorem
+
+---- Raw terms and erasure
+
+open import Inference.Raw.Syntax
+open import Inference.Erase
+
+---- Constraints and their satisfaction
+
+open import Inference.Constraints.Syntax
+open import Inference.Constraints.Satisfaction
+open import Inference.Constraints.Properties
+open import Inference.Constraints.Ground
+
+---- Constraint generation
+
+open import Inference.Generate
+
+---- Soundness and completeness of constraint generation
+
+open import Inference.Soundness
+open import Inference.Completeness
+
+---- Axiomatised constraint solvers, principal typings, and inference
+
+open import Inference.Solver
+open import Inference.Principality
+open import Inference.Infer
