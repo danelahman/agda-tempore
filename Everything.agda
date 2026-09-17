@@ -363,3 +363,8 @@ open import Inference.Completeness
 open import Inference.Solver
 open import Inference.Principality
 open import Inference.Infer
+
+---- Parametricity certificates for grounded derivations
+---- (relative to a grade-naturality assumption on clause denotations)
+
+open import Inference.ParamGround
