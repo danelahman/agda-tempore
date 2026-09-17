@@ -374,3 +374,8 @@ open import Inference.ParamGround
 
 import Inference.SolverImpl
 import Inference.SolverImpl.Demo
+
+---- Discharge of the grade-naturality assumption for covariant clauses
+
+open import Inference.ParamGround.Covariance
+open import Inference.ParamGround.Uniform
