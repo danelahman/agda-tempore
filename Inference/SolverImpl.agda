@@ -34,8 +34,7 @@
 -- heuristic — a failure is "this solver found nothing", not "no   --
 -- solution exists" — so `GroundSolver` is not instantiated, and   --
 -- `Solver` (residual `Hyps`, principality) is out of scope        --
--- altogether. See DECISIONS-TypeInference.md for the fragment     --
--- the solver does decide.                                         --
+-- altogether.                                                     --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
