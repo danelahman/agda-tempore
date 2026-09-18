@@ -26,14 +26,14 @@
 -- `left-sided-intervals-with-⊤`. The floor's greatest grade demands    --
 -- nothing and is absorbing -- forced, a top for the conjunctive subset --
 -- order having to be included in every product -- while `[ 0 ,+∞⟩`,    --
--- the intervals' greatest grade, is their unit and so is not. A        --
--- morphism satisfying both `map-⊤` and `map-·` carries an absorbing    --
--- top to an absorbing top, so no projection of this grade lands in the --
--- plain intervals: `map ⊤ ≡ [ 0 ,+∞⟩` and `map-·` at `⊤` would force   --
--- `map` constant, contradicting `map-of-nat`. Adjoining a top to the   --
--- target is what restores the projection, and it is the one place in   --
--- the development where that is needed -- every other endpoint is      --
--- either read disjunctively or bounded above.                          --
+-- the intervals' greatest grade, is their unit and so is not. No       --
+-- monoid morphism at all can land in the plain intervals: `map-·` at   --
+-- the absorbing top gives `map ⊤ ≡ map ⊤ · map c` for every `c`, and   --
+-- at `c := of-nat 1` that reads `k ≡ k + 1` under `map-of-nat`, which   --
+-- has no solution in ℕ. Adjoining a top to the target is what restores --
+-- the projection, and it is the one place in the development where     --
+-- that is needed -- every other endpoint is either read disjunctively  --
+-- or bounded above.                                                    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

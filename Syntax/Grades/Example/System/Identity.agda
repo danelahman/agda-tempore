@@ -23,7 +23,6 @@ idᵍ G = record
   ; map-monotone = λ rel → rel
   ; map-u        = refl
   ; map-·        = refl
-  ; map-⊤        = refl
   ; map-of-nat   = refl
   }
 

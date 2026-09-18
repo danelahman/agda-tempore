@@ -155,7 +155,6 @@ two-sided-traces→intervals = record
   ; map-monotone = λ {i₁} {i₂} → mapₒ-monotone {i₁} {i₂}
   ; map-u        = eqᵢ refl refl
   ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
-  ; map-⊤        = eqᵢ refl refl
   ; map-of-nat   = λ {n} →
       eqᵢ (duration-⟨⟩ˡᵒ n)
           (cong ↑_ (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n)))

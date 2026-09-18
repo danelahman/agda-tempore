@@ -11,10 +11,9 @@
 -- Adjoining is not the only way to get a top: where the unit is        --
 -- already greatest (`Time.LeftSided`, the coverage floor) the grade is --
 -- left alone. The two differ in one respect that matters downstream --  --
--- an adjoined top is absorbing, a unit top is not -- and `map-⊤`       --
--- together with `map-·` forces a grade morphism to take one to the     --
--- other, so a morphism out of an extended grade needs an extended one  --
--- to land in.                                                          --
+-- an adjoined top is absorbing, a unit top is not -- and `map-·` alone --
+-- forces a morphism out of an absorbing top to land on one too, so a   --
+-- morphism out of an extended grade needs an extended one to land in.  --
 --                                                                     --
 -- The input is a `Grade` minus its `⊤` and `≾-⊤`, which is what a      --
 -- grade without a top has to offer; `forgetTop` supplies it from a     --
@@ -307,6 +306,5 @@ module AdjoinMap {M₁ M₂ : OrderedMonoid}
     ; map-monotone = λ {c} {d} → mapᵉ-monotone {c} {d}
     ; map-u        = cong only₂_ map₀-u
     ; map-·        = λ {c} {d} → mapᵉ-· {c} {d}
-    ; map-⊤        = refl
     ; map-of-nat   = λ {n} → cong only₂_ (map₀-of-nat {n})
     }

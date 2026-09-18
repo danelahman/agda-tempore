@@ -21,8 +21,8 @@
 -- WHERE THE RESOURCE GRADES COME FROM. As on the one-sided floor, not  --
 -- the plain intervals but `two-sided-intervals-with-⊤`. The pair's     --
 -- greatest grade is absorbing because its floor's is, while            --
--- `[ 0 , ∞ ]` is not, its `min` endpoint being the unit; `map-⊤` with  --
--- `map-·` cannot bridge the two.                                       --
+-- `[ 0 , ∞ ]` is not, its `min` endpoint being the unit; no monoid      --
+-- morphism at all can bridge an absorbing top to a unit one.           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
