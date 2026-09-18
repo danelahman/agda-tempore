@@ -260,7 +260,6 @@ ec-var-alg (ec-⟨⟩ q p ec) et (Tl-⟨⟩ y) =
 ⟦ ⟨⟩-≤-ren rel ⟧ʳ        = ⟨⟩-≤ rel
 ⟦ cong-∷-ren r ⟧ʳ        = mapˣᵐ ⟦ r ⟧ʳ idᵐ
 ⟦ cong-⟨⟩-ren {ρ = ρ} r ⟧ʳ = ⟨ ρ ⟩ᶠ ⟦ r ⟧ʳ
-⟦ ⟨⟩-ext-ren et ⟧ʳ       = Eternalᵒ.strᵉ (eternalᵛ-Eternalᵒ et)
 ⟦ ⟨⟩-ext-ctx _ ecΓ ⟧ʳ    = Eternalᵒ.extᵉ (ec-Eternalᵒ ecΓ)
 
 -- Transport along an equality of *grades* is the grade relaxation at the

@@ -102,21 +102,6 @@ eternalᵛ-extᵉ-μ : ∀ {A} → (et : Eternal A) → ∀ {ρ₁ ρ₂}
                 ≈ᵐ eternalᵛ-extᵉ et {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (eternalᵛ-extᵉ et {ρ₂})
 eternalᵛ-extᵉ-μ et = Eternalᵒ.extᵉ-μ (eternalᵛ-Eternalᵒ et)
 
--- The eternal `⟨_⟩`-strength at an arbitrary grade, and its β-rules reading
--- back the two factors. Used to interpret `⟨⟩-ext-ren` (extruding an eternal
--- variable past a lock).
-
-eternalᵛ-strᵉ : ∀ {A} → (et : Eternal A) → ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ ⟦ A ⟧ᵛ →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ ⟦ A ⟧ᵛ)
-eternalᵛ-strᵉ et = Eternalᵒ.strᵉ (eternalᵛ-Eternalᵒ et)
-
-eternalᵛ-strᵉ-fstᵐ : ∀ {A} → (et : Eternal A) → ∀ {ρ X}
-                   → ⟨ ρ ⟩ᶠ fstᵐ ∘ᵐ eternalᵛ-strᵉ et {ρ} {X} ≈ᵐ fstᵐ
-eternalᵛ-strᵉ-fstᵐ et = Eternalᵒ.strᵉ-fstᵐ (eternalᵛ-Eternalᵒ et)
-
-eternalᵛ-strᵉ-sndᵐ : ∀ {A} → (et : Eternal A) → ∀ {ρ X}
-                   → eternalᵛ-extᵉ et ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ eternalᵛ-strᵉ et {ρ} {X} ≈ᵐ sndᵐ
-eternalᵛ-strᵉ-sndᵐ et = Eternalᵒ.strᵉ-sndᵐ (eternalᵛ-Eternalᵒ et)
-
 -- Eternal extraction does not depend on how eternality was established
 -- (`Eternal` is a property — see `Syntax.Types.eternal-irrelevant`).
 
@@ -292,11 +277,10 @@ var-morphism-unfoldᵉ {A = A} et f y with eternal? A
 -- ═══════════════════════════════════════════════════════════════════════════
 -- SPLITTING AN EXTENDED CONTEXT ALONG ITS ETERNAL BASE
 --
--- The eternal base `⟦ Γ ᴱ ⟧` is an `Eternalᵒ` object, so it distributes out of
--- every lock in an extension `Γ'` (via `strᵉ`/`costrᵉ`) and hence splits off as
--- a product factor:  `⟦ Γ ᴱ ++ᶜ Γ' ⟧ ≅ ⟦ Γ' ⟧ ×ᵐ ⟦ Γ ᴱ ⟧`  — eternal on the
--- right, matching the strength's orientation. This is what makes the eternal
--- base act functorially in the extension `Γ'`.
+-- The eternal base `⟦ Γ ᴱ ⟧` is an `Eternalᵒ` object, so it splits off as a
+-- product factor of an extension `Γ'`:
+-- `⟦ Γ ᴱ ++ᶜ Γ' ⟧ ≅ ⟦ Γ' ⟧ ×ᵐ ⟦ Γ ᴱ ⟧` — eternal on the right. This is what
+-- makes the eternal base act functorially in the extension `Γ'`.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ───────────────────────────────────────────────────────────────────────────

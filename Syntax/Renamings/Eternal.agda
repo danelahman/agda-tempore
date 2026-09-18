@@ -77,9 +77,6 @@ restrict-ren {Ξ} (cong-∷-ren {Δ} {Δ'} {A} r) =
   restrict-∷-ren {Ξ} {Δ} {Δ'} {A} (eternal? A) (restrict-ren r)
 restrict-ren (cong-⟨⟩-ren r) =
   restrict-ren r
--- both sides drop the lock, so this is the identity whatever `A`'s eternality
-restrict-ren (⟨⟩-ext-ren {A = A} et) =
-  id-ren
 -- a lock is dropped by the restriction, so introducing one restricts to nothing
 restrict-ren (⟨⟩-ext-ctx ecΞ ecΔ) =
   id-ren

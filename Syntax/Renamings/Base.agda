@@ -92,8 +92,7 @@ ec-split (Δ' ⟨ ρ ⟩) (ec-⟨⟩ q p ec) =
 -- Indexed by an AMBIENT context `Ξ`, which the renaming fixes. Every rule acts
 -- only at the top of the local part `Δ`, carrying
 -- the ambient untouched — semantically, each is natural in `Ξ` (`⟨⟩-η-nat`,
--- `εᵘ-nat`, `⟨⟩-μ-nat`, `⟨⟩-≤-nat` are laws of the model, and `strᵉ`'s
--- naturality is derivable there).
+-- `εᵘ-nat`, `⟨⟩-μ-nat`, `⟨⟩-≤-nat` are laws of the model).
 --
 -- The exception, and the reason for the index, is `⟨⟩-ext-ctx`: it introduces a
 -- lock, i.e. is the *counit* of `⟨ ρ ⟩` at an arbitrary grade. `⟨ ρ ⟩` has no
@@ -119,11 +118,6 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Δ ⟨ ρ ·ᵣ ρ' ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
-  -- moving an eternal variable out of a lock: an eternal value is available at
-  -- the past world a `⟨ ρ ⟩` bundle already witnesses, so it can be extruded
-  -- past the lock. Semantically the `⟨_⟩`-strength against an eternal object.
-  ⟨⟩-ext-ren  : ∀ {Δ A ρ} → Eternal A
-              → Ren Ξ ((Δ ⟨ ρ ⟩) ∷ A) ((Δ ∷ A) ⟨ ρ ⟩)
   -- introducing a lock: the counit of `⟨ ρ ⟩` at an arbitrary grade, available
   -- exactly when everything to the lock's left is eternal, since `⟦_⟧ᶜᵗˣ` of
   -- such a context is a `⟨_⟩`-algebra and `extᵉ` is that counit. The context to
@@ -182,8 +176,6 @@ cong-renˡ Γ'' ec'' ⟨⟩-μ-ren =
   ⟨⟩-μ-ren
 cong-renˡ Γ'' ec'' (⟨⟩-≤-ren x) =
   ⟨⟩-≤-ren x
-cong-renˡ Γ'' ec'' (⟨⟩-ext-ren et) =
-  ⟨⟩-ext-ren et
 cong-renˡ Γ'' ec'' (⟨⟩-ext-ctx ecΞ ecΔ) =
   ⟨⟩-ext-ctx (ec-++ᶜ ec'' ecΞ) ecΔ
 cong-renˡ Γ'' ec'' (cong-∷-ren r) =
@@ -219,8 +211,6 @@ expose-ren Δ ⟨⟩-μ-ren =
   ⟨⟩-μ-ren
 expose-ren Δ (⟨⟩-≤-ren rel) =
   ⟨⟩-≤-ren rel
-expose-ren Δ (⟨⟩-ext-ren et) =
-  ⟨⟩-ext-ren et
 expose-ren {Ξ} Δ (⟨⟩-ext-ctx ec ecΔ₀) =
   ⟨⟩-ext-ctx (proj₁ ec-Ξ-Δ) (ec-++ᶜ (proj₂ ec-Ξ-Δ) ecΔ₀)
   where

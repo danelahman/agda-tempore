@@ -593,11 +593,6 @@ restrict-img⁻ (cong-∷-ren {A = B} r) x        | no  _ =
 restrict-img⁻ (cong-⟨⟩-ren {ρ = ρ₀} r) x =
   cong (λ z → proj₁ z ·ᵣ ρ₀ , Tl-⟨⟩ (proj₂ z)) (restrict-img⁻ r x)
 
-restrict-img⁻ (⟨⟩-ext-ren {A = B} etB) x with eternal? B
-restrict-img⁻ (⟨⟩-ext-ren {A = B} etB) Hd       | yes _ = refl
-restrict-img⁻ (⟨⟩-ext-ren {A = B} etB) (Tl-∷ x) | yes _ = refl
-restrict-img⁻ (⟨⟩-ext-ren {A = B} etB) x        | no ¬etB = ⊥-elim (¬etB etB)
-
 -- the restriction drops the introduced lock, so both sides are the reflected
 -- variable pushed under it
 restrict-img⁻ (⟨⟩-ext-ctx _ _) x = refl

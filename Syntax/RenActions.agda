@@ -67,10 +67,6 @@ var-rename (cong-∷-ren r) (Tl-∷ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' , ρ'≾ρ , Tl-∷ y
 var-rename (cong-⟨⟩-ren r) (Tl-⟨⟩ x) with var-rename r x
 ... | ρ' , ρ'≾ρ , y = ρ' ·ᵣ _ , (λ ¬et → ·ᵣ-monoˡ-≾ᵣ (ρ'≾ρ ¬et)) , Tl-⟨⟩ y
-var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ Hd) =
-  uᵣ , (λ ¬et → ⊥-elim (¬et et)) , Hd
-var-rename (⟨⟩-ext-ren et) (Tl-⟨⟩ (Tl-∷ x)) =
-  _ , (λ _ → ≾ᵣ-refl) , Tl-∷ (Tl-⟨⟩ x)
 var-rename (⟨⟩-ext-ctx _ ecΔ) x =
   _ , (λ ¬et → ⊥-elim (¬et (ec-eternal ecΔ x))) , Tl-⟨⟩ x
 

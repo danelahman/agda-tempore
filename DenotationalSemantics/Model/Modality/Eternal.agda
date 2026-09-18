@@ -6,49 +6,37 @@
 -- use a variable of eternal type at *any* grade `ρ`, not only at grades --
 -- below the unit `u`. Semantically this is the grade-`u` isomorphism    --
 -- `[ u ]ᵒ A ≅ A` (the box counit `ε` / unit `ηᵘ`) generalised to hold   --
--- at every grade — but only *one-directionally*, as a graded            --
--- `⟨_⟩`-algebra, not as an isomorphism (see the note below).           --
+-- at every grade — but only *one-directionally*, as an algebra, not as  --
+-- an isomorphism (see the note below).                                  --
 --                                                                    --
 -- Concretely (`Example.PSh`) eternal types are the constant             --
 -- presheaves: their value is the same at every world, so it can be      --
 -- necessitated into, and extracted from, the box / context modality at  --
 -- an arbitrary grade.                                                   --
 --                                                                    --
--- The structure carried is one half of an adjoint pair:                --
+-- At the greatest grade `⊤` the context modality is an ordinary monad   --
+-- (`⟨⊤⟩-η`/`⟨⊤⟩-μ` below), and an eternal object is exactly an          --
+-- Eilenberg–Moore algebra for it:                                       --
 --                                                                    --
---   * `extᵉ : ⟨ ρ ⟩ᵒ A →ᵐ A`  — extraction at every grade, the graded   --
---     `⟨_⟩`-algebra generalising `εᵘ`, which is what the variable rule   --
---     consumes directly. This is the primitive.                         --
+--   * `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`, with a unit and an associativity law.        --
+--                                                                    --
+-- Extraction at an arbitrary grade is then `extᵉ {ρ} = α ∘ᵐ ⟨⟩-≤ (≾-⊤ ρ)` --
+-- — the graded `⟨_⟩`-algebra generalising `εᵘ`, which is what the        --
+-- variable rule consumes — and its three laws are derived: uniformity    --
+-- in the grade from `≾`-irrelevance, the unit law from `α-unit`, the     --
+-- multiplication law from `α-assoc`.                                     --
 --                                                                    --
 -- Its transpose under `⟨ ρ ⟩ ⊣ [ ρ ]`, necessitation                    --
 -- `necᵉ : A →ᵐ [ ρ ]ᵒ A` — the graded `[_]`-coalgebra generalising      --
--- `ηᵘ` — is *derived*, along with the mate laws `necᵉ-mate` /           --
--- `extᵉ-mate` and the coalgebra laws, so a model supplies only `extᵉ`.  --
+-- `ηᵘ` — is likewise derived, along with the mate laws `necᵉ-mate` /    --
+-- `extᵉ-mate` and the coalgebra laws, so a model supplies only `α`.     --
 --                                                                    --
--- We additionally carry the *other direction* as a STRENGTH condition:  --
---                                                                    --
---   * `strᵉ : ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ A)`  — the `⟨_⟩`-strength   --
---     at every grade. The functor `⟨ ρ ⟩` is *not* strong in general    --
---     (a possibility/diamond cannot drag an arbitrary object into the    --
---     past); it becomes strong exactly against an *eternal* object,      --
---     whose value is available at the past world the `⟨ ρ ⟩X` bundle     --
---     already witnesses. Dually `necᵉ` supplies the `[_]`-strength       --
---     `[ ρ ]ᵒ X ×ᵐ A →ᵐ [ ρ ]ᵒ (X ×ᵐ A)` (via `necᵉ` + `[]-monoidal`).   --
---                                                                    --
--- `strᵉ` is inverse to the canonical costrength                          --
--- `⟨ ⟨ ρ ⟩ᶠ fstᵐ , extᵉ ∘ ⟨ ρ ⟩ᶠ sndᵐ ⟩` (which always exists, from      --
--- `extᵉ`), so together they exhibit the distributivity isomorphism       --
---                                                                    --
---   `⟨ ρ ⟩ᵒ (X ×ᵐ A) ≅ ⟨ ρ ⟩ᵒ X ×ᵐ A`.                                  --
---                                                                    --
--- Note (why the distributivity iso, not `A ≅ [ ρ ]ᵒ A`): the naive       --
--- `A ≅ [ ρ ]ᵒ A` is too strong — it fails for `Empty` in non-serial      --
--- frames (`[ ρ ]ᵒ 𝟘 ≅ 𝟙` when a world has no `ρ`-future), and dually     --
+-- Note (why an algebra, not `A ≅ [ ρ ]ᵒ A`): the naive `A ≅ [ ρ ]ᵒ A`   --
+-- is too strong — it fails for `Empty` in non-serial frames             --
+-- (`[ ρ ]ᵒ 𝟘 ≅ 𝟙` when a world has no `ρ`-future), and dually            --
 -- `⟨ ρ ⟩ᵒ A ≅ A` fails for `Unit` (`⟨ ρ ⟩ᵒ 𝟙` counts accessible pasts).  --
--- The *distributivity* iso survives both (at `A = Unit` both sides are   --
--- `⟨ ρ ⟩ᵒ X`; at `A = Empty` both are `𝟘`), and holds for all eternal    --
--- formers with no seriality assumption. The `necᵉ`/`extᵉ` coalgebra/     --
--- algebra pair is precisely the `[_]`-half of the same picture.          --
+-- The algebra/coalgebra pair survives both, with no seriality            --
+-- assumption, and holds for all eternal formers.                         --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -74,91 +62,190 @@ open Future Fut
 open Past Pst
 open Adjunction Adj
 
+-- THE `⟨ ⊤ ⟩` MONAD
+--
+-- At the greatest grade the graded context modality collapses to an ordinary
+-- monad: `≾-⊤` relaxes the grades `u` and `⊤ · ⊤` produced by `η` and `μ` back
+-- to `⊤`. Only `≾-⊤` is needed — `⊤` is not assumed absorbing.
+
+⟨⊤⟩-η : ∀ {A} → A →ᵐ ⟨ ⊤ ⟩ᵒ A
+⟨⊤⟩-η = ⟨⟩-≤ (≾-⊤ u) ∘ᵐ η
+
+⟨⊤⟩-μ : ∀ {A} → ⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ A) →ᵐ ⟨ ⊤ ⟩ᵒ A
+⟨⊤⟩-μ {A} = ⟨⟩-≤ (≾-⊤ (⊤ · ⊤)) ∘ᵐ μ {A} {⊤} {⊤}
+
+-- The functorial action is that of `⟨ ⊤ ⟩ᶠ`; both natural transformations are
+-- natural, being composites of natural ones.
+
+⟨⊤⟩-η-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ ⊤ ⟩ᶠ f ∘ᵐ ⟨⊤⟩-η ≈ᵐ ⟨⊤⟩-η ∘ᵐ f
+⟨⊤⟩-η-nat f =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-nat f (≾-⊤ u)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-η-nat f))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
+⟨⊤⟩-μ-nat : ∀ {A B} → (f : A →ᵐ B) → ⟨ ⊤ ⟩ᶠ f ∘ᵐ ⟨⊤⟩-μ ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨ ⊤ ⟩ᶠ f)
+⟨⊤⟩-μ-nat f =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-nat f (≾-⊤ (⊤ · ⊤))))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ-nat f))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
+-- LEFT UNIT, from `μ-εᵘ` and `⟨⟩-εᵘ∘η≡id`.
+
+⟨⊤⟩-μ∘η≡id : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨⊤⟩-η {⟨ ⊤ ⟩ᵒ A} ≈ᵐ idᵐ
+⟨⊤⟩-μ∘η≡id {A} =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ʳ (≾-⊤ u)))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ u)) (≾-⊤ (⊤ · ⊤))))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾-reflexive (·-identityʳ ⊤))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (μ-εᵘ {A} {⊤}))
+            ⟨⟩-εᵘ∘η≡id))))))))
+
+-- RIGHT UNIT, from `⟨⟩-μ∘Tη≡id`.
+
+⟨⊤⟩-μ∘Tη≡id : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-η {A}) ≈ᵐ idᵐ
+⟨⊤⟩-μ∘Tη≡id {A} =
+  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ (⟨⟩-≤ (≾-⊤ u)) η))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≾-⊤ u)))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ u)) (≾-⊤ (⊤ · ⊤))))
+  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ∘Tη≡id {A} {⊤}))
+  (≈ᵐ-trans (⟨⟩-≤-trans _ _)
+  (≈ᵐ-trans (⟨⟩-≤-irr _ ≾-refl) ⟨⟩-≤-refl)))))))))
+
+-- ASSOCIATIVITY, from `⟨⟩-μ∘μ≡μ∘Tμ`.
+
+⟨⊤⟩-μ∘μ≡μ∘Tμ : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨⊤⟩-μ {⟨ ⊤ ⟩ᵒ A} ≈ᵐ ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-μ {A})
+⟨⊤⟩-μ∘μ≡μ∘Tμ {A} = ≈ᵐ-trans left (≈ᵐ-sym right)
+  where
+    mid : ⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ A)) →ᵐ ⟨ ⊤ ⟩ᵒ A
+    mid = ⟨⟩-≤ (≾-⊤ ((⊤ · ⊤) · ⊤))
+            ∘ᵐ (μ {A} {⊤} {⊤ · ⊤} ∘ᵐ ⟨ ⊤ ⟩ᶠ (μ {A} {⊤} {⊤}))
+
+    left : ⟨⊤⟩-μ {A} ∘ᵐ ⟨⊤⟩-μ {⟨ ⊤ ⟩ᵒ A} ≈ᵐ mid
+    left =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ʳ (≾-⊤ (⊤ · ⊤))))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ (⊤ · ⊤))) (≾-⊤ (⊤ · ⊤))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ∘μ≡μ∘Tμ {A} {⊤} {⊤} {⊤}))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (≾-reflexive (·-assoc ⊤ ⊤ ⊤)) _))
+                (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))))))))))
+
+    right : ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-μ {A}) ≈ᵐ mid
+    right =
+      ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ (⟨⟩-≤ (≾-⊤ (⊤ · ⊤))) (μ {A} {⊤} {⊤})))
+      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ˡ (≾-⊤ (⊤ · ⊤))))))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ (⊤ · ⊤))) (≾-⊤ (⊤ · ⊤))))
+                (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))))))))
+
+
 record Eternalᵒ (A : Obj) : Set₁ where
 
   field
 
     -- STRUCTURE
 
-    -- Extraction at every grade (generalises `εᵘ`); consumed by `var`. This
-    -- is the primitive: `Eternalᵒ` is a *graded `⟨_⟩`-algebra*, and the box
-    -- coalgebra half (`necᵉ` etc.) is derived from it below via the mate.
+    -- The `⟨ ⊤ ⟩`-algebra: this is the only thing a model supplies.
 
-    extᵉ : ∀ {ρ} → ⟨ ρ ⟩ᵒ A →ᵐ A
+    α : ⟨ ⊤ ⟩ᵒ A →ᵐ A
 
-    -- The `⟨_⟩`-strength at every grade: an eternal object is pulled
-    -- *inside* the (past) context modality. `⟨ ρ ⟩` is not strong in
-    -- general — a diamond cannot drag an arbitrary object into the past —
-    -- but it is strong against an eternal `A`, whose value is available at
-    -- the past world the `⟨ ρ ⟩X` bundle already witnesses.
+    -- ALGEBRA LAWS
 
-    strᵉ : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ A →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ A)
+    α-unit : α ∘ᵐ ⟨⊤⟩-η ≈ᵐ idᵐ
 
-    -- ALGEBRA LAWS (`extᵉ` is a uniform graded `⟨_⟩`-algebra)
+    α-assoc : α ∘ᵐ ⟨⊤⟩-μ ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ α
 
-    -- Extraction is uniform in the grade (compatible with `⟨⟩-≤`): this is
-    -- what makes a variable of eternal type interpretable independently of how
-    -- much its context has been relaxed.
+  -- THE GRADED EXTRACTION, DERIVED
+  --
+  -- Extraction at every grade (generalises `εᵘ`); consumed by `var`. Relax the
+  -- grade up to `⊤`, then run the algebra.
 
-    extᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
-           → extᵉ {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ extᵉ {ρ₁}
+  extᵉ : ∀ {ρ} → ⟨ ρ ⟩ᵒ A →ᵐ A
+  extᵉ {ρ} = α ∘ᵐ ⟨⟩-≤ (≾-⊤ ρ)
 
-    -- At the unit grade the extraction is exactly the possibility counit `εᵘ`.
+  -- Extraction is uniform in the grade (compatible with `⟨⟩-≤`): this is what
+  -- makes a variable of eternal type interpretable independently of how much
+  -- its context has been relaxed. Merge the two relaxations, then use that `≾`
+  -- is proof-irrelevant.
 
-    extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
+  extᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
+         → extᵉ {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ extᵉ {ρ₁}
+  extᵉ-≤ {ρ₁} {ρ₂} p =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-trans p (≾-⊤ ρ₂)))
+              (∘ᵐ-congʳ (⟨⟩-≤-irr _ (≾-⊤ ρ₁))))
 
-    -- Extracting from a nested possibility agrees with folding the two layers
-    -- with `μ` and extracting once (the `⟨_⟩`-algebra multiplication law).
+  -- At the unit grade the extraction is exactly the possibility counit `εᵘ`:
+  -- two maps out of `⟨ u ⟩ᵒ A` agreeing after `η` are equal, `η` and `εᵘ` being
+  -- mutually inverse, and after `η` the unit law applies.
 
-    extᵉ-μ : ∀ {ρ₁ ρ₂}
-           → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
-           ≈ᵐ extᵉ {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (extᵉ {ρ₂})
+  extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
+  extᵉ-u =
+    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (∘ᵐ-assoc _ _ _) α-unit))
+              (∘ᵐ-identityˡ εᵘ))))
 
-  -- The canonical costrength: the inverse direction of the distributivity iso,
-  -- always available from `extᵉ` (project the `⟨ ρ ⟩X` factor, extract the
-  -- eternal one). Defined here so the iso laws below can relate `strᵉ` to it.
+  -- Extracting from a nested possibility agrees with folding the two layers
+  -- with `μ` and extracting once (the `⟨_⟩`-algebra multiplication law):
+  -- transport the two relaxations across `μ` (`μ-≤ˡ`, `μ-≤ʳ`) and fold them
+  -- into one, which is where `α-assoc` applies.
 
-  costrᵉ : ∀ {ρ X} → ⟨ ρ ⟩ᵒ (X ×ᵐ A) →ᵐ ⟨ ρ ⟩ᵒ X ×ᵐ A
-  costrᵉ {ρ} = ⟨ ⟨ ρ ⟩ᶠ fstᵐ , extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
-
-  field
-
-    -- `strᵉ` is a two-sided inverse of `costrᵉ`: together they exhibit the
-    -- distributivity isomorphism `⟨ ρ ⟩ᵒ (X ×ᵐ A) ≅ ⟨ ρ ⟩ᵒ X ×ᵐ A`.
-    --
-    -- No naturality (in `X`) or grade-coherence (with `⟨⟩-≤`/`μ`/`η`) law is
-    -- carried, because both are *derivable*, not primitive: `costrᵉ` is a
-    -- composite of natural, grade-coherent pieces (`⟨ ρ ⟩ᶠ`, `fstᵐ`, `sndᵐ`,
-    -- `extᵉ`), so it is natural/coherent; and `strᵉ`, being its two-sided
-    -- inverse, inherits naturality/coherence (the inverse of a natural iso is
-    -- natural). Keeping them derived avoids extra per-instance obligations.
-
-    strᵉ-costrᵉ : ∀ {ρ X} → costrᵉ {ρ} {X} ∘ᵐ strᵉ {ρ} {X} ≈ᵐ idᵐ
-
-    costrᵉ-strᵉ : ∀ {ρ X} → strᵉ {ρ} {X} ∘ᵐ costrᵉ {ρ} {X} ≈ᵐ idᵐ
-
-  -- The strength's β-rules: reading back the two factors after `strᵉ` recovers
-  -- them. Immediate from `strᵉ-costrᵉ` (`costrᵉ ∘ strᵉ ≈ id`) and the product
-  -- projections of `costrᵉ`. They isolate `strᵉ`'s two components for reuse.
-
-  strᵉ-fstᵐ : ∀ {ρ X} → ⟨ ρ ⟩ᶠ fstᵐ ∘ᵐ strᵉ {ρ} {X} ≈ᵐ fstᵐ
-  strᵉ-fstᵐ = ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
-              (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-              (≈ᵐ-trans (∘ᵐ-congʳ strᵉ-costrᵉ) (∘ᵐ-identityʳ _)))
-
-  strᵉ-sndᵐ : ∀ {ρ X} → extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ strᵉ {ρ} {X} ≈ᵐ sndᵐ
-  strᵉ-sndᵐ = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-              (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
-              (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-              (≈ᵐ-trans (∘ᵐ-congʳ strᵉ-costrᵉ) (∘ᵐ-identityʳ _))))
+  extᵉ-μ : ∀ {ρ₁ ρ₂}
+         → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
+         ≈ᵐ extᵉ {ρ₁} ∘ᵐ ⟨ ρ₁ ⟩ᶠ (extᵉ {ρ₂})
+  extᵉ-μ {ρ₁} {ρ₂} = ≈ᵐ-sym
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ α (⟨⟩-≤ (≾-⊤ ρ₂))))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-nat α (≾-⊤ ρ₁)))))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym α-assoc))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ inner)
+              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
+    where
+      inner : (⟨⟩-≤ (≾-⊤ (⊤ · ⊤)) ∘ᵐ μ {A} {⊤} {⊤})
+                ∘ᵐ (⟨⟩-≤ (≾-⊤ ρ₁) ∘ᵐ ⟨ ρ₁ ⟩ᶠ (⟨⟩-≤ (≾-⊤ ρ₂)))
+            ≈ᵐ ⟨⟩-≤ (≾-⊤ (ρ₂ · ρ₁)) ∘ᵐ μ {A} {ρ₁} {ρ₂}
+      inner =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (μ-≤ʳ (≾-⊤ ρ₁)))))
+        (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (μ-≤ˡ (≾-⊤ ρ₂))))
+        (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoʳ-≾ (≾-⊤ ρ₁)) (≾-⊤ (⊤ · ⊤))))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ ρ₂)) _))
+                  (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾-⊤ (ρ₂ · ρ₁))))))))))))
 
   -- THE BOX COALGEBRA, DERIVED
   --
   -- Necessitation at every grade, as the adjoint mate of `extᵉ` under
   -- `⟨ ρ ⟩ ⊣ [ ρ ]`. This is the `[_]`-coalgebra half of the structure — what
   -- lets an eternal object be carried *under* a box, across the passage of
-  -- time. It is entirely derived from the algebra `extᵉ`, so a model need only
-  -- supply `extᵉ`; there is no separate box-coalgebra to construct.
+  -- time.
 
   necᵉ : ∀ {ρ} → A →ᵐ [ ρ ]ᵒ A
   necᵉ {ρ} = [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
@@ -241,287 +328,125 @@ record Eternalᵒ (A : Obj) : Set₁ where
         (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (extᵉ {ρ₁})))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
 
--- PRODUCT CLOSURE OF THE ⟨_⟩-STRENGTH
---
--- Given two eternal objects, the `⟨_⟩`-strength for their product is assembled
--- from the factors' strengths, reassociating around them. It is inverse to the
--- reverse composite of the factors' costrengths (`costr-×`). These are the
--- ingredients a model's product-closure supplies for the `strᵉ`/`strᵉ-costrᵉ`/
--- `costrᵉ-strᵉ` fields; proved here abstractly (so the model reuses them rather
--- than re-deriving in a setting where `_≈ᵐ_` computes on the codomain object).
 
-module ×-strength {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
+-- THE FREE ALGEBRA
+--
+-- `⟨ ⊤ ⟩ᵒ X` is eternal for any `X`, with the monad multiplication as its
+-- algebra: the two laws *are* the monad's unit and associativity laws.
+
+⟨⊤⟩-eternalᵒ : (X : Obj) → Eternalᵒ (⟨ ⊤ ⟩ᵒ X)
+⟨⊤⟩-eternalᵒ X = record { α = ⟨⊤⟩-μ ; α-unit = ⟨⊤⟩-μ∘η≡id ; α-assoc = ⟨⊤⟩-μ∘μ≡μ∘Tμ }
+
+
+-- PRODUCTS OF ETERNAL OBJECTS
+--
+-- Eilenberg–Moore algebras are closed under the category's products, the
+-- structure map being assembled componentwise. Both laws reduce componentwise
+-- through `⟨⊤⟩-η`- and `⟨⊤⟩-μ`-naturality; no strength is involved.
+
+module _ {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
 
   private
     module EA = Eternalᵒ eA
     module EB = Eternalᵒ eB
 
-  -- the product strength: bring `A` inside via `eA`, then `B` via `eB`
-  strᵉ-× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ (A ×ᵐ B) →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ (A ×ᵐ B))
-  strᵉ-× {ρ} = ⟨ ρ ⟩ᶠ ×ᵐ-assoc ∘ᵐ EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹
+    α× : ⟨ ⊤ ⟩ᵒ (A ×ᵐ B) →ᵐ A ×ᵐ B
+    α× = ⟨ EA.α ∘ᵐ ⟨ ⊤ ⟩ᶠ fstᵐ , EB.α ∘ᵐ ⟨ ⊤ ⟩ᶠ sndᵐ ⟩ᵐ
 
-  -- its inverse: the reverse composite of the factor costrengths
-  costr-× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ (X ×ᵐ (A ×ᵐ B)) →ᵐ ⟨ ρ ⟩ᵒ X ×ᵐ (A ×ᵐ B)
-  costr-× {ρ} = ×ᵐ-assoc ∘ᵐ mapˣᵐ EA.costrᵉ idᵐ ∘ᵐ EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹
+    -- two maps into a product agree iff they agree componentwise
+    ×-ext : ∀ {X} {f g : X →ᵐ A ×ᵐ B}
+          → fstᵐ ∘ᵐ f ≈ᵐ fstᵐ ∘ᵐ g → sndᵐ ∘ᵐ f ≈ᵐ sndᵐ ∘ᵐ g → f ≈ᵐ g
+    ×-ext {f = f} {g} p q =
+      ≈ᵐ-trans (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ f) (sndᵐ ∘ᵐ f) f ≈ᵐ-refl ≈ᵐ-refl)
+               (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ f) (sndᵐ ∘ᵐ f) g (≈ᵐ-sym p) (≈ᵐ-sym q)))
 
-  -- `mapˣᵐ EA.strᵉ id` and `mapˣᵐ EA.costrᵉ id` cancel (from `EA.costrᵉ-strᵉ`)
-  private
-    n∘h : ∀ {ρ X} → mapˣᵐ (EA.strᵉ {ρ} {X}) (idᵐ {B}) ∘ᵐ mapˣᵐ (EA.costrᵉ {ρ} {X}) (idᵐ {B}) ≈ᵐ idᵐ
-    n∘h = ≈ᵐ-trans (mapˣᵐ-∘ EA.strᵉ idᵐ EA.costrᵉ idᵐ)
-          (≈ᵐ-trans (mapˣᵐ-cong EA.costrᵉ-strᵉ (∘ᵐ-identityˡ idᵐ)) mapˣᵐ-idᵐ)
+    -- the componentwise unit step
+    unit-comp : ∀ {C} → (α : ⟨ ⊤ ⟩ᵒ C →ᵐ C) → (α ∘ᵐ ⟨⊤⟩-η ≈ᵐ idᵐ)
+              → (π : A ×ᵐ B →ᵐ C)
+              → (α ∘ᵐ ⟨ ⊤ ⟩ᶠ π) ∘ᵐ ⟨⊤⟩-η ≈ᵐ π
+    unit-comp α αu π =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⊤⟩-η-nat π))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congˡ αu) (∘ᵐ-identityˡ π))))
 
-  -- `strᵉ-×` inverts `costr-×`: telescope the factor iso laws.
-  strᵉ-×-costr-× : ∀ {ρ X} → strᵉ-× {ρ} {X} ∘ᵐ costr-× {ρ} {X} ≈ᵐ idᵐ
-  strᵉ-×-costr-× {ρ} {X} =
-    ≈ᵐ-trans (∘ᵐ-assoc (⟨ ρ ⟩ᶠ ×ᵐ-assoc)
-                (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹) (costr-× {ρ} {X}))
-    (≈ᵐ-trans (∘ᵐ-congʳ REST)
-    (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ ×ᵐ-assoc ×ᵐ-assoc⁻¹))
-    (≈ᵐ-trans (⟨⟩-congᶠ ×ᵐ-assoc-iso) ⟨⟩-idᵐ)))
+    -- the two sides of the associativity law, one component at a time
+    assoc-lhs : ∀ {C} → (α : ⟨ ⊤ ⟩ᵒ C →ᵐ C)
+              → (α ∘ᵐ ⟨⊤⟩-μ ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ α)
+              → (π : A ×ᵐ B →ᵐ C)
+              → (π ∘ᵐ α× ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ π)
+              → π ∘ᵐ (α× ∘ᵐ ⟨⊤⟩-μ) ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ (α ∘ᵐ ⟨ ⊤ ⟩ᶠ π)
+    assoc-lhs α αa π pf =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc π α× ⟨⊤⟩-μ))
+      (≈ᵐ-trans (∘ᵐ-congˡ pf)
+      (≈ᵐ-trans (∘ᵐ-assoc α (⟨ ⊤ ⟩ᶠ π) ⟨⊤⟩-μ)
+      (≈ᵐ-trans (∘ᵐ-congʳ (⟨⊤⟩-μ-nat π))
+      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc α ⟨⊤⟩-μ (⟨ ⊤ ⟩ᶠ (⟨ ⊤ ⟩ᶠ π))))
+      (≈ᵐ-trans (∘ᵐ-congˡ αa)
+      (≈ᵐ-trans (∘ᵐ-assoc α (⟨ ⊤ ⟩ᶠ α) (⟨ ⊤ ⟩ᶠ (⟨ ⊤ ⟩ᶠ π)))
+                (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ α (⟨ ⊤ ⟩ᶠ π))))))))))
+
+    assoc-rhs : ∀ {C} → (α : ⟨ ⊤ ⟩ᵒ C →ᵐ C)
+              → (π : A ×ᵐ B →ᵐ C)
+              → (π ∘ᵐ α× ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ π)
+              → π ∘ᵐ (α× ∘ᵐ ⟨ ⊤ ⟩ᶠ α×) ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ (α ∘ᵐ ⟨ ⊤ ⟩ᶠ π)
+    assoc-rhs α π pf =
+      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc π α× (⟨ ⊤ ⟩ᶠ α×)))
+      (≈ᵐ-trans (∘ᵐ-congˡ pf)
+      (≈ᵐ-trans (∘ᵐ-assoc α (⟨ ⊤ ⟩ᶠ π) (⟨ ⊤ ⟩ᶠ α×))
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ π α×)))
+                (∘ᵐ-congʳ (⟨⟩-congᶠ pf)))))
+
+    pfˡ : fstᵐ ∘ᵐ α× ≈ᵐ EA.α ∘ᵐ ⟨ ⊤ ⟩ᶠ fstᵐ
+    pfˡ = ⟨⟩ᵐ-fstᵐ _ _
+
+    pfʳ : sndᵐ ∘ᵐ α× ≈ᵐ EB.α ∘ᵐ ⟨ ⊤ ⟩ᶠ sndᵐ
+    pfʳ = ⟨⟩ᵐ-sndᵐ _ _
+
+  ×ᵐ-eternalᵒ : Eternalᵒ (A ×ᵐ B)
+  ×ᵐ-eternalᵒ = record
+    { α = α×
+    ; α-unit = ×-ext
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ pfˡ)
+        (≈ᵐ-trans (unit-comp EA.α EA.α-unit fstᵐ)
+                  (≈ᵐ-sym (∘ᵐ-identityʳ fstᵐ)))))
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ pfʳ)
+        (≈ᵐ-trans (unit-comp EB.α EB.α-unit sndᵐ)
+                  (≈ᵐ-sym (∘ᵐ-identityʳ sndᵐ)))))
+    ; α-assoc = ×-ext
+        (≈ᵐ-trans (assoc-lhs EA.α EA.α-assoc fstᵐ pfˡ)
+                  (≈ᵐ-sym (assoc-rhs EA.α fstᵐ pfˡ)))
+        (≈ᵐ-trans (assoc-lhs EB.α EB.α-assoc sndᵐ pfʳ)
+                  (≈ᵐ-sym (assoc-rhs EB.α sndᵐ pfʳ)))
+    }
+
+  -- The product's extraction acts componentwise at every grade: the relaxation
+  -- to `⊤` slides past the projection (`⟨⟩-≤-nat`), leaving the factor's own
+  -- extraction.
+
+  ×ᵐ-eternalᵒ-extᵉ : ∀ {ρ} → Eternalᵒ.extᵉ ×ᵐ-eternalᵒ {ρ}
+                   ≈ᵐ ⟨ Eternalᵒ.extᵉ eA ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
+                      , Eternalᵒ.extᵉ eB ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
+  ×ᵐ-eternalᵒ-extᵉ {ρ} = ⟨⟩ᵐ-unique _ _ _ (comp EA.α fstᵐ pfˡ) (comp EB.α sndᵐ pfʳ)
     where
-      P∘C : ×ᵐ-assoc⁻¹ ∘ᵐ costr-× {ρ} {X}
-          ≈ᵐ mapˣᵐ EA.costrᵉ idᵐ ∘ᵐ EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹
-      P∘C = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc ×ᵐ-assoc⁻¹ ×ᵐ-assoc _))
-            (≈ᵐ-trans (∘ᵐ-congˡ ×ᵐ-assoc⁻¹-iso) (∘ᵐ-identityˡ _))
-      INNER : (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ costr-× {ρ} {X}
-            ≈ᵐ EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹
-      INNER = ≈ᵐ-trans (∘ᵐ-assoc (mapˣᵐ EA.strᵉ idᵐ) ×ᵐ-assoc⁻¹ (costr-× {ρ} {X}))
-              (≈ᵐ-trans (∘ᵐ-congʳ P∘C)
-              (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (mapˣᵐ EA.strᵉ idᵐ) (mapˣᵐ EA.costrᵉ idᵐ) _))
-              (≈ᵐ-trans (∘ᵐ-congˡ n∘h) (∘ᵐ-identityˡ _))))
-      REST : (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹) ∘ᵐ costr-× {ρ} {X}
-           ≈ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹
-      REST = ≈ᵐ-trans (∘ᵐ-assoc EB.strᵉ (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹) (costr-× {ρ} {X}))
-             (≈ᵐ-trans (∘ᵐ-congʳ INNER)
-             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc EB.strᵉ EB.costrᵉ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ EB.costrᵉ-strᵉ) (∘ᵐ-identityˡ _))))
-
-  -- `costr-×` inverts `strᵉ-×`: the mirror telescope.
-  costr-×-strᵉ-× : ∀ {ρ X} → costr-× {ρ} {X} ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ idᵐ
-  costr-×-strᵉ-× {ρ} {X} =
-    ≈ᵐ-trans (∘ᵐ-assoc ×ᵐ-assoc
-                (mapˣᵐ EA.costrᵉ idᵐ ∘ᵐ EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹) (strᵉ-× {ρ} {X}))
-    (≈ᵐ-trans (∘ᵐ-congʳ REST') ×ᵐ-assoc-iso)
-    where
-      aa : ⟨ ρ ⟩ᶠ (×ᵐ-assoc⁻¹ {X} {A} {B}) ∘ᵐ ⟨ ρ ⟩ᶠ (×ᵐ-assoc {X} {A} {B}) ≈ᵐ idᵐ
-      aa = ≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ ×ᵐ-assoc⁻¹ ×ᵐ-assoc))
-           (≈ᵐ-trans (⟨⟩-congᶠ ×ᵐ-assoc⁻¹-iso) ⟨⟩-idᵐ)
-      Q : ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹ ∘ᵐ strᵉ-× {ρ} {X}
-        ≈ᵐ EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹
-      Q = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹) (⟨ ρ ⟩ᶠ ×ᵐ-assoc)
-                             (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-          (≈ᵐ-trans (∘ᵐ-congˡ aa) (∘ᵐ-identityˡ _))
-      n∘h' : mapˣᵐ (EA.costrᵉ {ρ} {X}) (idᵐ {B}) ∘ᵐ mapˣᵐ (EA.strᵉ {ρ} {X}) (idᵐ {B}) ≈ᵐ idᵐ
-      n∘h' = ≈ᵐ-trans (mapˣᵐ-∘ EA.costrᵉ idᵐ EA.strᵉ idᵐ)
-             (≈ᵐ-trans (mapˣᵐ-cong EA.strᵉ-costrᵉ (∘ᵐ-identityˡ idᵐ)) mapˣᵐ-idᵐ)
-      INNER' : (EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹) ∘ᵐ strᵉ-× {ρ} {X}
-             ≈ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹
-      INNER' = ≈ᵐ-trans (∘ᵐ-assoc EB.costrᵉ (⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹) (strᵉ-× {ρ} {X}))
-               (≈ᵐ-trans (∘ᵐ-congʳ Q)
-               (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc EB.costrᵉ EB.strᵉ _))
-               (≈ᵐ-trans (∘ᵐ-congˡ EB.strᵉ-costrᵉ) (∘ᵐ-identityˡ _))))
-      REST' : (mapˣᵐ EA.costrᵉ idᵐ ∘ᵐ EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹) ∘ᵐ strᵉ-× {ρ} {X}
-            ≈ᵐ ×ᵐ-assoc⁻¹
-      REST' = ≈ᵐ-trans (∘ᵐ-assoc (mapˣᵐ EA.costrᵉ idᵐ) (EB.costrᵉ ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc⁻¹) (strᵉ-× {ρ} {X}))
-              (≈ᵐ-trans (∘ᵐ-congʳ INNER')
-              (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (mapˣᵐ EA.costrᵉ idᵐ) (mapˣᵐ EA.strᵉ idᵐ) _))
-              (≈ᵐ-trans (∘ᵐ-congˡ n∘h') (∘ᵐ-identityˡ _))))
-
-  -- `⟨ρ⟩ᶠ fstᵐ` reads back through `strᵉ-×` to the first projection: the two
-  -- factor strengths' `strᵉ-fstᵐ` laws threaded through the reassociations.
-  strᵉ-×-fstᵐ : ∀ {ρ X} → ⟨ ρ ⟩ᶠ fstᵐ ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ fstᵐ
-  strᵉ-×-fstᵐ {ρ} {X} =
-    ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ fstᵐ) (⟨ ρ ⟩ᶠ ×ᵐ-assoc)
-                        (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ fstᵐ ×ᵐ-assoc)) (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _))))
-    (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-∘ᵐ fstᵐ fstᵐ))
-    (≈ᵐ-trans (∘ᵐ-assoc (⟨ ρ ⟩ᶠ fstᵐ) (⟨ ρ ⟩ᶠ fstᵐ)
-                 (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹))
-    (≈ᵐ-trans (∘ᵐ-congʳ RB)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ fstᵐ) EA.strᵉ (fstᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-    (≈ᵐ-trans (∘ᵐ-congˡ EA.strᵉ-fstᵐ)
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _))))))))
-    where
-      -- `⟨ρ⟩ᶠfstᵐ ∘ (EB.strᵉ ∘ mapˣᵐ EA.strᵉ id ∘ ×ᵐ-assoc⁻¹) ≈ EA.strᵉ ∘ (fstᵐ ∘ ×ᵐ-assoc⁻¹)`
-      RB : ⟨ ρ ⟩ᶠ fstᵐ ∘ᵐ (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)
-         ≈ᵐ EA.strᵉ ∘ᵐ (fstᵐ ∘ᵐ ×ᵐ-assoc⁻¹)
-      RB = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ fstᵐ) EB.strᵉ (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-           (≈ᵐ-trans (∘ᵐ-congˡ EB.strᵉ-fstᵐ)
-           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ (mapˣᵐ EA.strᵉ idᵐ) ×ᵐ-assoc⁻¹))
-           (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
-                     (∘ᵐ-assoc EA.strᵉ fstᵐ ×ᵐ-assoc⁻¹))))
-
-  -- The A-projection reads back through `strᵉ-×` (with `EA.extᵉ`) to `fstᵐ∘sndᵐ`:
-  -- `⟨ρ⟩ᶠ(fstᵐ∘sndᵐ)` picks the `A` factor, `EA.strᵉ-sndᵐ` extracts it.
-  strᵉ-×-snd-fst : ∀ {ρ X}
-    → EA.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ (fstᵐ ∘ᵐ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ fstᵐ ∘ᵐ sndᵐ
-  strᵉ-×-snd-fst {ρ} {X} =
-    ≈ᵐ-trans (∘ᵐ-congʳ SUB)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc EA.extᵉ (⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ EA.strᵉ) (fstᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-    (≈ᵐ-trans (∘ᵐ-congˡ EA.strᵉ-sndᵐ)
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)) (⟨⟩ᵐ-sndᵐ _ _))))
-    where
-      -- `⟨ρ⟩ᶠ(fstᵐ∘sndᵐ) ∘ strᵉ-× ≈ (⟨ρ⟩ᶠsndᵐ ∘ EA.strᵉ) ∘ (fstᵐ ∘ ×ᵐ-assoc⁻¹)`
-      SUB : ⟨ ρ ⟩ᶠ (fstᵐ ∘ᵐ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X}
-          ≈ᵐ (⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ EA.strᵉ) ∘ᵐ (fstᵐ ∘ᵐ ×ᵐ-assoc⁻¹)
-      SUB = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ (fstᵐ ∘ᵐ sndᵐ)) (⟨ ρ ⟩ᶠ ×ᵐ-assoc)
-                               (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-            (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ (fstᵐ ∘ᵐ sndᵐ) ×ᵐ-assoc))
-                        (⟨⟩-congᶠ (≈ᵐ-trans (∘ᵐ-assoc fstᵐ sndᵐ ×ᵐ-assoc)
-                                  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-fstᵐ _ _))))))
-            (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-∘ᵐ sndᵐ fstᵐ))
-            (≈ᵐ-trans (∘ᵐ-assoc (⟨ ρ ⟩ᶠ sndᵐ) (⟨ ρ ⟩ᶠ fstᵐ)
-                         (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹))
-            (≈ᵐ-trans (∘ᵐ-congʳ RB2)
-                      (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ sndᵐ) EA.strᵉ (fstᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))))))
-        where
-          RB2 : ⟨ ρ ⟩ᶠ fstᵐ ∘ᵐ (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)
-              ≈ᵐ EA.strᵉ ∘ᵐ (fstᵐ ∘ᵐ ×ᵐ-assoc⁻¹)
-          RB2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ fstᵐ) EB.strᵉ (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-                (≈ᵐ-trans (∘ᵐ-congˡ EB.strᵉ-fstᵐ)
-                (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ (mapˣᵐ EA.strᵉ idᵐ) ×ᵐ-assoc⁻¹))
-                (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
-                          (∘ᵐ-assoc EA.strᵉ fstᵐ ×ᵐ-assoc⁻¹))))
-
-  -- The B-projection reads back through `strᵉ-×` (with `EB.extᵉ`) to `sndᵐ∘sndᵐ`.
-  strᵉ-×-snd-snd : ∀ {ρ X}
-    → EB.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ (sndᵐ ∘ᵐ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ sndᵐ ∘ᵐ sndᵐ
-  strᵉ-×-snd-snd {ρ} {X} =
-    ≈ᵐ-trans (∘ᵐ-congʳ SUB2)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc EB.extᵉ (⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ EB.strᵉ)
-                        (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-    (≈ᵐ-trans (∘ᵐ-congˡ EB.strᵉ-sndᵐ)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ (mapˣᵐ EA.strᵉ idᵐ) ×ᵐ-assoc⁻¹))
-    (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ sndᵐ)) (⟨⟩ᵐ-sndᵐ _ _))))))
-    where
-      SUB2 : ⟨ ρ ⟩ᶠ (sndᵐ ∘ᵐ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X}
-           ≈ᵐ (⟨ ρ ⟩ᶠ sndᵐ ∘ᵐ EB.strᵉ) ∘ᵐ (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)
-      SUB2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ (sndᵐ ∘ᵐ sndᵐ)) (⟨ ρ ⟩ᶠ ×ᵐ-assoc)
-                               (EB.strᵉ ∘ᵐ mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹)))
-             (≈ᵐ-trans (∘ᵐ-congˡ SS)
-                       (≈ᵐ-sym (∘ᵐ-assoc (⟨ ρ ⟩ᶠ sndᵐ) EB.strᵉ (mapˣᵐ EA.strᵉ idᵐ ∘ᵐ ×ᵐ-assoc⁻¹))))
-        where
-          SS : ⟨ ρ ⟩ᶠ (sndᵐ ∘ᵐ sndᵐ) ∘ᵐ ⟨ ρ ⟩ᶠ ×ᵐ-assoc ≈ᵐ ⟨ ρ ⟩ᶠ sndᵐ
-          SS = ≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ (sndᵐ ∘ᵐ sndᵐ) ×ᵐ-assoc))
-               (⟨⟩-congᶠ (≈ᵐ-trans (∘ᵐ-assoc sndᵐ sndᵐ ×ᵐ-assoc)
-                         (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)) (⟨⟩ᵐ-sndᵐ _ _))))
-
-  -- Given the product's extraction `ext×` and its decomposition into the
-  -- factors' extractions, the canonical costrength of the product coincides
-  -- with `costr-×`, so `strᵉ-×` is its two-sided inverse — the two `Eternalᵒ`
-  -- law fields a product-closure needs (`strᵉ = strᵉ-×`, `extᵉ = ext×`).
-  module product-laws
-           (ext× : ∀ {ρ} → ⟨ ρ ⟩ᵒ (A ×ᵐ B) →ᵐ A ×ᵐ B)
-           (ext×-dec : ∀ {ρ} → ext× {ρ}
-                     ≈ᵐ ⟨ EA.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ , EB.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ) where
-
-    -- the canonical costrength w.r.t. `ext×` (the record's derived `costrᵉ`)
-    canon-× : ∀ {ρ X} → ⟨ ρ ⟩ᵒ (X ×ᵐ (A ×ᵐ B)) →ᵐ ⟨ ρ ⟩ᵒ X ×ᵐ (A ×ᵐ B)
-    canon-× {ρ} = ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ ⟩ᵐ
-
-    fst-ext× : ∀ {ρ} → fstᵐ ∘ᵐ ext× {ρ} ≈ᵐ EA.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ fstᵐ
-    fst-ext× = ≈ᵐ-trans (∘ᵐ-congʳ ext×-dec) (⟨⟩ᵐ-fstᵐ _ _)
-
-    snd-ext× : ∀ {ρ} → sndᵐ ∘ᵐ ext× {ρ} ≈ᵐ EB.extᵉ ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ
-    snd-ext× = ≈ᵐ-trans (∘ᵐ-congʳ ext×-dec) (⟨⟩ᵐ-sndᵐ _ _)
-
-    -- The product's extraction is a uniform graded algebra: `extᵉ-≤`/`extᵉ-u`
-    -- reduce componentwise to the factors' via `ext×-dec` and `⟨⟩-≤`/`εᵘ`
-    -- naturality. These are the remaining algebra-law fields a product needs.
-    ext×-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂) → ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ ext× {ρ₁}
-    ext×-≤ {ρ₁} {ρ₂} p =
-      ≈ᵐ-trans (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ ext× {ρ₁}) (sndᵐ ∘ᵐ ext× {ρ₁})
-                  (ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p) L1 L2)
-               (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ ext× {ρ₁}) (sndᵐ ∘ᵐ ext× {ρ₁})
-                          (ext× {ρ₁}) ≈ᵐ-refl ≈ᵐ-refl))
-      where
-        L1 : fstᵐ ∘ᵐ (ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p) ≈ᵐ fstᵐ ∘ᵐ ext× {ρ₁}
-        L1 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ fst-ext×)
-             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-             (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat fstᵐ p))
-             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ (EA.extᵉ-≤ p))
-                       (≈ᵐ-sym fst-ext×))))))
-        L2 : sndᵐ ∘ᵐ (ext× {ρ₂} ∘ᵐ ⟨⟩-≤ p) ≈ᵐ sndᵐ ∘ᵐ ext× {ρ₁}
-        L2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ snd-ext×)
-             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-             (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat sndᵐ p))
-             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ (EB.extᵉ-≤ p))
-                       (≈ᵐ-sym snd-ext×))))))
-
-    ext×-u : ext× {u} ≈ᵐ εᵘ
-    ext×-u =
-      ≈ᵐ-trans (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ εᵘ) (sndᵐ ∘ᵐ εᵘ) (ext× {u}) U1 U2)
-               (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ εᵘ) (sndᵐ ∘ᵐ εᵘ) εᵘ ≈ᵐ-refl ≈ᵐ-refl))
-      where
-        U1 : fstᵐ ∘ᵐ ext× {u} ≈ᵐ fstᵐ ∘ᵐ εᵘ
-        U1 = ≈ᵐ-trans fst-ext×
-             (≈ᵐ-trans (∘ᵐ-congˡ EA.extᵉ-u) (≈ᵐ-sym (εᵘ-nat fstᵐ)))
-        U2 : sndᵐ ∘ᵐ ext× {u} ≈ᵐ sndᵐ ∘ᵐ εᵘ
-        U2 = ≈ᵐ-trans snd-ext×
-             (≈ᵐ-trans (∘ᵐ-congˡ EB.extᵉ-u) (≈ᵐ-sym (εᵘ-nat sndᵐ)))
-
-    -- `(ext× ∘ ⟨ρ⟩ᶠsndᵐ) ∘ strᵉ-× ≈ sndᵐ`, by prod-ext into the two factors
-    strᵉ-×-sndᵐ : ∀ {ρ X} → (ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ sndᵐ
-    strᵉ-×-sndᵐ {ρ} {X} =
-      ≈ᵐ-trans (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ sndᵐ) (sndᵐ ∘ᵐ sndᵐ)
-                  ((ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X}) Acomp Bcomp)
-      (≈ᵐ-sym (⟨⟩ᵐ-unique (fstᵐ ∘ᵐ sndᵐ) (sndᵐ ∘ᵐ sndᵐ) sndᵐ ≈ᵐ-refl ≈ᵐ-refl))
-      where
-        Acomp : fstᵐ ∘ᵐ ((ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X}) ≈ᵐ fstᵐ ∘ᵐ sndᵐ
-        Acomp =
-          ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ (ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) (strᵉ-× {ρ} {X})))
-          (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc fstᵐ ext× (⟨ ρ ⟩ᶠ sndᵐ))))
-          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ fst-ext×))
-          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc EA.extᵉ (⟨ ρ ⟩ᶠ fstᵐ) (⟨ ρ ⟩ᶠ sndᵐ)))
-          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ fstᵐ sndᵐ))))
-          (≈ᵐ-trans (∘ᵐ-assoc EA.extᵉ (⟨ ρ ⟩ᶠ (fstᵐ ∘ᵐ sndᵐ)) (strᵉ-× {ρ} {X}))
-                    strᵉ-×-snd-fst)))))
-        Bcomp : sndᵐ ∘ᵐ ((ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) ∘ᵐ strᵉ-× {ρ} {X}) ≈ᵐ sndᵐ ∘ᵐ sndᵐ
-        Bcomp =
-          ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ (ext× ∘ᵐ ⟨ ρ ⟩ᶠ sndᵐ) (strᵉ-× {ρ} {X})))
-          (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc sndᵐ ext× (⟨ ρ ⟩ᶠ sndᵐ))))
-          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ snd-ext×))
-          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc EB.extᵉ (⟨ ρ ⟩ᶠ sndᵐ) (⟨ ρ ⟩ᶠ sndᵐ)))
-          (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ sndᵐ sndᵐ))))
-          (≈ᵐ-trans (∘ᵐ-assoc EB.extᵉ (⟨ ρ ⟩ᶠ (sndᵐ ∘ᵐ sndᵐ)) (strᵉ-× {ρ} {X}))
-                    strᵉ-×-snd-snd)))))
-
-    -- The record's `strᵉ-costrᵉ`: `canon-× ∘ strᵉ-× ≈ id`.
-    strᵉ-costrᵉ-× : ∀ {ρ X} → canon-× {ρ} {X} ∘ᵐ strᵉ-× {ρ} {X} ≈ᵐ idᵐ
-    strᵉ-costrᵉ-× {ρ} {X} =
-      ≈ᵐ-trans (⟨⟩ᵐ-unique fstᵐ sndᵐ (canon-× {ρ} {X} ∘ᵐ strᵉ-× {ρ} {X}) C1 C2)
-      (≈ᵐ-sym (⟨⟩ᵐ-unique fstᵐ sndᵐ idᵐ (∘ᵐ-identityʳ fstᵐ) (∘ᵐ-identityʳ sndᵐ)))
-      where
-        C1 : fstᵐ ∘ᵐ (canon-× {ρ} {X} ∘ᵐ strᵉ-× {ρ} {X}) ≈ᵐ fstᵐ
-        C1 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc fstᵐ (canon-× {ρ} {X}) (strᵉ-× {ρ} {X})))
-             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)) strᵉ-×-fstᵐ)
-        C2 : sndᵐ ∘ᵐ (canon-× {ρ} {X} ∘ᵐ strᵉ-× {ρ} {X}) ≈ᵐ sndᵐ
-        C2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc sndᵐ (canon-× {ρ} {X}) (strᵉ-× {ρ} {X})))
-             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)) strᵉ-×-sndᵐ)
-
-    -- `canon-× ≈ costr-×` by inverse uniqueness, hence the second law.
-    bridge : ∀ {ρ X} → canon-× {ρ} {X} ≈ᵐ costr-× {ρ} {X}
-    bridge {ρ} {X} =
-      ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ (canon-× {ρ} {X})))
-      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym strᵉ-×-costr-×))
-      (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (canon-× {ρ} {X}) (strᵉ-× {ρ} {X}) (costr-× {ρ} {X})))
-      (≈ᵐ-trans (∘ᵐ-congˡ strᵉ-costrᵉ-×) (∘ᵐ-identityˡ _))))
-
-    costrᵉ-strᵉ-× : ∀ {ρ X} → strᵉ-× {ρ} {X} ∘ᵐ canon-× {ρ} {X} ≈ᵐ idᵐ
-    costrᵉ-strᵉ-× = ≈ᵐ-trans (∘ᵐ-congʳ bridge) strᵉ-×-costr-×
+      comp : ∀ {C} → (α : ⟨ ⊤ ⟩ᵒ C →ᵐ C) → (π : A ×ᵐ B →ᵐ C)
+           → (π ∘ᵐ α× ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ π)
+           → π ∘ᵐ Eternalᵒ.extᵉ ×ᵐ-eternalᵒ {ρ}
+             ≈ᵐ (α ∘ᵐ ⟨⟩-≤ (≾-⊤ ρ)) ∘ᵐ ⟨ ρ ⟩ᶠ π
+      comp α π pf =
+        ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+        (≈ᵐ-trans (∘ᵐ-congˡ pf)
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat π (≾-⊤ ρ)))
+                  (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
 
 -- ETERNALITY TRANSPORTS ALONG AN ISOMORPHISM
 --
--- Being eternal is invariant under isomorphism: conjugating the algebra `extᵉ`
--- and the strength `strᵉ` by an iso preserves every law. The induced costrength
--- is the original one conjugated the same way (`costr-conj`), which is what
--- carries the two distributivity-iso laws across.
+-- Being eternal is invariant under isomorphism: conjugating the algebra by an
+-- iso preserves both laws.
 
 module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
          (fg : f ∘ᵐ g ≈ᵐ idᵐ) (gf : g ∘ᵐ f ≈ᵐ idᵐ)
@@ -530,128 +455,58 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
   private
     module EA = Eternalᵒ eA
 
-    -- the iso on a product factor, and its two cancellation laws
+    α' : ⟨ ⊤ ⟩ᵒ B →ᵐ B
+    α' = f ∘ᵐ EA.α ∘ᵐ ⟨ ⊤ ⟩ᶠ g
 
-    Ff : ∀ {X} → X ×ᵐ A →ᵐ X ×ᵐ B
-    Ff = mapˣᵐ idᵐ f
+    -- the conjugated algebra applied to a `⟨ ⊤ ⟩`-layer of `g`s
+    conj : ⟨ ⊤ ⟩ᵒ (⟨ ⊤ ⟩ᵒ B) →ᵐ B
+    conj = f ∘ᵐ EA.α ∘ᵐ ⟨ ⊤ ⟩ᶠ (EA.α ∘ᵐ ⟨ ⊤ ⟩ᶠ g)
 
-    Fg : ∀ {X} → X ×ᵐ B →ᵐ X ×ᵐ A
-    Fg = mapˣᵐ idᵐ g
+    unit : α' ∘ᵐ ⟨⊤⟩-η ≈ᵐ idᵐ
+    unit =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⊤⟩-η-nat g)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ EA.α-unit))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-identityˡ _)) fg)))))
 
-    Ff∘Fg : ∀ {X} → Ff {X} ∘ᵐ Fg ≈ᵐ idᵐ
-    Ff∘Fg = ≈ᵐ-trans (mapˣᵐ-∘ idᵐ f idᵐ g)
-            (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ idᵐ) fg) mapˣᵐ-idᵐ)
+    assocˡ : α' ∘ᵐ ⟨⊤⟩-μ ≈ᵐ conj
+    assocˡ =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⊤⟩-μ-nat g)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ EA.α-assoc))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+                (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))))))))
 
-    Fg∘Ff : ∀ {X} → Fg {X} ∘ᵐ Ff ≈ᵐ idᵐ
-    Fg∘Ff = ≈ᵐ-trans (mapˣᵐ-∘ idᵐ g idᵐ f)
-            (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ idᵐ) gf) mapˣᵐ-idᵐ)
-
-    ext' : ∀ {ρ} → ⟨ ρ ⟩ᵒ B →ᵐ B
-    ext' {ρ} = f ∘ᵐ EA.extᵉ {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ g
-
-    str' : ∀ {ρ X} → ⟨ ρ ⟩ᵒ X ×ᵐ B →ᵐ ⟨ ρ ⟩ᵒ (X ×ᵐ B)
-    str' {ρ} {X} = ⟨ ρ ⟩ᶠ Ff ∘ᵐ EA.strᵉ ∘ᵐ Fg
-
-    costr-conj : ∀ {ρ X}
-               → ⟨ ⟨ ρ ⟩ᶠ fstᵐ , ext' {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (sndᵐ {A = X} {B}) ⟩ᵐ
-               ≈ᵐ Ff ∘ᵐ EA.costrᵉ {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ Fg
-    costr-conj {ρ} {X} = ≈ᵐ-sym (⟨⟩ᵐ-unique _ _ _ C1 C2)
-      where
-        C1 : fstᵐ ∘ᵐ Ff ∘ᵐ EA.costrᵉ {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ Fg ≈ᵐ ⟨ ρ ⟩ᶠ fstᵐ
-        C1 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
-             (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _))
-             (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-                       (⟨⟩-congᶠ
-               (≈ᵐ-trans (⟨⟩ᵐ-fstᵐ _ _)
-                                    (∘ᵐ-identityˡ _))))))))
-
-        C2 : sndᵐ ∘ᵐ Ff ∘ᵐ EA.costrᵉ {ρ} {X} ∘ᵐ ⟨ ρ ⟩ᶠ Fg
-           ≈ᵐ ext' {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (sndᵐ {A = X} {B})
-        C2 = ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-             (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
-             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-             (≈ᵐ-trans (∘ᵐ-congʳ
-               (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                     (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
-                     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                     (≈ᵐ-trans (∘ᵐ-congʳ
-                       (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-                               (≈ᵐ-trans (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _))
-                                         (⟨⟩-∘ᵐ _ _))))
-                               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
-                       (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+    assocʳ : α' ∘ᵐ ⟨ ⊤ ⟩ᶠ α' ≈ᵐ conj
+    assocʳ =
+      ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+      (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ g α'))))
+                (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-congᶠ
+        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc g f _))
+        (≈ᵐ-trans (∘ᵐ-congˡ gf) (∘ᵐ-identityˡ _))))))))
 
   iso-eternalᵒ : Eternalᵒ B
   iso-eternalᵒ = record
-    { extᵉ = ext'
-    ; strᵉ = str'
-    ; extᵉ-≤ = λ p →
-        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                  (∘ᵐ-congʳ
-          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-            (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-nat g p))
-            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                      (∘ᵐ-congˡ (EA.extᵉ-≤ p))))))
-    ; extᵉ-u =
-        ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ EA.extᵉ-u))
-        (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (εᵘ-nat g)))
-        (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-        (≈ᵐ-trans (∘ᵐ-congˡ fg)
-                  (∘ᵐ-identityˡ _))))
-    ; extᵉ-μ =
-        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ
-          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-            (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ-nat g))
-            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ EA.extᵉ-μ)
-            (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                      (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))))))))
-                  (≈ᵐ-sym
-          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                        (∘ᵐ-congʳ
-             (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-                            (∘ᵐ-congʳ
-                 (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-                                (⟨⟩-congᶠ
-                     (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                          (≈ᵐ-trans (∘ᵐ-congˡ gf)
-                                    (∘ᵐ-identityˡ _)))))))))))
-    ; strᵉ-costrᵉ =
-        ≈ᵐ-trans (∘ᵐ-congˡ costr-conj)
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ
-          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-            (≈ᵐ-trans (∘ᵐ-congʳ
-           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                    (≈ᵐ-trans (∘ᵐ-congˡ
-               (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-                        (≈ᵐ-trans (⟨⟩-congᶠ Fg∘Ff)
-                                  (⟨⟩-idᵐ))))
-                              (∘ᵐ-identityˡ _))))
-            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ EA.strᵉ-costrᵉ)
-                      (∘ᵐ-identityˡ _))))))
-                  (Ff∘Fg)))
-    ; costrᵉ-strᵉ =
-        ≈ᵐ-trans (∘ᵐ-congʳ costr-conj)
-        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-        (≈ᵐ-trans (∘ᵐ-congʳ
-          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-            (≈ᵐ-trans (∘ᵐ-congʳ
-           (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-                    (≈ᵐ-trans (∘ᵐ-congˡ Fg∘Ff)
-                              (∘ᵐ-identityˡ _))))
-            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ EA.costrᵉ-strᵉ)
-                      (∘ᵐ-identityˡ _))))))
-        (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
-        (≈ᵐ-trans (⟨⟩-congᶠ Ff∘Fg)
-                  (⟨⟩-idᵐ)))))
+    { α       = α'
+    ; α-unit  = unit
+    ; α-assoc = ≈ᵐ-trans assocˡ (≈ᵐ-sym assocʳ)
     }
+
+  -- Its extraction, unfolded: relax into the algebra's grade underneath the
+  -- iso, i.e. conjugate the original extraction.
+
+  iso-eternalᵒ-extᵉ : ∀ {ρ} → Eternalᵒ.extᵉ iso-eternalᵒ {ρ}
+                    ≈ᵐ f ∘ᵐ Eternalᵒ.extᵉ eA {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ g
+  iso-eternalᵒ-extᵉ {ρ} =
+    ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-≤-nat g (≾-⊤ ρ))))
+              (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
 
 -- UNIT-EQUIVALENT GRADES
@@ -705,4 +560,6 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
                    → Eternalᵒ.extᵉ (⟨u≈⟩-eternalᵒ q p eA) {σ}
                    ≈ᵐ ⟨u≈⟩-unit q ∘ᵐ Eternalᵒ.extᵉ eA {σ}
                         ∘ᵐ ⟨ σ ⟩ᶠ (⟨u≈⟩-counit p)
-⟨u≈⟩-eternalᵒ-extᵉ q p eA = ≈ᵐ-refl
+⟨u≈⟩-eternalᵒ-extᵉ q p eA =
+  iso-eternalᵒ-extᵉ (⟨u≈⟩-unit q) (⟨u≈⟩-counit p)
+    (⟨u≈⟩-unit-counit q p) (⟨u≈⟩-counit-unit q p) eA
