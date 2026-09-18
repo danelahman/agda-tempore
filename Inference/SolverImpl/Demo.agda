@@ -53,6 +53,7 @@ import Syntax.Types
 import Inference.Open.Grades
 import Inference.Open.Types
 import Inference.Open.Subst
+import Inference.Open.Contexts
 import Inference.Open.ClosedContexts
 import Inference.Raw.Syntax
 import Inference.Infer
@@ -390,3 +391,50 @@ module Least where
 
   ex-handle-pipeline : typeOfᵈ (Sᵐ.inferImpl Cᵈ.[] prog) ≡ just (Tᵈ.Unit , [0, 0 ])
   ex-handle-pipeline = refl
+
+--------------------------------------------------------------
+-- The fragment, and a principal typing                      --
+--                                                           --
+-- The solver is principal on `Frag`: the constraints whose   --
+-- `var`-rule disjunctions carry a lock grade convertible to  --
+-- the unit, where the solver's bias towards the grade         --
+-- disjunct costs nothing. Membership is decided by            --
+-- computation, and a program in the fragment that the solver  --
+-- accepts has a principal typing in Pretnar's sense.          --
+--------------------------------------------------------------
+
+module Fragment where
+
+  module OC = Inference.Open.Contexts spec
+
+  open import Inference.Principality            spec using (Principal; C[_,_])
+  open import Inference.Principality.Restricted spec using (principal-on)
+  open import Inference.Solver.Fragment         spec using (Frag; frag?)
+  open import Inference.SolverImpl.Restricted   spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
+    using (solveOn; solverImplOn)
+
+  Γ∅ : OC.OCtx ∅ˢ 0
+  Γ∅ = OC.[]
+
+  -- `return true` uses no variable, so it raises no disjunction at
+  -- all: it is in the fragment, and the check is a computation
+
+  prog-true : RawC 0
+  prog-true = return true
+
+  frag-true : Σ[ p ∈ Frag C[ Γ∅ , prog-true ] ]
+                (frag? ops₃ C[ Γ∅ , prog-true ] ≡ just p)
+  frag-true = _ , refl
+
+  -- a program in the fragment that the solver accepts has a
+  -- principal solution-with-residue, and hence a principal typing
+
+  principal? : ∀ {n} → (Γ : OC.OCtx ∅ˢ n) → (M : RawC n) → Frag C[ Γ , M ]
+             → Maybe (Principal Γ M)
+  principal? Γ M fr with solveOn C[ Γ , M ] in e
+  ... | nothing           = nothing
+  ... | just (Θ' , σ , Q) = just (principal-on solverImplOn Γ M fr e)
+
+  ex-principal : Σ[ p ∈ Principal Γ∅ prog-true ]
+                   (principal? Γ∅ prog-true (proj₁ frag-true) ≡ just p)
+  ex-principal = _ , refl

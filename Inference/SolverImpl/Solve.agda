@@ -114,25 +114,25 @@ wit-mono {s = s} m C w δ Q h =
 --------------------------------------------------------------
 
 pop⨟ʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ : RExp (Φ +e)) → {ρ₀ : RExp Φ}
-      → strʳ j ρ ≡ just ρ₀ → (δ : Subst Φ Φ')
+      → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → (δ : Subst Φ Φ')
       → ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ ≡ wkᵉ-r (ρ₀ [ δ ]ʳ)
 pop⨟ʳ j ρ {ρ₀} q δ =
   trans (sym ([⨟]ʳ ρ (popˢ j) (δ ↑ᵉ)))
-        (trans (cong (_[ δ ↑ᵉ ]ʳ) (str-popʳ j ρ q)) (wk-↑ᵉ-r δ ρ₀))
+        (trans (cong (_[ δ ↑ᵉ ]ʳ) q) (wk-↑ᵉ-r δ ρ₀))
 
 pop⨟ᵉ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ε : EExp (Φ +e)) → {ε₀ : EExp Φ}
-      → strᵉ j ε ≡ just ε₀ → (δ : Subst Φ Φ')
+      → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → (δ : Subst Φ Φ')
       → ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ ≡ wkᵉ-e (ε₀ [ δ ]ᵉ)
 pop⨟ᵉ j ε {ε₀} q δ =
   trans (sym ([⨟]ᵉ ε (popˢ j) (δ ↑ᵉ)))
-        (trans (cong (_[ δ ↑ᵉ ]ᵉ) (str-popᵉ j ε q)) (wk-↑ᵉ-e δ ε₀))
+        (trans (cong (_[ δ ↑ᵉ ]ᵉ) q) (wk-↑ᵉ-e δ ε₀))
 
 pop⨟ᵛ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → {A₀ : OVType Φ}
-      → strᵛ j A ≡ just A₀ → (δ : Subst Φ Φ')
+      → A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀ → (δ : Subst Φ Φ')
       → A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ ≡ wkᵉ-v (A₀ [ δ ]ᵛ)
 pop⨟ᵛ j A {A₀} q δ =
   trans (sym ([⨟]ᵛ A (popˢ j) (δ ↑ᵉ)))
-        (trans (cong (_[ δ ↑ᵉ ]ᵛ) (str-popᵛ j A q)) (wk-↑ᵉ-v δ A₀))
+        (trans (cong (_[ δ ↑ᵉ ]ᵛ) q) (wk-↑ᵉ-v δ A₀))
 
 Atomʳ : ∀ {Φ} → EVar (Φ +e) → RExp (Φ +e) → RExp (Φ +e) → Set
 Atomʳ {Φ} j ρ ρ' =
@@ -155,38 +155,53 @@ Atomᵗ {Φ} j A =
        → (∀ {B} → B ∈ l₀ → Q ⊩ᴱ B [ δ ]ᵛ)
        → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
 
+-- An eternality demand that reduces to no atom at all. Wrapping the
+-- verdict together with its proof keeps the case analysis of `atomᵗ`
+-- visible from outside, which is what reasoning about it needs.
+
+et₀? : ∀ {Φ} → (A : OVType Φ) → Maybe ({Q : Hyps Φ} → Q ⊩ᴱ A)
+et₀? A with etDec A in e
+... | just []      = just (λ {Q} → etDec-sound {Q = Q} A e (λ ()))
+... | just (α ∷ _) = nothing
+... | nothing      = nothing
+
 atomʳ : ∀ {Φ} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e)) → Maybe (Atomʳ j ρ ρ')
-atomʳ j ρ ρ' with strʳ j ρ in e₁ | strʳ j ρ' in e₂
-... | just ρ₀ | just ρ₀' =
+atomʳ j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
+... | just (ρ₀ , e₁) | just (ρ₀' , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
                              (sym (pop⨟ʳ j ρ e₁ δ)) (sym (pop⨟ʳ j ρ' e₂ δ))
                              (⊩-wkᵉᵣ (k (here refl))))
-... | _       | _        with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just _         | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ...   | nothing = nothing
+atomʳ j ρ ρ' | nothing | _ with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
+... | nothing = nothing
 
 atomᵉ : ∀ {Φ} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e)) → Maybe (Atomᵉ j ε ε')
-atomᵉ j ε ε' with strᵉ j ε in e₁ | strᵉ j ε' in e₂
-... | just ε₀ | just ε₀' =
+atomᵉ j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
+... | just (ε₀ , e₁) | just (ε₀' , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
                              (sym (pop⨟ᵉ j ε e₁ δ)) (sym (pop⨟ᵉ j ε' e₂ δ))
                              (⊩-wkᵉₑ (k (here refl))))
-... | _       | _        with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just _         | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ...   | nothing = nothing
+atomᵉ j ε ε' | nothing | _ with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
+... | nothing = nothing
 
 atomᵗ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → Maybe (Atomᵗ j A)
-atomᵗ j A with strᵛ j A in e₁
-... | just A₀ =
+atomᵗ j A with strᵛ⁺ j A
+... | just (A₀ , e₁) =
       just (A₀ ∷ [] ,
             λ δ Q k → subst (wkᵉ-H Q ⊩ᴱ_) (sym (pop⨟ᵛ j A e₁ δ))
                             (⊩ᴱ-wkᵉ (k (here refl))))
-... | nothing with etDec A in e₂
-...   | just []      = just ([] , λ δ Q k → ⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e₂ (λ ())))
-...   | just (α ∷ _) = nothing
-...   | nothing      = nothing
+... | nothing with et₀? A
+...   | just p  = just ([] , λ δ Q k → ⊩ᴱ-subst ∅ᴴ-⊩ᴴ (p {∅ᴴ}))
+...   | nothing = nothing
 
 --------------------------------------------------------------
 -- Crossing a rigid boundary: the whole residual             --
@@ -270,16 +285,24 @@ threadOps {f = f} g (op ∷ l) s with g s op
 -- The rigid boundary                                        --
 --------------------------------------------------------------
 
+-- The image of the rigid, with the equation that names it: a
+-- pattern-matching wrapper, so that `popᵉ`'s case analysis stays
+-- visible to a proof about it.
+
+evar? : ∀ {Φ} → (ε : EExp Φ) → Maybe (Σ[ j ∈ EVar Φ ] (ε ≡ evar j))
+evar? (evar j)   = just (j , refl)
+evar? (econst c) = nothing
+evar? (ε ·̂ₑ ε')  = nothing
+
 popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
      → (⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → Wit (st Φ θ'' R'' rg'') C
      → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
 popᵉ s C (scope nt nr nzero)    θ'' R'' rg'' m'' w'' = nothing
 popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
-  with sE (mδ m'') (newᵉ {Ψ s}) in eqj
-... | econst c = nothing
-... | ε ·̂ₑ ε'  = nothing
-... | evar j with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') | splitᴿ j R''
+  with evar? (sE (mδ m'') (newᵉ {Ψ s}))
+... | nothing = nothing
+... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') | splitᴿ j R''
 ...   | just (δ₀ , pδ) | just (R₀ , tr) =
         just (st (scope nt nr n) (θ s ⨟ˢ δ₀) (res s [ δ₀ ]ᴿ ∪ᴿ R₀) (transRig δ₀ (rig s)) ,
               mor δ₀ ≐ˢ-refl (λ δ Q h → ⊩ᴿ-subst (∪ᴿ-fst h)) ,
@@ -310,6 +333,29 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 -- The driver                                                --
 --------------------------------------------------------------
 
+-- The unifier's verdict, paired with the equation naming it, so
+-- that the driver's own case analysis stays visible to a proof.
+
+unifyAt : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
+        → (x : Maybe (Σ[ Θ⁺ ∈ Scope ] AList Θ Θ⁺)) → unify rg es ≡ x
+        → Maybe (Σ[ Θ⁺ ∈ Scope ] Σ[ ρ ∈ AList Θ Θ⁺ ] (unify rg es ≡ just (Θ⁺ , ρ)))
+unifyAt rg es nothing         equ = nothing
+unifyAt rg es (just (Θ⁺ , ρ)) equ = just (Θ⁺ , ρ , equ)
+
+unify* : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
+       → Maybe (Σ[ Θ⁺ ∈ Scope ] Σ[ ρ ∈ AList Θ Θ⁺ ] (unify rg es ≡ just (Θ⁺ , ρ)))
+unify* rg es = unifyAt rg es (unify rg es) refl
+
+unifyAt-nothing : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
+                → (x : Maybe (Σ[ Θ⁺ ∈ Scope ] AList Θ Θ⁺)) → (equ : unify rg es ≡ x)
+                → unifyAt rg es x equ ≡ nothing → unify rg es ≡ nothing
+unifyAt-nothing rg es nothing  equ q = equ
+unifyAt-nothing rg es (just _) equ ()
+
+unify*-nothing : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
+               → unify* rg es ≡ nothing → unify rg es ≡ nothing
+unify*-nothing rg es q = unifyAt-nothing rg es (unify rg es) refl q
+
 solve : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
       → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
 
@@ -324,9 +370,9 @@ solve s (C ∧̂ D) with solve s C
 ...   | just (s₂ , m₂ , w₂) =
         just (s₂ , ⟶-⨟ m₁ m₂ , λ δ Q h → wit-mono m₂ C w₁ δ Q h , w₂ δ Q h)
 
-solve s (A ≐ᵥ B) with unify (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) in equ
+solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
 ... | nothing = nothing
-... | just (Ψ⁺ , ρ) =
+... | just (Ψ⁺ , ρ , equ) =
       just (st Ψ⁺ (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) (transRig ⟦ ρ ⟧ᴬ (rig s)) ,
             mor ⟦ ρ ⟧ᴬ ≐ˢ-refl (λ δ Q h → ⊩ᴿ-subst h) ,
             λ δ Q h → trans (sym ([⨟]ᵛ A (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ))

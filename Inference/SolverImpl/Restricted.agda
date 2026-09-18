@@ -1,0 +1,145 @@
+------------------------------------------------------------------
+-- The driver as a solver on the fragment                        --
+--                                                                --
+-- `Inference.Solver.Restricted.SolverOn` asks for a solver        --
+-- returning a scope, a substitution and a hypothesis set. The     --
+-- driver returns a state; `toHyps` reads its residual back as     --
+-- the hypothesis set, and the three fields follow from the        --
+-- driver's deferred witness, `solve-fail` and `solve-principal`.  --
+--                                                                --
+-- The two guards are the ones those theorems need. Principality   --
+-- is guarded by `Frag` alone, which is what turns a solution into --
+-- a biased one; refutation additionally by `NoRig`, since at a    --
+-- rigid binder a failure can be a failure of `Normal`'s decision  --
+-- procedures. The read-back may also fail, on an eternality       --
+-- demand that decomposes to nothing — and that is refutable,      --
+-- because substitution preserves a type's head former.            --
+------------------------------------------------------------------
+
+open import Data.List.Base using (List; [])
+open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+
+open import Relation.Binary.Definitions using (Decidable)
+open import Relation.Nullary using (¬_)
+
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
+
+open import Util.Equality
+
+open import Inference.Scopes
+
+import Inference.Open.Hyps as H
+
+open import Inference.SolverImpl.Enum using (OpEnum)
+
+module Inference.SolverImpl.Restricted
+  (S : LanguageSpec)
+  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
+  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
+  (opEnum : OpEnum S)
+  (umin?ᵣ : Maybe (H.UnitMinᵣ S))
+  (umin?ₑ : Maybe (H.UnitMinₑ S))
+  where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+open Operations Ops
+
+open import Inference.Open.Types S
+open import Inference.Open.Subst S
+open import Inference.Open.Hyps  S
+
+open import Inference.Constraints.Syntax       S
+open import Inference.Constraints.Satisfaction S
+open import Inference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐ˢ-sym)
+
+open import Inference.Solver.Fragment   S
+open import Inference.Solver.Restricted S
+
+open import Inference.SolverImpl.Core.Unify    S using (Rig; _∈ᶠ_)
+open import Inference.SolverImpl.Core.UnifyMGU S using (Fixing; fixing)
+
+open import Inference.SolverImpl.Resid     S
+open import Inference.SolverImpl.State     S
+open import Inference.SolverImpl.Solve     S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
+open import Inference.SolverImpl.Principal S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
+
+--------------------------------------------------------------
+-- The initial state has no rigids                           --
+--------------------------------------------------------------
+
+Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
+Fixing-[] σ = fixing (λ i ()) (λ i i' ())
+
+--------------------------------------------------------------
+-- Solving from the initial state                            --
+--------------------------------------------------------------
+
+solveOn : ∀ {Θ} → Constraint Θ
+        → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))
+solveOn C with solve init C
+... | nothing = nothing
+... | just (s' , m , w) with toHyps (res s')
+...   | nothing        = nothing
+...   | just (Q , hq) = just (Ψ s' , θ s' , Q)
+
+solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
+              → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+              → solveOn C ≡ just (Θ' , σ , Q)
+              → σ ⊨[ Q ] C
+solveOn-sound C eq with solve init C in e
+... | nothing = ⊥just eq
+... | just (s' , m , w) with toHyps (res s') in e'
+...   | nothing = ⊥just eq
+...   | just (Q₀ , hq) with eq
+...     | refl = ⊨-resp-≐ˢ (⨟-idʳ (θ s')) C (w idˢ Q₀ hq)
+
+solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → (Frag C × NoRig C)
+                 → solveOn C ≡ nothing
+                 → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
+                 → ¬ (σ ⊨[ Q ] C)
+solveOn-complete C (fr , nr) eq σ Q sat with solve init C in e
+... | nothing = solve-fail init C nr e σ Q (Fixing-[] σ) ⊩ᴿ-empty (Frag-⊨→⊨ᴿ fr sat)
+... | just (s' , m , w) with toHyps (res s') in e'
+...   | just _  = ⊥nothing eq
+...   | nothing with toHyps-nothing (res s') e'
+...     | A , mem , q =
+          etDec-refute A q (proj₁ fac) (⊩ts (proj₁ (proj₂ (proj₂ fac))) mem)
+  where
+    fac = solve-principal init C e σ Q (Frag-⊨→⊨ᴿ fr sat) ⊩ᴿ-empty
+
+solveOn-principal : ∀ {Θ} → (C : Constraint Θ) → Frag C
+                  → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺}
+                  → solveOn C ≡ just (Θ⁺ , σ⁺ , Q⁺)
+                  → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'')
+                  → σ ⊨[ Q ] C
+                  → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
+                      (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
+solveOn-principal C fr eq σ Q sat with solve init C in e
+... | nothing = ⊥just eq
+... | just (s' , m , w) with toHyps (res s') in e'
+...   | nothing = ⊥just eq
+...   | just (Q₀ , hq) with eq
+...     | refl = δ ,
+                 ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri ,
+                 toHyps-compl (res s') e' δ hres
+  where
+    fac  = solve-principal init C e σ Q (Frag-⊨→⊨ᴿ fr sat) ⊩ᴿ-empty
+    δ    = proj₁ fac
+    tri  = proj₁ (proj₂ fac)
+    hres = proj₁ (proj₂ (proj₂ fac))
+
+--------------------------------------------------------------
+-- The instance                                              --
+--------------------------------------------------------------
+
+solverImplOn : SolverOn (λ C → Frag C × NoRig C) Frag
+solverImplOn = record
+  { solve           = solveOn
+  ; solve-sound     = solveOn-sound
+  ; solve-complete  = solveOn-complete
+  ; solve-principal = solveOn-principal
+  }
