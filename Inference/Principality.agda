@@ -19,7 +19,8 @@
 -- the constraint that was solved is `genC _ M _`, while          --
 -- completeness produces a solution of `genC _ ⌊ D ⌋ᶜ _`.         --
 --                                                              --
--- Principal qualified typings after Pretnar (LMCS 2014).       --
+-- Principal types carrying a constraint set, after Pretnar     --
+-- (LMCS 2014).                                                 --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (just)

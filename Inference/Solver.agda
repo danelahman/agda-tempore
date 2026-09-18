@@ -25,8 +25,10 @@
 -- its `Θ⁺` need not be empty, so the ground case is genuinely a  --
 -- separate assumption.                                           --
 --                                                              --
--- Solutions with a residual constraint follow Pretnar,         --
--- Inferring Algebraic Effects (LMCS 2014).                     --
+-- A solution is a substitution paired with a constraint set    --
+-- still to be satisfied — here called the residual — as in the --
+-- types-with-constraint-sets of Pretnar, Inferring Algebraic   --
+-- Effects (LMCS 2014).                                         --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)
