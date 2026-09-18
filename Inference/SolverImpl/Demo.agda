@@ -25,6 +25,7 @@ open import Data.Fin using (zero; suc)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Nat using (ℕ; _≤?_; z≤n)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 
@@ -244,6 +245,36 @@ ex-unbox = refl
 ex-handle : infer! [] (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆))
           ≡ nothing
 ex-handle = refl
+
+--------------------------------------------------------------
+-- A rigid that escapes                                      --
+--                                                           --
+-- Constraints are written directly here: what is at stake is --
+-- the ORDER of the two binders, which a program does not     --
+-- expose. In `escC` the unknown is allocated OUTSIDE the     --
+-- rigid's scope and the equation inside it pins the unknown  --
+-- to the rigid, which no substitution over the outer scope   --
+-- can do: the solver fails, and by the escape lemma that     --
+-- failure is a refutation. In `okC` the binders are swapped, --
+-- the unknown is allocated inside the rigid's scope, and     --
+-- mentioning the rigid is then its right.                    --
+--------------------------------------------------------------
+
+solved? : ∀ {Θ} {X : Subst Θ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] X σ) → Maybe ⊤
+solved? nothing  = nothing
+solved? (just _) = just tt
+
+escC : Constraint ∅ˢ
+escC = ∃ᵉ (∀ᵉ ((Unit ⇒ (Unit ‼ evar (suc zero))) ≐ᵥ (Unit ⇒ (Unit ‼ evar zero))))
+
+okC : Constraint ∅ˢ
+okC = ∀ᵉ (∃ᵉ ((Unit ⇒ (Unit ‼ evar zero)) ≐ᵥ (Unit ⇒ (Unit ‼ evar (suc zero)))))
+
+ex-escape : solved? (gsolveImpl escC) ≡ nothing
+ex-escape = refl
+
+ex-escape-ok : solved? (gsolveImpl okC) ≡ just tt
+ex-escape-ok = refl
 
 --------------------------------------------------------------
 -- The whole pipeline                                        --

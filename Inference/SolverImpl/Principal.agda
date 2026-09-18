@@ -36,7 +36,7 @@
 open import Data.Bool.Base using (true) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin.Base using (Fin; zero; suc)
-open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
+open import Data.Fin.Properties using (suc-injective) renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; mapMaybe)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻; ∈-++⁻)
@@ -89,10 +89,10 @@ open import Inference.Solver.Fragment S
 
 open import Inference.SolverImpl.Enum S using (AllOp; all-lookup)
 
-open import Inference.SolverImpl.Core.Thick using (thick; thickᵉ; thinᵉ; thick-just)
 open import Inference.SolverImpl.Core.AList S using (AList; anil; ⟦_⟧ᴬ)
 open import Inference.SolverImpl.Core.Eqn   S using (Eqn; eqᵛ; Eqns; Unifies)
-open import Inference.SolverImpl.Core.Rigid S using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; strSub)
+open import Inference.SolverImpl.Core.Rigid S
+  using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; strSub; unpopˢ; pop-unpop; strSub-escape)
 open import Inference.SolverImpl.Core.Unify S using (Rig; _∈ᶠ_; unify)
 open import Inference.SolverImpl.Core.UnifyMGU S
   using (Fixing; fixing; fixᵉ; injᵉ; Fixing-id; unify-max; unify-fail;
@@ -197,28 +197,6 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (κᵉ-wkᵉ ε₀)) (sym (κᵉ-wkᵉ ε₀')) (hypₑ m₀)
 
 --------------------------------------------------------------
--- Undoing the move of a rigid to the newest position        --
---------------------------------------------------------------
-
-unpopˢ : ∀ {Ψ} → EVar (Ψ +e) → Subst (Ψ +e) (Ψ +e)
-unpopˢ {Ψ} j = sub tvar rvar (λ { zero → evar j ; (suc k) → evar (thinᵉ {Ψ} j k) })
-
-thick-nothing : ∀ {n} → (i j : Fin (nsuc n)) → thick i j ≡ nothing → j ≡ i
-thick-nothing         zero    zero    q = refl
-thick-nothing         zero    (suc j) ()
-thick-nothing {nsuc n} (suc i) zero   ()
-thick-nothing {nsuc n} (suc i) (suc j) q with thick i j in r
-... | nothing = cong suc (thick-nothing i j r)
-
-pop-unpop : ∀ {Ψ} → (j : EVar (Ψ +e)) → (popˢ j ⨟ˢ unpopˢ j) ≐ˢ idˢ
-pop-unpop {Ψ} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
-  where
-    sE' : (k : EVar (Ψ +e)) → sE (popˢ {Ψ} j ⨟ˢ unpopˢ {Ψ} j) k ≡ sE (idˢ {Ψ +e}) k
-    sE' k with thickᵉ {Ψ} j k in r
-    ... | just k₀  = cong evar (sym (thick-just {nE Ψ} j k k₀ r))
-    ... | nothing  = cong evar (sym (thick-nothing {nE Ψ} j k r))
-
---------------------------------------------------------------
 -- Residual algebra the clauses need                         --
 --------------------------------------------------------------
 
@@ -315,6 +293,100 @@ Fixing-trans {Ψ} {Ψ₁} {Ψ''} {rg} σ δ {δ₀} p fx = fixing v n
                (trans (sym (≐ᵉ p i))
                  (trans (cong (_[ δ ]ᵉ) ri)
                    (trans r (trans (sym (cong (_[ δ ]ᵉ) ri')) (≐ᵉ p i')))))
+
+-- A rigid whose image is a variable is never dropped by the transport:
+-- `transRig`'s partiality cannot fire on a rigid-fixing substitution,
+-- which is the only kind the driver ever transports a rigid along.
+
+∈-transRig⁺ : ∀ {Ψ Ψ₁} → (σ : Subst Ψ Ψ₁) → (rg : Rig Ψ) → (i : EVar Ψ)
+            → i ∈ᶠ rg ≡ true → (k : EVar Ψ₁) → sE σ i ≡ evar k
+            → k ∈ᶠ transRig σ rg ≡ true
+∈-transRig⁺ σ []        i () k rk
+∈-transRig⁺ σ (i₀ ∷ rg) i m  k rk with varᵉ? (sE σ i₀) in r
+... | just k₀ with ∨-true ⌊ i ≟ᶠ i₀ ⌋ (i ∈ᶠ rg) m
+...   | inj₁ s = ∨-left ⌊ k ≟ᶠ k₀ ⌋ (k ∈ᶠ transRig σ rg) (dec-true (k ≟ᶠ k₀) kk)
+        where
+          kk : k ≡ k₀
+          kk = evar-inj (trans (sym rk)
+                          (trans (cong (sE σ) (true-dec (i ≟ᶠ i₀) s))
+                                 (varᵉ?-just (sE σ i₀) r)))
+...   | inj₂ s = ∨-right ⌊ k ≟ᶠ k₀ ⌋ (k ∈ᶠ transRig σ rg) (∈-transRig⁺ σ rg i s k rk)
+∈-transRig⁺ σ (i₀ ∷ rg) i m k rk
+    | nothing with ∨-true ⌊ i ≟ᶠ i₀ ⌋ (i ∈ᶠ rg) m
+... | inj₁ s = ⊥nothing (trans (sym (cong varᵉ? eqi)) r)
+      where
+        eqi : sE σ i₀ ≡ evar k
+        eqi = trans (sym (cong (sE σ) (true-dec (i ≟ᶠ i₀) s))) rk
+... | inj₂ s = ∈-transRig⁺ σ rg i s k rk
+
+transRig-total : ∀ {Ψ Ψ₁} → (σ : Subst Ψ Ψ₁) → (rg : Rig Ψ) → Fixing rg σ
+               → (i : EVar Ψ) → i ∈ᶠ rg ≡ true
+               → Σ[ k ∈ EVar Ψ₁ ] ((sE σ i ≡ evar k) × (k ∈ᶠ transRig σ rg ≡ true))
+transRig-total σ rg fx i m with fixᵉ fx i m
+... | k , rk = k , rk , ∈-transRig⁺ σ rg i m k rk
+
+-- A rigid lift fixes the rigid it declares — by computation — as well
+-- as the ones it transports
+
+Fixing-⇑ᵉ : ∀ {Ψ Ψ''} {rg : Rig Ψ} → (δ₀ : Subst Ψ Ψ'')
+          → Fixing rg δ₀ → Fixing (newᵉ {Ψ} ∷ transRig (wkˢᵉ {Ψ}) rg) (δ₀ ↑ᵉ)
+Fixing-⇑ᵉ {Ψ} {Ψ''} {rg} δ₀ fx = fixing v n
+  where
+    im : (k : EVar (Ψ +e)) → k ∈ᶠ transRig (wkˢᵉ {Ψ}) rg ≡ true
+       → Σ[ i ∈ EVar Ψ ] Σ[ j ∈ EVar Ψ'' ]
+           ((i ∈ᶠ rg ≡ true) × (k ≡ suc i) × (sE δ₀ i ≡ evar j))
+    im k m with ∈-transRig (wkˢᵉ {Ψ}) rg k m
+    ... | i , mi , ri with fixᵉ fx i mi
+    ...   | j , rj = i , j , mi , sym (evar-inj ri) , rj
+
+    cls : (k : EVar (Ψ +e)) → k ∈ᶠ (newᵉ {Ψ} ∷ transRig (wkˢᵉ {Ψ}) rg) ≡ true
+        → (k ≡ newᵉ {Ψ})
+          ⊎ (Σ[ i ∈ EVar Ψ ] Σ[ j ∈ EVar Ψ'' ]
+               ((i ∈ᶠ rg ≡ true) × (k ≡ suc i) × (sE δ₀ i ≡ evar j)))
+    cls k m with ∨-true ⌊ k ≟ᶠ newᵉ {Ψ} ⌋ (k ∈ᶠ transRig (wkˢᵉ {Ψ}) rg) m
+    ... | inj₁ s = inj₁ (true-dec (k ≟ᶠ newᵉ {Ψ}) s)
+    ... | inj₂ s = inj₂ (im k s)
+
+    v : (k : EVar (Ψ +e)) → k ∈ᶠ (newᵉ {Ψ} ∷ transRig (wkˢᵉ {Ψ}) rg) ≡ true
+      → Σ[ l ∈ EVar (Ψ'' +e) ] (sE (δ₀ ↑ᵉ) k ≡ evar l)
+    v k m with cls k m
+    ... | inj₁ refl                     = newᵉ {Ψ''} , refl
+    ... | inj₂ (i , j , mi , refl , rj) = wkᵉ-ev Ψ'' j , cong wkᵉ-e rj
+
+    n : (k k' : EVar (Ψ +e)) → k ∈ᶠ (newᵉ {Ψ} ∷ transRig (wkˢᵉ {Ψ}) rg) ≡ true
+      → k' ∈ᶠ (newᵉ {Ψ} ∷ transRig (wkˢᵉ {Ψ}) rg) ≡ true
+      → sE (δ₀ ↑ᵉ) k ≡ sE (δ₀ ↑ᵉ) k' → k ≡ k'
+    n k k' mk mk' r with cls k mk | cls k' mk'
+    ... | inj₁ refl | inj₁ refl = refl
+    ... | inj₁ refl | inj₂ (i' , j' , mi' , refl , rj')
+          with evar-inj (trans r (cong wkᵉ-e rj'))
+    ...     | ()
+    n k k' mk mk' r | inj₂ (i , j , mi , refl , rj) | inj₁ refl
+          with evar-inj (trans (sym (cong wkᵉ-e rj)) r)
+    ...     | ()
+    n k k' mk mk' r | inj₂ (i , j , mi , refl , rj)
+                    | inj₂ (i' , j' , mi' , refl , rj') =
+      cong suc (injᵉ fx i i' mi mi' (trans rj (trans (cong evar jj) (sym rj'))))
+      where
+        jj : j ≡ j'
+        jj = suc-injective
+               (evar-inj (trans (sym (cong wkᵉ-e rj)) (trans r (cong wkᵉ-e rj'))))
+
+--------------------------------------------------------------
+-- A store never binds a rigid                               --
+--                                                           --
+-- The boundary reads the rigid's image off the inner store   --
+-- and expects a variable. Substitution preserves the head of --
+-- an expression that is not one, so an image instantiable to --
+-- a variable was one already — which is what rules out the   --
+-- boundary's two impossible verdicts.                        --
+--------------------------------------------------------------
+
+varᵉ-inst : ∀ {Φ Ξ} → (ε : EExp Φ) → (δ : Subst Φ Ξ) → {k : EVar Ξ}
+          → ε [ δ ]ᵉ ≡ evar k → Σ[ j ∈ EVar Φ ] (ε ≡ evar j)
+varᵉ-inst (evar j)   δ q = j , refl
+varᵉ-inst (econst c) δ ()
+varᵉ-inst (ε ·̂ₑ ε')  δ ()
 
 --------------------------------------------------------------
 -- The two statements                                        --
@@ -753,12 +825,129 @@ solve-principal s (⋀ᵒᵖ f) eq
                                (λ s' op e' → solve-principal s' (f op) e') ops s e
 
 --------------------------------------------------------------
+-- What is left of a failure at a rigid boundary             --
+--                                                           --
+-- Of the four ways the boundary can fail, three are now      --
+-- refutations. Two cannot happen at all when a solution      --
+-- exists: a store never binds a rigid, so the rigid's image  --
+-- is a variable and the inner scope has one to spare. The    --
+-- third, a rigid escaping into an outer unknown's image, is  --
+-- refuted by the escape lemma. Only the fourth is left — the --
+-- atoms that mention the eigenvariable and must be           --
+-- discharged on the spot, by `Normal`, which is a sound      --
+-- oracle with no completeness theorem. `Discharges` is the   --
+-- assumption that its verdict there is a refutation, stated  --
+-- only for the instances a solution can actually produce:    --
+-- those that keep the eigenvariable an eigenvariable, hence  --
+-- foreign to the weakened hypotheses `wkᵉ-H Q`.              --
+--------------------------------------------------------------
+
+Discharges : Set
+Discharges = ∀ {Φ Ψ'} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
+           → splitᴿ j R ≡ nothing
+           → (γ : Subst (Φ +e) (Ψ' +e)) → sE γ j ≡ evar (newᵉ {Ψ'})
+           → (Q : Hyps Ψ') → ¬ (wkᵉ-H Q ⊩ᴿ R [ γ ])
+
+-- The refutation guard: `NoRig` relaxed at a rigid binder, which is
+-- crossed under the assumption above and nowhere else.
+
+Refutable : ∀ {Θ} → Constraint Θ → Set
+Refutable ⊤̂            = ⊤
+Refutable ⊥̂            = ⊤
+Refutable (C ∧̂ D)      = Refutable C × Refutable D
+Refutable (A ≐ᵥ B)     = ⊤
+Refutable (ρ ≾̂ᵣᶜ ρ')   = ⊤
+Refutable (ε ≾̂ₑᶜ ε')   = ⊤
+Refutable (Etᶜ A)      = ⊤
+Refutable (Et∨≾ᵘ A ρ)  = ⊤
+Refutable (∃ᵗ C)       = Refutable C
+Refutable (∃ʳ C)       = Refutable C
+Refutable (∃ᵉ C)       = Refutable C
+Refutable (∀ᵉ C)       = Discharges × Refutable C
+Refutable (⋀ᵒᵖ f)      = (op : Op) → Refutable (f op)
+
+NoRig→Refutable : ∀ {Θ} → (C : Constraint Θ) → NoRig C → Refutable C
+NoRig→Refutable ⊤̂            ⊤ⁿ         = tt
+NoRig→Refutable ⊥̂            ⊥ⁿ         = tt
+NoRig→Refutable (C ∧̂ D)      (nc ∧ⁿ nd) = NoRig→Refutable C nc , NoRig→Refutable D nd
+NoRig→Refutable (A ≐ᵥ B)     ≐ⁿ         = tt
+NoRig→Refutable (ρ ≾̂ᵣᶜ ρ')   ≾ᵣⁿ        = tt
+NoRig→Refutable (ε ≾̂ₑᶜ ε')   ≾ₑⁿ        = tt
+NoRig→Refutable (Etᶜ A)      Etⁿ        = tt
+NoRig→Refutable (Et∨≾ᵘ A ρ)  Et∨ⁿ       = tt
+NoRig→Refutable (∃ᵗ C)       (∃ᵗⁿ nc)   = NoRig→Refutable C nc
+NoRig→Refutable (∃ʳ C)       (∃ʳⁿ nc)   = NoRig→Refutable C nc
+NoRig→Refutable (∃ᵉ C)       (∃ᵉⁿ nc)   = NoRig→Refutable C nc
+NoRig→Refutable (⋀ᵒᵖ f)      (⋀ⁿ nf)    = λ op → NoRig→Refutable (f op) (nf op)
+
+-- The rigid's image under the inner factorisation is the outer
+-- scope's own eigenvariable, and the outer unknowns' images are those
+-- the outer substitution gives, weakened
+
+bnd-var : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
+        → {δ₀ : Subst Ψ Ψ''} → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
+        → {j : EVar Φ} → sE γ (newᵉ {Ψ}) ≡ evar j
+        → sE δ j ≡ evar (newᵉ {Ψ''})
+bnd-var {Ψ} γ δ tri eqj = trans (sym (cong (_[ δ ]ᵉ) eqj)) (≐ᵉ tri (newᵉ {Ψ}))
+
+bnd-out : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
+        → (δ₀ : Subst Ψ Ψ'') → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
+        → ((wkˢᵉ {Ψ} ⨟ˢ γ) ⨟ˢ δ) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ)
+bnd-out γ δ δ₀ tri =
+  ≐ˢ-trans (⨟-assoc wkˢᵉ γ δ) (≐ˢ-trans (⨟-congʳ wkˢᵉ tri) (wkˢᵉ-↑ᵉ δ₀))
+
+popᵉ-fail′ : ∀ {Θ Ψ''} → (s : St Θ) → (C : Constraint (Θ +e))
+           → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
+           → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
+           → Discharges
+           → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ nothing
+           → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
+           → (δ'' : Subst Φ (Ψ'' +e)) → (mδ m'' ⨟ˢ δ'') ≐ˢ (δ₀ ↑ᵉ)
+           → wkᵉ-H Q ⊩ᴿ R'' [ δ'' ] → ⊥
+popᵉ-fail′ s C (scope nt nr nzero) θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri hres
+  with varᵉ-inst (sE (mδ m'') (newᵉ {Ψ s})) δ'' (≐ᵉ tri (newᵉ {Ψ s}))
+... | () , _
+popᵉ-fail′ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri hres
+  with evar? (sE (mδ m'') (newᵉ {Ψ s})) in eqv
+... | nothing =
+      subst (λ ε → evar? ε ≡ nothing → ⊥) (sym (proj₂ isvar)) (λ ()) eqv
+      where
+        isvar = varᵉ-inst (sE (mδ m'') (newᵉ {Ψ s})) δ'' (≐ᵉ tri (newᵉ {Ψ s}))
+... | just (j , eqj)
+      with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') in eqstr | splitᴿ j R'' in eqsp
+...     | just _  | just _  = ⊥nothing eq
+...     | just _  | nothing =
+          dis j R'' eqsp δ'' (bnd-var (mδ m'') δ'' tri eqj) Q hres
+...     | nothing | _       =
+          strSub-escape j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') δ''
+                        (bnd-var (mδ m'') δ'' tri eqj)
+                        δ₀ (bnd-out (mδ m'') δ'' δ₀ tri) eqstr
+
+popᵉ-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
+          → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
+          → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
+          → Princ (⇑ᵉˢ s) (st Φ θ'' R'' rg'') m'' C → Discharges
+          → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ nothing
+          → Refut s (∀ᵉ C)
+popᵉ-fail s C Φ θ'' R'' rg'' m'' w'' ip dis eq δ₀ Q fx h sat =
+  popᵉ-fail′ s C Φ θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri'' hres''
+  where
+    ires = ip (δ₀ ↑ᵉ) (wkᵉ-H Q)
+              (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+
+    δ''    = proj₁ ires
+    tri''  = proj₁ (proj₂ ires)
+    hres'' = proj₁ (proj₂ (proj₂ ires))
+
+--------------------------------------------------------------
 -- The driver refutes what it fails on                       --
 --                                                           --
--- For constraints without a rigid binder. At such a binder a --
--- failure can be the failure of `Normal`'s decision          --
--- procedures on an atom mentioning the eigenvariable, which  --
--- is not a proof that no solution exists.                    --
+-- Unconditionally, except at a rigid binder, where the       --
+-- guard demands `Discharges` — the one place a failure can   --
+-- still be a decision procedure's rather than a proof that   --
+-- no solution exists. `solve-fail` is the corollary for      --
+-- constraints without a rigid binder, which needs no         --
+-- assumption at all.                                        --
 --------------------------------------------------------------
 
 threadOps-fail : ∀ {Θ} {f : Op → Constraint Θ}
@@ -788,19 +977,19 @@ threadOps-fail {f = f} g gp gf (op ∷ l) s eq δ₀ Q fx h sat with g s op in e
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
-solve-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → NoRig C
-           → solve s C ≡ nothing → Refut s C
+solve-fail⁺ : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → Refutable C
+            → solve s C ≡ nothing → Refut s C
 
-solve-fail s ⊤̂ nr ()
+solve-fail⁺ s ⊤̂ nr ()
 
-solve-fail s ⊥̂ nr eq δ₀ Q fx h sat = sat
+solve-fail⁺ s ⊥̂ nr eq δ₀ Q fx h sat = sat
 
-solve-fail s (C ∧̂ D) (nc ∧ⁿ nd) eq δ₀ Q fx h (sc , sd) with solve s C in e₁
-... | nothing = solve-fail s C nc e₁ δ₀ Q fx h sc
+solve-fail⁺ s (C ∧̂ D) (nc , nd) eq δ₀ Q fx h (sc , sd) with solve s C in e₁
+... | nothing = solve-fail⁺ s C nc e₁ δ₀ Q fx h sc
 ... | just (s₁ , m₁ , w₁) with solve s₁ D in e₂
 ...   | just _  = ⊥nothing eq
 ...   | nothing =
-        solve-fail s₁ D nd e₂ δ₁ Q fx₁ h₁ (⊨ᴿ-resp-≐ˢ (≐ˢ-sym chain) D sd)
+        solve-fail⁺ s₁ D nd e₂ δ₁ Q fx₁ h₁ (⊨ᴿ-resp-≐ˢ (≐ˢ-sym chain) D sd)
   where
     f₁   = solve-principal s C e₁ δ₀ Q sc h
     δ₁   = proj₁ f₁
@@ -811,7 +1000,7 @@ solve-fail s (C ∧̂ D) (nc ∧ⁿ nd) eq δ₀ Q fx h (sc , sd) with solve s C
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
-solve-fail s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
+solve-fail⁺ s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
   with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) in equ*
 ... | just _  = ⊥nothing eq
 ... | nothing =
@@ -820,44 +1009,58 @@ solve-fail s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
                  δ₀ fx
                  (trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt)
 
-solve-fail s (ρ ≾̂ᵣᶜ ρ') nr ()
+solve-fail⁺ s (ρ ≾̂ᵣᶜ ρ') nr ()
 
-solve-fail s (ε ≾̂ₑᶜ ε') nr ()
+solve-fail⁺ s (ε ≾̂ₑᶜ ε') nr ()
 
-solve-fail s (Etᶜ A) nr ()
+solve-fail⁺ s (Etᶜ A) nr ()
 
-solve-fail s (Et∨≾ᵘ A ρ) nr eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
+solve-fail⁺ s (Et∨≾ᵘ A ρ) nr eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = ⊥nothing eq
 ... | nothing = ⊥nothing eq
 
-solve-fail s (∃ᵗ C) (∃ᵗⁿ nc) eq δ₀ Q fx h (B , sat) with solve (s ↑ᵗˢ) C in e
+solve-fail⁺ s (∃ᵗ C) nc eq δ₀ Q fx h (B , sat) with solve (s ↑ᵗˢ) C in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
-      solve-fail (s ↑ᵗˢ) C nc e (δ₀ ,ᵗ B) Q
+      solve-fail⁺ (s ↑ᵗˢ) C nc e (δ₀ ,ᵗ B) Q
         (Fixing-trans wkˢᵗ (δ₀ ,ᵗ B) (wk-,ᵗ δ₀ B) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵗ δ₀ B)) h))
         (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
 
-solve-fail s (∃ʳ C) (∃ʳⁿ nc) eq δ₀ Q fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
+solve-fail⁺ s (∃ʳ C) nc eq δ₀ Q fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
-      solve-fail (s ↑ʳˢ) C nc e (δ₀ ,ʳ ρ) Q
+      solve-fail⁺ (s ↑ʳˢ) C nc e (δ₀ ,ʳ ρ) Q
         (Fixing-trans wkˢʳ (δ₀ ,ʳ ρ) (wk-,ʳ δ₀ ρ) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ʳ δ₀ ρ)) h))
         (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
 
-solve-fail s (∃ᵉ C) (∃ᵉⁿ nc) eq δ₀ Q fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
+solve-fail⁺ s (∃ᵉ C) nc eq δ₀ Q fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
-      solve-fail (s ↑ᵉˢ) C nc e (δ₀ ,ᵉ ε) Q
+      solve-fail⁺ (s ↑ᵉˢ) C nc e (δ₀ ,ᵉ ε) Q
         (Fixing-trans wkˢᵉ (δ₀ ,ᵉ ε) (wk-,ᵉ δ₀ ε) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵉ δ₀ ε)) h))
         (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
 
-solve-fail s (⋀ᵒᵖ f) (⋀ⁿ nf) eq
+solve-fail⁺ s (∀ᵉ C) (dis , nc) eq with solve (⇑ᵉˢ s) C in e
+... | nothing = λ δ₀ Q fx h sat →
+      solve-fail⁺ (⇑ᵉˢ s) C nc e (δ₀ ↑ᵉ) (wkᵉ-H Q) (Fixing-⇑ᵉ δ₀ fx) ⊩ᴿ-empty
+        (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat)
+... | just (s'' , m'' , w'') =
+      popᵉ-fail s C (Ψ s'') (θ s'') (res s'') (rig s'') m'' w''
+                (solve-principal (⇑ᵉˢ s) C e) dis eq
+
+solve-fail⁺ s (⋀ᵒᵖ f) nf eq
   with threadOps {f = f} (λ s' op → solve s' (f op)) ops s in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
       threadOps-fail (λ s' op → solve s' (f op))
                      (λ s' op e' → solve-principal s' (f op) e')
-                     (λ s' op e' → solve-fail s' (f op) (nf op) e') ops s e
+                     (λ s' op e' → solve-fail⁺ s' (f op) (nf op) e') ops s e
+
+-- Without a rigid binder, no assumption is needed
+
+solve-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → NoRig C
+           → solve s C ≡ nothing → Refut s C
+solve-fail s C nr = solve-fail⁺ s C (NoRig→Refutable C nr)

@@ -294,6 +294,13 @@ evar? (evar j)   = just (j , refl)
 evar? (econst c) = nothing
 evar? (ε ·̂ₑ ε')  = nothing
 
+-- Two of the four failures below cannot happen when a solution
+-- exists: a store never binds a rigid, so the rigid's image is a
+-- variable and the scope it lives in still counts one effect-grade
+-- variable. A third, a rigid escaping into an outer unknown's image,
+-- is a refutation, by the escape lemma of `Core.Rigid`. Only the
+-- atoms `splitᴿ` has to discharge on the spot are an oracle's verdict.
+
 popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
      → (⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → Wit (st Φ θ'' R'' rg'') C
