@@ -1,39 +1,22 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
--- Effect grades are the subset grade of lower bounds: each listed run  --
--- is one the computation can still exhibit. Resource grades are the    --
--- left-sided time intervals, "at least `n` time steps".                --
+-- Effect grades are the subset grade of lower bounds: each listed run --
+-- is one the computation can still exhibit. Resource grades are the   --
+-- left-sided time intervals, "at least `n` time steps".               --
 --                                                                     --
 --   ∣ P ∣ᵉ  =  [ the greatest duration among the traces of P ,+∞⟩     --
 --                                                                     --
--- The *greatest*, and this is the one place where the two families     --
--- disagree about which end of a set to read. Here the set is a         --
--- conjunction of demands -- every listed run must remain reachable --   --
--- so what the grade guarantees about time is what the slowest of them  --
--- takes. `System.Traces.Timed.LeftSided` reads its floor               --
--- disjunctively and so takes the fastest instead. Same target grade,   --
--- opposite aggregation, because the sets are read differently.         --
+-- The set is read conjunctively, so the guarantee is the slowest run; --
+-- `System.Traces.Timed.LeftSided` reads its floor disjunctively and   --
+-- takes the fastest.                                                  --
 --                                                                     --
--- This is also exactly what the tick frame of                          --
--- `Ticks.Traces.Subsets.LeftSided` sees, its condition being universal --
--- in the listed runs.                                                  --
+-- Monotonicity: weakening drops listed runs, and a shorter list has a --
+-- smaller maximum, so the guarantee falls.                            --
 --                                                                     --
--- Monotonicity: weakening drops listed runs, and a shorter list has a  --
--- smaller maximum, so the guarantee falls.                             --
---                                                                     --
--- WHERE THE RESOURCE GRADES COME FROM. Not `Time.LeftSided` itself but --
--- `left-sided-intervals-with-⊤`. The floor's greatest grade demands    --
--- nothing and is absorbing -- forced, a top for the conjunctive subset --
--- order having to be included in every product -- while `[ 0 ,+∞⟩`,    --
--- the intervals' greatest grade, is their unit and so is not. No       --
--- monoid morphism at all can land in the plain intervals: `map-·` at   --
--- the absorbing top gives `map ⊤ ≡ map ⊤ · map c` for every `c`, and   --
--- at `c := of-nat 1` that reads `k ≡ k + 1` under `map-of-nat`, which   --
--- has no solution in ℕ. Adjoining a top to the target is what restores --
--- the projection, and it is the one place in the development where     --
--- that is needed -- every other endpoint is either read disjunctively  --
--- or bounded above.                                                    --
+-- The target is `left-sided-intervals-with-⊤`, not the plain          --
+-- intervals: the floor's top is absorbing, theirs is the unit, and no --
+-- monoid morphism bridges the two.                                    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

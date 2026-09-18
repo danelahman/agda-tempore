@@ -1,23 +1,17 @@
 ------------------------------------------------------------------------
 -- Adjoining a greatest grade.                                         --
 --                                                                     --
--- Not every ordered monoid of grades has a `≾`-greatest element: the   --
--- subset grades' floor would need the empty set of demands, which is   --
--- excluded, and the allowance grades' cap would need the set of all    --
--- runs, which is not finite. This module adds one point above          --
--- everything, absorbing in the product. It asks nothing of the monoid  --
--- it extends, so it applies wherever a top is missing.                 --
+-- Adds one point above everything, absorbing in the product. Asks     --
+-- nothing of the monoid it extends, so it applies wherever a top is   --
+-- missing: the subset grades' floor, whose top would be the excluded  --
+-- empty set of demands, and the allowance grades' cap.                --
 --                                                                     --
--- Adjoining is not the only way to get a top: where the unit is        --
--- already greatest (`Time.LeftSided`, the coverage floor) the grade is --
--- left alone. The two differ in one respect that matters downstream --  --
--- an adjoined top is absorbing, a unit top is not -- and `map-·` alone --
--- forces a morphism out of an absorbing top to land on one too, so a   --
--- morphism out of an extended grade needs an extended one to land in.  --
+-- An adjoined top is absorbing; a unit top is not. A morphism out of  --
+-- an absorbing top must land on one, so an extended source needs an   --
+-- extended target.                                                    --
 --                                                                     --
--- The input is a `Grade` minus its `⊤` and `≾-⊤`, which is what a      --
--- grade without a top has to offer; `forgetTop` supplies it from a     --
--- grade that already has one.                                          --
+-- The input is a `Grade` minus its `⊤` and `≾-⊤`; `forgetTop`         --
+-- supplies those from a grade that already has one.                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.WithTop where
@@ -306,5 +300,6 @@ module AdjoinMap {M₁ M₂ : OrderedMonoid}
     ; map-monotone = λ {c} {d} → mapᵉ-monotone {c} {d}
     ; map-u        = cong only₂_ map₀-u
     ; map-·        = λ {c} {d} → mapᵉ-· {c} {d}
+    ; map-⊤        = refl
     ; map-of-nat   = λ {n} → cong only₂_ (map₀-of-nat {n})
     }

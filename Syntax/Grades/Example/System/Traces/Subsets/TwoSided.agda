@@ -1,28 +1,22 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
--- Effect grades are the two-sided subset intervals `[ P , Q ]`, and    --
--- resource grades the two-sided time intervals.                        --
+-- Effect grades are the two-sided subset intervals `[ P , Q ]`, and   --
+-- resource grades the two-sided time intervals.                       --
 --                                                                     --
 --   ∣ [ P , Q ] ∣ᵉ  =  [ greatest duration in P , greatest in Q ]     --
 --                                                                     --
--- Both endpoints are measured by their slowest member, but for         --
--- opposite reasons: below because every listed run is demanded, above  --
--- because any listed run may occur. So this is the pair of             --
--- `System.Traces.Subsets.LeftSided` and                                --
--- `System.Traces.Subsets.RightSided`, and every law is theirs.         --
+-- Both endpoints are measured by their slowest member: below because  --
+-- every listed run is demanded, above because any listed run may      --
+-- occur. The pair of `System.Traces.Subsets.LeftSided` and            --
+-- `System.Traces.Subsets.RightSided`, and every law is theirs.        --
 --                                                                     --
--- The target's `min ≤ max` is the grade's coherence field `P ⊆ Q`      --
--- read through durations: a larger set has a larger maximum, and the   --
--- floor's cost model is below the cap's. Since that field is exactly   --
--- the condition for the interval to be inhabited, no admissible grade  --
--- is refused before it reaches here.                                   --
+-- The target's `min ≤ max` is the grade's coherence field `P ⊆ Q`     --
+-- read through durations, so no admissible grade is refused here.     --
 --                                                                     --
--- WHERE THE RESOURCE GRADES COME FROM. As on the one-sided floor, not  --
--- the plain intervals but `two-sided-intervals-with-⊤`. The pair's     --
--- greatest grade is absorbing because its floor's is, while            --
--- `[ 0 , ∞ ]` is not, its `min` endpoint being the unit; no monoid      --
--- morphism at all can bridge an absorbing top to a unit one.           --
+-- The target is `two-sided-intervals-with-⊤`: the pair's top is       --
+-- absorbing because its floor's is, `[ 0 , ∞ ]` is not, and no monoid --
+-- morphism bridges the two.                                           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

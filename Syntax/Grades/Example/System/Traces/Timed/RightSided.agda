@@ -105,6 +105,7 @@ traces→right-sided-intervals = record
   ; map-monotone = λ {P} {Q} → mapₒ-monotone {P} {Q}
   ; map-u        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
+  ; map-⊤        = refl
   ; map-of-nat   = λ {n} →
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }

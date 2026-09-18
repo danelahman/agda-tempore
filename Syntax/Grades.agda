@@ -100,6 +100,9 @@ record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
     map-u        : map u₁ ≡ u₂
     map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁'
 
+    -- map preserves the greatest grade
+    map-⊤        : map ⊤₁ ≡ ⊤₂
+
     -- map preserves inclusion of ℕ
     map-of-nat   : ∀ {n} → map (of-nat₁ n) ≡ of-nat₂ n
 
@@ -172,5 +175,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      map-monotone to map-monotoneᵉ;
      map-u to map-uᵉ;
      map-· to map-·ᵉ;
+     map-⊤ to map-⊤ᵉ;
      map-of-nat to map-of-natᵉ
     ) public

@@ -28,6 +28,7 @@ tsi→lsi = record
   ; map-monotone = λ rel → proj₁ rel
   ; map-u        = refl
   ; map-·        = refl
+  ; map-⊤        = refl
   ; map-of-nat   = refl
   }
 

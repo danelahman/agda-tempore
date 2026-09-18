@@ -1,47 +1,41 @@
 ------------------------------------------------------------------------
 -- Example grades, and example grade systems built from them.          --
 --                                                                     --
--- A `Grade` (see `Syntax.Grades`) is an ordered monoid with an         --
--- inclusion of ℕ as "so many time steps". A `GradeSystem` is a pair    --
--- of them -- effect grades, recording what a computation may do, and   --
--- resource grades, recording what is thereby guaranteed about time --   --
--- together with a monoid map projecting the first onto the second.     --
+-- A `Grade` (see `Syntax.Grades`) is an ordered monoid with an        --
+-- inclusion of ℕ as "so many time steps". A `GradeSystem` is a pair   --
+-- of them -- effect grades, recording what a computation may do, and  --
+-- resource grades, recording what is thereby guaranteed about time -- --
+-- together with a monoid map projecting the first onto the second.    --
 --                                                                     --
--- The examples come in two families:                                   --
+-- The examples come in two families:                                  --
 --                                                                     --
---   * `Time.*`  -- grades that measure only elapsed time, as a     --
---     bound or a window of time steps. Small and self-contained.       --
+--   * `Time.*`  -- grades that measure only elapsed time, as a bound  --
+--     or a window of time steps. Small and self-contained.            --
 --                                                                     --
---   * `Traces.*`  -- grades that record *which runs* a computation   --
---     may have had, as a set of timed traces, sharing their carrier    --
---     and monoid (from `Grades.Traces.Sets`) and differing in the      --
---     order they put on it.                                            --
+--   * `Traces.*`  -- grades that record *which runs* a computation    --
+--     may have had, as a set of timed traces, sharing their carrier   --
+--     and monoid (from `Grades.Traces.Sets`) and differing in the     --
+--     order they put on it.                                           --
 --                                                                     --
--- The trace family is two families of three: `Timed.*` over the        --
--- cost-sensitive orders on traces, and `Subsets.*` over equality, each --
--- with a floor, a cap and their pairing. A grid over the sub-trace     --
--- orders -- four lifts against three sidednesses -- is parked under    --
--- `backup/`, along with its worked examples, Kripke frames and grade   --
--- systems, and is imported from nowhere.                               --
+-- The trace family is two families of three: `Timed.*` over the       --
+-- cost-sensitive orders on traces, and `Subsets.*` over equality,     --
+-- each with a floor, a cap and their pairing. A grid over the         --
+-- sub-trace orders is parked under `backup/`, imported from nowhere.  --
 --                                                                     --
--- WHERE EACH GREATEST GRADE COMES FROM. Three of them are already      --
--- there: the left-sided intervals' and the coverage floor's is their   --
--- unit, and the two-sided intervals' is `[ 0 , ∞ ]`. The right-sided   --
--- intervals get theirs by letting the endpoint be `∞`. The remaining   --
--- four -- the allowance cap and the three subset grades -- have none,  --
--- so `Grades.WithTop` adjoins one, which is then absorbing.            --
+-- Greatest grades: the left-sided intervals' and the coverage floor's --
+-- is their unit, the two-sided intervals' is `[ 0 , ∞ ]`, and the     --
+-- right-sided intervals' lets the endpoint be `∞`. The allowance cap  --
+-- and the three subset grades have none, so `Grades.WithTop` adjoins  --
+-- one, which is then absorbing.                                       --
 --                                                                     --
--- `System.*` then pairs them up. Reading the projections tells the     --
--- story of the development: each one says what a resource grade is     --
--- allowed to forget about the effect grade it comes from. `map-·`      --
--- forces an absorbing top to land on an absorbing top, and no monoid   --
--- morphism at all reaches a target without one -- which is why the     --
--- two subset floors project into extended interval grades rather than  --
--- the plain ones.                                                      --
+-- `System.*` pairs them up: each projection says what a resource      --
+-- grade may forget about the effect grade it comes from. The two      --
+-- subset floors project into extended interval grades, an absorbing   --
+-- top having to land on an absorbing top.                             --
 --                                                                     --
--- This module is only an index -- the trace-based examples are         --
--- parameterised by the alphabet `Op`, so it lists the pieces rather    --
--- than re-exporting them.                                              --
+-- This module is only an index -- the trace-based examples are        --
+-- parameterised by the alphabet `Op`, so it lists the pieces rather   --
+-- than re-exporting them.                                             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example where
