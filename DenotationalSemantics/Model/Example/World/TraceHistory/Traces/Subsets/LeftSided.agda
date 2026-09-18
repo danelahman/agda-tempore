@@ -20,7 +20,7 @@
 -- non-singleton lower bound is a claim about a computation's          --
 -- branching, and a single observed history is no witness for it.      --
 --                                                                    --
--- The grade's adjoined top `⊤ᵍ` demands no run, so it leaves the      --
+-- The grade's `no-demand` demands no run, so it leaves the            --
 -- continuation unconstrained and asks only that `w'` extend `w`.      --
 ------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ open import Data.Unit using (⊤; tt)
 open import Syntax.Grades.Traces.Sets Op
 
 open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
-  using (left-sided; Demands; only_; ⊤ᵍ; _·ᵈ_; _≾_)
+  using (left-sided; Demands; demanding_; no-demand; _·ᵈ_; _≾_)
 
 open WithDecEq _≟ₒ_
   using (_⊑_; _≟ᵀ_; ⊑-refl; ⊑-trans; ⊑-·ˢ; liftˢ-irrelevant)
@@ -53,15 +53,15 @@ open import DenotationalSemantics.Model.World
 ------------------------------------------------------------------------
 -- Accessibility on trace histories
 
--- the condition on the continuation, vacuous at `⊤ᵍ`
+-- the condition on the continuation, vacuous at `no-demand`
 
 Demanded : Trace → Demands → Set
-Demanded cont (only P) = traces P ⊑ [ cont ]
-Demanded cont ⊤ᵍ       = ⊤
+Demanded cont (demanding P) = traces P ⊑ [ cont ]
+Demanded cont no-demand       = ⊤
 
 Demanded-irr : (cont : Trace) (P : Demands) → (p q : Demanded cont P) → p ≡ q
-Demanded-irr _ (only _) = ⊑-irr
-Demanded-irr _ ⊤ᵍ       tt tt = refl
+Demanded-irr _ (demanding _) = ⊑-irr
+Demanded-irr _ no-demand       tt tt = refl
 
 infix 5 _⊑ᵇ[_]_
 
@@ -81,7 +81,7 @@ extends-∙ : (w t₁ t₂ : Trace) {w' w'' : Trace}
 extends-∙ w t₁ t₂ eq₁ eq₂ =
   trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂)
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ only u ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ (demanding u) ] w
 ⊑ᵇ-refl {w} = mkᵇ ε (⊑-refl {traces u}) (∙-identityʳ w)
 
 -- transitivity multiplies the grades: the product's demands are the
@@ -90,20 +90,20 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 
 ⊑ᵇ-trans : ∀ {P Q w w' w''}
          → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P ·ᵈ Q ] w''
-⊑ᵇ-trans {only _} {⊤ᵍ}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+⊑ᵇ-trans {demanding _} {no-demand}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
   mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
-⊑ᵇ-trans {⊤ᵍ}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+⊑ᵇ-trans {no-demand}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
   mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
-⊑ᵇ-trans {only P} {only Q} {w} (mkᵇ t₁ d₁ eq₁) (mkᵇ t₂ d₂ eq₂) =
+⊑ᵇ-trans {demanding P} {demanding Q} {w} (mkᵇ t₁ d₁ eq₁) (mkᵇ t₂ d₂ eq₂) =
   mkᵇ (t₁ ∙ t₂) (⊑-·ˢ d₁ d₂) (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 -- covariance: the weaker grade demands a sub-list of what the stronger
 -- one did, and the continuation already answered to all of that
 
 ⊑ᵇ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵇ[ P ] w' → w ⊑ᵇ[ Q ] w'
-⊑ᵇ-mono {_}      {⊤ᵍ}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
-⊑ᵇ-mono {⊤ᵍ}    {only _} ()
-⊑ᵇ-mono {only P} {only Q} rel (mkᵇ cont d eq) =
+⊑ᵇ-mono {_}      {no-demand}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
+⊑ᵇ-mono {no-demand}    {demanding _} ()
+⊑ᵇ-mono {demanding P} {demanding Q} rel (mkᵇ cont d eq) =
   mkᵇ cont (⊑-trans {traces Q} {traces P} rel d) eq
 
 ⊑ᵇ-irrelevant : ∀ {P w w'} → (p q : w ⊑ᵇ[ P ] w') → p ≡ q

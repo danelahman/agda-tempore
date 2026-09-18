@@ -194,9 +194,9 @@ one-branch-does-not = fails
 ------------------------------------------------------------------------
 -- The greatest grade
 --
--- Nothing is adjoined here: the unit `{ ε }` already guarantees
--- nothing, the empty run being covered by every run, so every grade
--- weakens to it and it is the designated greatest one.
+-- The unit `{ ε }` already guarantees nothing, the empty run being
+-- covered by every run, so every grade weakens to it and it is the
+-- designated greatest one.
 
 everything-weakens : (P : NeTraces) → P ≾ u
 everything-weakens = ≾-⊤

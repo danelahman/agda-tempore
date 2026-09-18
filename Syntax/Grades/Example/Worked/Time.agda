@@ -98,8 +98,8 @@ lsi-unit = refl
 lsi-unit-top : [ 7 ,+∞⟩ ≾ˡ uˡ
 lsi-unit-top = ≤!
 
--- so the unit is the designated greatest grade here; nothing had to be
--- adjoined, and it is not absorbing
+-- so the unit is the designated greatest grade here, and it is not
+-- absorbing
 
 lsi-top : Grade.⊤ left-sided-intervals ≡ uˡ
 lsi-top = refl

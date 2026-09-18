@@ -74,8 +74,7 @@ P ≾ P' = traces P' ≽ˢ traces P
 -- The greatest grade
 --
 -- The unit `{ ε }` guarantees nothing, the empty trace being covered by
--- every run, so it is already the greatest grade and no point has to be
--- adjoined.
+-- every run, so it is already the greatest grade.
 
 ≾-⊤ : (P : NeTraces) → P ≾ u
 ≾-⊤ P = u-≽ˢ (traces P)

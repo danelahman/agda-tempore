@@ -131,10 +131,6 @@ open import Syntax.CompContext
 
 open import Syntax.Grades
 
----- Adjoining a greatest grade, for the ordered monoids that lack one
-
-open import Syntax.Grades.WithTop
-
 ---- The timed-trace toolkit the trace-based grades are built from
 ---- (see the module for how its pieces fit together)
 

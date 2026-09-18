@@ -25,16 +25,17 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided where
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; ε; _∙_; ⌈_⌉; ⟨_⟩)
+  using (Op; read; write; send; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
-  using (right-sided; Permits; ⟅_⟆; ⟅_∣_⟆; holds; fails; holdsᵉ; failsᵉ)
+  using (right-sided; Permits; permitting_; any-run;
+         holds; fails; holdsᵉ; failsᵉ)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
 
 opTime : Op → Permits
-opTime o = ⟅ ⌈ o ⌉ ⟆
+opTime o = permitting ⟅ ⌈ o ⌉ ⟆
 
 open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
 
@@ -45,28 +46,28 @@ open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
 -- grade of a computation is the run it makes, and the locks along it
 -- are that run one event at a time.
 
-sampling : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
+sampling : [] ⊢C⦂ Reading ‼ permitting ⟅ ⌈ read ⌉ ⟆
 sampling =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+storing : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 storing =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-    (perform write here              -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+  perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform write here  -- ⟨ permitting ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+relaying : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 relaying =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-    (perform send here               -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+  perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform send here   -- ⟨ permitting ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
-                                     -- ∷ NodeId ∷ Reading
+                         -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 ------------------------------------------------------------------------
@@ -81,9 +82,9 @@ reading-stale-after-idling = fails
 reading-stale-after-an-operation : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ uᵣ)
 reading-stale-after-an-operation = fails
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ permitting ⟅ ⌈ read ⌉ ⟆
 carried-id =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
@@ -94,12 +95,12 @@ carried-id =
 -- not above the run that prompted it. The context is untouched.
 
 listing-a-second-run :
-  [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 listing-a-second-run =
   coerce holds (perform read ⋆ (perform write here (return ⋆)))
 
 no-budgeting :
-  ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆)
+  ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ permitting ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆)
 no-budgeting = fails
 
 ------------------------------------------------------------------------
@@ -109,28 +110,30 @@ no-budgeting = fails
 -- graded by the two branches' runs listed together -- and by nothing
 -- shorter, there being no bound that covers both by costing more.
 
-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
+branching :
+  [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ permitting ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
   if eternal-var Boolₑ (Tl-∷ Hd)
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
-six-ticks-buy-nothing : ¬ (opTime send ·ₑ uₑ ≾ₑ ⟅ ⟨ 6 ⟩ ⟆)
+six-ticks-buy-nothing : ¬ (opTime send ·ₑ uₑ ≾ₑ permitting ⟅ ⟨ 6 ⟩ ⟆)
 six-ticks-buy-nothing = fails
 
 -- an `if` over data alone: both branches make the same run, so neither
 -- is coerced
 
-either-reading : [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
+either-reading :
+  [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ permitting ⟅ ⌈ send ⌉ ⟆
 either-reading =
   if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
     `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆)
 
 sampling-then-branching :
-  [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 sampling-then-branching =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (if true
       `then coerce holds (perform send  here (return ⋆))
       `else coerce holds (perform write here (return ⋆)))
@@ -144,36 +147,36 @@ sampling-then-branching =
 -- else.
 
 permit : R
-permit = ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆
+permit = permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-sampling : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
-  box {ρ = permit} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
-    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+    (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (perform send here (return ⋆))))
 
-claim-after-idling : [] ⊢C⦂ Unit ‼ ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+claim-after-idling : [] ⊢C⦂ Unit ‼ permitting ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
-  box {ρ = permit} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
-    (delay 2                         -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
-      (unbox (Tl-⟨⟩ Hd) holds        -- ∷ Reading
+  box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+    (delay 2             -- ⟨ permitting ⟅ ⟨ 2 ⟩ ⟆ ⟩
+      (unbox (Tl-⟨⟩ Hd) holds  -- ∷ Reading
         (perform send here (return ⋆))))
 
-handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box {ρ = permit} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
-    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
-       (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+    (lam                 -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+       (perform read ⋆   -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+either-way : [] ∷ Bool ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box {ρ = permit} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
-    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+    (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
@@ -197,11 +200,11 @@ storing-not-listed = fails
 -- lock in between
 
 listed-now : R
-listed-now = ⟅ ε ∣ ⌈ read ⌉ ⟆
+listed-now = permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
 
-claiming-now : [] ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
+claiming-now : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ send ⌉ ⟆
 claiming-now =
-  box {ρ = listed-now} (const 42)    -- ∷ [ ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
+  box {ρ = listed-now} (const 42)  -- ∷ [ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
     (unbox Hd (holdsᵉ uᵣ listed-now) -- ∷ Reading
       (perform send here (return ⋆)))
 
@@ -211,32 +214,34 @@ claiming-now =
 -- A permit covering a conditional has to name what each branch does.
 
 alternatives : R
-alternatives = ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+alternatives = permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 
 claimed-in-both-branches :
-  [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 claimed-in-both-branches =
   box {ρ = alternatives} (const 42)
-                                     -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
+                         -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ] Reading
     (if true
       `then coerce holds
-              (perform read ⋆        -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+              (perform read ⋆  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
               (perform send (const 0)
-                                     -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+                         -- ⟨ permitting ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 -- and dropping either run closes the branch that makes it
 
-sampling-branch-needs-its-run : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⌈ send ⌉ ⟆)
+sampling-branch-needs-its-run :
+  ¬ (uᵣ ·ᵣ opTime read ≾ᵣ permitting ⟅ ⌈ send ⌉ ⟆)
 sampling-branch-needs-its-run = fails
 
-transmitting-branch-needs-its-run : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ ⟅ ⌈ read ⌉ ⟆)
+transmitting-branch-needs-its-run :
+  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
 transmitting-branch-needs-its-run = fails
 
 ------------------------------------------------------------------------
@@ -247,28 +252,30 @@ transmitting-branch-needs-its-run = fails
 -- conditional is graded by the two runs listed together.
 
 permit-in-a-branch :
-  [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  [] ∷ Bool ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 permit-in-a-branch =
-  box {ρ = permit} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
+  box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce holds
-              (perform read ⋆        -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+              (perform read ⋆  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
                 (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
-              (delay 2               -- ⟨ ⟅ ⟨ 2 ⟩ ⟆ ⟩
+              (delay 2   -- ⟨ permitting ⟅ ⟨ 2 ⟩ ⟆ ⟩
                 (unbox (Tl-⟨⟩ Hd) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
                   (perform send here (return ⋆)))))
 
 -- both runs have to be on the permit: neither half of it covers the
 -- other branch
 
-idling-not-covered-by-the-reading : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ ⟅ ⌈ read ⌉ ⟆)
+idling-not-covered-by-the-reading :
+  ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ permitting ⟅ ⌈ read ⌉ ⟆)
 idling-not-covered-by-the-reading = fails
 
-reading-not-covered-by-the-idling : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⟨ 2 ⟩ ⟆)
+reading-not-covered-by-the-idling :
+  ¬ (uᵣ ·ᵣ opTime read ≾ᵣ permitting ⟅ ⟨ 2 ⟩ ⟆)
 reading-not-covered-by-the-idling = fails
 
 ------------------------------------------------------------------------
@@ -277,18 +284,18 @@ reading-not-covered-by-the-idling = fails
 -- Handling locks its `in` part by the handled computation's grade,
 -- exactly as sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
+forwarded : [] ⊢C⦂ Reading ‼ permitting ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    `in                  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
+identified : Node ⊢C⦂ NodeId ‼ permitting ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    `in                  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- no clause may drop its continuation: its grade lists runs that begin

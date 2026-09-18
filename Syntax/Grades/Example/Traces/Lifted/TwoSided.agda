@@ -40,11 +40,9 @@
 -- an allowance must budget for its greatest (`costʰⁱ`). The field      --
 -- straddles the two, so it needs `cost-≤` to compare them at all.      --
 --                                                                     --
--- THE GREATEST GRADE is `[ u , ⊤ᵍ ]`: the floor already has one, its   --
--- unit guaranteeing nothing, while the cap has none of its own and     --
--- carries the adjoined `⊤ᵍ`. So only the cap's endpoint is extended,   --
--- not the pair, and the greatest grade is not absorbing -- sequencing  --
--- keeps whatever guarantee follows it.                                 --
+-- THE GREATEST GRADE is `[ u , unbounded ]`: the weakest guarantee,    --
+-- which is the floor's unit, under the cap's unbounded allowance. It   --
+-- is not absorbing -- sequencing keeps whatever guarantee follows it.  --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -100,14 +98,13 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided Op _≟ₒ_ Oᶠ
                      ≾-zero-productʳ to ≾ˡᵒ-zero-productʳ;
                      ≾-irrelevant to ≾ˡᵒ-irrelevant)
 
--- the cap's endpoint carries the adjoined `⊤ᵍ`, the allowance grade
--- having no greatest element of its own
+-- the cap's endpoint is `Bounds`, whose `unbounded` is the allowance
+-- grade's own greatest element
 
 open import Syntax.Grades.Example.Traces.Lifted.RightSided Op _≟ₒ_ Oᶜ
-  using (Bounds; only_; ⊤ᵍ; _·ᵇ_; uᵇ; _≟ᴮ_)
-  renaming (·ᵉ-identityʳ to ·ᵇ-identityʳ; ·ᵉ-identityˡ to ·ᵇ-identityˡ;
-            ·ᵉ-assoc to ·ᵇ-assoc;
-            _≾₀_ to _≾ʰⁱ₀_;
+  using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _≟ᴮ_;
+         ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
+  renaming (_≾₀_ to _≾ʰⁱ₀_;
             _≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
             ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans; ≾-⊤ to ≾ʰⁱ-⊤;
             ·-monoˡ to ·ʰⁱ-monoˡ; ·-monoʳ to ·ʰⁱ-monoʳ;
@@ -145,18 +142,18 @@ xs ◇ˢ₀ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? durati
 ◇ˢ₀-irr {xs} {ys} =
   True-irr (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
 
--- against `⊤ᵍ` there is nothing to ask: an unbounded allowance takes at
--- least as long as any guarantee
+-- against `unbounded` there is nothing to ask: an unbounded allowance
+-- takes at least as long as any guarantee
 
 infix 5 _◇ˢ_
 
 _◇ˢ_ : List Trace → Bounds → Set
-xs ◇ˢ (only Q) = xs ◇ˢ₀ traces Q
-xs ◇ˢ ⊤ᵍ       = ⊤
+xs ◇ˢ (within Q) = xs ◇ˢ₀ traces Q
+xs ◇ˢ unbounded  = ⊤
 
 ◇ˢ-irr : {xs : List Trace} {Y : Bounds} → (p q : xs ◇ˢ Y) → p ≡ q
-◇ˢ-irr {xs} {only Q} = ◇ˢ₀-irr {xs} {traces Q}
-◇ˢ-irr {xs} {⊤ᵍ}     tt tt = refl
+◇ˢ-irr {xs} {within Q}  = ◇ˢ₀-irr {xs} {traces Q}
+◇ˢ-irr {xs} {unbounded} tt tt = refl
 
 -- a set is coherent with itself, at whichever member is to hand
 
@@ -173,7 +170,7 @@ xs ◇ˢ ⊤ᵍ       = ⊤
                         (durationˡᵒ≤ʰⁱ t))
               t∈P
 
-◇ˢ-refl : (P : NeTraces) → traces P ◇ˢ (only P)
+◇ˢ-refl : (P : NeTraces) → traces P ◇ˢ (within P)
 ◇ˢ-refl = ◇ˢ₀-refl
 
 -- and coherence survives the language product, durations adding along
@@ -209,10 +206,10 @@ xs ◇ˢ ⊤ᵍ       = ⊤
 
 ◇ˢ-·ˢ : {xs xs' : List Trace} {Y Y' : Bounds}
       → xs ◇ˢ Y → xs' ◇ˢ Y' → (xs ·ˢ xs') ◇ˢ (Y ·ᵇ Y')
-◇ˢ-·ˢ {xs} {xs'} {only Q} {only Q'} p q =
+◇ˢ-·ˢ {xs} {xs'} {within Q} {within Q'} p q =
   ◇ˢ₀-·ˢ {xs} {xs'} {traces Q} {traces Q'} p q
-◇ˢ-·ˢ {_}  {_}   {only _} {⊤ᵍ}      _ _ = tt
-◇ˢ-·ˢ {_}  {_}   {⊤ᵍ}     {_}       _ _ = tt
+◇ˢ-·ˢ {_}  {_}   {within _}  {unbounded} _ _ = tt
+◇ˢ-·ˢ {_}  {_}   {unbounded} {_}         _ _ = tt
 
 ------------------------------------------------------------------------
 -- The carrier
@@ -245,13 +242,13 @@ i₁ ·ᵗˢ i₂ =
   ]
 
 uᵗˢ : TwoSided
-uᵗˢ = [ u , only u , ◇ˢ-refl u ]
+uᵗˢ = [ u , within u , ◇ˢ-refl u ]
 
 -- the greatest grade: the weakest guarantee, which is the unit, under
 -- an unbounded allowance
 
 ⊤ᵗˢ : TwoSided
-⊤ᵗˢ = [ u , ⊤ᵍ , tt ]
+⊤ᵗˢ = [ u , unbounded , tt ]
 
 ·ᵗˢ-identityʳ : (i : TwoSided) → (i ·ᵗˢ uᵗˢ) ≡ i
 ·ᵗˢ-identityʳ i = eqᵗˢ (·-identityʳ (lo i)) (·ᵇ-identityʳ (hi i))
@@ -332,9 +329,9 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 ◇ˢ-≾ : (i : TwoSided) (L : NeTraces) (U : Bounds)
      → lo i ≾ˡᵒ L → hi i ≾ʰⁱ U
      → traces L ◇ˢ U
-◇ˢ-≾ i L ⊤ᵍ       l h = tt
-◇ˢ-≾ i L (only U) l h with hi i | lo◇hi i | h
-... | only Q | coh | h' = ◇ˢ₀-≾ (lo i) Q L U coh l h'
+◇ˢ-≾ i L unbounded  l h = tt
+◇ˢ-≾ i L (within U) l h with hi i | lo◇hi i | h
+... | within Q | coh | h' = ◇ˢ₀-≾ (lo i) Q L U coh l h'
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -367,7 +364,7 @@ i₁ ≟ᵗˢ i₂ with lo i₁ ≟ᴺ lo i₂ | hi i₁ ≟ᴮ hi i₂
 -- Including the natural numbers, and deciding the order
 
 of-natᵗˢ : ℕ → TwoSided
-of-natᵗˢ n = [ of-nat n , only (of-nat n) , ◇ˢ-refl (of-nat n) ]
+of-natᵗˢ n = [ of-nat n , within (of-nat n) , ◇ˢ-refl (of-nat n) ]
 
 infix 5 _≾ᵗˢ?_
 
@@ -397,8 +394,8 @@ two-sided = record
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗˢ-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵗˢ-irrelevant {c} {d}
   ; of-nat          = of-natᵗˢ
-  ; of-nat-zero     = eqᵗˢ of-nat-zero (cong only_ of-nat-zero)
+  ; of-nat-zero     = eqᵗˢ of-nat-zero (cong within_ of-nat-zero)
   ; of-nat-plus     = λ {m} {n} →
                         eqᵗˢ (of-nat-plus {m} {n})
-                             (cong only_ (of-nat-plus {m} {n}))
+                             (cong within_ (of-nat-plus {m} {n}))
   }

@@ -24,29 +24,13 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
-import Syntax.Grades.Example.Worked.Operations as Ops
-
 open import Syntax.Grades.Example.Worked.Operations
-  hiding (⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆; _·_)
 
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using (right-sided; Permits; only_; ⊤ᵍ; _≾_; _≾?_)
-  renaming (_·ᵖ_ to _·_) public
+  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_; _≾?_) public
 
 order : Grade._≾_ right-sided ≡ _≾_
 order = refl
-
--- a written-out list of permitted runs is a grade under `only`; `⊤ᵍ`
--- permits any run at all, possibly infinite
-
-⟅_⟆ : Trace → Permits
-⟅ t ⟆ = only Ops.⟅ t ⟆
-
-⟅_∣_⟆ : Trace → Trace → Permits
-⟅ t ∣ u ⟆ = only Ops.⟅ t ∣ u ⟆
-
-⟅_∣_∣_⟆ : Trace → Trace → Trace → Permits
-⟅ t ∣ u ∣ v ⟆ = only Ops.⟅ t ∣ u ∣ v ⟆
 
 holds : {P Q : Permits} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
@@ -54,8 +38,8 @@ holds {p = p} = toWitness p
 fails : {P Q : Permits} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 fails {p = p} = toWitnessFalse p
 
--- `⟅ ε ⟆` leaves too little for the implicit arguments to be found, so
--- the endpoints are given explicitly where it appears
+-- `permitting ⟅ ε ⟆` leaves too little for the implicit arguments to
+-- be found, so the endpoints are given explicitly where it appears
 
 holdsᵉ : (P Q : Permits) {p : True (P ≾? Q)} → P ≾ Q
 holdsᵉ P Q {p} = toWitness p
@@ -71,11 +55,12 @@ failsᵉ P Q {p} = toWitnessFalse p
 -- never mean allowing a run that is not listed.
 
 permit-a-second-run :
-  ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  permitting ⟅ ⌈ read ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 permit-a-second-run = holds
 
 no-narrowing :
-  ¬ (⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
+  ¬ (permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+     ≾ permitting ⟅ ⌈ read ⌉ ⟆)
 no-narrowing = fails
 
 -- `return` has grade `{ ε }`, and it weakens only to grades that list
@@ -83,31 +68,33 @@ no-narrowing = fails
 -- anywhere
 
 pure-fits-where-stopping-is-listed :
-  ⟅ ε ⟆ ≾ ⟅ ε ∣ ⌈ read ⌉ ⟆
-pure-fits-where-stopping-is-listed = holdsᵉ ⟅ ε ⟆ ⟅ ε ∣ ⌈ read ⌉ ⟆
+  permitting ⟅ ε ⟆ ≾ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
+pure-fits-where-stopping-is-listed =
+  holdsᵉ (permitting ⟅ ε ⟆) (permitting ⟅ ε ∣ ⌈ read ⌉ ⟆)
 
 pure-does-not-fit-elsewhere :
-  ¬ (⟅ ε ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
-pure-does-not-fit-elsewhere = failsᵉ ⟅ ε ⟆ ⟅ ⌈ read ⌉ ⟆
+  ¬ (permitting ⟅ ε ⟆ ≾ permitting ⟅ ⌈ read ⌉ ⟆)
+pure-does-not-fit-elsewhere =
+  failsᵉ (permitting ⟅ ε ⟆) (permitting ⟅ ⌈ read ⌉ ⟆)
 
 ------------------------------------------------------------------------
--- The adjoined point
+-- The greatest grade
 --
--- `⊤ᵍ` permits any run at all, so every written-out list weakens to it,
--- and it weakens to none of them -- a finite list leaves some run
--- unpermitted. Permitting everything survives sequencing, `⊤ᵍ` being
--- absorbing.
+-- `any-run` permits any run at all, so every written-out list weakens
+-- to it, and it weakens to none of them -- a finite list leaves some
+-- run unpermitted. Permitting everything survives sequencing,
+-- `any-run` being absorbing.
 
 everything-weakens-to-the-top :
-  ⟅ ⌈ read ⌉ ⟆ ≾ ⊤ᵍ
-everything-weakens-to-the-top = holdsᵉ ⟅ ⌈ read ⌉ ⟆ ⊤ᵍ
+  permitting ⟅ ⌈ read ⌉ ⟆ ≾ any-run
+everything-weakens-to-the-top = holdsᵉ (permitting ⟅ ⌈ read ⌉ ⟆) any-run
 
 the-top-weakens-to-nothing-else :
-  ¬ (⊤ᵍ ≾ ⟅ ⌈ read ⌉ ⟆)
-the-top-weakens-to-nothing-else = failsᵉ ⊤ᵍ ⟅ ⌈ read ⌉ ⟆
+  ¬ (any-run ≾ permitting ⟅ ⌈ read ⌉ ⟆)
+the-top-weakens-to-nothing-else = failsᵉ any-run (permitting ⟅ ⌈ read ⌉ ⟆)
 
 the-top-absorbs :
-  (⊤ᵍ · ⟅ ⌈ read ⌉ ⟆) ≡ ⊤ᵍ
+  (any-run ·ᵖ permitting ⟅ ⌈ read ⌉ ⟆) ≡ any-run
 the-top-absorbs = refl
 
 ------------------------------------------------------------------------
@@ -119,17 +106,18 @@ the-top-absorbs = refl
 -- time pay for operations; here neither does.
 
 a-store-is-not-three-ticks :
-  ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆)
+  ¬ (permitting ⟅ ⌈ write ⌉ ⟆ ≾ permitting ⟅ ⟨ 3 ⟩ ⟆)
 a-store-is-not-three-ticks = fails
 
 a-budget-buys-nothing :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  ¬ (permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 a-budget-buys-nothing = fails
 
 -- what a grade must do instead is list the run outright
 
 listing-it-works :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 listing-it-works = holds
 
 ------------------------------------------------------------------------
@@ -140,15 +128,16 @@ listing-it-works = holds
 -- its result by listing what each branch may do.
 
 union-is-a-join-inˡ :
-  ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+  permitting ⟅ ⌈ read ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 union-is-a-join-inˡ = holds
 
 union-is-a-join-inʳ :
-  ⟅ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+  permitting ⟅ ⌈ send ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
 union-is-a-join-inʳ = holds
 
 union-is-a-join-least :
-  ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆
+  permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+  ≾ permitting ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆
 union-is-a-join-least = holds
 
 ------------------------------------------------------------------------
@@ -159,12 +148,13 @@ union-is-a-join-least = holds
 -- listed continuation.
 
 sequencing-pairs-the-runs :
-  (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆)
-  ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+  (permitting ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵖ permitting ⟅ ⌈ send ⌉ ⟆)
+  ≾ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 sequencing-pairs-the-runs = holds
 
 sequencing-adds-nothing-else :
-  ¬ ((⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆) ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆)
+  ¬ ((permitting ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵖ permitting ⟅ ⌈ send ⌉ ⟆)
+     ≾ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆)
 sequencing-adds-nothing-else = fails
 
 ------------------------------------------------------------------------
@@ -176,23 +166,23 @@ sequencing-adds-nothing-else = fails
 -- every run that may have happened is one of them.
 
 the-box-tolerates : Permits
-the-box-tolerates = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+the-box-tolerates = permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 
 a-listed-run-opens-the-box :
-  ⟅ ⌈ read ⌉ ⟆ ≾ the-box-tolerates
+  permitting ⟅ ⌈ read ⌉ ⟆ ≾ the-box-tolerates
 a-listed-run-opens-the-box = holds
 
 an-unlisted-run-does-not :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
+  ¬ (permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
 an-unlisted-run-does-not = fails
 
 -- and a branching computation opens it only if *every* branch is
 -- listed, the elapsed grade being read disjunctively too
 
 both-branches-listed :
-  ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ the-box-tolerates
+  permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ the-box-tolerates
 both-branches-listed = holds
 
 one-branch-not-listed :
-  ¬ (⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
+  ¬ (permitting ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ ≾ the-box-tolerates)
 one-branch-not-listed = fails

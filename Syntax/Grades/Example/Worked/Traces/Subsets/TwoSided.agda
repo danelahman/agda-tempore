@@ -4,8 +4,8 @@
 -- A grade `[ P , Q ]` says `P ⊆ X ⊆ Q`: every run listed in `P` is one --
 -- the computation can still exhibit, and every run it has is listed in --
 -- `Q`. Both endpoints compare by equality, so the interval is the      --
--- plain one in the subset lattice. Above all such pairs sits the       --
--- adjoined `⊤ᵍ`, which demands nothing and permits everything.         --
+-- plain one in the subset lattice. Above all such pairs sits           --
+-- `unconstrained`, which demands nothing and permits everything.       --
 --                                                                     --
 -- The two endpoints are read in opposite directions -- `P`             --
 -- conjunctively, `Q` disjunctively -- so weakening drops members below --
@@ -28,7 +28,8 @@ open import Util.Equality
 open import Syntax.Grades.Example.Worked.Operations
 
 open import Syntax.Grades.Example.Traces.Subsets.TwoSided Op _≟ₒ_
-  using (TwoSided; [_,_,_]; lo; hi; _◇_; ◇-refl; Interval; only_; ⊤ᵍ; _·ᴵ_;
+  using (TwoSided; [_,_,_]; lo; hi; _◇_; ◇-refl;
+         Interval; between_; unconstrained; _·ᴵ_;
          two-sided; _≾ᴵ_; _≾ᴵ?_) public
 
 order : Grade._≾_ two-sided ≡ _≾ᴵ_
@@ -40,18 +41,17 @@ holds i j {p} = toWitness p
 fails : (i j : Interval) {p : False (i ≾ᴵ? j)} → ¬ (i ≾ᴵ j)
 fails i j {p} = toWitnessFalse p
 
--- a written-out pair of run lists is a grade under `only`, its decided
--- coherence field left implicit; `⊤ᵍ` demands nothing and permits
--- everything
+-- a written-out pair of run lists is a grade under `between`, its
+-- decided coherence field left implicit
 
 ⟪_,_⟫ : (P Q : NeTraces) {coh : traces P ◇ traces Q} → Interval
-⟪ P , Q ⟫ {coh} = only [ P , Q , coh ]
+⟪ P , Q ⟫ {coh} = between [ P , Q , coh ]
 
 -- a deterministic computation is pinned exactly: its one run is both
 -- the only one reachable and the only one permitted
 
 exact : (t : Trace) → Interval
-exact t = only [ ⟅ t ⟆ , ⟅ t ⟆ , ◇-refl ⟅ t ⟆ ]
+exact t = between [ ⟅ t ⟆ , ⟅ t ⟆ , ◇-refl ⟅ t ⟆ ]
 
 -- a two-branch computation, graded by what its branches do
 
@@ -79,15 +79,15 @@ branching-meets-it = holds _ _
 -- a computation that cannot read at all fails the floor, though it is
 -- well inside the cap
 
-storing-only-fails-the-floor :
+storing-between-fails-the-floor :
   ¬ (exact (⌈ read ⌉ ∙ ⌈ write ⌉) ≾ᴵ contract)
-storing-only-fails-the-floor = fails _ _
+storing-between-fails-the-floor = fails _ _
 
-storing-only-is-inside-the-cap :
+storing-between-is-inside-the-cap :
   exact (⌈ read ⌉ ∙ ⌈ write ⌉)
   ≾ᴵ ⟪ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
      , ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ⟫
-storing-only-is-inside-the-cap = holds _ _
+storing-between-is-inside-the-cap = holds _ _
 
 -- and one that transmits fails the cap, though it does read
 
@@ -155,20 +155,20 @@ sequencing :
 sequencing = holds _ _
 
 ------------------------------------------------------------------------
--- The adjoined point
+-- The greatest grade
 --
 -- No pair is greatest: the floor's would demand nothing, which is the
--- empty set and excluded. `⊤ᵍ` is that pair's stand-in -- it demands
--- nothing and permits everything -- and it is absorbing.
+-- empty set and excluded. `unconstrained` is that pair's stand-in -- it
+-- demands nothing and permits everything -- and it is absorbing.
 
 everything-weakens-to-the-top :
-  contract ≾ᴵ ⊤ᵍ
-everything-weakens-to-the-top = holds contract ⊤ᵍ
+  contract ≾ᴵ unconstrained
+everything-weakens-to-the-top = holds contract unconstrained
 
 the-top-weakens-to-no-pair :
-  ¬ (⊤ᵍ ≾ᴵ contract)
-the-top-weakens-to-no-pair = fails ⊤ᵍ contract
+  ¬ (unconstrained ≾ᴵ contract)
+the-top-weakens-to-no-pair = fails unconstrained contract
 
 the-top-absorbs :
-  (⊤ᵍ ·ᴵ contract) ≡ ⊤ᵍ
+  (unconstrained ·ᴵ contract) ≡ unconstrained
 the-top-absorbs = refl

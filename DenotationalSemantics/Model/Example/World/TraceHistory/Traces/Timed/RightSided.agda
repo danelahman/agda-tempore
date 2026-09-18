@@ -18,7 +18,7 @@
 -- reflexivity is the empty run, transitivity is monotonicity of the   --
 -- trace product, and covariance is transitivity of the order.         --
 --                                                                    --
--- The grade's adjoined top `⊤ᵍ` lists no bound, so it leaves the      --
+-- The grade's `unbounded` lists no bound, so it leaves the            --
 -- continuation unconstrained and asks only that `w'` extend `w`.      --
 ------------------------------------------------------------------------
 
@@ -48,7 +48,8 @@ open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (right-sided; Bounds; only_; ⊤ᵍ; _·ᵇ_; _≾_)
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 open WithDecEq _≟ₒ_ using (True-irr)
@@ -61,24 +62,24 @@ open import DenotationalSemantics.Model.World
 -- Reach `w'` from `w` by appending a continuation that stays within one
 -- of the listed bounds.
 
--- the condition on the continuation, vacuous at `⊤ᵍ`
+-- the condition on the continuation, vacuous at `unbounded`
 
 Within : Trace → Bounds → Set
-Within cont (only P) = True (any? (λ p → cont ≼ᵃ? p) (traces P))
-Within cont ⊤ᵍ       = ⊤
+Within cont (within P) = True (any? (λ p → cont ≼ᵃ? p) (traces P))
+Within cont unbounded       = ⊤
 
 Within-irr : {cont : Trace} {P : Bounds} → (p q : Within cont P) → p ≡ q
-Within-irr {cont} {only P} = True-irr (any? (λ p → cont ≼ᵃ? p) (traces P))
-Within-irr {_}    {⊤ᵍ}    tt tt = refl
+Within-irr {cont} {within P} = True-irr (any? (λ p → cont ≼ᵃ? p) (traces P))
+Within-irr {_}    {unbounded}    tt tt = refl
 
 infix 5 _⊑ᵇ[_]_
 
 record _⊑ᵇ[_]_ (w : Trace) (P : Bounds) (w' : Trace) : Set where
   constructor mkᵇ
   field
-    cont    : Trace                                          -- continuation
-    within  : Within cont P                                  -- within some bound
-    extends : w ∙ cont ≡ w'                                  -- `w'` extends `w`
+    cont    : Trace                                      -- continuation
+    bounded : Within cont P                              -- within some bound
+    extends : w ∙ cont ≡ w'                              -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
 
@@ -92,7 +93,7 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 -- reflexivity at the unit grade `{ ε }`: the empty continuation stays
 -- within the empty bound
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ only u ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ (within u) ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
       (fromWitness {a? = any? (λ p → ε ≼ᵃ? p) (traces u)} (here (≼ᵃ-refl ε)))
@@ -103,11 +104,11 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 
 ⊑ᵇ-trans : ∀ {P Q w w' w''}
          → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P ·ᵇ Q ] w''
-⊑ᵇ-trans {only _} {⊤ᵍ}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+⊑ᵇ-trans {within _} {unbounded}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
   mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
-⊑ᵇ-trans {⊤ᵍ}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+⊑ᵇ-trans {unbounded}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
   mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
-⊑ᵇ-trans {only P} {only Q} {w} (mkᵇ t₁ w₁ eq₁) (mkᵇ t₂ w₂ eq₂)
+⊑ᵇ-trans {within P} {within Q} {w} (mkᵇ t₁ w₁ eq₁) (mkᵇ t₂ w₂ eq₂)
   with find (toWitness w₁) | find (toWitness w₂)
 ... | a , a∈P , t₁≼a | b , b∈Q , t₂≼b =
       mkᵇ (t₁ ∙ t₂)
@@ -120,9 +121,9 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 -- within one of the weaker grade's
 
 ⊑ᵇ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵇ[ P ] w' → w ⊑ᵇ[ Q ] w'
-⊑ᵇ-mono {_}      {⊤ᵍ}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
-⊑ᵇ-mono {⊤ᵍ}    {only _} ()
-⊑ᵇ-mono {only P} {only Q} rel (mkᵇ cont wit eq) =
+⊑ᵇ-mono {_}      {unbounded}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
+⊑ᵇ-mono {unbounded}    {within _} ()
+⊑ᵇ-mono {within P} {within Q} rel (mkᵇ cont wit eq) =
   mkᵇ cont (fromWitness within') eq
   where
     within' : Any (λ p → cont ≼ᵃ p) (traces Q)

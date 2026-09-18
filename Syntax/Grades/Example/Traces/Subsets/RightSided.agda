@@ -20,10 +20,10 @@
 -- union of two grades is their join, and `{ ε }` -- permitting nothing --
 -- but the empty run -- is the least grade.                             --
 --                                                                     --
--- There is no greatest one: no finite list permits every run. So `⊤ᵍ`   --
--- is adjoined, permitting any run at all, possibly infinite, and       --
--- absorbing. It is *not* the empty list, which permits nothing and     --
--- stays excluded.                                                      --
+-- No list is greatest: no finite one permits every run. The carrier    --
+-- therefore carries `any-run` as a point of its own, permitting any    --
+-- run at all, possibly infinite, and absorbing. It is *not* the empty  --
+-- list, which permits nothing and stays excluded.                      --
 --                                                                     --
 -- READINGS. As an *effect* grade this is a list of the runs a          --
 -- computation may have, and `coerce` adds runs to that list. As a      --
@@ -38,12 +38,13 @@ open import Util.Equality
 module Syntax.Grades.Example.Traces.Subsets.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
-open import Data.Unit using (tt)
+open import Data.Empty using (⊥)
+open import Data.Nat.Base using (ℕ; _+_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Syntax.Grades
-open import Syntax.Grades.WithTop
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
@@ -89,47 +90,168 @@ _≾₀?_ : (P Q : NeTraces) → Dec (P ≾₀ Q)
 P ≾₀? Q = traces P ⊑? traces Q
 
 ------------------------------------------------------------------------
--- The sets of traces as an ordered monoid, before a top is adjoined
+-- The carrier: a written-out list of permitted runs, or any run at all
 
-base : OrderedMonoid
-base = record
-  { Carrier         = NeTraces
-  ; _·_             = _·_
-  ; u               = u
-  ; ·-identityʳ     = ·-identityʳ
-  ; ·-identityˡ     = ·-identityˡ
-  ; ·-assoc         = ·-assoc
-  ; _≾_             = _≾₀_
-  ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ₀ {c} {x} {y}
-  ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ₀ {c} {x} {y}
-  ; ≾-refl          = λ {x} → ≾₀-refl {x}
-  ; ≾-trans         = λ {i} {j} {k} → ≾₀-trans {i} {j} {k}
-  ; _≡?_            = _≟ᴺ_
-  ; ≾-zero-productˡ = λ {c} {d} → ≾₀-zero-productˡ {c} {d}
-  ; ≾-zero-productʳ = λ {c} {d} → ≾₀-zero-productʳ {c} {d}
-  ; ≾-irrelevant    = λ {c} {d} → ≾₀-irrelevant {c} {d}
-  ; of-nat          = of-nat
-  ; of-nat-zero     = of-nat-zero
-  ; of-nat-plus     = λ {m} {n} → of-nat-plus {m} {n}
-  }
+infix 50 permitting_
+
+data Permits : Set₀ where
+  permitting_ : NeTraces → Permits
+  any-run     : Permits
+
+permitting-inj : {P Q : NeTraces} → permitting P ≡ permitting Q → P ≡ Q
+permitting-inj refl = refl
 
 ------------------------------------------------------------------------
--- The grade of sets of timed traces, read as upper bounds, with `⊤ᵍ`
--- adjoined above them
+-- The monoid: the language product, with `any-run` absorbing
 
-open Adjoin base public
-  renaming (Ext to Permits; _·ᵉ_ to _·ᵖ_; uᵉ to uᵖ; _≾ᵉ_ to _≾_;
-            ≾ᵉ-⊤ to ≾-⊤; ≾ᵉ-refl to ≾-refl; ≾ᵉ-trans to ≾-trans;
-            ≾ᵉ-irrelevant to ≾-irrelevant;
-            ≾ᵉ-zero-productˡ to ≾-zero-productˡ;
-            ≾ᵉ-zero-productʳ to ≾-zero-productʳ;
-            ·ᵉ-monoˡ-≾ᵉ to ·-monoˡ; ·ᵉ-monoʳ-≾ᵉ to ·-monoʳ;
-            _≡ᵉ?_ to _≟ᴾ_; withTop to right-sided)
+infixl 7 _·ᵖ_
+
+_·ᵖ_ : Permits → Permits → Permits
+(permitting P) ·ᵖ (permitting Q) = permitting (P · Q)
+(permitting _) ·ᵖ any-run        = any-run
+any-run        ·ᵖ _              = any-run
+
+uᵖ : Permits
+uᵖ = permitting u
+
+·ᵖ-identityʳ : (P : Permits) → P ·ᵖ uᵖ ≡ P
+·ᵖ-identityʳ (permitting P) = cong permitting_ (·-identityʳ P)
+·ᵖ-identityʳ any-run        = refl
+
+·ᵖ-identityˡ : (P : Permits) → uᵖ ·ᵖ P ≡ P
+·ᵖ-identityˡ (permitting P) = cong permitting_ (·-identityˡ P)
+·ᵖ-identityˡ any-run        = refl
+
+·ᵖ-assoc : (P Q R : Permits) → (P ·ᵖ Q) ·ᵖ R ≡ P ·ᵖ (Q ·ᵖ R)
+·ᵖ-assoc (permitting P) (permitting Q) (permitting R) =
+  cong permitting_ (·-assoc P Q R)
+·ᵖ-assoc (permitting _) (permitting _) any-run        = refl
+·ᵖ-assoc (permitting _) any-run        (permitting _) = refl
+·ᵖ-assoc (permitting _) any-run        any-run        = refl
+·ᵖ-assoc any-run        _              _              = refl
+
+------------------------------------------------------------------------
+-- The order: inclusion between lists, with `any-run` greatest
+
+infix 5 _≾_
+
+_≾_ : Permits → Permits → Set
+(permitting P) ≾ (permitting Q) = P ≾₀ Q
+(permitting _) ≾ any-run        = ⊤
+any-run        ≾ (permitting _) = ⊥
+any-run        ≾ any-run        = ⊤
+
+≾-⊤ : (P : Permits) → P ≾ any-run
+≾-⊤ (permitting _) = tt
+≾-⊤ any-run        = tt
+
+≾-refl : {P : Permits} → P ≾ P
+≾-refl {permitting P} = ≾₀-refl {P}
+≾-refl {any-run}      = tt
+
+≾-trans : {P Q R : Permits} → P ≾ Q → Q ≾ R → P ≾ R
+≾-trans {permitting P} {permitting Q} {permitting R} p q =
+  ≾₀-trans {P} {Q} {R} p q
+≾-trans {permitting _} {permitting _} {any-run}      p q = tt
+≾-trans {permitting _} {any-run}      {permitting _} p ()
+≾-trans {permitting _} {any-run}      {any-run}      p q = tt
+≾-trans {any-run}      {permitting _} {_}            () q
+≾-trans {any-run}      {any-run}      {permitting _} p ()
+≾-trans {any-run}      {any-run}      {any-run}      p q = tt
+
+≾-irrelevant : {P Q : Permits} → (p q : P ≾ Q) → p ≡ q
+≾-irrelevant {permitting P} {permitting Q} p  q  = ≾₀-irrelevant {P} {Q} p q
+≾-irrelevant {permitting _} {any-run}      tt tt = refl
+≾-irrelevant {any-run}      {permitting _} () q
+≾-irrelevant {any-run}      {any-run}      tt tt = refl
+
+·-monoˡ : {C P Q : Permits} → P ≾ Q → (P ·ᵖ C) ≾ (Q ·ᵖ C)
+·-monoˡ {permitting C} {permitting P} {permitting Q} p =
+  ·-monoˡ₀ {C} {P} {Q} p
+·-monoˡ {any-run}      {permitting _} {permitting _} p = tt
+·-monoˡ {permitting _} {permitting _} {any-run}      p = tt
+·-monoˡ {any-run}      {permitting _} {any-run}      p = tt
+·-monoˡ {_}            {any-run}      {permitting _} ()
+·-monoˡ {permitting _} {any-run}      {any-run}      p = tt
+·-monoˡ {any-run}      {any-run}      {any-run}      p = tt
+
+·-monoʳ : {C P Q : Permits} → P ≾ Q → (C ·ᵖ P) ≾ (C ·ᵖ Q)
+·-monoʳ {permitting C} {permitting P} {permitting Q} p =
+  ·-monoʳ₀ {C} {P} {Q} p
+·-monoʳ {any-run}      {permitting _} {permitting _} p = tt
+·-monoʳ {permitting _} {permitting _} {any-run}      p = tt
+·-monoʳ {any-run}      {permitting _} {any-run}      p = tt
+·-monoʳ {_}            {any-run}      {permitting _} ()
+·-monoʳ {permitting _} {any-run}      {any-run}      p = tt
+·-monoʳ {any-run}      {any-run}      {any-run}      p = tt
+
+------------------------------------------------------------------------
+-- Zero-product property
+--
+-- `any-run` is above the unit and not below it, so its clauses are
+-- vacuous and the property is the sets' own.
+
+≾-zero-productˡ : {P Q : Permits} → (P ·ᵖ Q) ≾ uᵖ → P ≾ uᵖ
+≾-zero-productˡ {permitting P} {permitting Q} p = ≾₀-zero-productˡ {P} {Q} p
+≾-zero-productˡ {permitting _} {any-run}      ()
+≾-zero-productˡ {any-run}      {_}            ()
+
+≾-zero-productʳ : {P Q : Permits} → (P ·ᵖ Q) ≾ uᵖ → Q ≾ uᵖ
+≾-zero-productʳ {permitting P} {permitting Q} p = ≾₀-zero-productʳ {P} {Q} p
+≾-zero-productʳ {permitting _} {any-run}      ()
+≾-zero-productʳ {any-run}      {_}            ()
+
+------------------------------------------------------------------------
+-- Decidable equality, the inclusion of ℕ, and deciding the order
+
+_≟ᴾ_ : DecidableEquality Permits
+(permitting P) ≟ᴾ (permitting Q) with P ≟ᴺ Q
+... | yes p = yes (cong permitting_ p)
+... | no ¬p = no λ eq → ¬p (permitting-inj eq)
+(permitting _) ≟ᴾ any-run        = no λ ()
+any-run        ≟ᴾ (permitting _) = no λ ()
+any-run        ≟ᴾ any-run        = yes refl
+
+of-natᵖ : ℕ → Permits
+of-natᵖ n = permitting (of-nat n)
+
+of-natᵖ-zero : of-natᵖ 0 ≡ uᵖ
+of-natᵖ-zero = cong permitting_ of-nat-zero
+
+of-natᵖ-plus : {m n : ℕ} → of-natᵖ (m + n) ≡ of-natᵖ m ·ᵖ of-natᵖ n
+of-natᵖ-plus {m} {n} = cong permitting_ (of-nat-plus {m} {n})
 
 infix 5 _≾?_
 
 _≾?_ : (P Q : Permits) → Dec (P ≾ Q)
-(only P) ≾? (only Q) = P ≾₀? Q
-(only _) ≾? ⊤ᵍ       = yes tt
-⊤ᵍ       ≾? (only _) = no λ ()
-⊤ᵍ       ≾? ⊤ᵍ       = yes tt
+(permitting P) ≾? (permitting Q) = P ≾₀? Q
+(permitting _) ≾? any-run        = yes tt
+any-run        ≾? (permitting _) = no λ ()
+any-run        ≾? any-run        = yes tt
+
+------------------------------------------------------------------------
+-- The grade of sets of timed traces, read as upper bounds
+
+right-sided : Grade
+right-sided = record
+  { Carrier         = Permits
+  ; _·_             = _·ᵖ_
+  ; u               = uᵖ
+  ; ·-identityʳ     = ·ᵖ-identityʳ
+  ; ·-identityˡ     = ·ᵖ-identityˡ
+  ; ·-assoc         = ·ᵖ-assoc
+  ; _≾_             = _≾_
+  ; ⊤               = any-run
+  ; ≾-⊤             = ≾-⊤
+  ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ {c} {x} {y}
+  ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
+  ; ≾-refl          = λ {x} → ≾-refl {x}
+  ; ≾-trans         = λ {i} {j} {k} → ≾-trans {i} {j} {k}
+  ; _≡?_            = _≟ᴾ_
+  ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
+  ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
+  ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
+  ; of-nat          = of-natᵖ
+  ; of-nat-zero     = of-natᵖ-zero
+  ; of-nat-plus     = λ {m} {n} → of-natᵖ-plus {m} {n}
+  }

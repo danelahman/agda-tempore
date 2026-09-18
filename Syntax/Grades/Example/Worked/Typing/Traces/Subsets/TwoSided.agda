@@ -14,8 +14,8 @@
 -- Both consequences of the conjunctive floor carry over: `unbox` needs --
 -- precisely the run the box names, and `no-common-listed-grade` below  --
 -- shows that no *listed* pair types a conditional whose branches       --
--- perform different operations. The adjoined `⊤ᵍ` does type it,        --
--- demanding no run at all; below `⊤ᵍ` what is left is branching over   --
+-- perform different operations. `unconstrained` does type it,          --
+-- demanding no run at all; below it what is left is branching over     --
 -- *data*, which needs no coercion.                                     --
 --                                                                     --
 -- The comments inside the programs say what each former appends to the --
@@ -42,7 +42,7 @@ open import Syntax.Grades.Example.Worked.Operations
          ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided
-  using (TwoSided; lo; Interval; only_; ⊤ᵍ; ⟪_,_⟫;
+  using (TwoSided; lo; Interval; between_; unconstrained; ⟪_,_⟫;
          two-sided; holds; fails; exact)
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
@@ -120,8 +120,8 @@ demanding-more = fails _ _
 -- Conditional branching
 --
 -- The floor refuses a common listed grade for branches that do
--- different things, exactly as at the one-sided floor, and the adjoined
--- `⊤ᵍ` admits both.
+-- different things, exactly as at the one-sided floor, and
+-- `unconstrained` admits both.
 
 member : (P : NeTraces) → Σ Trace (_∈ traces P)
 member (neTraces (t ∷ˡ _) _) = t , hereᴬ refl
@@ -130,26 +130,26 @@ only-member : {s t : Trace} → s ∈ (t ∷ˡ []ˡ) → s ≡ t
 only-member (hereᴬ p) = p
 
 no-common-listed-grade : (grade : TwoSided)
-                       → opTime send  ·ₑ uₑ ≾ₑ only grade
-                       → opTime write ·ₑ uₑ ≾ₑ only grade
+                       → opTime send  ·ₑ uₑ ≾ₑ between grade
+                       → opTime write ·ₑ uₑ ≾ₑ between grade
                        → ⊥
 no-common-listed-grade grade send-fits write-fits with member (lo grade)
 ... | t , t∈grade with only-member (∈-⊑ (proj₁ send-fits) t∈grade)
 ...   | refl with only-member (∈-⊑ (proj₁ write-fits) t∈grade)
 ...     | ()
 
--- the adjoined point is a common grade: it demands no run at all and
+-- `unconstrained` is a common grade: it demands no run at all and
 -- permits every run, so both branches weaken to it
 
-transmitting-fits-the-top : opTime send ·ₑ uₑ ≾ₑ ⊤ᵍ
+transmitting-fits-the-top : opTime send ·ₑ uₑ ≾ₑ unconstrained
 transmitting-fits-the-top = ≾-⊤ₑ (opTime send ·ₑ uₑ)
 
-storing-fits-the-top : opTime write ·ₑ uₑ ≾ₑ ⊤ᵍ
+storing-fits-the-top : opTime write ·ₑ uₑ ≾ₑ unconstrained
 storing-fits-the-top = ≾-⊤ₑ (opTime write ·ₑ uₑ)
 
--- so the conditional every listed pair refuses is typed at `⊤ᵍ`
+-- so the conditional every listed pair refuses is typed at `unconstrained`
 
-branching-at-the-top : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⊤ᵍ
+branching-at-the-top : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ unconstrained
 branching-at-the-top =
   if eternal-var Boolₑ (Tl-∷ Hd)
     `then coerce transmitting-fits-the-top (perform send  here (return ⋆))
@@ -225,15 +225,15 @@ claiming-at-once = fails uᵣ demand
 -- cap, which may list as many runs as it likes -- and there the
 -- comparison is a genuine inclusion rather than an equality.
 
--- `⊤ᵍ` demands no run at all
+-- `unconstrained` demands no run at all
 
 _∈ᵈ_ : Trace → R → Set
-s ∈ᵈ (only ρ) = s ∈ traces (lo ρ)
-s ∈ᵈ ⊤ᵍ       = ⊥
+s ∈ᵈ (between ρ) = s ∈ traces (lo ρ)
+s ∈ᵈ unconstrained       = ⊥
 
 every-demand-is-the-elapsed-run :
   (t : Trace) (ρ : R) → exact t ≾ᵣ ρ → (s : Trace) → s ∈ᵈ ρ → s ≡ t
-every-demand-is-the-elapsed-run t (only ρ) sub s s∈ρ =
+every-demand-is-the-elapsed-run t (between ρ) sub s s∈ρ =
   only-member (∈-⊑ (proj₁ sub) s∈ρ)
 
 -- so a box demanding two runs is out of reach of any one of them

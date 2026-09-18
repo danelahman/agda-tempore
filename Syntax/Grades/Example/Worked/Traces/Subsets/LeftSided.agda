@@ -6,8 +6,8 @@
 -- a separate demand -- so a longer list demands more, dropping members --
 -- weakens, and `{ ε }` demands only that stopping be possible. That is --
 -- still a demand, so `{ ε }` is above exactly the lists that carry the --
--- empty run and no written-out list is above them all; the adjoined    --
--- `⊤ᵍ`, which demands nothing at all, is.                              --
+-- empty run and no written-out list is above them all; `no-demand`,    --
+-- which demands nothing at all, is.                                    --
 --                                                                     --
 -- That is the reverse of every other endpoint in this development, and --
 -- it is forced: with equality as the comparison, the disjunctive       --
@@ -29,29 +29,13 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
-import Syntax.Grades.Example.Worked.Operations as Ops
-
 open import Syntax.Grades.Example.Worked.Operations
-  hiding (⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆; _·_)
 
 open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
-  using (left-sided; Demands; only_; ⊤ᵍ; _≾_; _≾?_)
-  renaming (_·ᵈ_ to _·_) public
+  using (left-sided; Demands; demanding_; no-demand; _·ᵈ_; _≾_; _≾?_) public
 
 order : Grade._≾_ left-sided ≡ _≾_
 order = refl
-
--- a written-out list of demanded runs is a grade under `only`; `⊤ᵍ`
--- demands no run at all
-
-⟅_⟆ : Trace → Demands
-⟅ t ⟆ = only Ops.⟅ t ⟆
-
-⟅_∣_⟆ : Trace → Trace → Demands
-⟅ t ∣ u ⟆ = only Ops.⟅ t ∣ u ⟆
-
-⟅_∣_∣_⟆ : Trace → Trace → Trace → Demands
-⟅ t ∣ u ∣ v ⟆ = only Ops.⟅ t ∣ u ∣ v ⟆
 
 holds : {P Q : Demands} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
@@ -73,41 +57,43 @@ failsᵉ P Q {p} = toWitnessFalse p
 -- claiming a further one is.
 
 forget-a-branch :
-  ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ demanding ⟅ ⌈ read ⌉ ⟆
 forget-a-branch = holds
 
 no-new-demand :
-  ¬ (⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+  ¬ (demanding ⟅ ⌈ read ⌉ ⟆ ≾ demanding ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
 no-new-demand = fails
 
 -- `{ ε }` demands only that stopping be possible, so every list that
 -- carries the empty run weakens to it -- and no other list does
 
 anything-reachable-weakens-to-stopping :
-  ⟅ ε ∣ ⌈ read ⌉ ⟆ ≾ ⟅ ε ⟆
-anything-reachable-weakens-to-stopping = holdsᵉ ⟅ ε ∣ ⌈ read ⌉ ⟆ ⟅ ε ⟆
+  demanding ⟅ ε ∣ ⌈ read ⌉ ⟆ ≾ demanding ⟅ ε ⟆
+anything-reachable-weakens-to-stopping =
+  holdsᵉ (demanding ⟅ ε ∣ ⌈ read ⌉ ⟆) (demanding ⟅ ε ⟆)
 
 but-stopping-must-be-reachable :
-  ¬ (⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ε ⟆)
-but-stopping-must-be-reachable = failsᵉ ⟅ ⌈ read ⌉ ⟆ ⟅ ε ⟆
+  ¬ (demanding ⟅ ⌈ read ⌉ ⟆ ≾ demanding ⟅ ε ⟆)
+but-stopping-must-be-reachable =
+  failsᵉ (demanding ⟅ ⌈ read ⌉ ⟆) (demanding ⟅ ε ⟆)
 
 ------------------------------------------------------------------------
--- The adjoined point
+-- The greatest grade
 --
--- `⊤ᵍ` demands nothing, so even `{ ε }` weakens to it, and it weakens to
--- no written-out list -- every list demands some run. Demanding nothing
--- survives sequencing, `⊤ᵍ` being absorbing.
+-- `no-demand` demands nothing, so even `{ ε }` weakens to it, and it
+-- weakens to no written-out list -- every list demands some run.
+-- Demanding nothing survives sequencing, `no-demand` being absorbing.
 
 everything-weakens-to-the-top :
-  ⟅ ε ⟆ ≾ ⊤ᵍ
-everything-weakens-to-the-top = holdsᵉ ⟅ ε ⟆ ⊤ᵍ
+  demanding ⟅ ε ⟆ ≾ no-demand
+everything-weakens-to-the-top = holdsᵉ (demanding ⟅ ε ⟆) no-demand
 
 the-top-weakens-to-nothing-else :
-  ¬ (⊤ᵍ ≾ ⟅ ε ⟆)
-the-top-weakens-to-nothing-else = failsᵉ ⊤ᵍ ⟅ ε ⟆
+  ¬ (no-demand ≾ demanding ⟅ ε ⟆)
+the-top-weakens-to-nothing-else = failsᵉ no-demand (demanding ⟅ ε ⟆)
 
 the-top-absorbs :
-  (⊤ᵍ · ⟅ ⌈ read ⌉ ⟆) ≡ ⊤ᵍ
+  (no-demand ·ᵈ demanding ⟅ ⌈ read ⌉ ⟆) ≡ no-demand
 the-top-absorbs = refl
 
 ------------------------------------------------------------------------
@@ -119,11 +105,11 @@ the-top-absorbs = refl
 -- them.
 
 a-store-is-not-three-ticks :
-  ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆)
+  ¬ (demanding ⟅ ⌈ write ⌉ ⟆ ≾ demanding ⟅ ⟨ 3 ⟩ ⟆)
 a-store-is-not-three-ticks = fails
 
 nor-three-ticks-a-store :
-  ¬ (⟅ ⟨ 3 ⟩ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆)
+  ¬ (demanding ⟅ ⟨ 3 ⟩ ⟆ ≾ demanding ⟅ ⌈ write ⌉ ⟆)
 nor-three-ticks-a-store = fails
 
 ------------------------------------------------------------------------
@@ -140,15 +126,15 @@ nor-three-ticks-a-store = fails
 -- its branches' grades rather than coerce both to one grade.
 
 union-is-a-meet-belowˡ :
-  ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ demanding ⟅ ⌈ read ⌉ ⟆
 union-is-a-meet-belowˡ = holds
 
 union-is-a-meet-belowʳ :
-  ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ demanding ⟅ ⌈ write ⌉ ⟆
 union-is-a-meet-belowʳ = holds
 
 branches-have-no-common-weakening :
-  ¬ (⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆)
+  ¬ (demanding ⟅ ⌈ read ⌉ ⟆ ≾ demanding ⟅ ⌈ write ⌉ ⟆)
 branches-have-no-common-weakening = fails
 
 ------------------------------------------------------------------------
@@ -159,11 +145,13 @@ branches-have-no-common-weakening = fails
 -- transmission demands both completed paths.
 
 sequencing-pairs-the-demands :
-  (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆) ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+  (demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵈ demanding ⟅ ⌈ send ⌉ ⟆)
+  ≾ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 sequencing-pairs-the-demands = holds
 
 sequencing-demands-no-mixture :
-  ¬ ((⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆) ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+  ¬ ((demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵈ demanding ⟅ ⌈ send ⌉ ⟆)
+     ≾ demanding ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
 sequencing-demands-no-mixture = fails
 
 ------------------------------------------------------------------------
@@ -175,26 +163,26 @@ sequencing-demands-no-mixture = fails
 -- demands is among what elapsed still offers.
 
 the-box-demands : Demands
-the-box-demands = ⟅ ⌈ read ⌉ ⟆
+the-box-demands = demanding ⟅ ⌈ read ⌉ ⟆
 
 offering-more-opens-the-box :
-  ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ the-box-demands
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ the-box-demands
 offering-more-opens-the-box = holds
 
 offering-something-else-does-not :
-  ¬ (⟅ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ the-box-demands)
+  ¬ (demanding ⟅ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ the-box-demands)
 offering-something-else-does-not = fails
 
 -- a box demanding two runs needs both of them still offered, so a
 -- computation that has narrowed to one branch no longer opens it
 
 a-two-run-box : Demands
-a-two-run-box = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+a-two-run-box = demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
 
 both-still-offered :
-  ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ a-two-run-box
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ a-two-run-box
 both-still-offered = holds
 
 narrowed-to-one-branch :
-  ¬ (⟅ ⌈ read ⌉ ⟆ ≾ a-two-run-box)
+  ¬ (demanding ⟅ ⌈ read ⌉ ⟆ ≾ a-two-run-box)
 narrowed-to-one-branch = fails

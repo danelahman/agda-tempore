@@ -33,29 +33,30 @@
 -- the elapsed grade to keep every run the box demands available while  --
 -- introducing none the box does not list.                              --
 --                                                                     --
--- THE GREATEST GRADE is adjoined to the pair as a whole rather than to --
--- either endpoint, the floor's own top being the excluded empty set of --
--- demands. It demands nothing and permits everything, and it absorbs.  --
+-- No pair is greatest, the floor's own top being the excluded empty    --
+-- set of demands, so the carrier carries `unconstrained` above the     --
+-- pairs rather than extending either endpoint. It demands nothing and  --
+-- permits everything, and it absorbs.                                  --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
+open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Util.Equality
 
 module Syntax.Grades.Example.Traces.Subsets.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
+open import Data.Empty using (⊥)
 open import Data.List.Base using (List)
-open import Data.Nat.Base using (ℕ)
-open import Data.Product using (_×_; _,_; proj₁; proj₂)
-open import Data.Unit using (tt)
+open import Data.Nat.Base using (ℕ; _+_)
+open import Data.Product using (_×_; _,_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _×-dec_)
 
 open import Syntax.Grades
-open import Syntax.Grades.WithTop
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
@@ -103,7 +104,7 @@ xs ◇ ys = True (xs ⊑? ys)
 ◇-·ˢ p q = fromWitness (⊑-·ˢ (toWitness p) (toWitness q))
 
 ------------------------------------------------------------------------
--- The carrier
+-- The pairs
 
 record TwoSided : Set where
   constructor [_,_,_]
@@ -121,7 +122,7 @@ eqᵇ {[ L , U , p ]} {[ .L , .U , q ]} refl refl =
   cong [ L , U ,_] (◇-irr {traces L} {traces U} p q)
 
 ------------------------------------------------------------------------
--- The monoid: the language product on each endpoint
+-- The monoid on pairs: the language product on each endpoint
 
 infixl 7 _·ᵇ_
 
@@ -147,7 +148,7 @@ uᵇ = [ u , u , ◇-refl u ]
   eqᵇ (·-assoc (lo i₁) (lo i₂) (lo i₃)) (·-assoc (hi i₁) (hi i₂) (hi i₃))
 
 ------------------------------------------------------------------------
--- The order: each endpoint at its own direction of inclusion
+-- The order on pairs: each endpoint at its own direction of inclusion
 
 infix 5 _≾ᵇ_
 
@@ -179,9 +180,6 @@ i₁ ≾ᵇ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
   fromWitness
     (⊑-trans l (⊑-trans {traces (lo i)} {traces (hi i)} (toWitness (lo◇hi i)) h))
 
-------------------------------------------------------------------------
--- Zero-product, endpointwise
-
 ≾ᵇ-zero-productˡ : {i₁ i₂ : TwoSided} → (i₁ ·ᵇ i₂) ≾ᵇ uᵇ → i₁ ≾ᵇ uᵇ
 ≾ᵇ-zero-productˡ {i₁} {i₂} (l , h) =
     ≾ˡᵒ-zero-productˡ {lo i₁} {lo i₂} l , ≾ʰⁱ-zero-productˡ {hi i₁} {hi i₂} h
@@ -195,14 +193,11 @@ i₁ ≾ᵇ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
   cong₂ _,_ (≾ˡᵒ-irrelevant {lo i₁} {lo i₂} l l')
             (≾ʰⁱ-irrelevant {hi i₁} {hi i₂} h h')
 
-_≟ᵇ_ : Decidable (_≡_ {A = TwoSided})
+_≟ᵇ_ : DecidableEquality TwoSided
 i₁ ≟ᵇ i₂ with lo i₁ ≟ᴺ lo i₂ | hi i₁ ≟ᴺ hi i₂
 ... | yes p | yes q = yes (eqᵇ p q)
 ... | yes _ | no ¬q = no λ eq → ¬q (cong hi eq)
 ... | no ¬p | _     = no λ eq → ¬p (cong lo eq)
-
-------------------------------------------------------------------------
--- Including the natural numbers, and deciding the order
 
 of-natᵇ : ℕ → TwoSided
 of-natᵇ n = [ of-nat n , of-nat n , ◇-refl (of-nat n) ]
@@ -213,48 +208,167 @@ _≾ᵇ?_ : (i₁ i₂ : TwoSided) → Dec (i₁ ≾ᵇ i₂)
 i₁ ≾ᵇ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i₂)
 
 ------------------------------------------------------------------------
--- The two-sided subset intervals as an ordered monoid
---
--- There is no greatest pair: the floor's would be the empty set of
--- demands, which is excluded. So a top is adjoined to the pair as a
--- whole, rather than to either endpoint.
+-- The carrier: a written-out pair, or no constraint at all
 
-base : OrderedMonoid
-base = record
-  { Carrier         = TwoSided
-  ; _·_             = _·ᵇ_
-  ; u               = uᵇ
-  ; ·-identityʳ     = ·ᵇ-identityʳ
-  ; ·-identityˡ     = ·ᵇ-identityˡ
-  ; ·-assoc         = ·ᵇ-assoc
-  ; _≾_             = _≾ᵇ_
-  ; ·-monoˡ-≾       = λ {c} {x} {y} → ·ᵇ-monoˡ {c} {x} {y}
-  ; ·-monoʳ-≾       = λ {c} {x} {y} → ·ᵇ-monoʳ {c} {x} {y}
-  ; ≾-refl          = λ {x} → ≾ᵇ-refl {x}
-  ; ≾-trans         = λ {i} {j} {k} → ≾ᵇ-trans {i} {j} {k}
-  ; _≡?_            = _≟ᵇ_
-  ; ≾-zero-productˡ = λ {c} {d} → ≾ᵇ-zero-productˡ {c} {d}
-  ; ≾-zero-productʳ = λ {c} {d} → ≾ᵇ-zero-productʳ {c} {d}
-  ; ≾-irrelevant    = λ {c} {d} → ≾ᵇ-irrelevant {c} {d}
-  ; of-nat          = of-natᵇ
-  ; of-nat-zero     = eqᵇ of-nat-zero of-nat-zero
-  ; of-nat-plus     = λ {m} {n} → eqᵇ (of-nat-plus {m} {n}) (of-nat-plus {m} {n})
-  }
+infix 50 between_
+
+data Interval : Set₀ where
+  between_      : TwoSided → Interval
+  unconstrained : Interval
+
+between-inj : {i₁ i₂ : TwoSided} → between i₁ ≡ between i₂ → i₁ ≡ i₂
+between-inj refl = refl
 
 ------------------------------------------------------------------------
--- The grade of two-sided subset intervals, with `⊤ᵍ` adjoined above them
+-- The monoid, with `unconstrained` absorbing
 
-open Adjoin base public
-  renaming (Ext to Interval; _·ᵉ_ to _·ᴵ_; uᵉ to uᴵ; _≾ᵉ_ to _≾ᴵ_;
-            ≾ᵉ-⊤ to ≾ᴵ-⊤; ≾ᵉ-refl to ≾ᴵ-refl; ≾ᵉ-trans to ≾ᴵ-trans;
-            ≾ᵉ-irrelevant to ≾ᴵ-irrelevant;
-            ·ᵉ-monoˡ-≾ᵉ to ·ᴵ-monoˡ; ·ᵉ-monoʳ-≾ᵉ to ·ᴵ-monoʳ;
-            withTop to two-sided)
+infixl 7 _·ᴵ_
+
+_·ᴵ_ : Interval → Interval → Interval
+(between i₁) ·ᴵ (between i₂) = between (i₁ ·ᵇ i₂)
+(between _) ·ᴵ unconstrained = unconstrained
+unconstrained ·ᴵ _            = unconstrained
+
+uᴵ : Interval
+uᴵ = between uᵇ
+
+·ᴵ-identityʳ : (i : Interval) → i ·ᴵ uᴵ ≡ i
+·ᴵ-identityʳ (between i) = cong between_ (·ᵇ-identityʳ i)
+·ᴵ-identityʳ unconstrained = refl
+
+·ᴵ-identityˡ : (i : Interval) → uᴵ ·ᴵ i ≡ i
+·ᴵ-identityˡ (between i) = cong between_ (·ᵇ-identityˡ i)
+·ᴵ-identityˡ unconstrained = refl
+
+·ᴵ-assoc : (i₁ i₂ i₃ : Interval) → (i₁ ·ᴵ i₂) ·ᴵ i₃ ≡ i₁ ·ᴵ (i₂ ·ᴵ i₃)
+·ᴵ-assoc (between i₁) (between i₂) (between i₃) =
+  cong between_ (·ᵇ-assoc i₁ i₂ i₃)
+·ᴵ-assoc (between _) (between _) unconstrained = refl
+·ᴵ-assoc (between _) unconstrained (between _) = refl
+·ᴵ-assoc (between _) unconstrained unconstrained = refl
+·ᴵ-assoc unconstrained _             _             = refl
+
+------------------------------------------------------------------------
+-- The order, with `unconstrained` greatest
+
+infix 5 _≾ᴵ_
+
+_≾ᴵ_ : Interval → Interval → Set
+(between i₁) ≾ᴵ (between i₂) = i₁ ≾ᵇ i₂
+(between _) ≾ᴵ unconstrained = ⊤
+unconstrained ≾ᴵ (between _) = ⊥
+unconstrained ≾ᴵ unconstrained = ⊤
+
+≾ᴵ-⊤ : (i : Interval) → i ≾ᴵ unconstrained
+≾ᴵ-⊤ (between _) = tt
+≾ᴵ-⊤ unconstrained = tt
+
+≾ᴵ-refl : {i : Interval} → i ≾ᴵ i
+≾ᴵ-refl {between i}   = ≾ᵇ-refl {i}
+≾ᴵ-refl {unconstrained} = tt
+
+≾ᴵ-trans : {i₁ i₂ i₃ : Interval} → i₁ ≾ᴵ i₂ → i₂ ≾ᴵ i₃ → i₁ ≾ᴵ i₃
+≾ᴵ-trans {between i₁} {between i₂} {between i₃} p q =
+  ≾ᵇ-trans {i₁} {i₂} {i₃} p q
+≾ᴵ-trans {between _} {between _} {unconstrained} p q = tt
+≾ᴵ-trans {between _} {unconstrained} {between _} p ()
+≾ᴵ-trans {between _} {unconstrained} {unconstrained} p q = tt
+≾ᴵ-trans {unconstrained} {between _} {_} () q
+≾ᴵ-trans {unconstrained} {unconstrained} {between _} p ()
+≾ᴵ-trans {unconstrained} {unconstrained} {unconstrained} p q = tt
+
+≾ᴵ-irrelevant : {i₁ i₂ : Interval} → (p q : i₁ ≾ᴵ i₂) → p ≡ q
+≾ᴵ-irrelevant {between i₁} {between i₂} p  q  = ≾ᵇ-irrelevant {i₁} {i₂} p q
+≾ᴵ-irrelevant {between _} {unconstrained} tt tt = refl
+≾ᴵ-irrelevant {unconstrained} {between _} () q
+≾ᴵ-irrelevant {unconstrained} {unconstrained} tt tt = refl
+
+·ᴵ-monoˡ : {c i₁ i₂ : Interval} → i₁ ≾ᴵ i₂ → (i₁ ·ᴵ c) ≾ᴵ (i₂ ·ᴵ c)
+·ᴵ-monoˡ {between c} {between i₁} {between i₂} p = ·ᵇ-monoˡ {c} {i₁} {i₂} p
+·ᴵ-monoˡ {unconstrained} {between _} {between _} p = tt
+·ᴵ-monoˡ {between _} {between _} {unconstrained} p = tt
+·ᴵ-monoˡ {unconstrained} {between _} {unconstrained} p = tt
+·ᴵ-monoˡ {_} {unconstrained} {between _} ()
+·ᴵ-monoˡ {between _} {unconstrained} {unconstrained} p = tt
+·ᴵ-monoˡ {unconstrained} {unconstrained} {unconstrained} p = tt
+
+·ᴵ-monoʳ : {c i₁ i₂ : Interval} → i₁ ≾ᴵ i₂ → (c ·ᴵ i₁) ≾ᴵ (c ·ᴵ i₂)
+·ᴵ-monoʳ {between c} {between i₁} {between i₂} p = ·ᵇ-monoʳ {c} {i₁} {i₂} p
+·ᴵ-monoʳ {unconstrained} {between _} {between _} p = tt
+·ᴵ-monoʳ {between _} {between _} {unconstrained} p = tt
+·ᴵ-monoʳ {unconstrained} {between _} {unconstrained} p = tt
+·ᴵ-monoʳ {_} {unconstrained} {between _} ()
+·ᴵ-monoʳ {between _} {unconstrained} {unconstrained} p = tt
+·ᴵ-monoʳ {unconstrained} {unconstrained} {unconstrained} p = tt
+
+------------------------------------------------------------------------
+-- Zero-product property
+--
+-- `unconstrained` is above the unit and not below it, so its clauses
+-- are vacuous and the property is the pairs' own.
+
+≾ᴵ-zero-productˡ : {i₁ i₂ : Interval} → (i₁ ·ᴵ i₂) ≾ᴵ uᴵ → i₁ ≾ᴵ uᴵ
+≾ᴵ-zero-productˡ {between i₁} {between i₂} p = ≾ᵇ-zero-productˡ {i₁} {i₂} p
+≾ᴵ-zero-productˡ {between _} {unconstrained} ()
+≾ᴵ-zero-productˡ {unconstrained} {_} ()
+
+≾ᴵ-zero-productʳ : {i₁ i₂ : Interval} → (i₁ ·ᴵ i₂) ≾ᴵ uᴵ → i₂ ≾ᴵ uᴵ
+≾ᴵ-zero-productʳ {between i₁} {between i₂} p = ≾ᵇ-zero-productʳ {i₁} {i₂} p
+≾ᴵ-zero-productʳ {between _} {unconstrained} ()
+≾ᴵ-zero-productʳ {unconstrained} {_} ()
+
+------------------------------------------------------------------------
+-- Decidable equality, the inclusion of ℕ, and deciding the order
+
+_≟ᴵ_ : DecidableEquality Interval
+(between i₁) ≟ᴵ (between i₂) with i₁ ≟ᵇ i₂
+... | yes p = yes (cong between_ p)
+... | no ¬p = no λ eq → ¬p (between-inj eq)
+(between _) ≟ᴵ unconstrained = no λ ()
+unconstrained ≟ᴵ (between _) = no λ ()
+unconstrained ≟ᴵ unconstrained = yes refl
+
+of-natᴵ : ℕ → Interval
+of-natᴵ n = between (of-natᵇ n)
+
+of-natᴵ-zero : of-natᴵ 0 ≡ uᴵ
+of-natᴵ-zero = cong between_ (eqᵇ of-nat-zero of-nat-zero)
+
+of-natᴵ-plus : {m n : ℕ} → of-natᴵ (m + n) ≡ of-natᴵ m ·ᴵ of-natᴵ n
+of-natᴵ-plus {m} {n} =
+  cong between_ (eqᵇ (of-nat-plus {m} {n}) (of-nat-plus {m} {n}))
 
 infix 5 _≾ᴵ?_
 
 _≾ᴵ?_ : (i₁ i₂ : Interval) → Dec (i₁ ≾ᴵ i₂)
-(only i₁) ≾ᴵ? (only i₂) = i₁ ≾ᵇ? i₂
-(only _)  ≾ᴵ? ⊤ᵍ        = yes tt
-⊤ᵍ        ≾ᴵ? (only _)  = no λ ()
-⊤ᵍ        ≾ᴵ? ⊤ᵍ        = yes tt
+(between i₁) ≾ᴵ? (between i₂) = i₁ ≾ᵇ? i₂
+(between _) ≾ᴵ? unconstrained = yes tt
+unconstrained ≾ᴵ? (between _) = no λ ()
+unconstrained ≾ᴵ? unconstrained = yes tt
+
+------------------------------------------------------------------------
+-- The grade of two-sided subset intervals
+
+two-sided : Grade
+two-sided = record
+  { Carrier         = Interval
+  ; _·_             = _·ᴵ_
+  ; u               = uᴵ
+  ; ·-identityʳ     = ·ᴵ-identityʳ
+  ; ·-identityˡ     = ·ᴵ-identityˡ
+  ; ·-assoc         = ·ᴵ-assoc
+  ; _≾_             = _≾ᴵ_
+  ; ⊤               = unconstrained
+  ; ≾-⊤             = ≾ᴵ-⊤
+  ; ·-monoˡ-≾       = λ {c} {x} {y} → ·ᴵ-monoˡ {c} {x} {y}
+  ; ·-monoʳ-≾       = λ {c} {x} {y} → ·ᴵ-monoʳ {c} {x} {y}
+  ; ≾-refl          = λ {x} → ≾ᴵ-refl {x}
+  ; ≾-trans         = λ {i} {j} {k} → ≾ᴵ-trans {i} {j} {k}
+  ; _≡?_            = _≟ᴵ_
+  ; ≾-zero-productˡ = λ {c} {d} → ≾ᴵ-zero-productˡ {c} {d}
+  ; ≾-zero-productʳ = λ {c} {d} → ≾ᴵ-zero-productʳ {c} {d}
+  ; ≾-irrelevant    = λ {c} {d} → ≾ᴵ-irrelevant {c} {d}
+  ; of-nat          = of-natᴵ
+  ; of-nat-zero     = of-natᴵ-zero
+  ; of-nat-plus     = λ {m} {n} → of-natᴵ-plus {m} {n}
+  }

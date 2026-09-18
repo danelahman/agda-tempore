@@ -16,7 +16,7 @@
 -- Monotonicity is immediate: weakening adds runs to the list, and a    --
 -- longer list has a greater maximum.                                   --
 --                                                                     --
--- The two grades' adjoined points correspond: `⊤ᵍ` permits any run at   --
+-- The two greatest grades correspond: `any-run` permits any run at     --
 -- all and `[0, ∞ ]` imposes no deadline, and both are absorbing.       --
 ------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
 
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using (right-sided; Permits; only_; ⊤ᵍ; _·ᵖ_; _≾_; _≾₀_)
+  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_; _≾₀_)
 
 open MaxDurations costʰⁱ
 
@@ -49,30 +49,30 @@ open MaxDurations costʰⁱ
 -- the unrestricted grade by no deadline at all
 
 mapₒ : Permits → 𝕀ᵣ
-mapₒ (only Q) = [0, ↑ setDuration (traces Q) ]
-mapₒ ⊤ᵍ       = [0, ∞ ]
+mapₒ (permitting Q) = [0, ↑ setDuration (traces Q) ]
+mapₒ any-run        = [0, ∞ ]
 
 mapₒ-monotone₀ : {P Q : NeTraces} → P ≾₀ Q
                → setDuration (traces P) ≤ setDuration (traces Q)
 mapₒ-monotone₀ {P} {Q} rel = setDuration-⊑ (traces P) (traces Q) rel
 
 mapₒ-monotone : {P Q : Permits} → P ≾ Q → mapₒ P ≾ₒ mapₒ Q
-mapₒ-monotone {only P} {only Q} rel = mapₒ-monotone₀ {P} {Q} rel
-mapₒ-monotone {only _} {⊤ᵍ}     rel = tt
-mapₒ-monotone {⊤ᵍ}     {only _} ()
-mapₒ-monotone {⊤ᵍ}     {⊤ᵍ}     rel = tt
+mapₒ-monotone {permitting P} {permitting Q} rel = mapₒ-monotone₀ {P} {Q} rel
+mapₒ-monotone {permitting _} {any-run}      rel = tt
+mapₒ-monotone {any-run}      {permitting _} ()
+mapₒ-monotone {any-run}      {any-run}      rel = tt
 
 -- the monoid structure is preserved: sequencing two grades adds their
 -- worst cases, the language product pairing each run with each, and
 -- both new points being absorbing
 
 mapₒ-· : (P Q : Permits) → mapₒ (P ·ᵖ Q) ≡ mapₒ P ·ₒ mapₒ Q
-mapₒ-· (only P) (only Q) =
+mapₒ-· (permitting P) (permitting Q) =
   eq𝕀ᵣ (cong ↑_ (setDuration-·ˢ (traces P) (traces Q)
                                 (nonempty P) (nonempty Q)))
-mapₒ-· (only _) ⊤ᵍ       = refl
-mapₒ-· ⊤ᵍ       (only _) = refl
-mapₒ-· ⊤ᵍ       ⊤ᵍ       = refl
+mapₒ-· (permitting _) any-run        = refl
+mapₒ-· any-run        (permitting _) = refl
+mapₒ-· any-run        any-run        = refl
 
 subsets→right-sided-intervals : right-sided →ᵍ right-sided-intervals
 subsets→right-sided-intervals = record

@@ -16,9 +16,9 @@
 -- which is `↓P ⊆ ↓Q` for the sets of runs the two grades permit, and   --
 -- makes the union of two grades their join.                            --
 --                                                                     --
--- No finite list of bounds permits every run, so the grade has no      --
--- greatest element of its own and one is adjoined: `⊤ᵍ` permits any run --
--- at all, however long, and is absorbing -- what follows an unbounded  --
+-- No finite list of bounds permits every run, so the carrier carries   --
+-- `unbounded` as a point of its own: it permits any run at all,        --
+-- however long, and is absorbing -- what follows an unbounded          --
 -- computation is unbounded too. It is *not* the empty set of bounds,   --
 -- which permits nothing and is excluded.                               --
 --                                                                     --
@@ -39,17 +39,18 @@ import Syntax.Grades.Traces.Order as Order
 module Syntax.Grades.Example.Traces.Lifted.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (O : Order.TraceOrder Op) where
 
-open import Data.Unit using (tt)
+open import Data.Empty using (⊥)
+open import Data.Nat.Base using (ℕ; _+_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 
 open import Syntax.Grades
-open import Syntax.Grades.WithTop
 
--- the carrier and the monoid structure (`_·_`, `u`, `of-nat`, and their
--- laws), decidable equality `_≟ᴺ_`, and the irrelevance of the
--- set-level lift come from the shared set-of-traces module; only the
--- order below is specific to this grade
+-- the sets of traces and their monoid structure (`_·_`, `u`, `of-nat`,
+-- and their laws), decidable equality `_≟ᴺ_`, and the irrelevance of
+-- the set-level lift come from the shared set-of-traces module; only
+-- the order below is specific to this grade
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ O
@@ -110,48 +111,164 @@ _≾₀?_ : (P Q : NeTraces) → Dec (P ≾₀ Q)
 P ≾₀? Q = traces P ≼ˢ? traces Q
 
 ------------------------------------------------------------------------
--- The sets of traces as an ordered monoid, before a top is adjoined
+-- The carrier: a written-out list of bounds, or no bound at all
 
-base : OrderedMonoid
-base = record
-  { Carrier         = NeTraces
-  ; _·_             = _·_
-  ; u               = u
-  ; ·-identityʳ     = ·-identityʳ
-  ; ·-identityˡ     = ·-identityˡ
-  ; ·-assoc         = ·-assoc
-  ; _≾_             = _≾₀_
-  ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ₀ {c} {x} {y}
-  ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ₀ {c} {x} {y}
-  ; ≾-refl          = λ {x} → ≾₀-refl {x}
-  ; ≾-trans         = λ {i} {j} {k} → ≾₀-trans {i} {j} {k}
-  ; _≡?_            = _≟ᴺ_
-  ; ≾-zero-productˡ = λ {c} {d} → ≾₀-zero-productˡ {c} {d}
-  ; ≾-zero-productʳ = λ {c} {d} → ≾₀-zero-productʳ {c} {d}
-  ; ≾-irrelevant    = λ {c} {d} → ≾₀-irrelevant {c} {d}
-  ; of-nat          = of-nat
-  ; of-nat-zero     = of-nat-zero
-  ; of-nat-plus     = λ {m} {n} → of-nat-plus {m} {n}
-  }
+infix 50 within_
+
+data Bounds : Set₀ where
+  within_   : NeTraces → Bounds
+  unbounded : Bounds
+
+within-inj : {P Q : NeTraces} → within P ≡ within Q → P ≡ Q
+within-inj refl = refl
 
 ------------------------------------------------------------------------
--- The grade: those sets with `⊤ᵍ` adjoined above them
+-- The monoid: the language product, with `unbounded` absorbing
 
-open Adjoin base public
-  renaming (Ext to Bounds; _·ᵉ_ to _·ᵇ_; uᵉ to uᵇ; _≾ᵉ_ to _≾_;
-            ≾ᵉ-⊤ to ≾-⊤; ≾ᵉ-refl to ≾-refl; ≾ᵉ-trans to ≾-trans;
-            ≾ᵉ-irrelevant to ≾-irrelevant;
-            ≾ᵉ-zero-productˡ to ≾-zero-productˡ;
-            ≾ᵉ-zero-productʳ to ≾-zero-productʳ;
-            ·ᵉ-monoˡ-≾ᵉ to ·-monoˡ; ·ᵉ-monoʳ-≾ᵉ to ·-monoʳ;
-            _≡ᵉ?_ to _≟ᴮ_; withTop to right-sided)
+infixl 7 _·ᵇ_
 
--- the extended order is decided at the new point as well
+_·ᵇ_ : Bounds → Bounds → Bounds
+(within P) ·ᵇ (within Q) = within (P · Q)
+(within _) ·ᵇ unbounded  = unbounded
+unbounded  ·ᵇ _          = unbounded
+
+uᵇ : Bounds
+uᵇ = within u
+
+·ᵇ-identityʳ : (P : Bounds) → P ·ᵇ uᵇ ≡ P
+·ᵇ-identityʳ (within P) = cong within_ (·-identityʳ P)
+·ᵇ-identityʳ unbounded  = refl
+
+·ᵇ-identityˡ : (P : Bounds) → uᵇ ·ᵇ P ≡ P
+·ᵇ-identityˡ (within P) = cong within_ (·-identityˡ P)
+·ᵇ-identityˡ unbounded  = refl
+
+·ᵇ-assoc : (P Q R : Bounds) → (P ·ᵇ Q) ·ᵇ R ≡ P ·ᵇ (Q ·ᵇ R)
+·ᵇ-assoc (within P) (within Q) (within R) = cong within_ (·-assoc P Q R)
+·ᵇ-assoc (within _) (within _) unbounded  = refl
+·ᵇ-assoc (within _) unbounded  (within _) = refl
+·ᵇ-assoc (within _) unbounded  unbounded  = refl
+·ᵇ-assoc unbounded  _          _          = refl
+
+------------------------------------------------------------------------
+-- The order: the lift between lists, with `unbounded` greatest
+
+infix 5 _≾_
+
+_≾_ : Bounds → Bounds → Set
+(within P) ≾ (within Q) = P ≾₀ Q
+(within _) ≾ unbounded  = ⊤
+unbounded  ≾ (within _) = ⊥
+unbounded  ≾ unbounded  = ⊤
+
+≾-⊤ : (P : Bounds) → P ≾ unbounded
+≾-⊤ (within _) = tt
+≾-⊤ unbounded  = tt
+
+≾-refl : {P : Bounds} → P ≾ P
+≾-refl {within P}  = ≾₀-refl {P}
+≾-refl {unbounded} = tt
+
+≾-trans : {P Q R : Bounds} → P ≾ Q → Q ≾ R → P ≾ R
+≾-trans {within P}  {within Q}  {within R}  p q = ≾₀-trans {P} {Q} {R} p q
+≾-trans {within _}  {within _}  {unbounded} p q = tt
+≾-trans {within _}  {unbounded} {within _}  p ()
+≾-trans {within _}  {unbounded} {unbounded} p q = tt
+≾-trans {unbounded} {within _}  {_}         () q
+≾-trans {unbounded} {unbounded} {within _}  p ()
+≾-trans {unbounded} {unbounded} {unbounded} p q = tt
+
+≾-irrelevant : {P Q : Bounds} → (p q : P ≾ Q) → p ≡ q
+≾-irrelevant {within P}  {within Q}  p  q  = ≾₀-irrelevant {P} {Q} p q
+≾-irrelevant {within _}  {unbounded} tt tt = refl
+≾-irrelevant {unbounded} {within _}  () q
+≾-irrelevant {unbounded} {unbounded} tt tt = refl
+
+·-monoˡ : {C P Q : Bounds} → P ≾ Q → (P ·ᵇ C) ≾ (Q ·ᵇ C)
+·-monoˡ {within C}  {within P}  {within Q}  p = ·-monoˡ₀ {C} {P} {Q} p
+·-monoˡ {unbounded} {within _}  {within _}  p = tt
+·-monoˡ {within _}  {within _}  {unbounded} p = tt
+·-monoˡ {unbounded} {within _}  {unbounded} p = tt
+·-monoˡ {_}         {unbounded} {within _}  ()
+·-monoˡ {within _}  {unbounded} {unbounded} p = tt
+·-monoˡ {unbounded} {unbounded} {unbounded} p = tt
+
+·-monoʳ : {C P Q : Bounds} → P ≾ Q → (C ·ᵇ P) ≾ (C ·ᵇ Q)
+·-monoʳ {within C}  {within P}  {within Q}  p = ·-monoʳ₀ {C} {P} {Q} p
+·-monoʳ {unbounded} {within _}  {within _}  p = tt
+·-monoʳ {within _}  {within _}  {unbounded} p = tt
+·-monoʳ {unbounded} {within _}  {unbounded} p = tt
+·-monoʳ {_}         {unbounded} {within _}  ()
+·-monoʳ {within _}  {unbounded} {unbounded} p = tt
+·-monoʳ {unbounded} {unbounded} {unbounded} p = tt
+
+------------------------------------------------------------------------
+-- Zero-product property
+--
+-- `unbounded` is above the unit and not below it, so its clauses are
+-- vacuous and the property is the sets' own.
+
+≾-zero-productˡ : {P Q : Bounds} → (P ·ᵇ Q) ≾ uᵇ → P ≾ uᵇ
+≾-zero-productˡ {within P}  {within Q}  p = ≾₀-zero-productˡ {P} {Q} p
+≾-zero-productˡ {within _}  {unbounded} ()
+≾-zero-productˡ {unbounded} {_}         ()
+
+≾-zero-productʳ : {P Q : Bounds} → (P ·ᵇ Q) ≾ uᵇ → Q ≾ uᵇ
+≾-zero-productʳ {within P}  {within Q}  p = ≾₀-zero-productʳ {P} {Q} p
+≾-zero-productʳ {within _}  {unbounded} ()
+≾-zero-productʳ {unbounded} {_}         ()
+
+------------------------------------------------------------------------
+-- Decidable equality, the inclusion of ℕ, and deciding the order
+
+_≟ᴮ_ : DecidableEquality Bounds
+(within P) ≟ᴮ (within Q) with P ≟ᴺ Q
+... | yes p = yes (cong within_ p)
+... | no ¬p = no λ eq → ¬p (within-inj eq)
+(within _) ≟ᴮ unbounded  = no λ ()
+unbounded  ≟ᴮ (within _) = no λ ()
+unbounded  ≟ᴮ unbounded  = yes refl
+
+of-natᵇ : ℕ → Bounds
+of-natᵇ n = within (of-nat n)
+
+of-natᵇ-zero : of-natᵇ 0 ≡ uᵇ
+of-natᵇ-zero = cong within_ of-nat-zero
+
+of-natᵇ-plus : {m n : ℕ} → of-natᵇ (m + n) ≡ of-natᵇ m ·ᵇ of-natᵇ n
+of-natᵇ-plus {m} {n} = cong within_ (of-nat-plus {m} {n})
 
 infix 5 _≾?_
 
 _≾?_ : (P Q : Bounds) → Dec (P ≾ Q)
-(only P) ≾? (only Q) = P ≾₀? Q
-(only _) ≾? ⊤ᵍ       = yes tt
-⊤ᵍ       ≾? (only _) = no λ ()
-⊤ᵍ       ≾? ⊤ᵍ       = yes tt
+(within P) ≾? (within Q) = P ≾₀? Q
+(within _) ≾? unbounded  = yes tt
+unbounded  ≾? (within _) = no λ ()
+unbounded  ≾? unbounded  = yes tt
+
+------------------------------------------------------------------------
+-- The grade of sets of timed traces, read as upper bounds
+
+right-sided : Grade
+right-sided = record
+  { Carrier         = Bounds
+  ; _·_             = _·ᵇ_
+  ; u               = uᵇ
+  ; ·-identityʳ     = ·ᵇ-identityʳ
+  ; ·-identityˡ     = ·ᵇ-identityˡ
+  ; ·-assoc         = ·ᵇ-assoc
+  ; _≾_             = _≾_
+  ; ⊤               = unbounded
+  ; ≾-⊤             = ≾-⊤
+  ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ {c} {x} {y}
+  ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
+  ; ≾-refl          = λ {x} → ≾-refl {x}
+  ; ≾-trans         = λ {i} {j} {k} → ≾-trans {i} {j} {k}
+  ; _≡?_            = _≟ᴮ_
+  ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
+  ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
+  ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}
+  ; of-nat          = of-natᵇ
+  ; of-nat-zero     = of-natᵇ-zero
+  ; of-nat-plus     = λ {m} {n} → of-natᵇ-plus {m} {n}
+  }

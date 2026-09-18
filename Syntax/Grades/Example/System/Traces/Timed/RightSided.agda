@@ -21,10 +21,9 @@
 -- replaces each bound by one that permits at least as much, and a      --
 -- bound that permits more takes at least as long.                     --
 --                                                                     --
--- Both grades were extended above their listed bounds, and the two new --
--- points correspond: `⊤ᵍ` permits any run at all and `[0, ∞ ]` imposes  --
--- no deadline. Both are absorbing, which is what lets the projection   --
--- preserve `_·_` at them.                                              --
+-- The two greatest grades correspond: `unbounded` permits any run at   --
+-- all and `[0, ∞ ]` imposes no deadline. Both are absorbing, which is  --
+-- what lets the projection preserve `_·_` at them.                     --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
@@ -55,7 +54,7 @@ open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; only_; ⊤ᵍ; _·ᵇ_; _≾_; _≾₀_)
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾₀_)
 
 open MaxDurations costʰⁱ
 
@@ -64,8 +63,8 @@ open MaxDurations costʰⁱ
 -- unbounded grade by no deadline at all
 
 mapₒ : Bounds → 𝕀ᵣ
-mapₒ (only P) = [0, ↑ setDuration (traces P) ]
-mapₒ ⊤ᵍ       = [0, ∞ ]
+mapₒ (within P) = [0, ↑ setDuration (traces P) ]
+mapₒ unbounded  = [0, ∞ ]
 
 -- monotonicity: each bound of `P` stays within one of `Q`, and so takes
 -- no longer than it, hence no longer than `Q`'s slowest
@@ -82,22 +81,22 @@ mapₒ-monotone₀ {P} {Q} rel =
           ≤-trans (duration-≼ᵃ t≼t') (bigMax-mem duration t' (traces Q) t'∈Q)
 
 mapₒ-monotone : {P Q : Bounds} → P ≾ Q → mapₒ P ≾ₒ mapₒ Q
-mapₒ-monotone {only P} {only Q} rel = mapₒ-monotone₀ {P} {Q} rel
-mapₒ-monotone {only P} {⊤ᵍ}     rel = tt
-mapₒ-monotone {⊤ᵍ}     {only _} ()
-mapₒ-monotone {⊤ᵍ}     {⊤ᵍ}     rel = tt
+mapₒ-monotone {within P}  {within Q}  rel = mapₒ-monotone₀ {P} {Q} rel
+mapₒ-monotone {within _}  {unbounded} rel = tt
+mapₒ-monotone {unbounded} {within _}  ()
+mapₒ-monotone {unbounded} {unbounded} rel = tt
 
 -- the monoid structure is preserved: sequencing two grades adds their
 -- worst cases, the language product pairing each bound with each, and
 -- both new points being absorbing
 
 mapₒ-· : (P Q : Bounds) → mapₒ (P ·ᵇ Q) ≡ mapₒ P ·ₒ mapₒ Q
-mapₒ-· (only P) (only Q) =
+mapₒ-· (within P) (within Q) =
   eq𝕀ᵣ (cong ↑_ (setDuration-·ˢ (traces P) (traces Q)
                                 (nonempty P) (nonempty Q)))
-mapₒ-· (only _) ⊤ᵍ       = refl
-mapₒ-· ⊤ᵍ       (only _) = refl
-mapₒ-· ⊤ᵍ       ⊤ᵍ       = refl
+mapₒ-· (within _) unbounded  = refl
+mapₒ-· unbounded  (within _) = refl
+mapₒ-· unbounded  unbounded  = refl
 
 traces→right-sided-intervals : right-sided →ᵍ right-sided-intervals
 traces→right-sided-intervals = record

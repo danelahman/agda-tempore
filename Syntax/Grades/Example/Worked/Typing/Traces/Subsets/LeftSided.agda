@@ -5,7 +5,7 @@
 -- `P ⊆ X`: every listed trace is a run it can exhibit. The set is read --
 -- *conjunctively*, so weakening drops members and `⟅ ε ⟆` demands only --
 -- that stopping be possible -- which is still a demand, so no          --
--- written-out list is above them all. The adjoined `⊤ᵍ` is.            --
+-- written-out list is above them all. `no-demand` is.                  --
 --                                                                     --
 -- The calculus meets this grade at its most rigid. Every operation is  --
 -- graded by a singleton, products of singletons are singletons, and a  --
@@ -16,9 +16,9 @@
 -- something sharper still: `no-common-listed-grade` below shows that   --
 -- no *listed* grade types a conditional whose branches perform         --
 -- different operations, since the two coercions would make one         --
--- non-empty set a subset of two disjoint singletons. The adjoined      --
--- `⊤ᵍ` does type it, demanding no run at all; what `if` can do below   --
--- `⊤ᵍ` is branch over *data*, both branches making the same run.       --
+-- non-empty set a subset of two disjoint singletons. `no-demand`       --
+-- does type it, demanding no run at all; what `if` can do below it     --
+-- is branch over *data*, both branches making the same run.            --
 --                                                                     --
 -- The comments inside the programs say what each former appends to the --
 -- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
@@ -42,10 +42,11 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_;
-         Trace; NeTraces; neTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩)
+         Trace; NeTraces; neTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩;
+         ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
-  using (left-sided; Demands; only_; ⊤ᵍ; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆;
+  using (left-sided; Demands; demanding_; no-demand;
          holds; fails; holdsᵉ; failsᵉ)
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
@@ -55,7 +56,7 @@ open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
 -- The operations, graded by the run that performs them
 
 opTime : Op → Demands
-opTime o = ⟅ ⌈ o ⌉ ⟆
+opTime o = demanding ⟅ ⌈ o ⌉ ⟆
 
 open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
 
@@ -65,28 +66,28 @@ open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
 -- The grade of a computation is the one run it makes, demanded, and the
 -- locks along it are that run one event at a time.
 
-sampling : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
+sampling : [] ⊢C⦂ Reading ‼ demanding ⟅ ⌈ read ⌉ ⟆
 sampling =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return here)
 
-storing : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+storing : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 storing =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-    (perform write here              -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+  perform read ⋆         -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform write here  -- ⟨ demanding ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
       (return ⋆))
 
-relaying : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+relaying : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 relaying =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-    (perform send here               -- ⟨ ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
+  perform read ⋆         -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform send here   -- ⟨ demanding ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
       (return ⋆))
 
-tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+tagged-relaying : [] ∷ NodeId ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 tagged-relaying =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (match ⦉ eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd)) , here ⦊
-                                     -- ∷ NodeId ∷ Reading
+                         -- ∷ NodeId ∷ Reading
       `in perform send here (return ⋆))
 
 ------------------------------------------------------------------------
@@ -101,9 +102,9 @@ reading-stale-after-an-operation = fails
 reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
 reading-stale-after-idling = fails
 
-carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
+carried-id : [] ∷ NodeId ⊢C⦂ NodeId ‼ demanding ⟅ ⌈ read ⌉ ⟆
 carried-id =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform read ⋆         -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ Hd))))
 
 ------------------------------------------------------------------------
@@ -113,10 +114,11 @@ carried-id =
 -- subset of it: the singleton itself. A deterministic computation
 -- therefore has nowhere to be coerced to.
 
-adding-a-demand : ¬ (opTime read ·ₑ uₑ ≾ₑ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆)
+adding-a-demand :
+  ¬ (opTime read ·ₑ uₑ ≾ₑ demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆)
 adding-a-demand = fails
 
-trading-work-for-time : ¬ (opTime read ·ₑ uₑ ≾ₑ ⟅ ⟨ 1 ⟩ ⟆)
+trading-work-for-time : ¬ (opTime read ·ₑ uₑ ≾ₑ demanding ⟅ ⟨ 1 ⟩ ⟆)
 trading-work-for-time = fails
 
 ------------------------------------------------------------------------
@@ -124,8 +126,8 @@ trading-work-for-time = fails
 --
 -- No *listed* grade types a conditional whose branches perform
 -- different operations: a common one would have to be a non-empty
--- subset of both branches' singletons. The adjoined `⊤ᵍ` is not a list
--- and does type it.
+-- subset of both branches' singletons. `no-demand` is not a list and
+-- does type it.
 
 -- a non-empty set has a member
 
@@ -138,27 +140,27 @@ only-member : {s t : Trace} → s ∈ (t ∷ˡ []ˡ) → s ≡ t
 only-member (hereᴬ p) = p
 
 no-common-listed-grade : (grade : NeTraces)
-                       → opTime send  ·ₑ uₑ ≾ₑ only grade
-                       → opTime write ·ₑ uₑ ≾ₑ only grade
+                       → opTime send  ·ₑ uₑ ≾ₑ demanding grade
+                       → opTime write ·ₑ uₑ ≾ₑ demanding grade
                        → ⊥
 no-common-listed-grade grade send-fits write-fits with member grade
 ... | t , t∈grade with only-member (∈-⊑ send-fits t∈grade)
 ...   | refl with only-member (∈-⊑ write-fits t∈grade)
 ...     | ()
 
--- the adjoined point is a common grade: it demands no run at all, so
+-- `no-demand` is a common grade: it demands no run at all, so
 -- both branches weaken to it
 
-transmitting-fits-the-top : opTime send ·ₑ uₑ ≾ₑ ⊤ᵍ
+transmitting-fits-the-top : opTime send ·ₑ uₑ ≾ₑ no-demand
 transmitting-fits-the-top = ≾-⊤ₑ (opTime send ·ₑ uₑ)
 
-storing-fits-the-top : opTime write ·ₑ uₑ ≾ₑ ⊤ᵍ
+storing-fits-the-top : opTime write ·ₑ uₑ ≾ₑ no-demand
 storing-fits-the-top = ≾-⊤ₑ (opTime write ·ₑ uₑ)
 
--- so the conditional every list of demands refuses is typed at `⊤ᵍ`,
+-- so the conditional every list of demands refuses is typed at `no-demand`,
 -- each branch coerced to the grade that demands nothing
 
-branching-at-the-top : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⊤ᵍ
+branching-at-the-top : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ no-demand
 branching-at-the-top =
   if eternal-var Boolₑ (Tl-∷ Hd)
     `then coerce transmitting-fits-the-top (perform send  here (return ⋆))
@@ -166,20 +168,24 @@ branching-at-the-top =
 
 -- the three grades one would reach for, refuted one at a time
 
-storing-branch-at-the-transmission : ¬ (opTime write ·ₑ uₑ ≾ₑ ⟅ ⌈ send ⌉ ⟆)
+storing-branch-at-the-transmission :
+  ¬ (opTime write ·ₑ uₑ ≾ₑ demanding ⟅ ⌈ send ⌉ ⟆)
 storing-branch-at-the-transmission = fails
 
-transmitting-branch-at-the-store : ¬ (opTime send ·ₑ uₑ ≾ₑ ⟅ ⌈ write ⌉ ⟆)
+transmitting-branch-at-the-store :
+  ¬ (opTime send ·ₑ uₑ ≾ₑ demanding ⟅ ⌈ write ⌉ ⟆)
 transmitting-branch-at-the-store = fails
 
-neither-at-the-union : ¬ (opTime send ·ₑ uₑ ≾ₑ ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆)
+neither-at-the-union :
+  ¬ (opTime send ·ₑ uₑ ≾ₑ demanding ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆)
 neither-at-the-union = fails
 
 -- what `if` can do here is branch over data: both branches make the
 -- same run, so they are already at one grade, and neither locks the
 -- context
 
-either-reading : [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
+either-reading :
+  [] ∷ Bool ∷ Reading ∷ Reading ⊢C⦂ Unit ‼ demanding ⟅ ⌈ send ⌉ ⟆
 either-reading =
   if eternal-var Boolₑ (Tl-∷ (Tl-∷ Hd))
     `then perform send here (return ⋆)
@@ -195,29 +201,29 @@ either-reading =
 -- will do.
 
 demand : R
-demand = ⟅ ⌈ read ⌉ ⟆
+demand = demanding ⟅ ⌈ read ⌉ ⟆
 
-claim-after-sampling : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+claim-after-sampling : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-sampling =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
-    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  box {ρ = demand} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (perform send here (return ⋆))))
 
-handed-over : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+handed-over : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 handed-over =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
-    (lam                             -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
-       (perform read ⋆               -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  box {ρ = demand} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (lam                 -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
+       (perform read ⋆   -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
          (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
 
-either-way : [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+either-way : [] ∷ Bool ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 either-way =
-  box {ρ = demand} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ⟆ ] Reading
-    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  box {ρ = demand} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
+    (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
@@ -245,14 +251,14 @@ claiming-at-once = failsᵉ uᵣ demand
 -- at once, with no lock in between
 
 nothing-demanded : R
-nothing-demanded = ⟅ ε ⟆
+nothing-demanded = demanding ⟅ ε ⟆
 
-claiming-now : [] ⊢C⦂ Unit ‼ ⟅ ⌈ send ⌉ ⟆
+claiming-now : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box {ρ = nothing-demanded} (const 42)
-                                     -- ∷ [ ⟅ ε ⟆ ] Reading
+                         -- ∷ [ demanding ⟅ ε ⟆ ] Reading
     (unbox Hd (holdsᵉ uᵣ nothing-demanded)
-                                     -- ∷ Reading
+                         -- ∷ Reading
       (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
@@ -265,20 +271,21 @@ claiming-now =
 -- is the run that elapsed. There is no room here for the non-reflexive
 -- comparisons the ordered families allow.
 
--- `⊤ᵍ` demands no run at all
+-- `no-demand` demands no run at all
 
 _∈ᵈ_ : Trace → R → Set
-s ∈ᵈ (only P) = s ∈ traces P
-s ∈ᵈ ⊤ᵍ       = ⊥
+s ∈ᵈ (demanding P) = s ∈ traces P
+s ∈ᵈ no-demand       = ⊥
 
 every-demand-is-the-elapsed-run :
-  (t : Trace) (ρ : R) → ⟅ t ⟆ ≾ᵣ ρ → (s : Trace) → s ∈ᵈ ρ → s ≡ t
-every-demand-is-the-elapsed-run t (only ρ) sub s s∈ρ = only-member (∈-⊑ sub s∈ρ)
+  (t : Trace) (ρ : R) → demanding ⟅ t ⟆ ≾ᵣ ρ → (s : Trace) → s ∈ᵈ ρ → s ≡ t
+every-demand-is-the-elapsed-run t (demanding ρ) sub s s∈ρ =
+  only-member (∈-⊑ sub s∈ρ)
 
 -- so a box demanding two runs is out of reach of any one of them, and
 -- of every program in this calculus
 
-two-run-demand : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆)
+two-run-demand : ¬ (uᵣ ·ᵣ opTime read ≾ᵣ demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆)
 two-run-demand = fails
 
 ------------------------------------------------------------------------
@@ -289,27 +296,29 @@ two-run-demand = fails
 -- there the union of two grades is their join, here it is their *meet*.
 -- The calculus cannot hand a computation such a grade -- `if` would
 -- have to union its branches and `no-common-listed-grade` says it
--- cannot, `⊤ᵍ` being the one grade left -- but the order is defined on
+-- cannot, `no-demand` being the one grade left -- but the order is defined on
 -- them all the same, and the facts below are what a branching rule that
 -- did take unions would be working with.
 
 -- weakening drops demands, so a two-run grade sits below each of the
 -- singletons it is made of
 
-dropping-the-store : ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ⟆
+dropping-the-store :
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ demanding ⟅ ⌈ read ⌉ ⟆
 dropping-the-store = holds
 
-dropping-the-reading : ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ write ⌉ ⟆
+dropping-the-reading :
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ demanding ⟅ ⌈ write ⌉ ⟆
 dropping-the-reading = holds
 
 -- and it is the greatest grade that does: anything demanding both runs
 -- demands the union, so the union is their meet
 
 union-is-the-meet :
-  (P : R) → P ≾ᵣ ⟅ ⌈ read ⌉ ⟆
-          → P ≾ᵣ ⟅ ⌈ write ⌉ ⟆
-          → P ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
-union-is-the-meet (only P) reads writes = ⊑-∈ step
+  (P : R) → P ≾ᵣ demanding ⟅ ⌈ read ⌉ ⟆
+          → P ≾ᵣ demanding ⟅ ⌈ write ⌉ ⟆
+          → P ≾ᵣ demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+union-is-the-meet (demanding P) reads writes = ⊑-∈ step
   where
     step : (s : Trace)
          → s ∈ (⌈ read ⌉ ∷ˡ ⌈ write ⌉ ∷ˡ []ˡ) → s ∈ traces P
@@ -319,24 +328,27 @@ union-is-the-meet (only P) reads writes = ⊑-∈ step
 -- a longer list demands more, so it too sits below a shorter one
 
 three-runs-below-two :
-  ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+  demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆
+  ≾ᵣ demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
 three-runs-below-two = holds
 
 two-runs-not-below-three :
-  ¬ (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆)
+  ¬ (demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+     ≾ᵣ demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆)
 two-runs-not-below-three = fails
 
 -- the unit demands only that stopping be possible, so a list that
 -- includes the empty run weakens to it -- and no other list does
 
-listing-stopping : ⟅ ε ∣ ⌈ read ⌉ ⟆ ≾ᵣ ⟅ ε ⟆
-listing-stopping = holdsᵉ ⟅ ε ∣ ⌈ read ⌉ ⟆ ⟅ ε ⟆
+listing-stopping : demanding ⟅ ε ∣ ⌈ read ⌉ ⟆ ≾ᵣ demanding ⟅ ε ⟆
+listing-stopping = holdsᵉ (demanding ⟅ ε ∣ ⌈ read ⌉ ⟆) (demanding ⟅ ε ⟆)
 
 -- sequencing distributes over the demands: each demanded run is
 -- followed by what comes next
 
 demands-sequence :
-  (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵣ ⟅ ⌈ send ⌉ ⟆) ≾ᵣ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
+  (demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ·ᵣ demanding ⟅ ⌈ send ⌉ ⟆)
+  ≾ᵣ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 demands-sequence = holds
 
 -- None of that is reachable from a program *here*, though. With every
@@ -344,10 +356,10 @@ demands-sequence = holds
 -- non-singleton grade a computation can be given is a list padded with
 -- copies of the run that happened -- which demands nothing new:
 
-sampling-listed-twice : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ⟆
+sampling-listed-twice : [] ⊢C⦂ Reading ‼ demanding ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ⟆
 sampling-listed-twice =
   coerce holds
-    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return here))
 
 -- Two *different* runs in one grade have to come from the signature,
@@ -363,12 +375,14 @@ sampling-listed-twice =
 -- `no-common-listed-grade` settles this too, the resource grades being
 -- the same monoid: a box claimed after a reading in one branch and
 -- after a transmission in the other would have to demand both runs and
--- neither, leaving `⊤ᵍ`, which demands nothing of either.
+-- neither, leaving `no-demand`, which demands nothing of either.
 
-sampling-branch-demands-its-run : uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⌈ read ⌉ ⟆
+sampling-branch-demands-its-run :
+  uᵣ ·ᵣ opTime read ≾ᵣ demanding ⟅ ⌈ read ⌉ ⟆
 sampling-branch-demands-its-run = holds
 
-transmitting-branch-cannot-meet-it : ¬ (uᵣ ·ᵣ opTime send ≾ᵣ ⟅ ⌈ read ⌉ ⟆)
+transmitting-branch-cannot-meet-it :
+  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ demanding ⟅ ⌈ read ⌉ ⟆)
 transmitting-branch-cannot-meet-it = fails
 
 ------------------------------------------------------------------------
@@ -380,16 +394,16 @@ transmitting-branch-cannot-meet-it = fails
 -- the grade.
 
 logged : R
-logged = ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+logged = demanding ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 
 log-then-claim :
-  [] ∷ Bool ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+  [] ∷ Bool ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
 log-then-claim =
-  box {ρ = logged} (const 42)        -- ∷ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ] Reading
-    (perform read ⋆                  -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (perform write here            -- ⟨ ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
+  box {ρ = logged} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ] Reading
+    (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+      (perform write here  -- ⟨ demanding ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
         (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
-                                     -- ∷ Reading
+                         -- ∷ Reading
           (if eternal-var Boolₑ
                 (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
             `then perform send here (return ⋆)
@@ -411,18 +425,18 @@ transmitting-instead = fails
 -- Handling locks its `in` part by the handled computation's grade,
 -- exactly as sequencing does.
 
-forwarded : [] ⊢C⦂ Reading ‼ ⟅ ⌈ read ⌉ ⟆
+forwarded : [] ⊢C⦂ Reading ‼ demanding ⟅ ⌈ read ⌉ ⟆
 forwarded =
   handle perform read ⋆ (return here)
     `with forwarding {[]}
-    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    `in                  -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return here)
 
-identified : Node ⊢C⦂ NodeId ‼ ⟅ ⌈ read ⌉ ⟆
+identified : Node ⊢C⦂ NodeId ‼ demanding ⟅ ⌈ read ⌉ ⟆
 identified =
   handle perform read ⋆ (return here)
     `with identifying
-    `in                              -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+    `in                  -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- no clause may drop its continuation: its grade demands a run that

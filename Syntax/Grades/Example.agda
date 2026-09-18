@@ -22,11 +22,11 @@
 -- each with a floor, a cap and their pairing. A grid over the         --
 -- sub-trace orders is parked under `backup/`, imported from nowhere.  --
 --                                                                     --
--- Greatest grades: the left-sided intervals' and the coverage floor's --
--- is their unit, the two-sided intervals' is `[ 0 , ∞ ]`, and the     --
--- right-sided intervals' lets the endpoint be `∞`. The allowance cap  --
--- and the three subset grades have none, so `Grades.WithTop` adjoins  --
--- one, which is then absorbing.                                       --
+-- Every grade carries its greatest element in its own carrier: for    --
+-- the left-sided intervals and the coverage floor that is the unit,   --
+-- for the two-sided intervals `[ 0 , ∞ ]`, and the allowance cap and  --
+-- the three subset grades each name a point of their own, which is    --
+-- then absorbing.                                                     --
 --                                                                     --
 -- `System.*` pairs them up: each projection says what a resource      --
 -- grade may forget about the effect grade it comes from. The two      --

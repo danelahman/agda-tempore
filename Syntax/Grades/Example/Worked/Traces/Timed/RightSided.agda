@@ -43,30 +43,14 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
-import Syntax.Grades.Example.Worked.Operations as Ops
-
 open import Syntax.Grades.Example.Worked.Operations
-  hiding (⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆; _·_)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; only_; ⊤ᵍ; _≾_; _≾?_)
-  renaming (_·ᵇ_ to _·_) public
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_) public
 
 order : Grade._≾_ right-sided ≡ _≾_
 order = refl
-
--- a written-out list of bounds is a grade under `only`; `⊤ᵍ` permits
--- any run at all, however long
-
-⟅_⟆ : Trace → Bounds
-⟅ t ⟆ = only Ops.⟅ t ⟆
-
-⟅_∣_⟆ : Trace → Trace → Bounds
-⟅ t ∣ u ⟆ = only Ops.⟅ t ∣ u ⟆
-
-⟅_∣_∣_⟆ : Trace → Trace → Trace → Bounds
-⟅ t ∣ u ∣ v ⟆ = only Ops.⟅ t ∣ u ∣ v ⟆
 
 holds : {P Q : Bounds} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
@@ -89,24 +73,26 @@ failsᵉ P Q {p} = toWitnessFalse p
 -- The reading is named, so it is permitted outright; everything after
 -- it comes out of the six ticks.
 
-reading-alone : ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+reading-alone : within ⟅ ⌈ read ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 reading-alone = holds
 
-storing-it : ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+storing-it : within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 storing-it = holds
 
-transmitting-it : ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+transmitting-it :
+  within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 transmitting-it = holds
 
 -- a transmission spends the whole budget, so nothing else fits after it
 
 transmitting-then-reading :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 transmitting-then-reading = fails
 
 -- idling draws on the same budget as working
 
-idling-instead : ⟅ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+idling-instead : within ⟅ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 idling-instead = holds
 
 ------------------------------------------------------------------------
@@ -116,18 +102,18 @@ idling-instead = holds
 -- is not worth its execution time to anything the run does instead.
 -- Time, by contrast, buys any work that costs no more.
 
-a-write-needs-budget : ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
+a-write-needs-budget : ¬ (within ⟅ ⌈ write ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ⟆)
 a-write-needs-budget = fails
 
-three-ticks-buy-a-write : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆
+three-ticks-buy-a-write : within ⟅ ⌈ write ⌉ ⟆ ≾ within ⟅ ⟨ 3 ⟩ ⟆
 three-ticks-buy-a-write = holds
 
-two-ticks-do-not : ¬ (⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 2 ⟩ ⟆)
+two-ticks-do-not : ¬ (within ⟅ ⌈ write ⌉ ⟆ ≾ within ⟅ ⟨ 2 ⟩ ⟆)
 two-ticks-do-not = fails
 
 -- and a permitted operation buys no time: skipping it frees nothing
 
-a-write-buys-no-time : ¬ (⟅ ⟨ 3 ⟩ ⟆ ≾ ⟅ ⌈ write ⌉ ⟆)
+a-write-buys-no-time : ¬ (within ⟅ ⟨ 3 ⟩ ⟆ ≾ within ⟅ ⌈ write ⌉ ⟆)
 a-write-buys-no-time = fails
 
 ------------------------------------------------------------------------
@@ -138,44 +124,45 @@ a-write-buys-no-time = fails
 -- long enough to cover it, and a delay grows.
 
 exact-to-budget :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
 exact-to-budget = holds
 
-budgets-grow : ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+budgets-grow : within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 budgets-grow = holds
 
 -- and not back: a budget permits more than the one run that prompted it
 
 not-back-to-the-run :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
 not-back-to-the-run = fails
 
 -- offering a second bound permits more, so it too is a weakening
 
 offering-a-second-bound :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ write ⌉ ∙ ⌈ read ⌉ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ write ⌉ ∙ ⌈ read ⌉ ⟆
 offering-a-second-bound = holds
 
 -- `return` does nothing, so every bound permits it -- the unit is the
 -- least grade, where for a floor it would be the greatest
 
-pure-stays-within-anything : ⟅ ε ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
-pure-stays-within-anything = holdsᵉ ⟅ ε ⟆ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+pure-stays-within-anything : within ⟅ ε ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+pure-stays-within-anything =
+  holdsᵉ (within ⟅ ε ⟆) (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 
 -- sub-effecting a part sub-effects the whole: the product is monotone,
 -- so weakening the first phase weakens the sequence
 
 weakening-under-sequencing :
-  (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆)
-  ≾ (⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ · ⟅ ⌈ send ⌉ ⟆)
+  (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ·ᵇ within ⟅ ⌈ send ⌉ ⟆)
+  ≾ (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ·ᵇ within ⟅ ⌈ send ⌉ ⟆)
 weakening-under-sequencing = holds
 
 -- tightening is refused: a computation that may transmit cannot be
 -- retyped at a bound that budgets four ticks
 
 no-tightening :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆)
 no-tightening = fails
 
 ------------------------------------------------------------------------
@@ -191,43 +178,45 @@ no-tightening = fails
 -- a permit good for a reading and six ticks' worth of work
 
 reading-keeps-it-open :
-  ⟅ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 reading-keeps-it-open = holds
 
 storing-keeps-it-open :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 storing-keeps-it-open = holds
 
 -- one operation too many and the permit has expired
 
 overspending-closes-it :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 overspending-closes-it = fails
 
 -- so does work the permit never names and has no budget for
 
 unnamed-work-closes-it :
-  ¬ (⟅ ⌈ write ⌉ ∙ ⌈ read ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
+  ¬ (within ⟅ ⌈ write ⌉ ∙ ⌈ read ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ⟆)
 unnamed-work-closes-it = fails
 
 -- a permit may list alternatives, and the elapsed run need only stay
 -- within one of them
 
 either-allowance :
-  ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 either-allowance = holds
 
 -- but the condition is universal in what elapsed, so a computation with
 -- two possible runs keeps the permit open only if both stay within it
 
 both-branches-stay-within :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 both-branches-stay-within = holds
 
 one-branch-overspends :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉ ⟆
-     ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 one-branch-overspends = fails
 
 ------------------------------------------------------------------------
@@ -239,61 +228,63 @@ one-branch-overspends = fails
 -- permitted by a bound that names only transmissions.
 
 each-run-its-own-bound :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 each-run-its-own-bound = holds
 
 -- and neither bound would do on its own
 
 transmissions-need-theirs :
-  ¬ (⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 transmissions-need-theirs = fails
 
 the-reading-needs-its-own :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ within ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆)
 the-reading-needs-its-own = fails
 
 -- so dropping either bound breaks the grade
 
 dropping-the-budget :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
-     ≾ ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+     ≾ within ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆)
 dropping-the-budget = fails
 
 dropping-the-transmissions :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
-     ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 dropping-the-transmissions = fails
 
 -- a union is a join: each branch's own grade coerces into the union
 
 union-is-a-join-left :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 union-is-a-join-left = holds
 
 union-is-a-join-right :
-  ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 union-is-a-join-right = holds
 
 -- a bound no run uses is harmless, the condition being existential in
 -- the set
 
 an-unused-bound :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 an-unused-bound = holds
 
 -- and a bound already covered by another may be dropped again: a set
 -- trims to those that are not
 
 trimming :
-  ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 trimming = holds
 
 untrimming :
-  ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
 untrimming = holds
 
 ------------------------------------------------------------------------
@@ -307,32 +298,35 @@ untrimming = holds
 -- exactly one of the runs.
 
 storing-in-the-window :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ⟆
 storing-in-the-window = holds
 
 storing-afterwards-does-not :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
-     ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ⟆)
 storing-afterwards-does-not = fails
 
 -- moving the three ticks the store needs to the far side of the
 -- transmission exchanges which run is permitted
 
 storing-afterwards :
-  ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
 storing-afterwards = holds
 
 storing-in-the-window-does-not :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
-     ≾ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆)
 storing-in-the-window-does-not = fails
 
 -- so a computation that may do either needs a grade listing both, and
 -- then each run stays within the bound that budgets where it spends
 
 either-placement :
-  ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
-  ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉
+         ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
 either-placement = holds
 
 -- Placement binds only while the budget is tight. Widen the window to
@@ -343,29 +337,32 @@ either-placement = holds
 -- cross. Eight ticks buy only one of the two.
 
 nine-ticks-buy-both-operations :
-  ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ∙ ⌈ send ⌉ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ∙ ⌈ send ⌉ ⟆
 nine-ticks-buy-both-operations = holds
 
 eight-do-not :
-  ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 8 ⟩ ∙ ⌈ send ⌉ ⟆)
+  ¬ (within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆
+     ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 8 ⟩ ∙ ⌈ send ⌉ ⟆)
 eight-do-not = fails
 
 ------------------------------------------------------------------------
--- The adjoined point
+-- The greatest grade
 --
 -- No finite list of bounds permits every run, so the greatest grade is
--- the adjoined `⊤ᵍ`: it permits any run at all, however long, and no
--- list of bounds permits what it does. An unbounded computation leaves
--- what follows it unbounded too, `⊤ᵍ` being absorbing.
+-- `unbounded`: it permits any run at all, however long, and no list of
+-- bounds permits what it does. An unbounded computation leaves what
+-- follows it unbounded too, `unbounded` being absorbing.
 
 everything-weakens-to-the-top :
-  ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ≾ ⊤ᵍ
-everything-weakens-to-the-top = holdsᵉ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ⊤ᵍ
+  within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ≾ unbounded
+everything-weakens-to-the-top =
+  holdsᵉ (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆) unbounded
 
 the-top-weakens-to-no-list :
-  ¬ (⊤ᵍ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
-the-top-weakens-to-no-list = failsᵉ ⊤ᵍ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  ¬ (unbounded ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+the-top-weakens-to-no-list = failsᵉ unbounded (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 
 the-top-absorbs :
-  (⊤ᵍ · ⟅ ⌈ read ⌉ ⟆) ≡ ⊤ᵍ
+  (unbounded ·ᵇ within ⟅ ⌈ read ⌉ ⟆) ≡ unbounded
 the-top-absorbs = refl

@@ -20,7 +20,7 @@
 -- orders: the guarantee is covered by the continuation, the           --
 -- continuation stays within the allowance.                           --
 --                                                                    --
--- The cap alone carries the adjoined `⊤ᵍ`, which lists no allowance   --
+-- The cap alone carries `unbounded`, which lists no allowance         --
 -- and so caps the continuation not at all.                           --
 ------------------------------------------------------------------------
 
@@ -61,11 +61,12 @@ open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
--- the cap endpoint is the right-sided grade's carrier, `⊤ᵍ` and all
+-- the cap endpoint is the right-sided grade's carrier, `unbounded` and
+-- all
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (Bounds; only_; ⊤ᵍ; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
+  using (Bounds; within_; unbounded; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
@@ -79,19 +80,19 @@ open import DenotationalSemantics.Model.World
 -- Reach `w'` from `w` by appending a continuation that covers one of
 -- the listed guarantees and stays within one of the listed allowances.
 
--- the cap's condition on the continuation, vacuous at `⊤ᵍ`
+-- the cap's condition on the continuation, vacuous at `unbounded`
 
 Within : Trace → Bounds → Set
-Within cont (only Q) = True (any? (λ q → cont ≼ᵃ? q) (traces Q))
-Within cont ⊤ᵍ       = ⊤
+Within cont (within Q) = True (any? (λ q → cont ≼ᵃ? q) (traces Q))
+Within cont unbounded       = ⊤
 
 -- sequencing two continuations stays within the sequenced allowance
 
 Within-∙ : (t₁ t₂ : Trace) (Q₁ Q₂ : Bounds)
          → Within t₁ Q₁ → Within t₂ Q₂ → Within (t₁ ∙ t₂) (Q₁ ·ᵇ Q₂)
-Within-∙ _  _  (only _)  ⊤ᵍ        _  _  = tt
-Within-∙ _  _  ⊤ᵍ        _         _  _  = tt
-Within-∙ t₁ t₂ (only Q₁) (only Q₂) n₁ n₂
+Within-∙ _  _  (within _)  unbounded        _  _  = tt
+Within-∙ _  _  unbounded        _         _  _  = tt
+Within-∙ t₁ t₂ (within Q₁) (within Q₂) n₁ n₂
   with find (toWitness n₁) | find (toWitness n₂)
 ... | x , x∈Q , t₁≼x | y , y∈Q' , t₂≼y =
       fromWitness
@@ -103,9 +104,9 @@ Within-∙ t₁ t₂ (only Q₁) (only Q₂) n₁ n₂
 
 Within-≾ : (cont : Trace) (Q₁ Q₂ : Bounds)
          → Q₁ ≾ʰⁱ Q₂ → Within cont Q₁ → Within cont Q₂
-Within-≾ _    _         ⊤ᵍ        _ _ = tt
-Within-≾ _    ⊤ᵍ        (only _)  ()
-Within-≾ cont (only Q₁) (only Q₂) h n
+Within-≾ _    _         unbounded        _ _ = tt
+Within-≾ _    unbounded        (within _)  ()
+Within-≾ cont (within Q₁) (within Q₂) h n
   with find (toWitness n)
 ... | t , t∈Q , cont≼t
         with find (toWitness (h t (fromWitness t∈Q)))
@@ -114,18 +115,19 @@ Within-≾ cont (only Q₁) (only Q₂) h n
             (Any.map (λ e → subst (cont ≼ᵃ_) e (≼ᵃ-trans cont≼t t≼t')) t'∈Q')
 
 Within-irr : (cont : Trace) (Q : Bounds) → (p q : Within cont Q) → p ≡ q
-Within-irr cont (only Q) = True-irr (any? (λ q → cont ≼ᵃ? q) (traces Q))
-Within-irr _    ⊤ᵍ       tt tt = refl
+Within-irr cont (within Q) = True-irr (any? (λ q → cont ≼ᵃ? q) (traces Q))
+Within-irr _    unbounded       tt tt = refl
 
 infix 5 _⊑ᵇ[_]_
 
 record _⊑ᵇ[_]_ (w : Trace) (i : TwoSided) (w' : Trace) : Set where
   constructor mkᵇ
   field
-    cont    : Trace                                             -- continuation
-    covers  : True (any? (λ p → p ≼ᶜ? cont) (traces (lo i)))    -- covers some guarantee
-    within  : Within cont (hi i)                                -- within some allowance
-    extends : w ∙ cont ≡ w'                                     -- `w'` extends `w`
+    cont    : Trace                                     -- continuation
+    covers  : True (any? (λ p → p ≼ᶜ? cont) (traces (lo i)))
+                                                        -- covers a guarantee
+    bounded : Within cont (hi i)                        -- within an allowance
+    extends : w ∙ cont ≡ w'                             -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
 

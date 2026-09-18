@@ -8,9 +8,11 @@
 
 module Syntax.Grades.Example.Time.LeftSided where
 
+open import Data.Empty using (⊥)
 open import Data.Nat
 open import Data.Nat.Properties
 open import Data.Product
+open import Data.Unit using (⊤; tt)
 
 open import Level renaming (zero to lzero)
 
@@ -19,7 +21,6 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
 
 open import Syntax.Grades
-open import Syntax.Grades.WithTop
 
 open import Util.Equality
 
@@ -147,15 +148,156 @@ left-sided-intervals = record
   ; of-nat-plus       = refl
   }
 
--- the same intervals with a formal greatest grade adjoined
+------------------------------------------------------------------------
+-- The same intervals with a formal greatest grade
 --
--- `[ 0 ,+∞⟩` is already greatest, but it is the unit and so not
--- absorbing. A morphism preserving both `⊤` and `_·_` takes an
--- absorbing top to an absorbing top, so a grade whose top *is*
--- absorbing -- the subset floor, whose top is its adjoined "nothing is
--- demanded" -- cannot project into the intervals above and projects
--- here instead. `⊤ᵍ` reads as "no lower bound is claimed, and sequencing
--- after it claims none either".
+-- `[ 0 ,+∞⟩` is greatest but is the unit, hence not absorbing, and a
+-- morphism preserving `⊤` and `_·_` carries an absorbing top to an
+-- absorbing top; a grade whose top absorbs -- the subset floor, whose
+-- top demands nothing -- therefore projects here rather than into the
+-- intervals above. `untimed` claims no lower bound at all, and
+-- sequencing after it claims none either.
 
-open Adjoin (forgetTop left-sided-intervals) public
-  using (only_; ⊤ᵍ) renaming (withTop to left-sided-intervals-with-⊤)
+infix 50 timed_
+
+data 𝕀⊤ : Set where
+  timed_  : 𝕀 → 𝕀⊤
+  untimed : 𝕀⊤
+
+timed-inj : ∀ {i j} → timed i ≡ timed j → i ≡ j
+timed-inj refl = refl
+
+-- interval addition, with `untimed` absorbing
+
+_·ᵗ_ : 𝕀⊤ → 𝕀⊤ → 𝕀⊤
+(timed i) ·ᵗ (timed j) = timed (i ·ₒ j)
+(timed _) ·ᵗ untimed   = untimed
+untimed   ·ᵗ _         = untimed
+
+infixl 7 _·ᵗ_
+
+uᵗ : 𝕀⊤
+uᵗ = timed uₒ
+
+-- interval order, with `untimed` greatest
+
+_≾ᵗ_ : Rel 𝕀⊤ lzero
+(timed i) ≾ᵗ (timed j) = i ≾ₒ j
+(timed _) ≾ᵗ untimed   = ⊤
+untimed   ≾ᵗ (timed _) = ⊥
+untimed   ≾ᵗ untimed   = ⊤
+
+infix 6 _≾ᵗ_
+
+≾ᵗ-⊤ : (i : 𝕀⊤) → i ≾ᵗ untimed
+≾ᵗ-⊤ (timed _) = tt
+≾ᵗ-⊤ untimed   = tt
+
+-- identity laws
+
+·ᵗ-identityʳ : (i : 𝕀⊤) → i ·ᵗ uᵗ ≡ i
+·ᵗ-identityʳ (timed i) = cong timed_ (·ₒ-identityʳ i)
+·ᵗ-identityʳ untimed   = refl
+
+·ᵗ-identityˡ : (i : 𝕀⊤) → uᵗ ·ᵗ i ≡ i
+·ᵗ-identityˡ (timed i) = cong timed_ (·ₒ-identityˡ i)
+·ᵗ-identityˡ untimed   = refl
+
+-- associativity
+
+·ᵗ-assoc : (i₁ i₂ i₃ : 𝕀⊤) → (i₁ ·ᵗ i₂) ·ᵗ i₃ ≡ i₁ ·ᵗ (i₂ ·ᵗ i₃)
+·ᵗ-assoc (timed i₁) (timed i₂) (timed i₃) = cong timed_ (·ₒ-assoc i₁ i₂ i₃)
+·ᵗ-assoc (timed _)  (timed _)  untimed    = refl
+·ᵗ-assoc (timed _)  untimed    (timed _)  = refl
+·ᵗ-assoc (timed _)  untimed    untimed    = refl
+·ᵗ-assoc untimed    _          _          = refl
+
+-- monotonicity
+
+·ᵗ-monoʳ-≾ᵗ : ∀ {i} → (i ·ᵗ_) Preserves _≾ᵗ_ ⟶ _≾ᵗ_
+·ᵗ-monoʳ-≾ᵗ {timed i} {timed j} {timed k} rel = ·ₒ-monoʳ-≾ₒ {i} {j} {k} rel
+·ᵗ-monoʳ-≾ᵗ {untimed} {timed _} {timed _} rel = tt
+·ᵗ-monoʳ-≾ᵗ {timed _} {timed _} {untimed} rel = tt
+·ᵗ-monoʳ-≾ᵗ {untimed} {timed _} {untimed} rel = tt
+·ᵗ-monoʳ-≾ᵗ {_}       {untimed} {timed _} ()
+·ᵗ-monoʳ-≾ᵗ {timed _} {untimed} {untimed} rel = tt
+·ᵗ-monoʳ-≾ᵗ {untimed} {untimed} {untimed} rel = tt
+
+·ᵗ-monoˡ-≾ᵗ : ∀ {i} → (_·ᵗ i) Preserves _≾ᵗ_ ⟶ _≾ᵗ_
+·ᵗ-monoˡ-≾ᵗ {timed i} {timed j} {timed k} rel = ·ₒ-monoˡ-≾ₒ {i} {j} {k} rel
+·ᵗ-monoˡ-≾ᵗ {untimed} {timed _} {timed _} rel = tt
+·ᵗ-monoˡ-≾ᵗ {timed _} {timed _} {untimed} rel = tt
+·ᵗ-monoˡ-≾ᵗ {untimed} {timed _} {untimed} rel = tt
+·ᵗ-monoˡ-≾ᵗ {_}       {untimed} {timed _} ()
+·ᵗ-monoˡ-≾ᵗ {timed _} {untimed} {untimed} rel = tt
+·ᵗ-monoˡ-≾ᵗ {untimed} {untimed} {untimed} rel = tt
+
+-- order properties
+
+≾ᵗ-refl : Reflexive _≾ᵗ_
+≾ᵗ-refl {timed i} = ≾ₒ-refl {i}
+≾ᵗ-refl {untimed} = tt
+
+≾ᵗ-trans : Transitive _≾ᵗ_
+≾ᵗ-trans {timed i}  {timed j}  {timed k}  p q = ≾ₒ-trans {i} {j} {k} p q
+≾ᵗ-trans {timed _}  {timed _}  {untimed}  p q = tt
+≾ᵗ-trans {timed _}  {untimed}  {timed _}  p ()
+≾ᵗ-trans {timed _}  {untimed}  {untimed}  p q = tt
+≾ᵗ-trans {untimed}  {timed _}  {_}        () q
+≾ᵗ-trans {untimed}  {untimed}  {timed _}  p ()
+≾ᵗ-trans {untimed}  {untimed}  {untimed}  p q = tt
+
+≾ᵗ-irrelevant : Irrelevant _≾ᵗ_
+≾ᵗ-irrelevant {timed i} {timed j} p  q  = ≾ₒ-irrelevant {i} {j} p q
+≾ᵗ-irrelevant {timed _} {untimed} tt tt = refl
+≾ᵗ-irrelevant {untimed} {timed _} () q
+≾ᵗ-irrelevant {untimed} {untimed} tt tt = refl
+
+-- decidability
+
+_≡ᵗ?_ : Decidable (_≡_ {A = 𝕀⊤})
+(timed i) ≡ᵗ? (timed j) with i ≡ₒ? j
+... | yes p = yes (cong timed_ p)
+... | no ¬p = no (λ eq → ¬p (timed-inj eq))
+(timed _) ≡ᵗ? untimed   = no (λ ())
+untimed   ≡ᵗ? (timed _) = no (λ ())
+untimed   ≡ᵗ? untimed   = yes refl
+
+-- zero-product properties, `untimed` sitting above the unit and not
+-- below it
+
+≾ᵗ-zero-productˡ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ uᵗ → i₁ ≾ᵗ uᵗ
+≾ᵗ-zero-productˡ {timed i₁} {timed i₂} rel = ≾ₒ-zero-productˡ {i₁} {i₂} rel
+≾ᵗ-zero-productˡ {timed _}  {untimed}  ()
+≾ᵗ-zero-productˡ {untimed}  {_}        ()
+
+≾ᵗ-zero-productʳ : ∀ {i₁ i₂ : 𝕀⊤} → i₁ ·ᵗ i₂ ≾ᵗ uᵗ → i₂ ≾ᵗ uᵗ
+≾ᵗ-zero-productʳ {timed i₁} {timed i₂} rel = ≾ₒ-zero-productʳ {i₁} {i₂} rel
+≾ᵗ-zero-productʳ {timed _}  {untimed}  ()
+≾ᵗ-zero-productʳ {untimed}  {_}        ()
+
+-- the grade of one-sided intervals with a formal greatest grade
+
+left-sided-intervals-with-⊤ : Grade
+left-sided-intervals-with-⊤ = record
+  { Carrier           = 𝕀⊤
+  ; _·_               = _·ᵗ_
+  ; u                 = uᵗ
+  ; ·-identityʳ       = ·ᵗ-identityʳ
+  ; ·-identityˡ       = ·ᵗ-identityˡ
+  ; ·-assoc           = ·ᵗ-assoc
+  ; _≾_               = _≾ᵗ_
+  ; ⊤                 = untimed
+  ; ≾-⊤               = ≾ᵗ-⊤
+  ; ·-monoʳ-≾         = λ {i} {i₁} {i₂} → ·ᵗ-monoʳ-≾ᵗ {i} {i₁} {i₂}
+  ; ·-monoˡ-≾         = λ {i} {i₁} {i₂} → ·ᵗ-monoˡ-≾ᵗ {i} {i₁} {i₂}
+  ; ≾-refl            = λ {i} → ≾ᵗ-refl {i}
+  ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ᵗ-trans {i₁} {i₂} {i₃}
+  ; _≡?_              = _≡ᵗ?_
+  ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵗ-zero-productˡ {i₁} {i₂}
+  ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵗ-zero-productʳ {i₁} {i₂}
+  ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵗ-irrelevant {i₁} {i₂}
+  ; of-nat            = λ n → timed [ n ,+∞⟩
+  ; of-nat-zero       = refl
+  ; of-nat-plus       = refl
+  }

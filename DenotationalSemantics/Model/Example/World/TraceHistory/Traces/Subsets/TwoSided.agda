@@ -21,7 +21,7 @@
 -- this order a lower bound already pins the continuation exactly, so  --
 -- a single history has nothing left to say about the upper one.       --
 --                                                                    --
--- The top `⊤ᵍ` is adjoined to the pair as a whole, and constrains the --
+-- The top `unconstrained` stands above the pairs, and constrains      --
 -- continuation at neither endpoint.                                  --
 ------------------------------------------------------------------------
 
@@ -46,7 +46,8 @@ open import Syntax.Grades.Traces.Sets Op
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
 open import Syntax.Grades.Example.Traces.Subsets.TwoSided Op _≟ₒ_
-  using (TwoSided; lo; hi; two-sided; Interval; only_; ⊤ᵍ; uᴵ; _·ᴵ_; _≾ᴵ_)
+  using (TwoSided; lo; hi; two-sided; Interval; between_; unconstrained;
+         uᴵ; _·ᴵ_; _≾ᴵ_)
 
 open WithDecEq _≟ₒ_
   using (_⊑_; _≟ᵀ_; _∈?_; ⊑-refl; ⊑-trans; ⊑-·ˢ; True-irr; liftˢ-irrelevant)
@@ -59,23 +60,24 @@ open import DenotationalSemantics.Model.World
 ------------------------------------------------------------------------
 -- Accessibility on trace histories
 
--- the two conditions on the continuation, both vacuous at `⊤ᵍ`
+-- the two conditions on the continuation, both vacuous at
+-- `unconstrained`
 
 Demanded : Trace → Interval → Set
-Demanded cont (only i) = traces (lo i) ⊑ [ cont ]
-Demanded cont ⊤ᵍ       = ⊤
+Demanded cont (between i) = traces (lo i) ⊑ [ cont ]
+Demanded cont unconstrained       = ⊤
 
 Listed : Trace → Interval → Set
-Listed cont (only i) = True (cont ∈? traces (hi i))
-Listed cont ⊤ᵍ       = ⊤
+Listed cont (between i) = True (cont ∈? traces (hi i))
+Listed cont unconstrained       = ⊤
 
 Demanded-irr : (cont : Trace) (i : Interval) → (p q : Demanded cont i) → p ≡ q
-Demanded-irr _ (only _) = ⊑-irr
-Demanded-irr _ ⊤ᵍ       tt tt = refl
+Demanded-irr _ (between _) = ⊑-irr
+Demanded-irr _ unconstrained       tt tt = refl
 
 Listed-irr : (cont : Trace) (i : Interval) → (p q : Listed cont i) → p ≡ q
-Listed-irr cont (only i) = True-irr (cont ∈? traces (hi i))
-Listed-irr _    ⊤ᵍ       tt tt = refl
+Listed-irr cont (between i) = True-irr (cont ∈? traces (hi i))
+Listed-irr _    unconstrained       tt tt = refl
 
 infix 5 _⊑ᵇ[_]_
 
@@ -103,11 +105,11 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 
 ⊑ᵇ-trans : ∀ {i₁ i₂ w w' w''}
          → w ⊑ᵇ[ i₁ ] w' → w' ⊑ᵇ[ i₂ ] w'' → w ⊑ᵇ[ i₁ ·ᴵ i₂ ] w''
-⊑ᵇ-trans {only _} {⊤ᵍ}    {w} (mkᵇ t₁ _ _ eq₁) (mkᵇ t₂ _ _ eq₂) =
+⊑ᵇ-trans {between _} {unconstrained}    {w} (mkᵇ t₁ _ _ eq₁) (mkᵇ t₂ _ _ eq₂) =
   mkᵇ (t₁ ∙ t₂) tt tt (extends-∙ w t₁ t₂ eq₁ eq₂)
-⊑ᵇ-trans {⊤ᵍ}    {_}      {w} (mkᵇ t₁ _ _ eq₁) (mkᵇ t₂ _ _ eq₂) =
+⊑ᵇ-trans {unconstrained}    {_}      {w} (mkᵇ t₁ _ _ eq₁) (mkᵇ t₂ _ _ eq₂) =
   mkᵇ (t₁ ∙ t₂) tt tt (extends-∙ w t₁ t₂ eq₁ eq₂)
-⊑ᵇ-trans {only i₁} {only i₂} {w} (mkᵇ t₁ d₁ l₁ eq₁) (mkᵇ t₂ d₂ l₂ eq₂) =
+⊑ᵇ-trans {between i₁} {between i₂} {w} (mkᵇ t₁ d₁ l₁ eq₁) (mkᵇ t₂ d₂ l₂ eq₂) =
   mkᵇ (t₁ ∙ t₂)
       (⊑-·ˢ d₁ d₂)
       (fromWitness
@@ -115,9 +117,9 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
       (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 ⊑ᵇ-mono : ∀ {i₁ i₂ w w'} → i₁ ≾ᴵ i₂ → w ⊑ᵇ[ i₁ ] w' → w ⊑ᵇ[ i₂ ] w'
-⊑ᵇ-mono {_}       {⊤ᵍ}     rel (mkᵇ cont _ _ eq) = mkᵇ cont tt tt eq
-⊑ᵇ-mono {⊤ᵍ}     {only _}  ()
-⊑ᵇ-mono {only i₁} {only i₂} (l , h) (mkᵇ cont d n eq) =
+⊑ᵇ-mono {_}       {unconstrained}     rel (mkᵇ cont _ _ eq) = mkᵇ cont tt tt eq
+⊑ᵇ-mono {unconstrained}     {between _}  ()
+⊑ᵇ-mono {between i₁} {between i₂} (l , h) (mkᵇ cont d n eq) =
   mkᵇ cont
       (⊑-trans {traces (lo i₂)} {traces (lo i₁)} l d)
       (fromWitness (∈-⊑ h (toWitness n)))

@@ -28,8 +28,8 @@
 -- Each endpoint is measured at its own cost model: `P` at `costˡᵒ`,    --
 -- `Q` at `costʰⁱ`.                                                     --
 --                                                                     --
--- The cap's unbounded grade `⊤ᵍ` is measured by `∞`, so the two         --
--- greatest grades correspond -- `[ u , ⊤ᵍ ]` above and `[ 0 , ∞ ]`      --
+-- The cap's `unbounded` is measured by `∞`, so the two greatest        --
+-- grades correspond -- `[ u , unbounded ]` above and `[ 0 , ∞ ]`       --
 -- below -- and neither is absorbing, both keeping whatever lower bound --
 -- follows them.                                                        --
 ------------------------------------------------------------------------
@@ -70,7 +70,7 @@ open import Syntax.Grades.Example.Traces.Timed.TwoSided
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (Bounds; only_; ⊤ᵍ; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
+  using (Bounds; within_; unbounded; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
 
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are, each at its own cost model
@@ -107,14 +107,14 @@ coherent₀ P Q coh
 -- unbounded allowance being measured by `∞`
 
 capDuration : Bounds → ℕ∞
-capDuration (only Q) = ↑ setDuration (traces Q)
-capDuration ⊤ᵍ       = ∞
+capDuration (within Q) = ↑ setDuration (traces Q)
+capDuration unbounded  = ∞
 
 coherent : (i : TwoSided)
          → ↑ minSetDuration (traces (lo i)) ≤∞ capDuration (hi i)
 coherent i with hi i | lo◇hi i
-... | only Q | coh = coherent₀ (lo i) Q coh
-... | ⊤ᵍ     | _   = tt
+... | within Q   | coh = coherent₀ (lo i) Q coh
+... | unbounded  | _   = tt
 
 mapₒ : TwoSided → Interval∞
 mapₒ i = [ minSetDuration (traces (lo i)) , capDuration (hi i) , coherent i ]
@@ -123,10 +123,11 @@ mapₒ i = [ minSetDuration (traces (lo i)) , capDuration (hi i) , coherent i ]
 
 capDuration-monotone : {P Q : Bounds}
                      → P ≾ʰⁱ Q → capDuration P ≤∞ capDuration Q
-capDuration-monotone {only P} {only Q} rel = mapʰⁱ-monotone {P} {Q} rel
-capDuration-monotone {only _} {⊤ᵍ}     rel = tt
-capDuration-monotone {⊤ᵍ}     {only _} ()
-capDuration-monotone {⊤ᵍ}     {⊤ᵍ}     rel = tt
+capDuration-monotone {within P}  {within Q}  rel =
+  mapʰⁱ-monotone {P} {Q} rel
+capDuration-monotone {within _}  {unbounded} rel = tt
+capDuration-monotone {unbounded} {within _}  ()
+capDuration-monotone {unbounded} {unbounded} rel = tt
 
 mapₒ-monotone : {i₁ i₂ : TwoSided} → i₁ ≾ᵗˢ i₂ → mapₒ i₁ ≾ᵢ mapₒ i₂
 mapₒ-monotone {i₁} {i₂} (l , h) =
@@ -137,11 +138,11 @@ mapₒ-monotone {i₁} {i₂} (l , h) =
 
 capDuration-· : (P Q : Bounds)
               → capDuration (P ·ᵇ Q) ≡ capDuration P +∞ capDuration Q
-capDuration-· (only P) (only Q) =
+capDuration-· (within P) (within Q) =
   cong ↑_ (setDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
-capDuration-· (only _) ⊤ᵍ       = refl
-capDuration-· ⊤ᵍ       (only _) = refl
-capDuration-· ⊤ᵍ       ⊤ᵍ       = refl
+capDuration-· (within _) unbounded  = refl
+capDuration-· unbounded  (within _) = refl
+capDuration-· unbounded  unbounded  = refl
 
 mapₒ-· : (i₁ i₂ : TwoSided) → mapₒ (i₁ ·ᵗˢ i₂) ≡ mapₒ i₁ ·ᵢ mapₒ i₂
 mapₒ-· i₁ i₂ =
