@@ -19,6 +19,9 @@
 -- That is the frame stating what the grade already says: a            --
 -- non-singleton lower bound is a claim about a computation's          --
 -- branching, and a single observed history is no witness for it.      --
+--                                                                    --
+-- The grade's adjoined top `⊤ᵍ` demands no run, so it leaves the      --
+-- continuation unconstrained and asks only that `w'` extend `w`.      --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -29,11 +32,12 @@ module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.Lef
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
 
 open import Data.List.Base using (List; [_])
+open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades.Traces.Sets Op
 
 open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
-  using (left-sided; _≾_)
+  using (left-sided; Demands; only_; ⊤ᵍ; _·ᵈ_; _≾_)
 
 open WithDecEq _≟ₒ_
   using (_⊑_; _≟ᵀ_; ⊑-refl; ⊑-trans; ⊑-·ˢ; liftˢ-irrelevant)
@@ -49,18 +53,35 @@ open import DenotationalSemantics.Model.World
 ------------------------------------------------------------------------
 -- Accessibility on trace histories
 
+-- the condition on the continuation, vacuous at `⊤ᵍ`
+
+Demanded : Trace → Demands → Set
+Demanded cont (only P) = traces P ⊑ [ cont ]
+Demanded cont ⊤ᵍ       = ⊤
+
+Demanded-irr : (cont : Trace) (P : Demands) → (p q : Demanded cont P) → p ≡ q
+Demanded-irr _ (only _) = ⊑-irr
+Demanded-irr _ ⊤ᵍ       tt tt = refl
+
 infix 5 _⊑ᵇ[_]_
 
-record _⊑ᵇ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
+record _⊑ᵇ[_]_ (w : Trace) (P : Demands) (w' : Trace) : Set where
   constructor mkᵇ
   field
     cont     : Trace                     -- continuation
-    demanded : traces P ⊑ [ cont ]       -- every demanded run is it
+    demanded : Demanded cont P           -- every demanded run is it
     extends  : w ∙ cont ≡ w'             -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ u ] w
+-- appending the two continuations in turn extends across both
+
+extends-∙ : (w t₁ t₂ : Trace) {w' w'' : Trace}
+          → w ∙ t₁ ≡ w' → w' ∙ t₂ ≡ w'' → w ∙ (t₁ ∙ t₂) ≡ w''
+extends-∙ w t₁ t₂ eq₁ eq₂ =
+  trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂)
+
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ only u ] w
 ⊑ᵇ-refl {w} = mkᵇ ε (⊑-refl {traces u}) (∙-identityʳ w)
 
 -- transitivity multiplies the grades: the product's demands are the
@@ -68,24 +89,28 @@ open _⊑ᵇ[_]_
 -- sequenced continuation
 
 ⊑ᵇ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P · Q ] w''
-⊑ᵇ-trans {P} {Q} {w} (mkᵇ t₁ d₁ eq₁) (mkᵇ t₂ d₂ eq₂) =
-  mkᵇ (t₁ ∙ t₂)
-      (⊑-·ˢ d₁ d₂)
-      (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+         → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P ·ᵈ Q ] w''
+⊑ᵇ-trans {only _} {⊤ᵍ}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+  mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
+⊑ᵇ-trans {⊤ᵍ}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+  mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
+⊑ᵇ-trans {only P} {only Q} {w} (mkᵇ t₁ d₁ eq₁) (mkᵇ t₂ d₂ eq₂) =
+  mkᵇ (t₁ ∙ t₂) (⊑-·ˢ d₁ d₂) (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 -- covariance: the weaker grade demands a sub-list of what the stronger
 -- one did, and the continuation already answered to all of that
 
 ⊑ᵇ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵇ[ P ] w' → w ⊑ᵇ[ Q ] w'
-⊑ᵇ-mono {P} {Q} rel (mkᵇ cont d eq) =
+⊑ᵇ-mono {_}      {⊤ᵍ}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
+⊑ᵇ-mono {⊤ᵍ}    {only _} ()
+⊑ᵇ-mono {only P} {only Q} rel (mkᵇ cont d eq) =
   mkᵇ cont (⊑-trans {traces Q} {traces P} rel d) eq
 
 ⊑ᵇ-irrelevant : ∀ {P w w'} → (p q : w ⊑ᵇ[ P ] w') → p ≡ q
 ⊑ᵇ-irrelevant {P} {w} (mkᵇ cont d refl) (mkᵇ cont' d' eq')
   with ∙-cancelˡ w eq'
 ... | refl with eq'
-... | refl = cong (λ z → mkᵇ cont z refl) (⊑-irr d d')
+... | refl = cong (λ z → mkᵇ cont z refl) (Demanded-irr cont P d d')
 
 ------------------------------------------------------------------------
 -- The frame.

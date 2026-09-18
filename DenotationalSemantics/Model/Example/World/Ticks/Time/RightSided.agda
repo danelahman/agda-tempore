@@ -3,10 +3,10 @@
 -- resource grades.                                                     --
 --                                                                    --
 -- Worlds are time points `ℕ`. A right-sided resource grade `[0, n ]`   --
--- ("at most `n` ticks") reaches the worlds no more than `n` ticks       --
--- ahead:                                                              --
+-- ("at most `n` ticks", with `n : ℕ∞`) reaches the worlds no more than  --
+-- `n` ticks ahead, an infinite `n` bounding nothing:                    --
 --                                                                    --
---   w ⊑[ [0, n ] ] w'   iff   w' ≤ w + n                              --
+--   w ⊑[ [0, n ] ] w'   iff   ↑ w' ≤∞ (↑ w +∞ n)                      --
 --                                                                    --
 -- the mirror image of `Time.LeftSided`'s frame, which asks the world    --
 -- to advance by *at least* the bound. Multiplying grades adds the       --
@@ -14,33 +14,39 @@
 -- sum, and a larger bound -- the weaker grade -- gives a larger         --
 -- relation.                                                           --
 --                                                                    --
--- Together with `Time.LeftSided` and `Time.TwoSided` this completes the --
--- interval family: every grade `Grades.Example.Time` defines has a      --
--- tick frame, and the frame's direction is read off the grade's.        --
+-- Together with `Time.LeftSided` and `Time.TwoSidedWithInfinity` this   --
+-- completes the interval family: every grade `Grades.Example.Time`      --
+-- defines has a tick frame, and the frame's direction is read off the   --
+-- grade's.                                                             --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided where
 
-open import Data.Nat using (ℕ; _+_; _≤_)
-open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant;
-         +-monoˡ-≤; +-monoʳ-≤; +-assoc; +-identityʳ)
+open import Data.Nat using (ℕ; _+_)
+open import Data.Nat.Properties using (≤-reflexive; +-identityʳ)
 
 open import Syntax.Grades.Example.Time.RightSided
-  using (𝕀ᵣ; [0,_]; _·ₒ_; _≾ₒ_; right-sided-intervals)
+  using (𝕀ᵣ; [0,_]; _·ₒ_; _≾ₒ_; right-sided-intervals;
+         ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant;
+         +∞-assoc)
 
 open import Util.Equality
 
 open import DenotationalSemantics.Model.World
 
+-- ℕ∞ helper used to rearrange the bound
+
+≤∞-reflexive : ∀ {a b} → a ≡ b → a ≤∞ b
+≤∞-reflexive refl = ≤∞-refl
+
 -- Accessibility on time ticks: reach the worlds at most `n` ticks ahead.
 
 _⊑ᵗ[_]_ : ℕ → 𝕀ᵣ → ℕ → Set
-w ⊑ᵗ[ [0, n ] ] w' = w' ≤ w + n
+w ⊑ᵗ[ [0, n ] ] w' = ↑ w' ≤∞ (↑ w +∞ n)
 
--- reflexivity at the unit grade `[0, 0 ]`: the world does not move
+-- reflexivity at the unit grade `[0, ↑ 0 ]`: the world does not move
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ [0, 0 ] ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ [0, ↑ 0 ] ] w
 ⊑ᵗ-refl {w} = ≤-reflexive (sym (+-identityʳ w))
 
 -- transitivity multiplies the grades (adds the upper bounds): the two
@@ -48,19 +54,22 @@ w ⊑ᵗ[ [0, n ] ] w' = w' ≤ w + n
 
 ⊑ᵗ-trans : ∀ {ρ₁ ρ₂ w w' w''}
          → w ⊑ᵗ[ ρ₁ ] w' → w' ⊑ᵗ[ ρ₂ ] w'' → w ⊑ᵗ[ ρ₁ ·ₒ ρ₂ ] w''
-⊑ᵗ-trans {[0, m ]} {[0, n ]} {w} p q =
-  ≤-trans (≤-trans q (+-monoˡ-≤ n p)) (≤-reflexive (+-assoc w m n))
+⊑ᵗ-trans {[0, m ]} {[0, n ]} {w} {w'} p q =
+  ≤∞-trans q
+    (≤∞-trans (+∞-mono-≤∞ {↑ w'} {n} {↑ w +∞ m} {n} p (≤∞-refl {n}))
+              (≤∞-reflexive (+∞-assoc (↑ w) m n)))
 
 -- covariance: a larger upper bound (a weaker grade) gives a larger
 -- relation
 
 ⊑ᵗ-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ₒ ρ₂ → w ⊑ᵗ[ ρ₁ ] w' → w ⊑ᵗ[ ρ₂ ] w'
-⊑ᵗ-mono {[0, m ]} {[0, n ]} {w} rel p = ≤-trans p (+-monoʳ-≤ w rel)
+⊑ᵗ-mono {[0, m ]} {[0, n ]} {w} {w'} rel p =
+  ≤∞-trans p (+∞-mono-≤∞ {↑ w} {m} {↑ w} {n} (≤∞-refl {↑ w}) rel)
 
 -- proof irrelevance of the witnesses
 
 ⊑ᵗ-irrelevant : ∀ {ρ w w'} → (p q : w ⊑ᵗ[ ρ ] w') → p ≡ q
-⊑ᵗ-irrelevant {[0, _ ]} p q = ≤-irrelevant p q
+⊑ᵗ-irrelevant {[0, n ]} {w} {w'} = ≤∞-irrelevant {↑ w'} {↑ w +∞ n}
 
 -- The frame.
 
@@ -69,7 +78,7 @@ ticks = record
   { W             = ℕ
   ; _⊑[_]_       = _⊑ᵗ[_]_
   ; ⊑-refl       = ⊑ᵗ-refl
-  ; ⊑-trans      = ⊑ᵗ-trans
-  ; ⊑-mono       = ⊑ᵗ-mono
-  ; ⊑-irrelevant = ⊑ᵗ-irrelevant
+  ; ⊑-trans      = λ {ρ₁} {ρ₂} → ⊑ᵗ-trans {ρ₁} {ρ₂}
+  ; ⊑-mono       = λ {ρ₁} {ρ₂} → ⊑ᵗ-mono {ρ₁} {ρ₂}
+  ; ⊑-irrelevant = λ {ρ} → ⊑ᵗ-irrelevant {ρ}
   }

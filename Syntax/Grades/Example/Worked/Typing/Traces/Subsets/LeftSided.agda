@@ -3,8 +3,9 @@
 --                                                                     --
 -- A grade `P` is read against the runs `X` a computation may have as   --
 -- `P ⊆ X`: every listed trace is a run it can exhibit. The set is read --
--- *conjunctively*, so weakening drops members and `⟅ ε ⟆` --          --
--- demanding only that stopping is possible -- is the greatest grade.   --
+-- *conjunctively*, so weakening drops members and `⟅ ε ⟆` demands only --
+-- that stopping be possible -- which is still a demand, so no          --
+-- written-out list is above them all. The adjoined `⊤ᵍ` is.            --
 --                                                                     --
 -- The calculus meets this grade at its most rigid. Every operation is  --
 -- graded by a singleton, products of singletons are singletons, and a  --
@@ -12,11 +13,12 @@
 -- singleton again: so every computation's grade is exactly its run and --
 -- `coerce` has nothing to do. `unbox` inherits that -- a box is        --
 -- claimable only after precisely the run it names -- and `if` inherits --
--- something sharper still: `no-common-grade` below shows that no grade --
--- whatever types a conditional whose branches perform different        --
--- operations, since the two coercions would make one non-empty set a   --
--- subset of two disjoint singletons. What `if` can still do here is    --
--- branch over *data*, both branches making the same run.               --
+-- something sharper still: `no-common-listed-grade` below shows that   --
+-- no *listed* grade types a conditional whose branches perform         --
+-- different operations, since the two coercions would make one         --
+-- non-empty set a subset of two disjoint singletons. The adjoined      --
+-- `⊤ᵍ` does type it, demanding no run at all; what `if` can do below   --
+-- `⊤ᵍ` is branch over *data*, both branches making the same run.       --
 --                                                                     --
 -- The comments inside the programs say what each former appends to the --
 -- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
@@ -40,11 +42,11 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_;
-         Trace; NeTraces; neTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆;
-         ⟅_∣_∣_⟆)
+         Trace; NeTraces; neTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
-  using (left-sided; holds; fails; holdsᵉ; failsᵉ)
+  using (left-sided; Demands; only_; ⊤ᵍ; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆;
+         holds; fails; holdsᵉ; failsᵉ)
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
   using (∈-⊑; ⊑-∈)
@@ -52,7 +54,7 @@ open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
 
-opTime : Op → NeTraces
+opTime : Op → Demands
 opTime o = ⟅ ⌈ o ⌉ ⟆
 
 open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
@@ -120,9 +122,10 @@ trading-work-for-time = fails
 ------------------------------------------------------------------------
 -- Conditional branching
 --
--- No grade at all types a conditional whose branches perform different
--- operations: a common grade would have to be a non-empty subset of
--- both branches' singletons.
+-- No *listed* grade types a conditional whose branches perform
+-- different operations: a common one would have to be a non-empty
+-- subset of both branches' singletons. The adjoined `⊤ᵍ` is not a list
+-- and does type it.
 
 -- a non-empty set has a member
 
@@ -134,14 +137,32 @@ member (neTraces (t ∷ˡ _) _) = t , hereᴬ refl
 only-member : {s t : Trace} → s ∈ (t ∷ˡ []ˡ) → s ≡ t
 only-member (hereᴬ p) = p
 
-no-common-grade : (grade : E)
-                → opTime send  ·ₑ uₑ ≾ₑ grade
-                → opTime write ·ₑ uₑ ≾ₑ grade
-                → ⊥
-no-common-grade grade send-fits write-fits with member grade
+no-common-listed-grade : (grade : NeTraces)
+                       → opTime send  ·ₑ uₑ ≾ₑ only grade
+                       → opTime write ·ₑ uₑ ≾ₑ only grade
+                       → ⊥
+no-common-listed-grade grade send-fits write-fits with member grade
 ... | t , t∈grade with only-member (∈-⊑ send-fits t∈grade)
 ...   | refl with only-member (∈-⊑ write-fits t∈grade)
 ...     | ()
+
+-- the adjoined point is a common grade: it demands no run at all, so
+-- both branches weaken to it
+
+transmitting-fits-the-top : opTime send ·ₑ uₑ ≾ₑ ⊤ᵍ
+transmitting-fits-the-top = ≾-⊤ₑ (opTime send ·ₑ uₑ)
+
+storing-fits-the-top : opTime write ·ₑ uₑ ≾ₑ ⊤ᵍ
+storing-fits-the-top = ≾-⊤ₑ (opTime write ·ₑ uₑ)
+
+-- so the conditional every list of demands refuses is typed at `⊤ᵍ`,
+-- each branch coerced to the grade that demands nothing
+
+branching-at-the-top : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ ⊤ᵍ
+branching-at-the-top =
+  if eternal-var Boolₑ (Tl-∷ Hd)
+    `then coerce transmitting-fits-the-top (perform send  here (return ⋆))
+    `else coerce storing-fits-the-top      (perform write here (return ⋆))
 
 -- the three grades one would reach for, refuted one at a time
 
@@ -244,9 +265,15 @@ claiming-now =
 -- is the run that elapsed. There is no room here for the non-reflexive
 -- comparisons the ordered families allow.
 
+-- `⊤ᵍ` demands no run at all
+
+_∈ᵈ_ : Trace → R → Set
+s ∈ᵈ (only P) = s ∈ traces P
+s ∈ᵈ ⊤ᵍ       = ⊥
+
 every-demand-is-the-elapsed-run :
-  (t : Trace) (ρ : R) → ⟅ t ⟆ ≾ᵣ ρ → (s : Trace) → s ∈ traces ρ → s ≡ t
-every-demand-is-the-elapsed-run t ρ sub s s∈ρ = only-member (∈-⊑ sub s∈ρ)
+  (t : Trace) (ρ : R) → ⟅ t ⟆ ≾ᵣ ρ → (s : Trace) → s ∈ᵈ ρ → s ≡ t
+every-demand-is-the-elapsed-run t (only ρ) sub s s∈ρ = only-member (∈-⊑ sub s∈ρ)
 
 -- so a box demanding two runs is out of reach of any one of them, and
 -- of every program in this calculus
@@ -261,9 +288,10 @@ two-run-demand = fails
 -- that is what sets this floor apart from the other five endpoints:
 -- there the union of two grades is their join, here it is their *meet*.
 -- The calculus cannot hand a computation such a grade -- `if` would
--- have to union its branches and `no-common-grade` says it cannot --
--- but the order is defined on them all the same, and the facts below
--- are what a branching rule that did take unions would be working with.
+-- have to union its branches and `no-common-listed-grade` says it
+-- cannot, `⊤ᵍ` being the one grade left -- but the order is defined on
+-- them all the same, and the facts below are what a branching rule that
+-- did take unions would be working with.
 
 -- weakening drops demands, so a two-run grade sits below each of the
 -- singletons it is made of
@@ -281,10 +309,10 @@ union-is-the-meet :
   (P : R) → P ≾ᵣ ⟅ ⌈ read ⌉ ⟆
           → P ≾ᵣ ⟅ ⌈ write ⌉ ⟆
           → P ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
-union-is-the-meet P reads writes = ⊑-∈ step
+union-is-the-meet (only P) reads writes = ⊑-∈ step
   where
     step : (s : Trace)
-         → s ∈ traces ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ → s ∈ traces P
+         → s ∈ (⌈ read ⌉ ∷ˡ ⌈ write ⌉ ∷ˡ []ˡ) → s ∈ traces P
     step _ (hereᴬ refl)          = ∈-⊑ reads  (hereᴬ refl)
     step _ (thereᴬ (hereᴬ refl)) = ∈-⊑ writes (hereᴬ refl)
 
@@ -298,8 +326,8 @@ two-runs-not-below-three :
   ¬ (⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ᵣ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆)
 two-runs-not-below-three = fails
 
--- the unit demands only that stopping be possible, so it is the
--- greatest grade, and a list that includes the empty run weakens to it
+-- the unit demands only that stopping be possible, so a list that
+-- includes the empty run weakens to it -- and no other list does
 
 listing-stopping : ⟅ ε ∣ ⌈ read ⌉ ⟆ ≾ᵣ ⟅ ε ⟆
 listing-stopping = holdsᵉ ⟅ ε ∣ ⌈ read ⌉ ⟆ ⟅ ε ⟆
@@ -332,9 +360,10 @@ sampling-listed-twice =
 ------------------------------------------------------------------------
 -- Unboxing under a branch
 --
--- `no-common-grade` settles this too, the resource grades being the
--- same monoid: a box claimed after a reading in one branch and after a
--- transmission in the other would have to demand both runs and neither.
+-- `no-common-listed-grade` settles this too, the resource grades being
+-- the same monoid: a box claimed after a reading in one branch and
+-- after a transmission in the other would have to demand both runs and
+-- neither, leaving `⊤ᵍ`, which demands nothing of either.
 
 sampling-branch-demands-its-run : uᵣ ·ᵣ opTime read ≾ᵣ ⟅ ⌈ read ⌉ ⟆
 sampling-branch-demands-its-run = holds

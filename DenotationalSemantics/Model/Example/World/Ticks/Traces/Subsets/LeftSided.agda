@@ -16,6 +16,9 @@
 -- grade is "at least as long as the *slowest* demanded run" -- where  --
 -- the coverage floor of `Ticks.Traces.Timed.LeftSided`, whose set is  --
 -- read disjunctively, yields the fastest instead.                     --
+--                                                                    --
+-- The grade's adjoined top `⊤ᵍ` demands no run at all, so it relates   --
+-- every pair of worlds.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -35,6 +38,7 @@ open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁻)
 open import Data.List.Relation.Unary.All as All using (All; []; _∷_; all?)
 open import Data.Product using (_,_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -43,7 +47,7 @@ open import Syntax.Grades.Traces.Durations Op
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
 open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
-  using (left-sided; _≾_)
+  using (left-sided; Demands; only_; ⊤ᵍ; _·ᵈ_; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -53,21 +57,24 @@ open WithDecEq _≟ₒ_ using (True-irr)
 ------------------------------------------------------------------------
 -- The frame
 
-_⊑ᵗ[_]_ : ℕ → NeTraces → ℕ → Set
-w ⊑ᵗ[ P ] w' = True (all? (λ p → (w + duration p) ≤? w') (traces P))
+_⊑ᵗ[_]_ : ℕ → Demands → ℕ → Set
+w ⊑ᵗ[ only P ] w' = True (all? (λ p → (w + duration p) ≤? w') (traces P))
+w ⊑ᵗ[ ⊤ᵍ ]     w' = ⊤
 
 -- reflexivity at the unit grade `{ ε }`: the only demanded run takes no
 -- time, and none has passed
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ u ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ only u ] w
 ⊑ᵗ-refl {w} = fromWitness (≤-reflexive (+-identityʳ w) ∷ [])
 
 -- transitivity multiplies the grades: every demanded run of the product
 -- splits into one from each factor, and the two advances compose
 
 ⊑ᵗ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P · Q ] w''
-⊑ᵗ-trans {P} {Q} {w} {w'} {w''} p q = fromWitness (All.tabulate step)
+         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P ·ᵈ Q ] w''
+⊑ᵗ-trans {only _} {⊤ᵍ}     p q = tt
+⊑ᵗ-trans {⊤ᵍ}     {_}      p q = tt
+⊑ᵗ-trans {only P} {only Q} {w} {w'} {w''} p q = fromWitness (All.tabulate step)
   where
     step : {r : Trace} → r ∈ (traces P ·ˢ traces Q) → (w + duration r) ≤ w''
     step {r} r∈
@@ -84,12 +91,15 @@ w ⊑ᵗ[ P ] w' = True (all? (λ p → (w + duration p) ≤? w') (traces P))
 -- already held of every member of the larger one
 
 ⊑ᵗ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵗ[ P ] w' → w ⊑ᵗ[ Q ] w'
-⊑ᵗ-mono {P} {Q} {w} {w'} rel p =
+⊑ᵗ-mono {_}      {⊤ᵍ}     rel p = tt
+⊑ᵗ-mono {⊤ᵍ}     {only _} ()
+⊑ᵗ-mono {only P} {only Q} {w} {w'} rel p =
   fromWitness (All.tabulate (λ r∈Q → All.lookup (toWitness p) (∈-⊑ rel r∈Q)))
 
 ⊑ᵗ-irrelevant : ∀ {P w w'} → (p q : w ⊑ᵗ[ P ] w') → p ≡ q
-⊑ᵗ-irrelevant {P} {w} {w'} p q =
+⊑ᵗ-irrelevant {only P} {w} {w'} p q =
   True-irr (all? (λ t → (w + duration t) ≤? w') (traces P)) p q
+⊑ᵗ-irrelevant {⊤ᵍ}     tt tt = refl
 
 ticks : World left-sided
 ticks = record

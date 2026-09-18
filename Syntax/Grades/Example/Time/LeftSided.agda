@@ -19,6 +19,7 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
 
 open import Syntax.Grades
+open import Syntax.Grades.WithTop
 
 open import Util.Equality
 
@@ -86,6 +87,12 @@ infix 6 _≾ₒ_
 ≾ₒ-irrelevant : Irrelevant _≾ₒ_
 ≾ₒ-irrelevant {[ _ ,+∞⟩} {[ _ ,+∞⟩} = ≤-irrelevant
 
+-- the unit is the greatest grade: demanding nothing is the weakest
+-- lower bound there is
+
+≾ₒ-⊤ : (i : 𝕀) → i ≾ₒ uₒ
+≾ₒ-⊤ [ _ ,+∞⟩ = z≤n
+
 -- decidability
 
 _≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
@@ -125,6 +132,8 @@ left-sided-intervals = record
   ; ·-identityˡ       = ·ₒ-identityˡ
   ; ·-assoc           = ·ₒ-assoc
   ; _≾_               = _≾ₒ_
+  ; ⊤                 = uₒ
+  ; ≾-⊤               = ≾ₒ-⊤
   ; ·-monoʳ-≾         = ·ₒ-monoʳ-≾ₒ
   ; ·-monoˡ-≾         = ·ₒ-monoˡ-≾ₒ
   ; ≾-refl            = ≾ₒ-refl
@@ -137,3 +146,16 @@ left-sided-intervals = record
   ; of-nat-zero       = refl
   ; of-nat-plus       = refl
   }
+
+-- the same intervals with a formal greatest grade adjoined
+--
+-- `[ 0 ,+∞⟩` is already greatest, but it is the unit and so not
+-- absorbing. A morphism preserving both `⊤` and `_·_` takes an
+-- absorbing top to an absorbing top, so a grade whose top *is*
+-- absorbing -- the subset floor, whose top is its adjoined "nothing is
+-- demanded" -- cannot project into the intervals above and projects
+-- here instead. `⊤ᵍ` reads as "no lower bound is claimed, and sequencing
+-- after it claims none either".
+
+open Adjoin (forgetTop left-sided-intervals) public
+  using (only_; ⊤ᵍ) renaming (withTop to left-sided-intervals-with-⊤)

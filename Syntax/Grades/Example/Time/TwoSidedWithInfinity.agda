@@ -21,6 +21,7 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
 
 open import Syntax.Grades
+open import Syntax.Grades.WithTop
 
 open import Util.Equality
 
@@ -91,6 +92,16 @@ eqᵢ {_} {i₂} refl refl =
 _≾ᵢ_ : Rel Interval∞ lzero
 i₁ ≾ᵢ i₂ =
   (min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂)
+
+-- the greatest grade: no lower bound and no upper bound
+--
+-- NB: it is not absorbing, `⊤ᵢ ·ᵢ i` keeping `min i`.
+
+⊤ᵢ : Interval∞
+⊤ᵢ = [ 0 , ∞ , ≤∞-∞ (↑ 0) ]
+
+≾ᵢ-⊤ : (i : Interval∞) → (min ⊤ᵢ ≤ min i × max i ≤∞ max ⊤ᵢ)
+≾ᵢ-⊤ i = z≤n , ≤∞-∞ (max i)
 
 -- uᵢ is the minimal element
 
@@ -163,6 +174,8 @@ two-sided-intervals-with-∞ = record
   ; ·-identityˡ      = ·ᵢ-identityˡ
   ; ·-assoc          = ·ᵢ-assoc
   ; _≾_              = _≾ᵢ_
+  ; ⊤                = ⊤ᵢ
+  ; ≾-⊤              = ≾ᵢ-⊤
   ; ·-monoʳ-≾        = λ {i} {i₁} {i₂} rel
                          → ·ᵢ-monoʳ-≾ᵢ {i} {i₁} {i₂} rel
   ; ·-monoˡ-≾        = λ {i} {i₁} {i₂} rel
@@ -179,3 +192,14 @@ two-sided-intervals-with-∞ = record
   ; of-nat-zero       = eqᵢ refl refl
   ; of-nat-plus       = eqᵢ refl refl
   }
+
+-- the same intervals with a formal greatest grade adjoined
+--
+-- `[ 0 , ∞ ]` is already greatest, but it is not absorbing: its `min`
+-- endpoint is the unit and keeps whatever follows. For the same reason
+-- as on the left-sided side, a grade with an absorbing top -- the
+-- two-sided subset intervals, whose floor has one -- projects here
+-- rather than into the intervals above.
+
+open Adjoin (forgetTop two-sided-intervals-with-∞) public
+  using (only_; ⊤ᵍ) renaming (withTop to two-sided-intervals-with-⊤)

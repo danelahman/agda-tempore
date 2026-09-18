@@ -24,9 +24,20 @@
 -- `backup/`, along with its worked examples, Kripke frames and grade   --
 -- systems, and is imported from nowhere.                               --
 --                                                                     --
+-- WHERE EACH GREATEST GRADE COMES FROM. Three of them are already      --
+-- there: the left-sided intervals' and the coverage floor's is their   --
+-- unit, and the two-sided intervals' is `[ 0 , ∞ ]`. The right-sided   --
+-- intervals get theirs by letting the endpoint be `∞`. The remaining   --
+-- four -- the allowance cap and the three subset grades -- have none,  --
+-- so `Grades.WithTop` adjoins one, which is then absorbing.            --
+--                                                                     --
 -- `System.*` then pairs them up. Reading the projections tells the     --
 -- story of the development: each one says what a resource grade is     --
--- allowed to forget about the effect grade it comes from.              --
+-- allowed to forget about the effect grade it comes from. A projection --
+-- has to take one greatest grade to the other, and with `map-·` that   --
+-- forces an absorbing top to land on an absorbing top -- which is why  --
+-- the two subset floors project into extended interval grades rather   --
+-- than the plain ones.                                                 --
 --                                                                     --
 -- This module is only an index -- the trace-based examples are         --
 -- parameterised by the alphabet `Op`, so it lists the pieces rather    --
@@ -49,11 +60,8 @@ import Syntax.Grades.Example.Time.LeftSided
 
 import Syntax.Grades.Example.Time.RightSided
 
--- "between `min` and `max` time steps"; a wider window is weaker
-
-import Syntax.Grades.Example.Time.TwoSided
-
--- the same, with `max` allowed to be `∞`, which imposes no upper bound
+-- "between `min` and `max` time steps", with `max` allowed to be `∞`,
+-- which imposes no upper bound; a wider window is weaker
 
 import Syntax.Grades.Example.Time.ExtendedNat
 import Syntax.Grades.Example.Time.TwoSidedWithInfinity

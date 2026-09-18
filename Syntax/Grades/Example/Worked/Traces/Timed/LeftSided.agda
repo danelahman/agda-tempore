@@ -41,7 +41,7 @@ open import Util.Equality
 open import Syntax.Grades.Example.Worked.Operations
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided Op _≟ₒ_ costˡᵒ
-  using (left-sided; _≾_; _≾?_) public
+  using (left-sided; _≾_; _≾?_; ≾-⊤) public
 
 order : Grade._≾_ left-sided ≡ _≾_
 order = refl
@@ -190,3 +190,16 @@ both-branches-open-it = holds
 one-branch-does-not :
   ¬ (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
 one-branch-does-not = fails
+
+------------------------------------------------------------------------
+-- The greatest grade
+--
+-- Nothing is adjoined here: the unit `{ ε }` already guarantees
+-- nothing, the empty run being covered by every run, so every grade
+-- weakens to it and it is the designated greatest one.
+
+everything-weakens : (P : NeTraces) → P ≾ u
+everything-weakens = ≾-⊤
+
+the-unit-is-greatest : Grade.⊤ left-sided ≡ u
+the-unit-is-greatest = refl

@@ -5,7 +5,8 @@
 -- performs it, and at that signature no program has a grade listing    --
 -- two *different* runs: products of singletons are singletons,         --
 -- `coerce` can only pad a list with copies of the run that happened,   --
--- and `no-common-grade` closes the remaining door, `if`. The grade     --
+-- and `no-common-listed-grade` closes the remaining door, `if`, at     --
+-- every grade but `⊤ᵍ`, which lists nothing. The grade                 --
 -- looks degenerate as a result -- every `unbox` premise is an equality --
 -- and every union is refused.                                         --
 --                                                                     --
@@ -26,11 +27,10 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.LeftSided.Retrying
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send;
-         NeTraces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
+  using (Op; read; write; send; ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
-  using (left-sided; holds; fails)
+  using (left-sided; Demands; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆; holds; fails)
 
 ------------------------------------------------------------------------
 -- The operations, with a transmitter that may retry
@@ -38,7 +38,7 @@ open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
 -- `read` and `write` do one thing each; `send` must be able to transmit
 -- once and, should that fail, twice.
 
-opTime : Op → NeTraces
+opTime : Op → Demands
 opTime read  = ⟅ ⌈ read ⌉ ⟆
 opTime write = ⟅ ⌈ write ⌉ ⟆
 opTime send  = ⟅ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆

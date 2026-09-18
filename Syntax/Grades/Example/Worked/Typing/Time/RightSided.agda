@@ -27,14 +27,31 @@
 -- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
 -- binding. The locks are what `var`'s bound and `unbox`'s premise are  --
 -- checked against, and here every lock but the unit closes a reading.  --
+--                                                                     --
+-- The endpoint ranges over the extended naturals, so every deadline    --
+-- written below is `[0, ↑ n ]`; `[0, ∞ ]` is the greatest grade,       --
+-- imposing no deadline at all.                                         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Time.RightSided where
 
+open import Data.Nat.Base using (ℕ)
+
 open import Relation.Nullary using (¬_)
 
+open import Data.Unit using (tt)
+
+open import Util.Equality
+
 open import Syntax.Grades.Example.Time.RightSided
-  using (𝕀ᵣ; [0,_]; right-sided-intervals)
+  using (𝕀ᵣ; ℕ∞; ↑_; ∞; right-sided-intervals)
+  renaming ([0,_] to ⌈0,_⌉)
+
+-- every deadline written below is finite, and `⌈0, ∞ ⌉` is the greatest
+-- grade, imposing no deadline at all
+
+[0,_] : ℕ → 𝕀ᵣ
+[0, n ] = ⌈0, ↑ n ⌉
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send)
@@ -387,9 +404,12 @@ identified =
 -- once meets it
 
 nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits read  [0, n ] = z≤n
-nothing-fits write [0, n ] = z≤n
-nothing-fits send  [0, n ] = z≤n
+nothing-fits read  ⌈0, ↑ n ⌉ = z≤n
+nothing-fits read  ⌈0, ∞ ⌉   = tt
+nothing-fits write ⌈0, ↑ n ⌉ = z≤n
+nothing-fits write ⌈0, ∞ ⌉   = tt
+nothing-fits send  ⌈0, ↑ n ⌉ = z≤n
+nothing-fits send  ⌈0, ∞ ⌉   = tt
 
 -- the operations are suppressed, and the grade the handled computation
 -- is typed at is unchanged by that
@@ -400,3 +420,20 @@ suppressed =
     `with discarding {[]} nothing-fits
     `in                              -- ⟨ [0, 4 ] ⟩ ∷ Unit
       (return ⋆)
+
+------------------------------------------------------------------------
+-- The greatest grade
+--
+-- `⌈0, ∞ ⌉` imposes no deadline, so every grade weakens to it, and it
+-- absorbs: nothing sequenced after an unbounded computation is bounded.
+
+everything-weakens : (ε : E) → ε ≾ₑ ⊤ₑ
+everything-weakens = ≾-⊤ₑ
+
+⊤-absorbs : (⊤ₑ ·ₑ [0, 4 ]) ≡ ⊤ₑ
+⊤-absorbs = refl
+
+-- and unlike the unit it is not a deadline any reading survives
+
+reading-stale-at-⊤ : ¬ (uᵣ ·ᵣ ⊤ᵣ ≾ᵣ uᵣ)
+reading-stale-at-⊤ ()

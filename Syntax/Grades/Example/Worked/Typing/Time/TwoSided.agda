@@ -27,16 +27,30 @@
 -- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
 -- binding. They write an interval as `[ min , max ]`, without the      --
 -- `min ≤ max` proof the constructor also carries.                      --
+--                                                                     --
+-- The upper endpoint ranges over the extended naturals, so every       --
+-- window written below is `[ min , ↑ max ]`; `[ 0 , ∞ ]` is the        --
+-- greatest grade, bounding the elapsed time at neither end.            --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Time.TwoSided where
 
+open import Data.Nat.Base using (ℕ; _≤_)
 open import Data.Product using (_,_)
+
+open import Util.Equality
 
 open import Relation.Nullary using (¬_)
 
-open import Syntax.Grades.Example.Time.TwoSided
-  using (Interval; [_,_,_]; two-sided-intervals)
+open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
+  using (Interval∞; ↑_; ∞; two-sided-intervals-with-∞)
+  renaming ([_,_,_] to ⌈_,_,_⌉)
+
+-- every window written below has a finite upper endpoint; `⌈ 0 , ∞ , _ ⌉`
+-- is the greatest grade, bounding the elapsed time at neither end
+
+[_,_,_] : (m n : ℕ) → m ≤ n → Interval∞
+[ m , n , p ] = ⌈ m , ↑ n , p ⌉
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send)
@@ -46,12 +60,13 @@ open import Syntax.Grades.Example.Worked.Time using (≤!; ≰!)
 ------------------------------------------------------------------------
 -- The operations, graded by the window their execution time falls in
 
-opTime : Op → Interval
+opTime : Op → Interval∞
 opTime read  = [ 1 , 1 , ≤! ]
 opTime write = [ 2 , 3 , ≤! ]
 opTime send  = [ 4 , 6 , ≤! ]
 
-open import Syntax.Grades.Example.Worked.Typing.Core two-sided-intervals opTime
+open import Syntax.Grades.Example.Worked.Typing.Core
+  two-sided-intervals-with-∞ opTime
 
 ------------------------------------------------------------------------
 -- Effectful computations
@@ -376,3 +391,16 @@ identified =
 
 no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
 no-discarding (lo , _) = ≰! lo
+
+------------------------------------------------------------------------
+-- The greatest grade
+--
+-- `⌈ 0 , ∞ , _ ⌉` bounds the elapsed time at neither end, so every
+-- grade weakens to it. It does not absorb: sequencing keeps the lower
+-- bound of whatever follows it.
+
+everything-weakens : (ε : E) → ε ≾ₑ ⊤ₑ
+everything-weakens = ≾-⊤ₑ
+
+⊤-keeps-the-floor : (⊤ₑ ·ₑ [ 4 , 6 , ≤! ]) ≡ (⌈ 4 , ∞ , _ ⌉)
+⊤-keeps-the-floor = refl

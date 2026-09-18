@@ -39,7 +39,13 @@ record Grade : Set₁ where
 
     -- order
     _≾_ : Rel Carrier lzero
-    
+
+    -- the designated greatest grade
+    ⊤ : Carrier
+
+    -- every grade may be weakened to ⊤
+    ≾-⊤ : (c : Carrier) → c ≾ ⊤
+
     -- _·_ is monotone with respect to _≾_
     ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
     ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
@@ -77,8 +83,10 @@ open Grade
 -- Morphisms of effect and resource monoids
 
 record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
-  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_; of-nat to of-nat₁)
-  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_; of-nat to of-nat₂)
+  open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
+                          ⊤ to ⊤₁; of-nat to of-nat₁)
+  open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
+                          ⊤ to ⊤₂; of-nat to of-nat₂)
   
   field
 
@@ -91,6 +99,9 @@ record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
     -- map preserves the monoid structure
     map-u        : map u₁ ≡ u₂
     map-·        : {c₁ c₁' : C₁} → map (c₁ ·₁ c₁') ≡ map c₁ ·₂ map c₁'
+
+    -- map preserves the greatest grade
+    map-⊤        : map ⊤₁ ≡ ⊤₂
 
     -- map preserves inclusion of ℕ
     map-of-nat   : ∀ {n} → map (of-nat₁ n) ≡ of-nat₂ n
@@ -121,6 +132,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-identityˡ to ·ᵣ-identityˡ;
      ·-assoc to ·ᵣ-assoc;
      _≾_ to _≾ᵣ_;
+     ⊤ to ⊤ᵣ;
+     ≾-⊤ to ≾-⊤ᵣ;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-refl to ≾ᵣ-refl;
@@ -143,6 +156,8 @@ module GradeSystemInterface (GS : GradeSystem) where
      ·-identityˡ to ·ₑ-identityˡ;
      ·-assoc to ·ₑ-assoc;
      _≾_ to _≾ₑ_;
+     ⊤ to ⊤ₑ;
+     ≾-⊤ to ≾-⊤ₑ;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-refl to ≾ₑ-refl;
@@ -160,5 +175,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      map-monotone to map-monotoneᵉ;
      map-u to map-uᵉ;
      map-· to map-·ᵉ;
+     map-⊤ to map-⊤ᵉ;
      map-of-nat to map-of-natᵉ
     ) public

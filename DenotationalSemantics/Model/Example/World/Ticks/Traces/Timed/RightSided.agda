@@ -16,6 +16,9 @@
 -- read off a trace of the grade rather than given outright -- and     --
 -- what the tick world cannot see is which operations that trace        --
 -- permits, only how long they take.                                  --
+--                                                                    --
+-- The grade's adjoined top `⊤ᵍ` lists no bound at all, so it relates   --
+-- every pair of worlds.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
@@ -36,6 +39,7 @@ open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -44,7 +48,7 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (right-sided; _≾_)
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (right-sided; Bounds; only_; ⊤ᵍ; _·ᵇ_; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -55,23 +59,26 @@ open WithDecEq _≟ₒ_ using (True-irr)
 -- The frame
 
 -- Accessibility on time ticks: advance no further than one of the
--- listed bounds takes.
+-- listed bounds takes; at `⊤ᵍ` there is no bound to stay within.
 
-_⊑ᵗ[_]_ : ℕ → NeTraces → ℕ → Set
-w ⊑ᵗ[ P ] w' = True (any? (λ p → w' ≤? (w + duration p)) (traces P))
+_⊑ᵗ[_]_ : ℕ → Bounds → ℕ → Set
+w ⊑ᵗ[ only P ] w' = True (any? (λ p → w' ≤? (w + duration p)) (traces P))
+w ⊑ᵗ[ ⊤ᵍ ]      w' = ⊤
 
 -- reflexivity at the unit grade `{ ε }`: the empty bound permits no
 -- time to pass, and none has
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ u ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ only u ] w
 ⊑ᵗ-refl {w} = fromWitness (here (≤-reflexive (sym (+-identityʳ w))))
 
 -- transitivity multiplies the grades: the two advances compose into the
 -- one the sequenced bound allows, whose duration is the sum
 
 ⊑ᵗ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P · Q ] w''
-⊑ᵗ-trans {P} {Q} {w} {w'} {w''} p q
+         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P ·ᵇ Q ] w''
+⊑ᵗ-trans {only _} {⊤ᵍ}   p q = tt
+⊑ᵗ-trans {⊤ᵍ}    {_}     p q = tt
+⊑ᵗ-trans {only P} {only Q} {w} {w'} {w''} p q
   with find (toWitness p) | find (toWitness q)
 ... | t₁ , t₁∈P , w'≤w+t₁ | t₂ , t₂∈Q , w''≤w'+t₂ =
       fromWitness
@@ -89,7 +96,9 @@ w ⊑ᵗ[ P ] w' = True (any? (λ p → w' ≤? (w + duration p)) (traces P))
 -- the weaker grade's, which therefore takes at least as long
 
 ⊑ᵗ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵗ[ P ] w' → w ⊑ᵗ[ Q ] w'
-⊑ᵗ-mono {P} {Q} {w} {w'} rel p
+⊑ᵗ-mono {_}      {⊤ᵍ}    rel p = tt
+⊑ᵗ-mono {⊤ᵍ}    {only _} ()
+⊑ᵗ-mono {only P} {only Q} {w} {w'} rel p
   with find (toWitness p)
 ... | t , t∈P , w'≤w+t
         with find (toWitness (rel t (fromWitness t∈P)))
@@ -103,8 +112,9 @@ w ⊑ᵗ[ P ] w' = True (any? (λ p → w' ≤? (w + duration p)) (traces P))
 -- proof irrelevance of the witnesses
 
 ⊑ᵗ-irrelevant : ∀ {P w w'} → (p q : w ⊑ᵗ[ P ] w') → p ≡ q
-⊑ᵗ-irrelevant {P} {w} {w'} p q =
+⊑ᵗ-irrelevant {only P} {w} {w'} p q =
   True-irr (any? (λ t → w' ≤? (w + duration t)) (traces P)) p q
+⊑ᵗ-irrelevant {⊤ᵍ}    tt tt = refl
 
 ticks : World right-sided
 ticks = record

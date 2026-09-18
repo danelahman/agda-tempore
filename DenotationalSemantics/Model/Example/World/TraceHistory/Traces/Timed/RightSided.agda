@@ -17,6 +17,9 @@
 -- which is what makes the frame conditions the grade's own laws:      --
 -- reflexivity is the empty run, transitivity is monotonicity of the   --
 -- trace product, and covariance is transitivity of the order.         --
+--                                                                    --
+-- The grade's adjoined top `⊤ᵍ` lists no bound, so it leaves the      --
+-- continuation unconstrained and asks only that `w'` extend `w`.      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _<_)
@@ -34,6 +37,7 @@ open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -44,7 +48,7 @@ open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (right-sided; _≾_)
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (right-sided; Bounds; only_; ⊤ᵍ; _·ᵇ_; _≾_)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 open WithDecEq _≟ₒ_ using (True-irr)
@@ -57,21 +61,38 @@ open import DenotationalSemantics.Model.World
 -- Reach `w'` from `w` by appending a continuation that stays within one
 -- of the listed bounds.
 
+-- the condition on the continuation, vacuous at `⊤ᵍ`
+
+Within : Trace → Bounds → Set
+Within cont (only P) = True (any? (λ p → cont ≼ᵃ? p) (traces P))
+Within cont ⊤ᵍ       = ⊤
+
+Within-irr : {cont : Trace} {P : Bounds} → (p q : Within cont P) → p ≡ q
+Within-irr {cont} {only P} = True-irr (any? (λ p → cont ≼ᵃ? p) (traces P))
+Within-irr {_}    {⊤ᵍ}    tt tt = refl
+
 infix 5 _⊑ᵇ[_]_
 
-record _⊑ᵇ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
+record _⊑ᵇ[_]_ (w : Trace) (P : Bounds) (w' : Trace) : Set where
   constructor mkᵇ
   field
     cont    : Trace                                          -- continuation
-    within  : True (any? (λ p → cont ≼ᵃ? p) (traces P))      -- within some bound
+    within  : Within cont P                                  -- within some bound
     extends : w ∙ cont ≡ w'                                  -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
 
+-- appending the two continuations in turn extends across both
+
+extends-∙ : (w t₁ t₂ : Trace) {w' w'' : Trace}
+          → w ∙ t₁ ≡ w' → w' ∙ t₂ ≡ w'' → w ∙ (t₁ ∙ t₂) ≡ w''
+extends-∙ w t₁ t₂ eq₁ eq₂ =
+  trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂)
+
 -- reflexivity at the unit grade `{ ε }`: the empty continuation stays
 -- within the empty bound
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ u ] w
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ only u ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
       (fromWitness {a? = any? (λ p → ε ≼ᵃ? p) (traces u)} (here (≼ᵃ-refl ε)))
@@ -81,21 +102,27 @@ open _⊑ᵇ[_]_
 -- continuations; monotonicity of the trace product carries the bound
 
 ⊑ᵇ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P · Q ] w''
-⊑ᵇ-trans {P} {Q} {w} (mkᵇ t₁ w₁ eq₁) (mkᵇ t₂ w₂ eq₂)
+         → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P ·ᵇ Q ] w''
+⊑ᵇ-trans {only _} {⊤ᵍ}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+  mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
+⊑ᵇ-trans {⊤ᵍ}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+  mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
+⊑ᵇ-trans {only P} {only Q} {w} (mkᵇ t₁ w₁ eq₁) (mkᵇ t₂ w₂ eq₂)
   with find (toWitness w₁) | find (toWitness w₂)
 ... | a , a∈P , t₁≼a | b , b∈Q , t₂≼b =
       mkᵇ (t₁ ∙ t₂)
           (fromWitness
             (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ t₁≼a t₂≼b))
                      (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
-          (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+          (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 -- covariance: the bound the continuation stayed within itself stays
 -- within one of the weaker grade's
 
 ⊑ᵇ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵇ[ P ] w' → w ⊑ᵇ[ Q ] w'
-⊑ᵇ-mono {P} {Q} rel (mkᵇ cont wit eq) =
+⊑ᵇ-mono {_}      {⊤ᵍ}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
+⊑ᵇ-mono {⊤ᵍ}    {only _} ()
+⊑ᵇ-mono {only P} {only Q} rel (mkᵇ cont wit eq) =
   mkᵇ cont (fromWitness within') eq
   where
     within' : Any (λ p → cont ≼ᵃ p) (traces Q)
@@ -112,9 +139,7 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-irrelevant {P} {w} (mkᵇ cont wit refl) (mkᵇ cont' wit' eq')
   with ∙-cancelˡ w eq'
 ... | refl with eq'
-... | refl =
-        cong (λ z → mkᵇ cont z refl)
-             (True-irr (any? (λ p → cont ≼ᵃ? p) (traces P)) wit wit')
+... | refl = cong (λ z → mkᵇ cont z refl) (Within-irr {cont} {P} wit wit')
 
 ------------------------------------------------------------------------
 -- The frame.

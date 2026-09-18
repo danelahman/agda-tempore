@@ -36,12 +36,13 @@ open import Syntax.LanguageSpec
 open import Syntax.Operations
 
 open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩; _≾ₒ_)
-open import Syntax.Grades.Example.Time.TwoSided  using (Interval; min; max; _≾ᵢ_)
+open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
+  using (Interval∞; min; max; _≾ᵢ_; _≤∞?_)
 open import Syntax.Grades.Example.Worked.Operations using (read; write; send)
 open import Syntax.Grades.Example.Worked.Spec using (spec; baseTypes; BT; reading)
 
 open import Syntax.Grades.Example.Time.RightSided
-  using (𝕀ᵣ; [0,_]; right-sided-intervals) renaming (_≾ₒ_ to _≾ᵈ_)
+  using (𝕀ᵣ; [0,_]; ↑_; ∞; right-sided-intervals) renaming (_≾ₒ_ to _≾ᵈ_)
 open import Syntax.Grades.Example.System.Identity using (identityGradeSystem)
 
 -- the modules below are also applied to a second specification, at the
@@ -99,8 +100,8 @@ open import Inference.SolverImpl.Enum spec using (OpEnum)
 
 -- effect grades are two-sided intervals, ordered by containment
 
-≾ₑ-dec : (i j : Interval) → Dec (i ≾ᵢ j)
-≾ₑ-dec i j with min j ≤? min i | max i ≤? max j
+≾ₑ-dec : (i j : Interval∞) → Dec (i ≾ᵢ j)
+≾ₑ-dec i j with min j ≤? min i | max i ≤∞? max j
 ... | yes p | yes q = yes (p , q)
 ... | yes p | no ¬q = no λ r → ¬q (proj₂ r)
 ... | no ¬p | _     = no λ r → ¬p (proj₁ r)
@@ -299,7 +300,7 @@ ex-pipeline-op = refl
 -- A specification whose unit is the least grade             --
 --                                                           --
 -- Right-sided intervals are deadlines `[0, n ]`, ordered by  --
--- `_≤_` on the endpoint, so `[0, 0 ]` is below every grade.  --
+-- `_≤_` on the endpoint, so `[0, ↑ 0 ]` is below every grade --
 -- Both components of the grade system are that monoid, over  --
 -- the same sensor node: each operation is charged its worst  --
 -- case.                                                      --
@@ -311,9 +312,9 @@ gradesᵈ = identityGradeSystem right-sided-intervals
 module Gᵈ = Syntax.GroundTypes gradesᵈ baseTypes
 
 opTimeᵈ : Op → 𝕀ᵣ
-opTimeᵈ read  = [0, 1 ]
-opTimeᵈ write = [0, 3 ]
-opTimeᵈ send  = [0, 6 ]
+opTimeᵈ read  = [0, ↑ 1 ]
+opTimeᵈ write = [0, ↑ 3 ]
+opTimeᵈ send  = [0, ↑ 6 ]
 
 opsᵈ : Operations gradesᵈ baseTypes
 opsᵈ = record
@@ -330,10 +331,11 @@ specᵈ = record { Grades = gradesᵈ ; BTs = baseTypes ; Ops = opsᵈ }
 -- the order is decidable, and the unit is its least element
 
 ≾ᵈ-dec : (i j : 𝕀ᵣ) → Dec (i ≾ᵈ j)
-≾ᵈ-dec [0, m ] [0, n ] = m ≤? n
+≾ᵈ-dec [0, m ] [0, n ] = m ≤∞? n
 
-uᵈ-min : (i : 𝕀ᵣ) → [0, 0 ] ≾ᵈ i
-uᵈ-min [0, n ] = z≤n
+uᵈ-min : (i : 𝕀ᵣ) → [0, ↑ 0 ] ≾ᵈ i
+uᵈ-min [0, ↑ n ] = z≤n
+uᵈ-min [0, ∞ ]   = tt
 
 opsᵈ₃ : Inference.SolverImpl.Enum.OpEnum specᵈ
 opsᵈ₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = c }
@@ -420,7 +422,8 @@ module Least where
   typeOfᵈ nothing  = nothing
   typeOfᵈ (just I) = just (Inᵈ.Inferred.A I , Inᵈ.Inferred.ε I)
 
-  ex-handle-pipeline : typeOfᵈ (Sᵐ.inferImpl Cᵈ.[] prog) ≡ just (Tᵈ.Unit , [0, 0 ])
+  ex-handle-pipeline : typeOfᵈ (Sᵐ.inferImpl Cᵈ.[] prog)
+                     ≡ just (Tᵈ.Unit , [0, ↑ 0 ])
   ex-handle-pipeline = refl
 
 --------------------------------------------------------------

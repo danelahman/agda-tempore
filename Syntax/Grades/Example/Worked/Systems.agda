@@ -27,7 +27,7 @@ open import Data.Product using (_,_)
 
 open import Util.Equality
 
-open import Syntax.Grades using (_→ᵍ_)
+open import Syntax.Grades using (Grade; _→ᵍ_)
 
 open import Syntax.Grades.Example.Worked.Operations
 
@@ -42,11 +42,20 @@ open _→ᵍ_ using (map; map-monotone)
 -- a box modality needs, since it is about data having become available,
 -- not about a deadline.
 
-open import Syntax.Grades.Example.Time.TwoSided
-  using ([_,_,_]; eqᵢ; _·ᵢ_; _≾ᵢ_)
+open import Data.Nat.Base using (ℕ; _≤_)
+
+open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
+  using (Interval∞; eqᵢ; _·ᵢ_; _≾ᵢ_; ↑_; ∞; two-sided-intervals-with-⊤)
+  renaming ([_,_,_] to mkᵢ; only_ to only²_)
 
 open import Syntax.Grades.Example.Time.LeftSided
-  using ([_,+∞⟩; _·ₒ_; _≾ₒ_)
+  using ([_,+∞⟩; _·ₒ_; _≾ₒ_; left-sided-intervals-with-⊤)
+  renaming (only_ to onlyˡ_; ⊤ᵍ to ⊤ˡ)
+
+-- every window below has a finite upper endpoint
+
+[_,_,_] : (m n : ℕ) → m ≤ n → Interval∞
+[ m , n , p ] = mkᵢ m (↑ n) p
 
 open import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
   using (tsi→lsi)
@@ -88,26 +97,37 @@ forget-max-· = refl
 -- how long they may take.
 
 open import Syntax.Grades.Example.Time.RightSided
-  using ([0,_]) renaming (_≾ₒ_ to _≾ᵣ_; _·ₒ_ to _·ᵣ_)
+  using () renaming (𝕀ᵣ to 𝕀ʳ; [0,_] to mkᵣ; _≾ₒ_ to _≾ᵣ_; _·ₒ_ to _·ᵣ_)
+
+-- and every deadline a finite one
+
+[0,_] : ℕ → 𝕀ʳ
+[0, n ] = mkᵣ (↑ n)
 
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (traces→right-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
-  using (_≾_; holds)
+  using (_≾_; holds) renaming (only_ to onlyᵃ_; ⊤ᵍ to ⊤ᵃ; _·_ to _·ᵃ_)
 
 -- a reading and six ticks' worth of work is a seven-tick deadline
 
-budget-measured : map traces→right-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ≡ [0, 7 ]
+budget-measured :
+  map traces→right-sided-intervals (onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆) ≡ [0, 7 ]
 budget-measured = refl
 
 -- and a grade listing alternatives is measured by the slowest of them
 
 alternatives-measured :
   map traces→right-sided-intervals
-      ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
+      (onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆)
   ≡ [0, 12 ]
 alternatives-measured = refl
+
+-- the unbounded grade becomes the deadline that is no deadline
+
+unbounded-measured : map traces→right-sided-intervals ⊤ᵃ ≡ mkᵣ ∞
+unbounded-measured = refl
 
 -- what the projection forgets is which operations are permitted: a
 -- bound naming a store and one budgeting the three ticks a store takes
@@ -115,32 +135,33 @@ alternatives-measured = refl
 -- outright
 
 operations-forgotten :
-  map traces→right-sided-intervals ⟅ ⌈ write ⌉ ⟆
-  ≡ map traces→right-sided-intervals ⟅ ⟨ 3 ⟩ ⟆
+  map traces→right-sided-intervals (onlyᵃ ⟅ ⌈ write ⌉ ⟆)
+  ≡ map traces→right-sided-intervals (onlyᵃ ⟅ ⟨ 3 ⟩ ⟆)
 operations-forgotten = refl
 
 -- upstream those two are ordered one way and not the other, which the
 -- deadline cannot see
 
-store-within-three-ticks : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 3 ⟩ ⟆
+store-within-three-ticks : onlyᵃ ⟅ ⌈ write ⌉ ⟆ ≾ onlyᵃ ⟅ ⟨ 3 ⟩ ⟆
 store-within-three-ticks = holds
 
 -- monotonicity: weakening a grade to a budget raises the deadline with
 -- it, from four ticks to seven
 
 deadline-rises :
-  map traces→right-sided-intervals ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
-  ≾ᵣ map traces→right-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+  map traces→right-sided-intervals (onlyᵃ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
+  ≾ᵣ map traces→right-sided-intervals (onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 deadline-rises =
   map-monotone traces→right-sided-intervals
-               {⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆} {⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆} holds
+               {onlyᵃ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆} {onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆} holds
 
 -- and it is a monoid map: sequencing before or after measuring agrees
 
 deadlines-add :
-  map traces→right-sided-intervals (⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ · ⟅ ⌈ send ⌉ ⟆)
-  ≡ map traces→right-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
-    ·ᵣ map traces→right-sided-intervals ⟅ ⌈ send ⌉ ⟆
+  map traces→right-sided-intervals
+      (onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ·ᵃ onlyᵃ ⟅ ⌈ send ⌉ ⟆)
+  ≡ map traces→right-sided-intervals (onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+    ·ᵣ map traces→right-sided-intervals (onlyᵃ ⟅ ⌈ send ⌉ ⟆)
 deadlines-add = refl
 
 ------------------------------------------------------------------------
@@ -220,7 +241,8 @@ open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 -- work becomes the window between one tick and seven
 
 contract-measured :
-  map two-sided-traces→intervals ⟪ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+  map two-sided-traces→intervals
+      ⟪ ⟅ ⌈ read ⌉ ⟆ , onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
   ≡ [ 1 , 7 , ≤! ]
 contract-measured = refl
 
@@ -230,7 +252,7 @@ contract-measured = refl
 alternatives-measured-both :
   map two-sided-traces→intervals
       ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
-      , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ⟫
+      , onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ⟫
   ≡ [ 1 , 12 , ≤! ]
 alternatives-measured-both = refl
 
@@ -248,11 +270,11 @@ exact-measured = refl
 window-contains :
   map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
   ≾ᵢ map two-sided-traces→intervals
-         ⟪ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+         ⟪ ⟅ ⌈ read ⌉ ⟆ , onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
 window-contains =
   map-monotone two-sided-traces→intervals
                {exact (⌈ read ⌉ ∙ ⌈ write ⌉)}
-               {⟪ ⟅ ⌈ read ⌉ ⟆ , ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫}
+               {⟪ ⟅ ⌈ read ⌉ ⟆ , onlyᵃ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫}
                (holdsᵗˢ _ _)
 
 -- and it is a monoid map: sequencing before or after measuring agrees
@@ -274,8 +296,15 @@ windows-add = refl
 -- them takes.
 --
 -- The timed floor, read disjunctively, takes the fastest instead. Same
--- source set, same target grade, opposite aggregation -- the direction
--- follows the reading of the set, not the side of the interval.
+-- source set, opposite aggregation -- the direction follows the reading
+-- of the set, not the side of the interval.
+--
+-- The two floors do not share a target: the subset floor's greatest
+-- grade demands nothing and absorbs, and no projection preserving both
+-- `⊤` and `_·_` takes an absorbing top to `[ 0 ,+∞⟩`, which is the
+-- intervals' unit. So it lands in the intervals with a top adjoined,
+-- and the timed floor, whose own greatest grade is its unit, lands in
+-- the plain ones.
 
 open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
   Op _≟ₒ_ costʰⁱ using (subsets→right-sided-intervals)
@@ -285,11 +314,11 @@ open import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
   Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ using (subsets→intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
-  using () renaming (holds to holdsˢʰ)
+  using () renaming (holds to holdsˢʰ; only_ to onlyᵖ_)
 open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
-  using () renaming (holds to holdsˢˡ)
+  using () renaming (holds to holdsˢˡ; only_ to onlyᵈ_; ⊤ᵍ to ⊤ᵈ)
 open import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided
-  using (branching; contract; _·ᵇ_) renaming (holds to holdsˢᵇ)
+  using (branching; contract; _·ᴵ_) renaming (holds to holdsˢᵇ)
 
 -- the two branches take one tick and three-to-four ticks
 
@@ -298,13 +327,17 @@ the-branches = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 
 -- above, the deadline is the slower branch at its worst case
 
-cap-measured : map subsets→right-sided-intervals the-branches ≡ [0, 4 ]
+cap-measured : map subsets→right-sided-intervals (onlyᵖ the-branches) ≡ [0, 4 ]
 cap-measured = refl
 
 -- below, so is the guarantee -- because both branches are demanded --
 -- but read at the best case
 
-floor-measured : map subsets→left-sided-intervals the-branches ≡ [ 3 ,+∞⟩
+-- and the resource grade is one of the extended left-sided intervals,
+-- its `⊤ᵍ` receiving the floor's "nothing is demanded"
+
+floor-measured :
+  map subsets→left-sided-intervals (onlyᵈ the-branches) ≡ onlyˡ [ 3 ,+∞⟩
 floor-measured = refl
 
 -- where the timed floor, listing alternatives rather than demands,
@@ -317,35 +350,47 @@ timed-floor-measured = refl
 -- monotonicity, above: permitting a further run raises the deadline
 
 cap-deadline-rises :
-  map subsets→right-sided-intervals ⟅ ⌈ read ⌉ ⟆
-  ≾ᵣ map subsets→right-sided-intervals the-branches
+  map subsets→right-sided-intervals (onlyᵖ ⟅ ⌈ read ⌉ ⟆)
+  ≾ᵣ map subsets→right-sided-intervals (onlyᵖ the-branches)
 cap-deadline-rises =
   map-monotone subsets→right-sided-intervals
-               {⟅ ⌈ read ⌉ ⟆} {the-branches} holdsˢʰ
+               {onlyᵖ ⟅ ⌈ read ⌉ ⟆} {onlyᵖ the-branches} holdsˢʰ
 
 -- and below: forgetting a demanded run lowers the guarantee
 
 floor-guarantee-falls :
-  map subsets→left-sided-intervals the-branches
-  ≾ₒ map subsets→left-sided-intervals ⟅ ⌈ read ⌉ ⟆
+  Grade._≾_ left-sided-intervals-with-⊤
+            (map subsets→left-sided-intervals (onlyᵈ the-branches))
+            (map subsets→left-sided-intervals (onlyᵈ ⟅ ⌈ read ⌉ ⟆))
 floor-guarantee-falls =
   map-monotone subsets→left-sided-intervals
-               {the-branches} {⟅ ⌈ read ⌉ ⟆} holdsˢˡ
+               {onlyᵈ the-branches} {onlyᵈ ⟅ ⌈ read ⌉ ⟆} holdsˢˡ
+
+-- the floor's greatest grade demands nothing, and lands on the target's
+-- own greatest grade
+
+floor-top-measured : map subsets→left-sided-intervals ⊤ᵈ ≡ ⊤ˡ
+floor-top-measured = refl
 
 -- the two-sided projection is the pair, and the window it lands in is
 -- non-degenerate because the grade's coherence field is
 
-subset-contract-measured : map subsets→intervals contract ≡ [ 1 , 4 , ≤! ]
+subset-contract-measured :
+  map subsets→intervals contract ≡ only² [ 1 , 4 , ≤! ]
 subset-contract-measured = refl
 
 branching-inside-the-contract :
-  map subsets→intervals branching ≾ᵢ map subsets→intervals contract
+  Grade._≾_ two-sided-intervals-with-⊤
+            (map subsets→intervals branching)
+            (map subsets→intervals contract)
 branching-inside-the-contract =
   map-monotone subsets→intervals {branching} {contract} (holdsˢᵇ _ _)
 
 -- and it is a monoid map at both endpoints
 
 subset-windows-add :
-  map subsets→intervals (branching ·ᵇ contract)
-  ≡ map subsets→intervals branching ·ᵢ map subsets→intervals contract
+  map subsets→intervals (branching ·ᴵ contract)
+  ≡ Grade._·_ two-sided-intervals-with-⊤
+              (map subsets→intervals branching)
+              (map subsets→intervals contract)
 subset-windows-add = refl

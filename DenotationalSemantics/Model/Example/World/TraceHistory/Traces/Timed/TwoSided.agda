@@ -19,6 +19,9 @@
 -- The two comparisons run in opposite directions, and at different    --
 -- orders: the guarantee is covered by the continuation, the           --
 -- continuation stays within the allowance.                           --
+--                                                                    --
+-- The cap alone carries the adjoined `⊤ᵍ`, which lists no allowance   --
+-- and so caps the continuation not at all.                           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
@@ -38,6 +41,7 @@ open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -57,6 +61,12 @@ open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
+-- the cap endpoint is the right-sided grade's carrier, `⊤ᵍ` and all
+
+open import Syntax.Grades.Example.Traces.Timed.RightSided
+  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  using (Bounds; only_; ⊤ᵍ; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
+
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 open WithDecEq _≟ₒ_ using (True-irr)
@@ -69,6 +79,44 @@ open import DenotationalSemantics.Model.World
 -- Reach `w'` from `w` by appending a continuation that covers one of
 -- the listed guarantees and stays within one of the listed allowances.
 
+-- the cap's condition on the continuation, vacuous at `⊤ᵍ`
+
+Within : Trace → Bounds → Set
+Within cont (only Q) = True (any? (λ q → cont ≼ᵃ? q) (traces Q))
+Within cont ⊤ᵍ       = ⊤
+
+-- sequencing two continuations stays within the sequenced allowance
+
+Within-∙ : (t₁ t₂ : Trace) (Q₁ Q₂ : Bounds)
+         → Within t₁ Q₁ → Within t₂ Q₂ → Within (t₁ ∙ t₂) (Q₁ ·ᵇ Q₂)
+Within-∙ _  _  (only _)  ⊤ᵍ        _  _  = tt
+Within-∙ _  _  ⊤ᵍ        _         _  _  = tt
+Within-∙ t₁ t₂ (only Q₁) (only Q₂) n₁ n₂
+  with find (toWitness n₁) | find (toWitness n₂)
+... | x , x∈Q , t₁≼x | y , y∈Q' , t₂≼y =
+      fromWitness
+        (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ᵃ t₁≼x t₂≼y))
+                 (∈-cartesianProductWith⁺ _∙_ x∈Q y∈Q'))
+
+-- the allowance the continuation stayed within is replaced by one of
+-- the weaker grade's
+
+Within-≾ : (cont : Trace) (Q₁ Q₂ : Bounds)
+         → Q₁ ≾ʰⁱ Q₂ → Within cont Q₁ → Within cont Q₂
+Within-≾ _    _         ⊤ᵍ        _ _ = tt
+Within-≾ _    ⊤ᵍ        (only _)  ()
+Within-≾ cont (only Q₁) (only Q₂) h n
+  with find (toWitness n)
+... | t , t∈Q , cont≼t
+        with find (toWitness (h t (fromWitness t∈Q)))
+...     | t' , t'∈Q' , t≼t' =
+          fromWitness
+            (Any.map (λ e → subst (cont ≼ᵃ_) e (≼ᵃ-trans cont≼t t≼t')) t'∈Q')
+
+Within-irr : (cont : Trace) (Q : Bounds) → (p q : Within cont Q) → p ≡ q
+Within-irr cont (only Q) = True-irr (any? (λ q → cont ≼ᵃ? q) (traces Q))
+Within-irr _    ⊤ᵍ       tt tt = refl
+
 infix 5 _⊑ᵇ[_]_
 
 record _⊑ᵇ[_]_ (w : Trace) (i : TwoSided) (w' : Trace) : Set where
@@ -76,7 +124,7 @@ record _⊑ᵇ[_]_ (w : Trace) (i : TwoSided) (w' : Trace) : Set where
   field
     cont    : Trace                                             -- continuation
     covers  : True (any? (λ p → p ≼ᶜ? cont) (traces (lo i)))    -- covers some guarantee
-    within  : True (any? (λ q → cont ≼ᵃ? q) (traces (hi i)))    -- within some allowance
+    within  : Within cont (hi i)                                -- within some allowance
     extends : w ∙ cont ≡ w'                                     -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
@@ -98,15 +146,12 @@ open _⊑ᵇ[_]_
          → w ⊑ᵇ[ i₁ ] w' → w' ⊑ᵇ[ i₂ ] w'' → w ⊑ᵇ[ i₁ ·ᵗˢ i₂ ] w''
 ⊑ᵇ-trans {i₁} {i₂} {w} (mkᵇ t₁ c₁ n₁ eq₁) (mkᵇ t₂ c₂ n₂ eq₂)
   with find (toWitness c₁) | find (toWitness c₂)
-     | find (toWitness n₁) | find (toWitness n₂)
-... | a , a∈P , a≼t₁ | b , b∈P' , b≼t₂ | x , x∈Q , t₁≼x | y , y∈Q' , t₂≼y =
+... | a , a∈P , a≼t₁ | b , b∈P' , b≼t₂ =
       mkᵇ (t₁ ∙ t₂)
           (fromWitness
             (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq (mono-∙ᶜ a≼t₁ b≼t₂))
                      (∈-cartesianProductWith⁺ _∙_ a∈P b∈P')))
-          (fromWitness
-            (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ᵃ t₁≼x t₂≼y))
-                     (∈-cartesianProductWith⁺ _∙_ x∈Q y∈Q')))
+          (Within-∙ t₁ t₂ (hi i₁) (hi i₂) n₁ n₂)
           (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
 
 -- covariance: each witness is replaced along its own endpoint's order,
@@ -114,7 +159,7 @@ open _⊑ᵇ[_]_
 
 ⊑ᵇ-mono : ∀ {i₁ i₂ w w'} → i₁ ≾ᵗˢ i₂ → w ⊑ᵇ[ i₁ ] w' → w ⊑ᵇ[ i₂ ] w'
 ⊑ᵇ-mono {i₁} {i₂} (l , h) (mkᵇ cont c n eq) =
-  mkᵇ cont (fromWitness covers') (fromWitness within') eq
+  mkᵇ cont (fromWitness covers') (Within-≾ cont (hi i₁) (hi i₂) h n) eq
   where
     covers' : Any (λ p → p ≼ᶜ cont) (traces (lo i₂))
     covers' with find (toWitness c)
@@ -122,13 +167,6 @@ open _⊑ᵇ[_]_
             with find (toWitness (l t (fromWitness t∈P)))
     ...     | t' , t'∈P' , t'≼t =
               Any.map (λ e → subst (_≼ᶜ cont) e (≼ᶜ-trans t'≼t t≼cont)) t'∈P'
-
-    within' : Any (λ q → cont ≼ᵃ q) (traces (hi i₂))
-    within' with find (toWitness n)
-    ... | t , t∈Q , cont≼t
-            with find (toWitness (h t (fromWitness t∈Q)))
-    ...     | t' , t'∈Q' , t≼t' =
-              Any.map (λ e → subst (cont ≼ᵃ_) e (≼ᵃ-trans cont≼t t≼t')) t'∈Q'
 
 -- proof irrelevance: the continuation is determined by left
 -- cancellation, and both witnesses are irrelevant proofs
@@ -140,7 +178,7 @@ open _⊑ᵇ[_]_
 ... | refl =
         cong₂ (λ x y → mkᵇ cont x y refl)
               (True-irr (any? (λ p → p ≼ᶜ? cont) (traces (lo i))) c c')
-              (True-irr (any? (λ q → cont ≼ᵃ? q) (traces (hi i))) n n')
+              (Within-irr cont (hi i) n n')
 
 ------------------------------------------------------------------------
 -- The frame.

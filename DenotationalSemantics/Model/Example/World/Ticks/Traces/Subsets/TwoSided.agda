@@ -14,6 +14,9 @@
 --                                                                    --
 -- Each half is the corresponding one-sided frame, at its own cost     --
 -- model, and every frame condition is the pair of theirs.             --
+--                                                                    --
+-- The top `⊤ᵍ` is adjoined to the pair as a whole, and fences the     --
+-- advance in from neither side, so it relates every pair of worlds.  --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)
@@ -26,9 +29,18 @@ module DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ costʰⁱ : Op → ℕ) where
 
 open import Data.Product using (_×_; _,_)
+open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades.Example.Traces.Subsets.TwoSided Op _≟ₒ_
-  using (TwoSided; lo; hi; uᵇ; _·ᵇ_; two-sided; _≾ᵇ_)
+  using (TwoSided; lo; hi; two-sided; Interval; only_; ⊤ᵍ; uᴵ; _·ᴵ_; _≾ᴵ_)
+
+-- each endpoint of a pair is an un-extended set, which the one-sided
+-- frames see through their own `only`
+
+open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
+  using () renaming (only_ to onlyᴰ_)
+open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
+  using () renaming (only_ to onlyᴾ_)
 
 open import DenotationalSemantics.Model.World
 
@@ -47,24 +59,33 @@ open Hi Op _≟ₒ_ costʰⁱ using () renaming
 ------------------------------------------------------------------------
 -- The frame
 
-_⊑ᵗ[_]_ : ℕ → TwoSided → ℕ → Set
-w ⊑ᵗ[ i ] w' = (w ⊑ˡᵒ[ lo i ] w') × (w ⊑ʰⁱ[ hi i ] w')
+_⊑ᵗ[_]_ : ℕ → Interval → ℕ → Set
+w ⊑ᵗ[ only i ] w' = (w ⊑ˡᵒ[ onlyᴰ (lo i) ] w') × (w ⊑ʰⁱ[ onlyᴾ (hi i) ] w')
+w ⊑ᵗ[ ⊤ᵍ ]      w' = ⊤
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ uᵇ ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ uᴵ ] w
 ⊑ᵗ-refl {w} = ⊑ˡᵒ-refl {w} , ⊑ʰⁱ-refl {w}
 
 ⊑ᵗ-trans : ∀ {i₁ i₂ w w' w''}
-         → w ⊑ᵗ[ i₁ ] w' → w' ⊑ᵗ[ i₂ ] w'' → w ⊑ᵗ[ i₁ ·ᵇ i₂ ] w''
-⊑ᵗ-trans {i₁} {i₂} (l₁ , h₁) (l₂ , h₂) =
-    ⊑ˡᵒ-trans {lo i₁} {lo i₂} l₁ l₂ , ⊑ʰⁱ-trans {hi i₁} {hi i₂} h₁ h₂
+         → w ⊑ᵗ[ i₁ ] w' → w' ⊑ᵗ[ i₂ ] w'' → w ⊑ᵗ[ i₁ ·ᴵ i₂ ] w''
+⊑ᵗ-trans {only _}  {⊤ᵍ}      p q = tt
+⊑ᵗ-trans {⊤ᵍ}     {_}        p q = tt
+⊑ᵗ-trans {only i₁} {only i₂} (l₁ , h₁) (l₂ , h₂) =
+    ⊑ˡᵒ-trans {onlyᴰ (lo i₁)} {onlyᴰ (lo i₂)} l₁ l₂
+  , ⊑ʰⁱ-trans {onlyᴾ (hi i₁)} {onlyᴾ (hi i₂)} h₁ h₂
 
-⊑ᵗ-mono : ∀ {i₁ i₂ w w'} → i₁ ≾ᵇ i₂ → w ⊑ᵗ[ i₁ ] w' → w ⊑ᵗ[ i₂ ] w'
-⊑ᵗ-mono {i₁} {i₂} (l , h) (pl , ph) =
-    ⊑ˡᵒ-mono {lo i₁} {lo i₂} l pl , ⊑ʰⁱ-mono {hi i₁} {hi i₂} h ph
+⊑ᵗ-mono : ∀ {i₁ i₂ w w'} → i₁ ≾ᴵ i₂ → w ⊑ᵗ[ i₁ ] w' → w ⊑ᵗ[ i₂ ] w'
+⊑ᵗ-mono {_}       {⊤ᵍ}      rel p = tt
+⊑ᵗ-mono {⊤ᵍ}     {only _}  ()
+⊑ᵗ-mono {only i₁} {only i₂} (l , h) (pl , ph) =
+    ⊑ˡᵒ-mono {onlyᴰ (lo i₁)} {onlyᴰ (lo i₂)} l pl
+  , ⊑ʰⁱ-mono {onlyᴾ (hi i₁)} {onlyᴾ (hi i₂)} h ph
 
 ⊑ᵗ-irrelevant : ∀ {i w w'} → (p q : w ⊑ᵗ[ i ] w') → p ≡ q
-⊑ᵗ-irrelevant {i} (l , h) (l' , h') =
-  cong₂ _,_ (⊑ˡᵒ-irrelevant {lo i} l l') (⊑ʰⁱ-irrelevant {hi i} h h')
+⊑ᵗ-irrelevant {only i} (l , h) (l' , h') =
+  cong₂ _,_ (⊑ˡᵒ-irrelevant {onlyᴰ (lo i)} l l')
+            (⊑ʰⁱ-irrelevant {onlyᴾ (hi i)} h h')
+⊑ᵗ-irrelevant {⊤ᵍ}    tt      tt        = refl
 
 ticks : World two-sided
 ticks = record

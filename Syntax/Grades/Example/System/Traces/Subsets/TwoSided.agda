@@ -17,15 +17,22 @@
 -- floor's cost model is below the cap's. Since that field is exactly   --
 -- the condition for the interval to be inhabited, no admissible grade  --
 -- is refused before it reaches here.                                   --
+--                                                                     --
+-- WHERE THE RESOURCE GRADES COME FROM. As on the one-sided floor, not  --
+-- the plain intervals but `two-sided-intervals-with-⊤`. The pair's     --
+-- greatest grade is absorbing because its floor's is, while            --
+-- `[ 0 , ∞ ]` is not, its `min` endpoint being the unit; `map-⊤` with  --
+-- `map-·` cannot bridge the two.                                       --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
-open import Data.Nat.Properties using (≤-trans; ⊔-identityʳ)
+open import Data.Nat.Properties using (≤-refl; ≤-trans; ⊔-identityʳ)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Syntax.Grades
-open import Syntax.Grades.Example.Time.TwoSided
+open import Syntax.Grades.WithTop
+open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 
 open import Util.Equality
 
@@ -43,7 +50,7 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
 
 open import Syntax.Grades.Example.Traces.Subsets.TwoSided Op _≟ₒ_
-  using (TwoSided; lo; hi; lo◇hi; _·ᵇ_; two-sided; _≾ᵇ_)
+  using (TwoSided; lo; hi; lo◇hi; _·ᵇ_; uᵇ; of-natᵇ; base; two-sided; _≾ᵇ_)
 
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are
@@ -51,7 +58,7 @@ open import Syntax.Grades.Example.Traces.Subsets.TwoSided Op _≟ₒ_
 open import Syntax.Grades.Example.System.Traces.Subsets.LeftSided Op _≟ₒ_ costˡᵒ
   using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
 open import Syntax.Grades.Example.System.Traces.Subsets.RightSided Op _≟ₒ_ costʰⁱ
-  using () renaming (mapₒ-monotone to mapʰⁱ-monotone)
+  using () renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
 
 open MaxDurations costˡᵒ using ()
   renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ;
@@ -75,9 +82,12 @@ coherent i =
 ------------------------------------------------------------------------
 -- The projection: each endpoint by its slowest member
 
-mapₒ : TwoSided → Interval
+mapₒ : TwoSided → Interval∞
 mapₒ i =
-  [ setDurationˡᵒ (traces (lo i)) , setDurationʰⁱ (traces (hi i)) , coherent i ]
+  [ setDurationˡᵒ (traces (lo i))
+  , ↑ setDurationʰⁱ (traces (hi i))
+  , coherent i
+  ]
 
 mapₒ-monotone : {i₁ i₂ : TwoSided} → i₁ ≾ᵇ i₂ → mapₒ i₁ ≾ᵢ mapₒ i₂
 mapₒ-monotone {i₁} {i₂} (l , h) =
@@ -87,23 +97,22 @@ mapₒ-· : (i₁ i₂ : TwoSided) → mapₒ (i₁ ·ᵇ i₂) ≡ mapₒ i₁ 
 mapₒ-· i₁ i₂ =
   eqᵢ (setDuration-·ˢˡᵒ (traces (lo i₁)) (traces (lo i₂))
                         (nonempty (lo i₁)) (nonempty (lo i₂)))
-      (setDuration-·ˢʰⁱ (traces (hi i₁)) (traces (hi i₂))
-                        (nonempty (hi i₁)) (nonempty (hi i₂)))
+      (cong ↑_ (setDuration-·ˢʰⁱ (traces (hi i₁)) (traces (hi i₂))
+                                 (nonempty (hi i₁)) (nonempty (hi i₂))))
 
-subsets→intervals : two-sided →ᵍ two-sided-intervals
-subsets→intervals = record
-  { map          = mapₒ
-  ; map-monotone = λ {i₁} {i₂} → mapₒ-monotone {i₁} {i₂}
-  ; map-u        = eqᵢ refl refl
-  ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
-  ; map-of-nat   = λ {n} →
-      eqᵢ (trans (⊔-identityʳ (durationˡᵒ ⟨ n ⟩)) (duration-⟨⟩ˡᵒ n))
-          (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n))
-  }
+mapₒ-of-nat : {n : ℕ} → mapₒ (of-natᵇ n) ≡ [ n , ↑ n , ≤-refl ]
+mapₒ-of-nat {n} =
+  eqᵢ (trans (⊔-identityʳ (durationˡᵒ ⟨ n ⟩)) (duration-⟨⟩ˡᵒ n))
+      (cong ↑_ (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n)))
+
+open AdjoinMap {base} {forgetTop two-sided-intervals-with-∞}
+  mapₒ (λ {i₁} {i₂} → mapₒ-monotone {i₁} {i₂}) (eqᵢ refl refl)
+  (λ {i₁} {i₂} → mapₒ-· i₁ i₂) (λ {n} → mapₒ-of-nat {n})
+  public using () renaming (withTopᵐ to subsets→intervals)
 
 subsetsToIntervalsGradeSystem : GradeSystem
 subsetsToIntervalsGradeSystem = record
-  { RGrade = two-sided-intervals
+  { RGrade = two-sided-intervals-with-⊤
   ; EGrade = two-sided
   ; ∣_∣ᵉ   = subsets→intervals
   }

@@ -71,10 +71,19 @@ P ≾ P' = traces P' ≽ˢ traces P
   ≽ˢ-·ˢ {traces C} {traces C} {traces Q} {traces P} (≽ˢ-refl {traces C}) rel
 
 ------------------------------------------------------------------------
+-- The greatest grade
+--
+-- The unit `{ ε }` guarantees nothing, the empty trace being covered by
+-- every run, so it is already the greatest grade and no point has to be
+-- adjoined.
+
+≾-⊤ : (P : NeTraces) → P ≾ u
+≾-⊤ P = u-≽ˢ (traces P)
+
+------------------------------------------------------------------------
 -- Zero-product property
 --
--- The unit `{ ε }` guarantees nothing, and the empty trace is covered
--- by every run, so every grade lies below it and the property is
+-- The unit is greatest, so every grade lies below it and the property is
 -- vacuous.
 
 ≾-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
@@ -108,6 +117,8 @@ left-sided = record
   ; ·-identityˡ     = ·-identityˡ
   ; ·-assoc         = ·-assoc
   ; _≾_             = _≾_
+  ; ⊤               = u
+  ; ≾-⊤             = ≾-⊤
   ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ {c} {x} {y}
   ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
   ; ≾-refl          = λ {x} → ≾-refl {x}

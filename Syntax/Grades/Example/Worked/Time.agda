@@ -7,14 +7,18 @@
 -- grade records a different part of that fact:                         --
 --                                                                     --
 --   left-sided   [ 7 ,+∞⟩       "at least 7 ticks have passed"        --
---   right-sided  [0, 9 ]        "at most 9 ticks have passed"         --
---   two-sided    [ 7 , 9 ]      both bounds at once                    --
---   with ∞       [ 7 , ∞ ]      a lower bound, no upper one            --
+--   right-sided  [0, ↑ 9 ]      "at most 9 ticks have passed"         --
+--   two-sided    [ 7 , ↑ 9 ]    both bounds at once                    --
+--                                                                     --
+-- Both upper endpoints range over the extended naturals, so `[0, ∞ ]`  --
+-- and `[ 7 , ∞ ]` impose no upper bound at all.                        --
 --                                                                     --
 -- In each case `_·_` adds the endpoints, so sequencing two runs adds   --
 -- their windows, and the order is *weakening*: a grade sits below the  --
 -- grades that claim less than it does. Which way "less" points differs --
--- per grade, and that is what the examples below pin down.             --
+-- per grade, and that is what the examples below pin down. Each grade  --
+-- also has a designated greatest element `⊤`, and the sections below   --
+-- say which one it is.                                                 --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time where
@@ -36,16 +40,12 @@ open import Syntax.Grades.Example.Time.LeftSided
   renaming (𝕀 to 𝕀ˡ; _·ₒ_ to _·ˡ_; uₒ to uˡ; _≾ₒ_ to _≾ˡ_)
 
 open import Syntax.Grades.Example.Time.RightSided
-  using ([0,_]; right-sided-intervals)
-  renaming (𝕀ᵣ to 𝕀ʳ; _·ₒ_ to _·ʳ_; uₒ to uʳ; _≾ₒ_ to _≾ʳ_)
-
-open import Syntax.Grades.Example.Time.TwoSided
-  using (Interval; [_,_,_]; eqᵢ; two-sided-intervals)
-  renaming (_·ᵢ_ to _·²_; _≾ᵢ_ to _≾²_)
+  using ([0,_]; ℕ∞; ↑_; ∞; right-sided-intervals)
+  renaming (𝕀ᵣ to 𝕀ʳ; _·ₒ_ to _·ʳ_; uₒ to uʳ; _≾ₒ_ to _≾ʳ_; ⊤ₒ to ⊤ʳ)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; ↑_; ∞; two-sided-intervals-with-∞)
-  renaming ([_,_,_] to [_,_,_]∞; eqᵢ to eq∞; _·ᵢ_ to _·∞_; _≾ᵢ_ to _≾∞_)
+  using (Interval∞; [_,_,_]; eqᵢ; two-sided-intervals-with-∞)
+  renaming (_·ᵢ_ to _·²_; _≾ᵢ_ to _≾²_; ⊤ᵢ to ⊤²)
 
 ------------------------------------------------------------------------
 -- Discharging the numeric side conditions
@@ -98,6 +98,12 @@ lsi-unit = refl
 lsi-unit-top : [ 7 ,+∞⟩ ≾ˡ uˡ
 lsi-unit-top = ≤!
 
+-- so the unit is the designated greatest grade here; nothing had to be
+-- adjoined, and it is not absorbing
+
+lsi-top : Grade.⊤ left-sided-intervals ≡ uˡ
+lsi-top = refl
+
 -- `n` time steps, as a grade
 
 lsi-of-nat : Grade.of-nat left-sided-intervals 7 ≡ [ 7 ,+∞⟩
@@ -111,122 +117,138 @@ lsi-of-nat = refl
 -- relaxed, never tightened.
 
 uplink-hi : 𝕀ʳ
-uplink-hi = [0, 9 ]
+uplink-hi = [0, ↑ 9 ]
 
-rsi-weaken : [0, 9 ] ≾ʳ [0, 12 ]
+rsi-weaken : [0, ↑ 9 ] ≾ʳ [0, ↑ 12 ]
 rsi-weaken = ≤!
 
-rsi-no-tighten : ¬ ([0, 12 ] ≾ʳ [0, 9 ])
+rsi-no-tighten : ¬ ([0, ↑ 12 ] ≾ʳ [0, ↑ 9 ])
 rsi-no-tighten = ≰!
 
-rsi-seq : [0, 1 ] ·ʳ [0, 8 ] ≡ [0, 9 ]
+rsi-seq : [0, ↑ 1 ] ·ʳ [0, ↑ 8 ] ≡ [0, ↑ 9 ]
 rsi-seq = refl
 
 -- here the unit is the *smallest* grade: "at most 0 ticks" is the
 -- strongest budget there is
 
-rsi-unit : uʳ ≡ [0, 0 ]
+rsi-unit : uʳ ≡ [0, ↑ 0 ]
 rsi-unit = refl
 
-rsi-unit-bottom : uʳ ≾ʳ [0, 9 ]
+rsi-unit-bottom : uʳ ≾ʳ [0, ↑ 9 ]
 rsi-unit-bottom = ≤!
 
-rsi-of-nat : Grade.of-nat right-sided-intervals 9 ≡ [0, 9 ]
+-- and the greatest grade is `[0, ∞ ]`, which imposes no deadline; it is
+-- absorbing, a run after an unbounded one being unbounded too
+
+rsi-top : ⊤ʳ ≡ [0, ∞ ]
+rsi-top = refl
+
+rsi-weaken-to-top : [0, ↑ 9 ] ≾ʳ ⊤ʳ
+rsi-weaken-to-top = _
+
+rsi-top-absorbs : ⊤ʳ ·ʳ [0, ↑ 9 ] ≡ ⊤ʳ
+rsi-top-absorbs = refl
+
+rsi-of-nat : Grade.of-nat right-sided-intervals 9 ≡ [0, ↑ 9 ]
 rsi-of-nat = refl
 
 ------------------------------------------------------------------------
 -- Two-sided intervals: both bounds at once
 --
--- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤ max i₂`: containment. The
+-- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂`: containment. The
 -- two halves are the two one-sided orders, pulling in opposite
--- directions, so weakening widens the window from both ends.
+-- directions, so weakening widens the window from both ends. The upper
+-- endpoint may be `∞`, which imposes no upper bound and turns the grade
+-- into a left-sided interval sitting inside the two-sided one.
 
 -- the window the uplink run actually falls in
 
-uplink-window : Interval
-uplink-window = [ 7 , 9 , ≤! ]
+uplink-window : Interval∞
+uplink-window = [ 7 , ↑ 9 , ≤! ]
 
 -- it is exactly `opTime read · [2,2] · opTime send`, as the run's shape
 -- would suggest: 1 + 2 + 4 at the bottom, 1 + 2 + 6 at the top
 
 uplink-window-computed :
-  [ 1 , 1 , ≤! ] ·² [ 2 , 2 , ≤! ] ·² [ 4 , 6 , ≤! ] ≡ uplink-window
+  [ 1 , ↑ 1 , ≤! ] ·² [ 2 , ↑ 2 , ≤! ] ·² [ 4 , ↑ 6 , ≤! ] ≡ uplink-window
 uplink-window-computed = eqᵢ refl refl
 
 -- a looser budget is a weaker grade
 
-tsi-weaken : uplink-window ≾² [ 5 , 12 , ≤! ]
+tsi-weaken : uplink-window ≾² [ 5 , ↑ 12 , ≤! ]
 tsi-weaken = ≤! , ≤!
 
-tsi-no-tighten : ¬ ([ 5 , 12 , ≤! ] ≾² uplink-window)
+tsi-no-tighten : ¬ ([ 5 , ↑ 12 , ≤! ] ≾² uplink-window)
 tsi-no-tighten rel = ≰! (proj₂ rel)
 
 -- widening only one end is still weakening: the two halves are
 -- independent
 
-tsi-weaken-lo : uplink-window ≾² [ 5 , 9 , ≤! ]
+tsi-weaken-lo : uplink-window ≾² [ 5 , ↑ 9 , ≤! ]
 tsi-weaken-lo = ≤! , ≤!
 
-tsi-weaken-hi : uplink-window ≾² [ 7 , 12 , ≤! ]
+tsi-weaken-hi : uplink-window ≾² [ 7 , ↑ 12 , ≤! ]
 tsi-weaken-hi = ≤! , ≤!
 
 -- but the two windows below are incomparable: neither contains the
 -- other, so a computation graded by one cannot be regraded to the other
 
-tsi-incomparableˡ : ¬ ([ 7 , 9 , ≤! ] ≾² [ 8 , 12 , ≤! ])
+tsi-incomparableˡ : ¬ ([ 7 , ↑ 9 , ≤! ] ≾² [ 8 , ↑ 12 , ≤! ])
 tsi-incomparableˡ rel = ≰! (proj₁ rel)
 
-tsi-incomparableʳ : ¬ ([ 8 , 12 , ≤! ] ≾² [ 7 , 9 , ≤! ])
+tsi-incomparableʳ : ¬ ([ 8 , ↑ 12 , ≤! ] ≾² [ 7 , ↑ 9 , ≤! ])
 tsi-incomparableʳ rel = ≰! (proj₂ rel)
 
 -- the unit is the singleton window at 0, and it is minimal: only a
 -- computation that takes no time at all can be graded by it
 
-tsi-unit : Grade.u two-sided-intervals ≡ [ 0 , 0 , ≤! ]
+tsi-unit : Grade.u two-sided-intervals-with-∞ ≡ [ 0 , ↑ 0 , ≤! ]
 tsi-unit = eqᵢ refl refl
 
 -- `n` time steps is the singleton window at `n`
 
-tsi-of-nat : Grade.of-nat two-sided-intervals 7 ≡ [ 7 , 7 , ≤! ]
+tsi-of-nat : Grade.of-nat two-sided-intervals-with-∞ 7 ≡ [ 7 , ↑ 7 , ≤! ]
 tsi-of-nat = eqᵢ refl refl
 
 ------------------------------------------------------------------------
--- Two-sided intervals with an infinite upper endpoint
+-- The infinite upper endpoint
 --
--- `∞` as the upper endpoint imposes no upper bound, so `[ n , ∞ ]` is
--- the largest grade with lower bound `n` -- it is the left-sided
--- interval `[ n ,+∞⟩` sitting inside the two-sided grade.
-
--- the same window, now with a possibly-infinite top
-
-uplink-window∞ : Interval∞
-uplink-window∞ = [ 7 , ↑ 9 , ≤! ]∞
+-- `[ n , ∞ ]` is the largest grade with lower bound `n`, and `[ 0 , ∞ ]`
+-- the largest of all -- the greatest grade of this monoid. Unlike the
+-- right-sided intervals' top it is not absorbing: its `min` endpoint is
+-- the unit, so a run sequenced after it keeps its own lower bound.
 
 -- dropping the upper bound is weakening
 
-tsi∞-forget-max : uplink-window∞ ≾∞ [ 7 , ∞ , _ ]∞
-tsi∞-forget-max = ≤! , _
+tsi-forget-max : uplink-window ≾² [ 7 , ∞ , _ ]
+tsi-forget-max = ≤! , _
 
 -- and it cannot be recovered
 
-tsi∞-no-recover : ¬ ([ 7 , ∞ , _ ]∞ ≾∞ uplink-window∞)
-tsi∞-no-recover rel = proj₂ rel
+tsi-no-recover : ¬ ([ 7 , ∞ , _ ] ≾² uplink-window)
+tsi-no-recover rel = proj₂ rel
 
--- ∞ absorbs in the sum: once a run is unbounded, so is everything that
--- sequences it
+-- ∞ absorbs in the upper endpoint: once a run is unbounded above, so is
+-- everything that sequences it
 
-tsi∞-seq : [ 1 , ↑ 1 , ≤! ]∞ ·∞ [ 6 , ∞ , _ ]∞ ≡ [ 7 , ∞ , _ ]∞
-tsi∞-seq = eq∞ refl refl
+tsi-seq : [ 1 , ↑ 1 , ≤! ] ·² [ 6 , ∞ , _ ] ≡ [ 7 , ∞ , _ ]
+tsi-seq = eqᵢ refl refl
 
 -- the unbounded grades are still ordered by their lower bounds alone,
 -- exactly as the left-sided intervals are
 
-tsi∞-lower-bounds : [ 7 , ∞ , _ ]∞ ≾∞ [ 4 , ∞ , _ ]∞
-tsi∞-lower-bounds = ≤! , _
+tsi-lower-bounds : [ 7 , ∞ , _ ] ≾² [ 4 , ∞ , _ ]
+tsi-lower-bounds = ≤! , _
 
--- `n` time steps is still the singleton window at `n`, now with a
--- finite upper endpoint
+-- the greatest grade claims nothing at either end
 
-tsi∞-of-nat :
-  Grade.of-nat two-sided-intervals-with-∞ 7 ≡ [ 7 , ↑ 7 , ≤! ]∞
-tsi∞-of-nat = eq∞ refl refl
+tsi-top : ⊤² ≡ [ 0 , ∞ , _ ]
+tsi-top = eqᵢ refl refl
+
+tsi-weaken-to-top : uplink-window ≾² ⊤²
+tsi-weaken-to-top = ≤! , _
+
+-- but it does not absorb: sequencing keeps the lower bound that follows
+
+tsi-top-keeps-min : ⊤² ·² [ 6 , ∞ , _ ] ≡ [ 6 , ∞ , _ ]
+tsi-top-keeps-min = eqᵢ refl refl

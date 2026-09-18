@@ -30,7 +30,8 @@ open import Data.Unit using (tt)
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (yes; no)
 
-open import Syntax.Grades.Example.Time.TwoSided using (Interval; [_,_,_])
+open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
+  using (Interval∞; [_,_,_]; ↑_)
 
 open import Util.Equality
 
@@ -58,10 +59,10 @@ send  ≟ₒ send  = yes refl
 
 -- the interval an operation's execution time falls in
 
-opTime : Op → Interval
-opTime read  = [ 1 , 1 , s≤s z≤n ]
-opTime write = [ 2 , 3 , s≤s (s≤s z≤n) ]
-opTime send  = [ 4 , 6 , s≤s (s≤s (s≤s (s≤s z≤n))) ]
+opTime : Op → Interval∞
+opTime read  = [ 1 , ↑ 1 , s≤s z≤n ]
+opTime write = [ 2 , ↑ 3 , s≤s (s≤s z≤n) ]
+opTime send  = [ 4 , ↑ 6 , s≤s (s≤s (s≤s (s≤s z≤n))) ]
 
 -- the two endpoints, as cost models in their own right
 

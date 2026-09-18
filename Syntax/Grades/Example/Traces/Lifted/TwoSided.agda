@@ -39,6 +39,12 @@
 -- guarantee may credit it with no more than its least (`costˡᵒ`) while --
 -- an allowance must budget for its greatest (`costʰⁱ`). The field      --
 -- straddles the two, so it needs `cost-≤` to compare them at all.      --
+--                                                                     --
+-- THE GREATEST GRADE is `[ u , ⊤ᵍ ]`: the floor already has one, its   --
+-- unit guaranteeing nothing, while the cap has none of its own and     --
+-- carries the adjoined `⊤ᵍ`. So only the cap's endpoint is extended,   --
+-- not the pair, and the greatest grade is not absorbing -- sequencing  --
+-- keeps whatever guarantee follows it.                                 --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -65,6 +71,7 @@ module Syntax.Grades.Example.Traces.Lifted.TwoSided
   where
 
 open import Data.List.Base using (List)
+open import Data.Unit using (⊤; tt)
 open import Data.Nat using (_+_; _≤?_)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-reflexive; +-mono-≤)
 open import Data.List.Membership.Propositional using (_∈_; find)
@@ -86,19 +93,27 @@ open import Syntax.Grades.Traces.Durations Op
 -- orders it, at its own order
 
 open import Syntax.Grades.Example.Traces.Lifted.LeftSided Op _≟ₒ_ Oᶠ
-  using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_;
+  using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_; ≾-⊤ to ≾ˡᵒ-⊤;
                      ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
                      ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
                      ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
                      ≾-zero-productʳ to ≾ˡᵒ-zero-productʳ;
                      ≾-irrelevant to ≾ˡᵒ-irrelevant)
+
+-- the cap's endpoint carries the adjoined `⊤ᵍ`, the allowance grade
+-- having no greatest element of its own
+
 open import Syntax.Grades.Example.Traces.Lifted.RightSided Op _≟ₒ_ Oᶜ
-  using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
-                     ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans;
-                     ·-monoˡ to ·ʰⁱ-monoˡ; ·-monoʳ to ·ʰⁱ-monoʳ;
-                     ≾-zero-productˡ to ≾ʰⁱ-zero-productˡ;
-                     ≾-zero-productʳ to ≾ʰⁱ-zero-productʳ;
-                     ≾-irrelevant to ≾ʰⁱ-irrelevant)
+  using (Bounds; only_; ⊤ᵍ; _·ᵇ_; uᵇ; _≟ᴮ_)
+  renaming (·ᵉ-identityʳ to ·ᵇ-identityʳ; ·ᵉ-identityˡ to ·ᵇ-identityˡ;
+            ·ᵉ-assoc to ·ᵇ-assoc;
+            _≾₀_ to _≾ʰⁱ₀_;
+            _≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
+            ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans; ≾-⊤ to ≾ʰⁱ-⊤;
+            ·-monoˡ to ·ʰⁱ-monoˡ; ·-monoʳ to ·ʰⁱ-monoʳ;
+            ≾-zero-productˡ to ≾ʰⁱ-zero-productˡ;
+            ≾-zero-productʳ to ≾ʰⁱ-zero-productʳ;
+            ≾-irrelevant to ≾ʰⁱ-irrelevant)
 
 -- each endpoint is measured at its own cost model
 
@@ -121,19 +136,32 @@ durationˡᵒ≤ʰⁱ = duration-mono costˡᵒ costʰⁱ cost-≤
 -- cost model, than some trace of `ys` takes at the cap's. It is
 -- decided, hence irrelevant.
 
+infix 5 _◇ˢ₀_
+
+_◇ˢ₀_ : List Trace → List Trace → Set
+xs ◇ˢ₀ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
+
+◇ˢ₀-irr : {xs ys : List Trace} → (p q : xs ◇ˢ₀ ys) → p ≡ q
+◇ˢ₀-irr {xs} {ys} =
+  True-irr (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
+
+-- against `⊤ᵍ` there is nothing to ask: an unbounded allowance takes at
+-- least as long as any guarantee
+
 infix 5 _◇ˢ_
 
-_◇ˢ_ : List Trace → List Trace → Set
-xs ◇ˢ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
+_◇ˢ_ : List Trace → Bounds → Set
+xs ◇ˢ (only Q) = xs ◇ˢ₀ traces Q
+xs ◇ˢ ⊤ᵍ       = ⊤
 
-◇ˢ-irr : {xs ys : List Trace} → (p q : xs ◇ˢ ys) → p ≡ q
-◇ˢ-irr {xs} {ys} =
-  True-irr (any? (λ p → any? (λ q → durationˡᵒ p ≤? durationʰⁱ q) ys) xs)
+◇ˢ-irr : {xs : List Trace} {Y : Bounds} → (p q : xs ◇ˢ Y) → p ≡ q
+◇ˢ-irr {xs} {only Q} = ◇ˢ₀-irr {xs} {traces Q}
+◇ˢ-irr {xs} {⊤ᵍ}     tt tt = refl
 
 -- a set is coherent with itself, at whichever member is to hand
 
-◇ˢ-refl : (P : NeTraces) → traces P ◇ˢ traces P
-◇ˢ-refl P with neHead (traces P) (nonempty P)
+◇ˢ₀-refl : (P : NeTraces) → traces P ◇ˢ₀ traces P
+◇ˢ₀-refl P with neHead (traces P) (nonempty P)
 ... | t , t∈P =
       fromWitness
         (Any.map (λ eq → subst (λ z → Any (λ q → durationˡᵒ z ≤ durationʰⁱ q)
@@ -145,12 +173,15 @@ xs ◇ˢ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? duration�
                         (durationˡᵒ≤ʰⁱ t))
               t∈P
 
+◇ˢ-refl : (P : NeTraces) → traces P ◇ˢ (only P)
+◇ˢ-refl = ◇ˢ₀-refl
+
 -- and coherence survives the language product, durations adding along
 -- sequencing
 
-◇ˢ-·ˢ : {xs xs' ys ys' : List Trace}
-      → xs ◇ˢ ys → xs' ◇ˢ ys' → (xs ·ˢ xs') ◇ˢ (ys ·ˢ ys')
-◇ˢ-·ˢ {xs} {xs'} {ys} {ys'} p q
+◇ˢ₀-·ˢ : {xs xs' ys ys' : List Trace}
+       → xs ◇ˢ₀ ys → xs' ◇ˢ₀ ys' → (xs ·ˢ xs') ◇ˢ₀ (ys ·ˢ ys')
+◇ˢ₀-·ˢ {xs} {xs'} {ys} {ys'} p q
   with find (toWitness p)
 ... | t , t∈xs , hit
         with find hit
@@ -176,6 +207,13 @@ xs ◇ˢ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? duration�
       Any.map (λ eq → subst (λ z → durationˡᵒ (t ∙ t') ≤ durationʰⁱ z) eq bound)
               (∈-cartesianProductWith⁺ _∙_ s∈ys s'∈ys')
 
+◇ˢ-·ˢ : {xs xs' : List Trace} {Y Y' : Bounds}
+      → xs ◇ˢ Y → xs' ◇ˢ Y' → (xs ·ˢ xs') ◇ˢ (Y ·ᵇ Y')
+◇ˢ-·ˢ {xs} {xs'} {only Q} {only Q'} p q =
+  ◇ˢ₀-·ˢ {xs} {xs'} {traces Q} {traces Q'} p q
+◇ˢ-·ˢ {_}  {_}   {only _} {⊤ᵍ}      _ _ = tt
+◇ˢ-·ˢ {_}  {_}   {⊤ᵍ}     {_}       _ _ = tt
+
 ------------------------------------------------------------------------
 -- The carrier
 
@@ -183,15 +221,15 @@ record TwoSided : Set where
   constructor [_,_,_]
   field
     lo : NeTraces
-    hi : NeTraces
+    hi : Bounds
     -- some listed guarantee takes no longer than some listed allowance
-    lo◇hi : traces lo ◇ˢ traces hi
+    lo◇hi : traces lo ◇ˢ hi
 
 open TwoSided public
 
 eqᵗˢ : {i₁ i₂ : TwoSided} → lo i₁ ≡ lo i₂ → hi i₁ ≡ hi i₂ → i₁ ≡ i₂
 eqᵗˢ {[ L , U , p ]} {[ .L , .U , q ]} refl refl =
-  cong [ L , U ,_] (◇ˢ-irr {traces L} {traces U} p q)
+  cong [ L , U ,_] (◇ˢ-irr {traces L} {U} p q)
 
 ------------------------------------------------------------------------
 -- The monoid: the language product on each endpoint
@@ -201,25 +239,31 @@ infixl 7 _·ᵗˢ_
 _·ᵗˢ_ : TwoSided → TwoSided → TwoSided
 i₁ ·ᵗˢ i₂ =
   [ lo i₁ · lo i₂
-  , hi i₁ · hi i₂
-  , ◇ˢ-·ˢ {traces (lo i₁)} {traces (lo i₂)} {traces (hi i₁)} {traces (hi i₂)}
+  , hi i₁ ·ᵇ hi i₂
+  , ◇ˢ-·ˢ {traces (lo i₁)} {traces (lo i₂)} {hi i₁} {hi i₂}
           (lo◇hi i₁) (lo◇hi i₂)
   ]
 
 uᵗˢ : TwoSided
-uᵗˢ = [ u , u , ◇ˢ-refl u ]
+uᵗˢ = [ u , only u , ◇ˢ-refl u ]
+
+-- the greatest grade: the weakest guarantee, which is the unit, under
+-- an unbounded allowance
+
+⊤ᵗˢ : TwoSided
+⊤ᵗˢ = [ u , ⊤ᵍ , tt ]
 
 ·ᵗˢ-identityʳ : (i : TwoSided) → (i ·ᵗˢ uᵗˢ) ≡ i
-·ᵗˢ-identityʳ i = eqᵗˢ (·-identityʳ (lo i)) (·-identityʳ (hi i))
+·ᵗˢ-identityʳ i = eqᵗˢ (·-identityʳ (lo i)) (·ᵇ-identityʳ (hi i))
 
 ·ᵗˢ-identityˡ : (i : TwoSided) → (uᵗˢ ·ᵗˢ i) ≡ i
-·ᵗˢ-identityˡ i = eqᵗˢ (·-identityˡ (lo i)) (·-identityˡ (hi i))
+·ᵗˢ-identityˡ i = eqᵗˢ (·-identityˡ (lo i)) (·ᵇ-identityˡ (hi i))
 
 ·ᵗˢ-assoc : (i₁ i₂ i₃ : TwoSided)
           → ((i₁ ·ᵗˢ i₂) ·ᵗˢ i₃) ≡ (i₁ ·ᵗˢ (i₂ ·ᵗˢ i₃))
 ·ᵗˢ-assoc i₁ i₂ i₃ =
   eqᵗˢ (·-assoc (lo i₁) (lo i₂) (lo i₃))
-       (·-assoc (hi i₁) (hi i₂) (hi i₃))
+       (·ᵇ-assoc (hi i₁) (hi i₂) (hi i₃))
 
 ------------------------------------------------------------------------
 -- The order: each endpoint at its own order
@@ -231,6 +275,9 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 
 ≾ᵗˢ-refl : {i : TwoSided} → i ≾ᵗˢ i
 ≾ᵗˢ-refl {i} = ≾ˡᵒ-refl {lo i} , ≾ʰⁱ-refl {hi i}
+
+≾ᵗˢ-⊤ : (i : TwoSided) → i ≾ᵗˢ ⊤ᵗˢ
+≾ᵗˢ-⊤ i = ≾ˡᵒ-⊤ (lo i) , ≾ʰⁱ-⊤ (hi i)
 
 ≾ᵗˢ-trans : {i₁ i₂ i₃ : TwoSided} → i₁ ≾ᵗˢ i₂ → i₂ ≾ᵗˢ i₃ → i₁ ≾ᵗˢ i₃
 ≾ᵗˢ-trans {i₁} {i₂} {i₃} (l₁ , h₁) (l₂ , h₂) =
@@ -254,11 +301,12 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 -- takes no longer, and the witnessing allowance by a larger one, which
 -- takes no less. So nothing the order reaches is refused by the field.
 
-◇ˢ-≾ : (i : TwoSided) (L U : NeTraces)
-     → lo i ≾ˡᵒ L → hi i ≾ʰⁱ U
-     → traces L ◇ˢ traces U
-◇ˢ-≾ i L U l h
-  with find (toWitness (lo◇hi i))
+◇ˢ₀-≾ : (P Q L U : NeTraces)
+      → traces P ◇ˢ₀ traces Q
+      → P ≾ˡᵒ L → Q ≾ʰⁱ₀ U
+      → traces L ◇ˢ₀ traces U
+◇ˢ₀-≾ P Q L U coh l h
+  with find (toWitness coh)
 ... | p , p∈L₁ , hit
         with find hit
 ...     | q , q∈U₁ , p≤q
@@ -277,6 +325,16 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
       Any.map (λ eq → subst (λ z → durationˡᵒ p' ≤ durationʰⁱ z) eq
                         (≤-trans (durᶠ p'≼p) (≤-trans p≤q (durᶜ q≼q'))))
               q'∈U
+
+-- an unbounded allowance asks nothing, and a bounded one can only be
+-- reached from a bounded one
+
+◇ˢ-≾ : (i : TwoSided) (L : NeTraces) (U : Bounds)
+     → lo i ≾ˡᵒ L → hi i ≾ʰⁱ U
+     → traces L ◇ˢ U
+◇ˢ-≾ i L ⊤ᵍ       l h = tt
+◇ˢ-≾ i L (only U) l h with hi i | lo◇hi i | h
+... | only Q | coh | h' = ◇ˢ₀-≾ (lo i) Q L U coh l h'
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -300,7 +358,7 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
             (≾ʰⁱ-irrelevant {hi i₁} {hi i₂} h h')
 
 _≟ᵗˢ_ : Decidable (_≡_ {A = TwoSided})
-i₁ ≟ᵗˢ i₂ with lo i₁ ≟ᴺ lo i₂ | hi i₁ ≟ᴺ hi i₂
+i₁ ≟ᵗˢ i₂ with lo i₁ ≟ᴺ lo i₂ | hi i₁ ≟ᴮ hi i₂
 ... | yes p | yes q = yes (eqᵗˢ p q)
 ... | yes _ | no ¬q = no λ eq → ¬q (cong hi eq)
 ... | no ¬p | _     = no λ eq → ¬p (cong lo eq)
@@ -309,7 +367,7 @@ i₁ ≟ᵗˢ i₂ with lo i₁ ≟ᴺ lo i₂ | hi i₁ ≟ᴺ hi i₂
 -- Including the natural numbers, and deciding the order
 
 of-natᵗˢ : ℕ → TwoSided
-of-natᵗˢ n = [ of-nat n , of-nat n , ◇ˢ-refl (of-nat n) ]
+of-natᵗˢ n = [ of-nat n , only (of-nat n) , ◇ˢ-refl (of-nat n) ]
 
 infix 5 _≾ᵗˢ?_
 
@@ -328,6 +386,8 @@ two-sided = record
   ; ·-identityˡ     = ·ᵗˢ-identityˡ
   ; ·-assoc         = ·ᵗˢ-assoc
   ; _≾_             = _≾ᵗˢ_
+  ; ⊤               = ⊤ᵗˢ
+  ; ≾-⊤             = ≾ᵗˢ-⊤
   ; ·-monoˡ-≾       = λ {c} {x} {y} → ·ᵗˢ-monoˡ {c} {x} {y}
   ; ·-monoʳ-≾       = λ {c} {x} {y} → ·ᵗˢ-monoʳ {c} {x} {y}
   ; ≾-refl          = λ {x} → ≾ᵗˢ-refl {x}
@@ -337,6 +397,8 @@ two-sided = record
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗˢ-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵗˢ-irrelevant {c} {d}
   ; of-nat          = of-natᵗˢ
-  ; of-nat-zero     = eqᵗˢ of-nat-zero of-nat-zero
-  ; of-nat-plus     = λ {m} {n} → eqᵗˢ (of-nat-plus {m} {n}) (of-nat-plus {m} {n})
+  ; of-nat-zero     = eqᵗˢ of-nat-zero (cong only_ of-nat-zero)
+  ; of-nat-plus     = λ {m} {n} →
+                        eqᵗˢ (of-nat-plus {m} {n})
+                             (cong only_ (of-nat-plus {m} {n}))
   }

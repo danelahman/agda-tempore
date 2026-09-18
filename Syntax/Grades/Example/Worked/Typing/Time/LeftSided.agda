@@ -492,3 +492,16 @@ identified =
 
 no-discarding : ¬ (uₑ ≾ₑ op-grade read ·ₑ uₑ)
 no-discarding = ≰!
+
+------------------------------------------------------------------------
+-- The greatest grade
+--
+-- Here it is the unit: "at least 0 ticks" claims nothing, so every
+-- grade weakens to it and a lock at `⊤ᵣ` lets everything through --
+-- nothing ever expires under a lower bound.
+
+everything-weakens : (ε : E) → ε ≾ₑ ⊤ₑ
+everything-weakens = ≾-⊤ₑ
+
+reading-survives-⊤ : ⊤ᵣ ≾ᵣ uᵣ
+reading-survives-⊤ = ≤!

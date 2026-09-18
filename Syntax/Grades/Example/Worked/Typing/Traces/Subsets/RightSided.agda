@@ -25,15 +25,15 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided where
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; NeTraces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+  using (Op; read; write; send; ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
-  using (right-sided; holds; fails; holdsᵉ; failsᵉ)
+  using (right-sided; Permits; ⟅_⟆; ⟅_∣_⟆; holds; fails; holdsᵉ; failsᵉ)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
 
-opTime : Op → NeTraces
+opTime : Op → Permits
 opTime o = ⟅ ⌈ o ⌉ ⟆
 
 open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime

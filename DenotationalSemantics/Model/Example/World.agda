@@ -49,11 +49,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided
 
--- reach the worlds inside the window `[ min , max ]` ticks ahead
-
-import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSided
-
--- the same, with an infinite `max` imposing no upper bound
+-- reach the worlds inside the window `[ min , max ]` ticks ahead, with
+-- an infinite `max` imposing no upper bound
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
 
@@ -88,11 +85,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.TwoSided
 -- that the grade `ρ` admits. Being Σ-shaped, the relation is covariant
 -- in the grade on the nose.
 
--- append a continuation whose duration falls in `[ min , max ]`
-
-import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSided
-
--- the same, with an infinite `max` imposing no upper bound
+-- append a continuation whose duration falls in `[ min , max ]`, with
+-- an infinite `max` imposing no upper bound
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinity
 

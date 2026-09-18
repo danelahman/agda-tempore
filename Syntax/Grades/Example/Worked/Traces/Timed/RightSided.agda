@@ -43,26 +43,45 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
+import Syntax.Grades.Example.Worked.Operations as Ops
+
 open import Syntax.Grades.Example.Worked.Operations
+  hiding (⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆; _·_)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (right-sided; _≾_; _≾?_) public
+  using (right-sided; Bounds; only_; ⊤ᵍ; _≾_; _≾?_)
+  renaming (_·ᵇ_ to _·_) public
 
 order : Grade._≾_ right-sided ≡ _≾_
 order = refl
 
-holds : {P Q : NeTraces} {p : True (P ≾? Q)} → P ≾ Q
+-- a written-out list of bounds is a grade under `only`; `⊤ᵍ` permits
+-- any run at all, however long
+
+⟅_⟆ : Trace → Bounds
+⟅ t ⟆ = only Ops.⟅ t ⟆
+
+⟅_∣_⟆ : Trace → Trace → Bounds
+⟅ t ∣ u ⟆ = only Ops.⟅ t ∣ u ⟆
+
+⟅_∣_∣_⟆ : Trace → Trace → Trace → Bounds
+⟅ t ∣ u ∣ v ⟆ = only Ops.⟅ t ∣ u ∣ v ⟆
+
+holds : {P Q : Bounds} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
 
-fails : {P Q : NeTraces} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+fails : {P Q : Bounds} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 fails {p = p} = toWitnessFalse p
 
 -- the sets taken explicitly, for the claims where they are not
 -- determined by the goal alone
 
-holdsᵉ : (P Q : NeTraces) {p : True (P ≾? Q)} → P ≾ Q
+holdsᵉ : (P Q : Bounds) {p : True (P ≾? Q)} → P ≾ Q
 holdsᵉ P Q {p} = toWitness p
+
+failsᵉ : (P Q : Bounds) {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+failsᵉ P Q {p} = toWitnessFalse p
 
 ------------------------------------------------------------------------
 -- What a bound permits
@@ -330,3 +349,23 @@ nine-ticks-buy-both-operations = holds
 eight-do-not :
   ¬ (⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 8 ⟩ ∙ ⌈ send ⌉ ⟆)
 eight-do-not = fails
+
+------------------------------------------------------------------------
+-- The adjoined point
+--
+-- No finite list of bounds permits every run, so the greatest grade is
+-- the adjoined `⊤ᵍ`: it permits any run at all, however long, and no
+-- list of bounds permits what it does. An unbounded computation leaves
+-- what follows it unbounded too, `⊤ᵍ` being absorbing.
+
+everything-weakens-to-the-top :
+  ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ≾ ⊤ᵍ
+everything-weakens-to-the-top = holdsᵉ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ⊤ᵍ
+
+the-top-weakens-to-no-list :
+  ¬ (⊤ᵍ ≾ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+the-top-weakens-to-no-list = failsᵉ ⊤ᵍ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+
+the-top-absorbs :
+  (⊤ᵍ · ⟅ ⌈ read ⌉ ⟆) ≡ ⊤ᵍ
+the-top-absorbs = refl

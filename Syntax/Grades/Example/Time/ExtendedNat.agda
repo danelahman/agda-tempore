@@ -103,6 +103,16 @@ infix 6 _≤∞_
 ≤∞-trans {∞}   {∞}   {↑ _} p ()
 ≤∞-trans {∞}   {∞}   {∞}   p q = tt
 
+-- order is decidable
+
+infix 4 _≤∞?_
+
+_≤∞?_ : (a b : ℕ∞) → Dec (a ≤∞ b)
+(↑ m) ≤∞? (↑ n) = m ≤? n
+(↑ _) ≤∞? ∞     = yes tt
+∞     ≤∞? (↑ _) = no λ ()
+∞     ≤∞? ∞     = yes tt
+
 -- order is irrelevant
 
 ≤∞-irrelevant : {a b : ℕ∞} → (p q : a ≤∞ b) → p ≡ q

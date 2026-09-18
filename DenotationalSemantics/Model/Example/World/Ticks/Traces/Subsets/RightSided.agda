@@ -20,6 +20,9 @@
 -- Covariance is immediate: a listed run of the smaller grade is       --
 -- literally a listed run of the larger one, the comparison between    --
 -- traces being equality.                                              --
+--                                                                    --
+-- The grade's adjoined top `⊤ᵍ` lists no run at all, so it relates     --
+-- every pair of worlds.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -39,6 +42,7 @@ open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_,_)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -47,7 +51,7 @@ open import Syntax.Grades.Traces.Durations Op
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using (right-sided; _≾_)
+  using (right-sided; Permits; only_; ⊤ᵍ; _·ᵖ_; _≾_)
 
 open import DenotationalSemantics.Model.World
 
@@ -57,21 +61,24 @@ open WithDecEq _≟ₒ_ using (True-irr)
 ------------------------------------------------------------------------
 -- The frame
 
-_⊑ᵗ[_]_ : ℕ → NeTraces → ℕ → Set
-w ⊑ᵗ[ Q ] w' = True (any? (λ q → w' ≤? (w + duration q)) (traces Q))
+_⊑ᵗ[_]_ : ℕ → Permits → ℕ → Set
+w ⊑ᵗ[ only Q ] w' = True (any? (λ q → w' ≤? (w + duration q)) (traces Q))
+w ⊑ᵗ[ ⊤ᵍ ]      w' = ⊤
 
 -- reflexivity at the unit grade `{ ε }`: the only permitted run takes
 -- no time, and none has passed
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ u ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ only u ] w
 ⊑ᵗ-refl {w} = fromWitness (here (≤-reflexive (sym (+-identityʳ w))))
 
 -- transitivity multiplies the grades: the two advances compose into the
 -- one the sequenced run allows, whose duration is the sum
 
 ⊑ᵗ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P · Q ] w''
-⊑ᵗ-trans {P} {Q} {w} {w'} {w''} p q
+         → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P ·ᵖ Q ] w''
+⊑ᵗ-trans {only _} {⊤ᵍ}    p q = tt
+⊑ᵗ-trans {⊤ᵍ}    {_}      p q = tt
+⊑ᵗ-trans {only P} {only Q} {w} {w'} {w''} p q
   with find (toWitness p) | find (toWitness q)
 ... | t₁ , t₁∈P , w'≤w+t₁ | t₂ , t₂∈Q , w''≤w'+t₂ =
       fromWitness
@@ -89,7 +96,9 @@ w ⊑ᵗ[ Q ] w' = True (any? (λ q → w' ≤? (w + duration q)) (traces Q))
 -- the weaker grade
 
 ⊑ᵗ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵗ[ P ] w' → w ⊑ᵗ[ Q ] w'
-⊑ᵗ-mono {P} {Q} {w} {w'} rel p
+⊑ᵗ-mono {_}      {⊤ᵍ}    rel p = tt
+⊑ᵗ-mono {⊤ᵍ}    {only _} ()
+⊑ᵗ-mono {only P} {only Q} {w} {w'} rel p
   with find (toWitness p)
 ... | t , t∈P , w'≤w+t =
       fromWitness
@@ -97,8 +106,9 @@ w ⊑ᵗ[ Q ] w' = True (any? (λ q → w' ≤? (w + duration q)) (traces Q))
                  (∈-⊑ rel t∈P))
 
 ⊑ᵗ-irrelevant : ∀ {Q w w'} → (p q : w ⊑ᵗ[ Q ] w') → p ≡ q
-⊑ᵗ-irrelevant {Q} {w} {w'} p q =
+⊑ᵗ-irrelevant {only Q} {w} {w'} p q =
   True-irr (any? (λ t → w' ≤? (w + duration t)) (traces Q)) p q
+⊑ᵗ-irrelevant {⊤ᵍ}    tt tt = refl
 
 ticks : World right-sided
 ticks = record

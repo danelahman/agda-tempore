@@ -15,6 +15,9 @@
 -- world is reachable exactly when the run that got there is one of    --
 -- them. Covariance is then just that a listed run of a smaller grade  --
 -- is a listed run of a larger one.                                    --
+--                                                                    --
+-- The grade's adjoined top `⊤ᵍ` permits every run, so it leaves the   --
+-- continuation unconstrained and asks only that `w'` extend `w`.      --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -28,6 +31,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any using (here)
+open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -35,7 +39,7 @@ open import Syntax.Grades.Traces.Sets Op
 
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using (right-sided; _≾_)
+  using (right-sided; Permits; only_; ⊤ᵍ; _·ᵖ_; _≾_)
 
 open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
 
@@ -44,18 +48,35 @@ open import DenotationalSemantics.Model.World
 ------------------------------------------------------------------------
 -- Accessibility on trace histories
 
+-- the condition on the continuation, vacuous at `⊤ᵍ`
+
+Listed : Trace → Permits → Set
+Listed cont (only Q) = True (cont ∈? traces Q)
+Listed cont ⊤ᵍ       = ⊤
+
+Listed-irr : (cont : Trace) (Q : Permits) → (p q : Listed cont Q) → p ≡ q
+Listed-irr cont (only Q) = True-irr (cont ∈? traces Q)
+Listed-irr _    ⊤ᵍ       tt tt = refl
+
 infix 5 _⊑ᵇ[_]_
 
-record _⊑ᵇ[_]_ (w : Trace) (Q : NeTraces) (w' : Trace) : Set where
+record _⊑ᵇ[_]_ (w : Trace) (Q : Permits) (w' : Trace) : Set where
   constructor mkᵇ
   field
     cont    : Trace                          -- continuation
-    listed  : True (cont ∈? traces Q)        -- one of the permitted runs
+    listed  : Listed cont Q                  -- one of the permitted runs
     extends : w ∙ cont ≡ w'                  -- `w'` extends `w`
 
 open _⊑ᵇ[_]_
 
-⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ u ] w
+-- appending the two continuations in turn extends across both
+
+extends-∙ : (w t₁ t₂ : Trace) {w' w'' : Trace}
+          → w ∙ t₁ ≡ w' → w' ∙ t₂ ≡ w'' → w ∙ (t₁ ∙ t₂) ≡ w''
+extends-∙ w t₁ t₂ eq₁ eq₂ =
+  trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂)
+
+⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ only u ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε (fromWitness {a? = ε ∈? traces u} (here refl)) (∙-identityʳ w)
 
@@ -63,15 +84,22 @@ open _⊑ᵇ[_]_
 -- into one the product lists
 
 ⊑ᵇ-trans : ∀ {P Q w w' w''}
-         → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P · Q ] w''
-⊑ᵇ-trans {P} {Q} {w} (mkᵇ t₁ l₁ eq₁) (mkᵇ t₂ l₂ eq₂) =
+         → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P ·ᵖ Q ] w''
+⊑ᵇ-trans {only _} {⊤ᵍ}    {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+  mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
+⊑ᵇ-trans {⊤ᵍ}    {_}      {w} (mkᵇ t₁ _ eq₁) (mkᵇ t₂ _ eq₂) =
+  mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
+⊑ᵇ-trans {only P} {only Q} {w} (mkᵇ t₁ l₁ eq₁) (mkᵇ t₂ l₂ eq₂) =
   mkᵇ (t₁ ∙ t₂)
       (fromWitness
         (∈-cartesianProductWith⁺ _∙_ (toWitness l₁) (toWitness l₂)))
-      (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+      (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 ⊑ᵇ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵇ[ P ] w' → w ⊑ᵇ[ Q ] w'
-⊑ᵇ-mono rel (mkᵇ cont l eq) = mkᵇ cont (fromWitness (∈-⊑ rel (toWitness l))) eq
+⊑ᵇ-mono {_}      {⊤ᵍ}    rel (mkᵇ cont _ eq) = mkᵇ cont tt eq
+⊑ᵇ-mono {⊤ᵍ}    {only _} ()
+⊑ᵇ-mono {only P} {only Q} rel (mkᵇ cont l eq) =
+  mkᵇ cont (fromWitness (∈-⊑ rel (toWitness l))) eq
 
 -- proof irrelevance: the continuation is determined by left
 -- cancellation, and membership is an irrelevant proof
@@ -80,8 +108,7 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-irrelevant {Q} {w} (mkᵇ cont l refl) (mkᵇ cont' l' eq')
   with ∙-cancelˡ w eq'
 ... | refl with eq'
-... | refl =
-        cong (λ z → mkᵇ cont z refl) (True-irr (cont ∈? traces Q) l l')
+... | refl = cong (λ z → mkᵇ cont z refl) (Listed-irr cont Q l l')
 
 ------------------------------------------------------------------------
 -- The frame.

@@ -29,14 +29,17 @@
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.RightSided where
 
+open import Data.Unit using (tt)
+
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_; costʰⁱ; costʰⁱ-pos;
-         NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+         NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩)
+  renaming (⟅_⟆ to ⟅_⟆ᴺ; _·_ to _·ᴺ_)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
-  using (right-sided; holds; fails)
+  using (right-sided; Bounds; only_; ⊤ᵍ; ⟅_⟆; ⟅_∣_⟆; holds; fails)
 
 open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
@@ -47,8 +50,11 @@ open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ allowanceOrder
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
 
-opTime : Op → NeTraces
-opTime o = ⟅ ⌈ o ⌉ ⟆
+opTime₀ : Op → NeTraces
+opTime₀ o = ⟅ ⌈ o ⌉ ⟆ᴺ
+
+opTime : Op → Bounds
+opTime o = only (opTime₀ o)
 
 open import Syntax.Grades.Example.Worked.Typing.Core right-sided opTime
 
@@ -343,11 +349,15 @@ identified =
       (return (eternal-var nodeid-eternal (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
 
 -- a clause may drop its continuation: the empty run stays within every
--- allowance, so the coercion a discarding clause needs always exists
+-- allowance, and within the adjoined point, so the coercion a
+-- discarding clause needs always exists
+
+u-fits : (P : NeTraces) → uₑ ≾ₑ only P
+u-fits P = u-≼ˢ (traces P) (nonempty P)
 
 nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op ε'' =
-  u-≼ˢ (traces (op-grade op ·ₑ ε'')) (nonempty (op-grade op ·ₑ ε''))
+nothing-fits op (only Q) = u-fits (opTime₀ op ·ᴺ Q)
+nothing-fits op ⊤ᵍ       = tt
 
 suppressed : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 suppressed =

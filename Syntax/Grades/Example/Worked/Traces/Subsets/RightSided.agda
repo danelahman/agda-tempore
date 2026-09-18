@@ -24,27 +24,43 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
+import Syntax.Grades.Example.Worked.Operations as Ops
+
 open import Syntax.Grades.Example.Worked.Operations
+  hiding (⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆; _·_)
 
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using (right-sided; _≾_; _≾?_) public
+  using (right-sided; Permits; only_; ⊤ᵍ; _≾_; _≾?_)
+  renaming (_·ᵖ_ to _·_) public
 
 order : Grade._≾_ right-sided ≡ _≾_
 order = refl
 
-holds : {P Q : NeTraces} {p : True (P ≾? Q)} → P ≾ Q
+-- a written-out list of permitted runs is a grade under `only`; `⊤ᵍ`
+-- permits any run at all, possibly infinite
+
+⟅_⟆ : Trace → Permits
+⟅ t ⟆ = only Ops.⟅ t ⟆
+
+⟅_∣_⟆ : Trace → Trace → Permits
+⟅ t ∣ u ⟆ = only Ops.⟅ t ∣ u ⟆
+
+⟅_∣_∣_⟆ : Trace → Trace → Trace → Permits
+⟅ t ∣ u ∣ v ⟆ = only Ops.⟅ t ∣ u ∣ v ⟆
+
+holds : {P Q : Permits} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
 
-fails : {P Q : NeTraces} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+fails : {P Q : Permits} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 fails {p = p} = toWitnessFalse p
 
 -- `⟅ ε ⟆` leaves too little for the implicit arguments to be found, so
 -- the endpoints are given explicitly where it appears
 
-holdsᵉ : (P Q : NeTraces) {p : True (P ≾? Q)} → P ≾ Q
+holdsᵉ : (P Q : Permits) {p : True (P ≾? Q)} → P ≾ Q
 holdsᵉ P Q {p} = toWitness p
 
-failsᵉ : (P Q : NeTraces) {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+failsᵉ : (P Q : Permits) {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 failsᵉ P Q {p} = toWitnessFalse p
 
 ------------------------------------------------------------------------
@@ -73,6 +89,26 @@ pure-fits-where-stopping-is-listed = holdsᵉ ⟅ ε ⟆ ⟅ ε ∣ ⌈ read ⌉
 pure-does-not-fit-elsewhere :
   ¬ (⟅ ε ⟆ ≾ ⟅ ⌈ read ⌉ ⟆)
 pure-does-not-fit-elsewhere = failsᵉ ⟅ ε ⟆ ⟅ ⌈ read ⌉ ⟆
+
+------------------------------------------------------------------------
+-- The adjoined point
+--
+-- `⊤ᵍ` permits any run at all, so every written-out list weakens to it,
+-- and it weakens to none of them -- a finite list leaves some run
+-- unpermitted. Permitting everything survives sequencing, `⊤ᵍ` being
+-- absorbing.
+
+everything-weakens-to-the-top :
+  ⟅ ⌈ read ⌉ ⟆ ≾ ⊤ᵍ
+everything-weakens-to-the-top = holdsᵉ ⟅ ⌈ read ⌉ ⟆ ⊤ᵍ
+
+the-top-weakens-to-nothing-else :
+  ¬ (⊤ᵍ ≾ ⟅ ⌈ read ⌉ ⟆)
+the-top-weakens-to-nothing-else = failsᵉ ⊤ᵍ ⟅ ⌈ read ⌉ ⟆
+
+the-top-absorbs :
+  (⊤ᵍ · ⟅ ⌈ read ⌉ ⟆) ≡ ⊤ᵍ
+the-top-absorbs = refl
 
 ------------------------------------------------------------------------
 -- Nothing is approximated
@@ -139,7 +175,7 @@ sequencing-adds-nothing-else = fails
 -- names the runs it will tolerate, and the box opens exactly when
 -- every run that may have happened is one of them.
 
-the-box-tolerates : NeTraces
+the-box-tolerates : Permits
 the-box-tolerates = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 
 a-listed-run-opens-the-box :

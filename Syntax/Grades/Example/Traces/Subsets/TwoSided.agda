@@ -32,6 +32,10 @@
 -- reachability below. As a *resource* grade, `unbox`'s `ρ' ≾ᵣ ρ` asks  --
 -- the elapsed grade to keep every run the box demands available while  --
 -- introducing none the box does not list.                              --
+--                                                                     --
+-- THE GREATEST GRADE is adjoined to the pair as a whole rather than to --
+-- either endpoint, the floor's own top being the excluded empty set of --
+-- demands. It demands nothing and permits everything, and it absorbs.  --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
@@ -44,12 +48,14 @@ module Syntax.Grades.Example.Traces.Subsets.TwoSided
 open import Data.List.Base using (List)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Unit using (tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _×-dec_)
 
 open import Syntax.Grades
+open import Syntax.Grades.WithTop
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
@@ -58,19 +64,19 @@ open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
 -- orders it
 
 open import Syntax.Grades.Example.Traces.Subsets.LeftSided Op _≟ₒ_
-  using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_;
-                     ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
-                     ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
-                     ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
-                     ≾-zero-productʳ to ≾ˡᵒ-zero-productʳ;
-                     ≾-irrelevant to ≾ˡᵒ-irrelevant)
+  using () renaming (_≾₀_ to _≾ˡᵒ_; _≾₀?_ to _≾ˡᵒ?_;
+                     ≾₀-refl to ≾ˡᵒ-refl; ≾₀-trans to ≾ˡᵒ-trans;
+                     ·-monoˡ₀ to ·ˡᵒ-monoˡ; ·-monoʳ₀ to ·ˡᵒ-monoʳ;
+                     ≾₀-zero-productˡ to ≾ˡᵒ-zero-productˡ;
+                     ≾₀-zero-productʳ to ≾ˡᵒ-zero-productʳ;
+                     ≾₀-irrelevant to ≾ˡᵒ-irrelevant)
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using () renaming (_≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
-                     ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans;
-                     ·-monoˡ to ·ʰⁱ-monoˡ; ·-monoʳ to ·ʰⁱ-monoʳ;
-                     ≾-zero-productˡ to ≾ʰⁱ-zero-productˡ;
-                     ≾-zero-productʳ to ≾ʰⁱ-zero-productʳ;
-                     ≾-irrelevant to ≾ʰⁱ-irrelevant)
+  using () renaming (_≾₀_ to _≾ʰⁱ_; _≾₀?_ to _≾ʰⁱ?_;
+                     ≾₀-refl to ≾ʰⁱ-refl; ≾₀-trans to ≾ʰⁱ-trans;
+                     ·-monoˡ₀ to ·ʰⁱ-monoˡ; ·-monoʳ₀ to ·ʰⁱ-monoʳ;
+                     ≾₀-zero-productˡ to ≾ʰⁱ-zero-productˡ;
+                     ≾₀-zero-productʳ to ≾ʰⁱ-zero-productʳ;
+                     ≾₀-irrelevant to ≾ʰⁱ-irrelevant)
 
 open WithDecEq _≟ₒ_
   using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·ˢ; _≟ᴺ_; True-irr)
@@ -207,10 +213,14 @@ _≾ᵇ?_ : (i₁ i₂ : TwoSided) → Dec (i₁ ≾ᵇ i₂)
 i₁ ≾ᵇ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i₂)
 
 ------------------------------------------------------------------------
--- The grade of two-sided subset intervals
+-- The two-sided subset intervals as an ordered monoid
+--
+-- There is no greatest pair: the floor's would be the empty set of
+-- demands, which is excluded. So a top is adjoined to the pair as a
+-- whole, rather than to either endpoint.
 
-two-sided : Grade
-two-sided = record
+base : OrderedMonoid
+base = record
   { Carrier         = TwoSided
   ; _·_             = _·ᵇ_
   ; u               = uᵇ
@@ -230,3 +240,21 @@ two-sided = record
   ; of-nat-zero     = eqᵇ of-nat-zero of-nat-zero
   ; of-nat-plus     = λ {m} {n} → eqᵇ (of-nat-plus {m} {n}) (of-nat-plus {m} {n})
   }
+
+------------------------------------------------------------------------
+-- The grade of two-sided subset intervals, with `⊤ᵍ` adjoined above them
+
+open Adjoin base public
+  renaming (Ext to Interval; _·ᵉ_ to _·ᴵ_; uᵉ to uᴵ; _≾ᵉ_ to _≾ᴵ_;
+            ≾ᵉ-⊤ to ≾ᴵ-⊤; ≾ᵉ-refl to ≾ᴵ-refl; ≾ᵉ-trans to ≾ᴵ-trans;
+            ≾ᵉ-irrelevant to ≾ᴵ-irrelevant;
+            ·ᵉ-monoˡ-≾ᵉ to ·ᴵ-monoˡ; ·ᵉ-monoʳ-≾ᵉ to ·ᴵ-monoʳ;
+            withTop to two-sided)
+
+infix 5 _≾ᴵ?_
+
+_≾ᴵ?_ : (i₁ i₂ : Interval) → Dec (i₁ ≾ᴵ i₂)
+(only i₁) ≾ᴵ? (only i₂) = i₁ ≾ᵇ? i₂
+(only _)  ≾ᴵ? ⊤ᵍ        = yes tt
+⊤ᵍ        ≾ᴵ? (only _)  = no λ ()
+⊤ᵍ        ≾ᴵ? ⊤ᵍ        = yes tt
