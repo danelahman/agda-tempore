@@ -53,7 +53,7 @@ open import Inference.Open.Hyps     S
 -- `¬ Eternal A → ρ ≾ᵣ uᵣ`; at open types `Eternal` is undecided, so the
 -- implication becomes a disjunction. A use that crosses a barrier drops the
 -- second disjunct and the grade with it: the eternality obligation is
--- unconditional, exactly the prototype's bare `Eternal` constraint.
+-- unconditional.
 
 VarOK : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → 𝔹 → Set
 VarOK Q A ρ true  = Q ⊩ᴱ A

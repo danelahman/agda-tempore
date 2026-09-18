@@ -10,8 +10,8 @@
 -- are optional: a proof that the unit is the least grade, on      --
 -- either side, which `nothing` switches off.                      --
 --                                                                --
--- The design is the temporal-millet prototype's, adapted to the   --
--- fact that satisfaction of `_≐ᵥ_` is *syntactic* equality of     --
+-- The design is built around the fact that satisfaction of        --
+-- `_≐ᵥ_` is *syntactic* equality of                               --
 -- substituted types: substitution never normalises grades, so a   --
 -- solved type equation must be made literally true by assignment, --
 -- never by rewriting. Accordingly:                                --
@@ -23,7 +23,7 @@
 --   * at an existential it guesses, by probing the constraint it  --
 --     scopes over for a pattern equation that pins the fresh      --
 --     variable (`Inference.SolverImpl.Match`), and falls back on  --
---     the prototype's defaults (`Unit`, `ûᵣ`, `ûₑ`);              --
+--     the defaults `Unit`, `ûᵣ`, `ûₑ`;                            --
 --   * a grade ordering is decided by normalising both sides to    --
 --     atom lists and comparing them atom by atom                  --
 --     (`Inference.SolverImpl.Normal`), and, when the left side    --
@@ -139,7 +139,7 @@ et? ([ ρ ] A) = nothing
 --------------------------------------------------------------
 -- Candidate witnesses for an existential                    --
 --                                                           --
--- The probe's answer first, the prototype's default second.  --
+-- The probe's answer first, the default second.              --
 --------------------------------------------------------------
 
 candᵗ : ∀ {Θ Θ'} → Subst Θ Θ' → Constraint (Θ +ty) → List (OVType Θ')
