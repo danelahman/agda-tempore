@@ -153,7 +153,7 @@ ex-pair : infer! [] (return ⦉ ⋆ , true ⦊) ≡ just (Unit |×| Bool , ûₑ
 ex-pair = refl
 
 -- a lambda: none of `α₁ ⇒ (α₂ ‼ e)` is fixed in advance, so the
--- staged resolution of the probe is what produces this answer
+-- argument type is defaulted and the latent effect is slack
 
 ex-lam : infer! [] (return (lam (return true)))
        ≡ just (Unit ⇒ (Bool ‼ ûₑ) , ûₑ)
@@ -185,11 +185,20 @@ ex-perform : infer! [] (perform read ⋆ (return (var zero)))
            ≡ just (Base reading , econst (op-grade read) ·̂ₑ ûₑ)
 ex-perform = refl
 
--- a nested lambda: each level costs the probe one stage
+-- nested lambdas: the unknowns of every level are shared in one
+-- store, so nesting costs the solver nothing
 
 ex-lam² : infer! [] (return (lam (return (lam (return true)))))
         ≡ just (Unit ⇒ ((Unit ⇒ (Bool ‼ ûₑ)) ‼ ûₑ) , ûₑ)
 ex-lam² = refl
+
+ex-lam³ : infer! [] (return (lam (return (lam (return (lam (return true)))))))
+        ≡ just (Unit ⇒ ((Unit ⇒ ((Unit ⇒ (Bool ‼ ûₑ)) ‼ ûₑ)) ‼ ûₑ) , ûₑ)
+ex-lam³ = refl
+
+ex-lam⁴ : infer! [] (return (lam (return (lam (return (lam (return (lam (return true)))))))))
+        ≡ just (Unit ⇒ ((Unit ⇒ ((Unit ⇒ ((Unit ⇒ (Bool ‼ ûₑ)) ‼ ûₑ)) ‼ ûₑ)) ‼ ûₑ) , ûₑ)
+ex-lam⁴ = refl
 
 -- delaying: the declared duration is charged to the effect
 
