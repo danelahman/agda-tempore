@@ -1,14 +1,14 @@
 ------------------------------------------------------------------
--- Principal typing on a fragment                                --
+-- Principal types on a fragment                                 --
 --                                                                --
 -- `Inference.Principality.principal` consumes only a solver's    --
 -- soundness and principality, so it transcribes verbatim to a    --
 -- `SolverOn` once the guard is threaded: a constraint in the     --
--- fragment that the solver accepts has a principal typing.        --
+-- fragment that the solver accepts has a principal type.          --
 --                                                                --
--- `principal-inst`, the Pretnar-style reading, applies to the     --
--- result unchanged — it is a property of `Principal`, not of the  --
--- solver that produced it.                                        --
+-- `principal-inst`, the instance reading, applies to the result   --
+-- unchanged — it is a property of `Principal`, not of the solver  --
+-- that produced it.                                               --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (just)

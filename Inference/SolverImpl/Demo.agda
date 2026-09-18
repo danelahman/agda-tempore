@@ -424,14 +424,15 @@ module Least where
   ex-handle-pipeline = refl
 
 --------------------------------------------------------------
--- The fragment, and a principal typing                      --
---                                                           --
--- The solver is principal on `Frag`: the constraints whose   --
--- `var`-rule disjunctions carry a lock grade convertible to  --
--- the unit, where the solver's bias towards the grade         --
--- disjunct costs nothing. Membership is decided by            --
--- computation, and a program in the fragment that the solver  --
--- accepts has a principal typing in Pretnar's sense.          --
+-- The fragment, and a principal type                       --
+--                                                          --
+-- The solver is principal on `Frag`: the constraints whose --
+-- `var`-rule disjunctions carry a lock grade convertible   --
+-- to the unit, where the solver's bias towards the grade   --
+-- disjunct costs nothing. Membership is decided by         --
+-- computation, and a program in the fragment that the      --
+-- solver accepts has a principal type: every typing an     --
+-- instance.                                                --
 --------------------------------------------------------------
 
 module Fragment where
@@ -458,7 +459,7 @@ module Fragment where
   frag-true = _ , refl
 
   -- a program in the fragment that the solver accepts has a
-  -- principal solution-with-residue, and hence a principal typing
+  -- principal solution-with-residue, and hence a principal type
 
   principal? : ∀ {n} → (Γ : OC.OCtx ∅ˢ n) → (M : RawC n) → Frag C[ Γ , M ]
              → Maybe (Principal Γ M)

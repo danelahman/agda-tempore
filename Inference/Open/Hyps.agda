@@ -6,10 +6,11 @@
 -- expressions under which a mirrored typing derivation is built. --
 -- Entailment (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`) is an inductive       --
 -- under-approximation of truth in all groundings.                --
---                                                              --
--- Qualified-judgement hypotheses in the style of HM(X)         --
--- (Odersky, Sulzmann, Wehr 1999) and Jones's qualified types   --
--- (1994).                                                      --
+--                                                                --
+-- Judgements under such a set are HM(X)'s constrained types      --
+-- (Odersky, Sulzmann, Wehr 1999) and Jones's qualified types     --
+-- (1994); the set plays the role of OutsideIn(X)'s given         --
+-- constraints (Vytiniotis et al., JFP 2011).                     --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map)

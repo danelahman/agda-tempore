@@ -1,35 +1,35 @@
 ------------------------------------------------------------------
--- Most general unifiers, and refutation                         --
---                                                               --
--- A successful run of `unify` returns a store whose denotation   --
--- is a most general unifier of the equations: every unifying     --
--- substitution factors through it. A failing run refutes the     --
--- equations, for every substitution that maps the rigid          --
--- variables to variables, injectively.                           --
---                                                               --
--- Both halves are one induction, following the unifier: a call   --
--- is specified by what each of its two possible results means    --
--- (`Spec`), so a clash — where nothing needs to be known about   --
--- the result — is discharged by refuting its equation alone,     --
--- with no case analysis on the size index.                       --
---                                                               --
--- The properties spoken about are properties of substitutions    --
--- closed under `_≐ˢ_`, composed with a substitution by `_⋄_`;    --
--- `Max` is maximality relative to the store a call starts from,  --
--- and `seq-spec` is the optimist's lemma: maximal solutions of   --
--- two properties in sequence compose.                            --
---                                                               --
--- Failure has three sources. A clash is a head mismatch, and is  --
--- immediate because satisfaction is syntactic equality. A failed --
--- occurrence check is refuted by the cross-sort sizes: a proper  --
--- occurrence of a variable makes the instance of the expression  --
--- strictly larger than the instance of the variable. A rigid     --
--- variable refuses to be bound, which is refuted by its image    --
--- being a variable, distinct from the image of every other       --
--- rigid variable.                                                --
+-- Most general unifiers, and refutation                        --
 --                                                              --
--- The Max/composition presentation of most general unifiers and--
--- the optimist's lemma follow McBride (JFP 2003).              --
+-- A successful run of `unify` returns a store whose denotation --
+-- is a most general unifier of the equations: every unifying   --
+-- substitution factors through it. A failing run refutes the   --
+-- equations, for every substitution that maps the rigid        --
+-- variables to variables, injectively.                         --
+--                                                              --
+-- Both halves are one induction, following the unifier: a call --
+-- is specified by what each of its two possible results means  --
+-- (`Spec`), so a clash — where nothing needs to be known about --
+-- the result — is discharged by refuting its equation alone,   --
+-- with no case analysis on the size index.                     --
+--                                                              --
+-- The properties spoken about are properties of substitutions  --
+-- closed under `_≐ˢ_`, composed with a substitution by `_⋄_`;  --
+-- `Max` is maximality relative to the store a call starts      --
+-- from, and `seq-spec` is the optimist's lemma: maximal        --
+-- solutions of two properties in sequence compose.             --
+--                                                              --
+-- Failure has three sources. A clash is a head mismatch, and   --
+-- is immediate because satisfaction is syntactic equality. A   --
+-- failed occurrence check is refuted by the cross-sort sizes:  --
+-- a proper occurrence of a variable makes the instance of the  --
+-- expression strictly larger than the instance of the          --
+-- variable. A rigid variable refuses to be bound, which is     --
+-- refuted by its image being a variable, distinct from the     --
+-- image of every other rigid variable.                         --
+--                                                              --
+-- The `Max` characterisation of most general unifiers and the  --
+-- optimist's lemma follow McBride (JFP 2003).                  --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)

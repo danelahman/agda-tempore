@@ -1,14 +1,16 @@
 ------------------------------------------------------------------
--- Triangular substitutions                                      --
---                                                               --
--- An `AList Θ Θ'` is a list of single-variable bindings, each    --
--- eliminating one variable of the scope it is read in: the head  --
--- is the binding applied first, and every binding's image lives  --
--- in the scope of the bindings that follow it. It denotes the    --
--- composite substitution `⟦_⟧ᴬ`, and the three sorts are kept    --
--- apart by three constructors.                                   --
+-- Triangular substitutions                                     --
 --                                                              --
--- Triangular substitutions after McBride (JFP 2003).           --
+-- An `AList Θ Θ'` is a list of single-variable bindings, each  --
+-- eliminating one variable of the scope it is read in: the     --
+-- head is the binding applied first, and every binding's image --
+-- lives in the scope of the bindings that follow it. It        --
+-- denotes the composite substitution `⟦_⟧ᴬ`, and the three     --
+-- sorts are kept apart by three constructors.                  --
+--                                                              --
+-- `AList` follows McBride (JFP 2003); substitutions of this    --
+-- shape are the unification literature's triangular form       --
+-- (Baader and Snyder, 2001).                                   --
 ------------------------------------------------------------------
 
 open import Syntax.Grades

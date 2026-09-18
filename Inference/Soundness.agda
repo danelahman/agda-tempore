@@ -19,9 +19,10 @@
 -- `ty-subst`/`c-subst` (from `Inference.Open.Language`) for an    --
 -- annotation, `ctx-substᵛ`/`ctx-substᶜ` (below) for a context.    --
 -- Each is erasure-invariant, by matching on the equation.         --
---                                                              --
--- The soundness-by-reconstruction architecture follows Tavits's--
--- MSc thesis (U. Tartu, 2025).                                 --
+--                                                                --
+-- The proof rebuilds a mirrored derivation under a satisfying    --
+-- substitution, following the soundness of type inference of     --
+-- Tavits's MSc thesis (U. Tartu, 2025).                          --
 ------------------------------------------------------------------
 
 -- `Bool` is renamed, as `OVType` has a constructor of that name

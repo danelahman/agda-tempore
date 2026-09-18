@@ -24,11 +24,12 @@
 -- residual `Q⁺` need not be satisfiable by any grounding, and    --
 -- its `Θ⁺` need not be empty, so the ground case is genuinely a  --
 -- separate assumption.                                           --
---                                                              --
--- A solution is a substitution paired with a constraint set    --
--- still to be satisfied — here called the residual — as in the --
--- types-with-constraint-sets of Pretnar, Inferring Algebraic   --
--- Effects (LMCS 2014).                                         --
+--                                                                --
+-- A solution is a substitution paired with a constraint set      --
+-- still to be satisfied: the residual constraint, in             --
+-- OutsideIn(X)'s terminology (Vytiniotis et al., JFP 2011) — cf. --
+-- the types with constraint sets of Pretnar, Inferring Algebraic --
+-- Effects (LMCS 2014).                                           --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)

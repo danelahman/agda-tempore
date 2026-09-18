@@ -4,9 +4,10 @@
 -- A concrete solver is rarely complete and rarely principal on   --
 -- every constraint, but it can be both on a precisely delimited  --
 -- class. `SolverOn` is `Solver` with those two fields guarded by --
--- a predicate on the constraint — a theory-parameterised reading --
--- of principal typing in the spirit of HM(X)                      --
--- (Odersky, Sulzmann and Wehr).                                   --
+-- a predicate on the constraint, making principality relative to --
+-- a class of constraints — no direct source, but cf. HM(X)'s     --
+-- parameterisation of principality by its constraint system      --
+-- (Odersky, Sulzmann, Wehr 1999).                                --
 --                                                                --
 -- Soundness stays unguarded: an accepting run always returns a    --
 -- satisfaction witness, whatever the constraint.                  --

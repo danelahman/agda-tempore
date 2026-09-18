@@ -1,26 +1,30 @@
 ------------------------------------------------------------------
--- Principal typing                                              --
---                                                                --
--- Generation is run at `Θ` extended by a fresh type variable and --
--- a fresh effect variable, standing for the result type and the  --
--- result effect; solving the resulting constraint yields a       --
--- principal solution-with-residue in Pretnar's sense.            --
---                                                                --
--- `Principal Γ M` packages the two halves:                       --
---                                                                --
---   `instantiate` — every instance of the residual hypotheses    --
---     gives a typing of `M`, by `solve-sound`, `⊨-mono` and      --
---     `soundC`;                                                  --
---   `mgu` — every typing of `M` factors through the principal    --
---     substitution and residue, by `completeC` and               --
---     `solve-principal`.                                         --
---                                                                --
--- `mgu` takes the derivation's erasure equation as a hypothesis: --
--- the constraint that was solved is `genC _ M _`, while          --
--- completeness produces a solution of `genC _ ⌊ D ⌋ᶜ _`.         --
+-- Principal types                                              --
+--                                                              --
+-- Generation is run at `Θ` extended by a fresh type variable   --
+-- and a fresh effect variable, standing for the result type    --
+-- and the result effect; solving the resulting constraint      --
+-- yields a principal solution together with its residual       --
+-- constraint.                                                  --
+--                                                              --
+-- `Principal Γ M` packages the two halves:                     --
+--                                                              --
+-- `instantiate` — every instance of the residual hypotheses    --
+-- gives a typing of `M`, by `solve-sound`, `⊨-mono` and        --
+-- `soundC`; `mgu` — every typing of `M` factors through the    --
+-- principal substitution and residue, by `completeC` and       --
+-- `solve-principal`.                                           --
+--                                                              --
+-- `mgu` takes the derivation's erasure equation as a           --
+-- hypothesis: the constraint that was solved is `genC _ M _`,  --
+-- while completeness produces a solution of `genC _ ⌊ D ⌋ᶜ _`. --
 --                                                              --
 -- Principal types carrying a constraint set, after Pretnar     --
--- (LMCS 2014).                                                 --
+-- (LMCS 2014); "residual constraint" is OutsideIn(X)'s term    --
+-- (Vytiniotis, Peyton Jones, Schrijvers, Sulzmann, JFP 2011).  --
+-- The context is fixed, so what is principal is the type —     --
+-- Damas and Milner's principal type scheme (1982) — not a      --
+-- principal typing in Wells's sense (2002).                    --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (just)
@@ -93,7 +97,7 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
     σ⁺ : Subst (Θ +ty +e) Θ⁺
     Q⁺ : Hyps Θ⁺
 
-    -- the principal typing itself (its type is `X̂ Θ [ σ⁺ ]ᵛ`, its
+    -- the principal derivation itself (its type is `X̂ Θ [ σ⁺ ]ᵛ`, its
     -- effect `t̂ Θ [ σ⁺ ]ᵉ`)
 
     D⁺   : Q⁺ ∣ Γ₊ Γ [ σ⁺ ]ᶜᵗˣ ⊢C⦂ (X̂ Θ [ σ⁺ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ]ᵉ)
@@ -147,12 +151,12 @@ principal sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipal
     elab = soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) sat
 
 --------------------------------------------------------------
--- The Pretnar-style reading of `mgu`                        --
---                                                           --
--- A typing of `M` in `Γ [ σ₀ ]ᶜᵗˣ` at an arbitrary type and  --
--- effect is an instance of the principal one: the principal  --
--- type instantiates to it exactly, the principal effect up   --
--- to the residual entailment.                                --
+-- The instance reading of `mgu`                            --
+--                                                          --
+-- A typing of `M` in `Γ [ σ₀ ]ᶜᵗˣ` at an arbitrary type    --
+-- and effect is an instance of the principal one: the      --
+-- principal type instantiates to it exactly, the principal --
+-- effect up to the residual entailment.                    --
 --------------------------------------------------------------
 
 principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)

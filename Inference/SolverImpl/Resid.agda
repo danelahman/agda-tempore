@@ -13,6 +13,9 @@
 -- residual back as a hypothesis set (`toHyps`) decomposes the     --
 -- eternality demands into atoms on type variables (`etDec`) and   --
 -- takes the orderings verbatim.                                   --
+--                                                                --
+-- The name follows OutsideIn(X): a residual constraint is what    --
+-- solving leaves behind (Vytiniotis et al., JFP 2011).            --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)

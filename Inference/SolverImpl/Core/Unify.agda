@@ -21,7 +21,8 @@
 -- or a product is a clash, which is correct because satisfaction --
 -- of an equation is syntactic equality of the two instances.     --
 --                                                              --
--- Follows McBride's structural-recursion unifier (JFP 2003).   --
+-- Follows McBride's structural-recursion unifier (JFP 2003);   --
+-- "rigid" and "flexible" are Huet's (1975).                    --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)

@@ -19,9 +19,10 @@
 -- substitution that keeps the rigid a variable cannot erase an    --
 -- occurrence of it, so a strengthening that fails does not merely --
 -- fail — it refutes every such instance. That is the completeness --
--- half of the boundary's escape check, and it is the eigenvariable --
--- discipline of Miller's mixed-prefix unification (Miller 1992):   --
--- a rigid may be renamed, never instantiated.                      --
+-- half of the boundary's escape check, and it is the discipline   --
+-- of unification under a mixed prefix (Miller 1992), the rigid    --
+-- playing the role of Gentzen's eigenvariable: it may be renamed, --
+-- never instantiated.                                             --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -346,10 +347,11 @@ pop-unpop {Ψ} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
 -- The escape lemma                                          --
 --                                                           --
 -- An occurrence of a variable whose image is again a         --
--- variable is renamed, not removed. The rigid discipline of  --
--- Miller's mixed prefixes is exactly that its eigenvariables --
--- are renamed and never instantiated, so an occurrence of a  --
--- rigid survives every substitution that respects them.      --
+-- variable is renamed, not removed. The discipline of a      --
+-- mixed prefix (Miller 1992) is exactly that its universally --
+-- quantified variables are renamed and never instantiated,   --
+-- so an occurrence of a rigid survives every substitution    --
+-- that respects them.                                        --
 --------------------------------------------------------------
 
 escᵉ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k

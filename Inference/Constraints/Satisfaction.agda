@@ -1,16 +1,19 @@
 ------------------------------------------------------------------
--- Satisfaction of constraints                                    --
---                                                                --
--- `σ ⊨[ Q ] C` reads: the substitution `σ` together with the      --
--- residual hypothesis set `Q` solves the constraint `C`. It is    --
--- Set-valued and informative — the ∃-clauses carry their          --
--- witnesses, which elaboration reads back off.                    --
---                                                                --
--- `σ` need not ground anything: a pair `(σ , Q)` is a solution    --
--- with residue, Pretnar's substitution plus residual constraints. --
+-- Satisfaction of constraints                                  --
 --                                                              --
--- Satisfaction interprets the binders as Sigma and Pi,         --
--- following Pottier and Remy (ATTAPL, 2005).                   --
+-- `σ ⊨[ Q ] C` reads: the substitution `σ` together with the   --
+-- residual hypothesis set `Q` solves the constraint `C`. It is --
+-- Set-valued and informative — the ∃-clauses carry their       --
+-- witnesses, which elaboration reads back off.                 --
+--                                                              --
+-- `σ` need not ground anything: a pair `(σ , Q)` is a solution --
+-- with residue: "residual constraint" in OutsideIn(X)'s sense  --
+-- (Vytiniotis et al., JFP 2011), cf. Pretnar's types with      --
+-- constraint sets (LMCS 2014).                                 --
+--                                                              --
+-- Constraint satisfaction follows Pottier and Remy (ATTAPL,    --
+-- 2005); here it is proof-relevant, reading the binders as     --
+-- Sigma and Pi.                                                --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
