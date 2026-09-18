@@ -24,6 +24,9 @@
 -- residual `Q⁺` need not be satisfiable by any grounding, and    --
 -- its `Θ⁺` need not be empty, so the ground case is genuinely a  --
 -- separate assumption.                                           --
+--                                                              --
+-- Solutions with a residual constraint follow Pretnar,         --
+-- Inferring Algebraic Effects (LMCS 2014).                     --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)

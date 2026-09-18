@@ -7,6 +7,8 @@
 -- in the scope of the bindings that follow it. It denotes the    --
 -- composite substitution `⟦_⟧ᴬ`, and the three sorts are kept    --
 -- apart by three constructors.                                   --
+--                                                              --
+-- Triangular substitutions after McBride (JFP 2003).           --
 ------------------------------------------------------------------
 
 open import Syntax.Grades

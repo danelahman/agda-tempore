@@ -12,6 +12,9 @@
 -- corresponding extension bumps; the other two counters are      --
 -- untouched, so each wrapper is the bare `Fin` operation and the --
 -- three `Fin` lemmas below apply to it verbatim.                 --
+--                                                              --
+-- Follows McBride's First-Order Unification by Structural      --
+-- Recursion (JFP 2003).                                        --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; zero; suc; punchIn)

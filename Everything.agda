@@ -375,6 +375,17 @@ open import Inference.ParamGround
 import Inference.SolverImpl
 import Inference.SolverImpl.Demo
 
+---- Biased satisfaction, the static fragment, and guarded solver interfaces
+
+open import Inference.Solver.Fragment
+open import Inference.Solver.Restricted
+open import Inference.Principality.Restricted
+
+---- The concrete solver's principality, refutation, and interface instance
+
+import Inference.SolverImpl.Principal
+import Inference.SolverImpl.Restricted
+
 ---- Discharge of the grade-naturality assumption for covariant clauses
 
 open import Inference.ParamGround.Covariance

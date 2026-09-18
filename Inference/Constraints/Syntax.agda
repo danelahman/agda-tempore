@@ -11,6 +11,9 @@
 -- The constraint formers carrying a relation are suffixed `ᶜ`,  --
 -- as the relations themselves (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`) are  --
 -- what their satisfaction unfolds to.                            --
+--                                                              --
+-- Constraints with binders follow Pottier and Remy, The Essence--
+-- of ML Type Inference (ATTAPL, 2005).                         --
 ------------------------------------------------------------------
 
 open import Syntax.Grades

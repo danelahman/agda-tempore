@@ -27,6 +27,9 @@
 -- variable refuses to be bound, which is refuted by its image    --
 -- being a variable, distinct from the image of every other       --
 -- rigid variable.                                                --
+--                                                              --
+-- The Max/composition presentation of most general unifiers and--
+-- the optimist's lemma follow McBride (JFP 2003).              --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)

@@ -8,6 +8,9 @@
 --                                                                --
 -- `σ` need not ground anything: a pair `(σ , Q)` is a solution    --
 -- with residue, Pretnar's substitution plus residual constraints. --
+--                                                              --
+-- Satisfaction interprets the binders as Sigma and Pi,         --
+-- following Pottier and Remy (ATTAPL, 2005).                   --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
