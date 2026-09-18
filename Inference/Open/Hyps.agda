@@ -115,6 +115,14 @@ data _≡̂ₑ_ {Θ} where
 
 infix 4 _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
+-- Unit-minimality of a grade monoid, as a property of the closed grades
+
+UnitMinᵣ : Set
+UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
+
+UnitMinₑ : Set
+UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
+
 data _⊩_≾̂ᵣ_ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set
 data _⊩_≾̂ₑ_ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set
 
@@ -126,6 +134,8 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   monoᵣ    : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁' → Q ⊩ ρ₂ ≾̂ᵣ ρ₂'
            → Q ⊩ ρ₁ ·̂ᵣ ρ₂ ≾̂ᵣ ρ₁' ·̂ᵣ ρ₂'
   map-mono : ∀ {ε ε'} → Q ⊩ ε ≾̂ₑ ε' → Q ⊩ ∣ ε ∣̂ᵉ ≾̂ᵣ ∣ ε' ∣̂ᵉ
+  -- optional unit-minimality; the premise is the property of the grade monoid
+  minᵣ     : ∀ {ρ} → UnitMinᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
   hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
@@ -134,6 +144,8 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   transₑ : ∀ {ε ε' ε''} → Q ⊩ ε ≾̂ₑ ε' → Q ⊩ ε' ≾̂ₑ ε'' → Q ⊩ ε ≾̂ₑ ε''
   monoₑ  : ∀ {ε₁ ε₁' ε₂ ε₂'} → Q ⊩ ε₁ ≾̂ₑ ε₁' → Q ⊩ ε₂ ≾̂ₑ ε₂'
          → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ ε₁' ·̂ₑ ε₂'
+  -- optional unit-minimality; the premise is the property of the grade monoid
+  minₑ   : ∀ {ε} → UnitMinₑ → Q ⊩ ûₑ ≾̂ₑ ε
 
 -- Entailed ordering is reflexive
 
@@ -231,12 +243,14 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h (transᵣ p q) = transᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
 ⊩-substᵣ            h (monoᵣ p q)  = monoᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
 ⊩-substᵣ            h (map-mono p) = map-mono (⊩-substₑ h p)
+⊩-substᵣ            h (minᵣ p)     = minᵣ p
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
 ⊩-substₑ         h (atomₑ p)    = atomₑ p
 ⊩-substₑ {σ = σ} h (eqₑ p)      = eqₑ (≡̂ₑ-subst σ p)
 ⊩-substₑ         h (transₑ p q) = transₑ (⊩-substₑ h p) (⊩-substₑ h q)
 ⊩-substₑ         h (monoₑ p q)  = monoₑ (⊩-substₑ h p) (⊩-substₑ h q)
+⊩-substₑ         h (minₑ p)     = minₑ p
 
 ⊩ᴱ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A : OVType Θ}
          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ᴱ A → Q' ⊩ᴱ A [ σ ]ᵛ

@@ -197,6 +197,7 @@ ground-≾ᵣ h (transᵣ p q) = ≾ᵣ-trans (ground-≾ᵣ h p) (ground-≾ᵣ
 ground-≾ᵣ h (monoᵣ p q)  = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (ground-≾ᵣ h p))
                                     (·ᵣ-monoʳ-≾ᵣ (ground-≾ᵣ h q))
 ground-≾ᵣ h (map-mono p) = map-monotoneᵉ (ground-≾ₑ h p)
+ground-≾ᵣ {θ = θ} {ρ' = ρ'} h (minᵣ p) = p (⟦ ρ' ⟧ʳ θ)
 
 ground-≾ₑ h (hypₑ m)     = ordEOK h m
 ground-≾ₑ h (atomₑ p)    = p
@@ -204,6 +205,7 @@ ground-≾ₑ h (eqₑ p)      = ≾ₑ-reflexive (ground-≡̂ₑ p)
 ground-≾ₑ h (transₑ p q) = ≾ₑ-trans (ground-≾ₑ h p) (ground-≾ₑ h q)
 ground-≾ₑ h (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (ground-≾ₑ h p))
                                     (·ₑ-monoʳ-≾ₑ (ground-≾ₑ h q))
+ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
 --------------------------------------------------------------
 -- Grounding of eternality                                   --

@@ -6,7 +6,9 @@
 -- with adjacent constants multiplied and units dropped. The       --
 -- flattening is certified by `≡̂ᵣ`/`≡̂ₑ`, so the entailed ordering  --
 -- of two expressions can be decided atom by atom and glued back   --
--- with `eqᵣ`/`monoᵣ`/`transᵣ`.                                    --
+-- with `eqᵣ`/`monoᵣ`/`transᵣ`. A left side whose atoms all cancel --
+-- is the unit, and is then below anything by `minᵣ`/`minₑ`,       --
+-- provided the corresponding unit-minimality option is supplied.  --
 --                                                                --
 -- `⊩-reflectᵣ`/`⊩-reflectₑ` are the closed special case: a        --
 -- variable-free expression is convertible to the constant it      --
@@ -29,10 +31,14 @@ open import Util.Equality
 
 open import Inference.Scopes
 
+import Inference.Open.Hyps as H
+
 module Inference.SolverImpl.Normal
   (S : LanguageSpec)
   (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
   (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
+  (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
+  (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
   where
 
 open LanguageSpec S
@@ -209,10 +215,18 @@ list≾ₑ (a ∷ as) (b ∷ bs) with atom≾ₑ a b | list≾ₑ as bs
 ... | _      | _      = nothing
 list≾ₑ _ _ = nothing
 
+-- A left-hand side whose atoms all cancel is the unit, and the unit is
+-- below anything as soon as the option is supplied
+
+min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Maybe UnitMinₑ → (as : List (EAtom Θ))
+      → ε ≡̂ₑ ⟦ as ⟧ᵉˢ → (ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+min≾ₑ (just p) []      q ε' = just (transₑ (eqₑ q) (minₑ p))
+min≾ₑ _        _       _ _  = nothing
+
 decide≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
 decide≾ₑ ε ε' with list≾ₑ (nrmₑ ε) (nrmₑ ε')
 ... | just p  = just (transₑ (eqₑ (nrmₑ-≡ ε)) (transₑ p (eqₑ (≡̂ₑ-sym (nrmₑ-≡ ε')))))
-... | nothing = nothing
+... | nothing = min≾ₑ umin?ₑ (nrmₑ ε) (nrmₑ-≡ ε) ε'
 
 atom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
 atom≾ᵣ (rc c) (rc d) with c ≾ᵣ? d
@@ -234,10 +248,15 @@ list≾ᵣ (a ∷ as) (b ∷ bs) with atom≾ᵣ a b | list≾ᵣ as bs
 ... | _      | _      = nothing
 list≾ᵣ _ _ = nothing
 
+min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe UnitMinᵣ → (as : List (RAtom Θ))
+      → ρ ≡̂ᵣ ⟦ as ⟧ʳˢ → (ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+min≾ᵣ (just p) []      q ρ' = just (transᵣ (eqᵣ q) (minᵣ p))
+min≾ᵣ _        _       _ _  = nothing
+
 decide≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
 decide≾ᵣ ρ ρ' with list≾ᵣ (nrmᵣ ρ) (nrmᵣ ρ')
 ... | just p  = just (transᵣ (eqᵣ (nrmᵣ-≡ ρ)) (transᵣ p (eqᵣ (≡̂ᵣ-sym (nrmᵣ-≡ ρ')))))
-... | nothing = nothing
+... | nothing = min≾ᵣ umin?ᵣ (nrmᵣ ρ) (nrmᵣ-≡ ρ) ρ'
 
 --------------------------------------------------------------
 -- The closed case: evaluation, and reflection of the         --

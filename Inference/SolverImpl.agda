@@ -6,7 +6,9 @@
 -- `⋀ᵒᵖ`/`∀ᵉ` are infinitary. This module builds as much of one as --
 -- is buildable, under three explicit assumptions — decidability   --
 -- of the two grade orders and an enumeration of the operation     --
--- symbols — and is honest about the rest.                         --
+-- symbols — and is honest about the rest. Two further parameters  --
+-- are optional: a proof that the unit is the least grade, on      --
+-- either side, which `nothing` switches off.                      --
 --                                                                --
 -- The design is the temporal-millet prototype's, adapted to the   --
 -- fact that satisfaction of `_≐ᵥ_` is *syntactic* equality of     --
@@ -24,7 +26,9 @@
 --     the prototype's defaults (`Unit`, `ûᵣ`, `ûₑ`);              --
 --   * a grade ordering is decided by normalising both sides to    --
 --     atom lists and comparing them atom by atom                  --
---     (`Inference.SolverImpl.Normal`);                            --
+--     (`Inference.SolverImpl.Normal`), and, when the left side    --
+--     normalises to the unit and the matching unit-minimality     --
+--     option is supplied, by `minᵣ`/`minₑ`;                       --
 --   * `∀ᵉ` lifts the accumulator, so a rigid effect variable is   --
 --     an opaque constant of the enlarged target scope and is      --
 --     never guessed;                                              --
@@ -54,6 +58,8 @@ open import Util.Equality
 
 open import Inference.Scopes
 
+import Inference.Open.Hyps as H
+
 open import Inference.SolverImpl.Enum using (OpEnum)
 
 module Inference.SolverImpl
@@ -61,6 +67,8 @@ module Inference.SolverImpl
   (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
   (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (opEnum : OpEnum S)
+  (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
+  (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
   where
 
 open LanguageSpec S
@@ -91,7 +99,7 @@ open import Inference.Infer      S using (Θ₁; X̂₁; t̂₁; C∅[_,_]; Infe
 
 open import Inference.SolverImpl.Enum   S using (AllOp; all-lookup; all-build)
 open import Inference.SolverImpl.Match  S
-open import Inference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_
+open import Inference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
 
 open OpEnum opEnum
 

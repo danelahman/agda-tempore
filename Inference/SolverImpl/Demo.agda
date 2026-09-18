@@ -11,6 +11,11 @@
 --                                                                --
 -- Each example below is discharged by `refl`, so what the solver  --
 -- infers is checked by computation, not asserted.                 --
+--                                                                --
+-- A second specification follows at the end — deadlines, whose    --
+-- unit IS the least grade — to exercise the solver's optional     --
+-- unit-minimality: the same handler is rejected without it and    --
+-- inferred with it.                                               --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
@@ -18,7 +23,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Fin using (zero; suc)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Data.Nat using (ℕ; _≤?_)
+open import Data.Nat using (ℕ; _≤?_; z≤n)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
 open import Relation.Nullary using (Dec; yes; no)
@@ -32,7 +37,27 @@ open import Syntax.Operations
 open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩; _≾ₒ_)
 open import Syntax.Grades.Example.Time.TwoSided  using (Interval; min; max; _≾ᵢ_)
 open import Syntax.Grades.Example.Worked.Operations using (read; write; send)
-open import Syntax.Grades.Example.Worked.Spec using (spec; BT; reading)
+open import Syntax.Grades.Example.Worked.Spec using (spec; baseTypes; BT; reading)
+
+open import Syntax.Grades.Example.Time.RightSided
+  using (𝕀ᵣ; [0,_]; right-sided-intervals) renaming (_≾ₒ_ to _≾ᵈ_)
+open import Syntax.Grades.Example.System.Identity using (identityGradeSystem)
+
+-- the modules below are also applied to a second specification, at the
+-- end of this module
+
+import Syntax.GroundTypes
+import Syntax.Contexts
+import Syntax.Types
+
+import Inference.Open.Grades
+import Inference.Open.Types
+import Inference.Open.Subst
+import Inference.Open.ClosedContexts
+import Inference.Raw.Syntax
+import Inference.Infer
+import Inference.SolverImpl
+import Inference.SolverImpl.Enum
 
 open import Inference.Scopes
 
@@ -88,7 +113,7 @@ ops₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = 
     c write = there (here refl)
     c send  = there (there (here refl))
 
-open import Inference.SolverImpl spec ≾ᵣ-dec ≾ₑ-dec ops₃
+open import Inference.SolverImpl spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
 
 --------------------------------------------------------------
 -- Reading the inferred type and effect off a solution       --
@@ -197,11 +222,14 @@ ex-unbox : infer! ([] ∷ (T.[ uᵣ ] T.Bool)) (unbox zero (return (var zero)))
          ≡ just (Bool , ûₑ)
 ex-unbox = refl
 
--- what the solver cannot do: a handler clause is typed under a RIGID
--- effect variable `e''`, and its slack constraint `ûₑ ≾̂ₑᶜ (g ·̂ₑ e'')`
--- has no derivation in `_⊩_≾̂ₑ_` — there is no rule taking a unit below
--- a product with an opaque variable. `handle` is therefore rejected,
--- and this is checked, not asserted
+-- what the solver cannot do here: a handler clause is typed under a
+-- RIGID effect variable `e''`, and its slack constraint
+-- `ûₑ ≾̂ₑᶜ (g ·̂ₑ e'')` is derivable only by `minₑ`, whose premise fails
+-- for these grades — `[ 0 , 0 ]` is contained in `[ m , n ]` only when
+-- `m` is `0`. The option is therefore `nothing` above, `handle` is
+-- rejected, and this is checked, not asserted. The section at the end
+-- of this module runs the same program over grades that do have a
+-- least unit
 
 ex-handle : infer! [] (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆))
           ≡ nothing
@@ -225,3 +253,131 @@ ex-pipeline = refl
 ex-pipeline-op : typeOf (inferImpl [] (perform read ⋆ (return (var zero))))
                ≡ just (T.Base reading , op-grade read ·ₑ uₑ)
 ex-pipeline-op = refl
+
+--------------------------------------------------------------
+-- A specification whose unit is the least grade             --
+--                                                           --
+-- Right-sided intervals are deadlines `[0, n ]`, ordered by  --
+-- `_≤_` on the endpoint, so `[0, 0 ]` is below every grade.  --
+-- Both components of the grade system are that monoid, over  --
+-- the same sensor node: each operation is charged its worst  --
+-- case.                                                      --
+--------------------------------------------------------------
+
+gradesᵈ : GradeSystem
+gradesᵈ = identityGradeSystem right-sided-intervals
+
+module Gᵈ = Syntax.GroundTypes gradesᵈ baseTypes
+
+opTimeᵈ : Op → 𝕀ᵣ
+opTimeᵈ read  = [0, 1 ]
+opTimeᵈ write = [0, 3 ]
+opTimeᵈ send  = [0, 6 ]
+
+opsᵈ : Operations gradesᵈ baseTypes
+opsᵈ = record
+  { Op       = Op
+  ; _≟ₒ_     = _≟ₒ_
+  ; param    = λ { read → Gᵈ.Unit ; write → Gᵈ.Base reading ; send → Gᵈ.Base reading }
+  ; arity    = λ { read → Gᵈ.Base reading ; write → Gᵈ.Unit ; send → Gᵈ.Unit }
+  ; op-grade = opTimeᵈ
+  }
+
+specᵈ : LanguageSpec
+specᵈ = record { Grades = gradesᵈ ; BTs = baseTypes ; Ops = opsᵈ }
+
+-- the order is decidable, and the unit is its least element
+
+≾ᵈ-dec : (i j : 𝕀ᵣ) → Dec (i ≾ᵈ j)
+≾ᵈ-dec [0, m ] [0, n ] = m ≤? n
+
+uᵈ-min : (i : 𝕀ᵣ) → [0, 0 ] ≾ᵈ i
+uᵈ-min [0, n ] = z≤n
+
+opsᵈ₃ : Inference.SolverImpl.Enum.OpEnum specᵈ
+opsᵈ₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = c }
+  where
+    c : (op : Op) → op ∈ (read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ)
+    c read  = here refl
+    c write = there (here refl)
+    c send  = there (there (here refl))
+
+--------------------------------------------------------------
+-- Handlers, accommodated                                    --
+--                                                           --
+-- A handler clause that does not resume the continuation has --
+-- the unit as its effect, and must be below the clause's     --
+-- declared grade `op-grade op ·̂ₑ e''`, whose `e''` is rigid. --
+-- Nothing derives that without unit-minimality; with it,     --
+-- `minₑ` does. The two instantiations below differ only in   --
+-- whether the option is supplied.                            --
+--------------------------------------------------------------
+
+module Least where
+
+  module Cᵈ  = Syntax.Contexts               specᵈ
+  module Tᵈ  = Syntax.Types                  specᵈ
+  module Grᵈ = Inference.Open.Grades         specᵈ
+  module Tyᵈ = Inference.Open.Types          specᵈ
+  module Sbᵈ = Inference.Open.Subst          specᵈ
+  module CCᵈ = Inference.Open.ClosedContexts specᵈ
+  module Rwᵈ = Inference.Raw.Syntax          specᵈ
+  module Inᵈ = Inference.Infer               specᵈ
+
+  -- with the option, and without it
+
+  module Sᵐ = Inference.SolverImpl specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ (just uᵈ-min) (just uᵈ-min)
+  module S⁰ = Inference.SolverImpl specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing       nothing
+
+  resultᵈ : {X : Sbᵈ.Subst Inᵈ.Θ₁ ∅ˢ → Set}
+          → Maybe (Σ[ σ ∈ Sbᵈ.Subst Inᵈ.Θ₁ ∅ˢ ] X σ)
+          → Maybe (Tyᵈ.OVType ∅ˢ × Grᵈ.EExp ∅ˢ)
+  resultᵈ nothing        = nothing
+  resultᵈ (just (σ , _)) = just (Inᵈ.X̂₁ Sbᵈ.[ σ ]ᵛ , Inᵈ.t̂₁ Sbᵈ.[ σ ]ᵉ)
+
+  -- the option changes nothing about the rest: a program without a
+  -- handler is inferred as before
+
+  ex-unitᵈ : resultᵈ (Sᵐ.gsolveImpl Inᵈ.C∅[ Cᵈ.[] , Rwᵈ.return Rwᵈ.⋆ ])
+           ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-unitᵈ = refl
+
+  -- a handler whose clauses return a constant, run by either solver
+
+  prog : Rwᵈ.RawC 0
+  prog = Rwᵈ.handle (Rwᵈ.return Rwᵈ.⋆)
+         `with (λ op → Rwᵈ.return Rwᵈ.⋆)
+         `in (Rwᵈ.return Rwᵈ.⋆)
+
+  -- without the option, the clause's slack constraint is underivable
+
+  ex-handle-no : resultᵈ (S⁰.gsolveImpl Inᵈ.C∅[ Cᵈ.[] , prog ]) ≡ nothing
+  ex-handle-no = refl
+
+  -- with it, the whole program is solved, and both slacks stay unit
+
+  ex-handle-min : resultᵈ (Sᵐ.gsolveImpl Inᵈ.C∅[ Cᵈ.[] , prog ])
+                ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ Grᵈ.·̂ₑ Grᵈ.ûₑ)
+  ex-handle-min = refl
+
+  -- the handled computation may itself perform
+
+  prog' : Rwᵈ.RawC 0
+  prog' = Rwᵈ.handle (Rwᵈ.perform read Rwᵈ.⋆ (Rwᵈ.return (Rwᵈ.var zero)))
+          `with (λ op → Rwᵈ.return Rwᵈ.⋆)
+          `in (Rwᵈ.return Rwᵈ.⋆)
+
+  ex-handle-op : resultᵈ (Sᵐ.gsolveImpl Inᵈ.C∅[ Cᵈ.[] , prog' ])
+               ≡ just (Tyᵈ.Unit , (Grᵈ.econst (opTimeᵈ read) Grᵈ.·̂ₑ Grᵈ.ûₑ) Grᵈ.·̂ₑ Grᵈ.ûₑ)
+  ex-handle-op = refl
+
+  -- end to end: the same program elaborated into the ORIGINAL system,
+  -- its grounded derivation reading the clause's slack off `minₑ`
+
+  typeOfᵈ : {Γ : Cᵈ.Ctx} {M : Rwᵈ.RawC (CCᵈ.skel Γ)}
+          → Maybe (Inᵈ.Inferred Γ M) → Maybe (Tᵈ.VType × 𝕀ᵣ)
+  typeOfᵈ nothing  = nothing
+  typeOfᵈ (just I) = just (Inᵈ.Inferred.A I , Inᵈ.Inferred.ε I)
+
+  ex-handle-pipeline : typeOfᵈ (Sᵐ.inferImpl Cᵈ.[] prog) ≡ just (Tᵈ.Unit , [0, 0 ])
+  ex-handle-pipeline = refl
