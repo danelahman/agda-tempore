@@ -308,83 +308,83 @@ import DenotationalSemantics.Model.Example.World
 
 ---- Scopes of type and grade variables
 
-open import Inference.Scopes
+open import TypeInference.Scopes
 
 ---- Open grade expressions, types, and contexts (with the eternal barrier)
 
-open import Inference.Open.Grades
-open import Inference.Open.Types
-open import Inference.Open.Contexts
-open import Inference.Open.ContextsLemmas
-open import Inference.Open.ClosedContexts
+open import TypeInference.Open.Grades
+open import TypeInference.Open.Types
+open import TypeInference.Open.Contexts
+open import TypeInference.Open.ContextsLemmas
+open import TypeInference.Open.ClosedContexts
 
 ---- Substitutions between scopes
 
-open import Inference.Open.Subst
+open import TypeInference.Open.Subst
 
 ---- Hypothesis sets and entailment
 
-open import Inference.Open.Hyps
+open import TypeInference.Open.Hyps
 
 ---- The mirrored qualified type system
 
-open import Inference.Open.Language
+open import TypeInference.Open.Language
 
 ---- Grounding open judgements into the original type system
 
-open import Inference.Open.Grounding
-open import Inference.Open.GroundingTheorem
+open import TypeInference.Open.Grounding
+open import TypeInference.Open.GroundingTheorem
 
 ---- Raw terms and erasure
 
-open import Inference.Raw.Syntax
-open import Inference.Erase
+open import TypeInference.Raw.Syntax
+open import TypeInference.Erase
 
 ---- Constraints and their satisfaction
 
-open import Inference.Constraints.Syntax
-open import Inference.Constraints.Satisfaction
-open import Inference.Constraints.Properties
-open import Inference.Constraints.Ground
+open import TypeInference.Constraints.Syntax
+open import TypeInference.Constraints.Satisfaction
+open import TypeInference.Constraints.Properties
+open import TypeInference.Constraints.Ground
 
 ---- Constraint generation
 
-open import Inference.Generate
+open import TypeInference.Generate
 
 ---- Soundness and completeness of constraint generation
 
-open import Inference.Soundness
-open import Inference.Completeness
+open import TypeInference.Soundness
+open import TypeInference.Completeness
 
 ---- Axiomatised constraint solvers, principal typings, and inference
 
-open import Inference.Solver
-open import Inference.Principality
-open import Inference.Infer
+open import TypeInference.Solver
+open import TypeInference.Principality
+open import TypeInference.Infer
 
 ---- Parametricity certificates for grounded derivations
 ---- (relative to a grade-naturality assumption on clause denotations)
 
-open import Inference.ParamGround
+open import TypeInference.ParamGround
 
 ---- A concrete solver for the generated constraints (sound by construction;
 ---- heuristic, so the completeness field of the solver interface is not met)
 
-import Inference.SolverImpl
-import Inference.SolverImpl.Demo
+import TypeInference.SolverImpl
+import TypeInference.SolverImpl.Demo
 
 ---- Biased satisfaction, the static fragment, and guarded solver interfaces
 
-open import Inference.Solver.Fragment
-open import Inference.Solver.Restricted
-open import Inference.Principality.Restricted
+open import TypeInference.Solver.Fragment
+open import TypeInference.Solver.Restricted
+open import TypeInference.Principality.Restricted
 
 ---- The concrete solver's principality, refutation, and interface instance
 
-import Inference.SolverImpl.Principal
-import Inference.SolverImpl.Restricted
+import TypeInference.SolverImpl.Principal
+import TypeInference.SolverImpl.Restricted
 
 ---- Discharge of the grade-naturality assumption for covariant clauses
 
-open import Inference.ParamGround.Covariance
-open import Inference.ParamGround.Uniform
+open import TypeInference.ParamGround.Covariance
+open import TypeInference.ParamGround.Uniform
