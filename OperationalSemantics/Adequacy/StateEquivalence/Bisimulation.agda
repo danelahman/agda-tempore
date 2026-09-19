@@ -171,7 +171,7 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 ↝-≐ˢ-handle-ret : ∀ {A B ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
                → {V : toCtx St ⊢V⦂ A}
                → {H : (op : Op) → (ε' : E) →
-                        toCtx St ᴱ ∷ type-of-gtype (param op)
+                        toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                           ∷ [ mapᵉ (op-grade op) ]
                               (type-of-gtype (arity op) ⇒ B ‼ ε')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
@@ -253,16 +253,6 @@ cast-seq-op refl V' M' N' = refl
       (ε-subst-≡ _
         (cong₂ (perform _) eV (cong₂ _⨟_ eM₀ (C-rename-cong (cong-∷-ren _) eN))))
 
-cast-clause : ∀ {Γ Γ' Γ₁ Γ₁' D C} → (e : Γ' ≡ Γ) → (e₁ : Γ₁' ≡ Γ₁)
-            → (a : Γ ᴱ ≡ Γ₁ ᴱ) → (a' : Γ' ᴱ ≡ Γ₁' ᴱ)
-            → (h' : (Γ' ᴱ ++ᶜ D) ⊢C⦂ C)
-            → subst (λ Γ₂ → (Γ₂ ++ᶜ D) ⊢C⦂ C) a
-                (castᶜ (cong (λ Γ₂ → Γ₂ ᴱ ++ᶜ D) e) h')
-            ≡ castᶜ (cong (λ Γ₂ → Γ₂ ᴱ ++ᶜ D) e₁)
-                (subst (λ Γ₂ → (Γ₂ ++ᶜ D) ⊢C⦂ C) a' h')
-cast-clause {D = D} {C = C} refl refl a a' h' =
-  cong (λ z → subst (λ Γ₂ → (Γ₂ ++ᶜ D) ⊢C⦂ C) z h') uip
-
 cast-rename-∷ : ∀ {Γ₁ Γ₂ Γ₁' Γ₂' A C} → (e₁ : Γ₁' ≡ Γ₁) → (e₂ : Γ₂' ≡ Γ₂)
               → (r' : Ren [] Γ₂' Γ₁') → (M' : Γ₁' ∷ A ⊢C⦂ C)
               → C-rename (cong-∷-ren (castʳ² e₁ e₂ r'))
@@ -270,16 +260,29 @@ cast-rename-∷ : ∀ {Γ₁ Γ₂ Γ₁' Γ₂' A C} → (e₁ : Γ₁' ≡ Γ�
               ≡ castᶜ (cong (_∷ A) e₂) (C-rename (cong-∷-ren r') M')
 cast-rename-∷ refl refl r' M' = refl
 
+-- The same for a clause: `HANDLE-STEP` retypes it by a renaming under the
+-- barrier and the clause's two binders.
+
+cast-rename-cl : ∀ {Γ₁ Γ₂ Γ₁' Γ₂' A A₀ C} → (e₁ : Γ₁' ≡ Γ₁) → (e₂ : Γ₂' ≡ Γ₂)
+               → (r' : Ren [] (Γ₂' ⟨ ⊤ᵣ ⟩) (Γ₁' ⟨ ⊤ᵣ ⟩))
+               → (M' : Γ₁' ⟨ ⊤ᵣ ⟩ ∷ A ∷ A₀ ⊢C⦂ C)
+               → C-rename (cong-∷-ren (cong-∷-ren
+                   (castʳ² (cong (_⟨ ⊤ᵣ ⟩) e₁) (cong (_⟨ ⊤ᵣ ⟩) e₂) r')))
+                   (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ⊤ᵣ ⟩ ∷ A ∷ A₀) e₁) M')
+               ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ⊤ᵣ ⟩ ∷ A ∷ A₀) e₂)
+                   (C-rename (cong-∷-ren (cong-∷-ren r')) M')
+cast-rename-cl refl refl r' M' = refl
+
 -- `HANDLE-OP`'s reduct in one lemma: the cast moves past the box, the lambda,
 -- the inner handle, the three renamings and the substitution of the parameter.
--- The fired clause is included by `ᴱ-ren`, a renaming, so nothing is retyped.
+-- The fired clause crosses the barrier by a renaming, so nothing is retyped.
 
 cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                → (V' : Γ' ⊢V⦂ type-of-gtype (param op))
                → (M' : Γ' ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                          ⊢C⦂ A ‼ ε)
                → (H' : (op' : Op) → (ε' : E) →
-                         Γ' ᴱ ∷ type-of-gtype (param op')
+                         Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
                            ∷ [ mapᵉ (op-grade op') ]
                                (type-of-gtype (arity op') ⇒ B ‼ ε')
                          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
@@ -291,9 +294,9 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                        `with (λ op' ε' →
                                 C-rename
                                   (cong-∷-ren (cong-∷-ren
-                                    (ren-ᴱ-∷ {Δ = Γ ⟨ mapᵉ (op-grade op) ⟩}
-                                             (type-of-gtype (arity op)))))
-                                  (castᶜ (cong (λ Γ₁ → Γ₁ ᴱ
+                                    (barrier-wk-ren (mapᵉ (op-grade op))
+                                                    (type-of-gtype (arity op)))))
+                                  (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩
                                                          ∷ type-of-gtype (param op')
                                                          ∷ [ mapᵉ (op-grade op') ]
                                                              (type-of-gtype (arity op')
@@ -306,8 +309,8 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                              ∘ʳ cong-⟨⟩-ren wk-ren))
                              (castᶜ (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A)
                                           e) N'))))
-                      (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
-                        (castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                      (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
+                        (castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                                ∷ [ mapᵉ (op-grade op) ]
                                                    (type-of-gtype (arity op)
                                                       ⇒ B ‼ (ε ·ₑ ε'')))
@@ -320,15 +323,15 @@ cast-handle-op : ∀ {Γ Γ' A B ε ε''} {op : Op} → (e : Γ' ≡ Γ)
                           `with (λ op' ε' →
                                    C-rename
                                      (cong-∷-ren (cong-∷-ren
-                                       (ren-ᴱ-∷ {Δ = Γ' ⟨ mapᵉ (op-grade op) ⟩}
-                                                (type-of-gtype (arity op)))))
+                                       (barrier-wk-ren (mapᵉ (op-grade op))
+                                                       (type-of-gtype (arity op)))))
                                      (H' op' ε'))
                           `in (C-rename
                                 (  cong-∷-ren ((eq-ren (cong (Γ' ⟨_⟩) map-·ᵉ)
                                 ∘ʳ ⟨⟩-μ-ren)
                                 ∘ʳ cong-⟨⟩-ren wk-ren))
                                 N')))
-                         (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ')))
+                         (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                    (H' op (ε ·ₑ ε''))
                           [ split-∷ split-[] ↦ V' ]c))
 cast-handle-op refl V' M' H' N' = refl
@@ -341,7 +344,7 @@ cast-handle-op refl V' M' H' N' = refl
               → {M₀ : toCtx St ⟨ mapᵉ (op-grade op) ⟩
                         ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
               → {H : (op' : Op) → (ε' : E) →
-                       toCtx St ᴱ ∷ type-of-gtype (param op')
+                       toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
                          ∷ [ mapᵉ (op-grade op') ]
                              (type-of-gtype (arity op') ⇒ B ‼ ε')
                        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
@@ -365,11 +368,12 @@ cast-handle-op refl V' M' H' N' = refl
           (handle-≡ eM₀
             (λ op' ε' →
                C-rename-cong (cong-∷-ren (cong-∷-ren
-                               (ren-ᴱ-∷ (type-of-gtype (arity op)))))
+                               (barrier-wk-ren (mapᵉ (op-grade op))
+                                               (type-of-gtype (arity op)))))
                              (eH op' ε'))
             (C-rename-cong (cong-∷-ren _) eN)))
         (sub-≡ᶜ (split-∷ split-[]) eV
-          (C-rename-cong (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx St))))
+          (C-rename-cong (cong-∷-ren (cong-∷-ren barrier-ren))
                          (eH op (ε ·ₑ ε'')))))
 
 -- `HANDLE-STEP`: as `SEQ-STEP`, plus the clause retyping. The scrutinee's
@@ -378,7 +382,7 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ-handle-step : ∀ {A B ε₁ ε₂ ε₁'} {St St' St₁ : 𝕊 []} → (es : St ≐ˢ St')
                 → {M : toCtx St ⊢C⦂ A ‼ ε₁}
                 → {H : (op : Op) → (ε₃ : E) →
-                         toCtx St ᴱ ∷ type-of-gtype (param op)
+                         toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                            ∷ [ mapᵉ (op-grade op) ]
                                (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
@@ -386,13 +390,13 @@ cast-handle-op refl V' M' H' N' = refl
                 → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε₁'}
                 → (M' : toCtx St' ⊢C⦂ A ‼ ε₁)
                 → (H' : (op : Op) → (ε₃ : E) →
-                          toCtx St' ᴱ ∷ type-of-gtype (param op)
+                          toCtx St' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                             ∷ [ mapᵉ (op-grade op) ]
                                 (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
                 → (N' : toCtx St' ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
                 → (∀ op ε₃ → H op ε₃
-                     ≡ castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                     ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                               ∷ [ mapᵉ (op-grade op) ]
                                                   (type-of-gtype (arity op) ⇒ B ‼ ε₃))
                                (sym (toCtx-≐ˢ es)))
@@ -413,16 +417,21 @@ cast-handle-op refl V' M' H' N' = refl
       (sym (cast-handle (sym (toCtx-≐ˢ es₂)) {M = M₂'}))
       (handle-≡ eM₂
         (λ op ε₃ →
-           subst (λ z → _ ≡ z)
-             (cast-clause {D = [] ∷ _ ∷ _}
-                          (sym (toCtx-≐ˢ es)) (sym (toCtx-≐ˢ es₂))
-                          (trans (toCtxᴱ-[] St) (sym (toCtxᴱ-[] St₁)))
-                          (trans (toCtxᴱ-[] St') (sym (toCtxᴱ-[] St₂')))
-                          (H' op ε₃))
-             (substᶜ-≡′ (λ Γ₂ → Γ₂ ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ]
-                                      (type-of-gtype (arity op) ⇒ _ ‼ ε₃))
-                        _ (eH op ε₃)))
+           trans
+             (C-rename-≡
+               (cong-∷-ren-≐ʳ (cong-∷-ren-≐ʳ
+                 (suc-comp-ren-≐ʳ h es es₂ (≾-⊤ᵣ _) (≾-⊤ᵣ _)))) _)
+             (trans
+               (C-rename-cong
+                 (cong-∷-ren (cong-∷-ren
+                   (castʳ² (cong (_⟨ ⊤ᵣ ⟩) (sym (toCtx-≐ˢ es)))
+                           (cong (_⟨ ⊤ᵣ ⟩) (sym (toCtx-≐ˢ es₂)))
+                           (suc-comp-ren (step-extends-state r') (≾-⊤ᵣ _)))))
+                 (eH op ε₃))
+               (cast-rename-cl (sym (toCtx-≐ˢ es)) (sym (toCtx-≐ˢ es₂))
+                               (suc-comp-ren (step-extends-state r')
+                                             (≾-⊤ᵣ _))
+                               (H' op ε₃))))
         (trans
           (C-rename-≡ (cong-∷-ren-≐ʳ (suc-comp-ren-≐ʳ h es es₂ c (step-grade-≾ r'))) _)
           (subst (λ z → _ ≡ z)

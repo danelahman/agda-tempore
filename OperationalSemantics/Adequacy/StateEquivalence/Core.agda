@@ -212,7 +212,7 @@ cast-coerce⁻ refl _ refl = _ , _ , refl , refl
 cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
           → {M : Γ ⊢C⦂ A ‼ ε}
           → {H : (op : Op) → (ε'' : E) →
-                   Γ ᴱ ∷ type-of-gtype (param op)
+                   Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                      ∷ [ mapᵉ (op-grade op) ]
                          (type-of-gtype (arity op) ⇒ B ‼ ε'')
                    ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
@@ -221,7 +221,7 @@ cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
           → (handle M `with H `in N) ≡ castᶜ e P'
           → Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ]
             Σ[ H' ∈ ((op : Op) → (ε'' : E) →
-                       Γ' ᴱ ∷ type-of-gtype (param op)
+                       Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ]
                              (type-of-gtype (arity op) ⇒ B ‼ ε'')
                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')) ]
@@ -229,7 +229,7 @@ cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
               (P' ≡ (handle M' `with H' `in N'))
             × (M ≡ castᶜ e M')
             × (∀ op ε'' → H op ε''
-                 ≡ castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                 ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                           ∷ [ mapᵉ (op-grade op) ]
                                               (type-of-gtype (arity op) ⇒ B ‼ ε''))
                                 e)

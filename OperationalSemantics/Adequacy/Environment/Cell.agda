@@ -44,7 +44,6 @@ open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 open import OperationalSemantics.Adequacy.Environment.Action Spec
 open import OperationalSemantics.Adequacy.Environment.Variables Spec
-open import OperationalSemantics.Adequacy.Environment.Clauses Spec
 
 ------------------------------------------------------------------------
 -- THE ACTION ON THE CELL AN `unbox` NAMES
@@ -59,24 +58,10 @@ open import OperationalSemantics.Adequacy.Environment.Clauses Spec
 -- every consumer recovers whichever one it needs from the term.
 ------------------------------------------------------------------------
 
--- one step of the eternal zone's chain
-
-env-eternal-cell : ∀ {Δ Γc A ρ} → Lock-free Δ → ClosedVals Δ
-                 → Var (Δ ++ᶜ Γc) ([ ρ ] A) → Var Γc ([ ρ ] A)
-
-env-eternal-cell lf-[] η t = Var-cast ++ᶜ-identityˡ t
-
-env-eternal-cell {Δ ∷ B} {Γc} (lf-∷ lf) η (σ , z) =
-  env-eternal-cell lf (λ x → η (Tl-∷ x))
-    (proj₁ (sub-atᴿ Γc z W) , proj₁ (proj₂ (sub-atᴿ Γc z W)))
-  where
-    W = V-rename (empty-ren lf) (η Hd)
-
 env-cell : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
          → Var (Γ ++ᶜ Δ) ([ ρ ] A) → Var (toCtx St ++ᶜ Δ) ([ ρ ] A)
 
 env-cell ⌊ St ⌋      Δ t = t
-env-cell (∅ᵉ St)     Δ t = var-img′ (cong-ren (∅-ren St)) t
 env-cell (reachᵉ γ q) Δ t =
   var-img′ (cong-ren (reach-renᵘ q)) (env-cell γ Δ t)
 
@@ -98,10 +83,6 @@ env-cell (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t =
                  (env-cell γ ([] ∷ A₀ ++ᶜ Δ)
                    (Var-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t)))
 
-env-cell (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ t =
-  env-cell γ Δ
-    (env-eternal-cell lf η (Var-cast (++ᶜ-assoc Δ₀ Γ₁ Δ) t))
-
 -- The readability bound travels with the cell. Renaming a variable can only
 -- lower its grade (`var-rename`'s own bound, discharged at a box type, which is
 -- never eternal), and `⟨_⟩[_↦_]rvar` carries its bound as its third component —
@@ -111,27 +92,12 @@ var-img-≾ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ' Γ)
           → (x : [ ρ ] A ∈[ σ ] Γ) → proj₁ (var-img r x) ≾ᵣ σ
 var-img-≾ r x = proj₁ (proj₂ (var-rename r x)) (λ ())
 
-env-eternal-cell-rel : ∀ {Δ Γc A ρ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-                     → (t : Var (Δ ++ᶜ Γc) ([ ρ ] A))
-                     → proj₁ t ≾ᵣ ρ
-                     → proj₁ (env-eternal-cell lf η t) ≾ᵣ ρ
-
-env-eternal-cell-rel lf-[] η t rel = rel
-
-env-eternal-cell-rel {Δ ∷ B} {Γc} (lf-∷ lf) η (σ , z) rel =
-  env-eternal-cell-rel lf (λ x → η (Tl-∷ x)) _
-    (≾ᵣ-trans
-      (proj₂ (proj₂ (sub-atᴿ Γc z (V-rename (empty-ren lf) (η Hd)))))
-      rel)
-
 env-cell-rel : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
              → (t : Var (Γ ++ᶜ Δ) ([ ρ ] A))
              → proj₁ t ≾ᵣ ρ
              → proj₁ (env-cell γ Δ t) ≾ᵣ ρ
 
 env-cell-rel ⌊ St ⌋       Δ t rel = rel
-env-cell-rel (∅ᵉ St)      Δ t rel =
-  ≾ᵣ-trans (var-img-≾ (cong-ren (∅-ren St)) (proj₂ t)) rel
 env-cell-rel (reachᵉ γ q) Δ t rel =
   ≾ᵣ-trans (var-img-≾ (cong-ren (reach-renᵘ q)) (proj₂ (env-cell γ Δ t)))
            (env-cell-rel γ Δ t rel)
@@ -158,10 +124,6 @@ env-cell-rel (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t rel =
                  (env-cell γ ([] ∷ A₀ ++ᶜ Δ)
                    (Var-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t)))
 
-env-cell-rel (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ t rel =
-  env-cell-rel γ Δ _
-    (env-eternal-cell-rel lf η (Var-cast (++ᶜ-assoc Δ₀ Γ₁ Δ) t) rel)
-
 -- and the same on computations
 
 env-Cˢ-≡ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx) → {M M' : (Γ ++ᶜ Δ) ⊢C⦂ C}
@@ -178,23 +140,6 @@ env-Cˢ-≡ γ Δ = cong (env-Cˢ γ Δ)
 -- statement takes the target bound as a parameter.
 ------------------------------------------------------------------------
 
-env-eternal-C-unbox : ∀ {Δ Γc A C ρ σ} → (lf : Lock-free Δ) → (η : ClosedVals Δ)
-                    → (x : [ ρ ] A ∈[ σ ] (Δ ++ᶜ Γc)) → (rel : σ ≾ᵣ ρ)
-                    → (M : ((Δ ++ᶜ Γc) ∷ A) ⊢C⦂ C)
-                    → (rel' : proj₁ (env-eternal-cell lf η (σ , x)) ≾ᵣ ρ)
-                    → env-eternal-C lf η (unbox x rel M)
-                    ≡ unbox (proj₂ (env-eternal-cell lf η (σ , x))) rel'
-                             (env-eternal-C lf η M)
-
-env-eternal-C-unbox {[]} {Γc} {A = A} lf-[] η x rel M rel' =
-  trans ((cast-unbox (++ᶜ-identityˡ {Γc})))
-    (unbox-≡ refl
-      ((castᶜ-irr (cong (_∷ A) (++ᶜ-identityˡ {Γc}))
-                       (++ᶜ-identityˡ {Γc ∷ A}) M)))
-
-env-eternal-C-unbox {Δ ∷ B} {Γc} {A = A} (lf-∷ lf) η x rel M rel' =
-  env-eternal-C-unbox lf (λ y → η (Tl-∷ y)) _ _ _ rel'
-
 env-Cˢ-unbox : ∀ {St Γ A C ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
              → (x : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Δ)) → (rel : σ ≾ᵣ ρ)
              → (M : ((Γ ++ᶜ Δ) ∷ A) ⊢C⦂ C)
@@ -203,7 +148,6 @@ env-Cˢ-unbox : ∀ {St Γ A C ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
              ≡ unbox (proj₂ (env-cell γ Δ (σ , x))) rel' (env-Cˢ γ (Δ ∷ A) M)
 
 env-Cˢ-unbox ⌊ St ⌋  Δ x rel M rel' = unbox-≡ refl (refl)
-env-Cˢ-unbox (∅ᵉ St) Δ x rel M rel' = unbox-≡ refl (refl)
 
 env-Cˢ-unbox (reachᵉ γ q) Δ x rel M rel' =
   trans
@@ -244,21 +188,6 @@ env-Cˢ-unbox {A = A} (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V₀ 
   where
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ [ ρ₀ ] A₀) Δ)
 
-env-Cˢ-unbox (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ x rel M rel' =
-  trans
-    (env-Cˢ-≡ γ Δ
-      (trans
-        (env-eternal-C-≡ lf η ((cast-unbox (++ᶜ-assoc Δ₀ Γ₁ Δ))))
-        (env-eternal-C-unbox lf η _ _ _
-          (env-eternal-cell-rel lf η _ rel))))
-    (trans
-      (env-Cˢ-unbox γ Δ _ _ _ rel')
-      (unbox-≡ refl
-        (env-Cˢ-≡ γ (Δ ∷ _)
-          (env-eternal-C-≡ lf η
-            ((castᶜ-irr (cong (_∷ _) (++ᶜ-assoc Δ₀ Γ₁ Δ))
-                     (++ᶜ-assoc Δ₀ Γ₁ (Δ ∷ _)) _))))))
-
 env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x rel M rel' =
   trans
     (sub-atᶜ-≡ Δ W
@@ -287,23 +216,12 @@ env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x rel M 
 -- against it by induction on the environment. This is the same action read
 -- off the environment's zones directly, where the recursion stays at the
 -- boundary and every case is a variable of `toCtx St`.
---
--- Two zones are discharged rather than computed. `∅ᵉ` has no variables; and an
--- eternal prefix has no *cell*, because the value it would substitute is a
--- closed one of box type, hence a variable of `[]` (`grad-typ⇒var`).
 ------------------------------------------------------------------------
 
 env-cell₀ : ∀ {St Γ A ρ} → (γ : Env St Γ)
           → Var Γ ([ ρ ] A) → Var (toCtx St) ([ ρ ] A)
 
--- a cell cannot come from an eternal prefix
-eternal-no-cell : ∀ {Δ₀ A ρ σ} → (η : ClosedVals Δ₀)
-                → [ ρ ] A ∈[ σ ] Δ₀ → ⊥
-eternal-no-cell η x =
-  not-in-empty-ctx (proj₁ (proj₂ (grad-typ⇒var (η x))))
-
 env-cell₀ ⌊ St ⌋      t         = t
-env-cell₀ (∅ᵉ St)     (σ , x)   = ⊥-elim (not-in-empty-ctx x)
 env-cell₀ (reachᵉ γ q) t        = var-img′ (reach-renᵘ q) (env-cell₀ γ t)
 
 env-cell₀ (_⟨_⟩ᵉ {ρ = ρ₀} γ q) (σ , Tl-⟨⟩ y) =
@@ -315,11 +233,6 @@ env-cell₀ (γ ∷ᵉ W) (σ , Tl-∷ y) = env-cell₀ γ (σ , y)
 
 env-cell₀ (liftᵉ V γ) (σ , Hd)     = uᵣ , Hd
 env-cell₀ (liftᵉ V γ) (σ , Tl-∷ y) = Var-∷ (env-cell₀ γ (σ , y))
-
-env-cell₀ (eternalˡ Δ₀ lf η γ) (σ , x)
-  with ∈-++ᶜ-split Δ₀ _ x
-... | inj₁ (ρ' , y) = ⊥-elim (eternal-no-cell η y)
-... | inj₂ y        = env-cell₀ γ (σ , y)
 
 ------------------------------------------------------------------------
 -- THE CELL THE ENVIRONMENT SENDS A CELL TO IS REDUCIBLE
@@ -340,7 +253,6 @@ env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
                                         rel)
 
 env-cell₀-val ⌊ St ⌋   pγ t       e rel = pγ (proj₂ t) (read e rel)
-env-cell₀-val (∅ᵉ St)  pγ (σ , x) e rel = ⊥-elim (not-in-empty-ctx x)
 
 env-cell₀-val {A = A} {ρ = ρ} (reachᵉ γ q) pγ t {St'} e rel =
   VRed-≡ᵛ A ((lookup-body-≡ St' cellEq rel₁ rel))
@@ -379,11 +291,6 @@ env-cell₀-val {A = A} {ρ = ρ} (liftᵉ V γ) (pγ , pV) (σ , Tl-∷ y) {St'
 
     cellEq = ≤ₛ-embed-∘ (∷-suc V id-suc) e c
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
-
-env-cell₀-val (eternalˡ Δ₀ lf η γ) (pγ , et) (σ , x) e rel
-  with ∈-++ᶜ-split Δ₀ _ x
-... | inj₁ (ρ' , y) = ⊥-elim (eternal-no-cell η y)
-... | inj₂ y        = env-cell₀-val γ pγ (σ , y) e rel
 
 ------------------------------------------------------------------------
 -- THE TWO CELL ACTIONS AGREE
@@ -429,25 +336,12 @@ rvar-hit (Θ ⟨ ρ' ⟩) W = cong (Var-⟨⟩ ρ') (rvar-hit Θ W)
               (sym (∈-++ᶜʳ-assoc Γ Γ' x)))
         (subst-sym-subst′ (++ᶜ-assoc Γ Γ' Δ) (∈-++ᶜʳ x))
 
-env-eternal-cell-suffix : ∀ {Δ₀ Γc A ρ σ} → (lf : Lock-free Δ₀)
-                        → (η : ClosedVals Δ₀) → (z : [ ρ ] A ∈[ σ ] Γc)
-                        → env-eternal-cell lf η (σ , ∈-++ᶜʳ {Γ = Δ₀} z)
-                        ≡ (σ , z)
-
-env-eternal-cell-suffix lf-[] η z =
-  cong (λ v → _ , v) (∈-++ᶜʳ-[] z)
-env-eternal-cell-suffix {Δ ∷ B} {Γc} (lf-∷ lf) η z =
-  trans (cong (env-eternal-cell lf (λ x → η (Tl-∷ x)))
-              (sub-rvar-r Γc z (V-rename (empty-ren lf) (η Hd))))
-        (env-eternal-cell-suffix lf (λ x → η (Tl-∷ x)) z)
-
 env-cell-suffix : ∀ {St Γ A ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
                 → (z : [ ρ ] A ∈[ σ ] Δ)
                 → env-cell γ Δ (σ , ∈-++ᶜʳ {Γ = Γ} z)
                 ≡ (σ , ∈-++ᶜʳ {Γ = toCtx St} z)
 
 env-cell-suffix ⌊ St ⌋  Δ z = refl
-env-cell-suffix (∅ᵉ St) Δ z = cong-ren-img-r (∅-ren St) z
 env-cell-suffix (reachᵉ γ q) Δ z =
   trans (cong (var-img′ (cong-ren (reach-renᵘ q))) (env-cell-suffix γ Δ z))
         (cong-ren-img-r (reach-renᵘ q) z)
@@ -487,19 +381,11 @@ env-cell-suffix (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ z =
     Δ'   = [] ∷ A₀ ++ᶜ Δ
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
 
-env-cell-suffix (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ z =
-  trans (cong (λ v → env-cell γ Δ (env-eternal-cell lf η (_ , v)))
-              (∈-++ᶜʳ-assoc Δ₀ Γ₁ z))
-    (trans (cong (env-cell γ Δ)
-                 (env-eternal-cell-suffix lf η (∈-++ᶜʳ {Γ = Γ₁} z)))
-           (env-cell-suffix γ Δ z))
-
 env-cell-push : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
               → (t : Var Γ ([ ρ ] A))
               → env-cell γ Δ (Var-++ᶜˡ Δ t) ≡ Var-++ᶜˡ Δ (env-cell₀ γ t)
 
 env-cell-push ⌊ St ⌋  Δ t       = refl
-env-cell-push (∅ᵉ St) Δ (σ , x) = ⊥-elim (not-in-empty-ctx x)
 
 env-cell-push (reachᵉ γ q) Δ t =
   trans (cong (var-img′ (cong-ren (reach-renᵘ q))) (env-cell-push γ Δ t))
@@ -606,19 +492,3 @@ env-cell-push (liftᵉ {St = St} {Γ = Γ} {A = A₀} {ρ = ρ₀} V γ) Δ (σ 
     eOut = sym (++ᶜ-assoc (toCtx St) B₀ Δ)
 
     bnd = ∈-++ᶜˡ {Γ = B₀} Δ Hd
-
-env-cell-push (eternalˡ {Γ = Γ₁} Δ₀ lf η γ) Δ (σ , x)
-  with ∈-++ᶜ-split Δ₀ Γ₁ x in eq
-
-... | inj₁ (ρ' , y) = ⊥-elim (eternal-no-cell η y)
-
-... | inj₂ y =
-  trans (cong (λ z → env-cell γ Δ
-                       (env-eternal-cell lf η
-                         (Var-cast (++ᶜ-assoc Δ₀ Γ₁ Δ) (Var-++ᶜˡ Δ (σ , z)))))
-              (∈-++ᶜ-split-inj₂ Δ₀ Γ₁ x y eq))
-    (trans (cong (λ z → env-cell γ Δ (env-eternal-cell lf η z))
-                 (∈-++ᶜˡ-++ᶜʳ Δ₀ Γ₁ Δ y))
-      (trans (cong (env-cell γ Δ)
-                   (env-eternal-cell-suffix lf η (∈-++ᶜˡ {Γ = Γ₁} Δ y)))
-             (env-cell-push γ Δ (σ , y))))

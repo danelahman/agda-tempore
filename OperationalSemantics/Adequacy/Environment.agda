@@ -12,17 +12,14 @@
 --   * `⌊ St ⌋`  — the state: locks and cells, closed by the store;   --
 --   * `_∷ᵉ_`/`_⟨_⟩ᵉ` — the binder telescope: each variable           --
 --                 instantiated by a value, each lock matched by a    --
---                 graded reach into a state far enough ahead;        --
---   * `eternalˡ` — an eternal prefix: handler clauses close over     --
---                 `Γ ᴱ` and fire at `Γ' := toCtx St` (`HANDLE-OP`);  --
---                 `toCtx St ᴱ ≡ []`, so eternal values are closed.   --
+--                 graded reach into a state far enough ahead.        --
 ------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
 
 module OperationalSemantics.Adequacy.Environment (Spec : LanguageSpec) where
 
--- Lock-free contexts, `Env`, and its reducibility predicates.
+-- `Env` and its reducibility predicate.
 
 open import OperationalSemantics.Adequacy.Environment.Core      Spec public
 
@@ -33,10 +30,6 @@ open import OperationalSemantics.Adequacy.Environment.Action    Spec public
 -- The action on a variable, and its respect for the term equivalence.
 
 open import OperationalSemantics.Adequacy.Environment.Variables Spec public
-
--- The clause action against the clause environment.
-
-open import OperationalSemantics.Adequacy.Environment.Clauses   Spec public
 
 -- The action on the cell an `unbox` names.
 

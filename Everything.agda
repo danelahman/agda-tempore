@@ -277,7 +277,6 @@ open import OperationalSemantics.Adequacy.Reducibility
 open import OperationalSemantics.Adequacy.Environment.Core
 open import OperationalSemantics.Adequacy.Environment.Action
 open import OperationalSemantics.Adequacy.Environment.Variables
-open import OperationalSemantics.Adequacy.Environment.Clauses
 open import OperationalSemantics.Adequacy.Environment.Cell
 open import OperationalSemantics.Adequacy.Environment
 open import OperationalSemantics.Adequacy.Bind

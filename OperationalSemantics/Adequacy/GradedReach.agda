@@ -447,44 +447,46 @@ seq-steps (r ◅ rs) N
                                         (steps-grade-≾ rs)))))
           N))
 
--- The same under `handle`, which also retypes the clauses — along an equality
--- of the two states' eternal parts, both empty. The transports compose, and any
--- two proofs of the equality agree, so the clauses reached are the original ones
--- transported once.
+-- The same under `handle`, which also retypes the clauses — along the barrier
+-- lock, at the run's own extension. `⊤ᵣ` being `≾ᵣ`-greatest, the side condition
+-- is `≾-⊤ᵣ` at every step, so the clause half is the sequel half at a fixed
+-- grade.
 
-toCtxᴱ-≡ : (St St₁ : 𝕊 []) → toCtx St ᴱ ≡ toCtx St₁ ᴱ
-toCtxᴱ-≡ St St₁ = trans (toCtxᴱ-[] St) (sym (toCtxᴱ-[] St₁))
-
-subst² : ∀ {a} {X : Set a} {P : X → Set} {x y z : X}
-       → (e₁ : x ≡ y) → (e₂ : y ≡ z) → (e₃ : x ≡ z) → (v : P x)
-       → subst P e₂ (subst P e₁ v) ≡ subst P e₃ v
-subst² refl refl refl v = refl
+steps-barrier-ren : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+                  → (rs : cf ↝* cf')
+                  → Ren [] (toCtx (Config.state cf') ⟨ ⊤ᵣ ⟩)
+                           (toCtx (Config.state cf)  ⟨ ⊤ᵣ ⟩)
+steps-barrier-ren rs = suc-comp-ren (steps-extends-state rs) (≾-⊤ᵣ _)
 
 handle-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
              → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
-             → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ))
+             → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ⟨ ⊤ᵣ ⟩))
              → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
              ---------------------------------------------------------------
-             → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ᴱ)) ]
+             → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ⟨ ⊤ᵣ ⟩)) ]
                Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
                  (⟨ St , handle M `with H `in N ⟩ ↝*
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
-                    ≡ subst (Cl B op ε₃) (toCtxᴱ-≡ St St₁) (H op ε₃))
+                    ≡ C-rename (cong-∷-ren (cong-∷-ren (steps-barrier-ren rs)))
+                               (H op ε₃))
                × (N₁ ≡ C-rename (cong-∷-ren (steps-ren rs)) N)
 
 handle-steps {B = B} {St = St} ε* H N =
     H , N , ε*
   , (λ op ε₃ →
-       cong (λ e → subst (Cl B op ε₃) e (H op ε₃))
-            (uip {p = refl} {q = toCtxᴱ-≡ St St}))
+       sym (C-rename-id-≡
+              (cong-∷-ren-id-≐ʳ (cong-∷-ren-id-≐ʳ (⟨⟩-≤-ren-id-≐ʳ _)))
+              (H op ε₃)))
   , sym (C-rename-id-≡ (cong-∷-ren-id-≐ʳ (⟨⟩-≤-ren-id-≐ʳ _)) N)
 
 handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩} r rs) H N
   with handle-steps rs
          (λ op ε₃ →
-            subst (Cl B op ε₃) (toCtxᴱ-≡ St St') (H op ε₃))
+            C-rename (cong-∷-ren (cong-∷-ren
+                       (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
+              (H op ε₃))
          (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
                                              (step-grade-≾ r))) N)
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
@@ -492,8 +494,28 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
   , HANDLE-STEP r (step-grade-≾ r) ◅ rs'
   , (λ op ε₃ →
        trans (eH₁ op ε₃)
-             (subst² (toCtxᴱ-≡ St St') (toCtxᴱ-≡ St' St₁) (toCtxᴱ-≡ St St₁)
-                     (H op ε₃)))
+         (trans
+           (sym (C-rename-∘
+                   (cong-∷-ren (cong-∷-ren
+                     (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
+                   (cong-∷-ren (cong-∷-ren (steps-barrier-ren rs)))
+                   (H op ε₃)))
+           (C-rename-≡
+             (≐ʳ-trans
+               (≐ʳ-sym (cong-∷-ren-∘-≐ʳ
+                          (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                    (≾-⊤ᵣ _)))
+                          (cong-∷-ren (steps-barrier-ren rs))))
+               (cong-∷-ren-≐ʳ
+                 (≐ʳ-trans
+                   (≐ʳ-sym (cong-∷-ren-∘-≐ʳ
+                              (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))
+                              (steps-barrier-ren rs)))
+                   (cong-∷-ren-≐ʳ
+                     (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
+                                               (steps-extends-state rs)
+                                               _ (≾-⊤ᵣ _) (≾-⊤ᵣ _)))))))
+             (H op ε₃))))
   , trans eN₁
       (trans
         (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
@@ -581,6 +603,19 @@ unbox-ren-μ-≐ʳ {σ = σ} q b = mk≐ʳ go
     go : ∀ {A τ} → (x : A ∈[ τ ] _) → _
     go (Tl-⟨⟩ x) = trans (cong (Var-⟨⟩ σ) (unbox-ren-img q x))
                          (sym (suc-comp-ren-img (ext q) b x))
+
+-- Entering the barrier and then following an extension is the reach at budget
+-- `⊤ᵣ`: the residual grade is relaxed from `uᵣ` to `⊤ᵣ` (`suc-comp-ren-≤`).
+
+barrier-unbox-≐ʳ : ∀ {St St₁ : 𝕊 []} → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)
+                 → (b : ≤ₛ-grade (ext q) ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
+                 → (suc-comp-ren (ext q) b ∘ʳ barrier-ren) ≐ʳ unbox-ren q
+barrier-unbox-≐ʳ q b =
+  ≐ʳ-trans
+    (≐ʳ-sym (∘ʳ-assoc-≐ʳ (suc-comp-ren (ext q) b) (⟨⟩-≤-ren (≾-⊤ᵣ uᵣ))
+                        ⟨⟩-η-ren))
+    (∘ʳ-≐ʳ (≐ʳ-sym (suc-comp-ren-≤ (ext q) (reach-bound q) b (≾-⊤ᵣ uᵣ)))
+          ≐ʳ-refl)
 
 -- Crossing a lock and then following a guarded reach is following the same reach
 -- at the unit budget (`reach-≤`): the source grade is relaxed from `ρ` to `uᵣ`,

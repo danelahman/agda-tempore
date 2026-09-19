@@ -128,19 +128,18 @@ FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
 -- For the clause premise, `HANDLE-OP` fires a clause at `St₁` and `BOX`
 -- allocates the resumption, so the clause is reached at
 -- `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell:
--- that environment is `liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W)` — `env-clause` giving
--- the clause's own context with no store (`∅ᵉ`), `_∷ᵉ_` the operation's
--- parameter, and `liftᵉ` the cell. Its `Rel-Env` is
--- `((env-clause-rel γ St₁ , pW) , bv)`, whose last component is exactly the
--- `Boxed-VRed` argument `handle-CRed` supplies.
+-- that environment is `liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)` — the barrier lock matched
+-- by the `⊤ᵣ`-reach the premise supplies, `_∷ᵉ_` the operation's parameter, and
+-- `liftᵉ` the cell. Its `Rel-Env` is `((pγ , pW) , bv)`, whose last component
+-- is exactly the `Boxed-VRed` argument `handle-CRed` supplies.
 
 FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
           → (M : Γ ⊢C⦂ A ‼ ε₁)
-          → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (Γ ᴱ))
+          → (H : Fam B (Γ ⟨ ⊤ᵣ ⟩))
           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
           → CRed' A ε₁ St (env-C γ M)
           → (∀ {St'} {op : Op} {ε₃ : E}
-               → (γ' : Env St' (Γ ᴱ ∷ type-of-gtype (param op)
+               → (γ' : Env St' (Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                   ∷ [ mapᵉ (op-grade op) ]
                                       (type-of-gtype (arity op) ⇒ B ‼ ε₃)))
                → Rel-Env γ'
@@ -154,20 +153,13 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
   subst (CRed' _ _ St) (sym (env-Cˢ-handle γ [] M H N))
     (handle-CRed Hγ (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N) pM clause sequel)
   where
-    Hγ : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ᴱ)
+    Hγ : Fam B (toCtx St ⟨ ⊤ᵣ ⟩)
     Hγ = env-Hˢ γ [] H
 
-    -- The clause the machine fires and the clause the environment closes agree
-    -- only up to the equivalence: the substituted values match on the nose, the
-    -- *renamings* reaching the state's context do not (`ᴱ-ren (toCtx St₁)`
-    -- against `∅-ren St₁`), and only `≡` identifies those. Hence `CRed-≡ᶜ`
-    -- rather than a transport.
-
     clause : Clause-Prem B St Hγ
-    clause {St₁} {op} {ε₃} V₀ bv W pW =
-      CRed-≡ᶜ (sym (env-Hˢ-fired γ St₁ H V₀ W))
-        (pH (liftᵉ V₀ (env-clause γ St₁ ∷ᵉ W))
-            ((env-clause-rel γ St₁ , pW) , bv))
+    clause {St₁} {op} {ε₃} q V₀ bv W pW =
+      subst (CRed' _ _ _) (sym (env-Hˢ-fired γ q H V₀ W))
+        (pH (liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)) ((pγ , pW) , bv))
 
     sequel : Seq-Prem (env-Cˢ γ ([] ⟨ mapᵉ ε₁ ⟩ ∷ A) N)
     sequel q V pV =
