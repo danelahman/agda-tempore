@@ -21,7 +21,7 @@ open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Nat using (ℕ)
-open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Product using (_×_; _,_; Σ; Σ-syntax; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Relation.Nullary using (¬_)
@@ -123,13 +123,13 @@ mutual
   ⟦_⟧ᶜ : ∀ {Θ} → OCType Θ → Grounding Θ → CType
   ⟦ A ‼ ε ⟧ᶜ θ = ⟦ A ⟧ᵛ θ ‼ ⟦ ε ⟧ᵉ θ
 
--- Contexts: the barrier becomes the eternal restriction of the original.
+-- Contexts: the barrier becomes the greatest-grade lock of the original.
 
 ⟦_⟧ᶜᵗˣ : ∀ {Θ n} → OCtx Θ n → Grounding Θ → Ctx
 ⟦ []      ⟧ᶜᵗˣ θ = []
 ⟦ Γ ∷ A   ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ∷ ⟦ A ⟧ᵛ θ
 ⟦ Γ ⟨ ρ ⟩ ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ⟨ ⟦ ρ ⟧ʳ θ ⟩
-⟦ Γ ᴱ̂     ⟧ᶜᵗˣ θ = (⟦ Γ ⟧ᶜᵗˣ θ) ᴱ
+⟦ Γ ᴱ̂     ⟧ᶜᵗˣ θ = (⟦ Γ ⟧ᶜᵗˣ θ) ⟨ ⊤ᵣ ⟩
 
 --------------------------------------------------------------
 -- Groundings satisfying a hypothesis set                    --
@@ -226,7 +226,9 @@ ground-Et h Emptyₑ           = Emptyₑ
 -- Two translations: one for a variable that stays on this   --
 -- side of every barrier, where each membership former maps  --
 -- to its counterpart; one for a variable of eternal type,   --
--- which additionally crosses barriers via `∈-ᴱ`.            --
+-- which additionally crosses barriers by the lock's `Tl-⟨⟩`. --
+-- Crossing multiplies the grade by `⊤ᵣ`, so the second one  --
+-- reports the grade it arrives at.                          --
 --------------------------------------------------------------
 
 ground-∈ : ∀ {Θ n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
@@ -238,11 +240,11 @@ ground-∈ θ (Tl-⟨⟩ x) eq = Tl-⟨⟩ (ground-∈ θ x eq)
 
 ground-∈ᴱ : ∀ {Θ n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
           → (θ : Grounding Θ) → (x : A ∈̂[ ρ ] Γ) → Eternal (⟦ A ⟧ᵛ θ)
-          → ⟦ A ⟧ᵛ θ ∈[ ⟦ ρ ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ
-ground-∈ᴱ θ Hd        et = Hd
-ground-∈ᴱ θ (Tl-∷ x)  et = Tl-∷ (ground-∈ᴱ θ x et)
-ground-∈ᴱ θ (Tl-⟨⟩ x) et = Tl-⟨⟩ (ground-∈ᴱ θ x et)
-ground-∈ᴱ θ (Tl-ᴱ̂ x)  et = ∈-ᴱ et (ground-∈ᴱ θ x et)
+          → Σ[ ρ₀ ∈ R ] (⟦ A ⟧ᵛ θ ∈[ ρ₀ ] ⟦ Γ ⟧ᶜᵗˣ θ)
+ground-∈ᴱ θ Hd        et = _ , Hd
+ground-∈ᴱ θ (Tl-∷ x)  et = _ , Tl-∷ (proj₂ (ground-∈ᴱ θ x et))
+ground-∈ᴱ θ (Tl-⟨⟩ x) et = _ , Tl-⟨⟩ (proj₂ (ground-∈ᴱ θ x et))
+ground-∈ᴱ θ (Tl-ᴱ̂ x)  et = _ , Tl-⟨⟩ (proj₂ (ground-∈ᴱ θ x et))
 
 --------------------------------------------------------------
 -- Grounding the side conditions of `var` and `unbox`        --
@@ -256,14 +258,16 @@ ground-∈ᴱ θ (Tl-ᴱ̂ x)  et = ∈-ᴱ et (ground-∈ᴱ θ x et)
 ground-var : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → (θ : Grounding Θ) → θ ⊨ᴴ Q
            → (b : 𝔹) → (x : A ∈̂[ ρ ] Γ) → crossesᴱ̂ x ≡ b → VarOK Q A ρ b
-           → (¬ Eternal (⟦ A ⟧ᵛ θ) → ⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-           × (⟦ A ⟧ᵛ θ ∈[ ⟦ ρ ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ)
+           → Σ[ ρ₀ ∈ R ] ( (¬ Eternal (⟦ A ⟧ᵛ θ) → ρ₀ ≾ᵣ uᵣ)
+                         × (⟦ A ⟧ᵛ θ ∈[ ρ₀ ] ⟦ Γ ⟧ᶜᵗˣ θ))
 ground-var θ h true  x eq ok =
-  (λ ¬et → ⊥-elim (¬et (ground-Et h ok))) , ground-∈ᴱ θ x (ground-Et h ok)
+    _
+  , (λ ¬et → ⊥-elim (¬et (ground-Et h ok)))
+  , proj₂ (ground-∈ᴱ θ x (ground-Et h ok))
 ground-var θ h false x eq (inj₁ et) =
-  (λ ¬et → ⊥-elim (¬et (ground-Et h et))) , ground-∈ θ x eq
+  _ , (λ ¬et → ⊥-elim (¬et (ground-Et h et))) , ground-∈ θ x eq
 ground-var θ h false x eq (inj₂ le) =
-  (λ _ → ground-≾ᵣ h le) , ground-∈ θ x eq
+  _ , (λ _ → ground-≾ᵣ h le) , ground-∈ θ x eq
 
 ground-unbox : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ ρ' : RExp Θ} {Γ : OCtx Θ n}
              → (θ : Grounding Θ) → θ ⊨ᴴ Q
@@ -342,7 +346,7 @@ ground-wkᵉ-ctx : ∀ {Θ n} {θ : Grounding Θ} {ε₀ : E} → (Γ : OCtx Θ 
 ground-wkᵉ-ctx []        = refl
 ground-wkᵉ-ctx (Γ ∷ A)   = cong₂ _∷_ (ground-wkᵉ-ctx Γ) (ground-wkᵉ-v A)
 ground-wkᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (ground-wkᵉ-ctx Γ) (ground-wkᵉ-r ρ)
-ground-wkᵉ-ctx (Γ ᴱ̂)     = cong _ᴱ (ground-wkᵉ-ctx Γ)
+ground-wkᵉ-ctx (Γ ᴱ̂)     = cong (_⟨ ⊤ᵣ ⟩) (ground-wkᵉ-ctx Γ)
 
 -- An extended grounding satisfies the weakened hypothesis set
 

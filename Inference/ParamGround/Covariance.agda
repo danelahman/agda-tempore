@@ -450,7 +450,7 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   nonew-ctx []        n        = refl
   nonew-ctx (Γ ∷ A)   (n , n') = cong₂ _∷_ (nonew-ctx Γ n) (nonew-v A n')
   nonew-ctx (Γ ⟨ ρ ⟩) (n , n') = cong₂ _⟨_⟩ (nonew-ctx Γ n) (nonew-r ρ n')
-  nonew-ctx (Γ ᴱ̂)     n        = cong _ᴱ (nonew-ctx Γ n)
+  nonew-ctx (Γ ᴱ̂)     n        = cong (_⟨ ⊤ᵣ ⟩) (nonew-ctx Γ n)
 
   ------------------------------------------------------------
   -- The coercions                                           --

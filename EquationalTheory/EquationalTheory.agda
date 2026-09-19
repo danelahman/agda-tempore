@@ -197,13 +197,13 @@ mutual
     handle-cong : ∀ {A B ε ε'}
                 → {M M' : Γ ⊢C⦂ A ‼ ε}
                 → {H H' : ((op : Op) → (ε'' : E) →
-                             Γ ᴱ ∷ type-of-gtype (param op)
+                             Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))}
                 → {N N' : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε'}
                 → Γ ⊢C⦂ M == M'
                 → ((op : Op) → (ε'' : E) →
-                     Γ ᴱ ∷ type-of-gtype (param op)
+                     Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ H op ε'' == H' op ε'')
                 → Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ N == N'
@@ -389,11 +389,16 @@ mutual
                == M [ split-[] ↦ V ]c
 
     -- computational/beta-equations for effect handling
+    --
+    -- A `handle` pushed under a binder or a lock reads its clauses at the
+    -- extended ambient, so every such equation re-bars the clause family:
+    -- `cong-⟨⟩-ren wk-ren` past a binder, `⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren` past
+    -- a lock, and `barrier-wk-ren` past both.
 
     handle-return : ∀ {A B ε}
                   → (V : Γ ⊢V⦂ A)
                   → (H : (op : Op) → (ε'' : E) →
-                           Γ ᴱ ∷ type-of-gtype (param op)
+                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
@@ -410,7 +415,7 @@ mutual
                    → (V : Γ ⊢V⦂ type-of-gtype (param op))
                    → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
                    → (H : (op : Op) → (ε'' : E) →
-                            Γ ᴱ ∷ type-of-gtype (param op)
+                            Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                             ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                    → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
@@ -422,8 +427,8 @@ mutual
                                    `with (λ op' ε'' →
                                             C-rename
                                               (cong-∷-ren (cong-∷-ren
-                                                (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                                                         (type-of-gtype (arity op)))))
+                                                (barrier-wk-ren {Γ} (mapᵉ (op-grade op))
+                                                                (type-of-gtype (arity op)))))
                                               (H op' ε''))
                                    `in (C-rename
                                          (cong-∷-ren
@@ -431,14 +436,14 @@ mutual
                                             ∘ʳ ⟨⟩-μ-ren)
                                             ∘ʳ cong-⟨⟩-ren wk-ren))
                                          N)))
-                                  (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                                  (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                     (H op (ε ·ₑ ε'))
                                    [ split-∷ split-[] ↦ V ]c))
 
     handle-delay : ∀ {A B τ ε ε'}
                  → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
-                          Γ ᴱ ∷ type-of-gtype (param op)
+                          Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
@@ -447,7 +452,10 @@ mutual
                      == ε-subst (sym (·ₑ-assoc (of-natᵉ τ) ε ε'))
                           (delay τ
                             (handle M
-                            `with H
+                            `with (λ op' ε'' →
+                                     C-rename (cong-∷-ren (cong-∷-ren
+                                       (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)))
+                                       (H op' ε''))
                             `in (C-rename
                                   (cong-∷-ren
                                     (eq-ren (cong (Γ ⟨_⟩)
@@ -460,14 +468,18 @@ mutual
                  → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
                  → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
-                          Γ ᴱ ∷ type-of-gtype (param op)
+                          Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  ------------------------------------------------------------------------------
                  → Γ ⊢C⦂ handle box V M `with H `in N
                      == box V
-                        (handle M `with H
+                        (handle M
+                        `with (λ op' ε'' →
+                                 C-rename (cong-∷-ren (cong-∷-ren
+                                   (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = [ ρ ] A}))))
+                                   (H op' ε''))
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
 
@@ -476,7 +488,7 @@ mutual
                  → (rel : ρ' ≾ᵣ ρ)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
-                          Γ ᴱ ∷ type-of-gtype (param op)
+                          Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
@@ -485,7 +497,8 @@ mutual
                      == unbox x rel
                         (handle M
                         `with (λ op' ε'' →
-                                 C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
+                                 C-rename (cong-∷-ren (cong-∷-ren
+                                   (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = A}))))
                                    (H op' ε''))
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
@@ -624,7 +637,7 @@ mutual
                   → (rel : ε₁ ≾ₑ ε₂)
                   → (M : Γ ⊢C⦂ A ‼ ε₁)
                   → (H : (op : Op) → (ε₀ : E) →
-                           Γ ᴱ ∷ type-of-gtype (param op)
+                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
                   → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')

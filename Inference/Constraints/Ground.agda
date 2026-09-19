@@ -207,7 +207,7 @@ mutual
 ⟦⟧-⨟ᵍ-ctx σ θ []        = refl
 ⟦⟧-⨟ᵍ-ctx σ θ (Γ ∷ A)   = cong₂ _∷_ (⟦⟧-⨟ᵍ-ctx σ θ Γ) (⟦⟧-⨟ᵍ-v σ θ A)
 ⟦⟧-⨟ᵍ-ctx σ θ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (⟦⟧-⨟ᵍ-ctx σ θ Γ) (⟦⟧-⨟ᵍ-r σ θ ρ)
-⟦⟧-⨟ᵍ-ctx σ θ (Γ ᴱ̂)     = cong _ᴱ (⟦⟧-⨟ᵍ-ctx σ θ Γ)
+⟦⟧-⨟ᵍ-ctx σ θ (Γ ᴱ̂)     = cong (_⟨ ⊤ᵣ ⟩) (⟦⟧-⨟ᵍ-ctx σ θ Γ)
 
 -- How the composite interacts with the formers the binder cases build
 

@@ -65,6 +65,9 @@ open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 
+open import DenotationalSemantics.Model.Modality.Eternal
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (⟨⊤⟩-eternalᵒ)
+
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 
 -- Postcomposition commutes with a transport in the second component of a
@@ -184,14 +187,14 @@ sound-coerce-handle : ∀ {Γ A B ε₁ ε₂ ε'}
                     → (rel : ε₁ ≾ₑ ε₂)
                     → (M : Γ ⊢C⦂ A ‼ ε₁)
                     → (H : (op : Op) → (ε₀ : E) →
-                             Γ ᴱ ∷ type-of-gtype (param op)
+                             Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
                     → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
                     → Soundᶜ== (coerce-handle rel M H N)
 sound-coerce-handle {Γ = Γ} rel M H N
                     (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
-    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟦ Γ ⟧ᴱ-Eternalᵒ)
+    ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ)
               (λ op ε'' → ∘ᵐ-congˡ
                             (⟦⟧ᶜᵗ-irr (H op ε'') (pH op ε'') (pH' op ε''))))
             (⟨ ≈ᵐ-refl
@@ -200,7 +203,7 @@ sound-coerce-handle {Γ = Γ} rel M H N
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (⟦ Γ ⟧ᴱ-Eternalᵒ) _ rel)
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) _ rel)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-congᶠ
       (⟦⟧ᶜᵗ-irr (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)

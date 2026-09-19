@@ -481,10 +481,10 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
       → (cΓ : CovCtx Γ) → (cA : CovV A)
       → (b : 𝔹) → (x : A ∈̂[ ρ ] Γ) → (eq : crossesᴱ̂ x ≡ b)
       → (ok : VarOK Q A ρ b) → NoCross b
-      → var-morphism (proj₁ (ground-var θ₂ h₂ b x eq ok))
-                     (proj₂ (ground-var θ₂ h₂ b x eq ok)) ∘ᵐ covCtx Γ cΓ
-      ≈ᵐ covV A cA ∘ᵐ var-morphism (proj₁ (ground-var θ₁ h₁ b x eq ok))
-                                   (proj₂ (ground-var θ₁ h₁ b x eq ok))
+      → var-morphism (proj₁ (proj₂ (ground-var θ₂ h₂ b x eq ok)))
+                     (proj₂ (proj₂ (ground-var θ₂ h₂ b x eq ok))) ∘ᵐ covCtx Γ cΓ
+      ≈ᵐ covV A cA ∘ᵐ var-morphism (proj₁ (proj₂ (ground-var θ₁ h₁ b x eq ok)))
+                                   (proj₂ (proj₂ (ground-var θ₁ h₁ b x eq ok)))
     cov-var-D h₁ h₂ cΓ cA false x eq (inj₁ et) nc =
          cov-var cΓ x eq _ _
       ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x eq) cA)
@@ -869,13 +869,13 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
 -- The clause context and result type that `ground-clause` transports along.
 
 clause-ctx : (r : R) → Ctx → VType → VType → VType → E → Ctx
-clause-ctx r Δ P A Bv ϵ = Δ ᴱ ∷ P ∷ [ r ] (A ⇒ Bv ‼ ϵ)
+clause-ctx r Δ P A Bv ϵ = Δ ⟨ ⊤ᵣ ⟩ ∷ P ∷ [ r ] (A ⇒ Bv ‼ ϵ)
 
 ctxE : (r : R) → {Δ' Δ : Ctx} → Δ' ≡ Δ → {P' P : VType} → P' ≡ P
      → {A' A : VType} → A' ≡ A → {B' B : VType} → B' ≡ B → (ϵ : E)
      → clause-ctx r Δ' P' A' B' ϵ ≡ clause-ctx r Δ P A B ϵ
 ctxE r eΔ eP eA eB ϵ =
-  cong₂ _∷_ (cong₂ _∷_ (cong _ᴱ eΔ) eP)
+  cong₂ _∷_ (cong₂ _∷_ (cong (_⟨ ⊤ᵣ ⟩) eΔ) eP)
             (cong₂ (λ A₀ B₀ → [ r ] (A₀ ⇒ B₀ ‼ ϵ)) eA eB)
 
 -- The context square: the continuation coercion that `EffUniformʰ` names,
@@ -892,7 +892,7 @@ ctx-square :
   → (w : ϵ₁ ≾ₑ ϵ₂) → (u : r ≾ᵣ r)
   →    invˣ⁻ (ctxE r eΔ₂ eP₂ eA₂ eB₂ ϵ₂)
          ∘ᵐ mapˣᵐ idᵐ ([ r ]ᶠ (map⇒ᵐ idᵐ (T-≤ w)))
-  ≈ᵐ    mapˣᵐ (mapˣᵐ (invˣ⁺ (cong _ᴱ dΔ)) (inv⁺ dP))
+  ≈ᵐ    mapˣᵐ (mapˣᵐ (invˣ⁺ (cong (_⟨ ⊤ᵣ ⟩) dΔ)) (inv⁺ dP))
               ([ r ]ᶠ (map⇒ᵐ (inv⁻ dA) (Tᶠ (inv⁺ dB) ∘ᵐ T-≤ w)) ∘ᵐ []-≤ u)
          ∘ᵐ invˣ⁻ (ctxE r eΔ₁ eP₁ eA₁ eB₁ ϵ₁)
 ctx-square refl refl refl refl refl refl refl refl refl refl refl refl w u =
@@ -969,7 +969,7 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
 
       E₁ : (ε'' : E)
          → ⟦ Γ̂ ⟧ᵒᶜᵗˣ (θ ,ᵍᵉ ε'')
-         ≡ (⟦ Γ ⟧ᵒᶜᵗˣ θ) ᴱ ∷ type-of-gtype (param op)
+         ≡ (⟦ Γ ⟧ᵒᶜᵗˣ θ) ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
              ∷ [ mapᵉ (op-grade op) ]
                  (type-of-gtype (arity op) ⇒ ⟦ B ⟧ᵒᵛ θ ‼ ε'')
       E₁ ε'' = ctxE (mapᵉ (op-grade op))

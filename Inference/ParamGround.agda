@@ -204,7 +204,7 @@ module _ (GU : GroundUniform) where
     -- membership witness is exposed and `Paramᵛ` reduces to `⊤`
 
     Param-groundV θ h (var x ok) with ground-var θ h (crossesᴱ̂ x) x refl ok
-    ... | f , y = tt
+    ... | _ , f , y = tt
     Param-groundV θ h (const B c) = tt
     Param-groundV θ h ⋆           = tt
     Param-groundV θ h true        = tt
@@ -263,7 +263,7 @@ module _ (GU : GroundUniform) where
     Param-ground-clause {Γ = Γ} {B} θ h op ε'' X =
       subst₂-Paramᶜ
         (cong₂ _∷_
-               (cong₂ _∷_ (cong _ᴱ (ground-wkᵉ-ctx Γ)) (⌜⌝ᵍ-ground (param op)))
+               (cong₂ _∷_ (cong (_⟨ ⊤ᵣ ⟩) (ground-wkᵉ-ctx Γ)) (⌜⌝ᵍ-ground (param op)))
                (cong₂ (λ A₀ B₀ → [ mapᵉ (op-grade op) ] (A₀ ⇒ B₀ ‼ ε''))
                       (⌜⌝ᵍ-ground (arity op))
                       (ground-wkᵉ-v B)))

@@ -4,7 +4,7 @@
 -- Each is the corresponding `T-alg-of-handlerᵀ-*` law of the model,      --
 -- with the handled computation's own former unfolded first. The shape   --
 -- is the sequencing group's: `handle M `with H `in N` denotes            --
--- `T-alg-of-handlerᵀ … ∘ᵐ ⟨ projᴱ Γ , Tᶠ ⟦N⟧ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦M⟧ ⟩ ⟩`, --
+-- `T-alg-of-handlerᵀ … ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ ⟦N⟧ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦M⟧ ⟩ ⟩`, --
 -- so the sub-computation sits in exactly the position `⨟` puts it and    --
 -- the same strength laws apply.                                        --
 --                                                                    --
@@ -41,7 +41,6 @@ module EquationalTheory.Soundness.Handle
 
 open import Data.Product using (_,_; _×_; Σ; Σ-syntax; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
-open import Relation.Nullary using (¬_; yes; no)
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -58,13 +57,15 @@ open import EquationalTheory.EquationalTheory S
 
 open Category Cat
 open Future Fut using ([_]ᵒ; [_]ᶠ; []-∘ᵐ; []-congᶠ; []-monoidal; []-monoidal-nat)
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; ⟨⟩-≤; ⟨⟩-∘ᵐ; μ)
 open Adjunction Adj using (η⊣; ε⊣; η⊣-nat; η⊣-monoidal)
 open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-η-nat; ⟨⊤⟩-μ∘η≡id;
+              ⟨⊤⟩-μ∘Tη≡id; free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-lock)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -84,7 +85,7 @@ open import EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE
 sound-handle-return : ∀ {Γ A B ε}
   → (V : Γ ⊢V⦂ A)
   → (H : (op : Op) → (ε'' : E)
-       → Γ ᴱ ∷ type-of-gtype (param op)
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
@@ -105,7 +106,7 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-ηᵀ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-ηᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
     -- the environment the continuation receives is the transposed one
@@ -128,24 +129,123 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
     r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r N) split-[] V (renᶜ r N pN) pV
 
+-- TRANSPORTING THE FOLD ALONG A CLAUSE REINDEXING
+--
+-- A `handle` inside a binder or a lock reads its clauses at an extended
+-- ambient, so the family is renamed along `r` and the fold's parameter has to
+-- move with it. Every such `r` factors through the free `⟨⊤⟩`-algebra's
+-- universal property as `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g`; that factorisation discharges
+-- `T-alg-of-handlerᵀ-natᴾ`'s necessitation premise and computes the reindexed
+-- barrier.
+
+module Reindex
+         {Γ Γ' : Ctx} {B : VType}
+         (r : Ren [] (Γ' ⟨ ⊤ᵣ ⟩) (Γ ⟨ ⊤ᵣ ⟩))
+         (g : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ ⟨ ⊤ᵣ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ)
+         (r≈ : ⟦ r ⟧ʳ ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g)
+         (H : (op : Op) → (ε'' : E)
+            → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
+         (pH : ∀ op ε'' → Paramᶜ (H op ε''))
+         (uH : EffUniformʰ {Γ} H pH)
+       where
+
+  Hᵣ : (op : Op) → (ε'' : E)
+     → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
+       ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
+  Hᵣ op ε'' = C-rename (cong-∷-ren (cong-∷-ren r)) (H op ε'')
+
+  pHᵣ : ∀ op ε'' → Paramᶜ (Hᵣ op ε'')
+  pHᵣ op ε'' = renᶜ (cong-∷-ren (cong-∷-ren r)) (H op ε'') (pH op ε'')
+
+  uHᵣ : EffUniformʰ {Γ'} Hᵣ pHᵣ
+  uHᵣ = ren-clauses-uniform r H pH uH
+
+  f : ⟦ Γ' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+  f = ⟦ r ⟧ʳ
+
+  -- the reindexed barrier is `g`
+  barrier : f ∘ᵐ ⟨⊤⟩-η ≈ᵐ g
+  barrier =
+      ∘ᵐ-congˡ r≈
+    ∙ ∘ᵐ-assoc _ _ _
+    ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat g)
+    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘η≡id
+    ∙ ∘ᵐ-identityˡ _
+
+  f-necᵉ : ∀ {ρ₀}
+         → [ ρ₀ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ) {ρ₀}
+         ≈ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) {ρ₀} ∘ᵐ f
+  f-necᵉ =
+      ∘ᵐ-congˡ ([]-congᶠ r≈)
+    ∙ free-necᵉ-nat (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g) (free-extᵉ-nat g)
+    ∙ ∘ᵐ-congʳ (≈ᵐ-sym r≈)
+
+  -- The renamed family's own certificates are whatever the reduct carries;
+  -- `⟦⟧ᶜᵗ-irr` reconciles them with the renamed ones.
+  module _ (pH' : ∀ op ε'' → Paramᶜ (Hᵣ op ε''))
+           (uH' : EffUniformʰ {Γ'} Hᵣ pH')
+         where
+
+    clause-nat : ∀ op ε''
+               → clauseᵀ (⟦_⟧ʰᵗ {Γ'} Hᵣ pH' uH') op ε''
+               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
+    clause-nat op ε'' =
+        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (Hᵣ op ε'') (pH' op ε'') (pHᵣ op ε'')
+                  ∙ C-rename-nat (cong-∷-ren (cong-∷-ren r))
+                      (H op ε'') (pH op ε''))
+      ∙ ∘ᵐ-assoc _ _ _
+      ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+    alg-nat : ∀ {ε ε'}
+            → T-alg-of-handlerᵀ {_} {_} {ε} {ε'}
+                (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ'} Hᵣ pH' uH')
+            ≈ᵐ T-alg-of-handlerᵀ {_} {_} {ε} {ε'}
+                 (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH)
+               ∘ᵐ mapˣᵐ f idᵐ
+    alg-nat =
+      T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ)
+        f f-necᵉ (⟦_⟧ʰᵗ {Γ} H pH uH) (⟦_⟧ʰᵗ {Γ'} Hᵣ pH' uH') clause-nat
+
+-- Crossing a binder: weakening under the barrier is the free-algebra morphism
+-- induced by the barrier itself.
+
+wk-free : ∀ {Γ A}
+        → ⟦ cong-⟨⟩-ren {[]} {Γ ∷ A} {Γ} {⊤ᵣ} wk-ren ⟧ʳ
+        ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (⟨⊤⟩-η ∘ᵐ fstᵐ)
+wk-free =
+  ≈ᵐ-sym (  ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
+          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+          ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘Tη≡id
+          ∙ ∘ᵐ-identityˡ _)
+
 -- `handle-box`: a `box` binder commutes with handling. The binder denotes an
--- environment extension `g` undone by `fstᵐ`, so the handled computation and
--- the continuation move by `str-extend`; the handler is untouched because
--- `(Γ ∷ [ ρ ] A) ᴱ = Γ ᴱ` (a box type is never eternal), which also makes
--- `projᴱ` reduce to `projᴱ Γ ∘ᵐ fstᵐ`.
+-- environment extension `gb` undone by `fstᵐ`, so the handled computation and
+-- the continuation move by `str-extend`, and the clauses are re-barred across
+-- the binder by `Reindex` at `wk-free`.
 
 sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
   → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
   → (H : (op : Op) → (ε'' : E)
-       → Γ ᴱ ∷ type-of-gtype (param op)
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
   → Soundᶜ== (handle-box V M H N)
-sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH) pR =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box V (handle M `with H `in (C-rename r N))) pR
-              (pV , (pM , renᶜ r N pN , pH , uH))
+sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH)
+                 (pV₂ , pM₂ , pN₂ , pH₂ , uH₂) =
+  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (box V (handle M `with R.Hᵣ `in (C-rename r N)))
+              (pV₂ , (pM₂ , pN₂ , pH₂ , uH₂))
+              (pV , (pM , renᶜ r N pN , pH₂ , uH₂))
+          ∙ ∘ᵐ-congˡ (  ∘ᵐ-congˡ (R.alg-nat pH₂ uH₂)
+                      ∙ ∘ᵐ-assoc _ _ _
+                      ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+                                  ∙ ⟨ R.barrier , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
           ∙ ∘ᵐ-assoc _ _ _
           ∙ ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
                       ∙ ⟨   ∘ᵐ-assoc _ _ _
@@ -154,34 +254,25 @@ sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH) pR =
                         ,   ∘ᵐ-congˡ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN)))
                           ∙ ∘ᵐ-assoc _ _ _
                           ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-                          ∙ str-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) g fstᵐ
+                          ∙ str-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) gb fstᵐ
                               (⟨⟩ᵐ-fstᵐ _ _) ⟩ᵐ-cong))
   where
-    r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
-    g = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
+    r  = cong-∷-ren (cong-⟨⟩-ren wk-ren)
+    gb = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
 
--- `handle-unbox`: the same for an `unbox` binder, except that `A` may be
--- eternal, so the eternal skeleton really does grow: `(Γ ∷ A) ᴱ` is `Γ ᴱ ∷ A`
--- or `Γ ᴱ`. The handler is therefore reindexed along `ren-ᴱ-∷ A`, and
--- `T-alg-of-handlerᵀ-natᴾ` transports the fold along it — its two premises
--- being `restrict-ren-necᵉ` (the necessitation commutes) and `clause-nat`
--- (the clauses commute, `adapt-commute` moving the reindexing past the
--- ground-type adapters). `ren-ᴱ-∷ A` *is* `restrict-ren wk-ren`, which is what
--- lets those two be reused verbatim.
+    module R = Reindex (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = [ ρ ] A}))
+                       (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {[ ρ ] A}) H pH uH
 
-private
-  ren-ᴱ-∷≡ : ∀ {Γ} → (A : VType)
-           → ren-ᴱ-∷ {Γ} {[]} A ≡ restrict-ren {[]} (wk-ren {Δ = Γ} {A = A})
-  ren-ᴱ-∷≡ A with eternal? A
-  ... | yes _ = refl
-  ... | no  _ = refl
+-- `handle-unbox`: the same for an `unbox` binder. `unbox-def` unfolds the
+-- binder first; the fold is then transported across it by `Reindex`, and the
+-- continuation moves as in `handle-box`.
 
 sound-handle-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
   → (x : [ ρ ] A ∈[ ρ' ] Γ)
   → (rel : ρ' ≾ᵣ ρ)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
   → (H : (op : Op) → (ε'' : E)
-       → Γ ᴱ ∷ type-of-gtype (param op)
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
@@ -189,19 +280,19 @@ sound-handle-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
 sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
                    (pM , pN , pH , uH)
                    (pM₂ , pN₂ , pH₂ , uH₂) =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel (handle M `with H' `in (C-rename r N)))
+  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel (handle M `with R.Hᵣ `in (C-rename r N)))
               (pM₂ , pN₂ , pH₂ , uH₂)
               (pM , renᶜ r N pN , pH₂ , uH₂)
-          ∙ unbox-def x rel (handle M `with H' `in (C-rename r N))
+          ∙ unbox-def x rel (handle M `with R.Hᵣ `in (C-rename r N))
               (pM , renᶜ r N pN , pH₂ , uH₂)
-            -- transport the fold along the eternal-skeleton renaming
-          ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ alg-nat)
+            -- transport the fold across the binder
+          ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (R.alg-nat pH₂ uH₂))
           ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
           ∙ ∘ᵐ-assoc _ _ _
           ∙ ∘ᵐ-congʳ (  ∘ᵐ-congˡ (mapˣᵐ-∘⟨⟩ _ _ _ _)
                       ∙ ⟨⟩ᵐ-∘ _ _ _
-                        -- the eternal part is untouched by the binder …
-                      ∙ ⟨   ∘ᵐ-congˡ (≈ᵐ-sym projᴱ-wk)
+                        -- the barrier is untouched by the binder …
+                      ∙ ⟨   ∘ᵐ-congˡ R.barrier
                           ∙ ∘ᵐ-assoc _ _ _
                           ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
                           ∙ ∘ᵐ-identityʳ _
@@ -214,60 +305,22 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
                               (⟨⟩ᵐ-fstᵐ _ _) ⟩ᵐ-cong))
   where
     r  = cong-∷-ren (cong-⟨⟩-ren wk-ren)
-
-    H' : (op : Op) → (ε'' : E)
-       → (Γ ∷ A) ᴱ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
-         ⊢C⦂ C ‼ (op-grade op ·ₑ ε'')
-    H' op' ε'' = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A))) (H op' ε'')
-
     gu = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
 
-    f : ⟦ (Γ ∷ A) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-    f = ⟦ ren-ᴱ-∷ {Γ} A ⟧ʳ
-
-    necᵉ-comm : ∀ {ρ₀}
-              → [ ρ₀ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ ∷ A ⟧ᴱ-Eternalᵒ) {ρ₀}
-              ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ₀} ∘ᵐ f
-    necᵉ-comm {ρ₀} =
-      subst (λ z → [ ρ₀ ]ᶠ ⟦ z ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ ∷ A ⟧ᴱ-Eternalᵒ) {ρ₀}
-                 ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ₀} ∘ᵐ ⟦ z ⟧ʳ)
-            (sym (ren-ᴱ-∷≡ {Γ} A))
-            (restrict-ren-necᵉ (wk-ren {Δ = Γ} {A = A}))
-
-    projᴱ-wk : projᴱ Γ ∘ᵐ fstᵐ ≈ᵐ f ∘ᵐ projᴱ (Γ ∷ A)
-    projᴱ-wk =
-      subst (λ z → projᴱ Γ ∘ᵐ ⟦ wk-ren {Δ = Γ} {A = A} ⟧ʳ ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ (Γ ∷ A))
-            (sym (ren-ᴱ-∷≡ {Γ} A))
-            (projᴱ-nat (wk-ren {Δ = Γ} {A = A}))
-
-    clause-nat : ∀ op ε''
-               → clauseᵀ (⟦_⟧ʰᵗ {Γ ∷ A} H' pH₂ uH₂) op ε''
-               ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
-    clause-nat op ε'' =
-        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (H' op ε'') (pH₂ op ε'')
-                      (renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
-                            (H op ε'') (pH op ε''))
-                  ∙ C-rename-nat (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ} A)))
-                      (H op ε'') (pH op ε''))
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-
-    alg-nat = T-alg-of-handlerᵀ-natᴾ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦ Γ ∷ A ⟧ᴱ-Eternalᵒ)
-                f necᵉ-comm (⟦_⟧ʰᵗ {Γ} H pH uH) (⟦_⟧ʰᵗ {Γ ∷ A} H' pH₂ uH₂)
-                clause-nat
+    module R = Reindex (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = A}))
+                       (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {A}) H pH uH
 
 -- `handle-delay`: the handled computation's `delay` becomes a `delay` of the
 -- handled computation. The strength half is `str-delay` (shared with
 -- `seq-delay`); the fold's own law is `T-alg-of-handlerᵀ-delayᵀ`, which carries
--- the eternal parameter under the box by `necᵉ`. The handler itself is
--- unchanged, since `(Γ ⟨ ρ ⟩) ᴱ = Γ ᴱ`.
+-- the eternal parameter under the box by `necᵉ`. The clauses cross the delay's
+-- lock by `Reindex` at `barrier-μ`, the parameter's own crossing being
+-- `barrier-lock`.
 
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
   → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
   → (H : (op : Op) → (ε'' : E)
-       → Γ ᴱ ∷ type-of-gtype (param op)
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
@@ -279,7 +332,7 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
   ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-delayᵀ τ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+  ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-delayᵀ τ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
@@ -289,11 +342,12 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
-                  ∙ ⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate (⟦ Γ ⟧ᴱ-Eternalᵒ))
+                  ∙ ⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ))
                       ∙ ∘ᵐ-assoc _ _ _
-                      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (projᴱ Γ)))
+                      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟨⊤⟩-η))
                       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+                      ∙ ∘ᵐ-congˡ ([]-congᶠ (barrier-lock ∙ ≈ᵐ-sym R.barrier))
                     , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -304,23 +358,33 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
       ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
                   ∙ []-congᶠ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                               ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong)))))
-    -- recombine the two boxes, and put the continuation's re-lock renaming back
+    -- recombine the two boxes, put the continuation's re-lock renaming back,
+    -- and transport the fold across the delay's lock
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
-                  ∙ []-congᶠ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                                        , ∘ᵐ-congˡ (≈ᵐ-sym (
-                                              T-congᶠ (C-rename-nat r N pN)
-                                            ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
-                                                (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
-                                                  (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
-                                                ≈ᵐ-refl)))) ⟩ᵐ-cong)))))
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (handle M `with H `in (C-rename r N))))
+                  ∙ []-congᶠ (
+                        ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+                                  , ∘ᵐ-congˡ (≈ᵐ-sym (
+                                        T-congᶠ (C-rename-nat r N pN)
+                                      ∙ T-congᶠ (∘ᵐ-congʳ (mapˣᵐ-cong
+                                          (∘ᵐ-congˡ (eq-ren-grade (trans map-·ᵉ
+                                            (cong (_·ᵣ mapᵉ ε) map-of-natᵉ))))
+                                          ≈ᵐ-refl)))) ⟩ᵐ-cong)
+                      ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-refl , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong
+                                  ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
+                      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                      ∙ ∘ᵐ-congˡ (≈ᵐ-sym (R.alg-nat R.pHᵣ R.uHᵣ))))))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))))
                 pR (ε-substᴾ e _ pRc)
-            ∙ sound-ε-subst e (delay τ (handle M `with H `in (C-rename r N))) pRc)
+            ∙ sound-ε-subst e (delay τ (handle M `with R.Hᵣ `in (C-rename r N))) pRc)
   where
     e   = sym (·ₑ-assoc (of-natᵉ τ) ε ε')
     r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩)
                                (trans map-·ᵉ (cong (_·ᵣ mapᵉ ε) map-of-natᵉ)))
                       ∘ʳ ⟨⟩-μ-ren)
-    pRc = pM , renᶜ r N pN , pH , uH
+
+    module R = Reindex (⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren)
+                       (⟨⟩-≤ (≾-⊤ᵣ (of-natʳ τ))) (barrier-μ (≾-⊤ᵣ _)) H pH uH
+
+    pRc = pM , renᶜ r N pN , R.pHᵣ , R.uHᵣ

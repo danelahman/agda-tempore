@@ -59,7 +59,7 @@ mutual
   -- eternality entailment, away from one they come from the disjunction.
 
   groundV θ h (var x ok) with ground-var θ h (crossesᴱ̂ x) x refl ok
-  ... | f , y = var f y
+  ... | _ , f , y = var f y
   groundV θ h (const B c) = const c
   groundV θ h ⋆           = ⋆
   groundV θ h true        = true
@@ -120,7 +120,8 @@ mutual
 
   -- One operation clause, at one continuation grade. The clause derivation
   -- lives at the extended scope `Θ +e`; grounding it at `θ ,ᵍᵉ ε''` sends the
-  -- rigid variable to `ε''` and the barrier `_ᴱ̂` to `_ᴱ`, both definitionally.
+  -- rigid variable to `ε''` and the barrier `_ᴱ̂` to `_⟨ ⊤ᵣ ⟩`, both
+  -- definitionally.
   -- What remains is the weakening collapse and the two ground-type round-trips.
 
   ground-clause : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ}
@@ -131,7 +132,7 @@ mutual
                                    (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
                      ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
                 ---------------------------------------------------------------
-                → (⟦ Γ ⟧ᶜᵗˣ θ) ᴱ ∷ type-of-gtype (param op)
+                → (⟦ Γ ⟧ᶜᵗˣ θ) ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                     ∷ [ mapᵉ (op-grade op) ]
                         (type-of-gtype (arity op) ⇒ ⟦ B ⟧ᵛ θ ‼ ε'')
                   ⊢C⦂ ⟦ B ⟧ᵛ θ ‼ (op-grade op ·ₑ ε'')
@@ -139,7 +140,8 @@ mutual
   ground-clause {Γ = Γ} {B} θ h op ε'' X =
     subst₂ _⊢C⦂_
            (cong₂ _∷_
-                  (cong₂ _∷_ (cong _ᴱ (ground-wkᵉ-ctx Γ)) (⌜⌝ᵍ-ground (param op)))
+                  (cong₂ _∷_ (cong (_⟨ ⊤ᵣ ⟩) (ground-wkᵉ-ctx Γ))
+                             (⌜⌝ᵍ-ground (param op)))
                   (cong₂ (λ A₀ B₀ → [ mapᵉ (op-grade op) ] (A₀ ⇒ B₀ ‼ ε''))
                          (⌜⌝ᵍ-ground (arity op))
                          (ground-wkᵉ-v B)))
@@ -160,13 +162,13 @@ private
   θ₀ : Grounding ∅ˢ
   θ₀ = grounding (λ ()) (λ ()) (λ ())
 
-  -- A variable used across a barrier grounds to a variable of the eternal
-  -- restriction: `⟦ (∅ᶜ ∷ Unit) ᴱ̂ ⟧ θ₀` *is* `([] ∷ Unit) ᴱ`.
+  -- A variable used across a barrier grounds to a variable behind the
+  -- barrier lock: `⟦ (∅ᶜ ∷ Unit) ᴱ̂ ⟧ θ₀` *is* `([] ∷ Unit) ⟨ ⊤ᵣ ⟩`.
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ᴱ̂) ⊢V⦂ Unit
   ex-var-barrier = var (Tl-ᴱ̂ Hd) Unitₑ
 
-  ex-var-barrier-ground : ([] ∷ Unit) ᴱ ⊢V⦂ Unit
+  ex-var-barrier-ground : ([] ∷ Unit) ⟨ ⊤ᵣ ⟩ ⊢V⦂ Unit
   ex-var-barrier-ground = groundV θ₀ ∅ᴴ-⊨ ex-var-barrier
 
   -- A variable used after time-passage, and an unboxing: the grades of the

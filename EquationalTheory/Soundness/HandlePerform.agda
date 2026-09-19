@@ -3,10 +3,9 @@
 --                                                                    --
 -- Handling an operation applies the matching clause, with the rest of  --
 -- the handled computation boxed up as the clause's continuation. The   --
--- proof is the parametric generalisation of the operational            --
--- `sound-HANDLE-OP`: the eternal parameter is threaded live and carried --
--- under the operation's box by `necᵉ`, rather than collapsed to the     --
--- terminal object as in a closed runtime configuration.                --
+-- barrier parameter is carried under the operation's box by `necᵉ`,    --
+-- and the inner handle's own transport across the arity binder is      --
+-- `handle-op-cont`, shared verbatim with operational preservation.     --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -58,7 +57,8 @@ open GroundEternal GE using (×-eternalᵒ; ×-eternalᵒ-extᵉ)
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -77,107 +77,12 @@ open import OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj G
 open import OperationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE
        using (op-pair; op-env; str-op; str-op-box; gty-cancelᵛ; arity-box; cont-collapse)
 open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
-       using (ren-ᴱ-∷≡restrict)
+       using (handle-op-cont)
 
 private
   infixr 3 _∙_
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙_ = ≈ᵐ-trans
-
--- ───────────────────────────────────────────────────────────────────────────
--- Transporting the fold along an eternal-skeleton extension, with a live
--- parameter.
---
--- `HandleOpCont.handle-op-cont` does this only at a runtime configuration
--- (`Γ ᴱ ≡ []`), where the parameter collapses by terminality. Here the
--- parameter is carried, so the reconciliation is `T-alg-of-handlerᵀ-natᴾ`
--- along `ren-ᴱ-∷ A₀` — as in `sound-handle-unbox`, but over an arbitrary base.
--- ───────────────────────────────────────────────────────────────────────────
-
-module _ {Γ₀ : Ctx} {B : VType} (A₀ : VType)
-         (H : (op : Op) → (ε'' : E)
-            → Γ₀ ᴱ ∷ type-of-gtype (param op)
-                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-              ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-         (pH : ∀ op ε'' → Paramᶜ (H op ε''))
-         (uH : EffUniformʰ {Γ₀} H pH)
-       where
-
-  -- the clauses reindexed to the extended eternal skeleton
-  Hᴿ : (op : Op) → (ε'' : E)
-     → (Γ₀ ∷ A₀) ᴱ ∷ type-of-gtype (param op)
-          ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-       ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
-  Hᴿ op ε'' = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ₀} A₀))) (H op ε'')
-
-  fᴿ : ⟦ (Γ₀ ∷ A₀) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ₀ ᴱ ⟧ᶜᵗˣ
-  fᴿ = ⟦ ren-ᴱ-∷ {Γ₀} A₀ ⟧ʳ
-
-  -- `ren-ᴱ-∷ A₀` *is* `restrict-ren wk-ren`, so the two coherences transport
-  necᵉ-commᴿ : ∀ {ρ₀}
-             → [ ρ₀ ]ᶠ fᴿ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ₀ ∷ A₀ ⟧ᴱ-Eternalᵒ) {ρ₀}
-             ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ₀ ⟧ᴱ-Eternalᵒ) {ρ₀} ∘ᵐ fᴿ
-  necᵉ-commᴿ {ρ₀} =
-    subst (λ z → [ ρ₀ ]ᶠ ⟦ z ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ₀ ∷ A₀ ⟧ᴱ-Eternalᵒ) {ρ₀}
-               ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ₀ ⟧ᴱ-Eternalᵒ) {ρ₀} ∘ᵐ ⟦ z ⟧ʳ)
-          (sym (ren-ᴱ-∷≡restrict {Γ₀} A₀))
-          (restrict-ren-necᵉ (wk-ren {Δ = Γ₀} {A = A₀}))
-
-  projᴱ-wkᴿ : projᴱ Γ₀ ∘ᵐ fstᵐ ≈ᵐ fᴿ ∘ᵐ projᴱ (Γ₀ ∷ A₀)
-  projᴱ-wkᴿ =
-    subst (λ z → projᴱ Γ₀ ∘ᵐ ⟦ wk-ren {Δ = Γ₀} {A = A₀} ⟧ʳ ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ (Γ₀ ∷ A₀))
-          (sym (ren-ᴱ-∷≡restrict {Γ₀} A₀))
-          (projᴱ-nat (wk-ren {Δ = Γ₀} {A = A₀}))
-
-  module _ (pHᴿ : ∀ op ε'' → Paramᶜ (Hᴿ op ε''))
-           (uHᴿ : EffUniformʰ {Γ₀ ∷ A₀} Hᴿ pHᴿ)
-         where
-
-    clause-natᴿ : ∀ op ε''
-                → clauseᵀ (⟦_⟧ʰᵗ {Γ₀ ∷ A₀} Hᴿ pHᴿ uHᴿ) op ε''
-                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ₀} H pH uH) op ε'' ∘ᵐ mapˣᵐ fᴿ idᵐ
-    clause-natᴿ op ε'' =
-        ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (Hᴿ op ε'') (pHᴿ op ε'')
-                      (renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ₀} A₀)))
-                            (H op ε'') (pH op ε''))
-                  ∙ C-rename-nat (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ₀} A₀)))
-                      (H op ε'') (pH op ε''))
-      ∙ ∘ᵐ-assoc _ _ _
-      ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-
-    alg-natᴿ : ∀ {ε ε'}
-             → T-alg-of-handlerᵀ {_} {_} {ε} {ε'}
-                 (⟦ Γ₀ ∷ A₀ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ₀ ∷ A₀} Hᴿ pHᴿ uHᴿ)
-             ≈ᵐ T-alg-of-handlerᵀ {_} {_} {ε} {ε'}
-                  (⟦ Γ₀ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ₀} H pH uH)
-                ∘ᵐ mapˣᵐ fᴿ idᵐ
-    alg-natᴿ =
-      T-alg-of-handlerᵀ-natᴾ (⟦ Γ₀ ⟧ᴱ-Eternalᵒ) (⟦ Γ₀ ∷ A₀ ⟧ᴱ-Eternalᵒ)
-        fᴿ necᵉ-commᴿ (⟦_⟧ʰᵗ {Γ₀} H pH uH) (⟦_⟧ʰᵗ {Γ₀ ∷ A₀} Hᴿ pHᴿ uHᴿ)
-        clause-natᴿ
-
-
--- ───────────────────────────────────────────────────────────────────────────
--- The clause included into `Γ` is the clause reindexed by `projᴱ Γ`.
---
--- The fold's operation law returns `clauseᵀ h op _`, the clause read at its own
--- eternal skeleton; the equation's right-hand side uses the clause included
--- into `Γ` by `ᴱ-ren`, whose denotation is exactly `projᴱ Γ` (`ᴱ-ren-mor`).
--- ───────────────────────────────────────────────────────────────────────────
-
-ᴱ-ren-clause : ∀ {Γ B}
-  → (H : (op : Op) → (ε'' : E)
-       → Γ ᴱ ∷ type-of-gtype (param op)
-            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-  → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
-  → ∀ op ε''
-  → ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ ⟦ ᴱ-ren Γ ⟧ʳ idᵐ) idᵐ
-  ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ (projᴱ Γ) idᵐ) idᵐ
-ᴱ-ren-clause {Γ} H pH op ε'' =
-  ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (ᴱ-ren-mor Γ) ≈ᵐ-refl) ≈ᵐ-refl)
-
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- THE AXIOM: handling an operation applies the matching clause, with the rest
@@ -188,7 +93,7 @@ sound-handle-perform : ∀ {Γ A B ε ε' op}
   → (V : Γ ⊢V⦂ type-of-gtype (param op))
   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
   → (H : (op' : Op) → (ε'' : E)
-       → Γ ᴱ ∷ type-of-gtype (param op')
+       → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
             ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ (op-grade op ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
@@ -208,27 +113,22 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     e = sym (·ₑ-assoc (op-grade op) ε ε')
 
     -- the reduct's pieces, with their certificates
+    bren = barrier-wk-ren {Γ} (mapᵉ (op-grade op)) (type-of-gtype (arity op))
+
     H' : (op' : Op) → (ε'' : E)
-       → (Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ᴱ
+       → (Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)) ⟨ ⊤ᵣ ⟩
            ∷ type-of-gtype (param op')
            ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'')
-    H' op' ε'' =
-      C-rename (cong-∷-ren (cong-∷-ren
-                 (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))))
-               (H op' ε'')
+    H' op' ε'' = C-rename (cong-∷-ren (cong-∷-ren bren)) (H op' ε'')
 
     pH' : ∀ op' ε'' → Paramᶜ (H' op' ε'')
-    pH' op' ε'' =
-      renᶜ (cong-∷-ren (cong-∷-ren
-             (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))))
-           (H op' ε'') (pH op' ε'')
+    pH' op' ε'' = renᶜ (cong-∷-ren (cong-∷-ren bren)) (H op' ε'') (pH op' ε'')
 
     uH' : EffUniformʰ {Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)} H' pH'
-    uH' = ren-clauses-uniform
-            (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH
+    uH' = ren-clauses-uniform bren H pH uH
 
-    Cren = cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))
+    Cren = cong-∷-ren (cong-∷-ren barrier-ren)
     CL   = C-rename Cren (H op (ε ·ₑ ε'))
     pCL  = renᶜ Cren (H op (ε ·ₑ ε')) (pH op (ε ·ₑ ε'))
 
@@ -243,9 +143,8 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     -- extension applied to the eternal projection and the operation's value
     rhs-left =
         ∘ᵐ-congˡ (  C-subst-nat CL (split-∷ split-[]) V pCL pV
-                  ∙ ∘ᵐ-congˡ (  C-rename-nat Cren (H op (ε ·ₑ ε'))
-                                  (pH op (ε ·ₑ ε'))
-                              ∙ ᴱ-ren-clause {Γ} {B} H pH op (ε ·ₑ ε')))
+                  ∙ ∘ᵐ-congˡ (C-rename-nat Cren (H op (ε ·ₑ ε'))
+                                (pH op (ε ·ₑ ε'))))
       ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  ∘ᵐ-congˡ (  mapˣᵐ-∘ _ _ _ _
@@ -258,25 +157,16 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
 
     -- the boxed continuation on the reduct side: the arity coercions cancel
     -- (`arity-box`), the inner handle's fold is transported to the ambient
-    -- eternal base (`alg-natᴿ`/`projᴱ-wkᴿ`), the sequel's renaming is `C-rename-nat`
+    -- barrier (`handle-op-cont`, shared with operational preservation)
     boxeq =
       -- merge the coercion into the box and cancel it against the arity subst
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
       ∙ ∘ᵐ-congˡ ([]-congᶠ (arity-box (ty-gty (arity op)) _ _ _))
       -- and what is left is the reduct's inner handle, once its fold is
-      -- transported to the ambient eternal base
-      ∙ ≈ᵐ-sym (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (
-            ∘ᵐ-congˡ (alg-natᴿ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                        (type-of-gtype (arity op)) H pH uH pH' uH')
-          ∙ ∘ᵐ-assoc _ _ _
-          ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
-          ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-wkᴿ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                                 (type-of-gtype (arity op)) H pH uH)
-                      , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-          ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                      , ∘ᵐ-congˡ (T-congᶠ
-                          (C-rename-nat (cong-∷-ren ren) N pN)) ⟩ᵐ-cong)))))
+      -- transported to the ambient barrier
+      ∙ ≈ᵐ-sym (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
+          (handle-op-cont H M N ren pM pN pH uH))))
 
     rhs-inner =
         rhs-left
@@ -311,9 +201,9 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
             , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
             mapˣᵐ-∘⟨⟩ _ _ _ _
-          ∙ ⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate (⟦ Γ ⟧ᴱ-Eternalᵒ))
+          ∙ ⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ))
               ∙ ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (projᴱ Γ)))
+              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat ⟨⊤⟩-η))
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
             , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
@@ -331,7 +221,7 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
       ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-opᵀ op (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+      ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-opᵀ op (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH))
       -- the law's reshuffle returns the eternal and operation parameters
       -- unchanged; the continuation carries the rest
       ∙ ∘ᵐ-assoc _ _ _
