@@ -437,3 +437,14 @@ everything-weakens = ≾-⊤ₑ
 
 reading-stale-at-⊤ : ¬ (uᵣ ·ᵣ ⊤ᵣ ≾ᵣ uᵣ)
 reading-stale-at-⊤ ()
+
+-- so no handler clause here may close over a reading: the bound
+-- `reporting` asks for fails at the barrier already, whatever the
+-- clause spends past it
+
+no-reporting : (op : Op) → (ε'' : E)
+             → ¬ (uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ)
+no-reporting op ε'' bound =
+  reading-stale-at-⊤
+    (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ} {op-grade op}
+      (≾ᵣ-zero-productˡ {uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op} {ε''} bound))

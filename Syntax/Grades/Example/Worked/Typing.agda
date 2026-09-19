@@ -57,6 +57,13 @@
 --                                                                     --
 -- Each entry is a proof or a refutation in the instance concerned.     --
 --                                                                     --
+-- `var`'s bound is asked once more at the barrier lock `⟨ ⊤ᵣ ⟩`, which --
+-- is how a handler clause sees the ambient context: may a clause close --
+-- over a *non-eternal* binding? `Core`'s `reporting` is the clause     --
+-- that does, asking for the bound at `⊤ᵣ` and at what it spends past   --
+-- it. `Time.LeftSided` supplies it, `⊤ᵣ` being the unit there, and     --
+-- `Time.RightSided` refutes it.                                        --
+--                                                                     --
 -- A third rule meets `unbox` obliquely. Sequencing types its           --
 -- continuation under the lock `⟨ mapᵉ ε ⟩`, `ε` being the grade its    --
 -- first part is *typed at*, so a `coerce` there changes what the       --

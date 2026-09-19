@@ -234,6 +234,30 @@ identifying op ε'' =
                      (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷
                        (Tl-⟨⟩ (Tl-∷ Hd)))))))))))))
 
+-- Resume, and then answer with the reading the clause closed over. A
+-- reading is not eternal, so `var` asks for its bound at the barrier
+-- and at everything the clause has spent since -- the question `Node`
+-- leaves to each instance.
+
+reporting : (reading-crosses :
+              (op : Op) → (ε'' : E)
+              → uᵣ ·ᵣ ⊤ᵣ ·ᵣ mapᵉ (op-grade op) ·ᵣ mapᵉ ε'' ≾ᵣ uᵣ)
+          → (op : Op) → (ε'' : E)
+          → Node ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Reading ‼ ε'')
+            ⊢C⦂ Reading ‼ (op-grade op ·ₑ ε'')
+reporting reading-crosses op ε'' =
+  ε-subst (cong (op-grade op ·ₑ_) (·ₑ-identityʳ ε''))
+    (perform op (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
+                                     -- ⟨ op-grade op ⟩ ∷ arity op
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (≾ᵣ-reflexive (·ᵣ-identityˡ _))
+                                     -- ∷ arity op ⇒ Reading ‼ ε''
+        ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
+          ⨟                          -- ⟨ ε'' ⟩ ∷ Reading
+            return (fresh-var (reading-crosses op ε'')
+                     (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷
+                       (Tl-⟨⟩ Hd))))))))))))
+
 -- Drop the continuation and return straight away. The clause still has
 -- to be graded at `op-grade op ·ₑ ε''`, and a `return` is graded at
 -- `uₑ`, so it exists exactly when the grade of doing nothing sits below

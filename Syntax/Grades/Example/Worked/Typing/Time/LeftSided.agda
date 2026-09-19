@@ -505,3 +505,20 @@ everything-weakens = ≾-⊤ₑ
 
 reading-survives-⊤ : ⊤ᵣ ≾ᵣ uᵣ
 reading-survives-⊤ = ≤!
+
+-- so a handler clause may close over a reading: `var`'s bound holds at
+-- the barrier and at whatever the clause spends past it
+
+reading-crosses-the-barrier :
+  (op : Op) → (ε'' : E) → uᵣ ·ᵣ ⊤ᵣ ·ᵣ op-grade op ·ᵣ ε'' ≾ᵣ uᵣ
+reading-crosses-the-barrier op ε'' = nothing-goes-stale _
+
+-- the node's reading, answered from inside a clause that performs the
+-- operation again and resumes first
+
+reported : Node ⊢C⦂ Reading ‼ [ 1 ,+∞⟩
+reported =
+  handle perform read ⋆ (return here)
+    `with reporting reading-crosses-the-barrier
+    `in                              -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
+      (return here)
