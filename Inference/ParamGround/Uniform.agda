@@ -8,11 +8,10 @@
 -- `Inference.ParamGround.Covariance`.                             --
 --                                                                --
 -- `CovD` excludes a *nested* `handle` (the handler algebra's      --
--- fold is not known to be natural in the ambient instantiation),  --
--- a `var` reaching across the `_ᴱ̂` barrier, and a `_⨟_` whose     --
--- continuation grade mentions the rigid variable (the model       --
--- interface has `T-≤-μᵀ` only in the *outer* grade). Every other  --
--- former is covered.                                             --
+-- fold is not known to be natural in the ambient instantiation)    --
+-- and a `_⨟_` whose continuation grade mentions the rigid          --
+-- variable (the model interface has `T-≤-μᵀ` only in the *outer*   --
+-- grade). Every other former is covered.                          --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -42,8 +41,7 @@ module Inference.ParamGround.Uniform
          (GE : GroundEternal S Cat Fut Pst Adj GTy)
        where
 
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
-open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Empty using (⊥)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; _×_; Σ; Σ-syntax; proj₁; proj₂)
@@ -252,19 +250,11 @@ ifᵐ-post {X} {A} b m n g =
 -- Covariance certificates for derivations                   --
 --------------------------------------------------------------
 
--- Which variable uses are admitted: those that stay on this side of the
--- `_ᴱ̂` barrier (across one the grounded witness is built by `∈-ᴱ`, whose
--- two readings the coercions of `Covariance` do not relate).
-
-NoCross : 𝔹 → Set
-NoCross false = ⊤
-NoCross true  = ⊥
-
 mutual
 
   CovDV : ∀ {Θ m} {Q : Hyps (Θ +e)} {Γ : OCtx (Θ +e) m} {A : OVType (Θ +e)}
         → Q ∣ Γ ⊢V⦂ A → Set
-  CovDV (var x ok)  = NoCross (crossesᴱ̂ x)
+  CovDV (var x ok)  = ⊤
   CovDV (const B c) = ⊤
   CovDV ⋆           = ⊤
   CovDV true        = ⊤
@@ -283,7 +273,7 @@ mutual
   CovDC (perform op V M)        = CovDV V × CovDC M
   CovDC (delay τ M)             = CovDC M
   CovDC (handle M `with H `in N) = ⊥
-  CovDC (unbox x ok N)          = NoCross (crossesᴱ̂ x) × CovDC N
+  CovDC (unbox x ok N)          = CovDC N
   CovDC (box {A} ρ V N)         = NoNewR ρ × CovV A × CovDV V × CovDC N
   CovDC (coerce le M)           = CovDC M
 
@@ -306,7 +296,7 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
       ≈ᵐ covV A cA ∘ᵐ ⟦ groundV θ₁ h₁ D ⟧ᵛᵗ p₁
 
     Cov-groundV h₁ h₂ (var x ok) cΓ cA cD p₁ p₂ =
-      cov-var-D h₁ h₂ cΓ cA (crossesᴱ̂ x) x refl ok cD
+      cov-var-D h₁ h₂ cΓ cA x ok
     Cov-groundV h₁ h₂ (const B c) cΓ cA cD p₁ p₂ =
          ∘ᵐ-assoc _ _ _
       ∙≈ ∘ᵐ-congʳ terminalᵐ-unique
@@ -460,8 +450,8 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
                 (pm₁ , pn₁) (pm₂ , pn₂) =
       cov-seq h₁ h₂ M N cΓ cB nε' cA cM cN pm₁ pn₁ pm₂ pn₂
 
-    Cov-groundC h₁ h₂ (unbox x ok N) cΓ cC (nc , cN) p₁ p₂ =
-      cov-unbox h₁ h₂ cΓ cC (crossesᴱ̂ x) x refl ok nc N cN p₁ p₂
+    Cov-groundC h₁ h₂ (unbox x ok N) cΓ cC cN p₁ p₂ =
+      cov-unbox h₁ h₂ cΓ cC x ok N cN p₁ p₂
 
     Cov-groundC h₁ h₂ (box ρ V N) cΓ cC (nρ , cA , cV , cN)
                 (pv₁ , pn₁) (pv₂ , pn₂) =
@@ -471,26 +461,24 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
     -- The cases with content                                --
     ----------------------------------------------------------
 
-    -- A variable. `ground-var`'s crossing flag is generalised, exactly as in
-    -- `groundV`, so that the two grounded witnesses are `ground-∈`.
+    -- A variable.
 
     cov-var-D :
         ∀ {m} {Q : Hyps (Θ +e)} {Γ : OCtx (Θ +e) m} {A : OVType (Θ +e)}
           {ρ : RExp (Θ +e)}
       → (h₁ : θ₁ ⊨ᴴ Q) → (h₂ : θ₂ ⊨ᴴ Q)
       → (cΓ : CovCtx Γ) → (cA : CovV A)
-      → (b : 𝔹) → (x : A ∈̂[ ρ ] Γ) → (eq : crossesᴱ̂ x ≡ b)
-      → (ok : VarOK Q A ρ b) → NoCross b
-      → var-morphism (proj₁ (proj₂ (ground-var θ₂ h₂ b x eq ok)))
-                     (proj₂ (proj₂ (ground-var θ₂ h₂ b x eq ok))) ∘ᵐ covCtx Γ cΓ
-      ≈ᵐ covV A cA ∘ᵐ var-morphism (proj₁ (proj₂ (ground-var θ₁ h₁ b x eq ok)))
-                                   (proj₂ (proj₂ (ground-var θ₁ h₁ b x eq ok)))
-    cov-var-D h₁ h₂ cΓ cA false x eq (inj₁ et) nc =
-         cov-var cΓ x eq _ _
-      ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x eq) cA)
-    cov-var-D h₁ h₂ cΓ cA false x eq (inj₂ le) nc =
-         cov-var cΓ x eq _ _
-      ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x eq) cA)
+      → (x : A ∈̂[ ρ ] Γ) → (ok : VarOK Q A ρ)
+      → var-morphism (proj₁ (ground-var θ₂ h₂ x ok))
+                     (proj₂ (ground-var θ₂ h₂ x ok)) ∘ᵐ covCtx Γ cΓ
+      ≈ᵐ covV A cA ∘ᵐ var-morphism (proj₁ (ground-var θ₁ h₁ x ok))
+                                   (proj₂ (ground-var θ₁ h₁ x ok))
+    cov-var-D h₁ h₂ cΓ cA x (inj₁ et) =
+         cov-var cΓ x _ _
+      ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x) cA)
+    cov-var-D h₁ h₂ cΓ cA x (inj₂ le) =
+         cov-var cΓ x _ _
+      ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x) cA)
 
     -- Sequencing. The strength's box component is relaxed by `strᵀ-≤`, which
     -- is where the lock's grade `∣ ε ∣̂ᵉ` meets `map-monotoneᵉ`.
@@ -587,37 +575,36 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
           {A : OVType (Θ +e)} {C : OCType (Θ +e)} {ρ ρ' : RExp (Θ +e)}
       → (h₁ : θ₁ ⊨ᴴ Q) → (h₂ : θ₂ ⊨ᴴ Q)
       → (cΓ : CovCtx Γ) → (cC : CovC C)
-      → (b : 𝔹) → (x : [ ρ ] A ∈̂[ ρ' ] Γ) → (eq : crossesᴱ̂ x ≡ b)
-      → (ok : UnboxOK Q ρ' ρ b) → NoCross b
+      → (x : [ ρ ] A ∈̂[ ρ' ] Γ) → (le : Q ⊩ ρ' ≾̂ᵣ ρ)
       → (N : Q ∣ Γ ∷ A ⊢C⦂ C) → (cN : CovDC N)
       → (p₁ : Paramᶜ (groundC θ₁ h₁ N)) → (p₂ : Paramᶜ (groundC θ₂ h₂ N))
       → (   ⟦ groundC θ₂ h₂ N ⟧ᶜᵗ p₂
-          ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₁ (ground-unbox θ₂ h₂ b x eq ok))
-                        ∘ᵐ var-proj (proj₂ (ground-unbox θ₂ h₂ b x eq ok)) ⟩ᵐ)
+          ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₁ (ground-unbox θ₂ h₂ x le))
+                        ∘ᵐ var-proj (proj₂ (ground-unbox θ₂ h₂ x le)) ⟩ᵐ)
           ∘ᵐ covCtx Γ cΓ
       ≈ᵐ covC C cC
           ∘ᵐ ⟦ groundC θ₁ h₁ N ⟧ᶜᵗ p₁
-          ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₁ (ground-unbox θ₁ h₁ b x eq ok))
-                        ∘ᵐ var-proj (proj₂ (ground-unbox θ₁ h₁ b x eq ok)) ⟩ᵐ
-    cov-unbox {Γ = Γ} {A} h₁ h₂ cΓ cC false x eq le nc N cN p₁ p₂ =
+          ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ (proj₁ (ground-unbox θ₁ h₁ x le))
+                        ∘ᵐ var-proj (proj₂ (ground-unbox θ₁ h₁ x le)) ⟩ᵐ
+    cov-unbox {Γ = Γ} {A} h₁ h₂ cΓ cC x le N cN p₁ p₂ =
          ∘ᵐ-assoc _ _ _
       ∙≈ ∘ᵐ-congʳ (   ⟨⟩ᵐ-∘ _ _ _
                    ∙≈ ⟨ ∘ᵐ-identityˡ _ , snd-step ⟩ᵐ-cong
                    ∙≈ ≈ᵐ-sym (   mapˣᵐ-∘⟨⟩ _ _ _ _
                               ∙≈ ⟨ ∘ᵐ-identityʳ _ , ≈ᵐ-refl ⟩ᵐ-cong))
       ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙≈ ∘ᵐ-congˡ (Cov-groundC h₁ h₂ N (cΓ , proj₂ (cov-∈ cΓ x eq)) cC cN p₁ p₂)
+      ∙≈ ∘ᵐ-congˡ (Cov-groundC h₁ h₂ N (cΓ , proj₂ (cov-∈ cΓ x)) cC cN p₁ p₂)
       ∙≈ ∘ᵐ-assoc _ _ _
       where
         snd-step :
-            (ε⊣ ∘ᵐ ⟨⟩-≤ (ground-≾ᵣ h₂ le) ∘ᵐ var-proj (ground-∈ θ₂ x eq))
+            (ε⊣ ∘ᵐ ⟨⟩-≤ (ground-≾ᵣ h₂ le) ∘ᵐ var-proj (ground-∈ θ₂ x))
               ∘ᵐ covCtx Γ cΓ
-          ≈ᵐ covV A (proj₂ (cov-∈ cΓ x eq))
-              ∘ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (ground-≾ᵣ h₁ le) ∘ᵐ var-proj (ground-∈ θ₁ x eq))
+          ≈ᵐ covV A (proj₂ (cov-∈ cΓ x))
+              ∘ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ (ground-≾ᵣ h₁ le) ∘ᵐ var-proj (ground-∈ θ₁ x))
         snd-step =
              ∘ᵐ-assoc _ _ _
           ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-          ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (cov-var-proj cΓ x eq))
+          ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (cov-var-proj cΓ x))
           ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
           ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-trans _ _))
           ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -929,7 +916,7 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
 
   ground-uniform-cov :
       (Ĥ : (op : Op)
-         → wkᵉ-H Q ∣ (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+         → wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                        ∷ [ rconst (mapᵉ (op-grade op)) ]
                            (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
            ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
@@ -957,7 +944,7 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
       open Cov θ qq
 
       Γ̂ : OCtx (Θ +e) _
-      Γ̂ = (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+      Γ̂ = wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
             ∷ [ rconst (mapᵉ (op-grade op)) ]
                 (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
 
@@ -983,8 +970,12 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
       E₂ ε'' = cong (_‼ (op-grade op ·ₑ ε''))
                     (ground-wkᵉ-v {θ = θ} {ε₀ = ε''} B)
 
+      nΓ̂ : NoNewCtx (wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩)
+      nΓ̂ = nn-wkᵉ-ctx Γ , tt
+
       cΓ̂ : CovCtx Γ̂
-      cΓ̂ = (nn-wkᵉ-ctx Γ , nn⇒CovV ⌜ param op ⌝ᵍ (nn-⌜⌝ᵍ (param op)))
+      cΓ̂ = (nn⇒CovCtx (wkᵉ-ctx Γ) (nn-wkᵉ-ctx Γ)
+           , nn⇒CovV ⌜ param op ⌝ᵍ (nn-⌜⌝ᵍ (param op)))
          , (tt , (nn-⌜⌝ᵍ (arity op) , nn⇒CovV (wkᵉ-v B) (nn-wkᵉ-v B)))
 
       cĈ : CovC Ĉ
@@ -1009,8 +1000,14 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
                       (nonew-v (wkᵉ-v B) (nn-wkᵉ-v B))
                       qq (≾ᵣ-reflexive (sym (nonew-r (rconst (mapᵉ (op-grade op))) tt)))
         ∙≈ ∘ᵐ-congˡ (mapˣᵐ-cong
-             (mapˣᵐ-cong ≈ᵐ-refl
-                         (≈ᵐ-sym (covV-nn ⌜ param op ⌝ᵍ
+             (mapˣᵐ-cong
+                (≈ᵐ-sym (   covCtx-nn (wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩)
+                                      (nn⇒CovCtx (wkᵉ-ctx Γ) (nn-wkᵉ-ctx Γ)) nΓ̂
+                         ∙≈ invˣ⁺-irr
+                              (nonew-ctx (wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩) nΓ̂)
+                              (cong (_⟨ ⊤ᵣ ⟩)
+                                    (nonew-ctx (wkᵉ-ctx Γ) (nn-wkᵉ-ctx Γ)))))
+                (≈ᵐ-sym (covV-nn ⌜ param op ⌝ᵍ
                                           (nn⇒CovV ⌜ param op ⌝ᵍ (nn-⌜⌝ᵍ (param op)))
                                           (nn-⌜⌝ᵍ (param op)))))
              (∘ᵐ-congˡ ([]-congᶠ (map⇒ᵐ-cong ≈ᵐ-refl
@@ -1043,7 +1040,7 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
 private
 
   forward : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ} → (op : Op)
-          → wkᵉ-H Q ∣ (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+          → wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                         ∷ [ rconst (mapᵉ (op-grade op)) ]
                             (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
               ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ}))
@@ -1055,4 +1052,4 @@ private
 
   forward-cov : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ} → (op : Op)
               → CovDC (forward {Θ} {n} {Q} {Γ} {B} op)
-  forward-cov op = tt , (tt , (nn-⌜⌝ᵍ (arity op) , tt , tt))
+  forward-cov op = tt , (nn-⌜⌝ᵍ (arity op) , tt , tt)

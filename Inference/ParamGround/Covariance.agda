@@ -125,7 +125,6 @@ NoNewCtx : ∀ {Θ n} → OCtx (Θ +e) n → Set
 NoNewCtx []        = ⊤
 NoNewCtx (Γ ∷ A)   = NoNewCtx Γ × NoNewV A
 NoNewCtx (Γ ⟨ ρ ⟩) = NoNewCtx Γ × NoNewR ρ
-NoNewCtx (Γ ᴱ̂)     = NoNewCtx Γ
 
 --------------------------------------------------------------
 -- The weakenings and the closed embeddings are `newᵉ`-free   --
@@ -161,7 +160,6 @@ nn-wkᵉ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → NoNewCtx (wkᵉ-ctx Γ)
 nn-wkᵉ-ctx []        = tt
 nn-wkᵉ-ctx (Γ ∷ A)   = nn-wkᵉ-ctx Γ , nn-wkᵉ-v A
 nn-wkᵉ-ctx (Γ ⟨ ρ ⟩) = nn-wkᵉ-ctx Γ , nn-wkᵉ-r ρ
-nn-wkᵉ-ctx (Γ ᴱ̂)     = nn-wkᵉ-ctx Γ
 
 -- A ground type embeds `newᵉ`-free
 
@@ -301,7 +299,6 @@ CovCtx : ∀ {Θ n} → OCtx (Θ +e) n → Set
 CovCtx []        = ⊤
 CovCtx (Γ ∷ A)   = CovCtx Γ × CovV A
 CovCtx (Γ ⟨ ρ ⟩) = CovCtx Γ
-CovCtx (Γ ᴱ̂)     = NoNewCtx Γ
 
 ------------------------------------------------------------
 -- Certificates for a `newᵉ`-free type                     --
@@ -325,7 +322,6 @@ nn⇒CovCtx : ∀ {Θ n} → (Γ : OCtx (Θ +e) n) → NoNewCtx Γ → CovCtx Γ
 nn⇒CovCtx []        n        = tt
 nn⇒CovCtx (Γ ∷ A)   (n , n') = nn⇒CovCtx Γ n , nn⇒CovV A n'
 nn⇒CovCtx (Γ ⟨ ρ ⟩) (n , n') = nn⇒CovCtx Γ n
-nn⇒CovCtx (Γ ᴱ̂)     n        = n
 
 ------------------------------------------------------------
 -- Uniqueness of the certificates                          --
@@ -390,10 +386,10 @@ mutual
 -- the variable's type covariant too, and a `newᵉ`-free one `newᵉ`-free.
 
 cov-∈ : ∀ {Θ m} {A : OVType (Θ +e)} {ρ : RExp (Θ +e)} {Γ : OCtx (Θ +e) m}
-      → CovCtx Γ → (x : A ∈̂[ ρ ] Γ) → crossesᴱ̂ x ≡ false → CovV A
-cov-∈ (c , c') Hd        eq = c'
-cov-∈ (c , c') (Tl-∷ x)  eq = cov-∈ c x eq
-cov-∈ c        (Tl-⟨⟩ x) eq = cov-∈ c x eq
+      → CovCtx Γ → A ∈̂[ ρ ] Γ → CovV A
+cov-∈ (c , c') Hd        = c'
+cov-∈ (c , c') (Tl-∷ x)  = cov-∈ c x
+cov-∈ c        (Tl-⟨⟩ x) = cov-∈ c x
 
 
 -- Left-to-right chaining of `≈ᵐ`
@@ -450,7 +446,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   nonew-ctx []        n        = refl
   nonew-ctx (Γ ∷ A)   (n , n') = cong₂ _∷_ (nonew-ctx Γ n) (nonew-v A n')
   nonew-ctx (Γ ⟨ ρ ⟩) (n , n') = cong₂ _⟨_⟩ (nonew-ctx Γ n) (nonew-r ρ n')
-  nonew-ctx (Γ ᴱ̂)     n        = cong (_⟨ ⊤ᵣ ⟩) (nonew-ctx Γ n)
 
   ------------------------------------------------------------
   -- The coercions                                           --
@@ -478,7 +473,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   covCtx (Γ ∷ A)   (c , c') = mapˣᵐ (covCtx Γ c) (covV A c')
   covCtx (Γ ⟨ ρ ⟩) c =
     ⟨⟩-≤ (ground-mono-r {θ = θ} q ρ) ∘ᵐ ⟨ ⟦ ρ ⟧ʳ θ₁ ⟩ᶠ (covCtx Γ c)
-  covCtx (Γ ᴱ̂)     n = invˣ⁺ (nonew-ctx (Γ ᴱ̂) n)
 
   ------------------------------------------------------------
   -- At a `newᵉ`-free type every coercion is the transport   --
@@ -522,7 +516,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
     ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (covCtx-nn Γ c n)))
              (invˣ⁺-⟨⟩ (nonew-ctx Γ n) (nonew-r ρ n')
                        (ground-mono-r {θ = θ} q ρ))
-  covCtx-nn (Γ ᴱ̂) c n = invˣ⁺-irr (nonew-ctx (Γ ᴱ̂) c) (nonew-ctx (Γ ᴱ̂) n)
 
   ------------------------------------------------------------
   -- Eternal types are `newᵉ`-free                           --
@@ -558,12 +551,12 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   -- Naturality of the projection `var-proj` in the instantiation.
 
   cov-var-proj : ∀ {m} {A : OVType (Θ +e)} {ρ : RExp (Θ +e)} {Γ : OCtx (Θ +e) m}
-               → (cΓ : CovCtx Γ) → (x : A ∈̂[ ρ ] Γ) → (eq : crossesᴱ̂ x ≡ false)
-               → var-proj (ground-∈ θ₂ x eq) ∘ᵐ covCtx Γ cΓ
+               → (cΓ : CovCtx Γ) → (x : A ∈̂[ ρ ] Γ)
+               → var-proj (ground-∈ θ₂ x) ∘ᵐ covCtx Γ cΓ
                ≈ᵐ ⟨⟩-≤ (ground-mono-r {θ = θ} q ρ)
-                    ∘ᵐ ⟨ ⟦ ρ ⟧ʳ θ₁ ⟩ᶠ (covV _ (cov-∈ cΓ x eq))
-                    ∘ᵐ var-proj (ground-∈ θ₁ x eq)
-  cov-var-proj {A = A} (cΓ , cA) Hd eq =
+                    ∘ᵐ ⟨ ⟦ ρ ⟧ʳ θ₁ ⟩ᶠ (covV _ (cov-∈ cΓ x))
+                    ∘ᵐ var-proj (ground-∈ θ₁ x)
+  cov-var-proj {A = A} (cΓ , cA) Hd =
        ∘ᵐ-assoc _ _ _
     ∙≈ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
     ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -571,20 +564,20 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
     ∙≈ ∘ᵐ-assoc _ _ _
     ∙≈ ≈ᵐ-sym (   ∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl ∙≈ ⟨⟩-≤-refl)
                ∙≈ ∘ᵐ-identityˡ _)
-  cov-var-proj (cΓ , cA) (Tl-∷ x) eq =
+  cov-var-proj (cΓ , cA) (Tl-∷ x) =
        ∘ᵐ-assoc _ _ _
     ∙≈ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
     ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-    ∙≈ ∘ᵐ-congˡ (cov-var-proj cΓ x eq)
+    ∙≈ ∘ᵐ-congˡ (cov-var-proj cΓ x)
     ∙≈ ∘ᵐ-assoc _ _ _
     ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  cov-var-proj {A = A} cΓ (Tl-⟨⟩ {ρ = ρ₀} {ρ' = ρ'} x) eq =
+  cov-var-proj {A = A} cΓ (Tl-⟨⟩ {ρ = ρ₀} {ρ' = ρ'} x) =
        ∘ᵐ-assoc _ _ _
     ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
     ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-nat _ _))
     ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
     ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-congᶠ (cov-var-proj cΓ x eq)))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-congᶠ (cov-var-proj cΓ x)))
     ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
     ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
     ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -627,45 +620,45 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   -- Naturality of a variable's denotation in the instantiation.
 
   cov-var : ∀ {m} {A : OVType (Θ +e)} {ρ : RExp (Θ +e)} {Γ : OCtx (Θ +e) m}
-          → (cΓ : CovCtx Γ) → (x : A ∈̂[ ρ ] Γ) → (eq : crossesᴱ̂ x ≡ false)
+          → (cΓ : CovCtx Γ) → (x : A ∈̂[ ρ ] Γ)
           → (f₁ : ¬ Eternal (⟦ A ⟧ᵒᵛ θ₁) → ⟦ ρ ⟧ʳ θ₁ ≾ᵣ uᵣ)
           → (f₂ : ¬ Eternal (⟦ A ⟧ᵒᵛ θ₂) → ⟦ ρ ⟧ʳ θ₂ ≾ᵣ uᵣ)
-          → var-morphism f₂ (ground-∈ θ₂ x eq) ∘ᵐ covCtx Γ cΓ
-          ≈ᵐ covV _ (cov-∈ cΓ x eq) ∘ᵐ var-morphism f₁ (ground-∈ θ₁ x eq)
-  cov-var {A = A} {ρ} {Γ} cΓ x eq f₁ f₂ = go (eternal? (⟦ A ⟧ᵒᵛ θ₁))
+          → var-morphism f₂ (ground-∈ θ₂ x) ∘ᵐ covCtx Γ cΓ
+          ≈ᵐ covV _ (cov-∈ cΓ x) ∘ᵐ var-morphism f₁ (ground-∈ θ₁ x)
+  cov-var {A = A} {ρ} {Γ} cΓ x f₁ f₂ = go (eternal? (⟦ A ⟧ᵒᵛ θ₁))
     where
       go : Dec (Eternal (⟦ A ⟧ᵒᵛ θ₁))
-         → var-morphism f₂ (ground-∈ θ₂ x eq) ∘ᵐ covCtx Γ cΓ
-         ≈ᵐ covV A (cov-∈ cΓ x eq) ∘ᵐ var-morphism f₁ (ground-∈ θ₁ x eq)
+         → var-morphism f₂ (ground-∈ θ₂ x) ∘ᵐ covCtx Γ cΓ
+         ≈ᵐ covV A (cov-∈ cΓ x) ∘ᵐ var-morphism f₁ (ground-∈ θ₁ x)
       go (yes et₁) =
-           ∘ᵐ-congˡ (var-morphism-unfoldᵉ (eternal₁₂ A et₁) f₂ (ground-∈ θ₂ x eq))
+           ∘ᵐ-congˡ (var-morphism-unfoldᵉ (eternal₁₂ A et₁) f₂ (ground-∈ θ₂ x))
         ∙≈ ∘ᵐ-assoc _ _ _
-        ∙≈ ∘ᵐ-congʳ (cov-var-proj cΓ x eq)
+        ∙≈ ∘ᵐ-congʳ (cov-var-proj cΓ x)
         ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
         ∙≈ ∘ᵐ-congˡ (eternalᵛ-extᵉ-≤ (eternal₁₂ A et₁) (ground-mono-r {θ = θ} q ρ))
         ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-        ∙≈ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (covV-nn A (cov-∈ cΓ x eq) nA)))
+        ∙≈ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (covV-nn A (cov-∈ cΓ x) nA)))
         ∙≈ ∘ᵐ-congˡ (extᵉ-inv⁺ (nonew-v A nA) et₁ (eternal₁₂ A et₁))
         ∙≈ ∘ᵐ-assoc _ _ _
-        ∙≈ ∘ᵐ-congˡ (≈ᵐ-sym (covV-nn A (cov-∈ cΓ x eq) nA))
-        ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (var-morphism-unfoldᵉ et₁ f₁ (ground-∈ θ₁ x eq)))
+        ∙≈ ∘ᵐ-congˡ (≈ᵐ-sym (covV-nn A (cov-∈ cΓ x) nA))
+        ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (var-morphism-unfoldᵉ et₁ f₁ (ground-∈ θ₁ x)))
         where
           nA : NoNewV A
           nA = eternal-nn θ₁ A et₁
       go (no ¬et₁) =
-           ∘ᵐ-congˡ (var-morphism-unfold¬ᵉ ¬et₂ f₂ (ground-∈ θ₂ x eq))
+           ∘ᵐ-congˡ (var-morphism-unfold¬ᵉ ¬et₂ f₂ (ground-∈ θ₂ x))
         ∙≈ ∘ᵐ-assoc _ _ _
         ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-        ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (cov-var-proj cΓ x eq))
+        ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (cov-var-proj cΓ x))
         ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-trans (ground-mono-r {θ = θ} q ρ) (f₂ ¬et₂)))
         ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
         ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-        ∙≈ ∘ᵐ-congˡ (≈ᵐ-sym (ext-nat _ (covV A (cov-∈ cΓ x eq))))
+        ∙≈ ∘ᵐ-congˡ (≈ᵐ-sym (ext-nat _ (covV A (cov-∈ cΓ x))))
         ∙≈ ∘ᵐ-assoc _ _ _
         ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
         ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ (f₁ ¬et₁))))
-        ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (var-morphism-unfold¬ᵉ ¬et₁ f₁ (ground-∈ θ₁ x eq)))
+        ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (var-morphism-unfold¬ᵉ ¬et₁ f₁ (ground-∈ θ₁ x)))
         where
           ¬et₂ : ¬ Eternal (⟦ A ⟧ᵒᵛ θ₂)
           ¬et₂ et = ¬et₁ (eternal₂₁ A et)

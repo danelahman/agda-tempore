@@ -29,8 +29,6 @@
 -- `Inference.Soundness`, read right-to-left) remain.             --
 ------------------------------------------------------------------
 
--- `Bool` is renamed, as `OVType` has a constructor of that name
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.Fin using (zero)
 open import Data.Product using (Σ-syntax; _,_)
 
@@ -68,36 +66,6 @@ open import Inference.Generate  S
 open import Inference.Soundness S
 
 --------------------------------------------------------------
--- Reading the two barrier-sensitive rows backwards          --
---                                                           --
--- `VarC`/`UnboxC` dispatch on the same flag as               --
--- `VarOK`/`UnboxOK`, so the premise of the mirrored rule     --
--- *is* the satisfaction of the generated row.                --
---------------------------------------------------------------
-
-VarOK-VarC : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
-           → (A : OVType Θ) → (ρ : RExp Θ) → (b : 𝔹)
-           → VarOK Q (A [ σ ]ᵛ) (ρ [ σ ]ʳ) b
-           --------------------------------
-           → σ ⊨[ Q ] VarC A ρ b
-
-VarOK-VarC σ Q A ρ true  ok = ok
-VarOK-VarC σ Q A ρ false ok = ok
-
--- A derivable unboxing is a non-crossing one, and its row is then the
--- guarded constraint itself; the crossing case is `⊥`.
-
-UnboxOK-UnboxC : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C : Constraint Θ}
-                 {ρ' ρ : RExp Θ'}
-               → (b : 𝔹)
-               → UnboxOK Q ρ' ρ b
-               → (Q ⊩ ρ' ≾̂ᵣ ρ → σ ⊨[ Q ] C)
-               ----------------------------
-               → σ ⊨[ Q ] UnboxC C b
-
-UnboxOK-UnboxC false ok f = f ok
-
---------------------------------------------------------------
 -- The theorem                                               --
 --------------------------------------------------------------
 
@@ -114,12 +82,11 @@ mutual
 
   -- variables
   --
-  -- The raw index is `var-pos x`, at which the three lookups agree with
-  -- the type, the grade and the crossing flag of `x` itself.
+  -- The raw index is `var-pos x`, at which the two lookups agree with the
+  -- type and the grade of `x` itself.
 
   completeV {σ = σ} {Q = Q} Γ A (var {A = A₁} {ρ = ρ₁} x ok) ceq aeq =
-    trans lty aeq ,
-    VarOK-VarC σ Q (lookup-ty Γ i) (lookup-gr Γ i) (lookup-crosses Γ i) ok'
+    trans lty aeq , ok'
     where
       i = var-pos x
 
@@ -131,17 +98,8 @@ mutual
       lgr = trans (sym (lookup-gr-subst Γ σ i))
                   (trans (cong (λ G → lookup-gr G i) (sym ceq)) (var-pos-gr x))
 
-      flg : lookup-crosses Γ i ≡ crossesᴱ̂ x
-      flg = trans (sym (lookup-crosses-subst Γ σ i))
-                  (trans (cong (λ G → lookup-crosses G i) (sym ceq))
-                         (lookup-crosses-var x))
-
       ok' : VarOK Q (lookup-ty Γ i [ σ ]ᵛ) (lookup-gr Γ i [ σ ]ʳ)
-                    (lookup-crosses Γ i)
-      ok' = subst (VarOK Q (lookup-ty Γ i [ σ ]ᵛ) (lookup-gr Γ i [ σ ]ʳ))
-                  (sym flg)
-                  (subst₂ (λ A₂ ρ₂ → VarOK Q A₂ ρ₂ (crossesᴱ̂ x))
-                          (sym lty) (sym lgr) ok)
+      ok' = subst₂ (VarOK Q) (sym lty) (sym lgr) ok
 
   -- base-typed constants, unit, booleans
 
@@ -352,15 +310,15 @@ mutual
       aH = trans (cong wkᵉ-v aeq) (sym pA⇑)
 
       cH : (op : Op)
-         → (wkᵉ-ctx _) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+         → wkᵉ-ctx _ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
               ∷ [ rconst (mapᵉ (op-grade op)) ]
                   (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v _ ‼ evar (newᵉ {Θ'}))
-           ≡ (Γ⇑ ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+           ≡ (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                 ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ A⇑ ‼ e''))
              [ σ' ↑ᵉ ]ᶜᵗˣ
       cH op =
         cong₂ _∷_
-              (cong₂ _∷_ (cong _ᴱ̂ (trans (cong wkᵉ-ctx ceq) (sym pΓ⇑)))
+              (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) (trans (cong wkᵉ-ctx ceq) (sym pΓ⇑)))
                          (sym (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op))))
               (cong₂ (λ X Y → [ rconst (mapᵉ (op-grade op)) ]
                                 (X ⇒ Y ‼ evar (newᵉ {Θ'})))
@@ -369,21 +327,16 @@ mutual
 
       ihH : (op : Op) → _
       ihH op =
-        completeC (Γ⇑ ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+        completeC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                       ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ A⇑ ‼ e''))
                   A⇑ (econst (op-grade op) ·̂ₑ e'')
                   (H op) (cH op) aH ⊩≾̂ₑ-refl
 
   -- unboxing a boxed variable
-  --
-  -- The gate is `lookup-crosses Γ (var-pos x)`, which the alignment `flg`
-  -- rewrites to the witness's own flag; a derivable `unbox` has that flag
-  -- `false` (`UnboxOK … true = ⊥`), and the guarded row is then the row.
 
   completeC {Θ = Θ} {σ = σ} {Q = Q} Γ A t
             (unbox {A = A₁} {ρ = ρ₁} {ρ' = ρ'} x ok D) ceq aeq le =
-    subst (λ b → σ ⊨[ Q ] UnboxC Cᵘ b) (sym flg)
-          (UnboxOK-UnboxC (crossesᴱ̂ x) ok row)
+    row ok
     where
       i  = var-pos x
       σ' = σ ,ᵗ A₁ ,ʳ ρ₁
@@ -400,11 +353,6 @@ mutual
       pΓ = coᵗʳ-ctx σ A₁ ρ₁ Γ
       pA = coᵗʳ-v   σ A₁ ρ₁ A
       pt = coᵗʳ-e   σ A₁ ρ₁ t
-
-      flg : lookup-crosses Γ i ≡ crossesᴱ̂ x
-      flg = trans (sym (lookup-crosses-subst Γ σ i))
-                  (trans (cong (λ G → lookup-crosses G i) (sym ceq))
-                         (lookup-crosses-var x))
 
       -- lookup in the weakened context, instantiated, is lookup in `Γ₀`
 

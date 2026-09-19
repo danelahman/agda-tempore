@@ -73,7 +73,6 @@ _[_]ᶜᵗˣ : ∀ {Θ Θ' n} → OCtx Θ n → Subst Θ Θ' → OCtx Θ' n
 []        [ σ ]ᶜᵗˣ = []
 (Γ ∷ A)   [ σ ]ᶜᵗˣ = Γ [ σ ]ᶜᵗˣ ∷ A [ σ ]ᵛ
 (Γ ⟨ ρ ⟩) [ σ ]ᶜᵗˣ = Γ [ σ ]ᶜᵗˣ ⟨ ρ [ σ ]ʳ ⟩
-(Γ ᴱ̂)     [ σ ]ᶜᵗˣ = (Γ [ σ ]ᶜᵗˣ) ᴱ̂
 
 -- Identity and composition (apply the first, then substitute with the second)
 
@@ -197,7 +196,6 @@ mutual
 [id]ᶜᵗˣ []        = refl
 [id]ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ ([id]ᶜᵗˣ Γ) ([id]ᵛ A)
 [id]ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ ([id]ᶜᵗˣ Γ) ([id]ʳ ρ)
-[id]ᶜᵗˣ (Γ ᴱ̂)     = cong _ᴱ̂ ([id]ᶜᵗˣ Γ)
 
 ----------------------------
 -- Composition (fusion)   --
@@ -238,7 +236,6 @@ mutual
 [⨟]ᶜᵗˣ []        σ δ = refl
 [⨟]ᶜᵗˣ (Γ ∷ A)   σ δ = cong₂ _∷_ ([⨟]ᶜᵗˣ Γ σ δ) ([⨟]ᵛ A σ δ)
 [⨟]ᶜᵗˣ (Γ ⟨ ρ ⟩) σ δ = cong₂ _⟨_⟩ ([⨟]ᶜᵗˣ Γ σ δ) ([⨟]ʳ ρ σ δ)
-[⨟]ᶜᵗˣ (Γ ᴱ̂)     σ δ = cong _ᴱ̂ ([⨟]ᶜᵗˣ Γ σ δ)
 
 ----------------------------------------
 -- The actions respect `_≐ˢ_`         --
@@ -275,7 +272,6 @@ mutual
 [≐]ᶜᵗˣ p []        = refl
 [≐]ᶜᵗˣ p (Γ ∷ A)   = cong₂ _∷_ ([≐]ᶜᵗˣ p Γ) ([≐]ᵛ p A)
 [≐]ᶜᵗˣ p (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ ([≐]ᶜᵗˣ p Γ) ([≐]ʳ p ρ)
-[≐]ᶜᵗˣ p (Γ ᴱ̂)     = cong _ᴱ̂ ([≐]ᶜᵗˣ p Γ)
 
 --------------------------------------------------------------
 -- The weakening substitutions compute the scope extensions  --
@@ -363,19 +359,16 @@ wkˢᵗ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ wkˢᵗ ]ᶜᵗˣ ≡ wk�
 wkˢᵗ-ctx []        = refl
 wkˢᵗ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢᵗ-ctx Γ) (wkˢᵗ-v A)
 wkˢᵗ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢᵗ-ctx Γ) (wkˢᵗ-r ρ)
-wkˢᵗ-ctx (Γ ᴱ̂)     = cong _ᴱ̂ (wkˢᵗ-ctx Γ)
 
 wkˢʳ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ wkˢʳ ]ᶜᵗˣ ≡ wkʳ-ctx Γ
 wkˢʳ-ctx []        = refl
 wkˢʳ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢʳ-ctx Γ) (wkˢʳ-v A)
 wkˢʳ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢʳ-ctx Γ) (wkˢʳ-r ρ)
-wkˢʳ-ctx (Γ ᴱ̂)     = cong _ᴱ̂ (wkˢʳ-ctx Γ)
 
 wkˢᵉ-ctx : ∀ {Θ n} → (Γ : OCtx Θ n) → Γ [ wkˢᵉ ]ᶜᵗˣ ≡ wkᵉ-ctx Γ
 wkˢᵉ-ctx []        = refl
 wkˢᵉ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢᵉ-ctx Γ) (wkˢᵉ-v A)
 wkˢᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢᵉ-ctx Γ) (wkˢᵉ-r ρ)
-wkˢᵉ-ctx (Γ ᴱ̂)     = cong _ᴱ̂ (wkˢᵉ-ctx Γ)
 
 ------------------------------------------------------------------
 -- A weakening precomposed with an extension or a lift          --
@@ -602,27 +595,12 @@ lookup-ty-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') �
 lookup-ty-subst (Γ ∷ A)   σ zero    = refl
 lookup-ty-subst (Γ ∷ A)   σ (suc i) = lookup-ty-subst Γ σ i
 lookup-ty-subst (Γ ⟨ ρ ⟩) σ i       = lookup-ty-subst Γ σ i
-lookup-ty-subst (Γ ᴱ̂)     σ i       = lookup-ty-subst Γ σ i
 
 lookup-gr-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') → (i : Fin n)
                 → lookup-gr (Γ [ σ ]ᶜᵗˣ) i ≡ lookup-gr Γ i [ σ ]ʳ
 lookup-gr-subst (Γ ∷ A)   σ zero    = refl
 lookup-gr-subst (Γ ∷ A)   σ (suc i) = lookup-gr-subst Γ σ i
 lookup-gr-subst (Γ ⟨ ρ ⟩) σ i       = cong (_·̂ᵣ ρ [ σ ]ʳ) (lookup-gr-subst Γ σ i)
-lookup-gr-subst (Γ ᴱ̂)     σ i       = refl
-
-lookup-crosses-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') → (i : Fin n)
-                     → lookup-crosses (Γ [ σ ]ᶜᵗˣ) i ≡ lookup-crosses Γ i
-lookup-crosses-subst (Γ ∷ A)   σ zero    = refl
-lookup-crosses-subst (Γ ∷ A)   σ (suc i) = lookup-crosses-subst Γ σ i
-lookup-crosses-subst (Γ ⟨ ρ ⟩) σ i       = lookup-crosses-subst Γ σ i
-lookup-crosses-subst (Γ ᴱ̂)     σ i       = refl
-
--- The barrier former commutes with substitution, definitionally
-
-ᴱ̂-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ')
-        → (Γ ᴱ̂) [ σ ]ᶜᵗˣ ≡ (Γ [ σ ]ᶜᵗˣ) ᴱ̂
-ᴱ̂-subst Γ σ = refl
 
 ------------------------------------------------------
 -- Closed embeddings are substitution-invariant     --

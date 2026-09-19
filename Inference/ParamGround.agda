@@ -160,7 +160,7 @@ record GroundUniform : Set where
       ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ}
       → (θ : Grounding Θ) → (h : θ ⊨ᴴ Q)
       → (Ĥ : (op : Op)
-           → wkᵉ-H Q ∣ (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+           → wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                          ∷ [ rconst (mapᵉ (op-grade op)) ]
                              (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
              ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
@@ -203,8 +203,8 @@ module _ (GU : GroundUniform) where
     -- the `with` mirrors `groundV`'s, so that the grounded variable's
     -- membership witness is exposed and `Paramᵛ` reduces to `⊤`
 
-    Param-groundV θ h (var x ok) with ground-var θ h (crossesᴱ̂ x) x refl ok
-    ... | _ , f , y = tt
+    Param-groundV θ h (var x ok) with ground-var θ h x ok
+    ... | f , y = tt
     Param-groundV θ h (const B c) = tt
     Param-groundV θ h ⋆           = tt
     Param-groundV θ h true        = tt
@@ -242,7 +242,7 @@ module _ (GU : GroundUniform) where
       , (λ op ε'' → Param-ground-clause θ h op ε'' (Ĥ op))
       , ground-uniform GU θ h Ĥ (λ op ε'' → Param-ground-clause θ h op ε'' (Ĥ op))
 
-    Param-groundC θ h (unbox x ok N) with ground-unbox θ h (crossesᴱ̂ x) x refl ok
+    Param-groundC θ h (unbox x ok N) with ground-unbox θ h x ok
     ... | le , y = Param-groundC θ h N
     Param-groundC θ h (box ρ V N) = Param-groundV θ h V , Param-groundC θ h N
     Param-groundC θ h (coerce le M) = Param-groundC θ h M
@@ -254,7 +254,7 @@ module _ (GU : GroundUniform) where
       ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ}
       → (θ : Grounding Θ) → (h : θ ⊨ᴴ Q)
       → (op : Op) → (ε'' : E)
-      → (X : wkᵉ-H Q ∣ (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+      → (X : wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                          ∷ [ rconst (mapᵉ (op-grade op)) ]
                              (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
              ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))

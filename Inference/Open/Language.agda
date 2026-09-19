@@ -7,17 +7,12 @@
 -- conditions of the original discharged by entailment from the   --
 -- hypothesis set `Q` instead of by closed-grade facts.           --
 --                                                                --
--- Three rules deviate, each marked at its definition: `var` and  --
--- `unbox` are indexed by whether their variable is reached by    --
--- crossing an `_ᴱ̂` barrier, and `handle` types its operation     --
--- clauses at the extended scope `Θ +e`, the original's meta-level --
--- quantification over the continuation grade becoming a rigid    --
--- effect-grade variable.                                         --
+-- One rule deviates, marked at its definition: `handle` types    --
+-- its operation clauses at the extended scope `Θ +e`, the        --
+-- original's meta-level quantification over the continuation     --
+-- grade becoming a rigid effect-grade variable.                  --
 ------------------------------------------------------------------
 
--- `Bool` is renamed, as `OVType` has a constructor of that name
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
-open import Data.Empty using (⊥)
 open import Data.Nat using (ℕ)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
@@ -46,26 +41,14 @@ open import Inference.Open.Contexts S
 open import Inference.Open.Hyps     S
 
 --------------------------------------------------------------
--- Side conditions of the two barrier-sensitive rules         --
+-- The side condition of `var`                               --
 --------------------------------------------------------------
 
--- What a use of a variable has to establish. The original demands
--- `¬ Eternal A → ρ ≾ᵣ uᵣ`; at open types `Eternal` is undecided, so the
--- implication becomes a disjunction. A use that crosses a barrier drops the
--- second disjunct and the grade with it: the eternality obligation is
--- unconditional.
+-- The original demands `¬ Eternal A → ρ ≾ᵣ uᵣ`; at open types `Eternal` is
+-- undecided, so the implication becomes a disjunction.
 
-VarOK : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → 𝔹 → Set
-VarOK Q A ρ true  = Q ⊩ᴱ A
-VarOK Q A ρ false = (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
-
--- What an unboxing has to establish. Away from a barrier it is the original's
--- grade bound `ρ' ≾ᵣ ρ`. Across a barrier it is unsatisfiable: a box type is
--- never eternal, so the continuation of a handler clause cannot escape.
-
-UnboxOK : ∀ {Θ} → Hyps Θ → RExp Θ → RExp Θ → 𝔹 → Set
-UnboxOK Q ρ' ρ true  = ⊥
-UnboxOK Q ρ' ρ false = Q ⊩ ρ' ≾̂ᵣ ρ
+VarOK : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → Set
+VarOK Q A ρ = (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
 
 --------------------------------------------------------------
 -- Well-typed terms (values and computations)                --
@@ -80,14 +63,11 @@ mutual
 
     -- variables
 
-    -- DEVIATION: the premise is `VarOK`, whose shape is determined by the
-    -- membership witness — one constructor covering the rule's two modes.
-
     var     : {A : OVType Θ}
             → {ρ : RExp Θ}
             → (x : A ∈̂[ ρ ] Γ)
-            → VarOK Q A ρ (crossesᴱ̂ x)
-            --------------------------
+            → VarOK Q A ρ
+            -------------
             → Q ∣ Γ ⊢V⦂ A
 
     -- base-typed constants
@@ -213,11 +193,8 @@ mutual
 
     -- effect handling
 
-    -- The operation clauses are typed behind the barrier `_ᴱ̂`, the mirrored
-    -- eternal restriction of the ambient context: no entry is dropped and no
-    -- lock stands above it, but every use of an ambient variable inside a
-    -- clause crosses it and so owes an unconditional eternality entailment
-    -- (`var`), while unboxing across it is impossible (`unbox`).
+    -- The operation clauses are typed under a lock at `⊤ᵣ`, the greatest
+    -- grade: a clause runs at a time the handler does not fix.
 
     -- DEVIATION: the original quantifies the clause family over the
     -- continuation grade `ε''` at the meta level. Here the clauses are typed
@@ -230,7 +207,7 @@ mutual
             → {ε ε' : EExp Θ}
             → Q ∣ Γ ⊢C⦂ A ‼ ε
             → ((op : Op) →
-                 wkᵉ-H Q ∣ (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+                 wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                              ∷ [ rconst (mapᵉ (op-grade op)) ]
                                  (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
                    ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
@@ -244,17 +221,13 @@ mutual
     -- `[ ρ ] A`, and the time that has passed since it was brought into scope
     -- is the grade `ρ'` read off the context.
 
-    -- DEVIATION: the premise is `UnboxOK`, the grade bound `Q ⊩ ρ' ≾̂ᵣ ρ` for a
-    -- variable that stays on this side of a barrier and `⊥` for one that does
-    -- not (see `UnboxOK`).
-
     unbox   : {A : OVType Θ}
             → {C : OCType Θ}
             → {ρ ρ' : RExp Θ}
             → (x : [ ρ ] A ∈̂[ ρ' ] Γ)
-            → UnboxOK Q ρ' ρ (crossesᴱ̂ x)
+            → Q ⊩ ρ' ≾̂ᵣ ρ
             → Q ∣ Γ ∷ A ⊢C⦂ C
-            -----------------------------
+            -----------------
             → Q ∣ Γ ⊢C⦂ C
 
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
@@ -334,10 +307,10 @@ private
   ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
   ex-var-lock = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
 
-  -- a variable used across a barrier: the eternality entailment is unconditional
+  -- a variable used across a clause barrier, the lock at `⊤ᵣ`
 
-  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ᴱ̂) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-ᴱ̂ Hd) Unitₑ
+  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
 
   -- returning a value, sequenced with another such computation
 

@@ -20,8 +20,6 @@
 -- so `wk*-cn` is never needed.                                   --
 ------------------------------------------------------------------
 
--- `Bool` is renamed, as `OVType` has a constructor of that name
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.Fin using (Fin; zero)
 open import Data.Nat using (ℕ)
 
@@ -48,31 +46,14 @@ open import Inference.Raw.Syntax S
 open import Inference.Constraints.Syntax S
 
 --------------------------------------------------------------
--- The two barrier-sensitive rows                            --
---                                                           --
--- Both dispatch on the crossing flag of the looked-up        --
--- variable, exactly as `VarOK`/`UnboxOK` dispatch on         --
--- `crossesᴱ̂`; they are exported, as the proofs case on them. --
+-- The row a variable generates                              --
 --------------------------------------------------------------
 
--- What a use of a variable generates: the unconditional eternality atom
--- across a barrier, the disjunction otherwise (`VarOK`).
-
-VarC : ∀ {Θ} → OVType Θ → RExp Θ → 𝔹 → Constraint Θ
-VarC A ρ true  = Etᶜ A
-VarC A ρ false = Et∨≾ᵘ A ρ
+-- The looked-up type is pinned, and its grade owes `VarOK`'s disjunction.
 
 varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint Θ
 varConstraint Γ i A =
-  (lookup-ty Γ i ≐ᵥ A) ∧̂ VarC (lookup-ty Γ i) (lookup-gr Γ i) (lookup-crosses Γ i)
-
--- What an unboxing generates: unsatisfiable across a barrier, the plan's
--- row otherwise (`UnboxOK`). The gate is read off the *unweakened* context,
--- outside the `∃ᵗ∃ʳ` of the row it guards.
-
-UnboxC : ∀ {Θ} → Constraint Θ → 𝔹 → Constraint Θ
-UnboxC C true  = ⊥̂
-UnboxC C false = C
+  (lookup-ty Γ i ≐ᵥ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
 
 --------------------------------------------------------------
 -- Generation                                                --
@@ -196,7 +177,7 @@ mutual
                 ∧̂ genC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (A↑ ‼ e₂)
                 ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)
                 ∧̂ ⋀ᵒᵖ (λ op →
-                     ∀ᵉ (genC (Γ⇑ ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+                     ∀ᵉ (genC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                 ∷ [ rconst (mapᵉ (op-grade op)) ]
                                     (⌜ arity op ⌝ᵍ ⇒ A⇑ ‼ e''))
                               (H op)
@@ -216,10 +197,9 @@ mutual
   -- unboxing a boxed variable
 
   genC {Θ} Γ (unbox i N) (A ‼ t) =
-    UnboxC (∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
-                    ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
-                    ∧̂ genC (Γ↑ ∷ α) N (A↑ ‼ t↑))))
-           (lookup-crosses Γ i)
+    ∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
+            ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
+            ∧̂ genC (Γ↑ ∷ α) N (A↑ ‼ t↑)))
     where
       α  = wkʳ-v (tvar (newᵗ {Θ}))
       r  = rvar (newʳ {Θ +ty})
@@ -239,7 +219,7 @@ mutual
       Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
 
 --------------------------------------------------------------
--- Sanity checks: the barrier dispatch computes              --
+-- Sanity checks: generation computes                        --
 --------------------------------------------------------------
 
 private
@@ -255,17 +235,13 @@ private
   Γ₁ : OCtx Θ₁ 1
   Γ₁ = [] ∷ α₀
 
-  -- a variable that stays on this side of a barrier: the disjunction
+  -- a variable: the type equation and the disjunction
 
   ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ ≐ᵥ α₀) ∧̂ Et∨≾ᵘ α₀ ûᵣ
   ex-var = refl
 
-  -- the same variable across a barrier: the bare eternality atom
+  -- the same variable behind a clause barrier: the grade has picked up `⊤ᵣ`
 
-  ex-var-ᴱ̂ : genV (Γ₁ ᴱ̂) (var zero) α₀ ≡ (α₀ ≐ᵥ α₀) ∧̂ Etᶜ α₀
-  ex-var-ᴱ̂ = refl
-
-  -- unboxing across a barrier is unsatisfiable (`UnboxOK … true = ⊥`)
-
-  ex-unbox-ᴱ̂ : genC (Γ₁ ᴱ̂) (unbox zero (return ⋆)) (Unit ‼ ûₑ) ≡ ⊥̂
-  ex-unbox-ᴱ̂ = refl
+  ex-var-⊤ : genV (Γ₁ ⟨ rconst ⊤ᵣ ⟩) (var zero) α₀
+           ≡ (α₀ ≐ᵥ α₀) ∧̂ Et∨≾ᵘ α₀ (ûᵣ ·̂ᵣ rconst ⊤ᵣ)
+  ex-var-⊤ = refl

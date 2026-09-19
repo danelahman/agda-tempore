@@ -3,9 +3,7 @@
 --                                                                --
 -- The context-level counterpart of `⌜_⌝ᵛ`: an original context   --
 -- embeds into a mirrored context of any scope, with its types    --
--- embedded and its locks read as grade constants. No barrier     --
--- former is produced — `_ᴱ` is a function on original contexts,  --
--- not a former.                                                  --
+-- embedded and its locks read as grade constants.               --
 --                                                                --
 -- `skel Γ` is the number of variables of `Γ`, which is the index --
 -- the mirrored context carries.                                  --

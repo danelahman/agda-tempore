@@ -25,8 +25,6 @@
 -- Tavits's MSc thesis (U. Tartu, 2025).                          --
 ------------------------------------------------------------------
 
--- `Bool` is renamed, as `OVType` has a constructor of that name
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -106,33 +104,6 @@ ctx-substᶜ refl M = M
 ⌊ctxᶜ⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {C : OCType Θ}
        → (e : Γ ≡ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ ctx-substᶜ e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊ctxᶜ⌋ refl M = refl
-
---------------------------------------------------------------
--- Reading the two barrier-sensitive rows                    --
---                                                           --
--- `VarC`/`UnboxC` dispatch on the same flag as               --
--- `VarOK`/`UnboxOK`, so their satisfaction *is* the premise  --
--- of the mirrored rule, once the flag is aligned.            --
---------------------------------------------------------------
-
-VarC-VarOK : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
-           → (A : OVType Θ) → (ρ : RExp Θ) → (b : 𝔹)
-           → σ ⊨[ Q ] VarC A ρ b
-           ---------------------------------------
-           → VarOK Q (A [ σ ]ᵛ) (ρ [ σ ]ʳ) b
-
-VarC-VarOK σ Q A ρ true  s = s
-VarC-VarOK σ Q A ρ false s = s
-
--- A satisfied `UnboxC` row is a non-crossing one, and is then the row itself.
-
-UnboxC-inv : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C : Constraint Θ}
-           → (b : 𝔹)
-           → σ ⊨[ Q ] UnboxC C b
-           ------------------------------------
-           → (b ≡ false) × (σ ⊨[ Q ] C)
-
-UnboxC-inv false s = refl , s
 
 --------------------------------------------------------------
 -- Collapsing the generation binders                         --
@@ -263,8 +234,8 @@ mutual
   -- variables
   --
   -- The membership witness is `lookup-var` in the substituted context, so
-  -- its position is `i` on the nose; the `VarC` conjunct is `VarOK`'s
-  -- payload once the type, the grade and the crossing flag are aligned.
+  -- its position is `i` on the nose; the `Et∨≾ᵘ` conjunct is `VarOK`'s
+  -- payload once the type and the grade are aligned.
 
   soundV {σ = σ} {Q = Q} Γ (var i) A (eq , ok) =
     ty-subst tyeq D₀ ,
@@ -272,15 +243,10 @@ mutual
     where
       x = lookup-var (Γ [ σ ]ᶜᵗˣ) i
 
-      flag = trans (crossesᴱ̂-lookup (Γ [ σ ]ᶜᵗˣ) i) (lookup-crosses-subst Γ σ i)
-
-      ok₁ = subst (VarOK Q (lookup-ty (Γ [ σ ]ᶜᵗˣ) i) (lookup-gr (Γ [ σ ]ᶜᵗˣ) i))
-                  (sym flag)
-                  (subst₂ (λ A₀ ρ₀ → VarOK Q A₀ ρ₀ (lookup-crosses Γ i))
-                          (sym (lookup-ty-subst Γ σ i))
-                          (sym (lookup-gr-subst Γ σ i))
-                          (VarC-VarOK σ Q (lookup-ty Γ i) (lookup-gr Γ i)
-                                      (lookup-crosses Γ i) ok))
+      ok₁ = subst₂ (VarOK Q)
+                   (sym (lookup-ty-subst Γ σ i))
+                   (sym (lookup-gr-subst Γ σ i))
+                   ok
 
       D₀ = var x ok₁
 
@@ -555,14 +521,14 @@ mutual
 
       ihH : (op : Op) → _
       ihH op =
-        soundC (Γ⇑ ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+        soundC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ A⇑ ‼ e''))
                (H op) A⇑ (econst (op-grade op) ·̂ₑ e'') (cls op)
 
       cH : (op : Op) → _
       cH op =
         cong₂ _∷_
-              (cong₂ _∷_ (cong _ᴱ̂ pΓ⇑) (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op)))
+              (cong₂ _∷_ (cong (_⟨ rconst ⊤ᵣ ⟩) pΓ⇑) (⌜⌝ᵍ-subst (σ' ↑ᵉ) (param op)))
               (cong₂ (λ A₀ B₀ → [ rconst (mapᵉ (op-grade op)) ] (A₀ ⇒ B₀ ‼ _))
                      (⌜⌝ᵍ-subst (σ' ↑ᵉ) (arity op))
                      pA⇑)
@@ -582,14 +548,9 @@ mutual
                        (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂)))
 
   -- unboxing a boxed variable
-  --
-  -- The gate is read off the unweakened context, outside the `∃ᵗ∃ʳ` it
-  -- guards: a satisfied row is a non-crossing one (`UnboxC-inv`), which is
-  -- exactly what `UnboxOK` needs on the membership witness's own flag.
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (unbox i N) A t s
-    with UnboxC-inv (lookup-crosses Γ i) s
-  ... | fls , (B , ρ , eq , le , s') = D , q
+  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (unbox i N) A t (B , ρ , eq , le , s') =
+    D , q
     where
       σ' = σ ,ᵗ B ,ʳ ρ
       Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
@@ -626,12 +587,7 @@ mutual
 
       x = ∈̂-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i)
 
-      flag = trans (crossesᴱ̂-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))
-                   (trans (crossesᴱ̂-lookup (Γ [ σ ]ᶜᵗˣ) i)
-                          (trans (lookup-crosses-subst Γ σ i) fls))
-
-      ok = subst (UnboxOK Q (lookup-gr (Γ [ σ ]ᶜᵗˣ) i) ρ) (sym flag)
-                 (subst (λ z → Q ⊩ z ≾̂ᵣ ρ) lgr le)
+      ok = subst (λ z → Q ⊩ z ≾̂ᵣ ρ) lgr le
 
       ih = soundC (Γ↑ ∷ α) N A↑ t↑ s'
 

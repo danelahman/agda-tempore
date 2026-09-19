@@ -7,11 +7,10 @@
 -- and entailment premises, keeping only what a raw term          --
 -- annotates.                                                     --
 --                                                                --
--- Erasure is index-preserving: `_ᴱ̂` is arity-preserving, so a    --
--- handler clause — typed at the extended scope `Θ +e` over a     --
--- context of arity `2 + n` — erases to a `RawC (2 + n)` with no  --
--- adjustment, and a variable's raw index is its full-context     --
--- position `var-pos`.                                            --
+-- Erasure is index-preserving: a handler clause — typed at the   --
+-- extended scope `Θ +e` over a context of arity `2 + n` —        --
+-- erases to a `RawC (2 + n)` with no adjustment, and a           --
+-- variable's raw index is its full-context position `var-pos`.   --
 --                                                                --
 -- Erasure is not injective: `coerce` erases to its subject.      --
 ------------------------------------------------------------------
@@ -121,10 +120,10 @@ private
   ex-var-lock-erase : ⌊ ex-var-lock ⌋ᵛ ≡ var zero
   ex-var-lock-erase = refl
 
-  -- a variable used across a barrier: the barrier too is forgotten
+  -- a variable used across a clause barrier: that lock too is forgotten
 
-  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ᴱ̂) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-ᴱ̂ Hd) Unitₑ
+  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
 
   ex-var-barrier-erase : ⌊ ex-var-barrier ⌋ᵛ ≡ var zero
   ex-var-barrier-erase = refl

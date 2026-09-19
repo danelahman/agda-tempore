@@ -13,7 +13,7 @@
 -- particular `box` carries no grade (inference binds it          --
 -- existentially), and handlers carry no capture annotation:      --
 -- their clauses are scoped over the FULL context, `RawC (2 + n)`,--
--- the barrier `_ᴱ̂` being arity-preserving.                       --
+-- the clause barrier being an ordinary lock.                     --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin)

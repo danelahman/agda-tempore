@@ -3,25 +3,21 @@
 --                                                                --
 -- A `Grounding Θ` assigns a closed type or grade to every        --
 -- variable of the scope `Θ`, and the interpretations `⟦_⟧` send  --
--- every open expression, type and context to a closed one. The   --
--- barrier `_ᴱ̂` is sent to the eternal restriction `_ᴱ` of        --
--- `Syntax.Contexts`, on the nose.                                --
+-- every open expression, type and context to a closed one.       --
 --                                                                --
 -- On top of that sit the lemmas the grounding theorem consumes:  --
 -- `θ ⊨ᴴ Q` (the grounding satisfies the hypothesis set),         --
--- groundings of convertibility, entailment and eternality, the   --
--- two membership translations, the round-trips of the closed     --
--- embeddings, and the collapse of an effect-scope weakening.     --
+-- groundings of convertibility, entailment, eternality and       --
+-- membership, the round-trips of the closed embeddings, and the  --
+-- collapse of an effect-scope weakening.                         --
 ------------------------------------------------------------------
 
--- `Bool` is renamed, as `OVType` has a constructor of that name
-open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Nat using (ℕ)
-open import Data.Product using (_×_; _,_; Σ; Σ-syntax; proj₁; proj₂)
+open import Data.Product using (_×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Relation.Nullary using (¬_)
@@ -46,10 +42,10 @@ open import Inference.Open.Types    S
 open import Inference.Open.Contexts S
 open import Inference.Open.Hyps     S
 
--- Only the two side conditions are needed; the constructors of the mirrored
--- judgement would otherwise clash with those of the original one.
+-- Only the side condition of `var` is needed; the constructors of the
+-- mirrored judgement would otherwise clash with those of the original one.
 
-open import Inference.Open.Language S using (VarOK; UnboxOK)
+open import Inference.Open.Language S using (VarOK)
 
 --------------------------------------------------------------
 -- Groundings                                                --
@@ -123,13 +119,12 @@ mutual
   ⟦_⟧ᶜ : ∀ {Θ} → OCType Θ → Grounding Θ → CType
   ⟦ A ‼ ε ⟧ᶜ θ = ⟦ A ⟧ᵛ θ ‼ ⟦ ε ⟧ᵉ θ
 
--- Contexts: the barrier becomes the greatest-grade lock of the original.
+-- Contexts
 
 ⟦_⟧ᶜᵗˣ : ∀ {Θ n} → OCtx Θ n → Grounding Θ → Ctx
 ⟦ []      ⟧ᶜᵗˣ θ = []
 ⟦ Γ ∷ A   ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ∷ ⟦ A ⟧ᵛ θ
 ⟦ Γ ⟨ ρ ⟩ ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ⟨ ⟦ ρ ⟧ʳ θ ⟩
-⟦ Γ ᴱ̂     ⟧ᶜᵗˣ θ = (⟦ Γ ⟧ᶜᵗˣ θ) ⟨ ⊤ᵣ ⟩
 
 --------------------------------------------------------------
 -- Groundings satisfying a hypothesis set                    --
@@ -223,59 +218,36 @@ ground-Et h Emptyₑ           = Emptyₑ
 --------------------------------------------------------------
 -- Grounding of variables                                    --
 --                                                           --
--- Two translations: one for a variable that stays on this   --
--- side of every barrier, where each membership former maps  --
--- to its counterpart; one for a variable of eternal type,   --
--- which additionally crosses barriers by the lock's `Tl-⟨⟩`. --
--- Crossing multiplies the grade by `⊤ᵣ`, so the second one  --
--- reports the grade it arrives at.                          --
+-- Each membership former maps to its counterpart.           --
 --------------------------------------------------------------
 
 ground-∈ : ∀ {Θ n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
-         → (θ : Grounding Θ) → (x : A ∈̂[ ρ ] Γ) → crossesᴱ̂ x ≡ false
+         → (θ : Grounding Θ) → A ∈̂[ ρ ] Γ
          → ⟦ A ⟧ᵛ θ ∈[ ⟦ ρ ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ
-ground-∈ θ Hd        eq = Hd
-ground-∈ θ (Tl-∷ x)  eq = Tl-∷ (ground-∈ θ x eq)
-ground-∈ θ (Tl-⟨⟩ x) eq = Tl-⟨⟩ (ground-∈ θ x eq)
-
-ground-∈ᴱ : ∀ {Θ n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
-          → (θ : Grounding Θ) → (x : A ∈̂[ ρ ] Γ) → Eternal (⟦ A ⟧ᵛ θ)
-          → Σ[ ρ₀ ∈ R ] (⟦ A ⟧ᵛ θ ∈[ ρ₀ ] ⟦ Γ ⟧ᶜᵗˣ θ)
-ground-∈ᴱ θ Hd        et = _ , Hd
-ground-∈ᴱ θ (Tl-∷ x)  et = _ , Tl-∷ (proj₂ (ground-∈ᴱ θ x et))
-ground-∈ᴱ θ (Tl-⟨⟩ x) et = _ , Tl-⟨⟩ (proj₂ (ground-∈ᴱ θ x et))
-ground-∈ᴱ θ (Tl-ᴱ̂ x)  et = _ , Tl-⟨⟩ (proj₂ (ground-∈ᴱ θ x et))
+ground-∈ θ Hd        = Hd
+ground-∈ θ (Tl-∷ x)  = Tl-∷ (ground-∈ θ x)
+ground-∈ θ (Tl-⟨⟩ x) = Tl-⟨⟩ (ground-∈ θ x)
 
 --------------------------------------------------------------
 -- Grounding the side conditions of `var` and `unbox`        --
---                                                           --
--- `VarOK`/`UnboxOK` compute by recursion on the crossing     --
--- flag, so the flag is generalised to a `𝔹` argument with   --
--- its defining equation attached; the caller instantiates    --
--- it with `crossesᴱ̂ x` and `refl`.                          --
 --------------------------------------------------------------
 
 ground-var : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → (θ : Grounding Θ) → θ ⊨ᴴ Q
-           → (b : 𝔹) → (x : A ∈̂[ ρ ] Γ) → crossesᴱ̂ x ≡ b → VarOK Q A ρ b
-           → Σ[ ρ₀ ∈ R ] ( (¬ Eternal (⟦ A ⟧ᵛ θ) → ρ₀ ≾ᵣ uᵣ)
-                         × (⟦ A ⟧ᵛ θ ∈[ ρ₀ ] ⟦ Γ ⟧ᶜᵗˣ θ))
-ground-var θ h true  x eq ok =
-    _
-  , (λ ¬et → ⊥-elim (¬et (ground-Et h ok)))
-  , proj₂ (ground-∈ᴱ θ x (ground-Et h ok))
-ground-var θ h false x eq (inj₁ et) =
-  _ , (λ ¬et → ⊥-elim (¬et (ground-Et h et))) , ground-∈ θ x eq
-ground-var θ h false x eq (inj₂ le) =
-  _ , (λ _ → ground-≾ᵣ h le) , ground-∈ θ x eq
+           → (x : A ∈̂[ ρ ] Γ) → VarOK Q A ρ
+           → ( (¬ Eternal (⟦ A ⟧ᵛ θ) → ⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
+             × (⟦ A ⟧ᵛ θ ∈[ ⟦ ρ ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ))
+ground-var θ h x (inj₁ et) =
+  (λ ¬et → ⊥-elim (¬et (ground-Et h et))) , ground-∈ θ x
+ground-var θ h x (inj₂ le) =
+  (λ _ → ground-≾ᵣ h le) , ground-∈ θ x
 
 ground-unbox : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ ρ' : RExp Θ} {Γ : OCtx Θ n}
              → (θ : Grounding Θ) → θ ⊨ᴴ Q
-             → (b : 𝔹) → (x : [ ρ ] A ∈̂[ ρ' ] Γ) → crossesᴱ̂ x ≡ b
-             → UnboxOK Q ρ' ρ b
+             → (x : [ ρ ] A ∈̂[ ρ' ] Γ) → Q ⊩ ρ' ≾̂ᵣ ρ
              → (⟦ ρ' ⟧ʳ θ ≾ᵣ ⟦ ρ ⟧ʳ θ)
              × ([ ⟦ ρ ⟧ʳ θ ] ⟦ A ⟧ᵛ θ ∈[ ⟦ ρ' ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ)
-ground-unbox θ h false x eq le = ground-≾ᵣ h le , ground-∈ θ x eq
+ground-unbox θ h x le = ground-≾ᵣ h le , ground-∈ θ x
 
 --------------------------------------------------------------
 -- Round-trips of the closed embeddings                      --
@@ -346,7 +318,6 @@ ground-wkᵉ-ctx : ∀ {Θ n} {θ : Grounding Θ} {ε₀ : E} → (Γ : OCtx Θ 
 ground-wkᵉ-ctx []        = refl
 ground-wkᵉ-ctx (Γ ∷ A)   = cong₂ _∷_ (ground-wkᵉ-ctx Γ) (ground-wkᵉ-v A)
 ground-wkᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (ground-wkᵉ-ctx Γ) (ground-wkᵉ-r ρ)
-ground-wkᵉ-ctx (Γ ᴱ̂)     = cong (_⟨ ⊤ᵣ ⟩) (ground-wkᵉ-ctx Γ)
 
 -- An extended grounding satisfies the weakened hypothesis set
 

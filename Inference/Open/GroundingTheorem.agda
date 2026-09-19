@@ -55,11 +55,10 @@ mutual
           → ⟦ Γ ⟧ᶜᵗˣ θ ⊢V⦂ ⟦ A ⟧ᵛ θ
 
   -- The membership witness and the original's grade premise are read off
-  -- `VarOK` together: at a barrier crossing both come from the unconditional
-  -- eternality entailment, away from one they come from the disjunction.
+  -- `VarOK` together.
 
-  groundV θ h (var x ok) with ground-var θ h (crossesᴱ̂ x) x refl ok
-  ... | _ , f , y = var f y
+  groundV θ h (var x ok) with ground-var θ h x ok
+  ... | f , y = var f y
   groundV θ h (const B c) = const c
   groundV θ h ⋆           = ⋆
   groundV θ h true        = true
@@ -111,7 +110,7 @@ mutual
       `with (λ op ε'' → ground-clause θ h op ε'' (H op))
       `in (groundC θ h N)
 
-  groundC θ h (unbox x ok N) with ground-unbox θ h (crossesᴱ̂ x) x refl ok
+  groundC θ h (unbox x ok N) with ground-unbox θ h x ok
   ... | le , y = unbox y le (groundC θ h N)
   groundC θ h (box ρ V N) =
     box (groundV θ h V) (groundC θ h N)
@@ -120,14 +119,13 @@ mutual
 
   -- One operation clause, at one continuation grade. The clause derivation
   -- lives at the extended scope `Θ +e`; grounding it at `θ ,ᵍᵉ ε''` sends the
-  -- rigid variable to `ε''` and the barrier `_ᴱ̂` to `_⟨ ⊤ᵣ ⟩`, both
-  -- definitionally.
-  -- What remains is the weakening collapse and the two ground-type round-trips.
+  -- rigid variable to `ε''`, definitionally. What remains is the weakening
+  -- collapse and the two ground-type round-trips.
 
   ground-clause : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ}
                 → (θ : Grounding Θ) → θ ⊨ᴴ Q
                 → (op : Op) → (ε'' : E)
-                → (wkᵉ-H Q ∣ (wkᵉ-ctx Γ) ᴱ̂ ∷ ⌜ param op ⌝ᵍ
+                → (wkᵉ-H Q ∣ wkᵉ-ctx Γ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                ∷ [ rconst (mapᵉ (op-grade op)) ]
                                    (⌜ arity op ⌝ᵍ ⇒ wkᵉ-v B ‼ evar (newᵉ {Θ}))
                      ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
@@ -162,11 +160,10 @@ private
   θ₀ : Grounding ∅ˢ
   θ₀ = grounding (λ ()) (λ ()) (λ ())
 
-  -- A variable used across a barrier grounds to a variable behind the
-  -- barrier lock: `⟦ (∅ᶜ ∷ Unit) ᴱ̂ ⟧ θ₀` *is* `([] ∷ Unit) ⟨ ⊤ᵣ ⟩`.
+  -- A variable used across a clause barrier grounds behind the `⊤ᵣ` lock
 
-  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ᴱ̂) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-ᴱ̂ Hd) Unitₑ
+  ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
 
   ex-var-barrier-ground : ([] ∷ Unit) ⟨ ⊤ᵣ ⟩ ⊢V⦂ Unit
   ex-var-barrier-ground = groundV θ₀ ∅ᴴ-⊨ ex-var-barrier
