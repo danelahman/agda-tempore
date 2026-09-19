@@ -53,13 +53,8 @@ infixr 6 _∧̂_
 infix  4 _≐ᵥ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
 infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 
---------------------------------------------------------------
--- Action of a substitution on constraints                   --
---                                                           --
--- The binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` --
--- of `TypeInference.Open.Subst`; no separate renaming structure  --
--- is needed, and weakening is a substitution like any other. --
---------------------------------------------------------------
+-- Binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` of
+-- `TypeInference.Open.Subst`; weakening is a substitution like any other.
 
 infixl 50 _[_]ᶜⁿ
 

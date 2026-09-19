@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- ADEQUACY FOR THE EQUATIONAL THEORY.                                --
+-- Adequacy for the equational theory.                                --
 --                                                                    --
 -- Reasoning in the equational theory is observationally valid: a     --
 -- derivation `[] ⊢C⦂ M == N` between closed programs denotes an      --
@@ -78,10 +78,6 @@ open import OperationalSemantics.Adequacy.Adequacy      Spec Cat Fut Pst Adj GTy
 open import OperationalSemantics.Adequacy.Evaluation    Spec
 open import OperationalSemantics.Adequacy.Normalization Spec
 
-------------------------------------------------------------------------
--- THE BRIDGE
-------------------------------------------------------------------------
-
 -- Soundness of the equational theory, read at closed programs: the two sides
 -- of a derivable equation are the same global point of `Tᵒ ⟦ A ⟧ᵛ ε`. This is
 -- `soundᶜ` at the empty context, where `⟦_⟧ᶜᵗ` is `⟦_⟧ᵖ`.
@@ -98,10 +94,6 @@ open import OperationalSemantics.Adequacy.Normalization Spec
               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
 
 ==-denotation p mp pM pN = soundᶜ p mp pM pN
-
-------------------------------------------------------------------------
--- ADEQUACY FOR DERIVABLE EQUATIONS
-------------------------------------------------------------------------
 
 -- Provable equals halt alike.
 
@@ -157,10 +149,6 @@ open import OperationalSemantics.Adequacy.Normalization Spec
 
 ==-same-operation p mp pM pN = same-operation pM pN (==-denotation p mp pM pN)
 
-------------------------------------------------------------------------
--- THE OBSERVATION AT BASE TYPE
-------------------------------------------------------------------------
-
 -- What a closed base-typed program can be observed to do: return a constant,
 -- or get stuck on an operation. Two programs agree on the observation when
 -- they halt in the same shape with the same constant, resp. the same
@@ -178,11 +166,10 @@ data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
            → Op-whnf.oper wM ≡ Op-whnf.oper wN
            → Same-answer M N
 
--- THE HEADLINE. Derivable equations are observational equations: `halts`
--- supplies a whnf on each side, `==-ret-not-op` rules out the mismatched
--- pairings, and the matching ones are `adequacy-base` resp. `same-operation`.
---
--- No halting hypothesis is needed — every program halts.
+-- Derivable equations are observational equations: `halts` supplies a whnf on
+-- each side, `==-ret-not-op` rules out the mismatched pairings, and the
+-- matching ones are `adequacy-base` resp. `same-operation`. No halting
+-- hypothesis is needed — every program halts.
 
 ==-same-answer : ∀ {b ε} → {M N : Prog (Base b) ε}
                → (p : [] ⊢C⦂ M == N) → (mp : Midᶜ p)
@@ -239,10 +226,6 @@ data Same-answer-bool {ε : E} (M N : Prog Bool ε) : Set where
     go (halts-ret wM) (halts-op wN)  = ⊥-elim (ret-not-op pM pN e wM wN)
     go (halts-op wM)  (halts-ret wN) = ⊥-elim (ret-not-op pN pM (≈ᵐ-sym e) wN wM)
     go (halts-op wM)  (halts-op wN)  = both-op wM wN (same-operation pM pN e wM wN)
-
-------------------------------------------------------------------------
--- THE TIMED REFINEMENT
-------------------------------------------------------------------------
 
 -- Opt-in, as in `adequacy-ticks`: under `HeadTimed` provably equal programs
 -- also take the same time to return.

@@ -1,28 +1,28 @@
 ------------------------------------------------------------------------
 -- A time-ticks Kripke frame for the subset grade of upper bounds.     --
---                                                                    --
+--                                                                     --
 -- Worlds are time points `ℕ`. A tick world records only elapsed time, --
 -- so a grade is read through the durations of the runs it lists, and  --
 -- moving between worlds may take no longer than one of them:          --
---                                                                    --
+--                                                                     --
 --   w ⊑ᵗ[ Q ] w'   iff   w' ≤ w + duration q   for some q ∈ Q         --
---                                                                    --
+--                                                                     --
 -- The quantifier is existential because the grade's own order is      --
 -- inclusion in the permitting direction: a weaker grade lists *more*  --
 -- runs, so a condition that must survive weakening has to be met by   --
 -- one listed run rather than by all of them.                          --
---                                                                    --
--- READING. The grade is a cap on which runs may occur; the tick world --
--- keeps only how long the slowest of them takes, so `⌈ write ⌉` and   --
--- `⟨ 3 ⟩` -- distinct grades here, neither below the other -- reach   --
--- the same time points.                                               --
---                                                                    --
+--                                                                     --
+-- The grade is a cap on which runs may occur; the tick world keeps    --
+-- only how long the slowest of them takes, so `⌈ write ⌉` and `⟨ 3 ⟩` --
+-- -- distinct grades here, neither below the other -- reach the same  --
+-- time points.                                                        --
+--                                                                     --
 -- Covariance is immediate: a listed run of the smaller grade is       --
 -- literally a listed run of the larger one, the comparison between    --
 -- traces being equality.                                              --
---                                                                    --
--- The grade's `any-run` lists no run at all, so it relates            --
--- every pair of worlds.                                               --
+--                                                                     --
+-- The grade's `any-run` lists no run at all, so it relates every pair --
+-- of worlds.                                                          --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

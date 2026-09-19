@@ -1,25 +1,10 @@
 ------------------------------------------------------------------------
 -- Soundness of the sequencing equations.                              --
---                                                                    --
--- `M ⨟ N` denotes `μᵀ ∘ Tᶠ ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩`, so its         --
--- equations are the graded monad's laws threaded through the strength: --
--- `seq-return` is `T-μ∘η≡id` after `strᵀ-ηᵀ`, `seq-eta` is             --
--- `T-μ∘Tη≡id` after `strᵀ-sndᵐ`.                                       --
---                                                                    --
--- `seq-box`/`seq-unbox` say that a resource binder commutes with       --
--- sequencing. Both binders denote `⟦M⟧ ∘ ⟨ idᵐ , _ ⟩ᵐ` — an            --
--- environment extension that the first projection undoes — which is    --
--- exactly the premise of the shared `seq-extend` below.                --
---                                                                    --
--- `seq-delay` says `delay` is algebraic: `delayᵀ` pulls out of `⨟`     --
--- (`strᵀ-delayᵀ-algebraicity`, `delayᵀ-nat`, `delayᵀ-algebraicity`),   --
--- the continuation's `⟨⟩-μ-ren` re-lock realigning the two graded locks --
--- via `η⊣-δ` / `[]-δ-nat`.                                             --
---                                                                    --
--- `seq-perform` is the same for `opᵀ` (`strᵀ-opᵀ-algebraicity`,        --
--- `opᵀ-nat`, `opᵀ-algebraicity`): the lock-split core is reused,        --
--- wrapped by the operation continuation's `exp-strᵐ`/`map⇒ᵐ`, with the  --
--- arity's `ty-gty` transport threaded through the pair.                 --
+-- `M ⨟ N` denotes `μᵀ ∘ Tᶠ ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩`; each equation  --
+-- is a graded monad law threaded through the strength.                --
+-- `seq-box`/`seq-unbox`: a resource binder commutes with sequencing   --
+-- (`seq-extend`); `seq-delay`/`seq-perform`: `delay`/the operation    --
+-- are algebraic over `⨟`.                                             --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -150,7 +135,6 @@ seq-extend m n g f fg = ∘ᵐ-congʳ (str-extend m n g f fg)
 sound-seq-return : ∀ {Γ A B ε} → (V : Γ ⊢V⦂ A) → (M : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
                  → Soundᶜ== (seq-return V M)
 sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
-    -- `return` sequenced: the strength's unit law, then the monad's
     ∘ᵐ-congʳ (  ∘ᵐ-congʳ (  ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                               ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
                           ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -161,11 +145,9 @@ sound-seq-return {Γ} {A} {B} {ε} V M (pV , pM) pR =
               ∙ ∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ T-μ∘η≡id
-    -- the environment the continuation receives is the transposed one
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-    -- which is what the right-hand side's renaming and substitution build
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst (sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c))
                 pR (ε-substᴾ (sym (·ₑ-identityˡ ε)) _ pRc)
             ∙ sound-ε-subst (sym (·ₑ-identityˡ ε)) ((C-rename r M) [ split-[] ↦ V ]c) pRc
@@ -211,10 +193,7 @@ sound-seq-eta {Γ} {A} {ε} M pM pN =
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ T-μ∘Tη≡id
 
--- `seq-box`/`seq-unbox`: a resource binder commutes with sequencing. The
--- binder denotes precomposition by an environment extension `g` (undone by
--- `fstᵐ`), and the continuation's renaming `cong-∷-ren (cong-⟨⟩-ren wk-ren)`
--- denotes exactly the `mapˣᵐ (⟨ mapᵉ ε ⟩ᶠ fstᵐ) idᵐ` that `seq-extend` moves.
+-- `seq-box`/`seq-unbox`: a resource binder commutes with sequencing.
 
 sound-seq-box : ∀ {Γ A B C ρ ε ε'}
               → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ B ‼ ε)
@@ -248,9 +227,7 @@ sound-seq-unbox {ε = ε} x rel M N (pM , pN) pR =
 
 
 
--- The transposed pair, boxed, is exactly the tail that
--- `strᵀ-delayᵀ-algebraicity` produces: `η⊣-monoidal` supplies the diagonal,
--- `[]-δ-nat`/`η⊣-δ` split the lock `of-natʳ τ ·ᵣ mapᵉ ε`, and `η⊣-≤` relaxes it.
+-- The transposed pair, boxed, is exactly the tail that `strᵀ-delayᵀ-algebraicity` produces.
 
 delay-core3 : ∀ {X A ε} → (τ : ℕ) → (m : ⟨ of-natʳ τ ⟩ᵒ X →ᵐ Tᵒ A ε)
             → [ of-natʳ τ ]ᶠ
@@ -300,25 +277,19 @@ str-delay : ∀ {X A B ε ε'} → (τ : ℕ)
                      ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ)
                ∘ᵐ η⊣
 str-delay {X} {A} {B} {ε} {ε'} τ m n =
-    -- p1: factor `delayᵀ τ` out of the pair
     ∘ᵐ-congʳ (∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
                         ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _)))
-    -- p2: the strength's delay-algebraicity
   ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (strᵀ-delayᵀ-algebraicity {ε = ε} τ))
-    -- p3: `delayᵀ` commutes past `Tᶠ n`
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (delayᵀ-nat τ n))
-    -- recombine the two `[ of-natʳ τ ]ᶠ` factors
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
-    -- core3, reversed: rebuild the transposed pair out of the algebraicity tail
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
                         ∙ ≈ᵐ-sym (delay-core3 {X} {A} {ε} τ m)))
-    -- and put the re-lock back outside the strength pair
   ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
                           ∙ []-congᶠ (  ∘ᵐ-assoc _ _ _
@@ -336,10 +307,7 @@ sound-seq-delay : ∀ {Γ A B τ ε ε'}
                 → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
                 → Soundᶜ== (seq-delay M N)
 sound-seq-delay {Γ} {A} {B} {τ} {ε} {ε'} M N (pM , pN) pR =
-    -- the strength part is `str-delay`; the continuation's `⟨⟩-μ-ren` denotes
-    -- exactly its `φ` (`eq-ren-grade`)
     ∘ᵐ-congʳ (str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN))
-    -- then `delayᵀ` is algebraic over `μᵀ`
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (delayᵀ-algebraicity τ)
   ∙ ∘ᵐ-assoc _ _ _
@@ -371,8 +339,6 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
     ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e' (perform op V (M ⨟ C-rename r' N)))
                 pR (ε-substᴾ e' _ pRc')
             ∙ sound-ε-subst e' (perform op V (M ⨟ C-rename r' N)) pRc'
-            -- segment A: under the param/arity substs, move the continuation's
-            -- renaming inside the strength pair by strᵀ-naturality.
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                 , ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (substᵈ-≈ (ty-gty (arity op)) (
                     ∘ᵐ-congʳ (
@@ -387,27 +353,20 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
                                           (eq-ren-grade map-·ᵉ))))
                                       , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))))))
                 ⟩ᵐ-cong))
-            -- `op` is algebraic: pull `opᵀ op` out of `⨟`.
             ∙ ≈ᵐ-sym (
-                -- p1: factor `opᵀ op` out of the pair
                 ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
                     ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))
-                -- p2: strᵀ-op algebraicity
               ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
                     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                   ∙ ∘ᵐ-congˡ (strᵀ-opᵀ-algebraicity op)))
-                -- p3: opᵀ commutes past `Tᶠ n`
               ∙ ∘ᵐ-congʳ (
                     ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
                   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op _)))
-                -- p4: opᵀ is algebraic over `μᵀ`
               ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (opᵀ-algebraicity op)
-                -- collapse the `strᵀ-opᵀ-algebraicity` reshape and the three
-                -- `mapˣᵐ idᵐ _` layers onto the pair `⟨ Vp , S ⟩`
               ∙ ∘ᵐ-assoc _ _ _
               ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
@@ -423,7 +382,6 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
                   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)
                   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
               ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl ,
-                  -- C2: rebuild the lock-split tail (seq-delay's core3, reversed)
                     ∘ᵐ-congʳ (∘ᵐ-congʳ (
                         ∘ᵐ-assoc _ _ _
                       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ≈ᵐ-sym (
@@ -447,8 +405,6 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
                                       , ≈ᵐ-sym (∘ᵐ-identityˡ _) ⟩ᵐ-cong)
                           ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) , ≈ᵐ-refl ⟩ᵐ-cong
                                       ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))))))
-                  -- C3: peel `strᵀ` (through `exp-strᵐ`), then `Tᶠ n`, then `μᵀ`
-                  -- into the curried continuation
                   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
                         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                       ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
@@ -460,8 +416,6 @@ sound-seq-perform {Γ} {A} {B} {ε} {ε'} {op} V M N ((pV , pM) , pN) pR =
                       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ []-congᶠ (map⇒ᵐ-curryᵐ _ _)))
                   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _) ∙ []-congᶠ (map⇒ᵐ-curryᵐ _ _))
-                  -- C4: transporting the arity type across the pair — the
-                  -- continuation's `subst` and the boxed environment's `fstᵐ`.
                   ∙ ∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong (c4 (ty-gty (arity op)))))
                   ⟩ᵐ-cong))))
   where

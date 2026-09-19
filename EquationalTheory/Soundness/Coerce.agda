@@ -1,14 +1,10 @@
 ------------------------------------------------------------------------
 -- Soundness of the sub-effecting equations.                           --
---                                                                    --
--- `coerce` denotes `T-≤`, and each equation is the corresponding law of --
--- the monad: `coerce-refl`/`coerce-trans` are `T-≤`'s functoriality in  --
--- the grade, `coerce-perform`/`coerce-delay` are `opᵀ-≤`/`delayᵀ-≤`     --
--- (a coercion of the continuation escaping the node), and               --
--- `coerce-seq`/`coerce-handle` are `strᵀ-≤` followed by `T-≤-μᵀ`        --
--- resp. `T-alg-of-handlerᵀ-≤` (a coercion of the sequenced computation   --
--- escaping the composite). The last two also move the continuation      --
--- across the lock the coercion relaxes, which is `η⊣-≤`.                --
+-- `coerce` denotes `T-≤`; each equation is a law of the monad:        --
+-- `coerce-refl`/`coerce-trans` its functoriality in the grade,        --
+-- `coerce-perform`/`coerce-delay` are `opᵀ-≤`/`delayᵀ-≤`, and         --
+-- `coerce-seq`/`coerce-handle` are `strᵀ-≤` then `T-≤-μᵀ` resp.       --
+-- `T-alg-of-handlerᵀ-≤`, crossing the lock via `η⊣-≤`.                --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -126,10 +122,7 @@ sound-coerce-delay {τ = τ} rel M pM pM' =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
 
--- The continuation of a `⨟`/`handle` lives under the lock the coercion
--- relaxes. Transposing it at the smaller grade and relaxing the lock
--- (`⟨⟩-≤`, the renaming the equations apply) is the same as transposing at
--- the larger grade and relaxing the box (`[]-≤`, what `strᵀ-≤` produces).
+-- The continuation lives under the lock the coercion relaxes; transposes across it.
 
 coe-str : ∀ {Γ A B ε₁ ε₂ ε'}
         → (rel : ε₁ ≾ₑ ε₂)
@@ -142,7 +135,6 @@ coe-str : ∀ {Γ A B ε₁ ε₂ ε'}
                       (renᶜ (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N pN))
              ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
 coe-str rel N pN m =
-    -- push the coercion out of the pairing and through the strength
     ∘ᵐ-congʳ (  ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                   ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -151,12 +143,9 @@ coe-str rel N pN m =
               ∙ ∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
                           ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                       ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
-    -- and out past the continuation's functorial action
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (T-≤-nat _ rel)
   ∙ ∘ᵐ-assoc _ _ _
-    -- what is left on the environment is the transposed lock relaxation,
-    -- i.e. the renaming the equation applies to the continuation
   ∙ ∘ᵐ-congʳ (  ∘ᵐ-congʳ (  ∘ᵐ-congʳ (⟨ η⊣-≤ (map-monotoneᵉ rel) , ≈ᵐ-refl ⟩ᵐ-cong)
                           ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                               ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))

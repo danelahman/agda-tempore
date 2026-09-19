@@ -45,19 +45,11 @@ open import TypeInference.Raw.Syntax S
 
 open import TypeInference.Constraints.Syntax S
 
---------------------------------------------------------------
--- The row a variable generates                              --
---------------------------------------------------------------
-
 -- The looked-up type is pinned, and its grade owes `VarOK`'s disjunction.
 
 varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint Θ
 varConstraint Γ i A =
   (lookup-ty Γ i ≐ᵥ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
-
---------------------------------------------------------------
--- Generation                                                --
---------------------------------------------------------------
 
 mutual
 
@@ -218,9 +210,7 @@ mutual
       t↑ = wkʳ-e (wkᵗ-e t)
       Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
 
---------------------------------------------------------------
--- Sanity checks: generation computes                        --
---------------------------------------------------------------
+-- Sanity checks: generation computes.
 
 private
 

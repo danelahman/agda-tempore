@@ -36,15 +36,11 @@ open import Syntax.Substitutions.Lookup      Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 
-------------------------------------------------------------------------
--- SUFFIX VARIABLES
---
 -- The action is defined under a suffix `Δ`, and a variable of that suffix is
 -- one the environment does not close: it is carried along, its position fixed
 -- and only its grade bound recomputed. `∈-++ᶜʳ` is the injection, and the
--- lemmas below are what the recursion needs to see through the casts and the
--- congruence renamings.
-------------------------------------------------------------------------
+-- lemmas below let the recursion see through the casts and the congruence
+-- renamings.
 
 -- A cast acts on a variable by relocating it.
 
@@ -107,8 +103,6 @@ ren-var-r : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → {Δ : Ctx} → (x : A 
 ren-var-r r x f f' =
   var-ren-img-≡ (cong-ren r) (∈-++ᶜʳ x) f (cong-ren-img-r r x) f'
 
--- SUBSTITUTION FIXES A SUFFIX VARIABLE
---
 -- The variable being replaced lies in the prefix, so a suffix variable survives
 -- it: what comes back is that variable again, its position fixed and only its
 -- grade bound recomputed. Induction on the suffix variable, which is also the
@@ -173,8 +167,6 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
     | inj₂ y' with eq
 ...   | refl = cong Tl-⟨⟩ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
 
--- SUBSTITUTION AT THE VARIABLE IT REPLACES
---
 -- The third possibility: the variable looked up *is* the one being replaced, so
 -- what comes back is the value, pushed under the suffix. The recursion of
 -- `⟨_,_⟩[_↦_]var` builds that push one layer at a time — `wk-ren` per binder and
@@ -228,11 +220,10 @@ sub-var-hit′ : ∀ {Γ₁ B σ} → (Γ₂ : Ctx) → ¬ Eternal B
              ≡ V-rename (push-ren Γ₂ p) W
 sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 
--- SUBSTITUTION FIXES A RESOURCE VARIABLE
---
--- The `rvar` counterpart of `sub-var-r`: `⟨_⟩[_↦_]rvar` returns the
--- same resource variable when the variable it replaces is a different one. Simpler than the
--- value versions — a box type is never eternal, so there is no `eternal?` split.
+-- The `rvar` counterpart of `sub-var-r`: `⟨_⟩[_↦_]rvar` returns the same
+-- resource variable when the variable it replaces is a different one.
+-- Simpler than the value versions: a box type is never eternal, so there is
+-- no `eternal?` split.
 
 -- The cell the boundary substitution puts a resource variable at.
 

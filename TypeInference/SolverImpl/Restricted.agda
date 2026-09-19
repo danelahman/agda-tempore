@@ -67,16 +67,8 @@ open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Principal S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
 
---------------------------------------------------------------
--- The initial state has no rigids                           --
---------------------------------------------------------------
-
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
-
---------------------------------------------------------------
--- Solving from the initial state                            --
---------------------------------------------------------------
 
 solveOn : ∀ {Θ} → Constraint Θ
         → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))
@@ -131,10 +123,6 @@ solveOn-principal C fr eq σ Q sat with solve init C in e
     δ    = proj₁ fac
     tri  = proj₁ (proj₂ fac)
     hres = proj₁ (proj₂ (proj₂ fac))
-
---------------------------------------------------------------
--- The instance                                              --
---------------------------------------------------------------
 
 solverImplOn : SolverOn (λ C → Frag C × NoRig C) Frag
 solverImplOn = record

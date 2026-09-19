@@ -67,13 +67,10 @@ open import DenotationalSemantics.Model.Modality.Eternal
 
 open import OperationalSemantics.Soundness.Preservation.Unbox S Cat Fut Pst Adj GTy Mon GE public
 
--- SPLITTING THE ENVIRONMENT BOX
---
--- A box available `ρ₁`-far ahead, where `ρ₁ ⊒ σ ·ᵣ ρ₃`, can be transposed in
--- two stages: once at `σ` and once at `ρ₃`, the two pasts being folded back
--- together by `μ`. This is `η⊣-δ` packaged with the grade relaxation, and it
--- is the single move that carries an environment across a computation split
--- into two graded phases — which is the shape `strᵀ-μᵀ` forces.
+-- Splitting the environment box: a box available `ρ₁`-far ahead, where
+-- `ρ₁ ⊒ σ ·ᵣ ρ₃`, can be transposed in two stages, once at `σ` and once at
+-- `ρ₃`, the two pasts folded back together by `μ`. This is `η⊣-δ` packaged
+-- with the grade relaxation.
 
 box-split : ∀ {X σ ρ₁ ρ₃} → (a : σ ·ᵣ ρ₃ ≾ᵣ ρ₁)
           → δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
@@ -191,14 +188,10 @@ box-open e H =
   ∙ ∘ᵐ-congˡ ([]-congᶠ (mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
 
--- CARRYING THE ENVIRONMENT BOX ACROSS A TRIVIAL TRANSITION
---
--- The nine rules that do not advance time transition by `ηᵀ`. For them the
--- environment box must survive unchanged. `strᵀ-ηᵀ` opens it with the box
--- counit at the unit grade; what has to be shown is that opening it there
--- gives the environment back boxed at the *continuation's* grade `ρ₃` — i.e.
--- that it was carried, not lost. `box-split` is what puts back together what
--- `strᵀ-μᵀ` split with `δ`.
+-- The nine rules that do not advance time transition by `ηᵀ`: the
+-- environment box must survive unchanged, opened by `strᵀ-ηᵀ` at the unit
+-- grade and given back boxed at the continuation's grade `ρ₃`, by
+-- `box-split`.
 
 box-η : ∀ {X ρ₁ ρ₃} → (a : mapᵉ uₑ ·ᵣ ρ₃ ≾ᵣ ρ₁) → (w : ρ₃ ≾ᵣ ρ₁)
       → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym map-uᵉ)) ∘ᵐ δ ∘ᵐ []-≤ a ∘ᵐ η⊣ {X} {ρ₁}
@@ -236,13 +229,10 @@ box-η {X} {ρ₁} {ρ₃} a w =
 
 -- Interpreting an effect-grade coercion is the transport `ε-substᵀ`.
 
--- SEQ-STEP and HANDLE-STEP
---
--- Both step rules have the shape `alg ∘ Tᶠ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩ᵐ`,
--- differing only in the algebra (`μᵀ` resp. the handler's). The proof pushes
--- the inductive hypothesis' coercion out through the strength and multiplies,
--- bottoming out in `step-box`: the environment carried across the step is the
--- new state's environment, renamed by `suc-comp-ren`.
+-- `SEQ-STEP` and `HANDLE-STEP` both have the shape
+-- `alg ∘ Tᶠ⟦N⟧ ∘ strᵀ ∘ ⟨ η⊣ , ⟦M⟧ ⟩ᵐ`, differing only in the algebra (`μᵀ`
+-- resp. the handler's), bottoming out in `step-box`: the environment carried
+-- across the step is the new state's environment, renamed by `suc-comp-ren`.
 
 -- Naturality of the strength in its monadic (tree) component alone — the
 -- dual of `strᵀ-natˡ`. Derived from `strᵀ-nat` and `[]-idᵐ`.
@@ -462,13 +452,9 @@ seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {P} {S} {S'} alg alg-≤ pv {M} N 
              (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS')
              (stepᵀ r) (step-≾ r)
 
--- THE `id-suc` BOX IDENTITY
---
--- This is the residual left by `strᵀ-ηᵀ` in the nine rules that neither
--- advance time nor allocate. The box arrives carrying *two* grade
--- relaxations — one re-associating `mapᵉ (d ·ₑ ε₃)`, one refining along the
--- step — which merge by `[]-≤-trans` into exactly `box-η`'s hypothesis. The
--- environment `env` rides along and is moved across by `η⊣`'s naturality.
+-- The `id-suc` box identity: the residual left by `strᵀ-ηᵀ` in the nine
+-- rules that neither advance time nor allocate. The box's two grade
+-- relaxations merge by `[]-≤-trans` into exactly `box-η`'s hypothesis.
 
 box-core : ∀ {X ρ₂ ρ₄}
          → (a : mapᵉ uₑ ·ᵣ ρ₄ ≾ᵣ ρ₂) → (w : ρ₄ ≾ᵣ ρ₂)
@@ -496,8 +482,6 @@ box-id-suc {ρ₂ = ρ₂} a w env =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
 
--- THE TICK'S CONTEXT-MODALITY IDENTITY
---
 -- What `DELAY` finally reduces to, once every box has been discharged: a pure
 -- statement about the context modality.
 
@@ -563,16 +547,11 @@ box-∷-suc w w' env cell =
   ∙ ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
--- THREADING THE ENVIRONMENT BOX ACROSS A STEP
---
 -- The semantic content of "reduction only extends the state": the boxed
 -- environment of the source state, carried along the step's time transition,
 -- is the target state's boxed environment reindexed by the renaming
--- `suc-comp-ren` builds.
---
--- Generic in the two resource grades: a reduction's own effect grades only
--- instantiate them, and the recursive cases apply the lemma at the sub-step's
--- grades, not the enclosing sequencing's.
+-- `suc-comp-ren` builds. Generic in the two resource grades: a reduction's
+-- own effect grades only instantiate them.
 
 step-box : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
          → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
@@ -797,12 +776,10 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
                 ∙ ε-substᵀ-refl)
     ∙ ∘ᵐ-identityˡ _)
 
--- SEQ-STEP
---
--- `seq-step-core` reduces the source to the `strᵀ ∘ ⟨ box , stepᵀ r ⟩` core;
--- `step-box` replaces that core by the *new* state's box, renamed by
--- `suc-comp-ren`; and `seq-coe` reconciles the effect grades (which differ by
--- an associativity, as `step-≾ (SEQ-STEP …)` already anticipates).
+-- `SEQ-STEP`: `seq-step-core` reduces the source to the
+-- `strᵀ ∘ ⟨ box , stepᵀ r ⟩` core; `step-box` replaces that core by the
+-- *new* state's box, renamed by `suc-comp-ren`; and `seq-coe` reconciles the
+-- effect grades (which differ by an associativity).
 
 -- The box `seq-step-core` produces carries two grade relaxations, which merge
 -- into the single one `step-box` expects.

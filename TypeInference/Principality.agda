@@ -64,12 +64,8 @@ open import TypeInference.Soundness    S
 open import TypeInference.Completeness S
 open import TypeInference.Solver       S
 
---------------------------------------------------------------
--- The generation instance                                   --
---                                                           --
--- `Θ +ty +e` binds the unknown result type and effect; the   --
--- context is weakened into that scope.                       --
---------------------------------------------------------------
+-- `Θ +ty +e` binds the unknown result type and effect; the context is
+-- weakened into that scope.
 
 X̂ : (Θ : Scope) → OVType (Θ +ty +e)
 X̂ Θ = tvar (newᵗ {Θ})
@@ -82,10 +78,6 @@ t̂ Θ = evar (newᵉ {Θ +ty})
 
 C[_,_] : ∀ {Θ n} → OCtx Θ n → RawC n → Constraint (Θ +ty +e)
 C[_,_] {Θ} Γ M = genC (Γ₊ Γ) M (X̂ Θ ‼ t̂ Θ)
-
---------------------------------------------------------------
--- Principality                                              --
---------------------------------------------------------------
 
 record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set where
   constructor mkPrincipal
@@ -128,10 +120,6 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
 
 open Principal
 
---------------------------------------------------------------
--- The theorem                                               --
---------------------------------------------------------------
-
 principal : (sv : Solver) → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC n)
           → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'}
           → Solver.solve sv C[ Γ , M ] ≡ just (Θ' , σ , Q)
@@ -150,14 +138,9 @@ principal sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipal
     sat  = Solver.solve-sound sv C[ Γ , M ] eq
     elab = soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) sat
 
---------------------------------------------------------------
--- The instance reading of `mgu`                            --
---                                                          --
--- A typing of `M` in `Γ [ σ₀ ]ᶜᵗˣ` at an arbitrary type    --
--- and effect is an instance of the principal one: the      --
--- principal type instantiates to it exactly, the principal --
--- effect up to the residual entailment.                    --
---------------------------------------------------------------
+-- A typing of `M` at an arbitrary type and effect is an instance of the
+-- principal one: the principal type instantiates to it exactly, the
+-- principal effect up to the residual entailment.
 
 principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')

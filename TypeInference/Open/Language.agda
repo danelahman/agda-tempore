@@ -40,19 +40,11 @@ open import TypeInference.Open.Types    S
 open import TypeInference.Open.Contexts S
 open import TypeInference.Open.Hyps     S
 
---------------------------------------------------------------
--- The side condition of `var`                               --
---------------------------------------------------------------
-
 -- The original demands `¬ Eternal A → ρ ≾ᵣ uᵣ`; at open types `Eternal` is
 -- undecided, so the implication becomes a disjunction.
 
 VarOK : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → Set
 VarOK Q A ρ = (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
-
---------------------------------------------------------------
--- Well-typed terms (values and computations)                --
---------------------------------------------------------------
 
 infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_
@@ -251,10 +243,6 @@ mutual
            ------------------
            → Q ∣ Γ ⊢C⦂ A ‼ ε'
 
---------------------------------------------------------------
--- Useful substitutions of annotations                       --
---------------------------------------------------------------
-
 -- Effect-grade annotations
 
 ε̂-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
@@ -285,9 +273,7 @@ c-subst : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C C'}
 
 c-subst refl M = M
 
---------------------------------------------------------------
--- Sanity checks: the rules are usable                       --
---------------------------------------------------------------
+-- Sanity checks: the rules are usable.
 
 -- The empty scope has to be given explicitly: `OCtx`'s scope is not
 -- determined by `[]`, and `Scope`'s fields are projections, not constructors.

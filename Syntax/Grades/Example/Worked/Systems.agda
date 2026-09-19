@@ -1,24 +1,22 @@
 ------------------------------------------------------------------------
 -- Worked instances of the grade systems.                              --
 --                                                                     --
--- A grade system pairs effect grades -- what a computation may do --   --
--- with resource grades -- what is thereby guaranteed about time -- and --
--- a monoid map `∣_∣ᵉ` projecting the first onto the second. Reading    --
--- the projection tells you what the resource grade may forget.         --
+-- A grade system pairs effect grades (what a computation may do) with --
+-- resource grades (what is thereby guaranteed about time) and a       --
+-- monoid map `∣_∣ᵉ` projecting the first onto the second. Reading the --
+-- projection tells you what the resource grade may forget.            --
 --                                                                     --
--- Each section computes the projection on the sensor node's own grades --
--- and then exercises its monotonicity: an ordering between two effect  --
--- grades must still hold between their images.                        --
+-- Each section computes the projection on the sensor node's own       --
+-- grades and then exercises its monotonicity: an ordering between two --
+-- effect grades must still hold between their images.                 --
 --                                                                     --
--- There are seven: one between time intervals, and one for each of the --
--- six trace grades. Every trace projection measures a set of traces by  --
--- a duration, and each aggregates in the direction its endpoint is      --
--- *read* rather than in the direction it bounds -- so a disjunctive     --
--- endpoint takes the slowest or fastest member according to which way   --
--- its quantifier runs, and the one conjunctive endpoint in the          --
--- development, the subset floor, takes the slowest.                     --
---                                                                      --
--- Systems for the sub-trace-order grid are parked under `backup/`.      --
+-- There are seven: one between time intervals, and one for each of    --
+-- the six trace grades. Every trace projection measures a set of      --
+-- traces by a duration, aggregating in the direction its endpoint is  --
+-- *read* rather than the direction it bounds -- so a disjunctive      --
+-- endpoint takes the slowest or fastest member according to which way --
+-- its quantifier runs, and the one conjunctive endpoint, the subset   --
+-- floor, takes the slowest.                                           --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Systems where
@@ -36,11 +34,9 @@ open _→ᵍ_ using (map; map-monotone)
 ------------------------------------------------------------------------
 -- Forgetting the upper bound
 --
--- `IntervalsToLeftSidedIntervals` keeps the lower endpoint alone. The
--- effect grade says the uplink takes between 7 and 9 ticks; the
--- resource grade says only that at least 7 have passed -- which is what
--- a box modality needs, since it is about data having become available,
--- not about a deadline.
+-- `IntervalsToLeftSidedIntervals` keeps the lower endpoint alone: the
+-- effect grade says the uplink takes between 7 and 9 ticks, the
+-- resource grade only that at least 7 have passed.
 
 open import Data.Nat.Base using (ℕ; _≤_)
 
@@ -291,21 +287,13 @@ windows-add = refl
 -- The subset grades, and where they read a set differently
 --
 -- The subset projections measure by the slowest member at *every*
--- endpoint. Above that is the usual reason -- any listed run may occur,
--- so the deadline must cover the slowest. Below it is the opposite
--- reason: the subset floor is read conjunctively, every listed run
--- being separately demanded, so the guarantee is what the slowest of
--- them takes.
---
--- The timed floor, read disjunctively, takes the fastest instead. Same
--- source set, opposite aggregation -- the direction follows the reading
--- of the set, not the side of the interval.
+-- endpoint, the subset floor being read conjunctively; the timed
+-- floor, read disjunctively, takes the fastest instead. The direction
+-- follows the reading of the set, not the side of the interval.
 --
 -- The two floors do not share a target: the subset floor's greatest
--- grade demands nothing and absorbs, and no projection preserving both
--- `⊤` and `_·_` takes an absorbing top to `[ 0 ,+∞⟩`, which is the
--- intervals' unit. So it lands in the extended intervals, and the timed
--- floor, whose own greatest grade is its unit, lands in the plain ones.
+-- grade absorbs, so it lands in the extended intervals, while the
+-- timed floor lands in the plain ones.
 
 open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
   Op _≟ₒ_ costʰⁱ using (subsets→right-sided-intervals)

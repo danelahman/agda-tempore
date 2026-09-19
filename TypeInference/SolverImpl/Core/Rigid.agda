@@ -1,28 +1,9 @@
 ------------------------------------------------------------------
--- Strengthening away a rigid effect-grade variable               --
---                                                                --
--- A rigid variable is one the unifier may not bind, so on leaving --
--- the scope that declares it every expression that is to survive  --
--- must be free of it. `str*` are the partial strengthenings that  --
--- check exactly that, thickening at the rigid's position.         --
---                                                                --
--- The rigid is declared as the newest effect-grade variable, but  --
--- the existentials nested inside its scope are allocated on top   --
--- of it, so by the time the scope is left the rigid sits at an    --
--- arbitrary position `j`. `popˢ j` is the substitution that moves  --
--- it back to the newest position and shifts everything else up;   --
--- `str-pop*` say that a successful strengthening is exactly the   --
--- inverse of that move followed by the weakening, and `unpopˢ`     --
--- undoes the move.                                                --
---                                                                --
--- The last section is the ESCAPE LEMMA and its consequence: a     --
--- substitution that keeps the rigid a variable cannot erase an    --
--- occurrence of it, so a strengthening that fails does not merely --
--- fail — it refutes every such instance. That is the completeness --
--- half of the boundary's escape check, and it is the discipline   --
--- of unification under a mixed prefix (Miller 1992), the rigid    --
--- playing the role of Gentzen's eigenvariable: it may be renamed, --
--- never instantiated.                                             --
+-- Strengthens away a rigid effect-grade variable when leaving    --
+-- its scope.                                                     --
+-- `popˢ`/`unpopˢ` relocate the rigid to the newest position; the --
+-- escape lemma shows a failed strengthening refutes every        --
+-- instance that keeps the rigid an eigenvariable.                --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -56,13 +37,8 @@ open import TypeInference.Open.Subst  S
 open import TypeInference.SolverImpl.Core.Thick
 open import TypeInference.SolverImpl.Core.Occurs S
 
---------------------------------------------------------------
--- Absurd verdicts, decisions, disjunctions                  --
---                                                           --
--- Repeated here rather than imported: the unification core's --
--- maximality module has the same five, and this module is    --
--- the boundary's, not the unifier's.                         --
---------------------------------------------------------------
+-- Repeated from the unifier's maximality module: this is the
+-- boundary's own copy, not an import.
 
 ⊥just : ∀ {X Y : Set} {x : X} → nothing ≡ just x → Y
 ⊥just ()
@@ -93,10 +69,6 @@ notNothing : ∀ {X : Set} → (m : Maybe X) → (m ≡ nothing → ⊥) → Σ[
 notNothing (just x) h = x , refl
 notNothing nothing  h = ⊥-elim (h refl)
 
---------------------------------------------------------------
--- Pairing two partial results                               --
---------------------------------------------------------------
-
 zip₂ : ∀ {X Y Z : Set} → (X → Y → Z) → Maybe X → Maybe Y → Maybe Z
 zip₂ f (just x) (just y) = just (f x y)
 zip₂ f _        _        = nothing
@@ -119,10 +91,6 @@ map-nothing : ∀ {X Y : Set} → (f : X → Y) → (m : Maybe X) → mmap f m �
             → m ≡ nothing
 map-nothing f nothing  q = refl
 map-nothing f (just x) ()
-
---------------------------------------------------------------
--- The partial strengthenings                                --
---------------------------------------------------------------
 
 strᵉ : ∀ {Ψ} → EVar (Ψ +e) → EExp (Ψ +e) → Maybe (EExp Ψ)
 strᵉ {Ψ} j (evar k)   = mmap evar (thickᵉ {Ψ} j k)
@@ -150,10 +118,6 @@ mutual
   strᶜ : ∀ {Ψ} → EVar (Ψ +e) → OCType (Ψ +e) → Maybe (OCType Ψ)
   strᶜ j (A ‼ ε) = zip₂ _‼_ (strᵛ j A) (strᵉ j ε)
 
---------------------------------------------------------------
--- Moving the rigid back to the newest position              --
---------------------------------------------------------------
-
 popˢ : ∀ {Ψ} → EVar (Ψ +e) → Subst (Ψ +e) (Ψ +e)
 popˢ {Ψ} j = sub tvar rvar
                  (λ k → maybe′ (λ k₀ → evar (wkᵉ-ev Ψ k₀))
@@ -163,10 +127,6 @@ popˢ {Ψ} j = sub tvar rvar
 popˢ-hit : ∀ {Ψ} → (j : EVar (Ψ +e)) → sE (popˢ {Ψ} j) j ≡ evar (newᵉ {Ψ})
 popˢ-hit {Ψ} j =
   cong (maybe′ (λ k₀ → evar (wkᵉ-ev Ψ k₀)) (evar (newᵉ {Ψ}))) (thick-refl {nE Ψ} j)
-
---------------------------------------------------------------
--- A successful strengthening inverts the move               --
---------------------------------------------------------------
 
 str-popᵉ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e)) → {ε₀ : EExp Ψ}
          → strᵉ j ε ≡ just ε₀ → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀
@@ -207,10 +167,6 @@ mutual
   str-popᶜ j (A ‼ ε) q with zip₂-just _‼_ (strᵛ j A) (strᵉ j ε) q
   ... | a , b , qa , qb , refl = cong₂ _‼_ (str-popᵛ j A qa) (str-popᵉ j ε qb)
 
---------------------------------------------------------------
--- Strengthening undoes the weakening                        --
---------------------------------------------------------------
-
 str-wkᵉ : ∀ {Ψ} → (ε : EExp Ψ) → strᵉ (newᵉ {Ψ}) (wkᵉ-e ε) ≡ just ε
 str-wkᵉ (evar i)   = refl
 str-wkᵉ (econst c) = refl
@@ -237,17 +193,9 @@ mutual
   str-wkᶜ : ∀ {Ψ} → (C : OCType Ψ) → strᶜ (newᵉ {Ψ}) (wkᵉ-c C) ≡ just C
   str-wkᶜ (A ‼ ε) = cong₂ (zip₂ _‼_) (str-wkᵛ A) (str-wkᵉ ε)
 
---------------------------------------------------------------
--- Strengthening a whole substitution                        --
---                                                           --
--- A substitution out of a scope is a function on each of the --
--- three finite sorts, so the pointwise partial results are   --
--- assembled by a finite traversal.                           --
---------------------------------------------------------------
-
--- The traversals are written with explicit auxiliaries taking the
--- scrutinee as an argument, so that the case analysis remains visible
--- from outside — what a proof about a verdict needs.
+-- Assembles the pointwise partial results of the three finite sorts by
+-- a finite traversal. The auxiliaries take the scrutinee explicitly,
+-- keeping the case analysis visible to callers.
 
 seqFinᵃ : ∀ {n} {X : Set} → (P : Fin (nsuc n) → X → Set)
         → Maybe (Σ[ x ∈ X ] P zero x)
@@ -318,10 +266,6 @@ strSub j γ = strSubᵃ j γ (seqFin (λ α → strᵛ⁺ j (sTy γ α)))
                          (seqFin (λ i → strʳ⁺ j (sR  γ i)))
                          (seqFin (λ i → strᵉ⁺ j (sE  γ i)))
 
---------------------------------------------------------------
--- Undoing the move of the rigid                             --
---------------------------------------------------------------
-
 unpopˢ : ∀ {Ψ} → EVar (Ψ +e) → Subst (Ψ +e) (Ψ +e)
 unpopˢ {Ψ} j = sub tvar rvar (λ { zero → evar j ; (suc k) → evar (thinᵉ {Ψ} j k) })
 
@@ -343,16 +287,9 @@ pop-unpop {Ψ} j = mk≐ˢ (λ α → refl) (λ i → refl) sE'
     ... | just k₀  = cong evar (sym (thick-just {nE Ψ} j k k₀ r))
     ... | nothing  = cong evar (sym (thick-nothing {nE Ψ} j k r))
 
---------------------------------------------------------------
--- The escape lemma                                          --
---                                                           --
--- An occurrence of a variable whose image is again a         --
--- variable is renamed, not removed. The discipline of a      --
--- mixed prefix (Miller 1992) is exactly that its universally --
--- quantified variables are renamed and never instantiated,   --
--- so an occurrence of a rigid survives every substitution    --
--- that respects them.                                        --
---------------------------------------------------------------
+-- An occurrence of a variable whose image is again a variable is
+-- renamed, not removed — Miller's mixed-prefix discipline (1992), the
+-- rigid playing Gentzen's eigenvariable.
 
 escᵉ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
      → (ε : EExp Φ) → occᵉ-e j ε ≡ true → occᵉ-e k (ε [ σ ]ᵉ) ≡ true
@@ -397,10 +334,6 @@ mutual
   ... | inj₁ s = ∨-left  (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-e k (ε [ σ ]ᵉ)) (escᵛ σ j k r A s)
   ... | inj₂ s = ∨-right (occᵉ-v k (A [ σ ]ᵛ)) (occᵉ-e k (ε [ σ ]ᵉ)) (escᵉ σ j k r ε s)
 
---------------------------------------------------------------
--- The newest variable occurs in nothing weakened            --
---------------------------------------------------------------
-
 occ-wkᵉ : ∀ {Ψ} → (ε : EExp Ψ) → occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε) ≡ true → ⊥
 occ-wkᵉ {Ψ} (evar i)   q with true-dec (newᵉ {Ψ} ≟ᶠ wkᵉ-ev Ψ i) q
 ... | ()
@@ -439,10 +372,6 @@ mutual
   occ-wkᶜ {Ψ} (A ‼ ε) q =
     [ occ-wkᵛ A , occ-wkᵉ ε ]′
       (∨-true (occᵉ-v (newᵉ {Ψ}) (wkᵉ-v A)) (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε)) q)
-
---------------------------------------------------------------
--- A failed strengthening is an occurrence                   --
---------------------------------------------------------------
 
 str-occᵉ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
          → strᵉ j ε ≡ nothing → occᵉ-e j ε ≡ true
@@ -487,14 +416,8 @@ mutual
   ... | inj₁ s = ∨-left  (occᵉ-v j A) (occᵉ-e j ε) (str-occᵛ j A s)
   ... | inj₂ s = ∨-right (occᵉ-v j A) (occᵉ-e j ε) (str-occᵉ j ε s)
 
---------------------------------------------------------------
--- Completeness of the escape check                          --
---                                                           --
--- An expression that a rigid-preserving instance frees of    --
--- the rigid never mentioned it, so it strengthens. Read      --
--- contrapositively: a `strSub` that fails refutes every      --
--- instance keeping the rigid an eigenvariable of its own.    --
---------------------------------------------------------------
+-- Contrapositive: a `strSub` that fails refutes every instance that
+-- keeps the rigid an eigenvariable.
 
 strᵉ-just : ∀ {Ψ Ξ} → (j : EVar (Ψ +e)) → (ε : EExp (Ψ +e))
           → (δ : Subst (Ψ +e) (Ξ +e)) → sE δ j ≡ evar (newᵉ {Ξ})

@@ -21,19 +21,14 @@ open GradeSystemInterface Grades
 open import Syntax.Contexts S
 open import Syntax.Types     S
 
--- ETERNAL CONTEXTS
---
 -- All-eternal, and lock-free apart from locks at a grade ≾-equivalent to the
 -- unit. Interprets to a graded `⟨_⟩`-algebra (`𝟙ᵐ` and `×ᵐ` are eternal
 -- objects, and `⟨ ρ ⟩ᵒ` is the identity up to isomorphism at a unit-equivalent
--- `ρ`), which is what a lock-introducing renaming needs of the context standing
--- to its left.
+-- `ρ`).
 --
 -- A unit-equivalent lock is admissible rather than new: `⟨⟩-η-ren`/`⟨⟩-η⁻¹-ren`
--- and `⟨⟩-≤-ren` already move a context across it in both directions. Carrying
--- it as a constructor saves that shuffle at the use sites. Both bounds are
--- needed — `ρ ≾ᵣ uᵣ` alone would admit *every* lock in a grade system whose
--- order bottoms out at the unit (e.g. `Grades.Example.Time.LeftSided`).
+-- and `⟨⟩-≤-ren` already move a context across it in both directions. Both
+-- bounds are needed.
 
 data EternalCtx : Ctx → Set where
   ec-[] : EternalCtx []
@@ -72,21 +67,19 @@ ec-split (Δ' ⟨ ρ ⟩) (ec-⟨⟩ q p ec) =
 -- identities, composition, congruences, ordinary variable
 -- renamings, and strong monoidal functor structure for ⟨_⟩)
 --
--- A `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` of contexts, so each
--- constructor's indices run in the direction of the model map it denotes and
--- the action on terms is contravariant: it takes a `Ξ ++ᶜ Δ'`-term to a
--- `Ξ ++ᶜ Δ`-term (`V-rename`, `C-rename`).
+-- A `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` of contexts. The action on
+-- terms is contravariant: it takes a `Ξ ++ᶜ Δ'`-term to a `Ξ ++ᶜ Δ`-term
+-- (`V-rename`, `C-rename`).
 --
--- Indexed by an AMBIENT context `Ξ`, which the renaming fixes. Every rule acts
--- only at the top of the local part `Δ`, carrying
--- the ambient untouched — semantically, each is natural in `Ξ` (`⟨⟩-η-nat`,
--- `εᵘ-nat`, `⟨⟩-μ-nat`, `⟨⟩-≤-nat` are laws of the model).
+-- Indexed by an ambient context `Ξ`, which the renaming fixes. Every rule acts
+-- only at the top of the local part `Δ`, leaving the ambient untouched;
+-- semantically, each is natural in `Ξ` (`⟨⟩-η-nat`, `εᵘ-nat`, `⟨⟩-μ-nat`,
+-- `⟨⟩-≤-nat` are laws of the model).
 --
--- The exception, and the reason for the index, is `⟨⟩-ext-ctx`: it introduces a
--- lock, i.e. is the *counit* of `⟨ ρ ⟩` at an arbitrary grade. `⟨ ρ ⟩` has no
--- such counit in general — only the `Eternalᵒ` algebra `extᵉ` of an eternal
--- object does, which is why it alone constrains the ambient. Correspondingly it
--- is the one map of the model carrying no naturality law.
+-- The exception is `⟨⟩-ext-ctx`: it introduces a lock, the counit of `⟨ ρ ⟩`
+-- at an arbitrary grade, available only via the `Eternalᵒ` algebra `extᵉ` of
+-- an eternal object. It is the one map of the model carrying no naturality
+-- law.
 
 data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   -- identity renaming
@@ -106,11 +99,9 @@ data Ren (Ξ : Ctx) : Ctx → Ctx → Set where
   ⟨⟩-μ-ren    : ∀ {Δ ρ ρ'} → Ren Ξ (Δ ⟨ ρ ⟩ ⟨ ρ' ⟩) (Δ ⟨ ρ ·ᵣ ρ' ⟩)
   -- monotonicity renaming for ⟨_⟩ modality
   ⟨⟩-≤-ren    : ∀ {Δ ρ ρ'} → ρ' ≾ᵣ ρ → Ren Ξ (Δ ⟨ ρ' ⟩) (Δ ⟨ ρ ⟩)
-  -- introducing a lock: the counit of `⟨ ρ ⟩` at an arbitrary grade, available
-  -- exactly when everything to the lock's left is eternal, since `⟦_⟧ᶜᵗˣ` of
-  -- such a context is a `⟨_⟩`-algebra and `extᵉ` is that counit. The context to
-  -- the left is `Ξ ++ᶜ Δ`, so both halves are asked for (`ec-++ᶜ` assembles
-  -- them). The only rule that reads the ambient.
+  -- introducing a lock: available when the context to its left, `Ξ ++ᶜ Δ`,
+  -- is eternal (`ec-++ᶜ` assembles the two halves). The only rule that reads
+  -- the ambient.
   ⟨⟩-ext-ctx  : ∀ {Δ ρ} → EternalCtx Ξ → EternalCtx Δ → Ren Ξ (Δ ⟨ ρ ⟩) Δ
   -- congruence renamings
   cong-∷-ren  : ∀ {Δ Δ' A} → Ren Ξ Δ Δ' → Ren Ξ (Δ ∷ A) (Δ' ∷ A)
@@ -139,9 +130,8 @@ cong-ren {Γ'' = []} r        = r
 cong-ren {Γ'' = Γ'' ∷ A} r   = cong-∷-ren (cong-ren r)
 cong-ren {Γ'' = Γ'' ⟨ ρ' ⟩} r = cong-⟨⟩-ren (cong-ren r)
 
--- Extending the *ambient* on the left. Only `⟨⟩-ext-ctx` constrains it, and
--- there the obligation is genuine: the prefix now stands to the left of the
--- lock, so it must be eternal too.
+-- Extending the ambient on the left. Only `⟨⟩-ext-ctx` constrains it: the
+-- prefix, now standing to the left of the lock, must be eternal too.
 
 cong-renˡ : ∀ {Ξ Δ Δ'} → (Γ'' : Ctx) → EternalCtx Γ''
           → Ren Ξ Δ Δ' → Ren (Γ'' ++ᶜ Ξ) Δ Δ'
@@ -171,15 +161,13 @@ cong-renˡ Γ'' ec'' (cong-∷-ren r) =
 cong-renˡ Γ'' ec'' (cong-⟨⟩-ren r) =
   cong-⟨⟩-ren (cong-renˡ Γ'' ec'' r)
 
--- Moving a prefix of the ambient into the local part. Both sides denote a map
--- between the same two contexts, so this is a reassociation; it goes only this
--- way, since the ambient means *fixed*, and fixing more implies fixing less.
+-- Moving a prefix of the ambient into the local part: a reassociation between
+-- the same two contexts, one-directional since fixing more implies fixing
+-- less.
 --
--- Every case is the same constructor: no rule inspects where the ambient/local
--- boundary lies, and `++ᶜ` recurses on its right argument, so the local shapes
--- reassociate definitionally. Only `var-ren` (whose variable ranges over the
--- whole context) and `⟨⟩-ext-ctx` (whose eternality obligation is split by
--- `ec-split` and reassembled by `ec-++ᶜ`) do any work.
+-- Only `var-ren` (whose variable ranges over the whole context) and
+-- `⟨⟩-ext-ctx` (whose eternality obligation is split by `ec-split` and
+-- reassembled by `ec-++ᶜ`) do any work; the rest reassociates definitionally.
 
 expose-ren : ∀ {Ξ Δ₀ Δ₀'} → (Δ : Ctx) → Ren (Ξ ⋈ᶜ Δ) Δ₀ Δ₀'
            → Ren Ξ (Δ ++ᶜ Δ₀) (Δ ++ᶜ Δ₀')
@@ -245,7 +233,7 @@ barrier-wk-ren ρ A = ⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren ∘ʳ co
 
 -- Inserting a context `Γ'` immediately after the ambient, under an arbitrary
 -- suffix `Θ`. Recursion on `Θ`, bottoming out in an insertion at the top; the
--- lock case uses `⟨⟩-ext-ctx`, which is why the ambient must be eternal.
+-- lock case uses `⟨⟩-ext-ctx`, requiring the ambient to be eternal.
 
 wk-ctx-ren : ∀ {Ξ} → EternalCtx Ξ → (Γ' : Ctx) → Ren Ξ Γ' []
 wk-ctx-ren ec []         = id-ren

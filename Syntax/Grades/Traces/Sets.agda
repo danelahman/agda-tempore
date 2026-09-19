@@ -257,15 +257,12 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   --
   -- Every order the trace grades put on sets of traces has one shape:
   -- every trace of the left-hand set is related to *some* trace of the
-  -- right-hand one. Only the relation lifted differs -- `_≡_` below, and
-  -- `Allowance`'s `_≼ᵃ_` together with its converse in `AllowanceLift`
-  -- -- so the properties are proved here once and instantiated there.
+  -- right-hand one. Only the relation lifted differs, so the properties
+  -- are proved here once and instantiated elsewhere.
   --
   -- The superscript marks the level, not one of the instances: at `_≡_`
-  -- the lift is the subset preorder, at `_≼_` it is the Hoare lower
-  -- lift, and at the converse of `_≼_` it is the Smyth upper lift read
-  -- backwards. Swapping the two sets alone does *not* take one of the
-  -- latter two to the other -- the relation has to be reversed as well.
+  -- the lift is the subset preorder, at `_≼_` the Hoare lower lift, and
+  -- at the converse of `_≼_` the Smyth upper lift read backwards.
   --
   -- Membership and `R` are both decided, so the lift is stated in the
   -- proof-irrelevant `True`-of-a-decision form.

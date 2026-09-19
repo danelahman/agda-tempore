@@ -1,9 +1,6 @@
 ------------------------------------------------------------------------
 -- The syntactic equivalence is contained in the equational theory.    --
---                                                                    --
--- Equality of terms is propositional equality, and `_==_` is         --
--- reflexive, so the inclusion is one line each way round the mutual   --
--- pair. The converse fails, and should: `_==_` has the βη axioms.     --
+-- The converse fails: the equational theory has further βη axioms.    --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

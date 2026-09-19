@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- RUNNING THE OPERATIONS, on presheaves.                               --
+-- Running the operations, on presheaves.                               --
 --                                                                    --
 -- The graded monad morphism from the free tree monad into the free tick --
 -- monad, determined by a semantic implementation of the operations       --

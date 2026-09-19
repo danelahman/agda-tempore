@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
 -- The slack-indexed coverage relation, and its preorder structure.    --
---                                                                    --
+--                                                                     --
 -- `s ≼ᶜ[ k ] t` reads: the run `t` covers the trace `s`, given `k`    --
 -- units of slack already banked. Read as a guarantee `s` and an       --
--- elapsed run `t`:                                                   --
---                                                                    --
+-- elapsed run `t`:                                                    --
+--                                                                     --
 --   * every operation `s` names must genuinely occur in `t`, in       --
 --     order (`keep`) -- it is never bought with time;                 --
 --   * every delay `s` names is paid out of slack (`use-delay`), and   --
@@ -13,15 +13,13 @@
 --     and its delays at their length (`del-delay`);                   --
 --   * and slack does not cross a match. `keep` recurses at slack      --
 --     zero, so a delay `s` places between two operations it names is  --
---     paid only by what the run does between those same two.         --
---                                                                    --
+--     paid only by what the run does between those same two.          --
+--                                                                     --
 -- Time discharges a demand for time; nothing discharges a demand for  --
 -- an operation but the operation, and a demand for time is met only   --
--- where it is placed. This is the order a *guarantee* wants, and it   --
--- is deliberately not the converse of `Traces.Allowance`: there time  --
--- buys operations, which would let a run that merely idles discharge  --
--- a guarantee that a reading was taken.                              --
---                                                                    --
+-- where it is placed. This is the order a *guarantee* wants; it is    --
+-- not the converse of `Traces.Allowance`, where time buys operations. --
+--                                                                     --
 -- The relation is a preorder at the slacks: reflexive at any slack,   --
 -- weakenable to more slack, and transitive with the slacks adding up. --
 -- Everything derived from those laws -- the moves, the duration bound --

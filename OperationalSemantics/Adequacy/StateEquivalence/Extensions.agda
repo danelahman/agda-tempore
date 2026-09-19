@@ -37,15 +37,9 @@ open import Syntax.Substitutions.Equivalence Spec
 
 open import OperationalSemantics.Adequacy.StateEquivalence.Core Spec
 
-------------------------------------------------------------------------
--- STATE EXTENSIONS OF THE SAME SHAPE
---
 -- `SEQ-STEP`/`HANDLE-STEP` rename their continuation along
--- `suc-comp-ren (step-extends-state r) c`, so simulating them needs the two
--- derived renamings to agree. They do, because `suc-comp-ren` reads only the
--- *shape* of the extension — its `∷-suc` clause discards the stored value, and
--- the only data it keeps is a `≾ᵣ` proof, invisible to `_≐ʳ_`.
-------------------------------------------------------------------------
+-- `suc-comp-ren (step-extends-state r) c`; simulating them needs the two
+-- derived renamings to agree.
 
 data _≤≐_ : ∀ {St St₁ St' St₁' : 𝕊 []} → St ≤ₛ St₁ → St' ≤ₛ St₁' → Set where
 
@@ -161,14 +155,8 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
                   (cong (_⟨ ρ''' ⟩) (sym (toCtx-≐ˢ (∷-≐ˢ es₁ eV))))
                   (suc-comp-ren (∷-suc V' q') c')))
 
-------------------------------------------------------------------------
--- RELATED STATES HOLD RELATED VALUES
---
 -- A cell of `St` is a cell of `St'`, split off at related states and holding
--- equal values — which at the cell itself is exactly what `∷-≐ˢ`
--- stores. Induction on the relation and the variable together; `toCtx-≐ˢ` is
--- built by `cong`, so relocating the variable is `subst-Hd`/`subst-Tl-*`.
-------------------------------------------------------------------------
+-- equal values.
 
 ≐ˢ-var : ∀ {A ρ σ} {St St' : 𝕊 []} → (es : St ≐ˢ St')
        → [ ρ ] A ∈[ σ ] toCtx St → [ ρ ] A ∈[ σ ] toCtx St'
@@ -239,13 +227,7 @@ suc-comp-ren-≐ʳ {ρ'' = ρ''} {ρ''' = ρ'''}
                     (resource-lookup St' z')
 ≐ˢ-lookup₂ es z z' refl = ≐ˢ-lookup es z
 
-------------------------------------------------------------------------
--- READING THE STORE, UP TO THE EQUIVALENCE
---
--- `UNBOX` reads the store; related states hold related values. Unfolding both
--- lookups leaves `lookup-body′` at corresponding data, which `lookup-body′-≡`
--- compares.
-------------------------------------------------------------------------
+-- `UNBOX` reads the store; related states hold related values.
 
 -- Stated on cells, which is what a `VRed` stated on readability needs;
 -- `unbox-lookup-≐ˢ` below is the same at an `unbox` node's variable.

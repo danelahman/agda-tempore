@@ -1,28 +1,17 @@
 ------------------------------------------------------------------------
--- Soundness of the PURE top-level operational semantics.                --
---                                                                    --
--- The top-level machine runs a program against external implementations  --
--- of the algebraic operations (`op-sem`). It has two rules: an ordinary  --
--- step `↝-STEP`, and                                                    --
---                                                                    --
---   OP-STEP : ⟨ S , perform op V M ⟩                                    --
---           ⟿ ⟨ S ⟨ mapᵉ (op-grade op) ⟩ₛ , M [ split-[] ↦ op-sem op V ]c ⟩   --
---                                                                    --
--- which replaces the operation call by the value the implementation      --
--- computes, and locks the state: performing the operation took           --
--- `mapᵉ (op-grade op)` worth of time.                                   --
---                                                                    --
--- Every operation is therefore run, and the top-level denotation lands   --
--- in the tick monad (`Model.TickMonad`), where the only effect is the    --
--- passage of time. It is the tree-monad denotation, composed with the    --
--- implementation `implᵐ : Tᵒ A ε →ᵐ Tᵏ A ε` (`Model.Implementation`):    --
---                                                                    --
---   ⟦ cf ⟧ᵏᶜᶠ  =  implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ                                     --
---                                                                    --
--- Operations under a handler are handled by `⟦_⟧ᶜᵗ` in the tree monad,   --
--- `HANDLE-OP` being an `↝-STEP`; `implᵐ` runs the ones surviving to the  --
--- top. The theorem's one condition, `OpSemCoherent`, is that `op-sem` is --
--- the semantic implementation `op-semᵐ`.                                --
+-- Soundness of the pure top-level operational semantics.                --
+--                                                                       --
+-- The top-level machine runs a program against external                 --
+-- implementations of the algebraic operations (`op-sem`): an ordinary   --
+-- step `↝-STEP`, and `OP-STEP`, which replaces an operation call by     --
+-- the implementation's value and locks the state by `op-grade op`.      --
+--                                                                       --
+-- Its denotation lands in the tick monad (`Model.TickMonad`), composed  --
+-- with the tree-monad denotation via the implementation                 --
+-- `implᵐ : Tᵒ A ε →ᵐ Tᵏ A ε` (`Model.Implementation`).                  --
+--                                                                       --
+-- The theorem's one condition, `OpSemCoherent`, is that `op-sem` is the --
+-- semantic implementation `op-semᵐ`.                                    --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -136,8 +125,6 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
 
   module _ (op-par : OpSemParametric) (op-coh : OpSemCoherent op-par) where
 
-    -- THE TOP-LEVEL DENOTATION OF A CONFIGURATION
-
     ⟦_⟧ᵏᶜᶠ : ∀ {A ε} → (cf : Config (A ‼ ε)) → Paramᶜᶠ cf
            → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ Tᵏ ⟦ A ⟧ᵛ ε
     ⟦ cf ⟧ᵏᶜᶠ p = implᵐ ∘ᵐ ⟦ cf ⟧ᶜᶠ p
@@ -153,11 +140,9 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     topᴾᶜᶠ (OP-STEP {op = op} {S = St} {V = V} {M = M}) (pSt , (pV , pM)) =
       pSt , subᶜ M split-[] (op-sem op V) pM (op-par op St V)
 
-    -- THE TOP-LEVEL STEP'S GRADE, TRANSITION AND REFINEMENT
-    --
-    -- `↝-STEP` inherits the ordinary ones, run through the implementation.
-    -- `OP-STEP` performs the operation: it costs `op-grade op`, and its
-    -- transition is a tick.
+    -- The top-level step's grade, transition and refinement: `↝-STEP`
+    -- inherits the ordinary ones, run through the implementation; `OP-STEP`
+    -- performs the operation, costing `op-grade op`, with a tick transition.
 
     top-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
               → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -196,10 +181,9 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
               ≈ᵐ f ∘ᵐ ⟨ idᵐ , g ⟩ᵐ
     substᵈ-⟨⟩ refl f g = ≈ᵐ-refl
 
-    -- OP-STEP
-    --
-    -- The implementation feeds the continuation `op-semᵐ`'s value, which by
-    -- `OpSemCoherent` is the value the reduct substitutes, and leaves a tick.
+    -- `OP-STEP`: the implementation feeds the continuation `op-semᵐ`'s value,
+    -- which by `OpSemCoherent` is the value the reduct substitutes, and
+    -- leaves a tick.
 
     sound-OP-STEP : ∀ {A ε} → (op : Op) → (St : 𝕊 [])
                   → (V : toCtx St ⊢V⦂ type-of-gtype (param op))
@@ -262,9 +246,8 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
           ∙ᵏ ∘ᵐ-congˡ (T-≤ᵏ-refl _)
           ∙ᵏ ∘ᵐ-identityˡ _
 
-    -- SOUNDNESS OF A TOP-LEVEL STEP
-    --
-    -- `↝-STEP` is `↝-sound` carried along the monad morphism `implᵐ`.
+    -- Soundness of a top-level step: `↝-STEP` is `↝-sound` carried along the
+    -- monad morphism `implᵐ`.
 
     ⟿-sound : ∀ {ε ε' A} {St St' : 𝕊 []}
              → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -285,10 +268,9 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     ⟿-sound (OP-STEP {op = op} {S = St} {V = V} {M = M}) (pSt , (pV , pM)) _ =
       sound-OP-STEP op St V M pSt pV pM
 
-    -- THE COERCION ESCAPES A TOP-LEVEL TRANSITION
-    --
-    -- Every top-level transition is built from `ηᵏ` and ticks, and a tick
-    -- records nothing, so `tickᵏ-≤` lets a coercion through it.
+    -- The coercion escapes a top-level transition: every one is built from
+    -- `ηᵏ` and ticks, and a tick records nothing, so `tickᵏ-≤` lets a
+    -- coercion through it.
 
     ηᵏ-case : ∀ {X B εa εb} → (g : X →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
             → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ ηᵏ
@@ -393,8 +375,6 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
               ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ top-stepᵏ r
     T-≤ᵏ-topᵏ B (↝-STEP r) g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-topᵏ B (OP-STEP {op = op}) g q = tick-case (op-grade op) η⊣ g q
-
-    -- THE MULTI-STEP CLOSURE
 
     top-steps-grade : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                     → cf ⟿* cf' → E

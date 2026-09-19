@@ -163,7 +163,6 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
     inner : strᵀ ∘ᵐ mapˣᵐ idᵐ n ∘ᵐ ×ᵐ-assoc ∘ᵐ mapˣᵐ ⟨ α , idᵐ ⟩ᵐ idᵐ
           ≈ᵐ Tᶠ (mapˣᵐ φ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , n ⟩ᵐ
     inner =
-        -- the pair algebra: `×ᵐ-assoc` after the diagonal leaves `⟨ α ∘ fstᵐ , n ⟩`
         ∘ᵐ-congʳ (  ∘ᵐ-congʳ (  ⟨⟩ᵐ-∘ _ _ _
                               ∙ ⟨   ∘ᵐ-assoc _ _ _
                                   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
@@ -181,9 +180,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                                               (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _)) ⟩ᵐ-cong)
                   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
                   ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong)
-        -- (†) rewrites the boxed component into the renaming's transpose
       ∙ ∘ᵐ-congʳ (⟨ α-fstᵐ , ≈ᵐ-refl ⟩ᵐ-cong)
-        -- and the strength's naturality in that component absorbs it
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (strᵀ-natˡ φ))
@@ -196,7 +193,6 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
            ∘ᵐ mapˣᵐ η⊣ (Tᶠ n) ∘ᵐ mapˣᵐ idᵐ strᵀ ∘ᵐ ⟨ idᵐ , ⟨ η⊣ , m ⟩ᵐ ⟩ᵐ
       ≈ᵐ Tᶠ (Tᶠ (mapˣᵐ φ idᵐ)) ∘ᵐ Tᶠ strᵀ ∘ᵐ Tᶠ ⟨ η⊣ , n ⟩ᵐ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
     core =
-        -- collapse the `mapˣᵐ`-layers back onto the pair
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
@@ -204,14 +200,12 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
           ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityʳ _ , ≈ᵐ-refl ⟩ᵐ-cong)
           ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
           ∙ ⟨ ∘ᵐ-assoc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-        -- factor `Tᶠ n` out of the pair and push it through the strength
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                    ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong)))
       ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                   ∙ ∘ᵐ-congˡ (  ∘ᵐ-congʳ (mapˣᵐ-cong (≈ᵐ-sym []-idᵐ) ≈ᵐ-refl)
                               ∙ strᵀ-nat idᵐ n)
                   ∙ ∘ᵐ-assoc _ _ _)
-        -- nested strengths: `strᵀ-assoc` merges them
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
             ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                               ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
@@ -231,7 +225,6 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                                                   ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
                                   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
                                   ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))))
-        -- (Step B) split the environment box, then `η⊣-monoidal` pairs it up
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (⟨
             ∘ᵐ-congʳ (⟨ box-split , ≈ᵐ-refl ⟩ᵐ-cong)
           ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
@@ -246,14 +239,12 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
                       ∙ []-congᶠ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
           , ≈ᵐ-refl ⟩ᵐ-cong))))
-        -- push the resulting box through the outer strength
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
             ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                               ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
           ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
           ∙ ∘ᵐ-congˡ (≈ᵐ-sym (strᵀ-natˡ _))
           ∙ ∘ᵐ-assoc _ _ _)))
-        -- gather the `Tᶠ`-layers and discharge (★★)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -273,21 +264,17 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
          ε-substᵀ e ∘ᵐ ⟦ M ⨟ (N ⨟ C-rename r P) ⟧ᶜᵗ pRc
       ≈ᵐ μᵀ ∘ᵐ μᵀ ∘ᵐ Tᶠ (Tᶠ q) ∘ᵐ Tᶠ strᵀ ∘ᵐ Tᶠ ⟨ η⊣ , n ⟩ᵐ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m ⟩ᵐ
     rhs→common =
-        -- unfold `Tᶠ` of the inner `⨟`
         ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ
           (T-∘ᵐ _ _ ∙ ∘ᵐ-congʳ (T-∘ᵐ _ _ ∙ ∘ᵐ-congʳ (T-∘ᵐ _ _)))))
-        -- regroup so `μᵀ ∘ Tᶠ μᵀ` meets the monad's associativity
       ∙ ∘ᵐ-congʳ (  ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
                   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                   ∙ ∘ᵐ-congˡ T-μ∘μ≡μ∘Tμ)
-        -- the two grade coercions cancel (`e = sym (·ₑ-assoc …)`)
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (  ε-substᵀ-trans (·ₑ-assoc ε ε' ε'') e
                   ∙ ≡→≈ᵐ (cong ε-substᵀ uip)
                   ∙ ε-substᵀ-refl)
       ∙ ∘ᵐ-identityˡ _
-        -- re-associate the `Tᶠ`-tail against the outer strength
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
 
@@ -300,9 +287,7 @@ sound-seq-assoc {Γ} {A} {B} {C} {ε} {ε'} {ε''} M N P ((pM , pN) , pP) pR =
       ≈⟨ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ step1-pair))
        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ strᵀ-μᵀ ∙ ∘ᵐ-assoc _ _ _))
        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (≈ᵐ-sym (μᵀ-nat p)) ∙ ∘ᵐ-assoc _ _ _)
-         -- (★) the strength-coherence core
        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ core))
-         -- and `P`'s renaming rejoins its interpretation
        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
              ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
            ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym (T-∘ᵐ _ _)

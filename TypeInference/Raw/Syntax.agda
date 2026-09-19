@@ -34,10 +34,6 @@ open Operations Ops
 
 open import Syntax.Types S using (BaseType; BaseConstants)
 
---------------------------------------------------------------
--- Raw terms (values and computations)                       --
---------------------------------------------------------------
-
 mutual
 
   data RawV (n : ℕ) : Set where

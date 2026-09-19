@@ -160,12 +160,11 @@ bare-send-not-demanded :
 bare-send-not-demanded = fails
 
 ------------------------------------------------------------------------
--- What has not changed
+-- What `if` still cannot do
 --
--- `if` still cannot join branches that do different things: a common
--- grade would have to be a non-empty subset of both branches' grades,
--- and a store's and a transmitter's have no run in common. Several runs
--- per grade is a property of an operation here, not something a
+-- `if` still cannot join branches that do different things, a store's
+-- and a transmitter's grades having no run in common. Several runs per
+-- grade is a property of an operation here, not something a
 -- conditional can produce.
 
 storing-branch-not-at-the-transmission :

@@ -1,17 +1,8 @@
 ------------------------------------------------------------------------
 -- Soundness of the modal commutation equations.                        --
---                                                                    --
--- `unbox-comm`, `box-comm` and `box-unbox-comm` all say the same thing: --
--- two *independent* resource binders may be taken in either order, the   --
--- body being re-indexed by `exch-ren`. Denotationally each binder is an  --
--- environment extension `⟨ idᵐ , _ ⟩ᵐ` — a lookup `lk` for `unbox`, a    --
--- transposed box for `box` — and the equation is that the two extensions --
--- commute. Both orders normalise to `⟦M⟧ ∘ᵐ ⟨ ⟨ idᵐ , a ⟩ᵐ , b ⟩ᵐ`,      --
--- which is `comm-l` / `comm-r`; everything else is unfolding.           --
---                                                                    --
--- The inner binder's variable/value is weakened past the outer one, so   --
--- each case first pushes that weakening out: `unbox-env-nat` for a       --
--- lookup, `box-wk` (below) for a box.                                    --
+-- `unbox-comm`/`box-comm`/`box-unbox-comm` say two independent         --
+-- resource binders commute; `comm-l`/`comm-r` normalise both orders    --
+-- to the same composite.                                               --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -129,13 +120,11 @@ sound-unbox-comm : ∀ {Γ A B C ρ₁ ρ₁' ρ₂ ρ₂'}
                  → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                  → Soundᶜ== (unbox-comm x₁ rel₁ x₂ rel₂ M)
 sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ x₂ rel₂ M pM pR =
-    -- LHS: unfold both unboxings, push the inner lookup's weakening out
     unbox-def x₁ rel₁ (unbox (Tl-∷ x₂) rel₂ M) pM
   ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₂) rel₂ M pM)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                         , unbox-env-nat (wk-ren {A = A}) x₂ rel₂ rel₂ ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
-    -- RHS: the same, with the exchange renaming unfolded
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ (unbox (Tl-∷ x₁) rel₁ (C-rename exch-ren M)))
                 pR (renᶜ exch-ren M pM)
             ∙ unbox-def x₂ rel₂ (unbox (Tl-∷ x₁) rel₁ (C-rename exch-ren M))
@@ -153,14 +142,12 @@ sound-box-comm : ∀ {Γ A B C ρ ρ'}
                → (M : Γ ∷ [ ρ ] A ∷ [ ρ' ] B ⊢C⦂ C)
                → Soundᶜ== (box-comm V W M)
 sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' , pM)) (pW , (pV' , pMr)) =
-    -- LHS: the inner box's value is `W` weakened
     ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                         ,   ∘ᵐ-congˡ ([]-congᶠ
                               (⟦⟧ᵛᵗ-irr (V-rename (cong-⟨⟩-ren wk-ren) W) pW'
                                  (renᵛ (cong-⟨⟩-ren wk-ren) W pW)))
                           ∙ box-wk ([ ρ ] A) W pW ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
-    -- RHS: symmetrically, with the exchange renaming
   ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ (∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename exch-ren M) pMr
                                       (renᶜ exch-ren M pM)
                                   ∙ C-rename-nat exch-ren M pM
@@ -178,13 +165,11 @@ sound-box-unbox-comm : ∀ {Γ A B C ρ ρ₂ ρ₂'}
                      → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                      → Soundᶜ== (box-unbox-comm V x₂ rel₂ M)
 sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ M (pV , pM) pR =
-    -- LHS: `box` outside, the inner lookup weakened past it
     ∘ᵐ-congˡ (  unbox-def (Tl-∷ x₂) rel₂ M pM
               ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                           , unbox-env-nat (wk-ren {A = [ ρ ] A}) x₂ rel₂ rel₂
                             ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
-    -- RHS: `unbox` outside, the box weakened past it
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
                                            (C-rename exch-ren M)))
                 pR (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)

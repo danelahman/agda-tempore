@@ -34,8 +34,6 @@ open import DenotationalSemantics.Model.Example.PSh.Base GS Wld
 open import DenotationalSemantics.Model.Example.PSh.Modality.Future GS Wld hiding (⊑ρ∘ᵘ)
 open import DenotationalSemantics.Model.Example.PSh.Modality.Past GS Wld
 
--- STRUCTURE
-
 -- Unit: transpose a value under a lock into a boxed possibility.
 
 η⊣ : ∀ {A ρ} → A →ᵖ [ ρ ]ᵒ (⟨ ρ ⟩ᵒ A)
@@ -73,8 +71,6 @@ open import DenotationalSemantics.Model.Example.PSh.Modality.Past GS Wld
 
 ε⊣ : ∀ {A ρ} → ⟨ ρ ⟩ᵒ ([ ρ ]ᵒ A) →ᵖ A
 ε⊣ {A} = pmap ε⊣-app ε⊣-cong (λ t E → fun-nat (val E) (acc E) t)
-
--- PROPERTIES
 
 -- unit and counit are natural
 

@@ -1,28 +1,10 @@
 ------------------------------------------------------------------
--- Soundness of constraint generation                             --
+-- Soundness of constraint generation: a solution of a generated  --
+-- constraint elaborates to a mirrored derivation that erases     --
+-- back to the raw term it was generated from.                    --
 --                                                                --
--- A solution of a generated constraint elaborates to a mirrored  --
--- derivation that erases back to the raw term it was generated   --
--- from:                                                          --
---                                                                --
---   σ ⊨[ Q ] genC Γ M (A ‼ t)                                    --
---     → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ‼ t [ σ ]ᵉ) ]        --
---         (⌊ D ⌋ᶜ ≡ M)                                           --
---                                                                --
--- The proof is a structural induction on the raw term, one case  --
--- per row of the generation table: the `∃`-clauses of            --
--- satisfaction hand over the witnesses the rule's implicit        --
--- arguments need, the `_≐ᵥ_` conjuncts become transports, and     --
--- the `_≾̂ₑᶜ_` conjunct of a pinning former becomes a `coerce`.    --
---                                                                --
--- Every transport is one of the four `*-subst` families:          --
--- `ty-subst`/`c-subst` (from `TypeInference.Open.Language`) for an    --
--- annotation, `ctx-substᵛ`/`ctx-substᶜ` (below) for a context.    --
--- Each is erasure-invariant, by matching on the equation.         --
---                                                                --
--- The proof rebuilds a mirrored derivation under a satisfying    --
--- substitution, following the soundness of type inference of     --
--- Tavits's MSc thesis (U. Tartu, 2025).                          --
+-- Follows the soundness proof of Tavits's MSc thesis             --
+-- (U. Tartu, 2025).                                              --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -60,14 +42,9 @@ open import TypeInference.Constraints.Satisfaction S
 
 open import TypeInference.Generate S
 
---------------------------------------------------------------
--- Transporting a derivation along a context equation        --
---                                                           --
--- `TypeInference.Open.Language` transports annotations only;     --
--- the clause contexts of `handle`, and every context built   --
--- under a generation binder, need the context transported    --
--- too.                                                       --
---------------------------------------------------------------
+-- `TypeInference.Open.Language` transports annotations only; the clause
+-- contexts of `handle`, and every context built under a generation
+-- binder, need the context transported too.
 
 ctx-substᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
            → Γ ≡ Γ'
@@ -85,10 +62,6 @@ ctx-substᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {C : OCType Θ}
 
 ctx-substᶜ refl M = M
 
---------------------------------------------------------------
--- The transports are invisible to erasure                   --
---------------------------------------------------------------
-
 ⌊ty⌋ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A A' : OVType Θ}
      → (e : A ≡ A') → (V : Q ∣ Γ ⊢V⦂ A) → ⌊ ty-subst e V ⌋ᵛ ≡ ⌊ V ⌋ᵛ
 ⌊ty⌋ refl V = refl
@@ -105,14 +78,9 @@ ctx-substᶜ refl M = M
        → (e : Γ ≡ Γ') → (M : Q ∣ Γ ⊢C⦂ C) → ⌊ ctx-substᶜ e M ⌋ᶜ ≡ ⌊ M ⌋ᶜ
 ⌊ctxᶜ⌋ refl M = refl
 
---------------------------------------------------------------
--- Collapsing the generation binders                         --
---                                                           --
--- Generation weakens its arguments into the scope of the     --
--- `∃`s it introduces; satisfaction instantiates those `∃`s   --
--- by extending `σ`. Each pair cancels (`wk-,*`), one lemma   --
--- per binder pattern of the generation table.                --
---------------------------------------------------------------
+-- Generation weakens its arguments into the scope of the `∃`s it
+-- introduces; satisfaction instantiates those `∃`s by extending `σ`.
+-- Each pair cancels (`wk-,*`), one lemma per binder pattern below.
 
 -- `∃ᵗ∃ᵗ` — pairing, pattern-matching
 
@@ -218,10 +186,6 @@ coᵗʳ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : 
        → (ρ₀ : RExp Θ)
        → wkʳ-r (wkᵗ-r ρ₀) [ σ ,ᵗ B ,ʳ ρ ]ʳ ≡ ρ₀ [ σ ]ʳ
 coᵗʳ-r σ B ρ ρ₀ = trans (wk-,ʳ-r (σ ,ᵗ B) ρ (wkᵗ-r ρ₀)) (wk-,ᵗ-r σ B ρ₀)
-
---------------------------------------------------------------
--- The theorem                                               --
---------------------------------------------------------------
 
 mutual
 
@@ -485,11 +449,8 @@ mutual
 
   -- effect handling
   --
-  -- The clause family is typed one `∀ᵉ` deeper, its rigid effect-grade
-  -- variable landing on `evar (newᵉ {Θ'})` definitionally; what remains is
-  -- the collapse of the clause context's weakenings and the round-trips of
-  -- the two ground-type embeddings. The clause equalities hold pointwise,
-  -- so the erasure of the family needs `fun-ext`.
+  -- The clause family is typed one `∀ᵉ` deeper; the clause equalities
+  -- hold pointwise, so the erasure of the family needs `fun-ext`.
 
   soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (handle M `with H `in N) A t
          (B , ε₁ , ε₂ , s₁ , s₂ , le , cls) =
@@ -635,12 +596,9 @@ mutual
                 (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
                        (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂)))
 
---------------------------------------------------------------
--- Sanity checks: the elaboration computes                   --
---                                                           --
--- Three closed examples, solved by the identity substitution --
--- and the empty hypothesis set, elaborated and erased back.  --
---------------------------------------------------------------
+-- Sanity checks: three closed examples, solved by the identity
+-- substitution and the empty hypothesis set, elaborated and erased
+-- back.
 
 private
 

@@ -113,17 +113,13 @@ nor-three-ticks-a-store :
 nor-three-ticks-a-store = fails
 
 ------------------------------------------------------------------------
--- Unions are meets, which is what a non-singleton grade costs
+-- Unions are meets
 --
--- A computation has one run at a time, so a grade demanding two
--- distinct runs is inhabited only by a branching one, and the grade it
--- gets is the union of what its branches offer. The union lies *below*
--- each branch's own grade, so it cannot be reached by weakening the two
--- branches to a common grade -- the common weakening would be their
--- intersection, which may be empty and is not a grade at all.
---
--- A branching rule for this endpoint therefore has to take the union of
--- its branches' grades rather than coerce both to one grade.
+-- A grade demanding two distinct runs is inhabited only by a branching
+-- computation, whose grade is the union of what its branches offer.
+-- That union lies *below* each branch's own grade, so a branching rule
+-- for this endpoint has to take the union rather than coerce both
+-- branches to one grade.
 
 union-is-a-meet-belowˡ :
   demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ≾ demanding ⟅ ⌈ read ⌉ ⟆

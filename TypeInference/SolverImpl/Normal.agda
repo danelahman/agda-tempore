@@ -47,10 +47,6 @@ open GradeSystemInterface Grades
 open import TypeInference.Open.Grades S
 open import TypeInference.Open.Hyps   S
 
---------------------------------------------------------------
--- Atoms of an effect-grade expression                       --
---------------------------------------------------------------
-
 data EAtom (Θ : Scope) : Set where
   ac : E → EAtom Θ
   av : EVar Θ → EAtom Θ
@@ -106,10 +102,6 @@ nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
 nrmₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
 nrmₑ-≡ (ε ·̂ₑ ε')  =
   ≡̂ₑ-trans (≡̂ₑ-cong (nrmₑ-≡ ε) (nrmₑ-≡ ε')) (≡̂ₑ-sym (appₑ-≡ (nrmₑ ε) (nrmₑ ε')))
-
---------------------------------------------------------------
--- Atoms of a resource-grade expression                      --
---------------------------------------------------------------
 
 data RAtom (Θ : Scope) : Set where
   rc : R → RAtom Θ
@@ -194,10 +186,6 @@ nrmᵣ-≡ (ρ ·̂ᵣ ρ')  =
   ≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ')) (≡̂ᵣ-sym (appᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))
 nrmᵣ-≡ ∣ ε ∣̂ᵉ     = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (nrmₑ-≡ ε)) (img-≡ (nrmₑ ε))
 
---------------------------------------------------------------
--- Deciding an entailed ordering                             --
---------------------------------------------------------------
-
 atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
 atom≾ₑ (ac c) (ac d) with c ≾ₑ? d
 ... | yes p = just (atomₑ p)
@@ -257,11 +245,6 @@ decide≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ
 decide≾ᵣ ρ ρ' with list≾ᵣ (nrmᵣ ρ) (nrmᵣ ρ')
 ... | just p  = just (transᵣ (eqᵣ (nrmᵣ-≡ ρ)) (transᵣ p (eqᵣ (≡̂ᵣ-sym (nrmᵣ-≡ ρ')))))
 ... | nothing = min≾ᵣ umin?ᵣ (nrmᵣ ρ) (nrmᵣ-≡ ρ) ρ'
-
---------------------------------------------------------------
--- The closed case: evaluation, and reflection of the         --
--- semantic value back into the syntactic entailment          --
---------------------------------------------------------------
 
 evalᵉ : EExp ∅ˢ → E
 evalᵉ (evar ())

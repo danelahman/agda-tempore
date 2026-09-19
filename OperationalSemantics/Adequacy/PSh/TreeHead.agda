@@ -1,22 +1,9 @@
 ------------------------------------------------------------------------
 -- Head shapes of effect trees, at an arbitrary tick total.            --
---                                                                    --
--- `_≈ᵗ_` is generated with `sub-u`/`sub-∘`/`sub-delay`/`sub-op`, the  --
--- two delay collapses, and explicit `≈ᵗ-sym`/`≈ᵗ-trans`, so no-       --
--- confusion is proved against an observation invariant under all of   --
--- them, by induction on the derivation.                               --
---                                                                    --
--- The observation descends delays along a **path of unit ticks**      --
--- supplied in advance. That is the whole design, and what it buys is  --
--- both directions of `delay-plus` without asking the frame to         --
--- interpolate: a `τ₁ + τ₂` node consumes `τ₁ + τ₂` unit steps and the --
--- nested pair consumes `τ₁` then `τ₂`, so splitting the rule is       --
--- splitting the *chain*, never inverting a composite witness. The     --
--- tick total is therefore observable too, which is `HeadTimed`.       --
---                                                                    --
--- The path is a parameter, not an existential: two observations of    --
--- one tree then descend to the same world, which is what makes the    --
--- shape (and the count) unique.                                       --
+--                                                                     --
+-- Delays are descended along a fixed path of unit ticks, so           --
+-- `delay-plus` splits without the frame ever interpolating.           --
+-- The tick total is therefore observable too (`HeadTimed`).           --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -54,15 +41,8 @@ open GroundTypes GTy
 
 open import DenotationalSemantics.Model.Example.PSh.Monad.Core Spec Wld GTy
 
-------------------------------------------------------------------------
--- WHAT A HEAD IS
---
 -- A returned value, or an operation. The observation is parameterised by a
--- *predicate* on this rather than fixed at the shape alone, so that one
--- development serves both the shape statements (`ret≢op`, `op-inj`) and the
--- one that reads the returned value (`leaf-const`). The predicate has to be
--- closed under the carrier's own equality, which is all `leaf-≈` gives.
-------------------------------------------------------------------------
+-- *predicate* on this rather than fixed at the shape alone.
 
 data Res (A : PSh) : W → Set where
   ret-res : ∀ {w} → carrier A w → Res A w
@@ -92,10 +72,6 @@ isRet-closed e p = tt
 isOp-closed : ∀ {A op} → ≈-closed A (isOp op)
 isOp-closed e ()
 
-------------------------------------------------------------------------
--- PATHS OF UNIT TICKS
-------------------------------------------------------------------------
-
 data Path : W → W → Set where
   pnil  : ∀ {w} → Path w w
   pcons : ∀ {w w' w''} → w ⊑[ mapᵉ (of-natᵉ 1) ] w' → Path w' w'' → Path w w''
@@ -105,14 +81,8 @@ p-len pnil        = 0
 p-len (pcons q p) = suc (p-len p)
 
 
-------------------------------------------------------------------------
--- THE HEAD OBSERVATION
---
 -- `Head P t p n` — descending `t` along `p` reaches, after `n` ticks, a head
--- satisfying `P`. `Headᵏ` is the same for a delay node's *continuation*, so
--- that descending never has to rebuild a node (and hence never has to
--- fabricate a node's naturality witness).
-------------------------------------------------------------------------
+-- satisfying `P`. `Headᵏ` is the same for a delay node's *continuation*.
 
 mutual
 
@@ -211,13 +181,7 @@ headᵏ-sub⁻ : ∀ {A} {P : Pred A} {ε ε' w we τ n} {e : ε ≾ₑ ε'}
 headᵏ-sub⁻ (hk-zero (h-sub h)) = hk-zero h
 headᵏ-sub⁻ (hk-suc q h)        = hk-suc q (headᵏ-sub⁻ h)
 
-------------------------------------------------------------------------
--- UNIQUENESS
---
--- One tree, one path: one tick total, and one head — the two observations
--- are zipped into an observation of their conjunction, which is what lets
--- two *different* predicates be compared at the same head.
-------------------------------------------------------------------------
+-- One tree, one path: one tick total, and one head.
 
 mutual
 
@@ -270,13 +234,8 @@ mutual
   headᵏ-reach (hk-suc q h) with headᵏ-reach h
   ... | w' , ρ , acc , r , pr = w' , _ , ⊑-trans q acc , r , pr
 
-------------------------------------------------------------------------
--- INVARIANCE
---
--- Bisimilar trees have the same head *and the same tick total*. Mutual with
--- its converse, since `≈ᵗ-sym` is a constructor, and with the two
--- `delay-plus` transfers, which are inductions on the outer delay's `τ₁`.
-------------------------------------------------------------------------
+-- Bisimilar trees have the same head *and the same tick total*. Mutual
+-- with its converse, since `≈ᵗ-sym` is a constructor.
 
 module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
 
@@ -356,13 +315,7 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
     headᵏ-≈⁻ ek (hk-zero h)  = hk-zero (head-≈ᵗ⁻ (ek ⊑-delay0) h)
     headᵏ-≈⁻ ek (hk-suc q h) = hk-suc q (headᵏ-≈⁻ (λ q' → ek (⊑-split q q')) h)
 
-    -- THE TWO `delay-plus` TRANSFERS
-    --
-    -- Induction on the *outer* delay, not on the path: at `zero` the two
-    -- continuations meet at the canonical zero-step, and at `suc` one unit
-    -- step is peeled off both sides at once. No accessibility witness is ever
-    -- split — which is why the tick total survives and the frame is not asked
-    -- to interpolate.
+    -- Induction on the *outer* delay, not on the path.
 
     plus-fwd : ∀ {ε w we n} → (τ₁ τ₂ : ℕ)
              → {k : ∀ {w'} → w ⊑[ mapᵉ (of-natᵉ (τ₁ + τ₂)) ] w' → Tˢ A ε w'}
@@ -424,13 +377,8 @@ module _ {A : PSh} {P : Pred A} (Pcl : ≈-closed A P) where
                                         (⊑-split q (⊑-split q₁ q₂))))))
           h)
 
-------------------------------------------------------------------------
--- DELAY CHAINS
---
--- What a run's time transition denotes: leaves, reached after some number of
--- ticks. The morphism-level class `stepsᵀ` builds (`Delaysᵐ`) unfolds to
--- this, and this is the form the bind below consumes.
-------------------------------------------------------------------------
+-- What a run's time transition denotes: leaves, reached after some number
+-- of ticks. `Delaysᵐ` unfolds to this.
 
 data Delaysᵗ {Y : PSh} : ∀ {δ w} → Tˢ Y δ w → ℕ → Set where
 
@@ -497,13 +445,7 @@ headᵏ-walk (suc τ) pnil         ()       φ
 headᵏ-walk (suc τ) (pcons q p) (s≤s le) φ =
   hk-suc q (headᵏ-walk τ p le (λ q' p' le' → φ (⊑-split q q') p' le'))
 
-------------------------------------------------------------------------
--- BINDING PAST A DELAY CHAIN
---
 -- Running `h` after a chain of delays finds `h`'s own head, `n` ticks in.
--- `μˢ` and `Tˢᶠ` are structural — they regrade a node and push into its
--- continuations — so each case is the corresponding case of the chain.
-------------------------------------------------------------------------
 
 bind-head : ∀ {Y X : PSh} {δ ε' n} {P : Pred X} {h : Y →ᵖ Tᵒ X ε'}
           → ≈-closed X P
@@ -523,10 +465,6 @@ bind-head Pcl pH (d-sub d) p le = h-sub (bind-head Pcl pH d p le)
 
 bind-head {h = h} Pcl pH (d-≈ e d) p le =
   head-≈ᵗ Pcl (μˢ-congᵗ (Tˢᶠ-congᵗ h e)) (bind-head Pcl pH d p le)
-
-------------------------------------------------------------------------
--- NO-CONFUSION, AT AN ARBITRARY TICK TOTAL
-------------------------------------------------------------------------
 
 -- Two observations of bisimilar trees along one path meet: at one world,
 -- reached in one number of ticks, at one head.
@@ -563,9 +501,8 @@ op-inj {A} {op = op} et h h' with heads-meet (isOp-closed {A} {op}) et h h'
 ... | _ , _ , _ , _ , ret-res _ , (() , _)
 ... | _ , _ , _ , _ , op-res _ , (e₁ , e₂) = trans e₁ (sym e₂)
 
--- And the tick total is observable: the path is descended equally far on both
--- sides. This is what the zero-delay observation could not see, and it comes
--- for free here — no case of the invariance above changes `n`.
+-- And the tick total is observable: the path is descended equally far on
+-- both sides. This is what the zero-delay observation could not see.
 
 ticks-eq : ∀ {A ε w we n₁ n₂} {P Q : Pred A} → ≈-closed A P
          → {t t' : Tˢ A ε w} {p : Path w we}

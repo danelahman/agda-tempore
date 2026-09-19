@@ -161,13 +161,9 @@ fresh-var p x = var (λ _ → p) x
 -- Sequencing types its continuation under the lock `⟨ mapᵉ ε ⟩`, where
 -- `ε` is the grade the first part is *typed at* -- not the time it
 -- takes -- and `handle`'s `in` part is locked the same way. So a
--- `coerce` on that first part changes what its continuation may claim.
---
--- It can only take claims away. `unbox`'s premise at the coerced grade
--- implies the premise at the grade before it: the projection preserves
--- the order and the product is monotone, so the uncoerced elapsed grade
--- sits below the coerced one, and `≾ᵣ` is transitive. The instances
--- exhibit the converse failing.
+-- `coerce` on that first part changes what its continuation may claim,
+-- and it can only take claims away; the instances exhibit the converse
+-- failing.
 --
 -- An operation's own lock is not subject to any of this: `perform`
 -- takes it from the signature, where no coercion reaches it.

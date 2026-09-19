@@ -28,27 +28,15 @@ open import TypeInference.Scopes
 
 module TypeInference.SolverImpl.Core.Thick where
 
---------------------------------------------------------------
--- Thickening                                                --
---------------------------------------------------------------
-
 thick : ∀ {n} → Fin (suc n) → Fin (suc n) → Maybe (Fin n)
 thick         zero    zero    = nothing
 thick         zero    (suc j) = just j
 thick {suc n} (suc i) zero    = just zero
 thick {suc n} (suc i) (suc j) = map suc (thick i j)
 
---------------------------------------------------------------
--- Inversion of `map` on `Maybe`                             --
---------------------------------------------------------------
-
 map-just : ∀ {X Y : Set} → (f : X → Y) → (m : Maybe X) → {y : Y}
          → map f m ≡ just y → Σ[ x ∈ X ] ((m ≡ just x) × (f x ≡ y))
 map-just f (just x) refl = x , refl , refl
-
---------------------------------------------------------------
--- The three characterising lemmas                           --
---------------------------------------------------------------
 
 -- A variable is thick at itself
 
@@ -72,10 +60,6 @@ thick-just         zero    (suc j) k refl = refl
 thick-just {suc n} (suc i) zero    k refl = refl
 thick-just {suc n} (suc i) (suc j) k q with map-just suc (thick i j) q
 ... | k' , q' , refl = cong suc (thick-just i j k' q')
-
---------------------------------------------------------------
--- Per-sort wrappers                                         --
---------------------------------------------------------------
 
 thinᵗ : ∀ {Θ} → TyVar (Θ +ty) → TyVar Θ → TyVar (Θ +ty)
 thinᵗ {Θ} α β = punchIn {nTy Θ} α β

@@ -81,10 +81,8 @@ bind-bindᵏ f t s =
   ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ᵏ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
 
--- BINDING AFTER A TICK
---
--- A tick is natural and algebraic, so the bind goes under it, and the
--- transition's `ηᵏ` is absorbed, leaving only a regrading.
+-- Binding after a tick: a tick is natural and algebraic, so the bind goes
+-- under it, and the transition's `ηᵏ` is absorbed, leaving only a regrading.
 
 tick-z : ∀ (δ : E) (ε : E) → δ ·ₑ ε ≾ₑ (δ ·ₑ uₑ) ·ₑ ε
 tick-z δ ε =

@@ -50,15 +50,11 @@ open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
-------------------------------------------------------------------------
--- THE FUNDAMENTAL LEMMA
---
 -- Induction on the typing derivation, mutually for values and computations.
 -- Five computation cases are split off here, each stated as its own lemma
 -- taking the induction hypotheses it needs — for a binding subterm, at *every*
 -- environment, since the state the subterm is reached at is not the one the
 -- case starts from. Sequencing is `Adequacy.Bind`'s `seq-CRed`.
-------------------------------------------------------------------------
 
 -- Unboxing: read the store. `env-Cˢ-unbox` sends the action to an `unbox` at
 -- the cell the environment sends this one to, `UNBOX` reads that cell, and the
@@ -372,10 +368,6 @@ mutual
 
   FL-C γ pγ (unbox x rel M) =
     FL-unbox γ pγ x rel M (λ γ' pγ' → FL-C γ' pγ' M)
-
-------------------------------------------------------------------------
--- COROLLARIES
-------------------------------------------------------------------------
 
 -- A reducible computation halts: its run *is* the evaluation, and which of the
 -- two shapes it halts in is which `CRed` constructor it is. The reducibility

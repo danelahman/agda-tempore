@@ -1,23 +1,6 @@
 ------------------------------------------------------------------------
 -- Filling a computation term context is a congruence.                  --
---                                                                    --
--- `unbox-beta` (unlike the other axioms) equates two terms that differ  --
--- only *inside* an evaluation context `K`, so its soundness needs a     --
--- congruence: denotationally equal fillings give denotationally equal   --
--- filled terms. Proved by induction on `K`; every case is the           --
--- corresponding term former's congruence, with the `C-rename (eq-ren …)` --
--- that `_[_]` inserts at each binder discharged by `C-rename-nat` on     --
--- both sides.                                                          --
---                                                                    --
--- `Paramᵏ` collects the certificates of a context's *non-hole* parts,   --
--- and `fillᴾ` assembles the filled term's certificate from it.          --
---                                                                    --
--- `fill-cong-env` is the strengthened form actually needed by            --
--- `unbox-beta`, whose two fillings agree only under the ambient          --
--- `box V`: its hypothesis may assume that environment morphism,          --
--- weakened past every binder `K` crosses. That weakening (`ext`) and     --
--- the `eq-ren` coercion lemmas are general renaming machinery and live   --
--- in `Interpretation.Renaming`.                                          --
+-- Equal fillings denote equal filled terms.                            --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -157,11 +140,8 @@ ren-hyp Γ Γ' Θ₁ K g rΓ' rΓ coh N N' pN pN' eq =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-rename-nat rΓ' N' pN'))
 
--- THE STRENGTHENED CONGRUENCE
---
--- The hypothesis may assume the ambient environment morphism `g`, extended
--- through everything `K` binds. This is what `unbox-beta` needs: its two hole
--- fillings agree only once the surrounding `box V` has bound the variable.
+-- The hypothesis may assume the ambient morphism `g` extended through `K`;
+-- `unbox-beta` needs this since its two fillings agree only under `box V`.
 
 fill-cong-env : (Γ : Ctx) → ∀ {Γ' f CH C} → (K : Γ' ⊢K[ f ◁ CH ]⦂ C)
               → (pK : Paramᵏ K)

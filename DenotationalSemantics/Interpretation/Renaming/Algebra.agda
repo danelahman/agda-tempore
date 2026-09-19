@@ -116,13 +116,10 @@ ec-var-lock p et y =
   (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (εᵘ-nat _)))
             (∘ᵐ-assoc _ _ _)))))))))
 
--- AN ETERNAL VARIABLE'S MORPHISM IS AN ALGEBRA MORPHISM
---
 -- `extᵉ ∘ᵐ var-proj y`, which is `var-morphism` at an eternal type, carries the
 -- context's `⟨_⟩`-algebra to the type's. This is what `⟨⟩-ext-ctx` needs of its
 -- ambient: `extᵉ` has no naturality law, so only algebra morphisms commute with
--- it. One case per `EternalCtx` former; the lock case crosses the lock with
--- its counit (`ec-var-lock`).
+-- it.
 
 ec-var-alg : ∀ {Γ A ρ σ} → (ec : EternalCtx Γ) → (et : Eternal A) → (y : A ∈[ ρ ] Γ)
            → eternalᵛ-extᵉ et ∘ᵐ ⟨ σ ⟩ᶠ (eternalᵛ-extᵉ et ∘ᵐ var-proj y)

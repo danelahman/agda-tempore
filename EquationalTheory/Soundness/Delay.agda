@@ -1,20 +1,5 @@
 ------------------------------------------------------------------------
 -- Soundness of the delay-collapsing equations.                         --
---                                                                    --
--- These are the two model laws that make delays the *passage of time*  --
--- rather than observable nodes: `delayᵀ-zero` and `delayᵀ-plus`. Each   --
--- axiom is that law precomposed with the delayed computation, the       --
--- syntactic re-lock renaming supplying exactly the box/lock             --
--- reconciliation the law's own left-hand side asks for.                 --
---                                                                    --
--- `delay-zero`: at grade `uᵣ` the box counit `εᵇ` and the possibility   --
--- unit `η` are transposes (`εᵇ-η⊣-u`), which is what the `⟨⟩-η-ren` on  --
--- the right-hand side denotes.                                         --
---                                                                    --
--- `delay-delay`: the two nested transposes `η⊣` rebuild the             --
--- comultiplication `δ` (`η⊣-δ`), and the `⟨⟩-μ-ren` re-lock becomes the --
--- grade relaxation `[]-≤` (`η⊣-≤`) — the same reconciliation as         --
--- `SeqAssoc.box-split`.                                                --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -81,20 +66,16 @@ open import EquationalTheory.Soundness.Seq S Cat Fut Pst Adj GTy Mon GE using (�
 sound-delay-zero : ∀ {Γ A ε} → (M : Γ ⟨ of-natʳ 0 ⟩ ⊢C⦂ A ‼ ε)
                  → Soundᶜ== (delay-zero M)
 sound-delay-zero {Γ} {A} {ε} M pM pR =
-    -- the model's `delayᵀ 0` law
     ∘ᵐ-congˡ delayᵀ-zero
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (  ∘ᵐ-assoc _ _ _
-                -- move `⟦M⟧` out from under the box …
               ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                           ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ _))
                           ∙ ∘ᵐ-assoc _ _ _)
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-ε-nat _))
               ∙ ∘ᵐ-assoc _ _ _
-                -- … leaving the counit/unit transposition at grade `uᵣ`
               ∙ ∘ᵐ-congʳ (εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} of-natʳ-zero))
-    -- which is what the right-hand side's renaming denotes
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e (C-rename r M)) pR (ε-substᴾ e _ (renᶜ r M pM))
             ∙ sound-ε-subst e (C-rename r M) (renᶜ r M pM)
             ∙ ∘ᵐ-congʳ (C-rename-nat r M pM)
@@ -103,8 +84,7 @@ sound-delay-zero {Γ} {A} {ε} M pM pR =
     e = sym (trans (cong (_·ₑ ε) of-natᵉ-zero) (·ₑ-identityˡ ε))
     r = eq-ren (cong (Γ ⟨_⟩) of-natʳ-zero) ∘ʳ ⟨⟩-η-ren
 
--- Two consecutive delays are the one delay by the sum: the nested transposes
--- rebuild `δ`, and the re-lock renaming becomes the grade relaxation.
+-- Two consecutive delays are the one delay by the sum.
 --
 -- `M` occurs renamed on the left and under an `ε-subst` on the right, so its
 -- own certificate comes in separately (the axiom's `Midᶜ` payload).
@@ -113,14 +93,11 @@ sound-delay-delay : ∀ {Γ A τ₁ τ₂ ε} → (M : Γ ⟨ of-natʳ (τ₁ + 
                   → Paramᶜ M → Soundᶜ== (delay-delay {τ₁ = τ₁} {τ₂ = τ₂} M)
 sound-delay-delay {Γ} {A} {τ₁} {τ₂} {ε} M pM pL pR =
     ⟦⟧ᶜᵗ-irr (delay τ₁ (delay τ₂ (C-rename r M))) pL (renᶜ r M pM)
-    -- unfold the inner computation's re-lock renaming
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-congʳ (∘ᵐ-congˡ ([]-congᶠ (
         C-rename-nat r M pM
       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (eq-ren-grade {Γ} of-natʳ-plus))))))))
-    -- expose the transposed box, and split it
   ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-∘ᵐ _ _) ∙ ∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ delay-box)
-    -- re-associate so the model's `delayᵀ`-composition law applies
   ∙ ≈ᵐ-sym (  ∘ᵐ-assoc _ _ _
             ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))

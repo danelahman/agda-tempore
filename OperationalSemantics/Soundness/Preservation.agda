@@ -1,34 +1,11 @@
 ------------------------------------------------------------------------
 -- Soundness of the small-step operational semantics.                   --
---                                                                    --
--- A configuration `⟨ S , M ⟩` interprets as the open computation `M`   --
--- with its context plugged by the state:                                --
---                                                                    --
---   ⟦ ⟨ S , M ⟩ ⟧ᶜᶠ = ⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ                                --
---                                                                    --
--- The plug is total on the *cells* of `toCtx S` (each carries its       --
--- stored value) but not on the *locks*: `⟨ ρ ⟩ᵒ X` has no global points, --
--- so the passage of time cannot be manufactured. What remains is the     --
--- state's history `hist S`, so a configuration denotes a morphism out of --
--- `⟦ hist S ⟧ᶜᵗˣ` — for an initial state `∅` that is `𝟙ᵐ`, a global      --
--- point.                                                                --
---                                                                    --
--- A reduction step relates the two denotations. The two configurations   --
--- have different histories and different effect grades, so the statement --
--- is mediated by                                                        --
---                                                                    --
---   * a *time transition* `stepᵀ r : ⟦ hist S ⟧ →ᵐ Tᵒ ⟦ hist S' ⟧ δ`,    --
---     which is `ηᵀ` for every rule but `DELAY` — the only rule that adds --
---     a lock — where it is the tick built from `delayᵀ`;                 --
---                                                                    --
---   * a sub-effecting coercion `T-≤`, as reduction refines the effect    --
---     grade (`COERCE` peels a coercion off; `SEQ-STEP` sharpens a        --
---     grade).                                                           --
---                                                                    --
--- `BOX` needs no transition: allocating a resource and extending the     --
--- store are the same morphism (`[ ρ ]ᶠ ⟦ V ⟧ ∘ᵐ η⊣`), used by both       --
--- `⟦_⟧ˢ`'s cell clause and `⟦ box V M ⟧ᶜᵗ`. Nor does `UNBOX`: it is a    --
--- projection out of the environment.                                     --
+--                                                                      --
+-- A configuration `⟨ S , M ⟩` denotes `⟦ M ⟧ᶜᵗ ∘ᵐ ⟦ S ⟧ˢ`, a morphism  --
+-- out of the state's history `⟦ hist S ⟧ᶜᵗˣ`.                          --
+--                                                                      --
+-- A reduction step relates the two denotations via a time transition   --
+-- (`stepᵀ`) and an effect-refining coercion (`T-≤`).                   --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -100,13 +77,8 @@ open import DenotationalSemantics.Model.Modality.Eternal
 
 open import OperationalSemantics.Soundness.Preservation.Handle S Cat Fut Pst Adj GTy Mon GE public
 
--- SUB-EFFECTING ACROSS A STEP
---
--- Composing two reduction steps substitutes the target configuration's
--- coercion under the Kleisli bind, so it has to escape from beneath `Tᶠ`: that
--- is sub-effecting in the monad's inner grade. It holds for the transitions
--- reduction produces — `ηᵀ` for every rule but `DELAY`, whose `delayᵀ` obeys
--- the model's `delayᵀ-≤`.
+-- The coercion carried across a step escapes the bind: reduction's own
+-- transitions are `ηᵀ` for every rule but `DELAY`, which uses `delayᵀ-≤`.
 
 -- The grade a delayed computation's `ηᵀ` leaves behind.
 
@@ -208,29 +180,9 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
     z : of-natᵉ τ ·ₑ εa ≾ₑ (of-natᵉ τ ·ₑ uₑ) ·ₑ εb
     z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (delay-z τ εb)
 
-------------------------------------------------------------------------
--- THE SOUNDNESS THEOREM
---
 -- A reduction step relates denotationally equal configurations: the source's
--- denotation is the target's, run after the step's time transition and coerced
--- along the effect refinement the step licenses. Right to left:
---
---   * `stepᵀ r` is the time the step takes, a map between the two states'
---     histories. Every rule but `DELAY` takes none, transitioning by `ηᵀ`;
---     `DELAY` ticks by its own delay.
---
---   * `⟦ ⟨ S' , M' ⟩ ⟧ᶜᶠ ⋄ stepᵀ r` is the target configuration run over that
---     later history, the two effect grades multiplying (`step-grade r ·ₑ ε'`).
---
---   * `T-≤ (step-≾ r)` puts the result back at the source's grade `ε`, by
---     `step-≾ r : step-grade r ·ₑ ε' ≾ₑ ε`: a step never costs more than the
---     type promised.
---
--- The state does not appear: it is the environment, already plugged into both
--- sides by `⟦_⟧ᶜᶠ`. `BOX` is invisible because extending the store and boxing a
--- resource are the same morphism, `UNBOX` because reading a cell projects out
--- the value the state wrote there.
-------------------------------------------------------------------------
+-- denotation is the target's, run after the step's time transition and
+-- coerced along the effect refinement the step licenses.
 
 -- The handlers a reduction actually reaches must be uniform. `HANDLE-OP` is the
 -- only rule that fires a clause, and the only rules that can reach it are the
@@ -387,15 +339,9 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
      ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 
 
-------------------------------------------------------------------------
--- THE MULTI-STEP CLOSURE
---
--- A run of the machine is sound: the source configuration's denotation is the
--- final one's, run after the accumulated transition, coerced along the
--- accumulated refinement. The three components multiply/compose exactly as the
--- single-step ones do, and the induction goes through because the target's
--- coercion escapes the bind (`T-≤-stepᵀ`).
-------------------------------------------------------------------------
+-- A run of the machine is sound: the source configuration's denotation is
+-- the final one's, run after the accumulated transition and coerced along
+-- the accumulated refinement.
 
 -- The accumulated effect of a run, its transition, and its refinement.
 
@@ -459,8 +405,6 @@ bind-bind f t s =
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
 
--- SOUNDNESS OF A RUN
-
 ↝*-sound : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
          → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf) → Uniform↝* rs p
          → ⟦ cf ⟧ᶜᶠ p
@@ -478,7 +422,7 @@ bind-bind f t s =
     ↝-sound r pS pM u
   -- … and so, inductively, is the run that follows it
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (↝*-sound rs (stepᴾᶜᶠ r (pS , pM)) us))))
-  -- THE KEY STEP: the run's coercion escapes the bind
+  -- the run's coercion escapes the bind
   ∙ ∘ᵐ-congʳ (T-≤-stepᵀ ⟦ A ⟧ᵛ r
        (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))) ⋄ stepsᵀ rs) (steps-≾ rs))
   -- the two binds re-associate into one, at the product of their grades …
@@ -497,23 +441,10 @@ bind-bind f t s =
 
 
 
-------------------------------------------------------------------------
--- DENOTATIONAL RUNNING
---
--- `cf ⊳ cf'` says that `cf` runs to `cf'` denotationally: `cf` is `cf'`,
--- executed after some transition and coerced along some refinement. `↝*-⊳`
--- says a run of the machine witnesses it.
---
--- The relation is directed, not an equivalence: the two sides sit at different
--- effect grades, and `T-≤ refine` only coerces the target's (finer) grade up
--- to the source's, never back.
---
--- It is reflexive (`⊳-refl`) but not transitive: transitivity would have to
--- substitute the middle configuration's coercion under an arbitrary
--- transition's bind, and sub-effecting escapes a bind only for the transitions
--- reduction produces (`T-≤-stepᵀ`). Transitivity along a run is the induction
--- in `↝*-sound`.
-------------------------------------------------------------------------
+-- `cf ⊳ cf'`: `cf` runs to `cf'` denotationally, after some transition and
+-- coerced along some refinement. Reflexive (`⊳-refl`) but not transitive —
+-- sub-effecting escapes a bind only for reduction's own transitions
+-- (`T-≤-stepᵀ`); transitivity along a run is `↝*-sound`'s induction instead.
 
 infix 4 _⊳_
 
@@ -555,13 +486,8 @@ record _⊳_ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
 ↝*-⊳ rs p us =
   mk⊳ (steps-grade rs) (steps-≾ rs) (stepsᵀ rs) (↝*-sound rs p us)
 
--- CLOSED PROGRAMS
---
--- A program is a closed computation: the empty state, so the empty history, so
--- its denotation is a global point of `Tᵒ ⟦ A ⟧ᵛ ε`. If it runs to a returned
--- value, the program *is* that value returned — after the run's transition, and
--- at the run's (refined) grade. Nothing of the state survives in the equation:
--- `hist ∅ ≡ []`, so both sides are morphisms out of `𝟙ᵐ`.
+-- A program is a closed computation (empty state, so empty history), so its
+-- denotation is a global point of `Tᵒ ⟦ A ⟧ᵛ ε`.
 
 Program : VType → E → Set
 Program A ε = [] ⊢C⦂ A ‼ ε

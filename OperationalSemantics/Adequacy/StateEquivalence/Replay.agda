@@ -39,13 +39,10 @@ open import OperationalSemantics.Adequacy.StateEquivalence.Core Spec
 open import OperationalSemantics.Adequacy.StateEquivalence.Extensions Spec
 open import OperationalSemantics.Adequacy.StateEquivalence.Bisimulation Spec
 
-------------------------------------------------------------------------
--- REPLAYING AN EXTENSION
---
--- `VRed`'s Kripke clauses quantify over extensions of the state, so transporting
--- one along `_≐ˢ_` means replaying its extension on the other state: the shape
--- is copied, and each cell's value is transported along the contexts' equality.
-------------------------------------------------------------------------
+-- `VRed`'s Kripke clauses quantify over extensions of the state, so
+-- transporting one along `_≐ˢ_` means replaying its extension on the other
+-- state: the shape is copied, and each cell's value is transported along the
+-- contexts' equality.
 
 castᵛ-castᵛ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ) → (V : Γ ⊢V⦂ A)
             → castᵛ e' (castᵛ e V) ≡ V
@@ -181,13 +178,7 @@ reach-renᵘ-≐ˢ es es₂ {q} {q'} h =
                    ⟨⟩-η⁻¹-ren
                    (suc-comp-ren (ext q') (reach-bound q') ∘ʳ ⟨⟩-η-ren))))
 
--- WHERE A CELL GETS TO, ACROSS THE EQUIVALENCE
---
--- The `≤ₛ`-level counterpart of `unbox-ren-bridge`, which is what a `VRed`
--- stated on cell readability needs. Derived from it rather than by a fresh
--- induction: an arbitrary extension is the extension of *some* reach — take
--- the guard to be its own accumulated grade, where the bound is reflexivity —
--- and `unbox-ren-img` then reads `≤ₛ-embed` off that reach's renaming.
+-- The `≤ₛ`-level counterpart of `unbox-ren-bridge`.
 
 var-img-castʳ : ∀ {Γ Γ' Δ ρ A σ} → (e : Γ' ≡ Γ) → (r : Ren [] Γ' (Δ ⟨ ρ ⟩))
               → (y : A ∈[ σ ] (Δ ⟨ ρ ⟩))

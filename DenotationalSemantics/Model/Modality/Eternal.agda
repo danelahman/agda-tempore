@@ -1,42 +1,18 @@
 ------------------------------------------------------------------------
 -- Objects interpreting *eternal* types.                                --
---                                                                    --
--- An eternal type (`Syntax.Types.Eternal`) is one whose values are    --
--- available regardless of the resource budget: the variable rule may   --
--- use a variable of eternal type at *any* grade `ρ`, not only at grades --
--- below the unit `u`. Semantically this is the grade-`u` isomorphism    --
--- `[ u ]ᵒ A ≅ A` (the box counit `ε` / unit `ηᵘ`) generalised to hold   --
--- at every grade — but only *one-directionally*, as an algebra, not as  --
--- an isomorphism (see the note below).                                  --
---                                                                    --
--- Concretely (`Example.PSh`) eternal types are the constant             --
--- presheaves: their value is the same at every world, so it can be      --
--- necessitated into, and extracted from, the box / context modality at  --
--- an arbitrary grade.                                                   --
---                                                                    --
--- At the greatest grade `⊤` the context modality is an ordinary monad   --
--- (`⟨⊤⟩-η`/`⟨⊤⟩-μ` below), and an eternal object is exactly an          --
--- Eilenberg–Moore algebra for it:                                       --
---                                                                    --
---   * `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`, with a unit and an associativity law.        --
---                                                                    --
--- Extraction at an arbitrary grade is then `extᵉ {ρ} = α ∘ᵐ ⟨⟩-≤ (≾-⊤ ρ)` --
--- — the graded `⟨_⟩`-algebra generalising `εᵘ`, which is what the        --
--- variable rule consumes — and its three laws are derived: uniformity    --
--- in the grade from `≾`-irrelevance, the unit law from `α-unit`, the     --
--- multiplication law from `α-assoc`.                                     --
---                                                                    --
--- Its transpose under `⟨ ρ ⟩ ⊣ [ ρ ]`, necessitation                    --
--- `necᵉ : A →ᵐ [ ρ ]ᵒ A` — the graded `[_]`-coalgebra generalising      --
--- `ηᵘ` — is likewise derived, along with the mate laws `necᵉ-mate` /    --
--- `extᵉ-mate` and the coalgebra laws, so a model supplies only `α`.     --
---                                                                    --
--- Note (why an algebra, not `A ≅ [ ρ ]ᵒ A`): the naive `A ≅ [ ρ ]ᵒ A`   --
--- is too strong — it fails for `Empty` in non-serial frames             --
--- (`[ ρ ]ᵒ 𝟘 ≅ 𝟙` when a world has no `ρ`-future), and dually            --
--- `⟨ ρ ⟩ᵒ A ≅ A` fails for `Unit` (`⟨ ρ ⟩ᵒ 𝟙` counts accessible pasts).  --
--- The algebra/coalgebra pair survives both, with no seriality            --
--- assumption, and holds for all eternal formers.                         --
+--                                                                      --
+-- An eternal type (`Syntax.Types.Eternal`) is available at any         --
+-- grade, not only below the unit `u`; concretely (`Example.PSh`)       --
+-- these are the constant presheaves.                                   --
+--                                                                      --
+-- `Eternalᵒ A` is an Eilenberg–Moore algebra `α : ⟨ ⊤ ⟩ᵒ A →ᵐ A`       --
+-- for the monad `⟨⊤⟩` the context modality collapses to at the         --
+-- greatest grade `⊤`. Extraction `extᵉ`, necessitation `necᵉ`, and     --
+-- their laws are all derived from `α`; a model supplies only the       --
+-- algebra.                                                             --
+--                                                                      --
+-- An isomorphism `A ≅ [ ρ ]ᵒ A` would be too strong; the algebra       --
+-- needs no seriality assumption.                                       --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -62,11 +38,9 @@ open Future Fut
 open Past Pst
 open Adjunction Adj
 
--- THE `⟨ ⊤ ⟩` MONAD
---
 -- At the greatest grade the graded context modality collapses to an ordinary
 -- monad: `≾-⊤` relaxes the grades `u` and `⊤ · ⊤` produced by `η` and `μ` back
--- to `⊤`. Only `≾-⊤` is needed — `⊤` is not assumed absorbing.
+-- to `⊤`. `⊤` is not assumed absorbing.
 
 ⟨⊤⟩-η : ∀ {A} → A →ᵐ ⟨ ⊤ ⟩ᵒ A
 ⟨⊤⟩-η = ⟨⟩-≤ (≾-⊤ u) ∘ᵐ η
@@ -93,7 +67,7 @@ open Adjunction Adj
   (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-μ-nat f))
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
--- LEFT UNIT, from `μ-εᵘ` and `⟨⟩-εᵘ∘η≡id`.
+-- Left unit.
 
 ⟨⊤⟩-μ∘η≡id : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨⊤⟩-η {⟨ ⊤ ⟩ᵒ A} ≈ᵐ idᵐ
 ⟨⊤⟩-μ∘η≡id {A} =
@@ -108,7 +82,7 @@ open Adjunction Adj
   (≈ᵐ-trans (∘ᵐ-congˡ (μ-εᵘ {A} {⊤}))
             ⟨⟩-εᵘ∘η≡id))))))))
 
--- RIGHT UNIT, from `⟨⟩-μ∘Tη≡id`.
+-- Right unit.
 
 ⟨⊤⟩-μ∘Tη≡id : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-η {A}) ≈ᵐ idᵐ
 ⟨⊤⟩-μ∘Tη≡id {A} =
@@ -123,7 +97,7 @@ open Adjunction Adj
   (≈ᵐ-trans (⟨⟩-≤-trans _ _)
   (≈ᵐ-trans (⟨⟩-≤-irr _ ≾-refl) ⟨⟩-≤-refl)))))))))
 
--- ASSOCIATIVITY, from `⟨⟩-μ∘μ≡μ∘Tμ`.
+-- Associativity.
 
 ⟨⊤⟩-μ∘μ≡μ∘Tμ : ∀ {A} → ⟨⊤⟩-μ {A} ∘ᵐ ⟨⊤⟩-μ {⟨ ⊤ ⟩ᵒ A} ≈ᵐ ⟨⊤⟩-μ {A} ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⊤⟩-μ {A})
 ⟨⊤⟩-μ∘μ≡μ∘Tμ {A} = ≈ᵐ-trans left (≈ᵐ-sym right)
@@ -173,18 +147,14 @@ record Eternalᵒ (A : Obj) : Set₁ where
 
     α-assoc : α ∘ᵐ ⟨⊤⟩-μ ≈ᵐ α ∘ᵐ ⟨ ⊤ ⟩ᶠ α
 
-  -- THE GRADED EXTRACTION, DERIVED
-  --
-  -- Extraction at every grade (generalises `εᵘ`); consumed by `var`. Relax the
-  -- grade up to `⊤`, then run the algebra.
+  -- Extraction at every grade, generalising `εᵘ`; consumed by `var`.
 
   extᵉ : ∀ {ρ} → ⟨ ρ ⟩ᵒ A →ᵐ A
   extᵉ {ρ} = α ∘ᵐ ⟨⟩-≤ (≾-⊤ ρ)
 
   -- Extraction is uniform in the grade (compatible with `⟨⟩-≤`): this is what
   -- makes a variable of eternal type interpretable independently of how much
-  -- its context has been relaxed. Merge the two relaxations, then use that `≾`
-  -- is proof-irrelevant.
+  -- its context has been relaxed.
 
   extᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
          → extᵉ {ρ₂} ∘ᵐ ⟨⟩-≤ p ≈ᵐ extᵉ {ρ₁}
@@ -193,9 +163,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-≤-trans p (≾-⊤ ρ₂)))
               (∘ᵐ-congʳ (⟨⟩-≤-irr _ (≾-⊤ ρ₁))))
 
-  -- At the unit grade the extraction is exactly the possibility counit `εᵘ`:
-  -- two maps out of `⟨ u ⟩ᵒ A` agreeing after `η` are equal, `η` and `εᵘ` being
-  -- mutually inverse, and after `η` the unit law applies.
+  -- At the unit grade, extraction is exactly the possibility counit `εᵘ`.
 
   extᵉ-u : extᵉ {u} ≈ᵐ εᵘ
   extᵉ-u =
@@ -206,9 +174,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
               (∘ᵐ-identityˡ εᵘ))))
 
   -- Extracting from a nested possibility agrees with folding the two layers
-  -- with `μ` and extracting once (the `⟨_⟩`-algebra multiplication law):
-  -- transport the two relaxations across `μ` (`μ-≤ˡ`, `μ-≤ʳ`) and fold them
-  -- into one, which is where `α-assoc` applies.
+  -- with `μ` and extracting once (the `⟨_⟩`-algebra multiplication law).
 
   extᵉ-μ : ∀ {ρ₁ ρ₂}
          → extᵉ {ρ₂ · ρ₁} ∘ᵐ μ {A} {ρ₁} {ρ₂}
@@ -240,12 +206,9 @@ record Eternalᵒ (A : Obj) : Set₁ where
         (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ ρ₂)) _))
                   (∘ᵐ-congˡ (⟨⟩-≤-irr _ (≾-⊤ (ρ₂ · ρ₁))))))))))))
 
-  -- THE BOX COALGEBRA, DERIVED
-  --
-  -- Necessitation at every grade, as the adjoint mate of `extᵉ` under
-  -- `⟨ ρ ⟩ ⊣ [ ρ ]`. This is the `[_]`-coalgebra half of the structure — what
-  -- lets an eternal object be carried *under* a box, across the passage of
-  -- time.
+  -- Necessitation at every grade, the adjoint mate of `extᵉ` under
+  -- `⟨ ρ ⟩ ⊣ [ ρ ]`: the `[_]`-coalgebra half of the structure, letting an
+  -- eternal object be carried under a box, across the passage of time.
 
   necᵉ : ∀ {ρ} → A →ᵐ [ ρ ]ᵒ A
   necᵉ {ρ} = [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
@@ -255,8 +218,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
   necᵉ-mate : ∀ {ρ} → necᵉ {ρ} ≈ᵐ [ ρ ]ᶠ (extᵉ {ρ}) ∘ᵐ η⊣
   necᵉ-mate = ≈ᵐ-refl
 
-  -- `extᵉ` and `necᵉ` are adjoint mates (the forward mate direction, from the
-  -- left triangle identity and `ε⊣`-naturality).
+  -- `extᵉ` and `necᵉ` are adjoint mates.
 
   extᵉ-mate : ∀ {ρ} → extᵉ {ρ} ≈ᵐ ε⊣ ∘ᵐ ⟨ ρ ⟩ᶠ (necᵉ {ρ})
   extᵉ-mate {ρ} = ≈ᵐ-sym (≈ᵐ-trans
@@ -267,10 +229,9 @@ record Eternalᵒ (A : Obj) : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congʳ triangleˡ)
               (∘ᵐ-identityʳ (extᵉ {ρ})))))))
 
-  -- `necᵉ` is a uniform graded `[_]`-coalgebra:
+  -- `necᵉ` is a uniform graded `[_]`-coalgebra.
 
-  -- at the unit grade it is the box's unit `ηᵘ` (from `extᵉ-u`, `η⊣-u`, and
-  -- the possibility iso `εᵘ ∘ η ≈ id`).
+  -- At the unit grade it is the box's unit `ηᵘ`.
 
   necᵉ-u : necᵉ {u} ≈ᵐ ηᵘ
   necᵉ-u =
@@ -282,8 +243,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congˡ []-idᵐ)
               (∘ᵐ-identityˡ ηᵘ))))))
 
-  -- it is uniform in the grade (compatible with `[]-≤`; from `[]-≤`/`η⊣`
-  -- naturality and `extᵉ-≤`),
+  -- It is uniform in the grade (compatible with `[]-≤`).
 
   necᵉ-≤ : ∀ {ρ₁ ρ₂} → (p : ρ₁ ≾ ρ₂)
          → []-≤ p ∘ᵐ necᵉ {ρ₂} ≈ᵐ necᵉ {ρ₁}
@@ -296,11 +256,7 @@ record Eternalᵒ (A : Obj) : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ (⟨⟩-≤ p) (extᵉ {ρ₂}))))
               (∘ᵐ-congˡ ([]-congᶠ (extᵉ-≤ p))))))))
 
-  -- and it is compatible with the comultiplication `δ`. This is the one
-  -- coalgebra law that needs the adjunction's grade-composition coherence,
-  -- supplied by the *derived* `η⊣-δ` (itself the future-side transpose of the
-  -- primitive counit law `ε⊣-μ`); combined with the algebra law `extᵉ-μ` and
-  -- `η⊣`-naturality it reduces to `necᵉ`.
+  -- It is compatible with the comultiplication `δ`.
 
   necᵉ-δ : ∀ {ρ₁ ρ₂}
          → δ ∘ᵐ necᵉ {ρ₁ · ρ₂} ≈ᵐ [ ρ₁ ]ᶠ (necᵉ {ρ₂}) ∘ᵐ necᵉ {ρ₁}
@@ -315,8 +271,6 @@ record Eternalᵒ (A : Obj) : Set₁ where
     (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
               (∘ᵐ-assoc _ _ _))))))))
     where
-      -- `[ρ₂]ᶠ extᵉ ∘ ([ρ₂]ᶠ μ ∘ η⊣) ≈ necᵉ{ρ₂} ∘ extᵉ{ρ₁}`, from `extᵉ-μ`
-      -- and `η⊣`-naturality (the eternal value slides out of the transpose).
       inner : [ ρ₂ ]ᶠ (extᵉ {ρ₁ · ρ₂}) ∘ᵐ ([ ρ₂ ]ᶠ (μ {A} {ρ₂} {ρ₁}) ∘ᵐ η⊣)
             ≈ᵐ necᵉ {ρ₂} ∘ᵐ extᵉ {ρ₁}
       inner =
@@ -329,8 +283,6 @@ record Eternalᵒ (A : Obj) : Set₁ where
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
 
 
--- THE FREE ALGEBRA
---
 -- `⟨ ⊤ ⟩ᵒ X` is eternal for any `X`, with the monad multiplication as its
 -- algebra: the two laws *are* the monad's unit and associativity laws.
 
@@ -338,9 +290,8 @@ record Eternalᵒ (A : Obj) : Set₁ where
 ⟨⊤⟩-eternalᵒ X = record { α = ⟨⊤⟩-μ ; α-unit = ⟨⊤⟩-μ∘η≡id ; α-assoc = ⟨⊤⟩-μ∘μ≡μ∘Tμ }
 
 -- `⟨ ⊤ ⟩ᶠ f` is a morphism of free algebras: it commutes with the graded
--- extraction at every grade. From `⟨⟩-≤`- and `⟨⊤⟩-μ`-naturality; the free
--- algebra is the only case where this holds for an arbitrary `f`, `extᵉ`
--- having no naturality law in general.
+-- extraction at every grade. The free algebra is the only case where this
+-- holds for an arbitrary `f`, `extᵉ` having no naturality law in general.
 
 ⟨⊤⟩-free-extᵉ-nat : ∀ {X Y} → (f : X →ᵐ Y) → ∀ {ρ}
                   → Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨ ⊤ ⟩ᶠ f)
@@ -369,8 +320,6 @@ record Eternalᵒ (A : Obj) : Set₁ where
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
 
 
--- THE FREE ALGEBRA'S UNIVERSAL PROPERTY, GENERALISED
---
 -- `⟨⊤⟩-free-extᵉ-nat`/`⟨⊤⟩-free-necᵉ-nat` above only cover a map already of
 -- shape `⟨ ⊤ ⟩ᶠ f`. These generalise to any `g : X →ᵐ ⟨ ⊤ ⟩ᵒ Y`: the algebra
 -- morphism `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ ⟩ᶠ g` its universal property produces still commutes
@@ -441,11 +390,8 @@ barrier-lock {X} {ρ} =
   ∙ ∘ᵐ-identityˡ _
 
 
--- PRODUCTS OF ETERNAL OBJECTS
---
 -- Eilenberg–Moore algebras are closed under the category's products, the
--- structure map being assembled componentwise. Both laws reduce componentwise
--- through `⟨⊤⟩-η`- and `⟨⊤⟩-μ`-naturality; no strength is involved.
+-- structure map being assembled componentwise.
 
 module _ {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
 
@@ -546,8 +492,6 @@ module _ {A B : Obj} (eA : Eternalᵒ A) (eB : Eternalᵒ B) where
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
 
--- ETERNALITY TRANSPORTS ALONG AN ISOMORPHISM
---
 -- Being eternal is invariant under isomorphism: conjugating the algebra by an
 -- iso preserves both laws.
 
@@ -600,9 +544,6 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
     ; α-assoc = ≈ᵐ-trans assocˡ (≈ᵐ-sym assocʳ)
     }
 
-  -- Its extraction, unfolded: relax into the algebra's grade underneath the
-  -- iso, i.e. conjugate the original extraction.
-
   iso-eternalᵒ-extᵉ : ∀ {ρ} → Eternalᵒ.extᵉ iso-eternalᵒ {ρ}
                     ≈ᵐ f ∘ᵐ Eternalᵒ.extᵉ eA {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ g
   iso-eternalᵒ-extᵉ {ρ} =
@@ -612,8 +553,6 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
               (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
 
--- UNIT-EQUIVALENT GRADES
---
 -- At a grade `ρ` that is ≾-equivalent to the unit, `⟨ ρ ⟩ᵒ` is isomorphic to
 -- the identity: `η` relaxed up to `ρ`, and `εᵘ` relaxed down from it, are
 -- mutually inverse. So `⟨ ρ ⟩ᵒ A` is eternal whenever `A` is, which is what
@@ -655,9 +594,6 @@ module _ {A B : Obj} (f : A →ᵐ B) (g : B →ᵐ A)
 ⟨u≈⟩-eternalᵒ q p =
   iso-eternalᵒ (⟨u≈⟩-unit q) (⟨u≈⟩-counit p)
     (⟨u≈⟩-unit-counit q p) (⟨u≈⟩-counit-unit q p)
-
--- Its extraction, unfolded: relax into the lock pointwise, extract underneath,
--- relax back out.
 
 ⟨u≈⟩-eternalᵒ-extᵉ : ∀ {A ρ σ} → (q : u ≾ ρ) → (p : ρ ≾ u) → (eA : Eternalᵒ A)
                    → Eternalᵒ.extᵉ (⟨u≈⟩-eternalᵒ q p eA) {σ}

@@ -85,10 +85,9 @@ import Syntax.Grades.Traces.Slack
 -- The allowance order: when a bound permits a run. The bound's
 -- operations are permissions and its delays are a budget, which the run
 -- spends on its own idling and on operations the bound does not name,
--- at their execution time. Going up the order an operation turns into a
--- delay long enough to cover it, and a delay grows. Budget does not
--- cross an operation the bound names, so a bound says when its slack is
--- available and not merely how much of it there is.
+-- at their execution time. Budget does not cross an operation the bound
+-- names, so a bound says when its slack is available and not merely how
+-- much of it there is.
 
 import Syntax.Grades.Traces.Allowance
 
@@ -108,10 +107,8 @@ import Syntax.Grades.Traces.AllowanceLift
 -- between the same two operations it names. Slack does not cross a
 -- named operation, so a demand for time is met only where it is placed.
 --
--- This is the order a guarantee wants, and it is deliberately not the
--- converse of the allowance order: there a bound's delays buy the run's
--- operations, which read as a guarantee would let a run that merely
--- idles discharge "a reading was taken". The two are incomparable.
+-- This is the order a guarantee wants. It is not the converse of the
+-- allowance order; the two are incomparable.
 
 import Syntax.Grades.Traces.Coverage
 
@@ -132,8 +129,3 @@ import Syntax.Grades.Traces.CoverageLift
 
 import Syntax.Grades.Traces.Prefix
 
-------------------------------------------------------------------------
--- Parked
---
--- The sub-trace orders are under `backup/`, along with their lifts,
--- durations and cost-model comparison, and are imported from nowhere.

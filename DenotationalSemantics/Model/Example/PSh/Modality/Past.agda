@@ -80,8 +80,6 @@ open ⟨_⟩ᶜ public
 _◅_ : ∀ {ρ A w} → ⟨ ρ ⟩ᶜ A w → ⟨ ρ ⟩ᶜ A w → Set
 _◅_ {A = A} e e' = Σ[ s ∈ wᵖ e ⊑[ u ] wᵖ e' ] _≈_ A (transport A s (val e)) (val e')
 
--- STRUCTURE
-
 -- Functor
 
 ⟨_⟩ᵒ : R → PSh → PSh
@@ -185,8 +183,6 @@ A-isEquiv {A} = record { refl = ≈-refl A ; sym = ≈-sym A ; trans = ≈-trans
   (λ t e → ≈-trans A (transport-irr {A} (⊑ρ∘ᵘ (acc e) t) (⊑ᵘ-trans (acc e) t) (val e))
                      (transport-trans A (acc e) t (val e)))
 
-
--- PROPERTIES
 
 -- ⟨_⟩ is functorial
 

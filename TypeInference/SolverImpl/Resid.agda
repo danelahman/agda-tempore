@@ -52,10 +52,6 @@ open import TypeInference.Open.Hyps   S
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂; zip₂-just)
 
---------------------------------------------------------------
--- Residuals                                                 --
---------------------------------------------------------------
-
 record Resid (Ψ : Scope) : Set where
   constructor resid
   field
@@ -89,10 +85,6 @@ pushᵉ ε ε' R = resid (rs R) ((ε , ε') ∷ es R) (ts R)
 
 pushᵗ : ∀ {Ψ} → OVType Ψ → Resid Ψ → Resid Ψ
 pushᵗ A R = resid (rs R) (es R) (A ∷ ts R)
-
---------------------------------------------------------------
--- Discharging a residual                                    --
---------------------------------------------------------------
 
 infix 4 _⊩ᴿ_[_]
 
@@ -174,13 +166,9 @@ tailᵗ h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ m → ⊩ts h (there m))
 ∅ᴴ-⊩ᴴ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → Q ⊩ᴴ ∅ᴴ [ δ ]
 ∅ᴴ-⊩ᴴ = mk⊩ᴴ (λ ()) (λ ()) (λ ())
 
---------------------------------------------------------------
--- Eternality, decomposed                                    --
---                                                           --
--- `_⊩ᴱ_` has one rule per former except `_⇒_` and `[_]_`,   --
--- and `et-hyp` at a type variable, so a demand either        --
--- reduces to demands on type variables or is refuted.        --
---------------------------------------------------------------
+-- `_⊩ᴱ_` has one rule per former except `_⇒_` and `[_]_`, and `et-hyp`
+-- at a type variable: a demand reduces to demands on type variables or
+-- is refuted.
 
 etDec : ∀ {Ψ} → OVType Ψ → Maybe (List (TyVar Ψ))
 etDec (tvar α)  = just (α ∷ [])
@@ -248,13 +236,8 @@ etDec-refute (A |×| B) q  δ | nothing | _       =
 etDec-refute (A ⇒ C)   q δ = λ ()
 etDec-refute ([ ρ ] A) q δ = λ ()
 
---------------------------------------------------------------
--- Reading a residual back as a hypothesis set               --
---                                                           --
--- The decomposition is paired with the entailment it         --
--- justifies, so that the case analysis of `etsList` stays    --
--- visible to a proof about it.                               --
---------------------------------------------------------------
+-- The decomposition is paired with the entailment it justifies, so
+-- `etsList`'s case analysis stays visible to a proof about it.
 
 EtDec : ∀ {Ψ} → OVType Ψ → Set
 EtDec {Ψ} A = Σ[ αs ∈ List (TyVar Ψ) ]

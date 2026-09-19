@@ -1,37 +1,31 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
--- Effect grades are the two-sided trace intervals of                   --
--- `Example.Traces.Timed.TwoSided`: a grade `[ P , Q ]` says that       --
--- whatever the computation did, it covered one of the traces in `P`    --
--- and stayed within one of those in `Q`. Resource grades are the       --
--- two-sided time intervals, "between `min` and `max` time steps".      --
+-- Effect grades are the two-sided trace intervals of                  --
+-- `Example.Traces.Timed.TwoSided`: a grade `[ P , Q ]` says that      --
+-- whatever the computation did, it covered one of the traces in `P`   --
+-- and stayed within one of those in `Q`. Resource grades are the      --
+-- two-sided time intervals, "between `min` and `max` time steps".     --
 --                                                                     --
--- The projection reads each endpoint through durations, and each one   --
--- in the direction its set is read:                                    --
+-- The projection reads each endpoint through durations, in the        --
+-- direction its set is read and at its own cost model (`P` at         --
+-- `costˡᵒ`, `Q` at `costʰⁱ`):                                         --
 --                                                                     --
---   ∣ [ P , Q ] ∣ᵉ  =  [ least duration in P , greatest duration in Q ] --
+--   ∣ [ P , Q ] ∣ᵉ  =  [ least duration in P , greatest in Q ]        --
 --                                                                     --
--- Both sets being read disjunctively, the guarantee is only as strong  --
--- as its cheapest member and the allowance only as tight as its        --
--- slowest. So this is the pair of the two one-sided projections --     --
--- `System.Traces.Timed.LeftSided` and `System.Traces.Timed.RightSided` --
--- -- and every law is theirs.                                          --
+-- Both sets being read disjunctively, the guarantee is only as strong --
+-- as its cheapest member and the allowance only as tight as its       --
+-- slowest. So this is the pair of the two one-sided projections,      --
+-- `System.Traces.Timed.LeftSided` and                                 --
+-- `System.Traces.Timed.RightSided`, and every law is theirs.          --
 --                                                                     --
--- The target's `min ≤ max` is exactly what the grade's coherence field --
--- supplies: some listed guarantee takes no longer than some listed     --
--- allowance, and the least duration of `P` is below that guarantee     --
--- while the greatest of `Q` is above that allowance. Without the field --
--- the projection would not land in the interval grade at all -- which  --
--- is the concrete reason a two-sided trace grade carries one.          --
+-- The target's `min ≤ max` is exactly what the grade's coherence      --
+-- field supplies.                                                     --
 --                                                                     --
--- Each endpoint is measured at its own cost model: `P` at `costˡᵒ`,    --
--- `Q` at `costʰⁱ`.                                                     --
---                                                                     --
--- The cap's `unbounded` is measured by `∞`, so the two greatest        --
--- grades correspond -- `[ u , unbounded ]` above and `[ 0 , ∞ ]`       --
--- below -- and neither is absorbing, both keeping whatever lower bound --
--- follows them.                                                        --
+-- The cap's `unbounded` is measured by `∞`, so the two greatest       --
+-- grades correspond -- `[ u , unbounded ]` above and `[ 0 , ∞ ]`      --
+-- below -- and neither is absorbing, both keeping whatever lower      --
+-- bound follows.                                                      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)

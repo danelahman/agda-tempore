@@ -377,8 +377,7 @@ mutual
 
     -- eta-equation for boolean elimination
     --
-    -- Every commuting conversion is an instance: taking `M` to be a sequencing,
-    -- a handling, a coercion, ... pushes that former into the two branches.
+    -- Commuting conversions are instances of this rule.
 
     if-eta : ∀ {C}
            → (V : Γ ⊢V⦂ Bool)
@@ -390,10 +389,7 @@ mutual
 
     -- computational/beta-equations for effect handling
     --
-    -- A `handle` pushed under a binder or a lock reads its clauses at the
-    -- extended ambient, so every such equation re-bars the clause family:
-    -- `cong-⟨⟩-ren wk-ren` past a binder, `⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren` past
-    -- a lock, and `barrier-wk-ren` past both.
+    -- Each equation re-bars the clause family across the binder or lock the handle moves under.
 
     handle-return : ∀ {A B ε}
                   → (V : Γ ⊢V⦂ A)
@@ -584,12 +580,7 @@ mutual
 
     -- equations for sub-effecting coercions
     --
-    -- Coercion is a coercion, not structure: it is functorial in the effect
-    -- witness (`coerce-refl`/`coerce-trans`, no dependence on which witness is
-    -- used — that is already `coerce-cong`), and it commutes with the two
-    -- effect-grade formers, so a coercion of the continuation is unobservable
-    -- from outside the operation or delay. These are the syntactic image of the
-    -- monad's `T-≤-refl`, `T-≤-trans`, `opᵀ-≤` and `delayᵀ-≤`.
+    -- Coercion is functorial in the effect grade and commutes with the operation/delay effect formers.
 
     coerce-refl : ∀ {A ε}
                 → (rel : ε ≾ₑ ε)
@@ -619,10 +610,7 @@ mutual
                  → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (delay τ M)
                       == delay τ (coerce rel M)
 
-    -- Coercing the *handled*/sequenced computation is coercing the composite.
-    -- The continuation lives under the lock `Γ ⟨ mapᵉ ε ⟩`, which the coercion
-    -- relaxes, so it is reindexed along `⟨⟩-≤-ren` (the box being contravariant
-    -- in its grade — the model's `strᵀ-≤`).
+    -- The continuation's lock relaxes contravariantly along the coercion.
 
     coerce-seq : ∀ {A B ε₁ ε₂ ε'}
                → (rel : ε₁ ≾ₑ ε₂)

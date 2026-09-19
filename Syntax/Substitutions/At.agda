@@ -1,11 +1,10 @@
 ------------------------------------------------------------------------
 -- Substituting at the prefix boundary.                                --
 --                                                                     --
--- Replacing the entry sitting between `Γ'` and a suffix `Θ` by a value --
--- over `Γ'`, presenting the result over `Γ' ++ᶜ Θ`. This is the form   --
--- every consumer of substitution actually uses: the one substitution   --
--- operator at the splitting `split-≡-++ᶜ`, which is what carries the   --
--- parallel laws over to it.                                            --
+-- Replacing the entry sitting between `Γ'` and a suffix `Θ` by a      --
+-- value over `Γ'`, presenting the result over `Γ' ++ᶜ Θ`. This is the --
+-- form every consumer of substitution actually uses: the one          --
+-- substitution operator at the splitting `split-≡-++ᶜ`.               --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -51,13 +50,9 @@ C-rename-castᶜ : ∀ {Γ Γ' C} → (e : Γ ≡ Γ') → (M : Γ ⊢C⦂ C)
                → C-rename (eq-ren e) M ≡ castᶜ e M
 C-rename-castᶜ refl M = C-rename-id-≡ ≐ʳ-refl M
 
-------------------------------------------------------------------------
--- SUBSTITUTING AT THE PREFIX BOUNDARY
-------------------------------------------------------------------------
-
 -- The boundary is the splitting `split-≡-++ᶜ`, whose halves are the prefix and
--- suffix as given. Naming it is what lets a caller pin the suffix, which is all
--- these four are: the one substitution operator, at that splitting.
+-- suffix as given: these four are the one substitution operator, at that
+-- splitting.
 
 sub-atᵛ : ∀ {Γ' B A} → (Θ : Ctx) → ((Γ' ∷ B) ++ᶜ Θ) ⊢V⦂ A → Γ' ⊢V⦂ B
         → (Γ' ++ᶜ Θ) ⊢V⦂ A
@@ -112,11 +107,8 @@ sub-at-≡ᶜ : ∀ {Γ B C} → (Θ : Ctx) → (M : ((Γ ∷ B) ++ᶜ Θ) ⊢C�
           ≡ C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W)) M
 sub-at-≡ᶜ Θ M W = cong (λ s → C-sub₀ s M) (sub-at-≡ˢ₀ Θ W)
 
-------------------------------------------------------------------------
--- `sub-wk`: SUBSTITUTING FOR A VARIABLE NOBODY MENTIONS
---
--- Weakening at the boundary and then substituting there is the identity.
-------------------------------------------------------------------------
+-- `sub-wk`: weakening at the boundary and then substituting there is the
+-- identity.
 
 sub-wk-V : ∀ {Γ B} → (Θ : Ctx) → ∀ {A} → (U : (Γ ++ᶜ Θ) ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
          → (V-rename (cong-ren {Γ'' = Θ} (wk-ren {A = B})) U)
@@ -144,13 +136,9 @@ sub-wk-C-cast : ∀ {Γ B Γ₀} → (Θ : Ctx) → (e : Γ₀ ≡ Γ ++ᶜ Θ) 
               ≡ subst (_⊢C⦂ C) e M
 sub-wk-C-cast Θ refl M W = sub-wk-C Θ M W
 
-------------------------------------------------------------------------
--- THE TWO ORDERS
---
 -- `outer` replaces `B₂` (its value weakened past `B₁`) and then `B₁`;
 -- `inner` replaces `B₁`, with `B₂` re-bracketed into the suffix, and then
 -- `B₂`. The re-bracketing is `++ᶜ-assoc`, so only `inner₀` carries casts.
-------------------------------------------------------------------------
 
 assocᴮ : (Γ : Ctx) → (B₁ B₂ : VType) → (Θ : Ctx)
        → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ≡ ((Γ ∷ B₁) ++ᶜ (([] ∷ B₂) ++ᶜ Θ))
@@ -178,13 +166,8 @@ innerᶜ : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ
 innerᶜ {Γ} {B₂ = B₂} Θ M W₂ W₁ =
   (inner₀ᶜ Θ M W₁) [ split-≡-++ᶜ {Γ ∷ B₂} {Θ} ↦ W₂ ]c
 
-------------------------------------------------------------------------
--- RE-BRACKETING THE SUFFIX
---
 -- `inner₀`'s two casts conjugate the substitution at the re-bracketed suffix
--- into the one under `Θ` alone. Induction on the suffix, each step moving the
--- two retypings past one congruence.
-------------------------------------------------------------------------
+-- into the one under `Θ` alone.
 
 assoc-≐ˢ : ∀ {Γ B₁ B₂} → (Θ : Ctx) → (W₁ : Γ ⊢V⦂ B₁)
          → (⌜ eq-ren (assocᴮ⁻ Γ B₂ Θ) ⌝
@@ -233,13 +216,9 @@ inner₀-≡ᶜ {Γ} {B₁} {B₂} Θ M W₁ =
         (trans (sym (C-sub₀-⌜⌝ (eq-ren (assocᴮ⁻ Γ B₂ Θ)) _))
                (C-sub-≐ˢ (assoc-≐ˢ Θ W₁) M))))
 
-------------------------------------------------------------------------
--- `sub-swap`: THE TWO ORDERS AGREE
---
--- Both orders are now `cong-sub₀ (val-sub _)` composites, so the theorem is
--- `sub-swap-at-≡ᶜ` with the outer value read back by `sub-wk`: substituting
--- `W₁` into `W₂` weakened past `B₁` gives `W₂` again.
-------------------------------------------------------------------------
+-- `sub-swap`: both orders are now `cong-sub₀ (val-sub _)` composites; the
+-- theorem is `sub-swap-at-≡ᶜ` with the outer value read back by `sub-wk`:
+-- substituting `W₁` into `W₂` weakened past `B₁` gives `W₂` again.
 
 SubSwapC : ∀ {Γ B₁ B₂ C} → (Θ : Ctx) → ((Γ ∷ B₁ ∷ B₂) ++ᶜ Θ) ⊢C⦂ C
          → Γ ⊢V⦂ B₂ → Γ ⊢V⦂ B₁ → Set

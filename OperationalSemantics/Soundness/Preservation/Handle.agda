@@ -75,17 +75,9 @@ open import OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut
 
 open import OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE public
 
--- THE HANDLER COMMUTES WITH A STEP TRANSITION
---
--- A reduction step never performs an operation: `stepᵀ r` is `ηᵀ` for every
--- rule but `DELAY`, where it is a tick. So handling the effects a step produces
--- gives the same result whether the handler sits inside the step or outside it,
--- which is what lets `HANDLE-STEP` move the transition out of the handler's
--- argument and into the `⋄` of the target configuration.
---
--- The equation holds only for step transitions: `alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` is
--- false for a general tree, whose outer layer's operations would be handled on
--- one side and merely flattened on the other.
+-- A handler commutes with a step transition: `stepᵀ r` is `ηᵀ` except for
+-- `DELAY`'s tick, and a reduction step never performs an operation. This
+-- fails for a general tree, where `alg ∘ᵐ μᵀ ≈ᵐ μᵀ ∘ᵐ Tᶠ alg` does not hold.
 
 -- The algebra commutes with a grade transport (derivable from `alg-≤`).
 
@@ -401,13 +393,11 @@ step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
   ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx S ⟧ᶜᵗˣ} {of-natʳ τ})
   ∙ ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (delay-suc _))
 
--- HANDLE-STEP
---
--- The same assembly as `SEQ-STEP`, with the handler's fold in place of the
--- monad multiplication. Everything is shared: `seq-step-core` and `seq-target`
--- are generic in the parameterised algebra, `step-box` is algebra-free, and
--- `T-≤-μᵀ` is matched by `T-alg-of-handlerᵀ-≤`. The clause families at the two
--- states differ by the step's `suc-comp-ren`, so the fold's parameter is
+-- `HANDLE-STEP`: the same assembly as `SEQ-STEP`, with the handler's fold in
+-- place of the monad multiplication. `seq-step-core` and `seq-target` are
+-- generic in the parameterised algebra, `step-box` is algebra-free, and
+-- `T-≤-μᵀ` is matched by `T-alg-of-handlerᵀ-≤`. The clause families at the
+-- two states differ by the step's `suc-comp-ren`, so the fold's parameter is
 -- reindexed along it (`T-alg-of-handlerᵀ-natᴾ`).
 
 sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
@@ -560,26 +550,15 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS p
                ≈ᵐ f ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
     param-step = step-pv-state r pS pM
 
--- SEQ-OP
---
--- The operation commuting conversion: sequencing a computation that begins
--- with an operation is the operation with the sequencing pushed into its
--- continuation. This is the content of the algebraicity laws,
--- `opᵀ-algebraicity` for the multiplication and `strᵀ-opᵀ-algebraicity` for the
--- strength. The rule leaves the state alone, so this is a plain equation
--- between the two denotations, in an arbitrary context.
---
--- The strength is where the environment goes: the operation's continuation is
--- boxed (it may run only once `op-grade op` worth of time has passed), so the
--- environment is pushed under that box, which is what `exp-strᵐ` does.
+-- `SEQ-OP`: sequencing a computation that begins with an operation is the
+-- operation with the sequencing pushed into its continuation
+-- (`opᵀ-algebraicity`, `strᵀ-opᵀ-algebraicity`). The environment is pushed
+-- under the continuation's box by `exp-strᵐ`.
 
--- Reassociating the operation's arguments.
---
--- `strᵀ-opᵀ-algebraicity` hands the operation back its parameter and pairs the
--- environment with the (boxed) continuation. Applied to an actual `perform`,
--- whose argument is `⟨ env , ⟨ param , cont ⟩ᵐ ⟩ᵐ`, that reshuffle just puts the
--- parameter back in front and leaves the environment sitting next to the
--- continuation, ready to be pushed under its box.
+-- Reassociating the operation's arguments: `strᵀ-opᵀ-algebraicity` hands the
+-- operation back its parameter and pairs the environment with the (boxed)
+-- continuation, putting the parameter back in front of an actual `perform`'s
+-- `⟨ env , ⟨ param , cont ⟩ᵐ ⟩ᵐ` argument.
 
 op-pair : ∀ {X E P Q R} → (v : X →ᵐ P) → (e : X →ᵐ E) → (c : X →ᵐ Q)
         → (F : E ×ᵐ Q →ᵐ R)
@@ -596,13 +575,9 @@ op-pair v e c F =
   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
   ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong
 
--- The environment the operation's continuation receives.
---
--- Under the operation's box the environment has already been transposed once
--- (at `mapᵉ (op-grade op)`) and re-locked by `μ`; the continuation then binds
--- the arity value, so the environment must be weakened past it. Doing that
--- *outside* the second transposition (`_ ∘ᵐ fstᵐ`) and doing it *inside* it
--- (the syntax's `cong-⟨⟩-ren wk-ren`) agree, by naturality of `η⊣`.
+-- The environment the operation's continuation receives: weakening past the
+-- bound arity value outside the second transposition (`_ ∘ᵐ fstᵐ`) or inside
+-- it (the syntax's `cong-⟨⟩-ren wk-ren`) agree, by naturality of `η⊣`.
 
 op-env : ∀ {X Y d ε} → (a : mapᵉ d ·ᵣ mapᵉ ε ≾ᵣ mapᵉ (d ·ₑ ε))
        → ([ mapᵉ ε ]ᶠ (⟨⟩-≤ a ∘ᵐ μ) ∘ᵐ η⊣ {⟨ mapᵉ d ⟩ᵒ X} {mapᵉ ε}) ∘ᵐ fstᵐ {_} {Y}
@@ -615,18 +590,9 @@ op-env a =
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
   ∙ ∘ᵐ-congˡ ([]-congᶠ (∘ᵐ-assoc _ _ _))
 
--- PUSHING THE SEQUENCING UNDER THE OPERATION'S BOX
---
--- This is the heart of `SEQ-OP`. On the left the environment arrives boxed at
--- the *whole* computation's grade `mapᵉ (op-grade op ·ₑ ε)`; `strᵀ-opᵀ-algebra-
--- icity` splits that box with `δ` into `mapᵉ (op-grade op)` (the operation's own
--- delay) and `mapᵉ ε` (the continuation's), pairs the inner half with the boxed
--- continuation via `[]-monoidal`, and pushes it under the exponential with
--- `exp-strᵐ`. On the right the syntax has instead renamed the continuation's
--- context with `⟨⟩-μ-ren`, folding the two locks back into one.
---
--- The two agree: `box-split` is exactly the `δ`-split-then-`μ`-refold, and
--- `η⊣-⟨⟩` is what lets the two transposed halves be re-paired under one box.
+-- The heart of `SEQ-OP`: splitting the environment's box into the
+-- operation's and the continuation's grades (`box-split`) matches the
+-- syntax's refolding of the two locks into one (`⟨⟩-μ-ren`).
 
 seq-op-box : ∀ {X A B ε ε'} → (op : Op)
   → (alg : Tᵒ (Tᵒ B ε') ε →ᵐ Tᵒ B (ε ·ₑ ε'))
@@ -695,14 +661,10 @@ seq-op-box {X} {A} {B} {ε} {ε'} op alg m n rn ern =
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
           (⟨ ∘ᵐ-congˡ ([]-congᶠ ern) ∙ ≈ᵐ-sym (op-env _) , ≈ᵐ-refl ⟩ᵐ-cong)))
 
--- The commuting conversion, at the level of the model.
---
--- The three moves are the operation's three laws: `strᵀ-opᵀ-algebraicity` puts
--- the environment inside the operation's continuation, `opᵀ-nat` puts the
--- sequel `n` there too, and `opᵀ-algebraicity` puts the multiplication there —
--- leaving the `ε-substᵀ` that reassociates the grades, which is exactly the
--- coercion the syntactic rule carries. The ground-type coercion `ea` is
--- generalised so it can be matched, at which point both `subst`s vanish.
+-- The commuting conversion, at the level of the model: `strᵀ-opᵀ-algebraicity`
+-- puts the environment inside the operation's continuation, `opᵀ-nat` puts
+-- the sequel `n` there too, and `opᵀ-algebraicity` puts the multiplication
+-- there, leaving the `ε-substᵀ` that reassociates the grades.
 
 seq-op-core : ∀ {X Y A B ε ε'} → (op : Op)
             -- the algebra that collapses the two monad layers …
@@ -967,15 +929,13 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
 
--- HANDLE-OP
---
--- Handling an operation applies the matching clause, with the rest of the
--- handled computation boxed up as the clause's continuation, the box being what
--- stops the continuation running before `op-grade op` worth of time has passed.
--- So the reduct is a `box`, and the equation is `SEQ-OP`'s with the handler's
--- fold in place of the monad multiplication: `T-alg-of-handlerᵀ-opᵀ` (apply a
--- clause) where `SEQ-OP` has `opᵀ-algebraicity` (re-emit the operation). The
--- eternal parameter is carried under the operation's box by `necᵉ`.
+-- `HANDLE-OP`: handling an operation applies the matching clause, with the
+-- rest of the handled computation boxed up as the clause's continuation, the
+-- box being what stops the continuation running before `op-grade op` worth
+-- of time has passed. The equation is `SEQ-OP`'s with the handler's fold
+-- (`T-alg-of-handlerᵀ-opᵀ`) in place of the monad multiplication
+-- (`opᵀ-algebraicity`); the eternal parameter is carried under the
+-- operation's box by `necᵉ`.
 
 sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                 → (V : Γ ⊢V⦂ type-of-gtype (param op))

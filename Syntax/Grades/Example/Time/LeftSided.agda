@@ -151,12 +151,10 @@ left-sided-intervals = record
 ------------------------------------------------------------------------
 -- The same intervals with a formal greatest grade
 --
--- `[ 0 ,+∞⟩` is greatest but is the unit, hence not absorbing, and a
--- morphism preserving `⊤` and `_·_` carries an absorbing top to an
--- absorbing top; a grade whose top absorbs -- the subset floor, whose
--- top demands nothing -- therefore projects here rather than into the
--- intervals above. `untimed` claims no lower bound at all, and
--- sequencing after it claims none either.
+-- `[ 0 ,+∞⟩` is greatest but not absorbing, being the unit, so a grade
+-- whose top absorbs -- the subset floor, whose top demands nothing --
+-- projects here rather than into the intervals above. `untimed` claims
+-- no lower bound at all, and absorbs.
 
 infix 50 timed_
 

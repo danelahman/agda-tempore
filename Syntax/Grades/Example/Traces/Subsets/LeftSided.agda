@@ -1,38 +1,32 @@
 ------------------------------------------------------------------------
 -- Sets of timed traces as lower bounds, at the subset order.          --
 --                                                                     --
--- A grade is a non-empty finite set of traces, read against the runs   --
--- `X` a computation may have as                                        --
+-- A grade is a non-empty finite set of traces, read against the runs  --
+-- `X` a computation may have as                                       --
 --                                                                     --
---   X is graded by P   iff   P ⊆ X                                     --
+--   X is graded by P   iff   P ⊆ X                                    --
 --                                                                     --
--- -- each listed trace is a run the computation can exhibit. This is   --
--- the only lower bound the subset order admits. The reading "whatever  --
--- happened, it was one of the listed traces" is `X ⊆ P`, which is the  --
--- *cap*'s condition, equality leaving nothing for the two endpoints to --
--- differ about; the ordered families keep them apart by what their     --
--- comparison lets one trace do for another, and there is none here.    --
+-- -- each listed trace is a run the computation can exhibit. This is  --
+-- the only lower bound the subset order admits, `X ⊆ P` being the     --
+-- *cap*'s condition.                                                  --
 --                                                                     --
--- Weakening drops listed traces,                                       --
+-- Weakening drops listed traces,                                      --
 --                                                                     --
---   P ≾ P'   iff   P' ⊆ P                                              --
+--   P ≾ P'   iff   P' ⊆ P                                             --
 --                                                                     --
--- necessary (take `X := P`) and sufficient (transitivity of ⊆). So the --
--- set is read *conjunctively* -- every member is a separate demand --   --
--- and a longer list demands more.                                      --
+-- so the set is read *conjunctively* -- every member is a separate    --
+-- demand -- and a longer list demands more.                           --
 --                                                                     --
--- No list is then greatest: that would be the empty set of demands,    --
--- which is excluded. The carrier therefore carries `no-demand` as a    --
--- point of its own, above every list and absorbing -- once nothing is  --
--- demanded, sequencing demands nothing either.                         --
+-- No list is then greatest, that being the excluded empty set of      --
+-- demands, so the carrier carries `no-demand` as a point of its own,  --
+-- above every list and absorbing.                                     --
 --                                                                     --
--- READINGS. As an *effect* grade this is a reachability claim about a  --
--- computation's branches, and `coerce` forgets branches; a non-        --
--- singleton grade needs a branching construct whose rule takes the     --
--- union of its branches' grades, since coercing both branches to one   --
--- grade would have to intersect them. As a *resource* grade it is a    --
--- demand that every listed run be available, which `unbox`'s           --
--- `ρ' ≾ᵣ ρ` discharges by having what elapsed cover all of them.       --
+-- As an *effect* grade this is a reachability claim about a           --
+-- computation's branches, and `coerce` forgets branches; a            --
+-- non-singleton grade needs a branching construct whose rule takes    --
+-- the union of its branches' grades. As a *resource* grade it is a    --
+-- demand that every listed run be available, which `unbox`'s          --
+-- `ρ' ≾ᵣ ρ` discharges by having what elapsed cover all of them.      --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

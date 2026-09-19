@@ -50,14 +50,10 @@ open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
-------------------------------------------------------------------------
--- THE TWO PREMISES
---
 -- The clause premise: at the state the operation is handled at, with the
 -- resumption already boxed and allocated. `V₀` is the boxed resumption in the
 -- shape `_∷ₛ_` stores it, and the hypothesis about it is exactly
 -- `SRed-fresh`'s — reducible at every state the lock permits.
-------------------------------------------------------------------------
 
 Boxed : (B : VType) → (op : Op) → (ε₃ : E) → 𝕊 [] → Set
 Boxed B op ε₃ St₁ =
@@ -113,14 +109,10 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
     → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
     → CRed' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
-------------------------------------------------------------------------
--- HANDLING
---
 -- Induction on the scrutinee's `CRed` derivation. `cred-ret` fires `HANDLE-RET`
 -- and is `Bind`'s `cred-ret` verbatim — the sequel premise consumes the value
 -- and the run's `mapᵉ uₑ` is reconciled with the reach's `uᵣ` by
 -- `suc-comp-ren-grade`.
-------------------------------------------------------------------------
 
 handle-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε₁}
@@ -658,13 +650,9 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
                             (cong-∷-ren (cong-∷-ren (unbox-ren q₃)))
                             (sym (cancelled op₃ ε₄))))
 
-------------------------------------------------------------------------
--- THE FIRED CLAUSE IS THE CLAUSE ENVIRONMENT'S ACTION
---
 -- `env-Hˢ` at the empty suffix is the action at the clause suffix, and the
 -- barrier crossing is the lock zone `_⟨_⟩ᵉ` at the same reach — so the two
 -- sides are the same term.
-------------------------------------------------------------------------
 
 env-Hˢ-fired : ∀ {St Γ B} → (γ : Env St Γ) → {St₁ : 𝕊 []}
              → (q : St ⊑ₛ[ ⊤ᵣ ] St₁)

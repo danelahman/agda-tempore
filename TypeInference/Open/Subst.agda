@@ -162,10 +162,6 @@ record _≐ˢ_ {Θ Θ'} (σ δ : Subst Θ Θ') : Set where
 
 open _≐ˢ_ public
 
----------------------
--- Identity law    --
----------------------
-
 [id]ᵉ : ∀ {Θ} → (ε : EExp Θ) → ε [ idˢ ]ᵉ ≡ ε
 [id]ᵉ (evar i)   = refl
 [id]ᵉ (econst ε) = refl
@@ -196,10 +192,6 @@ mutual
 [id]ᶜᵗˣ []        = refl
 [id]ᶜᵗˣ (Γ ∷ A)   = cong₂ _∷_ ([id]ᶜᵗˣ Γ) ([id]ᵛ A)
 [id]ᶜᵗˣ (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ ([id]ᶜᵗˣ Γ) ([id]ʳ ρ)
-
-----------------------------
--- Composition (fusion)   --
-----------------------------
 
 [⨟]ᵉ : ∀ {Θ Θ' Θ''} → (ε : EExp Θ) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
      → ε [ σ ]ᵉ [ δ ]ᵉ ≡ ε [ σ ⨟ˢ δ ]ᵉ
@@ -237,10 +229,6 @@ mutual
 [⨟]ᶜᵗˣ (Γ ∷ A)   σ δ = cong₂ _∷_ ([⨟]ᶜᵗˣ Γ σ δ) ([⨟]ᵛ A σ δ)
 [⨟]ᶜᵗˣ (Γ ⟨ ρ ⟩) σ δ = cong₂ _⟨_⟩ ([⨟]ᶜᵗˣ Γ σ δ) ([⨟]ʳ ρ σ δ)
 
-----------------------------------------
--- The actions respect `_≐ˢ_`         --
-----------------------------------------
-
 [≐]ᵉ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (ε : EExp Θ) → ε [ σ ]ᵉ ≡ ε [ δ ]ᵉ
 [≐]ᵉ p (evar i)   = ≐ᵉ p i
 [≐]ᵉ p (econst ε) = refl
@@ -272,10 +260,6 @@ mutual
 [≐]ᶜᵗˣ p []        = refl
 [≐]ᶜᵗˣ p (Γ ∷ A)   = cong₂ _∷_ ([≐]ᶜᵗˣ p Γ) ([≐]ᵛ p A)
 [≐]ᶜᵗˣ p (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ ([≐]ᶜᵗˣ p Γ) ([≐]ʳ p ρ)
-
---------------------------------------------------------------
--- The weakening substitutions compute the scope extensions  --
---------------------------------------------------------------
 
 wkˢᵗ-e : ∀ {Θ} → (ε : EExp Θ) → ε [ wkˢᵗ ]ᵉ ≡ wkᵗ-e ε
 wkˢᵗ-e (evar i)   = refl
@@ -370,10 +354,6 @@ wkˢᵉ-ctx []        = refl
 wkˢᵉ-ctx (Γ ∷ A)   = cong₂ _∷_ (wkˢᵉ-ctx Γ) (wkˢᵉ-v A)
 wkˢᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (wkˢᵉ-ctx Γ) (wkˢᵉ-r ρ)
 
-------------------------------------------------------------------
--- A weakening precomposed with an extension or a lift          --
-------------------------------------------------------------------
-
 wkˢᵗ-,ᵗ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → wkˢᵗ ⨟ˢ (σ ,ᵗ B) ≐ˢ σ
 wkˢᵗ-,ᵗ σ B = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 
@@ -398,9 +378,7 @@ wkˢᵉ-↑ᵉ σ = mk≐ˢ (λ α → sym (wkˢᵉ-v (sTy σ α)))
                  (λ i → sym (wkˢᵉ-r (sR σ i)))
                  (λ i → sym (wkˢᵉ-e (sE σ i)))
 
-----------------------------------------------------------------
--- `wk-,`: an extension undoes a weakening                     --
-----------------------------------------------------------------
+-- `wk-,`: an extension undoes a weakening.
 
 wk-,ᵗ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε : EExp Θ)
         → wkᵗ-e ε [ σ ,ᵗ B ]ᵉ ≡ ε [ σ ]ᵉ
@@ -477,9 +455,7 @@ wk-,ᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (ε' : EExp Θ') → (�
 wk-,ᵉ-ctx σ ε' Γ = trans (cong (_[ σ ,ᵉ ε' ]ᶜᵗˣ) (sym (wkˢᵉ-ctx Γ)))
                    (trans ([⨟]ᶜᵗˣ Γ wkˢᵉ (σ ,ᵉ ε')) ([≐]ᶜᵗˣ (wkˢᵉ-,ᵉ σ ε') Γ))
 
-----------------------------------------------------------------
--- `wk-↑`: a lift commutes with a weakening                    --
-----------------------------------------------------------------
+-- `wk-↑`: a lift commutes with a weakening.
 
 wk-↑ᵗ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (ε : EExp Θ)
         → wkᵗ-e ε [ σ ↑ᵗ ]ᵉ ≡ wkᵗ-e (ε [ σ ]ᵉ)
@@ -586,10 +562,6 @@ wk-↑ᵉ-ctx σ Γ = trans (cong (_[ σ ↑ᵉ ]ᶜᵗˣ) (sym (wkˢᵉ-ctx Γ)
                 (trans ([≐]ᶜᵗˣ (wkˢᵉ-↑ᵉ σ) Γ)
                 (trans (sym ([⨟]ᶜᵗˣ Γ σ wkˢᵉ)) (wkˢᵉ-ctx (Γ [ σ ]ᶜᵗˣ)))))
 
---------------------------------------------
--- Lookup commutes with substitution      --
---------------------------------------------
-
 lookup-ty-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') → (i : Fin n)
                 → lookup-ty (Γ [ σ ]ᶜᵗˣ) i ≡ lookup-ty Γ i [ σ ]ᵛ
 lookup-ty-subst (Γ ∷ A)   σ zero    = refl
@@ -601,10 +573,6 @@ lookup-gr-subst : ∀ {Θ Θ' n} → (Γ : OCtx Θ n) → (σ : Subst Θ Θ') �
 lookup-gr-subst (Γ ∷ A)   σ zero    = refl
 lookup-gr-subst (Γ ∷ A)   σ (suc i) = lookup-gr-subst Γ σ i
 lookup-gr-subst (Γ ⟨ ρ ⟩) σ i       = cong (_·̂ᵣ ρ [ σ ]ʳ) (lookup-gr-subst Γ σ i)
-
-------------------------------------------------------
--- Closed embeddings are substitution-invariant     --
-------------------------------------------------------
 
 mutual
 

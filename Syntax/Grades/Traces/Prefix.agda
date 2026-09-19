@@ -1,34 +1,27 @@
 ------------------------------------------------------------------------
 -- The prefix order on timed traces, and why it carries no grade.      --
 --                                                                     --
--- The orders the trace grades are built from match one trace against   --
--- another as a *subsequence*: the events named must occur in order,     --
--- but others may occur in between. That is what lets a demand for       --
--- `read · ⟨ 2 ⟩ · send` be met by a run that also stores on the way,    --
--- and what lets a bound permit a run that skips what it offers.         --
+-- The orders the trace grades are built from match one trace against  --
+-- another as a *subsequence*: the events named must occur in order,   --
+-- but others may occur in between. That is what lets a demand for     --
+-- `read · ⟨ 2 ⟩ · send` be met by a run that also stores on the way,  --
+-- and what lets a bound permit a run that skips what it offers.       --
 --                                                                     --
--- The obvious strengthening is to ask for a *prefix*: the events must   --
--- happen from the start, with nothing skipped.                         --
+-- The obvious strengthening is to ask for a *prefix*, with nothing    --
+-- skipped:                                                            --
 --                                                                     --
 --   s ⊑ᵖ t   iff   t ≡ s ∙ r   for some continuation r                --
 --                                                                     --
--- This module defines that relation, proves it is a preorder, and then --
--- shows why it cannot be the comparison underlying a `Grade`: the      --
--- language product is not monotone for it on the left, which is        --
--- exactly the `·-monoˡ-≾` field. `Separation` exhibits the failure as  --
--- a checked term.                                                     --
+-- This module defines that relation, proves it is a preorder, and     --
+-- shows that the language product is not monotone for it on the left, --
+-- which is the `·-monoˡ-≾` field a `Grade` asks for. `Separation`     --
+-- exhibits the failure as a checked term.                             --
 --                                                                     --
--- The obstruction is not special to prefixes. Any order asking the     --
--- demanded events to be *contiguous* in the run fails the same way,    --
--- because sequencing two gap-free demands leaves a gap between them:   --
--- for the infix order, `a` is an infix of `a` and `a` of `b · a`, yet  --
--- `a · a` is no infix of `a · b · a`. Contiguity is simply not stable  --
--- under the language product, and monotonicity for that product is     --
--- what the grade construction needs.                                  --
---                                                                     --
--- So an order's tolerance of unmatched operations in the middle is not --
--- a looseness that could be tightened away; it is what makes the trace --
--- grades monoid-graded at all.                                        --
+-- The obstruction is not special to prefixes: any order asking the    --
+-- demanded events to be *contiguous* in the run fails the same way,   --
+-- sequencing two gap-free demands leaving a gap between them. An      --
+-- order's tolerance of unmatched operations in the middle is what     --
+-- makes the trace grades monoid-graded at all.                        --
 ------------------------------------------------------------------------
 
 open import Relation.Nullary using (¬_)
@@ -78,10 +71,8 @@ s ⊑ᵖ t = Σ[ r ∈ Trace ] (s ∙ r ≡ t)
 -- Right multiplication is not
 --
 -- Extending both sides by a common *suffix* does not preserve the
--- relation, because the suffix lands after the part that differs. Two
--- distinct operations are enough to see it, with the empty demand on
--- the left: `ε` is a prefix of `a`, yet appending `b` to both gives
--- `b` against `a ∙ b`, and the very first event already disagrees.
+-- relation, the suffix landing after the part that differs. Two
+-- distinct operations are enough to exhibit the failure.
 
 module Separation (a b : Op) (a≢b : ¬ (a ≡ b)) where
 

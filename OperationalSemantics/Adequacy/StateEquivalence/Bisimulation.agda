@@ -38,14 +38,9 @@ open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.StateEquivalence.Core Spec
 open import OperationalSemantics.Adequacy.StateEquivalence.Extensions Spec
 
-------------------------------------------------------------------------
--- THE BISIMULATION, RULE BY RULE
---
--- `Sim es M' r` is what simulating `r` from the related configuration amounts
--- to: a state, a reduct, their relations, the step, and the fact that the two
--- steps extend the state alike. Each rule gets its own lemma, so the assembly
--- below is one line per rule.
-------------------------------------------------------------------------
+-- `Sim es M' r` is what simulating `r` from the related configuration
+-- amounts to: a state, a reduct, their relations, the step, and the fact
+-- that the two steps extend the state alike.
 
 Sim : ∀ {A ε ε₁} {St St' St₁ : 𝕊 []}
     → (es : St ≐ˢ St') → {M : toCtx St ⊢C⦂ A ‼ ε} → (M' : toCtx St' ⊢C⦂ A ‼ ε)
@@ -448,14 +443,8 @@ cast-handle-op refl V' M' H' N' = refl
             (C-rename-cong (cong-∷-ren _)
               (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
 
-------------------------------------------------------------------------
--- THE BISIMULATION
---
--- One clause per rule. The two congruences recurse, and hand the recursion's
--- `_≤≐_` witness on: their reduct renames the continuation along
--- `suc-comp-ren (step-extends-state r) c`, which `suc-comp-ren-≐ʳ` relates only
--- for extensions of the same shape.
-------------------------------------------------------------------------
+-- One clause per rule. The two congruences recurse, and hand the
+-- recursion's `_≤≐_` witness on.
 
 ↝-≐ˢ : ∀ {A ε ε₁} {St St' St₁ : 𝕊 []}
     → (es : St ≐ˢ St')
@@ -509,10 +498,6 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM (HANDLE-STEP r c) with cast-handle⁻ (sym (toCtx-≐ˢ es)) _ eM
 ... | M₁' , H' , N' , refl , eM₁ , eH , eN =
   ↝-≐ˢ-handle-step es M₁' H' N' eH eN r c (↝-≐ˢ es eM₁ r)
-
-------------------------------------------------------------------------
--- RUNS
-------------------------------------------------------------------------
 
 -- The bisimulation extends to runs, step by step.
 

@@ -105,10 +105,8 @@ tagged-relaying =
 -- Readings go stale
 --
 -- `var` asks for `ρ ≾ᵣ uᵣ` at a non-eternal type, and the only grade
--- below `[0, 0 ]` is `[0, 0 ]` itself. So a reading is usable only where
--- no lock stands between its binding and its use: neither
--- `idle-then-transmit` nor `carried-reading` of the lower bounds can be
--- written here.
+-- below `[0, 0 ]` is itself, so a reading is usable only where no lock
+-- stands between its binding and its use.
 
 reading-stale-after-idling : ¬ (uᵣ ·ᵣ of-natʳ 2 ≾ᵣ uᵣ)
 reading-stale-after-idling = ≰!
@@ -174,12 +172,11 @@ sampling-then-branching =
 ------------------------------------------------------------------------
 -- Unboxing: a lease that expires
 --
--- `unbox`'s premise is `elapsed ≾ᵣ ρ`, which here reads
--- `elapsed ≤ ρ`: the box may be claimed while what the computation has
--- spent is still within what the box allows. What it has spent is the
--- product of the locks between the box's binding and the claim, which
--- the comments show one by one. The resource below is leased for six
--- ticks' worth of work.
+-- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `elapsed ≤ ρ` here: the box
+-- may be claimed while what the computation has spent -- the product of
+-- the locks between the box's binding and the claim -- is still within
+-- what the box allows. The resource below is leased for six ticks'
+-- worth of work.
 
 -- claimed at once, with no lock in between
 
@@ -279,8 +276,7 @@ claimed-in-both-branches =
 -- Sub-effecting against unboxing
 --
 -- Sequencing locks its continuation by the grade the first part is
--- *typed at* and binds that part's result. Here too a `coerce` on that
--- part can only take claims away, for the opposite reason: coercing
+-- *typed at*. A `coerce` there can only take claims away: coercing
 -- relaxes the deadline, so the lock grows and the lease is spent
 -- against a larger figure.
 

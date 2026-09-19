@@ -58,13 +58,8 @@ Var-∷ (σ , y) = σ , Tl-∷ y
 Var-⟨⟩ : ∀ {Γ A} → (ρ : R) → Var Γ A → Var (Γ ⟨ ρ ⟩) A
 Var-⟨⟩ ρ (σ , y) = σ ·ᵣ ρ , Tl-⟨⟩ y
 
--- RELOCATING A VARIABLE
---
--- A context equality that only extends a smaller one relocates a variable by
--- pushing the equality inside the constructors. Kept here so that both the
--- environment and the state equivalence can use it.
-
--- Relocating a variable past a context equality that only extends it.
+-- Relocating a variable past a context equality that only extends it, by
+-- pushing the equality inside the constructors.
 
 subst-Hd : ∀ {Γ Γ' A} → (e : Γ ≡ Γ')
          → subst (λ Γ₀ → A ∈[ uᵣ ] Γ₀) (cong (_∷ A) e) Hd ≡ Hd
@@ -86,8 +81,6 @@ subst-sym-subst′ : ∀ {a p} {X : Set a} {P : X → Set p} {u v : X}
 subst-sym-subst′ refl w = refl
 
 
--- ACTING ALIKE
-
 infix 4 _≐ʳ_
 
 -- A record, not a function type: the statements below are used at renamings
@@ -108,10 +101,8 @@ open _≐ʳ_ public
 ≐ʳ-trans : ∀ {Γ Γ'} {r r' r'' : Ren [] Γ Γ'} → r ≐ʳ r' → r' ≐ʳ r'' → r ≐ʳ r''
 ≐ʳ-trans h h' = mk≐ʳ (λ x → trans (at h x) (at h' x))
 
--- COMPOSITION
---
--- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₂` and then with `r₁`,
--- so all three laws below hold at the level of `var-img` by computation.
+-- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₂` and then with `r₁`;
+-- the three laws below hold at the level of `var-img` by computation.
 
 ∘ʳ-≐ʳ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren [] Γ' Γ''} {r₁ r₁' : Ren [] Γ Γ'}
      → r₂ ≐ʳ r₂' → r₁ ≐ʳ r₁'
@@ -132,10 +123,8 @@ open _≐ʳ_ public
 ∘ʳ-identityʳ-≐ʳ : ∀ {Γ Γ'} → (r : Ren [] Γ Γ') → (r ∘ʳ id-ren) ≐ʳ r
 ∘ʳ-identityʳ-≐ʳ r = mk≐ʳ (λ x → refl)
 
--- GRADE BOUNDS ARE INVISIBLE TO `_≐ʳ_`
---
 -- `⟨⟩-≤-ren` stores a `≾ᵣ` proof, but sends a variable to itself at a grade
--- fixed by the renaming's indices, so the proof is not observable.
+-- fixed by the renaming's indices; the proof is not observable.
 
 ⟨⟩-≤-ren-≐ʳ : ∀ {Γ ρ ρ'} → (p p' : ρ' ≾ᵣ ρ)
            → ⟨⟩-≤-ren {Δ = Γ} p ≐ʳ ⟨⟩-≤-ren p'
@@ -169,8 +158,6 @@ eq-ren-img : ∀ {Γ Γ' A ρ} → (e : Γ ≡ Γ') → (x : A ∈[ ρ ] Γ)
            → var-img (eq-ren e) x ≡ (ρ , subst (λ Γ₀ → A ∈[ ρ ] Γ₀) e x)
 eq-ren-img refl x = refl
 
--- PUSHING A SUFFIX VARIABLE UNDER A PREFIX
---
 -- The grade is untouched: only the suffix's own locks stand to its right.
 
 ∈-++ᶜʳ : ∀ {Γ Δ A ρ} → A ∈[ ρ ] Δ → A ∈[ ρ ] (Γ ++ᶜ Δ)
@@ -188,12 +175,8 @@ eq-ren-img refl x = refl
 ∈-++ᶜʳ-[] (Tl-⟨⟩ x) =
   trans (subst-Tl-⟨⟩ ++ᶜ-identityˡ (∈-++ᶜʳ x)) (cong Tl-⟨⟩ (∈-++ᶜʳ-[] x))
 
--- PUSHING A PREFIX VARIABLE UNDER A SUFFIX
---
--- The grade depends only on the suffix, not on the variable, so it is a function
--- of its own — which is what lets the two sides of a boundary substitution be
--- seen to have the same grade, and what keeps every lemma about the push
--- subst-free.
+-- The grade depends only on the suffix, not on the variable, so it is a
+-- function of its own.
 
 grade-++ᶜˡ : R → Ctx → R
 grade-++ᶜˡ ρ []         = ρ
@@ -311,11 +294,9 @@ Var-cast-flip⁻ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (t : Var Γ' A) → (
                → Var-cast (sym e) t ≡ t' → Var-cast e t' ≡ t
 Var-cast-flip⁻ refl t t' q = sym q
 
--- THE PUSHING RENAMING
---
--- The renaming that weakens a context by a whole suffix. It exists only when
--- the suffix's grade is bounded by the unit — each of its locks has to be
--- crossed, which is `⟨⟩-≤-ren` at that lock's own grade.
+-- The renaming that weakens a context by a whole suffix, defined only when
+-- the suffix's grade is bounded by the unit: each lock is crossed by
+-- `⟨⟩-≤-ren` at its own grade.
 
 push-ren : ∀ {Γ₀} → (Δ : Ctx) → ctx-grade Δ ≾ᵣ uᵣ → Ren [] (Γ₀ ++ᶜ Δ) Γ₀
 push-ren []         p = id-ren
@@ -380,9 +361,7 @@ push-ren-++ᶜ {Γ₀} Δ₁ Δ₂ p p₁ p₂ = mk≐ʳ go
             (sym (trans (cong (var-img′ (push-ren Δ₂ p₂)) (push-ren-img Δ₁ p₁ y))
                         (push-ren-img Δ₂ p₂ (∈-++ᶜˡ Δ₁ y))))))
 
--- SUFFIX EXTENSION
---
--- `cong-ren` recurses on the suffix, so it respects `_≐ʳ_` and commutes with
+-- `cong-ren` recurses on the suffix; it respects `_≐ʳ_` and commutes with
 -- composition up to it (`cong-∷-ren (r ∘ʳ r')` and `cong-∷-ren r ∘ʳ cong-∷-ren r'`
 -- are distinct renamings acting alike).
 
@@ -443,9 +422,8 @@ cong-ren-∘-≐ʳ (Γ₀ ⟨ ρ ⟩) r₂ r₁ =
   ≐ʳ-trans (cong-⟨⟩-ren-≐ʳ (cong-ren-∘-≐ʳ Γ₀ r₂ r₁))
            (cong-⟨⟩-ren-∘-≐ʳ (cong-ren {Γ'' = Γ₀} r₂) (cong-ren {Γ'' = Γ₀} r₁))
 
--- Forcing a `with eternal?`-defined function to reduce: `rewrite`ing the
--- scrutinee is cleaner than unfold lemmas whose statements are themselves
--- stuck on the decision.
+-- Forces a `with eternal?`-defined function to reduce, by rewriting the
+-- scrutinee.
 
 eternal?-yes : ∀ {A} → (et : Eternal A) → eternal? A ≡ yes et
 eternal?-yes {A} et with eternal? A
@@ -480,9 +458,7 @@ eternal?-no {A} ¬et with eternal? A
 ... | inj₂ y = inj₂ (Tl-⟨⟩ y)
 
 -- What the lookup's weakening does to a variable: it is the subst-free push
--- `∈-++ᶜˡ`, at the grade the suffix's locks contribute. Stated over `∈-++ᶜˡ`
--- precisely so that no case needs a grade transport — each is a `cong` of the
--- next.
+-- `∈-++ᶜˡ`, at the grade the suffix's locks contribute.
 
 wk-ren-⟨ρ⟩-ctx-img : ∀ {Γ A σ ρ} → (Γ' : Ctx) → (h : ctx-grade Γ' ≡ ρ)
                    → (x : A ∈[ σ ] Γ)

@@ -67,14 +67,10 @@ open import DenotationalSemantics.Model.Modality.Eternal
 
 open import OperationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj GTy Mon GE public
 
--- UNBOX = LOOKUP
---
--- A cell `x` of the store was allocated by some prefix of the state, namely
--- `split-state-fst St x`, and the value it holds lives in *that* prefix's
--- context, locked by the cell's own resource `ρ`. Reading the cell therefore
--- has to reach back to the world where it was allocated. `state-past` is that
--- reach-back: the past-view, at the cell's accumulated grade `ρ'`, of the
--- sub-state that allocated it.
+-- `UNBOX` = lookup: a cell `x` was allocated by some prefix of the state
+-- (`split-state-fst St x`), so reading it has to reach back to that world.
+-- `state-past` is that reach-back: the past-view, at the cell's accumulated
+-- grade `ρ'`, of the sub-state that allocated it.
 
 state-past : ∀ {A ρ ρ'} → (St : 𝕊 []) → (x : [ ρ ] A ∈[ ρ' ] toCtx St)
            → Paramˢ St
@@ -125,19 +121,12 @@ state-lookup (St ⟨ σ ⟩ₛ) (Tl-⟨⟩ y) pSt =
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-μ-nat _))
   ∙ ∘ᵐ-assoc _ _ _
 
--- THE SYNTACTIC BRIDGE
---
 -- `unbox-lookup` renames the stored value out of the allocating prefix's
 -- context into `toCtx S`, through a composite of transports, a
--- `wk-ren-⟨ρ⟩-ctx`, and the grade relaxation `⟨⟩-≤-ren rel`. That composite
--- denotes `state-past`.
---
--- `wk-ren-⟨ρ⟩-ctx` matches its grade equality against `refl`, but the grade
--- `ρ'` occurs inside `split-state-snd St x`, whose type mentions
--- `x : … ∈[ ρ' ] …`, so specialising it is circular. The grade coercion is
--- therefore carried explicitly as a `⟨⟩-≤` at an arbitrary witness (the order
--- being proof-irrelevant), and the induction reconciles witnesses with
--- `⟨⟩-≤-irr`.
+-- `wk-ren-⟨ρ⟩-ctx`, and the grade relaxation `⟨⟩-≤-ren rel`; that composite
+-- denotes `state-past`. The grade coercion is carried explicitly as a `⟨⟩-≤`
+-- at an arbitrary witness, since `ρ'` occurs inside `split-state-snd St x`'s
+-- own type and so cannot be specialised against `refl`.
 
 -- The grade a cell's suffix accumulates is the cell's own grade. (This is the
 -- equality `unbox-lookup` feeds to `wk-ren-⟨ρ⟩-ctx`.)
@@ -233,13 +222,10 @@ wk-lock-≤ : ∀ {Γ Γ' ρ} → (e : ctx-grade Γ' ≡ ρ)
 wk-lock-≤ refl =
   ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-irr _ ≾ᵣ-refl ∙ ⟨⟩-≤-refl) ∙ ∘ᵐ-identityˡ _)
 
--- UNBOX
---
--- Reading the resource an `unbox` refers to, out of the state's environment,
--- is exactly the value stored in it. The cell was written by `box`, i.e. by
--- `[ ρ ]ᶠ ⟦V⟧ ∘ᵐ η⊣`; the read is `ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj`, and `ε⊣`
--- cancels the `η⊣` by the triangle identity. The grade relaxation `rel` is
--- what gates the read: it is the proof that enough resources have elapsed.
+-- `UNBOX`: reading the resource it refers to, out of the state's environment,
+-- is exactly the value stored in it. The read is `ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj`,
+-- and `ε⊣` cancels the `η⊣` that `box` wrote by the triangle identity; the
+-- grade relaxation `rel` gates the read.
 
 -- The looked-up resource is the stored value renamed, so its certificate is
 -- the stored one's, renamed the same way.

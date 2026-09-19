@@ -58,10 +58,6 @@ open import TypeInference.Open.Hyps  S
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
---------------------------------------------------------------
--- Solving with a residue                                    --
---------------------------------------------------------------
-
 record Solver : Set₁ where
   field
 
@@ -99,12 +95,8 @@ record Solver : Set₁ where
                     → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
                         (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
 
---------------------------------------------------------------
--- Solving into the empty scope                              --
---                                                           --
--- A success carries its own soundness witness, so no         --
--- `gsolve-sound` field is needed.                            --
---------------------------------------------------------------
+-- A success carries its own soundness witness, so no `gsolve-sound`
+-- field is needed.
 
 record GroundSolver : Set₁ where
   field

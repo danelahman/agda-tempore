@@ -45,18 +45,9 @@ open import OperationalSemantics.Adequacy.Environment.Core Spec
 open import OperationalSemantics.Adequacy.Environment.Action Spec
 open import OperationalSemantics.Adequacy.Environment.Variables Spec
 
-------------------------------------------------------------------------
--- THE ACTION ON THE CELL AN `unbox` NAMES
---
--- Reduction consults an `unbox` only through the variable it names, so this is
--- what the action does to an `unbox`. The zones that rename move the cell by
--- `var-img′`; the zones that substitute move it by `⟨_⟩[_↦_]rvar`, the value
--- put in a resource variable's place being of box type and hence itself a
--- variable.
---
--- Only the cell is tracked, not its grade bound: the bound is irrelevant, so
--- every consumer recovers whichever one it needs from the term.
-------------------------------------------------------------------------
+-- What the action does to an `unbox`: the cell `env-cell` computes. Only the
+-- cell is tracked, not its grade bound, which every consumer recovers from
+-- the term.
 
 env-cell : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
          → Var (Γ ++ᶜ Δ) ([ ρ ] A) → Var (toCtx St ++ᶜ Δ) ([ ρ ] A)
@@ -83,10 +74,9 @@ env-cell (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ t =
                  (env-cell γ ([] ∷ A₀ ++ᶜ Δ)
                    (Var-cast (++ᶜ-assoc Γ ([] ∷ A₀) Δ) t)))
 
--- The readability bound travels with the cell. Renaming a variable can only
--- lower its grade (`var-rename`'s own bound, discharged at a box type, which is
--- never eternal), and `⟨_⟩[_↦_]rvar` carries its bound as its third component —
--- so a cell readable at `ρ` stays readable at `ρ` wherever the action puts it.
+-- The readability bound travels with the cell: renaming only lowers a
+-- variable's grade, and `⟨_⟩[_↦_]rvar` carries its bound along, so a cell
+-- readable at `ρ` stays readable at `ρ` wherever the action puts it.
 
 var-img-≾ : ∀ {Γ Γ' A ρ σ} → (r : Ren [] Γ' Γ)
           → (x : [ ρ ] A ∈[ σ ] Γ) → proj₁ (var-img r x) ≾ᵣ σ
@@ -130,15 +120,9 @@ env-Cˢ-≡ : ∀ {St Γ C} → (γ : Env St Γ) → (Δ : Ctx) → {M M' : (Γ 
          → M ≡ M' → env-Cˢ γ Δ M ≡ env-Cˢ γ Δ M'
 env-Cˢ-≡ γ Δ = cong (env-Cˢ γ Δ)
 
-------------------------------------------------------------------------
--- THE ACTION COMMUTES WITH `unbox`
---
--- The action sends an `unbox` to an `unbox` at the cell `env-cell` computes:
--- the zones that rename move the variable by `var-img′` and the zones that
--- substitute move it by `⟨_⟩[_↦_]rvar`, which is exactly `env-cell`'s own
--- recursion. Only the grade bound differs, and it is irrelevant — so the
--- statement takes the target bound as a parameter.
-------------------------------------------------------------------------
+-- The action sends an `unbox` to an `unbox` at the cell `env-cell` computes;
+-- the grade bound is irrelevant, so the statement takes the target bound as a
+-- parameter.
 
 env-Cˢ-unbox : ∀ {St Γ A C ρ σ} → (γ : Env St Γ) → (Δ : Ctx)
              → (x : [ ρ ] A ∈[ σ ] (Γ ++ᶜ Δ)) → (rel : σ ≾ᵣ ρ)
@@ -207,16 +191,9 @@ env-Cˢ-unbox {A = A} (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x rel M 
   where
     eOut = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
 
-------------------------------------------------------------------------
--- THE CELL ACTION, SUFFIX-FREE
---
--- `env-cell` recurses through *growing* suffixes, so a statement that only
--- makes sense at the empty one — such as "the cell's content is reducible",
--- whose `lookup-body` needs the cell to land in `toCtx St` — cannot be proved
--- against it by induction on the environment. This is the same action read
--- off the environment's zones directly, where the recursion stays at the
--- boundary and every case is a variable of `toCtx St`.
-------------------------------------------------------------------------
+-- The same action as `env-cell`, read directly off the environment's zones,
+-- with the recursion staying at the boundary: every case is a variable of
+-- `toCtx St`.
 
 env-cell₀ : ∀ {St Γ A ρ} → (γ : Env St Γ)
           → Var Γ ([ ρ ] A) → Var (toCtx St) ([ ρ ] A)
@@ -234,15 +211,7 @@ env-cell₀ (γ ∷ᵉ W) (σ , Tl-∷ y) = env-cell₀ γ (σ , y)
 env-cell₀ (liftᵉ V γ) (σ , Hd)     = uᵣ , Hd
 env-cell₀ (liftᵉ V γ) (σ , Tl-∷ y) = Var-∷ (env-cell₀ γ (σ , y))
 
-------------------------------------------------------------------------
--- THE CELL THE ENVIRONMENT SENDS A CELL TO IS REDUCIBLE
---
--- This is `VRed` at the box type, for `env-cell₀ γ t` — which is what makes the
--- two substituting zones nothing at all: `_∷ᵉ_`'s cell is the value the zone
--- substitutes, and `Rel-Env` already says that value is `VRed` at its box type;
--- `liftᵉ`'s is the freshly allocated cell, and `Rel-Env`'s Kripke component is
--- exactly `SRed-fresh`'s hypothesis.
-------------------------------------------------------------------------
+-- `VRed` at the box type, for `env-cell₀ γ t`.
 
 env-cell₀-val : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
               → (t : Var Γ ([ ρ ] A))
@@ -292,14 +261,8 @@ env-cell₀-val {A = A} {ρ = ρ} (liftᵉ V γ) (pγ , pV) (σ , Tl-∷ y) {St'
     cellEq = ≤ₛ-embed-∘ (∷-suc V id-suc) e c
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
-------------------------------------------------------------------------
--- THE TWO CELL ACTIONS AGREE
---
--- `env-cell` recurses through growing suffixes, `env-cell₀` stays at the
--- boundary. They agree on the cells that matter — those pushed in from the
--- environment's own context — which is all `FL-unbox` reads, the suffix being
--- empty there.
-------------------------------------------------------------------------
+-- `env-cell` and `env-cell₀` agree on the cells pushed in from the
+-- environment's own context — all that `FL-unbox` reads.
 
 Var-++ᶜˡ : ∀ {Γ A} → (Δ : Ctx) → Var Γ A → Var (Γ ++ᶜ Δ) A
 Var-++ᶜˡ Δ (σ , x) = grade-++ᶜˡ σ Δ , ∈-++ᶜˡ Δ x

@@ -1,24 +1,24 @@
 ------------------------------------------------------------------------
 -- A time-ticks Kripke frame for the subset grade of lower bounds.     --
---                                                                    --
+--                                                                     --
 -- Worlds are time points `ℕ`, and a grade lists runs that must remain --
 -- reachable. Advancing has to leave room for every one of them:       --
---                                                                    --
+--                                                                     --
 --   w ⊑ᵗ[ P ] w'   iff   w + duration p ≤ w'   for *all* p ∈ P        --
---                                                                    --
+--                                                                     --
 -- The quantifier is universal, and forced to be: a weaker grade lists --
 -- *fewer* runs here, so only a condition asked of every listed run    --
 -- survives weakening. That is the mirror of the cap's frame, where a  --
 -- weaker grade lists more and the condition is existential -- the     --
 -- quantifier follows the direction of inclusion, not the endpoint.    --
---                                                                    --
--- READING. A tick world sees only durations, so what it makes of the  --
--- grade is "at least as long as the *slowest* demanded run" -- where  --
--- the coverage floor of `Ticks.Traces.Timed.LeftSided`, whose set is  --
--- read disjunctively, yields the fastest instead.                     --
---                                                                    --
--- The grade's `no-demand` demands no run at all, so it relates        --
--- every pair of worlds.                                               --
+--                                                                     --
+-- A tick world sees only durations, so what it makes of the grade is  --
+-- "at least as long as the *slowest* demanded run" -- where the       --
+-- coverage floor of `Ticks.Traces.Timed.LeftSided`, whose set is read --
+-- disjunctively, yields the fastest instead.                          --
+--                                                                     --
+-- The grade's `no-demand` demands no run at all, so it relates every  --
+-- pair of worlds.                                                     --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

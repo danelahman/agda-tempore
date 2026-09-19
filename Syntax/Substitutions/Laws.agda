@@ -50,13 +50,9 @@ sub-atˢ Θ W = [ cong-sub₀ {Γ'' = Θ} (val-sub W) ]ˢ
 wkˢ : ∀ {Γ B} → (Θ : Ctx) → Sub [] ((Γ ∷ B) ++ᶜ Θ) (Γ ++ᶜ Θ)
 wkˢ {B = B} Θ = ⌜ cong-ren {Γ'' = Θ} (wk-ren {A = B}) ⌝ˢ
 
-------------------------------------------------------------------------
--- `sub-wk`: SUBSTITUTING FOR A VARIABLE NOBODY MENTIONS
---
--- Weakening and then substituting is the identity. On a variable the weakening
--- lands to the right of the substituted one, so the substitution passes it
--- through — one induction on the suffix, at variables only.
-------------------------------------------------------------------------
+-- `sub-wk`: weakening and then substituting is the identity. On a variable
+-- the weakening lands to the right of the substituted one, so the
+-- substitution passes it through.
 
 sub-wk-var : ∀ {Γ B A ρ} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
            → (x : A ∈[ ρ ] (Γ ++ᶜ Θ))
@@ -116,13 +112,9 @@ sub-wk-≡ᶜ {B = B} Θ W M =
               (sym (C-sub₀-⌜⌝ (cong-ren {Γ'' = Θ} (wk-ren {A = B})) M)))
         (C-sub-≐ˢ (sub-wk-≐ˢ Θ W) M)
 
-------------------------------------------------------------------------
--- `ren-sub`: SUBSTITUTING COMMUTES WITH RENAMING
---
--- An instance of the interchange: at the empty suffix the premise is a
--- two-case check on the substituted variable, and `⋈-cong` carries it under
--- an arbitrary suffix.
-------------------------------------------------------------------------
+-- `ren-sub`: substituting commutes with renaming, an instance of the
+-- interchange. At the empty suffix the premise is a two-case check on the
+-- substituted variable, and `⋈-cong` carries it under an arbitrary suffix.
 
 -- A box-typed value is a variable, so renaming it is renaming that variable.
 
@@ -163,14 +155,12 @@ ren-sub-≡ᶜ : ∀ {Γ Γ' B C} → (Θ : Ctx) → (r : Ren [] Γ Γ') → (W 
                       (C-sub₀ (cong-sub₀ {Γ'' = Θ} (val-sub W)) M)
 ren-sub-≡ᶜ Θ r W M = C-sub₀-ren (⋈-cong Θ (⋈-val r W)) M
 
-------------------------------------------------------------------------
--- `sub-swap`: SUBSTITUTING FOR TWO VARIABLES IN EITHER ORDER
+-- `sub-swap`: substituting for two variables in either order.
 --
 -- Substituting `W₂` for the top variable and then `W₁` for the one beneath it
 -- agrees with substituting `W₁` under the top binder and then `W₂` with `W₁`
 -- already put in. Two 2-chains with the same endpoints, so the law is a `≐ˢ`
--- equation, and its three variable cases are `refl`, `sub-wk` and `var-≡`.
-------------------------------------------------------------------------
+-- equation.
 
 swap-innerˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
             → Sub [] Γ ((Γ ∷ B₁) ∷ B₂)
@@ -223,14 +213,10 @@ sub-swap-≡ᶜ : ∀ {Γ B₁ B₂ C} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : 
                      (C-sub₀ (cong-∷-sub (val-sub W₁)) M)
 sub-swap-≡ᶜ W₁ W₂ M = C-sub-≐ˢ (sub-swap-≐ˢ W₁ W₂) M
 
-------------------------------------------------------------------------
--- `sub-swap` UNDER A SUFFIX
---
--- Both orders live under the same suffix `Θ`, so the law at `Θ` is the law
--- at the top two variables with `cong-subˢ Θ` applied to it. Nothing about
--- the suffix has to be re-examined: `cong-subˢ` distributes over a chain, so
--- the congruence of a two-step chain is the two-step chain of congruences.
-------------------------------------------------------------------------
+-- `sub-swap` under a suffix: both orders live under the same suffix `Θ`, so
+-- the law at `Θ` is the law at the top two variables with `cong-subˢ Θ`
+-- applied to it. `cong-subˢ` distributes over a chain, so nothing about the
+-- suffix has to be re-examined.
 
 cong-subˢ-◅ : ∀ {Ξ Δ Δ' Δ''} → (Γ₀ : Ctx)
             → (s₁ : Sub₀ Ξ Δ Δ') → (s₂ : Sub₀ Ξ Δ' Δ'')

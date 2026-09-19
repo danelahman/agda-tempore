@@ -1,22 +1,14 @@
 ------------------------------------------------------------------------
 -- The presheaf model is head-faithful.                                --
---                                                                    --
+--                                                                     --
 -- Discharges `Adequacy.HeadFaithful`'s record — the model-side        --
 -- assumption of the adequacy theorem — for the free graded tree monad --
 -- on presheaves, and `HeadTimed` with it.                             --
---                                                                    --
--- Two frame assumptions are needed, both stated as records below.     --
---                                                                    --
---   * `TickFrame`: the worlds are inhabited, and time can always pass --
---     by one tick. Without the first nothing is observable at all     --
---     (every pair of morphisms is `≈ᵐ` over an empty frame); without  --
---     the second a delay node cannot be descended.                    --
---                                                                    --
---   * `ConstFrame`: whether two base constants agree does not depend  --
---     on when one looks. Needed only for `leaf-const`, and needed at  --
---     all because a head is read at a *later* world than the one the  --
---     statement is about — the delays moved there — and a presheaf    --
---     map is natural, not reflective.                                 --
+--                                                                     --
+-- Needs two frame assumptions: `TickFrame` (worlds are inhabited,     --
+-- time can always pass by a tick) and `ConstFrame` (base constants'   --
+-- equality does not depend on when one looks, needed only for         --
+-- `leaf-const`).                                                      --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -80,10 +72,6 @@ open import OperationalSemantics.Adequacy.HeadFaithful
              (P.PShPast Grades Wld) (A.PShAdj Grades Wld) GTy
              (M.PShMonad Spec Wld GTy) GE
 
-------------------------------------------------------------------------
--- THE FRAME ASSUMPTIONS
-------------------------------------------------------------------------
-
 record TickFrame : Set where
   field
     -- there is a world to observe at
@@ -108,15 +96,9 @@ reachable⇒tick : W → (∀ (ρ : R) (w : W) → Σ[ w' ∈ W ] w ⊑[ ρ ] w'
 reachable⇒tick w₀ f =
   record { some-world = w₀ ; ⊑-tick = f (mapᵉ (of-natᵉ 1)) }
 
-------------------------------------------------------------------------
--- A RUN'S TRANSITION IS A DELAY CHAIN
---
 -- `Delaysᵐ` describes a morphism as `ηᵀ` bound after `delayᵀ`s; at the
 -- presheaf model each of its three shapes computes to the corresponding
--- shape of `Delaysᵗ`. Only the `τ`-step does anything: `η⊣` names the
--- present world, `[ ρ ]ᶠ ηᵀ` puts a leaf at every world the box reaches,
--- and `delayᵀ` wraps them in the node.
-------------------------------------------------------------------------
+-- shape of `Delaysᵗ`.
 
 -- one tick's worth of transition, spelled out at the concrete operations
 
@@ -139,10 +121,6 @@ delaysᵐ→ᵗ (τ-step {n = n} τ {t = t} dm) x =
       (delays-bind {h = t} (delaysᵐ→ᵗ dm) (tick-delays τ x))
 delaysᵐ→ᵗ (delays-≈ e dm)       x = d-≈ (e x) (delaysᵐ→ᵗ dm x)
 
-------------------------------------------------------------------------
--- THE TWO HEADS, AS PREDICATES
-------------------------------------------------------------------------
-
 -- A leaf morphism has a `ret` head at every world, immediately.
 
 leafᵐ-head : ∀ {X Y : PSh} → (a : Y →ᵖ X)
@@ -159,12 +137,8 @@ nodeᵐ-head : ∀ {X Y : PSh} {ε : E} → (op : Op)
            → Head (isOp op) (app (nodeᵐ op v k) y) p 0
 nodeᵐ-head op v k y p = h-op refl
 
-------------------------------------------------------------------------
--- THE OBSERVATION OF A `delayedᵐ` SHAPE
---
 -- `delayedᵐ h d r` is `h` bound after `d`, coerced: a `sub` node over the
 -- bind, which `bind-head` descends.
-------------------------------------------------------------------------
 
 delayedᵐ-head : ∀ {X Y : PSh} {ε ε' δ : E} {n : ℕ} {P : Pred X}
               → ≈-closed X P
@@ -178,10 +152,6 @@ delayedᵐ-head : ∀ {X Y : PSh} {ε ε' δ : E} {n : ℕ} {P : Pred X}
 
 delayedᵐ-head Pcl pH dm r p le =
   h-sub (bind-head Pcl pH (delaysᵐ→ᵗ dm tt) p le)
-
-------------------------------------------------------------------------
--- THE INSTANCE
-------------------------------------------------------------------------
 
 module _ (TF : TickFrame) where
 
@@ -204,8 +174,6 @@ module _ (TF : TickFrame) where
                    , subst (n₁ ≤_) (sym e) (m≤m+n n₁ n₂)
                    , subst (n₂ ≤_) (sym e) (m≤n+m n₂ n₁)
 
-  -- A LEAF IS NEVER AN OPERATION
-
   rno : ∀ {X Y₁ Y₂ : PSh} {ε ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op : Op}
       → {a : Y₁ →ᵖ X}
       → {v : Y₂ →ᵖ ⟦ param op ⟧ᵍ}
@@ -223,8 +191,6 @@ module _ (TF : TickFrame) where
     ret≉op (eq tt)
       (delayedᵐ-head (isRet-closed {X}) (leafᵐ-head a) nd₁ r₁ p le₁)
       (delayedᵐ-head (isOp-closed {X} {op}) (nodeᵐ-head op v k) nd₂ r₂ p le₂)
-
-  -- DISTINCT OPERATIONS ARE DISTINCT NODES
 
   oinj : ∀ {X Y₁ Y₂ : PSh} {ε ε₁ ε₂ δ₁ δ₂ : E} {n₁ n₂ : ℕ} {op₁ op₂ : Op}
        → {v₁ : Y₁ →ᵖ ⟦ param op₁ ⟧ᵍ}
@@ -247,8 +213,6 @@ module _ (TF : TickFrame) where
       (delayedᵐ-head (isOp-closed {X} {op₁}) (nodeᵐ-head op₁ v₁ k₁) nd₁ r₁ p le₁)
       (delayedᵐ-head (isOp-closed {X} {op₂}) (nodeᵐ-head op₂ v₂ k₂) nd₂ r₂ p le₂)
 
-  -- THE RETURNED ANSWER
-  --
   -- The predicate says the leaf *is* that global element, which the
   -- observation carries to whatever world the delays reach. Stated for an
   -- arbitrary `g : 𝟙ᵖ →ᵖ X`, since both answer types return one: a base
@@ -265,13 +229,6 @@ module _ (TF : TickFrame) where
            → ∀ {w we} (y : carrier Y w) (p : Path w we)
            → Head (isG g) (app (leafᵐ (g ∘ᵖ terminalᵖ {Y})) y) p 0
   isG-head {X} g y p = h-leaf (≈-refl X)
-
-  -- THE RETURNED BOOLEAN
-  --
-  -- `𝔹ᵖ` is the constant presheaf on `Bool`, so `app trueᵖ tt` is `true` at
-  -- every world and its equivalence is `_≡_`. The comparison the observation
-  -- lands on is therefore already world-independent, and no reflection
-  -- assumption (the `ConstFrame` the base constants need) arises.
 
   -- Two leaves with the same delayed denotation carry the same answer, at
   -- *some* world the delays reach. Both answer types read their observation
@@ -301,9 +258,8 @@ module _ (TF : TickFrame) where
           w' , ρ , acc , ≈-trans X (≈-sym X e₁) e₂
   ...   | _ , _ , _ , acc , op-res _ , (() , _)
 
-  -- At `𝔹ᵖ` the answer is world-independent — the carrier is `Bool` at every
-  -- world and its equivalence is `_≡_` — so the world `globals-meet` lands at
-  -- does not matter and no reflection assumption arises.
+  -- At `𝔹ᵖ` the answer is world-independent, so no reflection assumption
+  -- arises.
 
   lbool : ∀ {Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
         → {d₁ : 𝟙ᵖ →ᵖ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
@@ -355,10 +311,8 @@ module _ (TF : TickFrame) where
       ; leaf-bool  = lbool
       }
 
-  -- THE TIMED REFINEMENT
-  --
-  -- The tick total is observable too, since no case of the invariance changes
-  -- it: the path is descended equally far on both sides.
+  -- The tick total is observable too, since no case of the invariance
+  -- changes it: the path is descended equally far on both sides.
 
   rte : ∀ {X Y₁ Y₂ : PSh} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
       → {a₁ : Y₁ →ᵖ X} → {a₂ : Y₂ →ᵖ X}

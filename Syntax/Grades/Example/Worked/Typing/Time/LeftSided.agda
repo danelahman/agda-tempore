@@ -55,11 +55,10 @@ open import Syntax.Grades.Example.Worked.Typing.Core left-sided-intervals opTime
 ------------------------------------------------------------------------
 -- Effectful computations
 --
--- The grade of a computation is the sum of the grades of the operations
--- along it, so it is the time the whole run is guaranteed to take. Each
+-- A computation's grade is the sum of the grades of the operations
+-- along it: the time the whole run is guaranteed to take. Each
 -- `perform` locks the context by the operation's grade and binds its
--- result, which is why the continuation may use `here` and why time has
--- passed for everything bound before it.
+-- result.
 
 -- take a reading and hand it back
 
@@ -187,13 +186,11 @@ sampling-then-branching =
 ------------------------------------------------------------------------
 -- Unboxing: a resource that becomes available
 --
--- `unbox`'s premise is `elapsed ≾ᵣ ρ`, which here reads `ρ ≤ elapsed`:
--- the box may be claimed once at least as much time has passed as it
--- asks for. What has elapsed is the product of the locks standing
--- between the box's binding and the claim -- the `⟨ … ⟩` entries the
--- comments show -- and the variable's index counts the same entries.
--- The boxed value is a constant, which is what "available in `Γ ⟨ ρ ⟩`"
--- comes to for data the environment supplies.
+-- `unbox`'s premise `elapsed ≾ᵣ ρ` reads `ρ ≤ elapsed` here: the box
+-- may be claimed once at least as much time has passed as it asks for.
+-- What has elapsed is the product of the locks standing between the
+-- box's binding and the claim -- the `⟨ … ⟩` entries the comments
+-- show.
 
 -- a reading promised in two ticks, claimed after idling three: the
 -- premise is `2 ≤ 3`, and waiting longer than the box asks for is
@@ -306,10 +303,9 @@ either-way =
 --
 -- Sequencing locks its continuation by the grade the first part is
 -- *typed at* and binds that part's result -- the `⟨ … ⟩ ∷ …` on the
--- `⨟` line below. So a `coerce` on the first part changes the lock, and
--- at these grades it can only take claims away: coercing forgets time,
--- and time is what the box is compared against. `coercion-only-closes`
--- is the general statement; here is what it comes to.
+-- `⨟` line below. A `coerce` on the first part therefore changes the
+-- lock, and at these grades can only take claims away: coercing
+-- forgets time, and time is what the box is compared against.
 
 -- a reading and a store guarantee three ticks, exactly what the box
 -- asks for, so the claim has no slack to survive a coercion
@@ -349,13 +345,10 @@ claim-without-coercing = ≤!
 ------------------------------------------------------------------------
 -- Joining branches, and what survives the join
 --
--- The grade of a conditional is the join of its branches', which at
--- these intervals is the smaller floor. Sequencing after it locks the
+-- A conditional's grade is the join of its branches', which at these
+-- intervals is the smaller floor. Sequencing after it locks the
 -- continuation by that join, so a box claimed there has to have been
--- discharged by *both* branches: what one of them guaranteed on its own
--- is no longer available. (At the trace grades the join is a union of
--- runs and the same thing happens, member by member -- see
--- `Traces.Timed.LeftSided`.)
+-- discharged by *both* branches.
 
 -- the conditional guarantees two ticks, and the box asks for one, so
 -- the claim goes through with a tick to spare
@@ -380,11 +373,9 @@ four-ticks-lost-at-the-join = ≰!
 ------------------------------------------------------------------------
 -- Programs written at these intervals
 --
--- A lower bound counts time and nothing else, so what a run does
--- between boxing a resource and claiming it does not matter -- only how
--- long it takes. The two runs below reach the same resource, one by
--- working and one by waiting: the locks between the binding and the
--- claim multiply to `[ 5 ,+∞⟩` either way.
+-- A lower bound counts time and nothing else. The two runs below reach
+-- the same resource, one by working and one by waiting, the locks
+-- between binding and claim multiplying to `[ 5 ,+∞⟩` either way.
 
 -- a resource promised in four ticks, reached by working: a reading and
 -- a store are three ticks, and two of idling make five, a tick more

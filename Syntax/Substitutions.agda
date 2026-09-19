@@ -49,24 +49,21 @@ sub-split₀ (split-∷ s)  W = cong-∷-sub (sub-split₀ s W)
 sub-split₀ (split-⟨⟩ s) W = cong-⟨⟩-sub (sub-split₀ s W)
 
 -- A variable names its own splitting, `split-pf`. `var-split` recurses on the
--- variable exactly as `sub-split₀` does on the splitting, so `split-l (Tl-∷ x)`
--- is `split-l x`, `split-pf (Tl-∷ x)` is `split-∷ (split-pf x)`, and hence
--- `sub-split₀ (split-pf (Tl-∷ x))` is `cong-∷-sub (sub-split₀ (split-pf x))` —
--- all definitionally (the `with` in `var-split` reduces by eta for `Σ`).
+-- variable exactly as `sub-split₀` does on the splitting, so the two agree
+-- definitionally (the `with` in `var-split` reduces by eta for `Σ`).
 
 -- A prefix boundary names its own splitting too, `split-≡-++ᶜ`, whose halves
 -- are the prefix and suffix as given. `≡-split` recurses on the suffix in step
 -- with `sub-split₀`, so extending the suffix by a binder, resp. a lock, is
--- `cong-∷-sub`, resp. `cong-⟨⟩-sub` — again definitionally, which is what makes
--- the boundary substitution commute with the term formers on the nose.
+-- `cong-∷-sub`, resp. `cong-⟨⟩-sub` — again definitionally.
 
 sub-atˢ₀ : ∀ {Γ B} → (Θ : Ctx) → Γ ⊢V⦂ B
          → Sub₀ [] (Γ ++ᶜ Θ) ((Γ ∷ B) ++ᶜ Θ)
 sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 
 -- Substituting a value at a splitting in a variable, i.e. looking the variable
--- up. The grade bound is the `var` rule's own premise, which is what building a
--- *value* out of a variable needs.
+-- up. The grade bound is the `var` rule's own premise, needed to build a
+-- value out of a variable.
 
 ⟨_,_⟩[_↦_]var : ∀ {Γ Γ₁ Γ₂ A B ρ'}
               → B ∈[ ρ' ] Γ
@@ -79,9 +76,9 @@ sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 ⟨ y , f ⟩[ s ↦ W ]var = sub-var₀ (sub-split₀ s W) y f
 
 -- Substituting in a *resource* variable, i.e. one of box type, which is what
--- an `unbox` names. Its grade is not bounded by the unit — that is exactly what
--- `unbox` is for — so it is not read as a value; it does not have to be, box
--- types having only variables as values.
+-- an `unbox` names. Its grade is not bounded by the unit, so it is not read
+-- as a value; it does not have to be, box types having only variables as
+-- values.
 
 ⟨_⟩[_↦_]rvar : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
              → ([ ρ ] B ∈[ σ ] Γ)

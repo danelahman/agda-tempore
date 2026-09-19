@@ -114,9 +114,8 @@ _≡ₒ?_ : Decidable (_≡_ {A = 𝕀ᵣ})
 ... | yes p = yes (eq𝕀ᵣ p)
 ... | no ¬p = no (λ eq → ¬p (𝕀ᵣ-inj eq))
 
--- NB: unlike the all-finite deadlines, _·ₒ_ is *not* cancellative once
--- ∞ is allowed: with m = ∞ every (m +∞ x) ≤∞ (m +∞ y) holds, yet
--- x ≤∞ y may fail.
+-- Unlike the all-finite deadlines, _·ₒ_ is *not* cancellative once ∞
+-- is allowed.
 
 -- zero-product properties
 

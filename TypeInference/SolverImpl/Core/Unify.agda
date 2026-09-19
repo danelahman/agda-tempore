@@ -1,28 +1,10 @@
 ------------------------------------------------------------------
--- First-order unification                                       --
---                                                               --
--- `unify` solves a list of equations by eliminating one variable --
--- at a time: the scope it returns is the original one minus the  --
--- variables that got bound, and the store it returns is the      --
--- triangular substitution witnessing the elimination. A flexible --
--- variable is bound; a variable declared rigid is not, so an     --
--- equation demanding it be bound is a failure.                    --
---                                                               --
--- `amgu*` take the equation's two sides and a store, and descend --
--- through the store, applying each of its bindings to the two    --
--- sides in turn, until they reach `anil` and can work on the     --
--- syntax. Termination is by the derived size index: the argument --
--- `k` with `Sz Θ ≡ k` decreases at every binding descended       --
--- through, and the two sides decrease when the store is `anil`.   --
---                                                               --
--- Verdicts across the sorts: `∣ ε ∣̂ᵉ ≐ rvar i` binds `i`, the    --
--- occurrence check being vacuous as effect expressions hold no   --
--- resource-grade variables; `∣ ε ∣̂ᵉ` against a resource constant --
--- or a product is a clash, which is correct because satisfaction --
--- of an equation is syntactic equality of the two instances.     --
---                                                              --
--- Follows McBride's structural-recursion unifier (JFP 2003);   --
--- "rigid" and "flexible" are Huet's (1975).                    --
+-- Solves a list of equations by eliminating one variable at a   --
+-- time; a rigid effect-grade variable is never bound.           --
+-- `amgu*` descend through the store one binding at a time,      --
+-- terminating on the derived size index `Sz`.                   --
+-- Follows McBride's structural-recursion unifier (JFP 2003);    --
+-- "rigid"/"flexible" are Huet's (1975).                         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)
@@ -62,10 +44,6 @@ open import TypeInference.SolverImpl.Core.Eqn    S
 open import TypeInference.SolverImpl.Core.Occurs S
 open import TypeInference.SolverImpl.Core.Size   S
 
---------------------------------------------------------------
--- Rigid variables, and what the unifier returns             --
---------------------------------------------------------------
-
 -- The effect-grade variables that may not be bound
 
 Rig : Scope → Set
@@ -99,10 +77,6 @@ consʳ X i (Θ' , ρ) = Θ' , X /ʳ i ∷ ρ
 consᵉ : ∀ {Θ} → EExp Θ → EVar (Θ +e) → Sol Θ → Sol (Θ +e)
 consᵉ ε i (Θ' , ρ) = Θ' , ε /ᵉ i ∷ ρ
 
---------------------------------------------------------------
--- The size index                                            --
---------------------------------------------------------------
-
 no-suc : ∀ {X : Set} {n : ℕ} → suc n ≡ zero → X
 no-suc ()
 
@@ -126,12 +100,8 @@ sz0ʳ {Θ = Θ} τ p = no-suc (trans (sym (Sz-+r Θ)) p)
 sz0ᵉ : ∀ {X : Set} {Θ Θ'} → AList Θ Θ' → Sz (Θ +e) ≡ zero → X
 sz0ᵉ {Θ = Θ} τ p = no-suc (trans (sym (Sz-+e Θ)) p)
 
---------------------------------------------------------------
--- Binding a variable                                        --
---                                                           --
--- The scope is matched on, as the variable to be eliminated  --
--- is the one its counter counts.                             --
---------------------------------------------------------------
+-- The scope is matched on, as the variable to be eliminated is the one
+-- its counter counts.
 
 flexᵗ : ∀ {Θ} → TyVar Θ → OVType Θ → Maybe (Sol Θ)
 flexᵗ {scope zero    nr ne} ()  A
@@ -162,10 +132,6 @@ flexFlexᵉ : ∀ {Θ} → Rig Θ → EVar Θ → EVar Θ → Maybe (Sol Θ)
 flexFlexᵉ {Θ} rg i j =
   if ⌊ i ≟ᶠ j ⌋ then just (Θ , anil)
   else (flexᵉ rg i (evar j) <∣> flexᵉ rg j (evar i))
-
---------------------------------------------------------------
--- The unifier proper                                        --
---------------------------------------------------------------
 
 mutual
 
@@ -266,10 +232,6 @@ mutual
   amguᵉ k p rg (ε₁ ·̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') s@(_ , anil) = amguᵉ k p rg ε₁ ε₁' s >>= amguᵉ k p rg ε₂ ε₂'
   amguᵉ k p rg ε           ε'            (_ , anil)  = nothing
 
---------------------------------------------------------------
--- Solving a list of equations                               --
---------------------------------------------------------------
-
 amguᴱ : ∀ {Θ} → Rig Θ → Eqn Θ → Sol Θ → Maybe (Sol Θ)
 amguᴱ {Θ} rg (eqᵛ A B)  s = amguᵛ (Sz Θ) refl rg A B s
 amguᴱ {Θ} rg (eqᶜ C D)  s = amguᶜ (Sz Θ) refl rg C D s
@@ -282,10 +244,6 @@ unifyᴬ rg (e ∷ es) s = amguᴱ rg e s >>= unifyᴬ rg es
 
 unify : ∀ {Θ} → Rig Θ → Eqns Θ → Maybe (Σ[ Θ⁺ ∈ Scope ] AList Θ Θ⁺)
 unify {Θ} rg es = unifyᴬ rg es (Θ , anil)
-
---------------------------------------------------------------
--- Sanity checks                                             --
---------------------------------------------------------------
 
 private
 

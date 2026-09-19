@@ -1,19 +1,20 @@
 ------------------------------------------------------------------------
--- IMPLEMENTING THE OPERATIONS.                                          --
---                                                                    --
--- An external implementation `op-semᵐ` of each operation: from the       --
--- parameter, seen from `mapᵉ (op-grade op)` in its future (where the     --
--- continuation runs), the arity value. It is the semantic counterpart of --
--- `OperationalSemantics.TopLevelOpSemantics.op-sem`, and being a single  --
--- morphism it is uniform in the state.                                   --
---                                                                    --
--- Running the operations against it is a graded monad morphism from the  --
--- tree monad into the tick monad,                                       --
---                                                                    --
+-- Implementing the operations.                                          --
+--                                                                       --
+-- An external implementation `op-semᵐ` of each operation: from the      --
+-- parameter, seen from `mapᵉ (op-grade op)` in its future (where the    --
+-- continuation runs), the arity value. It is the semantic counterpart   --
+-- of `OperationalSemantics.TopLevelOpSemantics.op-sem`, and being a     --
+-- single morphism it is uniform in the state.                           --
+--                                                                       --
+-- Running the operations against it is a graded monad morphism from     --
+-- the tree monad into the tick monad,                                   --
+--                                                                       --
 --   implᵐ : Tᵒ A ε →ᵐ Tᵏ A ε                                            --
---                                                                    --
--- which keeps leaves and delays, and replaces each operation node by an  --
--- `op-grade op`-tick, feeding its continuation the computed arity value. --
+--                                                                       --
+-- which keeps leaves and delays, and replaces each operation node by    --
+-- an `op-grade op`-tick, feeding its continuation the computed arity    --
+-- value.                                                                --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -81,7 +82,7 @@ record Implementation : Set₁ where
     implᵐ-ε-subst : ∀ {A ε ε'} → (e : ε ≡ ε')
                   → implᵐ {A} ∘ᵐ ε-substᵀ e ≈ᵐ ε-substᵏ e ∘ᵐ implᵐ
 
-    -- … it keeps a delay a delay …
+    -- … it keeps a delay as a delay …
 
     implᵐ-delayᵀ : ∀ {A ε} → (τ : ℕ)
                  → implᵐ ∘ᵐ delayᵀ {A} {ε} τ

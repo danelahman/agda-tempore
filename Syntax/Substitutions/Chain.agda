@@ -32,10 +32,8 @@ open import Syntax.Substitutions.Action    S
 -- therefore concatenation, and is associative and unital as an equation rather
 -- than up to an observation.
 --
--- Taking composition freely is what keeps the two recursions of `Sub₀` apart.
--- A composition *generator* would force `sub-var₀` to run the term action on
--- the value its first component produces, while the action grows the
--- substitution at every binder; here neither recursion ever sees a chain.
+-- Taking composition freely keeps the two recursions of `Sub₀` apart: neither
+-- `sub-var₀` nor the action on terms ever sees a chain.
 
 infixr 5 _◅_
 
@@ -60,8 +58,6 @@ _∘ˢ_ : ∀ {Ξ Δ Δ' Δ''} → Sub Ξ Δ' Δ'' → Sub Ξ Δ Δ' → Sub Ξ 
 σ₂ ∘ˢ []ˢ      = σ₂
 σ₂ ∘ˢ (s ◅ σ₁) = s ◅ (σ₂ ∘ˢ σ₁)
 
--- MAPS OF CHAINS
---
 -- Every `Sub₀ → Sub₀` map applies a functor to both endpoints and possibly
 -- moves the ambient, so all of them are this one map.
 
@@ -93,8 +89,6 @@ expose-subˢ Δ = mapˢ (Δ ++ᶜ_) (expose-sub₀ Δ)
 expose-subˢ-[] : ∀ {Ξ Δ Δ'} → Sub Ξ Δ Δ' → Sub [] (Ξ ++ᶜ Δ) (Ξ ++ᶜ Δ')
 expose-subˢ-[] {Ξ} s = expose-subˢ Ξ s
 
--- ACTION ON TERMS
---
 -- Recursion on the chain alone: each step is the already-defined action of a
 -- generator. A one-step chain acts as its generator does, definitionally.
 
@@ -106,8 +100,6 @@ C-sub : ∀ {Γ Γ' C} → Sub [] Γ Γ' → Γ' ⊢C⦂ C → Γ ⊢C⦂ C
 C-sub []ˢ      M = M
 C-sub (s ◅ σ) M = C-sub₀ s (C-sub σ M)
 
--- OBSERVATIONS
---
 -- A variable's image is read off by acting on it, which unfolds to the fold of
 -- `sub-var₀` along the chain: each later step substitutes into the value the
 -- earlier ones produced.
@@ -137,11 +129,7 @@ sub-tgt (s ◅ σ) y =
   , ≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s (proj₁ (proj₂ (sub-tgt σ y))))))
              (proj₂ (proj₂ (sub-tgt σ y)))
 
-------------------------------------------------------------------------
--- THE CATEGORY LAWS
---
 -- All by induction on the chain: no recursion over terms anywhere.
-------------------------------------------------------------------------
 
 ∘ˢ-identityʳ : ∀ {Ξ Δ Δ'} → (σ : Sub Ξ Δ Δ') → σ ∘ˢ []ˢ ≡ σ
 ∘ˢ-identityʳ σ = refl

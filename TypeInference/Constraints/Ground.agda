@@ -51,10 +51,6 @@ open import TypeInference.Open.Grounding S
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
---------------------------------------------------------------
--- Ground satisfaction                                       --
---------------------------------------------------------------
-
 infix 4 _⊨ᵍ_
 
 _⊨ᵍ_ : ∀ {Θ} → Grounding Θ → Constraint Θ → Set
@@ -72,13 +68,8 @@ _⊨ᵍ_ : ∀ {Θ} → Grounding Θ → Constraint Θ → Set
 θ ⊨ᵍ (∀ᵉ C)     = (ε : E) → (θ ,ᵍᵉ ε) ⊨ᵍ C
 θ ⊨ᵍ ⋀ᵒᵖ f      = (op : Op) → θ ⊨ᵍ f op
 
---------------------------------------------------------------
--- Pointwise equality of groundings                          --
---                                                           --
--- Groundings are records of functions, and the binder cases  --
--- below build two groundings that agree only pointwise; the  --
--- mirror of `_≐ˢ_` avoids appealing to extensionality.       --
---------------------------------------------------------------
+-- Groundings are records of functions; this mirrors `_≐ˢ_` to avoid
+-- appealing to extensionality.
 
 infix 20 _≐ᵍ_
 
@@ -137,10 +128,6 @@ mutual
        → (θ ,ᵍᵉ ε) ≐ᵍ (θ' ,ᵍᵉ ε)
 ≐ᵍ-,ᵍᵉ p ε = mk≐ᵍ (≐ᵍᵗ p) (≐ᵍʳ p) (λ { zero → refl ; (suc i) → ≐ᵍᵉ p i })
 
---------------------------------------------------------------
--- Ground satisfaction respects pointwise equality           --
---------------------------------------------------------------
-
 ⊨ᵍ-resp : ∀ {Θ} {θ θ' : Grounding Θ}
         → θ ≐ᵍ θ' → (C : Constraint Θ) → θ ⊨ᵍ C → θ' ⊨ᵍ C
 ⊨ᵍ-resp p ⊤̂           s        = s
@@ -158,10 +145,6 @@ mutual
 ⊨ᵍ-resp p (∃ᵉ C)      (ε , s)  = ε , ⊨ᵍ-resp (≐ᵍ-,ᵍᵉ p ε) C s
 ⊨ᵍ-resp p (∀ᵉ C)      s        = λ ε → ⊨ᵍ-resp (≐ᵍ-,ᵍᵉ p ε) C (s ε)
 ⊨ᵍ-resp p (⋀ᵒᵖ f)     s        = λ op → ⊨ᵍ-resp p (f op) (s op)
-
---------------------------------------------------------------
--- Composing a substitution with a grounding                 --
---------------------------------------------------------------
 
 infixl 25 _⨟ᵍ_
 
@@ -234,13 +217,6 @@ mutual
 
 idˢ-⨟ᵍ : ∀ {Θ} → (θ : Grounding Θ) → (idˢ ⨟ᵍ θ) ≐ᵍ θ
 idˢ-⨟ᵍ θ = mk≐ᵍ (λ α → refl) (λ i → refl) (λ i → refl)
-
---------------------------------------------------------------
--- The bridge                                                --
---                                                           --
--- A grounding of the residual hypotheses turns a solution     --
--- with residue into a ground solution along the composite.    --
---------------------------------------------------------------
 
 ⊨-ground : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
          → (θ : Grounding Θ') → θ ⊨ᴴ Q

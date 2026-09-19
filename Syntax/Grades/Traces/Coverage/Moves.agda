@@ -1,33 +1,21 @@
 ------------------------------------------------------------------------
 -- The moves that build coverage proofs, and what they add up to.      --
 --                                                                     --
--- The relation's rules act on the *heads* of the two traces. These     --
--- helpers lift them to the trace operations the grades are defined by: --
--- inverting a leading delay of the run, absorbing one into the slack,  --
--- spending slack on one the guarantee names, and padding the run on    --
--- the left. None of them touches `keep`.                               --
+-- The relation's rules act on the *heads* of the two traces. These    --
+-- helpers lift them to the trace operations the grades are defined    --
+-- by: inverting a leading delay of the run, absorbing one into the    --
+-- slack, spending slack on one the guarantee names, and padding the   --
+-- run on the left. None of them touches `keep`.                       --
 --                                                                     --
--- Monotonicity of the trace product is the exception. The slack-       --
--- additive form                                                        --
---                                                                     --
---   s ≼ᶜ[ j ] s' → t ≼ᶜ[ k ] t' → (s ∙ t) ≼ᶜ[ j + k ] (s' ∙ t')       --
---                                                                     --
--- is *false* here: take `s = s' = ⌈ a ⌉`,                              --
--- `t = ⟨ 2 ⟩`, `t' = ε` and `k = 2`. Both premises hold, but           --
--- `operation a ⟨ 2 ⟩ ≼ᶜ[ j+2 ] operation a ε` has no derivation --     --
--- `keep` demands its tail at slack zero and `2 ≰ 0`, while `pay-op`    --
--- leaves a demand headed by an operation facing `ε`. The `k` units of  --
--- slack live *after* the match, and a match is exactly where this      --
--- order refuses to carry slack.                                        --
---                                                                     --
--- What does hold is the form with the second slack pinned to zero:     --
+-- Monotonicity of the trace product holds only with the second slack  --
+-- pinned to zero,                                                     --
 --                                                                     --
 --   mono-∙ : s ≼ᶜ[ j ] s' → t ≼ᶜ[ 0 ] t' → (s ∙ t) ≼ᶜ[ j ] (s' ∙ t')  --
 --                                                                     --
--- which at `j := 0` is exactly what `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, --
--- the lifts being taken at `_≼ᶜ_ = _≼ᶜ[ 0 ]_`, so it is the instance   --
--- the grades need. Pinning the second slack also removes every         --
--- slack-swapping step from the proof.                                  --
+-- and not in the slack-additive form, slack after a match being what  --
+-- this order refuses to carry. At `j := 0` the pinned form is what    --
+-- `Sets.liftˢ`'s `liftˢ-·ˢ` consumes, the lifts being taken at        --
+-- `_≼ᶜ_ = _≼ᶜ[ 0 ]_`, so it is the instance the grades need.          --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)

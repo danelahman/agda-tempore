@@ -44,20 +44,14 @@ open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 open import OperationalSemantics.Adequacy.Environment.Action Spec
 
-------------------------------------------------------------------------
--- THE ACTION RESPECTS EQUALITY OF TERMS
---
 -- The action is a function of the term, so this is `cong` — no recursion on
 -- the environment needed.
-------------------------------------------------------------------------
 
 env-Vˢ-≡ : ∀ {St Γ A} → (γ : Env St Γ) → (Δ : Ctx) → {V V' : (Γ ++ᶜ Δ) ⊢V⦂ A}
          → V ≡ V' → env-Vˢ γ Δ V ≡ env-Vˢ γ Δ V'
 env-Vˢ-≡ γ Δ = cong (env-Vˢ γ Δ)
 
 
--- THE ACTION FIXES A SUFFIX VARIABLE
---
 -- Recursion on the environment. Each zone either renames along a congruence
 -- renaming (`ren-var-r`) or substitutes at a variable of the prefix
 -- (`sub-var-r`); the two zones that re-bracket the suffix pass through
@@ -155,12 +149,8 @@ env-Vˢ-var-r (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ x f f' =
                  (subst-sym-subst′ (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
                                    (∈-++ᶜʳ x))))
 
-------------------------------------------------------------------------
--- THE ACTION ON A VARIABLE
---
 -- What each zone does to a variable of its own context. The bounds are left
 -- free: `_≡_` does not see them, and each caller has its own.
-------------------------------------------------------------------------
 
 -- A telescope entry is substituted by its value: at the empty suffix the
 -- action is `env-Vˢ γ ([] ∷ A)` followed by substituting `Hd`, and the entry's
@@ -173,21 +163,6 @@ env-var-hd γ W f =
   sub-≡ᵛ split-[] (refl) (env-Vˢ-var-r γ ([] ∷ _) Hd f f)
 
 -- Any other variable is untouched by the entry, and is the action of the rest.
---
--- Both are the same lemma at a one-entry suffix: the action under a suffix `Δ`
--- of a variable of the *prefix* is the action at the empty suffix, pushed under
--- `Δ` by `push-ren`. The suffix must be arbitrary, because `env-Vˢ` grows it at
--- `_⟨_⟩ᵉ` and `_∷ᵉ_`; `push-ren` is pinned up to `_≐ʳ_` by `push-ren-img`, which
--- is why no renaming needs to be quantified over.
---
--- The two zones that grow the suffix use the induction hypothesis **twice** —
--- at `[] ∷ A ++ᶜ Δ` (resp. `[] ⟨ ρ ⟩ ++ᶜ Δ`) for the goal's left side and at
--- `[] ∷ A` (resp. `[] ⟨ ρ ⟩`) for its right, whose own action is at suffix `[]`.
--- Both land on the same `env-Vˢ γ [] (var _ x)`, leaving an equation between two
--- composite renamings, which `push-ren-++ᶜ` and `push-ren-nat` settle.
---
--- `¬ Eternal A` is what makes the lock case go through: it supplies the lock's
--- own bound by `≾ᵣ-zero-product*`, where at an eternal type `f` is vacuous.
 
 env-Vˢ-var-l : ∀ {St Γ A ρ} → (γ : Env St Γ) → (Δ : Ctx)
              → ¬ Eternal A
@@ -405,9 +380,8 @@ env-var-lock {ρ = ρ} γ q ¬et p x f f' =
     pₗ = ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) p
 
 -- Every variable of a reducible environment's context becomes a reducible
--- value: the fundamental lemma's variable case. The eternal cases are the two
--- that need no law — `VRed` holds of everything at an eternal type, which is
--- also why a locked variable of eternal type needs no reach.
+-- value: the fundamental lemma's variable case. `VRed` holds of everything at
+-- an eternal type, so the eternal cases need no law.
 
 env-var : ∀ {St Γ A ρ} → (γ : Env St Γ) → Rel-Env γ
         → (x : A ∈[ ρ ] Γ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)

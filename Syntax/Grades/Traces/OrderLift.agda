@@ -141,10 +141,9 @@ u-≼ˢ xs ne s m
 -- The unit is a zero for the Hoare lift
 --
 -- Unlike `_≽ˢ_`, the Hoare lift says something at the unit: `s ≼ ε`
--- forces `s` itself to be empty, since a spent run meets no demand but
--- the empty one. So if a language product lies below `{ ε }`, so does
--- each factor, the trace monoid being conical. This is the zero-product
--- property for any grade whose order caps by `_≼ˢ_`.
+-- forces `s` itself to be empty, so a language product below `{ ε }`
+-- has each factor below it. This is the zero-product property for any
+-- grade whose order caps by `_≼ˢ_`.
 
 ≼ˢ-zero-productˡ : {xs ys : List Trace} → NonEmpty ys
                  → (xs ·ˢ ys) ≼ˢ traces u → xs ≼ˢ traces u

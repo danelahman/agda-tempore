@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- The free graded TICK monad on setoid-valued unit-monotone presheaves. --
+-- The free graded tick monad on setoid-valued unit-monotone presheaves. --
 --                                                                    --
 -- Trees are built from                                                  --
 --                                                                    --
@@ -37,8 +37,6 @@ open Operations Ops
 open World Wld
 open import DenotationalSemantics.Model.Example.PSh.Base Grades Wld
 open import DenotationalSemantics.Model.Example.PSh.Modality.Future Grades Wld
-
--- THE TREE, ITS TRANSPORT AND ITS BISIMULATION
 
 mutual
 
@@ -158,8 +156,6 @@ sub-tickᵏ : ∀ {A ε ε' w} {δ : E} → (e : ε ≾ₑ ε')
           ≈ᵏ tick-node δ (λ q → sub e (k q)) (λ q r → sub-≈ (kn q r))
 sub-tickᵏ e k kn = sub-tick
 
--- GRADE COERCION
---
 -- Defined as `subst` (rather than by matching `refl`) so that it *is* the
 -- transport the tick-collapsing rules `tick-u`/`tick-·` are stated with, which
 -- — being inside the defining block — cannot mention this name.
@@ -225,8 +221,6 @@ tick-·-out refl k' kn₂ kn₁ k kn m hk e =
   ≈ᵏ-trans (tick-· m hk e)
            (≡→≈ᵏ (ε-substᵏˢ-uip e (trans e refl) (tick-node _ k kn)))
 
--- TRANSPORT LAWS
-
 transportᵏ-cong : ∀ {A ε w w'} (p : w ⊑[ uᵣ ] w') {t t' : Tᵏˢ A ε w}
                 → t ≈ᵏ t' → transportᵏ p t ≈ᵏ transportᵏ p t'
 transportᵏ-cong {A} p (leaf-≈ e)     = leaf-≈ (transport-cong A p e)
@@ -262,8 +256,6 @@ transportᵏ-trans p q (tick-node δ k kn) =
   tick-≈ (λ q' → ≡→≈ᵏ (cong k (⊑-irrelevant _ _)))
 transportᵏ-trans p q (sub e t)          = sub-≈ (transportᵏ-trans p q t)
 
--- PACKAGED AS A PRESHEAF
-
 Tᵏ : PSh → E → PSh
 Tᵏ A ε = record
   { carrier         = Tᵏˢ A ε
@@ -277,8 +269,6 @@ Tᵏ A ε = record
   ; transport-trans = transportᵏ-trans
   }
 
--- GRADE COERCION
-
 sub-ε-substᵏ : ∀ {A ε₁ ε₁' ε₂ ε₂' w} → (a : ε₁ ≡ ε₁') → (b : ε₂ ≡ ε₂')
              → (q : ε₁ ≾ₑ ε₂) → (q' : ε₁' ≾ₑ ε₂') → (t : Tᵏˢ A ε₁ w)
              → sub q' (ε-substᵏˢ a t) ≈ᵏ ε-substᵏˢ b (sub q t)
@@ -291,8 +281,6 @@ sub-ε-substᵏ refl refl q q' t = sub-≈ (≈ᵏ-refl t)
 
 ε-substᵏ-refl : ∀ {A ε} → ε-substᵏ {A} {ε} refl ≈ᵖ idᵖ
 ε-substᵏ-refl t = ≈ᵏ-refl _
-
--- FUNCTOR
 
 mutual
 
@@ -391,15 +379,11 @@ T-≤ᵏ-≡ : ∀ {A ε ε'} → (e : ε ≡ ε')
        → ε-substᵏ {A} e ≈ᵖ T-≤ᵏ (≾ₑ-reflexive e)
 T-≤ᵏ-≡ refl t = ≈ᵏ-sym sub-u
 
--- UNIT
-
 ηᵏ : ∀ {A} → A →ᵖ Tᵏ A uₑ
 ηᵏ = pmap leaf leaf-≈ (λ p x → ≈ᵏ-refl _)
 
 ηᵏ-nat : ∀ {A B} → (f : A →ᵖ B) → ηᵏ ∘ᵖ f ≈ᵖ Tᵏᶠ f ∘ᵖ ηᵏ
 ηᵏ-nat f x = ≈ᵏ-refl _
-
--- MULTIPLICATION
 
 mutual
 
@@ -501,8 +485,6 @@ sub-substᵏˢ P refl t = refl
               → ε-substᵏˢ r (sub P t) ≡ sub (subst (ε₁ ≾ₑ_) r P) t
 ε-substᵏˢ-sub P refl t = refl
 
--- MULTIPLICATION IS NATURAL
-
 μᵏˢ-nat-f : ∀ {A B ε ε' w} (f : A →ᵖ B) (t : Tᵏˢ (Tᵏ A ε') ε w)
           → μᵏˢ (Tᵏˢᶠ (Tᵏᶠ f) t) ≈ᵏ Tᵏˢᶠ f (μᵏˢ t)
 μᵏˢ-nat-f f (leaf s) = ≡→≈ᵏ (ε-substᵏˢ-Tᵏˢᶠ (sym (·ₑ-identityˡ _)) f s)
@@ -522,8 +504,6 @@ sub-substᵏˢ P refl t = refl
 T-≤ᵏ-μᵏ : ∀ {A ε₁ ε₂ ε'} → (p : ε₁ ≾ₑ ε₂)
         → μᵏ {A} {ε₂} {ε'} ∘ᵖ T-≤ᵏ p ≈ᵖ T-≤ᵏ (·ₑ-monoˡ-≾ₑ p) ∘ᵖ μᵏ {A} {ε₁} {ε'}
 T-≤ᵏ-μᵏ p t = ≈ᵏ-refl _
-
--- MONAD LAWS
 
 Tᵏ-μ∘η≡id : ∀ {A ε} → μᵏ {A} {uₑ} {ε} ∘ᵖ ηᵏ {Tᵏ A ε} ≈ᵖ ε-substᵏ (sym (·ₑ-identityˡ ε))
 Tᵏ-μ∘η≡id t = ≈ᵏ-refl _
@@ -604,8 +584,6 @@ Tᵏ-μ∘μ≡μ∘Tμ : ∀ {A ε ε' ε''}
             ≈ᵖ ε-substᵏ (·ₑ-assoc ε ε' ε'') ∘ᵖ μᵏ ∘ᵖ μᵏ
 Tᵏ-μ∘μ≡μ∘Tμ t = μᵏˢ-assoc t
 
--- THE TICK
---
 -- `δ` worth of time passes; the computation resumes in the future the box
 -- reaches. The box sits at the node's own grade `mapᵉ δ`.
 

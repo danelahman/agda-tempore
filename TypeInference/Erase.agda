@@ -41,10 +41,6 @@ open import TypeInference.Open.Language S
 
 open import TypeInference.Raw.Syntax    S
 
---------------------------------------------------------------
--- Erasure                                                   --
---------------------------------------------------------------
-
 mutual
 
   ⌊_⌋ᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
@@ -92,9 +88,7 @@ mutual
 
   ⌊ coerce p M ⌋ᶜ               = ⌊ M ⌋ᶜ
 
---------------------------------------------------------------
--- Sanity checks: erasure computes as intended               --
---------------------------------------------------------------
+-- Sanity checks: erasure computes as intended.
 
 -- The scope has to be given explicitly, as in `TypeInference.Open.Language`:
 -- `OCtx`'s scope is not determined by `[]`.

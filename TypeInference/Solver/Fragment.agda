@@ -1,32 +1,16 @@
 ------------------------------------------------------------------
--- Biased satisfaction, and the fragment on which it is exact    --
---                                                                --
--- `Et∨≾ᵘ` is the only constraint former whose satisfaction is a  --
--- disjunction, and `Hyps` cannot express one: neither disjunct   --
--- dominates the other, so no solution is principal among both.   --
--- Two tiers answer this.                                          --
---                                                                --
--- Tier one is `_⊨ᴿ[_]_`, satisfaction with the disjunction        --
--- resolved in favour of its grade disjunct. It is what a solver   --
--- that never constrains a type to be eternal is principal for,    --
--- and it holds for every constraint: `⊨ᴿ→⊨` is `inj₂`.            --
---                                                                --
--- Tier two is `Frag`, the class of constraints on which the bias  --
--- costs nothing: those whose `Et∨≾ᵘ` atoms carry a grade          --
--- convertible to the unit, where the grade disjunct is true       --
--- outright. The atom is raised at a use of a variable across an   --
--- accumulated lock grade, so `Frag` says: every variable is used  --
--- at unit lock grade. Lock-free programs qualify, as do uses of   --
--- a variable bound after the last former that locks; uses of an   --
--- outer variable inside a `⨟`-continuation, a `perform`, a        --
--- `delay` or a `box` body do not.                                 --
---                                                                --
--- `NoRig` is the second, orthogonal restriction, and it is a      --
--- restriction on refutation only: a rigid effect-grade binder is  --
--- where a solver must discharge, rather than carry, the atoms     --
--- mentioning the eigenvariable, and a discharge that fails is a   --
--- failure of the decision procedure, not a proof that there is    --
--- no solution.                                                    --
+-- Biased satisfaction, and the fragment on which it is exact.   --
+--                                                               --
+-- `Et∨≾ᵘ` is the only constraint former whose satisfaction is a --
+-- disjunction, which `Hyps` cannot express; `_⊨ᴿ[_]_` resolves  --
+-- it in favour of the grade disjunct, soundly for every         --
+-- constraint (`⊨ᴿ→⊨` is `inj₂`). `Frag` is the class of         --
+-- constraints — every variable used at unit lock grade — on     --
+-- which that bias is free.                                      --
+--                                                               --
+-- `NoRig` restricts refutation only: a failed discharge at a    --
+-- rigid binder is a decision-procedure failure, not a proof of  --
+-- unsatisfiability.                                             --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -64,12 +48,8 @@ open import TypeInference.Constraints.Properties   S using (≐ˢ-,ᵗ; ≐ˢ-,�
 
 open import TypeInference.SolverImpl.Enum S using (AllOp; all-lookup; all-build)
 
---------------------------------------------------------------
--- Tier one: biased satisfaction                             --
---                                                           --
--- Verbatim `_⊨[_]_` except at `Et∨≾ᵘ`, where the grade       --
--- disjunct is forced.                                        --
---------------------------------------------------------------
+-- Verbatim `_⊨[_]_` except at `Et∨≾ᵘ`, where the grade disjunct is
+-- forced.
 
 infix 4 _⊨ᴿ[_]_
 
@@ -128,10 +108,6 @@ _⊨ᴿ[_]_ {Θ' = Θ'} σ Q (∃ᵉ C)      = Σ[ ε ∈ EExp Θ' ]   ((σ ,ᵉ
 ⊨ᴿ-resp-≐ˢ p (∀ᵉ C)              s       = ⊨ᴿ-resp-≐ˢ (≐ˢ-↑ᵉ p) C s
 ⊨ᴿ-resp-≐ˢ p (⋀ᵒᵖ f)             s       = λ op → ⊨ᴿ-resp-≐ˢ p (f op) (s op)
 
---------------------------------------------------------------
--- Tier two: the static fragment                             --
---------------------------------------------------------------
-
 data Frag {Θ : Scope} : Constraint Θ → Set where
   ⊤ᶠ    : Frag ⊤̂
   ⊥ᶠ    : Frag ⊥̂
@@ -167,10 +143,6 @@ Frag-⊨→⊨ᴿ (∃ᵉᶠ f)       (ε , s) = ε , Frag-⊨→⊨ᴿ f s
 Frag-⊨→⊨ᴿ (∀ᵉᶠ f)       s       = Frag-⊨→⊨ᴿ f s
 Frag-⊨→⊨ᴿ (⋀ᶠ f)        s       = λ op → Frag-⊨→⊨ᴿ (f op) (s op)
 
---------------------------------------------------------------
--- Constraints without a rigid binder                        --
---------------------------------------------------------------
-
 data NoRig {Θ : Scope} : Constraint Θ → Set where
   ⊤ⁿ    : NoRig ⊤̂
   ⊥ⁿ    : NoRig ⊥̂
@@ -187,13 +159,9 @@ data NoRig {Θ : Scope} : Constraint Θ → Set where
 
 infixr 6 _∧ⁿ_
 
---------------------------------------------------------------
--- Deciding that a grade expression is the unit              --
---                                                           --
--- The atoms of a product must all cancel; a constant must be --
--- the unit; an image is the unit exactly when its argument   --
--- is, `∣_∣̂ᵉ` being a monoid morphism.                        --
---------------------------------------------------------------
+-- The atoms of a product must all cancel; a constant must be the unit;
+-- an image is the unit exactly when its argument is, `∣_∣̂ᵉ` being a
+-- monoid morphism.
 
 unitₑ? : ∀ {Θ} → (ε : EExp Θ) → Maybe (ε ≡̂ₑ ûₑ)
 unitₑ? (evar i)   = nothing
@@ -217,13 +185,9 @@ unitᵣ? ∣ ε ∣̂ᵉ     with unitₑ? ε
                                (subst (λ x → ∣ ûₑ ∣̂ᵉ ≡̂ᵣ rconst x) map-uᵉ ≡̂ᵣ-map-const))
 ... | nothing = nothing
 
---------------------------------------------------------------
--- Deciding the two restrictions                             --
---                                                           --
--- `⋀ᵒᵖ` carries a function, so its clause is decided by      --
--- exhausting an enumeration of the operation symbols and     --
--- reading the result back with `all-lookup`.                 --
---------------------------------------------------------------
+-- `⋀ᵒᵖ` carries a function, so its clause is decided by exhausting an
+-- enumeration of the operation symbols and reading the result back
+-- with `all-lookup`.
 
 frag? : ∀ {Θ} → OpEnum S → (C : Constraint Θ) → Maybe (Frag C)
 frag? oe ⊤̂             = just ⊤ᶠ

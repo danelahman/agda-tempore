@@ -94,9 +94,8 @@ _≾ᵢ_ : Rel Interval∞ lzero
 i₁ ≾ᵢ i₂ =
   (min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂)
 
--- the greatest grade: no lower bound and no upper bound
---
--- NB: it is not absorbing, `⊤ᵢ ·ᵢ i` keeping `min i`.
+-- the greatest grade: no lower bound and no upper bound. It is not
+-- absorbing, `⊤ᵢ ·ᵢ i` keeping `min i`.
 
 ⊤ᵢ : Interval∞
 ⊤ᵢ = [ 0 , ∞ , ≤∞-∞ (↑ 0) ]
@@ -138,9 +137,8 @@ eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟∞ max i₂
 ... | yes _ | no ¬q = no  λ x → ¬q (cong max x)
 ... | no ¬p | _     = no  λ x → ¬p (cong min x)
 
--- NB: unlike the all-finite two-sided intervals, _·ᵢ_ is *not*
--- cancellative once ∞ is allowed: e.g. with max i₁ = ∞ we have
--- (i₁ ·ᵢ i₂) ≾ᵢ (i₁ ·ᵢ i₃) for all i₂ i₃, yet i₂ ≾ᵢ i₃ may fail.
+-- Unlike the all-finite two-sided intervals, _·ᵢ_ is *not*
+-- cancellative once ∞ is allowed.
 
 -- zero-product property
 
@@ -198,11 +196,9 @@ two-sided-intervals-with-∞ = record
 -- The same intervals with a formal greatest grade
 --
 -- `[ 0 , ∞ ]` is greatest but not absorbing, its `min` endpoint being
--- the unit, and a morphism preserving `⊤` and `_·_` carries an
--- absorbing top to an absorbing top; the two-sided subset intervals,
--- whose top absorbs, therefore project here rather than into the
--- intervals above. `no-window` claims no bound at either end, and
--- sequencing after it claims none either.
+-- the unit, so the two-sided subset intervals, whose top absorbs,
+-- project here rather than into the intervals above. `no-window`
+-- claims no bound at either end, and absorbs.
 
 infix 50 window_
 

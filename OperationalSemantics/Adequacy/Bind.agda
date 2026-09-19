@@ -43,21 +43,8 @@ open import Syntax.Substitutions.At        Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
-------------------------------------------------------------------------
--- BIND
---
 -- Induction on the scrutinee's `CRed` derivation, recursing on the `pk` field
 -- exactly as `CRed-≐ˢ` does.
---
---   * `cred-ret` runs the scrutinee to a `return` (`seq-steps`), fires
---     `SEQ-RET`, and hands the value to the sequel premise. The run's own reach
---     lands at `mapᵉ uₑ` where a graded reach wants `uᵣ`, which `suc-comp-ren-grade`
---     reconciles.
---   * `cred-op` runs it to a `perform`, floats the operation out with `SEQ-OP`
---     and recurses at the resumption. The sequel the recursion needs is the
---     original one weakened past the operation's arity variable, so firing the
---     outer sequel premise means *undoing* that weakening — which is `sub-wk-C`.
-------------------------------------------------------------------------
 
 seq-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε₁}

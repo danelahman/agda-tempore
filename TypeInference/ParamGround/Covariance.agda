@@ -86,10 +86,6 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 open import TypeInference.ParamGround S Cat Fut Pst Adj GTy Mon GE
   using (ground-mono-e; ground-mono-r)
 
---------------------------------------------------------------
--- `newᵉ`-freeness                                           --
---------------------------------------------------------------
-
 -- The syntactic condition "the newly bound effect-grade variable does not
 -- occur". Only a `newᵉ`-free expression reads the same under the two
 -- instantiations, and a contravariant position needs exactly that.
@@ -125,10 +121,6 @@ NoNewCtx : ∀ {Θ n} → OCtx (Θ +e) n → Set
 NoNewCtx []        = ⊤
 NoNewCtx (Γ ∷ A)   = NoNewCtx Γ × NoNewV A
 NoNewCtx (Γ ⟨ ρ ⟩) = NoNewCtx Γ × NoNewR ρ
-
---------------------------------------------------------------
--- The weakenings and the closed embeddings are `newᵉ`-free   --
---------------------------------------------------------------
 
 nn-wkᵉ-e : ∀ {Θ} → (ε : EExp Θ) → NoNewE (wkᵉ-e ε)
 nn-wkᵉ-e (evar i)   = tt
@@ -170,10 +162,6 @@ nn-⌜⌝ᵍ Bool       = tt
 nn-⌜⌝ᵍ Empty      = tt
 nn-⌜⌝ᵍ (G |×|ᵍ H) = nn-⌜⌝ᵍ G , nn-⌜⌝ᵍ H
 nn-⌜⌝ᵍ ([ ρ ]ᵍ G) = tt , nn-⌜⌝ᵍ G
-
---------------------------------------------------------------
--- Transport along an equality of readings                   --
---------------------------------------------------------------
 
 inv⁺ : ∀ {A B : VType} → A ≡ B → ⟦ A ⟧ᵛ →ᵐ ⟦ B ⟧ᵛ
 inv⁺ refl = idᵐ
@@ -272,10 +260,6 @@ invˣ⁺-⟨⟩ refl refl w =
   (≈ᵐ-trans (∘ᵐ-identityʳ _)
   (≈ᵐ-trans (⟨⟩-≤-irr w ≾ᵣ-refl) ⟨⟩-≤-refl))
 
-------------------------------------------------------------
--- Covariance certificates                                 --
-------------------------------------------------------------
-
 -- `newᵉ` occurs only covariantly: freely under `|×|`, under the graded
 -- monad's effect (`T-≤` covariant) and under a lock (`⟨⟩-≤` covariant);
 -- never in a function's domain nor in a box's grade, both contravariant.
@@ -300,10 +284,6 @@ CovCtx []        = ⊤
 CovCtx (Γ ∷ A)   = CovCtx Γ × CovV A
 CovCtx (Γ ⟨ ρ ⟩) = CovCtx Γ
 
-------------------------------------------------------------
--- Certificates for a `newᵉ`-free type                     --
-------------------------------------------------------------
-
 nn⇒CovV : ∀ {Θ} → (A : OVType (Θ +e)) → NoNewV A → CovV A
 nn⇒CovC : ∀ {Θ} → (C : OCType (Θ +e)) → NoNewC C → CovC C
 
@@ -322,10 +302,6 @@ nn⇒CovCtx : ∀ {Θ n} → (Γ : OCtx (Θ +e) n) → NoNewCtx Γ → CovCtx Γ
 nn⇒CovCtx []        n        = tt
 nn⇒CovCtx (Γ ∷ A)   (n , n') = nn⇒CovCtx Γ n , nn⇒CovV A n'
 nn⇒CovCtx (Γ ⟨ ρ ⟩) (n , n') = nn⇒CovCtx Γ n
-
-------------------------------------------------------------
--- Uniqueness of the certificates                          --
-------------------------------------------------------------
 
 -- `NoNew*` and `Cov*` are built from `⊤`, `⊥` and `_×_`, hence are
 -- propositions: a certificate is determined by what it certifies.
@@ -399,10 +375,6 @@ infixr 3 _∙≈_
 _∙≈_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
 _∙≈_ = ≈ᵐ-trans
 
---------------------------------------------------------------
--- The two readings                                          --
---------------------------------------------------------------
-
 module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ ε₂) where
 
   θ₁ : Grounding (Θ +e)
@@ -410,10 +382,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
 
   θ₂ : Grounding (Θ +e)
   θ₂ = θ ,ᵍᵉ ε₂
-
-  ------------------------------------------------------------
-  -- A `newᵉ`-free expression reads the same twice           --
-  ------------------------------------------------------------
 
   nonew-e : (ε : EExp (Θ +e)) → NoNewE ε → ⟦ ε ⟧ᵉ θ₁ ≡ ⟦ ε ⟧ᵉ θ₂
   nonew-e (evar (suc i)) n = refl
@@ -447,10 +415,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   nonew-ctx (Γ ∷ A)   (n , n') = cong₂ _∷_ (nonew-ctx Γ n) (nonew-v A n')
   nonew-ctx (Γ ⟨ ρ ⟩) (n , n') = cong₂ _⟨_⟩ (nonew-ctx Γ n) (nonew-r ρ n')
 
-  ------------------------------------------------------------
-  -- The coercions                                           --
-  ------------------------------------------------------------
-
   mutual
 
     covV : (A : OVType (Θ +e)) → CovV A → ⟦ ⟦ A ⟧ᵒᵛ θ₁ ⟧ᵛ →ᵐ ⟦ ⟦ A ⟧ᵒᵛ θ₂ ⟧ᵛ
@@ -473,10 +437,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   covCtx (Γ ∷ A)   (c , c') = mapˣᵐ (covCtx Γ c) (covV A c')
   covCtx (Γ ⟨ ρ ⟩) c =
     ⟨⟩-≤ (ground-mono-r {θ = θ} q ρ) ∘ᵐ ⟨ ⟦ ρ ⟧ʳ θ₁ ⟩ᶠ (covCtx Γ c)
-
-  ------------------------------------------------------------
-  -- At a `newᵉ`-free type every coercion is the transport   --
-  ------------------------------------------------------------
 
   mutual
 
@@ -517,10 +477,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
              (invˣ⁺-⟨⟩ (nonew-ctx Γ n) (nonew-r ρ n')
                        (ground-mono-r {θ = θ} q ρ))
 
-  ------------------------------------------------------------
-  -- Eternal types are `newᵉ`-free                           --
-  ------------------------------------------------------------
-
   -- `Eternal` has no clause for `_⇒_` or `[_]_`, and no other former of an
   -- open type carries a grade, so an eternal reading forces `newᵉ`-freeness.
 
@@ -545,9 +501,6 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   covV-irr : (A : OVType (Θ +e)) → (c c' : CovV A) → covV A c ≈ᵐ covV A c'
   covV-irr A c c' rewrite CovV-unique A c c' = ≈ᵐ-refl
 
-  ------------------------------------------------------------
-  -- Variables                                               --
-  ------------------------------------------------------------
   -- Naturality of the projection `var-proj` in the instantiation.
 
   cov-var-proj : ∀ {m} {A : OVType (Θ +e)} {ρ : RExp (Θ +e)} {Γ : OCtx (Θ +e) m}

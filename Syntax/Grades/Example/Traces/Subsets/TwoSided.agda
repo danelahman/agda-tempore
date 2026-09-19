@@ -2,41 +2,36 @@
 -- Sets of timed traces bounding a computation from both sides, at the --
 -- subset order.                                                       --
 --                                                                     --
--- A grade is a pair `[ P , Q ]` of non-empty finite sets of traces,    --
--- read against the runs `X` a computation may have as                  --
+-- A grade is a pair `[ P , Q ]` of non-empty finite sets of traces,   --
+-- read against the runs `X` a computation may have as                 --
 --                                                                     --
---   P ⊆ X ⊆ Q                                                          --
+--   P ⊆ X ⊆ Q                                                         --
 --                                                                     --
--- -- each listed trace of `P` is a run the computation can exhibit,    --
--- and every run it has is listed in `Q`. This is the Egli-Milner       --
--- reading, and it is a genuine interval: the grades between `P` and    --
--- `Q` in the subset lattice are exactly the run-sets it admits.        --
+-- -- each listed trace of `P` is a run the computation can exhibit,   --
+-- and every run it has is listed in `Q`. This is the Egli-Milner      --
+-- reading, and it is a genuine interval: the grades between `P` and   --
+-- `Q` in the subset lattice are exactly the run-sets it admits.       --
 --                                                                     --
--- The endpoints move in opposite directions,                           --
+-- The endpoints move in opposite directions,                          --
 --                                                                     --
---   [ P , Q ] ≾ [ P' , Q' ]   iff   P' ⊆ P   and   Q ⊆ Q'              --
+--   [ P , Q ] ≾ [ P' , Q' ]   iff   P' ⊆ P   and   Q ⊆ Q'             --
 --                                                                     --
--- so the floor is read conjunctively (dropping a member weakens) and   --
--- the cap disjunctively (gaining one weakens). The unit is `[{ε},{ε}]` --
--- -- the computation stops, and can.                                   --
+-- so the floor is read conjunctively (dropping a member weakens) and  --
+-- the cap disjunctively (gaining one weakens). The unit is            --
+-- `[{ε},{ε}]` -- the computation stops, and can.                      --
 --                                                                     --
--- COHERENCE. The field asks `P ⊆ Q`. Here that is not merely necessary --
--- but exactly right: `P ⊆ X ⊆ Q` has a solution iff `P ⊆ Q` (take      --
--- `X := Q`), so the field refuses precisely the uninhabited grades.    --
--- `Traces.Timed.TwoSided` can only manage necessity, its two endpoints --
--- being ordered by incomparable relations; with one order on both      --
--- sides the interval closes exactly.                                   --
+-- The coherence field asks `P ⊆ Q`, which refuses precisely the       --
+-- uninhabited grades.                                                 --
 --                                                                     --
--- READINGS. As an *effect* grade, `Q` lists what may happen and `P`    --
--- what must remain reachable; `coerce` adds runs above and forgets     --
--- reachability below. As a *resource* grade, `unbox`'s `ρ' ≾ᵣ ρ` asks  --
--- the elapsed grade to keep every run the box demands available while  --
--- introducing none the box does not list.                              --
+-- As an *effect* grade, `Q` lists what may happen and `P` what must   --
+-- remain reachable; `coerce` adds runs above and forgets reachability --
+-- below. As a *resource* grade, `unbox`'s `ρ' ≾ᵣ ρ` asks the elapsed  --
+-- grade to keep every run the box demands available while introducing --
+-- none the box does not list.                                         --
 --                                                                     --
--- No pair is greatest, the floor's own top being the excluded empty    --
--- set of demands, so the carrier carries `unconstrained` above the     --
--- pairs rather than extending either endpoint. It demands nothing and  --
--- permits everything, and it absorbs.                                  --
+-- No pair is greatest, the floor's own top being the excluded empty   --
+-- set of demands, so the carrier carries `unconstrained` above the    --
+-- pairs. It demands nothing, permits everything, and absorbs.         --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

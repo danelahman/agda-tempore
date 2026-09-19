@@ -1,19 +1,16 @@
 ------------------------------------------------------------------------
 -- Interpretation of variables.                                         --
---                                                                    --
--- A variable `x : A ∈[ ρ ] Γ` is projected through the context to the  --
--- context modality at its accumulated grade, `var-proj x :              --
--- ⟦ Γ ⟧ →ᵐ ⟨ ρ ⟩ᵒ ⟦ A ⟧`. It is then extracted to `⟦ A ⟧`: for a        --
--- non-eternal type this needs `ρ ≾ uᵣ` and uses the unit-graded counit   --
--- `εᵘ`; for an eternal type it uses the eternal extraction `extᵉ` at     --
--- the arbitrary grade `ρ`.                                              --
---                                                                    --
--- The `Eternalᵒ` structure of an eternal type is assembled by recursion   --
--- on the eternality witness from the per-former structure supplied by     --
--- `GroundEternal` (base types, `Unit`, `Bool`, `Empty`, products). Landing in --
--- `Eternalᵒ` means the eternal laws — grade-uniformity `extᵉ-≤`, the unit --
--- grade `extᵉ-u`, and the `⟨_⟩`-algebra law `extᵉ-μ` — are inherited      --
--- rather than re-proved for each former.                                  --
+--                                                                      --
+-- A variable `x : A ∈[ ρ ] Γ` projects through the context to the      --
+-- context modality at its accumulated grade, then extracts to          --
+-- `⟦ A ⟧`: a non-eternal type needs `ρ ≾ uᵣ` and the possibility       --
+-- counit `εᵘ`; an eternal type uses the eternal extraction `extᵉ`      --
+-- at any grade `ρ`.                                                    --
+--                                                                      --
+-- An eternal type's `Eternalᵒ` structure is assembled by recursion     --
+-- on the eternality witness from `GroundEternal`'s per-former          --
+-- structure, so the eternal laws are inherited rather than             --
+-- re-proved for each former.                                           --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -127,13 +124,8 @@ var-morphism-unfoldᵉ {A = A} et f y with eternal? A
 ... | yes et' = ∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et)
 ... | no ¬et = ⊥-elim (¬et et)
 
--- ───────────────────────────────────────────────────────────────────────────
--- READING THE TOPMOST VARIABLES
---
 -- Two facts about `var-morphism` at the top of a context, used wherever a
--- renaming's denotation has to be computed. Both split on `eternal?` of the
--- variable's type, and both sides of each equation reduce simultaneously.
--- ───────────────────────────────────────────────────────────────────────────
+-- renaming's denotation has to be computed.
 
 private
   infixr 3 _∙ᵛ_

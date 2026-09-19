@@ -43,10 +43,6 @@ open import TypeInference.Open.Hyps      S
 open import TypeInference.Open.Language  S
 open import TypeInference.Open.Grounding S
 
---------------------------------------------------------------
--- The theorem                                               --
---------------------------------------------------------------
-
 mutual
 
   groundV : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
@@ -146,9 +142,7 @@ mutual
            (cong (_‼ (op-grade op ·ₑ ε'')) (ground-wkᵉ-v B))
            (groundC (θ ,ᵍᵉ ε'') (⊨ᴴ-wkᵉ-ground h) X)
 
---------------------------------------------------------------
--- Sanity checks: the grounded derivations compute           --
---------------------------------------------------------------
+-- Sanity checks: the grounded derivations compute.
 
 private
 

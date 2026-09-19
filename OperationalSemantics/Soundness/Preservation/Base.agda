@@ -71,8 +71,6 @@ open import DenotationalSemantics.Model.Modality.Eternal
 bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
 bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 
--- THE INTERPRETATION OF A CONFIGURATION
---
 -- The computation, with its context plugged by the state.
 
 Paramᶜᶠ : ∀ {C} → Config C → Set
@@ -82,11 +80,10 @@ Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
       → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
 ⟦ ⟨ St , M ⟩ ⟧ᶜᶠ (pSt , pM) = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
 
--- THE STATE'S CERTIFICATE ACROSS A STEP
---
--- Only `BOX` changes it: the cell it allocates stores the boxed value, whose
--- certificate is the term's, renamed. Every other rule either keeps the state
--- or only locks it, and the two congruences inherit the sub-step's.
+-- The state's certificate across a step. Only `BOX` changes it: the cell it
+-- allocates stores the boxed value, whose certificate is the term's,
+-- renamed. Every other rule either keeps the state or only locks it, and the
+-- two congruences inherit the sub-step's.
 
 stepᴾˢ : ∀ {ε ε' A} {S S' : 𝕊 []}
        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
@@ -107,10 +104,8 @@ stepᴾˢ (BOX {V = V})       pS (pV , _)       =
 stepᴾˢ UNBOX               pS _              = pS
 stepᴾˢ COERCE              pS _              = pS
 
--- KLEISLI COMPOSITION WITH A TIME TRANSITION
---
--- Running a computation over the later history, after the transition that
--- produces it. The effect grades multiply.
+-- Kleisli composition with a time transition: running a computation over
+-- the later history, after the transition that produces it.
 
 _⋄_ : ∀ {X Y A ε ε'}
     → (Y →ᵐ Tᵒ A ε')
@@ -120,12 +115,10 @@ f ⋄ t = μᵀ ∘ᵐ Tᶠ f ∘ᵐ t
 
 infixl 25 _⋄_
 
--- THE TIME TRANSITION OF A STEP
---
--- The effect it performs. Only `DELAY` does anything: it is the sole rule
--- that advances time, and it does so by exactly its own delay. Resources
--- (cells) are allocated into the *shape* of the store, never into the
--- effect grade, which is why allocation contributes `uₑ`.
+-- A step's effect. Only `DELAY` does anything: it is the sole rule that
+-- advances time, by exactly its own delay. Resources (cells) are allocated
+-- into the *shape* of the store, never into the effect grade, which is why
+-- allocation contributes `uₑ`.
 
 step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -225,13 +218,10 @@ _∙_ = ≈ᵐ-trans
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (∘ᵐ-congˡ T-μ∘η≡id))
 
--- THE TIME-PRESERVING STEPS
---
--- Every rule but `DELAY` leaves the history alone and transitions by `ηᵀ`.
--- For those the soundness equation collapses to a plain equation between
--- the two computations' denotations, coerced along the effect refinement:
--- the `uₑ` that `ηᵀ` contributes is absorbed by `T-≤`, which the tree
--- equality lets us do precisely because it collapses coercion nodes.
+-- Every rule but `DELAY` leaves the history alone, transitioning by `ηᵀ`: the
+-- soundness equation collapses to a plain equation between the two
+-- denotations, coerced along the effect refinement (the `uₑ` that `ηᵀ`
+-- contributes is absorbed by `T-≤`).
 
 pure-step : ∀ {X A ε ε'}
           → (q : uₑ ·ₑ ε' ≾ₑ ε)
@@ -491,12 +481,11 @@ sub-ren r N V pN pV =
   ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
--- THE `return` RULES
---
--- `⨟` and `handle` thread the environment through the strength in exactly the
--- same way, differing only in the algebra that collapses the two monad layers
--- (`μᵀ`, resp. the handler's `T-alg-of-handlerᵀ`). Both algebras compute on a
--- returned value the same way, so `SEQ-RET` and `HANDLE-RET` share one proof.
+-- The `return` rules: `⨟` and `handle` thread the environment through the
+-- strength in exactly the same way, differing only in the algebra that
+-- collapses the two monad layers (`μᵀ`, resp. the handler's
+-- `T-alg-of-handlerᵀ`). Both algebras compute on a returned value the same
+-- way, so `SEQ-RET` and `HANDLE-RET` share one proof.
 
 -- The parametricity certificate of the `return`-rules' reduct: the sequel
 -- renamed by the re-locking renaming, then substituted into.

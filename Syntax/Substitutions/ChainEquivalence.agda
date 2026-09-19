@@ -68,13 +68,9 @@ open _≐ˢ_ public
   mk≐ˢ (λ x f → trans (atᵛ h x f) (atᵛ h' x f))
        (λ y → trans (atᵗ h y) (atᵗ h' y))
 
-------------------------------------------------------------------------
--- THE INTERCHANGES A CONGRUENCE FOLDS
---
 -- A chain congruence applies its clause at every step, so comparing it with
 -- applying it once is exactly an interchange, at the renaming or the eternal
 -- operation the clause uses.
-------------------------------------------------------------------------
 
 ⋈-wk : ∀ {Γ Γ' B} → (s : Sub₀ [] Γ Γ')
      → Interchange (cong-∷-sub {A = B} s) wk-ren wk-ren s
@@ -97,13 +93,9 @@ V-sub₀-ext s et false     = refl
 V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-ext s et₁ V₁) (V-sub₀-ext s et₂ V₂)
 
-------------------------------------------------------------------------
--- THE CONGRUENCES
---
 -- Each is a chain induction: the head step's clause is moved past the tail's
 -- accumulated image by the interchange, leaving the image the chain would have
 -- produced without the congruence.
-------------------------------------------------------------------------
 
 -- Under one more variable.
 
@@ -252,13 +244,9 @@ cong-subˢ-≐ˢ []         h = h
 cong-subˢ-≐ˢ (Γ₀ ∷ A)   h = cong-∷-subˢ-≐ˢ (cong-subˢ-≐ˢ Γ₀ h)
 cong-subˢ-≐ˢ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-subˢ-≐ˢ (cong-subˢ-≐ˢ Γ₀ h)
 
-------------------------------------------------------------------------
--- A CHAIN ACTS STRUCTURALLY
---
--- The action folds the chain, so that it reaches under a binder by the
--- matching chain congruence is a chain induction, one per former: the empty
--- chain is `refl`, and a step is the generator's own clause.
-------------------------------------------------------------------------
+-- The action folds the chain: reaching under a binder by the matching chain
+-- congruence is a chain induction, one per former, the empty chain a `refl`
+-- and a step the generator's own clause.
 
 V-sub-const : ∀ {Γ Γ' B} → (σ : Sub [] Γ Γ') → (c : BaseConstants B)
             → V-sub σ (const c) ≡ const c
@@ -379,13 +367,9 @@ C-sub-coerce : ∀ {Γ Γ' A ε ε'} → (σ : Sub [] Γ Γ') → (rel : ε ≾�
 C-sub-coerce []ˢ      rel M = refl
 C-sub-coerce (s ◅ σ) rel M = cong (C-sub₀ s) (C-sub-coerce σ rel M)
 
-------------------------------------------------------------------------
--- THE ACTION RESPECTS ACTING ALIKE
---
 -- The one induction over term formers this layer buys: at `var` and `unbox`
 -- the whole content is the hypothesis, and at every other former the two sides
 -- are opened by the same structural law and closed by a congruence.
-------------------------------------------------------------------------
 
 mutual
 
@@ -467,13 +451,9 @@ mutual
     trans (C-sub-coerce σ rel M)
       (trans (coerce-≡ (C-sub-≐ˢ h M)) (sym (C-sub-coerce σ' rel M)))
 
-------------------------------------------------------------------------
--- CHAINS AGAINST EMBEDDED RENAMINGS
---
 -- `⌜_⌝` is faithful for the two observations, and a chain's head may be
 -- replaced by one acting alike, dropped when it is identity-like, or left to
 -- act on a tail replaced the same way.
-------------------------------------------------------------------------
 
 ⌜⌝-≐ˢ₀ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → r ≐ʳ r' → ⌜ r ⌝ ≐ˢ₀ ⌜ r' ⌝
 ⌜⌝-≐ˢ₀ h = mk≐ˢ₀ (λ x f → var-img-≡ (at h x) _ _) (λ y → at h y)

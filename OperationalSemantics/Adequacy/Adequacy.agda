@@ -84,12 +84,7 @@ open import OperationalSemantics.Adequacy.Reducibility   Spec
 open HF.HeadFaithful hf
 open HF.BaseFaithful bf
 
--- THE SAME OBSERVABLE BEHAVIOUR
---
--- Two programs halt alike: whenever one returns so does the other, and
--- whenever one gets stuck on an operation so does the other, on the same
--- operation. Together with `halts` and `⇓-exclusive` this is a biconditional
--- characterisation of the shape.
+-- Two programs halt alike: same return-or-stuck shape, same operation.
 
 record Same-whnf {A : VType} {ε : E} (M N : Prog A ε) : Set where
 
@@ -100,13 +95,9 @@ record Same-whnf {A : VType} {ε : E} (M N : Prog A ε) : Set where
     same-op  : (w : Op-whnf (⟨ ∅ , M ⟩))
              → Σ[ w' ∈ Op-whnf (⟨ ∅ , N ⟩) ] Op-whnf.oper w ≡ Op-whnf.oper w'
 
-------------------------------------------------------------------------
--- THE PROOF
-------------------------------------------------------------------------
-
--- SOUNDNESS, PACKAGED. A program is its whnf, run after the run's transition
--- and coerced back to the program's grade: `↝*-sound` at the empty state
--- (`hist ∅ ≡ []`, so `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty environment is `idᵐ`).
+-- A program is its whnf, run after the run's transition and coerced back to
+-- the program's grade: `↝*-sound` at the empty state (`hist ∅ ≡ []`, so
+-- `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty environment is `idᵐ`).
 
 program-run-sound : ∀ {A ε ε'} {cf' : Config (A ‼ ε')}
                   → (M : Prog A ε) → (pM : Paramᶜ M)
@@ -176,8 +167,8 @@ same-oper {M = M} {N = N} pM pN e wM wN
     | _ , _ , _ , _ , _ , _ , ndN , rN , eN =
   op-inj ndM ndN rM rN (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))
 
--- ADEQUACY, CASE-FAITHFULNESS. Equal denotations halt alike: `halts` supplies
--- a whnf on each side, and the two lemmas above exclude the mismatched pairing.
+-- Equal denotations halt alike: `halts` supplies a whnf on each side, and the
+-- two lemmas above exclude the mismatched pairing.
 
 adequacy : ∀ {A ε} → {M N : Prog A ε}
          → (pM : Paramᶜ M) → (pN : Paramᶜ N)
@@ -214,9 +205,8 @@ const-presentation M pM (ret-whnf St V rs) with base-leaf-const V _ _
   , ≈ᵐ-trans (program-run-sound M pM rs)
       (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs) qc)
 
--- ADEQUACY AT BASE TYPE. The returned answers are the same constant:
--- `leaf-const` identifies the two denotations and `const-inj` reflects that to
--- the syntax.
+-- The returned answers are the same constant: `leaf-const` identifies the two
+-- denotations and `const-inj` reflects that to the syntax.
 
 adequacy-base : ∀ {b ε} → {M N : Prog (Base b) ε}
               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
@@ -282,10 +272,7 @@ bool-presentation M pM (ret-whnf St V rs) with bool-leaf-value V _ _
   , inj₂ (sv , ≈ᵐ-trans (program-run-sound M pM rs)
                  (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs) qv))
 
--- ADEQUACY AT `Bool`. The returned answers are the same boolean: the two
--- matching cases are read straight off the presentations, and a mixed one
--- would make `trueᵐ` and `falseᵐ` the same morphism (`leaf-bool`), which
--- `true≉false` forbids.
+-- The returned answers are the same boolean.
 
 adequacy-bool : ∀ {ε} → {M N : Prog Bool ε}
               → (pM : Paramᶜ M) → (pN : Paramᶜ N)
@@ -312,8 +299,8 @@ adequacy-bool {M = M} {N = N} pM pN e wM wN
         (leaf-bool ndN ndM rN rM
           (≈ᵐ-trans (≈ᵐ-sym eN) (≈ᵐ-trans (≈ᵐ-sym e) eM))))
 
--- THE HYPOTHESIS FORM. A point presented as a delayed leaf, resp. a delayed
--- operation node, dictates how the program halts.
+-- A point presented as a delayed leaf, resp. a delayed operation node,
+-- dictates how the program halts.
 
 leaf-adequacy : ∀ {A ε Y δ n} → {M : Prog A ε} → (pM : Paramᶜ M)
               → {a : Y →ᵐ ⟦ A ⟧ᵛ}
@@ -351,9 +338,8 @@ node-adequacy {op = op} {M = M} pM nd r eq = go (halts M)
     ... | _ , _ , _ , _ , _ , _ , ndO , rO , eO =
       w , sym (op-inj nd ndO r rO (≈ᵐ-trans (≈ᵐ-sym eq) eO))
 
--- THE TIMED REFINEMENT, opt-in: under `HeadTimed` the two programs also take
--- the same time. The presentations are indexed by the runs' tick totals, so
--- this is `ret-ticks-eq` at them.
+-- Under `HeadTimed`, equal denotations also take the same time (`ret-ticks-eq`
+-- at the presentations' tick totals).
 
 adequacy-ticks : HF.HeadTimed Spec Cat Fut Pst Adj GTy Mon GE
                → ∀ {A ε} → {M N : Prog A ε}
@@ -370,13 +356,8 @@ adequacy-ticks ht {M = M} {N = N} pM pN e wM wN
   HF.HeadTimed.ret-ticks-eq ht ndM ndN rM rN
     (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN))
 
-------------------------------------------------------------------------
--- COROLLARIES
-------------------------------------------------------------------------
-
--- Every program halts in exactly one of the two shapes, and equal denotations
--- pick out the same one: if `M` returns then `N` cannot get stuck on an
--- operation.
+-- Every program halts in exactly one of the two shapes; equal denotations
+-- pick the same one.
 
 ret-not-op : ∀ {A ε} → {M N : Prog A ε}
            → (pM : Paramᶜ M) → (pN : Paramᶜ N)

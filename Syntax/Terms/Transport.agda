@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
 -- Retyping a term along a context equality.                          --
 --                                                                    --
--- `castᵛ`/`castᶜ` transport a term along an equality of contexts, and --
--- the laws below push that transport through each term former. Being --
--- defined by matching on the proof, a cast computes away at `refl`,   --
--- which is what lets the inversion lemmas match it off.               --
+-- `castᵛ`/`castᶜ` transport a term along an equality of contexts,    --
+-- and the laws below push that transport through each term former.   --
+-- Being defined by matching on the proof, a cast computes away at    --
+-- `refl`.                                                            --
 --                                                                    --
--- A cast is the renaming action along `eq-ren`                       --
--- (`V-rename-eq-≡`), so this family is the action of the subgroupoid  --
--- of context equalities.                                             --
+-- A cast is the renaming action along `eq-ren` (`V-rename-eq-≡`),    --
+-- so this family is the action of the subgroupoid of context         --
+-- equalities.                                                        --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -39,11 +39,8 @@ open import Syntax.Renamings.Equivalence Spec
 open import Syntax.Terms.Equivalence     Spec
 open import Syntax.Renamings.Coherence   Spec
 
--- RETYPING ALONG A CONTEXT EQUALITY
-
--- Defined by matching on the proof, not as `subst`: the rigid head is what
--- lets the unifier solve the clause-swap metas, and what lets the inversion
--- lemmas match a cast off.
+-- Defined by matching on the proof, not as `subst`: the head stays rigid for
+-- the unifier and for the inversion lemmas below to match off.
 
 castᵛ : ∀ {Γ Γ' A} → Γ ≡ Γ' → Γ ⊢V⦂ A → Γ' ⊢V⦂ A
 castᵛ refl V = V
@@ -224,10 +221,6 @@ castᶜ-≡ e = cong (castᶜ e)
 castᵛ-≡ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {V V' : Γ ⊢V⦂ A}
         → V ≡ V' → castᵛ e V ≡ castᵛ e V'
 castᵛ-≡ e = cong (castᵛ e)
-
-------------------------------------------------------------------------
--- VALUE-LEVEL TRANSPORT ALGEBRA
-------------------------------------------------------------------------
 
 castᵛ≡subst : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → (V : Γ ⊢V⦂ A)
             → castᵛ e V ≡ subst (_⊢V⦂ A) e V

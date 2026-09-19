@@ -66,12 +66,7 @@ _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈�
 _∙_ = ≈ᵐ-trans
 
 
--- CERTIFICATE IRRELEVANCE
---
--- The interpretation does not depend on the parametricity certificate: the
--- certificate's only computational use is the clause family of a handler,
--- and the fold is a congruence in its handler (`T-alg-of-handlerᵀ-cong`),
--- which in particular ignores the handler's `Monoᵀ` component.
+-- Only the handler clause family uses the certificate; the fold is a congruence in it.
 
 mutual
 
@@ -123,14 +118,6 @@ mutual
             (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᵛᵗ-irr V pV pV')) ⟩ᵐ-cong)
   ⟦⟧ᶜᵗ-irr (coerce p M) pM pM' = ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM')
 
-
--- THE SOUNDNESS STATEMENT, PER EQUATION
---
--- `Soundᵛ== p` / `Soundᶜ== p` is "the equation `p` is denotationally valid":
--- its two sides denote the same morphism, for *any* certificates. Naming it
--- lets each axiom of the theory be discharged by a lemma whose statement
--- mentions only the axiom's own arguments, rather than a spelled-out copy of
--- its right-hand side.
 
 Soundᵛ== : ∀ {Γ A} {V W : Γ ⊢V⦂ A} → Γ ⊢V⦂ V == W → Set
 Soundᵛ== {V = V} {W = W} _ =

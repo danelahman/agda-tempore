@@ -32,10 +32,6 @@ open import TypeInference.SolverImpl.Core.Thick
 
 infix 40 _forᵗ_ _forʳ_ _forᵉ_
 
---------------------------------------------------------------
--- The three single-binding substitutions                    --
---------------------------------------------------------------
-
 _forᵗ_ : ∀ {Θ} → OVType Θ → TyVar (Θ +ty) → Subst (Θ +ty) Θ
 _forᵗ_ {Θ} A α = sub (λ β → maybe′ tvar A (thickᵗ {Θ} α β))
                      (λ i → rvar i)
@@ -51,10 +47,6 @@ _forᵉ_ {Θ} ε i = sub (λ α → tvar α)
                      (λ j → rvar j)
                      (λ j → maybe′ evar ε (thickᵉ {Θ} i j))
 
---------------------------------------------------------------
--- The bound variable goes to its image                      --
---------------------------------------------------------------
-
 for-hitᵗ : ∀ {Θ} → (A : OVType Θ) → (α : TyVar (Θ +ty)) → sTy (A forᵗ α) α ≡ A
 for-hitᵗ {Θ} A α = cong (maybe′ tvar A) (thick-refl {nTy Θ} α)
 
@@ -63,10 +55,6 @@ for-hitʳ {Θ} ρ i = cong (maybe′ rvar ρ) (thick-refl {nR Θ} i)
 
 for-hitᵉ : ∀ {Θ} → (ε : EExp Θ) → (i : EVar (Θ +e)) → sE (ε forᵉ i) i ≡ ε
 for-hitᵉ {Θ} ε i = cong (maybe′ evar ε) (thick-refl {nE Θ} i)
-
---------------------------------------------------------------
--- Every other variable comes back                           --
---------------------------------------------------------------
 
 for-missᵗ : ∀ {Θ} → (A : OVType Θ) → (α : TyVar (Θ +ty)) → (β : TyVar Θ)
           → sTy (A forᵗ α) (thinᵗ {Θ} α β) ≡ tvar β

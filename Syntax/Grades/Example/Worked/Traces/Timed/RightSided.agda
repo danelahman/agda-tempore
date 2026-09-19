@@ -168,12 +168,10 @@ no-tightening = fails
 ------------------------------------------------------------------------
 -- As a resource grade: a permit that expires
 --
--- `unbox`'s premise `ρ' ≾ᵣ ρ` has `ρ'` the product of the locks
--- standing to the variable's right -- what elapsed -- and `ρ` the grade
--- on the box. With both read as upper bounds it says: what elapsed is
--- still within what the box allows. A box is then a permit valid while
--- the computation stays inside its allowance, and overspending closes
--- it.
+-- `unbox`'s premise `ρ' ≾ᵣ ρ` weighs what elapsed -- the product of
+-- the locks standing to the variable's right -- against the grade on
+-- the box, both read as upper bounds: what elapsed is still within what
+-- the box allows. Overspending closes the box.
 
 -- a permit good for a reading and six ticks' worth of work
 
@@ -291,11 +289,9 @@ untrimming = holds
 -- Where the budget sits
 --
 -- Budget does not cross an operation the bound names, so a bound
--- prescribes when its spare time is available. Two bounds differing
--- only in where six ticks sit, against two runs differing only in where
--- the store falls -- all four traces performing a read, a store and a
--- transmission, and all taking ten ticks -- and each bound admits
--- exactly one of the runs.
+-- prescribes when its spare time is available: two bounds differing
+-- only in where six ticks sit each admit exactly one of two runs
+-- differing only in where the store falls.
 
 storing-in-the-window :
   within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆

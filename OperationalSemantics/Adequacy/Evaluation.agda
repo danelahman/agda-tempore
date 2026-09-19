@@ -33,8 +33,6 @@ open import Syntax.Contexts Spec
 open import Syntax.Language Spec
 open import Syntax.Types    Spec
 
--- CANONICAL FORMS OVER A STATE CONTEXT
---
 -- A runtime context is built solely from locks and box-typed cells, so it
 -- holds no base-typed variable either (the counterpart of `⇒-not-in-toCtx`,
 -- `⦉⦊-not-in-toCtx` and `Empty-not-in-toCtx` in `OperationalSemantics.State`).
@@ -51,8 +49,6 @@ base-canonical : ∀ {b} {St : 𝕊 []}
 base-canonical (var f x) = ⊥-elim (Base-not-in-toCtx x)
 base-canonical (const c) = c , refl
 
--- THE OBSERVABLE TIME OF A RUN
---
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The
 -- grade `steps-grade` is not an observable — it absorbs `uₑ` factors freely
 -- and `_≾ₑ_` is a preorder.
@@ -81,8 +77,6 @@ ticks : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
       → ℕ
 ticks ε*       = 0
 ticks (r ◅ rs) = step-ticks r + ticks rs
-
--- THE TWO HALTING SHAPES
 
 -- Evaluation to a returned value.
 
@@ -118,16 +112,12 @@ ret-ticks w = ticks (Ret-whnf.run w)
 op-ticks : ∀ {A ε} {cf : Config (A ‼ ε)} → Op-whnf cf → ℕ
 op-ticks w = ticks (Op-whnf.run w)
 
--- CLOSED PROGRAMS
---
 -- `toCtx ∅ ≡ []`, so this is `OperationalSemantics.Soundness.Preservation`'s
 -- `Program` (definitionally), stated without model parameters.
 
 Prog : VType → E → Set
 Prog A ε = toCtx {[]} ∅ ⊢C⦂ A ‼ ε
 
--- FINALITY
---
 -- Neither whnf steps.
 
 finality-ret : ∀ {A} {D : CType} {St : 𝕊 []}
@@ -147,13 +137,9 @@ finality-perform : ∀ {A ε op} {D : CType} {St : 𝕊 []}
                  → ⊥
 finality-perform ()
 
--- DETERMINISM
---
--- A step out of a configuration is unique — target *and* derivation. The
--- derivation is part of it: the congruence rules rebuild their continuation
--- along `suc-comp-ren (step-extends-state r)`, so the reduct is determined only
--- once the sub-derivation is. Packing grade, target and derivation into one Σ
--- keeps the statement homogeneous, so consumers can match on `refl`.
+-- A step out of a configuration is unique — target and derivation. Packing
+-- grade, target and derivation into one Σ keeps the statement homogeneous, so
+-- consumers can match on `refl`.
 
 Step-from : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Step-from {A} cf = Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A ‼ ε') ] (cf ↝ cf')

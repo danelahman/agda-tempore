@@ -1,22 +1,8 @@
 ------------------------------------------------------------------
--- Closing a residual into the empty scope                       --
---                                                                --
--- The driver leaves a residual and a scope of unknowns; closing  --
--- it is where the heuristics live, and where they are confined.  --
--- Three flat passes:                                             --
---                                                                --
---   * slack — an ordering whose right-hand side is still a bare  --
---     variable is made an equality, the variable taking the left  --
---     side. An expected effect grade is only ever a right-hand    --
---     side, so this is what keeps an inferred effect the product  --
---     it was built from instead of collapsing to the unit;        --
---   * defaults — every unknown left over becomes `Unit`, `ûᵣ` or  --
---     `ûₑ`;                                                       --
---   * discharge — every atom is decided by `TypeInference.SolverImpl. --
---     Normal` and every eternality demand by `etDec`.             --
---                                                                --
--- A failure here is "this oracle found nothing", not "there is    --
--- nothing to find": the passes are linear and do not search.      --
+-- Closes a residual into the empty scope: slack, then           --
+-- defaults, then the decision procedures of                     --
+-- `TypeInference.SolverImpl.Normal`.                            --
+-- A failure is "found nothing", not "nothing to find".          --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)
@@ -61,20 +47,11 @@ open import TypeInference.SolverImpl.Core.Size S using (Sz)
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
 
---------------------------------------------------------------
--- Defaults                                                  --
---------------------------------------------------------------
-
 groundˢ : ∀ {Ψ} → Subst Ψ ∅ˢ
 groundˢ = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
 
---------------------------------------------------------------
--- Slack                                                     --
---                                                           --
--- Assignments are composed, so an unknown pinned to an       --
--- expression that is itself pinned later comes out fully     --
--- resolved; an unknown already pinned is left alone.         --
---------------------------------------------------------------
+-- Assignments compose: an unknown pinned to an expression pinned later
+-- comes out fully resolved; an unknown already pinned is left alone.
 
 updᵉ : ∀ {Ψ} → EVar Ψ → EExp Ψ → Subst Ψ Ψ
 updᵉ i ε = sub tvar rvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ε else evar k)
@@ -103,10 +80,6 @@ slack¹ R σ = slackʳ (rs R) (slackᵉ (es R) σ)
 slack* : ∀ {Ψ} → ℕ → Resid Ψ → Subst Ψ Ψ → Subst Ψ Ψ
 slack* nzero    R σ = σ
 slack* (nsuc n) R σ = slack* n R (slack¹ R σ)
-
---------------------------------------------------------------
--- Discharge                                                 --
---------------------------------------------------------------
 
 checkʳ : ∀ {Ψ} → (l : List (RExp Ψ × RExp Ψ)) → (δ : Subst Ψ ∅ˢ)
        → Maybe (∀ {ρ ρ'} → (ρ , ρ') ∈ l → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ)
@@ -141,10 +114,6 @@ closeAt R δ with checkʳ (rs R) δ | checkᵉ (es R) δ | checkᵗ (ts R) δ
 ... | just _  | just _  | nothing = nothing
 ... | just _  | nothing | _       = nothing
 ... | nothing | _       | _       = nothing
-
---------------------------------------------------------------
--- Closing                                                   --
---------------------------------------------------------------
 
 close : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ δ ∈ Subst Ψ ∅ˢ ] (∅ᴴ ⊩ᴿ R [ δ ]))
 close {Ψ} R with closeAt R (slack* (Sz Ψ) R idˢ ⨟ˢ groundˢ)

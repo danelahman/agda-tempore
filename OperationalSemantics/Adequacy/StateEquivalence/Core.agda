@@ -36,8 +36,6 @@ open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 
--- STATES UP TO THE EQUIVALENCE
-
 mutual
 
   data _≐ˢ_ : 𝕊 [] → 𝕊 [] → Set where
@@ -98,15 +96,9 @@ mutual
               (cong (λ Γ₀ → [] ++ᶜ Γ₀ ⟨ ρ ⟩) (sym (toCtx-≐ˢ e)))
               (sym eV))
 
-------------------------------------------------------------------------
--- INVERTING A CAST
---
--- The bisimulation cases on the reduction, which fixes the shape of the
--- left-hand term; the shape of the right-hand one has to be read back out of
--- `M ≡ castᶜ e M'`. A cast along a *neutral* equality does not reduce, so this
--- cannot be done in place — but each inversion is one line as a standalone
--- lemma over abstract contexts, where the equality can be matched.
-------------------------------------------------------------------------
+-- The right-hand term's shape has to be read back out of `M ≡ castᶜ e M'`;
+-- each inversion is a standalone lemma over abstract contexts, where the
+-- equality can be matched.
 
 cast-lam⁻ : ∀ {Γ Γ' A B ε} → (e : Γ' ≡ Γ) → {M : Γ ∷ A ⊢C⦂ B ‼ ε}
        → (V' : Γ' ⊢V⦂ A ⇒ B ‼ ε)
@@ -248,14 +240,8 @@ cast-unbox⁻ : ∀ {Γ Γ' A C ρ ρ'} → (e : Γ' ≡ Γ)
            × (M ≡ castᶜ (cong (_∷ A) e) M')
 cast-unbox⁻ refl _ refl = _ , _ , _ , _ , refl , refl , refl
 
-------------------------------------------------------------------------
--- CASTS AND THE REDUCTS
---
--- Having fired the same rule on the right, its reduct must be related to the
--- left one's. The reducts are built by renaming, substitution and retyping,
--- each of which commutes with a cast — one line per rule at `refl`, stated in
--- exactly the shape the corresponding case needs.
-------------------------------------------------------------------------
+-- The reducts are built by renaming, substitution and retyping, each of
+-- which commutes with a cast.
 
 cast-app-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
          → (M' : Γ' ∷ A ⊢C⦂ C) → (W' : Γ' ⊢V⦂ A)

@@ -53,12 +53,7 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            ------------------
            → Env St (toCtx St)
 
-  -- postcomposition with a reach: what makes `Env` functorial in the *state*.
-  -- Recorded rather than pushed into the base, so that a
-  -- reducible environment stays reducible when the state grows: its values
-  -- still come from the earlier state, and `VRed-reach` moves them. Pushing it
-  -- into `⌊_⌋` would instead demand the *later* state's store, which nothing
-  -- supplies.
+  -- Postcomposition with a reach: what makes `Env` functorial in the state.
 
   reachᵉ   : ∀ {St St' Γ}
            → Env St Γ → St ⊑ₛ[ uᵣ ] St'
@@ -77,19 +72,15 @@ data Env : (St : 𝕊 []) → Ctx → Set where
            ---------------------------
            → Env St (Γ ∷ A)
 
-  -- a binder matched by a freshly allocated cell: `BOX` steps
-  -- `⟨St, box V M⟩ ↝ ⟨St ∷ₛ V', M⟩`, and the reduct already lives over the new
-  -- state's context, so the environment must *keep* the binder as the cell
-  -- rather than substitute a variable for itself. Pure re-bracketing: it acts as
-  -- `γ` under the suffix `[] ∷ [ ρ ] A`.
+  -- A binder matched by a freshly allocated cell, as `BOX` steps
+  -- `⟨St, box V M⟩ ↝ ⟨St ∷ₛ V', M⟩`; acts as `γ` under the suffix
+  -- `[] ∷ [ ρ ] A`.
 
   liftᵉ    : ∀ {St Γ A ρ}
            → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A) → Env St Γ
            ------------------------------------------------
            → Env (St ∷ₛ V) (Γ ∷ [ ρ ] A)
 
--- REDUCIBLE ENVIRONMENTS
---
 -- The state's own part is the store; each instantiated binder holds a
 -- reducible value.
 

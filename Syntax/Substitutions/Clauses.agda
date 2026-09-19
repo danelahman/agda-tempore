@@ -55,13 +55,9 @@ Dcl D op ε'' =
      ∷ type-of-gtype (param op)
      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ D ‼ ε'')
 
-------------------------------------------------------------------------
--- CONJUGATED DECOMPOSITIONS
---
 -- Every renaming reaching a clause comes out as an `eq-ren`-conjugated core;
 -- the helpers below fuse nested conjugations, extend one by a suffix, and turn
 -- a conjugation into transports around the core's action.
-------------------------------------------------------------------------
 
 infix 4 _≐ʳconj⟨_,_,_⟩
 
@@ -109,12 +105,8 @@ C-rename-conj e {K = K} e' h X =
         (trans (C-rename-∘ K (eq-ren e') _)
                   (C-rename-eq-≡ e' ≐ʳ-refl _))))
 
-------------------------------------------------------------------------
--- BEING A TRANSPORT
---
 -- Recording "X is some transport of h" makes the transports compose, and two
 -- such records of the same `h` are equal by `uip`.
-------------------------------------------------------------------------
 
 IsSub : ∀ {Γ₀ Γ₁ C} → Γ₀ ⊢C⦂ C → Γ₁ ⊢C⦂ C → Set
 IsSub {Γ₀} {Γ₁} {C} h X = Σ[ e ∈ Γ₀ ≡ Γ₁ ] X ≡ subst (_⊢C⦂ C) e h
@@ -153,10 +145,6 @@ isSub-≡ {C = C} {M' = M'} (e , q) (e' , q') eM =
       ((trans (cong (λ z → subst (_⊢C⦂ C) z M') (uip {p = e} {q = e'}))
                    (sym q'))))
 
-------------------------------------------------------------------------
--- ALIGNING TWO BOUNDARY SUBSTITUTIONS
-------------------------------------------------------------------------
-
 -- The `_≡_`-flavoured alignment, taking the terms and the values related only
 -- up to `_≡_`.
 
@@ -173,13 +161,9 @@ sub-at-≡ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
   rewrite uip {p = e} {q = refl} | uip {p = e'} {q = refl} =
   sub-≡ᶜ split-≡-++ᶜ (sym eV) eX
 
-------------------------------------------------------------------------
--- WHAT `_[_↦_]cl` IS
---
 -- The general substitution at the clause's own suffix. Both sides build the
 -- same generating substitution: `split-++ʳ s (Dcl D op ε)` peels the suffix
 -- into the three congruences `_[_↦_]cl` applies.
-------------------------------------------------------------------------
 
 cl-≡ : ∀ {Γ₀ Γ₁ Γ₂ A D} → (s : Γ₁ ∷ A , Γ₂ split Γ₀) → (W : Γ₁ ⊢V⦂ A)
      → (H : Fam D (Γ₀ ⟨ ⊤ᵣ ⟩)) → (op : Op) → (ε : E)

@@ -28,10 +28,6 @@ open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
 open import TypeInference.Open.Subst  S
 
---------------------------------------------------------------
--- Equations                                                 --
---------------------------------------------------------------
-
 data Eqn (Θ : Scope) : Set where
   eqᵛ : OVType Θ → OVType Θ → Eqn Θ
   eqᶜ : OCType Θ → OCType Θ → Eqn Θ
@@ -40,10 +36,6 @@ data Eqn (Θ : Scope) : Set where
 
 Eqns : Scope → Set
 Eqns Θ = List (Eqn Θ)
-
---------------------------------------------------------------
--- Action of a substitution                                  --
---------------------------------------------------------------
 
 infixl 50 _[_]ᴱ _[_]ᴱˢ
 
@@ -56,10 +48,6 @@ eqᵉ ε ε' [ σ ]ᴱ = eqᵉ (ε [ σ ]ᵉ) (ε' [ σ ]ᵉ)
 _[_]ᴱˢ : ∀ {Θ Θ'} → Eqns Θ → Subst Θ Θ' → Eqns Θ'
 es [ σ ]ᴱˢ = map (_[ σ ]ᴱ) es
 
---------------------------------------------------------------
--- Unification as a property of a substitution               --
---------------------------------------------------------------
-
 Unifies¹ : ∀ {Θ Θ'} → Eqn Θ → Subst Θ Θ' → Set
 Unifies¹ (eqᵛ A B)  σ = A [ σ ]ᵛ ≡ B [ σ ]ᵛ
 Unifies¹ (eqᶜ C D)  σ = C [ σ ]ᶜ ≡ D [ σ ]ᶜ
@@ -69,10 +57,6 @@ Unifies¹ (eqᵉ ε ε') σ = ε [ σ ]ᵉ ≡ ε' [ σ ]ᵉ
 Unifies : ∀ {Θ Θ'} → Eqns Θ → Subst Θ Θ' → Set
 Unifies []       σ = ⊤
 Unifies (e ∷ es) σ = Unifies¹ e σ × Unifies es σ
-
---------------------------------------------------------------
--- Unification is stable under the two moves the solver makes --
---------------------------------------------------------------
 
 Unifies¹-resp-≐ˢ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ
                  → (e : Eqn Θ) → Unifies¹ e σ → Unifies¹ e δ

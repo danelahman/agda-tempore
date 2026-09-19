@@ -68,8 +68,6 @@ open [_]ᶜ public
 []-fun-irr {A = A} F p q with ⊑-irrelevant p q
 ... | refl = ≈-refl A
 
--- STRUCTURE
-
 -- Functor
 
 [_]ᵒ : R → PSh → PSh

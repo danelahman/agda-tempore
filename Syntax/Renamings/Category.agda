@@ -35,33 +35,24 @@ open import Syntax.Renamings.Equivalence Spec
 open import Syntax.Renamings.Coherence   Spec
 open import Syntax.Terms.Equivalence     Spec
 
-------------------------------------------------------------------------
--- THE CATEGORY OF RENAMINGS
---
--- Objects are contexts, morphisms are `Ren [] Γ Γ'` taken up to `_≐ʳ_`.
--- The three laws hold by computation at the level of `var-img`, which is
--- what makes this quotient the right one:
+-- Objects are contexts, morphisms are `Ren [] Γ Γ'` taken up to `_≐ʳ_`. The
+-- three laws hold by computation at the level of `var-img`:
 --
 --   `∘ʳ-assoc-≐ʳ`, `∘ʳ-identityˡ-≐ʳ`, `∘ʳ-identityʳ-≐ʳ`   (Equivalence)
 --
--- and `∘ʳ-≐ʳ` is composition's congruence, i.e. `_≐ʳ_` is a congruence for
--- the category structure. `var-img` itself is the faithful functor into
--- the presheaf of variables that defines the quotient.
-------------------------------------------------------------------------
+-- `∘ʳ-≐ʳ` is composition's congruence, i.e. `_≐ʳ_` is a congruence for the
+-- category structure. `var-img` is the faithful functor into the presheaf
+-- of variables that defines the quotient.
 
-------------------------------------------------------------------------
--- THE AMBIENT INDEXING
+-- `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` fixing `Ξ`: the family
+-- `Ξ ↦ Ren Ξ` is an indexed category, each `Ξ` giving a category with the
+-- same objects, reindexed by the two functors below. `Ren []` is the fibre
+-- over the empty ambient.
 --
--- `Ren Ξ Δ Δ'` is a morphism `Ξ ++ᶜ Δ → Ξ ++ᶜ Δ'` fixing `Ξ`, so the
--- family `Ξ ↦ Ren Ξ` is an indexed category: each `Ξ` gives a category
--- with the same objects, and the ambient is reindexed by the two functors
--- below. `Ren []` is the fibre over the empty ambient.
---
--- Only two constructors read `Ξ` at all: `var-ren`, whose variable ranges
--- over `Ξ ⋈ᶜ Δ` (the ambient may be *read*, never rewritten), and
--- `⟨⟩-ext-ctx`, which additionally demands `EternalCtx Ξ`. So the fibres
--- are all alike except that the lock-introducing map exists only over an
--- eternal ambient — semantically, only there is `⟦ Ξ ⟧ᶜᵗˣ` a `⟨_⟩`-algebra.
+-- Only two constructors read `Ξ`: `var-ren`, whose variable ranges over
+-- `Ξ ⋈ᶜ Δ` (the ambient may be read, never rewritten), and `⟨⟩-ext-ctx`,
+-- which also demands `EternalCtx Ξ` — the lock-introducing map exists only
+-- over an eternal ambient.
 
 -- Forgetting what a renaming fixes is the projection to the fibre over the
 -- empty ambient. It is a functor *on the nose*: `expose-ren` sends `id-ren`
@@ -78,8 +69,8 @@ expose-ren-[]-∘ r₂ r₁ = refl
 
 -- Extending the ambient on the left is the reindexing functor of the
 -- indexing, and likewise strictly functorial. Its `EternalCtx` premise is
--- the obligation `⟨⟩-ext-ctx` incurs: the prefix now stands to the left of
--- the lock, so it must be eternal too.
+-- the obligation `⟨⟩-ext-ctx` incurs: the prefix, now standing to the left
+-- of the lock, must be eternal too.
 
 cong-renˡ-id : ∀ {Ξ Δ} → (Γ'' : Ctx) → (ec : EternalCtx Γ'')
              → cong-renˡ {Ξ} {Δ} Γ'' ec id-ren ≡ id-ren
@@ -96,9 +87,6 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- `cong-ren` recurses on the suffix and so does not commute with `_∘ʳ_` on
 -- the nose: that is `cong-ren-∘-≐ʳ` and `cong-ren-id-≐ʳ` (Coherence).
 
-------------------------------------------------------------------------
--- TERMS ARE PRESHEAVES
---
 -- `Γ ⊢V⦂ A` and `Γ ⊢C⦂ C` are presheaves on the category above. The action is
 -- `V-rename`/`C-rename`; the laws are `V-rename-∘`, `V-rename-id-≡` (the
 -- action respects the quotient on renamings) and `V-rename-cong`, and likewise
@@ -109,4 +97,3 @@ cong-renˡ-∘ Γ'' ec r₂ r₁ = refl
 -- subgroupoid of equalities: `castᵛ e V ≡ V-rename (eq-ren e) V`
 -- (`V-rename-eq-≡`), with `eq-ren` the functor from that subgroupoid
 -- (`eq-ren-∘-≐ʳ`, `eq-ren-≐ʳ`).
-------------------------------------------------------------------------

@@ -1,28 +1,13 @@
 ------------------------------------------------------------------
--- Parametricity certificates for grounded derivations            --
+-- Parametricity certificates for grounded derivations.           --
 --                                                                --
--- The interpretation `⟦_⟧ᵛᵗ`/`⟦_⟧ᶜᵗ` of                          --
--- `DenotationalSemantics.Interpretation.Terms` is defined only on --
--- *parametric* terms. `TypeInference.Infer` produces its derivation   --
--- through `groundC`, so the missing link between inference and    --
--- the denotational semantics is                                   --
+-- `Interpretation.Terms`'s interpretation is defined only on     --
+-- parametric terms; this supplies `Paramᵛ (groundV θ h D)` and   --
+-- `Paramᶜ (groundC θ h D)` for every mirrored derivation D.      --
 --                                                                --
---     Paramᵛ (groundV θ h D)   and   Paramᶜ (groundC θ h D).      --
---                                                                --
--- Every case but `handle` is inert: `Paramᵛ`/`Paramᶜ` is `⊤` or a --
--- product, so the certificate is assembled from the sub-          --
--- derivations', modulo the transports `groundV`/`groundC` insert  --
--- (`perform`'s ground-type round-trips, `ground-clause`'s         --
--- `subst₂`), each of which is stripped by `J`.                    --
---                                                                --
--- `handle` carries `EffUniformʰ`: the clause denotations have to  --
--- be natural in the residual effect grade. A grounded handler's   --
--- clause family is one mirrored derivation `Ĥ op` at scope        --
--- `Θ +e`, read at the groundings `θ ,ᵍᵉ ε''`, so its uniformity   --
--- is a *grade-naturality* statement about `groundC`. That         --
--- statement is `GroundUniform.ground-uniform`, an explicit        --
--- hypothesis of this module (not a postulate); see the module     --
--- note below it for what proving it would take.                   --
+-- `handle` needs `EffUniformʰ`-uniformity of its clause family,  --
+-- stated as `GroundUniform.ground-uniform`: an explicit          --
+-- hypothesis of this module, not proved here.                    --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -80,12 +65,8 @@ open import TypeInference.Open.Grounding S
 
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
 
---------------------------------------------------------------
--- Transport lemmas                                          --
---                                                           --
--- `Paramᵛ`/`Paramᶜ` is invariant under the type- and         --
--- context-equality transports `groundV`/`groundC` insert.    --
---------------------------------------------------------------
+-- `Paramᵛ`/`Paramᶜ` is invariant under the type- and context-equality
+-- transports `groundV`/`groundC` insert.
 
 -- `perform`'s parameter: the value's type is retyped
 
@@ -105,13 +86,8 @@ subst₂-Paramᶜ : ∀ {Γ Γ' C C'} → (e₁ : Γ ≡ Γ') → (e₂ : C ≡ 
               → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (subst₂ _⊢C⦂_ e₁ e₂ M)
 subst₂-Paramᶜ refl refl M p = p
 
---------------------------------------------------------------
--- Monotonicity of grounding in the residual grade           --
---                                                           --
--- The first building block of a proof of `ground-uniform`:  --
--- every grade expression of the extended scope is monotone  --
--- in the grade the rigid variable is sent to.               --
---------------------------------------------------------------
+-- Every grade expression of the extended scope is monotone in the
+-- grade the rigid variable is sent to.
 
 ground-mono-e : ∀ {Θ} {θ : Grounding Θ} {ε₁ ε₂ : E} → ε₁ ≾ₑ ε₂
               → (ε : EExp (Θ +e))
@@ -140,19 +116,9 @@ ground-mono-clause : ∀ {Θ} {θ : Grounding Θ} {ε₁ ε₂ : E} → (q : ε�
                    ≡ ·ₑ-monoʳ-≾ₑ q
 ground-mono-clause q op = ≾ₑ-irrelevant _ _
 
---------------------------------------------------------------
--- The grade-naturality hypothesis                           --
---------------------------------------------------------------
-
--- A grounded handler's clause at residual grade `ε''` is `ground-clause θ h op
--- ε'' (Ĥ op)`: one and the same mirrored derivation `Ĥ op`, typed at scope
--- `Θ +e` against the rigid grade `evar newᵉ`, read at the grounding `θ ,ᵍᵉ ε''`.
--- `ground-uniform` says that this syntactically uniform family is semantically
--- uniform, i.e. that it satisfies `EffUniformʰ`.
---
--- The certificate family `pH` is an argument rather than the one this module
--- builds, exactly as in `EffUniformʰ` itself; that also keeps the hypothesis
--- independent of the mutual block below.
+-- `ground-uniform` says that a grounded handler's clause family — one
+-- mirrored derivation `Ĥ op` read at varying groundings `θ ,ᵍᵉ ε''` —
+-- is semantically uniform, i.e. satisfies `EffUniformʰ`.
 
 record GroundUniform : Set where
   field
@@ -170,27 +136,11 @@ record GroundUniform : Set where
 
 open GroundUniform public
 
--- What proving `ground-uniform` takes. The strengthened induction hypothesis is
--- a naturality statement for `groundC` itself: a family of morphisms
--- `⟦ ⟦ A ⟧ᵒᵛ (θ ,ᵍᵉ ε₁) ⟧ᵛ →ᵐ ⟦ ⟦ A ⟧ᵒᵛ (θ ,ᵍᵉ ε₂) ⟧ᵛ` (and likewise on
--- contexts), along which the two grounded denotations commute. `ground-mono-e`/
--- `ground-mono-r` supply the coercion grades; the variance discipline such a
--- family needs is
---
---   covariant:      `A |×| B`, `A ‼ ε` (via `T-≤`), `Γ ∷ A`, `Γ ⟨ ρ ⟩`
---                   (`⟨⟩-≤` is covariant in the grade)
---   contravariant:  the domain of `A ⇒ C`, the grade of `[ ρ ] A`
---                   (`[]-≤` is contravariant in the grade)
---
--- so the family exists only for types in which `evar newᵉ` occurs covariantly.
--- The clause's own context and result type qualify, but `lam` (a newᵉ-mentioning
--- domain) and `box` (a newᵉ-mentioning grade) can put it negatively, where no
--- such morphism exists and a relational argument is required — structure the
--- abstract model interface does not provide.
-
---------------------------------------------------------------
--- The theorem                                               --
---------------------------------------------------------------
+-- Proving `ground-uniform` needs a naturality family for `groundC`,
+-- which exists only for types where `evar newᵉ` occurs covariantly; the
+-- clause's own context and result type qualify, but `lam` and `box` can
+-- put it negatively, where the abstract model interface provides no
+-- such morphism.
 
 module _ (GU : GroundUniform) where
 

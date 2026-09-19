@@ -1,10 +1,8 @@
 ------------------------------------------------------------------------
 -- Soundness of the `handle-perform` equation.                          --
---                                                                    --
 -- Handling an operation applies the matching clause, with the rest of  --
 -- the handled computation boxed up as the clause's continuation. The   --
--- barrier parameter is carried under the operation's box by `necᵉ`,    --
--- and the inner handle's own transport across the arity binder is      --
+-- inner handle's transport across the arity binder is                  --
 -- `handle-op-cont`, shared verbatim with operational preservation.     --
 ------------------------------------------------------------------------
 
@@ -84,11 +82,6 @@ private
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
   _∙_ = ≈ᵐ-trans
 
--- ═══════════════════════════════════════════════════════════════════════════
--- THE AXIOM: handling an operation applies the matching clause, with the rest
--- of the handled computation boxed up as the clause's continuation.
--- ═══════════════════════════════════════════════════════════════════════════
-
 sound-handle-perform : ∀ {Γ A B ε ε' op}
   → (V : Γ ⊢V⦂ type-of-gtype (param op))
   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
@@ -159,12 +152,9 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
     -- (`arity-box`), the inner handle's fold is transported to the ambient
     -- barrier (`handle-op-cont`, shared with operational preservation)
     boxeq =
-      -- merge the coercion into the box and cancel it against the arity subst
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
       ∙ ∘ᵐ-congˡ ([]-congᶠ (arity-box (ty-gty (arity op)) _ _ _))
-      -- and what is left is the reduct's inner handle, once its fold is
-      -- transported to the ambient barrier
       ∙ ≈ᵐ-sym (∘ᵐ-congˡ ([]-congᶠ (curryᵐ-cong
           (handle-op-cont H M N ren pM pN pH uH))))
 
@@ -188,9 +178,6 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
                   ∙ ⟨ ∘ᵐ-identityˡ _ , gty-cancelᵛ (ty-gty (param op)) _ ⟩ᵐ-cong
                 , boxeq ⟩ᵐ-cong))
 
-    -- the operation's boxed continuation: the eternal parameter is carried
-    -- under the box by `necᵉ` (its mate `η⊣`), pairs up with the continuation
-    -- by `η⊣-⟨⟩`, and the fold is applied inside by `cont-collapse`
     boxpart =
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
@@ -213,17 +200,13 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
       ∙ ∘ᵐ-congˡ ([]-congᶠ (cont-collapse _ _ _))
 
     assembly =
-      -- `str-op` moves the sequel `N` into the operation's boxed continuation
         ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
                   , str-op op (ty-gty (arity op)) Vp (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN)
                       ⟦ ren ⟧ʳ ern ⟩ᵐ-cong)
-      -- re-form `mapˣᵐ idᵐ (opᵀ op)` and apply the fold's operation law
       ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
                   ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-opᵀ op (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH))
-      -- the law's reshuffle returns the eternal and operation parameters
-      -- unchanged; the continuation carries the rest
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
@@ -232,8 +215,6 @@ sound-handle-perform {Γ} {A} {B} {ε} {ε'} {op} V M H N
             , ⟨⟩ᵐ-∘ _ _ _
               ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _
                 , boxpart ⟩ᵐ-cong ⟩ᵐ-cong))
-      -- what remains is the reduct: the clause at `Γ`, applied to the
-      -- parameter and to the boxed continuation the `box` allocates
       ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr
                     (ε-subst e
                       (box (lam (handle M `with H' `in (C-rename (cong-∷-ren ren) N)))

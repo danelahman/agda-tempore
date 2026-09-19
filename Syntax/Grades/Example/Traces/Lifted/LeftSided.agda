@@ -1,30 +1,27 @@
 ------------------------------------------------------------------------
 -- Sets of timed traces as lower bounds.                               --
 --                                                                     --
--- A grade is a non-empty finite set of traces, read as the guarantees  --
--- a computation makes: writing `X` for the runs it may have,           --
+-- A grade is a non-empty finite set of traces, read as the guarantees --
+-- a computation makes: writing `X` for the runs it may have,          --
 --                                                                     --
 --   X is graded by P   iff   ∀ x ∈ X. ∃ p ∈ P. p ≼ x                  --
 --                                                                     --
--- -- whatever happens, at least one of the listed traces has been      --
--- covered. The quantifier is universal over the runs and existential   --
--- over the set, so a longer list guarantees less, and the order that   --
+-- -- whatever happens, at least one of the listed traces has been     --
+-- covered. The quantifier is universal over the runs and existential  --
+-- over the set, so a longer list guarantees less, and the order that  --
 -- weakens the grade is                                                --
 --                                                                     --
 --   P ≾ P'   iff   ∀ p ∈ P. ∃ p' ∈ P'. p' ≼ p                         --
 --                                                                     --
--- every listed guarantee has an easier one listed in `P'`. Taking      --
--- `X := P` shows that necessary and transitivity shows it sufficient.  --
+-- -- every listed guarantee has an easier one listed in `P'`. Both    --
+-- endpoints are read disjunctively, both weaken by gaining members,   --
+-- and the union of two grades is their join at either; note that the  --
+-- quantifiers run universally over the *stronger* grade's set and     --
+-- existentially over the weaker's, the mirror of `Lifted.RightSided`. --
 --                                                                     --
--- Note which set each quantifier runs over: universally over the       --
--- *stronger* grade's, existentially over the weaker's -- the mirror of --
--- `Lifted.RightSided`, where it is the other way round. Both endpoints --
--- are therefore read disjunctively, both weaken by gaining members,    --
--- and the union of two grades is their join at either.                 --
---                                                                     --
--- Nothing here inspects the order; `Example.Traces.Timed.LeftSided` is   --
--- construction at the coverage order, which is the one a guarantee     --
--- wants, since there nothing but an operation covers a demand for it.  --
+-- Nothing here inspects the order. `Example.Traces.Timed.LeftSided`   --
+-- instantiates it at the coverage order, the one a guarantee wants,   --
+-- since there nothing but an operation covers a demand for it.        --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

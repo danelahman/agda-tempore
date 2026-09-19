@@ -194,11 +194,10 @@ either-reading =
 ------------------------------------------------------------------------
 -- Unboxing: a resource demanding exactly its run
 --
--- `unbox`'s premise is `elapsed ≾ᵣ ρ`, which here asks every run the
--- box demands to be one the computation exhibited. With both sides
--- singletons that is equality: the locks between the binding and the
--- claim have to multiply to the run the box names, and nothing else
--- will do.
+-- `unbox`'s premise `elapsed ≾ᵣ ρ` asks every run the box demands to
+-- be one the computation exhibited. With both sides singletons that is
+-- equality: the locks between the binding and the claim have to
+-- multiply to the run the box names.
 
 demand : R
 demand = demanding ⟅ ⌈ read ⌉ ⟆
@@ -262,14 +261,12 @@ claiming-now =
       (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
--- Why every claim here is an equality
+-- Every claim here is an equality
 --
--- The claims above all compare a grade with itself, and that is forced
--- rather than chosen. A computation's grade is the singleton of its
--- run, so the elapsed grade at any `unbox` is a singleton; the premise
--- `elapsed ≾ᵣ ρ` asks `ρ ⊆ elapsed`; and so every run the box demands
--- is the run that elapsed. There is no room here for the non-reflexive
--- comparisons the ordered families allow.
+-- The claims above all compare a grade with itself: a computation's
+-- grade is the singleton of its run, and `elapsed ≾ᵣ ρ` asks
+-- `ρ ⊆ elapsed`, so there is no room for the non-reflexive comparisons
+-- the ordered families allow.
 
 -- `no-demand` demands no run at all
 
@@ -291,14 +288,12 @@ two-run-demand = fails
 ------------------------------------------------------------------------
 -- Non-singleton grades
 --
--- A grade with several members demands each of them separately, and
--- that is what sets this floor apart from the other five endpoints:
--- there the union of two grades is their join, here it is their *meet*.
--- The calculus cannot hand a computation such a grade -- `if` would
--- have to union its branches and `no-common-listed-grade` says it
--- cannot, `no-demand` being the one grade left -- but the order is defined on
--- them all the same, and the facts below are what a branching rule that
--- did take unions would be working with.
+-- A grade with several members demands each of them separately, which
+-- sets this floor apart from the other five endpoints: there the union
+-- of two grades is their join, here it is their *meet*. The calculus
+-- cannot hand a computation such a grade, but the order is defined on
+-- them all the same, and the facts below are what a branching rule
+-- taking unions would be working with.
 
 -- weakening drops demands, so a two-run grade sits below each of the
 -- singletons it is made of

@@ -44,25 +44,9 @@ open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.Environment.Core Spec
 
 
-------------------------------------------------------------------------
--- THE ACTION
---
--- Iterated single substitutions. Two things make it go through with only the
--- prefix-typed substitution `_[_↦_]c` the formalisation has:
---
---   * the variable to replace sits under whatever the recursion has already
---     passed, so the action is defined under an arbitrary *suffix* `Δ`. A lock
---     is absorbed into that suffix (`(Γ ⟨ ρ ⟩) ++ᶜ Δ ≡ Γ ++ᶜ ([] ⟨ ρ ⟩ ++ᶜ Δ)`),
---     which is what lets the substitution cross it: crossing is the
---     grade-lowering case of `⟨_,_⟩[_↦_]var`, licensed by the `var` rule's own
---     premise, and needs nothing from here;
---
---   * a telescope entry is substituted *last*: it rides along in the suffix
---     (`[] ∷ A ++ᶜ Δ`) and its variable is substituted afterwards. Its value
---     already lives over the prefix `toCtx St`, so it needs no weakening, and
---     `env-C (γ ∷ᵉ W) M ≡ (env-Cˢ γ ([] ∷ A) M) [ split-[] ↦ W ]c` holds
---     definitionally — the order `APP` wants.
-------------------------------------------------------------------------
+-- Iterated single substitutions, defined under an arbitrary suffix `Δ`. A
+-- telescope entry is substituted last, riding along in the suffix until its
+-- variable is substituted.
 
 -- The action under a suffix.
 
@@ -108,12 +92,7 @@ env-Cˢ (liftᵉ {St = St} {Γ = Γ} {A = A} {ρ = ρ} V γ) Δ M =
     (env-Cˢ γ ([] ∷ [ ρ ] A ++ᶜ Δ)
       (castᶜ (++ᶜ-assoc Γ ([] ∷ [ ρ ] A) Δ) M))
 
--- THE ACTION COMMUTES WITH `lam`
---
--- Each single substitution does: the substitution at suffix `Δ ∷ A` is
--- `cong-∷-sub` of the one at `Δ` — definitionally, since `split-≡-++ᶜ` is
--- `≡-split refl` and both it and `sub-split₀` recurse on the suffix — and that
--- congruence is exactly what the action inserts at a binder.
+-- Commutes with `lam` via `cong-∷-sub` at the suffix `Δ ∷ A`.
 
 env-Vˢ-lam : ∀ {St Γ A B ε} → (γ : Env St Γ) → (Δ : Ctx)
            → (M : (Γ ++ᶜ Δ) ∷ A ⊢C⦂ B ‼ ε)
@@ -505,8 +484,6 @@ env-Vˢ-pair (_∷ᵉ_ {St = St} {Γ = Γ} {A = A₀} γ W) Δ V U =
     eIn  = sym (++ᶜ-assoc (toCtx St) ([] ∷ A₀) Δ)
     eA   = ++ᶜ-assoc Γ ([] ∷ A₀) Δ
 
--- THE ACTION COMMUTES WITH THE BINDING FORMERS
---
 -- The body sits at an extended suffix, so the two sides carry casts along
 -- different (but equal) proofs, reconciled by `castᶜ-irr`.
 
@@ -1043,10 +1020,6 @@ env-C γ M = env-Cˢ γ [] M
 env-C-id : ∀ {St C} → (M : toCtx St ⊢C⦂ C) → env-C ⌊ St ⌋ M ≡ M
 env-C-id M = refl
 
-------------------------------------------------------------------------
--- CLAUSE FAMILIES AND THE ETERNAL ZONE
-------------------------------------------------------------------------
-
 -- The action commutes with substituting a telescope entry, definitionally:
 -- at the empty suffix every cast is `refl` (`++ᶜ-assoc Γ Γ' []` is, and so is
 -- `cong₂ _++ᶜ_ refl refl`) and the variable is `Hd`.
@@ -1056,8 +1029,6 @@ env-Cˢ-head : ∀ {St Γ A C} → (γ : Env St Γ) → (M : Γ ∷ A ⊢C⦂ C)
             → (env-Cˢ γ ([] ∷ A) M) [ split-[] ↦ W ]c ≡ env-C (γ ∷ᵉ W) M
 env-Cˢ-head γ M W = refl
 
--- THE ACTION ON A CLAUSE FAMILY
---
 -- A clause lives over the ambient under the barrier lock and the clause's two
 -- binders (`Dcl`), an ordinary suffix, so the action on a family is the action
 -- at that suffix.
@@ -1080,11 +1051,9 @@ Cl-cast-irr : ∀ {Γ₀ Γ₀' B} {op : Op} {ε : E} → (e : Γ₀ ≡ Γ₀')
             → Cl-cast op ε e X ≡ castᶜ e' X
 Cl-cast-irr e e' X = castᶜ-irr _ e' X
 
--- THE ACTION COMMUTES WITH `handle`
---
--- The last of the structural laws. Every zone acts on the clauses exactly as it
--- acts under any other suffix; what is left is that its transports and the
--- ones `cast-handle` produces are the same by `uip`.
+-- Every zone acts on the clauses exactly as it acts under any other suffix;
+-- what is left is that its transports and the ones `cast-handle` produces are
+-- the same by `uip`.
 
 env-Cˢ-handle : ∀ {St Γ A B ε ε'} → (γ : Env St Γ) → (Δ : Ctx)
               → (M : (Γ ++ᶜ Δ) ⊢C⦂ A ‼ ε)
@@ -1205,14 +1174,4 @@ env-Cˢ-handle {A = A} {B = B} {ε = ε}
                      (Cl-cast-irr eA (++ᶜ-assoc Γ Δ₁ D) (H op ε₀))))
       where
         D = Δ ++ᶜ Dcl B op ε₀
-
-------------------------------------------------------------------------
--- FUNCTORIALITY IN THE STATE
---
--- `BOX` steps `⟨St, box V M⟩ ↝ ⟨St ∷ₛ V', M⟩`, so the `box` case of the
--- fundamental lemma must move an environment to the extended state. The term
--- needs no reindexing — `toCtx (St ∷ₛ V) = toCtx St ∷ [ρ]A` is the context the
--- action already produced, and moving the environment is recording the
--- allocation reach.
-------------------------------------------------------------------------
 

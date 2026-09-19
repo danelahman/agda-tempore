@@ -43,11 +43,6 @@ open import TypeInference.Open.Hyps   S
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
---------------------------------------------------------------
--- Pointwise equality of substitutions: symmetry and the     --
--- compatibility with the formers the binder cases use       --
---------------------------------------------------------------
-
 ≐ˢ-sym : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → σ' ≐ˢ σ
 ≐ˢ-sym p = mk≐ˢ (λ α → sym (≐ᵗ p α)) (λ i → sym (≐ʳ p i)) (λ i → sym (≐ᵉ p i))
 
@@ -67,10 +62,6 @@ open import TypeInference.Constraints.Satisfaction S
 ≐ˢ-↑ᵉ p = mk≐ˢ (λ α → cong wkᵉ-v (≐ᵗ p α))
                (λ i → cong wkᵉ-r (≐ʳ p i))
                (λ { zero → refl ; (suc i) → cong wkᵉ-e (≐ᵉ p i) })
-
---------------------------------------------------------------
--- Satisfaction respects pointwise equality                  --
---------------------------------------------------------------
 
 ⊨-resp-≐ˢ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} {Q : Hyps Θ'}
           → σ ≐ˢ σ' → (C : Constraint Θ) → σ ⊨[ Q ] C → σ' ⊨[ Q ] C
@@ -92,10 +83,6 @@ open import TypeInference.Constraints.Satisfaction S
 ⊨-resp-≐ˢ p (∃ᵉ C)               (ε , s)  = ε , ⊨-resp-≐ˢ (≐ˢ-,ᵉ p ε) C s
 ⊨-resp-≐ˢ p (∀ᵉ C)               s        = ⊨-resp-≐ˢ (≐ˢ-↑ᵉ p) C s
 ⊨-resp-≐ˢ p (⋀ᵒᵖ f)              s        = λ op → ⊨-resp-≐ˢ p (f op) (s op)
-
---------------------------------------------------------------
--- How the substitution formers interact with composition    --
---------------------------------------------------------------
 
 private
 
@@ -141,13 +128,8 @@ private
                      (λ i → wk-,ᵉ-r σ ε (sR δ i))
                      (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
---------------------------------------------------------------
--- Hypothesis entailment under a lift                        --
---                                                           --
--- The `∀ᵉ` clause weakens both hypothesis sets, so `⊨-mono`  --
--- needs its assumption transported along `_↑ᵉ`. The members  --
--- of a weakened `Hyps` are read back with `∈-map⁻`.          --
---------------------------------------------------------------
+-- Transports hypothesis entailment along `_↑ᵉ`, for the `∀ᵉ` case of
+-- `⊨-mono`; members of a weakened `Hyps` are read back with `∈-map⁻`.
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
@@ -172,10 +154,6 @@ private
       subst₂ (λ x y → wkᵉ-H Q' ⊩ x ≾̂ₑ y)
              (sym (wk-↑ᵉ-e δ ε₀)) (sym (wk-↑ᵉ-e δ ε₀'))
              (⊩-wkᵉₑ (⊩ordₑ h m₀))
-
---------------------------------------------------------------
--- Monotonicity                                              --
---------------------------------------------------------------
 
 ⊨-mono : ∀ {Θ Θ' Θ''} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
            {δ : Subst Θ' Θ''} {Q' : Hyps Θ''}
@@ -205,12 +183,7 @@ private
   ⊨-resp-≐ˢ (⨟-↑ᵉ σ δ) C (⊨-mono (⊩ᴴ-↑ᵉ h) C s)
 ⊨-mono h (⋀ᵒᵖ f) s = λ op → ⊨-mono h (f op) (s op)
 
---------------------------------------------------------------
--- Satisfaction of a substituted constraint                  --
---                                                           --
--- Both directions, as generation weakens constraints it has  --
--- already built and elaboration reads them back.             --
---------------------------------------------------------------
+-- Both directions of satisfaction along a substitution.
 
 ⊨-subst : ∀ {Θ Θ₁ Θ'} {δ : Subst Θ Θ₁} {σ : Subst Θ₁ Θ'} {Q : Hyps Θ'}
         → (C : Constraint Θ) → (δ ⨟ˢ σ) ⊨[ Q ] C → σ ⊨[ Q ] C [ δ ]ᶜⁿ
@@ -265,10 +238,6 @@ private
 ⊨-subst⁻ {δ = δ} {σ = σ} (∀ᵉ C) s =
   ⊨-resp-≐ˢ (⨟-↑ᵉ δ σ) C (⊨-subst⁻ C s)
 ⊨-subst⁻ (⋀ᵒᵖ f) s = λ op → ⊨-subst⁻ (f op) (s op)
-
---------------------------------------------------------------
--- Small helpers                                             --
---------------------------------------------------------------
 
 ⊨-⊤ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} → σ ⊨[ Q ] ⊤̂
 ⊨-⊤ = tt

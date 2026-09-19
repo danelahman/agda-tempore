@@ -34,28 +34,18 @@ open import TypeInference.Open.Contexts  S
 open import TypeInference.Open.Subst     S
 open import TypeInference.Open.Grounding S
 
---------------------------------------------------------------
--- The number of variables of an original context            --
---------------------------------------------------------------
-
 skel : Ctx → ℕ
 skel []        = 0
 skel (Γ ∷ A)   = suc (skel Γ)
 skel (Γ ⟨ ρ ⟩) = skel Γ
-
---------------------------------------------------------------
--- The embedding                                             --
---------------------------------------------------------------
 
 ⌜_⌝ᶜᵗˣ : ∀ {Θ} → (Γ : Ctx) → OCtx Θ (skel Γ)
 ⌜ []      ⌝ᶜᵗˣ = []
 ⌜ Γ ∷ A   ⌝ᶜᵗˣ = ⌜ Γ ⌝ᶜᵗˣ ∷ ⌜ A ⌝ᵛ
 ⌜ Γ ⟨ ρ ⟩ ⌝ᶜᵗˣ = ⌜ Γ ⌝ᶜᵗˣ ⟨ rconst ρ ⟩
 
---------------------------------------------------------------
--- An embedded context has no variables to substitute for,   --
--- and grounds back to itself                                --
---------------------------------------------------------------
+-- An embedded context has no variables to substitute for, and grounds
+-- back to itself.
 
 ⌜⌝ᶜᵗˣ-subst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (Γ : Ctx)
             → ⌜ Γ ⌝ᶜᵗˣ [ σ ]ᶜᵗˣ ≡ ⌜ Γ ⌝ᶜᵗˣ

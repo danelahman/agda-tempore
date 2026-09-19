@@ -31,8 +31,7 @@ open import Syntax.Substitutions.Lookup S
 -- Structural on the term, exactly as `V-rename`/`C-rename` is: the recursion
 -- grows the substitution at each binder (`cong-sub₀`) and never inspects it.
 -- The observations recurse on the substitution alone and never call back here,
--- so the two recursions are independent — which is what a composition generator
--- in `Sub₀` would have destroyed.
+-- so the two recursions are independent.
 --
 -- At the empty ambient throughout, and so transport-free: a handler clause's
 -- context is the substituted one under one more lock and two more binders.

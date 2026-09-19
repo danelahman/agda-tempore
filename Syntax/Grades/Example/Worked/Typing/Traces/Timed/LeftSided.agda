@@ -312,11 +312,9 @@ transmitting-branch-does-not = fails
 --
 -- Sequencing locks its continuation by the grade the first part is
 -- *typed at* and binds that part's result -- the `⟨ … ⟩ ∷ …` on the
--- `⨟` line below. So a `coerce` on the first part changes the lock, and
--- can only take claims away, which is `coercion-only-closes`. What a
--- coercion forgets here is not time but the operation: a reading may be
--- traded for the tick it took, and a box asking for the reading is then
--- out of reach.
+-- `⨟` line below. What a `coerce` there forgets is not time but the
+-- operation: a reading may be traded for the tick it took, and a box
+-- asking for the reading is then out of reach.
 
 claim-after-a-reading : [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
 claim-after-a-reading =
@@ -342,12 +340,9 @@ forgetting-the-reading-closes-it = fails
 -- Non-singleton grades
 --
 -- A grade with several members is read disjunctively: each run of the
--- computation covers one of them. `if` is what produces one, its grade
--- being the join of the branches' and the union being that join. And
--- sequencing after the join locks its continuation by the union, so an
--- `unbox` there is discharged only if *every* branch discharges it --
--- the condition being universal in the elapsed set and existential in
--- the box's.
+-- computation covers one of them. `if` produces one, its grade being
+-- the union of its branches'. An `unbox` after the join is discharged
+-- only if *every* branch discharges it.
 
 -- the grade of the conditional: the join of what its branches
 -- guarantee, which is their union
@@ -355,14 +350,10 @@ forgetting-the-reading-closes-it = fails
 after-the-join : E
 after-the-join = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
 
--- and the grade on the box, which is a different element of the same
--- monoid -- the two are the same carrier only because the grade system
--- is the identity one, and they are doing different jobs. This one asks
--- for a reading *or* for two ticks, and the two branches meet it by
--- different members: the sampling branch covers the reading and cannot
--- cover the ticks (`sampling-branch-covers-it`,
--- `sampling-branch-too-little`), the storing branch the other way
--- round.
+-- and the grade on the box, a different element of the same monoid: it
+-- asks for a reading *or* for two ticks, and the two branches meet it
+-- by different members -- the sampling branch covers the reading and
+-- not the ticks, the storing branch the other way round.
 
 mixed-demand : R
 mixed-demand = ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆

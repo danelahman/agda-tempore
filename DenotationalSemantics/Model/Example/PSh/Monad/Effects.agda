@@ -41,8 +41,6 @@ open import DenotationalSemantics.Model.Example.PSh.Monad.Core S Wld GTy
 open import DenotationalSemantics.Model.Category
 open Category PShCat using (mapˣᵐ; map⇒ᵐ; fstᵐ; sndᵐ; ⟨_,_⟩ᵐ)
 
--- OPERATIONS AND DELAYS
-
 -- A delay: its continuation box `[ of-natʳ τ ]` is stored in the
 -- delay-node; the node's naturality is the box's own `fun-nat`.
 

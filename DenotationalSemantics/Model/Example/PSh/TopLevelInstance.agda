@@ -39,8 +39,6 @@ open import DenotationalSemantics.Model.Implementation S
              PShMonad
            using (Implementation)
 
--- THE TICK MONAD
-
 PShTickMonad : TickMonad
 PShTickMonad = record
   { Tᵏ           = Tᵏ
@@ -69,7 +67,7 @@ PShTickMonad = record
   ; tickᵏ-≤      = tickᵏ-≤
   }
 
--- THE IMPLEMENTATION, for any semantic implementation of the operations
+-- For any semantic implementation of the operations.
 
 PShImplementation : OpSemᵐ → Implementation PShTickMonad
 PShImplementation op-semᵐ = record

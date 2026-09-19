@@ -1,19 +1,10 @@
 ------------------------------------------------------------------------
 -- Soundness of the beta/eta equations of the pure fragment.            --
---                                                                    --
--- These are the cartesian closed structure of the model: `unit-eta` is  --
--- the terminal object's uniqueness, `fun-beta`/`fun-eta` the            --
--- exponential's beta/eta (`βᵐ`, `uncurryᵐ-curryᵐ-iso`),                 --
--- `match-beta`/`match-eta` the product's, and `absurd-eta` the          --
--- strictness of the initial object (`𝟘ᵐ-strict`) — with an empty-typed  --
--- value in scope every computation is the same one. The boolean         --
--- equations are the boolean object's own laws: `if-beta-true`/          --
--- `if-beta-false` are `ifᵐ-true`/`ifᵐ-false`, and `if-eta` is `ifᵐ-η`.   --
---                                                                    --
--- The substitutions on the right-hand sides are discharged by           --
--- `V-subst-nat`/`C-subst-nat`: `sub-env split-[] W` is the pairing           --
--- `⟨ idᵐ , ⟦ W ⟧ ⟩ᵐ`, so each beta rule reduces to a product            --
--- manipulation.                                                        --
+-- These are the cartesian closed structure: `unit-eta` is the terminal --
+-- object's uniqueness, `fun-beta`/`fun-eta` the exponential's,         --
+-- `match-beta`/`match-eta` the product's, `absurd-eta` the initial     --
+-- object's strictness, and the boolean equations are the boolean       --
+-- object's own laws.                                                   --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -200,9 +191,7 @@ sound-match-eta {Γ} {A} {B} {C} V M pM (pV , pB) pR =
 sound-match-beta : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                  → Soundᶜ== (match-beta V W M)
 sound-match-beta V W M ((pV , pW) , pM) pR =
-    -- the two projections of the pair being matched
     ∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong)
-    -- the two substitutions, composed and reassociated
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr ((M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c) pR
                 (subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
                    (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)

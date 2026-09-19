@@ -1,17 +1,7 @@
 ------------------------------------------------------------------------
 -- Soundness of the effect-handling equations.                          --
---                                                                    --
--- Each is the corresponding `T-alg-of-handlerᵀ-*` law of the model,      --
--- with the handled computation's own former unfolded first. The shape   --
--- is the sequencing group's: `handle M `with H `in N` denotes            --
--- `T-alg-of-handlerᵀ … ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ ⟦N⟧ ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦M⟧ ⟩ ⟩`, --
--- so the sub-computation sits in exactly the position `⨟` puts it and    --
--- the same strength laws apply.                                        --
---                                                                    --
--- `handle-return`: `strᵀ-ηᵀ` then `ηᵀ`-naturality expose the `ηᵀ` that    --
--- `T-alg-of-handlerᵀ-ηᵀ` consumes, leaving the continuation applied to   --
--- the transposed environment — which is what the right-hand side's       --
--- `⟨⟩-η-ren` and substitution build (as in `sound-seq-return`).          --
+-- Each is the corresponding `T-alg-of-handlerᵀ-*` law of the model,    --
+-- with the handled computation's own former unfolded first.            --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -91,8 +81,6 @@ sound-handle-return : ∀ {Γ A B ε}
   → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
   → Soundᶜ== (handle-return V H N)
 sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
-    -- expose the `ηᵀ` the handler's algebra law consumes: the strength's
-    -- unit law, then `ηᵀ`-naturality past the continuation
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
               ,   ∘ᵐ-congʳ (  ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                                                 ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
@@ -102,18 +90,15 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
                 ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
                 ∙ ∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat _))
                 ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong)
-    -- and hand it to `T-alg-of-handlerᵀ-ηᵀ`, which returns the leaf
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-ηᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH))
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _)
-    -- the environment the continuation receives is the transposed one
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-assoc _ _ _ ∙ εᵇ-η⊣-u {⟦ Γ ⟧ᶜᵗˣ} map-uᵉ
                           , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-    -- which is what the right-hand side's renaming and substitution build
   ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (ε-subst e ((C-rename r N) [ split-[] ↦ V ]c))
                 pR (ε-substᴾ e _ pRc)
             ∙ sound-ε-subst e ((C-rename r N) [ split-[] ↦ V ]c) pRc
@@ -129,14 +114,8 @@ sound-handle-return {Γ} {A} {B} {ε} V H N (pV , pN , pH , uH) pR =
     r   = cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)
     pRc = subᶜ (C-rename r N) split-[] V (renᶜ r N pN) pV
 
--- TRANSPORTING THE FOLD ALONG A CLAUSE REINDEXING
---
--- A `handle` inside a binder or a lock reads its clauses at an extended
--- ambient, so the family is renamed along `r` and the fold's parameter has to
--- move with it. Every such `r` factors through the free `⟨⊤⟩`-algebra's
--- universal property as `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g`; that factorisation discharges
--- `T-alg-of-handlerᵀ-natᴾ`'s necessitation premise and computes the reindexed
--- barrier.
+-- Transports the fold along a clause-family renaming `r` that factors as
+-- `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g` through the free `⟨⊤⟩`-algebra's universal property.
 
 module Reindex
          {Γ Γ' : Ctx} {B : VType}
@@ -166,7 +145,6 @@ module Reindex
   f : ⟦ Γ' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
   f = ⟦ r ⟧ʳ
 
-  -- the reindexed barrier is `g`
   barrier : f ∘ᵐ ⟨⊤⟩-η ≈ᵐ g
   barrier =
       ∘ᵐ-congˡ r≈
@@ -223,10 +201,7 @@ wk-free =
           ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘Tη≡id
           ∙ ∘ᵐ-identityˡ _)
 
--- `handle-box`: a `box` binder commutes with handling. The binder denotes an
--- environment extension `gb` undone by `fstᵐ`, so the handled computation and
--- the continuation move by `str-extend`, and the clauses are re-barred across
--- the binder by `Reindex` at `wk-free`.
+-- `handle-box`: a `box` binder commutes with handling.
 
 sound-handle-box : ∀ {Γ A B C ρ ε ε'}
   → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
@@ -263,9 +238,7 @@ sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH)
     module R = Reindex (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = [ ρ ] A}))
                        (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {[ ρ ] A}) H pH uH
 
--- `handle-unbox`: the same for an `unbox` binder. `unbox-def` unfolds the
--- binder first; the fold is then transported across it by `Reindex`, and the
--- continuation moves as in `handle-box`.
+-- `handle-unbox`: the same for an `unbox` binder.
 
 sound-handle-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
   → (x : [ ρ ] A ∈[ ρ' ] Γ)
@@ -285,18 +258,15 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
               (pM , renᶜ r N pN , pH₂ , uH₂)
           ∙ unbox-def x rel (handle M `with R.Hᵣ `in (C-rename r N))
               (pM , renᶜ r N pN , pH₂ , uH₂)
-            -- transport the fold across the binder
           ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (R.alg-nat pH₂ uH₂))
           ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
           ∙ ∘ᵐ-assoc _ _ _
           ∙ ∘ᵐ-congʳ (  ∘ᵐ-congˡ (mapˣᵐ-∘⟨⟩ _ _ _ _)
                       ∙ ⟨⟩ᵐ-∘ _ _ _
-                        -- the barrier is untouched by the binder …
                       ∙ ⟨   ∘ᵐ-congˡ R.barrier
                           ∙ ∘ᵐ-assoc _ _ _
                           ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
                           ∙ ∘ᵐ-identityʳ _
-                        -- … and the continuation moves as in `handle-box`
                         ,   ∘ᵐ-congˡ (  ∘ᵐ-identityˡ _
                                       ∙ ∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN)))
                           ∙ ∘ᵐ-assoc _ _ _
@@ -311,11 +281,7 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
                        (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {A}) H pH uH
 
 -- `handle-delay`: the handled computation's `delay` becomes a `delay` of the
--- handled computation. The strength half is `str-delay` (shared with
--- `seq-delay`); the fold's own law is `T-alg-of-handlerᵀ-delayᵀ`, which carries
--- the eternal parameter under the box by `necᵉ`. The clauses cross the delay's
--- lock by `Reindex` at `barrier-μ`, the parameter's own crossing being
--- `barrier-lock`.
+-- handled computation.
 
 sound-handle-delay : ∀ {Γ A B τ ε ε'}
   → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
@@ -326,9 +292,7 @@ sound-handle-delay : ∀ {Γ A B τ ε ε'}
   → (N : Γ ⟨ mapᵉ (of-natᵉ τ ·ₑ ε) ⟩ ∷ A ⊢C⦂ B ‼ ε')
   → Soundᶜ== (handle-delay M H N)
 sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
-    -- the strength half
     ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , str-delay τ (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) ⟩ᵐ-cong)
-    -- re-form `mapˣᵐ idᵐ (delayᵀ τ)` and fire the fold's delay law
   ∙ ∘ᵐ-congʳ (  ⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , ≈ᵐ-refl ⟩ᵐ-cong
               ∙ ≈ᵐ-sym (mapˣᵐ-∘⟨⟩ _ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -336,9 +300,6 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-    -- carry the eternal parameter under the box: `necᵉ` is the transpose of
-    -- the extraction (`necᵉ-mate`), so both components become `[ρτ]ᶠ _ ∘ᵐ η⊣`
-    -- and `η⊣-monoidal` pairs them up
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (
         ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
@@ -358,8 +319,6 @@ sound-handle-delay {Γ} {A} {B} {τ} {ε} {ε'} M H N (pM , pN , pH , uH) pR =
       ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)
                   ∙ []-congᶠ (  mapˣᵐ-∘⟨⟩ _ _ _ _
                               ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong)))))
-    -- recombine the two boxes, put the continuation's re-lock renaming back,
-    -- and transport the fold across the delay's lock
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (
         ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (  ≈ᵐ-sym ([]-∘ᵐ _ _)

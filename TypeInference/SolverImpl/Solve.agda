@@ -1,30 +1,14 @@
 ------------------------------------------------------------------
--- The constraint driver                                         --
---                                                                --
--- `solve` walks a constraint, threading a state: type equations  --
--- go to the unification core, grade orderings and eternality      --
--- demands are residualised, and the binders lift the state.       --
--- No defaults and no guessing are taken here — what the core      --
--- cannot decide is carried, not chosen.                           --
---                                                                --
--- The witness a successful run returns is DEFERRED: it is a       --
--- function of a further substitution and a discharge of the       --
--- residual. That is what makes a conjunction transport-free — the --
--- first component is re-read at the state the second component    --
--- left behind, rather than transported along it.                  --
---                                                                --
--- Two atoms are residualised verbatim, and that is exactly what   --
--- their satisfaction clauses ask for: `_⊩ᴴ_[_]` demands the       --
--- substituted ordering itself. The `var`-rule disjunction is      --
--- biased towards its grade disjunct: the eternality disjunct      --
--- would constrain the type, and is never taken.                   --
---                                                                --
--- At a rigid effect-grade binder the state is lifted with a fresh --
--- residual, so that on the way out exactly the atoms raised       --
--- inside the binder are examined: those free of the rigid are     --
--- strengthened and kept, those mentioning it must be discharged   --
--- there and then, and the images of the outer unknowns must be    --
--- free of it, on pain of failure.                                 --
+-- Walks a constraint, threading a state: type equations go to   --
+-- the unification core, grade orderings and eternality          --
+-- demands are residualised, and binders lift the state.         --
+-- A successful witness is deferred, re-read at the state a      --
+-- later component leaves behind rather than transported         --
+-- along it, making conjunction transport-free.                  --
+-- At a rigid binder the state is lifted with a fresh residual:  --
+-- atoms free of the rigid are kept, one mentioning it is        --
+-- discharged on the spot, and an outer unknown's image must     --
+-- stay free of it.                                              --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)
@@ -88,10 +72,6 @@ open import TypeInference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?
 
 open OpEnum opEnum
 
---------------------------------------------------------------
--- Deferred witnesses                                        --
---------------------------------------------------------------
-
 Wit : ∀ {Θ} → (s : St Θ) → Constraint Θ → Set
 Wit s C = ∀ {Ψ'} → (δ : Subst (Ψ s) Ψ') → (Q : Hyps Ψ')
         → Q ⊩ᴿ (res s) [ δ ] → (θ s ⨟ˢ δ) ⊨[ Q ] C
@@ -103,15 +83,9 @@ wit-mono {s = s} m C w δ Q h =
   ⊨-resp-≐ˢ (⨟-congˡ (mtri m) δ) C
     (⊨-resp-≐ˢ (≐ˢ-sym (⨟-assoc (θ s) (mδ m) δ)) C (w (mδ m ⨟ˢ δ) Q (mres m δ Q h)))
 
---------------------------------------------------------------
--- Crossing a rigid boundary: one residual atom              --
---                                                           --
--- An atom either strengthens away from the rigid, and is     --
--- kept, or must be discharged where the rigid is still in    --
--- scope. A decision taken against `∅ᴴ` transports to any     --
--- hypothesis set and any substitution, so the discharge is   --
--- valid at whatever the boundary is later instantiated to.   --
---------------------------------------------------------------
+-- An atom either strengthens away from the rigid and is kept, or must
+-- be discharged where the rigid is still in scope; a decision against
+-- `∅ᴴ` transports to any later hypothesis set and substitution.
 
 pop⨟ʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ : RExp (Φ +e)) → {ρ₀ : RExp Φ}
       → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → (δ : Subst Φ Φ')
@@ -203,10 +177,6 @@ atomᵗ j A with strᵛ⁺ j A
 ...   | just p  = just ([] , λ δ Q k → ⊩ᴱ-subst ∅ᴴ-⊩ᴴ (p {∅ᴴ}))
 ...   | nothing = nothing
 
---------------------------------------------------------------
--- Crossing a rigid boundary: the whole residual             --
---------------------------------------------------------------
-
 listʳ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
@@ -265,10 +235,6 @@ splitᴿ j R with listʳ j (rs R) | listᵉ j (es R) | listᵗ j (ts R)
 ... | just _         | nothing        | _              = nothing
 ... | nothing        | _              | _              = nothing
 
---------------------------------------------------------------
--- Threading the operations of a `⋀ᵒᵖ`                       --
---------------------------------------------------------------
-
 threadOps : ∀ {Θ} → {f : Op → Constraint Θ}
           → ((s : St Θ) → (op : Op)
                → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
@@ -281,10 +247,6 @@ threadOps {f = f} g (op ∷ l) s with g s op
 ...   | nothing = nothing
 ...   | just (s₂ , m₂ , ws) = just (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ (f op) w₁ ∷ ws)
 
---------------------------------------------------------------
--- The rigid boundary                                        --
---------------------------------------------------------------
-
 -- The image of the rigid, with the equation that names it: a
 -- pattern-matching wrapper, so that `popᵉ`'s case analysis stays
 -- visible to a proof about it.
@@ -294,12 +256,9 @@ evar? (evar j)   = just (j , refl)
 evar? (econst c) = nothing
 evar? (ε ·̂ₑ ε')  = nothing
 
--- Two of the four failures below cannot happen when a solution
--- exists: a store never binds a rigid, so the rigid's image is a
--- variable and the scope it lives in still counts one effect-grade
--- variable. A third, a rigid escaping into an outer unknown's image,
--- is a refutation, by the escape lemma of `Core.Rigid`. Only the
--- atoms `splitᴿ` has to discharge on the spot are an oracle's verdict.
+-- Of the four failures below, only the atoms `splitᴿ` has to discharge
+-- on the spot are an oracle's verdict; the rest cannot happen or are
+-- refuted by `Core.Rigid`'s escape lemma.
 
 popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
@@ -335,10 +294,6 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
                     (≐ˢ-trans (⨟-congˡ key' (δ ↑ᵉ)) (⨟-↑ᵉ (θ s ⨟ˢ δ₀) δ))
 ...   | just _         | nothing = nothing
 ...   | nothing        | _       = nothing
-
---------------------------------------------------------------
--- The driver                                                --
---------------------------------------------------------------
 
 -- The unifier's verdict, paired with the equation naming it, so
 -- that the driver's own case analysis stays visible to a proof.

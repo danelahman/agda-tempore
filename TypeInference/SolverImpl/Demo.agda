@@ -1,21 +1,10 @@
 ------------------------------------------------------------------
--- The solver, run                                                --
---                                                                --
--- `TypeInference.SolverImpl` is parameterised by assumptions no       --
--- `LanguageSpec` supplies: decidability of the two grade orders   --
--- and an enumeration of the operation symbols. The sensor-node    --
--- specification of `Syntax.Grades.Example.Worked.Spec` satisfies  --
--- all three — its grades are time intervals, ordered by `_≤_` on  --
--- their endpoints, and it has three operations — so the solver    --
--- can be instantiated and run.                                    --
---                                                                --
--- Each example below is discharged by `refl`, so what the solver  --
--- infers is checked by computation, not asserted.                 --
---                                                                --
--- A second specification follows at the end — deadlines, whose    --
--- unit IS the least grade — to exercise the solver's optional     --
--- unit-minimality: the same handler is rejected without it and    --
--- inferred with it.                                               --
+-- Runs the solver against `Syntax.Grades.Example.Worked.Spec`, a --
+-- sensor-node specification satisfying its three assumptions.    --
+-- Every example is discharged by `refl`, so what is inferred is  --
+-- checked by computation, not asserted.                          --
+-- A second specification, deadlines, follows at the end to       --
+-- exercise the optional unit-minimality assumption.              --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
@@ -89,10 +78,6 @@ open import TypeInference.Infer spec using (Θ₁; X̂₁; t̂₁; C∅[_,_]; In
 
 open import TypeInference.SolverImpl.Enum spec using (OpEnum)
 
---------------------------------------------------------------
--- The three assumptions, for this specification             --
---------------------------------------------------------------
-
 -- resource grades are lower bounds, ordered by `_≤_` reversed
 
 ≾ᵣ-dec : (i j : 𝕀) → Dec (i ≾ₒ j)
@@ -118,10 +103,6 @@ ops₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = 
 
 open import TypeInference.SolverImpl spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
 
---------------------------------------------------------------
--- Reading the inferred type and effect off a solution       --
---------------------------------------------------------------
-
 result : {X : Subst Θ₁ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ₁ ∅ˢ ] X σ)
        → Maybe (OVType ∅ˢ × EExp ∅ˢ)
 result nothing        = nothing
@@ -129,10 +110,6 @@ result (just (σ , _)) = just (X̂₁ [ σ ]ᵛ , t̂₁ [ σ ]ᵉ)
 
 infer! : (Γ : Ctx) → (M : RawC (skel Γ)) → Maybe (OVType ∅ˢ × EExp ∅ˢ)
 infer! Γ M = result (gsolveImpl C∅[ Γ , M ])
-
---------------------------------------------------------------
--- Examples                                                  --
---------------------------------------------------------------
 
 -- returning the unit value
 
@@ -234,32 +211,18 @@ ex-unbox : infer! ([] ∷ (T.[ uᵣ ] T.Bool)) (unbox zero (return (var zero)))
          ≡ just (Bool , ûₑ)
 ex-unbox = refl
 
--- what the solver cannot do here: a handler clause is typed under a
--- RIGID effect variable `e''`, and its slack constraint
--- `ûₑ ≾̂ₑᶜ (g ·̂ₑ e'')` is derivable only by `minₑ`, whose premise fails
--- for these grades — `[ 0 , 0 ]` is contained in `[ m , n ]` only when
--- `m` is `0`. The option is therefore `nothing` above, `handle` is
--- rejected, and this is checked, not asserted. The section at the end
--- of this module runs the same program over grades that do have a
--- least unit
+-- `handle` is rejected: the clause's slack constraint needs `minₑ`,
+-- whose premise fails for these grades. The section at the end of this
+-- module runs the same program over grades with a least unit.
 
 ex-handle : infer! [] (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆))
           ≡ nothing
 ex-handle = refl
 
---------------------------------------------------------------
--- A rigid that escapes                                      --
---                                                           --
--- Constraints are written directly here: what is at stake is --
--- the ORDER of the two binders, which a program does not     --
--- expose. In `escC` the unknown is allocated OUTSIDE the     --
--- rigid's scope and the equation inside it pins the unknown  --
--- to the rigid, which no substitution over the outer scope   --
--- can do: the solver fails, and by the escape lemma that     --
--- failure is a refutation. In `okC` the binders are swapped, --
--- the unknown is allocated inside the rigid's scope, and     --
--- mentioning the rigid is then its right.                    --
---------------------------------------------------------------
+-- Written directly, since a program never exposes binder order.
+-- `escC` allocates the unknown outside the rigid's scope and pins it
+-- to the rigid: unsatisfiable, refuted by the escape lemma. `okC`
+-- swaps the binders, allocating the unknown inside.
 
 solved? : ∀ {Θ} {X : Subst Θ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] X σ) → Maybe ⊤
 solved? nothing  = nothing
@@ -277,13 +240,9 @@ ex-escape = refl
 ex-escape-ok : solved? (gsolveImpl okC) ≡ just tt
 ex-escape-ok = refl
 
---------------------------------------------------------------
--- The whole pipeline                                        --
---                                                           --
--- `inferImpl` runs the solution through `soundC` and         --
--- `groundC`, so what comes back is a typing derivation of    --
--- the ORIGINAL system, with its type and effect as fields.   --
---------------------------------------------------------------
+-- `inferImpl` runs the solution through `soundC` and `groundC`,
+-- yielding a typing derivation of the source system, with its type
+-- and effect as fields.
 
 typeOf : {Γ : Ctx} {M : RawC (skel Γ)} → Maybe (Inferred Γ M) → Maybe (T.VType × E)
 typeOf nothing  = nothing
@@ -296,15 +255,9 @@ ex-pipeline-op : typeOf (inferImpl [] (perform read ⋆ (return (var zero))))
                ≡ just (T.Base reading , op-grade read ·ₑ uₑ)
 ex-pipeline-op = refl
 
---------------------------------------------------------------
--- A specification whose unit is the least grade             --
---                                                           --
--- Right-sided intervals are deadlines `[0, n ]`, ordered by  --
--- `_≤_` on the endpoint, so `[0, ↑ 0 ]` is below every grade --
--- Both components of the grade system are that monoid, over  --
--- the same sensor node: each operation is charged its worst  --
--- case.                                                      --
---------------------------------------------------------------
+-- Right-sided intervals are deadlines `[0, n]`, ordered by `_≤_` on
+-- the endpoint, so `[0, ↑0]` is below every grade. Both grade
+-- components are this monoid, over the same sensor node.
 
 gradesᵈ : GradeSystem
 gradesᵈ = identityGradeSystem right-sided-intervals
@@ -345,16 +298,9 @@ opsᵈ₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete
     c write = there (here refl)
     c send  = there (there (here refl))
 
---------------------------------------------------------------
--- Handlers, accommodated                                    --
---                                                           --
--- A handler clause that does not resume the continuation has --
--- the unit as its effect, and must be below the clause's     --
--- declared grade `op-grade op ·̂ₑ e''`, whose `e''` is rigid. --
--- Nothing derives that without unit-minimality; with it,     --
--- `minₑ` does. The two instantiations below differ only in   --
--- whether the option is supplied.                            --
---------------------------------------------------------------
+-- A non-resuming handler clause's effect (the unit) must be below its
+-- declared grade `op-grade op ·̂ₑ e''`, `e''` rigid — derivable only
+-- with unit-minimality, by `minₑ`.
 
 module Least where
 
@@ -414,7 +360,7 @@ module Least where
                ≡ just (Tyᵈ.Unit , (Grᵈ.econst (opTimeᵈ read) Grᵈ.·̂ₑ Grᵈ.ûₑ) Grᵈ.·̂ₑ Grᵈ.ûₑ)
   ex-handle-op = refl
 
-  -- end to end: the same program elaborated into the ORIGINAL system,
+  -- end to end: the same program elaborated into the source system,
   -- its grounded derivation reading the clause's slack off `minₑ`
 
   typeOfᵈ : {Γ : Cᵈ.Ctx} {M : Rwᵈ.RawC (CCᵈ.skel Γ)}
@@ -426,17 +372,9 @@ module Least where
                      ≡ just (Tᵈ.Unit , [0, ↑ 0 ])
   ex-handle-pipeline = refl
 
---------------------------------------------------------------
--- The fragment, and a principal type                       --
---                                                          --
--- The solver is principal on `Frag`: the constraints whose --
--- `var`-rule disjunctions carry a lock grade convertible   --
--- to the unit, where the solver's bias towards the grade   --
--- disjunct costs nothing. Membership is decided by         --
--- computation, and a program in the fragment that the      --
--- solver accepts has a principal type: every typing an     --
--- instance.                                                --
---------------------------------------------------------------
+-- The solver is principal on `Frag` (constraints whose `var`-rule
+-- disjunctions carry a lock grade convertible to the unit): a program
+-- in the fragment that the solver accepts has a principal type.
 
 module Fragment where
 

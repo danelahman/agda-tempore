@@ -219,10 +219,8 @@ claiming-at-once = fails uᵣ demand
 ------------------------------------------------------------------------
 -- Which endpoint the comparison can move at
 --
--- The floor is pinned: a computation's runs are the singleton of the
--- run it makes, `P ⊆ X` forces `P` to be that singleton, and so every
--- run the box demands is the run that elapsed. What is left free is the
--- cap, which may list as many runs as it likes -- and there the
+-- The floor is pinned: `P ⊆ X` forces `P` to be the singleton of the
+-- run the computation makes. The cap is left free, and there the
 -- comparison is a genuine inclusion rather than an equality.
 
 -- `unconstrained` demands no run at all

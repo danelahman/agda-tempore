@@ -58,14 +58,8 @@ infixl 30 _++ᶜ_
 ++ᶜ-identityˡ {Γ ∷ A}   = cong (_∷ A) ++ᶜ-identityˡ
 ++ᶜ-identityˡ {Γ ⟨ ρ ⟩} = cong (_⟨ ρ ⟩) ++ᶜ-identityˡ
 
--- AMBIENT JOIN
---
--- The same concatenation, but recursing on its *left* argument, so that the
--- empty case reduces: `[] ⋈ᶜ Δ` is `Δ` definitionally, where `[] ++ᶜ Δ` is only
--- propositionally so (`++ᶜ` recurses on the right). Renamings are indexed by an
--- ambient context and join it to their local parts with this, which is what
--- keeps everything at the empty ambient — the language's own renamings and all
--- the derived ones — free of transports.
+-- Same concatenation, recursing on the left argument: `[] ⋈ᶜ Δ` reduces to
+-- `Δ` definitionally, where `[] ++ᶜ Δ` only holds propositionally.
 
 _⋈ᶜ_ : Ctx → Ctx → Ctx
 [] ⋈ᶜ Δ        = Δ
@@ -181,8 +175,7 @@ var-split {Γ ⟨ ρ ⟩} (Tl-⟨⟩ x) with var-split x
 ... | Γ₁ , Γ₂ , p , q =
   Γ₁ , Γ₂ ⟨ ρ ⟩ , split-⟨⟩ p , cong (_·ᵣ ρ) q
 
--- Named accessors for the components of `var-split`. Using these
--- avoids the deep `proj₁ (proj₂ (proj₂ ...))` chains at call sites.
+-- Named accessors for the components of `var-split`.
 
 split-l : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → Ctx
 split-l x = proj₁ (var-split x)
@@ -204,9 +197,8 @@ data ⟨⟩-Ctx : Ctx → Set where
   is-⟨⟩ : ∀ {Γ ρ} → ⟨⟩-Ctx Γ → ⟨⟩-Ctx (Γ ⟨ ρ ⟩)
 
 
--- A variable of the local part is one of the join. At the empty ambient this is
--- the identity, definitionally, which is what keeps the derived renamings there
--- transport-free.
+-- A variable of the local part is one of the join; at the empty ambient this
+-- is the identity, definitionally.
 
 ∈-⋈ᶜ : ∀ {Δ A ρ} → (Ξ : Ctx) → A ∈[ ρ ] Δ → A ∈[ ρ ] (Ξ ⋈ᶜ Δ)
 ∈-⋈ᶜ []        x = x

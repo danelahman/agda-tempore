@@ -29,10 +29,6 @@ open GradeSystemInterface Grades
 open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
 
---------------------------------------------------------------
--- Sizes of expressions                                      --
---------------------------------------------------------------
-
 sizeᵉ : ∀ {Θ} → EExp Θ → ℕ
 sizeᵉ (evar i)   = 1
 sizeᵉ (econst ε) = 1
@@ -58,10 +54,6 @@ mutual
 
   sizeᶜ : ∀ {Θ} → OCType Θ → ℕ
   sizeᶜ (A ‼ ε) = suc (sizeᵛ A + sizeᵉ ε)
-
---------------------------------------------------------------
--- Size of a scope                                           --
---------------------------------------------------------------
 
 Sz : Scope → ℕ
 Sz Θ = nTy Θ + nR Θ + nE Θ

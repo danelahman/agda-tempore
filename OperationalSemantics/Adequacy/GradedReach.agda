@@ -1,19 +1,10 @@
 ------------------------------------------------------------------------
 -- Graded reachability: the frame the logical relation is indexed by. --
 --                                                                    --
--- Reindexing along `S ≤ₛ S'` is not free weakening — `suc-comp-ren`  --
--- takes a grade side-condition. So the relation is Kripke not over    --
--- `≤ₛ` but over the accessibility that carries a grade budget: an     --
--- extension together with the bound licensing the lock it crossed.    --
---                                                                    --
--- The budgets compose multiplicatively rather than by a preorder:     --
--- `reach-id` is the unit and `reach-∘ᵍ` multiplies, resting on         --
--- `≤ₛ-grade` being multiplicative (`≤ₛ-grade-trans`). `unbox-ren` is   --
--- the renaming a reach licenses and `reach-renᵘ` its unit-budget       --
--- form, with `reach-renᵘ-∘` and `reach-renᵘ-id-≐ʳ` the two functor     --
--- laws. Where a lock has to be crossed on both sides — the reduct of   --
--- `SEQ-STEP`/`HANDLE-STEP` — `suc-comp-ren` is used directly, on the   --
--- two-graded bound `PreservationTheorem` supplies.                     --
+-- Kripke over an accessibility that carries a grade budget: an       --
+-- extension together with the bound licensing the lock it crossed    --
+-- — rather than over `≤ₛ` alone, since reindexing along `≤ₛ` is not  --
+-- free weakening.                                                    --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -105,8 +96,6 @@ resume : ∀ {St St' ρ A ε B}
        → toCtx St' ⊢C⦂ A ‼ ε
 resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
 
--- TRANSITIVITY OF STATE EXTENSION
---
 -- Two general facts about `_≤ₛ_` that `OperationalSemantics.State` does not
 -- carry: extensions compose, and their accumulated grades multiply.
 
@@ -130,15 +119,6 @@ resume q M W = (C-rename (cong-∷-ren (unbox-ren q)) M) [ split-[] ↦ W ]c
   trans (cong (_·ᵣ ρ) (≤ₛ-grade-trans q q')) (·ᵣ-assoc _ _ ρ)
 ≤ₛ-grade-trans q (∷-suc V q')  =
   ≤ₛ-grade-trans q q'
-
--- REACHES COMPOSE, BUDGETS MULTIPLY
---
--- The extensions compose and their accumulated grades multiply
--- (`≤ₛ-grade-trans`), so the composite stays below the product of the budgets.
--- `reach-≤` relaxes a budget: a `ρ`-guarded reach whose guard is itself below
--- the unit is a unit reach, which is how a value under a lock is moved forward —
--- a *usable* variable's grade bound gives `ρ ≾ᵣ uᵣ` by the grade monoid's
--- zero-product law.
 
 reach-≤ : ∀ {St St' ρ ρ₀} → St ⊑ₛ[ ρ ] St' → ρ ≾ᵣ ρ₀ → St ⊑ₛ[ ρ₀ ] St'
 reach-≤ (reach e b) p = reach e (≾ᵣ-trans b p)
@@ -164,8 +144,6 @@ reach-∘ : ∀ {St St' St'' ρ} → St' ⊑ₛ[ uᵣ ] St'' → St ⊑ₛ[ ρ ]
         → St ⊑ₛ[ ρ ] St''
 reach-∘ {ρ = ρ} q' q = reach-≤ (reach-∘ᵍ q' q) (≾ᵣ-reflexive (·ᵣ-identityʳ ρ))
 
--- THE REACHES THE MACHINE PRODUCES
---
 -- Allocating a cell accumulates nothing (`BOX`); letting time pass costs
 -- exactly the lock it passes (`DELAY`).
 
@@ -181,14 +159,7 @@ delay-reach : ∀ {ρ} {St : 𝕊 []}
 
 delay-reach {ρ} = reach (⟨⟩-suc ρ id-suc) (≾ᵣ-reflexive (·ᵣ-identityˡ ρ))
 
-------------------------------------------------------------------------
--- COMPOSING EXTENSIONS
---
--- `VRed`'s Kripke clauses compose two transports, and the composite has to be
--- recognised as one: extending twice is extending once along the composite.
--- Everything here is cast-free — both sides are renamings between the same
--- contexts — so it is a statement about `suc-comp-ren` alone.
-------------------------------------------------------------------------
+-- Extending twice is extending once along the composite.
 
 -- The grade bound is invisible: it only ever reaches a `⟨⟩-≤-ren`.
 
@@ -291,14 +262,8 @@ suc-comp-ren-∘-≐ʳ e (∷-suc V e') b b₁ b₂ =
            (∘ʳ-assoc-≐ʳ (suc-comp-ren e b₁) (suc-comp-ren e' _)
                        (cong-⟨⟩-ren wk-ren))
 
-------------------------------------------------------------------------
--- WHAT AN EXTENSION DOES TO A VARIABLE
---
 -- `suc-comp-ren` sends a locked variable to a locked variable: the extension
--- embeds `toCtx St` into `toCtx St₁`, and the renaming is that embedding under
--- the lock. Making this explicit is what lets the `⟨⟩-η` round trip in
--- `reach-renᵘ`/`unbox-ren` be cancelled at a specific variable.
-------------------------------------------------------------------------
+-- embeds `toCtx St` into `toCtx St₁`, under the lock.
 
 ≤ₛ-embed : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A σ}
          → A ∈[ σ ] toCtx St → Σ[ σ' ∈ R ] A ∈[ σ' ] toCtx St₁
@@ -363,14 +328,8 @@ unbox-ren-img : ∀ {St St' : 𝕊 []} {ρ : R} → (q : St ⊑ₛ[ ρ ] St')
 unbox-ren-img q x =
   cong (var-img′ ⟨⟩-η-ren) (suc-comp-ren-img (ext q) (reach-bound q) x)
 
-------------------------------------------------------------------------
--- RUNS
---
--- What a whole run accumulates. `PreservationTheorem` has the per-step facts;
--- these are their closure under composition, packaged as the reach a run
--- licenses. A graded reach is exactly the data `SEQ-STEP`/`HANDLE-STEP` consume,
--- which is what lets a run be lifted under those two formers.
-------------------------------------------------------------------------
+-- What a whole run accumulates: the closure of `PreservationTheorem`'s
+-- per-step facts under composition, packaged as the reach a run licenses.
 
 steps-extends-state : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                     → cf ↝* cf' → Config.state cf ≤ₛ Config.state cf'
@@ -403,13 +362,8 @@ steps-ren : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                    (toCtx (Config.state cf)  ⟨ mapᵉ ε  ⟩)
 steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 
--- LIFTING A RUN UNDER A FORMER
---
 -- Both congruence rules retype the continuation along `suc-comp-ren` of the
--- step's own extension, so after a run it has been renamed once per step.
--- The composite is the run's own renaming only up to `_≐ʳ_`
--- (`suc-comp-ren-∘-≐ʳ`), and at the empty run it is a grade relaxation rather
--- than the identity, so the continuation reached is returned as it stands.
+-- step's own extension.
 
 seq-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
@@ -447,10 +401,8 @@ seq-steps (r ◅ rs) N
                                         (steps-grade-≾ rs)))))
           N))
 
--- The same under `handle`, which also retypes the clauses — along the barrier
--- lock, at the run's own extension. `⊤ᵣ` being `≾ᵣ`-greatest, the side condition
--- is `≾-⊤ᵣ` at every step, so the clause half is the sequel half at a fixed
--- grade.
+-- The same under `handle`, which also retypes the clauses along the barrier
+-- lock, at the run's own extension.
 
 steps-barrier-ren : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
                   → (rs : cf ↝* cf')
@@ -592,7 +544,7 @@ alloc-ren-≐ʳ V = mk≐ʳ (λ x → reach-renᵘ-img (alloc-reach V) x)
 
 -- The same for the renaming an `unbox` consumes: splitting the guard into the
 -- reach's own part and a residual `σ`, then crossing the lock under `σ`, is the
--- extension at residual `σ`. Both send `Tl-⟨⟩ x` to the embedding under `σ`.
+-- extension at residual `σ`.
 
 unbox-ren-μ-≐ʳ : ∀ {St St₁ : 𝕊 []} {ρ σ : R} → (q : St ⊑ₛ[ ρ ] St₁)
               → (b : ≤ₛ-grade (ext q) ·ᵣ σ ≾ᵣ ρ ·ᵣ σ)
@@ -650,18 +602,8 @@ unbox-ren-delay-≐ʳ = mk≐ʳ go
     go : ∀ {A σ} → (x : A ∈[ σ ] _) → _
     go (Tl-⟨⟩ x) = unbox-ren-img delay-reach x
 
-------------------------------------------------------------------------
--- UNFOLDING THE LOOKUP
---
--- Naming `unbox-lookup`'s body as a function of the cell (`Var`) and the grade
--- bound is what makes the lookup coherences provable: two lookups at the same
--- cell agree, the bound being irrelevant.
-------------------------------------------------------------------------
-
 -- The lookup's renaming composite depends on the state only through two
--- contexts, the stored value and three proofs — so it is factored out. That is
--- what lets two lookups be compared: at corresponding contexts the proofs are
--- irrelevant (`uip`, `≾ᵣ-irrelevant`) and only the values have to be related.
+-- contexts, the stored value, and three proofs.
 
 lookup-ren′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
             → (eq : (Γf ∷ [ ρ ] A) ++ᶜ Γs ≡ Γ)
@@ -682,10 +624,6 @@ lookup-body′ : ∀ {A ρ σ} {Γ : Ctx} → (Γf Γs : Ctx)
              → ([] ++ᶜ Γf) ⟨ ρ ⟩ ⊢V⦂ A
              → Γ ⊢V⦂ A
 lookup-body′ Γf Γs eq h rel U = V-rename (lookup-ren′ Γf Γs eq h rel) U
-
--- What is left for `SRed-fresh` is `var-img` of this: `eq-ren ++ᶜ-identityˡ`
--- (`eq-ren-img`, then `∈-++ᶜʳ-[]`), `⟨⟩-≤-ren`, the push
--- `wk-ren-⟨ρ⟩-ctx-img` computes, and the two relocations (`eq-ren-img`).
 
 lookup-body : ∀ {A ρ} → (St : 𝕊 []) → (t : Var (toCtx St) ([ ρ ] A))
             → proj₁ t ≾ᵣ ρ → toCtx St ⊢V⦂ A
@@ -732,14 +670,8 @@ lookup-body-≡ St refl rel rel' =
   cong (lookup-body St _) (≾ᵣ-irrelevant rel rel')
 
 
-------------------------------------------------------------------------
--- THE STORE IS STABLE UNDER AN EXTENSION
---
--- An already-allocated cell is split off at the same state, and holds the same
--- value, however far the state has grown since. Both `≤ₛ` constructors leave
--- `split-state-fst` and `resource-lookup` alone — a lock is crossed and a newer
--- cell is skipped — so each is its own induction hypothesis.
-------------------------------------------------------------------------
+-- An already-allocated cell is split off at the same state, and holds the
+-- same value, however far the state has grown since.
 
 ≤ₛ-embed-fst : ∀ {St St₁ : 𝕊 []} → (e : St ≤ₛ St₁) → ∀ {A ρ σ}
              → (x : [ ρ ] A ∈[ σ ] toCtx St)
@@ -761,14 +693,9 @@ lookup-body-≡ St refl rel rel' =
 ≤ₛ-embed-lookup (⟨⟩-suc ρ e) x = ≤ₛ-embed-lookup e x
 ≤ₛ-embed-lookup (∷-suc V e)  x = ≤ₛ-embed-lookup e x
 
-------------------------------------------------------------------------
--- WHAT AN EXTENSION ADDS AFTER AN ALREADY-ALLOCATED CELL
---
 -- `SRed-fresh` compares the lookup at a later state with the value that was
--- stored. `≤ₛ-embed-fst` already says the cell is split off at the same state;
--- what is left is that the part *after* it grows by exactly the context the
--- extension adds. Three cases, each a `cong` of the next.
-------------------------------------------------------------------------
+-- stored: the part after the cell grows by exactly the context the extension
+-- adds.
 
 ≤ₛ-ctx : {St₀ St₂ : 𝕊 []} → St₀ ≤ₛ St₂ → Ctx
 ≤ₛ-ctx id-suc                  = []
@@ -812,16 +739,8 @@ lookup-body-≡ St refl rel rel' =
            (Var-cast-irr (cong (_∷ _) (sym (≤ₛ-ctx-toCtx e)))
                          (sym (≤ₛ-ctx-toCtx (∷-suc V e))) _))
 
-------------------------------------------------------------------------
--- READING BACK A FRESHLY ALLOCATED CELL
---
--- What `SRed-fresh` needs. Looking up, at whatever state the run has reached,
--- the cell `BOX` just allocated returns the value that was stored — renamed.
--- Both sides are that value renamed, so the content is a renaming agreement,
--- and both renamings *push* the value's context under everything the state has
--- gained since: the lookup by `wk-ren-⟨ρ⟩-ctx` out of the cell's own lock, the
--- reach by `≤ₛ-embed`.
-------------------------------------------------------------------------
+-- Looking up, at whatever state the run has reached, the cell `BOX` just
+-- allocated returns the value that was stored — renamed.
 
 -- Transporting a stored value along an equality of the states it was split off
 -- at is transporting it along the contexts.
@@ -831,12 +750,6 @@ subst-state-castᵛ : ∀ {A ρ} {St St' : 𝕊 []} → (p : St ≡ St')
                    → subst (λ S → ([] ++ᶜ toCtx S ⟨ ρ ⟩) ⊢V⦂ A) p U
                    ≡ castᵛ (cong (λ Γ₀ → ([] ++ᶜ Γ₀) ⟨ ρ ⟩) (cong toCtx p)) U
 subst-state-castᵛ refl U = refl
-
--- The renaming agreement. The lookup's composite runs, right to left: out of
--- the leading `[] ++ᶜ`, across the cell's own lock at the grade the state after
--- it contributes, out of that lock into everything after the cell, and back
--- along the two context equalities. The reach's runs by `≤ₛ-embed`. Both land
--- on `∈-++ᶜˡ (≤ₛ-ctx e) (Tl-∷ y)`, relocated by the same `≤ₛ-ctx-toCtx e`.
 
 alloc-lookup-ren : ∀ {A ρ σ} {St St' : 𝕊 []}
                  → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
@@ -887,10 +800,8 @@ alloc-lookup-ren {A} {ρ} {σ} {St} {St'} V e h rel q₀ eq₀ = mk≐ʳ go
                    (cong (λ z → τ' ·ᵣ ρ , z)
                          (subst-Tl-⟨⟩ (++ᶜ-identityˡ {toCtx St}) w))
 
--- Hence the lookup itself. `lookup-body′-≡` moves the lookup's own data — the
--- state the cell is split off at, what the state gained after it, and the value
--- stored — onto the data the allocation presents, which `≤ₛ-embed-fst`,
--- `≤ₛ-embed-snd-ctx` and `≤ₛ-embed-lookup` supply.
+-- `lookup-body′-≡` moves the lookup's own data onto the data the allocation
+-- presents, via `≤ₛ-embed-fst`, `≤ₛ-embed-snd-ctx`, and `≤ₛ-embed-lookup`.
 
 alloc-lookup-≡ : ∀ {A ρ} {St St' : 𝕊 []}
                → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
@@ -923,18 +834,9 @@ alloc-lookup-≡ {A} {ρ} {St} {St'} V e rel q₀ eq₀ =
                       (subst-state-castᵛ
                          (sym (≤ₛ-embed-fst e (Hd {Γ = toCtx St}))) V))
 
-------------------------------------------------------------------------
--- READABILITY AT A CELL
---
--- `St [ c ]⊑ᶜ St'` — an extension under which the cell `c` has ripened:
--- enough grade has accumulated *at `c`'s own position* for its `ρ`-box to
--- be read. The sibling of `_⊑ₛ[_]_`, measured at a cell rather than at a lock,
--- so its bound carries the cell's own grade as a prefix (`σ ·ᵣ ≤ₛ-grade e`
--- against `≤ₛ-grade e`) and the two cannot be identified.
---
--- Packaging the pair is what makes `SRed` and `VRed` at a box type the same
--- statement at different cells (`SRed-var`).
-------------------------------------------------------------------------
+-- `St [ c ]⊑ᶜ St'`: an extension under which the cell `c` has ripened —
+-- enough grade has accumulated at `c`'s own position for its `ρ`-box to be
+-- read.
 
 infix 4 _[_]⊑ᶜ_
 

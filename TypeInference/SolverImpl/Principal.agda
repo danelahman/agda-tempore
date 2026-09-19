@@ -1,36 +1,6 @@
 ------------------------------------------------------------------
--- Principality and refutation for the driver                    --
---                                                                --
--- The driver's two halves, stated relative to the state it is    --
--- entered at and against the biased satisfaction of              --
--- `TypeInference.Solver.Fragment`.                                    --
---                                                                --
---   * `solve-principal` — a successful run returns a state every  --
---     solution of the constraint factors through: the returned    --
---     substitution is followed by one further substitution that   --
---     recovers the given one, along which the new residual is     --
---     discharged by whatever discharged the old one. No rigid     --
---     hypothesis is needed: a store never binds a rigid, so       --
---     `unify-max` suffices, and the rigid boundary is crossed     --
---     only on a successful run.                                   --
---   * `solve-fail` — a failing run refutes the constraint, for    --
---     every substitution that fixes the state's rigids. It is     --
---     stated for constraints without a rigid binder: at such a    --
---     binder a failure may be the failure of a decision           --
---     procedure rather than the absence of a solution.            --
---                                                                --
--- Principality carries a third component, that the state's rigid  --
--- discipline transports along the factorisation. That is what     --
--- lets refutation thread its hypothesis through a conjunction,    --
--- and it is one lemma, `Fixing-trans`, at every clause.           --
---                                                                --
--- Crossing a rigid boundary is where the hypotheses live at the   --
--- weakened set `wkᵉ-H Q` and the conclusion at `Q`. Entailment    --
--- does not strengthen syntactically — a transitivity step may go  --
--- through the eigenvariable — but it is stable under              --
--- substitution, so instantiating the eigenvariable to the unit    --
--- (`κᵉ`) strengthens every atom that mentions it nowhere. That is --
--- the whole content of the boundary case.                         --
+-- Principality and refutation for the driver, against the       --
+-- biased satisfaction of `TypeInference.Solver.Fragment`.       --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true) renaming (Bool to 𝔹)
@@ -105,19 +75,11 @@ open import TypeInference.SolverImpl.Solve  S _≾ᵣ?_ _≾ₑ?_ opEnum umin?�
 
 open OpEnum opEnum
 
---------------------------------------------------------------
--- Absurd verdicts                                           --
---------------------------------------------------------------
-
 ⊥just : ∀ {X Y : Set} {x : X} → nothing ≡ just x → Y
 ⊥just ()
 
 ⊥nothing : ∀ {X Y : Set} {x : X} → just x ≡ nothing → Y
 ⊥nothing ()
-
---------------------------------------------------------------
--- Substitution algebra the clauses need                     --
---------------------------------------------------------------
 
 -- A weakening is undone by an extension
 
@@ -150,14 +112,8 @@ wk-,ᵉ δ ε = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
                    (λ i → wk-,ᵉ-r σ ε (sR δ i))
                    (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
---------------------------------------------------------------
--- Instantiating the newest effect-grade variable             --
---                                                            --
--- `κᵉ` sends it to the unit and leaves everything else. It is --
--- a retraction of the weakening, so it strengthens whatever   --
--- the weakening produced — and, being a substitution,         --
--- entailment survives it.                                     --
---------------------------------------------------------------
+-- `κᵉ` sends the newest effect-grade variable to the unit, fixing the
+-- rest; being a substitution, entailment survives it.
 
 κᵉ : ∀ {Ψ} → Subst (Ψ +e) Ψ
 κᵉ = sub tvar rvar (λ { zero → ûₑ ; (suc i) → evar i })
@@ -195,10 +151,6 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
     ordₑ' m with ∈-map⁻ (mapᵖ wkᵉ-e) m
     ... | (ε₀ , ε₀') , m₀ , refl =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (κᵉ-wkᵉ ε₀)) (sym (κᵉ-wkᵉ ε₀')) (hypₑ m₀)
-
---------------------------------------------------------------
--- Residual algebra the clauses need                         --
---------------------------------------------------------------
 
 -- The converse of `⊩ᴿ-subst`
 
@@ -243,10 +195,6 @@ pushᵉ-⊩ p h = mk⊩ᴿ (⊩rs h) (λ { (here refl) → p ; (there m) → ⊩
 pushᵗ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {δ : Subst Ψ Ψ'}
         → Q ⊩ᴱ A [ δ ]ᵛ → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵗ A R) [ δ ]
 pushᵗ-⊩ p h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ { (here refl) → p ; (there m) → ⊩ts h m })
-
---------------------------------------------------------------
--- Transporting the rigid discipline                         --
---------------------------------------------------------------
 
 varᵉ?-just : ∀ {Ψ} → (ε : EExp Ψ) → {k : EVar Ψ} → varᵉ? ε ≡ just k → ε ≡ evar k
 varᵉ?-just (evar i)   refl = refl
@@ -294,9 +242,8 @@ Fixing-trans {Ψ} {Ψ₁} {Ψ''} {rg} σ δ {δ₀} p fx = fixing v n
                  (trans (cong (_[ δ ]ᵉ) ri)
                    (trans r (trans (sym (cong (_[ δ ]ᵉ) ri')) (≐ᵉ p i')))))
 
--- A rigid whose image is a variable is never dropped by the transport:
--- `transRig`'s partiality cannot fire on a rigid-fixing substitution,
--- which is the only kind the driver ever transports a rigid along.
+-- A rigid whose image is a variable is never dropped: `transRig` cannot
+-- fail on a rigid-fixing substitution.
 
 ∈-transRig⁺ : ∀ {Ψ Ψ₁} → (σ : Subst Ψ Ψ₁) → (rg : Rig Ψ) → (i : EVar Ψ)
             → i ∈ᶠ rg ≡ true → (k : EVar Ψ₁) → sE σ i ≡ evar k
@@ -372,25 +319,14 @@ Fixing-⇑ᵉ {Ψ} {Ψ''} {rg} δ₀ fx = fixing v n
         jj = suc-injective
                (evar-inj (trans (sym (cong wkᵉ-e rj)) (trans r (cong wkᵉ-e rj'))))
 
---------------------------------------------------------------
--- A store never binds a rigid                               --
---                                                           --
--- The boundary reads the rigid's image off the inner store   --
--- and expects a variable. Substitution preserves the head of --
--- an expression that is not one, so an image instantiable to --
--- a variable was one already — which is what rules out the   --
--- boundary's two impossible verdicts.                        --
---------------------------------------------------------------
+-- A store never binds a rigid: substitution preserves an expression's
+-- head, so an image instantiable to a variable already was one.
 
 varᵉ-inst : ∀ {Φ Ξ} → (ε : EExp Φ) → (δ : Subst Φ Ξ) → {k : EVar Ξ}
           → ε [ δ ]ᵉ ≡ evar k → Σ[ j ∈ EVar Φ ] (ε ≡ evar j)
 varᵉ-inst (evar j)   δ q = j , refl
 varᵉ-inst (econst c) δ ()
 varᵉ-inst (ε ·̂ₑ ε')  δ ()
-
---------------------------------------------------------------
--- The two statements                                        --
---------------------------------------------------------------
 
 Princ : ∀ {Θ} → (s s' : St Θ) → s ⟶ s' → Constraint Θ → Set
 Princ s s' m C =
@@ -407,13 +343,9 @@ Refut s C =
   → Fixing (rig s) δ₀ → Q ⊩ᴿ (res s) [ δ₀ ]
   → ¬ ((θ s ⨟ˢ δ₀) ⊨ᴿ[ Q ] C)
 
---------------------------------------------------------------
--- Crossing a rigid boundary, principally                    --
---                                                           --
--- An atom kept at the boundary is the strengthening of an    --
--- inner one, so its instance along the factorisation is the  --
--- inner instance with the eigenvariable sent to the unit.    --
---------------------------------------------------------------
+-- An atom kept at the boundary is the strengthening of an inner one; its
+-- instance along the factorisation is the inner instance with the
+-- eigenvariable sent to the unit.
 
 keyʳ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (ρ : RExp (Φ +e)) → {ρ₀ : RExp Φ}
      → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → (γ : Subst (Φ +e) (Φ' +e))
@@ -470,10 +402,6 @@ bndᵗ {Q = Q} j A {A₀} q γ p =
   subst (Q ⊩ᴱ_) ([⨟]ᵛ A₀ (wkˢᵉ ⨟ˢ γ) κᵉ)
         (⊩ᴱ-subst ⊩ᴴ-κᵉ (subst (wkᵉ-H Q ⊩ᴱ_) (keyᵛ j A q γ) p))
 
---------------------------------------------------------------
--- The atoms the boundary keeps                              --
---------------------------------------------------------------
-
 atomʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → ∀ {a} → atomʳ j ρ ρ' ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e))
@@ -522,10 +450,6 @@ atomᵗ-princ j A eq γ p | nothing with et₀? A
 ... | just _  with eq
 ...   | refl = λ ()
 atomᵗ-princ j A eq γ p | nothing | nothing = ⊥just eq
-
---------------------------------------------------------------
--- The lists, and the whole residual                         --
---------------------------------------------------------------
 
 listʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (RExp (Φ +e) × RExp (Φ +e)))
@@ -588,15 +512,9 @@ splitᴿ-princ j R eq γ h | just _  | just _  | nothing = ⊥just eq
 splitᴿ-princ j R eq γ h | just _  | nothing | _       = ⊥just eq
 splitᴿ-princ j R eq γ h | nothing | _       | _       = ⊥just eq
 
---------------------------------------------------------------
--- The rigid boundary, principally                           --
---                                                           --
--- The inner run is entered at `δ₀ ↑ᵉ`; what comes back is    --
--- turned into a substitution out of the outer scope by       --
--- undoing the rigid's move and sending the rigid to the      --
--- unit. The outer residual is reattached along the           --
--- factorisation, the inner-born atoms along `⊩ᴴ-κᵉ`.         --
---------------------------------------------------------------
+-- The inner run is entered at `δ₀ ↑ᵉ`; what comes back is turned into a
+-- substitution out of the outer scope by undoing the rigid's move and
+-- sending the rigid to the unit.
 
 popᵉ-princ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
            → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
@@ -646,10 +564,6 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat h
   | just (j , eqj) | nothing | _ = ⊥just eq
 
---------------------------------------------------------------
--- Threading the operations                                  --
---------------------------------------------------------------
-
 threadOps-princ : ∀ {Θ} {f : Op → Constraint Θ}
    → (g : (s : St Θ) → (op : Op)
             → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
@@ -685,10 +599,6 @@ threadOps-princ {f = f} g gp (op ∷ l) s eq δ₀ Q sat h with g s op in e₁
     tri₂ = proj₁ (proj₂ f₂)
     h₂  = proj₁ (proj₂ (proj₂ f₂))
     fx₂ = proj₂ (proj₂ (proj₂ f₂))
-
---------------------------------------------------------------
--- The driver is principal                                   --
---------------------------------------------------------------
 
 solve-principal : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
                 → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' C}
@@ -824,23 +734,9 @@ solve-principal s (⋀ᵒᵖ f) eq
 ...   | refl = threadOps-princ (λ s' op → solve s' (f op))
                                (λ s' op e' → solve-principal s' (f op) e') ops s e
 
---------------------------------------------------------------
--- What is left of a failure at a rigid boundary             --
---                                                           --
--- Of the four ways the boundary can fail, three are now      --
--- refutations. Two cannot happen at all when a solution      --
--- exists: a store never binds a rigid, so the rigid's image  --
--- is a variable and the inner scope has one to spare. The    --
--- third, a rigid escaping into an outer unknown's image, is  --
--- refuted by the escape lemma. Only the fourth is left — the --
--- atoms that mention the eigenvariable and must be           --
--- discharged on the spot, by `Normal`, which is a sound      --
--- oracle with no completeness theorem. `Discharges` is the   --
--- assumption that its verdict there is a refutation, stated  --
--- only for the instances a solution can actually produce:    --
--- those that keep the eigenvariable an eigenvariable, hence  --
--- foreign to the weakened hypotheses `wkᵉ-H Q`.              --
---------------------------------------------------------------
+-- `Discharges`: `Normal`'s failure on the eigenvariable-mentioning atoms
+-- at a rigid binder is assumed to be a refutation, for instances that
+-- keep the eigenvariable an eigenvariable.
 
 Discharges : Set
 Discharges = ∀ {Φ Ψ'} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
@@ -939,16 +835,8 @@ popᵉ-fail s C Φ θ'' R'' rg'' m'' w'' ip dis eq δ₀ Q fx h sat =
     tri''  = proj₁ (proj₂ ires)
     hres'' = proj₁ (proj₂ (proj₂ ires))
 
---------------------------------------------------------------
--- The driver refutes what it fails on                       --
---                                                           --
--- Unconditionally, except at a rigid binder, where the       --
--- guard demands `Discharges` — the one place a failure can   --
--- still be a decision procedure's rather than a proof that   --
--- no solution exists. `solve-fail` is the corollary for      --
--- constraints without a rigid binder, which needs no         --
--- assumption at all.                                        --
---------------------------------------------------------------
+-- Refutes unconditionally, except at a rigid binder, where it needs
+-- `Discharges`.
 
 threadOps-fail : ∀ {Θ} {f : Op → Constraint Θ}
    → (g : (s : St Θ) → (op : Op)

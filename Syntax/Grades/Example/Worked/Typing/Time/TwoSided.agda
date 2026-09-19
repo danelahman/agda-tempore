@@ -274,11 +274,9 @@ claimed-in-both-branches =
 -- Sub-effecting against unboxing
 --
 -- Sequencing locks its continuation by the grade the first part is
--- *typed at*, so a `coerce` on that part changes the lock -- and here
--- the coercion moves both endpoints, so it can close a box from either
--- side. Below it is the floor that gives way: widening the prefix's
--- window lowers what it guarantees, and the box is no longer late
--- enough to be claimed.
+-- *typed at*, so a `coerce` there changes the lock, and here it moves
+-- both endpoints and can close a box from either side. Below it is the
+-- floor that gives way.
 
 -- a reading and a store take between three and four ticks, which lands
 -- inside the box's window

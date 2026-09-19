@@ -74,10 +74,6 @@ open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence.Base S Cat Fut Pst Adj GTy Mon GE
 
-------------------------------------------------------------------------
--- PARAMETRIC SUBSTITUTIONS, AND WHAT THEY DO TO AN ENVIRONMENT
-------------------------------------------------------------------------
-
 Paramˢ₀ : ∀ {Γ Γ'} → Sub₀ [] Γ Γ' → Set
 Paramˢ₀ ⌜ r ⌝           = ⊤
 Paramˢ₀ (val-sub V)     = Paramᵛ V
@@ -108,14 +104,8 @@ sub-env-is-⟦⟧ˢ₀ split-[]     W pW = ≈ᵐ-refl
 sub-env-is-⟦⟧ˢ₀ (split-∷ s)  W pW = mapˣᵐ-cong (sub-env-is-⟦⟧ˢ₀ s W pW) ≈ᵐ-refl
 sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧ˢ₀ s W pW)
 
-------------------------------------------------------------------------
--- WHAT A SUBSTITUTION DOES TO A VARIABLE
---
--- Both statements recurse on the substitution alone, as `sub-var₀`/`sub-tgt₀`
--- do. The renaming generator is the corresponding renaming fact
--- (`var-morphism-nat`, `var-proj-nat`); the other three are the model's
--- structural maps.
-------------------------------------------------------------------------
+-- What a substitution does to a variable: both statements recurse on the
+-- substitution alone, as `sub-var₀`/`sub-tgt₀` do.
 
 mutual
 
@@ -237,13 +227,9 @@ sub-var-natˢ {A = B} (cong-⟨⟩-sub s) p (Tl-⟨⟩ y) f with eternal? B
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
             (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))))))))))))))
 
-------------------------------------------------------------------------
--- WHAT A SUBSTITUTION DOES TO A RESOURCE VARIABLE
---
--- A box-typed variable is not read as a value, so this is a statement about
--- its projection alone: relaxing the substituted variable's projection back to
--- the original grade is the original projection reindexed by the substitution.
-------------------------------------------------------------------------
+-- What a substitution does to a resource (box-typed) variable: a statement
+-- about its projection alone, since a box-typed variable is not read as a
+-- value.
 
 sub-rvar-natˢ : ∀ {Γ Γ' A ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
               → (y : [ ρ ] A ∈[ σ ] Γ')
@@ -318,25 +304,17 @@ unbox-subst-natˢ s p y rel M ih =
                        (≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s y))) rel)}
              {lkᵒ = lk y rel} ih (sub-lkˢ s p y rel)
 
-------------------------------------------------------------------------
--- THE SUBSTITUTION COHERENCE THEOREM
---
--- Substituting preserves parametricity, and the interpretation is natural in
--- the substitution. The two are defined simultaneously, for the same reason as
--- for renamings: transporting a handler's clause-uniformity across a
--- substitution needs the naturality lemma for the clauses themselves.
---
--- The recursion is on the term and never inspects the substitution, exactly as
--- `V-sub₀`/`C-sub₀`'s is; what the substitution does is confined to the `var`
--- and `unbox` cases, which are the lemmas above.
-------------------------------------------------------------------------
+-- The substitution coherence theorem: substituting preserves parametricity,
+-- and the interpretation is natural in the substitution, defined
+-- simultaneously (as for renamings). The recursion is on the term alone;
+-- what the substitution does is confined to the `var` and `unbox` cases,
+-- the lemmas above.
 
 mutual
 
-  -- `TERMINATING`: the recursion is structural on the term, but it passes
-  -- through the simultaneously-defined naturality lemma (the `handle` case of
-  -- `subᶜˢ` appeals to `C-subst-natˢ` on the clauses), which masks that from
-  -- the termination checker.
+  -- `{-# TERMINATING #-}`: the recursion is structural on the term, but it
+  -- passes through the mutually-defined naturality lemma, which hides that
+  -- from the checker.
 
   {-# TERMINATING #-}
 

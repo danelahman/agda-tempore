@@ -34,12 +34,7 @@ open import TypeInference.Open.Types    S
 open import TypeInference.Open.Contexts S
 open import TypeInference.Open.Subst    S
 
---------------------------------------------------------------
--- Lookup commutes with the three scope extensions           --
---                                                           --
--- Each is the induction that mirrors `lookup-*`'s own        --
--- recursion; the `[]` case is covered by `Fin 0` being empty. --
---------------------------------------------------------------
+-- Lookup commutes with the three scope extensions.
 
 lookup-ty-wkᵗ : ∀ {Θ n} → (Γ : OCtx Θ n) → (i : Fin n)
               → lookup-ty (wkᵗ-ctx Γ) i ≡ wkᵗ-v (lookup-ty Γ i)
@@ -77,12 +72,8 @@ lookup-gr-wkᵉ (Γ ∷ A)   zero    = refl
 lookup-gr-wkᵉ (Γ ∷ A)   (suc i) = lookup-gr-wkᵉ Γ i
 lookup-gr-wkᵉ (Γ ⟨ ρ ⟩) i       = cong (_·̂ᵣ wkᵉ-r ρ) (lookup-gr-wkᵉ Γ i)
 
---------------------------------------------------------------
--- Action of a substitution on a membership witness          --
---                                                           --
--- Index-preserving, as `_[_]ᶜᵗˣ` is: the witness is rebuilt  --
--- constructor for constructor, so its position is untouched. --
---------------------------------------------------------------
+-- Substitution on a membership witness is index-preserving, as `_[_]ᶜᵗˣ`
+-- is.
 
 ∈̂-subst : ∀ {Θ Θ' n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
         → (σ : Subst Θ Θ')
@@ -100,14 +91,8 @@ var-pos-∈̂-subst σ Hd        = refl
 var-pos-∈̂-subst σ (Tl-∷ x)  = cong suc (var-pos-∈̂-subst σ x)
 var-pos-∈̂-subst σ (Tl-⟨⟩ x) = var-pos-∈̂-subst σ x
 
---------------------------------------------------------------
--- Transporting a membership witness along a type equation   --
---                                                           --
--- The `unbox` rule wants the looked-up type in the shape     --
--- `[ ρ ] A`; the equation that puts it there comes from the  --
--- `_≐ᵥ_` conjunct. Transporting is `J`, so the position      --
--- cannot change.                                             --
---------------------------------------------------------------
+-- Transporting a membership witness along a type equation is `J`, so
+-- the position cannot change.
 
 ∈̂-ty-subst : ∀ {Θ n} {A A' : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → A ≡ A' → A ∈̂[ ρ ] Γ → A' ∈̂[ ρ ] Γ

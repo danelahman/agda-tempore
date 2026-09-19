@@ -1,25 +1,25 @@
 ------------------------------------------------------------------------
 -- A trace-history Kripke frame for the subset grade of lower bounds.  --
---                                                                    --
+--                                                                     --
 -- Worlds are timed traces. A grade `P` lists runs that must remain    --
 -- reachable, and a history reaches another by appending a             --
 -- continuation that answers to every one of them:                     --
---                                                                    --
+--                                                                     --
 --   w ⊑ᵇ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'  and  P ⊆ { cont }   --
---                                                                    --
+--                                                                     --
 -- The condition is universal in `P`, as covariance demands: weakening --
 -- here drops listed runs.                                             --
---                                                                    --
--- READING, and what it exposes. `P ⊆ { cont }` says every demanded    --
--- run *is* the continuation, so for a non-singleton grade no world is --
--- reachable at all: one history is one run, and it cannot be two. The --
--- tick frame does not see this -- there a grade is only a number of   --
--- ticks, and several demanded runs collapse into their slowest.       --
---                                                                    --
--- That is the frame stating what the grade already says: a            --
--- non-singleton lower bound is a claim about a computation's          --
--- branching, and a single observed history is no witness for it.      --
---                                                                    --
+--                                                                     --
+-- `P ⊆ { cont }` says every demanded run *is* the continuation, so    --
+-- for a non-singleton grade no world is reachable at all: one history --
+-- is one run, and it cannot be two. The tick frame does not see this  --
+-- -- there a grade is only a number of ticks, and several demanded    --
+-- runs collapse into their slowest.                                   --
+--                                                                     --
+-- That is the frame stating what the grade already says: a non-       --
+-- singleton lower bound is a claim about a computation's branching,   --
+-- and a single observed history is no witness for it.                 --
+--                                                                     --
 -- The grade's `no-demand` demands no run, so it leaves the            --
 -- continuation unconstrained and asks only that `w'` extend `w`.      --
 ------------------------------------------------------------------------

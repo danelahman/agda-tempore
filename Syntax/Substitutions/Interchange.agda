@@ -62,13 +62,9 @@ eternal-val-ext-ren et             r false       = refl
 eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊  =
   cong₂ ⦉_,_⦊ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
 
-------------------------------------------------------------------------
--- A RENAMING ACTS AS THE SUBSTITUTION IT EMBEDS TO
---
 -- `cong-sub₀ ⌜ r ⌝` and `⌜ cong-ren r ⌝` are distinct substitutions acting
--- alike, so the bridge is stated up to `_≐ˢ₀_` at the binders and closed by
+-- alike; the bridge is stated up to `_≐ˢ₀_` at the binders and closed by
 -- `C-sub₀-≐ˢ₀`.
-------------------------------------------------------------------------
 
 cong-∷-sub-⌜⌝ : ∀ {Γ Γ' A} → {s : Sub₀ [] Γ Γ'} → {r : Ren [] Γ Γ'}
               → s ≐ˢ₀ ⌜ r ⌝ → cong-∷-sub {A = A} s ≐ˢ₀ ⌜ cong-∷-ren r ⌝
@@ -162,17 +158,12 @@ mutual
                      (C-sub₀-⌜⌝ (cong-ren r) M))
   C-sub₀-⌜⌝ r (coerce rel M) = coerce-≡ (C-sub₀-⌜⌝ r M)
 
-------------------------------------------------------------------------
--- SUBSTITUTING COMMUTES WITH RENAMING
---
 -- Two ways round a square: substitute by `s` then rename by `r'`, or rename
 -- by `r` then substitute by `s'`. The premise is that they agree on variables
 -- and on resource variables; the theorem is that they then agree on terms.
 --
--- The premise is closed under all four ways the action grows a substitution at
--- a binder, each closure being a variable-level calculation. That is what keeps
--- this one induction over terms self-contained.
-------------------------------------------------------------------------
+-- The premise is closed under all four ways the action grows a substitution
+-- at a binder, each closure a variable-level calculation.
 
 record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
                    (r' : Ren [] Δ Γ) (s : Sub₀ [] Γ Γ') : Set where
@@ -257,8 +248,6 @@ open Interchange public
 ⋈-cong []         h = h
 ⋈-cong (Γ₀ ∷ A)   h = ⋈-∷ (⋈-cong Γ₀ h)
 ⋈-cong (Γ₀ ⟨ ρ ⟩) h = ⋈-⟨⟩ (⋈-cong Γ₀ h)
-
-------------------------------------------------------------------------
 
 mutual
 

@@ -77,12 +77,8 @@ wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵉ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵉ-e) (ordₑ Q))
 
---------------------------------------------------------------
--- Convertibility of open grade expressions                  --
---                                                           --
--- The monoid laws, the constants' arithmetic, and the fact   --
--- that `∣_∣̂ᵉ` is a monoid morphism. No hypotheses involved.  --
---------------------------------------------------------------
+-- The monoid laws, the constants' arithmetic, and `∣_∣̂ᵉ` being a monoid
+-- morphism; no hypotheses involved.
 
 infix 4 _≡̂ᵣ_ _≡̂ₑ_
 
@@ -113,10 +109,6 @@ data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-identityˡ : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
   ≡̂ₑ-identityʳ : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
   ≡̂ₑ-const-·   : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
-
---------------------------------------------------------------
--- Entailment of grade orderings                             --
---------------------------------------------------------------
 
 infix 4 _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
@@ -160,13 +152,9 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 ⊩≾̂ₑ-refl : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ≾̂ₑ ε
 ⊩≾̂ₑ-refl = eqₑ ≡̂ₑ-refl
 
---------------------------------------------------------------
--- Entailment of eternality                                  --
---                                                           --
--- Mirrors `Eternal` of `Syntax.Types`, with an extra rule    --
--- for the eternality atoms of the hypothesis set. As in the  --
--- original, there is no rule for `_⇒_` and `[_]_`.           --
---------------------------------------------------------------
+-- Mirrors `Eternal` of `Syntax.Types`, plus a rule for the eternality
+-- atoms of the hypothesis set; as in the original, no rule for `_⇒_`
+-- and `[_]_`.
 
 infix 4 _⊩ᴱ_
 
@@ -178,14 +166,9 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   _|×|ₑ_ : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
   Emptyₑ : Q ⊩ᴱ Empty
 
---------------------------------------------------------------
--- Entailment between hypothesis sets                        --
---                                                           --
--- `Q' ⊩ᴴ Q [ σ ]` says that `Q'` entails every hypothesis of --
--- `Q` transported along `σ`. There is no syntactic action of --
--- a substitution on `Hyps`: `ets` holds *variables*, whose   --
--- images under `σ` are open types, not variables.            --
---------------------------------------------------------------
+-- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
+-- along `σ`; there is no syntactic action of a substitution on `Hyps`,
+-- as `ets` holds variables, whose images under `σ` are open types.
 
 infix 4 _⊩ᴴ_[_] _⊩ᴴ_
 
@@ -202,10 +185,6 @@ open _⊩ᴴ_[_] public
 
 _⊩ᴴ_ : ∀ {Θ} → Hyps Θ → Hyps Θ → Set
 Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
-
---------------------------------------------------------------
--- Stability of convertibility under substitution            --
---------------------------------------------------------------
 
 ≡̂ᵣ-subst : ∀ {Θ Θ'} {ρ ρ' : RExp Θ} → (σ : Subst Θ Θ')
          → ρ ≡̂ᵣ ρ' → ρ [ σ ]ʳ ≡̂ᵣ ρ' [ σ ]ʳ
@@ -232,10 +211,6 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ ≡̂ₑ-identityˡ   = ≡̂ₑ-identityˡ
 ≡̂ₑ-subst σ ≡̂ₑ-identityʳ   = ≡̂ₑ-identityʳ
 ≡̂ₑ-subst σ ≡̂ₑ-const-·     = ≡̂ₑ-const-·
-
---------------------------------------------------------------
--- Stability of entailment under substitution                --
---------------------------------------------------------------
 
 ⊩-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
@@ -266,10 +241,6 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-subst h (et₁ |×|ₑ et₂) = ⊩ᴱ-subst h et₁ |×|ₑ ⊩ᴱ-subst h et₂
 ⊩ᴱ-subst h Emptyₑ      = Emptyₑ
 
---------------------------------------------------------------
--- Identity and composition of hypothesis entailment         --
---------------------------------------------------------------
-
 ⊩ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ᴴ Q [ idˢ ]
 ⊩ᴴ-refl {Q = Q} =
   mk⊩ᴴ et-hyp
@@ -290,12 +261,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
           subst₂ (λ x y → Q'' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
                  (⊩-substₑ h' (⊩ordₑ h m)))
 
---------------------------------------------------------------
--- Compatibility with the scope extensions                   --
---                                                           --
--- Weakening a hypothesis set is the action of the weakening --
--- substitution, so entailment is stable under it.           --
---------------------------------------------------------------
+-- Weakening a hypothesis set is the action of the weakening substitution,
+-- so entailment is stable under it.
 
 ⊩ᴴ-wkᵗ : ∀ {Θ} {Q : Hyps Θ} → wkᵗ-H Q ⊩ᴴ Q [ wkˢᵗ ]
 ⊩ᴴ-wkᵗ {Θ} {Q} =

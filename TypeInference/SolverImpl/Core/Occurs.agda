@@ -40,10 +40,6 @@ open import TypeInference.Open.Subst  S
 
 open import TypeInference.SolverImpl.Core.For S
 
---------------------------------------------------------------
--- Occurrence of a type variable                             --
---------------------------------------------------------------
-
 mutual
 
   occᵗ-v : ∀ {Θ} → TyVar Θ → OVType Θ → 𝔹
@@ -58,10 +54,6 @@ mutual
 
   occᵗ-c : ∀ {Θ} → TyVar Θ → OCType Θ → 𝔹
   occᵗ-c α (A ‼ ε) = occᵗ-v α A
-
---------------------------------------------------------------
--- Occurrence of a resource-grade variable                   --
---------------------------------------------------------------
 
 occʳ-r : ∀ {Θ} → RVar Θ → RExp Θ → 𝔹
 occʳ-r i (rvar j)   = ⌊ i ≟ᶠ j ⌋
@@ -83,10 +75,6 @@ mutual
 
   occʳ-c : ∀ {Θ} → RVar Θ → OCType Θ → 𝔹
   occʳ-c i (A ‼ ε) = occʳ-v i A
-
---------------------------------------------------------------
--- Occurrence of an effect-grade variable                    --
---------------------------------------------------------------
 
 occᵉ-e : ∀ {Θ} → EVar Θ → EExp Θ → 𝔹
 occᵉ-e i (evar j)   = ⌊ i ≟ᶠ j ⌋
@@ -113,10 +101,6 @@ mutual
 
   occᵉ-c : ∀ {Θ} → EVar Θ → OCType Θ → 𝔹
   occᵉ-c i (A ‼ ε) = occᵉ-v i A ∨ occᵉ-e i ε
-
---------------------------------------------------------------
--- Strengthening along a variable                            --
---------------------------------------------------------------
 
 chkᵗ-v : ∀ {Θ} → TyVar (Θ +ty) → OVType (Θ +ty) → Maybe (OVType Θ)
 chkᵗ-v α A = if occᵗ-v α A then nothing else just (A [ Unit forᵗ α ]ᵛ)

@@ -1,38 +1,8 @@
 ------------------------------------------------------------------
--- A concrete constraint solver                                   --
---                                                                --
--- The `Solver` of `TypeInference.Solver` is an assumption, and must   --
--- be: `_≾ᵣ_`/`_≾ₑ_` are undecidable in the `Grade` interface and  --
--- `⋀ᵒᵖ`/`∀ᵉ` are infinitary. This module builds as much of one as --
--- is buildable, under three explicit assumptions — decidability   --
--- of the two grade orders and an enumeration of the operation     --
--- symbols — and is honest about the rest. Two further parameters  --
--- are optional: a proof that the unit is the least grade, on      --
--- either side, which `nothing` switches off.                      --
---                                                                --
--- The solver is in two halves, and the split is the point.        --
---                                                                --
---   * `TypeInference.SolverImpl.Solve` drives the constraint against  --
---     the unification core of `TypeInference.SolverImpl.Core`. It     --
---     takes no defaults: a type equation is solved by the core,   --
---     a grade ordering and an eternality demand are carried as a  --
---     residual, and the `var`-rule disjunction is biased towards  --
---     its grade disjunct, which constrains no type. What it       --
---     returns is a substitution together with what is left over,  --
---     and a witness deferred until the leftovers are discharged.  --
---   * `TypeInference.SolverImpl.Close` discharges the leftovers into  --
---     the empty scope. This is the heuristic half: slack, then    --
---     the defaults `Unit`/`ûᵣ`/`ûₑ`, then the decision procedures  --
---     of `TypeInference.SolverImpl.Normal`.                           --
---                                                                --
--- Satisfaction of `_≐ᵥ_` is *syntactic* equality of substituted   --
--- types — substitution never normalises grades — so a solved type --
--- equation is made literally true by assignment, and the core's   --
--- verdicts across the sorts are the right ones.                   --
---                                                                --
--- What is *not* attained: `gsolve-complete`. Closing is a         --
--- heuristic — a failure is "this solver found nothing", not "no   --
--- solution exists" — so `GroundSolver` is not instantiated.       --
+-- A concrete constraint solver, under decidability and           --
+-- enumerability assumptions.                                     --
+-- Parameters: decidability of the two grade orders, an           --
+-- operation enumeration, and optional unit-minimality witnesses. --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)
@@ -90,16 +60,7 @@ open import TypeInference.SolverImpl.State S using (St; θ; res; init)
 open import TypeInference.SolverImpl.Solve S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ using (solve)
 open import TypeInference.SolverImpl.Close S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ using (close)
 
---------------------------------------------------------------
--- Solving into the empty scope                              --
---                                                           --
--- This is the `gsolve` field of `GroundSolver`, and all of   --
--- it that is attainable: a success carries its own           --
--- soundness, a failure carries nothing. The witness the      --
--- driver deferred is applied to the closing substitution and --
--- the discharge of the residual it comes with, and IS the    --
--- satisfaction proof.                                       --
---------------------------------------------------------------
+-- The `gsolve` field of `GroundSolver` — the only part attainable here.
 
 gsolveImpl : ∀ {Θ} → (C : Constraint Θ)
            → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] (σ ⊨[ ∅ᴴ ] C))
@@ -109,16 +70,8 @@ gsolveImpl C with solve init C
 ...   | nothing      = nothing
 ...   | just (δ , h) = just (θ s' ⨟ˢ δ , w δ ∅ᴴ h)
 
---------------------------------------------------------------
--- Inference, end to end                                     --
---                                                           --
--- `TypeInference.Infer.infer` takes a whole `GroundSolver`, so   --
--- it is out of reach (see above). Its pipeline is not: the   --
--- solution `gsolveImpl` returns is exactly what `soundC`,    --
--- `ctx-substᶜ` and `groundC` consume, and the result is a    --
--- typing derivation of the ORIGINAL system together with     --
--- its mirrored origin and erasure equation.                  --
---------------------------------------------------------------
+-- Feeds `gsolveImpl`'s result to `soundC`, `ctx-substᶜ` and `groundC`,
+-- bypassing `TypeInference.Infer.infer` (which needs a whole `GroundSolver`).
 
 inferImpl : (Γ : Ctx) → (M : RawC (skel Γ)) → Maybe (Inferred Γ M)
 inferImpl Γ M = elaborate (gsolveImpl C∅[ Γ , M ])

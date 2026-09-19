@@ -1,32 +1,6 @@
 ------------------------------------------------------------------
--- Completeness of constraint generation                          --
---                                                                --
--- Every mirrored derivation solves the constraint generated from --
--- its own erasure:                                               --
---                                                                --
---   (D : Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ‼ ε) → Q ⊩ ε ≾̂ₑ t [ σ ]ᵉ    --
---     → σ ⊨[ Q ] genC Γ ⌊ D ⌋ᶜ (A ‼ t)                           --
---                                                                --
--- The proof is a structural induction on `D`, one case per       --
--- former. The context and the value type of `D` are *generalised*--
--- and related to the generation arguments by equations           --
--- (`Γ₀ ≡ Γ [ σ ]ᶜᵗˣ`, `A₀ ≡ A [ σ ]ᵛ`): a transported derivation --
--- is not a structural subterm, so the transports of              --
--- `TypeInference.Soundness` are replaced by hypotheses carried along --
--- the induction.                                                 --
---                                                                --
--- The effect of `D` is related to the expected effect by the     --
--- *slack* hypothesis `Q ⊩ ε ≾̂ₑ t [ σ ]ᵉ`, which is what makes    --
--- the `coerce` case go through (entailment transitivity). At     --
--- every recursive call the slack is reflexivity: generation's    --
--- inner expected effects are the `∃`-witnesses supplied here,    --
--- which are `D`'s own effects.                                   --
---                                                                --
--- The `∃`-witnesses are read off `D`; each generated fresh       --
--- variable instantiates to its witness *definitionally*          --
--- (`newᵗ`/`newʳ`/`newᵉ` are `zero`), so only the collapses of    --
--- the weakened generation arguments (`co*`, from                 --
--- `TypeInference.Soundness`, read right-to-left) remain.             --
+-- Completeness of constraint generation: a derivation            --
+-- satisfies the constraint generated from its own erasure.       --
 ------------------------------------------------------------------
 
 open import Data.Fin using (zero)
@@ -64,10 +38,6 @@ open import TypeInference.Constraints.Satisfaction S
 
 open import TypeInference.Generate  S
 open import TypeInference.Soundness S
-
---------------------------------------------------------------
--- The theorem                                               --
---------------------------------------------------------------
 
 mutual
 
@@ -274,11 +244,8 @@ mutual
 
   -- effect handling
   --
-  -- The clause family is handled pointwise, one `∀ᵉ` deeper: the rigid
-  -- effect-grade variable of generation instantiates to the rigid variable
-  -- of the rule definitionally, so the clause's slack is reflexivity and
-  -- only the clause context's weakenings and the two ground-type
-  -- embeddings have to be collapsed.
+  -- The clause family is handled pointwise; only the clause context's
+  -- weakenings and the two ground-type embeddings need collapsing.
 
   completeC {Θ = Θ} {Θ' = Θ'} {σ = σ} {Q = Q} Γ A t
             (handle_`with_`in {A = A₁} {ε = ε₁} {ε' = ε₂} D₁ H D₂) ceq aeq le =
@@ -410,13 +377,8 @@ mutual
   completeC Γ A t (coerce p D) ceq aeq le =
     completeC Γ A t D ceq aeq (transₑ p le)
 
---------------------------------------------------------------
--- Characterisation                                          --
---                                                           --
--- Satisfaction of a generated constraint and existence of a  --
--- derivation erasing to the raw term are equivalent, up to   --
--- existence (mirrored derivations are proof-relevant).       --
---------------------------------------------------------------
+-- Satisfying the generated constraint is equivalent to erasing from a
+-- derivation, up to derivation choice.
 
 charV : ∀ {Θ n Θ'} → (Γ : OCtx Θ n) → (V : RawV n) → (A : OVType Θ)
       → (σ : Subst Θ Θ') → (Q : Hyps Θ')
@@ -440,9 +402,7 @@ charC Γ M A t σ Q =
       (λ { (D , e) → subst (λ N → σ ⊨[ Q ] genC Γ N (A ‼ t)) e
                            (completeC Γ A t D refl refl ⊩≾̂ₑ-refl) })
 
---------------------------------------------------------------
--- Sanity checks: completeness computes                      --
---------------------------------------------------------------
+-- Sanity checks: completeness computes on examples.
 
 private
 

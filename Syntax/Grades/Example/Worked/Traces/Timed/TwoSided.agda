@@ -142,10 +142,8 @@ no-narrower-allowance = fails _ _
 --   ⌈ read ⌉ ≼ᵃ ⌈ read ⌉ ∙ ⌈ write ⌉    a bound naming a store still
 --                                        permits reading and stopping
 --
--- The two endpoints nonetheless move in opposite directions, because
--- the floor's lift reverses and the cap's does not. So the single fact
--- "the store is extra work" reads as *weakening* at the floor and as
--- *widening* at the cap.
+-- The floor's lift reverses and the cap's does not, so the one fact
+-- reads as *weakening* at the floor and as *widening* at the cap.
 
 -- at the floor, with the cap held fixed: the store may be dropped from
 -- what is guaranteed
@@ -242,11 +240,9 @@ no-such-interval ()
 ------------------------------------------------------------------------
 -- The greatest grade
 --
--- `⊤ᵗˢ` is the weakest guarantee,
--- which is the unit, under an unbounded allowance. Sequencing absorbs
--- at the cap alone -- what follows an unbounded computation is
--- unbounded too -- while the floor keeps whatever the other factor
--- guarantees.
+-- `⊤ᵗˢ` is the weakest guarantee, which is the unit, under an
+-- unbounded allowance. Sequencing absorbs at the cap alone; the floor
+-- keeps whatever the other factor guarantees.
 
 everything-weakens-to-the-top :
   [ ⟅ ⌈ read ⌉ ⟆ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ] ≾ᵗˢ ⊤ᵗˢ

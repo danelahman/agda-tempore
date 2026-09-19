@@ -59,10 +59,6 @@ open import TypeInference.SolverImpl.Core.Occurs S
 open import TypeInference.SolverImpl.Core.Size   S
 open import TypeInference.SolverImpl.Core.Unify  S
 
---------------------------------------------------------------
--- Inverting the combinators the unifier is built from       --
---------------------------------------------------------------
-
 bind-just : ∀ {X Y : Set} → (m : Maybe X) → (f : X → Maybe Y) → {y : Y}
           → (m >>= f) ≡ just y → Σ[ x ∈ X ] ((m ≡ just x) × (f x ≡ just y))
 bind-just (just x) f q = x , refl , q
@@ -102,21 +98,12 @@ dec-false (yes _) ()
 ∨-false false true  ()
 ∨-false true  b'    ()
 
---------------------------------------------------------------
--- A variable other than the eliminated one thickens         --
---------------------------------------------------------------
-
 thick-¬ : ∀ {n} → (i j : Fin (suc n)) → ¬ (i ≡ j) → Σ[ k ∈ Fin n ] (thick i j ≡ just k)
 thick-¬         zero    zero    ne = ⊥-elim (ne refl)
 thick-¬         zero    (suc j) ne = j , refl
 thick-¬ {suc n} (suc i) zero    ne = zero , refl
 thick-¬ {suc n} (suc i) (suc j) ne with thick-¬ i j (λ r → ne (cong suc r))
 ... | k , q = suc k , cong (mmap suc) q
-
---------------------------------------------------------------
--- Grade expressions see only two of the three components    --
--- of a substitution                                         --
---------------------------------------------------------------
 
 agreeᵉ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → ((i : EVar Θ) → sE σ i ≡ sE δ i)
        → (ε : EExp Θ) → ε [ σ ]ᵉ ≡ ε [ δ ]ᵉ
@@ -130,11 +117,6 @@ agreeʳ qr qe (rvar i)   = qr i
 agreeʳ qr qe (rconst c) = refl
 agreeʳ qr qe (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (agreeʳ qr qe ρ) (agreeʳ qr qe ρ')
 agreeʳ qr qe ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (agreeᵉ qe ε)
-
---------------------------------------------------------------
--- An expression the eliminated variable misses does not see --
--- the image it is eliminated to                             --
---------------------------------------------------------------
 
 irrᵉ-e : ∀ {Θ} → (i : EVar (Θ +e)) → (X Y : EExp Θ) → (ε : EExp (Θ +e))
        → occᵉ-e i ε ≡ false → ε [ X forᵉ i ]ᵉ ≡ ε [ Y forᵉ i ]ᵉ
@@ -174,10 +156,6 @@ mutual
          → occᵗ-c α C ≡ false → C [ X forᵗ α ]ᶜ ≡ C [ Y forᵗ α ]ᶜ
   irrᵗ-c α X Y (A ‼ ε) q = cong₂ _‼_ (irrᵗ-v α X Y A q) (agreeᵉ (λ i → refl) ε)
 
---------------------------------------------------------------
--- The algebra of store composition                          --
---------------------------------------------------------------
-
 anil-++ᴬ : ∀ {Θ Θ'} → (ρ : AList Θ Θ') → anil ++ᴬ ρ ≡ ρ
 anil-++ᴬ anil         = refl
 anil-++ᴬ (A /ᵗ α ∷ ρ) = cong (A /ᵗ α ∷_) (anil-++ᴬ ρ)
@@ -209,10 +187,6 @@ Unifies¹-[]ᴱ (eqᵛ A B)  τ δ u = trans (sym ([⨟]ᵛ A τ δ)) (trans u (
 Unifies¹-[]ᴱ (eqᶜ C D)  τ δ u = trans (sym ([⨟]ᶜ C τ δ)) (trans u ([⨟]ᶜ D τ δ))
 Unifies¹-[]ᴱ (eqʳ ρ ρ') τ δ u = trans (sym ([⨟]ʳ ρ τ δ)) (trans u ([⨟]ʳ ρ' τ δ))
 Unifies¹-[]ᴱ (eqᵉ ε ε') τ δ u = trans (sym ([⨟]ᵉ ε τ δ)) (trans u ([⨟]ᵉ ε' τ δ))
-
---------------------------------------------------------------
--- What one successful call establishes                      --
---------------------------------------------------------------
 
 -- The returned store extends the given one, and solves the equation.
 -- A record, so that the equation is recovered from the type.
@@ -266,10 +240,6 @@ seq-sound {e₁ = e₁} {ρ = ρ} m f s₁ s₂ cg eq with bind-just m f eq
         sound (ρ⁺₂ ++ᴬ ρ⁺₁)
               (trans r₂ (trans (cong (ρ⁺₂ ++ᴬ_) r₁) (sym (++ᴬ-assoc ρ⁺₂ ρ⁺₁ ρ))))
               (cg (subst (λ z → Unifies¹ e₁ ⟦ z ⟧ᴬ) (sym r₂) (mono++ ρ⁺₂ e₁ u₁)) u₂)
-
---------------------------------------------------------------
--- Binding a variable                                        --
---------------------------------------------------------------
 
 flexᵗ-sound : ∀ {Θ} → (α : TyVar Θ) → (A : OVType Θ) → {Θ'' : Scope} → {ρ'' : AList Θ Θ''}
             → flexᵗ α A ≡ just (Θ'' , ρ'') → Sound (eqᵛ (tvar α) A) anil ρ''
@@ -365,10 +335,6 @@ flexFlexᵉ-sound {Θ} rg i j eq
 ... | inj₂ q with alt-just (flexᵉ rg i (evar j)) (flexᵉ rg j (evar i)) q
 ...   | inj₁ q' = flexᵉ-sound rg i (evar j) q'
 ...   | inj₂ q' = Sound-map sym (flexᵉ-sound rg j (evar i) q')
-
---------------------------------------------------------------
--- Soundness of the unifier                                  --
---------------------------------------------------------------
 
 mutual
 
@@ -715,10 +681,6 @@ mutual
               (amguᵉ-sound zero p rg ε₁ ε₁' anil) (amguᵉ-sound zero p rg ε₂ ε₂')
               (cong₂ _·̂ₑ_) eq
 
---------------------------------------------------------------
--- Soundness of the equation solver                          --
---------------------------------------------------------------
-
 amguᴱ-sound : ∀ {Θ} → (rg : Rig Θ) → (e : Eqn Θ) → {Θ' Θ'' : Scope}
             → (ρ : AList Θ Θ') → {ρ'' : AList Θ Θ''}
             → amguᴱ rg e (Θ' , ρ) ≡ just (Θ'' , ρ'') → Sound e ρ ρ''
@@ -744,10 +706,6 @@ unify-sound : ∀ {Θ Θ⁺} → (rg : Rig Θ) → (es : Eqns Θ) → {ρ : ALis
             → unify rg es ≡ just (Θ⁺ , ρ) → Unifies es ⟦ ρ ⟧ᴬ
 unify-sound {Θ} rg es eq with unifyᴬ-sound rg es anil eq
 ... | _ , _ , us = us
-
---------------------------------------------------------------
--- Sanity check                                              --
---------------------------------------------------------------
 
 private
 

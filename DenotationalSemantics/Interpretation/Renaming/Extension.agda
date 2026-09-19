@@ -45,8 +45,6 @@ open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming.Algebra S Cat Fut Pst Adj GTy Mon GE
 
--- EXTENDING AN ENVIRONMENT MORPHISM THROUGH A CONTEXT SUFFIX
---
 -- `ext Γ Γ' Θ` weakens a morphism `⟦ Γ ⟧ → ⟦ Γ' ⟧` past everything a suffix
 -- `Θ` binds. It is the semantic counterpart of the syntactic `cong-ren`,
 -- generalised from renaming denotations to arbitrary

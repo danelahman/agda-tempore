@@ -1,35 +1,11 @@
 ------------------------------------------------------------------
--- Most general unifiers, and refutation                        --
---                                                              --
--- A successful run of `unify` returns a store whose denotation --
--- is a most general unifier of the equations: every unifying   --
--- substitution factors through it. A failing run refutes the   --
--- equations, for every substitution that maps the rigid        --
--- variables to variables, injectively.                         --
---                                                              --
--- Both halves are one induction, following the unifier: a call --
--- is specified by what each of its two possible results means  --
--- (`Spec`), so a clash — where nothing needs to be known about --
--- the result — is discharged by refuting its equation alone,   --
--- with no case analysis on the size index.                     --
---                                                              --
--- The properties spoken about are properties of substitutions  --
--- closed under `_≐ˢ_`, composed with a substitution by `_⋄_`;  --
--- `Max` is maximality relative to the store a call starts      --
--- from, and `seq-spec` is the optimist's lemma: maximal        --
--- solutions of two properties in sequence compose.             --
---                                                              --
--- Failure has three sources. A clash is a head mismatch, and   --
--- is immediate because satisfaction is syntactic equality. A   --
--- failed occurrence check is refuted by the cross-sort sizes:  --
--- a proper occurrence of a variable makes the instance of the  --
--- expression strictly larger than the instance of the          --
--- variable. A rigid variable refuses to be bound, which is     --
--- refuted by its image being a variable, distinct from the     --
--- image of every other rigid variable.                         --
---                                                              --
--- The `Max` characterisation of most general unifiers and the  --
--- optimist's lemma follow McBride (JFP 2003).                  --
+-- Most general unifiers, and refutation of `unify`'s failures. --
+-- A success returns a most general unifier: every unifying     --
+-- substitution factors through it. A failure refutes the       --
+-- equations, for every substitution mapping rigids to          --
+-- variables, injectively.                                      --
+-- Follows McBride's `Max` characterisation of most general     --
+-- unifiers and the optimist's lemma (JFP 2003).                --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)
@@ -75,10 +51,6 @@ open import TypeInference.SolverImpl.Core.Size      S
 open import TypeInference.SolverImpl.Core.Unify     S
 open import TypeInference.SolverImpl.Core.UnifySound S
 
---------------------------------------------------------------
--- The algebra of pointwise equality of substitutions        --
---------------------------------------------------------------
-
 refl≐ˢ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → σ ≐ˢ σ
 refl≐ˢ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 
@@ -98,10 +70,6 @@ trans≐ˢ q r = mk≐ˢ (λ α → trans (≐ᵗ q α) (≐ᵗ r α))
 ⨟ˢ-congʳ σ q = mk≐ˢ (λ α → [≐]ᵛ q (sTy σ α))
                     (λ i → [≐]ʳ q (sR σ i))
                     (λ i → [≐]ᵉ q (sE σ i))
-
---------------------------------------------------------------
--- Further inversions of the combinators of the unifier      --
---------------------------------------------------------------
 
 bind-nothing : ∀ {X Y : Set} → (m : Maybe X) → (f : X → Maybe Y) → (m >>= f) ≡ nothing
              → (m ≡ nothing) ⊎ Σ[ x ∈ X ] ((m ≡ just x) × (f x ≡ nothing))
@@ -160,10 +128,6 @@ dec-no (no  _) _  = refl
 just-inj : ∀ {X : Set} {x y : X} → just x ≡ just y → x ≡ y
 just-inj refl = refl
 
---------------------------------------------------------------
--- The formers are injective                                 --
---------------------------------------------------------------
-
 tvar-inj : ∀ {Θ} {α β : TyVar Θ} → tvar {Θ} α ≡ tvar β → α ≡ β
 tvar-inj refl = refl
 
@@ -200,12 +164,8 @@ econst-inj refl = refl
 ·ₑ-inj : ∀ {Θ} {ε₁ ε₂ ε₁' ε₂' : EExp Θ} → (ε₁ ·̂ₑ ε₂) ≡ (ε₁' ·̂ₑ ε₂') → (ε₁ ≡ ε₁') × (ε₂ ≡ ε₂')
 ·ₑ-inj refl = refl , refl
 
---------------------------------------------------------------
--- Substitutions that fix the rigid variables                --
---                                                           --
--- A rigid variable goes to a variable, and two distinct      --
--- rigids go to distinct variables.                           --
---------------------------------------------------------------
+-- A rigid variable goes to a variable, and two distinct rigids go to
+-- distinct variables.
 
 record Fixing {Θ Ψ : Scope} (rg : Rig Θ) (σ : Subst Θ Ψ) : Set where
   constructor fixing
@@ -241,10 +201,6 @@ Fixing-id rg = fixing (λ i _ → i , refl) (λ i i' _ _ r → evar-inj r)
 ... | inj₂ s with ∈-mapMaybe {Θ} i rg j s
 ...   | i' , m , r' = i' , ∨-right ⌊ i' ≟ᶠ i₀ ⌋ (i' ∈ᶠ rg) m , r'
 
---------------------------------------------------------------
--- Properties of substitutions                               --
---------------------------------------------------------------
-
 record Property (Θ : Scope) : Set₁ where
   constructor prop
   field
@@ -268,13 +224,9 @@ Uni e = prop (λ σ → Unifies¹ e σ) (λ q u → Unifies¹-resp-≐ˢ q e u)
 Unis : ∀ {Θ} → Eqns Θ → Property Θ
 Unis es = prop (λ σ → Unifies es σ) (λ q u → Unifies-resp-≐ˢ q es u)
 
---------------------------------------------------------------
--- What one call of the unifier establishes                  --
---                                                           --
--- Maximality is relative to the store the call starts from:  --
--- every solution of the property extending that store is an  --
--- instance of the returned store.                            --
---------------------------------------------------------------
+-- Maximality relative to the store the call starts from: every
+-- solution of the property extending that store is an instance of the
+-- returned store.
 
 record Max {Θ Θ' Θ'' : Scope} (P : Property Θ) (ρ : AList Θ Θ') (ρ'' : AList Θ Θ'') : Set where
   constructor max
@@ -293,10 +245,6 @@ record Spec {Θ Θ' : Scope} (rg : Rig Θ) (P : Property Θ) (ρ : AList Θ Θ')
               → ¬ at (P ⋄ ⟦ ρ ⟧ᴬ) δ
 
 open Spec public
-
---------------------------------------------------------------
--- The shapes of verdict                                     --
---------------------------------------------------------------
 
 Max-id : ∀ {Θ Θ'} {P : Property Θ} {ρ : AList Θ Θ'} → Max P ρ ρ
 Max-id = max (λ δ u → δ , refl≐ˢ)
@@ -346,13 +294,8 @@ Unifies¹-[]ᴱ⁻ (eqᶜ C D)  τ δ u = trans ([⨟]ᶜ C τ δ) (trans u (sym
 Unifies¹-[]ᴱ⁻ (eqʳ ρ ρ') τ δ u = trans ([⨟]ʳ ρ τ δ) (trans u (sym ([⨟]ʳ ρ' τ δ)))
 Unifies¹-[]ᴱ⁻ (eqᵉ ε ε') τ δ u = trans ([⨟]ᵉ ε τ δ) (trans u (sym ([⨟]ᵉ ε' τ δ)))
 
---------------------------------------------------------------
--- The optimist's lemma                                      --
---                                                           --
--- Two calls in sequence: the second one starts from the      --
--- store the first one returned, and the factorisations       --
--- compose.                                                   --
---------------------------------------------------------------
+-- Two calls in sequence: the second starts from the store the first
+-- returned, and the factorisations compose.
 
 seq-spec : ∀ {Θ Θ'} {rg : Rig Θ} {P P₁ P₂ : Property Θ} {ρ : AList Θ Θ'}
          → (m : Maybe (Sol Θ)) → (f : Sol Θ → Maybe (Sol Θ))
@@ -379,10 +322,6 @@ seq-spec {Θ} {Θ'} {rg} {P} {P₁} {P₂} {ρ} m f s₁ s₂ split = spec yes' 
             in onNothing (s₂ ρ₁) r₂ _ (Fixing-resp (sym≐ˢ h) fx)
                          (resp≐ P₂ (sym≐ˢ h) (proj₂ (split u)))
 
---------------------------------------------------------------
--- The two alternatives of a flexible-flexible verdict       --
---------------------------------------------------------------
-
 alt-spec : ∀ {Θ Θ'} {rg : Rig Θ} {P : Property Θ} {ρ : AList Θ Θ'}
          → (m m' : Maybe (Sol Θ))
          → (∀ {Θ₂} {ρ₂ : AList Θ Θ₂} → m ≡ just (Θ₂ , ρ₂) → Max P ρ ρ₂)
@@ -401,10 +340,6 @@ alt-spec {Θ} {Θ'} {rg} {P} {ρ} m m' j₁ j₂ n = spec yes' no'
         → ¬ at (P ⋄ ⟦ ρ ⟧ᴬ) δ
     no' q with alt-nothing m m' q
     ... | r , r' = n r r'
-
---------------------------------------------------------------
--- Descending through one binding of the store               --
---------------------------------------------------------------
 
 glueᵗ : ∀ {Θ Θ' Θ'' Ψ} → (X : OVType Θ) → (α : TyVar (Θ +ty))
       → (τ : AList Θ Θ') → (τ' : AList Θ Θ'')
@@ -535,10 +470,6 @@ descᵉ-spec {Θ} {Θ'} X i rg e τ {m} s = spec yes' no'
         → Fixing rg (⟦ X /ᵉ i ∷ τ ⟧ᴬ ⨟ˢ δ) → ¬ Unifies¹ e (⟦ X /ᵉ i ∷ τ ⟧ᴬ ⨟ˢ δ)
     no' q δ fx u = onNothing s (map-nothing (consᵉ X i) m q) δ (Fixing-∷ᵉ X i τ δ fx) (down δ u)
 
---------------------------------------------------------------
--- A variable that occurs is no larger than its host         --
---------------------------------------------------------------
-
 occ≤ᵉ : ∀ {Θ Ψ} → (i : EVar Θ) → (ε : EExp Θ) → (σ : Subst Θ Ψ) → occᵉ-e i ε ≡ true
       → sizeᵉ (sE σ i) ≤ sizeᵉ (ε [ σ ]ᵉ)
 occ≤ᵉ i (evar j)   σ q = subst (λ z → sizeᵉ (sE σ i) ≤ sizeᵉ (sE σ z)) (true-dec (i ≟ᶠ j) q) ≤-refl
@@ -577,11 +508,6 @@ mutual
   occ≤ᶜ : ∀ {Θ Ψ} → (α : TyVar Θ) → (C : OCType Θ) → (σ : Subst Θ Ψ) → occᵗ-c α C ≡ true
         → sizeᵛ (sTy σ α) ≤ sizeᶜ (C [ σ ]ᶜ)
   occ≤ᶜ α (A ‼ ε) σ q = m≤n⇒m≤1+n (≤-trans (occ≤ᵛ α A σ q) (m≤m+n _ _))
-
---------------------------------------------------------------
--- A proper occurrence is a strict increase, and hence a     --
--- refutation of the equation that demanded it               --
---------------------------------------------------------------
 
 no-cycleᵉ : ∀ {Θ Ψ} → (i : EVar Θ) → (ε : EExp Θ) → (σ : Subst Θ Ψ) → ¬ (ε ≡ evar i)
           → occᵉ-e i ε ≡ true → ¬ (sE σ i ≡ ε [ σ ]ᵉ)
@@ -627,11 +553,6 @@ no-cycleᵛ α ([ ρ ] A) σ nv q u =
   1+n≰n (subst (suc (sizeᵛ (sTy σ α)) ≤_) (sym (cong sizeᵛ u))
                (s≤s (≤-trans (occ≤ᵛ α A σ q) (m≤n+m _ _))))
 
---------------------------------------------------------------
--- Two substitutions that agree away from a variable agree   --
--- on every expression the variable misses                   --
---------------------------------------------------------------
-
 awayᵉ : ∀ {Θ Ψ} → (i : EVar Θ) → (σ δ : Subst Θ Ψ)
       → ((j : EVar Θ) → ¬ (i ≡ j) → sE σ j ≡ sE δ j)
       → (ε : EExp Θ) → occᵉ-e i ε ≡ false → ε [ σ ]ᵉ ≡ ε [ δ ]ᵉ
@@ -676,13 +597,8 @@ mutual
         → (C : OCType Θ) → occᵗ-c α C ≡ false → C [ σ ]ᶜ ≡ C [ δ ]ᶜ
   awayᶜ α σ δ h hr he (A ‼ ε) o = cong₂ _‼_ (awayᵛ α σ δ h hr he A o) (agreeᵉ he ε)
 
---------------------------------------------------------------
--- Binding a variable is maximal                             --
---                                                           --
--- A substitution solving the equation is recovered from the  --
--- store by restricting it along the thinning of the bound    --
--- variable.                                                  --
---------------------------------------------------------------
+-- A substitution solving the equation is recovered from the store by
+-- restricting it along the thinning of the bound variable.
 
 bindᵗ-max : ∀ {Θ} → (α : TyVar (Θ +ty)) → (A : OVType (Θ +ty)) → occᵗ-v α A ≡ false
           → Max (Uni (eqᵛ (tvar α) A)) anil ((A [ Unit forᵗ α ]ᵛ) /ᵗ α ∷ anil)
@@ -786,10 +702,6 @@ bindᵉ-max {Θ} i ε o = max lem
                 trans (cong (λ z → ((maybe′ evar (ε [ ûₑ forᵉ i ]ᵉ) z) [ idˢ ]ᵉ) [ δ' ]ᵉ) r)
                       (cong (sE δ) (sym (thick-just {nE Θ} i j j' r)))
 
---------------------------------------------------------------
--- Reading the verdict of a binding attempt                  --
---------------------------------------------------------------
-
 flexᵗ-inv : ∀ {Θ} → (α : TyVar Θ) → (A : OVType Θ) → {Θ'' : Scope} → {ρ'' : AList Θ Θ''}
           → flexᵗ α A ≡ just (Θ'' , ρ'') → Max (Uni (eqᵛ (tvar α) A)) anil ρ''
 flexᵗ-inv {scope (suc nt) nr ne} α A eq
@@ -839,10 +751,6 @@ flexᵉ-no {scope nt nr (suc ne)} rg i ε eq
                                 (map-nothing (λ X → scope nt nr ne , X /ᵉ i ∷ anil)
                                              (chkᵉ-e {scope nt nr ne} i ε) q))
 
---------------------------------------------------------------
--- Binding a variable to a non-variable                      --
---------------------------------------------------------------
-
 data NonVarᵉ {Θ : Scope} : EExp Θ → Set where
   nvconstᵉ : (c : E) → NonVarᵉ (econst c)
   nvmulᵉ   : (ε ε' : EExp Θ) → NonVarᵉ (ε ·̂ₑ ε')
@@ -859,10 +767,6 @@ rigidᵉ-no (nvconstᵉ c)  (k , s) u with trans (sym s) u
 ... | ()
 rigidᵉ-no (nvmulᵉ ε ε') (k , s) u with trans (sym s) u
 ... | ()
-
---------------------------------------------------------------
--- The specification of a binding attempt                    --
---------------------------------------------------------------
 
 flexᵗ-spec : ∀ {Θ} → (rg : Rig Θ) → (α : TyVar Θ) → (A : OVType Θ) → ¬ (A ≡ tvar α)
            → Spec rg (Uni (eqᵛ (tvar α) A)) anil (flexᵗ α A)
@@ -883,10 +787,6 @@ flexᵉ-spec rg i ε nv = spec (flexᵉ-inv rg i ε) no'
     no' eq δ fx u with flexᵉ-no rg i ε eq
     ... | inj₁ r = rigidᵉ-no nv (fixᵉ fx i r) u
     ... | inj₂ o = no-cycleᵉ i ε δ (nonvarᵉ-≢ nv) o u
-
---------------------------------------------------------------
--- The specification of a flexible-flexible verdict          --
---------------------------------------------------------------
 
 flexFlexᵗ-spec : ∀ {Θ} → (rg : Rig Θ) → (α β : TyVar Θ)
                → Spec rg (Uni (eqᵛ (tvar α) (tvar β))) anil (flexFlexᵗ α β)
@@ -944,14 +844,9 @@ flexFlexᵉ-spec {Θ} rg i j = spec yes' no'
     ...     | inj₁ r₁ | inj₂ r₂ = ne (sym (true-dec (j ≟ᶠ i) r₂))
     ...     | inj₂ r₁ | _       = ne (true-dec (i ≟ᶠ j) r₁)
 
---------------------------------------------------------------
--- The specification of the unifier                          --
---                                                           --
--- The store-descent clauses are the same for every sort, and --
--- the syntactic clauses are written once per shape of the    --
--- size index, which a clause computes only after. A clash    --
--- needs neither, being a refutation of its own equation.     --
---------------------------------------------------------------
+-- The store-descent clauses are the same for every sort; a clash needs
+-- neither them nor the size index, being a refutation of its own
+-- equation.
 
 mutual
 
@@ -1205,10 +1100,6 @@ mutual
   amguᵉ-spec k p rg (econst c) (ε₁' ·̂ₑ ε₂') anil = clash (λ δ ())
   amguᵉ-spec k p rg (ε₁ ·̂ₑ ε₂) (econst d) anil = clash (λ δ ())
 
---------------------------------------------------------------
--- Solving a list of equations                               --
---------------------------------------------------------------
-
 amguᴱ-spec : ∀ {Θ Θ'} → (rg : Rig Θ) → (e : Eqn Θ) → (ρ : AList Θ Θ')
            → Spec rg (Uni e) ρ (amguᴱ rg e (Θ' , ρ))
 amguᴱ-spec {Θ} rg (eqᵛ A B)  ρ = amguᵛ-spec (Sz Θ) refl rg A B ρ
@@ -1223,10 +1114,6 @@ unifyᴬ-spec {Θ} {Θ'} rg (e ∷ es) ρ =
   seq-spec (amguᴱ rg e (Θ' , ρ)) (unifyᴬ rg es)
            (amguᴱ-spec rg e ρ) (λ ρ₁ → unifyᴬ-spec rg es ρ₁)
            (λ u → u)
-
---------------------------------------------------------------
--- Most general unifier, and refutation                      --
---------------------------------------------------------------
 
 -- Maximality does not need the rigid hypothesis: a store never
 -- binds a rigid variable, so every unifier factors through it.
@@ -1246,10 +1133,6 @@ unify-mgu rg es eq σ fx u = unify-max rg es eq σ u
 unify-fail : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ) → unify rg es ≡ nothing
            → ∀ {Θ''} → (σ : Subst Θ Θ'') → Fixing rg σ → ¬ Unifies es σ
 unify-fail rg es eq σ fx u = onNothing (unifyᴬ-spec rg es anil) eq σ fx u
-
---------------------------------------------------------------
--- Sanity checks                                             --
---------------------------------------------------------------
 
 private
 

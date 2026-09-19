@@ -70,8 +70,6 @@ open import OperationalSemantics.Soundness.Preservation   Spec Cat Fut Pst Adj G
 
 open import OperationalSemantics.Adequacy.Evaluation Spec
 
--- A RUN'S TIME TRANSITION
---
 -- The class of morphisms `stepsᵀ` builds: `ηᵀ`, and a `DELAY`'s tick bound
 -- into a further transition, indexed by the tick total. Closed under `_≈ᵐ_`.
 
@@ -132,10 +130,8 @@ stepsᵀ-delays : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ �
 stepsᵀ-delays ε*       = no-delay
 stepsᵀ-delays (r ◅ rs) = step-delays r (stepsᵀ-delays rs)
 
--- THE TWO HEAD SHAPES, as morphisms
---
--- `⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ` is a leaf and `⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ` an
--- operation node (`whnf-shape` below).
+-- The two head shapes, as morphisms: `⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ` is a leaf and
+-- `⟦ ⟨ St , perform op W M' ⟩ ⟧ᶜᶠ` an operation node (`whnf-shape` below).
 
 leafᵐ : ∀ {X Y : Obj} → (a : Y →ᵐ X) → Y →ᵐ Tᵒ X uₑ
 leafᵐ a = ηᵀ ∘ᵐ a
@@ -163,10 +159,6 @@ delayedᵐ-cong : ∀ {X Y : Obj} {ε ε' δ : E} {h h' : Y →ᵐ Tᵒ X ε'}
               ---------------------------------------
               → delayedᵐ h d r ≈ᵐ delayedᵐ h' d r
 delayedᵐ-cong d r eh = ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ eh)))
-
-------------------------------------------------------------------------
--- THE INTERFACE
-------------------------------------------------------------------------
 
 -- No-confusion and injectivity at the head. A model that satisfies this
 -- reflects the shape of a whnf; the presheaf model does, by the `Head`
@@ -205,8 +197,7 @@ record HeadFaithful : Set₂ where
            → op₁ ≡ op₂
 
     -- Constant leaves are injective: what makes the returned answer at base
-    -- type observable. (A constant's denotation factors through `𝟙ᵐ`, which is
-    -- what makes this statement independent of the two histories.)
+    -- type observable.
 
     leaf-const : ∀ {Y₁ Y₂ : Obj} {b : BaseType} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
                → {c₁ c₂ : BaseConstants b}
@@ -221,9 +212,7 @@ record HeadFaithful : Set₂ where
 
     -- The boolean leaves likewise: what makes the returned answer at `Bool`
     -- observable. Stated at the two constants rather than at arbitrary global
-    -- elements of `𝔹ᵐ`, because those are the only leaves a `Bool`-typed value
-    -- over a state context produces. The two matching cases need nothing, so
-    -- only the mixed one is asked for.
+    -- elements of `𝔹ᵐ`.
 
     leaf-bool : ∀ {Y₁ Y₂ : Obj} {ε δ₁ δ₂ : E} {n₁ n₂ : ℕ}
               → {d₁ : 𝟙ᵐ →ᵐ Tᵒ Y₁ δ₁} → Delaysᵐ d₁ n₁
@@ -235,9 +224,8 @@ record HeadFaithful : Set₂ where
               -----------------------------------------------------------
               → trueᵐ ≈ᵐ falseᵐ
 
--- The timed refinement: the tick total is observable too. Split off because
--- proving it needs the Kripke frame to interpolate a composite step, which
--- holds only for coarse-unit frames.
+-- The timed refinement: the tick total is observable too, provable only for
+-- coarse-unit Kripke frames.
 
 record HeadTimed : Set₂ where
 
@@ -268,9 +256,7 @@ record HeadTimed : Set₂ where
 
 -- Faithfulness of the interpretation at the *answer* types: the base
 -- constants, an assumption on the `GroundTypes` parameter, and the two
--- booleans, one on `Cat`. Neither is a theorem — a model may collapse them —
--- and both are what turns an equality of denotations into an equality of
--- returned answers.
+-- booleans, one on `Cat`. Neither is a theorem — a model may collapse them.
 
 record BaseFaithful : Set where
 
@@ -283,10 +269,7 @@ record BaseFaithful : Set where
 
     true≉false : ¬ (trueᵐ ≈ᵐ falseᵐ)
 
--- UNIFORMITY IS FREE
---
--- Handler uniformity is carried by the term's own certificate, so
--- `Uniform↝`/`Uniform↝*` are `⊤` in every case.
+-- Handler uniformity is carried by the term's own certificate.
 
 uniform↝ : ∀ {A ε ε'} {St St' : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -318,8 +301,6 @@ uniform↝* ε*       p          = tt
 uniform↝* (r ◅ rs) (pS , pM)  =
   uniform↝ r pM , uniform↝* rs (stepᴾᶜᶠ r (pS , pM))
 
--- WHNF CONFIGURATIONS DENOTE HEADS
---
 -- Unfold `⟦_⟧ᶜᵗ` at the two whnf formers and push the state's environment
 -- inside; it survives only inside the head's components.
 

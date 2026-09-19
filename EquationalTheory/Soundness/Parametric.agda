@@ -1,26 +1,10 @@
 ------------------------------------------------------------------------
 -- Parametric derivations.                                             --
---                                                                    --
--- The interpretation is defined only on terms carrying a parametricity --
--- certificate (`Paramᵛ`/`Paramᶜ`: every handler in the term is uniform  --
--- in its residual grade and in its context extension). That certificate --
--- is *not* preserved by the equational theory in either direction: an   --
--- equation may discard a subterm (`boxed-not-used`, `absurd-eta`, …),    --
--- so one side can be parametric while the other mentions a handler that  --
--- is not.                                                              --
---                                                                    --
--- Soundness is therefore stated for derivations all of whose terms are   --
--- interpretable. `Midᵛ`/`Midᶜ` collect exactly the certificates that a    --
--- derivation's endpoints do not already determine:                       --
---                                                                    --
---   * transitivity — the middle term is not mentioned by either endpoint; --
---                                                                    --
---   * substitutivity — the endpoints are substitution *instances*, from   --
---     which the substituted term and substituend cannot be recovered.     --
---                                                                    --
--- Every congruence rule just passes the requirement to its premises (the  --
--- endpoints' certificates decompose along the term formers), and every    --
--- axiom needs nothing beyond its two endpoints' certificates.             --
+-- The interpretation is defined only on terms with a parametricity    --
+-- certificate (`Paramᵛ`/`Paramᶜ`), which the equational theory does   --
+-- not preserve in either direction.                                   --
+-- `Midᵛ`/`Midᶜ` collect the certificates a derivation's endpoints     --
+-- do not already determine.                                           --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

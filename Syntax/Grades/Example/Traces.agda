@@ -1,40 +1,35 @@
 ------------------------------------------------------------------------
 -- Grades that are (non-empty) sets of timed traces.                   --
 --                                                                     --
--- A grade records which runs a computation may have. There are two     --
--- families of three, differing in what the comparison between one run  --
--- and one listed trace is allowed to do:                               --
+-- A grade records which runs a computation may have. There are two    --
+-- families of three, differing in what the comparison between one run --
+-- and one listed trace is allowed to do:                              --
 --                                                                     --
---   Timed.*    the two cost-sensitive orders on traces. Going up the   --
---              allowance order an operation turns into a delay long    --
---              enough to cover it; going up the coverage order a run   --
---              may do more than it was asked for.                      --
+--   Timed.*    the two cost-sensitive orders on traces. Going up the  --
+--              allowance order an operation turns into a delay long   --
+--              enough to cover it; going up the coverage order a run  --
+--              may do more than it was asked for.                     --
 --                                                                     --
---   Subsets.*  equality. Nothing is approximated: a run either is a    --
---              listed trace or it is not, and the lifts are the two    --
---              directions of subset inclusion.                         --
+--   Subsets.*  equality. Nothing is approximated: a run either is a   --
+--              listed trace or it is not, and the lifts are the two   --
+--              directions of subset inclusion.                        --
 --                                                                     --
--- Each family has a floor, a cap and their pairing:                    --
+-- Each family has a floor, a cap and their pairing:                   --
 --                                                                     --
---   *.LeftSided   a lower bound on what happened                       --
---   *.RightSided  an upper bound                                       --
---   *.TwoSided    both at once, with a coherence field                 --
+--   *.LeftSided   a lower bound on what happened                      --
+--   *.RightSided  an upper bound                                      --
+--   *.TwoSided    both at once, with a coherence field                --
 --                                                                     --
--- HOW THE ENDPOINTS ARE READ. Five of the six endpoints are read       --
--- *disjunctively* -- one listed trace carries the grade -- so they     --
--- weaken by gaining members and the union of two grades is their join, --
--- which is what a branching construct wants. The exception is          --
--- `Subsets.LeftSided`, which is read conjunctively and weakens by      --
--- losing members. That is forced: with equality as the comparison the  --
--- disjunctive floor condition is `X ⊆ P`, which is the cap's own, so a --
--- subset floor has to be conjunctive or it is not a floor at all.      --
+-- Five of the six endpoints are read *disjunctively* -- one listed    --
+-- trace carries the grade -- so they weaken by gaining members and    --
+-- the union of two grades is their join, which is what a branching    --
+-- construct wants. `Subsets.LeftSided` is the exception, read         --
+-- conjunctively and weakening by losing members, equality leaving a   --
+-- disjunctive floor nothing to differ from the cap about.             --
 --                                                                     --
--- The `Timed.*` grades are `Traces.Lifted.*` instantiated at a trace   --
--- order; the `Subsets.*` ones are built directly on `Sets`' `_⊑_`,     --
--- the discrete order not being a `TraceOrder` (it has no `≼-nil`).     --
---                                                                     --
--- A grid of four lifts against three sidednesses, over the sub-trace   --
--- orders, is parked under `backup/`.                                   --
+-- The `Timed.*` grades are `Traces.Lifted.*` instantiated at a trace  --
+-- order; the `Subsets.*` ones are built directly on `Sets`' `_⊑_`,    --
+-- the discrete order not being a `TraceOrder` (it has no `≼-nil`).    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Traces where

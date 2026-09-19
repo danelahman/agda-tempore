@@ -47,10 +47,6 @@ open import TypeInference.Open.Hyps     S
 
 open import TypeInference.Open.Language S using (VarOK)
 
---------------------------------------------------------------
--- Groundings                                                --
---------------------------------------------------------------
-
 record Grounding (Θ : Scope) : Set where
   constructor grounding
   field
@@ -83,10 +79,6 @@ gTy (θ ,ᵍᵉ ε) α       = gTy θ α
 gR  (θ ,ᵍᵉ ε) i       = gR θ i
 gE  (θ ,ᵍᵉ ε) zero    = ε
 gE  (θ ,ᵍᵉ ε) (suc i) = gE θ i
-
---------------------------------------------------------------
--- Interpretation of open expressions, types and contexts    --
---------------------------------------------------------------
 
 -- Grade expressions: every former is sent to its closed counterpart, so in
 -- particular `⟦ ûᵣ ⟧ʳ θ` is `uᵣ` and `⟦ ∣ ε ∣̂ᵉ ⟧ʳ θ` is `mapᵉ ⟦ ε ⟧ᵉ θ`.
@@ -126,10 +118,6 @@ mutual
 ⟦ Γ ∷ A   ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ∷ ⟦ A ⟧ᵛ θ
 ⟦ Γ ⟨ ρ ⟩ ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ⟨ ⟦ ρ ⟧ʳ θ ⟩
 
---------------------------------------------------------------
--- Groundings satisfying a hypothesis set                    --
---------------------------------------------------------------
-
 infix 4 _⊨ᴴ_
 
 record _⊨ᴴ_ {Θ : Scope} (θ : Grounding Θ) (Q : Hyps Θ) : Set where
@@ -145,10 +133,6 @@ open _⊨ᴴ_ public
 
 ∅ᴴ-⊨ : ∀ {Θ} {θ : Grounding Θ} → θ ⊨ᴴ ∅ᴴ
 ∅ᴴ-⊨ = mk⊨ᴴ (λ ()) (λ ()) (λ ())
-
---------------------------------------------------------------
--- Grounding of convertibility                               --
---------------------------------------------------------------
 
 ground-≡̂ᵣ : ∀ {Θ} {θ : Grounding Θ} {ρ ρ' : RExp Θ}
           → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≡ ⟦ ρ' ⟧ʳ θ
@@ -176,10 +160,6 @@ ground-≡̂ₑ ≡̂ₑ-identityˡ   = ·ₑ-identityˡ _
 ground-≡̂ₑ ≡̂ₑ-identityʳ   = ·ₑ-identityʳ _
 ground-≡̂ₑ ≡̂ₑ-const-·     = refl
 
---------------------------------------------------------------
--- Grounding of entailment                                   --
---------------------------------------------------------------
-
 ground-≾ᵣ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
           → θ ⊨ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
 ground-≾ₑ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
@@ -202,10 +182,6 @@ ground-≾ₑ h (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (ground-≾�
                                     (·ₑ-monoʳ-≾ₑ (ground-≾ₑ h q))
 ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
---------------------------------------------------------------
--- Grounding of eternality                                   --
---------------------------------------------------------------
-
 ground-Et : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {A : OVType Θ}
           → θ ⊨ᴴ Q → Q ⊩ᴱ A → Eternal (⟦ A ⟧ᵛ θ)
 ground-Et h (et-hyp m)       = etOK h m
@@ -215,11 +191,7 @@ ground-Et h Boolₑ            = Boolₑ
 ground-Et h (et₁ |×|ₑ et₂)   = ground-Et h et₁ |×|ₑ ground-Et h et₂
 ground-Et h Emptyₑ           = Emptyₑ
 
---------------------------------------------------------------
--- Grounding of variables                                    --
---                                                           --
--- Each membership former maps to its counterpart.           --
---------------------------------------------------------------
+-- Each membership former maps to its counterpart.
 
 ground-∈ : ∀ {Θ n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
          → (θ : Grounding Θ) → A ∈̂[ ρ ] Γ
@@ -227,10 +199,6 @@ ground-∈ : ∀ {Θ n} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
 ground-∈ θ Hd        = Hd
 ground-∈ θ (Tl-∷ x)  = Tl-∷ (ground-∈ θ x)
 ground-∈ θ (Tl-⟨⟩ x) = Tl-⟨⟩ (ground-∈ θ x)
-
---------------------------------------------------------------
--- Grounding the side conditions of `var` and `unbox`        --
---------------------------------------------------------------
 
 ground-var : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → (θ : Grounding Θ) → θ ⊨ᴴ Q
@@ -248,10 +216,6 @@ ground-unbox : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ ρ' : RExp Θ} {Γ :
              → (⟦ ρ' ⟧ʳ θ ≾ᵣ ⟦ ρ ⟧ʳ θ)
              × ([ ⟦ ρ ⟧ʳ θ ] ⟦ A ⟧ᵛ θ ∈[ ⟦ ρ' ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ)
 ground-unbox θ h x le = ground-≾ᵣ h le , ground-∈ θ x
-
---------------------------------------------------------------
--- Round-trips of the closed embeddings                      --
---------------------------------------------------------------
 
 mutual
 
@@ -275,13 +239,8 @@ mutual
 ⌜⌝ᵍ-ground (A |×|ᵍ B)  = cong₂ _|×|_ (⌜⌝ᵍ-ground A) (⌜⌝ᵍ-ground B)
 ⌜⌝ᵍ-ground ([ ρ ]ᵍ A)  = cong [ ρ ]_ (⌜⌝ᵍ-ground A)
 
---------------------------------------------------------------
--- Collapse of an effect-scope weakening                     --
---                                                           --
--- Weakening into `Θ +e` and then grounding the new variable --
--- away is the identity on interpretations. Needed by the     --
--- `handle` case, whose clauses live at `Θ +e`.               --
---------------------------------------------------------------
+-- Weakening into `Θ +e` and grounding the new variable away is the
+-- identity on interpretations; needed by the `handle` case.
 
 ground-wkᵉ-e : ∀ {Θ} {θ : Grounding Θ} {ε₀ : E} → (ε : EExp Θ)
              → ⟦ wkᵉ-e ε ⟧ᵉ (θ ,ᵍᵉ ε₀) ≡ ⟦ ε ⟧ᵉ θ

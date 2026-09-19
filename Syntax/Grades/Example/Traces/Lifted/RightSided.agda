@@ -1,33 +1,30 @@
 ------------------------------------------------------------------------
 -- Sets of timed traces as upper bounds.                               --
 --                                                                     --
--- A grade is a non-empty finite set of traces, read as the bounds a    --
--- computation must stay within: writing `X` for the runs it may have,  --
+-- A grade is a non-empty finite set of traces, read as the bounds a   --
+-- computation must stay within: writing `X` for the runs it may have, --
 --                                                                     --
 --   X is graded by Q   iff   ∀ x ∈ X. ∃ q ∈ Q. x ≼ q                  --
 --                                                                     --
--- -- every run stays within one of the listed bounds. The quantifier   --
--- is universal over the runs and existential over the set, so a longer --
--- list permits more, and the order that weakens the grade is the       --
--- Hoare (lower) lift of `_≼_` in the argument order written:           --
+-- -- every run stays within one of the listed bounds. The quantifier  --
+-- is universal over the runs and existential over the set, so a       --
+-- longer list permits more, and the order that weakens the grade is   --
+-- the Hoare (lower) lift of `_≼_` in the argument order written:      --
 --                                                                     --
 --   P ≾ Q   iff   ∀ p ∈ P. ∃ q ∈ Q. p ≼ q                             --
 --                                                                     --
--- which is `↓P ⊆ ↓Q` for the sets of runs the two grades permit, and   --
--- makes the union of two grades their join.                            --
+-- which is `↓P ⊆ ↓Q` for the sets of runs the two grades permit, and  --
+-- makes the union of two grades their join.                           --
 --                                                                     --
--- No finite list of bounds permits every run, so the carrier carries   --
--- `unbounded` as a point of its own: it permits any run at all,        --
--- however long, and is absorbing -- what follows an unbounded          --
--- computation is unbounded too. It is *not* the empty set of bounds,   --
--- which permits nothing and is excluded.                               --
+-- No finite list of bounds permits every run, so the carrier carries  --
+-- `unbounded` as a point of its own: it permits any run at all,       --
+-- however long, and is absorbing. It is *not* the empty set of        --
+-- bounds, which permits nothing and is excluded.                      --
 --                                                                     --
--- Nothing here inspects the order, so the construction is written once --
--- and instantiated -- `Example.Traces.Timed.RightSided` at the         --
--- order. What the order decides is what "staying within a bound"       --
--- means, and there it means the bound's operations permit the run's    --
--- and its delays are a budget the run may spend where the bound places --
--- it.                                                                  --
+-- Nothing here inspects the order. `Example.Traces.Timed.RightSided`  --
+-- instantiates it at the allowance order, where staying within a      --
+-- bound means the bound's operations permit the run's and its delays  --
+-- are a budget the run may spend where the bound places it.           --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)

@@ -124,11 +124,9 @@ cap-cannot-drop = fails _ _
 ------------------------------------------------------------------------
 -- Coherence is exact here
 --
--- The field asks `P ⊆ Q`, and that is precisely when some run-set sits
--- between the two: `X := Q` always does. So the field refuses exactly
--- the uninhabited grades -- unlike `Traces.Timed.TwoSided`, whose two
--- endpoints are ordered by incomparable relations and whose field can
--- only be necessary.
+-- The field asks `P ⊆ Q`, which is precisely when some run-set sits
+-- between the two, so it refuses exactly the uninhabited grades --
+-- unlike `Traces.Timed.TwoSided`, whose field can only be necessary.
 
 demanding-what-is-not-permitted :
   ¬ (traces ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ◇ traces ⟅ ⌈ read ⌉ ⟆)

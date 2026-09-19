@@ -1,23 +1,9 @@
 ------------------------------------------------------------------------
 -- Head shapes of effect trees, at zero delay.                        --
 --                                                                    --
--- `_≈ᵗ_` is generated with `sub-u`/`sub-∘`/`sub-delay`/`sub-op`, the --
--- two delay collapses, and explicit `≈ᵗ-sym`/`≈ᵗ-trans`, so no-      --
--- confusion is proved against an observation invariant under all of  --
--- them, by induction on the derivation.                              --
---                                                                    --
 -- `Head0 t s` reads off `t`'s head, descending only structure that   --
--- takes no time. Two things make that work:                          --
---                                                                    --
---   * a zero delay has a canonical witness `⊑-delay0`, so the        --
---     observation quantifies over none and all is witness-irrelevant;--
---                                                                    --
---   * splitting a `τ₁ + τ₂` step (`delay-plus` backwards) needs the  --
---     frame to interpolate; at `τ₁ + τ₂ ≡ 0` it is `⊑-delay0` twice. --
---                                                                    --
--- This is `HeadFaithful`'s `ret≢op`/`op-inj` at zero delay. The      --
--- general case is the same argument at a tick-indexed observation,   --
--- needing interpolation.                                             --
+-- takes no time. This is `HeadFaithful`'s `ret≢op`/`op-inj` at zero  --
+-- delay.                                                             --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -52,8 +38,6 @@ open GroundTypes GTy
 
 open import DenotationalSemantics.Model.Example.PSh.Monad.Core Spec Wld GTy
 
--- THE TWO HEAD SHAPES
-
 data Shape : Set where
   ret-shape : Shape
   op-shape  : Op → Shape
@@ -64,8 +48,6 @@ ret≢op-shape ()
 op-shape-inj : ∀ {op op'} → op-shape op ≡ op-shape op' → op ≡ op'
 op-shape-inj refl = refl
 
--- THE ZERO-DELAY HEAD OBSERVATION
---
 -- `sub` nodes are transparent (reduction discards a `coerce`); a delay is
 -- descended only when it delays by nothing, along the canonical zero-step.
 
@@ -137,14 +119,8 @@ head0-⊑ : ∀ {A ε w s}
         → Head0 (k q') s
 head0-⊑ k q q' h = subst (λ z → Head0 (k z) _) (⊑-irrelevant q q') h
 
-------------------------------------------------------------------------
--- INVARIANCE
---
 -- Bisimilar trees have the same zero-delay head shape. Mutual with its
--- converse, since `≈ᵗ-sym` is a constructor. Every case recurses on a
--- sub-derivation of `_≈ᵗ_`; the delay collapses' continuation coherences
--- (`ek`, `hk`) are fields of the derivation.
-------------------------------------------------------------------------
+-- converse, since `≈ᵗ-sym` is a constructor.
 
 mutual
 
@@ -211,10 +187,6 @@ mutual
 
   head0-≈ᵗ⁻ (≈ᵗ-sym et)       h = head0-≈ᵗ et h
   head0-≈ᵗ⁻ (≈ᵗ-trans et et') h = head0-≈ᵗ⁻ et (head0-≈ᵗ⁻ et' h)
-
-------------------------------------------------------------------------
--- NO-CONFUSION AT ZERO DELAY
-------------------------------------------------------------------------
 
 -- A returned value is never an operation. Stated at the head observation,
 -- which sees through the `ε-substˢ`/`sub` the two denotations carry (a leaf

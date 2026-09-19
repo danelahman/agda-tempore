@@ -3,39 +3,37 @@
 --                                                                     --
 -- A `Grade` (see `Syntax.Grades`) is an ordered monoid with an        --
 -- inclusion of ℕ as "so many time steps". A `GradeSystem` is a pair   --
--- of them -- effect grades, recording what a computation may do, and  --
--- resource grades, recording what is thereby guaranteed about time -- --
+-- of them (effect grades, recording what a computation may do, and    --
+-- resource grades, recording what is thereby guaranteed about time)   --
 -- together with a monoid map projecting the first onto the second.    --
 --                                                                     --
 -- The examples come in two families:                                  --
 --                                                                     --
---   * `Time.*`  -- grades that measure only elapsed time, as a bound  --
+--   * `Time.*` -- grades that measure only elapsed time, as a bound   --
 --     or a window of time steps. Small and self-contained.            --
 --                                                                     --
---   * `Traces.*`  -- grades that record *which runs* a computation    --
+--   * `Traces.*` -- grades that record *which runs* a computation     --
 --     may have had, as a set of timed traces, sharing their carrier   --
 --     and monoid (from `Grades.Traces.Sets`) and differing in the     --
 --     order they put on it.                                           --
 --                                                                     --
 -- The trace family is two families of three: `Timed.*` over the       --
 -- cost-sensitive orders on traces, and `Subsets.*` over equality,     --
--- each with a floor, a cap and their pairing. A grid over the         --
--- sub-trace orders is parked under `backup/`, imported from nowhere.  --
+-- each with a floor, a cap and their pairing.                         --
 --                                                                     --
--- Every grade carries its greatest element in its own carrier: for    --
--- the left-sided intervals and the coverage floor that is the unit,   --
--- for the two-sided intervals `[ 0 , ∞ ]`, and the allowance cap and  --
--- the three subset grades each name a point of their own, which is    --
--- then absorbing.                                                     --
+-- Every grade carries its greatest element in its own carrier: the    --
+-- unit for the left-sided intervals and the coverage floor,           --
+-- `[ 0 , ∞ ]` for the two-sided intervals, and a point of its own,    --
+-- then absorbing, for the allowance cap and the three subset grades.  --
 --                                                                     --
 -- `System.*` pairs them up: each projection says what a resource      --
--- grade may forget about the effect grade it comes from. The two      --
--- subset floors project into extended interval grades, an absorbing   --
--- top having to land on an absorbing top.                             --
+-- grade may forget about the effect grade it comes from. An absorbing --
+-- top has to land on an absorbing top, so the two subset floors       --
+-- project into extended interval grades.                              --
 --                                                                     --
--- This module is only an index -- the trace-based examples are        --
--- parameterised by the alphabet `Op`, so it lists the pieces rather   --
--- than re-exporting them.                                             --
+-- An index only: the trace-based examples are parameterised by the    --
+-- alphabet `Op`, so it lists the pieces rather than re-exporting      --
+-- them.                                                               --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example where
@@ -87,11 +85,9 @@ import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
 
 -- the timed trace grades to time intervals: forget which runs a grade
 -- mentions and which operations they perform, keep what their
--- durations say. The cap keeps the deadline its slowest bound imposes,
--- the floor what its *fastest* guarantee takes -- the set being read
--- disjunctively at both ends -- and the two-sided one is their pair,
--- which lands in an interval at all because the coherence field puts
--- the fastest guarantee below the slowest allowance
+-- durations say -- the cap the deadline its slowest bound imposes, the
+-- floor what its *fastest* guarantee takes, and the two-sided one
+-- their pair
 
 import Syntax.Grades.Example.System.Traces.Timed.RightSided
 import Syntax.Grades.Example.System.Traces.Timed.LeftSided

@@ -92,11 +92,8 @@ sound-unbox-not-used x rel M pCM pR =
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-identityʳ _
 
--- AN `unbox` NODE DEPENDS ONLY ON THE CELL IT NAMES
---
--- `⟦_⟧ᶜᵗ` reads the node's variable and its grade bound; the bound is a `_≾ᵣ_`
--- proof, hence irrelevant. So two `unbox` nodes naming the same cell denote the
--- same morphism — the semantic content of `unbox-cong`'s premise.
+-- Two `unbox` nodes naming the same cell denote the same morphism: the grade
+-- bound is a `_≾ᵣ_` proof, hence irrelevant.
 
 unbox-env-irr : ∀ {Γ A ρ} → {c c' : Var Γ ([ ρ ] A)} → c ≡ c'
               → (b : proj₁ c ≾ᵣ ρ) → (b' : proj₁ c' ≾ᵣ ρ)

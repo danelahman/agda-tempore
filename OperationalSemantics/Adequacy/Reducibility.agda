@@ -50,16 +50,11 @@ open import OperationalSemantics.Adequacy.GradedReach           Spec
 open import Syntax.Substitutions.Equivalence Spec
 open import OperationalSemantics.Adequacy.StateEquivalence Spec
 
--- REDUCIBLE GROUND VALUES (recursion on `GType`)
---
 -- Ground types are the parameter and arity types of operations. They contain
--- no arrows, so this needs nothing but itself — which is what lets `CRed`
--- mention it.
+-- no arrows, so this needs nothing but itself.
 
--- THE CELL A BOX-TYPED VALUE NAMES
---
--- A value of box type is always a variable (`grad-typ⇒var`), so it *is* a cell,
--- and that is what both `VRed` and `VRedᵍ` speak about at a box type.
+-- A value of box type is always a variable (`grad-typ⇒var`), so it *is* a
+-- cell.
 
 val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A → Var Γ ([ ρ ] A)
 val-cell V = proj₁ (grad-typ⇒var V) , proj₁ (proj₂ (grad-typ⇒var V))
@@ -76,11 +71,9 @@ VRedᵍ (G₁ |×|ᵍ G₂)  St V =
 VRedᵍ ([ ρ ]ᵍ G)    St V =
   ∀ {St'} → (r : St [ proj₂ (val-cell V) ]⊑ᶜ St') → VRedᵍ G St' (lookupᶜ r)
 
--- REDUCIBLE COMPUTATIONS (inductive)
---
 -- `M` runs to a weak head normal form whose components are reducible. A step
 -- only refines the grade, so the whnf's grade and state are bound by the
--- constructors; `steps-≾`/`steps-grade` recover the refinement.
+-- constructors.
 
 data CRed (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
      : (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set where
@@ -96,9 +89,8 @@ data CRed (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
            → CRed A P ε St M
 
   -- or it gets stuck on an operation with a reducible parameter, whose
-  -- resumption is reducible at every state where the operation's own grade has
-  -- elapsed — the graded reach an `unbox` consumes, since `HANDLE-OP` boxes the
-  -- resumption at that grade and a clause reaches it by unboxing
+  -- resumption is reducible at every state where the operation's own grade
+  -- has elapsed
 
   cred-op : ∀ {ε ε₁} {St St₁ : 𝕊 []} {op : Op}
           → {M : toCtx St ⊢C⦂ A ‼ ε}
@@ -115,21 +107,9 @@ data CRed (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
           -------------------------------------------------------------------
           → CRed A P ε St M
 
--- REDUCIBLE VALUES (recursion on `VType`)
---
 -- Over a state context a product value *is* a pair and a function value *is*
--- a lambda (`⦉⦊-not-in-toCtx`, `⇒-not-in-toCtx`), and a box-typed value is a
--- resource variable (`grad-typ⇒var`) — canonical forms are read off directly.
---
--- Both `⇒` and `[ ρ ]` are Kripke. `[ ρ ]` because the resource is ready only
--- once enough time has passed. `⇒` because `VRed` must be monotone: `BOX`
--- allocates a cell, and a function reaching the extended state may be applied
--- to arguments mentioning it.
---
--- The `⇒` clause takes its transported term up to a propositional equation
--- rather than on the nose. That slack is what lets `VRed-reach` compose two
--- transports: the two derived renamings agree only up to `_≐ʳ_`, and
--- `C-rename-≡` turns that into the equation the clause asks for.
+-- a lambda, and a box-typed value is a resource variable — canonical forms
+-- are read off directly. Both `⇒` and `[ ρ ]` are Kripke.
 
 VRed : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 VRed (Base b)      St V = ⊤
@@ -149,11 +129,7 @@ VRed (A ⇒ (B ‼ ε)) St V =
      → VRed A St' W
      → CRed B (VRed B) ε St' (M₂ [ split-[] ↦ W ]c))
 -- A box type is the cell the value names: readable at a later state means its
--- content is reducible there. This is `SRed` below, per cell — `SRed-var`.
--- Quantifying over `St ⊑ₛ[ ρ ] St'` instead would demand more than
--- readability: that bound is `≤ₛ-grade e ≾ᵣ ρ`, whereas reading a cell gives
--- `proj₁ (≤ₛ-embed e c) ≾ᵣ ρ`, i.e. `σ_c ·ᵣ ≤ₛ-grade e ≾ᵣ ρ`, and with
--- `σ_c ≾ᵣ uᵣ` the latter is strictly weaker.
+-- content is reducible there.
 VRed ([ ρ ] A)     St V =
   ∀ {St'} → (r : St [ proj₂ (val-cell V) ]⊑ᶜ St') → VRed A St' (lookupᶜ r)
 
@@ -163,39 +139,16 @@ VRed ([ ρ ] A)     St V =
 CRed' : (A : VType) → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
 CRed' A = CRed A (VRed A)
 
--- REDUCIBLE STORES
---
 -- Every cell of the state holds a value that is reducible at any later state
--- at which it is readable. Stated on the cells rather than by recursion on
--- `𝕊`, and on cells alone because every variable of `toCtx St` is of box type
--- (`⇒-not-in-toCtx`, `⦉⦊-not-in-toCtx`, `Empty-not-in-toCtx`).
---
--- The `≤ₛ` is what makes this one condition rather than two. Reading a cell is
--- a Kripke matter — `≤ₛ-embed e x` is where the cell has got to at `St'`, and
--- `rel` says enough time has passed there for a `ρ`-box — and the two ways the
--- development reads a cell are the two ends of that quantification:
---
---   * `e = id-suc` is what `UNBOX` consumes. It fires at the *current* state,
---     and an `unbox` carries only `ρ' ≾ᵣ ρ`, never `ρ' ≾ᵣ uᵣ`: a cell can be
---     readable without being usable as a value.
---
---   * `e = ext q` for a `ρ`-reach `q` is `VRed` at the cell's box type, which is
---     `SRed-var` below. So the reducibility of a box-typed *variable* is this
---     same condition at a later state, not a separate assumption.
---
--- Keeping only the second would not do: instantiating it at the current state
--- needs `St ⊑ₛ[ ρ ] St`, whose bound is `uᵣ ≾ᵣ ρ`, and `Grade` has no such
--- law — rightly, since it would say every box is ready immediately.
+-- at which it is readable.
 
 SRed : 𝕊 [] → Set
 SRed St = ∀ {A ρ σ} {St' : 𝕊 []} → (c : [ ρ ] A ∈[ σ ] toCtx St)
         → (r : St [ c ]⊑ᶜ St')
         → VRed A St' (lookupᶜ r)
 
--- HEAD EXPANSION
---
--- A step in front of a reducible computation reaches the same whnf by a longer
--- run. `CRed` carries runs, so `_◅_` leaves the grade free.
+-- A step in front of a reducible computation reaches the same whnf by a
+-- longer run. `CRed` carries runs, so `_◅_` leaves the grade free.
 
 CRed-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
@@ -230,15 +183,9 @@ CRed-ε-subst refl p = p
 SRed-∅ : SRed ∅
 SRed-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
-------------------------------------------------------------------------
--- ETERNAL TYPES ARE FREE
---
--- An eternal type is built from base, unit, empty and products, so `VRed` asks
--- nothing of a value of eternal type — except, at a product, that it *be* a
--- pair, which over a state context it is (`⦉⦊-not-in-toCtx`). This is what
--- makes the eternal zone of an environment reducible for nothing, and what
--- covers the variables a lock would otherwise block.
-------------------------------------------------------------------------
+-- An eternal type is built from base, unit, empty and products, so `VRed`
+-- asks nothing of a value of eternal type — except, at a product, that it
+-- *be* a pair, which over a state context it is.
 
 pair-canonical : ∀ {A B} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A |×| B)
                → Σ[ V₁ ∈ toCtx St ⊢V⦂ A ] Σ[ V₂ ∈ toCtx St ⊢V⦂ B ]
@@ -246,16 +193,14 @@ pair-canonical : ∀ {A B} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A |×| B)
 pair-canonical (var f x) = ⊥-elim (⦉⦊-not-in-toCtx x)
 pair-canonical ⦉ V , W ⦊  = V , W , refl
 
--- There is no value of the empty type over a state context: a variable is ruled
--- out by `Empty-not-in-toCtx` and no other value has that type. This is what
--- discharges `absurd`, which has no reduction rule.
+-- There is no value of the empty type over a state context: a variable is
+-- ruled out by `Empty-not-in-toCtx` and no other value has that type.
 
 empty-canonical : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ Empty → ⊥
 empty-canonical (var f x) = Empty-not-in-toCtx x
 
 -- A boolean over a state context is one of the two constants: a variable is
--- ruled out by `Bool-not-in-toCtx`. This is what lets `if` take a branch in
--- the fundamental lemma, the way `pair-canonical` lets `match` fire.
+-- ruled out by `Bool-not-in-toCtx`.
 
 bool-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
                → (V ≡ true) ⊎ (V ≡ false)
@@ -273,14 +218,8 @@ VRed-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
 ... | V₁ , V₂ , refl           =
   V₁ , V₂ , refl , VRed-eternal et₁ V₁ , VRed-eternal et₂ V₂
 
-------------------------------------------------------------------------
--- REDUCIBILITY IS INSENSITIVE TO THE EQUIVALENCE, AND MONOTONE
---
--- Both are recursions on the type, and both are almost free: the slack in the
--- two Kripke clauses absorbs exactly the mismatch, so nothing has to be
--- transported. `VRed-reach` composes the two reaches — `reach-∘` at `⇒` (both
--- unit-graded), and at `[ ρ ]` the read's own `≤ₛ-trans`.
-------------------------------------------------------------------------
+-- Both are recursions on the type, and both are almost free: the slack in
+-- the two Kripke clauses absorbs exactly the mismatch.
 
 VRed-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
         → V ≡ V' → VRed A St V → VRed A St V'
@@ -319,12 +258,8 @@ VRed-reach {[ ρ ] A} q₀ V f {St''} (read e rel) with grad-typ⇒var V
                               (reach-renᵘ-img q₀ c)))
     rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
 
--- GROUND TYPES
---
 -- `VRedᵍ` is `VRed` restricted to the ground types, whose formation rules
--- `type-of-gtype` matches one for one. Two recursions on the ground type, needed
--- because `CRed`'s operation constructor speaks of `VRedᵍ` while the fundamental
--- lemma delivers `VRed`.
+-- `type-of-gtype` matches one for one. Two recursions on the ground type.
 
 VRed→VRedᵍ : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
            → VRed (type-of-gtype G) St V → VRedᵍ G St V
@@ -355,12 +290,8 @@ VRedᵍ-≡ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂
 
 VRedᵍ-≡ᵛ G refl p = p
 
--- GROUND VALUES ACROSS THE STATE EQUIVALENCE
---
--- Related states hold related values, so reducibility transports. Recursion on
--- the ground type; the box clause replays the reach on the other state
--- (`reach-replay` + `≐ˢ-sym`) and identifies the two reads (`unbox-ren-bridge`,
--- then `lookup-body-≐ˢ`).
+-- Related states hold related values, so reducibility transports. Recursion
+-- on the ground type.
 
 VRedᵍ-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (G : GType)
          → (V : toCtx St ⊢V⦂ type-of-gtype G)
@@ -391,15 +322,10 @@ VRedᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} (read e rel)
                         (≤ₛ-embed e₀ c) refl rel₀ rel₀)
         ((castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
 
--- COMPUTATIONS ACROSS THE STATE EQUIVALENCE
---
--- One lemma carrying *both* relations: the states' and the terms'. They cannot
--- be separated — the `cred-op` case replays the resumption's reach and recurses,
--- and the two continuations come out of `cast-perform⁻` related only by `_≡_`.
---
--- Parameterised by the value predicate's transport rather than mutual with
--- `VRed-≐ˢ`, so that both recurse structurally on the *type*.
-
+-- One lemma carrying *both* relations: the states' and the terms', since they
+-- cannot be separated. Parameterised by the value predicate's transport
+-- rather than mutual with `VRed-≐ˢ`, so that both recurse structurally on the
+-- *type*.
 
 -- The reduct a resumption builds, compared across the two states.
 
@@ -482,11 +408,9 @@ CRed-≐ˢ {A} {P} es tr tr≐ eM (cred-op {op = op} {M' = Mk} rs pW pk)
         (pk q (castᵛ (toCtx-≐ˢ es₃) W'')
              (VRedᵍ-≐ˢ es₃ (arity op) W'' pW''))
 
--- VALUES ACROSS THE STATE EQUIVALENCE
---
--- Recursion on the type. Both Kripke clauses replay the other state's extension
--- and transport back; the arrow clause is where `CRed-≐ˢ` is called, at the
--- smaller type `B`, which is what keeps the two definitions non-mutual.
+-- Recursion on the type. Both Kripke clauses replay the other state's
+-- extension and transport back; the arrow clause calls `CRed-≐ˢ` at the
+-- smaller type `B`, keeping the two definitions non-mutual.
 
 VRed-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (A : VType)
         → (V : toCtx St ⊢V⦂ A)
@@ -571,16 +495,8 @@ CRed-≡ᶜ {A} {ε} {St} {M} {M'} eM pM =
 -- Handling is `Adequacy.Handle`, above `Environment`: as sequencing, plus a
 -- clause premise, and needing `sub-wk-C` for the same reason.
 
--- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ` is
--- one out of `St` (the allocation accumulates nothing), and reading the cell
--- back returns the stored value. Which cell is read is settled — `unbox-ren-img`
--- sends it to `≤ₛ-embed (ext q) Hd` — and what it holds is settled too, by
--- `≤ₛ-embed-fst`/`≤ₛ-embed-lookup`: the cell is split off at `St` and holds `V`,
--- however far the state has grown.
---
--- What is left is one renaming agreement, `GradedReach.alloc-lookup-≡`: the
--- two renamings both push the value's context under everything the state has
--- gained since, the lookup by `wk-ren-⟨ρ⟩-ctx` and the reach by `≤ₛ-embed`.
+-- The freshly allocated cell is reducible: a reach out of `St ∷ₛ V` at `ρ`
+-- is one out of `St`, and reading the cell back returns the stored value.
 
 SRed-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) ⊢V⦂ A)
            → (∀ {St'} → (q : St ⊑ₛ[ ρ ] St')
@@ -604,15 +520,9 @@ SRed-fresh {A} {ρ} {St} V pV f {St'} r =
                           (sym (≤ₛ-embed-grade e (Hd {Γ = toCtx St})))))
                  rel)
 
--- THE STORE ON VARIABLES
---
--- Every variable of a state context is of box type, so at the other four types
--- there is nothing to show (`⊤`, or no such variable at all). At a box type a
--- *usable* variable — one carrying the grade bound `var` demands — is
--- reducible, and that is the store read at the later states its own box grade
--- allows: `unbox-ren-img` identifies the cell the lookup names with
--- `≤ₛ-embed (ext q)`, which is exactly where the store speaks. So `VRed` at a
--- box type is not a second assumption about the state; it is this one.
+-- Every variable of a state context is of box type, so at the other four
+-- types there is nothing to show. At a box type a usable variable is
+-- reducible via the store read at the states its own box grade allows.
 
 SRed-var : ∀ {A ρ} {St : 𝕊 []} → SRed St
          → (x : A ∈[ ρ ] toCtx St) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)

@@ -29,17 +29,15 @@ open import Syntax.Substitutions.Base S
 -- lives and where `[] ⋈ᶜ Δ` reduces to `Δ`, so nothing here is transported.
 -- Neither calls the term action, so both recurse on the substitution alone.
 
--- A VARIABLE'S IMAGE IS A VALUE
---
--- The grade bound is an argument, not a result: producing a *value* out of a
--- variable needs the `var` rule's own premise. It is also what pays for
--- crossing a lock, `≾ᵣ-zero-productʳ` extracting the lock's own grade from it.
+-- The grade bound is an argument, not a result: producing a value out of a
+-- variable needs the `var` rule's own premise. It also pays for crossing a
+-- lock, `≾ᵣ-zero-productʳ` extracting the lock's own grade from it.
 --
 -- The lock rule takes the eternality decision as a parameter rather than
--- matching on it, so a caller deciding it reduces this too.
+-- matching on it.
 --
 -- The renaming rule reads `var-rename` off with projections rather than a
--- `with`, so that the clause reduces to a `var` node at an abstract renaming.
+-- `with`, so the clause reduces to a `var` node at an abstract renaming.
 
 mutual
 
@@ -80,16 +78,14 @@ mutual
       (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren (≾ᵣ-zero-productʳ (f ¬et)))
       (sub-var₀ s y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
 
--- A RESOURCE VARIABLE'S IMAGE IS A RESOURCE VARIABLE
+-- A variable of box type is what an `unbox` names. Its grade is not bounded
+-- by the unit, so it cannot be read as a value by `sub-var₀`. It does not
+-- have to be: the only values of box type are variables (`grad-typ⇒var`), so
+-- its image is again a variable, at a grade that drops.
 --
--- A variable of box type is what an `unbox` names. Its grade is not bounded by
--- the unit — that is what `unbox` is for — so it cannot be read as a value by
--- `sub-var₀`. It does not have to be: the only values of box type are variables
--- (`grad-typ⇒var`), so its image is again a variable, at a grade that drops.
---
--- Stated with projections throughout, so that every clause reduces at an
--- abstract substitution: the image is what an `unbox` node stores, and what
--- `_≐ˢ₀_` compares.
+-- Stated with projections throughout, so every clause reduces at an abstract
+-- substitution: the image is what an `unbox` node stores, and what `_≐ˢ₀_`
+-- compares.
 
 sub-tgt₀ : ∀ {Δ Δ' A ρ σ}
          → Sub₀ [] Δ Δ'

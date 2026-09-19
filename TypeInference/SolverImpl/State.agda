@@ -39,10 +39,6 @@ open import TypeInference.Constraints.Properties S using (≐ˢ-sym)
 open import TypeInference.SolverImpl.Core.Unify S using (Rig)
 open import TypeInference.SolverImpl.Resid      S
 
---------------------------------------------------------------
--- The algebra of pointwise equality                         --
---------------------------------------------------------------
-
 ≐ˢ-refl : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → σ ≐ˢ σ
 ≐ˢ-refl = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 
@@ -83,12 +79,8 @@ open import TypeInference.SolverImpl.Resid      S
                 (λ i → wk-↑ᵉ-r δ (sR σ i))
                 (λ { zero → refl ; (suc i) → wk-↑ᵉ-e δ (sE σ i) })
 
---------------------------------------------------------------
--- Reading an existential witness back off a substitution    --
---                                                           --
--- A substitution out of an extended scope is its own         --
--- restriction extended by the image of the new variable.     --
---------------------------------------------------------------
+-- A substitution out of an extended scope is its own restriction
+-- extended by the image of the new variable.
 
 ↑-,ᵗ : ∀ {Θ Θ'} → (γ : Subst (Θ +ty) Θ')
      → ((wkˢᵗ ⨟ˢ γ) ,ᵗ sTy γ (newᵗ {Θ})) ≐ˢ γ
@@ -102,12 +94,8 @@ open import TypeInference.SolverImpl.Resid      S
      → ((wkˢᵉ ⨟ˢ γ) ,ᵉ sE γ (newᵉ {Θ})) ≐ˢ γ
 ↑-,ᵉ γ = mk≐ˢ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl })
 
---------------------------------------------------------------
--- Transporting the rigids                                   --
---                                                           --
--- A rigid is never bound, so its image under any substitution --
--- the driver builds is again a variable.                      --
---------------------------------------------------------------
+-- A rigid is never bound, so its image under any substitution the
+-- driver builds is again a variable.
 
 varᵉ? : ∀ {Ψ} → EExp Ψ → Maybe (EVar Ψ)
 varᵉ? (evar i)  = just i
@@ -116,10 +104,6 @@ varᵉ? (ε ·̂ₑ ε') = nothing
 
 transRig : ∀ {Ψ Ψ'} → Subst Ψ Ψ' → Rig Ψ → Rig Ψ'
 transRig δ rg = mapMaybe (λ i → varᵉ? (sE δ i)) rg
-
---------------------------------------------------------------
--- States                                                    --
---------------------------------------------------------------
 
 record St (Θ : Scope) : Set where
   constructor st
@@ -133,10 +117,6 @@ open St public
 
 init : ∀ {Θ} → St Θ
 init {Θ} = st Θ idˢ emptyᴿ []
-
---------------------------------------------------------------
--- Morphisms of states                                       --
---------------------------------------------------------------
 
 infix 4 _⟶_
 
@@ -161,14 +141,9 @@ open _⟶_ public
       (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc (mδ m) (mδ m') δ))
                             (mres m (mδ m' ⨟ˢ δ) Q (mres m' δ Q h)))
 
---------------------------------------------------------------
--- Binder lifts                                              --
---                                                           --
--- An existential allocates a fresh unknown; the rigid lift    --
--- additionally declares it rigid and starts the scope with a  --
--- fresh residual, so that what is left over inside a rigid    --
--- scope is exactly what has to cross its boundary.            --
---------------------------------------------------------------
+-- An existential allocates a fresh unknown; the rigid lift
+-- additionally declares it rigid and starts the scope with a fresh
+-- residual.
 
 infixl 32 _↑ᵗˢ _↑ʳˢ _↑ᵉˢ
 

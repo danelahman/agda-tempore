@@ -58,13 +58,9 @@ open import TypeInference.Generate  S
 open import TypeInference.Soundness S
 open import TypeInference.Solver    S
 
---------------------------------------------------------------
--- The generation instance for a closed context              --
---                                                           --
--- Only the result type and the result effect are unknown, so --
--- generation runs in `∅ˢ +ty +e`; the embedded context needs --
--- no weakening, being scope-polymorphic.                     --
---------------------------------------------------------------
+-- Only the result type and effect are unknown, so generation runs in
+-- `∅ˢ +ty +e`; the embedded context needs no weakening, being
+-- scope-polymorphic.
 
 Θ₁ : Scope
 Θ₁ = ∅ˢ +ty +e
@@ -83,10 +79,6 @@ C∅[ Γ , M ] = genC ⌜ Γ ⌝ᶜᵗˣ M (X̂₁ ‼ t̂₁)
 θ∅ : Grounding ∅ˢ
 θ∅ = grounding (λ ()) (λ ()) (λ ())
 
---------------------------------------------------------------
--- The result of a successful inference                      --
---------------------------------------------------------------
-
 record Inferred (Γ : Ctx) (M : RawC (skel Γ)) : Set where
   constructor inferred
   field
@@ -104,10 +96,6 @@ record Inferred (Γ : Ctx) (M : RawC (skel Γ)) : Set where
     A-is : A ≡ ⟦ X̂₁ [ σ ]ᵛ ⟧ᵛ θ∅
     ε-is : ε ≡ ⟦ t̂₁ [ σ ]ᵉ ⟧ᵉ θ∅
     D    : Γ ⊢C⦂ A ‼ ε
-
---------------------------------------------------------------
--- Inference                                                 --
---------------------------------------------------------------
 
 private
 
@@ -142,14 +130,9 @@ infer : (gs : GroundSolver) → (Γ : Ctx) → (M : RawC (skel Γ))
       → Maybe (Inferred Γ M)
 infer gs Γ M = infer-aux Γ M (GroundSolver.gsolve gs C∅[ Γ , M ])
 
---------------------------------------------------------------
--- Failure                                                   --
---                                                           --
--- Stated at the constraint level: an untypability statement  --
--- about the ORIGINAL system would need an erasure of         --
--- original derivations, which does not exist (erasure is     --
--- defined on mirrored derivations only).                     --
---------------------------------------------------------------
+-- Failure is stated at the constraint level: an untypability statement
+-- about the original system would need an erasure of original
+-- derivations, which does not exist.
 
 private
 
@@ -167,9 +150,7 @@ infer-complete : (gs : GroundSolver) → (Γ : Ctx) → (M : RawC (skel Γ))
 infer-complete gs Γ M p σ =
   GroundSolver.gsolve-complete gs C∅[ Γ , M ] (infer-nothing gs Γ M p) σ
 
---------------------------------------------------------------
--- Sanity check: the pipeline computes on closed input       --
---------------------------------------------------------------
+-- Sanity check: the pipeline computes on closed input.
 
 private
 

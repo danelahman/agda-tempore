@@ -50,11 +50,9 @@ open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 ------------------------------------------------------------------------
 -- Discharging the numeric side conditions
 --
--- Every interval fact below reduces to comparisons of natural numbers.
--- Rather than spelling the `s≤s` chains out, `≤!` runs `_≤?_` and `≰!`
--- runs it the other way, so an example that holds is closed by `≤!` and
--- one that fails by `≰!` -- and an example asserted the wrong way round
--- simply will not typecheck.
+-- Every interval fact below reduces to comparisons of natural numbers:
+-- `≤!` runs `_≤?_` and `≰!` runs it the other way, so an example
+-- asserted the wrong way round does not typecheck.
 
 ≤! : {m n : ℕ} {p : True (m ≤? n)} → m ≤ n
 ≤! {p = p} = toWitness p
@@ -155,11 +153,9 @@ rsi-of-nat = refl
 ------------------------------------------------------------------------
 -- Two-sided intervals: both bounds at once
 --
--- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂`: containment. The
--- two halves are the two one-sided orders, pulling in opposite
--- directions, so weakening widens the window from both ends. The upper
--- endpoint may be `∞`, which imposes no upper bound and turns the grade
--- into a left-sided interval sitting inside the two-sided one.
+-- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂`: containment, the
+-- two halves being the two one-sided orders, so weakening widens the
+-- window from both ends. An `∞` upper endpoint imposes no upper bound.
 
 -- the window the uplink run actually falls in
 

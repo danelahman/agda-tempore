@@ -52,13 +52,7 @@ var-ren-img-≡ : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ' Γ) → (x : A ∈[ ρ ]
               → V-rename r (var f x) ≡ var f' (proj₂ t)
 var-ren-img-≡ r x f refl f' = var-ren-≡ r x f f'
 
-------------------------------------------------------------------------
--- THE ACTION RESPECTS ACTING ALIKE
---
--- Induction on the term. At `var` and `unbox` the whole content is the
--- hypothesis, the grade bounds being irrelevant; the binding formers use
--- `cong-ren-≐ʳ`, `handle` among them.
-------------------------------------------------------------------------
+-- The renaming action respects the `≐ʳ` equivalence on renamings.
 
 mutual
 
@@ -104,13 +98,9 @@ mutual
           (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
   C-rename-≡ h (coerce p M) = coerce-≡ (C-rename-≡ h M)
 
-------------------------------------------------------------------------
--- RENAMING ALONG AN IDENTITY-LIKE RENAMING
---
--- `cong-∷-ren id-ren`, `⟨⟩-≤-ren` at equal grades and `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
--- all act as the identity without being it, so the action is the identity only
--- up to the equivalence. Induction on the term, as for `C-rename-≡`.
-------------------------------------------------------------------------
+-- `cong-∷-ren id-ren`, `⟨⟩-≤-ren` at equal grades, and `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
+-- all act as the identity without being it; the action is the identity only
+-- up to the equivalence.
 
 ⟨⟩-≤-ren-id-≐ʳ : ∀ {Γ ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤-ren {Δ = Γ} p ≐ʳ id-ren
 ⟨⟩-≤-ren-id-≐ʳ p = mk≐ʳ go
@@ -218,10 +208,9 @@ eq-ren-⟨⟩-≐ʳ : ∀ {Γ Γ' ρ} → (e : Γ ≡ Γ')
             → eq-ren (cong (_⟨ ρ ⟩) e) ≐ʳ cong-⟨⟩-ren {ρ = ρ} (eq-ren e)
 eq-ren-⟨⟩-≐ʳ refl = ≐ʳ-sym (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
 
--- A context splitting is determined by its two halves: `_,_split_` recurses on
--- the right half, so its constructor is forced at each step. This is what
--- identifies the two ways `sub-wk`'s `handle` case reaches the substituted
--- variable — `split-++ʳ s D` and `split-≡-++ᶜ` — without computing either.
+-- A context splitting is determined by its two halves, which identifies the
+-- two ways `sub-wk`'s `handle` case reaches the substituted variable —
+-- `split-++ʳ s D` and `split-≡-++ᶜ` — without computing either.
 
 split-unique : ∀ {Γ Γ₁ Γ₂} → (s s' : Γ₁ , Γ₂ split Γ) → s ≡ s'
 split-unique split-[]     split-[]      = refl
@@ -268,15 +257,8 @@ eq-ren-∘-≐ʳ : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ''
            → (eq-ren e ∘ʳ eq-ren e') ≐ʳ eq-ren (trans e e')
 eq-ren-∘-≐ʳ refl refl = ∘ʳ-identityˡ-≐ʳ _
 
-------------------------------------------------------------------------
--- FUNCTORIALITY
---
--- At the binding formers the two sides rename along `cong-ren (r₂ ∘ʳ r₁)` and
--- `cong-ren r₂ ∘ʳ cong-ren r₁`: distinct renamings acting alike, so the proof
--- leans on the laws above. At `var` and `unbox` both sides locate the variable
--- with `r₂` and then with `r₁`, which is what `var-rename` of a composite does,
--- so abstracting the two lookups makes the clause `refl` up to irrelevance.
-------------------------------------------------------------------------
+-- The renaming action is functorial: renaming along a composite equals
+-- renaming along each factor in turn.
 
 mutual
 
@@ -344,11 +326,7 @@ mutual
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
   C-rename-∘ r₂ r₁ (coerce p M) = coerce-≡ (C-rename-∘ r₂ r₁ M)
 
-------------------------------------------------------------------------
--- THE ACTION IS A CONGRUENCE
---
 -- Renaming related terms gives related terms.
-------------------------------------------------------------------------
 
 V-rename-cong : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → {V V' : Γ' ⊢V⦂ A}
               → V ≡ V' → V-rename r V ≡ V-rename r V'

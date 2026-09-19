@@ -61,10 +61,6 @@ var-img-≡ : ∀ {Γ A} {t t' : Var Γ A} → t ≡ t'
           → var f (proj₂ t) ≡ var f' (proj₂ t')
 var-img-≡ refl f f' = var-≡
 
-------------------------------------------------------------------------
--- ACTING ALIKE
-------------------------------------------------------------------------
-
 -- Where a substitution sends a resource variable, forgetting the grade bound.
 -- This is what an `unbox` node stores.
 
@@ -100,13 +96,9 @@ open _≐ˢ₀_ public
   mk≐ˢ₀ (λ x f → trans (atᵛ h x f) (atᵛ h' x f))
         (λ y → trans (atᵗ h y) (atᵗ h' y))
 
-------------------------------------------------------------------------
--- THE CONGRUENCES
---
--- Unlike a renaming's, a substitution's image is a *term*, so a congruence
--- weakens it (`∷`) or extends it past a lock (`⟨⟩`) rather than relocating a
--- variable. Each is therefore a `cong` of the operation the clause applies.
-------------------------------------------------------------------------
+-- Unlike a renaming's, a substitution's image is a term: a congruence
+-- weakens it (`∷`) or extends it past a lock (`⟨⟩`) rather than relocating
+-- a variable, each a `cong` of the operation the clause applies.
 
 cong-∷-sub-≐ˢ₀ : ∀ {Γ Γ' A} {s s' : Sub₀ [] Γ Γ'}
                → s ≐ˢ₀ s' → cong-∷-sub {A = A} s ≐ˢ₀ cong-∷-sub s'
@@ -148,12 +140,7 @@ V-rename-eq-≡ : ∀ {Γ Γ' A} → (e : Γ ≡ Γ') → {r : Ren [] Γ' Γ}
               → V-rename r V ≡ subst (_⊢V⦂ A) e V
 V-rename-eq-≡ refl h V = V-rename-id-≡ h V
 
-------------------------------------------------------------------------
--- THE ACTION RESPECTS ACTING ALIKE
---
--- Induction on the term. At `var` and `unbox` the whole content is the
--- hypothesis; the binding formers use `cong-sub₀-≐ˢ₀`, `handle` among them.
-------------------------------------------------------------------------
+-- Substitution respects the `≐ˢ₀` equivalence on substitutions.
 
 mutual
 
@@ -199,8 +186,6 @@ mutual
   C-sub₀-≐ˢ₀ h (coerce rel M) = coerce-≡ (C-sub₀-≐ˢ₀ h M)
 
 
--- ETERNAL VALUES
-
 eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Eternal A) → {V V' : Γ ⊢V⦂ A}
                      → V ≡ V'
                      → eternal-val-ext {ρ = ρ} et V ≡ eternal-val-ext et V'
@@ -214,10 +199,6 @@ substᶜ-≡′ : (f : Ctx → Ctx) → ∀ {C Γ₁ Γ₂} → (e : Γ₁ ≡ �
           → M ≡ M'
           → subst (λ z → f z ⊢C⦂ C) e M ≡ subst (λ z → f z ⊢C⦂ C) e M'
 substᶜ-≡′ f {C} e = cong (subst (λ z → f z ⊢C⦂ C) e)
-
-------------------------------------------------------------------------
--- SUBSTITUTION IS A CONGRUENCE
-------------------------------------------------------------------------
 
 sub-≡ᵛ : ∀ {Γ Γ₁ Γ₂ A B} → (s : Γ₁ ∷ A , Γ₂ split Γ) → {W W' : Γ₁ ⊢V⦂ A}
        → W ≡ W' → {V V' : Γ ⊢V⦂ B} → V ≡ V'

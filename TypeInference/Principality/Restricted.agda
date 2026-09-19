@@ -49,10 +49,6 @@ open import TypeInference.Principality S
 
 open import TypeInference.Solver.Restricted S
 
---------------------------------------------------------------
--- The theorem, guarded                                      --
---------------------------------------------------------------
-
 principal-on : ∀ {Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set} → (sv : SolverOn Pᶜ Pᵖ)
              → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC n)
              → Pᵖ C[ Γ , M ]

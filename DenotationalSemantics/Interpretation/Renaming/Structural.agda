@@ -46,10 +46,6 @@ open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy
 open import DenotationalSemantics.Interpretation.Renaming.Algebra S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Renaming.Extension S Cat Fut Pst Adj GTy Mon GE
 
--- ───────────────────────────────────────────────────────────────────────────
--- DENOTATIONS OF THE STRUCTURAL RENAMINGS
--- ───────────────────────────────────────────────────────────────────────────
-
 private
   infixr 3 _∙_
   _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h

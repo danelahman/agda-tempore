@@ -48,10 +48,6 @@ open import TypeInference.Constraints.Satisfaction S
 
 open import TypeInference.Solver S
 
---------------------------------------------------------------
--- Solving, complete and principal on a fragment             --
---------------------------------------------------------------
-
 record SolverOn (Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set) : Set₁ where
   field
 
@@ -84,10 +80,6 @@ record SolverOn (Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set) : Set₁ where
                     ---------------------------------------------------
                     → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
                         (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
-
---------------------------------------------------------------
--- The unrestricted case                                     --
---------------------------------------------------------------
 
 toSolver : SolverOn (λ _ → ⊤) (λ _ → ⊤) → Solver
 toSolver sv = record

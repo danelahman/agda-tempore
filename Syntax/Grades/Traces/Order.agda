@@ -1,18 +1,17 @@
 ------------------------------------------------------------------------
 -- What a trace order has to supply to carry grades.                   --
 --                                                                     --
--- Several preorders on timed traces are in play -- the allowance order --
--- of `Traces.Allowance`, the coverage order of `Traces.Coverage`, and  --
--- the sub-trace orders parked under `backup/` -- and the grades built  --
--- over them differ only in which one they lift. This record is the     --
--- interface they meet:                                                 --
--- decidability, the preorder laws, monotonicity for the trace product, --
--- and the two facts about the unit that the zero-product properties    --
--- rest on.                                                            --
+-- Several preorders on timed traces are in play -- the allowance      --
+-- order of `Traces.Allowance` and the coverage order of               --
+-- `Traces.Coverage` -- and the grades built over them differ only in  --
+-- which one they lift. This record is the interface they meet:        --
+-- decidability, the preorder laws, monotonicity for the trace         --
+-- product, and the two facts about the unit that the zero-product     --
+-- properties rest on.                                                 --
 --                                                                     --
--- Monotonicity is the demanding field. It is what fails for the prefix --
--- order (`Traces.Prefix`), and it is why contiguity-based orders carry --
--- no grade at all.                                                    --
+-- Monotonicity is the demanding field. It is what fails for the       --
+-- prefix order (`Traces.Prefix`), and it is why contiguity-based      --
+-- orders carry no grade at all.                                       --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (Decidable)

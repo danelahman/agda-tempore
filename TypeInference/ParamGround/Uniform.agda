@@ -87,10 +87,6 @@ open import TypeInference.ParamGround S Cat Fut Pst Adj GTy Mon GE
 
 open import TypeInference.ParamGround.Covariance S Cat Fut Pst Adj GTy Mon GE
 
---------------------------------------------------------------
--- Transports                                                --
---------------------------------------------------------------
-
 -- Object-level coercions, and the two shapes of `subst` the interpretation
 -- of `perform` inserts around its ground-typed parameter and arity.
 
@@ -152,10 +148,6 @@ inv⁻≈inv⁺ refl = ≈ᵐ-refl
 inv⁺-sym-trans : ∀ {A B C : VType} → (e : A ≡ B) → (e' : A ≡ C)
                → inv⁺ e' ∘ᵐ inv⁻ e ≈ᵐ inv⁻ (trans (sym e') e)
 inv⁺-sym-trans refl refl = ∘ᵐ-identityˡ _
-
---------------------------------------------------------------
--- Derived model laws                                        --
---------------------------------------------------------------
 
 -- Application reindexed by the exponential's functorial action.
 
@@ -246,10 +238,6 @@ ifᵐ-post {X} {A} b m n g =
   ∙≈ ∘ᵐ-identityʳ _
   ∙≈ ≈ᵐ-sym (∘ᵐ-congˡ (T-≤-refl w') ∙≈ ∘ᵐ-identityˡ _)
 
---------------------------------------------------------------
--- Covariance certificates for derivations                   --
---------------------------------------------------------------
-
 mutual
 
   CovDV : ∀ {Θ m} {Q : Hyps (Θ +e)} {Γ : OCtx (Θ +e) m} {A : OVType (Θ +e)}
@@ -276,10 +264,6 @@ mutual
   CovDC (unbox x ok N)          = CovDC N
   CovDC (box {A} ρ V N)         = NoNewR ρ × CovV A × CovDV V × CovDC N
   CovDC (coerce le M)           = CovDC M
-
---------------------------------------------------------------
--- The fundamental lemma                                     --
---------------------------------------------------------------
 
 module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ ε₂) where
 
@@ -456,10 +440,6 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
     Cov-groundC h₁ h₂ (box ρ V N) cΓ cC (nρ , cA , cV , cN)
                 (pv₁ , pn₁) (pv₂ , pn₂) =
       cov-box h₁ h₂ ρ V N cΓ cC nρ cA cV cN pv₁ pn₁ pv₂ pn₂
-
-    ----------------------------------------------------------
-    -- The cases with content                                --
-    ----------------------------------------------------------
 
     -- A variable.
 
@@ -849,10 +829,6 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
               ∙≈ ≈ᵐ-sym (map⇒ᵐ-curryᵐ _ _)
 
 
---------------------------------------------------------------
--- Discharging `EffUniformʰ` for a covariant clause family    --
---------------------------------------------------------------
-
 -- The clause context and result type that `ground-clause` transports along.
 
 clause-ctx : (r : R) → Ctx → VType → VType → VType → E → Ctx
@@ -1027,10 +1003,6 @@ module _ {Θ : Scope} {m} {Q : Hyps Θ} {Γ : OCtx Θ m} {B : OVType Θ}
                      (nonew-v (wkᵉ-v B) (nn-wkᵉ-v B))
                      qq (ground-mono-e {θ = θ} qq
                            (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ})))
-
---------------------------------------------------------------
--- Sanity check: the certificates are inhabited              --
---------------------------------------------------------------
 
 -- The canonical *forwarding* clause — re-perform the operation and pass the
 -- result to the boxed continuation — is covariant. It uses `perform`,

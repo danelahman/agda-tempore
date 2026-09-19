@@ -1,12 +1,9 @@
 ------------------------------------------------------------------------
 -- Denotational soundness of the equational theory.                      --
---                                                                    --
--- The main induction: every derivable equation `M == N` denotes an     --
--- equality of morphisms `⟦M⟧ ≈ᵐ ⟦N⟧`. Reflexivity/symmetry/transitivity --
--- are the setoid structure of `_≈ᵐ_`; each congruence rule recurses on   --
--- its premises (mirroring `⟦⟧ᶜᵗ-irr`); each axiom dispatches to its own   --
--- `sound-*` lemma. Certificates the endpoints do not determine are       --
--- threaded by `Midᵛ`/`Midᶜ`.                                             --
+-- Every derivable `M == N` denotes `⟦M⟧ ≈ᵐ ⟦N⟧`.                        --
+-- Congruences recurse on their premises; axioms dispatch to their       --
+-- own `sound-*` lemma. `Midᵛ`/`Midᶜ` thread certificates the endpoints  --
+-- do not determine.                                                     --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
