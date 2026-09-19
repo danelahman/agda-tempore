@@ -5,12 +5,12 @@
 -- continuation: `handle M with H' in N'`, where `H'` is `H` renamed by  --
 -- `ren-ᴱ-∷` (its clauses now close over the extended eternal context)   --
 -- and `N'` is `N` renamed by the commuting conversion. This lemma        --
--- reconciles that inner handle's interpretation with the collapsed       --
--- handler algebra `Halg` at the ambient runtime context (`Γ ᴱ ≡ []`).    --
--- The reconciliation is the `HANDLE-STEP` pattern: `⟦H'⟧ʰᵗ`-naturality   --
--- for the renaming, `T-alg-of-handlerᵀ-natᴾ`, and terminality of         --
--- `⟦ Γ ᴱ ⟧`. Split off into its own (interpretation-only) module so it    --
--- compiles fast and its goals are readable.                             --
+-- reconciles that inner handle's interpretation with the handler's fold  --
+-- at the ambient context `Γ`, its eternal parameter reindexed along the  --
+-- clause renaming: `⟦H'⟧ʰᵗ`-naturality for the renaming,                 --
+-- `T-alg-of-handlerᵀ-natᴾ`, and `projᴱ`-naturality at `wk-ren`. Split    --
+-- off into its own (interpretation-only) module so it compiles fast and  --
+-- its goals are readable.                                               --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -84,20 +84,11 @@ ren-ᴱ-∷≡restrict A with eternal? A
 ... | yes _ = refl
 ... | no  _ = refl
 
-term∅ : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-term∅ {X = X} e = subst (λ Δ → X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) (sym e) terminalᵐ
-
-∅-terminal : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → (f g : X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ) → f ≈ᵐ g
-∅-terminal {X = X} e =
-  subst (λ Δ → (f g : X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) → f ≈ᵐ g) (sym e)
-        (λ f g → ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique))
-
--- The inner handle's interpretation equals the collapsed algebra applied to the
+-- The inner handle's interpretation equals the outer fold applied to the
 -- (renamed) sequel. `H'` renames `H`'s clauses along `ren-ᴱ-∷ A₀` (= the eternal
 -- restriction of `wk-ren`), so this is the renaming coherence of the handler at
--- `wk-ren`, reconciled with the terminal parameter of the outer context.
+-- `wk-ren`, with the eternal parameter reindexed along the same renaming.
 module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
-         (e : Γ ᴱ ≡ [])
          (H : (op' : Op) → (ε₀ : E)
               → Γ ᴱ ∷ type-of-gtype (param op')
                    ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
@@ -130,19 +121,27 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
   handle-op-cont :
       ⟦ handle M `with H' `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ
         (pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH')
-    ≈ᵐ (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
-       ∘ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ
+    ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)
+       ∘ᵐ ⟨ projᴱ (Γ ⟨ ρ ⟩) ∘ᵐ fstᵐ
+          ,   Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
+            ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   handle-op-cont =
       ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , seq-eq ⟩ᵐ-cong)
     ∙ ∘ᵐ-congˡ alg-nat
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
-    ∙ ∘ᵐ-congʳ (⟨ ∅-terminal {Γ} e _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-    ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _ ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
-    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-sym projᴱ-wk , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
     where
       f : ⟦ ((Γ ⟨ ρ ⟩) ∷ A₀) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
       f = ⟦ ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀ ⟧ʳ
+
+      -- the eternal projection is untouched by the arity binder
+      projᴱ-wk : projᴱ (Γ ⟨ ρ ⟩) ∘ᵐ fstᵐ ≈ᵐ f ∘ᵐ projᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)
+      projᴱ-wk =
+        subst (λ z → projᴱ (Γ ⟨ ρ ⟩) ∘ᵐ ⟦ wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀} ⟧ʳ
+                   ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
+              (sym (ren-ᴱ-∷≡restrict {Γ ⟨ ρ ⟩} A₀))
+              (projᴱ-nat (wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀}))
 
       -- the renamed sequel commutes back to the un-renamed one under `Tᶠ`
       seq-eq : Tᶠ (⟦ C-rename (cong-∷-ren ren) N ⟧ᶜᵗ (renᶜ (cong-∷-ren ren) N pN))

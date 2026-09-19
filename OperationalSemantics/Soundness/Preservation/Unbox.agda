@@ -64,11 +64,6 @@ open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
-import DenotationalSemantics.Model.HandlerAlgebra S Cat Fut Pst Adj GTy as HC
-open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
-  using (handle-op-cont)
-open import OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
-  using (term∅; ∅-terminal; clause-sound)
 
 open import OperationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj GTy Mon GE public
 

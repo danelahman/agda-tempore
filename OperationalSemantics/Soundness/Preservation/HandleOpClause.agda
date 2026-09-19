@@ -5,10 +5,9 @@
 -- Split off from `Preservation` because it is interpretation-only (no    --
 -- operational machinery) and its normalisation is heavy: keeping it in    --
 -- its own module lets `Preservation` import `clause-sound` rather than    --
--- re-elaborate its body. `HANDLE-OP` includes the handler's clause into the --
--- runtime context `Γ` (`Γ ᴱ ≡ []`) along `ᴱ-ren`; its coherence is          --
--- `C-rename-nat`, and the reindexing it introduces is a map into            --
--- `⟦ Γ ᴱ ⟧ᶜᵗˣ`, hence terminal (`term∅`).                                   --
+-- re-elaborate its body. `HANDLE-OP` includes the handler's clause into  --
+-- the ambient context `Γ` along `ᴱ-ren`, whose denotation is the eternal --
+-- projection `projᴱ Γ` (`ᴱ-ren-mor`).                                    --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -73,14 +72,6 @@ infixr 3 _∙_
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
 _∙_ = ≈ᵐ-trans
 
-term∅ : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-term∅ {X = X} e = subst (λ Δ → X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) (sym e) terminalᵐ
-
-∅-terminal : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → (f g : X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ) → f ≈ᵐ g
-∅-terminal {X = X} e =
-  subst (λ Δ → (f g : X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) → f ≈ᵐ g) (sym e)
-        (λ f g → ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique))
-
 gty-cancelᵛ : ∀ {X Y Y'} → (e : Y ≡ Y') → (g : X →ᵐ Y)
             → subst (λ O → Y' →ᵐ O) (sym e) idᵐ ∘ᵐ subst (λ O → X →ᵐ O) e g ≈ᵐ g
 gty-cancelᵛ refl g = ∘ᵐ-identityˡ _
@@ -95,7 +86,7 @@ assoc⁻¹-⟨⟩ a b c =
         , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong
     , ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _) ∙ ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong
 
-clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
+clause-sound : ∀ {Γ B ε''} → (op : Op)
              → (H : (op' : Op) → (ε' : E)
                   → Γ ᴱ ∷ type-of-gtype (param op')
                        ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
@@ -117,11 +108,12 @@ clause-sound : ∀ {Γ B ε''} → (e : Γ ᴱ ≡ []) → (op : Op)
                         (map⇒ᵐ (subst (λ O → O →ᵐ ⟦ arity op ⟧ᵍ)
                                       (sym (ty-gty (arity op))) idᵐ) idᵐ)
                       ∘ᵐ W ⟩ᵐ
-             ≈ᵐ (clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''
-                   ∘ᵐ ⟨ term∅ {Γ} e , idᵐ ⟩ᵐ)
-                  ∘ᵐ ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV)
-                     , W ⟩ᵐ
-clause-sound {Γ} {B} {ε''} e op H pH uH V pV W =
+             ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''
+                  ∘ᵐ ⟨ projᴱ Γ
+                     , ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op))
+                               (⟦ V ⟧ᵛᵗ pV)
+                       , W ⟩ᵐ ⟩ᵐ
+clause-sound {Γ} {B} {ε''} op H pH uH V pV W =
     ∘ᵐ-congˡ (C-subst-nat Hcl (split-∷ split-[]) V pHcl pV)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ mid)
   ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
@@ -133,18 +125,13 @@ clause-sound {Γ} {B} {ε''} e op H pH uH V pV W =
          ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
          ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
        , ∘ᵐ-congˡ (∘ᵐ-identityˡ _) ∙ ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-  -- the semantic clause unfolds through its adapter: the eternal parameter is
-  -- terminal (`∅-terminal`), the associator rearranges the pairing
-  -- (`assoc⁻¹-⟨⟩`), and the parameter's ground coercions cancel (`gty-cancelᵛ`)
+  -- the semantic clause unfolds through its adapter: the associator rearranges
+  -- the pairing (`assoc⁻¹-⟨⟩`) and the parameter's ground coercions cancel
+  -- (`gty-cancelᵛ`)
   ∙ ≈ᵐ-sym
-      (  ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
-       ∙ ∘ᵐ-assoc _ _ _
+      (  ∘ᵐ-assoc _ _ _
        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-           (⟨⟩ᵐ-∘ _ _ _
-            ∙ ⟨ ∅-terminal {Γ} e _ (term∅ {Γ} e) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)))
-       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (assoc⁻¹-⟨⟩ (term∅ {Γ} e) _ _))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (assoc⁻¹-⟨⟩ (projᴱ Γ) _ _))
        ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
        ∙ ∘ᵐ-congʳ (⟨ mapˣᵐ-∘⟨⟩ _ _ _ _
                      ∙ ⟨ ∘ᵐ-identityˡ _
@@ -153,11 +140,10 @@ clause-sound {Γ} {B} {ε''} e op H pH uH V pV W =
   where
     Hcl  = C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'')
     pHcl = renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'') (pH op ε'')
-    -- the clause's inclusion is `projᴱ Γ` on the ambient slot, and any map into
-    -- `⟦ Γ ᴱ ⟧` is terminal here
+    -- the clause's inclusion along `ᴱ-ren` is `projᴱ Γ` on the ambient slot
     mid : ⟦ Hcl ⟧ᶜᵗ pHcl
-        ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ (term∅ {Γ} e) idᵐ) idᵐ
+        ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ (projᴱ Γ) idᵐ) idᵐ
     mid =
         C-rename-nat (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'') (pH op ε'')
-      ∙ ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (∅-terminal {Γ} e _ _) ≈ᵐ-refl) ≈ᵐ-refl)
+      ∙ ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (ᴱ-ren-mor Γ) ≈ᵐ-refl) ≈ᵐ-refl)
 
