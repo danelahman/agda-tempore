@@ -230,6 +230,19 @@ exch-ren : ∀ {Δ A B Ξ} → Ren Ξ (Δ ∷ A ∷ B) (Δ ∷ B ∷ A)
 exch-ren {Ξ = Ξ} =
   extend-ren (cong-∷-ren wk-ren) (λ _ → ≾ᵣ-refl) (∈-⋈ᶜ Ξ (Tl-∷ Hd))
 
+-- The barrier `⟨ ⊤ᵣ ⟩` guarding a handler's clauses, as renamings.
+--
+-- `barrier-ren` includes a clause's view of the ambient context into the
+-- ambient itself. `barrier-wk-ren` re-bars a context extended by a lock and a
+-- binder: `⊤ᵣ` is greatest, so the two locks fold into it.
+
+barrier-ren : ∀ {Δ} → Ren [] Δ (Δ ⟨ ⊤ᵣ ⟩)
+barrier-ren = ⟨⟩-≤-ren (≾-⊤ᵣ uᵣ) ∘ʳ ⟨⟩-η-ren
+
+barrier-wk-ren : ∀ {Δ} → (ρ : R) → (A : VType)
+               → Ren [] ((Δ ⟨ ρ ⟩ ∷ A) ⟨ ⊤ᵣ ⟩) (Δ ⟨ ⊤ᵣ ⟩)
+barrier-wk-ren ρ A = ⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren ∘ʳ cong-⟨⟩-ren wk-ren
+
 -- Inserting a context `Γ'` immediately after the ambient, under an arbitrary
 -- suffix `Θ`. Recursion on `Θ`, bottoming out in an insertion at the top; the
 -- lock case uses `⟨⟩-ext-ctx`, which is why the ambient must be eternal.

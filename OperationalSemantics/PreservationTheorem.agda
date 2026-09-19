@@ -29,19 +29,6 @@ record Config (C : CType) : Set where
         state       : 𝕊 []
         computation : toCtx state  ⊢C⦂ C
 
--- The barrier `⟨ ⊤ᵣ ⟩` guarding a handler's clauses, as renamings.
---
--- `barrier-ren` includes a clause's view of the ambient context into the
--- ambient itself. `barrier-wk-ren` re-bars a context extended by a lock and a
--- binder: `⊤ᵣ` is greatest, so the two locks fold into it.
-
-barrier-ren : ∀ {Δ} → Ren [] Δ (Δ ⟨ ⊤ᵣ ⟩)
-barrier-ren = ⟨⟩-≤-ren (≾-⊤ᵣ uᵣ) ∘ʳ ⟨⟩-η-ren
-
-barrier-wk-ren : ∀ {Δ} → (ρ : R) → (A : VType)
-               → Ren [] ((Δ ⟨ ρ ⟩ ∷ A) ⟨ ⊤ᵣ ⟩) (Δ ⟨ ⊤ᵣ ⟩)
-barrier-wk-ren ρ A = ⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren ∘ʳ cong-⟨⟩-ren wk-ren
-
 -- Looking up the resource that an unboxing computation refers to
 
 unbox-lookup : ∀ {A ρ ρ'}

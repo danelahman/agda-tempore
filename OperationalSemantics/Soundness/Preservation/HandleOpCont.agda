@@ -48,8 +48,6 @@ open import Syntax.Language   S
 open import Syntax.Renamings  S
 open import Syntax.RenActions S using (C-rename)
 
-open import OperationalSemantics.PreservationTheorem S using (barrier-wk-ren)
-
 open Category Cat
 open Future Fut
 open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-≤-nat; ⟨⟩-≤-irr;

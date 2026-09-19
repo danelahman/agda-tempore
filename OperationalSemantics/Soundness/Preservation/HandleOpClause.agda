@@ -55,8 +55,6 @@ open Adjunction Adj using (η⊣)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
-open import OperationalSemantics.PreservationTheorem S using (barrier-ren)
-
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; ⟨⊤⟩-η)
 
