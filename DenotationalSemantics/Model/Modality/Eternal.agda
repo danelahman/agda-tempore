@@ -369,6 +369,78 @@ record Eternalᵒ (A : Obj) : Set₁ where
             (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
 
 
+-- THE FREE ALGEBRA'S UNIVERSAL PROPERTY, GENERALISED
+--
+-- `⟨⊤⟩-free-extᵉ-nat`/`⟨⊤⟩-free-necᵉ-nat` above only cover a map already of
+-- shape `⟨ ⊤ ⟩ᶠ f`. These generalise to any `g : X →ᵐ ⟨ ⊤ ⟩ᵒ Y`: the algebra
+-- morphism `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ ⟩ᶠ g` its universal property produces still commutes
+-- with extraction, hence with necessitation, at every grade.
+
+infixr 3 _∙_
+_∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
+_∙_ = ≈ᵐ-trans
+
+-- Commutes with extraction at every grade.
+
+free-extᵉ-nat : ∀ {X Y} → (g : X →ᵐ ⟨ ⊤ ⟩ᵒ Y) → ∀ {ρ}
+              → (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ ⟩ᶠ g) ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+              ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ ⟩ᶠ g)
+free-extᵉ-nat g {ρ} =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⊤⟩-μ-nat g))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘μ≡μ∘Tμ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  ∙ ∘ᵐ-congʳ (⟨⟩-≤-nat _ (≾-⊤ ρ))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- Its `[_]`-mate: commutes with necessitation at every grade.
+
+free-necᵉ-nat : ∀ {X Y} → (f : ⟨ ⊤ ⟩ᵒ X →ᵐ ⟨ ⊤ ⟩ᵒ Y)
+              → (∀ {ρ} → f ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+                       ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ f)
+              → ∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+                      ≈ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ f
+free-necᵉ-nat f nat =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congˡ ([]-congᶠ nat)
+  ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (η⊣-nat f)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- A lock composed before the barrier relaxation is the free algebra's own
+-- multiplication applied to the inner relaxation (`⊤` is greatest).
+
+barrier-μ : ∀ {X ρ} → (p : ρ · ⊤ ≾ ⊤)
+          → ⟨⟩-≤ p ∘ᵐ μ {X} {⊤} {ρ}
+          ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ ⟩ᶠ (⟨⟩-≤ (≾-⊤ ρ))
+barrier-μ {X} {ρ} p =
+    ∘ᵐ-congˡ (⟨⟩-≤-irr p (≾-trans (·-monoˡ-≾ (≾-⊤ ρ)) (≾-⊤ (⊤ · ⊤))))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·-monoˡ-≾ (≾-⊤ ρ)) (≾-⊤ (⊤ · ⊤))))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (μ-≤ˡ (≾-⊤ ρ))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- Extraction at a lock, applied to the barrier, is the lock's relaxation to
+-- `⊤`.
+
+barrier-lock : ∀ {X ρ}
+             → Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {X})
+             ≈ᵐ ⟨⟩-≤ (≾-⊤ ρ)
+barrier-lock {X} {ρ} =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat ⟨⊤⟩-η (≾-⊤ ρ)))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘Tη≡id
+  ∙ ∘ᵐ-identityˡ _
+
+
 -- PRODUCTS OF ETERNAL OBJECTS
 --
 -- Eilenberg–Moore algebras are closed under the category's products, the

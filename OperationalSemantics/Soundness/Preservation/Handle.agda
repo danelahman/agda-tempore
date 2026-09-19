@@ -66,9 +66,10 @@ open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
-       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-η-nat; ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-μ-nat)
+       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-η-nat; ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-μ-nat;
+              free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-lock)
 open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
-  using (handle-op-cont; free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-lock)
+  using (handle-op-cont)
 open import OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
   using (clause-sound)
 
@@ -346,7 +347,7 @@ suc-comp-free-at : ∀ {Γ Γ' a} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
                  ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx St ⟧ᶜᵗˣ) {a} ∘ᵐ ⟨ a ⟩ᶠ (suc-g q)
 suc-comp-free-at {a = a} {St = St} id-suc pf =
     ⟨⟩-≤-irr _ (≾-⊤ᵣ a)
-  ∙ ≈ᵐ-sym (barrier-lock {toCtx St} {a})
+  ∙ ≈ᵐ-sym (barrier-lock {⟦ toCtx St ⟧ᶜᵗˣ} {a})
 suc-comp-free-at (⟨⟩-suc ρ q) pf =
     ∘ᵐ-congˡ (suc-comp-free-at q _)
   ∙ ∘ᵐ-assoc _ _ _
@@ -397,7 +398,7 @@ step-pv-state (BOX {V = V}) pS (pV , _) =
 step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
     ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (barrier-lock {toCtx S} {of-natʳ τ})
+  ∙ ∘ᵐ-congˡ (barrier-lock {⟦ toCtx S ⟧ᶜᵗˣ} {of-natʳ τ})
   ∙ ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (delay-suc _))
 
 -- HANDLE-STEP

@@ -1,6 +1,5 @@
 ------------------------------------------------------------------------
--- The HANDLE-OP continuation lemma, and the free-algebra morphism       --
--- lemmas the handler fold's parameter-naturality consumes.              --
+-- The HANDLE-OP continuation lemma.                                     --
 --                                                                    --
 -- `sound-HANDLE-OP`'s reduct boxes up the handled remainder as a        --
 -- continuation: `handle M with H' in N'`, where `H'` is `H` renamed by  --
@@ -62,7 +61,8 @@ open Monad Mon
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj
        using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-μ-nat; ⟨⊤⟩-μ∘μ≡μ∘Tμ;
-              ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-η-nat)
+              ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-η-nat; free-extᵉ-nat; free-necᵉ-nat; barrier-μ;
+              barrier-lock)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
@@ -78,72 +78,11 @@ _∙_ = ≈ᵐ-trans
 bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
 bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 
--- FREE-ALGEBRA MORPHISMS
---
--- A map `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g` is the algebra morphism the free algebra's
--- universal property produces from `g`. It commutes with extraction at every
--- grade, and hence — as the `[_]`-mate — with necessitation. That mate is the
--- coalgebra-morphism premise of `T-alg-of-handlerᵀ-natᴾ`, which every
--- reindexing of a handler's parameter has to discharge.
-
-free-extᵉ-nat : ∀ {X Y} → (g : X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y) → ∀ {ρ}
-              → (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g) ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
-              ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g)
-free-extᵉ-nat g {ρ} =
-    ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⊤⟩-μ-nat g))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘μ≡μ∘Tμ
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  ∙ ∘ᵐ-congʳ (⟨⟩-≤-nat _ (≾-⊤ᵣ ρ))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-
-free-necᵉ-nat : ∀ {X Y} → (f : ⟨ ⊤ᵣ ⟩ᵒ X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y)
-              → (∀ {ρ} → f ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
-                       ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ f)
-              → ∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
-                      ≈ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ f
-free-necᵉ-nat f nat =
-    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
-  ∙ ∘ᵐ-congˡ ([]-congᶠ nat)
-  ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (η⊣-nat f)
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-
--- THE BARRIER AT A LOCK
---
--- `⊤ᵣ` is greatest, so a lock in front of the barrier is absorbed by it: the
--- two-layer fold `⟨⟩-μ` followed by the relaxation to `⊤ᵣ` is the free
--- algebra's own multiplication applied to the inner relaxation.
-
-barrier-μ : ∀ {X ρ} → (p : ρ ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
-          → ⟨⟩-≤ p ∘ᵐ μ {X} {⊤ᵣ} {ρ}
-          ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (⟨⟩-≤ (≾-⊤ᵣ ρ))
-barrier-μ {X} {ρ} p =
-    ∘ᵐ-congˡ (⟨⟩-≤-irr p (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (≾-⊤ᵣ ρ)) (≾-⊤ᵣ (⊤ᵣ ·ᵣ ⊤ᵣ))))
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·ᵣ-monoˡ-≾ᵣ (≾-⊤ᵣ ρ)) (≾-⊤ᵣ (⊤ᵣ ·ᵣ ⊤ᵣ))))
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (μ-≤ˡ (≾-⊤ᵣ ρ))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-
--- Barring an ambient that is a lock away: extraction at that lock, applied to
--- the barrier, is just the relaxation of the lock to `⊤ᵣ`.
-
-barrier-lock : ∀ {Γ ρ}
-             → Eternalᵒ.extᵉ (bcᴱ Γ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})
-             ≈ᵐ ⟨⟩-≤ (≾-⊤ᵣ ρ)
-barrier-lock {Γ} {ρ} =
-    ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat ⟨⊤⟩-η (≾-⊤ᵣ ρ)))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘Tη≡id
-  ∙ ∘ᵐ-identityˡ _
+-- `free-extᵉ-nat`, `free-necᵉ-nat`, `barrier-μ`, `barrier-lock` are facts
+-- about the free `⟨⊤⟩`-algebra, imported above from `Eternal`. `free-necᵉ-nat`
+-- applied to `free-extᵉ-nat` is the coalgebra-morphism premise of
+-- `T-alg-of-handlerᵀ-natᴾ` that every reindexing of a handler's parameter
+-- has to discharge.
 
 -- The inner handle's interpretation equals the outer fold applied to the
 -- (renamed) sequel. `H'` renames `H`'s clauses along `barrier-wk-ren`, so this
@@ -211,7 +150,7 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
       barrier-wk : (Eternalᵒ.extᵉ (bcᴱ Γ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})) ∘ᵐ fstᵐ
                  ≈ᵐ f ∘ᵐ ⟨⊤⟩-η
       barrier-wk =
-          ∘ᵐ-congˡ (barrier-lock {Γ} {ρ})
+          ∘ᵐ-congˡ (barrier-lock {⟦ Γ ⟧ᶜᵗˣ} {ρ})
         ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ f≈
                   ∙ ∘ᵐ-assoc _ _ _
                   ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat g)
