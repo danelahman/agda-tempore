@@ -40,18 +40,6 @@ data EternalCtx : Ctx → Set where
   ec-∷  : ∀ {Δ A} → EternalCtx Δ → Eternal A → EternalCtx (Δ ∷ A)
   ec-⟨⟩ : ∀ {Δ ρ} → uᵣ ≾ᵣ ρ → ρ ≾ᵣ uᵣ → EternalCtx Δ → EternalCtx (Δ ⟨ ρ ⟩)
 
--- The eternal restriction is an eternal context: it is lock-free and keeps only
--- eternal-typed variables. This is what licenses the lock in `ᴱ-ren`, along
--- which a handler clause (closing over `Γ ᴱ`) moves to the context reached when
--- the operation is handled.
-
-ᴱ-EternalCtx : (Δ : Ctx) → EternalCtx (Δ ᴱ)
-ᴱ-EternalCtx []        = ec-[]
-ᴱ-EternalCtx (Δ ∷ A)   with eternal? A
-... | yes et = ec-∷ (ᴱ-EternalCtx Δ) et
-... | no  _  = ᴱ-EternalCtx Δ
-ᴱ-EternalCtx (Δ ⟨ ρ ⟩) = ᴱ-EternalCtx Δ
-
 -- The 0-graded lock, the case the two bounds are `≾ᵣ-refl`, and the case of a
 -- grade only propositionally equal to the unit, which is the form the grades
 -- standing in a context take (`of-natʳ-zero`, `map-uᵉ`).
@@ -241,3 +229,12 @@ wk-ren-⟨ρ⟩-ctx {Δ} {Δ' ⟨ ρ' ⟩} {ρ} {Ξ} refl =
 exch-ren : ∀ {Δ A B Ξ} → Ren Ξ (Δ ∷ A ∷ B) (Δ ∷ B ∷ A)
 exch-ren {Ξ = Ξ} =
   extend-ren (cong-∷-ren wk-ren) (λ _ → ≾ᵣ-refl) (∈-⋈ᶜ Ξ (Tl-∷ Hd))
+
+-- Inserting a context `Γ'` immediately after the ambient, under an arbitrary
+-- suffix `Θ`. Recursion on `Θ`, bottoming out in an insertion at the top; the
+-- lock case uses `⟨⟩-ext-ctx`, which is why the ambient must be eternal.
+
+wk-ctx-ren : ∀ {Ξ} → EternalCtx Ξ → (Γ' : Ctx) → Ren Ξ Γ' []
+wk-ctx-ren ec []         = id-ren
+wk-ctx-ren ec (Γ' ∷ A)   = wk-ren ∘ʳ cong-∷-ren (wk-ctx-ren ec Γ')
+wk-ctx-ren ec (Γ' ⟨ ρ ⟩) = ⟨⟩-ext-ctx ec ec-[] ∘ʳ cong-⟨⟩-ren (wk-ctx-ren ec Γ')

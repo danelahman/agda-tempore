@@ -53,7 +53,8 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-η-nat; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-free-necᵉ-nat)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -94,25 +95,6 @@ unbox-env-nat : ∀ {Γ Γ' A ρ ρ'} → (r : Ren [] Γ' Γ)
                 ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x) ∘ᵐ ⟦ r ⟧ʳ
 unbox-env-nat r x rel rel' =
   ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr rel' _))) (unbox-env-nat′ r x rel)
-
--- The interpretation of a restricted renaming also commutes with the
--- necessitations `necᵉ` (the box/`Future` mate of `restrict-ren-mor`, which
--- is stated for `extᵉ`). Derived via `necᵉ-mate` and the adjunction. This is
--- the box-coalgebra-morphism premise that the fold's parameter-naturality needs.
-
-restrict-ren-necᵉ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → ∀ {ρ}
-                  → [ ρ ]ᶠ ⟦ restrict-ren r ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ' ⟧ᴱ-Eternalᵒ) {ρ}
-                  ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ} ∘ᵐ ⟦ restrict-ren r ⟧ʳ
-restrict-ren-necᵉ {Γ} {Γ'} r {ρ} =
-  ≈ᵐ-trans (∘ᵐ-congʳ (Eternalᵒ.necᵉ-mate (⟦ Γ' ⟧ᴱ-Eternalᵒ)))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (restrict-ren-mor r))))
-  (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (∘ᵐ-congˡ (≈ᵐ-sym (Eternalᵒ.necᵉ-mate (⟦ Γ ⟧ᴱ-Eternalᵒ)))))))))))
 
 -- Naturality of the (inverse) associator in its first component: both sides
 -- are `⟨ ⟨ f ∘ fstᵐ , fstᵐ ∘ sndᵐ ⟩ , sndᵐ ∘ sndᵐ ⟩`.
@@ -215,9 +197,9 @@ mutual
   renᶜ r (handle_`with_`in M H N) (pM , pN , pH , uH) =
       renᶜ r M pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN
-    , (λ op ε'' → renᶜ (cong-∷-ren (cong-∷-ren (restrict-ren r)))
+    , (λ op ε'' → renᶜ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
                      (H op ε'') (pH op ε''))
-    , ren-clauses-uniform (restrict-ren r) H pH uH
+    , ren-clauses-uniform (cong-⟨⟩-ren r) H pH uH
 
   -- Renaming a clause family's ambient context preserves the clauses'
   -- uniformity in the residual grade: the renaming acts on the ambient context
@@ -347,12 +329,12 @@ mutual
     (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-nat r) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ⟨⊤⟩-η-nat ⟦ r ⟧ʳ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
     where
-      f : ⟦ Γ' ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-      f = ⟦ restrict-ren r ⟧ʳ
+      f : ⟦ Γ' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+      f = ⟦ cong-⟨⟩-ren r ⟧ʳ
       seq-nat : Tᶠ (⟦ C-rename (cong-∷-ren (cong-⟨⟩-ren r)) N ⟧ᶜᵗ
                       (renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN)) ∘ᵐ strᵀ
                   ∘ᵐ ⟨ η⊣ , ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M pM) ⟩ᵐ
@@ -373,23 +355,23 @@ mutual
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
       ⟦⟧ʰᵗ-nat : ∀ op ε''
                → clauseᵀ (⟦_⟧ʰᵗ {Γ'}
-                    (λ op ε'' → C-rename (cong-∷-ren (cong-∷-ren (restrict-ren r)))
+                    (λ op ε'' → C-rename (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
                                   (H op ε''))
                     (λ op ε'' →
-                       renᶜ (cong-∷-ren (cong-∷-ren (restrict-ren r)))
+                       renᶜ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
                          (H op ε'') (pH op ε''))
                     -- the uniformity component of `renᶜ`'s handle tuple
                     (proj₂ (proj₂ (proj₂ (renᶜ r (handle M `with H `in N)
                                             (pM , pN , pH , uH)))))) op ε''
                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦⟧ʰᵗ-nat op ε'' =
-        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (restrict-ren r)))
+        ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r)))
                               (H op ε'') (pH op ε'')))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat = T-alg-of-handlerᵀ-natᴾ ((⟦ Γ ⟧ᴱ-Eternalᵒ)) ((⟦ Γ' ⟧ᴱ-Eternalᵒ))
-                  f (restrict-ren-necᵉ r) (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦⟧ʰᵗ-nat
+      alg-nat = T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ)
+                  f (⟨⊤⟩-free-necᵉ-nat ⟦ r ⟧ʳ) (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦⟧ʰᵗ-nat
   C-rename-nat r (unbox x rel M) pM =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)

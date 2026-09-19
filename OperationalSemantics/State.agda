@@ -59,17 +59,6 @@ grades-≡ ∅ = refl
 grades-≡ (S ⟨ ρ ⟩ₛ) = cong (_·ᵣ ρ) (grades-≡ S)
 grades-≡ (S ∷ₛ A) = grades-≡ S
 
--- A runtime context is built solely from locks and box-typed resources,
--- neither of which is eternal, so its eternal restriction is empty. Hence at
--- the top level a handler's eternal context is trivial: firing at `Γ' := toCtx S`
--- recovers `toCtx S ∷ param ∷ cont` (via `++ᶜ-identityˡ`).
-
-toCtxᴱ-[] : ∀ {Γ} → (S : 𝕊 Γ) → (toCtx S) ᴱ ≡ []
-toCtxᴱ-[] ∅            = refl
-toCtxᴱ-[] (S ⟨ ρ ⟩ₛ)  = toCtxᴱ-[] S
-toCtxᴱ-[] (_∷ₛ_ {A} {ρ} S V) =
-  trans (ᴱ-∷-drop {Γ = toCtx S} {A = [ ρ ] A} (λ ())) (toCtxᴱ-[] S)
-
 -- Definition of successor of a state
 
 data _≤ₛ_ : ∀ {Γ Γ'} → 𝕊 Γ → 𝕊 Γ' → Set where

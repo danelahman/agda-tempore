@@ -86,9 +86,6 @@ cong-subˢ {Γ'' = []}        σ = σ
 cong-subˢ {Γ'' = Γ'' ∷ A}   σ = cong-∷-subˢ (cong-subˢ σ)
 cong-subˢ {Γ'' = Γ'' ⟨ ρ ⟩} σ = cong-⟨⟩-subˢ (cong-subˢ σ)
 
-restrict-subˢ : ∀ {Ξ Δ Δ'} → Sub Ξ Δ Δ' → Sub (Ξ ᴱ) (Δ ᴱ) (Δ' ᴱ)
-restrict-subˢ = mapˢ (λ Δ₀ → Δ₀ ᴱ) restrict-sub₀
-
 expose-subˢ : ∀ {Ξ Δ₀ Δ₀'} → (Δ : Ctx) → Sub (Ξ ⋈ᶜ Δ) Δ₀ Δ₀'
             → Sub Ξ (Δ ++ᶜ Δ₀) (Δ ++ᶜ Δ₀')
 expose-subˢ Δ = mapˢ (Δ ++ᶜ_) (expose-sub₀ Δ)

@@ -316,7 +316,7 @@ record Monad : Set₁ where
   -- EFFECT HANDLING
 
   -- A handler is parameterised by an *eternal* object `P` (the interpretation
-  -- of the eternal part `Γ ᴱ` of the ambient context it closes over). It
+  -- of the barred ambient context `Γ ⟨ ⊤ᵣ ⟩` its clauses see). It
   -- assigns to every operation `op` and residual effect grade `ε''` a clause:
   -- given `P`, the parameter, and the operation's boxed continuation
   -- `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces a computation.

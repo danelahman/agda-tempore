@@ -105,9 +105,6 @@ cong-sub₀-⌜⌝ []         r = ≐ˢ₀-refl
 cong-sub₀-⌜⌝ (Γ₀ ∷ A)   r = cong-∷-sub-⌜⌝ (cong-sub₀-⌜⌝ Γ₀ r)
 cong-sub₀-⌜⌝ (Γ₀ ⟨ ρ ⟩) r = cong-⟨⟩-sub-⌜⌝ (cong-sub₀-⌜⌝ Γ₀ r)
 
--- The eternal restriction of an embedded renaming is the embedding of its
--- restriction, on the nose.
-
 mutual
 
   V-sub₀-⌜⌝ : ∀ {Γ Γ' A} → (r : Ren [] Γ Γ') → (V : Γ' ⊢V⦂ A)
@@ -150,8 +147,8 @@ mutual
   C-sub₀-⌜⌝ r (handle M `with H `in N) =
     handle-≡ (C-sub₀-⌜⌝ r M)
       (λ op ε'' →
-         trans (C-sub₀-≐ˢ₀ (cong-∷-sub-⌜⌝ (cong-∷-sub-⌜⌝ ≐ˢ₀-refl)) (H op ε''))
-               (C-sub₀-⌜⌝ (cong-∷-ren (cong-∷-ren (restrict-ren r))) (H op ε'')))
+         trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _ ∷ _) r) (H op ε''))
+               (C-sub₀-⌜⌝ (cong-ren r) (H op ε'')))
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) N)
              (C-sub₀-⌜⌝ (cong-ren r) N))
   C-sub₀-⌜⌝ r (unbox x rel M) =
@@ -261,42 +258,6 @@ open Interchange public
 ⋈-cong (Γ₀ ∷ A)   h = ⋈-∷ (⋈-cong Γ₀ h)
 ⋈-cong (Γ₀ ⟨ ρ ⟩) h = ⋈-⟨⟩ (⋈-cong Γ₀ h)
 
--- On the eternal restriction. Both sides' images are the restriction of the
--- unrestricted image (`restrict-sub-img⁻`), and restriction is natural in
--- renaming, so the square is the given one restricted. Box types are never
--- eternal, so there is no resource variable to compare.
-
-⋈-ᴱ : ∀ {Δ Δ' Γ Γ'} {s' : Sub₀ [] Δ Δ'} {r : Ren [] Δ' Γ'}
-        {r' : Ren [] Δ Γ} {s : Sub₀ [] Γ Γ'}
-    → Interchange s' r r' s
-    → Interchange (restrict-sub₀ s') (restrict-ren r)
-                  (restrict-ren r') (restrict-sub₀ s)
-⋈-ᴱ {Δ} {Δ'} {Γ} {Γ'} {s'} {r} {r'} {s} h = mk⋈ goᵛ goᵗ
-  where
-    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ' ᴱ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-        → V-sub₀ (restrict-sub₀ s') (V-rename (restrict-ren r) (var f x))
-        ≡ V-rename (restrict-ren r') (V-sub₀ (restrict-sub₀ s) (var f x))
-    goᵛ {A} x f =
-      trans (sub-var₀-irr (restrict-sub₀ s') _ _ (et-bound et))
-        (trans (restrict-sub-img⁻ s' (proj₂ (var-img (restrict-ren r) x)) et)
-          (trans (cong (λ t → eternal-val-restrict et
-                                (sub-var₀ s' (proj₂ t) (et-bound et)))
-                       (restrict-img⁻ r x))
-            (trans (cong (eternal-val-restrict et)
-                     (trans (sub-var₀-irr s' _ (et-bound et) _)
-                            (atᵛ h (proj₂ (∈-ᴱ⁻ Γ' x)) (et-bound et))))
-              (trans (eternal-val-restrict-ren et r'
-                       (V-sub₀ s (var (et-bound et) (proj₂ (∈-ᴱ⁻ Γ' x)))))
-                     (cong (V-rename (restrict-ren r'))
-                       (sym (trans (sub-var₀-irr (restrict-sub₀ s) x f (et-bound et))
-                                   (restrict-sub-img⁻ s x et))))))))
-      where
-        et : Eternal A
-        et = ec-eternal (ᴱ-EternalCtx Γ') x
-
-    goᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ' ᴱ) → _
-    goᵗ y = ⊥-elim (tgt-img₀-ᴱ Γ' y)
-
 ------------------------------------------------------------------------
 
 mutual
@@ -335,7 +296,7 @@ mutual
     cong (delay _) (C-sub₀-ren (⋈-cong ([] ⟨ _ ⟩) h) M)
   C-sub₀-ren h (handle M `with H `in N) =
     handle-≡ (C-sub₀-ren h M)
-      (λ op ε'' → C-sub₀-ren (⋈-∷ (⋈-∷ (⋈-ᴱ h))) (H op ε''))
+      (λ op ε'' → C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
   C-sub₀-ren h (unbox x rel M) =
     unbox-≡ (atᵗ h x) (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)

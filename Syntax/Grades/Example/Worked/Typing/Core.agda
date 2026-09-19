@@ -182,15 +182,13 @@ coercion-only-closes sub claim =
 ------------------------------------------------------------------------
 -- A context to handle in
 --
--- Clauses close over the eternal part of the ambient context. In a
--- context holding both base types, that is the identifier alone, so a
--- clause may mention it and cannot mention the reading.
+-- Clauses see the ambient context behind the barrier lock `⟨ ⊤ᵣ ⟩`. In a
+-- context holding both base types, the identifier crosses it by being
+-- eternal; whether the reading does is a question about `⊤ᵣ`, which each
+-- instance answers.
 
 Node : Ctx
 Node = [] ∷ NodeId ∷ Reading
-
-eternal-part : Node ᴱ ≡ [] ∷ NodeId
-eternal-part = refl
 
 ------------------------------------------------------------------------
 -- Operation clauses
@@ -206,7 +204,7 @@ eternal-part = refl
 -- discharges at every grade.
 
 forwarding : ∀ {Γ B} → (op : Op) → (ε'' : E)
-           → Γ ᴱ ∷ type-of-gtype (param op)
+           → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
              ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
 forwarding op ε'' =
@@ -221,7 +219,7 @@ forwarding op ε'' =
 -- operation and after everything the continuation did.
 
 identifying : (op : Op) → (ε'' : E)
-            → Node ᴱ ∷ type-of-gtype (param op)
+            → Node ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                     ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ NodeId ‼ ε'')
               ⊢C⦂ NodeId ‼ (op-grade op ·ₑ ε'')
 identifying op ε'' =
@@ -233,7 +231,8 @@ identifying op ε'' =
         ((here · fresh-var ≾ᵣ-refl (Tl-∷ Hd))
           ⨟                          -- ⟨ ε'' ⟩ ∷ NodeId
             return (eternal-var nodeid-eternal
-                     (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))))))))))
+                     (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷
+                       (Tl-⟨⟩ (Tl-∷ Hd)))))))))))))
 
 -- Drop the continuation and return straight away. The clause still has
 -- to be graded at `op-grade op ·ₑ ε''`, and a `return` is graded at
@@ -243,7 +242,7 @@ identifying op ε'' =
 discarding : ∀ {Γ}
            → (nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε'')
            → (op : Op) → (ε'' : E)
-           → Γ ᴱ ∷ type-of-gtype (param op)
+           → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ Unit ‼ ε'')
              ⊢C⦂ Unit ‼ (op-grade op ·ₑ ε'')
 discarding nothing-fits op ε'' = coerce (nothing-fits op ε'') (return ⋆)

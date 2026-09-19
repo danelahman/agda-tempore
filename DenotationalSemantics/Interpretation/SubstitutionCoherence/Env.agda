@@ -63,7 +63,8 @@ open GroundEternal GE
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-η-nat; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-free-necᵉ-nat)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -106,33 +107,6 @@ sub-env-is-⟦⟧ˢ₀ : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ spl
 sub-env-is-⟦⟧ˢ₀ split-[]     W pW = ≈ᵐ-refl
 sub-env-is-⟦⟧ˢ₀ (split-∷ s)  W pW = mapˣᵐ-cong (sub-env-is-⟦⟧ˢ₀ s W pW) ≈ᵐ-refl
 sub-env-is-⟦⟧ˢ₀ (split-⟨⟩ s) W pW = ⟨⟩-congᶠ (sub-env-is-⟦⟧ˢ₀ s W pW)
-
-------------------------------------------------------------------------
--- THE ETERNAL RESTRICTION
-------------------------------------------------------------------------
-
--- The restricted substitution stores only restrictions of stored values, and
--- those are parametric outright.
-
-restrict-val-subᴾ : ∀ {Γ₀ A} → (dec : Dec (Eternal A)) → (V : Γ₀ ⊢V⦂ A)
-                  → Paramˢ₀ (restrict-val-sub {[]} {Γ₀} {A} dec V)
-restrict-val-subᴾ (yes et) V = eternal-val-restrictᴾ et V
-restrict-val-subᴾ (no  _)  V = tt
-
-restrict-∷-subᴾ : ∀ {B} → (Γ Δ : Ctx) → (dec : Dec (Eternal B))
-                → {s : Sub₀ [] (Δ ᴱ) (Γ ᴱ)} → Paramˢ₀ s
-                → Paramˢ₀ (restrict-∷-sub {Ξ = []} {Δ = Δ} {Δ' = Γ} dec s)
-restrict-∷-subᴾ Γ Δ (yes _) p = p
-restrict-∷-subᴾ Γ Δ (no  _) p = p
-
-restrict-sub₀ᴾ : ∀ {Γ Γ'} → (s : Sub₀ [] Γ Γ') → Paramˢ₀ s
-               → Paramˢ₀ (restrict-sub₀ s)
-restrict-sub₀ᴾ ⌜ r ⌝ p = tt
-restrict-sub₀ᴾ {Γ} (val-sub {A = A} V) pV =
-  restrict-val-subᴾ {Γ} {A} (eternal? A) V
-restrict-sub₀ᴾ (cong-∷-sub {Δ} {Δ'} {A} s) p =
-  restrict-∷-subᴾ Δ' Δ (eternal? A) (restrict-sub₀ᴾ s p)
-restrict-sub₀ᴾ (cong-⟨⟩-sub s) p = restrict-sub₀ᴾ s p
 
 ------------------------------------------------------------------------
 -- WHAT A SUBSTITUTION DOES TO A VARIABLE
@@ -345,129 +319,6 @@ unbox-subst-natˢ s p y rel M ih =
              {lkᵒ = lk y rel} ih (sub-lkˢ s p y rel)
 
 ------------------------------------------------------------------------
--- THE ETERNAL RESTRICTION AGAINST THE ETERNAL PROJECTION
---
--- The restricted substitution is a morphism of eternal objects, and the
--- eternal projection is natural along a substitution. Both recurse on the
--- substitution; the embedded-renaming generator is the corresponding renaming
--- fact (`restrict-ren-mor`, `projᴱ-nat`).
-------------------------------------------------------------------------
-restrict-sub-env-extᵉˢ : ∀ {Γ Γ'} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s) → ∀ {ρ}
-                       → projᴱ-extᵉ Γ' {ρ}
-                           ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ restrict-sub₀ s ⟧ˢ₀ (restrict-sub₀ᴾ s p))
-                       ≈ᵐ ⟦ restrict-sub₀ s ⟧ˢ₀ (restrict-sub₀ᴾ s p)
-                            ∘ᵐ projᴱ-extᵉ Γ {ρ}
-
-restrict-sub-env-extᵉˢ ⌜ r ⌝ p = restrict-ren-mor r
-restrict-sub-env-extᵉˢ {Γ} (val-sub {A = A} V) pV {ρ} with eternal? A
-... | yes et =
-  prod-ext
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ} {A} et {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
-    (≈ᵐ-trans (∘ᵐ-identityʳ _)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)))
-              (∘ᵐ-assoc _ _ _))))))))))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ} {A} et {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
-    (≈ᵐ-trans (restrict-val-mor et V)
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _)))
-              (∘ᵐ-assoc _ _ _))))))))
-... | no  _  =
-  ≈ᵐ-trans (∘ᵐ-congʳ ⟨⟩-idᵐ)
-  (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _)))
-restrict-sub-env-extᵉˢ (cong-∷-sub {Γ₀} {Γ₀'} {B} s) p {ρ} with eternal? B
-... | yes etB =
-  prod-ext
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-extᵉ-fst {Γ₀'} {B} etB {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉˢ s p))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (projᴱ-extᵉ-fst {Γ₀} {B} etB {ρ})))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _)))
-              (∘ᵐ-assoc _ _ _)))))))))))))
-    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-sndᵉ {Γ₀'} {B} etB {ρ}))
-    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-    (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-identityˡ _)))
-    (≈ᵐ-sym (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩ᵐ-sndᵐ _ _))
-            (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-identityˡ _))
-                      (×-eternalᵒ-sndᵉ {Γ₀} {B} etB {ρ})))))))))))
-... | no  _  = restrict-sub-env-extᵉˢ s p
-restrict-sub-env-extᵉˢ (cong-⟨⟩-sub s) p = restrict-sub-env-extᵉˢ s p
-
--- The `necᵉ`/`Future` mate.
-
-restrict-sub-env-necᵉˢ : ∀ {Γ Γ'} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s) → ∀ {ρ}
-                       → [ ρ ]ᶠ (⟦ restrict-sub₀ s ⟧ˢ₀ (restrict-sub₀ᴾ s p))
-                           ∘ᵐ Eternalᵒ.necᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ) {ρ}
-                       ≈ᵐ Eternalᵒ.necᵉ (⟦ Γ' ⟧ᴱ-Eternalᵒ) {ρ}
-                            ∘ᵐ ⟦ restrict-sub₀ s ⟧ˢ₀ (restrict-sub₀ᴾ s p)
-restrict-sub-env-necᵉˢ {Γ} {Γ'} s p {ρ} =
-  ≈ᵐ-trans (∘ᵐ-congʳ (Eternalᵒ.necᵉ-mate (⟦ Γ ⟧ᴱ-Eternalᵒ)))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (restrict-sub-env-extᵉˢ s p))))
-  (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-            (∘ᵐ-congˡ (≈ᵐ-sym (Eternalᵒ.necᵉ-mate (⟦ Γ' ⟧ᴱ-Eternalᵒ)))))))))))
-
--- Naturality of the eternal projection along a substitution.
-
-projᴱ-natˢ : ∀ {Γ Γ'} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-           → projᴱ Γ' ∘ᵐ ⟦ s ⟧ˢ₀ p
-           ≈ᵐ ⟦ restrict-sub₀ s ⟧ˢ₀ (restrict-sub₀ᴾ s p) ∘ᵐ projᴱ Γ
-
-projᴱ-natˢ ⌜ r ⌝ p = projᴱ-nat r
-projᴱ-natˢ {Γ} (val-sub {A = A} V) pV with eternal? A
-... | yes et =
-  ≈ᵐ-trans (mapˣᵐ-∘⟨⟩ _ _ _ _)
-  (≈ᵐ-trans (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-  (≈ᵐ-trans (⟨ ≈ᵐ-sym (∘ᵐ-identityˡ _) , eternal-val-restrict-nat et V pV ⟩ᵐ-cong)
-            (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
-... | no  _ =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-  (≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))))
-projᴱ-natˢ (cong-∷-sub {Γ₀} {Γ₀'} {B} s) p with eternal? B
-... | yes _ =
-  ≈ᵐ-trans (mapˣᵐ-∘ _ _ _ _)
-  (≈ᵐ-trans (mapˣᵐ-cong (projᴱ-natˢ s p) ≈ᵐ-refl)
-            (≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)))
-... | no  _ =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (projᴱ-natˢ s p))
-            (∘ᵐ-assoc _ _ _))))
-projᴱ-natˢ (cong-⟨⟩-sub s) p =
-  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (projᴱ-natˢ s p)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (restrict-sub-env-extᵉˢ s p))
-            (∘ᵐ-assoc _ _ _))))))
-
-------------------------------------------------------------------------
 -- THE SUBSTITUTION COHERENCE THEOREM
 --
 -- Substituting preserves parametricity, and the interpretation is natural in
@@ -517,14 +368,14 @@ mutual
   subᶜˢ s p (box V M)        (pV , pM) =
     subᵛˢ (cong-⟨⟩-sub s) p V pV , subᶜˢ (cong-∷-sub s) p M pM
   subᶜˢ s p (coerce rel M)   pM        = subᶜˢ s p M pM
-  -- the clauses are substituted into by the eternal restriction, which acts on
-  -- the ambient context only, so the clauses' uniformity transports
+  -- the clauses are substituted into under the barrier lock, which acts on the
+  -- ambient context only, so the clauses' uniformity transports
   subᶜˢ s p (handle M `with H `in N) (pM , pN , pH , uH) =
       subᶜˢ s p M pM
     , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN
-    , (λ op ε'' → subᶜˢ (cong-∷-sub (cong-∷-sub (restrict-sub₀ s)))
-                    (restrict-sub₀ᴾ s p) (H op ε'') (pH op ε''))
-    , sub-clauses-uniformˢ (restrict-sub₀ s) (restrict-sub₀ᴾ s p) H pH uH
+    , (λ op ε'' → subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                    p (H op ε'') (pH op ε''))
+    , sub-clauses-uniformˢ (cong-⟨⟩-sub s) p H pH uH
 
   -- Substituting in a clause family's ambient context preserves the clauses'
   -- uniformity in the residual grade: the substitution acts on the ambient
@@ -672,8 +523,8 @@ mutual
   C-subst-natˢ s p (coerce rel M) pM =
     ≈ᵐ-trans (∘ᵐ-congʳ (C-subst-natˢ s p M pM)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   -- The environment-threading second component commutes as for `⨟`
-  -- (`seq-nat`), and the handler algebra is reindexed by the restricted
-  -- substitution (`alg-nat`, via `T-alg-of-handlerᵀ`'s naturality-in-P). The
+  -- (`seq-nat`), and the handler algebra is reindexed by the substitution under
+  -- the barrier lock (`alg-nat`, via `T-alg-of-handlerᵀ`'s naturality-in-P). The
   -- clause family is substituted into uniformly, so `⟦⟧ʰᵗ-nat` is the clauses'
   -- own naturality with the adapter moved past it (`adapt-commute`).
   C-subst-natˢ {Γ} {Γ'} s p (handle_`with_`in {A} {B} {ε} {ε'} M H N)
@@ -682,12 +533,12 @@ mutual
     (≈ᵐ-trans (∘ᵐ-congˡ alg-nat)
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
-    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ≈ᵐ-sym (projᴱ-natˢ s p) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+    (≈ᵐ-trans (∘ᵐ-congʳ (⟨ ⟨⊤⟩-η-nat (⟦ s ⟧ˢ₀ p) , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
     where
-      f : ⟦ Γ ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ᴱ ⟧ᶜᵗˣ
-      f = ⟦ restrict-sub₀ s ⟧ˢ₀ (restrict-sub₀ᴾ s p)
+      f : ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+      f = ⟦ cong-⟨⟩-sub {ρ = ⊤ᵣ} s ⟧ˢ₀ p
       seq-nat : Tᶠ (⟦ C-sub₀ (cong-∷-sub (cong-⟨⟩-sub s)) N ⟧ᶜᵗ
                       (subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p N pN)) ∘ᵐ strᵀ
                   ∘ᵐ ⟨ η⊣ , ⟦ C-sub₀ s M ⟧ᶜᵗ (subᶜˢ s p M pM) ⟩ᵐ
@@ -709,20 +560,19 @@ mutual
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))))))
       ⟦⟧ʰᵗ-nat : ∀ op ε''
                → clauseᵀ (⟦_⟧ʰᵗ {Γ}
-                    (λ op ε'' → C-sub₀ (cong-∷-sub (cong-∷-sub (restrict-sub₀ s)))
+                    (λ op ε'' → C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
                                   (H op ε''))
                     (λ op ε'' →
-                       subᶜˢ (cong-∷-sub (cong-∷-sub (restrict-sub₀ s)))
-                         (restrict-sub₀ᴾ s p) (H op ε'') (pH op ε''))
-                    (sub-clauses-uniformˢ (restrict-sub₀ s) (restrict-sub₀ᴾ s p)
-                       H pH uH)) op ε''
+                       subᶜˢ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                         p (H op ε'') (pH op ε''))
+                    (sub-clauses-uniformˢ (cong-⟨⟩-sub s) p H pH uH)) op ε''
                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ'} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦⟧ʰᵗ-nat op ε'' =
         ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-natˢ
-                    (cong-∷-sub (cong-∷-sub (restrict-sub₀ s)))
-                    (restrict-sub₀ᴾ s p) (H op ε'') (pH op ε'')))
+                    (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s)))
+                    p (H op ε'') (pH op ε'')))
         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
         (≈ᵐ-trans (∘ᵐ-congʳ (adapt-commute _ _ _))
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
-      alg-nat = T-alg-of-handlerᵀ-natᴾ ((⟦ Γ' ⟧ᴱ-Eternalᵒ)) ((⟦ Γ ⟧ᴱ-Eternalᵒ))
-                  f (restrict-sub-env-necᵉˢ s p) (⟦_⟧ʰᵗ {Γ'} H pH uH) _ ⟦⟧ʰᵗ-nat
+      alg-nat = T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ)
+                  f (⟨⊤⟩-free-necᵉ-nat (⟦ s ⟧ˢ₀ p)) (⟦_⟧ʰᵗ {Γ'} H pH uH) _ ⟦⟧ʰᵗ-nat

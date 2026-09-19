@@ -63,39 +63,6 @@ cong-sub₀ {Γ'' = []}        s = s
 cong-sub₀ {Γ'' = Γ'' ∷ A}   s = cong-∷-sub (cong-sub₀ s)
 cong-sub₀ {Γ'' = Γ'' ⟨ ρ ⟩} s = cong-⟨⟩-sub (cong-sub₀ s)
 
--- THE ETERNAL RESTRICTION, ACTING ON SUBSTITUTIONS
---
--- Every variable of `Δ' ᴱ` has an eternal type, so the value put in its place
--- restricts to the eternal part of its own context (`eternal-val-restrict`).
---
--- As for `_ᴱ` itself, the two clauses that inspect a type take the decision as
--- a parameter rather than matching on it, so that a caller deciding it reduces
--- these too.
-
-restrict-val-sub : ∀ {Ξ Δ A} → (dec : Dec (Eternal A))
-                 → (Ξ ⋈ᶜ Δ) ⊢V⦂ A
-                 → Sub₀ (Ξ ᴱ) (Δ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec)
-restrict-val-sub {Ξ} {Δ} {A} (yes et) V =
-  val-sub (subst (_⊢V⦂ A) (ᴱ-⋈ᶜ Ξ Δ) (eternal-val-restrict et V))
-restrict-val-sub (no _) V =
-  id-sub₀
-
-restrict-∷-sub : ∀ {Ξ Δ Δ' A} → (dec : Dec (Eternal A))
-               → Sub₀ (Ξ ᴱ) (Δ ᴱ) (Δ' ᴱ)
-               → Sub₀ (Ξ ᴱ) (ᴱ-∷ (Δ ᴱ) A dec) (ᴱ-∷ (Δ' ᴱ) A dec)
-restrict-∷-sub (yes _) s = cong-∷-sub s
-restrict-∷-sub (no  _) s = s
-
-restrict-sub₀ : ∀ {Ξ Δ Δ'} → Sub₀ Ξ Δ Δ' → Sub₀ (Ξ ᴱ) (Δ ᴱ) (Δ' ᴱ)
-restrict-sub₀ ⌜ r ⌝ =
-  ⌜ restrict-ren r ⌝
-restrict-sub₀ {Ξ} {Δ} (val-sub {A = A} V) =
-  restrict-val-sub {Ξ} {Δ} {A} (eternal? A) V
-restrict-sub₀ {Ξ} (cong-∷-sub {Δ} {Δ'} {A} s) =
-  restrict-∷-sub {Ξ} {Δ} {Δ'} {A} (eternal? A) (restrict-sub₀ s)
-restrict-sub₀ (cong-⟨⟩-sub s) =
-  restrict-sub₀ s
-
 -- Moving a prefix of the ambient into the local part. As for renamings this is
 -- a reassociation, and only the value-carrying rule does any work.
 

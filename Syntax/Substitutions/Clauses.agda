@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
 -- Handler clauses against substitution.                               --
 --                                                                     --
--- A clause family lives over `Γ ᴱ ++ᶜ Dcl`, so every step that reaches --
--- one is either a transport of it or a substitution at the *restricted* --
--- context. `IsSub` records the first kind so that towers of them        --
--- compose and are identified by `uip`; `cl-yes` says what the second    --
--- kind is — a `sub-atᶜ` at the splitting's own halves.                  --
+-- A clause family lives over `Γ ++ᶜ Dcl`, an ordinary suffix extension --
+-- by the barrier lock and the clause's two binders. `IsSub` records a  --
+-- transport of one, so towers of them compose and are identified by    --
+-- `uip`; `cl-≡` says that substituting in a clause is the general      --
+-- substitution at that suffix.                                         --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -44,15 +44,15 @@ open import Syntax.Substitutions.Equivalence      S
 open import Syntax.Substitutions.Interchange      S
 open import Syntax.Substitutions.Chain            S
 open import Syntax.Substitutions.ChainEquivalence S
-open import Syntax.Substitutions.Restrict         S
 open import Syntax.Substitutions.Variables        S
 open import Syntax.Substitutions.At               S
 
--- A clause's two binders, as a suffix.
+-- The barrier lock and a clause's two binders, as a suffix.
 
 Dcl : VType → Op → E → Ctx
 Dcl D op ε'' =
-  [] ∷ type-of-gtype (param op)
+  [] ⟨ ⊤ᵣ ⟩
+     ∷ type-of-gtype (param op)
      ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ D ‼ ε'')
 
 ------------------------------------------------------------------------
@@ -174,79 +174,15 @@ sub-at-≡ {C = C} refl refl X₁ X₂ e eX V₁ V₂ eV e'
   sub-≡ᶜ split-≡-++ᶜ (sym eV) eX
 
 ------------------------------------------------------------------------
--- WHAT `_[_↦_]cl` IS AT AN ETERNAL TYPE
+-- WHAT `_[_↦_]cl` IS
 --
--- It is `sub-atᶜ` at the *restricted* contexts — but at the splitting's own
--- halves (`split-l x ᴱ`, `split-r x ᴱ ++ᶜ Dcl`), not at the contexts those are
--- propositionally equal to: only there do `split-++ʳ (∈-ᴱ-split et x) Dcl` and
--- `split-≡-++ᶜ` have literally the same halves, so `split-unique` applies on
--- the nose. Both are transports of one and the same substituted clause, which
--- is what the two lemmas below record; `isSub-reassoc` then identifies them.
+-- The general substitution at the clause's own suffix. Both sides build the
+-- same generating substitution: `split-++ʳ s (Dcl D op ε)` peels the suffix
+-- into the three congruences `_[_↦_]cl` applies.
 ------------------------------------------------------------------------
 
--- The context equation between the clause's own context and the one the
--- splitting names it at.
-
-bigEqCl : ∀ {Γ₀ Γ₁ Γ₂ A} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
-        → (D : VType) → (op : Op) → (ε : E)
-        → (Γ₁ ᴱ ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε))
-        ≡ ((Γ₁ ++ᶜ Γ₂) ᴱ ++ᶜ Dcl D op ε)
-bigEqCl {Γ₁ = Γ₁} {Γ₂} et s D op ε =
-  trans (sym (++ᶜ-assoc (Γ₁ ᴱ) (Γ₂ ᴱ) (Dcl D op ε)))
-        (cong (_++ᶜ Dcl D op ε) (sym (ᴱ-++ᶜ Γ₁ Γ₂)))
-
-clBody : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
-       → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
-       → (Γ₁ ᴱ ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε)) ⊢C⦂ D ‼ (op-grade op ·ₑ ε)
-clBody {D = D} et s W H op ε =
-  (H op ε) [ split-++ʳ (∈-ᴱ-split et s) (Dcl D op ε)
-             ↦ eternal-val-restrict et W ]c
-
--- The clause substitution is that body, transported: at an eternal type the
--- restricted substitution *is* the restricted value put in for the entry
--- `∈-ᴱ-split` names, which is `restrict-sub-at-et`.
-
-cl-yes-raw : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
-           → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
-           → IsSub (clBody et s W H op ε) ((H [ s ↦ W ]cl) op ε)
-cl-yes-raw {D = D} et s W H op ε =
-  bigEqCl et s D op ε , cl-et-≡ et s W H op ε (bigEqCl et s D op ε)
-
--- Both splittings have the same halves, so the substitution at the boundary and
--- the one the clause names sit at the *same* context: `IsSub` at `refl`, and
--- the equation is `sub-cast-C′` — two splittings of one context agree.
-
-cl-yes-sub : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
-           → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
-           → (e : (Γ₀ ᴱ ++ᶜ Dcl D op ε)
-                ≡ ((Γ₁ ᴱ ∷ A) ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε)))
-           → IsSub (clBody et s W H op ε)
-                   ((subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
-                      [ split-≡-++ᶜ {Γ₁ ᴱ ∷ A} {Γ₂ ᴱ ++ᶜ Dcl D op ε}
-                      ↦ eternal-val-restrict et W ]c)
-cl-yes-sub {D = D} et s W H op ε e =
-  refl
-  , sub-cast-C′ e (H op ε) (split-++ʳ (∈-ᴱ-split et s) (Dcl D op ε))
-      (split-≡-++ᶜ {_ ∷ A'} {_}) (eternal-val-restrict et W)
-  where
-    A' = _
-
-cl-yes : ∀ {Γ₀ Γ₁ Γ₂ A D} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
-       → (W : Γ₁ ⊢V⦂ A) → (H : Fam D (Γ₀ ᴱ)) → (op : Op) → (ε : E)
-       → (e : (Γ₀ ᴱ ++ᶜ Dcl D op ε)
-            ≡ ((Γ₁ ᴱ ∷ A) ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε)))
-       → IsSub ((subst (_⊢C⦂ D ‼ (op-grade op ·ₑ ε)) e (H op ε))
-                  [ split-≡-++ᶜ {Γ₁ ᴱ ∷ A} {Γ₂ ᴱ ++ᶜ Dcl D op ε}
-                  ↦ eternal-val-restrict et W ]c)
-               ((H [ s ↦ W ]cl) op ε)
-cl-yes et s W H op ε e =
-  isSub-reassoc (cl-yes-raw et s W H op ε) (cl-yes-sub et s W H op ε e)
-
--- The equation `cl-yes` wants is the splitting's own.
-
-eCl : ∀ {Γ₀ Γ₁ Γ₂ A} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ₀)
-    → (D : VType) → (op : Op) → (ε : E)
-    → (Γ₀ ᴱ ++ᶜ Dcl D op ε)
-    ≡ ((Γ₁ ᴱ ∷ A) ++ᶜ (Γ₂ ᴱ ++ᶜ Dcl D op ε))
-eCl et s D op ε =
-  sym (split-≡ (split-++ʳ (∈-ᴱ-split et s) (Dcl D op ε)))
+cl-≡ : ∀ {Γ₀ Γ₁ Γ₂ A D} → (s : Γ₁ ∷ A , Γ₂ split Γ₀) → (W : Γ₁ ⊢V⦂ A)
+     → (H : Fam D (Γ₀ ⟨ ⊤ᵣ ⟩)) → (op : Op) → (ε : E)
+     → (H [ s ↦ W ]cl) op ε
+     ≡ (H op ε) [ split-++ʳ s (Dcl D op ε) ↦ W ]c
+cl-≡ s W H op ε = refl

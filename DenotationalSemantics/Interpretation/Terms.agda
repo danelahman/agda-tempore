@@ -57,7 +57,7 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-eternalᵒ)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
@@ -163,7 +163,7 @@ mutual
   -- the certificate and `⟦_⟧ʰᵗ`'s premise — are one condition, not two copies.
   EffUniformʰ : ∀ {Γ B}
               → (H : (op : Op) → (ε'' : E)
-                   → Γ ᴱ ∷ type-of-gtype (param op)
+                   → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                         ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
               → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
@@ -201,19 +201,19 @@ mutual
         ∘ᵐ η⊣ ⟩ᵐ
   ⟦ delay τ M ⟧ᶜᵗ pM = delayᵀ τ ∘ᵐ [ of-natʳ τ ]ᶠ (⟦ M ⟧ᶜᵗ pM) ∘ᵐ η⊣
   ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH) =
-      T-alg-of-handlerᵀ (⟦ Γ ⟧ᴱ-Eternalᵒ) (⟦_⟧ʰᵗ {Γ} H pH uH)
-    ∘ᵐ ⟨ projᴱ Γ , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
+      T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH)
+    ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   ⟦ unbox x rel M ⟧ᶜᵗ pM =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
   ⟦ box {ρ = ρ} V M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
   ⟦ coerce p M ⟧ᶜᵗ pM = T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 
-  -- The semantic handler of a syntactic one. Each clause closes over the
-  -- eternal part `Γ ᴱ` of the ambient context, so it interprets to a morphism
-  -- parameterised by `⟦ Γ ᴱ ⟧`; the `ty-gty` coercions adapt the
-  -- ground-type parameter/arity to their value-type interpretations, and
-  -- `×ᵐ-assoc⁻¹` reassociates the `⟦Γ ᴱ⟧`-parameter alongside the parameter.
+  -- The semantic handler of a syntactic one. Each clause sees the ambient
+  -- context barred by `⟨ ⊤ᵣ ⟩`, so it interprets to a morphism parameterised
+  -- by `⟨ ⊤ᵣ ⟩ᵒ ⟦ Γ ⟧` — the free `⟨⊤⟩`-algebra, hence eternal in every model.
+  -- The `ty-gty` coercions adapt the ground-type parameter/arity to their
+  -- value-type interpretations, and `×ᵐ-assoc⁻¹` reassociates the parameter.
   --
   -- The handler's ambivalence is the clauses' uniformity `uH`, transported
   -- along that adapter: the continuation coercion commutes past the associator
@@ -221,12 +221,12 @@ mutual
   -- `map⇒ᵐ-swap`), after which `uH` applies.
   ⟦_⟧ʰᵗ : ∀ {Γ B}
         → (H : (op : Op) → (ε'' : E)
-             → Γ ᴱ ∷ type-of-gtype (param op)
+             → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
         → (pH : ∀ op ε'' → Paramᶜ (H op ε''))
         → EffUniformʰ {Γ} {B} H pH
-        → Handlerᵀ ⟦ Γ ᴱ ⟧ᶜᵗˣ ⟦ B ⟧ᵛ
+        → Handlerᵀ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ⟦ B ⟧ᵛ
   ⟦_⟧ʰᵗ {Γ} {B} H pH uH =
       (λ op ε'' → ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'')
                     ∘ᵐ mapˣᵐ

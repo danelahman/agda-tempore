@@ -57,7 +57,7 @@ var-ren-img-≡ r x f refl f' = var-ren-≡ r x f f'
 --
 -- Induction on the term. At `var` and `unbox` the whole content is the
 -- hypothesis, the grade bounds being irrelevant; the binding formers use
--- `cong-ren-≐ʳ` and `handle` uses `restrict-ren-≐ʳ`.
+-- `cong-ren-≐ʳ`, `handle` among them.
 ------------------------------------------------------------------------
 
 mutual
@@ -95,7 +95,7 @@ mutual
   C-rename-≡ h (handle M `with H `in N) =
     handle-≡ (C-rename-≡ h M)
       (λ op ε'' →
-         C-rename-≡ (cong-∷-ren-≐ʳ (cong-∷-ren-≐ʳ (restrict-ren-≐ʳ h))) (H op ε''))
+         C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-≡ h (unbox x rel M) =
     unbox-≡ (at h x) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
@@ -143,9 +143,6 @@ cong-ren-id-≐ʳ (Γ₀ ⟨ ρ ⟩) h = cong-⟨⟩-ren-id-≐ʳ (cong-ren-id-�
         → r ≐ʳ id-ren → (r ∘ʳ w) ≐ʳ w
 ∘ʳ-idˡ-≐ʳ w h = mk≐ʳ (λ x → cong (var-img′ w) (at h x))
 
-restrict-ren-id-≐ʳ : ∀ {Γ} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → restrict-ren r ≐ʳ id-ren
-restrict-ren-id-≐ʳ h = restrict-ren-≐ʳ h
-
 mutual
 
   V-rename-id-≡ : ∀ {Γ A} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
@@ -181,8 +178,7 @@ mutual
   C-rename-id-≡ h (handle M `with H `in N) =
     handle-≡ (C-rename-id-≡ h M)
       (λ op ε'' →
-         C-rename-id-≡ (cong-∷-ren-id-≐ʳ (cong-∷-ren-id-≐ʳ (restrict-ren-id-≐ʳ h)))
-                       (H op ε''))
+         C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
   C-rename-id-≡ h (unbox x rel M) =
     unbox-≡ (at h x) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
@@ -225,8 +221,7 @@ eq-ren-⟨⟩-≐ʳ refl = ≐ʳ-sym (cong-⟨⟩-ren-id-≐ʳ ≐ʳ-refl)
 -- A context splitting is determined by its two halves: `_,_split_` recurses on
 -- the right half, so its constructor is forced at each step. This is what
 -- identifies the two ways `sub-wk`'s `handle` case reaches the substituted
--- variable — `split-++ʳ (∈-ᴱ-split et z₀) D` and `split-≡-++ᶜ` — without
--- computing either.
+-- variable — `split-++ʳ s D` and `split-≡-++ᶜ` — without computing either.
 
 split-unique : ∀ {Γ Γ₁ Γ₂} → (s s' : Γ₁ , Γ₂ split Γ) → s ≡ s'
 split-unique split-[]     split-[]      = refl
@@ -272,105 +267,6 @@ cong-ren-assoc-≐ʳ {Γ} {Γ'} Θ (D ⟨ ρ ⟩) r =
 eq-ren-∘-≐ʳ : ∀ {Γ Γ' Γ''} → (e : Γ ≡ Γ') → (e' : Γ' ≡ Γ'')
            → (eq-ren e ∘ʳ eq-ren e') ≐ʳ eq-ren (trans e e')
 eq-ren-∘-≐ʳ refl refl = ∘ʳ-identityˡ-≐ʳ _
-
--- THE ETERNAL RESTRICTION AGAINST A SUFFIX
---
--- `restrict-ren (cong-ren {Δ} r)` is `cong-ren {Δ ᴱ} (restrict-ren r)`,
--- conjugated by `eq-ren`s at `ᴱ`'s distribution over `_++ᶜ_`. This is the
--- functor `_ᴱ` commuting with the action of contexts on each fibre; the two
--- weakening cases below are its instances at `r := wk-ren`.
-
-restrict-cong-≐ʳ : ∀ {Γ Γ'} → (r : Ren [] Γ' Γ) → (Δ : Ctx)
-                → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
-                → (e₂ : (Γ' ++ᶜ Δ) ᴱ ≡ Γ' ᴱ ++ᶜ Δ ᴱ)
-                → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} r)
-                ≐ʳ (eq-ren e₁
-                    ∘ʳ cong-ren {Γ'' = Δ ᴱ} (restrict-ren r) ∘ʳ eq-ren (sym e₂))
-
-restrict-cong-≐ʳ r [] e₁ e₂
-  rewrite uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
-  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-identityʳ-≐ʳ _))
-
-restrict-cong-≐ʳ r (Δ ∷ C) e₁ e₂ with eternal? C
-
-... | yes _ =
-  ≐ʳ-trans (cong-∷-ren-≐ʳ (restrict-cong-≐ʳ r Δ (∷ᶜ-injective-ctx e₁)
-                                              (∷ᶜ-injective-ctx e₂)))
-    (≐ʳ-trans (cong-∷-ren-∘-≐ʳ _ _)
-      (≐ʳ-trans (∘ʳ-≐ʳ (≐ʳ-sym (eq-ren-∷-≐ʳ (∷ᶜ-injective-ctx e₁)))
-                      (cong-∷-ren-∘-≐ʳ _ _))
-        (≐ʳ-trans (∘ʳ-≐ʳ (eq-ren-≐ʳ _ e₁)
-                        (∘ʳ-≐ʳ ≐ʳ-refl
-                              (≐ʳ-sym (eq-ren-∷-≐ʳ (sym (∷ᶜ-injective-ctx e₂))))))
-                  (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ _ (sym e₂)))))))
-
-... | no  _ = restrict-cong-≐ʳ r Δ e₁ e₂
-
-restrict-cong-≐ʳ r (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-cong-≐ʳ r Δ e₁ e₂
-
--- With an *eternal* `B`, weakening by `B` weakens the eternal restriction by it
--- too: `restrict-ren` walks down to `restrict-ren wk-ren`, which at an eternal
--- type is `wk-ren`. The two contexts differ by `ᴱ`'s distribution over `_++ᶜ_`,
--- so the statement is conjugated by `eq-ren`s at arbitrary proofs of that.
---
--- This and `restrict-wk-≐ʳ` below are `restrict-cong-≐ʳ` at `r := wk-ren`, and
--- their `∷`/`⟨⟩` cases repeat its proof. They are kept all the same: the
--- general law phrases the target as `(Γ ∷ B) ᴱ`, these as the already-reduced
--- `Γ ᴱ ∷ B`, and that reduction needs `eternal? B` decided. Absorbing it here,
--- once, is what lets the four call sites state their equalities in reduced
--- form; deriving them instead would leave each caller transporting a *renaming*
--- along `ᴱ-∷-keep`, which costs more than the repeated induction saves.
-
-restrict-wk-et-≐ʳ : ∀ {Γ B} → (et : Eternal B) → (Δ : Ctx)
-                 → (e₁ : (Γ ++ᶜ Δ) ᴱ ≡ Γ ᴱ ++ᶜ Δ ᴱ)
-                 → (e₂ : ((Γ ∷ B) ++ᶜ Δ) ᴱ ≡ (Γ ᴱ ∷ B) ++ᶜ Δ ᴱ)
-                 → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (wk-ren {A = B}))
-                 ≐ʳ (eq-ren e₁
-                     ∘ʳ cong-ren {Γ'' = Δ ᴱ} (wk-ren {A = B}) ∘ʳ eq-ren (sym e₂))
-
-restrict-wk-et-≐ʳ {Γ} {B} et [] e₁ e₂
-  rewrite eternal?-yes et
-        | uip {p = e₁} {q = refl} | uip {p = e₂} {q = refl} =
-  ≐ʳ-sym (≐ʳ-trans (∘ʳ-identityˡ-≐ʳ _) (∘ʳ-identityʳ-≐ʳ _))
-
-restrict-wk-et-≐ʳ {Γ} {B} et (Δ ∷ C) e₁ e₂ with eternal? C
-
-... | yes _ =
-  ≐ʳ-trans (cong-∷-ren-≐ʳ (restrict-wk-et-≐ʳ et Δ (∷ᶜ-injective-ctx e₁)
-                                              (∷ᶜ-injective-ctx e₂)))
-    (≐ʳ-trans (cong-∷-ren-∘-≐ʳ _ _)
-      (≐ʳ-trans (∘ʳ-≐ʳ (≐ʳ-sym (eq-ren-∷-≐ʳ (∷ᶜ-injective-ctx e₁)))
-                      (cong-∷-ren-∘-≐ʳ _ _))
-        (≐ʳ-trans (∘ʳ-≐ʳ (eq-ren-≐ʳ _ e₁)
-                        (∘ʳ-≐ʳ ≐ʳ-refl
-                              (≐ʳ-sym (eq-ren-∷-≐ʳ (sym (∷ᶜ-injective-ctx e₂))))))
-                  (∘ʳ-≐ʳ ≐ʳ-refl (∘ʳ-≐ʳ ≐ʳ-refl (eq-ren-≐ʳ _ (sym e₂)))))))
-
-... | no  _ = restrict-wk-et-≐ʳ et Δ e₁ e₂
-
-restrict-wk-et-≐ʳ {Γ} {B} et (Δ ⟨ ρ ⟩) e₁ e₂ = restrict-wk-et-≐ʳ et Δ e₁ e₂
-
--- With a non-eternal `B`, weakening by `B` leaves the eternal restriction
--- alone: `restrict-ren` walks `cong-ren` down to `restrict-ren wk-ren`, which at
--- a non-eternal type is `id-ren`. The two contexts are then equal only
--- propositionally, so the statement is against an arbitrary proof of that
--- equality — any two agree by `uip`.
-
-restrict-wk-≐ʳ : ∀ {Γ B} → (¬et : ¬ Eternal B) → (Δ : Ctx)
-              → (e : (Γ ++ᶜ Δ) ᴱ ≡ ((Γ ∷ B) ++ᶜ Δ) ᴱ)
-              → restrict-ren {Ξ = []} (cong-ren {Γ'' = Δ} (wk-ren {A = B})) ≐ʳ eq-ren e
-
-restrict-wk-≐ʳ {Γ} {B} ¬et [] e
-  rewrite eternal?-no ¬et | uip {p = e} {q = refl} = ≐ʳ-refl
-
-restrict-wk-≐ʳ {Γ} {B} ¬et (Δ ∷ C) e with eternal? C
-... | yes _ =
-  ≐ʳ-trans (cong-∷-ren-≐ʳ (restrict-wk-≐ʳ ¬et Δ (∷ᶜ-injective-ctx e)))
-    (≐ʳ-trans (cong-ren-eq-ren-≐ʳ ([] ∷ C) (∷ᶜ-injective-ctx e))
-              (eq-ren-≐ʳ _ e))
-... | no  _ = restrict-wk-≐ʳ ¬et Δ e
-
-restrict-wk-≐ʳ {Γ} {B} ¬et (Δ ⟨ ρ ⟩) e = restrict-wk-≐ʳ ¬et Δ e
 
 ------------------------------------------------------------------------
 -- FUNCTORIALITY
@@ -429,13 +325,9 @@ mutual
     handle-≡ (C-rename-∘ r₂ r₁ M)
       (λ op ε'' →
          trans
-           (C-rename-≡
-             (≐ʳ-trans (cong-∷-ren-≐ʳ (cong-∷-ren-≐ʳ (restrict-ren-∘-≐ʳ r₂ r₁)))
-                       (cong-ren-∘-≐ʳ ([] ∷ _ ∷ _)
-                                     (restrict-ren r₂) (restrict-ren r₁)))
-             (H op ε''))
-           (C-rename-∘ (cong-∷-ren (cong-∷-ren (restrict-ren r₂)))
-                       (cong-∷-ren (cong-∷-ren (restrict-ren r₁)))
+           (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) r₂ r₁) (H op ε''))
+           (C-rename-∘ (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r₂)))
+                       (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r₁)))
                        (H op ε'')))
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))

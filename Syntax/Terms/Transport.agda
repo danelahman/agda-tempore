@@ -120,7 +120,7 @@ cast-box refl = refl
 cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
             → {M : Γ ⊢C⦂ A ‼ ε}
             → {H : (op : Op) → (ε'' : E) →
-                     Γ ᴱ ∷ type-of-gtype (param op)
+                     Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                        ∷ [ mapᵉ (op-grade op) ]
                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}
@@ -128,7 +128,7 @@ cast-handle : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')
             → castᶜ e (handle M `with H `in N)
             ≡ handle (castᶜ e M)
               `with (λ op ε'' →
-                       castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+                       castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                                              ∷ [ mapᵉ (op-grade op) ]
                                                  (type-of-gtype (arity op) ⇒ B ‼ ε''))
                               e)
@@ -202,14 +202,14 @@ Cl B op ε₃ Γ₀ =
 Fam : VType → Ctx → Set
 Fam B Γ₀ = (op : Op) → (ε : E) → Cl B op ε Γ₀
 
--- Relocating a clause along an equality of the context it restricts. Written in
--- exactly the shape `cast-handle` produces, so that the two agree on the nose
--- and no `castᶜ-irr` is needed at any use site.
+-- Relocating a clause along an equality of the context it is barred from.
+-- Written in exactly the shape `cast-handle` produces, so that the two agree on
+-- the nose and no `castᶜ-irr` is needed at any use site.
 
 Cl-cast : ∀ {Γ Γ' B} → (op : Op) → (ε : E) → Γ ≡ Γ'
-        → Cl B op ε (Γ ᴱ) → Cl B op ε (Γ' ᴱ)
+        → Cl B op ε (Γ ⟨ ⊤ᵣ ⟩) → Cl B op ε (Γ' ⟨ ⊤ᵣ ⟩)
 Cl-cast {B = B} op ε e X =
-  castᶜ (cong (λ Γ₁ → Γ₁ ᴱ ∷ type-of-gtype (param op)
+  castᶜ (cong (λ Γ₁ → Γ₁ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                         ∷ [ mapᵉ (op-grade op) ]
                             (type-of-gtype (arity op) ⇒ B ‼ ε))
               e)

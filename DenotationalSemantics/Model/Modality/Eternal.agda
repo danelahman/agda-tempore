@@ -337,6 +337,37 @@ record Eternalᵒ (A : Obj) : Set₁ where
 ⟨⊤⟩-eternalᵒ : (X : Obj) → Eternalᵒ (⟨ ⊤ ⟩ᵒ X)
 ⟨⊤⟩-eternalᵒ X = record { α = ⟨⊤⟩-μ ; α-unit = ⟨⊤⟩-μ∘η≡id ; α-assoc = ⟨⊤⟩-μ∘μ≡μ∘Tμ }
 
+-- `⟨ ⊤ ⟩ᶠ f` is a morphism of free algebras: it commutes with the graded
+-- extraction at every grade. From `⟨⟩-≤`- and `⟨⊤⟩-μ`-naturality; the free
+-- algebra is the only case where this holds for an arbitrary `f`, `extᵉ`
+-- having no naturality law in general.
+
+⟨⊤⟩-free-extᵉ-nat : ∀ {X Y} → (f : X →ᵐ Y) → ∀ {ρ}
+                  → Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨ ⊤ ⟩ᶠ f)
+                  ≈ᵐ ⟨ ⊤ ⟩ᶠ f ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+⟨⊤⟩-free-extᵉ-nat f {ρ} =
+  ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat (⟨ ⊤ ⟩ᶠ f) (≾-⊤ ρ))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⊤⟩-μ-nat f)))
+            (∘ᵐ-assoc _ _ _))))
+
+-- Its `[_]`-mate: `⟨ ⊤ ⟩ᶠ f` is also a morphism of the derived box coalgebras.
+-- This is the coalgebra-morphism premise a handler fold's parameter-naturality
+-- needs, at an arbitrary `f`.
+
+⟨⊤⟩-free-necᵉ-nat : ∀ {X Y} → (f : X →ᵐ Y) → ∀ {ρ}
+                  → [ ρ ]ᶠ (⟨ ⊤ ⟩ᶠ f) ∘ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+                  ≈ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ⊤ ⟩ᶠ f
+⟨⊤⟩-free-necᵉ-nat f =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congˡ ([]-congᶠ (≈ᵐ-sym (⟨⊤⟩-free-extᵉ-nat f))))
+  (≈ᵐ-trans (∘ᵐ-congˡ ([]-∘ᵐ _ _))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (η⊣-nat (⟨ ⊤ ⟩ᶠ f)))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+
 
 -- PRODUCTS OF ETERNAL OBJECTS
 --

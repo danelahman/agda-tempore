@@ -112,26 +112,25 @@ _[_↦_]c : ∀ {Γ Γ₁ Γ₂ A C}
 
 M [ s ↦ W ]c = C-sub₀ (sub-split₀ s W) M
 
--- and in a handler's clause family, which closes over the eternal part `Γ ᴱ`
--- of the context. The substitution restricts to it (`restrict-sub₀`), which is
--- what drops the substituted variable when its type is not eternal and keeps
--- its restricted value when it is.
+-- and in a handler's clause family, which sits under the barrier lock
+-- `⟨ ⊤ᵣ ⟩` and two binders. That is an ordinary suffix, so the clause
+-- substitution is the general one at it.
 
 _[_↦_]cl : ∀ {Γ Γ₁ Γ₂ A B}
          → ((op : Op) → (ε'' : E)
-              → Γ ᴱ ∷ type-of-gtype (param op)
+              → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                     ∷ [ mapᵉ (op-grade op) ]
                         (type-of-gtype (arity op) ⇒ B ‼ ε'')
                 ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
          → (s : Γ₁ ∷ A , Γ₂ split Γ)
          → Γ₁ ⊢V⦂ A
          → (op : Op) → (ε'' : E)
-         → (Γ₁ ++ᶜ Γ₂) ᴱ
+         → (Γ₁ ++ᶜ Γ₂) ⟨ ⊤ᵣ ⟩
                ∷ type-of-gtype (param op)
                ∷ [ mapᵉ (op-grade op) ]
                    (type-of-gtype (arity op) ⇒ B ‼ ε'')
            ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
 
 (H [ s ↦ W ]cl) op ε'' =
-  C-sub₀ (cong-∷-sub (cong-∷-sub (restrict-sub₀ (sub-split₀ s W))))
+  C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub (sub-split₀ s W))))
          (H op ε'')

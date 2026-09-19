@@ -6,8 +6,8 @@
 -- operational machinery) and its normalisation is heavy: keeping it in    --
 -- its own module lets `Preservation` import `clause-sound` rather than    --
 -- re-elaborate its body. `HANDLE-OP` includes the handler's clause into  --
--- the ambient context `Γ` along `ᴱ-ren`, whose denotation is the eternal --
--- projection `projᴱ Γ` (`ᴱ-ren-mor`).                                    --
+-- the ambient context `Γ` along `barrier-ren`, whose denotation is the    --
+-- free algebra's unit `⟨⊤⟩-η` on the nose.                                --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -55,8 +55,10 @@ open Adjunction Adj using (η⊣)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
+open import OperationalSemantics.PreservationTheorem S using (barrier-ren)
+
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; ⟨⊤⟩-η)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
@@ -66,7 +68,7 @@ open import DenotationalSemantics.Interpretation.Renaming S Cat Fut Pst Adj GTy 
 open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst Adj GTy Mon GE
   using (renᶜ; C-rename-nat)
 open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut Pst Adj GTy Mon GE
-  using (C-subst-nat; subst-clause-interp; subᶜ; substᴾᶜ)
+  using (C-subst-nat; subᶜ)
 
 infixr 3 _∙_
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
@@ -88,7 +90,7 @@ assoc⁻¹-⟨⟩ a b c =
 
 clause-sound : ∀ {Γ B ε''} → (op : Op)
              → (H : (op' : Op) → (ε' : E)
-                  → Γ ᴱ ∷ type-of-gtype (param op')
+                  → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
                        ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                     ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
              → (pH : ∀ op' ε' → Paramᶜ (H op' ε'))
@@ -96,11 +98,11 @@ clause-sound : ∀ {Γ B ε''} → (op : Op)
              → (V : Γ ⊢V⦂ type-of-gtype (param op)) → (pV : Paramᵛ V)
              → (W : ⟦ Γ ⟧ᶜᵗˣ →ᵐ [ mapᵉ (op-grade op) ]ᵒ
                       (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ ⟦ B ⟧ᵛ ε''))
-             → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε''))
+             → ⟦ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε''))
                      [ split-∷ split-[] ↦ V ]c ⟧ᶜᵗ
-                 (subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε''))
+                 (subᶜ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε''))
                        (split-∷ split-[]) V
-                       (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                       (renᶜ (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                              (H op ε'') (pH op ε''))
                        pV)
                  ∘ᵐ ⟨ idᵐ
@@ -109,7 +111,7 @@ clause-sound : ∀ {Γ B ε''} → (op : Op)
                                       (sym (ty-gty (arity op))) idᵐ) idᵐ)
                       ∘ᵐ W ⟩ᵐ
              ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε''
-                  ∘ᵐ ⟨ projᴱ Γ
+                  ∘ᵐ ⟨ ⟨⊤⟩-η
                      , ⟨ subst (λ O → ⟦ Γ ⟧ᶜᵗˣ →ᵐ O) (ty-gty (param op))
                                (⟦ V ⟧ᵛᵗ pV)
                        , W ⟩ᵐ ⟩ᵐ
@@ -131,19 +133,18 @@ clause-sound {Γ} {B} {ε''} op H pH uH V pV W =
   ∙ ≈ᵐ-sym
       (  ∘ᵐ-assoc _ _ _
        ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (assoc⁻¹-⟨⟩ (projᴱ Γ) _ _))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (assoc⁻¹-⟨⟩ ⟨⊤⟩-η _ _))
        ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
        ∙ ∘ᵐ-congʳ (⟨ mapˣᵐ-∘⟨⟩ _ _ _ _
                      ∙ ⟨ ∘ᵐ-identityˡ _
                        , gty-cancelᵛ (ty-gty (param op)) (⟦ V ⟧ᵛᵗ pV) ⟩ᵐ-cong
                    , ≈ᵐ-refl ⟩ᵐ-cong))
   where
-    Hcl  = C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'')
-    pHcl = renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'') (pH op ε'')
-    -- the clause's inclusion along `ᴱ-ren` is `projᴱ Γ` on the ambient slot
+    Hcl  = C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε'')
+    pHcl = renᶜ (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε'') (pH op ε'')
+    -- the clause's inclusion along `barrier-ren` is `⟨⊤⟩-η` on the ambient slot
     mid : ⟦ Hcl ⟧ᶜᵗ pHcl
-        ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ (projᴱ Γ) idᵐ) idᵐ
+        ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ ⟨⊤⟩-η idᵐ) idᵐ
     mid =
-        C-rename-nat (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ))) (H op ε'') (pH op ε'')
-      ∙ ∘ᵐ-congʳ (mapˣᵐ-cong (mapˣᵐ-cong (ᴱ-ren-mor Γ) ≈ᵐ-refl) ≈ᵐ-refl)
+      C-rename-nat (cong-∷-ren (cong-∷-ren (barrier-ren {Γ}))) (H op ε'') (pH op ε'')
 

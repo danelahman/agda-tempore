@@ -477,8 +477,8 @@ forwarded =
     `in                              -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (return here)
 
--- and a clause may close over the eternal part of the context, use its
--- continuation, and answer with what it closed over
+-- and a clause may reach an eternal binding across the barrier lock, use
+-- its continuation, and answer with what it reached
 
 identified : Node ⊢C⦂ NodeId ‼ [ 1 ,+∞⟩
 identified =

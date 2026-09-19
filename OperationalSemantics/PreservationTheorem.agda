@@ -29,6 +29,19 @@ record Config (C : CType) : Set where
         state       : 𝕊 []
         computation : toCtx state  ⊢C⦂ C
 
+-- The barrier `⟨ ⊤ᵣ ⟩` guarding a handler's clauses, as renamings.
+--
+-- `barrier-ren` includes a clause's view of the ambient context into the
+-- ambient itself. `barrier-wk-ren` re-bars a context extended by a lock and a
+-- binder: `⊤ᵣ` is greatest, so the two locks fold into it.
+
+barrier-ren : ∀ {Δ} → Ren [] Δ (Δ ⟨ ⊤ᵣ ⟩)
+barrier-ren = ⟨⟩-≤-ren (≾-⊤ᵣ uᵣ) ∘ʳ ⟨⟩-η-ren
+
+barrier-wk-ren : ∀ {Δ} → (ρ : R) → (A : VType)
+               → Ren [] ((Δ ⟨ ρ ⟩ ∷ A) ⟨ ⊤ᵣ ⟩) (Δ ⟨ ⊤ᵣ ⟩)
+barrier-wk-ren ρ A = ⟨⟩-≤-ren (≾-⊤ᵣ _) ∘ʳ ⟨⟩-μ-ren ∘ʳ cong-⟨⟩-ren wk-ren
+
 -- Looking up the resource that an unboxing computation refers to
 
 unbox-lookup : ∀ {A ρ ρ'}
@@ -144,7 +157,7 @@ mutual
                    →
                      {H : (op : Op)
                         → (ε' : E)
-                        → toCtx S ᴱ
+                        → toCtx S ⟨ ⊤ᵣ ⟩
                                   ∷ type-of-gtype (param op)
                                   ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε')
                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε')}
@@ -161,7 +174,7 @@ mutual
                     → {S S' : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                     → {H : (op : Op) → (ε₃ : E) →
-                         toCtx S ᴱ
+                         toCtx S ⟨ ⊤ᵣ ⟩
                                  ∷ type-of-gtype (param op)
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
@@ -173,12 +186,9 @@ mutual
                     → ⟨ S  , handle M `with H `in N ⟩ ↝
                       ⟨ S' , handle M'
                             `with (λ op ε₃ →
-                                     subst
-                                       (λ Γ₀ → Γ₀
-                                                 ∷ type-of-gtype (param op)
-                                                 ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
-                                               ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃))
-                                       (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
+                                     C-rename
+                                       (cong-∷-ren (cong-∷-ren
+                                         (suc-comp-ren (step-extends-state M↝M') (≾-⊤ᵣ _))))
                                        (H op ε₃))
                             `in (C-rename
                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
@@ -192,7 +202,7 @@ mutual
                     → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
                     → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
                     → {H : (op' : Op) → (ε' : E) →
-                             toCtx S ᴱ
+                             toCtx S ⟨ ⊤ᵣ ⟩
                                      ∷ type-of-gtype (param op')
                                      ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε')
                                    ⊢C⦂ B ‼ (op-grade op' ·ₑ ε')}
@@ -204,8 +214,8 @@ mutual
                               `with (λ op' ε' →
                                        C-rename
                                          (cong-∷-ren (cong-∷-ren
-                                           (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩}
-                                                    (type-of-gtype (arity op)))))
+                                           (barrier-wk-ren (mapᵉ (op-grade op))
+                                                           (type-of-gtype (arity op)))))
                                          (H op' ε'))
                               `in (C-rename
                                     (  cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ)
@@ -214,7 +224,7 @@ mutual
                                     N)))
                              -- the clause is included into the context reached
                              -- when the operation is handled
-                             (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S))))
+                             (C-rename (cong-∷-ren (cong-∷-ren barrier-ren))
                                        (H op (ε ·ₑ ε''))
                               [ split-∷ split-[] ↦ V ]c) ⟩
 

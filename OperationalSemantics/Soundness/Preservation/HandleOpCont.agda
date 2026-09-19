@@ -1,16 +1,15 @@
 ------------------------------------------------------------------------
--- The HANDLE-OP continuation lemma.                                     --
---                                                                      --
+-- The HANDLE-OP continuation lemma, and the free-algebra morphism       --
+-- lemmas the handler fold's parameter-naturality consumes.              --
+--                                                                    --
 -- `sound-HANDLE-OP`'s reduct boxes up the handled remainder as a        --
 -- continuation: `handle M with H' in N'`, where `H'` is `H` renamed by  --
--- `ren-ᴱ-∷` (its clauses now close over the extended eternal context)   --
--- and `N'` is `N` renamed by the commuting conversion. This lemma        --
--- reconciles that inner handle's interpretation with the handler's fold  --
--- at the ambient context `Γ`, its eternal parameter reindexed along the  --
--- clause renaming: `⟦H'⟧ʰᵗ`-naturality for the renaming,                 --
--- `T-alg-of-handlerᵀ-natᴾ`, and `projᴱ`-naturality at `wk-ren`. Split    --
--- off into its own (interpretation-only) module so it compiles fast and  --
--- its goals are readable.                                               --
+-- `barrier-wk-ren` (its clauses now sit behind the barrier of the       --
+-- extended ambient) and `N'` is `N` renamed by the commuting            --
+-- conversion. This lemma reconciles that inner handle's interpretation   --
+-- with the handler's fold at the ambient context `Γ`, its parameter      --
+-- reindexed along the clause renaming: `⟦H'⟧ʰᵗ`-naturality for the       --
+-- renaming, `T-alg-of-handlerᵀ-natᴾ`, and the barrier at `wk-ren`.       --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -39,7 +38,6 @@ module OperationalSemantics.Soundness.Preservation.HandleOpCont
        where
 
 open import Data.Product using (_,_; proj₁; proj₂)
-open import Relation.Nullary using (yes; no)
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -51,15 +49,20 @@ open import Syntax.Language   S
 open import Syntax.Renamings  S
 open import Syntax.RenActions S using (C-rename)
 
+open import OperationalSemantics.PreservationTheorem S using (barrier-wk-ren)
+
 open Category Cat
 open Future Fut
-open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η)
-open Adjunction Adj using (η⊣)
+open Past Pst using (⟨_⟩ᵒ; ⟨_⟩ᶠ; η; μ; ⟨⟩-≤; ⟨⟩-∘ᵐ; ⟨⟩-congᶠ; ⟨⟩-≤-nat; ⟨⟩-≤-irr;
+                    ⟨⟩-≤-trans; μ-≤ˡ)
+open Adjunction Adj using (η⊣; η⊣-nat)
 open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-μ-nat; ⟨⊤⟩-μ∘μ≡μ∘Tμ;
+              ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-η-nat)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
@@ -72,25 +75,83 @@ infixr 3 _∙_
 _∙_ : ∀ {A B} {f g h : A →ᵐ B} → f ≈ᵐ g → g ≈ᵐ h → f ≈ᵐ h
 _∙_ = ≈ᵐ-trans
 
-bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-bcᴱ Γ = (⟦ Γ ⟧ᴱ-Eternalᵒ)
+bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 
--- The reduct renames the handler's clauses by `ren-ᴱ-∷ A₀`, which is
--- definitionally the eternal restriction of `wk-ren` (both split on
--- `eternal? A₀`) — so the renaming coherence machinery applies to it.
-ren-ᴱ-∷≡restrict : ∀ {Γ₀} → (A : VType)
-                 → ren-ᴱ-∷ {Γ₀} {[]} A ≡ restrict-ren {[]} (wk-ren {Δ = Γ₀} {A = A})
-ren-ᴱ-∷≡restrict A with eternal? A
-... | yes _ = refl
-... | no  _ = refl
+-- FREE-ALGEBRA MORPHISMS
+--
+-- A map `⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g` is the algebra morphism the free algebra's
+-- universal property produces from `g`. It commutes with extraction at every
+-- grade, and hence — as the `[_]`-mate — with necessitation. That mate is the
+-- coalgebra-morphism premise of `T-alg-of-handlerᵀ-natᴾ`, which every
+-- reindexing of a handler's parameter has to discharge.
+
+free-extᵉ-nat : ∀ {X Y} → (g : X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y) → ∀ {ρ}
+              → (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g) ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+              ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g)
+free-extᵉ-nat g {ρ} =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⊤⟩-μ-nat g))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘μ≡μ∘Tμ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+  ∙ ∘ᵐ-congʳ (⟨⟩-≤-nat _ (≾-⊤ᵣ ρ))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+free-necᵉ-nat : ∀ {X Y} → (f : ⟨ ⊤ᵣ ⟩ᵒ X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y)
+              → (∀ {ρ} → f ∘ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+                       ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ f)
+              → ∀ {ρ} → [ ρ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ X) {ρ}
+                      ≈ᵐ Eternalᵒ.necᵉ (⟨⊤⟩-eternalᵒ Y) {ρ} ∘ᵐ f
+free-necᵉ-nat f nat =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+  ∙ ∘ᵐ-congˡ ([]-congᶠ nat)
+  ∙ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (η⊣-nat f)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- THE BARRIER AT A LOCK
+--
+-- `⊤ᵣ` is greatest, so a lock in front of the barrier is absorbed by it: the
+-- two-layer fold `⟨⟩-μ` followed by the relaxation to `⊤ᵣ` is the free
+-- algebra's own multiplication applied to the inner relaxation.
+
+barrier-μ : ∀ {X ρ} → (p : ρ ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
+          → ⟨⟩-≤ p ∘ᵐ μ {X} {⊤ᵣ} {ρ}
+          ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (⟨⟩-≤ (≾-⊤ᵣ ρ))
+barrier-μ {X} {ρ} p =
+    ∘ᵐ-congˡ (⟨⟩-≤-irr p (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (≾-⊤ᵣ ρ)) (≾-⊤ᵣ (⊤ᵣ ·ᵣ ⊤ᵣ))))
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans (·ᵣ-monoˡ-≾ᵣ (≾-⊤ᵣ ρ)) (≾-⊤ᵣ (⊤ᵣ ·ᵣ ⊤ᵣ))))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (μ-≤ˡ (≾-⊤ᵣ ρ))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+-- Barring an ambient that is a lock away: extraction at that lock, applied to
+-- the barrier, is just the relaxation of the lock to `⊤ᵣ`.
+
+barrier-lock : ∀ {Γ ρ}
+             → Eternalᵒ.extᵉ (bcᴱ Γ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})
+             ≈ᵐ ⟨⟩-≤ (≾-⊤ᵣ ρ)
+barrier-lock {Γ} {ρ} =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-≤-nat ⟨⊤⟩-η (≾-⊤ᵣ ρ)))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ ⟨⊤⟩-μ∘Tη≡id
+  ∙ ∘ᵐ-identityˡ _
 
 -- The inner handle's interpretation equals the outer fold applied to the
--- (renamed) sequel. `H'` renames `H`'s clauses along `ren-ᴱ-∷ A₀` (= the eternal
--- restriction of `wk-ren`), so this is the renaming coherence of the handler at
--- `wk-ren`, with the eternal parameter reindexed along the same renaming.
+-- (renamed) sequel. `H'` renames `H`'s clauses along `barrier-wk-ren`, so this
+-- is the renaming coherence of the handler at that renaming, with the fold's
+-- parameter reindexed along the same renaming.
 module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
          (H : (op' : Op) → (ε₀ : E)
-              → Γ ᴱ ∷ type-of-gtype (param op')
+              → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
                    ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
                 ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀))
          (M : Γ ⟨ ρ ⟩ ∷ A₀ ⊢C⦂ A ‼ ε)
@@ -104,25 +165,25 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
              ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ ⟦ H op' ε₁ ⟧ᶜᵗ (pH op' ε₁))
        where
 
-  -- The reduct's clause family: `H` renamed along `ren-ᴱ-∷ A₀`, with the
+  -- The reduct's clause family: `H` re-barred along `barrier-wk-ren`, with the
   -- renamed parametricity and uniformity certificates.
   H' : (op' : Op) → (ε₀ : E)
-     → ((Γ ⟨ ρ ⟩) ∷ A₀) ᴱ ∷ type-of-gtype (param op')
+     → ((Γ ⟨ ρ ⟩) ∷ A₀) ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
           ∷ [ mapᵉ (op-grade op') ] (type-of-gtype (arity op') ⇒ B ‼ ε₀)
        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε₀)
-  H' op' ε₀ = C-rename (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀))) (H op' ε₀)
+  H' op' ε₀ = C-rename (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρ A₀))) (H op' ε₀)
 
   pH' : ∀ op' ε₀ → Paramᶜ (H' op' ε₀)
   pH' op' ε₀ =
-    renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀))) (H op' ε₀) (pH op' ε₀)
+    renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρ A₀))) (H op' ε₀) (pH op' ε₀)
 
-  uH' = ren-clauses-uniform (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀) H pH uH
+  uH' = ren-clauses-uniform (barrier-wk-ren ρ A₀) H pH uH
 
   handle-op-cont :
       ⟦ handle M `with H' `in (C-rename (cong-∷-ren ren) N) ⟧ᶜᵗ
         (pM , renᶜ (cong-∷-ren ren) N pN , pH' , uH')
     ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)
-       ∘ᵐ ⟨ projᴱ (Γ ⟨ ρ ⟩) ∘ᵐ fstᵐ
+       ∘ᵐ ⟨ (Eternalᵒ.extᵉ (bcᴱ Γ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})) ∘ᵐ fstᵐ
           ,   Tᶠ (⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ ⟦ ren ⟧ʳ idᵐ)
             ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
   handle-op-cont =
@@ -130,18 +191,33 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
     ∙ ∘ᵐ-congˡ alg-nat
     ∙ ∘ᵐ-assoc _ _ _
     ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _)
-    ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-sym projᴱ-wk , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+    ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-sym barrier-wk , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
     where
-      f : ⟦ ((Γ ⟨ ρ ⟩) ∷ A₀) ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-      f = ⟦ ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀ ⟧ʳ
+      f : ⟦ ((Γ ⟨ ρ ⟩) ∷ A₀) ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+      f = ⟦ barrier-wk-ren {Γ} ρ A₀ ⟧ʳ
 
-      -- the eternal projection is untouched by the arity binder
-      projᴱ-wk : projᴱ (Γ ⟨ ρ ⟩) ∘ᵐ fstᵐ ≈ᵐ f ∘ᵐ projᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)
-      projᴱ-wk =
-        subst (λ z → projᴱ (Γ ⟨ ρ ⟩) ∘ᵐ ⟦ wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀} ⟧ʳ
-                   ≈ᵐ ⟦ z ⟧ʳ ∘ᵐ projᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
-              (sym (ren-ᴱ-∷≡restrict {Γ ⟨ ρ ⟩} A₀))
-              (projᴱ-nat (wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀}))
+      -- `f` is the free-algebra morphism induced by `g`
+      g : ⟦ (Γ ⟨ ρ ⟩) ∷ A₀ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+      g = ⟨⟩-≤ (≾-⊤ᵣ ρ) ∘ᵐ fstᵐ
+
+      f≈ : f ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g
+      f≈ =
+          ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+        ∙ ∘ᵐ-congˡ (barrier-μ (≾-⊤ᵣ (ρ ·ᵣ ⊤ᵣ)))
+        ∙ ∘ᵐ-assoc _ _ _
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+
+      -- the barrier is untouched by the arity binder
+      barrier-wk : (Eternalᵒ.extᵉ (bcᴱ Γ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})) ∘ᵐ fstᵐ
+                 ≈ᵐ f ∘ᵐ ⟨⊤⟩-η
+      barrier-wk =
+          ∘ᵐ-congˡ (barrier-lock {Γ} {ρ})
+        ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ f≈
+                  ∙ ∘ᵐ-assoc _ _ _
+                  ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat g)
+                  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (Eternalᵒ.α-unit (bcᴱ Γ))
+                  ∙ ∘ᵐ-identityˡ _)
 
       -- the renamed sequel commutes back to the un-renamed one under `Tᶠ`
       seq-eq : Tᶠ (⟦ C-rename (cong-∷-ren ren) N ⟧ᶜᵗ (renᶜ (cong-∷-ren ren) N pN))
@@ -154,22 +230,21 @@ module _ {Γ : Ctx} {A₀ A B : VType} {ρ σ : _} {ε ε' : E}
                  → clauseᵀ (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH') op ε''
                  ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {Γ} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
       ⟦H'⟧ʰᵗ-nat op ε'' =
-          ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ ρ ⟩} A₀)))
+          ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren (barrier-wk-ren ρ A₀)))
                       (H op ε'') (pH op ε''))
         ∙ ∘ᵐ-assoc _ _ _
         ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
         ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-      alg-nat : T-alg-of-handlerᵀ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH')
-              ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ mapˣᵐ f idᵐ
       f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
                       ≈ᵐ Eternalᵒ.necᵉ (bcᴱ Γ) ∘ᵐ f
-      f-necᵉ =
-        subst (λ r → ∀ {ρ₁} → [ ρ₁ ]ᶠ ⟦ r ⟧ʳ ∘ᵐ Eternalᵒ.necᵉ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀))
-                            ≈ᵐ Eternalᵒ.necᵉ (bcᴱ Γ) ∘ᵐ ⟦ r ⟧ʳ)
-              (sym (ren-ᴱ-∷≡restrict A₀))
-              (restrict-ren-necᵉ (wk-ren {Δ = Γ ⟨ ρ ⟩} {A = A₀}))
+      f-necᵉ {ρ₁} =
+          ∘ᵐ-congˡ ([]-congᶠ f≈)
+        ∙ free-necᵉ-nat (⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ g) (free-extᵉ-nat g)
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym f≈)
 
+      alg-nat : T-alg-of-handlerᵀ (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) (⟦_⟧ʰᵗ {(Γ ⟨ ρ ⟩) ∷ A₀} H' pH' uH')
+              ≈ᵐ T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH) ∘ᵐ mapˣᵐ f idᵐ
       alg-nat =
         T-alg-of-handlerᵀ-natᴾ (bcᴱ Γ) (bcᴱ ((Γ ⟨ ρ ⟩) ∷ A₀)) f f-necᵉ
           (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦H'⟧ʰᵗ-nat

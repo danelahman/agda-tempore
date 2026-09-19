@@ -65,8 +65,8 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 -- rebuild a `Γ`-environment from one for `Γ` with `x` removed, by
 -- computing the missing component with `⟦ W ⟧`.
 
--- `eternal-val-ext`/`eternal-val-restrict` build only variables, constants,
--- units and pairs — never a `lam` — so their results are parametric outright.
+-- `eternal-val-ext` builds only variables, constants, units and pairs — never
+-- a `lam` — so its result is parametric outright.
 
 eternal-val-extᴾ : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
                  → Paramᵛ (eternal-val-ext {ρ = ρ} et V)
@@ -77,16 +77,6 @@ eternal-val-extᴾ _  true                       = tt
 eternal-val-extᴾ _  false                      = tt
 eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
-
-eternal-val-restrictᴾ : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A)
-                      → Paramᵛ (eternal-val-restrict et V)
-eternal-val-restrictᴾ et (var _ x)               = tt
-eternal-val-restrictᴾ _  (const b)               = tt
-eternal-val-restrictᴾ _  ⋆                       = tt
-eternal-val-restrictᴾ _  true                    = tt
-eternal-val-restrictᴾ _  false                   = tt
-eternal-val-restrictᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
-  eternal-val-restrictᴾ et₁ V₁ , eternal-val-restrictᴾ et₂ V₂
 
 sub-env : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A) → Paramᵛ W
         → ⟦ Γ₁ ++ᶜ Γ₂ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
@@ -146,91 +136,8 @@ eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
             (∘ᵐ-congˡ (≈ᵐ-sym (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁)
                                               (eternalᵛ-Eternalᵒ et₂))))))))
 
--- An eternal value's interpretation factors through the eternal projection:
--- the value-level counterpart of `var-projᴱ` (and the value analog of
--- `eternal-val-ext-nat`). This carries the substituted eternal value onto the
--- eternal parameter in the handler substitution coherence below.
-
-eternal-val-restrict-nat : ∀ {Γ A} → (et : Eternal A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
-                         → ⟦ V ⟧ᵛᵗ pV
-                         ≈ᵐ ⟦ eternal-val-restrict et V ⟧ᵛᵗ (eternal-val-restrictᴾ et V)
-                              ∘ᵐ projᴱ Γ
--- The interpretation of a *restricted* eternal value is a morphism of eternal
--- objects (commutes with the extractions). Its variables are all `∈-ᴱ` images,
--- so the variable case is exactly `eternal-mor`. This is what makes the
--- restricted substitution a coalgebra morphism at the head.
-
-restrict-val-mor : ∀ {Γ A} → (et : Eternal A) → (W : Γ ⊢V⦂ A) → ∀ {ρ}
-                 → eternalᵛ-extᵉ et {ρ}
-                     ∘ᵐ ⟨ ρ ⟩ᶠ (⟦ eternal-val-restrict et W ⟧ᵛᵗ (eternal-val-restrictᴾ et W))
-                 ≈ᵐ ⟦ eternal-val-restrict et W ⟧ᵛᵗ (eternal-val-restrictᴾ et W)
-                      ∘ᵐ Eternalᵒ.extᵉ (⟦ Γ ⟧ᴱ-Eternalᵒ)
-restrict-val-mor {A = A} et (var f x) with eternal? A
-... | yes et' =
-  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))))
-  (≈ᵐ-trans (eternal-mor et x)
-            (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))
-... | no ¬et' = ⊥-elim (¬et' et)
-restrict-val-mor (Baseₑ eb) (const c) =
-  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧ᵇᶜ-eternal eb c))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ terminalᵐ-unique)
-            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique)))))))
-restrict-val-mor Unitₑ ⋆ =
-  ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique)
-restrict-val-mor Boolₑ true =
-  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ trueᵐ-eternal)
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ terminalᵐ-unique)
-            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique)))))))
-restrict-val-mor Boolₑ false =
-  ≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ falseᵐ-eternal)
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ terminalᵐ-unique)
-            (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique)))))))
-restrict-val-mor (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
-  ≈ᵐ-trans (∘ᵐ-congˡ (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁) (eternalᵛ-Eternalᵒ et₂)))
-  (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
-  (≈ᵐ-trans
-    (⟨ ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-       (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-fstᵐ _ _)))
-                 (restrict-val-mor et₁ V₁)))
-     , ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-       (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-       (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ (⟨⟩ᵐ-sndᵐ _ _)))
-                 (restrict-val-mor et₂ V₂))) ⟩ᵐ-cong)
-    (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))))
-
-eternal-val-restrict-nat {A = A} et (var f x) _ with eternal? A
-... | yes et' =
-  ≈ᵐ-trans (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et' et))
-  (≈ᵐ-trans (var-projᴱ et x)
-            (∘ᵐ-congˡ (∘ᵐ-congˡ (eternalᵛ-extᵉ-irr et et'))))
-... | no ¬et' = ⊥-elim (¬et' et)
-eternal-val-restrict-nat _ (const c) _ =
-  ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
-eternal-val-restrict-nat _ ⋆ _ =
-  ≈ᵐ-sym terminalᵐ-unique
-eternal-val-restrict-nat _ true _ =
-  ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
-eternal-val-restrict-nat _ false _ =
-  ≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ terminalᵐ-unique))
-eternal-val-restrict-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
-  ≈ᵐ-trans (⟨ eternal-val-restrict-nat et₁ V₁ p₁ , eternal-val-restrict-nat et₂ V₂ p₂ ⟩ᵐ-cong)
-           (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
-
 -- (`eq-ren-∷` / `eq-ren-⟨⟩` / `eq-ren-irr` live with the other renaming
 -- denotation lemmas in `Interpretation.Renaming`.)
-
--- and hence the lookup lemma in the form the `unbox` cases need.
-
 
 -- The resource lookup morphism of an `unbox`.
 

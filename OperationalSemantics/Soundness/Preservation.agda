@@ -285,18 +285,20 @@ stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ 
 stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
   stepᴾᶜ r pS pM
   , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
-  , (λ op ε₃ → substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) (H op ε₃) (pH op ε₃))
-  , subst-clauses-uniform (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
+  , (λ op ε₃ → renᶜ (cong-∷-ren (cong-∷-ren
+                       (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
+                    (H op ε₃) (pH op ε₃))
+  , ren-clauses-uniform (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _)) H pH uH
 stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} {H = H} {N = N})
        pS ((pV , pM) , pN , pH , uH) =
     (pM
     , renᶜ (cong-∷-ren ((eq-ren (cong (toCtx S ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
-    , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
+    , (λ op' ε' → renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
     , ren-clauses-uniform
-        (ren-ᴱ-∷ {toCtx S ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))) H pH uH)
-  , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S)))) (H op (ε ·ₑ ε'')))
+        (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))) H pH uH)
+  , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {toCtx S}))) (H op (ε ·ₑ ε'')))
          (split-∷ split-[]) V
-         (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren (toCtx S))))
+         (renᶜ (cong-∷-ren (cong-∷-ren (barrier-ren {toCtx S})))
                (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
          pV
 stepᴾᶜ BOX                              pS (pV , pM)  = pM

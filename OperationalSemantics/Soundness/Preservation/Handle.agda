@@ -65,9 +65,10 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-μ; ⟨⊤⟩-η-nat; ⟨⊤⟩-μ∘Tη≡id; ⟨⊤⟩-μ-nat)
 open import OperationalSemantics.Soundness.Preservation.HandleOpCont S Cat Fut Pst Adj GTy Mon GE
-  using (handle-op-cont; ren-ᴱ-∷≡restrict)
+  using (handle-op-cont; free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-lock)
 open import OperationalSemantics.Soundness.Preservation.HandleOpClause S Cat Fut Pst Adj GTy Mon GE
   using (clause-sound)
 
@@ -302,22 +303,102 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
       ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))))
 
--- Any two maps into `⟦ Γ ᴱ ⟧ᶜᵗˣ` agree when `Γ ᴱ ≡ []`, which `toCtxᴱ-[]`
--- supplies at every runtime context. This is the only place the parameter needs
--- identifying: across a step the handler's clauses are transported along
--- `toCtx S ᴱ ≡ toCtx S' ᴱ`, and the two descriptions of the parameter — carried
--- by `step-pv`, or read off the new state — are related by nothing else.
+-- The state's barrier across a step: the parameter `step-pv` carries forward is
+-- the one read off the new state, reindexed along the step's `suc-comp-ren`.
+-- Only `DELAY` and `BOX` do anything — the lock the delay adds folds into the
+-- barrier, and the cell the box allocates is projected away.
 
-∅-terminal : ∀ {Γ X} → (e : Γ ᴱ ≡ []) → (f g : X →ᵐ ⟦ Γ ᴱ ⟧ᶜᵗˣ) → f ≈ᵐ g
-∅-terminal {X = X} e =
-  subst (λ Δ → (f g : X →ᵐ ⟦ Δ ⟧ᶜᵗˣ) → f ≈ᵐ g) (sym e)
-        (λ f g → ≈ᵐ-trans terminalᵐ-unique (≈ᵐ-sym terminalᵐ-unique))
+⟨⟩-≤-id : ∀ {X ρ} → (p : ρ ≾ᵣ ρ) → ⟨⟩-≤ {X} p ≈ᵐ idᵐ
+⟨⟩-≤-id p = ⟨⟩-≤-irr p ≾ᵣ-refl ∙ ⟨⟩-≤-refl
 
-∅-box-terminal : ∀ {Γ X ρ} → (e : Γ ᴱ ≡ [])
-               → (f g : X →ᵐ [ ρ ]ᵒ ⟦ Γ ᴱ ⟧ᶜᵗˣ) → f ≈ᵐ g
-∅-box-terminal {X = X} {ρ = ρ} e =
-  subst (λ Δ → (f g : X →ᵐ [ ρ ]ᵒ ⟦ Δ ⟧ᶜᵗˣ) → f ≈ᵐ g) (sym e)
-        (λ f g → []-𝟙-unique f g)
+-- A lock in front of the barrier, refolded: `⊤ᵣ` absorbs it.
+delay-suc : ∀ {X ρ} → (q : ρ ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
+          → (⟨⟩-≤ q ∘ᵐ μ {X} {⊤ᵣ} {ρ}) ∘ᵐ ⟨⊤⟩-η ≈ᵐ ⟨⟩-≤ (≾-⊤ᵣ ρ)
+delay-suc {X} {ρ} q =
+    ∘ᵐ-congˡ (barrier-μ q)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⊤⟩-η-nat (⟨⟩-≤ (≾-⊤ᵣ ρ)))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (Eternalᵒ.α-unit (⟨⊤⟩-eternalᵒ X))
+  ∙ ∘ᵐ-identityˡ _
+
+id-suc-step : ∀ {X Y} → (p : ⊤ᵣ ≾ᵣ ⊤ᵣ) → (h : X →ᵐ ⟨ ⊤ᵣ ⟩ᵒ Y)
+            → h ≈ᵐ ⟨⟩-≤ p ∘ᵐ h
+id-suc-step p h = ≈ᵐ-sym (∘ᵐ-congˡ (⟨⟩-≤-id p) ∙ ∘ᵐ-identityˡ _)
+
+-- A state successor, read as a map into the earlier state's barrier: each lock
+-- it passed is extracted, each cell it allocated is projected away.
+
+suc-g : ∀ {Γ Γ'} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
+      → (q : St ≤ₛ St') → ⟦ toCtx St' ⟧ᶜᵗˣ →ᵐ ⟦ toCtx St ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+suc-g id-suc = ⟨⊤⟩-η
+suc-g {St = St} (⟨⟩-suc ρ q) =
+  Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx St ⟧ᶜᵗˣ) {ρ} ∘ᵐ ⟨ ρ ⟩ᶠ (suc-g q)
+suc-g (∷-suc V q) = suc-g q ∘ᵐ fstᵐ
+
+-- `suc-comp-ren` is the free algebra's extension of `suc-g`: extraction at the
+-- outer lock applied to it. The barrier is a free algebra, so the renaming is an
+-- algebra morphism, which is what the fold's parameter-naturality needs.
+
+suc-comp-free-at : ∀ {Γ Γ' a} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
+                 → (q : St ≤ₛ St') → (pf : ≤ₛ-grade q ·ᵣ a ≾ᵣ ⊤ᵣ)
+                 → ⟦ suc-comp-ren {ρ'' = ⊤ᵣ} {ρ''' = a} q pf ⟧ʳ
+                 ≈ᵐ Eternalᵒ.extᵉ (⟨⊤⟩-eternalᵒ ⟦ toCtx St ⟧ᶜᵗˣ) {a} ∘ᵐ ⟨ a ⟩ᶠ (suc-g q)
+suc-comp-free-at {a = a} {St = St} id-suc pf =
+    ⟨⟩-≤-irr _ (≾-⊤ᵣ a)
+  ∙ ≈ᵐ-sym (barrier-lock {toCtx St} {a})
+suc-comp-free-at (⟨⟩-suc ρ q) pf =
+    ∘ᵐ-congˡ (suc-comp-free-at q _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (⟨⟩-μ-nat (suc-g q))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (Eternalᵒ.extᵉ-μ (⟨⊤⟩-eternalᵒ _))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+suc-comp-free-at (∷-suc V q) pf =
+    ∘ᵐ-congˡ (suc-comp-free-at q pf)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+
+suc-comp-free : ∀ {Γ Γ'} → {St : 𝕊 Γ} → {St' : 𝕊 Γ'}
+              → (q : St ≤ₛ St') → (pf : ≤ₛ-grade q ·ᵣ ⊤ᵣ ≾ᵣ ⊤ᵣ)
+              → ⟦ suc-comp-ren {ρ'' = ⊤ᵣ} {ρ''' = ⊤ᵣ} q pf ⟧ʳ
+              ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (suc-g q)
+suc-comp-free q pf =
+    suc-comp-free-at q pf
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-≤-id _) ∙ ∘ᵐ-identityʳ _)
+
+step-pv-state : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []}
+              → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+              → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+              → (pS : Paramˢ S) → (pM : Paramᶜ M)
+              → step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
+              ≈ᵐ ⟦ suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _) ⟧ʳ
+                 ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+step-pv-state APP        pS pM = id-suc-step _ _
+step-pv-state MATCH      pS pM = id-suc-step _ _
+step-pv-state IF-TRUE    pS pM = id-suc-step _ _
+step-pv-state IF-FALSE   pS pM = id-suc-step _ _
+step-pv-state SEQ-RET    pS pM = id-suc-step _ _
+step-pv-state SEQ-OP     pS pM = id-suc-step _ _
+step-pv-state HANDLE-RET pS pM = id-suc-step _ _
+step-pv-state HANDLE-OP  pS pM = id-suc-step _ _
+step-pv-state UNBOX      pS pM = id-suc-step _ _
+step-pv-state COERCE     pS pM = id-suc-step _ _
+step-pv-state (SEQ-STEP r c)    pS (pM , _) = step-pv-state r pS pM
+step-pv-state (HANDLE-STEP r c) pS (pM , _) = step-pv-state r pS pM
+step-pv-state (BOX {V = V}) pS (pV , _) =
+  ≈ᵐ-sym
+    (  ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-id _) ∙ ∘ᵐ-identityˡ _)
+     ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+     ∙ ∘ᵐ-congˡ (⟨⊤⟩-η-nat fstᵐ)
+     ∙ ∘ᵐ-assoc _ _ _
+     ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (⟨⟩ᵐ-fstᵐ _ _) ∙ ∘ᵐ-identityˡ _))
+step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
+    ∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (barrier-lock {toCtx S} {of-natʳ τ})
+  ∙ ≈ᵐ-sym (≈ᵐ-sym (∘ᵐ-assoc _ _ _) ∙ ∘ᵐ-congˡ (delay-suc _))
 
 -- HANDLE-STEP
 --
@@ -325,13 +406,13 @@ alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {�
 -- monad multiplication. Everything is shared: `seq-step-core` and `seq-target`
 -- are generic in the parameterised algebra, `step-box` is algebra-free, and
 -- `T-≤-μᵀ` is matched by `T-alg-of-handlerᵀ-≤`. The clause families at the two
--- states differ by a transport, so the fold's parameter is reindexed along it
--- (`T-alg-of-handlerᵀ-natᴾ`).
+-- states differ by the step's `suc-comp-ren`, so the fold's parameter is
+-- reindexed along it (`T-alg-of-handlerᵀ-natᴾ`).
 
 sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
   → {M : toCtx S ⊢C⦂ A ‼ ε₁}
   → (H : (op : Op) → (ε'' : E)
-       → toCtx S ᴱ ∷ type-of-gtype (param op)
+       → toCtx S ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
   → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
@@ -350,26 +431,24 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
               (⟦ handle M'
                    `with (λ op ε'' →
-                            subst
-                              (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                                        ∷ [ mapᵉ (op-grade op) ]
-                                            (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                                      ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-                              (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
+                            C-rename
+                              (cong-∷-ren (cong-∷-ren
+                                (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
                               (H op ε''))
                    `in (C-rename (cong-∷-ren
                                    (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
                       (pM'
                       , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
                       , (λ op ε'' →
-                           substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
-                             (H op ε'') (pH op ε''))
-                      , subst-clauses-uniform
-                          (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH)
+                           renᶜ (cong-∷-ren (cong-∷-ren
+                                  (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
+                                (H op ε'') (pH op ε''))
+                      , ren-clauses-uniform
+                          (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _)) H pH uH)
                  ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
 sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS pM pN pM' pH uH ih =
-    seq-step-core alg alg-≤ (projᴱ (toCtx S)) N r c pS (stepᴾˢ r pS pM) pM pN pM' ih
+    seq-step-core alg alg-≤ ⟨⊤⟩-η N r c pS (stepᴾˢ r pS pM) pM pN pM' ih
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
       ,   ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
               (⟨ box-merge _ _ (seq-g r) _ _ , ≈ᵐ-refl ⟩ᵐ-cong)))))
@@ -390,7 +469,7 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS p
   -- THE KEY STEP: the handler commutes with the step transition, because a
   -- reduction step never performs an operation
   ∙ ∘ᵐ-congʳ (alg-stepᵀ {B = B} (bcᴱ (toCtx S)) alg alg-≤ alg-delay r
-                        (projᴱ (toCtx S) ∘ᵐ ⟦ S ⟧ˢ pS) _)
+                        (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS) _)
   -- drop the identity the strength's pairing picked up
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
       , ∘ᵐ-congʳ (∘ᵐ-congʳ ⟨ ≈ᵐ-refl , ∘ᵐ-identityʳ _ ⟩ᵐ-cong) ⟩ᵐ-cong))))))
@@ -402,45 +481,41 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS p
                           ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
       ∙ ∘ᵐ-congˡ (≈ᵐ-sym alg-natᴾ)
-      ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B} {⟦ toCtx S' ᴱ ⟧ᶜᵗˣ}
+      ∙ ≈ᵐ-sym (seq-target {ε₁} {ε₂} {ε₃} {A} {B} {⟦ toCtx S' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ}
                   {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
-                  alg' (projᴱ (toCtx S')) N
+                  alg' ⟨⊤⟩-η N
                   (suc-comp-ren (step-extends-state r) c) M'
                   (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN pM'))))))
   -- … and `seq-coe` fixes the grade
   ∙ seq-coe (step-≾ r) (step-≾ (HANDLE-STEP {H = H} {N = N} r c)) _
   where
-    eS  = toCtxᴱ-[] S
-    eS' = toCtxᴱ-[] S'
+    -- the clause families at the two states differ by the step's own renaming
+    fren : Ren [] (toCtx S' ⟨ ⊤ᵣ ⟩) (toCtx S ⟨ ⊤ᵣ ⟩)
+    fren = suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _)
 
     H' : (op : Op) → (ε'' : E)
-       → toCtx S' ᴱ ∷ type-of-gtype (param op)
+       → toCtx S' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
          ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')
-    H' op ε'' =
-      subst
-        (λ Γ₀ → Γ₀ ∷ type-of-gtype (param op)
-                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-                ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
-        (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S')))
-        (H op ε'')
+    H' op ε'' = C-rename (cong-∷-ren (cong-∷-ren fren)) (H op ε'')
 
     pH' : ∀ op ε'' → Paramᶜ (H' op ε'')
-    pH' op ε'' =
-      substᴾᶜ (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) (H op ε'') (pH op ε'')
+    pH' op ε'' = renᶜ (cong-∷-ren (cong-∷-ren fren)) (H op ε'') (pH op ε'')
 
-    uH' = subst-clauses-uniform (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) H pH uH
+    uH' = ren-clauses-uniform fren H pH uH
 
-    -- the clause families differ by the transport along `toCtx S ᴱ ≡ toCtx S' ᴱ`,
-    -- so the fold's parameter is reindexed along that transport's renaming
-    f : ⟦ toCtx S' ᴱ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ᴱ ⟧ᶜᵗˣ
-    f = ⟦ eq-ren (trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))) ⟧ʳ
+    f : ⟦ toCtx S' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ →ᵐ ⟦ toCtx S ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+    f = ⟦ fren ⟧ʳ
 
-    alg : ∀ {ε} → ⟦ toCtx S ᴱ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
+    -- `f` is the free-algebra morphism induced by `suc-g`
+    f≈ : f ≈ᵐ ⟨⊤⟩-μ ∘ᵐ ⟨ ⊤ᵣ ⟩ᶠ (suc-g (step-extends-state r))
+    f≈ = suc-comp-free (step-extends-state r) (≾-⊤ᵣ _)
+
+    alg : ∀ {ε} → ⟦ toCtx S ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
         →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
     alg = T-alg-of-handlerᵀ (bcᴱ (toCtx S)) (⟦_⟧ʰᵗ {toCtx S} H pH uH)
 
-    alg' : ∀ {ε} → ⟦ toCtx S' ᴱ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
+    alg' : ∀ {ε} → ⟦ toCtx S' ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε
          →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂)
     alg' = T-alg-of-handlerᵀ (bcᴱ (toCtx S')) (⟦_⟧ʰᵗ {toCtx S'} H' pH' uH')
 
@@ -462,34 +537,27 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} H N {M'} r c pS p
                → clauseᵀ (⟦_⟧ʰᵗ {toCtx S'} H' pH' uH') op ε''
                ≈ᵐ clauseᵀ (⟦_⟧ʰᵗ {toCtx S} H pH uH) op ε'' ∘ᵐ mapˣᵐ f idᵐ
     ⟦H'⟧ʰᵗ-nat op ε'' =
-        ∘ᵐ-congˡ step1'
+        ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren (cong-∷-ren fren))
+                    (H op ε'') (pH op ε''))
       ∙ ∘ᵐ-assoc _ _ _
       ∙ ∘ᵐ-congʳ (adapt-commute _ _ _)
       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      where
-        ptᵥ = type-of-gtype (param op)
-        ktᵥ = [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
-        D₀ = [] ∷ ptᵥ ∷ ktᵥ
-        eq = trans (toCtxᴱ-[] S) (sym (toCtxᴱ-[] S'))
-        ⟦eqren⟧≈ : ⟦ eq-ren (cong (_++ᶜ D₀) eq) ⟧ʳ
-                 ≈ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
-        ⟦eqren⟧≈ =
-            eq-ren-irr (cong (_++ᶜ D₀) eq) (cong (_∷ ktᵥ) (cong (_∷ ptᵥ) eq))
-          ∙ eq-ren-∷ (cong (_∷ ptᵥ) eq)
-          ∙ mapˣᵐ-cong (eq-ren-∷ eq) ≈ᵐ-refl
-        step1' : ⟦ H' op ε'' ⟧ᶜᵗ (pH' op ε'')
-               ≈ᵐ ⟦ H op ε'' ⟧ᶜᵗ (pH op ε'') ∘ᵐ mapˣᵐ (mapˣᵐ f idᵐ) idᵐ
-        step1' = subst-clause-interp eq (H op ε'') (pH op ε'')
-               ∙ ∘ᵐ-congʳ ⟦eqren⟧≈
+
+    f-necᵉ : ∀ {ρ₁} → [ ρ₁ ]ᶠ f ∘ᵐ Eternalᵒ.necᵉ (bcᴱ (toCtx S'))
+                    ≈ᵐ Eternalᵒ.necᵉ (bcᴱ (toCtx S)) ∘ᵐ f
+    f-necᵉ =
+        ∘ᵐ-congˡ ([]-congᶠ f≈)
+      ∙ free-necᵉ-nat _ (free-extᵉ-nat (suc-g (step-extends-state r)))
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym f≈)
 
     alg-natᴾ : ∀ {ε} → alg' {ε} ≈ᵐ alg {ε} ∘ᵐ mapˣᵐ f idᵐ
     alg-natᴾ =
       T-alg-of-handlerᵀ-natᴾ (bcᴱ (toCtx S)) (bcᴱ (toCtx S'))
-        f (∅-box-terminal eS _ _) (⟦_⟧ʰᵗ {toCtx S} H pH uH) _ ⟦H'⟧ʰᵗ-nat
+        f f-necᵉ (⟦_⟧ʰᵗ {toCtx S} H pH uH) _ ⟦H'⟧ʰᵗ-nat
 
-    param-step : step-pv (bcᴱ (toCtx S)) r (projᴱ (toCtx S) ∘ᵐ ⟦ S ⟧ˢ pS)
-               ≈ᵐ f ∘ᵐ (projᴱ (toCtx S') ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
-    param-step = ∅-terminal eS _ _
+    param-step : step-pv (bcᴱ (toCtx S)) r (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS)
+               ≈ᵐ f ∘ᵐ (⟨⊤⟩-η ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+    param-step = step-pv-state r pS pM
 
 -- SEQ-OP
 --
@@ -913,7 +981,7 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                 → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
                        ⊢C⦂ A ‼ ε)
                 → (H : (op' : Op) → (ε' : E)
-                     → Γ ᴱ ∷ type-of-gtype (param op')
+                     → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op')
                           ∷ [ mapᵉ (op-grade op') ]
                               (type-of-gtype (arity op') ⇒ B ‼ ε')
                        ⊢C⦂ B ‼ (op-grade op' ·ₑ ε'))
@@ -927,26 +995,26 @@ sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                    ∘ᵐ ⟦ box (lam (handle M
                                    `with (λ op' ε' →
                                             C-rename (cong-∷-ren (cong-∷-ren
-                                              (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩}
-                                                       (type-of-gtype (arity op)))))
+                                              (barrier-wk-ren (mapᵉ (op-grade op))
+                                                              (type-of-gtype (arity op)))))
                                               (H op' ε'))
                                    `in (C-rename (cong-∷-ren
                                           ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren)
                                            ∘ʳ cong-⟨⟩-ren wk-ren)) N)))
-                            (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                            (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                                        (H op (ε ·ₑ ε''))
                              [ split-∷ split-[] ↦ V ]c) ⟧ᶜᵗ
                      ( (pM
                        , renᶜ (cong-∷-ren ((eq-ren (cong (Γ ⟨_⟩) map-·ᵉ) ∘ʳ ⟨⟩-μ-ren) ∘ʳ cong-⟨⟩-ren wk-ren)) N pN
                        , (λ op' ε' →
-                            renᶜ (cong-∷-ren (cong-∷-ren (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
+                            renᶜ (cong-∷-ren (cong-∷-ren (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op))))) (H op' ε') (pH op' ε'))
                        , ren-clauses-uniform
-                           (ren-ᴱ-∷ {Γ ⟨ mapᵉ (op-grade op) ⟩} (type-of-gtype (arity op)))
+                           (barrier-wk-ren (mapᵉ (op-grade op)) (type-of-gtype (arity op)))
                            H pH uH)
-                     , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                     , subᶜ (C-rename (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                                      (H op (ε ·ₑ ε'')))
                             (split-∷ split-[]) V
-                            (renᶜ (cong-∷-ren (cong-∷-ren (ᴱ-ren Γ)))
+                            (renᶜ (cong-∷-ren (cong-∷-ren (barrier-ren {Γ})))
                                   (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
                             pV )
 sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N pV pM pN pH uH =
@@ -997,7 +1065,7 @@ sound-HANDLE-OP {Γ} {A} {B} {ε} {ε''} op V M H N pV pM pN pH uH =
             mapˣᵐ-∘⟨⟩ _ _ _ _
           ∙ ⟨   ∘ᵐ-congˡ (Eternalᵒ.necᵉ-mate (bcᴱ Γ))
               ∙ ∘ᵐ-assoc _ _ _
-              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (projᴱ Γ)))
+              ∙ ∘ᵐ-congʳ (≈ᵐ-sym (η⊣-nat (⟨⊤⟩-η {⟦ Γ ⟧ᶜᵗˣ})))
               ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
               ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
             , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))

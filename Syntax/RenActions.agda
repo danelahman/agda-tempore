@@ -28,9 +28,8 @@ open import Syntax.Types     S
 -- Renaming of variables
 --
 -- Stated at the empty ambient, which is where all of the language's renamings
--- and every derived one live: `[] ᴱ` is `[]`, and the congruences preserve it,
--- so nothing here is transported and every clause reduces. Ambient-indexed
--- renamings act through `expose-ren-[]`.
+-- and every derived one live. Ambient-indexed renamings act through
+-- `expose-ren-[]`.
 --
 -- `⟨⟩-ext-ctx` is the one rule whose variable is not analysed: it accepts any
 -- variable of the context to its left, and pays for it by that variable being
@@ -89,8 +88,8 @@ rvar-rename r x =
 
 -- Action of renamings on well-typed values and computations
 --
--- At the empty ambient throughout, and so transport-free: the handler clauses'
--- `restrict-ren r` stays there because `[] ᴱ` is `[]`.
+-- At the empty ambient throughout, and so transport-free: a handler clause's
+-- context is the renamed one under one more lock and two more binders.
 
 mutual
 
@@ -127,7 +126,7 @@ mutual
   C-rename r (handle M `with H `in N) =
     handle C-rename r M
     `with (λ op ε'' →
-             C-rename (cong-∷-ren (cong-∷-ren (restrict-ren r))) (H op ε''))
+             C-rename (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
   C-rename r (unbox x rel M) =
     unbox (proj₁ (proj₂ (rvar-rename r x)))

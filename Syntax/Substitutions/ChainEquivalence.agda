@@ -97,25 +97,6 @@ V-sub₀-ext s et false     = refl
 V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-ext s et₁ V₁) (V-sub₀-ext s et₂ V₂)
 
--- So does an eternal restriction, its `var` case being `restrict-sub-img⁻`.
-
-V-sub₀-restrict : ∀ {Γ Γ' A} → (s : Sub₀ [] Γ Γ') → (et : Eternal A)
-                → (V : Γ' ⊢V⦂ A)
-                → V-sub₀ (restrict-sub₀ s) (eternal-val-restrict et V)
-                ≡ eternal-val-restrict et (V-sub₀ s V)
-V-sub₀-restrict {Γ' = Γ'} s et (var f x) =
-  trans (sub-var₀-irr (restrict-sub₀ s) (∈-ᴱ et x) _ (et-bound et))
-    (trans (restrict-sub-img⁻ s (∈-ᴱ et x) et)
-      (cong (eternal-val-restrict et)
-        (trans (cong (λ t → sub-var₀ s (proj₂ t) (et-bound et)) (∈-ᴱ⁻-∈-ᴱ Γ' et x))
-               (sub-var₀-irr s x (et-bound et) f))))
-V-sub₀-restrict s et (const c) = refl
-V-sub₀-restrict s et ⋆         = refl
-V-sub₀-restrict s et true      = refl
-V-sub₀-restrict s et false     = refl
-V-sub₀-restrict s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
-  cong₂ ⦉_,_⦊ (V-sub₀-restrict s et₁ V₁) (V-sub₀-restrict s et₂ V₂)
-
 ------------------------------------------------------------------------
 -- THE CONGRUENCES
 --
@@ -258,43 +239,10 @@ cong-⟨⟩-subˢ-≐ˢ {Γ} {Γ'} {ρ} {σ} {σ'} h = mk≐ˢ goᵛ goᵗ
       trans (cong-⟨⟩-subˢ-tgt σ y)
         (trans (cong (Var-⟨⟩ ρ) (atᵗ h y)) (sym (cong-⟨⟩-subˢ-tgt σ' y)))
 
--- On the eternal restriction.
-
 sub-var-irr : ∀ {Γ Γ' A ρ} → (σ : Sub [] Γ Γ') → (x : A ∈[ ρ ] Γ')
             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
             → sub-var σ x f ≡ sub-var σ x f'
 sub-var-irr σ x f f' = cong (λ g → V-sub σ (var g x)) (bound-irr f f')
-
-restrict-subˢ-var : ∀ {Γ Γ' A ρ} → (σ : Sub [] Γ Γ')
-                  → (x : A ∈[ ρ ] Γ' ᴱ) → (et : Eternal A)
-                  → sub-var (restrict-subˢ σ) x (et-bound et)
-                  ≡ eternal-val-restrict et
-                      (sub-var σ (proj₂ (∈-ᴱ⁻ Γ' x)) (et-bound et))
-restrict-subˢ-var {Γ' = Γ'} []ˢ x et =
-  var-img-≡ (∈-ᴱ-∈-ᴱ⁻ Γ' et x) _ _
-restrict-subˢ-var {Γ' = Γ'} (s ◅ σ) x et =
-  trans (cong (V-sub₀ (restrict-sub₀ s)) (restrict-subˢ-var σ x et))
-        (V-sub₀-restrict s et (sub-var σ (proj₂ (∈-ᴱ⁻ Γ' x)) (et-bound et)))
-
-restrict-subˢ-≐ˢ : ∀ {Γ Γ'} {σ σ' : Sub [] Γ Γ'}
-                 → σ ≐ˢ σ' → restrict-subˢ σ ≐ˢ restrict-subˢ σ'
-restrict-subˢ-≐ˢ {Γ} {Γ'} {σ} {σ'} h = mk≐ˢ goᵛ goᵗ
-  where
-    goᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ' ᴱ) → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
-        → sub-var (restrict-subˢ σ) x f ≡ sub-var (restrict-subˢ σ') x f
-    goᵛ {A} x f =
-      trans (sub-var-irr (restrict-subˢ σ) x f (et-bound et))
-        (trans (restrict-subˢ-var σ x et)
-          (trans (cong (eternal-val-restrict et)
-                       (atᵛ h (proj₂ (∈-ᴱ⁻ Γ' x)) (et-bound et)))
-            (trans (sym (restrict-subˢ-var σ' x et))
-                   (sub-var-irr (restrict-subˢ σ') x (et-bound et) f))))
-      where
-        et : Eternal A
-        et = ec-eternal (ᴱ-EternalCtx Γ') x
-
-    goᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ' ᴱ) → _
-    goᵗ y = ⊥-elim (tgt-img₀-ᴱ Γ' y)
 
 -- Under a whole suffix.
 
@@ -394,7 +342,7 @@ C-sub-delay (s ◅ σ) τ M = cong (C-sub₀ s) (C-sub-delay σ τ M)
 C-sub-handle : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
              → (M : Γ' ⊢C⦂ A ‼ ε)
              → (H : (op : Op) → (ε'' : E)
-                  → Γ' ᴱ ∷ type-of-gtype (param op)
+                  → Γ' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                         ∷ [ mapᵉ (op-grade op) ]
                             (type-of-gtype (arity op) ⇒ B ‼ ε'')
                     ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
@@ -402,7 +350,7 @@ C-sub-handle : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
              → C-sub σ (handle M `with H `in N)
              ≡ handle C-sub σ M
                `with (λ op ε'' →
-                        C-sub (cong-∷-subˢ (cong-∷-subˢ (restrict-subˢ σ))) (H op ε''))
+                        C-sub (cong-∷-subˢ (cong-∷-subˢ (cong-⟨⟩-subˢ σ))) (H op ε''))
                `in (C-sub (cong-∷-subˢ (cong-⟨⟩-subˢ σ)) N)
 C-sub-handle []ˢ      M H N = refl
 C-sub-handle (s ◅ σ) M H N = cong (C-sub₀ s) (C-sub-handle σ M H N)
@@ -502,7 +450,7 @@ mutual
     trans (C-sub-handle σ M H N)
       (trans (handle-≡ (C-sub-≐ˢ h M)
                 (λ op ε'' →
-                   C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ (restrict-subˢ-≐ˢ h)))
+                   C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)))
                             (H op ε''))
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)) N))
              (sym (C-sub-handle σ' M H N)))
@@ -518,3 +466,48 @@ mutual
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (coerce rel M) =
     trans (C-sub-coerce σ rel M)
       (trans (coerce-≡ (C-sub-≐ˢ h M)) (sym (C-sub-coerce σ' rel M)))
+
+------------------------------------------------------------------------
+-- CHAINS AGAINST EMBEDDED RENAMINGS
+--
+-- `⌜_⌝` is faithful for the two observations, and a chain's head may be
+-- replaced by one acting alike, dropped when it is identity-like, or left to
+-- act on a tail replaced the same way.
+------------------------------------------------------------------------
+
+⌜⌝-≐ˢ₀ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → r ≐ʳ r' → ⌜ r ⌝ ≐ˢ₀ ⌜ r' ⌝
+⌜⌝-≐ˢ₀ h = mk≐ˢ₀ (λ x f → var-img-≡ (at h x) _ _) (λ y → at h y)
+
+◅-≐ˢ₀ : ∀ {Γ Δ Γ'} {s s' : Sub₀ [] Γ Δ} → s ≐ˢ₀ s' → (σ : Sub [] Δ Γ')
+      → (s ◅ σ) ≐ˢ (s' ◅ σ)
+◅-≐ˢ₀ h σ = mk≐ˢ (λ x f → V-sub₀-≐ˢ₀ h (sub-var σ x f)) (λ y → atᵗ h _)
+
+◅-tail-≐ˢ : ∀ {Γ Δ Γ'} → (s : Sub₀ [] Γ Δ) → {σ σ' : Sub [] Δ Γ'}
+          → σ ≐ˢ σ' → (s ◅ σ) ≐ˢ (s ◅ σ')
+◅-tail-≐ˢ s h =
+  mk≐ˢ (λ x f → cong (V-sub₀ s) (atᵛ h x f))
+       (λ y → cong (λ t → tgt-img₀ s (proj₂ t)) (atᵗ h y))
+
+id-◅-≐ˢ : ∀ {Γ Γ'} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → (σ : Sub [] Γ Γ')
+        → (⌜ r ⌝ ◅ σ) ≐ˢ σ
+id-◅-≐ˢ {r = r} h σ =
+  mk≐ˢ (λ x f → trans (V-sub₀-⌜⌝ r (sub-var σ x f))
+                      (V-rename-id-≡ h (sub-var σ x f)))
+       (λ y → at h (proj₂ (tgt-img σ y)))
+
+-- A retyping under one more binder, resp. lock, is that binder's congruence
+-- applied to the retyping.
+
+eq-ren-∷-≐ˢ₀ : ∀ {Γ₁ Γ₂ B} → (e' : Γ₁ ≡ Γ₂) → (e : Γ₁ ∷ B ≡ Γ₂ ∷ B)
+             → ⌜ eq-ren e ⌝ ≐ˢ₀ cong-∷-sub {A = B} ⌜ eq-ren e' ⌝
+eq-ren-∷-≐ˢ₀ {B = B} e' e =
+  ≐ˢ₀-trans
+    (⌜⌝-≐ˢ₀ (≐ʳ-trans (eq-ren-≐ʳ e (cong (_∷ B) e')) (eq-ren-∷-≐ʳ e')))
+    (≐ˢ₀-sym (cong-∷-sub-⌜⌝ ≐ˢ₀-refl))
+
+eq-ren-⟨⟩-≐ˢ₀ : ∀ {Γ₁ Γ₂ ρ} → (e' : Γ₁ ≡ Γ₂) → (e : Γ₁ ⟨ ρ ⟩ ≡ Γ₂ ⟨ ρ ⟩)
+              → ⌜ eq-ren e ⌝ ≐ˢ₀ cong-⟨⟩-sub {ρ = ρ} ⌜ eq-ren e' ⌝
+eq-ren-⟨⟩-≐ˢ₀ {ρ = ρ} e' e =
+  ≐ˢ₀-trans
+    (⌜⌝-≐ˢ₀ (≐ʳ-trans (eq-ren-≐ʳ e (cong (_⟨ ρ ⟩) e')) (eq-ren-⟨⟩-≐ʳ e')))
+    (≐ˢ₀-sym (cong-⟨⟩-sub-⌜⌝ ≐ˢ₀-refl))

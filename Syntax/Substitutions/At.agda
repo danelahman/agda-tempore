@@ -44,7 +44,6 @@ open import Syntax.Substitutions.Equivalence      S
 open import Syntax.Substitutions.Interchange      S
 open import Syntax.Substitutions.Chain            S
 open import Syntax.Substitutions.ChainEquivalence S
-open import Syntax.Substitutions.Restrict         S
 open import Syntax.Substitutions.Laws             S
 open import Syntax.Substitutions.Variables        S
 
@@ -73,8 +72,8 @@ sub-atᴿ : ∀ {Γ' B A ρ σ} → (Θ : Ctx)
         → Σ[ σ' ∈ R ] (([ ρ ] A ∈[ σ' ] (Γ' ++ᶜ Θ)) × (σ' ≾ᵣ σ))
 sub-atᴿ {Γ'} {B} Θ z W = ⟨ z ⟩[ split-≡-++ᶜ {Γ' ∷ B} {Θ} ↦ W ]rvar
 
-sub-atᴴ : ∀ {Γ' B D} → (Θ : Ctx) → Fam D (((Γ' ∷ B) ++ᶜ Θ) ᴱ) → Γ' ⊢V⦂ B
-        → Fam D ((Γ' ++ᶜ Θ) ᴱ)
+sub-atᴴ : ∀ {Γ' B D} → (Θ : Ctx) → Fam D (((Γ' ∷ B) ++ᶜ Θ) ⟨ ⊤ᵣ ⟩) → Γ' ⊢V⦂ B
+        → Fam D ((Γ' ++ᶜ Θ) ⟨ ⊤ᵣ ⟩)
 sub-atᴴ {Γ'} {B} Θ H W = H [ split-≡-++ᶜ {Γ' ∷ B} {Θ} ↦ W ]cl
 
 -- Congruences, at that splitting.

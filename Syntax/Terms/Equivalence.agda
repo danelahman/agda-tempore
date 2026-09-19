@@ -66,7 +66,7 @@ unbox-≡ {x = x} {rel = rel} {rel' = rel'} {M = M} refl refl =
 
 handle-≡ : ∀ {Γ A B ε ε'} {M M' : Γ ⊢C⦂ A ‼ ε}
              {H H' : (op : Op) → (ε'' : E) →
-                       Γ ᴱ ∷ type-of-gtype (param op)
+                       Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                          ∷ [ mapᵉ (op-grade op) ]
                              (type-of-gtype (arity op) ⇒ B ‼ ε'')
                        ⊢C⦂ B ‼ (op-grade op ·ₑ ε'')}

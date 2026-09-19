@@ -204,60 +204,6 @@ data ⟨⟩-Ctx : Ctx → Set where
   is-⟨⟩ : ∀ {Γ ρ} → ⟨⟩-Ctx Γ → ⟨⟩-Ctx (Γ ⟨ ρ ⟩)
 
 
--- Eternal restriction of a context: keep only the eternal-typed variables,
--- dropping non-eternal variables and all locks. Eternal values survive
--- arbitrary time-passage (`eternal-val-ext`), so a lock imposes no real
--- constraint on eternal data. The result is therefore lock-free, and every
--- surviving variable sits at grade `uᵣ`.
-
--- The `∷` clause is routed through a helper taking the decision, rather than
--- being a `with` on it. That keeps `(Γ ∷ A) ᴱ` *reducible* at a variable `A`:
--- it exposes `eternal? A` syntactically, so a `with`/`rewrite` elsewhere can
--- abstract it. As a `with`-function the occurrence sits inside an auxiliary
--- that nothing outside can see, which blocks every proof that must reduce both
--- a term and its clause family's context at the same decision.
-
-ᴱ-∷ : Ctx → (A : VType) → Dec (Eternal A) → Ctx
-ᴱ-∷ Γ A (yes _) = Γ ∷ A
-ᴱ-∷ Γ A (no  _) = Γ
-
-_ᴱ : Ctx → Ctx
-[] ᴱ        = []
-(Γ ∷ A) ᴱ   = ᴱ-∷ (Γ ᴱ) A (eternal? A)
-(Γ ⟨ ρ ⟩) ᴱ = Γ ᴱ
-
-infix 34 _ᴱ
-
--- An eternal variable of Γ occurs in the eternal restriction at grade `uᵣ`.
-
-∈-ᴱ : ∀ {Γ A ρ} → Eternal A → A ∈[ ρ ] Γ → A ∈[ uᵣ ] Γ ᴱ
-∈-ᴱ {Γ ∷ A} et Hd       with eternal? A
-... | yes _  = Hd
-... | no ¬et = ⊥-elim (¬et et)
-∈-ᴱ {Γ ∷ B} et (Tl-∷ x) with eternal? B
-... | yes _  = Tl-∷ (∈-ᴱ et x)
-... | no  _  = ∈-ᴱ et x
-∈-ᴱ {Γ ⟨ ρ ⟩} et (Tl-⟨⟩ x) = ∈-ᴱ et x
-
--- The eternal restriction is a homomorphism for context concatenation.
-
-ᴱ-++ᶜ : (Γ Γ' : Ctx) → (Γ ++ᶜ Γ') ᴱ ≡ Γ ᴱ ++ᶜ Γ' ᴱ
-ᴱ-++ᶜ Γ []          = refl
-ᴱ-++ᶜ Γ (Γ' ∷ A)    with eternal? A
-... | yes _ = cong (_∷ A) (ᴱ-++ᶜ Γ Γ')
-... | no  _ = ᴱ-++ᶜ Γ Γ'
-ᴱ-++ᶜ Γ (Γ' ⟨ ρ ⟩)  = ᴱ-++ᶜ Γ Γ'
-
--- The same for the ambient join. Recursion on the ambient, so at the empty one
--- this is `refl` and the transports it justifies compute away.
-
-ᴱ-⋈ᶜ : (Ξ Δ : Ctx) → (Ξ ⋈ᶜ Δ) ᴱ ≡ (Ξ ᴱ) ⋈ᶜ (Δ ᴱ)
-ᴱ-⋈ᶜ []        Δ = refl
-ᴱ-⋈ᶜ (Ξ ∷ A)   Δ =
-  trans (ᴱ-++ᶜ (Ξ ∷ A) Δ) (sym (⋈ᶜ-++ᶜ ((Ξ ∷ A) ᴱ) (Δ ᴱ)))
-ᴱ-⋈ᶜ (Ξ ⟨ ρ ⟩) Δ =
-  trans (ᴱ-++ᶜ (Ξ ⟨ ρ ⟩) Δ) (sym (⋈ᶜ-++ᶜ ((Ξ ⟨ ρ ⟩) ᴱ) (Δ ᴱ)))
-
 -- A variable of the local part is one of the join. At the empty ambient this is
 -- the identity, definitionally, which is what keeps the derived renamings there
 -- transport-free.
@@ -276,20 +222,6 @@ infix 34 _ᴱ
 ⋈ᶜ-assoc (Ξ ⟨ ρ ⟩) Δ Δ₀ =
   trans (⋈ᶜ-++ᶜ ((Ξ ⟨ ρ ⟩) ++ᶜ Δ) Δ₀) (++ᶜ-assoc (Ξ ⟨ ρ ⟩) Δ Δ₀)
 
--- Restriction drops a non-eternal variable extension.
-
-ᴱ-∷-drop : ∀ {Γ A} → ¬ Eternal A → (Γ ∷ A) ᴱ ≡ Γ ᴱ
-ᴱ-∷-drop {A = A} ¬et with eternal? A
-... | yes et = ⊥-elim (¬et et)
-... | no  _  = refl
-
--- Restriction keeps an eternal variable extension.
-
-ᴱ-∷-keep : ∀ {Γ A} → Eternal A → (Γ ∷ A) ᴱ ≡ Γ ᴱ ∷ A
-ᴱ-∷-keep {A = A} et with eternal? A
-... | yes _  = refl
-... | no ¬et = ⊥-elim (¬et et)
-
 -- Appending a context on the right of a split.
 
 split-++ʳ : ∀ {Γ Γ₁ Γ₂} → Γ₁ , Γ₂ split Γ → (D : Ctx) → Γ₁ , Γ₂ ++ᶜ D split (Γ ++ᶜ D)
@@ -297,34 +229,9 @@ split-++ʳ s []        = s
 split-++ʳ s (D ∷ B)   = split-∷ (split-++ʳ s D)
 split-++ʳ s (D ⟨ ρ ⟩) = split-⟨⟩ (split-++ʳ s D)
 
--- Restricting a splitting at an eternal entry: the entry survives, and the two
--- halves become their own eternal restrictions. A lock contributes nothing, and
--- a non-eternal binder drops out of the suffix.
-
-∈-ᴱ-split : ∀ {Γ Γ₁ Γ₂ A} → (et : Eternal A) → (s : Γ₁ ∷ A , Γ₂ split Γ)
-          → Γ₁ ᴱ ∷ A , Γ₂ ᴱ split (Γ ᴱ)
-∈-ᴱ-split {A = A} et split-[] with eternal? A
-... | yes _  = split-[]
-... | no ¬et = ⊥-elim (¬et et)
-∈-ᴱ-split et (split-∷ {A = B} s) with eternal? B
-... | yes _  = split-∷ (∈-ᴱ-split et s)
-... | no  _  = ∈-ᴱ-split et s
-∈-ᴱ-split et (split-⟨⟩ s) = ∈-ᴱ-split et s
-
 -- The variable a split points at, so it can be substituted into by `_[_↦_]c`.
 
 split→∈ : ∀ {Γ Γ₁ Γ₂ A} → Γ₁ ∷ A , Γ₂ split Γ → A ∈[ ctx-grade Γ₂ ] Γ
 split→∈ split-[]     = Hd
 split→∈ (split-∷ s)  = Tl-∷ (split→∈ s)
 split→∈ (split-⟨⟩ s) = Tl-⟨⟩ (split→∈ s)
-
--- When the split variable is *not* eternal, the eternal restriction is
--- unchanged by removing it, i.e. it is the restriction of the two halves.
-
-ᴱ-drop-split : ∀ {Γ Γ₁ Γ₂ A} → ¬ Eternal A → (s : Γ₁ ∷ A , Γ₂ split Γ)
-             → Γ ᴱ ≡ (Γ₁ ++ᶜ Γ₂) ᴱ
-ᴱ-drop-split {Γ₁ = Γ₁} {Γ₂} {A} ¬et s =
-  trans (cong _ᴱ (sym (split-≡ s)))
-    (trans (ᴱ-++ᶜ (Γ₁ ∷ A) Γ₂)
-      (trans (cong (_++ᶜ Γ₂ ᴱ) (ᴱ-∷-drop {Γ₁} {A} ¬et))
-        (sym (ᴱ-++ᶜ Γ₁ Γ₂))))

@@ -40,9 +40,6 @@ open import Syntax.Renamings.Equivalence S using (eternal?-yes)
 open Category Cat
 open Past Pst
 open GroundEternal GE
-open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
-
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
@@ -51,9 +48,6 @@ open import DenotationalSemantics.Interpretation.Renaming.Extension S Cat Fut Ps
 
 -- ───────────────────────────────────────────────────────────────────────────
 -- DENOTATIONS OF THE STRUCTURAL RENAMINGS
---
--- `exch-ren` (swap the two topmost variables) and `ᴱ-ren` (project a context
--- onto its eternal prefix `Γ ᴱ`).
 -- ───────────────────────────────────────────────────────────────────────────
 
 private
@@ -71,25 +65,3 @@ exch-ren-mor {Γ} {X} {Y} =
                 ∙ ∘ᵐ-congˡ (var-morphism-Hd {Γ} {X} _) ⟩ᵐ-cong)
   ∙ mapˣᵐ-∘⟨⟩ _ _ _ _
   ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong
-
--- The denotation of the eternal inclusion `ᴱ-ren Γ : Ren [] Γ` (Γ ᴱ) is the
--- eternal projection: the two are defined by the same `eternal?` recursion, the
--- lock case matching `extᵉ` against `⟨⟩-ext-ctx`. That case needs the two
--- eternal structures on `⟦ Γ ᴱ ⟧` — the one read off the `EternalCtx` witness
--- and the one `projᴱ` uses — to agree, which they do, by the same recursion.
-
-ec-Eternalᵒ-ᴱ : (Γ : Ctx) → ec-Eternalᵒ (ᴱ-EternalCtx Γ) ≡ ⟦ Γ ⟧ᴱ-Eternalᵒ
-ec-Eternalᵒ-ᴱ []        = refl
-ec-Eternalᵒ-ᴱ (Γ ∷ A)   with eternal? A
-... | yes et = cong (λ z → ×-eternalᵒ z (eternalᵛ-Eternalᵒ et)) (ec-Eternalᵒ-ᴱ Γ)
-... | no  _  = ec-Eternalᵒ-ᴱ Γ
-ec-Eternalᵒ-ᴱ (Γ ⟨ ρ ⟩) = ec-Eternalᵒ-ᴱ Γ
-
-ᴱ-ren-mor : (Γ : Ctx) → ⟦ ᴱ-ren Γ ⟧ʳ ≈ᵐ projᴱ Γ
-ᴱ-ren-mor []        = ≈ᵐ-refl
-ᴱ-ren-mor (Γ ∷ A)   with eternal? A
-... | yes _ = mapˣᵐ-cong (ᴱ-ren-mor Γ) ≈ᵐ-refl
-... | no  _ = ∘ᵐ-congˡ (ᴱ-ren-mor Γ)
-ᴱ-ren-mor (Γ ⟨ ρ ⟩) =
-    ∘ᵐ-cong (≡→≈ᵐ (cong (λ eΓ → Eternalᵒ.extᵉ eΓ {ρ}) (ec-Eternalᵒ-ᴱ Γ)))
-            (⟨⟩-congᶠ (ᴱ-ren-mor Γ))

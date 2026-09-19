@@ -109,7 +109,6 @@ open import Syntax.Substitutions.Equivalence
 open import Syntax.Substitutions.Chain
 open import Syntax.Substitutions.Interchange
 open import Syntax.Substitutions.ChainEquivalence
-open import Syntax.Substitutions.Restrict
 open import Syntax.Substitutions.Laws
 
 ---- Substituting at a context's prefix boundary, which is the form every

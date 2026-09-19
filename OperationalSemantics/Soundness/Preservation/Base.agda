@@ -63,12 +63,13 @@ open import DenotationalSemantics.Interpretation.SubstitutionCoherence S Cat Fut
 open import DenotationalSemantics.Interpretation.State S Cat Fut Pst Adj GTy Mon GE
 
 open import DenotationalSemantics.Model.Modality.Eternal
-       Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
+       Cat (GradeSystem.RGrade Grades) Fut Pst Adj
+       using (Eternalᵒ; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-η)
 
--- The `Eternalᵒ` on `⟦ Γ ᴱ ⟧` carried by every `handle` interpretation: the
--- eternal-parameter object of the handler's fold.
-bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ᴱ ⟧ᶜᵗˣ
-bcᴱ Γ = (⟦ Γ ⟧ᴱ-Eternalᵒ)
+-- The `Eternalᵒ` on `⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧` carried by every `handle` interpretation: the
+-- eternal-parameter object of the handler's fold, free on `⟦ Γ ⟧`.
+bcᴱ : ∀ (Γ : Ctx) → Eternalᵒ ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧ᶜᵗˣ
+bcᴱ Γ = ⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ
 
 -- THE INTERPRETATION OF A CONFIGURATION
 --
@@ -544,8 +545,8 @@ ret-step {Γ} alg alg-η V N pV pN =
       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (sub-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren) N V pN pV))
 
 -- `ret-step`, threaded with an eternal parameter `P` supplied by `pv`. The
--- handler's algebra reads its clause-context off `P` (`= ⟦ Γ ᴱ ⟧`, via
--- `projᴱ Γ`); the `ηᵀ` law discards it (`sndᵐ`), so returning ignores `P`.
+-- handler's algebra reads its clause-context off `P` (`= ⟦ Γ ⟨ ⊤ᵣ ⟩ ⟧`, via
+-- `⟨⊤⟩-η`); the `ηᵀ` law discards it (`sndᵐ`), so returning ignores `P`.
 ret-step-P : ∀ {Γ A B ε P}
            → (pv : ⟦ Γ ⟧ᶜᵗˣ →ᵐ P)
            → (alg : P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε) uₑ →ᵐ Tᵒ ⟦ B ⟧ᵛ (uₑ ·ₑ ε))
@@ -597,7 +598,7 @@ sound-SEQ-RET V N pV pN = ret-step μᵀ T-μ∘η≡id V N pV pN
 sound-HANDLE-RET : ∀ {Γ A B ε}
                  → (V : Γ ⊢V⦂ A)
                  → (H : (op : Op) → (ε'' : E)
-                      → Γ ᴱ ∷ type-of-gtype (param op)
+                      → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
                            ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε'')
                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ uₑ ⟩ ∷ A ⊢C⦂ B ‼ ε)
@@ -609,6 +610,6 @@ sound-HANDLE-RET : ∀ {Γ A B ε}
                     ∘ᵐ ⟦ C-rename (cong-∷-ren (eq-ren (cong (Γ ⟨_⟩) map-uᵉ) ∘ʳ ⟨⟩-η-ren)) N
                            [ split-[] ↦ V ]c ⟧ᶜᵗ (ret-subᴾ V N pV pN)
 sound-HANDLE-RET {Γ} V H N pV pN pH uH =
-  ret-step-P (projᴱ Γ) (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
+  ret-step-P ⟨⊤⟩-η (T-alg-of-handlerᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH))
              (T-alg-of-handlerᵀ-ηᵀ (bcᴱ Γ) (⟦_⟧ʰᵗ {Γ} H pH uH)) V N pV pN
 

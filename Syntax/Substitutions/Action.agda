@@ -34,8 +34,8 @@ open import Syntax.Substitutions.Lookup S
 -- so the two recursions are independent — which is what a composition generator
 -- in `Sub₀` would have destroyed.
 --
--- At the empty ambient throughout, and so transport-free: the handler clauses'
--- `restrict-sub₀ s` stays there because `[] ᴱ` is `[]`.
+-- At the empty ambient throughout, and so transport-free: a handler clause's
+-- context is the substituted one under one more lock and two more binders.
 
 mutual
 
@@ -71,7 +71,7 @@ mutual
   C-sub₀ s (handle M `with H `in N) =
     handle C-sub₀ s M
     `with (λ op ε'' →
-             C-sub₀ (cong-∷-sub (cong-∷-sub (restrict-sub₀ s))) (H op ε''))
+             C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))) (H op ε''))
     `in (C-sub₀ (cong-sub₀ s) N)
   -- The unboxed resource variable is taken to another resource variable by
   -- `sub-tgt₀`, at a grade that drops. Read off with projections rather than a
