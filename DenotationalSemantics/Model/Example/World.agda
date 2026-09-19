@@ -54,6 +54,13 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
 
+-- the same two with a formal greatest grade adjoined, which reaches
+-- every world: covariance forces the relation there to contain every
+-- other, and composition survives because the adjoined point absorbs
+
+import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop
+import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinityAndTop
+
 -- advance no further than one of the bounds a trace grade lists: the
 -- right-sided interval frame, with the bound read off a trace
 
@@ -90,6 +97,11 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.TwoSided
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinity
 
+-- the same with a formal greatest grade adjoined, which reaches every
+-- history: it is the one grade whose worlds need not extend one another
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinityAndTop
+
 -- append a continuation that stays within one of the bounds a trace
 -- grade lists -- accessibility is then just "the continuation is a run
 -- the grade admits"
@@ -117,3 +129,11 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSi
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.RightSided
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.LeftSided
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.TwoSided
+
+------------------------------------------------------------------------
+-- The frames a grade system is modelled over
+--
+-- The two grade systems projecting subset grades onto intervals land in
+-- the adjoined-top intervals, so it is the frames above that model them.
+
+import DenotationalSemantics.Model.Example.World.SubsetSystems

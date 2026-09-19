@@ -297,7 +297,8 @@ open import OperationalSemantics.Adequacy.PSh.HeadFaithful
 open import OperationalSemantics.Adequacy.PSh.TickFrames
 
 ---- Concrete Kripke frames: time-ticks worlds and trace-history worlds,
----- one of each per example grade
+---- one of each per example grade, and the frames each grade system is
+---- modelled over
 ---- (see the module for the contrast between the two families)
 
 import DenotationalSemantics.Model.Example.World
