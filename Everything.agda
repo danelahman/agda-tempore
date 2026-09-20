@@ -131,6 +131,12 @@ open import Syntax.Substitutions.Clauses
 
 open import Syntax.CompContext
 
+---- Erasure to raw terms, and the theorem that subsumption is confined to
+---- the reconciliation points
+
+open import Syntax.Erasure
+open import Syntax.Normalisation
+
 
 -- GRADES
 ---------

@@ -1,0 +1,93 @@
+------------------------------------------------------------------
+-- Erasure of well-typed terms to their underlying raw terms.    --
+--                                                               --
+-- `ErV`/`ErC` are the term formers with every type, grade and   --
+-- subsumption witness dropped; variables become de Bruijn       --
+-- positions, counting binders and skipping locks. Two           --
+-- derivations have the same erasure exactly when they are the   --
+-- same program typed differently.                               --
+--                                                               --
+-- A handler's clause family is indexed by the operation and the --
+-- continuation's effect, as in the typing rule, so that equal   --
+-- erasures compare clauses at every effect.                     --
+------------------------------------------------------------------
+
+open import Syntax.Grades
+open import Syntax.LanguageSpec
+open import Syntax.Operations
+
+open import Util.Equality
+
+module Syntax.Erasure (S : LanguageSpec) where
+
+open LanguageSpec S
+open GradeSystemInterface Grades
+open Operations Ops
+
+open import Syntax.Contexts S
+open import Syntax.Language S
+open import Syntax.Types    S
+
+-- Raw terms
+
+mutual
+
+  data ErV : Set where
+    var   : ℕ → ErV
+    const : (B : BaseType) → BaseConstants B → ErV
+    ⋆     : ErV
+    true  : ErV
+    false : ErV
+    ⦉_,_⦊ : ErV → ErV → ErV
+    lam   : ErC → ErV
+
+  data ErC : Set where
+    return            : ErV → ErC
+    _⨟_               : ErC → ErC → ErC
+    _·_               : ErV → ErV → ErC
+    match_`in_        : ErV → ErC → ErC
+    absurd            : ErV → ErC
+    if_`then_`else_   : ErV → ErC → ErC → ErC
+    perform           : Op → ErV → ErC → ErC
+    delay             : ℕ → ErC → ErC
+    handle_`with_`in  : ErC → (Op → E → ErC) → ErC → ErC
+    unbox             : ℕ → ErC → ErC
+    box               : ErV → ErC → ErC
+
+-- De Bruijn position of a variable: locks contribute nothing.
+
+var-pos : ∀ {Γ A ρ} → A ∈[ ρ ] Γ → ℕ
+var-pos Hd        = zero
+var-pos (Tl-∷ x)  = suc (var-pos x)
+var-pos (Tl-⟨⟩ x) = var-pos x
+
+-- Erasure
+
+mutual
+
+  ⌊_⌋ᵛ : ∀ {Γ A} → Γ ⊢V⦂ A → ErV
+
+  ⌊ var f x ⌋ᵛ   = var (var-pos x)
+  ⌊ const c ⌋ᵛ   = const _ c
+  ⌊ ⋆ ⌋ᵛ         = ⋆
+  ⌊ true ⌋ᵛ      = true
+  ⌊ false ⌋ᵛ     = false
+  ⌊ ⦉ V , W ⦊ ⌋ᵛ  = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
+  ⌊ lam M ⌋ᵛ     = lam ⌊ M ⌋ᶜ
+  ⌊ subV V p ⌋ᵛ  = ⌊ V ⌋ᵛ
+
+  ⌊_⌋ᶜ : ∀ {Γ C} → Γ ⊢C⦂ C → ErC
+
+  ⌊ return V ⌋ᶜ               = return ⌊ V ⌋ᵛ
+  ⌊ M ⨟ N ⌋ᶜ                  = ⌊ M ⌋ᶜ ⨟ ⌊ N ⌋ᶜ
+  ⌊ V · W ⌋ᶜ                  = ⌊ V ⌋ᵛ · ⌊ W ⌋ᵛ
+  ⌊ match V `in M ⌋ᶜ          = match ⌊ V ⌋ᵛ `in ⌊ M ⌋ᶜ
+  ⌊ absurd V ⌋ᶜ               = absurd ⌊ V ⌋ᵛ
+  ⌊ if V `then M `else N ⌋ᶜ   = if ⌊ V ⌋ᵛ `then ⌊ M ⌋ᶜ `else ⌊ N ⌋ᶜ
+  ⌊ perform op V M ⌋ᶜ         = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
+  ⌊ delay τ M ⌋ᶜ              = delay τ ⌊ M ⌋ᶜ
+  ⌊ handle M `with H `in N ⌋ᶜ =
+    handle ⌊ M ⌋ᶜ `with (λ op ε'' → ⌊ H op ε'' ⌋ᶜ) `in ⌊ N ⌋ᶜ
+  ⌊ unbox x rel p N ⌋ᶜ        = unbox (var-pos x) ⌊ N ⌋ᶜ
+  ⌊ box V N ⌋ᶜ                = box ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
+  ⌊ subC M p ⌋ᶜ               = ⌊ M ⌋ᶜ
