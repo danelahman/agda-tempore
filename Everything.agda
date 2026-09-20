@@ -374,6 +374,10 @@ open import TypeInference.ParamGround
 import TypeInference.SolverImpl
 import TypeInference.SolverImpl.Demo
 
+---- Semantic refutation of a grade ordering against the unit
+
+import TypeInference.SolverImpl.Refute
+
 ---- Biased satisfaction, the static fragment, and guarded solver interfaces
 
 open import TypeInference.Solver.Fragment
