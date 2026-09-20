@@ -374,9 +374,11 @@ open import TypeInference.ParamGround
 import TypeInference.SolverImpl
 import TypeInference.SolverImpl.Demo
 
----- Semantic refutation of a grade ordering against the unit
+---- Semantic refutation of a grade ordering against the unit, and the
+---- narrowing of reported var-rule disjunctions it justifies
 
 import TypeInference.SolverImpl.Refute
+import TypeInference.SolverImpl.Simplify
 
 ---- The rigid-binder-free fragment, and guarded solver interfaces
 

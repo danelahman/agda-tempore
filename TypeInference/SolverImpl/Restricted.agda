@@ -12,10 +12,16 @@
 -- `Normal`'s decision procedures. The read-back may also fail, on --
 -- an eternality demand that decomposes to nothing — and that is   --
 -- refutable, because substitution preserves a type's head former. --
+--                                                                --
+-- `reportOn` is the reporting boundary on top: what a caller is   --
+-- shown is the same residue with its var-rule disjunctions        --
+-- narrowed. `Principality` and `Infer` are solver-independent, so --
+-- the narrowing is applied here, where the deciders are in scope. --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])
 open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (⊤)
 
@@ -47,14 +53,19 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import TypeInference.Open.Types S
-open import TypeInference.Open.Subst S
-open import TypeInference.Open.Hyps  S
+open import TypeInference.Open.Types     S
+open import TypeInference.Open.Contexts  S
+open import TypeInference.Open.Subst     S
+open import TypeInference.Open.Hyps      S
+open import TypeInference.Open.Grounding S
+
+open import TypeInference.Raw.Syntax S using (RawC)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐ˢ-sym)
 
+open import TypeInference.Principality      S using (Principal)
 open import TypeInference.Solver.Fragment   S
 open import TypeInference.Solver.Restricted S
 
@@ -65,6 +76,8 @@ open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Principal S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Simplify  S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+  using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
@@ -130,3 +143,37 @@ solverImplOn = record
   ; solve-complete  = solveOn-complete
   ; solve-principal = λ C _ → solveOn-principal C
   }
+
+-- A solution, its residue as the solver returns it, and the residue
+-- narrowed for the report. The two are satisfied by the same
+-- groundings, so the narrowing changes nothing but the reading.
+
+record Reported {Θ : Scope} (C : Constraint Θ) : Set where
+  constructor report
+  field
+    Θ'     : Scope
+    σ      : Subst Θ Θ'
+    Q      : Hyps Θ'
+    Q̂      : Hyps Θ'
+    sat    : σ ⊨[ Q ] C
+    narrow : (θ : Grounding Θ') → θ ⊨ᴴ Q  → θ ⊨ᴴ Q̂
+    widen  : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q
+
+reportOn : ∀ {Θ} → (C : Constraint Θ) → Maybe (Reported C)
+reportOn C with solveOn C in e
+... | nothing           = nothing
+... | just (Θ' , σ , Q) =
+      just (report Θ' σ Q (simplify Q) (solveOn-sound C e)
+                   (simplify-⊨ Q) (simplify-⊨⁻ Q))
+
+-- The same narrowing where a principal type hands out its residue
+
+reportedQ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
+          → Hyps (Principal.Θ⁺ p)
+reportedQ p = simplify (Principal.Q⁺ p)
+
+reportedQ-≃ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
+            → (θ : Grounding (Principal.Θ⁺ p))
+            → (θ ⊨ᴴ Principal.Q⁺ p → θ ⊨ᴴ reportedQ p)
+              × (θ ⊨ᴴ reportedQ p → θ ⊨ᴴ Principal.Q⁺ p)
+reportedQ-≃ p = simplify-≃ (Principal.Q⁺ p)

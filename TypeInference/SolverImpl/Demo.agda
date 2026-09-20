@@ -409,6 +409,57 @@ module Least where
   ex-disj-close : solved?ᵈ (S⁰.gsolveImpl disjC) ≡ just tt
   ex-disj-close = refl
 
+  -- The same grade under a type variable: eternality is open, the
+  -- grade side is refuted, so reporting narrows the disjunction.
+
+  narrowC : Cnᵈ.Constraint (∅ˢ +ty)
+  narrowC = Cnᵈ.Et∨≾ᵘ (Tyᵈ.tvar (newᵗ {∅ˢ})) (Grᵈ.rconst [0, ↑ 1 ])
+
+  -- the solver's disjunctions, then the report's atoms, orderings
+  -- and surviving disjunctions
+
+  reportOfᵈ : ∀ {Θ₀} → Cnᵈ.Constraint Θ₀
+            → Maybe (Σ[ Θ ∈ Scope ] (List (Tyᵈ.OVType Θ × Grᵈ.RExp Θ)
+                                      × List (TyVar Θ)
+                                      × List (Grᵈ.RExp Θ × Grᵈ.RExp Θ)
+                                      × List (Tyᵈ.OVType Θ × Grᵈ.RExp Θ)))
+  reportOfᵈ C with Rsᵈ.reportOn C
+  ... | nothing = nothing
+  ... | just r  = just (Rsᵈ.Reported.Θ' r ,
+                        Hyᵈ.disj (Rsᵈ.Reported.Q  r) ,
+                        Hyᵈ.ets  (Rsᵈ.Reported.Q̂ r) ,
+                        Hyᵈ.ordᵣ (Rsᵈ.Reported.Q̂ r) ,
+                        Hyᵈ.disj (Rsᵈ.Reported.Q̂ r))
+
+  -- the solver residualises the disjunction; the report keeps the
+  -- eternality atom alone
+
+  ex-narrow : reportOfᵈ narrowC
+            ≡ just (∅ˢ +ty ,
+                    (Tyᵈ.tvar (newᵗ {∅ˢ}) , Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
+                    newᵗ {∅ˢ} ∷ᴸ []ᴸ , []ᴸ , []ᴸ)
+  ex-narrow = refl
+
+  -- a met eternality demand is dropped outright
+
+  ex-narrow-met : reportOfᵈ disjC
+                ≡ just (∅ˢ , (Tyᵈ.Unit , Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
+                        []ᴸ , []ᴸ , []ᴸ)
+  ex-narrow-met = refl
+
+  -- a function type is never eternal, so both sides are refuted here:
+  -- narrowing leaves the false ordering rather than hiding it
+
+  bothC : Cnᵈ.Constraint ∅ˢ
+  bothC = Cnᵈ.Et∨≾ᵘ (Tyᵈ.Unit Tyᵈ.⇒ (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ)) (Grᵈ.rconst [0, ↑ 1 ])
+
+  ex-narrow-both : reportOfᵈ bothC
+                 ≡ just (∅ˢ ,
+                         (Tyᵈ.Unit Tyᵈ.⇒ (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ) ,
+                          Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
+                         []ᴸ , (Grᵈ.rconst [0, ↑ 1 ] , Grᵈ.ûᵣ) ∷ᴸ []ᴸ , []ᴸ)
+  ex-narrow-both = refl
+
 -- The solver is principal on every constraint: a program the solver
 -- accepts has a principal type.
 
