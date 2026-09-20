@@ -58,6 +58,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
               ⟨⊤⟩-μ∘Tη≡id; free-extᵉ-nat; free-necᵉ-nat; barrier-μ; barrier-lock)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -240,23 +241,24 @@ sound-handle-box {Γ} {A} {B} {C} {ρ} V M H N ((pV , pM) , pN , pH , uH)
 
 -- `handle-unbox`: the same for an `unbox` binder.
 
-sound-handle-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
-  → (x : [ ρ ] A ∈[ ρ' ] Γ)
-  → (rel : ρ' ≾ᵣ ρ)
+sound-handle-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
+  → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
+  → (rel : ρ' ≾ᵣ ρ₀)
+  → (w : A₀ <:ᵛ A)
   → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
   → (H : (op : Op) → (ε'' : E)
        → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ C ‼ ε'')
          ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-  → Soundᶜ== (handle-unbox x rel M H N)
-sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
+  → Soundᶜ== (handle-unbox x rel w M H N)
+sound-handle-unbox {Γ} {A} {A₀} {B} {C} {ρ₀} {ρ'} {ε} {ε'} x rel w M H N
                    (pM , pN , pH , uH)
                    (pM₂ , pN₂ , pH₂ , uH₂) =
-  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel (handle M `with R.Hᵣ `in (C-rename r N)))
+  ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel w (handle M `with R.Hᵣ `in (C-rename r N)))
               (pM₂ , pN₂ , pH₂ , uH₂)
               (pM , renᶜ r N pN , pH₂ , uH₂)
-          ∙ unbox-def x rel (handle M `with R.Hᵣ `in (C-rename r N))
+          ∙ unbox-def x rel w (handle M `with R.Hᵣ `in (C-rename r N))
               (pM , renᶜ r N pN , pH₂ , uH₂)
           ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (R.alg-nat pH₂ uH₂))
           ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
@@ -275,7 +277,7 @@ sound-handle-unbox {Γ} {A} {B} {C} {ρ} {ρ'} {ε} {ε'} x rel M H N
                               (⟨⟩ᵐ-fstᵐ _ _) ⟩ᵐ-cong))
   where
     r  = cong-∷-ren (cong-⟨⟩-ren wk-ren)
-    gu = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
+    gu = ⟨ idᵐ , ⟦ w ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
 
     module R = Reindex (cong-⟨⟩-ren (wk-ren {Δ = Γ} {A = A}))
                        (⟨⊤⟩-η ∘ᵐ fstᵐ) (wk-free {Γ} {A}) H pH uH

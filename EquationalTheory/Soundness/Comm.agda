@@ -54,6 +54,7 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -114,27 +115,33 @@ box-wk X W pW =
   ∙ ∘ᵐ-congʳ (η⊣-nat fstᵐ)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
-sound-unbox-comm : ∀ {Γ A B C ρ₁ ρ₁' ρ₂ ρ₂'}
-                 → (x₁ : [ ρ₁ ] A ∈[ ρ₁' ] Γ) → (rel₁ : ρ₁' ≾ᵣ ρ₁)
-                 → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
+sound-unbox-comm : ∀ {Γ A A₁ B B₂ C ρ₁ ρ₁' ρ₂ ρ₂'}
+                 → (x₁ : [ ρ₁ ] A₁ ∈[ ρ₁' ] Γ) → (rel₁ : ρ₁' ≾ᵣ ρ₁)
+                 → (w₁ : A₁ <:ᵛ A)
+                 → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
+                 → (w₂ : B₂ <:ᵛ B)
                  → (M : Γ ∷ A ∷ B ⊢C⦂ C)
-                 → Soundᶜ== (unbox-comm x₁ rel₁ x₂ rel₂ M)
-sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ x₂ rel₂ M pM pR =
-    unbox-def x₁ rel₁ (unbox (Tl-∷ x₂) rel₂ M) pM
-  ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₂) rel₂ M pM)
+                 → Soundᶜ== (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M)
+sound-unbox-comm {Γ = Γ} {A = A} {B = B} x₁ rel₁ w₁ x₂ rel₂ w₂ M pM pR =
+    unbox-def x₁ rel₁ w₁ (unbox (Tl-∷ x₂) rel₂ w₂ M) pM
+  ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₂) rel₂ w₂ M pM)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                        , unbox-env-nat (wk-ren {A = A}) x₂ rel₂ rel₂ ⟩ᵐ-cong))
+                        ,   ∘ᵐ-congʳ (unbox-env-nat (wk-ren {A = A}) x₂ rel₂ rel₂)
+                          ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ (unbox (Tl-∷ x₁) rel₁ (C-rename exch-ren M)))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ w₂
+                         (unbox (Tl-∷ x₁) rel₁ w₁ (C-rename exch-ren M)))
                 pR (renᶜ exch-ren M pM)
-            ∙ unbox-def x₂ rel₂ (unbox (Tl-∷ x₁) rel₁ (C-rename exch-ren M))
+            ∙ unbox-def x₂ rel₂ w₂
+                (unbox (Tl-∷ x₁) rel₁ w₁ (C-rename exch-ren M))
                 (renᶜ exch-ren M pM)
-            ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₁) rel₁ (C-rename exch-ren M)
+            ∙ ∘ᵐ-congˡ (unbox-def (Tl-∷ x₁) rel₁ w₁ (C-rename exch-ren M)
                           (renᶜ exch-ren M pM))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM
                                   ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {B} {A})))
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                                  , unbox-env-nat (wk-ren {A = B}) x₁ rel₁ rel₁ ⟩ᵐ-cong))
+                                  ,   ∘ᵐ-congʳ (unbox-env-nat (wk-ren {A = B}) x₁ rel₁ rel₁)
+                                    ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong))
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
 
 sound-box-comm : ∀ {Γ A B C ρ ρ'}
@@ -159,22 +166,23 @@ sound-box-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} {ρ' = ρ'} V W M (pV , (pW' 
                                     ∙ box-wk ([ ρ' ] B) V pV ⟩ᵐ-cong))
             ∙ comm-r (⟦ M ⟧ᶜᵗ pM) _ _)
 
-sound-box-unbox-comm : ∀ {Γ A B C ρ ρ₂ ρ₂'}
+sound-box-unbox-comm : ∀ {Γ A B B₂ C ρ ρ₂ ρ₂'}
                      → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                     → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
+                     → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ) → (rel₂ : ρ₂' ≾ᵣ ρ₂)
+                     → (w₂ : B₂ <:ᵛ B)
                      → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
-                     → Soundᶜ== (box-unbox-comm V x₂ rel₂ M)
-sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ M (pV , pM) pR =
-    ∘ᵐ-congˡ (  unbox-def (Tl-∷ x₂) rel₂ M pM
+                     → Soundᶜ== (box-unbox-comm V x₂ rel₂ w₂ M)
+sound-box-unbox-comm {Γ = Γ} {A = A} {B = B} {ρ = ρ} V x₂ rel₂ w₂ M (pV , pM) pR =
+    ∘ᵐ-congˡ (  unbox-def (Tl-∷ x₂) rel₂ w₂ M pM
               ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                          , unbox-env-nat (wk-ren {A = [ ρ ] A}) x₂ rel₂ rel₂
-                            ⟩ᵐ-cong))
+                          ,   ∘ᵐ-congʳ (unbox-env-nat (wk-ren {A = [ ρ ] A}) x₂ rel₂ rel₂)
+                            ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong))
   ∙ comm-l (⟦ M ⟧ᶜᵗ pM) _ _
-  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
-                                           (C-rename exch-ren M)))
+  ∙ ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x₂ rel₂ w₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
+                                              (C-rename exch-ren M)))
                 pR (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
-            ∙ unbox-def x₂ rel₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
-                                     (C-rename exch-ren M))
+            ∙ unbox-def x₂ rel₂ w₂ (box (V-rename (cong-⟨⟩-ren wk-ren) V)
+                                        (C-rename exch-ren M))
                 (renᵛ (cong-⟨⟩-ren wk-ren) V pV , renᶜ exch-ren M pM)
             ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (  C-rename-nat exch-ren M pM
                                   ∙ ∘ᵐ-congʳ (exch-ren-mor {Γ} {B} {[ ρ ] A})))

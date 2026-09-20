@@ -66,6 +66,7 @@ mutual
   Midᵛ (V-subst {V = V} {W = W} p x q U) = Paramᵛ V × Paramᵛ W × Paramᵛ U × Midᵛ p
   Midᵛ (⦉⦊-cong p q)                     = Midᵛ p × Midᵛ q
   Midᵛ (lam-cong p)                      = Midᶜ p
+  Midᵛ (subV-cong p)                     = Midᵛ p
   Midᵛ _                                 = ⊤
 
   Midᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → Γ ⊢C⦂ M == N → Set
@@ -85,7 +86,7 @@ mutual
     Midᶜ p × ((op : Op) → (ε'' : E) → Midᶜ (hs op ε'')) × Midᶜ q
   Midᶜ (unbox-cong q)                    = Midᶜ q
   Midᶜ (box-cong p q)                    = Midᵛ p × Midᶜ q
-  Midᶜ (coerce-cong p)                   = Midᶜ p
+  Midᶜ (subC-cong p)                     = Midᶜ p
   -- The two *axioms* whose endpoints do not determine all the certificates,
   -- because each mentions its body only under a renaming or a substitution
   -- (and neither `renᶜ` nor `subᶜ` is invertible): `match-eta`'s `M` occurs
@@ -95,5 +96,5 @@ mutual
   Midᶜ (if-eta V M)                      = Paramᶜ M
   Midᶜ (delay-delay M)                   = Paramᶜ M
   -- `unbox-beta` mentions `K` and `N` only inside the filled context.
-  Midᶜ (unbox-beta V K p N)              = Paramᵏ K × Paramᶜ N
+  Midᶜ (unbox-beta V K p w N)            = Paramᵏ K × Paramᶜ N
   Midᶜ _                                 = ⊤

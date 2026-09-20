@@ -59,6 +59,7 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -82,10 +83,12 @@ sound-boxed-not-used V M (pV , pCM) pR =
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)
   ∙ ∘ᵐ-identityʳ _
 
-sound-unbox-not-used : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-                     → (M : Γ ⊢C⦂ C) → Soundᶜ== (unbox-not-used x rel M)
-sound-unbox-not-used x rel M pCM pR =
-    unbox-def x rel (C-rename wk-ren M) pCM
+sound-unbox-not-used : ∀ {Γ A A₀ C ρ₀ ρ'}
+                     → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ₀)
+                     → (w : A₀ <:ᵛ A)
+                     → (M : Γ ⊢C⦂ C) → Soundᶜ== (unbox-not-used x rel w M)
+sound-unbox-not-used x rel w M pCM pR =
+    unbox-def x rel w (C-rename wk-ren M) pCM
   ∙ ∘ᵐ-congˡ (  ⟦⟧ᶜᵗ-irr (C-rename wk-ren M) pCM (renᶜ wk-ren M pR)
               ∙ C-rename-nat wk-ren M pR)
   ∙ ∘ᵐ-assoc _ _ _
@@ -93,7 +96,8 @@ sound-unbox-not-used x rel M pCM pR =
   ∙ ∘ᵐ-identityʳ _
 
 -- Two `unbox` nodes naming the same cell denote the same morphism: the grade
--- bound is a `_≾ᵣ_` proof, hence irrelevant.
+-- bound is a `_≾ᵣ_` proof and the payload witness a `_<:ᵛ_` one, both
+-- irrelevant.
 
 unbox-env-irr : ∀ {Γ A ρ} → {c c' : Var Γ ([ ρ ] A)} → c ≡ c'
               → (b : proj₁ c ≾ᵣ ρ) → (b' : proj₁ c' ≾ᵣ ρ)
@@ -101,14 +105,16 @@ unbox-env-irr : ∀ {Γ A ρ} → {c c' : Var Γ ([ ρ ] A)} → c ≡ c'
               ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ b' ∘ᵐ var-proj (proj₂ c'))
 unbox-env-irr refl b b' rewrite ≾ᵣ-irrelevant b b' = ≈ᵐ-refl
 
-unbox-cell-≈ : ∀ {Γ A C ρ ρ' ρ''}
-             → (x : [ ρ ] A ∈[ ρ' ] Γ) → (x' : [ ρ ] A ∈[ ρ'' ] Γ)
-             → (rel : ρ' ≾ᵣ ρ) → (rel' : ρ'' ≾ᵣ ρ)
-             → _≡_ {A = Var Γ ([ ρ ] A)} (ρ' , x) (ρ'' , x')
+unbox-cell-≈ : ∀ {Γ A A₀ C ρ₀ ρ' ρ''}
+             → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (x' : [ ρ₀ ] A₀ ∈[ ρ'' ] Γ)
+             → (rel : ρ' ≾ᵣ ρ₀) → (rel' : ρ'' ≾ᵣ ρ₀)
+             → (w w' : A₀ <:ᵛ A)
+             → _≡_ {A = Var Γ ([ ρ₀ ] A₀)} (ρ' , x) (ρ'' , x')
              → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
-             → ⟦ unbox x rel M ⟧ᶜᵗ pM ≈ᵐ ⟦ unbox x' rel' M ⟧ᶜᵗ pM
+             → ⟦ unbox x rel w M ⟧ᶜᵗ pM ≈ᵐ ⟦ unbox x' rel' w' M ⟧ᶜᵗ pM
 
-unbox-cell-≈ x x' rel rel' h M pM =
-    unbox-def x rel M pM
-  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , unbox-env-irr h rel rel' ⟩ᵐ-cong)
-  ∙ ≈ᵐ-sym (unbox-def x' rel' M pM)
+unbox-cell-≈ x x' rel rel' w w' h M pM =
+    unbox-def x rel w M pM
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+              , ∘ᵐ-cong (⟦⟧<:ᵛ-irr w w') (unbox-env-irr h rel rel') ⟩ᵐ-cong)
+  ∙ ≈ᵐ-sym (unbox-def x' rel' w' M pM)

@@ -59,6 +59,7 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -208,21 +209,21 @@ sound-seq-box {ρ = ρ} V M N ((pV , pM) , pN) pR =
     r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
     g = ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
 
-sound-seq-unbox : ∀ {Γ A B C ρ ρ' ε ε'}
-                → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
+sound-seq-unbox : ∀ {Γ A A₀ B C ρ₀ ρ' ε ε'}
+                → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ₀) → (w : A₀ <:ᵛ A)
                 → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
-                → Soundᶜ== (seq-unbox x rel M N)
-sound-seq-unbox {ε = ε} x rel M N (pM , pN) pR =
-    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel (M ⨟ C-rename r N)) pR (pM , renᶜ r N pN)
-            ∙ unbox-def x rel (M ⨟ C-rename r N) (pM , renᶜ r N pN)
+                → Soundᶜ== (seq-unbox x rel w M N)
+sound-seq-unbox {ε = ε} x rel w M N (pM , pN) pR =
+    ≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (unbox x rel w (M ⨟ C-rename r N)) pR (pM , renᶜ r N pN)
+            ∙ unbox-def x rel w (M ⨟ C-rename r N) (pM , renᶜ r N pN)
             ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (C-rename-nat r N pN))))
             ∙ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
             ∙ seq-extend (⟦ M ⟧ᶜᵗ pM) (⟦ N ⟧ᶜᵗ pN) g fstᵐ (⟨⟩ᵐ-fstᵐ _ _)
             ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
-                (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-def x rel M pM) ⟩ᵐ-cong))))
+                (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-def x rel w M pM) ⟩ᵐ-cong))))
   where
     r = cong-∷-ren (cong-⟨⟩-ren wk-ren)
-    g = ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
+    g = ⟨ idᵐ , ⟦ w ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
 
 
 

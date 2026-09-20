@@ -54,6 +54,7 @@ open GroundTypes GTy
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -103,9 +104,14 @@ mutual
   soundᵛ (⦉⦊-cong p q)        (mp , mq)    (pV , pW) (pV' , pW') =
     ⟨ soundᵛ p mp pV pV' , soundᵛ q mq pW pW' ⟩ᵐ-cong
   soundᵛ (lam-cong p)         mp           pM pM' = curryᵐ-cong (soundᶜ p mp pM pM')
+  soundᵛ (subV-cong {w = w} {w' = w'} p) mp pV pW =
+    ∘ᵐ-cong (⟦⟧<:ᵛ-irr w w') (soundᵛ p mp pV pW)
   -- eta
   soundᵛ (unit-eta V)         _            pV pW = sound-unit-eta V pV pW
   soundᵛ (fun-eta V)          _            pV pW = sound-fun-eta V pV pW
+  -- axioms — subsumption
+  soundᵛ (subV-refl w V)      _            = sound-subV-refl w V
+  soundᵛ (subV-trans w w' w'' V) _         = sound-subV-trans w w' w'' V
 
   soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M == N) → Midᶜ p → Soundᶜ== p
   -- setoid structure
@@ -156,24 +162,24 @@ mutual
                        (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , soundᶜ p mp pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
   -- The two nodes name the same variable and differ only in an irrelevant
   -- bound (`unbox-cell-≈`); only the body needs the recursive call.
-  soundᶜ (unbox-cong {x = x} {rel = rel} {rel' = rel'} {M = M} {N = N} q)
+  soundᶜ (unbox-cong {x = x} {rel = rel} {rel' = rel'} {w = w} {w' = w'}
+                     {M = M} {N = N} q)
          mq pM pM' =
-      unbox-cell-≈ x x rel rel' refl M pM
-    ∙ unbox-def x rel' M pM
+      unbox-cell-≈ x x rel rel' w w' refl M pM
+    ∙ unbox-def x rel' w' M pM
     ∙ ∘ᵐ-congˡ (soundᶜ q mq pM pM')
-    ∙ ≈ᵐ-sym (unbox-def x rel' N pM')
+    ∙ ≈ᵐ-sym (unbox-def x rel' w' N pM')
   soundᶜ (box-cong p q)       (mp , mq)    (pV , pM) (pV' , pM') =
     ∘ᵐ-cong (soundᶜ q mq pM pM')
             (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ ([]-congᶠ (soundᵛ p mp pV pV')) ⟩ᵐ-cong)
-  soundᶜ (coerce-cong {rel = rel} {rel' = rel'} p) mp pM pN =
-    ∘ᵐ-cong (≡→≈ᵐ (cong T-≤ (≾ₑ-irrelevant rel rel')))
-            (soundᶜ p mp pM pN)
+  soundᶜ (subC-cong {w = w} {w' = w'} p) mp pM pN =
+    ∘ᵐ-cong (⟦⟧<:ᶜ-irr w w') (soundᶜ p mp pM pN)
   -- axioms — sequencing
   soundᶜ (seq-return V M)     _  = sound-seq-return V M
   soundᶜ (seq-perform V M N)  _  = sound-seq-perform V M N
   soundᶜ (seq-delay M N)      _  = sound-seq-delay M N
   soundᶜ (seq-box V M N)      _  = sound-seq-box V M N
-  soundᶜ (seq-unbox w V M N)  _  = sound-seq-unbox w V M N
+  soundᶜ (seq-unbox x rel w M N) _ = sound-seq-unbox x rel w M N
   soundᶜ (seq-eta M)          _  = sound-seq-eta M
   soundᶜ (seq-assoc M N P)    _  = sound-seq-assoc M N P
   -- axioms — beta/eta
@@ -189,21 +195,22 @@ mutual
   soundᶜ (handle-perform V M H N) _ = sound-handle-perform V M H N
   soundᶜ (handle-delay M H N)    _ = sound-handle-delay M H N
   soundᶜ (handle-box V M H N)    _ = sound-handle-box V M H N
-  soundᶜ (handle-unbox w V M H N) _ = sound-handle-unbox w V M H N
+  soundᶜ (handle-unbox x rel w M H N) _ = sound-handle-unbox x rel w M H N
   -- axioms — modal
-  soundᶜ (unbox-beta V K p N)    m = sound-unbox-beta V K p N (proj₁ m) (proj₂ m)
-  soundᶜ (unbox-comm w₁ V₁ w₂ V₂ M) _ = sound-unbox-comm w₁ V₁ w₂ V₂ M
+  soundᶜ (unbox-beta V K p w N)  m = sound-unbox-beta V K p w N (proj₁ m) (proj₂ m)
+  soundᶜ (unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M) _ =
+    sound-unbox-comm x₁ rel₁ w₁ x₂ rel₂ w₂ M
   soundᶜ (box-comm V W M)        _ = sound-box-comm V W M
-  soundᶜ (box-unbox-comm V w₂ V₂ M) _ = sound-box-unbox-comm V w₂ V₂ M
+  soundᶜ (box-unbox-comm V x₂ rel₂ w₂ M) _ = sound-box-unbox-comm V x₂ rel₂ w₂ M
   soundᶜ (boxed-not-used V M)    _ = sound-boxed-not-used V M
-  soundᶜ (unbox-not-used w V M)  _ = sound-unbox-not-used w V M
-  -- axioms — coercion
-  soundᶜ (coerce-refl rel M)     _ = sound-coerce-refl rel M
-  soundᶜ (coerce-trans rel rel' rel'' M) _ = sound-coerce-trans rel rel' rel'' M
-  soundᶜ (coerce-perform rel V M) _ = sound-coerce-perform rel V M
-  soundᶜ (coerce-delay rel M)    _ = sound-coerce-delay rel M
-  soundᶜ (coerce-seq rel M N)    _ = sound-coerce-seq rel M N
-  soundᶜ (coerce-handle rel M H N) _ = sound-coerce-handle rel M H N
+  soundᶜ (unbox-not-used x rel w M) _ = sound-unbox-not-used x rel w M
+  -- axioms — subsumption
+  soundᶜ (subC-refl w M)         _ = sound-subC-refl w M
+  soundᶜ (subC-trans w w' w'' M) _ = sound-subC-trans w w' w'' M
+  soundᶜ (subC-perform w rel V M) _ = sound-subC-perform w rel V M
+  soundᶜ (subC-delay w rel M)    _ = sound-subC-delay w rel M
+  soundᶜ (subC-seq w rel M N)    _ = sound-subC-seq w rel M N
+  soundᶜ (subC-handle w rel M H N) _ = sound-subC-handle w rel M H N
   -- axioms — delay
   soundᶜ (delay-zero M)          _ = sound-delay-zero M
   soundᶜ (delay-delay M)         m = sound-delay-delay M m

@@ -26,6 +26,11 @@ open import Syntax.Types         S
 
 open import Syntax.Renamings.Equivalence S using (∈-++ᶜˡ; grade-++ᶜˡ-uᵣ)
 
+-- Binder narrowing, shared with the two sequencing rules of the operational
+-- semantics.
+
+open import OperationalSemantics.PreservationTheorem S using (narrow-∷)
+
 
 -- Equations between well-typed values and computations
 
@@ -94,6 +99,30 @@ mutual
             -----------------------------------------------
             → Γ ⊢V⦂ V
                 == lam (V-rename wk-ren V · var (λ _ → ≾ᵣ-refl) Hd)
+
+    -- equations for subsumption
+    --
+    -- Subsumption is erased, so it obeys exactly the laws of the coercion it
+    -- denotes: witness irrelevance, and functoriality in the witness.
+
+    subV-cong : ∀ {A A'}
+              → {w w' : A <:ᵛ A'}
+              → {V W : Γ ⊢V⦂ A}
+              → Γ ⊢V⦂ V == W
+              ------------------------------
+              → Γ ⊢V⦂ subV V w == subV W w'
+
+    subV-refl : ∀ {A}
+              → (w : A <:ᵛ A)
+              → (V : Γ ⊢V⦂ A)
+              ----------------------
+              → Γ ⊢V⦂ subV V w == V
+
+    subV-trans : ∀ {A₁ A₂ A₃}
+               → (w : A₁ <:ᵛ A₂) → (w' : A₂ <:ᵛ A₃) → (w'' : A₁ <:ᵛ A₃)
+               → (V : Γ ⊢V⦂ A₁)
+               ------------------------------------------
+               → Γ ⊢V⦂ subV (subV V w) w' == subV V w''
 
   infix 18 _⊢V⦂_==_
 
@@ -210,16 +239,18 @@ mutual
                 --------------------------------------------------------------------
                 → Γ ⊢C⦂ handle M `with H `in N == handle M' `with H' `in N'
 
-    -- The grade bound an `unbox` stores is irrelevant, so the two nodes are
-    -- compared at the resource variable they name.
+    -- The grade bound and the payload subsumption an `unbox` stores are both
+    -- irrelevant, so the two nodes are compared at the resource variable they
+    -- name.
 
-    unbox-cong : ∀ {A C ρ ρ'}
-               → {x : [ ρ ] A ∈[ ρ' ] Γ}
-               → {rel rel' : ρ' ≾ᵣ ρ}
+    unbox-cong : ∀ {A A₀ C ρ₀ ρ'}
+               → {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ}
+               → {rel rel' : ρ' ≾ᵣ ρ₀}
+               → {w w' : A₀ <:ᵛ A}
                → {M N : Γ ∷ A  ⊢C⦂ C}
                → Γ ∷ A ⊢C⦂ M == N
-               --------------------------------------
-               → Γ ⊢C⦂ unbox x rel M == unbox x rel' N
+               ------------------------------------------------
+               → Γ ⊢C⦂ unbox x rel w M == unbox x rel' w' N
 
     box-cong : ∀ {A C ρ}
              → {V W : Γ ⟨ ρ ⟩ ⊢V⦂ A}
@@ -229,12 +260,12 @@ mutual
              --------------------------
              → Γ ⊢C⦂ box V M == box W N
 
-    coerce-cong : ∀ {A ε ε'}
-                → {rel rel' : ε ≾ₑ ε'}
-                → {M N : Γ ⊢C⦂ A ‼ ε}
-                → Γ ⊢C⦂ M == N
-                -----------------------------------
-                → Γ ⊢C⦂ coerce rel M == coerce rel' N
+    subC-cong : ∀ {C C'}
+              → {w w' : C <:ᶜ C'}
+              → {M N : Γ ⊢C⦂ C}
+              → Γ ⊢C⦂ M == N
+              ------------------------------
+              → Γ ⊢C⦂ subC M w == subC N w'
 
     -- computational/beta-equations for sequential composition
 
@@ -290,14 +321,15 @@ mutual
             → Γ ⊢C⦂ box V M ⨟ N
                 == box V (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
-    seq-unbox : ∀ {A B C ρ ρ' ε ε'}
-              → (x : [ ρ ] A ∈[ ρ' ] Γ)
-              → (rel : ρ' ≾ᵣ ρ)
+    seq-unbox : ∀ {A A₀ B C ρ₀ ρ' ε ε'}
+              → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
+              → (rel : ρ' ≾ᵣ ρ₀)
+              → (w : A₀ <:ᵛ A)
               → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
               -------------------------------------------------------
-              → Γ ⊢C⦂ unbox x rel M ⨟ N
-                  == unbox x rel (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
+              → Γ ⊢C⦂ unbox x rel w M ⨟ N
+                  == unbox x rel w (M ⨟ C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N)
 
     -- eta-equation for sequential composition
 
@@ -479,9 +511,10 @@ mutual
                         `in (C-rename (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N))
 
 
-    handle-unbox : ∀ {A B C ρ ρ' ε ε'}
-                 → (x : [ ρ ] A ∈[ ρ' ] Γ)
-                 → (rel : ρ' ≾ᵣ ρ)
+    handle-unbox : ∀ {A A₀ B C ρ₀ ρ' ε ε'}
+                 → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
+                 → (rel : ρ' ≾ᵣ ρ₀)
+                 → (w : A₀ <:ᵛ A)
                  → (M : Γ ∷ A ⊢C⦂ B ‼ ε)
                  → (H : (op : Op) → (ε'' : E) →
                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
@@ -489,8 +522,8 @@ mutual
                           ⊢C⦂ C ‼ (op-grade op ·ₑ ε''))
                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ B ⊢C⦂ C ‼ ε')
                  -----------------------------------------------------------------
-                 → Γ ⊢C⦂ handle unbox x rel M `with H `in N
-                     == unbox x rel
+                 → Γ ⊢C⦂ handle unbox x rel w M `with H `in N
+                     == unbox x rel w
                         (handle M
                         `with (λ op' ε'' →
                                  C-rename (cong-∷-ren (cong-∷-ren
@@ -500,33 +533,36 @@ mutual
 
     -- beta rule for unbox
 
-    unbox-beta : ∀ {A C D ρ}
+    unbox-beta : ∀ {A A' C D ρ}
                → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
                → (K : Γ ∷ [ ρ ] A ⊢K[ all ◁ D ]⦂ C)
                → (p : ctx-grade (hole-ctx K) ≾ᵣ ρ)
-               → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A ⊢C⦂ D)
+               → (w : A <:ᵛ A')
+               → (N : (Γ ∷ [ ρ ] A ++ᶜ hole-ctx K) ∷ A' ⊢C⦂ D)
                -----------------------------------------------------------------------
                → Γ ⊢C⦂ box V (K [ unbox (∈-++ᶜˡ (hole-ctx K) Hd)
                                         (≾ᵣ-trans (≾ᵣ-reflexive
                                                     (grade-++ᶜˡ-uᵣ (hole-ctx K)))
                                                   p)
-                                        N ])
-                   == box V (K [ N [ split-[] ↦ V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V ]c ])
+                                        w N ])
+                   == box V (K [ N [ split-[] ↦ subV (V-rename ((cong-⟨⟩-ren wk-ren ∘ʳ ⟨⟩-≤-ren p) ∘ʳ wk-ren-⟨ρ⟩-ctx refl) V) w ]c ])
 
 
     -- unboxing non-related values commute
 
-    unbox-comm : ∀ {A B C ρ₁ ρ₁' ρ₂ ρ₂'}
-               → (x₁ : [ ρ₁ ] A ∈[ ρ₁' ] Γ)
+    unbox-comm : ∀ {A A₁ B B₂ C ρ₁ ρ₁' ρ₂ ρ₂'}
+               → (x₁ : [ ρ₁ ] A₁ ∈[ ρ₁' ] Γ)
                → (rel₁ : ρ₁' ≾ᵣ ρ₁)
-               → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
+               → (w₁ : A₁ <:ᵛ A)
+               → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ)
                → (rel₂ : ρ₂' ≾ᵣ ρ₂)
+               → (w₂ : B₂ <:ᵛ B)
                → (M : Γ ∷ A ∷ B ⊢C⦂ C)
                ----------------------------------------------------
-               → Γ ⊢C⦂ unbox x₁ rel₁
-                        (unbox (Tl-∷ x₂) rel₂ M)
-                   == unbox x₂ rel₂
-                        (unbox (Tl-∷ x₁) rel₁
+               → Γ ⊢C⦂ unbox x₁ rel₁ w₁
+                        (unbox (Tl-∷ x₂) rel₂ w₂ M)
+                   == unbox x₂ rel₂ w₂
+                        (unbox (Tl-∷ x₁) rel₁ w₁
                                (C-rename exch-ren M))
 
 
@@ -555,85 +591,100 @@ mutual
 
     -- eta rule for unbox
 
-    unbox-not-used : ∀ {A C ρ ρ'}
-                   → (x : [ ρ ] A ∈[ ρ' ] Γ)
-                   → (rel : ρ' ≾ᵣ ρ)
+    unbox-not-used : ∀ {A A₀ C ρ₀ ρ'}
+                   → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
+                   → (rel : ρ' ≾ᵣ ρ₀)
+                   → (w : A₀ <:ᵛ A)
                    → (M : Γ ⊢C⦂ C)
-                   -------------------------------------
-                   → Γ ⊢C⦂ unbox x rel (C-rename wk-ren M)
+                   ---------------------------------------------------
+                   → Γ ⊢C⦂ unbox x rel w (C-rename (wk-ren {A = A}) M)
                        == M
 
     -- boxing and unboxing unrelated resources commute
 
-    box-unbox-comm : ∀ {A B C ρ ρ₂ ρ₂'}
+    box-unbox-comm : ∀ {A B B₂ C ρ ρ₂ ρ₂'}
                    → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
-                   → (x₂ : [ ρ₂ ] B ∈[ ρ₂' ] Γ)
+                   → (x₂ : [ ρ₂ ] B₂ ∈[ ρ₂' ] Γ)
                    → (rel₂ : ρ₂' ≾ᵣ ρ₂)
+                   → (w₂ : B₂ <:ᵛ B)
                    → (M : Γ ∷ [ ρ ] A ∷ B ⊢C⦂ C)
                    -----------------------------------
                    → Γ ⊢C⦂ box V
-                            (unbox (Tl-∷ x₂) rel₂ M)
-                       == unbox x₂ rel₂
+                            (unbox (Tl-∷ x₂) rel₂ w₂ M)
+                       == unbox x₂ rel₂ w₂
                             (box
                               (V-rename (cong-⟨⟩-ren wk-ren) V)
                               (C-rename exch-ren M))
 
-    -- equations for sub-effecting coercions
+    -- equations for subsumption
     --
-    -- Coercion is functorial in the effect grade and commutes with the operation/delay effect formers.
+    -- Subsumption is functorial in the witness and commutes with the
+    -- operation/delay effect formers. Sub-effecting is the special case at an
+    -- effect-only witness, so `coerce` needs no equations of its own.
 
-    coerce-refl : ∀ {A ε}
-                → (rel : ε ≾ₑ ε)
-                → (M : Γ ⊢C⦂ A ‼ ε)
-                ---------------------------
-                → Γ ⊢C⦂ coerce rel M == M
+    subC-refl : ∀ {C}
+              → (w : C <:ᶜ C)
+              → (M : Γ ⊢C⦂ C)
+              ------------------------
+              → Γ ⊢C⦂ subC M w == M
 
-    coerce-trans : ∀ {A ε₁ ε₂ ε₃}
-                 → (rel : ε₁ ≾ₑ ε₂) → (rel' : ε₂ ≾ₑ ε₃) → (rel'' : ε₁ ≾ₑ ε₃)
-                 → (M : Γ ⊢C⦂ A ‼ ε₁)
-                 ------------------------------------------------------
-                 → Γ ⊢C⦂ coerce rel' (coerce rel M) == coerce rel'' M
+    subC-trans : ∀ {C₁ C₂ C₃}
+               → (w : C₁ <:ᶜ C₂) → (w' : C₂ <:ᶜ C₃) → (w'' : C₁ <:ᶜ C₃)
+               → (M : Γ ⊢C⦂ C₁)
+               ----------------------------------------------
+               → Γ ⊢C⦂ subC (subC M w) w' == subC M w''
 
-    coerce-perform : ∀ {A ε ε' op}
-                   → (rel : ε ≾ₑ ε')
-                   → (V : Γ ⊢V⦂ type-of-gtype (param op))
-                   → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-                          ⊢C⦂ A ‼ ε)
-                   ----------------------------------------------------------
-                   → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (perform op V M)
-                        == perform op V (coerce rel M)
-
-    coerce-delay : ∀ {A τ ε ε'}
+    subC-perform : ∀ {A A' ε ε' op}
+                 → (w : A <:ᵛ A')
                  → (rel : ε ≾ₑ ε')
-                 → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
-                 ------------------------------------------------
-                 → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (delay τ M)
-                      == delay τ (coerce rel M)
+                 → (V : Γ ⊢V⦂ type-of-gtype (param op))
+                 → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                        ⊢C⦂ A ‼ ε)
+                 ----------------------------------------------------------
+                 → Γ ⊢C⦂ subC (perform op V M) (w ‼ₛ ·ₑ-monoʳ-≾ₑ rel)
+                      == perform op V (subC M (w ‼ₛ rel))
 
-    -- The continuation's lock relaxes contravariantly along the coercion.
+    subC-delay : ∀ {A A' τ ε ε'}
+               → (w : A <:ᵛ A')
+               → (rel : ε ≾ₑ ε')
+               → (M : Γ ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
+               ------------------------------------------------
+               → Γ ⊢C⦂ subC (delay τ M) (w ‼ₛ ·ₑ-monoʳ-≾ₑ rel)
+                    == delay τ (subC M (w ‼ₛ rel))
 
-    coerce-seq : ∀ {A B ε₁ ε₂ ε'}
-               → (rel : ε₁ ≾ₑ ε₂)
-               → (M : Γ ⊢C⦂ A ‼ ε₁)
-               → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
-               ------------------------------------------------------------
-               → Γ ⊢C⦂ (coerce rel M) ⨟ N
-                    == coerce (·ₑ-monoˡ-≾ₑ rel)
-                         (M ⨟ C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)
+    -- Moving a scrutinee's subsumption outwards relaxes the continuation's
+    -- lock along the effect half and narrows its binder along the value half.
+    -- Neither `_⨟_` nor `handle_`with_`in` carries a payload witness of its
+    -- own, as `unbox` does.
 
-    coerce-handle : ∀ {A B ε₁ ε₂ ε'}
-                  → (rel : ε₁ ≾ₑ ε₂)
-                  → (M : Γ ⊢C⦂ A ‼ ε₁)
-                  → (H : (op : Op) → (ε₀ : E) →
-                           Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                               ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                           ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                  → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A ⊢C⦂ B ‼ ε')
-                  ----------------------------------------------------------------
-                  → Γ ⊢C⦂ handle (coerce rel M) `with H `in N
-                       == coerce (·ₑ-monoˡ-≾ₑ rel)
-                            (handle M `with H
-                               `in (C-rename (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N))
+    subC-seq : ∀ {A A' B ε₁ ε₂ ε'}
+             → (w : A <:ᵛ A')
+             → (rel : ε₁ ≾ₑ ε₂)
+             → (M : Γ ⊢C⦂ A ‼ ε₁)
+             → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
+             ------------------------------------------------------------
+             → Γ ⊢C⦂ subC M (w ‼ₛ rel) ⨟ N
+                  == coerce (·ₑ-monoˡ-≾ₑ rel)
+                       (M ⨟ narrow-∷ w
+                              (C-rename
+                                (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N))
+
+    subC-handle : ∀ {A A' B ε₁ ε₂ ε'}
+                → (w : A <:ᵛ A')
+                → (rel : ε₁ ≾ₑ ε₂)
+                → (M : Γ ⊢C⦂ A ‼ ε₁)
+                → (H : (op : Op) → (ε₀ : E) →
+                         Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                             ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                         ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
+                → (N : Γ ⟨ mapᵉ ε₂ ⟩ ∷ A' ⊢C⦂ B ‼ ε')
+                ----------------------------------------------------------------
+                → Γ ⊢C⦂ handle (subC M (w ‼ₛ rel)) `with H `in N
+                     == coerce (·ₑ-monoˡ-≾ₑ rel)
+                          (handle M `with H
+                             `in (narrow-∷ w
+                                    (C-rename
+                                      (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)))
 
     -- equations for collapsing successive delays
 

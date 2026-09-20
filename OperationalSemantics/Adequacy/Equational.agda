@@ -152,14 +152,16 @@ open import OperationalSemantics.Adequacy.Normalization Spec
 -- What a closed base-typed program can be observed to do: return a constant,
 -- or get stuck on an operation. Two programs agree on the observation when
 -- they halt in the same shape with the same constant, resp. the same
--- operation.
+-- operation. A run only refines the whnf's value type, so the returned value
+-- is read at the program's type (`ret-value`) and its subsumption spine
+-- stripped by `base-val`/`bool-val`.
 
 data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
 
   both-ret : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
            → (c : BaseConstants b)
-           → Ret-whnf.value wM ≡ const c
-           → Ret-whnf.value wN ≡ const c
+           → base-val (ret-value wM) ≡ const c
+           → base-val (ret-value wN) ≡ const c
            → Same-answer M N
 
   both-op  : (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
@@ -195,13 +197,13 @@ data Same-answer {b : BaseType} {ε : E} (M N : Prog (Base b) ε) : Set where
 data Same-answer-bool {ε : E} (M N : Prog Bool ε) : Set where
 
   both-true  : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
-             → Ret-whnf.value wM ≡ true
-             → Ret-whnf.value wN ≡ true
+             → bool-val (ret-value wM) ≡ true
+             → bool-val (ret-value wN) ≡ true
              → Same-answer-bool M N
 
   both-false : (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
-             → Ret-whnf.value wM ≡ false
-             → Ret-whnf.value wN ≡ false
+             → bool-val (ret-value wM) ≡ false
+             → bool-val (ret-value wN) ≡ false
              → Same-answer-bool M N
 
   both-op    : (wM : Op-whnf (⟨ ∅ , M ⟩)) → (wN : Op-whnf (⟨ ∅ , N ⟩))
