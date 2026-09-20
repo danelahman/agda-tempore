@@ -33,6 +33,7 @@ open import Syntax.Language      Spec
 open import Syntax.RenActions    Spec
 open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
+open import Syntax.Subtyping     Spec
 open import Syntax.Types         Spec
 
 open import Syntax.Renamings.Equivalence Spec
@@ -74,9 +75,13 @@ cast-app : ∀ {Γ Γ' A C} → (e : Γ ≡ Γ') → {V : Γ ⊢V⦂ A ⇒ C} �
          → castᶜ e (V · W) ≡ (castᵛ e V) · (castᵛ e W)
 cast-app refl = refl
 
-cast-coerce : ∀ {Γ Γ' A ε ε'} → (e : Γ ≡ Γ') → {p : ε ≾ₑ ε'} → {M : Γ ⊢C⦂ A ‼ ε}
-            → castᶜ e (coerce p M) ≡ coerce p (castᶜ e M)
-cast-coerce refl = refl
+cast-subV : ∀ {Γ Γ' A A'} → (e : Γ ≡ Γ') → {p : A <:ᵛ A'} → {V : Γ ⊢V⦂ A}
+          → castᵛ e (subV V p) ≡ subV (castᵛ e V) p
+cast-subV refl = refl
+
+cast-subC : ∀ {Γ Γ' C C'} → (e : Γ ≡ Γ') → {p : C <:ᶜ C'} → {M : Γ ⊢C⦂ C}
+          → castᶜ e (subC M p) ≡ subC (castᶜ e M) p
+cast-subC refl = refl
 
 cast-if : ∀ {Γ Γ' C} → (e : Γ ≡ Γ')
         → {V : Γ ⊢V⦂ Bool} → {M N : Γ ⊢C⦂ C}
@@ -176,10 +181,12 @@ castʳ refl w = w
 
 -- A cast relocates the resource variable an `unbox` names along `Var-cast`.
 
-cast-unbox : ∀ {Γ Γ' A C ρ ρ'} → (e : Γ ≡ Γ')
-           → {x : [ ρ ] A ∈[ ρ' ] Γ} → {rel : ρ' ≾ᵣ ρ} → {M : Γ ∷ A ⊢C⦂ C}
-           → castᶜ e (unbox x rel M)
-           ≡ unbox (proj₂ (Var-cast e (ρ' , x))) rel (castᶜ (cong (_∷ A) e) M)
+cast-unbox : ∀ {Γ Γ' A A₀ C ρ ρ₀ ρ'} → (e : Γ ≡ Γ')
+           → {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} → {p : ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)}
+           → {rel : ρ' ≾ᵣ ρ} → {M : Γ ∷ A ⊢C⦂ C}
+           → castᶜ e (unbox<: x p rel M)
+           ≡ unbox<: (proj₂ (Var-cast e (ρ' , x))) p rel
+                     (castᶜ (cong (_∷ A) e) M)
 cast-unbox refl = refl
 
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')

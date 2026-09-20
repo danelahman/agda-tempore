@@ -23,6 +23,7 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import Syntax.Contexts   S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 -- Well-typed terms (values and computations)
@@ -82,6 +83,16 @@ mutual
             -------------
             → Γ ⊢V⦂ A ⇒ C
 
+    -- subsumption
+    --
+    -- Erased: a value is retyped, never transformed, so no coercion is
+    -- computed and nothing is eta-expanded.
+
+    subV    : {A A' : VType}
+            → Γ ⊢V⦂ A
+            → A <:ᵛ A'
+            -----------
+            → Γ ⊢V⦂ A'
 
   data _⊢C⦂_ (Γ : Ctx) : CType → Set where
 
@@ -129,8 +140,8 @@ mutual
 
     -- boolean elimination
 
-    -- Both branches are typed at the same computation type `C`, so they carry
-    -- the same effect grade; differing grades are equalised by `coerce`.
+    -- Both branches are typed at the same computation type `C`; differing
+    -- types are equalised by subsumption.
 
     if_`then_`else_
             : {C : CType}
@@ -181,17 +192,22 @@ mutual
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
-    -- The value being unboxed is a variable of box type `[ ρ ] A`: every value of
-    -- a graded modal type is one (`grad-typ⇒var` below). That enough time has
-    -- passed since it was brought into scope is the grade bound `ρ' ≾ᵣ ρ`, where
-    -- `ρ'` is the product of the locks standing to the variable's right. Reading
-    -- that product off the context is what rewinds it to the variable's world,
-    -- with no subtraction operation on contexts.
+    -- The value being unboxed is a variable of box type: every value of a graded
+    -- modal type is one up to subsumption (`grad-typ⇒var<:` below), so the rule
+    -- names the occurrence at its *declared* type `[ ρ₀ ] A₀` and subsumes it
+    -- into the `[ ρ ] A` being eliminated. A binder's type is not something a
+    -- term former can subsume, which is why that witness sits here and not on a
+    -- premise. That enough time has passed since the occurrence was brought into
+    -- scope is the grade bound `ρ' ≾ᵣ ρ`, where `ρ'` is the product of the locks
+    -- standing to the variable's right. Reading that product off the context is
+    -- what rewinds it to the variable's world, with no subtraction operation on
+    -- contexts.
 
-    unbox   : {A : VType}
+    unbox<: : {A A₀ : VType}
             → {C : CType}
-            → {ρ ρ' : R}
-            → [ ρ ] A ∈[ ρ' ] Γ
+            → {ρ ρ₀ ρ' : R}
+            → [ ρ₀ ] A₀ ∈[ ρ' ] Γ
+            → ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)
             → ρ' ≾ᵣ ρ
             → Γ ∷ A ⊢C⦂ C
             ---------------------------
@@ -207,14 +223,34 @@ mutual
             --------------------
             → Γ ⊢C⦂ C
 
-    -- (shallow explicit) sub-effecting
+    -- subsumption
 
-    coerce : {A : VType}
-           → {ε ε' : E}
-           → ε ≾ₑ ε'
-           → Γ ⊢C⦂ A ‼ ε
-           --------------
-           → Γ ⊢C⦂ A ‼ ε'
+    subC    : {C C' : CType}
+            → Γ ⊢C⦂ C
+            → C <:ᶜ C'
+            -----------
+            → Γ ⊢C⦂ C'
+
+-- Sub-effecting, recovered as subsumption at an effect-only derivation
+
+coerce : ∀ {Γ A ε ε'}
+       → ε ≾ₑ ε'
+       → Γ ⊢C⦂ A ‼ ε
+       --------------
+       → Γ ⊢C⦂ A ‼ ε'
+
+coerce {A = A} p M = subC M (<:ᵛ-refl A , p)
+
+-- Unboxing an occurrence at the type it is declared with
+
+unbox : ∀ {Γ A C ρ ρ'}
+      → [ ρ ] A ∈[ ρ' ] Γ
+      → ρ' ≾ᵣ ρ
+      → Γ ∷ A ⊢C⦂ C
+      -------------------
+      → Γ ⊢C⦂ C
+
+unbox {A = A} {ρ = ρ} x rel M = unbox<: x (<:ᵛ-refl ([ ρ ] A)) rel M
 
 -- Useful substitution of effect annotations
 
@@ -226,13 +262,21 @@ mutual
 
 ε-subst refl M = M
 
--- Values with graded modal types are variables
+-- Values with graded modal types are variables, up to subsumption: the
+-- occurrence is at the *declared* box type, which the value's type only
+-- bounds.
 
-grad-typ⇒var : ∀ {Γ A ρ}
-             → (V : Γ ⊢V⦂ [ ρ ] A)
-             → Σ[ ρ' ∈ R ] Σ[ x ∈ ([ ρ ] A ∈[ ρ' ] Γ) ] Σ[ f ∈ (¬ Eternal ([ ρ ] A) → ρ' ≾ᵣ uᵣ) ] (V ≡ var f x)
+grad-typ⇒var<: : ∀ {Γ A ρ}
+               → Γ ⊢V⦂ [ ρ ] A
+               → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
+                   (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × ([ ρ₀ ] A₀ <:ᵛ [ ρ ] A) × ρ' ≾ᵣ uᵣ)
 
-grad-typ⇒var (var f x) = _ , x , f , refl
+grad-typ⇒var<: {A = A} {ρ = ρ} (var f x) =
+  _ , _ , _ , x , <:ᵛ-refl ([ ρ ] A) , f (λ ())
+grad-typ⇒var<: {A = A} {ρ = ρ} (subV {A = B} V p) with <:ᵛ-shape p
+... | Boxˢ {ρ = ρ₁} {A = A₁} with grad-typ⇒var<: V
+... | ρ₀ , A₀ , ρ' , x , q , b =
+  ρ₀ , A₀ , ρ' , x , <:ᵛ-trans {[ ρ₀ ] A₀} {[ ρ₁ ] A₁} {[ ρ ] A} q p , b
 
 -- Values typing with eternal types can type under any grade extension of its typing context
 
@@ -249,3 +293,5 @@ eternal-val-ext _ false =
   false
 eternal-val-ext (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   ⦉ eternal-val-ext et₁ V₁ , eternal-val-ext et₂ V₂ ⦊
+eternal-val-ext et (subV V p) =
+  subV (eternal-val-ext (<:ᵛ-eternalˡ p et) V) p

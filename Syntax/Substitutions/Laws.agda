@@ -26,6 +26,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Renamings.Equivalence S
@@ -79,12 +80,12 @@ sub-wk-tgt : ∀ {Γ B A ρ ρ'} → (Θ : Ctx) → (W : Γ ⊢V⦂ B)
            → (y : [ ρ ] A ∈[ ρ' ] (Γ ++ᶜ Θ))
            → tgt-img₀ (cong-sub₀ {Γ'' = Θ} (val-sub W))
                       (proj₂ (var-img (cong-ren {Γ'' = Θ} (wk-ren {A = B})) y))
-           ≡ (ρ' , y)
+           ≡ (ρ , A , ρ' , y)
 
 sub-wk-tgt []          W y         = refl
 sub-wk-tgt (Θ ∷ C)     W Hd        = refl
-sub-wk-tgt (Θ ∷ C)     W (Tl-∷ z)  = cong Var-∷ (sub-wk-tgt Θ W z)
-sub-wk-tgt (Θ ⟨ ρ ⟩)   W (Tl-⟨⟩ z) = cong (Var-⟨⟩ ρ) (sub-wk-tgt Θ W z)
+sub-wk-tgt (Θ ∷ C)     W (Tl-∷ z)  = cong RVar-∷ (sub-wk-tgt Θ W z)
+sub-wk-tgt (Θ ⟨ ρ ⟩)   W (Tl-⟨⟩ z) = cong (RVar-⟨⟩ ρ) (sub-wk-tgt Θ W z)
 
 -- The law itself.
 
@@ -116,12 +117,15 @@ sub-wk-≡ᶜ {B = B} Θ W M =
 -- interchange. At the empty suffix the premise is a two-case check on the
 -- substituted variable, and `⋈-cong` carries it under an arbitrary suffix.
 
--- A box-typed value is a variable, so renaming it is renaming that variable.
+-- A box-typed value is a variable up to subsumption, so renaming it is
+-- renaming that variable.
 
 val-sub-tgt-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ [ ρ ] A)
                 → tgt-img₀ (val-sub (V-rename r W)) Hd
-                ≡ var-img′ r (tgt-img₀ (val-sub W) Hd)
-val-sub-tgt-ren r (var g z) = refl
+                ≡ rvar-img′ r (tgt-img₀ (val-sub W) Hd)
+val-sub-tgt-ren r (var g z)  = refl
+val-sub-tgt-ren r (subV V p) with <:ᵛ-shape p
+... | Boxˢ = val-sub-tgt-ren r V
 
 ⋈-val : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ B)
       → Interchange (val-sub (V-rename r W)) (cong-∷-ren r) r (val-sub W)
@@ -135,7 +139,7 @@ val-sub-tgt-ren r (var g z) = refl
 
     goᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] (Γ' ∷ B))
         → tgt-img₀ (val-sub (V-rename r W)) (proj₂ (var-img (cong-∷-ren r) y))
-        ≡ var-img′ r (tgt-img₀ (val-sub W) y)
+        ≡ rvar-img′ r (tgt-img₀ (val-sub W) y)
     goᵗ Hd       = val-sub-tgt-ren r W
     goᵗ (Tl-∷ z) = refl
 
@@ -172,14 +176,16 @@ swap-outerˢ W₁ W₂ =
   val-sub (V-sub₀ (val-sub W₁) W₂) ◅ [ cong-∷-sub (val-sub W₁) ]ˢ
 
 -- The one case with content beyond the variable calculus: the substituted
--- value is of box type, hence a variable, and where that variable goes is
--- decided by whether it is the one `W₁` replaces.
+-- value is of box type, hence a variable up to subsumption, and where that
+-- variable goes is decided by whether it is the one `W₁` replaces.
 
 swap-tgt-Hd : ∀ {Γ B₁ A ρ} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ [ ρ ] A)
-            → tgt-img₀ (val-sub W₁) (proj₂ (tgt-img₀ (val-sub W₂) Hd))
+            → tgt-img₀ (val-sub W₁) (rvar-pos (tgt-img₀ (val-sub W₂) Hd))
             ≡ tgt-img₀ (val-sub (V-sub₀ (val-sub W₁) W₂)) Hd
 swap-tgt-Hd W₁ (var g Hd)       = refl
 swap-tgt-Hd W₁ (var g (Tl-∷ y)) = refl
+swap-tgt-Hd W₁ (subV V p) with <:ᵛ-shape p
+... | Boxˢ = swap-tgt-Hd W₁ V
 
 sub-swap-≐ˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
             → swap-innerˢ W₁ W₂ ≐ˢ swap-outerˢ W₁ W₂

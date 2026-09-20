@@ -2,14 +2,14 @@
 -- Terms up to irrelevant stored data.                                --
 --                                                                    --
 -- A term stores three pieces of data no rule inspects: a `var`'s      --
--- grade bound, a `coerce`'s effect ordering, and an `unbox`'s grade   --
--- bound. All three are proof-irrelevant (`≾ᵣ-irrelevant`,             --
--- `≾ₑ-irrelevant`, the first through `fun-ext`), so terms differing   --
--- only in them are propositionally equal.                            --
+-- grade bound, a subsumption's subtyping witness, and an `unbox`'s    --
+-- grade bound. All three are proof-irrelevant (`≾ᵣ-irrelevant`,       --
+-- `<:ᵛ-irrelevant`/`<:ᶜ-irrelevant`, the first through `fun-ext`), so --
+-- terms differing only in them are propositionally equal.            --
 --                                                                    --
 -- Equality of terms is therefore `_≡_`, and the congruence at each    --
--- former is `cong`/`cong₂`. Named here are only the four that are     --
--- not: the three irrelevance laws, and `handle-≡`, whose clause       --
+-- former is `cong`/`cong₂`. Named here are only the five that are     --
+-- not: the four irrelevance laws, and `handle-≡`, whose clause        --
 -- family is compared pointwise and so needs `fun-ext`.                --
 ------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ open import Syntax.Contexts   Spec
 open import Syntax.Language   Spec
 open import Syntax.RenActions Spec
 open import Syntax.Renamings  Spec
+open import Syntax.Subtyping  Spec
 open import Syntax.Types      Spec
 open import Syntax.Renamings.Equivalence Spec
 
@@ -46,20 +47,31 @@ var-≡ : ∀ {Γ A ρ} {f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ} {x : A ∈[ ρ 
       → var f x ≡ var f' x
 var-≡ {f = f} {f' = f'} {x = x} = cong (λ g → var g x) (bound-irr f f')
 
-coerce-≡ : ∀ {Γ A ε ε'} {p p' : ε ≾ₑ ε'} {M M' : Γ ⊢C⦂ A ‼ ε}
-         → M ≡ M' → coerce p M ≡ coerce p' M'
-coerce-≡ {p = p} {p' = p'} {M = M} refl =
-  cong (λ q → coerce q M) (≾ₑ-irrelevant p p')
+subV-≡ : ∀ {Γ A A'} {p p' : A <:ᵛ A'} {V V' : Γ ⊢V⦂ A}
+       → V ≡ V' → subV V p ≡ subV V' p'
+subV-≡ {p = p} {p' = p'} {V = V} refl =
+  cong (subV V) (<:ᵛ-irrelevant p p')
 
--- `unbox` is compared at the *resource variable* it names; the grade bound it
--- stores alongside is irrelevant.
+subC-≡ : ∀ {Γ C C'} {p p' : C <:ᶜ C'} {M M' : Γ ⊢C⦂ C}
+       → M ≡ M' → subC M p ≡ subC M' p'
+subC-≡ {p = p} {p' = p'} {M = M} refl =
+  cong (subC M) (<:ᶜ-irrelevant p p')
 
-unbox-≡ : ∀ {Γ A C ρ ρ' ρ''} {x : [ ρ ] A ∈[ ρ' ] Γ} {y : [ ρ ] A ∈[ ρ'' ] Γ}
+-- `unbox<:` is compared at the *resource variable* it names, together with the
+-- declared box type that variable stands at; the grade bound and the subtyping
+-- witness it stores alongside are irrelevant.
+
+unbox-≡ : ∀ {Γ A C ρ ρ₀ ρ₀' A₀ A₀' ρ' ρ''}
+            {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} {y : [ ρ₀' ] A₀' ∈[ ρ'' ] Γ}
+            {p : ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)} {p' : ([ ρ₀' ] A₀') <:ᵛ ([ ρ ] A)}
             {rel : ρ' ≾ᵣ ρ} {rel' : ρ'' ≾ᵣ ρ} {M M' : Γ ∷ A ⊢C⦂ C}
-        → _≡_ {A = Var Γ ([ ρ ] A)} (ρ' , x) (ρ'' , y) → M ≡ M'
-        → unbox x rel M ≡ unbox y rel' M'
-unbox-≡ {x = x} {rel = rel} {rel' = rel'} {M = M} refl refl =
-  cong (λ r → unbox x r M) (≾ᵣ-irrelevant rel rel')
+        → _≡_ {A = RVar Γ} (ρ₀ , A₀ , ρ' , x) (ρ₀' , A₀' , ρ'' , y) → M ≡ M'
+        → unbox<: x p rel M ≡ unbox<: y p' rel' M'
+unbox-≡ {A = A} {ρ = ρ} {ρ₀ = ρ₀} {A₀ = A₀}
+        {x = x} {p = p} {p' = p'} {rel = rel} {rel' = rel'} {M = M} refl refl =
+  cong₂ (λ q r → unbox<: x q r M)
+        (<:ᵛ-irrelevant {[ ρ₀ ] A₀} {[ ρ ] A} p p')
+        (≾ᵣ-irrelevant rel rel')
 
 -- The clause family is a function of the operation and its effect, so its
 -- congruence goes through `fun-ext`.

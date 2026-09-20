@@ -64,8 +64,9 @@ var-img-≡ refl f f' = var-≡
 -- Where a substitution sends a resource variable, forgetting the grade bound.
 -- This is what an `unbox` node stores.
 
-tgt-img₀ : ∀ {Γ Γ' A ρ ρ'} → Sub₀ [] Γ Γ' → [ ρ ] A ∈[ ρ' ] Γ' → Var Γ ([ ρ ] A)
-tgt-img₀ s y = proj₁ (sub-tgt₀ s y) , proj₁ (proj₂ (sub-tgt₀ s y))
+tgt-img₀ : ∀ {Γ Γ' A ρ ρ'} → Sub₀ [] Γ Γ' → [ ρ ] A ∈[ ρ' ] Γ' → RVar Γ
+tgt-img₀ s y =
+  tgt-grade₀ s y , tgt-type₀ s y , tgt-elapsed₀ s y , tgt-var₀ s y
 
 infix 4 _≐ˢ₀_
 
@@ -110,7 +111,7 @@ cong-∷-sub-≐ˢ₀ h = mk≐ˢ₀ goᵛ goᵗ
 
     goᵗ : ∀ {A' ρ ρ'} → (y : [ ρ ] A' ∈[ ρ' ] _) → _
     goᵗ Hd       = refl
-    goᵗ (Tl-∷ y) = cong Var-∷ (atᵗ h y)
+    goᵗ (Tl-∷ y) = cong RVar-∷ (atᵗ h y)
 
 -- Crossing a lock splits on the variable's eternality, but both sides split on
 -- the same decision — the clause takes it as an argument.
@@ -125,7 +126,7 @@ cong-⟨⟩-sub-≐ˢ₀ {ρ = ρ} h = mk≐ˢ₀ goᵛ goᵗ
     ... | no ¬et = cong (V-rename _) (atᵛ h y _)
 
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
-    goᵗ (Tl-⟨⟩ y) = cong (Var-⟨⟩ ρ) (atᵗ h y)
+    goᵗ (Tl-⟨⟩ y) = cong (RVar-⟨⟩ ρ) (atᵗ h y)
 
 cong-sub₀-≐ˢ₀ : ∀ {Γ Γ'} {s s' : Sub₀ [] Γ Γ'} → (Γ₀ : Ctx)
               → s ≐ˢ₀ s' → cong-sub₀ {Γ'' = Γ₀} s ≐ˢ₀ cong-sub₀ s'
@@ -154,6 +155,7 @@ mutual
   V-sub₀-≐ˢ₀ h false     = refl
   V-sub₀-≐ˢ₀ h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-≐ˢ₀ h V) (V-sub₀-≐ˢ₀ h W)
   V-sub₀-≐ˢ₀ h (lam M)   = cong lam (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
+  V-sub₀-≐ˢ₀ h (subV V p) = subV-≡ (V-sub₀-≐ˢ₀ h V)
 
   C-sub₀-≐ˢ₀ : ∀ {Γ Γ' C} {s s' : Sub₀ [] Γ Γ'} → s ≐ˢ₀ s'
              → (M : Γ' ⊢C⦂ C) → C-sub₀ s M ≡ C-sub₀ s' M
@@ -178,12 +180,12 @@ mutual
       (λ op ε'' →
          C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-sub₀-≐ˢ₀ h (unbox x rel M) =
+  C-sub₀-≐ˢ₀ h (unbox<: x p rel M) =
     unbox-≡ (atᵗ h x) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
   C-sub₀-≐ˢ₀ h (box V M) =
     cong₂ box (V-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ⟨ _ ⟩) h) V)
               (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
-  C-sub₀-≐ˢ₀ h (coerce rel M) = coerce-≡ (C-sub₀-≐ˢ₀ h M)
+  C-sub₀-≐ˢ₀ h (subC M p) = subC-≡ (C-sub₀-≐ˢ₀ h M)
 
 
 eternal-val-ext-cong : ∀ {Γ A ρ} → (et : Eternal A) → {V V' : Γ ⊢V⦂ A}

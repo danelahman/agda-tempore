@@ -68,6 +68,7 @@ mutual
   V-rename-≡ h false      = refl
   V-rename-≡ h ⦉ V , W ⦊   = cong₂ ⦉_,_⦊ (V-rename-≡ h V) (V-rename-≡ h W)
   V-rename-≡ h (lam M)    = cong lam (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
+  V-rename-≡ h (subV V p) = subV-≡ (V-rename-≡ h V)
 
   C-rename-≡ : ∀ {Γ Γ' C} {r r' : Ren [] Γ Γ'} → r ≐ʳ r'
              → (M : Γ' ⊢C⦂ C) → C-rename r M ≡ C-rename r' M
@@ -91,12 +92,12 @@ mutual
       (λ op ε'' →
          C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-≡ h (unbox x rel M) =
-    unbox-≡ (at h x) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
+  C-rename-≡ h (unbox<: x p rel M) =
+    unbox-≡ (rvar-≡ (at h x)) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
   C-rename-≡ h (box V M) =
     cong₂ box (V-rename-≡ (cong-ren-≐ʳ ([] ⟨ _ ⟩) h) V)
           (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
-  C-rename-≡ h (coerce p M) = coerce-≡ (C-rename-≡ h M)
+  C-rename-≡ h (subC M p) = subC-≡ (C-rename-≡ h M)
 
 -- `cong-∷-ren id-ren`, `⟨⟩-≤-ren` at equal grades, and `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-η-ren`
 -- all act as the identity without being it; the action is the identity only
@@ -146,6 +147,7 @@ mutual
   V-rename-id-≡ h false     = refl
   V-rename-id-≡ h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-rename-id-≡ h V) (V-rename-id-≡ h W)
   V-rename-id-≡ h (lam M)   = cong lam (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
+  V-rename-id-≡ h (subV V p) = subV-≡ (V-rename-id-≡ h V)
 
   C-rename-id-≡ : ∀ {Γ C} {r : Ren [] Γ Γ} → r ≐ʳ id-ren
                 → (M : Γ ⊢C⦂ C) → C-rename r M ≡ M
@@ -170,12 +172,12 @@ mutual
       (λ op ε'' →
          C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-id-≡ h (unbox x rel M) =
-    unbox-≡ (at h x) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
+  C-rename-id-≡ h (unbox<: x p rel M) =
+    unbox-≡ (rvar-≡ (at h x)) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
   C-rename-id-≡ h (box V M) =
     cong₂ box (V-rename-id-≡ (cong-ren-id-≐ʳ ([] ⟨ _ ⟩) h) V)
           (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
-  C-rename-id-≡ h (coerce p M) = coerce-≡ (C-rename-id-≡ h M)
+  C-rename-id-≡ h (subC M p) = subC-≡ (C-rename-id-≡ h M)
 
 eq-ren-≐ʳ : ∀ {Γ Γ'} → (e e' : Γ ≡ Γ') → eq-ren e ≐ʳ eq-ren e'
 eq-ren-≐ʳ e e' rewrite uip {p = e} {q = e'} = ≐ʳ-refl
@@ -277,6 +279,7 @@ mutual
   V-rename-∘ r₂ r₁ (lam M)   =
     cong lam (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
+  V-rename-∘ r₂ r₁ (subV V p) = subV-≡ (V-rename-∘ r₂ r₁ V)
 
   C-rename-∘ : ∀ {Γ Γ' Γ'' C} → (r₂ : Ren [] Γ' Γ'') → (r₁ : Ren [] Γ Γ')
              → (M : Γ'' ⊢C⦂ C)
@@ -313,7 +316,7 @@ mutual
                        (H op ε'')))
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
-  C-rename-∘ r₂ r₁ (unbox x rel M) with var-rename r₂ x
+  C-rename-∘ r₂ r₁ (unbox<: x p rel M) with var-rename r₂ x
   ... | _ , _ , y with var-rename r₁ y
   ...   | _ , _ , z =
     unbox-≡ refl
@@ -324,7 +327,7 @@ mutual
                     (V-rename-∘ (cong-ren r₂) (cong-ren r₁) V))
           (trans (C-rename-≡ (cong-ren-∘-≐ʳ ([] ∷ _) r₂ r₁) M)
                     (C-rename-∘ (cong-ren r₂) (cong-ren r₁) M))
-  C-rename-∘ r₂ r₁ (coerce p M) = coerce-≡ (C-rename-∘ r₂ r₁ M)
+  C-rename-∘ r₂ r₁ (subC M p) = subC-≡ (C-rename-∘ r₂ r₁ M)
 
 -- Renaming related terms gives related terms.
 

@@ -28,6 +28,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Renamings.Equivalence S
@@ -43,8 +44,9 @@ open import Syntax.Substitutions.Chain       S
 
 -- Where a chain sends a resource variable.
 
-tgt-img : ∀ {Γ Γ' A ρ ρ'} → Sub [] Γ Γ' → [ ρ ] A ∈[ ρ' ] Γ' → Var Γ ([ ρ ] A)
-tgt-img σ y = proj₁ (sub-tgt σ y) , proj₁ (proj₂ (sub-tgt σ y))
+tgt-img : ∀ {Γ Γ' A ρ ρ'} → Sub [] Γ Γ' → [ ρ ] A ∈[ ρ' ] Γ' → RVar Γ
+tgt-img σ y =
+  let (ρ₀ , A₀ , ρ'' , z , w , g) = sub-tgt σ y in ρ₀ , A₀ , ρ'' , z
 
 infix 4 _≐ˢ_
 
@@ -92,6 +94,8 @@ V-sub₀-ext s et true      = refl
 V-sub₀-ext s et false     = refl
 V-sub₀-ext s (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (V-sub₀-ext s et₁ V₁) (V-sub₀-ext s et₂ V₂)
+V-sub₀-ext s et (subV V p) =
+  cong (λ W → subV W p) (V-sub₀-ext s (<:ᵛ-eternalˡ p et) V)
 
 -- Each is a chain induction: the head step's clause is moved past the tail's
 -- accumulated image by the interchange, leaving the image the chain would have
@@ -117,16 +121,16 @@ cong-∷-subˢ-Tl (s ◅ σ) y f =
 
 cong-∷-subˢ-tgt : ∀ {Γ Γ' A B ρ ρ'} → (σ : Sub [] Γ Γ')
                 → (y : [ ρ ] A ∈[ ρ' ] Γ')
-                → tgt-img (cong-∷-subˢ {A = B} σ) (Tl-∷ y) ≡ Var-∷ (tgt-img σ y)
+                → tgt-img (cong-∷-subˢ {A = B} σ) (Tl-∷ y) ≡ RVar-∷ (tgt-img σ y)
 cong-∷-subˢ-tgt []ˢ      y = refl
 cong-∷-subˢ-tgt (s ◅ σ) y =
-  cong (λ t → tgt-img₀ (cong-∷-sub s) (proj₂ t)) (cong-∷-subˢ-tgt σ y)
+  cong (λ t → tgt-img₀ (cong-∷-sub s) (rvar-pos t)) (cong-∷-subˢ-tgt σ y)
 
 cong-∷-subˢ-tgt-Hd : ∀ {Γ Γ' A ρ} → (σ : Sub [] Γ Γ')
-                   → tgt-img (cong-∷-subˢ {A = [ ρ ] A} σ) Hd ≡ (uᵣ , Hd)
+                   → tgt-img (cong-∷-subˢ {A = [ ρ ] A} σ) Hd ≡ (ρ , A , uᵣ , Hd)
 cong-∷-subˢ-tgt-Hd []ˢ      = refl
 cong-∷-subˢ-tgt-Hd (s ◅ σ) =
-  cong (λ t → tgt-img₀ (cong-∷-sub s) (proj₂ t)) (cong-∷-subˢ-tgt-Hd σ)
+  cong (λ t → tgt-img₀ (cong-∷-sub s) (rvar-pos t)) (cong-∷-subˢ-tgt-Hd σ)
 
 cong-∷-subˢ-≐ˢ : ∀ {Γ Γ' B} {σ σ' : Sub [] Γ Γ'}
                → σ ≐ˢ σ' → cong-∷-subˢ {A = B} σ ≐ˢ cong-∷-subˢ σ'
@@ -143,7 +147,7 @@ cong-∷-subˢ-≐ˢ {σ = σ} {σ' = σ'} h = mk≐ˢ goᵛ goᵗ
     goᵗ Hd       = trans (cong-∷-subˢ-tgt-Hd σ) (sym (cong-∷-subˢ-tgt-Hd σ'))
     goᵗ (Tl-∷ y) =
       trans (cong-∷-subˢ-tgt σ y)
-        (trans (cong Var-∷ (atᵗ h y)) (sym (cong-∷-subˢ-tgt σ' y)))
+        (trans (cong RVar-∷ (atᵗ h y)) (sym (cong-∷-subˢ-tgt σ' y)))
 
 -- Under one more lock. An eternal value crosses a lock either way.
 
@@ -156,6 +160,8 @@ eternal-val-ext-≡ et p true      = refl
 eternal-val-ext-≡ et p false     = refl
 eternal-val-ext-≡ (et₁ |×|ₑ et₂) p ⦉ V₁ , V₂ ⦊ =
   cong₂ ⦉_,_⦊ (eternal-val-ext-≡ et₁ p V₁) (eternal-val-ext-≡ et₂ p V₂)
+eternal-val-ext-≡ et p (subV V q) =
+  cong (λ W → subV W q) (eternal-val-ext-≡ (<:ᵛ-eternalˡ q et) p V)
 
 ⋈-lock : ∀ {Γ Γ' ρ} → (s : Sub₀ [] Γ Γ') → (p p' : ρ ≾ᵣ uᵣ)
        → Interchange (cong-⟨⟩-sub {ρ = ρ} s) (⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren p)
@@ -176,7 +182,7 @@ eternal-val-ext-≡ (et₁ |×|ₑ et₂) p ⦉ V₁ , V₂ ⦊ =
             (V-rename-≡ (∘ʳ-≐ʳ ≐ʳ-refl (⟨⟩-≤-ren-≐ʳ _ p')) (sub-var₀ s x f))
 
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
-    goᵗ y = sym (hit-⟨⟩-img p' (proj₂ (tgt-img₀ s y)))
+    goᵗ y = rvar-≡ (sym (hit-⟨⟩-img p' (rvar-pos (tgt-img₀ s y))))
 
 cong-⟨⟩-subˢ-et : ∀ {Γ Γ' A ρ ρ'} → (σ : Sub [] Γ Γ') → (et : Eternal A)
                 → (y : A ∈[ ρ' ] Γ') → (f : ¬ Eternal A → ρ' ·ᵣ ρ ≾ᵣ uᵣ)
@@ -202,10 +208,10 @@ cong-⟨⟩-subˢ-ne (s ◅ σ) ¬et y f =
 cong-⟨⟩-subˢ-tgt : ∀ {Γ Γ' A ρ ρ₀ ρ'} → (σ : Sub [] Γ Γ')
                  → (y : [ ρ₀ ] A ∈[ ρ' ] Γ')
                  → tgt-img (cong-⟨⟩-subˢ {ρ = ρ} σ) (Tl-⟨⟩ y)
-                 ≡ Var-⟨⟩ ρ (tgt-img σ y)
+                 ≡ RVar-⟨⟩ ρ (tgt-img σ y)
 cong-⟨⟩-subˢ-tgt []ˢ      y = refl
 cong-⟨⟩-subˢ-tgt (s ◅ σ) y =
-  cong (λ t → tgt-img₀ (cong-⟨⟩-sub s) (proj₂ t)) (cong-⟨⟩-subˢ-tgt σ y)
+  cong (λ t → tgt-img₀ (cong-⟨⟩-sub s) (rvar-pos t)) (cong-⟨⟩-subˢ-tgt σ y)
 
 cong-⟨⟩-subˢ-≐ˢ : ∀ {Γ Γ' ρ} {σ σ' : Sub [] Γ Γ'}
                 → σ ≐ˢ σ' → cong-⟨⟩-subˢ {ρ = ρ} σ ≐ˢ cong-⟨⟩-subˢ σ'
@@ -229,7 +235,7 @@ cong-⟨⟩-subˢ-≐ˢ {Γ} {Γ'} {ρ} {σ} {σ'} h = mk≐ˢ goᵛ goᵗ
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
     goᵗ (Tl-⟨⟩ y) =
       trans (cong-⟨⟩-subˢ-tgt σ y)
-        (trans (cong (Var-⟨⟩ ρ) (atᵗ h y)) (sym (cong-⟨⟩-subˢ-tgt σ' y)))
+        (trans (cong (RVar-⟨⟩ ρ) (atᵗ h y)) (sym (cong-⟨⟩-subˢ-tgt σ' y)))
 
 sub-var-irr : ∀ {Γ Γ' A ρ} → (σ : Sub [] Γ Γ') → (x : A ∈[ ρ ] Γ')
             → (f f' : ¬ Eternal A → ρ ≾ᵣ uᵣ)
@@ -275,6 +281,11 @@ V-sub-lam : ∀ {Γ Γ' A C} → (σ : Sub [] Γ Γ') → (M : Γ' ∷ A ⊢C⦂
           → V-sub σ (lam M) ≡ lam (C-sub (cong-∷-subˢ σ) M)
 V-sub-lam []ˢ      M = refl
 V-sub-lam (s ◅ σ) M = cong (V-sub₀ s) (V-sub-lam σ M)
+
+V-sub-subV : ∀ {Γ Γ' A A'} → (σ : Sub [] Γ Γ') → (p : A <:ᵛ A') → (V : Γ' ⊢V⦂ A)
+           → V-sub σ (subV V p) ≡ subV (V-sub σ V) p
+V-sub-subV []ˢ      p V = refl
+V-sub-subV (s ◅ σ) p V = cong (V-sub₀ s) (V-sub-subV σ p V)
 
 C-sub-return : ∀ {Γ Γ' A} → (σ : Sub [] Γ Γ') → (V : Γ' ⊢V⦂ A)
              → C-sub σ (return V) ≡ return (V-sub σ V)
@@ -343,16 +354,21 @@ C-sub-handle : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
 C-sub-handle []ˢ      M H N = refl
 C-sub-handle (s ◅ σ) M H N = cong (C-sub₀ s) (C-sub-handle σ M H N)
 
-C-sub-unbox : ∀ {Γ Γ' A C ρ ρ'} → (σ : Sub [] Γ Γ')
-            → (x : [ ρ ] A ∈[ ρ' ] Γ') → (rel : ρ' ≾ᵣ ρ) → (M : Γ' ∷ A ⊢C⦂ C)
-            → Σ[ q ∈ (proj₁ (tgt-img σ x) ≾ᵣ ρ) ]
-                (C-sub σ (unbox x rel M)
-                 ≡ unbox (proj₂ (tgt-img σ x)) q (C-sub (cong-∷-subˢ σ) M))
-C-sub-unbox []ˢ      x rel M = rel , refl
-C-sub-unbox (s ◅ σ) x rel M =
-    ≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s (proj₁ (proj₂ (sub-tgt σ x))))))
-             (proj₁ (C-sub-unbox σ x rel M))
-  , cong (C-sub₀ s) (proj₂ (C-sub-unbox σ x rel M))
+C-sub-unbox : ∀ {Γ Γ' A A₀ C ρ ρ₀ ρ'} → (σ : Sub [] Γ Γ')
+            → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ') → (p : ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A))
+            → (rel : ρ' ≾ᵣ ρ) → (M : Γ' ∷ A ⊢C⦂ C)
+            → Σ[ w ∈ (([ rvar-grade (tgt-img σ x) ] rvar-type (tgt-img σ x))
+                        <:ᵛ ([ ρ ] A)) ]
+              Σ[ q ∈ (rvar-elapsed (tgt-img σ x) ≾ᵣ ρ) ]
+                (C-sub σ (unbox<: x p rel M)
+                 ≡ unbox<: (rvar-pos (tgt-img σ x)) w q
+                           (C-sub (cong-∷-subˢ σ) M))
+C-sub-unbox []ˢ      x p rel M = p , rel , refl
+C-sub-unbox (s ◅ σ) x p rel M =
+    tgt-<:-∘₀ s (rvar-pos (tgt-img σ x)) (proj₁ (C-sub-unbox σ x p rel M))
+  , ≾ᵣ-trans (tgt-≾₀ s (rvar-pos (tgt-img σ x)))
+             (proj₁ (proj₂ (C-sub-unbox σ x p rel M)))
+  , cong (C-sub₀ s) (proj₂ (proj₂ (C-sub-unbox σ x p rel M)))
 
 C-sub-box : ∀ {Γ Γ' A C ρ} → (σ : Sub [] Γ Γ')
           → (V : Γ' ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ' ∷ [ ρ ] A ⊢C⦂ C)
@@ -361,11 +377,11 @@ C-sub-box : ∀ {Γ Γ' A C ρ} → (σ : Sub [] Γ Γ')
 C-sub-box []ˢ      V M = refl
 C-sub-box (s ◅ σ) V M = cong (C-sub₀ s) (C-sub-box σ V M)
 
-C-sub-coerce : ∀ {Γ Γ' A ε ε'} → (σ : Sub [] Γ Γ') → (rel : ε ≾ₑ ε')
-             → (M : Γ' ⊢C⦂ A ‼ ε)
-             → C-sub σ (coerce rel M) ≡ coerce rel (C-sub σ M)
-C-sub-coerce []ˢ      rel M = refl
-C-sub-coerce (s ◅ σ) rel M = cong (C-sub₀ s) (C-sub-coerce σ rel M)
+C-sub-subC : ∀ {Γ Γ' C C'} → (σ : Sub [] Γ Γ') → (p : C <:ᶜ C')
+           → (M : Γ' ⊢C⦂ C)
+           → C-sub σ (subC M p) ≡ subC (C-sub σ M) p
+C-sub-subC []ˢ      p M = refl
+C-sub-subC (s ◅ σ) p M = cong (C-sub₀ s) (C-sub-subC σ p M)
 
 -- The one induction over term formers this layer buys: at `var` and `unbox`
 -- the whole content is the hypothesis, and at every other former the two sides
@@ -393,6 +409,9 @@ mutual
     trans (V-sub-lam σ M)
       (trans (cong lam (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
              (sym (V-sub-lam σ' M)))
+  V-sub-≐ˢ {σ = σ} {σ' = σ'} h (subV V p) =
+    trans (V-sub-subV σ p V)
+      (trans (subV-≡ (V-sub-≐ˢ h V)) (sym (V-sub-subV σ' p V)))
 
   C-sub-≐ˢ : ∀ {Γ Γ' C} {σ σ' : Sub [] Γ Γ'} → σ ≐ˢ σ'
            → (M : Γ' ⊢C⦂ C) → C-sub σ M ≡ C-sub σ' M
@@ -438,25 +457,25 @@ mutual
                             (H op ε''))
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)) N))
              (sym (C-sub-handle σ' M H N)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (unbox x rel M) =
-    trans (proj₂ (C-sub-unbox σ x rel M))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (unbox<: x p rel M) =
+    trans (proj₂ (proj₂ (C-sub-unbox σ x p rel M)))
       (trans (unbox-≡ (atᵗ h x) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
-             (sym (proj₂ (C-sub-unbox σ' x rel M))))
+             (sym (proj₂ (proj₂ (C-sub-unbox σ' x p rel M)))))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (box V M) =
     trans (C-sub-box σ V M)
       (trans (cong₂ box (V-sub-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h) V)
                         (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
              (sym (C-sub-box σ' V M)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (coerce rel M) =
-    trans (C-sub-coerce σ rel M)
-      (trans (coerce-≡ (C-sub-≐ˢ h M)) (sym (C-sub-coerce σ' rel M)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (subC M p) =
+    trans (C-sub-subC σ p M)
+      (trans (subC-≡ (C-sub-≐ˢ h M)) (sym (C-sub-subC σ' p M)))
 
 -- `⌜_⌝` is faithful for the two observations, and a chain's head may be
 -- replaced by one acting alike, dropped when it is identity-like, or left to
 -- act on a tail replaced the same way.
 
 ⌜⌝-≐ˢ₀ : ∀ {Γ Γ'} {r r' : Ren [] Γ Γ'} → r ≐ʳ r' → ⌜ r ⌝ ≐ˢ₀ ⌜ r' ⌝
-⌜⌝-≐ˢ₀ h = mk≐ˢ₀ (λ x f → var-img-≡ (at h x) _ _) (λ y → at h y)
+⌜⌝-≐ˢ₀ h = mk≐ˢ₀ (λ x f → var-img-≡ (at h x) _ _) (λ y → rvar-≡ (at h y))
 
 ◅-≐ˢ₀ : ∀ {Γ Δ Γ'} {s s' : Sub₀ [] Γ Δ} → s ≐ˢ₀ s' → (σ : Sub [] Δ Γ')
       → (s ◅ σ) ≐ˢ (s' ◅ σ)
@@ -466,14 +485,14 @@ mutual
           → σ ≐ˢ σ' → (s ◅ σ) ≐ˢ (s ◅ σ')
 ◅-tail-≐ˢ s h =
   mk≐ˢ (λ x f → cong (V-sub₀ s) (atᵛ h x f))
-       (λ y → cong (λ t → tgt-img₀ s (proj₂ t)) (atᵗ h y))
+       (λ y → cong (λ t → tgt-img₀ s (rvar-pos t)) (atᵗ h y))
 
 id-◅-≐ˢ : ∀ {Γ Γ'} {r : Ren [] Γ Γ} → r ≐ʳ id-ren → (σ : Sub [] Γ Γ')
         → (⌜ r ⌝ ◅ σ) ≐ˢ σ
 id-◅-≐ˢ {r = r} h σ =
   mk≐ˢ (λ x f → trans (V-sub₀-⌜⌝ r (sub-var σ x f))
                       (V-rename-id-≡ h (sub-var σ x f)))
-       (λ y → at h (proj₂ (tgt-img σ y)))
+       (λ y → rvar-≡ (at h (rvar-pos (tgt-img σ y))))
 
 -- A retyping under one more binder, resp. lock, is that binder's congruence
 -- applied to the retyping.

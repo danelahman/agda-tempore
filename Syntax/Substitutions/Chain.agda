@@ -21,6 +21,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Substitutions.Base      S
@@ -119,15 +120,17 @@ sub-var σ x f = V-sub σ (var f x)
 sub-tgt : ∀ {Δ Δ' A ρ ρ'}
         → Sub [] Δ Δ'
         → [ ρ ] A ∈[ ρ' ] Δ'
-        --------------------------------------------------
-        → Σ[ ρ'' ∈ R ] (([ ρ ] A ∈[ ρ'' ] Δ) × (ρ'' ≾ᵣ ρ'))
+        ----------------------------------------------------
+        → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ'' ∈ R ]
+            (([ ρ₀ ] A₀ ∈[ ρ'' ] Δ)
+              × (([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)) × (ρ'' ≾ᵣ ρ'))
 
-sub-tgt []ˢ y = _ , y , ≾ᵣ-refl
+sub-tgt {A = A} {ρ = ρ} []ˢ y =
+  ρ , A , _ , y , <:ᵛ-refl ([ ρ ] A) , ≾ᵣ-refl
 sub-tgt (s ◅ σ) y =
-    proj₁ (sub-tgt₀ s (proj₁ (proj₂ (sub-tgt σ y))))
-  , proj₁ (proj₂ (sub-tgt₀ s (proj₁ (proj₂ (sub-tgt σ y)))))
-  , ≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s (proj₁ (proj₂ (sub-tgt σ y))))))
-             (proj₂ (proj₂ (sub-tgt σ y)))
+  let (ρ₀ , A₀ , ρ'' , z , w , g) = sub-tgt σ y in
+  tgt-grade₀ s z , tgt-type₀ s z , tgt-elapsed₀ s z
+  , tgt-var₀ s z , tgt-<:-∘₀ s z w , ≾ᵣ-trans (tgt-≾₀ s z) g
 
 -- All by induction on the chain: no recursion over terms anywhere.
 

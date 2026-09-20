@@ -29,6 +29,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Renamings.Equivalence S
@@ -61,6 +62,8 @@ eternal-val-ext-ren et             r true        = refl
 eternal-val-ext-ren et             r false       = refl
 eternal-val-ext-ren (et₁ |×|ₑ et₂) r ⦉ V₁ , V₂ ⦊  =
   cong₂ ⦉_,_⦊ (eternal-val-ext-ren et₁ r V₁) (eternal-val-ext-ren et₂ r V₂)
+eternal-val-ext-ren et             r (subV V p) =
+  cong (λ W → subV W p) (eternal-val-ext-ren (<:ᵛ-eternalˡ p et) r V)
 
 -- `cong-sub₀ ⌜ r ⌝` and `⌜ cong-ren r ⌝` are distinct substitutions acting
 -- alike; the bridge is stated up to `_≐ˢ₀_` at the binders and closed by
@@ -76,7 +79,7 @@ cong-∷-sub-⌜⌝ h = mk≐ˢ₀ goᵛ goᵗ
 
     goᵗ : ∀ {A' ρ ρ'} → (y : [ ρ ] A' ∈[ ρ' ] _) → _
     goᵗ Hd       = refl
-    goᵗ (Tl-∷ y) = cong Var-∷ (atᵗ h y)
+    goᵗ (Tl-∷ y) = cong RVar-∷ (atᵗ h y)
 
 cong-⟨⟩-sub-⌜⌝ : ∀ {Γ Γ' ρ} → {s : Sub₀ [] Γ Γ'} → {r : Ren [] Γ Γ'}
                → s ≐ˢ₀ ⌜ r ⌝ → cong-⟨⟩-sub {ρ = ρ} s ≐ˢ₀ ⌜ cong-⟨⟩-ren r ⌝
@@ -93,7 +96,7 @@ cong-⟨⟩-sub-⌜⌝ {ρ = ρ} {r = r} h = mk≐ˢ₀ goᵛ goᵗ
                                    (proj₂ (var-img r y))) _ _)
 
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
-    goᵗ (Tl-⟨⟩ y) = cong (Var-⟨⟩ ρ) (atᵗ h y)
+    goᵗ (Tl-⟨⟩ y) = cong (RVar-⟨⟩ ρ) (atᵗ h y)
 
 cong-sub₀-⌜⌝ : ∀ {Γ Γ'} → (Γ₀ : Ctx) → (r : Ren [] Γ Γ')
              → cong-sub₀ {Γ'' = Γ₀} ⌜ r ⌝ ≐ˢ₀ ⌜ cong-ren {Γ'' = Γ₀} r ⌝
@@ -115,6 +118,7 @@ mutual
   V-sub₀-⌜⌝ r (lam M)   =
     cong lam (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                     (C-sub₀-⌜⌝ (cong-ren r) M))
+  V-sub₀-⌜⌝ r (subV V p) = subV-≡ (V-sub₀-⌜⌝ r V)
 
   C-sub₀-⌜⌝ : ∀ {Γ Γ' C} → (r : Ren [] Γ Γ') → (M : Γ' ⊢C⦂ C)
             → C-sub₀ ⌜ r ⌝ M ≡ C-rename r M
@@ -147,7 +151,7 @@ mutual
                (C-sub₀-⌜⌝ (cong-ren r) (H op ε'')))
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) N)
              (C-sub₀-⌜⌝ (cong-ren r) N))
-  C-sub₀-⌜⌝ r (unbox x rel M) =
+  C-sub₀-⌜⌝ r (unbox<: x q rel M) =
     unbox-≡ refl
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
              (C-sub₀-⌜⌝ (cong-ren r) M))
@@ -156,7 +160,7 @@ mutual
                      (V-sub₀-⌜⌝ (cong-ren r) V))
               (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
                      (C-sub₀-⌜⌝ (cong-ren r) M))
-  C-sub₀-⌜⌝ r (coerce rel M) = coerce-≡ (C-sub₀-⌜⌝ r M)
+  C-sub₀-⌜⌝ r (subC M p) = subC-≡ (C-sub₀-⌜⌝ r M)
 
 -- Two ways round a square: substitute by `s` then rename by `r'`, or rename
 -- by `r` then substitute by `s'`. The premise is that they agree on variables
@@ -172,7 +176,7 @@ record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
     atᵛ : ∀ {A ρ} → (x : A ∈[ ρ ] Γ') → (f : ¬ Eternal A → ρ ≾ᵣ uᵣ)
         → V-sub₀ s' (V-rename r (var f x)) ≡ V-rename r' (V-sub₀ s (var f x))
     atᵗ : ∀ {A ρ ρ'} → (y : [ ρ ] A ∈[ ρ' ] Γ')
-        → tgt-img₀ s' (proj₂ (var-img r y)) ≡ var-img′ r' (tgt-img₀ s y)
+        → tgt-img₀ s' (proj₂ (var-img r y)) ≡ rvar-img′ r' (tgt-img₀ s y)
 
 open Interchange public
 
@@ -196,7 +200,7 @@ open Interchange public
 
     goᵗ : ∀ {A' ρ ρ'} → (y : [ ρ ] A' ∈[ ρ' ] _) → _
     goᵗ Hd       = refl
-    goᵗ (Tl-∷ y) = cong Var-∷ (atᵗ h y)
+    goᵗ (Tl-∷ y) = cong RVar-∷ (atᵗ h y)
 
 -- Under one more lock. At an eternal type both sides extend the image
 -- (`eternal-val-ext-ren`); otherwise both weaken along the lock-collapsing
@@ -236,7 +240,7 @@ open Interchange public
                              (cong-⟨⟩-ren r') (V-sub₀ s (var _ y)))))
 
     goᵗ : ∀ {A' ρ₀ ρ'} → (y : [ ρ₀ ] A' ∈[ ρ' ] _) → _
-    goᵗ (Tl-⟨⟩ y) = cong (Var-⟨⟩ ρ) (atᵗ h y)
+    goᵗ (Tl-⟨⟩ y) = cong (RVar-⟨⟩ ρ) (atᵗ h y)
 
 -- Under a whole suffix.
 
@@ -263,6 +267,7 @@ mutual
   V-sub₀-ren h false     = refl
   V-sub₀-ren h ⦉ V , W ⦊  = cong₂ ⦉_,_⦊ (V-sub₀-ren h V) (V-sub₀-ren h W)
   V-sub₀-ren h (lam M)   = cong lam (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
+  V-sub₀-ren h (subV V p) = subV-≡ (V-sub₀-ren h V)
 
   C-sub₀-ren : ∀ {Δ Δ' Γ Γ' C} {s' : Sub₀ [] Δ Δ'} {r : Ren [] Δ' Γ'}
                  {r' : Ren [] Δ Γ} {s : Sub₀ [] Γ Γ'}
@@ -287,9 +292,9 @@ mutual
     handle-≡ (C-sub₀-ren h M)
       (λ op ε'' → C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-sub₀-ren h (unbox x rel M) =
+  C-sub₀-ren h (unbox<: x q rel M) =
     unbox-≡ (atᵗ h x) (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   C-sub₀-ren h (box V M) =
     cong₂ box (V-sub₀-ren (⋈-cong ([] ⟨ _ ⟩) h) V)
               (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
-  C-sub₀-ren h (coerce rel M) = coerce-≡ (C-sub₀-ren h M)
+  C-sub₀-ren h (subC M p) = subC-≡ (C-sub₀-ren h M)

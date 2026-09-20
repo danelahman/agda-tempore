@@ -228,24 +228,23 @@ sub-var-hit′ Γ₂ ¬et p _ refl W f = sub-var-hit Γ₂ ¬et p W f
 -- The cell the boundary substitution puts a resource variable at.
 
 atᴿ : ∀ {Γ B A ρ σ} → (Θ : Ctx) → ([ ρ ] A ∈[ σ ] ((Γ ∷ B) ++ᶜ Θ)) → Γ ⊢V⦂ B
-    → Var (Γ ++ᶜ Θ) ([ ρ ] A)
-atᴿ Θ z W = proj₁ (sub-tgt₀ (sub-atˢ₀ Θ W) z)
-          , proj₁ (proj₂ (sub-tgt₀ (sub-atˢ₀ Θ W) z))
+    → RVar (Γ ++ᶜ Θ)
+atᴿ Θ z W = tgt-img₀ (sub-atˢ₀ Θ W) z
 
 sub-rvar-r : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
            → (z : [ ρ ] A ∈[ σ ] Θ) → (W : Γ ⊢V⦂ B)
-           → atᴿ {Γ} {B} Θ (∈-++ᶜʳ {Γ = Γ ∷ B} z) W ≡ (σ , ∈-++ᶜʳ {Γ = Γ} z)
+           → atᴿ {Γ} {B} Θ (∈-++ᶜʳ {Γ = Γ ∷ B} z) W ≡ (ρ , A , σ , ∈-++ᶜʳ {Γ = Γ} z)
 
 sub-rvar-r (Θ ∷ C)   Hd       W = refl
-sub-rvar-r (Θ ∷ C)   (Tl-∷ z) W = cong Var-∷ (sub-rvar-r Θ z W)
-sub-rvar-r (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W = cong (Var-⟨⟩ ρ') (sub-rvar-r Θ z W)
+sub-rvar-r (Θ ∷ C)   (Tl-∷ z) W = cong RVar-∷ (sub-rvar-r Θ z W)
+sub-rvar-r (Θ ⟨ ρ' ⟩) (Tl-⟨⟩ z) W = cong (RVar-⟨⟩ ρ') (sub-rvar-r Θ z W)
 
 sub-rvar-l : ∀ {Γ B} → (Θ : Ctx) → ∀ {A ρ σ}
            → (z : [ ρ ] A ∈[ σ ] Γ) → (W : Γ ⊢V⦂ B)
            → atᴿ {Γ} {B} Θ (∈-++ᶜˡ {Γ = Γ ∷ B} Θ (Tl-∷ z)) W
-           ≡ (grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
+           ≡ (ρ , A , grade-++ᶜˡ σ Θ , ∈-++ᶜˡ {Γ = Γ} Θ z)
 
 sub-rvar-l []         z W = refl
-sub-rvar-l (Θ ∷ C)    z W = cong Var-∷ (sub-rvar-l Θ z W)
-sub-rvar-l (Θ ⟨ ρ' ⟩) z W = cong (Var-⟨⟩ ρ') (sub-rvar-l Θ z W)
+sub-rvar-l (Θ ∷ C)    z W = cong RVar-∷ (sub-rvar-l Θ z W)
+sub-rvar-l (Θ ⟨ ρ' ⟩) z W = cong (RVar-⟨⟩ ρ') (sub-rvar-l Θ z W)
 

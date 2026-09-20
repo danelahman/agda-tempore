@@ -58,6 +58,40 @@ Var-∷ (σ , y) = σ , Tl-∷ y
 Var-⟨⟩ : ∀ {Γ A} → (ρ : R) → Var Γ A → Var (Γ ⟨ ρ ⟩) A
 Var-⟨⟩ ρ (σ , y) = σ ·ᵣ ρ , Tl-⟨⟩ y
 
+-- A *resource* variable's position carries the declared box type as well: a
+-- substitution may send it to an occurrence at a subtype of the one named.
+
+RVar : Ctx → Set
+RVar Γ = Σ[ ρ ∈ R ] Σ[ A ∈ VType ] Var Γ ([ ρ ] A)
+
+RVar-∷ : ∀ {Γ B} → RVar Γ → RVar (Γ ∷ B)
+RVar-∷ (ρ , A , t) = ρ , A , Var-∷ t
+
+RVar-⟨⟩ : ∀ {Γ} → (ρ : R) → RVar Γ → RVar (Γ ⟨ ρ ⟩)
+RVar-⟨⟩ ρ (ρ₀ , A , t) = ρ₀ , A , Var-⟨⟩ ρ t
+
+rvar-img′ : ∀ {Γ' Γ''} → Ren [] Γ' Γ'' → RVar Γ'' → RVar Γ'
+rvar-img′ r (ρ , A , t) = ρ , A , var-img′ r t
+
+-- Named accessors, and the congruence at a fixed declared box type.
+
+rvar-grade : ∀ {Γ} → RVar Γ → R
+rvar-grade t = proj₁ t
+
+rvar-type : ∀ {Γ} → RVar Γ → VType
+rvar-type t = proj₁ (proj₂ t)
+
+rvar-elapsed : ∀ {Γ} → RVar Γ → R
+rvar-elapsed t = proj₁ (proj₂ (proj₂ t))
+
+rvar-pos : ∀ {Γ} → (t : RVar Γ)
+         → [ rvar-grade t ] rvar-type t ∈[ rvar-elapsed t ] Γ
+rvar-pos t = proj₂ (proj₂ (proj₂ t))
+
+rvar-≡ : ∀ {Γ ρ A} {t t' : Var Γ ([ ρ ] A)}
+       → t ≡ t' → _≡_ {A = RVar Γ} (ρ , A , t) (ρ , A , t')
+rvar-≡ = cong _
+
 -- Relocating a variable past a context equality that only extends it, by
 -- pushing the equality inside the constructors.
 

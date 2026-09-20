@@ -72,8 +72,8 @@ var-rename (⟨⟩-ext-ctx _ ecΔ) x =
 -- Renaming a *resource* variable, i.e. one of box type, which is what `unbox`
 -- names. Box types are never eternal, so the grade bound is unconditional.
 --
--- Stated with projections rather than a `with`, so that the `unbox` clause of
--- the action below reduces to an `unbox` node at an abstract renaming.
+-- Stated with projections rather than a `with`, so that the `unbox<:` clause
+-- of the action below reduces to an `unbox<:` node at an abstract renaming.
 
 rvar-rename : ∀ {Γ Γ' A ρ ρ'}
             → Ren [] Γ Γ'
@@ -107,6 +107,7 @@ mutual
   V-rename r false       = false
   V-rename r (⦉ V , W ⦊)  = ⦉ V-rename r V , V-rename r W ⦊
   V-rename r (lam M)     = lam (C-rename (cong-ren r) M)
+  V-rename r (subV V p)  = subV (V-rename r V) p
 
   C-rename : ∀ {Γ Γ' C}
            → Ren [] Γ Γ'
@@ -128,9 +129,9 @@ mutual
     `with (λ op ε'' →
              C-rename (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
-  C-rename r (unbox x rel M) =
-    unbox (proj₁ (proj₂ (rvar-rename r x)))
-          (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
-          (C-rename (cong-ren r) M)
+  C-rename r (unbox<: x p rel M) =
+    unbox<: (proj₁ (proj₂ (rvar-rename r x))) p
+            (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
+            (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
-  C-rename r (coerce rel M) = coerce rel (C-rename r M)
+  C-rename r (subC M p) = subC (C-rename r M) p

@@ -29,6 +29,7 @@ open import Syntax.Language      S
 open import Syntax.RenActions    S
 open import Syntax.Renamings     S
 open import Syntax.Substitutions S
+open import Syntax.Subtyping     S
 open import Syntax.Types         S
 
 open import Syntax.Renamings.Equivalence S
@@ -64,7 +65,9 @@ sub-atᶜ {Γ'} {B} Θ M W = M [ split-≡-++ᶜ {Γ' ∷ B} {Θ} ↦ W ]c
 
 sub-atᴿ : ∀ {Γ' B A ρ σ} → (Θ : Ctx)
         → ([ ρ ] A ∈[ σ ] ((Γ' ∷ B) ++ᶜ Θ)) → Γ' ⊢V⦂ B
-        → Σ[ σ' ∈ R ] (([ ρ ] A ∈[ σ' ] (Γ' ++ᶜ Θ)) × (σ' ≾ᵣ σ))
+        → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ σ' ∈ R ]
+            (([ ρ₀ ] A₀ ∈[ σ' ] (Γ' ++ᶜ Θ))
+              × (([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)) × (σ' ≾ᵣ σ))
 sub-atᴿ {Γ'} {B} Θ z W = ⟨ z ⟩[ split-≡-++ᶜ {Γ' ∷ B} {Θ} ↦ W ]rvar
 
 sub-atᴴ : ∀ {Γ' B D} → (Θ : Ctx) → Fam D (((Γ' ∷ B) ++ᶜ Θ) ⟨ ⊤ᵣ ⟩) → Γ' ⊢V⦂ B

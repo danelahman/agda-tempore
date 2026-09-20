@@ -16,6 +16,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 -- Computation term context flags. They characterise whether
@@ -91,18 +92,18 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         --------------------
           Γ ⊢K[ f ◁ CH ]⦂ CH
 
-    -- sub-effecting coercions
+    -- subsumption
     --
     -- Neither an evaluation nor a state-induced former, hence available only
-    -- at `all`: reduction discards a coercion outright (`COERCE`) rather than
-    -- descending into it, and a state's telescope carries no coercion.
+    -- at `all`: reduction discards a subsumption outright rather than
+    -- descending into it, and a state's telescope carries none.
 
-    coerce[_]ₖ : ∀ {A ε ε'}
+    sub[_]ₖ : ∀ {C C'}
         → all ≤ᶠ f
-        → ε ≾ₑ ε'
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε
-        --------------------------
-        → Γ ⊢K[ f ◁ CH ]⦂ A ‼ ε'
+        → C <:ᶜ C'
+        → Γ ⊢K[ f ◁ CH ]⦂ C
+        ---------------------
+        → Γ ⊢K[ f ◁ CH ]⦂ C'
 
     -- state specific computation term contexts
 
@@ -121,12 +122,13 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         -----------------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-natᵉ τ ·ₑ ε)
 
-    unbox[_]ₖ : ∀ {A C ρ ρ'}
+    unbox[_]ₖ : ∀ {A A₀ C ρ ρ₀ ρ'}
         → state ≤ᶠ f
-        → [ ρ ] A ∈[ ρ' ] Γ
+        → [ ρ₀ ] A₀ ∈[ ρ' ] Γ
+        → ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)
         → ρ' ≾ᵣ ρ
         → Γ ∷ A ⊢K[ f ◁ CH ]⦂ C
-        -------------------------
+        -----------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
     
     box[_]ₖ : ∀ {A C ρ}
@@ -166,7 +168,7 @@ rel-hole-ctx : ∀ {Γ f CH C} → Γ ⊢K[ f ◁ CH ]⦂ C → Ctx → Ctx
 
 rel-hole-ctx []ₖ Γ' =
   Γ'
-rel-hole-ctx (coerce[ p ]ₖ q K) Γ' =
+rel-hole-ctx (sub[ p ]ₖ q K) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (K ₖ[ p ]⨟ N) Γ' =
   rel-hole-ctx K Γ'
@@ -176,7 +178,7 @@ rel-hole-ctx (handle[ p ]ₖ K `with H `in N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
   rel-hole-ctx K (Γ' ⟨ of-natʳ τ ⟩)
-rel-hole-ctx (unbox[_]ₖ {A = A} p x rel K) Γ' =
+rel-hole-ctx (unbox[_]ₖ {A = A} p x w rel K) Γ' =
   rel-hole-ctx K (Γ' ∷ A)
 rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =
   rel-hole-ctx K (Γ' ∷ [ ρ ] A)
@@ -195,7 +197,7 @@ rel-hole-ctx-++ᶜ : ∀ {Γ Γ' Γ'' f CH C}
 
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} []ₖ =
   refl
-rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (coerce[ p ]ₖ q K) =
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (sub[ p ]ₖ q K) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (K ₖ[ p ]⨟ N) =
   rel-hole-ctx-++ᶜ K
@@ -205,7 +207,7 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (handle[ p ]ₖ K `with H `in N) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (delay[ p ]ₖ τ K) =
   rel-hole-ctx-++ᶜ K
-rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x rel K) =
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x w rel K) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   rel-hole-ctx-++ᶜ K
@@ -219,8 +221,8 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
       
 ◁-mon {f = f} {f' = f'} p []ₖ =
   []ₖ
-◁-mon {f = f} {f' = f'} p (coerce[ q ]ₖ r K) =
-  coerce[ ≤ᶠ-trans q p ]ₖ r (◁-mon p K)
+◁-mon {f = f} {f' = f'} p (sub[ q ]ₖ r K) =
+  sub[ ≤ᶠ-trans q p ]ₖ r (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (K ₖ[ q ]⨟ N) =
   (◁-mon p K) ₖ[ ≤ᶠ-trans q p ]⨟ N
 ◁-mon {f = f} {f' = f'} p (perform[ q ]ₖ op V K) =
@@ -229,8 +231,8 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   handle[ ≤ᶠ-trans q p ]ₖ (◁-mon p K) `with H `in N
 ◁-mon {f = f} {f' = f'} p (delay[ q ]ₖ τ K) =
   delay[ ≤ᶠ-trans q p ]ₖ τ (◁-mon p K)
-◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ x rel K) =
-  unbox[ ≤ᶠ-trans q p ]ₖ x rel (◁-mon p K)
+◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ x w rel K) =
+  unbox[ ≤ᶠ-trans q p ]ₖ x w rel (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (box[ q ]ₖ V K) =
   box[ ≤ᶠ-trans q p ]ₖ V (◁-mon p K)
 
@@ -244,8 +246,8 @@ K-rename : ∀ {Γ Γ' CH C f}
 
 K-rename r []ₖ =
   []ₖ
-K-rename r (coerce[ p ]ₖ q K) =
-  coerce[ p ]ₖ q (K-rename r K)
+K-rename r (sub[ p ]ₖ q K) =
+  sub[ p ]ₖ q (K-rename r K)
 K-rename r (K ₖ[ p ]⨟ N) =
   (K-rename r K) ₖ[ p ]⨟ (C-rename (cong-ren r) N)
 K-rename r (perform[ p ]ₖ op V K) =
@@ -257,8 +259,8 @@ K-rename r (handle[ p ]ₖ K `with H `in N) =
     `in (C-rename (cong-ren r) N)
 K-rename r (delay[ p ]ₖ τ K) =
   delay[ p ]ₖ τ (K-rename (cong-ren r) K)
-K-rename r (unbox[ p ]ₖ x rel K) =
-  unbox[ p ]ₖ (proj₁ (proj₂ (rvar-rename r x)))
+K-rename r (unbox[ p ]ₖ x w rel K) =
+  unbox[ p ]ₖ (proj₁ (proj₂ (rvar-rename r x))) w
               (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
               (K-rename (cong-ren r) K)
 K-rename r (box[ p ]ₖ V K) =
@@ -273,8 +275,8 @@ _[_]ₖ : ∀ {Γ CH CH' C f f'}
 
 []ₖ [ L ]ₖ =
   ◁-mon ∨ᶠ-inr L
-coerce[ p ]ₖ q K [ L ]ₖ =
-  coerce[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ q (K [ L ]ₖ)
+sub[ p ]ₖ q K [ L ]ₖ =
+  sub[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ q (K [ L ]ₖ)
 (K ₖ[ p ]⨟ N) [ L ]ₖ =
   (K [ L ]ₖ) ₖ[ ≤ᶠ-trans p ∨ᶠ-inl ]⨟ N
 perform[ p ]ₖ op V K [ L ]ₖ =
@@ -291,8 +293,8 @@ delay[ p ]ₖ τ K [ L ]ₖ =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) L ]ₖ)
-unbox[ p ]ₖ x rel K [ L ]ₖ =
-  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ x rel
+unbox[ p ]ₖ x w rel K [ L ]ₖ =
+  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ x w rel
     (K [ K-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
@@ -313,8 +315,8 @@ _[_] : ∀ {Γ CH C f}
 
 []ₖ [ N ] =
   N
-coerce[ p ]ₖ q K [ N ] =
-  coerce q (K [ N ])
+sub[ p ]ₖ q K [ N ] =
+  subC (K [ N ]) q
 (K ₖ[ p ]⨟ M) [ N ] =
   (K [ N ]) ⨟ M
 perform[ p ]ₖ op V K [ N ] =
@@ -331,8 +333,8 @@ delay[ p ]ₖ τ K [ N ] =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) N ])
-unbox[ p ]ₖ x rel K [ N ] =
-  unbox x rel
+unbox[ p ]ₖ x w rel K [ N ] =
+  unbox<: x w rel
     (K [ C-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))

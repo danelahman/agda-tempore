@@ -1,7 +1,7 @@
 -------------------------------------------------------------------
 -- Shape-preserving subtyping of value and computation types      --
 --                                                                --
--- `_<:_` is a recursive predicate on the skeleton the two types  --
+-- `_<:ᵛ_` is a recursive predicate on the skeleton the two types --
 -- share, not an inductive family, so reflexivity, transitivity   --
 -- and proof irrelevance are lemmas rather than constructors.     --
 --                                                                --
@@ -26,25 +26,25 @@ open GradeSystemInterface Grades
 
 open import Syntax.Types S
 
-infix 4 _<:_ _<:ᶜ_ _∼ˢ_
+infix 4 _<:ᵛ_ _<:ᶜ_ _∼ˢ_
 
 -- The relation
 
-_<:_ : VType → VType → Set
+_<:ᵛ_ : VType → VType → Set
 _<:ᶜ_ : CType → CType → Set
 
-Base b    <: Base b'     = b ≡ b'
-Unit      <: Unit        = ⊤
-Bool      <: Bool        = ⊤
-(A |×| B) <: (A' |×| B') = A <: A' × B <: B'
-Empty     <: Empty       = ⊤
-(A ⇒ C)   <: (A' ⇒ C')   = A' <: A × C <:ᶜ C'
-([ ρ ] A) <: ([ ρ' ] A') = ρ' ≾ᵣ ρ × A <: A'
-_         <: _           = ⊥
+Base b    <:ᵛ Base b'     = b ≡ b'
+Unit      <:ᵛ Unit        = ⊤
+Bool      <:ᵛ Bool        = ⊤
+(A |×| B) <:ᵛ (A' |×| B') = A <:ᵛ A' × B <:ᵛ B'
+Empty     <:ᵛ Empty       = ⊤
+(A ⇒ C)   <:ᵛ (A' ⇒ C')   = A' <:ᵛ A × C <:ᶜ C'
+([ ρ ] A) <:ᵛ ([ ρ' ] A') = ρ' ≾ᵣ ρ × A <:ᵛ A'
+_         <:ᵛ _           = ⊥
 
-(A ‼ ε) <:ᶜ (A' ‼ ε') = A <: A' × ε ≾ₑ ε'
+(A ‼ ε) <:ᶜ (A' ‼ ε') = A <:ᵛ A' × ε ≾ₑ ε'
 
--- Relatedness of two types under `_<:_` fixes their common skeleton.
+-- Relatedness of two types under `_<:ᵛ_` fixes their common skeleton.
 -- Reading it off once is what keeps the lemmas below to one case per
 -- type former instead of one per pair of type formers.
 
@@ -57,139 +57,139 @@ data _∼ˢ_ : VType → VType → Set where
   Arrˢ   : ∀ {A A' C C'} → (A ⇒ C) ∼ˢ (A' ⇒ C')
   Boxˢ   : ∀ {ρ ρ' A A'} → ([ ρ ] A) ∼ˢ ([ ρ' ] A')
 
-<:-shape : ∀ {A B} → A <: B → A ∼ˢ B
-<:-shape {Base _}  {Base _}  _ = Baseˢ
-<:-shape {Base _}  {Unit}    ()
-<:-shape {Base _}  {Bool}    ()
-<:-shape {Base _}  {_ |×| _} ()
-<:-shape {Base _}  {Empty}   ()
-<:-shape {Base _}  {_ ⇒ _}   ()
-<:-shape {Base _}  {[ _ ] _} ()
-<:-shape {Unit}    {Base _}  ()
-<:-shape {Unit}    {Unit}    _ = Unitˢ
-<:-shape {Unit}    {Bool}    ()
-<:-shape {Unit}    {_ |×| _} ()
-<:-shape {Unit}    {Empty}   ()
-<:-shape {Unit}    {_ ⇒ _}   ()
-<:-shape {Unit}    {[ _ ] _} ()
-<:-shape {Bool}    {Base _}  ()
-<:-shape {Bool}    {Unit}    ()
-<:-shape {Bool}    {Bool}    _ = Boolˢ
-<:-shape {Bool}    {_ |×| _} ()
-<:-shape {Bool}    {Empty}   ()
-<:-shape {Bool}    {_ ⇒ _}   ()
-<:-shape {Bool}    {[ _ ] _} ()
-<:-shape {_ |×| _} {Base _}  ()
-<:-shape {_ |×| _} {Unit}    ()
-<:-shape {_ |×| _} {Bool}    ()
-<:-shape {_ |×| _} {_ |×| _} _ = Prodˢ
-<:-shape {_ |×| _} {Empty}   ()
-<:-shape {_ |×| _} {_ ⇒ _}   ()
-<:-shape {_ |×| _} {[ _ ] _} ()
-<:-shape {Empty}   {Base _}  ()
-<:-shape {Empty}   {Unit}    ()
-<:-shape {Empty}   {Bool}    ()
-<:-shape {Empty}   {_ |×| _} ()
-<:-shape {Empty}   {Empty}   _ = Emptyˢ
-<:-shape {Empty}   {_ ⇒ _}   ()
-<:-shape {Empty}   {[ _ ] _} ()
-<:-shape {_ ⇒ _}   {Base _}  ()
-<:-shape {_ ⇒ _}   {Unit}    ()
-<:-shape {_ ⇒ _}   {Bool}    ()
-<:-shape {_ ⇒ _}   {_ |×| _} ()
-<:-shape {_ ⇒ _}   {Empty}   ()
-<:-shape {_ ⇒ _}   {_ ⇒ _}   _ = Arrˢ
-<:-shape {_ ⇒ _}   {[ _ ] _} ()
-<:-shape {[ _ ] _} {Base _}  ()
-<:-shape {[ _ ] _} {Unit}    ()
-<:-shape {[ _ ] _} {Bool}    ()
-<:-shape {[ _ ] _} {_ |×| _} ()
-<:-shape {[ _ ] _} {Empty}   ()
-<:-shape {[ _ ] _} {_ ⇒ _}   ()
-<:-shape {[ _ ] _} {[ _ ] _} _ = Boxˢ
+<:ᵛ-shape : ∀ {A B} → A <:ᵛ B → A ∼ˢ B
+<:ᵛ-shape {Base _}  {Base _}  _ = Baseˢ
+<:ᵛ-shape {Base _}  {Unit}    ()
+<:ᵛ-shape {Base _}  {Bool}    ()
+<:ᵛ-shape {Base _}  {_ |×| _} ()
+<:ᵛ-shape {Base _}  {Empty}   ()
+<:ᵛ-shape {Base _}  {_ ⇒ _}   ()
+<:ᵛ-shape {Base _}  {[ _ ] _} ()
+<:ᵛ-shape {Unit}    {Base _}  ()
+<:ᵛ-shape {Unit}    {Unit}    _ = Unitˢ
+<:ᵛ-shape {Unit}    {Bool}    ()
+<:ᵛ-shape {Unit}    {_ |×| _} ()
+<:ᵛ-shape {Unit}    {Empty}   ()
+<:ᵛ-shape {Unit}    {_ ⇒ _}   ()
+<:ᵛ-shape {Unit}    {[ _ ] _} ()
+<:ᵛ-shape {Bool}    {Base _}  ()
+<:ᵛ-shape {Bool}    {Unit}    ()
+<:ᵛ-shape {Bool}    {Bool}    _ = Boolˢ
+<:ᵛ-shape {Bool}    {_ |×| _} ()
+<:ᵛ-shape {Bool}    {Empty}   ()
+<:ᵛ-shape {Bool}    {_ ⇒ _}   ()
+<:ᵛ-shape {Bool}    {[ _ ] _} ()
+<:ᵛ-shape {_ |×| _} {Base _}  ()
+<:ᵛ-shape {_ |×| _} {Unit}    ()
+<:ᵛ-shape {_ |×| _} {Bool}    ()
+<:ᵛ-shape {_ |×| _} {_ |×| _} _ = Prodˢ
+<:ᵛ-shape {_ |×| _} {Empty}   ()
+<:ᵛ-shape {_ |×| _} {_ ⇒ _}   ()
+<:ᵛ-shape {_ |×| _} {[ _ ] _} ()
+<:ᵛ-shape {Empty}   {Base _}  ()
+<:ᵛ-shape {Empty}   {Unit}    ()
+<:ᵛ-shape {Empty}   {Bool}    ()
+<:ᵛ-shape {Empty}   {_ |×| _} ()
+<:ᵛ-shape {Empty}   {Empty}   _ = Emptyˢ
+<:ᵛ-shape {Empty}   {_ ⇒ _}   ()
+<:ᵛ-shape {Empty}   {[ _ ] _} ()
+<:ᵛ-shape {_ ⇒ _}   {Base _}  ()
+<:ᵛ-shape {_ ⇒ _}   {Unit}    ()
+<:ᵛ-shape {_ ⇒ _}   {Bool}    ()
+<:ᵛ-shape {_ ⇒ _}   {_ |×| _} ()
+<:ᵛ-shape {_ ⇒ _}   {Empty}   ()
+<:ᵛ-shape {_ ⇒ _}   {_ ⇒ _}   _ = Arrˢ
+<:ᵛ-shape {_ ⇒ _}   {[ _ ] _} ()
+<:ᵛ-shape {[ _ ] _} {Base _}  ()
+<:ᵛ-shape {[ _ ] _} {Unit}    ()
+<:ᵛ-shape {[ _ ] _} {Bool}    ()
+<:ᵛ-shape {[ _ ] _} {_ |×| _} ()
+<:ᵛ-shape {[ _ ] _} {Empty}   ()
+<:ᵛ-shape {[ _ ] _} {_ ⇒ _}   ()
+<:ᵛ-shape {[ _ ] _} {[ _ ] _} _ = Boxˢ
 
 -- Reflexivity
 
-<:-refl  : (A : VType) → A <: A
+<:ᵛ-refl : (A : VType) → A <:ᵛ A
 <:ᶜ-refl : (C : CType) → C <:ᶜ C
 
-<:-refl (Base b)  = refl
-<:-refl Unit      = tt
-<:-refl Bool      = tt
-<:-refl (A |×| B) = <:-refl A , <:-refl B
-<:-refl Empty     = tt
-<:-refl (A ⇒ C)   = <:-refl A , <:ᶜ-refl C
-<:-refl ([ ρ ] A) = ≾ᵣ-refl , <:-refl A
+<:ᵛ-refl (Base b)  = refl
+<:ᵛ-refl Unit      = tt
+<:ᵛ-refl Bool      = tt
+<:ᵛ-refl (A |×| B) = <:ᵛ-refl A , <:ᵛ-refl B
+<:ᵛ-refl Empty     = tt
+<:ᵛ-refl (A ⇒ C)   = <:ᵛ-refl A , <:ᶜ-refl C
+<:ᵛ-refl ([ ρ ] A) = ≾ᵣ-refl , <:ᵛ-refl A
 
-<:ᶜ-refl (A ‼ ε) = <:-refl A , ≾ₑ-refl
+<:ᶜ-refl (A ‼ ε) = <:ᵛ-refl A , ≾ₑ-refl
 
 -- Transitivity; the contravariant positions compose in the opposite order
 
-<:-trans  : ∀ {A B C} → A <: B → B <: C → A <: C
+<:ᵛ-trans : ∀ {A B C} → A <:ᵛ B → B <:ᵛ C → A <:ᵛ C
 <:ᶜ-trans : ∀ {C₁ C₂ C₃} → C₁ <:ᶜ C₂ → C₂ <:ᶜ C₃ → C₁ <:ᶜ C₃
 
-<:-transˢ : ∀ {A B C} → A ∼ˢ B → B ∼ˢ C → A <: B → B <: C → A <: C
-<:-transˢ Baseˢ  Baseˢ  p       q       = trans p q
-<:-transˢ Unitˢ  Unitˢ  p       q       = tt
-<:-transˢ Boolˢ  Boolˢ  p       q       = tt
-<:-transˢ Prodˢ  Prodˢ  (p , r) (q , s) = <:-trans p q , <:-trans r s
-<:-transˢ Emptyˢ Emptyˢ p       q       = tt
-<:-transˢ Arrˢ   Arrˢ   (p , r) (q , s) = <:-trans q p , <:ᶜ-trans r s
-<:-transˢ Boxˢ   Boxˢ   (p , r) (q , s) = ≾ᵣ-trans q p , <:-trans r s
+<:ᵛ-transˢ : ∀ {A B C} → A ∼ˢ B → B ∼ˢ C → A <:ᵛ B → B <:ᵛ C → A <:ᵛ C
+<:ᵛ-transˢ Baseˢ  Baseˢ  p       q       = trans p q
+<:ᵛ-transˢ Unitˢ  Unitˢ  p       q       = tt
+<:ᵛ-transˢ Boolˢ  Boolˢ  p       q       = tt
+<:ᵛ-transˢ Prodˢ  Prodˢ  (p , r) (q , s) = <:ᵛ-trans p q , <:ᵛ-trans r s
+<:ᵛ-transˢ Emptyˢ Emptyˢ p       q       = tt
+<:ᵛ-transˢ Arrˢ   Arrˢ   (p , r) (q , s) = <:ᵛ-trans q p , <:ᶜ-trans r s
+<:ᵛ-transˢ Boxˢ   Boxˢ   (p , r) (q , s) = ≾ᵣ-trans q p , <:ᵛ-trans r s
 
-<:-trans p q = <:-transˢ (<:-shape p) (<:-shape q) p q
+<:ᵛ-trans p q = <:ᵛ-transˢ (<:ᵛ-shape p) (<:ᵛ-shape q) p q
 
 <:ᶜ-trans {_ ‼ _} {_ ‼ _} {_ ‼ _} (p , r) (q , s) =
-  <:-trans p q , ≾ₑ-trans r s
+  <:ᵛ-trans p q , ≾ₑ-trans r s
 
 -- Subtyping is a *property* of a pair of types: any two witnesses
 -- coincide, by irrelevance of the grade orderings and UIP at `Base`.
 
-<:-irrelevant  : ∀ {A B} → (p q : A <: B) → p ≡ q
+<:ᵛ-irrelevant : ∀ {A B} → (p q : A <:ᵛ B) → p ≡ q
 <:ᶜ-irrelevant : ∀ {C₁ C₂} → (p q : C₁ <:ᶜ C₂) → p ≡ q
 
-<:-irrelevantˢ : ∀ {A B} → A ∼ˢ B → (p q : A <: B) → p ≡ q
-<:-irrelevantˢ Baseˢ  p       q       = uip
-<:-irrelevantˢ Unitˢ  p       q       = refl
-<:-irrelevantˢ Boolˢ  p       q       = refl
-<:-irrelevantˢ Prodˢ  (p , r) (q , s) =
-  cong₂ _,_ (<:-irrelevant p q) (<:-irrelevant r s)
-<:-irrelevantˢ Emptyˢ p       q       = refl
-<:-irrelevantˢ Arrˢ   (p , r) (q , s) =
-  cong₂ _,_ (<:-irrelevant p q) (<:ᶜ-irrelevant r s)
-<:-irrelevantˢ Boxˢ   (p , r) (q , s) =
-  cong₂ _,_ (≾ᵣ-irrelevant p q) (<:-irrelevant r s)
+<:ᵛ-irrelevantˢ : ∀ {A B} → A ∼ˢ B → (p q : A <:ᵛ B) → p ≡ q
+<:ᵛ-irrelevantˢ Baseˢ  p       q       = uip
+<:ᵛ-irrelevantˢ Unitˢ  p       q       = refl
+<:ᵛ-irrelevantˢ Boolˢ  p       q       = refl
+<:ᵛ-irrelevantˢ Prodˢ  (p , r) (q , s) =
+  cong₂ _,_ (<:ᵛ-irrelevant p q) (<:ᵛ-irrelevant r s)
+<:ᵛ-irrelevantˢ Emptyˢ p       q       = refl
+<:ᵛ-irrelevantˢ Arrˢ   (p , r) (q , s) =
+  cong₂ _,_ (<:ᵛ-irrelevant p q) (<:ᶜ-irrelevant r s)
+<:ᵛ-irrelevantˢ Boxˢ   (p , r) (q , s) =
+  cong₂ _,_ (≾ᵣ-irrelevant p q) (<:ᵛ-irrelevant r s)
 
-<:-irrelevant p q = <:-irrelevantˢ (<:-shape p) p q
+<:ᵛ-irrelevant p q = <:ᵛ-irrelevantˢ (<:ᵛ-shape p) p q
 
 <:ᶜ-irrelevant {_ ‼ _} {_ ‼ _} (p , r) (q , s) =
-  cong₂ _,_ (<:-irrelevant p q) (≾ₑ-irrelevant r s)
+  cong₂ _,_ (<:ᵛ-irrelevant p q) (≾ₑ-irrelevant r s)
 
 -- Eternality lives on the shared skeleton — `Eternal` has no `_⇒_` and
 -- no `[_]_` clause, and the only grade it could see is a box's — so it
--- transfers along `_<:_` in both directions.
+-- transfers along `_<:ᵛ_` in both directions.
 
-<:-eternalˡ : ∀ {A B} → A <: B → Eternal B → Eternal A
-<:-eternalʳ : ∀ {A B} → A <: B → Eternal A → Eternal B
+<:ᵛ-eternalˡ : ∀ {A B} → A <:ᵛ B → Eternal B → Eternal A
+<:ᵛ-eternalʳ : ∀ {A B} → A <:ᵛ B → Eternal A → Eternal B
 
-<:-eternalˡˢ : ∀ {A B} → A ∼ˢ B → A <: B → Eternal B → Eternal A
-<:-eternalˡˢ Baseˢ  refl    et          = et
-<:-eternalˡˢ Unitˢ  p       et          = et
-<:-eternalˡˢ Boolˢ  p       et          = et
-<:-eternalˡˢ Prodˢ  (p , r) (et |×|ₑ e) = <:-eternalˡ p et |×|ₑ <:-eternalˡ r e
-<:-eternalˡˢ Emptyˢ p       et          = et
-<:-eternalˡˢ Arrˢ   p       ()
-<:-eternalˡˢ Boxˢ   p       ()
+<:ᵛ-eternalˡˢ : ∀ {A B} → A ∼ˢ B → A <:ᵛ B → Eternal B → Eternal A
+<:ᵛ-eternalˡˢ Baseˢ  refl    et          = et
+<:ᵛ-eternalˡˢ Unitˢ  p       et          = et
+<:ᵛ-eternalˡˢ Boolˢ  p       et          = et
+<:ᵛ-eternalˡˢ Prodˢ  (p , r) (et |×|ₑ e) = <:ᵛ-eternalˡ p et |×|ₑ <:ᵛ-eternalˡ r e
+<:ᵛ-eternalˡˢ Emptyˢ p       et          = et
+<:ᵛ-eternalˡˢ Arrˢ   p       ()
+<:ᵛ-eternalˡˢ Boxˢ   p       ()
 
-<:-eternalˡ p et = <:-eternalˡˢ (<:-shape p) p et
+<:ᵛ-eternalˡ p et = <:ᵛ-eternalˡˢ (<:ᵛ-shape p) p et
 
-<:-eternalʳˢ : ∀ {A B} → A ∼ˢ B → A <: B → Eternal A → Eternal B
-<:-eternalʳˢ Baseˢ  refl    et          = et
-<:-eternalʳˢ Unitˢ  p       et          = et
-<:-eternalʳˢ Boolˢ  p       et          = et
-<:-eternalʳˢ Prodˢ  (p , r) (et |×|ₑ e) = <:-eternalʳ p et |×|ₑ <:-eternalʳ r e
-<:-eternalʳˢ Emptyˢ p       et          = et
-<:-eternalʳˢ Arrˢ   p       ()
-<:-eternalʳˢ Boxˢ   p       ()
+<:ᵛ-eternalʳˢ : ∀ {A B} → A ∼ˢ B → A <:ᵛ B → Eternal A → Eternal B
+<:ᵛ-eternalʳˢ Baseˢ  refl    et          = et
+<:ᵛ-eternalʳˢ Unitˢ  p       et          = et
+<:ᵛ-eternalʳˢ Boolˢ  p       et          = et
+<:ᵛ-eternalʳˢ Prodˢ  (p , r) (et |×|ₑ e) = <:ᵛ-eternalʳ p et |×|ₑ <:ᵛ-eternalʳ r e
+<:ᵛ-eternalʳˢ Emptyˢ p       et          = et
+<:ᵛ-eternalʳˢ Arrˢ   p       ()
+<:ᵛ-eternalʳˢ Boxˢ   p       ()
 
-<:-eternalʳ p et = <:-eternalʳˢ (<:-shape p) p et
+<:ᵛ-eternalʳ p et = <:ᵛ-eternalʳˢ (<:ᵛ-shape p) p et

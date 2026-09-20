@@ -29,6 +29,7 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
+open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Substitutions.Base      S
@@ -77,15 +78,17 @@ sub-atˢ₀ {Γ} {B} Θ W = sub-split₀ (split-≡-++ᶜ {Γ ∷ B} {Θ}) W
 
 -- Substituting in a *resource* variable, i.e. one of box type, which is what
 -- an `unbox` names. Its grade is not bounded by the unit, so it is not read
--- as a value; it does not have to be, box types having only variables as
--- values.
+-- as a value; it does not have to be, a value of box type being a variable up
+-- to subsumption.
 
 ⟨_⟩[_↦_]rvar : ∀ {Γ Γ₁ Γ₂ A B ρ σ}
              → ([ ρ ] B ∈[ σ ] Γ)
              → (s : Γ₁ ∷ A , Γ₂ split Γ)
              → Γ₁ ⊢V⦂ A
              ----------------------------------------------------------
-             → Σ[ σ' ∈ R ] (([ ρ ] B ∈[ σ' ] (Γ₁ ++ᶜ Γ₂)) × (σ' ≾ᵣ σ))
+             → Σ[ ρ₀ ∈ R ] Σ[ B₀ ∈ VType ] Σ[ σ' ∈ R ]
+                 (([ ρ₀ ] B₀ ∈[ σ' ] (Γ₁ ++ᶜ Γ₂))
+                   × (([ ρ₀ ] B₀) <:ᵛ ([ ρ ] B)) × (σ' ≾ᵣ σ))
 
 ⟨ y ⟩[ s ↦ W ]rvar = sub-tgt₀ (sub-split₀ s W) y
 
