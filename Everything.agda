@@ -82,6 +82,10 @@ open import Syntax.Types
 open import Syntax.Contexts
 open import Syntax.Language
 
+---- Shape-preserving subtyping of value and computation types
+
+open import Syntax.Subtyping
+
 ---- Renamings and substitutions
 
 open import Syntax.Renamings
