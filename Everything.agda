@@ -225,6 +225,7 @@ open import DenotationalSemantics.Model.Example.PSh.TopLevelInstance
 ---- Interpretation of the calculus
 
 open import DenotationalSemantics.Interpretation.Types
+open import DenotationalSemantics.Interpretation.Subtyping
 open import DenotationalSemantics.Interpretation.Contexts
 open import DenotationalSemantics.Interpretation.Variables
 open import DenotationalSemantics.Interpretation.Terms

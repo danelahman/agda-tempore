@@ -5,10 +5,11 @@
 -- `Γ ⊢C⦂ C` is `⟦ Γ ⟧ →ᵐ ⟦ C ⟧ᶜ`. Variables use the machinery of        --
 -- `Interpretation.Variables`. Effectful formers use the graded monad:   --
 -- `return`↦`ηᵀ`, `⨟`↦`μᵀ ∘ Tᶠ- ∘ strᵀ` (environment threaded by the     --
--- adjunction unit `η⊣`), `perform`↦`opᵀ`, `delay`↦`delayᵀ`,             --
--- `coerce`↦`T-≤`. The Fitch formers use the adjunction: `box` transposes --
--- by `[ ρ ]ᶠ- ∘ η⊣`, and `unbox` projects the variable it names and     --
--- opens it with the counit `ε⊣`.                                        --
+-- adjunction unit `η⊣`), `perform`↦`opᵀ`, `delay`↦`delayᵀ`. Subsumption  --
+-- `subV`/`subC` post-composes the coercion `⟦_⟧<:ᵛ`/`⟦_⟧<:ᶜ` of its      --
+-- witness. The Fitch formers use the adjunction: `box` transposes        --
+-- by `[ ρ ]ᶠ- ∘ η⊣`, and `unbox` projects the variable it names, opens   --
+-- it with the counit `ε⊣` and coerces the payload to the bound type.     --
 --                                                                    --
 -- `perform`'s parameter/arity are ground types, interpreted via the      --
 -- coercion `⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ` (`ty-gty`).                  --
@@ -60,6 +61,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ; ⟨⊤⟩-η; ⟨⊤⟩-eternalᵒ)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 
@@ -136,6 +138,7 @@ mutual
   Paramᵛ false      = ⊤
   Paramᵛ ⦉ V , W ⦊  = Paramᵛ V × Paramᵛ W
   Paramᵛ (lam M)    = Paramᶜ M
+  Paramᵛ (subV V p) = Paramᵛ V
 
   Paramᶜ : ∀ {Γ C} → Γ ⊢C⦂ C → Set
   Paramᶜ (return V)       = Paramᵛ V
@@ -146,9 +149,9 @@ mutual
   Paramᶜ (if V `then M `else N) = Paramᵛ V × Paramᶜ M × Paramᶜ N
   Paramᶜ (perform op V M) = Paramᵛ V × Paramᶜ M
   Paramᶜ (delay τ M)      = Paramᶜ M
-  Paramᶜ (unbox x rel M)  = Paramᶜ M
+  Paramᶜ (unbox x rel p M) = Paramᶜ M
   Paramᶜ (box V M)        = Paramᵛ V × Paramᶜ M
-  Paramᶜ (coerce p M)     = Paramᶜ M
+  Paramᶜ (subC M p)       = Paramᶜ M
   -- the handled computation, the return clause, every operation clause, and —
   -- the actual content — the clauses' uniformity in the residual grade
   Paramᶜ {Γ} (handle_`with_`in {B = B} M H N) =
@@ -181,6 +184,7 @@ mutual
   ⟦ false    ⟧ᵛᵗ _ = falseᵐ ∘ᵐ terminalᵐ
   ⟦ ⦉ V , W ⦊ ⟧ᵛᵗ (pV , pW) = ⟨ ⟦ V ⟧ᵛᵗ pV , ⟦ W ⟧ᵛᵗ pW ⟩ᵐ
   ⟦ lam M    ⟧ᵛᵗ pM = curryᵐ (⟦ M ⟧ᶜᵗ pM)
+  ⟦ subV V p ⟧ᵛᵗ pV = ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
 
   ⟦_⟧ᶜᵗ : ∀ {Γ C} → (M : Γ ⊢C⦂ C) → Paramᶜ M → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ C ⟧ᶜ
   ⟦ return V ⟧ᶜᵗ pV = ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ pV
@@ -203,11 +207,11 @@ mutual
   ⟦_⟧ᶜᵗ {Γ} (handle_`with_`in {A} {B} {ε} {ε'} M H N) (pM , pN , pH , uH) =
       T-alg-of-handlerᵀ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟦_⟧ʰᵗ {Γ} H pH uH)
     ∘ᵐ ⟨ ⟨⊤⟩-η , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ
-  ⟦ unbox x rel M ⟧ᶜᵗ pM =
-    ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
+  ⟦ unbox x rel p M ⟧ᶜᵗ pM =
+    ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ⟦ p ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
   ⟦ box {ρ = ρ} V M ⟧ᶜᵗ (pV , pM) =
     ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , [ ρ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣ ⟩ᵐ
-  ⟦ coerce p M ⟧ᶜᵗ pM = T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
+  ⟦ subC M p ⟧ᶜᵗ pM = ⟦ p ⟧<:ᶜ ∘ᵐ ⟦ M ⟧ᶜᵗ pM
 
   -- The semantic handler of a syntactic one. Each clause sees the ambient
   -- context barred by `⟨ ⊤ᵣ ⟩`, so it interprets to a morphism parameterised

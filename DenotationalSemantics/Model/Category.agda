@@ -378,6 +378,49 @@ record Category : Set₂ where
                     (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
                               (curryᵐ-uncurryᵐ-iso k)))))))))
 
+  -- Both reindexings of an abstraction at once; `map⇒ᵐ-curryᵐ` and
+  -- `map⇒ᵐ-curryᵐˡ` are the cases `f ≔ idᵐ` and `g ≔ idᵐ`.
+
+  map⇒ᵐ-curryᵐˡʳ : ∀ {A A' B C D} → (f : A' →ᵐ A) → (g : C →ᵐ D) → (k : B ×ᵐ A →ᵐ C)
+                 → map⇒ᵐ f g ∘ᵐ curryᵐ k ≈ᵐ curryᵐ (g ∘ᵐ k ∘ᵐ mapˣᵐ idᵐ f)
+  map⇒ᵐ-curryᵐˡʳ f g k =
+    ≈ᵐ-trans (≈ᵐ-sym (curryᵐ-nat (curryᵐ k) (g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ f)))
+      (curryᵐ-cong
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+          (∘ᵐ-congʳ
+            (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            -- the two product maps commute, splitting off the argument's reindexing
+            (≈ᵐ-trans (∘ᵐ-congʳ
+                        (≈ᵐ-trans (mapˣᵐ-∘ idᵐ f (curryᵐ k) idᵐ)
+                        (≈ᵐ-trans (mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _))
+                                  (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ (curryᵐ k) idᵐ idᵐ f)
+                                                    (mapˣᵐ-cong (∘ᵐ-identityʳ _)
+                                                                (∘ᵐ-identityˡ _)))))))
+            (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      -- what is left of the application is the abstraction undone
+                      (∘ᵐ-congˡ
+                        (≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ k) idᵐ))
+                        (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
+                                  (curryᵐ-uncurryᵐ-iso k))))))))))
+
+  -- the exponential is a bifunctor, contravariant in the domain
+
+  map⇒ᵐ-∘ : ∀ {A A' B C D D'} → (f : A →ᵐ B) → (f' : A' →ᵐ A)
+          → (g : C →ᵐ D) → (g' : D →ᵐ D')
+          → map⇒ᵐ (f ∘ᵐ f') (g' ∘ᵐ g) ≈ᵐ map⇒ᵐ f' g' ∘ᵐ map⇒ᵐ f g
+  map⇒ᵐ-∘ f f' g g' =
+    ≈ᵐ-sym
+      (≈ᵐ-trans (map⇒ᵐ-curryᵐˡʳ f' g' (g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ f))
+        (curryᵐ-cong
+          (≈ᵐ-trans (∘ᵐ-congʳ
+                      (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                        (∘ᵐ-congʳ
+                          (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+                                    (∘ᵐ-congʳ
+                                      (≈ᵐ-trans (mapˣᵐ-∘ idᵐ f idᵐ f')
+                                                (mapˣᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl)))))))
+                    (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
   -- The exponential's costrength applied to a pair whose second component is
   -- an abstraction: the paired-in value simply joins the abstraction's
   -- environment (it is constant in the abstracted argument, hence `fstᵐ`).

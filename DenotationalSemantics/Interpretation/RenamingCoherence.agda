@@ -173,6 +173,7 @@ mutual
   renᵛ r false    _ = tt
   renᵛ r ⦉ V , W ⦊ (pV , pW) = renᵛ r V pV , renᵛ r W pW
   renᵛ r (lam M)   pM = renᶜ (cong-∷-ren r) M pM
+  renᵛ r (subV V p) pV = renᵛ r V pV
 
   renᶜ : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-rename r M)
   renᶜ r (return V)       pV        = renᵛ r V pV
@@ -187,10 +188,10 @@ mutual
   renᶜ r (perform op V M) (pV , pM) =
     renᵛ r V pV , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) M pM
   renᶜ r (delay τ M)      pM        = renᶜ (cong-⟨⟩-ren r) M pM
-  renᶜ r (unbox x rel M)  pM        = renᶜ (cong-∷-ren r) M pM
+  renᶜ r (unbox x rel p M) pM       = renᶜ (cong-∷-ren r) M pM
   renᶜ r (box V M)        (pV , pM) =
     renᵛ (cong-⟨⟩-ren r) V pV , renᶜ (cong-∷-ren r) M pM
-  renᶜ r (coerce rel M)   pM        = renᶜ r M pM
+  renᶜ r (subC M p)       pM        = renᶜ r M pM
   -- the clauses' uniformity transports: the renaming acts on the ambient
   -- context only, so it commutes with the continuation's coercion
   -- (`mapˣ-swapᵐ`), after which the original uniformity applies
@@ -251,6 +252,8 @@ mutual
   V-rename-nat r (lam M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-rename-nat (cong-∷-ren r) M pM))
              (curryᵐ-nat ⟦ r ⟧ʳ (⟦ M ⟧ᶜᵗ pM))
+  V-rename-nat r (subV V p) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-rename-nat r V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
   C-rename-nat : ∀ {Γ Γ' C} → (r : Ren [] Γ' Γ) → (M : Γ ⊢C⦂ C) → (p : Paramᶜ M)
                → ⟦ C-rename r M ⟧ᶜᵗ (renᶜ r M p) ≈ᵐ ⟦ M ⟧ᶜᵗ p ∘ᵐ ⟦ r ⟧ʳ
@@ -372,13 +375,15 @@ mutual
                   (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
       alg-nat = T-alg-of-handlerᵀ-natᴾ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) (⟨⊤⟩-eternalᵒ ⟦ Γ' ⟧ᶜᵗˣ)
                   f (⟨⊤⟩-free-necᵉ-nat ⟦ r ⟧ʳ) (⟦_⟧ʰᵗ {Γ} H pH uH) _ ⟦⟧ʰᵗ-nat
-  C-rename-nat r (unbox x rel M) pM =
+  C-rename-nat r (unbox x rel p M) pM =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-rename-nat (cong-∷-ren r) M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
     (≈ᵐ-trans (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _))
     (≈ᵐ-trans (∘ᵐ-congʳ
                 (⟨ ≈ᵐ-trans (∘ᵐ-identityʳ _) (≈ᵐ-sym (∘ᵐ-identityˡ _))
-                 , ≈ᵐ-trans (∘ᵐ-identityˡ _) (unbox-env-nat r x rel _) ⟩ᵐ-cong))
+                 , ≈ᵐ-trans (∘ᵐ-identityˡ _)
+                   (≈ᵐ-trans (∘ᵐ-congʳ (unbox-env-nat r x rel _))
+                             (≈ᵐ-sym (∘ᵐ-assoc _ _ _))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
   C-rename-nat r (box V M) (pV , pM) =
@@ -395,5 +400,5 @@ mutual
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ idᵐ ([ _ ]ᶠ (⟦ V ⟧ᵛᵗ pV) ∘ᵐ η⊣) ⟦ r ⟧ʳ)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
-  C-rename-nat r (coerce rel M) pM =
+  C-rename-nat r (subC M p) pM =
     ≈ᵐ-trans (∘ᵐ-congʳ (C-rename-nat r M pM)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))

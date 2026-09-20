@@ -54,6 +54,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (Eternalᵒ)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -77,6 +78,8 @@ eternal-val-extᴾ _  true                       = tt
 eternal-val-extᴾ _  false                      = tt
 eternal-val-extᴾ (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊    =
   eternal-val-extᴾ et₁ V₁ , eternal-val-extᴾ et₂ V₂
+eternal-val-extᴾ et (subV V p)                 =
+  eternal-val-extᴾ (<:ᵛ-eternalˡ p et) V
 
 sub-env : ∀ {Γ Γ₁ Γ₂ A} → (s : Γ₁ ∷ A , Γ₂ split Γ) → (W : Γ₁ ⊢V⦂ A) → Paramᵛ W
         → ⟦ Γ₁ ++ᶜ Γ₂ ⟧ᶜᵗˣ →ᵐ ⟦ Γ ⟧ᶜᵗˣ
@@ -89,6 +92,19 @@ sub-env (split-⟨⟩ {ρ = ρ} s)  W pW = ⟨ ρ ⟩ᶠ (sub-env s W pW)
 -- Weakening a value of *eternal* type under a lock: denotationally this is
 -- the eternal extraction applied to the locked environment. Proved by
 -- induction on the value (only the eternal formers can occur).
+
+-- Extraction commutes with a coercion out of an eternal type: such a
+-- coercion has equal endpoints, hence is the identity.
+
+extᵉ-<: : ∀ {A B ρ} → (et : Eternal A) → (et' : Eternal B) → (p : A <:ᵛ B)
+        → ⟦ p ⟧<:ᵛ ∘ᵐ eternalᵛ-extᵉ et {ρ} ≈ᵐ eternalᵛ-extᵉ et' ∘ᵐ ⟨ ρ ⟩ᶠ ⟦ p ⟧<:ᵛ
+extᵉ-<: et et' p with <:ᵛ-eternal-≡ et p
+... | refl =
+  ≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧<:ᵛ-id p))
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (eternalᵛ-extᵉ-irr et et')
+  (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-id p)) ⟨⟩-idᵐ))
+                    (∘ᵐ-identityʳ _)))))
 
 eternal-val-ext-nat : ∀ {Γ A ρ} → (et : Eternal A) → (V : Γ ⊢V⦂ A) → (pV : Paramᵛ V)
                     → ⟦ eternal-val-ext {ρ = ρ} et V ⟧ᵛᵗ (eternal-val-extᴾ et V)
@@ -135,21 +151,31 @@ eternal-val-ext-nat (et₁ |×|ₑ et₂) ⦉ V₁ , V₂ ⦊ (p₁ , p₂) =
   (≈ᵐ-trans (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
             (∘ᵐ-congˡ (≈ᵐ-sym (×-eternalᵒ-extᵉ (eternalᵛ-Eternalᵒ et₁)
                                               (eternalᵛ-Eternalᵒ et₂))))))))
+eternal-val-ext-nat et (subV V p) pV =
+  ≈ᵐ-trans (∘ᵐ-congʳ (eternal-val-ext-nat (<:ᵛ-eternalˡ p et) V pV))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (extᵉ-<: (<:ᵛ-eternalˡ p et) et p))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))))))
 
 -- (`eq-ren-∷` / `eq-ren-⟨⟩` / `eq-ren-irr` live with the other renaming
 -- denotation lemmas in `Interpretation.Renaming`.)
 
 -- The resource lookup morphism of an `unbox`.
 
-lk : ∀ {Γ A ρ ρ'} → [ ρ ] A ∈[ ρ' ] Γ → ρ' ≾ᵣ ρ → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
-lk z rel = ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj z
+lk : ∀ {Γ A A₀ ρ ρ'} → [ ρ ] A₀ ∈[ ρ' ] Γ → ρ' ≾ᵣ ρ → A₀ <:ᵛ A
+   → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟦ A ⟧ᵛ
+lk z rel w = ⟦ w ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj z
 
--- It depends on the cell alone, the bound being irrelevant.
+-- It depends on the cell alone, the bound and the payload witness being
+-- irrelevant.
 
-lk-irr : ∀ {Γ A ρ} → {t t' : Var Γ ([ ρ ] A)} → t ≡ t'
+lk-irr : ∀ {Γ A A₀ ρ} → {t t' : Var Γ ([ ρ ] A₀)} → t ≡ t'
        → (b : proj₁ t ≾ᵣ ρ) → (b' : proj₁ t' ≾ᵣ ρ)
-       → lk (proj₂ t) b ≈ᵐ lk (proj₂ t') b'
-lk-irr refl b b' rewrite ≾ᵣ-irrelevant b b' = ≈ᵐ-refl
+       → (w w' : A₀ <:ᵛ A)
+       → lk (proj₂ t) b w ≈ᵐ lk (proj₂ t') b' w'
+lk-irr refl b b' w w'
+  rewrite ≾ᵣ-irrelevant b b' | <:ᵛ-irrelevant w w' = ≈ᵐ-refl
 
 -- Projecting the head variable through one lock and relaxing the redundant
 -- `uᵣ ·ᵣ ρ` back to `ρ` is just the (locked) second projection.
@@ -203,3 +229,32 @@ var-morphism-¬et : ∀ {Γ B ρ'} → (y : B ∈[ ρ' ] Γ) → (f : ¬ Eternal
 var-morphism-¬et {B = B} y f ¬et with eternal? B
 ... | yes et'  = ⊥-elim (¬et et')
 ... | no ¬et'' = ∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-irr _ _))
+
+-- A value of box type is an occurrence up to subsumption
+-- (`grad-typ⇒var<:`); denotationally it is that occurrence's projection
+-- followed by the coercion. Stated on the packed inversion so that it
+-- reduces wherever `grad-typ⇒var<:` does.
+
+boxed-proj : ∀ {Γ A ρ}
+           → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
+               (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)) × ρ' ≾ᵣ uᵣ)
+           → ⟦ Γ ⟧ᶜᵗˣ →ᵐ ⟨ uᵣ ⟩ᵒ ⟦ [ ρ ] A ⟧ᵛ
+boxed-proj (_ , _ , _ , x , w , b) = ⟨ uᵣ ⟩ᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟨⟩-≤ b ∘ᵐ var-proj x
+
+grad-typ-var-nat : ∀ {Γ A ρ} → (W : Γ ⊢V⦂ [ ρ ] A) → (pW : Paramᵛ W)
+                 → boxed-proj (grad-typ⇒var<: W) ≈ᵐ η ∘ᵐ ⟦ W ⟧ᵛᵗ pW
+grad-typ-var-nat {A = A} {ρ = ρ} (var f x) _ =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-refl ([ ρ ] A))) ⟨⟩-idᵐ))
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-≤-irr _ (f (λ ()))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+            (∘ᵐ-congʳ (≈ᵐ-sym (var-morphism-¬et x f (λ ())))))))))
+grad-typ-var-nat (subV V p@([ _ ]ₛ _)) pV with grad-typ⇒var<: V | grad-typ-var-nat V pV
+... | _ , _ , _ , x , q , b | ih =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-trans q p)) (⟨⟩-∘ᵐ _ _)))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ ih)
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-η-nat _)) (∘ᵐ-assoc _ _ _)))))

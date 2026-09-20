@@ -67,6 +67,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
        using (Eternalᵒ; ⟨⊤⟩-η-nat; ⟨⊤⟩-eternalᵒ; ⟨⊤⟩-free-necᵉ-nat)
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -229,80 +230,122 @@ sub-var-natˢ {A = B} (cong-⟨⟩-sub s) p (Tl-⟨⟩ y) f with eternal? B
 
 -- What a substitution does to a resource (box-typed) variable: a statement
 -- about its projection alone, since a box-typed variable is not read as a
--- value.
+-- value. The image occurs at its *declared* box type, so the projections
+-- only agree after the declared type is coerced to the named one.
 
 sub-rvar-natˢ : ∀ {Γ Γ' A ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
               → (y : [ ρ ] A ∈[ σ ] Γ')
-              → ⟨⟩-≤ (proj₂ (proj₂ (sub-tgt₀ s y)))
-                  ∘ᵐ var-proj (proj₁ (proj₂ (sub-tgt₀ s y)))
+              → ⟨ σ ⟩ᶠ ⟦ tgt-<:₀ s y ⟧<:ᵛ
+                  ∘ᵐ ⟨⟩-≤ (tgt-≾₀ s y) ∘ᵐ var-proj (tgt-var₀ s y)
               ≈ᵐ var-proj y ∘ᵐ ⟦ s ⟧ˢ₀ p
 
-sub-rvar-natˢ ⌜ r ⌝ p y = var-proj-nat r y (λ ())
-sub-rvar-natˢ (val-sub W) pW Hd with grad-typ⇒var W
-... | σ' , v , f , refl =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityˡ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym ⟨⟩-η∘εᵘ≡id))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-sub-rvar-natˢ (val-sub W) pW (Tl-∷ y) =
-  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+sub-rvar-natˢ {A = A} {ρ = ρ} ⌜ r ⌝ p y =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-refl ([ ρ ] A))) ⟨⟩-idᵐ))
+  (≈ᵐ-trans (∘ᵐ-identityˡ _) (var-proj-nat r y (λ ())))
+-- the substituted value is an occurrence up to subsumption
+sub-rvar-natˢ (val-sub W) pW Hd =
+  ≈ᵐ-trans (grad-typ-var-nat W pW)
+           (≈ᵐ-sym (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (⟨⟩ᵐ-sndᵐ _ _))))
+sub-rvar-natˢ {A = A} {ρ = ρ} (val-sub W) pW (Tl-∷ y) =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-refl ([ ρ ] A))) ⟨⟩-idᵐ))
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _)
   (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ _))
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
-sub-rvar-natˢ (cong-∷-sub s) p Hd =
-  ≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
+sub-rvar-natˢ {A = A} {ρ = ρ} (cong-∷-sub s) p Hd =
+  ≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-trans (⟨⟩-congᶠ (⟦⟧<:ᵛ-refl ([ ρ ] A))) ⟨⟩-idᵐ))
+  (≈ᵐ-trans (∘ᵐ-identityˡ _)
+  (≈ᵐ-trans (∘ᵐ-congˡ ⟨⟩-≤-refl)
   (≈ᵐ-trans (∘ᵐ-identityˡ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (≈ᵐ-trans (⟨⟩ᵐ-sndᵐ _ _) (∘ᵐ-identityˡ _))))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
 sub-rvar-natˢ (cong-∷-sub s) p (Tl-∷ y) with sub-tgt₀ s y | sub-rvar-natˢ s p y
-... | σ' , v , p | ih =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+... | _ , _ , _ , v , w , b | ih =
+  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   (≈ᵐ-trans (∘ᵐ-congˡ ih)
   (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
   (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
 sub-rvar-natˢ (cong-⟨⟩-sub s) p (Tl-⟨⟩ y) with sub-tgt₀ s y | sub-rvar-natˢ s p y
-... | σ' , v , p | ih =
-  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congˡ (μ-≤ˡ p))
-  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-congᶠ ih))
-  (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))))
--- hence the resource lookup commutes with the substitution
-
-sub-lkˢ : ∀ {Γ Γ' A ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-        → (y : [ ρ ] A ∈[ σ ] Γ') → (rel : σ ≾ᵣ ρ)
-        → lk (proj₁ (proj₂ (sub-tgt₀ s y)))
-             (≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s y))) rel)
-        ≈ᵐ lk y rel ∘ᵐ ⟦ s ⟧ˢ₀ p
-sub-lkˢ s p y rel =
-  ≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-trans _ rel))))
+... | _ , _ , _ , v , w , b | ih =
+  ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (μ-≤ˡ b)))
   (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
-  (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (sub-rvar-natˢ s p y)))
-  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-            (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+  (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  (≈ᵐ-trans (∘ᵐ-congˡ (⟨⟩-μ-nat _))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-∘ᵐ _ _)))
+                      (≈ᵐ-trans (≈ᵐ-sym (⟨⟩-∘ᵐ _ _))
+                      (≈ᵐ-trans (⟨⟩-congᶠ (∘ᵐ-assoc _ _ _))
+                      (≈ᵐ-trans (⟨⟩-congᶠ ih) (⟨⟩-∘ᵐ _ _)))))))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))))
+
+-- hence the resource lookup commutes with the substitution: the two grade
+-- bounds meet at the declared grade (`ε⊣-≤`) and the payload coercions compose.
+
+sub-lkˢ : ∀ {Γ Γ' A A' ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
+        → (y : [ ρ ] A ∈[ σ ] Γ') → (rel : σ ≾ᵣ ρ) → (w : A <:ᵛ A')
+        → lk (tgt-var₀ s y)
+             (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s y) rel) (tgt-grade-≾₀ s y))
+             (<:ᵛ-trans (tgt-type-<:₀ s y) w)
+        ≈ᵐ lk y rel w ∘ᵐ ⟦ s ⟧ˢ₀ p
+sub-lkˢ s p y rel w =
+  ≈ᵐ-trans (∘ᵐ-congˡ (⟦⟧<:ᵛ-trans (tgt-type-<:₀ s y) w))
+  (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+  (≈ᵐ-trans (∘ᵐ-congʳ (sub-lk₀ˢ s p y rel))
+            (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  where
+    sub-lk₀ˢ : ∀ {Γ Γ' A ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
+             → (y : [ ρ ] A ∈[ σ ] Γ') → (rel : σ ≾ᵣ ρ)
+             → lk (tgt-var₀ s y)
+                  (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s y) rel) (tgt-grade-≾₀ s y))
+                  (tgt-type-<:₀ s y)
+             ≈ᵐ (ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj y) ∘ᵐ ⟦ s ⟧ˢ₀ p
+    sub-lk₀ˢ s p y rel =
+      ≈ᵐ-sym
+        (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (sub-rvar-natˢ s p y))))
+         (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩-≤-nat _ rel))))
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+         (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+         (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-congᶠ (⟦⟧<:ᵛ-box (tgt-<:₀ s y)))))
+         (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨⟩-∘ᵐ _ _)))
+         (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+         (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congˡ (≈ᵐ-sym (ε⊣-nat _))))
+         (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-assoc _ _ _))
+         (≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (≈ᵐ-sym (ε⊣-≤ (tgt-grade-≾₀ s y)))))
+         (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-trans _ _)))))
+         (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+         (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (⟨⟩-≤-trans _ _))))))))))))))))))))))
 
 -- and so does the whole unboxing.
 
-unbox-subst-natˢ : ∀ {Γ Γ' A C ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
-                 → (y : [ ρ ] A ∈[ σ ] Γ') → (rel : σ ≾ᵣ ρ)
-                 → (M : Γ' ∷ A ⊢C⦂ C)
+unbox-subst-natˢ : ∀ {Γ Γ' A A' C ρ σ} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
+                 → (y : [ ρ ] A ∈[ σ ] Γ') → (rel : σ ≾ᵣ ρ) → (w : A <:ᵛ A')
+                 → (M : Γ' ∷ A' ⊢C⦂ C)
                  → {pM : Paramᶜ M} → {pM' : Paramᶜ (C-sub₀ (cong-∷-sub s) M)}
                  → ⟦ C-sub₀ (cong-∷-sub s) M ⟧ᶜᵗ pM'
                    ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ mapˣᵐ (⟦ s ⟧ˢ₀ p) idᵐ
-                 → ⟦ unbox (proj₁ (proj₂ (sub-tgt₀ s y)))
-                           (≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s y))) rel)
+                 → ⟦ unbox (tgt-var₀ s y)
+                           (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s y) rel) (tgt-grade-≾₀ s y))
+                           (<:ᵛ-trans (tgt-type-<:₀ s y) w)
                            (C-sub₀ (cong-∷-sub s) M) ⟧ᶜᵗ pM'
-                   ≈ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , lk y rel ⟩ᵐ) ∘ᵐ ⟦ s ⟧ˢ₀ p
-unbox-subst-natˢ s p y rel M ih =
+                   ≈ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , lk y rel w ⟩ᵐ) ∘ᵐ ⟦ s ⟧ˢ₀ p
+unbox-subst-natˢ s p y rel w M ih =
   unbox-step {M' = C-sub₀ (cong-∷-sub s) M} {M = M} {σ = ⟦ s ⟧ˢ₀ p}
-             {lk' = lk (proj₁ (proj₂ (sub-tgt₀ s y)))
-                       (≾ᵣ-trans (proj₂ (proj₂ (sub-tgt₀ s y))) rel)}
-             {lkᵒ = lk y rel} ih (sub-lkˢ s p y rel)
+             {lk' = lk (tgt-var₀ s y)
+                       (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s y) rel) (tgt-grade-≾₀ s y))
+                       (<:ᵛ-trans (tgt-type-<:₀ s y) w)}
+             {lkᵒ = lk y rel w} ih (sub-lkˢ s p y rel w)
 
 -- The substitution coherence theorem: substituting preserves parametricity,
 -- and the interpretation is natural in the substitution, defined
@@ -327,6 +370,7 @@ mutual
   subᵛˢ s p false       _         = tt
   subᵛˢ s p ⦉ V , W ⦊   (pV , pW) = subᵛˢ s p V pV , subᵛˢ s p W pW
   subᵛˢ s p (lam M)     pM        = subᶜˢ (cong-∷-sub s) p M pM
+  subᵛˢ s p (subV V q)  pV        = subᵛˢ s p V pV
 
   subᶜˢ : ∀ {Γ Γ' C} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
         → (M : Γ' ⊢C⦂ C) → Paramᶜ M → Paramᶜ (C-sub₀ s M)
@@ -342,10 +386,10 @@ mutual
   subᶜˢ s p (perform op V M) (pV , pM) =
     subᵛˢ s p V pV , subᶜˢ (cong-∷-sub (cong-⟨⟩-sub s)) p M pM
   subᶜˢ s p (delay τ M)      pM        = subᶜˢ (cong-⟨⟩-sub s) p M pM
-  subᶜˢ s p (unbox x rel M)  pM        = subᶜˢ (cong-∷-sub s) p M pM
+  subᶜˢ s p (unbox x rel q M) pM       = subᶜˢ (cong-∷-sub s) p M pM
   subᶜˢ s p (box V M)        (pV , pM) =
     subᵛˢ (cong-⟨⟩-sub s) p V pV , subᶜˢ (cong-∷-sub s) p M pM
-  subᶜˢ s p (coerce rel M)   pM        = subᶜˢ s p M pM
+  subᶜˢ s p (subC M q)       pM        = subᶜˢ s p M pM
   -- the clauses are substituted into under the barrier lock, which acts on the
   -- ambient context only, so the clauses' uniformity transports
   subᶜˢ s p (handle M `with H `in N) (pM , pN , pH , uH) =
@@ -405,6 +449,8 @@ mutual
   V-subst-natˢ s p (lam M) pM =
     ≈ᵐ-trans (curryᵐ-cong (C-subst-natˢ (cong-∷-sub s) p M pM))
              (curryᵐ-nat (⟦ s ⟧ˢ₀ p) (⟦ M ⟧ᶜᵗ pM))
+  V-subst-natˢ s p (subV V q) pV =
+    ≈ᵐ-trans (∘ᵐ-congʳ (V-subst-natˢ s p V pV)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
 
   C-subst-natˢ : ∀ {Γ Γ' C} → (s : Sub₀ [] Γ Γ') → (p : Paramˢ₀ s)
                → (M : Γ' ⊢C⦂ C) → (pM : Paramᶜ M)
@@ -481,8 +527,8 @@ mutual
                   (≈ᵐ-sym (C-subst-natˢ (cong-⟨⟩-sub s) p M pM))))))))))
   -- `unbox-step` splits the goal into the continuation (the IH) and the
   -- resource lookup (`sub-lkˢ`).
-  C-subst-natˢ s p (unbox x rel M) pM =
-    unbox-subst-natˢ s p x rel M (C-subst-natˢ (cong-∷-sub s) p M pM)
+  C-subst-natˢ s p (unbox x rel q M) pM =
+    unbox-subst-natˢ s p x rel q M (C-subst-natˢ (cong-∷-sub s) p M pM)
   C-subst-natˢ s p (box V M) (pV , pM) =
     ≈ᵐ-trans (∘ᵐ-congˡ (C-subst-natˢ (cong-∷-sub s) p M pM))
     (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
@@ -498,7 +544,7 @@ mutual
                              (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))) ⟩ᵐ-cong))
     (≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _)))
               (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))))
-  C-subst-natˢ s p (coerce rel M) pM =
+  C-subst-natˢ s p (subC M q) pM =
     ≈ᵐ-trans (∘ᵐ-congʳ (C-subst-natˢ s p M pM)) (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
   -- The environment-threading second component commutes as for `⨟`
   -- (`seq-nat`), and the handler algebra is reindexed by the substitution under
