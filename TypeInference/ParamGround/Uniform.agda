@@ -45,7 +45,6 @@ open import Data.Empty using (⊥)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; _×_; Σ; Σ-syntax; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -453,10 +452,7 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
                      (proj₂ (ground-var θ₂ h₂ x ok)) ∘ᵐ covCtx Γ cΓ
       ≈ᵐ covV A cA ∘ᵐ var-morphism (proj₁ (ground-var θ₁ h₁ x ok))
                                    (proj₂ (ground-var θ₁ h₁ x ok))
-    cov-var-D h₁ h₂ cΓ cA x (inj₁ et) =
-         cov-var cΓ x _ _
-      ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x) cA)
-    cov-var-D h₁ h₂ cΓ cA x (inj₂ le) =
+    cov-var-D h₁ h₂ cΓ cA x ok =
          cov-var cΓ x _ _
       ∙≈ ∘ᵐ-congˡ (covV-irr _ (cov-∈ cΓ x) cA)
 
@@ -1018,9 +1014,9 @@ private
               ⊢C⦂ wkᵉ-v B ‼ (econst (op-grade op) ·̂ₑ evar (newᵉ {Θ}))
   forward op =
     perform op
-      (var (Tl-∷ Hd) (inj₂ ⊩≾̂ᵣ-refl))
+      (var (Tl-∷ Hd) (≾ᵘ-ok ⊩≾̂ᵣ-refl))
       (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ)
-        (var Hd (inj₂ ⊩≾̂ᵣ-refl) · var (Tl-∷ Hd) (inj₂ ⊩≾̂ᵣ-refl)))
+        (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl) · var (Tl-∷ Hd) (≾ᵘ-ok ⊩≾̂ᵣ-refl)))
 
   forward-cov : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {B : OVType Θ} → (op : Op)
               → CovDC (forward {Θ} {n} {Q} {Γ} {B} op)

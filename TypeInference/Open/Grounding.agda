@@ -18,7 +18,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Nat using (ℕ)
 open import Data.Product using (_×_; _,_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂; [_,_]′)
 
 open import Relation.Nullary using (¬_)
 
@@ -41,11 +41,6 @@ open import TypeInference.Open.Grades   S
 open import TypeInference.Open.Types    S
 open import TypeInference.Open.Contexts S
 open import TypeInference.Open.Hyps     S
-
--- Only the side condition of `var` is needed; the constructors of the
--- mirrored judgement would otherwise clash with those of the original one.
-
-open import TypeInference.Open.Language S using (VarOK)
 
 record Grounding (Θ : Scope) : Set where
   constructor grounding
@@ -126,13 +121,15 @@ record _⊨ᴴ_ {Θ : Scope} (θ : Grounding Θ) (Q : Hyps Θ) : Set where
     etOK   : ∀ {α} → α ∈ ets Q → Eternal (gTy θ α)
     ordROK : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
     ordEOK : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
+    disjOK : ∀ {A ρ} → (A , ρ) ∈ disj Q
+           → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
 
 open _⊨ᴴ_ public
 
 -- Every grounding satisfies the empty hypothesis set
 
 ∅ᴴ-⊨ : ∀ {Θ} {θ : Grounding Θ} → θ ⊨ᴴ ∅ᴴ
-∅ᴴ-⊨ = mk⊨ᴴ (λ ()) (λ ()) (λ ())
+∅ᴴ-⊨ = mk⊨ᴴ (λ ()) (λ ()) (λ ()) (λ ())
 
 ground-≡̂ᵣ : ∀ {Θ} {θ : Grounding Θ} {ρ ρ' : RExp Θ}
           → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≡ ⟦ ρ' ⟧ʳ θ
@@ -200,15 +197,21 @@ ground-∈ θ Hd        = Hd
 ground-∈ θ (Tl-∷ x)  = Tl-∷ (ground-∈ θ x)
 ground-∈ θ (Tl-⟨⟩ x) = Tl-⟨⟩ (ground-∈ θ x)
 
+ground-VarOK : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ}
+             → θ ⊨ᴴ Q → VarOK Q A ρ
+             → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
+ground-VarOK h (et-ok et) = inj₁ (ground-Et h et)
+ground-VarOK h (≾ᵘ-ok le) = inj₂ (ground-≾ᵣ h le)
+ground-VarOK h (hyp-ok m) = disjOK h m
+
 ground-var : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → (θ : Grounding Θ) → θ ⊨ᴴ Q
            → (x : A ∈̂[ ρ ] Γ) → VarOK Q A ρ
            → ( (¬ Eternal (⟦ A ⟧ᵛ θ) → ⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
              × (⟦ A ⟧ᵛ θ ∈[ ⟦ ρ ⟧ʳ θ ] ⟦ Γ ⟧ᶜᵗˣ θ))
-ground-var θ h x (inj₁ et) =
-  (λ ¬et → ⊥-elim (¬et (ground-Et h et))) , ground-∈ θ x
-ground-var θ h x (inj₂ le) =
-  (λ _ → ground-≾ᵣ h le) , ground-∈ θ x
+ground-var θ h x ok =
+  [ (λ et ¬et → ⊥-elim (¬et et)) , (λ le _ → le) ]′ (ground-VarOK h ok) ,
+  ground-∈ θ x
 
 ground-unbox : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ ρ' : RExp Θ} {Γ : OCtx Θ n}
              → (θ : Grounding Θ) → θ ⊨ᴴ Q
@@ -282,7 +285,7 @@ ground-wkᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (ground-wkᵉ-ctx Γ) (groun
 
 ⊨ᴴ-wkᵉ-ground : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ε₀ : E}
               → θ ⊨ᴴ Q → (θ ,ᵍᵉ ε₀) ⊨ᴴ wkᵉ-H Q
-⊨ᴴ-wkᵉ-ground {Θ} {θ} {Q} {ε₀} h = mk⊨ᴴ et ordR ordE
+⊨ᴴ-wkᵉ-ground {Θ} {θ} {Q} {ε₀} h = mk⊨ᴴ et ordR ordE dsj
   where
     et : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Eternal (gTy (θ ,ᵍᵉ ε₀) α)
     et m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -299,3 +302,10 @@ ground-wkᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (ground-wkᵉ-ctx Γ) (groun
     ordE m with ∈-map⁻ (mapᵖ wkᵉ-e) m
     ... | (ε₀' , ε₀'') , m₀ , refl =
       subst₂ _≾ₑ_ (sym (ground-wkᵉ-e ε₀')) (sym (ground-wkᵉ-e ε₀'')) (ordEOK h m₀)
+
+    dsj : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q)
+        → Eternal (⟦ A ⟧ᵛ (θ ,ᵍᵉ ε₀)) ⊎ (⟦ ρ ⟧ʳ (θ ,ᵍᵉ ε₀) ≾ᵣ uᵣ)
+    dsj m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
+    ... | (A₀ , ρ₀) , m₀ , refl =
+      [ (λ et → inj₁ (subst Eternal (sym (ground-wkᵉ-v A₀)) et))
+      , (λ le → inj₂ (subst (_≾ᵣ uᵣ) (sym (ground-wkᵉ-r ρ₀)) le)) ]′ (disjOK h m₀)

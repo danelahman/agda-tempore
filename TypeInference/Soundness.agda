@@ -10,7 +10,6 @@
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
-open import Data.Sum using (inj₁)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -198,8 +197,8 @@ mutual
   -- variables
   --
   -- The membership witness is `lookup-var` in the substituted context, so
-  -- its position is `i` on the nose; the `Et∨≾ᵘ` conjunct is `VarOK`'s
-  -- payload once the type and the grade are aligned.
+  -- its position is `i` on the nose; the `Et∨≾ᵘ` conjunct is `VarOK`
+  -- once the type and the grade are aligned.
 
   soundV {σ = σ} {Q = Q} Γ (var i) A (eq , ok) =
     ty-subst tyeq D₀ ,
@@ -616,7 +615,7 @@ private
   -- a variable used after time-passage: the `Et∨≾ᵘ` disjunction is `VarOK`
 
   ex-var : ∅ᴴ ∣ (∅ᶜ ∷ Unit) ⟨ ûᵣ ⟩ ⊢V⦂ Unit
-  ex-var = proj₁ (soundV {σ = idˢ} {Q = ∅ᴴ} ((∅ᶜ ∷ Unit) ⟨ ûᵣ ⟩) (var zero) Unit (refl , inj₁ Unitₑ))
+  ex-var = proj₁ (soundV {σ = idˢ} {Q = ∅ᴴ} ((∅ᶜ ∷ Unit) ⟨ ûᵣ ⟩) (var zero) Unit (refl , et-ok Unitₑ))
 
   ex-var-erase : ⌊ ex-var ⌋ᵛ ≡ var zero
   ex-var-erase = refl

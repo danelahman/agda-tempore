@@ -91,7 +91,7 @@ refute-⊩ θ h ref d = ref θ (ground-≾ᵣ h d)
 
 -- Ground realisability is essential: a hypothesis names any ordering at all
 
-hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] ((ρ , ûᵣ) ∷ []) [] ⊩ ρ ≾̂ᵣ ûᵣ
+hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] ((ρ , ûᵣ) ∷ []) [] [] ⊩ ρ ≾̂ᵣ ûᵣ
 hyp-derives ρ = hypᵣ (here refl)
 
 -- The scan is structural over the atom list: `consᵣ` merges adjacent

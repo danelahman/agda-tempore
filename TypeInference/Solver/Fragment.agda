@@ -2,11 +2,10 @@
 -- Biased satisfaction, and the fragment on which it is exact.   --
 --                                                               --
 -- `Et∨≾ᵘ` is the only constraint former whose satisfaction is a --
--- disjunction, which `Hyps` cannot express; `_⊨ᴿ[_]_` resolves  --
--- it in favour of the grade disjunct, soundly for every         --
--- constraint (`⊨ᴿ→⊨` is `inj₂`). `Frag` is the class of         --
--- constraints — every variable used at unit lock grade — on     --
--- which that bias is free.                                      --
+-- disjunction; `_⊨ᴿ[_]_` resolves it in favour of the grade     --
+-- disjunct, soundly for every constraint (`⊨ᴿ→⊨` is `≾ᵘ-ok`).   --
+-- `Frag` is the class of constraints — every variable used at   --
+-- unit lock grade — on which that bias is free.                 --
 --                                                               --
 -- `NoRig` restricts refutation only: a failed discharge at a    --
 -- rigid binder is a decision-procedure failure, not a proof of  --
@@ -16,7 +15,6 @@
 open import Data.Empty using (⊥)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.Sum.Base using (_⊎_; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (yes; no)
@@ -79,7 +77,7 @@ _⊨ᴿ[_]_ {Θ' = Θ'} σ Q (∃ᵉ C)      = Σ[ ε ∈ EExp Θ' ]   ((σ ,ᵉ
 ⊨ᴿ→⊨ (ρ ≾̂ᵣᶜ ρ')   s       = s
 ⊨ᴿ→⊨ (ε ≾̂ₑᶜ ε')   s       = s
 ⊨ᴿ→⊨ (Etᶜ A)      s       = s
-⊨ᴿ→⊨ (Et∨≾ᵘ A ρ)  s       = inj₂ s
+⊨ᴿ→⊨ (Et∨≾ᵘ A ρ)  s       = ≾ᵘ-ok s
 ⊨ᴿ→⊨ (∃ᵗ C)       (B , s) = B , ⊨ᴿ→⊨ C s
 ⊨ᴿ→⊨ (∃ʳ C)       (ρ , s) = ρ , ⊨ᴿ→⊨ C s
 ⊨ᴿ→⊨ (∃ᵉ C)       (ε , s) = ε , ⊨ᴿ→⊨ C s

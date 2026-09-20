@@ -48,7 +48,6 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (zero; suc)
 open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; _×_; Σ; Σ-syntax; proj₁; proj₂)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
@@ -64,7 +63,6 @@ open import TypeInference.Open.Grades   S
 open import TypeInference.Open.Types    S
 open import TypeInference.Open.Contexts S
 open import TypeInference.Open.Hyps     S
-open import TypeInference.Open.Language S using (VarOK)
 
 open import TypeInference.Open.Grounding S
   renaming (⟦_⟧ᵛ to ⟦_⟧ᵒᵛ; ⟦_⟧ᶜ to ⟦_⟧ᵒᶜ; ⟦_⟧ᶜᵗˣ to ⟦_⟧ᵒᶜᵗˣ)

@@ -164,7 +164,7 @@ tailᵗ h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ m → ⊩ts h (there m))
 -- against it transports to any hypothesis set and any substitution
 
 ∅ᴴ-⊩ᴴ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → Q ⊩ᴴ ∅ᴴ [ δ ]
-∅ᴴ-⊩ᴴ = mk⊩ᴴ (λ ()) (λ ()) (λ ())
+∅ᴴ-⊩ᴴ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ())
 
 -- `_⊩ᴱ_` has one rule per former except `_⇒_` and `[_]_`, and `et-hyp`
 -- at a type variable: a demand reduces to demands on type variables or
@@ -299,7 +299,7 @@ toHyps R with etsList (ts R)
 ... | just (αs , f) = just (Q , mk⊩ᴿ ordᵣ' ordₑ' ets')
   where
     Q : Hyps _
-    Q = hyps αs (rs R) (es R)
+    Q = hyps αs (rs R) (es R) []
 
     ets' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ idˢ ]ᵛ
     ets' {A} m = subst (Q ⊩ᴱ_) (sym ([id]ᵛ A)) (f et-hyp m)
@@ -345,4 +345,4 @@ toHyps-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (R : Resid Ψ)
 toHyps-compl R eq δ h with etsList (ts R) in e
 toHyps-compl R () δ h | nothing
 toHyps-compl R eq δ h | just (αs , f) with eq
-... | refl = mk⊩ᴴ (etsList-compl (ts R) e δ (⊩ts h)) (⊩rs h) (⊩es h)
+... | refl = mk⊩ᴴ (etsList-compl (ts R) e δ (⊩ts h)) (⊩rs h) (⊩es h) (λ ())

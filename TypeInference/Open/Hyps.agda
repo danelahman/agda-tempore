@@ -2,9 +2,10 @@
 -- Hypotheses and entailment of the mirrored language             --
 --                                                                --
 -- A hypothesis set `Hyps Θ` collects the eternality atoms on     --
--- type variables and the assumed orderings between open grade    --
--- expressions under which a mirrored typing derivation is built. --
--- Entailment (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`) is an inductive       --
+-- type variables, the assumed orderings between open grade       --
+-- expressions, and the assumed var-rule disjunctions, under      --
+-- which a mirrored typing derivation is built. Entailment        --
+-- (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`, `VarOK`) is an inductive         --
 -- under-approximation of truth in all groundings.                --
 --                                                                --
 -- Judgements under such a set are HM(X)'s constrained types      --
@@ -47,18 +48,25 @@ record Hyps (Θ : Scope) : Set where
     ets  : List (TyVar Θ)                     -- eternality atoms on type variables
     ordᵣ : List (RExp Θ × RExp Θ)             -- assumed resource-grade orderings
     ordₑ : List (EExp Θ × EExp Θ)             -- assumed effect-grade orderings
+    disj : List (OVType Θ × RExp Θ)           -- assumed var-rule disjunctions
 
 open Hyps public
 
 -- Empty hypothesis set
 
 ∅ᴴ : ∀ {Θ} → Hyps Θ
-∅ᴴ = hyps [] [] []
+∅ᴴ = hyps [] [] [] []
 
 -- Pairwise action of a function on a homogeneous pair
 
 mapᵖ : ∀ {A B : Set} → (A → B) → A × A → B × B
 mapᵖ f (x , y) = f x , f y
+
+-- Componentwise action on a type-and-grade pair
+
+mapᵈ : ∀ {Θ Θ'} → (OVType Θ → OVType Θ') → (RExp Θ → RExp Θ')
+     → OVType Θ × RExp Θ → OVType Θ' × RExp Θ'
+mapᵈ f g (A , ρ) = f A , g ρ
 
 -- Action of the scope extensions on hypothesis sets
 
@@ -66,16 +74,19 @@ wkᵗ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +ty)
 wkᵗ-H {Θ} Q = hyps (map (wkᵗ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵗ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵗ-e) (ordₑ Q))
+                   (map (mapᵈ wkᵗ-v wkᵗ-r) (disj Q))
 
 wkʳ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +r)
 wkʳ-H {Θ} Q = hyps (map (wkʳ-tv Θ) (ets Q))
                    (map (mapᵖ wkʳ-r) (ordᵣ Q))
                    (map (mapᵖ wkʳ-e) (ordₑ Q))
+                   (map (mapᵈ wkʳ-v wkʳ-r) (disj Q))
 
 wkᵉ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +e)
 wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
                    (map (mapᵖ wkᵉ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵉ-e) (ordₑ Q))
+                   (map (mapᵈ wkᵉ-v wkᵉ-r) (disj Q))
 
 -- The monoid laws, the constants' arithmetic, and `∣_∣̂ᵉ` being a monoid
 -- morphism; no hypotheses involved.
@@ -166,6 +177,15 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   _|×|ₑ_ : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
   Emptyₑ : Q ⊩ᴱ Empty
 
+-- The side condition of the `var` rule: `Eternal` is undecided at open
+-- types, so the original's `¬ Eternal A → ρ ≾ᵣ uᵣ` becomes a disjunction,
+-- met by eternality, by the ordering, or by a `disj` hypothesis.
+
+data VarOK {Θ : Scope} (Q : Hyps Θ) (A : OVType Θ) (ρ : RExp Θ) : Set where
+  et-ok  : Q ⊩ᴱ A → VarOK Q A ρ
+  ≾ᵘ-ok  : Q ⊩ ρ ≾̂ᵣ ûᵣ → VarOK Q A ρ
+  hyp-ok : (A , ρ) ∈ disj Q → VarOK Q A ρ
+
 -- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
 -- along `σ`; there is no syntactic action of a substitution on `Hyps`,
 -- as `ets` holds variables, whose images under `σ` are open types.
@@ -178,6 +198,7 @@ record _⊩ᴴ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
     ⊩ets  : ∀ {α} → α ∈ ets Q → Q' ⊩ᴱ sTy σ α
     ⊩ordᵣ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
     ⊩ordₑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
+    ⊩disj : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
 
 open _⊩ᴴ_[_] public
 
@@ -241,6 +262,13 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-subst h (et₁ |×|ₑ et₂) = ⊩ᴱ-subst h et₁ |×|ₑ ⊩ᴱ-subst h et₂
 ⊩ᴱ-subst h Emptyₑ      = Emptyₑ
 
+VarOK-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
+                {A : OVType Θ} {ρ : RExp Θ}
+            → Q' ⊩ᴴ Q [ σ ] → VarOK Q A ρ → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
+VarOK-subst h (et-ok et)  = et-ok (⊩ᴱ-subst h et)
+VarOK-subst h (≾ᵘ-ok le)  = ≾ᵘ-ok (⊩-substᵣ h le)
+VarOK-subst h (hyp-ok m)  = ⊩disj h m
+
 ⊩ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ᴴ Q [ idˢ ]
 ⊩ᴴ-refl {Q = Q} =
   mk⊩ᴴ et-hyp
@@ -248,6 +276,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
           subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ')) (hypᵣ m))
        (λ {ε} {ε'} m →
           subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (hypₑ m))
+       (λ {A} {ρ} m →
+          subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok m))
 
 ⊩ᴴ-⨟ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ'} {Q'' : Hyps Θ''}
        {σ : Subst Θ Θ'} {δ : Subst Θ' Θ''}
@@ -260,6 +290,9 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
        (λ {ε} {ε'} m →
           subst₂ (λ x y → Q'' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
                  (⊩-substₑ h' (⊩ordₑ h m)))
+       (λ {A} {ρ} m →
+          subst₂ (VarOK Q'') ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
+                 (VarOK-subst h' (⊩disj h m)))
 
 -- Weakening a hypothesis set is the action of the weakening substitution,
 -- so entailment is stable under it.
@@ -273,6 +306,9 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
        (λ {ε} {ε'} m →
           subst₂ (λ x y → wkᵗ-H Q ⊩ x ≾̂ₑ y) (sym (wkˢᵗ-e ε)) (sym (wkˢᵗ-e ε'))
                  (hypₑ (∈-map⁺ (mapᵖ wkᵗ-e) m)))
+       (λ {A} {ρ} m →
+          subst₂ (VarOK (wkᵗ-H Q)) (sym (wkˢᵗ-v A)) (sym (wkˢᵗ-r ρ))
+                 (hyp-ok (∈-map⁺ (mapᵈ wkᵗ-v wkᵗ-r) m)))
 
 ⊩ᴴ-wkʳ : ∀ {Θ} {Q : Hyps Θ} → wkʳ-H Q ⊩ᴴ Q [ wkˢʳ ]
 ⊩ᴴ-wkʳ {Θ} {Q} =
@@ -283,6 +319,9 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
        (λ {ε} {ε'} m →
           subst₂ (λ x y → wkʳ-H Q ⊩ x ≾̂ₑ y) (sym (wkˢʳ-e ε)) (sym (wkˢʳ-e ε'))
                  (hypₑ (∈-map⁺ (mapᵖ wkʳ-e) m)))
+       (λ {A} {ρ} m →
+          subst₂ (VarOK (wkʳ-H Q)) (sym (wkˢʳ-v A)) (sym (wkˢʳ-r ρ))
+                 (hyp-ok (∈-map⁺ (mapᵈ wkʳ-v wkʳ-r) m)))
 
 ⊩ᴴ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} → wkᵉ-H Q ⊩ᴴ Q [ wkˢᵉ ]
 ⊩ᴴ-wkᵉ {Θ} {Q} =
@@ -293,6 +332,9 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
        (λ {ε} {ε'} m →
           subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y) (sym (wkˢᵉ-e ε)) (sym (wkˢᵉ-e ε'))
                  (hypₑ (∈-map⁺ (mapᵖ wkᵉ-e) m)))
+       (λ {A} {ρ} m →
+          subst₂ (VarOK (wkᵉ-H Q)) (sym (wkˢᵉ-v A)) (sym (wkˢᵉ-r ρ))
+                 (hyp-ok (∈-map⁺ (mapᵈ wkᵉ-v wkᵉ-r) m)))
 
 -- Entailment is preserved by the scope extensions
 
@@ -331,3 +373,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ⊩ᴱ A → wkᵉ-H Q ⊩ᴱ wkᵉ-v A
 ⊩ᴱ-wkᵉ {Q = Q} {A} et =
   subst (λ x → wkᵉ-H Q ⊩ᴱ x) (wkˢᵉ-v A) (⊩ᴱ-subst ⊩ᴴ-wkᵉ et)
+
+VarOK-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A ρ}
+          → VarOK Q A ρ → VarOK (wkᵉ-H Q) (wkᵉ-v A) (wkᵉ-r ρ)
+VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
+  subst₂ (VarOK (wkᵉ-H Q)) (wkˢᵉ-v A) (wkˢᵉ-r ρ) (VarOK-subst ⊩ᴴ-wkᵉ ok)

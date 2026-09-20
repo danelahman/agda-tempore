@@ -14,7 +14,6 @@
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -39,12 +38,6 @@ open import TypeInference.Open.Grades   S
 open import TypeInference.Open.Types    S
 open import TypeInference.Open.Contexts S
 open import TypeInference.Open.Hyps     S
-
--- The original demands `¬ Eternal A → ρ ≾ᵣ uᵣ`; at open types `Eternal` is
--- undecided, so the implication becomes a disjunction.
-
-VarOK : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → Set
-VarOK Q A ρ = (Q ⊩ᴱ A) ⊎ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
 
 infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_
@@ -291,12 +284,12 @@ private
   -- a variable used after time-passage, justified by eternality of its type
 
   ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
-  ex-var-lock = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
+  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   -- a variable used across a clause barrier, the lock at `⊤ᵣ`
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   -- returning a value, sequenced with another such computation
 

@@ -19,7 +19,6 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁)
-open import Data.Sum.Base using (inj₂)
 open import Data.Unit using (tt)
 
 open import Relation.Binary.Definitions using (Decidable)
@@ -366,13 +365,13 @@ solve s (Etᶜ A) =
 solve s (Et∨≾ᵘ A ρ) with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just p =
       just (s , ⟶-id ,
-            λ δ Q h → inj₂ (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
-                                  (⊩-substᵣ ∅ᴴ-⊩ᴴ p)))
+            λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
+                                   (⊩-substᵣ ∅ᴴ-⊩ᴴ p)))
 ... | nothing =
       just (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) ûᵣ (res s)) (rig s) ,
             mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
-            λ δ Q h → inj₂ (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
-                                  (⊩rs h (here refl))))
+            λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
+                                   (⊩rs h (here refl))))
 
 solve {Θ} s (∃ᵗ C) with solve (s ↑ᵗˢ) C
 ... | nothing = nothing

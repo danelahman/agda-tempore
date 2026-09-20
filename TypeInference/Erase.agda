@@ -17,7 +17,6 @@
 
 open import Data.Fin using (Fin; zero)
 open import Data.Nat using (ℕ)
-open import Data.Sum using (inj₁)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -109,7 +108,7 @@ private
   -- a variable used after time-passage: the lock is forgotten, the position kept
 
   ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
-  ex-var-lock = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
+  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   ex-var-lock-erase : ⌊ ex-var-lock ⌋ᵛ ≡ var zero
   ex-var-lock-erase = refl
@@ -117,7 +116,7 @@ private
   -- a variable used across a clause barrier: that lock too is forgotten
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   ex-var-barrier-erase : ⌊ ex-var-barrier ⌋ᵛ ≡ var zero
   ex-var-barrier-erase = refl

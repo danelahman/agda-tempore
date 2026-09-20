@@ -136,7 +136,7 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 -- Every weakened hypothesis is entailed back by the original set
 
 ⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
-⊩ᴴ-κᵉ {Ψ} {Q} = mk⊩ᴴ ets' ordᵣ' ordₑ'
+⊩ᴴ-κᵉ {Ψ} {Q} = mk⊩ᴴ ets' ordᵣ' ordₑ' disj'
   where
     ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q ⊩ᴱ sTy κᵉ α
     ets' m with ∈-map⁻ (wkᵉ-tv Ψ) m
@@ -151,6 +151,11 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
     ordₑ' m with ∈-map⁻ (mapᵖ wkᵉ-e) m
     ... | (ε₀ , ε₀') , m₀ , refl =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (κᵉ-wkᵉ ε₀)) (sym (κᵉ-wkᵉ ε₀')) (hypₑ m₀)
+
+    disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κᵉ ]ᵛ) (ρ [ κᵉ ]ʳ)
+    disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
+    ... | (A₀ , ρ₀) , m₀ , refl =
+      subst₂ (VarOK Q) (sym (κᵉ-wkᵛ A₀)) (sym (κᵉ-wkʳ ρ₀)) (hyp-ok m₀)
 
 -- The converse of `⊩ᴿ-subst`
 

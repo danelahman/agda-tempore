@@ -17,7 +17,7 @@
 open import Data.Empty using (⊥)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Unit using (⊤)
 
 open import Syntax.Grades
@@ -233,10 +233,9 @@ idˢ-⨟ᵍ θ = mk≐ᵍ (λ α → refl) (λ i → refl) (λ i → refl)
   subst₂ _≾ₑ_ (⟦⟧-⨟ᵍ-e σ θ ε) (⟦⟧-⨟ᵍ-e σ θ ε') (ground-≾ₑ h s)
 ⊨-ground {σ = σ} θ h (Etᶜ A) s =
   subst Eternal (⟦⟧-⨟ᵍ-v σ θ A) (ground-Et h s)
-⊨-ground {σ = σ} θ h (Et∨≾ᵘ A ρ) (inj₁ s) =
-  inj₁ (subst Eternal (⟦⟧-⨟ᵍ-v σ θ A) (ground-Et h s))
-⊨-ground {σ = σ} θ h (Et∨≾ᵘ A ρ) (inj₂ s) =
-  inj₂ (subst (_≾ᵣ uᵣ) (⟦⟧-⨟ᵍ-r σ θ ρ) (ground-≾ᵣ h s))
+⊨-ground {σ = σ} θ h (Et∨≾ᵘ A ρ) s =
+  [ (λ et → inj₁ (subst Eternal (⟦⟧-⨟ᵍ-v σ θ A) et))
+  , (λ le → inj₂ (subst (_≾ᵣ uᵣ) (⟦⟧-⨟ᵍ-r σ θ ρ) le)) ]′ (ground-VarOK h s)
 ⊨-ground {σ = σ} θ h (∃ᵗ C) (B , s) =
   ⟦ B ⟧ᵛ θ , ⊨ᵍ-resp (⨟ᵍ-,ᵗ σ B θ) C (⊨-ground θ h C s)
 ⊨-ground {σ = σ} θ h (∃ʳ C) (ρ , s) =

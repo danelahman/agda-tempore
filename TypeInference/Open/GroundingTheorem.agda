@@ -16,7 +16,6 @@
 
 open import Data.Nat using (ℕ)
 open import Data.Product using (_,_; proj₁; proj₂)
-open import Data.Sum using (inj₁)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -157,7 +156,7 @@ private
   -- A variable used across a clause barrier grounds behind the `⊤ᵣ` lock
 
   ex-var-barrier : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst ⊤ᵣ ⟩) ⊢V⦂ Unit
-  ex-var-barrier = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
+  ex-var-barrier = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   ex-var-barrier-ground : ([] ∷ Unit) ⟨ ⊤ᵣ ⟩ ⊢V⦂ Unit
   ex-var-barrier-ground = groundV θ₀ ∅ᴴ-⊨ ex-var-barrier
@@ -166,7 +165,7 @@ private
   -- grounded derivations are the interpretations of the mirrored ones.
 
   ex-var-lock : ∅ᴴ ∣ ((∅ᶜ ∷ Unit) ⟨ rconst uᵣ ⟩) ⊢V⦂ Unit
-  ex-var-lock = var (Tl-⟨⟩ Hd) (inj₁ Unitₑ)
+  ex-var-lock = var (Tl-⟨⟩ Hd) (et-ok Unitₑ)
 
   ex-var-lock-ground : ([] ∷ Unit) ⟨ uᵣ ⟩ ⊢V⦂ Unit
   ex-var-lock-ground = groundV θ₀ ∅ᴴ-⊨ ex-var-lock

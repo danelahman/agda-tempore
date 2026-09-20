@@ -18,7 +18,6 @@ open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Product using (_,_)
-open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (tt)
 
 open import Syntax.Grades
@@ -75,9 +74,8 @@ open import TypeInference.Constraints.Satisfaction S
 ⊨-resp-≐ˢ {Q = Q} p (ε ≾̂ₑᶜ ε')   s        =
   subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') s
 ⊨-resp-≐ˢ {Q = Q} p (Etᶜ A)      s        = subst (Q ⊩ᴱ_) ([≐]ᵛ p A) s
-⊨-resp-≐ˢ {Q = Q} p (Et∨≾ᵘ A ρ)  (inj₁ s) = inj₁ (subst (Q ⊩ᴱ_) ([≐]ᵛ p A) s)
-⊨-resp-≐ˢ {Q = Q} p (Et∨≾ᵘ A ρ)  (inj₂ s) =
-  inj₂ (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([≐]ʳ p ρ) s)
+⊨-resp-≐ˢ {Q = Q} p (Et∨≾ᵘ A ρ)  s        =
+  subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) s
 ⊨-resp-≐ˢ p (∃ᵗ C)               (B , s)  = B , ⊨-resp-≐ˢ (≐ˢ-,ᵗ p B) C s
 ⊨-resp-≐ˢ p (∃ʳ C)               (ρ , s)  = ρ , ⊨-resp-≐ˢ (≐ˢ-,ʳ p ρ) C s
 ⊨-resp-≐ˢ p (∃ᵉ C)               (ε , s)  = ε , ⊨-resp-≐ˢ (≐ˢ-,ᵉ p ε) C s
@@ -133,7 +131,7 @@ private
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
-⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ ordᵣ↑ ordₑ↑
+⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ ordᵣ↑ ordₑ↑ disj↑
   where
     ets↑ : ∀ {α} → α ∈ ets (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴱ sTy (δ ↑ᵉ) α
     ets↑ m with ∈-map⁻ (wkᵉ-tv Θ) m
@@ -155,6 +153,14 @@ private
              (sym (wk-↑ᵉ-e δ ε₀)) (sym (wk-↑ᵉ-e δ ε₀'))
              (⊩-wkᵉₑ (⊩ordₑ h m₀))
 
+    disj↑ : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q)
+          → VarOK (wkᵉ-H Q') (A [ δ ↑ᵉ ]ᵛ) (ρ [ δ ↑ᵉ ]ʳ)
+    disj↑ m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
+    ... | (A₀ , ρ₀) , m₀ , refl =
+      subst₂ (VarOK (wkᵉ-H Q'))
+             (sym (wk-↑ᵉ-v δ A₀)) (sym (wk-↑ᵉ-r δ ρ₀))
+             (VarOK-wkᵉ (⊩disj h m₀))
+
 ⊨-mono : ∀ {Θ Θ' Θ''} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
            {δ : Subst Θ' Θ''} {Q' : Hyps Θ''}
        → Q' ⊩ᴴ Q [ δ ] → (C : Constraint Θ) → σ ⊨[ Q ] C → (σ ⨟ˢ δ) ⊨[ Q' ] C
@@ -169,10 +175,8 @@ private
   subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ) (⊩-substₑ h s)
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (Etᶜ A) s =
   subst (Q' ⊩ᴱ_) ([⨟]ᵛ A σ δ) (⊩ᴱ-subst h s)
-⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (Et∨≾ᵘ A ρ) (inj₁ s) =
-  inj₁ (subst (Q' ⊩ᴱ_) ([⨟]ᵛ A σ δ) (⊩ᴱ-subst h s))
-⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (Et∨≾ᵘ A ρ) (inj₂ s) =
-  inj₂ (subst (λ x → Q' ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ σ δ) (⊩-substᵣ h s))
+⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (Et∨≾ᵘ A ρ) s =
+  subst₂ (VarOK Q') ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ) (VarOK-subst h s)
 ⊨-mono {σ = σ} {δ = δ} h (∃ᵗ C) (B , s) =
   B [ δ ]ᵛ , ⊨-resp-≐ˢ (⨟-,ᵗ σ B δ) C (⊨-mono h C s)
 ⊨-mono {σ = σ} {δ = δ} h (∃ʳ C) (ρ , s) =
@@ -198,10 +202,8 @@ private
   subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε δ σ)) (sym ([⨟]ᵉ ε' δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (Etᶜ A) s =
   subst (Q ⊩ᴱ_) (sym ([⨟]ᵛ A δ σ)) s
-⊨-subst {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) (inj₁ s) =
-  inj₁ (subst (Q ⊩ᴱ_) (sym ([⨟]ᵛ A δ σ)) s)
-⊨-subst {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) (inj₂ s) =
-  inj₂ (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) (sym ([⨟]ʳ ρ δ σ)) s)
+⊨-subst {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) s =
+  subst₂ (VarOK Q) (sym ([⨟]ᵛ A δ σ)) (sym ([⨟]ʳ ρ δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} (∃ᵗ C) (B , s) =
   B , ⊨-subst C (⊨-resp-≐ˢ (≐ˢ-sym (↑ᵗ-,ᵗ δ σ B)) C s)
 ⊨-subst {δ = δ} {σ = σ} (∃ʳ C) (ρ , s) =
@@ -225,10 +227,8 @@ private
   subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ σ) ([⨟]ᵉ ε' δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (Etᶜ A) s =
   subst (Q ⊩ᴱ_) ([⨟]ᵛ A δ σ) s
-⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) (inj₁ s) =
-  inj₁ (subst (Q ⊩ᴱ_) ([⨟]ᵛ A δ σ) s)
-⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) (inj₂ s) =
-  inj₂ (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ δ σ) s)
+⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (Et∨≾ᵘ A ρ) s =
+  subst₂ (VarOK Q) ([⨟]ᵛ A δ σ) ([⨟]ʳ ρ δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} (∃ᵗ C) (B , s) =
   B , ⊨-resp-≐ˢ (↑ᵗ-,ᵗ δ σ B) C (⊨-subst⁻ C s)
 ⊨-subst⁻ {δ = δ} {σ = σ} (∃ʳ C) (ρ , s) =

@@ -18,7 +18,6 @@
 
 open import Data.Empty using (⊥)
 open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.Sum using (_⊎_)
 open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades
@@ -54,7 +53,7 @@ _⊨[_]_ : ∀ {Θ Θ'} → Subst Θ Θ' → Hyps Θ' → Constraint Θ → Set
 σ ⊨[ Q ] (ρ ≾̂ᵣᶜ ρ')              = Q ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
 σ ⊨[ Q ] (ε ≾̂ₑᶜ ε')              = Q ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
 σ ⊨[ Q ] Etᶜ A                   = Q ⊩ᴱ A [ σ ]ᵛ
-σ ⊨[ Q ] Et∨≾ᵘ A ρ               = (Q ⊩ᴱ A [ σ ]ᵛ) ⊎ (Q ⊩ ρ [ σ ]ʳ ≾̂ᵣ ûᵣ)
+σ ⊨[ Q ] Et∨≾ᵘ A ρ               = VarOK Q (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
 _⊨[_]_ {Θ' = Θ'} σ Q (∃ᵗ C)      = Σ[ B ∈ OVType Θ' ] ((σ ,ᵗ B) ⊨[ Q ] C)
 _⊨[_]_ {Θ' = Θ'} σ Q (∃ʳ C)      = Σ[ ρ ∈ RExp Θ' ]   ((σ ,ʳ ρ) ⊨[ Q ] C)
 _⊨[_]_ {Θ' = Θ'} σ Q (∃ᵉ C)      = Σ[ ε ∈ EExp Θ' ]   ((σ ,ᵉ ε) ⊨[ Q ] C)
