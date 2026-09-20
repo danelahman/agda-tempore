@@ -21,7 +21,6 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
-open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Substitutions.Base S
@@ -139,11 +138,27 @@ tgt-≾₀ : ∀ {Δ Δ' A ρ σ} → (s : Sub₀ [] Δ Δ') → (y : [ ρ ] A �
        → tgt-elapsed₀ s y ≾ᵣ σ
 tgt-≾₀ s y = proj₂ (proj₂ (proj₂ (proj₂ (proj₂ (sub-tgt₀ s y)))))
 
--- Composing the image's witness with the one an `unbox<:` node already stores.
--- Spelled out because `_<:ᵛ_` computes: neither end is read back off a witness.
+-- The two halves of that witness, which an `unbox` node keeps apart.
+
+tgt-grade-≾₀ : ∀ {Δ Δ' A ρ σ} → (s : Sub₀ [] Δ Δ') → (y : [ ρ ] A ∈[ σ ] Δ')
+             → ρ ≾ᵣ tgt-grade₀ s y
+tgt-grade-≾₀ s y = proj₁ (tgt-<:₀ s y)
+
+tgt-type-<:₀ : ∀ {Δ Δ' A ρ σ} → (s : Sub₀ [] Δ Δ') → (y : [ ρ ] A ∈[ σ ] Δ')
+             → tgt-type₀ s y <:ᵛ A
+tgt-type-<:₀ s y = proj₂ (tgt-<:₀ s y)
+
+-- Composing the image's witness with the one a term already stores. Spelled
+-- out because `_<:ᵛ_` computes: neither end is read back off a witness.
 
 tgt-<:-∘₀ : ∀ {Δ Δ' A A' ρ ρ' σ} → (s : Sub₀ [] Δ Δ') → (y : [ ρ ] A ∈[ σ ] Δ')
           → ([ ρ ] A) <:ᵛ ([ ρ' ] A')
           → ([ tgt-grade₀ s y ] tgt-type₀ s y) <:ᵛ ([ ρ' ] A')
 tgt-<:-∘₀ {A = A} {A' = A'} {ρ = ρ} {ρ' = ρ'} s y p =
   <:ᵛ-trans {[ tgt-grade₀ s y ] tgt-type₀ s y} {[ ρ ] A} {[ ρ' ] A'} (tgt-<:₀ s y) p
+
+tgt-type-<:-∘₀ : ∀ {Δ Δ' A A' ρ σ} → (s : Sub₀ [] Δ Δ') → (y : [ ρ ] A ∈[ σ ] Δ')
+               → A <:ᵛ A'
+               → tgt-type₀ s y <:ᵛ A'
+tgt-type-<:-∘₀ {A = A} {A' = A'} s y p =
+  <:ᵛ-trans {tgt-type₀ s y} {A} {A'} (tgt-type-<:₀ s y) p

@@ -180,7 +180,7 @@ mutual
       (λ op ε'' →
          C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-sub₀-≐ˢ₀ h (unbox<: x p rel M) =
+  C-sub₀-≐ˢ₀ h (unbox x rel p M) =
     unbox-≡ (atᵗ h x) (C-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ∷ _) h) M)
   C-sub₀-≐ˢ₀ h (box V M) =
     cong₂ box (V-sub₀-≐ˢ₀ (cong-sub₀-≐ˢ₀ ([] ⟨ _ ⟩) h) V)

@@ -29,7 +29,6 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
-open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Renamings.Equivalence S
@@ -151,7 +150,7 @@ mutual
                (C-sub₀-⌜⌝ (cong-ren r) (H op ε'')))
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ (_ ⟨ _ ⟩ ∷ _) r) N)
              (C-sub₀-⌜⌝ (cong-ren r) N))
-  C-sub₀-⌜⌝ r (unbox<: x q rel M) =
+  C-sub₀-⌜⌝ r (unbox x rel q M) =
     unbox-≡ refl
       (trans (C-sub₀-≐ˢ₀ (cong-sub₀-⌜⌝ ([] ∷ _) r) M)
              (C-sub₀-⌜⌝ (cong-ren r) M))
@@ -292,7 +291,7 @@ mutual
     handle-≡ (C-sub₀-ren h M)
       (λ op ε'' → C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-sub₀-ren (⋈-cong (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-sub₀-ren h (unbox<: x q rel M) =
+  C-sub₀-ren h (unbox x rel q M) =
     unbox-≡ (atᵗ h x) (C-sub₀-ren (⋈-cong ([] ∷ _) h) M)
   C-sub₀-ren h (box V M) =
     cong₂ box (V-sub₀-ren (⋈-cong ([] ⟨ _ ⟩) h) V)

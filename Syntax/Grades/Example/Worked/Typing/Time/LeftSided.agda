@@ -200,7 +200,8 @@ claim-after-idling : [] ⊢C⦂ Unit ‼ [ 7 ,+∞⟩
 claim-after-idling =
   box {ρ = [ 2 ,+∞⟩} (const 42)      -- ∷ [ [ 2 ,+∞⟩ ] Reading
     (delay 3                         -- ⟨ [ 3 ,+∞⟩ ⟩
-      (unbox (Tl-⟨⟩ Hd) ≤!           -- ∷ Reading
+      (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 -- taking a reading is one tick's worth of waiting, which is not enough
@@ -222,7 +223,8 @@ claim-after-sampling : [] ⊢C⦂ Unit ‼ [ 5 ,+∞⟩
 claim-after-sampling =
   box {ρ = [ 1 ,+∞⟩} (const 42)      -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!    -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 -- a resource claimable with nothing elapsed is one that promises
@@ -232,7 +234,7 @@ claim-after-sampling =
 claiming-now : [] ⊢C⦂ Unit ‼ [ 4 ,+∞⟩
 claiming-now =
   box {ρ = [ 0 ,+∞⟩} (const 42)      -- ∷ [ [ 0 ,+∞⟩ ] Reading
-    (unbox Hd ≤!                     -- ∷ Reading
+    (unbox Hd ≤! (<:ᵛ-refl _)        -- ∷ Reading
       (perform send here (return ⋆)))
 
 -- a boxed resource crosses a binder as an ordinary value: the function
@@ -244,7 +246,8 @@ handed-over =
   box {ρ = [ 1 ,+∞⟩} (const 42)      -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (lam                             -- ∷ [ [ 1 ,+∞⟩ ] Reading
        (perform write (const 0)      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
-         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! -- ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
 
@@ -273,13 +276,13 @@ claimed-in-both-branches =
       `then coerce ≤!
               (perform write (const 0)
                                      -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce ≤!
               (perform send (const 0)
                                      -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 
@@ -292,7 +295,7 @@ either-way =
   box {ρ = [ 1 ,+∞⟩} (const 42)      -- ∷ [ [ 1 ,+∞⟩ ] Reading
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (delay 1                       -- ⟨ [ 1 ,+∞⟩ ⟩
-        (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤!
+        (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (if eternal-var Boolₑ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd)))))
             `then perform send here (return ⋆)
@@ -315,7 +318,8 @@ claim-after-a-store =
   box {ρ = [ 3 ,+∞⟩} (const 42)      -- ∷ [ [ 3 ,+∞⟩ ] Reading
     ((perform read ⋆ (perform write here (return ⋆)))
       ⨟                              -- ⟨ [ 3 ,+∞⟩ ⟩ ∷ Unit
-        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!   -- ∷ Reading
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- forgetting one of those ticks first puts the box out of reach: the
@@ -333,7 +337,8 @@ claim-after-a-coerced-store =
     (coerce {ε' = [ 2 ,+∞⟩} ≤!
        (perform read ⋆ (perform write here (return ⋆)))
       ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
-        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!   -- ∷ Reading
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- and that box was within the uncoerced program's reach as well, which
@@ -360,7 +365,8 @@ claim-after-a-branch =
         `then coerce {ε' = [ 2 ,+∞⟩} ≤! (perform send (const 0) (return ⋆))
         `else delay 2 (return ⋆))
       ⨟                              -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
-        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!   -- ∷ Reading
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- the transmitting branch guarantees four ticks on its own -- that is
@@ -387,7 +393,7 @@ duty-cycle =
     (perform read ⋆                  -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
       (perform write here            -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
         (delay 2                     -- ⟨ [ 2 ,+∞⟩ ⟩
-          (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))) ≤!
+          (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
             (perform send here (return ⋆))))))
 
@@ -397,7 +403,8 @@ waiting-instead : [] ⊢C⦂ Unit ‼ [ 9 ,+∞⟩
 waiting-instead =
   box {ρ = [ 4 ,+∞⟩} (const 42)      -- ∷ [ [ 4 ,+∞⟩ ] Reading
     (delay 5                         -- ⟨ [ 5 ,+∞⟩ ⟩
-      (unbox (Tl-⟨⟩ Hd) ≤!           -- ∷ Reading
+      (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 -- one tick short of it, the claim is refused: dropping the store from
@@ -419,11 +426,11 @@ two-schedules =
     (box {ρ = [ 6 ,+∞⟩} (const 2)    -- ∷ [ [ 6 ,+∞⟩ ] Reading
       (perform read ⋆                -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
         (perform write here          -- ⟨ [ 2 ,+∞⟩ ⟩ ∷ Unit
-          (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) ≤!
+          (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
             (perform send here       -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
               (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))))))
-                     ≤!
+                     ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                 (perform send here (return ⋆))))))))
 
@@ -443,12 +450,12 @@ scheduled-choice =
   box {ρ = [ 3 ,+∞⟩} (const 42)      -- ∷ [ [ 3 ,+∞⟩ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then perform send (const 0)   -- ⟨ [ 4 ,+∞⟩ ⟩ ∷ Unit
-              (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+              (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                 (perform send here (return ⋆)))
       `else perform read ⋆           -- ⟨ [ 1 ,+∞⟩ ⟩ ∷ Reading
               (delay 3               -- ⟨ [ 3 ,+∞⟩ ⟩
-                (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤!
+                (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 

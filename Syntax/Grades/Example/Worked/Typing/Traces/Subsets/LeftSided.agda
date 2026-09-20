@@ -206,7 +206,8 @@ claim-after-sampling : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ se
 claim-after-sampling =
   box {ρ = demand} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
@@ -214,7 +215,7 @@ handed-over =
   box {ρ = demand} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
     (lam                 -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
        (perform read ⋆   -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
@@ -223,7 +224,8 @@ either-way : [] ∷ Bool ⊢C⦂ Unit ‼ demanding ⟅ ⌈ read ⌉ ∙ ⌈ sen
 either-way =
   box {ρ = demand} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ⟆ ] Reading
     (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -256,7 +258,7 @@ claiming-now : [] ⊢C⦂ Unit ‼ demanding ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box {ρ = nothing-demanded} (const 42)
                          -- ∷ [ demanding ⟅ ε ⟆ ] Reading
-    (unbox Hd (holdsᵉ uᵣ nothing-demanded)
+    (unbox Hd (holdsᵉ uᵣ nothing-demanded) (<:ᵛ-refl _)
                          -- ∷ Reading
       (perform send here (return ⋆)))
 
@@ -397,7 +399,7 @@ log-then-claim =
   box {ρ = logged} (const 42)  -- ∷ [ demanding ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ] Reading
     (perform read ⋆      -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (perform write here  -- ⟨ demanding ⟅ ⌈ write ⌉ ⟆ ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds (<:ᵛ-refl _)
                          -- ∷ Reading
           (if eternal-var Boolₑ
                 (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))

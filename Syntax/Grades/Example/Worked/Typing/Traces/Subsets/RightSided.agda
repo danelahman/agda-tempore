@@ -153,14 +153,16 @@ claim-after-sampling : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ s
 claim-after-sampling =
   box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 claim-after-idling : [] ⊢C⦂ Unit ‼ permitting ⟅ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
 claim-after-idling =
   box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (delay 2             -- ⟨ permitting ⟅ ⟨ 2 ⟩ ⟆ ⟩
-      (unbox (Tl-⟨⟩ Hd) holds  -- ∷ Reading
+      (unbox (Tl-⟨⟩ Hd) holds (<:ᵛ-refl _)
+                               -- ∷ Reading
         (perform send here (return ⋆))))
 
 handed-over : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
@@ -168,7 +170,7 @@ handed-over =
   box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (lam                 -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
        (perform read ⋆   -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
@@ -177,7 +179,8 @@ either-way : [] ∷ Bool ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ se
 either-way =
   box {ρ = permit} (const 42)  -- ∷ [ permitting ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ ] Reading
     (perform read ⋆      -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -205,7 +208,8 @@ listed-now = permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
 claiming-now : [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ send ⌉ ⟆
 claiming-now =
   box {ρ = listed-now} (const 42)  -- ∷ [ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆ ] Reading
-    (unbox Hd (holdsᵉ uᵣ listed-now) -- ∷ Reading
+    (unbox Hd (holdsᵉ uᵣ listed-now) (<:ᵛ-refl _)
+                                     -- ∷ Reading
       (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
@@ -224,13 +228,13 @@ claimed-in-both-branches =
     (if true
       `then coerce holds
               (perform read ⋆  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
               (perform send (const 0)
                          -- ⟨ permitting ⟅ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading
                   (perform send here (return ⋆)))))
 
@@ -258,12 +262,12 @@ permit-in-a-branch =
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce holds
               (perform read ⋆  -- ⟨ permitting ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
                          -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce holds
               (delay 2   -- ⟨ permitting ⟅ ⟨ 2 ⟩ ⟆ ⟩
-                (unbox (Tl-⟨⟩ Hd) holds
+                (unbox (Tl-⟨⟩ Hd) holds (<:ᵛ-refl _)
                          -- ∷ Reading
                   (perform send here (return ⋆)))))
 

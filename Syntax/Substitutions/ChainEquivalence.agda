@@ -28,7 +28,6 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
-open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Renamings.Equivalence S
@@ -354,21 +353,22 @@ C-sub-handle : ∀ {Γ Γ' A B ε ε'} → (σ : Sub [] Γ Γ')
 C-sub-handle []ˢ      M H N = refl
 C-sub-handle (s ◅ σ) M H N = cong (C-sub₀ s) (C-sub-handle σ M H N)
 
-C-sub-unbox : ∀ {Γ Γ' A A₀ C ρ ρ₀ ρ'} → (σ : Sub [] Γ Γ')
-            → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ') → (p : ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A))
-            → (rel : ρ' ≾ᵣ ρ) → (M : Γ' ∷ A ⊢C⦂ C)
-            → Σ[ w ∈ (([ rvar-grade (tgt-img σ x) ] rvar-type (tgt-img σ x))
-                        <:ᵛ ([ ρ ] A)) ]
-              Σ[ q ∈ (rvar-elapsed (tgt-img σ x) ≾ᵣ ρ) ]
-                (C-sub σ (unbox<: x p rel M)
-                 ≡ unbox<: (rvar-pos (tgt-img σ x)) w q
-                           (C-sub (cong-∷-subˢ σ) M))
-C-sub-unbox []ˢ      x p rel M = p , rel , refl
-C-sub-unbox (s ◅ σ) x p rel M =
-    tgt-<:-∘₀ s (rvar-pos (tgt-img σ x)) (proj₁ (C-sub-unbox σ x p rel M))
-  , ≾ᵣ-trans (tgt-≾₀ s (rvar-pos (tgt-img σ x)))
-             (proj₁ (proj₂ (C-sub-unbox σ x p rel M)))
-  , cong (C-sub₀ s) (proj₂ (proj₂ (C-sub-unbox σ x p rel M)))
+C-sub-unbox : ∀ {Γ Γ' A A₀ C ρ₀ ρ'} → (σ : Sub [] Γ Γ')
+            → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ') → (rel : ρ' ≾ᵣ ρ₀) → (p : A₀ <:ᵛ A)
+            → (M : Γ' ∷ A ⊢C⦂ C)
+            → Σ[ q ∈ (rvar-elapsed (tgt-img σ x) ≾ᵣ rvar-grade (tgt-img σ x)) ]
+              Σ[ w ∈ (rvar-type (tgt-img σ x) <:ᵛ A) ]
+                (C-sub σ (unbox x rel p M)
+                 ≡ unbox (rvar-pos (tgt-img σ x)) q w
+                         (C-sub (cong-∷-subˢ σ) M))
+C-sub-unbox []ˢ      x rel p M = rel , p , refl
+C-sub-unbox (s ◅ σ) x rel p M =
+    ≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s (rvar-pos (tgt-img σ x)))
+                       (proj₁ (C-sub-unbox σ x rel p M)))
+             (tgt-grade-≾₀ s (rvar-pos (tgt-img σ x)))
+  , tgt-type-<:-∘₀ s (rvar-pos (tgt-img σ x))
+                     (proj₁ (proj₂ (C-sub-unbox σ x rel p M)))
+  , cong (C-sub₀ s) (proj₂ (proj₂ (C-sub-unbox σ x rel p M)))
 
 C-sub-box : ∀ {Γ Γ' A C ρ} → (σ : Sub [] Γ Γ')
           → (V : Γ' ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ' ∷ [ ρ ] A ⊢C⦂ C)
@@ -457,10 +457,10 @@ mutual
                             (H op ε''))
                 (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h)) N))
              (sym (C-sub-handle σ' M H N)))
-  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (unbox<: x p rel M) =
-    trans (proj₂ (proj₂ (C-sub-unbox σ x p rel M)))
+  C-sub-≐ˢ {σ = σ} {σ' = σ'} h (unbox x rel p M) =
+    trans (proj₂ (proj₂ (C-sub-unbox σ x rel p M)))
       (trans (unbox-≡ (atᵗ h x) (C-sub-≐ˢ (cong-∷-subˢ-≐ˢ h) M))
-             (sym (proj₂ (proj₂ (C-sub-unbox σ' x p rel M)))))
+             (sym (proj₂ (proj₂ (C-sub-unbox σ' x rel p M)))))
   C-sub-≐ˢ {σ = σ} {σ' = σ'} h (box V M) =
     trans (C-sub-box σ V M)
       (trans (cong₂ box (V-sub-≐ˢ (cong-⟨⟩-subˢ-≐ˢ h) V)

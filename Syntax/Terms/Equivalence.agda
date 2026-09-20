@@ -34,7 +34,6 @@ open import Syntax.Contexts   Spec
 open import Syntax.Language   Spec
 open import Syntax.RenActions Spec
 open import Syntax.Renamings  Spec
-open import Syntax.Subtyping  Spec
 open import Syntax.Types      Spec
 open import Syntax.Renamings.Equivalence Spec
 
@@ -57,21 +56,21 @@ subC-≡ : ∀ {Γ C C'} {p p' : C <:ᶜ C'} {M M' : Γ ⊢C⦂ C}
 subC-≡ {p = p} {p' = p'} {M = M} refl =
   cong (subC M) (<:ᶜ-irrelevant p p')
 
--- `unbox<:` is compared at the *resource variable* it names, together with the
--- declared box type that variable stands at; the grade bound and the subtyping
--- witness it stores alongside are irrelevant.
+-- `unbox` is compared at the *resource variable* it names, together with the
+-- declared box type that variable stands at; the grade bound and the payload
+-- subsumption it stores alongside are irrelevant.
 
-unbox-≡ : ∀ {Γ A C ρ ρ₀ ρ₀' A₀ A₀' ρ' ρ''}
+unbox-≡ : ∀ {Γ A C ρ₀ ρ₀' A₀ A₀' ρ' ρ''}
             {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} {y : [ ρ₀' ] A₀' ∈[ ρ'' ] Γ}
-            {p : ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)} {p' : ([ ρ₀' ] A₀') <:ᵛ ([ ρ ] A)}
-            {rel : ρ' ≾ᵣ ρ} {rel' : ρ'' ≾ᵣ ρ} {M M' : Γ ∷ A ⊢C⦂ C}
+            {rel : ρ' ≾ᵣ ρ₀} {rel' : ρ'' ≾ᵣ ρ₀'}
+            {p : A₀ <:ᵛ A} {p' : A₀' <:ᵛ A} {M M' : Γ ∷ A ⊢C⦂ C}
         → _≡_ {A = RVar Γ} (ρ₀ , A₀ , ρ' , x) (ρ₀' , A₀' , ρ'' , y) → M ≡ M'
-        → unbox<: x p rel M ≡ unbox<: y p' rel' M'
-unbox-≡ {A = A} {ρ = ρ} {ρ₀ = ρ₀} {A₀ = A₀}
-        {x = x} {p = p} {p' = p'} {rel = rel} {rel' = rel'} {M = M} refl refl =
-  cong₂ (λ q r → unbox<: x q r M)
-        (<:ᵛ-irrelevant {[ ρ₀ ] A₀} {[ ρ ] A} p p')
+        → unbox x rel p M ≡ unbox y rel' p' M'
+unbox-≡ {A = A} {A₀ = A₀}
+        {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl =
+  cong₂ (λ r q → unbox x r q M)
         (≾ᵣ-irrelevant rel rel')
+        (<:ᵛ-irrelevant {A₀} {A} p p')
 
 -- The clause family is a function of the operation and its effect, so its
 -- congruence goes through `fun-ext`.

@@ -16,7 +16,6 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
-open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 -- Computation term context flags. They characterise whether
@@ -122,13 +121,13 @@ data _⊢K[_◁_]⦂_ (Γ : Ctx) (f : Flag) (CH : CType) : CType → Set where
         -----------------------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ A ‼ (of-natᵉ τ ·ₑ ε)
 
-    unbox[_]ₖ : ∀ {A A₀ C ρ ρ₀ ρ'}
+    unbox[_]ₖ : ∀ {A A₀ C ρ₀ ρ'}
         → state ≤ᶠ f
         → [ ρ₀ ] A₀ ∈[ ρ' ] Γ
-        → ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)
-        → ρ' ≾ᵣ ρ
+        → ρ' ≾ᵣ ρ₀
+        → A₀ <:ᵛ A
         → Γ ∷ A ⊢K[ f ◁ CH ]⦂ C
-        -----------------------------
+        -------------------------
         → Γ ⊢K[ f ◁ CH ]⦂ C
     
     box[_]ₖ : ∀ {A C ρ}
@@ -178,7 +177,7 @@ rel-hole-ctx (handle[ p ]ₖ K `with H `in N) Γ' =
   rel-hole-ctx K Γ'
 rel-hole-ctx (delay[ p ]ₖ τ K) Γ' =
   rel-hole-ctx K (Γ' ⟨ of-natʳ τ ⟩)
-rel-hole-ctx (unbox[_]ₖ {A = A} p x w rel K) Γ' =
+rel-hole-ctx (unbox[_]ₖ {A = A} p x rel w K) Γ' =
   rel-hole-ctx K (Γ' ∷ A)
 rel-hole-ctx (box[_]ₖ {A = A} {ρ = ρ} p V K) Γ' =
   rel-hole-ctx K (Γ' ∷ [ ρ ] A)
@@ -207,7 +206,7 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (handle[ p ]ₖ K `with H `in N) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (delay[ p ]ₖ τ K) =
   rel-hole-ctx-++ᶜ K
-rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x w rel K) =
+rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (unbox[ p ]ₖ x rel w K) =
   rel-hole-ctx-++ᶜ K
 rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   rel-hole-ctx-++ᶜ K
@@ -231,8 +230,8 @@ rel-hole-ctx-++ᶜ {Γ} {Γ'} {Γ''} (box[ p ]ₖ V K) =
   handle[ ≤ᶠ-trans q p ]ₖ (◁-mon p K) `with H `in N
 ◁-mon {f = f} {f' = f'} p (delay[ q ]ₖ τ K) =
   delay[ ≤ᶠ-trans q p ]ₖ τ (◁-mon p K)
-◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ x w rel K) =
-  unbox[ ≤ᶠ-trans q p ]ₖ x w rel (◁-mon p K)
+◁-mon {f = f} {f' = f'} p (unbox[ q ]ₖ x rel w K) =
+  unbox[ ≤ᶠ-trans q p ]ₖ x rel w (◁-mon p K)
 ◁-mon {f = f} {f' = f'} p (box[ q ]ₖ V K) =
   box[ ≤ᶠ-trans q p ]ₖ V (◁-mon p K)
 
@@ -259,9 +258,9 @@ K-rename r (handle[ p ]ₖ K `with H `in N) =
     `in (C-rename (cong-ren r) N)
 K-rename r (delay[ p ]ₖ τ K) =
   delay[ p ]ₖ τ (K-rename (cong-ren r) K)
-K-rename r (unbox[ p ]ₖ x w rel K) =
-  unbox[ p ]ₖ (proj₁ (proj₂ (rvar-rename r x))) w
-              (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
+K-rename r (unbox[ p ]ₖ x rel w K) =
+  unbox[ p ]ₖ (proj₁ (proj₂ (rvar-rename r x)))
+              (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel) w
               (K-rename (cong-ren r) K)
 K-rename r (box[ p ]ₖ V K) =
   box[ p ]ₖ (V-rename (cong-ren r) V) (K-rename (cong-ren r) K)
@@ -293,8 +292,8 @@ delay[ p ]ₖ τ K [ L ]ₖ =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) L ]ₖ)
-unbox[ p ]ₖ x w rel K [ L ]ₖ =
-  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ x w rel
+unbox[ p ]ₖ x rel w K [ L ]ₖ =
+  unbox[ ≤ᶠ-trans p ∨ᶠ-inl ]ₖ x rel w
     (K [ K-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
@@ -333,8 +332,8 @@ delay[ p ]ₖ τ K [ N ] =
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))
              (sym (++ᶜ-assoc _ ([] ⟨ _ ⟩) (hole-ctx K))))) N ])
-unbox[ p ]ₖ x w rel K [ N ] =
-  unbox<: x w rel
+unbox[ p ]ₖ x rel w K [ N ] =
+  unbox x rel w
     (K [ C-rename (eq-ren
            (trans
              (cong (_ ++ᶜ_) (rel-hole-ctx-++ᶜ K))

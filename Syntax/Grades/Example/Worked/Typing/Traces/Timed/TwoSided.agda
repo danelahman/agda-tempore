@@ -161,7 +161,7 @@ claim-after-storing =
   box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
@@ -170,7 +170,7 @@ handed-over =
   box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
     (lam                             -- ∷ [ contract ] Reading
        (perform read ⋆               -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
@@ -179,7 +179,7 @@ either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
   box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
@@ -223,13 +223,13 @@ claimed-in-both-branches =
     (if true
       `then coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce (holds _ _)
               (perform send (const 0)
                                      -- ⟨ exact ⌈ send ⌉ ⟩ ∷ Unit
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 
@@ -279,7 +279,7 @@ claim-after-a-branch =
                 (perform read ⋆ (return ⋆))
         `else coerce (holds _ _) (perform write (const 0) (return ⋆)))
       ⨟                              -- ⟨ branch-join ⟩ ∷ Unit
-        unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))
 
@@ -299,13 +299,13 @@ store-or-not =
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce (holds _ _)
               (perform read ⋆        -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
                 (perform write here  -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
-                  (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
+                  (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
                     (perform send here (return ⋆))))))
 

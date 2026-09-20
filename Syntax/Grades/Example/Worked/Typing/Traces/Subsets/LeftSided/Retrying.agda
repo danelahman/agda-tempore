@@ -111,7 +111,8 @@ claim-after-transmitting =
   box {ρ = demanding ⟅ ⌈ send ⌉ ⟆} (const 42)  -- ∷ [ demanding ⟅ ⌈ send ⌉ ⟆ ] Reading
     (perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd))
                   -- ⟨ demanding ⟅ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) holds (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (return here)))
 
 -- the box may demand the retry instead, which the same run discharges
@@ -147,7 +148,7 @@ claim-after-relaying =
                   -- ∷ [ demanding ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆ ] Reading
     (perform read ⋆  -- ⟨ demanding ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
       (perform send here  -- ⟨ demanding ⟅ ⌈ send ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) holds (<:ᵛ-refl _)
                   -- ∷ Reading
           (return here))))
 

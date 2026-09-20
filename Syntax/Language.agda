@@ -23,8 +23,12 @@ open GradeSystemInterface Grades
 open Operations Ops
 
 open import Syntax.Contexts   S
-open import Syntax.Subtyping  S
 open import Syntax.Types      S
+
+-- Re-exported because the typing rules' own premises mention `_<:ᵛ_`: anything
+-- that builds a term needs the relation in scope.
+
+open import Syntax.Subtyping S public
 
 -- Well-typed terms (values and computations)
 
@@ -194,21 +198,25 @@ mutual
 
     -- The value being unboxed is a variable of box type: every value of a graded
     -- modal type is one up to subsumption (`grad-typ⇒var<:` below), so the rule
-    -- names the occurrence at its *declared* type `[ ρ₀ ] A₀` and subsumes it
-    -- into the `[ ρ ] A` being eliminated. A binder's type is not something a
-    -- term former can subsume, which is why that witness sits here and not on a
-    -- premise. That enough time has passed since the occurrence was brought into
-    -- scope is the grade bound `ρ' ≾ᵣ ρ`, where `ρ'` is the product of the locks
-    -- standing to the variable's right. Reading that product off the context is
-    -- what rewinds it to the variable's world, with no subtraction operation on
+    -- names the occurrence at its *declared* type `[ ρ₀ ] A₀` and lets the
+    -- continuation bind any supertype `A` of the payload — a binder's type is
+    -- not something a term former can subsume, so that witness is a premise.
+    -- Box subtyping's *grade* half needs no premise of its own: the rule already
+    -- bounds the elapsed grade, and contravariance only composes into that
+    -- bound. Contravariance is absorbed, not lost.
+    --
+    -- That enough time has passed since the occurrence was brought into scope is
+    -- the grade bound `ρ' ≾ᵣ ρ₀`, where `ρ'` is the product of the locks standing
+    -- to the variable's right. Reading that product off the context is what
+    -- rewinds it to the variable's world, with no subtraction operation on
     -- contexts.
 
-    unbox<: : {A A₀ : VType}
+    unbox   : {A A₀ : VType}
             → {C : CType}
-            → {ρ ρ₀ ρ' : R}
+            → {ρ₀ ρ' : R}
             → [ ρ₀ ] A₀ ∈[ ρ' ] Γ
-            → ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)
-            → ρ' ≾ᵣ ρ
+            → ρ' ≾ᵣ ρ₀
+            → A₀ <:ᵛ A
             → Γ ∷ A ⊢C⦂ C
             ---------------------------
             → Γ ⊢C⦂ C
@@ -240,17 +248,6 @@ coerce : ∀ {Γ A ε ε'}
        → Γ ⊢C⦂ A ‼ ε'
 
 coerce {A = A} p M = subC M (<:ᵛ-refl A , p)
-
--- Unboxing an occurrence at the type it is declared with
-
-unbox : ∀ {Γ A C ρ ρ'}
-      → [ ρ ] A ∈[ ρ' ] Γ
-      → ρ' ≾ᵣ ρ
-      → Γ ∷ A ⊢C⦂ C
-      -------------------
-      → Γ ⊢C⦂ C
-
-unbox {A = A} {ρ = ρ} x rel M = unbox<: x (<:ᵛ-refl ([ ρ ] A)) rel M
 
 -- Useful substitution of effect annotations
 

@@ -23,7 +23,6 @@ open import Syntax.Contexts   S
 open import Syntax.Language   S
 open import Syntax.RenActions S
 open import Syntax.Renamings  S
-open import Syntax.Subtyping  S
 open import Syntax.Types      S
 
 open import Syntax.Substitutions.Base      S
@@ -75,14 +74,14 @@ mutual
              C-sub₀ (cong-∷-sub (cong-∷-sub (cong-⟨⟩-sub s))) (H op ε''))
     `in (C-sub₀ (cong-sub₀ s) N)
   -- The unboxed resource variable is taken to another resource variable by
-  -- `sub-tgt₀`, at a grade that drops and at a declared box type the named one
-  -- only bounds; the two witnesses compose. Read off with projections rather
-  -- than a `with`, so that this clause reduces to an `unbox<:` node at an
-  -- abstract `s`.
-  C-sub₀ s (unbox<: x p rel M) =
-    unbox<: (tgt-var₀ s x)
-            (tgt-<:-∘₀ s x p)
-            (≾ᵣ-trans (tgt-≾₀ s x) rel)
-            (C-sub₀ (cong-sub₀ s) M)
+  -- `sub-tgt₀`, at a grade that drops and at a declared payload type the named
+  -- one only bounds; both witnesses compose into the node's own. Read off with
+  -- projections rather than a `with`, so that this clause reduces to an `unbox`
+  -- node at an abstract `s`.
+  C-sub₀ s (unbox x rel p M) =
+    unbox (tgt-var₀ s x)
+          (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s x) rel) (tgt-grade-≾₀ s x))
+          (tgt-type-<:-∘₀ s x p)
+          (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (box V M) = box (V-sub₀ (cong-sub₀ s) V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (subC M p) = subC (C-sub₀ s M) p

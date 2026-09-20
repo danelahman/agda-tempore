@@ -72,8 +72,8 @@ var-rename (⟨⟩-ext-ctx _ ecΔ) x =
 -- Renaming a *resource* variable, i.e. one of box type, which is what `unbox`
 -- names. Box types are never eternal, so the grade bound is unconditional.
 --
--- Stated with projections rather than a `with`, so that the `unbox<:` clause
--- of the action below reduces to an `unbox<:` node at an abstract renaming.
+-- Stated with projections rather than a `with`, so that the `unbox` clause of
+-- the action below reduces to an `unbox` node at an abstract renaming.
 
 rvar-rename : ∀ {Γ Γ' A ρ ρ'}
             → Ren [] Γ Γ'
@@ -85,6 +85,44 @@ rvar-rename r x =
     proj₁ (var-rename r x)
   , proj₂ (proj₂ (var-rename r x))
   , proj₁ (proj₂ (var-rename r x)) (λ ())
+
+-- The value-taking reading of `unbox`, as a derived rule.
+--
+-- The value is not taken in `Γ` but in a `Δ` that `Γ` reaches through one lock
+-- of the box's own grade -- a Fitch-style witness. It has to be: `Eternal` has
+-- no `[_]_` clause, so a box type is never eternal and `var`'s premise
+-- `¬ Eternal A → ρ' ≾ᵣ uᵣ` always fires at box type. Any *value* of box type
+-- therefore already carries `ρ' ≾ᵣ uᵣ`, i.e. that essentially no time has
+-- passed, which is exactly what unboxing after a `delay` must not require. The
+-- lookup-based rule bypasses that premise by reading the elapsed grade off the
+-- context; a value-taking rule has to recover it, and the renaming is where
+-- from.
+
+unbox⇒var : ∀ {Γ Δ A ρ}
+          → Ren [] Γ (Δ ⟨ ρ ⟩)
+          → Δ ⊢V⦂ [ ρ ] A
+          --------------------------------------------------------
+          → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
+              (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (ρ' ≾ᵣ ρ₀) × (A₀ <:ᵛ A))
+
+unbox⇒var {ρ = ρ} r V with grad-typ⇒var<: V
+... | ρ₀ , A₀ , σ , y , (ρ≾ρ₀ , p) , σ≾u with var-rename r (Tl-⟨⟩ y)
+... | ρ' , ρ'≾σ·ρ , z =
+    ρ₀ , A₀ , ρ' , z
+  , ≾ᵣ-trans (ρ'≾σ·ρ (λ ()))
+      (≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ σ≾u)
+        (≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ ρ)) ρ≾ρ₀))
+  , p
+
+unbox-val : ∀ {Γ Δ A C ρ}
+          → Ren [] Γ (Δ ⟨ ρ ⟩)
+          → Δ ⊢V⦂ [ ρ ] A
+          → Γ ∷ A ⊢C⦂ C
+          ---------------
+          → Γ ⊢C⦂ C
+
+unbox-val r V M with unbox⇒var r V
+... | _ , _ , _ , x , rel , p = unbox x rel p M
 
 -- Action of renamings on well-typed values and computations
 --
@@ -129,9 +167,9 @@ mutual
     `with (λ op ε'' →
              C-rename (cong-∷-ren (cong-∷-ren (cong-⟨⟩-ren r))) (H op ε''))
     `in (C-rename (cong-ren r) N)
-  C-rename r (unbox<: x p rel M) =
-    unbox<: (proj₁ (proj₂ (rvar-rename r x))) p
-            (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel)
-            (C-rename (cong-ren r) M)
+  C-rename r (unbox x rel p M) =
+    unbox (proj₁ (proj₂ (rvar-rename r x)))
+          (≾ᵣ-trans (proj₂ (proj₂ (rvar-rename r x))) rel) p
+          (C-rename (cong-ren r) M)
   C-rename r (box V M) = box (V-rename (cong-ren r) V) (C-rename (cong-ren r) M)
   C-rename r (subC M p) = subC (C-rename r M) p

@@ -183,7 +183,7 @@ sampling-then-branching =
 claiming-now : [] ⊢C⦂ Unit ‼ [0, 6 ]
 claiming-now =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
-    (unbox Hd ≤!                     -- ∷ Reading
+    (unbox Hd ≤! (<:ᵛ-refl _)        -- ∷ Reading
       (perform send here (return ⋆)))
 
 -- claimed after idling two ticks of the six
@@ -192,7 +192,8 @@ claim-after-idling : [] ⊢C⦂ Unit ‼ [0, 8 ]
 claim-after-idling =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (delay 2                         -- ⟨ [0, 2 ] ⟩
-      (unbox (Tl-⟨⟩ Hd) ≤!           -- ∷ Reading
+      (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 -- and after taking a reading, which spends one
@@ -201,7 +202,8 @@ claim-after-sampling : [] ⊢C⦂ Unit ‼ [0, 7 ]
 claim-after-sampling =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!    -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (perform send here (return ⋆))))
 
 -- a transmission and a reading spend seven, which the lease does not
@@ -222,7 +224,8 @@ handed-over =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (lam                             -- ∷ [ [0, 6 ] ] Reading
        (perform read ⋆               -- ⟨ [0, 1 ] ⟩ ∷ Reading
-         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! -- ∷ Reading
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
 
@@ -234,7 +237,8 @@ either-way : [] ∷ Bool ⊢C⦂ Unit ‼ [0, 7 ]
 either-way =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!    -- ∷ Reading
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
           `else perform send (fresh-var ≾ᵣ-refl (Tl-∷ Hd)) (return ⋆))))
@@ -262,13 +266,13 @@ claimed-in-both-branches =
     (if true
       `then coerce ≤!
               (perform read ⋆        -- ⟨ [0, 1 ] ⟩ ∷ Reading
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆))))
       `else coerce ≤!
               (perform send (const 0)
                                      -- ⟨ [0, 6 ] ⟩ ∷ Unit
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 
@@ -287,7 +291,8 @@ claim-after-a-reading =
   box {ρ = [0, 4 ]} (const 42)       -- ∷ [ [0, 4 ] ] Reading
     ((perform read ⋆ (return here))
       ⨟                              -- ⟨ [0, 1 ] ⟩ ∷ Reading
-        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!   -- ∷ Reading
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 -- relaxing that reading's deadline to six spends six of them, and the
@@ -304,7 +309,8 @@ claim-after-a-coerced-reading =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (coerce {ε' = [0, 6 ]} ≤! (perform read ⋆ (return here))
       ⨟                              -- ⟨ [0, 6 ] ⟩ ∷ Reading
-        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!   -- ∷ Reading
+        unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
           (perform send here (return ⋆)))
 
 ------------------------------------------------------------------------
@@ -319,7 +325,7 @@ carrying-a-lease =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (delay 2                       -- ⟨ [0, 2 ] ⟩
-        (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤!
+        (unbox (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
@@ -336,7 +342,7 @@ longer-lease =
   box {ρ = [0, 9 ]} (const 42)       -- ∷ [ [0, 9 ] ] Reading
     (perform read ⋆                  -- ⟨ [0, 1 ] ⟩ ∷ Reading
       (perform send (const 0)        -- ⟨ [0, 6 ] ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) ≤!
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
           (perform send here (return ⋆)))))
 
@@ -360,11 +366,12 @@ spend-it-either-way =
   box {ρ = [0, 6 ]} (const 42)       -- ∷ [ [0, 6 ] ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
       `then delay 2                  -- ⟨ [0, 2 ] ⟩
-              (unbox (Tl-⟨⟩ Hd) ≤!   -- ∷ Reading
+              (unbox (Tl-⟨⟩ Hd) ≤! (<:ᵛ-refl _)
+                                     -- ∷ Reading
                 (perform send here (return ⋆)))
       `else coerce ≤!
               (perform read ⋆        -- ⟨ [0, 1 ] ⟩ ∷ Reading
-                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤!
+                (unbox (Tl-∷ (Tl-⟨⟩ Hd)) ≤! (<:ᵛ-refl _)
                                      -- ∷ Reading
                   (perform send here (return ⋆)))))
 

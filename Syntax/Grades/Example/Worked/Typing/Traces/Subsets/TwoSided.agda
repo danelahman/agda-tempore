@@ -180,7 +180,7 @@ claim-after-sampling : [] ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 claim-after-sampling =
   box {ρ = demand} (const 42)        -- ∷ [ demand ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
         (perform send here (return ⋆))))
 
@@ -189,7 +189,7 @@ handed-over =
   box {ρ = demand} (const 42)        -- ∷ [ demand ] Reading
     (lam                             -- ∷ [ demand ] Reading
        (perform read ⋆               -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+         (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
            (perform send here (return ⋆))))
       · here)
@@ -198,7 +198,7 @@ either-way : [] ∷ Bool ⊢C⦂ Unit ‼ exact (⌈ read ⌉ ∙ ⌈ send ⌉)
 either-way =
   box {ρ = demand} (const 42)        -- ∷ [ demand ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
-      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _)
+      (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
         (if eternal-var Boolₑ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))
           `then perform send here (return ⋆)
@@ -271,7 +271,7 @@ log-then-claim =
   box {ρ = logged} (const 42)        -- ∷ [ logged ] Reading
     (perform read ⋆                  -- ⟨ exact ⌈ read ⌉ ⟩ ∷ Reading
       (perform write here            -- ⟨ exact ⌈ write ⌉ ⟩ ∷ Unit
-        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _)
+        (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ Hd)))) (holds _ _) (<:ᵛ-refl _)
                                      -- ∷ Reading
           (if eternal-var Boolₑ
                 (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))

@@ -33,7 +33,6 @@ open import Syntax.Language      Spec
 open import Syntax.RenActions    Spec
 open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
-open import Syntax.Subtyping     Spec
 open import Syntax.Types         Spec
 
 open import Syntax.Renamings.Equivalence Spec
@@ -181,12 +180,12 @@ castʳ refl w = w
 
 -- A cast relocates the resource variable an `unbox` names along `Var-cast`.
 
-cast-unbox : ∀ {Γ Γ' A A₀ C ρ ρ₀ ρ'} → (e : Γ ≡ Γ')
-           → {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} → {p : ([ ρ₀ ] A₀) <:ᵛ ([ ρ ] A)}
-           → {rel : ρ' ≾ᵣ ρ} → {M : Γ ∷ A ⊢C⦂ C}
-           → castᶜ e (unbox<: x p rel M)
-           ≡ unbox<: (proj₂ (Var-cast e (ρ' , x))) p rel
-                     (castᶜ (cong (_∷ A) e) M)
+cast-unbox : ∀ {Γ Γ' A A₀ C ρ₀ ρ'} → (e : Γ ≡ Γ')
+           → {x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ} → {rel : ρ' ≾ᵣ ρ₀} → {p : A₀ <:ᵛ A}
+           → {M : Γ ∷ A ⊢C⦂ C}
+           → castᶜ e (unbox x rel p M)
+           ≡ unbox (proj₂ (Var-cast e (ρ' , x))) rel p
+                   (castᶜ (cong (_∷ A) e) M)
 cast-unbox refl = refl
 
 cast-seq : ∀ {Γ Γ' A B ε ε'} → (e : Γ ≡ Γ')

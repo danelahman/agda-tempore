@@ -92,7 +92,7 @@ mutual
       (λ op ε'' →
          C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-rename-≡ (cong-ren-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-≡ h (unbox<: x p rel M) =
+  C-rename-≡ h (unbox x rel p M) =
     unbox-≡ (rvar-≡ (at h x)) (C-rename-≡ (cong-ren-≐ʳ ([] ∷ _) h) M)
   C-rename-≡ h (box V M) =
     cong₂ box (V-rename-≡ (cong-ren-≐ʳ ([] ⟨ _ ⟩) h) V)
@@ -172,7 +172,7 @@ mutual
       (λ op ε'' →
          C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _ ∷ _) h) (H op ε''))
       (C-rename-id-≡ (cong-ren-id-≐ʳ (_ ⟨ _ ⟩ ∷ _) h) N)
-  C-rename-id-≡ h (unbox<: x p rel M) =
+  C-rename-id-≡ h (unbox x rel p M) =
     unbox-≡ (rvar-≡ (at h x)) (C-rename-id-≡ (cong-ren-id-≐ʳ ([] ∷ _) h) M)
   C-rename-id-≡ h (box V M) =
     cong₂ box (V-rename-id-≡ (cong-ren-id-≐ʳ ([] ⟨ _ ⟩) h) V)
@@ -316,7 +316,7 @@ mutual
                        (H op ε'')))
       (trans (C-rename-≡ (cong-ren-∘-≐ʳ (_ ⟨ _ ⟩ ∷ _) r₂ r₁) N)
                 (C-rename-∘ (cong-ren r₂) (cong-ren r₁) N))
-  C-rename-∘ r₂ r₁ (unbox<: x p rel M) with var-rename r₂ x
+  C-rename-∘ r₂ r₁ (unbox x rel p M) with var-rename r₂ x
   ... | _ , _ , y with var-rename r₁ y
   ...   | _ , _ , z =
     unbox-≡ refl
