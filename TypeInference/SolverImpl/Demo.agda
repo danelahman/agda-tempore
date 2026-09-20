@@ -4,7 +4,8 @@
 -- Every example is discharged by `refl`, so what is inferred is  --
 -- checked by computation, not asserted.                          --
 -- A second specification, deadlines, follows at the end to       --
--- exercise the optional unit-minimality assumption.              --
+-- exercise the optional unit-minimality assumption and the       --
+-- residual var-rule disjunctions.                                --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
@@ -46,10 +47,13 @@ import TypeInference.Open.Types
 import TypeInference.Open.Subst
 import TypeInference.Open.Contexts
 import TypeInference.Open.ClosedContexts
+import TypeInference.Open.Hyps
 import TypeInference.Raw.Syntax
+import TypeInference.Constraints.Syntax
 import TypeInference.Infer
 import TypeInference.SolverImpl
 import TypeInference.SolverImpl.Enum
+import TypeInference.SolverImpl.Restricted
 
 open import TypeInference.Scopes
 
@@ -309,14 +313,19 @@ module Least where
   module Grᵈ = TypeInference.Open.Grades         specᵈ
   module Tyᵈ = TypeInference.Open.Types          specᵈ
   module Sbᵈ = TypeInference.Open.Subst          specᵈ
+  module Hyᵈ = TypeInference.Open.Hyps           specᵈ
   module CCᵈ = TypeInference.Open.ClosedContexts specᵈ
   module Rwᵈ = TypeInference.Raw.Syntax          specᵈ
+  module Cnᵈ = TypeInference.Constraints.Syntax  specᵈ
   module Inᵈ = TypeInference.Infer               specᵈ
 
   -- with the option, and without it
 
   module Sᵐ = TypeInference.SolverImpl specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ (just uᵈ-min) (just uᵈ-min)
   module S⁰ = TypeInference.SolverImpl specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing       nothing
+
+  module Rsᵈ =
+    TypeInference.SolverImpl.Restricted specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing nothing
 
   resultᵈ : {X : Sbᵈ.Subst Inᵈ.Θ₁ ∅ˢ → Set}
           → Maybe (Σ[ σ ∈ Sbᵈ.Subst Inᵈ.Θ₁ ∅ˢ ] X σ)
@@ -371,6 +380,34 @@ module Least where
   ex-handle-pipeline : typeOfᵈ (Sᵐ.inferImpl Cᵈ.[] prog)
                      ≡ just (Tᵈ.Unit , [0, ↑ 0 ])
   ex-handle-pipeline = refl
+
+  -- Deadlines have a least unit, so a `var`-rule disjunction whose
+  -- grade is `[0, ↑ 1 ]` has a refutable grade side.
+
+  disjC : Cnᵈ.Constraint ∅ˢ
+  disjC = Cnᵈ.Et∨≾ᵘ Tyᵈ.Unit (Grᵈ.rconst [0, ↑ 1 ])
+
+  disjOf : Maybe (Σ[ Θ ∈ Scope ] List (Tyᵈ.OVType Θ × Grᵈ.RExp Θ))
+  disjOf with Rsᵈ.solveOn disjC
+  ... | nothing          = nothing
+  ... | just (Θ , _ , Q) = just (Θ , Hyᵈ.disj Q)
+
+  -- the open solver residualises the disjunction rather than committing
+  -- to either side
+
+  ex-disj : disjOf ≡ just (∅ˢ , (Tyᵈ.Unit , Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ)
+  ex-disj = refl
+
+  solved?ᵈ : ∀ {Θ} {X : Sbᵈ.Subst Θ ∅ˢ → Set}
+           → Maybe (Σ[ σ ∈ Sbᵈ.Subst Θ ∅ˢ ] X σ) → Maybe ⊤
+  solved?ᵈ nothing  = nothing
+  solved?ᵈ (just _) = just tt
+
+  -- the ground path closes it by the eternality side, the grade side
+  -- being false
+
+  ex-disj-close : solved?ᵈ (S⁰.gsolveImpl disjC) ≡ just tt
+  ex-disj-close = refl
 
 -- The solver is principal on `Frag` (constraints whose `var`-rule
 -- disjunctions carry a lock grade convertible to the unit): a program
