@@ -732,6 +732,17 @@ mutual
                → Γ ⊢C⦂ subC (unbox x rel v M) w
                     == unbox x rel v (subC M w)
 
+    -- Sub-effecting the result of a bind is sub-effecting its continuation.
+    -- Only the effect half needs an axiom: its value half is derivable from
+    -- the eta and associativity rules of `_⨟_`, this one is not.
+
+    coerce-seq : ∀ {A B ε ε₁' ε₂'}
+               → (rel : ε₁' ≾ₑ ε₂')
+               → (M : Γ ⊢C⦂ A ‼ ε)
+               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+               ----------------------------------------------------------
+               → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) == M ⨟ coerce rel N
+
     -- Sub-effecting the answer of a `handle` is sub-effecting its return
     -- clause. Only the effect half moves: the handler's clauses are typed at
     -- the answer type, and their boxed continuation argument is contravariant

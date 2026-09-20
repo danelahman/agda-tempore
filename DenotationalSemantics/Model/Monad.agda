@@ -130,13 +130,18 @@ record Monad : Set₁ where
     T-≤-≡ : ∀ {A ε ε'} → (e : ε ≡ ε')
           → ε-substᵀ {A} e ≈ᵐ T-≤ (≾ₑ-reflexive e)
 
-    -- Sub-effecting commutes with the monad multiplication in the outer
-    -- grade, and with the strength (which also relaxes the box's grade,
-    -- the box being contravariant in it).
+    -- Sub-effecting commutes with the monad multiplication in either grade —
+    -- the outer one landing on `·ₑ-monoˡ`, the inner one on `·ₑ-monoʳ` — and
+    -- with the strength (which also relaxes the box's grade, the box being
+    -- contravariant in it).
 
     T-≤-μᵀ : ∀ {A ε₁ ε₂ ε'} → (p : ε₁ ≾ₑ ε₂)
            → μᵀ {A} {ε₂} {ε'} ∘ᵐ T-≤ p
            ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ μᵀ {A} {ε₁} {ε'}
+
+    T-≤-μᵀⁱ : ∀ {A ε ε₁' ε₂'} → (p : ε₁' ≾ₑ ε₂')
+            → μᵀ {A} {ε} {ε₂'} ∘ᵐ Tᶠ (T-≤ p)
+            ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ μᵀ {A} {ε} {ε₁'}
 
 
     -- Graded monad laws

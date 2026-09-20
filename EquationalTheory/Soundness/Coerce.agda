@@ -224,6 +224,25 @@ sound-subC-unbox x rel v w M pM pM' =
   ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM'))
 
 
+-- Sub-effecting the result of a bind is the multiplication's inner-grade law.
+
+sound-coerce-seq : ∀ {Γ A B ε ε₁' ε₂'}
+                 → (rel : ε₁' ≾ₑ ε₂')
+                 → (M : Γ ⊢C⦂ A ‼ ε)
+                 → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                 → Soundᶜ== (coerce-seq rel M N)
+sound-coerce-seq {B = B} rel M N (pM , pN) (pM' , pN') =
+    ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-≤-μᵀⁱ rel))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (  ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+              ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))
+  ∙ ∘ᵐ-congʳ (  ∘ᵐ-congˡ (T-congᶠ (  ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr N pN pN')
+                                   ∙ coe-refl-≈ B rel (⟦ N ⟧ᶜᵗ pN')))
+              ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)))
+
+
 -- Sub-effecting the answer of a `handle` is the fold's inner-grade law.
 
 sound-subC-handle-in : ∀ {Γ A B ε ε₁' ε₂'}

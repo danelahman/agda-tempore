@@ -201,34 +201,46 @@ seq-ε-subst refl M N = refl
 ε-subst-coerce refl c M = C-sym (subC-refl _ M)
 
 
--- Sequencing, at the result position: the value half of a subsumption of a
--- bind is a subsumption of the continuation. This is `μᵀ`-naturality. The
--- effect half does not follow — see the note at the end of the module.
+-- Sequencing, at the result position: a subsumption of a bind is a
+-- subsumption of its continuation, relaxing the residual effect grade. The
+-- value half is `μᵀ`-naturality and is derived here from the eta and
+-- associativity rules; the effect half is the axiom `coerce-seq`.
 
-subC-seq-in : ∀ {Γ A B B' ε ε'}
+subC-seq-in : ∀ {Γ A B B' ε ε₁' ε₂'}
             → (v : B <:ᵛ B')
+            → (q : ε₁' ≾ₑ ε₂')
             → (M : Γ ⊢C⦂ A ‼ ε)
-            → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε')
+            → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
             ----------------------------------------------------------
-            → Γ ⊢C⦂ subC (M ⨟ N) (v ‼ₛ ≾ₑ-refl)
-                 == M ⨟ subC N (v ‼ₛ ≾ₑ-refl)
-subC-seq-in {ε = ε} {ε' = ε'} v M N =
-  C-trans
-    (C-trans (subC-seq-eta v ≾ₑ-refl (M ⨟ N))
-    (C-trans (ε-subst-cong _ (subC-cong
-                (==-castᶜ refl (cong (λ X → ε-subst (sym (·ₑ-assoc ε ε' uₑ)) (M ⨟ (N ⨟ X)))
-                                     (cong return (subV-≡ var-≡)))
-                          (seq-assoc M N (return (subV hd v))))))
-             (coerce-ε-subst _ _ (·ₑ-monoˡ-≾ₑ ≾ₑ-refl) assoc-≾
-                             (M ⨟ (N ⨟ return (subV hd v))))))
-    (C-sym
-      (C-trans (seq-cong C-refl (subC-seq-eta v ≾ₑ-refl N))
-      (C-trans (seq-cong C-refl (ε-subst-cong _ (subC-refl _ _)))
-      (C-trans (==-castᶜ refl (seq-ε-subst _ M (N ⨟ return (subV hd v))) C-refl)
-               (ε-subst-coerce _ assoc-≾ (M ⨟ (N ⨟ return (subV hd v))))))))
+            → Γ ⊢C⦂ subC (M ⨟ N) (v ‼ₛ ·ₑ-monoʳ-≾ₑ q)
+                 == M ⨟ subC N (v ‼ₛ q)
+subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
+  C-trans (C-sym (subC-trans (v ‼ₛ ≾ₑ-refl) (<:ᵛ-refl B' ‼ₛ ·ₑ-monoʳ-≾ₑ q)
+                             (v ‼ₛ ·ₑ-monoʳ-≾ₑ q) (M ⨟ N)))
+  (C-trans (subC-cong value-half)
+  (C-trans (coerce-seq q M (subC N (v ‼ₛ ≾ₑ-refl)))
+           (seq-cong C-refl (subC-trans (v ‼ₛ ≾ₑ-refl) (<:ᵛ-refl B' ‼ₛ q)
+                                        (v ‼ₛ q) N))))
   where
-    assoc-≾ : ε ·ₑ (ε' ·ₑ uₑ) ≾ₑ ε ·ₑ ε'
-    assoc-≾ = ≾ₑ-reflexive (cong (ε ·ₑ_) (·ₑ-identityʳ ε'))
+    assoc-≾ : ε ·ₑ (ε₁' ·ₑ uₑ) ≾ₑ ε ·ₑ ε₁'
+    assoc-≾ = ≾ₑ-reflexive (cong (ε ·ₑ_) (·ₑ-identityʳ ε₁'))
+
+    value-half : Γ ⊢C⦂ subC (M ⨟ N) (v ‼ₛ ≾ₑ-refl)
+                    == M ⨟ subC N (v ‼ₛ ≾ₑ-refl)
+    value-half =
+      C-trans
+        (C-trans (subC-seq-eta v ≾ₑ-refl (M ⨟ N))
+        (C-trans (ε-subst-cong _ (subC-cong
+                    (==-castᶜ refl (cong (λ X → ε-subst (sym (·ₑ-assoc ε ε₁' uₑ)) (M ⨟ (N ⨟ X)))
+                                         (cong return (subV-≡ var-≡)))
+                              (seq-assoc M N (return (subV hd v))))))
+                 (coerce-ε-subst _ _ (·ₑ-monoˡ-≾ₑ ≾ₑ-refl) assoc-≾
+                                 (M ⨟ (N ⨟ return (subV hd v))))))
+        (C-sym
+          (C-trans (seq-cong C-refl (subC-seq-eta v ≾ₑ-refl N))
+          (C-trans (seq-cong C-refl (ε-subst-cong _ (subC-refl _ _)))
+          (C-trans (==-castᶜ refl (seq-ε-subst _ M (N ⨟ return (subV hd v))) C-refl)
+                   (ε-subst-coerce _ assoc-≾ (M ⨟ (N ⨟ return (subV hd v))))))))
 
 
 -- Pattern matching. At a pair scrutinee the beta rule reduces both sides to
@@ -273,10 +285,3 @@ subC-match {Γ} {A} {B} {C} {C'} w V M =
 
     castR : bodyR [ split-[] ↦ V ]c ≡ match V `in subC M w
     castR = cong (λ X → match V `in subC X w) (sub-wk-≡ᶜ ([] ∷ A ∷ B) V M)
-
-
--- Absent, for want of a model law: the effect half at a bind's result
--- position, `coerce (·ₑ-monoʳ-≾ₑ q) (M ⨟ N) == M ⨟ coerce q N`. It is the
--- inner-grade counterpart of `T-≤-μᵀ`, which the monad interface does not
--- carry — unlike the handler's fold, whose `T-alg-of-handlerᵀ-≤ⁱ` is what
--- `subC-handle-in` denotes.

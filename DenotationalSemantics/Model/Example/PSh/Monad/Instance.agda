@@ -52,6 +52,7 @@ PShMonad = record
   ; T-≤-trans           = T-≤-trans
   ; T-≤-≡               = T-≤-≡
   ; T-≤-μᵀ              = T-≤-μᵀ
+  ; T-≤-μᵀⁱ             = T-≤-μᵀⁱ
   ; strᵀ-≤              = strᵀ-≤
   ; T-μ∘η≡id            = T-μ∘η≡id
   ; T-μ∘Tη≡id           = T-μ∘Tη≡id
