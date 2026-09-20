@@ -51,15 +51,96 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
     (step-extends-state r ≤≐ step-extends-state r')
   × (N ≡ castᶜ (sym (toCtx-≐ˢ es₁)) N')
 
--- `coerce` is peeled off on both sides.
+-- subsumption at a returned value: the coercion is absorbed by the value on
+-- both sides, the two witnesses agreeing by `<:ᵛ-irrelevant`.
 
-↝-≐ˢ-coerce : ∀ {A ε ε'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {p : ε ≾ₑ ε'} → {M : toCtx St ⊢C⦂ A ‼ ε}
-           → (P' : toCtx St' ⊢C⦂ A ‼ ε')
-           → coerce p M ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-           → Sim es P' (COERCE {M = M} {ε≾ε' = p})
-↝-≐ˢ-coerce es P' eM with cast-coerce⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | p' , M₀' , refl , eM₀ = _ , _ , es , COERCE , id-≤≐ , eM₀
+↝-≐ˢ-sub-ret : ∀ {A A' ε'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → {V : toCtx St ⊢V⦂ A} → {p : A <:ᵛ A'} → {q : uₑ ≾ₑ ε'}
+            → (P' : toCtx St' ⊢C⦂ A' ‼ ε')
+            → subC (return V) (p ‼ₛ q) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+            → Sim es P' (SUB-RET {V = V} {p = p} {q = q})
+↝-≐ˢ-sub-ret es {p = p} P' eM with cast-sub⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | p₁ ‼ₛ q₁ , M₀' , refl , eM₀
+  with cast-return⁻ (sym (toCtx-≐ˢ es)) M₀' eM₀
+...   | V' , refl , eV =
+    _ , _ , es , SUB-RET , id-≤≐
+  , trans (cong return (cong₂ subV eV (<:ᵛ-irrelevant p p₁)))
+          (sym (trans (cast-ret (sym (toCtx-≐ˢ es)))
+                      (cong return (cast-subV (sym (toCtx-≐ˢ es))))))
+
+-- subsumption at a performed operation: it is pushed into the continuation on
+-- both sides.
+
+↝-≐ˢ-sub-op : ∀ {A A' ε ε'} {op : Op} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+           → {V : toCtx St ⊢V⦂ type-of-gtype (param op)}
+           → {M₀ : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                     ⊢C⦂ A ‼ ε}
+           → {p : A <:ᵛ A'} → {q : op-grade op ·ₑ ε ≾ₑ ε'}
+           → (P' : toCtx St' ⊢C⦂ A' ‼ ε')
+           → subC (perform op V M₀) (p ‼ₛ q) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+           → Sim es P' (SUB-OP {V = V} {M = M₀} {p = p} {q = q})
+↝-≐ˢ-sub-op {op = op} es P' eM with cast-sub⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | p₁ ‼ₛ q₁ , M₁' , refl , eM₁
+  with cast-perform⁻ (sym (toCtx-≐ˢ es)) M₁' eM₁
+...   | V' , M₀' , refl , eV , eM₀ =
+    _ , _ , es , SUB-OP , id-≤≐
+  , trans (cong₂ (perform op) eV (cong₂ subC eM₀ (<:ᶜ-irrelevant _ _)))
+          (sym (trans (cast-perform (sym (toCtx-≐ˢ es)))
+                      (cong (perform op _) (cast-subC _))))
+
+-- subsumption at an eliminated function: the coercion splits the same way on
+-- both sides.
+
+↝-≐ˢ-sub-app : ∀ {A A₁ B C₁ ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → {V : toCtx St ⊢V⦂ A₁ ⇒ C₁} → {W : toCtx St ⊢V⦂ A}
+            → {q : A <:ᵛ A₁} → {r : C₁ <:ᶜ B ‼ ε}
+            → (P' : toCtx St' ⊢C⦂ B ‼ ε)
+            → (subV V (q ⇒ₛ r) · W) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+            → Sim es P' (SUB-APP {V = V} {W = W} {q = q} {r = r})
+↝-≐ˢ-sub-app es {q = q} {r = r} P' eM
+  with cast-app⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | Vf' , W' , refl , eVf , eW
+  with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vf' eVf
+...   | q₁ ⇒ₛ r₁ , V' , refl , eV =
+    _ , _ , es , SUB-APP , id-≤≐
+  , trans (cong₂ subC (cong₂ _·_ eV (cong₂ subV eW (<:ᵛ-irrelevant q q₁)))
+                      (<:ᶜ-irrelevant r r₁))
+          (sym (trans (cast-subC (sym (toCtx-≐ˢ es)))
+                 (cong (λ z → subC z r₁)
+                   (trans (cast-app (sym (toCtx-≐ˢ es)))
+                          (cong (_ ·_) (cast-subV (sym (toCtx-≐ˢ es))))))))
+
+-- subsumption at a scrutinised boolean: `Boolₛ` is dropped on both sides.
+
+↝-≐ˢ-sub-if : ∀ {A ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+           → {V : toCtx St ⊢V⦂ Bool} → {M N : toCtx St ⊢C⦂ A ‼ ε}
+           → (P' : toCtx St' ⊢C⦂ A ‼ ε)
+           → (if subV V Boolₛ `then M `else N) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+           → Sim es P' (SUB-IF {V = V} {M = M} {N = N})
+↝-≐ˢ-sub-if es P' eM with cast-if⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | Vb' , M₀' , N₀' , refl , eVb , eM₀ , eN₀
+  with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vb' eVb
+...   | Boolₛ , V' , refl , eV =
+    _ , _ , es , SUB-IF , id-≤≐
+  , trans (cong₃ (λ v m n → if v `then m `else n) eV eM₀ eN₀)
+          (sym (cast-if (sym (toCtx-≐ˢ es))))
+
+-- subsumption elsewhere: step underneath it on both sides. The scrutinee's
+-- simulation is passed in, as the recursion supplies it.
+
+↝-≐ˢ-sub-step : ∀ {A A' ε ε' ε''} {St St' St₁ : 𝕊 []} → (es : St ≐ˢ St')
+             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε''}
+             → (M' : toCtx St' ⊢C⦂ A ‼ ε)
+             → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
+             → (p₁ : A <:ᵛ A') → (q₁ : ε ≾ₑ ε')
+             → (r : ⟨ St , M ⟩ ↝ ⟨ St₁ , M₁ ⟩)
+             → Sim es M' r
+             ----------------------------------------------------------
+             → Sim es (subC M' (p₁ ‼ₛ q₁)) (SUB-STEP {p = p} {q = q} r)
+↝-≐ˢ-sub-step es M' p q p₁ q₁ r (St₂' , M₂' , es₂ , r' , h , eM₂) =
+    St₂' , _ , es₂ , SUB-STEP r' , h
+  , trans (cong₂ subC eM₂ (<:ᶜ-irrelevant _ _))
+          (sym (cast-subC (sym (toCtx-≐ˢ es₂))))
 
 -- boolean elimination: the scrutinee is the same constant on both sides
 -- (`cast-true⁻`/`cast-false⁻`), and the reduct is the branch it names.
@@ -129,22 +210,26 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
   , BOX , ∷-≤≐ id-≤≐
   , subst (λ z → _ ≡ z) (castᶜ-irr _ _ M₀') eM₀
 
--- matching: the scrutinee is a pair on both sides, and the reduct is the same
--- pair of nested substitutions.
+-- matching: the scrutinee corresponds on both sides, and its two projections
+-- commute with the cast (`fstᵛ-cast`/`sndᵛ-cast`).
 
 ↝-≐ˢ-match : ∀ {A B D ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {V : toCtx St ⊢V⦂ A} → {W : toCtx St ⊢V⦂ B}
+          → {U : toCtx St ⊢V⦂ A |×| B}
           → {M₀ : toCtx St ∷ A ∷ B ⊢C⦂ D ‼ ε}
           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
-          → (match ⦉ V , W ⦊ `in M₀) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-          → Sim es P' (MATCH {V = V} {W = W} {M = M₀})
+          → (match U `in M₀) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+          → Sim es P' (MATCH {P = U} {M = M₀})
 ↝-≐ˢ-match es P' eM with cast-match⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | U' , M₀' , refl , eU , eM₀ with cast-pair⁻ (sym (toCtx-≐ˢ es)) U' eU
-...   | V' , W' , refl , eV , eW =
+... | U' , M₀' , refl , eU , eM₀ =
     _ , _ , es , MATCH , id-≤≐
-  , subst (λ z → _ ≡ z) (cast-match-reduct (sym (toCtx-≐ˢ es)) M₀' V' W')
-      (sub-≡ᶜ split-[] eV
-        (sub-≡ᶜ split-[] (V-rename-cong wk-ren eW) eM₀))
+  , subst (λ z → _ ≡ z)
+      (cast-match-reduct (sym (toCtx-≐ˢ es)) M₀' (fstᵛ U') (sndᵛ U'))
+      (sub-≡ᶜ split-[]
+        (trans (cong fstᵛ eU) (fstᵛ-cast (sym (toCtx-≐ˢ es)) U'))
+        (sub-≡ᶜ split-[]
+          (V-rename-cong wk-ren
+            (trans (cong sndᵛ eU) (sndᵛ-cast (sym (toCtx-≐ˢ es)) U')))
+          eM₀))
 
 -- sequencing a returned value: the continuation is retyped by a renaming that
 -- mentions the context, so `cast-seq-ret` is what moves the cast past it.
@@ -185,20 +270,25 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
 -- unboxing: the store is read at the same cell, so the substituted values are
 -- related (`unbox-lookup-≐ˢ`).
 
-↝-≐ˢ-unbox : ∀ {A D ε ρ ρ'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-          → {x : [ ρ ] A ∈[ ρ' ] toCtx St} → {rel : ρ' ≾ᵣ ρ}
+↝-≐ˢ-unbox : ∀ {A A₀ D ε ρ ρ'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+          → {x : [ ρ ] A₀ ∈[ ρ' ] toCtx St} → {rel : ρ' ≾ᵣ ρ} → {p : A₀ <:ᵛ A}
           → {M₀ : toCtx St ∷ A ⊢C⦂ D ‼ ε}
           → (P' : toCtx St' ⊢C⦂ D ‼ ε)
-          → unbox x rel M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-          → Sim es P' (UNBOX {z = x} {rel = rel} {M = M₀})
-↝-≐ˢ-unbox {St = St} {St' = St'} es {x = x} {rel = rel} P' eM
+          → unbox x rel p M₀ ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+          → Sim es P' (UNBOX {z = x} {rel = rel} {p = p} {M = M₀})
+↝-≐ˢ-unbox {St = St} {St' = St'} es {x = x} {rel = rel} {p = p} P' eM
   with cast-unbox⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | _ , x' , rel' , M₀' , refl , hw , eM₀ =
+... | _ , x' , rel' , p' , M₀' , refl , hw , eM₀ =
     _ , _ , es , UNBOX , id-≤≐
   , subst (λ z → _ ≡ z)
-      (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀' (unbox-lookup St' x' rel'))
-      (sub-≡ᶜ split-[] (unbox-lookup-≐ˢ es {x = x} {x' = x'} {rel = rel} {rel' = rel'} hw)
-                 eM₀)
+      (cast-app-reduct (sym (toCtx-≐ˢ es)) M₀'
+        (subV (unbox-lookup St' x' rel') p'))
+      (sub-≡ᶜ split-[]
+        (trans (cong₂ subV
+                 (unbox-lookup-≐ˢ es {x = x} {x' = x'} {rel = rel} {rel' = rel'} hw)
+                 (<:ᵛ-irrelevant p p'))
+               (sym (cast-subV (sym (toCtx-≐ˢ es)))))
+        eM₀)
 
 -- sequencing an operation: the operation floats out, its continuation gaining
 -- the sequel. The reduct is retyped in its *effect* (`ε-subst`) as well.
@@ -466,7 +556,10 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM HANDLE-OP   = ↝-≐ˢ-handle-op es _ eM
 ↝-≐ˢ es eM BOX         = ↝-≐ˢ-box es _ eM
 ↝-≐ˢ es eM UNBOX       = ↝-≐ˢ-unbox es _ eM
-↝-≐ˢ es eM COERCE      = ↝-≐ˢ-coerce es _ eM
+↝-≐ˢ es eM SUB-APP     = ↝-≐ˢ-sub-app es _ eM
+↝-≐ˢ es eM SUB-IF      = ↝-≐ˢ-sub-if es _ eM
+↝-≐ˢ es eM SUB-RET     = ↝-≐ˢ-sub-ret es _ eM
+↝-≐ˢ es eM SUB-OP      = ↝-≐ˢ-sub-op es _ eM
 
 -- sequencing: simulate the head, then rebuild
 ↝-≐ˢ es eM (SEQ-STEP {ε₁ = ε₁} {ε₃ = ε₃} {A = A} r c)
@@ -498,6 +591,10 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM (HANDLE-STEP r c) with cast-handle⁻ (sym (toCtx-≐ˢ es)) _ eM
 ... | M₁' , H' , N' , refl , eM₁ , eH , eN =
   ↝-≐ˢ-handle-step es M₁' H' N' eH eN r c (↝-≐ˢ es eM₁ r)
+
+↝-≐ˢ es eM (SUB-STEP {p = p} {q = q} r) with cast-sub⁻ (sym (toCtx-≐ˢ es)) _ eM
+... | p₁ ‼ₛ q₁ , M₁' , refl , eM₁ =
+  ↝-≐ˢ-sub-step es M₁' p q p₁ q₁ r (↝-≐ˢ es eM₁ r)
 
 -- The bisimulation extends to runs, step by step.
 

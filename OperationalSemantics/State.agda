@@ -275,6 +275,26 @@ Bool-not-in-toCtx {S = S ∷ₛ V} (Tl-∷ x) = Bool-not-in-toCtx x
 not-in-empty-ctx : {ρ : R} {A : VType} → A ∈[ ρ ] [] → ⊥
 not-in-empty-ctx ()
 
+-- The two components of a value of product type. Over a state context the
+-- value is a pair under a spine of subsumptions, which the recursion peels.
+
+fstᵛ : ∀ {Γ A B} {S : 𝕊 Γ} → toCtx S ⊢V⦂ A |×| B → toCtx S ⊢V⦂ A
+sndᵛ : ∀ {Γ A B} {S : 𝕊 Γ} → toCtx S ⊢V⦂ A |×| B → toCtx S ⊢V⦂ B
+
+fstᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ ⦉ V , _ ⦊        = V
+fstᵛ (subV V (p |×|ₛ _)) = subV (fstᵛ V) p
+
+sndᵛ (var _ x)        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ ⦉ _ , W ⦊        = W
+sndᵛ (subV V (_ |×|ₛ q)) = subV (sndᵛ V) q
+
+-- There is no value of the empty type over a state context.
+
+empty-not-value : ∀ {Γ} {S : 𝕊 Γ} → toCtx S ⊢V⦂ Empty → ⊥
+empty-not-value (var _ x)      = Empty-not-in-toCtx x
+empty-not-value (subV V Emptyₛ) = empty-not-value V
+
 -- Looking up a resource in the state
 
 resource-lookup : ∀ {Γ ρ ρ' A}

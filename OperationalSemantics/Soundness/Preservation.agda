@@ -156,10 +156,14 @@ T-≤-stepᵀ B HANDLE-RET  g q = ηᵀ-case g q
 T-≤-stepᵀ B HANDLE-OP   g q = ηᵀ-case g q
 T-≤-stepᵀ B BOX         g q = ηᵀ-case g q
 T-≤-stepᵀ B UNBOX       g q = ηᵀ-case g q
-T-≤-stepᵀ B COERCE      g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-APP     g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-IF      g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-RET     g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB-OP      g q = ηᵀ-case g q
 -- the congruences transition exactly as their sub-reduction does
 T-≤-stepᵀ B (SEQ-STEP r _)    g q = T-≤-stepᵀ B r g q
 T-≤-stepᵀ B (HANDLE-STEP r _) g q = T-≤-stepᵀ B r g q
+T-≤-stepᵀ B (SUB-STEP r)      g q = T-≤-stepᵀ B r g q
 -- the one rule that advances time
 T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
   -- the coercion is under the delay's box; `delayᵀ-≤` pulls it out, and the two
@@ -199,6 +203,7 @@ Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
 Uniform↝ HANDLE-OP           _            = ⊤
 Uniform↝ (SEQ-STEP r _)      (pM , _)     = Uniform↝ r pM
 Uniform↝ (HANDLE-STEP r _)   (pM , _)     = Uniform↝ r pM
+Uniform↝ (SUB-STEP r)        pM           = Uniform↝ r pM
 Uniform↝ APP                 _            = ⊤
 Uniform↝ MATCH               _            = ⊤
 Uniform↝ IF-TRUE             _            = ⊤
@@ -209,7 +214,10 @@ Uniform↝ DELAY               _            = ⊤
 Uniform↝ HANDLE-RET          _            = ⊤
 Uniform↝ BOX                 _            = ⊤
 Uniform↝ UNBOX               _            = ⊤
-Uniform↝ COERCE              _            = ⊤
+Uniform↝ SUB-APP             _            = ⊤
+Uniform↝ SUB-IF              _            = ⊤
+Uniform↝ SUB-RET             _            = ⊤
+Uniform↝ SUB-OP              _            = ⊤
 
 -- The computation's certificate across a step: every reduct is built from the
 -- source's pieces by renaming, substitution and retyping, each of which
@@ -219,9 +227,12 @@ stepᴾᶜ : ∀ {ε ε' A} {S S' : 𝕊 []}
        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramᶜ M'
 stepᴾᶜ (APP {M = M} {V = V})            pS (pM , pV)  = subᶜ M split-[] V pM pV
-stepᴾᶜ (MATCH {V = V} {W = W} {M = M})  pS ((pV , pW) , pM) =
-  subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-    (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV
+stepᴾᶜ (MATCH {S = St} {P = P} {M = M}) pS (pP , pM) =
+  subᶜ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c) split-[]
+    (fstᵛ {S = St} P)
+    (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
+       (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
+    (fstᵛᴾ St P pP)
 stepᴾᶜ (SEQ-STEP {N = N} r c)           pS (pM , pN)  =
   stepᴾᶜ r pS pM
   , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
@@ -254,9 +265,13 @@ stepᴾᶜ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op} {S = S} {V = V} {M = M} 
                (H op (ε ·ₑ ε'')) (pH op (ε ·ₑ ε'')))
          pV
 stepᴾᶜ BOX                              pS (pV , pM)  = pM
-stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {M = M}) pS pM =
-  subᶜ M split-[] (unbox-lookup S z rel) pM (unbox-lookupᴾ S z rel pS)
-stepᴾᶜ COERCE                           pS pM         = pM
+stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {p = p} {M = M}) pS pM =
+  subᶜ M split-[] (subV (unbox-lookup S z rel) p) pM (unbox-lookupᴾ S z rel pS)
+stepᴾᶜ SUB-APP                          pS pM         = pM
+stepᴾᶜ SUB-IF                           pS pM         = pM
+stepᴾᶜ SUB-RET                          pS pM         = pM
+stepᴾᶜ SUB-OP                           pS pM         = pM
+stepᴾᶜ (SUB-STEP r)                     pS pM         = stepᴾᶜ r pS pM
 
 -- Both halves at once, for a configuration.
 
@@ -281,8 +296,8 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 ↝-sound r@(APP {M = M} {V = V}) pS (pM , pV) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-APP M V pM pV))
-↝-sound r@(MATCH {V = V} {W = W} {M = M}) pS ((pV , pW) , pM) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH V W M pV pW pM))
+↝-sound r@(MATCH {S = St} {P = P} {M = M}) pS (pP , pM) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH St P M pP pM))
 ↝-sound r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SEQ-OP op V M N pV pM pN))
 ↝-sound r@(IF-TRUE {M = M} {N = N}) pS (_ , pM , pN) _ =
@@ -294,8 +309,8 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 ↝-sound r@(BOX {S = St} {V = V} {M = M}) pS (pV , pM) _ =
   pure-step-≡ (step-≾ r) (sound-BOX St V M pS pV pM)
-↝-sound r@(UNBOX {S = St} {z = z} {rel = rel} {M = M}) pS pM _ =
-  pure-step-≡ (step-≾ r) (sound-UNBOX St z rel M pS pM)
+↝-sound r@(UNBOX {S = St} {z = z} {rel = rel} {p = p} {M = M}) pS pM _ =
+  pure-step-≡ (step-≾ r) (sound-UNBOX St z rel p M pS pM)
 
 -- The `return` rules: the coercion the substitution leaves behind is `ε-substᵀ`,
 -- which `T-≤-≡` turns into the sub-effecting the theorem asks for.
@@ -308,11 +323,18 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
     (∘ᵐ-congˡ (sound-HANDLE-RET V H N pV pN pH uH)
      ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
 
--- Peeling a coercion: the step refines the grade by exactly the coercion's own
--- witness, which is what `T-≤` already does.
+-- Peeling a subsumption: at an eliminator it splits (`SUB-APP`, `SUB-IF`); at a
+-- weak head normal form its value half is absorbed and its effect half becomes
+-- the step's own refinement (`SUB-RET`, `SUB-OP`).
 
-↝-sound r@(COERCE {M = M} {ε≾ε' = p}) pS pM _ =
-  pure-step (step-≾ r) p (∘ᵐ-congˡ (sound-COERCE p M pM) ∙ ∘ᵐ-assoc _ _ _)
+↝-sound r@(SUB-APP {V = V} {W = W} {q = q} {r = s}) pS (pV , pW) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-APP V W q s pV pW))
+↝-sound r@(SUB-IF {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-IF V M N pV pM pN))
+↝-sound r@(SUB-RET {V = V} {p = p} {q = q}) pS pV _ =
+  pure-step (step-≾ r) q (∘ᵐ-congˡ (sound-SUB-RET V p q pV) ∙ ∘ᵐ-assoc _ _ _)
+↝-sound r@(SUB-OP {V = V} {M = M} {p = p} {q = q}) pS (pV , pM) _ =
+  pure-step (step-≾ r) q (∘ᵐ-congˡ (sound-SUB-OP V M p q pV pM) ∙ ∘ᵐ-assoc _ _ _)
 
 -- The one rule that advances time.
 
@@ -326,6 +348,8 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
   sound-SEQ-STEP N r c pS pM pN (stepᴾᶜ r pS pM) (↝-sound r pS pM u)
 ↝-sound (HANDLE-STEP {H = H} {N = N} r c) pS (pM , pN , pH , uH) u =
   sound-HANDLE-STEP H N r c pS pM pN (stepᴾᶜ r pS pM) pH uH (↝-sound r pS pM u)
+↝-sound (SUB-STEP {p = p} {q = q} r) pS pM u =
+  sound-SUB-STEP p q r pS pM (stepᴾᶜ r pS pM) (↝-sound r pS pM u)
 
 -- Handling an operation: the clause is applied, with the handled remainder
 -- boxed up as its continuation. This is the only rule that reads a clause; its

@@ -54,6 +54,7 @@ open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -307,29 +308,34 @@ unbox-lookup-sound {A} {ρ} St x rel pSt =
 -- The interpretation of an `unbox`, named so that the equational-theory
 -- soundness proofs can rewrite by it.
 
-unbox-def : ∀ {Γ A C ρ ρ'} → (x : [ ρ ] A ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
-          → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
-          → ⟦ unbox x rel M ⟧ᶜᵗ pM
-          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
-unbox-def x rel M pM = ≈ᵐ-refl
+unbox-def : ∀ {Γ A A₀ C ρ ρ'} → (x : [ ρ ] A₀ ∈[ ρ' ] Γ) → (rel : ρ' ≾ᵣ ρ)
+          → (p : A₀ <:ᵛ A) → (M : Γ ∷ A ⊢C⦂ C) → (pM : Paramᶜ M)
+          → ⟦ unbox x rel p M ⟧ᶜᵗ pM
+          ≈ᵐ ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟨ idᵐ , ⟦ p ⟧<:ᵛ ∘ᵐ ε⊣ ∘ᵐ ⟨⟩-≤ rel ∘ᵐ var-proj x ⟩ᵐ
+unbox-def x rel p M pM = ≈ᵐ-refl
 
--- UNBOX: substituting the looked-up resource is reading the cell.
+-- UNBOX: substituting the looked-up resource is reading the cell, the payload
+-- subsumption riding along on both sides.
 
-sound-UNBOX : ∀ {A C ρ ρ'} → (St : 𝕊 [])
-            → (x : [ ρ ] A ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ)
+sound-UNBOX : ∀ {A A₀ C ρ ρ'} → (St : 𝕊 [])
+            → (x : [ ρ ] A₀ ∈[ ρ' ] toCtx St) → (rel : ρ' ≾ᵣ ρ) → (p : A₀ <:ᵛ A)
             → (M : toCtx St ∷ A ⊢C⦂ C)
             → (pSt : Paramˢ St) → (pM : Paramᶜ M)
-            → ⟦ unbox x rel M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
-            ≈ᵐ ⟦ M [ split-[] ↦ unbox-lookup St x rel ]c ⟧ᶜᵗ
-                 (subᶜ M split-[] (unbox-lookup St x rel) pM (unbox-lookupᴾ St x rel pSt))
+            → ⟦ unbox x rel p M ⟧ᶜᵗ pM ∘ᵐ ⟦ St ⟧ˢ pSt
+            ≈ᵐ ⟦ M [ split-[] ↦ subV (unbox-lookup St x rel) p ]c ⟧ᶜᵗ
+                 (subᶜ M split-[] (subV (unbox-lookup St x rel) p) pM
+                    (unbox-lookupᴾ St x rel pSt))
                ∘ᵐ ⟦ St ⟧ˢ pSt
-sound-UNBOX St x rel M pSt pM =
-    ∘ᵐ-congˡ (unbox-def x rel M pM)
+sound-UNBOX St x rel p M pSt pM =
+    ∘ᵐ-congˡ (unbox-def x rel p M pM)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
-  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ≈ᵐ-sym (unbox-lookup-sound St x rel pSt) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+              ,   ∘ᵐ-assoc _ _ _
+                ∙ ∘ᵐ-congʳ (≈ᵐ-sym (unbox-lookup-sound St x rel pSt))
+                ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (⟨⟩ᵐ-∘ _ _ _))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M split-[] (unbox-lookup St x rel) pM
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (C-subst-nat M split-[] (subV (unbox-lookup St x rel) p) pM
                         (unbox-lookupᴾ St x rel pSt)))
 

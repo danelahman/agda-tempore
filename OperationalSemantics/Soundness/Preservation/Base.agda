@@ -27,6 +27,7 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
+open import Data.Empty using (⊥-elim)
 open import Data.Product using (_,_; _×_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
 
@@ -54,6 +55,7 @@ open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -102,7 +104,11 @@ stepᴾˢ HANDLE-OP           pS _              = pS
 stepᴾˢ (BOX {V = V})       pS (pV , _)       =
   pS , renᵛ (eq-ren (sym ++ᶜ-identityˡ)) V pV
 stepᴾˢ UNBOX               pS _              = pS
-stepᴾˢ COERCE              pS _              = pS
+stepᴾˢ SUB-APP             pS _              = pS
+stepᴾˢ SUB-IF              pS _              = pS
+stepᴾˢ SUB-RET             pS _              = pS
+stepᴾˢ SUB-OP              pS _              = pS
+stepᴾˢ (SUB-STEP r)        pS pM             = stepᴾˢ r pS pM
 
 -- Kleisli composition with a time transition: running a computation over
 -- the later history, after the transition that produces it.
@@ -137,7 +143,11 @@ step-grade (HANDLE-STEP r _)    = step-grade r
 step-grade HANDLE-OP            = uₑ
 step-grade BOX                  = uₑ
 step-grade UNBOX                = uₑ
-step-grade COERCE               = uₑ
+step-grade SUB-APP              = uₑ
+step-grade SUB-IF               = uₑ
+step-grade SUB-RET              = uₑ
+step-grade SUB-OP               = uₑ
+step-grade (SUB-STEP r)         = step-grade r
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
 -- every world one delay ahead (`η⊣`), and `delayᵀ` is what actually reaches
@@ -160,7 +170,11 @@ stepᵀ (HANDLE-STEP r _) = stepᵀ r
 stepᵀ HANDLE-OP         = ηᵀ
 stepᵀ BOX               = ηᵀ
 stepᵀ UNBOX             = ηᵀ
-stepᵀ COERCE            = ηᵀ
+stepᵀ SUB-APP           = ηᵀ
+stepᵀ SUB-IF            = ηᵀ
+stepᵀ SUB-RET           = ηᵀ
+stepᵀ SUB-OP            = ηᵀ
+stepᵀ (SUB-STEP r)      = stepᵀ r
 
 -- The step's effect, composed with the target's, refines the source's. This is
 -- `step-grade-≾` in the effect grades.
@@ -190,9 +204,14 @@ step-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
   ≾ₑ-reflexive
     (trans (·ₑ-identityˡ _) (sym (·ₑ-assoc (op-grade op) ε ε'')))
 step-≾ {ε = ε} BOX    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ {ε = ε} UNBOX  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ (COERCE {ε = ε} {ε≾ε' = ε≾ε'}) =
-  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ ε)) ε≾ε'
+step-≾ {ε = ε} UNBOX   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} SUB-APP = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ {ε = ε} SUB-IF  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ (SUB-RET {q = q}) =
+  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ uₑ)) q
+step-≾ (SUB-OP {ε = ε} {op = op} {q = q}) =
+  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ (op-grade op ·ₑ ε))) q
+step-≾ (SUB-STEP {q = q} r) = ≾ₑ-trans (step-≾ r) q
 
 -- Sub-effecting is irrelevant in its witness (the effect order is).
 
@@ -271,29 +290,74 @@ sound-APP : ∀ {Γ A B ε} → (M : Γ ∷ A ⊢C⦂ B ‼ ε) → (V : Γ ⊢V
 sound-APP M V pM pV =
   ≈ᵐ-trans (βᵐ (⟦ M ⟧ᶜᵗ pM) (⟦ V ⟧ᵛᵗ pV)) (≈ᵐ-sym (C-subst-nat M split-[] V pM pV))
 
--- MATCH: destructing a pair is the two substitutions in sequence. The inner
--- one substitutes `W` weakened past `A`, which reindexes it by `fstᵐ`; that
--- projection is then cancelled by the outer environment.
+-- Projecting out of a pair-typed value in a state context: the certificate
+-- it transports, and the projection it denotes.
 
-sound-MATCH : ∀ {Γ A B C} → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B) → (M : Γ ∷ A ∷ B ⊢C⦂ C)
-            → (pV : Paramᵛ V) → (pW : Paramᵛ W) → (pM : Paramᶜ M)
-            → ⟦ match ⦉ V , W ⦊ `in M ⟧ᶜᵗ ((pV , pW) , pM)
-            ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟧ᶜᵗ
-                 (subᶜ (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-                    (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
-sound-MATCH V W M pV pW pM =
+fstᵛᴾ : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
+      → Paramᵛ P → Paramᵛ (fstᵛ {S = St} P)
+fstᵛᴾ St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛᴾ St ⦉ V , W ⦊           (pV , pW) = pV
+fstᵛᴾ St (subV P (p |×|ₛ q)) pP        = fstᵛᴾ St P pP
+
+sndᵛᴾ : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
+      → Paramᵛ P → Paramᵛ (sndᵛ {S = St} P)
+sndᵛᴾ St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛᴾ St ⦉ V , W ⦊           (pV , pW) = pW
+sndᵛᴾ St (subV P (p |×|ₛ q)) pP        = sndᵛᴾ St P pP
+
+fstᵛ-sound : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B) → (pP : Paramᵛ P)
+           → ⟦ fstᵛ {S = St} P ⟧ᵛᵗ (fstᵛᴾ St P pP) ≈ᵐ fstᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
+fstᵛ-sound St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-sound St ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _)
+fstᵛ-sound St (subV P (p |×|ₛ q)) pP        =
+    ∘ᵐ-congʳ (fstᵛ-sound St P pP)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-fstᵐ _ _))
+  ∙ ∘ᵐ-assoc _ _ _
+
+sndᵛ-sound : ∀ {Γ A B} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B) → (pP : Paramᵛ P)
+           → ⟦ sndᵛ {S = St} P ⟧ᵛᵗ (sndᵛᴾ St P pP) ≈ᵐ sndᵐ ∘ᵐ ⟦ P ⟧ᵛᵗ pP
+sndᵛ-sound St (var f x)           pP        = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-sound St ⦉ V , W ⦊           (pV , pW) = ≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _)
+sndᵛ-sound St (subV P (p |×|ₛ q)) pP        =
+    ∘ᵐ-congʳ (sndᵛ-sound St P pP)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟨⟩ᵐ-sndᵐ _ _))
+  ∙ ∘ᵐ-assoc _ _ _
+
+-- MATCH: destructing a pair is the two substitutions in sequence. The inner
+-- one substitutes the second projection weakened past `A`, which reindexes it
+-- by `fstᵐ`; that projection is then cancelled by the outer environment.
+
+sound-MATCH : ∀ {Γ A B C} → (St : 𝕊 Γ) → (P : toCtx St ⊢V⦂ A |×| B)
+            → (M : toCtx St ∷ A ∷ B ⊢C⦂ C)
+            → (pP : Paramᵛ P) → (pM : Paramᶜ M)
+            → ⟦ match P `in M ⟧ᶜᵗ (pP , pM)
+            ≈ᵐ ⟦ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c)
+                   [ split-[] ↦ fstᵛ {S = St} P ]c ⟧ᶜᵗ
+                 (subᶜ (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c) split-[]
+                    (fstᵛ {S = St} P)
+                    (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
+                       (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
+                    (fstᵛᴾ St P pP))
+sound-MATCH St P M pP pM =
   ≈ᵐ-trans
-    (∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ⟨⟩ᵐ-fstᵐ _ _ ⟩ᵐ-cong , ⟨⟩ᵐ-sndᵐ _ _ ⟩ᵐ-cong))
+    (∘ᵐ-congʳ (⟨ ⟨ ≈ᵐ-refl , ≈ᵐ-sym (fstᵛ-sound St P pP) ⟩ᵐ-cong
+               , ≈ᵐ-sym (sndᵛ-sound St P pP) ⟩ᵐ-cong))
     (≈ᵐ-sym
-      (≈ᵐ-trans (C-subst-nat (M [ split-[] ↦ V-rename wk-ren W ]c) split-[] V
-                   (subᶜ M split-[] (V-rename wk-ren W) pM (renᵛ wk-ren W pW)) pV)
-      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M split-[] (V-rename wk-ren W) pM
-                             (renᵛ wk-ren W pW)))
+      (≈ᵐ-trans (C-subst-nat (M [ split-[] ↦ V-rename wk-ren (sndᵛ {S = St} P) ]c)
+                   split-[] (fstᵛ {S = St} P)
+                   (subᶜ M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
+                      (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP)))
+                   (fstᵛᴾ St P pP))
+      (≈ᵐ-trans (∘ᵐ-congˡ (C-subst-nat M split-[] (V-rename wk-ren (sndᵛ {S = St} P)) pM
+                             (renᵛ wk-ren (sndᵛ {S = St} P) (sndᵛᴾ St P pP))))
       (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                 (∘ᵐ-congʳ
                   (≈ᵐ-trans (⟨⟩ᵐ-∘ _ _ _)
                             (⟨ ∘ᵐ-identityˡ _
-                             , ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat wk-ren W pW))
+                             , ≈ᵐ-trans (∘ᵐ-congˡ (V-rename-nat wk-ren (sndᵛ {S = St} P)
+                                                     (sndᵛᴾ St P pP)))
                                (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
                                (≈ᵐ-trans (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
                                          (∘ᵐ-identityʳ _))) ⟩ᵐ-cong)))))))
@@ -327,11 +391,93 @@ sound-BOX {ρ = ρ} St V M pSt pV pM =
       (≈ᵐ-trans (∘ᵐ-congʳ (eq-ren-inv (++ᶜ-identityˡ {toCtx St ⟨ ρ ⟩})))
                 (∘ᵐ-identityʳ _)))
 
--- COERCE: peeling a coercion off is exactly what `T-≤` does.
+-- Applying a reindexed abstraction: the codomain half of the reindexing comes
+-- out in front, the domain half lands on the argument.
 
-sound-COERCE : ∀ {Γ A ε ε'} → (p : ε ≾ₑ ε') → (M : Γ ⊢C⦂ A ‼ ε) → (pM : Paramᶜ M)
-             → ⟦ coerce p M ⟧ᶜᵗ pM ≈ᵐ T-≤ p ∘ᵐ ⟦ M ⟧ᶜᵗ pM
-sound-COERCE p M pM = ≈ᵐ-refl
+app-map⇒ᵐ : ∀ {X A A' B B'} → (f : A' →ᵐ A) → (g : B →ᵐ B')
+          → (h : X →ᵐ A ⇒ᵐ B) → (k : X →ᵐ A')
+          → appᵐ ∘ᵐ ⟨ map⇒ᵐ f g ∘ᵐ h , k ⟩ᵐ ≈ᵐ g ∘ᵐ appᵐ ∘ᵐ ⟨ h , f ∘ᵐ k ⟩ᵐ
+app-map⇒ᵐ f g h k =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ (map⇒ᵐ f g) idᵐ h k
+                      ∙ ⟨ ≈ᵐ-refl , ∘ᵐ-identityˡ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat (map⇒ᵐ f g) idᵐ))
+  ∙ ∘ᵐ-congˡ (uncurryᵐ-cong (∘ᵐ-identityˡ _))
+  ∙ ∘ᵐ-congˡ (curryᵐ-uncurryᵐ-iso _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ idᵐ f h k ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+
+-- SUB-APP: the subsumption at an eliminated function splits.
+
+sound-SUB-APP : ∀ {Γ A A₁ C C₁} → (V : Γ ⊢V⦂ A₁ ⇒ C₁) → (W : Γ ⊢V⦂ A)
+              → (q : A <:ᵛ A₁) → (r : C₁ <:ᶜ C)
+              → (pV : Paramᵛ V) → (pW : Paramᵛ W)
+              → ⟦ subV V (q ⇒ₛ r) · W ⟧ᶜᵗ (pV , pW)
+              ≈ᵐ ⟦ subC (V · subV W q) r ⟧ᶜᵗ (pV , pW)
+sound-SUB-APP V W q r pV pW =
+  app-map⇒ᵐ ⟦ q ⟧<:ᵛ ⟦ r ⟧<:ᶜ (⟦ V ⟧ᵛᵗ pV) (⟦ W ⟧ᵛᵗ pW)
+
+-- SUB-IF: `Bool <:ᵛ Bool` denotes the identity.
+
+sound-SUB-IF : ∀ {Γ C} → (V : Γ ⊢V⦂ Bool) → (M N : Γ ⊢C⦂ C)
+             → (pV : Paramᵛ V) → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+             → ⟦ if subV V Boolₛ `then M `else N ⟧ᶜᵗ (pV , pM , pN)
+             ≈ᵐ ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN)
+sound-SUB-IF V M N pV pM pN = ifᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
+
+-- SUB-RET: the value half of the coercion crosses the unit, the effect half
+-- stays behind as the sub-effecting the step licenses.
+
+sound-SUB-RET : ∀ {Γ A A' ε'} → (V : Γ ⊢V⦂ A) → (p : A <:ᵛ A') → (q : uₑ ≾ₑ ε')
+              → (pV : Paramᵛ V)
+              → ⟦ subC (return V) (p ‼ₛ q) ⟧ᶜᵗ pV
+              ≈ᵐ T-≤ q ∘ᵐ ⟦ return (subV V p) ⟧ᶜᵗ pV
+sound-SUB-RET V p q pV =
+    ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ p ⟧<:ᵛ)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+
+-- Transporting a composite along an equality of the domain's second factor.
+
+subst-∘ᵐ : ∀ {X Y Z} {O O' : Obj} → (e : O ≡ O') → (g : Y →ᵐ Z) → (f : X ×ᵐ O →ᵐ Y)
+         → subst (λ P → X ×ᵐ P →ᵐ Z) e (g ∘ᵐ f)
+         ≈ᵐ g ∘ᵐ subst (λ P → X ×ᵐ P →ᵐ Y) e f
+subst-∘ᵐ refl g f = ≈ᵐ-refl
+
+-- SUB-OP: the value half of the coercion is pushed into the continuation,
+-- where `opᵀ`'s naturality pulls it back out.
+
+sound-SUB-OP : ∀ {Γ A A' ε ε' op}
+             → (V : Γ ⊢V⦂ type-of-gtype (param op))
+             → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
+             → (p : A <:ᵛ A') → (q : op-grade op ·ₑ ε ≾ₑ ε')
+             → (pV : Paramᵛ V) → (pM : Paramᶜ M)
+             → ⟦ subC (perform op V M) (p ‼ₛ q) ⟧ᶜᵗ (pV , pM)
+             ≈ᵐ T-≤ q ∘ᵐ ⟦ perform op V (subC M (p ‼ₛ ≾ₑ-refl)) ⟧ᶜᵗ (pV , pM)
+sound-SUB-OP {Γ} {A} {A'} {ε} {ε'} {op} V M p q pV pM =
+    ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym push)
+  where
+    push : ⟦ perform op V (subC M (p ‼ₛ ≾ₑ-refl)) ⟧ᶜᵗ (pV , pM)
+         ≈ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ perform op V M ⟧ᶜᵗ (pV , pM)
+    push =
+        ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
+                  , ∘ᵐ-congˡ ([]-congᶠ
+                      (curryᵐ-cong
+                        (  subst-∘ᵐ (ty-gty (arity op)) _ (⟦ M ⟧ᶜᵗ pM)
+                         ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (T-≤-refl ≾ₑ-refl) ∙ ∘ᵐ-identityʳ _))
+                       ∙ ≈ᵐ-sym (map⇒ᵐ-curryᵐ (Tᶠ ⟦ p ⟧<:ᵛ) _))
+                     ∙ []-∘ᵐ _ _)
+                    ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong)
+      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ _ _ _
+                          ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (opᵀ-nat op ⟦ p ⟧<:ᵛ)
+      ∙ ∘ᵐ-assoc _ _ _
 
 -- IF-TRUE / IF-FALSE: taking a branch is the boolean object's beta law.
 

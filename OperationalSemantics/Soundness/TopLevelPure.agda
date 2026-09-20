@@ -356,9 +356,13 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
     T-≤ᵏ-implstep B HANDLE-OP  g q = ηᵀ-step g q
     T-≤ᵏ-implstep B BOX        g q = ηᵀ-step g q
     T-≤ᵏ-implstep B UNBOX      g q = ηᵀ-step g q
-    T-≤ᵏ-implstep B COERCE     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-APP    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-IF     g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-RET    g q = ηᵀ-step g q
+    T-≤ᵏ-implstep B SUB-OP     g q = ηᵀ-step g q
     T-≤ᵏ-implstep B (SEQ-STEP r _)    g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-implstep B (HANDLE-STEP r _) g q = T-≤ᵏ-implstep B r g q
+    T-≤ᵏ-implstep B (SUB-STEP r)      g q = T-≤ᵏ-implstep B r g q
     T-≤ᵏ-implstep B (DELAY {τ = τ}) g q =
         ∘ᵐ-congʳ (∘ᵐ-congʳ (delay-tick τ))
       ∙ᵏ tick-case (of-natᵉ τ) _ g q

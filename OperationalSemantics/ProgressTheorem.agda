@@ -74,21 +74,25 @@ progress ((return V) ⨟ N) | is-value = step-progress SEQ-RET
 progress (M ⨟ N) | steps M↝M' p      = step-progress (SEQ-STEP M↝M' p)
 progress (var ρ≾uᵣ x · W)          = ⊥-elim (⇒-not-in-toCtx x)
 progress (lam M · W)               = step-progress APP
-progress (match var ρ≾uᵣ x `in M)  = ⊥-elim (⦉⦊-not-in-toCtx x)
-progress (match ⦉ V₁ , V₂ ⦊ `in M) = step-progress MATCH
-progress (absurd (var ρ≾uᵣ x))     = ⊥-elim (Empty-not-in-toCtx x)
+progress (subV V (_ ⇒ₛ _) · W)     = step-progress SUB-APP
+progress (match P `in M)           = step-progress MATCH
+progress (absurd V)                = ⊥-elim (empty-not-value V)
 progress (if var ρ≾uᵣ x `then M `else N) = ⊥-elim (Bool-not-in-toCtx x)
 progress (if true       `then M `else N) = step-progress IF-TRUE
 progress (if false      `then M `else N) = step-progress IF-FALSE
+progress (if subV V Boolₛ `then M `else N) = step-progress SUB-IF
 progress (perform op V M)          = is-op
 progress (delay τ M)               = step-progress DELAY
 progress (handle M `with H `in N) with progress M
 progress (handle (return V) `with H `in N) | is-value = step-progress HANDLE-RET
 ... | is-op                     = step-progress HANDLE-OP
 ... | steps M↝M' p              = step-progress (HANDLE-STEP M↝M' p)
-progress (unbox _ _ _)   = step-progress UNBOX
+progress (unbox _ _ _ _) = step-progress UNBOX
 progress (box _ _)       = step-progress BOX
-progress (coerce ε≾ε' _) = step-progress COERCE
+progress (subC M (_ ‼ₛ _)) with progress M
+progress (subC (return V) (_ ‼ₛ _))        | is-value = step-progress SUB-RET
+progress (subC (perform op V M) (_ ‼ₛ _))  | is-op    = step-progress SUB-OP
+progress (subC M (_ ‼ₛ _))                 | steps M↝M' _ = step-progress (SUB-STEP M↝M')
 
 -- Theorem: is-value is indeed final state (make no further steps)
 

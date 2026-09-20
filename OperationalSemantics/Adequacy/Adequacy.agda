@@ -196,7 +196,7 @@ const-presentation : ∀ {b ε} → (M : Prog (Base b) ε) → (pM : Paramᶜ M)
                    → Σ[ c ∈ BaseConstants b ] Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                      Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                      Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
-                       (Ret-whnf.value w ≡ const c)
+                       (base-val (Ret-whnf.value w) ≡ const c)
                      × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d r)
 
 const-presentation M pM (ret-whnf St V rs) with base-leaf-const V _ _
@@ -214,7 +214,8 @@ adequacy-base : ∀ {b ε} → {M N : Prog (Base b) ε}
               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
               ------------------------------------------------------------
               → Σ[ c ∈ BaseConstants b ]
-                  (Ret-whnf.value wM ≡ const c) × (Ret-whnf.value wN ≡ const c)
+                  (base-val (Ret-whnf.value wM) ≡ const c)
+                × (base-val (Ret-whnf.value wN) ≡ const c)
 
 adequacy-base {M = M} {N = N} pM pN e wM wN
   with const-presentation M pM wM | const-presentation N pN wN
@@ -224,31 +225,36 @@ adequacy-base {M = M} {N = N} pM pN e wM wN
                     (≈ᵐ-trans (≈ᵐ-sym eM) (≈ᵐ-trans e eN)))
 ... | refl = cM , sM , sN
 
--- A `Bool`-typed value's leaf is one of the two constants' (`bool-canonical`);
--- the state's environment is absorbed by the terminal object, as at a base
--- constant. Which constant it is has to be carried along, since the two give
--- different leaves.
+-- A `Bool`-typed value's leaf is one of the two constants', read through its
+-- subsumption spine by `bool-val`; the state's environment is absorbed by the
+-- terminal object, as at a base constant. Which constant it is has to be
+-- carried along, since the two give different leaves.
 
 bool-leaf-value : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
                 → (pSt : Paramˢ St) → (pV : Paramᵛ V)
-                → ((V ≡ true)
+                → ((bool-val V ≡ true)
                    × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
                         ≈ᵐ leafᵐ (trueᵐ ∘ᵐ terminalᵐ)))
-                ⊎ ((V ≡ false)
+                ⊎ ((bool-val V ≡ false)
                    × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
                         ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
 
-bool-leaf-value {St = St} V pSt pV with bool-canonical V
-... | inj₁ refl =
+bool-leaf-value (var f x) pSt pV = ⊥-elim (Bool-not-in-toCtx x)
+bool-leaf-value {St = St} true pSt pV =
   inj₁ (refl
        , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (trueᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc trueᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
                                (∘ᵐ-congʳ terminalᵐ-unique))))
-... | inj₂ refl =
+bool-leaf-value {St = St} false pSt pV =
   inj₂ (refl
        , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (falseᵐ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
            (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc falseᵐ terminalᵐ (⟦ St ⟧ˢ pSt))
                                (∘ᵐ-congʳ terminalᵐ-unique))))
+bool-leaf-value (subV V Boolₛ) pSt pV with bool-leaf-value V pSt pV
+... | inj₁ (sv , qv) =
+  inj₁ (sv , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) qv)
+... | inj₂ (sv , qv) =
+  inj₂ (sv , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) qv)
 
 -- The head presentation at `Bool`, with the boolean it returns.
 
@@ -257,9 +263,9 @@ bool-presentation : ∀ {ε} → (M : Prog Bool ε) → (pM : Paramᶜ M)
                   → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                     Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                     Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
-                      ( ((Ret-whnf.value w ≡ true)
+                      ( ((bool-val (Ret-whnf.value w) ≡ true)
                          × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (trueᵐ ∘ᵐ terminalᵐ)) d r))
-                      ⊎ ((Ret-whnf.value w ≡ false)
+                      ⊎ ((bool-val (Ret-whnf.value w) ≡ false)
                          × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (falseᵐ ∘ᵐ terminalᵐ)) d r)) )
 
 bool-presentation M pM (ret-whnf St V rs) with bool-leaf-value V _ _
@@ -279,8 +285,10 @@ adequacy-bool : ∀ {ε} → {M N : Prog Bool ε}
               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
               ------------------------------------------------------------
-              → ((Ret-whnf.value wM ≡ true)  × (Ret-whnf.value wN ≡ true))
-              ⊎ ((Ret-whnf.value wM ≡ false) × (Ret-whnf.value wN ≡ false))
+              → ((bool-val (Ret-whnf.value wM) ≡ true)
+                 × (bool-val (Ret-whnf.value wN) ≡ true))
+              ⊎ ((bool-val (Ret-whnf.value wM) ≡ false)
+                 × (bool-val (Ret-whnf.value wN) ≡ false))
 
 adequacy-bool {M = M} {N = N} pM pN e wM wN
   with bool-presentation M pM wM | bool-presentation N pN wN

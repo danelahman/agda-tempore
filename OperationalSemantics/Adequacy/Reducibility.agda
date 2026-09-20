@@ -10,6 +10,11 @@
 --                                                                    --
 -- Ground types have no arrows, so `VRedᵍ` comes first and `CRed`     --
 -- precedes `VRed`, which instantiates it at the smaller predicate.   --
+--                                                                    --
+-- Both value predicates recurse on the type's *skeleton*, not the    --
+-- type: at a box they speak of the raw store read, whose type the    --
+-- cell declares and which `_<:ᵛ_` only relates to the payload type   --
+-- named, shape-preservingly.                                         --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -48,28 +53,118 @@ open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
 open import OperationalSemantics.Adequacy.GradedReach           Spec
 open import Syntax.Substitutions.Equivalence Spec
-open import OperationalSemantics.Adequacy.StateEquivalence Spec
+
+-- A value of box type is a variable under a spine of subsumptions: the spine
+-- leaves the variable alone, so the value still names a cell, but at the
+-- cell's *declared* grade and payload type, which its own type only bounds.
+
+val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A
+         → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Var Γ ([ ρ₀ ] A₀)
+val-cell {A = A} {ρ = ρ} (var {ρ = σ} _ x) = ρ , A , σ , x
+val-cell (subV V ([ _ ]ₛ _))               = val-cell V
+
+cellᵛ : ∀ {Γ A ρ} → (V : Γ ⊢V⦂ [ ρ ] A)
+      → [ proj₁ (val-cell V) ] proj₁ (proj₂ (val-cell V))
+          ∈[ proj₁ (proj₂ (proj₂ (val-cell V))) ] Γ
+cellᵛ V = proj₂ (proj₂ (proj₂ (val-cell V)))
+
+-- The cell's declared payload type, and the spine as a single subsumption.
+
+val-typeᵛ : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A → VType
+val-typeᵛ V = proj₁ (proj₂ (val-cell V))
+
+val-subᵛ : ∀ {Γ A ρ} → (V : Γ ⊢V⦂ [ ρ ] A) → val-typeᵛ V <:ᵛ A
+val-subᵛ {A = A} (var _ x)   = <:ᵛ-refl A
+val-subᵛ (subV V ([ _ ]ₛ p)) = <:ᵛ-trans (val-subᵛ V) p
+
+-- The two projections commute with renaming and with a context equality.
+-- Both are one-clause inductions; the variable clause is absurd.
+
+fstᵛ-ren : ∀ {A B} {St St' : 𝕊 []} → (r : Ren [] (toCtx St') (toCtx St))
+         → (V : toCtx St ⊢V⦂ A |×| B)
+         → fstᵛ (V-rename r V) ≡ V-rename r (fstᵛ V)
+fstᵛ-ren r (var _ x)             = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-ren r ⦉ _ , _ ⦊             = refl
+fstᵛ-ren r (subV V (p |×|ₛ _))   = cong (λ z → subV z p) (fstᵛ-ren r V)
+
+sndᵛ-ren : ∀ {A B} {St St' : 𝕊 []} → (r : Ren [] (toCtx St') (toCtx St))
+         → (V : toCtx St ⊢V⦂ A |×| B)
+         → sndᵛ (V-rename r V) ≡ V-rename r (sndᵛ V)
+sndᵛ-ren r (var _ x)             = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-ren r ⦉ _ , _ ⦊             = refl
+sndᵛ-ren r (subV V (_ |×|ₛ q))   = cong (λ z → subV z q) (sndᵛ-ren r V)
+
+-- The skeleton a type shares with all its subtypes.
+
+data Shape : Set where
+  ⋆ˢ   : Shape
+  _×ˢ_ : Shape → Shape → Shape
+  _→ˢ_ : Shape → Shape → Shape
+  □ˢ   : Shape → Shape
+
+shapeᵛ : VType → Shape
+shapeᵛ (Base b)      = ⋆ˢ
+shapeᵛ Unit          = ⋆ˢ
+shapeᵛ Bool          = ⋆ˢ
+shapeᵛ (A |×| B)     = shapeᵛ A ×ˢ shapeᵛ B
+shapeᵛ Empty         = ⋆ˢ
+shapeᵛ (A ⇒ (B ‼ _)) = shapeᵛ A →ˢ shapeᵛ B
+shapeᵛ ([ _ ] A)     = □ˢ (shapeᵛ A)
+
+×ˢ-inj₁ : ∀ {t t' s s'} → (t ×ˢ t') ≡ (s ×ˢ s') → t ≡ s
+×ˢ-inj₁ refl = refl
+
+×ˢ-inj₂ : ∀ {t t' s s'} → (t ×ˢ t') ≡ (s ×ˢ s') → t' ≡ s'
+×ˢ-inj₂ refl = refl
+
+→ˢ-inj₁ : ∀ {t t' s s'} → (t →ˢ t') ≡ (s →ˢ s') → t ≡ s
+→ˢ-inj₁ refl = refl
+
+→ˢ-inj₂ : ∀ {t t' s s'} → (t →ˢ t') ≡ (s →ˢ s') → t' ≡ s'
+→ˢ-inj₂ refl = refl
+
+□ˢ-inj : ∀ {t s} → □ˢ t ≡ □ˢ s → t ≡ s
+□ˢ-inj refl = refl
+
+<:ᵛ-shape : ∀ {A A'} → A <:ᵛ A' → shapeᵛ A ≡ shapeᵛ A'
+<:ᵛ-shape (Baseₛ _)       = refl
+<:ᵛ-shape Unitₛ           = refl
+<:ᵛ-shape Boolₛ           = refl
+<:ᵛ-shape (p |×|ₛ q)      = cong₂ _×ˢ_ (<:ᵛ-shape p) (<:ᵛ-shape q)
+<:ᵛ-shape Emptyₛ          = refl
+<:ᵛ-shape (p ⇒ₛ (q ‼ₛ _)) = cong₂ _→ˢ_ (sym (<:ᵛ-shape p)) (<:ᵛ-shape q)
+<:ᵛ-shape ([ _ ]ₛ p)      = cong □ˢ (<:ᵛ-shape p)
 
 -- Ground types are the parameter and arity types of operations. They contain
--- no arrows, so this needs nothing but itself.
+-- no arrows, so the arrow clause is vacuous and this needs nothing but itself.
 
--- A value of box type is always a variable (`grad-typ⇒var`), so it *is* a
--- cell.
+VRedᵍˢ : (t : Shape) → {A : VType} → shapeᵛ A ≡ t
+       → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 
-val-cell : ∀ {Γ A ρ} → Γ ⊢V⦂ [ ρ ] A → Var Γ ([ ρ ] A)
-val-cell V = proj₁ (grad-typ⇒var V) , proj₁ (proj₂ (grad-typ⇒var V))
+VRedᵍˢ ⋆ˢ        e St V = ⊤
+VRedᵍˢ (t →ˢ t') e St V = ⊤
+
+VRedᵍˢ (t ×ˢ t') {A |×| B}     e  St V =
+  VRedᵍˢ t (×ˢ-inj₁ e) St (fstᵛ V) × VRedᵍˢ t' (×ˢ-inj₂ e) St (sndᵛ V)
+VRedᵍˢ (t ×ˢ t') {Base b}      () St V
+VRedᵍˢ (t ×ˢ t') {Unit}        () St V
+VRedᵍˢ (t ×ˢ t') {Bool}        () St V
+VRedᵍˢ (t ×ˢ t') {Empty}       () St V
+VRedᵍˢ (t ×ˢ t') {A ⇒ (B ‼ ε)} () St V
+VRedᵍˢ (t ×ˢ t') {[ ρ ] A}     () St V
+
+VRedᵍˢ (□ˢ t) {[ ρ ] A}     e  St V =
+  ∀ {St'} → (r : St [ cellᵛ V ]⊑ᶜ St')
+  → VRedᵍˢ t (trans (<:ᵛ-shape (val-subᵛ V)) (□ˢ-inj e)) St' (lookupᶜ r)
+VRedᵍˢ (□ˢ t) {Base b}      () St V
+VRedᵍˢ (□ˢ t) {Unit}        () St V
+VRedᵍˢ (□ˢ t) {Bool}        () St V
+VRedᵍˢ (□ˢ t) {A |×| B}     () St V
+VRedᵍˢ (□ˢ t) {Empty}       () St V
+VRedᵍˢ (□ˢ t) {A ⇒ (B ‼ ε)} () St V
 
 VRedᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ type-of-gtype G → Set
-VRedᵍ (Base b)      St V = ⊤
-VRedᵍ Unit          St V = ⊤
-VRedᵍ Bool          St V = ⊤
-VRedᵍ Empty         St V = ⊤
-VRedᵍ (G₁ |×|ᵍ G₂)  St V =
-  Σ[ V₁ ∈ toCtx St ⊢V⦂ type-of-gtype G₁ ]
-  Σ[ V₂ ∈ toCtx St ⊢V⦂ type-of-gtype G₂ ]
-    (V ≡ ⦉ V₁ , V₂ ⦊) × VRedᵍ G₁ St V₁ × VRedᵍ G₂ St V₂
-VRedᵍ ([ ρ ]ᵍ G)    St V =
-  ∀ {St'} → (r : St [ proj₂ (val-cell V) ]⊑ᶜ St') → VRedᵍ G St' (lookupᶜ r)
+VRedᵍ G = VRedᵍˢ (shapeᵛ (type-of-gtype G)) {type-of-gtype G} refl
 
 -- `M` runs to a weak head normal form whose components are reducible. A step
 -- only refines the grade, so the whnf's grade and state are bound by the
@@ -107,37 +202,67 @@ data CRed (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
           -------------------------------------------------------------------
           → CRed A P ε St M
 
--- Over a state context a product value *is* a pair and a function value *is*
--- a lambda, and a box-typed value is a resource variable — canonical forms
--- are read off directly. Both `⇒` and `[ ρ ]` are Kripke.
+-- Stated through the eliminators, so that subsumption is absorbed: a product
+-- by its two projections, a function by what it does to a reducible argument
+-- at a later state, a box by what reading its cell yields. Both `⇒` and
+-- `[ ρ ]` are Kripke.
+
+VRedˢ : (t : Shape) → {A : VType} → shapeᵛ A ≡ t
+      → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
+
+VRedˢ ⋆ˢ e St V = ⊤
+
+VRedˢ (t ×ˢ t') {A |×| B}     e  St V =
+  VRedˢ t (×ˢ-inj₁ e) St (fstᵛ V) × VRedˢ t' (×ˢ-inj₂ e) St (sndᵛ V)
+VRedˢ (t ×ˢ t') {Base b}      () St V
+VRedˢ (t ×ˢ t') {Unit}        () St V
+VRedˢ (t ×ˢ t') {Bool}        () St V
+VRedˢ (t ×ˢ t') {Empty}       () St V
+VRedˢ (t ×ˢ t') {A ⇒ (B ‼ ε)} () St V
+VRedˢ (t ×ˢ t') {[ ρ ] A}     () St V
+
+VRedˢ (t →ˢ t') {A ⇒ (B ‼ ε)} e  St V =
+  ∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
+  → (W : toCtx St' ⊢V⦂ A)
+  → VRedˢ t (→ˢ-inj₁ e) St' W
+  → CRed B (VRedˢ t' {B} (→ˢ-inj₂ e)) ε St' (reach-val q V · W)
+VRedˢ (t →ˢ t') {Base b}      () St V
+VRedˢ (t →ˢ t') {Unit}        () St V
+VRedˢ (t →ˢ t') {Bool}        () St V
+VRedˢ (t →ˢ t') {A |×| B}     () St V
+VRedˢ (t →ˢ t') {Empty}       () St V
+VRedˢ (t →ˢ t') {[ ρ ] A}     () St V
+
+VRedˢ (□ˢ t) {[ ρ ] A}     e  St V =
+  ∀ {St'} → (r : St [ cellᵛ V ]⊑ᶜ St')
+  → VRedˢ t (trans (<:ᵛ-shape (val-subᵛ V)) (□ˢ-inj e)) St' (lookupᶜ r)
+VRedˢ (□ˢ t) {Base b}      () St V
+VRedˢ (□ˢ t) {Unit}        () St V
+VRedˢ (□ˢ t) {Bool}        () St V
+VRedˢ (□ˢ t) {A |×| B}     () St V
+VRedˢ (□ˢ t) {Empty}       () St V
+VRedˢ (□ˢ t) {A ⇒ (B ‼ ε)} () St V
 
 VRed : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
-VRed (Base b)      St V = ⊤
-VRed Unit          St V = ⊤
-VRed Bool          St V = ⊤
-VRed Empty         St V = ⊤
-VRed (A |×| B)     St V =
-  Σ[ V₁ ∈ toCtx St ⊢V⦂ A ] Σ[ V₂ ∈ toCtx St ⊢V⦂ B ]
-    (V ≡ ⦉ V₁ , V₂ ⦊) × VRed A St V₁ × VRed B St V₂
-VRed (A ⇒ (B ‼ ε)) St V =
-  Σ[ M ∈ toCtx St ∷ A ⊢C⦂ B ‼ ε ]
-    (V ≡ lam M)
-  × (∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
-     → (M₂ : toCtx St' ∷ A ⊢C⦂ B ‼ ε)
-     → M₂ ≡ reach-under q M
-     → (W : toCtx St' ⊢V⦂ A)
-     → VRed A St' W
-     → CRed B (VRed B) ε St' (M₂ [ split-[] ↦ W ]c))
--- A box type is the cell the value names: readable at a later state means its
--- content is reducible there.
-VRed ([ ρ ] A)     St V =
-  ∀ {St'} → (r : St [ proj₂ (val-cell V) ]⊑ᶜ St') → VRed A St' (lookupᶜ r)
+VRed A = VRedˢ (shapeᵛ A) {A} refl
 
 -- Reducible computations at the value predicate `VRed` — the form the
 -- fundamental lemma proves.
 
 CRed' : (A : VType) → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
 CRed' A = CRed A (VRed A)
+
+-- Two proofs of a shape equality out of the same type carry the predicate
+-- across, by UIP on the shared endpoints.
+
+VRedˢ-≡ˢ : ∀ {t t' A} {St : 𝕊 []} {V : toCtx St ⊢V⦂ A}
+         → {e : shapeᵛ A ≡ t} → {e' : shapeᵛ A ≡ t'}
+         → VRedˢ t e St V → VRedˢ t' e' St V
+VRedˢ-≡ˢ {e = refl} {e' = refl} p = p
+
+VRedˢ-≡ᵛ : ∀ {t A} {St : 𝕊 []} {e : shapeᵛ A ≡ t} {V V' : toCtx St ⊢V⦂ A}
+         → V ≡ V' → VRedˢ t e St V → VRedˢ t e St V'
+VRedˢ-≡ᵛ refl p = p
 
 -- Every cell of the state holds a value that is reducible at any later state
 -- at which it is readable.
@@ -178,35 +303,86 @@ CRed-ε-subst : ∀ {A P ε ε'} {St : 𝕊 []} → (e : ε ≡ ε')
              → CRed A P ε St M → CRed A P ε' St (ε-subst e M)
 CRed-ε-subst refl p = p
 
+-- Subsumption is transparent to a run: `SUB-STEP` carries it along and
+-- `SUB-RET`/`SUB-OP` absorb it at the weak head normal form.
+
+↝*-sub-ret : ∀ {A A' ε ε₀} {St St₁ : 𝕊 []}
+           → {M : toCtx St ⊢C⦂ A ‼ ε} → {V : toCtx St₁ ⊢V⦂ A}
+           → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
+           → ⟨ St , M ⟩ ↝* ⟨ St₁ , return V ⟩
+           ------------------------------------------------------------
+           → ⟨ St , subC M (p ‼ₛ q) ⟩ ↝* ⟨ St₁ , return (subV V p) ⟩
+
+↝*-sub-ret p q ε*       = SUB-RET ◅ ε*
+↝*-sub-ret p q (r ◅ rs) = SUB-STEP r ◅ ↝*-sub-ret p ≾ₑ-refl rs
+
+↝*-sub-op : ∀ {A A' ε ε₀ ε₁ op} {St St₁ : 𝕊 []}
+          → {M : toCtx St ⊢C⦂ A ‼ ε}
+          → {W : toCtx St₁ ⊢V⦂ type-of-gtype (param op)}
+          → {M' : toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
+                    ⊢C⦂ A ‼ ε₁}
+          → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
+          → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
+          ------------------------------------------------------------------
+          → ⟨ St , subC M (p ‼ₛ q) ⟩ ↝*
+            ⟨ St₁ , perform op W (subC M' (p ‼ₛ ≾ₑ-refl)) ⟩
+
+↝*-sub-op p q ε*       = SUB-OP ◅ ε*
+↝*-sub-op p q (r ◅ rs) = SUB-STEP r ◅ ↝*-sub-op p ≾ₑ-refl rs
+
+-- Reducibility is monotone in the subtyping order. The value half recurses on
+-- the witness, the computation half on the derivation; at an arrow the two
+-- meet, `SUB-APP` splitting the witness across the application. At a box both
+-- sides quantify over the same reads of the same cell, so only the skeleton
+-- index moves.
+
+VRed-sub : ∀ {A A'} {St : 𝕊 []} → (p : A <:ᵛ A')
+         → (V : toCtx St ⊢V⦂ A) → VRed A St V → VRed A' St (subV V p)
+
+CRed-sub : ∀ {A A' ε ε₀} {St : 𝕊 []} → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
+         → {M : toCtx St ⊢C⦂ A ‼ ε}
+         → CRed A (VRed A) ε St M → CRed A' (VRed A') ε₀ St (subC M (p ‼ₛ q))
+
+VRed-sub (Baseₛ refl) V pV          = tt
+VRed-sub Unitₛ        V pV          = tt
+VRed-sub Boolₛ        V pV          = tt
+VRed-sub Emptyₛ       V pV          = tt
+VRed-sub (p |×|ₛ p')  V (pV , pV')  =
+  VRed-sub p (fstᵛ V) pV , VRed-sub p' (sndᵛ V) pV'
+VRed-sub (p ⇒ₛ (p' ‼ₛ q)) V f      =
+  λ q₀ W pW →
+    CRed-expand SUB-APP (CRed-sub p' q (f q₀ (subV W p) (VRed-sub p W pW)))
+VRed-sub ([ _ ]ₛ p)   V f           = λ r → VRedˢ-≡ˢ (f r)
+
+CRed-sub p q (cred-ret rs pV) =
+  cred-ret (↝*-sub-ret p q rs) (VRed-sub p _ pV)
+CRed-sub p q (cred-op rs pW pk) =
+  cred-op (↝*-sub-op p q rs) pW
+          (λ q₀ W' pW' → CRed-sub p ≾ₑ-refl (pk q₀ W' pW'))
+
 -- The empty store: `toCtx ∅` has no variables.
 
 SRed-∅ : SRed ∅
 SRed-∅ c r = ⊥-elim (not-in-empty-ctx c)
 
--- An eternal type is built from base, unit, empty and products, so `VRed`
--- asks nothing of a value of eternal type — except, at a product, that it
--- *be* a pair, which over a state context it is.
-
-pair-canonical : ∀ {A B} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A |×| B)
-               → Σ[ V₁ ∈ toCtx St ⊢V⦂ A ] Σ[ V₂ ∈ toCtx St ⊢V⦂ B ]
-                   (V ≡ ⦉ V₁ , V₂ ⦊)
-pair-canonical (var f x) = ⊥-elim (⦉⦊-not-in-toCtx x)
-pair-canonical ⦉ V , W ⦊  = V , W , refl
-
--- There is no value of the empty type over a state context: a variable is
--- ruled out by `Empty-not-in-toCtx` and no other value has that type.
-
-empty-canonical : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ Empty → ⊥
-empty-canonical (var f x) = Empty-not-in-toCtx x
-
--- A boolean over a state context is one of the two constants: a variable is
--- ruled out by `Bool-not-in-toCtx`.
+-- A boolean over a state context runs to one of the two constants: a variable
+-- is ruled out by `Bool-not-in-toCtx`, and a subsumption is dropped by
+-- `SUB-IF`.
 
 bool-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
-               → (V ≡ true) ⊎ (V ≡ false)
-bool-canonical (var f x) = ⊥-elim (Bool-not-in-toCtx x)
-bool-canonical true      = inj₁ refl
-bool-canonical false     = inj₂ refl
+               → (∀ {A ε} {M N : toCtx St ⊢C⦂ A ‼ ε}
+                    → ⟨ St , if V `then M `else N ⟩ ↝* ⟨ St , M ⟩)
+               ⊎ (∀ {A ε} {M N : toCtx St ⊢C⦂ A ‼ ε}
+                    → ⟨ St , if V `then M `else N ⟩ ↝* ⟨ St , N ⟩)
+bool-canonical (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
+bool-canonical true           = inj₁ (IF-TRUE ◅ ε*)
+bool-canonical false          = inj₂ (IF-FALSE ◅ ε*)
+bool-canonical (subV V Boolₛ) with bool-canonical V
+... | inj₁ rs = inj₁ (SUB-IF ◅ rs)
+... | inj₂ rs = inj₂ (SUB-IF ◅ rs)
+
+-- An eternal type is built from base, unit, empty and products, so `VRed`
+-- asks nothing of a value of eternal type.
 
 VRed-eternal : ∀ {A} {St : 𝕊 []} → Eternal A → (V : toCtx St ⊢V⦂ A) → VRed A St V
 
@@ -214,74 +390,156 @@ VRed-eternal (Baseₑ _)        V = tt
 VRed-eternal Unitₑ            V = tt
 VRed-eternal Boolₑ            V = tt
 VRed-eternal Emptyₑ           V = tt
-VRed-eternal (et₁ |×|ₑ et₂)   V with pair-canonical V
-... | V₁ , V₂ , refl           =
-  V₁ , V₂ , refl , VRed-eternal et₁ V₁ , VRed-eternal et₂ V₂
-
--- Both are recursions on the type, and both are almost free: the slack in
--- the two Kripke clauses absorbs exactly the mismatch.
+VRed-eternal (et₁ |×|ₑ et₂)   V =
+  VRed-eternal et₁ (fstᵛ V) , VRed-eternal et₂ (sndᵛ V)
 
 VRed-≡ᵛ : ∀ {St : 𝕊 []} → (A : VType) → {V V' : toCtx St ⊢V⦂ A}
         → V ≡ V' → VRed A St V → VRed A St V'
 
 VRed-≡ᵛ A refl p = p
 
+-- Reading a cell after a reach is reading it before: the payload is the same
+-- value, so what holds of it transports. An induction on the value — the spine
+-- passes it on, and the variable clause is where the reach is absorbed.
+
+reach-read-val : ∀ {t A ρ} {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+               → (V : toCtx St ⊢V⦂ [ ρ ] A)
+               → (e : shapeᵛ (val-typeᵛ V) ≡ t)
+               → (e' : shapeᵛ (val-typeᵛ (reach-val q V)) ≡ t)
+               → (∀ {St₂ : 𝕊 []} → (r₀ : St [ cellᵛ V ]⊑ᶜ St₂)
+                    → VRedˢ t e St₂ (lookupᶜ r₀))
+               -------------------------------------------------------------
+               → ∀ {St₂ : 𝕊 []} → (r : St' [ cellᵛ (reach-val q V) ]⊑ᶜ St₂)
+               → VRedˢ t e' St₂ (lookupᶜ r)
+
+reach-read-val {ρ = ρ} q (var _ x) e e' h {St₂} (read ee rel) =
+  VRedˢ-≡ˢ (VRedˢ-≡ᵛ (lookup-body-≡ St₂ cellEq rel₁ rel)
+                     (h (read (≤ₛ-trans (ext q) ee) rel₁)))
+  where
+    cellEq = trans (≤ₛ-embed-∘ (ext q) ee x)
+                   (sym (cong (λ z → ≤ₛ-embed ee (proj₂ z))
+                              (reach-renᵘ-img q x)))
+    rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
+
+reach-read-val q (subV V ([ _ ]ₛ _)) e e' h r = reach-read-val q V e e' h r
+
+VRedˢ-reach : ∀ {t A} {St St' : 𝕊 []} → (q : St ⊑ₛ[ uᵣ ] St')
+            → (e : shapeᵛ A ≡ t) → (V : toCtx St ⊢V⦂ A)
+            → VRedˢ t e St V → VRedˢ t e St' (reach-val q V)
+
+VRedˢ-reach {⋆ˢ} q e V p = tt
+
+VRedˢ-reach {t ×ˢ t'} {A |×| B}     q e  V (p₁ , p₂) =
+    VRedˢ-≡ᵛ (sym (fstᵛ-ren (reach-renᵘ q) V))
+             (VRedˢ-reach q (×ˢ-inj₁ e) (fstᵛ V) p₁)
+  , VRedˢ-≡ᵛ (sym (sndᵛ-ren (reach-renᵘ q) V))
+             (VRedˢ-reach q (×ˢ-inj₂ e) (sndᵛ V) p₂)
+VRedˢ-reach {t ×ˢ t'} {Base b}      q () V p
+VRedˢ-reach {t ×ˢ t'} {Unit}        q () V p
+VRedˢ-reach {t ×ˢ t'} {Bool}        q () V p
+VRedˢ-reach {t ×ˢ t'} {Empty}       q () V p
+VRedˢ-reach {t ×ˢ t'} {A ⇒ (B ‼ ε)} q () V p
+VRedˢ-reach {t ×ˢ t'} {[ ρ ] A}     q () V p
+
+VRedˢ-reach {t →ˢ t'} {A ⇒ (B ‼ ε)} q₀ e  V f = λ q' W pW →
+  subst (λ z → CRed B (VRedˢ t' {B} (→ˢ-inj₂ e)) ε _ (z · W))
+        (trans (V-rename-≡ (reach-renᵘ-∘ q' q₀) V)
+               (V-rename-∘ (reach-renᵘ q₀) (reach-renᵘ q') V))
+        (f (reach-∘ q' q₀) W pW)
+VRedˢ-reach {t →ˢ t'} {Base b}      q () V f
+VRedˢ-reach {t →ˢ t'} {Unit}        q () V f
+VRedˢ-reach {t →ˢ t'} {Bool}        q () V f
+VRedˢ-reach {t →ˢ t'} {A |×| B}     q () V f
+VRedˢ-reach {t →ˢ t'} {Empty}       q () V f
+VRedˢ-reach {t →ˢ t'} {[ ρ ] A}     q () V f
+
+VRedˢ-reach {□ˢ t} {[ ρ ] A}     q e  V f = reach-read-val q V _ _ f
+VRedˢ-reach {□ˢ t} {Base b}      q () V f
+VRedˢ-reach {□ˢ t} {Unit}        q () V f
+VRedˢ-reach {□ˢ t} {Bool}        q () V f
+VRedˢ-reach {□ˢ t} {A |×| B}     q () V f
+VRedˢ-reach {□ˢ t} {Empty}       q () V f
+VRedˢ-reach {□ˢ t} {A ⇒ (B ‼ ε)} q () V f
+
 VRed-reach : ∀ {A St St'} → (q : St ⊑ₛ[ uᵣ ] St') → (V : toCtx St ⊢V⦂ A)
            → VRed A St V → VRed A St' (reach-val q V)
 
-VRed-reach {Base b}  q V p = tt
-VRed-reach {Unit}    q V p = tt
-VRed-reach {Bool}    q V p = tt
-VRed-reach {Empty}   q V p = tt
-VRed-reach {A |×| B} q .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , refl , VRed-reach q V₁ p₁ , VRed-reach q V₂ p₂
-VRed-reach {A ⇒ (B ‼ ε)} q₀ .(lam M) (M , refl , f) =
-    _ , refl
-  , λ q' M₂ eM₂ W pW →
-      f (reach-∘ q' q₀) M₂
-        (trans eM₂
-          (trans
-            (sym (C-rename-∘ (cong-∷-ren (reach-renᵘ q₀))
-                                (cong-∷-ren (reach-renᵘ q')) M))
-            (C-rename-≡ (≐ʳ-trans
-                          (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (reach-renᵘ q₀) (reach-renᵘ q')))
-                          (cong-∷-ren-≐ʳ (≐ʳ-sym (reach-renᵘ-∘ q' q₀))))
-                        M)))
-        W pW
-VRed-reach {[ ρ ] A} q₀ V f {St''} (read e rel) with grad-typ⇒var V
-... | _ , c , g , refl =
-  VRed-≡ᵛ A ((lookup-body-≡ St'' cellEq rel₁ rel))
-            (f (read (≤ₛ-trans (ext q₀) e) rel₁))
-  where
-    cellEq = trans (≤ₛ-embed-∘ (ext q₀) e c)
-                   (sym (cong (λ z → ≤ₛ-embed e (proj₂ z))
-                              (reach-renᵘ-img q₀ c)))
-    rel₁ = subst (_≾ᵣ ρ) (sym (cong proj₁ cellEq)) rel
+VRed-reach q V p = VRedˢ-reach q refl V p
 
--- `VRedᵍ` is `VRed` restricted to the ground types, whose formation rules
--- `type-of-gtype` matches one for one. Two recursions on the ground type.
+-- `VRedᵍ` is `VRed` restricted to the ground types, whose skeletons have no
+-- arrows, so the two predicates coincide clause for clause. Two recursions on
+-- the ground type, with the value's own type left free — a box's read is at
+-- the cell's declared type, not the one named.
+
+VRedˢ→VRedᵍˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
+             → (e : shapeᵛ A ≡ shapeᵛ (type-of-gtype G))
+             → (V : toCtx St ⊢V⦂ A)
+             → VRedˢ (shapeᵛ (type-of-gtype G)) e St V
+             → VRedᵍˢ (shapeᵛ (type-of-gtype G)) e St V
+
+VRedˢ→VRedᵍˢ (Base b) e V p = tt
+VRedˢ→VRedᵍˢ Unit     e V p = tt
+VRedˢ→VRedᵍˢ Bool     e V p = tt
+VRedˢ→VRedᵍˢ Empty    e V p = tt
+
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
+    VRedˢ→VRedᵍˢ G₁ (×ˢ-inj₁ e) (fstᵛ V) p₁
+  , VRedˢ→VRedᵍˢ G₂ (×ˢ-inj₂ e) (sndᵛ V) p₂
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
+VRedˢ→VRedᵍˢ (G₁ |×|ᵍ G₂) {[ ρ ] A}     () V p
+
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
+  λ r → VRedˢ→VRedᵍˢ G _ (lookupᶜ r) (p r)
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
+VRedˢ→VRedᵍˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ‼ ε)} () V p
+
+VRedᵍˢ→VRedˢ : (G : GType) → ∀ {A} {St : 𝕊 []}
+             → (e : shapeᵛ A ≡ shapeᵛ (type-of-gtype G))
+             → (V : toCtx St ⊢V⦂ A)
+             → VRedᵍˢ (shapeᵛ (type-of-gtype G)) e St V
+             → VRedˢ (shapeᵛ (type-of-gtype G)) e St V
+
+VRedᵍˢ→VRedˢ (Base b) e V p = tt
+VRedᵍˢ→VRedˢ Unit     e V p = tt
+VRedᵍˢ→VRedˢ Bool     e V p = tt
+VRedᵍˢ→VRedˢ Empty    e V p = tt
+
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A |×| B}     e  V (p₁ , p₂) =
+    VRedᵍˢ→VRedˢ G₁ (×ˢ-inj₁ e) (fstᵛ V) p₁
+  , VRedᵍˢ→VRedˢ G₂ (×ˢ-inj₂ e) (sndᵛ V) p₂
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Base b}      () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Unit}        () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Bool}        () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {Empty}       () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {A ⇒ (B ‼ ε)} () V p
+VRedᵍˢ→VRedˢ (G₁ |×|ᵍ G₂) {[ ρ ] A}     () V p
+
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {[ ρ ] A}     e  V p =
+  λ r → VRedᵍˢ→VRedˢ G _ (lookupᶜ r) (p r)
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Base b}      () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Unit}        () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Bool}        () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A |×| B}     () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {Empty}       () V p
+VRedᵍˢ→VRedˢ ([ ρ₀ ]ᵍ G) {A ⇒ (B ‼ ε)} () V p
 
 VRed→VRedᵍ : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
            → VRed (type-of-gtype G) St V → VRedᵍ G St V
 
-VRed→VRedᵍ (Base b)     V p = tt
-VRed→VRedᵍ Unit         V p = tt
-VRed→VRedᵍ Bool         V p = tt
-VRed→VRedᵍ Empty        V p = tt
-VRed→VRedᵍ (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
-  V₁ , V₂ , refl , VRed→VRedᵍ G₁ V₁ p₁ , VRed→VRedᵍ G₂ V₂ p₂
-VRed→VRedᵍ ([ ρ ]ᵍ G)   V p = λ r → VRed→VRedᵍ G _ (p r)
+VRed→VRedᵍ G V p = VRedˢ→VRedᵍˢ G refl V p
 
 VRedᵍ→VRed : (G : GType) → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ type-of-gtype G)
            → VRedᵍ G St V → VRed (type-of-gtype G) St V
 
-VRedᵍ→VRed (Base b)     V p = tt
-VRedᵍ→VRed Unit         V p = tt
-VRedᵍ→VRed Bool         V p = tt
-VRedᵍ→VRed Empty        V p = tt
-VRedᵍ→VRed (G₁ |×|ᵍ G₂) V (V₁ , V₂ , refl , p₁ , p₂) =
-  V₁ , V₂ , refl , VRedᵍ→VRed G₁ V₁ p₁ , VRedᵍ→VRed G₂ V₂ p₂
-VRedᵍ→VRed ([ ρ ]ᵍ G)   V p = λ r → VRedᵍ→VRed G _ (p r)
+VRedᵍ→VRed G V p = VRedᵍˢ→VRedˢ G refl V p
 
 -- Ground reducibility is insensitive to the equivalence, as `VRed-≡ᵛ` is.
 
@@ -290,207 +548,11 @@ VRedᵍ-≡ᵛ : ∀ {St : 𝕊 []} → (G : GType) → {V V' : toCtx St ⊢V⦂
 
 VRedᵍ-≡ᵛ G refl p = p
 
--- Related states hold related values, so reducibility transports. Recursion
--- on the ground type.
-
-VRedᵍ-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (G : GType)
-         → (V : toCtx St ⊢V⦂ type-of-gtype G)
-         → VRedᵍ G St V → VRedᵍ G St' (castᵛ (toCtx-≐ˢ es) V)
-
-VRedᵍ-≐ˢ es (Base b)     V p = tt
-VRedᵍ-≐ˢ es Unit         V p = tt
-VRedᵍ-≐ˢ es Bool         V p = tt
-VRedᵍ-≐ˢ es Empty        V p = tt
-VRedᵍ-≐ˢ es (G₁ |×|ᵍ G₂) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
-  , VRedᵍ-≐ˢ es G₁ V₁ p₁ , VRedᵍ-≐ˢ es G₂ V₂ p₂
-
-VRedᵍ-≐ˢ {St} {St'} es ([ ρ ]ᵍ G) V f {St''} (read e rel)
-  with grad-typ⇒var V
-... | _ , c , g , refl with replay (≐ˢ-sym es) e
-...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
-  VRedᵍ-≡ᵛ G ((sym (lookup-body-≡ St'' cellEq rel rel₀)))
-    (VRedᵍ-≡ᵛ G (sym bridge)
-      (VRedᵍ-≐ˢ (≐ˢ-sym es₂) G _ (f (read e₀ rel₀))))
-  where
-    cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
-    rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
-
-    bridge =
-      trans
-        (lookup-body-≐ˢ es₂ (Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
-                        (≤ₛ-embed e₀ c) refl rel₀ rel₀)
-        ((castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
-
--- One lemma carrying *both* relations: the states' and the terms', since they
--- cannot be separated. Parameterised by the value predicate's transport
--- rather than mutual with `VRed-≐ˢ`, so that both recurse structurally on the
--- *type*.
-
--- The reduct a resumption builds, compared across the two states.
-
-resume-≐ˢ : ∀ {A B ε ρ} {St St' St₂ St₂' : 𝕊 []}
-         → (es : St ≐ˢ St') → (es₂ : St₂ ≐ˢ St₂')
-         → {q : St ⊑ₛ[ ρ ] St₂} → {q' : St' ⊑ₛ[ ρ ] St₂'}
-         → ext q ≤≐ ext q'
-         → {M : toCtx St ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
-         → {M' : toCtx St' ⟨ ρ ⟩ ∷ B ⊢C⦂ A ‼ ε}
-         → M ≡ castᶜ (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B) (sym (toCtx-≐ˢ es))) M'
-         → {W : toCtx St₂ ⊢V⦂ B} → {W' : toCtx St₂' ⊢V⦂ B}
-         → W ≡ castᵛ (sym (toCtx-≐ˢ es₂)) W'
-         -------------------------------------------------------------------
-         → resume q M W
-         ≡ castᶜ (sym (toCtx-≐ˢ es₂)) (resume q' M' W')
-
-resume-≐ˢ {A} {B} {ρ = ρ} es es₂ {q} {q'} h {M} {M'} eM {W} {W'} eW =
-  trans
-    (sub-≡ᶜ split-[] eW
-      (trans (C-rename-≡ (cong-∷-ren-≐ʳ (unbox-ren-≐ˢ es es₂ h)) M)
-                (C-rename-cong (cong-∷-ren _)
-                  (subst (λ z → M ≡ z)
-                         (castᶜ-irr (cong (λ Γ₀ → Γ₀ ⟨ ρ ⟩ ∷ B)
-                                          (sym (toCtx-≐ˢ es)))
-                                    (cong (_∷ B) e₁) M')
-                         eM))))
-    ((trans (cong (λ z → z [ split-[] ↦ castᵛ e₂ W' ]c)
-                       (cast-rename-∷ e₁ e₂ (unbox-ren q') M'))
-                 (cast-app-reduct e₂ (C-rename (cong-∷-ren (unbox-ren q')) M') W')))
-  where
-    e₁ = cong (_⟨ ρ ⟩) (sym (toCtx-≐ˢ es))
-    e₂ = sym (toCtx-≐ˢ es₂)
-
-CRed-≐ˢ : ∀ {A P ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-       → (tr : ∀ {St₁ St₁' : 𝕊 []} → (es₁ : St₁ ≐ˢ St₁')
-             → (V : toCtx St₁ ⊢V⦂ A) → P St₁ V
-             → P St₁' (castᵛ (toCtx-≐ˢ es₁) V))
-       → (tr≐ : ∀ {St₁ : 𝕊 []} {V V' : toCtx St₁ ⊢V⦂ A}
-              → V ≡ V' → P St₁ V → P St₁ V')
-       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
-       → M ≡ castᶜ (sym (toCtx-≐ˢ es)) M'
-       -------------------------------------------------------------
-       → CRed A P ε St M → CRed A P ε St' M'
-
-CRed-≐ˢ es tr tr≐ eM (cred-ret rs pV) with ↝*-≐ˢ es eM rs
-... | St₁' , N' , es₁ , rs' , eN with cast-return⁻ (sym (toCtx-≐ˢ es₁)) N' eN
-...   | V' , refl , eV =
-  cred-ret rs'
-    (tr≐ (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≡ z)
-                (castᵛ-castᵛ (sym (toCtx-≐ˢ es₁)) (toCtx-≐ˢ es₁) V')
-                (castᵛ-≡ (toCtx-≐ˢ es₁) eV))
-         (tr es₁ _ pV))
-
-CRed-≐ˢ {A} {P} es tr tr≐ eM (cred-op {op = op} {M' = Mk} rs pW pk)
-  with ↝*-≐ˢ es eM rs
-... | St₁' , N' , es₁ , rs' , eN with cast-perform⁻ (sym (toCtx-≐ˢ es₁)) N' eN
-...   | W' , Mk' , refl , eW , eMk =
-  cred-op rs'
-    (VRedᵍ-≡ᵛ (param op)
-      (subst (λ z → castᵛ (toCtx-≐ˢ es₁) _ ≡ z)
-             (castᵛ-castᵛ (sym (toCtx-≐ˢ es₁)) (toCtx-≐ˢ es₁) W')
-             (castᵛ-≡ (toCtx-≐ˢ es₁) eW))
-      (VRedᵍ-≐ˢ es₁ (param op) _ pW))
-    (λ q' W'' pW'' → step q' W'' pW'')
-  where
-    ρ = mapᵉ (op-grade op)
-
-    step : ∀ {St₂ : 𝕊 []} → (q' : _ ⊑ₛ[ ρ ] St₂)
-         → (W'' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
-         → VRedᵍ (arity op) St₂ W''
-         → CRed A P _ St₂ (resume q' Mk' W'')
-    step {St₂} q' W'' pW'' with reach-replay (≐ˢ-sym es₁) q'
-    ... | St₃ , q , es₃ , h =
-      CRed-≐ˢ (≐ˢ-sym es₃) tr tr≐
-        (resume-≐ˢ es₁ (≐ˢ-sym es₃) (≤≐-sym h) eMk
-          (subst (λ z → castᵛ (toCtx-≐ˢ es₃) W'' ≡ z)
-                 (castᵛ-irr (toCtx-≐ˢ es₃)
-                            (sym (toCtx-≐ˢ (≐ˢ-sym es₃))) W'')
-                 (refl)))
-        (pk q (castᵛ (toCtx-≐ˢ es₃) W'')
-             (VRedᵍ-≐ˢ es₃ (arity op) W'' pW''))
-
--- Recursion on the type. Both Kripke clauses replay the other state's
--- extension and transport back; the arrow clause calls `CRed-≐ˢ` at the
--- smaller type `B`, keeping the two definitions non-mutual.
-
-VRed-≐ˢ : ∀ {St St' : 𝕊 []} → (es : St ≐ˢ St') → (A : VType)
-        → (V : toCtx St ⊢V⦂ A)
-        → VRed A St V → VRed A St' (castᵛ (toCtx-≐ˢ es) V)
-
-VRed-≐ˢ es (Base b)  V p = tt
-VRed-≐ˢ es Unit      V p = tt
-VRed-≐ˢ es Bool      V p = tt
-VRed-≐ˢ es Empty     V p = tt
-VRed-≐ˢ es (A |×| B) .(⦉ V₁ , V₂ ⦊) (V₁ , V₂ , refl , p₁ , p₂) =
-  _ , _ , cast-pair (toCtx-≐ˢ es) {V₁} {V₂}
-  , VRed-≐ˢ es A V₁ p₁ , VRed-≐ˢ es B V₂ p₂
-
-VRed-≐ˢ {St} {St'} es (A ⇒ (B ‼ ε)) .(lam M) (M , refl , f) =
-    _ , cast-lam (toCtx-≐ˢ es) M
-  , λ {St''} q' M₂ eM₂ W pW → step q' M₂ eM₂ W pW
-  where
-    e = toCtx-≐ˢ es
-
-    step : ∀ {St'' : 𝕊 []} → (q' : St' ⊑ₛ[ uᵣ ] St'')
-         → (M₂ : toCtx St'' ∷ A ⊢C⦂ B ‼ ε)
-         → M₂ ≡ reach-under q' (castᶜ (cong (_∷ A) e) M)
-         → (W : toCtx St'' ⊢V⦂ A) → VRed A St'' W
-         → CRed B (VRed B) ε St'' (M₂ [ split-[] ↦ W ]c)
-    step {St''} q' M₂ eM₂ W pW with reach-replay (≐ˢ-sym es) q'
-    ... | St₂ , q , es₂ , h =
-      CRed-≐ˢ (≐ˢ-sym es₂) (λ es₁ V₀ → VRed-≐ˢ es₁ B V₀) (VRed-≡ᵛ B)
-        ((trans (cast-app-reduct e₂ M₂ W)
-                     (castᶜ-irr e₂ (sym (toCtx-≐ˢ (≐ˢ-sym es₂)))
-                                (M₂ [ split-[] ↦ W ]c))))
-        (f q (castᶜ (cong (_∷ A) e₂) M₂) eM₃ (castᵛ e₂ W)
-             (VRed-≐ˢ es₂ A W pW))
-      where
-        e₂ = toCtx-≐ˢ es₂
-
-        eM₃ : castᶜ (cong (_∷ A) e₂) M₂ ≡ reach-under q M
-        eM₃ =
-          trans (castᶜ-≡ (cong (_∷ A) e₂) eM₂)
-            (trans
-              ((sym (cast-rename-∷ (sym e) e₂ (reach-renᵘ q')
-                                        (castᶜ (cong (_∷ A) e) M))))
-              (trans
-                ((cong (C-rename
-                              (cong-∷-ren (castʳ² (sym e) e₂ (reach-renᵘ q'))))
-                            (castᶜ-castᶜ (cong (_∷ A) e) (cong (_∷ A) (sym e)) M)))
-                (sym
-                  (C-rename-≡
-                    (cong-∷-ren-≐ʳ
-                      (≐ʳ-trans (reach-renᵘ-≐ˢ es (≐ˢ-sym es₂) (≤≐-sym h))
-                                (castʳ²-irr (sym e) (sym e)
-                                            (sym (toCtx-≐ˢ (≐ˢ-sym es₂))) e₂
-                                            (reach-renᵘ q'))))
-                    M))))
-
-VRed-≐ˢ {St} {St'} es ([ ρ ] A) V f {St''} (read e rel)
-  with grad-typ⇒var V
-... | _ , c , g , refl with replay (≐ˢ-sym es) e
-...   | St₂ , e₀ , es₂ , h rewrite castᵛ-var (toCtx-≐ˢ es) g c =
-  VRed-≡ᵛ A ((sym (lookup-body-≡ St'' cellEq rel rel₀)))
-    (VRed-≡ᵛ A (sym bridge)
-      (VRed-≐ˢ (≐ˢ-sym es₂) A _ (f (read e₀ rel₀))))
-  where
-    cellEq = ≤ₛ-embed-≐ˢ es es₂ h c
-    rel₀   = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel
-
-    bridge =
-      trans
-        (lookup-body-≐ˢ es₂ (Var-cast (sym (toCtx-≐ˢ es₂)) (≤ₛ-embed e₀ c))
-                        (≤ₛ-embed e₀ c) refl rel₀ rel₀)
-        ((castᵛ-irr (sym (toCtx-≐ˢ es₂)) (toCtx-≐ˢ (≐ˢ-sym es₂)) _))
-
--- Hence reducibility is insensitive to the term equivalence: the special case
--- `es := ≐ˢ-refl St`, where `toCtx-≐ˢ-refl` makes the cast the identity.
+-- Reducibility is insensitive to the term equivalence.
 
 CRed-≡ᶜ : ∀ {A ε} {St : 𝕊 []} {M M' : toCtx St ⊢C⦂ A ‼ ε}
         → M ≡ M' → CRed' A ε St M → CRed' A ε St M'
-CRed-≡ᶜ {A} {ε} {St} {M} {M'} eM pM =
-  CRed-≐ˢ (≐ˢ-refl St) (λ es₁ V₀ → VRed-≐ˢ es₁ A V₀) (VRed-≡ᵛ A)
-    (subst (λ z → M ≡ castᶜ (sym z) M') (sym (toCtx-≐ˢ-refl St)) eM)
-    pM
+CRed-≡ᶜ refl p = p
 
 -- Handling is `Adequacy.Handle`, above `Environment`: as sequencing, plus a
 -- clause premise, and needing `sub-wk-C` for the same reason.
@@ -506,7 +568,8 @@ SRed-fresh : ∀ {A ρ} {St : 𝕊 []} → (V : ([] ++ᶜ toCtx St ⟨ ρ ⟩) �
            → VRed ([ ρ ] A) (St ∷ₛ V) (var f Hd)
 
 SRed-fresh {A} {ρ} {St} V pV f {St'} r =
-  VRed-≡ᵛ A (sym (alloc-lookup-≡ V (extᶜ r) (ready r) q₀ refl)) (pV q₀)
+  VRedˢ-≡ˢ (VRed-≡ᵛ A (sym (alloc-lookup-≡ V (extᶜ r) (ready r) q₀ refl))
+                      (pV q₀))
   where
     e   = extᶜ r
     rel = ready r
@@ -536,4 +599,4 @@ SRed-var {Empty}     pSt x f = tt
 SRed-var {A₁ |×| A₂} pSt x f = ⊥-elim (⦉⦊-not-in-toCtx x)
 SRed-var {A₁ ⇒ C}    pSt x f = ⊥-elim (⇒-not-in-toCtx x)
 
-SRed-var {[ ρ ] A} pSt x f r = pSt x r
+SRed-var {[ ρ ] A} pSt x f r = VRedˢ-≡ˢ (pSt x r)

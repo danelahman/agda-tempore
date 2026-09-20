@@ -58,38 +58,36 @@ open import Syntax.Substitutions.Equivalence Spec
 
 -- Unboxing: read the store. `env-Cˢ-unbox` sends the action to an `unbox` at
 -- the cell the environment sends this one to, `UNBOX` reads that cell, and the
--- value read is reducible at the current state — which is the store, come
--- through the environment (`env-cell₀-val` at `id-suc`, the extension `UNBOX`
--- performs). `env-cell-push` at the empty suffix is what identifies the cell
--- the shape law computes with the one the reducibility statement speaks about.
+-- value read — the raw read at the cell's declared payload type, subsumed once
+-- along the composite the action accumulates — is reducible at the current
+-- state.
 
-FL-unbox : ∀ {St Γ A D ρ σ ε} → (γ : Env St Γ) → Rel-Env γ
-         → (x : [ ρ ] A ∈[ σ ] Γ) → (rel : σ ≾ᵣ ρ)
+FL-unbox : ∀ {St Γ A A₀ D ρ σ ε} → (γ : Env St Γ) → Rel-Env γ
+         → (x : [ ρ ] A₀ ∈[ σ ] Γ) → (rel : σ ≾ᵣ ρ) → (p : A₀ <:ᵛ A)
          → (M : Γ ∷ A ⊢C⦂ D ‼ ε)
          → (∀ {St'} → (γ' : Env St' (Γ ∷ A)) → Rel-Env γ'
               → CRed' D ε St' (env-C γ' M))
          --------------------------------------------------------------
-         → CRed' D ε St (env-C γ (unbox x rel M))
+         → CRed' D ε St (env-C γ (unbox x rel p M))
 
-FL-unbox {St = St} {A = A} {ρ = ρ} {σ = σ} γ pγ x rel M pM =
-  CRed-≡ᶜ (sym (env-Cˢ-unbox γ [] x rel M rel₁))
+FL-unbox {St = St} {A = A} {A₀ = A₀} {ρ = ρ} {σ = σ} γ pγ x rel p M pM =
+  CRed-≡ᶜ (sym (env-Cˢ-unbox γ [] x rel p M rel₁ p₁))
           (CRed-expand UNBOX (pM (γ ∷ᵉ U) (pγ , pU)))
   where
     rel₁ = env-cell-rel γ [] (σ , x) rel
+    p₁   = <:ᵛ-trans (env-cell-typ γ [] (σ , x)) p
 
-    U = unbox-lookup St (proj₂ (env-cell γ [] (σ , x))) rel₁
+    Y = unbox-lookup St (rvar-pos (env-cell γ [] (σ , x))) rel₁
 
-    -- the cell the action names is the one the reducibility statement speaks of
-    cellEq : env-cell γ [] (σ , x) ≡ env-cell₀ γ (σ , x)
-    cellEq = env-cell-push γ [] (σ , x)
+    U = subV Y p₁
 
-    rel₂ = subst (_≾ᵣ ρ) (cong proj₁ cellEq) rel₁
+    store : VRed (rvar-type (env-cell γ [] (σ , x))) St Y
+    store = env-cell-val γ pγ (σ , x) _ (env-cell-push γ [] (σ , x)) rel₁
 
     pU : VRed A St U
-    pU = VRed-≡ᵛ A ( (sym (lookup-body-≡ St cellEq rel₁ rel₂)))
-                   (env-cell₀-val γ pγ (σ , x) id-suc rel₂)
+    pU = VRed-sub p₁ Y store
 
--- Matching: the scrutinee is a pair, and `MATCH` substitutes its two components
+-- Matching: `MATCH` fires at any scrutinee, substituting its two projections
 -- in the *opposite* order from the environment — the rule replaces `B` (its
 -- value weakened past `A`) and then `A`, the action replaces `A` with `B`
 -- riding in the suffix and then `B`. That is exactly `sub-swap-C`, at the
@@ -103,14 +101,15 @@ FL-match : ∀ {St Γ A B D ε} → (γ : Env St Γ) → Rel-Env γ
          --------------------------------------------------------------
          → CRed' D ε St (env-C γ (match V `in M))
 
-FL-match {St = St} {Γ = Γ} {A = A} {B = B} γ pγ V M
-         (U₁ , U₂ , eV , p₁ , p₂) pM =
+FL-match {St = St} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
   subst (CRed' _ _ St) (sym (env-Cˢ-match γ [] V M))
-    (subst (λ z → CRed' _ _ St (match z `in M₀)) (sym eV)
-      (CRed-expand MATCH
-        (CRed-≡ᶜ (sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂)))))
+    (CRed-expand MATCH
+      (CRed-≡ᶜ (sym step) (pM ((γ ∷ᵉ U₁) ∷ᵉ U₂) ((pγ , p₁) , p₂))))
   where
     M₀ = env-Cˢ γ ([] ∷ A ∷ B) M
+
+    U₁ = fstᵛ (env-V γ V)
+    U₂ = sndᵛ (env-V γ V)
 
     step : (M₀ [ split-[] ↦ V-rename wk-ren U₂ ]c) [ split-[] ↦ U₁ ]c
          ≡ env-C ((γ ∷ᵉ U₁) ∷ᵉ U₂) M
@@ -252,13 +251,14 @@ FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
 mutual
 
   -- The value half. Nothing is asked at a base, unit or empty type; a pair is
-  -- the pair of the actions; a variable is `env-var`.
+  -- the pair of the actions' projections; a variable is `env-var`; a
+  -- subsumption is `VRed-sub`.
   --
   -- At a lambda the environment moves to the state the Kripke clause offers and
   -- gains the argument (`reachᵉ`, `_∷ᵉ_`) — and that is the whole reason the
   -- reach is *recorded* in the environment: the clause supplies no store for
-  -- the later state, and a recorded reach needs none. The reduct the clause asks
-  -- for is the action's body up to `_≡_`, whence `CRed-≡ᶜ`.
+  -- the later state, and a recorded reach needs none. The action is a `lam`,
+  -- so `APP` reduces the clause's application to that body.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⊢V⦂ A)
@@ -270,16 +270,19 @@ mutual
   FL-V γ pγ ⋆          = tt
   FL-V γ pγ true       = tt
   FL-V γ pγ false      = tt
-  FL-V γ pγ ⦉ V , W ⦊   =
-    _ , _ , env-Vˢ-pair γ [] V W , FL-V γ pγ V , FL-V γ pγ W
 
-  FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) =
-      _ , env-Vˢ-lam γ [] M
-    , λ q M₂ eM₂ W pW →
-        CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) (sym eM₂))
-                (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M)
+  FL-V {A = A |×| B} γ pγ ⦉ V , W ⦊ =
+      VRed-≡ᵛ A (sym (cong fstᵛ (env-Vˢ-pair γ [] V W))) (FL-V γ pγ V)
+    , VRed-≡ᵛ B (sym (cong sndᵛ (env-Vˢ-pair γ [] V W))) (FL-V γ pγ W)
 
-  -- The computation half. `return` is a weak head normal form; `coerce`,
+  FL-V {A = A ⇒ (B ‼ ε)} γ pγ (lam M) q W pW =
+    subst (λ z → CRed' B ε _ (reach-val q z · W)) (sym (env-Vˢ-lam γ [] M))
+      (CRed-expand APP (FL-C (reachᵉ γ q ∷ᵉ W) (pγ , pW) M))
+
+  FL-V {A = A} γ pγ (subV V p) =
+    VRed-≡ᵛ A (sym (env-Vˢ-sub γ [] V)) (VRed-sub p (env-V γ V) (FL-V γ pγ V))
+
+  -- The computation half. `return` is a weak head normal form; subsumption,
   -- application and `delay` are head expansion off their own rule; `absurd` is
   -- vacuous, since no value of the empty type lives over a state context.
   --
@@ -296,35 +299,29 @@ mutual
   FL-C γ pγ (return V) =
     subst (CRed' _ _ _) (sym (env-Cˢ-ret γ [] V)) (cred-ret ε* (FL-V γ pγ V))
 
-  FL-C γ pγ (coerce p M) =
-    subst (CRed' _ _ _) (sym (env-Cˢ-coerce γ [] M))
-      (CRed-expand COERCE (FL-C γ pγ M))
+  FL-C γ pγ (subC M (p ‼ₛ q)) =
+    subst (CRed' _ _ _) (sym (env-Cˢ-sub γ [] M))
+      (CRed-sub p q (FL-C γ pγ M))
 
-  FL-C γ pγ (absurd V) = ⊥-elim (empty-canonical (env-V γ V))
+  FL-C γ pγ (absurd V) = ⊥-elim (empty-not-value (env-V γ V))
 
-  -- `if` is head expansion off whichever rule the scrutinee names: over a state
-  -- context a boolean *is* one of the two constants (`bool-canonical`).
+  -- `if` is head expansion along whichever run the scrutinee licenses: over a
+  -- state context a boolean reaches one of the two branches
+  -- (`bool-canonical`).
 
   FL-C γ pγ (if V `then M `else N) with bool-canonical (env-V γ V)
-  ... | inj₁ eV =
+  ... | inj₁ rs =
     subst (CRed' _ _ _) (sym (env-Cˢ-if γ [] V M N))
-      (subst (λ z → CRed' _ _ _ (if z `then env-C γ M `else env-C γ N)) (sym eV)
-        (CRed-expand IF-TRUE (FL-C γ pγ M)))
-  ... | inj₂ eV =
+      (CRed-expand* rs (FL-C γ pγ M))
+  ... | inj₂ rs =
     subst (CRed' _ _ _) (sym (env-Cˢ-if γ [] V M N))
-      (subst (λ z → CRed' _ _ _ (if z `then env-C γ M `else env-C γ N)) (sym eV)
-        (CRed-expand IF-FALSE (FL-C γ pγ N)))
+      (CRed-expand* rs (FL-C γ pγ N))
 
-  FL-C γ pγ (V · W) with FL-V γ pγ V
-  ... | M₀ , eq , f =
+  FL-C γ pγ (V · W) =
     subst (CRed' _ _ _) (sym (env-Cˢ-app γ [] V W))
-      (subst (λ z → CRed' _ _ _ (z · env-V γ W)) (sym eq)
-        (CRed-expand APP
-          (CRed-≡ᶜ
-            (sub-≡ᶜ split-[] (refl)
-              (C-rename-id-≡ (cong-∷-ren-id-≐ʳ reach-renᵘ-id-≐ʳ) M₀))
-            (f reach-id (reach-under reach-id M₀) (refl)
-               (env-V γ W) (FL-V γ pγ W)))))
+      (subst (λ z → CRed' _ _ _ (z · env-V γ W))
+             (V-rename-id-≡ reach-renᵘ-id-≐ʳ (env-V γ V))
+             (FL-V γ pγ V reach-id (env-V γ W) (FL-V γ pγ W)))
 
   FL-C {St = St} γ pγ (delay τ M) =
     subst (CRed' _ _ _) (sym (env-Cˢ-delay γ [] M))
@@ -366,8 +363,8 @@ mutual
   FL-C γ pγ (box V M) =
     FL-box γ pγ V M (λ γ' pγ' → FL-V γ' pγ' V) (λ γ' pγ' → FL-C γ' pγ' M)
 
-  FL-C γ pγ (unbox x rel M) =
-    FL-unbox γ pγ x rel M (λ γ' pγ' → FL-C γ' pγ' M)
+  FL-C γ pγ (unbox x rel p M) =
+    FL-unbox γ pγ x rel p M (λ γ' pγ' → FL-C γ' pγ' M)
 
 -- A reducible computation halts: its run *is* the evaluation, and which of the
 -- two shapes it halts in is which `CRed` constructor it is. The reducibility

@@ -11,6 +11,7 @@
 
 open import Data.Empty
 open import Data.Product
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Relation.Nullary using (¬_)
 
@@ -41,13 +42,38 @@ Base-not-in-toCtx : ∀ {Γ ρ b} {St : 𝕊 Γ} → Base b ∈[ ρ ] toCtx St �
 Base-not-in-toCtx {St = St ⟨ ρ ⟩ₛ} (Tl-⟨⟩ x) = Base-not-in-toCtx x
 Base-not-in-toCtx {St = St ∷ₛ V}   (Tl-∷ x)  = Base-not-in-toCtx x
 
--- Hence a base-typed value over a state context is a constant.
+-- Hence a base-typed value over a state context is a constant underneath its
+-- subsumption spine, which `base-val` strips.
+
+base-val : ∀ {b} {St : 𝕊 []}
+         → toCtx St ⊢V⦂ Base b
+         → toCtx St ⊢V⦂ Base b
+base-val (var f x)             = ⊥-elim (Base-not-in-toCtx x)
+base-val (const c)             = const c
+base-val (subV V (Baseₛ refl)) = base-val V
 
 base-canonical : ∀ {b} {St : 𝕊 []}
                → (V : toCtx St ⊢V⦂ Base b)
-               → Σ[ c ∈ BaseConstants b ] V ≡ const c
-base-canonical (var f x) = ⊥-elim (Base-not-in-toCtx x)
-base-canonical (const c) = c , refl
+               → Σ[ c ∈ BaseConstants b ] base-val V ≡ const c
+base-canonical (var f x)             = ⊥-elim (Base-not-in-toCtx x)
+base-canonical (const c)             = c , refl
+base-canonical (subV V (Baseₛ refl)) = base-canonical V
+
+-- The same at `Bool`, where the spine is again forced to be identity
+-- coercions.
+
+bool-val : ∀ {St : 𝕊 []} → toCtx St ⊢V⦂ Bool → toCtx St ⊢V⦂ Bool
+bool-val (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
+bool-val true           = true
+bool-val false          = false
+bool-val (subV V Boolₛ) = bool-val V
+
+bool-val-canonical : ∀ {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Bool)
+                   → (bool-val V ≡ true) ⊎ (bool-val V ≡ false)
+bool-val-canonical (var f x)      = ⊥-elim (Bool-not-in-toCtx x)
+bool-val-canonical true           = inj₁ refl
+bool-val-canonical false          = inj₂ refl
+bool-val-canonical (subV V Boolₛ) = bool-val-canonical V
 
 -- The ticks a step takes: only `DELAY` advances time, by its own delay. The
 -- grade `steps-grade` is not an observable — it absorbs `uₑ` factors freely
@@ -70,7 +96,11 @@ step-ticks (HANDLE-STEP r _)   = step-ticks r
 step-ticks HANDLE-OP           = 0
 step-ticks BOX                 = 0
 step-ticks UNBOX               = 0
-step-ticks COERCE              = 0
+step-ticks SUB-APP             = 0
+step-ticks SUB-IF              = 0
+step-ticks SUB-RET             = 0
+step-ticks SUB-OP              = 0
+step-ticks (SUB-STEP r)        = step-ticks r
 
 ticks : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
       → cf ↝* cf'
@@ -166,6 +196,14 @@ handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ �
             → Step-from (⟨ St , handle M `with H `in N ⟩)
 handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-grade-≾ r)
 
+sub-step : ∀ {A A' ε ε'} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε}
+         → (p : A <:ᵛ A')
+         → (q : ε ≾ₑ ε')
+         → Step-from (⟨ St , M ⟩)
+         -----------------------------------
+         → Step-from (⟨ St , subC M (p ‼ₛ q) ⟩)
+sub-step p q (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SUB-STEP r
+
 ↝-det : ∀ {A ε ε₁ ε₂} {cf : Config (A ‼ ε)}
       → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (A ‼ ε₂)}
       → (r₁ : cf ↝ cf₁) → (r₂ : cf ↝ cf₂)
@@ -184,7 +222,10 @@ handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-gra
 ↝-det HANDLE-OP  HANDLE-OP  = refl
 ↝-det BOX        BOX        = refl
 ↝-det UNBOX      UNBOX      = refl
-↝-det COERCE     COERCE     = refl
+↝-det SUB-APP    SUB-APP    = refl
+↝-det SUB-IF     SUB-IF     = refl
+↝-det SUB-RET    SUB-RET    = refl
+↝-det SUB-OP     SUB-OP     = refl
 
 -- the congruences: normalise the grade premises (they are irrelevant), then
 -- rebuild both reducts from the sub-derivations' equality
@@ -194,6 +235,8 @@ handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-gra
 ↝-det (HANDLE-STEP {H = H} {N = N} r p) (HANDLE-STEP r' p')
   rewrite ≾ᵣ-irrelevant p (step-grade-≾ r) | ≾ᵣ-irrelevant p' (step-grade-≾ r') =
   cong (handle-step H N) (↝-det r r')
+↝-det (SUB-STEP {p = p} {q = q} r) (SUB-STEP r') =
+  cong (sub-step p q) (↝-det r r')
 
 -- a congruence against a whnf scrutinee cannot happen
 ↝-det (SEQ-STEP r _)    SEQ-RET          = ⊥-elim (finality-ret r)
@@ -204,6 +247,10 @@ handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-gra
 ↝-det HANDLE-RET        (HANDLE-STEP r _) = ⊥-elim (finality-ret r)
 ↝-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
 ↝-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
+↝-det (SUB-STEP r)      SUB-RET          = ⊥-elim (finality-ret r)
+↝-det SUB-RET           (SUB-STEP r)     = ⊥-elim (finality-ret r)
+↝-det (SUB-STEP r)      SUB-OP           = ⊥-elim (finality-perform r)
+↝-det SUB-OP            (SUB-STEP r)     = ⊥-elim (finality-perform r)
 
 Op-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
 Op-run {A} cf =

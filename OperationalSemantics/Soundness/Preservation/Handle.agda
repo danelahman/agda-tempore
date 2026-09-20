@@ -145,9 +145,13 @@ step-pv bc HANDLE-RET        pv = pv
 step-pv bc HANDLE-OP         pv = pv
 step-pv bc BOX               pv = pv
 step-pv bc UNBOX             pv = pv
-step-pv bc COERCE            pv = pv
+step-pv bc SUB-APP           pv = pv
+step-pv bc SUB-IF            pv = pv
+step-pv bc SUB-RET           pv = pv
+step-pv bc SUB-OP            pv = pv
 step-pv bc (SEQ-STEP r c)    pv = step-pv bc r pv
 step-pv bc (HANDLE-STEP r c) pv = step-pv bc r pv
+step-pv bc (SUB-STEP r)      pv = step-pv bc r pv
 step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ of-natʳ τ ⟩ᶠ pv
 
 -- The step transition commutes with the handler, by induction on the
@@ -187,10 +191,15 @@ alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-RET pv f = alg-ηᵀ alg alg-≤ pv 
 alg-stepᵀ bc alg alg-≤ alg-delay HANDLE-OP  pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay BOX        pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ bc alg alg-≤ alg-delay UNBOX      pv f = alg-ηᵀ alg alg-≤ pv f
-alg-stepᵀ bc alg alg-≤ alg-delay COERCE     pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-APP    pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-IF     pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-RET    pv f = alg-ηᵀ alg alg-≤ pv f
+alg-stepᵀ bc alg alg-≤ alg-delay SUB-OP     pv f = alg-ηᵀ alg alg-≤ pv f
 alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (SEQ-STEP r c) pv f =
   alg-stepᵀ {B = B} bc alg alg-≤ alg-delay r pv f
 alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (HANDLE-STEP r c) pv f =
+  alg-stepᵀ {B = B} bc alg alg-≤ alg-delay r pv f
+alg-stepᵀ {B = B} bc alg alg-≤ alg-delay (SUB-STEP r) pv f =
   alg-stepᵀ {B = B} bc alg alg-≤ alg-delay r pv f
 alg-stepᵀ {ε = ε} {ε₂ = ε₂} {B = B} bc alg alg-≤ alg-delay (DELAY {τ = τ}) pv f =
   -- Both sides reach the same normal form: the tick, with the *whole* bind
@@ -377,9 +386,13 @@ step-pv-state SEQ-OP     pS pM = id-suc-step _ _
 step-pv-state HANDLE-RET pS pM = id-suc-step _ _
 step-pv-state HANDLE-OP  pS pM = id-suc-step _ _
 step-pv-state UNBOX      pS pM = id-suc-step _ _
-step-pv-state COERCE     pS pM = id-suc-step _ _
+step-pv-state SUB-APP    pS pM = id-suc-step _ _
+step-pv-state SUB-IF     pS pM = id-suc-step _ _
+step-pv-state SUB-RET    pS pM = id-suc-step _ _
+step-pv-state SUB-OP     pS pM = id-suc-step _ _
 step-pv-state (SEQ-STEP r c)    pS (pM , _) = step-pv-state r pS pM
 step-pv-state (HANDLE-STEP r c) pS (pM , _) = step-pv-state r pS pM
+step-pv-state (SUB-STEP r)      pS pM       = step-pv-state r pS pM
 step-pv-state (BOX {V = V}) pS (pV , _) =
   ≈ᵐ-sym
     (  ∘ᵐ-congˡ (∘ᵐ-congˡ (⟨⟩-≤-id _) ∙ ∘ᵐ-identityˡ _)

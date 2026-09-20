@@ -2,6 +2,7 @@
 -- States up to the term equivalence, and inverting a cast.
 ------------------------------------------------------------------------
 
+open import Data.Empty
 open import Data.Product
 
 open import Syntax.Grades
@@ -193,13 +194,21 @@ cast-box⁻ : ∀ {Γ Γ' A C ρ} → (e : Γ' ≡ Γ)
          × (M ≡ castᶜ (cong (_∷ [ ρ ] A) e) M')
 cast-box⁻ refl _ refl = _ , _ , refl , refl , refl
 
-cast-coerce⁻ : ∀ {Γ Γ' A ε ε'} → (e : Γ' ≡ Γ) → {p : ε ≾ₑ ε'}
-          → {M : Γ ⊢C⦂ A ‼ ε}
-          → (P' : Γ' ⊢C⦂ A ‼ ε')
-          → coerce p M ≡ castᶜ e P'
-          → Σ[ p' ∈ (ε ≾ₑ ε') ] Σ[ M' ∈ (Γ' ⊢C⦂ A ‼ ε) ]
-              (P' ≡ coerce p' M') × (M ≡ castᶜ e M')
-cast-coerce⁻ refl _ refl = _ , _ , refl , refl
+cast-sub⁻ : ∀ {Γ Γ' C C'} → (e : Γ' ≡ Γ) → {p : C <:ᶜ C'}
+          → {M : Γ ⊢C⦂ C}
+          → (P' : Γ' ⊢C⦂ C')
+          → subC M p ≡ castᶜ e P'
+          → Σ[ p' ∈ (C <:ᶜ C') ] Σ[ M' ∈ (Γ' ⊢C⦂ C) ]
+              (P' ≡ subC M' p') × (M ≡ castᶜ e M')
+cast-sub⁻ refl _ refl = _ , _ , refl , refl
+
+cast-subV⁻ : ∀ {Γ Γ' A A'} → (e : Γ' ≡ Γ) → {p : A <:ᵛ A'}
+           → {V : Γ ⊢V⦂ A}
+           → (W' : Γ' ⊢V⦂ A')
+           → subV V p ≡ castᵛ e W'
+           → Σ[ p' ∈ (A <:ᵛ A') ] Σ[ V' ∈ (Γ' ⊢V⦂ A) ]
+               (W' ≡ subV V' p') × (V ≡ castᵛ e V')
+cast-subV⁻ refl _ refl = _ , _ , refl , refl
 
 cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
           → {M : Γ ⊢C⦂ A ‼ ε}
@@ -229,16 +238,17 @@ cast-handle⁻ : ∀ {Γ Γ' A B ε ε'} → (e : Γ' ≡ Γ)
             × (N ≡ castᶜ (cong (λ Γ₁ → Γ₁ ⟨ mapᵉ ε ⟩ ∷ A) e) N')
 cast-handle⁻ refl _ refl = _ , _ , _ , refl , refl , (λ op ε'' → refl) , refl
 
-cast-unbox⁻ : ∀ {Γ Γ' A C ρ ρ'} → (e : Γ' ≡ Γ)
-         → {x : [ ρ ] A ∈[ ρ' ] Γ} → {rel : ρ' ≾ᵣ ρ} → {M : Γ ∷ A ⊢C⦂ C}
+cast-unbox⁻ : ∀ {Γ Γ' A A₀ C ρ ρ'} → (e : Γ' ≡ Γ)
+         → {x : [ ρ ] A₀ ∈[ ρ' ] Γ} → {rel : ρ' ≾ᵣ ρ} → {p : A₀ <:ᵛ A}
+         → {M : Γ ∷ A ⊢C⦂ C}
          → (P' : Γ' ⊢C⦂ C)
-         → unbox x rel M ≡ castᶜ e P'
-         → Σ[ ρ'' ∈ R ] Σ[ x' ∈ ([ ρ ] A ∈[ ρ'' ] Γ') ] Σ[ rel' ∈ (ρ'' ≾ᵣ ρ) ]
-           Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
-             (P' ≡ unbox x' rel' M')
-           × (_≡_ {A = Var Γ ([ ρ ] A)} (ρ' , x) (Var-cast e (ρ'' , x')))
+         → unbox x rel p M ≡ castᶜ e P'
+         → Σ[ ρ'' ∈ R ] Σ[ x' ∈ ([ ρ ] A₀ ∈[ ρ'' ] Γ') ] Σ[ rel' ∈ (ρ'' ≾ᵣ ρ) ]
+           Σ[ p' ∈ (A₀ <:ᵛ A) ] Σ[ M' ∈ (Γ' ∷ A ⊢C⦂ C) ]
+             (P' ≡ unbox x' rel' p' M')
+           × (_≡_ {A = Var Γ ([ ρ ] A₀)} (ρ' , x) (Var-cast e (ρ'' , x')))
            × (M ≡ castᶜ (cong (_∷ A) e) M')
-cast-unbox⁻ refl _ refl = _ , _ , _ , _ , refl , refl , refl
+cast-unbox⁻ refl _ refl = _ , _ , _ , _ , _ , refl , refl , refl
 
 -- The reducts are built by renaming, substitution and retyping, each of
 -- which commutes with a cast.
@@ -248,6 +258,29 @@ cast-app-reduct : ∀ {Γ Γ' A C} → (e : Γ' ≡ Γ)
          → (castᶜ (cong (_∷ A) e) M') [ split-[] ↦ castᵛ e W' ]c
          ≡ castᶜ e (M' [ split-[] ↦ W' ]c)
 cast-app-reduct refl M' W' = refl
+
+-- The two projections commute with a context equality: a one-clause
+-- induction on the value, the variable clause being absurd.
+
+fstᵛ-cast : ∀ {A B} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
+          → (V : toCtx St ⊢V⦂ A |×| B)
+          → fstᵛ (castᵛ e V) ≡ castᵛ e (fstᵛ V)
+fstᵛ-cast e (var _ x)           = ⊥-elim (⦉⦊-not-in-toCtx x)
+fstᵛ-cast e ⦉ V , W ⦊           = cong fstᵛ (cast-pair e {V} {W})
+fstᵛ-cast e (subV V (p |×|ₛ _)) =
+  trans (cong fstᵛ (cast-subV e {V = V}))
+        (trans (cong (λ z → subV z p) (fstᵛ-cast e V))
+               (sym (cast-subV e)))
+
+sndᵛ-cast : ∀ {A B} {St St' : 𝕊 []} → (e : toCtx St ≡ toCtx St')
+          → (V : toCtx St ⊢V⦂ A |×| B)
+          → sndᵛ (castᵛ e V) ≡ castᵛ e (sndᵛ V)
+sndᵛ-cast e (var _ x)           = ⊥-elim (⦉⦊-not-in-toCtx x)
+sndᵛ-cast e ⦉ V , W ⦊           = cong sndᵛ (cast-pair e {V} {W})
+sndᵛ-cast e (subV V (_ |×|ₛ q)) =
+  trans (cong sndᵛ (cast-subV e {V = V}))
+        (trans (cong (λ z → subV z q) (sndᵛ-cast e V))
+               (sym (cast-subV e)))
 
 cast-match-reduct : ∀ {Γ Γ' A B C} → (e : Γ' ≡ Γ)
            → (M' : Γ' ∷ A ∷ B ⊢C⦂ C) → (V' : Γ' ⊢V⦂ A) → (W' : Γ' ⊢V⦂ B)

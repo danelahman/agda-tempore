@@ -65,15 +65,16 @@ mutual
                      -----------------------------------------
                    → ⟨ S , lam M · V ⟩ ↝ ⟨ S , M [ split-[] ↦ V ]c ⟩
 
-        -- matching: substitute the pair's two components
+        -- matching: substitute the pair's two components, read off the
+        -- scrutinee by `fstᵛ`/`sndᵛ`
         MATCH      : ∀ {A B C}
                    → {S : 𝕊 []}
-                   → {V : toCtx S ⊢V⦂ A }
-                   → {W : toCtx S ⊢V⦂ B }
-                   → {M : toCtx S ∷ A ∷ B ⊢C⦂ C} 
+                   → {P : toCtx S ⊢V⦂ A |×| B}
+                   → {M : toCtx S ∷ A ∷ B ⊢C⦂ C}
                      ---------------------------------------------------
-                   → ⟨ S , match ⦉ V , W ⦊ `in M ⟩ ↝ 
-                     ⟨ S , (M [ split-[] ↦ V-rename wk-ren W ]c) [ split-[] ↦ V ]c ⟩
+                   → ⟨ S , match P `in M ⟩ ↝
+                     ⟨ S , (M [ split-[] ↦ V-rename wk-ren (sndᵛ P) ]c)
+                             [ split-[] ↦ fstᵛ P ]c ⟩
 
         -- boolean elimination: take the branch the scrutinee names
         IF-TRUE    : ∀ {C}
@@ -226,23 +227,69 @@ mutual
 
         -- unbox: look the resource up in the state and substitute it into the
         -- continuation
-        UNBOX       : ∀ {A C ρ ρ'}
+        UNBOX       : ∀ {A A₀ C ρ ρ'}
                     → {S : 𝕊 []}
-                    → {z : [ ρ ] A ∈[ ρ' ] toCtx S}
+                    → {z : [ ρ ] A₀ ∈[ ρ' ] toCtx S}
                     → {rel : ρ' ≾ᵣ ρ}
+                    → {p : A₀ <:ᵛ A}
                     → {M : toCtx S ∷ A ⊢C⦂ C}
                       ----------------------------------------------------------
-                    → ⟨ S , unbox z rel M ⟩ ↝
-                      ⟨ S , M [ split-[] ↦ unbox-lookup S z rel ]c ⟩
+                    → ⟨ S , unbox z rel p M ⟩ ↝
+                      ⟨ S , M [ split-[] ↦ subV (unbox-lookup S z rel) p ]c ⟩
 
-        -- coerce: peeled off during execution, refining the computation's effect
-        COERCE      : ∀ {A ε ε'}
+        -- subsumption at an eliminated function: the coercion splits, the
+        -- domain half moving onto the argument
+        SUB-APP     : ∀ {A A₁ C C₁}
                     → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ A₁ ⇒ C₁}
+                    → {W : toCtx S ⊢V⦂ A}
+                    → {q : A <:ᵛ A₁}
+                    → {r : C₁ <:ᶜ C}
+                      ------------------------------------------------------
+                    → ⟨ S , subV V (q ⇒ₛ r) · W ⟩ ↝ ⟨ S , subC (V · subV W q) r ⟩
+
+        -- subsumption at a scrutinised boolean: `Bool <:ᵛ Bool` is the
+        -- identity, so it is simply dropped
+        SUB-IF      : ∀ {C}
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ Bool}
+                    → {M N : toCtx S ⊢C⦂ C}
+                      -------------------------------------------------------
+                    → ⟨ S , if subV V Boolₛ `then M `else N ⟩ ↝
+                      ⟨ S , if V `then M `else N ⟩
+
+        -- subsumption at a returned value: absorbed by the value
+        SUB-RET     : ∀ {A A' ε'}
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ A}
+                    → {p : A <:ᵛ A'}
+                    → {q : uₑ ≾ₑ ε'}
+                      ------------------------------------------------------
+                    → ⟨ S , subC (return V) (p ‼ₛ q) ⟩ ↝ ⟨ S , return (subV V p) ⟩
+
+        -- subsumption at a performed operation: pushed into the continuation
+        SUB-OP      : ∀ {A A' ε ε' op}
+                    → {S : 𝕊 []}
+                    → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
+                    → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
+                    → {p : A <:ᵛ A'}
+                    → {q : op-grade op ·ₑ ε ≾ₑ ε'}
+                      -----------------------------------------------------------
+                    → ⟨ S , subC (perform op V M) (p ‼ₛ q) ⟩ ↝
+                      ⟨ S , perform op V (subC M (p ‼ₛ ≾ₑ-refl)) ⟩
+
+        -- subsumption elsewhere: step underneath it, the effect half of the
+        -- coercion discharged by the step's own refinement
+        SUB-STEP    : ∀ {A A' ε ε' ε''}
+                    → {S S' : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε}
-                    → {ε≾ε' : ε ≾ₑ ε'}
-                      ----------------------------------
-                    → ⟨ S , coerce ε≾ε' M ⟩ ↝ ⟨ S , M ⟩
- 
+                    → {M' : toCtx S' ⊢C⦂ A ‼ ε''}
+                    → {p : A <:ᵛ A'}
+                    → {q : ε ≾ₑ ε'}
+                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+                      ---------------------------------------------------
+                    → ⟨ S , subC M (p ‼ₛ q) ⟩ ↝ ⟨ S' , subC M' (p ‼ₛ ≾ₑ-refl) ⟩
+
     -- reduction steps only extend states
     --
     -- The two value types are independent here (they are equal, by
@@ -270,7 +317,11 @@ mutual
     step-extends-state HANDLE-OP            = id-suc
     step-extends-state BOX                  = ∷-suc (V-rename (eq-ren (sym ++ᶜ-identityˡ)) _) id-suc
     step-extends-state UNBOX                = id-suc
-    step-extends-state COERCE               = id-suc
+    step-extends-state SUB-APP              = id-suc
+    step-extends-state SUB-IF               = id-suc
+    step-extends-state SUB-RET              = id-suc
+    step-extends-state SUB-OP               = id-suc
+    step-extends-state (SUB-STEP M↝M')      = step-extends-state M↝M'
 
 -- reduction steps preserve the value type
 
@@ -295,7 +346,11 @@ step-preserves-type (HANDLE-STEP _ _) = refl
 step-preserves-type HANDLE-OP        = refl
 step-preserves-type BOX              = refl
 step-preserves-type UNBOX            = refl
-step-preserves-type COERCE           = refl
+step-preserves-type SUB-APP          = refl
+step-preserves-type SUB-IF           = refl
+step-preserves-type SUB-RET          = refl
+step-preserves-type SUB-OP           = refl
+step-preserves-type (SUB-STEP _)     = refl
 
 -- Reduction steps make effects more precise, in cancelled form: the grade δ by
 -- which the state grew, composed with the residual effect ε', stays below the
@@ -348,10 +403,16 @@ step-grade-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
     (trans
       (·ᵣ-identityˡ _)
       (cong mapᵉ (sym (·ₑ-assoc (op-grade op) ε ε''))))
-step-grade-≾ BOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ UNBOX = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ (COERCE {ε≾ε' = ε≾ε'}) =
-  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ ε≾ε')
+step-grade-≾ BOX     = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ UNBOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ SUB-APP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ SUB-IF  = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ (SUB-RET {q = q}) =
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
+step-grade-≾ (SUB-OP {q = q}) =
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
+step-grade-≾ (SUB-STEP {q = q} step) =
+  ≾ᵣ-trans (step-grade-≾ step) (map-monotoneᵉ q)
 
 -- invariants preserved by the small-step operational semantics, stated in
 -- terms of the two states' grades

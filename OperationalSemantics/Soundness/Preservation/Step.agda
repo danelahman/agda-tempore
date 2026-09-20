@@ -54,6 +54,7 @@ open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -662,7 +663,37 @@ step-box UNBOX c g pS pM =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box COERCE c g pS pM =
+step-box SUB-APP c g pS pM =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box SUB-IF c g pS pM =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box SUB-RET c g pS pM =
+    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
+                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
+  ∙ ηᵀ-nat _
+
+step-box SUB-OP c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -677,6 +708,7 @@ step-box COERCE c g pS pM =
 
 step-box (SEQ-STEP r c') c g pS (pM , pN) = step-box r c g pS pM
 step-box (HANDLE-STEP r c') c g pS (pM , pN , pH , uH) = step-box r c g pS pM
+step-box (SUB-STEP r) c g pS pM = step-box r c g pS pM
 
 -- BOX: allocation. `stepᵀ` is still `ηᵀ`; the `fstᵐ` that `suc-comp-ren`
 -- contributes cancels exactly the cell just written.
@@ -918,3 +950,48 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c pS pM pN 
   -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
   ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
 
+
+-- `SUB-STEP`: the subsumption passes through the bind. Its value half crosses
+-- the multiplication (`μᵀ-nat`) and lands on the reduct; its effect half meets
+-- the sub-step's own refinement.
+
+sound-SUB-STEP : ∀ {ε ε' ε'' A A'} {S S' : 𝕊 []}
+  → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε''}
+  → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
+  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
+  → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pM' : Paramᶜ M')
+  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+    ≈ᵐ T-≤ (step-≾ r)
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε''}
+              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
+  → ⟦ subC M (p ‼ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+    ≈ᵐ T-≤ (step-≾ (SUB-STEP {p = p} {q = q} r))
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A' ⟧ᵛ} {step-grade r} {ε''}
+              (⟦ subC M' (p ‼ₛ ≾ₑ-refl) ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+              (stepᵀ r)
+sound-SUB-STEP {S = S} {S' = S'} {M' = M'} p q r pS pM pM' ih =
+    ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ ih
+  ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ (step-≾ r)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-trans (step-≾ r) q _)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym bind-push)
+  where
+    f = ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
+
+    bind-push : (⟦ subC M' (p ‼ₛ ≾ₑ-refl) ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
+                  ⋄ stepᵀ r
+              ≈ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ (f ⋄ stepᵀ r)
+    bind-push =
+        ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+            (  ∘ᵐ-congˡ (∘ᵐ-congˡ (∘ᵐ-congʳ (T-≤-refl ≾ₑ-refl) ∙ ∘ᵐ-identityʳ _))
+             ∙ ∘ᵐ-assoc _ _ _)))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _))
+      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+      ∙ ∘ᵐ-congˡ (μᵀ-nat ⟦ p ⟧<:ᵛ)
+      ∙ ∘ᵐ-assoc _ _ _

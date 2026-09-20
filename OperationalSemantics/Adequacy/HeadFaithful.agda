@@ -120,7 +120,11 @@ step-delays (HANDLE-STEP r _)  d = step-delays r d
 step-delays HANDLE-OP          d = η-step d
 step-delays BOX                d = η-step d
 step-delays UNBOX              d = η-step d
-step-delays COERCE             d = η-step d
+step-delays SUB-APP            d = η-step d
+step-delays SUB-IF             d = η-step d
+step-delays SUB-RET            d = η-step d
+step-delays SUB-OP             d = η-step d
+step-delays (SUB-STEP r)       d = step-delays r d
 
 stepsᵀ-delays : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
               → (rs : cf ↝* cf')
@@ -290,7 +294,11 @@ uniform↝ (HANDLE-STEP r _)   (pM , _)  = uniform↝ r pM
 uniform↝ HANDLE-OP           _         = tt
 uniform↝ BOX                 _         = tt
 uniform↝ UNBOX               _         = tt
-uniform↝ COERCE              _         = tt
+uniform↝ SUB-APP             _         = tt
+uniform↝ SUB-IF              _         = tt
+uniform↝ SUB-RET             _         = tt
+uniform↝ SUB-OP              _         = tt
+uniform↝ (SUB-STEP r)        pM        = uniform↝ r pM
 
 uniform↝* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
           → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf)
@@ -327,19 +335,22 @@ op-whnf-shape {St = St} {op = op} W M' pSt pW pM' =
   , ≈ᵐ-trans (∘ᵐ-assoc (opᵀ op) _ (⟦ St ⟧ˢ pSt))
              (∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ (⟦ St ⟧ˢ pSt)))
 
--- A base-typed value's leaf is a constant's (`base-canonical`); the state's
--- environment is absorbed by the terminal object.
+-- A base-typed value's leaf is a constant's, the constant read through the
+-- subsumption spine (`base-val`); the state's environment is absorbed by the
+-- terminal object, and a spine link by `⟦ Baseₛ refl ⟧<:ᵛ ≡ idᵐ`.
 
 base-leaf-const : ∀ {b} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ Base b)
                 → (pSt : Paramˢ St) → (pV : Paramᵛ V)
                 → Σ[ c ∈ BaseConstants b ]
-                    (V ≡ const c)
+                    (base-val V ≡ const c)
                   × (⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
                        ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ))
 
-base-leaf-const {St = St} V pSt pV with base-canonical V
-base-leaf-const {St = St} .(const c) pSt pV | c , refl =
+base-leaf-const (var f x) pSt pV = ⊥-elim (Base-not-in-toCtx x)
+base-leaf-const {St = St} (const c) pSt pV =
     c , refl
   , ≈ᵐ-trans (∘ᵐ-assoc ηᵀ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ) (⟦ St ⟧ˢ pSt))
       (∘ᵐ-congʳ (≈ᵐ-trans (∘ᵐ-assoc ⟦ c ⟧ᵇᶜ terminalᵐ (⟦ St ⟧ˢ pSt))
                           (∘ᵐ-congʳ terminalᵐ-unique)))
+base-leaf-const (subV V (Baseₛ refl)) pSt pV with base-leaf-const V pSt pV
+... | c , e , eq = c , e , ≈ᵐ-trans (∘ᵐ-congˡ (∘ᵐ-congʳ (∘ᵐ-identityˡ _))) eq
