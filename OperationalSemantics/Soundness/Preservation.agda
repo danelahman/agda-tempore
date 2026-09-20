@@ -64,6 +64,7 @@ open GroundTypes GTy using (⟦_⟧ᵍ)
 open Monad Mon
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.Contexts S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms S Cat Fut Pst Adj GTy Mon GE
@@ -140,8 +141,8 @@ delay-nf {ε = ε} τ env f =
 
 -- The coercion escapes the bind, for the transition of any step.
 
-T-≤-stepᵀ : ∀ {ε ε' εa εb A} {S S' : 𝕊 []} → (B : Obj)
-          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+T-≤-stepᵀ : ∀ {ε ε' εa εb A A₀} {S S' : 𝕊 []} → (B : Obj)
+          → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε'}
           → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
           → (g : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)
           → μᵀ ∘ᵐ Tᶠ (T-≤ q ∘ᵐ g) ∘ᵐ stepᵀ r
@@ -158,12 +159,10 @@ T-≤-stepᵀ B BOX         g q = ηᵀ-case g q
 T-≤-stepᵀ B UNBOX       g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-APP     g q = ηᵀ-case g q
 T-≤-stepᵀ B SUB-IF      g q = ηᵀ-case g q
-T-≤-stepᵀ B SUB-RET     g q = ηᵀ-case g q
-T-≤-stepᵀ B SUB-OP      g q = ηᵀ-case g q
+T-≤-stepᵀ B SUB         g q = ηᵀ-case g q
 -- the congruences transition exactly as their sub-reduction does
 T-≤-stepᵀ B (SEQ-STEP r _)    g q = T-≤-stepᵀ B r g q
 T-≤-stepᵀ B (HANDLE-STEP r _) g q = T-≤-stepᵀ B r g q
-T-≤-stepᵀ B (SUB-STEP r)      g q = T-≤-stepᵀ B r g q
 -- the one rule that advances time
 T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
   -- the coercion is under the delay's box; `delayᵀ-≤` pulls it out, and the two
@@ -196,14 +195,13 @@ T-≤-stepᵀ {εa = εa} {εb = εb} B (DELAY {τ = τ}) g q =
 -- `Paramᶜ`, so a reduction assumes nothing on top of it and every case is `⊤`.
 -- It stays a predicate so the soundness statements can take it uniformly.
 
-Uniform↝ : ∀ {ε ε' A} {S S' : 𝕊 []}
-         → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+Uniform↝ : ∀ {ε ε' A A₀} {S S' : 𝕊 []}
+         → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε'}
          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramᶜ M
          → Set
 Uniform↝ HANDLE-OP           _            = ⊤
 Uniform↝ (SEQ-STEP r _)      (pM , _)     = Uniform↝ r pM
 Uniform↝ (HANDLE-STEP r _)   (pM , _)     = Uniform↝ r pM
-Uniform↝ (SUB-STEP r)        pM           = Uniform↝ r pM
 Uniform↝ APP                 _            = ⊤
 Uniform↝ MATCH               _            = ⊤
 Uniform↝ IF-TRUE             _            = ⊤
@@ -216,15 +214,14 @@ Uniform↝ BOX                 _            = ⊤
 Uniform↝ UNBOX               _            = ⊤
 Uniform↝ SUB-APP             _            = ⊤
 Uniform↝ SUB-IF              _            = ⊤
-Uniform↝ SUB-RET             _            = ⊤
-Uniform↝ SUB-OP              _            = ⊤
+Uniform↝ SUB                 _            = ⊤
 
 -- The computation's certificate across a step: every reduct is built from the
 -- source's pieces by renaming, substitution and retyping, each of which
 -- transports parametricity.
 
-stepᴾᶜ : ∀ {ε ε' A} {S S' : 𝕊 []}
-       → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+stepᴾᶜ : ∀ {ε ε' A A₀} {S S' : 𝕊 []}
+       → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε'}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramᶜ M'
 stepᴾᶜ (APP {M = M} {V = V})            pS (pM , pV)  = subᶜ M split-[] V pM pV
 stepᴾᶜ (MATCH {S = St} {P = P} {M = M}) pS (pP , pM) =
@@ -235,7 +232,9 @@ stepᴾᶜ (MATCH {S = St} {P = P} {M = M}) pS (pP , pM) =
     (fstᵛᴾ St P pP)
 stepᴾᶜ (SEQ-STEP {N = N} r c)           pS (pM , pN)  =
   stepᴾᶜ r pS pM
-  , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
+  , narrowᴾ (step-refines-type r)
+      (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
+      (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
 stepᴾᶜ (SEQ-RET {V = V} {N = N})        pS (pV , pN)  = ret-subᴾ V N pV pN
 stepᴾᶜ (SEQ-OP {op = op} {S = S} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) =
   ε-substᴾ (sym (·ₑ-assoc (op-grade op) _ _))
@@ -247,7 +246,9 @@ stepᴾᶜ DELAY                            pS pM         = pM
 stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ V N pV pN
 stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
   stepᴾᶜ r pS pM
-  , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN
+  , narrowᴾ (step-refines-type r)
+      (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
+      (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
   , (λ op ε₃ → renᶜ (cong-∷-ren (cong-∷-ren
                        (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
                     (H op ε₃) (pH op ε₃))
@@ -269,98 +270,105 @@ stepᴾᶜ (UNBOX {S = S} {z = z} {rel = rel} {p = p} {M = M}) pS pM =
   subᶜ M split-[] (subV (unbox-lookup S z rel) p) pM (unbox-lookupᴾ S z rel pS)
 stepᴾᶜ SUB-APP                          pS pM         = pM
 stepᴾᶜ SUB-IF                           pS pM         = pM
-stepᴾᶜ SUB-RET                          pS pM         = pM
-stepᴾᶜ SUB-OP                           pS pM         = pM
-stepᴾᶜ (SUB-STEP r)                     pS pM         = stepᴾᶜ r pS pM
+stepᴾᶜ SUB                              pS pM         = pM
 
 -- Both halves at once, for a configuration.
 
-stepᴾᶜᶠ : ∀ {ε ε' A} {S S' : 𝕊 []}
-        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+stepᴾᶜᶠ : ∀ {ε ε' A A₀} {S S' : 𝕊 []}
+        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε'}
         → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → (p : Paramᶜᶠ (⟨ S , M ⟩))
         → Paramᶜᶠ (⟨ S' , M' ⟩)
 stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
-↝-sound : ∀ {ε ε' A} {S S' : 𝕊 []}
-        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+↝-sound : ∀ {ε ε' A A₀} {S S' : 𝕊 []}
+        → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε'}
         → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
         → (pS : Paramˢ S) → (pM : Paramᶜ M)
         → Uniform↝ r pM
         → ⟦ ⟨ S , M ⟩ ⟧ᶜᶠ (pS , pM)
         ≈ᵐ T-≤ (step-≾ r)
-           ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε'}
+           ∘ᵐ Tᶠ ⟦ step-refines-type r ⟧<:ᵛ
+           ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {step-grade r} {ε'}
                   (⟦ ⟨ S' , M' ⟩ ⟧ᶜᶠ (stepᴾᶜᶠ r (pS , pM))) (stepᵀ r)
 
 -- The rules that neither advance time nor change the store: a plain equation
 -- between the two denotations, with `ηᵀ`'s unit grade absorbed by `T-≤`.
 
-↝-sound r@(APP {M = M} {V = V}) pS (pM , pV) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-APP M V pM pV))
-↝-sound r@(MATCH {S = St} {P = P} {M = M}) pS (pP , pM) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH St P M pP pM))
-↝-sound r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) _ =
+↝-sound {A = A} r@(APP {M = M} {V = V}) pS (pM , pV) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-APP M V pM pV)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(MATCH {S = St} {P = P} {M = M}) pS (pP , pM) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-MATCH St P M pP pM)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(SEQ-OP {op = op} {V = V} {M = M} {N = N}) pS ((pV , pM) , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SEQ-OP op V M N pV pM pN))
-↝-sound r@(IF-TRUE {M = M} {N = N}) pS (_ , pM , pN) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-TRUE M N pM pN))
-↝-sound r@(IF-FALSE {M = M} {N = N}) pS (_ , pM , pN) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-FALSE M N pM pN))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(IF-TRUE {M = M} {N = N}) pS (_ , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-TRUE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(IF-FALSE {M = M} {N = N}) pS (_ , pM , pN) _ =
+  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-IF-FALSE M N pM pN)) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- Allocation and lookup: also plain equations, but ones that mention the store.
 
-↝-sound r@(BOX {S = St} {V = V} {M = M}) pS (pV , pM) _ =
-  pure-step-≡ (step-≾ r) (sound-BOX St V M pS pV pM)
-↝-sound r@(UNBOX {S = St} {z = z} {rel = rel} {p = p} {M = M}) pS pM _ =
-  pure-step-≡ (step-≾ r) (sound-UNBOX St z rel p M pS pM)
+↝-sound {A = A} r@(BOX {S = St} {V = V} {M = M}) pS (pV , pM) _ =
+  pure-step-≡ (step-≾ r) (sound-BOX St V M pS pV pM) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(UNBOX {S = St} {z = z} {rel = rel} {p = p} {M = M}) pS pM _ =
+  pure-step-≡ (step-≾ r) (sound-UNBOX St z rel p M pS pM) ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- The `return` rules: the coercion the substitution leaves behind is `ε-substᵀ`,
 -- which `T-≤-≡` turns into the sub-effecting the theorem asks for.
 
-↝-sound r@(SEQ-RET {V = V} {N = N}) pS (pV , pN) _ =
+↝-sound {A = A} r@(SEQ-RET {V = V} {N = N}) pS (pV , pN) _ =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
     (∘ᵐ-congˡ (sound-SEQ-RET V N pV pN) ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
-↝-sound r@(HANDLE-RET {V = V} {H = H} {N = N}) pS (pV , pN , pH , uH) _ =
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} r@(HANDLE-RET {V = V} {H = H} {N = N}) pS (pV , pN , pH , uH) _ =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-identityˡ _)))
     (∘ᵐ-congˡ (sound-HANDLE-RET V H N pV pN pH uH)
      ∙ ∘ᵐ-assoc _ _ _ ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
--- Peeling a subsumption: at an eliminator it splits (`SUB-APP`, `SUB-IF`); at a
--- weak head normal form its value half is absorbed and its effect half becomes
--- the step's own refinement (`SUB-RET`, `SUB-OP`).
+-- Peeling a subsumption: at an eliminated function it splits (`SUB-APP`), at a
+-- scrutinised boolean it is the identity (`SUB-IF`), and at a computation it is
+-- discarded (`SUB`) — in the first and third the codomain half becomes the
+-- step's own refinement of both components.
 
-↝-sound r@(SUB-APP {V = V} {W = W} {q = q} {r = s}) pS (pV , pW) _ =
-  pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-APP V W q s pV pW))
-↝-sound r@(SUB-IF {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
+↝-sound {A = A} r@(SUB-APP {V = V} {W = W} {q = q} {r = p ‼ₛ s}) pS (pV , pW) _ =
+  pure-step<: (step-≾ r) p s
+    (∘ᵐ-congˡ (sound-SUB-APP V W q (p ‼ₛ s) pV pW)
+     ∙ ∘ᵐ-assoc _ _ _
+     ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ s)
+     ∙ ∘ᵐ-assoc _ _ _)
+↝-sound {A = A} r@(SUB-IF {V = V} {M = M} {N = N}) pS (pV , pM , pN) _ =
   pure-step-≡ (step-≾ r) (∘ᵐ-congˡ (sound-SUB-IF V M N pV pM pN))
-↝-sound r@(SUB-RET {V = V} {p = p} {q = q}) pS pV _ =
-  pure-step (step-≾ r) q (∘ᵐ-congˡ (sound-SUB-RET V p q pV) ∙ ∘ᵐ-assoc _ _ _)
-↝-sound r@(SUB-OP {V = V} {M = M} {p = p} {q = q}) pS (pV , pM) _ =
-  pure-step (step-≾ r) q (∘ᵐ-congˡ (sound-SUB-OP V M p q pV pM) ∙ ∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} {S = St} r@(SUB {M = M₀} {w = p ‼ₛ q}) pS pM _ =
+  pure-step<: (step-≾ r) p q (sound-SUB {S = St} {M = M₀} p q pS pM)
 
 -- The one rule that advances time.
 
-↝-sound r@(DELAY {τ = τ} {S = St} {M = M}) pS pM _ =
-  sound-DELAY τ St M (step-≾ r) pS pM
+↝-sound {A = A} r@(DELAY {τ = τ} {S = St} {M = M}) pS pM _ =
+  sound-DELAY τ St M (step-≾ r) pS pM ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- The congruence rules: the inductive hypothesis is pushed through the strength
 -- and multiplied, the environment carried across the step by `step-box`.
 
-↝-sound (SEQ-STEP {N = N} r c) pS (pM , pN) u =
+↝-sound {A = A} (SEQ-STEP {N = N} r c) pS (pM , pN) u =
   sound-SEQ-STEP N r c pS pM pN (stepᴾᶜ r pS pM) (↝-sound r pS pM u)
-↝-sound (HANDLE-STEP {H = H} {N = N} r c) pS (pM , pN , pH , uH) u =
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
+↝-sound {A = A} (HANDLE-STEP {H = H} {N = N} r c) pS (pM , pN , pH , uH) u =
   sound-HANDLE-STEP H N r c pS pM pN (stepᴾᶜ r pS pM) pH uH (↝-sound r pS pM u)
-↝-sound (SUB-STEP {p = p} {q = q} r) pS pM u =
-  sound-SUB-STEP p q r pS pM (stepᴾᶜ r pS pM) (↝-sound r pS pM u)
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 -- Handling an operation: the clause is applied, with the handled remainder
 -- boxed up as its continuation. This is the only rule that reads a clause; its
 -- parametricity comes from the term's own `Paramᶜ` certificate.
 
-↝-sound {S = S} r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N})
+↝-sound {A = A} {S = S} r@(HANDLE-OP {op = op} {V = V} {M = M} {H = H} {N = N})
         pS ((pV , pM) , pN , pH , uH) u =
   pure-step (step-≾ r) (≾ₑ-reflexive (sym (·ₑ-assoc (op-grade op) _ _)))
     (∘ᵐ-congˡ (sound-HANDLE-OP op V M H N pV pM pN pH uH)
      ∙ ∘ᵐ-assoc _ _ _
      ∙ ∘ᵐ-congˡ (T-≤-≡ _))
+  ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 
 
 -- A run of the machine is sound: the source configuration's denotation is
@@ -369,19 +377,19 @@ stepᴾᶜᶠ r (pS , pM) = stepᴾˢ r pS pM , stepᴾᶜ r pS pM
 
 -- The accumulated effect of a run, its transition, and its refinement.
 
-steps-grade : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-grade : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
             → cf ↝* cf' → E
 steps-grade ε*        = uₑ
 steps-grade (r ◅ rs)  = step-grade r ·ₑ steps-grade rs
 
-stepsᵀ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+stepsᵀ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
        → (rs : cf ↝* cf')
        → ⟦ hist (Config.state cf) ⟧ᶜᵗˣ
        →ᵐ Tᵒ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ (steps-grade rs)
 stepsᵀ ε*       = ηᵀ
 stepsᵀ (r ◅ rs) = stepsᵀ rs ⋄ stepᵀ r
 
-steps-≾ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
         → (rs : cf ↝* cf') → steps-grade rs ·ₑ ε' ≾ₑ ε
 steps-≾ {ε = ε} ε*       = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 steps-≾ {ε' = ε'} (_◅_ {ε₂ = ε₂} r rs) =
@@ -393,12 +401,12 @@ steps-≾ {ε' = ε'} (_◅_ {ε₂ = ε₂} r rs) =
 
 -- The certificate accumulated along a run.
 
-stepsᴾᶜᶠ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+stepsᴾᶜᶠ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
          → cf ↝* cf' → Paramᶜᶠ cf → Paramᶜᶠ cf'
 stepsᴾᶜᶠ ε*       p = p
 stepsᴾᶜᶠ (r ◅ rs) p = stepsᴾᶜᶠ rs (stepᴾᶜᶠ r p)
 
-Uniform↝* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+Uniform↝* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
           → (rs : cf ↝* cf') → Paramᶜᶠ cf → Set
 Uniform↝* ε*       _        = ⊤
 Uniform↝* (r ◅ rs) (pS , pM) =
@@ -429,39 +437,66 @@ bind-bind f t s =
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
 
-↝*-sound : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+-- The two refinements a step and the run after it contribute, with the three
+-- sub-effectings between them, collapse into the run's own pair.
+
+run-collapse : ∀ {X A B C ε₁ ε₂ ε₃ ε₄}
+             → (h₁ : B →ᵐ A) → (h₂ : C →ᵐ B)
+             → (a : ε₂ ≾ₑ ε₁) → (m : ε₃ ≾ₑ ε₂) → (c : ε₄ ≾ₑ ε₃) → (w : ε₄ ≾ₑ ε₁)
+             → (K : X →ᵐ Tᵒ C ε₄)
+             → T-≤ a ∘ᵐ Tᶠ h₁ ∘ᵐ T-≤ m ∘ᵐ Tᶠ h₂ ∘ᵐ T-≤ c ∘ᵐ K
+             ≈ᵐ T-≤ w ∘ᵐ Tᶠ (h₁ ∘ᵐ h₂) ∘ᵐ K
+run-collapse h₁ h₂ a m c w K =
+    ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat h₂ c))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-trans c m (≾ₑ-trans c m))))
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat h₁ (≾ₑ-trans c m)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (T-≤-trans (≾ₑ-trans c m) a w)
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ h₁ h₂)))
+
+↝*-sound : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
          → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf) → Uniform↝* rs p
          → ⟦ cf ⟧ᶜᶠ p
          ≈ᵐ T-≤ (steps-≾ rs)
+            ∘ᵐ Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
             ∘ᵐ _⋄_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
-                   {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ}
+                   {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ}
                    {steps-grade rs} {ε'}
                    (⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs p)) (stepsᵀ rs)
 -- the empty run: the transition is `ηᵀ`, which the bind absorbs
 ↝*-sound {A = A} {ε = ε} {cf = cf} ε* p _ =
-  pure-step-≡ (steps-≾ (ε* {A} {ε} {cf})) ≈ᵐ-refl
+  pure-step-≡ (steps-≾ (ε* {A} {ε} {cf})) ≈ᵐ-refl ∙ ∘ᵐ-congʳ (insert-coe (<:ᵛ-refl A))
 -- a step, then a run
-↝*-sound {A = A} {ε' = ε'} (_◅_ {ε₂ = ε₂} {cf₃ = cf₃} r rs) (pS , pM) (u , us) =
+↝*-sound {A = A} {ε' = ε'} (_◅_ {B = B} {ε₂ = ε₂} {cf₃ = cf₃} r rs) (pS , pM) (u , us) =
   -- the step is sound …
     ↝-sound r pS pM u
   -- … and so, inductively, is the run that follows it
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (↝*-sound rs (stepᴾᶜᶠ r (pS , pM)) us))))
-  -- the run's coercion escapes the bind
-  ∙ ∘ᵐ-congʳ (T-≤-stepᵀ ⟦ A ⟧ᵛ r
-       (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))) ⋄ stepsᵀ rs) (steps-≾ rs))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
+      (↝*-sound rs (stepᴾᶜᶠ r (pS , pM)) us)))))
+  -- the run's coercion escapes the bind, its refinement by naturality alone
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (T-≤-stepᵀ ⟦ B ⟧ᵛ r
+       (Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
+          ∘ᵐ (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))) ⋄ stepsᵀ rs))
+       (steps-≾ rs)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (Tᶠ-bind ⟦ run-refines-type rs ⟧<:ᵛ
+       (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))) ⋄ stepsᵀ rs) (stepᵀ r))))
   -- the two binds re-associate into one, at the product of their grades …
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (bind-bind (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))))
-                          (stepsᵀ rs) (stepᵀ r)))
-  -- … and the three coercions collapse into the run's own
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _)))
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-trans _ _ b))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-≤-trans b (step-≾ r) (steps-≾ (r ◅ rs)))
-  where
-    b : steps-grade (r ◅ rs) ·ₑ ε' ≾ₑ step-grade r ·ₑ ε₂
-    b = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-assoc (step-grade r) (steps-grade rs) ε'))
-                 (·ₑ-monoʳ-≾ₑ (steps-≾ rs))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
+      (bind-bind (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))))
+                 (stepsᵀ rs) (stepᵀ r)))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-≡ _)))))
+  -- … and the two refinements, with the three sub-effectings between them,
+  -- collapse into the run's own pair
+  ∙ run-collapse ⟦ step-refines-type r ⟧<:ᵛ ⟦ run-refines-type rs ⟧<:ᵛ
+      (step-≾ r) (·ₑ-monoʳ-≾ₑ (steps-≾ rs)) _ (steps-≾ (r ◅ rs))
+      (⟦ cf₃ ⟧ᶜᶠ (stepsᴾᶜᶠ rs (stepᴾᶜᶠ r (pS , pM))) ⋄ stepsᵀ (r ◅ rs))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (≈ᵐ-sym (⟦⟧<:ᵛ-trans (run-refines-type rs) (step-refines-type r)))))
 
 
 
@@ -476,21 +511,24 @@ infix 4 _⊳_
 -- certificates: interpreting a configuration needs one, so the relation is
 -- between certified configurations.
 
-record _⊳_ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+record _⊳_ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
            (p : Paramᶜᶠ cf) (p' : Paramᶜᶠ cf') : Set where
   constructor mk⊳
   field
     -- the effect the transition performs, and the refinement it licenses
     grade : E
     refine : grade ·ₑ ε' ≾ₑ ε
+    -- the value type is refined too
+    refineᵛ : B <:ᵛ A
     -- the transition itself, between the two states' histories
     tr     : ⟦ hist (Config.state cf) ⟧ᶜᵗˣ
            →ᵐ Tᵒ ⟦ hist (Config.state cf') ⟧ᶜᵗˣ grade
     -- and the equation
     sound  : ⟦ cf ⟧ᶜᶠ p
            ≈ᵐ T-≤ refine
+              ∘ᵐ Tᶠ ⟦ refineᵛ ⟧<:ᵛ
               ∘ᵐ _⋄_ {⟦ hist (Config.state cf) ⟧ᶜᵗˣ}
-                     {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {grade} {ε'}
+                     {⟦ hist (Config.state cf') ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {grade} {ε'}
                      (⟦ cf' ⟧ᶜᶠ p') tr
 
 -- Reflexivity: a configuration runs to itself, taking no time and refining
@@ -499,16 +537,18 @@ record _⊳_ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
 ⊳-refl : ∀ {A ε} → (cf : Config (A ‼ ε)) → (p : Paramᶜᶠ cf)
        → _⊳_ {cf = cf} {cf' = cf} p p
 ⊳-refl {ε = ε} cf p =
-  mk⊳ uₑ (steps-≾ (ε* {cf = cf})) ηᵀ (↝*-sound (ε* {cf = cf}) p tt)
+  mk⊳ uₑ (steps-≾ (ε* {cf = cf})) (run-refines-type (ε* {cf = cf})) ηᵀ
+      (↝*-sound (ε* {cf = cf}) p tt)
 
 -- A run of the machine is such a witness. This is the soundness theorem in its
 -- final form: reduction never changes what a configuration means.
 
-↝*-⊳ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+↝*-⊳ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
      → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf) → Uniform↝* rs p
      → _⊳_ {cf = cf} {cf' = cf'} p (stepsᴾᶜᶠ rs p)
 ↝*-⊳ rs p us =
-  mk⊳ (steps-grade rs) (steps-≾ rs) (stepsᵀ rs) (↝*-sound rs p us)
+  mk⊳ (steps-grade rs) (steps-≾ rs) (run-refines-type rs) (stepsᵀ rs)
+      (↝*-sound rs p us)
 
 -- A program is a closed computation (empty state, so empty history), so its
 -- denotation is a global point of `Tᵒ ⟦ A ⟧ᵛ ε`.
@@ -522,15 +562,16 @@ Program A ε = [] ⊢C⦂ A ‼ ε
 -- Running a program to a value: its denotation is `ηᵀ` of the value's, in the
 -- final state's environment, composed with the run's transition.
 
-↝*-value : ∀ {A ε} {S' : 𝕊 []}
+↝*-value : ∀ {A A₀ ε} {S' : 𝕊 []}
          → (M : Program A ε)
-         → (V : toCtx S' ⊢V⦂ A)
+         → (V : toCtx S' ⊢V⦂ A₀)
          → (rs : ⟨ ∅ , M ⟩ ↝* ⟨ S' , return V ⟩)
          → (pM : Paramᶜ M)
          → Uniform↝* rs (tt , pM)
          → ⟦ M ⟧ᵖ pM
          ≈ᵐ T-≤ (steps-≾ rs)
-            ∘ᵐ _⋄_ {𝟙ᵐ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {steps-grade rs} {uₑ}
+            ∘ᵐ Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
+            ∘ᵐ _⋄_ {𝟙ᵐ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {steps-grade rs} {uₑ}
                    (ηᵀ ∘ᵐ ⟦ V ⟧ᵛᵗ (proj₂ (stepsᴾᶜᶠ rs (tt , pM)))
                        ∘ᵐ ⟦ S' ⟧ˢ (proj₁ (stepsᴾᶜᶠ rs (tt , pM))))
                    (stepsᵀ rs)
@@ -538,4 +579,4 @@ Program A ε = [] ⊢C⦂ A ‼ ε
   -- the empty state is the empty environment
     ≈ᵐ-sym (∘ᵐ-identityʳ _)
   ∙ ↝*-sound rs (tt , pM) us
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-assoc _ _ _))))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (∘ᵐ-assoc _ _ _)))))

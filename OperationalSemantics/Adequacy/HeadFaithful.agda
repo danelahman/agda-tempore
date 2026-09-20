@@ -99,8 +99,8 @@ data Delaysᵐ : ∀ {X Y : Obj} {δ : E} → (X →ᵐ Tᵒ Y δ) → ℕ → S
 -- between the syntactic observable (`ticks`) and the model-side interface.
 -- `stepᵀ` is `ηᵀ` for every rule but `DELAY`.
 
-step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A : VType}
-            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+step-delays : ∀ {ε ε' n} {St St' : 𝕊 []} {A A₀ : VType}
+            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
             → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
             → {X : Obj} → {δ : E} → {t : ⟦ hist St' ⟧ᶜᵗˣ →ᵐ Tᵒ X δ}
             → Delaysᵐ t n
@@ -122,11 +122,9 @@ step-delays BOX                d = η-step d
 step-delays UNBOX              d = η-step d
 step-delays SUB-APP            d = η-step d
 step-delays SUB-IF             d = η-step d
-step-delays SUB-RET            d = η-step d
-step-delays SUB-OP             d = η-step d
-step-delays (SUB-STEP r)       d = step-delays r d
+step-delays SUB                d = η-step d
 
-stepsᵀ-delays : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+stepsᵀ-delays : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
               → (rs : cf ↝* cf')
               ------------------------------
               → Delaysᵐ (stepsᵀ rs) (ticks rs)
@@ -275,8 +273,8 @@ record BaseFaithful : Set where
 
 -- Handler uniformity is carried by the term's own certificate.
 
-uniform↝ : ∀ {A ε ε'} {St St' : 𝕊 []}
-         → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+uniform↝ : ∀ {A A₀ ε ε'} {St St' : 𝕊 []}
+         → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A₀ ‼ ε'}
          → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩) → (pM : Paramᶜ M)
          ---------------------------------------------------
          → Uniform↝ r pM
@@ -296,11 +294,9 @@ uniform↝ BOX                 _         = tt
 uniform↝ UNBOX               _         = tt
 uniform↝ SUB-APP             _         = tt
 uniform↝ SUB-IF              _         = tt
-uniform↝ SUB-RET             _         = tt
-uniform↝ SUB-OP              _         = tt
-uniform↝ (SUB-STEP r)        pM        = uniform↝ r pM
+uniform↝ SUB                 _         = tt
 
-uniform↝* : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+uniform↝* : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
           → (rs : cf ↝* cf') → (p : Paramᶜᶠ cf)
           ------------------------------------
           → Uniform↝* rs p

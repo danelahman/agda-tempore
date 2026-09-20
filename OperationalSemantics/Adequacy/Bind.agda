@@ -44,12 +44,14 @@ open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
 
 -- Induction on the scrutinee's `CRed` derivation, recursing on the `pk` field
--- exactly as `CRed-≐ˢ` does.
+-- exactly as `CRed-≐ˢ` does. The scrutinee is taken at a skeleton rather than
+-- at its own type: `pk` stands at the skeleton its own `CRed` was indexed by,
+-- which is what the recursive call is handed.
 
-seq-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
+seq-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
          → {M : toCtx St ⊢C⦂ A ‼ ε₁}
          → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-         → CRed' A ε₁ St M
+         → CRedˢ' s e ε₁ St M
          → (∀ {St₁ : 𝕊 []} → (q : St ⊑ₛ[ mapᵉ ε₁ ] St₁)
               → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
               → CRed' B ε₂ St₁
@@ -59,13 +61,14 @@ seq-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
 
 -- The scrutinee returns.
 
-seq-CRed {A} {B} {ε₁} {ε₂} {St} N (cred-ret {St₁ = St₁} {V = V} rs pV) hN
+seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
+         (cred-ret {St₁ = St₁} {V = V} e₀ rs pV) hN
   with seq-steps rs N
 
 ... | N₁ , rs' , eN₁ =
-  CRed-expand* rs'
+  CRed-expand* {e₀ = refl} rs'
     (CRed-expand SEQ-RET
-      (CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
+      (CRed-≡ᶜ shift (hN q (spine rs V) (VRed-spine rs V (VRedˢ-≡ˢ pV)))))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -90,26 +93,38 @@ seq-CRed {A} {B} {ε₁} {ε₂} {St} N (cred-ret {St₁ = St₁} {V = V} rs pV)
                                              (reach-bound q))
                          ≐ʳ-refl)
 
-    shift : C-rename (cong-∷-ren (unbox-ren q)) N
-          ≡ C-rename (cong-∷-ren R₁) N₁
+    ren-shift : C-rename (cong-∷-ren R₁) (C-rename (cong-∷-ren srs) N)
+              ≡ C-rename (cong-∷-ren (unbox-ren q)) N
+    ren-shift =
+      trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
+            (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs R₁))
+                                  (cong-∷-ren-≐ʳ eqr)) N)
+
+    -- the sequel the run reached takes the whnf where the original takes its
+    -- spine
+    shift : (C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ spine rs V ]c
+          ≡ (C-rename (cong-∷-ren R₁) N₁) [ split-[] ↦ V ]c
     shift =
       sym
-        (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
-          (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
-            (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs R₁))
-                                  (cong-∷-ren-≐ʳ eqr)) N)))
+        (trans
+          (sub-≡ᶜ split-[] refl
+            (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
+              (trans (narrow-run-ren rs R₁ (C-rename (cong-∷-ren srs) N))
+                     (cong (narrow-run rs) ren-shift))))
+          (narrow-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
 
 -- The scrutinee gets stuck on an operation.
 
-seq-CRed {A} {B} {ε₁} {ε₂} {St} N
-         (cred-op {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'} rs pW pk) hN
+seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
+         (cred-op {A₀ = A₀} {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'}
+                  e₀ rs pW pk) hN
   with seq-steps rs N
 
 ... | N₁ , rs' , eN₁ =
-  CRed-expand* rs'
-    (CRed-expand SEQ-OP
+  CRed-expand* {e₀ = refl} rs'
+    (CRed-expand {e₀ = refl} SEQ-OP
       (CRed-ε-subst (sym (·ₑ-assoc (op-grade op) ε₃ ε₂))
-        (cred-op ε* pW resump)))
+        (cred-op refl ε* pW resump)))
   where
     ρₒ  = mapᵉ (op-grade op)
     Ar  = type-of-gtype (arity op)
@@ -133,7 +148,7 @@ seq-CRed {A} {B} {ε₁} {ε₂} {St} N
            → VRedᵍ (arity op) St₂ W'
            → CRed' B (ε₃ ·ₑ ε₂) St₂ (resume q (M' ⨟ N₂) W')
 
-    resump {St₂} q W' pW' = seq-CRed N₃ (pk q W' pW') hN₃
+    resump {St₂} q W' pW' = seq-CRed {e = e₀} N₃ (pk q W' pW') hN₃
       where
         sq = unbox-ren q
 
@@ -157,15 +172,18 @@ seq-CRed {A} {B} {ε₁} {ε₂} {St} N
             (≐ʳ-trans (∘ʳ-≐ʳ ≐ʳ-refl (unbox-ren-μ-≐ʳ q B₁'))
                       (suc-comp-ren-grade-src (ext q) map-·ᵉ B₁' B₁))
 
-        -- the sequel the recursion needs is the original one, renamed
-        eN₃ : N₃ ≡ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
+        -- the sequel the recursion needs is the original one, renamed and
+        -- narrowed along the run
+        eN₃ : N₃ ≡ narrow-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
         eN₃ =
           trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
-            (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
+            (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A₀)
                                 (C-rename (cong-∷-ren W₁) N₁) W')
               (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
-                (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren W₁) N))
-                          (C-rename-≡ (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs W₁)) N))))
+                (trans (narrow-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
+                  (cong (narrow-run rs)
+                    (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren W₁) N))
+                           (C-rename-≡ (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs W₁)) N))))))
           where
             inner : (κ ∘ʳ cong-⟨⟩-ren (cong-∷-ren sq))
                   ≐ʳ (W₁ ∘ʳ cong-⟨⟩-ren wk-ren)
@@ -199,12 +217,12 @@ seq-CRed {A} {B} {ε₁} {ε₂} {St} N
                   (C-rename-∘ (cong-∷-ren W₁) (cong-∷-ren (cong-⟨⟩-ren wk-ren)) N₁))
 
         hN₃ : ∀ {St₃ : 𝕊 []} → (q' : St₂ ⊑ₛ[ mapᵉ ε₃ ] St₃)
-            → (V : toCtx St₃ ⊢V⦂ A) → VRed A St₃ V
+            → (V : toCtx St₃ ⊢V⦂ A₀) → VRed A₀ St₃ V
             → CRed' B ε₂ St₃
                 ((C-rename (cong-∷-ren (unbox-ren q')) N₃) [ split-[] ↦ V ]c)
 
         hN₃ {St₃} q' V pV =
-          CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₁ V pV)
+          CRed-≡ᶜ shift (hN q₁ (spine rs V) (VRed-spine rs V pV))
           where
             -- the run and the clause's own reach accumulate: the grades multiply
             -- and each is bounded, so the composite stays under `ε₁`
@@ -239,14 +257,29 @@ seq-CRed {A} {B} {ε₁} {ε₂} {St} N
                 (∘ʳ-assoc-≐ʳ (srs ∘ʳ W₁)
                             (suc-comp-ren (ext q') (reach-bound q')) ⟨⟩-η-ren)
 
-            shift : C-rename (cong-∷-ren (unbox-ren q₁)) N
-                  ≡ C-rename (cong-∷-ren (unbox-ren q')) N₃
-            shift =
-              trans
-                (C-rename-≡
-                  (≐ʳ-trans (cong-∷-ren-≐ʳ finalEq)
-                            (cong-∷-ren-∘-≐ʳ (srs ∘ʳ W₁) (unbox-ren q'))) N)
+            ren-shift : C-rename (cong-∷-ren (unbox-ren q'))
+                          (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
+                      ≡ C-rename (cong-∷-ren (unbox-ren q₁)) N
+            ren-shift =
+              sym
                 (trans
+                  (C-rename-≡
+                    (≐ʳ-trans (cong-∷-ren-≐ʳ finalEq)
+                              (cong-∷-ren-∘-≐ʳ (srs ∘ʳ W₁) (unbox-ren q'))) N)
                   (C-rename-∘ (cong-∷-ren (srs ∘ʳ W₁))
-                              (cong-∷-ren (unbox-ren q')) N)
-                  (C-rename-cong (cong-∷-ren (unbox-ren q')) (sym eN₃)))
+                              (cong-∷-ren (unbox-ren q')) N))
+
+            shift : (C-rename (cong-∷-ren (unbox-ren q₁)) N)
+                      [ split-[] ↦ spine rs V ]c
+                  ≡ (C-rename (cong-∷-ren (unbox-ren q')) N₃)
+                      [ split-[] ↦ V ]c
+            shift =
+              sym
+                (trans
+                  (sub-≡ᶜ split-[] refl
+                    (trans (C-rename-cong (cong-∷-ren (unbox-ren q')) eN₃)
+                      (trans (narrow-run-ren rs (unbox-ren q')
+                                (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N))
+                             (cong (narrow-run rs) ren-shift))))
+                  (narrow-run-sub rs
+                    (C-rename (cong-∷-ren (unbox-ren q₁)) N) V))

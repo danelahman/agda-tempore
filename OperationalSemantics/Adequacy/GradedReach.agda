@@ -37,6 +37,10 @@ open import Syntax.Renamings     Spec
 open import Syntax.Substitutions Spec
 open import Syntax.Types         Spec
 
+open import Syntax.Substitutions.Base   Spec
+open import Syntax.Substitutions.Action Spec
+open import Syntax.Substitutions.Laws   Spec
+
 -- `St ⊑ₛ[ ρ ] St'` — `St'` is reachable from `St` on the budget `ρ`: the grade
 -- the extension accumulated stays below `ρ`. The `ₛ` marks it as refining the
 -- state extension `≤ₛ`.
@@ -331,14 +335,14 @@ unbox-ren-img q x =
 -- What a whole run accumulates: the closure of `PreservationTheorem`'s
 -- per-step facts under composition, packaged as the reach a run licenses.
 
-steps-extends-state : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-extends-state : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
                     → cf ↝* cf' → Config.state cf ≤ₛ Config.state cf'
 
 steps-extends-state ε*       = id-suc
 steps-extends-state (r ◅ rs) =
   ≤ₛ-trans (step-extends-state r) (steps-extends-state rs)
 
-steps-grade-≾ : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-grade-≾ : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
               → (rs : cf ↝* cf')
               → ≤ₛ-grade (steps-extends-state rs) ·ᵣ mapᵉ ε' ≾ᵣ mapᵉ ε
 
@@ -356,74 +360,172 @@ steps-grade-≾ {ε' = ε'} (r ◅ rs) =
 -- The renaming a whole run licenses. A run's bound relates two locked contexts,
 -- so it goes straight to `suc-comp-ren` rather than through a reach.
 
-steps-ren : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
           → (rs : cf ↝* cf')
           → Ren [] (toCtx (Config.state cf') ⟨ mapᵉ ε' ⟩)
                    (toCtx (Config.state cf)  ⟨ mapᵉ ε  ⟩)
 steps-ren rs = suc-comp-ren (steps-extends-state rs) (steps-grade-≾ rs)
 
--- Both congruence rules retype the continuation along `suc-comp-ren` of the
--- step's own extension.
+-- A step refines the scrutinee's value type, so a congruence rule narrows the
+-- continuation's binder. A run stacks those narrowings up; a `subV` spine does
+-- not flatten, so the stack is kept as it stands and described by what
+-- substituting into it does.
 
-seq-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
-          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
+narrow-run : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+           → cf ↝* cf' → ∀ {Γ C} → Γ ∷ A ⊢C⦂ C → Γ ∷ B ⊢C⦂ C
+narrow-run ε*       N = N
+narrow-run (r ◅ rs) N = narrow-run rs (narrow-∷ (step-refines-type r) N)
+
+spine : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+      → cf ↝* cf' → ∀ {Γ} → Γ ⊢V⦂ B → Γ ⊢V⦂ A
+spine ε*       V = V
+spine (r ◅ rs) V = subV (spine rs V) (step-refines-type r)
+
+-- Substituting into a narrowed binder subsumes the value first.
+
+narrow-∷-sub : ∀ {Γ A A₀ C} → (w : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C)
+             → (V : Γ ⊢V⦂ A₀)
+             ------------------------------------------------------------
+             → narrow-∷ w N [ split-[] ↦ V ]c ≡ N [ split-[] ↦ subV V w ]c
+
+narrow-∷-sub {A = A} w N V =
+  trans (sub-swap-≡ᶜ V (subV (var (λ _ → ≾ᵣ-refl) Hd) w)
+                     (C-rename (cong-∷-ren wk-ren) N))
+        (cong (C-sub₀ (val-sub (subV V w))) (sub-wk-≡ᶜ ([] ∷ A) V N))
+
+-- A narrowing only touches the top binder, so a renaming of the rest passes it.
+
+narrow-∷-ren : ∀ {Γ Δ A A₀ C} → (r : Ren [] Δ Γ) → (w : A₀ <:ᵛ A)
+             → (N : Γ ∷ A ⊢C⦂ C)
+             --------------------------------------------------
+             → C-rename (cong-∷-ren r) (narrow-∷ w N)
+             ≡ narrow-∷ w (C-rename (cong-∷-ren r) N)
+
+narrow-∷-ren r w N =
+  trans (sym (ren-sub-≡ᶜ [] (cong-∷-ren r)
+                         (subV (var (λ _ → ≾ᵣ-refl) Hd) w)
+                         (C-rename (cong-∷-ren wk-ren) N)))
+        (cong₂ (λ U X → C-sub₀ (val-sub U) X) (subV-≡ var-≡) renM)
+  where
+    renM : C-rename (cong-∷-ren (cong-∷-ren r))
+             (C-rename (cong-∷-ren wk-ren) N)
+         ≡ C-rename (cong-∷-ren wk-ren) (C-rename (cong-∷-ren r) N)
+    renM =
+      trans (sym (C-rename-∘ (cong-∷-ren wk-ren)
+                             (cong-∷-ren (cong-∷-ren r)) N))
+        (trans
+          (C-rename-≡
+            (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ wk-ren (cong-∷-ren r)))
+              (≐ʳ-trans (cong-∷-ren-≐ʳ (wk-ren-nat-≐ʳ r))
+                        (cong-∷-ren-∘-≐ʳ r wk-ren)))
+            N)
+          (C-rename-∘ (cong-∷-ren r) (cong-∷-ren wk-ren) N))
+
+-- A narrowing is stable under a context equality, the binder it narrows being
+-- the one the equality leaves alone.
+
+cast-narrow-∷ : ∀ {Γ Γ' A A₀ C} → (f : Ctx → Ctx) → (e : Γ' ≡ Γ)
+              → (w : A₀ <:ᵛ A) → (N : f Γ' ∷ A ⊢C⦂ C)
+              ------------------------------------------------------
+              → narrow-∷ w (castᶜ (cong (λ Γ₀ → f Γ₀ ∷ A) e) N)
+              ≡ castᶜ (cong (λ Γ₀ → f Γ₀ ∷ A₀) e) (narrow-∷ w N)
+
+cast-narrow-∷ f refl w N = refl
+
+-- Both laws, iterated along a run.
+
+narrow-run-sub : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+               → (rs : cf ↝* cf') → ∀ {Γ C} → (N : Γ ∷ A ⊢C⦂ C) → (V : Γ ⊢V⦂ B)
+               ---------------------------------------------------------------
+               → narrow-run rs N [ split-[] ↦ V ]c
+               ≡ N [ split-[] ↦ spine rs V ]c
+
+narrow-run-sub ε*       N V = refl
+narrow-run-sub (r ◅ rs) N V =
+  trans (narrow-run-sub rs (narrow-∷ (step-refines-type r) N) V)
+        (narrow-∷-sub (step-refines-type r) N (spine rs V))
+
+narrow-run-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+               → (rs : cf ↝* cf') → ∀ {Γ Δ C} → (r : Ren [] Δ Γ)
+               → (N : Γ ∷ A ⊢C⦂ C)
+               -----------------------------------------------
+               → C-rename (cong-∷-ren r) (narrow-run rs N)
+               ≡ narrow-run rs (C-rename (cong-∷-ren r) N)
+
+narrow-run-ren ε*        r N = refl
+narrow-run-ren (r₀ ◅ rs) r N =
+  trans (narrow-run-ren rs r (narrow-∷ (step-refines-type r₀) N))
+        (cong (narrow-run rs) (narrow-∷-ren r (step-refines-type r₀) N))
+
+-- Both congruence rules retype the continuation along `suc-comp-ren` of the
+-- step's own extension, and narrow its binder to the refined value type.
+
+seq-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
+          → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
           → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
           → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
           -----------------------------------------------------------------
-          → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
+          → Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
               (⟨ St , M ⨟ N ⟩ ↝* ⟨ St₁ , M₁ ⨟ N₁ ⟩)
-            × (N₁ ≡ C-rename (cong-∷-ren (steps-ren rs)) N)
+            × (N₁ ≡ narrow-run rs (C-rename (cong-∷-ren (steps-ren rs)) N))
 
 seq-steps ε* N =
   N , ε* , sym (C-rename-id-≡ (cong-∷-ren-id-≐ʳ (⟨⟩-≤-ren-id-≐ʳ _)) N)
 
 seq-steps (r ◅ rs) N
   with seq-steps rs
-         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
-                                             (step-grade-≾ r))) N)
+         (narrow-∷ (step-refines-type r)
+           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                               (step-grade-≾ r))) N))
 ... | N₁ , rs' , eN₁ =
     N₁
   , SEQ-STEP r (step-grade-≾ r) ◅ rs'
   , trans eN₁
-      (trans
-        (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
-                                                      (step-grade-≾ r)))
-                            (cong-∷-ren (steps-ren rs)) N))
-        (C-rename-≡
-          (≐ʳ-trans
-            (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (suc-comp-ren (step-extends-state r)
-                                                  (step-grade-≾ r))
-                                    (steps-ren rs)))
-            (cong-∷-ren-≐ʳ
-              (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
-                                        (steps-extends-state rs)
-                                        _ (step-grade-≾ r)
-                                        (steps-grade-≾ rs)))))
-          N))
+      (cong (narrow-run rs)
+        (trans
+          (narrow-∷-ren (steps-ren rs) (step-refines-type r)
+            (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                (step-grade-≾ r))) N))
+          (cong (narrow-∷ (step-refines-type r))
+            (trans
+              (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                            (step-grade-≾ r)))
+                                  (cong-∷-ren (steps-ren rs)) N))
+              (C-rename-≡
+                (≐ʳ-trans
+                  (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (suc-comp-ren (step-extends-state r)
+                                                        (step-grade-≾ r))
+                                          (steps-ren rs)))
+                  (cong-∷-ren-≐ʳ
+                    (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
+                                              (steps-extends-state rs)
+                                              _ (step-grade-≾ r)
+                                              (steps-grade-≾ rs)))))
+                N)))))
 
 -- The same under `handle`, which also retypes the clauses along the barrier
 -- lock, at the run's own extension.
 
-steps-barrier-ren : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+steps-barrier-ren : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
                   → (rs : cf ↝* cf')
                   → Ren [] (toCtx (Config.state cf') ⟨ ⊤ᵣ ⟩)
                            (toCtx (Config.state cf)  ⟨ ⊤ᵣ ⟩)
 steps-barrier-ren rs = suc-comp-ren (steps-extends-state rs) (≾-⊤ᵣ _)
 
-handle-steps : ∀ {A B ε ε' ε₂} {St St₁ : 𝕊 []}
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε'}
+handle-steps : ∀ {A A₁ B ε ε' ε₂} {St St₁ : 𝕊 []}
+             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε'}
              → (rs : ⟨ St , M ⟩ ↝* ⟨ St₁ , M₁ ⟩)
              → (H : (op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St ⟨ ⊤ᵣ ⟩))
              → (N : toCtx St ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
              ---------------------------------------------------------------
              → Σ[ H₁ ∈ ((op : Op) → (ε₃ : E) → Cl B op ε₃ (toCtx St₁ ⟨ ⊤ᵣ ⟩)) ]
-               Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A ⊢C⦂ B ‼ ε₂) ]
+               Σ[ N₁ ∈ (toCtx St₁ ⟨ mapᵉ ε' ⟩ ∷ A₁ ⊢C⦂ B ‼ ε₂) ]
                  (⟨ St , handle M `with H `in N ⟩ ↝*
                   ⟨ St₁ , handle M₁ `with H₁ `in N₁ ⟩)
                × (∀ op ε₃ → H₁ op ε₃
                     ≡ C-rename (cong-∷-ren (cong-∷-ren (steps-barrier-ren rs)))
                                (H op ε₃))
-               × (N₁ ≡ C-rename (cong-∷-ren (steps-ren rs)) N)
+               × (N₁ ≡ narrow-run rs (C-rename (cong-∷-ren (steps-ren rs)) N))
 
 handle-steps {B = B} {St = St} ε* H N =
     H , N , ε*
@@ -439,8 +541,9 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
             C-rename (cong-∷-ren (cong-∷-ren
                        (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
               (H op ε₃))
-         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
-                                             (step-grade-≾ r))) N)
+         (narrow-∷ (step-refines-type r)
+           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                               (step-grade-≾ r))) N))
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
     H₁ , N₁
   , HANDLE-STEP r (step-grade-≾ r) ◅ rs'
@@ -469,21 +572,27 @@ handle-steps {B = B} {St = St} {St₁ = St₁} (_◅_ {cf₂ = ⟨ St' , M' ⟩}
                                                _ (≾-⊤ᵣ _) (≾-⊤ᵣ _)))))))
              (H op ε₃))))
   , trans eN₁
-      (trans
-        (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
-                                                      (step-grade-≾ r)))
-                            (cong-∷-ren (steps-ren rs)) N))
-        (C-rename-≡
-          (≐ʳ-trans
-            (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (suc-comp-ren (step-extends-state r)
-                                                  (step-grade-≾ r))
-                                    (steps-ren rs)))
-            (cong-∷-ren-≐ʳ
-              (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
-                                        (steps-extends-state rs)
-                                        _ (step-grade-≾ r)
-                                        (steps-grade-≾ rs)))))
-          N))
+      (cong (narrow-run rs)
+        (trans
+          (narrow-∷-ren (steps-ren rs) (step-refines-type r)
+            (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                (step-grade-≾ r))) N))
+          (cong (narrow-∷ (step-refines-type r))
+            (trans
+              (sym (C-rename-∘ (cong-∷-ren (suc-comp-ren (step-extends-state r)
+                                                            (step-grade-≾ r)))
+                                  (cong-∷-ren (steps-ren rs)) N))
+              (C-rename-≡
+                (≐ʳ-trans
+                  (≐ʳ-sym (cong-∷-ren-∘-≐ʳ (suc-comp-ren (step-extends-state r)
+                                                        (step-grade-≾ r))
+                                          (steps-ren rs)))
+                  (cong-∷-ren-≐ʳ
+                    (≐ʳ-sym (suc-comp-ren-∘-≐ʳ (step-extends-state r)
+                                              (steps-extends-state rs)
+                                              _ (step-grade-≾ r)
+                                              (steps-grade-≾ rs)))))
+                N)))))
 
 -- Transporting a reach's residual grade along a grade equality: the renaming is
 -- unchanged, since the bound is all that differs (`suc-comp-ren-irr`). This is

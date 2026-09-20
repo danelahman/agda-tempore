@@ -109,16 +109,16 @@ Seq-Prem {A} {B} {ε₁} {ε₂} {St} N =
     → (V : toCtx St₁ ⊢V⦂ A) → VRed A St₁ V
     → CRed' B ε₂ St₁ ((C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ V ]c)
 
--- Induction on the scrutinee's `CRed` derivation. `cred-ret` fires `HANDLE-RET`
--- and is `Bind`'s `cred-ret` verbatim — the sequel premise consumes the value
--- and the run's `mapᵉ uₑ` is reconciled with the reach's `uᵣ` by
--- `suc-comp-ren-grade`.
+-- Induction on the scrutinee's `CRed` derivation, taken at a skeleton as in
+-- `Bind`. `cred-ret` fires `HANDLE-RET` and is `Bind`'s `cred-ret` verbatim —
+-- the sequel premise consumes the value and the run's `mapᵉ uₑ` is reconciled
+-- with the reach's `uᵣ` by `suc-comp-ren-grade`.
 
-handle-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
+handle-CRed : ∀ {s A B ε₁ ε₂} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
             → {M : toCtx St ⊢C⦂ A ‼ ε₁}
             → (H : Fam B (toCtx St ⟨ ⊤ᵣ ⟩))
             → (N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-            → CRed' A ε₁ St M
+            → CRedˢ' s e ε₁ St M
             → Clause-Prem B St H
             → Seq-Prem N
             ------------------------------------------------------------
@@ -126,14 +126,14 @@ handle-CRed : ∀ {A B ε₁ ε₂} {St : 𝕊 []}
 
 -- The scrutinee returns: `HANDLE-RET`, and the clauses are discarded.
 
-handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
-            (cred-ret {St₁ = St₁} {V = V} rs pV) hH hN
+handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
+            (cred-ret {St₁ = St₁} {V = V} e₀ rs pV) hH hN
   with handle-steps rs H N
 
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
-  CRed-expand* rs'
+  CRed-expand* {e₀ = refl} rs'
     (CRed-expand HANDLE-RET
-      (CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q V pV)))
+      (CRed-≡ᶜ shift (hN q (spine rs V) (VRed-spine rs V (VRedˢ-≡ˢ pV)))))
   where
     E₀  = steps-extends-state rs
     srs = suc-comp-ren E₀ (steps-grade-≾ rs)
@@ -157,14 +157,25 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
                                              (reach-bound q))
                          ≐ʳ-refl)
 
-    shift : C-rename (cong-∷-ren (unbox-ren q)) N
-          ≡ C-rename (cong-∷-ren R₁) N₁
+    ren-shift : C-rename (cong-∷-ren R₁) (C-rename (cong-∷-ren srs) N)
+              ≡ C-rename (cong-∷-ren (unbox-ren q)) N
+    ren-shift =
+      trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
+            (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs R₁))
+                                  (cong-∷-ren-≐ʳ eqr)) N)
+
+    -- the sequel the run reached takes the whnf where the original takes its
+    -- spine
+    shift : (C-rename (cong-∷-ren (unbox-ren q)) N) [ split-[] ↦ spine rs V ]c
+          ≡ (C-rename (cong-∷-ren R₁) N₁) [ split-[] ↦ V ]c
     shift =
       sym
-        (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
-          (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren R₁) N))
-            (C-rename-≡ (≐ʳ-trans (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs R₁))
-                                  (cong-∷-ren-≐ʳ eqr)) N)))
+        (trans
+          (sub-≡ᶜ split-[] refl
+            (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
+              (trans (narrow-run-ren rs R₁ (C-rename (cong-∷-ren srs) N))
+                     (cong (narrow-run rs) ren-shift))))
+          (narrow-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
 
 
 -- The scrutinee gets stuck on an operation. The reduct chain is
@@ -179,15 +190,16 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
 -- relates configurations at different effects, and `box`'s body carries
 -- `op-grade op ·ₑ (ε₃ ·ₑ ε₂)` where the redex carries `(op-grade op ·ₑ ε₃) ·ₑ ε₂`.
 
-handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
-            (cred-op {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W} {M' = M'} rs pW pk)
+handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
+            (cred-op {A₀ = A₀} {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W}
+                     {M' = M'} e₀ rs pW pk)
             hH hN
   with handle-steps rs H N
 
 ... | H₁ , N₁ , rs' , eH₁ , eN₁ =
-  CRed-expand* rs'
-    (CRed-expand HANDLE-OP
-      (CRed-expand BOX
+  CRed-expand* {e₀ = refl} rs'
+    (CRed-expand {e₀ = refl} HANDLE-OP
+      (CRed-expand {e₀ = refl} BOX
         (subst (CRed' B _ (St₁ ∷ₛ V₀)) fired
           (hH q₀ V₀ bv W (VRedᵍ→VRed (param op) W pW)))))
   where
@@ -319,7 +331,8 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
                   ((C-rename (cong-∷-ren (unbox-ren q₂)) Body)
                      [ split-[] ↦ W' ]c)
         inner =
-          handle-CRed _ _ (pk q₂ W' (VRed→VRedᵍ (arity op) W' pW')) hH₂ hN₂
+          handle-CRed {e = e₀} _ _
+            (pk q₂ W' (VRed→VRedᵍ (arity op) W' pW')) hH₂ hN₂
           where
             sq = unbox-ren q₂
 
@@ -348,16 +361,18 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
             -- substitutes for exactly that variable, so the two cancel
             eN₂ : (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                     [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c
-                ≡ C-rename (cong-∷-ren (srs ∘ʳ W₁)) N
+                ≡ narrow-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
             eN₂ =
               trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
-                (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A)
+                (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A₀)
                                     (C-rename (cong-∷-ren W₁) N₁) W')
                   (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
-                    (trans
-                      (sym (C-rename-∘ (cong-∷-ren srs)
-                                          (cong-∷-ren W₁) N))
-                      (C-rename-≡ (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs W₁)) N))))
+                    (trans (narrow-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
+                      (cong (narrow-run rs)
+                        (trans
+                          (sym (C-rename-∘ (cong-∷-ren srs)
+                                              (cong-∷-ren W₁) N))
+                          (C-rename-≡ (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs W₁)) N))))))
               where
                 innerᵣ : (κ ∘ʳ cong-⟨⟩-ren (cong-∷-ren sq))
                        ≐ʳ (W₁ ∘ʳ cong-⟨⟩-ren wk-ren)
@@ -401,7 +416,7 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
                                (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                               [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c)
             hN₂ {St₃} q₃ V pV =
-              CRed-≡ᶜ (sub-≡ᶜ split-[] (refl) shift) (hN q₄ V pV)
+              CRed-≡ᶜ shift (hN q₄ (spine rs V) (VRed-spine rs V pV))
               where
                 -- the run and the clause's own reach accumulate: the grades
                 -- multiply and each is bounded, so the composite stays
@@ -443,22 +458,38 @@ handle-CRed {A} {B} {ε₁} {ε₂} {St} H N
                                 (suc-comp-ren (ext q₃) (reach-bound q₃))
                                 ⟨⟩-η-ren)
 
-                shift : C-rename (cong-∷-ren (unbox-ren q₄)) N
-                      ≡ C-rename (cong-∷-ren (unbox-ren q₃))
+                ren-shift : C-rename (cong-∷-ren (unbox-ren q₃))
+                              (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
+                          ≡ C-rename (cong-∷-ren (unbox-ren q₄)) N
+                ren-shift =
+                  sym
+                    (trans
+                      (C-rename-≡
+                        (≐ʳ-trans (cong-∷-ren-≐ʳ finalEq)
+                                  (cong-∷-ren-∘-≐ʳ (srs ∘ʳ W₁)
+                                                  (unbox-ren q₃))) N)
+                      (C-rename-∘ (cong-∷-ren (srs ∘ʳ W₁))
+                                  (cong-∷-ren (unbox-ren q₃)) N))
+
+                shift : (C-rename (cong-∷-ren (unbox-ren q₄)) N)
+                          [ split-[] ↦ spine rs V ]c
+                      ≡ (C-rename (cong-∷-ren (unbox-ren q₃))
                            ((C-rename
                                (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
-                              [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c)
+                              [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c))
+                          [ split-[] ↦ V ]c
                 shift =
-                  trans
-                    (C-rename-≡
-                      (≐ʳ-trans (cong-∷-ren-≐ʳ finalEq)
-                                (cong-∷-ren-∘-≐ʳ (srs ∘ʳ W₁)
-                                                (unbox-ren q₃))) N)
+                  sym
                     (trans
-                      (C-rename-∘ (cong-∷-ren (srs ∘ʳ W₁))
-                                  (cong-∷-ren (unbox-ren q₃)) N)
-                      (C-rename-cong (cong-∷-ren (unbox-ren q₃))
-                                     (sym eN₂)))
+                      (sub-≡ᶜ split-[] refl
+                        (trans
+                          (C-rename-cong (cong-∷-ren (unbox-ren q₃)) eN₂)
+                          (trans
+                            (narrow-run-ren rs (unbox-ren q₃)
+                              (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N))
+                            (cong (narrow-run rs) ren-shift))))
+                      (narrow-run-sub rs
+                        (C-rename (cong-∷-ren (unbox-ren q₄)) N) V))
 
             -- The clause premise, rebuilt from `hH`. The clauses the
             -- recursion sees are `H` renamed by the run, weakened past the

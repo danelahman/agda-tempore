@@ -53,11 +53,11 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
 
   infixr 5 _◅ᵗ_
 
-  data _⟿*_ : ∀ {A ε ε'} → Config (A ‼ ε) → Config (A ‼ ε') → Set where
+  data _⟿*_ : ∀ {A B ε ε'} → Config (A ‼ ε) → Config (B ‼ ε') → Set where
     ε*ᵗ  : ∀ {A ε} {cf : Config (A ‼ ε)}
          → cf ⟿* cf
-    _◅ᵗ_ : ∀ {A ε₁ ε₂ ε₃}
-         → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (A ‼ ε₂)} → {cf₃ : Config (A ‼ ε₃)}
+    _◅ᵗ_ : ∀ {A B C ε₁ ε₂ ε₃}
+         → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (B ‼ ε₂)} → {cf₃ : Config (C ‼ ε₃)}
          → cf₁ ⟿ cf₂ → cf₂ ⟿* cf₃ → cf₁ ⟿* cf₃
 
   -- invariants preserved by the top-level small-step operational semantics
@@ -69,13 +69,13 @@ module PureTopLevelPreservationTheorem (OpSemantics : TopLevelOpSemantics) where
                             → {M : toCtx S ⊢C⦂ A ‼ ε}
                             → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                             → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
-                            → A ≡ B
+                            → B <:ᵛ A
                             × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε
 
   top-level-step-invariants (↝-STEP step) =
     step-invariants step
-  top-level-step-invariants {S = S} OP-STEP =
-    refl ,
+  top-level-step-invariants {A = A} {S = S} OP-STEP =
+    <:ᵛ-refl A ,
     ≾ᵣ-reflexive
       (trans
         (·ᵣ-assoc _ _ _)

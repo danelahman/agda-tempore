@@ -44,24 +44,26 @@ data Progresses : {ε : E}
 
 
     steps    : ∀ {ε'' ε'''}
-             → {S S' : 𝕊 []} {A : VType}
+             → {S S' : 𝕊 []} {A B : VType}
              → {M : toCtx S ⊢C⦂ A ‼ ε''}
-             → {M' : toCtx S' ⊢C⦂  A ‼ ε''' }
+             → {M' : toCtx S' ⊢C⦂  B ‼ ε''' }
              → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
              → (p : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε''' ≾ᵣ mapᵉ ε'')
+             → (t : B <:ᵛ A)
                --------------------------------------------------------------
              → Progresses M
 
--- Any reduction step witnesses progress: its grade premise is `step-grade-≾`.
+-- Any reduction step witnesses progress: its two premises are `step-grade-≾`
+-- and `step-refines-type`.
 
 step-progress : ∀ {ε'' ε'''}
-              → {S S' : 𝕊 []} {A : VType}
+              → {S S' : 𝕊 []} {A B : VType}
               → {M : toCtx S ⊢C⦂ A ‼ ε''}
-              → {M' : toCtx S' ⊢C⦂ A ‼ ε'''}
+              → {M' : toCtx S' ⊢C⦂ B ‼ ε'''}
               → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                 ---------------------------------
               → Progresses M
-step-progress M↝M' = steps M↝M' (step-grade-≾ M↝M')
+step-progress M↝M' = steps M↝M' (step-grade-≾ M↝M') (step-refines-type M↝M')
 
 -- Progress theorem statement
 
@@ -71,10 +73,10 @@ progress (return V) = is-value
 progress (M ⨟ N) with progress M
 progress ((return V) ⨟ N) | is-value = step-progress SEQ-RET
 ... | is-op                          = step-progress SEQ-OP
-progress (M ⨟ N) | steps M↝M' p      = step-progress (SEQ-STEP M↝M' p)
+progress (M ⨟ N) | steps M↝M' p _    = step-progress (SEQ-STEP M↝M' p)
 progress (var ρ≾uᵣ x · W)          = ⊥-elim (⇒-not-in-toCtx x)
 progress (lam M · W)               = step-progress APP
-progress (subV V (_ ⇒ₛ _) · W)     = step-progress SUB-APP
+progress (subV V (_ ⇒ₛ (_ ‼ₛ _)) · W) = step-progress SUB-APP
 progress (match P `in M)           = step-progress MATCH
 progress (absurd V)                = ⊥-elim (empty-not-value V)
 progress (if var ρ≾uᵣ x `then M `else N) = ⊥-elim (Bool-not-in-toCtx x)
@@ -86,13 +88,10 @@ progress (delay τ M)               = step-progress DELAY
 progress (handle M `with H `in N) with progress M
 progress (handle (return V) `with H `in N) | is-value = step-progress HANDLE-RET
 ... | is-op                     = step-progress HANDLE-OP
-... | steps M↝M' p              = step-progress (HANDLE-STEP M↝M' p)
+... | steps M↝M' p _            = step-progress (HANDLE-STEP M↝M' p)
 progress (unbox _ _ _ _) = step-progress UNBOX
 progress (box _ _)       = step-progress BOX
-progress (subC M (_ ‼ₛ _)) with progress M
-progress (subC (return V) (_ ‼ₛ _))        | is-value = step-progress SUB-RET
-progress (subC (perform op V M) (_ ‼ₛ _))  | is-op    = step-progress SUB-OP
-progress (subC M (_ ‼ₛ _))                 | steps M↝M' _ = step-progress (SUB-STEP M↝M')
+progress (subC M (_ ‼ₛ _)) = step-progress SUB
 
 -- Theorem: is-value is indeed final state (make no further steps)
 

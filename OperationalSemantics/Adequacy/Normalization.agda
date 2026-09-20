@@ -227,7 +227,7 @@ FL-perform : ∀ {St Γ A ε} {op : Op} → (γ : Env St Γ) → Rel-Env γ
 
 FL-perform {St = St} {Γ = Γ} {op = op} γ pγ V M pV pM =
   subst (CRed' _ _ _) (sym (env-Cˢ-perform γ [] V M))
-    (cred-op ε* (VRed→VRedᵍ (param op) (env-V γ V) pV)
+    (cred-op refl ε* (VRed→VRedᵍ (param op) (env-V γ V) pV)
       (λ q W' pW' →
          subst (CRed' _ _ _) (resumeq q W')
            (pM ((γ ⟨ q ⟩ᵉ) ∷ᵉ W') (pγ , VRedᵍ→VRed (arity op) W' pW'))))
@@ -297,11 +297,11 @@ mutual
        → CRed' A ε St (env-C γ M)
 
   FL-C γ pγ (return V) =
-    subst (CRed' _ _ _) (sym (env-Cˢ-ret γ [] V)) (cred-ret ε* (FL-V γ pγ V))
+    subst (CRed' _ _ _) (sym (env-Cˢ-ret γ [] V)) (cred-ret refl ε* (FL-V γ pγ V))
 
   FL-C γ pγ (subC M (p ‼ₛ q)) =
     subst (CRed' _ _ _) (sym (env-Cˢ-sub γ [] M))
-      (CRed-sub p q (FL-C γ pγ M))
+      (CRed'-sub p q (FL-C γ pγ M))
 
   FL-C γ pγ (absurd V) = ⊥-elim (empty-not-value (env-V γ V))
 
@@ -370,13 +370,14 @@ mutual
 -- two shapes it halts in is which `CRed` constructor it is. The reducibility
 -- of the components plays no part — normalization is all that is read off.
 
-CRed-halts : ∀ {A P ε} {St : 𝕊 []} → {M : toCtx St ⊢C⦂ A ‼ ε}
-           → CRed A P ε St M
-           -------------------
+CRed-halts : ∀ {s} {P : VPred s} {A ε} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
+           → {M : toCtx St ⊢C⦂ A ‼ ε}
+           → CRed s P e ε St M
+           --------------------
            → Halts (⟨ St , M ⟩)
 
-CRed-halts (cred-ret rs _)  = halts-ret (ret-whnf _ _ rs)
-CRed-halts (cred-op rs _ _) = halts-op (op-whnf _ _ _ _ _ rs)
+CRed-halts (cred-ret _ rs _)  = halts-ret (ret-whnf _ _ _ rs)
+CRed-halts (cred-op _ rs _ _) = halts-op (op-whnf _ _ _ _ _ _ rs)
 
 -- A closed program is reducible at the empty state: `Γ = []`, `St = ∅`, and
 -- `toCtx ∅` has no variables to make reducible (`SRed-∅`).

@@ -52,8 +52,17 @@ unbox-lookup {A} {ρ} S z ρ'≾ρ =
        ∘ʳ eq-ren (split-state-++ᶜ S z))
     (resource-lookup S z)
 
-mutual 
-    
+-- Narrowing a binder. A continuation that binds `A` also binds any subtype of
+-- `A`: weaken, then substitute the subsumed variable. The two sequencing
+-- congruences need it because a step refines the bound value's type, while
+-- `_⨟_` and `handle_`with_`in`, unlike `unbox`, carry no witness of their own.
+
+narrow-∷ : ∀ {Γ A A₀ C} → A₀ <:ᵛ A → Γ ∷ A ⊢C⦂ C → Γ ∷ A₀ ⊢C⦂ C
+narrow-∷ p N =
+  C-rename (cong-∷-ren wk-ren) N [ split-[] ↦ subV (var (λ _ → ≾ᵣ-refl) Hd) p ]c
+
+mutual
+
     -- Small-step operational semantics aka Preservation theorem
     data _↝_ :  {C D : CType} → Config C → Config D → Set where
 
@@ -89,20 +98,22 @@ mutual
                      --------------------------------------------
                    → ⟨ S , if false `then M `else N ⟩ ↝ ⟨ S , N ⟩
 
-        -- sequencing: step the scrutinee, carrying time and state forward
+        -- sequencing: step the scrutinee, carrying time and state forward and
+        -- narrowing the sequel's binder to the scrutinee's refined type
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
-                   → {A B : VType}
+                   → {A A₀ B : VType}
                    → {S S' : 𝕊 []}
                    → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                    → {N : ((toCtx S) ⟨ mapᵉ ε₁ ⟩ ∷ A) ⊢C⦂ B ‼ ε₂}
-                   → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+                   → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                    → (δε₃≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
                     --------------------------------------------------------------------
                    → ⟨ S , M ⨟ N ⟩ ↝
-                     ⟨ S' , M' ⨟ C-rename
-                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₃≾ε₁))
-                                   N ⟩
+                     ⟨ S' , M' ⨟ narrow-∷ (step-refines-type M↝M')
+                                   (C-rename
+                                     (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₃≾ε₁))
+                                     N) ⟩
 
         -- sequencing a returned value: substitute it into the sequel
         SEQ-RET    : ∀ {A B ε}
@@ -158,7 +169,7 @@ mutual
                              N) [ split-[] ↦ V ]c ⟩
                      
         -- handling: step the handled computation, carrying time and state forward
-        HANDLE-STEP : ∀ {A B ε₁ ε₂ ε₁'}
+        HANDLE-STEP : ∀ {A A₀ B ε₁ ε₂ ε₁'}
                     → {S S' : 𝕊 []}
                     → {M : toCtx S ⊢C⦂ A ‼ ε₁}
                     → {H : (op : Op) → (ε₃ : E) →
@@ -167,7 +178,7 @@ mutual
                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
                     → {N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
-                    → {M' : toCtx S' ⊢C⦂ A ‼ ε₁'}
+                    → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₁'}
                     → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
                     → (δε₁'≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₁' ≾ᵣ mapᵉ ε₁)
                       -----------------------------------------------------------------------
@@ -178,9 +189,10 @@ mutual
                                        (cong-∷-ren (cong-∷-ren
                                          (suc-comp-ren (step-extends-state M↝M') (≾-⊤ᵣ _))))
                                        (H op ε₃))
-                            `in (C-rename
-                                  (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
-                                  N)⟩
+                            `in (narrow-∷ (step-refines-type M↝M')
+                                  (C-rename
+                                    (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
+                                    N))⟩
 
         -- handling an operation: apply its clause, with the rest of the handled
         -- computation boxed up, so that its resources are not used before enough
@@ -238,7 +250,8 @@ mutual
                       ⟨ S , M [ split-[] ↦ subV (unbox-lookup S z rel) p ]c ⟩
 
         -- subsumption at an eliminated function: the coercion splits, the
-        -- domain half moving onto the argument
+        -- domain half moving onto the argument and the codomain half becoming
+        -- the step's own refinement
         SUB-APP     : ∀ {A A₁ C C₁}
                     → {S : 𝕊 []}
                     → {V : toCtx S ⊢V⦂ A₁ ⇒ C₁}
@@ -246,7 +259,7 @@ mutual
                     → {q : A <:ᵛ A₁}
                     → {r : C₁ <:ᶜ C}
                       ------------------------------------------------------
-                    → ⟨ S , subV V (q ⇒ₛ r) · W ⟩ ↝ ⟨ S , subC (V · subV W q) r ⟩
+                    → ⟨ S , subV V (q ⇒ₛ r) · W ⟩ ↝ ⟨ S , V · subV W q ⟩
 
         -- subsumption at a scrutinised boolean: `Bool <:ᵛ Bool` is the
         -- identity, so it is simply dropped
@@ -258,43 +271,20 @@ mutual
                     → ⟨ S , if subV V Boolₛ `then M `else N ⟩ ↝
                       ⟨ S , if V `then M `else N ⟩
 
-        -- subsumption at a returned value: absorbed by the value
-        SUB-RET     : ∀ {A A' ε'}
+        -- subsumption at a computation: discarded, the reduct landing at the
+        -- subtype the step is free to refine to
+        SUB         : ∀ {C C'}
                     → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ A}
-                    → {p : A <:ᵛ A'}
-                    → {q : uₑ ≾ₑ ε'}
-                      ------------------------------------------------------
-                    → ⟨ S , subC (return V) (p ‼ₛ q) ⟩ ↝ ⟨ S , return (subV V p) ⟩
-
-        -- subsumption at a performed operation: pushed into the continuation
-        SUB-OP      : ∀ {A A' ε ε' op}
-                    → {S : 𝕊 []}
-                    → {V : toCtx S ⊢V⦂ type-of-gtype (param op)}
-                    → {M : toCtx S ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε}
-                    → {p : A <:ᵛ A'}
-                    → {q : op-grade op ·ₑ ε ≾ₑ ε'}
-                      -----------------------------------------------------------
-                    → ⟨ S , subC (perform op V M) (p ‼ₛ q) ⟩ ↝
-                      ⟨ S , perform op V (subC M (p ‼ₛ ≾ₑ-refl)) ⟩
-
-        -- subsumption elsewhere: step underneath it, the effect half of the
-        -- coercion discharged by the step's own refinement
-        SUB-STEP    : ∀ {A A' ε ε' ε''}
-                    → {S S' : 𝕊 []}
-                    → {M : toCtx S ⊢C⦂ A ‼ ε}
-                    → {M' : toCtx S' ⊢C⦂ A ‼ ε''}
-                    → {p : A <:ᵛ A'}
-                    → {q : ε ≾ₑ ε'}
-                    → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-                      ---------------------------------------------------
-                    → ⟨ S , subC M (p ‼ₛ q) ⟩ ↝ ⟨ S' , subC M' (p ‼ₛ ≾ₑ-refl) ⟩
+                    → {M : toCtx S ⊢C⦂ C}
+                    → {w : C <:ᶜ C'}
+                      ---------------------------------
+                    → ⟨ S , subC M w ⟩ ↝ ⟨ S , M ⟩
 
     -- reduction steps only extend states
     --
-    -- The two value types are independent here (they are equal, by
-    -- `step-preserves-type`), so that `step-grade-≾` can speak about
-    -- `step-extends-state` without first knowing the types agree.
+    -- The two value types are independent here (they are related by
+    -- `step-refines-type`), so that `step-grade-≾` can speak about
+    -- `step-extends-state` without first knowing how the types relate.
     step-extends-state : ∀ {ε ε'}
                        → {S S' : 𝕊 []}
                        → {A B : VType}
@@ -303,7 +293,7 @@ mutual
                        → (M↝M' : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩ )
                        -----------------------------------
                        → S ≤ₛ S'
-                       
+
     step-extends-state APP                  = id-suc
     step-extends-state MATCH                = id-suc
     step-extends-state IF-TRUE              = id-suc
@@ -319,38 +309,33 @@ mutual
     step-extends-state UNBOX                = id-suc
     step-extends-state SUB-APP              = id-suc
     step-extends-state SUB-IF               = id-suc
-    step-extends-state SUB-RET              = id-suc
-    step-extends-state SUB-OP               = id-suc
-    step-extends-state (SUB-STEP M↝M')      = step-extends-state M↝M'
+    step-extends-state SUB                  = id-suc
 
--- reduction steps preserve the value type
+    -- reduction steps refine the value type, just as they refine the effect
+    step-refines-type : ∀ {A B ε ε'}
+                      → {S S' : 𝕊 []}
+                      → {M : toCtx S ⊢C⦂ A ‼ ε}
+                      → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
+                      → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
+                      ---------------------------
+                      → B <:ᵛ A
 
-step-preserves-type : ∀ {A B ε ε'}
-                    → {S S' : 𝕊 []}
-                    → {M : toCtx S ⊢C⦂ A ‼ ε}
-                    → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
-                    → ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩
-                    ---------------------------
-                    → A ≡ B
-
-step-preserves-type APP              = refl
-step-preserves-type MATCH            = refl
-step-preserves-type IF-TRUE          = refl
-step-preserves-type IF-FALSE         = refl
-step-preserves-type (SEQ-STEP _ _)   = refl
-step-preserves-type SEQ-RET          = refl
-step-preserves-type SEQ-OP           = refl
-step-preserves-type DELAY            = refl
-step-preserves-type HANDLE-RET       = refl
-step-preserves-type (HANDLE-STEP _ _) = refl
-step-preserves-type HANDLE-OP        = refl
-step-preserves-type BOX              = refl
-step-preserves-type UNBOX            = refl
-step-preserves-type SUB-APP          = refl
-step-preserves-type SUB-IF           = refl
-step-preserves-type SUB-RET          = refl
-step-preserves-type SUB-OP           = refl
-step-preserves-type (SUB-STEP _)     = refl
+    step-refines-type {A = A} APP               = <:ᵛ-refl A
+    step-refines-type {A = A} MATCH             = <:ᵛ-refl A
+    step-refines-type {A = A} IF-TRUE           = <:ᵛ-refl A
+    step-refines-type {A = A} IF-FALSE          = <:ᵛ-refl A
+    step-refines-type {A = A} (SEQ-STEP _ _)    = <:ᵛ-refl A
+    step-refines-type {A = A} SEQ-RET           = <:ᵛ-refl A
+    step-refines-type {A = A} SEQ-OP            = <:ᵛ-refl A
+    step-refines-type {A = A} DELAY             = <:ᵛ-refl A
+    step-refines-type {A = A} HANDLE-RET        = <:ᵛ-refl A
+    step-refines-type {A = A} (HANDLE-STEP _ _) = <:ᵛ-refl A
+    step-refines-type {A = A} HANDLE-OP         = <:ᵛ-refl A
+    step-refines-type {A = A} BOX               = <:ᵛ-refl A
+    step-refines-type {A = A} UNBOX             = <:ᵛ-refl A
+    step-refines-type (SUB-APP {r = p ‼ₛ _})    = p
+    step-refines-type {A = A} SUB-IF            = <:ᵛ-refl A
+    step-refines-type (SUB {w = p ‼ₛ _})        = p
 
 -- Reduction steps make effects more precise, in cancelled form: the grade δ by
 -- which the state grew, composed with the residual effect ε', stays below the
@@ -405,14 +390,11 @@ step-grade-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
       (cong mapᵉ (sym (·ₑ-assoc (op-grade op) ε ε''))))
 step-grade-≾ BOX     = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
 step-grade-≾ UNBOX   = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ SUB-APP = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
+step-grade-≾ (SUB-APP {r = _ ‼ₛ s}) =
+  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ s)
 step-grade-≾ SUB-IF  = ≾ᵣ-reflexive (·ᵣ-identityˡ _)
-step-grade-≾ (SUB-RET {q = q}) =
+step-grade-≾ (SUB {w = _ ‼ₛ q}) =
   ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
-step-grade-≾ (SUB-OP {q = q}) =
-  ≾ᵣ-trans (≾ᵣ-reflexive (·ᵣ-identityˡ _)) (map-monotoneᵉ q)
-step-grade-≾ (SUB-STEP {q = q} step) =
-  ≾ᵣ-trans (step-grade-≾ step) (map-monotoneᵉ q)
 
 -- invariants preserved by the small-step operational semantics, stated in
 -- terms of the two states' grades
@@ -422,21 +404,29 @@ step-invariants : ∀ {A B ε ε'}
                 → {M : toCtx S ⊢C⦂ A ‼ ε}
                 → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                 → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-                → A ≡ B                                                 -- return types are preserved
+                → B <:ᵛ A                                               -- return types become more precise
                 × state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε  -- effects become more precise
 
 step-invariants r =
-  step-preserves-type r ,
+  step-refines-type r ,
   cancelled⇒total (step-extends-state r) (step-grade-≾ r)
 
--- Reflexive-transitive closure: a run of the machine. Every step preserves the
--- value type, but refines the effect grade, so the grade is free at each link.
+-- Reflexive-transitive closure: a run of the machine. Every step refines both
+-- components of the computation type, so both are free at each link.
 
 infixr 5 _◅_
 
-data _↝*_ : ∀ {A ε ε'} → Config (A ‼ ε) → Config (A ‼ ε') → Set where
+data _↝*_ : ∀ {A B ε ε'} → Config (A ‼ ε) → Config (B ‼ ε') → Set where
   ε*   : ∀ {A ε} {cf : Config (A ‼ ε)}
        → cf ↝* cf
-  _◅_  : ∀ {A ε₁ ε₂ ε₃}
-       → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (A ‼ ε₂)} → {cf₃ : Config (A ‼ ε₃)}
+  _◅_  : ∀ {A B C ε₁ ε₂ ε₃}
+       → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (B ‼ ε₂)} → {cf₃ : Config (C ‼ ε₃)}
        → cf₁ ↝ cf₂ → cf₂ ↝* cf₃ → cf₁ ↝* cf₃
+
+-- The refinement a run accumulates.
+
+run-refines-type : ∀ {A B ε ε'}
+                 → {cf : Config (A ‼ ε)} → {cf' : Config (B ‼ ε')}
+                 → cf ↝* cf' → B <:ᵛ A
+run-refines-type {A = A} ε* = <:ᵛ-refl A
+run-refines-type (r ◅ rs)   = <:ᵛ-trans (run-refines-type rs) (step-refines-type r)

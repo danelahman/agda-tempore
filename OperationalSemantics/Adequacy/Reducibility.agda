@@ -15,6 +15,9 @@
 -- type: at a box they speak of the raw store read, whose type the    --
 -- cell declares and which `_<:ᵛ_` only relates to the payload type   --
 -- named, shape-preservingly.                                         --
+--                                                                    --
+-- `CRed` is indexed by the skeleton too: a run refines the value      --
+-- type, so the whnf it reaches is at a subtype of the one named.      --
 ------------------------------------------------------------------------
 
 open import Data.Empty
@@ -167,40 +170,47 @@ VRedᵍ : (G : GType) → (St : 𝕊 []) → toCtx St ⊢V⦂ type-of-gtype G �
 VRedᵍ G = VRedᵍˢ (shapeᵛ (type-of-gtype G)) {type-of-gtype G} refl
 
 -- `M` runs to a weak head normal form whose components are reducible. A step
--- only refines the grade, so the whnf's grade and state are bound by the
--- constructors.
+-- refines the value type as well as the grade, so the whnf's own value type is
+-- free and only its skeleton `s` is fixed; the refinement witness is stored as
+-- the shape equality the whnf stands at.
 
-data CRed (A : VType) (P : (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set)
-     : (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set where
+VPred : Shape → Set₁
+VPred s = {A : VType} → shapeᵛ A ≡ s → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
+
+data CRed (s : Shape) (P : VPred s)
+     : {A : VType} → shapeᵛ A ≡ s
+     → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set where
 
   -- it returns a reducible value
 
-  cred-ret : ∀ {ε} {St St₁ : 𝕊 []}
+  cred-ret : ∀ {A A₀ ε} {e : shapeᵛ A ≡ s} {St St₁ : 𝕊 []}
            → {M : toCtx St ⊢C⦂ A ‼ ε}
-           → {V : toCtx St₁ ⊢V⦂ A}
+           → {V : toCtx St₁ ⊢V⦂ A₀}
+           → (e₀ : shapeᵛ A₀ ≡ s)
            → ⟨ St , M ⟩ ↝* ⟨ St₁ , return V ⟩
-           → P St₁ V
+           → P e₀ St₁ V
            ---------------------------------
-           → CRed A P ε St M
+           → CRed s P e ε St M
 
   -- or it gets stuck on an operation with a reducible parameter, whose
   -- resumption is reducible at every state where the operation's own grade
   -- has elapsed
 
-  cred-op : ∀ {ε ε₁} {St St₁ : 𝕊 []} {op : Op}
+  cred-op : ∀ {A A₀ ε ε₁} {e : shapeᵛ A ≡ s} {St St₁ : 𝕊 []} {op : Op}
           → {M : toCtx St ⊢C⦂ A ‼ ε}
           → {W : toCtx St₁ ⊢V⦂ type-of-gtype (param op)}
           → {M' : toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-                    ⊢C⦂ A ‼ ε₁}
+                    ⊢C⦂ A₀ ‼ ε₁}
+          → (e₀ : shapeᵛ A₀ ≡ s)
           → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
           → VRedᵍ (param op) St₁ W
           → (∀ {St₂ : 𝕊 []}
              → (q : St₁ ⊑ₛ[ mapᵉ (op-grade op) ] St₂)
              → (W' : toCtx St₂ ⊢V⦂ type-of-gtype (arity op))
              → VRedᵍ (arity op) St₂ W'
-             → CRed A P ε₁ St₂ (resume q M' W'))
+             → CRed s P e₀ ε₁ St₂ (resume q M' W'))
           -------------------------------------------------------------------
-          → CRed A P ε St M
+          → CRed s P e ε St M
 
 -- Stated through the eliminators, so that subsumption is absorbed: a product
 -- by its two projections, a function by what it does to a reducible argument
@@ -225,7 +235,7 @@ VRedˢ (t →ˢ t') {A ⇒ (B ‼ ε)} e  St V =
   ∀ {St'} → (q : St ⊑ₛ[ uᵣ ] St')
   → (W : toCtx St' ⊢V⦂ A)
   → VRedˢ t (→ˢ-inj₁ e) St' W
-  → CRed B (VRedˢ t' {B} (→ˢ-inj₂ e)) ε St' (reach-val q V · W)
+  → CRed t' (VRedˢ t') (→ˢ-inj₂ e) ε St' (reach-val q V · W)
 VRedˢ (t →ˢ t') {Base b}      () St V
 VRedˢ (t →ˢ t') {Unit}        () St V
 VRedˢ (t →ˢ t') {Bool}        () St V
@@ -247,10 +257,15 @@ VRed : (A : VType) → (St : 𝕊 []) → toCtx St ⊢V⦂ A → Set
 VRed A = VRedˢ (shapeᵛ A) {A} refl
 
 -- Reducible computations at the value predicate `VRed` — the form the
--- fundamental lemma proves.
+-- fundamental lemma proves. Stated at a shape, so that a subsumption moves the
+-- equality index and leaves the predicate alone.
+
+CRedˢ' : (s : Shape) → {A : VType} → shapeᵛ A ≡ s
+       → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
+CRedˢ' s = CRed s (VRedˢ s)
 
 CRed' : (A : VType) → (ε : E) → (St : 𝕊 []) → toCtx St ⊢C⦂ A ‼ ε → Set
-CRed' A = CRed A (VRed A)
+CRed' A = CRedˢ' (shapeᵛ A) {A} refl
 
 -- Two proofs of a shape equality out of the same type carry the predicate
 -- across, by UIP on the shared endpoints.
@@ -264,6 +279,11 @@ VRedˢ-≡ᵛ : ∀ {t A} {St : 𝕊 []} {e : shapeᵛ A ≡ t} {V V' : toCtx St
          → V ≡ V' → VRedˢ t e St V → VRedˢ t e St V'
 VRedˢ-≡ᵛ refl p = p
 
+CRedˢ'-≡ˢ : ∀ {t t' A ε} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε}
+          → {e : shapeᵛ A ≡ t} → {e' : shapeᵛ A ≡ t'}
+          → CRedˢ' t e ε St M → CRedˢ' t' e' ε St M
+CRedˢ'-≡ˢ {e = refl} {e' = refl} p = p
+
 -- Every cell of the state holds a value that is reducible at any later state
 -- at which it is readable.
 
@@ -273,92 +293,92 @@ SRed St = ∀ {A ρ σ} {St' : 𝕊 []} → (c : [ ρ ] A ∈[ σ ] toCtx St)
         → VRed A St' (lookupᶜ r)
 
 -- A step in front of a reducible computation reaches the same whnf by a
--- longer run. `CRed` carries runs, so `_◅_` leaves the grade free.
+-- longer run. `CRed` carries runs, so `_◅_` leaves the grade and the value
+-- type free; only the stored shape equality is kept.
 
-CRed-expand : ∀ {A P ε ε'} {St St' : 𝕊 []}
-            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
-            → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
-            → CRed A P ε' St' M'
+CRed-expand : ∀ {s} {P : VPred s} {A A₀ ε ε₀} {St St₀ : 𝕊 []}
+            → {e : shapeᵛ A ≡ s} → {e₀ : shapeᵛ A₀ ≡ s}
+            → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ‼ ε₀}
+            → ⟨ St , M ⟩ ↝ ⟨ St₀ , M₀ ⟩
+            → CRed s P e₀ ε₀ St₀ M₀
             -------------------------
-            → CRed A P ε St M
+            → CRed s P e ε St M
 
-CRed-expand r (cred-ret rs pV)   = cred-ret (r ◅ rs) pV
-CRed-expand r (cred-op rs pW pk) = cred-op (r ◅ rs) pW pk
+CRed-expand r (cred-ret e₀ rs pV)   = cred-ret e₀ (r ◅ rs) pV
+CRed-expand r (cred-op e₀ rs pW pk) = cred-op e₀ (r ◅ rs) pW pk
 
 -- A whole run in front of a reducible computation, and transporting one along an
 -- equality of effects (which `SEQ-OP`'s reduct carries).
 
-CRed-expand* : ∀ {A P ε ε'} {St St' : 𝕊 []}
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
-             → ⟨ St , M ⟩ ↝* ⟨ St' , M' ⟩
-             → CRed A P ε' St' M'
+CRed-expand* : ∀ {s} {P : VPred s} {A A₀ ε ε₀} {St St₀ : 𝕊 []}
+             → {e : shapeᵛ A ≡ s} → {e₀ : shapeᵛ A₀ ≡ s}
+             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₀ : toCtx St₀ ⊢C⦂ A₀ ‼ ε₀}
+             → ⟨ St , M ⟩ ↝* ⟨ St₀ , M₀ ⟩
+             → CRed s P e₀ ε₀ St₀ M₀
              -------------------------
-             → CRed A P ε St M
+             → CRed s P e ε St M
 
-CRed-expand* ε*       p = p
-CRed-expand* (r ◅ rs) p = CRed-expand r (CRed-expand* rs p)
+CRed-expand* {s = s} {P = P} {ε = ε} {St = St} {M = M} ε* p =
+  subst (λ z → CRed s P z ε St M) uip p
+CRed-expand* {e = e} (r ◅ rs) p =
+  CRed-expand r
+    (CRed-expand* {e = trans (<:ᵛ-shape (step-refines-type r)) e} rs p)
 
-CRed-ε-subst : ∀ {A P ε ε'} {St : 𝕊 []} → (e : ε ≡ ε')
-             → {M : toCtx St ⊢C⦂ A ‼ ε}
-             → CRed A P ε St M → CRed A P ε' St (ε-subst e M)
+CRed-ε-subst : ∀ {s} {P : VPred s} {A ε ε'} {e : shapeᵛ A ≡ s} {St : 𝕊 []}
+             → (eε : ε ≡ ε') → {M : toCtx St ⊢C⦂ A ‼ ε}
+             → CRed s P e ε St M → CRed s P e ε' St (ε-subst eε M)
 CRed-ε-subst refl p = p
 
--- Subsumption is transparent to a run: `SUB-STEP` carries it along and
--- `SUB-RET`/`SUB-OP` absorb it at the weak head normal form.
+-- Reducibility is monotone in the subtyping order. Both halves are stated at a
+-- fixed skeleton, the subtyping witness moving the equality index alone. The
+-- value half recurses on the witness; at an arrow `SUB-APP` splits the witness
+-- across the application, the codomain half becoming the step's refinement. At
+-- a box both sides quantify over the same reads of the same cell.
 
-↝*-sub-ret : ∀ {A A' ε ε₀} {St St₁ : 𝕊 []}
-           → {M : toCtx St ⊢C⦂ A ‼ ε} → {V : toCtx St₁ ⊢V⦂ A}
-           → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
-           → ⟨ St , M ⟩ ↝* ⟨ St₁ , return V ⟩
-           ------------------------------------------------------------
-           → ⟨ St , subC M (p ‼ₛ q) ⟩ ↝* ⟨ St₁ , return (subV V p) ⟩
+VRedˢ-sub : ∀ {s A A'} {e : shapeᵛ A ≡ s} {e' : shapeᵛ A' ≡ s} {St : 𝕊 []}
+          → (p : A <:ᵛ A') → (V : toCtx St ⊢V⦂ A)
+          → VRedˢ s e St V → VRedˢ s e' St (subV V p)
 
-↝*-sub-ret p q ε*       = SUB-RET ◅ ε*
-↝*-sub-ret p q (r ◅ rs) = SUB-STEP r ◅ ↝*-sub-ret p ≾ₑ-refl rs
-
-↝*-sub-op : ∀ {A A' ε ε₀ ε₁ op} {St St₁ : 𝕊 []}
-          → {M : toCtx St ⊢C⦂ A ‼ ε}
-          → {W : toCtx St₁ ⊢V⦂ type-of-gtype (param op)}
-          → {M' : toCtx St₁ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-                    ⊢C⦂ A ‼ ε₁}
-          → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
-          → ⟨ St , M ⟩ ↝* ⟨ St₁ , perform op W M' ⟩
-          ------------------------------------------------------------------
-          → ⟨ St , subC M (p ‼ₛ q) ⟩ ↝*
-            ⟨ St₁ , perform op W (subC M' (p ‼ₛ ≾ₑ-refl)) ⟩
-
-↝*-sub-op p q ε*       = SUB-OP ◅ ε*
-↝*-sub-op p q (r ◅ rs) = SUB-STEP r ◅ ↝*-sub-op p ≾ₑ-refl rs
-
--- Reducibility is monotone in the subtyping order. The value half recurses on
--- the witness, the computation half on the derivation; at an arrow the two
--- meet, `SUB-APP` splitting the witness across the application. At a box both
--- sides quantify over the same reads of the same cell, so only the skeleton
--- index moves.
+VRedˢ-sub {e' = refl} (Baseₛ refl) V pV         = tt
+VRedˢ-sub {e' = refl} Unitₛ        V pV         = tt
+VRedˢ-sub {e' = refl} Boolₛ        V pV         = tt
+VRedˢ-sub {e' = refl} Emptyₛ       V pV         = tt
+VRedˢ-sub {e' = refl} (p |×|ₛ p')  V (pV , pV') =
+  VRedˢ-sub p (fstᵛ V) pV , VRedˢ-sub p' (sndᵛ V) pV'
+VRedˢ-sub {e' = refl} (p ⇒ₛ (p' ‼ₛ q)) V f      =
+  λ q₀ W pW → CRed-expand SUB-APP (f q₀ (subV W p) (VRedˢ-sub p W pW))
+VRedˢ-sub {e' = refl} ([ _ ]ₛ p)   V f          = λ r → VRedˢ-≡ˢ (f r)
 
 VRed-sub : ∀ {A A'} {St : 𝕊 []} → (p : A <:ᵛ A')
          → (V : toCtx St ⊢V⦂ A) → VRed A St V → VRed A' St (subV V p)
 
-CRed-sub : ∀ {A A' ε ε₀} {St : 𝕊 []} → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
+VRed-sub p V pV = VRedˢ-sub {e = <:ᵛ-shape p} p V (VRedˢ-≡ˢ pV)
+
+-- A run refines the value type one subsumption at a time, and `spine` applies
+-- them in order; reducibility travels along it.
+
+VRed-spine : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
+           → (rs : cf ↝* cf') → {St : 𝕊 []} → (V : toCtx St ⊢V⦂ B)
+           → VRed B St V → VRed A St (spine rs V)
+
+VRed-spine ε*       V pV = pV
+VRed-spine (r ◅ rs) V pV =
+  VRed-sub (step-refines-type r) (spine rs V) (VRed-spine rs V pV)
+
+-- A subsumed computation is its own reduct, one `SUB` step on.
+
+CRed-sub : ∀ {s A A' ε ε₀} {e : shapeᵛ A ≡ s} {e' : shapeᵛ A' ≡ s} {St : 𝕊 []}
+         → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
          → {M : toCtx St ⊢C⦂ A ‼ ε}
-         → CRed A (VRed A) ε St M → CRed A' (VRed A') ε₀ St (subC M (p ‼ₛ q))
+         → CRedˢ' s e ε St M → CRedˢ' s e' ε₀ St (subC M (p ‼ₛ q))
 
-VRed-sub (Baseₛ refl) V pV          = tt
-VRed-sub Unitₛ        V pV          = tt
-VRed-sub Boolₛ        V pV          = tt
-VRed-sub Emptyₛ       V pV          = tt
-VRed-sub (p |×|ₛ p')  V (pV , pV')  =
-  VRed-sub p (fstᵛ V) pV , VRed-sub p' (sndᵛ V) pV'
-VRed-sub (p ⇒ₛ (p' ‼ₛ q)) V f      =
-  λ q₀ W pW →
-    CRed-expand SUB-APP (CRed-sub p' q (f q₀ (subV W p) (VRed-sub p W pW)))
-VRed-sub ([ _ ]ₛ p)   V f           = λ r → VRedˢ-≡ˢ (f r)
+CRed-sub p q = CRed-expand SUB
 
-CRed-sub p q (cred-ret rs pV) =
-  cred-ret (↝*-sub-ret p q rs) (VRed-sub p _ pV)
-CRed-sub p q (cred-op rs pW pk) =
-  cred-op (↝*-sub-op p q rs) pW
-          (λ q₀ W' pW' → CRed-sub p ≾ₑ-refl (pk q₀ W' pW'))
+CRed'-sub : ∀ {A A' ε ε₀} {St : 𝕊 []} → (p : A <:ᵛ A') → (q : ε ≾ₑ ε₀)
+          → {M : toCtx St ⊢C⦂ A ‼ ε}
+          → CRed' A ε St M → CRed' A' ε₀ St (subC M (p ‼ₛ q))
+
+CRed'-sub p q pM = CRed-sub {e = <:ᵛ-shape p} p q (CRedˢ'-≡ˢ pM)
 
 -- The empty store: `toCtx ∅` has no variables.
 
@@ -442,7 +462,7 @@ VRedˢ-reach {t ×ˢ t'} {A ⇒ (B ‼ ε)} q () V p
 VRedˢ-reach {t ×ˢ t'} {[ ρ ] A}     q () V p
 
 VRedˢ-reach {t →ˢ t'} {A ⇒ (B ‼ ε)} q₀ e  V f = λ q' W pW →
-  subst (λ z → CRed B (VRedˢ t' {B} (→ˢ-inj₂ e)) ε _ (z · W))
+  subst (λ z → CRed t' (VRedˢ t') (→ˢ-inj₂ e) ε _ (z · W))
         (trans (V-rename-≡ (reach-renᵘ-∘ q' q₀) V)
                (V-rename-∘ (reach-renᵘ q₀) (reach-renᵘ q') V))
         (f (reach-∘ q' q₀) W pW)

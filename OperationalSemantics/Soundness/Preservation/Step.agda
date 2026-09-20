@@ -245,6 +245,27 @@ strᵀ-natʳ g =
     ∘ᵐ-congʳ (⟨ ∘ᵐ-congˡ (≈ᵐ-sym []-idᵐ) , ≈ᵐ-refl ⟩ᵐ-cong)
   ∙ strᵀ-nat idᵐ g
 
+-- Narrowing the sequel's binder is the step's value refinement, moved from the
+-- bound computation to the binder: the strength carries it across.
+
+narrow-str : ∀ {Γ A A₀ B ε₁ ε₂ X} {t : A₀ <:ᵛ A}
+           → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → (pN : Paramᶜ N)
+           → (b : X →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ))
+           → (m : X →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₁)
+           → Tᶠ (⟦ narrow-∷ t N ⟧ᶜᵗ (narrowᴾ t N pN))
+               ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {ε₁} ∘ᵐ ⟨ b , m ⟩ᵐ
+           ≈ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN)
+               ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₁}
+               ∘ᵐ ⟨ b , Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ m ⟩ᵐ
+narrow-str {t = t} N pN b m =
+    ∘ᵐ-congˡ (T-congᶠ (narrow-nat t N pN))
+  ∙ ∘ᵐ-congˡ (T-∘ᵐ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (strᵀ-natʳ ⟦ t ⟧<:ᵛ)))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _ ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
+
 -- Pushing an environment reindexing into a sequencing/handling composite.
 -- Stated generically (over objects) so the associativity metas are pinned.
 
@@ -406,21 +427,22 @@ seq-coe {d = d} {ε₂ = ε₂} {ε₃ = ε₃} p q f =
 -- Stated in `push-str`'s natural grade `(d ·ₑ ε₃) ·ₑ ε₂`; `seq-coe` re-associates
 -- to the goal's `d ·ₑ (ε₃ ·ₑ ε₂)` afterwards.
 
-seq-step-core : ∀ {ε₁ ε₂ ε₃ A B P} {S S' : 𝕊 []}
+seq-step-core : ∀ {ε₁ ε₂ ε₃ A A₀ B P} {S S' : 𝕊 []}
   → (alg : ∀ {ε} → P ×ᵐ Tᵒ (Tᵒ ⟦ B ⟧ᵛ ε₂) ε →ᵐ Tᵒ ⟦ B ⟧ᵛ (ε ·ₑ ε₂))
   → (alg-≤ : ∀ {εa εb} → (q : εa ≾ₑ εb)
            → alg {εb} ∘ᵐ mapˣᵐ idᵐ (T-≤ q) ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ q) ∘ᵐ alg {εa})
   → (pv : ⟦ toCtx S ⟧ᶜᵗˣ →ᵐ P)
   → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-  → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+  → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
   → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
-  → (pS : Paramˢ S) → (pS' : Paramˢ S')
-  → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+  → (pS : Paramˢ S)
+  → (pM : Paramᶜ M) → (pN : Paramᶜ N)
+  → (m' : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
   → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
-              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS') (stepᵀ r)
+              m' (stepᵀ r)
   → (alg {ε₁} ∘ᵐ ⟨ pv , Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M ⟧ᶜᵗ pM ⟩ᵐ ⟩ᵐ)
        ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ (step-≾ r))
@@ -428,14 +450,14 @@ seq-step-core : ∀ {ε₁ ε₂ ε₃ A B P} {S S' : 𝕊 []}
        ∘ᵐ ⟨ pv ∘ᵐ ⟦ S ⟧ˢ pS
           ,   Tᶠ (⟦ N ⟧ᶜᵗ pN) ∘ᵐ μᵀ
             ∘ᵐ Tᶠ (strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃})
-            ∘ᵐ Tᶠ (mapˣᵐ idᵐ (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS'))
+            ∘ᵐ Tᶠ (mapˣᵐ idᵐ m')
             ∘ᵐ strᵀ {[ mapᵉ ε₃ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ)} {⟦ hist S' ⟧ᶜᵗˣ}
                     {step-grade r}
             ∘ᵐ ⟨ (δ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ toCtx S ⟧ᶜᵗˣ} {mapᵉ (step-grade r)} {mapᵉ ε₃}
                     ∘ᵐ []-≤ (≾ᵣ-reflexive (sym (map-·ᵉ {step-grade r} {ε₃}))))
                    ∘ᵐ ([]-≤ (map-monotoneᵉ (step-≾ r)) ∘ᵐ (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS))
                , stepᵀ r ⟩ᵐ ⟩ᵐ
-seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {P} {S} {S'} alg alg-≤ pv {M} N {M'} r c pS pS' pM pN pM' ih =
+seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {S} {S'} alg alg-≤ pv {M} N {M'} r c pS pM pN m' ih =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
@@ -444,13 +466,12 @@ seq-step-core {ε₁} {ε₂} {ε₃} {A} {B} {P} {S} {S'} alg alg-≤ pv {M} N 
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congʳ (∘ᵐ-congʳ
       (⟨_,_⟩ᵐ-cong {f = η⊣ ∘ᵐ ⟦ S ⟧ˢ pS} {f' = η⊣ ∘ᵐ ⟦ S ⟧ˢ pS}
                    {g = ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS}
-                   {g' = T-≤ (step-≾ r)
-                           ∘ᵐ (μᵀ ∘ᵐ Tᶠ (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS') ∘ᵐ stepᵀ r)}
+                   {g' = T-≤ (step-≾ r) ∘ᵐ (μᵀ ∘ᵐ Tᶠ m' ∘ᵐ stepᵀ r)}
                    ≈ᵐ-refl ih)) ⟩ᵐ-cong)
   ∙ push-str {⟦ toCtx S ⟧ᶜᵗˣ} {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {P}
              {step-grade r} {ε₁} {ε₂} {ε₃}
              alg alg-≤ (pv ∘ᵐ ⟦ S ⟧ˢ pS)
-             (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ pS')
+             (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) m'
              (stepᵀ r) (step-≾ r)
 
 -- The `id-suc` box identity: the residual left by `strᵀ-ηᵀ` in the nine
@@ -554,8 +575,8 @@ box-∷-suc w w' env cell =
 -- `suc-comp-ren` builds. Generic in the two resource grades: a reduction's
 -- own effect grades only instantiate them.
 
-step-box : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
-         → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
+         → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
          → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
          → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
          → (g : mapᵉ (step-grade r) ·ᵣ ρ₄ ≾ᵣ ρ₂)
@@ -683,17 +704,7 @@ step-box SUB-IF c g pS pM =
               ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
   ∙ ηᵀ-nat _
 
-step-box SUB-RET c g pS pM =
-    ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
-                      ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ strᵀ-ηᵀ
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
-              ∙ ⟨ box-id-suc _ _ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
-  ∙ ηᵀ-nat _
-
-step-box SUB-OP c g pS pM =
+step-box SUB c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ ηᵀ _ idᵐ
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
@@ -708,7 +719,6 @@ step-box SUB-OP c g pS pM =
 
 step-box (SEQ-STEP r c') c g pS (pM , pN) = step-box r c g pS pM
 step-box (HANDLE-STEP r c') c g pS (pM , pN , pH , uH) = step-box r c g pS pM
-step-box (SUB-STEP r) c g pS pM = step-box r c g pS pM
 
 -- BOX: allocation. `stepᵀ` is still `ηᵀ`; the `fstᵐ` that `suc-comp-ren`
 -- contributes cancels exactly the cell just written.
@@ -816,8 +826,8 @@ step-box (DELAY {τ = τ} {S = St}) c g pS pM =
 -- The box `seq-step-core` produces carries two grade relaxations, which merge
 -- into the single one `step-box` expects.
 
-seq-g : ∀ {ε₁ ε₃ A} {S S' : 𝕊 []}
-      → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+seq-g : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []}
+      → {M : toCtx S ⊢C⦂ A ‼ ε₁} → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
       → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
       → mapᵉ (step-grade r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁
 seq-g {ε₃ = ε₃} r =
@@ -844,20 +854,20 @@ seq-target : ∀ {ε₁ ε₂ ε₃ A B P} {Γ Γ' : Ctx} {H : Obj}
            → (pv : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ P)
            → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
            → (ρ : Ren [] (Γ' ⟨ mapᵉ ε₃ ⟩) (Γ ⟨ mapᵉ ε₁ ⟩))
-           → (M' : Γ' ⊢C⦂ A ‼ ε₃)
+           → (m' : ⟦ Γ' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃)
            → (env : H →ᵐ ⟦ Γ' ⟧ᶜᵗˣ)
-           → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
+           → (pN : Paramᶜ N)
            → (alg ∘ᵐ ⟨ pv
                      ,   Tᶠ (⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ
                                (renᶜ (cong-∷-ren ρ) N pN))
-                       ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , ⟦ M' ⟧ᶜᵗ pM' ⟩ᵐ ⟩ᵐ)
+                       ∘ᵐ strᵀ ∘ᵐ ⟨ η⊣ , m' ⟩ᵐ ⟩ᵐ)
                ∘ᵐ env
            ≈ᵐ alg ∘ᵐ ⟨ pv ∘ᵐ env
                      ,   Tᶠ (⟦ N ⟧ᶜᵗ pN)
                        ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₃}
                        ∘ᵐ ⟨ [ mapᵉ ε₃ ]ᶠ (⟦ ρ ⟧ʳ ∘ᵐ ⟨ mapᵉ ε₃ ⟩ᶠ env) ∘ᵐ η⊣
-                          , ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ env ⟩ᵐ ⟩ᵐ
-seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ M' env pN pM' =
+                          , m' ∘ᵐ env ⟩ᵐ ⟩ᵐ
+seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ m' env pN =
     ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (⟨⟩ᵐ-∘ _ _ _)
   ∙ ∘ᵐ-congʳ (⟨ ≈ᵐ-refl , body ⟩ᵐ-cong)
@@ -865,7 +875,7 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ M' env pN pM'
     body =
         seq-push {⟦ Γ' ⟧ᶜᵗˣ} {_} {⟦ A ⟧ᵛ} {⟦ B ⟧ᵛ} {ε₃} {_}
                  (⟦ C-rename (cong-∷-ren ρ) N ⟧ᶜᵗ (renᶜ (cong-∷-ren ρ) N pN))
-                 (⟦ M' ⟧ᶜᵗ pM') env
+                 m' env
       -- the renaming in the continuation …
       ∙ ∘ᵐ-congˡ (T-congᶠ (C-rename-nat (cong-∷-ren ρ) N pN))
       ∙ ∘ᵐ-congˡ (T-∘ᵐ _ _)
@@ -884,26 +894,30 @@ seq-target {ε₃ = ε₃} {A = A} {B = B} {Γ' = Γ'} alg pv N ρ M' env pN pM'
              ∙ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
            , ≈ᵐ-refl ⟩ᵐ-cong))
 
-sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A B} {S S' : 𝕊 []}
+sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
   → {M : toCtx S ⊢C⦂ A ‼ ε₁} → (N : toCtx S ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂)
-  → {M' : toCtx S' ⊢C⦂ A ‼ ε₃}
+  → {M' : toCtx S' ⊢C⦂ A₀ ‼ ε₃}
   → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
   → (c : ≤ₛ-grade (step-extends-state r) ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
   → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pN : Paramᶜ N) → (pM' : Paramᶜ M')
   → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ r)
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+       ∘ᵐ Tᶠ ⟦ step-refines-type r ⟧<:ᵛ
+       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {step-grade r} {ε₃}
               (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
   → ⟦ M ⨟ N ⟧ᶜᵗ (pM , pN) ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ (SEQ-STEP {N = N} r c))
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
-              (⟦ M' ⨟ C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N ⟧ᶜᵗ
-                 (pM' , renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
+              (⟦ M' ⨟ narrow-∷ (step-refines-type r)
+                        (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
+                 (pM' , narrowᴾ (step-refines-type r)
+                          (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
+                          (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN))
                  ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
               (stepᵀ r)
-sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c pS pM pN pM' ih =
+sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS pM pN pM' ih =
     ∘ᵐ-congˡ (≈ᵐ-sym (μalg-drop _ _))
-  ∙ seq-step-core μalg μalg-≤ terminalᵐ N r c pS (stepᴾˢ r pS pM) pM pN pM' ih
+  ∙ seq-step-core μalg μalg-≤ terminalᵐ N r c pS pM pN mt ih'
   ∙ ∘ᵐ-congʳ (μalg-drop _ _)
   -- merge the box's two relaxations into the one `step-box` expects
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ
@@ -938,60 +952,51 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {B} {S} {S'} {M} N {M'} r c pS pM pN 
   -- collect the last two functorial actions under one `Tᶠ`
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)))))
-  -- what is under it is the target's denotation …
+  -- … and what is under it is the target's denotation, the step's value
+  -- refinement moving from the bound computation onto the sequel's binder
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
       (∘ᵐ-assoc _ _ _
-       ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ (≈ᵐ-sym (μalg-drop _ _))
+       ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ (∘ᵐ-congʳ
+                     (narrow-str {t = step-refines-type r}
+                        (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
+                        (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
+                        η⊣ (⟦ M' ⟧ᶜᵗ pM')))
+                 ∙ ∘ᵐ-congˡ (≈ᵐ-sym (μalg-drop _ _))
                  ∙ seq-target {ε₁} {ε₂} {ε₃} {A} {B} {𝟙ᵐ}
                               {toCtx S} {toCtx S'} {⟦ hist S' ⟧ᶜᵗˣ}
                               μalg terminalᵐ N (suc-comp-ren (step-extends-state r) c)
-                              M' (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN pM'
+                              (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM')
+                              (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN
                  ∙ μalg-drop _ _))))))
   -- … and the `ε-substᵀ` that `μμ` exposed is exactly what `seq-coe` absorbs
   ∙ seq-coe (step-≾ r) (step-≾ (SEQ-STEP {N = N} r c)) _
-
-
--- `SUB-STEP`: the subsumption passes through the bind. Its value half crosses
--- the multiplication (`μᵀ-nat`) and lands on the reduct; its effect half meets
--- the sub-step's own refinement.
-
-sound-SUB-STEP : ∀ {ε ε' ε'' A A'} {S S' : 𝕊 []}
-  → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε''}
-  → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
-  → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩)
-  → (pS : Paramˢ S) → (pM : Paramᶜ M) → (pM' : Paramᶜ M')
-  → ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
-    ≈ᵐ T-≤ (step-≾ r)
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε''}
-              (⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) (stepᵀ r)
-  → ⟦ subC M (p ‼ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
-    ≈ᵐ T-≤ (step-≾ (SUB-STEP {p = p} {q = q} r))
-       ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A' ⟧ᵛ} {step-grade r} {ε''}
-              (⟦ subC M' (p ‼ₛ ≾ₑ-refl) ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
-              (stepᵀ r)
-sound-SUB-STEP {S = S} {S' = S'} {M' = M'} p q r pS pM pM' ih =
-    ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ ih
-  ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q)
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ (step-≾ r)))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙ ∘ᵐ-congˡ (T-≤-trans (step-≾ r) q _)
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym bind-push)
   where
-    f = ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
+    g : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₃
+    g = ⟦ M' ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
 
-    bind-push : (⟦ subC M' (p ‼ₛ ≾ₑ-refl) ⟧ᶜᵗ pM' ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
-                  ⋄ stepᵀ r
-              ≈ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ (f ⋄ stepᵀ r)
-    bind-push =
-        ∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
-            (  ∘ᵐ-congˡ (∘ᵐ-congˡ (∘ᵐ-congʳ (T-≤-refl ≾ₑ-refl) ∙ ∘ᵐ-identityʳ _))
-             ∙ ∘ᵐ-assoc _ _ _)))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _))
-      ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (μᵀ-nat ⟦ p ⟧<:ᵛ)
-      ∙ ∘ᵐ-assoc _ _ _
+    mt : ⟦ hist S' ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ A ⟧ᵛ ε₃
+    mt = (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM') ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM)
+
+    ih' : ⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+        ≈ᵐ T-≤ (step-≾ r)
+           ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {step-grade r} {ε₃}
+                  mt (stepᵀ r)
+    ih' = ih
+        ∙ ∘ᵐ-congʳ (≈ᵐ-sym (Tᶠ-bind ⟦ step-refines-type r ⟧<:ᵛ g (stepᵀ r)))
+        ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
+
+
+-- `SUB`: subsumption at a computation is discarded. Its value half becomes the
+-- step's own type refinement, its effect half the step's sub-effecting.
+
+sound-SUB : ∀ {ε ε' A A'} {S : 𝕊 []}
+  → {M : toCtx S ⊢C⦂ A ‼ ε}
+  → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
+  → (pS : Paramˢ S) → (pM : Paramᶜ M)
+  → ⟦ subC M (p ‼ₛ q) ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS
+    ≈ᵐ T-≤ q ∘ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ (⟦ M ⟧ᶜᵗ pM ∘ᵐ ⟦ S ⟧ˢ pS)
+sound-SUB p q pS pM =
+    ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q))
+  ∙ ∘ᵐ-congˡ (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)

@@ -69,7 +69,8 @@ open Adjunction Adj using (η⊣)
 open GroundTypes GTy using (⟦_⟧ᵍ; ⟦_⟧ᵇ; ⟦_⟧ᵇᶜ)
 open Monad Mon
 
-open import DenotationalSemantics.Interpretation.Types    Spec Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Types     Spec Cat Fut Pst Adj GTy Mon
+open import DenotationalSemantics.Interpretation.Subtyping Spec Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts Spec Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Terms    Spec Cat Fut Pst Adj GTy Mon GE
 open import DenotationalSemantics.Interpretation.State    Spec Cat Fut Pst Adj GTy Mon GE
@@ -95,20 +96,61 @@ record Same-whnf {A : VType} {ε : E} (M N : Prog A ε) : Set where
     same-op  : (w : Op-whnf (⟨ ∅ , M ⟩))
              → Σ[ w' ∈ Op-whnf (⟨ ∅ , N ⟩) ] Op-whnf.oper w ≡ Op-whnf.oper w'
 
--- A program is its whnf, run after the run's transition and coerced back to
--- the program's grade: `↝*-sound` at the empty state (`hist ∅ ≡ []`, so
--- `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty environment is `idᵐ`).
+-- Post-composing the functorial action passes into a Kleisli composite, and
+-- through each of the two head shapes: `ηᵀ` and `opᵀ` are natural.
 
-program-run-sound : ∀ {A ε ε'} {cf' : Config (A ‼ ε')}
+Tᶠ-⋄ : ∀ {X Y Z Z' : Obj} {ε ε' : E} → (g : Z →ᵐ Z')
+     → (h : Y →ᵐ Tᵒ Z ε') → (d : X →ᵐ Tᵒ Y ε)
+     → Tᶠ g ∘ᵐ (h ⋄ d) ≈ᵐ (Tᶠ g ∘ᵐ h) ⋄ d
+Tᶠ-⋄ g h d =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (Tᶠ g) μᵀ (Tᶠ h ∘ᵐ d)))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (μᵀ-nat g)))
+      (≈ᵐ-trans (∘ᵐ-assoc μᵀ (Tᶠ (Tᶠ g)) (Tᶠ h ∘ᵐ d))
+        (∘ᵐ-congʳ (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (Tᶠ (Tᶠ g)) (Tᶠ h) d))
+                            (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ (Tᶠ g) h)))))))
+
+Tᶠ-leafᵐ : ∀ {X Y Z : Obj} → (g : X →ᵐ Z) → (a : Y →ᵐ X)
+         → Tᶠ g ∘ᵐ leafᵐ a ≈ᵐ leafᵐ (g ∘ᵐ a)
+Tᶠ-leafᵐ g a =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (Tᶠ g) ηᵀ a))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat g))) (∘ᵐ-assoc ηᵀ g a))
+
+Tᶠ-nodeᵐ : ∀ {X X' Y : Obj} {ε : E} → (g : X →ᵐ X') → (op : Op)
+         → (w : Y →ᵐ ⟦ param op ⟧ᵍ)
+         → (k : Y →ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ X ε))
+         → Tᶠ g ∘ᵐ nodeᵐ op w k
+         ≈ᵐ nodeᵐ op w ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (Tᶠ g)) ∘ᵐ k)
+Tᶠ-nodeᵐ g op w k =
+  ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc (Tᶠ g) (opᵀ op) ⟨ w , k ⟩ᵐ))
+    (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (opᵀ-nat op g)))
+      (≈ᵐ-trans (∘ᵐ-assoc (opᵀ op) _ ⟨ w , k ⟩ᵐ)
+        (∘ᵐ-congʳ (≈ᵐ-trans (mapˣᵐ-∘⟨⟩ idᵐ _ w k)
+                            (⟨ ∘ᵐ-identityˡ w , ≈ᵐ-refl ⟩ᵐ-cong)))))
+
+-- A program is its whnf, coerced along the run's refinement and run after the
+-- run's transition, then coerced back to the program's grade: `↝*-sound` at
+-- the empty state (`hist ∅ ≡ []`, so `⟦ [] ⟧ᶜᵗˣ = 𝟙ᵐ` and the empty
+-- environment is `idᵐ`).
+
+program-run-sound : ∀ {A B ε ε'} {cf' : Config (B ‼ ε')}
                   → (M : Prog A ε) → (pM : Paramᶜ M)
                   → (rs : ⟨ ∅ , M ⟩ ↝* cf')
                   → ⟦ M ⟧ᵖ pM
-                  ≈ᵐ delayedᵐ (⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs (tt , pM)))
+                  ≈ᵐ delayedᵐ (Tᶠ ⟦ run-refines-type rs ⟧<:ᵛ
+                                 ∘ᵐ ⟦ cf' ⟧ᶜᶠ (stepsᴾᶜᶠ rs (tt , pM)))
                               (stepsᵀ rs) (steps-≾ rs)
 
 program-run-sound M pM rs =
   ≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-identityʳ (⟦ M ⟧ᵖ pM)))
-           (↝*-sound rs (tt , pM) (uniform↝* rs (tt , pM)))
+    (≈ᵐ-trans (↝*-sound rs (tt , pM) (uniform↝* rs (tt , pM)))
+              (∘ᵐ-congʳ (Tᶠ-⋄ _ _ _)))
+
+-- The value a whnf returns, at the program's own type: a run refines the type,
+-- so the value stands at a subtype of it.
+
+ret-value : ∀ {A ε} {M : Prog A ε} → (w : Ret-whnf (⟨ ∅ , M ⟩))
+          → toCtx (Ret-whnf.state w) ⊢V⦂ A
+ret-value w = subV (Ret-whnf.value w) (run-refines-type (Ret-whnf.run w))
 
 -- The two head presentations of a program, read off a whnf it reaches.
 
@@ -118,11 +160,12 @@ ret-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
                    Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                    Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
                      (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ a) d r)
-ret-presentation M pM (ret-whnf St V rs) =
+ret-presentation M pM (ret-whnf St A₀ V rs) =
     _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
   , ≈ᵐ-trans (program-run-sound M pM rs)
       (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs)
-        (proj₂ (ret-whnf-shape V _ _)))
+        (≈ᵐ-trans (∘ᵐ-congʳ (proj₂ (ret-whnf-shape V _ _)))
+                  (Tᶠ-leafᵐ _ _)))
 
 op-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
                 → (w : Op-whnf (⟨ ∅ , M ⟩))
@@ -133,11 +176,12 @@ op-presentation : ∀ {A ε} → (M : Prog A ε) → (pM : Paramᶜ M)
                   Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (op-ticks w) ]
                   Σ[ r ∈ (δ ·ₑ (op-grade (Op-whnf.oper w) ·ₑ ε₂) ≾ₑ ε) ]
                     (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (nodeᵐ (Op-whnf.oper w) v k) d r)
-op-presentation M pM (op-whnf St op ε' W M' rs) =
+op-presentation M pM (op-whnf St op ε' A₀ W M' rs) =
     _ , _ , _ , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
   , ≈ᵐ-trans (program-run-sound M pM rs)
       (delayedᵐ-cong (stepsᵀ rs) (steps-≾ rs)
-        (proj₂ (proj₂ (op-whnf-shape W M' _ _ _))))
+        (≈ᵐ-trans (∘ᵐ-congʳ (proj₂ (proj₂ (op-whnf-shape W M' _ _ _))))
+                  (Tᶠ-nodeᵐ _ op _ _)))
 
 -- Equal denotations cannot halt in different shapes, and when both get stuck
 -- it is on the same operation: the two presentations meet at `ret≢op`
@@ -191,15 +235,31 @@ adequacy {M = M} {N = N} pM pN e = record { same-ret = sr ; same-op = so }
 
 -- The head presentation at base type, with the constant it returns.
 
+-- At a base type the run's refinement is `Baseₛ refl`, whose coercion is the
+-- identity, so the whnf's leaf survives it unchanged.
+
+base-run-leaf : ∀ {b A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀)
+              → (p : A₀ <:ᵛ Base b)
+              → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+              → Σ[ c ∈ BaseConstants b ]
+                  (base-val (subV V p) ≡ const c)
+                × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                     ≈ᵐ leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ))
+
+base-run-leaf V (Baseₛ refl) pSt pV with base-leaf-const V pSt pV
+... | c , sc , qc =
+  c , sc , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qc)
+
 const-presentation : ∀ {b ε} → (M : Prog (Base b) ε) → (pM : Paramᶜ M)
                    → (w : Ret-whnf (⟨ ∅ , M ⟩))
                    → Σ[ c ∈ BaseConstants b ] Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                      Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                      Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
-                       (base-val (Ret-whnf.value w) ≡ const c)
+                       (base-val (ret-value w) ≡ const c)
                      × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (⟦ c ⟧ᵇᶜ ∘ᵐ terminalᵐ)) d r)
 
-const-presentation M pM (ret-whnf St V rs) with base-leaf-const V _ _
+const-presentation M pM (ret-whnf St A₀ V rs)
+  with base-run-leaf V (run-refines-type rs) _ _
 ... | c , sc , qc =
     c , _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs , sc
   , ≈ᵐ-trans (program-run-sound M pM rs)
@@ -214,8 +274,8 @@ adequacy-base : ∀ {b ε} → {M N : Prog (Base b) ε}
               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
               ------------------------------------------------------------
               → Σ[ c ∈ BaseConstants b ]
-                  (base-val (Ret-whnf.value wM) ≡ const c)
-                × (base-val (Ret-whnf.value wN) ≡ const c)
+                  (base-val (ret-value wM) ≡ const c)
+                × (base-val (ret-value wN) ≡ const c)
 
 adequacy-base {M = M} {N = N} pM pN e wM wN
   with const-presentation M pM wM | const-presentation N pN wN
@@ -258,17 +318,35 @@ bool-leaf-value (subV V Boolₛ) pSt pV with bool-leaf-value V pSt pV
 
 -- The head presentation at `Bool`, with the boolean it returns.
 
+-- The same at `Bool`, where the run's refinement is `Boolₛ`.
+
+bool-run-leaf : ∀ {A₀} {St : 𝕊 []} → (V : toCtx St ⊢V⦂ A₀) → (p : A₀ <:ᵛ Bool)
+              → (pSt : Paramˢ St) → (pV : Paramᵛ V)
+              → ((bool-val (subV V p) ≡ true)
+                 × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                      ≈ᵐ leafᵐ (trueᵐ ∘ᵐ terminalᵐ)))
+              ⊎ ((bool-val (subV V p) ≡ false)
+                 × (Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ ⟨ St , return V ⟩ ⟧ᶜᶠ (pSt , pV)
+                      ≈ᵐ leafᵐ (falseᵐ ∘ᵐ terminalᵐ)))
+
+bool-run-leaf V Boolₛ pSt pV with bool-leaf-value V pSt pV
+... | inj₁ (sv , qv) =
+  inj₁ (sv , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qv))
+... | inj₂ (sv , qv) =
+  inj₂ (sv , ≈ᵐ-trans (∘ᵐ-congˡ T-idᵐ) (≈ᵐ-trans (∘ᵐ-identityˡ _) qv))
+
 bool-presentation : ∀ {ε} → (M : Prog Bool ε) → (pM : Paramᶜ M)
                   → (w : Ret-whnf (⟨ ∅ , M ⟩))
                   → Σ[ Y ∈ Obj ] Σ[ δ ∈ E ]
                     Σ[ d ∈ (𝟙ᵐ →ᵐ Tᵒ Y δ) ] Σ[ nd ∈ Delaysᵐ d (ret-ticks w) ]
                     Σ[ r ∈ (δ ·ₑ uₑ ≾ₑ ε) ]
-                      ( ((bool-val (Ret-whnf.value w) ≡ true)
+                      ( ((bool-val (ret-value w) ≡ true)
                          × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (trueᵐ ∘ᵐ terminalᵐ)) d r))
-                      ⊎ ((bool-val (Ret-whnf.value w) ≡ false)
+                      ⊎ ((bool-val (ret-value w) ≡ false)
                          × (⟦ M ⟧ᵖ pM ≈ᵐ delayedᵐ (leafᵐ (falseᵐ ∘ᵐ terminalᵐ)) d r)) )
 
-bool-presentation M pM (ret-whnf St V rs) with bool-leaf-value V _ _
+bool-presentation M pM (ret-whnf St A₀ V rs)
+  with bool-run-leaf V (run-refines-type rs) _ _
 ... | inj₁ (sv , qv) =
     _ , _ , _ , stepsᵀ-delays rs , steps-≾ rs
   , inj₁ (sv , ≈ᵐ-trans (program-run-sound M pM rs)
@@ -285,10 +363,10 @@ adequacy-bool : ∀ {ε} → {M N : Prog Bool ε}
               → ⟦ M ⟧ᵖ pM ≈ᵐ ⟦ N ⟧ᵖ pN
               → (wM : Ret-whnf (⟨ ∅ , M ⟩)) → (wN : Ret-whnf (⟨ ∅ , N ⟩))
               ------------------------------------------------------------
-              → ((bool-val (Ret-whnf.value wM) ≡ true)
-                 × (bool-val (Ret-whnf.value wN) ≡ true))
-              ⊎ ((bool-val (Ret-whnf.value wM) ≡ false)
-                 × (bool-val (Ret-whnf.value wN) ≡ false))
+              → ((bool-val (ret-value wM) ≡ true)
+                 × (bool-val (ret-value wN) ≡ true))
+              ⊎ ((bool-val (ret-value wM) ≡ false)
+                 × (bool-val (ret-value wN) ≡ false))
 
 adequacy-bool {M = M} {N = N} pM pN e wM wN
   with bool-presentation M pM wM | bool-presentation N pN wN

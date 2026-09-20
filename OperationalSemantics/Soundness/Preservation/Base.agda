@@ -87,8 +87,8 @@ Paramᶜᶠ ⟨ St , M ⟩ = Paramˢ St × Paramᶜ M
 -- renamed. Every other rule either keeps the state or only locks it, and the
 -- two congruences inherit the sub-step's.
 
-stepᴾˢ : ∀ {ε ε' A} {S S' : 𝕊 []}
-       → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+stepᴾˢ : ∀ {ε ε' A B} {S S' : 𝕊 []}
+       → {M : toCtx S ⊢C⦂ A ‼ ε} → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
        → (r : ⟨ S , M ⟩ ↝ ⟨ S' , M' ⟩) → Paramˢ S → Paramᶜ M → Paramˢ S'
 stepᴾˢ APP                 pS _              = pS
 stepᴾˢ MATCH               pS _              = pS
@@ -106,9 +106,7 @@ stepᴾˢ (BOX {V = V})       pS (pV , _)       =
 stepᴾˢ UNBOX               pS _              = pS
 stepᴾˢ SUB-APP             pS _              = pS
 stepᴾˢ SUB-IF              pS _              = pS
-stepᴾˢ SUB-RET             pS _              = pS
-stepᴾˢ SUB-OP              pS _              = pS
-stepᴾˢ (SUB-STEP r)        pS pM             = stepᴾˢ r pS pM
+stepᴾˢ SUB                 pS _              = pS
 
 -- Kleisli composition with a time transition: running a computation over
 -- the later history, after the transition that produces it.
@@ -126,8 +124,8 @@ infixl 25 _⋄_
 -- into the *shape* of the store, never into the effect grade, which is why
 -- allocation contributes `uₑ`.
 
-step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
-           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+step-grade : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
+           → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
            → ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩
            → E
 step-grade APP                  = uₑ
@@ -145,16 +143,14 @@ step-grade BOX                  = uₑ
 step-grade UNBOX                = uₑ
 step-grade SUB-APP              = uₑ
 step-grade SUB-IF               = uₑ
-step-grade SUB-RET              = uₑ
-step-grade SUB-OP               = uₑ
-step-grade (SUB-STEP r)         = step-grade r
+step-grade SUB                  = uₑ
 
 -- The transition itself. `DELAY` ticks: it names the present as the past of
 -- every world one delay ahead (`η⊣`), and `delayᵀ` is what actually reaches
 -- those worlds — this is the only way a lock can ever be produced.
 
-stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
-      → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+stepᵀ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
+      → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
       → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
       → ⟦ hist St ⟧ᶜᵗˣ →ᵐ Tᵒ ⟦ hist St' ⟧ᶜᵗˣ (step-grade r)
 stepᵀ APP               = ηᵀ
@@ -172,15 +168,13 @@ stepᵀ BOX               = ηᵀ
 stepᵀ UNBOX             = ηᵀ
 stepᵀ SUB-APP           = ηᵀ
 stepᵀ SUB-IF            = ηᵀ
-stepᵀ SUB-RET           = ηᵀ
-stepᵀ SUB-OP            = ηᵀ
-stepᵀ (SUB-STEP r)      = stepᵀ r
+stepᵀ SUB               = ηᵀ
 
 -- The step's effect, composed with the target's, refines the source's. This is
 -- `step-grade-≾` in the effect grades.
 
-step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A : VType}
-       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε'}
+step-≾ : ∀ {ε ε'} {St St' : 𝕊 []} {A B : VType}
+       → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ B ‼ ε'}
        → (r : ⟨ St , M ⟩ ↝ ⟨ St' , M' ⟩)
        → step-grade r ·ₑ ε' ≾ₑ ε
 step-≾ {ε = ε} APP    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
@@ -205,13 +199,9 @@ step-≾ (HANDLE-OP {ε = ε} {ε'' = ε''} {op = op}) =
     (trans (·ₑ-identityˡ _) (sym (·ₑ-assoc (op-grade op) ε ε'')))
 step-≾ {ε = ε} BOX    = ≾ₑ-reflexive (·ₑ-identityˡ ε)
 step-≾ {ε = ε} UNBOX   = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ {ε = ε} SUB-APP = ≾ₑ-reflexive (·ₑ-identityˡ ε)
+step-≾ (SUB-APP {r = _ ‼ₛ s}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) s
 step-≾ {ε = ε} SUB-IF  = ≾ₑ-reflexive (·ₑ-identityˡ ε)
-step-≾ (SUB-RET {q = q}) =
-  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ uₑ)) q
-step-≾ (SUB-OP {ε = ε} {op = op} {q = q}) =
-  ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ (op-grade op ·ₑ ε))) q
-step-≾ (SUB-STEP {q = q} r) = ≾ₑ-trans (step-≾ r) q
+step-≾ (SUB {w = _ ‼ₛ q}) = ≾ₑ-trans (≾ₑ-reflexive (·ₑ-identityˡ _)) q
 
 -- Sub-effecting is irrelevant in its witness (the effect order is).
 
@@ -408,13 +398,14 @@ app-map⇒ᵐ f g h k =
   ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ idᵐ f h k ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
 
--- SUB-APP: the subsumption at an eliminated function splits.
+-- SUB-APP: the subsumption at an eliminated function splits, its codomain
+-- half becoming the step's own refinement.
 
 sound-SUB-APP : ∀ {Γ A A₁ C C₁} → (V : Γ ⊢V⦂ A₁ ⇒ C₁) → (W : Γ ⊢V⦂ A)
               → (q : A <:ᵛ A₁) → (r : C₁ <:ᶜ C)
               → (pV : Paramᵛ V) → (pW : Paramᵛ W)
               → ⟦ subV V (q ⇒ₛ r) · W ⟧ᶜᵗ (pV , pW)
-              ≈ᵐ ⟦ subC (V · subV W q) r ⟧ᶜᵗ (pV , pW)
+              ≈ᵐ ⟦ r ⟧<:ᶜ ∘ᵐ ⟦ V · subV W q ⟧ᶜᵗ (pV , pW)
 sound-SUB-APP V W q r pV pW =
   app-map⇒ᵐ ⟦ q ⟧<:ᵛ ⟦ r ⟧<:ᶜ (⟦ V ⟧ᵛᵗ pV) (⟦ W ⟧ᵛᵗ pW)
 
@@ -426,20 +417,6 @@ sound-SUB-IF : ∀ {Γ C} → (V : Γ ⊢V⦂ Bool) → (M N : Γ ⊢C⦂ C)
              ≈ᵐ ⟦ if V `then M `else N ⟧ᶜᵗ (pV , pM , pN)
 sound-SUB-IF V M N pV pM pN = ifᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl ≈ᵐ-refl
 
--- SUB-RET: the value half of the coercion crosses the unit, the effect half
--- stays behind as the sub-effecting the step licenses.
-
-sound-SUB-RET : ∀ {Γ A A' ε'} → (V : Γ ⊢V⦂ A) → (p : A <:ᵛ A') → (q : uₑ ≾ₑ ε')
-              → (pV : Paramᵛ V)
-              → ⟦ subC (return V) (p ‼ₛ q) ⟧ᶜᵗ pV
-              ≈ᵐ T-≤ q ∘ᵐ ⟦ return (subV V p) ⟧ᶜᵗ pV
-sound-SUB-RET V p q pV =
-    ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q)
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (ηᵀ-nat ⟦ p ⟧<:ᵛ)))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-
 -- Transporting a composite along an equality of the domain's second factor.
 
 subst-∘ᵐ : ∀ {X Y Z} {O O' : Obj} → (e : O ≡ O') → (g : Y →ᵐ Z) → (f : X ×ᵐ O →ᵐ Y)
@@ -447,37 +424,70 @@ subst-∘ᵐ : ∀ {X Y Z} {O O' : Obj} → (e : O ≡ O') → (g : Y →ᵐ Z) 
          ≈ᵐ g ∘ᵐ subst (λ P → X ×ᵐ P →ᵐ Y) e f
 subst-∘ᵐ refl g f = ≈ᵐ-refl
 
--- SUB-OP: the value half of the coercion is pushed into the continuation,
--- where `opᵀ`'s naturality pulls it back out.
+-- A step's value refinement, at a type it does not move, denotes the identity.
 
-sound-SUB-OP : ∀ {Γ A A' ε ε' op}
-             → (V : Γ ⊢V⦂ type-of-gtype (param op))
-             → (M : Γ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε)
-             → (p : A <:ᵛ A') → (q : op-grade op ·ₑ ε ≾ₑ ε')
-             → (pV : Paramᵛ V) → (pM : Paramᶜ M)
-             → ⟦ subC (perform op V M) (p ‼ₛ q) ⟧ᶜᵗ (pV , pM)
-             ≈ᵐ T-≤ q ∘ᵐ ⟦ perform op V (subC M (p ‼ₛ ≾ₑ-refl)) ⟧ᶜᵗ (pV , pM)
-sound-SUB-OP {Γ} {A} {A'} {ε} {ε'} {op} V M p q pV pM =
-    ∘ᵐ-congˡ (T-≤-nat ⟦ p ⟧<:ᵛ q)
-  ∙ ∘ᵐ-assoc _ _ _
-  ∙ ∘ᵐ-congʳ (≈ᵐ-sym push)
+T⟦⟧<:ᵛ-id : ∀ {A ε} → (t : A <:ᵛ A) → Tᶠ {⟦ A ⟧ᵛ} {⟦ A ⟧ᵛ} {ε} ⟦ t ⟧<:ᵛ ≈ᵐ idᵐ
+T⟦⟧<:ᵛ-id t = T-congᶠ (⟦⟧<:ᵛ-id t) ∙ T-idᵐ
+
+insert-coe : ∀ {X A ε} {h : X →ᵐ Tᵒ ⟦ A ⟧ᵛ ε} → (t : A <:ᵛ A)
+           → h ≈ᵐ Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ h
+insert-coe {h = h} t = ≈ᵐ-sym (∘ᵐ-congˡ (T⟦⟧<:ᵛ-id t) ∙ ∘ᵐ-identityˡ h)
+
+-- The unit step, with the step's value refinement in front: the same shape as
+-- `pure-step`, with the coercion passing the sub-effecting by naturality.
+
+pure-step<: : ∀ {X A B ε ε'}
+            → (q : uₑ ·ₑ ε' ≾ₑ ε) → (t : B <:ᵛ A)
+            → {f : X →ᵐ Tᵒ ⟦ A ⟧ᵛ ε} → {g : X →ᵐ Tᵒ ⟦ B ⟧ᵛ ε'}
+            → (r : ε' ≾ₑ ε)
+            → f ≈ᵐ T-≤ r ∘ᵐ Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ g
+            → f ≈ᵐ T-≤ q ∘ᵐ Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ (g ⋄ ηᵀ)
+pure-step<: {ε' = ε'} q t {f} {g} r e =
+    e
+  ∙ ≈ᵐ-sym
+      (  ∘ᵐ-congʳ (∘ᵐ-congʳ (⋄-ηᵀ g ∙ ∘ᵐ-congˡ (T-≤-≡ uₑ·ε'≡ε')))
+       ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat ⟦ t ⟧<:ᵛ (≾ₑ-reflexive uₑ·ε'≡ε')))
+       ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+       ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+       ∙ ∘ᵐ-congˡ (T-≤-trans (≾ₑ-reflexive uₑ·ε'≡ε') q r))
   where
-    push : ⟦ perform op V (subC M (p ‼ₛ ≾ₑ-refl)) ⟧ᶜᵗ (pV , pM)
-         ≈ᵐ Tᶠ ⟦ p ⟧<:ᵛ ∘ᵐ ⟦ perform op V M ⟧ᶜᵗ (pV , pM)
-    push =
-        ∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-                  , ∘ᵐ-congˡ ([]-congᶠ
-                      (curryᵐ-cong
-                        (  subst-∘ᵐ (ty-gty (arity op)) _ (⟦ M ⟧ᶜᵗ pM)
-                         ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (T-≤-refl ≾ₑ-refl) ∙ ∘ᵐ-identityʳ _))
-                       ∙ ≈ᵐ-sym (map⇒ᵐ-curryᵐ (Tᶠ ⟦ p ⟧<:ᵛ) _))
-                     ∙ []-∘ᵐ _ _)
-                    ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong)
-      ∙ ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ _ _ _
-                          ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
-      ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-      ∙ ∘ᵐ-congˡ (opᵀ-nat op ⟦ p ⟧<:ᵛ)
-      ∙ ∘ᵐ-assoc _ _ _
+    uₑ·ε'≡ε' : ε' ≡ uₑ ·ₑ ε'
+    uₑ·ε'≡ε' = sym (·ₑ-identityˡ ε')
+
+-- A functorial action escapes a bind, by naturality of the multiplication.
+
+Tᶠ-bind : ∀ {X Y A B ε ε'} → (h : A →ᵐ B) → (g : Y →ᵐ Tᵒ A ε') → (s : X →ᵐ Tᵒ Y ε)
+        → (Tᶠ h ∘ᵐ g) ⋄ s ≈ᵐ Tᶠ h ∘ᵐ (g ⋄ s)
+Tᶠ-bind h g s =
+    ∘ᵐ-congʳ (∘ᵐ-congˡ (T-∘ᵐ _ _))
+  ∙ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (μᵀ-nat h)
+  ∙ ∘ᵐ-assoc _ _ _
+
+-- Narrowing a binder is a weakening followed by substituting the subsumed
+-- variable, so its certificate and its denotation come from those two.
+
+narrowᴾ : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C) → Paramᶜ N
+        → Paramᶜ (narrow-∷ t N)
+narrowᴾ t N pN =
+  subᶜ (C-rename (cong-∷-ren wk-ren) N) split-[]
+       (subV (var (λ _ → ≾ᵣ-refl) Hd) t)
+       (renᶜ (cong-∷-ren wk-ren) N pN) tt
+
+narrow-nat : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C) → (pN : Paramᶜ N)
+           → ⟦ narrow-∷ t N ⟧ᶜᵗ (narrowᴾ t N pN)
+           ≈ᵐ ⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ idᵐ ⟦ t ⟧<:ᵛ
+narrow-nat {Γ} {A} {A₀} t N pN =
+    C-subst-nat (C-rename (cong-∷-ren wk-ren) N) split-[]
+                (subV (var (λ _ → ≾ᵣ-refl) Hd) t)
+                (renᶜ (cong-∷-ren wk-ren) N pN) tt
+  ∙ ∘ᵐ-congˡ (C-rename-nat (cong-∷-ren wk-ren) N pN)
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ ∘ᵐ-identityʳ _ ∙ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+                , ∘ᵐ-identityˡ _ ∙ ∘ᵐ-congʳ (var-morphism-Hd {Γ} {A₀} _) ⟩ᵐ-cong)
 
 -- IF-TRUE / IF-FALSE: taking a branch is the boolean object's beta law.
 

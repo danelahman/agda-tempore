@@ -98,11 +98,9 @@ step-ticks BOX                 = 0
 step-ticks UNBOX               = 0
 step-ticks SUB-APP             = 0
 step-ticks SUB-IF              = 0
-step-ticks SUB-RET             = 0
-step-ticks SUB-OP              = 0
-step-ticks (SUB-STEP r)        = step-ticks r
+step-ticks SUB                 = 0
 
-ticks : ∀ {A ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (A ‼ ε')}
+ticks : ∀ {A B ε ε'} {cf : Config (A ‼ ε)} {cf' : Config (B ‼ ε')}
       → cf ↝* cf'
       → ℕ
 ticks ε*       = 0
@@ -114,7 +112,8 @@ record Ret-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
   constructor ret-whnf
   field
     state : 𝕊 []
-    value : toCtx state ⊢V⦂ A
+    vtype : VType
+    value : toCtx state ⊢V⦂ vtype
     run   : cf ↝* ⟨ state , return value ⟩
 
 -- Evaluation to an unhandled operation, with its parameter and continuation.
@@ -125,9 +124,10 @@ record Op-whnf {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
     state : 𝕊 []
     oper  : Op
     resid : E
+    vtype : VType
     prm   : toCtx state ⊢V⦂ type-of-gtype (param oper)
     cont  : toCtx state ⟨ mapᵉ (op-grade oper) ⟩ ∷ type-of-gtype (arity oper)
-              ⊢C⦂ A ‼ resid
+              ⊢C⦂ vtype ‼ resid
     run   : cf ↝* ⟨ state , perform oper prm cont ⟩
 
 data Halts {A : VType} {ε : E} (cf : Config (A ‼ ε)) : Set where
@@ -172,7 +172,8 @@ finality-perform ()
 -- consumers can match on `refl`.
 
 Step-from : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
-Step-from {A} cf = Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A ‼ ε') ] (cf ↝ cf')
+Step-from cf =
+  Σ[ A' ∈ VType ] Σ[ ε' ∈ E ] Σ[ cf' ∈ Config (A' ‼ ε') ] (cf ↝ cf')
 
 -- The two congruences, as maps on packed steps. The reducts are left to
 -- unification: they are whatever the rule builds out of the sub-step.
@@ -182,7 +183,7 @@ seq-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε�
          → Step-from (⟨ St , M ⟩)
          ---------------------------------
          → Step-from (⟨ St , M ⨟ N ⟩)
-seq-step N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SEQ-STEP r (step-grade-≾ r)
+seq-step N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , _ , SEQ-STEP r (step-grade-≾ r)
 
 handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε₁}
             → (H : (op : Op) → (ε₃ : E) →
@@ -194,21 +195,14 @@ handle-step : ∀ {A B ε₁ ε₂} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ �
             → Step-from (⟨ St , M ⟩)
             ------------------------------------------------
             → Step-from (⟨ St , handle M `with H `in N ⟩)
-handle-step H N (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , HANDLE-STEP r (step-grade-≾ r)
+handle-step H N (A₀ , ε₃ , ⟨ St' , M' ⟩ , r) =
+  _ , _ , _ , HANDLE-STEP r (step-grade-≾ r)
 
-sub-step : ∀ {A A' ε ε'} {St : 𝕊 []} {M : toCtx St ⊢C⦂ A ‼ ε}
-         → (p : A <:ᵛ A')
-         → (q : ε ≾ₑ ε')
-         → Step-from (⟨ St , M ⟩)
-         -----------------------------------
-         → Step-from (⟨ St , subC M (p ‼ₛ q) ⟩)
-sub-step p q (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SUB-STEP r
-
-↝-det : ∀ {A ε ε₁ ε₂} {cf : Config (A ‼ ε)}
-      → {cf₁ : Config (A ‼ ε₁)} → {cf₂ : Config (A ‼ ε₂)}
+↝-det : ∀ {A A₁ A₂ ε ε₁ ε₂} {cf : Config (A ‼ ε)}
+      → {cf₁ : Config (A₁ ‼ ε₁)} → {cf₂ : Config (A₂ ‼ ε₂)}
       → (r₁ : cf ↝ cf₁) → (r₂ : cf ↝ cf₂)
       -----------------------------------------------------------
-      → _≡_ {A = Step-from cf} (ε₁ , cf₁ , r₁) (ε₂ , cf₂ , r₂)
+      → _≡_ {A = Step-from cf} (A₁ , ε₁ , cf₁ , r₁) (A₂ , ε₂ , cf₂ , r₂)
 
 -- the rules that fire on a determined term shape
 ↝-det APP        APP        = refl
@@ -224,8 +218,7 @@ sub-step p q (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SUB-STEP r
 ↝-det UNBOX      UNBOX      = refl
 ↝-det SUB-APP    SUB-APP    = refl
 ↝-det SUB-IF     SUB-IF     = refl
-↝-det SUB-RET    SUB-RET    = refl
-↝-det SUB-OP     SUB-OP     = refl
+↝-det SUB        SUB        = refl
 
 -- the congruences: normalise the grade premises (they are irrelevant), then
 -- rebuild both reducts from the sub-derivations' equality
@@ -235,9 +228,6 @@ sub-step p q (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SUB-STEP r
 ↝-det (HANDLE-STEP {H = H} {N = N} r p) (HANDLE-STEP r' p')
   rewrite ≾ᵣ-irrelevant p (step-grade-≾ r) | ≾ᵣ-irrelevant p' (step-grade-≾ r') =
   cong (handle-step H N) (↝-det r r')
-↝-det (SUB-STEP {p = p} {q = q} r) (SUB-STEP r') =
-  cong (sub-step p q) (↝-det r r')
-
 -- a congruence against a whnf scrutinee cannot happen
 ↝-det (SEQ-STEP r _)    SEQ-RET          = ⊥-elim (finality-ret r)
 ↝-det SEQ-RET           (SEQ-STEP r _)   = ⊥-elim (finality-ret r)
@@ -247,31 +237,27 @@ sub-step p q (ε₃ , ⟨ St' , M' ⟩ , r) = _ , _ , SUB-STEP r
 ↝-det HANDLE-RET        (HANDLE-STEP r _) = ⊥-elim (finality-ret r)
 ↝-det (HANDLE-STEP r _) HANDLE-OP        = ⊥-elim (finality-perform r)
 ↝-det HANDLE-OP         (HANDLE-STEP r _) = ⊥-elim (finality-perform r)
-↝-det (SUB-STEP r)      SUB-RET          = ⊥-elim (finality-ret r)
-↝-det SUB-RET           (SUB-STEP r)     = ⊥-elim (finality-ret r)
-↝-det (SUB-STEP r)      SUB-OP           = ⊥-elim (finality-perform r)
-↝-det SUB-OP            (SUB-STEP r)     = ⊥-elim (finality-perform r)
 
 Op-run : ∀ {A ε} → (cf : Config (A ‼ ε)) → Set
-Op-run {A} cf =
-  Σ[ St ∈ 𝕊 [] ] Σ[ op ∈ Op ] Σ[ ε' ∈ E ]
+Op-run cf =
+  Σ[ St ∈ 𝕊 [] ] Σ[ op ∈ Op ] Σ[ A' ∈ VType ] Σ[ ε' ∈ E ]
   Σ[ W ∈ toCtx St ⊢V⦂ type-of-gtype (param op) ]
-  Σ[ M ∈ (toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A ‼ ε') ]
+  Σ[ M ∈ (toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op) ⊢C⦂ A' ‼ ε') ]
     (cf ↝* ⟨ St , perform op W M ⟩)
 
 op-run-det : ∀ {A ε} {cf : Config (A ‼ ε)}
-           → {St₁ St₂ : 𝕊 []} → {op₁ op₂ : Op} → {ε₁' ε₂' : E}
+           → {St₁ St₂ : 𝕊 []} → {op₁ op₂ : Op} → {A₁ A₂ : VType} → {ε₁' ε₂' : E}
            → {W₁ : toCtx St₁ ⊢V⦂ type-of-gtype (param op₁)}
            → {W₂ : toCtx St₂ ⊢V⦂ type-of-gtype (param op₂)}
            → {M₁ : toCtx St₁ ⟨ mapᵉ (op-grade op₁) ⟩ ∷ type-of-gtype (arity op₁)
-                     ⊢C⦂ A ‼ ε₁'}
+                     ⊢C⦂ A₁ ‼ ε₁'}
            → {M₂ : toCtx St₂ ⟨ mapᵉ (op-grade op₂) ⟩ ∷ type-of-gtype (arity op₂)
-                     ⊢C⦂ A ‼ ε₂'}
+                     ⊢C⦂ A₂ ‼ ε₂'}
            → (rs₁ : cf ↝* ⟨ St₁ , perform op₁ W₁ M₁ ⟩)
            → (rs₂ : cf ↝* ⟨ St₂ , perform op₂ W₂ M₂ ⟩)
            ---------------------------------------------------------------
-           → _≡_ {A = Op-run cf} (St₁ , op₁ , ε₁' , W₁ , M₁ , rs₁)
-                                 (St₂ , op₂ , ε₂' , W₂ , M₂ , rs₂)
+           → _≡_ {A = Op-run cf} (St₁ , op₁ , A₁ , ε₁' , W₁ , M₁ , rs₁)
+                                 (St₂ , op₂ , A₂ , ε₂' , W₂ , M₂ , rs₂)
 
 op-run-det ε*         ε*         = refl
 op-run-det ε*         (r ◅ _)    = ⊥-elim (finality-perform r)
@@ -281,7 +267,8 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
   cong (λ z → proj₁ z , proj₁ (proj₂ z) , proj₁ (proj₂ (proj₂ z))
              , proj₁ (proj₂ (proj₂ (proj₂ z)))
              , proj₁ (proj₂ (proj₂ (proj₂ (proj₂ z))))
-             , r₁ ◅ proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z)))))
+             , proj₁ (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z)))))
+             , r₁ ◅ proj₂ (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z))))))
        (op-run-det rs₁ rs₂)
 
 -- The two shapes exclude each other.
@@ -289,12 +276,12 @@ op-run-det (r₁ ◅ rs₁) (r₂ ◅ rs₂) with ↝-det r₁ r₂
 ⇓-exclusive : ∀ {A ε} {cf : Config (A ‼ ε)} → Ret-whnf cf → Op-whnf cf → ⊥
 ⇓-exclusive w w' = no-both (Ret-whnf.run w) (Op-whnf.run w')
   where
-    no-both : ∀ {A ε} {cf : Config (A ‼ ε)}
-            → {St₁ St₂ : 𝕊 []} {op : Op} {ε' : E}
-            → {V : toCtx St₁ ⊢V⦂ A}
+    no-both : ∀ {A A₁ A₂ ε ε'} {cf : Config (A ‼ ε)}
+            → {St₁ St₂ : 𝕊 []} {op : Op}
+            → {V : toCtx St₁ ⊢V⦂ A₁}
             → {W : toCtx St₂ ⊢V⦂ type-of-gtype (param op)}
             → {M : toCtx St₂ ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-                     ⊢C⦂ A ‼ ε'}
+                     ⊢C⦂ A₂ ‼ ε'}
             → cf ↝* ⟨ St₁ , return V ⟩
             → cf ↝* ⟨ St₂ , perform op W M ⟩
             → ⊥
@@ -308,6 +295,6 @@ op-whnf-unique : ∀ {A ε} {cf : Config (A ‼ ε)} → (w w' : Op-whnf cf)
                    (op-ticks w ≡ op-ticks w')
 op-whnf-unique w w' =
     cong (λ z → proj₁ (proj₂ z)) eq
-  , cong (λ z → ticks (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z)))))) eq
+  , cong (λ z → ticks (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ (proj₂ z))))))) eq
   where
     eq = op-run-det (Op-whnf.run w) (Op-whnf.run w')

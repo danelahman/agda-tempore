@@ -41,11 +41,12 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
                           → TopLevelProgresses (return V)
 
        top-level-steps    : ∀ {ε ε'}
-                          → {A : VType}
+                          → {A B : VType}
                           → {S S' : 𝕊 []}
                           → {M : toCtx S ⊢C⦂ A ‼ ε}
-                          → {M' : toCtx S' ⊢C⦂ A ‼ ε'}
+                          → {M' : toCtx S' ⊢C⦂ B ‼ ε'}
                           → (prf : state-grade S' ·ᵣ mapᵉ ε' ≾ᵣ state-grade S ·ᵣ mapᵉ ε)
+                          → (t : B <:ᵛ A)
                           → ⟨ S , M ⟩ ⟿ ⟨ S' , M' ⟩
                           ------------------------------------------------------------
                           → TopLevelProgresses M
@@ -59,6 +60,7 @@ module PureTopLevelProgressTheorem (OpSemantics : TopLevelOpSemantics) where
   ... | is-op =
     top-level-steps
       (≾ᵣ-reflexive (trans (·ᵣ-assoc _ _ _) (cong (state-grade S ·ᵣ_) (sym map-·ᵉ))))
+      (<:ᵛ-refl _)
       OP-STEP
-  ... | steps M↝M' p =
-    top-level-steps (cancelled⇒total (step-extends-state M↝M') p) (↝-STEP M↝M')
+  ... | steps M↝M' p t =
+    top-level-steps (cancelled⇒total (step-extends-state M↝M') p) t (↝-STEP M↝M')

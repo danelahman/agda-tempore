@@ -42,58 +42,32 @@ open import OperationalSemantics.Adequacy.StateEquivalence.Extensions Spec
 -- amounts to: a state, a reduct, their relations, the step, and the fact
 -- that the two steps extend the state alike.
 
-Sim : ∀ {A ε ε₁} {St St' St₁ : 𝕊 []}
+Sim : ∀ {A A₁ ε ε₁} {St St' St₁ : 𝕊 []}
     → (es : St ≐ˢ St') → {M : toCtx St ⊢C⦂ A ‼ ε} → (M' : toCtx St' ⊢C⦂ A ‼ ε)
-    → {N : toCtx St₁ ⊢C⦂ A ‼ ε₁} → (r : ⟨ St , M ⟩ ↝ ⟨ St₁ , N ⟩) → Set
-Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
-  Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A ‼ ε₁) ] Σ[ es₁ ∈ St₁ ≐ˢ St₁' ]
+    → {N : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁} → (r : ⟨ St , M ⟩ ↝ ⟨ St₁ , N ⟩) → Set
+Sim {A₁ = A₁} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
+  Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A₁ ‼ ε₁) ] Σ[ es₁ ∈ St₁ ≐ˢ St₁' ]
   Σ[ r' ∈ (⟨ St' , M' ⟩ ↝ ⟨ St₁' , N' ⟩) ]
     (step-extends-state r ≤≐ step-extends-state r')
   × (N ≡ castᶜ (sym (toCtx-≐ˢ es₁)) N')
 
--- subsumption at a returned value: the coercion is absorbed by the value on
--- both sides, the two witnesses agreeing by `<:ᵛ-irrelevant`.
+-- subsumption at a computation: the coercion is discarded on both sides, the
+-- reduct being the coerced computation itself.
 
-↝-≐ˢ-sub-ret : ∀ {A A' ε'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-            → {V : toCtx St ⊢V⦂ A} → {p : A <:ᵛ A'} → {q : uₑ ≾ₑ ε'}
-            → (P' : toCtx St' ⊢C⦂ A' ‼ ε')
-            → subC (return V) (p ‼ₛ q) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-            → Sim es P' (SUB-RET {V = V} {p = p} {q = q})
-↝-≐ˢ-sub-ret es {p = p} P' eM with cast-sub⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | p₁ ‼ₛ q₁ , M₀' , refl , eM₀
-  with cast-return⁻ (sym (toCtx-≐ˢ es)) M₀' eM₀
-...   | V' , refl , eV =
-    _ , _ , es , SUB-RET , id-≤≐
-  , trans (cong return (cong₂ subV eV (<:ᵛ-irrelevant p p₁)))
-          (sym (trans (cast-ret (sym (toCtx-≐ˢ es)))
-                      (cong return (cast-subV (sym (toCtx-≐ˢ es))))))
-
--- subsumption at a performed operation: it is pushed into the continuation on
--- both sides.
-
-↝-≐ˢ-sub-op : ∀ {A A' ε ε'} {op : Op} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-           → {V : toCtx St ⊢V⦂ type-of-gtype (param op)}
-           → {M₀ : toCtx St ⟨ mapᵉ (op-grade op) ⟩ ∷ type-of-gtype (arity op)
-                     ⊢C⦂ A ‼ ε}
-           → {p : A <:ᵛ A'} → {q : op-grade op ·ₑ ε ≾ₑ ε'}
-           → (P' : toCtx St' ⊢C⦂ A' ‼ ε')
-           → subC (perform op V M₀) (p ‼ₛ q) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
-           → Sim es P' (SUB-OP {V = V} {M = M₀} {p = p} {q = q})
-↝-≐ˢ-sub-op {op = op} es P' eM with cast-sub⁻ (sym (toCtx-≐ˢ es)) P' eM
-... | p₁ ‼ₛ q₁ , M₁' , refl , eM₁
-  with cast-perform⁻ (sym (toCtx-≐ˢ es)) M₁' eM₁
-...   | V' , M₀' , refl , eV , eM₀ =
-    _ , _ , es , SUB-OP , id-≤≐
-  , trans (cong₂ (perform op) eV (cong₂ subC eM₀ (<:ᶜ-irrelevant _ _)))
-          (sym (trans (cast-perform (sym (toCtx-≐ˢ es)))
-                      (cong (perform op _) (cast-subC _))))
+↝-≐ˢ-sub : ∀ {A A' ε ε'} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+        → {M : toCtx St ⊢C⦂ A ‼ ε} → {w : (A ‼ ε) <:ᶜ (A' ‼ ε')}
+        → (P' : toCtx St' ⊢C⦂ A' ‼ ε')
+        → subC M w ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
+        → Sim es P' (SUB {M = M} {w = w})
+↝-≐ˢ-sub es P' eM with cast-sub⁻ (sym (toCtx-≐ˢ es)) P' eM
+... | w₁ , M₀' , refl , eM₀ = _ , _ , es , SUB , id-≤≐ , eM₀
 
 -- subsumption at an eliminated function: the coercion splits the same way on
 -- both sides.
 
-↝-≐ˢ-sub-app : ∀ {A A₁ B C₁ ε} {St St' : 𝕊 []} → (es : St ≐ˢ St')
-            → {V : toCtx St ⊢V⦂ A₁ ⇒ C₁} → {W : toCtx St ⊢V⦂ A}
-            → {q : A <:ᵛ A₁} → {r : C₁ <:ᶜ B ‼ ε}
+↝-≐ˢ-sub-app : ∀ {A A₁ B B₁ ε ε₁} {St St' : 𝕊 []} → (es : St ≐ˢ St')
+            → {V : toCtx St ⊢V⦂ A₁ ⇒ (B₁ ‼ ε₁)} → {W : toCtx St ⊢V⦂ A}
+            → {q : A <:ᵛ A₁} → {r : (B₁ ‼ ε₁) <:ᶜ B ‼ ε}
             → (P' : toCtx St' ⊢C⦂ B ‼ ε)
             → (subV V (q ⇒ₛ r) · W) ≡ castᶜ (sym (toCtx-≐ˢ es)) P'
             → Sim es P' (SUB-APP {V = V} {W = W} {q = q} {r = r})
@@ -103,12 +77,9 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
   with cast-subV⁻ (sym (toCtx-≐ˢ es)) Vf' eVf
 ...   | q₁ ⇒ₛ r₁ , V' , refl , eV =
     _ , _ , es , SUB-APP , id-≤≐
-  , trans (cong₂ subC (cong₂ _·_ eV (cong₂ subV eW (<:ᵛ-irrelevant q q₁)))
-                      (<:ᶜ-irrelevant r r₁))
-          (sym (trans (cast-subC (sym (toCtx-≐ˢ es)))
-                 (cong (λ z → subC z r₁)
-                   (trans (cast-app (sym (toCtx-≐ˢ es)))
-                          (cong (_ ·_) (cast-subV (sym (toCtx-≐ˢ es))))))))
+  , trans (cong₂ _·_ eV (cong₂ subV eW (<:ᵛ-irrelevant q q₁)))
+          (sym (trans (cast-app (sym (toCtx-≐ˢ es)))
+                      (cong (_ ·_) (cast-subV (sym (toCtx-≐ˢ es))))))
 
 -- subsumption at a scrutinised boolean: `Boolₛ` is dropped on both sides.
 
@@ -124,23 +95,6 @@ Sim {A} {ε₁ = ε₁} {St' = St'} {St₁ = St₁} es M' {N} r =
     _ , _ , es , SUB-IF , id-≤≐
   , trans (cong₃ (λ v m n → if v `then m `else n) eV eM₀ eN₀)
           (sym (cast-if (sym (toCtx-≐ˢ es))))
-
--- subsumption elsewhere: step underneath it on both sides. The scrutinee's
--- simulation is passed in, as the recursion supplies it.
-
-↝-≐ˢ-sub-step : ∀ {A A' ε ε' ε''} {St St' St₁ : 𝕊 []} → (es : St ≐ˢ St')
-             → {M : toCtx St ⊢C⦂ A ‼ ε} → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε''}
-             → (M' : toCtx St' ⊢C⦂ A ‼ ε)
-             → (p : A <:ᵛ A') → (q : ε ≾ₑ ε')
-             → (p₁ : A <:ᵛ A') → (q₁ : ε ≾ₑ ε')
-             → (r : ⟨ St , M ⟩ ↝ ⟨ St₁ , M₁ ⟩)
-             → Sim es M' r
-             ----------------------------------------------------------
-             → Sim es (subC M' (p₁ ‼ₛ q₁)) (SUB-STEP {p = p} {q = q} r)
-↝-≐ˢ-sub-step es M' p q p₁ q₁ r (St₂' , M₂' , es₂ , r' , h , eM₂) =
-    St₂' , _ , es₂ , SUB-STEP r' , h
-  , trans (cong₂ subC eM₂ (<:ᶜ-irrelevant _ _))
-          (sym (cast-subC (sym (toCtx-≐ˢ es₂))))
 
 -- boolean elimination: the scrutinee is the same constant on both sides
 -- (`cast-true⁻`/`cast-false⁻`), and the reduct is the branch it names.
@@ -464,7 +418,7 @@ cast-handle-op refl V' M' H' N' = refl
 -- `HANDLE-STEP`: as `SEQ-STEP`, plus the clause retyping. The scrutinee's
 -- simulation is passed in, as the recursion supplies it.
 
-↝-≐ˢ-handle-step : ∀ {A B ε₁ ε₂ ε₁'} {St St' St₁ : 𝕊 []} → (es : St ≐ˢ St')
+↝-≐ˢ-handle-step : ∀ {A A₁ B ε₁ ε₂ ε₁'} {St St' St₁ : 𝕊 []} → (es : St ≐ˢ St')
                 → {M : toCtx St ⊢C⦂ A ‼ ε₁}
                 → {H : (op : Op) → (ε₃ : E) →
                          toCtx St ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
@@ -472,7 +426,7 @@ cast-handle-op refl V' M' H' N' = refl
                                (type-of-gtype (arity op) ⇒ B ‼ ε₃)
                          ⊢C⦂ B ‼ (op-grade op ·ₑ ε₃)}
                 → {N : toCtx St ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂}
-                → {M₁ : toCtx St₁ ⊢C⦂ A ‼ ε₁'}
+                → {M₁ : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁'}
                 → (M' : toCtx St' ⊢C⦂ A ‼ ε₁)
                 → (H' : (op : Op) → (ε₃ : E) →
                           toCtx St' ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
@@ -518,29 +472,38 @@ cast-handle-op refl V' M' H' N' = refl
                                              (≾-⊤ᵣ _))
                                (H' op ε₃))))
         (trans
-          (C-rename-≡ (cong-∷-ren-≐ʳ (suc-comp-ren-≐ʳ h es es₂ c (step-grade-≾ r'))) _)
-          (subst (λ z → _ ≡ z)
-            (trans (cast-rename-∷ (cong (_⟨ mapᵉ ε₁ ⟩) (sym (toCtx-≐ˢ es)))
-                                  (cong (_⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂)))
-                                  (suc-comp-ren (step-extends-state r')
-                                                (step-grade-≾ r'))
-                                  N')
-                   (castᶜ-irr (cong (_∷ A) (cong (_⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂))))
-                              (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₁' ⟩ ∷ A) (sym (toCtx-≐ˢ es₂)))
-                              (C-rename (cong-∷-ren (suc-comp-ren
-                                          (step-extends-state r')
-                                          (step-grade-≾ r'))) N')))
-            (C-rename-cong (cong-∷-ren _)
-              (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
+          (cong₂ narrow-∷
+            (<:ᵛ-irrelevant (step-refines-type r) (step-refines-type r'))
+            (trans
+              (C-rename-≡
+                (cong-∷-ren-≐ʳ (suc-comp-ren-≐ʳ h es es₂ c (step-grade-≾ r'))) _)
+              (subst (λ z → _ ≡ z)
+                (trans (cast-rename-∷ (cong (_⟨ mapᵉ ε₁ ⟩) (sym (toCtx-≐ˢ es)))
+                                      (cong (_⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂)))
+                                      (suc-comp-ren (step-extends-state r')
+                                                    (step-grade-≾ r'))
+                                      N')
+                       (castᶜ-irr
+                         (cong (_∷ A) (cong (_⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂))))
+                         (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₁' ⟩ ∷ A) (sym (toCtx-≐ˢ es₂)))
+                         (C-rename (cong-∷-ren (suc-comp-ren
+                                     (step-extends-state r')
+                                     (step-grade-≾ r'))) N')))
+                (C-rename-cong (cong-∷-ren _)
+                  (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
+          (cast-narrow-∷ (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂))
+            (step-refines-type r')
+            (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
+                                                (step-grade-≾ r'))) N'))))
 
 -- One clause per rule. The two congruences recurse, and hand the
 -- recursion's `_≤≐_` witness on.
 
-↝-≐ˢ : ∀ {A ε ε₁} {St St' St₁ : 𝕊 []}
+↝-≐ˢ : ∀ {A A₁ ε ε₁} {St St' St₁ : 𝕊 []}
     → (es : St ≐ˢ St')
     → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
     → M ≡ castᶜ (sym (toCtx-≐ˢ es)) M'
-    → {N : toCtx St₁ ⊢C⦂ A ‼ ε₁}
+    → {N : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁}
     → (r : ⟨ St , M ⟩ ↝ ⟨ St₁ , N ⟩)
     -------------------------------
     → Sim es M' r
@@ -558,8 +521,7 @@ cast-handle-op refl V' M' H' N' = refl
 ↝-≐ˢ es eM UNBOX       = ↝-≐ˢ-unbox es _ eM
 ↝-≐ˢ es eM SUB-APP     = ↝-≐ˢ-sub-app es _ eM
 ↝-≐ˢ es eM SUB-IF      = ↝-≐ˢ-sub-if es _ eM
-↝-≐ˢ es eM SUB-RET     = ↝-≐ˢ-sub-ret es _ eM
-↝-≐ˢ es eM SUB-OP      = ↝-≐ˢ-sub-op es _ eM
+↝-≐ˢ es eM SUB         = ↝-≐ˢ-sub es _ eM
 
 -- sequencing: simulate the head, then rebuild
 ↝-≐ˢ es eM (SEQ-STEP {ε₁ = ε₁} {ε₃ = ε₃} {A = A} r c)
@@ -569,43 +531,49 @@ cast-handle-op refl V' M' H' N' = refl
     St₂' , _ , es₂ , SEQ-STEP r' (step-grade-≾ r') , h
   , subst (λ z → _ ≡ z)
       (sym (cast-seq (sym (toCtx-≐ˢ es₂)) {M = M₂'}
-             {N = C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
-                                                     (step-grade-≾ r'))) N'}))
+             {N = narrow-∷ (step-refines-type r')
+                    (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
+                                                        (step-grade-≾ r'))) N')}))
     (cong₂ _⨟_ eM₂
       (trans
-        (C-rename-≡ (cong-∷-ren-≐ʳ (suc-comp-ren-≐ʳ h es es₂ c (step-grade-≾ r'))) _)
-        (subst (λ z → _ ≡ z)
-          (trans (cast-rename-∷ (cong (_⟨ mapᵉ ε₁ ⟩) (sym (toCtx-≐ˢ es)))
-                                (cong (_⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂)))
-                                (suc-comp-ren (step-extends-state r')
-                                              (step-grade-≾ r'))
-                                N')
-                 (castᶜ-irr (cong (_∷ A) (cong (_⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂))))
-                            (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₃ ⟩ ∷ A) (sym (toCtx-≐ˢ es₂)))
-                            (C-rename (cong-∷-ren (suc-comp-ren
-                                        (step-extends-state r')
-                                        (step-grade-≾ r'))) N')))
-          (C-rename-cong (cong-∷-ren _)
-            (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
+        (cong₂ narrow-∷
+          (<:ᵛ-irrelevant (step-refines-type r) (step-refines-type r'))
+          (trans
+            (C-rename-≡
+              (cong-∷-ren-≐ʳ (suc-comp-ren-≐ʳ h es es₂ c (step-grade-≾ r'))) _)
+            (subst (λ z → _ ≡ z)
+              (trans (cast-rename-∷ (cong (_⟨ mapᵉ ε₁ ⟩) (sym (toCtx-≐ˢ es)))
+                                    (cong (_⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂)))
+                                    (suc-comp-ren (step-extends-state r')
+                                                  (step-grade-≾ r'))
+                                    N')
+                     (castᶜ-irr
+                       (cong (_∷ A) (cong (_⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂))))
+                       (cong (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₃ ⟩ ∷ A) (sym (toCtx-≐ˢ es₂)))
+                       (C-rename (cong-∷-ren (suc-comp-ren
+                                   (step-extends-state r')
+                                   (step-grade-≾ r'))) N')))
+              (C-rename-cong (cong-∷-ren _)
+                (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
+        (cast-narrow-∷ (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂))
+          (step-refines-type r')
+          (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
+                                              (step-grade-≾ r'))) N'))))
 
 ↝-≐ˢ es eM (HANDLE-STEP r c) with cast-handle⁻ (sym (toCtx-≐ˢ es)) _ eM
 ... | M₁' , H' , N' , refl , eM₁ , eH , eN =
   ↝-≐ˢ-handle-step es M₁' H' N' eH eN r c (↝-≐ˢ es eM₁ r)
 
-↝-≐ˢ es eM (SUB-STEP {p = p} {q = q} r) with cast-sub⁻ (sym (toCtx-≐ˢ es)) _ eM
-... | p₁ ‼ₛ q₁ , M₁' , refl , eM₁ =
-  ↝-≐ˢ-sub-step es M₁' p q p₁ q₁ r (↝-≐ˢ es eM₁ r)
-
 -- The bisimulation extends to runs, step by step.
 
-↝*-≐ˢ : ∀ {A ε ε₁} {St St' St₁ : 𝕊 []}
+↝*-≐ˢ : ∀ {A A₁ ε ε₁} {St St' St₁ : 𝕊 []}
      → (es : St ≐ˢ St')
      → {M : toCtx St ⊢C⦂ A ‼ ε} → {M' : toCtx St' ⊢C⦂ A ‼ ε}
      → M ≡ castᶜ (sym (toCtx-≐ˢ es)) M'
-     → {N : toCtx St₁ ⊢C⦂ A ‼ ε₁}
+     → {N : toCtx St₁ ⊢C⦂ A₁ ‼ ε₁}
      → ⟨ St , M ⟩ ↝* ⟨ St₁ , N ⟩
      -------------------------------------------------------------------
-     → Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A ‼ ε₁) ]
+     → Σ[ St₁' ∈ 𝕊 [] ] Σ[ N' ∈ (toCtx St₁' ⊢C⦂ A₁ ‼ ε₁) ]
        Σ[ es₁ ∈ St₁ ≐ˢ St₁' ]
          (⟨ St' , M' ⟩ ↝* ⟨ St₁' , N' ⟩)
        × (N ≡ castᶜ (sym (toCtx-≐ˢ es₁)) N')
