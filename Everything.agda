@@ -179,6 +179,10 @@ open import OperationalSemantics.TopLevelProgressTheorem
 
 open import EquationalTheory.EquationalTheory
 
+---- Naturality of subsumption, where the theory derives it
+
+open import EquationalTheory.Naturality
+
 ---- The syntactic equivalence is contained in the equational theory
 
 open import EquationalTheory.Alignment

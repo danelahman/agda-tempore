@@ -124,6 +124,32 @@ mutual
                ------------------------------------------
                → Γ ⊢V⦂ subV (subV V w) w' == subV V w''
 
+    -- Subsumption is natural in the value formers: the witness splits the way
+    -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `lam`
+    -- functoriality of `_⇒_` — contravariant in the domain, so the binder is
+    -- narrowed rather than the body coerced there.
+    --
+    -- The atomic formers and `var` have no rule: at `Base`/`Unit`/`Bool` the
+    -- witness is reflexive and `subV-refl` already applies, and a variable's
+    -- type is fixed by the context, so there is no variable at the supertype
+    -- to push the subsumption onto.
+
+    subV-pair : ∀ {A A' B B'}
+              → (p : A <:ᵛ A') → (q : B <:ᵛ B')
+              → (V : Γ ⊢V⦂ A)
+              → (W : Γ ⊢V⦂ B)
+              ------------------------------------------------------
+              → Γ ⊢V⦂ subV ⦉ V , W ⦊ (p |×|ₛ q)
+                   == ⦉ subV V p , subV W q ⦊
+
+    subV-lam : ∀ {A A' C C'}
+             → (p : A' <:ᵛ A)
+             → (w : C <:ᶜ C')
+             → (M : Γ ∷ A ⊢C⦂ C)
+             ------------------------------------------------------
+             → Γ ⊢V⦂ subV (lam M) (p ⇒ₛ w)
+                  == lam (subC (narrow-∷ p M) w)
+
   infix 18 _⊢V⦂_==_
 
   -- computation equations
@@ -685,6 +711,44 @@ mutual
                              `in (narrow-∷ w
                                     (C-rename
                                       (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)))
+
+    -- `box` and `unbox` bind but compute nothing, so a subsumption of the
+    -- node is a subsumption of the body, at an unrestricted witness.
+
+    subC-box : ∀ {A C C' ρ}
+             → (w : C <:ᶜ C')
+             → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+             → (M : Γ ∷ [ ρ ] A ⊢C⦂ C)
+             ----------------------------------------------------
+             → Γ ⊢C⦂ subC (box V M) w == box V (subC M w)
+
+    subC-unbox : ∀ {A A₀ C C' ρ₀ ρ'}
+               → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
+               → (rel : ρ' ≾ᵣ ρ₀)
+               → (v : A₀ <:ᵛ A)
+               → (w : C <:ᶜ C')
+               → (M : Γ ∷ A ⊢C⦂ C)
+               ----------------------------------------------------
+               → Γ ⊢C⦂ subC (unbox x rel v M) w
+                    == unbox x rel v (subC M w)
+
+    -- Sub-effecting the answer of a `handle` is sub-effecting its return
+    -- clause. Only the effect half moves: the handler's clauses are typed at
+    -- the answer type, and their boxed continuation argument is contravariant
+    -- in it, so a value half would have to narrow that binder along a witness
+    -- pointing the wrong way.
+
+    subC-handle-in : ∀ {A B ε ε₁' ε₂'}
+                   → (rel : ε₁' ≾ₑ ε₂')
+                   → (M : Γ ⊢C⦂ A ‼ ε)
+                   → (H : (op : Op) → (ε₀ : E) →
+                            Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
+                   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                   ----------------------------------------------------------
+                   → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (handle M `with H `in N)
+                        == handle M `with H `in (coerce rel N)
 
     -- equations for collapsing successive delays
 

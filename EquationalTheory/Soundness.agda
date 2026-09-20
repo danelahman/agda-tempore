@@ -112,6 +112,8 @@ mutual
   -- axioms — subsumption
   soundᵛ (subV-refl w V)      _            = sound-subV-refl w V
   soundᵛ (subV-trans w w' w'' V) _         = sound-subV-trans w w' w'' V
+  soundᵛ (subV-pair p q V W)  _            = sound-subV-pair p q V W
+  soundᵛ (subV-lam p w M)     _            = sound-subV-lam p w M
 
   soundᶜ : ∀ {Γ C} {M N : Γ ⊢C⦂ C} → (p : Γ ⊢C⦂ M == N) → Midᶜ p → Soundᶜ== p
   -- setoid structure
@@ -211,6 +213,9 @@ mutual
   soundᶜ (subC-delay w rel M)    _ = sound-subC-delay w rel M
   soundᶜ (subC-seq w rel M N)    _ = sound-subC-seq w rel M N
   soundᶜ (subC-handle w rel M H N) _ = sound-subC-handle w rel M H N
+  soundᶜ (subC-box w V M)        _ = sound-subC-box w V M
+  soundᶜ (subC-unbox x rel v w M) _ = sound-subC-unbox x rel v w M
+  soundᶜ (subC-handle-in rel M H N) _ = sound-subC-handle-in rel M H N
   -- axioms — delay
   soundᶜ (delay-zero M)          _ = sound-delay-zero M
   soundᶜ (delay-delay M)         m = sound-delay-delay M m

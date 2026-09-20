@@ -68,7 +68,7 @@ open import DenotationalSemantics.Model.Modality.Eternal
 
 open import OperationalSemantics.PreservationTheorem S using (narrow-∷)
 open import OperationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj GTy Mon GE
-       using (narrowᴾ)
+       using (narrowᴾ; narrow-nat)
 open import OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE
        using (narrow-str)
 
@@ -174,6 +174,84 @@ sound-subC-trans w w' w'' M pL pR =
     ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (⟦⟧<:ᶜ-trans w w') ∙ ⟦⟧<:ᶜ-irr (<:ᶜ-trans w w') w'')
   ∙ ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pL pR)
+
+
+-- Naturality in the value formers: functoriality of `_|×|_` and of `_⇒_`
+
+sound-subV-pair : ∀ {Γ A A' B B'}
+                → (p : A <:ᵛ A') → (q : B <:ᵛ B')
+                → (V : Γ ⊢V⦂ A) → (W : Γ ⊢V⦂ B)
+                → Soundᵛ== (subV-pair p q V W)
+sound-subV-pair p q V W (pV , pW) (pV' , pW') =
+    mapˣᵐ-∘⟨⟩ _ _ _ _
+  ∙ ⟨ ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr V pV pV')
+    , ∘ᵐ-congʳ (⟦⟧ᵛᵗ-irr W pW pW') ⟩ᵐ-cong
+
+sound-subV-lam : ∀ {Γ A A' C C'}
+               → (p : A' <:ᵛ A) → (w : C <:ᶜ C')
+               → (M : Γ ∷ A ⊢C⦂ C)
+               → Soundᵛ== (subV-lam p w M)
+sound-subV-lam p w M pM pR =
+    map⇒ᵐ-curryᵐˡʳ ⟦ p ⟧<:ᵛ ⟦ w ⟧<:ᶜ (⟦ M ⟧ᶜᵗ pM)
+  ∙ curryᵐ-cong (∘ᵐ-congʳ
+      (≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (narrow-∷ p M) pR (narrowᴾ p M pM)
+               ∙ narrow-nat p M pM)))
+
+
+-- Naturality in the Fitch formers: both are precomposition, so the coercion
+-- passes by associativity alone.
+
+sound-subC-box : ∀ {Γ A C C' ρ}
+               → (w : C <:ᶜ C')
+               → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A)
+               → (M : Γ ∷ [ ρ ] A ⊢C⦂ C)
+               → Soundᶜ== (subC-box w V M)
+sound-subC-box w V M (pV , pM) (pV' , pM') =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-cong (∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM'))
+            (⟨ ≈ᵐ-refl
+             , ∘ᵐ-congˡ ([]-congᶠ (⟦⟧ᵛᵗ-irr V pV pV')) ⟩ᵐ-cong)
+
+sound-subC-unbox : ∀ {Γ A A₀ C C' ρ₀ ρ'}
+                 → (x : [ ρ₀ ] A₀ ∈[ ρ' ] Γ)
+                 → (rel : ρ' ≾ᵣ ρ₀)
+                 → (v : A₀ <:ᵛ A)
+                 → (w : C <:ᶜ C')
+                 → (M : Γ ∷ A ⊢C⦂ C)
+                 → Soundᶜ== (subC-unbox x rel v w M)
+sound-subC-unbox x rel v w M pM pM' =
+    ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr M pM pM'))
+
+
+-- Sub-effecting the answer of a `handle` is the fold's inner-grade law.
+
+sound-subC-handle-in : ∀ {Γ A B ε ε₁' ε₂'}
+                     → (rel : ε₁' ≾ₑ ε₂')
+                     → (M : Γ ⊢C⦂ A ‼ ε)
+                     → (H : (op : Op) → (ε₀ : E) →
+                              Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
+                     → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                     → Soundᶜ== (subC-handle-in rel M H N)
+sound-subC-handle-in {Γ = Γ} {B = B} rel M H N
+                     (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
+    ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
+  ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-alg-of-handlerᵀ-≤ⁱ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) _ rel))
+  ∙ ∘ᵐ-assoc _ _ _
+  ∙ ∘ᵐ-congʳ (  mapˣᵐ-∘⟨⟩ _ _ _ _
+              ∙ ⟨ ∘ᵐ-identityˡ _
+                ,   ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+                  ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _)) ⟩ᵐ-cong)
+  ∙ ∘ᵐ-cong (T-alg-of-handlerᵀ-cong (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ)
+              (λ op ε₀ → ∘ᵐ-congˡ
+                           (⟦⟧ᶜᵗ-irr (H op ε₀) (pH op ε₀) (pH' op ε₀))))
+            (⟨ ≈ᵐ-refl
+             , ∘ᵐ-cong (T-congᶠ (  ∘ᵐ-congʳ (⟦⟧ᶜᵗ-irr N pN pN')
+                                 ∙ coe-refl-≈ B rel (⟦ N ⟧ᶜᵗ pN')))
+                       (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ⟦⟧ᶜᵗ-irr M pM pM' ⟩ᵐ-cong)) ⟩ᵐ-cong)
 
 
 -- Commutation with the effect formers
