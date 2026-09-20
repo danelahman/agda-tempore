@@ -409,42 +409,32 @@ module Least where
   ex-disj-close : solved?ᵈ (S⁰.gsolveImpl disjC) ≡ just tt
   ex-disj-close = refl
 
--- The solver is principal on `Frag` (constraints whose `var`-rule
--- disjunctions carry a lock grade convertible to the unit): a program
--- in the fragment that the solver accepts has a principal type.
+-- The solver is principal on every constraint: a program the solver
+-- accepts has a principal type.
 
-module Fragment where
+module Unguarded where
 
   module OC = TypeInference.Open.Contexts spec
 
   open import TypeInference.Principality            spec using (Principal; C[_,_])
   open import TypeInference.Principality.Restricted spec using (principal-on)
-  open import TypeInference.Solver.Fragment         spec using (Frag; frag?)
   open import TypeInference.SolverImpl.Restricted   spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
     using (solveOn; solverImplOn)
 
   Γ∅ : OC.OCtx ∅ˢ 0
   Γ∅ = OC.[]
 
-  -- `return true` uses no variable, so it raises no disjunction at
-  -- all: it is in the fragment, and the check is a computation
-
   prog-true : RawC 0
   prog-true = return true
 
-  frag-true : Σ[ p ∈ Frag C[ Γ∅ , prog-true ] ]
-                (frag? ops₃ C[ Γ∅ , prog-true ] ≡ just p)
-  frag-true = _ , refl
+  -- a program the solver accepts has a principal solution-with-residue,
+  -- and hence a principal type
 
-  -- a program in the fragment that the solver accepts has a
-  -- principal solution-with-residue, and hence a principal type
-
-  principal? : ∀ {n} → (Γ : OC.OCtx ∅ˢ n) → (M : RawC n) → Frag C[ Γ , M ]
-             → Maybe (Principal Γ M)
-  principal? Γ M fr with solveOn C[ Γ , M ] in e
+  principal? : ∀ {n} → (Γ : OC.OCtx ∅ˢ n) → (M : RawC n) → Maybe (Principal Γ M)
+  principal? Γ M with solveOn C[ Γ , M ] in e
   ... | nothing           = nothing
-  ... | just (Θ' , σ , Q) = just (principal-on solverImplOn Γ M fr e)
+  ... | just (Θ' , σ , Q) = just (principal-on solverImplOn Γ M tt e)
 
   ex-principal : Σ[ p ∈ Principal Γ∅ prog-true ]
-                   (principal? Γ∅ prog-true (proj₁ frag-true) ≡ just p)
+                   (principal? Γ∅ prog-true ≡ just p)
   ex-principal = _ , refl

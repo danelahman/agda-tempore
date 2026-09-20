@@ -378,7 +378,7 @@ import TypeInference.SolverImpl.Demo
 
 import TypeInference.SolverImpl.Refute
 
----- Biased satisfaction, the static fragment, and guarded solver interfaces
+---- The rigid-binder-free fragment, and guarded solver interfaces
 
 open import TypeInference.Solver.Fragment
 open import TypeInference.Solver.Restricted

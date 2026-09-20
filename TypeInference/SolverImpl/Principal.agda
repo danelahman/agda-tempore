@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
--- Principality and refutation for the driver, against the       --
--- biased satisfaction of `TypeInference.Solver.Fragment`.       --
+-- Principality and refutation for the driver, against plain     --
+-- satisfaction.                                                  --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true) renaming (Bool to 𝔹)
@@ -53,7 +53,7 @@ open import TypeInference.Open.Hyps   S
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
-open import TypeInference.Constraints.Properties   S using (≐ˢ-sym)
+open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐ˢ-sym)
 
 open import TypeInference.Solver.Fragment S
 
@@ -351,7 +351,7 @@ varᵉ-inst (ε ·̂ₑ ε')  δ ()
 Princ : ∀ {Θ} → (s s' : St Θ) → s ⟶ s' → Constraint Θ → Set
 Princ s s' m C =
   ∀ {Ψ''} → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
-  → (θ s ⨟ˢ δ₀) ⊨ᴿ[ Q ] C → Q ⊩ᴿ (res s) [ δ₀ ]
+  → (θ s ⨟ˢ δ₀) ⊨[ Q ] C → Q ⊩ᴿ (res s) [ δ₀ ]
   → Σ[ δ ∈ Subst (Ψ s') Ψ'' ]
       (((mδ m ⨟ˢ δ) ≐ˢ δ₀)
         × (Q ⊩ᴿ (res s') [ δ ])
@@ -361,7 +361,7 @@ Refut : ∀ {Θ} → St Θ → Constraint Θ → Set
 Refut s C =
   ∀ {Ψ''} → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
   → Fixing (rig s) δ₀ → Q ⊩ᴿ (res s) [ δ₀ ]
-  → ¬ ((θ s ⨟ˢ δ₀) ⊨ᴿ[ Q ] C)
+  → ¬ ((θ s ⨟ˢ δ₀) ⊨[ Q ] C)
 
 -- An atom kept at the boundary is the strengthening of an inner one; its
 -- instance along the factorisation is the inner instance with the
@@ -605,7 +605,7 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
                  (λ fx → Fixing-trans δ₀ₛ δ tri fx)
   where
     ires = ip (δ₀ ↑ᵉ) (wkᵉ-H Q)
-              (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+              (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
 
     δ''    = proj₁ ires
     tri''  = proj₁ (proj₂ ires)
@@ -663,7 +663,7 @@ threadOps-princ {f = f} g gp (op ∷ l) s eq δ₀ Q sat h with g s op in e₁
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
     f₂  = threadOps-princ g gp l s₁ e₂ δ₁ Q
-            (λ op' → ⊨ᴿ-resp-≐ˢ (≐ˢ-sym chain) (f op') (sat op')) h₁
+            (λ op' → ⊨-resp-≐ˢ (≐ˢ-sym chain) (f op') (sat op')) h₁
     δ₂  = proj₁ f₂
     tri₂ = proj₁ (proj₂ f₂)
     h₂  = proj₁ (proj₂ (proj₂ f₂))
@@ -697,7 +697,7 @@ solve-principal s (C ∧̂ D) eq δ₀ Q (sc , sd) h with solve s C in e₁
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
-    f₂  = solve-principal s₁ D e₂ δ₁ Q (⊨ᴿ-resp-≐ˢ (≐ˢ-sym chain) D sd) h₁
+    f₂  = solve-principal s₁ D e₂ δ₁ Q (⊨-resp-≐ˢ (≐ˢ-sym chain) D sd) h₁
     δ₂  = proj₁ f₂
     tri₂ = proj₁ (proj₂ f₂)
     h₂  = proj₁ (proj₂ (proj₂ f₂))
@@ -739,8 +739,8 @@ solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ Q sat h
 ...   | refl = δ₀ , ≐ˢ-refl , h , (λ fx → fx)
 solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ Q sat h | nothing with eq
 ... | refl = δ₀ , ≐ˢ-refl ,
-             pushᵈ-⊩ (≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ)
-                                   (sym ([⨟]ʳ ρ (θ s) δ₀)) sat)) h ,
+             pushᵈ-⊩ (subst₂ (VarOK Q) (sym ([⨟]ᵛ A (θ s) δ₀))
+                             (sym ([⨟]ʳ ρ (θ s) δ₀)) sat) h ,
              (λ fx → fx)
 
 solve-principal s (∃ᵗ C) eq δ₀ Q (B , sat) h with solve (s ↑ᵗˢ) C in e
@@ -752,7 +752,7 @@ solve-principal s (∃ᵗ C) eq δ₀ Q (B , sat) h with solve (s ↑ᵗˢ) C in
                h'' , (λ fx → fx'' (Fixing-trans wkˢᵗ (δ₀ ,ᵗ B) (wk-,ᵗ δ₀ B) fx))
   where
     ih = solve-principal (s ↑ᵗˢ) C e (δ₀ ,ᵗ B) Q
-           (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
+           (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
            (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵗ δ₀ B)) h))
     δ''   = proj₁ ih
     tri'' = proj₁ (proj₂ ih)
@@ -768,7 +768,7 @@ solve-principal s (∃ʳ C) eq δ₀ Q (ρ , sat) h with solve (s ↑ʳˢ) C in 
                h'' , (λ fx → fx'' (Fixing-trans wkˢʳ (δ₀ ,ʳ ρ) (wk-,ʳ δ₀ ρ) fx))
   where
     ih = solve-principal (s ↑ʳˢ) C e (δ₀ ,ʳ ρ) Q
-           (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
+           (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
            (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ʳ δ₀ ρ)) h))
     δ''   = proj₁ ih
     tri'' = proj₁ (proj₂ ih)
@@ -784,7 +784,7 @@ solve-principal s (∃ᵉ C) eq δ₀ Q (ε , sat) h with solve (s ↑ᵉˢ) C i
                h'' , (λ fx → fx'' (Fixing-trans wkˢᵉ (δ₀ ,ᵉ ε) (wk-,ᵉ δ₀ ε) fx))
   where
     ih = solve-principal (s ↑ᵉˢ) C e (δ₀ ,ᵉ ε) Q
-           (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
+           (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
            (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵉ δ₀ ε)) h))
     δ''   = proj₁ ih
     tri'' = proj₁ (proj₂ ih)
@@ -899,7 +899,7 @@ popᵉ-fail s C Φ θ'' R'' rg'' m'' w'' ip dis eq δ₀ Q fx h sat =
   popᵉ-fail′ s C Φ θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri'' hres''
   where
     ires = ip (δ₀ ↑ᵉ) (wkᵉ-H Q)
-              (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+              (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
 
     δ''    = proj₁ ires
     tri''  = proj₁ (proj₂ ires)
@@ -924,7 +924,7 @@ threadOps-fail {f = f} g gp gf (op ∷ l) s eq δ₀ Q fx h sat with g s op in e
 ...   | just _  = ⊥nothing eq
 ...   | nothing =
         threadOps-fail g gp gf l s₁ e₂ δ₁ Q fx₁ h₁
-          (λ op' → ⊨ᴿ-resp-≐ˢ (≐ˢ-sym chain) (f op') (sat op'))
+          (λ op' → ⊨-resp-≐ˢ (≐ˢ-sym chain) (f op') (sat op'))
   where
     f₁   = gp s op e₁ δ₀ Q (sat op) h
     δ₁   = proj₁ f₁
@@ -947,7 +947,7 @@ solve-fail⁺ s (C ∧̂ D) (nc , nd) eq δ₀ Q fx h (sc , sd) with solve s C i
 ... | just (s₁ , m₁ , w₁) with solve s₁ D in e₂
 ...   | just _  = ⊥nothing eq
 ...   | nothing =
-        solve-fail⁺ s₁ D nd e₂ δ₁ Q fx₁ h₁ (⊨ᴿ-resp-≐ˢ (≐ˢ-sym chain) D sd)
+        solve-fail⁺ s₁ D nd e₂ δ₁ Q fx₁ h₁ (⊨-resp-≐ˢ (≐ˢ-sym chain) D sd)
   where
     f₁   = solve-principal s C e₁ δ₀ Q sc h
     δ₁   = proj₁ f₁
@@ -983,7 +983,7 @@ solve-fail⁺ s (∃ᵗ C) nc eq δ₀ Q fx h (B , sat) with solve (s ↑ᵗˢ) 
       solve-fail⁺ (s ↑ᵗˢ) C nc e (δ₀ ,ᵗ B) Q
         (Fixing-trans wkˢᵗ (δ₀ ,ᵗ B) (wk-,ᵗ δ₀ B) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵗ δ₀ B)) h))
-        (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
+        (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
 
 solve-fail⁺ s (∃ʳ C) nc eq δ₀ Q fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
 ... | just _  = ⊥nothing eq
@@ -991,7 +991,7 @@ solve-fail⁺ s (∃ʳ C) nc eq δ₀ Q fx h (ρ , sat) with solve (s ↑ʳˢ) C
       solve-fail⁺ (s ↑ʳˢ) C nc e (δ₀ ,ʳ ρ) Q
         (Fixing-trans wkˢʳ (δ₀ ,ʳ ρ) (wk-,ʳ δ₀ ρ) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ʳ δ₀ ρ)) h))
-        (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
+        (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
 
 solve-fail⁺ s (∃ᵉ C) nc eq δ₀ Q fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
 ... | just _  = ⊥nothing eq
@@ -999,12 +999,12 @@ solve-fail⁺ s (∃ᵉ C) nc eq δ₀ Q fx h (ε , sat) with solve (s ↑ᵉˢ)
       solve-fail⁺ (s ↑ᵉˢ) C nc e (δ₀ ,ᵉ ε) Q
         (Fixing-trans wkˢᵉ (δ₀ ,ᵉ ε) (wk-,ᵉ δ₀ ε) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵉ δ₀ ε)) h))
-        (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
+        (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
 
 solve-fail⁺ s (∀ᵉ C) (dis , nc) eq with solve (⇑ᵉˢ s) C in e
 ... | nothing = λ δ₀ Q fx h sat →
       solve-fail⁺ (⇑ᵉˢ s) C nc e (δ₀ ↑ᵉ) (wkᵉ-H Q) (Fixing-⇑ᵉ δ₀ fx) ⊩ᴿ-empty
-        (⊨ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat)
+        (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat)
 ... | just (s'' , m'' , w'') =
       popᵉ-fail s C (Ψ s'') (θ s'') (res s'') (rig s'') m'' w''
                 (solve-principal (⇑ᵉˢ s) C e) dis eq
