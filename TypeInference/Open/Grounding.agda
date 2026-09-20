@@ -7,9 +7,9 @@
 --                                                                --
 -- On top of that sit the lemmas the grounding theorem consumes:  --
 -- `θ ⊨ᴴ Q` (the grounding satisfies the hypothesis set),         --
--- groundings of convertibility, entailment, eternality and       --
--- membership, the round-trips of the closed embeddings, and the  --
--- collapse of an effect-scope weakening.                         --
+-- groundings of convertibility, entailment, eternality,          --
+-- subtyping and membership, the round-trips of the closed        --
+-- embeddings, and the collapse of an effect-scope weakening.     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -34,13 +34,15 @@ module TypeInference.Open.Grounding (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Contexts S
-open import Syntax.Types    S
+open import Syntax.Contexts  S
+open import Syntax.Types     S
+open import Syntax.Subtyping S
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
-open import TypeInference.Open.Hyps     S
+open import TypeInference.Open.Grades    S
+open import TypeInference.Open.Types     S
+open import TypeInference.Open.Contexts  S
+open import TypeInference.Open.Hyps      S
+open import TypeInference.Open.Subtyping S
 
 record Grounding (Θ : Scope) : Set where
   constructor grounding
@@ -187,6 +189,26 @@ ground-Et h Unitₑ            = Unitₑ
 ground-Et h Boolₑ            = Boolₑ
 ground-Et h (et₁ |×|ₑ et₂)   = ground-Et h et₁ |×|ₑ ground-Et h et₂
 ground-Et h Emptyₑ           = Emptyₑ
+
+-- Subtyping grounds structurally: each constructor maps to its closed
+-- counterpart, the grade slots by `ground-≾ᵣ`/`ground-≾ₑ`. A type variable
+-- grounds to whatever `θ` assigns it, so `tvarₛ` grounds to reflexivity.
+
+ground-<:ᵛ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {A A' : OVType Θ}
+           → θ ⊨ᴴ Q → Q ∣ A <:̂ᵛ A' → ⟦ A ⟧ᵛ θ <:ᵛ ⟦ A' ⟧ᵛ θ
+ground-<:ᶜ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {C C' : OCType Θ}
+           → θ ⊨ᴴ Q → Q ∣ C <:̂ᶜ C' → ⟦ C ⟧ᶜ θ <:ᶜ ⟦ C' ⟧ᶜ θ
+
+ground-<:ᵛ {θ = θ} h (tvarₛ {α} refl) = <:ᵛ-refl (gTy θ α)
+ground-<:ᵛ         h (Baseₛ p)        = Baseₛ p
+ground-<:ᵛ         h Unitₛ            = Unitₛ
+ground-<:ᵛ         h Boolₛ            = Boolₛ
+ground-<:ᵛ         h (p |×|ₛ r)       = ground-<:ᵛ h p |×|ₛ ground-<:ᵛ h r
+ground-<:ᵛ         h Emptyₛ           = Emptyₛ
+ground-<:ᵛ         h (p ⇒ₛ r)         = ground-<:ᵛ h p ⇒ₛ ground-<:ᶜ h r
+ground-<:ᵛ         h ([ q ]ₛ p)       = [ ground-≾ᵣ h q ]ₛ ground-<:ᵛ h p
+
+ground-<:ᶜ h (p ‼ₛ q) = ground-<:ᵛ h p ‼ₛ ground-≾ₑ h q
 
 -- Each membership former maps to its counterpart.
 

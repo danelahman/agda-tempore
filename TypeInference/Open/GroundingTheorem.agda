@@ -60,6 +60,7 @@ mutual
   groundV θ h false       = false
   groundV θ h ⦉ V , W ⦊    = ⦉ groundV θ h V , groundV θ h W ⦊
   groundV θ h (lam M)     = lam (groundC θ h M)
+  groundV θ h (subV V p)  = subV (groundV θ h V) (ground-<:ᵛ h p)
 
   groundC : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
           → (θ : Grounding Θ) → θ ⊨ᴴ Q → Q ∣ Γ ⊢C⦂ C
@@ -105,12 +106,12 @@ mutual
       `with (λ op ε'' → ground-clause θ h op ε'' (H op))
       `in (groundC θ h N)
 
-  groundC θ h (unbox x ok N) with ground-unbox θ h x ok
-  ... | le , y = unbox y le (groundC θ h N)
+  groundC θ h (unbox x ok p N) with ground-unbox θ h x ok
+  ... | le , y = unbox y le (ground-<:ᵛ h p) (groundC θ h N)
   groundC θ h (box ρ V N) =
     box (groundV θ h V) (groundC θ h N)
-  groundC θ h (coerce le M) =
-    coerce (ground-≾ₑ h le) (groundC θ h M)
+  groundC θ h (subC M p) =
+    subC (groundC θ h M) (ground-<:ᶜ h p)
 
   -- One operation clause, at one continuation grade. The clause derivation
   -- lives at the extended scope `Θ +e`; grounding it at `θ ,ᵍᵉ ε''` sends the
@@ -171,7 +172,7 @@ private
   ex-var-lock-ground = groundV θ₀ ∅ᴴ-⊨ ex-var-lock
 
   ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Unit) (return ⋆)
 
   ex-unbox-ground : [] ∷ [ uᵣ ] Unit ⊢C⦂ Unit ‼ uₑ
   ex-unbox-ground = groundC θ₀ ∅ᴴ-⊨ ex-unbox

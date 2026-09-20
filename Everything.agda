@@ -333,6 +333,10 @@ open import TypeInference.Open.Subst
 
 open import TypeInference.Open.Hyps
 
+---- Subtyping of open types
+
+open import TypeInference.Open.Subtyping
+
 ---- The mirrored qualified type system
 
 open import TypeInference.Open.Language

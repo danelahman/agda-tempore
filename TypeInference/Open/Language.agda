@@ -34,10 +34,15 @@ open Operations Ops
 
 open import Syntax.Types S using (BaseType; BaseConstants)
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
-open import TypeInference.Open.Hyps     S
+open import TypeInference.Open.Grades    S
+open import TypeInference.Open.Types     S
+open import TypeInference.Open.Contexts  S
+open import TypeInference.Open.Hyps      S
+
+-- Re-exported for the same reason as on the closed side: the typing rules'
+-- own premises mention `_∣_<:̂ᵛ_`.
+
+open import TypeInference.Open.Subtyping S public
 
 infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_
@@ -96,6 +101,14 @@ mutual
             -----------------
             → Q ∣ Γ ⊢V⦂ A ⇒ C
 
+    -- subsumption
+
+    subV    : {A A' : OVType Θ}
+            → Q ∣ Γ ⊢V⦂ A
+            → Q ∣ A <:̂ᵛ A'
+            --------------
+            → Q ∣ Γ ⊢V⦂ A'
+
 
   data _∣_⊢C⦂_ {Θ : Scope} {n : ℕ} (Q : Hyps Θ) (Γ : OCtx Θ n) : OCType Θ → Set where
 
@@ -143,8 +156,8 @@ mutual
 
     -- boolean elimination
 
-    -- Both branches are typed at the same computation type `C`, so they carry
-    -- the same effect grade; differing grades are equalised by `coerce`.
+    -- Both branches are typed at the same computation type `C`; differing
+    -- types are reconciled by `subC`.
 
     if_`then_`else_
             : {C : OCType Θ}
@@ -202,15 +215,17 @@ mutual
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
-    -- As in the original, the value being unboxed is a variable of box type
-    -- `[ ρ ] A`, and the time that has passed since it was brought into scope
-    -- is the grade `ρ'` read off the context.
+    -- As in the original, the value being unboxed is a variable, named at its
+    -- *declared* box type `[ ρ₀ ] A₀`, the time that has passed since it was
+    -- brought into scope is the grade `ρ'` read off the context, and the
+    -- continuation may bind any supertype `A` of the payload.
 
-    unbox   : {A : OVType Θ}
+    unbox   : {A A₀ : OVType Θ}
             → {C : OCType Θ}
-            → {ρ ρ' : RExp Θ}
-            → (x : [ ρ ] A ∈̂[ ρ' ] Γ)
-            → Q ⊩ ρ' ≾̂ᵣ ρ
+            → {ρ₀ ρ' : RExp Θ}
+            → (x : [ ρ₀ ] A₀ ∈̂[ ρ' ] Γ)
+            → Q ⊩ ρ' ≾̂ᵣ ρ₀
+            → Q ∣ A₀ <:̂ᵛ A
             → Q ∣ Γ ∷ A ⊢C⦂ C
             -----------------
             → Q ∣ Γ ⊢C⦂ C
@@ -227,14 +242,23 @@ mutual
             -----------------------
             → Q ∣ Γ ⊢C⦂ C
 
-    -- (shallow explicit) sub-effecting
+    -- subsumption
 
-    coerce : {A : OVType Θ}
-           → {ε ε' : EExp Θ}
-           → Q ⊩ ε ≾̂ₑ ε'
-           → Q ∣ Γ ⊢C⦂ A ‼ ε
-           ------------------
-           → Q ∣ Γ ⊢C⦂ A ‼ ε'
+    subC    : {C C' : OCType Θ}
+            → Q ∣ Γ ⊢C⦂ C
+            → Q ∣ C <:̂ᶜ C'
+            --------------
+            → Q ∣ Γ ⊢C⦂ C'
+
+-- Sub-effecting, recovered as subsumption at an effect-only derivation
+
+coerce : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A ε ε'}
+       → Q ⊩ ε ≾̂ₑ ε'
+       → Q ∣ Γ ⊢C⦂ A ‼ ε
+       ------------------
+       → Q ∣ Γ ⊢C⦂ A ‼ ε'
+
+coerce {A = A} p M = subC M (<:̂ᵛ-refl A ‼ₛ p)
 
 -- Effect-grade annotations
 
@@ -299,4 +323,4 @@ private
   -- unboxing a boxed variable, no time having passed since it came into scope
 
   ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Unit) (return ⋆)
