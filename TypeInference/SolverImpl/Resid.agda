@@ -2,17 +2,18 @@
 -- Residual constraints                                          --
 --                                                                --
 -- What the driver cannot solve it carries: a `Resid Ψ` is the    --
--- list of grade orderings and eternality demands still open over  --
--- the current scope. Unlike `Hyps`, a residual is closed under    --
--- substitution — its eternality component holds whole types, not  --
--- variables — which is what lets the driver push it through the   --
--- store extensions a unification performs.                        --
+-- list of grade orderings, eternality demands and var-rule        --
+-- disjunctions still open over the current scope. Unlike `Hyps`,  --
+-- a residual is closed under substitution — its eternality        --
+-- component holds whole types, not variables — which is what lets --
+-- the driver push it through the store extensions a unification   --
+-- performs.                                                       --
 --                                                                --
 -- `Q ⊩ᴿ R [ δ ]` is what it takes to discharge a residual: every  --
 -- atom, instantiated along `δ`, is entailed by `Q`. Reading a     --
 -- residual back as a hypothesis set (`toHyps`) decomposes the     --
 -- eternality demands into atoms on type variables (`etDec`) and   --
--- takes the orderings verbatim.                                   --
+-- takes the orderings and disjunctions verbatim.                  --
 --                                                                --
 -- The name follows OutsideIn(X): a residual constraint is what    --
 -- solving leaves behind (Vytiniotis et al., JFP 2011).            --
@@ -58,11 +59,12 @@ record Resid (Ψ : Scope) : Set where
     rs : List (RExp Ψ × RExp Ψ)            -- open resource-grade orderings
     es : List (EExp Ψ × EExp Ψ)            -- open effect-grade orderings
     ts : List (OVType Ψ)                   -- open eternality demands
+    ds : List (OVType Ψ × RExp Ψ)          -- open var-rule disjunctions
 
 open Resid public
 
 emptyᴿ : ∀ {Ψ} → Resid Ψ
-emptyᴿ = resid [] [] []
+emptyᴿ = resid [] [] [] []
 
 infixl 50 _[_]ᴿ
 infixr 5 _∪ᴿ_
@@ -71,20 +73,24 @@ _[_]ᴿ : ∀ {Ψ Ψ'} → Resid Ψ → Subst Ψ Ψ' → Resid Ψ'
 R [ σ ]ᴿ = resid (map (mapᵖ (_[ σ ]ʳ)) (rs R))
                  (map (mapᵖ (_[ σ ]ᵉ)) (es R))
                  (map (_[ σ ]ᵛ) (ts R))
+                 (map (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) (ds R))
 
 _∪ᴿ_ : ∀ {Ψ} → Resid Ψ → Resid Ψ → Resid Ψ
-R ∪ᴿ R' = resid (rs R ++ rs R') (es R ++ es R') (ts R ++ ts R')
+R ∪ᴿ R' = resid (rs R ++ rs R') (es R ++ es R') (ts R ++ ts R') (ds R ++ ds R')
 
 -- Pushing one atom
 
 pushʳ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Resid Ψ → Resid Ψ
-pushʳ ρ ρ' R = resid ((ρ , ρ') ∷ rs R) (es R) (ts R)
+pushʳ ρ ρ' R = resid ((ρ , ρ') ∷ rs R) (es R) (ts R) (ds R)
 
 pushᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Resid Ψ → Resid Ψ
-pushᵉ ε ε' R = resid (rs R) ((ε , ε') ∷ es R) (ts R)
+pushᵉ ε ε' R = resid (rs R) ((ε , ε') ∷ es R) (ts R) (ds R)
 
 pushᵗ : ∀ {Ψ} → OVType Ψ → Resid Ψ → Resid Ψ
-pushᵗ A R = resid (rs R) (es R) (A ∷ ts R)
+pushᵗ A R = resid (rs R) (es R) (A ∷ ts R) (ds R)
+
+pushᵈ : ∀ {Ψ} → OVType Ψ → RExp Ψ → Resid Ψ → Resid Ψ
+pushᵈ A ρ R = resid (rs R) (es R) (ts R) ((A , ρ) ∷ ds R)
 
 infix 4 _⊩ᴿ_[_]
 
@@ -94,11 +100,12 @@ record _⊩ᴿ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (R : Resid Ψ) (δ : Subst Ψ
     ⊩rs : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     ⊩es : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
     ⊩ts : ∀ {A}    → A ∈ ts R        → Q ⊩ᴱ A [ δ ]ᵛ
+    ⊩ds : ∀ {A ρ}  → (A , ρ) ∈ ds R  → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
 
 open _⊩ᴿ_[_] public
 
 ⊩ᴿ-empty : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → Q ⊩ᴿ emptyᴿ [ δ ]
-⊩ᴿ-empty = mk⊩ᴿ (λ ()) (λ ()) (λ ())
+⊩ᴿ-empty = mk⊩ᴿ (λ ()) (λ ()) (λ ()) (λ ())
 
 ⊩ᴿ-resp-≐ˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {δ δ' : Subst Ψ Ψ'}
            → δ ≐ˢ δ' → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ R [ δ' ]
@@ -106,6 +113,7 @@ open _⊩ᴿ_[_] public
   mk⊩ᴿ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩rs h m))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩es h m))
        (λ {A}       m → subst (Q ⊩ᴱ_) ([≐]ᵛ p A) (⊩ts h m))
+       (λ {A} {ρ}   m → subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩ds h m))
 
 -- A residual pushed through a substitution
 
@@ -119,6 +127,8 @@ open _⊩ᴿ_[_] public
                               (⊩es h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
        (λ {A}      m → subst (Q ⊩ᴱ_) ([⨟]ᵛ A σ δ)
                               (⊩ts h (∈-map⁺ (_[ σ ]ᵛ) m)))
+       (λ {A} {ρ}  m → subst₂ (VarOK Q) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
+                              (⊩ds h (∈-map⁺ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m)))
 
 -- A discharge followed by a strengthening of the hypotheses
 
@@ -131,6 +141,8 @@ open _⊩ᴿ_[_] public
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
                               (⊩-substₑ g (⊩es h m)))
        (λ {A}      m → subst (Q' ⊩ᴱ_) ([⨟]ᵛ A δ δ') (⊩ᴱ-subst g (⊩ts h m)))
+       (λ {A} {ρ}  m → subst₂ (VarOK Q') ([⨟]ᵛ A δ δ') ([⨟]ʳ ρ δ δ')
+                              (VarOK-subst g (⊩ds h m)))
 
 -- The two components of a union
 
@@ -139,26 +151,33 @@ open _⊩ᴿ_[_] public
 ∪ᴿ-fst h = mk⊩ᴿ (λ m → ⊩rs h (∈-++⁺ˡ m))
                 (λ m → ⊩es h (∈-++⁺ˡ m))
                 (λ m → ⊩ts h (∈-++⁺ˡ m))
+                (λ m → ⊩ds h (∈-++⁺ˡ m))
 
 ∪ᴿ-snd : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R R' : Resid Ψ} {δ : Subst Ψ Ψ'}
        → Q ⊩ᴿ (R ∪ᴿ R') [ δ ] → Q ⊩ᴿ R' [ δ ]
 ∪ᴿ-snd {R = R} h = mk⊩ᴿ (λ m → ⊩rs h (∈-++⁺ʳ (rs R) m))
                         (λ m → ⊩es h (∈-++⁺ʳ (es R) m))
                         (λ m → ⊩ts h (∈-++⁺ʳ (ts R) m))
+                        (λ m → ⊩ds h (∈-++⁺ʳ (ds R) m))
 
 -- The tail of a residual with one atom pushed
 
 tailʳ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {ρ ρ' : RExp Ψ} {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushʳ ρ ρ' R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailʳ h = mk⊩ᴿ (λ m → ⊩rs h (there m)) (⊩es h) (⊩ts h)
+tailʳ h = mk⊩ᴿ (λ m → ⊩rs h (there m)) (⊩es h) (⊩ts h) (⊩ds h)
 
 tailᵉ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {ε ε' : EExp Ψ} {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushᵉ ε ε' R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailᵉ h = mk⊩ᴿ (⊩rs h) (λ m → ⊩es h (there m)) (⊩ts h)
+tailᵉ h = mk⊩ᴿ (⊩rs h) (λ m → ⊩es h (there m)) (⊩ts h) (⊩ds h)
 
 tailᵗ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushᵗ A R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailᵗ h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ m → ⊩ts h (there m))
+tailᵗ h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ m → ⊩ts h (there m)) (⊩ds h)
+
+tailᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {ρ : RExp Ψ}
+          {δ : Subst Ψ Ψ'}
+      → Q ⊩ᴿ (pushᵈ A ρ R) [ δ ] → Q ⊩ᴿ R [ δ ]
+tailᵈ h = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (λ m → ⊩ds h (there m))
 
 -- The empty hypothesis set entails nothing, so every decision taken
 -- against it transports to any hypothesis set and any substitution
@@ -296,10 +315,10 @@ etsList-nothing (A ∷ l) eq | nothing | _ = A , here refl , etDec⁺-nothing A 
 toHyps : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ Q ∈ Hyps Ψ ] (Q ⊩ᴿ R [ idˢ ]))
 toHyps R with etsList (ts R)
 ... | nothing       = nothing
-... | just (αs , f) = just (Q , mk⊩ᴿ ordᵣ' ordₑ' ets')
+... | just (αs , f) = just (Q , mk⊩ᴿ ordᵣ' ordₑ' ets' disj')
   where
     Q : Hyps _
-    Q = hyps αs (rs R) (es R) []
+    Q = hyps αs (rs R) (es R) (ds R)
 
     ets' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ idˢ ]ᵛ
     ets' {A} m = subst (Q ⊩ᴱ_) (sym ([id]ᵛ A)) (f et-hyp m)
@@ -311,6 +330,10 @@ toHyps R with etsList (ts R)
     ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ idˢ ]ᵉ ≾̂ₑ ε' [ idˢ ]ᵉ
     ordₑ' {ε} {ε'} m =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (hypₑ m)
+
+    disj' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
+    disj' {A} {ρ} m =
+      subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok m)
 
 -- The same, for a whole residual
 
@@ -345,4 +368,4 @@ toHyps-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (R : Resid Ψ)
 toHyps-compl R eq δ h with etsList (ts R) in e
 toHyps-compl R () δ h | nothing
 toHyps-compl R eq δ h | just (αs , f) with eq
-... | refl = mk⊩ᴴ (etsList-compl (ts R) e δ (⊩ts h)) (⊩rs h) (⊩es h) (λ ())
+... | refl = mk⊩ᴴ (etsList-compl (ts R) e δ (⊩ts h)) (⊩rs h) (⊩es h) (⊩ds h)

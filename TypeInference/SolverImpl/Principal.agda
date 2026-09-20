@@ -162,7 +162,7 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 ⊩ᴿ-subst⁻ : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ}
               {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
           → Q ⊩ᴿ R [ σ ⨟ˢ δ ] → Q ⊩ᴿ (R [ σ ]ᴿ) [ δ ]
-⊩ᴿ-subst⁻ {Q = Q} {R = R} {σ = σ} {δ = δ} h = mk⊩ᴿ rs' es' ts'
+⊩ᴿ-subst⁻ {Q = Q} {R = R} {σ = σ} {δ = δ} h = mk⊩ᴿ rs' es' ts' ds'
   where
     rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs (R [ σ ]ᴿ) → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     rs' m with ∈-map⁻ (mapᵖ (_[ σ ]ʳ)) m
@@ -178,6 +178,11 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
     ts' m with ∈-map⁻ (_[ σ ]ᵛ) m
     ... | A₀ , m₀ , refl = subst (Q ⊩ᴱ_) (sym ([⨟]ᵛ A₀ σ δ)) (⊩ts h m₀)
 
+    ds' : ∀ {A ρ} → (A , ρ) ∈ ds (R [ σ ]ᴿ) → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+    ds' m with ∈-map⁻ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m
+    ... | (A₀ , ρ₀) , m₀ , refl =
+      subst₂ (VarOK Q) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ʳ ρ₀ σ δ)) (⊩ds h m₀)
+
 -- Both components of a union
 
 ∪ᴿ-both : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R R' : Resid Ψ} {δ : Subst Ψ Ψ'}
@@ -186,20 +191,30 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
   mk⊩ᴿ (λ m → [ ⊩rs h , ⊩rs h' ]′ (∈-++⁻ (rs R) m))
        (λ m → [ ⊩es h , ⊩es h' ]′ (∈-++⁻ (es R) m))
        (λ m → [ ⊩ts h , ⊩ts h' ]′ (∈-++⁻ (ts R) m))
+       (λ m → [ ⊩ds h , ⊩ds h' ]′ (∈-++⁻ (ds R) m))
 
 -- Pushing one atom
 
 pushʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {ρ ρ' : RExp Ψ} {δ : Subst Ψ Ψ'}
         → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushʳ ρ ρ' R) [ δ ]
-pushʳ-⊩ p h = mk⊩ᴿ (λ { (here refl) → p ; (there m) → ⊩rs h m }) (⊩es h) (⊩ts h)
+pushʳ-⊩ p h =
+  mk⊩ᴿ (λ { (here refl) → p ; (there m) → ⊩rs h m }) (⊩es h) (⊩ts h) (⊩ds h)
 
 pushᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {ε ε' : EExp Ψ} {δ : Subst Ψ Ψ'}
         → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵉ ε ε' R) [ δ ]
-pushᵉ-⊩ p h = mk⊩ᴿ (⊩rs h) (λ { (here refl) → p ; (there m) → ⊩es h m }) (⊩ts h)
+pushᵉ-⊩ p h =
+  mk⊩ᴿ (⊩rs h) (λ { (here refl) → p ; (there m) → ⊩es h m }) (⊩ts h) (⊩ds h)
 
 pushᵗ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {δ : Subst Ψ Ψ'}
         → Q ⊩ᴱ A [ δ ]ᵛ → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵗ A R) [ δ ]
-pushᵗ-⊩ p h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ { (here refl) → p ; (there m) → ⊩ts h m })
+pushᵗ-⊩ p h =
+  mk⊩ᴿ (⊩rs h) (⊩es h) (λ { (here refl) → p ; (there m) → ⊩ts h m }) (⊩ds h)
+
+pushᵈ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {ρ : RExp Ψ}
+            {δ : Subst Ψ Ψ'}
+        → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵈ A ρ R) [ δ ]
+pushᵈ-⊩ p h =
+  mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (λ { (here refl) → p ; (there m) → ⊩ds h m })
 
 varᵉ?-just : ∀ {Ψ} → (ε : EExp Ψ) → {k : EVar Ψ} → varᵉ? ε ≡ just k → ε ≡ evar k
 varᵉ?-just (evar i)   refl = refl
@@ -407,6 +422,17 @@ bndᵗ {Q = Q} j A {A₀} q γ p =
   subst (Q ⊩ᴱ_) ([⨟]ᵛ A₀ (wkˢᵉ ⨟ˢ γ) κᵉ)
         (⊩ᴱ-subst ⊩ᴴ-κᵉ (subst (wkᵉ-H Q ⊩ᴱ_) (keyᵛ j A q γ) p))
 
+bndᵈ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
+     → (ρ : RExp (Φ +e)) → {A₀ : OVType Φ} {ρ₀ : RExp Φ}
+     → A [ popˢ j ]ᵛ ≡ wkᵉ-v A₀ → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀
+     → (γ : Subst (Φ +e) (Φ' +e))
+     → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ)
+     → VarOK Q (A₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (ρ₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
+bndᵈ {Q = Q} j A ρ {A₀} {ρ₀} q q' γ p =
+  subst₂ (VarOK Q) ([⨟]ᵛ A₀ (wkˢᵉ ⨟ˢ γ) κᵉ) ([⨟]ʳ ρ₀ (wkˢᵉ ⨟ˢ γ) κᵉ)
+         (VarOK-subst ⊩ᴴ-κᵉ
+           (subst₂ (VarOK (wkᵉ-H Q)) (keyᵛ j A q γ) (keyʳ j ρ q' γ) p))
+
 atomʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → ∀ {a} → atomʳ j ρ ρ' ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e))
@@ -456,6 +482,25 @@ atomᵗ-princ j A eq γ p | nothing with et₀? A
 ...   | refl = λ ()
 atomᵗ-princ j A eq γ p | nothing | nothing = ⊥just eq
 
+atomᵈ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
+            → (ρ : RExp (Φ +e))
+            → ∀ {a} → atomᵈ j A ρ ≡ just a
+            → (γ : Subst (Φ +e) (Φ' +e))
+            → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ)
+            → ∀ {B τ} → (B , τ) ∈ proj₁ a
+            → VarOK Q (B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
+atomᵈ-princ j A ρ eq γ p with strᵛ⁺ j A | strʳ⁺ j ρ
+... | just (A₀ , e₁) | just (ρ₀ , e₂) with eq
+...   | refl = λ { (here refl) → bndᵈ j A ρ e₁ e₂ γ p }
+atomᵈ-princ j A ρ eq γ p | just _ | nothing with discᵈ j A ρ
+... | just _  with eq
+...   | refl = λ ()
+atomᵈ-princ j A ρ eq γ p | just _ | nothing | nothing = ⊥just eq
+atomᵈ-princ j A ρ eq γ p | nothing | _ with discᵈ j A ρ
+... | just _  with eq
+...   | refl = λ ()
+atomᵈ-princ j A ρ eq γ p | nothing | _ | nothing = ⊥just eq
+
 listʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (RExp (Φ +e) × RExp (Φ +e)))
             → ∀ {a} → listʳ j l ≡ just a
@@ -502,20 +547,39 @@ listᵗ-princ j (A ∷ l) eq γ k with atomᵗ j A in e₁ | listᵗ j l in e₂
 listᵗ-princ j (A ∷ l) eq γ k | just _  | nothing = ⊥just eq
 listᵗ-princ j (A ∷ l) eq γ k | nothing | _       = ⊥just eq
 
+listᵈ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
+            → (l : List (OVType (Φ +e) × RExp (Φ +e)))
+            → ∀ {a} → listᵈ j l ≡ just a
+            → (γ : Subst (Φ +e) (Φ' +e))
+            → (∀ {A ρ} → (A , ρ) ∈ l
+                 → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ))
+            → ∀ {B τ} → (B , τ) ∈ proj₁ a
+            → VarOK Q (B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
+listᵈ-princ j []             refl γ k = λ ()
+listᵈ-princ j ((A , ρ) ∷ l) eq γ k with atomᵈ j A ρ in e₁ | listᵈ j l in e₂
+... | just (a , fa) | just (l₁ , f) with eq
+...   | refl = λ m → [ atomᵈ-princ j A ρ e₁ γ (k (here refl))
+                     , listᵈ-princ j l e₂ γ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
+listᵈ-princ j ((A , ρ) ∷ l) eq γ k | just _  | nothing = ⊥just eq
+listᵈ-princ j ((A , ρ) ∷ l) eq γ k | nothing | _       = ⊥just eq
+
 splitᴿ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
              → ∀ {a} → splitᴿ j R ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e))
              → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ γ ]
              → Q ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
 splitᴿ-princ j R eq γ h
-  with listʳ j (rs R) in e₁ | listᵉ j (es R) in e₂ | listᵗ j (ts R) in e₃
-... | just (lr , fr) | just (le , fe) | just (lt , ft) with eq
+  with listʳ j (rs R) in e₁ | listᵉ j (es R) in e₂
+     | listᵗ j (ts R) in e₃ | listᵈ j (ds R) in e₄
+... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ld , fd) with eq
 ...   | refl = mk⊩ᴿ (listʳ-princ j (rs R) e₁ γ (⊩rs h))
                     (listᵉ-princ j (es R) e₂ γ (⊩es h))
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
-splitᴿ-princ j R eq γ h | just _  | just _  | nothing = ⊥just eq
-splitᴿ-princ j R eq γ h | just _  | nothing | _       = ⊥just eq
-splitᴿ-princ j R eq γ h | nothing | _       | _       = ⊥just eq
+                    (listᵈ-princ j (ds R) e₄ γ (⊩ds h))
+splitᴿ-princ j R eq γ h | just _  | just _  | just _  | nothing = ⊥just eq
+splitᴿ-princ j R eq γ h | just _  | just _  | nothing | _       = ⊥just eq
+splitᴿ-princ j R eq γ h | just _  | nothing | _       | _       = ⊥just eq
+splitᴿ-princ j R eq γ h | nothing | _       | _       | _       = ⊥just eq
 
 -- The inner run is entered at `δ₀ ↑ᵉ`; what comes back is turned into a
 -- substitution out of the outer scope by undoing the rigid's move and
@@ -675,7 +739,8 @@ solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ Q sat h
 ...   | refl = δ₀ , ≐ˢ-refl , h , (λ fx → fx)
 solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ Q sat h | nothing with eq
 ... | refl = δ₀ , ≐ˢ-refl ,
-             pushʳ-⊩ (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) (sym ([⨟]ʳ ρ (θ s) δ₀)) sat) h ,
+             pushᵈ-⊩ (≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ)
+                                   (sym ([⨟]ʳ ρ (θ s) δ₀)) sat)) h ,
              (λ fx → fx)
 
 solve-principal s (∃ᵗ C) eq δ₀ Q (B , sat) h with solve (s ↑ᵗˢ) C in e

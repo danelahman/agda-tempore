@@ -108,12 +108,30 @@ checkᵗ (A ∷ l) δ with etDec (A [ δ ]ᵛ) in eq | checkᵗ l δ
 ... | just (α ∷ αs) | _       = nothing
 ... | nothing       | _       = nothing
 
+-- At the ground substitution a disjunction is closed by whichever
+-- disjunct holds: the grade side first, the eternality side after.
+
+checkᵈ : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → (δ : Subst Ψ ∅ˢ)
+       → Maybe (∀ {A ρ} → (A , ρ) ∈ l → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+checkᵈ []             δ = just (λ ())
+checkᵈ ((A , ρ) ∷ l) δ with checkᵈ l δ
+... | nothing = nothing
+... | just f with decide≾ᵣ {Q = ∅ᴴ} (ρ [ δ ]ʳ) ûᵣ
+...   | just p  = just (λ { (here refl) → ≾ᵘ-ok p ; (there m) → f m })
+...   | nothing with etDec (A [ δ ]ᵛ) in eq
+...     | just []       =
+          just (λ { (here refl) → et-ok (etDec-sound {Q = ∅ᴴ} (A [ δ ]ᵛ) eq (λ ()))
+                  ; (there m)   → f m })
+...     | just (α ∷ αs) = nothing
+...     | nothing       = nothing
+
 closeAt : ∀ {Ψ} → (R : Resid Ψ) → (δ : Subst Ψ ∅ˢ) → Maybe (∅ᴴ ⊩ᴿ R [ δ ])
-closeAt R δ with checkʳ (rs R) δ | checkᵉ (es R) δ | checkᵗ (ts R) δ
-... | just f  | just g  | just k  = just (mk⊩ᴿ f g k)
-... | just _  | just _  | nothing = nothing
-... | just _  | nothing | _       = nothing
-... | nothing | _       | _       = nothing
+closeAt R δ with checkʳ (rs R) δ | checkᵉ (es R) δ | checkᵗ (ts R) δ | checkᵈ (ds R) δ
+... | just f  | just g  | just k  | just d  = just (mk⊩ᴿ f g k d)
+... | just _  | just _  | just _  | nothing = nothing
+... | just _  | just _  | nothing | _       = nothing
+... | just _  | nothing | _       | _       = nothing
+... | nothing | _       | _       | _       = nothing
 
 close : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ δ ∈ Subst Ψ ∅ˢ ] (∅ᴴ ⊩ᴿ R [ δ ]))
 close {Ψ} R with closeAt R (slack* (Sz Ψ) R idˢ ⨟ˢ groundˢ)

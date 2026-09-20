@@ -1,7 +1,8 @@
 ------------------------------------------------------------------
 -- Walks a constraint, threading a state: type equations go to   --
--- the unification core, grade orderings and eternality          --
--- demands are residualised, and binders lift the state.         --
+-- the unification core, grade orderings, eternality demands     --
+-- and var-rule disjunctions are residualised, and binders lift  --
+-- the state.                                                    --
 -- A successful witness is deferred, re-read at the state a      --
 -- later component leaves behind rather than transported         --
 -- along it, making conjunction transport-free.                  --
@@ -128,6 +129,13 @@ Atomᵗ {Φ} j A =
        → (∀ {B} → B ∈ l₀ → Q ⊩ᴱ B [ δ ]ᵛ)
        → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
 
+Atomᵈ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → RExp (Φ +e) → Set
+Atomᵈ {Φ} j A ρ =
+  Σ[ l₀ ∈ List (OVType Φ × RExp Φ) ]
+    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+       → (∀ {B τ} → (B , τ) ∈ l₀ → VarOK Q (B [ δ ]ᵛ) (τ [ δ ]ʳ))
+       → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ) (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
+
 -- An eternality demand that reduces to no atom at all. Wrapping the
 -- verdict together with its proof keeps the case analysis of `atomᵗ`
 -- visible from outside, which is what reasoning about it needs.
@@ -176,6 +184,34 @@ atomᵗ j A with strᵛ⁺ j A
 ...   | just p  = just ([] , λ δ Q k → ⊩ᴱ-subst ∅ᴴ-⊩ᴴ (p {∅ᴴ}))
 ...   | nothing = nothing
 
+-- A disjunction whose type or grade mentions the rigid cannot be kept:
+-- one of its two sides must be settled where the rigid is in scope.
+
+discᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
+      → Maybe (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+                 → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
+                                   (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
+discᵈ j A ρ with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
+... | just p  = just (λ δ Q → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
+... | nothing with et₀? A
+...   | just q  = just (λ δ Q → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (q {∅ᴴ})))
+...   | nothing = nothing
+
+atomᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
+      → Maybe (Atomᵈ j A ρ)
+atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j ρ
+... | just (A₀ , e₁) | just (ρ₀ , e₂) =
+      just ((A₀ , ρ₀) ∷ [] ,
+            λ δ Q k → subst₂ (VarOK (wkᵉ-H Q))
+                             (sym (pop⨟ᵛ j A e₁ δ)) (sym (pop⨟ʳ j ρ e₂ δ))
+                             (VarOK-wkᵉ (k (here refl))))
+... | just _         | nothing          with discᵈ j A ρ
+...   | just f  = just ([] , λ δ Q k → f δ Q)
+...   | nothing = nothing
+atomᵈ j A ρ | nothing | _ with discᵈ j A ρ
+... | just f  = just ([] , λ δ Q k → f δ Q)
+... | nothing = nothing
+
 listʳ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
@@ -222,17 +258,35 @@ listᵗ j (A ∷ l) with atomᵗ j A | listᵗ j l
 ... | just _        | nothing = nothing
 ... | nothing       | _       = nothing
 
+listᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × RExp (Φ +e)))
+      → Maybe (Σ[ l₀ ∈ List (OVType Φ × RExp Φ) ]
+                 (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+                    → (∀ {B τ} → (B , τ) ∈ l₀ → VarOK Q (B [ δ ]ᵛ) (τ [ δ ]ʳ))
+                    → (∀ {A ρ} → (A , ρ) ∈ l
+                         → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
+                                           (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))))
+listᵈ j []             = just ([] , λ δ Q k → λ ())
+listᵈ j ((A , ρ) ∷ l) with atomᵈ j A ρ | listᵈ j l
+... | just (a , fa) | just (l₀ , f) =
+      just (a ++ l₀ ,
+            λ δ Q k → λ { (here refl) → fa δ Q (λ m → k (∈-++⁺ˡ m))
+                        ; (there m)   → f δ Q (λ m' → k (∈-++⁺ʳ a m')) m })
+... | just _        | nothing = nothing
+... | nothing       | _       = nothing
+
 splitᴿ : ∀ {Φ} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
        → Maybe (Σ[ R₀ ∈ Resid Φ ]
                   (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
                      → Q ⊩ᴿ R₀ [ δ ] → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]))
-splitᴿ j R with listʳ j (rs R) | listᵉ j (es R) | listᵗ j (ts R)
-... | just (lr , fr) | just (le , fe) | just (lt , ft) =
-      just (resid lr le lt ,
-            λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h)) (fe δ Q (⊩es h)) (ft δ Q (⊩ts h)))
-... | just _         | just _         | nothing        = nothing
-... | just _         | nothing        | _              = nothing
-... | nothing        | _              | _              = nothing
+splitᴿ j R with listʳ j (rs R) | listᵉ j (es R) | listᵗ j (ts R) | listᵈ j (ds R)
+... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ld , fd) =
+      just (resid lr le lt ld ,
+            λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h)) (fe δ Q (⊩es h))
+                           (ft δ Q (⊩ts h)) (fd δ Q (⊩ds h)))
+... | just _         | just _         | just _         | nothing = nothing
+... | just _         | just _         | nothing        | _       = nothing
+... | just _         | nothing        | _              | _       = nothing
+... | nothing        | _              | _              | _       = nothing
 
 threadOps : ∀ {Θ} → {f : Op → Constraint Θ}
           → ((s : St Θ) → (op : Op)
@@ -368,10 +422,10 @@ solve s (Et∨≾ᵘ A ρ) with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
             λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
                                    (⊩-substᵣ ∅ᴴ-⊩ᴴ p)))
 ... | nothing =
-      just (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) ûᵣ (res s)) (rig s) ,
-            mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
-            λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
-                                   (⊩rs h (here refl))))
+      just (st (Ψ s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
+            mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵈ h)) ,
+            λ δ Q h → subst₂ (VarOK Q) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ)
+                             (⊩ds h (here refl)))
 
 solve {Θ} s (∃ᵗ C) with solve (s ↑ᵗˢ) C
 ... | nothing = nothing
