@@ -366,8 +366,8 @@ C-sub-unbox (s ◅ σ) x rel p M =
     ≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s (rvar-pos (tgt-img σ x)))
                        (proj₁ (C-sub-unbox σ x rel p M)))
              (tgt-grade-≾₀ s (rvar-pos (tgt-img σ x)))
-  , tgt-type-<:-∘₀ s (rvar-pos (tgt-img σ x))
-                     (proj₁ (proj₂ (C-sub-unbox σ x rel p M)))
+  , <:ᵛ-trans (tgt-type-<:₀ s (rvar-pos (tgt-img σ x)))
+              (proj₁ (proj₂ (C-sub-unbox σ x rel p M)))
   , cong (C-sub₀ s) (proj₂ (proj₂ (C-sub-unbox σ x rel p M)))
 
 C-sub-box : ∀ {Γ Γ' A C ρ} → (σ : Sub [] Γ Γ')

@@ -247,7 +247,7 @@ coerce : ∀ {Γ A ε ε'}
        --------------
        → Γ ⊢C⦂ A ‼ ε'
 
-coerce {A = A} p M = subC M (<:ᵛ-refl A , p)
+coerce {A = A} p M = subC M (<:ᵛ-refl A ‼ₛ p)
 
 -- Useful substitution of effect annotations
 
@@ -268,12 +268,11 @@ grad-typ⇒var<: : ∀ {Γ A ρ}
                → Σ[ ρ₀ ∈ R ] Σ[ A₀ ∈ VType ] Σ[ ρ' ∈ R ]
                    (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × ([ ρ₀ ] A₀ <:ᵛ [ ρ ] A) × ρ' ≾ᵣ uᵣ)
 
-grad-typ⇒var<: {A = A} {ρ = ρ} (var f x) =
-  _ , _ , _ , x , <:ᵛ-refl ([ ρ ] A) , f (λ ())
-grad-typ⇒var<: {A = A} {ρ = ρ} (subV {A = B} V p) with <:ᵛ-shape p
-... | Boxˢ {ρ = ρ₁} {A = A₁} with grad-typ⇒var<: V
+grad-typ⇒var<: (var f x) =
+  _ , _ , _ , x , <:ᵛ-refl _ , f (λ ())
+grad-typ⇒var<: (subV V p@([ _ ]ₛ _)) with grad-typ⇒var<: V
 ... | ρ₀ , A₀ , ρ' , x , q , b =
-  ρ₀ , A₀ , ρ' , x , <:ᵛ-trans {[ ρ₀ ] A₀} {[ ρ₁ ] A₁} {[ ρ ] A} q p , b
+  ρ₀ , A₀ , ρ' , x , <:ᵛ-trans q p , b
 
 -- Values typing with eternal types can type under any grade extension of its typing context
 

@@ -106,7 +106,7 @@ unbox⇒var : ∀ {Γ Δ A ρ}
               (([ ρ₀ ] A₀ ∈[ ρ' ] Γ) × (ρ' ≾ᵣ ρ₀) × (A₀ <:ᵛ A))
 
 unbox⇒var {ρ = ρ} r V with grad-typ⇒var<: V
-... | ρ₀ , A₀ , σ , y , (ρ≾ρ₀ , p) , σ≾u with var-rename r (Tl-⟨⟩ y)
+... | ρ₀ , A₀ , σ , y , [ ρ≾ρ₀ ]ₛ p , σ≾u with var-rename r (Tl-⟨⟩ y)
 ... | ρ' , ρ'≾σ·ρ , z =
     ρ₀ , A₀ , ρ' , z
   , ≾ᵣ-trans (ρ'≾σ·ρ (λ ()))

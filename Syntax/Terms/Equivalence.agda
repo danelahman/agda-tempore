@@ -66,11 +66,10 @@ unbox-≡ : ∀ {Γ A C ρ₀ ρ₀' A₀ A₀' ρ' ρ''}
             {p : A₀ <:ᵛ A} {p' : A₀' <:ᵛ A} {M M' : Γ ∷ A ⊢C⦂ C}
         → _≡_ {A = RVar Γ} (ρ₀ , A₀ , ρ' , x) (ρ₀' , A₀' , ρ'' , y) → M ≡ M'
         → unbox x rel p M ≡ unbox y rel' p' M'
-unbox-≡ {A = A} {A₀ = A₀}
-        {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl =
+unbox-≡ {x = x} {rel = rel} {rel' = rel'} {p = p} {p' = p'} {M = M} refl refl =
   cong₂ (λ r q → unbox x r q M)
         (≾ᵣ-irrelevant rel rel')
-        (<:ᵛ-irrelevant {A₀} {A} p p')
+        (<:ᵛ-irrelevant p p')
 
 -- The clause family is a function of the operation and its effect, so its
 -- congruence goes through `fun-ext`.

@@ -122,9 +122,8 @@ sub-wk-≡ᶜ {B = B} Θ W M =
 val-sub-tgt-ren : ∀ {Γ Γ' A ρ} → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ [ ρ ] A)
                 → tgt-img₀ (val-sub (V-rename r W)) Hd
                 ≡ rvar-img′ r (tgt-img₀ (val-sub W) Hd)
-val-sub-tgt-ren r (var g z)  = refl
-val-sub-tgt-ren r (subV V p) with <:ᵛ-shape p
-... | Boxˢ = val-sub-tgt-ren r V
+val-sub-tgt-ren r (var g z)           = refl
+val-sub-tgt-ren r (subV V ([ _ ]ₛ _)) = val-sub-tgt-ren r V
 
 ⋈-val : ∀ {Γ Γ' B} → (r : Ren [] Γ Γ') → (W : Γ' ⊢V⦂ B)
       → Interchange (val-sub (V-rename r W)) (cong-∷-ren r) r (val-sub W)
@@ -181,10 +180,9 @@ swap-outerˢ W₁ W₂ =
 swap-tgt-Hd : ∀ {Γ B₁ A ρ} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ [ ρ ] A)
             → tgt-img₀ (val-sub W₁) (rvar-pos (tgt-img₀ (val-sub W₂) Hd))
             ≡ tgt-img₀ (val-sub (V-sub₀ (val-sub W₁) W₂)) Hd
-swap-tgt-Hd W₁ (var g Hd)       = refl
-swap-tgt-Hd W₁ (var g (Tl-∷ y)) = refl
-swap-tgt-Hd W₁ (subV V p) with <:ᵛ-shape p
-... | Boxˢ = swap-tgt-Hd W₁ V
+swap-tgt-Hd W₁ (var g Hd)          = refl
+swap-tgt-Hd W₁ (var g (Tl-∷ y))    = refl
+swap-tgt-Hd W₁ (subV V ([ _ ]ₛ _)) = swap-tgt-Hd W₁ V
 
 sub-swap-≐ˢ : ∀ {Γ B₁ B₂} → (W₁ : Γ ⊢V⦂ B₁) → (W₂ : Γ ∷ B₁ ⊢V⦂ B₂)
             → swap-innerˢ W₁ W₂ ≐ˢ swap-outerˢ W₁ W₂

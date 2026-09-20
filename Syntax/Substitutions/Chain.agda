@@ -129,7 +129,7 @@ sub-tgt {A = A} {ρ = ρ} []ˢ y =
 sub-tgt (s ◅ σ) y =
   let (ρ₀ , A₀ , ρ'' , z , w , g) = sub-tgt σ y in
   tgt-grade₀ s z , tgt-type₀ s z , tgt-elapsed₀ s z
-  , tgt-var₀ s z , tgt-<:-∘₀ s z w , ≾ᵣ-trans (tgt-≾₀ s z) g
+  , tgt-var₀ s z , <:ᵛ-trans (tgt-<:₀ s z) w , ≾ᵣ-trans (tgt-≾₀ s z) g
 
 -- All by induction on the chain: no recursion over terms anywhere.
 

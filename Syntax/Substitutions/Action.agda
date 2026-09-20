@@ -76,12 +76,12 @@ mutual
   -- The unboxed resource variable is taken to another resource variable by
   -- `sub-tgt₀`, at a grade that drops and at a declared payload type the named
   -- one only bounds; both witnesses compose into the node's own. Read off with
-  -- projections rather than a `with`, so that this clause reduces to an `unbox`
+  -- accessors rather than a `with`, so that this clause reduces to an `unbox`
   -- node at an abstract `s`.
   C-sub₀ s (unbox x rel p M) =
     unbox (tgt-var₀ s x)
           (≾ᵣ-trans (≾ᵣ-trans (tgt-≾₀ s x) rel) (tgt-grade-≾₀ s x))
-          (tgt-type-<:-∘₀ s x p)
+          (<:ᵛ-trans (tgt-type-<:₀ s x) p)
           (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (box V M) = box (V-sub₀ (cong-sub₀ s) V) (C-sub₀ (cong-sub₀ s) M)
   C-sub₀ s (subC M p) = subC (C-sub₀ s M) p
