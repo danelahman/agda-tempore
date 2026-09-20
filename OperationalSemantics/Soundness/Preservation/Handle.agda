@@ -38,6 +38,7 @@ open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
+open import Syntax.Substitutions.Subsumption S
 
 open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
@@ -435,11 +436,11 @@ sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
                               (cong-∷-ren (cong-∷-ren
                                 (suc-comp-ren (step-extends-state r) (≾-⊤ᵣ _))))
                               (H op ε''))
-                   `in (narrow-∷ (step-refines-type r)
+                   `in (subCtx (step-refines-type r)
                           (C-rename (cong-∷-ren
                             (suc-comp-ren (step-extends-state r) c)) N)) ⟧ᶜᵗ
                       (pM'
-                      , narrowᴾ (step-refines-type r)
+                      , subCtxᴾ (step-refines-type r)
                           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
                           (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
                       , (λ op ε'' →
@@ -491,7 +492,7 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
                   (Tᶠ ⟦ step-refines-type r ⟧<:ᵛ ∘ᵐ ⟦ M' ⟧ᶜᵗ pM')
                   (⟦ S' ⟧ˢ (stepᴾˢ r pS pM)) pN)
       ∙ ≈ᵐ-sym (∘ᵐ-congˡ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl
-          , narrow-str {t = step-refines-type r}
+          , subCtx-str {t = step-refines-type r}
               (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
               (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
               η⊣ (⟦ M' ⟧ᶜᵗ pM') ⟩ᵐ-cong))))))))

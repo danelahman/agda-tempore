@@ -42,6 +42,7 @@ open import Syntax.Substitutions.Variables Spec
 open import Syntax.Substitutions.At        Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
+open import Syntax.Substitutions.Subsumption Spec
 
 -- Induction on the scrutinee's `CRed` derivation, recursing on the `pk` field
 -- exactly as `CRed-≐ˢ` does. The scrutinee is taken at a skeleton rather than
@@ -109,9 +110,9 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
         (trans
           (sub-≡ᶜ split-[] refl
             (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
-              (trans (narrow-run-ren rs R₁ (C-rename (cong-∷-ren srs) N))
-                     (cong (narrow-run rs) ren-shift))))
-          (narrow-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
+              (trans (subCtx-run-ren rs R₁ (C-rename (cong-∷-ren srs) N))
+                     (cong (subCtx-run rs) ren-shift))))
+          (subCtx-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
 
 -- The scrutinee gets stuck on an operation.
 
@@ -173,15 +174,15 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
                       (suc-comp-ren-grade-src (ext q) map-·ᵉ B₁' B₁))
 
         -- the sequel the recursion needs is the original one, renamed and
-        -- narrowed along the run
-        eN₃ : N₃ ≡ narrow-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
+        -- subsumed along the run
+        eN₃ : N₃ ≡ subCtx-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
         eN₃ =
           trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
             (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A₀)
                                 (C-rename (cong-∷-ren W₁) N₁) W')
               (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
-                (trans (narrow-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
-                  (cong (narrow-run rs)
+                (trans (subCtx-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
+                  (cong (subCtx-run rs)
                     (trans (sym (C-rename-∘ (cong-∷-ren srs) (cong-∷-ren W₁) N))
                            (C-rename-≡ (≐ʳ-sym (cong-∷-ren-∘-≐ʳ srs W₁)) N))))))
           where
@@ -278,8 +279,8 @@ seq-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} N
                 (trans
                   (sub-≡ᶜ split-[] refl
                     (trans (C-rename-cong (cong-∷-ren (unbox-ren q')) eN₃)
-                      (trans (narrow-run-ren rs (unbox-ren q')
+                      (trans (subCtx-run-ren rs (unbox-ren q')
                                 (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N))
-                             (cong (narrow-run rs) ren-shift))))
-                  (narrow-run-sub rs
+                             (cong (subCtx-run rs) ren-shift))))
+                  (subCtx-run-sub rs
                     (C-rename (cong-∷-ren (unbox-ren q₁)) N) V))

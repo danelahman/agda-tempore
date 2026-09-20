@@ -26,10 +26,10 @@ open import Syntax.Types         S
 
 open import Syntax.Renamings.Equivalence S using (∈-++ᶜˡ; grade-++ᶜˡ-uᵣ)
 
--- Binder narrowing, shared with the two sequencing rules of the operational
+-- Binder subsumption, shared with the two sequencing rules of the operational
 -- semantics.
 
-open import OperationalSemantics.PreservationTheorem S using (narrow-∷)
+open import Syntax.Substitutions.Subsumption S using (subCtx)
 
 
 -- Equations between well-typed values and computations
@@ -127,7 +127,7 @@ mutual
     -- Subsumption is natural in the value formers: the witness splits the way
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `lam`
     -- functoriality of `_⇒_` — contravariant in the domain, so the binder is
-    -- narrowed rather than the body coerced there.
+    -- subsumed rather than the body coerced there.
     --
     -- The atomic formers and `var` have no rule: at `Base`/`Unit`/`Bool` the
     -- witness is reflexive and `subV-refl` already applies, and a variable's
@@ -148,7 +148,7 @@ mutual
              → (M : Γ ∷ A ⊢C⦂ C)
              ------------------------------------------------------
              → Γ ⊢V⦂ subV (lam M) (p ⇒ₛ w)
-                  == lam (subC (narrow-∷ p M) w)
+                  == lam (subC (subCtx p M) w)
 
   infix 18 _⊢V⦂_==_
 
@@ -679,7 +679,7 @@ mutual
                     == delay τ (subC M (w ‼ₛ rel))
 
     -- Moving a scrutinee's subsumption outwards relaxes the continuation's
-    -- lock along the effect half and narrows its binder along the value half.
+    -- lock along the effect half and subsumes its binder along the value half.
     -- Neither `_⨟_` nor `handle_`with_`in` carries a payload witness of its
     -- own, as `unbox` does.
 
@@ -691,7 +691,7 @@ mutual
              ------------------------------------------------------------
              → Γ ⊢C⦂ subC M (w ‼ₛ rel) ⨟ N
                   == coerce (·ₑ-monoˡ-≾ₑ rel)
-                       (M ⨟ narrow-∷ w
+                       (M ⨟ subCtx w
                               (C-rename
                                 (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N))
 
@@ -708,7 +708,7 @@ mutual
                 → Γ ⊢C⦂ handle (subC M (w ‼ₛ rel)) `with H `in N
                      == coerce (·ₑ-monoˡ-≾ₑ rel)
                           (handle M `with H
-                             `in (narrow-∷ w
+                             `in (subCtx w
                                     (C-rename
                                       (cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))) N)))
 
@@ -735,7 +735,7 @@ mutual
     -- Sub-effecting the answer of a `handle` is sub-effecting its return
     -- clause. Only the effect half moves: the handler's clauses are typed at
     -- the answer type, and their boxed continuation argument is contravariant
-    -- in it, so a value half would have to narrow that binder along a witness
+    -- in it, so a value half would have to subsume that binder along a witness
     -- pointing the wrong way.
 
     subC-handle-in : ∀ {A B ε ε₁' ε₂'}

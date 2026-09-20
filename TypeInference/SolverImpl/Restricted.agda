@@ -156,8 +156,8 @@ record Reported {Θ : Scope} (C : Constraint Θ) : Set where
     Q      : Hyps Θ'
     Q̂      : Hyps Θ'
     sat    : σ ⊨[ Q ] C
-    narrow : (θ : Grounding Θ') → θ ⊨ᴴ Q  → θ ⊨ᴴ Q̂
-    widen  : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q
+    to-Q̂   : (θ : Grounding Θ') → θ ⊨ᴴ Q  → θ ⊨ᴴ Q̂
+    to-Q   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q
 
 reportOn : ∀ {Θ} → (C : Constraint Θ) → Maybe (Reported C)
 reportOn C with solveOn C in e

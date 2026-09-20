@@ -30,11 +30,9 @@ open import Syntax.Types         S
 open import Syntax.Terms.Equivalence  S using (var-≡; subV-≡)
 open import Syntax.Substitutions.Laws S using (sub-wk-≡ᵛ; sub-wk-≡ᶜ)
 
--- Binder narrowing and its substitution law. Both are purely syntactic and
--- belong in `Syntax/`; they are reached here where they currently live.
+-- Binder subsumption and its substitution law.
 
-open import OperationalSemantics.PreservationTheorem S using (narrow-∷)
-open import OperationalSemantics.Adequacy.GradedReach S using (narrow-∷-sub)
+open import Syntax.Substitutions.Subsumption S using (subCtx; subCtx-sub)
 
 open import EquationalTheory.EquationalTheory S
 
@@ -125,12 +123,12 @@ subV-app p w V W =
                        (subV-lam p w (V-rename wk-ren V · hd)))
               V-refl)
     (==-castᶜ refl (cong (λ X → subC X w) body-sub)
-              (fun-beta (subC (narrow-∷ p (V-rename wk-ren V · hd)) w) W))
+              (fun-beta (subC (subCtx p (V-rename wk-ren V · hd)) w) W))
   where
-    body-sub : narrow-∷ p (V-rename wk-ren V · hd) [ split-[] ↦ W ]c
+    body-sub : subCtx p (V-rename wk-ren V · hd) [ split-[] ↦ W ]c
              ≡ V · subV W p
     body-sub =
-      trans (narrow-∷-sub p (V-rename wk-ren V · hd) W)
+      trans (subCtx-sub p (V-rename wk-ren V · hd) W)
             (cong (_· subV W p) (sub-wk-≡ᵛ [] (subV W p) V))
 
 

@@ -5,7 +5,7 @@
 -- functoriality, `subC-perform`/`-delay` the naturality and            --
 -- sub-effecting of `opᵀ`/`delayᵀ`, and `subC-seq`/`-handle` are        --
 -- `strᵀ-≤` then `T-≤-μᵀ` resp. `T-alg-of-handlerᵀ-≤`, crossing the     --
--- lock via `η⊣-≤` and the binder via `narrow-str`.                    --
+-- lock via `η⊣-≤` and the binder via `subCtx-str`.                    --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -66,11 +66,11 @@ open import DenotationalSemantics.Interpretation.RenamingCoherence S Cat Fut Pst
 open import DenotationalSemantics.Model.Modality.Eternal
        Cat (GradeSystem.RGrade Grades) Fut Pst Adj using (⟨⊤⟩-eternalᵒ)
 
-open import OperationalSemantics.PreservationTheorem S using (narrow-∷)
+open import Syntax.Substitutions.Subsumption S using (subCtx)
 open import OperationalSemantics.Soundness.Preservation.Base S Cat Fut Pst Adj GTy Mon GE
-       using (narrowᴾ; narrow-nat)
+       using (subCtxᴾ; subCtx-nat)
 open import OperationalSemantics.Soundness.Preservation.Step S Cat Fut Pst Adj GTy Mon GE
-       using (narrow-str)
+       using (subCtx-str)
 
 open import EquationalTheory.Soundness.Base S Cat Fut Pst Adj GTy Mon GE
 
@@ -194,8 +194,8 @@ sound-subV-lam : ∀ {Γ A A' C C'}
 sound-subV-lam p w M pM pR =
     map⇒ᵐ-curryᵐˡʳ ⟦ p ⟧<:ᵛ ⟦ w ⟧<:ᶜ (⟦ M ⟧ᶜᵗ pM)
   ∙ curryᵐ-cong (∘ᵐ-congʳ
-      (≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (narrow-∷ p M) pR (narrowᴾ p M pM)
-               ∙ narrow-nat p M pM)))
+      (≈ᵐ-sym (  ⟦⟧ᶜᵗ-irr (subCtx p M) pR (subCtxᴾ p M pM)
+               ∙ subCtx-nat p M pM)))
 
 
 -- Naturality in the Fitch formers: both are precomposition, so the coercion
@@ -339,14 +339,14 @@ sound-subC-seq {B = B} w rel M N (pM , pN) (pM' , pR) =
            ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ w ⟧<:ᵛ rel)
            ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong)))
   ∙ ∘ᵐ-congʳ (coe-str rel N pN (Tᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟦ M ⟧ᶜᵗ pM'))
-  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (narrow-str {t = w} (C-rename r N)
+  ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-sym (subCtx-str {t = w} (C-rename r N)
                                  (renᶜ r N pN) η⊣ (⟦ M ⟧ᶜᵗ pM'))))
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (T-≤-μᵀ rel)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
-      (⟦⟧ᶜᵗ-irr (narrow-∷ w (C-rename r N))
-                (narrowᴾ w (C-rename r N) (renᶜ r N pN)) pR))))
+      (⟦⟧ᶜᵗ-irr (subCtx w (C-rename r N))
+                (subCtxᴾ w (C-rename r N) (renᶜ r N pN)) pR))))
   ∙ coe-refl-≈ B (·ₑ-monoˡ-≾ₑ rel) _
   where
     r = cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))
@@ -373,7 +373,7 @@ sound-subC-handle {Γ = Γ} {B = B} w rel M H N
                       ∙ ∘ᵐ-congˡ (T-≤-nat ⟦ w ⟧<:ᵛ rel)
                       ∙ ∘ᵐ-assoc _ _ _ ⟩ᵐ-cong))
                ∙ coe-str rel N pN (Tᶠ ⟦ w ⟧<:ᵛ ∘ᵐ ⟦ M ⟧ᶜᵗ pM')
-               ∙ ∘ᵐ-congʳ (≈ᵐ-sym (narrow-str {t = w} (C-rename r N)
+               ∙ ∘ᵐ-congʳ (≈ᵐ-sym (subCtx-str {t = w} (C-rename r N)
                                     (renᶜ r N pN) η⊣ (⟦ M ⟧ᶜᵗ pM'))) ⟩ᵐ-cong)
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (  mapˣᵐ-∘⟨⟩ _ _ _ _
                       ∙ ⟨ ∘ᵐ-identityˡ _ , ≈ᵐ-refl ⟩ᵐ-cong))
@@ -381,8 +381,8 @@ sound-subC-handle {Γ = Γ} {B = B} w rel M H N
   ∙ ∘ᵐ-congˡ (T-alg-of-handlerᵀ-≤ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) _ rel)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (⟨ ≈ᵐ-refl , ∘ᵐ-congˡ (T-congᶠ
-      (⟦⟧ᶜᵗ-irr (narrow-∷ w (C-rename r N))
-                (narrowᴾ w (C-rename r N) (renᶜ r N pN)) pR)) ⟩ᵐ-cong))
+      (⟦⟧ᶜᵗ-irr (subCtx w (C-rename r N))
+                (subCtxᴾ w (C-rename r N) (renᶜ r N pN)) pR)) ⟩ᵐ-cong))
   ∙ coe-refl-≈ B (·ₑ-monoˡ-≾ₑ rel) _
   where
     r = cong-∷-ren (⟨⟩-≤-ren (map-monotoneᵉ rel))

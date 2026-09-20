@@ -36,6 +36,7 @@ open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
+open import Syntax.Substitutions.Subsumption S
 
 open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
@@ -245,20 +246,20 @@ strᵀ-natʳ g =
     ∘ᵐ-congʳ (⟨ ∘ᵐ-congˡ (≈ᵐ-sym []-idᵐ) , ≈ᵐ-refl ⟩ᵐ-cong)
   ∙ strᵀ-nat idᵐ g
 
--- Narrowing the sequel's binder is the step's value refinement, moved from the
+-- Subsuming the sequel's binder is the step's value refinement, moved from the
 -- bound computation to the binder: the strength carries it across.
 
-narrow-str : ∀ {Γ A A₀ B ε₁ ε₂ X} {t : A₀ <:ᵛ A}
+subCtx-str : ∀ {Γ A A₀ B ε₁ ε₂ X} {t : A₀ <:ᵛ A}
            → (N : Γ ⟨ mapᵉ ε₁ ⟩ ∷ A ⊢C⦂ B ‼ ε₂) → (pN : Paramᶜ N)
            → (b : X →ᵐ [ mapᵉ ε₁ ]ᵒ (⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ))
            → (m : X →ᵐ Tᵒ ⟦ A₀ ⟧ᵛ ε₁)
-           → Tᶠ (⟦ narrow-∷ t N ⟧ᶜᵗ (narrowᴾ t N pN))
+           → Tᶠ (⟦ subCtx t N ⟧ᶜᵗ (subCtxᴾ t N pN))
                ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A₀ ⟧ᵛ} {ε₁} ∘ᵐ ⟨ b , m ⟩ᵐ
            ≈ᵐ Tᶠ (⟦ N ⟧ᶜᵗ pN)
                ∘ᵐ strᵀ {⟨ mapᵉ ε₁ ⟩ᵒ ⟦ Γ ⟧ᶜᵗˣ} {⟦ A ⟧ᵛ} {ε₁}
                ∘ᵐ ⟨ b , Tᶠ ⟦ t ⟧<:ᵛ ∘ᵐ m ⟩ᵐ
-narrow-str {t = t} N pN b m =
-    ∘ᵐ-congˡ (T-congᶠ (narrow-nat t N pN))
+subCtx-str {t = t} N pN b m =
+    ∘ᵐ-congˡ (T-congᶠ (subCtx-nat t N pN))
   ∙ ∘ᵐ-congˡ (T-∘ᵐ _ _)
   ∙ ∘ᵐ-assoc _ _ _
   ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
@@ -908,9 +909,9 @@ sound-SEQ-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
   → ⟦ M ⨟ N ⟧ᶜᵗ (pM , pN) ∘ᵐ ⟦ S ⟧ˢ pS
     ≈ᵐ T-≤ (step-≾ (SEQ-STEP {N = N} r c))
        ∘ᵐ _⋄_ {⟦ hist S ⟧ᶜᵗˣ} {⟦ hist S' ⟧ᶜᵗˣ} {⟦ B ⟧ᵛ} {step-grade r} {ε₃ ·ₑ ε₂}
-              (⟦ M' ⨟ narrow-∷ (step-refines-type r)
+              (⟦ M' ⨟ subCtx (step-refines-type r)
                         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N) ⟧ᶜᵗ
-                 (pM' , narrowᴾ (step-refines-type r)
+                 (pM' , subCtxᴾ (step-refines-type r)
                           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
                           (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN))
                  ∘ᵐ ⟦ S' ⟧ˢ (stepᴾˢ r pS pM))
@@ -957,7 +958,7 @@ sound-SEQ-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} N {M'} r c pS
   ∙ ∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congʳ (∘ᵐ-congˡ (T-congᶠ
       (∘ᵐ-assoc _ _ _
        ∙ ≈ᵐ-sym (  ∘ᵐ-congˡ (∘ᵐ-congʳ
-                     (narrow-str {t = step-refines-type r}
+                     (subCtx-str {t = step-refines-type r}
                         (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
                         (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
                         η⊣ (⟦ M' ⟧ᶜᵗ pM')))

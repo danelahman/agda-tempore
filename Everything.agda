@@ -116,6 +116,10 @@ open import Syntax.Substitutions.Interchange
 open import Syntax.Substitutions.ChainEquivalence
 open import Syntax.Substitutions.Laws
 
+---- Subsumption for contexts
+
+open import Syntax.Substitutions.Subsumption
+
 ---- Substituting at a context's prefix boundary, which is the form every
 ---- consumer uses
 

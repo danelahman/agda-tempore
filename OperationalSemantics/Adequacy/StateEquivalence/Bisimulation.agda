@@ -34,6 +34,7 @@ open import Syntax.Terms.Transport       Spec
 open import Syntax.Substitutions.Variables Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
+open import Syntax.Substitutions.Subsumption Spec
 
 open import OperationalSemantics.Adequacy.StateEquivalence.Core Spec
 open import OperationalSemantics.Adequacy.StateEquivalence.Extensions Spec
@@ -472,7 +473,7 @@ cast-handle-op refl V' M' H' N' = refl
                                              (≾-⊤ᵣ _))
                                (H' op ε₃))))
         (trans
-          (cong₂ narrow-∷
+          (cong₂ subCtx
             (<:ᵛ-irrelevant (step-refines-type r) (step-refines-type r'))
             (trans
               (C-rename-≡
@@ -491,7 +492,7 @@ cast-handle-op refl V' M' H' N' = refl
                                      (step-grade-≾ r'))) N')))
                 (C-rename-cong (cong-∷-ren _)
                   (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
-          (cast-narrow-∷ (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂))
+          (subCtx-cast (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₁' ⟩) (sym (toCtx-≐ˢ es₂))
             (step-refines-type r')
             (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
                                                 (step-grade-≾ r'))) N'))))
@@ -531,12 +532,12 @@ cast-handle-op refl V' M' H' N' = refl
     St₂' , _ , es₂ , SEQ-STEP r' (step-grade-≾ r') , h
   , subst (λ z → _ ≡ z)
       (sym (cast-seq (sym (toCtx-≐ˢ es₂)) {M = M₂'}
-             {N = narrow-∷ (step-refines-type r')
+             {N = subCtx (step-refines-type r')
                     (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
                                                         (step-grade-≾ r'))) N')}))
     (cong₂ _⨟_ eM₂
       (trans
-        (cong₂ narrow-∷
+        (cong₂ subCtx
           (<:ᵛ-irrelevant (step-refines-type r) (step-refines-type r'))
           (trans
             (C-rename-≡
@@ -555,7 +556,7 @@ cast-handle-op refl V' M' H' N' = refl
                                    (step-grade-≾ r'))) N')))
               (C-rename-cong (cong-∷-ren _)
                 (subst (λ z → _ ≡ z) (castᶜ-irr _ _ N') eN)))))
-        (cast-narrow-∷ (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂))
+        (subCtx-cast (λ Γ₀ → Γ₀ ⟨ mapᵉ ε₃ ⟩) (sym (toCtx-≐ˢ es₂))
           (step-refines-type r')
           (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r')
                                               (step-grade-≾ r'))) N'))))

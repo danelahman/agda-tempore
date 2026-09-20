@@ -49,6 +49,7 @@ open import Syntax.Substitutions.At        Spec
 open import Syntax.Substitutions.Clauses   Spec
 open import OperationalSemantics.Adequacy.GradedReach          Spec
 open import Syntax.Substitutions.Equivalence Spec
+open import Syntax.Substitutions.Subsumption Spec
 
 -- The clause premise: at the state the operation is handled at, with the
 -- resumption already boxed and allocated. `V₀` is the boxed resumption in the
@@ -173,9 +174,9 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
         (trans
           (sub-≡ᶜ split-[] refl
             (trans (C-rename-cong (cong-∷-ren R₁) eN₁)
-              (trans (narrow-run-ren rs R₁ (C-rename (cong-∷-ren srs) N))
-                     (cong (narrow-run rs) ren-shift))))
-          (narrow-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
+              (trans (subCtx-run-ren rs R₁ (C-rename (cong-∷-ren srs) N))
+                     (cong (subCtx-run rs) ren-shift))))
+          (subCtx-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
 
 
 -- The scrutinee gets stuck on an operation. The reduct chain is
@@ -361,14 +362,14 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
             -- substitutes for exactly that variable, so the two cancel
             eN₂ : (C-rename (cong-∷-ren (cong-⟨⟩-ren (cong-∷-ren sq))) N₁')
                     [ split-∷ (split-⟨⟩ split-[]) ↦ W' ]c
-                ≡ narrow-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
+                ≡ subCtx-run rs (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N)
             eN₂ =
               trans (sub-≡ᶜ (split-∷ (split-⟨⟩ split-[])) (refl) split-off)
                 (trans (sub-wk-C ([] ⟨ mapᵉ ε₃ ⟩ ∷ A₀)
                                     (C-rename (cong-∷-ren W₁) N₁) W')
                   (trans (C-rename-cong (cong-∷-ren W₁) eN₁)
-                    (trans (narrow-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
-                      (cong (narrow-run rs)
+                    (trans (subCtx-run-ren rs W₁ (C-rename (cong-∷-ren srs) N))
+                      (cong (subCtx-run rs)
                         (trans
                           (sym (C-rename-∘ (cong-∷-ren srs)
                                               (cong-∷-ren W₁) N))
@@ -485,10 +486,10 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                         (trans
                           (C-rename-cong (cong-∷-ren (unbox-ren q₃)) eN₂)
                           (trans
-                            (narrow-run-ren rs (unbox-ren q₃)
+                            (subCtx-run-ren rs (unbox-ren q₃)
                               (C-rename (cong-∷-ren (srs ∘ʳ W₁)) N))
-                            (cong (narrow-run rs) ren-shift))))
-                      (narrow-run-sub rs
+                            (cong (subCtx-run rs) ren-shift))))
+                      (subCtx-run-sub rs
                         (C-rename (cong-∷-ren (unbox-ren q₄)) N) V))
 
             -- The clause premise, rebuilt from `hH`. The clauses the

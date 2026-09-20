@@ -21,6 +21,8 @@ open import Syntax.Renamings     S
 open import Syntax.Substitutions S
 open import Syntax.Types         S
 
+open import Syntax.Substitutions.Subsumption S
+
 -- Configurations that encapsulate time, state and computation
 
 record Config (C : CType) : Set where
@@ -51,15 +53,6 @@ unbox-lookup {A} {ρ} S z ρ'≾ρ =
        ∘ʳ eq-ren (sym (++ᶜ-assoc _ ([] ∷ [ ρ ] A) _)))
        ∘ʳ eq-ren (split-state-++ᶜ S z))
     (resource-lookup S z)
-
--- Narrowing a binder. A continuation that binds `A` also binds any subtype of
--- `A`: weaken, then substitute the subsumed variable. The two sequencing
--- congruences need it because a step refines the bound value's type, while
--- `_⨟_` and `handle_`with_`in`, unlike `unbox`, carry no witness of their own.
-
-narrow-∷ : ∀ {Γ A A₀ C} → A₀ <:ᵛ A → Γ ∷ A ⊢C⦂ C → Γ ∷ A₀ ⊢C⦂ C
-narrow-∷ p N =
-  C-rename (cong-∷-ren wk-ren) N [ split-[] ↦ subV (var (λ _ → ≾ᵣ-refl) Hd) p ]c
 
 mutual
 
@@ -99,7 +92,7 @@ mutual
                    → ⟨ S , if false `then M `else N ⟩ ↝ ⟨ S , N ⟩
 
         -- sequencing: step the scrutinee, carrying time and state forward and
-        -- narrowing the sequel's binder to the scrutinee's refined type
+        -- subsuming the sequel's binder to the scrutinee's refined type
         SEQ-STEP   : ∀ {ε₁ ε₂ ε₃}
                    → {A A₀ B : VType}
                    → {S S' : 𝕊 []}
@@ -110,10 +103,10 @@ mutual
                    → (δε₃≾ε₁ : ≤ₛ-grade (step-extends-state M↝M') ·ᵣ mapᵉ ε₃ ≾ᵣ mapᵉ ε₁)
                     --------------------------------------------------------------------
                    → ⟨ S , M ⨟ N ⟩ ↝
-                     ⟨ S' , M' ⨟ narrow-∷ (step-refines-type M↝M')
-                                   (C-rename
-                                     (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₃≾ε₁))
-                                     N) ⟩
+                     ⟨ S' , M' ⨟ subCtx (step-refines-type M↝M')
+                                 (C-rename
+                                   (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₃≾ε₁))
+                                   N) ⟩
 
         -- sequencing a returned value: substitute it into the sequel
         SEQ-RET    : ∀ {A B ε}
@@ -189,7 +182,7 @@ mutual
                                        (cong-∷-ren (cong-∷-ren
                                          (suc-comp-ren (step-extends-state M↝M') (≾-⊤ᵣ _))))
                                        (H op ε₃))
-                            `in (narrow-∷ (step-refines-type M↝M')
+                            `in (subCtx (step-refines-type M↝M')
                                   (C-rename
                                     (cong-∷-ren (suc-comp-ren (step-extends-state M↝M') δε₁'≾ε₁))
                                     N))⟩

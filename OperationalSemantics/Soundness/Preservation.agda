@@ -46,6 +46,7 @@ open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
+open import Syntax.Substitutions.Subsumption S
 
 open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
@@ -232,7 +233,7 @@ stepᴾᶜ (MATCH {S = St} {P = P} {M = M}) pS (pP , pM) =
     (fstᵛᴾ St P pP)
 stepᴾᶜ (SEQ-STEP {N = N} r c)           pS (pM , pN)  =
   stepᴾᶜ r pS pM
-  , narrowᴾ (step-refines-type r)
+  , subCtxᴾ (step-refines-type r)
       (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
       (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
 stepᴾᶜ (SEQ-RET {V = V} {N = N})        pS (pV , pN)  = ret-subᴾ V N pV pN
@@ -246,7 +247,7 @@ stepᴾᶜ DELAY                            pS pM         = pM
 stepᴾᶜ (HANDLE-RET {V = V} {N = N})     pS (pV , pN , pH , uH) = ret-subᴾ V N pV pN
 stepᴾᶜ (HANDLE-STEP {S = S} {S' = S'} {H = H} {N = N} r c) pS (pM , pN , pH , uH) =
   stepᴾᶜ r pS pM
-  , narrowᴾ (step-refines-type r)
+  , subCtxᴾ (step-refines-type r)
       (C-rename (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N)
       (renᶜ (cong-∷-ren (suc-comp-ren (step-extends-state r) c)) N pN)
   , (λ op ε₃ → renᶜ (cong-∷-ren (cong-∷-ren

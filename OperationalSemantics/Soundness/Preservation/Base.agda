@@ -37,6 +37,7 @@ open import Syntax.Language  S
 open import Syntax.Renamings S
 open import Syntax.RenActions S using (V-rename; C-rename; var-rename)
 open import Syntax.Substitutions S
+open import Syntax.Substitutions.Subsumption S
 
 open import OperationalSemantics.State S
 open import OperationalSemantics.PreservationTheorem S
@@ -466,20 +467,20 @@ Tᶠ-bind h g s =
   ∙ ∘ᵐ-congˡ (μᵀ-nat h)
   ∙ ∘ᵐ-assoc _ _ _
 
--- Narrowing a binder is a weakening followed by substituting the subsumed
+-- Subsuming a binder is a weakening followed by substituting the subsumed
 -- variable, so its certificate and its denotation come from those two.
 
-narrowᴾ : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C) → Paramᶜ N
-        → Paramᶜ (narrow-∷ t N)
-narrowᴾ t N pN =
+subCtxᴾ : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C) → Paramᶜ N
+        → Paramᶜ (subCtx t N)
+subCtxᴾ t N pN =
   subᶜ (C-rename (cong-∷-ren wk-ren) N) split-[]
        (subV (var (λ _ → ≾ᵣ-refl) Hd) t)
        (renᶜ (cong-∷-ren wk-ren) N pN) tt
 
-narrow-nat : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C) → (pN : Paramᶜ N)
-           → ⟦ narrow-∷ t N ⟧ᶜᵗ (narrowᴾ t N pN)
+subCtx-nat : ∀ {Γ A A₀ C} → (t : A₀ <:ᵛ A) → (N : Γ ∷ A ⊢C⦂ C) → (pN : Paramᶜ N)
+           → ⟦ subCtx t N ⟧ᶜᵗ (subCtxᴾ t N pN)
            ≈ᵐ ⟦ N ⟧ᶜᵗ pN ∘ᵐ mapˣᵐ idᵐ ⟦ t ⟧<:ᵛ
-narrow-nat {Γ} {A} {A₀} t N pN =
+subCtx-nat {Γ} {A} {A₀} t N pN =
     C-subst-nat (C-rename (cong-∷-ren wk-ren) N) split-[]
                 (subV (var (λ _ → ≾ᵣ-refl) Hd) t)
                 (renᶜ (cong-∷-ren wk-ren) N pN) tt
