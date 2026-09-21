@@ -229,29 +229,38 @@ upperʳ i ((ρ , ρ') ∷ l) σ with ρ [ σ ]ʳ
 ... | _ ⊔̂ᵣ _   = upperʳ i l σ
 ... | ∣ _ ∣̂ᵉ   = upperʳ i l σ
 
+-- A whole list of bounds, folded. A singleton is its own fold; a
+-- combination that fails takes the fold with it, so an unknown one
+-- bound fails to join with is left for a later round rather than
+-- bound to the rest.
+
 boundᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
-boundᵉ []      = nothing
-boundᵉ (ε ∷ l) with boundᵉ l
-... | nothing = just ε
-... | just ε' = lubᵉ ε ε'
+boundᵉ []           = nothing
+boundᵉ (ε ∷ [])     = just ε
+boundᵉ (ε ∷ ε' ∷ l) with boundᵉ (ε' ∷ l)
+... | nothing  = nothing
+... | just ε'' = lubᵉ ε ε''
 
 boundʳ : ∀ {Ψ} → List (RExp Ψ) → Maybe (RExp Ψ)
-boundʳ []      = nothing
-boundʳ (ρ ∷ l) with boundʳ l
-... | nothing = just ρ
-... | just ρ' = lubʳ ρ ρ'
+boundʳ []           = nothing
+boundʳ (ρ ∷ [])     = just ρ
+boundʳ (ρ ∷ ρ' ∷ l) with boundʳ (ρ' ∷ l)
+... | nothing  = nothing
+... | just ρ'' = lubʳ ρ ρ''
 
 capᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
-capᵉ []      = nothing
-capᵉ (ε ∷ l) with capᵉ l
-... | nothing = just ε
-... | just ε' = cmpᵉ⁻ ε ε'
+capᵉ []           = nothing
+capᵉ (ε ∷ [])     = just ε
+capᵉ (ε ∷ ε' ∷ l) with capᵉ (ε' ∷ l)
+... | nothing  = nothing
+... | just ε'' = cmpᵉ⁻ ε ε''
 
 capʳ : ∀ {Ψ} → List (RExp Ψ) → Maybe (RExp Ψ)
-capʳ []      = nothing
-capʳ (ρ ∷ l) with capʳ l
-... | nothing = just ρ
-... | just ρ' = cmpʳ⁻ ρ ρ'
+capʳ []           = nothing
+capʳ (ρ ∷ [])     = just ρ
+capʳ (ρ ∷ ρ' ∷ l) with capʳ (ρ' ∷ l)
+... | nothing  = nothing
+... | just ρ'' = cmpʳ⁻ ρ ρ''
 
 -- A bound in which the unknown itself occurs is no value for it
 

@@ -290,6 +290,30 @@ ex-branch-delay : infer! [] branch-delay
                 ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
 ex-branch-delay = refl
 
+-- Nesting a branch inside a branch puts three bounds on one effect
+-- unknown, and the window spans all three durations.
+-- `notes/ThreeArmBranch.agda` derives the same grade declaratively.
+
+branch-delay³ : RawC 0
+branch-delay³ = if true `then delay 1 (return ⋆)
+                        `else (if true `then delay 2 (return ⋆)
+                                       `else delay 3 (return ⋆))
+
+ex-branch-delay³ : infer! [] branch-delay³
+                 ≡ just (Unit , econst [ 1 , ↑ 3 , s≤s z≤n ])
+ex-branch-delay³ = refl
+
+-- an arm that returns contributes the unit window here too
+
+branch-delay³-ret : RawC 0
+branch-delay³-ret = if true `then return ⋆
+                            `else (if true `then delay 2 (return ⋆)
+                                           `else delay 3 (return ⋆))
+
+ex-branch-delay³-ret : infer! [] branch-delay³-ret
+                     ≡ just (Unit , econst [ 0 , ↑ 3 , z≤n ])
+ex-branch-delay³-ret = refl
+
 -- A resource boxed at `[ 2 ,+∞⟩` becomes available only once two ticks
 -- stand between the binder and the `unbox`: that is the premise
 -- `ρ' ≾ᵣ ρ₀` of the `unbox` rule, `ρ'` being the product of the locks
@@ -360,6 +384,21 @@ fold-then-mul = branch-delay ⨟ return ⋆
 ex-fold-then-mul : infer! [] fold-then-mul
                  ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ] ·̂ₑ econst uₑ)
 ex-fold-then-mul = refl
+
+-- The fold declines a bound that does not combine rather than dropping
+-- it, so an unknown whose bounds still hold an arm's own slack variable
+-- is left to the round that follows, by which point they are constants.
+-- Three arms at one duration therefore land on a single constant, not
+-- on a product with one arm's slack.
+
+branch-delay³-flat : RawC 0
+branch-delay³-flat = if true `then delay 1 (return ⋆)
+                             `else (if true `then delay 1 (return ⋆)
+                                            `else delay 1 (return ⋆))
+
+ex-branch-delay³-flat : infer! [] branch-delay³-flat
+                      ≡ just (Unit , econst [ 1 , ↑ 1 , s≤s z≤n ])
+ex-branch-delay³-flat = refl
 
 -- The slack variable of a sequencing's first component is resolved
 -- before the composite effect is built.
