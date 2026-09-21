@@ -4,9 +4,10 @@
 -- `genV Γ V A` and `genC Γ M C` are total functions from a raw   --
 -- term and an expected (open) type to a constraint of the same   --
 -- scope. They are structural on the raw term and mirror the      --
--- rules of `TypeInference.Open.Language` former by former: every --
--- type a rule leaves free becomes a fresh `∃`-bound variable,    --
--- every side condition becomes a constraint atom.                --
+-- rules of `TypeInference.OpenSyntax.Language` former by         --
+-- former: every type a rule leaves free becomes a fresh          --
+-- `∃`-bound variable, every side condition becomes a             --
+-- constraint atom.                                               --
 --                                                                --
 -- The expected type is an upper bound, not a pin: where two      --
 -- types generation cannot choose meet, it is the right-hand side --
@@ -35,9 +36,9 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
+open import TypeInference.OpenSyntax.Grades   S
+open import TypeInference.OpenSyntax.Types    S
+open import TypeInference.OpenSyntax.Contexts S
 
 open import TypeInference.Raw.Syntax S
 

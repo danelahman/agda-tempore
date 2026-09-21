@@ -36,15 +36,15 @@ open import Syntax.Contexts S
 open import Syntax.Language S
 open import Syntax.Types    S
 
-open import TypeInference.Open.Grades          S
-open import TypeInference.Open.Types           S
-open import TypeInference.Open.Contexts        S
-open import TypeInference.Open.Subst           S
-open import TypeInference.Open.Hyps            S
-open import TypeInference.Open.Language        S
-open import TypeInference.Open.Grounding       S
-open import TypeInference.Open.GroundingTheorem S
-open import TypeInference.Open.ClosedContexts  S
+open import TypeInference.OpenSyntax.Grades          S
+open import TypeInference.OpenSyntax.Types           S
+open import TypeInference.OpenSyntax.Contexts        S
+open import TypeInference.OpenSyntax.Subst           S
+open import TypeInference.OpenSyntax.Hyps            S
+open import TypeInference.OpenSyntax.Language        S
+open import TypeInference.OpenSyntax.Grounding       S
+open import TypeInference.OpenSyntax.GroundingTheorem S
+open import TypeInference.OpenSyntax.ClosedContexts  S
 
 open import TypeInference.Raw.Syntax S
 open import TypeInference.Erase      S

@@ -34,18 +34,18 @@ open Operations Ops
 
 -- The closed types and contexts the interpretations land in; their
 -- constructors overlap with the mirrored ones and are disambiguated by
--- the expected type, as in `TypeInference.Open.Grounding`.
+-- the expected type, as in `TypeInference.OpenSyntax.Grounding`.
 
 open import Syntax.Contexts  S
 open import Syntax.Subtyping S
 open import Syntax.Types     S
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Contexts  S
-open import TypeInference.Open.Subst     S
-open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Contexts  S
+open import TypeInference.OpenSyntax.Subst     S
+open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S

@@ -32,7 +32,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.Open.Hyps as H
+import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Close
   (S : LanguageSpec)
@@ -47,12 +47,12 @@ module TypeInference.SolverImpl.Close
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
-open import TypeInference.Open.Hyps   S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
+open import TypeInference.OpenSyntax.Hyps   S
 
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grounding S
   using (Grounding; grounding; ⟦_⟧ʳ; ⟦_⟧ᵉ; ∅ᴴ-⊨; ground-≾ᵣ; ground-≾ₑ)
 
 open import TypeInference.SolverImpl.Core.Occurs S using (occʳ-r; occᵉ-e)

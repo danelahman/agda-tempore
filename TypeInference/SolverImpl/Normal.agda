@@ -28,7 +28,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.Open.Hyps as H
+import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Normal
   (S : LanguageSpec)
@@ -41,8 +41,8 @@ module TypeInference.SolverImpl.Normal
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Hyps   S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Product S public
 

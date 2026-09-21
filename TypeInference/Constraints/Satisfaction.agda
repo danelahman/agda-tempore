@@ -32,10 +32,10 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
-open import TypeInference.Open.Hyps   S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
+open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.Constraints.Syntax S
 

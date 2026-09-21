@@ -28,9 +28,9 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
 
 -- Constraints
 
@@ -55,7 +55,8 @@ infix  4 _≐ᵥ_ _≾̂ᵥᶜ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
 infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 
 -- Binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` of
--- `TypeInference.Open.Subst`; weakening is a substitution like any other.
+-- `TypeInference.OpenSyntax.Subst`; weakening is a substitution
+-- like any other.
 
 infixl 50 _[_]ᶜⁿ
 

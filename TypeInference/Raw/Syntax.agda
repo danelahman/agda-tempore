@@ -2,10 +2,10 @@
 -- Raw (well-scoped, untyped) syntax of the language              --
 --                                                                --
 -- The terms that inference takes as input: one former per former --
--- of `TypeInference.Open.Language`, minus `coerce`, and with the --
--- type, grade and entailment data of the mirrored judgement      --
--- dropped. Variables are de Bruijn indices into the full         --
--- context, `Fin n`.                                              --
+-- of `TypeInference.OpenSyntax.Language`, minus `coerce`, and    --
+-- with the type, grade and entailment data of the mirrored       --
+-- judgement dropped. Variables are de Bruijn indices into the    --
+-- full context, `Fin n`.                                         --
 --                                                                --
 -- The only annotations left are the base type of a constant, the --
 -- operation of a `perform`, the duration of a `delay` and the    --

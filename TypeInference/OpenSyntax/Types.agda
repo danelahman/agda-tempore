@@ -12,14 +12,14 @@ open import Syntax.LanguageSpec
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.Types (S : LanguageSpec) where
+module TypeInference.OpenSyntax.Types (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import Syntax.Types S
 
-open import TypeInference.Open.Grades S
+open import TypeInference.OpenSyntax.Grades S
 
 -- Open value and computation types
 

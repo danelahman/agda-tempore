@@ -333,28 +333,28 @@ open import TypeInference.Scopes
 
 ---- Open grade expressions, types, and contexts (with the eternal barrier)
 
-open import TypeInference.Open.Grades
-open import TypeInference.Open.Types
-open import TypeInference.Open.Contexts
-open import TypeInference.Open.ContextsLemmas
-open import TypeInference.Open.ClosedContexts
+open import TypeInference.OpenSyntax.Grades
+open import TypeInference.OpenSyntax.Types
+open import TypeInference.OpenSyntax.Contexts
+open import TypeInference.OpenSyntax.ContextsLemmas
+open import TypeInference.OpenSyntax.ClosedContexts
 
 ---- Substitutions between scopes
 
-open import TypeInference.Open.Subst
+open import TypeInference.OpenSyntax.Subst
 
 ---- Hypothesis sets, entailment and subtyping of open types
 
-open import TypeInference.Open.Hyps
+open import TypeInference.OpenSyntax.Hyps
 
 ---- The mirrored qualified type system
 
-open import TypeInference.Open.Language
+open import TypeInference.OpenSyntax.Language
 
 ---- Grounding open judgements into the original type system
 
-open import TypeInference.Open.Grounding
-open import TypeInference.Open.GroundingTheorem
+open import TypeInference.OpenSyntax.Grounding
+open import TypeInference.OpenSyntax.GroundingTheorem
 
 ---- Raw terms and erasure
 

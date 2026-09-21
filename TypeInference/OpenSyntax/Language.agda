@@ -23,7 +23,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.Language (S : LanguageSpec) where
+module TypeInference.OpenSyntax.Language (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -34,10 +34,10 @@ open Operations Ops
 
 open import Syntax.Types S using (BaseType; BaseConstants)
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Contexts  S
-open import TypeInference.Open.Hyps      S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Contexts  S
+open import TypeInference.OpenSyntax.Hyps      S
 
 infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_

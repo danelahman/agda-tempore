@@ -28,8 +28,8 @@ module TypeInference.SolverImpl.Product (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Hyps   S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Hyps   S
 
 data EAtom (Θ : Scope) : Set where
   ac : E → EAtom Θ

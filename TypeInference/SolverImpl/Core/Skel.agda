@@ -34,8 +34,8 @@ open GradeSystemInterface Grades
 
 open import Syntax.Types S using (BaseType)
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
 
 open import TypeInference.SolverImpl.Core.Thick
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂)

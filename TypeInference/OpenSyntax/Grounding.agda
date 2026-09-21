@@ -29,7 +29,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.Grounding (S : LanguageSpec) where
+module TypeInference.OpenSyntax.Grounding (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -38,10 +38,10 @@ open import Syntax.Contexts  S
 open import Syntax.Types     S
 open import Syntax.Subtyping S
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Contexts  S
-open import TypeInference.Open.Hyps      S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Contexts  S
+open import TypeInference.OpenSyntax.Hyps      S
 
 record Grounding (Θ : Scope) : Set where
   constructor grounding

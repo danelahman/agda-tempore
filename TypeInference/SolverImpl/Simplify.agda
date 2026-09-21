@@ -37,7 +37,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.Open.Hyps as H
+import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Simplify
   (S : LanguageSpec)
@@ -57,10 +57,10 @@ open import Syntax.Types S
   using (Eternal; Baseₑ; Unitₑ; Boolₑ; _|×|ₑ_; Emptyₑ;
          EternalBaseType; eternalBaseType?)
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 

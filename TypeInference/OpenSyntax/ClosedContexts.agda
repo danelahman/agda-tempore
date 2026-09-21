@@ -19,7 +19,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.ClosedContexts (S : LanguageSpec) where
+module TypeInference.OpenSyntax.ClosedContexts (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -28,11 +28,11 @@ open Operations Ops
 open import Syntax.Contexts S
 open import Syntax.Types    S
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Contexts  S
-open import TypeInference.Open.Subst     S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Contexts  S
+open import TypeInference.OpenSyntax.Subst     S
+open import TypeInference.OpenSyntax.Grounding S
 
 skel : Ctx → ℕ
 skel []        = 0

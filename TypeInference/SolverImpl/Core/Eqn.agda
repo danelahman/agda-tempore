@@ -24,9 +24,9 @@ module TypeInference.SolverImpl.Core.Eqn (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
 
 data Eqn (Θ : Scope) : Set where
   eqᵛ : OVType Θ → OVType Θ → Eqn Θ

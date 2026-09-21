@@ -55,14 +55,14 @@ open import Syntax.Types    S
 open import Syntax.Contexts S
 open import Syntax.Language S
 
-open import TypeInference.Open.Grades           S
-open import TypeInference.Open.Types            S
-open import TypeInference.Open.Contexts         S
-open import TypeInference.Open.Hyps             S
-open import TypeInference.Open.Language         S
-open import TypeInference.Open.GroundingTheorem S
+open import TypeInference.OpenSyntax.Grades           S
+open import TypeInference.OpenSyntax.Types            S
+open import TypeInference.OpenSyntax.Contexts         S
+open import TypeInference.OpenSyntax.Hyps             S
+open import TypeInference.OpenSyntax.Language         S
+open import TypeInference.OpenSyntax.GroundingTheorem S
 
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grounding S
   renaming (⟦_⟧ᵛ to ⟦_⟧ᵒᵛ; ⟦_⟧ᶜ to ⟦_⟧ᵒᶜ; ⟦_⟧ᶜᵗˣ to ⟦_⟧ᵒᶜᵗˣ)
 
 open Category Cat

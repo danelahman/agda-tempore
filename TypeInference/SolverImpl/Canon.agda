@@ -35,10 +35,10 @@ open import Syntax.Subtyping S using (_<:ᶜ_; <:ᶜ-refl)
 
 import Syntax.Types S as T
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.SolverImpl.Product   S
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)

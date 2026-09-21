@@ -26,8 +26,8 @@ module TypeInference.SolverImpl.Core.Size (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
 
 sizeᵉ : ∀ {Θ} → EExp Θ → ℕ
 sizeᵉ (evar i)   = 1

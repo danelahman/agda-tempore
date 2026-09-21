@@ -41,12 +41,12 @@ import Syntax.GroundTypes
 import Syntax.Contexts
 import Syntax.Types
 
-import TypeInference.Open.Grades
-import TypeInference.Open.Types
-import TypeInference.Open.Subst
-import TypeInference.Open.Contexts
-import TypeInference.Open.ClosedContexts
-import TypeInference.Open.Hyps
+import TypeInference.OpenSyntax.Grades
+import TypeInference.OpenSyntax.Types
+import TypeInference.OpenSyntax.Subst
+import TypeInference.OpenSyntax.Contexts
+import TypeInference.OpenSyntax.ClosedContexts
+import TypeInference.OpenSyntax.Hyps
 import TypeInference.Raw.Syntax
 import TypeInference.Constraints.Syntax
 import TypeInference.Infer
@@ -67,11 +67,11 @@ import Syntax.Types spec as T
 
 open import Syntax.Contexts spec using (Ctx; []; _∷_; _⟨_⟩)
 
-open import TypeInference.Open.Grades      spec
-open import TypeInference.Open.Types       spec
-open import TypeInference.Open.Subst       spec
-open import TypeInference.Open.Hyps        spec
-open import TypeInference.Open.ClosedContexts spec using (skel)
+open import TypeInference.OpenSyntax.Grades      spec
+open import TypeInference.OpenSyntax.Types       spec
+open import TypeInference.OpenSyntax.Subst       spec
+open import TypeInference.OpenSyntax.Hyps        spec
+open import TypeInference.OpenSyntax.ClosedContexts spec using (skel)
 
 open import TypeInference.Raw.Syntax spec
 
@@ -403,11 +403,11 @@ module Least where
 
   module Cᵈ  = Syntax.Contexts               specᵈ
   module Tᵈ  = Syntax.Types                  specᵈ
-  module Grᵈ = TypeInference.Open.Grades         specᵈ
-  module Tyᵈ = TypeInference.Open.Types          specᵈ
-  module Sbᵈ = TypeInference.Open.Subst          specᵈ
-  module Hyᵈ = TypeInference.Open.Hyps           specᵈ
-  module CCᵈ = TypeInference.Open.ClosedContexts specᵈ
+  module Grᵈ = TypeInference.OpenSyntax.Grades         specᵈ
+  module Tyᵈ = TypeInference.OpenSyntax.Types          specᵈ
+  module Sbᵈ = TypeInference.OpenSyntax.Subst          specᵈ
+  module Hyᵈ = TypeInference.OpenSyntax.Hyps           specᵈ
+  module CCᵈ = TypeInference.OpenSyntax.ClosedContexts specᵈ
   module Rwᵈ = TypeInference.Raw.Syntax          specᵈ
   module Cnᵈ = TypeInference.Constraints.Syntax  specᵈ
   module Inᵈ = TypeInference.Infer               specᵈ
@@ -560,7 +560,7 @@ module Least where
 
 module Unguarded where
 
-  module OC = TypeInference.Open.Contexts spec
+  module OC = TypeInference.OpenSyntax.Contexts spec
 
   open import TypeInference.Principality            spec using (Principal; C[_,_])
   open import TypeInference.Principality.Restricted spec using (principal-on)
@@ -592,7 +592,7 @@ module Unguarded where
 
 module Library where
 
-  module OC = TypeInference.Open.Contexts spec
+  module OC = TypeInference.OpenSyntax.Contexts spec
 
   open import TypeInference.Principality spec using (X̂; t̂; C[_,_])
   open import TypeInference.SolverImpl.Restricted spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
@@ -749,10 +749,10 @@ module Library where
 
   module Deadlines where
 
-    module Grᵈ = TypeInference.Open.Grades      specᵈ
-    module Tyᵈ = TypeInference.Open.Types       specᵈ
-    module Hyᵈ = TypeInference.Open.Hyps        specᵈ
-    module OCᵈ = TypeInference.Open.Contexts    specᵈ
+    module Grᵈ = TypeInference.OpenSyntax.Grades      specᵈ
+    module Tyᵈ = TypeInference.OpenSyntax.Types       specᵈ
+    module Hyᵈ = TypeInference.OpenSyntax.Hyps        specᵈ
+    module OCᵈ = TypeInference.OpenSyntax.Contexts    specᵈ
     module Rwᵈ = TypeInference.Raw.Syntax       specᵈ
     module Prᵈ = TypeInference.Principality     specᵈ
 

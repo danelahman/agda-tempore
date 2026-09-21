@@ -1,13 +1,13 @@
 ------------------------------------------------------------------
--- Single-binding substitutions                                  --
---                                                               --
--- `A forᵗ α` is the substitution that eliminates the type       --
+-- Single-binding substitutions                                   --
+--                                                                --
+-- `A forᵗ α` is the substitution that eliminates the type        --
 -- variable `α`, sending it to `A` and every other variable of    --
 -- its sort to its thickening. It is an ordinary `Subst`, so the  --
--- whole substitution algebra of `TypeInference.Open.Subst` applies   --
--- to it; the components of the two other sorts are the variable  --
--- constructors, as the extension `_+ty` leaves their counters    --
--- alone.                                                        --
+-- whole substitution algebra of `TypeInference.OpenSyntax.Subst` --
+-- applies to it; the components of the two other sorts are the   --
+-- variable constructors, as the extension `_+ty` leaves their    --
+-- counters alone.                                                --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′)
@@ -24,9 +24,9 @@ module TypeInference.SolverImpl.Core.For (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
 
 open import TypeInference.SolverImpl.Core.Thick
 

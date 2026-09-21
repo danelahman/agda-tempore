@@ -34,7 +34,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.Open.Hyps as H
+import TypeInference.OpenSyntax.Hyps as H
 
 open import TypeInference.SolverImpl.Enum using (OpEnum)
 
@@ -53,11 +53,11 @@ open Operations Ops
 
 open import Syntax.Subtyping S using (_<:ᶜ_)
 
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Contexts  S
-open import TypeInference.Open.Subst     S
-open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Contexts  S
+open import TypeInference.OpenSyntax.Subst     S
+open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.Raw.Syntax S using (RawC)
 

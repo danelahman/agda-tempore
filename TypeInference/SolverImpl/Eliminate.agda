@@ -47,10 +47,10 @@ open import Syntax.Subtyping S
 
 import Syntax.Types S as T
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Types     S
-open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.SolverImpl.Polarity S
 

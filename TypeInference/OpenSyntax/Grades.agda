@@ -19,7 +19,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.Grades (S : LanguageSpec) where
+module TypeInference.OpenSyntax.Grades (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades

@@ -29,7 +29,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.Open.Hyps as H
+import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Refute
   (S : LanguageSpec)
@@ -42,10 +42,10 @@ module TypeInference.SolverImpl.Refute
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades    S
-open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Subst     S
-open import TypeInference.Open.Grounding S
+open import TypeInference.OpenSyntax.Grades    S
+open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Subst     S
+open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.Constraints.Ground S using (_⨟ᵍ_; ⟦⟧-⨟ᵍ-r)
 

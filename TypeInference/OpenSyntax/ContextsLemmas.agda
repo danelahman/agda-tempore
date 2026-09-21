@@ -6,10 +6,11 @@
 -- weakened context, while the mirrored rules take their          --
 -- membership witness in a substituted one.                       --
 --                                                                --
--- `TypeInference.Open.Contexts` and `TypeInference.Open.Subst`   --
--- carry the facts for substitution; this module adds those for   --
--- the three scope extensions and for the actions of a            --
--- substitution and of a type equation on membership witnesses.   --
+-- `TypeInference.OpenSyntax.Contexts` and                        --
+-- `TypeInference.OpenSyntax.Subst` carry the facts for           --
+-- substitution; this module adds those for the three scope       --
+-- extensions and for the actions of a substitution and of a type --
+-- equation on membership witnesses.                              --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -22,15 +23,15 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.ContextsLemmas (S : LanguageSpec) where
+module TypeInference.OpenSyntax.ContextsLemmas (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
-open import TypeInference.Open.Subst    S
+open import TypeInference.OpenSyntax.Grades   S
+open import TypeInference.OpenSyntax.Types    S
+open import TypeInference.OpenSyntax.Contexts S
+open import TypeInference.OpenSyntax.Subst    S
 
 -- Lookup commutes with the three scope extensions.
 

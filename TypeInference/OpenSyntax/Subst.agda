@@ -17,16 +17,16 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.Subst (S : LanguageSpec) where
+module TypeInference.OpenSyntax.Subst (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
 
 open import Syntax.Types S
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
+open import TypeInference.OpenSyntax.Grades   S
+open import TypeInference.OpenSyntax.Types    S
+open import TypeInference.OpenSyntax.Contexts S
 
 -- Substitutions
 

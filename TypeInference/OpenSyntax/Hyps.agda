@@ -31,7 +31,7 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.Open.Hyps (S : LanguageSpec) where
+module TypeInference.OpenSyntax.Hyps (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -41,9 +41,9 @@ open GradeSystemInterface Grades
 
 open import Syntax.Types S using (EternalBaseType)
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
 
 -- Hypothesis sets
 

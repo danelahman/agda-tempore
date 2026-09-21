@@ -2,10 +2,10 @@
 -- Erasure of mirrored derivations to raw terms                   --
 --                                                                --
 -- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` are total functions from the well-typed      --
--- syntax of `TypeInference.Open.Language` to the well-scoped raw --
--- syntax of `TypeInference.Raw.Syntax`. They forget types,       --
--- grades and entailment premises, keeping only what a raw term   --
--- annotates.                                                     --
+-- syntax of `TypeInference.OpenSyntax.Language` to the           --
+-- well-scoped raw syntax of `TypeInference.Raw.Syntax`. They     --
+-- forget types, grades and entailment premises, keeping only     --
+-- what a raw term annotates.                                     --
 --                                                                --
 -- Erasure is index-preserving: a handler clause erases to a      --
 -- `RawC (2 + n)` with no adjustment, and a variable's raw index  --
@@ -30,11 +30,11 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
-open import TypeInference.Open.Hyps     S
-open import TypeInference.Open.Language S
+open import TypeInference.OpenSyntax.Grades   S
+open import TypeInference.OpenSyntax.Types    S
+open import TypeInference.OpenSyntax.Contexts S
+open import TypeInference.OpenSyntax.Hyps     S
+open import TypeInference.OpenSyntax.Language S
 
 open import TypeInference.Raw.Syntax    S
 
@@ -91,8 +91,9 @@ mutual
 
 -- Sanity checks: erasure computes as intended.
 
--- The scope has to be given explicitly, as in `TypeInference.Open.Language`:
--- `OCtx`'s scope is not determined by `[]`.
+-- The scope has to be given explicitly, as in
+-- `TypeInference.OpenSyntax.Language`: `OCtx`'s scope is not
+-- determined by `[]`.
 
 private
 

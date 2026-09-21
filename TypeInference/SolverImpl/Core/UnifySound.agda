@@ -40,9 +40,9 @@ open GradeSystemInterface Grades
 
 open import Syntax.Types S using (_≡ᵇ?_)
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Subst  S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Subst  S
 
 open import TypeInference.SolverImpl.Core.Thick
 open import TypeInference.SolverImpl.Core.For    S

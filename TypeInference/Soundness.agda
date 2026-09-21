@@ -25,13 +25,13 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import TypeInference.Open.Grades         S
-open import TypeInference.Open.Types          S
-open import TypeInference.Open.Contexts       S
-open import TypeInference.Open.ContextsLemmas S
-open import TypeInference.Open.Subst          S
-open import TypeInference.Open.Hyps           S
-open import TypeInference.Open.Language       S
+open import TypeInference.OpenSyntax.Grades         S
+open import TypeInference.OpenSyntax.Types          S
+open import TypeInference.OpenSyntax.Contexts       S
+open import TypeInference.OpenSyntax.ContextsLemmas S
+open import TypeInference.OpenSyntax.Subst          S
+open import TypeInference.OpenSyntax.Hyps           S
+open import TypeInference.OpenSyntax.Language       S
 
 open import TypeInference.Raw.Syntax S
 open import TypeInference.Erase      S
@@ -41,9 +41,9 @@ open import TypeInference.Constraints.Satisfaction S
 
 open import TypeInference.Generate S
 
--- `TypeInference.Open.Language` transports annotations only; the clause
--- contexts of `handle`, and every context built under a generation
--- binder, need the context transported too.
+-- `TypeInference.OpenSyntax.Language` transports annotations only;
+-- the clause contexts of `handle`, and every context built under a
+-- generation binder, need the context transported too.
 
 ctx-substᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ Γ' : OCtx Θ n} {A : OVType Θ}
            → Γ ≡ Γ'

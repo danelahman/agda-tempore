@@ -31,9 +31,9 @@ module TypeInference.SolverImpl.Polarity (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import TypeInference.Open.Grades S
-open import TypeInference.Open.Types  S
-open import TypeInference.Open.Hyps   S
+open import TypeInference.OpenSyntax.Grades S
+open import TypeInference.OpenSyntax.Types  S
+open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Resid S
 
