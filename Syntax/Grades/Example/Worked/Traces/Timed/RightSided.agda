@@ -325,7 +325,7 @@ either-placement :
   ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⟨ 3 ⟩ ⟆
 either-placement = holds
 
--- Placement binds only while the budget is tight. Widen the window to
+-- Placement binds only while the budget is tight. Enlarge the window to
 -- nine ticks and the run that stores afterwards is permitted again --
 -- but not because its store moved: nine buys the transmission outright
 -- (six) and the store after it (three), so the bound's own `⌈ send ⌉`

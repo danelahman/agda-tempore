@@ -9,7 +9,7 @@
 -- be a failure of `Normal`'s decision procedures.                --
 --                                                                --
 -- `reportOn` is the reporting boundary on top: the same residue  --
--- with its var-rule disjunctions narrowed, its redundant         --
+-- with its var-rule disjunctions settled, its redundant         --
 -- hypotheses dropped, the unknowns its own hypotheses fix        --
 -- eliminated from it and from the reported type, and every grade --
 -- expression in product normal form. It is applied here, where   --

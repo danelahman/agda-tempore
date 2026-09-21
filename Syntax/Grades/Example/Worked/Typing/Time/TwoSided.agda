@@ -122,11 +122,11 @@ carried-id =
 ------------------------------------------------------------------------
 -- Sub-effecting
 --
--- `coerce` widens the window: it may forget the floor downwards and the
+-- `coerce` enlarges the window: it may forget the floor downwards and the
 -- deadline upwards, and neither the other way. The context is untouched.
 
-widening : [] ⊢C⦂ Unit ‼ [ 2 , 6 , ≤! ]
-widening =
+enlarging-the-window : [] ⊢C⦂ Unit ‼ [ 2 , 6 , ≤! ]
+enlarging-the-window =
   coerce (≤! , ≤!) (perform read ⋆ (perform write here (return ⋆)))
 
 raising-the-floor : ¬ (opTime read ·ₑ (opTime write ·ₑ uₑ) ≾ₑ [ 4 , 6 , ≤! ])
@@ -150,8 +150,8 @@ branching =
 
 -- neither branch's own window will do for the conditional
 
-storing-window-too-narrow : ¬ (opTime send ·ₑ uₑ ≾ₑ [ 2 , 3 , ≤! ])
-storing-window-too-narrow (_ , hi) = ≰! hi
+storing-window-too-tight : ¬ (opTime send ·ₑ uₑ ≾ₑ [ 2 , 3 , ≤! ])
+storing-window-too-tight (_ , hi) = ≰! hi
 
 transmitting-window-too-late : ¬ (opTime write ·ₑ uₑ ≾ₑ [ 4 , 6 , ≤! ])
 transmitting-window-too-late (lo , _) = ≰! lo
@@ -292,7 +292,7 @@ claim-after-a-store =
                                      -- ∷ Reading
           (perform send here (return ⋆)))
 
--- widening that to `[ 2 , 6 ]` first drops its floor to two, and the
+-- enlarging that to `[ 2 , 6 ]` first drops its floor to two, and the
 -- box asks for three
 
 coercing-closes-it : ¬ (uᵣ ·ᵣ [ 2 , 6 , ≤! ] ≾ᵣ [ 3 , 6 , ≤! ])

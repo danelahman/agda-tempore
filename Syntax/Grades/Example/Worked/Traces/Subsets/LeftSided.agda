@@ -170,7 +170,7 @@ offering-something-else-does-not :
 offering-something-else-does-not = fails
 
 -- a box demanding two runs needs both of them still offered, so a
--- computation that has narrowed to one branch no longer opens it
+-- computation that has shrunk to one branch no longer opens it
 
 a-two-run-box : Demands
 a-two-run-box = demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
@@ -179,6 +179,6 @@ both-still-offered :
   demanding ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆ ≾ a-two-run-box
 both-still-offered = holds
 
-narrowed-to-one-branch :
+shrunk-to-one-branch :
   ¬ (demanding ⟅ ⌈ read ⌉ ⟆ ≾ a-two-run-box)
-narrowed-to-one-branch = fails
+shrunk-to-one-branch = fails

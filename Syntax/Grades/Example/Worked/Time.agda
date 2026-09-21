@@ -154,8 +154,8 @@ rsi-of-nat = refl
 -- Two-sided intervals: both bounds at once
 --
 -- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂`: containment, the
--- two halves being the two one-sided orders, so weakening widens the
--- window from both ends. An `∞` upper endpoint imposes no upper bound.
+-- two halves being the two one-sided orders, so weakening enlarges the
+-- window at both ends. An `∞` upper endpoint imposes no upper bound.
 
 -- the window the uplink run actually falls in
 
@@ -177,7 +177,7 @@ tsi-weaken = ≤! , ≤!
 tsi-no-tighten : ¬ ([ 5 , ↑ 12 , ≤! ] ≾² uplink-window)
 tsi-no-tighten rel = ≰! (proj₂ rel)
 
--- widening only one end is still weakening: the two halves are
+-- enlarging only one end is still weakening: the two halves are
 -- independent
 
 tsi-weaken-lo : uplink-window ≾² [ 5 , ↑ 9 , ≤! ]

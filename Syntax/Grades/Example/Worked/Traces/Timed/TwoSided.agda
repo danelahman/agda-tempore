@@ -126,10 +126,10 @@ no-stronger-guarantee :
      ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ])
 no-stronger-guarantee = fails _ _
 
-no-narrower-allowance :
+no-tighter-allowance :
   ¬ (exact (⌈ read ⌉ ∙ ⌈ write ⌉)
      ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ , within ⟅ ⌈ read ⌉ ⟆ , tt ])
-no-narrower-allowance = fails _ _
+no-tighter-allowance = fails _ _
 
 ------------------------------------------------------------------------
 -- One trace fact, two directions
@@ -143,7 +143,7 @@ no-narrower-allowance = fails _ _
 --                                        permits reading and stopping
 --
 -- The floor's lift reverses and the cap's does not, so the one fact
--- reads as *weakening* at the floor and as *widening* at the cap.
+-- reads as *weakening* at the floor and as *loosening* at the cap.
 
 -- at the floor, with the cap held fixed: the store may be dropped from
 -- what is guaranteed
@@ -178,7 +178,7 @@ allowance-broken-by-the-store = fails _ _
 
 -- the two moves compose: a computation known to read and store exactly
 -- reaches a contract guaranteeing only the reading and permitting six
--- further ticks, the floor weakening while the cap widens
+-- further ticks, the floor weakening while the cap loosens
 
 read-then-store-meets-the-contract :
   exact (⌈ read ⌉ ∙ ⌈ write ⌉)

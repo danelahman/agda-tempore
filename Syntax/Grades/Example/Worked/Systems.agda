@@ -71,7 +71,7 @@ deadline-forgotten :
   map tsi→lsi [ 7 , 9 , ≤! ] ≡ map tsi→lsi [ 7 , 12 , ≤! ]
 deadline-forgotten = refl
 
--- monotonicity: widening the window to `[ 5 , 12 ]` weakens the lower
+-- monotonicity: enlarging the window to `[ 5 , 12 ]` weakens the lower
 -- bound to `[ 5 ,+∞⟩`
 
 forget-max-mono : [ 7 ,+∞⟩ ≾ₒ [ 5 ,+∞⟩
@@ -243,7 +243,7 @@ contract-measured :
   ≡ [ 1 , 7 , ≤! ]
 contract-measured = refl
 
--- listing alternatives widens the window at both ends at once, each end
+-- listing alternatives enlarges the window at both ends at once, each end
 -- aggregating its own way
 
 alternatives-measured-both :

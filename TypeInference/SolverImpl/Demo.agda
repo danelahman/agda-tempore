@@ -505,10 +505,10 @@ module Least where
   ex-disj-close = refl
 
   -- The same grade under a type variable: eternality is open, the
-  -- grade side is refuted, so reporting narrows the disjunction.
+  -- grade side is refuted, so reporting settles the disjunction.
 
-  narrowC : Cnᵈ.Constraint (∅ˢ +ty)
-  narrowC = Cnᵈ.Et∨≾ᵘ (Tyᵈ.tvar (newᵗ {∅ˢ})) (Grᵈ.rconst [0, ↑ 1 ])
+  settleC : Cnᵈ.Constraint (∅ˢ +ty)
+  settleC = Cnᵈ.Et∨≾ᵘ (Tyᵈ.tvar (newᵗ {∅ˢ})) (Grᵈ.rconst [0, ↑ 1 ])
 
   -- the solver's disjunctions, then the report's atoms, orderings
   -- and surviving disjunctions
@@ -529,31 +529,31 @@ module Least where
   -- the solver residualises the disjunction; the report keeps the
   -- eternality atom alone
 
-  ex-narrow : reportOfᵈ narrowC
+  ex-settle : reportOfᵈ settleC
             ≡ just (∅ˢ +ty ,
                     (Tyᵈ.tvar (newᵗ {∅ˢ}) , Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
                     newᵗ {∅ˢ} ∷ᴸ []ᴸ , []ᴸ , []ᴸ)
-  ex-narrow = refl
+  ex-settle = refl
 
   -- a met eternality demand is dropped outright
 
-  ex-narrow-met : reportOfᵈ disjC
+  ex-settle-met : reportOfᵈ disjC
                 ≡ just (∅ˢ , (Tyᵈ.Unit , Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
                         []ᴸ , []ᴸ , []ᴸ)
-  ex-narrow-met = refl
+  ex-settle-met = refl
 
   -- a function type is never eternal, so both sides are refuted here:
-  -- narrowing leaves the false ordering rather than hiding it
+  -- settling leaves the false ordering rather than hiding it
 
   bothC : Cnᵈ.Constraint ∅ˢ
   bothC = Cnᵈ.Et∨≾ᵘ (Tyᵈ.Unit Tyᵈ.⇒ (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ)) (Grᵈ.rconst [0, ↑ 1 ])
 
-  ex-narrow-both : reportOfᵈ bothC
+  ex-settle-both : reportOfᵈ bothC
                  ≡ just (∅ˢ ,
                          (Tyᵈ.Unit Tyᵈ.⇒ (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ) ,
                           Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
                          []ᴸ , (Grᵈ.rconst [0, ↑ 1 ] , Grᵈ.ûᵣ) ∷ᴸ []ᴸ , []ᴸ)
-  ex-narrow-both = refl
+  ex-settle-both = refl
 
 -- The solver is principal on every constraint: a program the solver
 -- accepts has a principal type.

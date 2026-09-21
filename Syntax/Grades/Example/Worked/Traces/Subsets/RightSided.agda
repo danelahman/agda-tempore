@@ -58,10 +58,10 @@ permit-a-second-run :
   permitting ⟅ ⌈ read ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 permit-a-second-run = holds
 
-no-narrowing :
+no-dropping-runs :
   ¬ (permitting ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
      ≾ permitting ⟅ ⌈ read ⌉ ⟆)
-no-narrowing = fails
+no-dropping-runs = fails
 
 -- `return` has grade `{ ε }`, and it weakens only to grades that list
 -- the empty run: `{ ε }` is the least grade, not a unit that fits

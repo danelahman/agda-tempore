@@ -8,10 +8,10 @@
 -- continuation, and the root. `NfV`/`NfC` pin those positions and     --
 -- `C-normal-form` is the theorem.                                     --
 --                                                                     --
--- The tool is narrowing along `_≼ᶜ_`, which lowers binder types and   --
--- lock grades at once. It is a statement about derivations: nothing   --
--- in the substitution calculus may call it, since it rebuilds every   --
--- variable.                                                           --
+-- The tool is context subsumption along `_≼ᶜ_`, which lowers binder   --
+-- types and lock grades at once. It is a statement about derivations: --
+-- nothing in the substitution calculus may call it, since it rebuilds --
+-- every variable.                                                     --
 ------------------------------------------------------------------------
 
 open import Data.Product
@@ -58,8 +58,8 @@ data _≼ᶜ_ : Ctx → Ctx → Set where
 ≼ᶜ-refl (Γ ∷ A)   = ≼-∷ (≼ᶜ-refl Γ) (<:ᵛ-refl A)
 ≼ᶜ-refl (Γ ⟨ ρ ⟩) = ≼-⟨⟩ (≼ᶜ-refl Γ) ≾ᵣ-refl
 
--- A variable of the wider context occurs in the narrower one at the same
--- position, at a subtype and after no more elapsed grade.
+-- A variable of the supertype context occurs in the subtype one at the
+-- same position, at a subtype and after no more elapsed grade.
 
 record Lookup≼ (Γ₀ : Ctx) {Γ₁ : Ctx} {A : VType} {ρ : R} (x : A ∈[ ρ ] Γ₁) : Set where
   constructor lkp
@@ -168,7 +168,7 @@ data NfC where
            → NfV V → NfC N → NfC (box V N)
 
 
--- A normal derivation in a narrower context, with its residual subtyping
+-- A normal derivation in a subtype context, with its residual subtyping
 -- and the erasure it shares with the derivation it came from.
 
 record NfResV (Γ₀ : Ctx) {Γ : Ctx} {A : VType} (V : Γ ⊢V⦂ A) : Set where
@@ -195,69 +195,69 @@ open NfResV
 open NfResC
 
 
--- Narrowing: a normal derivation over a wider context is one over any
--- narrower one, at a subtype and with the same erasure.
+-- Context subsumption: a normal derivation over a context is one over
+-- any context below it, at a subtype and with the same erasure.
 
-V-narrow : ∀ {Γ₀ Γ₁ A} → Γ₀ ≼ᶜ Γ₁ → {V : Γ₁ ⊢V⦂ A} → NfV V → NfResV Γ₀ V
-C-narrow : ∀ {Γ₀ Γ₁ A ε} → Γ₀ ≼ᶜ Γ₁ → {M : Γ₁ ⊢C⦂ A ‼ ε} → NfC M → NfResC Γ₀ M
+V-subCtx : ∀ {Γ₀ Γ₁ A} → Γ₀ ≼ᶜ Γ₁ → {V : Γ₁ ⊢V⦂ A} → NfV V → NfResV Γ₀ V
+C-subCtx : ∀ {Γ₀ Γ₁ A ε} → Γ₀ ≼ᶜ Γ₁ → {M : Γ₁ ⊢C⦂ A ‼ ε} → NfC M → NfResC Γ₀ M
 
-V-narrow c (varⁿ {f = f} {x = x}) with ≼ᶜ-lookup c x
+V-subCtx c (varⁿ {f = f} {x = x}) with ≼ᶜ-lookup c x
 ... | lkp y s b e =
   nfv (var (λ ¬et → ≾ᵣ-trans b (f (λ et → ¬et (<:ᵛ-eternalˡ s et)))) y)
       s varⁿ (cong var e)
-V-narrow c (constⁿ {c = b}) =
+V-subCtx c (constⁿ {c = b}) =
   nfv (const b) (<:ᵛ-refl _) constⁿ refl
-V-narrow c ⋆ⁿ =
+V-subCtx c ⋆ⁿ =
   nfv ⋆ Unitₛ ⋆ⁿ refl
-V-narrow c trueⁿ =
+V-subCtx c trueⁿ =
   nfv true Boolₛ trueⁿ refl
-V-narrow c falseⁿ =
+V-subCtx c falseⁿ =
   nfv false Boolₛ falseⁿ refl
-V-narrow c (pairⁿ nV nW) with V-narrow c nV | V-narrow c nW
+V-subCtx c (pairⁿ nV nW) with V-subCtx c nV | V-subCtx c nW
 ... | nfv V' s₁ n₁ e₁ | nfv W' s₂ n₂ e₂ =
   nfv ⦉ V' , W' ⦊ (s₁ |×|ₛ s₂) (pairⁿ n₁ n₂) (cong₂ ⦉_,_⦊ e₁ e₂)
-V-narrow c (lamⁿ {A = A} nM) with C-narrow (≼-∷ c (<:ᵛ-refl A)) nM
+V-subCtx c (lamⁿ {A = A} nM) with C-subCtx (≼-∷ c (<:ᵛ-refl A)) nM
 ... | nfc M' sv se n e =
   nfv (lam M') (<:ᵛ-refl A ⇒ₛ (sv ‼ₛ se)) (lamⁿ n) (cong lam e)
 
-C-narrow c (returnⁿ nV) with V-narrow c nV
+C-subCtx c (returnⁿ nV) with V-subCtx c nV
 ... | nfv V' s n e =
   nfc (return V') s ≾ₑ-refl (returnⁿ n) (cong return e)
-C-narrow c (seqⁿ nM nN) with C-narrow c nM
-... | nfc M' sA sε nM' eM with C-narrow (≼-∷ (≼-⟨⟩ c (map-monotoneᵉ sε)) sA) nN
+C-subCtx c (seqⁿ nM nN) with C-subCtx c nM
+... | nfc M' sA sε nM' eM with C-subCtx (≼-∷ (≼-⟨⟩ c (map-monotoneᵉ sε)) sA) nN
 ...   | nfc N' sB sε' nN' eN =
   nfc (M' ⨟ N') sB (·ₑ-mono sε sε') (seqⁿ nM' nN') (cong₂ _⨟_ eM eN)
-C-narrow c (appⁿ {p = p} nV nW) with V-narrow c nV
-... | nfv V' (sd ⇒ₛ (sv ‼ₛ se)) nV' eV with V-narrow c nW
+C-subCtx c (appⁿ {p = p} nV nW) with V-subCtx c nV
+... | nfv V' (sd ⇒ₛ (sv ‼ₛ se)) nV' eV with V-subCtx c nW
 ...   | nfv W' sw nW' eW =
   nfc (V' · subV W' (<:ᵛ-trans sw (<:ᵛ-trans p sd))) sv se
       (appⁿ nV' nW') (cong₂ _·_ eV eW)
-C-narrow c (matchⁿ nV nN) with V-narrow c nV
-... | nfv V' (s₁ |×|ₛ s₂) nV' eV with C-narrow (≼-∷ (≼-∷ c s₁) s₂) nN
+C-subCtx c (matchⁿ nV nN) with V-subCtx c nV
+... | nfv V' (s₁ |×|ₛ s₂) nV' eV with C-subCtx (≼-∷ (≼-∷ c s₁) s₂) nN
 ...   | nfc N' sv se nN' eN =
   nfc (match V' `in N') sv se (matchⁿ nV' nN') (cong₂ match_`in_ eV eN)
-C-narrow c (absurdⁿ nV) with V-narrow c nV
+C-subCtx c (absurdⁿ nV) with V-subCtx c nV
 ... | nfv V' Emptyₛ nV' eV =
   nfc (absurd V') (<:ᵛ-refl _) ≾ₑ-refl (absurdⁿ nV') (cong absurd eV)
-C-narrow c (ifⁿ {p = p} {q = q} nV nM nN) with V-narrow c nV
-... | nfv V' Boolₛ nV' eV with C-narrow c nM | C-narrow c nN
+C-subCtx c (ifⁿ {p = p} {q = q} nV nM nN) with V-subCtx c nV
+... | nfv V' Boolₛ nV' eV with C-subCtx c nM | C-subCtx c nN
 ...   | nfc M' sv₁ se₁ nM' eM | nfc N' sv₂ se₂ nN' eN =
   nfc (if V' `then subC M' (<:ᶜ-trans (sv₁ ‼ₛ se₁) p)
              `else subC N' (<:ᶜ-trans (sv₂ ‼ₛ se₂) q))
       (<:ᵛ-refl _) ≾ₑ-refl (ifⁿ nV' nM' nN')
       (cong₃ (λ a b d → if a `then b `else d) eV eM eN)
-C-narrow c (performⁿ {op = op} {p = p} nV nM) with V-narrow c nV
+C-subCtx c (performⁿ {op = op} {p = p} nV nM) with V-subCtx c nV
 ... | nfv V' s nV' eV
-      with C-narrow (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) nM
+      with C-subCtx (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) nM
 ...   | nfc M' sv se nM' eM =
   nfc (perform op (subV V' (<:ᵛ-trans s p)) M') sv (·ₑ-monoʳ-≾ₑ se)
       (performⁿ nV' nM') (cong₂ (perform op) eV eM)
-C-narrow c (delayⁿ {τ = τ} nM) with C-narrow (≼-⟨⟩ c ≾ᵣ-refl) nM
+C-subCtx c (delayⁿ {τ = τ} nM) with C-subCtx (≼-⟨⟩ c ≾ᵣ-refl) nM
 ... | nfc M' sv se nM' eM =
   nfc (delay τ M') sv (·ₑ-monoʳ-≾ₑ se) (delayⁿ nM') (cong (delay τ) eM)
-C-narrow c (handleⁿ {p = p} {q = q} nM nH nN) with C-narrow c nM
+C-subCtx c (handleⁿ {p = p} {q = q} nM nH nN) with C-subCtx c nM
 ... | nfc M' sA sε nM' eM
-      with C-narrow (≼-∷ (≼-⟨⟩ c (map-monotoneᵉ sε)) sA) nN
+      with C-subCtx (≼-∷ (≼-⟨⟩ c (map-monotoneᵉ sε)) sA) nN
 ...   | nfc N' sB sε₁ nN' eN =
   nfc (handle M' `with (λ op ε'' →
          subC (rtm (hr op ε''))
@@ -270,14 +270,14 @@ C-narrow c (handleⁿ {p = p} {q = q} nM nH nN) with C-narrow c nM
   where
     hr : (op : Op) → (ε'' : E) → NfResC _ _
     hr op ε'' =
-      C-narrow (≼-∷ (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) (<:ᵛ-refl _)) (nH op ε'')
-C-narrow c (unboxⁿ {x = x} {rel = rel} nN) with ≼ᶜ-lookup c x
-... | lkp y ([ g ]ₛ sp) b e with C-narrow (≼-∷ c sp) nN
+      C-subCtx (≼-∷ (≼-∷ (≼-⟨⟩ c ≾ᵣ-refl) (<:ᵛ-refl _)) (<:ᵛ-refl _)) (nH op ε'')
+C-subCtx c (unboxⁿ {x = x} {rel = rel} nN) with ≼ᶜ-lookup c x
+... | lkp y ([ g ]ₛ sp) b e with C-subCtx (≼-∷ c sp) nN
 ...   | nfc N' sv se nN' eN =
   nfc (unbox y (≾ᵣ-trans b (≾ᵣ-trans rel g)) (<:ᵛ-refl _) N') sv se
       (unboxⁿ nN') (cong₂ unbox e eN)
-C-narrow c (boxⁿ nV nN) with V-narrow (≼-⟨⟩ c ≾ᵣ-refl) nV
-... | nfv V' s nV' eV with C-narrow (≼-∷ c ([ ≾ᵣ-refl ]ₛ s)) nN
+C-subCtx c (boxⁿ nV nN) with V-subCtx (≼-⟨⟩ c ≾ᵣ-refl) nV
+... | nfv V' s nV' eV with C-subCtx (≼-∷ c ([ ≾ᵣ-refl ]ₛ s)) nN
 ...   | nfc N' sv se nN' eN =
   nfc (box V' N') sv se (boxⁿ nV' nN') (cong₂ box eV eN)
 
@@ -314,7 +314,7 @@ C-normalise (return V) with V-normalise V
 C-normalise (M ⨟ N) with C-normalise M
 ... | nfc M' sA sε nM eM with C-normalise N
 ...   | nfc N₁ sB sε' nN eN
-        with C-narrow (≼-∷ (≼-⟨⟩ (≼ᶜ-refl _) (map-monotoneᵉ sε)) sA) nN
+        with C-subCtx (≼-∷ (≼-⟨⟩ (≼ᶜ-refl _) (map-monotoneᵉ sε)) sA) nN
 ...     | nfc N' sB' sε'' nN' eN' =
   nfc (M' ⨟ N') (<:ᵛ-trans sB' sB) (·ₑ-mono sε (≾ₑ-trans sε'' sε'))
       (seqⁿ nM nN') (cong₂ _⨟_ eM (trans eN' eN))
@@ -325,7 +325,7 @@ C-normalise (V · W) with V-normalise V
 C-normalise (match V `in N) with V-normalise V
 ... | nfv V' (s₁ |×|ₛ s₂) nV eV with C-normalise N
 ...   | nfc N₁ sv se nN eN
-        with C-narrow (≼-∷ (≼-∷ (≼ᶜ-refl _) s₁) s₂) nN
+        with C-subCtx (≼-∷ (≼-∷ (≼ᶜ-refl _) s₁) s₂) nN
 ...     | nfc N' sv' se' nN' eN' =
   nfc (match V' `in N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
       (matchⁿ nV nN') (cong₂ match_`in_ eV (trans eN' eN))
@@ -349,7 +349,7 @@ C-normalise (delay τ M) with C-normalise M
 C-normalise (handle_`with_`in M H N) with C-normalise M
 ... | nfc M' sA sε nM eM with C-normalise N
 ...   | nfc N₁ sB sε₁ nN eN
-        with C-narrow (≼-∷ (≼-⟨⟩ (≼ᶜ-refl _) (map-monotoneᵉ sε)) sA) nN
+        with C-subCtx (≼-∷ (≼-⟨⟩ (≼ᶜ-refl _) (map-monotoneᵉ sε)) sA) nN
 ...     | nfc N' sB' sε₂ nN' eN' =
   nfc (handle M' `with (λ op ε'' →
          subC (rtm (hr op ε''))
@@ -364,13 +364,13 @@ C-normalise (handle_`with_`in M H N) with C-normalise M
     hr : (op : Op) → (ε'' : E) → NfResC _ _
     hr op ε'' = C-normalise (H op ε'')
 C-normalise (unbox x rel p N) with C-normalise N
-... | nfc N₁ sv se nN eN with C-narrow (≼-∷ (≼ᶜ-refl _) p) nN
+... | nfc N₁ sv se nN eN with C-subCtx (≼-∷ (≼ᶜ-refl _) p) nN
 ...   | nfc N' sv' se' nN' eN' =
   nfc (unbox x rel (<:ᵛ-refl _) N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
       (unboxⁿ nN') (cong (unbox (var-pos x)) (trans eN' eN))
 C-normalise (box V N) with V-normalise V
 ... | nfv V' s nV eV with C-normalise N
-...   | nfc N₁ sv se nN eN with C-narrow (≼-∷ (≼ᶜ-refl _) ([ ≾ᵣ-refl ]ₛ s)) nN
+...   | nfc N₁ sv se nN eN with C-subCtx (≼-∷ (≼ᶜ-refl _) ([ ≾ᵣ-refl ]ₛ s)) nN
 ...     | nfc N' sv' se' nN' eN' =
   nfc (box V' N') (<:ᵛ-trans sv' sv) (≾ₑ-trans se' se)
       (boxⁿ nV nN') (cong₂ box eV (trans eN' eN))

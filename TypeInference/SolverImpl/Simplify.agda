@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Normalising, narrowing and pruning a reported hypothesis set   --
+-- Normalising, settling and pruning a reported hypothesis set   --
 --                                                                --
 -- `simplify` first replaces every grade expression of the set by --
 -- its product normal form. It then settles every `disj` entry    --
@@ -228,8 +228,8 @@ ets? Q (α ∷ as) with etᴾ? (subᵥ Q) (ets Q) α | ets? Q as
 
 -- One disjunction, settled against the deciders and the set itself
 
-narrow : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
-narrow A ρ Q with etDec A
+settle : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
+settle A ρ Q with etDec A
 ... | nothing = hyps (ets Q) (subᵥ Q) ((ρ , ûᵣ) ∷ ordᵣ Q) (ordₑ Q) (disj Q)
 ... | just αs with ets? Q αs
 ...   | just _  = Q
@@ -237,9 +237,9 @@ narrow A ρ Q with etDec A
 ...     | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q)
 ...     | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
 
-narrow-⊨ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
-         → Disj θ A ρ → θ ⊨ᴴ Q → θ ⊨ᴴ narrow A ρ Q
-narrow-⊨ {θ = θ} A ρ Q d h with etDec A in e
+settle-⊨ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
+         → Disj θ A ρ → θ ⊨ᴴ Q → θ ⊨ᴴ settle A ρ Q
+settle-⊨ {θ = θ} A ρ Q d h with etDec A in e
 ... | nothing = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) (disjOK h)
       where
         ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ((ρ , ûᵣ) ∷ ordᵣ Q)
@@ -262,9 +262,9 @@ narrow-⊨ {θ = θ} A ρ Q d h with etDec A in e
         dsj' (here refl) = d
         dsj' (there m)   = disjOK h m
 
-narrow-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
-          → θ ⊨ᴴ narrow A ρ Q → (θ ⊨ᴴ Q) × Disj θ A ρ
-narrow-⊨⁻ A ρ Q h with etDec A in e
+settle-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
+          → θ ⊨ᴴ settle A ρ Q → (θ ⊨ᴴ Q) × Disj θ A ρ
+settle-⊨⁻ A ρ Q h with etDec A in e
 ... | nothing = mk⊨ᴴ (etOK h) (subOK h) (λ m → ordROK h (there m)) (ordEOK h) (disjOK h)
               , inj₂ (ordROK h (here refl))
 ... | just αs with ets? Q αs
@@ -276,24 +276,24 @@ narrow-⊨⁻ A ρ Q h with etDec A in e
 ...     | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ m → disjOK h (there m))
                   , disjOK h (here refl)
 
-narrowAll : ∀ {Θ} → List (OVType Θ × RExp Θ) → Hyps Θ → Hyps Θ
-narrowAll []             Q₀ = Q₀
-narrowAll ((A , ρ) ∷ l) Q₀ = narrow A ρ (narrowAll l Q₀)
+settleAll : ∀ {Θ} → List (OVType Θ × RExp Θ) → Hyps Θ → Hyps Θ
+settleAll []             Q₀ = Q₀
+settleAll ((A , ρ) ∷ l) Q₀ = settle A ρ (settleAll l Q₀)
 
-narrowAll-⊨ : ∀ {Θ} {θ : Grounding Θ} → (l : List (OVType Θ × RExp Θ))
+settleAll-⊨ : ∀ {Θ} {θ : Grounding Θ} → (l : List (OVType Θ × RExp Θ))
             → (Q₀ : Hyps Θ) → (∀ {A ρ} → (A , ρ) ∈ l → Disj θ A ρ) → θ ⊨ᴴ Q₀
-            → θ ⊨ᴴ narrowAll l Q₀
-narrowAll-⊨ []             Q₀ k h = h
-narrowAll-⊨ ((A , ρ) ∷ l) Q₀ k h =
-  narrow-⊨ A ρ (narrowAll l Q₀) (k (here refl))
-           (narrowAll-⊨ l Q₀ (λ m → k (there m)) h)
+            → θ ⊨ᴴ settleAll l Q₀
+settleAll-⊨ []             Q₀ k h = h
+settleAll-⊨ ((A , ρ) ∷ l) Q₀ k h =
+  settle-⊨ A ρ (settleAll l Q₀) (k (here refl))
+           (settleAll-⊨ l Q₀ (λ m → k (there m)) h)
 
-narrowAll-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (l : List (OVType Θ × RExp Θ))
-             → (Q₀ : Hyps Θ) → θ ⊨ᴴ narrowAll l Q₀
+settleAll-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (l : List (OVType Θ × RExp Θ))
+             → (Q₀ : Hyps Θ) → θ ⊨ᴴ settleAll l Q₀
              → (θ ⊨ᴴ Q₀) × (∀ {A ρ} → (A , ρ) ∈ l → Disj θ A ρ)
-narrowAll-⊨⁻ []             Q₀ h = h , λ ()
-narrowAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with narrow-⊨⁻ A ρ (narrowAll l Q₀) h
-... | h' , d with narrowAll-⊨⁻ l Q₀ h'
+settleAll-⊨⁻ []             Q₀ h = h , λ ()
+settleAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with settle-⊨⁻ A ρ (settleAll l Q₀) h
+... | h' , d with settleAll-⊨⁻ l Q₀ h'
 ...   | h'' , k = h'' , λ { (here refl) → d ; (there m) → k m }
 
 -- A hypothesis the rest of the set still entails is dropped. Decided
@@ -479,22 +479,22 @@ split : ∀ {Θ} → Hyps Θ → Hyps Θ
 split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
 
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
-simplify Q = prune (narrowAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
+simplify Q = prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
 
 -- Simplification changes nothing a grounding can see
 
 simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q
 simplify-⊨ Q θ h₀ =
-  prune-⊨ (narrowAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
-    (narrowAll-⊨ (disj (canonᴴ Q)) (split (canonᴴ Q)) (disjOK h)
+  prune-⊨ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
+    (settleAll-⊨ (disj (canonᴴ Q)) (split (canonᴴ Q)) (disjOK h)
                  (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ())))
   where
     h = canonᴴ-⊨ Q h₀
 
 simplify-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q
 simplify-⊨⁻ Q θ h
-  with narrowAll-⊨⁻ (disj (canonᴴ Q)) (split (canonᴴ Q))
-         (prune-⊨⁻ (narrowAll (disj (canonᴴ Q)) (split (canonᴴ Q))) h)
+  with settleAll-⊨⁻ (disj (canonᴴ Q)) (split (canonᴴ Q))
+         (prune-⊨⁻ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q))) h)
 ... | h₀ , k = canonᴴ-⊨⁻ Q (mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k)
 
 simplify-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
