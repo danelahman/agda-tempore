@@ -215,6 +215,25 @@ ex-unbox : infer! ([] ∷ (T.[ uᵣ ] T.Bool)) (unbox zero (return (var zero)))
          ≡ just (Bool , ûₑ)
 ex-unbox = refl
 
+-- A boxed variable at a non-unit grade. Subtyping is contravariant in
+-- a box's grade, so the result type's fresh grade variable is bounded
+-- above by the annotation and never below: tightening sends it there,
+-- and the grade is reported rather than coarsened to the unit.
+
+ex-box-grade : infer! ([] ∷ (T.[ [ 1 ,+∞⟩ ] T.Bool)) (return (var zero))
+             ≡ just ([ rconst [ 1 ,+∞⟩ ] Bool , ûₑ)
+ex-box-grade = refl
+
+-- both arms of a conditional bound that one variable above, by the
+-- same expression, which is therefore its own cap
+
+ex-box-branch : infer! ([] ∷ T.Bool ∷ (T.[ [ 1 ,+∞⟩ ] T.Bool))
+                  (if var (suc zero)
+                    `then return (var zero)
+                    `else return (var zero))
+              ≡ just ([ rconst [ 1 ,+∞⟩ ] Bool , ûₑ)
+ex-box-branch = refl
+
 -- `handle` is rejected: the clause's slack constraint needs `minₑ`,
 -- whose premise fails for these grades. The section at the end of this
 -- module runs the same program over grades with a least unit.

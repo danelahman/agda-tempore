@@ -3,17 +3,19 @@
 --                                                                --
 -- Slack sends a flexible grade variable to the join of its lower --
 -- bounds — those of the orderings and those the subtyping        --
--- demands decompose to. A bound still holding a variable is      --
--- combined by comparability instead, and a bound the variable    --
--- occurs in is declined. What slack leaves is defaulted by       --
--- polarity: the greatest grade where only lower bounds push, the --
--- unit otherwise.                                                --
+-- demands decompose to. Tightening is its dual: a variable the   --
+-- demands bound above and never below goes to its upper bound.   --
+-- A bound still holding a variable is combined by comparability  --
+-- instead, as are several upper bounds, grades having no meet;   --
+-- a bound the variable occurs in is declined. What the two       --
+-- passes leave is defaulted by polarity: the greatest grade      --
+-- where only lower bounds push, the unit otherwise.              --
 --                                                                --
 -- At the empty scope an expression is a constant, so the checks  --
 -- are complete and only the choice of substitution is heuristic. --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (if_then_else_)
+open import Data.Bool.Base using (if_then_else_; _∧_; not) renaming (Bool to 𝔹)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_)
 open import Data.List.Membership.Propositional using (_∈_)
@@ -160,6 +162,22 @@ cmpʳ ρ ρ' with decide≾ᵣ {Q = ∅ᴴ} ρ ρ' | decide≾ᵣ {Q = ∅ᴴ} �
 ... | nothing | just _  = just ρ
 ... | nothing | nothing = nothing
 
+-- Two upper bounds on one unknown, combined: the smaller of two
+-- comparable bounds, else neither. Grades carry no meet, so this is
+-- the whole of it.
+
+cmpᵉ⁻ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
+cmpᵉ⁻ ε ε' with decide≾ₑ {Q = ∅ᴴ} ε ε' | decide≾ₑ {Q = ∅ᴴ} ε' ε
+... | just _  | _       = just ε
+... | nothing | just _  = just ε'
+... | nothing | nothing = nothing
+
+cmpʳ⁻ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
+cmpʳ⁻ ρ ρ' with decide≾ᵣ {Q = ∅ᴴ} ρ ρ' | decide≾ᵣ {Q = ∅ᴴ} ρ' ρ
+... | just _  | _       = just ρ
+... | nothing | just _  = just ρ'
+... | nothing | nothing = nothing
+
 lubᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
 lubᵉ ε ε' with joinᵉ? ε ε'
 ... | just ε'' = just ε''
@@ -170,8 +188,8 @@ lubʳ ρ ρ' with joinʳ? ρ ρ'
 ... | just ρ'' = just ρ''
 ... | nothing  = cmpʳ ρ ρ'
 
--- Every lower bound a list of orderings places on one unknown, and
--- their combination
+-- Every lower bound a list of orderings places on one unknown, every
+-- upper bound it places, and their combinations
 
 lowerᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Subst Ψ Ψ → List (EExp Ψ)
 lowerᵉ i []             σ = []
@@ -188,6 +206,21 @@ lowerʳ i ((ρ , ρ') ∷ l) σ with ρ' [ σ ]ʳ
 ... | _ ·̂ᵣ _   = lowerʳ i l σ
 ... | ∣ _ ∣̂ᵉ   = lowerʳ i l σ
 
+upperᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Subst Ψ Ψ → List (EExp Ψ)
+upperᵉ i []             σ = []
+upperᵉ i ((ε , ε') ∷ l) σ with ε [ σ ]ᵉ
+... | evar j   = if ⌊ j ≟ᶠ i ⌋ then ε' [ σ ]ᵉ ∷ upperᵉ i l σ else upperᵉ i l σ
+... | econst _ = upperᵉ i l σ
+... | _ ·̂ₑ _   = upperᵉ i l σ
+
+upperʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Subst Ψ Ψ → List (RExp Ψ)
+upperʳ i []             σ = []
+upperʳ i ((ρ , ρ') ∷ l) σ with ρ [ σ ]ʳ
+... | rvar j   = if ⌊ j ≟ᶠ i ⌋ then ρ' [ σ ]ʳ ∷ upperʳ i l σ else upperʳ i l σ
+... | rconst _ = upperʳ i l σ
+... | _ ·̂ᵣ _   = upperʳ i l σ
+... | ∣ _ ∣̂ᵉ   = upperʳ i l σ
+
 boundᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
 boundᵉ []      = nothing
 boundᵉ (ε ∷ l) with boundᵉ l
@@ -199,6 +232,18 @@ boundʳ []      = nothing
 boundʳ (ρ ∷ l) with boundʳ l
 ... | nothing = just ρ
 ... | just ρ' = lubʳ ρ ρ'
+
+capᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
+capᵉ []      = nothing
+capᵉ (ε ∷ l) with capᵉ l
+... | nothing = just ε
+... | just ε' = cmpᵉ⁻ ε ε'
+
+capʳ : ∀ {Ψ} → List (RExp Ψ) → Maybe (RExp Ψ)
+capʳ []      = nothing
+capʳ (ρ ∷ l) with capʳ l
+... | nothing = just ρ
+... | just ρ' = cmpʳ⁻ ρ ρ'
 
 -- A bound in which the unknown itself occurs is no value for it
 
@@ -225,6 +270,33 @@ slackʳ ((ρ , ρ') ∷ l) l₀ σ with ρ' [ σ ]ʳ
 ... | _ ·̂ᵣ _   = slackʳ l l₀ σ
 ... | ∣ _ ∣̂ᵉ   = slackʳ l l₀ σ
 
+-- Tightening is confined to the unknowns no demand bounds from below,
+-- the upper bound being no value for one that is pushed up too.
+
+onlyAbove : Pol → 𝔹
+onlyAbove p = above p ∧ not (below p)
+
+tightᵉ : ∀ {Ψ} → (EVar Ψ → Pol)
+       → (l l₀ : List (EExp Ψ × EExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
+tightᵉ p []             l₀ σ = σ
+tightᵉ p ((ε , ε') ∷ l) l₀ σ with ε [ σ ]ᵉ
+... | evar i   = tightᵉ p l l₀
+                   (if onlyAbove (p i)
+                      then bindᵉ i (capᵉ (upperᵉ i l₀ σ)) σ else σ)
+... | econst _ = tightᵉ p l l₀ σ
+... | _ ·̂ₑ _   = tightᵉ p l l₀ σ
+
+tightʳ : ∀ {Ψ} → (RVar Ψ → Pol)
+       → (l l₀ : List (RExp Ψ × RExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
+tightʳ p []             l₀ σ = σ
+tightʳ p ((ρ , ρ') ∷ l) l₀ σ with ρ [ σ ]ʳ
+... | rvar i   = tightʳ p l l₀
+                   (if onlyAbove (p i)
+                      then bindʳ i (capʳ (upperʳ i l₀ σ)) σ else σ)
+... | rconst _ = tightʳ p l l₀ σ
+... | _ ·̂ᵣ _   = tightʳ p l l₀ σ
+... | ∣ _ ∣̂ᵉ   = tightʳ p l l₀ σ
+
 -- The grade orderings the subtyping demands decompose to. A
 -- substitution leaves a head former alone, so the decomposition does
 -- not depend on the assignment slack has reached.
@@ -236,7 +308,8 @@ atomsˢ ((A , B) ∷ l) with subDec A B
 ... | nothing = atomsˢ l
 
 slack¹ : ∀ {Ψ} → Resid Ψ → Subst Ψ Ψ → Subst Ψ Ψ
-slack¹ R σ = slackʳ lʳ lʳ (slackᵉ lᵉ lᵉ σ)
+slack¹ R σ = tightʳ (polᵣ R') lʳ lʳ (tightᵉ (polₑ R') lᵉ lᵉ
+               (slackʳ lʳ lʳ (slackᵉ lᵉ lᵉ σ)))
   where
     a : SubAtoms _
     a = atomsˢ (ss R)
@@ -246,6 +319,12 @@ slack¹ R σ = slackʳ lʳ lʳ (slackᵉ lᵉ lᵉ σ)
 
     lᵉ : List (EExp _ × EExp _)
     lᵉ = es R ++ aordₑ a
+
+    -- the polarities the pass reads are those of the residual as the
+    -- assignment reached so far leaves it
+
+    R' : Resid _
+    R' = R [ σ ]ᴿ
 
 slack* : ∀ {Ψ} → ℕ → Resid Ψ → Subst Ψ Ψ → Subst Ψ Ψ
 slack* nzero    R σ = σ
