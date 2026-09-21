@@ -3,10 +3,14 @@
 --                                                               --
 -- Constraints are the output of type-and-effect inference: a    --
 -- first-order formula over the open types and grade expressions --
--- of a scope `Θ`, built from type equations, grade orderings,   --
--- eternality atoms, existential quantification over the three   --
--- sorts of variables, a rigid (eigenvariable) effect-grade       --
--- quantifier, and a conjunction indexed by operation symbols.    --
+-- of a scope `Θ`, built from type equations, value-type        --
+-- subtyping, grade orderings, eternality atoms, existential     --
+-- quantification over the three sorts of variables, a rigid     --
+-- (eigenvariable) effect-grade quantifier, and a conjunction    --
+-- indexed by operation symbols.                                 --
+--                                                               --
+-- Computation types need no former of their own: `C ≾̂ᶜ C'` is   --
+-- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`.                                    --
 --                                                               --
 -- The constraint formers carrying a relation are suffixed `ᶜ`,  --
 -- as the relations themselves (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`) are  --
@@ -39,6 +43,7 @@ data Constraint (Θ : Scope) : Set where
   ⊥̂     : Constraint Θ                                -- unsatisfiable
   _∧̂_   : Constraint Θ → Constraint Θ → Constraint Θ  -- conjunction
   _≐ᵥ_  : OVType Θ → OVType Θ → Constraint Θ          -- type equation
+  _≾̂ᵥᶜ_ : OVType Θ → OVType Θ → Constraint Θ          -- value-type subtyping
   _≾̂ᵣᶜ_ : RExp Θ → RExp Θ → Constraint Θ              -- resource-grade ordering
   _≾̂ₑᶜ_ : EExp Θ → EExp Θ → Constraint Θ              -- effect-grade ordering
   Etᶜ   : OVType Θ → Constraint Θ                     -- eternality of a type
@@ -50,7 +55,7 @@ data Constraint (Θ : Scope) : Set where
   ⋀ᵒᵖ   : (Op → Constraint Θ) → Constraint Θ          -- conjunction over operations
 
 infixr 6 _∧̂_
-infix  4 _≐ᵥ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
+infix  4 _≐ᵥ_ _≾̂ᵥᶜ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
 infix  2 ∃ᵗ_ ∃ʳ_ ∃ᵉ_ ∀ᵉ_
 
 -- Binders are traversed with the lifts `_↑ᵗ`/`_↑ʳ`/`_↑ᵉ` of
@@ -63,6 +68,7 @@ _[_]ᶜⁿ : ∀ {Θ Θ'} → Constraint Θ → Subst Θ Θ' → Constraint Θ'
 ⊥̂           [ σ ]ᶜⁿ = ⊥̂
 (C ∧̂ D)     [ σ ]ᶜⁿ = C [ σ ]ᶜⁿ ∧̂ D [ σ ]ᶜⁿ
 (A ≐ᵥ B)    [ σ ]ᶜⁿ = A [ σ ]ᵛ ≐ᵥ B [ σ ]ᵛ
+(A ≾̂ᵥᶜ B)   [ σ ]ᶜⁿ = A [ σ ]ᵛ ≾̂ᵥᶜ B [ σ ]ᵛ
 (ρ ≾̂ᵣᶜ ρ')  [ σ ]ᶜⁿ = ρ [ σ ]ʳ ≾̂ᵣᶜ ρ' [ σ ]ʳ
 (ε ≾̂ₑᶜ ε')  [ σ ]ᶜⁿ = ε [ σ ]ᵉ ≾̂ₑᶜ ε' [ σ ]ᵉ
 Etᶜ A       [ σ ]ᶜⁿ = Etᶜ (A [ σ ]ᵛ)

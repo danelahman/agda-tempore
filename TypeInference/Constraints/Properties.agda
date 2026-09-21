@@ -39,6 +39,8 @@ open import TypeInference.Open.Types  S
 open import TypeInference.Open.Subst  S
 open import TypeInference.Open.Hyps   S
 
+open import TypeInference.Open.Subtyping S using (<:̂ᵛ-wkᵉ)
+
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
@@ -69,6 +71,8 @@ open import TypeInference.Constraints.Satisfaction S
 ⊨-resp-≐ˢ p (C ∧̂ D)              (s , t)  = ⊨-resp-≐ˢ p C s , ⊨-resp-≐ˢ p D t
 ⊨-resp-≐ˢ p (A ≐ᵥ B)             s        =
   trans (sym ([≐]ᵛ p A)) (trans s ([≐]ᵛ p B))
+⊨-resp-≐ˢ {Q = Q} p (A ≾̂ᵥᶜ B)    s        =
+  subst₂ (Q ∣_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) s
 ⊨-resp-≐ˢ {Q = Q} p (ρ ≾̂ᵣᶜ ρ')   s        =
   subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') s
 ⊨-resp-≐ˢ {Q = Q} p (ε ≾̂ₑᶜ ε')   s        =
@@ -131,11 +135,16 @@ private
 
 ⊩ᴴ-↑ᵉ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {δ : Subst Θ Θ'}
       → Q' ⊩ᴴ Q [ δ ] → wkᵉ-H Q' ⊩ᴴ (wkᵉ-H Q) [ δ ↑ᵉ ]
-⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ ordᵣ↑ ordₑ↑ disj↑
+⊩ᴴ-↑ᵉ {Θ} {Θ'} {Q} {Q'} {δ} h = mk⊩ᴴ ets↑ subᵥ↑ ordᵣ↑ ordₑ↑ disj↑
   where
     ets↑ : ∀ {α} → α ∈ ets (wkᵉ-H Q) → wkᵉ-H Q' ⊩ᴱ sTy (δ ↑ᵉ) α
     ets↑ m with ∈-map⁻ (wkᵉ-tv Θ) m
     ... | α₀ , m₀ , refl = ⊩ᴱ-wkᵉ (⊩ets h m₀)
+
+    subᵥ↑ : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q)
+          → wkᵉ-H Q' ∣ sTy (δ ↑ᵉ) α <:̂ᵛ sTy (δ ↑ᵉ) β
+    subᵥ↑ m with ∈-map⁻ (mapᵖ (wkᵉ-tv Θ)) m
+    ... | (α₀ , β₀) , m₀ , refl = <:̂ᵛ-wkᵉ (⊩subᵥ h m₀)
 
     ordᵣ↑ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
           → wkᵉ-H Q' ⊩ ρ [ δ ↑ᵉ ]ʳ ≾̂ᵣ ρ' [ δ ↑ᵉ ]ʳ
@@ -169,6 +178,8 @@ private
 ⊨-mono h (C ∧̂ D) (s , t) = ⊨-mono h C s , ⊨-mono h D t
 ⊨-mono {σ = σ} {δ = δ} h (A ≐ᵥ B) s =
   trans (sym ([⨟]ᵛ A σ δ)) (trans (cong (_[ δ ]ᵛ) s) ([⨟]ᵛ B σ δ))
+⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (A ≾̂ᵥᶜ B) s =
+  subst₂ (Q' ∣_<:̂ᵛ_) ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ) (<:̂ᵛ-subst h s)
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (ρ ≾̂ᵣᶜ ρ') s =
   subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ) (⊩-substᵣ h s)
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (ε ≾̂ₑᶜ ε') s =
@@ -196,6 +207,8 @@ private
 ⊨-subst (C ∧̂ D) (s , t) = ⊨-subst C s , ⊨-subst D t
 ⊨-subst {δ = δ} {σ = σ} (A ≐ᵥ B) s =
   trans ([⨟]ᵛ A δ σ) (trans s (sym ([⨟]ᵛ B δ σ)))
+⊨-subst {δ = δ} {σ = σ} {Q = Q} (A ≾̂ᵥᶜ B) s =
+  subst₂ (Q ∣_<:̂ᵛ_) (sym ([⨟]ᵛ A δ σ)) (sym ([⨟]ᵛ B δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (ρ ≾̂ᵣᶜ ρ') s =
   subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([⨟]ʳ ρ δ σ)) (sym ([⨟]ʳ ρ' δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (ε ≾̂ₑᶜ ε') s =
@@ -221,6 +234,8 @@ private
 ⊨-subst⁻ (C ∧̂ D) (s , t) = ⊨-subst⁻ C s , ⊨-subst⁻ D t
 ⊨-subst⁻ {δ = δ} {σ = σ} (A ≐ᵥ B) s =
   trans (sym ([⨟]ᵛ A δ σ)) (trans s ([⨟]ᵛ B δ σ))
+⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (A ≾̂ᵥᶜ B) s =
+  subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A δ σ) ([⨟]ᵛ B δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (ρ ≾̂ᵣᶜ ρ') s =
   subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ δ σ) ([⨟]ʳ ρ' δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (ε ≾̂ₑᶜ ε') s =

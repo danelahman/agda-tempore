@@ -2,18 +2,25 @@
 -- Residual constraints                                          --
 --                                                                --
 -- What the driver cannot solve it carries: a `Resid Ψ` is the    --
--- list of grade orderings, eternality demands and var-rule        --
--- disjunctions still open over the current scope. Unlike `Hyps`,  --
--- a residual is closed under substitution — its eternality        --
--- component holds whole types, not variables — which is what lets --
--- the driver push it through the store extensions a unification   --
--- performs.                                                       --
+-- list of grade orderings, eternality demands, subtyping demands --
+-- and var-rule disjunctions still open over the current scope.    --
+-- Unlike `Hyps`, a residual is closed under substitution — its    --
+-- eternality and subtyping components hold whole types, not       --
+-- variables — which is what lets the driver push it through the   --
+-- store extensions a unification performs.                        --
 --                                                                --
 -- `Q ⊩ᴿ R [ δ ]` is what it takes to discharge a residual: every  --
 -- atom, instantiated along `δ`, is entailed by `Q`. Reading a     --
 -- residual back as a hypothesis set (`toHyps`) decomposes the     --
 -- eternality demands into atoms on type variables (`etDec`) and   --
--- takes the orderings and disjunctions verbatim.                  --
+-- the subtyping demands into atoms on type variables and grade    --
+-- orderings (`subDec`), and takes the orderings and disjunctions  --
+-- verbatim.                                                       --
+--                                                                --
+-- `subDec` decomposes a matching pair of formers and stops at a   --
+-- pair of type variables. A type variable against a former has no --
+-- decomposition: relating them needs the variable instantiated to --
+-- the other side's shape, which a residual cannot express.        --
 --                                                                --
 -- The name follows OutsideIn(X): a residual constraint is what    --
 -- solving leaves behind (Vytiniotis et al., JFP 2011).            --
@@ -26,9 +33,9 @@ open import Data.List.Membership.Propositional.Properties
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Empty using (⊥)
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
-open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Maybe.Base using (Maybe; just; nothing) renaming (map to mmap)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁)
-open import Data.Sum.Base using ([_,_]′)
+open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
 open import Relation.Nullary using (¬_; yes; no)
 
@@ -44,7 +51,7 @@ module TypeInference.SolverImpl.Resid (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Types S using (EternalBaseType; eternalBaseType?)
+open import Syntax.Types S using (EternalBaseType; eternalBaseType?; _≡ᵇ?_)
 
 open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
@@ -59,12 +66,13 @@ record Resid (Ψ : Scope) : Set where
     rs : List (RExp Ψ × RExp Ψ)            -- open resource-grade orderings
     es : List (EExp Ψ × EExp Ψ)            -- open effect-grade orderings
     ts : List (OVType Ψ)                   -- open eternality demands
+    ss : List (OVType Ψ × OVType Ψ)        -- open subtyping demands
     ds : List (OVType Ψ × RExp Ψ)          -- open var-rule disjunctions
 
 open Resid public
 
 emptyᴿ : ∀ {Ψ} → Resid Ψ
-emptyᴿ = resid [] [] [] []
+emptyᴿ = resid [] [] [] [] []
 
 infixl 50 _[_]ᴿ
 infixr 5 _∪ᴿ_
@@ -73,24 +81,26 @@ _[_]ᴿ : ∀ {Ψ Ψ'} → Resid Ψ → Subst Ψ Ψ' → Resid Ψ'
 R [ σ ]ᴿ = resid (map (mapᵖ (_[ σ ]ʳ)) (rs R))
                  (map (mapᵖ (_[ σ ]ᵉ)) (es R))
                  (map (_[ σ ]ᵛ) (ts R))
+                 (map (mapᵖ (_[ σ ]ᵛ)) (ss R))
                  (map (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) (ds R))
 
 _∪ᴿ_ : ∀ {Ψ} → Resid Ψ → Resid Ψ → Resid Ψ
-R ∪ᴿ R' = resid (rs R ++ rs R') (es R ++ es R') (ts R ++ ts R') (ds R ++ ds R')
+R ∪ᴿ R' = resid (rs R ++ rs R') (es R ++ es R') (ts R ++ ts R')
+                (ss R ++ ss R') (ds R ++ ds R')
 
 -- Pushing one atom
 
 pushʳ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Resid Ψ → Resid Ψ
-pushʳ ρ ρ' R = resid ((ρ , ρ') ∷ rs R) (es R) (ts R) (ds R)
+pushʳ ρ ρ' R = resid ((ρ , ρ') ∷ rs R) (es R) (ts R) (ss R) (ds R)
 
 pushᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Resid Ψ → Resid Ψ
-pushᵉ ε ε' R = resid (rs R) ((ε , ε') ∷ es R) (ts R) (ds R)
+pushᵉ ε ε' R = resid (rs R) ((ε , ε') ∷ es R) (ts R) (ss R) (ds R)
 
 pushᵗ : ∀ {Ψ} → OVType Ψ → Resid Ψ → Resid Ψ
-pushᵗ A R = resid (rs R) (es R) (A ∷ ts R) (ds R)
+pushᵗ A R = resid (rs R) (es R) (A ∷ ts R) (ss R) (ds R)
 
 pushᵈ : ∀ {Ψ} → OVType Ψ → RExp Ψ → Resid Ψ → Resid Ψ
-pushᵈ A ρ R = resid (rs R) (es R) (ts R) ((A , ρ) ∷ ds R)
+pushᵈ A ρ R = resid (rs R) (es R) (ts R) (ss R) ((A , ρ) ∷ ds R)
 
 infix 4 _⊩ᴿ_[_]
 
@@ -100,12 +110,13 @@ record _⊩ᴿ_[_] {Ψ Ψ' : Scope} (Q : Hyps Ψ') (R : Resid Ψ) (δ : Subst Ψ
     ⊩rs : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
     ⊩es : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
     ⊩ts : ∀ {A}    → A ∈ ts R        → Q ⊩ᴱ A [ δ ]ᵛ
+    ⊩ss : ∀ {A B}  → (A , B) ∈ ss R  → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
     ⊩ds : ∀ {A ρ}  → (A , ρ) ∈ ds R  → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
 
 open _⊩ᴿ_[_] public
 
 ⊩ᴿ-empty : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → Q ⊩ᴿ emptyᴿ [ δ ]
-⊩ᴿ-empty = mk⊩ᴿ (λ ()) (λ ()) (λ ()) (λ ())
+⊩ᴿ-empty = mk⊩ᴿ (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
 ⊩ᴿ-resp-≐ˢ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {δ δ' : Subst Ψ Ψ'}
            → δ ≐ˢ δ' → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ R [ δ' ]
@@ -113,6 +124,7 @@ open _⊩ᴿ_[_] public
   mk⊩ᴿ (λ {ρ} {ρ'} m → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩rs h m))
        (λ {ε} {ε'} m → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩es h m))
        (λ {A}       m → subst (Q ⊩ᴱ_) ([≐]ᵛ p A) (⊩ts h m))
+       (λ {A} {B}   m → subst₂ (Q ∣_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) (⊩ss h m))
        (λ {A} {ρ}   m → subst₂ (VarOK Q) ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩ds h m))
 
 -- A residual pushed through a substitution
@@ -127,6 +139,8 @@ open _⊩ᴿ_[_] public
                               (⊩es h (∈-map⁺ (mapᵖ (_[ σ ]ᵉ)) m)))
        (λ {A}      m → subst (Q ⊩ᴱ_) ([⨟]ᵛ A σ δ)
                               (⊩ts h (∈-map⁺ (_[ σ ]ᵛ) m)))
+       (λ {A} {B}  m → subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ)
+                              (⊩ss h (∈-map⁺ (mapᵖ (_[ σ ]ᵛ)) m)))
        (λ {A} {ρ}  m → subst₂ (VarOK Q) ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
                               (⊩ds h (∈-map⁺ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m)))
 
@@ -141,6 +155,8 @@ open _⊩ᴿ_[_] public
        (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([⨟]ᵉ ε δ δ') ([⨟]ᵉ ε' δ δ')
                               (⊩-substₑ g (⊩es h m)))
        (λ {A}      m → subst (Q' ⊩ᴱ_) ([⨟]ᵛ A δ δ') (⊩ᴱ-subst g (⊩ts h m)))
+       (λ {A} {B}  m → subst₂ (Q' ∣_<:̂ᵛ_) ([⨟]ᵛ A δ δ') ([⨟]ᵛ B δ δ')
+                              (<:̂ᵛ-subst g (⊩ss h m)))
        (λ {A} {ρ}  m → subst₂ (VarOK Q') ([⨟]ᵛ A δ δ') ([⨟]ʳ ρ δ δ')
                               (VarOK-subst g (⊩ds h m)))
 
@@ -151,6 +167,7 @@ open _⊩ᴿ_[_] public
 ∪ᴿ-fst h = mk⊩ᴿ (λ m → ⊩rs h (∈-++⁺ˡ m))
                 (λ m → ⊩es h (∈-++⁺ˡ m))
                 (λ m → ⊩ts h (∈-++⁺ˡ m))
+                (λ m → ⊩ss h (∈-++⁺ˡ m))
                 (λ m → ⊩ds h (∈-++⁺ˡ m))
 
 ∪ᴿ-snd : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R R' : Resid Ψ} {δ : Subst Ψ Ψ'}
@@ -158,32 +175,200 @@ open _⊩ᴿ_[_] public
 ∪ᴿ-snd {R = R} h = mk⊩ᴿ (λ m → ⊩rs h (∈-++⁺ʳ (rs R) m))
                         (λ m → ⊩es h (∈-++⁺ʳ (es R) m))
                         (λ m → ⊩ts h (∈-++⁺ʳ (ts R) m))
+                        (λ m → ⊩ss h (∈-++⁺ʳ (ss R) m))
                         (λ m → ⊩ds h (∈-++⁺ʳ (ds R) m))
 
 -- The tail of a residual with one atom pushed
 
 tailʳ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {ρ ρ' : RExp Ψ} {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushʳ ρ ρ' R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailʳ h = mk⊩ᴿ (λ m → ⊩rs h (there m)) (⊩es h) (⊩ts h) (⊩ds h)
+tailʳ h = mk⊩ᴿ (λ m → ⊩rs h (there m)) (⊩es h) (⊩ts h) (⊩ss h) (⊩ds h)
 
 tailᵉ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {ε ε' : EExp Ψ} {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushᵉ ε ε' R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailᵉ h = mk⊩ᴿ (⊩rs h) (λ m → ⊩es h (there m)) (⊩ts h) (⊩ds h)
+tailᵉ h = mk⊩ᴿ (⊩rs h) (λ m → ⊩es h (there m)) (⊩ts h) (⊩ss h) (⊩ds h)
 
 tailᵗ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushᵗ A R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailᵗ h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ m → ⊩ts h (there m)) (⊩ds h)
+tailᵗ h = mk⊩ᴿ (⊩rs h) (⊩es h) (λ m → ⊩ts h (there m)) (⊩ss h) (⊩ds h)
 
 tailᵈ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {ρ : RExp Ψ}
           {δ : Subst Ψ Ψ'}
       → Q ⊩ᴿ (pushᵈ A ρ R) [ δ ] → Q ⊩ᴿ R [ δ ]
-tailᵈ h = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (λ m → ⊩ds h (there m))
+tailᵈ h = mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (λ m → ⊩ds h (there m))
 
 -- The empty hypothesis set entails nothing, so every decision taken
 -- against it transports to any hypothesis set and any substitution
 
 ∅ᴴ-⊩ᴴ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → Q ⊩ᴴ ∅ᴴ [ δ ]
 ∅ᴴ-⊩ᴴ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
+
+-- The atoms a subtyping demand decomposes to: pairs of type
+-- variables and the grade orderings of the slots passed through.
+
+record SubAtoms (Ψ : Scope) : Set where
+  constructor atoms
+  field
+    asubᵥ : List (TyVar Ψ × TyVar Ψ)
+    aordᵣ : List (RExp Ψ × RExp Ψ)
+    aordₑ : List (EExp Ψ × EExp Ψ)
+
+open SubAtoms public
+
+noAtoms : ∀ {Ψ} → SubAtoms Ψ
+noAtoms = atoms [] [] []
+
+atomsᵛ : ∀ {Ψ} → TyVar Ψ → TyVar Ψ → SubAtoms Ψ
+atomsᵛ α β = atoms ((α , β) ∷ []) [] []
+
+atomsʳ : ∀ {Ψ} → RExp Ψ → RExp Ψ → SubAtoms Ψ
+atomsʳ ρ ρ' = atoms [] ((ρ , ρ') ∷ []) []
+
+atomsᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → SubAtoms Ψ
+atomsᵉ ε ε' = atoms [] [] ((ε , ε') ∷ [])
+
+infixr 5 _∪ᴬ_
+
+_∪ᴬ_ : ∀ {Ψ} → SubAtoms Ψ → SubAtoms Ψ → SubAtoms Ψ
+a ∪ᴬ b = atoms (asubᵥ a ++ asubᵥ b) (aordᵣ a ++ aordᵣ b) (aordₑ a ++ aordₑ b)
+
+-- The atoms hold along `δ` under `Q`
+
+record Holds {Ψ Ψ' : Scope} (Q : Hyps Ψ') (δ : Subst Ψ Ψ') (a : SubAtoms Ψ) : Set where
+  constructor holds
+  field
+    hv : ∀ {α β} → (α , β) ∈ asubᵥ a → Q ∣ sTy δ α <:̂ᵛ sTy δ β
+    hr : ∀ {ρ ρ'} → (ρ , ρ') ∈ aordᵣ a → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+    he : ∀ {ε ε'} → (ε , ε') ∈ aordₑ a → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+
+open Holds public
+
+holdsᵛ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {α β}
+       → Q ∣ sTy δ α <:̂ᵛ sTy δ β → Holds Q δ (atomsᵛ α β)
+holdsᵛ p = holds (λ { (here refl) → p }) (λ ()) (λ ())
+
+holdsʳ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {ρ ρ'}
+       → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ → Holds Q δ (atomsʳ ρ ρ')
+holdsʳ p = holds (λ ()) (λ { (here refl) → p }) (λ ())
+
+holdsᵉ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {ε ε'}
+       → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ → Holds Q δ (atomsᵉ ε ε')
+holdsᵉ p = holds (λ ()) (λ ()) (λ { (here refl) → p })
+
+∪ᴬ-intro : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} {a b}
+         → Holds Q δ a → Holds Q δ b → Holds Q δ (a ∪ᴬ b)
+∪ᴬ-intro {a = a} g h =
+  holds (λ m → [ hv g , hv h ]′ (∈-++⁻ (asubᵥ a) m))
+        (λ m → [ hr g , hr h ]′ (∈-++⁻ (aordᵣ a) m))
+        (λ m → [ he g , he h ]′ (∈-++⁻ (aordₑ a) m))
+
+∪ᴬ-fst : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (a b : SubAtoms Ψ)
+       → Holds Q δ (a ∪ᴬ b) → Holds Q δ a
+∪ᴬ-fst a b h = holds (λ m → hv h (∈-++⁺ˡ m)) (λ m → hr h (∈-++⁺ˡ m))
+                     (λ m → he h (∈-++⁺ˡ m))
+
+∪ᴬ-snd : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (a b : SubAtoms Ψ)
+       → Holds Q δ (a ∪ᴬ b) → Holds Q δ b
+∪ᴬ-snd a b h = holds (λ m → hv h (∈-++⁺ʳ (asubᵥ a) m))
+                     (λ m → hr h (∈-++⁺ʳ (aordᵣ a) m))
+                     (λ m → he h (∈-++⁺ʳ (aordₑ a) m))
+
+-- The atoms as a residual of their own: the variable pairs become
+-- subtyping demands between variable types.
+
+atomsᴿ : ∀ {Ψ} → SubAtoms Ψ → Resid Ψ
+atomsᴿ a = resid (aordᵣ a) (aordₑ a) [] (map (mapᵖ tvar) (asubᵥ a)) []
+
+holdsᴿ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (a : SubAtoms Ψ)
+       → Q ⊩ᴿ (atomsᴿ a) [ δ ] → Holds Q δ a
+holdsᴿ a h = holds (λ m → ⊩ss h (∈-map⁺ (mapᵖ tvar) m)) (⊩rs h) (⊩es h)
+
+-- A decomposition carries both directions: the atoms entail the
+-- demand at every instance, and every instance of the demand
+-- entails them.
+
+record SubDec {Ψ : Scope} (A B : OVType Ψ) : Set where
+  constructor subdec
+  field
+    atomsOf : SubAtoms Ψ
+    intro   : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+            → Holds Q δ atomsOf → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
+    elim    : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+            → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ → Holds Q δ atomsOf
+
+open SubDec public
+
+record SubDecᶜ {Ψ : Scope} (C D : OCType Ψ) : Set where
+  constructor subdecᶜ
+  field
+    atomsOfᶜ : SubAtoms Ψ
+    introᶜ   : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+             → Holds Q δ atomsOfᶜ → Q ∣ C [ δ ]ᶜ <:̂ᶜ D [ δ ]ᶜ
+    elimᶜ    : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+             → Q ∣ C [ δ ]ᶜ <:̂ᶜ D [ δ ]ᶜ → Holds Q δ atomsOfᶜ
+
+open SubDecᶜ public
+
+-- One assembly per pair of matching formers
+
+pairᴰ : ∀ {Ψ} {A A' B B' : OVType Ψ} → SubDec A A' → SubDec B B'
+      → SubDec (A |×| B) (A' |×| B')
+pairᴰ d e =
+  subdec (atomsOf d ∪ᴬ atomsOf e)
+         (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsOf e) h) |×|ₛ
+                  intro e δ (∪ᴬ-snd (atomsOf d) (atomsOf e) h))
+         (λ { δ (p |×|ₛ q) → ∪ᴬ-intro (elim d δ p) (elim e δ q) })
+
+arrᴰ : ∀ {Ψ} {A A' : OVType Ψ} {C C' : OCType Ψ} → SubDec A' A → SubDecᶜ C C'
+     → SubDec (A ⇒ C) (A' ⇒ C')
+arrᴰ d e =
+  subdec (atomsOf d ∪ᴬ atomsOfᶜ e)
+         (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsOfᶜ e) h) ⇒ₛ
+                  introᶜ e δ (∪ᴬ-snd (atomsOf d) (atomsOfᶜ e) h))
+         (λ { δ (p ⇒ₛ q) → ∪ᴬ-intro (elim d δ p) (elimᶜ e δ q) })
+
+boxᴰ : ∀ {Ψ} {A A' : OVType Ψ} → (ρ ρ' : RExp Ψ) → SubDec A A'
+     → SubDec ([ ρ ] A) ([ ρ' ] A')
+boxᴰ ρ ρ' d =
+  subdec (atomsʳ ρ' ρ ∪ᴬ atomsOf d)
+         (λ δ h → [ hr (∪ᴬ-fst (atomsʳ ρ' ρ) (atomsOf d) h) (here refl) ]ₛ
+                  intro d δ (∪ᴬ-snd (atomsʳ ρ' ρ) (atomsOf d) h))
+         (λ { δ ([ q ]ₛ p) → ∪ᴬ-intro (holdsʳ q) (elim d δ p) })
+
+bangᴰ : ∀ {Ψ} {A A' : OVType Ψ} → (ε ε' : EExp Ψ) → SubDec A A'
+      → SubDecᶜ (A ‼ ε) (A' ‼ ε')
+bangᴰ ε ε' d =
+  subdecᶜ (atomsOf d ∪ᴬ atomsᵉ ε ε')
+          (λ δ h → intro d δ (∪ᴬ-fst (atomsOf d) (atomsᵉ ε ε') h) ‼ₛ
+                   he (∪ᴬ-snd (atomsOf d) (atomsᵉ ε ε') h) (here refl))
+          (λ { δ (p ‼ₛ q) → ∪ᴬ-intro (elim d δ p) (holdsᵉ q) })
+
+leafᴰ : ∀ {Ψ} {A B : OVType Ψ}
+      → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
+      → SubDec A B
+leafᴰ f = subdec noAtoms (λ δ h → f δ) (λ δ p → holds (λ ()) (λ ()) (λ ()))
+
+-- `_∣_<:̂ᵛ_` has one rule per pair of matching formers and `tvarₛ` at a
+-- pair of type variables: a demand reduces to atoms on type variables
+-- and grade orderings, or has no decomposition.
+
+subDec  : ∀ {Ψ} → (A B : OVType Ψ) → Maybe (SubDec A B)
+subDecᶜ : ∀ {Ψ} → (C D : OCType Ψ) → Maybe (SubDecᶜ C D)
+
+subDec (tvar α) (tvar β) =
+  just (subdec (atomsᵛ α β) (λ δ h → hv h (here refl)) (λ δ p → holdsᵛ p))
+subDec (Base b) (Base b') with b ≡ᵇ? b'
+... | yes refl = just (leafᴰ (λ δ → Baseₛ refl))
+... | no _     = nothing
+subDec Unit       Unit        = just (leafᴰ (λ δ → Unitₛ))
+subDec Bool       Bool        = just (leafᴰ (λ δ → Boolₛ))
+subDec Empty      Empty       = just (leafᴰ (λ δ → Emptyₛ))
+subDec (A |×| B)  (A' |×| B') = zip₂ pairᴰ (subDec A A') (subDec B B')
+subDec (A ⇒ C)    (A' ⇒ C')   = zip₂ arrᴰ (subDec A' A) (subDecᶜ C C')
+subDec ([ ρ ] A)  ([ ρ' ] A') = mmap (boxᴰ ρ ρ') (subDec A A')
+subDec _          _           = nothing
+
+subDecᶜ (A ‼ ε) (A' ‼ ε') = mmap (bangᴰ ε ε') (subDec A A')
 
 -- `_⊩ᴱ_` has one rule per former except `_⇒_` and `[_]_`, and `et-hyp`
 -- at a type variable: a demand reduces to demands on type variables or
@@ -312,24 +497,83 @@ etsList-nothing (A ∷ l) eq | just _ | nothing with etsList-nothing l e
 ... | B , m , q = B , there m , q
 etsList-nothing (A ∷ l) eq | nothing | _ = A , here refl , etDec⁺-nothing A e₀
 
+-- The decomposition of a whole list of subtyping demands
+
+record SubsDec {Ψ : Scope} (l : List (OVType Ψ × OVType Ψ)) : Set where
+  constructor subsdec
+  field
+    atomsOfˢ : SubAtoms Ψ
+    introˢ   : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → Holds Q δ atomsOfˢ
+             → ∀ {A B} → (A , B) ∈ l → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
+    elimˢ    : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+             → (∀ {A B} → (A , B) ∈ l → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
+             → Holds Q δ atomsOfˢ
+
+open SubsDec public
+
+subsList : ∀ {Ψ} → (l : List (OVType Ψ × OVType Ψ)) → Maybe (SubsDec l)
+subsList []             =
+  just (subsdec noAtoms (λ δ h ()) (λ δ k → holds (λ ()) (λ ()) (λ ())))
+subsList ((A , B) ∷ l) with subDec A B | subsList l
+... | just d  | just ds =
+      just (subsdec (atomsOf d ∪ᴬ atomsOfˢ ds)
+                    (λ δ h →
+                       λ { (here refl) →
+                             intro d δ (∪ᴬ-fst (atomsOf d) (atomsOfˢ ds) h)
+                         ; (there m)   →
+                             introˢ ds δ (∪ᴬ-snd (atomsOf d) (atomsOfˢ ds) h) m })
+                    (λ δ k → ∪ᴬ-intro (elim d δ (k (here refl)))
+                                      (elimˢ ds δ (λ m → k (there m)))))
+... | just _  | nothing = nothing
+... | nothing | _       = nothing
+
+subsList-nothing : ∀ {Ψ} → (l : List (OVType Ψ × OVType Ψ)) → subsList l ≡ nothing
+                 → Σ[ A ∈ OVType Ψ ] Σ[ B ∈ OVType Ψ ]
+                     (((A , B) ∈ l) × (subDec A B ≡ nothing))
+subsList-nothing []             ()
+subsList-nothing ((A , B) ∷ l) eq with subDec A B in e₀ | subsList l in e
+subsList-nothing ((A , B) ∷ l) () | just _ | just _
+subsList-nothing ((A , B) ∷ l) eq | just _ | nothing with subsList-nothing l e
+... | A' , B' , m , q = A' , B' , there m , q
+subsList-nothing ((A , B) ∷ l) eq | nothing | _ = A , B , here refl , e₀
+
 toHyps : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ Q ∈ Hyps Ψ ] (Q ⊩ᴿ R [ idˢ ]))
-toHyps R with etsList (ts R)
-... | nothing       = nothing
-... | just (αs , f) = just (Q , mk⊩ᴿ ordᵣ' ordₑ' ets' disj')
+toHyps R with etsList (ts R) | subsList (ss R)
+... | nothing       | _       = nothing
+... | just _        | nothing = nothing
+... | just (αs , f) | just d  = just (Q , mk⊩ᴿ ordᵣ' ordₑ' ets' subs' disj')
   where
+    a : SubAtoms _
+    a = atomsOfˢ d
+
     Q : Hyps _
-    Q = hyps αs [] (rs R) (es R) (ds R)
+    Q = hyps αs (asubᵥ a) (rs R ++ aordᵣ a) (es R ++ aordₑ a) (ds R)
+
+    hyps' : Holds Q idˢ a
+    hyps' =
+      holds (λ m → tvarₛ (hypᵗᵛ m))
+            (λ {ρ} {ρ'} m →
+               subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ'))
+                      (hypᵣ (∈-++⁺ʳ (rs R) m)))
+            (λ {ε} {ε'} m →
+               subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε'))
+                      (hypₑ (∈-++⁺ʳ (es R) m)))
 
     ets' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ idˢ ]ᵛ
     ets' {A} m = subst (Q ⊩ᴱ_) (sym ([id]ᵛ A)) (f et-hyp m)
 
+    subs' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ idˢ ]ᵛ <:̂ᵛ B [ idˢ ]ᵛ
+    subs' = introˢ d idˢ hyps'
+
     ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ idˢ ]ʳ ≾̂ᵣ ρ' [ idˢ ]ʳ
     ordᵣ' {ρ} {ρ'} m =
-      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ')) (hypᵣ m)
+      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ'))
+             (hypᵣ (∈-++⁺ˡ m))
 
     ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ idˢ ]ᵉ ≾̂ₑ ε' [ idˢ ]ᵉ
     ordₑ' {ε} {ε'} m =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (hypₑ m)
+      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε'))
+             (hypₑ (∈-++⁺ˡ m))
 
     disj' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
     disj' {A} {ρ} m =
@@ -339,9 +583,12 @@ toHyps R with etsList (ts R)
 
 toHyps-nothing : ∀ {Ψ} → (R : Resid Ψ) → toHyps R ≡ nothing
                → Σ[ A ∈ OVType Ψ ] ((A ∈ ts R) × (etDec A ≡ nothing))
-toHyps-nothing R eq with etsList (ts R) in e
-... | nothing = etsList-nothing (ts R) e
-toHyps-nothing R () | just _
+               ⊎ Σ[ A ∈ OVType Ψ ] Σ[ B ∈ OVType Ψ ]
+                   (((A , B) ∈ ss R) × (subDec A B ≡ nothing))
+toHyps-nothing R eq with etsList (ts R) in e | subsList (ss R) in e'
+... | nothing | _       = inj₁ (etsList-nothing (ts R) e)
+... | just _  | nothing = inj₂ (subsList-nothing (ss R) e')
+toHyps-nothing R () | just _ | just _
 
 -- Every atom the read-back raised is entailed by the demands it
 -- came from, at every instance
@@ -365,8 +612,19 @@ toHyps-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (R : Resid Ψ)
              → {p : Σ[ Q₀ ∈ Hyps Ψ ] (Q₀ ⊩ᴿ R [ idˢ ])}
              → toHyps R ≡ just p → (δ : Subst Ψ Ψ')
              → Q ⊩ᴿ R [ δ ] → Q ⊩ᴴ proj₁ p [ δ ]
-toHyps-compl R eq δ h with etsList (ts R) in e
-toHyps-compl R () δ h | nothing
-toHyps-compl R eq δ h | just (αs , f) with eq
-... | refl = mk⊩ᴴ (etsList-compl (ts R) e δ (⊩ts h)) (λ ()) (⊩rs h) (⊩es h)
-                  (⊩ds h)
+toHyps-compl R eq δ h with etsList (ts R) in e | subsList (ss R) in e'
+toHyps-compl R () δ h | nothing        | _
+toHyps-compl R () δ h | just _         | nothing
+toHyps-compl R eq δ h | just (αs , f)  | just d with eq
+... | refl = mk⊩ᴴ (etsList-compl (ts R) e δ (⊩ts h)) (hv hs) ordᵣ' ordₑ' (⊩ds h)
+  where
+    hs : Holds _ δ (atomsOfˢ d)
+    hs = elimˢ d δ (⊩ss h)
+
+    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R ++ aordᵣ (atomsOfˢ d)
+          → _ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+    ordᵣ' m = [ ⊩rs h , hr hs ]′ (∈-++⁻ (rs R) m)
+
+    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ es R ++ aordₑ (atomsOfˢ d)
+          → _ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+    ordₑ' m = [ ⊩es h , he hs ]′ (∈-++⁻ (es R) m)

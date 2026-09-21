@@ -108,6 +108,31 @@ checkᵗ (A ∷ l) δ with etDec (A [ δ ]ᵛ) in eq | checkᵗ l δ
 ... | just (α ∷ αs) | _       = nothing
 ... | nothing       | _       = nothing
 
+-- At the empty scope a decomposition raises no atom on type variables,
+-- so only its grade orderings are left to decide.
+
+no-tvar : ∀ {X : Set} → TyVar ∅ˢ → X
+no-tvar ()
+
+checkˢ¹ : ∀ {Ψ} → (A B : OVType Ψ) → (δ : Subst Ψ ∅ˢ)
+        → Maybe (∅ᴴ ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
+checkˢ¹ A B δ with subDec (A [ δ ]ᵛ) (B [ δ ]ᵛ)
+... | nothing = nothing
+... | just d with checkʳ (aordᵣ (atomsOf d)) idˢ | checkᵉ (aordₑ (atomsOf d)) idˢ
+...   | just g  | just k  =
+        just (subst₂ (∅ᴴ ∣_<:̂ᵛ_) ([id]ᵛ (A [ δ ]ᵛ)) ([id]ᵛ (B [ δ ]ᵛ))
+                     (intro d idˢ (holds (λ {α} m → no-tvar α) g k)))
+...   | just _  | nothing = nothing
+...   | nothing | _       = nothing
+
+checkˢ : ∀ {Ψ} → (l : List (OVType Ψ × OVType Ψ)) → (δ : Subst Ψ ∅ˢ)
+       → Maybe (∀ {A B} → (A , B) ∈ l → ∅ᴴ ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ)
+checkˢ []             δ = just (λ ())
+checkˢ ((A , B) ∷ l) δ with checkˢ¹ A B δ | checkˢ l δ
+... | just p  | just f  = just (λ { (here refl) → p ; (there m) → f m })
+... | just _  | nothing = nothing
+... | nothing | _       = nothing
+
 -- At the ground substitution a disjunction is closed by whichever
 -- disjunct holds: the grade side first, the eternality side after.
 
@@ -126,12 +151,14 @@ checkᵈ ((A , ρ) ∷ l) δ with checkᵈ l δ
 ...     | nothing       = nothing
 
 closeAt : ∀ {Ψ} → (R : Resid Ψ) → (δ : Subst Ψ ∅ˢ) → Maybe (∅ᴴ ⊩ᴿ R [ δ ])
-closeAt R δ with checkʳ (rs R) δ | checkᵉ (es R) δ | checkᵗ (ts R) δ | checkᵈ (ds R) δ
-... | just f  | just g  | just k  | just d  = just (mk⊩ᴿ f g k d)
-... | just _  | just _  | just _  | nothing = nothing
-... | just _  | just _  | nothing | _       = nothing
-... | just _  | nothing | _       | _       = nothing
-... | nothing | _       | _       | _       = nothing
+closeAt R δ with checkʳ (rs R) δ | checkᵉ (es R) δ | checkᵗ (ts R) δ
+               | checkˢ (ss R) δ | checkᵈ (ds R) δ
+... | just f  | just g  | just k  | just b  | just d  = just (mk⊩ᴿ f g k b d)
+... | just _  | just _  | just _  | just _  | nothing = nothing
+... | just _  | just _  | just _  | nothing | _       = nothing
+... | just _  | just _  | nothing | _       | _       = nothing
+... | just _  | nothing | _       | _       | _       = nothing
+... | nothing | _       | _       | _       | _       = nothing
 
 close : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ δ ∈ Subst Ψ ∅ˢ ] (∅ᴴ ⊩ᴿ R [ δ ]))
 close {Ψ} R with closeAt R (slack* (Sz Ψ) R idˢ ⨟ˢ groundˢ)

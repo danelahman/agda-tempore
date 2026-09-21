@@ -1,8 +1,9 @@
 ------------------------------------------------------------------
 -- Walks a constraint, threading a state: type equations go to   --
--- the unification core, grade orderings, eternality demands     --
--- and var-rule disjunctions are residualised, and binders lift  --
--- the state.                                                    --
+-- the unification core, a subtyping atom is decomposed at       --
+-- matching formers and residualised at a pair of type           --
+-- variables, grade orderings, eternality demands and var-rule   --
+-- disjunctions are residualised, and binders lift the state.    --
 -- A successful witness is deferred, re-read at the state a      --
 -- later component leaves behind rather than transported         --
 -- along it, making conjunction transport-free.                  --
@@ -53,6 +54,8 @@ open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
 open import TypeInference.Open.Subst  S
 open import TypeInference.Open.Hyps   S
+
+open import TypeInference.Open.Subtyping S using (<:̂ᵛ-wkᵉ)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
@@ -129,6 +132,13 @@ Atomᵗ {Φ} j A =
        → (∀ {B} → B ∈ l₀ → Q ⊩ᴱ B [ δ ]ᵛ)
        → wkᵉ-H Q ⊩ᴱ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
 
+Atomˢ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → OVType (Φ +e) → Set
+Atomˢ {Φ} j A B =
+  Σ[ l₀ ∈ List (OVType Φ × OVType Φ) ]
+    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+       → (∀ {X Y} → (X , Y) ∈ l₀ → Q ∣ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ)
+       → wkᵉ-H Q ∣ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ <:̂ᵛ B [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
+
 Atomᵈ : ∀ {Φ} → EVar (Φ +e) → OVType (Φ +e) → RExp (Φ +e) → Set
 Atomᵈ {Φ} j A ρ =
   Σ[ l₀ ∈ List (OVType Φ × RExp Φ) ]
@@ -183,6 +193,19 @@ atomᵗ j A with strᵛ⁺ j A
 ... | nothing with et₀? A
 ...   | just p  = just ([] , λ δ Q k → ⊩ᴱ-subst ∅ᴴ-⊩ᴴ (p {∅ᴴ}))
 ...   | nothing = nothing
+
+-- A subtyping demand is kept only when both sides strengthen away
+-- from the rigid.
+
+atomˢ : ∀ {Φ} → (j : EVar (Φ +e)) → (A B : OVType (Φ +e)) → Maybe (Atomˢ j A B)
+atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
+... | just (A₀ , e₁) | just (B₀ , e₂) =
+      just ((A₀ , B₀) ∷ [] ,
+            λ δ Q k → subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_)
+                             (sym (pop⨟ᵛ j A e₁ δ)) (sym (pop⨟ᵛ j B e₂ δ))
+                             (<:̂ᵛ-wkᵉ (k (here refl))))
+... | just _         | nothing = nothing
+... | nothing        | _       = nothing
 
 -- A disjunction whose type or grade mentions the rigid cannot be kept:
 -- one of its two sides must be settled where the rigid is in scope.
@@ -258,6 +281,22 @@ listᵗ j (A ∷ l) with atomᵗ j A | listᵗ j l
 ... | just _        | nothing = nothing
 ... | nothing       | _       = nothing
 
+listˢ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × OVType (Φ +e)))
+      → Maybe (Σ[ l₀ ∈ List (OVType Φ × OVType Φ) ]
+                 (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+                    → (∀ {X Y} → (X , Y) ∈ l₀ → Q ∣ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ)
+                    → (∀ {A B} → (A , B) ∈ l
+                         → wkᵉ-H Q ∣ A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ
+                                  <:̂ᵛ B [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)))
+listˢ j []             = just ([] , λ δ Q k → λ ())
+listˢ j ((A , B) ∷ l) with atomˢ j A B | listˢ j l
+... | just (a , fa) | just (l₀ , f) =
+      just (a ++ l₀ ,
+            λ δ Q k → λ { (here refl) → fa δ Q (λ m → k (∈-++⁺ˡ m))
+                        ; (there m)   → f δ Q (λ m' → k (∈-++⁺ʳ a m')) m })
+... | just _        | nothing = nothing
+... | nothing       | _       = nothing
+
 listᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × RExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (OVType Φ × RExp Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
@@ -278,15 +317,18 @@ splitᴿ : ∀ {Φ} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
        → Maybe (Σ[ R₀ ∈ Resid Φ ]
                   (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
                      → Q ⊩ᴿ R₀ [ δ ] → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]))
-splitᴿ j R with listʳ j (rs R) | listᵉ j (es R) | listᵗ j (ts R) | listᵈ j (ds R)
-... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ld , fd) =
-      just (resid lr le lt ld ,
-            λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h)) (fe δ Q (⊩es h))
-                           (ft δ Q (⊩ts h)) (fd δ Q (⊩ds h)))
-... | just _         | just _         | just _         | nothing = nothing
-... | just _         | just _         | nothing        | _       = nothing
-... | just _         | nothing        | _              | _       = nothing
-... | nothing        | _              | _              | _       = nothing
+splitᴿ j R with listʳ j (rs R) | listᵉ j (es R) | listᵗ j (ts R)
+              | listˢ j (ss R) | listᵈ j (ds R)
+... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ls , fs)
+    | just (ld , fd) =
+      just (resid lr le lt ls ld ,
+            λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h)) (fe δ Q (⊩es h)) (ft δ Q (⊩ts h))
+                           (fs δ Q (⊩ss h)) (fd δ Q (⊩ds h)))
+... | just _ | just _ | just _  | just _  | nothing = nothing
+... | just _ | just _ | just _  | nothing | _       = nothing
+... | just _ | just _ | nothing | _       | _       = nothing
+... | just _ | nothing | _      | _       | _       = nothing
+... | nothing | _      | _      | _       | _       = nothing
 
 threadOps : ∀ {Θ} → {f : Op → Constraint Θ}
           → ((s : St Θ) → (op : Op)
@@ -398,6 +440,15 @@ solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) 
                  (trans (proj₁ (unify-sound (rig s)
                                             (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ))
                         ([⨟]ᵛ B (θ s) ⟦ ρ ⟧ᴬ))
+
+solve s (A ≾̂ᵥᶜ B) with subDec (A [ θ s ]ᵛ) (B [ θ s ]ᵛ)
+... | nothing = nothing
+... | just d  =
+      just (st (Ψ s) (θ s) (res s ∪ᴿ atomsᴿ (atomsOf d)) (rig s) ,
+            mor idˢ (⨟-idʳ (θ s))
+                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (∪ᴿ-fst h)) ,
+            λ δ Q h → subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A (θ s) δ) ([⨟]ᵛ B (θ s) δ)
+                             (intro d δ (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
 solve s (ρ ≾̂ᵣᶜ ρ') =
   just (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) (ρ' [ θ s ]ʳ) (res s)) (rig s) ,

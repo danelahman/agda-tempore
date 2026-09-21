@@ -5,8 +5,9 @@
 -- true in the closed language. Every clause is the *semantic*    --
 -- counterpart of the corresponding clause of `_⊨[_]_`: the       --
 -- entailments become the closed orders, `_⊩ᴱ_` becomes           --
--- `Eternal`, and the existentials range over closed types and    --
--- grades rather than over open expressions.                       --
+-- `Eternal`, `_∣_<:̂ᵛ_` becomes `_<:ᵛ_`, and the existentials     --
+-- range over closed types and grades rather than over open       --
+-- expressions.                                                    --
 --                                                                --
 -- The bridge `⊨-ground` grounds a solution-with-residue: a       --
 -- grounding of the residual hypotheses turns `σ ⊨[ Q ] C` into   --
@@ -38,8 +39,9 @@ open Operations Ops
 -- constructors overlap with the mirrored ones and are disambiguated by
 -- the expected type, as in `TypeInference.Open.Grounding`.
 
-open import Syntax.Contexts S
-open import Syntax.Types    S
+open import Syntax.Contexts  S
+open import Syntax.Subtyping S
+open import Syntax.Types     S
 
 open import TypeInference.Open.Grades    S
 open import TypeInference.Open.Types     S
@@ -58,6 +60,7 @@ _⊨ᵍ_ : ∀ {Θ} → Grounding Θ → Constraint Θ → Set
 θ ⊨ᵍ ⊥̂          = ⊥
 θ ⊨ᵍ (C ∧̂ D)    = θ ⊨ᵍ C × θ ⊨ᵍ D
 θ ⊨ᵍ (A ≐ᵥ B)   = ⟦ A ⟧ᵛ θ ≡ ⟦ B ⟧ᵛ θ
+θ ⊨ᵍ (A ≾̂ᵥᶜ B)  = ⟦ A ⟧ᵛ θ <:ᵛ ⟦ B ⟧ᵛ θ
 θ ⊨ᵍ (ρ ≾̂ᵣᶜ ρ') = ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
 θ ⊨ᵍ (ε ≾̂ₑᶜ ε') = ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
 θ ⊨ᵍ Etᶜ A      = Eternal (⟦ A ⟧ᵛ θ)
@@ -135,6 +138,7 @@ mutual
 ⊨ᵍ-resp p (C ∧̂ D)     (s , t)  = ⊨ᵍ-resp p C s , ⊨ᵍ-resp p D t
 ⊨ᵍ-resp p (A ≐ᵥ B)    s        =
   trans (sym (⟦≐⟧ᵛ p A)) (trans s (⟦≐⟧ᵛ p B))
+⊨ᵍ-resp p (A ≾̂ᵥᶜ B)   s        = subst₂ _<:ᵛ_ (⟦≐⟧ᵛ p A) (⟦≐⟧ᵛ p B) s
 ⊨ᵍ-resp p (ρ ≾̂ᵣᶜ ρ')  s        = subst₂ _≾ᵣ_ (⟦≐⟧ʳ p ρ) (⟦≐⟧ʳ p ρ') s
 ⊨ᵍ-resp p (ε ≾̂ₑᶜ ε')  s        = subst₂ _≾ₑ_ (⟦≐⟧ᵉ p ε) (⟦≐⟧ᵉ p ε') s
 ⊨ᵍ-resp p (Etᶜ A)     s        = subst Eternal (⟦≐⟧ᵛ p A) s
@@ -227,6 +231,8 @@ idˢ-⨟ᵍ θ = mk≐ᵍ (λ α → refl) (λ i → refl) (λ i → refl)
 ⊨-ground {σ = σ} θ h (A ≐ᵥ B) s =
   trans (sym (⟦⟧-⨟ᵍ-v σ θ A))
         (trans (cong (λ X → ⟦ X ⟧ᵛ θ) s) (⟦⟧-⨟ᵍ-v σ θ B))
+⊨-ground {σ = σ} θ h (A ≾̂ᵥᶜ B) s =
+  subst₂ _<:ᵛ_ (⟦⟧-⨟ᵍ-v σ θ A) (⟦⟧-⨟ᵍ-v σ θ B) (ground-<:ᵛ h s)
 ⊨-ground {σ = σ} θ h (ρ ≾̂ᵣᶜ ρ') s =
   subst₂ _≾ᵣ_ (⟦⟧-⨟ᵍ-r σ θ ρ) (⟦⟧-⨟ᵍ-r σ θ ρ') (ground-≾ᵣ h s)
 ⊨-ground {σ = σ} θ h (ε ≾̂ₑᶜ ε') s =

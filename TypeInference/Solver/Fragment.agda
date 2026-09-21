@@ -30,6 +30,7 @@ data NoRig {Θ : Scope} : Constraint Θ → Set where
   ⊥ⁿ    : NoRig ⊥̂
   _∧ⁿ_  : ∀ {C D} → NoRig C → NoRig D → NoRig (C ∧̂ D)
   ≐ⁿ    : ∀ {A B} → NoRig (A ≐ᵥ B)
+  ≾ᵥⁿ   : ∀ {A B} → NoRig (A ≾̂ᵥᶜ B)
   ≾ᵣⁿ   : ∀ {ρ ρ'} → NoRig (ρ ≾̂ᵣᶜ ρ')
   ≾ₑⁿ   : ∀ {ε ε'} → NoRig (ε ≾̂ₑᶜ ε')
   Etⁿ   : ∀ {A} → NoRig (Etᶜ A)
@@ -52,6 +53,7 @@ norig? oe (C ∧̂ D) with norig? oe C | norig? oe D
 ... | just p  | just q  = just (p ∧ⁿ q)
 ... | _       | _       = nothing
 norig? oe (A ≐ᵥ B)     = just ≐ⁿ
+norig? oe (A ≾̂ᵥᶜ B)    = just ≾ᵥⁿ
 norig? oe (ρ ≾̂ᵣᶜ ρ')   = just ≾ᵣⁿ
 norig? oe (ε ≾̂ₑᶜ ε')   = just ≾ₑⁿ
 norig? oe (Etᶜ A)      = just Etⁿ
