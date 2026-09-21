@@ -555,7 +555,9 @@ mutual
 
       D₀ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih))
 
-      D = unbox x ok D₀
+      -- generation equates the payload slot, so the witness is reflexivity
+
+      D = unbox x ok (<:̂ᵛ-refl _) D₀
 
       q = cong₂ unbox
                 (trans (var-pos-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))

@@ -12,7 +12,7 @@
 -- erases to a `RawC (2 + n)` with no adjustment, and a           --
 -- variable's raw index is its full-context position `var-pos`.   --
 --                                                                --
--- Erasure is not injective: `coerce` erases to its subject.      --
+-- Erasure is not injective: `subV`/`subC` erase to their subjects.      --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -57,6 +57,10 @@ mutual
   ⌊ ⦉ V , W ⦊ ⌋ᵛ   = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ lam M ⌋ᵛ      = lam ⌊ M ⌋ᶜ
 
+  -- subsumption is invisible
+
+  ⌊ subV V p ⌋ᵛ   = ⌊ V ⌋ᵛ
+
 
   ⌊_⌋ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
        → Q ∣ Γ ⊢C⦂ C
@@ -77,15 +81,15 @@ mutual
 
   ⌊ handle M `with H `in N ⌋ᶜ   = handle ⌊ M ⌋ᶜ `with (λ op → ⌊ H op ⌋ᶜ) `in ⌊ N ⌋ᶜ
 
-  ⌊ unbox x p N ⌋ᶜ              = unbox (var-pos x) ⌊ N ⌋ᶜ
+  ⌊ unbox x p q N ⌋ᶜ            = unbox (var-pos x) ⌊ N ⌋ᶜ
 
   -- the grade of a box is dropped, being existentially bound by inference
 
   ⌊ box ρ V N ⌋ᶜ                = box ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
 
-  -- sub-effecting is invisible
+  -- subsumption is invisible
 
-  ⌊ coerce p M ⌋ᶜ               = ⌊ M ⌋ᶜ
+  ⌊ subC M p ⌋ᶜ                 = ⌊ M ⌋ᶜ
 
 -- Sanity checks: erasure computes as intended.
 
@@ -124,7 +128,7 @@ private
   -- unboxing a boxed variable
 
   ex-unbox : ∅ᴴ ∣ (∅ᶜ ∷ [ ûᵣ ] Unit) ⊢C⦂ Unit ‼ ûₑ
-  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (return ⋆)
+  ex-unbox = unbox Hd ⊩≾̂ᵣ-refl (<:̂ᵛ-refl Unit) (return ⋆)
 
   ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox zero (return ⋆)
   ex-unbox-erase = refl

@@ -161,6 +161,7 @@ module _ (GU : GroundUniform) where
     Param-groundV θ h false       = tt
     Param-groundV θ h ⦉ V , W ⦊    = Param-groundV θ h V , Param-groundV θ h W
     Param-groundV θ h (lam M)     = Param-groundC θ h M
+    Param-groundV θ h (subV V p)  = Param-groundV θ h V
 
     Param-groundC : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
                   → (θ : Grounding Θ) → (h : θ ⊨ᴴ Q) → (D : Q ∣ Γ ⊢C⦂ C)
@@ -192,10 +193,10 @@ module _ (GU : GroundUniform) where
       , (λ op ε'' → Param-ground-clause θ h op ε'' (Ĥ op))
       , ground-uniform GU θ h Ĥ (λ op ε'' → Param-ground-clause θ h op ε'' (Ĥ op))
 
-    Param-groundC θ h (unbox x ok N) with ground-unbox θ h x ok
+    Param-groundC θ h (unbox x ok p N) with ground-unbox θ h x ok
     ... | le , y = Param-groundC θ h N
     Param-groundC θ h (box ρ V N) = Param-groundV θ h V , Param-groundC θ h N
-    Param-groundC θ h (coerce le M) = Param-groundC θ h M
+    Param-groundC θ h (subC M p)  = Param-groundC θ h M
 
     -- one clause at one residual grade: the certificate of the clause read at
     -- `θ ,ᵍᵉ ε''`, transported along `ground-clause`'s `subst₂`
