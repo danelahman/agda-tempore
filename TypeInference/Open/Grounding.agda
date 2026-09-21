@@ -121,6 +121,7 @@ record _⊨ᴴ_ {Θ : Scope} (θ : Grounding Θ) (Q : Hyps Θ) : Set where
   constructor mk⊨ᴴ
   field
     etOK   : ∀ {α} → α ∈ ets Q → Eternal (gTy θ α)
+    subOK  : ∀ {α β} → (α , β) ∈ subᵥ Q → gTy θ α <:ᵛ gTy θ β
     ordROK : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
     ordEOK : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
     disjOK : ∀ {A ρ} → (A , ρ) ∈ disj Q
@@ -131,7 +132,7 @@ open _⊨ᴴ_ public
 -- Every grounding satisfies the empty hypothesis set
 
 ∅ᴴ-⊨ : ∀ {Θ} {θ : Grounding Θ} → θ ⊨ᴴ ∅ᴴ
-∅ᴴ-⊨ = mk⊨ᴴ (λ ()) (λ ()) (λ ()) (λ ())
+∅ᴴ-⊨ = mk⊨ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
 
 ground-≡̂ᵣ : ∀ {Θ} {θ : Grounding Θ} {ρ ρ' : RExp Θ}
           → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≡ ⟦ ρ' ⟧ʳ θ
@@ -181,9 +182,20 @@ ground-≾ₑ h (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (ground-≾�
                                     (·ₑ-monoʳ-≾ₑ (ground-≾ₑ h q))
 ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
+-- An assumed subtyping between type variables grounds to a closed
+-- subtyping between their images.
+
+ground-⊩ᵗᵛ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {α β}
+           → θ ⊨ᴴ Q → Q ⊩ᵗᵛ α ≾ β → gTy θ α <:ᵛ gTy θ β
+ground-⊩ᵗᵛ {θ = θ} h (reflᵗᵛ {α}) = <:ᵛ-refl (gTy θ α)
+ground-⊩ᵗᵛ         h (hypᵗᵛ m)     = subOK h m
+ground-⊩ᵗᵛ         h (transᵗᵛ p q) = <:ᵛ-trans (ground-⊩ᵗᵛ h p) (ground-⊩ᵗᵛ h q)
+
 ground-Et : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {A : OVType Θ}
           → θ ⊨ᴴ Q → Q ⊩ᴱ A → Eternal (⟦ A ⟧ᵛ θ)
 ground-Et h (et-hyp m)       = etOK h m
+ground-Et h (et-subˡ p et)   = <:ᵛ-eternalˡ (ground-⊩ᵗᵛ h p) (ground-Et h et)
+ground-Et h (et-subʳ p et)   = <:ᵛ-eternalʳ (ground-⊩ᵗᵛ h p) (ground-Et h et)
 ground-Et h (Baseₑ p)        = Baseₑ p
 ground-Et h Unitₑ            = Unitₑ
 ground-Et h Boolₑ            = Boolₑ
@@ -191,15 +203,15 @@ ground-Et h (et₁ |×|ₑ et₂)   = ground-Et h et₁ |×|ₑ ground-Et h et�
 ground-Et h Emptyₑ           = Emptyₑ
 
 -- Subtyping grounds structurally: each constructor maps to its closed
--- counterpart, the grade slots by `ground-≾ᵣ`/`ground-≾ₑ`. A type variable
--- grounds to whatever `θ` assigns it, so `tvarₛ` grounds to reflexivity.
+-- counterpart, the grade slots by `ground-≾ᵣ`/`ground-≾ₑ` and the
+-- variable heads by `ground-⊩ᵗᵛ`.
 
 ground-<:ᵛ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {A A' : OVType Θ}
            → θ ⊨ᴴ Q → Q ∣ A <:̂ᵛ A' → ⟦ A ⟧ᵛ θ <:ᵛ ⟦ A' ⟧ᵛ θ
 ground-<:ᶜ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {C C' : OCType Θ}
            → θ ⊨ᴴ Q → Q ∣ C <:̂ᶜ C' → ⟦ C ⟧ᶜ θ <:ᶜ ⟦ C' ⟧ᶜ θ
 
-ground-<:ᵛ {θ = θ} h (tvarₛ {α} refl) = <:ᵛ-refl (gTy θ α)
+ground-<:ᵛ         h (tvarₛ p)        = ground-⊩ᵗᵛ h p
 ground-<:ᵛ         h (Baseₛ p)        = Baseₛ p
 ground-<:ᵛ         h Unitₛ            = Unitₛ
 ground-<:ᵛ         h Boolₛ            = Boolₛ
@@ -307,11 +319,16 @@ ground-wkᵉ-ctx (Γ ⟨ ρ ⟩) = cong₂ _⟨_⟩ (ground-wkᵉ-ctx Γ) (groun
 
 ⊨ᴴ-wkᵉ-ground : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ε₀ : E}
               → θ ⊨ᴴ Q → (θ ,ᵍᵉ ε₀) ⊨ᴴ wkᵉ-H Q
-⊨ᴴ-wkᵉ-ground {Θ} {θ} {Q} {ε₀} h = mk⊨ᴴ et ordR ordE dsj
+⊨ᴴ-wkᵉ-ground {Θ} {θ} {Q} {ε₀} h = mk⊨ᴴ et sub ordR ordE dsj
   where
     et : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Eternal (gTy (θ ,ᵍᵉ ε₀) α)
     et m with ∈-map⁻ (wkᵉ-tv Θ) m
     ... | α₀ , m₀ , refl = etOK h m₀
+
+    sub : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q)
+        → gTy (θ ,ᵍᵉ ε₀) α <:ᵛ gTy (θ ,ᵍᵉ ε₀) β
+    sub m with ∈-map⁻ (mapᵖ (wkᵉ-tv Θ)) m
+    ... | (α₀ , β₀) , m₀ , refl = subOK h m₀
 
     ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
          → ⟦ ρ ⟧ʳ (θ ,ᵍᵉ ε₀) ≾ᵣ ⟦ ρ' ⟧ʳ (θ ,ᵍᵉ ε₀)

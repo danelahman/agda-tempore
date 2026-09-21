@@ -2,11 +2,18 @@
 -- Hypotheses and entailment of the mirrored language             --
 --                                                                --
 -- A hypothesis set `Hyps Θ` collects the eternality atoms on     --
--- type variables, the assumed orderings between open grade       --
+-- type variables, the assumed subtyping atoms between type       --
+-- variables, the assumed orderings between open grade            --
 -- expressions, and the assumed var-rule disjunctions, under      --
 -- which a mirrored typing derivation is built. Entailment        --
--- (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`, `VarOK`) is an inductive         --
--- under-approximation of truth in all groundings.                --
+-- (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`, `_∣_<:̂ᵛ_`, `VarOK`)   --
+-- is an inductive under-approximation of truth in all            --
+-- groundings.                                                    --
+--                                                                --
+-- Open subtyping is defined here, not in                         --
+-- `TypeInference.Open.Subtyping`: the image of a subtyping atom  --
+-- under a substitution is a subtyping derivation between         --
+-- arbitrary open types, so `_⊩ᴴ_[_]` already mentions it.        --
 --                                                                --
 -- Judgements under such a set are HM(X)'s constrained types      --
 -- (Odersky, Sulzmann, Wehr 1999) and Jones's qualified types     --
@@ -46,6 +53,7 @@ record Hyps (Θ : Scope) : Set where
   constructor hyps
   field
     ets  : List (TyVar Θ)                     -- eternality atoms on type variables
+    subᵥ : List (TyVar Θ × TyVar Θ)           -- assumed subtyping between type variables
     ordᵣ : List (RExp Θ × RExp Θ)             -- assumed resource-grade orderings
     ordₑ : List (EExp Θ × EExp Θ)             -- assumed effect-grade orderings
     disj : List (OVType Θ × RExp Θ)           -- assumed var-rule disjunctions
@@ -55,7 +63,7 @@ open Hyps public
 -- Empty hypothesis set
 
 ∅ᴴ : ∀ {Θ} → Hyps Θ
-∅ᴴ = hyps [] [] [] []
+∅ᴴ = hyps [] [] [] [] []
 
 -- Pairwise action of a function on a homogeneous pair
 
@@ -72,21 +80,34 @@ mapᵈ f g (A , ρ) = f A , g ρ
 
 wkᵗ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +ty)
 wkᵗ-H {Θ} Q = hyps (map (wkᵗ-tv Θ) (ets Q))
+                   (map (mapᵖ (wkᵗ-tv Θ)) (subᵥ Q))
                    (map (mapᵖ wkᵗ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵗ-e) (ordₑ Q))
                    (map (mapᵈ wkᵗ-v wkᵗ-r) (disj Q))
 
 wkʳ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +r)
 wkʳ-H {Θ} Q = hyps (map (wkʳ-tv Θ) (ets Q))
+                   (map (mapᵖ (wkʳ-tv Θ)) (subᵥ Q))
                    (map (mapᵖ wkʳ-r) (ordᵣ Q))
                    (map (mapᵖ wkʳ-e) (ordₑ Q))
                    (map (mapᵈ wkʳ-v wkʳ-r) (disj Q))
 
 wkᵉ-H : ∀ {Θ} → Hyps Θ → Hyps (Θ +e)
 wkᵉ-H {Θ} Q = hyps (map (wkᵉ-tv Θ) (ets Q))
+                   (map (mapᵖ (wkᵉ-tv Θ)) (subᵥ Q))
                    (map (mapᵖ wkᵉ-r) (ordᵣ Q))
                    (map (mapᵖ wkᵉ-e) (ordₑ Q))
                    (map (mapᵈ wkᵉ-v wkᵉ-r) (disj Q))
+
+-- Assumed subtyping between type variables, closed under reflexivity
+-- and transitivity
+
+infix 4 _⊩ᵗᵛ_≾_
+
+data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set where
+  reflᵗᵛ  : ∀ {α} → Q ⊩ᵗᵛ α ≾ α
+  hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α ≾ β
+  transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
 
 -- The monoid laws, the constants' arithmetic, and `∣_∣̂ᵉ` being a monoid
 -- morphism; no hypotheses involved.
@@ -165,17 +186,21 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 
 -- Mirrors `Eternal` of `Syntax.Types`, plus a rule for the eternality
 -- atoms of the hypothesis set; as in the original, no rule for `_⇒_`
--- and `[_]_`.
+-- and `[_]_`. Eternality is a property of the skeleton and subtyping
+-- preserves skeletons, so it also transfers along an assumed
+-- subtyping in both directions.
 
 infix 4 _⊩ᴱ_
 
 data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
-  et-hyp : ∀ {α} → α ∈ ets Q → Q ⊩ᴱ tvar α
-  Baseₑ  : ∀ {b} → .(EternalBaseType b) → Q ⊩ᴱ Base b
-  Unitₑ  : Q ⊩ᴱ Unit
-  Boolₑ  : Q ⊩ᴱ Bool
-  _|×|ₑ_ : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
-  Emptyₑ : Q ⊩ᴱ Empty
+  et-hyp  : ∀ {α} → α ∈ ets Q → Q ⊩ᴱ tvar α
+  et-subˡ : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᴱ tvar β → Q ⊩ᴱ tvar α
+  et-subʳ : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᴱ tvar α → Q ⊩ᴱ tvar β
+  Baseₑ   : ∀ {b} → .(EternalBaseType b) → Q ⊩ᴱ Base b
+  Unitₑ   : Q ⊩ᴱ Unit
+  Boolₑ   : Q ⊩ᴱ Bool
+  _|×|ₑ_  : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
+  Emptyₑ  : Q ⊩ᴱ Empty
 
 -- The side condition of the `var` rule: `Eternal` is undecided at open
 -- types, so the original's `¬ Eternal A → ρ ≾ᵣ uᵣ` becomes a disjunction,
@@ -186,9 +211,97 @@ data VarOK {Θ : Scope} (Q : Hyps Θ) (A : OVType Θ) (ρ : RExp Θ) : Set where
   ≾ᵘ-ok  : Q ⊩ ρ ≾̂ᵣ ûᵣ → VarOK Q A ρ
   hyp-ok : (A , ρ) ∈ disj Q → VarOK Q A ρ
 
+-- Shape-preserving subtyping of open value and computation types,
+-- mirroring `Syntax.Subtyping` former by former: one constructor per
+-- pair of matching type formers, no `refl` or `trans` constructor. The
+-- grade slots carry entailments from `Q`, and an unknown head is
+-- related only by an assumed subtyping.
+--
+-- Irrelevance does not mirror, entailment being proof-relevant.
+
+infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
+infix  37 [_]ₛ_
+infix  32 _|×|ₛ_
+infixr 30 _⇒ₛ_
+infix  31 _‼ₛ_
+
+data _∣_<:̂ᵛ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → OVType Θ → Set
+data _∣_<:̂ᶜ_ {Θ : Scope} (Q : Hyps Θ) : OCType Θ → OCType Θ → Set
+
+data _∣_<:̂ᵛ_ {Θ} Q where
+  tvarₛ  : ∀ {α β} → Q ⊩ᵗᵛ α ≾ β → Q ∣ tvar α <:̂ᵛ tvar β
+  Baseₛ  : ∀ {b b'} → b ≡ b' → Q ∣ Base b <:̂ᵛ Base b'
+  Unitₛ  : Q ∣ Unit <:̂ᵛ Unit
+  Boolₛ  : Q ∣ Bool <:̂ᵛ Bool
+  _|×|ₛ_ : ∀ {A A' B B'} → Q ∣ A <:̂ᵛ A' → Q ∣ B <:̂ᵛ B'
+         → Q ∣ (A |×| B) <:̂ᵛ (A' |×| B')
+  Emptyₛ : Q ∣ Empty <:̂ᵛ Empty
+  _⇒ₛ_   : ∀ {A A' C C'} → Q ∣ A' <:̂ᵛ A → Q ∣ C <:̂ᶜ C'
+         → Q ∣ (A ⇒ C) <:̂ᵛ (A' ⇒ C')
+  [_]ₛ_  : ∀ {ρ ρ' A A'} → Q ⊩ ρ' ≾̂ᵣ ρ → Q ∣ A <:̂ᵛ A'
+         → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A')
+
+data _∣_<:̂ᶜ_ {Θ} Q where
+  _‼ₛ_ : ∀ {A A' ε ε'} → Q ∣ A <:̂ᵛ A' → Q ⊩ ε ≾̂ₑ ε'
+       → Q ∣ (A ‼ ε) <:̂ᶜ (A' ‼ ε')
+
+-- Reflexivity
+
+<:̂ᵛ-refl : ∀ {Θ} {Q : Hyps Θ} → (A : OVType Θ) → Q ∣ A <:̂ᵛ A
+<:̂ᶜ-refl : ∀ {Θ} {Q : Hyps Θ} → (C : OCType Θ) → Q ∣ C <:̂ᶜ C
+
+<:̂ᵛ-refl (tvar α)  = tvarₛ reflᵗᵛ
+<:̂ᵛ-refl (Base b)  = Baseₛ refl
+<:̂ᵛ-refl Unit      = Unitₛ
+<:̂ᵛ-refl Bool      = Boolₛ
+<:̂ᵛ-refl (A |×| B) = <:̂ᵛ-refl A |×|ₛ <:̂ᵛ-refl B
+<:̂ᵛ-refl Empty     = Emptyₛ
+<:̂ᵛ-refl (A ⇒ C)   = <:̂ᵛ-refl A ⇒ₛ <:̂ᶜ-refl C
+<:̂ᵛ-refl ([ ρ ] A) = [ ⊩≾̂ᵣ-refl ]ₛ <:̂ᵛ-refl A
+
+<:̂ᶜ-refl (A ‼ ε) = <:̂ᵛ-refl A ‼ₛ ⊩≾̂ₑ-refl
+
+-- Transitivity; the contravariant positions compose in the opposite order
+
+<:̂ᵛ-trans : ∀ {Θ} {Q : Hyps Θ} {A B C}
+          → Q ∣ A <:̂ᵛ B → Q ∣ B <:̂ᵛ C → Q ∣ A <:̂ᵛ C
+<:̂ᶜ-trans : ∀ {Θ} {Q : Hyps Θ} {C₁ C₂ C₃}
+          → Q ∣ C₁ <:̂ᶜ C₂ → Q ∣ C₂ <:̂ᶜ C₃ → Q ∣ C₁ <:̂ᶜ C₃
+
+<:̂ᵛ-trans (tvarₛ p)  (tvarₛ q)  = tvarₛ (transᵗᵛ p q)
+<:̂ᵛ-trans (Baseₛ p)  (Baseₛ q)  = Baseₛ (trans p q)
+<:̂ᵛ-trans Unitₛ      Unitₛ      = Unitₛ
+<:̂ᵛ-trans Boolₛ      Boolₛ      = Boolₛ
+<:̂ᵛ-trans (p |×|ₛ r) (q |×|ₛ s) = <:̂ᵛ-trans p q |×|ₛ <:̂ᵛ-trans r s
+<:̂ᵛ-trans Emptyₛ     Emptyₛ     = Emptyₛ
+<:̂ᵛ-trans (p ⇒ₛ r)   (q ⇒ₛ s)   = <:̂ᵛ-trans q p ⇒ₛ <:̂ᶜ-trans r s
+<:̂ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ transᵣ q p ]ₛ <:̂ᵛ-trans r s
+
+<:̂ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) = <:̂ᵛ-trans p q ‼ₛ transₑ r s
+
+-- Eternality lives on the shared skeleton, so it transfers along
+-- `_∣_<:̂ᵛ_` in both directions.
+
+<:̂ᵛ-eternalˡ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → Q ⊩ᴱ B → Q ⊩ᴱ A
+<:̂ᵛ-eternalˡ (tvarₛ p)    et          = et-subˡ p et
+<:̂ᵛ-eternalˡ (Baseₛ refl) et          = et
+<:̂ᵛ-eternalˡ Unitₛ        et          = et
+<:̂ᵛ-eternalˡ Boolₛ        et          = et
+<:̂ᵛ-eternalˡ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalˡ p et |×|ₑ <:̂ᵛ-eternalˡ r e
+<:̂ᵛ-eternalˡ Emptyₛ       et          = et
+
+<:̂ᵛ-eternalʳ : ∀ {Θ} {Q : Hyps Θ} {A B} → Q ∣ A <:̂ᵛ B → Q ⊩ᴱ A → Q ⊩ᴱ B
+<:̂ᵛ-eternalʳ (tvarₛ p)    et          = et-subʳ p et
+<:̂ᵛ-eternalʳ (Baseₛ refl) et          = et
+<:̂ᵛ-eternalʳ Unitₛ        et          = et
+<:̂ᵛ-eternalʳ Boolₛ        et          = et
+<:̂ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalʳ p et |×|ₑ <:̂ᵛ-eternalʳ r e
+<:̂ᵛ-eternalʳ Emptyₛ       et          = et
+
 -- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
 -- along `σ`; there is no syntactic action of a substitution on `Hyps`,
--- as `ets` holds variables, whose images under `σ` are open types.
+-- as `ets` and `subᵥ` hold variables, whose images under `σ` are open
+-- types.
 
 infix 4 _⊩ᴴ_[_] _⊩ᴴ_
 
@@ -196,6 +309,7 @@ record _⊩ᴴ_[_] {Θ Θ' : Scope} (Q' : Hyps Θ') (Q : Hyps Θ) (σ : Subst Θ
   constructor mk⊩ᴴ
   field
     ⊩ets  : ∀ {α} → α ∈ ets Q → Q' ⊩ᴱ sTy σ α
+    ⊩subᵥ : ∀ {α β} → (α , β) ∈ subᵥ Q → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
     ⊩ordᵣ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
     ⊩ordₑ : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
     ⊩disj : ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
@@ -253,14 +367,25 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h (monoₑ p q)  = monoₑ (⊩-substₑ h p) (⊩-substₑ h q)
 ⊩-substₑ         h (minₑ p)     = minₑ p
 
+-- A type variable's image is an arbitrary open type, so an assumed
+-- subtyping transports to a subtyping derivation at those images.
+
+⊩ᵗᵛ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {α β}
+          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ᵗᵛ α ≾ β → Q' ∣ sTy σ α <:̂ᵛ sTy σ β
+⊩ᵗᵛ-subst {σ = σ} h (reflᵗᵛ {α})  = <:̂ᵛ-refl (sTy σ α)
+⊩ᵗᵛ-subst         h (hypᵗᵛ m)     = ⊩subᵥ h m
+⊩ᵗᵛ-subst         h (transᵗᵛ p q) = <:̂ᵛ-trans (⊩ᵗᵛ-subst h p) (⊩ᵗᵛ-subst h q)
+
 ⊩ᴱ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A : OVType Θ}
          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ᴱ A → Q' ⊩ᴱ A [ σ ]ᵛ
-⊩ᴱ-subst h (et-hyp m)  = ⊩ets h m
-⊩ᴱ-subst h (Baseₑ p)   = Baseₑ p
-⊩ᴱ-subst h Unitₑ       = Unitₑ
-⊩ᴱ-subst h Boolₑ       = Boolₑ
+⊩ᴱ-subst h (et-hyp m)     = ⊩ets h m
+⊩ᴱ-subst h (et-subˡ p et) = <:̂ᵛ-eternalˡ (⊩ᵗᵛ-subst h p) (⊩ᴱ-subst h et)
+⊩ᴱ-subst h (et-subʳ p et) = <:̂ᵛ-eternalʳ (⊩ᵗᵛ-subst h p) (⊩ᴱ-subst h et)
+⊩ᴱ-subst h (Baseₑ p)      = Baseₑ p
+⊩ᴱ-subst h Unitₑ          = Unitₑ
+⊩ᴱ-subst h Boolₑ          = Boolₑ
 ⊩ᴱ-subst h (et₁ |×|ₑ et₂) = ⊩ᴱ-subst h et₁ |×|ₑ ⊩ᴱ-subst h et₂
-⊩ᴱ-subst h Emptyₑ      = Emptyₑ
+⊩ᴱ-subst h Emptyₑ         = Emptyₑ
 
 VarOK-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
                 {A : OVType Θ} {ρ : RExp Θ}
@@ -269,9 +394,26 @@ VarOK-subst h (et-ok et)  = et-ok (⊩ᴱ-subst h et)
 VarOK-subst h (≾ᵘ-ok le)  = ≾ᵘ-ok (⊩-substᵣ h le)
 VarOK-subst h (hyp-ok m)  = ⊩disj h m
 
+<:̂ᵛ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A A' : OVType Θ}
+          → Q' ⊩ᴴ Q [ σ ] → Q ∣ A <:̂ᵛ A' → Q' ∣ A [ σ ]ᵛ <:̂ᵛ A' [ σ ]ᵛ
+<:̂ᶜ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {C C' : OCType Θ}
+          → Q' ⊩ᴴ Q [ σ ] → Q ∣ C <:̂ᶜ C' → Q' ∣ C [ σ ]ᶜ <:̂ᶜ C' [ σ ]ᶜ
+
+<:̂ᵛ-subst h (tvarₛ p)  = ⊩ᵗᵛ-subst h p
+<:̂ᵛ-subst h (Baseₛ p)  = Baseₛ p
+<:̂ᵛ-subst h Unitₛ      = Unitₛ
+<:̂ᵛ-subst h Boolₛ      = Boolₛ
+<:̂ᵛ-subst h (p |×|ₛ r) = <:̂ᵛ-subst h p |×|ₛ <:̂ᵛ-subst h r
+<:̂ᵛ-subst h Emptyₛ     = Emptyₛ
+<:̂ᵛ-subst h (p ⇒ₛ r)   = <:̂ᵛ-subst h p ⇒ₛ <:̂ᶜ-subst h r
+<:̂ᵛ-subst h ([ q ]ₛ p) = [ ⊩-substᵣ h q ]ₛ <:̂ᵛ-subst h p
+
+<:̂ᶜ-subst h (p ‼ₛ q) = <:̂ᵛ-subst h p ‼ₛ ⊩-substₑ h q
+
 ⊩ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊩ᴴ Q [ idˢ ]
 ⊩ᴴ-refl {Q = Q} =
   mk⊩ᴴ et-hyp
+       (λ m → tvarₛ (hypᵗᵛ m))
        (λ {ρ} {ρ'} m →
           subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ')) (hypᵣ m))
        (λ {ε} {ε'} m →
@@ -284,6 +426,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
      → Q'' ⊩ᴴ Q' [ δ ] → Q' ⊩ᴴ Q [ σ ] → Q'' ⊩ᴴ Q [ σ ⨟ˢ δ ]
 ⊩ᴴ-⨟ {Q'' = Q''} {σ = σ} {δ = δ} h' h =
   mk⊩ᴴ (λ m → ⊩ᴱ-subst h' (⊩ets h m))
+       (λ m → <:̂ᵛ-subst h' (⊩subᵥ h m))
        (λ {ρ} {ρ'} m →
           subst₂ (λ x y → Q'' ⊩ x ≾̂ᵣ y) ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ)
                  (⊩-substᵣ h' (⊩ordᵣ h m)))
@@ -300,6 +443,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
 ⊩ᴴ-wkᵗ : ∀ {Θ} {Q : Hyps Θ} → wkᵗ-H Q ⊩ᴴ Q [ wkˢᵗ ]
 ⊩ᴴ-wkᵗ {Θ} {Q} =
   mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (wkᵗ-tv Θ) m))
+       (λ m → tvarₛ (hypᵗᵛ (∈-map⁺ (mapᵖ (wkᵗ-tv Θ)) m)))
        (λ {ρ} {ρ'} m →
           subst₂ (λ x y → wkᵗ-H Q ⊩ x ≾̂ᵣ y) (sym (wkˢᵗ-r ρ)) (sym (wkˢᵗ-r ρ'))
                  (hypᵣ (∈-map⁺ (mapᵖ wkᵗ-r) m)))
@@ -313,6 +457,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
 ⊩ᴴ-wkʳ : ∀ {Θ} {Q : Hyps Θ} → wkʳ-H Q ⊩ᴴ Q [ wkˢʳ ]
 ⊩ᴴ-wkʳ {Θ} {Q} =
   mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (wkʳ-tv Θ) m))
+       (λ m → tvarₛ (hypᵗᵛ (∈-map⁺ (mapᵖ (wkʳ-tv Θ)) m)))
        (λ {ρ} {ρ'} m →
           subst₂ (λ x y → wkʳ-H Q ⊩ x ≾̂ᵣ y) (sym (wkˢʳ-r ρ)) (sym (wkˢʳ-r ρ'))
                  (hypᵣ (∈-map⁺ (mapᵖ wkʳ-r) m)))
@@ -326,6 +471,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
 ⊩ᴴ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} → wkᵉ-H Q ⊩ᴴ Q [ wkˢᵉ ]
 ⊩ᴴ-wkᵉ {Θ} {Q} =
   mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (wkᵉ-tv Θ) m))
+       (λ m → tvarₛ (hypᵗᵛ (∈-map⁺ (mapᵖ (wkᵉ-tv Θ)) m)))
        (λ {ρ} {ρ'} m →
           subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y) (sym (wkˢᵉ-r ρ)) (sym (wkˢᵉ-r ρ'))
                  (hypᵣ (∈-map⁺ (mapᵖ wkᵉ-r) m)))

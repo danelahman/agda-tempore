@@ -117,30 +117,30 @@ Disj θ A ρ = Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
 narrow : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
 narrow A ρ Q with etDec A
 ... | just []       = Q
-... | nothing       = hyps (ets Q) ((ρ , ûᵣ) ∷ ordᵣ Q) (ordₑ Q) (disj Q)
+... | nothing       = hyps (ets Q) (subᵥ Q) ((ρ , ûᵣ) ∷ ordᵣ Q) (ordₑ Q) (disj Q)
 ... | just (α ∷ αs) with scanᵤ ρ
-...   | just _  = hyps ((α ∷ αs) ++ ets Q) (ordᵣ Q) (ordₑ Q) (disj Q)
-...   | nothing = hyps (ets Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
+...   | just _  = hyps ((α ∷ αs) ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q)
+...   | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
 
 narrow-⊨ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
          → Disj θ A ρ → θ ⊨ᴴ Q → θ ⊨ᴴ narrow A ρ Q
 narrow-⊨ {θ = θ} A ρ Q d h with etDec A in e
 ... | just []       = h
-... | nothing       = mk⊨ᴴ (etOK h) ordR (ordEOK h) (disjOK h)
+... | nothing       = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) (disjOK h)
       where
         ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ((ρ , ûᵣ) ∷ ordᵣ Q)
              → ⟦ ρ₀ ⟧ʳ θ ≾ᵣ ⟦ ρ₀' ⟧ʳ θ
         ordR (here refl) = [ (λ et → ⊥-elim (etDec-¬Et A e et)) , (λ le → le) ]′ d
         ordR (there m)   = ordROK h m
 ... | just (α ∷ αs) with scanᵤ ρ
-...   | just ref = mk⊨ᴴ et' (ordROK h) (ordEOK h) (disjOK h)
+...   | just ref = mk⊨ᴴ et' (subOK h) (ordROK h) (ordEOK h) (disjOK h)
       where
         etA : Eternal (⟦ A ⟧ᵛ θ)
         etA = [ (λ et → et) , (λ le → ⊥-elim (ref θ le)) ]′ d
 
         et' : ∀ {β} → β ∈ ((α ∷ αs) ++ ets Q) → Eternal (gTy θ β)
         et' m = [ etDec-atoms A e etA , etOK h ]′ (∈-++⁻ (α ∷ αs) m)
-...   | nothing = mk⊨ᴴ (etOK h) (ordROK h) (ordEOK h) dsj'
+...   | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) dsj'
       where
         dsj' : ∀ {A₀ ρ₀} → (A₀ , ρ₀) ∈ ((A , ρ) ∷ disj Q) → Disj θ A₀ ρ₀
         dsj' (here refl) = d
@@ -150,13 +150,13 @@ narrow-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp 
           → θ ⊨ᴴ narrow A ρ Q → (θ ⊨ᴴ Q) × Disj θ A ρ
 narrow-⊨⁻ A ρ Q h with etDec A in e
 ... | just []       = h , inj₁ (etDec-Et A e (λ ()))
-... | nothing       = mk⊨ᴴ (etOK h) (λ m → ordROK h (there m)) (ordEOK h) (disjOK h)
+... | nothing       = mk⊨ᴴ (etOK h) (subOK h) (λ m → ordROK h (there m)) (ordEOK h) (disjOK h)
                     , inj₂ (ordROK h (here refl))
 ... | just (α ∷ αs) with scanᵤ ρ
 ...   | just _  = mk⊨ᴴ (λ m → etOK h (∈-++⁺ʳ (α ∷ αs) m))
-                       (ordROK h) (ordEOK h) (disjOK h)
+                       (subOK h) (ordROK h) (ordEOK h) (disjOK h)
                 , inj₁ (etDec-Et A e (λ m → etOK h (∈-++⁺ˡ m)))
-...   | nothing = mk⊨ᴴ (etOK h) (ordROK h) (ordEOK h) (λ m → disjOK h (there m))
+...   | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ m → disjOK h (there m))
                 , disjOK h (here refl)
 
 narrowAll : ∀ {Θ} → List (OVType Θ × RExp Θ) → Hyps Θ → Hyps Θ
@@ -180,19 +180,19 @@ narrowAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with narrow-⊨⁻ A ρ (narrowAll l Q�
 ...   | h'' , k = h'' , λ { (here refl) → d ; (there m) → k m }
 
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
-simplify Q = narrowAll (disj Q) (hyps (ets Q) (ordᵣ Q) (ordₑ Q) [])
+simplify Q = narrowAll (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) [])
 
 -- Simplification changes nothing a grounding can see
 
 simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q
 simplify-⊨ Q θ h =
-  narrowAll-⊨ (disj Q) (hyps (ets Q) (ordᵣ Q) (ordₑ Q) []) (disjOK h)
-              (mk⊨ᴴ (etOK h) (ordROK h) (ordEOK h) (λ ()))
+  narrowAll-⊨ (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) []) (disjOK h)
+              (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ()))
 
 simplify-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q
 simplify-⊨⁻ Q θ h
-  with narrowAll-⊨⁻ (disj Q) (hyps (ets Q) (ordᵣ Q) (ordₑ Q) []) h
-... | h₀ , k = mk⊨ᴴ (etOK h₀) (ordROK h₀) (ordEOK h₀) k
+  with narrowAll-⊨⁻ (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) []) h
+... | h₀ , k = mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k
 
 simplify-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
            → (θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q) × (θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q)
