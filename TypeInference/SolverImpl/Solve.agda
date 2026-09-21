@@ -554,3 +554,13 @@ solve s (⋀ᵒᵖ f) with threadOps {f = f} (λ s' op → solve s' (f op)) ops 
 ... | nothing = nothing
 ... | just (s' , m , ws) =
       just (s' , m , λ δ Q h op → all-lookup ws (complete op) δ Q h)
+
+-- Reading a residual back as a hypothesis set asks every subtyping
+-- demand to decompose; one expansion of what is left makes it so.
+
+reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
+reexpand s with expandSub (ss (res s))
+... | nothing       = nothing
+... | just (Ψ' , δ) =
+      just (st Ψ' (θ s ⨟ˢ δ) (res s [ δ ]ᴿ) (transRig δ (rig s)) ,
+            mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst h))

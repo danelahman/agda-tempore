@@ -55,6 +55,22 @@ data Skel (n : ℕ) : Set where
   _s⇒_   : Skel n → Skel n → Skel n        -- function type, to its result's value part
   sBox_  : Skel n → Skel n                 -- box modality
 
+-- A skeleton that is still a variable
+
+svar? : ∀ {n} → Skel n → Maybe (Fin n)
+svar? (svar γ) = just γ
+svar? _        = nothing
+
+svar?-just : ∀ {n} → (t : Skel n) → {γ : Fin n} → svar? t ≡ just γ → t ≡ svar γ
+svar?-just (svar γ)  refl = refl
+svar?-just (sBase b) ()
+svar?-just sUnit     ()
+svar?-just sBool     ()
+svar?-just (t s× u)  ()
+svar?-just sEmpty    ()
+svar?-just (t s⇒ u)  ()
+svar?-just (sBox t)  ()
+
 -- The skeleton of an open type
 
 mutual

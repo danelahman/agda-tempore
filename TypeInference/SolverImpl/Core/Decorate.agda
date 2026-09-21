@@ -19,7 +19,7 @@
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)
-open import Data.Maybe.Base using (Maybe; just; nothing; maybe′)
+open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map to mmap)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Vec.Base using (Vec; []; _∷_; lookup; tabulate)
@@ -70,10 +70,11 @@ decorate Ψ (sBox t) with decorate Ψ t
 
 decorate* : ∀ {m k} → (Ψ : Scope) → Vec (Skel m) k
           → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ' × Vec (Maybe (OVType Ψ')) k)
-decorate* Ψ []            = Ψ , idˢ , []
-decorate* Ψ (svar γ ∷ ts) with decorate* Ψ ts
-... | Ψ' , w , As = Ψ' , w , (nothing ∷ As)
-decorate* Ψ (t ∷ ts) with decorate Ψ t
+decorate* Ψ []       = Ψ , idˢ , []
+decorate* Ψ (t ∷ ts) with svar? t
+... | just γ  with decorate* Ψ ts
+...   | Ψ' , w , As = Ψ' , w , (nothing ∷ As)
+decorate* Ψ (t ∷ ts) | nothing with decorate Ψ t
 ... | Ψ₁ , w₁ , A with decorate* Ψ₁ ts
 ...   | Ψ₂ , w₂ , As = Ψ₂ , w₁ ⨟ˢ w₂ , (just (A [ w₂ ]ᵛ) ∷ As)
 
@@ -87,8 +88,9 @@ expandᵏ Ψ σ with decorate* Ψ (tabulate σ)
 
 -- The expansion a list of subtyping demands calls for
 
+skelEqns : ∀ {Ψ} → List (OVType Ψ × OVType Ψ) → SEqns (nTy Ψ)
+skelEqns = map (λ { (A , B) → skelᵛ A , skelᵛ B })
+
 expandSub : ∀ {Ψ} → List (OVType Ψ × OVType Ψ)
           → Maybe (Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ'))
-expandSub {Ψ} l with unifyᵏ (map (λ { (A , B) → skelᵛ A , skelᵛ B }) l)
-... | nothing      = nothing
-... | just (m , τ) = just (expandᵏ Ψ ⟦ τ ⟧ᴷ)
+expandSub {Ψ} l = mmap (λ { (m , τ) → expandᵏ Ψ ⟦ τ ⟧ᴷ }) (unifyᵏ (skelEqns l))

@@ -398,12 +398,6 @@ open import TypeInference.ParamGround
 import TypeInference.SolverImpl
 import TypeInference.SolverImpl.Demo
 
----- Soundness and most-generality of the skeleton unifier the solver's
----- variable expansion runs
-
-import TypeInference.SolverImpl.Core.SkelUnifySound
-import TypeInference.SolverImpl.Core.SkelUnifyMGU
-
 ---- Semantic refutation of a grade ordering against the unit, and the
 ---- narrowing of reported var-rule disjunctions it justifies
 
@@ -415,6 +409,11 @@ import TypeInference.SolverImpl.Simplify
 open import TypeInference.Solver.Fragment
 open import TypeInference.Solver.Restricted
 open import TypeInference.Principality.Restricted
+
+---- What the solver's variable expansion buys: decomposability of every
+---- expanded demand, most-generality of the expansion, and refutation
+
+import TypeInference.SolverImpl.Expand
 
 ---- The concrete solver's principality, refutation, and interface instance
 

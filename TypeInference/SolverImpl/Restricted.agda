@@ -23,6 +23,7 @@ open import Data.List.Base using (List; [])
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Sum.Base using (inj₁; inj₂)
 open import Data.Unit using (⊤)
 
 open import Relation.Binary.Definitions using (Decidable)
@@ -86,9 +87,11 @@ solveOn : ∀ {Θ} → Constraint Θ
         → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))
 solveOn C with solve init C
 ... | nothing = nothing
-... | just (s' , m , w) with toHyps (res s')
-...   | nothing        = nothing
-...   | just (Q , hq) = just (Ψ s' , θ s' , Q)
+... | just (s' , m , w) with reexpand s'
+...   | nothing = nothing
+...   | just (s₂ , m₂) with toHyps (res s₂)
+...     | nothing       = nothing
+...     | just (Q , hq) = just (Ψ s₂ , θ s₂ , Q)
 
 solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
@@ -96,10 +99,12 @@ solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
               → σ ⊨[ Q ] C
 solveOn-sound C eq with solve init C in e
 ... | nothing = ⊥just eq
-... | just (s' , m , w) with toHyps (res s') in e'
+... | just (s' , m , w) with reexpand s' in e₂
 ...   | nothing = ⊥just eq
-...   | just (Q₀ , hq) with eq
-...     | refl = ⊨-resp-≐ˢ (⨟-idʳ (θ s')) C (w idˢ Q₀ hq)
+...   | just (s₂ , m₂) with toHyps (res s₂) in e'
+...     | nothing = ⊥just eq
+...     | just (Q₀ , hq) with eq
+...       | refl = ⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C (wit-mono m₂ C w idˢ Q₀ hq)
 
 solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
                  → solveOn C ≡ nothing
@@ -107,13 +112,21 @@ solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
                  → ¬ (σ ⊨[ Q ] C)
 solveOn-complete C nr eq σ Q sat with solve init C in e
 ... | nothing = solve-fail init C nr e σ Q (Fixing-[] σ) ⊩ᴿ-empty sat
-... | just (s' , m , w) with toHyps (res s') in e'
-...   | just _  = ⊥nothing eq
-...   | nothing with toHyps-nothing (res s') e'
-...     | A , mem , q =
-          etDec-refute A q (proj₁ fac) (⊩ts (proj₁ (proj₂ (proj₂ fac))) mem)
+... | just (s' , m , w) with reexpand s' in e₂
+...   | nothing =
+        reexpand-fail s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))
   where
     fac = solve-principal init C e σ Q sat ⊩ᴿ-empty
+...   | just (s₂ , m₂) with toHyps (res s₂) in e'
+...     | just _  = ⊥nothing eq
+...     | nothing with toHyps-nothing (res s₂) e'
+...       | inj₁ (A , mem , q) =
+            etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
+  where
+    fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
+    fac₂ = reexpand-princ s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))
+...       | inj₂ (A , B , mem , q) =
+            ⊥nothing (trans (sym (proj₂ (reexpand-dec s' e₂ mem))) q)
 
 solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
                   → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺}
@@ -124,17 +137,27 @@ solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
                       (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
 solveOn-principal C eq σ Q sat with solve init C in e
 ... | nothing = ⊥just eq
-... | just (s' , m , w) with toHyps (res s') in e'
+... | just (s' , m , w) with reexpand s' in e₂
 ...   | nothing = ⊥just eq
-...   | just (Q₀ , hq) with eq
-...     | refl = δ ,
-                 ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri ,
-                 toHyps-compl (res s') e' δ hres
+...   | just (s₂ , m₂) with toHyps (res s₂) in e'
+...     | nothing = ⊥just eq
+...     | just (Q₀ , hq) with eq
+...       | refl = δ₂ , tri , toHyps-compl (res s₂) e' δ₂ h₂
   where
     fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
     δ    = proj₁ fac
-    tri  = proj₁ (proj₂ fac)
+    tri₁ = proj₁ (proj₂ fac)
     hres = proj₁ (proj₂ (proj₂ fac))
+
+    fac₂ = reexpand-princ s' e₂ δ Q hres
+    δ₂   = proj₁ fac₂
+    tri₂ = proj₁ (proj₂ fac₂)
+    h₂   = proj₂ (proj₂ fac₂)
+
+    tri = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₂)) δ₂)
+          (≐ˢ-trans (⨟-assoc (θ s') (mδ m₂) δ₂)
+          (≐ˢ-trans (⨟-congʳ (θ s') tri₂)
+          (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri₁)))
 
 solverImplOn : SolverOn NoRig (λ _ → ⊤)
 solverImplOn = record

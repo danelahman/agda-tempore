@@ -29,7 +29,7 @@
 open import Data.List.Base using (List; []; _∷_; map; _++_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-map⁺; ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
+  using (∈-map⁺; ∈-map⁻; ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Empty using (⊥)
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
@@ -282,6 +282,14 @@ atomsᴿ a = resid (aordᵣ a) (aordₑ a) [] (map (mapᵖ tvar) (asubᵥ a)) []
 holdsᴿ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (a : SubAtoms Ψ)
        → Q ⊩ᴿ (atomsᴿ a) [ δ ] → Holds Q δ a
 holdsᴿ a h = holds (λ m → ⊩ss h (∈-map⁺ (mapᵖ tvar) m)) (⊩rs h) (⊩es h)
+
+atomsᴿ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (a : SubAtoms Ψ)
+         → Holds Q δ a → Q ⊩ᴿ (atomsᴿ a) [ δ ]
+atomsᴿ-⊩ {Q = Q} {δ = δ} a hs = mk⊩ᴿ (hr hs) (he hs) (λ ()) ss' (λ ())
+  where
+    ss' : ∀ {X Y} → (X , Y) ∈ map (mapᵖ tvar) (asubᵥ a) → Q ∣ X [ δ ]ᵛ <:̂ᵛ Y [ δ ]ᵛ
+    ss' m with ∈-map⁻ (mapᵖ tvar) m
+    ... | (α , β) , m₀ , refl = hv hs m₀
 
 -- A decomposition carries both directions: the atoms entail the
 -- demand at every instance, and every instance of the demand
