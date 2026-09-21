@@ -2,7 +2,7 @@
 -- A concrete constraint solver, under decidability and           --
 -- enumerability assumptions.                                     --
 -- Parameters: decidability of the two grade orders, an           --
--- operation enumeration, and optional unit-minimality and join   --
+-- operation enumeration, and optional unit-minimality            --
 -- witnesses.                                                     --
 ------------------------------------------------------------------
 
@@ -30,8 +30,6 @@ module TypeInference.SolverImpl
   (opEnum : OpEnum S)
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
   (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
-  (join?ᵣ : Maybe (H.Joinᵣ S))                 -- optional binary join on `_≾ᵣ_`
-  (join?ₑ : Maybe (H.Joinₑ S))                 -- optional binary join on `_≾ₑ_`
   where
 
 open LanguageSpec S
@@ -61,7 +59,7 @@ open import TypeInference.Infer      S using (Θ₁; X̂₁; t̂₁; C∅[_,_]; 
 
 open import TypeInference.SolverImpl.State S using (St; θ; res; init)
 open import TypeInference.SolverImpl.Solve S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ using (solve)
-open import TypeInference.SolverImpl.Close S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ join?ᵣ join?ₑ
+open import TypeInference.SolverImpl.Close S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
   using (close)
 
 -- The `gsolve` field of `GroundSolver` — the only part attainable here.

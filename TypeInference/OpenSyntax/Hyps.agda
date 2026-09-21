@@ -150,25 +150,6 @@ UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
 UnitMinₑ : Set
 UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
 
--- A binary join on the closed grades, likewise optional: every instance
--- examined has one, and none is required to.
-
-record Joinᵣ : Set where
-  infixl 6 _⊔ᵣ_
-  field
-    _⊔ᵣ_   : R → R → R
-    ⊔ᵣ-ubˡ : (ρ ρ' : R) → ρ ≾ᵣ ρ ⊔ᵣ ρ'
-    ⊔ᵣ-ubʳ : (ρ ρ' : R) → ρ' ≾ᵣ ρ ⊔ᵣ ρ'
-    ⊔ᵣ-lub : {ρ ρ' ρ'' : R} → ρ ≾ᵣ ρ'' → ρ' ≾ᵣ ρ'' → ρ ⊔ᵣ ρ' ≾ᵣ ρ''
-
-record Joinₑ : Set where
-  infixl 6 _⊔ₑ_
-  field
-    _⊔ₑ_   : E → E → E
-    ⊔ₑ-ubˡ : (ε ε' : E) → ε ≾ₑ ε ⊔ₑ ε'
-    ⊔ₑ-ubʳ : (ε ε' : E) → ε' ≾ₑ ε ⊔ₑ ε'
-    ⊔ₑ-lub : {ε ε' ε'' : E} → ε ≾ₑ ε'' → ε' ≾ₑ ε'' → ε ⊔ₑ ε' ≾ₑ ε''
-
 data _⊩_≾̂ᵣ_ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set
 data _⊩_≾̂ₑ_ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set
 

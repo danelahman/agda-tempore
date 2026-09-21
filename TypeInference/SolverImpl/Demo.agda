@@ -14,8 +14,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Fin using (zero; suc; #_)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Data.Nat using (ℕ; _≤?_; z≤n; s≤s; _⊓_; _⊔_)
-open import Data.Nat.Properties using (m⊓n≤m; m⊓n≤n; ⊓-glb; m≤m⊔n; m≤n⊔m; ⊔-lub)
+open import Data.Nat using (ℕ; _≤?_; z≤n; s≤s)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (⊤; tt)
 
@@ -29,7 +28,7 @@ open import Syntax.Operations
 
 open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩; _≾ₒ_)
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_,_]; min; max; min≤max; _≾ᵢ_; _≤∞_; _≤∞?_; ≤∞-trans; ℕ∞)
+  using (Interval∞; [_,_,_]; min; max; _≾ᵢ_; _≤∞?_)
 open import Syntax.Grades.Example.Worked.Operations using (read; write; send)
 open import Syntax.Grades.Example.Worked.Spec using (spec; baseTypes; BT; reading)
 
@@ -105,7 +104,7 @@ ops₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = 
     c write = there (here refl)
     c send  = there (there (here refl))
 
-open import TypeInference.SolverImpl spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing nothing nothing
+open import TypeInference.SolverImpl spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
 
 result : {X : Subst Θ₁ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ₁ ∅ˢ ] X σ)
        → Maybe (OVType ∅ˢ × EExp ∅ˢ)
@@ -262,95 +261,23 @@ ex-pipeline-op = refl
 
 -- Several lower bounds on one unknown: both branches of an `if` bound
 -- the shared effect unknown from below, and the two bounds are
--- incomparable. Without a join the closer falls back on the greatest
--- grade.
+-- incomparable, so the closer takes their join — for effects the
+-- smallest window containing both branch windows.
 
 branch-op : RawC 0
 branch-op = if true `then perform read ⋆ (return ⋆) `else return ⋆
 
-ex-branch-⊤ : infer! [] branch-op ≡ just (Unit , econst ⊤ₑ)
-ex-branch-⊤ = refl
+ex-branch-⊔ : infer! [] branch-op ≡ just (Unit , econst [ 0 , ↑ 1 , z≤n ])
+ex-branch-⊔ = refl
 
--- Both grades of this specification have a binary join. Supplied, it
--- gives the same program the join of its two branch effects.
+-- two delays: the join spans both durations
 
-module Joins where
+branch-delay : RawC 0
+branch-delay = if true `then delay 2 (return ⋆) `else delay 1 (return ⋆)
 
-  infixl 7 _⊔∞_
-
-  _⊔∞_ : ℕ∞ → ℕ∞ → ℕ∞
-  (↑ m) ⊔∞ (↑ n) = ↑ (m ⊔ n)
-  (↑ _) ⊔∞ ∞     = ∞
-  ∞     ⊔∞ _     = ∞
-
-  ⊔∞-ubˡ : (a b : ℕ∞) → a ≤∞ a ⊔∞ b
-  ⊔∞-ubˡ (↑ m) (↑ n) = m≤m⊔n m n
-  ⊔∞-ubˡ (↑ _) ∞     = tt
-  ⊔∞-ubˡ ∞     _     = tt
-
-  ⊔∞-ubʳ : (a b : ℕ∞) → b ≤∞ a ⊔∞ b
-  ⊔∞-ubʳ (↑ m) (↑ n) = m≤n⊔m m n
-  ⊔∞-ubʳ (↑ _) ∞     = tt
-  ⊔∞-ubʳ ∞     (↑ _) = tt
-  ⊔∞-ubʳ ∞     ∞     = tt
-
-  ⊔∞-lub : {a b c : ℕ∞} → a ≤∞ c → b ≤∞ c → a ⊔∞ b ≤∞ c
-  ⊔∞-lub {↑ _} {↑ _} {↑ _} p q = ⊔-lub p q
-  ⊔∞-lub {↑ _} {↑ _} {∞}   p q = tt
-  ⊔∞-lub {↑ _} {∞}   {∞}   p q = tt
-  ⊔∞-lub {∞}   {_}   {∞}   p q = tt
-
-  -- a lower bound is the weaker grade, so the join takes the smaller
-  -- endpoint
-
-  join𝕀 : Joinᵣ
-  join𝕀 = record
-    { _⊔ᵣ_   = λ { [ m ,+∞⟩ [ n ,+∞⟩ → [ m ⊓ n ,+∞⟩ }
-    ; ⊔ᵣ-ubˡ = λ { [ m ,+∞⟩ [ n ,+∞⟩ → m⊓n≤m m n }
-    ; ⊔ᵣ-ubʳ = λ { [ m ,+∞⟩ [ n ,+∞⟩ → m⊓n≤n m n }
-    ; ⊔ᵣ-lub = λ { {[ _ ,+∞⟩} {[ _ ,+∞⟩} {[ _ ,+∞⟩} p q → ⊓-glb p q }
-    }
-
-  -- the order on two-sided intervals is containment, so the join is the
-  -- smallest interval containing both
-
-  _⊔ᵢ_ : Interval∞ → Interval∞ → Interval∞
-  i ⊔ᵢ j = [ min i ⊓ min j
-           , max i ⊔∞ max j
-           , ≤∞-trans {↑ (min i ⊓ min j)} {↑ min i} (m⊓n≤m (min i) (min j))
-                      (≤∞-trans {↑ min i} (min≤max i) (⊔∞-ubˡ (max i) (max j)))
-           ]
-
-  joinᵢ : Joinₑ
-  joinᵢ = record
-    { _⊔ₑ_   = _⊔ᵢ_
-    ; ⊔ₑ-ubˡ = λ i j → m⊓n≤m (min i) (min j) , ⊔∞-ubˡ (max i) (max j)
-    ; ⊔ₑ-ubʳ = λ i j → m⊓n≤n (min i) (min j) , ⊔∞-ubʳ (max i) (max j)
-    ; ⊔ₑ-lub = λ { (p₁ , p₂) (q₁ , q₂) → ⊓-glb p₁ q₁ , ⊔∞-lub p₂ q₂ }
-    }
-
-  module S⊔ = TypeInference.SolverImpl spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
-                                            (just join𝕀) (just joinᵢ)
-
-  infer⊔ : (Γ : Ctx) → (M : RawC (skel Γ)) → Maybe (OVType ∅ˢ × EExp ∅ˢ)
-  infer⊔ Γ M = result (S⊔.gsolveImpl C∅[ Γ , M ])
-
-  ex-branch-⊔ : infer⊔ [] branch-op ≡ just (Unit , econst [ 0 , ↑ 1 , z≤n ])
-  ex-branch-⊔ = refl
-
-  -- two delays: the join spans both durations
-
-  branch-delay : RawC 0
-  branch-delay = if true `then delay 2 (return ⋆) `else delay 1 (return ⋆)
-
-  ex-delay-⊔ : infer⊔ [] branch-delay
-             ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
-  ex-delay-⊔ = refl
-
-  -- a join changes nothing where one bound already dominates
-
-  ex-unit-⊔ : infer⊔ [] (return ⋆) ≡ just (Unit , ûₑ)
-  ex-unit-⊔ = refl
+ex-delay-⊔ : infer! [] branch-delay
+           ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
+ex-delay-⊔ = refl
 
 -- Right-sided intervals are deadlines `[0, n]`, ordered by `_≤_` on
 -- the endpoint, so `[0, ↑0]` is below every grade. Both grade
@@ -415,9 +342,7 @@ module Least where
   -- with the option, and without it
 
   module Sᵐ = TypeInference.SolverImpl specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ (just uᵈ-min) (just uᵈ-min)
-                 nothing nothing
   module S⁰ = TypeInference.SolverImpl specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing       nothing
-                 nothing nothing
 
   module Rsᵈ =
     TypeInference.SolverImpl.Restricted specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing nothing

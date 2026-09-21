@@ -1,12 +1,13 @@
 ------------------------------------------------------------------
 -- Closes a residual into the empty scope                         --
 --                                                                --
--- Slack sends a flexible grade variable to the combination of    --
--- its lower bounds — those of the orderings and those the        --
--- subtyping demands decompose to — by the supplied join, else by --
--- comparability; a bound the variable occurs in is declined.     --
--- What slack leaves is defaulted by polarity: the greatest grade --
--- where only lower bounds push, the unit otherwise.              --
+-- Slack sends a flexible grade variable to the join of its lower --
+-- bounds — those of the orderings and those the subtyping        --
+-- demands decompose to. A bound still holding a variable is      --
+-- combined by comparability instead, and a bound the variable    --
+-- occurs in is declined. What slack leaves is defaulted by       --
+-- polarity: the greatest grade where only lower bounds push, the --
+-- unit otherwise.                                                --
 --                                                                --
 -- At the empty scope an expression is a constant, so the checks  --
 -- are complete and only the choice of substitution is heuristic. --
@@ -40,8 +41,6 @@ module TypeInference.SolverImpl.Close
   (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
-  (join?ᵣ : Maybe (H.Joinᵣ S))                 -- optional binary join on `_≾ᵣ_`
-  (join?ₑ : Maybe (H.Joinₑ S))                 -- optional binary join on `_≾ₑ_`
   where
 
 open LanguageSpec S
@@ -140,17 +139,14 @@ valʳ (rconst c) = just c
 valʳ (ρ ·̂ᵣ ρ')  = zip₂ _·ᵣ_ (valʳ ρ) (valʳ ρ')
 valʳ ∣ ε ∣̂ᵉ     = mmap mapᵉ (valᵉ ε)
 
--- Two lower bounds on one unknown, combined: their join where the
--- instance supplies one and both are variable-free, else the larger of
--- two comparable bounds, else neither.
+-- Two lower bounds on one unknown, combined: their join where both
+-- evaluate, else the larger of two comparable bounds, else neither.
 
-joinᵉ? : ∀ {Ψ} → Maybe Joinₑ → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
-joinᵉ? nothing  ε ε' = nothing
-joinᵉ? (just j) ε ε' = mmap econst (zip₂ (Joinₑ._⊔ₑ_ j) (valᵉ ε) (valᵉ ε'))
+joinᵉ? : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
+joinᵉ? ε ε' = mmap econst (zip₂ _⊔ₑ_ (valᵉ ε) (valᵉ ε'))
 
-joinʳ? : ∀ {Ψ} → Maybe Joinᵣ → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
-joinʳ? nothing  ρ ρ' = nothing
-joinʳ? (just j) ρ ρ' = mmap rconst (zip₂ (Joinᵣ._⊔ᵣ_ j) (valʳ ρ) (valʳ ρ'))
+joinʳ? : ∀ {Ψ} → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
+joinʳ? ρ ρ' = mmap rconst (zip₂ _⊔ᵣ_ (valʳ ρ) (valʳ ρ'))
 
 cmpᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
 cmpᵉ ε ε' with decide≾ₑ {Q = ∅ᴴ} ε ε' | decide≾ₑ {Q = ∅ᴴ} ε' ε
@@ -165,12 +161,12 @@ cmpʳ ρ ρ' with decide≾ᵣ {Q = ∅ᴴ} ρ ρ' | decide≾ᵣ {Q = ∅ᴴ} �
 ... | nothing | nothing = nothing
 
 lubᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
-lubᵉ ε ε' with joinᵉ? join?ₑ ε ε'
+lubᵉ ε ε' with joinᵉ? ε ε'
 ... | just ε'' = just ε''
 ... | nothing  = cmpᵉ ε ε'
 
 lubʳ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
-lubʳ ρ ρ' with joinʳ? join?ᵣ ρ ρ'
+lubʳ ρ ρ' with joinʳ? ρ ρ'
 ... | just ρ'' = just ρ''
 ... | nothing  = cmpʳ ρ ρ'
 
