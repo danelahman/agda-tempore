@@ -58,11 +58,13 @@ open Operations Ops
 
 open import Syntax.Types    S
 open import Syntax.Contexts S
+open import Syntax.Subtyping S using (_<:ᵛ_; _<:ᶜ_)
 
-open import TypeInference.Open.Grades   S
-open import TypeInference.Open.Types    S
-open import TypeInference.Open.Contexts S
-open import TypeInference.Open.Hyps     S
+open import TypeInference.Open.Grades    S
+open import TypeInference.Open.Types     S
+open import TypeInference.Open.Contexts  S
+open import TypeInference.Open.Hyps      S
+open import TypeInference.Open.Subtyping S
 
 open import TypeInference.Open.Grounding S
   renaming (⟦_⟧ᵛ to ⟦_⟧ᵒᵛ; ⟦_⟧ᶜ to ⟦_⟧ᵒᶜ; ⟦_⟧ᶜᵗˣ to ⟦_⟧ᵒᶜᵗˣ)
@@ -80,6 +82,9 @@ open Monad Mon using (Tᵒ; Tᶠ; T-≤; T-idᵐ; T-∘ᵐ; T-congᶠ;
 open import DenotationalSemantics.Interpretation.Types     S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Contexts  S Cat Fut Pst Adj GTy Mon
 open import DenotationalSemantics.Interpretation.Variables S Cat Fut Pst Adj GTy Mon GE
+
+open import DenotationalSemantics.Interpretation.Subtyping S Cat Fut Pst Adj GTy Mon
+  using (⟦_⟧<:ᵛ; ⟦_⟧<:ᶜ; ⟦⟧<:ᵛ-irr)
 
 open import TypeInference.ParamGround S Cat Fut Pst Adj GTy Mon GE
   using (ground-mono-e; ground-mono-r)
@@ -202,6 +207,16 @@ inv⁻∘inv⁺ refl = ∘ᵐ-identityˡ _
 invˣ⁺-trans : ∀ {Γ Δ Ξ : Ctx} → (e : Γ ≡ Δ) → (e' : Δ ≡ Ξ)
             → invˣ⁺ e' ∘ᵐ invˣ⁺ e ≈ᵐ invˣ⁺ (trans e e')
 invˣ⁺-trans refl refl = ∘ᵐ-identityˡ _
+
+-- A coercion commutes with the transports of its two endpoints: witnesses of
+-- the two transported inclusions denote conjugate morphisms.
+
+<:ᵛ-inv⁻ : ∀ {A₁ A₂ B₁ B₂ : VType} → (e : A₁ ≡ A₂) → (e' : B₁ ≡ B₂)
+         → (w₁ : A₁ <:ᵛ B₁) → (w₂ : A₂ <:ᵛ B₂)
+         → inv⁻ e' ∘ᵐ ⟦ w₂ ⟧<:ᵛ ≈ᵐ ⟦ w₁ ⟧<:ᵛ ∘ᵐ inv⁻ e
+<:ᵛ-inv⁻ refl refl w₁ w₂ =
+  ≈ᵐ-trans (∘ᵐ-identityˡ _)
+           (≈ᵐ-trans (⟦⟧<:ᵛ-irr w₂ w₁) (≈ᵐ-sym (∘ᵐ-identityʳ _)))
 
 -- Grade relaxation is irrelevant in its witness, for the box as for `⟨_⟩`.
 
@@ -498,6 +513,81 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
 
   covV-irr : (A : OVType (Θ +e)) → (c c' : CovV A) → covV A c ≈ᵐ covV A c'
   covV-irr A c c' rewrite CovV-unique A c c' = ≈ᵐ-refl
+
+  -- Naturality of the covariance coercion in a subtyping witness: the two
+  -- readings of a witness are conjugate by the coercions of its endpoints.
+  -- A contravariant slot of `covV` is an equality, so it crosses the witness
+  -- by `<:ᵛ-inv⁻` rather than by a recursive call.
+
+  cov-<:ᵛ : ∀ {Q : Hyps (Θ +e)} {A A' : OVType (Θ +e)}
+          → (h₁ : θ₁ ⊨ᴴ Q) → (h₂ : θ₂ ⊨ᴴ Q) → (p : Q ∣ A <:̂ᵛ A')
+          → (c : CovV A) → (c' : CovV A')
+          → ⟦ ground-<:ᵛ h₂ p ⟧<:ᵛ ∘ᵐ covV A c
+          ≈ᵐ covV A' c' ∘ᵐ ⟦ ground-<:ᵛ h₁ p ⟧<:ᵛ
+
+  cov-<:ᶜ : ∀ {Q : Hyps (Θ +e)} {C C' : OCType (Θ +e)}
+          → (h₁ : θ₁ ⊨ᴴ Q) → (h₂ : θ₂ ⊨ᴴ Q) → (p : Q ∣ C <:̂ᶜ C')
+          → (c : CovC C) → (c' : CovC C')
+          → ⟦ ground-<:ᶜ h₂ p ⟧<:ᶜ ∘ᵐ covC C c
+          ≈ᵐ covC C' c' ∘ᵐ ⟦ ground-<:ᶜ h₁ p ⟧<:ᶜ
+
+  -- A type variable reads the same under both instantiations.
+  cov-<:ᵛ h₁ h₂ (tvarₛ e) c c' =
+       ∘ᵐ-identityʳ _
+    ∙≈ ⟦⟧<:ᵛ-irr (ground-<:ᵛ h₂ (tvarₛ e)) (ground-<:ᵛ h₁ (tvarₛ e))
+    ∙≈ ≈ᵐ-sym (∘ᵐ-identityˡ _)
+  cov-<:ᵛ h₁ h₂ (Baseₛ refl) c c' = ≈ᵐ-refl
+  cov-<:ᵛ h₁ h₂ Unitₛ        c c' = ≈ᵐ-refl
+  cov-<:ᵛ h₁ h₂ Boolₛ        c c' = ≈ᵐ-refl
+  cov-<:ᵛ h₁ h₂ Emptyₛ       c c' = ≈ᵐ-refl
+  cov-<:ᵛ h₁ h₂ (p |×|ₛ r) (c , d) (c' , d') =
+       mapˣᵐ-∘ _ _ _ _
+    ∙≈ mapˣᵐ-cong (cov-<:ᵛ h₁ h₂ p c c') (cov-<:ᵛ h₁ h₂ r d d')
+    ∙≈ ≈ᵐ-sym (mapˣᵐ-∘ _ _ _ _)
+  cov-<:ᵛ h₁ h₂ (_⇒ₛ_ {A} {A'} p r) (n , c) (n' , c') =
+       ≈ᵐ-sym (map⇒ᵐ-∘ _ _ _ _)
+    ∙≈ map⇒ᵐ-cong (<:ᵛ-inv⁻ (nonew-v A' n') (nonew-v A n)
+                            (ground-<:ᵛ h₁ p) (ground-<:ᵛ h₂ p))
+                  (cov-<:ᶜ h₁ h₂ r c c')
+    ∙≈ map⇒ᵐ-∘ _ _ _ _
+  cov-<:ᵛ h₁ h₂ ([_]ₛ_ {ρ} {ρ'} {A} {A'} qq p) (n , c) (n' , c') =
+       ∘ᵐ-assoc _ _ _
+    ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym ([]-≤-nat _ _)))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙≈ ∘ᵐ-congˡ (≈ᵐ-sym ([]-∘ᵐ _ _))
+    ∙≈ ∘ᵐ-congˡ ([]-congᶠ (cov-<:ᵛ h₁ h₂ p c c'))
+    ∙≈ ∘ᵐ-congʳ (   []-≤-trans _ _
+                 ∙≈ []-≤-irr _ (≾ᵣ-trans (≾ᵣ-reflexive (sym (nonew-r ρ' n')))
+                                         (ground-≾ᵣ h₁ qq))
+                 ∙≈ ≈ᵐ-sym ([]-≤-trans (≾ᵣ-reflexive (sym (nonew-r ρ' n')))
+                                       (ground-≾ᵣ h₁ qq)))
+    ∙≈ ∘ᵐ-congˡ ([]-∘ᵐ _ _)
+    ∙≈ ∘ᵐ-assoc _ _ _
+    ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ ([]-≤-nat _ _))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+
+  cov-<:ᶜ h₁ h₂ (_‼ₛ_ {A} {A'} {ε} {ε'} p w) c c' =
+       ∘ᵐ-assoc _ _ _
+    ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-≤-nat _ _)))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
+    ∙≈ ∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))
+    ∙≈ ∘ᵐ-congˡ (T-congᶠ (cov-<:ᵛ h₁ h₂ p c c'))
+    ∙≈ ∘ᵐ-congʳ (   T-≤-trans _ _ (≾ₑ-trans (ground-≾ₑ h₁ w)
+                                            (ground-mono-e {θ = θ} q ε'))
+                 ∙≈ ≈ᵐ-sym (T-≤-trans (ground-≾ₑ h₁ w)
+                                      (ground-mono-e {θ = θ} q ε') _))
+    ∙≈ ∘ᵐ-congˡ (T-∘ᵐ _ _)
+    ∙≈ ∘ᵐ-assoc _ _ _
+    ∙≈ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-congˡ (T-≤-nat _ _))
+    ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
+    ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
 
   -- Naturality of the projection `var-proj` in the instantiation.
 
