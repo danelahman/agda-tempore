@@ -5,7 +5,7 @@
 -- checked by computation, not asserted.                          --
 -- A second specification, deadlines, follows to exercise the     --
 -- optional unit-minimality assumption and the residual var-rule  --
--- disjunctions, and a benchmark over five library shapes closes  --
+-- disjunctions, and a benchmark over six library shapes closes   --
 -- the module.                                                    --
 ------------------------------------------------------------------
 
@@ -529,7 +529,7 @@ module Unguarded where
                    (principal? Γ∅ prog-true ≡ just p)
   ex-principal = _ , refl
 
--- The library benchmark: five shapes go through `reportOn`, the open
+-- The library benchmark: six shapes go through `reportOn`, the open
 -- path, which hands back a qualified type rather than a ground
 -- solution. Each is stated twice, the full report and its hypothesis
 -- counts by sort.
@@ -655,6 +655,32 @@ module Library where
 
   ex-branch-size : sizeOf branch ≡ just (0 , 2 , 0 , 0 , 0)
   ex-branch-size = refl
+
+  -- `branchE f b = if b then perform read () (return ()) else f ()`:
+  -- the arms carry different effects, so both bound the result's
+  -- effect unknown from below, and the unknown is sent to the join of
+  -- the two bounds
+
+  branchE : RawC 0
+  branchE =
+    return (lam (return (lam
+      (if var zero
+         `then perform read ⋆ (return ⋆)
+         `else (var (suc zero) · ⋆)))))
+
+  ex-branchE-report : reportOf branchE
+                    ≡ just (scope 15 0 10 ,
+                            ((Unit ⇒ Unit ‼ evar (# 1))
+                              ⇒ (Bool
+                                  ⇒ Unit ‼ (econst (op-grade read) ·̂ₑ ûₑ
+                                             ⊔̂ₑ evar (# 1)))
+                                ‼ ûₑ)
+                              ‼ ûₑ ,
+                            []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
+  ex-branchE-report = refl
+
+  ex-branchE-size : sizeOf branchE ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-branchE-size = refl
 
   -- `keep x = box x`: the box grade stays a variable, and the one
   -- var-rule disjunction on it is all that is left

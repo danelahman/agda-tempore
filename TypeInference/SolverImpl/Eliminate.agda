@@ -1,14 +1,15 @@
 ------------------------------------------------------------------
 -- Eliminating an unknown from a report                           --
 --                                                                --
--- An unknown bounded below by exactly one hypothesis, and        --
--- occurring below nowhere else, is sent to that bound and the    --
--- hypothesis goes with it; an unknown absent from the reported   --
--- type is eliminated outright by the same step. Every grounding  --
--- of the result realises the original at the same type, every    --
--- grounding of the original satisfies the result, and the        --
--- reported type becomes a subtype of what it was. The three      --
--- sorts are treated alike.                                       --
+-- An unknown occurring below nowhere else is sent to the join of --
+-- the hypotheses bounding it below, and those hypotheses go with --
+-- it; an unknown absent from the reported type is eliminated     --
+-- outright by the same step. Every grounding of the result       --
+-- realises the original at the same type, every grounding of the --
+-- original satisfies the result, and the reported type becomes a --
+-- subtype of what it was. The two grade sorts are treated alike; --
+-- open types carry no join, so a type variable is eliminated     --
+-- against a single bound.                                        --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --
@@ -381,35 +382,106 @@ _⨾ᴱ_ r s = mkElim (Ĉ s) (Q̂ s)
            in proj₁ t₂ , proj₁ (proj₂ t₂) , trans (proj₂ (proj₂ t₂)) (proj₂ (proj₂ t₁)))
   (λ θ h → <:ᶜ-trans (princ s θ (keep r θ h)) (princ r θ h))
 
--- The single hypothesis bounding an unknown below, and the rest
+-- The join of a non-empty list of bounds, its head named so that a
+-- lone bound is its own join and folded to the left so that the join
+-- reads in the order the bounds were met.
+
+joinₑ : ∀ {Θ} → EExp Θ → List (EExp Θ) → EExp Θ
+joinₑ ε []        = ε
+joinₑ ε (ε' ∷ εs) = joinₑ (ε ⊔̂ₑ ε') εs
+
+joinₑ-ub : ∀ {Θ} {θ : Grounding Θ} → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
+         → ∀ {ε} → ε ∈ ε₀ ∷ εs → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ joinₑ ε₀ εs ⟧ᵉ θ
+joinₑ-ub ε₀ []        (here refl) = ≾ₑ-refl
+joinₑ-ub {θ = θ} ε₀ (ε₁ ∷ εs) (here refl) =
+  ≾ₑ-trans (⊔ₑ-ubˡ (⟦ ε₀ ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ))
+           (joinₑ-ub (ε₀ ⊔̂ₑ ε₁) εs (here refl))
+joinₑ-ub {θ = θ} ε₀ (ε₁ ∷ εs) (there (here refl)) =
+  ≾ₑ-trans (⊔ₑ-ubʳ (⟦ ε₀ ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ))
+           (joinₑ-ub (ε₀ ⊔̂ₑ ε₁) εs (here refl))
+joinₑ-ub ε₀ (ε₁ ∷ εs) (there (there m)) = joinₑ-ub (ε₀ ⊔̂ₑ ε₁) εs (there m)
+
+joinₑ-lub : ∀ {Θ} {θ : Grounding Θ} {x : E} → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
+          → (∀ {ε} → ε ∈ ε₀ ∷ εs → ⟦ ε ⟧ᵉ θ ≾ₑ x)
+          → ⟦ joinₑ ε₀ εs ⟧ᵉ θ ≾ₑ x
+joinₑ-lub ε₀ []        k = k (here refl)
+joinₑ-lub ε₀ (ε₁ ∷ εs) k =
+  joinₑ-lub (ε₀ ⊔̂ₑ ε₁) εs
+    (λ { (here refl) → ⊔ₑ-lub (k (here refl)) (k (there (here refl)))
+       ; (there m)   → k (there (there m)) })
+
+joinₑ-below : ∀ {Θ} → (i : EVar Θ) → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
+            → below (polₑ-e i ⁻ (joinₑ ε₀ εs)) ≡ false
+            → ∀ {ε} → ε ∈ ε₀ ∷ εs → below (polₑ-e i ⁻ ε) ≡ false
+joinₑ-below i ε₀ []        q (here refl) = q
+joinₑ-below i ε₀ (ε₁ ∷ εs) q (here refl) =
+  proj₁ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
+                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
+joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (here refl)) =
+  proj₂ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
+                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
+joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (there m)) =
+  joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (there m)
+
+-- The hypotheses bounding an unknown below, and the rest
 
 record Splitₑ {Θ : Scope} (i : EVar Θ) (l : List (EExp Θ × EExp Θ)) : Set where
   constructor split
   field
-    bnd  : EExp Θ
-    rest : List (EExp Θ × EExp Θ)
-    mem  : (bnd , evar i) ∈ l
-    sub  : ∀ {p} → p ∈ rest → p ∈ l
-    cases : ∀ {p} → p ∈ l → (p ≡ (bnd , evar i)) ⊎ (p ∈ rest)
+    bnd   : EExp Θ
+    bnds  : List (EExp Θ)
+    rest  : List (EExp Θ × EExp Θ)
+    mem   : ∀ {ε} → ε ∈ bnd ∷ bnds → (ε , evar i) ∈ l
+    sub   : ∀ {p} → p ∈ rest → p ∈ l
+    cases : ∀ {ε ε'} → (ε , ε') ∈ l
+          → ((ε ∈ bnd ∷ bnds) × (ε' ≡ evar i)) ⊎ ((ε , ε') ∈ rest)
 
 open Splitₑ
 
-consₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {p} → Splitₑ i l
-      → Splitₑ i (p ∷ l)
-consₑ {p = p} s =
-  split (bnd s) (p ∷ rest s) (there (mem s))
+-- The bound the unknown is sent to
+
+lubₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} → Splitₑ i l → EExp Θ
+lubₑ s = joinₑ (bnd s) (bnds s)
+
+-- A hypothesis that is not a bound joins the rest; one that is joins
+-- the bounds
+
+consₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀ ε₀'} → Splitₑ i l
+      → Splitₑ i ((ε₀ , ε₀') ∷ l)
+consₑ {ε₀ = ε₀} {ε₀'} s =
+  split (bnd s) (bnds s) ((ε₀ , ε₀') ∷ rest s)
+        (λ m → there (mem s m))
         (λ { (here refl) → here refl ; (there m) → there (sub s m) })
         (λ { (here refl) → inj₂ (here refl)
            ; (there m)   → [ inj₁ , (λ r → inj₂ (there r)) ]′ (cases s m) })
 
+moreₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀} → Splitₑ i l
+      → Splitₑ i ((ε₀ , evar i) ∷ l)
+moreₑ {ε₀ = ε₀} s =
+  split ε₀ (bnd s ∷ bnds s) (rest s)
+        (λ { (here refl) → here refl ; (there m) → there (mem s m) })
+        (λ m → there (sub s m))
+        (λ { (here refl) → inj₁ (here refl , refl)
+           ; (there m)   → [ (λ { (mb , e) → inj₁ (there mb , e) })
+                           , inj₂ ]′ (cases s m) })
+
+oneₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀}
+     → Splitₑ i ((ε₀ , evar i) ∷ l)
+oneₑ {l = l} {ε₀} =
+  split ε₀ [] l
+        (λ { (here refl) → here refl ; (there ()) })
+        there
+        (λ { (here refl) → inj₁ (here refl , refl) ; (there m) → inj₂ m })
+
 splitₑ : ∀ {Θ} → (i : EVar Θ) → (l : List (EExp Θ × EExp Θ)) → Maybe (Splitₑ i l)
 splitₑ i [] = nothing
 splitₑ i ((ε , evar j) ∷ l) with i ≟ᶠ j
-... | yes refl = just (split ε l (here refl) there
-                             (λ { (here refl) → inj₁ refl ; (there m) → inj₂ m }))
-... | no  _    with splitₑ i l
-...   | just s  = just (consₑ s)
-...   | nothing = nothing
+... | yes refl with splitₑ i l
+...   | just s  = just (moreₑ s)
+...   | nothing = just oneₑ
+splitₑ i ((ε , evar j) ∷ l) | no _ with splitₑ i l
+... | just s  = just (consₑ s)
+... | nothing = nothing
 splitₑ i ((ε , econst _) ∷ l) with splitₑ i l
 ... | just s  = just (consₑ s)
 ... | nothing = nothing
@@ -422,14 +494,14 @@ splitₑ i ((ε , _ ⊔̂ₑ _) ∷ l) with splitₑ i l
 
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → (s : Splitₑ i (ordₑ Q))
-      → below (polₑ-e i ⁻ (bnd s)) ≡ false
+      → below (polₑ-e i ⁻ (lubₑ s)) ≡ false
       → below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (rest s) (disj Q)) i) ≡ false
       → below (polₑ-c i ⁺ C) ≡ false
       → Elim C Q
 stepᵉ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
   where
     b : EExp Θ
-    b = bnd s
+    b = lubₑ s
 
     Ĉ₀ : OCType Θ
     Ĉ₀ = sbᵉ-c i b C
@@ -476,7 +548,7 @@ stepᵉ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
         e₀ = ⟦ b ⟧ᵉ θ
 
         le : e₀ ≾ₑ gE θ i
-        le = ordEOK h (mem s)
+        le = joinₑ-lub (bnd s) (bnds s) (λ m → ordEOK h (mem s m))
 
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q)
              → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
@@ -535,9 +607,10 @@ stepᵉ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
 
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
         ordE {ε} {ε'} m with cases s m
-        ... | inj₁ refl =
-              subst₂ _≾ₑ_ (sym (invᵉ-e i b cb)) (sym (upd-≡ i (⟦ b ⟧ᵉ θ) (gE θ)))
-                     ≾ₑ-refl
+        ... | inj₁ (mb , refl) =
+              subst₂ _≾ₑ_ (sym (invᵉ-e i ε (joinₑ-below i (bnd s) (bnds s) cb mb)))
+                          (sym (upd-≡ i (⟦ b ⟧ᵉ θ) (gE θ)))
+                     (joinₑ-ub {θ = θ} (bnd s) (bnds s) mb)
         ... | inj₂ m' =
               subst₂ _≾ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε') (ordEOK h (∈-mapᵖᵉ m'))
 
@@ -551,7 +624,9 @@ stepᵉ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
     princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
     princ₀ θ h =
       subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (⟦sbᵉ⟧-c i b C))
-            (monoᵉ-c θ i (⟦ b ⟧ᵉ θ) (ordEOK h (mem s)) ⁺ C cc)
+            (monoᵉ-c θ i (⟦ b ⟧ᵉ θ)
+                     (joinₑ-lub (bnd s) (bnds s) (λ m → ordEOK h (mem s m)))
+                     ⁺ C cc)
 
 -- The search: one unknown at a time, the first that qualifies
 
@@ -559,7 +634,7 @@ stepᵉ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → 
 stepᵉ? C Q i with splitₑ i (ordₑ Q)
 ... | nothing = nothing
 ... | just s
-    with below (polₑ-e i ⁻ (bnd s)) in c1
+    with below (polₑ-e i ⁻ (lubₑ s)) in c1
        | below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (rest s) (disj Q)) i) in c2
        | below (polₑ-c i ⁺ C) in c3
 ...   | false | false | false = just (stepᵉ C Q i s c1 c2 c3)
@@ -721,33 +796,95 @@ polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsᵣ-disj-∈ i l (proj₂ (below-∪ (polᵣ-r i ⁺ ρ₀) (polsᵣ-disj i l) q)) m
 
+joinᵣ : ∀ {Θ} → RExp Θ → List (RExp Θ) → RExp Θ
+joinᵣ ρ []        = ρ
+joinᵣ ρ (ρ' ∷ ρs) = joinᵣ (ρ ⊔̂ᵣ ρ') ρs
+
+joinᵣ-ub : ∀ {Θ} {θ : Grounding Θ} → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
+         → ∀ {ρ} → ρ ∈ ρ₀ ∷ ρs → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ joinᵣ ρ₀ ρs ⟧ʳ θ
+joinᵣ-ub ρ₀ []        (here refl) = ≾ᵣ-refl
+joinᵣ-ub {θ = θ} ρ₀ (ρ₁ ∷ ρs) (here refl) =
+  ≾ᵣ-trans (⊔ᵣ-ubˡ (⟦ ρ₀ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ))
+           (joinᵣ-ub (ρ₀ ⊔̂ᵣ ρ₁) ρs (here refl))
+joinᵣ-ub {θ = θ} ρ₀ (ρ₁ ∷ ρs) (there (here refl)) =
+  ≾ᵣ-trans (⊔ᵣ-ubʳ (⟦ ρ₀ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ))
+           (joinᵣ-ub (ρ₀ ⊔̂ᵣ ρ₁) ρs (here refl))
+joinᵣ-ub ρ₀ (ρ₁ ∷ ρs) (there (there m)) = joinᵣ-ub (ρ₀ ⊔̂ᵣ ρ₁) ρs (there m)
+
+joinᵣ-lub : ∀ {Θ} {θ : Grounding Θ} {x : R} → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
+          → (∀ {ρ} → ρ ∈ ρ₀ ∷ ρs → ⟦ ρ ⟧ʳ θ ≾ᵣ x)
+          → ⟦ joinᵣ ρ₀ ρs ⟧ʳ θ ≾ᵣ x
+joinᵣ-lub ρ₀ []        k = k (here refl)
+joinᵣ-lub ρ₀ (ρ₁ ∷ ρs) k =
+  joinᵣ-lub (ρ₀ ⊔̂ᵣ ρ₁) ρs
+    (λ { (here refl) → ⊔ᵣ-lub (k (here refl)) (k (there (here refl)))
+       ; (there m)   → k (there (there m)) })
+
+joinᵣ-below : ∀ {Θ} → (i : RVar Θ) → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
+            → below (polᵣ-r i ⁻ (joinᵣ ρ₀ ρs)) ≡ false
+            → ∀ {ρ} → ρ ∈ ρ₀ ∷ ρs → below (polᵣ-r i ⁻ ρ) ≡ false
+joinᵣ-below i ρ₀ []        q (here refl) = q
+joinᵣ-below i ρ₀ (ρ₁ ∷ ρs) q (here refl) =
+  proj₁ (below-∪ (polᵣ-r i ⁻ ρ₀) (polᵣ-r i ⁻ ρ₁)
+                 (joinᵣ-below i (ρ₀ ⊔̂ᵣ ρ₁) ρs q (here refl)))
+joinᵣ-below i ρ₀ (ρ₁ ∷ ρs) q (there (here refl)) =
+  proj₂ (below-∪ (polᵣ-r i ⁻ ρ₀) (polᵣ-r i ⁻ ρ₁)
+                 (joinᵣ-below i (ρ₀ ⊔̂ᵣ ρ₁) ρs q (here refl)))
+joinᵣ-below i ρ₀ (ρ₁ ∷ ρs) q (there (there m)) =
+  joinᵣ-below i (ρ₀ ⊔̂ᵣ ρ₁) ρs q (there m)
+
 record Splitʳ {Θ : Scope} (i : RVar Θ) (l : List (RExp Θ × RExp Θ)) : Set where
   constructor splitr
   field
     bndʳ   : RExp Θ
+    bndsʳ  : List (RExp Θ)
     restʳ  : List (RExp Θ × RExp Θ)
-    memʳ   : (bndʳ , rvar i) ∈ l
+    memʳ   : ∀ {ρ} → ρ ∈ bndʳ ∷ bndsʳ → (ρ , rvar i) ∈ l
     subʳ   : ∀ {p} → p ∈ restʳ → p ∈ l
-    casesʳ : ∀ {p} → p ∈ l → (p ≡ (bndʳ , rvar i)) ⊎ (p ∈ restʳ)
+    casesʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ l
+           → ((ρ ∈ bndʳ ∷ bndsʳ) × (ρ' ≡ rvar i)) ⊎ ((ρ , ρ') ∈ restʳ)
 
 open Splitʳ
 
-consʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {p} → Splitʳ i l
-      → Splitʳ i (p ∷ l)
-consʳ {p = p} s =
-  splitr (bndʳ s) (p ∷ restʳ s) (there (memʳ s))
+lubʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} → Splitʳ i l → RExp Θ
+lubʳ s = joinᵣ (bndʳ s) (bndsʳ s)
+
+consʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {ρ₀ ρ₀'} → Splitʳ i l
+      → Splitʳ i ((ρ₀ , ρ₀') ∷ l)
+consʳ {ρ₀ = ρ₀} {ρ₀'} s =
+  splitr (bndʳ s) (bndsʳ s) ((ρ₀ , ρ₀') ∷ restʳ s)
+         (λ m → there (memʳ s m))
          (λ { (here refl) → here refl ; (there m) → there (subʳ s m) })
          (λ { (here refl) → inj₂ (here refl)
             ; (there m)   → [ inj₁ , (λ r → inj₂ (there r)) ]′ (casesʳ s m) })
 
+moreʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {ρ₀} → Splitʳ i l
+      → Splitʳ i ((ρ₀ , rvar i) ∷ l)
+moreʳ {ρ₀ = ρ₀} s =
+  splitr ρ₀ (bndʳ s ∷ bndsʳ s) (restʳ s)
+         (λ { (here refl) → here refl ; (there m) → there (memʳ s m) })
+         (λ m → there (subʳ s m))
+         (λ { (here refl) → inj₁ (here refl , refl)
+            ; (there m)   → [ (λ { (mb , e) → inj₁ (there mb , e) })
+                            , inj₂ ]′ (casesʳ s m) })
+
+oneʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {ρ₀}
+     → Splitʳ i ((ρ₀ , rvar i) ∷ l)
+oneʳ {l = l} {ρ₀} =
+  splitr ρ₀ [] l
+         (λ { (here refl) → here refl ; (there ()) })
+         there
+         (λ { (here refl) → inj₁ (here refl , refl) ; (there m) → inj₂ m })
+
 splitʳ : ∀ {Θ} → (i : RVar Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (Splitʳ i l)
 splitʳ i [] = nothing
 splitʳ i ((ρ , rvar j) ∷ l) with i ≟ᶠ j
-... | yes refl = just (splitr ρ l (here refl) there
-                              (λ { (here refl) → inj₁ refl ; (there m) → inj₂ m }))
-... | no  _    with splitʳ i l
-...   | just s  = just (consʳ s)
-...   | nothing = nothing
+... | yes refl with splitʳ i l
+...   | just s  = just (moreʳ s)
+...   | nothing = just oneʳ
+splitʳ i ((ρ , rvar j) ∷ l) | no _ with splitʳ i l
+... | just s  = just (consʳ s)
+... | nothing = nothing
 splitʳ i ((ρ , rconst _) ∷ l) with splitʳ i l
 ... | just s  = just (consʳ s)
 ... | nothing = nothing
@@ -763,14 +900,14 @@ splitʳ i ((ρ , ∣ _ ∣̂ᵉ) ∷ l) with splitʳ i l
 
 stepʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → (s : Splitʳ i (ordᵣ Q))
-      → below (polᵣ-r i ⁻ (bndʳ s)) ≡ false
+      → below (polᵣ-r i ⁻ (lubʳ s)) ≡ false
       → below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restʳ s) (ordₑ Q) (disj Q)) i) ≡ false
       → below (polᵣ-c i ⁺ C) ≡ false
       → Elim C Q
 stepʳ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
   where
     b : RExp Θ
-    b = bndʳ s
+    b = lubʳ s
 
     Ĉ₀ : OCType Θ
     Ĉ₀ = sbʳ-c i b C
@@ -805,7 +942,7 @@ stepʳ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
         ρ₀ = ⟦ b ⟧ʳ θ
 
         le : ρ₀ ≾ᵣ gR θ i
-        le = ordROK h (memʳ s)
+        le = joinᵣ-lub (bndʳ s) (bndsʳ s) (λ m → ordROK h (memʳ s m))
 
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (sbʳ-r i b)) (restʳ s)
              → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
@@ -850,9 +987,10 @@ stepʳ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
 
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
         ordR {ρ} {ρ'} m with casesʳ s m
-        ... | inj₁ refl =
-              subst₂ _≾ᵣ_ (sym (invʳ-r i b cb)) (sym (upd-≡ i (⟦ b ⟧ʳ θ) (gR θ)))
-                     ≾ᵣ-refl
+        ... | inj₁ (mb , refl) =
+              subst₂ _≾ᵣ_ (sym (invʳ-r i ρ (joinᵣ-below i (bndʳ s) (bndsʳ s) cb mb)))
+                          (sym (upd-≡ i (⟦ b ⟧ʳ θ) (gR θ)))
+                     (joinᵣ-ub {θ = θ} (bndʳ s) (bndsʳ s) mb)
         ... | inj₂ m' =
               subst₂ _≾ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ') (ordROK h (∈-mapᵖʳ m'))
 
@@ -866,13 +1004,15 @@ stepʳ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
     princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
     princ₀ θ h =
       subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (⟦sbʳ⟧-c i b C))
-            (monoʳ-c θ i (⟦ b ⟧ʳ θ) (ordROK h (memʳ s)) ⁺ C cc)
+            (monoʳ-c θ i (⟦ b ⟧ʳ θ)
+                     (joinᵣ-lub (bndʳ s) (bndsʳ s) (λ m → ordROK h (memʳ s m)))
+                     ⁺ C cc)
 
 stepʳ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → Maybe (Elim C Q)
 stepʳ? C Q i with splitʳ i (ordᵣ Q)
 ... | nothing = nothing
 ... | just s
-    with below (polᵣ-r i ⁻ (bndʳ s)) in c1
+    with below (polᵣ-r i ⁻ (lubʳ s)) in c1
        | below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restʳ s) (ordₑ Q) (disj Q)) i) in c2
        | below (polᵣ-c i ⁺ C) in c3
 ...   | false | false | false = just (stepʳ C Q i s c1 c2 c3)
