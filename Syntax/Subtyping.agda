@@ -11,6 +11,8 @@
 -- `unbox`'s premise: a larger box grade is the weaker obligation. --
 -------------------------------------------------------------------
 
+open import Data.Product
+
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 
@@ -122,3 +124,152 @@ data _<:ᶜ_ where
 <:ᵛ-eternalʳ Boolₛ        et          = et
 <:ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:ᵛ-eternalʳ p et |×|ₑ <:ᵛ-eternalʳ r e
 <:ᵛ-eternalʳ Emptyₛ       et          = et
+
+
+-------------------------------------------------------------------
+-- Least upper bounds of value and computation types              --
+--                                                                --
+-- `A₁ ⊔ᵛ A₂ ≡ A` says that `A` is a least upper bound of `A₁`    --
+-- and `A₂` for `_<:ᵛ_`. A ternary inductive family in the same   --
+-- style as `_<:ᵛ_`: one constructor per matching pair of type    --
+-- formers, so mismatched shapes are uninhabited and the joined   --
+-- type is read off structurally.                                 --
+--                                                                --
+-- The relation is partial, and deliberately so: a function's     --
+-- domain and a box's grade are contravariant, so joining them    --
+-- would ask for *meets* of value types and of resource grades,   --
+-- neither of which is available. Those two positions are         --
+-- therefore pinned — one shared domain, one shared grade — and   --
+-- the only component genuinely joined is a computation's effect, --
+-- where `_⊔ₑ_` always exists.                                    --
+--                                                                --
+-- The constructors and their premises are instances: the         --
+-- relation is syntax-directed on its two input types, so a       --
+-- witness is found by instance search and reads as a side        --
+-- condition on a rule rather than as a premise of it.            --
+-------------------------------------------------------------------
+
+infix 4 _⊔ᵛ_≡_ _⊔ᶜ_≡_
+
+data _⊔ᵛ_≡_ : VType → VType → VType → Set
+data _⊔ᶜ_≡_ : CType → CType → CType → Set
+
+data _⊔ᵛ_≡_ where
+  instance
+    Baseⱼ  : ∀ {b} → Base b ⊔ᵛ Base b ≡ Base b
+    Unitⱼ  : Unit ⊔ᵛ Unit ≡ Unit
+    Boolⱼ  : Bool ⊔ᵛ Bool ≡ Bool
+    |×|ⱼ   : ∀ {A₁ A₂ A B₁ B₂ B}
+           → {{A₁ ⊔ᵛ A₂ ≡ A}}
+           → {{B₁ ⊔ᵛ B₂ ≡ B}}
+           → (A₁ |×| B₁) ⊔ᵛ (A₂ |×| B₂) ≡ (A |×| B)
+    Emptyⱼ : Empty ⊔ᵛ Empty ≡ Empty
+    ⇒ⱼ     : ∀ {A C₁ C₂ C}
+           → {{C₁ ⊔ᶜ C₂ ≡ C}}
+           → (A ⇒ C₁) ⊔ᵛ (A ⇒ C₂) ≡ (A ⇒ C)
+    []ⱼ    : ∀ {ρ A₁ A₂ A}
+           → {{A₁ ⊔ᵛ A₂ ≡ A}}
+           → ([ ρ ] A₁) ⊔ᵛ ([ ρ ] A₂) ≡ ([ ρ ] A)
+
+data _⊔ᶜ_≡_ where
+  instance
+    ‼ⱼ : ∀ {A₁ A₂ A ε₁ ε₂}
+       → {{A₁ ⊔ᵛ A₂ ≡ A}}
+       → (A₁ ‼ ε₁) ⊔ᶜ (A₂ ‼ ε₂) ≡ (A ‼ (ε₁ ⊔ₑ ε₂))
+
+-- The join is an upper bound of both arguments
+
+⊔ᵛ-ubˡ : ∀ {A₁ A₂ A} → A₁ ⊔ᵛ A₂ ≡ A → A₁ <:ᵛ A
+⊔ᶜ-ubˡ : ∀ {C₁ C₂ C} → C₁ ⊔ᶜ C₂ ≡ C → C₁ <:ᶜ C
+
+⊔ᵛ-ubˡ Baseⱼ              = Baseₛ refl
+⊔ᵛ-ubˡ Unitⱼ              = Unitₛ
+⊔ᵛ-ubˡ Boolⱼ              = Boolₛ
+⊔ᵛ-ubˡ Emptyⱼ             = Emptyₛ
+⊔ᵛ-ubˡ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubˡ j |×|ₛ ⊔ᵛ-ubˡ k
+⊔ᵛ-ubˡ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubˡ j
+⊔ᵛ-ubˡ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubˡ j
+
+⊔ᶜ-ubˡ (‼ⱼ {{j}}) = ⊔ᵛ-ubˡ j ‼ₛ ⊔ₑ-ubˡ _ _
+
+⊔ᵛ-ubʳ : ∀ {A₁ A₂ A} → A₁ ⊔ᵛ A₂ ≡ A → A₂ <:ᵛ A
+⊔ᶜ-ubʳ : ∀ {C₁ C₂ C} → C₁ ⊔ᶜ C₂ ≡ C → C₂ <:ᶜ C
+
+⊔ᵛ-ubʳ Baseⱼ              = Baseₛ refl
+⊔ᵛ-ubʳ Unitⱼ              = Unitₛ
+⊔ᵛ-ubʳ Boolⱼ              = Boolₛ
+⊔ᵛ-ubʳ Emptyⱼ             = Emptyₛ
+⊔ᵛ-ubʳ (|×|ⱼ {{j}} {{k}}) = ⊔ᵛ-ubʳ j |×|ₛ ⊔ᵛ-ubʳ k
+⊔ᵛ-ubʳ (⇒ⱼ {{j}})         = <:ᵛ-refl _ ⇒ₛ ⊔ᶜ-ubʳ j
+⊔ᵛ-ubʳ ([]ⱼ {{j}})        = [ ≾ᵣ-refl ]ₛ ⊔ᵛ-ubʳ j
+
+⊔ᶜ-ubʳ (‼ⱼ {{j}}) = ⊔ᵛ-ubʳ j ‼ₛ ⊔ₑ-ubʳ _ _
+
+-- The join is below any common upper bound.
+--
+-- The pinned positions are what makes this go through with no meets: at a
+-- box the bound is `[ σ ] Z` and its own `σ ≾ᵣ ρ` is the bound the joined
+-- type needs, and at an arrow the bound's `A' <:ᵛ A` is reusable verbatim
+-- because the domain is shared.
+
+⊔ᵛ-lub : ∀ {A₁ A₂ A B} → A₁ ⊔ᵛ A₂ ≡ A → A₁ <:ᵛ B → A₂ <:ᵛ B → A <:ᵛ B
+⊔ᶜ-lub : ∀ {C₁ C₂ C D} → C₁ ⊔ᶜ C₂ ≡ C → C₁ <:ᶜ D → C₂ <:ᶜ D → C <:ᶜ D
+
+⊔ᵛ-lub Baseⱼ  p          _          = p
+⊔ᵛ-lub Unitⱼ  p          _          = p
+⊔ᵛ-lub Boolⱼ  p          _          = p
+⊔ᵛ-lub Emptyⱼ p          _          = p
+⊔ᵛ-lub (|×|ⱼ {{j}} {{k}}) (p |×|ₛ r) (q |×|ₛ s) =
+  ⊔ᵛ-lub j p q |×|ₛ ⊔ᵛ-lub k r s
+⊔ᵛ-lub (⇒ⱼ {{j}})  (p ⇒ₛ r)   (_ ⇒ₛ s)   = p ⇒ₛ ⊔ᶜ-lub j r s
+⊔ᵛ-lub ([]ⱼ {{j}}) ([ p ]ₛ r) ([ _ ]ₛ s) = [ p ]ₛ ⊔ᵛ-lub j r s
+
+⊔ᶜ-lub (‼ⱼ {{j}}) (p ‼ₛ r) (q ‼ₛ s) = ⊔ᵛ-lub j p q ‼ₛ ⊔ₑ-lub r s
+
+-- The joined type is determined by the two arguments
+
+⊔ᵛ-det : ∀ {A₁ A₂ A A'} → A₁ ⊔ᵛ A₂ ≡ A → A₁ ⊔ᵛ A₂ ≡ A' → A ≡ A'
+⊔ᶜ-det : ∀ {C₁ C₂ C C'} → C₁ ⊔ᶜ C₂ ≡ C → C₁ ⊔ᶜ C₂ ≡ C' → C ≡ C'
+
+⊔ᵛ-det Baseⱼ  Baseⱼ  = refl
+⊔ᵛ-det Unitⱼ  Unitⱼ  = refl
+⊔ᵛ-det Boolⱼ  Boolⱼ  = refl
+⊔ᵛ-det Emptyⱼ Emptyⱼ = refl
+⊔ᵛ-det (|×|ⱼ {{j}} {{k}}) (|×|ⱼ {{j'}} {{k'}}) =
+  cong₂ _|×|_ (⊔ᵛ-det j j') (⊔ᵛ-det k k')
+⊔ᵛ-det (⇒ⱼ {{j}})  (⇒ⱼ {{j'}})  = cong (_ ⇒_) (⊔ᶜ-det j j')
+⊔ᵛ-det ([]ⱼ {{j}}) ([]ⱼ {{j'}}) = cong ([ _ ]_) (⊔ᵛ-det j j')
+
+⊔ᶜ-det (‼ⱼ {{j}}) (‼ⱼ {{j'}}) = cong (_‼ _) (⊔ᵛ-det j j')
+
+-- A type joined with itself: the join exists, and is the type back again up
+-- to `_<:ᵛ_`.
+--
+-- Not on the nose. `_⊔ₑ_` is asked only to be a least upper bound for
+-- `_≾ₑ_`, so a grade instance may join by a construction that is idempotent
+-- only up to the order — the trace-set grades join two sets by concatenating
+-- their underlying lists. The `‼` case is where that shows, and it is
+-- discharged by `⊔ₑ-idem-≾ₑ`. `⊔ᵛ-ubˡ` and `⊔ᶜ-ubˡ` give the converse
+-- inclusions, so the two types are equivalent.
+
+⊔ᵛ-idem : (A : VType) → Σ[ A' ∈ VType ] (A ⊔ᵛ A ≡ A') × (A' <:ᵛ A)
+⊔ᶜ-idem : (C : CType) → Σ[ C' ∈ CType ] (C ⊔ᶜ C ≡ C') × (C' <:ᶜ C)
+
+⊔ᵛ-idem (Base b)  = Base b , Baseⱼ , Baseₛ refl
+⊔ᵛ-idem Unit      = Unit , Unitⱼ , Unitₛ
+⊔ᵛ-idem Bool      = Bool , Boolⱼ , Boolₛ
+⊔ᵛ-idem (A |×| B) =
+  let A' , j , p = ⊔ᵛ-idem A
+      B' , k , q = ⊔ᵛ-idem B
+  in  A' |×| B' , |×|ⱼ {{j}} {{k}} , p |×|ₛ q
+⊔ᵛ-idem Empty     = Empty , Emptyⱼ , Emptyₛ
+⊔ᵛ-idem (A ⇒ C)   =
+  let C' , j , p = ⊔ᶜ-idem C
+  in  A ⇒ C' , ⇒ⱼ {{j}} , <:ᵛ-refl A ⇒ₛ p
+⊔ᵛ-idem ([ ρ ] A) =
+  let A' , j , p = ⊔ᵛ-idem A
+  in  [ ρ ] A' , []ⱼ {{j}} , [ ≾ᵣ-refl ]ₛ p
+
+⊔ᶜ-idem (A ‼ ε) =
+  let A' , j , p = ⊔ᵛ-idem A
+  in  A' ‼ (ε ⊔ₑ ε) , ‼ⱼ {{j}} , p ‼ₛ ⊔ₑ-idem-≾ₑ ε
