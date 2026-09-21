@@ -5,3 +5,6 @@
 *.agdai
 MAlonzo/**
 _build/
+
+# Scratch notes and spikes (kept out of the repository on purpose)
+notes/
