@@ -8,11 +8,16 @@
 -- type the rule leaves free becomes a fresh `∃`-bound variable,  --
 -- every side condition becomes a constraint atom.                --
 --                                                                --
--- Slack invariant: the expected effect grade (`t` in `A ‼ t`) is --
--- only ever the right-hand side of a `_≾̂ₑᶜ_` — at the formers    --
--- that pin an effect (`return`, `_·_`, `_⨟_`, `perform`,         --
--- `delay`, `handle`) — or passed down unchanged. Expected value  --
--- types are pinned exactly, by `_≐ᵥ_`.                           --
+-- The expected type is an upper bound, not a pin. The expected   --
+-- effect grade is only ever the right-hand side of a `_≾̂ₑᶜ_` or  --
+-- passed down unchanged; the expected value type is the          --
+-- right-hand side of a `_≾̂ᵥᶜ_` at the five positions where a     --
+-- type generation cannot choose meets another it cannot choose   --
+-- either — a variable's declared type, a lambda's synthesised    --
+-- arrow, an application's result, a handled computation's        --
+-- result, and an `unbox` payload against the continuation's      --
+-- binder. Everywhere else the shape is pinned by `_≐ᵥ_` and the  --
+-- slack is passed on to the subterms.                            --
 --                                                                --
 -- Under a binder the *arguments* of the recursive calls are      --
 -- weakened (`wk*-ctx`, `wk*-v`, `wk*-c`, `wk*-e`, `wk*-r`); the  --
@@ -45,11 +50,12 @@ open import TypeInference.Raw.Syntax S
 
 open import TypeInference.Constraints.Syntax S
 
--- The looked-up type is pinned, and its grade owes `VarOK`'s disjunction.
+-- The looked-up type subtypes into the expected one, and its grade owes
+-- `VarOK`'s disjunction.
 
 varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint Θ
 varConstraint Γ i A =
-  (lookup-ty Γ i ≐ᵥ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
+  (lookup-ty Γ i ≾̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
 
 mutual
 
@@ -77,9 +83,12 @@ mutual
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
 
   -- lambda abstraction
+  --
+  -- The domain is contravariant, so the body is typed at the arrow the
+  -- lambda itself synthesises and that arrow subtypes into the expected type.
 
   genV {Θ} Γ (lam M) A =
-    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≐ᵥ A↑) ∧̂ genC (Γ↑ ∷ α₁) M (α₂ ‼ e))))
+    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genC (Γ↑ ∷ α₁) M (α₂ ‼ e))))
     where
       α₁ = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
       α₂ = wkᵉ-v (tvar (newᵗ {Θ +ty}))
@@ -109,15 +118,22 @@ mutual
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx Γ))
 
   -- function application
+  --
+  -- The function's own result type is synthesised and then reconciled with
+  -- the expected one, as its latent effect already is.
 
   genC {Θ} Γ (V₁ · V₂) (A ‼ t) =
-    ∃ᵗ (∃ᵉ (genV Γ↑ V₁ (α ⇒ (A↑ ‼ e)) ∧̂ genV Γ↑ V₂ α ∧̂ (e ≾̂ₑᶜ t↑)))
+    ∃ᵗ (∃ᵗ (∃ᵉ (  genV Γ↑ V₁ (α ⇒ (β ‼ e))
+                ∧̂ genV Γ↑ V₂ α
+                ∧̂ (β ≾̂ᵥᶜ A↑)
+                ∧̂ (e ≾̂ₑᶜ t↑))))
     where
-      α  = wkᵉ-v (tvar (newᵗ {Θ}))
-      e  = evar (newᵉ {Θ +ty})
-      A↑ = wkᵉ-v (wkᵗ-v A)
-      t↑ = wkᵉ-e (wkᵗ-e t)
-      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+      α  = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      β  = wkᵉ-v (tvar (newᵗ {Θ +ty}))
+      e  = evar (newᵉ {Θ +ty +ty})
+      A↑ = wkᵉ-v (wkᵗ-v (wkᵗ-v A))
+      t↑ = wkᵉ-e (wkᵗ-e (wkᵗ-e t))
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
   -- pattern-matching
 
@@ -163,41 +179,53 @@ mutual
       Γ↑ = wkᵉ-ctx Γ
 
   -- effect handling
+  --
+  -- The handled result type occurs contravariantly in the clause contexts,
+  -- inside the boxed continuation, so it gets an existential of its own and
+  -- is reconciled with the expected type once, for the clauses and the
+  -- continuation together.
 
   genC {Θ} Γ (handle M `with H `in N) (A ‼ t) =
-    ∃ᵗ (∃ᵉ (∃ᵉ (  genC Γ↑ M (α ‼ e₁)
-                ∧̂ genC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (A↑ ‼ e₂)
-                ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)
-                ∧̂ ⋀ᵒᵖ (λ op →
-                     ∀ᵉ (genC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                                ∷ [ rconst (mapᵉ (op-grade op)) ]
-                                    (⌜ arity op ⌝ᵍ ⇒ A⇑ ‼ e''))
-                              (H op)
-                              (A⇑ ‼ (econst (op-grade op) ·̂ₑ e'')))))))
+    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genC Γ↑ M (α ‼ e₁)
+                    ∧̂ genC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ‼ e₂)
+                    ∧̂ (γ ≾̂ᵥᶜ A↑)
+                    ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)
+                    ∧̂ ⋀ᵒᵖ (λ op →
+                         ∀ᵉ (genC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                                    ∷ [ rconst (mapᵉ (op-grade op)) ]
+                                        (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                                  (H op)
+                                  (γ⇑ ‼ (econst (op-grade op) ·̂ₑ e''))))))))
     where
-      α  = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ})))
-      e₁ = wkᵉ-e (evar (newᵉ {Θ +ty}))
-      e₂ = evar (newᵉ {Θ +ty +e})
-      A↑ = wkᵉ-v (wkᵉ-v (wkᵗ-v A))
-      t↑ = wkᵉ-e (wkᵉ-e (wkᵗ-e t))
-      Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx Γ))
+      α  = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
+      γ  = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
+      e₁ = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
+      e₂ = evar (newᵉ {Θ +ty +ty +e})
+      A↑ = wkᵉ-v (wkᵉ-v (wkᵗ-v (wkᵗ-v A)))
+      t↑ = wkᵉ-e (wkᵉ-e (wkᵗ-e (wkᵗ-e t)))
+      Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
       -- and additionally under the rigid `∀ᵉ` of a clause
-      e'' = evar (newᵉ {Θ +ty +e +e})
-      A⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (wkᵗ-v A)))
-      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx Γ)))
+      e'' = evar (newᵉ {Θ +ty +ty +e +e})
+      γ⇑  = wkᵉ-v (wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty}))))
+      Γ⇑  = wkᵉ-ctx (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))))
 
   -- unboxing a boxed variable
+  --
+  -- The declared box type is pinned, being read off the context; the
+  -- continuation binds a supertype of the payload.
 
   genC {Θ} Γ (unbox i N) (A ‼ t) =
-    ∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
-            ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
-            ∧̂ genC (Γ↑ ∷ α) N (A↑ ‼ t↑)))
+    ∃ᵗ (∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
+                ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
+                ∧̂ (α ≾̂ᵥᶜ β)
+                ∧̂ genC (Γ↑ ∷ β) N (A↑ ‼ t↑))))
     where
-      α  = wkʳ-v (tvar (newᵗ {Θ}))
-      r  = rvar (newʳ {Θ +ty})
-      A↑ = wkʳ-v (wkᵗ-v A)
-      t↑ = wkʳ-e (wkᵗ-e t)
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
+      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
+      r  = rvar (newʳ {Θ +ty +ty})
+      A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
+      t↑ = wkʳ-e (wkᵗ-e (wkᵗ-e t))
+      Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
   -- boxing up a value
 
@@ -225,13 +253,13 @@ private
   Γ₁ : OCtx Θ₁ 1
   Γ₁ = [] ∷ α₀
 
-  -- a variable: the type equation and the disjunction
+  -- a variable: the subtyping atom and the disjunction
 
-  ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ ≐ᵥ α₀) ∧̂ Et∨≾ᵘ α₀ ûᵣ
+  ex-var : genV Γ₁ (var zero) α₀ ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ ûᵣ
   ex-var = refl
 
   -- the same variable behind a clause barrier: the grade has picked up `⊤ᵣ`
 
   ex-var-⊤ : genV (Γ₁ ⟨ rconst ⊤ᵣ ⟩) (var zero) α₀
-           ≡ (α₀ ≐ᵥ α₀) ∧̂ Et∨≾ᵘ α₀ (ûᵣ ·̂ᵣ rconst ⊤ᵣ)
+           ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (ûᵣ ·̂ᵣ rconst ⊤ᵣ)
   ex-var-⊤ = refl

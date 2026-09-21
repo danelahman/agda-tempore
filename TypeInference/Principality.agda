@@ -18,6 +18,8 @@
 -- `mgu` takes the derivation's erasure equation as a           --
 -- hypothesis: the constraint that was solved is `genC _ M _`,  --
 -- while completeness produces a solution of `genC _ ⌊ D ⌋ᶜ _`. --
+-- Its type and effect are bounded by the principal ones, not   --
+-- equal to them: subsumption is invisible to erasure.          --
 --                                                              --
 -- Principal types carrying a constraint set, after Pretnar     --
 -- (LMCS 2014); "residual constraint" is OutsideIn(X)'s term    --
@@ -110,7 +112,7 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
         → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
         → ⌊ D ⌋ᶜ ≡ M
-        → A₀ ≡ X̂ Θ [ σ ]ᵛ
+        → Q ∣ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
         ----------------------------------------------------
         → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
@@ -130,10 +132,10 @@ principal sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipal
   Θ' σ Q
   (proj₁ elab) (proj₂ elab)
   (λ δ Q' h → soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) (⊨-mono h C[ Γ , M ] sat))
-  (λ σ' Q' D e aeq le →
+  (λ σ' Q' D e st le →
      Solver.solve-principal sv C[ Γ , M ] eq σ' Q'
        (subst (λ N → σ' ⊨[ Q' ] genC (Γ₊ Γ) N (X̂ Θ ‼ t̂ Θ)) e
-              (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) D refl aeq le)))
+              (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) D refl st le)))
   where
     sat  = Solver.solve-sound sv C[ Γ , M ] eq
     elab = soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) sat
@@ -167,7 +169,7 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e =
     D' : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀
     D' = ctx-substᶜ (sym ctxeq) D
 
-    fac = mgu p σ Q D' (trans (⌊ctxᶜ⌋ (sym ctxeq) D) e) refl ⊩≾̂ₑ-refl
+    fac = mgu p σ Q D' (trans (⌊ctxᶜ⌋ (sym ctxeq) D) e) (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl
 
     δ = proj₁ fac
     h = proj₂ (proj₂ fac)

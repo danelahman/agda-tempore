@@ -1,7 +1,8 @@
 -------------------------------------------------------------------
 -- Consequences of open subtyping                                  --
 --                                                                 --
--- Inversion at box type and stability under the scope extensions.  --
+-- Inversion at a type former and stability under the scope        --
+-- extensions.                                                     --
 --                                                                 --
 -- The relation `_∣_<:̂ᵛ_` itself, together with reflexivity,        --
 -- transitivity, eternality transfer and stability under a scope    --
@@ -9,6 +10,8 @@
 -- states what an assumed subtyping transports to, so it mentions   --
 -- the relation.                                                    --
 -------------------------------------------------------------------
+
+open import Data.Product using (Σ-syntax; _×_; _,_)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -26,6 +29,25 @@ open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
 open import TypeInference.Open.Subst  S
 open import TypeInference.Open.Hyps   S
+
+-- Inversion at the formers with no proper supertype
+
+<:̂ᵛ-Baseˡ : ∀ {Θ} {Q : Hyps Θ} {b A} → Q ∣ Base b <:̂ᵛ A → A ≡ Base b
+<:̂ᵛ-Baseˡ (Baseₛ refl) = refl
+
+<:̂ᵛ-Unitˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Unit <:̂ᵛ A → A ≡ Unit
+<:̂ᵛ-Unitˡ Unitₛ = refl
+
+<:̂ᵛ-Boolˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Bool <:̂ᵛ A → A ≡ Bool
+<:̂ᵛ-Boolˡ Boolₛ = refl
+
+-- Inversion at a product: a supertype is a product, componentwise
+
+<:̂ᵛ-×ˡ : ∀ {Θ} {Q : Hyps Θ} {A₁ A₂ B}
+       → Q ∣ A₁ |×| A₂ <:̂ᵛ B
+       → Σ[ B₁ ∈ OVType Θ ] Σ[ B₂ ∈ OVType Θ ]
+           (B ≡ B₁ |×| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
+<:̂ᵛ-×ˡ (p |×|ₛ q) = _ , _ , refl , p , q
 
 -- Inversion at box type
 
