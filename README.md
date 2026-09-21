@@ -74,20 +74,13 @@ a grade system, a signature of base types, and operations' signatures.
   `ExtendedNat.agda`).
 
 - `Syntax/Grades/Example/Traces/` holds the grades that record *which runs* a
-  computation may have had, as non-empty finite sets of timed traces. All six
+  computation may have had, as non-empty finite sets of timed traces. All four
   share the carrier and the monoid of `Syntax/Grades/Traces/Sets.agda` and
   differ only in the order on it. `Lifted/{LeftSided,RightSided,TwoSided}.agda`
   are the constructions, parameterised by an order on traces; `Timed/*`
-  instantiate them at the two cost-sensitive orders below and `Subsets/*` at
-  equality — each family with a floor, a cap, and their pairing under a
-  coherence field.
-
-- Five of the six endpoints are read *disjunctively*, one listed trace carrying
-  the grade, so they weaken by gaining members and a union of grades is their
-  join — which is what a branching construct wants.
-  `Traces/Subsets/LeftSided.agda` is the exception: with equality as the
-  comparison the disjunctive floor condition coincides with the cap's, so that
-  floor is read conjunctively and weakens by *losing* members instead.
+  instantiate them at the two cost-sensitive orders below — a floor, a cap, and
+  their pairing under a coherence field — and `Subsets/RightSided.agda` is the
+  cap at equality.
 
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
   built on: `Positive` (the strictly positive duration a delay carries), `Base`
@@ -131,9 +124,10 @@ a grade system, a signature of base types, and operations' signatures.
   resource grade may forget. `Identity.agda` forgets nothing — one grade read
   as both components, so that `mapᵉ` drops out of the typing rules.
   `IntervalsToLeftSidedIntervals.agda` keeps a two-sided interval's lower
-  endpoint, discarding the deadline. `Traces/Timed/*` and `Traces/Subsets/*`
-  measure a set of traces by a duration, each endpoint aggregated in the
-  direction it is *read* rather than the direction it bounds.
+  endpoint, discarding the deadline. `Traces/Timed/*` and
+  `Traces/Subsets/RightSided.agda` measure a set of traces by a duration: the
+  sets are read disjunctively, so a cap has to cover its slowest listed run
+  and a floor may promise only its fastest.
 
 - `Syntax/Grades/Example/Worked/` instantiates all of the above at one fixed
   alphabet — a sensor node that can `read` (1 tick), `write` (2–3) and `send`
@@ -148,17 +142,14 @@ a grade system, a signature of base types, and operations' signatures.
 - `Syntax/Grades/Example/Worked/Typing/` then fixes a language over that
   alphabet and types example computations against these grades, exercising
   operations, sequencing, `delay`, `if`, pattern matching, functions,
-  `box`/`unbox` and effect handlers. Each of the nine instances (three time
-  grades and all six trace grades, each over its identity grade system) writes
+  `box`/`unbox` and effect handlers. Each of the seven instances (three time
+  grades and all four trace grades, each over its identity grade system) writes
   its programs out in full at its own grades, discharging every side condition
   a rule imposes — `var`'s bound, `unbox`'s premise, `coerce`'s ordering — at
   the point it imposes it, by running the grade's own decision procedure; where
   a grade refuses a program, a refutation of the bound it would have needed
   stands in its place. So what a grade lets a program do, and what it refuses,
   is settled by whether the program typechecks.
-  `Typing/Traces/Subsets/LeftSided/Retrying.agda` re-runs the conjunctive floor
-  at a signature grading one operation by two runs — a transmitter that may
-  retry — which is where that floor's non-singleton grades come from.
   `Typing/Core.agda` holds what
   the programs are written *with*: the language itself, the three ways of
   meeting `var`'s bound, and the operation clauses handed to `handle`. The

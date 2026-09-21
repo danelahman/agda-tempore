@@ -17,19 +17,18 @@
 --     and monoid (from `Grades.Traces.Sets`) and differing in the     --
 --     order they put on it.                                           --
 --                                                                     --
--- The trace family is two families of three: `Timed.*` over the       --
--- cost-sensitive orders on traces, and `Subsets.*` over equality,     --
--- each with a floor, a cap and their pairing.                         --
+-- The trace family splits in two: `Timed.*` over the cost-sensitive   --
+-- orders on traces, with a floor, a cap and their pairing, and        --
+-- `Subsets.*` over equality, with a cap.                              --
 --                                                                     --
 -- Every grade carries its greatest element in its own carrier: the    --
 -- unit for the left-sided intervals and the coverage floor,           --
 -- `[ 0 , ∞ ]` for the two-sided intervals, and a point of its own,    --
--- then absorbing, for the allowance cap and the three subset grades.  --
+-- then absorbing, for the allowance cap and the subset cap.           --
 --                                                                     --
 -- `System.*` pairs them up: each projection says what a resource      --
--- grade may forget about the effect grade it comes from. An absorbing --
--- top has to land on an absorbing top, so the two subset floors       --
--- project into extended interval grades.                              --
+-- grade may forget about the effect grade it comes from, and an       --
+-- absorbing top has to land on an absorbing top.                      --
 --                                                                     --
 -- An index only: the trace-based examples are parameterised by the    --
 -- alphabet `Op`, so it lists the pieces rather than re-exporting      --
@@ -93,14 +92,10 @@ import Syntax.Grades.Example.System.Traces.Timed.RightSided
 import Syntax.Grades.Example.System.Traces.Timed.LeftSided
 import Syntax.Grades.Example.System.Traces.Timed.TwoSided
 
--- the subset grades to time intervals: the same, except that every
--- endpoint is measured by its *slowest* member. Above for the usual
--- reason, below because that floor is read conjunctively -- so the
--- aggregation follows how a set is read, not which side it bounds
+-- the subset cap to time intervals: the same, the deadline being the
+-- one its *slowest* listed run imposes
 
 import Syntax.Grades.Example.System.Traces.Subsets.RightSided
-import Syntax.Grades.Example.System.Traces.Subsets.LeftSided
-import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
 
 ------------------------------------------------------------------------
 -- Worked instances

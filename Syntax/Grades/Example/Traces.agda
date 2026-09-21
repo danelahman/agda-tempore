@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- Grades that are (non-empty) sets of timed traces.                   --
 --                                                                     --
--- A grade records which runs a computation may have. There are two    --
--- families of three, differing in what the comparison between one run --
--- and one listed trace is allowed to do:                              --
+-- A grade records which runs a computation may have. The families     --
+-- differ in what the comparison between one run and one listed trace  --
+-- is allowed to do:                                                   --
 --                                                                     --
 --   Timed.*    the two cost-sensitive orders on traces. Going up the  --
 --              allowance order an operation turns into a delay long   --
@@ -11,24 +11,24 @@
 --              may do more than it was asked for.                     --
 --                                                                     --
 --   Subsets.*  equality. Nothing is approximated: a run either is a   --
---              listed trace or it is not, and the lifts are the two   --
---              directions of subset inclusion.                        --
+--              listed trace or it is not, and the lift is subset      --
+--              inclusion.                                             --
 --                                                                     --
--- Each family has a floor, a cap and their pairing:                   --
+-- `Timed.*` has a floor, a cap and their pairing:                     --
 --                                                                     --
---   *.LeftSided   a lower bound on what happened                      --
---   *.RightSided  an upper bound                                      --
---   *.TwoSided    both at once, with a coherence field                --
+--   Timed.LeftSided   a lower bound on what happened                  --
+--   Timed.RightSided  an upper bound                                  --
+--   Timed.TwoSided    both at once, with a coherence field            --
 --                                                                     --
--- Five of the six endpoints are read *disjunctively* -- one listed    --
--- trace carries the grade -- so they weaken by gaining members and    --
--- the union of two grades is their join, which is what a branching    --
--- construct wants. `Subsets.LeftSided` is the exception, read         --
--- conjunctively and weakening by losing members, equality leaving a   --
--- disjunctive floor nothing to differ from the cap about.             --
+-- `Subsets.*` keeps the cap, `Subsets.RightSided`.                    --
+--                                                                     --
+-- Every endpoint is read *disjunctively* -- one listed trace carries  --
+-- the grade -- so they weaken by gaining members and the union of     --
+-- two grades is their join, which is what a branching construct       --
+-- wants.                                                              --
 --                                                                     --
 -- The `Timed.*` grades are `Traces.Lifted.*` instantiated at a trace  --
--- order; the `Subsets.*` ones are built directly on `Sets`' `_⊑_`,    --
+-- order; the `Subsets.*` one is built directly on `Sets`' `_⊑_`,      --
 -- the discrete order not being a `TraceOrder` (it has no `≼-nil`).    --
 ------------------------------------------------------------------------
 
@@ -56,12 +56,9 @@ import Syntax.Grades.Example.Traces.Timed.TwoSided
 ------------------------------------------------------------------------
 -- At the subset order
 --
--- One relation serves both endpoints, taken in its two directions of
--- inclusion, so the two-sided grade is the plain Egli-Milner interval
--- `P ⊆ X ⊆ Q` -- and its coherence field is exactly the condition for
--- that interval to be inhabited, which the timed one cannot manage.
+-- The comparison is equality, so the cap is plain subset inclusion
+-- `X ⊆ Q`: every run a computation may have is one of the traces the
+-- grade lists.
 
 import Syntax.Grades.Example.Traces.Subsets.Base
-import Syntax.Grades.Example.Traces.Subsets.LeftSided
 import Syntax.Grades.Example.Traces.Subsets.RightSided
-import Syntax.Grades.Example.Traces.Subsets.TwoSided

@@ -42,9 +42,9 @@ import Syntax.Grades.Example.Worked.Spec
 
 import Syntax.Grades.Example.Worked.Systems
 
--- The six trace grades -- a floor, a cap and their pairing, at the
--- cost-sensitive orders and at the subset order -- each read as an
--- effect grade and as a resource grade.
+-- The four trace grades -- a floor, a cap and their pairing at the
+-- cost-sensitive orders, and a cap at the subset order -- each read as
+-- an effect grade and as a resource grade.
 
 import Syntax.Grades.Example.Worked.Traces
 

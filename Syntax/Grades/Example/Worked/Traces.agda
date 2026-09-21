@@ -35,14 +35,6 @@ import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 ------------------------------------------------------------------------
 -- At the subset order
 
--- runs that must remain reachable, read conjunctively
-
-import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
-
 -- runs that may occur, read disjunctively
 
 import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
-
--- and both at once, as an interval in the subset lattice
-
-import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided

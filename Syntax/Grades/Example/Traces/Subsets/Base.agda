@@ -1,16 +1,15 @@
 ------------------------------------------------------------------------
 -- What the subset preorder on sets of traces supplies.                --
 --                                                                     --
--- The three subset grades all order `NeTraces` by `Sets`' `_⊑_`, in    --
--- one direction or the other, so what they share is collected here:    --
--- the reading of `_⊑_` as plain membership, and the two facts about    --
--- the unit `{ ε }` that their zero-product laws rest on.               --
+-- The subset grade orders `NeTraces` by `Sets`' `_⊑_`, so what it     --
+-- rests on is collected here: the reading of `_⊑_` as plain           --
+-- membership, and the zero-product law its grade structure needs.     --
 --                                                                     --
--- `_⊑_` is `liftˢ _≡_`: the same set-level lift the ordered trace      --
--- grades use, at the discrete order. That is also why these grades do  --
--- not go through `Traces.Order`/`Traces.OrderLift` -- a `TraceOrder`   --
--- must supply `≼-nil : ε ≼ t`, and `ε ≡ t` is false. So the subset     --
--- family sits beside the lifted one rather than inside it.             --
+-- `_⊑_` is `liftˢ _≡_`: the same set-level lift the ordered trace     --
+-- grades use, at the discrete order. That is also why it does not go  --
+-- through `Traces.Order`/`Traces.OrderLift` -- a `TraceOrder` must    --
+-- supply `≼-nil : ε ≼ t`, and `ε ≡ t` is false. So the subset grade   --
+-- sits beside the lifted family rather than inside it.                --
 ------------------------------------------------------------------------
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -23,9 +22,9 @@ module Syntax.Grades.Example.Traces.Subsets.Base
 open import Data.List.Base using (List)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
-open import Data.List.Relation.Unary.Any as Any using (Any; here)
-open import Data.Product using (_×_; _,_)
+  using (∈-cartesianProductWith⁺)
+open import Data.List.Relation.Unary.Any using (here)
+open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
@@ -44,19 +43,6 @@ open WithDecEq _≟ₒ_ using (_⊑_; _∈?_; _≟ᵀ_)
 
 ⊑-∈ : {xs ys : List Trace} → ((s : Trace) → s ∈ xs → s ∈ ys) → xs ⊑ ys
 ⊑-∈ f s m = fromWitness (f s (toWitness m))
-
-------------------------------------------------------------------------
--- The unit, from both sides
---
--- `xs ⊑ { ε }` says every member of `xs` is the empty trace; `{ ε } ⊑
--- xs` says `xs` has the empty trace among its members. The two are what
--- the cap and the floor respectively need at the unit grade.
-
-u-⊑ : {xs : List Trace} → ε ∈ xs → traces u ⊑ xs
-u-⊑ mem = ⊑-∈ (λ s s∈u → subst (_∈ _) (sym (∈-[ε]⁻ s∈u)) mem)
-
-⊑-u : {xs : List Trace} → traces u ⊑ xs → ε ∈ xs
-⊑-u sub = ∈-⊑ sub (here refl)
 
 ------------------------------------------------------------------------
 -- Zero-product, for a cap
@@ -84,15 +70,3 @@ u-⊑ mem = ⊑-∈ (λ s s∈u → subst (_∈ _) (sym (∈-[ε]⁻ s∈u)) mem
     ... | x , x∈xs =
           here (∙-conicalʳ {x} {s}
                  (∈-[ε]⁻ (∈-⊑ sub (∈-cartesianProductWith⁺ _∙_ x∈xs s∈ys))))
-
-------------------------------------------------------------------------
--- Zero-product, for a floor
---
--- Dual: a language product *containing* the empty trace has it in both
--- factors, by the same conicality.
-
-ε∈-·ˢ⁻ : {xs ys : List Trace} → ε ∈ (xs ·ˢ ys) → (ε ∈ xs) × (ε ∈ ys)
-ε∈-·ˢ⁻ {xs} {ys} mem with ∈-cartesianProductWith⁻ _∙_ xs ys mem
-... | a , b , a∈xs , b∈ys , eq =
-      Any.map (λ e → trans (sym (∙-conicalˡ {a} {b} (sym eq))) e) a∈xs
-    , Any.map (λ e → trans (sym (∙-conicalʳ {a} {b} (sym eq))) e) b∈ys

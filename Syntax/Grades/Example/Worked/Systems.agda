@@ -10,13 +10,11 @@
 -- grades and then exercises its monotonicity: an ordering between two --
 -- effect grades must still hold between their images.                 --
 --                                                                     --
--- There are seven: one between time intervals, and one for each of    --
--- the six trace grades. Every trace projection measures a set of      --
--- traces by a duration, aggregating in the direction its endpoint is  --
--- *read* rather than the direction it bounds -- so a disjunctive      --
--- endpoint takes the slowest or fastest member according to which way --
--- its quantifier runs, and the one conjunctive endpoint, the subset   --
--- floor, takes the slowest.                                           --
+-- There are five: one between time intervals, and one for each of     --
+-- the four trace grades. Every trace projection measures a set of     --
+-- traces by a duration: the sets are read disjunctively -- which      --
+-- listed trace was taken is not known -- so a cap has to cover the    --
+-- slowest member and a floor may promise only the fastest.            --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Systems where
@@ -41,12 +39,11 @@ open _→ᵍ_ using (map; map-monotone)
 open import Data.Nat.Base using (ℕ; _≤_)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; eqᵢ; _·ᵢ_; _≾ᵢ_; ↑_; ∞;
-         window_; no-window; _·ʷ_; _≾ʷ_)
+  using (Interval∞; eqᵢ; _·ᵢ_; _≾ᵢ_; ↑_; ∞)
   renaming ([_,_,_] to mkᵢ)
 
 open import Syntax.Grades.Example.Time.LeftSided
-  using ([_,+∞⟩; _·ₒ_; _≾ₒ_; timed_; untimed; _≾ᵗ_)
+  using ([_,+∞⟩; _·ₒ_; _≾ₒ_)
 
 -- every window below has a finite upper endpoint
 
@@ -284,60 +281,38 @@ windows-add :
 windows-add = refl
 
 ------------------------------------------------------------------------
--- The subset grades, and where they read a set differently
+-- The subset cap, beside the timed floor
 --
--- The subset projections measure by the slowest member at *every*
--- endpoint, the subset floor being read conjunctively; the timed
--- floor, read disjunctively, takes the fastest instead. The direction
--- follows the reading of the set, not the side of the interval.
---
--- The two floors do not share a target: the subset floor's greatest
--- grade absorbs, so it lands in the extended intervals, while the
--- timed floor lands in the plain ones.
+-- At the subset order nothing is approximated: the grade lists the runs
+-- outright, and the deadline is the slowest of them at its worst case.
+-- The timed floor, on the same two runs, takes the fastest instead --
+-- which side the endpoint bounds is what fixes the direction.
 
 open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
   Op _≟ₒ_ costʰⁱ using (subsets→right-sided-intervals)
-open import Syntax.Grades.Example.System.Traces.Subsets.LeftSided
-  Op _≟ₒ_ costˡᵒ using (subsets→left-sided-intervals)
-open import Syntax.Grades.Example.System.Traces.Subsets.TwoSided
-  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ using (subsets→intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
   using (permitting_) renaming (holds to holdsˢʰ)
-open import Syntax.Grades.Example.Worked.Traces.Subsets.LeftSided
-  using (demanding_; no-demand) renaming (holds to holdsˢˡ)
-open import Syntax.Grades.Example.Worked.Traces.Subsets.TwoSided
-  using (branching; contract; _·ᴵ_) renaming (holds to holdsˢᵇ)
 
 -- the two branches take one tick and three-to-four ticks
 
 the-branches : NeTraces
 the-branches = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 
--- above, the deadline is the slower branch at its worst case
+-- the deadline is the slower branch at its worst case
 
 cap-measured :
   map subsets→right-sided-intervals (permitting the-branches) ≡ [0, 4 ]
 cap-measured = refl
 
--- below, so is the guarantee -- because both branches are demanded --
--- but read at the best case
-
--- and the resource grade is one of the extended left-sided intervals,
--- its `untimed` receiving the floor's "nothing is demanded"
-
-floor-measured :
-  map subsets→left-sided-intervals (demanding the-branches) ≡ timed [ 3 ,+∞⟩
-floor-measured = refl
-
--- where the timed floor, listing alternatives rather than demands,
--- guarantees only what the faster of them takes
+-- where the timed floor, guaranteeing one of its alternatives rather
+-- than a particular one, promises only what the faster of them takes
 
 timed-floor-measured :
   map traces→left-sided-intervals the-branches ≡ [ 1 ,+∞⟩
 timed-floor-measured = refl
 
--- monotonicity, above: permitting a further run raises the deadline
+-- monotonicity: permitting a further run raises the deadline
 
 cap-deadline-rises :
   map subsets→right-sided-intervals (permitting ⟅ ⌈ read ⌉ ⟆)
@@ -345,37 +320,3 @@ cap-deadline-rises :
 cap-deadline-rises =
   map-monotone subsets→right-sided-intervals
                {permitting ⟅ ⌈ read ⌉ ⟆} {permitting the-branches} holdsˢʰ
-
--- and below: forgetting a demanded run lowers the guarantee
-
-floor-guarantee-falls :
-  map subsets→left-sided-intervals (demanding the-branches)
-  ≾ᵗ map subsets→left-sided-intervals (demanding ⟅ ⌈ read ⌉ ⟆)
-floor-guarantee-falls =
-  map-monotone subsets→left-sided-intervals
-               {demanding the-branches} {demanding ⟅ ⌈ read ⌉ ⟆} holdsˢˡ
-
--- the floor's greatest grade demands nothing, and lands on the target's
--- own greatest grade
-
-floor-top-measured : map subsets→left-sided-intervals no-demand ≡ untimed
-floor-top-measured = refl
-
--- the two-sided projection is the pair, and the window it lands in is
--- non-degenerate because the grade's coherence field is
-
-subset-contract-measured :
-  map subsets→intervals contract ≡ window [ 1 , 4 , ≤! ]
-subset-contract-measured = refl
-
-branching-inside-the-contract :
-  map subsets→intervals branching ≾ʷ map subsets→intervals contract
-branching-inside-the-contract =
-  map-monotone subsets→intervals {branching} {contract} (holdsˢᵇ _ _)
-
--- and it is a monoid map at both endpoints
-
-subset-windows-add :
-  map subsets→intervals (branching ·ᴵ contract)
-  ≡ map subsets→intervals branching ·ʷ map subsets→intervals contract
-subset-windows-add = refl

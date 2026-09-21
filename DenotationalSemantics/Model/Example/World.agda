@@ -75,15 +75,12 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
 
--- the same three at the subset order. The quantifier over the listed
--- runs follows the direction of inclusion the grade weakens along, so
--- the cap's frame is existential and the floor's universal -- the
--- floor's condition being asked of every demanded run, which is what
--- makes a tick world read it as "at least as long as the slowest"
+-- the cap at the subset order. The quantifier over the listed runs
+-- follows the direction of inclusion the grade weakens along, so this
+-- frame is existential: moving between worlds may take no longer than
+-- one of the listed runs
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.LeftSided
-import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.TwoSided
 
 ------------------------------------------------------------------------
 -- Trace-history frames: worlds are timed traces
@@ -118,22 +115,9 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftS
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
 
--- the same three at the subset order, where accessibility is membership
+-- the cap at the subset order, where accessibility is membership
 -- outright, there being no comparison between the continuation and a
--- listed run to make. The floor's frame is the informative one: it asks
--- every demanded run to *be* the continuation, so a non-singleton grade
--- reaches no world at all -- one history is one run, and cannot be two.
--- The tick frame cannot see that, several demanded runs collapsing
--- there into their slowest
+-- listed run to make. The frame is then as fine-grained as the grade
+-- is, distinguishing runs the tick frame collapses into their durations
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.RightSided
-import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.LeftSided
-import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.TwoSided
-
-------------------------------------------------------------------------
--- The frames a grade system is modelled over
---
--- The two grade systems projecting subset grades onto intervals land in
--- the adjoined-top intervals, so it is the frames above that model them.
-
-import DenotationalSemantics.Model.Example.World.SubsetSystems

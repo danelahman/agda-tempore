@@ -65,7 +65,7 @@ import Syntax.Grades.Example.Worked.Typing.Time.TwoSided
 -- Grades that record which runs there were
 --
 -- The same programs against grades that see which operations ran and
--- where, at the three orders of each family.
+-- where, at the three cost-sensitive orders and at the subset order.
 
 -- sets of traces at the coverage order: a box asks for work to have
 -- been done, and time cannot stand in for it
@@ -81,23 +81,7 @@ import Syntax.Grades.Example.Worked.Typing.Traces.Timed.RightSided
 
 import Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided
 
--- the subset order as a floor: a box names the run that must have
--- happened, and `if` loses its branches
-
-import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.LeftSided
-
--- the same floor at a signature that grades one operation by several
--- runs, which is where a conjunctive floor's non-singleton grades come
--- from: a transmitter that may retry
-
-import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.LeftSided.Retrying
-
--- as a cap: a box names the runs it covers outright, nothing paying for
--- anything else
+-- the subset order as a cap: a box names the runs it covers outright,
+-- nothing paying for anything else
 
 import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided
-
--- and as both, the Egli-Milner reading, which against this calculus
--- behaves as the floor alone
-
-import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.TwoSided
