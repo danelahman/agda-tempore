@@ -215,8 +215,8 @@ mutual
   soundᶜ (subC-handle w rel M H N) _ = sound-subC-handle w rel M H N
   soundᶜ (subC-box w V M)        _ = sound-subC-box w V M
   soundᶜ (subC-unbox x rel v w M) _ = sound-subC-unbox x rel v w M
-  soundᶜ (coerce-seq rel M N)    _ = sound-coerce-seq rel M N
-  soundᶜ (subC-handle-in rel M H N) _ = sound-subC-handle-in rel M H N
+  soundᶜ (coerce-seq-in rel M N) _ = sound-coerce-seq-in rel M N
+  soundᶜ (coerce-handle-in rel M H N) _ = sound-coerce-handle-in rel M H N
   -- axioms — delay
   soundᶜ (delay-zero M)          _ = sound-delay-zero M
   soundᶜ (delay-delay M)         m = sound-delay-delay M m

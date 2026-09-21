@@ -4,20 +4,13 @@
 -- Unary and purely syntactic — it only has to deliver weak-head      --
 -- normalization; soundness and head-faithfulness are separate.       --
 --                                                                    --
--- `CRed` is an inductive family: `E` is an arbitrary preordered      --
--- monoid, so `op-grade op ·ₑ ε` need not exceed `ε` and there is no  --
--- measure to recurse on. Its induction carries FL's `handle` case.   --
+-- `CRed` is an inductive family, not a recursion on a measure: `E`   --
+-- is an arbitrary preordered monoid, so `op-grade op ·ₑ ε` need not  --
+-- exceed `ε`. `VRedᵍ` comes first and `CRed` precedes `VRed`,        --
+-- which instantiates it at the smaller predicate.                    --
 --                                                                    --
--- Ground types have no arrows, so `VRedᵍ` comes first and `CRed`     --
--- precedes `VRed`, which instantiates it at the smaller predicate.   --
---                                                                    --
--- Both value predicates recurse on the type's *skeleton*, not the    --
--- type: at a box they speak of the raw store read, whose type the    --
--- cell declares and which `_<:ᵛ_` only relates to the payload type   --
--- named, shape-preservingly.                                         --
---                                                                    --
--- `CRed` is indexed by the skeleton too: a run refines the value      --
--- type, so the whnf it reaches is at a subtype of the one named.      --
+-- All three recurse on a type's skeleton rather than the type, a run --
+-- refining the value type as it goes.                                --
 ------------------------------------------------------------------------
 
 open import Data.Empty

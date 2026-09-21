@@ -39,11 +39,6 @@ open import TypeInference.Open.Types     S
 open import TypeInference.Open.Contexts  S
 open import TypeInference.Open.Hyps      S
 
--- Re-exported for the same reason as on the closed side: the typing rules'
--- own premises mention `_∣_<:̂ᵛ_`.
-
-open import TypeInference.Open.Subtyping S public
-
 infix 26 _∣_⊢V⦂_
 infix 26 _∣_⊢C⦂_
 
@@ -194,11 +189,8 @@ mutual
     -- The operation clauses are typed under a lock at `⊤ᵣ`, the greatest
     -- grade: a clause runs at a time the handler does not fix.
 
-    -- DEVIATION: the original quantifies the clause family over the
-    -- continuation grade `ε''` at the meta level. Here the clauses are typed
-    -- once, at the extended scope `Θ +e`, against the *rigid* effect-grade
-    -- variable `evar newᵉ`; `Q` and `Γ` are weakened into that scope, while
-    -- the closed embeddings `⌜_⌝ᵍ` are formed at `Θ +e` directly.
+    -- DEVIATION: the original's meta-level quantification over the
+    -- continuation grade is here the rigid variable `evar newᵉ`.
 
     handle_`with_`in
             : {A B : OVType Θ}

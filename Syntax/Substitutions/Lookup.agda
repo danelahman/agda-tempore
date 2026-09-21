@@ -79,10 +79,9 @@ mutual
       (sub-var₀ s y (λ ¬et' → ≾ᵣ-zero-productˡ (f ¬et')))
 
 -- A variable of box type is what an `unbox` names. Its grade is not bounded
--- by the unit, so it cannot be read as a value by `sub-var₀`. It does not
--- have to be: a value of box type is a variable up to subsumption
--- (`grad-typ⇒var<:`), so its image is again a variable, at a grade that drops
--- and at a declared box type the named one only bounds.
+-- by the unit, so `sub-var₀` cannot read it as a value; its image is again a
+-- variable, at a grade that drops and at a declared box type the named one
+-- only bounds.
 --
 -- Stated with projections throughout, so every clause reduces at an abstract
 -- substitution: the image is what an `unbox` node stores, and what `_≐ˢ₀_`

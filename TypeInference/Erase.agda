@@ -2,17 +2,15 @@
 -- Erasure of mirrored derivations to raw terms                   --
 --                                                                --
 -- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` are total functions from the well-typed      --
--- syntax of `TypeInference.Open.Language` to the well-scoped raw     --
--- syntax of `TypeInference.Raw.Syntax`. They forget types, grades    --
--- and entailment premises, keeping only what a raw term          --
+-- syntax of `TypeInference.Open.Language` to the well-scoped raw --
+-- syntax of `TypeInference.Raw.Syntax`. They forget types,       --
+-- grades and entailment premises, keeping only what a raw term   --
 -- annotates.                                                     --
 --                                                                --
--- Erasure is index-preserving: a handler clause — typed at the   --
--- extended scope `Θ +e` over a context of arity `2 + n` —        --
--- erases to a `RawC (2 + n)` with no adjustment, and a           --
--- variable's raw index is its full-context position `var-pos`.   --
---                                                                --
--- Erasure is not injective: `subV`/`subC` erase to their subjects.      --
+-- Erasure is index-preserving: a handler clause erases to a      --
+-- `RawC (2 + n)` with no adjustment, and a variable's raw index  --
+-- is its full-context position `var-pos`. It is not injective:   --
+-- `subV`/`subC` erase to their subjects.                         --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)

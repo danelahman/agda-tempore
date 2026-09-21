@@ -127,12 +127,8 @@ mutual
     -- Subsumption is natural in the value formers: the witness splits the way
     -- its type does. At `⦉_,_⦊` that is functoriality of `_|×|_`, at `lam`
     -- functoriality of `_⇒_` — contravariant in the domain, so the binder is
-    -- subsumed rather than the body coerced there.
-    --
-    -- The atomic formers and `var` have no rule: at `Base`/`Unit`/`Bool` the
-    -- witness is reflexive and `subV-refl` already applies, and a variable's
-    -- type is fixed by the context, so there is no variable at the supertype
-    -- to push the subsumption onto.
+    -- subsumed rather than the body coerced there. The atomic formers and `var`
+    -- have no rule of their own.
 
     subV-pair : ∀ {A A' B B'}
               → (p : A <:ᵛ A') → (q : B <:ᵛ B')
@@ -736,30 +732,29 @@ mutual
     -- Only the effect half needs an axiom: its value half is derivable from
     -- the eta and associativity rules of `_⨟_`, this one is not.
 
-    coerce-seq : ∀ {A B ε ε₁' ε₂'}
-               → (rel : ε₁' ≾ₑ ε₂')
-               → (M : Γ ⊢C⦂ A ‼ ε)
-               → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
-               ----------------------------------------------------------
-               → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) == M ⨟ coerce rel N
+    coerce-seq-in : ∀ {A B ε ε₁' ε₂'}
+                  → (rel : ε₁' ≾ₑ ε₂')
+                  → (M : Γ ⊢C⦂ A ‼ ε)
+                  → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                  ----------------------------------------------------------
+                  → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (M ⨟ N) == M ⨟ coerce rel N
 
     -- Sub-effecting the answer of a `handle` is sub-effecting its return
     -- clause. Only the effect half moves: the handler's clauses are typed at
     -- the answer type, and their boxed continuation argument is contravariant
-    -- in it, so a value half would have to subsume that binder along a witness
-    -- pointing the wrong way.
+    -- in it.
 
-    subC-handle-in : ∀ {A B ε ε₁' ε₂'}
-                   → (rel : ε₁' ≾ₑ ε₂')
-                   → (M : Γ ⊢C⦂ A ‼ ε)
-                   → (H : (op : Op) → (ε₀ : E) →
-                            Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                            ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                   → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
-                   ----------------------------------------------------------
-                   → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (handle M `with H `in N)
-                        == handle M `with H `in (coerce rel N)
+    coerce-handle-in : ∀ {A B ε ε₁' ε₂'}
+                     → (rel : ε₁' ≾ₑ ε₂')
+                     → (M : Γ ⊢C⦂ A ‼ ε)
+                     → (H : (op : Op) → (ε₀ : E) →
+                              Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
+                     → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                     ----------------------------------------------------------
+                     → Γ ⊢C⦂ coerce (·ₑ-monoʳ-≾ₑ rel) (handle M `with H `in N)
+                          == handle M `with H `in (coerce rel N)
 
     -- equations for collapsing successive delays
 

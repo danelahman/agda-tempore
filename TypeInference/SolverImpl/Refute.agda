@@ -1,17 +1,16 @@
 ------------------------------------------------------------------
 -- Semantic refutation of a grade ordering against the unit       --
 --                                                                --
--- `Refutedᵤ ρ` says that no grounding brings `ρ` below the unit.  --
--- A constant atom of `ρ`'s normal form that is not itself below   --
--- the unit establishes it, using only the zero-product laws of    --
--- `_≾ᵣ_`; `scanᵤ` looks for such an atom with the instance's      --
--- decider. Refutation is stable under later instantiation, and    --
--- rules out entailment from every ground-realisable hypothesis    --
--- set.                                                            --
+-- `Refutedᵤ ρ` says that no grounding brings `ρ` below the unit. --
+-- A constant atom of `ρ`'s normal form that is not itself below  --
+-- the unit establishes it, using only the zero-product laws of   --
+-- `_≾ᵣ_`; `scanᵤ` looks for such an atom with the instance's     --
+-- decider. Refutation is stable under later instantiation, and   --
+-- rules out entailment from every ground-realisable hypothesis   --
+-- set.                                                           --
 --                                                                --
--- Refutation cannot be quantified over all `Q`: `hypᵣ` accepts    --
--- arbitrary expressions, so some hypothesis set derives           --
--- `ρ ≾̂ᵣ ûᵣ` for every `ρ`, as `hyp-derives` records.              --
+-- Refutation cannot be quantified over all `Q`, as `hyp-derives` --
+-- records.                                                       --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)

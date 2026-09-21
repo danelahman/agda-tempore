@@ -121,7 +121,7 @@ delay-nf {ε = ε} τ env f =
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (∘ᵐ-congˡ (T-≤-≡ _) ∙ T-≤-trans _ _ (delay-z τ ε))
 
--- The nine rules that transition by `ηᵀ`: the coercion simply passes through,
+-- The rules that transition by `ηᵀ`: the coercion simply passes through,
 -- both sides collapsing to the same chain of sub-effectings.
 
 ηᵀ-case : ∀ {X B εa εb} → (g : X →ᵐ Tᵒ B εa) → (q : εa ≾ₑ εb)

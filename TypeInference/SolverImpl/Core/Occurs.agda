@@ -1,15 +1,12 @@
 ------------------------------------------------------------------
--- Occurrence of a variable, and strengthening along it          --
---                                                               --
+-- Occurrence of a variable, and strengthening along it           --
+--                                                                --
 -- `occ*` say whether a variable of one of the three sorts occurs --
 -- syntactically in an expression of one of the four categories.  --
--- The sorts are stratified — effect expressions contain neither  --
--- resource-grade nor type variables, resource expressions no     --
--- type variables — so the traversals that cross a sort boundary  --
--- (`∣_∣̂ᵉ`, `[_]_`, `_‼_`) are the only ones that can report an   --
--- occurrence, and the remaining cross-sort cases are constantly  --
--- `false`.                                                      --
---                                                               --
+-- The sorts are stratified, so only the traversals that cross a  --
+-- sort boundary (`∣_∣̂ᵉ`, `[_]_`, `_‼_`) can report an            --
+-- occurrence.                                                    --
+--                                                                --
 -- `chk*` combine the check with the renaming: an expression in   --
 -- which the variable does not occur is one of the smaller scope, --
 -- and the single-binding substitution of `Core.For` computes the --

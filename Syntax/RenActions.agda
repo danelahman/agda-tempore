@@ -86,17 +86,9 @@ rvar-rename r x =
   , proj₂ (proj₂ (var-rename r x))
   , proj₁ (proj₂ (var-rename r x)) (λ ())
 
--- The value-taking reading of `unbox`, as a derived rule.
---
--- The value is not taken in `Γ` but in a `Δ` that `Γ` reaches through one lock
--- of the box's own grade -- a Fitch-style witness. It has to be: `Eternal` has
--- no `[_]_` clause, so a box type is never eternal and `var`'s premise
--- `¬ Eternal A → ρ' ≾ᵣ uᵣ` always fires at box type. Any *value* of box type
--- therefore already carries `ρ' ≾ᵣ uᵣ`, i.e. that essentially no time has
--- passed, which is exactly what unboxing after a `delay` must not require. The
--- lookup-based rule bypasses that premise by reading the elapsed grade off the
--- context; a value-taking rule has to recover it, and the renaming is where
--- from.
+-- The value-taking reading of `unbox`, as a derived rule. The value is taken not
+-- in `Γ` but in a `Δ` that `Γ` reaches through one lock of the box's own grade
+-- -- a Fitch-style witness, and the source of the elapsed grade.
 
 unbox⇒var : ∀ {Γ Δ A ρ}
           → Ren [] Γ (Δ ⟨ ρ ⟩)

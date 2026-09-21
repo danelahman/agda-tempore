@@ -71,20 +71,8 @@ private
 module ≈-Reasoning {A B} = SetoidReasoning (homSetoid {A} {B})
 open ≈-Reasoning
 
-------------------------------------------------------------------------
--- Two auxiliary cartesian-closed lemmas
-------------------------------------------------------------------------
-
--- Congruence of the (derived) exponential functor's action.
-
-map⇒ᵐ-cong : ∀ {A B C D} {f f' : A →ᵐ B} {g g' : C →ᵐ D}
-           → f ≈ᵐ f' → g ≈ᵐ g'
-           → map⇒ᵐ f g ≈ᵐ map⇒ᵐ f' g'
-map⇒ᵐ-cong p q = curryᵐ-cong (∘ᵐ-cong q (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl p)))
-
--- Postcomposing the codomain of an uncurried morphism: the exponential's
--- functorial action on the codomain (`map⇒ᵐ idᵐ h`) becomes ordinary
--- postcomposition once the morphism is uncurried.
+-- Uncurrying turns the exponential's action on the codomain into
+-- ordinary postcomposition.
 
 uncurryᵐ-map⇒ᵐˡ : ∀ {A B C D} → (h : C →ᵐ D) → (e : A →ᵐ B ⇒ᵐ C)
                 → uncurryᵐ (map⇒ᵐ idᵐ h ∘ᵐ e) ≈ᵐ h ∘ᵐ uncurryᵐ e

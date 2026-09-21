@@ -3,15 +3,13 @@
 --                                                                --
 -- The fundamental lemma: a mirrored derivation certified by      --
 -- `CovD` denotes, at the two instantiations `θ ,ᵍᵉ ε₁` and       --
--- `θ ,ᵍᵉ ε₂` of the rigid grade variable, two morphisms that      --
--- commute with the covariance coercions of                        --
--- `TypeInference.ParamGround.Covariance`.                             --
+-- `θ ,ᵍᵉ ε₂` of the rigid grade variable, two morphisms that     --
+-- commute with the covariance coercions of                       --
+-- `TypeInference.ParamGround.Covariance`.                        --
 --                                                                --
--- `CovD` excludes a *nested* `handle` (the handler algebra's      --
--- fold is not known to be natural in the ambient instantiation)    --
--- and a `_⨟_` whose continuation grade mentions the rigid          --
--- variable (the model interface has `T-≤-μᵀ` only in the *outer*   --
--- grade). Every other former is covered.                          --
+-- `CovD` excludes a nested `handle` and a `_⨟_` whose            --
+-- continuation grade mentions the rigid variable; every other    --
+-- former is covered.                                             --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -151,85 +149,6 @@ inv⁺-sym-trans : ∀ {A B C : VType} → (e : A ≡ B) → (e' : A ≡ C)
                → inv⁺ e' ∘ᵐ inv⁻ e ≈ᵐ inv⁻ (trans (sym e') e)
 inv⁺-sym-trans refl refl = ∘ᵐ-identityˡ _
 
--- Application reindexed by the exponential's functorial action.
-
-appᵐ-curryᵐ : ∀ {X A B} → (k : X ×ᵐ A →ᵐ B)
-            → appᵐ ∘ᵐ mapˣᵐ (curryᵐ k) idᵐ ≈ᵐ k
-appᵐ-curryᵐ k =
-     ≈ᵐ-sym (uncurryᵐ-nat (curryᵐ k) idᵐ)
-  ∙≈ uncurryᵐ-cong (∘ᵐ-identityˡ _)
-  ∙≈ curryᵐ-uncurryᵐ-iso k
-
-appᵐ-map⇒ᵐ : ∀ {X A B C D} → (f : A →ᵐ B) → (g : C →ᵐ D) → (b : X →ᵐ A)
-           → appᵐ ∘ᵐ mapˣᵐ (map⇒ᵐ f g) b
-           ≈ᵐ g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ (f ∘ᵐ b)
-appᵐ-map⇒ᵐ f g b =
-     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘ (map⇒ᵐ f g) idᵐ idᵐ b
-                        ∙≈ mapˣᵐ-cong (∘ᵐ-identityʳ _) (∘ᵐ-identityˡ _)))
-  ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-  ∙≈ ∘ᵐ-congˡ (appᵐ-curryᵐ _)
-  ∙≈ ∘ᵐ-assoc _ _ _
-  ∙≈ ∘ᵐ-congʳ (∘ᵐ-assoc _ _ _)
-  ∙≈ ∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-∘ idᵐ f idᵐ b
-                          ∙≈ mapˣᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl))
-
--- Precomposing an abstraction, with both components reindexed.
-
-map⇒ᵐ-curryᵐ₂ : ∀ {X A A' C D} → (f : A' →ᵐ A) → (g : C →ᵐ D) → (k : X ×ᵐ A →ᵐ C)
-              → map⇒ᵐ f g ∘ᵐ curryᵐ k ≈ᵐ curryᵐ (g ∘ᵐ (k ∘ᵐ mapˣᵐ idᵐ f))
-map⇒ᵐ-curryᵐ₂ f g k =
-     ≈ᵐ-sym (curryᵐ-nat (curryᵐ k) (g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ f))
-  ∙≈ curryᵐ-cong
-       (   ∘ᵐ-assoc _ _ _
-        ∙≈ ∘ᵐ-congʳ (   ∘ᵐ-assoc _ _ _
-                     ∙≈ ∘ᵐ-congʳ (   mapˣᵐ-∘ idᵐ f (curryᵐ k) idᵐ
-                                  ∙≈ mapˣᵐ-cong (∘ᵐ-identityˡ _) (∘ᵐ-identityʳ _)
-                                  ∙≈ ≈ᵐ-sym (   mapˣᵐ-∘ (curryᵐ k) idᵐ idᵐ f
-                                             ∙≈ mapˣᵐ-cong (∘ᵐ-identityʳ _)
-                                                           (∘ᵐ-identityˡ _)))
-                     ∙≈ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
-                     ∙≈ ∘ᵐ-congˡ (appᵐ-curryᵐ k)))
-
--- The exponential's action on the codomain is functorial.
-
-map⇒ᵐ-∘ʳ : ∀ {A B C D} → (g : C →ᵐ D) → (h : B →ᵐ C)
-         → map⇒ᵐ (idᵐ {A}) (g ∘ᵐ h) ≈ᵐ map⇒ᵐ idᵐ g ∘ᵐ map⇒ᵐ idᵐ h
-map⇒ᵐ-∘ʳ g h = ≈ᵐ-sym (map⇒ᵐ-curryᵐ g _ ∙≈ curryᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))
-
--- Postcomposing a boolean elimination (only precomposition is a field).
-
-ifᵐ-post : ∀ {X A B} → (b : X →ᵐ 𝔹ᵐ) → (m n : X →ᵐ A) → (g : A →ᵐ B)
-         → g ∘ᵐ ifᵐ b m n ≈ᵐ ifᵐ b (g ∘ᵐ m) (g ∘ᵐ n)
-ifᵐ-post {X} {A} b m n g =
-     ≈ᵐ-sym lhs
-  ∙≈ ifᵐ-η b (g ∘ᵐ ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ))
-  ∙≈ ifᵐ-cong ≈ᵐ-refl (branch ∙≈ ∘ᵐ-congʳ (ifᵐ-true m n))
-                      (branch ∙≈ ∘ᵐ-congʳ (ifᵐ-false m n))
-  where
-    step : ∀ {Y} → (u : Y →ᵐ X) → (c : Y →ᵐ 𝔹ᵐ)
-         → ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ) ∘ᵐ ⟨ u , c ⟩ᵐ ≈ᵐ ifᵐ c (m ∘ᵐ u) (n ∘ᵐ u)
-    step u c =
-         ifᵐ-∘ _ _ _ _
-      ∙≈ ifᵐ-cong (⟨⟩ᵐ-sndᵐ _ _)
-                  (∘ᵐ-assoc _ _ _ ∙≈ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-                  (∘ᵐ-assoc _ _ _ ∙≈ ∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))
-
-    lhs : (g ∘ᵐ ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ)) ∘ᵐ ⟨ idᵐ , b ⟩ᵐ
-        ≈ᵐ g ∘ᵐ ifᵐ b m n
-    lhs =
-         ∘ᵐ-assoc _ _ _
-      ∙≈ ∘ᵐ-congʳ (step idᵐ b)
-      ∙≈ ∘ᵐ-congʳ (ifᵐ-cong ≈ᵐ-refl (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))
-
-    branch : ∀ {c : 𝟙ᵐ →ᵐ 𝔹ᵐ}
-           → (g ∘ᵐ ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ))
-               ∘ᵐ ⟨ idᵐ , c ∘ᵐ terminalᵐ ⟩ᵐ
-           ≈ᵐ g ∘ᵐ ifᵐ (c ∘ᵐ terminalᵐ) m n
-    branch =
-         ∘ᵐ-assoc _ _ _
-      ∙≈ ∘ᵐ-congʳ (step idᵐ _)
-      ∙≈ ∘ᵐ-congʳ (ifᵐ-cong ≈ᵐ-refl (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))
-
 -- The inner grade of `μᵀ` may be relaxed along an *equality* of grades.
 
 μᵀ-inner-≡ : ∀ {A ε ϵ₁ ϵ₂} → (e : ϵ₁ ≡ ϵ₂)
@@ -314,7 +233,7 @@ module Fund {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ
                                      (≈ᵐ-sym (covV-nn A (nn⇒CovV A nA) nA)))
                           ∙≈ Cov-groundC h₁ h₂ M (cΓ , nn⇒CovV A nA) cC cM p₁ p₂)
             ∙≈ ∘ᵐ-assoc _ _ _)
-      ∙≈ ≈ᵐ-sym (map⇒ᵐ-curryᵐ₂ _ _ _)
+      ∙≈ ≈ᵐ-sym (map⇒ᵐ-curryᵐˡʳ _ _ _)
     Cov-groundV h₁ h₂ (subV {A} {A'} V p) cΓ cA' (cA , cV) p₁ p₂ =
          ∘ᵐ-assoc _ _ _
       ∙≈ ∘ᵐ-congʳ (Cov-groundV h₁ h₂ V cΓ cA cV p₁ p₂)

@@ -1,20 +1,19 @@
 ------------------------------------------------------------------
--- Skeletons: open types with every grade slot deleted           --
---                                                               --
+-- Skeletons: open types with every grade slot deleted            --
+--                                                                --
 -- A skeleton records the shape of an open type and nothing else: --
 -- the box grade, the arrow's effect grade and the effect grade   --
 -- of a computation type are dropped, so a computation type       --
 -- contributes the skeleton of its value part alone.              --
---                                                               --
+--                                                                --
 -- Skeleton variables are a sort of their own, drawn from a bare  --
--- `Fin`. `skelᵛ` sends each type variable to the skeleton        --
+-- `Fin`; `skelᵛ` sends each type variable to the skeleton        --
 -- variable of the same index, so unifying two skeleton variables --
 -- records that two type variables have the same shape without    --
--- identifying the type variables themselves.                     --
---                                                               --
--- Substitution, the single-variable binding `_forᵏ_` and the     --
--- occurrence check `checkᵏ` follow McBride's structural          --
--- unification (JFP 2003), here at one sort.                      --
+-- identifying them.                                              --
+--                                                                --
+-- Substitution, `_forᵏ_` and `checkᵏ` follow McBride's           --
+-- structural unification (JFP 2003), here at one sort.           --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; punchIn)

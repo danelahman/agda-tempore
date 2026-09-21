@@ -37,9 +37,6 @@ open import Syntax.Grades.Example.Time.RightSided
   using (𝕀ᵣ; [0,_]; ↑_; ∞; right-sided-intervals) renaming (_≾ₒ_ to _≾ᵈ_)
 open import Syntax.Grades.Example.System.Identity using (identityGradeSystem)
 
--- the modules below are also applied to a second specification, at the
--- end of this module
-
 import Syntax.GroundTypes
 import Syntax.Contexts
 import Syntax.Types
@@ -263,11 +260,10 @@ ex-pipeline-op : typeOf (inferImpl [] (perform read ⋆ (return (var zero))))
                ≡ just (T.Base reading , op-grade read ·ₑ uₑ)
 ex-pipeline-op = refl
 
--- Several lower bounds on one unknown
---
--- Both branches of an `if` bound the shared effect unknown from below,
--- and the two bounds are incomparable. Without a join the closer falls
--- back on the greatest grade.
+-- Several lower bounds on one unknown: both branches of an `if` bound
+-- the shared effect unknown from below, and the two bounds are
+-- incomparable. Without a join the closer falls back on the greatest
+-- grade.
 
 branch-op : RawC 0
 branch-op = if true `then perform read ⋆ (return ⋆) `else return ⋆
@@ -589,13 +585,10 @@ module Unguarded where
                    (principal? Γ∅ prog-true ≡ just p)
   ex-principal = _ , refl
 
--- The library benchmark
---
--- `reportOn` is the open path: it hands back a qualified type rather
--- than a ground solution. Five library shapes go through it, with
--- `return ⋆` for a floor, each stated twice — the report in full,
--- and the number of hypotheses of each sort left with it. Every
--- grade expression shown is in product normal form.
+-- The library benchmark: five shapes go through `reportOn`, the open
+-- path, which hands back a qualified type rather than a ground
+-- solution. Each is stated twice, the full report and its hypothesis
+-- counts by sort.
 
 module Library where
 

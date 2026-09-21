@@ -1,18 +1,14 @@
 ------------------------------------------------------------------------
--- Interpretation of the well-typed terms (values and computations).    --
+-- Interpretation of the well-typed terms (values and computations).  --
 --                                                                    --
--- A value `Γ ⊢V⦂ A` is a morphism `⟦ Γ ⟧ →ᵐ ⟦ A ⟧ᵛ`; a computation     --
--- `Γ ⊢C⦂ C` is `⟦ Γ ⟧ →ᵐ ⟦ C ⟧ᶜ`. Variables use the machinery of        --
--- `Interpretation.Variables`. Effectful formers use the graded monad:   --
--- `return`↦`ηᵀ`, `⨟`↦`μᵀ ∘ Tᶠ- ∘ strᵀ` (environment threaded by the     --
--- adjunction unit `η⊣`), `perform`↦`opᵀ`, `delay`↦`delayᵀ`. Subsumption  --
--- `subV`/`subC` post-composes the coercion `⟦_⟧<:ᵛ`/`⟦_⟧<:ᶜ` of its      --
--- witness. The Fitch formers use the adjunction: `box` transposes        --
--- by `[ ρ ]ᶠ- ∘ η⊣`, and `unbox` projects the variable it names, opens   --
--- it with the counit `ε⊣` and coerces the payload to the bound type.     --
+-- A value `Γ ⊢V⦂ A` is a morphism `⟦ Γ ⟧ →ᵐ ⟦ A ⟧ᵛ`; a computation   --
+-- `Γ ⊢C⦂ C` is `⟦ Γ ⟧ →ᵐ ⟦ C ⟧ᶜ`. Variables use the machinery of     --
+-- `Interpretation.Variables`, the effectful formers the graded       --
+-- monad, and the Fitch formers the adjunction. Subsumption           --
+-- post-composes the coercion of its witness.                         --
 --                                                                    --
--- `perform`'s parameter/arity are ground types, interpreted via the      --
--- coercion `⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ` (`ty-gty`).                  --
+-- `perform`'s parameter/arity are ground types, interpreted via the  --
+-- coercion `⟦ type-of-gtype G ⟧ᵛ ≡ ⟦ G ⟧ᵍ` (`ty-gty`).               --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -161,9 +157,8 @@ mutual
 
   -- Naturality of a handler's clauses in the residual effect `ε''`: the clause
   -- commutes with sub-effecting the boxed continuation's residual, landing on
-  -- `·ₑ-monoʳ`. This is what `Paramᶜ` carries for a `handle` and what becomes the
-  -- semantic handler's `Monoᵀ` field (built by `⟦_⟧ʰᵗ`). Named here so the two —
-  -- the certificate and `⟦_⟧ʰᵗ`'s premise — are one condition, not two copies.
+  -- `·ₑ-monoʳ`. This is what `Paramᶜ` carries for a `handle` and what becomes
+  -- the semantic handler's `Monoᵀ` field (built by `⟦_⟧ʰᵗ`).
   EffUniformʰ : ∀ {Γ B}
               → (H : (op : Op) → (ε'' : E)
                    → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
@@ -218,11 +213,8 @@ mutual
   -- by `⟨ ⊤ᵣ ⟩ᵒ ⟦ Γ ⟧` — the free `⟨⊤⟩`-algebra, hence eternal in every model.
   -- The `ty-gty` coercions adapt the ground-type parameter/arity to their
   -- value-type interpretations, and `×ᵐ-assoc⁻¹` reassociates the parameter.
-  --
   -- The handler's ambivalence is the clauses' uniformity `uH`, transported
-  -- along that adapter: the continuation coercion commutes past the associator
-  -- (`×ᵐ-assoc⁻¹-nat³`) and past the ground-type coercions (`[]-∘ᵐ`,
-  -- `map⇒ᵐ-swap`), after which `uH` applies.
+  -- along that adapter.
   ⟦_⟧ʰᵗ : ∀ {Γ B}
         → (H : (op : Op) → (ε'' : E)
              → Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)

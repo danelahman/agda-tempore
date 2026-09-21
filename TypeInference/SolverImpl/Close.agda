@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Closes a residual into the empty scope                        --
+-- Closes a residual into the empty scope                         --
 --                                                                --
 -- Slack sends a flexible grade variable to the combination of    --
 -- its lower bounds — those of the orderings and those the        --
@@ -9,8 +9,7 @@
 -- where only lower bounds push, the unit otherwise.              --
 --                                                                --
 -- At the empty scope an expression is a constant, so the checks  --
--- are complete and a failure is "found nothing", not "nothing to --
--- find": only the choice of substitution is heuristic.           --
+-- are complete and only the choice of substitution is heuristic. --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)

@@ -1,25 +1,19 @@
 ------------------------------------------------------------------
--- The driver as a solver interface instance                     --
+-- The driver as a solver interface instance                      --
 --                                                                --
--- `TypeInference.Solver.Restricted.SolverOn` asks for a solver        --
--- returning a scope, a substitution and a hypothesis set. The     --
--- driver returns a state; `toHyps` reads its residual back as     --
--- the hypothesis set, and the three fields follow from the        --
--- driver's deferred witness, `solve-fail` and `solve-principal`.  --
+-- `TypeInference.Solver.Restricted.SolverOn` asks for a solver   --
+-- returning a scope, a substitution and a hypothesis set; the    --
+-- driver returns a state, and `toHyps` reads its residual back   --
+-- as the hypothesis set. Principality is unguarded; refutation   --
+-- is guarded by `NoRig`, since at a rigid binder a failure can   --
+-- be a failure of `Normal`'s decision procedures.                --
 --                                                                --
--- Principality is unguarded; refutation is guarded by `NoRig`,   --
--- since at a rigid binder a failure can be a failure of           --
--- `Normal`'s decision procedures. The read-back may also fail, on --
--- an eternality demand that decomposes to nothing — and that is   --
--- refutable, because substitution preserves a type's head former. --
---                                                                --
--- `reportOn` is the reporting boundary on top: what a caller is   --
--- shown is the same residue with its var-rule disjunctions        --
--- narrowed, its redundant hypotheses dropped, the unknowns its    --
--- own hypotheses fix eliminated from it and from the reported     --
--- type, and every grade expression left in product normal form.   --
--- `Principality` and `Infer` are solver-independent, so this is   --
--- applied here, where the deciders are in scope.                  --
+-- `reportOn` is the reporting boundary on top: the same residue  --
+-- with its var-rule disjunctions narrowed, its redundant         --
+-- hypotheses dropped, the unknowns its own hypotheses fix        --
+-- eliminated from it and from the reported type, and every grade --
+-- expression in product normal form. It is applied here, where   --
+-- the deciders are in scope.                                     --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])
@@ -175,8 +169,8 @@ solverImplOn = record
   }
 
 -- A solution, its residue as the solver returns it, the residue
--- narrowed, and the narrowed residue with the unknowns it fixes
--- eliminated from it and from the reported type `X`. Narrowing is
+-- simplified, and the simplified residue with the unknowns it fixes
+-- eliminated from it and from the reported type `X`. Simplification is
 -- satisfied by exactly the same groundings; elimination keeps every
 -- grounding, is realised by the grounding reading each eliminated
 -- unknown off its bound, and reports the subtype. Normalisation of
@@ -210,7 +204,7 @@ reportOn X C with solveOn C in e
     el : Elim (X [ σ ]ᶜ) (simplify Q)
     el = eliminate (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _
 
--- The same narrowing where a principal type hands out its residue
+-- The same simplification where a principal type hands out its residue
 
 reportedQ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
           → Hyps (Principal.Θ⁺ p)

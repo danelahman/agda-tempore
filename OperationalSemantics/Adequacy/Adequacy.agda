@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- ADEQUACY of the denotational semantics w.r.t. the operational one. --
+-- Adequacy of the denotational semantics w.r.t. the operational one. --
 --                                                                    --
 -- The converse direction of `↝*-sound`. Assembled from               --
 --                                                                    --

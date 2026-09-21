@@ -136,11 +136,8 @@ record GroundUniform : Set where
 
 open GroundUniform public
 
--- Proving `ground-uniform` needs a naturality family for `groundC`,
--- which exists only for types where `evar newᵉ` occurs covariantly; the
--- clause's own context and result type qualify, but `lam` and `box` can
--- put it negatively, where the abstract model interface provides no
--- such morphism.
+-- Assumed, not proved: `lam` and `box` can put `evar newᵉ` in a
+-- contravariant position, where the model interface gives no coercion.
 
 module _ (GU : GroundUniform) where
 

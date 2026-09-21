@@ -3,16 +3,13 @@
 --                                                                --
 -- Every grade expression of a reported type and of a reported    --
 -- hypothesis set is replaced by its product normal form, so the  --
--- monoid laws — both identities, associativity, the constants'   --
--- arithmetic and the morphism laws — leave no trace in what a    --
--- caller is shown.                                               --
+-- monoid laws leave no trace in what a caller is shown.          --
 --                                                                --
--- Two statements, and they differ. A hypothesis set and its      --
--- normal form are satisfied by exactly the same groundings, so   --
--- the normal form is stored, not merely printed. A type and its  --
--- normal form have the same denotation at every grounding, and   --
--- `canonElim` is that fact as an elimination step, so the        --
--- normalisation of a report composes with the others.            --
+-- A hypothesis set and its normal form are satisfied by exactly  --
+-- the same groundings, so the normal form is stored, not merely  --
+-- printed. A type and its normal form have the same denotation   --
+-- at every grounding, and `canonElim` is that fact as an         --
+-- elimination step.                                              --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (map)

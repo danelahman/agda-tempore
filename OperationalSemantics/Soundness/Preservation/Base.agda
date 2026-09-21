@@ -520,12 +520,10 @@ coe-cancel e q =
 
 -- DELAY: the tick.
 --
--- This is the only rule that advances time, and the only one whose history
--- grows. `η⊣`-naturality is what does the work: the state's interpretation
--- passes under the new lock (`⟦ St ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ St ⟧ˢ`), so the
--- source's `η⊣ ∘ᵐ ⟦ St ⟧ˢ` is the target's environment already boxed up.
--- The transition then supplies exactly the `delayᵀ` that reaches the worlds
--- one delay ahead, and `delayᵀ`'s algebraicity re-associates it out.
+-- The only rule that advances time, and the only one whose history grows. The
+-- state's interpretation passes under the new lock
+-- (`⟦ St ⟨ ρ ⟩ₛ ⟧ˢ = ⟨ ρ ⟩ᶠ ⟦ St ⟧ˢ`), and `delayᵀ`'s algebraicity
+-- re-associates the transition's `delayᵀ` out.
 
 sound-DELAY : ∀ {A ε} → (τ : ℕ) → (St : 𝕊 [])
             → (M : toCtx St ⟨ of-natʳ τ ⟩ ⊢C⦂ A ‼ ε)
@@ -603,11 +601,10 @@ sound-DELAY {ε = ε} τ St M q pSt pM =
 
 -- The environment a `return` hands to its continuation.
 --
--- `strᵀ-ηᵀ` opens the boxed environment with the box counit at the unit
--- grade; the syntax instead re-locks the context with `⟨⟩-η-ren`. The two
--- agree: at the unit grade the adjunction unit *is* the possibility unit
--- (`η⊣-u`), and the counit cancels it. The grade equality `mapᵉ uₑ ≡ uᵣ` is
--- generalised so that it can be matched.
+-- `strᵀ-ηᵀ` opens the boxed environment with the box counit at the unit grade;
+-- the syntax instead re-locks the context with `⟨⟩-η-ren`. The two agree by
+-- `η⊣-u`. The grade equality `mapᵉ uₑ ≡ uᵣ` is generalised so that it can be
+-- matched.
 
 ret-env : ∀ {Γ ρ} → (e : ρ ≡ uᵣ)
         → εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e)) ∘ᵐ η⊣ {⟦ Γ ⟧ᶜᵗˣ} {ρ}
@@ -639,10 +636,9 @@ sub-ren r N V pN pV =
   ∙ ∘ᵐ-congʳ (⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityˡ _ ⟩ᵐ-cong)
 
 -- The `return` rules: `⨟` and `handle` thread the environment through the
--- strength in exactly the same way, differing only in the algebra that
--- collapses the two monad layers (`μᵀ`, resp. the handler's
--- `T-alg-of-handlerᵀ`). Both algebras compute on a returned value the same
--- way, so `SEQ-RET` and `HANDLE-RET` share one proof.
+-- strength in the same way, differing only in the algebra that collapses the
+-- two monad layers (`μᵀ`, resp. `T-alg-of-handlerᵀ`), so `SEQ-RET` and
+-- `HANDLE-RET` share one proof.
 
 -- The parametricity certificate of the `return`-rules' reduct: the sequel
 -- renamed by the re-locking renaming, then substituted into.

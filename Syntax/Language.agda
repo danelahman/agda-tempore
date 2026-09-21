@@ -178,9 +178,7 @@ mutual
 
     -- A clause runs at a time the handler does not fix, so its view of the
     -- ambient context `Γ` is barred by the `≾ᵣ`-greatest lock `⟨ ⊤ᵣ ⟩`; the
-    -- parameter and boxed continuation are added on top. The lock keeps every
-    -- binding and blocks by grade, so only what `var`'s eternality escape or
-    -- `unbox`'s bound admits crosses it.
+    -- parameter and boxed continuation are added on top.
 
     handle_`with_`in
             : {A B : VType}
@@ -196,20 +194,11 @@ mutual
 
     -- unboxing a boxed value/resource after enough time has passed for it to be ready
 
-    -- The value being unboxed is a variable of box type: every value of a graded
-    -- modal type is one up to subsumption (`grad-typ⇒var<:` below), so the rule
-    -- names the occurrence at its *declared* type `[ ρ₀ ] A₀` and lets the
-    -- continuation bind any supertype `A` of the payload — a binder's type is
-    -- not something a term former can subsume, so that witness is a premise.
-    -- Box subtyping's *grade* half needs no premise of its own: the rule already
-    -- bounds the elapsed grade, and contravariance only composes into that
-    -- bound. Contravariance is absorbed, not lost.
-    --
-    -- That enough time has passed since the occurrence was brought into scope is
-    -- the grade bound `ρ' ≾ᵣ ρ₀`, where `ρ'` is the product of the locks standing
-    -- to the variable's right. Reading that product off the context is what
-    -- rewinds it to the variable's world, with no subtraction operation on
-    -- contexts.
+    -- The value being unboxed is a variable of box type, named at its declared
+    -- type `[ ρ₀ ] A₀`; the premise `A₀ <:ᵛ A` lets the continuation bind any
+    -- supertype of the payload. That enough time has passed is the grade bound
+    -- `ρ' ≾ᵣ ρ₀`, with `ρ'` the product of the locks standing to the variable's
+    -- right.
 
     unbox   : {A A₀ : VType}
             → {C : CType}

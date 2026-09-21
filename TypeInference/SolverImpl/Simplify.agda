@@ -5,16 +5,12 @@
 -- its product normal form. It then settles every `disj` entry    --
 -- one of whose sides is settled: a met eternality demand drops   --
 -- the entry, a refuted one leaves the grade ordering behind, and --
--- a refuted grade leaves the eternality atoms behind. Eternality --
--- is met either outright or through the set's own atoms and      --
--- subtyping hypotheses. It finally drops every hypothesis the    --
--- rest of the set still entails.                                 --
+-- a refuted grade leaves the eternality atoms behind. It finally --
+-- drops every hypothesis the rest of the set still entails.      --
 --                                                                --
--- The justification is semantic: `simplify Q` and `Q` are        --
--- satisfied by exactly the same groundings. Entailment cannot    --
--- narrow — a `disj` hypothesis proves `VarOK` with neither       --
--- disjunct in hand — so this is a simplification of the report,  --
--- not of the solver, and `solve-principal` is untouched.         --
+-- `simplify Q` and `Q` are satisfied by exactly the same         --
+-- groundings. This is a simplification of the report, not of the --
+-- solver, and `solve-principal` is untouched.                    --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -300,13 +296,9 @@ narrowAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with narrow-⊨⁻ A ρ (narrowAll l Q�
 ... | h' , d with narrowAll-⊨⁻ l Q₀ h'
 ...   | h'' , k = h'' , λ { (here refl) → d ; (there m) → k m }
 
--- A hypothesis the rest of the set still entails is redundant, and is
--- dropped. The criterion is decided here for the subtyping atoms and
--- the eternality atoms, where entailment is reachability in a finite
--- digraph; it is left undecided for the grade orderings, `_⊩_≾̂ᵣ_` and
--- `_⊩_≾̂ₑ_` closing the hypotheses under `monoᵣ`, `map-mono`, `eqᵣ`
--- and transitivity as well. Each atom is tested against the suffix
--- already decided, so its justification survives into the result.
+-- A hypothesis the rest of the set still entails is dropped. Decided
+-- for the subtyping and eternality atoms, where entailment is
+-- reachability in a finite digraph; left undecided for the orderings.
 
 pruneᵛ : ∀ {n} → List (Fin n × Fin n) → List (Fin n × Fin n) → List (Fin n × Fin n)
 pruneᵛ acc []            = acc

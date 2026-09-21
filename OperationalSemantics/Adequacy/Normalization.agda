@@ -120,13 +120,9 @@ FL-match {St = St} {A = A} {B = B} γ pγ V M (p₁ , p₂) pM =
 --
 -- The sequel premise is `FL-C`'s at `(γ ⟨ q ⟩ᵉ) ∷ᵉ V`, as for sequencing.
 --
--- For the clause premise, `HANDLE-OP` fires a clause at `St₁` and `BOX`
--- allocates the resumption, so the clause is reached at
--- `St₁ ∷ₛ V₀` with its continuation binder *being* the fresh cell:
--- that environment is `liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)` — the barrier lock matched
--- by the `⊤ᵣ`-reach the premise supplies, `_∷ᵉ_` the operation's parameter, and
--- `liftᵉ` the cell. Its `Rel-Env` is `((pγ , pW) , bv)`, whose last component
--- is exactly the `Boxed-VRed` argument `handle-CRed` supplies.
+-- The clause premise is reached at `St₁ ∷ₛ V₀`, its continuation binder being
+-- the fresh cell: the environment `liftᵉ V₀ ((γ ⟨ q ⟩ᵉ) ∷ᵉ W)`, with
+-- `Rel-Env` `((pγ , pW) , bv)`.
 
 FL-handle : ∀ {St Γ A B ε₁ ε₂} → (γ : Env St Γ) → Rel-Env γ
           → (M : Γ ⊢C⦂ A ‼ ε₁)
@@ -161,13 +157,10 @@ FL-handle {St = St} {Γ = Γ} {A = A} {B = B} {ε₁ = ε₁} γ pγ M H N pM pH
       subst (CRed' _ _ _) (sym (env-Cˢ-head (γ ⟨ q ⟩ᵉ) N V))
             (pN ((γ ⟨ q ⟩ᵉ) ∷ᵉ V) (pγ , pV))
 
--- Boxing: `BOX` allocates, and the reduct already lives over the *new* state's
--- context — so the environment must keep the binder as the fresh cell rather than
--- substitute for it, which is `liftᵉ`. The reduct then
--- *is* the action at `liftᵉ V₀ γ`, and its `Rel-Env` is the boxed value's
--- reducibility at every state the lock permits — which is the first hypothesis,
--- at the environment `γ ⟨ q ⟩ᵉ` (whose action at the empty suffix is
--- `V-rename (unbox-ren q)`, both casts being `refl` there).
+-- Boxing: `BOX` allocates, and the reduct lives over the new state's context, so
+-- the environment keeps the binder as the fresh cell (`liftᵉ`) rather than
+-- substituting for it. The reduct is the action at `liftᵉ V₀ γ`, and its
+-- `Rel-Env` is the boxed value's reducibility at every state the lock permits.
 
 FL-box : ∀ {St Γ A D ρ ε} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⟨ ρ ⟩ ⊢V⦂ A) → (M : Γ ∷ [ ρ ] A ⊢C⦂ D ‼ ε)
@@ -255,10 +248,8 @@ mutual
   -- subsumption is `VRed-sub`.
   --
   -- At a lambda the environment moves to the state the Kripke clause offers and
-  -- gains the argument (`reachᵉ`, `_∷ᵉ_`) — and that is the whole reason the
-  -- reach is *recorded* in the environment: the clause supplies no store for
-  -- the later state, and a recorded reach needs none. The action is a `lam`,
-  -- so `APP` reduces the clause's application to that body.
+  -- gains the argument (`reachᵉ`, `_∷ᵉ_`). The action is a `lam`, so `APP`
+  -- reduces the clause's application to that body.
 
   FL-V : ∀ {St Γ A} → (γ : Env St Γ) → Rel-Env γ
        → (V : Γ ⊢V⦂ A)

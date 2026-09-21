@@ -1,35 +1,18 @@
 ------------------------------------------------------------------
--- The constraint solver, axiomatised                            --
+-- The constraint solver, axiomatised                             --
 --                                                                --
--- `Solver` is an *assumption*, not a construction: `_≾ᵣ_`/`_≾ₑ_` --
+-- `Solver` is an assumption, not a construction: `_≾ᵣ_`/`_≾ₑ_`   --
 -- are undecidable in the `Grade` interface, `∀ᵉ` and `⋀ᵒᵖ` are   --
--- infinitary, and `∀ᵉ` additionally demands an eigenvariable     --
--- (skolem) treatment — so no solver exists for an arbitrary      --
--- `LanguageSpec`.                                                --
+-- infinitary, and `∀ᵉ` needs an eigenvariable treatment.         --
 --                                                                --
--- A residual is a `Hyps`, not a leftover `Constraint`: the       --
--- unsolvable atoms are exactly grade orderings and eternality    --
--- atoms, which is what the mirrored judgement consumes as its    --
--- hypothesis set — so a solution-with-residue is already a       --
--- typing context, with no further translation.                   --
+-- A solution is a substitution paired with a residual hypothesis --
+-- set, which is already a context of the mirrored judgement.     --
+-- `GroundSolver` is the separate assumption for ground           --
+-- semantics, returning the witnessing substitution.              --
 --                                                                --
--- `GroundSolver` returns the *witnessing substitution* rather    --
--- than a grounding: the naive bridge from `_⊨ᵍ_` back to         --
--- `_⊨[_]_` is false (ground satisfaction compares               --
--- interpretations, substitution satisfaction compares            --
--- unnormalised grade expressions). Ground semantics is obtained  --
--- on top, from `⊨-ground` of `TypeInference.Constraints.Ground`.     --
---                                                                --
--- No `Solver → GroundSolver` derivation is offered: a `Solver`'s --
--- residual `Q⁺` need not be satisfiable by any grounding, and    --
--- its `Θ⁺` need not be empty, so the ground case is genuinely a  --
--- separate assumption.                                           --
---                                                                --
--- A solution is a substitution paired with a constraint set      --
--- still to be satisfied: the residual constraint, in             --
--- OutsideIn(X)'s terminology (Vytiniotis et al., JFP 2011) — cf. --
--- the types with constraint sets of Pretnar, Inferring Algebraic --
--- Effects (LMCS 2014).                                           --
+-- "Residual constraint" is OutsideIn(X)'s term (Vytiniotis et    --
+-- al., JFP 2011); cf. Pretnar, Inferring Algebraic Effects (LMCS --
+-- 2014).                                                         --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)

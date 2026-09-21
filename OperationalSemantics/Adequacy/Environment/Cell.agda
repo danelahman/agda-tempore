@@ -441,14 +441,10 @@ env-cell-push (reachᵉ γ q) Δ t =
   trans (cong (rvar-img′ (cong-ren (reach-renᵘ q))) (env-cell-push γ Δ t))
         (rvar-≡ (cong-ren-img-l (reach-renᵘ q) Δ (rvar-pos (env-cell₀ γ t))))
 
--- The two zones that grow the suffix by a binder split on the variable. A
--- `Tl-∷` is the `⟨⟩ᵉ` pattern with `[] ∷ A₀` for `[] ⟨ ρ₀ ⟩`; a `Hd` is the
--- zone's own boundary variable, which `∈-++ᶜˡ-++ᶜʳ` recognises as a *suffix*
--- variable of the grown suffix, so `env-cell-suffix` carries it across. At
--- `_∷ᵉ_` the substitution then hits it (`split→∈-∈-++ᶜˡ` identifies the pushed
--- boundary variable with the one the splitting names, and `rvar-hit` reads off
--- the substituted value's own cell); at `liftᵉ` nothing substitutes and it
--- stays the fresh cell. The eternal zone has no cell of its own at all.
+-- The two zones that grow the suffix by a binder split on the variable: a
+-- `Tl-∷` is the `⟨⟩ᵉ` pattern with `[] ∷ A₀` for `[] ⟨ ρ₀ ⟩`, and a `Hd` is the
+-- zone's own boundary variable, which `env-cell-suffix` carries across. The
+-- eternal zone has no cell of its own.
 
 env-cell-push (_⟨_⟩ᵉ {St = St} {Γ = Γ} {ρ = ρ₀} γ q) Δ (σ , Tl-⟨⟩ y) =
   trans (cong (λ z → rvar-img′ (cong-ren (unbox-ren q))

@@ -2,20 +2,16 @@
 -- Eliminating an unknown from a report                           --
 --                                                                --
 -- An unknown bounded below by exactly one hypothesis, and        --
--- occurring below nowhere else — not in the rest of the set, not --
--- contravariantly in the reported type — is sent to that bound,  --
--- and the hypothesis goes with it. Every grounding of the result --
--- realises the original at the same type, every grounding of the --
--- original satisfies the result, and the reported type becomes a --
--- subtype of what it was, hence the principal presentation. An   --
--- unknown absent from the reported type is eliminated outright   --
--- by the same step. The three sorts are treated alike; the bound --
--- of a type variable is a type variable, so it acts on the       --
--- eternality and subtyping atoms too.                            --
+-- occurring below nowhere else, is sent to that bound and the    --
+-- hypothesis goes with it; an unknown absent from the reported   --
+-- type is eliminated outright by the same step. Every grounding  --
+-- of the result realises the original at the same type, every    --
+-- grounding of the original satisfies the result, and the        --
+-- reported type becomes a subtype of what it was. The three      --
+-- sorts are treated alike.                                       --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
--- (ICFP 1996): the step is an existential elimination, witnessed --
--- by the grounding that reads the unknown off its bound.         --
+-- (ICFP 1996).                                                   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (false; _∨_) renaming (Bool to 𝔹)
@@ -170,10 +166,6 @@ atᶜ-‼ : (s : Sign) → {A A' : VType} {ε ε' : E}
       → atᵛ s A A' → atᵉ s ε ε' → atᶜ s (A T.‼ ε) (A' T.‼ ε')
 atᶜ-‼ ⁺ p q = p ‼ₛ q
 atᶜ-‼ ⁻ p q = p ‼ₛ q
-
-------------------------------------------------------------------
--- An effect unknown                                              --
-------------------------------------------------------------------
 
 sbᵉ-e : ∀ {Θ} → EVar Θ → EExp Θ → EExp Θ → EExp Θ
 sbᵉ-e i b (evar j)   = upd i b evar j
@@ -402,8 +394,6 @@ splitₑ i ((ε , _ ·̂ₑ _) ∷ l) with splitₑ i l
 ... | just s  = just (consₑ s)
 ... | nothing = nothing
 
--- The step itself
-
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → (s : Splitₑ i (ordₑ Q))
       → below (polₑ-e i ⁻ (bnd s)) ≡ false
@@ -558,11 +548,6 @@ firstᵉ C Q []       = nothing
 firstᵉ C Q (i ∷ is) with stepᵉ? C Q i
 ... | just r  = just r
 ... | nothing = firstᵉ C Q is
-
-
-------------------------------------------------------------------
--- A resource unknown                                             --
-------------------------------------------------------------------
 
 -- Effect expressions carry no resource unknown, so only the resource
 -- expressions and the box grades of a type move.
@@ -861,10 +846,6 @@ firstʳ C Q (i ∷ is) with stepʳ? C Q i
 ... | just r  = just r
 ... | nothing = firstʳ C Q is
 
-------------------------------------------------------------------
--- A type variable                                                --
-------------------------------------------------------------------
-
 -- The bound of a type variable is another type variable, so the
 -- substitution acts on the eternality and subtyping atoms too.
 
@@ -1136,11 +1117,6 @@ firstᵗ C Q []       = nothing
 firstᵗ C Q (α ∷ αs) with stepᵗ? C Q α
 ... | just r  = just r
 ... | nothing = firstᵗ C Q αs
-
-
-------------------------------------------------------------------
--- The driver                                                     --
-------------------------------------------------------------------
 
 anyStep : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elim C Q)
 anyStep {Θ} C Q with firstᵉ C Q (fins (nE Θ))

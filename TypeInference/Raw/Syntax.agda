@@ -2,18 +2,15 @@
 -- Raw (well-scoped, untyped) syntax of the language              --
 --                                                                --
 -- The terms that inference takes as input: one former per former --
--- of `TypeInference.Open.Language`, minus `coerce` (invisible), and  --
--- with the type, grade and entailment data of the mirrored       --
--- judgement dropped. Variables are de Bruijn indices into the    --
--- full context, `Fin n`.                                         --
+-- of `TypeInference.Open.Language`, minus `coerce`, and with the --
+-- type, grade and entailment data of the mirrored judgement      --
+-- dropped. Variables are de Bruijn indices into the full         --
+-- context, `Fin n`.                                              --
 --                                                                --
--- The only annotations left are the ones inference cannot guess: --
--- the base type of a constant, the operation of a `perform`, the --
--- duration of a `delay`, and the variable of an `unbox`. In      --
--- particular `box` carries no grade (inference binds it          --
--- existentially), and handlers carry no capture annotation:      --
--- their clauses are scoped over the FULL context, `RawC (2 + n)`,--
--- the clause barrier being an ordinary lock.                     --
+-- The only annotations left are the base type of a constant, the --
+-- operation of a `perform`, the duration of a `delay` and the    --
+-- variable of an `unbox`; `box` carries no grade. A handler's    --
+-- clauses are scoped over the full context, `RawC (2 + n)`.      --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin)

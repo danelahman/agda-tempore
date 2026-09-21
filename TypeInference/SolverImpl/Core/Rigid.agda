@@ -37,8 +37,7 @@ open import TypeInference.Open.Subst  S
 open import TypeInference.SolverImpl.Core.Thick
 open import TypeInference.SolverImpl.Core.Occurs S
 
--- Repeated from the unifier's maximality module: this is the
--- boundary's own copy, not an import.
+-- Decidability helpers
 
 ⊥just : ∀ {X Y : Set} {x : X} → nothing ≡ just x → Y
 ⊥just ()
@@ -269,8 +268,7 @@ strSub j γ = strSubᵃ j γ (seqFin (λ α → strᵛ⁺ j (sTy γ α)))
 unpopˢ : ∀ {Ψ} → EVar (Ψ +e) → Subst (Ψ +e) (Ψ +e)
 unpopˢ {Ψ} j = sub tvar rvar (λ { zero → evar j ; (suc k) → evar (thinᵉ {Ψ} j k) })
 
--- `Core.Thick` is closed; the one thickening lemma the boundary needs
--- and the unifier does not lives here, next to its use.
+-- Thickening is `nothing` only at the variable itself
 
 thick-nothing : ∀ {n} → (i j : Fin (nsuc n)) → thick i j ≡ nothing → j ≡ i
 thick-nothing          zero   zero    q = refl

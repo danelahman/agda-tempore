@@ -3,17 +3,14 @@
 --                                                                --
 -- Fix a grounding `θ : Grounding Θ` and two instantiations       --
 -- `ε₁ ≾ₑ ε₂` of the rigid effect-grade variable `newᵉ`. A type   --
--- of the extended scope `Θ +e` then has two closed readings,     --
--- `⟦ A ⟧ᵒᵛ (θ ,ᵍᵉ ε₁)` and `⟦ A ⟧ᵒᵛ (θ ,ᵍᵉ ε₂)`, and this       --
--- module builds the coercion between their interpretations       --
--- whenever `newᵉ` occurs *covariantly* in `A`.                   --
+-- of the extended scope `Θ +e` then has two closed readings, and --
+-- this module builds the coercion between their interpretations  --
+-- whenever `newᵉ` occurs covariantly in it.                      --
 --                                                                --
--- Variance in the model: `T-≤` is covariant in the effect grade  --
--- and `⟨⟩-≤` covariant in the resource grade, while `[]-≤` is    --
--- contravariant and `_⇒_`'s domain contravariant. As no grade    --
--- expression is antitone in `newᵉ`, a contravariant position     --
--- must be `newᵉ`-*free*; `NoNew*` is that syntactic condition    --
--- and `nonew-*` turns it into the equality of the two readings.  --
+-- No grade expression is antitone in `newᵉ`, so a contravariant  --
+-- position must be `newᵉ`-free; `NoNew*` is that syntactic       --
+-- condition and `nonew-*` turns it into the equality of the two  --
+-- readings.                                                      --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -64,7 +61,6 @@ open import TypeInference.Open.Grades    S
 open import TypeInference.Open.Types     S
 open import TypeInference.Open.Contexts  S
 open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Subtyping S
 
 open import TypeInference.Open.Grounding S
   renaming (⟦_⟧ᵛ to ⟦_⟧ᵒᵛ; ⟦_⟧ᶜ to ⟦_⟧ᵒᶜ; ⟦_⟧ᶜᵗˣ to ⟦_⟧ᵒᶜᵗˣ)
@@ -225,14 +221,6 @@ invˣ⁺-trans refl refl = ∘ᵐ-identityˡ _
 
 T-≤-irr : ∀ {A ε₁ ε₂} → (w w' : ε₁ ≾ₑ ε₂) → T-≤ {A} w ≈ᵐ T-≤ {A} w'
 T-≤-irr {A} w w' rewrite ≾ₑ-irrelevant w w' = ≈ᵐ-refl
-
--- `map⇒ᵐ` is a congruence
-
-map⇒ᵐ-cong : ∀ {A B C D} {f f' : A →ᵐ B} {g g' : C →ᵐ D}
-           → f ≈ᵐ f' → g ≈ᵐ g' → map⇒ᵐ f g ≈ᵐ map⇒ᵐ f' g'
-map⇒ᵐ-cong r r' =
-  curryᵐ-cong (≈ᵐ-trans (∘ᵐ-congˡ r')
-                        (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl r))))
 
 -- The transports commute with each type/context former: this is what lets a
 -- structurally built coercion collapse to a transport at a `newᵉ`-free type.

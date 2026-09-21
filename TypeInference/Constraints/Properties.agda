@@ -1,24 +1,20 @@
 ------------------------------------------------------------------
 -- Properties of constraint satisfaction                          --
 --                                                                --
--- The two facts every consumer of the constraint language needs: --
+-- `⊨-mono` — a solution survives any further substitution that   --
+-- also strengthens the residual hypotheses.                      --
 --                                                                --
---   `⊨-mono`     — a solution survives any further substitution   --
---                  that also strengthens the residual hypotheses; --
---   `⊨-subst`/`⊨-subst⁻` — satisfying a substituted constraint is --
---                  satisfying the original along the composite.   --
+-- `⊨-subst`/`⊨-subst⁻` — satisfying a substituted constraint is  --
+-- satisfying the original along the composite.                   --
 --                                                                --
--- Both go by induction on the constraint, and both rest on        --
--- `⊨-resp-≐ˢ`: satisfaction only looks at a substitution          --
--- pointwise, so the binder cases may rearrange the substitutions  --
--- they build up to `_≐ˢ_`.                                        --
+-- Both rest on `⊨-resp-≐ˢ`: satisfaction looks at a substitution --
+-- only pointwise.                                                --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Product using (_,_)
-open import Data.Unit using (tt)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -38,8 +34,6 @@ open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
 open import TypeInference.Open.Subst  S
 open import TypeInference.Open.Hyps   S
-
-open import TypeInference.Open.Subtyping S using (<:̂ᵛ-wkᵉ)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
@@ -253,18 +247,3 @@ private
 ⊨-subst⁻ {δ = δ} {σ = σ} (∀ᵉ C) s =
   ⊨-resp-≐ˢ (⨟-↑ᵉ δ σ) C (⊨-subst⁻ C s)
 ⊨-subst⁻ (⋀ᵒᵖ f) s = λ op → ⊨-subst⁻ (f op) (s op)
-
-⊨-⊤ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} → σ ⊨[ Q ] ⊤̂
-⊨-⊤ = tt
-
-⊨-∧-intro : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C D : Constraint Θ}
-          → σ ⊨[ Q ] C → σ ⊨[ Q ] D → σ ⊨[ Q ] (C ∧̂ D)
-⊨-∧-intro s t = s , t
-
-⊨-∧-fst : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C D : Constraint Θ}
-        → σ ⊨[ Q ] (C ∧̂ D) → σ ⊨[ Q ] C
-⊨-∧-fst (s , t) = s
-
-⊨-∧-snd : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {C D : Constraint Θ}
-        → σ ⊨[ Q ] (C ∧̂ D) → σ ⊨[ Q ] D
-⊨-∧-snd (s , t) = t

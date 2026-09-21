@@ -167,12 +167,10 @@ sub-var-r {Γ₁} (Γ₂ ⟨ ρ ⟩) {A = A} (Tl-⟨⟩ x) W f f' with eternal? 
     | inj₂ y' with eq
 ...   | refl = cong Tl-⟨⟩ (∈-++ᶜ-split-inj₂ Δ₁ Δ₂ x y' eq')
 
--- The third possibility: the variable looked up *is* the one being replaced, so
--- what comes back is the value, pushed under the suffix. The recursion of
--- `⟨_,_⟩[_↦_]var` builds that push one layer at a time — `wk-ren` per binder and
--- `⟨⟩-η⁻¹-ren ∘ʳ ⟨⟩-≤-ren` per lock — which is exactly `push-ren`, up to the
--- grade bounds `_≐ʳ_` does not see. Non-eternality is what selects that branch
--- at a lock; at an eternal type the substitution extends the value instead.
+-- The third possibility: the variable looked up is the one being replaced, so
+-- what comes back is the value, pushed under the suffix by `push-ren`, up to
+-- the grade bounds `_≐ʳ_` does not see. Non-eternality selects that branch at a
+-- lock; at an eternal type the substitution extends the value instead.
 
 sub-var-hit : ∀ {Γ₁ B} → (Γ₂ : Ctx) → ¬ Eternal B
             → (p : ctx-grade Γ₂ ≾ᵣ uᵣ)

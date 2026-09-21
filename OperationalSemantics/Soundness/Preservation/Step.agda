@@ -107,12 +107,10 @@ box-split-env {ρ₁ = ρ₁} a env =
 
 -- Pushing an outer box-split through one that has already happened.
 --
--- `DELAY` produces a *double* `δ` stack — one `δ` from `step-box`'s own
--- statement, one from `strᵀ-delayᵀ-algebraicity` — and a single split peels
--- only one layer. This pushes the outer layer through (`[]-≤-nat`, then
--- `[]-δ-nat`), exposing a bare `δ ∘ᵐ []-≤ ∘ᵐ η⊣` on which `box-split` fires
--- again. The transposition then sits at `ρ₁` — the tick's own grade — which is
--- what lets `η⊣-⟨⟩` reassemble the strength's two components.
+-- `DELAY` produces a double `δ` stack and a single split peels only one layer.
+-- This pushes the outer layer through, exposing a bare `δ ∘ᵐ []-≤ ∘ᵐ η⊣` on
+-- which `box-split` fires again, leaving the transposition at the tick's own
+-- grade.
 
 box-push : ∀ {Y Z ρ₁ ρ₂ ρ'} → (e : ρ₁ ·ᵣ ρ₂ ≾ᵣ ρ')
          → (h : ⟨ ρ' ⟩ᵒ Y →ᵐ Z)
@@ -155,10 +153,9 @@ box-push {ρ' = ρ'} e h =
 
 -- Opening a unit-graded box around an arbitrary map.
 --
--- At a grade that *is* the unit (`e : ρ ≡ uᵣ`), the box counit discharges the
--- transposition entirely: what is left is the possibility unit, relaxed to the
--- grade. This is `εᵇ-η⊣` with a map `H` carried through — `[]-≤-nat` and
--- `[]-ε-nat` commute the counit and the relaxation past `[ ρ ]ᶠ H`.
+-- At a grade that is the unit (`e : ρ ≡ uᵣ`), the box counit discharges the
+-- transposition entirely, leaving the possibility unit relaxed to the grade.
+-- `εᵇ-η⊣` with a map `H` carried through.
 
 box-open : ∀ {X Z ρ} → (e : ρ ≡ uᵣ) → (H : ⟨ ρ ⟩ᵒ X →ᵐ Z)
          → (εᵇ ∘ᵐ []-≤ (≾ᵣ-reflexive (sym e))) ∘ᵐ [ ρ ]ᶠ H ∘ᵐ η⊣ {X} {ρ}
@@ -190,7 +187,7 @@ box-open e H =
   ∙ ∘ᵐ-congˡ ([]-congᶠ (mapˣᵐ-∘⟨⟩ _ _ _ _
                         ∙ ⟨ ∘ᵐ-identityʳ _ , ∘ᵐ-identityʳ _ ⟩ᵐ-cong))
 
--- The nine rules that do not advance time transition by `ηᵀ`: the
+-- The rules that do not advance time transition by `ηᵀ`: the
 -- environment box must survive unchanged, opened by `strᵀ-ηᵀ` at the unit
 -- grade and given back boxed at the continuation's grade `ρ₃`, by
 -- `box-split`.
@@ -475,7 +472,7 @@ seq-step-core {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {P} {S} {S'} alg alg-≤ pv
              (η⊣ ∘ᵐ ⟦ S ⟧ˢ pS) (⟦ N ⟧ᶜᵗ pN) m'
              (stepᵀ r) (step-≾ r)
 
--- The `id-suc` box identity: the residual left by `strᵀ-ηᵀ` in the nine
+-- The `id-suc` box identity: the residual left by `strᵀ-ηᵀ` in the
 -- rules that neither advance time nor allocate. The box's two grade
 -- relaxations merge by `[]-≤-trans` into exactly `box-η`'s hypothesis.
 
@@ -554,9 +551,8 @@ wk-w : ∀ {ρ₂ ρ₄} → (c : uᵣ ·ᵣ ρ₄ ≾ᵣ ρ₂) → ρ₄ ≾�
 wk-w {ρ₄ = ρ₄} c = ≾ᵣ-trans (≾ᵣ-reflexive (sym (·ᵣ-identityˡ ρ₄))) c
 
 -- The `∷-suc` cancellation: `suc-comp-ren` prefixes a `cong-⟨⟩-ren wk-ren`,
--- whose `fstᵐ` projects away exactly the cell that `⟦_⟧ˢ` just allocated. So
--- allocation leaves the *environment* untouched — which is why `BOX` threads
--- the box just like a time-preserving rule.
+-- whose `fstᵐ` projects away exactly the cell that `⟦_⟧ˢ` just allocated, so
+-- allocation leaves the environment untouched.
 
 box-∷-suc : ∀ {X Y Z ρ₂ ρ₄} → (w w' : ρ₄ ≾ᵣ ρ₂)
           → (env : Y →ᵐ X) → (cell : X →ᵐ Z)
@@ -592,7 +588,7 @@ step-box : ∀ {ε₁ ε₃ A A₀} {S S' : 𝕊 []} {ρ₂ ρ₄ : R}
                  , idᵐ ⟩ᵐ
               ∘ᵐ stepᵀ r
 
--- The eleven time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-id-suc`
+-- The time-preserving rules: `strᵀ-ηᵀ` opens the box, and `box-id-suc`
 -- is exactly what is left — the environment survives unchanged.
 
 step-box APP c g pS pM =
@@ -743,12 +739,10 @@ step-box (BOX {ρ' = ρ'} {S = St} {V = V}) c g pS (pV , pM) =
 
 -- DELAY: the tick, the one rule that advances time.
 --
--- `strᵀ-delayᵀ-algebraicity` routes the box through `[]-monoidal`, leaving a
--- double `δ` stack on the first component. `box-split-env` peels the inner
--- layer (carrying the environment under the box) and `box-push` pushes the
--- outer one through; both components then transpose at the tick's own grade,
--- so `η⊣-⟨⟩` reassembles them. Inside the resulting box the shape is again the
--- time-preserving one, and `delayᵀ-nat` pulls `Tᶠ` out to match `stepᵀ DELAY`.
+-- `strᵀ-delayᵀ-algebraicity` leaves a double `δ` stack on the first component,
+-- which `box-split-env` and `box-push` peel down to a transposition at the
+-- tick's own grade. Inside the resulting box the shape is the time-preserving
+-- one again.
 
 step-box (DELAY {τ = τ} {S = St}) c g pS pM =
     ∘ᵐ-congʳ (≈ᵐ-sym (mapˣᵐ-∘⟨⟩ idᵐ (delayᵀ τ) _ ([ of-natʳ τ ]ᶠ ηᵀ ∘ᵐ η⊣)

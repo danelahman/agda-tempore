@@ -2,17 +2,14 @@
 -- Ground satisfaction of constraints                             --
 --                                                                --
 -- `θ ⊨ᵍ C` reads: the grounding `θ` makes the constraint `C`     --
--- true in the closed language. Every clause is the *semantic*    --
+-- true in the closed language. Every clause is the semantic      --
 -- counterpart of the corresponding clause of `_⊨[_]_`: the       --
 -- entailments become the closed orders, `_⊩ᴱ_` becomes           --
 -- `Eternal`, `_∣_<:̂ᵛ_` becomes `_<:ᵛ_`, and the existentials     --
--- range over closed types and grades rather than over open       --
--- expressions.                                                    --
+-- range over closed types and grades.                            --
 --                                                                --
--- The bridge `⊨-ground` grounds a solution-with-residue: a       --
--- grounding of the residual hypotheses turns `σ ⊨[ Q ] C` into   --
--- ground satisfaction along the composite `σ ⨟ᵍ θ`. This is the  --
--- semantics a `GroundSolver` is sound for.                        --
+-- `⊨-ground` grounds a solution-with-residue along `σ ⨟ᵍ θ`;     --
+-- this is the semantics a `GroundSolver` is sound for.           --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -71,8 +68,7 @@ _⊨ᵍ_ : ∀ {Θ} → Grounding Θ → Constraint Θ → Set
 θ ⊨ᵍ (∀ᵉ C)     = (ε : E) → (θ ,ᵍᵉ ε) ⊨ᵍ C
 θ ⊨ᵍ ⋀ᵒᵖ f      = (op : Op) → θ ⊨ᵍ f op
 
--- Groundings are records of functions; this mirrors `_≐ˢ_` to avoid
--- appealing to extensionality.
+-- Pointwise equality of groundings, mirroring `_≐ˢ_` on substitutions.
 
 infix 20 _≐ᵍ_
 

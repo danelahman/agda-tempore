@@ -226,12 +226,12 @@ sound-subC-unbox x rel v w M pM pM' =
 
 -- Sub-effecting the result of a bind is the multiplication's inner-grade law.
 
-sound-coerce-seq : ∀ {Γ A B ε ε₁' ε₂'}
-                 → (rel : ε₁' ≾ₑ ε₂')
-                 → (M : Γ ⊢C⦂ A ‼ ε)
-                 → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
-                 → Soundᶜ== (coerce-seq rel M N)
-sound-coerce-seq {B = B} rel M N (pM , pN) (pM' , pN') =
+sound-coerce-seq-in : ∀ {Γ A B ε ε₁' ε₂'}
+                    → (rel : ε₁' ≾ₑ ε₂')
+                    → (M : Γ ⊢C⦂ A ‼ ε)
+                    → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                    → Soundᶜ== (coerce-seq-in rel M N)
+sound-coerce-seq-in {B = B} rel M N (pM , pN) (pM' , pN') =
     ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-≤-μᵀⁱ rel))
@@ -245,17 +245,17 @@ sound-coerce-seq {B = B} rel M N (pM , pN) (pM' , pN') =
 
 -- Sub-effecting the answer of a `handle` is the fold's inner-grade law.
 
-sound-subC-handle-in : ∀ {Γ A B ε ε₁' ε₂'}
-                     → (rel : ε₁' ≾ₑ ε₂')
-                     → (M : Γ ⊢C⦂ A ‼ ε)
-                     → (H : (op : Op) → (ε₀ : E) →
-                              Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
-                                  ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
-                              ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
-                     → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
-                     → Soundᶜ== (subC-handle-in rel M H N)
-sound-subC-handle-in {Γ = Γ} {B = B} rel M H N
-                     (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
+sound-coerce-handle-in : ∀ {Γ A B ε ε₁' ε₂'}
+                       → (rel : ε₁' ≾ₑ ε₂')
+                       → (M : Γ ⊢C⦂ A ‼ ε)
+                       → (H : (op : Op) → (ε₀ : E) →
+                                Γ ⟨ ⊤ᵣ ⟩ ∷ type-of-gtype (param op)
+                                    ∷ [ mapᵉ (op-grade op) ] (type-of-gtype (arity op) ⇒ B ‼ ε₀)
+                                ⊢C⦂ B ‼ (op-grade op ·ₑ ε₀))
+                       → (N : Γ ⟨ mapᵉ ε ⟩ ∷ A ⊢C⦂ B ‼ ε₁')
+                       → Soundᶜ== (coerce-handle-in rel M H N)
+sound-coerce-handle-in {Γ = Γ} {B = B} rel M H N
+                       (pM , pN , pH , uH) (pM' , pN' , pH' , uH') =
     ≈ᵐ-sym (coe-refl-≈ B (·ₑ-monoʳ-≾ₑ rel) _)
   ∙ ≈ᵐ-sym (∘ᵐ-assoc _ _ _)
   ∙ ∘ᵐ-congˡ (≈ᵐ-sym (T-alg-of-handlerᵀ-≤ⁱ (⟨⊤⟩-eternalᵒ ⟦ Γ ⟧ᶜᵗˣ) _ rel))

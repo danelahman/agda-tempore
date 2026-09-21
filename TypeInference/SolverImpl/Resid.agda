@@ -1,29 +1,22 @@
 ------------------------------------------------------------------
--- Residual constraints                                          --
+-- Residual constraints                                           --
 --                                                                --
--- What the driver cannot solve it carries: a `Resid Ψ` is the    --
--- list of grade orderings, eternality demands, subtyping demands --
--- and var-rule disjunctions still open over the current scope.    --
--- Unlike `Hyps`, a residual is closed under substitution — its    --
--- eternality and subtyping components hold whole types, not       --
--- variables — which is what lets the driver push it through the   --
--- store extensions a unification performs.                        --
+-- A `Resid Ψ` is the list of grade orderings, eternality         --
+-- demands, subtyping demands and var-rule disjunctions the       --
+-- driver has left open over the current scope. Unlike `Hyps`, a  --
+-- residual is closed under substitution, which is what lets the  --
+-- driver push it through the store extensions a unification      --
+-- performs.                                                      --
 --                                                                --
--- `Q ⊩ᴿ R [ δ ]` is what it takes to discharge a residual: every  --
--- atom, instantiated along `δ`, is entailed by `Q`. Reading a     --
--- residual back as a hypothesis set (`toHyps`) decomposes the     --
--- eternality demands into atoms on type variables (`etDec`) and   --
--- the subtyping demands into atoms on type variables and grade    --
--- orderings (`subDec`), and takes the orderings and disjunctions  --
--- verbatim.                                                       --
+-- `Q ⊩ᴿ R [ δ ]` discharges a residual: every atom, instantiated --
+-- along `δ`, is entailed by `Q`. `toHyps` reads a residual back  --
+-- as a hypothesis set, decomposing the eternality demands        --
+-- (`etDec`) and the subtyping demands (`subDec`) into atoms on   --
+-- type variables and taking the rest verbatim. `subDec` stops at --
+-- a pair of type variables; a type variable against a former has --
+-- no decomposition.                                              --
 --                                                                --
--- `subDec` decomposes a matching pair of formers and stops at a   --
--- pair of type variables. A type variable against a former has    --
--- no decomposition; the solver refines the variable to the other  --
--- side's shape first.                                             --
---                                                                 --
--- The name follows OutsideIn(X): a residual constraint is what    --
--- solving leaves behind (Vytiniotis et al., JFP 2011).            --
+-- The name follows OutsideIn(X) (Vytiniotis et al., JFP 2011).   --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)

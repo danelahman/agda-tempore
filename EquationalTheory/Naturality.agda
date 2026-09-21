@@ -105,10 +105,9 @@ subC-if {Γ} {C} {C'} w V M N =
                    (sub-wk-≡ᶜ [] U M) (sub-wk-≡ᶜ [] U N)
 
 
--- Function application: eta-expand the subsumed function, push the
--- subsumption through the abstraction, and beta-reduce. The domain half
--- lands on the argument and the codomain half outside — Phase 3's `SUB-APP`
--- reduction rule, read as an equation.
+-- Function application: the domain half of the witness lands on the
+-- argument, the codomain half outside — the `SUB-APP` reduction rule,
+-- read as an equation.
 
 subV-app : ∀ {Γ A A' C C'}
          → (p : A' <:ᵛ A)
@@ -204,7 +203,7 @@ seq-ε-subst refl M N = refl
 -- Sequencing, at the result position: a subsumption of a bind is a
 -- subsumption of its continuation, relaxing the residual effect grade. The
 -- value half is `μᵀ`-naturality and is derived here from the eta and
--- associativity rules; the effect half is the axiom `coerce-seq`.
+-- associativity rules; the effect half is the axiom `coerce-seq-in`.
 
 subC-seq-in : ∀ {Γ A B B' ε ε₁' ε₂'}
             → (v : B <:ᵛ B')
@@ -218,7 +217,7 @@ subC-seq-in {Γ} {B' = B'} {ε = ε} {ε₁' = ε₁'} v q M N =
   C-trans (C-sym (subC-trans (v ‼ₛ ≾ₑ-refl) (<:ᵛ-refl B' ‼ₛ ·ₑ-monoʳ-≾ₑ q)
                              (v ‼ₛ ·ₑ-monoʳ-≾ₑ q) (M ⨟ N)))
   (C-trans (subC-cong value-half)
-  (C-trans (coerce-seq q M (subC N (v ‼ₛ ≾ₑ-refl)))
+  (C-trans (coerce-seq-in q M (subC N (v ‼ₛ ≾ₑ-refl)))
            (seq-cong C-refl (subC-trans (v ‼ₛ ≾ₑ-refl) (<:ᵛ-refl B' ‼ₛ q)
                                         (v ‼ₛ q) N))))
   where

@@ -343,13 +343,9 @@ open import TypeInference.Open.ClosedContexts
 
 open import TypeInference.Open.Subst
 
----- Hypothesis sets and entailment
+---- Hypothesis sets, entailment and subtyping of open types
 
 open import TypeInference.Open.Hyps
-
----- Subtyping of open types
-
-open import TypeInference.Open.Subtyping
 
 ---- The mirrored qualified type system
 

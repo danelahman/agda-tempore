@@ -10,10 +10,8 @@
 -- is an inductive under-approximation of truth in all            --
 -- groundings.                                                    --
 --                                                                --
--- Open subtyping is defined here, not in                         --
--- `TypeInference.Open.Subtyping`: the image of a subtyping atom  --
--- under a substitution is a subtyping derivation between         --
--- arbitrary open types, so `_⊩ᴴ_[_]` already mentions it.        --
+-- Open subtyping is defined here too, with its inversion and     --
+-- stability lemmas: `_⊩ᴴ_[_]` already mentions the relation.     --
 --                                                                --
 -- Judgements under such a set are HM(X)'s constrained types      --
 -- (Odersky, Sulzmann, Wehr 1999) and Jones's qualified types     --
@@ -24,7 +22,7 @@
 open import Data.List.Base using (List; []; _∷_; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
-open import Data.Product using (_×_; _,_)
+open import Data.Product using (Σ-syntax; _×_; _,_)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -203,11 +201,10 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 ⊩≾̂ₑ-refl : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ≾̂ₑ ε
 ⊩≾̂ₑ-refl = eqₑ ≡̂ₑ-refl
 
--- Mirrors `Eternal` of `Syntax.Types`, plus a rule for the eternality
--- atoms of the hypothesis set; as in the original, no rule for `_⇒_`
--- and `[_]_`. Eternality is a property of the skeleton and subtyping
--- preserves skeletons, so it also transfers along an assumed
--- subtyping in both directions.
+-- Mirrors `Eternal` of `Syntax.Types`, plus rules for the eternality
+-- atoms of the hypothesis set and for transfer along an assumed
+-- subtyping in both directions; as in the original, no rule for `_⇒_`
+-- and `[_]_`.
 
 infix 4 _⊩ᴱ_
 
@@ -316,6 +313,35 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 <:̂ᵛ-eternalʳ Boolₛ        et          = et
 <:̂ᵛ-eternalʳ (p |×|ₛ r)   (et |×|ₑ e) = <:̂ᵛ-eternalʳ p et |×|ₑ <:̂ᵛ-eternalʳ r e
 <:̂ᵛ-eternalʳ Emptyₛ       et          = et
+
+-- Inversion at the formers with no proper supertype
+
+<:̂ᵛ-Baseˡ : ∀ {Θ} {Q : Hyps Θ} {b A} → Q ∣ Base b <:̂ᵛ A → A ≡ Base b
+<:̂ᵛ-Baseˡ (Baseₛ refl) = refl
+
+<:̂ᵛ-Unitˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Unit <:̂ᵛ A → A ≡ Unit
+<:̂ᵛ-Unitˡ Unitₛ = refl
+
+<:̂ᵛ-Boolˡ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ∣ Bool <:̂ᵛ A → A ≡ Bool
+<:̂ᵛ-Boolˡ Boolₛ = refl
+
+-- Inversion at a product: a supertype is a product, componentwise
+
+<:̂ᵛ-×ˡ : ∀ {Θ} {Q : Hyps Θ} {A₁ A₂ B}
+       → Q ∣ A₁ |×| A₂ <:̂ᵛ B
+       → Σ[ B₁ ∈ OVType Θ ] Σ[ B₂ ∈ OVType Θ ]
+           (B ≡ B₁ |×| B₂) × (Q ∣ A₁ <:̂ᵛ B₁) × (Q ∣ A₂ <:̂ᵛ B₂)
+<:̂ᵛ-×ˡ (p |×|ₛ q) = _ , _ , refl , p , q
+
+-- Inversion at box type
+
+<:̂ᵛ-box-grade : ∀ {Θ} {Q : Hyps Θ} {ρ ρ' A A'}
+              → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ⊩ ρ' ≾̂ᵣ ρ
+<:̂ᵛ-box-grade ([ q ]ₛ _) = q
+
+<:̂ᵛ-box-type : ∀ {Θ} {Q : Hyps Θ} {ρ ρ' A A'}
+             → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ∣ A <:̂ᵛ A'
+<:̂ᵛ-box-type ([ _ ]ₛ p) = p
 
 -- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
 -- along `σ`; there is no syntactic action of a substitution on `Hyps`,
@@ -515,6 +541,11 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
 ⊩ᴱ-wkᵗ {Q = Q} {A} et =
   subst (λ x → wkᵗ-H Q ⊩ᴱ x) (wkˢᵗ-v A) (⊩ᴱ-subst ⊩ᴴ-wkᵗ et)
 
+<:̂ᵛ-wkᵗ : ∀ {Θ} {Q : Hyps Θ} {A A'}
+        → Q ∣ A <:̂ᵛ A' → wkᵗ-H Q ∣ wkᵗ-v A <:̂ᵛ wkᵗ-v A'
+<:̂ᵛ-wkᵗ {Q = Q} {A} {A'} p =
+  subst₂ (wkᵗ-H Q ∣_<:̂ᵛ_) (wkˢᵗ-v A) (wkˢᵗ-v A') (<:̂ᵛ-subst ⊩ᴴ-wkᵗ p)
+
 ⊩-wkʳᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → wkʳ-H Q ⊩ wkʳ-r ρ ≾̂ᵣ wkʳ-r ρ'
 ⊩-wkʳᵣ {Q = Q} {ρ} {ρ'} p =
   subst₂ (λ x y → wkʳ-H Q ⊩ x ≾̂ᵣ y) (wkˢʳ-r ρ) (wkˢʳ-r ρ') (⊩-substᵣ ⊩ᴴ-wkʳ p)
@@ -526,6 +557,11 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
 ⊩ᴱ-wkʳ : ∀ {Θ} {Q : Hyps Θ} {A} → Q ⊩ᴱ A → wkʳ-H Q ⊩ᴱ wkʳ-v A
 ⊩ᴱ-wkʳ {Q = Q} {A} et =
   subst (λ x → wkʳ-H Q ⊩ᴱ x) (wkˢʳ-v A) (⊩ᴱ-subst ⊩ᴴ-wkʳ et)
+
+<:̂ᵛ-wkʳ : ∀ {Θ} {Q : Hyps Θ} {A A'}
+        → Q ∣ A <:̂ᵛ A' → wkʳ-H Q ∣ wkʳ-v A <:̂ᵛ wkʳ-v A'
+<:̂ᵛ-wkʳ {Q = Q} {A} {A'} p =
+  subst₂ (wkʳ-H Q ∣_<:̂ᵛ_) (wkˢʳ-v A) (wkˢʳ-v A') (<:̂ᵛ-subst ⊩ᴴ-wkʳ p)
 
 ⊩-wkᵉᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Q ⊩ ρ ≾̂ᵣ ρ' → wkᵉ-H Q ⊩ wkᵉ-r ρ ≾̂ᵣ wkᵉ-r ρ'
 ⊩-wkᵉᵣ {Q = Q} {ρ} {ρ'} p =
@@ -543,3 +579,8 @@ VarOK-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A ρ}
           → VarOK Q A ρ → VarOK (wkᵉ-H Q) (wkᵉ-v A) (wkᵉ-r ρ)
 VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
   subst₂ (VarOK (wkᵉ-H Q)) (wkˢᵉ-v A) (wkˢᵉ-r ρ) (VarOK-subst ⊩ᴴ-wkᵉ ok)
+
+<:̂ᵛ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} {A A'}
+        → Q ∣ A <:̂ᵛ A' → wkᵉ-H Q ∣ wkᵉ-v A <:̂ᵛ wkᵉ-v A'
+<:̂ᵛ-wkᵉ {Q = Q} {A} {A'} p =
+  subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-subst ⊩ᴴ-wkᵉ p)

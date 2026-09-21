@@ -1,18 +1,12 @@
 ------------------------------------------------------------------
 -- Soundness of skeleton unification                              --
 --                                                                --
--- A successful run of `unifyᵏ` returns a store whose denotation   --
--- makes both sides of every equation it was given equal. Each     --
--- successful `amguᵏ` call returns a store extending the one it    --
--- was given, and satisfying its own equation; equations solved    --
--- earlier are transported along the extensions of the calls that  --
--- follow.                                                         --
+-- A successful run of `unifyᵏ` returns a store whose denotation  --
+-- makes both sides of every equation it was given equal. The     --
+-- proof mirrors the unifier, along the store extension `_++ᴷ_`,  --
+-- which acts on equations through `mono++ᵏ`.                     --
 --                                                                --
--- The extension is `_++ᴷ_` on stores: it is definitional for the  --
--- store-descent clause, composes by associativity, and acts on    --
--- equations through `mono++ᵏ`.                                    --
---                                                                --
--- Follows McBride's structural unification (JFP 2003).            --
+-- Follows McBride's structural unification (JFP 2003).           --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)

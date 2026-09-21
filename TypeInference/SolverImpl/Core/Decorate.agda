@@ -1,19 +1,17 @@
 ------------------------------------------------------------------
--- Decoration: a skeleton back into an open type                 --
---                                                               --
+-- Decoration: a skeleton back into an open type                  --
+--                                                                --
 -- `decorate` builds the most general open type of a given shape: --
 -- the scope grows by one fresh resource-grade variable per box,  --
 -- one fresh effect-grade variable per arrow, and one fresh type  --
 -- variable per skeleton variable left. Fresh means fresh per     --
--- occurrence: two occurrences of one skeleton variable have the  --
--- same shape, not the same type.                                 --
---                                                               --
--- `expandSub` is what a subtyping demand asks for. Subtyping     --
--- preserves skeletons, so a list of demands is first a           --
--- unification problem on their skeletons; the solution then      --
--- refines every type variable whose shape it has determined,     --
--- leaving the others alone.                                      --
---                                                               --
+-- occurrence.                                                    --
+--                                                                --
+-- `expandSub` is what a subtyping demand asks for: a list of     --
+-- demands is first a unification problem on their skeletons,     --
+-- whose solution then refines every type variable whose shape it --
+-- has determined, leaving the others alone.                      --
+--                                                                --
 -- Match-then-decompose, as in Fuh and Mishra's structural        --
 -- subtyping inference (TCS 1990).                                --
 ------------------------------------------------------------------

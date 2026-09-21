@@ -2,16 +2,14 @@
 -- Lookup and membership under weakening and substitution         --
 --                                                                --
 -- The commutation facts the `var` and `unbox` cases of the       --
--- inference proofs need. Generation looks a variable up in a     --
--- *weakened* context (`lookup-ty Γ↑ i`), while the mirrored      --
--- rules take their membership witness in a *substituted* one;    --
--- the two are related by the lemmas below.                       --
+-- inference proofs need: generation looks a variable up in a     --
+-- weakened context, while the mirrored rules take their          --
+-- membership witness in a substituted one.                       --
 --                                                                --
--- `TypeInference.Open.Contexts` and `TypeInference.Open.Subst` already   --
--- carry the corresponding facts for substitution; this module    --
--- adds the ones for the three scope extensions and the actions   --
--- of a substitution and of a type equation on membership         --
--- witnesses.                                                     --
+-- `TypeInference.Open.Contexts` and `TypeInference.Open.Subst`   --
+-- carry the facts for substitution; this module adds those for   --
+-- the three scope extensions and for the actions of a            --
+-- substitution and of a type equation on membership witnesses.   --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

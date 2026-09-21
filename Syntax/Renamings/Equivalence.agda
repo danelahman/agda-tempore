@@ -136,7 +136,8 @@ open _≐ʳ_ public
 ≐ʳ-trans h h' = mk≐ʳ (λ x → trans (at h x) (at h' x))
 
 -- `var-rename (r₂ ∘ʳ r₁)` locates the variable with `r₂` and then with `r₁`;
--- the three laws below hold at the level of `var-img` by computation.
+-- the associativity and identity laws below hold at the level of `var-img` by
+-- computation.
 
 ∘ʳ-≐ʳ : ∀ {Γ Γ' Γ''} {r₂ r₂' : Ren [] Γ' Γ''} {r₁ r₁' : Ren [] Γ Γ'}
      → r₂ ≐ʳ r₂' → r₁ ≐ʳ r₁'

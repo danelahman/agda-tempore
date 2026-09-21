@@ -1,31 +1,16 @@
 ------------------------------------------------------------------------
--- The `[-]`-strong graded monad modelling the effects of the calculus. --
+-- The `[-]`-strong graded monad modelling the calculus' effects.     --
 --                                                                    --
--- A graded monad `Tᵒ A ε`, graded by the *effect* grades `ε : E`,     --
--- equipped with the algebraic operations of the signature and with    --
--- explicit delays. It is a free-monad-like monad built from those      --
--- operations and delays.                                              --
+-- A graded monad `Tᵒ A ε` over the effect grades, built like a free  --
+-- monad from the signature's operations and explicit delays.         --
+-- Operations, delays and strength mention the box modality at the    --
+-- resource projection `mapᵉ` of the effect grade, matching the       --
+-- calculus' `⟨ mapᵉ ε ⟩` context advance.                            --
 --                                                                    --
--- The novelty is that the operations, delays, and the strength all     --
--- mention the *box* modality graded by the *resource* projection       --
--- `mapᵉ` of the relevant effect grade — matching the calculus, whose   --
--- effectful formers advance the context by `⟨ mapᵉ ε ⟩`. In            --
--- particular the strength                                              --
---                                                                    --
---   strᵀ : [ mapᵉ ε ]ᵒ A ×ᵐ Tᵒ B ε →ᵐ Tᵒ (A ×ᵐ B) ε                    --
---                                                                    --
--- threads a box `[ mapᵉ ε ] A` along the worlds a grade-`ε`            --
--- computation reaches.                                                --
---                                                                    --
--- On-the-nose grade coercions along the monoid laws of `·ₑ` are        --
--- carried by `ε-substᵀ` (transport along `≡`); genuine sub-effecting   --
--- (the semantics of `coerce`) is `T-≤`, along the effect order `≾ₑ`.   --
---                                                                    --
--- The strength coherence laws are stated for the *lax* box (a counit    --
--- `ε` and comultiplication `δ`, but no inverses `ε⁻¹`/`δ⁻¹`).           --
--- Effect handling folds a handler — a family of clause *morphisms* — into --
--- a `T`-algebra; the clauses being morphisms (natural families) is what   --
--- makes them usable at every world the handled computation reaches.       --
+-- Grade coercions come in two kinds: `ε-substᵀ` on the nose along    --
+-- the monoid laws of `·ₑ`, and `T-≤` for sub-effecting along `≾ₑ`.   --
+-- Strength coherence is stated for the lax box. Effect handling      --
+-- folds a handler, whose clauses are morphisms, into a `T`-algebra.  --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -89,10 +74,7 @@ record Monad : Set₁ where
                    → ε-substᵀ q ∘ᵐ ε-substᵀ p ≈ᵐ ε-substᵀ {A} (trans p q)
 
     -- Sub-effecting — the semantics of `coerce`. Covariant in the effect
-    -- grade, and functorial in it (`T-≤-refl` / `T-≤-trans` below), so that
-    -- `⟦ coerce p M ⟧ = T-≤ p ⟦ M ⟧` is a genuine coercion: one that the
-    -- denotational equality can see through, as it must, since execution
-    -- peels coercions off (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`).
+    -- grade, and functorial in it (`T-≤-refl` / `T-≤-trans` below).
 
     T-≤ : ∀ {A ε₁ ε₂} → ε₁ ≾ₑ ε₂ → Tᵒ A ε₁ →ᵐ Tᵒ A ε₂
 
@@ -112,17 +94,13 @@ record Monad : Set₁ where
     μᵀ-nat : ∀ {A B ε ε'} → (f : A →ᵐ B)
            → μᵀ {ε = ε} {ε' = ε'} ∘ᵐ Tᶠ (Tᶠ f) ≈ᵐ Tᶠ f ∘ᵐ μᵀ
 
-    -- T-≤ is natural (this holds on the nose; no refl/trans laws — see above)
+    -- T-≤ is natural
 
     T-≤-nat : ∀ {A B ε ε'} → (f : A →ᵐ B) → (p : ε ≾ₑ ε')
             → Tᶠ f ∘ᵐ T-≤ {A} p ≈ᵐ T-≤ {B} p ∘ᵐ Tᶠ f
 
     -- Sub-effecting is functorial in the grade, the on-the-nose coercion
-    -- being the special case at a reflexive witness. This is what makes
-    -- `T-≤` a coercion rather than extra structure, and it is needed
-    -- because reduction removes coercions
-    -- (`⟨ S , coerce p M ⟩ ↝ ⟨ S , M ⟩`) and refines effect grades as it
-    -- goes, so an equality preserved by reduction cannot see them.
+    -- being the special case at a reflexive witness.
 
     T-≤-refl : ∀ {A ε} → (p : ε ≾ₑ ε) → T-≤ {A} p ≈ᵐ idᵐ
     T-≤-trans : ∀ {A ε₁ ε₂ ε₃} → (p : ε₁ ≾ₑ ε₂) → (q : ε₂ ≾ₑ ε₃) → (r : ε₁ ≾ₑ ε₃)
@@ -173,11 +151,8 @@ record Monad : Set₁ where
                → delayᵀ {ε = ε} τ ∘ᵐ [ of-natʳ τ ]ᶠ (Tᶠ f)
                ≈ᵐ Tᶠ f ∘ᵐ delayᵀ τ
 
-    -- Sub-effecting the delayed computation is sub-effecting the delay. This is
-    -- the *inner*-grade counterpart of `T-≤-μᵀ`, and it is what a multi-step
-    -- reduction needs: composing two steps substitutes the target
-    -- configuration's coercion *under* the Kleisli bind, and only `DELAY`
-    -- produces a transition that is not `ηᵀ`.
+    -- Sub-effecting the delayed computation is sub-effecting the delay — the
+    -- inner-grade counterpart of `T-≤-μᵀ`.
 
     delayᵀ-≤ : ∀ {A ε ε'} → (τ : ℕ) → (p : ε ≾ₑ ε')
              → delayᵀ {A} {ε'} τ ∘ᵐ [ of-natʳ τ ]ᶠ (T-≤ p)
@@ -188,22 +163,15 @@ record Monad : Set₁ where
             ≈ᵐ Tᶠ f ∘ᵐ opᵀ op
 
     -- Sub-effecting the continuation is sub-effecting the operation, the
-    -- counterpart of `delayᵀ-≤` for `opᵀ`. Sound because handlers are
-    -- ambivalent in the residual grade (`Monoᵀ`): the fold picks the clause by
-    -- that grade, so a coercion pushed under an operation is unobservable.
+    -- counterpart of `delayᵀ-≤` for `opᵀ`.
 
     opᵀ-≤ : ∀ {A ε ε'} → (op : Op) → (p : ε ≾ₑ ε')
           → opᵀ {A} {ε'} op ∘ᵐ mapˣᵐ idᵐ ([ mapᵉ (op-grade op) ]ᶠ (map⇒ᵐ idᵐ (T-≤ p)))
           ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ opᵀ {A} {ε} op
 
-    -- Delays *are* the passage of time, not observable nodes: a delay by no
-    -- time is no delay, and two consecutive delays are the one delay by the
-    -- sum. In the zero case the box `[ of-natʳ 0 ]` is the unit-graded box,
-    -- whose counit `ε` extracts; in the sum case the box `[ of-natʳ (τ₁ + τ₂) ]`
-    -- splits into the two delays' boxes by the comultiplication `δ`. Both are
-    -- stated with the grade relaxation `[]-≤` at the reflexive witness of the
-    -- grade algebra's `of-nat` laws, since `of-natʳ` is only *propositionally*
-    -- a monoid morphism.
+    -- A delay by no time is no delay, and two consecutive delays are the one
+    -- delay by the sum. Both are stated with the grade relaxation `[]-≤`,
+    -- `of-natʳ` being only propositionally a monoid morphism.
 
     delayᵀ-zero : ∀ {A ε'}
                 → delayᵀ {A} {ε'} 0
@@ -320,30 +288,22 @@ record Monad : Set₁ where
 
   -- EFFECT HANDLING
 
-  -- A handler is parameterised by an *eternal* object `P` (the interpretation
-  -- of the barred ambient context `Γ ⟨ ⊤ᵣ ⟩` its clauses see). It
-  -- assigns to every operation `op` and residual effect grade `ε''` a clause:
-  -- given `P`, the parameter, and the operation's boxed continuation
-  -- `[ mapᵉ (op-grade op) ] (arity ⇒ Tᵒ A ε'')`, it produces a computation.
-  -- The clauses are *morphisms* (natural families), hence usable at every
-  -- world the handled computation reaches; `P` being eternal (a `Eternalᵒ`,
-  -- `necᵉ`) is what lets it be carried *under* the box at `delay`/`op` nodes,
-  -- across the passage of time, without moving the handler.
+  -- A handler is parameterised by an eternal object `P`, the interpretation of
+  -- the barred ambient context `Γ ⟨ ⊤ᵣ ⟩` its clauses see. It assigns to every
+  -- operation `op` and residual effect grade `ε''` a clause taking `P`, the
+  -- parameter, and the operation's boxed continuation to a computation. `P`
+  -- must be eternal for the fold to carry it under the box at `delay`/`op`
+  -- nodes.
 
   Clausesᵀ : Obj → Obj → Set
   Clausesᵀ P A = (op : Op) → (ε'' : E)
              → P ×ᵐ (⟦ param op ⟧ᵍ ×ᵐ [ mapᵉ (op-grade op) ]ᵒ (⟦ arity op ⟧ᵍ ⇒ᵐ Tᵒ A ε''))
                  →ᵐ Tᵒ A (op-grade op ·ₑ ε'')
 
-  -- A handler's clauses must be *ambivalent* in the residual grade `ε''`:
+  -- A handler's clauses must be ambivalent in the residual grade `ε''`:
   -- coercing the boxed continuation's residual equals coercing the clause's
-  -- output. The residual grade is fixed by the call site, not inspected by the
-  -- clause, so this is exactly the parametricity a handler is meant to have.
-  --
-  -- It is bundled into the handler rather than assumed law-by-law because the
-  -- fold must respect it to be a morphism at all: sub-effecting may be pushed
-  -- under an operation, and the fold selects the clause by the residual grade.
-  -- It is what makes both the fold and `μ` monotone in the inner grade.
+  -- output. The law is bundled into the handler rather than assumed
+  -- separately.
 
   Monoᵀ : ∀ {P A} → Clausesᵀ P A → Set
   Monoᵀ {P} {A} cl = ∀ (op : Op) {εa εb} → (q : εa ≾ₑ εb)
@@ -398,28 +358,24 @@ record Monad : Set₁ where
                                    ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ (op-grade op)}) idᵐ
                                    ∘ᵐ ⟨ fstᵐ , sndᵐ ∘ᵐ sndᵐ ⟩ᵐ ⟩ᵐ ⟩ᵐ
 
-    -- The fold commutes with sub-effecting in the *outer* grade — the same
-    -- shape as `T-≤-μᵀ`, and needed for the same reason: an inductive
-    -- hypothesis' coercion has to escape the handling composite.
+    -- The fold commutes with sub-effecting in the outer grade — the same shape
+    -- as `T-≤-μᵀ`.
 
     T-alg-of-handlerᵀ-≤ : ∀ {P A ε₁ ε₂ ε'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A) → (p : ε₁ ≾ₑ ε₂)
                         → T-alg-of-handlerᵀ {P} {A} {ε₂} {ε'} bc h ∘ᵐ mapˣᵐ idᵐ (T-≤ p)
                         ≈ᵐ T-≤ (·ₑ-monoˡ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε₁} {ε'} bc h
 
-    -- It also commutes with sub-effecting in the *inner* grade — landing on
-    -- `·ₑ-monoʳ`, dual to the outer law's `·ₑ-monoˡ`. No premise is needed: the
-    -- handler carries its own ambivalence (`Monoᵀ`), which is what lets the
-    -- coercion escape an operation the fold is reinterpreting.
+    -- It also commutes with sub-effecting in the inner grade — landing on
+    -- `·ₑ-monoʳ`, dual to the outer law's `·ₑ-monoˡ`.
 
     T-alg-of-handlerᵀ-≤ⁱ : ∀ {P A ε ε₁' ε₂'} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → (p : ε₁' ≾ₑ ε₂')
                          → T-alg-of-handlerᵀ {P} {A} {ε} {ε₂'} bc h ∘ᵐ mapˣᵐ idᵐ (Tᶠ (T-≤ p))
                          ≈ᵐ T-≤ (·ₑ-monoʳ-≾ₑ p) ∘ᵐ T-alg-of-handlerᵀ {P} {A} {ε} {ε₁'} bc h
 
-    -- And it *is* an algebra: folding a two-layer tree is folding the outer
-    -- layer after folding each inner one. Threading `P` into the inner folds
-    -- uses the monad's strength together with `necᵉ` (to box `P` at the grade
-    -- the strength requires); a copy of `P` is kept for the outer fold.
+    -- And it is an algebra: folding a two-layer tree is folding the outer layer
+    -- after folding each inner one. Threading `P` into the inner folds uses the
+    -- strength together with `necᵉ`; a copy of `P` is kept for the outer fold.
 
     T-alg-of-handlerᵀ-μᵀ : ∀ {P A ε ε' ε''} → (bc : Eternalᵒ P) → (h : Handlerᵀ P A)
                          → T-alg-of-handlerᵀ {P} {A} {ε ·ₑ ε'} {ε''} bc h
@@ -432,11 +388,8 @@ record Monad : Set₁ where
                                   ∘ᵐ mapˣᵐ (Eternalᵒ.necᵉ bc {mapᵉ ε}) idᵐ ⟩ᵐ
 
     -- Naturality in the eternal parameter: reindexing the handler along a
-    -- `[_]`-coalgebra morphism `f : P' →ᵐ P` (`[ ρ ]ᶠ f ∘ necᵉ' ≈ necᵉ ∘ f`,
-    -- so `f` commutes with the necessitation threaded through the fold) equals
-    -- reindexing the fold's parameter by `f`. This is what lets the fold
-    -- transport its eternal context along a renaming/substitution — hence it is
-    -- what the handler's interpretation needs to be stable under those.
+    -- `[_]`-coalgebra morphism `f : P' →ᵐ P` equals reindexing the fold's
+    -- parameter by `f`.
 
     T-alg-of-handlerᵀ-natᴾ : ∀ {P P' A ε ε'} → (bc : Eternalᵒ P) → (bc' : Eternalᵒ P')
                            → (f : P' →ᵐ P)

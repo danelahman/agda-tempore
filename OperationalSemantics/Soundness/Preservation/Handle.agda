@@ -156,7 +156,7 @@ step-pv bc (HANDLE-STEP r c) pv = step-pv bc r pv
 step-pv bc (DELAY {τ = τ})   pv = Eternalᵒ.extᵉ bc ∘ᵐ ⟨ of-natʳ τ ⟩ᶠ pv
 
 -- The step transition commutes with the handler, by induction on the
--- reduction. Eleven rules transition by `ηᵀ` (`alg-ηᵀ`); `DELAY` ticks, and the
+-- reduction. The `ηᵀ` rules go by `alg-ηᵀ`; `DELAY` ticks, and the
 -- fold *re-delays*, carrying the parameter under the tick's box by `necᵉ`; the
 -- two step rules inherit their transition from the sub-step.
 
@@ -405,9 +405,8 @@ step-pv-state {S = S} (DELAY {τ = τ}) pS pM =
 -- `HANDLE-STEP`: the same assembly as `SEQ-STEP`, with the handler's fold in
 -- place of the monad multiplication. `seq-step-core` and `seq-target` are
 -- generic in the parameterised algebra, `step-box` is algebra-free, and
--- `T-≤-μᵀ` is matched by `T-alg-of-handlerᵀ-≤`. The clause families at the
--- two states differ by the step's `suc-comp-ren`, so the fold's parameter is
--- reindexed along it (`T-alg-of-handlerᵀ-natᴾ`).
+-- `T-≤-μᵀ` is matched by `T-alg-of-handlerᵀ-≤`. The fold's parameter is
+-- reindexed along the step's `suc-comp-ren` (`T-alg-of-handlerᵀ-natᴾ`).
 
 sound-HANDLE-STEP : ∀ {ε₁ ε₂ ε₃ A A₀ B} {S S' : 𝕊 []}
   → {M : toCtx S ⊢C⦂ A ‼ ε₁}
@@ -470,8 +469,7 @@ sound-HANDLE-STEP {ε₁} {ε₂} {ε₃} {A} {A₀} {B} {S} {S'} {M} H N {M'} r
         -- merge the two functorial actions, so the bind is a single `Tᶠ f`
         ∙ ∘ᵐ-congʳ (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
         ∙ ∘ᵐ-congʳ (∘ᵐ-congˡ (≈ᵐ-sym (T-∘ᵐ _ _))) ⟩ᵐ-cong))
-  -- THE KEY STEP: the handler commutes with the step transition, because a
-  -- reduction step never performs an operation
+  -- the handler commutes with the step transition
   ∙ ∘ᵐ-congʳ (alg-stepᵀ {B = B} (bcᴱ (toCtx S)) alg alg-≤ alg-delay r
                         (⟨⊤⟩-η ∘ᵐ ⟦ S ⟧ˢ pS) _)
   -- drop the identity the strength's pairing picked up
@@ -873,8 +871,7 @@ str-op op refl v m n rn ern =
 --
 -- `⟦_⟧ᶜᵗ` coerces an operation's parameter and arity between their value-type
 -- and ground-type interpretations, and `⟦_⟧ʰᵗ` coerces them straight back. The
--- two cancel — which is why the handler's clause may be applied to the very
--- arguments the operation carries.
+-- two cancel.
 
 gty-cancelᵛ : ∀ {X Y Y'} → (e : Y ≡ Y') → (f : X →ᵐ Y)
             → subst (λ O → Y' →ᵐ O) (sym e) idᵐ ∘ᵐ subst (λ O → X →ᵐ O) e f
@@ -961,13 +958,11 @@ sound-SEQ-OP {Γ} {A} {B} {ε} {ε'} op V M N pV pM pN =
     ern : ⟦ ren ⟧ʳ ≈ᵐ ⟨⟩-≤ (≾ᵣ-reflexive (sym map-·ᵉ)) ∘ᵐ μ ∘ᵐ ⟨ mapᵉ ε ⟩ᶠ fstᵐ
     ern = ∘ᵐ-congˡ (∘ᵐ-congˡ (eq-ren-grade map-·ᵉ)) ∙ ∘ᵐ-assoc _ _ _
 
--- `HANDLE-OP`: handling an operation applies the matching clause, with the
--- rest of the handled computation boxed up as the clause's continuation, the
--- box being what stops the continuation running before `op-grade op` worth
--- of time has passed. The equation is `SEQ-OP`'s with the handler's fold
--- (`T-alg-of-handlerᵀ-opᵀ`) in place of the monad multiplication
--- (`opᵀ-algebraicity`); the eternal parameter is carried under the
--- operation's box by `necᵉ`.
+-- `HANDLE-OP`: handling an operation applies the matching clause, with the rest
+-- of the handled computation boxed up as the clause's continuation. The equation
+-- is `SEQ-OP`'s with the handler's fold (`T-alg-of-handlerᵀ-opᵀ`) in place of
+-- the monad multiplication (`opᵀ-algebraicity`); the eternal parameter is
+-- carried under the operation's box by `necᵉ`.
 
 sound-HANDLE-OP : ∀ {Γ A B ε ε''} → (op : Op)
                 → (V : Γ ⊢V⦂ type-of-gtype (param op))

@@ -42,7 +42,6 @@ open import TypeInference.Open.Grades    S
 open import TypeInference.Open.Types     S
 open import TypeInference.Open.Contexts  S
 open import TypeInference.Open.Hyps      S
-open import TypeInference.Open.Subtyping S
 
 record Grounding (Θ : Scope) : Set where
   constructor grounding

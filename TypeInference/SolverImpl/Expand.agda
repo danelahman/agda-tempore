@@ -12,10 +12,9 @@
 -- variable. `decorate` produces the first, and is most general  --
 -- among the second.                                             --
 --                                                               --
--- Hence the three facts about `expandSub`: it makes every       --
--- demand of its list decomposable, its substitution is most     --
--- general among those that satisfy the demands, and its failure --
--- refutes them.                                                 --
+-- `expandSub` makes every demand of its list decomposable, its  --
+-- substitution is most general among those that satisfy the     --
+-- demands, and its failure refutes them.                        --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

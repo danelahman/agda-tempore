@@ -1,22 +1,16 @@
 ------------------------------------------------------------------
--- Solving on a fragment                                         --
+-- Solving on a fragment                                          --
 --                                                                --
--- A concrete solver is rarely complete and rarely principal on   --
--- every constraint, but it can be both on a precisely delimited  --
--- class. `SolverOn` is `Solver` with those two fields guarded by --
--- a predicate on the constraint, making principality relative to --
--- a class of constraints — no direct source, but cf. HM(X)'s     --
+-- `SolverOn` is `Solver` with its refutation and principality    --
+-- fields guarded by a predicate on the constraint, making        --
+-- principality relative to a class of constraints — cf. HM(X)'s  --
 -- parameterisation of principality by its constraint system      --
--- (Odersky, Sulzmann, Wehr 1999).                                --
+-- (Odersky, Sulzmann, Wehr 1999). Soundness stays unguarded.     --
 --                                                                --
--- Soundness stays unguarded: an accepting run always returns a    --
--- satisfaction witness, whatever the constraint.                  --
---                                                                --
--- The two guards are separate because they delimit different      --
--- things: refutation fails where a decision procedure is          --
--- incomplete, principality where the constraint language is more  --
--- expressive than the residual one. Instantiating both at the     --
--- trivial predicate recovers `Solver`.                            --
+-- The two guards are separate: refutation fails where a decision --
+-- procedure is incomplete, principality where the constraint     --
+-- language is more expressive than the residual one. Both at the --
+-- trivial predicate recovers `Solver`.                           --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)

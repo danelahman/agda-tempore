@@ -165,8 +165,8 @@ mutual
 -- by `r` then substitute by `s'`. The premise is that they agree on variables
 -- and on resource variables; the theorem is that they then agree on terms.
 --
--- The premise is closed under all four ways the action grows a substitution
--- at a binder, each closure a variable-level calculation.
+-- The premise is closed under extending the substitution by a binder and by a
+-- lock, each closure a variable-level calculation.
 
 record Interchange {Δ Δ' Γ Γ'} (s' : Sub₀ [] Δ Δ') (r : Ren [] Δ' Γ')
                    (r' : Ren [] Δ Γ) (s : Sub₀ [] Γ Γ') : Set where

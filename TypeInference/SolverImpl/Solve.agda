@@ -1,16 +1,16 @@
 ------------------------------------------------------------------
+-- The solver driver                                            --
+--                                                              --
 -- Walks a constraint, threading a state: type equations go to  --
 -- the unification core, a subtyping atom is decomposed at      --
 -- matching formers and residualised at a pair of type          --
 -- variables, grade orderings, eternality demands and var-rule  --
 -- disjunctions are residualised, and binders lift the state.   --
--- Subtyping preserves skeletons, so a move that substitutes    --
--- into the residual first refines the type variables to the    --
--- shapes the pending subtyping demands force; that is what     --
--- leaves every demand decomposable.                            --
+--                                                              --
 -- A successful witness is deferred, re-read at the state a     --
--- later component leaves behind rather than transported        --
--- along it, making conjunction transport-free.                 --
+-- later component leaves behind rather than transported along  --
+-- it.                                                          --
+--                                                              --
 -- At a rigid binder the state is lifted with a fresh residual: --
 -- atoms free of the rigid are kept, one mentioning it is       --
 -- discharged on the spot, and an outer unknown's image must    --
@@ -58,8 +58,6 @@ open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
 open import TypeInference.Open.Subst  S
 open import TypeInference.Open.Hyps   S
-
-open import TypeInference.Open.Subtyping S using (<:̂ᵛ-wkᵉ)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S

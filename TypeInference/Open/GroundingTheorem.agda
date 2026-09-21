@@ -1,17 +1,16 @@
 ------------------------------------------------------------------
 -- The grounding theorem                                          --
 --                                                                --
--- A mirrored derivation, read under any grounding that satisfies  --
--- its hypothesis set, is a derivation of the original language:   --
+-- A mirrored derivation, read under any grounding that satisfies --
+-- its hypothesis set, is a derivation of the original language:  --
 --                                                                --
 --     θ ⊨ᴴ Q  →  Q ∣ Γ ⊢C⦂ C  →  ⟦ Γ ⟧θ ⊢C⦂ ⟦ C ⟧θ               --
 --                                                                --
--- This is the sole bridge back to `Syntax.Language`, and the      --
--- design check on the mirrored rules: every grade and lock of     --
--- every rule grounds definitionally. The only transports are      --
--- along the round-trip of the *ground-type* embedding `⌜_⌝ᵍ`      --
--- (`perform`, `handle`) and along the collapse of the clause      --
--- family's effect-scope weakening (`handle`).                     --
+-- This is the sole bridge back to `Syntax.Language`. Every grade --
+-- and lock of every rule grounds definitionally; the only        --
+-- transports are along the round-trip of the ground-type         --
+-- embedding `⌜_⌝ᵍ` and along the collapse of the clause family's --
+-- effect-scope weakening.                                        --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ)

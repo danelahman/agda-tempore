@@ -1,17 +1,14 @@
 ------------------------------------------------------------------------
--- Setoid-enriched cartesian closed category structure for the models   --
--- of the language.                                                     --
+-- Setoid-enriched cartesian closed category structure for the models --
+-- of the language.                                                   --
 --                                                                    --
--- Each hom-set carries an equivalence relation `_≈ᵐ_` of morphism       --
--- equality, and every equational law is stated up to `_≈ᵐ_`. This is    --
--- what lets the context (possibility) modality be realised as a coend    --
--- (a quotient), whose morphism equality is coarser than propositional    --
--- equality.                                                            --
+-- Each hom-set carries an equivalence relation `_≈ᵐ_` of morphism    --
+-- equality, and every equational law is stated up to `_≈ᵐ_`, so that --
+-- the context (possibility) modality may be realised as a coend.     --
 --                                                                    --
--- Beyond the core (identities, composition, and its congruence) we      --
--- record the cartesian closed structure (terminal, initial, binary       --
--- products, exponentials) with the congruences needed to reason up to    --
--- `_≈ᵐ_`.                                                              --
+-- Beyond the core (identities, composition, and its congruence) the  --
+-- record carries the cartesian closed structure with the congruences --
+-- needed to reason up to `_≈ᵐ_`.                                     --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Category where
@@ -85,12 +82,8 @@ record Category : Set₂ where
     initialᵐ : ∀ {A} → 𝟘ᵐ →ᵐ A
     initialᵐ-unique : ∀ {A} {f : 𝟘ᵐ →ᵐ A} → f ≈ᵐ initialᵐ
 
-    -- The initial object is *strict*: an object admitting a map to `𝟘ᵐ` is
-    -- itself initial, so any two maps out of it agree. This is what the
-    -- calculus's eta rule for `absurd` needs — with an empty-typed value in
-    -- scope, every computation of the same type is the same one — and
-    -- `initialᵐ-unique` alone does not give it, since that only speaks about
-    -- maps *out of* `𝟘ᵐ`.
+    -- The initial object is strict: an object admitting a map to `𝟘ᵐ` is itself
+    -- initial, so any two maps out of it agree.
 
     𝟘ᵐ-strict : ∀ {X A} → X →ᵐ 𝟘ᵐ → (f g : X →ᵐ A) → f ≈ᵐ g
 
@@ -162,12 +155,10 @@ record Category : Set₂ where
 
   -- TRANSPORT ALONG EQUALITIES OF OBJECTS
   --
-  -- The interpretation of a syntactic construct can land in a
-  -- *propositionally* equal object (e.g. a context split rebuilt by
-  -- `_++ᶜ_`), and the resulting `subst` then has to be pushed through `≈ᵐ`
-  -- and through composition. Each is immediate once the equality is `refl`,
-  -- which here is reached by applying `J` at an explicit motive (a record
-  -- body may not case-split on `refl` itself).
+  -- The interpretation of a syntactic construct can land in a propositionally
+  -- equal object, and the resulting `subst` then has to be pushed through `≈ᵐ`
+  -- and through composition. Each is proved by applying `J` at an explicit
+  -- motive, a record body not being allowed to case-split on `refl`.
 
   -- transport in a morphism's codomain
 
@@ -243,15 +234,11 @@ record Category : Set₂ where
   -- BOOLEAN OBJECT
   --
   -- Taken as primitive, with a three-argument eliminator `ifᵐ` rather than a
-  -- copairing out of a coproduct, since `ifᵐ` is what the interpretation of
-  -- `if_`then_`else_` applies directly. The block sits after the products
-  -- because `ifᵐ-η` speaks about `⟨_,_⟩ᵐ`.
+  -- copairing out of a coproduct. The block sits after the products because
+  -- `ifᵐ-η` speaks about `⟨_,_⟩ᵐ`.
   --
-  -- `ifᵐ-∘` is stability under precomposition, which is what the renaming and
-  -- substitution coherence proofs consume; `ifᵐ-η` says a morphism out of
-  -- `X ×ᵐ 𝔹ᵐ` is determined by its two instances, which is what makes the
-  -- calculus's eta rule for `if` sound. Together the two say `𝔹ᵐ` is a
-  -- *distributive* coproduct of two copies of `𝟙ᵐ`.
+  -- `ifᵐ-∘` is stability under precomposition; `ifᵐ-η` says a morphism out of
+  -- `X ×ᵐ 𝔹ᵐ` is determined by its two instances.
 
   field
     𝔹ᵐ : Obj
@@ -298,10 +285,9 @@ record Category : Set₂ where
     uncurryᵐ-curryᵐ-iso : ∀ {A B C} → (f : A →ᵐ B ⇒ᵐ C)
                         → curryᵐ (uncurryᵐ f) ≈ᵐ f
 
-    -- The exponential's costrength `A ×ᵐ (B ⇒ᵐ C) →ᵐ B ⇒ᵐ (A ×ᵐ C)`, taken
-    -- as primitive (it is definable as `curryᵐ ⟨ fstᵐ ∘ᵐ fstᵐ , uncurryᵐ
-    -- sndᵐ ⟩ᵐ`, but an instance may supply a computationally lighter one).
-    -- `exp-strᵐ-def` pins it to that definition.
+    -- The exponential's costrength, taken as primitive so that an instance may
+    -- supply a computationally lighter one; `exp-strᵐ-def` pins it to the
+    -- definable morphism.
 
     exp-strᵐ : ∀ {A B C} → A ×ᵐ (B ⇒ᵐ C) →ᵐ B ⇒ᵐ (A ×ᵐ C)
     exp-strᵐ-def : ∀ {A B C}
@@ -317,6 +303,10 @@ record Category : Set₂ where
   map⇒ᵐ : ∀ {A B C D} → A →ᵐ B → C →ᵐ D → B ⇒ᵐ C →ᵐ A ⇒ᵐ D
   map⇒ᵐ f g = curryᵐ (g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ f)
 
+  map⇒ᵐ-cong : ∀ {A B C D} {f f' : A →ᵐ B} {g g' : C →ᵐ D}
+             → f ≈ᵐ f' → g ≈ᵐ g' → map⇒ᵐ f g ≈ᵐ map⇒ᵐ f' g'
+  map⇒ᵐ-cong p q = curryᵐ-cong (∘ᵐ-cong q (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl p)))
+
   -- beta: applying an abstraction is substituting into its body
 
   βᵐ : ∀ {A B C} → (f : A ×ᵐ B →ᵐ C) → (g : A →ᵐ B)
@@ -328,6 +318,32 @@ record Category : Set₂ where
     (≈ᵐ-trans (∘ᵐ-congˡ (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ f) idᵐ)))
               (∘ᵐ-congˡ (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
                                   (curryᵐ-uncurryᵐ-iso f)))))
+
+  -- applying an abstraction undoes it
+
+  appᵐ-curryᵐ : ∀ {X A B} → (k : X ×ᵐ A →ᵐ B)
+              → appᵐ ∘ᵐ mapˣᵐ (curryᵐ k) idᵐ ≈ᵐ k
+  appᵐ-curryᵐ k =
+    ≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat (curryᵐ k) idᵐ))
+    (≈ᵐ-trans (uncurryᵐ-cong (∘ᵐ-identityˡ _))
+              (curryᵐ-uncurryᵐ-iso k))
+
+  -- application reindexed by the exponential's functorial action
+
+  appᵐ-map⇒ᵐ : ∀ {X A B C D} → (f : A →ᵐ B) → (g : C →ᵐ D) → (b : X →ᵐ A)
+             → appᵐ ∘ᵐ mapˣᵐ (map⇒ᵐ f g) b
+             ≈ᵐ g ∘ᵐ appᵐ ∘ᵐ mapˣᵐ idᵐ (f ∘ᵐ b)
+  appᵐ-map⇒ᵐ f g b =
+    ≈ᵐ-trans (∘ᵐ-congʳ (≈ᵐ-sym (≈ᵐ-trans (mapˣᵐ-∘ (map⇒ᵐ f g) idᵐ idᵐ b)
+                                        (mapˣᵐ-cong (∘ᵐ-identityʳ _)
+                                                    (∘ᵐ-identityˡ _)))))
+    (≈ᵐ-trans (≈ᵐ-sym (∘ᵐ-assoc _ _ _))
+    (≈ᵐ-trans (∘ᵐ-congˡ (appᵐ-curryᵐ _))
+    (≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+    (≈ᵐ-trans (∘ᵐ-congʳ (∘ᵐ-assoc _ _ _))
+              (∘ᵐ-congʳ (∘ᵐ-congʳ (≈ᵐ-trans (mapˣᵐ-∘ idᵐ f idᵐ b)
+                                           (mapˣᵐ-cong (∘ᵐ-identityˡ _)
+                                                       ≈ᵐ-refl))))))))
 
   -- Postcomposing an abstraction's body: the functorial action of the
   -- exponential on the codomain absorbs into the abstraction.
@@ -421,6 +437,14 @@ record Category : Set₂ where
                                                 (mapˣᵐ-cong (∘ᵐ-identityˡ _) ≈ᵐ-refl)))))))
                     (≈ᵐ-sym (∘ᵐ-assoc _ _ _)))))
 
+  -- the exponential's action on the codomain alone is functorial
+
+  map⇒ᵐ-∘ʳ : ∀ {A B C D} → (g : C →ᵐ D) → (h : B →ᵐ C)
+           → map⇒ᵐ (idᵐ {A}) (g ∘ᵐ h) ≈ᵐ map⇒ᵐ idᵐ g ∘ᵐ map⇒ᵐ idᵐ h
+  map⇒ᵐ-∘ʳ g h =
+    ≈ᵐ-sym (≈ᵐ-trans (map⇒ᵐ-curryᵐ g _)
+                     (curryᵐ-cong (≈ᵐ-sym (∘ᵐ-assoc _ _ _))))
+
   -- The exponential's costrength applied to a pair whose second component is
   -- an abstraction: the paired-in value simply joins the abstraction's
   -- environment (it is constant in the abstracted argument, hence `fstᵐ`).
@@ -441,3 +465,38 @@ record Category : Set₂ where
            , ≈ᵐ-trans (≈ᵐ-sym (uncurryᵐ-nat ⟨ f , curryᵐ g ⟩ᵐ sndᵐ))
              (≈ᵐ-trans (uncurryᵐ-cong (⟨⟩ᵐ-sndᵐ _ _))
                        (curryᵐ-uncurryᵐ-iso g)) ⟩ᵐ-cong))))
+
+  -- postcomposing a boolean elimination (only precomposition is a field)
+
+  ifᵐ-post : ∀ {X A B} → (b : X →ᵐ 𝔹ᵐ) → (m n : X →ᵐ A) → (g : A →ᵐ B)
+           → g ∘ᵐ ifᵐ b m n ≈ᵐ ifᵐ b (g ∘ᵐ m) (g ∘ᵐ n)
+  ifᵐ-post {X} {A} b m n g =
+    ≈ᵐ-trans (≈ᵐ-sym lhs)
+    (≈ᵐ-trans (ifᵐ-η b (g ∘ᵐ ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ)))
+              (ifᵐ-cong ≈ᵐ-refl
+                        (≈ᵐ-trans branch (∘ᵐ-congʳ (ifᵐ-true m n)))
+                        (≈ᵐ-trans branch (∘ᵐ-congʳ (ifᵐ-false m n)))))
+    where
+      step : ∀ {Y} → (u : Y →ᵐ X) → (c : Y →ᵐ 𝔹ᵐ)
+           → ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ) ∘ᵐ ⟨ u , c ⟩ᵐ ≈ᵐ ifᵐ c (m ∘ᵐ u) (n ∘ᵐ u)
+      step u c =
+        ≈ᵐ-trans (ifᵐ-∘ _ _ _ _)
+                 (ifᵐ-cong (⟨⟩ᵐ-sndᵐ _ _)
+                           (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _)))
+                           (≈ᵐ-trans (∘ᵐ-assoc _ _ _) (∘ᵐ-congʳ (⟨⟩ᵐ-fstᵐ _ _))))
+
+      lhs : (g ∘ᵐ ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ)) ∘ᵐ ⟨ idᵐ , b ⟩ᵐ
+          ≈ᵐ g ∘ᵐ ifᵐ b m n
+      lhs =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (step idᵐ b))
+                  (∘ᵐ-congʳ (ifᵐ-cong ≈ᵐ-refl (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))))
+
+      branch : ∀ {c : 𝟙ᵐ →ᵐ 𝔹ᵐ}
+             → (g ∘ᵐ ifᵐ sndᵐ (m ∘ᵐ fstᵐ) (n ∘ᵐ fstᵐ))
+                 ∘ᵐ ⟨ idᵐ , c ∘ᵐ terminalᵐ ⟩ᵐ
+             ≈ᵐ g ∘ᵐ ifᵐ (c ∘ᵐ terminalᵐ) m n
+      branch =
+        ≈ᵐ-trans (∘ᵐ-assoc _ _ _)
+        (≈ᵐ-trans (∘ᵐ-congʳ (step idᵐ _))
+                  (∘ᵐ-congʳ (ifᵐ-cong ≈ᵐ-refl (∘ᵐ-identityʳ _) (∘ᵐ-identityʳ _))))

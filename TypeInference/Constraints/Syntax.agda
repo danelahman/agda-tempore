@@ -3,7 +3,7 @@
 --                                                               --
 -- Constraints are the output of type-and-effect inference: a    --
 -- first-order formula over the open types and grade expressions --
--- of a scope `Θ`, built from type equations, value-type        --
+-- of a scope `Θ`, built from type equations, value-type         --
 -- subtyping, grade orderings, eternality atoms, existential     --
 -- quantification over the three sorts of variables, a rigid     --
 -- (eigenvariable) effect-grade quantifier, and a conjunction    --
@@ -12,12 +12,8 @@
 -- Computation types need no former of their own: `C ≾̂ᶜ C'` is   --
 -- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`.                                    --
 --                                                               --
--- The constraint formers carrying a relation are suffixed `ᶜ`,  --
--- as the relations themselves (`_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`) are  --
--- what their satisfaction unfolds to.                            --
---                                                              --
--- Constraints with binders follow Pottier and Remy, The Essence--
--- of ML Type Inference (ATTAPL, 2005).                         --
+-- Constraints with binders follow Pottier and Remy, The Essence --
+-- of ML Type Inference (ATTAPL, 2005).                          --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
@@ -78,14 +74,3 @@ Et∨≾ᵘ A ρ   [ σ ]ᶜⁿ = Et∨≾ᵘ (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
 (∃ᵉ C)      [ σ ]ᶜⁿ = ∃ᵉ (C [ σ ↑ᵉ ]ᶜⁿ)
 (∀ᵉ C)      [ σ ]ᶜⁿ = ∀ᵉ (C [ σ ↑ᵉ ]ᶜⁿ)
 ⋀ᵒᵖ f       [ σ ]ᶜⁿ = ⋀ᵒᵖ (λ op → f op [ σ ]ᶜⁿ)
-
--- Action of the scope extensions on constraints
-
-wkᵗ-cn : ∀ {Θ} → Constraint Θ → Constraint (Θ +ty)
-wkᵗ-cn C = C [ wkˢᵗ ]ᶜⁿ
-
-wkʳ-cn : ∀ {Θ} → Constraint Θ → Constraint (Θ +r)
-wkʳ-cn C = C [ wkˢʳ ]ᶜⁿ
-
-wkᵉ-cn : ∀ {Θ} → Constraint Θ → Constraint (Θ +e)
-wkᵉ-cn C = C [ wkˢᵉ ]ᶜⁿ

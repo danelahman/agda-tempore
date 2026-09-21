@@ -1,18 +1,11 @@
 ------------------------------------------------------------------
--- Soundness of unification                                      --
---                                                               --
+-- Soundness of unification                                       --
+--                                                                --
 -- A successful run of `unify` returns a store whose denotation   --
 -- makes both sides of every equation it was given equal. The     --
--- proof mirrors the unifier: each successful `amgu*` call is     --
--- shown to return a store that extends the one it was given,     --
--- and to satisfy its own equation under the returned store.      --
--- Equations solved earlier are transported along the extensions  --
--- of the calls that follow.                                      --
---                                                               --
--- The extension is `_++ᴬ_` on stores: it is definitional for the --
--- store-descent clauses, composes by associativity, and acts on  --
--- equations through `mono++`.                                    --
---                                                               --
+-- proof mirrors the unifier, along the store extension `_++ᴬ_`,  --
+-- which acts on equations through `mono++`.                      --
+--                                                                --
 -- A clause of `amgu*` computes only once both the size index and --
 -- the store are constructors, so each syntactic case is written  --
 -- twice, once for each shape of the index.                       --

@@ -1,17 +1,16 @@
 ------------------------------------------------------------------
--- Polarity of an unknown in a residual or a hypothesis set      --
+-- Polarity of an unknown in a residual or a hypothesis set       --
 --                                                                --
 -- A demand bounds an unknown above, below, both, or not at all.  --
 -- An ordering reads left to right; a type is traversed with the  --
 -- variance of the slot, an arrow domain and a box grade flipping --
 -- it. An eternality demand and the type side of a var-rule       --
--- disjunction mention no grade, and read only the skeleton, so   --
--- they bound no type variable either.                            --
+-- disjunction read only the skeleton, so they bound nothing.     --
 --                                                                --
 -- The analysis directs the closer's choice of default and is not --
--- part of its soundness, the closer checking its own result. At  --
--- the reporting boundary it is load-bearing instead: lowering an --
--- unknown with no occurrence below preserves every hypothesis.   --
+-- part of its soundness. At the reporting boundary it is         --
+-- load-bearing instead: lowering an unknown with no occurrence   --
+-- below preserves every hypothesis.                              --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; not; _∧_; true; false) renaming (Bool to 𝔹)

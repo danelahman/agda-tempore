@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Inference for closed input                                    --
+-- Inference for closed input                                     --
 --                                                                --
 -- The top-level corollary: for an original context `Γ` and a raw --
 -- computation over its variables, a `GroundSolver` yields a      --
@@ -8,10 +8,8 @@
 --     groundC ∘ soundC ∘ gsolve ∘ genC ⌜ Γ ⌝ᶜᵗˣ                  --
 --                                                                --
 -- `Inferred` also keeps the mirrored derivation the original one --
--- is grounded from, together with its erasure equation: erasure  --
--- is defined on mirrored derivations only, so the round-trip     --
--- statement `⌊ D ⌋ᶜ ≡ M` has no counterpart on the original      --
--- side and is reported there.                                    --
+-- is grounded from, together with its erasure equation           --
+-- `⌊ D ⌋ᶜ ≡ M`.                                                  --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)

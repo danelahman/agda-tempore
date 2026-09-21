@@ -276,7 +276,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
         pcf' : Paramᶜᶠ cf'
         pcf' = pSt , subᶜ M split-[] (op-sem op V) pM (op-par op St V)
 
-        -- the operation's continuation, fed `op-semᵐ`'s value, IS the reduct
+        -- the operation's continuation, fed `op-semᵐ`'s value, is the reduct
         cont : subst (λ O → (⟨ mapᵉ d ⟩ᵒ ⟦ toCtx St ⟧ᶜᵗˣ ×ᵐ O) →ᵐ Tᵒ ⟦ A ⟧ᵛ ε)
                      (ty-gty (arity op)) (⟦ M ⟧ᶜᵗ pM)
                  ∘ᵐ ⟨ idᵐ , op-semᵐ op ∘ᵐ ⟨ mapᵉ d ⟩ᶠ (paramᵐ op St V pV) ⟩ᵐ
@@ -368,7 +368,7 @@ module PureTopLevelSoundness (OpSemantics : TopLevelOpSemantics) where
         z : δ ·ₑ εa ≾ₑ (δ ·ₑ uₑ) ·ₑ εb
         z = ≾ₑ-trans (·ₑ-monoʳ-≾ₑ q) (tick-z δ εb)
 
-    -- the nine `ηᵀ` rules, with the implementation applied
+    -- the `ηᵀ` rules, with the implementation applied
     ηᵀ-step : ∀ {X B εa εb} → (g : X →ᵐ Tᵏ B εa) → (q : εa ≾ₑ εb)
             → μᵏ ∘ᵐ Tᵏᶠ (T-≤ᵏ q ∘ᵐ g) ∘ᵐ (implᵐ ∘ᵐ ηᵀ)
             ≈ᵐ T-≤ᵏ (·ₑ-monoʳ-≾ₑ q) ∘ᵐ μᵏ ∘ᵐ Tᵏᶠ g ∘ᵐ (implᵐ ∘ᵐ ηᵀ)

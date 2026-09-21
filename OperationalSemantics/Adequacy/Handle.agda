@@ -179,17 +179,9 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
           (subCtx-run-sub rs (C-rename (cong-∷-ren (unbox-ren q)) N) V))
 
 
--- The scrutinee gets stuck on an operation. The reduct chain is
---
---   handle-steps rs H N   -- run to the `perform`
---   HANDLE-OP             -- box the resumption
---   BOX                   -- allocate it
---
--- landing at `⟨ St₁ ∷ₛ V₀ , Fired … ⟩`. `Fired` is `HANDLE-OP`'s clause instance
--- once `handle-steps`'s renaming of the clauses is composed with the barrier
--- crossing (`barrier-unbox-≐ʳ`), and the effects need no `ε-subst`: `_↝_`
--- relates configurations at different effects, and `box`'s body carries
--- `op-grade op ·ₑ (ε₃ ·ₑ ε₂)` where the redex carries `(op-grade op ·ₑ ε₃) ·ₑ ε₂`.
+-- The scrutinee gets stuck on an operation: run to the `perform`, then
+-- `HANDLE-OP` and `BOX`, landing at `⟨ St₁ ∷ₛ V₀ , Fired … ⟩`. No `ε-subst` is
+-- needed, `_↝_` relating configurations at different effects.
 
 handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
             (cred-op {A₀ = A₀} {ε₁ = ε₃} {St₁ = St₁} {op = op} {W = W}
@@ -492,11 +484,9 @@ handle-CRed {A = A} {B = B} {ε₁ = ε₁} {ε₂ = ε₂} {St = St} H N
                       (subCtx-run-sub rs
                         (C-rename (cong-∷-ren (unbox-ren q₄)) N) V))
 
-            -- The clause premise, rebuilt from `hH`. The clauses the
-            -- recursion sees are `H` renamed by the run, weakened past the
-            -- arity variable, crossed into `St''` and then substituted at
-            -- that same variable — so the weakening and the substitution
-            -- cancel (`sub-wk-C`) and what is left is one `suc-comp-ren`.
+            -- The clause premise, rebuilt from `hH`: the weakening past the
+            -- arity variable and the substitution at it cancel (`sub-wk-C`),
+            -- leaving one `suc-comp-ren`.
             hH₂ : Clause-Prem B St''
                     (((λ op' ε' →
                           C-rename (cong-∷-ren (cong-∷-ren

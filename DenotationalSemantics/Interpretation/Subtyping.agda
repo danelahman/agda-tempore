@@ -48,14 +48,6 @@ open Monad Mon using (Tᵒ; Tᶠ; T-≤; T-idᵐ; T-∘ᵐ; T-congᶠ;
 
 open import DenotationalSemantics.Interpretation.Types S Cat Fut Pst Adj GTy Mon
 
--- `map⇒ᵐ` is a congruence
-
-map⇒ᵐ-cong : ∀ {A B C D} {f f' : A →ᵐ B} {g g' : C →ᵐ D}
-           → f ≈ᵐ f' → g ≈ᵐ g' → map⇒ᵐ f g ≈ᵐ map⇒ᵐ f' g'
-map⇒ᵐ-cong r r' =
-  curryᵐ-cong (≈ᵐ-trans (∘ᵐ-congˡ r')
-                        (∘ᵐ-congʳ (∘ᵐ-congʳ (mapˣᵐ-cong ≈ᵐ-refl r))))
-
 -- The coercion morphism
 
 ⟦_⟧<:ᵛ : ∀ {A A'} → A <:ᵛ A' → ⟦ A ⟧ᵛ →ᵐ ⟦ A' ⟧ᵛ

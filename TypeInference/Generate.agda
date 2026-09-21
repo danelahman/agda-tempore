@@ -4,25 +4,18 @@
 -- `genV Γ V A` and `genC Γ M C` are total functions from a raw   --
 -- term and an expected (open) type to a constraint of the same   --
 -- scope. They are structural on the raw term and mirror the      --
--- rules of `TypeInference.Open.Language` former by former: every     --
--- type the rule leaves free becomes a fresh `∃`-bound variable,  --
+-- rules of `TypeInference.Open.Language` former by former: every --
+-- type a rule leaves free becomes a fresh `∃`-bound variable,    --
 -- every side condition becomes a constraint atom.                --
 --                                                                --
--- The expected type is an upper bound, not a pin. The expected   --
--- effect grade is only ever the right-hand side of a `_≾̂ₑᶜ_` or  --
--- passed down unchanged; the expected value type is the          --
--- right-hand side of a `_≾̂ᵥᶜ_` at the five positions where a     --
--- type generation cannot choose meets another it cannot choose   --
--- either — a variable's declared type, a lambda's synthesised    --
--- arrow, an application's result, a handled computation's        --
--- result, and an `unbox` payload against the continuation's      --
--- binder. Everywhere else the shape is pinned by `_≐ᵥ_` and the  --
--- slack is passed on to the subterms.                            --
+-- The expected type is an upper bound, not a pin: where two      --
+-- types generation cannot choose meet, it is the right-hand side --
+-- of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_`; everywhere else the shape is pinned   --
+-- by `_≐ᵥ_` and the slack is passed on to the subterms.          --
 --                                                                --
--- Under a binder the *arguments* of the recursive calls are      --
--- weakened (`wk*-ctx`, `wk*-v`, `wk*-c`, `wk*-e`, `wk*-r`); the  --
--- constraints themselves are built inside the innermost binder,  --
--- so `wk*-cn` is never needed.                                   --
+-- Under a binder the arguments of the recursive calls are        --
+-- weakened; the constraints are built inside the innermost       --
+-- binder.                                                        --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)

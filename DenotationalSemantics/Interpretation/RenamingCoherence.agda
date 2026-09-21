@@ -192,9 +192,7 @@ mutual
   renᶜ r (box V M)        (pV , pM) =
     renᵛ (cong-⟨⟩-ren r) V pV , renᶜ (cong-∷-ren r) M pM
   renᶜ r (subC M p)       pM        = renᶜ r M pM
-  -- the clauses' uniformity transports: the renaming acts on the ambient
-  -- context only, so it commutes with the continuation's coercion
-  -- (`mapˣ-swapᵐ`), after which the original uniformity applies
+  -- the clauses' uniformity transports by `ren-clauses-uniform`
   renᶜ r (handle_`with_`in M H N) (pM , pN , pH , uH) =
       renᶜ r M pM
     , renᶜ (cong-∷-ren (cong-⟨⟩-ren r)) N pN

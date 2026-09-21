@@ -37,7 +37,7 @@ mutual
   infixl 31 _∷ₛ_
   infix  32 _⟨_⟩ₛ
 
--- Operations on state - for better readability in preservation theorem
+-- Named forms of the state constructors
 
 grade-pass : ∀ {Γ} → (S : 𝕊 Γ) → (ρ : R) → 𝕊 Γ
 grade-pass S ρ = S ⟨ ρ ⟩ₛ 
