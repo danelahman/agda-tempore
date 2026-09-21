@@ -520,7 +520,7 @@ module Least where
                                       × List (TyVar Θ)
                                       × List (Grᵈ.RExp Θ × Grᵈ.RExp Θ)
                                       × List (Tyᵈ.OVType Θ × Grᵈ.RExp Θ)))
-  reportOfᵈ C with Rsᵈ.reportOn C
+  reportOfᵈ C with Rsᵈ.reportOn (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ) C
   ... | nothing = nothing
   ... | just r  = just (Rsᵈ.Reported.Θ' r ,
                         Hyᵈ.disj (Rsᵈ.Reported.Q  r) ,

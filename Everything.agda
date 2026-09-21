@@ -404,6 +404,11 @@ import TypeInference.SolverImpl.Demo
 import TypeInference.SolverImpl.Refute
 import TypeInference.SolverImpl.Simplify
 
+---- Polarity-directed elimination of a grade unknown at the reporting
+---- boundary
+
+import TypeInference.SolverImpl.Eliminate
+
 ---- The rigid-binder-free fragment, and guarded solver interfaces
 
 open import TypeInference.Solver.Fragment

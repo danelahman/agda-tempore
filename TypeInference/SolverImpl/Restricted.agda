@@ -15,8 +15,10 @@
 --                                                                --
 -- `reportOn` is the reporting boundary on top: what a caller is   --
 -- shown is the same residue with its var-rule disjunctions        --
--- narrowed. `Principality` and `Infer` are solver-independent, so --
--- the narrowing is applied here, where the deciders are in scope. --
+-- narrowed, its redundant hypotheses dropped, and the unknowns    --
+-- its own hypotheses fix eliminated from it and from the reported --
+-- type. `Principality` and `Infer` are solver-independent, so     --
+-- this is applied here, where the deciders are in scope.          --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])
@@ -54,6 +56,8 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
+open import Syntax.Subtyping S using (_<:ᶜ_)
+
 open import TypeInference.Open.Types     S
 open import TypeInference.Open.Contexts  S
 open import TypeInference.Open.Subst     S
@@ -79,6 +83,7 @@ open import TypeInference.SolverImpl.Solve     S _≾ᵣ?_ _≾ₑ?_ opEnum umin
 open import TypeInference.SolverImpl.Principal S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Simplify  S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
   using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃)
+open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
@@ -167,27 +172,40 @@ solverImplOn = record
   ; solve-principal = λ C _ → solveOn-principal C
   }
 
--- A solution, its residue as the solver returns it, and the residue
--- narrowed for the report. The two are satisfied by the same
--- groundings, so the narrowing changes nothing but the reading.
+-- A solution, its residue as the solver returns it, the residue
+-- narrowed, and the narrowed residue with the unknowns it fixes
+-- eliminated from it and from the reported type `X`. Narrowing is
+-- satisfied by exactly the same groundings; elimination keeps every
+-- grounding, is realised by the grounding reading each eliminated
+-- unknown off its bound, and reports the subtype.
 
-record Reported {Θ : Scope} (C : Constraint Θ) : Set where
+record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
   field
     Θ'     : Scope
     σ      : Subst Θ Θ'
     Q      : Hyps Θ'
     Q̂      : Hyps Θ'
+    X̃      : OCType Θ'
+    Q̃      : Hyps Θ'
     sat    : σ ⊨[ Q ] C
     to-Q̂   : (θ : Grounding Θ') → θ ⊨ᴴ Q  → θ ⊨ᴴ Q̂
     to-Q   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q
+    to-Q̃   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q̃
+    realₑ  : (θ : Grounding Θ') → θ ⊨ᴴ Q̃
+           → Σ[ θ' ∈ Grounding Θ' ] ((θ' ⊨ᴴ Q̂) × (⟦ X [ σ ]ᶜ ⟧ᶜ θ' ≡ ⟦ X̃ ⟧ᶜ θ))
+    princₑ : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → ⟦ X̃ ⟧ᶜ θ <:ᶜ ⟦ X [ σ ]ᶜ ⟧ᶜ θ
 
-reportOn : ∀ {Θ} → (C : Constraint Θ) → Maybe (Reported C)
-reportOn C with solveOn C in e
+reportOn : ∀ {Θ} → (X : OCType Θ) → (C : Constraint Θ) → Maybe (Reported X C)
+reportOn X C with solveOn C in e
 ... | nothing           = nothing
 ... | just (Θ' , σ , Q) =
-      just (report Θ' σ Q (simplify Q) (solveOn-sound C e)
-                   (simplify-⊨ Q) (simplify-⊨⁻ Q))
+      just (report Θ' σ Q (simplify Q) (Elim.Ĉ el) (Elim.Q̂ el) (solveOn-sound C e)
+                   (simplify-⊨ Q) (simplify-⊨⁻ Q)
+                   (Elim.keep el) (Elim.real el) (Elim.princ el))
+  where
+    el : Elim (X [ σ ]ᶜ) (simplify Q)
+    el = eliminate (X [ σ ]ᶜ) (simplify Q)
 
 -- The same narrowing where a principal type hands out its residue
 

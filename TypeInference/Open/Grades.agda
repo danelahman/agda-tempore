@@ -7,8 +7,15 @@
 -- morphism), but not the other way round.                        --
 ------------------------------------------------------------------
 
+open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
+
+open import Relation.Binary.Definitions using (Decidable)
+open import Relation.Nullary using (yes; no)
+
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+
+open import Util.Equality
 
 open import TypeInference.Scopes
 
@@ -78,3 +85,53 @@ wkᵉ-r {Θ} (rvar i)   = rvar (wkᵉ-rv Θ i)
 wkᵉ-r     (rconst ρ) = rconst ρ
 wkᵉ-r     (ρ ·̂ᵣ ρ')  = wkᵉ-r ρ ·̂ᵣ wkᵉ-r ρ'
 wkᵉ-r     ∣ ε ∣̂ᵉ     = ∣ wkᵉ-e ε ∣̂ᵉ
+
+-- Decidable equality, the constants deciding by the grade interface
+
+infix 4 _≟ᵉ_ _≟ʳ_
+
+_≟ᵉ_ : ∀ {Θ} → Decidable (_≡_ {A = EExp Θ})
+_≟ʳ_ : ∀ {Θ} → Decidable (_≡_ {A = RExp Θ})
+
+evar i     ≟ᵉ evar j     with i ≟ᶠ j
+... | yes refl = yes refl
+... | no  ¬p   = no λ { refl → ¬p refl }
+evar i     ≟ᵉ econst _   = no λ ()
+evar i     ≟ᵉ (_ ·̂ₑ _)   = no λ ()
+econst _   ≟ᵉ evar _     = no λ ()
+econst ε   ≟ᵉ econst ε'  with ε ≡ₑ? ε'
+... | yes refl = yes refl
+... | no  ¬p   = no λ { refl → ¬p refl }
+econst _   ≟ᵉ (_ ·̂ₑ _)   = no λ ()
+(_ ·̂ₑ _)   ≟ᵉ evar _     = no λ ()
+(_ ·̂ₑ _)   ≟ᵉ econst _   = no λ ()
+(ε₁ ·̂ₑ ε₂) ≟ᵉ (ε₁' ·̂ₑ ε₂') with ε₁ ≟ᵉ ε₁' | ε₂ ≟ᵉ ε₂'
+... | yes refl | yes refl = yes refl
+... | no  ¬p   | _        = no λ { refl → ¬p refl }
+... | _        | no ¬p    = no λ { refl → ¬p refl }
+
+rvar i     ≟ʳ rvar j     with i ≟ᶠ j
+... | yes refl = yes refl
+... | no  ¬p   = no λ { refl → ¬p refl }
+rvar _     ≟ʳ rconst _   = no λ ()
+rvar _     ≟ʳ (_ ·̂ᵣ _)   = no λ ()
+rvar _     ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
+rconst _   ≟ʳ rvar _     = no λ ()
+rconst ρ   ≟ʳ rconst ρ'  with ρ ≡ᵣ? ρ'
+... | yes refl = yes refl
+... | no  ¬p   = no λ { refl → ¬p refl }
+rconst _   ≟ʳ (_ ·̂ᵣ _)   = no λ ()
+rconst _   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
+(_ ·̂ᵣ _)   ≟ʳ rvar _     = no λ ()
+(_ ·̂ᵣ _)   ≟ʳ rconst _   = no λ ()
+(ρ₁ ·̂ᵣ ρ₂) ≟ʳ (ρ₁' ·̂ᵣ ρ₂') with ρ₁ ≟ʳ ρ₁' | ρ₂ ≟ʳ ρ₂'
+... | yes refl | yes refl = yes refl
+... | no  ¬p   | _        = no λ { refl → ¬p refl }
+... | _        | no ¬p    = no λ { refl → ¬p refl }
+(_ ·̂ᵣ _)   ≟ʳ ∣ _ ∣̂ᵉ     = no λ ()
+∣ _ ∣̂ᵉ     ≟ʳ rvar _     = no λ ()
+∣ _ ∣̂ᵉ     ≟ʳ rconst _   = no λ ()
+∣ _ ∣̂ᵉ     ≟ʳ (_ ·̂ᵣ _)   = no λ ()
+∣ ε ∣̂ᵉ     ≟ʳ ∣ ε' ∣̂ᵉ    with ε ≟ᵉ ε'
+... | yes refl = yes refl
+... | no  ¬p   = no λ { refl → ¬p refl }

@@ -1,17 +1,21 @@
 ------------------------------------------------------------------
--- Polarity of a grade unknown in a residual                     --
+-- Polarity of an unknown in a residual or a hypothesis set      --
 --                                                                --
--- A residual bounds an unknown above, below, both, or not at     --
--- all. An ordering reads left to right; a subtyping demand is    --
--- traversed with the variance of the slot, an arrow domain and   --
--- a box grade flipping it. An eternality demand and the type     --
--- side of a var-rule disjunction mention no grade.               --
+-- A demand bounds an unknown above, below, both, or not at all.  --
+-- An ordering reads left to right; a type is traversed with the  --
+-- variance of the slot, an arrow domain and a box grade flipping --
+-- it. An eternality demand and the type side of a var-rule       --
+-- disjunction mention no grade, and read only the skeleton, so   --
+-- they bound no type variable either.                            --
 --                                                                --
 -- The analysis directs the closer's choice of default and is not --
--- part of its soundness, the closer checking its own result.     --
+-- part of its soundness, the closer checking its own result. At  --
+-- the reporting boundary it is load-bearing instead: lowering an --
+-- unknown with no occurrence below preserves every hypothesis.   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; not; _∧_; true; false) renaming (Bool to 𝔹)
+open import Data.Fin.Base using (Fin)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.Product using (_×_; _,_)
@@ -30,6 +34,7 @@ open GradeSystemInterface Grades
 
 open import TypeInference.Open.Grades S
 open import TypeInference.Open.Types  S
+open import TypeInference.Open.Hyps   S
 
 open import TypeInference.SolverImpl.Resid S
 
@@ -155,3 +160,40 @@ polₑ R i = polsₑ-ordᵣ i (rs R) ∪ᴾ polsₑ-ordₑ i (es R)
 
 onlyBelow : Pol → 𝔹
 onlyBelow p = below p ∧ not (above p)
+
+-- Occurrences of one type variable. An eternality atom and the type
+-- side of a var-rule disjunction read only the skeleton, which a
+-- subtyping hypothesis preserves, so neither bounds the variable.
+
+mutual
+
+  polₜ-v : ∀ {Ψ} → TyVar Ψ → Sign → OVType Ψ → Pol
+  polₜ-v α s (tvar β)  = atˢ s ⌊ α ≟ᶠ β ⌋
+  polₜ-v α s (Base _)  = noᴾ
+  polₜ-v α s Unit      = noᴾ
+  polₜ-v α s Bool      = noᴾ
+  polₜ-v α s (A |×| B) = polₜ-v α s A ∪ᴾ polₜ-v α s B
+  polₜ-v α s Empty     = noᴾ
+  polₜ-v α s (A ⇒ C)   = polₜ-v α (flipˢ s) A ∪ᴾ polₜ-c α s C
+  polₜ-v α s ([ ρ ] A) = polₜ-v α s A
+
+  polₜ-c : ∀ {Ψ} → TyVar Ψ → Sign → OCType Ψ → Pol
+  polₜ-c α s (A ‼ ε) = polₜ-v α s A
+
+polsₜ-sub : ∀ {n} → Fin n → List (Fin n × Fin n) → Pol
+polsₜ-sub α []            = noᴾ
+polsₜ-sub α ((β , γ) ∷ l) =
+  atˢ ⁺ ⌊ α ≟ᶠ β ⌋ ∪ᴾ atˢ ⁻ ⌊ α ≟ᶠ γ ⌋ ∪ᴾ polsₜ-sub α l
+
+-- The same over a hypothesis set. Its eternality and subtyping atoms
+-- carry no grade.
+
+polᵣᴴ : ∀ {Ψ} → Hyps Ψ → RVar Ψ → Pol
+polᵣᴴ Q i = polsᵣ-ord i (ordᵣ Q) ∪ᴾ polsᵣ-disj i (disj Q)
+
+polₑᴴ : ∀ {Ψ} → Hyps Ψ → EVar Ψ → Pol
+polₑᴴ Q i = polsₑ-ordᵣ i (ordᵣ Q) ∪ᴾ polsₑ-ordₑ i (ordₑ Q)
+              ∪ᴾ polsₑ-disj i (disj Q)
+
+polₜᴴ : ∀ {Ψ} → Hyps Ψ → TyVar Ψ → Pol
+polₜᴴ Q α = polsₜ-sub α (subᵥ Q)
