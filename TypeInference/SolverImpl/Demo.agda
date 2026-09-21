@@ -3,15 +3,16 @@
 -- sensor-node specification satisfying its three assumptions.    --
 -- Every example is discharged by `refl`, so what is inferred is  --
 -- checked by computation, not asserted.                          --
--- A second specification, deadlines, follows at the end to       --
--- exercise the optional unit-minimality assumption and the       --
--- residual var-rule disjunctions.                                --
+-- A second specification, deadlines, follows to exercise the     --
+-- optional unit-minimality assumption and the residual var-rule  --
+-- disjunctions, and a benchmark over five library shapes closes  --
+-- the module.                                                    --
 ------------------------------------------------------------------
 
-open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
+open import Data.List.Base using (List; length) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Fin using (zero; suc)
+open import Data.Fin using (zero; suc; #_)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Nat using (ℕ; _≤?_; z≤n; s≤s; _⊓_; _⊔_)
 open import Data.Nat.Properties using (m⊓n≤m; m⊓n≤n; ⊓-glb; m≤m⊔n; m≤n⊔m; ⊔-lub)
@@ -52,6 +53,7 @@ import TypeInference.Open.Hyps
 import TypeInference.Raw.Syntax
 import TypeInference.Constraints.Syntax
 import TypeInference.Infer
+import TypeInference.Principality
 import TypeInference.SolverImpl
 import TypeInference.SolverImpl.Enum
 import TypeInference.SolverImpl.Restricted
@@ -586,3 +588,224 @@ module Unguarded where
   ex-principal : Σ[ p ∈ Principal Γ∅ prog-true ]
                    (principal? Γ∅ prog-true ≡ just p)
   ex-principal = _ , refl
+
+-- The library benchmark
+--
+-- `reportOn` is the open path: it hands back a qualified type rather
+-- than a ground solution. Five library shapes go through it, with
+-- `return ⋆` for a floor, each stated twice — the report in full,
+-- and the number of hypotheses of each sort left with it. Every
+-- grade expression shown is in product normal form.
+
+module Library where
+
+  module OC = TypeInference.Open.Contexts spec
+
+  open import TypeInference.Principality spec using (X̂; t̂; C[_,_])
+  open import TypeInference.SolverImpl.Restricted spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
+    using (reportOn; Reported)
+
+  Γ∅ : OC.OCtx ∅ˢ 0
+  Γ∅ = OC.[]
+
+  -- a report: the scope it is stated in, the reported type, and the
+  -- eternality atoms, subtyping atoms, resource-grade orderings,
+  -- effect-grade orderings and var-rule disjunctions left with it
+
+  Report : Set
+  Report = Σ[ Θ ∈ Scope ] (OCType Θ
+                            × List (TyVar Θ)
+                            × List (TyVar Θ × TyVar Θ)
+                            × List (RExp Θ × RExp Θ)
+                            × List (EExp Θ × EExp Θ)
+                            × List (OVType Θ × RExp Θ))
+
+  reportOf : RawC 0 → Maybe Report
+  reportOf M with reportOn (X̂ ∅ˢ ‼ t̂ ∅ˢ) C[ Γ∅ , M ]
+  ... | nothing = nothing
+  ... | just r  = just (Reported.Θ' r , Reported.X̃ r ,
+                        ets  (Reported.Q̃ r) , subᵥ (Reported.Q̃ r) ,
+                        ordᵣ (Reported.Q̃ r) , ordₑ (Reported.Q̃ r) ,
+                        disj (Reported.Q̃ r))
+
+  sizeOf : RawC 0 → Maybe (ℕ × ℕ × ℕ × ℕ × ℕ)
+  sizeOf M with reportOn (X̂ ∅ˢ ‼ t̂ ∅ˢ) C[ Γ∅ , M ]
+  ... | nothing = nothing
+  ... | just r  = just (length (ets  (Reported.Q̃ r)) ,
+                        length (subᵥ (Reported.Q̃ r)) ,
+                        length (ordᵣ (Reported.Q̃ r)) ,
+                        length (ordₑ (Reported.Q̃ r)) ,
+                        length (disj (Reported.Q̃ r)))
+
+  -- `return ⋆`
+
+  ex-unit-report : reportOf (return ⋆)
+                 ≡ just (scope 0 0 1 , Unit ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
+  ex-unit-report = refl
+
+  ex-unit-size : sizeOf (return ⋆) ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-unit-size = refl
+
+  -- `compose f g x = let y = f x in g y`, reported as
+  -- `(α ⇒ β ‼ e₁) ⇒ (β ⇒ γ ‼ e₂) ⇒ (α ⇒ γ ‼ e₁ · e₂) ‼ 0`, with one
+  -- qualifier: the lock that the capture of `g` crosses
+
+  compose : RawC 0
+  compose = return (lam (return (lam (return (lam
+              ((var (suc (suc zero)) · var zero)
+                ⨟ (var (suc (suc zero)) · var zero)))))))
+
+  ex-compose-report : reportOf compose
+                    ≡ just (scope 34 0 19 ,
+                            ((tvar (# 18) ⇒ tvar (# 10) ‼ evar (# 5))
+                              ⇒ ((tvar (# 10) ⇒ tvar (# 2) ‼ evar (# 1))
+                                  ⇒ (tvar (# 18)
+                                      ⇒ tvar (# 2) ‼ (evar (# 5) ·̂ₑ evar (# 1)))
+                                    ‼ ûₑ)
+                                ‼ ûₑ)
+                              ‼ ûₑ ,
+                            []ᴸ , []ᴸ ,
+                            (∣ evar (# 5) ∣̂ᵉ , ûᵣ) ∷ᴸ []ᴸ ,
+                            []ᴸ , []ᴸ)
+  ex-compose-report = refl
+
+  ex-compose-size : sizeOf compose ≡ just (0 , 0 , 1 , 0 , 0)
+  ex-compose-size = refl
+
+  -- `twice f x = let y = f x in f y`: the two uses of `f` leave two
+  -- subtyping atoms, and the lock leaves one qualifier
+
+  twice : RawC 0
+  twice = return (lam (return (lam
+            ((var (suc zero) · var zero)
+              ⨟ (var (suc (suc zero)) · var zero)))))
+
+  ex-twice-report : reportOf twice
+                  ≡ just (scope 20 0 12 ,
+                          ((tvar (# 3) ⇒ tvar (# 4) ‼ evar (# 2))
+                            ⇒ (tvar (# 12)
+                                ⇒ tvar (# 4) ‼ (evar (# 2) ·̂ₑ evar (# 2)))
+                              ‼ ûₑ)
+                            ‼ ûₑ ,
+                          []ᴸ ,
+                          (# 4 , # 3) ∷ᴸ (# 12 , # 3) ∷ᴸ []ᴸ ,
+                          (∣ evar (# 2) ∣̂ᵉ , ûᵣ) ∷ᴸ []ᴸ ,
+                          []ᴸ , []ᴸ)
+  ex-twice-report = refl
+
+  ex-twice-size : sizeOf twice ≡ just (0 , 2 , 1 , 0 , 0)
+  ex-twice-size = refl
+
+  -- `branch b x y = if b then x else y`: one subtyping atom per arm,
+  -- and no grade ordering at all
+
+  branch : RawC 0
+  branch = return (lam (return (lam (return (lam
+             (if var (suc (suc zero))
+               `then return (var (suc zero))
+               `else return (var zero)))))))
+
+  ex-branch-report : reportOf branch
+                   ≡ just (scope 19 0 10 ,
+                           (Bool ⇒ (tvar (# 11)
+                                     ⇒ (tvar (# 3) ⇒ tvar (# 6) ‼ ûₑ) ‼ ûₑ)
+                                   ‼ ûₑ)
+                             ‼ ûₑ ,
+                           []ᴸ ,
+                           (# 3 , # 6) ∷ᴸ (# 11 , # 6) ∷ᴸ []ᴸ ,
+                           []ᴸ , []ᴸ , []ᴸ)
+  ex-branch-report = refl
+
+  ex-branch-size : sizeOf branch ≡ just (0 , 2 , 0 , 0 , 0)
+  ex-branch-size = refl
+
+  -- `keep x = box x`: the box grade stays a variable, and the one
+  -- var-rule disjunction on it is all that is left
+
+  keep : RawC 0
+  keep = return (lam (box (var zero) (return (var zero))))
+
+  ex-keep-report : reportOf keep
+                 ≡ just (scope 8 3 3 ,
+                         (tvar (# 4) ⇒ [ rvar (# 1) ] tvar (# 4) ‼ ûₑ) ‼ ûₑ ,
+                         []ᴸ , []ᴸ , []ᴸ , []ᴸ ,
+                         (tvar (# 4) , rvar (# 1)) ∷ᴸ []ᴸ)
+  ex-keep-report = refl
+
+  ex-keep-size : sizeOf keep ≡ just (0 , 0 , 0 , 0 , 1)
+  ex-keep-size = refl
+
+  -- `wrap f = handle f ⋆ with (λ op → return ⋆) in return x` is
+  -- declined: the clause's slack needs unit-minimality, which the
+  -- node's effect grades lack, and the failure is inside `solve` at
+  -- the rigid binder
+
+  wrap : RawC 0
+  wrap = return (lam (handle (var zero · ⋆)
+                      `with (λ op → return ⋆)
+                      `in (return (var zero))))
+
+  ex-wrap-report : reportOf wrap ≡ nothing
+  ex-wrap-report = refl
+
+  ex-wrap-size : sizeOf wrap ≡ nothing
+  ex-wrap-size = refl
+
+  -- Over the deadline grades, whose unit is least, the same shape is
+  -- reported, with nothing left over
+
+  module Deadlines where
+
+    module Grᵈ = TypeInference.Open.Grades      specᵈ
+    module Tyᵈ = TypeInference.Open.Types       specᵈ
+    module Hyᵈ = TypeInference.Open.Hyps        specᵈ
+    module OCᵈ = TypeInference.Open.Contexts    specᵈ
+    module Rwᵈ = TypeInference.Raw.Syntax       specᵈ
+    module Prᵈ = TypeInference.Principality     specᵈ
+
+    module Rsᵐ = TypeInference.SolverImpl.Restricted specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃
+                   (just uᵈ-min) (just uᵈ-min)
+
+    Γ∅ᵈ : OCᵈ.OCtx ∅ˢ 0
+    Γ∅ᵈ = OCᵈ.[]
+
+    Reportᵈ : Set
+    Reportᵈ = Σ[ Θ ∈ Scope ] (Tyᵈ.OCType Θ
+                               × List (TyVar Θ)
+                               × List (TyVar Θ × TyVar Θ)
+                               × List (Grᵈ.RExp Θ × Grᵈ.RExp Θ)
+                               × List (Grᵈ.EExp Θ × Grᵈ.EExp Θ)
+                               × List (Tyᵈ.OVType Θ × Grᵈ.RExp Θ))
+
+    reportOfᵈ : Rwᵈ.RawC 0 → Maybe Reportᵈ
+    reportOfᵈ M with Rsᵐ.reportOn (Prᵈ.X̂ ∅ˢ Tyᵈ.‼ Prᵈ.t̂ ∅ˢ) Prᵈ.C[ Γ∅ᵈ , M ]
+    ... | nothing = nothing
+    ... | just r  = just (Rsᵐ.Reported.Θ' r , Rsᵐ.Reported.X̃ r ,
+                          Hyᵈ.ets  (Rsᵐ.Reported.Q̃ r) , Hyᵈ.subᵥ (Rsᵐ.Reported.Q̃ r) ,
+                          Hyᵈ.ordᵣ (Rsᵐ.Reported.Q̃ r) , Hyᵈ.ordₑ (Rsᵐ.Reported.Q̃ r) ,
+                          Hyᵈ.disj (Rsᵐ.Reported.Q̃ r))
+
+    sizeOfᵈ : Rwᵈ.RawC 0 → Maybe (ℕ × ℕ × ℕ × ℕ × ℕ)
+    sizeOfᵈ M with Rsᵐ.reportOn (Prᵈ.X̂ ∅ˢ Tyᵈ.‼ Prᵈ.t̂ ∅ˢ) Prᵈ.C[ Γ∅ᵈ , M ]
+    ... | nothing = nothing
+    ... | just r  = just (length (Hyᵈ.ets  (Rsᵐ.Reported.Q̃ r)) ,
+                          length (Hyᵈ.subᵥ (Rsᵐ.Reported.Q̃ r)) ,
+                          length (Hyᵈ.ordᵣ (Rsᵐ.Reported.Q̃ r)) ,
+                          length (Hyᵈ.ordₑ (Rsᵐ.Reported.Q̃ r)) ,
+                          length (Hyᵈ.disj (Rsᵐ.Reported.Q̃ r)))
+
+    wrapᵈ : Rwᵈ.RawC 0
+    wrapᵈ = Rwᵈ.return (Rwᵈ.lam (Rwᵈ.handle (Rwᵈ.var zero Rwᵈ.· Rwᵈ.⋆)
+                                 `with (λ op → Rwᵈ.return Rwᵈ.⋆)
+                                 `in (Rwᵈ.return (Rwᵈ.var zero))))
+
+    ex-wrap-reportᵈ : reportOfᵈ wrapᵈ
+                    ≡ just (scope 11 0 8 ,
+                            ((Tyᵈ.Unit Tyᵈ.⇒ Tyᵈ.Unit Tyᵈ.‼ Grᵈ.evar (# 1))
+                              Tyᵈ.⇒ Tyᵈ.Unit Tyᵈ.‼ Grᵈ.evar (# 1))
+                              Tyᵈ.‼ Grᵈ.ûₑ ,
+                            []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
+    ex-wrap-reportᵈ = refl
+
+    ex-wrap-sizeᵈ : sizeOfᵈ wrapᵈ ≡ just (0 , 0 , 0 , 0 , 0)
+    ex-wrap-sizeᵈ = refl

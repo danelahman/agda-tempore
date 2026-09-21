@@ -405,9 +405,11 @@ import TypeInference.SolverImpl.Refute
 import TypeInference.SolverImpl.Simplify
 
 ---- Polarity-directed elimination of a grade unknown at the reporting
----- boundary
+---- boundary, and the product normal form of what is left
 
 import TypeInference.SolverImpl.Eliminate
+import TypeInference.SolverImpl.Product
+import TypeInference.SolverImpl.Canon
 
 ---- The rigid-binder-free fragment, and guarded solver interfaces
 
