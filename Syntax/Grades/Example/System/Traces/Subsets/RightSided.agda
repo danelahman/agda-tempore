@@ -40,7 +40,7 @@ open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
 
 open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
-  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_; _≾₀_)
+  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_; _≾₀_)
 
 open MaxDurations costʰⁱ
 
@@ -74,6 +74,16 @@ mapₒ-· (permitting _) any-run        = refl
 mapₒ-· any-run        (permitting _) = refl
 mapₒ-· any-run        any-run        = refl
 
+-- joins are preserved: the slowest run of a union is the slower of the
+-- two slowest, and the unrestricted grade absorbs
+
+mapₒ-⊔ : (P Q : Permits) → mapₒ (P ⊔ᵖ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
+mapₒ-⊔ (permitting P) (permitting Q) =
+  eq𝕀ᵣ (cong ↑_ (setDuration-++ (traces P) (traces Q)))
+mapₒ-⊔ (permitting _) any-run        = refl
+mapₒ-⊔ any-run        (permitting _) = refl
+mapₒ-⊔ any-run        any-run        = refl
+
 subsets→right-sided-intervals : right-sided →ᵍ right-sided-intervals
 subsets→right-sided-intervals = record
   { map          = mapₒ
@@ -81,6 +91,7 @@ subsets→right-sided-intervals = record
   ; map-u        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
+  ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
   ; map-of-nat   = λ {n} →
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }

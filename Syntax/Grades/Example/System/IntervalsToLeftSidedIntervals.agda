@@ -29,6 +29,7 @@ tsi→lsi = record
   ; map-u        = refl
   ; map-·        = refl
   ; map-⊤        = refl
+  ; map-⊔        = refl
   ; map-of-nat   = refl
   }
 

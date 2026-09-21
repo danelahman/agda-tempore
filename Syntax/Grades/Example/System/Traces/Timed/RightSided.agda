@@ -54,7 +54,7 @@ open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾₀_)
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_; _≾_; _≾₀_)
 
 open MaxDurations costʰⁱ
 
@@ -98,6 +98,16 @@ mapₒ-· (within _) unbounded  = refl
 mapₒ-· unbounded  (within _) = refl
 mapₒ-· unbounded  unbounded  = refl
 
+-- joins are preserved: the slowest bound of a union is the slower of
+-- the two slowest, and the unbounded grade absorbs
+
+mapₒ-⊔ : (P Q : Bounds) → mapₒ (P ⊔ᵇ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
+mapₒ-⊔ (within P) (within Q) =
+  eq𝕀ᵣ (cong ↑_ (setDuration-++ (traces P) (traces Q)))
+mapₒ-⊔ (within _) unbounded  = refl
+mapₒ-⊔ unbounded  (within _) = refl
+mapₒ-⊔ unbounded  unbounded  = refl
+
 traces→right-sided-intervals : right-sided →ᵍ right-sided-intervals
 traces→right-sided-intervals = record
   { map          = mapₒ
@@ -105,6 +115,7 @@ traces→right-sided-intervals = record
   ; map-u        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
+  ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
   ; map-of-nat   = λ {n} →
       eq𝕀ᵣ (cong ↑_ (trans (⊔-identityʳ (duration ⟨ n ⟩)) (duration-⟨⟩ n)))
   }

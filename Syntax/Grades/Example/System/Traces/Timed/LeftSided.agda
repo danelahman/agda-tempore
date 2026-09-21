@@ -80,6 +80,13 @@ mapₒ-· : (P Q : NeTraces) → mapₒ (P · Q) ≡ mapₒ P ·ₒ mapₒ Q
 mapₒ-· P Q =
   eq𝕀 (minSetDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
 
+-- joins are preserved: the fastest guarantee of a union is the faster
+-- of the two fastest
+
+mapₒ-⊔ : (P Q : NeTraces) → mapₒ (P ∪ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
+mapₒ-⊔ P Q =
+  eq𝕀 (minSetDuration-++ (traces P) (traces Q) (nonempty P) (nonempty Q))
+
 traces→left-sided-intervals : left-sided →ᵍ left-sided-intervals
 traces→left-sided-intervals = record
   { map          = mapₒ
@@ -87,6 +94,7 @@ traces→left-sided-intervals = record
   ; map-u        = refl
   ; map-·        = λ {P} {Q} → mapₒ-· P Q
   ; map-⊤        = refl
+  ; map-⊔        = λ {P} {Q} → mapₒ-⊔ P Q
   ; map-of-nat   = λ {n} → eq𝕀 (duration-⟨⟩ n)
   }
 

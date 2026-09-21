@@ -59,12 +59,12 @@ open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
-  using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; ⊤ᵗˢ; of-natᵗˢ; two-sided; _≾ᵗˢ_;
-         _◇ˢ₀_)
+  using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-natᵗˢ; two-sided;
+         _≾ᵗˢ_; _◇ˢ₀_)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
-  using (Bounds; within_; unbounded; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
+  using (Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
 
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are, each at its own cost model
@@ -75,9 +75,10 @@ open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   Op _≟ₒ_ costʰⁱ costʰⁱ-pos
   using () renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
 
-open MinDurations costˡᵒ using (minSetDuration; minSetDuration-·ˢ)
+open MinDurations costˡᵒ
+  using (minSetDuration; minSetDuration-·ˢ; minSetDuration-++)
   renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ)
-open MaxDurations costʰⁱ using (setDuration; setDuration-·ˢ)
+open MaxDurations costʰⁱ using (setDuration; setDuration-·ˢ; setDuration-++)
   renaming (duration to durationʰⁱ; duration-⟨⟩ to duration-⟨⟩ʰⁱ)
 
 ------------------------------------------------------------------------
@@ -144,6 +145,23 @@ mapₒ-· i₁ i₂ =
                          (nonempty (lo i₁)) (nonempty (lo i₂)))
       (capDuration-· (hi i₁) (hi i₂))
 
+-- joins, endpointwise: the union takes the faster of the two fastest
+-- below and the slower of the two slowest above, `∞` absorbing there
+
+capDuration-⊔ : (P Q : Bounds)
+              → capDuration (P ⊔ᵇ Q) ≡ capDuration P ⊔∞ capDuration Q
+capDuration-⊔ (within P) (within Q) =
+  cong ↑_ (setDuration-++ (traces P) (traces Q))
+capDuration-⊔ (within _) unbounded  = refl
+capDuration-⊔ unbounded  (within _) = refl
+capDuration-⊔ unbounded  unbounded  = refl
+
+mapₒ-⊔ : (i₁ i₂ : TwoSided) → mapₒ (i₁ ⊔ᵗˢ i₂) ≡ mapₒ i₁ ⊔ᵢ mapₒ i₂
+mapₒ-⊔ i₁ i₂ =
+  eqᵢ (minSetDuration-++ (traces (lo i₁)) (traces (lo i₂))
+                         (nonempty (lo i₁)) (nonempty (lo i₂)))
+      (capDuration-⊔ (hi i₁) (hi i₂))
+
 two-sided-traces→intervals : two-sided →ᵍ two-sided-intervals-with-∞
 two-sided-traces→intervals = record
   { map          = mapₒ
@@ -151,6 +169,7 @@ two-sided-traces→intervals = record
   ; map-u        = eqᵢ refl refl
   ; map-·        = λ {i₁} {i₂} → mapₒ-· i₁ i₂
   ; map-⊤        = eqᵢ refl refl
+  ; map-⊔        = λ {i₁} {i₂} → mapₒ-⊔ i₁ i₂
   ; map-of-nat   = λ {n} →
       eqᵢ (duration-⟨⟩ˡᵒ n)
           (cong ↑_ (trans (⊔-identityʳ (durationʰⁱ ⟨ n ⟩)) (duration-⟨⟩ʰⁱ n)))

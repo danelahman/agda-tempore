@@ -5,11 +5,11 @@
 module Syntax.Grades where
 
 open import Data.Empty
-open import Data.Nat.Base
+open import Data.Nat.Base hiding (_⊔_)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
 
-open import Level renaming (zero to lzero)
+open import Level hiding (_⊔_) renaming (zero to lzero)
 
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
@@ -21,6 +21,7 @@ open import Util.Equality
 
 record Grade : Set₁ where
   infixl 7 _·_
+  infixl 6 _⊔_
   infixl 5 _≾_
 
   field
@@ -45,6 +46,17 @@ record Grade : Set₁ where
 
     -- every grade may be weakened to ⊤
     ≾-⊤ : (c : Carrier) → c ≾ ⊤
+
+    -- binary joins
+    _⊔_          : Carrier → Carrier → Carrier
+    ⊔-ubˡ        : (c d : Carrier) → c ≾ c ⊔ d
+    ⊔-ubʳ        : (c d : Carrier) → d ≾ c ⊔ d
+    ⊔-lub        : {c d e : Carrier} → c ≾ e → d ≾ e → c ⊔ d ≾ e
+
+    -- `_·_` distributes over `_⊔_`, in the direction monotonicity does
+    -- not already give
+    ·-distribˡ-⊔ : (c d e : Carrier) → c · (d ⊔ e) ≾ (c · d) ⊔ (c · e)
+    ·-distribʳ-⊔ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
 
     -- _·_ is monotone with respect to _≾_
     ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
@@ -77,6 +89,39 @@ record Grade : Set₁ where
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
 
+  -- _⊔_ is monotone with respect to _≾_
+  ⊔-mono : ∀ {c c' d d'} → c ≾ c' → d ≾ d' → c ⊔ d ≾ c' ⊔ d'
+  ⊔-mono {c' = c'} {d' = d'} p q =
+    ⊔-lub (≾-trans p (⊔-ubˡ c' d')) (≾-trans q (⊔-ubʳ c' d'))
+
+  -- _⊔_ is idempotent, commutative and associative up to _≾_
+  ⊔-idem-≾ : (c : Carrier) → c ⊔ c ≾ c
+  ⊔-idem-≾ c = ⊔-lub ≾-refl ≾-refl
+
+  ⊔-comm-≾ : (c d : Carrier) → c ⊔ d ≾ d ⊔ c
+  ⊔-comm-≾ c d = ⊔-lub (⊔-ubʳ d c) (⊔-ubˡ d c)
+
+  ⊔-assoc-≾ : (c d e : Carrier) → (c ⊔ d) ⊔ e ≾ c ⊔ (d ⊔ e)
+  ⊔-assoc-≾ c d e =
+    ⊔-lub (⊔-lub (⊔-ubˡ c (d ⊔ e))
+                 (≾-trans (⊔-ubˡ d e) (⊔-ubʳ c (d ⊔ e))))
+          (≾-trans (⊔-ubʳ d e) (⊔-ubʳ c (d ⊔ e)))
+
+  -- ⊤ absorbs joins; the converse is `⊔-ubʳ`, so the two together say
+  -- that `c ⊔ ⊤` and `⊤` are equivalent
+  ⊔-⊤ : (c : Carrier) → c ⊔ ⊤ ≾ ⊤
+  ⊔-⊤ c = ⊔-lub (≾-⊤ c) ≾-refl
+
+  -- the converses of `·-distribˡ-⊔` and `·-distribʳ-⊔`, which follow
+  -- from `_·_` being monotone in each argument separately
+  ·-distribˡ-⊔⁻¹ : (c d e : Carrier) → (c · d) ⊔ (c · e) ≾ c · (d ⊔ e)
+  ·-distribˡ-⊔⁻¹ c d e =
+    ⊔-lub (·-monoʳ-≾ (⊔-ubˡ d e)) (·-monoʳ-≾ (⊔-ubʳ d e))
+
+  ·-distribʳ-⊔⁻¹ : (c d e : Carrier) → (d · c) ⊔ (e · c) ≾ (d ⊔ e) · c
+  ·-distribʳ-⊔⁻¹ c d e =
+    ⊔-lub (·-monoˡ-≾ (⊔-ubˡ d e)) (·-monoˡ-≾ (⊔-ubʳ d e))
+
 open Grade
 
 
@@ -84,9 +129,9 @@ open Grade
 
 record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
   open Grade G₁ renaming (Carrier to C₁; _≾_ to _≾₁_; u to u₁; _·_ to _·₁_;
-                          ⊤ to ⊤₁; of-nat to of-nat₁)
+                          ⊤ to ⊤₁; _⊔_ to _⊔₁_; of-nat to of-nat₁)
   open Grade G₂ renaming (Carrier to C₂; _≾_ to _≾₂_; u to u₂; _·_ to _·₂_;
-                          ⊤ to ⊤₂; of-nat to of-nat₂)
+                          ⊤ to ⊤₂; _⊔_ to _⊔₂_; of-nat to of-nat₂)
   
   field
 
@@ -102,6 +147,9 @@ record _→ᵍ_ (G₁ G₂ : Grade) : Set₁ where
 
     -- map preserves the greatest grade
     map-⊤        : map ⊤₁ ≡ ⊤₂
+
+    -- map preserves binary joins
+    map-⊔        : {c₁ c₁' : C₁} → map (c₁ ⊔₁ c₁') ≡ map c₁ ⊔₂ map c₁'
 
     -- map preserves inclusion of ℕ
     map-of-nat   : ∀ {n} → map (of-nat₁ n) ≡ of-nat₂ n
@@ -134,6 +182,19 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ᵣ_;
      ⊤ to ⊤ᵣ;
      ≾-⊤ to ≾-⊤ᵣ;
+     _⊔_ to _⊔ᵣ_;
+     ⊔-ubˡ to ⊔ᵣ-ubˡ;
+     ⊔-ubʳ to ⊔ᵣ-ubʳ;
+     ⊔-lub to ⊔ᵣ-lub;
+     ⊔-mono to ⊔ᵣ-mono;
+     ⊔-idem-≾ to ⊔ᵣ-idem-≾ᵣ;
+     ⊔-comm-≾ to ⊔ᵣ-comm-≾ᵣ;
+     ⊔-assoc-≾ to ⊔ᵣ-assoc-≾ᵣ;
+     ⊔-⊤ to ⊔ᵣ-⊤ᵣ;
+     ·-distribˡ-⊔ to ·ᵣ-distribˡ-⊔ᵣ;
+     ·-distribʳ-⊔ to ·ᵣ-distribʳ-⊔ᵣ;
+     ·-distribˡ-⊔⁻¹ to ·ᵣ-distribˡ-⊔ᵣ⁻¹;
+     ·-distribʳ-⊔⁻¹ to ·ᵣ-distribʳ-⊔ᵣ⁻¹;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-refl to ≾ᵣ-refl;
@@ -158,6 +219,19 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ₑ_;
      ⊤ to ⊤ₑ;
      ≾-⊤ to ≾-⊤ₑ;
+     _⊔_ to _⊔ₑ_;
+     ⊔-ubˡ to ⊔ₑ-ubˡ;
+     ⊔-ubʳ to ⊔ₑ-ubʳ;
+     ⊔-lub to ⊔ₑ-lub;
+     ⊔-mono to ⊔ₑ-mono;
+     ⊔-idem-≾ to ⊔ₑ-idem-≾ₑ;
+     ⊔-comm-≾ to ⊔ₑ-comm-≾ₑ;
+     ⊔-assoc-≾ to ⊔ₑ-assoc-≾ₑ;
+     ⊔-⊤ to ⊔ₑ-⊤ₑ;
+     ·-distribˡ-⊔ to ·ₑ-distribˡ-⊔ₑ;
+     ·-distribʳ-⊔ to ·ₑ-distribʳ-⊔ₑ;
+     ·-distribˡ-⊔⁻¹ to ·ₑ-distribˡ-⊔ₑ⁻¹;
+     ·-distribʳ-⊔⁻¹ to ·ₑ-distribʳ-⊔ₑ⁻¹;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-refl to ≾ₑ-refl;
@@ -176,5 +250,6 @@ module GradeSystemInterface (GS : GradeSystem) where
      map-u to map-uᵉ;
      map-· to map-·ᵉ;
      map-⊤ to map-⊤ᵉ;
+     map-⊔ to map-⊔ᵉ;
      map-of-nat to map-of-natᵉ
     ) public
