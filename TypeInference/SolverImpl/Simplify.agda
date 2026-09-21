@@ -1,19 +1,20 @@
 ------------------------------------------------------------------
--- Narrowing and pruning a reported hypothesis set                --
+-- Normalising, narrowing and pruning a reported hypothesis set   --
 --                                                                --
--- `simplify` settles every `disj` entry one of whose sides is     --
--- settled: a met eternality demand drops the entry, a refuted     --
--- one leaves the grade ordering behind, and a refuted grade       --
--- leaves the eternality atoms behind. Eternality is met either    --
--- outright or through the set's own atoms and subtyping           --
--- hypotheses. It then drops every hypothesis the rest of the set  --
--- still entails.                                                  --
+-- `simplify` first replaces every grade expression of the set by --
+-- its product normal form. It then settles every `disj` entry    --
+-- one of whose sides is settled: a met eternality demand drops   --
+-- the entry, a refuted one leaves the grade ordering behind, and --
+-- a refuted grade leaves the eternality atoms behind. Eternality --
+-- is met either outright or through the set's own atoms and      --
+-- subtyping hypotheses. It finally drops every hypothesis the    --
+-- rest of the set still entails.                                 --
 --                                                                --
--- The justification is semantic: `simplify Q` and `Q` are         --
--- satisfied by exactly the same groundings. Entailment cannot     --
--- narrow — a `disj` hypothesis proves `VarOK` with neither        --
--- disjunct in hand — so this is a simplification of the report,   --
--- not of the solver, and `solve-principal` is untouched.          --
+-- The justification is semantic: `simplify Q` and `Q` are        --
+-- satisfied by exactly the same groundings. Entailment cannot    --
+-- narrow — a `disj` hypothesis proves `VarOK` with neither       --
+-- disjunct in hand — so this is a simplification of the report,  --
+-- not of the solver, and `solve-principal` is untouched.         --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -67,6 +68,7 @@ open import TypeInference.Open.Grounding S
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
+open import TypeInference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊨; canonᴴ-⊨⁻)
 open import TypeInference.SolverImpl.Resid  S using (etDec)
 open import TypeInference.SolverImpl.Refute S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
   using (Refutedᵤ; scanᵤ)
@@ -479,22 +481,29 @@ prune-⊨⁻ Q h =
        (λ m → ordEOK h (pruneᴼᵉ-mem [] (ordₑ Q) m))
        (disjOK h)
 
+-- The set with its disjunctions taken out, to be settled one at a time
+
+split : ∀ {Θ} → Hyps Θ → Hyps Θ
+split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
+
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
-simplify Q = prune (narrowAll (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) []))
+simplify Q = prune (narrowAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
 
 -- Simplification changes nothing a grounding can see
 
 simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q
-simplify-⊨ Q θ h =
-  prune-⊨ (narrowAll (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) []))
-    (narrowAll-⊨ (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) []) (disjOK h)
+simplify-⊨ Q θ h₀ =
+  prune-⊨ (narrowAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
+    (narrowAll-⊨ (disj (canonᴴ Q)) (split (canonᴴ Q)) (disjOK h)
                  (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ())))
+  where
+    h = canonᴴ-⊨ Q h₀
 
 simplify-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q
 simplify-⊨⁻ Q θ h
-  with narrowAll-⊨⁻ (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) [])
-         (prune-⊨⁻ (narrowAll (disj Q) (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) [])) h)
-... | h₀ , k = mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k
+  with narrowAll-⊨⁻ (disj (canonᴴ Q)) (split (canonᴴ Q))
+         (prune-⊨⁻ (narrowAll (disj (canonᴴ Q)) (split (canonᴴ Q))) h)
+... | h₀ , k = canonᴴ-⊨⁻ Q (mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k)
 
 simplify-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
            → (θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q) × (θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q)

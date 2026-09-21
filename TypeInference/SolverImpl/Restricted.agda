@@ -15,10 +15,11 @@
 --                                                                --
 -- `reportOn` is the reporting boundary on top: what a caller is   --
 -- shown is the same residue with its var-rule disjunctions        --
--- narrowed, its redundant hypotheses dropped, and the unknowns    --
--- its own hypotheses fix eliminated from it and from the reported --
--- type. `Principality` and `Infer` are solver-independent, so     --
--- this is applied here, where the deciders are in scope.          --
+-- narrowed, its redundant hypotheses dropped, the unknowns its    --
+-- own hypotheses fix eliminated from it and from the reported     --
+-- type, and every grade expression left in product normal form.   --
+-- `Principality` and `Infer` are solver-independent, so this is   --
+-- applied here, where the deciders are in scope.                  --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])
@@ -83,7 +84,8 @@ open import TypeInference.SolverImpl.Solve     S _≾ᵣ?_ _≾ₑ?_ opEnum umin
 open import TypeInference.SolverImpl.Principal S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Simplify  S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
   using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃)
-open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate)
+open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate; _⨾ᴱ_)
+open import TypeInference.SolverImpl.Canon     S using (canonElim)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
@@ -177,7 +179,8 @@ solverImplOn = record
 -- eliminated from it and from the reported type `X`. Narrowing is
 -- satisfied by exactly the same groundings; elimination keeps every
 -- grounding, is realised by the grounding reading each eliminated
--- unknown off its bound, and reports the subtype.
+-- unknown off its bound, and reports the subtype. Normalisation of
+-- the grade expressions runs as a last elimination step.
 
 record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
@@ -205,7 +208,7 @@ reportOn X C with solveOn C in e
                    (Elim.keep el) (Elim.real el) (Elim.princ el))
   where
     el : Elim (X [ σ ]ᶜ) (simplify Q)
-    el = eliminate (X [ σ ]ᶜ) (simplify Q)
+    el = eliminate (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _
 
 -- The same narrowing where a principal type hands out its residue
 

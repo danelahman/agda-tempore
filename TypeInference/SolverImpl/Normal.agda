@@ -1,21 +1,18 @@
 ------------------------------------------------------------------
--- Normalisation of open grade expressions                        --
+-- Deciding an entailed ordering of open grade expressions        --
 --                                                                --
--- A grade expression is flattened to a list of atoms — constants, --
--- variables, and images of effect variables under `∣_∣̂ᵉ` —        --
--- with adjacent constants multiplied and units dropped. The       --
--- flattening is certified by `≡̂ᵣ`/`≡̂ₑ`, so the entailed ordering  --
--- of two expressions can be decided atom by atom and glued back   --
--- with `eqᵣ`/`monoᵣ`/`transᵣ`. A left side whose atoms all cancel --
--- is the unit, and is then below anything by `minᵣ`/`minₑ`,       --
--- provided the corresponding unit-minimality option is supplied.  --
+-- Both sides are put in the product normal form of               --
+-- `SolverImpl.Product` and compared atom by atom, the answer     --
+-- glued back with `eqᵣ`/`monoᵣ`/`transᵣ`. A left side whose      --
+-- atoms all cancel is the unit, and is then below anything by    --
+-- `minᵣ`/`minₑ`, provided the corresponding unit-minimality      --
+-- option is supplied.                                            --
 --                                                                --
--- `⊩-reflectᵣ`/`⊩-reflectₑ` are the closed special case: a        --
--- variable-free expression is convertible to the constant it      --
--- evaluates to, in both directions.                               --
+-- `⊩-reflectᵣ`/`⊩-reflectₑ` are the closed special case: a       --
+-- variable-free expression is convertible to the constant it     --
+-- evaluates to, in both directions.                              --
 ------------------------------------------------------------------
 
-open import Data.Fin using (Fin)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.Maybe using (Maybe; just; nothing)
@@ -47,144 +44,7 @@ open GradeSystemInterface Grades
 open import TypeInference.Open.Grades S
 open import TypeInference.Open.Hyps   S
 
-data EAtom (Θ : Scope) : Set where
-  ac : E → EAtom Θ
-  av : EVar Θ → EAtom Θ
-
-⟦_⟧ᵉᵃ : ∀ {Θ} → EAtom Θ → EExp Θ
-⟦ ac c ⟧ᵉᵃ = econst c
-⟦ av i ⟧ᵉᵃ = evar i
-
-⟦_⟧ᵉˢ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
-⟦ [] ⟧ᵉˢ     = ûₑ
-⟦ a ∷ as ⟧ᵉˢ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
-
--- Consing an atom: constants are merged, units dropped
-
-consₑ : ∀ {Θ} → EAtom Θ → List (EAtom Θ) → List (EAtom Θ)
-consₑ (ac c) (ac d ∷ as) = consₑ (ac (c ·ₑ d)) as
-consₑ (ac c) as with c ≡ₑ? uₑ
-... | yes _ = as
-... | no _  = ac c ∷ as
-consₑ (av i) as = av i ∷ as
-
-consₑ-≡ : ∀ {Θ} → (a : EAtom Θ) → (as : List (EAtom Θ))
-        → ⟦ consₑ a as ⟧ᵉˢ ≡̂ₑ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
-consₑ-≡ (ac c) (ac d ∷ as) =
-  ≡̂ₑ-trans (consₑ-≡ (ac (c ·ₑ d)) as)
-  (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-sym ≡̂ₑ-const-·) ≡̂ₑ-refl) ≡̂ₑ-assoc)
-consₑ-≡ (ac c) [] with c ≡ₑ? uₑ
-... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
-... | no _     = ≡̂ₑ-refl
-consₑ-≡ (ac c) (av i ∷ as) with c ≡ₑ? uₑ
-... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
-... | no _     = ≡̂ₑ-refl
-consₑ-≡ (av i) as = ≡̂ₑ-refl
-
-appₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ) → List (EAtom Θ)
-appₑ []       ys = ys
-appₑ (a ∷ as) ys = consₑ a (appₑ as ys)
-
-appₑ-≡ : ∀ {Θ} → (as bs : List (EAtom Θ))
-       → ⟦ appₑ as bs ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉˢ ·̂ₑ ⟦ bs ⟧ᵉˢ
-appₑ-≡ []       bs = ≡̂ₑ-sym ≡̂ₑ-identityˡ
-appₑ-≡ (a ∷ as) bs =
-  ≡̂ₑ-trans (consₑ-≡ a (appₑ as bs))
-  (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (appₑ-≡ as bs)) (≡̂ₑ-sym ≡̂ₑ-assoc))
-
-nrmₑ : ∀ {Θ} → EExp Θ → List (EAtom Θ)
-nrmₑ (evar i)   = av i ∷ []
-nrmₑ (econst c) = consₑ (ac c) []
-nrmₑ (ε ·̂ₑ ε')  = appₑ (nrmₑ ε) (nrmₑ ε')
-
-nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ
-nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
-nrmₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
-nrmₑ-≡ (ε ·̂ₑ ε')  =
-  ≡̂ₑ-trans (≡̂ₑ-cong (nrmₑ-≡ ε) (nrmₑ-≡ ε')) (≡̂ₑ-sym (appₑ-≡ (nrmₑ ε) (nrmₑ ε')))
-
-data RAtom (Θ : Scope) : Set where
-  rc : R → RAtom Θ
-  rv : RVar Θ → RAtom Θ
-  rm : EVar Θ → RAtom Θ
-
-⟦_⟧ʳᵃ : ∀ {Θ} → RAtom Θ → RExp Θ
-⟦ rc c ⟧ʳᵃ = rconst c
-⟦ rv i ⟧ʳᵃ = rvar i
-⟦ rm i ⟧ʳᵃ = ∣ evar i ∣̂ᵉ
-
-⟦_⟧ʳˢ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
-⟦ [] ⟧ʳˢ     = ûᵣ
-⟦ a ∷ as ⟧ʳˢ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
-
-consᵣ : ∀ {Θ} → RAtom Θ → List (RAtom Θ) → List (RAtom Θ)
-consᵣ (rc c) (rc d ∷ as) = consᵣ (rc (c ·ᵣ d)) as
-consᵣ (rc c) as with c ≡ᵣ? uᵣ
-... | yes _ = as
-... | no _  = rc c ∷ as
-consᵣ (rv i) as = rv i ∷ as
-consᵣ (rm i) as = rm i ∷ as
-
-consᵣ-≡ : ∀ {Θ} → (a : RAtom Θ) → (as : List (RAtom Θ))
-        → ⟦ consᵣ a as ⟧ʳˢ ≡̂ᵣ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
-consᵣ-≡ (rc c) (rc d ∷ as) =
-  ≡̂ᵣ-trans (consᵣ-≡ (rc (c ·ᵣ d)) as)
-  (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-sym ≡̂ᵣ-const-·) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
-consᵣ-≡ (rc c) [] with c ≡ᵣ? uᵣ
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
-... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (rv i ∷ as) with c ≡ᵣ? uᵣ
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
-... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (rm i ∷ as) with c ≡ᵣ? uᵣ
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
-... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rv i) as = ≡̂ᵣ-refl
-consᵣ-≡ (rm i) as = ≡̂ᵣ-refl
-
-appᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ) → List (RAtom Θ)
-appᵣ []       ys = ys
-appᵣ (a ∷ as) ys = consᵣ a (appᵣ as ys)
-
-appᵣ-≡ : ∀ {Θ} → (as bs : List (RAtom Θ))
-       → ⟦ appᵣ as bs ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳˢ ·̂ᵣ ⟦ bs ⟧ʳˢ
-appᵣ-≡ []       bs = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
-appᵣ-≡ (a ∷ as) bs =
-  ≡̂ᵣ-trans (consᵣ-≡ a (appᵣ as bs))
-  (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (appᵣ-≡ as bs)) (≡̂ᵣ-sym ≡̂ᵣ-assoc))
-
--- The image of an effect-atom list under `∣_∣̂ᵉ`
-
-imgᵃ : ∀ {Θ} → EAtom Θ → RAtom Θ
-imgᵃ (ac c) = rc (mapᵉ c)
-imgᵃ (av i) = rm i
-
-img : ∀ {Θ} → List (EAtom Θ) → List (RAtom Θ)
-img []       = []
-img (a ∷ as) = consᵣ (imgᵃ a) (img as)
-
-imgᵃ-≡ : ∀ {Θ} → (a : EAtom Θ) → ∣ ⟦ a ⟧ᵉᵃ ∣̂ᵉ ≡̂ᵣ ⟦ imgᵃ a ⟧ʳᵃ
-imgᵃ-≡ (ac c) = ≡̂ᵣ-map-const
-imgᵃ-≡ (av i) = ≡̂ᵣ-refl
-
-img-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ∣ ⟦ as ⟧ᵉˢ ∣̂ᵉ ≡̂ᵣ ⟦ img as ⟧ʳˢ
-img-≡ []       = subst (λ x → ∣ ûₑ ∣̂ᵉ ≡̂ᵣ rconst x) map-uᵉ ≡̂ᵣ-map-const
-img-≡ (a ∷ as) =
-  ≡̂ᵣ-trans ≡̂ᵣ-map-·
-  (≡̂ᵣ-trans (≡̂ᵣ-cong (imgᵃ-≡ a) (img-≡ as)) (≡̂ᵣ-sym (consᵣ-≡ (imgᵃ a) (img as))))
-
-nrmᵣ : ∀ {Θ} → RExp Θ → List (RAtom Θ)
-nrmᵣ (rvar i)   = rv i ∷ []
-nrmᵣ (rconst c) = consᵣ (rc c) []
-nrmᵣ (ρ ·̂ᵣ ρ')  = appᵣ (nrmᵣ ρ) (nrmᵣ ρ')
-nrmᵣ ∣ ε ∣̂ᵉ     = img (nrmₑ ε)
-
-nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ
-nrmᵣ-≡ (rvar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
-nrmᵣ-≡ (rconst c) = ≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ)
-nrmᵣ-≡ (ρ ·̂ᵣ ρ')  =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ')) (≡̂ᵣ-sym (appᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))
-nrmᵣ-≡ ∣ ε ∣̂ᵉ     = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (nrmₑ-≡ ε)) (img-≡ (nrmₑ ε))
+open import TypeInference.SolverImpl.Product S public
 
 atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
 atom≾ₑ (ac c) (ac d) with c ≾ₑ? d
