@@ -12,10 +12,12 @@
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Data.List.Base using (List; []; _∷_; map)
+open import Data.List.Base using (List; []; _∷_; _++_; map)
+open import Data.List.Properties using (map-++)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-map⁺; ∈-map⁻; ∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
+  using (∈-map⁺; ∈-map⁻; ∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻;
+         ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _⊓_; _≤_)
 open import Data.Nat.Properties
@@ -119,6 +121,51 @@ bigMin-mono f g xs ne h =
   bigMin-bound g xs (bigMin (map f xs)) ne
     (λ t t∈xs → ≤-trans (bigMin-mem f t xs t∈xs) (h t))
 
+-- `bigMin` is a monoid homomorphism `(List ℕ, ++) → (ℕ, ⊓)` on non-empty
+-- lists; non-emptiness is recorded by taking both arguments in
+-- cons-shaped form, since `NonEmpty` is defined on `List Trace` and does
+-- not apply to `List ℕ`
+
+bigMin-++ : (a : ℕ) (as : List ℕ) (b : ℕ) (bs : List ℕ)
+          → bigMin ((a ∷ as) ++ (b ∷ bs)) ≡ bigMin (a ∷ as) ⊓ bigMin (b ∷ bs)
+bigMin-++ a as b bs = ≤-antisym le ge
+  where
+    xs++ys : List ℕ
+    xs++ys = as ++ (b ∷ bs)
+
+    -- the minimum of the concatenation is below the minimum of each half,
+    -- via the value at which that half's minimum is attained
+    le : bigMin ((a ∷ as) ++ (b ∷ bs)) ≤ bigMin (a ∷ as) ⊓ bigMin (b ∷ bs)
+    le = ⊓-glb le-l le-r
+      where
+        le-l : minWith a xs++ys ≤ minWith a as
+        le-l with minWith-attained a as
+        ... | inj₁ eq            = ≤-trans (minWith-≤seed a xs++ys) (≤-reflexive (sym eq))
+        ... | inj₂ (v , mem , eq) =
+          ≤-trans (minWith-≤mem a v xs++ys (∈-++⁺ˡ mem)) (≤-reflexive (sym eq))
+
+        le-r : minWith a xs++ys ≤ minWith b bs
+        le-r with minWith-attained b bs
+        ... | inj₁ eq =
+          ≤-trans (minWith-≤mem a b xs++ys (∈-++⁺ʳ as (here refl))) (≤-reflexive (sym eq))
+        ... | inj₂ (v , mem , eq) =
+          ≤-trans (minWith-≤mem a v xs++ys (∈-++⁺ʳ as (there mem))) (≤-reflexive (sym eq))
+
+    -- conversely the meet of the two halves' minima lower-bounds every
+    -- element of the concatenation, hence lower-bounds its minimum
+    ge : bigMin (a ∷ as) ⊓ bigMin (b ∷ bs) ≤ bigMin ((a ∷ as) ++ (b ∷ bs))
+    ge = minWith-glb a (minWith a as ⊓ minWith b bs) xs++ys
+           (≤-trans (m⊓n≤m (minWith a as) (minWith b bs)) (minWith-≤seed a as))
+           bound
+      where
+        bound : (v : ℕ) → v ∈ xs++ys → minWith a as ⊓ minWith b bs ≤ v
+        bound v v∈ with ∈-++⁻ as v∈
+        ... | inj₁ v∈as = ≤-trans (m⊓n≤m (minWith a as) (minWith b bs)) (minWith-≤mem a v as v∈as)
+        ... | inj₂ (here refl) =
+          ≤-trans (m⊓n≤n (minWith a as) (minWith b bs)) (minWith-≤seed b bs)
+        ... | inj₂ (there v∈bs) =
+          ≤-trans (m⊓n≤n (minWith a as) (minWith b bs)) (minWith-≤mem b v bs v∈bs)
+
 ------------------------------------------------------------------------
 -- Best-case durations relative to a fixed cost on operation symbols
 --
@@ -143,6 +190,17 @@ module MinDurations (c : Op → ℕ) where
   minSetDuration-⊒ xs ys ne sub =
     bigMin-bound duration xs (minSetDuration ys) ne
       (λ t t∈xs → bigMin-mem duration t ys (toWitness (sub t (fromWitness t∈xs))))
+
+  -- `minSetDuration` is a monoid homomorphism for concatenation of
+  -- (non-empty) sets of traces (as a `⊓`-monoid map)
+
+  minSetDuration-++ : (xs ys : List Trace) → NonEmpty xs → NonEmpty ys
+                    → minSetDuration (xs ++ ys) ≡ minSetDuration xs ⊓ minSetDuration ys
+  minSetDuration-++ []       ys       () _
+  minSetDuration-++ (x ∷ xs) []       _  ()
+  minSetDuration-++ (x ∷ xs) (y ∷ ys) _  _ =
+    trans (cong bigMin (map-++ duration (x ∷ xs) (y ∷ ys)))
+          (bigMin-++ (duration x) (map duration xs) (duration y) (map duration ys))
 
   -- `minSetDuration` is a monoid homomorphism for the language product
   -- of (non-empty) sets of traces

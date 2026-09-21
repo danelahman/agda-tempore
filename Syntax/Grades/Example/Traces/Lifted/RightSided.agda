@@ -81,6 +81,25 @@ P ≾₀ Q = traces P ≼ˢ traces Q
 ·-monoʳ₀ {C} {P} {Q} rel =
   ≼ˢ-·ˢ {traces C} {traces C} {traces P} {traces Q} (≼ˢ-refl {traces C}) rel
 
+-- a set of bounds is read disjunctively, so the union of two sets is
+-- their join, and the language product distributes over it on both
+-- sides
+
+⊔₀-ubˡ : (P Q : NeTraces) → P ≾₀ (P ∪ Q)
+⊔₀-ubˡ P Q = ≼ˢ-++-ubˡ {traces P} {traces Q}
+
+⊔₀-ubʳ : (P Q : NeTraces) → Q ≾₀ (P ∪ Q)
+⊔₀-ubʳ P Q = ≼ˢ-++-ubʳ (traces P) {traces Q}
+
+⊔₀-lub : {P Q R : NeTraces} → P ≾₀ R → Q ≾₀ R → (P ∪ Q) ≾₀ R
+⊔₀-lub {P} {Q} {R} = ≼ˢ-++-lub {traces P} {traces Q} {traces R}
+
+·-distribˡ₀-⊔ : (C P Q : NeTraces) → (C · (P ∪ Q)) ≾₀ ((C · P) ∪ (C · Q))
+·-distribˡ₀-⊔ C P Q = ≼ˢ-·ˢ-++ˡ {traces C} {traces P} {traces Q}
+
+·-distribʳ₀-⊔ : (C P Q : NeTraces) → ((P ∪ Q) · C) ≾₀ ((P · C) ∪ (Q · C))
+·-distribʳ₀-⊔ C P Q = ≼ˢ-·ˢ-++ʳ {traces P} {traces Q} {traces C}
+
 -- zero-product: the unit `{ ε }` permits nothing but the empty run, and
 -- durations add along sequencing, so a product that stays within it has
 -- both factors staying within it
@@ -198,6 +217,50 @@ unbounded  ≾ unbounded  = ⊤
 ·-monoʳ {_}         {unbounded} {within _}  ()
 ·-monoʳ {within _}  {unbounded} {unbounded} p = tt
 ·-monoʳ {unbounded} {unbounded} {unbounded} p = tt
+
+------------------------------------------------------------------------
+-- Binary joins: the union of the written-out bounds, with `unbounded`
+-- absorbing, it being the greatest grade
+
+infixl 6 _⊔ᵇ_
+
+_⊔ᵇ_ : Bounds → Bounds → Bounds
+(within P) ⊔ᵇ (within Q) = within (P ∪ Q)
+(within _) ⊔ᵇ unbounded  = unbounded
+unbounded  ⊔ᵇ _          = unbounded
+
+⊔ᵇ-ubˡ : (P Q : Bounds) → P ≾ (P ⊔ᵇ Q)
+⊔ᵇ-ubˡ (within P) (within Q) = ⊔₀-ubˡ P Q
+⊔ᵇ-ubˡ (within _) unbounded  = tt
+⊔ᵇ-ubˡ unbounded  _          = tt
+
+⊔ᵇ-ubʳ : (P Q : Bounds) → Q ≾ (P ⊔ᵇ Q)
+⊔ᵇ-ubʳ (within P) (within Q) = ⊔₀-ubʳ P Q
+⊔ᵇ-ubʳ (within _) unbounded  = tt
+⊔ᵇ-ubʳ unbounded  (within _) = tt
+⊔ᵇ-ubʳ unbounded  unbounded  = tt
+
+⊔ᵇ-lub : {P Q R : Bounds} → P ≾ R → Q ≾ R → (P ⊔ᵇ Q) ≾ R
+⊔ᵇ-lub {within P}  {within Q}  {within R}  p q = ⊔₀-lub {P} {Q} {R} p q
+⊔ᵇ-lub {within _}  {within _}  {unbounded} p q = tt
+⊔ᵇ-lub {within _}  {unbounded} {within _}  p ()
+⊔ᵇ-lub {within _}  {unbounded} {unbounded} p q = tt
+⊔ᵇ-lub {unbounded} {_}         {within _}  () q
+⊔ᵇ-lub {unbounded} {_}         {unbounded} p q = tt
+
+·-distribˡ-⊔ : (C P Q : Bounds) → (C ·ᵇ (P ⊔ᵇ Q)) ≾ ((C ·ᵇ P) ⊔ᵇ (C ·ᵇ Q))
+·-distribˡ-⊔ (within C) (within P) (within Q) = ·-distribˡ₀-⊔ C P Q
+·-distribˡ-⊔ (within _) (within _) unbounded  = tt
+·-distribˡ-⊔ (within _) unbounded  _          = tt
+·-distribˡ-⊔ unbounded  _          _          = tt
+
+·-distribʳ-⊔ : (C P Q : Bounds) → ((P ⊔ᵇ Q) ·ᵇ C) ≾ ((P ·ᵇ C) ⊔ᵇ (Q ·ᵇ C))
+·-distribʳ-⊔ (within C) (within P) (within Q) = ·-distribʳ₀-⊔ C P Q
+·-distribʳ-⊔ (within _) (within _) unbounded  = tt
+·-distribʳ-⊔ (within _) unbounded  _          = tt
+·-distribʳ-⊔ unbounded  (within _) (within _) = tt
+·-distribʳ-⊔ unbounded  (within _) unbounded  = tt
+·-distribʳ-⊔ unbounded  unbounded  _          = tt
 
 ------------------------------------------------------------------------
 -- Zero-product property

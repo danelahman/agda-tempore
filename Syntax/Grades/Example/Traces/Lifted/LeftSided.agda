@@ -68,6 +68,33 @@ P ≾ P' = traces P' ≽ˢ traces P
   ≽ˢ-·ˢ {traces C} {traces C} {traces Q} {traces P} (≽ˢ-refl {traces C}) rel
 
 ------------------------------------------------------------------------
+-- Binary joins
+--
+-- A grade is read disjunctively and weakens by gaining members, so the
+-- union of two grades is their join, and the language product
+-- distributes over it on both sides.
+
+infixl 6 _⊔_
+
+_⊔_ : NeTraces → NeTraces → NeTraces
+_⊔_ = _∪_
+
+⊔-ubˡ : (P Q : NeTraces) → P ≾ (P ⊔ Q)
+⊔-ubˡ P Q = ≽ˢ-++-ubˡ {traces P} {traces Q}
+
+⊔-ubʳ : (P Q : NeTraces) → Q ≾ (P ⊔ Q)
+⊔-ubʳ P Q = ≽ˢ-++-ubʳ (traces P) {traces Q}
+
+⊔-lub : {P Q R : NeTraces} → P ≾ R → Q ≾ R → (P ⊔ Q) ≾ R
+⊔-lub {P} {Q} {R} = ≽ˢ-++-lub {traces P} {traces Q} {traces R}
+
+·-distribˡ-⊔ : (C P Q : NeTraces) → (C · (P ⊔ Q)) ≾ ((C · P) ⊔ (C · Q))
+·-distribˡ-⊔ C P Q = ≽ˢ-·ˢ-++ˡ {traces C} {traces P} {traces Q}
+
+·-distribʳ-⊔ : (C P Q : NeTraces) → ((P ⊔ Q) · C) ≾ ((P · C) ⊔ (Q · C))
+·-distribʳ-⊔ C P Q = ≽ˢ-·ˢ-++ʳ {traces P} {traces Q} {traces C}
+
+------------------------------------------------------------------------
 -- The greatest grade
 --
 -- The unit `{ ε }` guarantees nothing, the empty trace being covered by

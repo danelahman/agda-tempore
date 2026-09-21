@@ -28,11 +28,13 @@ open import Data.List.Properties
          ∷-injectiveˡ; ∷-injectiveʳ; cartesianProductWith-distribʳ-++; ≡-dec)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻)
+  using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻;
+         ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; there; any?)
 open import Data.Nat.Base using (ℕ; _+_)
 open import Data.Product using (_,_; Σ)
+open import Data.Sum using (inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
@@ -223,6 +225,54 @@ neHead []      ()
 ∈-[ε]⁻ (there ())
 
 ------------------------------------------------------------------------
+-- Union of sets of traces
+--
+-- The union is list concatenation: membership in `xs ++ ys` splits, so
+-- concatenation is a join for any order phrased through membership.
+
+-- the concatenation of two lists is non-empty as soon as the left one
+-- is; the right argument is taken for uniformity with `·ˢ-ne`
+
+++-ne : {xs ys : List Trace} → NonEmpty xs → NonEmpty ys → NonEmpty (xs ++ ys)
+++-ne {[]}    ()  _
+++-ne {_ ∷ _} _   _ = tt
+
+infixl 6 _∪_
+
+_∪_ : NeTraces → NeTraces → NeTraces
+P ∪ Q = neTraces (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
+
+-- the language product distributes over unions on the right on the nose
+
+·ˢ-distribʳ-++ : (xs ys zs : List Trace)
+               → ((xs ++ ys) ·ˢ zs) ≡ ((xs ·ˢ zs) ++ (ys ·ˢ zs))
+·ˢ-distribʳ-++ = cartesianProductWith-distribʳ-++ _∙_
+
+-- on the left the two sides only permute each other, so distributivity
+-- is stated as mutual membership
+
+∈-·ˢ-⊆ʳ : {w : Trace} {xs ys zs : List Trace}
+        → ({b : Trace} → b ∈ ys → b ∈ zs)
+        → w ∈ (xs ·ˢ ys) → w ∈ (xs ·ˢ zs)
+∈-·ˢ-⊆ʳ {xs = xs} {ys} sub m with ∈-cartesianProductWith⁻ _∙_ xs ys m
+... | a , b , a∈xs , b∈ys , refl =
+      ∈-cartesianProductWith⁺ _∙_ a∈xs (sub b∈ys)
+
+∈-·ˢ-++ˡ : {w : Trace} {xs ys zs : List Trace}
+         → w ∈ (xs ·ˢ (ys ++ zs)) → w ∈ ((xs ·ˢ ys) ++ (xs ·ˢ zs))
+∈-·ˢ-++ˡ {w} {xs} {ys} {zs} m
+  with ∈-cartesianProductWith⁻ _∙_ xs (ys ++ zs) m
+... | a , b , a∈xs , b∈ , refl with ∈-++⁻ ys b∈
+...   | inj₁ b∈ys = ∈-++⁺ˡ (∈-cartesianProductWith⁺ _∙_ a∈xs b∈ys)
+...   | inj₂ b∈zs = ∈-++⁺ʳ (xs ·ˢ ys) (∈-cartesianProductWith⁺ _∙_ a∈xs b∈zs)
+
+∈-·ˢ-++ˡ⁻ : {w : Trace} {xs ys zs : List Trace}
+          → w ∈ ((xs ·ˢ ys) ++ (xs ·ˢ zs)) → w ∈ (xs ·ˢ (ys ++ zs))
+∈-·ˢ-++ˡ⁻ {w} {xs} {ys} {zs} m with ∈-++⁻ (xs ·ˢ ys) m
+... | inj₁ m₁ = ∈-·ˢ-⊆ʳ {w} {xs} {ys} {ys ++ zs} ∈-++⁺ˡ m₁
+... | inj₂ m₂ = ∈-·ˢ-⊆ʳ {w} {xs} {zs} {ys ++ zs} (∈-++⁺ʳ ys) m₂
+
+------------------------------------------------------------------------
 -- Inclusion of the natural numbers as pure delays
 --
 -- A natural number `n` becomes the singleton set containing the pure
@@ -318,6 +368,63 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   liftˢ-mono R? R'? f p s m =
     fromWitness (Any.map f (toWitness (p s m)))
 
+  -- the lift is antitone in list inclusion of the source and monotone
+  -- in list inclusion of the target
+
+  liftˢ-⊆ˡ : {R : Trace → Trace → Set} → {R? : Decidable R}
+           → {xs ys zs : List Trace}
+           → ({w : Trace} → w ∈ ys → w ∈ xs)
+           → liftˢ R R? xs zs → liftˢ R R? ys zs
+  liftˢ-⊆ˡ sub p s m = p s (fromWitness (sub (toWitness m)))
+
+  liftˢ-⊆ʳ : {R : Trace → Trace → Set} → {R? : Decidable R}
+           → {xs ys zs : List Trace}
+           → ({w : Trace} → w ∈ ys → w ∈ zs)
+           → liftˢ R R? xs ys → liftˢ R R? xs zs
+  liftˢ-⊆ʳ {R} sub p s m with find (toWitness (p s m))
+  ... | y , y∈ys , sRy =
+        fromWitness (Any.map (λ eq → subst (R s) eq sRy) (sub y∈ys))
+
+  ----------------------------------------------------------------------
+  -- Concatenation is a join for the lift
+  --
+  -- Membership in `xs ++ ys` splits, so concatenation is a least upper
+  -- bound whenever the relation lifted is reflexive.
+
+  liftˢ-++-ubˡ : {R : Trace → Trace → Set} → (R? : Decidable R)
+               → ((s : Trace) → R s s)
+               → {xs ys : List Trace} → liftˢ R R? xs (xs ++ ys)
+  liftˢ-++-ubˡ R? rfl = liftˢ-⊆ʳ ∈-++⁺ˡ (liftˢ-refl R? rfl)
+
+  liftˢ-++-ubʳ : {R : Trace → Trace → Set} → (R? : Decidable R)
+               → ((s : Trace) → R s s)
+               → (xs : List Trace) → {ys : List Trace} → liftˢ R R? ys (xs ++ ys)
+  liftˢ-++-ubʳ R? rfl xs = liftˢ-⊆ʳ (∈-++⁺ʳ xs) (liftˢ-refl R? rfl)
+
+  liftˢ-++-lub : {R : Trace → Trace → Set} → {R? : Decidable R}
+               → {xs ys zs : List Trace}
+               → liftˢ R R? xs zs → liftˢ R R? ys zs → liftˢ R R? (xs ++ ys) zs
+  liftˢ-++-lub {xs = xs} p q s m with ∈-++⁻ xs (toWitness m)
+  ... | inj₁ s∈xs = p s (fromWitness s∈xs)
+  ... | inj₂ s∈ys = q s (fromWitness s∈ys)
+
+  -- left distributivity of the language product over concatenation, in
+  -- the form the grades consume it
+
+  liftˢ-·ˢ-++ˡ : {R : Trace → Trace → Set} → (R? : Decidable R)
+               → ((s : Trace) → R s s)
+               → {xs ys zs : List Trace}
+               → liftˢ R R? (xs ·ˢ (ys ++ zs)) ((xs ·ˢ ys) ++ (xs ·ˢ zs))
+  liftˢ-·ˢ-++ˡ R? rfl {xs} {ys} {zs} =
+    liftˢ-⊆ʳ (λ {w} → ∈-·ˢ-++ˡ {w} {xs} {ys} {zs}) (liftˢ-refl R? rfl)
+
+  liftˢ-·ˢ-++ˡ⁻ : {R : Trace → Trace → Set} → (R? : Decidable R)
+                → ((s : Trace) → R s s)
+                → {xs ys zs : List Trace}
+                → liftˢ R R? ((xs ·ˢ ys) ++ (xs ·ˢ zs)) (xs ·ˢ (ys ++ zs))
+  liftˢ-·ˢ-++ˡ⁻ R? rfl {xs} {ys} {zs} =
+    liftˢ-⊆ʳ (λ {w} → ∈-·ˢ-++ˡ⁻ {w} {xs} {ys} {zs}) (liftˢ-refl R? rfl)
+
   -- the orders built from the lift are proof-irrelevant
 
   True-irr : {A : Set} (a? : Dec A) (p q : True a?) → p ≡ q
@@ -368,6 +475,17 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   ⊑-·ˢ : {xs xs' ys ys' : List Trace}
        → xs ⊑ xs' → ys ⊑ ys' → (xs ·ˢ ys) ⊑ (xs' ·ˢ ys')
   ⊑-·ˢ = liftˢ-·ˢ _≟ᵀ_ (cong₂ _∙_)
+
+  -- concatenation is the join for the subset preorder
+
+  ⊑-++-ubˡ : {xs ys : List Trace} → xs ⊑ (xs ++ ys)
+  ⊑-++-ubˡ = liftˢ-++-ubˡ _≟ᵀ_ (λ _ → refl)
+
+  ⊑-++-ubʳ : (xs : List Trace) → {ys : List Trace} → ys ⊑ (xs ++ ys)
+  ⊑-++-ubʳ = liftˢ-++-ubʳ _≟ᵀ_ (λ _ → refl)
+
+  ⊑-++-lub : {xs ys zs : List Trace} → xs ⊑ zs → ys ⊑ zs → (xs ++ ys) ⊑ zs
+  ⊑-++-lub = liftˢ-++-lub
 
   infix 5 _⊑?_
 

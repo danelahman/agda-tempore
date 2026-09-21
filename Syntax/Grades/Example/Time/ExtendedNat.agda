@@ -103,6 +103,11 @@ infix 6 _≤∞_
 ≤∞-trans {∞}   {∞}   {↑ _} p ()
 ≤∞-trans {∞}   {∞}   {∞}   p q = tt
 
+-- equal endpoints are related
+
+≤∞-reflexive : {a b : ℕ∞} → a ≡ b → a ≤∞ b
+≤∞-reflexive {a} refl = ≤∞-refl {a}
+
 -- order is decidable
 
 infix 4 _≤∞?_
@@ -131,6 +136,50 @@ _≤∞?_ : (a b : ℕ∞) → Dec (a ≤∞ b)
 +∞-mono-≤∞ {↑ x} {b}   {∞}   {d}   p q = ≤∞-∞ (↑ x +∞ b)
 +∞-mono-≤∞ {∞}   {b}   {↑ _} {d}   () q
 +∞-mono-≤∞ {∞}   {b}   {∞}   {d}   p q = tt
+
+------------------------------------------------------------------------
+-- Maximum (∞ is greatest)
+
+_⊔∞_ : ℕ∞ → ℕ∞ → ℕ∞
+↑ m ⊔∞ ↑ n = ↑ (m ⊔ n)
+↑ _ ⊔∞ ∞   = ∞
+∞   ⊔∞ _   = ∞
+
+infixl 7 _⊔∞_
+
+-- the maximum is the least upper bound
+
+⊔∞-ubˡ : (a b : ℕ∞) → a ≤∞ a ⊔∞ b
+⊔∞-ubˡ (↑ m) (↑ n) = m≤m⊔n m n
+⊔∞-ubˡ (↑ _) ∞     = tt
+⊔∞-ubˡ ∞     _     = tt
+
+⊔∞-ubʳ : (a b : ℕ∞) → b ≤∞ a ⊔∞ b
+⊔∞-ubʳ (↑ m) (↑ n) = m≤n⊔m m n
+⊔∞-ubʳ (↑ _) ∞     = tt
+⊔∞-ubʳ ∞     (↑ _) = tt
+⊔∞-ubʳ ∞     ∞     = tt
+
+⊔∞-lub : {a b c : ℕ∞} → a ≤∞ c → b ≤∞ c → a ⊔∞ b ≤∞ c
+⊔∞-lub {↑ _} {↑ _} {↑ _} p q = ⊔-lub p q
+⊔∞-lub {↑ _} {↑ _} {∞}   p q = tt
+⊔∞-lub {↑ _} {∞}   {∞}   p q = tt
+⊔∞-lub {∞}   {_}   {∞}   p q = tt
+
+-- addition distributes over the maximum
+
++∞-distribˡ-⊔∞ : (a b c : ℕ∞) → a +∞ (b ⊔∞ c) ≡ (a +∞ b) ⊔∞ (a +∞ c)
++∞-distribˡ-⊔∞ (↑ x) (↑ y) (↑ z) = cong ↑_ (+-distribˡ-⊔ x y z)
++∞-distribˡ-⊔∞ (↑ _) (↑ _) ∞     = refl
++∞-distribˡ-⊔∞ (↑ _) ∞     _     = refl
++∞-distribˡ-⊔∞ ∞     _     _     = refl
+
++∞-distribʳ-⊔∞ : (a b c : ℕ∞) → (b ⊔∞ c) +∞ a ≡ (b +∞ a) ⊔∞ (c +∞ a)
++∞-distribʳ-⊔∞ (↑ x) (↑ y) (↑ z) = cong ↑_ (+-distribʳ-⊔ x y z)
++∞-distribʳ-⊔∞ ∞     (↑ _) (↑ _) = refl
++∞-distribʳ-⊔∞ (↑ _) (↑ _) ∞     = refl
++∞-distribʳ-⊔∞ ∞     (↑ _) ∞     = refl
++∞-distribʳ-⊔∞ _     ∞     _     = refl
 
 ------------------------------------------------------------------------
 -- ↑ 0 is the least element

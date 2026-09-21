@@ -162,6 +162,45 @@ eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟∞ max i₂
 ≾ᵢ-zero-productʳ {i₁} {i₂} (_ , maxrel) =
   z≤n , +∞-≤∞-0ʳ {max i₁} {max i₂} maxrel
 
+-- binary joins: the order is containment, so the join is the smallest
+-- window containing both
+
+_⊔ᵢ_ : Interval∞ → Interval∞ → Interval∞
+i₁ ⊔ᵢ i₂ =
+  [ min i₁ ⊓ min i₂
+  , max i₁ ⊔∞ max i₂
+  , ≤∞-trans {↑ (min i₁ ⊓ min i₂)} {↑ min i₁}
+             (m⊓n≤m (min i₁) (min i₂))
+             (≤∞-trans {↑ min i₁} (min≤max i₁) (⊔∞-ubˡ (max i₁) (max i₂)))
+  ]
+
+infixl 7 _⊔ᵢ_
+
+⊔ᵢ-ubˡ : (i₁ i₂ : Interval∞) → i₁ ≾ᵢ (i₁ ⊔ᵢ i₂)
+⊔ᵢ-ubˡ i₁ i₂ = m⊓n≤m (min i₁) (min i₂) , ⊔∞-ubˡ (max i₁) (max i₂)
+
+⊔ᵢ-ubʳ : (i₁ i₂ : Interval∞) → i₂ ≾ᵢ (i₁ ⊔ᵢ i₂)
+⊔ᵢ-ubʳ i₁ i₂ = m⊓n≤n (min i₁) (min i₂) , ⊔∞-ubʳ (max i₁) (max i₂)
+
+⊔ᵢ-lub : {i₁ i₂ i₃ : Interval∞} → i₁ ≾ᵢ i₃ → i₂ ≾ᵢ i₃ → (i₁ ⊔ᵢ i₂) ≾ᵢ i₃
+⊔ᵢ-lub {i₁} {i₂} {i₃} (p₁ , p₂) (q₁ , q₂) =
+  ⊓-glb p₁ q₁ , ⊔∞-lub {max i₁} {max i₂} {max i₃} p₂ q₂
+
+-- addition distributes over the join at both endpoints, so the two
+-- sides are equal
+
+·ᵢ-distribˡ-⊔ᵢ : (i₁ i₂ i₃ : Interval∞)
+               → (i₁ ·ᵢ (i₂ ⊔ᵢ i₃)) ≾ᵢ ((i₁ ·ᵢ i₂) ⊔ᵢ (i₁ ·ᵢ i₃))
+·ᵢ-distribˡ-⊔ᵢ i₁ i₂ i₃ =
+    ≤-reflexive (sym (+-distribˡ-⊓ (min i₁) (min i₂) (min i₃)))
+  , ≤∞-reflexive (+∞-distribˡ-⊔∞ (max i₁) (max i₂) (max i₃))
+
+·ᵢ-distribʳ-⊔ᵢ : (i₁ i₂ i₃ : Interval∞)
+               → ((i₂ ⊔ᵢ i₃) ·ᵢ i₁) ≾ᵢ ((i₂ ·ᵢ i₁) ⊔ᵢ (i₃ ·ᵢ i₁))
+·ᵢ-distribʳ-⊔ᵢ i₁ i₂ i₃ =
+    ≤-reflexive (sym (+-distribʳ-⊓ (min i₁) (min i₂) (min i₃)))
+  , ≤∞-reflexive (+∞-distribʳ-⊔∞ (max i₁) (max i₂) (max i₃))
+
 -- the grade of two-sided intervals with possibly-infinite max
 
 two-sided-intervals-with-∞ : Grade
@@ -324,6 +363,52 @@ eqʷ? no-window  no-window  = yes refl
   ≾ᵢ-zero-productʳ {i₁} {i₂} rel
 ≾ʷ-zero-productʳ {window _}  {no-window} ()
 ≾ʷ-zero-productʳ {no-window} {_}         ()
+
+-- binary joins, with `no-window` the join of anything with itself
+
+_⊔ʷ_ : Interval∞⊤ → Interval∞⊤ → Interval∞⊤
+(window i) ⊔ʷ (window j) = window (i ⊔ᵢ j)
+(window _) ⊔ʷ no-window  = no-window
+no-window  ⊔ʷ _          = no-window
+
+infixl 7 _⊔ʷ_
+
+⊔ʷ-ubˡ : (i₁ i₂ : Interval∞⊤) → i₁ ≾ʷ i₁ ⊔ʷ i₂
+⊔ʷ-ubˡ (window i) (window j) = ⊔ᵢ-ubˡ i j
+⊔ʷ-ubˡ (window _) no-window  = tt
+⊔ʷ-ubˡ no-window  _          = tt
+
+⊔ʷ-ubʳ : (i₁ i₂ : Interval∞⊤) → i₂ ≾ʷ i₁ ⊔ʷ i₂
+⊔ʷ-ubʳ (window i) (window j) = ⊔ᵢ-ubʳ i j
+⊔ʷ-ubʳ (window _) no-window  = tt
+⊔ʷ-ubʳ no-window  (window _) = tt
+⊔ʷ-ubʳ no-window  no-window  = tt
+
+⊔ʷ-lub : {i₁ i₂ i₃ : Interval∞⊤} → i₁ ≾ʷ i₃ → i₂ ≾ʷ i₃ → i₁ ⊔ʷ i₂ ≾ʷ i₃
+⊔ʷ-lub {window i}  {window j} {window k}  p q = ⊔ᵢ-lub {i} {j} {k} p q
+⊔ʷ-lub {window _}  {window _} {no-window} p q = tt
+⊔ʷ-lub {window _}  {no-window} {window _} p ()
+⊔ʷ-lub {window _}  {no-window} {no-window} p q = tt
+⊔ʷ-lub {no-window} {_}         {window _}  () q
+⊔ʷ-lub {no-window} {_}         {no-window} p q = tt
+
+-- addition distributes over the join, `no-window` absorbing on both
+-- sides
+
+·ʷ-distribˡ-⊔ʷ : (i₁ i₂ i₃ : Interval∞⊤)
+               → i₁ ·ʷ (i₂ ⊔ʷ i₃) ≾ʷ (i₁ ·ʷ i₂) ⊔ʷ (i₁ ·ʷ i₃)
+·ʷ-distribˡ-⊔ʷ (window i) (window j) (window k) = ·ᵢ-distribˡ-⊔ᵢ i j k
+·ʷ-distribˡ-⊔ʷ (window _) (window _) no-window  = tt
+·ʷ-distribˡ-⊔ʷ (window _) no-window  _          = tt
+·ʷ-distribˡ-⊔ʷ no-window  _          _          = tt
+
+·ʷ-distribʳ-⊔ʷ : (i₁ i₂ i₃ : Interval∞⊤)
+               → (i₂ ⊔ʷ i₃) ·ʷ i₁ ≾ʷ (i₂ ·ʷ i₁) ⊔ʷ (i₃ ·ʷ i₁)
+·ʷ-distribʳ-⊔ʷ (window i) (window j) (window k) = ·ᵢ-distribʳ-⊔ᵢ i j k
+·ʷ-distribʳ-⊔ʷ (window _) (window _) no-window  = tt
+·ʷ-distribʳ-⊔ʷ no-window  (window _) (window _) = tt
+·ʷ-distribʳ-⊔ʷ no-window  (window _) no-window  = tt
+·ʷ-distribʳ-⊔ʷ _          no-window  _          = tt
 
 -- the grade of two-sided intervals with a formal greatest grade
 

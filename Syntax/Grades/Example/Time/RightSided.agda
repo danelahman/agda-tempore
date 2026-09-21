@@ -131,6 +131,31 @@ _≡ₒ?_ : Decidable (_≡_ {A = 𝕀ᵣ})
 ≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀ᵣ} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₂ ≾ₒ uₒ
 ≾ₒ-zero-productʳ {[0, m ]} {[0, n ]} rel = +∞-≤∞-0ʳ {m} {n} rel
 
+-- binary joins: a weaker grade has the larger deadline, so the join
+-- takes the maximum of the two endpoints
+
+_⊔ₒ_ : 𝕀ᵣ → 𝕀ᵣ → 𝕀ᵣ
+[0, m ] ⊔ₒ [0, n ] = [0, m ⊔∞ n ]
+
+infixl 7 _⊔ₒ_
+
+⊔ₒ-ubˡ : (i₁ i₂ : 𝕀ᵣ) → i₁ ≾ₒ i₁ ⊔ₒ i₂
+⊔ₒ-ubˡ [0, m ] [0, n ] = ⊔∞-ubˡ m n
+
+⊔ₒ-ubʳ : (i₁ i₂ : 𝕀ᵣ) → i₂ ≾ₒ i₁ ⊔ₒ i₂
+⊔ₒ-ubʳ [0, m ] [0, n ] = ⊔∞-ubʳ m n
+
+⊔ₒ-lub : {i₁ i₂ i₃ : 𝕀ᵣ} → i₁ ≾ₒ i₃ → i₂ ≾ₒ i₃ → i₁ ⊔ₒ i₂ ≾ₒ i₃
+⊔ₒ-lub {[0, m ]} {[0, n ]} {[0, o ]} p q = ⊔∞-lub {m} {n} {o} p q
+
+-- addition distributes over the join, so the two sides are equal
+
+·ₒ-distribˡ-⊔ₒ : (i₁ i₂ i₃ : 𝕀ᵣ) → i₁ ·ₒ (i₂ ⊔ₒ i₃) ≾ₒ (i₁ ·ₒ i₂) ⊔ₒ (i₁ ·ₒ i₃)
+·ₒ-distribˡ-⊔ₒ [0, m ] [0, n ] [0, o ] = ≤∞-reflexive (+∞-distribˡ-⊔∞ m n o)
+
+·ₒ-distribʳ-⊔ₒ : (i₁ i₂ i₃ : 𝕀ᵣ) → (i₂ ⊔ₒ i₃) ·ₒ i₁ ≾ₒ (i₂ ·ₒ i₁) ⊔ₒ (i₃ ·ₒ i₁)
+·ₒ-distribʳ-⊔ₒ [0, m ] [0, n ] [0, o ] = ≤∞-reflexive (+∞-distribʳ-⊔∞ m n o)
+
 -- the grade of (right) one-sided intervals
 
 right-sided-intervals : Grade

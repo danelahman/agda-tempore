@@ -122,6 +122,33 @@ _≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
 ≾ₒ-zero-productʳ : ∀ {i₁ i₂ : 𝕀} → i₁ ·ₒ i₂ ≾ₒ uₒ → i₂ ≾ₒ uₒ
 ≾ₒ-zero-productʳ {[ _ ,+∞⟩} {[ _ ,+∞⟩} _ = z≤n
 
+-- binary joins: a weaker grade has the smaller bound, so the join
+-- takes the minimum of the two bounds
+
+_⊔ₒ_ : 𝕀 → 𝕀 → 𝕀
+[ m ,+∞⟩ ⊔ₒ [ n ,+∞⟩ = [ m ⊓ n ,+∞⟩
+
+infixl 7 _⊔ₒ_
+
+⊔ₒ-ubˡ : (i₁ i₂ : 𝕀) → i₁ ≾ₒ i₁ ⊔ₒ i₂
+⊔ₒ-ubˡ [ m ,+∞⟩ [ n ,+∞⟩ = m⊓n≤m m n
+
+⊔ₒ-ubʳ : (i₁ i₂ : 𝕀) → i₂ ≾ₒ i₁ ⊔ₒ i₂
+⊔ₒ-ubʳ [ m ,+∞⟩ [ n ,+∞⟩ = m⊓n≤n m n
+
+⊔ₒ-lub : {i₁ i₂ i₃ : 𝕀} → i₁ ≾ₒ i₃ → i₂ ≾ₒ i₃ → i₁ ⊔ₒ i₂ ≾ₒ i₃
+⊔ₒ-lub {[ _ ,+∞⟩} {[ _ ,+∞⟩} {[ _ ,+∞⟩} p q = ⊓-glb p q
+
+-- addition distributes over the join, so the two sides are equal
+
+·ₒ-distribˡ-⊔ₒ : (i₁ i₂ i₃ : 𝕀) → i₁ ·ₒ (i₂ ⊔ₒ i₃) ≾ₒ (i₁ ·ₒ i₂) ⊔ₒ (i₁ ·ₒ i₃)
+·ₒ-distribˡ-⊔ₒ [ m ,+∞⟩ [ n ,+∞⟩ [ o ,+∞⟩ =
+  ≤-reflexive (sym (+-distribˡ-⊓ m n o))
+
+·ₒ-distribʳ-⊔ₒ : (i₁ i₂ i₃ : 𝕀) → (i₂ ⊔ₒ i₃) ·ₒ i₁ ≾ₒ (i₂ ·ₒ i₁) ⊔ₒ (i₃ ·ₒ i₁)
+·ₒ-distribʳ-⊔ₒ [ m ,+∞⟩ [ n ,+∞⟩ [ o ,+∞⟩ =
+  ≤-reflexive (sym (+-distribʳ-⊓ m n o))
+
 -- the grade of one-sided intervals
 
 left-sided-intervals : Grade
@@ -273,6 +300,49 @@ untimed   ≡ᵗ? untimed   = yes refl
 ≾ᵗ-zero-productʳ {timed i₁} {timed i₂} rel = ≾ₒ-zero-productʳ {i₁} {i₂} rel
 ≾ᵗ-zero-productʳ {timed _}  {untimed}  ()
 ≾ᵗ-zero-productʳ {untimed}  {_}        ()
+
+-- binary joins, with `untimed` the join of anything with itself
+
+_⊔ᵗ_ : 𝕀⊤ → 𝕀⊤ → 𝕀⊤
+(timed i) ⊔ᵗ (timed j) = timed (i ⊔ₒ j)
+(timed _) ⊔ᵗ untimed   = untimed
+untimed   ⊔ᵗ _         = untimed
+
+infixl 7 _⊔ᵗ_
+
+⊔ᵗ-ubˡ : (i₁ i₂ : 𝕀⊤) → i₁ ≾ᵗ i₁ ⊔ᵗ i₂
+⊔ᵗ-ubˡ (timed i) (timed j) = ⊔ₒ-ubˡ i j
+⊔ᵗ-ubˡ (timed _) untimed   = tt
+⊔ᵗ-ubˡ untimed   _         = tt
+
+⊔ᵗ-ubʳ : (i₁ i₂ : 𝕀⊤) → i₂ ≾ᵗ i₁ ⊔ᵗ i₂
+⊔ᵗ-ubʳ (timed i) (timed j) = ⊔ₒ-ubʳ i j
+⊔ᵗ-ubʳ (timed _) untimed   = tt
+⊔ᵗ-ubʳ untimed   (timed _) = tt
+⊔ᵗ-ubʳ untimed   untimed   = tt
+
+⊔ᵗ-lub : {i₁ i₂ i₃ : 𝕀⊤} → i₁ ≾ᵗ i₃ → i₂ ≾ᵗ i₃ → i₁ ⊔ᵗ i₂ ≾ᵗ i₃
+⊔ᵗ-lub {timed i} {timed j} {timed k} p q = ⊔ₒ-lub {i} {j} {k} p q
+⊔ᵗ-lub {timed _} {timed _} {untimed} p q = tt
+⊔ᵗ-lub {timed _} {untimed} {timed _} p ()
+⊔ᵗ-lub {timed _} {untimed} {untimed} p q = tt
+⊔ᵗ-lub {untimed} {_}       {timed _} () q
+⊔ᵗ-lub {untimed} {_}       {untimed} p q = tt
+
+-- addition distributes over the join, `untimed` absorbing on both sides
+
+·ᵗ-distribˡ-⊔ᵗ : (i₁ i₂ i₃ : 𝕀⊤) → i₁ ·ᵗ (i₂ ⊔ᵗ i₃) ≾ᵗ (i₁ ·ᵗ i₂) ⊔ᵗ (i₁ ·ᵗ i₃)
+·ᵗ-distribˡ-⊔ᵗ (timed i) (timed j) (timed k) = ·ₒ-distribˡ-⊔ₒ i j k
+·ᵗ-distribˡ-⊔ᵗ (timed _) (timed _) untimed   = tt
+·ᵗ-distribˡ-⊔ᵗ (timed _) untimed   _         = tt
+·ᵗ-distribˡ-⊔ᵗ untimed   _         _         = tt
+
+·ᵗ-distribʳ-⊔ᵗ : (i₁ i₂ i₃ : 𝕀⊤) → (i₂ ⊔ᵗ i₃) ·ᵗ i₁ ≾ᵗ (i₂ ·ᵗ i₁) ⊔ᵗ (i₃ ·ᵗ i₁)
+·ᵗ-distribʳ-⊔ᵗ (timed i) (timed j) (timed k) = ·ₒ-distribʳ-⊔ₒ i j k
+·ᵗ-distribʳ-⊔ᵗ (timed _) (timed _) untimed   = tt
+·ᵗ-distribʳ-⊔ᵗ untimed   (timed _) (timed _) = tt
+·ᵗ-distribʳ-⊔ᵗ untimed   (timed _) untimed   = tt
+·ᵗ-distribʳ-⊔ᵗ _         untimed   _         = tt
 
 -- the grade of one-sided intervals with a formal greatest grade
 

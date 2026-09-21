@@ -55,13 +55,13 @@ module Syntax.Grades.Example.Traces.Lifted.TwoSided
         → Dur.Durations.duration Op costʰⁱ s ≤ Dur.Durations.duration Op costʰⁱ t)
   where
 
-open import Data.List.Base using (List)
+open import Data.List.Base using (List; _++_)
 open import Data.Unit using (⊤; tt)
 open import Data.Nat using (_+_; _≤?_)
 open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-reflexive; +-mono-≤)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
-  using (∈-cartesianProductWith⁺)
+  using (∈-cartesianProductWith⁺; ∈-++⁺ˡ)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
@@ -83,13 +83,16 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided Op _≟ₒ_ Oᶠ
                      ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
                      ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
                      ≾-zero-productʳ to ≾ˡᵒ-zero-productʳ;
-                     ≾-irrelevant to ≾ˡᵒ-irrelevant)
+                     ≾-irrelevant to ≾ˡᵒ-irrelevant;
+                     ⊔-ubˡ to ⊔ˡᵒ-ubˡ; ⊔-ubʳ to ⊔ˡᵒ-ubʳ; ⊔-lub to ⊔ˡᵒ-lub;
+                     ·-distribˡ-⊔ to ·ˡᵒ-distribˡ-⊔;
+                     ·-distribʳ-⊔ to ·ˡᵒ-distribʳ-⊔)
 
 -- the cap's endpoint is `Bounds`, whose `unbounded` is the allowance
 -- grade's own greatest element
 
 open import Syntax.Grades.Example.Traces.Lifted.RightSided Op _≟ₒ_ Oᶜ
-  using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _≟ᴮ_;
+  using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _≟ᴮ_; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
   renaming (_≾₀_ to _≾ʰⁱ₀_;
             _≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
@@ -97,7 +100,10 @@ open import Syntax.Grades.Example.Traces.Lifted.RightSided Op _≟ₒ_ Oᶜ
             ·-monoˡ to ·ʰⁱ-monoˡ; ·-monoʳ to ·ʰⁱ-monoʳ;
             ≾-zero-productˡ to ≾ʰⁱ-zero-productˡ;
             ≾-zero-productʳ to ≾ʰⁱ-zero-productʳ;
-            ≾-irrelevant to ≾ʰⁱ-irrelevant)
+            ≾-irrelevant to ≾ʰⁱ-irrelevant;
+            ⊔ᵇ-ubˡ to ⊔ʰⁱ-ubˡ; ⊔ᵇ-ubʳ to ⊔ʰⁱ-ubʳ; ⊔ᵇ-lub to ⊔ʰⁱ-lub;
+            ·-distribˡ-⊔ to ·ʰⁱ-distribˡ-⊔;
+            ·-distribʳ-⊔ to ·ʰⁱ-distribʳ-⊔)
 
 -- each endpoint is measured at its own cost model
 
@@ -198,6 +204,34 @@ xs ◇ˢ unbounded  = ⊤
 ◇ˢ-·ˢ {_}  {_}   {within _}  {unbounded} _ _ = tt
 ◇ˢ-·ˢ {_}  {_}   {unbounded} {_}         _ _ = tt
 
+-- and it survives concatenation at both endpoints: the witnessing pair
+-- of the left-hand sets is still a pair of members
+
+◇ˢ₀-++ : {xs xs' ys ys' : List Trace}
+       → xs ◇ˢ₀ ys → (xs ++ xs') ◇ˢ₀ (ys ++ ys')
+◇ˢ₀-++ {xs} {xs'} {ys} {ys'} p
+  with find (toWitness p)
+... | t , t∈xs , hit
+        with find hit
+...     | s , s∈ys , t≤s =
+          fromWitness
+            (Any.map
+              (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
+                                        (ys ++ ys')) eq inner)
+              (∈-++⁺ˡ {ys = xs'} t∈xs))
+  where
+    inner : Any (λ r → durationˡᵒ t ≤ durationʰⁱ r) (ys ++ ys')
+    inner =
+      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq t≤s)
+              (∈-++⁺ˡ {ys = ys'} s∈ys)
+
+◇ˢ-⊔ᵇ : {xs xs' : List Trace} {Y Y' : Bounds}
+      → xs ◇ˢ Y → (xs ++ xs') ◇ˢ (Y ⊔ᵇ Y')
+◇ˢ-⊔ᵇ {xs} {xs'} {within Q} {within Q'} p =
+  ◇ˢ₀-++ {xs} {xs'} {traces Q} {traces Q'} p
+◇ˢ-⊔ᵇ {_}  {_}   {within _}  {unbounded} _ = tt
+◇ˢ-⊔ᵇ {_}  {_}   {unbounded} {_}         _ = tt
+
 ------------------------------------------------------------------------
 -- The carrier
 
@@ -277,6 +311,45 @@ i₁ ≾ᵗˢ i₂ = (lo i₁ ≾ˡᵒ lo i₂) × (hi i₁ ≾ʰⁱ hi i₂)
 ·ᵗˢ-monoʳ {c} {i₁} {i₂} (l , h) =
     ·ˡᵒ-monoʳ {lo c} {lo i₁} {lo i₂} l
   , ·ʰⁱ-monoʳ {hi c} {hi i₁} {hi i₂} h
+
+------------------------------------------------------------------------
+-- Binary joins: the union at each endpoint
+--
+-- Both endpoints are read disjunctively, so both join by union, and
+-- the coherence field of the joined pair is witnessed by the left
+-- pair's own witnesses.
+
+infixl 6 _⊔ᵗˢ_
+
+_⊔ᵗˢ_ : TwoSided → TwoSided → TwoSided
+i₁ ⊔ᵗˢ i₂ =
+  [ lo i₁ ∪ lo i₂
+  , hi i₁ ⊔ᵇ hi i₂
+  , ◇ˢ-⊔ᵇ {traces (lo i₁)} {traces (lo i₂)} {hi i₁} {hi i₂} (lo◇hi i₁)
+  ]
+
+⊔ᵗˢ-ubˡ : (i₁ i₂ : TwoSided) → i₁ ≾ᵗˢ (i₁ ⊔ᵗˢ i₂)
+⊔ᵗˢ-ubˡ i₁ i₂ = ⊔ˡᵒ-ubˡ (lo i₁) (lo i₂) , ⊔ʰⁱ-ubˡ (hi i₁) (hi i₂)
+
+⊔ᵗˢ-ubʳ : (i₁ i₂ : TwoSided) → i₂ ≾ᵗˢ (i₁ ⊔ᵗˢ i₂)
+⊔ᵗˢ-ubʳ i₁ i₂ = ⊔ˡᵒ-ubʳ (lo i₁) (lo i₂) , ⊔ʰⁱ-ubʳ (hi i₁) (hi i₂)
+
+⊔ᵗˢ-lub : {i₁ i₂ i₃ : TwoSided} → i₁ ≾ᵗˢ i₃ → i₂ ≾ᵗˢ i₃ → (i₁ ⊔ᵗˢ i₂) ≾ᵗˢ i₃
+⊔ᵗˢ-lub {i₁} {i₂} {i₃} (l₁ , h₁) (l₂ , h₂) =
+    ⊔ˡᵒ-lub {lo i₁} {lo i₂} {lo i₃} l₁ l₂
+  , ⊔ʰⁱ-lub {hi i₁} {hi i₂} {hi i₃} h₁ h₂
+
+·ᵗˢ-distribˡ-⊔ : (c i₁ i₂ : TwoSided)
+               → (c ·ᵗˢ (i₁ ⊔ᵗˢ i₂)) ≾ᵗˢ ((c ·ᵗˢ i₁) ⊔ᵗˢ (c ·ᵗˢ i₂))
+·ᵗˢ-distribˡ-⊔ c i₁ i₂ =
+    ·ˡᵒ-distribˡ-⊔ (lo c) (lo i₁) (lo i₂)
+  , ·ʰⁱ-distribˡ-⊔ (hi c) (hi i₁) (hi i₂)
+
+·ᵗˢ-distribʳ-⊔ : (c i₁ i₂ : TwoSided)
+               → ((i₁ ⊔ᵗˢ i₂) ·ᵗˢ c) ≾ᵗˢ ((i₁ ·ᵗˢ c) ⊔ᵗˢ (i₂ ·ᵗˢ c))
+·ᵗˢ-distribʳ-⊔ c i₁ i₂ =
+    ·ˡᵒ-distribʳ-⊔ (lo c) (lo i₁) (lo i₂)
+  , ·ʰⁱ-distribʳ-⊔ (hi c) (hi i₁) (hi i₂)
 
 ------------------------------------------------------------------------
 -- The coherence field travels along the order
