@@ -31,13 +31,18 @@ open GradeSystemInterface Grades
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Hyps   S
 
+-- A join is an opaque atom carrying its two operands: normalisation
+-- passes it through rather than distributing the product over it.
+
 data EAtom (Θ : Scope) : Set where
   ac : E → EAtom Θ
   av : EVar Θ → EAtom Θ
+  a⊔ : EExp Θ → EExp Θ → EAtom Θ
 
 ⟦_⟧ᵉᵃ : ∀ {Θ} → EAtom Θ → EExp Θ
-⟦ ac c ⟧ᵉᵃ = econst c
-⟦ av i ⟧ᵉᵃ = evar i
+⟦ ac c ⟧ᵉᵃ    = econst c
+⟦ av i ⟧ᵉᵃ    = evar i
+⟦ a⊔ ε ε' ⟧ᵉᵃ = ε ⊔̂ₑ ε'
 
 ⟦_⟧ᵉˢ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
 ⟦ [] ⟧ᵉˢ     = ûₑ
@@ -51,6 +56,7 @@ consₑ (ac c) as with c ≡ₑ? uₑ
 ... | yes _ = as
 ... | no _  = ac c ∷ as
 consₑ (av i) as = av i ∷ as
+consₑ (a⊔ ε ε') as = a⊔ ε ε' ∷ as
 
 consₑ-≡ : ∀ {Θ} → (a : EAtom Θ) → (as : List (EAtom Θ))
         → ⟦ consₑ a as ⟧ᵉˢ ≡̂ₑ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
@@ -63,7 +69,11 @@ consₑ-≡ (ac c) [] with c ≡ₑ? uₑ
 consₑ-≡ (ac c) (av i ∷ as) with c ≡ₑ? uₑ
 ... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
 ... | no _     = ≡̂ₑ-refl
+consₑ-≡ (ac c) (a⊔ ε ε' ∷ as) with c ≡ₑ? uₑ
+... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
+... | no _     = ≡̂ₑ-refl
 consₑ-≡ (av i) as = ≡̂ₑ-refl
+consₑ-≡ (a⊔ ε ε') as = ≡̂ₑ-refl
 
 appₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ) → List (EAtom Θ)
 appₑ []       ys = ys
@@ -80,22 +90,26 @@ nrmₑ : ∀ {Θ} → EExp Θ → List (EAtom Θ)
 nrmₑ (evar i)   = av i ∷ []
 nrmₑ (econst c) = consₑ (ac c) []
 nrmₑ (ε ·̂ₑ ε')  = appₑ (nrmₑ ε) (nrmₑ ε')
+nrmₑ (ε ⊔̂ₑ ε')  = a⊔ ε ε' ∷ []
 
 nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ
 nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
 nrmₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
 nrmₑ-≡ (ε ·̂ₑ ε')  =
   ≡̂ₑ-trans (≡̂ₑ-cong (nrmₑ-≡ ε) (nrmₑ-≡ ε')) (≡̂ₑ-sym (appₑ-≡ (nrmₑ ε) (nrmₑ ε')))
+nrmₑ-≡ (ε ⊔̂ₑ ε')  = ≡̂ₑ-sym ≡̂ₑ-identityʳ
 
 data RAtom (Θ : Scope) : Set where
   rc : R → RAtom Θ
   rv : RVar Θ → RAtom Θ
   rm : EVar Θ → RAtom Θ
+  r⊔ : RExp Θ → RExp Θ → RAtom Θ
 
 ⟦_⟧ʳᵃ : ∀ {Θ} → RAtom Θ → RExp Θ
-⟦ rc c ⟧ʳᵃ = rconst c
-⟦ rv i ⟧ʳᵃ = rvar i
-⟦ rm i ⟧ʳᵃ = ∣ evar i ∣̂ᵉ
+⟦ rc c ⟧ʳᵃ    = rconst c
+⟦ rv i ⟧ʳᵃ    = rvar i
+⟦ rm i ⟧ʳᵃ    = ∣ evar i ∣̂ᵉ
+⟦ r⊔ ρ ρ' ⟧ʳᵃ = ρ ⊔̂ᵣ ρ'
 
 ⟦_⟧ʳˢ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
 ⟦ [] ⟧ʳˢ     = ûᵣ
@@ -108,6 +122,7 @@ consᵣ (rc c) as with c ≡ᵣ? uᵣ
 ... | no _  = rc c ∷ as
 consᵣ (rv i) as = rv i ∷ as
 consᵣ (rm i) as = rm i ∷ as
+consᵣ (r⊔ ρ ρ') as = r⊔ ρ ρ' ∷ as
 
 consᵣ-≡ : ∀ {Θ} → (a : RAtom Θ) → (as : List (RAtom Θ))
         → ⟦ consᵣ a as ⟧ʳˢ ≡̂ᵣ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
@@ -123,8 +138,12 @@ consᵣ-≡ (rc c) (rv i ∷ as) with c ≡ᵣ? uᵣ
 consᵣ-≡ (rc c) (rm i ∷ as) with c ≡ᵣ? uᵣ
 ... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
 ... | no _     = ≡̂ᵣ-refl
+consᵣ-≡ (rc c) (r⊔ ρ ρ' ∷ as) with c ≡ᵣ? uᵣ
+... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
+... | no _     = ≡̂ᵣ-refl
 consᵣ-≡ (rv i) as = ≡̂ᵣ-refl
 consᵣ-≡ (rm i) as = ≡̂ᵣ-refl
+consᵣ-≡ (r⊔ ρ ρ') as = ≡̂ᵣ-refl
 
 appᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ) → List (RAtom Θ)
 appᵣ []       ys = ys
@@ -140,16 +159,18 @@ appᵣ-≡ (a ∷ as) bs =
 -- The image of an effect-atom list under `∣_∣̂ᵉ`
 
 imgᵃ : ∀ {Θ} → EAtom Θ → RAtom Θ
-imgᵃ (ac c) = rc (mapᵉ c)
-imgᵃ (av i) = rm i
+imgᵃ (ac c)    = rc (mapᵉ c)
+imgᵃ (av i)    = rm i
+imgᵃ (a⊔ ε ε') = r⊔ ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ
 
 img : ∀ {Θ} → List (EAtom Θ) → List (RAtom Θ)
 img []       = []
 img (a ∷ as) = consᵣ (imgᵃ a) (img as)
 
 imgᵃ-≡ : ∀ {Θ} → (a : EAtom Θ) → ∣ ⟦ a ⟧ᵉᵃ ∣̂ᵉ ≡̂ᵣ ⟦ imgᵃ a ⟧ʳᵃ
-imgᵃ-≡ (ac c) = ≡̂ᵣ-map-const
-imgᵃ-≡ (av i) = ≡̂ᵣ-refl
+imgᵃ-≡ (ac c)    = ≡̂ᵣ-map-const
+imgᵃ-≡ (av i)    = ≡̂ᵣ-refl
+imgᵃ-≡ (a⊔ ε ε') = ≡̂ᵣ-map-⊔
 
 img-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ∣ ⟦ as ⟧ᵉˢ ∣̂ᵉ ≡̂ᵣ ⟦ img as ⟧ʳˢ
 img-≡ []       = subst (λ x → ∣ ûₑ ∣̂ᵉ ≡̂ᵣ rconst x) map-uᵉ ≡̂ᵣ-map-const
@@ -161,6 +182,7 @@ nrmᵣ : ∀ {Θ} → RExp Θ → List (RAtom Θ)
 nrmᵣ (rvar i)   = rv i ∷ []
 nrmᵣ (rconst c) = consᵣ (rc c) []
 nrmᵣ (ρ ·̂ᵣ ρ')  = appᵣ (nrmᵣ ρ) (nrmᵣ ρ')
+nrmᵣ (ρ ⊔̂ᵣ ρ')  = r⊔ ρ ρ' ∷ []
 nrmᵣ ∣ ε ∣̂ᵉ     = img (nrmₑ ε)
 
 nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ
@@ -168,6 +190,7 @@ nrmᵣ-≡ (rvar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
 nrmᵣ-≡ (rconst c) = ≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ)
 nrmᵣ-≡ (ρ ·̂ᵣ ρ')  =
   ≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ')) (≡̂ᵣ-sym (appᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))
+nrmᵣ-≡ (ρ ⊔̂ᵣ ρ')  = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
 nrmᵣ-≡ ∣ ε ∣̂ᵉ     = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (nrmₑ-≡ ε)) (img-≡ (nrmₑ ε))
 
 -- The read-back without a trailing unit, and the canonical form of an

@@ -95,11 +95,13 @@ strᵉ : ∀ {Ψ} → EVar (Ψ +e) → EExp (Ψ +e) → Maybe (EExp Ψ)
 strᵉ {Ψ} j (evar k)   = mmap evar (thickᵉ {Ψ} j k)
 strᵉ     j (econst c) = just (econst c)
 strᵉ     j (ε ·̂ₑ ε')  = zip₂ _·̂ₑ_ (strᵉ j ε) (strᵉ j ε')
+strᵉ     j (ε ⊔̂ₑ ε')  = zip₂ _⊔̂ₑ_ (strᵉ j ε) (strᵉ j ε')
 
 strʳ : ∀ {Ψ} → EVar (Ψ +e) → RExp (Ψ +e) → Maybe (RExp Ψ)
 strʳ j (rvar i)   = just (rvar i)
 strʳ j (rconst c) = just (rconst c)
 strʳ j (ρ ·̂ᵣ ρ')  = zip₂ _·̂ᵣ_ (strʳ j ρ) (strʳ j ρ')
+strʳ j (ρ ⊔̂ᵣ ρ')  = zip₂ _⊔̂ᵣ_ (strʳ j ρ) (strʳ j ρ')
 strʳ j ∣ ε ∣̂ᵉ     = mmap ∣_∣̂ᵉ (strᵉ j ε)
 
 mutual
@@ -135,6 +137,8 @@ str-popᵉ {Ψ} j (evar k)   q with map-just evar (thickᵉ {Ψ} j k) q
 str-popᵉ     j (econst c) refl = refl
 str-popᵉ     j (ε ·̂ₑ ε')  q with zip₂-just _·̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
 ... | a , b , qa , qb , refl = cong₂ _·̂ₑ_ (str-popᵉ j ε qa) (str-popᵉ j ε' qb)
+str-popᵉ     j (ε ⊔̂ₑ ε')  q with zip₂-just _⊔̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
+... | a , b , qa , qb , refl = cong₂ _⊔̂ₑ_ (str-popᵉ j ε qa) (str-popᵉ j ε' qb)
 
 str-popʳ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e)) → {ρ₀ : RExp Ψ}
          → strʳ j ρ ≡ just ρ₀ → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀
@@ -142,6 +146,8 @@ str-popʳ j (rvar i)   refl = refl
 str-popʳ j (rconst c) refl = refl
 str-popʳ j (ρ ·̂ᵣ ρ')  q with zip₂-just _·̂ᵣ_ (strʳ j ρ) (strʳ j ρ') q
 ... | a , b , qa , qb , refl = cong₂ _·̂ᵣ_ (str-popʳ j ρ qa) (str-popʳ j ρ' qb)
+str-popʳ j (ρ ⊔̂ᵣ ρ')  q with zip₂-just _⊔̂ᵣ_ (strʳ j ρ) (strʳ j ρ') q
+... | a , b , qa , qb , refl = cong₂ _⊔̂ᵣ_ (str-popʳ j ρ qa) (str-popʳ j ρ' qb)
 str-popʳ j ∣ ε ∣̂ᵉ     q with map-just ∣_∣̂ᵉ (strᵉ j ε) q
 ... | ε₀ , qe , refl = cong ∣_∣̂ᵉ (str-popᵉ j ε qe)
 
@@ -170,11 +176,13 @@ str-wkᵉ : ∀ {Ψ} → (ε : EExp Ψ) → strᵉ (newᵉ {Ψ}) (wkᵉ-e ε) �
 str-wkᵉ (evar i)   = refl
 str-wkᵉ (econst c) = refl
 str-wkᵉ (ε ·̂ₑ ε')  = cong₂ (zip₂ _·̂ₑ_) (str-wkᵉ ε) (str-wkᵉ ε')
+str-wkᵉ (ε ⊔̂ₑ ε')  = cong₂ (zip₂ _⊔̂ₑ_) (str-wkᵉ ε) (str-wkᵉ ε')
 
 str-wkʳ : ∀ {Ψ} → (ρ : RExp Ψ) → strʳ (newᵉ {Ψ}) (wkᵉ-r ρ) ≡ just ρ
 str-wkʳ (rvar i)   = refl
 str-wkʳ (rconst c) = refl
 str-wkʳ (ρ ·̂ᵣ ρ')  = cong₂ (zip₂ _·̂ᵣ_) (str-wkʳ ρ) (str-wkʳ ρ')
+str-wkʳ (ρ ⊔̂ᵣ ρ')  = cong₂ (zip₂ _⊔̂ᵣ_) (str-wkʳ ρ) (str-wkʳ ρ')
 str-wkʳ ∣ ε ∣̂ᵉ     = cong (mmap ∣_∣̂ᵉ) (str-wkᵉ ε)
 
 mutual
@@ -297,12 +305,18 @@ escᵉ σ j k r (econst c) ()
 escᵉ σ j k r (ε ·̂ₑ ε')  q with ∨-true (occᵉ-e j ε) (occᵉ-e j ε') q
 ... | inj₁ s = ∨-left  (occᵉ-e k (ε [ σ ]ᵉ)) (occᵉ-e k (ε' [ σ ]ᵉ)) (escᵉ σ j k r ε s)
 ... | inj₂ s = ∨-right (occᵉ-e k (ε [ σ ]ᵉ)) (occᵉ-e k (ε' [ σ ]ᵉ)) (escᵉ σ j k r ε' s)
+escᵉ σ j k r (ε ⊔̂ₑ ε')  q with ∨-true (occᵉ-e j ε) (occᵉ-e j ε') q
+... | inj₁ s = ∨-left  (occᵉ-e k (ε [ σ ]ᵉ)) (occᵉ-e k (ε' [ σ ]ᵉ)) (escᵉ σ j k r ε s)
+... | inj₂ s = ∨-right (occᵉ-e k (ε [ σ ]ᵉ)) (occᵉ-e k (ε' [ σ ]ᵉ)) (escᵉ σ j k r ε' s)
 
 escʳ : ∀ {Φ Ψ} → (σ : Subst Φ Ψ) → (j : EVar Φ) → (k : EVar Ψ) → sE σ j ≡ evar k
      → (ρ : RExp Φ) → occᵉ-r j ρ ≡ true → occᵉ-r k (ρ [ σ ]ʳ) ≡ true
 escʳ σ j k r (rvar i)   ()
 escʳ σ j k r (rconst c) ()
 escʳ σ j k r (ρ ·̂ᵣ ρ')  q with ∨-true (occᵉ-r j ρ) (occᵉ-r j ρ') q
+... | inj₁ s = ∨-left  (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-r k (ρ' [ σ ]ʳ)) (escʳ σ j k r ρ s)
+... | inj₂ s = ∨-right (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-r k (ρ' [ σ ]ʳ)) (escʳ σ j k r ρ' s)
+escʳ σ j k r (ρ ⊔̂ᵣ ρ')  q with ∨-true (occᵉ-r j ρ) (occᵉ-r j ρ') q
 ... | inj₁ s = ∨-left  (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-r k (ρ' [ σ ]ʳ)) (escʳ σ j k r ρ s)
 ... | inj₂ s = ∨-right (occᵉ-r k (ρ [ σ ]ʳ)) (occᵉ-r k (ρ' [ σ ]ʳ)) (escʳ σ j k r ρ' s)
 escʳ σ j k r ∣ ε ∣̂ᵉ     q = escᵉ σ j k r ε q
@@ -339,11 +353,17 @@ occ-wkᵉ     (econst c) ()
 occ-wkᵉ {Ψ} (ε ·̂ₑ ε')  q =
   [ occ-wkᵉ ε , occ-wkᵉ ε' ]′
     (∨-true (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε)) (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε')) q)
+occ-wkᵉ {Ψ} (ε ⊔̂ₑ ε')  q =
+  [ occ-wkᵉ ε , occ-wkᵉ ε' ]′
+    (∨-true (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε)) (occᵉ-e (newᵉ {Ψ}) (wkᵉ-e ε')) q)
 
 occ-wkʳ : ∀ {Ψ} → (ρ : RExp Ψ) → occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ) ≡ true → ⊥
 occ-wkʳ     (rvar i)   ()
 occ-wkʳ     (rconst c) ()
 occ-wkʳ {Ψ} (ρ ·̂ᵣ ρ')  q =
+  [ occ-wkʳ ρ , occ-wkʳ ρ' ]′
+    (∨-true (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ)) (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ')) q)
+occ-wkʳ {Ψ} (ρ ⊔̂ᵣ ρ')  q =
   [ occ-wkʳ ρ , occ-wkʳ ρ' ]′
     (∨-true (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ)) (occᵉ-r (newᵉ {Ψ}) (wkᵉ-r ρ')) q)
 occ-wkʳ     ∣ ε ∣̂ᵉ     q = occ-wkᵉ ε q
@@ -379,12 +399,18 @@ str-occᵉ     j (econst c) ()
 str-occᵉ     j (ε ·̂ₑ ε')  q with zip₂-nothing _·̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
 ... | inj₁ s = ∨-left  (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε s)
 ... | inj₂ s = ∨-right (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε' s)
+str-occᵉ     j (ε ⊔̂ₑ ε')  q with zip₂-nothing _⊔̂ₑ_ (strᵉ j ε) (strᵉ j ε') q
+... | inj₁ s = ∨-left  (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε s)
+... | inj₂ s = ∨-right (occᵉ-e j ε) (occᵉ-e j ε') (str-occᵉ j ε' s)
 
 str-occʳ : ∀ {Ψ} → (j : EVar (Ψ +e)) → (ρ : RExp (Ψ +e))
          → strʳ j ρ ≡ nothing → occᵉ-r j ρ ≡ true
 str-occʳ j (rvar i)   ()
 str-occʳ j (rconst c) ()
 str-occʳ j (ρ ·̂ᵣ ρ')  q with zip₂-nothing _·̂ᵣ_ (strʳ j ρ) (strʳ j ρ') q
+... | inj₁ s = ∨-left  (occᵉ-r j ρ) (occᵉ-r j ρ') (str-occʳ j ρ s)
+... | inj₂ s = ∨-right (occᵉ-r j ρ) (occᵉ-r j ρ') (str-occʳ j ρ' s)
+str-occʳ j (ρ ⊔̂ᵣ ρ')  q with zip₂-nothing _⊔̂ᵣ_ (strʳ j ρ) (strʳ j ρ') q
 ... | inj₁ s = ∨-left  (occᵉ-r j ρ) (occᵉ-r j ρ') (str-occʳ j ρ s)
 ... | inj₂ s = ∨-right (occᵉ-r j ρ) (occᵉ-r j ρ') (str-occʳ j ρ' s)
 str-occʳ j ∣ ε ∣̂ᵉ     q = str-occᵉ j ε (map-nothing ∣_∣̂ᵉ (strᵉ j ε) q)

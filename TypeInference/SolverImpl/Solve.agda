@@ -353,6 +353,7 @@ evar? : ∀ {Φ} → (ε : EExp Φ) → Maybe (Σ[ j ∈ EVar Φ ] (ε ≡ evar 
 evar? (evar j)   = just (j , refl)
 evar? (econst c) = nothing
 evar? (ε ·̂ₑ ε')  = nothing
+evar? (ε ⊔̂ₑ ε')  = nothing
 
 -- Of the four failures below, only the atoms `splitᴿ` has to discharge
 -- on the spot are an oracle's verdict; the rest cannot happen or are

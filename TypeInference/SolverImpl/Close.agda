@@ -74,11 +74,13 @@ evalᵉ-⟦⟧ : (ε : EExp ∅ˢ) → evalᵉ ε ≡ ⟦ ε ⟧ᵉ θ∅
 evalᵉ-⟦⟧ (evar ())
 evalᵉ-⟦⟧ (econst c) = refl
 evalᵉ-⟦⟧ (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (evalᵉ-⟦⟧ ε) (evalᵉ-⟦⟧ ε')
+evalᵉ-⟦⟧ (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (evalᵉ-⟦⟧ ε) (evalᵉ-⟦⟧ ε')
 
 evalʳ-⟦⟧ : (ρ : RExp ∅ˢ) → evalʳ ρ ≡ ⟦ ρ ⟧ʳ θ∅
 evalʳ-⟦⟧ (rvar ())
 evalʳ-⟦⟧ (rconst c) = refl
 evalʳ-⟦⟧ (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (evalʳ-⟦⟧ ρ) (evalʳ-⟦⟧ ρ')
+evalʳ-⟦⟧ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (evalʳ-⟦⟧ ρ) (evalʳ-⟦⟧ ρ')
 evalʳ-⟦⟧ ∣ ε ∣̂ᵉ     = cong mapᵉ (evalᵉ-⟦⟧ ε)
 
 -- Orderings of the empty scope, decided and refuted
@@ -134,11 +136,13 @@ valᵉ : ∀ {Ψ} → EExp Ψ → Maybe E
 valᵉ (evar _)   = nothing
 valᵉ (econst c) = just c
 valᵉ (ε ·̂ₑ ε')  = zip₂ _·ₑ_ (valᵉ ε) (valᵉ ε')
+valᵉ (ε ⊔̂ₑ ε')  = zip₂ _⊔ₑ_ (valᵉ ε) (valᵉ ε')
 
 valʳ : ∀ {Ψ} → RExp Ψ → Maybe R
 valʳ (rvar _)   = nothing
 valʳ (rconst c) = just c
 valʳ (ρ ·̂ᵣ ρ')  = zip₂ _·ᵣ_ (valʳ ρ) (valʳ ρ')
+valʳ (ρ ⊔̂ᵣ ρ')  = zip₂ _⊔ᵣ_ (valʳ ρ) (valʳ ρ')
 valʳ ∣ ε ∣̂ᵉ     = mmap mapᵉ (valᵉ ε)
 
 -- Two lower bounds on one unknown, combined: their join where both
@@ -197,6 +201,7 @@ lowerᵉ i ((ε , ε') ∷ l) σ with ε' [ σ ]ᵉ
 ... | evar j   = if ⌊ j ≟ᶠ i ⌋ then ε [ σ ]ᵉ ∷ lowerᵉ i l σ else lowerᵉ i l σ
 ... | econst _ = lowerᵉ i l σ
 ... | _ ·̂ₑ _   = lowerᵉ i l σ
+... | _ ⊔̂ₑ _   = lowerᵉ i l σ
 
 lowerʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Subst Ψ Ψ → List (RExp Ψ)
 lowerʳ i []             σ = []
@@ -204,6 +209,7 @@ lowerʳ i ((ρ , ρ') ∷ l) σ with ρ' [ σ ]ʳ
 ... | rvar j   = if ⌊ j ≟ᶠ i ⌋ then ρ [ σ ]ʳ ∷ lowerʳ i l σ else lowerʳ i l σ
 ... | rconst _ = lowerʳ i l σ
 ... | _ ·̂ᵣ _   = lowerʳ i l σ
+... | _ ⊔̂ᵣ _   = lowerʳ i l σ
 ... | ∣ _ ∣̂ᵉ   = lowerʳ i l σ
 
 upperᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Subst Ψ Ψ → List (EExp Ψ)
@@ -212,6 +218,7 @@ upperᵉ i ((ε , ε') ∷ l) σ with ε [ σ ]ᵉ
 ... | evar j   = if ⌊ j ≟ᶠ i ⌋ then ε' [ σ ]ᵉ ∷ upperᵉ i l σ else upperᵉ i l σ
 ... | econst _ = upperᵉ i l σ
 ... | _ ·̂ₑ _   = upperᵉ i l σ
+... | _ ⊔̂ₑ _   = upperᵉ i l σ
 
 upperʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Subst Ψ Ψ → List (RExp Ψ)
 upperʳ i []             σ = []
@@ -219,6 +226,7 @@ upperʳ i ((ρ , ρ') ∷ l) σ with ρ [ σ ]ʳ
 ... | rvar j   = if ⌊ j ≟ᶠ i ⌋ then ρ' [ σ ]ʳ ∷ upperʳ i l σ else upperʳ i l σ
 ... | rconst _ = upperʳ i l σ
 ... | _ ·̂ᵣ _   = upperʳ i l σ
+... | _ ⊔̂ᵣ _   = upperʳ i l σ
 ... | ∣ _ ∣̂ᵉ   = upperʳ i l σ
 
 boundᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
@@ -261,6 +269,7 @@ slackᵉ ((ε , ε') ∷ l) l₀ σ with ε' [ σ ]ᵉ
 ... | evar i   = slackᵉ l l₀ (bindᵉ i (boundᵉ (lowerᵉ i l₀ σ)) σ)
 ... | econst _ = slackᵉ l l₀ σ
 ... | _ ·̂ₑ _   = slackᵉ l l₀ σ
+... | _ ⊔̂ₑ _   = slackᵉ l l₀ σ
 
 slackʳ : ∀ {Ψ} → (l l₀ : List (RExp Ψ × RExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
 slackʳ []             l₀ σ = σ
@@ -268,6 +277,7 @@ slackʳ ((ρ , ρ') ∷ l) l₀ σ with ρ' [ σ ]ʳ
 ... | rvar i   = slackʳ l l₀ (bindʳ i (boundʳ (lowerʳ i l₀ σ)) σ)
 ... | rconst _ = slackʳ l l₀ σ
 ... | _ ·̂ᵣ _   = slackʳ l l₀ σ
+... | _ ⊔̂ᵣ _   = slackʳ l l₀ σ
 ... | ∣ _ ∣̂ᵉ   = slackʳ l l₀ σ
 
 -- Tightening is confined to the unknowns no demand bounds from below,
@@ -285,6 +295,7 @@ tightᵉ p ((ε , ε') ∷ l) l₀ σ with ε [ σ ]ᵉ
                       then bindᵉ i (capᵉ (upperᵉ i l₀ σ)) σ else σ)
 ... | econst _ = tightᵉ p l l₀ σ
 ... | _ ·̂ₑ _   = tightᵉ p l l₀ σ
+... | _ ⊔̂ₑ _   = tightᵉ p l l₀ σ
 
 tightʳ : ∀ {Ψ} → (RVar Ψ → Pol)
        → (l l₀ : List (RExp Ψ × RExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
@@ -295,6 +306,7 @@ tightʳ p ((ρ , ρ') ∷ l) l₀ σ with ρ [ σ ]ʳ
                       then bindʳ i (capʳ (upperʳ i l₀ σ)) σ else σ)
 ... | rconst _ = tightʳ p l l₀ σ
 ... | _ ·̂ᵣ _   = tightʳ p l l₀ σ
+... | _ ⊔̂ᵣ _   = tightʳ p l l₀ σ
 ... | ∣ _ ∣̂ᵉ   = tightʳ p l l₀ σ
 
 -- The grade orderings the subtyping demands decompose to. A

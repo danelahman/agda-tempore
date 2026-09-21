@@ -143,6 +143,16 @@ atʳ-· : (s : Sign) → {x x' y y' : R}
 atʳ-· ⁺ p q = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ p) (·ᵣ-monoʳ-≾ᵣ q)
 atʳ-· ⁻ p q = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ p) (·ᵣ-monoʳ-≾ᵣ q)
 
+atᵉ-⊔ : (s : Sign) → {x x' y y' : E}
+      → atᵉ s x y → atᵉ s x' y' → atᵉ s (x ⊔ₑ x') (y ⊔ₑ y')
+atᵉ-⊔ ⁺ p q = ⊔ₑ-mono p q
+atᵉ-⊔ ⁻ p q = ⊔ₑ-mono p q
+
+atʳ-⊔ : (s : Sign) → {x x' y y' : R}
+      → atʳ s x y → atʳ s x' y' → atʳ s (x ⊔ᵣ x') (y ⊔ᵣ y')
+atʳ-⊔ ⁺ p q = ⊔ᵣ-mono p q
+atʳ-⊔ ⁻ p q = ⊔ᵣ-mono p q
+
 atʳ-map : (s : Sign) → {x y : E} → atᵉ s x y → atʳ s (mapᵉ x) (mapᵉ y)
 atʳ-map ⁺ p = map-monotoneᵉ p
 atʳ-map ⁻ p = map-monotoneᵉ p
@@ -171,11 +181,13 @@ sbᵉ-e : ∀ {Θ} → EVar Θ → EExp Θ → EExp Θ → EExp Θ
 sbᵉ-e i b (evar j)   = upd i b evar j
 sbᵉ-e i b (econst ε) = econst ε
 sbᵉ-e i b (ε ·̂ₑ ε')  = sbᵉ-e i b ε ·̂ₑ sbᵉ-e i b ε'
+sbᵉ-e i b (ε ⊔̂ₑ ε')  = sbᵉ-e i b ε ⊔̂ₑ sbᵉ-e i b ε'
 
 sbᵉ-r : ∀ {Θ} → EVar Θ → EExp Θ → RExp Θ → RExp Θ
 sbᵉ-r i b (rvar j)   = rvar j
 sbᵉ-r i b (rconst ρ) = rconst ρ
 sbᵉ-r i b (ρ ·̂ᵣ ρ')  = sbᵉ-r i b ρ ·̂ᵣ sbᵉ-r i b ρ'
+sbᵉ-r i b (ρ ⊔̂ᵣ ρ')  = sbᵉ-r i b ρ ⊔̂ᵣ sbᵉ-r i b ρ'
 sbᵉ-r i b ∣ ε ∣̂ᵉ     = ∣ sbᵉ-e i b ε ∣̂ᵉ
 
 mutual
@@ -205,12 +217,14 @@ lowᵉ θ i e = grounding (gTy θ) (gR θ) (upd i e (gE θ))
                        (sym (upd-≢ i j (⟦ b ⟧ᵉ θ) (gE θ) ¬p))
 ⟦sbᵉ⟧-e i b (econst ε) = refl
 ⟦sbᵉ⟧-e i b (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε')
+⟦sbᵉ⟧-e i b (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε')
 
 ⟦sbᵉ⟧-r : ∀ {Θ} {θ : Grounding Θ} → (i : EVar Θ) → (b : EExp Θ) → (ρ : RExp Θ)
         → ⟦ sbᵉ-r i b ρ ⟧ʳ θ ≡ ⟦ ρ ⟧ʳ (lowᵉ θ i (⟦ b ⟧ᵉ θ))
 ⟦sbᵉ⟧-r i b (rvar j)   = refl
 ⟦sbᵉ⟧-r i b (rconst ρ) = refl
 ⟦sbᵉ⟧-r i b (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ')
+⟦sbᵉ⟧-r i b (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ')
 ⟦sbᵉ⟧-r i b ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦sbᵉ⟧-e i b ε)
 
 mutual
@@ -240,6 +254,9 @@ invᵉ-e i (econst ε) q = refl
 invᵉ-e i (ε ·̂ₑ ε')  q =
   cong₂ _·ₑ_ (invᵉ-e i ε (proj₁ d)) (invᵉ-e i ε' (proj₂ d))
   where d = below-∪ (polₑ-e i ⁻ ε) (polₑ-e i ⁻ ε') q
+invᵉ-e i (ε ⊔̂ₑ ε')  q =
+  cong₂ _⊔ₑ_ (invᵉ-e i ε (proj₁ d)) (invᵉ-e i ε' (proj₂ d))
+  where d = below-∪ (polₑ-e i ⁻ ε) (polₑ-e i ⁻ ε') q
 
 -- Lowering an unknown lowers whatever has no occurrence of it below
 
@@ -261,6 +278,9 @@ module _ {Θ : Scope} (θ : Grounding Θ) (i : EVar Θ) (e₀ : E)
   monoᵉ-e s (ε ·̂ₑ ε')  q =
     atᵉ-· s (monoᵉ-e s ε (proj₁ d)) (monoᵉ-e s ε' (proj₂ d))
     where d = below-∪ (polₑ-e i s ε) (polₑ-e i s ε') q
+  monoᵉ-e s (ε ⊔̂ₑ ε')  q =
+    atᵉ-⊔ s (monoᵉ-e s ε (proj₁ d)) (monoᵉ-e s ε' (proj₂ d))
+    where d = below-∪ (polₑ-e i s ε) (polₑ-e i s ε') q
 
   monoᵉ-r : (s : Sign) → (ρ : RExp Θ) → below (polₑ-r i s ρ) ≡ false
           → atʳ s (⟦ ρ ⟧ʳ θ⁻) (⟦ ρ ⟧ʳ θ)
@@ -268,6 +288,9 @@ module _ {Θ : Scope} (θ : Grounding Θ) (i : EVar Θ) (e₀ : E)
   monoᵉ-r s (rconst ρ) q = atʳ-refl s ρ
   monoᵉ-r s (ρ ·̂ᵣ ρ')  q =
     atʳ-· s (monoᵉ-r s ρ (proj₁ d)) (monoᵉ-r s ρ' (proj₂ d))
+    where d = below-∪ (polₑ-r i s ρ) (polₑ-r i s ρ') q
+  monoᵉ-r s (ρ ⊔̂ᵣ ρ')  q =
+    atʳ-⊔ s (monoᵉ-r s ρ (proj₁ d)) (monoᵉ-r s ρ' (proj₂ d))
     where d = below-∪ (polₑ-r i s ρ) (polₑ-r i s ρ') q
   monoᵉ-r s ∣ ε ∣̂ᵉ     q = atʳ-map s (monoᵉ-e s ε q)
 
@@ -391,6 +414,9 @@ splitₑ i ((ε , econst _) ∷ l) with splitₑ i l
 ... | just s  = just (consₑ s)
 ... | nothing = nothing
 splitₑ i ((ε , _ ·̂ₑ _) ∷ l) with splitₑ i l
+... | just s  = just (consₑ s)
+... | nothing = nothing
+splitₑ i ((ε , _ ⊔̂ₑ _) ∷ l) with splitₑ i l
 ... | just s  = just (consₑ s)
 ... | nothing = nothing
 
@@ -556,6 +582,7 @@ sbʳ-r : ∀ {Θ} → RVar Θ → RExp Θ → RExp Θ → RExp Θ
 sbʳ-r i b (rvar j)   = upd i b rvar j
 sbʳ-r i b (rconst ρ) = rconst ρ
 sbʳ-r i b (ρ ·̂ᵣ ρ')  = sbʳ-r i b ρ ·̂ᵣ sbʳ-r i b ρ'
+sbʳ-r i b (ρ ⊔̂ᵣ ρ')  = sbʳ-r i b ρ ⊔̂ᵣ sbʳ-r i b ρ'
 sbʳ-r i b ∣ ε ∣̂ᵉ     = ∣ ε ∣̂ᵉ
 
 mutual
@@ -581,6 +608,7 @@ lowʳ θ i ρ = grounding (gTy θ) (upd i ρ (gR θ)) (gE θ)
 ⟦lowʳ⟧-e i (evar j)   = refl
 ⟦lowʳ⟧-e i (econst ε) = refl
 ⟦lowʳ⟧-e i (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦lowʳ⟧-e i ε) (⟦lowʳ⟧-e i ε')
+⟦lowʳ⟧-e i (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦lowʳ⟧-e i ε) (⟦lowʳ⟧-e i ε')
 
 ⟦sbʳ⟧-r : ∀ {Θ} {θ : Grounding Θ} → (i : RVar Θ) → (b : RExp Θ) → (ρ : RExp Θ)
         → ⟦ sbʳ-r i b ρ ⟧ʳ θ ≡ ⟦ ρ ⟧ʳ (lowʳ θ i (⟦ b ⟧ʳ θ))
@@ -591,6 +619,7 @@ lowʳ θ i ρ = grounding (gTy θ) (upd i ρ (gR θ)) (gE θ)
                        (sym (upd-≢ i j (⟦ b ⟧ʳ θ) (gR θ) ¬p))
 ⟦sbʳ⟧-r i b (rconst ρ) = refl
 ⟦sbʳ⟧-r i b (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ')
+⟦sbʳ⟧-r i b (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ')
 ⟦sbʳ⟧-r i b ∣ ε ∣̂ᵉ     = cong mapᵉ (sym (⟦lowʳ⟧-e i ε))
 
 mutual
@@ -617,6 +646,9 @@ invʳ-r i (rconst ρ) q = refl
 invʳ-r i (ρ ·̂ᵣ ρ')  q =
   cong₂ _·ᵣ_ (invʳ-r i ρ (proj₁ d)) (invʳ-r i ρ' (proj₂ d))
   where d = below-∪ (polᵣ-r i ⁻ ρ) (polᵣ-r i ⁻ ρ') q
+invʳ-r i (ρ ⊔̂ᵣ ρ')  q =
+  cong₂ _⊔ᵣ_ (invʳ-r i ρ (proj₁ d)) (invʳ-r i ρ' (proj₂ d))
+  where d = below-∪ (polᵣ-r i ⁻ ρ) (polᵣ-r i ⁻ ρ') q
 invʳ-r i ∣ ε ∣̂ᵉ     q = cong mapᵉ (⟦lowʳ⟧-e i ε)
 
 module _ {Θ : Scope} (θ : Grounding Θ) (i : RVar Θ) (ρ₀ : R)
@@ -636,6 +668,9 @@ module _ {Θ : Scope} (θ : Grounding Θ) (i : RVar Θ) (ρ₀ : R)
   monoʳ-r s (rconst ρ) q = atʳ-refl s ρ
   monoʳ-r s (ρ ·̂ᵣ ρ')  q =
     atʳ-· s (monoʳ-r s ρ (proj₁ d)) (monoʳ-r s ρ' (proj₂ d))
+    where d = below-∪ (polᵣ-r i s ρ) (polᵣ-r i s ρ') q
+  monoʳ-r s (ρ ⊔̂ᵣ ρ')  q =
+    atʳ-⊔ s (monoʳ-r s ρ (proj₁ d)) (monoʳ-r s ρ' (proj₂ d))
     where d = below-∪ (polᵣ-r i s ρ) (polᵣ-r i s ρ') q
   monoʳ-r s ∣ ε ∣̂ᵉ     q =
     subst (λ x → atʳ s (mapᵉ x) (mapᵉ (⟦ ε ⟧ᵉ θ))) (sym (⟦lowʳ⟧-e i ε))
@@ -717,6 +752,9 @@ splitʳ i ((ρ , rconst _) ∷ l) with splitʳ i l
 ... | just s  = just (consʳ s)
 ... | nothing = nothing
 splitʳ i ((ρ , _ ·̂ᵣ _) ∷ l) with splitʳ i l
+... | just s  = just (consʳ s)
+... | nothing = nothing
+splitʳ i ((ρ , _ ⊔̂ᵣ _) ∷ l) with splitʳ i l
 ... | just s  = just (consʳ s)
 ... | nothing = nothing
 splitʳ i ((ρ , ∣ _ ∣̂ᵉ) ∷ l) with splitʳ i l
@@ -875,12 +913,14 @@ lowᵗ θ α B = grounding (upd α B (gTy θ)) (gR θ) (gE θ)
 ⟦lowᵗ⟧-e α (evar j)   = refl
 ⟦lowᵗ⟧-e α (econst ε) = refl
 ⟦lowᵗ⟧-e α (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦lowᵗ⟧-e α ε) (⟦lowᵗ⟧-e α ε')
+⟦lowᵗ⟧-e α (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦lowᵗ⟧-e α ε) (⟦lowᵗ⟧-e α ε')
 
 ⟦lowᵗ⟧-r : ∀ {Θ} {θ : Grounding Θ} {B : VType} → (α : TyVar Θ) → (ρ : RExp Θ)
          → ⟦ ρ ⟧ʳ (lowᵗ θ α B) ≡ ⟦ ρ ⟧ʳ θ
 ⟦lowᵗ⟧-r α (rvar j)   = refl
 ⟦lowᵗ⟧-r α (rconst ρ) = refl
 ⟦lowᵗ⟧-r α (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦lowᵗ⟧-r α ρ) (⟦lowᵗ⟧-r α ρ')
+⟦lowᵗ⟧-r α (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦lowᵗ⟧-r α ρ) (⟦lowᵗ⟧-r α ρ')
 ⟦lowᵗ⟧-r α ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦lowᵗ⟧-e α ε)
 
 mutual

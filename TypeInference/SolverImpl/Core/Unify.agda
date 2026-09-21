@@ -208,6 +208,7 @@ mutual
   amguʳ k p rg ρ           (rvar j)      (_ , anil)  = flexʳ j ρ
   amguʳ k p rg (rconst c)  (rconst d)   s@(_ , anil) = if ⌊ c ≡ᵣ? d ⌋ then just s else nothing
   amguʳ k p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') s@(_ , anil) = amguʳ k p rg ρ₁ ρ₁' s >>= amguʳ k p rg ρ₂ ρ₂'
+  amguʳ k p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') s@(_ , anil) = amguʳ k p rg ρ₁ ρ₁' s >>= amguʳ k p rg ρ₂ ρ₂'
   amguʳ k p rg ∣ ε ∣̂ᵉ      ∣ ε' ∣̂ᵉ      s@(_ , anil) = amguᵉ k p rg ε ε' s
   amguʳ k p rg ρ           ρ'            (_ , anil)  = nothing
 
@@ -230,6 +231,7 @@ mutual
   amguᵉ k p rg ε           (evar j)      (_ , anil)  = flexᵉ rg j ε
   amguᵉ k p rg (econst c)  (econst d)   s@(_ , anil) = if ⌊ c ≡ₑ? d ⌋ then just s else nothing
   amguᵉ k p rg (ε₁ ·̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') s@(_ , anil) = amguᵉ k p rg ε₁ ε₁' s >>= amguᵉ k p rg ε₂ ε₂'
+  amguᵉ k p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') s@(_ , anil) = amguᵉ k p rg ε₁ ε₁' s >>= amguᵉ k p rg ε₂ ε₂'
   amguᵉ k p rg ε           ε'            (_ , anil)  = nothing
 
 amguᴱ : ∀ {Θ} → Rig Θ → Eqn Θ → Sol Θ → Maybe (Sol Θ)

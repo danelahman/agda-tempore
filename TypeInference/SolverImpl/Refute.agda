@@ -50,7 +50,7 @@ open import TypeInference.OpenSyntax.Grounding S
 open import TypeInference.Constraints.Ground S using (_⨟ᵍ_; ⟦⟧-⨟ᵍ-r)
 
 open import TypeInference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
-  using (RAtom; rc; rv; rm; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; nrmᵣ; nrmᵣ-≡)
+  using (RAtom; rc; rv; rm; r⊔; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; nrmᵣ; nrmᵣ-≡)
 
 -- No grounding brings the expression below the unit
 
@@ -107,6 +107,7 @@ scan-atoms : ∀ {Ψ} → (as : List (RAtom Ψ))
 scan-atoms []             = nothing
 scan-atoms (rv i ∷ as)    = scan-∷ (scan-atoms as)
 scan-atoms (rm i ∷ as)    = scan-∷ (scan-atoms as)
+scan-atoms (r⊔ ρ ρ' ∷ as) = scan-∷ (scan-atoms as)
 scan-atoms (rc c ∷ as) with c ≾ᵣ? uᵣ
 ... | yes _ = scan-∷ (scan-atoms as)
 ... | no ¬p = just (c , here refl , ¬p)

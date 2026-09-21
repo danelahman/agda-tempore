@@ -47,11 +47,13 @@ _[_]ᵉ : ∀ {Θ Θ'} → EExp Θ → Subst Θ Θ' → EExp Θ'
 evar i    [ σ ]ᵉ = sE σ i
 econst ε  [ σ ]ᵉ = econst ε
 (ε ·̂ₑ ε') [ σ ]ᵉ = ε [ σ ]ᵉ ·̂ₑ ε' [ σ ]ᵉ
+(ε ⊔̂ₑ ε') [ σ ]ᵉ = ε [ σ ]ᵉ ⊔̂ₑ ε' [ σ ]ᵉ
 
 _[_]ʳ : ∀ {Θ Θ'} → RExp Θ → Subst Θ Θ' → RExp Θ'
 rvar i    [ σ ]ʳ = sR σ i
 rconst ρ  [ σ ]ʳ = rconst ρ
 (ρ ·̂ᵣ ρ') [ σ ]ʳ = ρ [ σ ]ʳ ·̂ᵣ ρ' [ σ ]ʳ
+(ρ ⊔̂ᵣ ρ') [ σ ]ʳ = ρ [ σ ]ʳ ⊔̂ᵣ ρ' [ σ ]ʳ
 ∣ ε ∣̂ᵉ    [ σ ]ʳ = ∣ ε [ σ ]ᵉ ∣̂ᵉ
 
 mutual
@@ -166,11 +168,13 @@ open _≐ˢ_ public
 [id]ᵉ (evar i)   = refl
 [id]ᵉ (econst ε) = refl
 [id]ᵉ (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ ([id]ᵉ ε) ([id]ᵉ ε')
+[id]ᵉ (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ ([id]ᵉ ε) ([id]ᵉ ε')
 
 [id]ʳ : ∀ {Θ} → (ρ : RExp Θ) → ρ [ idˢ ]ʳ ≡ ρ
 [id]ʳ (rvar i)   = refl
 [id]ʳ (rconst ρ) = refl
 [id]ʳ (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ ([id]ʳ ρ) ([id]ʳ ρ')
+[id]ʳ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ ([id]ʳ ρ) ([id]ʳ ρ')
 [id]ʳ ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ ([id]ᵉ ε)
 
 mutual
@@ -198,12 +202,14 @@ mutual
 [⨟]ᵉ (evar i)   σ δ = refl
 [⨟]ᵉ (econst ε) σ δ = refl
 [⨟]ᵉ (ε ·̂ₑ ε')  σ δ = cong₂ _·̂ₑ_ ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
+[⨟]ᵉ (ε ⊔̂ₑ ε')  σ δ = cong₂ _⊔̂ₑ_ ([⨟]ᵉ ε σ δ) ([⨟]ᵉ ε' σ δ)
 
 [⨟]ʳ : ∀ {Θ Θ' Θ''} → (ρ : RExp Θ) → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
      → ρ [ σ ]ʳ [ δ ]ʳ ≡ ρ [ σ ⨟ˢ δ ]ʳ
 [⨟]ʳ (rvar i)   σ δ = refl
 [⨟]ʳ (rconst ρ) σ δ = refl
 [⨟]ʳ (ρ ·̂ᵣ ρ')  σ δ = cong₂ _·̂ᵣ_ ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ)
+[⨟]ʳ (ρ ⊔̂ᵣ ρ')  σ δ = cong₂ _⊔̂ᵣ_ ([⨟]ʳ ρ σ δ) ([⨟]ʳ ρ' σ δ)
 [⨟]ʳ ∣ ε ∣̂ᵉ     σ δ = cong ∣_∣̂ᵉ ([⨟]ᵉ ε σ δ)
 
 mutual
@@ -233,11 +239,13 @@ mutual
 [≐]ᵉ p (evar i)   = ≐ᵉ p i
 [≐]ᵉ p (econst ε) = refl
 [≐]ᵉ p (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ ([≐]ᵉ p ε) ([≐]ᵉ p ε')
+[≐]ᵉ p (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ ([≐]ᵉ p ε) ([≐]ᵉ p ε')
 
 [≐]ʳ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → σ ≐ˢ δ → (ρ : RExp Θ) → ρ [ σ ]ʳ ≡ ρ [ δ ]ʳ
 [≐]ʳ p (rvar i)   = ≐ʳ p i
 [≐]ʳ p (rconst ρ) = refl
 [≐]ʳ p (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ ([≐]ʳ p ρ) ([≐]ʳ p ρ')
+[≐]ʳ p (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ ([≐]ʳ p ρ) ([≐]ʳ p ρ')
 [≐]ʳ p ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ ([≐]ᵉ p ε)
 
 mutual
@@ -265,33 +273,39 @@ wkˢᵗ-e : ∀ {Θ} → (ε : EExp Θ) → ε [ wkˢᵗ ]ᵉ ≡ wkᵗ-e ε
 wkˢᵗ-e (evar i)   = refl
 wkˢᵗ-e (econst ε) = refl
 wkˢᵗ-e (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (wkˢᵗ-e ε) (wkˢᵗ-e ε')
+wkˢᵗ-e (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (wkˢᵗ-e ε) (wkˢᵗ-e ε')
 
 wkˢʳ-e : ∀ {Θ} → (ε : EExp Θ) → ε [ wkˢʳ ]ᵉ ≡ wkʳ-e ε
 wkˢʳ-e (evar i)   = refl
 wkˢʳ-e (econst ε) = refl
 wkˢʳ-e (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (wkˢʳ-e ε) (wkˢʳ-e ε')
+wkˢʳ-e (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (wkˢʳ-e ε) (wkˢʳ-e ε')
 
 wkˢᵉ-e : ∀ {Θ} → (ε : EExp Θ) → ε [ wkˢᵉ ]ᵉ ≡ wkᵉ-e ε
 wkˢᵉ-e (evar i)   = refl
 wkˢᵉ-e (econst ε) = refl
 wkˢᵉ-e (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (wkˢᵉ-e ε) (wkˢᵉ-e ε')
+wkˢᵉ-e (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (wkˢᵉ-e ε) (wkˢᵉ-e ε')
 
 wkˢᵗ-r : ∀ {Θ} → (ρ : RExp Θ) → ρ [ wkˢᵗ ]ʳ ≡ wkᵗ-r ρ
 wkˢᵗ-r (rvar i)   = refl
 wkˢᵗ-r (rconst ρ) = refl
 wkˢᵗ-r (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (wkˢᵗ-r ρ) (wkˢᵗ-r ρ')
+wkˢᵗ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ (wkˢᵗ-r ρ) (wkˢᵗ-r ρ')
 wkˢᵗ-r ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (wkˢᵗ-e ε)
 
 wkˢʳ-r : ∀ {Θ} → (ρ : RExp Θ) → ρ [ wkˢʳ ]ʳ ≡ wkʳ-r ρ
 wkˢʳ-r (rvar i)   = refl
 wkˢʳ-r (rconst ρ) = refl
 wkˢʳ-r (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (wkˢʳ-r ρ) (wkˢʳ-r ρ')
+wkˢʳ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ (wkˢʳ-r ρ) (wkˢʳ-r ρ')
 wkˢʳ-r ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (wkˢʳ-e ε)
 
 wkˢᵉ-r : ∀ {Θ} → (ρ : RExp Θ) → ρ [ wkˢᵉ ]ʳ ≡ wkᵉ-r ρ
 wkˢᵉ-r (rvar i)   = refl
 wkˢᵉ-r (rconst ρ) = refl
 wkˢᵉ-r (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (wkˢᵉ-r ρ) (wkˢᵉ-r ρ')
+wkˢᵉ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ (wkˢᵉ-r ρ) (wkˢᵉ-r ρ')
 wkˢᵉ-r ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (wkˢᵉ-e ε)
 
 mutual

@@ -103,12 +103,14 @@ agreeᵉ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → ((i : EVar Θ) → sE σ i �
 agreeᵉ q (evar i)   = q i
 agreeᵉ q (econst c) = refl
 agreeᵉ q (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (agreeᵉ q ε) (agreeᵉ q ε')
+agreeᵉ q (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (agreeᵉ q ε) (agreeᵉ q ε')
 
 agreeʳ : ∀ {Θ Θ'} {σ δ : Subst Θ Θ'} → ((i : RVar Θ) → sR σ i ≡ sR δ i)
        → ((i : EVar Θ) → sE σ i ≡ sE δ i) → (ρ : RExp Θ) → ρ [ σ ]ʳ ≡ ρ [ δ ]ʳ
 agreeʳ qr qe (rvar i)   = qr i
 agreeʳ qr qe (rconst c) = refl
 agreeʳ qr qe (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (agreeʳ qr qe ρ) (agreeʳ qr qe ρ')
+agreeʳ qr qe (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ (agreeʳ qr qe ρ) (agreeʳ qr qe ρ')
 agreeʳ qr qe ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (agreeᵉ qe ε)
 
 irrᵉ-e : ∀ {Θ} → (i : EVar (Θ +e)) → (X Y : EExp Θ) → (ε : EExp (Θ +e))
@@ -118,6 +120,8 @@ irrᵉ-e i X Y (evar j) q with thick-¬ i j (dec-false (i ≟ᶠ j) q)
 irrᵉ-e i X Y (econst c) q = refl
 irrᵉ-e i X Y (ε ·̂ₑ ε')  q with ∨-false (occᵉ-e i ε) (occᵉ-e i ε') q
 ... | q₁ , q₂ = cong₂ _·̂ₑ_ (irrᵉ-e i X Y ε q₁) (irrᵉ-e i X Y ε' q₂)
+irrᵉ-e i X Y (ε ⊔̂ₑ ε')  q with ∨-false (occᵉ-e i ε) (occᵉ-e i ε') q
+... | q₁ , q₂ = cong₂ _⊔̂ₑ_ (irrᵉ-e i X Y ε q₁) (irrᵉ-e i X Y ε' q₂)
 
 irrʳ-r : ∀ {Θ} → (i : RVar (Θ +r)) → (X Y : RExp Θ) → (ρ : RExp (Θ +r))
        → occʳ-r i ρ ≡ false → ρ [ X forʳ i ]ʳ ≡ ρ [ Y forʳ i ]ʳ
@@ -126,6 +130,8 @@ irrʳ-r i X Y (rvar j) q with thick-¬ i j (dec-false (i ≟ᶠ j) q)
 irrʳ-r i X Y (rconst c) q = refl
 irrʳ-r i X Y (ρ ·̂ᵣ ρ')  q with ∨-false (occʳ-r i ρ) (occʳ-r i ρ') q
 ... | q₁ , q₂ = cong₂ _·̂ᵣ_ (irrʳ-r i X Y ρ q₁) (irrʳ-r i X Y ρ' q₂)
+irrʳ-r i X Y (ρ ⊔̂ᵣ ρ')  q with ∨-false (occʳ-r i ρ) (occʳ-r i ρ') q
+... | q₁ , q₂ = cong₂ _⊔̂ᵣ_ (irrʳ-r i X Y ρ q₁) (irrʳ-r i X Y ρ' q₂)
 irrʳ-r i X Y ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (agreeᵉ (λ j → refl) ε)
 
 mutual
@@ -576,48 +582,72 @@ mutual
   amguʳ-sound (suc k) p rg (rvar i) (rvar j) anil eq = flexFlexʳ-sound i j eq
   amguʳ-sound (suc k) p rg (rvar i) (rconst d) anil eq = flexʳ-sound i (rconst d) eq
   amguʳ-sound (suc k) p rg (rvar i) (ρ₁' ·̂ᵣ ρ₂') anil eq = flexʳ-sound i (ρ₁' ·̂ᵣ ρ₂') eq
+  amguʳ-sound (suc k) p rg (rvar i) (ρ₁' ⊔̂ᵣ ρ₂') anil eq = flexʳ-sound i (ρ₁' ⊔̂ᵣ ρ₂') eq
   amguʳ-sound (suc k) p rg (rvar i) ∣ ε' ∣̂ᵉ anil eq = flexʳ-sound i ∣ ε' ∣̂ᵉ eq
   amguʳ-sound (suc k) p rg (rconst c) (rvar j) anil eq = Sound-map sym (flexʳ-sound j (rconst c) eq)
   amguʳ-sound (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) (rvar j) anil eq = Sound-map sym (flexʳ-sound j (ρ₁ ·̂ᵣ ρ₂) eq)
+  amguʳ-sound (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) (rvar j) anil eq = Sound-map sym (flexʳ-sound j (ρ₁ ⊔̂ᵣ ρ₂) eq)
   amguʳ-sound (suc k) p rg ∣ ε ∣̂ᵉ (rvar j) anil eq = Sound-map sym (flexʳ-sound j ∣ ε ∣̂ᵉ eq)
   amguʳ-sound {Θ} (suc k) p rg (rconst c) (rconst d) anil eq
     with dec-if (c ≡ᵣ? d) (just (Θ , anil)) nothing eq
   ... | inj₁ (r , refl) = sound anil refl (cong rconst r)
   ... | inj₂ ()
   amguʳ-sound (suc k) p rg (rconst c) (ρ₁' ·̂ᵣ ρ₂') anil ()
+  amguʳ-sound (suc k) p rg (rconst c) (ρ₁' ⊔̂ᵣ ρ₂') anil ()
   amguʳ-sound (suc k) p rg (rconst c) ∣ ε' ∣̂ᵉ anil ()
   amguʳ-sound (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) (rconst d) anil ()
   amguʳ-sound {Θ} (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil eq =
     seq-sound (amguʳ (suc k) p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ (suc k) p rg ρ₂ ρ₂')
               (amguʳ-sound (suc k) p rg ρ₁ ρ₁' anil) (amguʳ-sound (suc k) p rg ρ₂ ρ₂')
               (cong₂ _·̂ᵣ_) eq
+  amguʳ-sound (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil ()
   amguʳ-sound (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) ∣ ε' ∣̂ᵉ anil ()
+  amguʳ-sound (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) (rconst d) anil ()
+  amguʳ-sound (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil ()
+  amguʳ-sound {Θ} (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil eq =
+    seq-sound (amguʳ (suc k) p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ (suc k) p rg ρ₂ ρ₂')
+              (amguʳ-sound (suc k) p rg ρ₁ ρ₁' anil) (amguʳ-sound (suc k) p rg ρ₂ ρ₂')
+              (cong₂ _⊔̂ᵣ_) eq
+  amguʳ-sound (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) ∣ ε' ∣̂ᵉ anil ()
   amguʳ-sound (suc k) p rg ∣ ε ∣̂ᵉ (rconst d) anil ()
   amguʳ-sound (suc k) p rg ∣ ε ∣̂ᵉ (ρ₁' ·̂ᵣ ρ₂') anil ()
+  amguʳ-sound (suc k) p rg ∣ ε ∣̂ᵉ (ρ₁' ⊔̂ᵣ ρ₂') anil ()
   amguʳ-sound (suc k) p rg ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ anil eq =
     Sound-map (cong ∣_∣̂ᵉ) (amguᵉ-sound (suc k) p rg ε ε' anil eq)
 
   amguʳ-sound zero p rg (rvar i) (rvar j) anil eq = flexFlexʳ-sound i j eq
   amguʳ-sound zero p rg (rvar i) (rconst d) anil eq = flexʳ-sound i (rconst d) eq
   amguʳ-sound zero p rg (rvar i) (ρ₁' ·̂ᵣ ρ₂') anil eq = flexʳ-sound i (ρ₁' ·̂ᵣ ρ₂') eq
+  amguʳ-sound zero p rg (rvar i) (ρ₁' ⊔̂ᵣ ρ₂') anil eq = flexʳ-sound i (ρ₁' ⊔̂ᵣ ρ₂') eq
   amguʳ-sound zero p rg (rvar i) ∣ ε' ∣̂ᵉ anil eq = flexʳ-sound i ∣ ε' ∣̂ᵉ eq
   amguʳ-sound zero p rg (rconst c) (rvar j) anil eq = Sound-map sym (flexʳ-sound j (rconst c) eq)
   amguʳ-sound zero p rg (ρ₁ ·̂ᵣ ρ₂) (rvar j) anil eq = Sound-map sym (flexʳ-sound j (ρ₁ ·̂ᵣ ρ₂) eq)
+  amguʳ-sound zero p rg (ρ₁ ⊔̂ᵣ ρ₂) (rvar j) anil eq = Sound-map sym (flexʳ-sound j (ρ₁ ⊔̂ᵣ ρ₂) eq)
   amguʳ-sound zero p rg ∣ ε ∣̂ᵉ (rvar j) anil eq = Sound-map sym (flexʳ-sound j ∣ ε ∣̂ᵉ eq)
   amguʳ-sound {Θ} zero p rg (rconst c) (rconst d) anil eq
     with dec-if (c ≡ᵣ? d) (just (Θ , anil)) nothing eq
   ... | inj₁ (r , refl) = sound anil refl (cong rconst r)
   ... | inj₂ ()
   amguʳ-sound zero p rg (rconst c) (ρ₁' ·̂ᵣ ρ₂') anil ()
+  amguʳ-sound zero p rg (rconst c) (ρ₁' ⊔̂ᵣ ρ₂') anil ()
   amguʳ-sound zero p rg (rconst c) ∣ ε' ∣̂ᵉ anil ()
   amguʳ-sound zero p rg (ρ₁ ·̂ᵣ ρ₂) (rconst d) anil ()
   amguʳ-sound {Θ} zero p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil eq =
     seq-sound (amguʳ zero p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ zero p rg ρ₂ ρ₂')
               (amguʳ-sound zero p rg ρ₁ ρ₁' anil) (amguʳ-sound zero p rg ρ₂ ρ₂')
               (cong₂ _·̂ᵣ_) eq
+  amguʳ-sound zero p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil ()
   amguʳ-sound zero p rg (ρ₁ ·̂ᵣ ρ₂) ∣ ε' ∣̂ᵉ anil ()
+  amguʳ-sound zero p rg (ρ₁ ⊔̂ᵣ ρ₂) (rconst d) anil ()
+  amguʳ-sound zero p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil ()
+  amguʳ-sound {Θ} zero p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil eq =
+    seq-sound (amguʳ zero p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ zero p rg ρ₂ ρ₂')
+              (amguʳ-sound zero p rg ρ₁ ρ₁' anil) (amguʳ-sound zero p rg ρ₂ ρ₂')
+              (cong₂ _⊔̂ᵣ_) eq
+  amguʳ-sound zero p rg (ρ₁ ⊔̂ᵣ ρ₂) ∣ ε' ∣̂ᵉ anil ()
   amguʳ-sound zero p rg ∣ ε ∣̂ᵉ (rconst d) anil ()
   amguʳ-sound zero p rg ∣ ε ∣̂ᵉ (ρ₁' ·̂ᵣ ρ₂') anil ()
+  amguʳ-sound zero p rg ∣ ε ∣̂ᵉ (ρ₁' ⊔̂ᵣ ρ₂') anil ()
   amguʳ-sound zero p rg ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ anil eq =
     Sound-map (cong ∣_∣̂ᵉ) (amguᵉ-sound zero p rg ε ε' anil eq)
 
@@ -645,34 +675,54 @@ mutual
   amguᵉ-sound (suc k) p rg (evar i) (evar j) anil eq = flexFlexᵉ-sound rg i j eq
   amguᵉ-sound (suc k) p rg (evar i) (econst d) anil eq = flexᵉ-sound rg i (econst d) eq
   amguᵉ-sound (suc k) p rg (evar i) (ε₁' ·̂ₑ ε₂') anil eq = flexᵉ-sound rg i (ε₁' ·̂ₑ ε₂') eq
+  amguᵉ-sound (suc k) p rg (evar i) (ε₁' ⊔̂ₑ ε₂') anil eq = flexᵉ-sound rg i (ε₁' ⊔̂ₑ ε₂') eq
   amguᵉ-sound (suc k) p rg (econst c) (evar j) anil eq = Sound-map sym (flexᵉ-sound rg j (econst c) eq)
   amguᵉ-sound (suc k) p rg (ε₁ ·̂ₑ ε₂) (evar j) anil eq = Sound-map sym (flexᵉ-sound rg j (ε₁ ·̂ₑ ε₂) eq)
+  amguᵉ-sound (suc k) p rg (ε₁ ⊔̂ₑ ε₂) (evar j) anil eq = Sound-map sym (flexᵉ-sound rg j (ε₁ ⊔̂ₑ ε₂) eq)
   amguᵉ-sound {Θ} (suc k) p rg (econst c) (econst d) anil eq
     with dec-if (c ≡ₑ? d) (just (Θ , anil)) nothing eq
   ... | inj₁ (r , refl) = sound anil refl (cong econst r)
   ... | inj₂ ()
   amguᵉ-sound (suc k) p rg (econst c) (ε₁' ·̂ₑ ε₂') anil ()
+  amguᵉ-sound (suc k) p rg (econst c) (ε₁' ⊔̂ₑ ε₂') anil ()
   amguᵉ-sound (suc k) p rg (ε₁ ·̂ₑ ε₂) (econst d) anil ()
   amguᵉ-sound {Θ} (suc k) p rg (ε₁ ·̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil eq =
     seq-sound (amguᵉ (suc k) p rg ε₁ ε₁' (Θ , anil)) (amguᵉ (suc k) p rg ε₂ ε₂')
               (amguᵉ-sound (suc k) p rg ε₁ ε₁' anil) (amguᵉ-sound (suc k) p rg ε₂ ε₂')
               (cong₂ _·̂ₑ_) eq
+  amguᵉ-sound (suc k) p rg (ε₁ ·̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil ()
+  amguᵉ-sound (suc k) p rg (ε₁ ⊔̂ₑ ε₂) (econst d) anil ()
+  amguᵉ-sound (suc k) p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil ()
+  amguᵉ-sound {Θ} (suc k) p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil eq =
+    seq-sound (amguᵉ (suc k) p rg ε₁ ε₁' (Θ , anil)) (amguᵉ (suc k) p rg ε₂ ε₂')
+              (amguᵉ-sound (suc k) p rg ε₁ ε₁' anil) (amguᵉ-sound (suc k) p rg ε₂ ε₂')
+              (cong₂ _⊔̂ₑ_) eq
 
   amguᵉ-sound zero p rg (evar i) (evar j) anil eq = flexFlexᵉ-sound rg i j eq
   amguᵉ-sound zero p rg (evar i) (econst d) anil eq = flexᵉ-sound rg i (econst d) eq
   amguᵉ-sound zero p rg (evar i) (ε₁' ·̂ₑ ε₂') anil eq = flexᵉ-sound rg i (ε₁' ·̂ₑ ε₂') eq
+  amguᵉ-sound zero p rg (evar i) (ε₁' ⊔̂ₑ ε₂') anil eq = flexᵉ-sound rg i (ε₁' ⊔̂ₑ ε₂') eq
   amguᵉ-sound zero p rg (econst c) (evar j) anil eq = Sound-map sym (flexᵉ-sound rg j (econst c) eq)
   amguᵉ-sound zero p rg (ε₁ ·̂ₑ ε₂) (evar j) anil eq = Sound-map sym (flexᵉ-sound rg j (ε₁ ·̂ₑ ε₂) eq)
+  amguᵉ-sound zero p rg (ε₁ ⊔̂ₑ ε₂) (evar j) anil eq = Sound-map sym (flexᵉ-sound rg j (ε₁ ⊔̂ₑ ε₂) eq)
   amguᵉ-sound {Θ} zero p rg (econst c) (econst d) anil eq
     with dec-if (c ≡ₑ? d) (just (Θ , anil)) nothing eq
   ... | inj₁ (r , refl) = sound anil refl (cong econst r)
   ... | inj₂ ()
   amguᵉ-sound zero p rg (econst c) (ε₁' ·̂ₑ ε₂') anil ()
+  amguᵉ-sound zero p rg (econst c) (ε₁' ⊔̂ₑ ε₂') anil ()
   amguᵉ-sound zero p rg (ε₁ ·̂ₑ ε₂) (econst d) anil ()
   amguᵉ-sound {Θ} zero p rg (ε₁ ·̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil eq =
     seq-sound (amguᵉ zero p rg ε₁ ε₁' (Θ , anil)) (amguᵉ zero p rg ε₂ ε₂')
               (amguᵉ-sound zero p rg ε₁ ε₁' anil) (amguᵉ-sound zero p rg ε₂ ε₂')
               (cong₂ _·̂ₑ_) eq
+  amguᵉ-sound zero p rg (ε₁ ·̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil ()
+  amguᵉ-sound zero p rg (ε₁ ⊔̂ₑ ε₂) (econst d) anil ()
+  amguᵉ-sound zero p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil ()
+  amguᵉ-sound {Θ} zero p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil eq =
+    seq-sound (amguᵉ zero p rg ε₁ ε₁' (Θ , anil)) (amguᵉ zero p rg ε₂ ε₂')
+              (amguᵉ-sound zero p rg ε₁ ε₁' anil) (amguᵉ-sound zero p rg ε₂ ε₂')
+              (cong₂ _⊔̂ₑ_) eq
 
 amguᴱ-sound : ∀ {Θ} → (rg : Rig Θ) → (e : Eqn Θ) → {Θ' Θ'' : Scope}
             → (ρ : AList Θ Θ') → {ρ'' : AList Θ Θ''}

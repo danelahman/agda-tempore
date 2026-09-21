@@ -110,11 +110,13 @@ evalᵉ : EExp ∅ˢ → E
 evalᵉ (evar ())
 evalᵉ (econst c) = c
 evalᵉ (ε ·̂ₑ ε')  = evalᵉ ε ·ₑ evalᵉ ε'
+evalᵉ (ε ⊔̂ₑ ε')  = evalᵉ ε ⊔ₑ evalᵉ ε'
 
 evalʳ : RExp ∅ˢ → R
 evalʳ (rvar ())
 evalʳ (rconst c) = c
 evalʳ (ρ ·̂ᵣ ρ')  = evalʳ ρ ·ᵣ evalʳ ρ'
+evalʳ (ρ ⊔̂ᵣ ρ')  = evalʳ ρ ⊔ᵣ evalʳ ρ'
 evalʳ ∣ ε ∣̂ᵉ     = mapᵉ (evalᵉ ε)
 
 evalᵉ-≡ : (ε : EExp ∅ˢ) → ε ≡̂ₑ econst (evalᵉ ε)
@@ -122,12 +124,16 @@ evalᵉ-≡ (evar ())
 evalᵉ-≡ (econst c) = ≡̂ₑ-refl
 evalᵉ-≡ (ε ·̂ₑ ε')  =
   ≡̂ₑ-trans (≡̂ₑ-cong (evalᵉ-≡ ε) (evalᵉ-≡ ε')) ≡̂ₑ-const-·
+evalᵉ-≡ (ε ⊔̂ₑ ε')  =
+  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (evalᵉ-≡ ε) (evalᵉ-≡ ε')) ≡̂ₑ-const-⊔
 
 evalʳ-≡ : (ρ : RExp ∅ˢ) → ρ ≡̂ᵣ rconst (evalʳ ρ)
 evalʳ-≡ (rvar ())
 evalʳ-≡ (rconst c) = ≡̂ᵣ-refl
 evalʳ-≡ (ρ ·̂ᵣ ρ')  =
   ≡̂ᵣ-trans (≡̂ᵣ-cong (evalʳ-≡ ρ) (evalʳ-≡ ρ')) ≡̂ᵣ-const-·
+evalʳ-≡ (ρ ⊔̂ᵣ ρ')  =
+  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (evalʳ-≡ ρ) (evalʳ-≡ ρ')) ≡̂ᵣ-const-⊔
 evalʳ-≡ ∣ ε ∣̂ᵉ     =
   ≡̂ᵣ-trans (≡̂ᵣ-map-cong (evalᵉ-≡ ε)) ≡̂ᵣ-map-const
 

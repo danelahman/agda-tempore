@@ -97,6 +97,8 @@ ground-mono-e q (evar (suc i)) = ≾ₑ-refl
 ground-mono-e q (econst ε)     = ≾ₑ-refl
 ground-mono-e q (ε ·̂ₑ ε')      =
   ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (ground-mono-e q ε)) (·ₑ-monoʳ-≾ₑ (ground-mono-e q ε'))
+ground-mono-e q (ε ⊔̂ₑ ε')      =
+  ⊔ₑ-mono (ground-mono-e q ε) (ground-mono-e q ε')
 
 ground-mono-r : ∀ {Θ} {θ : Grounding Θ} {ε₁ ε₂ : E} → ε₁ ≾ₑ ε₂
               → (ρ : RExp (Θ +e))
@@ -105,6 +107,8 @@ ground-mono-r q (rvar i)   = ≾ᵣ-refl
 ground-mono-r q (rconst ρ) = ≾ᵣ-refl
 ground-mono-r q (ρ ·̂ᵣ ρ')  =
   ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ (ground-mono-r q ρ)) (·ᵣ-monoʳ-≾ᵣ (ground-mono-r q ρ'))
+ground-mono-r q (ρ ⊔̂ᵣ ρ')  =
+  ⊔ᵣ-mono (ground-mono-r q ρ) (ground-mono-r q ρ')
 ground-mono-r q ∣ ε ∣̂ᵉ     = map-monotoneᵉ (ground-mono-e q ε)
 
 -- At the grade a mirrored clause is typed at, monotonicity *is* the coercion

@@ -108,7 +108,9 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
   transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
 
 -- The monoid laws, the constants' arithmetic, and `∣_∣̂ᵉ` being a monoid
--- morphism; no hypotheses involved.
+-- morphism; no hypotheses involved. The join former gets congruence,
+-- constant folding and the morphism law only: commutativity,
+-- associativity and idempotence of `_⊔_` hold at `_≾_`, not at `_≡_`.
 
 infix 4 _≡̂ᵣ_ _≡̂ₑ_
 
@@ -125,7 +127,11 @@ data _≡̂ᵣ_ {Θ} where
   ≡̂ᵣ-identityˡ : ∀ {ρ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
   ≡̂ᵣ-identityʳ : ∀ {ρ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
   ≡̂ᵣ-const-·   : ∀ {ρ ρ'} → rconst ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
+  ≡̂ᵣ-cong-⊔    : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
+               → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
+  ≡̂ᵣ-const-⊔   : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
   ≡̂ᵣ-map-·     : ∀ {ε ε'} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-map-⊔     : ∀ {ε ε'} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
   ≡̂ᵣ-map-const : ∀ {e} → ∣ econst e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
   ≡̂ᵣ-map-cong  : ∀ {ε ε'} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
 
@@ -139,6 +145,9 @@ data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-identityˡ : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
   ≡̂ₑ-identityʳ : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
   ≡̂ₑ-const-·   : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
+  ≡̂ₑ-cong-⊔    : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
+               → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
+  ≡̂ₑ-const-⊔   : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
 
 infix 4 _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
@@ -161,6 +170,13 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   monoᵣ    : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁' → Q ⊩ ρ₂ ≾̂ᵣ ρ₂'
            → Q ⊩ ρ₁ ·̂ᵣ ρ₂ ≾̂ᵣ ρ₁' ·̂ᵣ ρ₂'
   map-mono : ∀ {ε ε'} → Q ⊩ ε ≾̂ₑ ε' → Q ⊩ ∣ ε ∣̂ᵉ ≾̂ᵣ ∣ ε' ∣̂ᵉ
+  -- the join is the least upper bound; monotonicity of `_⊔̂ᵣ_` is derivable
+  ⊔-ubˡᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
+  ⊔-ubʳᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₂ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
+  ⊔-lubᵣ   : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
+  -- distributivity, in the direction monotonicity does not already give
+  ·-distribˡ-⊔ᵣ : ∀ {ρ ρ₁ ρ₂} → Q ⊩ ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≾̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
+  ·-distribʳ-⊔ᵣ : ∀ {ρ ρ₁ ρ₂} → Q ⊩ (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≾̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
   -- optional unit-minimality; the premise is the property of the grade monoid
   minᵣ     : ∀ {ρ} → UnitMinᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
 
@@ -171,6 +187,13 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   transₑ : ∀ {ε ε' ε''} → Q ⊩ ε ≾̂ₑ ε' → Q ⊩ ε' ≾̂ₑ ε'' → Q ⊩ ε ≾̂ₑ ε''
   monoₑ  : ∀ {ε₁ ε₁' ε₂ ε₂'} → Q ⊩ ε₁ ≾̂ₑ ε₁' → Q ⊩ ε₂ ≾̂ₑ ε₂'
          → Q ⊩ ε₁ ·̂ₑ ε₂ ≾̂ₑ ε₁' ·̂ₑ ε₂'
+  -- the join is the least upper bound; monotonicity of `_⊔̂ₑ_` is derivable
+  ⊔-ubˡₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₁ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
+  ⊔-ubʳₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₂ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
+  ⊔-lubₑ : ∀ {ε₁ ε₂ ε} → Q ⊩ ε₁ ≾̂ₑ ε → Q ⊩ ε₂ ≾̂ₑ ε → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε
+  -- distributivity, in the direction monotonicity does not already give
+  ·-distribˡ-⊔ₑ : ∀ {ε ε₁ ε₂} → Q ⊩ ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≾̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
+  ·-distribʳ-⊔ₑ : ∀ {ε ε₁ ε₂} → Q ⊩ (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≾̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
   -- optional unit-minimality; the premise is the property of the grade monoid
   minₑ   : ∀ {ε} → UnitMinₑ → Q ⊩ ûₑ ≾̂ₑ ε
 
@@ -360,7 +383,10 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵣ-subst σ ≡̂ᵣ-identityˡ    = ≡̂ᵣ-identityˡ
 ≡̂ᵣ-subst σ ≡̂ᵣ-identityʳ    = ≡̂ᵣ-identityʳ
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-·      = ≡̂ᵣ-const-·
+≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q) = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
+≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔      = ≡̂ᵣ-const-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-map-·        = ≡̂ᵣ-map-·
+≡̂ᵣ-subst σ ≡̂ᵣ-map-⊔        = ≡̂ᵣ-map-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-map-const    = ≡̂ᵣ-map-const
 ≡̂ᵣ-subst σ (≡̂ᵣ-map-cong p) = ≡̂ᵣ-map-cong (≡̂ₑ-subst σ p)
 
@@ -372,6 +398,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ ≡̂ₑ-identityˡ   = ≡̂ₑ-identityˡ
 ≡̂ₑ-subst σ ≡̂ₑ-identityʳ   = ≡̂ₑ-identityʳ
 ≡̂ₑ-subst σ ≡̂ₑ-const-·     = ≡̂ₑ-const-·
+≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q) = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
+≡̂ₑ-subst σ ≡̂ₑ-const-⊔     = ≡̂ₑ-const-⊔
 
 ⊩-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
@@ -384,6 +412,11 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h (transᵣ p q) = transᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
 ⊩-substᵣ            h (monoᵣ p q)  = monoᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
 ⊩-substᵣ            h (map-mono p) = map-mono (⊩-substₑ h p)
+⊩-substᵣ            h ⊔-ubˡᵣ       = ⊔-ubˡᵣ
+⊩-substᵣ            h ⊔-ubʳᵣ       = ⊔-ubʳᵣ
+⊩-substᵣ            h (⊔-lubᵣ p q) = ⊔-lubᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
+⊩-substᵣ            h ·-distribˡ-⊔ᵣ = ·-distribˡ-⊔ᵣ
+⊩-substᵣ            h ·-distribʳ-⊔ᵣ = ·-distribʳ-⊔ᵣ
 ⊩-substᵣ            h (minᵣ p)     = minᵣ p
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
@@ -391,6 +424,11 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ {σ = σ} h (eqₑ p)      = eqₑ (≡̂ₑ-subst σ p)
 ⊩-substₑ         h (transₑ p q) = transₑ (⊩-substₑ h p) (⊩-substₑ h q)
 ⊩-substₑ         h (monoₑ p q)  = monoₑ (⊩-substₑ h p) (⊩-substₑ h q)
+⊩-substₑ         h ⊔-ubˡₑ       = ⊔-ubˡₑ
+⊩-substₑ         h ⊔-ubʳₑ       = ⊔-ubʳₑ
+⊩-substₑ         h (⊔-lubₑ p q) = ⊔-lubₑ (⊩-substₑ h p) (⊩-substₑ h q)
+⊩-substₑ         h ·-distribˡ-⊔ₑ = ·-distribˡ-⊔ₑ
+⊩-substₑ         h ·-distribʳ-⊔ₑ = ·-distribʳ-⊔ₑ
 ⊩-substₑ         h (minₑ p)     = minₑ p
 
 -- A type variable's image is an arbitrary open type, so an assumed

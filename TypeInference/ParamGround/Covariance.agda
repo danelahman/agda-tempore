@@ -94,11 +94,13 @@ NoNewE (evar zero)    = ⊥
 NoNewE (evar (suc i)) = ⊤
 NoNewE (econst ε)     = ⊤
 NoNewE (ε ·̂ₑ ε')      = NoNewE ε × NoNewE ε'
+NoNewE (ε ⊔̂ₑ ε')      = NoNewE ε × NoNewE ε'
 
 NoNewR : ∀ {Θ} → RExp (Θ +e) → Set
 NoNewR (rvar i)   = ⊤
 NoNewR (rconst ρ) = ⊤
 NoNewR (ρ ·̂ᵣ ρ')  = NoNewR ρ × NoNewR ρ'
+NoNewR (ρ ⊔̂ᵣ ρ')  = NoNewR ρ × NoNewR ρ'
 NoNewR ∣ ε ∣̂ᵉ     = NoNewE ε
 
 mutual
@@ -125,11 +127,13 @@ nn-wkᵉ-e : ∀ {Θ} → (ε : EExp Θ) → NoNewE (wkᵉ-e ε)
 nn-wkᵉ-e (evar i)   = tt
 nn-wkᵉ-e (econst ε) = tt
 nn-wkᵉ-e (ε ·̂ₑ ε')  = nn-wkᵉ-e ε , nn-wkᵉ-e ε'
+nn-wkᵉ-e (ε ⊔̂ₑ ε')  = nn-wkᵉ-e ε , nn-wkᵉ-e ε'
 
 nn-wkᵉ-r : ∀ {Θ} → (ρ : RExp Θ) → NoNewR (wkᵉ-r ρ)
 nn-wkᵉ-r (rvar i)   = tt
 nn-wkᵉ-r (rconst ρ) = tt
 nn-wkᵉ-r (ρ ·̂ᵣ ρ')  = nn-wkᵉ-r ρ , nn-wkᵉ-r ρ'
+nn-wkᵉ-r (ρ ⊔̂ᵣ ρ')  = nn-wkᵉ-r ρ , nn-wkᵉ-r ρ'
 nn-wkᵉ-r ∣ ε ∣̂ᵉ     = nn-wkᵉ-e ε
 
 mutual
@@ -313,11 +317,15 @@ NoNewE-unique (evar (suc i)) n n' = refl
 NoNewE-unique (econst ε)     n n' = refl
 NoNewE-unique (ε ·̂ₑ ε') (n , m) (n' , m') =
   cong₂ _,_ (NoNewE-unique ε n n') (NoNewE-unique ε' m m')
+NoNewE-unique (ε ⊔̂ₑ ε') (n , m) (n' , m') =
+  cong₂ _,_ (NoNewE-unique ε n n') (NoNewE-unique ε' m m')
 
 NoNewR-unique : ∀ {Θ} → (ρ : RExp (Θ +e)) → (n n' : NoNewR ρ) → n ≡ n'
 NoNewR-unique (rvar i)   n n' = refl
 NoNewR-unique (rconst ρ) n n' = refl
 NoNewR-unique (ρ ·̂ᵣ ρ') (n , m) (n' , m') =
+  cong₂ _,_ (NoNewR-unique ρ n n') (NoNewR-unique ρ' m m')
+NoNewR-unique (ρ ⊔̂ᵣ ρ') (n , m) (n' , m') =
   cong₂ _,_ (NoNewR-unique ρ n n') (NoNewR-unique ρ' m m')
 NoNewR-unique ∣ ε ∣̂ᵉ n n' = NoNewE-unique ε n n'
 
@@ -388,11 +396,13 @@ module Cov {Θ : Scope} (θ : Grounding Θ) {ε₁ ε₂ : E} (q : ε₁ ≾ₑ 
   nonew-e (evar (suc i)) n = refl
   nonew-e (econst ε)     n = refl
   nonew-e (ε ·̂ₑ ε') (n , n') = cong₂ _·ₑ_ (nonew-e ε n) (nonew-e ε' n')
+  nonew-e (ε ⊔̂ₑ ε') (n , n') = cong₂ _⊔ₑ_ (nonew-e ε n) (nonew-e ε' n')
 
   nonew-r : (ρ : RExp (Θ +e)) → NoNewR ρ → ⟦ ρ ⟧ʳ θ₁ ≡ ⟦ ρ ⟧ʳ θ₂
   nonew-r (rvar i)   n = refl
   nonew-r (rconst ρ) n = refl
   nonew-r (ρ ·̂ᵣ ρ') (n , n') = cong₂ _·ᵣ_ (nonew-r ρ n) (nonew-r ρ' n')
+  nonew-r (ρ ⊔̂ᵣ ρ') (n , n') = cong₂ _⊔ᵣ_ (nonew-r ρ n) (nonew-r ρ' n')
   nonew-r ∣ ε ∣̂ᵉ     n       = cong mapᵉ (nonew-e ε n)
 
   mutual

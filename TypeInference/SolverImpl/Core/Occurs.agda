@@ -56,6 +56,7 @@ occʳ-r : ∀ {Θ} → RVar Θ → RExp Θ → 𝔹
 occʳ-r i (rvar j)   = ⌊ i ≟ᶠ j ⌋
 occʳ-r i (rconst ρ) = false
 occʳ-r i (ρ ·̂ᵣ ρ')  = occʳ-r i ρ ∨ occʳ-r i ρ'
+occʳ-r i (ρ ⊔̂ᵣ ρ')  = occʳ-r i ρ ∨ occʳ-r i ρ'
 occʳ-r i ∣ ε ∣̂ᵉ     = false
 
 mutual
@@ -77,11 +78,13 @@ occᵉ-e : ∀ {Θ} → EVar Θ → EExp Θ → 𝔹
 occᵉ-e i (evar j)   = ⌊ i ≟ᶠ j ⌋
 occᵉ-e i (econst ε) = false
 occᵉ-e i (ε ·̂ₑ ε')  = occᵉ-e i ε ∨ occᵉ-e i ε'
+occᵉ-e i (ε ⊔̂ₑ ε')  = occᵉ-e i ε ∨ occᵉ-e i ε'
 
 occᵉ-r : ∀ {Θ} → EVar Θ → RExp Θ → 𝔹
 occᵉ-r i (rvar j)   = false
 occᵉ-r i (rconst ρ) = false
 occᵉ-r i (ρ ·̂ᵣ ρ')  = occᵉ-r i ρ ∨ occᵉ-r i ρ'
+occᵉ-r i (ρ ⊔̂ᵣ ρ')  = occᵉ-r i ρ ∨ occᵉ-r i ρ'
 occᵉ-r i ∣ ε ∣̂ᵉ     = occᵉ-e i ε
 
 mutual

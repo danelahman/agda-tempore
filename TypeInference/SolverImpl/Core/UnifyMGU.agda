@@ -152,6 +152,9 @@ rconst-inj refl = refl
 ·ᵣ-inj : ∀ {Θ} {ρ₁ ρ₂ ρ₁' ρ₂' : RExp Θ} → (ρ₁ ·̂ᵣ ρ₂) ≡ (ρ₁' ·̂ᵣ ρ₂') → (ρ₁ ≡ ρ₁') × (ρ₂ ≡ ρ₂')
 ·ᵣ-inj refl = refl , refl
 
+⊔ᵣ-inj : ∀ {Θ} {ρ₁ ρ₂ ρ₁' ρ₂' : RExp Θ} → (ρ₁ ⊔̂ᵣ ρ₂) ≡ (ρ₁' ⊔̂ᵣ ρ₂') → (ρ₁ ≡ ρ₁') × (ρ₂ ≡ ρ₂')
+⊔ᵣ-inj refl = refl , refl
+
 ∣∣-inj : ∀ {Θ} {ε ε' : EExp Θ} → ∣ ε ∣̂ᵉ ≡ ∣ ε' ∣̂ᵉ → ε ≡ ε'
 ∣∣-inj refl = refl
 
@@ -163,6 +166,9 @@ econst-inj refl = refl
 
 ·ₑ-inj : ∀ {Θ} {ε₁ ε₂ ε₁' ε₂' : EExp Θ} → (ε₁ ·̂ₑ ε₂) ≡ (ε₁' ·̂ₑ ε₂') → (ε₁ ≡ ε₁') × (ε₂ ≡ ε₂')
 ·ₑ-inj refl = refl , refl
+
+⊔ₑ-inj : ∀ {Θ} {ε₁ ε₂ ε₁' ε₂' : EExp Θ} → (ε₁ ⊔̂ₑ ε₂) ≡ (ε₁' ⊔̂ₑ ε₂') → (ε₁ ≡ ε₁') × (ε₂ ≡ ε₂')
+⊔ₑ-inj refl = refl , refl
 
 -- A rigid variable goes to a variable, and two distinct rigids go to
 -- distinct variables.
@@ -477,12 +483,18 @@ occ≤ᵉ i (econst c) σ ()
 occ≤ᵉ i (ε ·̂ₑ ε')  σ q with ∨-true (occᵉ-e i ε) (occᵉ-e i ε') q
 ... | inj₁ r = m≤n⇒m≤1+n (≤-trans (occ≤ᵉ i ε σ r) (m≤m+n _ _))
 ... | inj₂ r = m≤n⇒m≤1+n (≤-trans (occ≤ᵉ i ε' σ r) (m≤n+m _ _))
+occ≤ᵉ i (ε ⊔̂ₑ ε')  σ q with ∨-true (occᵉ-e i ε) (occᵉ-e i ε') q
+... | inj₁ r = m≤n⇒m≤1+n (≤-trans (occ≤ᵉ i ε σ r) (m≤m+n _ _))
+... | inj₂ r = m≤n⇒m≤1+n (≤-trans (occ≤ᵉ i ε' σ r) (m≤n+m _ _))
 
 occ≤ʳ : ∀ {Θ Ψ} → (i : RVar Θ) → (ρ : RExp Θ) → (σ : Subst Θ Ψ) → occʳ-r i ρ ≡ true
       → sizeʳ (sR σ i) ≤ sizeʳ (ρ [ σ ]ʳ)
 occ≤ʳ i (rvar j)   σ q = subst (λ z → sizeʳ (sR σ i) ≤ sizeʳ (sR σ z)) (true-dec (i ≟ᶠ j) q) ≤-refl
 occ≤ʳ i (rconst c) σ ()
 occ≤ʳ i (ρ ·̂ᵣ ρ')  σ q with ∨-true (occʳ-r i ρ) (occʳ-r i ρ') q
+... | inj₁ r = m≤n⇒m≤1+n (≤-trans (occ≤ʳ i ρ σ r) (m≤m+n _ _))
+... | inj₂ r = m≤n⇒m≤1+n (≤-trans (occ≤ʳ i ρ' σ r) (m≤n+m _ _))
+occ≤ʳ i (ρ ⊔̂ᵣ ρ')  σ q with ∨-true (occʳ-r i ρ) (occʳ-r i ρ') q
 ... | inj₁ r = m≤n⇒m≤1+n (≤-trans (occ≤ʳ i ρ σ r) (m≤m+n _ _))
 ... | inj₂ r = m≤n⇒m≤1+n (≤-trans (occ≤ʳ i ρ' σ r) (m≤n+m _ _))
 occ≤ʳ i ∣ ε ∣̂ᵉ     σ ()
@@ -519,12 +531,24 @@ no-cycleᵉ i (ε ·̂ₑ ε') σ nv q u
                             (s≤s (≤-trans (occ≤ᵉ i ε σ r) (m≤m+n _ _))))
 ... | inj₂ r = 1+n≰n (subst (suc (sizeᵉ (sE σ i)) ≤_) (sym (cong sizeᵉ u))
                             (s≤s (≤-trans (occ≤ᵉ i ε' σ r) (m≤n+m _ _))))
+no-cycleᵉ i (ε ⊔̂ₑ ε') σ nv q u
+  with ∨-true (occᵉ-e i ε) (occᵉ-e i ε') q
+... | inj₁ r = 1+n≰n (subst (suc (sizeᵉ (sE σ i)) ≤_) (sym (cong sizeᵉ u))
+                            (s≤s (≤-trans (occ≤ᵉ i ε σ r) (m≤m+n _ _))))
+... | inj₂ r = 1+n≰n (subst (suc (sizeᵉ (sE σ i)) ≤_) (sym (cong sizeᵉ u))
+                            (s≤s (≤-trans (occ≤ᵉ i ε' σ r) (m≤n+m _ _))))
 
 no-cycleʳ : ∀ {Θ Ψ} → (i : RVar Θ) → (ρ : RExp Θ) → (σ : Subst Θ Ψ) → ¬ (ρ ≡ rvar i)
           → occʳ-r i ρ ≡ true → ¬ (sR σ i ≡ ρ [ σ ]ʳ)
 no-cycleʳ i (rvar j) σ nv q u = nv (cong rvar (sym (true-dec (i ≟ᶠ j) q)))
 no-cycleʳ i (rconst c) σ nv () u
 no-cycleʳ i (ρ ·̂ᵣ ρ') σ nv q u
+  with ∨-true (occʳ-r i ρ) (occʳ-r i ρ') q
+... | inj₁ r = 1+n≰n (subst (suc (sizeʳ (sR σ i)) ≤_) (sym (cong sizeʳ u))
+                            (s≤s (≤-trans (occ≤ʳ i ρ σ r) (m≤m+n _ _))))
+... | inj₂ r = 1+n≰n (subst (suc (sizeʳ (sR σ i)) ≤_) (sym (cong sizeʳ u))
+                            (s≤s (≤-trans (occ≤ʳ i ρ' σ r) (m≤n+m _ _))))
+no-cycleʳ i (ρ ⊔̂ᵣ ρ') σ nv q u
   with ∨-true (occʳ-r i ρ) (occʳ-r i ρ') q
 ... | inj₁ r = 1+n≰n (subst (suc (sizeʳ (sR σ i)) ≤_) (sym (cong sizeʳ u))
                             (s≤s (≤-trans (occ≤ʳ i ρ σ r) (m≤m+n _ _))))
@@ -560,6 +584,8 @@ awayᵉ i σ δ h (evar j)   o = h j (dec-false (i ≟ᶠ j) o)
 awayᵉ i σ δ h (econst c) o = refl
 awayᵉ i σ δ h (ε ·̂ₑ ε')  o with ∨-false (occᵉ-e i ε) (occᵉ-e i ε') o
 ... | o₁ , o₂ = cong₂ _·̂ₑ_ (awayᵉ i σ δ h ε o₁) (awayᵉ i σ δ h ε' o₂)
+awayᵉ i σ δ h (ε ⊔̂ₑ ε')  o with ∨-false (occᵉ-e i ε) (occᵉ-e i ε') o
+... | o₁ , o₂ = cong₂ _⊔̂ₑ_ (awayᵉ i σ δ h ε o₁) (awayᵉ i σ δ h ε' o₂)
 
 awayʳ : ∀ {Θ Ψ} → (i : RVar Θ) → (σ δ : Subst Θ Ψ)
       → ((j : RVar Θ) → ¬ (i ≡ j) → sR σ j ≡ sR δ j)
@@ -569,6 +595,8 @@ awayʳ i σ δ h he (rvar j)   o = h j (dec-false (i ≟ᶠ j) o)
 awayʳ i σ δ h he (rconst c) o = refl
 awayʳ i σ δ h he (ρ ·̂ᵣ ρ')  o with ∨-false (occʳ-r i ρ) (occʳ-r i ρ') o
 ... | o₁ , o₂ = cong₂ _·̂ᵣ_ (awayʳ i σ δ h he ρ o₁) (awayʳ i σ δ h he ρ' o₂)
+awayʳ i σ δ h he (ρ ⊔̂ᵣ ρ')  o with ∨-false (occʳ-r i ρ) (occʳ-r i ρ') o
+... | o₁ , o₂ = cong₂ _⊔̂ᵣ_ (awayʳ i σ δ h he ρ o₁) (awayʳ i σ δ h he ρ' o₂)
 awayʳ i σ δ h he ∣ ε ∣̂ᵉ     o = cong ∣_∣̂ᵉ (agreeᵉ he ε)
 
 mutual
@@ -754,18 +782,22 @@ flexᵉ-no {scope nt nr (suc ne)} rg i ε eq
 data NonVarᵉ {Θ : Scope} : EExp Θ → Set where
   nvconstᵉ : (c : E) → NonVarᵉ (econst c)
   nvmulᵉ   : (ε ε' : EExp Θ) → NonVarᵉ (ε ·̂ₑ ε')
+  nvjoinᵉ  : (ε ε' : EExp Θ) → NonVarᵉ (ε ⊔̂ₑ ε')
 
 nonvarᵉ-≢ : ∀ {Θ} {ε : EExp Θ} {i : EVar Θ} → NonVarᵉ ε → ¬ (ε ≡ evar i)
-nonvarᵉ-≢ (nvconstᵉ c)  ()
-nonvarᵉ-≢ (nvmulᵉ ε ε') ()
+nonvarᵉ-≢ (nvconstᵉ c)   ()
+nonvarᵉ-≢ (nvmulᵉ ε ε')  ()
+nonvarᵉ-≢ (nvjoinᵉ ε ε') ()
 
 -- A rigid variable goes to a variable, and a non-variable does not
 
 rigidᵉ-no : ∀ {Θ Ψ} {ε : EExp Θ} {δ : Subst Θ Ψ} {i : EVar Θ} → NonVarᵉ ε
           → Σ[ k ∈ EVar Ψ ] (sE δ i ≡ evar k) → ¬ (sE δ i ≡ ε [ δ ]ᵉ)
-rigidᵉ-no (nvconstᵉ c)  (k , s) u with trans (sym s) u
+rigidᵉ-no (nvconstᵉ c)   (k , s) u with trans (sym s) u
 ... | ()
-rigidᵉ-no (nvmulᵉ ε ε') (k , s) u with trans (sym s) u
+rigidᵉ-no (nvmulᵉ ε ε')  (k , s) u with trans (sym s) u
+... | ()
+rigidᵉ-no (nvjoinᵉ ε ε') (k , s) u with trans (sym s) u
 ... | ()
 
 flexᵗ-spec : ∀ {Θ} → (rg : Rig Θ) → (α : TyVar Θ) → (A : OVType Θ) → ¬ (A ≡ tvar α)
@@ -1025,41 +1057,59 @@ mutual
   amguʳ-spec (suc k) p rg (rvar i) (rvar j) anil = flexFlexʳ-spec rg i j
   amguʳ-spec (suc k) p rg (rvar i) (rconst d) anil = flexʳ-spec rg i (rconst d) (λ ())
   amguʳ-spec (suc k) p rg (rvar i) (ρ₁' ·̂ᵣ ρ₂') anil = flexʳ-spec rg i (ρ₁' ·̂ᵣ ρ₂') (λ ())
+  amguʳ-spec (suc k) p rg (rvar i) (ρ₁' ⊔̂ᵣ ρ₂') anil = flexʳ-spec rg i (ρ₁' ⊔̂ᵣ ρ₂') (λ ())
   amguʳ-spec (suc k) p rg (rvar i) ∣ ε' ∣̂ᵉ anil = flexʳ-spec rg i ∣ ε' ∣̂ᵉ (λ ())
   amguʳ-spec (suc k) p rg (rconst c) (rvar j) anil = Spec-map sym (flexʳ-spec rg j (rconst c) (λ ()))
   amguʳ-spec (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) (rvar j) anil = Spec-map sym (flexʳ-spec rg j (ρ₁ ·̂ᵣ ρ₂) (λ ()))
+  amguʳ-spec (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) (rvar j) anil = Spec-map sym (flexʳ-spec rg j (ρ₁ ⊔̂ᵣ ρ₂) (λ ()))
   amguʳ-spec (suc k) p rg ∣ ε ∣̂ᵉ (rvar j) anil = Spec-map sym (flexʳ-spec rg j ∣ ε ∣̂ᵉ (λ ()))
   amguʳ-spec (suc k) p rg (rconst c) (rconst d) anil = const-spec (c ≡ᵣ? d) (λ δ u → rconst-inj u)
   amguʳ-spec {Θ} (suc k) p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil =
     seq-spec (amguʳ (suc k) p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ (suc k) p rg ρ₂ ρ₂')
              (amguʳ-spec (suc k) p rg ρ₁ ρ₁' anil) (amguʳ-spec (suc k) p rg ρ₂ ρ₂')
              (λ u → ·ᵣ-inj u)
+  amguʳ-spec {Θ} (suc k) p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil =
+    seq-spec (amguʳ (suc k) p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ (suc k) p rg ρ₂ ρ₂')
+             (amguʳ-spec (suc k) p rg ρ₁ ρ₁' anil) (amguʳ-spec (suc k) p rg ρ₂ ρ₂')
+             (λ u → ⊔ᵣ-inj u)
   amguʳ-spec (suc k) p rg ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ anil =
     Spec-map (λ u → ∣∣-inj u) (amguᵉ-spec (suc k) p rg ε ε' anil)
 
   amguʳ-spec zero p rg (rvar i) (rvar j) anil = flexFlexʳ-spec rg i j
   amguʳ-spec zero p rg (rvar i) (rconst d) anil = flexʳ-spec rg i (rconst d) (λ ())
   amguʳ-spec zero p rg (rvar i) (ρ₁' ·̂ᵣ ρ₂') anil = flexʳ-spec rg i (ρ₁' ·̂ᵣ ρ₂') (λ ())
+  amguʳ-spec zero p rg (rvar i) (ρ₁' ⊔̂ᵣ ρ₂') anil = flexʳ-spec rg i (ρ₁' ⊔̂ᵣ ρ₂') (λ ())
   amguʳ-spec zero p rg (rvar i) ∣ ε' ∣̂ᵉ anil = flexʳ-spec rg i ∣ ε' ∣̂ᵉ (λ ())
   amguʳ-spec zero p rg (rconst c) (rvar j) anil = Spec-map sym (flexʳ-spec rg j (rconst c) (λ ()))
   amguʳ-spec zero p rg (ρ₁ ·̂ᵣ ρ₂) (rvar j) anil = Spec-map sym (flexʳ-spec rg j (ρ₁ ·̂ᵣ ρ₂) (λ ()))
+  amguʳ-spec zero p rg (ρ₁ ⊔̂ᵣ ρ₂) (rvar j) anil = Spec-map sym (flexʳ-spec rg j (ρ₁ ⊔̂ᵣ ρ₂) (λ ()))
   amguʳ-spec zero p rg ∣ ε ∣̂ᵉ (rvar j) anil = Spec-map sym (flexʳ-spec rg j ∣ ε ∣̂ᵉ (λ ()))
   amguʳ-spec zero p rg (rconst c) (rconst d) anil = const-spec (c ≡ᵣ? d) (λ δ u → rconst-inj u)
   amguʳ-spec {Θ} zero p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil =
     seq-spec (amguʳ zero p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ zero p rg ρ₂ ρ₂')
              (amguʳ-spec zero p rg ρ₁ ρ₁' anil) (amguʳ-spec zero p rg ρ₂ ρ₂')
              (λ u → ·ᵣ-inj u)
+  amguʳ-spec {Θ} zero p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil =
+    seq-spec (amguʳ zero p rg ρ₁ ρ₁' (Θ , anil)) (amguʳ zero p rg ρ₂ ρ₂')
+             (amguʳ-spec zero p rg ρ₁ ρ₁' anil) (amguʳ-spec zero p rg ρ₂ ρ₂')
+             (λ u → ⊔ᵣ-inj u)
   amguʳ-spec zero p rg ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ anil =
     Spec-map (λ u → ∣∣-inj u) (amguᵉ-spec zero p rg ε ε' anil)
 
   -- head mismatches, including a grade image against a resource former
 
   amguʳ-spec k p rg (rconst c) (ρ₁' ·̂ᵣ ρ₂') anil = clash (λ δ ())
+  amguʳ-spec k p rg (rconst c) (ρ₁' ⊔̂ᵣ ρ₂') anil = clash (λ δ ())
   amguʳ-spec k p rg (rconst c) ∣ ε' ∣̂ᵉ anil = clash (λ δ ())
   amguʳ-spec k p rg (ρ₁ ·̂ᵣ ρ₂) (rconst d) anil = clash (λ δ ())
+  amguʳ-spec k p rg (ρ₁ ·̂ᵣ ρ₂) (ρ₁' ⊔̂ᵣ ρ₂') anil = clash (λ δ ())
   amguʳ-spec k p rg (ρ₁ ·̂ᵣ ρ₂) ∣ ε' ∣̂ᵉ anil = clash (λ δ ())
+  amguʳ-spec k p rg (ρ₁ ⊔̂ᵣ ρ₂) (rconst d) anil = clash (λ δ ())
+  amguʳ-spec k p rg (ρ₁ ⊔̂ᵣ ρ₂) (ρ₁' ·̂ᵣ ρ₂') anil = clash (λ δ ())
+  amguʳ-spec k p rg (ρ₁ ⊔̂ᵣ ρ₂) ∣ ε' ∣̂ᵉ anil = clash (λ δ ())
   amguʳ-spec k p rg ∣ ε ∣̂ᵉ (rconst d) anil = clash (λ δ ())
   amguʳ-spec k p rg ∣ ε ∣̂ᵉ (ρ₁' ·̂ᵣ ρ₂') anil = clash (λ δ ())
+  amguʳ-spec k p rg ∣ ε ∣̂ᵉ (ρ₁' ⊔̂ᵣ ρ₂') anil = clash (λ δ ())
 
   -- effect grades
 
@@ -1078,27 +1128,43 @@ mutual
   amguᵉ-spec (suc k) p rg (evar i) (evar j) anil = flexFlexᵉ-spec rg i j
   amguᵉ-spec (suc k) p rg (evar i) (econst d) anil = flexᵉ-spec rg i (econst d) (nvconstᵉ d)
   amguᵉ-spec (suc k) p rg (evar i) (ε₁' ·̂ₑ ε₂') anil = flexᵉ-spec rg i (ε₁' ·̂ₑ ε₂') (nvmulᵉ ε₁' ε₂')
+  amguᵉ-spec (suc k) p rg (evar i) (ε₁' ⊔̂ₑ ε₂') anil = flexᵉ-spec rg i (ε₁' ⊔̂ₑ ε₂') (nvjoinᵉ ε₁' ε₂')
   amguᵉ-spec (suc k) p rg (econst c) (evar j) anil = Spec-map sym (flexᵉ-spec rg j (econst c) (nvconstᵉ c))
   amguᵉ-spec (suc k) p rg (ε₁ ·̂ₑ ε₂) (evar j) anil = Spec-map sym (flexᵉ-spec rg j (ε₁ ·̂ₑ ε₂) (nvmulᵉ ε₁ ε₂))
+  amguᵉ-spec (suc k) p rg (ε₁ ⊔̂ₑ ε₂) (evar j) anil = Spec-map sym (flexᵉ-spec rg j (ε₁ ⊔̂ₑ ε₂) (nvjoinᵉ ε₁ ε₂))
   amguᵉ-spec (suc k) p rg (econst c) (econst d) anil = const-spec (c ≡ₑ? d) (λ δ u → econst-inj u)
   amguᵉ-spec {Θ} (suc k) p rg (ε₁ ·̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil =
     seq-spec (amguᵉ (suc k) p rg ε₁ ε₁' (Θ , anil)) (amguᵉ (suc k) p rg ε₂ ε₂')
              (amguᵉ-spec (suc k) p rg ε₁ ε₁' anil) (amguᵉ-spec (suc k) p rg ε₂ ε₂')
              (λ u → ·ₑ-inj u)
+  amguᵉ-spec {Θ} (suc k) p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil =
+    seq-spec (amguᵉ (suc k) p rg ε₁ ε₁' (Θ , anil)) (amguᵉ (suc k) p rg ε₂ ε₂')
+             (amguᵉ-spec (suc k) p rg ε₁ ε₁' anil) (amguᵉ-spec (suc k) p rg ε₂ ε₂')
+             (λ u → ⊔ₑ-inj u)
 
   amguᵉ-spec zero p rg (evar i) (evar j) anil = flexFlexᵉ-spec rg i j
   amguᵉ-spec zero p rg (evar i) (econst d) anil = flexᵉ-spec rg i (econst d) (nvconstᵉ d)
   amguᵉ-spec zero p rg (evar i) (ε₁' ·̂ₑ ε₂') anil = flexᵉ-spec rg i (ε₁' ·̂ₑ ε₂') (nvmulᵉ ε₁' ε₂')
+  amguᵉ-spec zero p rg (evar i) (ε₁' ⊔̂ₑ ε₂') anil = flexᵉ-spec rg i (ε₁' ⊔̂ₑ ε₂') (nvjoinᵉ ε₁' ε₂')
   amguᵉ-spec zero p rg (econst c) (evar j) anil = Spec-map sym (flexᵉ-spec rg j (econst c) (nvconstᵉ c))
   amguᵉ-spec zero p rg (ε₁ ·̂ₑ ε₂) (evar j) anil = Spec-map sym (flexᵉ-spec rg j (ε₁ ·̂ₑ ε₂) (nvmulᵉ ε₁ ε₂))
+  amguᵉ-spec zero p rg (ε₁ ⊔̂ₑ ε₂) (evar j) anil = Spec-map sym (flexᵉ-spec rg j (ε₁ ⊔̂ₑ ε₂) (nvjoinᵉ ε₁ ε₂))
   amguᵉ-spec zero p rg (econst c) (econst d) anil = const-spec (c ≡ₑ? d) (λ δ u → econst-inj u)
   amguᵉ-spec {Θ} zero p rg (ε₁ ·̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil =
     seq-spec (amguᵉ zero p rg ε₁ ε₁' (Θ , anil)) (amguᵉ zero p rg ε₂ ε₂')
              (amguᵉ-spec zero p rg ε₁ ε₁' anil) (amguᵉ-spec zero p rg ε₂ ε₂')
              (λ u → ·ₑ-inj u)
+  amguᵉ-spec {Θ} zero p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil =
+    seq-spec (amguᵉ zero p rg ε₁ ε₁' (Θ , anil)) (amguᵉ zero p rg ε₂ ε₂')
+             (amguᵉ-spec zero p rg ε₁ ε₁' anil) (amguᵉ-spec zero p rg ε₂ ε₂')
+             (λ u → ⊔ₑ-inj u)
 
   amguᵉ-spec k p rg (econst c) (ε₁' ·̂ₑ ε₂') anil = clash (λ δ ())
+  amguᵉ-spec k p rg (econst c) (ε₁' ⊔̂ₑ ε₂') anil = clash (λ δ ())
   amguᵉ-spec k p rg (ε₁ ·̂ₑ ε₂) (econst d) anil = clash (λ δ ())
+  amguᵉ-spec k p rg (ε₁ ·̂ₑ ε₂) (ε₁' ⊔̂ₑ ε₂') anil = clash (λ δ ())
+  amguᵉ-spec k p rg (ε₁ ⊔̂ₑ ε₂) (econst d) anil = clash (λ δ ())
+  amguᵉ-spec k p rg (ε₁ ⊔̂ₑ ε₂) (ε₁' ·̂ₑ ε₂') anil = clash (λ δ ())
 
 amguᴱ-spec : ∀ {Θ Θ'} → (rg : Rig Θ) → (e : Eqn Θ) → (ρ : AList Θ Θ')
            → Spec rg (Uni e) ρ (amguᴱ rg e (Θ' , ρ))

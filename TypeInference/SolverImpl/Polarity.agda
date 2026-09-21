@@ -72,6 +72,7 @@ polᵣ-r : ∀ {Ψ} → RVar Ψ → Sign → RExp Ψ → Pol
 polᵣ-r i s (rvar j)   = atˢ s ⌊ i ≟ᶠ j ⌋
 polᵣ-r i s (rconst _) = noᴾ
 polᵣ-r i s (ρ ·̂ᵣ ρ')  = polᵣ-r i s ρ ∪ᴾ polᵣ-r i s ρ'
+polᵣ-r i s (ρ ⊔̂ᵣ ρ')  = polᵣ-r i s ρ ∪ᴾ polᵣ-r i s ρ'
 polᵣ-r i s ∣ _ ∣̂ᵉ     = noᴾ
 
 mutual
@@ -96,11 +97,13 @@ polₑ-e : ∀ {Ψ} → EVar Ψ → Sign → EExp Ψ → Pol
 polₑ-e i s (evar j)   = atˢ s ⌊ i ≟ᶠ j ⌋
 polₑ-e i s (econst _) = noᴾ
 polₑ-e i s (ε ·̂ₑ ε')  = polₑ-e i s ε ∪ᴾ polₑ-e i s ε'
+polₑ-e i s (ε ⊔̂ₑ ε')  = polₑ-e i s ε ∪ᴾ polₑ-e i s ε'
 
 polₑ-r : ∀ {Ψ} → EVar Ψ → Sign → RExp Ψ → Pol
 polₑ-r i s (rvar _)   = noᴾ
 polₑ-r i s (rconst _) = noᴾ
 polₑ-r i s (ρ ·̂ᵣ ρ')  = polₑ-r i s ρ ∪ᴾ polₑ-r i s ρ'
+polₑ-r i s (ρ ⊔̂ᵣ ρ')  = polₑ-r i s ρ ∪ᴾ polₑ-r i s ρ'
 polₑ-r i s ∣ ε ∣̂ᵉ     = polₑ-e i s ε
 
 mutual

@@ -33,11 +33,13 @@ sizeᵉ : ∀ {Θ} → EExp Θ → ℕ
 sizeᵉ (evar i)   = 1
 sizeᵉ (econst ε) = 1
 sizeᵉ (ε ·̂ₑ ε')  = suc (sizeᵉ ε + sizeᵉ ε')
+sizeᵉ (ε ⊔̂ₑ ε')  = suc (sizeᵉ ε + sizeᵉ ε')
 
 sizeʳ : ∀ {Θ} → RExp Θ → ℕ
 sizeʳ (rvar i)   = 1
 sizeʳ (rconst ρ) = 1
 sizeʳ (ρ ·̂ᵣ ρ')  = suc (sizeʳ ρ + sizeʳ ρ')
+sizeʳ (ρ ⊔̂ᵣ ρ')  = suc (sizeʳ ρ + sizeʳ ρ')
 sizeʳ ∣ ε ∣̂ᵉ     = suc (sizeᵉ ε)
 
 mutual

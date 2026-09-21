@@ -101,6 +101,7 @@ varᵉ? : ∀ {Ψ} → EExp Ψ → Maybe (EVar Ψ)
 varᵉ? (evar i)  = just i
 varᵉ? (econst c) = nothing
 varᵉ? (ε ·̂ₑ ε') = nothing
+varᵉ? (ε ⊔̂ₑ ε') = nothing
 
 transRig : ∀ {Ψ Ψ'} → Subst Ψ Ψ' → Rig Ψ → Rig Ψ'
 transRig δ rg = mapMaybe (λ i → varᵉ? (sE δ i)) rg
