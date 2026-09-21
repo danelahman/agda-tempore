@@ -1,16 +1,20 @@
 ------------------------------------------------------------------
--- Walks a constraint, threading a state: type equations go to   --
--- the unification core, a subtyping atom is decomposed at       --
--- matching formers and residualised at a pair of type           --
--- variables, grade orderings, eternality demands and var-rule   --
--- disjunctions are residualised, and binders lift the state.    --
--- A successful witness is deferred, re-read at the state a      --
--- later component leaves behind rather than transported         --
--- along it, making conjunction transport-free.                  --
--- At a rigid binder the state is lifted with a fresh residual:  --
--- atoms free of the rigid are kept, one mentioning it is        --
--- discharged on the spot, and an outer unknown's image must     --
--- stay free of it.                                              --
+-- Walks a constraint, threading a state: type equations go to  --
+-- the unification core, a subtyping atom is decomposed at      --
+-- matching formers and residualised at a pair of type          --
+-- variables, grade orderings, eternality demands and var-rule  --
+-- disjunctions are residualised, and binders lift the state.   --
+-- Subtyping preserves skeletons, so a move that substitutes    --
+-- into the residual first refines the type variables to the    --
+-- shapes the pending subtyping demands force; that is what     --
+-- leaves every demand decomposable.                            --
+-- A successful witness is deferred, re-read at the state a     --
+-- later component leaves behind rather than transported        --
+-- along it, making conjunction transport-free.                 --
+-- At a rigid binder the state is lifted with a fresh residual: --
+-- atoms free of the rigid are kept, one mentioning it is       --
+-- discharged on the spot, and an outer unknown's image must    --
+-- stay free of it.                                             --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)
@@ -64,6 +68,7 @@ open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐�
 open import TypeInference.SolverImpl.Enum S using (AllOp; []; _∷_; all-lookup)
 
 open import TypeInference.SolverImpl.Core.AList      S
+open import TypeInference.SolverImpl.Core.Decorate   S using (expandSub)
 open import TypeInference.SolverImpl.Core.Eqn        S
 open import TypeInference.SolverImpl.Core.Rigid      S
 open import TypeInference.SolverImpl.Core.Unify      S
@@ -413,6 +418,10 @@ unify*-nothing : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
                → unify* rg es ≡ nothing → unify rg es ≡ nothing
 unify*-nothing rg es q = unifyAt-nothing rg es (unify rg es) refl q
 
+chain₂ᵛ : ∀ {Θ Ψ Ψ₁ Ψ₂} → (X : OVType Θ) → (σ : Subst Θ Ψ) → (δ : Subst Ψ Ψ₁)
+        → (δ' : Subst Ψ₁ Ψ₂) → X [ σ ]ᵛ [ δ ]ᵛ [ δ' ]ᵛ ≡ X [ (σ ⨟ˢ δ) ⨟ˢ δ' ]ᵛ
+chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]ᵛ X (σ ⨟ˢ δ) δ')
+
 solve : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
       → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
 
@@ -429,26 +438,34 @@ solve s (C ∧̂ D) with solve s C
 
 solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
 ... | nothing = nothing
-... | just (Ψ⁺ , ρ , equ) =
-      just (st Ψ⁺ (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) (transRig ⟦ ρ ⟧ᴬ (rig s)) ,
-            mor ⟦ ρ ⟧ᴬ ≐ˢ-refl (λ δ Q h → ⊩ᴿ-subst h) ,
-            λ δ Q h → trans (sym ([⨟]ᵛ A (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ))
-                      (trans (cong (_[ δ ]ᵛ) pinned) ([⨟]ᵛ B (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ)))
-      where
-        pinned : A [ θ s ⨟ˢ ⟦ ρ ⟧ᴬ ]ᵛ ≡ B [ θ s ⨟ˢ ⟦ ρ ⟧ᴬ ]ᵛ
-        pinned = trans (sym ([⨟]ᵛ A (θ s) ⟦ ρ ⟧ᴬ))
-                 (trans (proj₁ (unify-sound (rig s)
-                                            (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ))
-                        ([⨟]ᵛ B (θ s) ⟦ ρ ⟧ᴬ))
+... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
+...   | nothing = nothing
+...   | just (Ψ' , δ) =
+        just (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ)
+                 (transRig δ (transRig ⟦ ρ ⟧ᴬ (rig s))) ,
+              mor (⟦ ρ ⟧ᴬ ⨟ˢ δ) (≐ˢ-sym (⨟-assoc (θ s) ⟦ ρ ⟧ᴬ δ))
+                  (λ δ' Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc ⟦ ρ ⟧ᴬ δ δ'))
+                                          (⊩ᴿ-subst (⊩ᴿ-subst h))) ,
+              λ δ' Q h → trans (sym (chain₂ᵛ A (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ'))
+                         (trans (cong (λ X → X [ δ ]ᵛ [ δ' ]ᵛ) pinned)
+                                (chain₂ᵛ B (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ')))
+        where
+          pinned : A [ θ s ⨟ˢ ⟦ ρ ⟧ᴬ ]ᵛ ≡ B [ θ s ⨟ˢ ⟦ ρ ⟧ᴬ ]ᵛ
+          pinned = trans (sym ([⨟]ᵛ A (θ s) ⟦ ρ ⟧ᴬ))
+                   (trans (proj₁ (unify-sound (rig s)
+                                              (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ))
+                          ([⨟]ᵛ B (θ s) ⟦ ρ ⟧ᴬ))
 
-solve s (A ≾̂ᵥᶜ B) with subDec (A [ θ s ]ᵛ) (B [ θ s ]ᵛ)
-... | nothing = nothing
-... | just d  =
-      just (st (Ψ s) (θ s) (res s ∪ᴿ atomsᴿ (atomsOf d)) (rig s) ,
-            mor idˢ (⨟-idʳ (θ s))
-                (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (∪ᴿ-fst h)) ,
-            λ δ Q h → subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A (θ s) δ) ([⨟]ᵛ B (θ s) δ)
-                             (intro d δ (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
+solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
+... | nothing        = nothing
+... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
+...   | nothing = nothing
+...   | just d  =
+        just (st Ψ' (θ s ⨟ˢ δ) (res s [ δ ]ᴿ ∪ᴿ atomsᴿ (atomsOf d))
+                 (transRig δ (rig s)) ,
+              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (∪ᴿ-fst h)) ,
+              λ δ' Q h → subst₂ (Q ∣_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
+                                (intro d δ' (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
 solve s (ρ ≾̂ᵣᶜ ρ') =
   just (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) (ρ' [ θ s ]ʳ) (res s)) (rig s) ,

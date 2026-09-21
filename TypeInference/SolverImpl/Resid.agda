@@ -18,10 +18,10 @@
 -- verbatim.                                                       --
 --                                                                --
 -- `subDec` decomposes a matching pair of formers and stops at a   --
--- pair of type variables. A type variable against a former has no --
--- decomposition: relating them needs the variable instantiated to --
--- the other side's shape, which a residual cannot express.        --
---                                                                --
+-- pair of type variables. A type variable against a former has    --
+-- no decomposition; the solver refines the variable to the other  --
+-- side's shape first.                                             --
+--                                                                 --
 -- The name follows OutsideIn(X): a residual constraint is what    --
 -- solving leaves behind (Vytiniotis et al., JFP 2011).            --
 ------------------------------------------------------------------

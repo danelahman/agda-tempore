@@ -398,6 +398,12 @@ open import TypeInference.ParamGround
 import TypeInference.SolverImpl
 import TypeInference.SolverImpl.Demo
 
+---- Soundness and most-generality of the skeleton unifier the solver's
+---- variable expansion runs
+
+import TypeInference.SolverImpl.Core.SkelUnifySound
+import TypeInference.SolverImpl.Core.SkelUnifyMGU
+
 ---- Semantic refutation of a grade ordering against the unit, and the
 ---- narrowing of reported var-rule disjunctions it justifies
 
