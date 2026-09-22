@@ -589,7 +589,8 @@ ex-pipeline-op = refl
 -- The eight shapes of `Demo.Generic` go through `reportOn`, the open
 -- path, which hands back a qualified type rather than a ground
 -- solution. Each is stated twice, the full report and its hypothesis
--- counts by sort.
+-- counts by sort. The two whose arms carry different effects,
+-- `branchE` and `seqBranch`, are stated on the ground path as well.
 --
 -- Seven of the eight come out at exactly the scopes, shapes and counts
 -- `Demo.TimeIntervals` reports, the grade constants inside being each
@@ -683,6 +684,14 @@ module Library where
   ex-branchE-size : sizeOf branchE ≡ just (0 , 0 , 0 , 0 , 0)
   ex-branchE-size = refl
 
+  -- the ground path takes `f`'s latent effect to be the unit, and the
+  -- join of the two arms is then a constant
+
+  ex-branchE : infer! [] branchE
+             ≡ just ((Unit ⇒ (Unit ‼ ûₑ))
+                       ⇒ ((Bool ⇒ (Unit ‼ econst (op-grade read))) ‼ ûₑ) , ûₑ)
+  ex-branchE = refl
+
   -- `seqBranch`: the same join, standing underneath a product. The
   -- product is distributed over it, and the arm that carries two
   -- constants has them multiplied into one.
@@ -702,6 +711,16 @@ module Library where
 
   ex-seqBranch-size : sizeOf seqBranch ≡ just (0 , 0 , 0 , 0 , 0)
   ex-seqBranch-size = refl
+
+  -- and here both alternatives of the join are constants, so it is
+  -- one too
+
+  ex-seqBranch : infer! [] seqBranch
+               ≡ just ((Unit ⇒ (Unit ‼ ûₑ))
+                         ⇒ ((Bool ⇒ (Unit ‼ econst (op-grade read ·ₑ op-grade read
+                                                    ⊔ₑ op-grade read)))
+                             ‼ ûₑ) , ûₑ)
+  ex-seqBranch = refl
 
   -- `keep`: the box grade stays a variable, and the one var-rule
   -- disjunction on it is all that is left
