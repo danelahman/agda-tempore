@@ -30,7 +30,6 @@ open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
-open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
@@ -45,8 +44,6 @@ import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Close
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
@@ -67,7 +64,7 @@ open import TypeInference.SolverImpl.Core.Size   S using (Sz)
 
 open import TypeInference.SolverImpl.Resid    S
 open import TypeInference.SolverImpl.Polarity S
-open import TypeInference.SolverImpl.Normal   S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Normal   S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Eliminate S using (joinᵣ; joinₑ)
 
 -- The unique grounding of the empty scope, and the constant an

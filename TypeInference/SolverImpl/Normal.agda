@@ -26,7 +26,6 @@ open import Data.List.Base using (List; []; _∷_)
 open import Data.Maybe using (Maybe; just; nothing; _<∣>_)
 open import Data.Product using (_×_; _,_)
 
-open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades
@@ -40,8 +39,6 @@ import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Normal
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
   (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
   where

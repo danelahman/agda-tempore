@@ -99,10 +99,8 @@ infix 6 _≾ₒ_
 
 -- decidability
 
-_≡ₒ?_ : Decidable (_≡_ {A = 𝕀})
-[ m ,+∞⟩ ≡ₒ? [ n ,+∞⟩ with m ≟ n
-... | yes p = yes (eq𝕀 p)
-... | no ¬p = no (λ eq → ¬p (𝕀-inj eq))
+_≾ₒ?_ : Decidable _≾ₒ_
+[ m ,+∞⟩ ≾ₒ? [ n ,+∞⟩ = n ≤? m
 
 -- cancellativity
 
@@ -176,7 +174,7 @@ left-sided-intervals = record
   ; ≾-refl            = ≾ₒ-refl
   ; ≾-trans           = ≾ₒ-trans
   ; ≾-antisym         = λ {i} {j} → ≾ₒ-antisym {i} {j}
-  ; _≡?_              = _≡ₒ?_
+  ; _≾?_              = _≾ₒ?_
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
   ; ≾-irrelevant      = ≾ₒ-irrelevant
@@ -296,13 +294,11 @@ infix 6 _≾ᵗ_
 
 -- decidability
 
-_≡ᵗ?_ : Decidable (_≡_ {A = 𝕀⊤})
-(timed i) ≡ᵗ? (timed j) with i ≡ₒ? j
-... | yes p = yes (cong timed_ p)
-... | no ¬p = no (λ eq → ¬p (timed-inj eq))
-(timed _) ≡ᵗ? untimed   = no (λ ())
-untimed   ≡ᵗ? (timed _) = no (λ ())
-untimed   ≡ᵗ? untimed   = yes refl
+_≾ᵗ?_ : Decidable _≾ᵗ_
+(timed i) ≾ᵗ? (timed j) = i ≾ₒ? j
+(timed _) ≾ᵗ? untimed   = yes tt
+untimed   ≾ᵗ? (timed _) = no λ ()
+untimed   ≾ᵗ? untimed   = yes tt
 
 -- zero-product properties, `untimed` sitting above the unit and not
 -- below it
@@ -384,7 +380,7 @@ left-sided-intervals-with-⊤ = record
   ; ≾-refl            = λ {i} → ≾ᵗ-refl {i}
   ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ᵗ-trans {i₁} {i₂} {i₃}
   ; ≾-antisym         = λ {i₁} {i₂} → ≾ᵗ-antisym {i₁} {i₂}
-  ; _≡?_              = _≡ᵗ?_
+  ; _≾?_              = _≾ᵗ?_
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵗ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵗ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵗ-irrelevant {i₁} {i₂}

@@ -63,7 +63,6 @@ module Syntax.Grades.Traces.Reduced
 
 open import Data.Empty using (⊥-elim)
 open import Data.List.Base using (List; []; _∷_; [_]; _++_)
-open import Data.List.Properties using (≡-dec)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻;
@@ -89,7 +88,7 @@ open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
           ·-distribˡ-∪; ·-distribʳ-∪; ·-zero-productˡ; ·-zero-productʳ;
           of-nat; of-nat-zero; of-nat-plus)
 
-open WithDecEq _≟ₒ_ public hiding (_≟ᴺ_)
+open WithDecEq _≟ₒ_ public
 
 open Syntax.Grades.Traces.Order.TracePartialOrder P
 
@@ -857,11 +856,3 @@ of-nat-zero = refl
 of-nat-plus : {m k : ℕ} → of-nat (m + k) ≡ (of-nat m · of-nat k)
 of-nat-plus {m} {k} =
   ac-ext {of-nat (m + k)} {of-nat m · of-nat k} (cong [_] (⟨⟩-hom m k))
-
-------------------------------------------------------------------------
--- Decidable equality of antichains
-
-_≟ᴬ_ : DecidableEquality Antichain
-P ≟ᴬ Q with ≡-dec _≟ᵀ_ (traces P) (traces Q)
-... | yes eq = yes (ac-ext eq)
-... | no ¬eq = no λ p → ¬eq (cong traces p)

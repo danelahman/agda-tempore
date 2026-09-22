@@ -112,10 +112,8 @@ infix 6 _≾ₒ_
 
 -- decidability
 
-_≡ₒ?_ : Decidable (_≡_ {A = 𝕀ᵣ})
-[0, m ] ≡ₒ? [0, n ] with m ≟∞ n
-... | yes p = yes (eq𝕀ᵣ p)
-... | no ¬p = no (λ eq → ¬p (𝕀ᵣ-inj eq))
+_≾ₒ?_ : Decidable _≾ₒ_
+[0, m ] ≾ₒ? [0, n ] = m ≤∞? n
 
 -- Unlike the all-finite deadlines, _·ₒ_ is *not* cancellative once ∞
 -- is allowed.
@@ -183,7 +181,7 @@ right-sided-intervals = record
   ; ≾-refl            = λ {i} → ≾ₒ-refl {i}
   ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ₒ-trans {i₁} {i₂} {i₃}
   ; ≾-antisym         = λ {i₁} {i₂} → ≾ₒ-antisym {i₁} {i₂}
-  ; _≡?_              = _≡ₒ?_
+  ; _≾?_              = _≾ₒ?_
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ₒ-irrelevant {i₁} {i₂}

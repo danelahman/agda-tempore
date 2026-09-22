@@ -55,7 +55,7 @@ open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open WithDecEq _≟ₒ_
-  using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·; _≟ᴺ_; liftˢ-irrelevant;
+  using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·; liftˢ-irrelevant;
          _≟ᵀ_; ⊑-∪-ubˡ; ⊑-∪-ubʳ; ⊑-∪-lub; ⊑-nfˡ⁻; ⊑-antisym)
 
 ------------------------------------------------------------------------
@@ -294,15 +294,7 @@ any-run        ⊔ᵖ _              = any-run
 ≾-zero-productʳ {any-run}      {_}            ()
 
 ------------------------------------------------------------------------
--- Decidable equality, the inclusion of ℕ, and deciding the order
-
-_≟ᴾ_ : DecidableEquality Permits
-(permitting P) ≟ᴾ (permitting Q) with P ≟ᴺ Q
-... | yes p = yes (cong permitting_ p)
-... | no ¬p = no λ eq → ¬p (permitting-inj eq)
-(permitting _) ≟ᴾ any-run        = no λ ()
-any-run        ≟ᴾ (permitting _) = no λ ()
-any-run        ≟ᴾ any-run        = yes refl
+-- The inclusion of ℕ, and deciding the order
 
 of-natᵖ : ℕ → Permits
 of-natᵖ n = permitting (of-nat n)
@@ -346,7 +338,7 @@ right-sided = record
   ; ≾-refl          = λ {x} → ≾-refl {x}
   ; ≾-trans         = λ {i} {j} {k} → ≾-trans {i} {j} {k}
   ; ≾-antisym       = λ {P} {Q} → ≾-antisym {P} {Q}
-  ; _≡?_            = _≟ᴾ_
+  ; _≾?_            = _≾?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}

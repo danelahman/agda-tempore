@@ -73,7 +73,9 @@ a grade system, a signature of base types, and operations' signatures.
   grade, all hold at `_≡_`. A grade morphism preserves joins on the nose. This
   is what lets a branching construct be graded by the join of its branches, and
   what lets type inference report the join of two bounds rather than falling
-  back on the greatest grade.
+  back on the greatest grade. The order is also **decidable** (`_≾?_`), which
+  type inference relies on, and antisymmetry turns that into decidable equality
+  of grades.
 
 - `Syntax/Grades/Example.agda` indexes the example grades, which come in two
   families, and the grade systems assembled from them.

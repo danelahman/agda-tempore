@@ -1,15 +1,14 @@
 ------------------------------------------------------------------
--- A concrete constraint solver, under decidability and           --
--- enumerability assumptions.                                     --
--- Parameters: decidability of the two grade orders, an           --
--- operation enumeration, and optional unit-minimality            --
--- witnesses.                                                     --
+-- A concrete constraint solver, under an enumerability           --
+-- assumption.                                                    --
+-- Parameters: an operation enumeration, and optional             --
+-- unit-minimality witnesses. The grade orders are decided by     --
+-- the grades themselves.                                         --
 ------------------------------------------------------------------
 
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
-open import Relation.Binary.Definitions using (Decidable)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -25,8 +24,6 @@ open import TypeInference.SolverImpl.Enum using (OpEnum)
 
 module TypeInference.SolverImpl
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (opEnum : OpEnum S)
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
   (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
@@ -58,8 +55,8 @@ open import TypeInference.Infer      S using (Θ₁; X̂₁; t̂₁; C∅[_,_]; 
 
 
 open import TypeInference.SolverImpl.State S using (St; θ; res; init)
-open import TypeInference.SolverImpl.Solve S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ using (solve)
-open import TypeInference.SolverImpl.Close S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Solve S opEnum umin?ᵣ umin?ₑ using (solve)
+open import TypeInference.SolverImpl.Close S umin?ᵣ umin?ₑ
   using (close)
 open import TypeInference.SolverImpl.Canon   S using (canonᵛ)
 open import TypeInference.SolverImpl.Product S using (canonₑ)

@@ -27,7 +27,6 @@ open import Data.Nat.Base using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
-open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Syntax.Grades
@@ -41,8 +40,6 @@ import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Simplify
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
@@ -66,7 +63,7 @@ open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
 open import TypeInference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊨; canonᴴ-⊨⁻)
 open import TypeInference.SolverImpl.Resid  S using (etDec)
-open import TypeInference.SolverImpl.Refute S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Refute S umin?ᵣ umin?ₑ
   using (Refutedᵤ; scanᵤ)
 
 -- `etDec` read at a grounding: the closed `Eternal` of `Syntax.Types`

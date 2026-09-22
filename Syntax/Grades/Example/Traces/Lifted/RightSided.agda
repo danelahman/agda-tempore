@@ -339,15 +339,7 @@ unbounded  ⊔ᵇ _          = unbounded
 ≾-zero-productʳ {unbounded} {_}         ()
 
 ------------------------------------------------------------------------
--- Decidable equality, the inclusion of ℕ, and deciding the order
-
-_≟ᴮ_ : DecidableEquality Bounds
-(within P) ≟ᴮ (within Q) with P ≟ᴬ Q
-... | yes p = yes (cong within_ p)
-... | no ¬p = no λ eq → ¬p (within-inj eq)
-(within _) ≟ᴮ unbounded  = no λ ()
-unbounded  ≟ᴮ (within _) = no λ ()
-unbounded  ≟ᴮ unbounded  = yes refl
+-- The inclusion of ℕ, and deciding the order
 
 of-natᵇ : ℕ → Bounds
 of-natᵇ n = within (of-nat n)
@@ -391,7 +383,7 @@ right-sided = record
   ; ≾-refl          = λ {x} → ≾-refl {x}
   ; ≾-trans         = λ {i} {j} {k} → ≾-trans {i} {j} {k}
   ; ≾-antisym       = λ {P} {Q} → ≾-antisym {P} {Q}
-  ; _≡?_            = _≟ᴮ_
+  ; _≾?_            = _≾?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}

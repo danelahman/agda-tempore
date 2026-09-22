@@ -42,7 +42,7 @@ open import Data.List.Base
   using (List; []; _∷_; [_]; _++_; map; cartesianProductWith)
 open import Data.List.Properties
   using (++-identityʳ; map-++; map-id; map-cong;
-         cartesianProductWith-distribʳ-++; ≡-dec)
+         cartesianProductWith-distribʳ-++)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻;
@@ -676,8 +676,8 @@ of-nat-plus {m} {n} =
 --
 -- Membership in a finite set of traces becomes decidable, and with it
 -- the set-level lift `liftˢ` that every trace grade's order is an
--- instance of, the subset preorder `_⊑_` on the underlying lists (the
--- lift at equality), and decidable equality of sets of traces.
+-- instance of, and the subset preorder `_⊑_` on the underlying lists
+-- (the lift at equality).
 
 module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
@@ -898,10 +898,3 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
 
   _⊑?_ : (xs ys : List Trace) → Dec (xs ⊑ ys)
   _⊑?_ = liftˢ? _≟ᵀ_
-
-  -- decidable equality of sets of traces
-
-  _≟ᴺ_ : DecidableEquality NeTraces
-  P ≟ᴺ Q with ≡-dec _≟ᵀ_ (traces P) (traces Q)
-  ... | yes eq = yes (ne-ext eq)
-  ... | no ¬eq = no λ p → ¬eq (cong traces p)

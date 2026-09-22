@@ -89,7 +89,7 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
   using (Antichain)
   renaming (traces to tracesˡᵒ; nonempty to nonemptyˡᵒ;
             n to nˡᵒ; n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈;
-            _·_ to _·ˡᵒ_; u to uˡᵒ; _⊔_ to _⊔ˡᵒ_; _≟ᴬ_ to _≟ˡᵒ_;
+            _·_ to _·ˡᵒ_; u to uˡᵒ; _⊔_ to _⊔ˡᵒ_;
             ·-identityʳ to ·ˡᵒ-identityʳ; ·-identityˡ to ·ˡᵒ-identityˡ;
             ·-assoc to ·ˡᵒ-assoc;
             of-nat to of-natˡᵒ; of-nat-zero to of-natˡᵒ-zero;
@@ -109,7 +109,7 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
 
 open import Syntax.Grades.Example.Traces.Lifted.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
-  using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _≟ᴮ_; _⊔ᵇ_;
+  using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
   renaming (Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
             u to uʰⁱ; n to nʰⁱ; n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈;
@@ -505,12 +505,6 @@ i₁ ⊔ᵗˢ i₂ =
   cong₂ _,_ (≾ˡᵒ-irrelevant {lo i₁} {lo i₂} l l')
             (≾ʰⁱ-irrelevant {hi i₁} {hi i₂} h h')
 
-_≟ᵗˢ_ : Decidable (_≡_ {A = TwoSided})
-i₁ ≟ᵗˢ i₂ with lo i₁ ≟ˡᵒ lo i₂ | hi i₁ ≟ᴮ hi i₂
-... | yes p | yes q = yes (eqᵗˢ p q)
-... | yes _ | no ¬q = no λ eq → ¬q (cong hi eq)
-... | no ¬p | _     = no λ eq → ¬p (cong lo eq)
-
 ------------------------------------------------------------------------
 -- Including the natural numbers, and deciding the order
 
@@ -548,7 +542,7 @@ two-sided = record
   ; ≾-refl          = λ {x} → ≾ᵗˢ-refl {x}
   ; ≾-trans         = λ {i} {j} {k} → ≾ᵗˢ-trans {i} {j} {k}
   ; ≾-antisym       = λ {i} {j} → ≾ᵗˢ-antisym {i} {j}
-  ; _≡?_            = _≟ᵗˢ_
+  ; _≾?_            = _≾ᵗˢ?_
   ; ≾-zero-productˡ = λ {c} {d} → ≾ᵗˢ-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗˢ-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵗˢ-irrelevant {c} {d}

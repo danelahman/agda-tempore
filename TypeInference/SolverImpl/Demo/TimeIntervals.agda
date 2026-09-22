@@ -4,8 +4,9 @@
 -- `Syntax.Grades.Example.Worked.Spec` grades a computation by a  --
 -- two-sided window of elapsed time and a resource by a lower     --
 -- bound on it, the projection between them keeping the window's  --
--- lower endpoint. It satisfies the solver's three assumptions,   --
--- but not the optional one that the effect unit is least.        --
+-- lower endpoint. It satisfies the solver's assumption, an       --
+-- enumeration of the operations, but not the optional one that   --
+-- the effect unit is least.                                      --
 --                                                                --
 -- Five sections: the plumbing; one example per raw-term former;  --
 -- what these grades do, which is what the calculus is for; what  --
@@ -21,11 +22,11 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Fin using (zero; suc; #_)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Data.Nat using (ℕ; _≤?_; z≤n; s≤s)
-open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Nat using (ℕ; z≤n; s≤s)
+open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Unit using (tt)
 
-open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
@@ -33,9 +34,9 @@ open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
 
-open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩; _≾ₒ_)
+open import Syntax.Grades.Example.Time.LeftSided using (𝕀; [_,+∞⟩)
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_,_]; min; max; _≾ᵢ_; _≤∞?_)
+  using (Interval∞; [_,_,_])
 open import Syntax.Grades.Example.Worked.Operations using (read; write; send)
 open import Syntax.Grades.Example.Worked.Spec using (spec; baseTypes; reading)
 
@@ -80,25 +81,12 @@ open import TypeInference.SolverImpl.Enum spec using (OpEnum)
 ------------------------------------------------------------------------
 -- 1. Setup
 --
--- The solver is parametric in the two decidable orders, in an
--- enumeration of the operations, and in the two optional proofs that a
--- unit is least. Instantiating it here, and `Demo.Generic` with it,
+-- The solver is parametric in an enumeration of the operations and in
+-- the two optional proofs that a unit is least; the grades decide their
+-- own orders. Instantiating it here, and `Demo.Generic` with it,
 -- fixes the wrappers the rest of the module runs: `infer!`, reporting
 -- an inferred type and effect, and `typeOf`, running the whole pipeline
 -- down to a derivation of the source system.
-
--- resource grades are lower bounds, ordered by `_≤_` reversed
-
-≾ᵣ-dec : (i j : 𝕀) → Dec (i ≾ₒ j)
-≾ᵣ-dec [ m ,+∞⟩ [ n ,+∞⟩ = n ≤? m
-
--- effect grades are two-sided intervals, ordered by containment
-
-≾ₑ-dec : (i j : Interval∞) → Dec (i ≾ᵢ j)
-≾ₑ-dec i j with min j ≤? min i | max i ≤∞? max j
-... | yes p | yes q = yes (p , q)
-... | yes p | no ¬q = no λ r → ¬q (proj₂ r)
-... | no ¬p | _     = no λ r → ¬p (proj₁ r)
 
 -- the node has three operations
 
@@ -114,7 +102,7 @@ ops₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = 
 -- takes no argument, so it is what the performing shapes perform
 
 module G = TypeInference.SolverImpl.Demo.Generic
-             spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing read ⋆
+             spec ops₃ nothing nothing read ⋆
 
 open G
 
@@ -497,7 +485,7 @@ module Unguarded where
 
   open import TypeInference.Principality            spec using (Principal; C[_,_])
   open import TypeInference.Principality.Restricted spec using (principal-on)
-  open import TypeInference.SolverImpl.Restricted   spec ≾ᵣ-dec ≾ₑ-dec ops₃ nothing nothing
+  open import TypeInference.SolverImpl.Restricted   spec ops₃ nothing nothing
     using (solveOn; solverImplOn)
 
   -- a program the solver accepts has a principal solution-with-residue,
@@ -542,10 +530,7 @@ opsᵈ = record
 specᵈ : LanguageSpec
 specᵈ = record { Grades = gradesᵈ ; BTs = baseTypes ; Ops = opsᵈ }
 
--- the order is decidable, and the unit is its least element
-
-≾ᵈ-dec : (i j : 𝕀ᵣ) → Dec (i ≾ᵈ j)
-≾ᵈ-dec [0, m ] [0, n ] = m ≤∞? n
+-- the unit is the least element
 
 uᵈ-min : (i : 𝕀ᵣ) → [0, ↑ 0 ] ≾ᵈ i
 uᵈ-min [0, ↑ n ] = z≤n
@@ -565,10 +550,10 @@ module Rwᵈ = TypeInference.Raw.Syntax specᵈ
 -- option taken and declined
 
 module Gᵐ = TypeInference.SolverImpl.Demo.Generic
-              specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ (just uᵈ-min) (just uᵈ-min) read Rwᵈ.⋆
+              specᵈ opsᵈ₃ (just uᵈ-min) (just uᵈ-min) read Rwᵈ.⋆
 
 module G⁰ = TypeInference.SolverImpl.Demo.Generic
-              specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing nothing read Rwᵈ.⋆
+              specᵈ opsᵈ₃ nothing nothing read Rwᵈ.⋆
 
 -- A non-resuming handler clause's effect (the unit) must be below its
 -- declared grade `op-grade op ·̂ₑ e''`, `e''` rigid -- derivable only
@@ -584,7 +569,7 @@ module Least where
   module Cnᵈ = TypeInference.Constraints.Syntax        specᵈ
 
   module Rsᵈ =
-    TypeInference.SolverImpl.Restricted specᵈ ≾ᵈ-dec ≾ᵈ-dec opsᵈ₃ nothing nothing
+    TypeInference.SolverImpl.Restricted specᵈ opsᵈ₃ nothing nothing
 
   -- the option bears on handler clauses alone: a program without a
   -- handler is inferred the same either way

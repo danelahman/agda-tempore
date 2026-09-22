@@ -35,16 +35,6 @@ infix 8 ↑_
 ↑-inj : ∀ {m n} → ↑ m ≡ ↑ n → m ≡ n
 ↑-inj refl = refl
 
--- decidable equality
-
-_≟∞_ : Decidable {A = ℕ∞} _≡_
-(↑ m) ≟∞ (↑ n) with m ≟ n
-... | yes p = yes (cong ↑_ p)
-... | no ¬p = no λ eq → ¬p (↑-inj eq)
-(↑ _) ≟∞ ∞     = no λ ()
-∞     ≟∞ (↑ _) = no λ ()
-∞     ≟∞ ∞     = yes refl
-
 ------------------------------------------------------------------------
 -- Addition (∞ is absorbing)
 

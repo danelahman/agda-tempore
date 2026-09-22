@@ -19,7 +19,6 @@ open import Data.List.Relation.Unary.Any using (here)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Product using (_,_)
 
-open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (¬_; yes; no)
 
 open import Syntax.Grades
@@ -33,8 +32,6 @@ import TypeInference.OpenSyntax.Hyps as H
 
 module TypeInference.SolverImpl.Refute
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
@@ -49,7 +46,7 @@ open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.Constraints.Ground S using (_⨟ᵍ_; ⟦⟧-⨟ᵍ-r)
 
-open import TypeInference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
   using (Alts; alt; _∷⁺_; RAtom; rc; rv; rm; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; ⟦_⟧ʳˢ⁺;
          nrmᵣ; nrmᵣ-≡)
 

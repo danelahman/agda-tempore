@@ -2,11 +2,11 @@
 -- The solver, run on example programs.                                --
 --                                                                     --
 -- `TypeInference.SolverImpl` is parametric in a language              --
--- specification, in decision procedures for its two grade orders, in  --
--- an enumeration of its operations, and in two optional proofs that a --
--- unit is least. A demo fixes all of that and states, as equations    --
--- discharged by `refl`, what the solver then infers -- so an example  --
--- asserted the wrong way round does not typecheck.                    --
+-- specification, in an enumeration of its operations, and in two      --
+-- optional proofs that a unit is least. A demo fixes all of that and  --
+-- states, as equations discharged by `refl`, what the solver then     --
+-- infers -- so an example asserted the wrong way round does not       --
+-- typecheck.                                                          --
 --                                                                     --
 -- `Generic` holds what the demos are written with, over an arbitrary  --
 -- specification: the library-shaped programs, which name no grade,    --

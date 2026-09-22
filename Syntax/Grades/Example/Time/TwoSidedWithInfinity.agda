@@ -140,11 +140,11 @@ uᵢ-minimal {i} (_ , maxrel) =
 
 -- decidability
 
-eqᵢ? : Decidable {lzero} {Interval∞} _≡_
-eqᵢ? i₁ i₂ with min i₁ ≟ min i₂ | max i₁ ≟∞ max i₂
-... | yes p | yes q = yes (eqᵢ p q)
-... | yes _ | no ¬q = no  λ x → ¬q (cong max x)
-... | no ¬p | _     = no  λ x → ¬p (cong min x)
+_≾ᵢ?_ : Decidable _≾ᵢ_
+i₁ ≾ᵢ? i₂ with min i₂ ≤? min i₁ | max i₁ ≤∞? max i₂
+... | yes p | yes q = yes (p , q)
+... | yes _ | no ¬q = no λ r → ¬q (proj₂ r)
+... | no ¬p | _     = no λ r → ¬p (proj₁ r)
 
 -- Unlike the all-finite two-sided intervals, _·ᵢ_ is *not*
 -- cancellative once ∞ is allowed.
@@ -238,7 +238,7 @@ two-sided-intervals-with-∞ = record
                          → ≤-trans (proj₁ rel₂) (proj₁ rel₁) ,
                            ≤∞-trans (proj₂ rel₁) (proj₂ rel₂)
   ; ≾-antisym        = λ {i₁} {i₂} → ≾ᵢ-antisym {i₁} {i₂}
-  ; _≡?_              = eqᵢ?
+  ; _≾?_              = _≾ᵢ?_
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
@@ -363,13 +363,11 @@ infix 6 _≾ʷ_
 
 -- decidability
 
-eqʷ? : Decidable {lzero} {Interval∞⊤} _≡_
-eqʷ? (window i) (window j) with eqᵢ? i j
-... | yes p = yes (cong window_ p)
-... | no ¬p = no (λ eq → ¬p (window-inj eq))
-eqʷ? (window _) no-window  = no (λ ())
-eqʷ? no-window  (window _) = no (λ ())
-eqʷ? no-window  no-window  = yes refl
+_≾ʷ?_ : Decidable _≾ʷ_
+(window i) ≾ʷ? (window j) = i ≾ᵢ? j
+(window _) ≾ʷ? no-window  = yes tt
+no-window  ≾ʷ? (window _) = no λ ()
+no-window  ≾ʷ? no-window  = yes tt
 
 -- zero-product properties, `no-window` sitting above the unit and not
 -- below it
@@ -456,7 +454,7 @@ two-sided-intervals-with-⊤ = record
   ; ≾-refl            = λ {i} → ≾ʷ-refl {i}
   ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ʷ-trans {i₁} {i₂} {i₃}
   ; ≾-antisym         = λ {i₁} {i₂} → ≾ʷ-antisym {i₁} {i₂}
-  ; _≡?_              = eqʷ?
+  ; _≾?_              = _≾ʷ?_
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ʷ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ʷ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ʷ-irrelevant {i₁} {i₂}

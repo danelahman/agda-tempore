@@ -20,7 +20,6 @@ open import Data.Fin using (zero; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Binary.Definitions using (Decidable)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -35,8 +34,6 @@ open import TypeInference.SolverImpl.Enum using (OpEnum)
 
 module TypeInference.SolverImpl.Demo.Generic
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (opEnum : OpEnum S)
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
@@ -68,10 +65,10 @@ open import TypeInference.Constraints.Syntax S
 open import TypeInference.Infer S using (Inferred)
 open import TypeInference.Principality S using (X̂; t̂; C[_,_])
 
-open import TypeInference.SolverImpl S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl S opEnum umin?ᵣ umin?ₑ
   using (gsolveImpl; greportImpl; inferImpl) public
 
-open import TypeInference.SolverImpl.Restricted S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Restricted S opEnum umin?ᵣ umin?ₑ
   using (reportOn; Reported)
 
 ------------------------------------------------------------------------

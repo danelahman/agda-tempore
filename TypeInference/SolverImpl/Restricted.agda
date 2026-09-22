@@ -12,8 +12,8 @@
 -- with its var-rule disjunctions settled, its redundant         --
 -- hypotheses dropped, the unknowns its own hypotheses fix        --
 -- eliminated from it and from the reported type, and every grade --
--- expression in product normal form. It is applied here, where   --
--- the deciders are in scope.                                     --
+-- expression in product normal form. It is applied here, on top  --
+-- of the driver.                                                 --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])
@@ -23,7 +23,6 @@ open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (inj₁; inj₂)
 open import Data.Unit using (⊤)
 
-open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades
@@ -40,8 +39,6 @@ open import TypeInference.SolverImpl.Enum using (OpEnum)
 
 module TypeInference.SolverImpl.Restricted
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (opEnum : OpEnum S)
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
@@ -74,9 +71,9 @@ open import TypeInference.SolverImpl.Core.UnifyMGU S using (Fixing; fixing)
 
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.State     S
-open import TypeInference.SolverImpl.Solve     S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
-open import TypeInference.SolverImpl.Principal S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
-open import TypeInference.SolverImpl.Simplify  S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Solve     S opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
   using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S using (canonElim)

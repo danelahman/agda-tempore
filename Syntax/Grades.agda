@@ -13,7 +13,7 @@ open import Level hiding (_⊔_) renaming (zero to lzero)
 
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
-open import Relation.Nullary using (¬_)
+open import Relation.Nullary using (¬_; yes; no)
 
 open import Util.Equality
 
@@ -70,8 +70,8 @@ record Grade : Set₁ where
     -- _≾_ is proof irrelevant
     ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
 
-    -- _≡_ (on Carrier) is decidable
-    _≡?_ : Decidable (_≡_ {A = Carrier})
+    -- _≾_ is decidable
+    _≾?_ : Decidable _≾_
 
     -- _≾_ and u have zero-product property
     ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
@@ -89,6 +89,14 @@ record Grade : Set₁ where
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
   ≾-reflexive refl = ≾-refl
+
+  -- _≡_ (on Carrier) is decidable: by antisymmetry, two grades are
+  -- equal exactly when each is below the other
+  _≡?_ : Decidable (_≡_ {A = Carrier})
+  c ≡? d with c ≾? d | d ≾? c
+  ... | yes p | yes q = yes (≾-antisym p q)
+  ... | yes _ | no ¬q = no λ eq → ¬q (≾-reflexive (sym eq))
+  ... | no ¬p | _     = no λ eq → ¬p (≾-reflexive eq)
 
   -- _⊔_ is monotone with respect to _≾_
   ⊔-mono : ∀ {c c' d d'} → c ≾ c' → d ≾ d' → c ⊔ d ≾ c' ⊔ d'
@@ -211,6 +219,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-trans to ≾ᵣ-trans;
      ≾-antisym to ≾ᵣ-antisym;
      ≾-irrelevant to ≾ᵣ-irrelevant;
+     _≾?_ to _≾ᵣ?_;
      _≡?_ to _≡ᵣ?_;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
@@ -249,6 +258,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ≾-trans to ≾ₑ-trans;
      ≾-antisym to ≾ₑ-antisym;
      ≾-irrelevant to ≾ₑ-irrelevant;
+     _≾?_ to _≾ₑ?_;
      _≡?_ to _≡ₑ?_;
      of-nat to of-natᵉ;
      of-nat-zero to of-natᵉ-zero;

@@ -17,7 +17,6 @@ open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Binary.Definitions using (Decidable)
 open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
@@ -35,8 +34,6 @@ open import TypeInference.SolverImpl.Enum using (OpEnum)
 
 module TypeInference.SolverImpl.Principal
   (S : LanguageSpec)
-  (_≾ᵣ?_ : Decidable (Grade._≾_ (GradeSystem.RGrade (LanguageSpec.Grades S))))
-  (_≾ₑ?_ : Decidable (Grade._≾_ (GradeSystem.EGrade (LanguageSpec.Grades S))))
   (opEnum : OpEnum S)
   (umin?ᵣ : Maybe (H.UnitMinᵣ S))
   (umin?ₑ : Maybe (H.UnitMinₑ S))
@@ -75,8 +72,8 @@ open import TypeInference.SolverImpl.Expand S
 
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
-open import TypeInference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
-open import TypeInference.SolverImpl.Solve  S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Solve  S opEnum umin?ᵣ umin?ₑ
 
 open OpEnum opEnum
 

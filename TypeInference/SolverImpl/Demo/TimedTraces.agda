@@ -51,7 +51,7 @@ open import Syntax.Grades.Example.Worked.Operations
          ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
-  using (right-sided; Bounds; within_; unbounded; _≾?_; holds; fails;
+  using (right-sided; Bounds; within_; unbounded; holds; fails;
          Antichain; ≾-⊥; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 import Syntax.Grades.Example.Worked.Typing.Core
@@ -69,10 +69,11 @@ module TypeInference.SolverImpl.Demo.TimedTraces where
 -- The specification is `Worked.Typing.Core`'s -- the sensor node's
 -- three operations over an identity grade system -- at the grade of
 -- trace allowances, each operation graded by the one-event run that
--- performs it. The solver is parametric in the two decidable orders,
--- in an enumeration of the operations, and in the two optional proofs
--- that a unit is least; instantiating it here, and `Demo.Generic` with
--- it, fixes the wrappers the rest of the module runs.
+-- performs it. The solver is parametric in an enumeration of the
+-- operations and in the two optional proofs that a unit is least, the
+-- grades deciding their own orders; instantiating it here, and
+-- `Demo.Generic` with it, fixes the wrappers the rest of the module
+-- runs.
 
 opTime₀ : Op → Antichain
 opTime₀ o = ⟅ ⌈ o ⌉ ⟆
@@ -130,7 +131,7 @@ ops₃ = record { ops = read ∷ᴸ write ∷ᴸ send ∷ᴸ []ᴸ ; complete = 
 -- shapes pass it
 
 module G = TypeInference.SolverImpl.Demo.Generic
-             spec _≾?_ _≾?_ ops₃ (just uᵇ-least) (just uᵇ-least) read ⋆
+             spec ops₃ (just uᵇ-least) (just uᵇ-least) read ⋆
 
 open G
 

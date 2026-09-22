@@ -1,9 +1,9 @@
 ------------------------------------------------------------------
 -- The constraint solver, axiomatised                             --
 --                                                                --
--- `Solver` is an assumption, not a construction: `_≾ᵣ_`/`_≾ₑ_`   --
--- are undecidable in the `Grade` interface, `∀ᵉ` and `⋀ᵒᵖ` are   --
--- infinitary, and `∀ᵉ` needs an eigenvariable treatment.         --
+-- `Solver` is an assumption, not a construction: `∀ᵉ` and        --
+-- `⋀ᵒᵖ` are infinitary, and `∀ᵉ` needs an eigenvariable          --
+-- treatment.                                                     --
 --                                                                --
 -- A solution is a substitution paired with a residual hypothesis --
 -- set, which is already a context of the mirrored judgement.     --
