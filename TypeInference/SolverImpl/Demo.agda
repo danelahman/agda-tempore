@@ -29,3 +29,13 @@ import TypeInference.SolverImpl.Demo.Generic
 -- graded so that the unit *is* least, which is what a handler needs.
 
 import TypeInference.SolverImpl.Demo.TimeIntervals
+
+-- Finite sets of timed runs as both effect and resource grades, read
+-- as allowances and ordered by what they permit, over an identity
+-- grade system: the same coverage, and what these grades say that a
+-- window cannot -- a branch graded by the union of its arms' runs, a
+-- sequence by the run it makes, a claim on a boxed resource refused
+-- for doing the right things in the wrong order. Their unit is least,
+-- so the handler `TimeIntervals` declines is inferred here.
+
+import TypeInference.SolverImpl.Demo.TimedTraces
