@@ -10,7 +10,7 @@
 -- Two read-backs: `⟦_⟧ʳˢ` ends every product in the unit, which  --
 -- makes the certificates structural; `⟦_⟧ʳᵖ` drops that trailing --
 -- unit, and is what `canonᵣ`/`canonₑ` return, and what a join    --
--- atom stores its operands in.                                   --
+-- atom reads its operands back with.                             --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
@@ -32,27 +32,31 @@ open GradeSystemInterface Grades
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Hyps   S
 
--- A join is an atom carrying its two operands in normal form: the
+-- A join is an atom carrying its two operands as atom lists: the
 -- product is not distributed over it, but each side is normalised.
+-- Storing the operands in normal form rather than as expressions is
+-- what makes a recursion into them structural.
 
 data EAtom (Θ : Scope) : Set where
   ac : E → EAtom Θ
   av : EVar Θ → EAtom Θ
-  a⊔ : EExp Θ → EExp Θ → EAtom Θ
+  a⊔ : List (EAtom Θ) → List (EAtom Θ) → EAtom Θ
 
-⟦_⟧ᵉᵃ : ∀ {Θ} → EAtom Θ → EExp Θ
-⟦ ac c ⟧ᵉᵃ    = econst c
-⟦ av i ⟧ᵉᵃ    = evar i
-⟦ a⊔ ε ε' ⟧ᵉᵃ = ε ⊔̂ₑ ε'
+mutual
+
+  ⟦_⟧ᵉᵃ : ∀ {Θ} → EAtom Θ → EExp Θ
+  ⟦ ac c ⟧ᵉᵃ     = econst c
+  ⟦ av i ⟧ᵉᵃ     = evar i
+  ⟦ a⊔ as bs ⟧ᵉᵃ = ⟦ as ⟧ᵉᵖ ⊔̂ₑ ⟦ bs ⟧ᵉᵖ
+
+  ⟦_⟧ᵉᵖ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
+  ⟦ [] ⟧ᵉᵖ         = ûₑ
+  ⟦ a ∷ [] ⟧ᵉᵖ     = ⟦ a ⟧ᵉᵃ
+  ⟦ a ∷ b ∷ as ⟧ᵉᵖ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ∷ as ⟧ᵉᵖ
 
 ⟦_⟧ᵉˢ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
 ⟦ [] ⟧ᵉˢ     = ûₑ
 ⟦ a ∷ as ⟧ᵉˢ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
-
-⟦_⟧ᵉᵖ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
-⟦ [] ⟧ᵉᵖ         = ûₑ
-⟦ a ∷ [] ⟧ᵉᵖ     = ⟦ a ⟧ᵉᵃ
-⟦ a ∷ b ∷ as ⟧ᵉᵖ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ∷ as ⟧ᵉᵖ
 
 ⟦⟧ᵉᵖ-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ⟦ as ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉᵖ
 ⟦⟧ᵉᵖ-≡ []           = ≡̂ₑ-refl
@@ -67,7 +71,7 @@ consₑ (ac c) as with c ≡ₑ? uₑ
 ... | yes _ = as
 ... | no _  = ac c ∷ as
 consₑ (av i) as = av i ∷ as
-consₑ (a⊔ ε ε') as = a⊔ ε ε' ∷ as
+consₑ (a⊔ bs cs) as = a⊔ bs cs ∷ as
 
 consₑ-≡ : ∀ {Θ} → (a : EAtom Θ) → (as : List (EAtom Θ))
         → ⟦ consₑ a as ⟧ᵉˢ ≡̂ₑ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
@@ -80,11 +84,11 @@ consₑ-≡ (ac c) [] with c ≡ₑ? uₑ
 consₑ-≡ (ac c) (av i ∷ as) with c ≡ₑ? uₑ
 ... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
 ... | no _     = ≡̂ₑ-refl
-consₑ-≡ (ac c) (a⊔ ε ε' ∷ as) with c ≡ₑ? uₑ
+consₑ-≡ (ac c) (a⊔ bs cs ∷ as) with c ≡ₑ? uₑ
 ... | yes refl = ≡̂ₑ-sym ≡̂ₑ-identityˡ
 ... | no _     = ≡̂ₑ-refl
 consₑ-≡ (av i) as = ≡̂ₑ-refl
-consₑ-≡ (a⊔ ε ε') as = ≡̂ₑ-refl
+consₑ-≡ (a⊔ bs cs) as = ≡̂ₑ-refl
 
 appₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ) → List (EAtom Θ)
 appₑ []       ys = ys
@@ -101,7 +105,7 @@ nrmₑ : ∀ {Θ} → EExp Θ → List (EAtom Θ)
 nrmₑ (evar i)   = av i ∷ []
 nrmₑ (econst c) = consₑ (ac c) []
 nrmₑ (ε ·̂ₑ ε')  = appₑ (nrmₑ ε) (nrmₑ ε')
-nrmₑ (ε ⊔̂ₑ ε')  = a⊔ ⟦ nrmₑ ε ⟧ᵉᵖ ⟦ nrmₑ ε' ⟧ᵉᵖ ∷ []
+nrmₑ (ε ⊔̂ₑ ε')  = a⊔ (nrmₑ ε) (nrmₑ ε') ∷ []
 
 nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ
 nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
@@ -117,22 +121,24 @@ data RAtom (Θ : Scope) : Set where
   rc : R → RAtom Θ
   rv : RVar Θ → RAtom Θ
   rm : EVar Θ → RAtom Θ
-  r⊔ : RExp Θ → RExp Θ → RAtom Θ
+  r⊔ : List (RAtom Θ) → List (RAtom Θ) → RAtom Θ
 
-⟦_⟧ʳᵃ : ∀ {Θ} → RAtom Θ → RExp Θ
-⟦ rc c ⟧ʳᵃ    = rconst c
-⟦ rv i ⟧ʳᵃ    = rvar i
-⟦ rm i ⟧ʳᵃ    = ∣ evar i ∣̂ᵉ
-⟦ r⊔ ρ ρ' ⟧ʳᵃ = ρ ⊔̂ᵣ ρ'
+mutual
+
+  ⟦_⟧ʳᵃ : ∀ {Θ} → RAtom Θ → RExp Θ
+  ⟦ rc c ⟧ʳᵃ     = rconst c
+  ⟦ rv i ⟧ʳᵃ     = rvar i
+  ⟦ rm i ⟧ʳᵃ     = ∣ evar i ∣̂ᵉ
+  ⟦ r⊔ as bs ⟧ʳᵃ = ⟦ as ⟧ʳᵖ ⊔̂ᵣ ⟦ bs ⟧ʳᵖ
+
+  ⟦_⟧ʳᵖ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
+  ⟦ [] ⟧ʳᵖ         = ûᵣ
+  ⟦ a ∷ [] ⟧ʳᵖ     = ⟦ a ⟧ʳᵃ
+  ⟦ a ∷ b ∷ as ⟧ʳᵖ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ∷ as ⟧ʳᵖ
 
 ⟦_⟧ʳˢ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
 ⟦ [] ⟧ʳˢ     = ûᵣ
 ⟦ a ∷ as ⟧ʳˢ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
-
-⟦_⟧ʳᵖ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
-⟦ [] ⟧ʳᵖ         = ûᵣ
-⟦ a ∷ [] ⟧ʳᵖ     = ⟦ a ⟧ʳᵃ
-⟦ a ∷ b ∷ as ⟧ʳᵖ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ∷ as ⟧ʳᵖ
 
 ⟦⟧ʳᵖ-≡ : ∀ {Θ} → (as : List (RAtom Θ)) → ⟦ as ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳᵖ
 ⟦⟧ʳᵖ-≡ []           = ≡̂ᵣ-refl
@@ -146,7 +152,7 @@ consᵣ (rc c) as with c ≡ᵣ? uᵣ
 ... | no _  = rc c ∷ as
 consᵣ (rv i) as = rv i ∷ as
 consᵣ (rm i) as = rm i ∷ as
-consᵣ (r⊔ ρ ρ') as = r⊔ ρ ρ' ∷ as
+consᵣ (r⊔ bs cs) as = r⊔ bs cs ∷ as
 
 consᵣ-≡ : ∀ {Θ} → (a : RAtom Θ) → (as : List (RAtom Θ))
         → ⟦ consᵣ a as ⟧ʳˢ ≡̂ᵣ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
@@ -162,12 +168,12 @@ consᵣ-≡ (rc c) (rv i ∷ as) with c ≡ᵣ? uᵣ
 consᵣ-≡ (rc c) (rm i ∷ as) with c ≡ᵣ? uᵣ
 ... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
 ... | no _     = ≡̂ᵣ-refl
-consᵣ-≡ (rc c) (r⊔ ρ ρ' ∷ as) with c ≡ᵣ? uᵣ
+consᵣ-≡ (rc c) (r⊔ bs cs ∷ as) with c ≡ᵣ? uᵣ
 ... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-identityˡ
 ... | no _     = ≡̂ᵣ-refl
 consᵣ-≡ (rv i) as = ≡̂ᵣ-refl
 consᵣ-≡ (rm i) as = ≡̂ᵣ-refl
-consᵣ-≡ (r⊔ ρ ρ') as = ≡̂ᵣ-refl
+consᵣ-≡ (r⊔ bs cs) as = ≡̂ᵣ-refl
 
 appᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ) → List (RAtom Θ)
 appᵣ []       ys = ys
@@ -187,7 +193,7 @@ nrmᵐ : ∀ {Θ} → EExp Θ → List (RAtom Θ)
 nrmᵐ (evar i)   = rm i ∷ []
 nrmᵐ (econst c) = consᵣ (rc (mapᵉ c)) []
 nrmᵐ (ε ·̂ₑ ε')  = appᵣ (nrmᵐ ε) (nrmᵐ ε')
-nrmᵐ (ε ⊔̂ₑ ε')  = r⊔ ⟦ nrmᵐ ε ⟧ʳᵖ ⟦ nrmᵐ ε' ⟧ʳᵖ ∷ []
+nrmᵐ (ε ⊔̂ₑ ε')  = r⊔ (nrmᵐ ε) (nrmᵐ ε') ∷ []
 
 nrmᵐ-≡ : ∀ {Θ} → (ε : EExp Θ) → ∣ ε ∣̂ᵉ ≡̂ᵣ ⟦ nrmᵐ ε ⟧ʳˢ
 nrmᵐ-≡ (evar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
@@ -207,7 +213,7 @@ nrmᵣ : ∀ {Θ} → RExp Θ → List (RAtom Θ)
 nrmᵣ (rvar i)   = rv i ∷ []
 nrmᵣ (rconst c) = consᵣ (rc c) []
 nrmᵣ (ρ ·̂ᵣ ρ')  = appᵣ (nrmᵣ ρ) (nrmᵣ ρ')
-nrmᵣ (ρ ⊔̂ᵣ ρ')  = r⊔ ⟦ nrmᵣ ρ ⟧ʳᵖ ⟦ nrmᵣ ρ' ⟧ʳᵖ ∷ []
+nrmᵣ (ρ ⊔̂ᵣ ρ')  = r⊔ (nrmᵣ ρ) (nrmᵣ ρ') ∷ []
 nrmᵣ ∣ ε ∣̂ᵉ     = nrmᵐ ε
 
 nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ
