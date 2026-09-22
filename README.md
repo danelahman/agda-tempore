@@ -64,6 +64,16 @@ a grade system, a signature of base types, and operations' signatures.
   morphism `∣_∣ᵉ` from the former to the latter), together with a convenience
   interface `GradeSystemInterface`.
 
+- A `Grade` also carries **binary joins**: a least upper bound `_⊔_`, and the
+  one direction of distributivity that monotonicity does not already give,
+  `ρ · (σ ⊔ τ) ≾ (ρ · σ) ⊔ (ρ · τ)` and its mirror. The other direction is
+  derived, as are the join's idempotence, commutativity, associativity and its
+  law against the greatest grade — all up to mutual `≾`, since the order is a
+  preorder and the laws cannot be stated at `_≡_`. A grade morphism preserves
+  joins on the nose. This is what lets a branching construct be graded by the
+  join of its branches, and what lets type inference report the join of two
+  bounds rather than falling back on the greatest grade.
+
 - `Syntax/Grades/Example.agda` indexes the example grades, which come in two
   families, and the grade systems assembled from them.
 
@@ -76,7 +86,13 @@ a grade system, a signature of base types, and operations' signatures.
 - `Syntax/Grades/Example/Traces/` holds the grades that record *which runs* a
   computation may have had, as non-empty finite sets of timed traces. All four
   share the carrier and the monoid of `Syntax/Grades/Traces/Sets.agda` and
-  differ only in the order on it. `Lifted/{LeftSided,RightSided,TwoSided}.agda`
+  differ only in the order on it. The carrier is canonical — its lists are
+  sorted strictly increasingly for the order on traces, hence duplicate-free —
+  so a set has one representation, the union of two grades is their join, and
+  `Subsets/RightSided.agda`'s order is a partial order rather than a preorder.
+  The lifted orders are not: each compares closures rather than sets — upward
+  for a floor, downward for a cap — so `⟅ ε ⟆` and `⟅ ε ∣ ⌈ o ⌉ ⟆` remain
+  distinct sets that are mutually `≾`. `Lifted/{LeftSided,RightSided,TwoSided}.agda`
   are the constructions, parameterised by an order on traces; `Timed/*`
   instantiate them at the two cost-sensitive orders below — a floor, a cap, and
   their pairing under a coherence field — and `Subsets/RightSided.agda` is the
@@ -84,8 +100,10 @@ a grade system, a signature of base types, and operations' signatures.
 
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
   built on: `Positive` (the strictly positive duration a delay carries), `Base`
-  (timed traces and their sequencing monoid), `Sets` (non-empty finite sets of
-  traces, the language product, and subset inclusion), `Restriction`
+  (timed traces and their sequencing monoid), `Lexicographic` (a strict total
+  order on traces, over one on the alphabet, which is what makes the carrier
+  canonical), `Sets` (sorted duplicate-free non-empty finite sets of traces,
+  the language product, their union, and subset inclusion), `Restriction`
   (restriction along a sub-alphabet), `Durations` with `MaxDuration` and
   `MinDuration` (worst- and best-case aggregation over a set), and
   `Order`/`OrderLift` (the interface a trace order supplies, and its Hoare and
@@ -171,6 +189,15 @@ a grade system, a signature of base types, and operations' signatures.
 - `Syntax/Types.agda` defines value and computation types.
 - `Syntax/Contexts.agda` defines variables and structured contexts, including
   the time-passage context former `Γ ⟨ ρ ⟩`.
+- `Syntax/Subtyping.agda` defines shape-preserving subtyping of value and
+  computation types, `_<:ᵛ_` and `_<:ᶜ_`, in which a function's domain and a
+  box's grade are contravariant and a computation's effect covariant. It also
+  defines least upper bounds of types, `_⊔ᵛ_≡_` and `_⊔ᶜ_≡_`, as inductive
+  relations in the same style. They are partial, and deliberately: the
+  contravariant positions are pinned to a shared domain and a shared grade,
+  because joining them would ask for *meets* of value types and of resource
+  grades, which the grades do not have. The only component genuinely joined is
+  a computation's effect, where `_⊔ₑ_` always exists.
 - `Syntax/Language.agda` defines well-typed values and computations.
 - `Syntax/Renamings/` defines context renamings: `Base.agda` the generating
   calculus (eternal contexts and the `Ren` datatype, indexed by an *ambient*
@@ -264,3 +291,77 @@ a grade system, a signature of base types, and operations' signatures.
   logical relation in `Reducibility.agda` and `Environment/`.
   `Adequacy/Equational.agda` reads this back for the equational theory:
   reasoning in it is observationally valid.
+
+### Type inference
+
+- `TypeInference/Scopes.agda` gives scopes of unknowns: three independent
+  counters, one each for type, resource-grade and effect-grade variables, so
+  that extending one leaves the others reducing definitionally.
+
+- `TypeInference/OpenSyntax/` is the language with unknowns in it. `Grades.agda`
+  has open grade expressions — a variable, an embedded closed grade, a product,
+  a binary join, and (on the resource side) the image of an effect expression
+  under `mapᵉ`; `Types.agda` and `Contexts.agda` the open types and contexts,
+  with the eternal barrier; `Subst.agda` substitutions between scopes.
+  `Hyps.agda` carries hypothesis sets, the entailment `_⊩_≾̂_` that decides an
+  ordering *under assumptions*, and shape-preserving subtyping of open types.
+  `Language.agda` is the mirrored qualified type system — the same rules over
+  open types and a hypothesis set — and `Grounding.agda` with
+  `GroundingTheorem.agda` lands an open judgement back in the original type
+  system once its unknowns are instantiated.
+
+- `TypeInference/Raw/Syntax.agda` defines raw terms, which carry no types at
+  all, and `TypeInference/Erase.agda` erases a derivation to one.
+
+- `TypeInference/Constraints/` defines what a generated problem is: type
+  equations, value-type subtyping, orderings of resource and effect grades,
+  eternality of a type, the disjunction the `var` rule leaves behind, and
+  binders for fresh and for rigid variables — together with what it means for a
+  substitution to satisfy one.
+
+- `TypeInference/Generate.agda` turns a raw term and an expected open type into
+  a constraint, structurally and mirroring the rules former by former. The
+  expected type is an *upper bound*, not a pin: where two types the generation
+  cannot choose between must meet, it is the right-hand side of a subtyping or
+  ordering atom, and the slack is passed on to the subterms.
+
+- `TypeInference/Soundness.agda` and `Completeness.agda` are the two halves of
+  its correctness: a solution of a generated constraint elaborates to a mirrored
+  derivation that erases back to the raw term it came from, and a derivation
+  satisfies the constraint generated from its own erasure.
+
+- `TypeInference/Solver.agda` axiomatises a constraint solver — solve, with
+  soundness, completeness and a principal-solution factorisation —
+  `Principality.agda` derives principal typings relative to one, and
+  `Infer.agda` composes generation, solving and grounding into inference.
+  `TypeInference/ParamGround/` supplies the parametricity certificates a
+  grounded derivation needs for the denotational side.
+
+- `TypeInference/SolverImpl/` is a concrete solver for the generated
+  constraints: sound by construction, but heuristic, so it deliberately does not
+  meet the interface's completeness field. `Core/` is McBride-style first-order
+  unification; `Expand.agda` expands a type unknown by skeleton unification, so
+  that subtyping demands decompose; `Resid.agda` is the residual worklist.
+  Two boundaries read an answer out of it. `Restricted.agda`'s `reportOn` is the
+  open one, settling the var-rule disjunctions, dropping entailed hypotheses,
+  eliminating the unknowns its own hypotheses fix, and normalising every grade;
+  `Close.agda` is the ground one, which assigns an unknown bounded below the
+  **join** of its lower bounds and one bounded only above that bound, and
+  defaults by polarity what neither pass settles. `Eliminate.agda` is Pottier's
+  simplification of subtyping constraints (ICFP 1996): an unknown occurring
+  below nowhere else is sent to the join of *all* its lower bounds, and they go
+  with it. `Product.agda` and `Canon.agda` give grade expressions a product
+  normal form, applied at both boundaries, so a reported grade is canonical
+  whichever entry point produced it.
+
+- `TypeInference/SolverImpl/Demo/` runs the solver and checks every answer by
+  computation — each example is discharged by `refl`, so what is inferred is
+  checked rather than asserted, and a refusal is paired with the side condition
+  that fails, decided by the grade's own procedure. `Generic.agda` holds the
+  program shapes that make sense over any grade monoid, and the two instances
+  supply their own results: `TimeIntervals.agda` over the sensor node's windows,
+  `TimedTraces.agda` over its sets of runs. The pair is the clearest statement
+  of what a grade choice buys — the same conditional is graded by a window
+  spanning both arms at one, and by the union of their runs at the other, where
+  a claim on a boxed resource can also be refused for doing the right things in
+  the wrong order.
