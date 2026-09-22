@@ -59,7 +59,7 @@ open import TypeInference.SolverImpl.Enum S using (AllOp; all-lookup)
 open import TypeInference.SolverImpl.Core.AList S using (AList; anil; ⟦_⟧ᴬ)
 open import TypeInference.SolverImpl.Core.Eqn   S using (Eqn; eqᵛ; Eqns; Unifies)
 open import TypeInference.SolverImpl.Core.Rigid S
-  using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; strSub; unpopˢ; pop-unpop; strSub-escape)
+  using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; popˢ-hit; strSub; unpopˢ; pop-unpop; strSub-escape)
 open import TypeInference.SolverImpl.Core.Unify S using (Rig; _∈ᶠ_; unify)
 open import TypeInference.SolverImpl.Core.UnifyMGU S
   using (Fixing; fixing; fixᵉ; injᵉ; Fixing-id; unify-max; unify-fail;
@@ -74,6 +74,9 @@ open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Solve  S opEnum umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Close  S umin?ᵣ umin?ₑ using (updᵉ)
+open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
+  using (Localised; localise; lσ; lfix; lcpl; updᵉ-absorb)
 
 open OpEnum opEnum
 
@@ -162,37 +165,6 @@ wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
     disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
     ... | (A₀ , ρ₀) , m₀ , refl =
       subst₂ (VarOK Q) (sym (κᵉ-wkᵛ A₀)) (sym (κᵉ-wkʳ ρ₀)) (hyp-ok m₀)
-
--- The converse of `⊩ᴿ-subst`
-
-⊩ᴿ-subst⁻ : ∀ {Ψ Ψ₁ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ}
-              {σ : Subst Ψ Ψ₁} {δ : Subst Ψ₁ Ψ'}
-          → Q ⊩ᴿ R [ σ ⨟ˢ δ ] → Q ⊩ᴿ (R [ σ ]ᴿ) [ δ ]
-⊩ᴿ-subst⁻ {Q = Q} {R = R} {σ = σ} {δ = δ} h = mk⊩ᴿ rs' es' ts' ss' ds'
-  where
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs (R [ σ ]ᴿ) → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
-    rs' m with ∈-map⁻ (mapᵖ (_[ σ ]ʳ)) m
-    ... | (ρ₀ , ρ₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym ([⨟]ʳ ρ₀ σ δ)) (sym ([⨟]ʳ ρ₀' σ δ)) (⊩rs h m₀)
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es (R [ σ ]ᴿ) → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
-    es' m with ∈-map⁻ (mapᵖ (_[ σ ]ᵉ)) m
-    ... | (ε₀ , ε₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε₀ σ δ)) (sym ([⨟]ᵉ ε₀' σ δ)) (⊩es h m₀)
-
-    ts' : ∀ {A} → A ∈ ts (R [ σ ]ᴿ) → Q ⊩ᴱ A [ δ ]ᵛ
-    ts' m with ∈-map⁻ (_[ σ ]ᵛ) m
-    ... | A₀ , m₀ , refl = subst (Q ⊩ᴱ_) (sym ([⨟]ᵛ A₀ σ δ)) (⊩ts h m₀)
-
-    ss' : ∀ {A B} → (A , B) ∈ ss (R [ σ ]ᴿ) → Q ∣ A [ δ ]ᵛ <:̂ᵛ B [ δ ]ᵛ
-    ss' m with ∈-map⁻ (mapᵖ (_[ σ ]ᵛ)) m
-    ... | (A₀ , B₀) , m₀ , refl =
-      subst₂ (Q ∣_<:̂ᵛ_) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ᵛ B₀ σ δ)) (⊩ss h m₀)
-
-    ds' : ∀ {A ρ} → (A , ρ) ∈ ds (R [ σ ]ᴿ) → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
-    ds' m with ∈-map⁻ (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) m
-    ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK Q) (sym ([⨟]ᵛ A₀ σ δ)) (sym ([⨟]ʳ ρ₀ σ δ)) (⊩ds h m₀)
 
 -- Both components of a union
 
@@ -459,41 +431,110 @@ bndᵈ {Q = Q} j A ρ {A₀} {ρ₀} q q' γ p =
          (VarOK-subst ⊩ᴴ-κᵉ
            (subst₂ (VarOK (wkᵉ-H Q)) (keyᵛ j A q γ) (keyʳ j ρ q' γ) p))
 
+-- A stripped ordering: the inner instance, with the eigenvariable sent
+-- to the unit, is the instance of the kept one
+
+stripʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Maybe UnitMinₑ) → (j : EVar (Φ +e))
+             → (ρ ρ' : RExp (Φ +e)) → (ρ₀ : RExp Φ) → (e₁ : ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀)
+             → ∀ {a} → stripʳ um? j ρ ρ' ρ₀ e₁ ≡ just a
+             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+             → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
+             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
+             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
+stripʳ-princ nothing   j ρ ρ' ρ₀ e₁ () γ hγ p
+stripʳ-princ {Q = Q} (just um) j ρ ρ' ρ₀ e₁ eq γ hγ p
+  with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+... | nothing          = ⊥just eq
+... | just (ρ₀' , e₂) with eq
+...   | refl = λ { (here refl) → goal }
+  where
+    X = popˢ j ⨟ˢ γ
+
+    unit : sE (X ⨟ˢ κᵉ) j ≡ ûₑ [ X ⨟ˢ κᵉ ]ᵉ
+    unit = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+
+    rhs : ρ' [ X ]ʳ [ κᵉ ]ʳ ≡ ρ₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
+    rhs = trans ([⨟]ʳ ρ' X κᵉ)
+          (trans (sym ([≐]ʳ (updᵉ-absorb j ûₑ (X ⨟ˢ κᵉ) unit) ρ'))
+          (trans (sym ([⨟]ʳ ρ' (updᵉ j ûₑ) (X ⨟ˢ κᵉ)))
+          (trans (sym ([⨟]ʳ (ρ' [ updᵉ j ûₑ ]ʳ) X κᵉ))
+          (trans (cong (_[ κᵉ ]ʳ) (keyʳ j (ρ' [ updᵉ j ûₑ ]ʳ) e₂ γ))
+                 ([⨟]ʳ ρ₀' (wkˢᵉ ⨟ˢ γ) κᵉ)))))
+
+    goal : Q ⊩ ρ₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ ρ₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
+    goal = subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y)
+                  (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ e₁ γ)) ([⨟]ʳ ρ₀ (wkˢᵉ ⨟ˢ γ) κᵉ)) rhs
+                  (⊩-substᵣ ⊩ᴴ-κᵉ p)
+
+stripᵉ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Maybe UnitMinₑ) → (j : EVar (Φ +e))
+             → (ε ε' : EExp (Φ +e)) → (ε₀ : EExp Φ) → (e₁ : ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀)
+             → ∀ {a} → stripᵉ um? j ε ε' ε₀ e₁ ≡ just a
+             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+             → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
+             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
+             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
+stripᵉ-princ nothing   j ε ε' ε₀ e₁ () γ hγ p
+stripᵉ-princ {Q = Q} (just um) j ε ε' ε₀ e₁ eq γ hγ p
+  with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+... | nothing          = ⊥just eq
+... | just (ε₀' , e₂) with eq
+...   | refl = λ { (here refl) → goal }
+  where
+    X = popˢ j ⨟ˢ γ
+
+    unit : sE (X ⨟ˢ κᵉ) j ≡ ûₑ [ X ⨟ˢ κᵉ ]ᵉ
+    unit = cong (_[ κᵉ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+
+    rhs : ε' [ X ]ᵉ [ κᵉ ]ᵉ ≡ ε₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
+    rhs = trans ([⨟]ᵉ ε' X κᵉ)
+          (trans (sym ([≐]ᵉ (updᵉ-absorb j ûₑ (X ⨟ˢ κᵉ) unit) ε'))
+          (trans (sym ([⨟]ᵉ ε' (updᵉ j ûₑ) (X ⨟ˢ κᵉ)))
+          (trans (sym ([⨟]ᵉ (ε' [ updᵉ j ûₑ ]ᵉ) X κᵉ))
+          (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j (ε' [ updᵉ j ûₑ ]ᵉ) e₂ γ))
+                 ([⨟]ᵉ ε₀' (wkˢᵉ ⨟ˢ γ) κᵉ)))))
+
+    goal : Q ⊩ ε₀ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ ε₀' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
+    goal = subst₂ (λ x y → Q ⊩ x ≾̂ₑ y)
+                  (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j ε e₁ γ)) ([⨟]ᵉ ε₀ (wkˢᵉ ⨟ˢ γ) κᵉ)) rhs
+                  (⊩-substₑ ⊩ᴴ-κᵉ p)
+
 atomʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → ∀ {a} → atomʳ j ρ ρ' ≡ just a
-            → (γ : Subst (Φ +e) (Φ' +e))
+            → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-atomʳ-princ j ρ ρ' eq γ p with strʳ⁺ j ρ | strʳ⁺ j ρ'
+atomʳ-princ j ρ ρ' eq γ hγ p with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ... | just (ρ₀ , e₁) | just (ρ₀' , e₂) with eq
 ...   | refl = λ { (here refl) → bndʳ j ρ ρ' e₁ e₂ γ p }
-atomʳ-princ j ρ ρ' eq γ p | just _ | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ j ρ ρ' eq γ hγ p | just (ρ₀ , e₁) | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
-atomʳ-princ j ρ ρ' eq γ p | just _ | nothing | nothing = ⊥just eq
-atomʳ-princ j ρ ρ' eq γ p | nothing | _ with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ j ρ ρ' eq γ hγ p | just (ρ₀ , e₁) | nothing | nothing =
+  stripʳ-princ umin?ₑ j ρ ρ' ρ₀ e₁ eq γ hγ p
+atomʳ-princ j ρ ρ' eq γ hγ p | nothing | _ with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
-atomʳ-princ j ρ ρ' eq γ p | nothing | _ | nothing = ⊥just eq
+atomʳ-princ j ρ ρ' eq γ hγ p | nothing | _ | nothing = ⊥just eq
 
 atomᵉ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
             → ∀ {a} → atomᵉ j ε ε' ≡ just a
-            → (γ : Subst (Φ +e) (Φ' +e))
+            → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-atomᵉ-princ j ε ε' eq γ p with strᵉ⁺ j ε | strᵉ⁺ j ε'
+atomᵉ-princ j ε ε' eq γ hγ p with strᵉ⁺ j ε | strᵉ⁺ j ε'
 ... | just (ε₀ , e₁) | just (ε₀' , e₂) with eq
 ...   | refl = λ { (here refl) → bndᵉ j ε ε' e₁ e₂ γ p }
-atomᵉ-princ j ε ε' eq γ p | just _ | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ j ε ε' eq γ hγ p | just (ε₀ , e₁) | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
-atomᵉ-princ j ε ε' eq γ p | just _ | nothing | nothing = ⊥just eq
-atomᵉ-princ j ε ε' eq γ p | nothing | _ with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ j ε ε' eq γ hγ p | just (ε₀ , e₁) | nothing | nothing =
+  stripᵉ-princ umin?ₑ j ε ε' ε₀ e₁ eq γ hγ p
+atomᵉ-princ j ε ε' eq γ hγ p | nothing | _ with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
-atomᵉ-princ j ε ε' eq γ p | nothing | _ | nothing = ⊥just eq
+atomᵉ-princ j ε ε' eq γ hγ p | nothing | _ | nothing = ⊥just eq
 
 atomᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
             → ∀ {a} → atomᵗ j A ≡ just a
@@ -542,34 +583,34 @@ atomᵈ-princ j A ρ eq γ p | nothing | _ | nothing = ⊥just eq
 listʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (RExp (Φ +e) × RExp (Φ +e)))
             → ∀ {a} → listʳ j l ≡ just a
-            → (γ : Subst (Φ +e) (Φ' +e))
+            → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → (∀ {ρ ρ'} → (ρ , ρ') ∈ l
                  → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ)
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-listʳ-princ j []              refl γ k = λ ()
-listʳ-princ j ((ρ , ρ') ∷ l) eq γ k with atomʳ j ρ ρ' in e₁ | listʳ j l in e₂
+listʳ-princ j []              refl γ hγ k = λ ()
+listʳ-princ j ((ρ , ρ') ∷ l) eq γ hγ k with atomʳ j ρ ρ' in e₁ | listʳ j l in e₂
 ... | just (a , fa) | just (l₁ , f) with eq
-...   | refl = λ m → [ atomʳ-princ j ρ ρ' e₁ γ (k (here refl))
-                     , listʳ-princ j l e₂ γ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
-listʳ-princ j ((ρ , ρ') ∷ l) eq γ k | just _  | nothing = ⊥just eq
-listʳ-princ j ((ρ , ρ') ∷ l) eq γ k | nothing | _       = ⊥just eq
+...   | refl = λ m → [ atomʳ-princ j ρ ρ' e₁ γ hγ (k (here refl))
+                     , listʳ-princ j l e₂ γ hγ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
+listʳ-princ j ((ρ , ρ') ∷ l) eq γ hγ k | just _  | nothing = ⊥just eq
+listʳ-princ j ((ρ , ρ') ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
 
 listᵉ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (EExp (Φ +e) × EExp (Φ +e)))
             → ∀ {a} → listᵉ j l ≡ just a
-            → (γ : Subst (Φ +e) (Φ' +e))
+            → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → (∀ {ε ε'} → (ε , ε') ∈ l
                  → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ)
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-listᵉ-princ j []              refl γ k = λ ()
-listᵉ-princ j ((ε , ε') ∷ l) eq γ k with atomᵉ j ε ε' in e₁ | listᵉ j l in e₂
+listᵉ-princ j []              refl γ hγ k = λ ()
+listᵉ-princ j ((ε , ε') ∷ l) eq γ hγ k with atomᵉ j ε ε' in e₁ | listᵉ j l in e₂
 ... | just (a , fa) | just (l₁ , f) with eq
-...   | refl = λ m → [ atomᵉ-princ j ε ε' e₁ γ (k (here refl))
-                     , listᵉ-princ j l e₂ γ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
-listᵉ-princ j ((ε , ε') ∷ l) eq γ k | just _  | nothing = ⊥just eq
-listᵉ-princ j ((ε , ε') ∷ l) eq γ k | nothing | _       = ⊥just eq
+...   | refl = λ m → [ atomᵉ-princ j ε ε' e₁ γ hγ (k (here refl))
+                     , listᵉ-princ j l e₂ γ hγ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
+listᵉ-princ j ((ε , ε') ∷ l) eq γ hγ k | just _  | nothing = ⊥just eq
+listᵉ-princ j ((ε , ε') ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
 
 listᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (OVType (Φ +e)))
@@ -619,24 +660,40 @@ listᵈ-princ j ((A , ρ) ∷ l) eq γ k | nothing | _       = ⊥just eq
 
 splitᴿ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
              → ∀ {a} → splitᴿ j R ≡ just a
-             → (γ : Subst (Φ +e) (Φ' +e))
+             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ γ ]
              → Q ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
-splitᴿ-princ j R eq γ h
+splitᴿ-princ j R eq γ hγ h
   with listʳ j (rs R) in e₁ | listᵉ j (es R) in e₂ | listᵗ j (ts R) in e₃
      | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅
 ... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ls , fs)
     | just (ld , fd) with eq
-...   | refl = mk⊩ᴿ (listʳ-princ j (rs R) e₁ γ (⊩rs h))
-                    (listᵉ-princ j (es R) e₂ γ (⊩es h))
+...   | refl = mk⊩ᴿ (listʳ-princ j (rs R) e₁ γ hγ (⊩rs h))
+                    (listᵉ-princ j (es R) e₂ γ hγ (⊩es h))
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
                     (listˢ-princ j (ss R) e₄ γ (⊩ss h))
                     (listᵈ-princ j (ds R) e₅ γ (⊩ds h))
-splitᴿ-princ j R eq γ h | just _ | just _ | just _  | just _  | nothing = ⊥just eq
-splitᴿ-princ j R eq γ h | just _ | just _ | just _  | nothing | _       = ⊥just eq
-splitᴿ-princ j R eq γ h | just _ | just _ | nothing | _       | _       = ⊥just eq
-splitᴿ-princ j R eq γ h | just _ | nothing | _      | _       | _       = ⊥just eq
-splitᴿ-princ j R eq γ h | nothing | _      | _      | _       | _       = ⊥just eq
+splitᴿ-princ j R eq γ hγ h | just _ | just _ | just _  | just _  | nothing = ⊥just eq
+splitᴿ-princ j R eq γ hγ h | just _ | just _ | just _  | nothing | _       = ⊥just eq
+splitᴿ-princ j R eq γ hγ h | just _ | just _ | nothing | _       | _       = ⊥just eq
+splitᴿ-princ j R eq γ hγ h | just _ | nothing | _      | _       | _       = ⊥just eq
+splitᴿ-princ j R eq γ hγ h | nothing | _      | _      | _       | _       = ⊥just eq
+
+-- The rigid's image under the inner factorisation is the outer
+-- scope's own eigenvariable, and the outer unknowns' images are those
+-- the outer substitution gives, weakened
+
+bnd-var : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
+        → {δ₀ : Subst Ψ Ψ''} → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
+        → {j : EVar Φ} → sE γ (newᵉ {Ψ}) ≡ evar j
+        → sE δ j ≡ evar (newᵉ {Ψ''})
+bnd-var {Ψ} γ δ tri eqj = trans (sym (cong (_[ δ ]ᵉ) eqj)) (≐ᵉ tri (newᵉ {Ψ}))
+
+bnd-out : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
+        → (δ₀ : Subst Ψ Ψ'') → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
+        → ((wkˢᵉ {Ψ} ⨟ˢ γ) ⨟ˢ δ) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ)
+bnd-out γ δ δ₀ tri =
+  ≐ˢ-trans (⨟-assoc wkˢᵉ γ δ) (≐ˢ-trans (⨟-congʳ wkˢᵉ tri) (wkˢᵉ-↑ᵉ δ₀))
 
 -- The inner run is entered at `δ₀ ↑ᵉ`; what comes back is turned into a
 -- substitution out of the outer scope by undoing the rigid's move and
@@ -657,7 +714,7 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
 ...   | just (δ₀ₛ , pδ) | just (R₀ , tr) with eq
 ...     | refl = δ , tri ,
                  ∪ᴿ-both (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri) h))
-                         (splitᴿ-princ j R'' eqsp γ
+                         (splitᴿ-princ j R'' eqsp γ (bnd-var (mδ m'') δ'' tri'' eqj)
                            (⊩ᴿ-resp-≐ˢ (≐ˢ-sym popγ) hres'')) ,
                  (λ fx → Fixing-trans δ₀ₛ δ tri fx)
   where
@@ -689,6 +746,25 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
   | just (j , eqj) | just _ | nothing = ⊥just eq
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat h
   | just (j , eqj) | nothing | _ = ⊥just eq
+
+-- Localisation keeps every instance: the factor found for the inner
+-- state serves the localised one, the local unknowns being in no image
+-- of the outer ones, and the lowering lemma keeping the residual.
+
+localise-princ : ∀ {Θ} {s₀ s'' : St Θ} {m : s₀ ⟶ s''} {C : Constraint Θ}
+               → Princ s₀ s'' m C
+               → Princ s₀ (proj₁ (localiseˢ m)) (⟶-⨟ m (proj₂ (localiseˢ m))) C
+localise-princ {s'' = s''} {m} ip δ₀ Q sat h =
+  δ , ≐ˢ-trans (⨟-congˡ (lfix L) δ) tri , lcpl L δ Q hres , fx
+  where
+    L : Localised (mδ m) (res s'')
+    L = localise (mδ m) (res s'')
+
+    f    = ip δ₀ Q sat h
+    δ    = proj₁ f
+    tri  = proj₁ (proj₂ f)
+    hres = proj₁ (proj₂ (proj₂ f))
+    fx   = proj₂ (proj₂ (proj₂ f))
 
 threadOps-princ : ∀ {Θ} {f : Op → Constraint Θ}
    → (g : (s : St Θ) → (op : Op)
@@ -892,8 +968,10 @@ solve-principal s (∃ᵉ C) eq δ₀ Q (ε , sat) h with solve (s ↑ᵉˢ) C i
 solve-principal s (∀ᵉ C) eq with solve (⇑ᵉˢ s) C in e
 ... | nothing = ⊥just eq
 ... | just (s'' , m'' , w'') =
-      popᵉ-princ s C (Ψ s'') (θ s'') (res s'') (rig s'') m'' w''
-                 (solve-principal (⇑ᵉˢ s) C e) eq
+      popᵉ-princ s C (Ψ (proj₁ (localiseˢ m''))) (θ (proj₁ (localiseˢ m'')))
+                 (res (proj₁ (localiseˢ m''))) (rig (proj₁ (localiseˢ m'')))
+                 (⟶-⨟ m'' (proj₂ (localiseˢ m''))) (wit-mono (proj₂ (localiseˢ m'')) C w'')
+                 (localise-princ {s₀ = ⇑ᵉˢ s} {s''} {m''} {C} (solve-principal (⇑ᵉˢ s) C e)) eq
 
 solve-principal s (⋀ᵒᵖ f) eq
   with threadOps {f = f} (λ s' op → solve s' (f op)) ops s in e
@@ -902,111 +980,30 @@ solve-principal s (⋀ᵒᵖ f) eq
 ...   | refl = threadOps-princ (λ s' op → solve s' (f op))
                                (λ s' op e' → solve-principal s' (f op) e') ops s e
 
--- `Discharges`: `Normal`'s failure on the eigenvariable-mentioning atoms
--- at a rigid binder is assumed to be a refutation, for instances that
--- keep the eigenvariable an eigenvariable.
+-- Refutation holds on the fragment without a rigid binder. At a rigid
+-- binder the atoms that mention the rigid are settled by a decision
+-- against no hypotheses, and a declined one refutes nothing: a
+-- satisfiable constraint whose least solution localisation cannot
+-- reach, such as `∀j ∃e. (c · e ≾ e) ∧ (j ≾ e)`, is declined all the
+-- same. What a rigid binder does refute is an escape: an outer
+-- unknown whose image keeps the rigid.
 
-Discharges : Set
-Discharges = ∀ {Φ Ψ'} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
-           → splitᴿ j R ≡ nothing
-           → (γ : Subst (Φ +e) (Ψ' +e)) → sE γ j ≡ evar (newᵉ {Ψ'})
-           → (Q : Hyps Ψ') → ¬ (wkᵉ-H Q ⊩ᴿ R [ γ ])
-
--- The refutation guard: `NoRig` relaxed at a rigid binder, which is
--- crossed under the assumption above and nowhere else.
-
-Refutable : ∀ {Θ} → Constraint Θ → Set
-Refutable ⊤̂            = ⊤
-Refutable ⊥̂            = ⊤
-Refutable (C ∧̂ D)      = Refutable C × Refutable D
-Refutable (A ≐ᵥ B)     = ⊤
-Refutable (A ≾̂ᵥᶜ B)    = ⊤
-Refutable (ρ ≾̂ᵣᶜ ρ')   = ⊤
-Refutable (ε ≾̂ₑᶜ ε')   = ⊤
-Refutable (Etᶜ A)      = ⊤
-Refutable (Et∨≾ᵘ A ρ)  = ⊤
-Refutable (∃ᵗ C)       = Refutable C
-Refutable (∃ʳ C)       = Refutable C
-Refutable (∃ᵉ C)       = Refutable C
-Refutable (∀ᵉ C)       = Discharges × Refutable C
-Refutable (⋀ᵒᵖ f)      = (op : Op) → Refutable (f op)
-
-NoRig→Refutable : ∀ {Θ} → (C : Constraint Θ) → NoRig C → Refutable C
-NoRig→Refutable ⊤̂            ⊤ⁿ         = tt
-NoRig→Refutable ⊥̂            ⊥ⁿ         = tt
-NoRig→Refutable (C ∧̂ D)      (nc ∧ⁿ nd) = NoRig→Refutable C nc , NoRig→Refutable D nd
-NoRig→Refutable (A ≐ᵥ B)     ≐ⁿ         = tt
-NoRig→Refutable (A ≾̂ᵥᶜ B)    ≾ᵥⁿ        = tt
-NoRig→Refutable (ρ ≾̂ᵣᶜ ρ')   ≾ᵣⁿ        = tt
-NoRig→Refutable (ε ≾̂ₑᶜ ε')   ≾ₑⁿ        = tt
-NoRig→Refutable (Etᶜ A)      Etⁿ        = tt
-NoRig→Refutable (Et∨≾ᵘ A ρ)  Et∨ⁿ       = tt
-NoRig→Refutable (∃ᵗ C)       (∃ᵗⁿ nc)   = NoRig→Refutable C nc
-NoRig→Refutable (∃ʳ C)       (∃ʳⁿ nc)   = NoRig→Refutable C nc
-NoRig→Refutable (∃ᵉ C)       (∃ᵉⁿ nc)   = NoRig→Refutable C nc
-NoRig→Refutable (⋀ᵒᵖ f)      (⋀ⁿ nf)    = λ op → NoRig→Refutable (f op) (nf op)
-
--- The rigid's image under the inner factorisation is the outer
--- scope's own eigenvariable, and the outer unknowns' images are those
--- the outer substitution gives, weakened
-
-bnd-var : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
-        → {δ₀ : Subst Ψ Ψ''} → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
-        → {j : EVar Φ} → sE γ (newᵉ {Ψ}) ≡ evar j
-        → sE δ j ≡ evar (newᵉ {Ψ''})
-bnd-var {Ψ} γ δ tri eqj = trans (sym (cong (_[ δ ]ᵉ) eqj)) (≐ᵉ tri (newᵉ {Ψ}))
-
-bnd-out : ∀ {Ψ Φ Ψ''} → (γ : Subst (Ψ +e) Φ) → (δ : Subst Φ (Ψ'' +e))
-        → (δ₀ : Subst Ψ Ψ'') → (γ ⨟ˢ δ) ≐ˢ (δ₀ ↑ᵉ)
-        → ((wkˢᵉ {Ψ} ⨟ˢ γ) ⨟ˢ δ) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ)
-bnd-out γ δ δ₀ tri =
-  ≐ˢ-trans (⨟-assoc wkˢᵉ γ δ) (≐ˢ-trans (⨟-congʳ wkˢᵉ tri) (wkˢᵉ-↑ᵉ δ₀))
-
-popᵉ-fail′ : ∀ {Θ Ψ''} → (s : St Θ) → (C : Constraint (Θ +e))
-           → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
-           → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
-           → Discharges
-           → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ nothing
-           → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
-           → (δ'' : Subst Φ (Ψ'' +e)) → (mδ m'' ⨟ˢ δ'') ≐ˢ (δ₀ ↑ᵉ)
-           → wkᵉ-H Q ⊩ᴿ R'' [ δ'' ] → ⊥
-popᵉ-fail′ s C (scope nt nr nzero) θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri hres
-  with varᵉ-inst (sE (mδ m'') (newᵉ {Ψ s})) δ'' (≐ᵉ tri (newᵉ {Ψ s}))
-... | () , _
-popᵉ-fail′ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri hres
-  with evar? (sE (mδ m'') (newᵉ {Ψ s})) in eqv
-... | nothing =
-      subst (λ ε → evar? ε ≡ nothing → ⊥) (sym (proj₂ isvar)) (λ ()) eqv
-      where
-        isvar = varᵉ-inst (sE (mδ m'') (newᵉ {Ψ s})) δ'' (≐ᵉ tri (newᵉ {Ψ s}))
-... | just (j , eqj)
-      with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') in eqstr | splitᴿ j R'' in eqsp
-...     | just _  | just _  = ⊥nothing eq
-...     | just _  | nothing =
-          dis j R'' eqsp δ'' (bnd-var (mδ m'') δ'' tri eqj) Q hres
-...     | nothing | _       =
-          strSub-escape j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') δ''
-                        (bnd-var (mδ m'') δ'' tri eqj)
-                        δ₀ (bnd-out (mδ m'') δ'' δ₀ tri) eqstr
-
-popᵉ-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
-          → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
-          → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
-          → Princ (⇑ᵉˢ s) (st Φ θ'' R'' rg'') m'' C → Discharges
-          → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ nothing
-          → Refut s (∀ᵉ C)
-popᵉ-fail s C Φ θ'' R'' rg'' m'' w'' ip dis eq δ₀ Q fx h sat =
-  popᵉ-fail′ s C Φ θ'' R'' rg'' m'' w'' dis eq δ₀ Q δ'' tri'' hres''
+popᵉ-escape : ∀ {Θ Φ} → (s : St Θ) → (C : Constraint (Θ +e))
+            → (θ'' : Subst (Θ +e) (Φ +e)) → (R'' : Resid (Φ +e)) → (rg'' : Rig (Φ +e))
+            → (m'' : ⇑ᵉˢ s ⟶ st (Φ +e) θ'' R'' rg'')
+            → Princ (⇑ᵉˢ s) (st (Φ +e) θ'' R'' rg'') m'' C
+            → (j : EVar (Φ +e)) → sE (mδ m'') (newᵉ {Ψ s}) ≡ evar j
+            → strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') ≡ nothing
+            → Refut s (∀ᵉ C)
+popᵉ-escape s C θ'' R'' rg'' m'' ip j eqj eqstr δ₀ Q fx h sat =
+  strSub-escape j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') δ'' (bnd-var (mδ m'') δ'' tri'' eqj)
+                δ₀ (bnd-out (mδ m'') δ'' δ₀ tri'') eqstr
   where
     ires = ip (δ₀ ↑ᵉ) (wkᵉ-H Q)
               (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
 
-    δ''    = proj₁ ires
-    tri''  = proj₁ (proj₂ ires)
-    hres'' = proj₁ (proj₂ (proj₂ ires))
-
--- Refutes unconditionally, except at a rigid binder, where it needs
--- `Discharges`.
+    δ''   = proj₁ ires
+    tri'' = proj₁ (proj₂ ires)
 
 threadOps-fail : ∀ {Θ} {f : Op → Constraint Θ}
    → (g : (s : St Θ) → (op : Op)
@@ -1035,19 +1032,19 @@ threadOps-fail {f = f} g gp gf (op ∷ l) s eq δ₀ Q fx h sat with g s op in e
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
-solve-fail⁺ : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → Refutable C
-            → solve s C ≡ nothing → Refut s C
+solve-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → NoRig C
+           → solve s C ≡ nothing → Refut s C
 
-solve-fail⁺ s ⊤̂ nr ()
+solve-fail s ⊤̂ nr ()
 
-solve-fail⁺ s ⊥̂ nr eq δ₀ Q fx h sat = sat
+solve-fail s ⊥̂ nr eq δ₀ Q fx h sat = sat
 
-solve-fail⁺ s (C ∧̂ D) (nc , nd) eq δ₀ Q fx h (sc , sd) with solve s C in e₁
-... | nothing = solve-fail⁺ s C nc e₁ δ₀ Q fx h sc
+solve-fail s (C ∧̂ D) (nc ∧ⁿ nd) eq δ₀ Q fx h (sc , sd) with solve s C in e₁
+... | nothing = solve-fail s C nc e₁ δ₀ Q fx h sc
 ... | just (s₁ , m₁ , w₁) with solve s₁ D in e₂
 ...   | just _  = ⊥nothing eq
 ...   | nothing =
-        solve-fail⁺ s₁ D nd e₂ δ₁ Q fx₁ h₁ (⊨-resp-≐ˢ (≐ˢ-sym chain) D sd)
+        solve-fail s₁ D nd e₂ δ₁ Q fx₁ h₁ (⊨-resp-≐ˢ (≐ˢ-sym chain) D sd)
   where
     f₁   = solve-principal s C e₁ δ₀ Q sc h
     δ₁   = proj₁ f₁
@@ -1058,7 +1055,7 @@ solve-fail⁺ s (C ∧̂ D) (nc , nd) eq δ₀ Q fx h (sc , sd) with solve s C i
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
-solve-fail⁺ s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
+solve-fail s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
   with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) in equ*
 ... | nothing =
       unify-fail (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
@@ -1080,7 +1077,7 @@ solve-fail⁺ s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
     h₁ : Q ⊩ᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) [ δ₁ ]
     h₁ = ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri₁) h)
 
-solve-fail⁺ s (A ≾̂ᵥᶜ B) nr eq δ₀ Q fx h sat
+solve-fail s (A ≾̂ᵥᶜ B) nr eq δ₀ Q fx h sat
   with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)) in eqx
 ... | nothing =
       subst (ExpMax δ₀) eqx
@@ -1100,61 +1097,49 @@ solve-fail⁺ s (A ≾̂ᵥᶜ B) nr eq δ₀ Q fx h sat
     dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
                 (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
 
-solve-fail⁺ s (ρ ≾̂ᵣᶜ ρ') nr ()
+solve-fail s (ρ ≾̂ᵣᶜ ρ') nr ()
 
-solve-fail⁺ s (ε ≾̂ₑᶜ ε') nr ()
+solve-fail s (ε ≾̂ₑᶜ ε') nr ()
 
-solve-fail⁺ s (Etᶜ A) nr ()
+solve-fail s (Etᶜ A) nr ()
 
-solve-fail⁺ s (Et∨≾ᵘ A ρ) nr eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
+solve-fail s (Et∨≾ᵘ A ρ) nr eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = ⊥nothing eq
 ... | nothing = ⊥nothing eq
 
-solve-fail⁺ s (∃ᵗ C) nc eq δ₀ Q fx h (B , sat) with solve (s ↑ᵗˢ) C in e
+solve-fail s (∃ᵗ C) (∃ᵗⁿ nc) eq δ₀ Q fx h (B , sat) with solve (s ↑ᵗˢ) C in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
-      solve-fail⁺ (s ↑ᵗˢ) C nc e (δ₀ ,ᵗ B) Q
+      solve-fail (s ↑ᵗˢ) C nc e (δ₀ ,ᵗ B) Q
         (Fixing-trans wkˢᵗ (δ₀ ,ᵗ B) (wk-,ᵗ δ₀ B) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵗ δ₀ B)) h))
         (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
 
-solve-fail⁺ s (∃ʳ C) nc eq δ₀ Q fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
+solve-fail s (∃ʳ C) (∃ʳⁿ nc) eq δ₀ Q fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
-      solve-fail⁺ (s ↑ʳˢ) C nc e (δ₀ ,ʳ ρ) Q
+      solve-fail (s ↑ʳˢ) C nc e (δ₀ ,ʳ ρ) Q
         (Fixing-trans wkˢʳ (δ₀ ,ʳ ρ) (wk-,ʳ δ₀ ρ) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ʳ δ₀ ρ)) h))
         (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
 
-solve-fail⁺ s (∃ᵉ C) nc eq δ₀ Q fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
+solve-fail s (∃ᵉ C) (∃ᵉⁿ nc) eq δ₀ Q fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
-      solve-fail⁺ (s ↑ᵉˢ) C nc e (δ₀ ,ᵉ ε) Q
+      solve-fail (s ↑ᵉˢ) C nc e (δ₀ ,ᵉ ε) Q
         (Fixing-trans wkˢᵉ (δ₀ ,ᵉ ε) (wk-,ᵉ δ₀ ε) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵉ δ₀ ε)) h))
         (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
 
-solve-fail⁺ s (∀ᵉ C) (dis , nc) eq with solve (⇑ᵉˢ s) C in e
-... | nothing = λ δ₀ Q fx h sat →
-      solve-fail⁺ (⇑ᵉˢ s) C nc e (δ₀ ↑ᵉ) (wkᵉ-H Q) (Fixing-⇑ᵉ δ₀ fx) ⊩ᴿ-empty
-        (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat)
-... | just (s'' , m'' , w'') =
-      popᵉ-fail s C (Ψ s'') (θ s'') (res s'') (rig s'') m'' w''
-                (solve-principal (⇑ᵉˢ s) C e) dis eq
+solve-fail s (∀ᵉ C) ()
 
-solve-fail⁺ s (⋀ᵒᵖ f) nf eq
+solve-fail s (⋀ᵒᵖ f) (⋀ⁿ nf) eq
   with threadOps {f = f} (λ s' op → solve s' (f op)) ops s in e
 ... | just _  = ⊥nothing eq
 ... | nothing =
       threadOps-fail (λ s' op → solve s' (f op))
                      (λ s' op e' → solve-principal s' (f op) e')
-                     (λ s' op e' → solve-fail⁺ s' (f op) (nf op) e') ops s e
-
--- Without a rigid binder, no assumption is needed
-
-solve-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → NoRig C
-           → solve s C ≡ nothing → Refut s C
-solve-fail s C nr = solve-fail⁺ s C (NoRig→Refutable C nr)
+                     (λ s' op e' → solve-fail s' (f op) (nf op) e') ops s e
 
 -- The closing expansion: it factors every satisfying instance, and
 -- its failure refutes the residual.

@@ -252,6 +252,38 @@ ex-handle-pipeline :
   ≡ just (T.Unit , uₑ)
 ex-handle-pipeline = refl
 
+-- Clauses that use their continuation. Its effect is the clause's rigid
+-- `e''`, and the unknowns bounded below by it alone, or by the unit,
+-- are sent to those bounds before the clause's scope closes. `forward`
+-- is `Worked.Typing.Core`'s `forwarding` clause.
+
+ex-forward : infer! [] forward ≡ just (Unit , ûₑ)
+ex-forward = refl
+
+ex-unboxing : infer! [] unboxing ≡ just (Unit , ûₑ)
+ex-unboxing = refl
+
+ex-performing : infer! [] performing ≡ just (Unit , ûₑ)
+ex-performing = refl
+
+-- the declarative derivation, with `forwarding` itself as the clause,
+-- and the pipeline's, at the same grade
+
+forward-typed : [] TC.⊢C⦂ T.Unit TC.‼ (uₑ ·ₑ uₑ)
+forward-typed = TC.handle_`with_`in (TC.return TC.⋆)
+                  (λ op ε'' → TC.forwarding op ε'') (TC.return TC.⋆)
+
+ex-forward-pipeline : typeOf (inferImpl [] forward) ≡ just (T.Unit , uₑ ·ₑ uₑ)
+ex-forward-pipeline = refl
+
+-- Resuming twice is refused, as the source system refuses it: the
+-- second resumption uses a continuation that is not eternal across the
+-- lock `∣ e'' ∣` the first one leaves, and the clause's effect would be
+-- `op-grade op · (e'' · e'')`, a run that repeats what `e''` permits.
+
+ex-resumingTwice : infer! [] resumingTwice ≡ nothing
+ex-resumingTwice = refl
+
 ------------------------------------------------------------------------
 -- 3. What these grades do
 --
@@ -574,6 +606,21 @@ ex-escape = refl
 
 ex-escape-ok : solved? (gsolveImpl okC) ≡ just tt
 ex-escape-ok = refl
+
+-- Rigid scopes. An unknown local to the scope and bounded below by the
+-- rigid alone is sent to it; an outer unknown bounded above by an
+-- expression in the rigid is bounded by that expression at the least
+-- rigid, the unit; a local unknown bounded below by a product with
+-- itself is left alone, and the constraint declined.
+
+ex-local : solved? (gsolveImpl localC) ≡ just tt
+ex-local = refl
+
+ex-strip : solved? (gsolveImpl stripC) ≡ just tt
+ex-strip = refl
+
+ex-cyc : solved? (gsolveImpl cycC) ≡ nothing
+ex-cyc = refl
 
 -- The pipeline, end to end.
 

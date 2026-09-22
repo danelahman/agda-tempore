@@ -623,3 +623,40 @@ VarOK-wkᵉ {Q = Q} {A} {ρ} ok =
         → Q ∣ A <:̂ᵛ A' → wkᵉ-H Q ∣ wkᵉ-v A <:̂ᵛ wkᵉ-v A'
 <:̂ᵛ-wkᵉ {Q = Q} {A} {A'} p =
   subst₂ (wkᵉ-H Q ∣_<:̂ᵛ_) (wkˢᵉ-v A) (wkˢᵉ-v A') (<:̂ᵛ-subst ⊩ᴴ-wkᵉ p)
+
+-- Grade expressions are monotone in their variables: every former is,
+-- so two substitutions ordered pointwise on the grade variables order
+-- the images of every grade expression the same way.
+
+infix 4 _⊩_≾ˢ_
+
+record _⊩_≾ˢ_ {Θ Θ' : Scope} (Q : Hyps Θ') (σ τ : Subst Θ Θ') : Set where
+  constructor mk≾ˢ
+  field
+    ≾ˢʳ : (i : RVar Θ) → Q ⊩ sR σ i ≾̂ᵣ sR τ i
+    ≾ˢᵉ : (i : EVar Θ) → Q ⊩ sE σ i ≾̂ₑ sE τ i
+
+open _⊩_≾ˢ_ public
+
+⊩-⊔̂ᵣ-mono : ∀ {Θ} {Q : Hyps Θ} {ρ₁ ρ₁' ρ₂ ρ₂'}
+          → Q ⊩ ρ₁ ≾̂ᵣ ρ₁' → Q ⊩ ρ₂ ≾̂ᵣ ρ₂' → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
+⊩-⊔̂ᵣ-mono p q = ⊔-lubᵣ (transᵣ p ⊔-ubˡᵣ) (transᵣ q ⊔-ubʳᵣ)
+
+⊩-⊔̂ₑ-mono : ∀ {Θ} {Q : Hyps Θ} {ε₁ ε₁' ε₂ ε₂'}
+          → Q ⊩ ε₁ ≾̂ₑ ε₁' → Q ⊩ ε₂ ≾̂ₑ ε₂' → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε₁' ⊔̂ₑ ε₂'
+⊩-⊔̂ₑ-mono p q = ⊔-lubₑ (transₑ p ⊔-ubˡₑ) (transₑ q ⊔-ubʳₑ)
+
+mono-substₑ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
+            → Q ⊩ σ ≾ˢ τ → (ε : EExp Θ) → Q ⊩ ε [ σ ]ᵉ ≾̂ₑ ε [ τ ]ᵉ
+mono-substₑ p (evar i)   = ≾ˢᵉ p i
+mono-substₑ p (econst c) = ⊩≾̂ₑ-refl
+mono-substₑ p (ε ·̂ₑ ε')  = monoₑ (mono-substₑ p ε) (mono-substₑ p ε')
+mono-substₑ p (ε ⊔̂ₑ ε')  = ⊩-⊔̂ₑ-mono (mono-substₑ p ε) (mono-substₑ p ε')
+
+mono-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
+            → Q ⊩ σ ≾ˢ τ → (ρ : RExp Θ) → Q ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ
+mono-substᵣ p (rvar i)   = ≾ˢʳ p i
+mono-substᵣ p (rconst c) = ⊩≾̂ᵣ-refl
+mono-substᵣ p (ρ ·̂ᵣ ρ')  = monoᵣ (mono-substᵣ p ρ) (mono-substᵣ p ρ')
+mono-substᵣ p (ρ ⊔̂ᵣ ρ')  = ⊩-⊔̂ᵣ-mono (mono-substᵣ p ρ) (mono-substᵣ p ρ')
+mono-substᵣ p ∣ ε ∣̂ᵉ     = map-mono (mono-substₑ p ε)

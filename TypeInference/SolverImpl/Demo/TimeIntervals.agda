@@ -52,8 +52,10 @@ import TypeInference.OpenSyntax.Grades
 import TypeInference.OpenSyntax.Types
 import TypeInference.OpenSyntax.Contexts
 import TypeInference.OpenSyntax.Hyps
+import TypeInference.OpenSyntax.Subst
 import TypeInference.Raw.Syntax
 import TypeInference.Constraints.Syntax
+import TypeInference.Constraints.Satisfaction
 import TypeInference.SolverImpl.Enum
 import TypeInference.SolverImpl.Restricted
 import TypeInference.SolverImpl.Demo.Generic
@@ -208,6 +210,24 @@ ex-unbox = refl
 ex-handle : infer! [] (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆))
           ≡ nothing
 ex-handle = refl
+
+-- A clause that resumes is inferred all the same. Its continuation's
+-- effect is the clause's rigid `e''`, the unknowns bounded below by it
+-- alone are sent to it before the clause's scope closes, and nothing is
+-- left to ask of the unit. `forward` is `Worked.Typing.Core`'s
+-- `forwarding` clause.
+
+ex-handle-forward : infer! [] forward ≡ just (Unit , ûₑ)
+ex-handle-forward = refl
+
+-- A clause that unboxes its continuation, or performs, and then drops
+-- it ends in the unit effect, and is refused as `ex-handle` is.
+
+ex-handle-unboxing : infer! [] unboxing ≡ nothing
+ex-handle-unboxing = refl
+
+ex-handle-performing : infer! [] performing ≡ nothing
+ex-handle-performing = refl
 
 ------------------------------------------------------------------------
 -- 3. What these grades do
@@ -467,6 +487,18 @@ ex-escape = refl
 ex-escape-ok : solved? (gsolveImpl okC) ≡ just tt
 ex-escape-ok = refl
 
+-- An unknown local to a rigid scope and bounded below by the rigid
+-- alone is sent to the rigid before the scope closes.
+
+ex-local : solved? (gsolveImpl localC) ≡ just tt
+ex-local = refl
+
+-- An outer unknown bounded above by an expression in the rigid needs
+-- that expression at the least rigid, which these windows lack.
+
+ex-strip : solved? (gsolveImpl stripC) ≡ nothing
+ex-strip = refl
+
 -- The pipeline, end to end.
 
 ex-pipeline : typeOf (inferImpl [] (return true)) ≡ just (T.Bool , uₑ)
@@ -567,6 +599,7 @@ module Least where
   module Tyᵈ = TypeInference.OpenSyntax.Types          specᵈ
   module Hyᵈ = TypeInference.OpenSyntax.Hyps           specᵈ
   module Cnᵈ = TypeInference.Constraints.Syntax        specᵈ
+  module GIᵈ = GradeSystemInterface                    gradesᵈ
 
   module Rsᵈ =
     TypeInference.SolverImpl.Restricted specᵈ opsᵈ₃ nothing nothing
@@ -612,6 +645,61 @@ module Least where
   ex-handle-pipeline : Gᵐ.typeOf (Gᵐ.inferImpl Cᵈ.[] prog)
                      ≡ just (Tᵈ.Unit , [0, ↑ 0 ])
   ex-handle-pipeline = refl
+
+  -- Clauses that use their continuation. Each ends in an effect bounded
+  -- below by the rigid `e''`, or by the unit, and is inferred once the
+  -- unknowns local to the clause are sent to those bounds.
+
+  ex-forward : Gᵐ.infer! Cᵈ.[] Gᵐ.forward ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-forward = refl
+
+  ex-unboxing : Gᵐ.infer! Cᵈ.[] Gᵐ.unboxing ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-unboxing = refl
+
+  ex-performing : Gᵐ.infer! Cᵈ.[] Gᵐ.performing ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-performing = refl
+
+  -- the forwarding clause needs no option: nothing it leaves is about
+  -- the unit
+
+  ex-forward-no : G⁰.infer! Cᵈ.[] G⁰.forward ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-forward-no = refl
+
+  -- elaborated into the source system, at `uₑ ·ₑ uₑ`, the grade the
+  -- handle rule gives the handled `return ⋆` and continuation
+
+  ex-forward-pipeline : Gᵐ.typeOf (Gᵐ.inferImpl Cᵈ.[] Gᵐ.forward)
+                      ≡ just (Tᵈ.Unit , GIᵈ.uₑ GIᵈ.·ₑ GIᵈ.uₑ)
+  ex-forward-pipeline = refl
+
+  -- Resuming twice is refused, as the source system refuses it: the
+  -- second resumption uses a continuation that is not eternal across
+  -- the lock `∣ e'' ∣` the first one leaves, and the clause's effect
+  -- would be `op-grade op · (e'' · e'')`, above `op-grade op · e''`
+  -- for every `e''` but the unit.
+
+  ex-resumingTwice : Gᵐ.infer! Cᵈ.[] Gᵐ.resumingTwice ≡ nothing
+  ex-resumingTwice = refl
+
+  -- With the unit least, an outer unknown bounded by an expression in
+  -- the rigid is bounded by it at the unit.
+
+  ex-strip-min : Gᵐ.solved? (Gᵐ.gsolveImpl Gᵐ.stripC) ≡ just tt
+  ex-strip-min = refl
+
+  ex-strip-no : G⁰.solved? (G⁰.gsolveImpl G⁰.stripC) ≡ nothing
+  ex-strip-no = refl
+
+  -- A local unknown bounded below by a product with itself has a least
+  -- solution, the top, that no finite join reaches; it is left alone,
+  -- and the constraint is declined although it is satisfiable.
+
+  ex-cyc-sat : TypeInference.Constraints.Satisfaction._⊨[_]_ specᵈ
+                (TypeInference.OpenSyntax.Subst.idˢ specᵈ) Hyᵈ.∅ᴴ Gᵐ.cycC
+  ex-cyc-sat = Grᵈ.econst GIᵈ.⊤ₑ , Hyᵈ.topₑ , Hyᵈ.topₑ
+
+  ex-cyc : Gᵐ.solved? (Gᵐ.gsolveImpl Gᵐ.cycC) ≡ nothing
+  ex-cyc = refl
 
   -- Deadlines have a least unit, so a `var`-rule disjunction whose
   -- grade is `[0, ↑ 1 ]` has a refutable grade side.

@@ -11,10 +11,13 @@
 -- later component leaves behind rather than transported along  --
 -- it.                                                          --
 --                                                              --
--- At a rigid binder the state is lifted with a fresh residual: --
--- atoms free of the rigid are kept, one mentioning it is       --
--- discharged on the spot, and an outer unknown's image must    --
--- stay free of it.                                             --
+-- At a rigid binder the state is lifted with a fresh residual. --
+-- Before the scope closes, the unknowns local to it are sent   --
+-- to their least solutions (`Localise`); then atoms free of    --
+-- the rigid are kept, one whose right side alone mentions it   --
+-- is kept at the unit rigid where the unit is least, any other --
+-- is discharged on the spot, and an outer unknown's image must --
+-- stay free of the rigid.                                      --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)
@@ -24,7 +27,7 @@ open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; �
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
-open import Data.Product using (Σ-syntax; _×_; _,_; proj₁)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Unit using (tt)
 
 
@@ -72,6 +75,9 @@ open import TypeInference.SolverImpl.Core.UnifySound S using (unify-sound)
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Close  S umin?ᵣ umin?ₑ using (updᵉ)
+open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
+  using (Localised; localise; lσ; lR; lsnd; updᵉ-below)
 
 open OpEnum opEnum
 
@@ -156,6 +162,39 @@ et₀? A with etDec A in e
 ... | just (α ∷ _) = nothing
 ... | nothing      = nothing
 
+-- An ordering whose left side is free of the rigid and whose right side
+-- mentions it holds for every rigid exactly when it holds at the unit,
+-- where the unit is least and the right side monotone in the rigid. The
+-- rigid is sent to the unit there, and what is left is kept.
+
+stripʳ : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e)) → (ρ₀ : RExp Φ)
+       → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
+stripʳ nothing   j ρ ρ' ρ₀ e₁ = nothing
+stripʳ (just um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+... | nothing          = nothing
+... | just (ρ₀' , e₂) =
+      just ((ρ₀ , ρ₀') ∷ [] ,
+            λ δ Q k → transᵣ (subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
+                                     (sym (pop⨟ʳ j ρ e₁ δ))
+                                     (trans (sym (pop⨟ʳ j (ρ' [ updᵉ j ûₑ ]ʳ) e₂ δ))
+                                            ([⨟]ʳ ρ' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                     (⊩-wkᵉᵣ (k (here refl))))
+                             (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ρ'))
+
+stripᵉ : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e)) → (ε₀ : EExp Φ)
+       → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Atomᵉ j ε ε')
+stripᵉ nothing   j ε ε' ε₀ e₁ = nothing
+stripᵉ (just um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+... | nothing          = nothing
+... | just (ε₀' , e₂) =
+      just ((ε₀ , ε₀') ∷ [] ,
+            λ δ Q k → transₑ (subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
+                                     (sym (pop⨟ᵉ j ε e₁ δ))
+                                     (trans (sym (pop⨟ᵉ j (ε' [ updᵉ j ûₑ ]ᵉ) e₂ δ))
+                                            ([⨟]ᵉ ε' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                     (⊩-wkᵉₑ (k (here refl))))
+                             (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ε'))
+
 atomʳ : ∀ {Φ} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e)) → Maybe (Atomʳ j ρ ρ')
 atomʳ j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ... | just (ρ₀ , e₁) | just (ρ₀' , e₂) =
@@ -163,9 +202,9 @@ atomʳ j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
                              (sym (pop⨟ʳ j ρ e₁ δ)) (sym (pop⨟ʳ j ρ' e₂ δ))
                              (⊩-wkᵉᵣ (k (here refl))))
-... | just _         | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just (ρ₀ , e₁) | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-...   | nothing = nothing
+...   | nothing = stripʳ umin?ₑ j ρ ρ' ρ₀ e₁
 atomʳ j ρ ρ' | nothing | _ with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
@@ -177,9 +216,9 @@ atomᵉ j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
                              (sym (pop⨟ᵉ j ε e₁ δ)) (sym (pop⨟ᵉ j ε' e₂ δ))
                              (⊩-wkᵉₑ (k (here refl))))
-... | just _         | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just (ε₀ , e₁) | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-...   | nothing = nothing
+...   | nothing = stripᵉ umin?ₑ j ε ε' ε₀ e₁
 atomᵉ j ε ε' | nothing | _ with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
@@ -391,6 +430,17 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 ...   | just _         | nothing = nothing
 ...   | nothing        | _       = nothing
 
+-- Before a rigid scope closes, the unknowns local to it are sent to
+-- their least solutions: those free in no image of the unknowns the
+-- scope was entered with.
+
+localiseˢ : ∀ {Θ} {s₀ s'' : St Θ} → s₀ ⟶ s'' → Σ[ s₃ ∈ St Θ ] (s'' ⟶ s₃)
+localiseˢ {s'' = s''} m =
+  st (Ψ s'') (θ s'' ⨟ˢ lσ L) (lR L) (rig s'') , mor (lσ L) ≐ˢ-refl (lsnd L)
+  where
+    L : Localised (mδ m) (res s'')
+    L = localise (mδ m) (res s'')
+
 -- The unifier's verdict, paired with the equation naming it, so
 -- that the driver's own case analysis stays visible to a proof.
 
@@ -544,7 +594,10 @@ solve {Θ} s (∃ᵉ C) with solve (s ↑ᵉˢ) C
 
 solve s (∀ᵉ C) with solve (⇑ᵉˢ s) C
 ... | nothing = nothing
-... | just (s'' , m'' , w'') = popᵉ s C (Ψ s'') (θ s'') (res s'') (rig s'') m'' w''
+... | just (s'' , m'' , w'') =
+      popᵉ s C (Ψ (proj₁ (localiseˢ m''))) (θ (proj₁ (localiseˢ m'')))
+               (res (proj₁ (localiseˢ m''))) (rig (proj₁ (localiseˢ m'')))
+               (⟶-⨟ m'' (proj₂ (localiseˢ m''))) (wit-mono (proj₂ (localiseˢ m'')) C w'')
 
 solve s (⋀ᵒᵖ f) with threadOps {f = f} (λ s' op → solve s' (f op)) ops s
 ... | nothing = nothing

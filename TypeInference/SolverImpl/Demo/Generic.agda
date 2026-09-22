@@ -200,6 +200,40 @@ wrap = return (lam (handle (var zero · ⋆)
                     `in (return (var zero))))
 
 ------------------------------------------------------------------------
+-- Handler clauses that touch their continuation
+--
+-- A clause is typed for every effect `e''` of the continuation it is
+-- handed, so the continuation's effect is a rigid. Each clause below
+-- works on it: `forward` performs the operation again and resumes with
+-- its answer, which is `Worked.Typing.Core`'s `forwarding`; `unboxing`
+-- unboxes the continuation and drops it; `performing` performs and does
+-- not resume; `resumingTwice` resumes twice, the second time across the
+-- lock the first resumption leaves.
+
+forward : RawC 0
+forward = handle (return ⋆)
+          `with (λ op → perform op (var (suc zero))
+                          (unbox (suc zero) (var zero · var (suc zero))))
+          `in (return ⋆)
+
+unboxing : RawC 0
+unboxing = handle (return ⋆) `with (λ op → unbox zero (return ⋆)) `in (return ⋆)
+
+performing : RawC 0
+performing = handle (return ⋆)
+             `with (λ op → perform op (var (suc zero)) (return ⋆))
+             `in (return ⋆)
+
+resumingTwice : RawC 0
+resumingTwice =
+  handle (return ⋆)
+  `with (λ op → perform op (var (suc zero))
+                  (unbox (suc zero)
+                    ((var zero · var (suc zero))
+                      ⨟ (var (suc zero) · var (suc (suc zero))))))
+  `in (return ⋆)
+
+------------------------------------------------------------------------
 -- Binder order
 --
 -- Written as constraints, since a program never exposes it. `escC`
@@ -212,3 +246,23 @@ escC = ∃ᵉ (∀ᵉ ((Unit ⇒ (Unit ‼ evar (suc zero))) ≐ᵥ (Unit ⇒ (U
 
 okC : Constraint ∅ˢ
 okC = ∀ᵉ (∃ᵉ ((Unit ⇒ (Unit ‼ evar zero)) ≐ᵥ (Unit ⇒ (Unit ‼ evar (suc zero)))))
+
+------------------------------------------------------------------------
+-- Rigid scopes
+--
+-- `localC` bounds an unknown allocated under the rigid by the rigid
+-- alone: its least solution is the rigid itself. `stripC` bounds an
+-- unknown allocated outside by an expression in the rigid, which holds
+-- for every rigid exactly when it holds at the least one. `cycC`
+-- bounds the local unknown by a product with itself as well, and no
+-- finite join reaches its least solution.
+
+localC : Constraint ∅ˢ
+localC = ∀ᵉ (∃ᵉ (evar (suc zero) ≾̂ₑᶜ evar zero))
+
+stripC : Constraint ∅ˢ
+stripC = ∃ᵉ (∀ᵉ (evar (suc zero) ≾̂ₑᶜ (econst (op-grade op₀) ·̂ₑ evar zero)))
+
+cycC : Constraint ∅ˢ
+cycC = ∀ᵉ (∃ᵉ (((econst (op-grade op₀) ·̂ₑ evar zero) ≾̂ₑᶜ evar zero)
+              ∧̂ (evar (suc zero) ≾̂ₑᶜ evar zero)))
