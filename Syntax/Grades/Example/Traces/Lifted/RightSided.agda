@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Sets of timed traces as upper bounds.                               --
+-- Antichains of timed traces as upper bounds.                         --
 --                                                                     --
 -- A grade is a non-empty finite set of traces, read as the bounds a   --
 -- computation must stay within: writing `X` for the runs it may have, --
@@ -13,18 +13,32 @@
 --                                                                     --
 --   P ≾ Q   iff   ∀ p ∈ P. ∃ q ∈ Q. p ≼ q                             --
 --                                                                     --
--- which is `↓P ⊆ ↓Q` for the sets of runs the two grades permit, and  --
--- makes the union of two grades their join.                           --
+-- -- every listed bound is itself within one listed in `Q`. That is   --
+-- `↓P ⊆ ↓Q` for the sets of runs the two grades permit, so the union  --
+-- of two grades is their join, the closure is *downward*, and the     --
+-- canonical form of a grade is the antichain of its `≼`-maximal       --
+-- members. The carrier is therefore `Traces.Reduced`'s `Antichain`    --
+-- taken at the *converse* of the order -- `Order.flipᵖ`, where the    --
+-- reduction's minimal members are this order's maximal ones -- and    --
+-- the order is a partial one: mutually-permitting grades are equal.   --
 --                                                                     --
 -- No finite list of bounds permits every run, so the carrier carries  --
 -- `unbounded` as a point of its own: it permits any run at all,       --
 -- however long, and is absorbing. It is *not* the empty set of        --
--- bounds, which permits nothing and is excluded.                      --
+-- bounds, which permits nothing and is excluded. It is the greatest   --
+-- grade, where for a floor the unit would be.                         --
 --                                                                     --
--- Nothing here inspects the order. `Example.Traces.Timed.RightSided`  --
--- instantiates it at the allowance order, where staying within a      --
--- bound means the bound's operations permit the run's and its delays  --
--- are a budget the run may spend where the bound places it.           --
+-- What is proper to this module beyond the reduction is how `{ ε }`   --
+-- sits: it is the *least* grade, the empty run staying within every   --
+-- bound, and it is a zero for the product, a bound that permits       --
+-- nothing but the empty run leaving no room for either factor. Those  --
+-- rest on the two unit facts a `TraceOrder` adds to the               --
+-- order-theoretic half the reduction runs on.                         --
+--                                                                     --
+-- `Example.Traces.Timed.RightSided` instantiates the whole at the     --
+-- allowance order, where staying within a bound means the bound's     --
+-- operations permit the run's and its delays are a budget the run may --
+-- spend where the bound places it.                                    --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -36,6 +50,7 @@ open import Relation.Binary.Definitions
 open import Util.Equality
 
 import Syntax.Grades.Traces.Order as Order
+import Syntax.Grades.Traces.Reduced as Reduced
 
 module Syntax.Grades.Example.Traces.Lifted.RightSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
@@ -44,110 +59,124 @@ module Syntax.Grades.Example.Traces.Lifted.RightSided
   (O : Order.TraceOrder Op) where
 
 open import Data.Empty using (⊥)
+open import Data.List.Membership.Propositional using (_∈_; find)
+open import Data.List.Membership.Propositional.Properties
+  using (∈-cartesianProductWith⁺)
+open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Nat.Base using (ℕ; _+_)
+open import Data.Product using (_,_)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades
 
--- the sets of traces and their monoid structure (`_·_`, `u`, `of-nat`,
--- and their laws), decidable equality `_≟ᴺ_`, and the irrelevance of
--- the set-level lift come from the shared set-of-traces module; only
--- the order below is specific to this grade
+open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
+-- the carrier of the written-out bounds and every law the
+-- order-theoretic half supplies: the monoid, the order, its decision
+-- procedure, the joins and the inclusion of the naturals. The
+-- reduction runs at the converse order, so its minimal members are
+-- this grade's maximal ones.
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
+module R = Reduced Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+             (Order.flipᵖ Op (Order.TraceOrder.base O))
+
+open R public
+  renaming (_≾_ to _≾₀_; _≾?_ to _≾₀?_;
+            ≾-refl to ≾₀-refl; ≾-trans to ≾₀-trans;
+            ≾-antisym to ≾₀-antisym; ≾-irrelevant to ≾₀-irrelevant;
+            ·-monoˡ to ·-monoˡ₀; ·-monoʳ to ·-monoʳ₀;
+            ⊔-ubˡ to ⊔₀-ubˡ; ⊔-ubʳ to ⊔₀-ubʳ; ⊔-lub to ⊔₀-lub)
 
 ------------------------------------------------------------------------
--- The order on (non-empty) sets of traces
+-- Distributivity, read at the order
 --
--- `P ≾₀ Q` asks that every bound of `P` stay within some bound of `Q`,
--- which is `_≼ˢ_` in the order the two are written.
+-- The two sides are equal antichains, so the grade's one-directional
+-- law is that equation transported.
 
-infix 5 _≾₀_
-
-_≾₀_ : NeTraces → NeTraces → Set
-P ≾₀ Q = traces P ≼ˢ traces Q
-
-≾₀-refl : {P : NeTraces} → P ≾₀ P
-≾₀-refl {P} = ≼ˢ-refl {traces P}
-
-≾₀-trans : {P Q R : NeTraces} → P ≾₀ Q → Q ≾₀ R → P ≾₀ R
-≾₀-trans {P} {Q} {R} = ≼ˢ-trans {traces P} {traces Q} {traces R}
-
--- the language product is monotone in both arguments
-
-·-monoˡ₀ : {C P Q : NeTraces} → P ≾₀ Q → (P · C) ≾₀ (Q · C)
-·-monoˡ₀ {C} {P} {Q} rel =
-  ≼ˢ-· {traces P} {traces Q} {traces C} {traces C} rel (≼ˢ-refl {traces C})
-
-·-monoʳ₀ : {C P Q : NeTraces} → P ≾₀ Q → (C · P) ≾₀ (C · Q)
-·-monoʳ₀ {C} {P} {Q} rel =
-  ≼ˢ-· {traces C} {traces C} {traces P} {traces Q} (≼ˢ-refl {traces C}) rel
-
--- a set of bounds is read disjunctively, so the union of two sets is
--- their join, and the language product distributes over it on both
--- sides
-
-⊔₀-ubˡ : (P Q : NeTraces) → P ≾₀ (P ∪ Q)
-⊔₀-ubˡ P Q = ≼ˢ-∪-ubˡ {traces P} {traces Q}
-
-⊔₀-ubʳ : (P Q : NeTraces) → Q ≾₀ (P ∪ Q)
-⊔₀-ubʳ P Q = ≼ˢ-∪-ubʳ (traces P) {traces Q}
-
-⊔₀-lub : {P Q R : NeTraces} → P ≾₀ R → Q ≾₀ R → (P ∪ Q) ≾₀ R
-⊔₀-lub {P} {Q} {R} = ≼ˢ-∪-lub {traces P} {traces Q} {traces R}
-
--- distributivity holds on the nose: the two sides list the same runs,
--- and a set is determined by the runs it lists
-
-·-distribˡ₀-⊔ : (C P Q : NeTraces) → (C · (P ∪ Q)) ≾₀ ((C · P) ∪ (C · Q))
+·-distribˡ₀-⊔ : (C P Q : Antichain) → (C · (P ⊔ Q)) ≾₀ ((C · P) ⊔ (C · Q))
 ·-distribˡ₀-⊔ C P Q =
-  subst ((C · (P ∪ Q)) ≾₀_) (·-distribˡ-∪ C P Q) (≾₀-refl {C · (P ∪ Q)})
+  subst ((C · (P ⊔ Q)) ≾₀_) (·-distribˡ-⊔ C P Q) (≾₀-refl {C · (P ⊔ Q)})
 
-·-distribʳ₀-⊔ : (C P Q : NeTraces) → ((P ∪ Q) · C) ≾₀ ((P · C) ∪ (Q · C))
+·-distribʳ₀-⊔ : (C P Q : Antichain) → ((P ⊔ Q) · C) ≾₀ ((P · C) ⊔ (Q · C))
 ·-distribʳ₀-⊔ C P Q =
-  subst (((P ∪ Q) · C) ≾₀_) (·-distribʳ-∪ P Q C) (≾₀-refl {(P ∪ Q) · C})
-
--- zero-product: the unit `{ ε }` permits nothing but the empty run, and
--- durations add along sequencing, so a product that stays within it has
--- both factors staying within it
-
-≾₀-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾₀ u → P ≾₀ u
-≾₀-zero-productˡ {P} {Q} rel =
-  ≼ˢ-zero-productˡ {traces P} {traces Q} (nonempty Q) (≼ˢ-nfˡ⁻ rel)
-
-≾₀-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾₀ u → Q ≾₀ u
-≾₀-zero-productʳ {P} {Q} rel =
-  ≼ˢ-zero-productʳ {traces P} {traces Q} (nonempty P) (≼ˢ-nfˡ⁻ rel)
-
--- the order is proof-irrelevant
-
-≾₀-irrelevant : {P Q : NeTraces} → (p q : P ≾₀ Q) → p ≡ q
-≾₀-irrelevant {P} {Q} = liftˢ-irrelevant
-
--- and decidable: both membership and the underlying order are decided
--- and the sets are finite, so an ordering between two written-out
--- grades is settled by computation
-
-infix 5 _≾₀?_
-
-_≾₀?_ : (P Q : NeTraces) → Dec (P ≾₀ Q)
-P ≾₀? Q = traces P ≼ˢ? traces Q
+  subst (((P ⊔ Q) · C) ≾₀_) (·-distribʳ-⊔ C P Q) (≾₀-refl {(P ⊔ Q) · C})
 
 ------------------------------------------------------------------------
--- The carrier: a written-out list of bounds, or no bound at all
+-- How the unit sits
+--
+-- `{ ε }` is the bound that permits nothing but the empty run. Being
+-- below it is therefore a statement about every member of a grade, and
+-- these two lemmas are that statement read in each direction.
+
+≾₀-u-inv : {P : Antichain} → P ≾₀ u → {p : Trace} → p ∈ traces P → p ≼ ε
+≾₀-u-inv {P} rel {p} m with find (toWitness (rel p (fromWitness m)))
+... | t , t∈u , p≼t = subst (p ≼_) (∈-[ε]⁻ t∈u) p≼t
+
+≾₀-u : {P : Antichain} → ({p : Trace} → p ∈ traces P → p ≼ ε) → P ≾₀ u
+≾₀-u {P} f p m =
+  fromWitness {a? = any? (_≽?_ p) (traces u)} (here (f (toWitness m)))
+
+-- the unit is the least grade, the empty run staying within every bound
+
+≾₀-⊥ : (P : Antichain) → u ≾₀ P
+≾₀-⊥ P s m
+  with ∈-[ε]⁻ (toWitness {a? = s ∈? traces u} m)
+... | refl with neHead (traces P) (nonempty P)
+...           | t , t∈P =
+                fromWitness (Any.map (λ eq → subst (ε ≼_) eq ≼-nil) t∈P)
+
+------------------------------------------------------------------------
+-- Zero-product property
+--
+-- A bound below `{ ε }` permits nothing but the empty run, and the
+-- trace monoid is conical, so a product below the unit has each factor
+-- below it. The reduction is transparent to the argument: a member of
+-- the raw language product is itself below a member of the reduced
+-- one, which the hypothesis places below `ε`.
+
+≾₀-zero-productˡ : {P Q : Antichain} → (P · Q) ≾₀ u → P ≾₀ u
+≾₀-zero-productˡ {P} {Q} rel = ≾₀-u {P} step
+  where
+    step : {p : Trace} → p ∈ traces P → p ≼ ε
+    step {p} m with neHead (traces Q) (nonempty Q)
+    ... | y , y∈Q
+            with find (n-◃⁻ (traces P ·ˢ traces Q)
+                            (◃-∈ (∈-cartesianProductWith⁺ _∙_ m y∈Q)))
+    ...     | r , r∈PQ , py≼r =
+              subst (_≼ ε)
+                    (sym (∙-conicalˡ {p} {y}
+                           (≼-ε-inv (≼-trans py≼r
+                                      (≾₀-u-inv {P · Q} rel r∈PQ)))))
+                    ≼-nil
+
+≾₀-zero-productʳ : {P Q : Antichain} → (P · Q) ≾₀ u → Q ≾₀ u
+≾₀-zero-productʳ {P} {Q} rel = ≾₀-u {Q} step
+  where
+    step : {q : Trace} → q ∈ traces Q → q ≼ ε
+    step {q} m with neHead (traces P) (nonempty P)
+    ... | x , x∈P
+            with find (n-◃⁻ (traces P ·ˢ traces Q)
+                            (◃-∈ (∈-cartesianProductWith⁺ _∙_ x∈P m)))
+    ...     | r , r∈PQ , xq≼r =
+              subst (_≼ ε)
+                    (sym (∙-conicalʳ {x} {q}
+                           (≼-ε-inv (≼-trans xq≼r
+                                      (≾₀-u-inv {P · Q} rel r∈PQ)))))
+                    ≼-nil
+
+------------------------------------------------------------------------
+-- The carrier: a written-out antichain of bounds, or no bound at all
 
 infix 50 within_
 
 data Bounds : Set₀ where
-  within_   : NeTraces → Bounds
+  within_   : Antichain → Bounds
   unbounded : Bounds
 
-within-inj : {P Q : NeTraces} → within P ≡ within Q → P ≡ Q
+within-inj : {P Q : Antichain} → within P ≡ within Q → P ≡ Q
 within-inj refl = refl
 
 ------------------------------------------------------------------------
@@ -179,7 +208,7 @@ uᵇ = within u
 ·ᵇ-assoc unbounded  _          _          = refl
 
 ------------------------------------------------------------------------
--- The order: the lift between lists, with `unbounded` greatest
+-- The order: the antichains' own order, with `unbounded` greatest
 
 infix 5 _≾_
 
@@ -193,6 +222,12 @@ unbounded  ≾ unbounded  = ⊤
 ≾-⊤ (within _) = tt
 ≾-⊤ unbounded  = tt
 
+-- and the unit least, `unbounded` being out of its reach
+
+≾-⊥ : (P : Bounds) → uᵇ ≾ P
+≾-⊥ (within P) = ≾₀-⊥ P
+≾-⊥ unbounded  = tt
+
 ≾-refl : {P : Bounds} → P ≾ P
 ≾-refl {within P}  = ≾₀-refl {P}
 ≾-refl {unbounded} = tt
@@ -205,6 +240,19 @@ unbounded  ≾ unbounded  = ⊤
 ≾-trans {unbounded} {within _}  {_}         () q
 ≾-trans {unbounded} {unbounded} {within _}  p ()
 ≾-trans {unbounded} {unbounded} {unbounded} p q = tt
+
+------------------------------------------------------------------------
+-- Antisymmetry
+--
+-- Mutually-permitting grades are propositionally equal, an antichain
+-- being determined by the closure the order reads, and `unbounded`
+-- being comparable with a written-out grade in one direction only.
+
+≾-antisym : {P Q : Bounds} → P ≾ Q → Q ≾ P → P ≡ Q
+≾-antisym {within P}  {within Q}  p q = cong within_ (≾₀-antisym {P} {Q} p q)
+≾-antisym {within _}  {unbounded} p ()
+≾-antisym {unbounded} {within _}  () q
+≾-antisym {unbounded} {unbounded} p q = refl
 
 ≾-irrelevant : {P Q : Bounds} → (p q : P ≾ Q) → p ≡ q
 ≾-irrelevant {within P}  {within Q}  p  q  = ≾₀-irrelevant {P} {Q} p q
@@ -237,7 +285,7 @@ unbounded  ≾ unbounded  = ⊤
 infixl 6 _⊔ᵇ_
 
 _⊔ᵇ_ : Bounds → Bounds → Bounds
-(within P) ⊔ᵇ (within Q) = within (P ∪ Q)
+(within P) ⊔ᵇ (within Q) = within (P ⊔ Q)
 (within _) ⊔ᵇ unbounded  = unbounded
 unbounded  ⊔ᵇ _          = unbounded
 
@@ -260,25 +308,25 @@ unbounded  ⊔ᵇ _          = unbounded
 ⊔ᵇ-lub {unbounded} {_}         {within _}  () q
 ⊔ᵇ-lub {unbounded} {_}         {unbounded} p q = tt
 
-·-distribˡ-⊔ : (C P Q : Bounds) → (C ·ᵇ (P ⊔ᵇ Q)) ≾ ((C ·ᵇ P) ⊔ᵇ (C ·ᵇ Q))
-·-distribˡ-⊔ (within C) (within P) (within Q) = ·-distribˡ₀-⊔ C P Q
-·-distribˡ-⊔ (within _) (within _) unbounded  = tt
-·-distribˡ-⊔ (within _) unbounded  _          = tt
-·-distribˡ-⊔ unbounded  _          _          = tt
+·ᵇ-distribˡ-⊔ : (C P Q : Bounds) → (C ·ᵇ (P ⊔ᵇ Q)) ≾ ((C ·ᵇ P) ⊔ᵇ (C ·ᵇ Q))
+·ᵇ-distribˡ-⊔ (within C) (within P) (within Q) = ·-distribˡ₀-⊔ C P Q
+·ᵇ-distribˡ-⊔ (within _) (within _) unbounded  = tt
+·ᵇ-distribˡ-⊔ (within _) unbounded  _          = tt
+·ᵇ-distribˡ-⊔ unbounded  _          _          = tt
 
-·-distribʳ-⊔ : (C P Q : Bounds) → ((P ⊔ᵇ Q) ·ᵇ C) ≾ ((P ·ᵇ C) ⊔ᵇ (Q ·ᵇ C))
-·-distribʳ-⊔ (within C) (within P) (within Q) = ·-distribʳ₀-⊔ C P Q
-·-distribʳ-⊔ (within _) (within _) unbounded  = tt
-·-distribʳ-⊔ (within _) unbounded  _          = tt
-·-distribʳ-⊔ unbounded  (within _) (within _) = tt
-·-distribʳ-⊔ unbounded  (within _) unbounded  = tt
-·-distribʳ-⊔ unbounded  unbounded  _          = tt
+·ᵇ-distribʳ-⊔ : (C P Q : Bounds) → ((P ⊔ᵇ Q) ·ᵇ C) ≾ ((P ·ᵇ C) ⊔ᵇ (Q ·ᵇ C))
+·ᵇ-distribʳ-⊔ (within C) (within P) (within Q) = ·-distribʳ₀-⊔ C P Q
+·ᵇ-distribʳ-⊔ (within _) (within _) unbounded  = tt
+·ᵇ-distribʳ-⊔ (within _) unbounded  _          = tt
+·ᵇ-distribʳ-⊔ unbounded  (within _) (within _) = tt
+·ᵇ-distribʳ-⊔ unbounded  (within _) unbounded  = tt
+·ᵇ-distribʳ-⊔ unbounded  unbounded  _          = tt
 
 ------------------------------------------------------------------------
--- Zero-product property
+-- Zero-product property at the carrier
 --
 -- `unbounded` is above the unit and not below it, so its clauses are
--- vacuous and the property is the sets' own.
+-- vacuous and the property is the antichains' own.
 
 ≾-zero-productˡ : {P Q : Bounds} → (P ·ᵇ Q) ≾ uᵇ → P ≾ uᵇ
 ≾-zero-productˡ {within P}  {within Q}  p = ≾₀-zero-productˡ {P} {Q} p
@@ -294,7 +342,7 @@ unbounded  ⊔ᵇ _          = unbounded
 -- Decidable equality, the inclusion of ℕ, and deciding the order
 
 _≟ᴮ_ : DecidableEquality Bounds
-(within P) ≟ᴮ (within Q) with P ≟ᴺ Q
+(within P) ≟ᴮ (within Q) with P ≟ᴬ Q
 ... | yes p = yes (cong within_ p)
 ... | no ¬p = no λ eq → ¬p (within-inj eq)
 (within _) ≟ᴮ unbounded  = no λ ()
@@ -319,7 +367,7 @@ unbounded  ≾? (within _) = no λ ()
 unbounded  ≾? unbounded  = yes tt
 
 ------------------------------------------------------------------------
--- The grade of sets of timed traces, read as upper bounds
+-- The grade of antichains of timed traces, read as upper bounds
 
 right-sided : Grade
 right-sided = record
@@ -336,8 +384,8 @@ right-sided = record
   ; ⊔-ubˡ           = ⊔ᵇ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵇ-ubʳ
   ; ⊔-lub           = λ {P} {Q} {R} → ⊔ᵇ-lub {P} {Q} {R}
-  ; ·-distribˡ-⊔    = ·-distribˡ-⊔
-  ; ·-distribʳ-⊔    = ·-distribʳ-⊔
+  ; ·-distribˡ-⊔    = ·ᵇ-distribˡ-⊔
+  ; ·-distribʳ-⊔    = ·ᵇ-distribʳ-⊔
   ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ {c} {x} {y}
   ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
   ; ≾-refl          = λ {x} → ≾-refl {x}

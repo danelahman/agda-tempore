@@ -16,7 +16,14 @@
 -- Budget is *local*: what a bound offers between two operations it     --
 -- names pays only for what the run does between those same two. A      --
 -- bound therefore says when its slack is available, and not merely how --
--- much of it there is -- the last section below turns on that alone.   --
+-- much of it there is -- one of the sections below turns on that       --
+-- alone.                                                               --
+--                                                                     --
+-- The set is read *disjunctively*: a longer list is a weaker grade,    --
+-- since there are more runs it permits. A listed bound that another    --
+-- listed one already permits adds nothing, so the members are cut      --
+-- down to the antichain of the most permissive of them, and            --
+-- mutually-permitting grades are literally equal.                      --
 --                                                                     --
 -- A bound is charged at `costʰⁱ` -- read 1, write 3, send 6 -- since   --
 -- that is what it must budget for. The runs below then take            --
@@ -43,14 +50,40 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
+open import Data.List.Base using ([]; _∷_)
+open import Data.Unit using (tt)
+
 open import Syntax.Grades.Example.Worked.Operations
+  using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costʰⁱ; costʰⁱ-pos;
+         read; write; send; Trace; ⌈_⌉; ⟨_⟩; _∙_; ε)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_) public
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_;
+         ≾-antisym; ≾-⊥; Antichain; acSet)
+  public
 
 order : Grade._≾_ right-sided ≡ _≾_
 order = refl
+
+------------------------------------------------------------------------
+-- Writing down finite sets of bounds
+--
+-- `⟅ t ∣ u ⟆` is the grade whose members are `t` and `u`. At these
+-- sizes writing the members out is the clearest thing to do. The
+-- members may be given in whatever order reads best, and are
+-- normalised into the canonical antichain: naming a bound twice, or
+-- naming one that another of them already permits, names the same
+-- grade as leaving it out.
+
+⟅_⟆ : Trace → Antichain
+⟅ t ⟆ = acSet (t ∷ []) tt
+
+⟅_∣_⟆ : Trace → Trace → Antichain
+⟅ t ∣ u ⟆ = acSet (t ∷ u ∷ []) tt
+
+⟅_∣_∣_⟆ : Trace → Trace → Trace → Antichain
+⟅ t ∣ u ∣ v ⟆ = acSet (t ∷ u ∷ v ∷ []) tt
 
 holds : {P Q : Bounds} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
@@ -58,7 +91,7 @@ holds {p = p} = toWitness p
 fails : {P Q : Bounds} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 fails {p = p} = toWitnessFalse p
 
--- the sets taken explicitly, for the claims where they are not
+-- the grades taken explicitly, for the claims where they are not
 -- determined by the goal alone
 
 holdsᵉ : (P Q : Bounds) {p : True (P ≾? Q)} → P ≾ Q
@@ -208,7 +241,7 @@ either-allowance = holds
 -- two possible runs keeps the permit open only if both stay within it
 
 both-branches-stay-within :
-  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⟨ 4 ⟩ ⟆
+  within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆
   ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
 both-branches-stay-within = holds
 
@@ -272,18 +305,26 @@ an-unused-bound :
   ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆
 an-unused-bound = holds
 
--- and a bound already covered by another may be dropped again: a set
--- trims to those that are not
+-- a bound another listed one already permits carries no information,
+-- so the members are trimmed to those that are not: the two grades
+-- below are the same one
 
 trimming :
-  within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
-  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
-trimming = holds
+  ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≡ ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+trimming = refl
 
-untrimming :
-  within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
-  ≾ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆
-untrimming = holds
+-- the same equation read off the order, which is antisymmetric
+
+trimming-both-ways :
+  within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ≡ within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆
+trimming-both-ways = ≾-antisym holds holds
+
+-- the unit is the smallest bound there is, so it is dropped from any
+-- list that names another
+
+dropping-the-empty-run :
+  ⟅ ε ∣ ⌈ read ⌉ ⟆ ≡ ⟅ ⌈ read ⌉ ⟆
+dropping-the-empty-run = refl
 
 ------------------------------------------------------------------------
 -- Where the budget sits

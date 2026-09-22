@@ -41,6 +41,8 @@ open import Syntax.Grades using (Grade)
 open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
+  using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ; costʰⁱ; cost-≤;
+         costʰⁱ-pos; read; write; send; Trace; ⌈_⌉; ⟨_⟩; _∙_; ε)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
@@ -60,11 +62,19 @@ open import Syntax.Grades.Example.Traces.Timed.LeftSided
 ⟅_∣_⟆ˡᵒ : Trace → Trace → Antichainˡᵒ
 ⟅ t ∣ u ⟆ˡᵒ = acSetˡᵒ (t ∷ u ∷ []) tt
 
--- the cap endpoint is a grade of the allowance side
+-- the cap endpoint is an antichain of the allowance side, wrapped in
+-- `within_` where `unbounded` could stand instead
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (Bounds; within_; unbounded) public
+  using (Bounds; within_; unbounded)
+  renaming (Antichain to Antichainʰⁱ; acSet to acSetʰⁱ) public
+
+⟅_⟆ : Trace → Antichainʰⁱ
+⟅ t ⟆ = acSetʰⁱ (t ∷ []) tt
+
+⟅_∣_⟆ : Trace → Trace → Antichainʰⁱ
+⟅ t ∣ u ⟆ = acSetʰⁱ (t ∷ u ∷ []) tt
 
 order : Grade._≾_ two-sided ≡ _≾ᵗˢ_
 order = refl

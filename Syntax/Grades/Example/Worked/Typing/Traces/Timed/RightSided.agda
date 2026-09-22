@@ -35,25 +35,16 @@ open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans;
-         costʰⁱ; costʰⁱ-pos;
-         NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
-  renaming (_·_ to _·ᴺ_)
+         costʰⁱ; costʰⁱ-pos; ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
-  using (right-sided; Bounds; within_; unbounded; holds; fails)
-
-open import Syntax.Grades.Traces.Allowance.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (allowanceOrder)
-
-open import Syntax.Grades.Traces.OrderLift
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder
-  using (u-≼ˢ)
+  using (right-sided; Bounds; within_; unbounded; holds; fails;
+         Antichain; ⟅_⟆; ⟅_∣_⟆; ≾-⊥)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
 
-opTime₀ : Op → NeTraces
+opTime₀ : Op → Antichain
 opTime₀ o = ⟅ ⌈ o ⌉ ⟆
 
 opTime : Op → Bounds
@@ -289,11 +280,12 @@ transmitting-branch-does-not = fails
 -- Programs written at these allowances
 --
 -- The permit claimed on both sides of an `if`: one branch takes the
--- reading it names, the other spends two of its three ticks idling, and
--- the conditional is graded by the union of the two runs.
+-- reading it names and transmits what it unboxes, the other spends two
+-- of its three ticks idling and stores it. The conditional is graded by
+-- the union of the two runs, which are incomparable, so both are listed.
 
 permit-in-a-branch :
-  [] ∷ Bool ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
+  [] ∷ Bool ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⟨ 2 ⟩ ∙ ⌈ write ⌉ ⟆
 permit-in-a-branch =
   box {ρ = permit} (const 42)  -- ∷ [ within ⟅ ⌈ read ⌉ ∙ ⟨ 3 ⟩ ⟆ ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)
@@ -306,7 +298,7 @@ permit-in-a-branch =
               (delay 2  -- ⟨ within ⟅ ⟨ 2 ⟩ ⟆ ⟩
                 (unbox (Tl-⟨⟩ Hd) holds (<:ᵛ-refl _)
                      -- ∷ Reading
-                  (perform send here (return ⋆)))))
+                  (perform write here (return ⋆)))))
 
 -- a third branch transmitting before the claim is not available:
 -- `transmitting-closes-it` above is what it would need
@@ -362,12 +354,8 @@ identified =
 -- allowance, and within `unbounded`, so the coercion a
 -- discarding clause needs always exists
 
-u-fits : (P : NeTraces) → uₑ ≾ₑ within P
-u-fits P = u-≼ˢ (traces P) (nonempty P)
-
 nothing-fits : (op : Op) → (ε'' : E) → uₑ ≾ₑ op-grade op ·ₑ ε''
-nothing-fits op (within Q) = u-fits (opTime₀ op ·ᴺ Q)
-nothing-fits op unbounded       = tt
+nothing-fits op ε'' = ≾-⊥ (op-grade op ·ₑ ε'')
 
 suppressed : [] ⊢C⦂ Unit ‼ within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 suppressed =

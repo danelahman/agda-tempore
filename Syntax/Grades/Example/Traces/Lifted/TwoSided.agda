@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
 -- Sets of timed traces bounding a computation from both sides.        --
 --                                                                     --
--- A grade is a pair `[ P , Q ]` of non-empty finite sets of traces    --
--- -- the floor an antichain, the cap a plain set -- read against the  --
--- runs `X` a computation may have:                                    --
+-- A grade is a pair `[ P , Q ]` of antichains of traces -- the floor  --
+-- cut down to its weakest guarantees, the cap to its most permissive  --
+-- allowances -- read against the runs `X` a computation may have:     --
 --                                                                     --
 --   ∀ x ∈ X. ∃ p ∈ P. p ≼ᶠ x     whatever happened, at least one of   --
 --                                the listed guarantees was covered    --
@@ -99,7 +99,7 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
             ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
             ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
             ≾-zero-productʳ to ≾ˡᵒ-zero-productʳ;
-            ≾-irrelevant to ≾ˡᵒ-irrelevant;
+            ≾-irrelevant to ≾ˡᵒ-irrelevant; ≾-antisym to ≾ˡᵒ-antisym;
             ⊔-ubˡ to ⊔ˡᵒ-ubˡ; ⊔-ubʳ to ⊔ˡᵒ-ubʳ; ⊔-lub to ⊔ˡᵒ-lub;
             ·-distribˡ-⊔-≾ to ·ˡᵒ-distribˡ-⊔;
             ·-distribʳ-⊔-≾ to ·ˡᵒ-distribʳ-⊔)
@@ -111,16 +111,21 @@ open import Syntax.Grades.Example.Traces.Lifted.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
   using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _≟ᴮ_; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
-  renaming (_≾₀_ to _≾ʰⁱ₀_;
+  renaming (Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
+            u to uʰⁱ; n to nʰⁱ; n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈;
+            of-nat to of-natʰⁱ; of-nat-zero to of-natʰⁱ-zero;
+            of-nat-plus to of-natʰⁱ-plus;
+            _≾₀_ to _≾ʰⁱ₀_;
             _≾_ to _≾ʰⁱ_; _≾?_ to _≾ʰⁱ?_;
             ≾-refl to ≾ʰⁱ-refl; ≾-trans to ≾ʰⁱ-trans; ≾-⊤ to ≾ʰⁱ-⊤;
+            ≾-antisym to ≾ʰⁱ-antisym;
             ·-monoˡ to ·ʰⁱ-monoˡ; ·-monoʳ to ·ʰⁱ-monoʳ;
             ≾-zero-productˡ to ≾ʰⁱ-zero-productˡ;
             ≾-zero-productʳ to ≾ʰⁱ-zero-productʳ;
             ≾-irrelevant to ≾ʰⁱ-irrelevant;
             ⊔ᵇ-ubˡ to ⊔ʰⁱ-ubˡ; ⊔ᵇ-ubʳ to ⊔ʰⁱ-ubʳ; ⊔ᵇ-lub to ⊔ʰⁱ-lub;
-            ·-distribˡ-⊔ to ·ʰⁱ-distribˡ-⊔;
-            ·-distribʳ-⊔ to ·ʰⁱ-distribʳ-⊔)
+            ·ᵇ-distribˡ-⊔ to ·ʰⁱ-distribˡ-⊔;
+            ·ᵇ-distribʳ-⊔ to ·ʰⁱ-distribʳ-⊔)
 
 -- each endpoint is measured at its own cost model
 
@@ -128,8 +133,6 @@ open Durations costˡᵒ using ()
   renaming (duration to durationˡᵒ; duration-∙ to duration-∙ˡᵒ)
 open Durations costʰⁱ using ()
   renaming (duration to durationʰⁱ; duration-∙ to duration-∙ʰⁱ)
-
-open WithDecEq _≟ₒ_ using (_≟ᴺ_)
 
 -- a trace's floor measure is below its cap measure
 
@@ -158,11 +161,11 @@ xs ◇ˢ₀ ys = True (any? (λ p → any? (λ q → durationˡᵒ p ≤? durati
 infix 5 _◇ˢ_
 
 _◇ˢ_ : List Trace → Bounds → Set
-xs ◇ˢ (within Q) = xs ◇ˢ₀ traces Q
+xs ◇ˢ (within Q) = xs ◇ˢ₀ tracesʰⁱ Q
 xs ◇ˢ unbounded  = ⊤
 
 ◇ˢ-irr : {xs : List Trace} {Y : Bounds} → (p q : xs ◇ˢ Y) → p ≡ q
-◇ˢ-irr {xs} {within Q}  = ◇ˢ₀-irr {xs} {traces Q}
+◇ˢ-irr {xs} {within Q}  = ◇ˢ₀-irr {xs} {tracesʰⁱ Q}
 ◇ˢ-irr {xs} {unbounded} tt tt = refl
 
 -- a set is coherent with itself, at whichever member is to hand
@@ -228,11 +231,33 @@ xs ◇ˢ unbounded  = ⊤
                         (≤-trans (durᶠ t'≼t) t≤s))
               s∈ys
 
--- the floor of a compound grade is reduced, the cap merely sorted
+-- reducing the cap keeps it too: the witnessing allowance is replaced
+-- by one above it, which takes no less
 
-◇ˢ₀-n-nf : {xs ys : List Trace} → xs ◇ˢ₀ ys → nˡᵒ xs ◇ˢ₀ nf ys
-◇ˢ₀-n-nf {xs} {ys} p =
-  ◇ˢ₀-∈ (λ {w} m → m) (λ {w} → nf-∈⁺ {w} {ys}) (◇ˢ₀-nˡ {xs} {ys} p)
+◇ˢ₀-nʰⁱ : {xs ys : List Trace} → xs ◇ˢ₀ ys → xs ◇ˢ₀ nʰⁱ ys
+◇ˢ₀-nʰⁱ {xs} {ys} p
+  with find (toWitness p)
+... | t , t∈xs , hit
+        with find hit
+...     | s , s∈ys , t≤s
+            with find (nʰⁱ-◃⁻ ys (◃ʰⁱ-∈ s∈ys))
+...         | s' , s'∈n , s≼s' =
+              fromWitness
+                (Any.map
+                  (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
+                                            (nʰⁱ ys)) eq inner)
+                  t∈xs)
+  where
+    inner : Any (λ r → durationˡᵒ t ≤ durationʰⁱ r) (nʰⁱ ys)
+    inner =
+      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq
+                        (≤-trans t≤s (durᶜ s≼s')))
+              s'∈n
+
+-- both endpoints of a compound grade are reduced
+
+◇ˢ₀-n-n : {xs ys : List Trace} → xs ◇ˢ₀ ys → nˡᵒ xs ◇ˢ₀ nʰⁱ ys
+◇ˢ₀-n-n {xs} {ys} p = ◇ˢ₀-nʰⁱ {nˡᵒ xs} {ys} (◇ˢ₀-nˡ {xs} {ys} p)
 
 ◇ˢ₀-·ˢ : {xs xs' ys ys' : List Trace}
        → xs ◇ˢ₀ ys → xs' ◇ˢ₀ ys' → (xs ·ˢ xs') ◇ˢ₀ (ys ·ˢ ys')
@@ -265,8 +290,8 @@ xs ◇ˢ unbounded  = ⊤
 ◇ˢ-·ˢ : {xs xs' : List Trace} {Y Y' : Bounds}
       → xs ◇ˢ Y → xs' ◇ˢ Y' → nˡᵒ (xs ·ˢ xs') ◇ˢ (Y ·ᵇ Y')
 ◇ˢ-·ˢ {xs} {xs'} {within Q} {within Q'} p q =
-  ◇ˢ₀-n-nf {xs ·ˢ xs'} {traces Q ·ˢ traces Q'}
-           (◇ˢ₀-·ˢ {xs} {xs'} {traces Q} {traces Q'} p q)
+  ◇ˢ₀-n-n {xs ·ˢ xs'} {tracesʰⁱ Q ·ˢ tracesʰⁱ Q'}
+          (◇ˢ₀-·ˢ {xs} {xs'} {tracesʰⁱ Q} {tracesʰⁱ Q'} p q)
 ◇ˢ-·ˢ {_}  {_}   {within _}  {unbounded} _ _ = tt
 ◇ˢ-·ˢ {_}  {_}   {unbounded} {_}         _ _ = tt
 
@@ -282,8 +307,8 @@ xs ◇ˢ unbounded  = ⊤
 ◇ˢ-⊔ᵇ : {xs xs' : List Trace} {Y Y' : Bounds}
       → xs ◇ˢ Y → nˡᵒ (xs ++ xs') ◇ˢ (Y ⊔ᵇ Y')
 ◇ˢ-⊔ᵇ {xs} {xs'} {within Q} {within Q'} p =
-  ◇ˢ₀-n-nf {xs ++ xs'} {traces Q ++ traces Q'}
-           (◇ˢ₀-++ {xs} {xs'} {traces Q} {traces Q'} p)
+  ◇ˢ₀-n-n {xs ++ xs'} {tracesʰⁱ Q ++ tracesʰⁱ Q'}
+          (◇ˢ₀-++ {xs} {xs'} {tracesʰⁱ Q} {tracesʰⁱ Q'} p)
 ◇ˢ-⊔ᵇ {_}  {_}   {within _}  {unbounded} _ = tt
 ◇ˢ-⊔ᵇ {_}  {_}   {unbounded} {_}         _ = tt
 
@@ -318,7 +343,7 @@ i₁ ·ᵗˢ i₂ =
   ]
 
 uᵗˢ : TwoSided
-uᵗˢ = [ uˡᵒ , within u , ◇ˢ₀-self (tracesˡᵒ uˡᵒ) tt ]
+uᵗˢ = [ uˡᵒ , within uʰⁱ , ◇ˢ₀-self (tracesˡᵒ uˡᵒ) tt ]
 
 -- the greatest grade: the weakest guarantee, which is the unit, under
 -- an unbounded allowance
@@ -413,10 +438,10 @@ i₁ ⊔ᵗˢ i₂ =
 -- takes no longer, and the witnessing allowance by a larger one, which
 -- takes no less. So nothing the order reaches is refused by the field.
 
-◇ˢ₀-≾ : (P : Antichain) (Q : NeTraces) (L : Antichain) (U : NeTraces)
-      → tracesˡᵒ P ◇ˢ₀ traces Q
+◇ˢ₀-≾ : (P : Antichain) (Q : Antichainʰⁱ) (L : Antichain) (U : Antichainʰⁱ)
+      → tracesˡᵒ P ◇ˢ₀ tracesʰⁱ Q
       → P ≾ˡᵒ L → Q ≾ʰⁱ₀ U
-      → tracesˡᵒ L ◇ˢ₀ traces U
+      → tracesˡᵒ L ◇ˢ₀ tracesʰⁱ U
 ◇ˢ₀-≾ P Q L U coh l h
   with find (toWitness coh)
 ... | p , p∈L₁ , hit
@@ -429,10 +454,10 @@ i₁ ⊔ᵗˢ i₂ =
                   fromWitness
                     (Any.map
                       (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
-                                                (traces U)) eq inner)
+                                                (tracesʰⁱ U)) eq inner)
                       p'∈L)
   where
-    inner : Any (λ r → durationˡᵒ p' ≤ durationʰⁱ r) (traces U)
+    inner : Any (λ r → durationˡᵒ p' ≤ durationʰⁱ r) (tracesʰⁱ U)
     inner =
       Any.map (λ eq → subst (λ z → durationˡᵒ p' ≤ durationʰⁱ z) eq
                         (≤-trans (durᶠ p'≼p) (≤-trans p≤q (durᶜ q≼q'))))
@@ -447,6 +472,17 @@ i₁ ⊔ᵗˢ i₂ =
 ◇ˢ-≾ i L unbounded  l h = tt
 ◇ˢ-≾ i L (within U) l h with hi i | lo◇hi i | h
 ... | within Q | coh | h' = ◇ˢ₀-≾ (lo i) Q L U coh l h'
+
+------------------------------------------------------------------------
+-- Antisymmetry
+--
+-- Both endpoints are antisymmetric, and the coherence field is
+-- irrelevant, so mutually-weakening grades are propositionally equal.
+
+≾ᵗˢ-antisym : {i₁ i₂ : TwoSided} → i₁ ≾ᵗˢ i₂ → i₂ ≾ᵗˢ i₁ → i₁ ≡ i₂
+≾ᵗˢ-antisym {i₁} {i₂} (l₁ , h₁) (l₂ , h₂) =
+  eqᵗˢ (≾ˡᵒ-antisym {lo i₁} {lo i₂} l₁ l₂)
+       (≾ʰⁱ-antisym {hi i₁} {hi i₂} h₁ h₂)
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -480,7 +516,7 @@ i₁ ≟ᵗˢ i₂ with lo i₁ ≟ˡᵒ lo i₂ | hi i₁ ≟ᴮ hi i₂
 
 of-natᵗˢ : ℕ → TwoSided
 of-natᵗˢ n =
-  [ of-natˡᵒ n , within (of-nat n) , ◇ˢ₀-self (tracesˡᵒ (of-natˡᵒ n)) tt ]
+  [ of-natˡᵒ n , within (of-natʰⁱ n) , ◇ˢ₀-self (tracesˡᵒ (of-natˡᵒ n)) tt ]
 
 infix 5 _≾ᵗˢ?_
 
@@ -516,8 +552,8 @@ two-sided = record
   ; ≾-zero-productʳ = λ {c} {d} → ≾ᵗˢ-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾ᵗˢ-irrelevant {c} {d}
   ; of-nat          = of-natᵗˢ
-  ; of-nat-zero     = eqᵗˢ of-natˡᵒ-zero (cong within_ of-nat-zero)
+  ; of-nat-zero     = eqᵗˢ of-natˡᵒ-zero (cong within_ of-natʰⁱ-zero)
   ; of-nat-plus     = λ {m} {n} →
                         eqᵗˢ (of-natˡᵒ-plus {m} {n})
-                             (cong within_ (of-nat-plus {m} {n}))
+                             (cong within_ (of-natʰⁱ-plus {m} {n}))
   }

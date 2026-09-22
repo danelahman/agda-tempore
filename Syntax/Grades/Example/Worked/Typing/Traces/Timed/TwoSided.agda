@@ -26,11 +26,11 @@ open import Data.Unit using (tt)
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
+  using (Op; read; write; send; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
   using (TwoSided; [_,_,_]; within_; unbounded; two-sided; holds; fails;
-         exact; ⟅_⟆ˡᵒ; ⟅_∣_⟆ˡᵒ)
+         exact; ⟅_⟆ˡᵒ; ⟅_∣_⟆ˡᵒ; ⟅_⟆; ⟅_∣_⟆)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them, at both ends

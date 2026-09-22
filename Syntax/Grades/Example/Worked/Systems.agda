@@ -103,18 +103,19 @@ open import Syntax.Grades.Example.System.Traces.Timed.RightSided
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (_≾_; holds; within_; unbounded; _·ᵇ_)
+  renaming (⟅_⟆ to ⟅_⟆ʰⁱ; ⟅_∣_⟆ to ⟅_∣_⟆ʰⁱ)
 
 -- a reading and six ticks' worth of work is a seven-tick deadline
 
 budget-measured :
-  map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆) ≡ [0, 7 ]
+  map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ) ≡ [0, 7 ]
 budget-measured = refl
 
 -- and a grade listing alternatives is measured by the slowest of them
 
 alternatives-measured :
   map traces→right-sided-intervals
-      (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆)
+      (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ʰⁱ)
   ≡ [0, 12 ]
 alternatives-measured = refl
 
@@ -129,34 +130,34 @@ unbounded-measured = refl
 -- outright
 
 operations-forgotten :
-  map traces→right-sided-intervals (within ⟅ ⌈ write ⌉ ⟆)
-  ≡ map traces→right-sided-intervals (within ⟅ ⟨ 3 ⟩ ⟆)
+  map traces→right-sided-intervals (within ⟅ ⌈ write ⌉ ⟆ʰⁱ)
+  ≡ map traces→right-sided-intervals (within ⟅ ⟨ 3 ⟩ ⟆ʰⁱ)
 operations-forgotten = refl
 
 -- upstream those two are ordered one way and not the other, which the
 -- deadline cannot see
 
-store-within-three-ticks : within ⟅ ⌈ write ⌉ ⟆ ≾ within ⟅ ⟨ 3 ⟩ ⟆
+store-within-three-ticks : within ⟅ ⌈ write ⌉ ⟆ʰⁱ ≾ within ⟅ ⟨ 3 ⟩ ⟆ʰⁱ
 store-within-three-ticks = holds
 
 -- monotonicity: weakening a grade to a budget raises the deadline with
 -- it, from four ticks to seven
 
 deadline-rises :
-  map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆)
-  ≾ᵣ map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
+  map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ʰⁱ)
+  ≾ᵣ map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ)
 deadline-rises =
   map-monotone traces→right-sided-intervals
-               {within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆}
-               {within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆} holds
+               {within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ʰⁱ}
+               {within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ} holds
 
 -- and it is a monoid map: sequencing before or after measuring agrees
 
 deadlines-add :
   map traces→right-sided-intervals
-      (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ·ᵇ within ⟅ ⌈ send ⌉ ⟆)
-  ≡ map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
-    ·ᵣ map traces→right-sided-intervals (within ⟅ ⌈ send ⌉ ⟆)
+      (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ·ᵇ within ⟅ ⌈ send ⌉ ⟆ʰⁱ)
+  ≡ map traces→right-sided-intervals (within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ)
+    ·ᵣ map traces→right-sided-intervals (within ⟅ ⌈ send ⌉ ⟆ʰⁱ)
 deadlines-add = refl
 
 ------------------------------------------------------------------------
@@ -239,7 +240,7 @@ open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 
 contract-measured :
   map two-sided-traces→intervals
-      ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+      ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ , tt ⟫
   ≡ [ 1 , 7 , ≤! ]
 contract-measured = refl
 
@@ -249,7 +250,7 @@ contract-measured = refl
 alternatives-measured-both :
   map two-sided-traces→intervals
       ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ
-      , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ⟫
+      , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ʰⁱ , tt ⟫
   ≡ [ 1 , 12 , ≤! ]
 alternatives-measured-both = refl
 
@@ -268,11 +269,11 @@ exact-measured = refl
 window-contains :
   map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
   ≾ᵢ map two-sided-traces→intervals
-         ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+         ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ , tt ⟫
 window-contains =
   map-monotone two-sided-traces→intervals
                {exact (⌈ read ⌉ ∙ ⌈ write ⌉)}
-               {⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫}
+               {⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ , tt ⟫}
                (holdsᵗˢ _ _)
 
 -- and it is a monoid map: sequencing before or after measuring agrees

@@ -79,7 +79,9 @@ open import Syntax.Grades.Example.Traces.Timed.LeftSided
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (Bounds; within_; unbounded; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
+  using (Bounds; within_; unbounded; _·ᵇ_)
+  renaming (_≾_ to _≾ʰⁱ_; traces to tracesʰⁱ; u to uʰⁱ;
+            n-◃⁻ to nʰⁱ-◃⁻; ◃-∈ to ◃ʰⁱ-∈)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
@@ -95,7 +97,7 @@ open import DenotationalSemantics.Model.World
 -- the cap's condition on the continuation, vacuous at `unbounded`
 
 Within : Trace → Bounds → Set
-Within cont (within Q) = True (any? (λ q → cont ≼ᵃ? q) (traces Q))
+Within cont (within Q) = True (any? (λ q → cont ≼ᵃ? q) (tracesʰⁱ Q))
 Within cont unbounded       = ⊤
 
 -- sequencing two continuations stays within the sequenced allowance
@@ -106,10 +108,14 @@ Within-∙ _  _  (within _)  unbounded        _  _  = tt
 Within-∙ _  _  unbounded        _         _  _  = tt
 Within-∙ t₁ t₂ (within Q₁) (within Q₂) n₁ n₂
   with find (toWitness n₁) | find (toWitness n₂)
-... | x , x∈Q , t₁≼x | y , y∈Q' , t₂≼y =
-      fromWitness
-        (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ᵃ t₁≼x t₂≼y))
-                 (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ x∈Q y∈Q')))
+... | x , x∈Q , t₁≼x | y , y∈Q' , t₂≼y
+        with find (nʰⁱ-◃⁻ (tracesʰⁱ Q₁ ·ˢ tracesʰⁱ Q₂)
+                          (◃ʰⁱ-∈ (∈-cartesianProductWith⁺ _∙_ x∈Q y∈Q')))
+...     | z , z∈QQ' , x∙y≼z =
+          fromWitness
+            (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq
+                               (≼ᵃ-trans (mono-∙ᵃ t₁≼x t₂≼y) x∙y≼z))
+                     z∈QQ')
 
 -- the allowance the continuation stayed within is replaced by one of
 -- the weaker grade's
@@ -127,7 +133,7 @@ Within-≾ cont (within Q₁) (within Q₂) h n
             (Any.map (λ e → subst (cont ≼ᵃ_) e (≼ᵃ-trans cont≼t t≼t')) t'∈Q')
 
 Within-irr : (cont : Trace) (Q : Bounds) → (p q : Within cont Q) → p ≡ q
-Within-irr cont (within Q) = True-irr (any? (λ q → cont ≼ᵃ? q) (traces Q))
+Within-irr cont (within Q) = True-irr (any? (λ q → cont ≼ᵃ? q) (tracesʰⁱ Q))
 Within-irr _    unbounded       tt tt = refl
 
 infix 5 _⊑ᵇ[_]_
@@ -151,7 +157,8 @@ open _⊑ᵇ[_]_
   mkᵇ ε
       (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (tracesˡᵒ uˡᵒ)}
                    (here (≼ᶜ-refl ε)))
-      (fromWitness {a? = any? (λ q → ε ≼ᵃ? q) (traces u)} (here (≼ᵃ-refl ε)))
+      (fromWitness {a? = any? (λ q → ε ≼ᵃ? q) (tracesʰⁱ uʰⁱ)}
+                   (here (≼ᵃ-refl ε)))
       (∙-identityʳ w)
 
 -- transitivity multiplies the grades, sequencing the one continuation

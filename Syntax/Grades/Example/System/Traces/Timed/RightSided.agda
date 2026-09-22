@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
 -- A grade system in which the resource grades measure only time.      --
 --                                                                     --
--- Effect grades are the sets of timed traces of                       --
+-- Effect grades are the antichains of timed traces of                 --
 -- `Traces.Timed.RightSided`, read as upper bounds: every run of a  --
 -- computation stays within one of the listed bounds. Resource grades   --
 -- are the right-sided time intervals, "at most `n` time steps".        --
@@ -27,7 +27,7 @@
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
-open import Data.Nat.Properties using (≤-trans; ⊔-identityʳ)
+open import Data.Nat.Properties using (≤-trans; ≤-antisym; ⊔-identityʳ)
 
 open import Data.Unit using (tt)
 
@@ -49,21 +49,49 @@ module Syntax.Grades.Example.System.Traces.Timed.RightSided
   (costʰⁱ : Op → ℕ)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
+open import Data.List.Base using (List; _++_)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_; _≾_; _≾₀_)
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_; _≾_; _≾₀_;
+         Antichain; traces; nonempty; Trace; n; n-∈⁻; n-◃⁻; ◃-∈;
+         _·ˢ_; _∙_; ⟨_⟩)
 
 open MaxDurations costʰⁱ
+
+------------------------------------------------------------------------
+-- The reduction is invisible to the measure
+--
+-- It keeps a `≼`-maximal member above every member it drops, and a
+-- more permissive bound takes no less, so the greatest duration is
+-- attained on the reduced list just as it is on the original.
+
+setDuration-n : (xs : List Trace) → setDuration (n xs) ≡ setDuration xs
+setDuration-n xs = ≤-antisym below above
+  where
+    below : setDuration (n xs) ≤ setDuration xs
+    below =
+      bigMax-bound duration (n xs) (setDuration xs)
+        (λ t t∈n → bigMax-mem duration t xs (n-∈⁻ t∈n))
+
+    -- a member is met by a member of the reduction above it, which
+    -- takes no less
+    above : setDuration xs ≤ setDuration (n xs)
+    above = bigMax-bound duration xs (setDuration (n xs)) step
+      where
+        step : (t : Trace) → t ∈ xs → duration t ≤ setDuration (n xs)
+        step t t∈xs with find (n-◃⁻ xs (◃-∈ t∈xs))
+        ... | t' , t'∈n , t≼t' =
+              ≤-trans (duration-≼ᵃ t≼t')
+                      (bigMax-mem duration t' (n xs) t'∈n)
 
 ------------------------------------------------------------------------
 -- The projection: a grade is measured by its slowest bound, and the
@@ -76,7 +104,7 @@ mapₒ unbounded  = [0, ∞ ]
 -- monotonicity: each bound of `P` stays within one of `Q`, and so takes
 -- no longer than it, hence no longer than `Q`'s slowest
 
-mapₒ-monotone₀ : {P Q : NeTraces} → P ≾₀ Q
+mapₒ-monotone₀ : {P Q : Antichain} → P ≾₀ Q
                → setDuration (traces P) ≤ setDuration (traces Q)
 mapₒ-monotone₀ {P} {Q} rel =
   bigMax-bound duration (traces P) (setDuration (traces Q)) step
@@ -99,8 +127,9 @@ mapₒ-monotone {unbounded} {unbounded} rel = tt
 
 mapₒ-· : (P Q : Bounds) → mapₒ (P ·ᵇ Q) ≡ mapₒ P ·ₒ mapₒ Q
 mapₒ-· (within P) (within Q) =
-  eq𝕀ᵣ (cong ↑_ (setDuration-nf-·ˢ (traces P) (traces Q)
-                                   (nonempty P) (nonempty Q)))
+  eq𝕀ᵣ (cong ↑_ (trans (setDuration-n (traces P ·ˢ traces Q))
+                       (setDuration-·ˢ (traces P) (traces Q)
+                                       (nonempty P) (nonempty Q))))
 mapₒ-· (within _) unbounded  = refl
 mapₒ-· unbounded  (within _) = refl
 mapₒ-· unbounded  unbounded  = refl
@@ -110,7 +139,8 @@ mapₒ-· unbounded  unbounded  = refl
 
 mapₒ-⊔ : (P Q : Bounds) → mapₒ (P ⊔ᵇ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
 mapₒ-⊔ (within P) (within Q) =
-  eq𝕀ᵣ (cong ↑_ (setDuration-∪ˢ (traces P) (traces Q)))
+  eq𝕀ᵣ (cong ↑_ (trans (setDuration-n (traces P ++ traces Q))
+                       (setDuration-++ (traces P) (traces Q))))
 mapₒ-⊔ (within _) unbounded  = refl
 mapₒ-⊔ unbounded  (within _) = refl
 mapₒ-⊔ unbounded  unbounded  = refl

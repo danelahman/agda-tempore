@@ -48,7 +48,6 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ
   using (_≼ᵃ_; ≼ᵃ-refl; ≼ᵃ-trans; mono-∙)
 open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
@@ -56,7 +55,9 @@ open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_)
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_;
+         Trace; ε; traces; u; _∙_; _·ˢ_; ∙-assoc; ∙-identityʳ; ∙-cancelˡ;
+         n-◃⁻; ◃-∈; True-irr)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 
@@ -116,12 +117,16 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
   mkᵇ (t₁ ∙ t₂) tt (extends-∙ w t₁ t₂ eq₁ eq₂)
 ⊑ᵇ-trans {within P} {within Q} {w} (mkᵇ t₁ w₁ eq₁) (mkᵇ t₂ w₂ eq₂)
   with find (toWitness w₁) | find (toWitness w₂)
-... | a , a∈P , t₁≼a | b , b∈Q , t₂≼b =
-      mkᵇ (t₁ ∙ t₂)
-          (fromWitness
-            (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ t₁≼a t₂≼b))
-                     (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q))))
-          (extends-∙ w t₁ t₂ eq₁ eq₂)
+... | a , a∈P , t₁≼a | b , b∈Q , t₂≼b
+        with find (n-◃⁻ (traces P ·ˢ traces Q)
+                        (◃-∈ (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
+...     | c , c∈PQ , a∙b≼c =
+          mkᵇ (t₁ ∙ t₂)
+              (fromWitness
+                (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq
+                                   (≼ᵃ-trans (mono-∙ t₁≼a t₂≼b) a∙b≼c))
+                         c∈PQ))
+              (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 -- covariance: the bound the continuation stayed within itself stays
 -- within one of the weaker grade's

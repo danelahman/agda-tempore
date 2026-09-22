@@ -71,7 +71,9 @@ open import Syntax.Grades.Example.Traces.Timed.TwoSided
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
+  using (Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_)
+  renaming (_≾_ to _≾ʰⁱ_; Antichain to Antichainʰⁱ; traces to tracesʰⁱ;
+            nonempty to nonemptyʰⁱ)
 
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are, each at its own cost model
@@ -86,13 +88,13 @@ open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
   using (minSetDuration-n) renaming (mapₒ-monotone to mapˡᵒ-monotone)
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using () renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
+  using (setDuration-n) renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
 
 open MinDurations costˡᵒ
   using (minSetDuration; minSetDuration-·ˢ; minSetDuration-++)
   renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ)
 open MaxDurations costʰⁱ
-  using (setDuration; setDuration-nf-·ˢ; setDuration-∪ˢ)
+  using (setDuration; setDuration-·ˢ; setDuration-++)
   renaming (duration to durationʰⁱ; duration-⟨⟩ to duration-⟨⟩ʰⁱ)
 
 ------------------------------------------------------------------------
@@ -101,22 +103,22 @@ open MaxDurations costʰⁱ
 -- Some listed guarantee takes no longer than some listed allowance, and
 -- the two aggregations sit on the outside of that pair.
 
-coherent₀ : (P : Antichainˡᵒ) (Q : NeTraces) → tracesˡᵒ P ◇ˢ₀ traces Q
-          → minSetDuration (tracesˡᵒ P) ≤ setDuration (traces Q)
+coherent₀ : (P : Antichainˡᵒ) (Q : Antichainʰⁱ) → tracesˡᵒ P ◇ˢ₀ tracesʰⁱ Q
+          → minSetDuration (tracesˡᵒ P) ≤ setDuration (tracesʰⁱ Q)
 coherent₀ P Q coh
   with find (toWitness coh)
 ... | p , p∈P , hit
         with find hit
 ...     | q , q∈Q , p≤q =
           ≤-trans (bigMin-mem durationˡᵒ p (tracesˡᵒ P) p∈P)
-                  (≤-trans p≤q (bigMax-mem durationʰⁱ q (traces Q) q∈Q))
+                  (≤-trans p≤q (bigMax-mem durationʰⁱ q (tracesʰⁱ Q) q∈Q))
 
 ------------------------------------------------------------------------
 -- The projection: fastest guarantee below, slowest allowance above, an
 -- unbounded allowance being measured by `∞`
 
 capDuration : Bounds → ℕ∞
-capDuration (within Q) = ↑ setDuration (traces Q)
+capDuration (within Q) = ↑ setDuration (tracesʰⁱ Q)
 capDuration unbounded  = ∞
 
 coherent : (i : TwoSided)
@@ -149,7 +151,9 @@ mapₒ-monotone {i₁} {i₂} (l , h) =
 capDuration-· : (P Q : Bounds)
               → capDuration (P ·ᵇ Q) ≡ capDuration P +∞ capDuration Q
 capDuration-· (within P) (within Q) =
-  cong ↑_ (setDuration-nf-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
+  cong ↑_ (trans (setDuration-n (tracesʰⁱ P ·ˢ tracesʰⁱ Q))
+                 (setDuration-·ˢ (tracesʰⁱ P) (tracesʰⁱ Q)
+                                 (nonemptyʰⁱ P) (nonemptyʰⁱ Q)))
 capDuration-· (within _) unbounded  = refl
 capDuration-· unbounded  (within _) = refl
 capDuration-· unbounded  unbounded  = refl
@@ -168,7 +172,8 @@ mapₒ-· i₁ i₂ =
 capDuration-⊔ : (P Q : Bounds)
               → capDuration (P ⊔ᵇ Q) ≡ capDuration P ⊔∞ capDuration Q
 capDuration-⊔ (within P) (within Q) =
-  cong ↑_ (setDuration-∪ˢ (traces P) (traces Q))
+  cong ↑_ (trans (setDuration-n (tracesʰⁱ P ++ tracesʰⁱ Q))
+                 (setDuration-++ (tracesʰⁱ P) (tracesʰⁱ Q)))
 capDuration-⊔ (within _) unbounded  = refl
 capDuration-⊔ unbounded  (within _) = refl
 capDuration-⊔ unbounded  unbounded  = refl

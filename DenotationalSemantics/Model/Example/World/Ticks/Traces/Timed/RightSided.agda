@@ -50,13 +50,13 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_)
+  using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_;
+         Antichain; traces; u; _∙_; _·ˢ_; n-◃⁻; ◃-∈; True-irr)
 
 open import DenotationalSemantics.Model.World
 
@@ -87,17 +87,22 @@ w ⊑ᵗ[ unbounded ]      w' = ⊤
 ⊑ᵗ-trans {unbounded}    {_}     p q = tt
 ⊑ᵗ-trans {within P} {within Q} {w} {w'} {w''} p q
   with find (toWitness p) | find (toWitness q)
-... | t₁ , t₁∈P , w'≤w+t₁ | t₂ , t₂∈Q , w''≤w'+t₂ =
-      fromWitness
-        (Any.map (λ r → subst (λ z → w'' ≤ w + duration z) r bound)
-                 (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q)))
+... | t₁ , t₁∈P , w'≤w+t₁ | t₂ , t₂∈Q , w''≤w'+t₂
+        with find (n-◃⁻ (traces P ·ˢ traces Q)
+                        (◃-∈ (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q)))
+...     | t , t∈PQ , t₁∙t₂≼t =
+          fromWitness
+            (Any.map (λ r → subst (λ z → w'' ≤ w + duration z) r bound) t∈PQ)
   where
-    bound : w'' ≤ w + duration (t₁ ∙ t₂)
-    bound =
+    sequenced : w'' ≤ w + duration (t₁ ∙ t₂)
+    sequenced =
       ≤-trans (≤-trans w''≤w'+t₂ (+-mono-≤ w'≤w+t₁ ≤-refl))
               (≤-reflexive
                 (trans (+-assoc w (duration t₁) (duration t₂))
                        (cong (w +_) (sym (duration-∙ t₁ t₂)))))
+
+    bound : w'' ≤ w + duration t
+    bound = ≤-trans sequenced (+-mono-≤ ≤-refl (duration-≼ᵃ t₁∙t₂≼t))
 
 -- covariance: the bound that witnessed the advance stays within one of
 -- the weaker grade's, which therefore takes at least as long

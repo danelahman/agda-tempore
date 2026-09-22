@@ -48,17 +48,11 @@ open import Syntax.Operations
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costʰⁱ; costʰⁱ-pos;
-         NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
+         ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
-  using (right-sided; Bounds; within_; unbounded; _≾?_; holds; fails)
-
-open import Syntax.Grades.Traces.Allowance.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
-  using (allowanceOrder)
-
-open import Syntax.Grades.Traces.OrderLift
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder using (u-≼ˢ)
+  using (right-sided; Bounds; within_; unbounded; _≾?_; holds; fails;
+         Antichain; ≾-⊥; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 import Syntax.Grades.Example.Worked.Typing.Core
 
@@ -80,7 +74,7 @@ module TypeInference.SolverImpl.Demo.TimedTraces where
 -- that a unit is least; instantiating it here, and `Demo.Generic` with
 -- it, fixes the wrappers the rest of the module runs.
 
-opTime₀ : Op → NeTraces
+opTime₀ : Op → Antichain
 opTime₀ o = ⟅ ⌈ o ⌉ ⟆
 
 opTime : Op → Bounds
@@ -116,13 +110,11 @@ open import TypeInference.SolverImpl.Enum spec using (OpEnum)
 -- between two written-out sets is settled by computation.
 --
 -- Both units are least: the unit is `{ ε }`, and the empty run stays
--- within every bound (`≼-nil`, packaged as `OrderLift`'s `u-≼ˢ`) and
--- within `unbounded`. So both options are taken, where
--- `Demo.TimeIntervals` declines both.
+-- within every bound and within `unbounded`. So both options are taken,
+-- where `Demo.TimeIntervals` declines both.
 
 uᵇ-least : (P : Bounds) → uₑ ≾ₑ P
-uᵇ-least (within Q) = u-≼ˢ (traces Q) (nonempty Q)
-uᵇ-least unbounded  = tt
+uᵇ-least = ≾-⊥
 
 -- the node has three operations
 
