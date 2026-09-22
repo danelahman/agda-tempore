@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Antichain normal forms for finite sets of timed traces.             --
+-- Antichains of timed traces, and the grade structure they carry.     --
 --                                                                     --
 -- The grades that lift a trace order to sets of traces order them by  --
 -- a closure: `P ≾ Q` says every member of `P` has a member of `Q`     --
@@ -25,13 +25,31 @@
 -- `_◃_` is membership in the closure: `x ◃ xs` holds when some member --
 -- of `xs` sits `≼`-below `x`. Everything is phrased through it, since --
 -- it is the invariant the reduction preserves and the order reads.    --
+--                                                                     --
+-- On top of the reduction sits the structure the antichains carry     --
+-- as a grade: the carrier `Antichain`, the language product with      --
+-- unit `{ ε }`, the order                                             --
+--                                                                     --
+--   P ≾ Q   iff   every member of `P` lies in the closure of `Q`      --
+--                                                                     --
+-- and the union as its join. One definition of the order serves       --
+-- both handednesses: at the order it reads "each member of `P` has    --
+-- a member of `Q` below it", and at `flipᵖ` of the order it reads     --
+-- "above", which is the other grade. It is a *partial* order,         --
+-- antisymmetry being `reduced-ext`, and that is what the reduction    --
+-- is for.                                                             --
+--                                                                     --
+-- The un-reduced carrier of `Traces.Sets` therefore plays no part     --
+-- here: the re-export below keeps that module's list-level            --
+-- machinery, which the reduction is built from, and leaves its        --
+-- set-level monoid behind.                                            --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
 open import Relation.Binary.Definitions
-  using (DecidableEquality; Transitive; Trichotomous)
+  using (Decidable; DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
@@ -45,12 +63,14 @@ module Syntax.Grades.Traces.Reduced
 
 open import Data.Empty using (⊥-elim)
 open import Data.List.Base using (List; []; _∷_; [_]; _++_)
+open import Data.List.Properties using (≡-dec)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺; ∈-cartesianProductWith⁻;
          ∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.All as All using (All; all?)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; there)
+open import Data.Nat.Base using (ℕ; _+_)
 open import Data.Product using (_,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (tt)
@@ -59,11 +79,17 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _→-dec_)
 
--- the carrier, its canonical sorting, and the language product
+-- the timed traces, their canonical sorting, and the list-level
+-- language product; the set-level monoid of `Traces.Sets` is the one
+-- the antichains below carry instead, so it stays out of the re-export
 
 open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
+  hiding (NeTraces; neTraces; traces; sorted; nonempty; ne-ext; neSet;
+          u; _·_; _∪_; ·-identityˡ; ·-identityʳ; ·-assoc;
+          ·-distribˡ-∪; ·-distribʳ-∪; ·-zero-productˡ; ·-zero-productʳ;
+          of-nat; of-nat-zero; of-nat-plus)
 
-open WithDecEq _≟ₒ_ public
+open WithDecEq _≟ₒ_ public hiding (_≟ᴺ_)
 
 open Syntax.Grades.Traces.Order.TracePartialOrder P
 
@@ -434,12 +460,34 @@ n-◃ xs p = mins-◃ (nf-◃ p)
 n-◃⁻ : (xs : List Trace) {v : Trace} → v ◃ xs → v ◃ n xs
 n-◃⁻ xs p = nf-◃⁻ (mins-◃⁻ p)
 
+-- the normal form only ever removes members
+
+n-∈⁻ : {v : Trace} {xs : List Trace} → v ∈ n xs → v ∈ xs
+n-∈⁻ {v} {xs} m = mins-⊆ {v} {xs} (nf-∈⁻ {v} {mins xs} m)
+
+-- the load-bearing lemma: `nf` is determined by its members, `n` by
+-- its closure
+
+n-ext : {xs ys : List Trace}
+      → ({v : Trace} → v ◃ xs → v ◃ ys)
+      → ({v : Trace} → v ◃ ys → v ◃ xs)
+      → n xs ≡ n ys
+n-ext {xs} {ys} f g =
+  reduced-ext (n xs) (n ys)
+    (n-sorted xs) (n-sorted ys) (n-reduced xs) (n-reduced ys)
+    (λ {v} p → n-◃⁻ ys (f (n-◃ xs p)))
+    (λ {v} p → n-◃⁻ xs (g (n-◃ ys p)))
+
+-- so it is the identity on a list that is already sorted and reduced,
+-- and idempotent because its output is
+
+n-reduced-id : (xs : List Trace) → Sorted xs → Reduced xs → n xs ≡ xs
+n-reduced-id xs s r =
+  reduced-ext (n xs) xs (n-sorted xs) s (n-reduced xs) r
+    (λ {v} → n-◃ xs) (λ {v} → n-◃⁻ xs)
+
 n-idem : (xs : List Trace) → n (n xs) ≡ n xs
-n-idem xs =
-  reduced-ext (n (n xs)) (n xs)
-    (n-sorted (n xs)) (n-sorted xs) (n-reduced (n xs)) (n-reduced xs)
-    (λ {v} p → n-◃ (n xs) p)
-    (λ {v} p → n-◃⁻ (n xs) p)
+n-idem xs = n-reduced-id (n xs) (n-sorted xs) (n-reduced xs)
 
 ------------------------------------------------------------------------
 -- Normalisation is compatible with the monoid structure
@@ -463,6 +511,22 @@ n-·ˢ xs ys =
     from p =
       n-◃⁻ (n xs ·ˢ n ys)
         (◃-·ˢ (λ {v} → n-◃⁻ xs) (λ {v} → n-◃⁻ ys) (n-◃ (xs ·ˢ ys) p))
+
+-- normalising one factor at a time, which is the shape associativity
+-- is read at, both factors of a product of antichains already being
+-- normal
+
+n-·ˢ-nˡ : (xs ys : List Trace) → n (n xs ·ˢ ys) ≡ n (xs ·ˢ ys)
+n-·ˢ-nˡ xs ys =
+  n-ext {n xs ·ˢ ys} {xs ·ˢ ys}
+    (◃-·ˢ {n xs} {xs} {ys} {ys} (λ {v} → n-◃ xs) (λ {v} p → p))
+    (◃-·ˢ {xs} {n xs} {ys} {ys} (λ {v} → n-◃⁻ xs) (λ {v} p → p))
+
+n-·ˢ-nʳ : (xs ys : List Trace) → n (xs ·ˢ n ys) ≡ n (xs ·ˢ ys)
+n-·ˢ-nʳ xs ys =
+  n-ext {xs ·ˢ n ys} {xs ·ˢ ys}
+    (◃-·ˢ {xs} {xs} {n ys} {ys} (λ {v} p → p) (λ {v} → n-◃ ys))
+    (◃-·ˢ {xs} {xs} {ys} {n ys} (λ {v} p → p) (λ {v} → n-◃⁻ ys))
 
 n-++ : (xs ys : List Trace) → n (n xs ++ n ys) ≡ n (xs ++ ys)
 n-++ xs ys =
@@ -488,3 +552,316 @@ n-identityʳ xs = cong n (·ˢ-identityʳ xs)
 
 n-identityˡ : (xs : List Trace) → n ([ ε ] ·ˢ xs) ≡ n xs
 n-identityˡ xs = cong n (·ˢ-identityˡ xs)
+
+------------------------------------------------------------------------
+-- Antichains of timed traces
+--
+-- A grade is a non-empty finite set of traces cut down to its
+-- `≼`-minimal members, held in the canonical sorted order. All three
+-- side conditions are `True` of a decision, hence proof-irrelevant, so
+-- an antichain names its underlying list and nothing else.
+
+record Antichain : Set where
+  constructor antichain
+  field
+    traces   : List Trace
+    sorted   : Sorted traces
+    reduced  : Reduced traces
+    nonempty : NonEmpty traces
+
+open Antichain public
+
+-- two antichains are equal as soon as their underlying lists are
+
+ac-ext : {P Q : Antichain} → traces P ≡ traces Q → P ≡ Q
+ac-ext {antichain xs s r ne} {antichain .xs s' r' ne'} refl =
+  cong₃ (antichain xs)
+    (Sorted-irr xs s s') (Reduced-irr xs r r') (NonEmpty-irr xs ne ne')
+
+-- the antichain a non-empty list of traces denotes: its normal form
+
+acSet : (xs : List Trace) → NonEmpty xs → Antichain
+acSet xs ne = antichain (n xs) (n-sorted xs) (n-reduced xs) (n-ne xs ne)
+
+-- a singleton is an antichain already, nothing being below anything
+-- else in it
+
+singleton-reduced : (t : Trace) → Reduced [ t ]
+singleton-reduced t = reduced-from step
+  where
+    step : Reducedᵐ [ t ]
+    step (here refl) (here refl) le = ≼-refl t
+    step (here refl) (there ())  le
+    step (there ())  mv          le
+
+singleton : Trace → Antichain
+singleton t = antichain [ t ] (tt , tt) (singleton-reduced t) tt
+
+------------------------------------------------------------------------
+-- Monoid structure: the language product with unit { ε }
+--
+-- Each law is the corresponding law on the underlying lists, sandwiched
+-- between normalisations that `n` sees through. The factors of a
+-- product are antichains already, which is why the one-sided
+-- normalisation lemmas are the ones associativity reads.
+
+infixl 7 _·_
+
+_·_ : Antichain → Antichain → Antichain
+P · Q = acSet (traces P ·ˢ traces Q) (·ˢ-ne (nonempty P) (nonempty Q))
+
+u : Antichain
+u = singleton ε
+
+·-identityʳ : (P : Antichain) → (P · u) ≡ P
+·-identityʳ P =
+  ac-ext (trans (n-identityʳ (traces P))
+                (n-reduced-id (traces P) (sorted P) (reduced P)))
+
+·-identityˡ : (P : Antichain) → (u · P) ≡ P
+·-identityˡ P =
+  ac-ext (trans (n-identityˡ (traces P))
+                (n-reduced-id (traces P) (sorted P) (reduced P)))
+
+·-assoc : (P Q R : Antichain) → ((P · Q) · R) ≡ (P · (Q · R))
+·-assoc P Q R =
+  ac-ext
+    (trans (n-·ˢ-nˡ (traces P ·ˢ traces Q) (traces R))
+           (trans (cong n (·ˢ-assoc (traces P) (traces Q) (traces R)))
+                  (sym (n-·ˢ-nʳ (traces P) (traces Q ·ˢ traces R)))))
+
+------------------------------------------------------------------------
+-- The order
+--
+-- `P ≾ Q` says every member of `P` lies in the closure of `Q`: some
+-- member of `Q` sits `≼`-below each member of `P`. At `flipᵖ` of the
+-- order that reads "above", so this one definition -- and every law
+-- proved of it -- serves a grade of either handedness.
+--
+-- It is `Sets.liftˢ` at the converse comparison rather than a
+-- transcription of `_◃_`, which is what lets the lift's machinery --
+-- decidability, proof-irrelevance, antitonicity in the source -- apply
+-- to it unchanged.
+
+infix 4 _≽_
+
+_≽_ : Trace → Trace → Set
+s ≽ t = t ≼ s
+
+_≽?_ : Decidable _≽_
+s ≽? t = t ≼? s
+
+≽-trans : {s t v : Trace} → s ≽ t → t ≽ v → s ≽ v
+≽-trans p q = ≼-trans q p
+
+infix 5 _≾ˢ_
+
+_≾ˢ_ : List Trace → List Trace → Set
+_≾ˢ_ = liftˢ _≽_ _≽?_
+
+-- at this relation the lift *is* closure membership, one member of the
+-- left-hand list at a time
+
+≾ˢ-◃ : {xs ys : List Trace} → xs ≾ˢ ys → {v : Trace} → v ∈ xs → v ◃ ys
+≾ˢ-◃ {xs} {ys} p {v} m = toWitness (p v (fromWitness m))
+
+◃-≾ˢ : {xs ys : List Trace} → ({v : Trace} → v ∈ xs → v ◃ ys) → xs ≾ˢ ys
+◃-≾ˢ f s m = fromWitness (f (toWitness m))
+
+-- and members in a closure compose to closures included, by one step of
+-- transitivity
+
+◃-trans : {xs ys : List Trace}
+        → ({w : Trace} → w ∈ xs → w ◃ ys)
+        → {v : Trace} → v ◃ xs → v ◃ ys
+◃-trans f p with find p
+... | y , y∈xs , y≼v = Any.map (λ z≼y → ≼-trans z≼y y≼v) (f y∈xs)
+
+infix 5 _≾_
+
+_≾_ : Antichain → Antichain → Set
+P ≾ Q = traces P ≾ˢ traces Q
+
+≾-refl : {P : Antichain} → P ≾ P
+≾-refl {P} = liftˢ-refl _≽?_ ≼-refl {traces P}
+
+≾-trans : {P Q R : Antichain} → P ≾ Q → Q ≾ R → P ≾ R
+≾-trans {P} {Q} {R} =
+  liftˢ-trans _≽?_ ≽-trans {traces P} {traces Q} {traces R}
+
+------------------------------------------------------------------------
+-- Antisymmetry
+--
+-- Mutual `≾` is mutual closure inclusion -- one step of `◃-trans` in
+-- each direction -- and a sorted reduced list is determined by its
+-- closure. This is what the reduction buys, and it is the law the
+-- un-reduced carrier of `Traces.Sets` cannot state.
+
+≾-antisym : {P Q : Antichain} → P ≾ Q → Q ≾ P → P ≡ Q
+≾-antisym {P} {Q} p q =
+  ac-ext
+    (reduced-ext (traces P) (traces Q)
+       (sorted P) (sorted Q) (reduced P) (reduced Q)
+       (◃-trans {traces P} {traces Q} (λ {w} → ≾ˢ-◃ p {w}))
+       (◃-trans {traces Q} {traces P} (λ {w} → ≾ˢ-◃ q {w})))
+
+------------------------------------------------------------------------
+-- The language product is monotone in each argument
+--
+-- Normalising either side leaves the order alone: the source only loses
+-- members, and the target keeps its closure. So the monotonicity of the
+-- raw language product is read at the normalising one the antichains
+-- carry.
+
+≾ˢ-nˡ : {xs ys : List Trace} → xs ≾ˢ ys → n xs ≾ˢ ys
+≾ˢ-nˡ {xs} {ys} = liftˢ-⊆ˡ (λ {w} → n-∈⁻ {w} {xs})
+
+≾ˢ-nʳ : {xs ys : List Trace} → xs ≾ˢ ys → xs ≾ˢ n ys
+≾ˢ-nʳ {xs} {ys} p = ◃-≾ˢ {xs} {n ys} (λ {v} m → n-◃⁻ ys (≾ˢ-◃ p m))
+
+≾ˢ-· : {xs xs' ys ys' : List Trace}
+     → xs ≾ˢ xs' → ys ≾ˢ ys' → n (xs ·ˢ ys) ≾ˢ n (xs' ·ˢ ys')
+≾ˢ-· {xs} {xs'} {ys} {ys'} p q =
+  ≾ˢ-nʳ {n (xs ·ˢ ys)} {xs' ·ˢ ys'}
+    (≾ˢ-nˡ {xs ·ˢ ys} {xs' ·ˢ ys'} (liftˢ-·ˢ _≽?_ mono-∙ p q))
+
+·-monoˡ : {C P Q : Antichain} → P ≾ Q → (P · C) ≾ (Q · C)
+·-monoˡ {C} {P} {Q} rel =
+  ≾ˢ-· {traces P} {traces Q} {traces C} {traces C} rel (≾-refl {C})
+
+·-monoʳ : {C P Q : Antichain} → P ≾ Q → (C · P) ≾ (C · Q)
+·-monoʳ {C} {P} {Q} rel =
+  ≾ˢ-· {traces C} {traces C} {traces P} {traces Q} (≾-refl {C}) rel
+
+------------------------------------------------------------------------
+-- The order is decidable and proof-irrelevant
+--
+-- Both are `liftˢ`'s, the relation lifted being decided and the lift
+-- being stated as `True` of a decision.
+
+infix 5 _≾?_
+
+_≾?_ : (P Q : Antichain) → Dec (P ≾ Q)
+P ≾? Q = liftˢ? _≽?_ (traces P) (traces Q)
+
+≾-irrelevant : {P Q : Antichain} → (p q : P ≾ Q) → p ≡ q
+≾-irrelevant {P} {Q} = liftˢ-irrelevant
+
+------------------------------------------------------------------------
+-- Binary joins
+--
+-- The two member lists concatenated and reduced. A member of either
+-- lies in the closure of the union, which is the upper-bound half; a
+-- member of the union is a member of one of the two, which is the
+-- least-upper-bound half.
+
+infixl 6 _⊔_
+
+_⊔_ : Antichain → Antichain → Antichain
+P ⊔ Q = acSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
+
+⊔-ubˡ : (P Q : Antichain) → P ≾ (P ⊔ Q)
+⊔-ubˡ P Q =
+  ◃-≾ˢ {traces P} {n (traces P ++ traces Q)}
+    (λ {v} m → n-◃⁻ (traces P ++ traces Q) (◃-∈ (∈-++⁺ˡ m)))
+
+⊔-ubʳ : (P Q : Antichain) → Q ≾ (P ⊔ Q)
+⊔-ubʳ P Q =
+  ◃-≾ˢ {traces Q} {n (traces P ++ traces Q)}
+    (λ {v} m → n-◃⁻ (traces P ++ traces Q) (◃-∈ (∈-++⁺ʳ (traces P) m)))
+
+⊔-lub : {P Q R : Antichain} → P ≾ R → Q ≾ R → (P ⊔ Q) ≾ R
+⊔-lub {P} {Q} {R} p q = ◃-≾ˢ {n (traces P ++ traces Q)} {traces R} step
+  where
+    step : {v : Trace} → v ∈ n (traces P ++ traces Q) → v ◃ traces R
+    step {v} m with ∈-++⁻ (traces P) (n-∈⁻ {v} {traces P ++ traces Q} m)
+    ... | inj₁ m₁ = ≾ˢ-◃ p m₁
+    ... | inj₂ m₂ = ≾ˢ-◃ q m₂
+
+-- the language product distributes over the join on the nose: the two
+-- sides have the same closure, and an antichain is determined by its
+-- closure
+
+·-distribˡ-⊔ : (C P Q : Antichain) → (C · (P ⊔ Q)) ≡ ((C · P) ⊔ (C · Q))
+·-distribˡ-⊔ C P Q =
+  ac-ext (n-ext {cs ·ˢ n (ps ++ qs)} {n (cs ·ˢ ps) ++ n (cs ·ˢ qs)} to from)
+  where
+    cs = traces C
+    ps = traces P
+    qs = traces Q
+
+    to : {v : Trace}
+       → v ◃ (cs ·ˢ n (ps ++ qs))
+       → v ◃ (n (cs ·ˢ ps) ++ n (cs ·ˢ qs))
+    to p =
+      ◃-++ {cs ·ˢ ps} {n (cs ·ˢ ps)} {cs ·ˢ qs} {n (cs ·ˢ qs)}
+           (λ {w} → n-◃⁻ (cs ·ˢ ps)) (λ {w} → n-◃⁻ (cs ·ˢ qs))
+           (◃-⊆ (λ {w} → ∈-·ˢ-++ˡ {w} {cs} {ps} {qs})
+                (◃-·ˢ {cs} {cs} {n (ps ++ qs)} {ps ++ qs}
+                      (λ {w} r → r) (λ {w} → n-◃ (ps ++ qs)) p))
+
+    from : {v : Trace}
+         → v ◃ (n (cs ·ˢ ps) ++ n (cs ·ˢ qs))
+         → v ◃ (cs ·ˢ n (ps ++ qs))
+    from p =
+      ◃-·ˢ {cs} {cs} {ps ++ qs} {n (ps ++ qs)}
+           (λ {w} r → r) (λ {w} → n-◃⁻ (ps ++ qs))
+           (◃-⊆ (λ {w} → ∈-·ˢ-++ˡ⁻ {w} {cs} {ps} {qs})
+                (◃-++ {n (cs ·ˢ ps)} {cs ·ˢ ps} {n (cs ·ˢ qs)} {cs ·ˢ qs}
+                      (λ {w} → n-◃ (cs ·ˢ ps)) (λ {w} → n-◃ (cs ·ˢ qs)) p))
+
+·-distribʳ-⊔ : (C P Q : Antichain) → ((P ⊔ Q) · C) ≡ ((P · C) ⊔ (Q · C))
+·-distribʳ-⊔ C P Q =
+  ac-ext (n-ext {n (ps ++ qs) ·ˢ cs} {n (ps ·ˢ cs) ++ n (qs ·ˢ cs)} to from)
+  where
+    cs = traces C
+    ps = traces P
+    qs = traces Q
+
+    split : ((ps ++ qs) ·ˢ cs) ≡ ((ps ·ˢ cs) ++ (qs ·ˢ cs))
+    split = ·ˢ-distribʳ-++ ps qs cs
+
+    to : {v : Trace}
+       → v ◃ (n (ps ++ qs) ·ˢ cs)
+       → v ◃ (n (ps ·ˢ cs) ++ n (qs ·ˢ cs))
+    to {v} p =
+      ◃-++ {ps ·ˢ cs} {n (ps ·ˢ cs)} {qs ·ˢ cs} {n (qs ·ˢ cs)}
+           (λ {w} → n-◃⁻ (ps ·ˢ cs)) (λ {w} → n-◃⁻ (qs ·ˢ cs))
+           (subst (v ◃_) split
+             (◃-·ˢ {n (ps ++ qs)} {ps ++ qs} {cs} {cs}
+                   (λ {w} → n-◃ (ps ++ qs)) (λ {w} r → r) p))
+
+    from : {v : Trace}
+         → v ◃ (n (ps ·ˢ cs) ++ n (qs ·ˢ cs))
+         → v ◃ (n (ps ++ qs) ·ˢ cs)
+    from {v} p =
+      ◃-·ˢ {ps ++ qs} {n (ps ++ qs)} {cs} {cs}
+           (λ {w} → n-◃⁻ (ps ++ qs)) (λ {w} r → r)
+           (subst (v ◃_) (sym split)
+             (◃-++ {n (ps ·ˢ cs)} {ps ·ˢ cs} {n (qs ·ˢ cs)} {qs ·ˢ cs}
+                   (λ {w} → n-◃ (ps ·ˢ cs)) (λ {w} → n-◃ (qs ·ˢ cs)) p))
+
+------------------------------------------------------------------------
+-- Inclusion of the natural numbers as pure delays
+--
+-- A natural number `m` becomes the singleton antichain containing the
+-- pure delay of duration `m`, which is what a grade's `of-nat` asks
+-- for.
+
+of-nat : ℕ → Antichain
+of-nat m = singleton ⟨ m ⟩
+
+of-nat-zero : of-nat 0 ≡ u
+of-nat-zero = refl
+
+of-nat-plus : {m k : ℕ} → of-nat (m + k) ≡ (of-nat m · of-nat k)
+of-nat-plus {m} {k} =
+  ac-ext {of-nat (m + k)} {of-nat m · of-nat k} (cong [_] (⟨⟩-hom m k))
+
+------------------------------------------------------------------------
+-- Decidable equality of antichains
+
+_≟ᴬ_ : DecidableEquality Antichain
+P ≟ᴬ Q with ≡-dec _≟ᵀ_ (traces P) (traces Q)
+... | yes eq = yes (ac-ext eq)
+... | no ¬eq = no λ p → ¬eq (cong traces p)
