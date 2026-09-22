@@ -112,6 +112,12 @@ import Syntax.Grades.Traces.Allowance
 
 import Syntax.Grades.Traces.Allowance.Antisym
 
+-- And the checked negative that makes that hypothesis necessary: at a
+-- cost model with a free operation, the empty bound permits a run
+-- different from itself, so `≼-ε-inv` and `≼-antisym` both fail.
+
+import Syntax.Grades.Traces.Allowance.ZeroCost
+
 -- Its interface instance, which asks every operation to cost
 -- something: that is what makes the empty bound permit nothing but the
 -- empty run, and what the grades' zero-product law rests on.

@@ -13,7 +13,7 @@ time passage as the means to specify and verify temporal properties of resources
 and [rzgdmqt/temporal-resources](https://github.com/rzgdmqt/temporal-resources).
 
 In contrast, the core language formalised in this repository can use arbitrary
-ordered monoids to specify effects and verify temporal properties 
+partially ordered monoids to specify effects and verify temporal properties 
 of resources. Furthermore, one can use *different* monoids for grading effects 
 and resources, related by a grade morphism, so that an effect grade (e.g., a 
 trace or interval of possible execution costs) can be reinterpreted as a resource 
@@ -37,8 +37,8 @@ The **main features** of this core language are:
 
 - A _graded monads-based modal effect system_ (with added temporal awareness)
   that modularly tracks the effects and resource usage, parameterised over a
-  **grade system**: a pair of ordered monoids (one for effect grades, one for
-  resource grades) together with a grade morphism between them.
+  **grade system**: a pair of partially ordered monoids (one for effect
+  grades, one for resource grades) together with a grade morphism between them.
 
 The formalisation is developed and tested with Agda version 2.8.0 and Agda
 Standard Library version 2.3. To check the whole development, run `make` (which
@@ -58,21 +58,22 @@ a grade system, a signature of base types, and operations' signatures.
 
 ### Grades and grade systems
 
-- `Syntax/Grades.agda` defines the notion of a `Grade` (an ordered monoid with
-  an inclusion of ℕ as "so many time steps"), grade morphisms `_→ᵍ_`, and a
-  `GradeSystem` (effect grades `EGrade`, resource grades `RGrade`, and a grade
-  morphism `∣_∣ᵉ` from the former to the latter), together with a convenience
-  interface `GradeSystemInterface`.
+- `Syntax/Grades.agda` defines the notion of a `Grade` (a partially ordered
+  monoid with an inclusion of ℕ as "so many time steps"), grade morphisms
+  `_→ᵍ_`, and a `GradeSystem` (effect grades `EGrade`, resource grades
+  `RGrade`, and a grade morphism `∣_∣ᵉ` from the former to the latter),
+  together with a convenience interface `GradeSystemInterface`.
 
-- A `Grade` also carries **binary joins**: a least upper bound `_⊔_`, and the
-  one direction of distributivity that monotonicity does not already give,
-  `ρ · (σ ⊔ τ) ≾ (ρ · σ) ⊔ (ρ · τ)` and its mirror. The other direction is
-  derived, as are the join's idempotence, commutativity, associativity and its
-  law against the greatest grade — all up to mutual `≾`, since the order is a
-  preorder and the laws cannot be stated at `_≡_`. A grade morphism preserves
-  joins on the nose. This is what lets a branching construct be graded by the
-  join of its branches, and what lets type inference report the join of two
-  bounds rather than falling back on the greatest grade.
+- A `Grade` also carries **binary joins** and **antisymmetry**: a least upper
+  bound `_⊔_`, the one direction of distributivity that monotonicity does not
+  already give, `ρ · (σ ⊔ τ) ≾ (ρ · σ) ⊔ (ρ · τ)` and its mirror, and
+  `≾-antisym`. Since the order is a partial one, the derived laws are
+  *equations*: the other direction of each distributivity, and the join's
+  idempotence, commutativity, associativity and its law against the greatest
+  grade, all hold at `_≡_`. A grade morphism preserves joins on the nose. This
+  is what lets a branching construct be graded by the join of its branches, and
+  what lets type inference report the join of two bounds rather than falling
+  back on the greatest grade.
 
 - `Syntax/Grades/Example.agda` indexes the example grades, which come in two
   families, and the grade systems assembled from them.
@@ -84,19 +85,21 @@ a grade system, a signature of base types, and operations' signatures.
   `ExtendedNat.agda`).
 
 - `Syntax/Grades/Example/Traces/` holds the grades that record *which runs* a
-  computation may have had, as non-empty finite sets of timed traces. All four
-  share the carrier and the monoid of `Syntax/Grades/Traces/Sets.agda` and
-  differ only in the order on it. The carrier is canonical — its lists are
-  sorted strictly increasingly for the order on traces, hence duplicate-free —
-  so a set has one representation, the union of two grades is their join, and
-  `Subsets/RightSided.agda`'s order is a partial order rather than a preorder.
-  The lifted orders are not: each compares closures rather than sets — upward
-  for a floor, downward for a cap — so `⟅ ε ⟆` and `⟅ ε ∣ ⌈ o ⌉ ⟆` remain
-  distinct sets that are mutually `≾`. `Lifted/{LeftSided,RightSided,TwoSided}.agda`
-  are the constructions, parameterised by an order on traces; `Timed/*`
-  instantiate them at the two cost-sensitive orders below — a floor, a cap, and
-  their pairing under a coherence field — and `Subsets/RightSided.agda` is the
-  cap at equality.
+  computation may have had, as non-empty finite sets of timed traces. Every
+  carrier is canonical — its lists are sorted strictly increasingly for the
+  order on traces, hence duplicate-free — so a set has one representation and
+  the union of two grades is their join. `Subsets/RightSided.agda` compares
+  sets outright, by inclusion. The lifted grades compare closures instead —
+  upward for a floor, downward for a cap — so their carrier is cut down
+  further, to the **antichain** of a set's minimal members for the order
+  (`Syntax/Grades/Traces/Reduced.agda`): a grade names exactly what the
+  closure determines, so at a floor `⟅ ε ⟆` and `⟅ ε ∣ ⌈ o ⌉ ⟆` are the same
+  grade, the dominated member dropping out. Every order here is therefore a
+  partial order: mutually-weakening grades are equal.
+  `Lifted/{LeftSided,RightSided,TwoSided}.agda` are the constructions,
+  parameterised by an order on traces; `Timed/*` instantiate them at the two
+  cost-sensitive orders below — a floor, a cap, and their pairing under a
+  coherence field — and `Subsets/RightSided.agda` is the cap at equality.
 
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
   built on: `Positive` (the strictly positive duration a delay carries), `Base`
@@ -106,17 +109,24 @@ a grade system, a signature of base types, and operations' signatures.
   the language product, their union, and subset inclusion), `Restriction`
   (restriction along a sub-alphabet), `Durations` with `MaxDuration` and
   `MinDuration` (worst- and best-case aggregation over a set), and
-  `Order`/`Reduced` (the interface a trace order supplies, and the antichains
-  of its minimal members that the set-level grades take as their carrier —
-  stated once, so each order below meets the interface once and inherits the
-  whole construction with its laws).
+  `Order`/`Reduced` (the interface a trace order supplies, in two layers — the
+  order-theoretic half `TracePartialOrder`, which the converse `flipᵖ` meets
+  as well, and the two unit facts `TraceOrder` adds on top — together with the
+  antichains of the order's minimal members that the lifted grades take as
+  their carrier, floors at the order and caps at its converse; stated once, so
+  each order below meets the interface once and inherits the whole
+  construction with its laws).
 
 - The two cost-sensitive orders on traces live in `Syntax/Grades/Traces/Allowance/`
   and `Syntax/Grades/Traces/Coverage/`. Both are parameterised by a cost model
   `cost : Op → ℕ` and both induct on a running number of time units,
   whose arithmetic is shared in `Slack.agda`; each has `Core`, `Moves`,
   `Decidable` and `Duration` submodules, with `Antisym.agda` proving the order
-  antisymmetric and `AsOrder.agda` packaging it as a `TraceOrder`.
+  antisymmetric and `AsOrder.agda` packaging it as a `TraceOrder`. The
+  allowance order asks in addition that every operation cost something, and
+  `Allowance/ZeroCost.agda` is the checked negative that makes the hypothesis
+  necessary: at a free operation the empty bound permits a run different from
+  itself, so neither antisymmetry nor the unit fact `≼-ε-inv` survives.
 
 - Under the **allowance** order `_≼ᵃ_` a bound's operations are permissions and
   its delays are a budget, which the run spends on idling and on operations the
@@ -192,7 +202,9 @@ a grade system, a signature of base types, and operations' signatures.
   the time-passage context former `Γ ⟨ ρ ⟩`.
 - `Syntax/Subtyping.agda` defines shape-preserving subtyping of value and
   computation types, `_<:ᵛ_` and `_<:ᶜ_`, in which a function's domain and a
-  box's grade are contravariant and a computation's effect covariant. It also
+  box's grade are contravariant and a computation's effect covariant. It is a
+  partial order on types: antisymmetry of the grade orders settles the grade
+  positions, so mutually-subtyped types are equal. It also
   defines least upper bounds of types, `_⊔ᵛ_≡_` and `_⊔ᶜ_≡_`, as inductive
   relations in the same style. They are partial, and deliberately: the
   contravariant positions are pinned to a shared domain and a shared grade,
