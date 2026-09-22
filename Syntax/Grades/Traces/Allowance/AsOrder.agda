@@ -30,16 +30,23 @@ module Syntax.Grades.Traces.Allowance.AsOrder
 
 open import Syntax.Grades.Traces.Order Op
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ
+open import Syntax.Grades.Traces.Allowance.Antisym Op costʰⁱ costʰⁱ-pos
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
 
+allowancePartialOrder : TracePartialOrder
+allowancePartialOrder = record
+  { _≼_       = _≼ᵃ_
+  ; _≼?_      = _≼ᵃ?_
+  ; ≼-refl    = ≼ᵃ-refl
+  ; ≼-trans   = ≼ᵃ-trans
+  ; ≼-antisym = ≼ᵃ-antisym
+  ; mono-∙    = mono-∙
+  }
+
 allowanceOrder : TraceOrder
 allowanceOrder = record
-  { _≼_     = _≼ᵃ_
-  ; _≼?_    = _≼ᵃ?_
-  ; ≼-refl  = ≼ᵃ-refl
-  ; ≼-trans = ≼ᵃ-trans
+  { base    = allowancePartialOrder
   ; ≼-nil   = nil
-  ; mono-∙  = mono-∙
   ; ≼-ε-inv = ≼ᵃ-ε-inv costʰⁱ-pos
   }

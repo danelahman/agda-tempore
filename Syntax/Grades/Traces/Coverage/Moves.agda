@@ -32,7 +32,6 @@ open import Util.Equality
 module Syntax.Grades.Traces.Coverage.Moves (Op : Set) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺; ∣1+∣⁺)
 
 -- the arithmetic helpers are about `ℕ` alone, so they are shared with
 -- the allowance order rather than restated

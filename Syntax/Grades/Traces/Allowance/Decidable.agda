@@ -29,7 +29,6 @@ open import Util.Equality
 module Syntax.Grades.Traces.Allowance.Decidable (Op : Set) (costʰⁱ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
 
 open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 open import Syntax.Grades.Traces.Allowance.Moves Op costʰⁱ using (bank-delay-inv)

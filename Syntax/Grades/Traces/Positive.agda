@@ -11,12 +11,13 @@
 
 module Syntax.Grades.Traces.Positive where
 
-open import Data.Empty using (⊥)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_)
+open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _∸_; _≤_)
+open import Data.Nat.Properties using (≤-antisym; n∸n≡0; suc-injective)
 
 open import Relation.Binary.Definitions
   using (DecidableEquality; Transitive; Trichotomous; tri<; tri≈; tri>)
-open import Relation.Nullary using (yes; no)
+open import Relation.Nullary using (¬_; yes; no)
 
 open import Util.Equality
 
@@ -46,7 +47,13 @@ suc⁺ m ≟⁺ suc⁺ n with m ≟⁺ n
 ... | no ¬p    = no λ { refl → ¬p refl }
 
 ------------------------------------------------------------------------
--- Reading a positive duration off a natural number
+-- Positive durations and the natural numbers
+--
+-- The two directions of the correspondence: `1+ n` is the positive
+-- duration `1 + n`, and `∣ d ∣⁺` is the length of `d` as a natural
+-- number. Taking the length is a monoid homomorphism
+-- `(ℕ⁺, +⁺) → (ℕ, +)`, and it is injective, so a delay is determined
+-- by how long it lasts.
 
 -- the positive natural `1 + n`
 
@@ -59,6 +66,45 @@ infix 8 1+_
 1+-+⁺ : (m n : ℕ) → ((1+ m) +⁺ (1+ n)) ≡ 1+ (m + suc n)
 1+-+⁺ zero    n = refl
 1+-+⁺ (suc m) n = cong suc⁺ (1+-+⁺ m n)
+
+-- the length of a positive duration as a natural number
+
+∣_∣⁺ : ℕ⁺ → ℕ
+∣ 𝟏      ∣⁺ = suc zero
+∣ suc⁺ n ∣⁺ = suc ∣ n ∣⁺
+
+∣∣⁺-+⁺ : (d e : ℕ⁺) → ∣ d +⁺ e ∣⁺ ≡ ∣ d ∣⁺ + ∣ e ∣⁺
+∣∣⁺-+⁺ 𝟏        e = refl
+∣∣⁺-+⁺ (suc⁺ d) e = cong suc (∣∣⁺-+⁺ d e)
+
+∣1+∣⁺ : (n : ℕ) → ∣ 1+ n ∣⁺ ≡ suc n
+∣1+∣⁺ zero    = refl
+∣1+∣⁺ (suc n) = cong suc (∣1+∣⁺ n)
+
+-- a length is never zero
+
+∣∣⁺-nz : (d : ℕ⁺) → ¬ (∣ d ∣⁺ ≡ 0)
+∣∣⁺-nz 𝟏        ()
+∣∣⁺-nz (suc⁺ _) ()
+
+-- and it determines the duration
+
+∣∣⁺-inj : {d e : ℕ⁺} → ∣ d ∣⁺ ≡ ∣ e ∣⁺ → d ≡ e
+∣∣⁺-inj {𝟏}      {𝟏}      _  = refl
+∣∣⁺-inj {𝟏}      {suc⁺ e} eq = ⊥-elim (∣∣⁺-nz e (sym (suc-injective eq)))
+∣∣⁺-inj {suc⁺ d} {𝟏}      eq = ⊥-elim (∣∣⁺-nz d (suc-injective eq))
+∣∣⁺-inj {suc⁺ d} {suc⁺ e} eq = cong suc⁺ (∣∣⁺-inj (suc-injective eq))
+
+-- so two delays that bound each other are the same delay, and then
+-- taking one from the other leaves nothing
+
+same-delay : {d e : ℕ⁺} → ∣ d ∣⁺ ≤ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ ∣ d ∣⁺ → d ≡ e
+same-delay le₁ le₂ = ∣∣⁺-inj (≤-antisym le₁ le₂)
+
+∣∣⁺-∸≡0 : {d e : ℕ⁺}
+        → ∣ d ∣⁺ ≤ ∣ e ∣⁺ → ∣ e ∣⁺ ≤ ∣ d ∣⁺ → ∣ e ∣⁺ ∸ ∣ d ∣⁺ ≡ 0
+∣∣⁺-∸≡0 {d} {e} le₁ le₂ =
+  trans (cong (∣ e ∣⁺ ∸_) (≤-antisym le₁ le₂)) (n∸n≡0 ∣ e ∣⁺)
 
 ------------------------------------------------------------------------
 -- Cancellation

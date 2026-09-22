@@ -35,7 +35,6 @@ open import Util.Equality
 module Syntax.Grades.Traces.Allowance.Moves (Op : Set) (costʰⁱ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺; ∣∣⁺-+⁺; ∣1+∣⁺)
 
 open import Syntax.Grades.Traces.Allowance.Core Op costʰⁱ
 

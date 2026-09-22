@@ -28,16 +28,23 @@ module Syntax.Grades.Traces.Coverage.AsOrder
 
 open import Syntax.Grades.Traces.Order Op
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
+open import Syntax.Grades.Traces.Coverage.Antisym Op costˡᵒ
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 
+coveragePartialOrder : TracePartialOrder
+coveragePartialOrder = record
+  { _≼_       = _≼ᶜ_
+  ; _≼?_      = _≼ᶜ?_
+  ; ≼-refl    = ≼ᶜ-refl
+  ; ≼-trans   = ≼ᶜ-trans
+  ; ≼-antisym = ≼ᶜ-antisym
+  ; mono-∙    = mono-∙
+  }
+
 coverageOrder : TraceOrder
 coverageOrder = record
-  { _≼_     = _≼ᶜ_
-  ; _≼?_    = _≼ᶜ?_
-  ; ≼-refl  = ≼ᶜ-refl
-  ; ≼-trans = ≼ᶜ-trans
+  { base    = coveragePartialOrder
   ; ≼-nil   = nil
-  ; mono-∙  = mono-∙
   ; ≼-ε-inv = ≼ᶜ-ε-inv
   }

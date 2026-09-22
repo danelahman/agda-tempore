@@ -68,13 +68,22 @@ import Syntax.Grades.Traces.MinDuration
 ------------------------------------------------------------------------
 -- What an order on traces has to supply
 --
--- The interface the grades take their order from, and its two lifts to
--- sets of traces -- Hoare and Smyth. Neither mentions a particular
--- order, so each order below meets the interface once and inherits both
--- lifts with all their laws.
+-- The interface the grades take their order from, in two layers: the
+-- order-theoretic half, which the converse also meets, and the facts
+-- about the unit on top of it. Then its two lifts to sets of traces --
+-- Hoare and Smyth. Neither mentions a particular order, so each order
+-- below meets the interface once and inherits both lifts with all
+-- their laws.
 
 import Syntax.Grades.Traces.Order
 import Syntax.Grades.Traces.OrderLift
+
+-- Antichain normal forms: a set of traces cut down to the members that
+-- are minimal for the order, so that two sets with the same closure
+-- become the same list. It asks only for the order-theoretic half of
+-- the interface, so it is taken at either handedness.
+
+import Syntax.Grades.Traces.Reduced
 
 ------------------------------------------------------------------------
 -- The two orders on traces
@@ -99,6 +108,12 @@ import Syntax.Grades.Traces.Slack
 
 import Syntax.Grades.Traces.Allowance
 
+-- Its antisymmetry, which also asks every operation to cost something:
+-- a free operation would be performed out of an empty budget, and the
+-- empty bound would then permit a run different from itself.
+
+import Syntax.Grades.Traces.Allowance.Antisym
+
 -- Its interface instance and lifts. Both ask every operation to cost
 -- something, which is what makes the empty bound permit nothing but the
 -- empty run, and what the grades' zero-product law rests on.
@@ -120,10 +135,14 @@ import Syntax.Grades.Traces.AllowanceLift
 
 import Syntax.Grades.Traces.Coverage
 
+-- Its antisymmetry, counting the operation nodes a run performs.
+
+import Syntax.Grades.Traces.Coverage.Antisym
+
 -- Its interface instance and lifts. Unlike the allowance order these
 -- need no assumption about `costˡᵒ`: an operation is never bought here,
 -- at any price, so a spent run covers nothing but the empty guarantee
--- outright.
+-- outright, and covers it antisymmetrically at any cost model.
 
 import Syntax.Grades.Traces.Coverage.AsOrder
 import Syntax.Grades.Traces.CoverageLift

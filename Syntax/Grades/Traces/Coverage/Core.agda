@@ -36,7 +36,6 @@ open import Util.Equality
 module Syntax.Grades.Traces.Coverage.Core (Op : Set) (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
 
 -- the slack arithmetic and the size measure are shared with the other
 -- order on traces

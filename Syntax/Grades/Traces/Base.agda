@@ -68,6 +68,14 @@ inj⁻ : Trace⁻ → Trace
 inj⁻ ε⁻               = ε
 inj⁻ (operation⁻ o t) = operation o t
 
+-- it is injective, the two shapes it lands on being distinct
+
+inj⁻-inj : {s⁻ t⁻ : Trace⁻} → inj⁻ s⁻ ≡ inj⁻ t⁻ → s⁻ ≡ t⁻
+inj⁻-inj {ε⁻}             {ε⁻}             _    = refl
+inj⁻-inj {ε⁻}             {operation⁻ _ _} ()
+inj⁻-inj {operation⁻ _ _} {ε⁻}             ()
+inj⁻-inj {operation⁻ _ _} {operation⁻ _ _} refl = refl
+
 ------------------------------------------------------------------------
 -- The monoid structure
 

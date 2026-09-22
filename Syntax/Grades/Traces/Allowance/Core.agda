@@ -43,7 +43,6 @@ open import Util.Equality
 module Syntax.Grades.Traces.Allowance.Core (Op : Set) (costʰⁱ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Base Op
-open import Syntax.Grades.Traces.Durations Op using (∣_∣⁺)
 
 -- the slack arithmetic and the size measure are the same for either
 -- order on traces, so they are shared rather than restated

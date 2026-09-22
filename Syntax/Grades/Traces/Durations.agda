@@ -18,23 +18,6 @@ module Syntax.Grades.Traces.Durations (Op : Set) where
 open import Syntax.Grades.Traces.Base Op
 
 ------------------------------------------------------------------------
--- The length of a positive duration as a natural number
-
-∣_∣⁺ : ℕ⁺ → ℕ
-∣ 𝟏      ∣⁺ = suc zero
-∣ suc⁺ n ∣⁺ = suc ∣ n ∣⁺
-
--- taking the length is a monoid homomorphism `(ℕ⁺, +⁺) → (ℕ, +)`
-
-∣∣⁺-+⁺ : (d e : ℕ⁺) → ∣ d +⁺ e ∣⁺ ≡ ∣ d ∣⁺ + ∣ e ∣⁺
-∣∣⁺-+⁺ 𝟏        e = refl
-∣∣⁺-+⁺ (suc⁺ d) e = cong suc (∣∣⁺-+⁺ d e)
-
-∣1+∣⁺ : (n : ℕ) → ∣ 1+ n ∣⁺ ≡ suc n
-∣1+∣⁺ zero    = refl
-∣1+∣⁺ (suc n) = cong suc (∣1+∣⁺ n)
-
-------------------------------------------------------------------------
 -- Durations relative to a fixed cost on operation symbols
 --
 -- The development below is parameterised by the map `c` assigning to
