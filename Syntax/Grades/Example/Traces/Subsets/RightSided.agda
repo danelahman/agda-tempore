@@ -56,7 +56,7 @@ open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ _<ᵒ_ <ᵒ-cm
 
 open WithDecEq _≟ₒ_
   using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·; _≟ᴺ_; liftˢ-irrelevant;
-         _≟ᵀ_; ⊑-∪-ubˡ; ⊑-∪-ubʳ; ⊑-∪-lub; ⊑-nfˡ⁻)
+         _≟ᵀ_; ⊑-∪-ubˡ; ⊑-∪-ubʳ; ⊑-∪-lub; ⊑-nfˡ⁻; ⊑-antisym)
 
 ------------------------------------------------------------------------
 -- The order on sets: inclusion, in the direction that permits more
@@ -71,6 +71,12 @@ P ≾₀ Q = traces P ⊑ traces Q
 
 ≾₀-trans : {P Q R : NeTraces} → P ≾₀ Q → Q ≾₀ R → P ≾₀ R
 ≾₀-trans {P} {Q} {R} = ⊑-trans {traces P} {traces Q} {traces R}
+
+-- mutual inclusion is equality of the permitted runs, and a set is the
+-- canonical list of its members, so the order is antisymmetric
+
+≾₀-antisym : {P Q : NeTraces} → P ≾₀ Q → Q ≾₀ P → P ≡ Q
+≾₀-antisym {P} {Q} p q = ne-ext (⊑-antisym (sorted P) (sorted Q) p q)
 
 ·-monoˡ₀ : {C P Q : NeTraces} → P ≾₀ Q → (P · C) ≾₀ (Q · C)
 ·-monoˡ₀ {C} rel = ⊑-· rel (⊑-refl {traces C})
@@ -190,6 +196,16 @@ any-run        ≾ any-run        = ⊤
 ≾-trans {any-run}      {permitting _} {_}            () q
 ≾-trans {any-run}      {any-run}      {permitting _} p ()
 ≾-trans {any-run}      {any-run}      {any-run}      p q = tt
+
+-- `any-run` is strictly greatest, so the mixed cases are absurd and
+-- the order is antisymmetric: the two grades list the same runs
+
+≾-antisym : {P Q : Permits} → P ≾ Q → Q ≾ P → P ≡ Q
+≾-antisym {permitting P} {permitting Q} p q =
+  cong permitting_ (≾₀-antisym {P} {Q} p q)
+≾-antisym {permitting _} {any-run}      p ()
+≾-antisym {any-run}      {permitting _} () q
+≾-antisym {any-run}      {any-run}      p q  = refl
 
 ≾-irrelevant : {P Q : Permits} → (p q : P ≾ Q) → p ≡ q
 ≾-irrelevant {permitting P} {permitting Q} p  q  = ≾₀-irrelevant {P} {Q} p q

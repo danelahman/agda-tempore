@@ -859,6 +859,19 @@ module WithDecEq (_≟ₒ_ : DecidableEquality Op) where
   ⊑-trans : {xs ys zs : List Trace} → xs ⊑ ys → ys ⊑ zs → xs ⊑ zs
   ⊑-trans = liftˢ-trans _≟ᵀ_ trans
 
+  -- at equality the lift is literally list inclusion: a trace related
+  -- to *some* member of the right-hand list is one of its members
+
+  ⊑-∈ : {xs ys : List Trace} → xs ⊑ ys → {w : Trace} → w ∈ xs → w ∈ ys
+  ⊑-∈ p m = toWitness (p _ (fromWitness m))
+
+  -- so mutual inclusion is equality of members, and on canonical lists
+  -- that is equality
+
+  ⊑-antisym : {xs ys : List Trace} → Sorted xs → Sorted ys
+            → xs ⊑ ys → ys ⊑ xs → xs ≡ ys
+  ⊑-antisym {xs} {ys} sx sy p q = sorted-ext xs ys sx sy (⊑-∈ p) (⊑-∈ q)
+
   -- the language product is monotone in both arguments
 
   ⊑-· : {xs xs' ys ys' : List Trace}
