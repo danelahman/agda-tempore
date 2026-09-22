@@ -219,8 +219,8 @@ sum≾ₑ (P ∷⁺ s) t with altSum≾ₑ P t | sum≾ₑ s t
 
 decide≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
 decide≾ₑ ε ε' with sum≾ₑ (nrmₑ ε) (nrmₑ ε')
-... | just p  = just (transₑ (eqₑ (canonₑ-≡ ε))
-                             (transₑ p (eqₑ (≡̂ₑ-sym (canonₑ-≡ ε')))))
+... | just p  = just (transₑ (eqₑ (nrmₑ-≡ᵖ ε))
+                             (transₑ p (eqₑ (≡̂ₑ-sym (nrmₑ-≡ᵖ ε')))))
 ... | nothing = nothing
 
 ------------------------------------------------------------------
@@ -341,8 +341,8 @@ sum≾ᵣ (P ∷⁺ s) t with altSum≾ᵣ P t | sum≾ᵣ s t
 
 decide≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
 decide≾ᵣ ρ ρ' with sum≾ᵣ (nrmᵣ ρ) (nrmᵣ ρ')
-... | just p  = just (transᵣ (eqᵣ (canonᵣ-≡ ρ))
-                             (transᵣ p (eqᵣ (≡̂ᵣ-sym (canonᵣ-≡ ρ')))))
+... | just p  = just (transᵣ (eqᵣ (nrmᵣ-≡ᵖ ρ))
+                             (transᵣ p (eqᵣ (≡̂ᵣ-sym (nrmᵣ-≡ᵖ ρ')))))
 ... | nothing = nothing
 
 evalᵉ : EExp ∅ˢ → E

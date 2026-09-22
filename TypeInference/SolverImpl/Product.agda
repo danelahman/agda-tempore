@@ -16,12 +16,23 @@
 -- product in the unit, which makes the certificates structural;   --
 -- `⟦_⟧ʳᵖ`/`⟦_⟧ʳᵖ⁺` drop that trailing unit and collapse a lone    --
 -- alternative, and are what `canonᵣ`/`canonₑ` return.             --
+--                                                                --
+-- `canonᵣ`/`canonₑ` also group the alternatives by skeleton, list --
+-- the groups in skeleton order, and fold a group that varies in   --
+-- one slot into one alternative whose slot is a join of           --
+-- constants. The result is canonical except in a group that       --
+-- varies in more than one slot, which keeps its arrival order.    --
+-- Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.                   --
 ------------------------------------------------------------------
 
+open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
+open import Data.Fin.Base using (toℕ)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Base using (List; []; _∷_; _++_; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-decᴸ)
 open import Data.Maybe using (Maybe; just; nothing)
+open import Data.Nat.Base using (_<ᵇ_)
+open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
@@ -58,6 +69,274 @@ infixr 5 _⧺_
 _⧺_ : ∀ {X} → Alts X → Alts X → Alts X
 alt x    ⧺ t = x ∷⁺ t
 (x ∷⁺ s) ⧺ t = x ∷⁺ (s ⧺ t)
+
+mapᴬ : ∀ {X Y} → (X → Y) → Alts X → Alts Y
+mapᴬ f (alt x)  = alt (f x)
+mapᴬ f (x ∷⁺ s) = f x ∷⁺ mapᴬ f s
+
+-- The lexicographic order on lists, from an order on their elements
+
+lex : ∀ {A : Set} → DecidableEquality A → (A → A → 𝔹) → List A → List A → 𝔹
+lex _≟_ _<_ []       []       = false
+lex _≟_ _<_ []       (_ ∷ _)  = true
+lex _≟_ _<_ (_ ∷ _)  []       = false
+lex _≟_ _<_ (a ∷ as) (b ∷ bs) with a ≟ b
+... | yes _ = lex _≟_ _<_ as bs
+... | no _  = a < b
+
+------------------------------------------------------------------
+-- Canonical sums
+--
+-- A product in normal form is read as its skeleton, the sequence of
+-- its variable atoms, with a constant slot before, between and after
+-- them, an empty slot being the unit. The alternatives of a sum are
+-- grouped by skeleton, and the groups ordered by it. A group whose
+-- alternatives agree in every slot but one is folded into a single
+-- alternative, that slot holding the join of their constants: the two
+-- distributivity laws bring the join into the slot, and a join of
+-- constants is a constant. A group that varies in more than one slot
+-- is kept as it is, without repeats and in the order its alternatives
+-- arrive; folding it two alternatives at a time would depend on which
+-- two meet first.
+--
+-- Constants are never ordered: two in the same slot are joined.
+-- Skeletons are ordered syntactically, lexicographically from an
+-- order on variable atoms.
+--
+-- Stated over any carrier with the laws it uses, and instantiated
+-- below at both sorts.
+
+module Grouping
+  {X K V : Set} (_≈_ : X → X → Set)
+  (≈-refl   : ∀ {a} → a ≈ a)
+  (≈-sym    : ∀ {a b} → a ≈ b → b ≈ a)
+  (≈-trans  : ∀ {a b c} → a ≈ b → b ≈ c → a ≈ c)
+  (_∙_ _∨_  : X → X → X)
+  (∙-cong   : ∀ {a a' b b'} → a ≈ a' → b ≈ b' → (a ∙ b) ≈ (a' ∙ b'))
+  (∨-cong   : ∀ {a a' b b'} → a ≈ a' → b ≈ b' → (a ∨ b) ≈ (a' ∨ b'))
+  (∨-idem   : ∀ {a} → (a ∨ a) ≈ a)
+  (∨-comm   : ∀ {a b} → (a ∨ b) ≈ (b ∨ a))
+  (∨-assoc  : ∀ {a b c} → ((a ∨ b) ∨ c) ≈ (a ∨ (b ∨ c)))
+  (distribˡ : ∀ {a b c} → (a ∙ (b ∨ c)) ≈ ((a ∙ b) ∨ (a ∙ c)))
+  (distribʳ : ∀ {a b c} → ((b ∨ c) ∙ a) ≈ ((b ∙ a) ∨ (c ∙ a)))
+  (κ : K → X) (_⊔ᴷ_ : K → K → K)
+  (κ-⊔      : ∀ {c d} → (κ c ∨ κ d) ≈ κ (c ⊔ᴷ d))
+  (_≟ᴷ_     : DecidableEquality K)
+  (ν : V → X) (_≟ⱽ_ : DecidableEquality V) (_<ⱽ_ : V → V → 𝔹)
+  where
+
+  -- The slots of a product with a given skeleton, one more than its
+  -- variables
+
+  infixr 5 _▸_
+
+  data Slots : List V → Set where
+    ⌜_⌝ : K → Slots []
+    _▸_ : ∀ {a vs} → K → Slots vs → Slots (a ∷ vs)
+
+  ⟦_⟧ᵏ : ∀ {vs} → Slots vs → X
+  ⟦ ⌜ c ⌝ ⟧ᵏ           = κ c
+  ⟦ _▸_ {a} c s ⟧ᵏ     = κ c ∙ (ν a ∙ ⟦ s ⟧ᵏ)
+
+  ⟦_⟧ᵏ⁺ : ∀ {vs} → Alts (Slots vs) → X
+  ⟦ alt s ⟧ᵏ⁺  = ⟦ s ⟧ᵏ
+  ⟦ s ∷⁺ g ⟧ᵏ⁺ = ⟦ s ⟧ᵏ ∨ ⟦ g ⟧ᵏ⁺
+
+  _≟ᵏ_ : ∀ {vs} → DecidableEquality (Slots vs)
+  ⌜ c ⌝   ≟ᵏ ⌜ d ⌝ with c ≟ᴷ d
+  ... | yes refl = yes refl
+  ... | no ¬p    = no λ { refl → ¬p refl }
+  (c ▸ s) ≟ᵏ (d ▸ t) with c ≟ᴷ d | s ≟ᵏ t
+  ... | yes refl | yes refl = yes refl
+  ... | no ¬p    | _        = no λ { refl → ¬p refl }
+  ... | _        | no ¬q    = no λ { refl → ¬q refl }
+
+  -- A product, with its skeleton
+
+  Prod : Set
+  Prod = Σ[ vs ∈ List V ] Slots vs
+
+  ⟦_⟧ᵖ : Prod → X
+  ⟦ P ⟧ᵖ = ⟦ proj₂ P ⟧ᵏ
+
+  ⟦_⟧ᵖ⁺ : Alts Prod → X
+  ⟦ alt P ⟧ᵖ⁺  = ⟦ P ⟧ᵖ
+  ⟦ P ∷⁺ s ⟧ᵖ⁺ = ⟦ P ⟧ᵖ ∨ ⟦ s ⟧ᵖ⁺
+
+  ⧺-≈ : (s t : Alts Prod) → ⟦ s ⧺ t ⟧ᵖ⁺ ≈ (⟦ s ⟧ᵖ⁺ ∨ ⟦ t ⟧ᵖ⁺)
+  ⧺-≈ (alt P)  t = ≈-refl
+  ⧺-≈ (P ∷⁺ s) t = ≈-trans (∨-cong ≈-refl (⧺-≈ s t)) (≈-sym ∨-assoc)
+
+  -- Folding a group. With an empty skeleton the group is a join of
+  -- constants. Otherwise either every alternative has the same first
+  -- slot, and the rest of the slots are folded, or they all have the
+  -- same remaining slots, and the first slot is the join of theirs.
+
+  joinᴷ : Alts (Slots []) → K
+  joinᴷ (alt ⌜ c ⌝)  = c
+  joinᴷ (⌜ c ⌝ ∷⁺ g) = c ⊔ᴷ joinᴷ g
+
+  joinᴷ-≈ : (g : Alts (Slots [])) → ⟦ g ⟧ᵏ⁺ ≈ κ (joinᴷ g)
+  joinᴷ-≈ (alt ⌜ c ⌝)  = ≈-refl
+  joinᴷ-≈ (⌜ c ⌝ ∷⁺ g) = ≈-trans (∨-cong ≈-refl (joinᴷ-≈ g)) κ-⊔
+
+  tails : ∀ {a vs} → Alts (Slots (a ∷ vs)) → Alts (Slots vs)
+  tails (alt (_ ▸ s))  = alt s
+  tails ((_ ▸ s) ∷⁺ g) = s ∷⁺ tails g
+
+  sameHead? : ∀ {a vs} → (g : Alts (Slots (a ∷ vs)))
+            → Maybe (Σ[ c ∈ K ] (⟦ g ⟧ᵏ⁺ ≈ (κ c ∙ (ν a ∙ ⟦ tails g ⟧ᵏ⁺))))
+  sameHead? (alt (c ▸ s)) = just (c , ≈-refl)
+  sameHead? ((c ▸ s) ∷⁺ g) with sameHead? g
+  ... | nothing       = nothing
+  ... | just (c' , p) with c ≟ᴷ c'
+  ...   | no _     = nothing
+  ...   | yes refl =
+          just (c , ≈-trans (∨-cong ≈-refl p)
+                            (≈-sym (≈-trans (∙-cong ≈-refl distribˡ) distribˡ)))
+
+  sameTail? : ∀ {a vs} → (g : Alts (Slots (a ∷ vs)))
+            → Maybe (Σ[ s ∈ Slots (a ∷ vs) ] (⟦ g ⟧ᵏ⁺ ≈ ⟦ s ⟧ᵏ))
+  sameTail? (alt (c ▸ s)) = just (c ▸ s , ≈-refl)
+  sameTail? ((c ▸ s) ∷⁺ g) with sameTail? g
+  ... | nothing = nothing
+  ... | just (c' ▸ s' , p) with s ≟ᵏ s'
+  ...   | no _     = nothing
+  ...   | yes refl =
+          just ((c ⊔ᴷ c') ▸ s , ≈-trans (∨-cong ≈-refl p)
+                                      (≈-trans (≈-sym distribʳ) (∙-cong κ-⊔ ≈-refl)))
+
+  fold? : ∀ {vs} → (g : Alts (Slots vs)) → Maybe (Σ[ s ∈ Slots vs ] (⟦ g ⟧ᵏ⁺ ≈ ⟦ s ⟧ᵏ))
+  fold? {[]}    g = just (⌜ joinᴷ g ⌝ , joinᴷ-≈ g)
+  fold? {_ ∷ _} g with sameHead? g
+  ... | nothing      = sameTail? g
+  ... | just (c , p) with fold? (tails g)
+  ...   | nothing      = sameTail? g
+  ...   | just (s , q) = just (c ▸ s , ≈-trans p (∙-cong ≈-refl (∙-cong ≈-refl q)))
+
+  -- Groups: the alternatives of one skeleton
+
+  Group : Set
+  Group = Σ[ vs ∈ List V ] Alts (Slots vs)
+
+  ⟦_⟧ᵍ : Group → X
+  ⟦ G ⟧ᵍ = ⟦ proj₂ G ⟧ᵏ⁺
+
+  ⟦_⟧ᵍ⁺ : Alts Group → X
+  ⟦ alt G ⟧ᵍ⁺   = ⟦ G ⟧ᵍ
+  ⟦ G ∷⁺ Gs ⟧ᵍ⁺ = ⟦ G ⟧ᵍ ∨ ⟦ Gs ⟧ᵍ⁺
+
+  -- An alternative already in the group is absorbed by it
+
+  within? : ∀ {vs} → (s : Slots vs) → (g : Alts (Slots vs))
+          → Maybe ((⟦ s ⟧ᵏ ∨ ⟦ g ⟧ᵏ⁺) ≈ ⟦ g ⟧ᵏ⁺)
+  within? s (alt t) with s ≟ᵏ t
+  ... | yes refl = just ∨-idem
+  ... | no _     = nothing
+  within? s (t ∷⁺ g) with s ≟ᵏ t
+  ... | yes refl = just (≈-trans (≈-sym ∨-assoc) (∨-cong ∨-idem ≈-refl))
+  ... | no _ with within? s g
+  ...   | just p  =
+          just (≈-trans (≈-sym ∨-assoc)
+               (≈-trans (∨-cong ∨-comm ≈-refl) (≈-trans ∨-assoc (∨-cong ≈-refl p))))
+  ...   | nothing = nothing
+
+  add : ∀ {vs} → Slots vs → Alts (Slots vs) → Alts (Slots vs)
+  add s g with within? s g
+  ... | just _  = g
+  ... | nothing = s ∷⁺ g
+
+  add-≈ : ∀ {vs} → (s : Slots vs) → (g : Alts (Slots vs))
+        → ⟦ add s g ⟧ᵏ⁺ ≈ (⟦ s ⟧ᵏ ∨ ⟦ g ⟧ᵏ⁺)
+  add-≈ s g with within? s g
+  ... | just p  = ≈-sym p
+  ... | nothing = ≈-refl
+
+  -- Skeletons: equality, and the order the groups are listed in
+
+  _≟ˢ_ : DecidableEquality (List V)
+  _≟ˢ_ = ≡-decᴸ _≟ⱽ_
+
+  _<ˢ_ : List V → List V → 𝔹
+  _<ˢ_ = lex _≟ⱽ_ _<ⱽ_
+
+  -- Inserting an alternative into its group, or a new group into its
+  -- place
+
+  insert : Prod → Alts Group → Alts Group
+  insert (vs , s) (alt (ws , g)) with vs ≟ˢ ws
+  ... | yes refl = alt (vs , add s g)
+  ... | no _ with vs <ˢ ws
+  ...   | true  = (vs , alt s) ∷⁺ alt (ws , g)
+  ...   | false = (ws , g) ∷⁺ alt (vs , alt s)
+  insert (vs , s) ((ws , g) ∷⁺ Gs) with vs ≟ˢ ws
+  ... | yes refl = (vs , add s g) ∷⁺ Gs
+  ... | no _ with vs <ˢ ws
+  ...   | true  = (vs , alt s) ∷⁺ (ws , g) ∷⁺ Gs
+  ...   | false = (ws , g) ∷⁺ insert (vs , s) Gs
+
+  insert-≈ : (P : Prod) → (Gs : Alts Group) → ⟦ insert P Gs ⟧ᵍ⁺ ≈ (⟦ P ⟧ᵖ ∨ ⟦ Gs ⟧ᵍ⁺)
+  insert-≈ (vs , s) (alt (ws , g)) with vs ≟ˢ ws
+  ... | yes refl = add-≈ s g
+  ... | no _ with vs <ˢ ws
+  ...   | true  = ≈-refl
+  ...   | false = ∨-comm
+  insert-≈ (vs , s) ((ws , g) ∷⁺ Gs) with vs ≟ˢ ws
+  ... | yes refl = ≈-trans (∨-cong (add-≈ s g) ≈-refl) ∨-assoc
+  ... | no _ with vs <ˢ ws
+  ...   | true  = ≈-refl
+  ...   | false =
+          ≈-trans (∨-cong ≈-refl (insert-≈ (vs , s) Gs))
+          (≈-trans (≈-sym ∨-assoc) (≈-trans (∨-cong ∨-comm ≈-refl) ∨-assoc))
+
+  groups : Alts Prod → Alts Group
+  groups (alt (vs , s)) = alt (vs , alt s)
+  groups (P ∷⁺ ps)      = insert P (groups ps)
+
+  groups-≈ : (ps : Alts Prod) → ⟦ groups ps ⟧ᵍ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+  groups-≈ (alt P)   = ≈-refl
+  groups-≈ (P ∷⁺ ps) = ≈-trans (insert-≈ P (groups ps)) (∨-cong ≈-refl (groups-≈ ps))
+
+  -- Each group folded where it can be, and the groups read back as one
+  -- sum
+
+  foldGroup : Group → Group
+  foldGroup (vs , g) with fold? g
+  ... | just (s , _) = vs , alt s
+  ... | nothing      = vs , g
+
+  foldGroup-≈ : (G : Group) → ⟦ foldGroup G ⟧ᵍ ≈ ⟦ G ⟧ᵍ
+  foldGroup-≈ (vs , g) with fold? g
+  ... | just (s , p) = ≈-sym p
+  ... | nothing      = ≈-refl
+
+  foldGroups-≈ : (Gs : Alts Group) → ⟦ mapᴬ foldGroup Gs ⟧ᵍ⁺ ≈ ⟦ Gs ⟧ᵍ⁺
+  foldGroups-≈ (alt G)   = foldGroup-≈ G
+  foldGroups-≈ (G ∷⁺ Gs) = ∨-cong (foldGroup-≈ G) (foldGroups-≈ Gs)
+
+  members : Group → Alts Prod
+  members (vs , g) = mapᴬ (vs ,_) g
+
+  members-≈ : (G : Group) → ⟦ members G ⟧ᵖ⁺ ≈ ⟦ G ⟧ᵍ
+  members-≈ (vs , alt s)  = ≈-refl
+  members-≈ (vs , s ∷⁺ g) = ∨-cong ≈-refl (members-≈ (vs , g))
+
+  flatten : Alts Group → Alts Prod
+  flatten (alt G)   = members G
+  flatten (G ∷⁺ Gs) = members G ⧺ flatten Gs
+
+  flatten-≈ : (Gs : Alts Group) → ⟦ flatten Gs ⟧ᵖ⁺ ≈ ⟦ Gs ⟧ᵍ⁺
+  flatten-≈ (alt G)   = members-≈ G
+  flatten-≈ (G ∷⁺ Gs) =
+    ≈-trans (⧺-≈ (members G) (flatten Gs)) (∨-cong (members-≈ G) (flatten-≈ Gs))
+
+  canonical : Alts Prod → Alts Prod
+  canonical ps = flatten (mapᴬ foldGroup (groups ps))
+
+  canonical-≈ : (ps : Alts Prod) → ⟦ canonical ps ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+  canonical-≈ ps =
+    ≈-trans (flatten-≈ (mapᴬ foldGroup (groups ps)))
+    (≈-trans (foldGroups-≈ (groups ps)) (groups-≈ ps))
 
 ------------------------------------------------------------------
 -- Effect grades
@@ -163,7 +442,8 @@ mulₑ-≡ (P ∷⁺ s) t =
   (≡̂ₑ-trans (≡̂ₑ-cong-⊔ (mul1ₑ-≡ P t) (mulₑ-≡ s t)) (≡̂ₑ-sym ≡̂ₑ-distribʳ-⊔))
 
 -- Merging repeated alternatives, which the join's idempotence,
--- commutativity and associativity licence
+-- commutativity and associativity licence; a repeat is absorbed by
+-- its last occurrence
 
 _≟ᵃₑ_ : ∀ {Θ} → DecidableEquality (EAtom Θ)
 ac c ≟ᵃₑ ac d with c ≡ₑ? d
@@ -178,13 +458,28 @@ av i ≟ᵃₑ av j with i ≟ᶠ j
 _≟ᵖₑ_ : ∀ {Θ} → DecidableEquality (List (EAtom Θ))
 _≟ᵖₑ_ = ≡-decᴸ _≟ᵃₑ_
 
+-- An alternative already in the sum is absorbed by it, which keeps
+-- the order of the remaining alternatives
+
+withinₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → (s : Alts (List (EAtom Θ)))
+         → Maybe (⟦ P ⟧ᵉˢ ⊔̂ₑ ⟦ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺)
+withinₑ? P (alt Q) with P ≟ᵖₑ Q
+... | yes refl = just ≡̂ₑ-idem-⊔
+... | no _     = nothing
+withinₑ? P (Q ∷⁺ t) with P ≟ᵖₑ Q
+... | yes refl =
+      just (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc-⊔) (≡̂ₑ-cong-⊔ ≡̂ₑ-idem-⊔ ≡̂ₑ-refl))
+... | no _ with withinₑ? P t
+...   | just p  =
+        just (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc-⊔)
+             (≡̂ₑ-trans (≡̂ₑ-cong-⊔ ≡̂ₑ-comm-⊔ ≡̂ₑ-refl)
+             (≡̂ₑ-trans ≡̂ₑ-assoc-⊔ (≡̂ₑ-cong-⊔ ≡̂ₑ-refl p))))
+...   | nothing = nothing
+
 nub1ₑ : ∀ {Θ} → List (EAtom Θ) → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
-nub1ₑ P (alt Q) with P ≟ᵖₑ Q
-... | yes _ = alt Q
-... | no _  = P ∷⁺ alt Q
-nub1ₑ P (Q ∷⁺ t) with P ≟ᵖₑ Q
-... | yes _ = Q ∷⁺ t
-... | no _  = Q ∷⁺ nub1ₑ P t
+nub1ₑ P s with withinₑ? P s
+... | just _  = s
+... | nothing = P ∷⁺ s
 
 nubₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
 nubₑ (alt P)  = alt P
@@ -192,16 +487,9 @@ nubₑ (P ∷⁺ s) = nub1ₑ P (nubₑ s)
 
 nub1ₑ-≡ : ∀ {Θ} → (P : List (EAtom Θ)) → (s : Alts (List (EAtom Θ)))
         → ⟦ nub1ₑ P s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ P ⟧ᵉˢ ⊔̂ₑ ⟦ s ⟧ᵉˢ⁺
-nub1ₑ-≡ P (alt Q) with P ≟ᵖₑ Q
-... | yes refl = ≡̂ₑ-sym ≡̂ₑ-idem-⊔
-... | no _     = ≡̂ₑ-refl
-nub1ₑ-≡ P (Q ∷⁺ t) with P ≟ᵖₑ Q
-... | yes refl =
-      ≡̂ₑ-trans (≡̂ₑ-sym (≡̂ₑ-cong-⊔ ≡̂ₑ-idem-⊔ ≡̂ₑ-refl)) ≡̂ₑ-assoc-⊔
-... | no _ =
-      ≡̂ₑ-trans (≡̂ₑ-cong-⊔ ≡̂ₑ-refl (nub1ₑ-≡ P t))
-      (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc-⊔)
-      (≡̂ₑ-trans (≡̂ₑ-cong-⊔ ≡̂ₑ-comm-⊔ ≡̂ₑ-refl) ≡̂ₑ-assoc-⊔))
+nub1ₑ-≡ P s with withinₑ? P s
+... | just p  = ≡̂ₑ-sym p
+... | nothing = ≡̂ₑ-refl
 
 nubₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → ⟦ nubₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
 nubₑ-≡ (alt P)  = ≡̂ₑ-refl
@@ -395,13 +683,28 @@ rm i ≟ᵃᵣ rm j with i ≟ᶠ j
 _≟ᵖᵣ_ : ∀ {Θ} → DecidableEquality (List (RAtom Θ))
 _≟ᵖᵣ_ = ≡-decᴸ _≟ᵃᵣ_
 
+-- An alternative already in the sum is absorbed by it, which keeps
+-- the order of the remaining alternatives
+
+withinᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → (s : Alts (List (RAtom Θ)))
+         → Maybe (⟦ P ⟧ʳˢ ⊔̂ᵣ ⟦ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺)
+withinᵣ? P (alt Q) with P ≟ᵖᵣ Q
+... | yes refl = just ≡̂ᵣ-idem-⊔
+... | no _     = nothing
+withinᵣ? P (Q ∷⁺ t) with P ≟ᵖᵣ Q
+... | yes refl =
+      just (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc-⊔) (≡̂ᵣ-cong-⊔ ≡̂ᵣ-idem-⊔ ≡̂ᵣ-refl))
+... | no _ with withinᵣ? P t
+...   | just p  =
+        just (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc-⊔)
+             (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ ≡̂ᵣ-comm-⊔ ≡̂ᵣ-refl)
+             (≡̂ᵣ-trans ≡̂ᵣ-assoc-⊔ (≡̂ᵣ-cong-⊔ ≡̂ᵣ-refl p))))
+...   | nothing = nothing
+
 nub1ᵣ : ∀ {Θ} → List (RAtom Θ) → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
-nub1ᵣ P (alt Q) with P ≟ᵖᵣ Q
-... | yes _ = alt Q
-... | no _  = P ∷⁺ alt Q
-nub1ᵣ P (Q ∷⁺ t) with P ≟ᵖᵣ Q
-... | yes _ = Q ∷⁺ t
-... | no _  = Q ∷⁺ nub1ᵣ P t
+nub1ᵣ P s with withinᵣ? P s
+... | just _  = s
+... | nothing = P ∷⁺ s
 
 nubᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
 nubᵣ (alt P)  = alt P
@@ -409,16 +712,9 @@ nubᵣ (P ∷⁺ s) = nub1ᵣ P (nubᵣ s)
 
 nub1ᵣ-≡ : ∀ {Θ} → (P : List (RAtom Θ)) → (s : Alts (List (RAtom Θ)))
         → ⟦ nub1ᵣ P s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ P ⟧ʳˢ ⊔̂ᵣ ⟦ s ⟧ʳˢ⁺
-nub1ᵣ-≡ P (alt Q) with P ≟ᵖᵣ Q
-... | yes refl = ≡̂ᵣ-sym ≡̂ᵣ-idem-⊔
-... | no _     = ≡̂ᵣ-refl
-nub1ᵣ-≡ P (Q ∷⁺ t) with P ≟ᵖᵣ Q
-... | yes refl =
-      ≡̂ᵣ-trans (≡̂ᵣ-sym (≡̂ᵣ-cong-⊔ ≡̂ᵣ-idem-⊔ ≡̂ᵣ-refl)) ≡̂ᵣ-assoc-⊔
-... | no _ =
-      ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ ≡̂ᵣ-refl (nub1ᵣ-≡ P t))
-      (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc-⊔)
-      (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ ≡̂ᵣ-comm-⊔ ≡̂ᵣ-refl) ≡̂ᵣ-assoc-⊔))
+nub1ᵣ-≡ P s with withinᵣ? P s
+... | just p  = ≡̂ᵣ-sym p
+... | nothing = ≡̂ᵣ-refl
 
 nubᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → ⟦ nubᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
 nubᵣ-≡ (alt P)  = ≡̂ᵣ-refl
@@ -510,18 +806,253 @@ nrmᵣ-≡ (ρ ⊔̂ᵣ ρ')  =
                               (⧺ᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))))
 nrmᵣ-≡ ∣ ε ∣̂ᵉ     = nrmᵐ-≡ ε
 
+-- The normal form read back without trailing units, which is what
+-- `decide≾ₑ`/`decide≾ᵣ` compare, alternative by alternative
+
+nrmₑ-≡ᵖ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉᵖ⁺
+nrmₑ-≡ᵖ ε = ≡̂ₑ-trans (nrmₑ-≡ ε) (⟦⟧ᵉᵖ⁺-≡ (nrmₑ ε))
+
+nrmᵣ-≡ᵖ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳᵖ⁺
+nrmᵣ-≡ᵖ ρ = ≡̂ᵣ-trans (nrmᵣ-≡ ρ) (⟦⟧ʳᵖ⁺-≡ (nrmᵣ ρ))
+
+------------------------------------------------------------------
+-- Canonical forms
+--
+-- The normal form of `nrmₑ`/`nrmᵣ`, grouped and folded by `Grouping`.
+-- A product is read into its skeleton and slots, the constants of a
+-- run multiplied into one slot, and read back through `consₑ`/`consᵣ`,
+-- which drops a slot holding the unit. A fold may yield the top, which
+-- then absorbs the sum.
+
+-- Effect variables are ordered by index
+
+_<ᵉᵛ_ : ∀ {Θ} → EVar Θ → EVar Θ → 𝔹
+i <ᵉᵛ j = toℕ i <ᵇ toℕ j
+
+module Gₑ {Θ : Scope} =
+  Grouping {EExp Θ} {E} {EVar Θ} _≡̂ₑ_ ≡̂ₑ-refl ≡̂ₑ-sym ≡̂ₑ-trans _·̂ₑ_ _⊔̂ₑ_
+           ≡̂ₑ-cong ≡̂ₑ-cong-⊔ ≡̂ₑ-idem-⊔ ≡̂ₑ-comm-⊔ ≡̂ₑ-assoc-⊔
+           ≡̂ₑ-distribˡ-⊔ ≡̂ₑ-distribʳ-⊔
+           econst _⊔ₑ_ ≡̂ₑ-const-⊔ _≡ₑ?_ evar _≟ᶠ_ (_<ᵉᵛ_ {Θ})
+
+-- The unit, where no constant has been met
+
+⌊_⌋ₑ : Maybe E → E
+⌊ nothing ⌋ₑ = uₑ
+⌊ just c ⌋ₑ  = c
+
+_·ᵐₑ_ : Maybe E → E → E
+nothing ·ᵐₑ c = c
+just b  ·ᵐₑ c = b ·ₑ c
+
+slotsₑ : ∀ {Θ} → Maybe E → List (EAtom Θ) → Gₑ.Prod {Θ}
+slotsₑ m        []           = [] , Gₑ.⌜ ⌊ m ⌋ₑ ⌝
+slotsₑ m        (ac c ∷ as) = slotsₑ (just (m ·ᵐₑ c)) as
+slotsₑ m        (av i ∷ as) = i ∷ proj₁ P , (⌊ m ⌋ₑ Gₑ.▸ proj₂ P)
+  where P = slotsₑ nothing as
+
+slotsₑ-≡ : ∀ {Θ} → (m : Maybe E) → (as : List (EAtom Θ))
+         → Gₑ.⟦ slotsₑ m as ⟧ᵖ ≡̂ₑ econst ⌊ m ⌋ₑ ·̂ₑ ⟦ as ⟧ᵉˢ
+slotsₑ-≡ m        []           = ≡̂ₑ-sym ≡̂ₑ-identityʳ
+slotsₑ-≡ nothing  (ac c ∷ as) = ≡̂ₑ-trans (slotsₑ-≡ (just c) as) (≡̂ₑ-sym ≡̂ₑ-identityˡ)
+slotsₑ-≡ (just b) (ac c ∷ as) =
+  ≡̂ₑ-trans (slotsₑ-≡ (just (b ·ₑ c)) as)
+  (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-sym ≡̂ₑ-const-·) ≡̂ₑ-refl) ≡̂ₑ-assoc)
+slotsₑ-≡ m        (av i ∷ as) =
+  ≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-trans (slotsₑ-≡ nothing as) ≡̂ₑ-identityˡ))
+
+atomsₑ : ∀ {Θ vs} → Gₑ.Slots {Θ} vs → List (EAtom Θ)
+atomsₑ Gₑ.⌜ c ⌝            = consₑ (ac c) []
+atomsₑ (Gₑ._▸_ {i} c s) = consₑ (ac c) (av i ∷ atomsₑ s)
+
+atomsₑ-≡ : ∀ {Θ vs} → (s : Gₑ.Slots {Θ} vs) → ⟦ atomsₑ s ⟧ᵉˢ ≡̂ₑ Gₑ.⟦ s ⟧ᵏ
+atomsₑ-≡ Gₑ.⌜ c ⌝            = ≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ
+atomsₑ-≡ (Gₑ._▸_ {i} c s) =
+  ≡̂ₑ-trans (consₑ-≡ (ac c) (av i ∷ atomsₑ s))
+           (≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-cong ≡̂ₑ-refl (atomsₑ-≡ s)))
+
+toProdsₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (Gₑ.Prod {Θ})
+toProdsₑ = mapᴬ (slotsₑ nothing)
+
+toProdsₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → Gₑ.⟦ toProdsₑ s ⟧ᵖ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+toProdsₑ-≡ (alt P)  = ≡̂ₑ-trans (slotsₑ-≡ nothing P) ≡̂ₑ-identityˡ
+toProdsₑ-≡ (P ∷⁺ s) =
+  ≡̂ₑ-cong-⊔ (≡̂ₑ-trans (slotsₑ-≡ nothing P) ≡̂ₑ-identityˡ) (toProdsₑ-≡ s)
+
+fromProdsₑ : ∀ {Θ} → Alts (Gₑ.Prod {Θ}) → Alts (List (EAtom Θ))
+fromProdsₑ = mapᴬ (λ P → atomsₑ (proj₂ P))
+
+fromProdsₑ-≡ : ∀ {Θ} → (ps : Alts (Gₑ.Prod {Θ})) → ⟦ fromProdsₑ ps ⟧ᵉˢ⁺ ≡̂ₑ Gₑ.⟦ ps ⟧ᵖ⁺
+fromProdsₑ-≡ (alt P)   = atomsₑ-≡ (proj₂ P)
+fromProdsₑ-≡ (P ∷⁺ ps) = ≡̂ₑ-cong-⊔ (atomsₑ-≡ (proj₂ P)) (fromProdsₑ-≡ ps)
+
+canonSumₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
+canonSumₑ s = absorbₑ (fromProdsₑ (Gₑ.canonical (toProdsₑ s)))
+
+canonSumₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → ⟦ canonSumₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+canonSumₑ-≡ s =
+  ≡̂ₑ-trans (absorbₑ-≡ (fromProdsₑ (Gₑ.canonical (toProdsₑ s))))
+  (≡̂ₑ-trans (fromProdsₑ-≡ (Gₑ.canonical (toProdsₑ s)))
+  (≡̂ₑ-trans (Gₑ.canonical-≈ (toProdsₑ s)) (toProdsₑ-≡ s)))
+
+-- The variable atoms of a resource product: resource variables, then
+-- images of effect variables, each ordered by index
+
+data RVAtom (Θ : Scope) : Set where
+  vr : RVar Θ → RVAtom Θ
+  vm : EVar Θ → RVAtom Θ
+
+varAtomᵣ : ∀ {Θ} → RVAtom Θ → RAtom Θ
+varAtomᵣ (vr i) = rv i
+varAtomᵣ (vm i) = rm i
+
+⟦_⟧ʳᵛ : ∀ {Θ} → RVAtom Θ → RExp Θ
+⟦ a ⟧ʳᵛ = ⟦ varAtomᵣ a ⟧ʳᵃ
+
+_≟ʳᵛ_ : ∀ {Θ} → DecidableEquality (RVAtom Θ)
+vr i ≟ʳᵛ vr j with i ≟ᶠ j
+... | yes refl = yes refl
+... | no ¬p    = no λ { refl → ¬p refl }
+vr i ≟ʳᵛ vm j = no λ ()
+vm i ≟ʳᵛ vr j = no λ ()
+vm i ≟ʳᵛ vm j with i ≟ᶠ j
+... | yes refl = yes refl
+... | no ¬p    = no λ { refl → ¬p refl }
+
+_<ʳᵛ_ : ∀ {Θ} → RVAtom Θ → RVAtom Θ → 𝔹
+vr i <ʳᵛ vr j = toℕ i <ᵇ toℕ j
+vr _ <ʳᵛ vm _ = true
+vm _ <ʳᵛ vr _ = false
+vm i <ʳᵛ vm j = toℕ i <ᵇ toℕ j
+
+module Gᵣ {Θ : Scope} =
+  Grouping {RExp Θ} {R} {RVAtom Θ} _≡̂ᵣ_ ≡̂ᵣ-refl ≡̂ᵣ-sym ≡̂ᵣ-trans _·̂ᵣ_ _⊔̂ᵣ_
+           ≡̂ᵣ-cong ≡̂ᵣ-cong-⊔ ≡̂ᵣ-idem-⊔ ≡̂ᵣ-comm-⊔ ≡̂ᵣ-assoc-⊔
+           ≡̂ᵣ-distribˡ-⊔ ≡̂ᵣ-distribʳ-⊔
+           rconst _⊔ᵣ_ ≡̂ᵣ-const-⊔ _≡ᵣ?_ ⟦_⟧ʳᵛ _≟ʳᵛ_ _<ʳᵛ_
+
+⌊_⌋ᵣ : Maybe R → R
+⌊ nothing ⌋ᵣ = uᵣ
+⌊ just c ⌋ᵣ  = c
+
+_·ᵐᵣ_ : Maybe R → R → R
+nothing ·ᵐᵣ c = c
+just b  ·ᵐᵣ c = b ·ᵣ c
+
+slotsᵣ : ∀ {Θ} → Maybe R → List (RAtom Θ) → Gᵣ.Prod {Θ}
+slotsᵣ m        []           = [] , Gᵣ.⌜ ⌊ m ⌋ᵣ ⌝
+slotsᵣ m        (rc c ∷ as) = slotsᵣ (just (m ·ᵐᵣ c)) as
+slotsᵣ m        (rv i ∷ as) = vr i ∷ proj₁ P , (⌊ m ⌋ᵣ Gᵣ.▸ proj₂ P)
+  where P = slotsᵣ nothing as
+slotsᵣ m        (rm i ∷ as) = vm i ∷ proj₁ P , (⌊ m ⌋ᵣ Gᵣ.▸ proj₂ P)
+  where P = slotsᵣ nothing as
+
+slotsᵣ-≡ : ∀ {Θ} → (m : Maybe R) → (as : List (RAtom Θ))
+         → Gᵣ.⟦ slotsᵣ m as ⟧ᵖ ≡̂ᵣ rconst ⌊ m ⌋ᵣ ·̂ᵣ ⟦ as ⟧ʳˢ
+slotsᵣ-≡ m        []           = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
+slotsᵣ-≡ nothing  (rc c ∷ as) = ≡̂ᵣ-trans (slotsᵣ-≡ (just c) as) (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)
+slotsᵣ-≡ (just b) (rc c ∷ as) =
+  ≡̂ᵣ-trans (slotsᵣ-≡ (just (b ·ᵣ c)) as)
+  (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-sym ≡̂ᵣ-const-·) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
+slotsᵣ-≡ m        (rv i ∷ as) =
+  ≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-trans (slotsᵣ-≡ nothing as) ≡̂ᵣ-identityˡ))
+slotsᵣ-≡ m        (rm i ∷ as) =
+  ≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-trans (slotsᵣ-≡ nothing as) ≡̂ᵣ-identityˡ))
+
+atomsᵣ : ∀ {Θ vs} → Gᵣ.Slots {Θ} vs → List (RAtom Θ)
+atomsᵣ Gᵣ.⌜ c ⌝            = consᵣ (rc c) []
+atomsᵣ (Gᵣ._▸_ {a} c s) = consᵣ (rc c) (varAtomᵣ a ∷ atomsᵣ s)
+
+atomsᵣ-≡ : ∀ {Θ vs} → (s : Gᵣ.Slots {Θ} vs) → ⟦ atomsᵣ s ⟧ʳˢ ≡̂ᵣ Gᵣ.⟦ s ⟧ᵏ
+atomsᵣ-≡ Gᵣ.⌜ c ⌝            = ≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ
+atomsᵣ-≡ (Gᵣ._▸_ {a} c s) =
+  ≡̂ᵣ-trans (consᵣ-≡ (rc c) (varAtomᵣ a ∷ atomsᵣ s))
+           (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-cong ≡̂ᵣ-refl (atomsᵣ-≡ s)))
+
+toProdsᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (Gᵣ.Prod {Θ})
+toProdsᵣ = mapᴬ (slotsᵣ nothing)
+
+toProdsᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → Gᵣ.⟦ toProdsᵣ s ⟧ᵖ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+toProdsᵣ-≡ (alt P)  = ≡̂ᵣ-trans (slotsᵣ-≡ nothing P) ≡̂ᵣ-identityˡ
+toProdsᵣ-≡ (P ∷⁺ s) =
+  ≡̂ᵣ-cong-⊔ (≡̂ᵣ-trans (slotsᵣ-≡ nothing P) ≡̂ᵣ-identityˡ) (toProdsᵣ-≡ s)
+
+fromProdsᵣ : ∀ {Θ} → Alts (Gᵣ.Prod {Θ}) → Alts (List (RAtom Θ))
+fromProdsᵣ = mapᴬ (λ P → atomsᵣ (proj₂ P))
+
+fromProdsᵣ-≡ : ∀ {Θ} → (ps : Alts (Gᵣ.Prod {Θ})) → ⟦ fromProdsᵣ ps ⟧ʳˢ⁺ ≡̂ᵣ Gᵣ.⟦ ps ⟧ᵖ⁺
+fromProdsᵣ-≡ (alt P)   = atomsᵣ-≡ (proj₂ P)
+fromProdsᵣ-≡ (P ∷⁺ ps) = ≡̂ᵣ-cong-⊔ (atomsᵣ-≡ (proj₂ P)) (fromProdsᵣ-≡ ps)
+
+canonSumᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
+canonSumᵣ s = absorbᵣ (fromProdsᵣ (Gᵣ.canonical (toProdsᵣ s)))
+
+canonSumᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → ⟦ canonSumᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+canonSumᵣ-≡ s =
+  ≡̂ᵣ-trans (absorbᵣ-≡ (fromProdsᵣ (Gᵣ.canonical (toProdsᵣ s))))
+  (≡̂ᵣ-trans (fromProdsᵣ-≡ (Gᵣ.canonical (toProdsᵣ s)))
+  (≡̂ᵣ-trans (Gᵣ.canonical-≈ (toProdsᵣ s)) (toProdsᵣ-≡ s)))
+
 -- The canonical form of an expression: a join of right-nested
 -- products of atoms, a lone alternative standing for itself and the
 -- empty product for the unit.
 
 canonₑ : ∀ {Θ} → EExp Θ → EExp Θ
-canonₑ ε = ⟦ nrmₑ ε ⟧ᵉᵖ⁺
+canonₑ ε = ⟦ canonSumₑ (nrmₑ ε) ⟧ᵉᵖ⁺
 
 canonᵣ : ∀ {Θ} → RExp Θ → RExp Θ
-canonᵣ ρ = ⟦ nrmᵣ ρ ⟧ʳᵖ⁺
+canonᵣ ρ = ⟦ canonSumᵣ (nrmᵣ ρ) ⟧ʳᵖ⁺
 
 canonₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ canonₑ ε
-canonₑ-≡ ε = ≡̂ₑ-trans (nrmₑ-≡ ε) (⟦⟧ᵉᵖ⁺-≡ (nrmₑ ε))
+canonₑ-≡ ε =
+  ≡̂ₑ-trans (nrmₑ-≡ ε)
+  (≡̂ₑ-trans (≡̂ₑ-sym (canonSumₑ-≡ (nrmₑ ε))) (⟦⟧ᵉᵖ⁺-≡ (canonSumₑ (nrmₑ ε))))
 
 canonᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ canonᵣ ρ
-canonᵣ-≡ ρ = ≡̂ᵣ-trans (nrmᵣ-≡ ρ) (⟦⟧ʳᵖ⁺-≡ (nrmᵣ ρ))
+canonᵣ-≡ ρ =
+  ≡̂ᵣ-trans (nrmᵣ-≡ ρ)
+  (≡̂ᵣ-trans (≡̂ᵣ-sym (canonSumᵣ-≡ (nrmᵣ ρ))) (⟦⟧ʳᵖ⁺-≡ (canonSumᵣ (nrmᵣ ρ))))
+
+------------------------------------------------------------------
+-- The skeletons of an expression's alternatives, read off its
+-- syntax, and the order of grade orderings by the skeletons of their
+-- two sides. On a canonical expression they are the skeletons of its
+-- groups, in order.
+
+varsₑ : ∀ {Θ} → EExp Θ → List (EVar Θ)
+varsₑ (evar i)   = i ∷ []
+varsₑ (econst _) = []
+varsₑ (ε ·̂ₑ ε')  = varsₑ ε ++ varsₑ ε'
+varsₑ (ε ⊔̂ₑ ε')  = varsₑ ε ++ varsₑ ε'
+
+skeletonsₑ : ∀ {Θ} → EExp Θ → List (List (EVar Θ))
+skeletonsₑ (ε ⊔̂ₑ ε') = skeletonsₑ ε ++ skeletonsₑ ε'
+skeletonsₑ (evar i)   = (i ∷ []) ∷ []
+skeletonsₑ (econst c) = [] ∷ []
+skeletonsₑ (ε ·̂ₑ ε')  = varsₑ (ε ·̂ₑ ε') ∷ []
+
+varsᵣ : ∀ {Θ} → RExp Θ → List (RVAtom Θ)
+varsᵣ (rvar i)   = vr i ∷ []
+varsᵣ (rconst _) = []
+varsᵣ (ρ ·̂ᵣ ρ')  = varsᵣ ρ ++ varsᵣ ρ'
+varsᵣ (ρ ⊔̂ᵣ ρ')  = varsᵣ ρ ++ varsᵣ ρ'
+varsᵣ ∣ ε ∣̂ᵉ     = map vm (varsₑ ε)
+
+skeletonsᵣ : ∀ {Θ} → RExp Θ → List (List (RVAtom Θ))
+skeletonsᵣ (ρ ⊔̂ᵣ ρ') = skeletonsᵣ ρ ++ skeletonsᵣ ρ'
+skeletonsᵣ (rvar i)   = (vr i ∷ []) ∷ []
+skeletonsᵣ (rconst c) = [] ∷ []
+skeletonsᵣ (ρ ·̂ᵣ ρ')  = varsᵣ (ρ ·̂ᵣ ρ') ∷ []
+skeletonsᵣ ∣ ε ∣̂ᵉ     = varsᵣ ∣ ε ∣̂ᵉ ∷ []
+
+infix 4 _≺ₑ_ _≺ᵣ_
+
+_≺ₑ_ : ∀ {Θ} → EExp Θ × EExp Θ → EExp Θ × EExp Θ → 𝔹
+_≺ₑ_ {Θ} (ε₁ , ε₁') (ε₂ , ε₂') =
+  lex (≡-decᴸ (≡-decᴸ _≟ᶠ_)) (lex (≡-decᴸ _≟ᶠ_) (Gₑ._<ˢ_ {Θ}))
+      (skeletonsₑ ε₁ ∷ skeletonsₑ ε₁' ∷ []) (skeletonsₑ ε₂ ∷ skeletonsₑ ε₂' ∷ [])
+
+_≺ᵣ_ : ∀ {Θ} → RExp Θ × RExp Θ → RExp Θ × RExp Θ → 𝔹
+(ρ₁ , ρ₁') ≺ᵣ (ρ₂ , ρ₂') =
+  lex (≡-decᴸ (≡-decᴸ _≟ʳᵛ_)) (lex (≡-decᴸ _≟ʳᵛ_) Gᵣ._<ˢ_)
+      (skeletonsᵣ ρ₁ ∷ skeletonsᵣ ρ₁' ∷ []) (skeletonsᵣ ρ₂ ∷ skeletonsᵣ ρ₂' ∷ [])

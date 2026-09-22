@@ -2,17 +2,22 @@
 -- Normalising, settling and pruning a reported hypothesis set   --
 --                                                                --
 -- `simplify` first replaces every grade expression of the set by --
--- its product normal form. It then settles every `disj` entry    --
--- one of whose sides is settled: a met eternality demand drops   --
--- the entry, a refuted one leaves the grade ordering behind, and --
--- a refuted grade leaves the eternality atoms behind. It finally --
--- drops every hypothesis the rest of the set still entails.      --
+-- its canonical form. It then settles every `disj` entry one of  --
+-- whose sides is settled: a met eternality demand drops the      --
+-- entry, a refuted one leaves the grade ordering behind, and a   --
+-- refuted grade leaves the eternality atoms behind. It then      --
+-- prunes: a subtyping or eternality atom entailed by the atoms   --
+-- kept before it is dropped, entailment there being reachability --
+-- in a finite digraph, and a grade ordering is dropped when it   --
+-- repeats one kept before it. It finally lists the grade         --
+-- orderings by the skeletons of their two sides.                 --
 --                                                                --
 -- `simplify Q` and `Q` are satisfied by exactly the same         --
 -- groundings. This is a simplification of the report, not of the --
 -- solver, and `solve-principal` is untouched.                    --
 ------------------------------------------------------------------
 
+open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥-elim)
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Fin.Base using (Fin)
@@ -62,6 +67,7 @@ open import TypeInference.OpenSyntax.Grounding S
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
 open import TypeInference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊨; canonᴴ-⊨⁻)
+open import TypeInference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
 open import TypeInference.SolverImpl.Resid  S using (etDec)
 open import TypeInference.SolverImpl.Refute S umin?ᵣ umin?ₑ
   using (Refutedᵤ; scanᵤ)
@@ -293,9 +299,9 @@ settleAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with settle-⊨⁻ A ρ (settleAll l Q�
 ... | h' , d with settleAll-⊨⁻ l Q₀ h'
 ...   | h'' , k = h'' , λ { (here refl) → d ; (there m) → k m }
 
--- A hypothesis the rest of the set still entails is dropped. Decided
--- for the subtyping and eternality atoms, where entailment is
--- reachability in a finite digraph; left undecided for the orderings.
+-- A subtyping or eternality atom entailed by the atoms kept before it
+-- is dropped: entailment of such atoms is reachability in a finite
+-- digraph.
 
 pruneᵛ : ∀ {n} → List (Fin n × Fin n) → List (Fin n × Fin n) → List (Fin n × Fin n)
 pruneᵛ acc []            = acc
@@ -363,8 +369,9 @@ pruneᴱ-et l acc (α₀ ∷ as) (here refl) | nothing =
   atomᴾ (pruneᴱ-⊇ l (α₀ ∷ acc) as (here refl))
 pruneᴱ-et l acc (α₀ ∷ as) (there m)   | nothing = pruneᴱ-et l (α₀ ∷ acc) as m
 
--- A grade ordering is entailed by the rest exactly when the rest
--- repeats it: `hypᵣ`/`hypₑ` is the only rule deciding here.
+-- A grade ordering is dropped when it repeats one kept before it, the
+-- orderings kept staying in place. Entailment of an ordering by the
+-- others is not decided here.
 
 memʳ? : ∀ {Θ} → (p : RExp Θ × RExp Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (p ∈ l)
 memʳ? p []              = nothing
@@ -384,69 +391,53 @@ memᵉ? (ε , ε') ((ε₀ , ε₀') ∷ l) with ε ≟ᵉ ε₀ | ε' ≟ᵉ ε
 
 pruneᴼʳ : ∀ {Θ} → List (RExp Θ × RExp Θ) → List (RExp Θ × RExp Θ)
         → List (RExp Θ × RExp Θ)
-pruneᴼʳ acc []      = acc
-pruneᴼʳ acc (p ∷ l) with memʳ? p acc
-... | just _  = pruneᴼʳ acc l
-... | nothing = pruneᴼʳ (p ∷ acc) l
+pruneᴼʳ seen []      = []
+pruneᴼʳ seen (p ∷ l) with memʳ? p seen
+... | just _  = pruneᴼʳ seen l
+... | nothing = p ∷ pruneᴼʳ (p ∷ seen) l
 
-pruneᴼʳ-⊇ : ∀ {Θ} → (acc l : List (RExp Θ × RExp Θ))
-          → ∀ {p} → p ∈ acc → p ∈ pruneᴼʳ acc l
-pruneᴼʳ-⊇ acc []       m = m
-pruneᴼʳ-⊇ acc (p₀ ∷ l) m with memʳ? p₀ acc
-... | just _  = pruneᴼʳ-⊇ acc l m
-... | nothing = pruneᴼʳ-⊇ (p₀ ∷ acc) l (there m)
+pruneᴼʳ-⊆ : ∀ {Θ} → (seen l : List (RExp Θ × RExp Θ))
+          → ∀ {p} → p ∈ pruneᴼʳ seen l → p ∈ l
+pruneᴼʳ-⊆ seen (p₀ ∷ l) m with memʳ? p₀ seen
+pruneᴼʳ-⊆ seen (p₀ ∷ l) m           | just _  = there (pruneᴼʳ-⊆ seen l m)
+pruneᴼʳ-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
+pruneᴼʳ-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (pruneᴼʳ-⊆ (p₀ ∷ seen) l m)
 
-pruneᴼʳ-⊆ : ∀ {Θ} → (acc l : List (RExp Θ × RExp Θ))
-          → ∀ {p} → p ∈ pruneᴼʳ acc l → (p ∈ acc) ⊎ (p ∈ l)
-pruneᴼʳ-⊆ acc []       m = inj₁ m
-pruneᴼʳ-⊆ acc (p₀ ∷ l) m with memʳ? p₀ acc
-... | just _  = [ inj₁ , (λ q → inj₂ (there q)) ]′ (pruneᴼʳ-⊆ acc l m)
-... | nothing with pruneᴼʳ-⊆ (p₀ ∷ acc) l m
-...   | inj₁ (here refl) = inj₂ (here refl)
-...   | inj₁ (there q)   = inj₁ q
-...   | inj₂ q           = inj₂ (there q)
-
-pruneᴼʳ-mem : ∀ {Θ} → (acc l : List (RExp Θ × RExp Θ))
-            → ∀ {p} → p ∈ l → p ∈ pruneᴼʳ acc l
-pruneᴼʳ-mem acc (p₀ ∷ l) m with memʳ? p₀ acc
-pruneᴼʳ-mem acc (p₀ ∷ l) (here refl) | just m₀ = pruneᴼʳ-⊇ acc l m₀
-pruneᴼʳ-mem acc (p₀ ∷ l) (there m)   | just m₀ = pruneᴼʳ-mem acc l m
-pruneᴼʳ-mem acc (p₀ ∷ l) (here refl) | nothing =
-  pruneᴼʳ-⊇ (p₀ ∷ acc) l (here refl)
-pruneᴼʳ-mem acc (p₀ ∷ l) (there m)   | nothing = pruneᴼʳ-mem (p₀ ∷ acc) l m
+pruneᴼʳ-mem : ∀ {Θ} → (seen l : List (RExp Θ × RExp Θ))
+            → ∀ {p} → p ∈ l → (p ∈ seen) ⊎ (p ∈ pruneᴼʳ seen l)
+pruneᴼʳ-mem seen (p₀ ∷ l) m with memʳ? p₀ seen
+pruneᴼʳ-mem seen (p₀ ∷ l) (here refl) | just m₀ = inj₁ m₀
+pruneᴼʳ-mem seen (p₀ ∷ l) (there m)   | just _  = pruneᴼʳ-mem seen l m
+pruneᴼʳ-mem seen (p₀ ∷ l) (here refl) | nothing = inj₂ (here refl)
+pruneᴼʳ-mem seen (p₀ ∷ l) (there m)   | nothing with pruneᴼʳ-mem (p₀ ∷ seen) l m
+... | inj₁ (here refl) = inj₂ (here refl)
+... | inj₁ (there q)   = inj₁ q
+... | inj₂ q           = inj₂ (there q)
 
 pruneᴼᵉ : ∀ {Θ} → List (EExp Θ × EExp Θ) → List (EExp Θ × EExp Θ)
         → List (EExp Θ × EExp Θ)
-pruneᴼᵉ acc []      = acc
-pruneᴼᵉ acc (p ∷ l) with memᵉ? p acc
-... | just _  = pruneᴼᵉ acc l
-... | nothing = pruneᴼᵉ (p ∷ acc) l
+pruneᴼᵉ seen []      = []
+pruneᴼᵉ seen (p ∷ l) with memᵉ? p seen
+... | just _  = pruneᴼᵉ seen l
+... | nothing = p ∷ pruneᴼᵉ (p ∷ seen) l
 
-pruneᴼᵉ-⊇ : ∀ {Θ} → (acc l : List (EExp Θ × EExp Θ))
-          → ∀ {p} → p ∈ acc → p ∈ pruneᴼᵉ acc l
-pruneᴼᵉ-⊇ acc []       m = m
-pruneᴼᵉ-⊇ acc (p₀ ∷ l) m with memᵉ? p₀ acc
-... | just _  = pruneᴼᵉ-⊇ acc l m
-... | nothing = pruneᴼᵉ-⊇ (p₀ ∷ acc) l (there m)
+pruneᴼᵉ-⊆ : ∀ {Θ} → (seen l : List (EExp Θ × EExp Θ))
+          → ∀ {p} → p ∈ pruneᴼᵉ seen l → p ∈ l
+pruneᴼᵉ-⊆ seen (p₀ ∷ l) m with memᵉ? p₀ seen
+pruneᴼᵉ-⊆ seen (p₀ ∷ l) m           | just _  = there (pruneᴼᵉ-⊆ seen l m)
+pruneᴼᵉ-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
+pruneᴼᵉ-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (pruneᴼᵉ-⊆ (p₀ ∷ seen) l m)
 
-pruneᴼᵉ-⊆ : ∀ {Θ} → (acc l : List (EExp Θ × EExp Θ))
-          → ∀ {p} → p ∈ pruneᴼᵉ acc l → (p ∈ acc) ⊎ (p ∈ l)
-pruneᴼᵉ-⊆ acc []       m = inj₁ m
-pruneᴼᵉ-⊆ acc (p₀ ∷ l) m with memᵉ? p₀ acc
-... | just _  = [ inj₁ , (λ q → inj₂ (there q)) ]′ (pruneᴼᵉ-⊆ acc l m)
-... | nothing with pruneᴼᵉ-⊆ (p₀ ∷ acc) l m
-...   | inj₁ (here refl) = inj₂ (here refl)
-...   | inj₁ (there q)   = inj₁ q
-...   | inj₂ q           = inj₂ (there q)
-
-pruneᴼᵉ-mem : ∀ {Θ} → (acc l : List (EExp Θ × EExp Θ))
-            → ∀ {p} → p ∈ l → p ∈ pruneᴼᵉ acc l
-pruneᴼᵉ-mem acc (p₀ ∷ l) m with memᵉ? p₀ acc
-pruneᴼᵉ-mem acc (p₀ ∷ l) (here refl) | just m₀ = pruneᴼᵉ-⊇ acc l m₀
-pruneᴼᵉ-mem acc (p₀ ∷ l) (there m)   | just m₀ = pruneᴼᵉ-mem acc l m
-pruneᴼᵉ-mem acc (p₀ ∷ l) (here refl) | nothing =
-  pruneᴼᵉ-⊇ (p₀ ∷ acc) l (here refl)
-pruneᴼᵉ-mem acc (p₀ ∷ l) (there m)   | nothing = pruneᴼᵉ-mem (p₀ ∷ acc) l m
+pruneᴼᵉ-mem : ∀ {Θ} → (seen l : List (EExp Θ × EExp Θ))
+            → ∀ {p} → p ∈ l → (p ∈ seen) ⊎ (p ∈ pruneᴼᵉ seen l)
+pruneᴼᵉ-mem seen (p₀ ∷ l) m with memᵉ? p₀ seen
+pruneᴼᵉ-mem seen (p₀ ∷ l) (here refl) | just m₀ = inj₁ m₀
+pruneᴼᵉ-mem seen (p₀ ∷ l) (there m)   | just _  = pruneᴼᵉ-mem seen l m
+pruneᴼᵉ-mem seen (p₀ ∷ l) (here refl) | nothing = inj₂ (here refl)
+pruneᴼᵉ-mem seen (p₀ ∷ l) (there m)   | nothing with pruneᴼᵉ-mem (p₀ ∷ seen) l m
+... | inj₁ (here refl) = inj₂ (here refl)
+... | inj₁ (there q)   = inj₁ q
+... | inj₂ q           = inj₂ (there q)
 
 prune : ∀ {Θ} → Hyps Θ → Hyps Θ
 prune Q = hyps (pruneᴱ (pruneᵛ [] (subᵥ Q)) [] (ets Q)) (pruneᵛ [] (subᵥ Q))
@@ -456,8 +447,8 @@ prune-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → �
 prune-⊨ Q h =
   mk⊨ᴴ (λ m → [ (λ ()) , etOK h ]′ (pruneᴱ-⊆ (pruneᵛ [] (subᵥ Q)) [] (ets Q) m))
        (λ m → [ (λ ()) , subOK h ]′ (pruneᵛ-⊆ [] (subᵥ Q) m))
-       (λ m → [ (λ ()) , ordROK h ]′ (pruneᴼʳ-⊆ [] (ordᵣ Q) m))
-       (λ m → [ (λ ()) , ordEOK h ]′ (pruneᴼᵉ-⊆ [] (ordₑ Q) m))
+       (λ m → ordROK h (pruneᴼʳ-⊆ [] (ordᵣ Q) m))
+       (λ m → ordEOK h (pruneᴼᵉ-⊆ [] (ordₑ Q) m))
        (disjOK h)
 
 prune-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ prune Q → θ ⊨ᴴ Q
@@ -466,8 +457,67 @@ prune-⊨⁻ Q h =
                 (Etᴾ-⊩ (λ q → q) (λ q → q)
                        (pruneᴱ-et (pruneᵛ [] (subᵥ Q)) [] (ets Q) m)))
        (λ m → ground-⊩ᵗᵛ h (⊢ᵖ-⊩ (λ q → q) (pruneᵛ-path [] (subᵥ Q) m)))
-       (λ m → ordROK h (pruneᴼʳ-mem [] (ordᵣ Q) m))
-       (λ m → ordEOK h (pruneᴼᵉ-mem [] (ordₑ Q) m))
+       (λ m → [ (λ ()) , ordROK h ]′ (pruneᴼʳ-mem [] (ordᵣ Q) m))
+       (λ m → [ (λ ()) , ordEOK h ]′ (pruneᴼᵉ-mem [] (ordₑ Q) m))
+       (disjOK h)
+
+-- The grade orderings listed by the skeletons of their two sides,
+-- orderings that tie kept in the order they arrive: an insertion
+-- sort, which only permutes the list
+
+module _ {A : Set} (_≺_ : A → A → 𝔹) where
+
+  insertᴼ : A → List A → List A
+  insertᴼ p []      = p ∷ []
+  insertᴼ p (q ∷ l) with q ≺ p
+  ... | true  = q ∷ insertᴼ p l
+  ... | false = p ∷ q ∷ l
+
+  sortᴼ : List A → List A
+  sortᴼ []      = []
+  sortᴼ (p ∷ l) = insertᴼ p (sortᴼ l)
+
+  insertᴼ-⊆ : ∀ p l {x} → x ∈ insertᴼ p l → x ∈ p ∷ l
+  insertᴼ-⊆ p []      m = m
+  insertᴼ-⊆ p (q ∷ l) m with q ≺ p
+  insertᴼ-⊆ p (q ∷ l) (here refl) | true = there (here refl)
+  insertᴼ-⊆ p (q ∷ l) (there m)   | true with insertᴼ-⊆ p l m
+  ... | here refl = here refl
+  ... | there m'  = there (there m')
+  insertᴼ-⊆ p (q ∷ l) m           | false = m
+
+  insertᴼ-⊇ : ∀ p l {x} → x ∈ p ∷ l → x ∈ insertᴼ p l
+  insertᴼ-⊇ p []      m = m
+  insertᴼ-⊇ p (q ∷ l) m with q ≺ p
+  insertᴼ-⊇ p (q ∷ l) (here refl)         | true  = there (insertᴼ-⊇ p l (here refl))
+  insertᴼ-⊇ p (q ∷ l) (there (here refl)) | true  = here refl
+  insertᴼ-⊇ p (q ∷ l) (there (there m))   | true  = there (insertᴼ-⊇ p l (there m))
+  insertᴼ-⊇ p (q ∷ l) m                   | false = m
+
+  sortᴼ-⊆ : ∀ l {x} → x ∈ sortᴼ l → x ∈ l
+  sortᴼ-⊆ (p ∷ l) m with insertᴼ-⊆ p (sortᴼ l) m
+  ... | here refl = here refl
+  ... | there m'  = there (sortᴼ-⊆ l m')
+
+  sortᴼ-⊇ : ∀ l {x} → x ∈ l → x ∈ sortᴼ l
+  sortᴼ-⊇ (p ∷ l) (here refl) = insertᴼ-⊇ p (sortᴼ l) (here refl)
+  sortᴼ-⊇ (p ∷ l) (there m)   = insertᴼ-⊇ p (sortᴼ l) (there (sortᴼ-⊇ l m))
+
+order : ∀ {Θ} → Hyps Θ → Hyps Θ
+order Q = hyps (ets Q) (subᵥ Q) (sortᴼ _≺ᵣ_ (ordᵣ Q)) (sortᴼ _≺ₑ_ (ordₑ Q)) (disj Q)
+
+order-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ order Q
+order-⊨ Q h =
+  mk⊨ᴴ (etOK h) (subOK h)
+       (λ m → ordROK h (sortᴼ-⊆ _≺ᵣ_ (ordᵣ Q) m))
+       (λ m → ordEOK h (sortᴼ-⊆ _≺ₑ_ (ordₑ Q) m))
+       (disjOK h)
+
+order-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ order Q → θ ⊨ᴴ Q
+order-⊨⁻ Q h =
+  mk⊨ᴴ (etOK h) (subOK h)
+       (λ m → ordROK h (sortᴼ-⊇ _≺ᵣ_ (ordᵣ Q) m))
+       (λ m → ordEOK h (sortᴼ-⊇ _≺ₑ_ (ordₑ Q) m))
        (disjOK h)
 
 -- The set with its disjunctions taken out, to be settled one at a time
@@ -476,22 +526,24 @@ split : ∀ {Θ} → Hyps Θ → Hyps Θ
 split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
 
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
-simplify Q = prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
+simplify Q = order (prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q))))
 
 -- Simplification changes nothing a grounding can see
 
 simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q
 simplify-⊨ Q θ h₀ =
-  prune-⊨ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
-    (settleAll-⊨ (disj (canonᴴ Q)) (split (canonᴴ Q)) (disjOK h)
-                 (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ())))
+  order-⊨ (prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q))))
+    (prune-⊨ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
+      (settleAll-⊨ (disj (canonᴴ Q)) (split (canonᴴ Q)) (disjOK h)
+                   (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ()))))
   where
     h = canonᴴ-⊨ Q h₀
 
 simplify-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q
 simplify-⊨⁻ Q θ h
   with settleAll-⊨⁻ (disj (canonᴴ Q)) (split (canonᴴ Q))
-         (prune-⊨⁻ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q))) h)
+         (prune-⊨⁻ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
+           (order-⊨⁻ (prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))) h))
 ... | h₀ , k = canonᴴ-⊨⁻ Q (mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k)
 
 simplify-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
