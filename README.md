@@ -106,16 +106,17 @@ a grade system, a signature of base types, and operations' signatures.
   the language product, their union, and subset inclusion), `Restriction`
   (restriction along a sub-alphabet), `Durations` with `MaxDuration` and
   `MinDuration` (worst- and best-case aggregation over a set), and
-  `Order`/`OrderLift` (the interface a trace order supplies, and its Hoare and
-  Smyth lifts to sets — stated once, so each order below meets the interface
-  once and inherits both lifts with their laws).
+  `Order`/`Reduced` (the interface a trace order supplies, and the antichains
+  of its minimal members that the set-level grades take as their carrier —
+  stated once, so each order below meets the interface once and inherits the
+  whole construction with its laws).
 
 - The two cost-sensitive orders on traces live in `Syntax/Grades/Traces/Allowance/`
   and `Syntax/Grades/Traces/Coverage/`. Both are parameterised by a cost model
   `cost : Op → ℕ` and both induct on a running number of time units,
   whose arithmetic is shared in `Slack.agda`; each has `Core`, `Moves`,
-  `Decidable` and `Duration` submodules, with `AsOrder.agda` packaging it as a
-  `TraceOrder` and `AllowanceLift`/`CoverageLift` supplying the set-level laws.
+  `Decidable` and `Duration` submodules, with `Antisym.agda` proving the order
+  antisymmetric and `AsOrder.agda` packaging it as a `TraceOrder`.
 
 - Under the **allowance** order `_≼ᵃ_` a bound's operations are permissions and
   its delays are a budget, which the run spends on idling and on operations the

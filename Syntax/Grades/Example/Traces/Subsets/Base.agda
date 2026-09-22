@@ -7,8 +7,8 @@
 --                                                                     --
 -- `_⊑_` is `liftˢ _≡_`: the same set-level lift the ordered trace     --
 -- grades use, at the discrete order. That is also why it does not go  --
--- through `Traces.Order`/`Traces.OrderLift` -- a `TraceOrder` must    --
--- supply `≼-nil : ε ≼ t`, and `ε ≡ t` is false. So the subset grade   --
+-- through `Traces.Order` -- a `TraceOrder` must supply                --
+-- `≼-nil : ε ≼ t`, and `ε ≡ t` is false. So the subset grade          --
 -- sits beside the lifted family rather than inside it.                --
 ------------------------------------------------------------------------
 
