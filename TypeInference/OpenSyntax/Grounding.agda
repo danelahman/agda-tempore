@@ -193,6 +193,7 @@ ground-≾ᵣ h (map-mono p) = map-monotoneᵉ (ground-≾ₑ h p)
 ground-≾ᵣ {θ = θ} h (⊔-ubˡᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubˡ (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ {θ = θ} h (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ h (⊔-lubᵣ p q) = ⊔ᵣ-lub (ground-≾ᵣ h p) (ground-≾ᵣ h q)
+ground-≾ᵣ {θ = θ} {ρ = ρ} h topᵣ = ≾-⊤ᵣ (⟦ ρ ⟧ʳ θ)
 ground-≾ᵣ {θ = θ} {ρ' = ρ'} h (minᵣ p) = p (⟦ ρ' ⟧ʳ θ)
 
 ground-≾ₑ h (hypₑ m)     = ordEOK h m
@@ -204,6 +205,7 @@ ground-≾ₑ h (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (ground-≾�
 ground-≾ₑ {θ = θ} h (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} h (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ h (⊔-lubₑ p q) = ⊔ₑ-lub (ground-≾ₑ h p) (ground-≾ₑ h q)
+ground-≾ₑ {θ = θ} {ε = ε} h topₑ = ≾-⊤ₑ (⟦ ε ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
 -- An assumed subtyping between type variables grounds to a closed

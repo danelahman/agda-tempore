@@ -5,11 +5,12 @@
 -- a product of atoms: constants, variables, and images of effect  --
 -- variables under the morphism. Adjacent constants are           --
 -- multiplied, units are dropped, a product is distributed over a  --
--- join, and repeated alternatives are merged. A sum is nonempty,  --
--- the join having no unit; a product may be empty, and is then    --
--- the unit itself. The flattening is certified by `≡̂ᵣ`/`≡̂ₑ`, so   --
--- one may compare alternative by alternative and atom by atom,    --
--- or read the sum back as an expression.                          --
+-- join, and repeated alternatives are merged. A sum with the top  --
+-- among its alternatives is the top, `⊤` absorbing the join. A    --
+-- sum is nonempty, the join having no unit; a product may be      --
+-- empty, and is then the unit itself. The flattening is certified --
+-- by `≡̂ᵣ`/`≡̂ₑ`, so one may compare alternative by alternative and --
+-- atom by atom, or read the sum back as an expression.            --
 --                                                                --
 -- Two read-backs at each layer: `⟦_⟧ʳˢ`/`⟦_⟧ʳˢ⁺` end every        --
 -- product in the unit, which makes the certificates structural;   --
@@ -20,6 +21,7 @@
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Properties using () renaming (≡-dec to ≡-decᴸ)
+open import Data.Maybe using (Maybe; just; nothing)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
 open import Relation.Nullary using (Dec; yes; no)
@@ -206,23 +208,69 @@ nubₑ-≡ (alt P)  = ≡̂ₑ-refl
 nubₑ-≡ (P ∷⁺ s) =
   ≡̂ₑ-trans (nub1ₑ-≡ P (nubₑ s)) (≡̂ₑ-cong-⊔ ≡̂ₑ-refl (nubₑ-≡ s))
 
+-- An alternative that is the top: the constant `⊤`, or the empty
+-- product when the unit is the top, `consₑ` dropping a constant that
+-- is the unit
+
+isTopₑ? : ∀ {Θ} → (P : List (EAtom Θ)) → Maybe (⟦ P ⟧ᵉᵖ ≡ econst ⊤ₑ)
+isTopₑ? [] with uₑ ≡ₑ? ⊤ₑ
+... | yes p = just (cong econst p)
+... | no _  = nothing
+isTopₑ? (ac c ∷ []) with c ≡ₑ? ⊤ₑ
+... | yes p = just (cong econst p)
+... | no _  = nothing
+isTopₑ? _ = nothing
+
+isTopₑ-≡ : ∀ {Θ} → (P : List (EAtom Θ)) → ⟦ P ⟧ᵉᵖ ≡ econst ⊤ₑ
+         → ⟦ P ⟧ᵉˢ ≡̂ₑ econst ⊤ₑ
+isTopₑ-≡ P eq = ≡̂ₑ-trans (⟦⟧ᵉᵖ-≡ P) (subst (⟦ P ⟧ᵉᵖ ≡̂ₑ_) eq ≡̂ₑ-refl)
+
+-- A sum with a top alternative is the top, which absorbs the join
+
+topSumₑ? : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → Maybe (⟦ s ⟧ᵉˢ⁺ ≡̂ₑ econst ⊤ₑ)
+topSumₑ? (alt P) with isTopₑ? P
+... | just eq = just (isTopₑ-≡ P eq)
+... | nothing = nothing
+topSumₑ? (P ∷⁺ s) with isTopₑ? P
+... | just eq =
+      just (≡̂ₑ-trans (≡̂ₑ-cong-⊔ (isTopₑ-≡ P eq) ≡̂ₑ-refl)
+                     (≡̂ₑ-trans ≡̂ₑ-comm-⊔ ≡̂ₑ-⊤-⊔))
+... | nothing with topSumₑ? s
+...   | just q  = just (≡̂ₑ-trans (≡̂ₑ-cong-⊔ ≡̂ₑ-refl q) ≡̂ₑ-⊤-⊔)
+...   | nothing = nothing
+
+-- Such a sum is replaced by the normal form of the top itself
+
+absorbₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
+absorbₑ s with topSumₑ? s
+... | just _  = alt (consₑ (ac ⊤ₑ) [])
+... | nothing = s
+
+absorbₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → ⟦ absorbₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+absorbₑ-≡ s with topSumₑ? s
+... | just q  =
+      ≡̂ₑ-trans (consₑ-≡ (ac ⊤ₑ) []) (≡̂ₑ-trans ≡̂ₑ-identityʳ (≡̂ₑ-sym q))
+... | nothing = ≡̂ₑ-refl
+
 nrmₑ : ∀ {Θ} → EExp Θ → Alts (List (EAtom Θ))
 nrmₑ (evar i)   = alt (av i ∷ [])
 nrmₑ (econst c) = alt (consₑ (ac c) [])
-nrmₑ (ε ·̂ₑ ε')  = nubₑ (mulₑ (nrmₑ ε) (nrmₑ ε'))
-nrmₑ (ε ⊔̂ₑ ε')  = nubₑ (nrmₑ ε ⧺ nrmₑ ε')
+nrmₑ (ε ·̂ₑ ε')  = absorbₑ (nubₑ (mulₑ (nrmₑ ε) (nrmₑ ε')))
+nrmₑ (ε ⊔̂ₑ ε')  = absorbₑ (nubₑ (nrmₑ ε ⧺ nrmₑ ε'))
 
 nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ⁺
 nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
 nrmₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
 nrmₑ-≡ (ε ·̂ₑ ε')  =
   ≡̂ₑ-trans (≡̂ₑ-cong (nrmₑ-≡ ε) (nrmₑ-≡ ε'))
-           (≡̂ₑ-sym (≡̂ₑ-trans (nubₑ-≡ (mulₑ (nrmₑ ε) (nrmₑ ε')))
-                             (mulₑ-≡ (nrmₑ ε) (nrmₑ ε'))))
+           (≡̂ₑ-sym (≡̂ₑ-trans (absorbₑ-≡ (nubₑ (mulₑ (nrmₑ ε) (nrmₑ ε'))))
+                    (≡̂ₑ-trans (nubₑ-≡ (mulₑ (nrmₑ ε) (nrmₑ ε')))
+                              (mulₑ-≡ (nrmₑ ε) (nrmₑ ε')))))
 nrmₑ-≡ (ε ⊔̂ₑ ε')  =
   ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (nrmₑ-≡ ε) (nrmₑ-≡ ε'))
-           (≡̂ₑ-sym (≡̂ₑ-trans (nubₑ-≡ (nrmₑ ε ⧺ nrmₑ ε'))
-                             (⧺ₑ-≡ (nrmₑ ε) (nrmₑ ε'))))
+           (≡̂ₑ-sym (≡̂ₑ-trans (absorbₑ-≡ (nubₑ (nrmₑ ε ⧺ nrmₑ ε')))
+                    (≡̂ₑ-trans (nubₑ-≡ (nrmₑ ε ⧺ nrmₑ ε'))
+                              (⧺ₑ-≡ (nrmₑ ε) (nrmₑ ε')))))
 
 ------------------------------------------------------------------
 -- Resource grades
@@ -377,14 +425,50 @@ nubᵣ-≡ (alt P)  = ≡̂ᵣ-refl
 nubᵣ-≡ (P ∷⁺ s) =
   ≡̂ᵣ-trans (nub1ᵣ-≡ P (nubᵣ s)) (≡̂ᵣ-cong-⊔ ≡̂ᵣ-refl (nubᵣ-≡ s))
 
+isTopᵣ? : ∀ {Θ} → (P : List (RAtom Θ)) → Maybe (⟦ P ⟧ʳᵖ ≡ rconst ⊤ᵣ)
+isTopᵣ? [] with uᵣ ≡ᵣ? ⊤ᵣ
+... | yes p = just (cong rconst p)
+... | no _  = nothing
+isTopᵣ? (rc c ∷ []) with c ≡ᵣ? ⊤ᵣ
+... | yes p = just (cong rconst p)
+... | no _  = nothing
+isTopᵣ? _ = nothing
+
+isTopᵣ-≡ : ∀ {Θ} → (P : List (RAtom Θ)) → ⟦ P ⟧ʳᵖ ≡ rconst ⊤ᵣ
+         → ⟦ P ⟧ʳˢ ≡̂ᵣ rconst ⊤ᵣ
+isTopᵣ-≡ P eq = ≡̂ᵣ-trans (⟦⟧ʳᵖ-≡ P) (subst (⟦ P ⟧ʳᵖ ≡̂ᵣ_) eq ≡̂ᵣ-refl)
+
+topSumᵣ? : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → Maybe (⟦ s ⟧ʳˢ⁺ ≡̂ᵣ rconst ⊤ᵣ)
+topSumᵣ? (alt P) with isTopᵣ? P
+... | just eq = just (isTopᵣ-≡ P eq)
+... | nothing = nothing
+topSumᵣ? (P ∷⁺ s) with isTopᵣ? P
+... | just eq =
+      just (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (isTopᵣ-≡ P eq) ≡̂ᵣ-refl)
+                     (≡̂ᵣ-trans ≡̂ᵣ-comm-⊔ ≡̂ᵣ-⊤-⊔))
+... | nothing with topSumᵣ? s
+...   | just q  = just (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ ≡̂ᵣ-refl q) ≡̂ᵣ-⊤-⊔)
+...   | nothing = nothing
+
+absorbᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
+absorbᵣ s with topSumᵣ? s
+... | just _  = alt (consᵣ (rc ⊤ᵣ) [])
+... | nothing = s
+
+absorbᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → ⟦ absorbᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+absorbᵣ-≡ s with topSumᵣ? s
+... | just q  =
+      ≡̂ᵣ-trans (consᵣ-≡ (rc ⊤ᵣ) []) (≡̂ᵣ-trans ≡̂ᵣ-identityʳ (≡̂ᵣ-sym q))
+... | nothing = ≡̂ᵣ-refl
+
 -- The sum of `∣ ε ∣̂ᵉ`, read off `ε` directly: the morphism is a
 -- monoid map, so it passes through a product and a join alike.
 
 nrmᵐ : ∀ {Θ} → EExp Θ → Alts (List (RAtom Θ))
 nrmᵐ (evar i)   = alt (rm i ∷ [])
 nrmᵐ (econst c) = alt (consᵣ (rc (mapᵉ c)) [])
-nrmᵐ (ε ·̂ₑ ε')  = nubᵣ (mulᵣ (nrmᵐ ε) (nrmᵐ ε'))
-nrmᵐ (ε ⊔̂ₑ ε')  = nubᵣ (nrmᵐ ε ⧺ nrmᵐ ε')
+nrmᵐ (ε ·̂ₑ ε')  = absorbᵣ (nubᵣ (mulᵣ (nrmᵐ ε) (nrmᵐ ε')))
+nrmᵐ (ε ⊔̂ₑ ε')  = absorbᵣ (nubᵣ (nrmᵐ ε ⧺ nrmᵐ ε'))
 
 nrmᵐ-≡ : ∀ {Θ} → (ε : EExp Θ) → ∣ ε ∣̂ᵉ ≡̂ᵣ ⟦ nrmᵐ ε ⟧ʳˢ⁺
 nrmᵐ-≡ (evar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
@@ -394,19 +478,21 @@ nrmᵐ-≡ (econst c) =
 nrmᵐ-≡ (ε ·̂ₑ ε')  =
   ≡̂ᵣ-trans ≡̂ᵣ-map-·
   (≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵐ-≡ ε) (nrmᵐ-≡ ε'))
-            (≡̂ᵣ-sym (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (nrmᵐ ε) (nrmᵐ ε')))
-                              (mulᵣ-≡ (nrmᵐ ε) (nrmᵐ ε')))))
+            (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (mulᵣ (nrmᵐ ε) (nrmᵐ ε'))))
+                     (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (nrmᵐ ε) (nrmᵐ ε')))
+                               (mulᵣ-≡ (nrmᵐ ε) (nrmᵐ ε'))))))
 nrmᵐ-≡ (ε ⊔̂ₑ ε')  =
   ≡̂ᵣ-trans ≡̂ᵣ-map-⊔
   (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (nrmᵐ-≡ ε) (nrmᵐ-≡ ε'))
-            (≡̂ᵣ-sym (≡̂ᵣ-trans (nubᵣ-≡ (nrmᵐ ε ⧺ nrmᵐ ε'))
-                              (⧺ᵣ-≡ (nrmᵐ ε) (nrmᵐ ε')))))
+            (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (nrmᵐ ε ⧺ nrmᵐ ε')))
+                     (≡̂ᵣ-trans (nubᵣ-≡ (nrmᵐ ε ⧺ nrmᵐ ε'))
+                               (⧺ᵣ-≡ (nrmᵐ ε) (nrmᵐ ε'))))))
 
 nrmᵣ : ∀ {Θ} → RExp Θ → Alts (List (RAtom Θ))
 nrmᵣ (rvar i)   = alt (rv i ∷ [])
 nrmᵣ (rconst c) = alt (consᵣ (rc c) [])
-nrmᵣ (ρ ·̂ᵣ ρ')  = nubᵣ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ'))
-nrmᵣ (ρ ⊔̂ᵣ ρ')  = nubᵣ (nrmᵣ ρ ⧺ nrmᵣ ρ')
+nrmᵣ (ρ ·̂ᵣ ρ')  = absorbᵣ (nubᵣ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ')))
+nrmᵣ (ρ ⊔̂ᵣ ρ')  = absorbᵣ (nubᵣ (nrmᵣ ρ ⧺ nrmᵣ ρ'))
 nrmᵣ ∣ ε ∣̂ᵉ     = nrmᵐ ε
 
 nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ⁺
@@ -414,12 +500,14 @@ nrmᵣ-≡ (rvar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
 nrmᵣ-≡ (rconst c) = ≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ)
 nrmᵣ-≡ (ρ ·̂ᵣ ρ')  =
   ≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ'))
-           (≡̂ᵣ-sym (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ')))
-                             (mulᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ'))))
+           (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ'))))
+                    (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ')))
+                              (mulᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))))
 nrmᵣ-≡ (ρ ⊔̂ᵣ ρ')  =
   ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ'))
-           (≡̂ᵣ-sym (≡̂ᵣ-trans (nubᵣ-≡ (nrmᵣ ρ ⧺ nrmᵣ ρ'))
-                             (⧺ᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ'))))
+           (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (nrmᵣ ρ ⧺ nrmᵣ ρ')))
+                    (≡̂ᵣ-trans (nubᵣ-≡ (nrmᵣ ρ ⧺ nrmᵣ ρ'))
+                              (⧺ᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))))
 nrmᵣ-≡ ∣ ε ∣̂ᵉ     = nrmᵐ-≡ ε
 
 -- The canonical form of an expression: a join of right-nested

@@ -186,6 +186,8 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   ⊔-ubˡᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
   ⊔-ubʳᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₂ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
   ⊔-lubᵣ   : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
+  -- every grade is below the top
+  topᵣ     : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
   -- optional unit-minimality; the premise is the property of the grade monoid
   minᵣ     : ∀ {ρ} → UnitMinᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
 
@@ -200,6 +202,8 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ⊔-ubˡₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₁ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
   ⊔-ubʳₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₂ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
   ⊔-lubₑ : ∀ {ε₁ ε₂ ε} → Q ⊩ ε₁ ≾̂ₑ ε → Q ⊩ ε₂ ≾̂ₑ ε → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε
+  -- every grade is below the top
+  topₑ   : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
   -- optional unit-minimality; the premise is the property of the grade monoid
   minₑ   : ∀ {ε} → UnitMinₑ → Q ⊩ ûₑ ≾̂ₑ ε
 
@@ -433,6 +437,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h ⊔-ubˡᵣ       = ⊔-ubˡᵣ
 ⊩-substᵣ            h ⊔-ubʳᵣ       = ⊔-ubʳᵣ
 ⊩-substᵣ            h (⊔-lubᵣ p q) = ⊔-lubᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
+⊩-substᵣ            h topᵣ         = topᵣ
 ⊩-substᵣ            h (minᵣ p)     = minᵣ p
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
@@ -443,6 +448,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h ⊔-ubˡₑ       = ⊔-ubˡₑ
 ⊩-substₑ         h ⊔-ubʳₑ       = ⊔-ubʳₑ
 ⊩-substₑ         h (⊔-lubₑ p q) = ⊔-lubₑ (⊩-substₑ h p) (⊩-substₑ h q)
+⊩-substₑ         h topₑ         = topₑ
 ⊩-substₑ         h (minₑ p)     = minₑ p
 
 -- A type variable's image is an arbitrary open type, so an assumed

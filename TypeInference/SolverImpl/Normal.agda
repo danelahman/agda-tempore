@@ -4,8 +4,9 @@
 -- Both sides are put in the sum-of-products normal form of       --
 -- `SolverImpl.Product` and compared alternative by alternative,  --
 -- each alternative atom by atom, the answer glued back with      --
--- `eqᵣ`/`monoᵣ`/`transᵣ`. A left alternative whose atoms all     --
--- cancel is the unit, and is then below anything by              --
+-- `eqᵣ`/`monoᵣ`/`transᵣ`. A right alternative that is the top is --
+-- above anything, by `topᵣ`/`topₑ`. A left alternative whose     --
+-- atoms all cancel is the unit, and is then below anything by    --
 -- `minᵣ`/`minₑ`, provided the corresponding unit-minimality      --
 -- option is supplied.                                            --
 --                                                                --
@@ -86,14 +87,23 @@ prod≾ₑ (a ∷ b ∷ as) (c ∷ d ∷ bs)
 ... | _      | _      = nothing
 prod≾ₑ _ _ = nothing
 
+-- One alternative against another: the top is above anything,
+-- and otherwise the products are compared
+
+alt≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (EAtom Θ))
+      → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
+alt≾ₑ {Q = Q} as bs with isTopₑ? bs
+... | just eq = just (subst (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ_) (sym eq) topₑ)
+... | nothing = prod≾ₑ as bs
+
 -- One alternative against a whole sum: some alternative of the sum
 -- bounds it, and the join is above that one
 
 altSum≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as : List (EAtom Θ))
          → (t : Alts (List (EAtom Θ)))
          → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
-altSum≾ₑ as (alt P) = prod≾ₑ as P
-altSum≾ₑ as (P ∷⁺ t) with prod≾ₑ as P
+altSum≾ₑ as (alt P) = alt≾ₑ as P
+altSum≾ₑ as (P ∷⁺ t) with alt≾ₑ as P
 ... | just p  = just (transₑ p ⊔-ubˡₑ)
 ... | nothing with altSum≾ₑ as t
 ...   | just q  = just (transₑ q ⊔-ubʳₑ)
@@ -138,11 +148,17 @@ prod≾ᵣ (a ∷ b ∷ as) (c ∷ d ∷ bs)
 ... | _      | _      = nothing
 prod≾ᵣ _ _ = nothing
 
+alt≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (RAtom Θ))
+      → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
+alt≾ᵣ {Q = Q} as bs with isTopᵣ? bs
+... | just eq = just (subst (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ_) (sym eq) topᵣ)
+... | nothing = prod≾ᵣ as bs
+
 altSum≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as : List (RAtom Θ))
          → (t : Alts (List (RAtom Θ)))
          → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
-altSum≾ᵣ as (alt P) = prod≾ᵣ as P
-altSum≾ᵣ as (P ∷⁺ t) with prod≾ᵣ as P
+altSum≾ᵣ as (alt P) = alt≾ᵣ as P
+altSum≾ᵣ as (P ∷⁺ t) with alt≾ᵣ as P
 ... | just p  = just (transᵣ p ⊔-ubˡᵣ)
 ... | nothing with altSum≾ᵣ as t
 ...   | just q  = just (transᵣ q ⊔-ubʳᵣ)

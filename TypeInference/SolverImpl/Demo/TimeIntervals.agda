@@ -700,8 +700,9 @@ module Library where
   ex-unit-size = refl
 
   -- `compose`, reported as
-  -- `(α ⇒ β ‼ e₁) ⇒ (β ⇒ γ ‼ e₂) ⇒ (α ⇒ γ ‼ e₁ · e₂) ‼ 0`, with one
-  -- qualifier: the lock that the capture of `g` crosses
+  -- `(α ⇒ β ‼ e₁) ⇒ (β ⇒ γ ‼ e₂) ⇒ (α ⇒ γ ‼ e₁ · e₂) ‼ 0`, with no
+  -- qualifier: the lock that the capture of `g` crosses asks
+  -- `∣ e₁ ∣ ≾ u`, and the resource unit is the top
 
   ex-compose-report : reportOf compose
                     ≡ just (scope 34 0 19 ,
@@ -712,16 +713,14 @@ module Library where
                                     ‼ ûₑ)
                                 ‼ ûₑ)
                               ‼ ûₑ ,
-                            []ᴸ , []ᴸ ,
-                            (∣ evar (# 5) ∣̂ᵉ , ûᵣ) ∷ᴸ []ᴸ ,
-                            []ᴸ , []ᴸ)
+                            []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-compose-report = refl
 
-  ex-compose-size : sizeOf compose ≡ just (0 , 0 , 1 , 0 , 0)
+  ex-compose-size : sizeOf compose ≡ just (0 , 0 , 0 , 0 , 0)
   ex-compose-size = refl
 
   -- `twice`: the two uses of `f` leave two subtyping atoms, and the
-  -- lock leaves one qualifier
+  -- lock's qualifier holds outright, the resource unit being the top
 
   ex-twice-report : reportOf twice
                   ≡ just (scope 20 0 12 ,
@@ -732,11 +731,10 @@ module Library where
                             ‼ ûₑ ,
                           []ᴸ ,
                           (# 4 , # 3) ∷ᴸ (# 12 , # 3) ∷ᴸ []ᴸ ,
-                          (∣ evar (# 2) ∣̂ᵉ , ûᵣ) ∷ᴸ []ᴸ ,
-                          []ᴸ , []ᴸ)
+                          []ᴸ , []ᴸ , []ᴸ)
   ex-twice-report = refl
 
-  ex-twice-size : sizeOf twice ≡ just (0 , 2 , 1 , 0 , 0)
+  ex-twice-size : sizeOf twice ≡ just (0 , 2 , 0 , 0 , 0)
   ex-twice-size = refl
 
   -- `branch`: one subtyping atom per arm, and no grade ordering at all
@@ -793,17 +791,17 @@ module Library where
   ex-seqBranch-size : sizeOf seqBranch ≡ just (0 , 0 , 0 , 0 , 0)
   ex-seqBranch-size = refl
 
-  -- `keep`: the box grade stays a variable, and the one var-rule
-  -- disjunction on it is all that is left
+  -- `keep`: the box grade stays a variable, and the var-rule
+  -- disjunction on it holds by its second disjunct, the resource unit
+  -- being the top
 
   ex-keep-report : reportOf keep
                  ≡ just (scope 8 3 3 ,
                          (tvar (# 4) ⇒ [ rvar (# 1) ] tvar (# 4) ‼ ûₑ) ‼ ûₑ ,
-                         []ᴸ , []ᴸ , []ᴸ , []ᴸ ,
-                         (tvar (# 4) , rvar (# 1)) ∷ᴸ []ᴸ)
+                         []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-keep-report = refl
 
-  ex-keep-size : sizeOf keep ≡ just (0 , 0 , 0 , 0 , 1)
+  ex-keep-size : sizeOf keep ≡ just (0 , 0 , 0 , 0 , 0)
   ex-keep-size = refl
 
   -- `wrap` is declined: the clause's slack needs unit-minimality,
