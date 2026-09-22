@@ -367,7 +367,9 @@ a grade system, a signature of base types, and operations' signatures.
   below nowhere else is sent to the join of *all* its lower bounds, and they go
   with it. `Product.agda` and `Canon.agda` give grade expressions a product
   normal form, applied at both boundaries, so a reported grade is canonical
-  whichever entry point produced it.
+  whichever entry point produced it; an alternative that `Normal.agda`'s
+  decider places below another is dropped by lattice absorption, so the
+  canonical form is relative to what that decider proves.
 
 - `TypeInference/SolverImpl/Demo/` runs the solver and checks every answer by
   computation — each example is discharged by `refl`, so what is inferred is

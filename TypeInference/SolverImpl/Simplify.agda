@@ -66,7 +66,7 @@ open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
-open import TypeInference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊨; canonᴴ-⊨⁻)
+open import TypeInference.SolverImpl.Canon  S umin?ᵣ umin?ₑ using (canonᴴ; canonᴴ-⊨; canonᴴ-⊨⁻)
 open import TypeInference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
 open import TypeInference.SolverImpl.Resid  S using (etDec)
 open import TypeInference.SolverImpl.Refute S umin?ᵣ umin?ₑ

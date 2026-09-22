@@ -139,6 +139,10 @@ ground-≡̂ᵣ : ∀ {Θ} {θ : Grounding Θ} {ρ ρ' : RExp Θ}
           → ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≡ ⟦ ρ' ⟧ʳ θ
 ground-≡̂ₑ : ∀ {Θ} {θ : Grounding Θ} {ε ε' : EExp Θ}
           → ε ≡̂ₑ ε' → ⟦ ε ⟧ᵉ θ ≡ ⟦ ε' ⟧ᵉ θ
+ground-≾ᵣ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
+          → θ ⊨ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
+ground-≾ₑ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
+          → θ ⊨ᴴ Q → Q ⊩ ε ≾̂ₑ ε' → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
 
 ground-≡̂ᵣ ≡̂ᵣ-refl          = refl
 ground-≡̂ᵣ (≡̂ᵣ-sym p)       = sym (ground-≡̂ᵣ p)
@@ -160,6 +164,7 @@ ground-≡̂ᵣ ≡̂ᵣ-map-·         = map-·ᵉ
 ground-≡̂ᵣ ≡̂ᵣ-map-⊔         = map-⊔ᵉ
 ground-≡̂ᵣ ≡̂ᵣ-map-const     = refl
 ground-≡̂ᵣ (≡̂ᵣ-map-cong p)  = cong mapᵉ (ground-≡̂ₑ p)
+ground-≡̂ᵣ (≡̂ᵣ-absorb p)    = ⊔ᵣ-absorb (ground-≾ᵣ ∅ᴴ-⊨ p)
 
 ground-≡̂ₑ ≡̂ₑ-refl          = refl
 ground-≡̂ₑ (≡̂ₑ-sym p)       = sym (ground-≡̂ₑ p)
@@ -177,11 +182,7 @@ ground-≡̂ₑ ≡̂ₑ-assoc-⊔       = ⊔ₑ-assoc _ _ _
 ground-≡̂ₑ ≡̂ₑ-⊤-⊔           = ⊔ₑ-⊤ₑ _
 ground-≡̂ₑ ≡̂ₑ-distribˡ-⊔    = ·ₑ-distribˡ-⊔ₑ _ _ _
 ground-≡̂ₑ ≡̂ₑ-distribʳ-⊔    = ·ₑ-distribʳ-⊔ₑ _ _ _
-
-ground-≾ᵣ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
-          → θ ⊨ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-ground-≾ₑ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
-          → θ ⊨ᴴ Q → Q ⊩ ε ≾̂ₑ ε' → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
+ground-≡̂ₑ (≡̂ₑ-absorb p)    = ⊔ₑ-absorb (ground-≾ₑ ∅ᴴ-⊨ p)
 
 ground-≾ᵣ h (hypᵣ m)     = ordROK h m
 ground-≾ᵣ h (atomᵣ p)    = p

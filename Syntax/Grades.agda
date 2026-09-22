@@ -123,9 +123,13 @@ record Grade : Set₁ where
              (⊔-lub (≾-trans (⊔-ubʳ c d) (⊔-ubˡ (c ⊔ d) e))
                     (⊔-ubʳ (c ⊔ d) e)))
 
+  -- a grade below another is absorbed by it in a join
+  ⊔-absorb : ∀ {c d} → c ≾ d → c ⊔ d ≡ d
+  ⊔-absorb {c} {d} p = ≾-antisym (⊔-lub p ≾-refl) (⊔-ubʳ c d)
+
   -- ⊤ absorbs joins
   ⊔-⊤ : (c : Carrier) → c ⊔ ⊤ ≡ ⊤
-  ⊔-⊤ c = ≾-antisym (⊔-lub (≾-⊤ c) ≾-refl) (⊔-ubʳ c ⊤)
+  ⊔-⊤ c = ⊔-absorb (≾-⊤ c)
 
   -- `_·_` distributes over `_⊔_`: the converse of each field follows
   -- from `_·_` being monotone in each argument separately, so the two
@@ -209,6 +213,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ⊔-comm to ⊔ᵣ-comm;
      ⊔-assoc to ⊔ᵣ-assoc;
      ⊔-⊤ to ⊔ᵣ-⊤ᵣ;
+     ⊔-absorb to ⊔ᵣ-absorb;
      ·-distribˡ-⊔-≾ to ·ᵣ-distribˡ-⊔ᵣ-≾ᵣ;
      ·-distribʳ-⊔-≾ to ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ;
      ·-distribˡ-⊔ to ·ᵣ-distribˡ-⊔ᵣ;
@@ -248,6 +253,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ⊔-comm to ⊔ₑ-comm;
      ⊔-assoc to ⊔ₑ-assoc;
      ⊔-⊤ to ⊔ₑ-⊤ₑ;
+     ⊔-absorb to ⊔ₑ-absorb;
      ·-distribˡ-⊔-≾ to ·ₑ-distribˡ-⊔ₑ-≾ₑ;
      ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
      ·-distribˡ-⊔ to ·ₑ-distribˡ-⊔ₑ;

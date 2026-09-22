@@ -107,15 +107,30 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
   hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α ≾ β
   transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
 
--- The monoid laws, the semilattice laws of the join, distributivity of
--- multiplication over the join, the constants' arithmetic, and `∣_∣̂ᵉ`
--- being a monoid morphism; no hypotheses involved. Each law holds at
--- `_≡_` on the closed grades, the order being partial.
+-- Unit-minimality of a grade monoid, as a property of the closed grades
 
-infix 4 _≡̂ᵣ_ _≡̂ₑ_
+UnitMinᵣ : Set
+UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
+
+UnitMinₑ : Set
+UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
+
+-- Convertibility: the monoid laws, the semilattice laws of the join,
+-- distributivity of multiplication over the join, the constants'
+-- arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a
+-- join by an upper bound. Each law holds at `_≡_` on the closed
+-- grades, absorption by antisymmetry of the order.
+--
+-- Convertibility carries no hypotheses, so the ordering that licenses
+-- absorption is entailed by the empty set; this makes it and entailed
+-- ordering one mutual definition, the latter occurring positively.
+
+infix 4 _≡̂ᵣ_ _≡̂ₑ_ _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
 data _≡̂ᵣ_ {Θ : Scope} : RExp Θ → RExp Θ → Set
 data _≡̂ₑ_ {Θ : Scope} : EExp Θ → EExp Θ → Set
+data _⊩_≾̂ᵣ_ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set
+data _⊩_≾̂ₑ_ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set
 
 data _≡̂ᵣ_ {Θ} where
   ≡̂ᵣ-refl       : ∀ {ρ} → ρ ≡̂ᵣ ρ
@@ -140,6 +155,7 @@ data _≡̂ᵣ_ {Θ} where
   ≡̂ᵣ-map-⊔      : ∀ {ε ε'} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
   ≡̂ᵣ-map-const  : ∀ {e} → ∣ econst e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
   ≡̂ᵣ-map-cong   : ∀ {ε ε'} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-absorb     : ∀ {ρ ρ'} → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ρ ⊔̂ᵣ ρ' ≡̂ᵣ ρ'
 
 data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-refl       : ∀ {ε} → ε ≡̂ₑ ε
@@ -160,19 +176,7 @@ data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-⊤-⊔        : ∀ {ε} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
   ≡̂ₑ-distribˡ-⊔ : ∀ {ε ε₁ ε₂} → ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≡̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
   ≡̂ₑ-distribʳ-⊔ : ∀ {ε ε₁ ε₂} → (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≡̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
-
-infix 4 _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
-
--- Unit-minimality of a grade monoid, as a property of the closed grades
-
-UnitMinᵣ : Set
-UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
-
-UnitMinₑ : Set
-UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
-
-data _⊩_≾̂ᵣ_ {Θ : Scope} (Q : Hyps Θ) : RExp Θ → RExp Θ → Set
-data _⊩_≾̂ₑ_ {Θ : Scope} (Q : Hyps Θ) : EExp Θ → EExp Θ → Set
+  ≡̂ₑ-absorb     : ∀ {ε ε'} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
 
 data _⊩_≾̂ᵣ_ {Θ} Q where
   hypᵣ     : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q ⊩ ρ ≾̂ᵣ ρ'
@@ -380,10 +384,22 @@ open _⊩ᴴ_[_] public
 _⊩ᴴ_ : ∀ {Θ} → Hyps Θ → Hyps Θ → Set
 Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 
+-- Every set entails the empty one, along any substitution
+
+⊩ᴴ-∅ : ∀ {Θ Θ'} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} → Q' ⊩ᴴ ∅ᴴ [ σ ]
+⊩ᴴ-∅ = mk⊩ᴴ (λ ()) (λ ()) (λ ()) (λ ()) (λ ())
+
+-- Convertibility and entailment are stable under substitution, the
+-- premise of absorption at the empty set
+
 ≡̂ᵣ-subst : ∀ {Θ Θ'} {ρ ρ' : RExp Θ} → (σ : Subst Θ Θ')
          → ρ ≡̂ᵣ ρ' → ρ [ σ ]ʳ ≡̂ᵣ ρ' [ σ ]ʳ
 ≡̂ₑ-subst : ∀ {Θ Θ'} {ε ε' : EExp Θ} → (σ : Subst Θ Θ')
          → ε ≡̂ₑ ε' → ε [ σ ]ᵉ ≡̂ₑ ε' [ σ ]ᵉ
+⊩-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
+         → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
+⊩-substₑ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ε ε' : EExp Θ}
+         → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ε ≾̂ₑ ε' → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
 
 ≡̂ᵣ-subst σ ≡̂ᵣ-refl          = ≡̂ᵣ-refl
 ≡̂ᵣ-subst σ (≡̂ᵣ-sym p)       = ≡̂ᵣ-sym (≡̂ᵣ-subst σ p)
@@ -405,6 +421,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵣ-subst σ ≡̂ᵣ-map-⊔         = ≡̂ᵣ-map-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-map-const     = ≡̂ᵣ-map-const
 ≡̂ᵣ-subst σ (≡̂ᵣ-map-cong p)  = ≡̂ᵣ-map-cong (≡̂ₑ-subst σ p)
+≡̂ᵣ-subst σ (≡̂ᵣ-absorb p)    = ≡̂ᵣ-absorb (⊩-substᵣ (⊩ᴴ-∅ {σ = σ}) p)
 
 ≡̂ₑ-subst σ ≡̂ₑ-refl          = ≡̂ₑ-refl
 ≡̂ₑ-subst σ (≡̂ₑ-sym p)       = ≡̂ₑ-sym (≡̂ₑ-subst σ p)
@@ -422,11 +439,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ ≡̂ₑ-⊤-⊔           = ≡̂ₑ-⊤-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-distribˡ-⊔    = ≡̂ₑ-distribˡ-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-distribʳ-⊔    = ≡̂ₑ-distribʳ-⊔
-
-⊩-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
-         → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
-⊩-substₑ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ε ε' : EExp Θ}
-         → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ε ≾̂ₑ ε' → Q' ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
+≡̂ₑ-subst σ (≡̂ₑ-absorb p)    = ≡̂ₑ-absorb (⊩-substₑ (⊩ᴴ-∅ {σ = σ}) p)
 
 ⊩-substᵣ            h (hypᵣ m)     = ⊩ordᵣ h m
 ⊩-substᵣ            h (atomᵣ p)    = atomᵣ p

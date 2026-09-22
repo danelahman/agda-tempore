@@ -58,8 +58,7 @@ open import TypeInference.SolverImpl.State S using (St; θ; res; init)
 open import TypeInference.SolverImpl.Solve S opEnum umin?ᵣ umin?ₑ using (solve)
 open import TypeInference.SolverImpl.Close S umin?ᵣ umin?ₑ
   using (close)
-open import TypeInference.SolverImpl.Canon   S using (canonᵛ)
-open import TypeInference.SolverImpl.Product S using (canonₑ)
+open import TypeInference.SolverImpl.Canon   S umin?ᵣ umin?ₑ using (canonᵛ; canonₑ)
 
 -- The `gsolve` field of `GroundSolver` — the only part attainable here.
 

@@ -76,7 +76,7 @@ open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
   using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate; _⨾ᴱ_)
-open import TypeInference.SolverImpl.Canon     S using (canonElim)
+open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ using (canonElim)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())

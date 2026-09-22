@@ -17,12 +17,13 @@
 -- `⟦_⟧ʳᵖ`/`⟦_⟧ʳᵖ⁺` drop that trailing unit and collapse a lone    --
 -- alternative, and are what `canonᵣ`/`canonₑ` return.             --
 --                                                                --
--- `canonᵣ`/`canonₑ` also group the alternatives by skeleton, list --
--- the groups in skeleton order, and fold a group that varies in   --
--- one slot into one alternative whose slot is a join of           --
--- constants. The result is canonical except in a group that       --
--- varies in more than one slot, which keeps its arrival order.    --
--- Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.                   --
+-- `Grouping` groups the alternatives by skeleton, lists the       --
+-- groups in skeleton order, folds a group that varies in one slot --
+-- into one alternative whose slot is a join of constants, and,    --
+-- given a decided order that the join absorbs, drops every        --
+-- alternative below another. `SolverImpl.Canon` instantiates it   --
+-- with the decider of `SolverImpl.Normal` to form `canonᵣ` and    --
+-- `canonₑ`. Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -31,7 +32,7 @@ open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-decᴸ)
 open import Data.Maybe using (Maybe; just; nothing)
-open import Data.Nat.Base using (_<ᵇ_)
+open import Data.Nat.Base using (ℕ; zero; suc; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
 open import Relation.Binary.Definitions using (DecidableEquality)
@@ -99,9 +100,10 @@ lex _≟_ _<_ (a ∷ as) (b ∷ bs) with a ≟ b
 -- arrive; folding it two alternatives at a time would depend on which
 -- two meet first.
 --
--- Constants are never ordered: two in the same slot are joined.
--- Skeletons are ordered syntactically, lexicographically from an
--- order on variable atoms.
+-- The grouping never compares constants: two in the same slot are
+-- joined. Skeletons are ordered syntactically, lexicographically from
+-- an order on variable atoms. Comparing alternatives by the grade
+-- order is left to `Pruning`, which is given the order.
 --
 -- Stated over any carrier with the laws it uses, and instantiated
 -- below at both sorts.
@@ -337,6 +339,146 @@ module Grouping
   canonical-≈ ps =
     ≈-trans (flatten-≈ (mapᴬ foldGroup (groups ps)))
     (≈-trans (foldGroups-≈ (groups ps)) (groups-≈ ps))
+
+  ----------------------------------------------------------------
+  -- Pruning
+  --
+  -- Given an order whose every instance a join absorbs, and a partial
+  -- decision of it on products, an alternative below another is
+  -- dropped. Two alternatives each below the other are equal as
+  -- grades, and the one listed first is kept, so on a grouped sum the
+  -- tie goes to the smaller skeleton, and within a group to the
+  -- earlier arrival.
+  --
+  -- The sum is pruned from the right: an alternative strictly below
+  -- one kept further on is dropped, and otherwise it is kept and every
+  -- alternative kept further on that is below it, ties included, is
+  -- dropped. Where the decided order is transitive, what remains is
+  -- the set of alternatives not below any other, with ties broken as
+  -- above, whatever order they are examined in. Canonicity is
+  -- relative to the decision: an ordering it does not find prunes
+  -- nothing.
+  --
+  -- Pruning only removes alternatives, so it keeps the skeleton
+  -- order; but it can make the fold applicable again, when a group
+  -- that varied in two slots loses the alternatives that made it vary
+  -- in one of them, and a fold can in turn expose a new ordering, a
+  -- join of constants being above more than either. So the fold and
+  -- the pruning are repeated until the sum stops shrinking, which
+  -- takes at most as many rounds as there are alternatives.
+
+  module Pruning
+    (_≲_    : X → X → Set)
+    (absorb : ∀ {a b} → a ≲ b → (a ∨ b) ≈ b)
+    (_≲?_   : (P P' : Prod) → Maybe (⟦ P ⟧ᵖ ≲ ⟦ P' ⟧ᵖ))
+    where
+
+    -- A sum with its first alternative set apart, the rest possibly
+    -- gone
+
+    _∷?_ : Prod → Maybe (Alts Prod) → Alts Prod
+    P ∷? nothing = alt P
+    P ∷? just s  = P ∷⁺ s
+
+    _∨?_ : X → Maybe (Alts Prod) → X
+    a ∨? nothing = a
+    a ∨? just s  = a ∨ ⟦ s ⟧ᵖ⁺
+
+    ∷?-≈ : (P : Prod) → (m : Maybe (Alts Prod)) → ⟦ P ∷? m ⟧ᵖ⁺ ≈ (⟦ P ⟧ᵖ ∨? m)
+    ∷?-≈ P nothing  = ≈-refl
+    ∷?-≈ P (just s) = ≈-refl
+
+    ∨-swap : ∀ {a b c} → (a ∨ (b ∨ c)) ≈ (b ∨ (a ∨ c))
+    ∨-swap = ≈-trans (≈-sym ∨-assoc) (≈-trans (∨-cong ∨-comm ≈-refl) ∨-assoc)
+
+    ∨?-swap : ∀ {a b} → (m : Maybe (Alts Prod)) → (a ∨ (b ∨? m)) ≈ (b ∨ (a ∨? m))
+    ∨?-swap nothing  = ∨-comm
+    ∨?-swap (just s) = ∨-swap
+
+    -- An alternative strictly below one of the sum is absorbed by it
+
+    below? : (P : Prod) → (s : Alts Prod) → Maybe ((⟦ P ⟧ᵖ ∨ ⟦ s ⟧ᵖ⁺) ≈ ⟦ s ⟧ᵖ⁺)
+    below? P (alt K) with P ≲? K | K ≲? P
+    ... | just p | nothing = just (absorb p)
+    ... | _      | _       = nothing
+    below? P (K ∷⁺ s) with P ≲? K | K ≲? P
+    ... | just p | nothing = just (≈-trans (≈-sym ∨-assoc) (∨-cong (absorb p) ≈-refl))
+    ... | _      | _ with below? P s
+    ...   | just q  = just (≈-trans ∨-swap (∨-cong ≈-refl q))
+    ...   | nothing = nothing
+
+    -- The alternatives of the sum below a given one, ties included,
+    -- absorbed into it
+
+    sweep : (P : Prod) → (s : Alts Prod)
+          → Σ[ m ∈ Maybe (Alts Prod) ] ((⟦ P ⟧ᵖ ∨ ⟦ s ⟧ᵖ⁺) ≈ (⟦ P ⟧ᵖ ∨? m))
+    sweep P (alt K) with K ≲? P
+    ... | just q  = nothing , ≈-trans ∨-comm (absorb q)
+    ... | nothing = just (alt K) , ≈-refl
+    sweep P (K ∷⁺ s) with K ≲? P | sweep P s
+    ... | just q  | m , p =
+          m , ≈-trans (≈-sym ∨-assoc) (≈-trans (∨-cong (≈-trans ∨-comm (absorb q)) ≈-refl) p)
+    ... | nothing | m , p =
+          just (K ∷? m) ,
+          ≈-trans ∨-swap (≈-trans (∨-cong ≈-refl p)
+                         (≈-trans (∨?-swap m) (∨-cong ≈-refl (≈-sym (∷?-≈ K m)))))
+
+    prune : Alts Prod → Alts Prod
+    prune (alt P)  = alt P
+    prune (P ∷⁺ s) with below? P (prune s)
+    ... | just _  = prune s
+    ... | nothing = P ∷? proj₁ (sweep P (prune s))
+
+    prune-≈ : (ps : Alts Prod) → ⟦ prune ps ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+    prune-≈ (alt P)  = ≈-refl
+    prune-≈ (P ∷⁺ s) with below? P (prune s)
+    ... | just q  = ≈-trans (≈-sym q) (∨-cong ≈-refl (prune-≈ s))
+    ... | nothing =
+          ≈-trans (∷?-≈ P (proj₁ (sweep P (prune s))))
+          (≈-trans (≈-sym (proj₂ (sweep P (prune s)))) (∨-cong ≈-refl (prune-≈ s)))
+
+    -- One round folds and orders, then prunes; rounds are repeated
+    -- while the sum shrinks
+
+    size : Alts Prod → ℕ
+    size (alt _)  = 1
+    size (_ ∷⁺ s) = suc (size s)
+
+    round : Alts Prod → Alts Prod
+    round ps = prune (canonical ps)
+
+    round-≈ : (ps : Alts Prod) → ⟦ round ps ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+    round-≈ ps = ≈-trans (prune-≈ (canonical ps)) (canonical-≈ ps)
+
+    rounds  : ℕ → Alts Prod → Alts Prod
+    rounds′ : ℕ → Alts Prod → Alts Prod → Alts Prod
+
+    rounds zero    ps = ps
+    rounds (suc n) ps = rounds′ n ps (round ps)
+
+    rounds′ n ps qs with size qs <ᵇ size ps
+    ... | true  = rounds n qs
+    ... | false = qs
+
+    rounds-≈  : (n : ℕ) → (ps : Alts Prod) → ⟦ rounds n ps ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+    rounds′-≈ : (n : ℕ) → (ps qs : Alts Prod) → ⟦ qs ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+              → ⟦ rounds′ n ps qs ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+
+    rounds-≈ zero    ps = ≈-refl
+    rounds-≈ (suc n) ps = rounds′-≈ n ps (round ps) (round-≈ ps)
+
+    rounds′-≈ n ps qs p with size qs <ᵇ size ps
+    ... | true  = ≈-trans (rounds-≈ n qs) p
+    ... | false = p
+
+    -- A round that shrinks the sum removes an alternative, so as many
+    -- rounds as there are alternatives reach one that does not
+
+    maximal : Alts Prod → Alts Prod
+    maximal ps = rounds (size ps) ps
+
+    maximal-≈ : (ps : Alts Prod) → ⟦ maximal ps ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
+    maximal-≈ ps = rounds-≈ (size ps) ps
 
 ------------------------------------------------------------------
 -- Effect grades
@@ -818,11 +960,12 @@ nrmᵣ-≡ᵖ ρ = ≡̂ᵣ-trans (nrmᵣ-≡ ρ) (⟦⟧ʳᵖ⁺-≡ (nrmᵣ ρ
 ------------------------------------------------------------------
 -- Canonical forms
 --
--- The normal form of `nrmₑ`/`nrmᵣ`, grouped and folded by `Grouping`.
--- A product is read into its skeleton and slots, the constants of a
--- run multiplied into one slot, and read back through `consₑ`/`consᵣ`,
--- which drops a slot holding the unit. A fold may yield the top, which
--- then absorbs the sum.
+-- `Grouping` at both sorts, and the passage to and from its products.
+-- A product of `nrmₑ`/`nrmᵣ` is read into its skeleton and slots, the
+-- constants of a run multiplied into one slot, and read back through
+-- `consₑ`/`consᵣ`, which drops a slot holding the unit. The canonical
+-- forms themselves need the decider, and are assembled in
+-- `SolverImpl.Canon`.
 
 -- Effect variables are ordered by index
 
@@ -885,15 +1028,6 @@ fromProdsₑ = mapᴬ (λ P → atomsₑ (proj₂ P))
 fromProdsₑ-≡ : ∀ {Θ} → (ps : Alts (Gₑ.Prod {Θ})) → ⟦ fromProdsₑ ps ⟧ᵉˢ⁺ ≡̂ₑ Gₑ.⟦ ps ⟧ᵖ⁺
 fromProdsₑ-≡ (alt P)   = atomsₑ-≡ (proj₂ P)
 fromProdsₑ-≡ (P ∷⁺ ps) = ≡̂ₑ-cong-⊔ (atomsₑ-≡ (proj₂ P)) (fromProdsₑ-≡ ps)
-
-canonSumₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
-canonSumₑ s = absorbₑ (fromProdsₑ (Gₑ.canonical (toProdsₑ s)))
-
-canonSumₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → ⟦ canonSumₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
-canonSumₑ-≡ s =
-  ≡̂ₑ-trans (absorbₑ-≡ (fromProdsₑ (Gₑ.canonical (toProdsₑ s))))
-  (≡̂ₑ-trans (fromProdsₑ-≡ (Gₑ.canonical (toProdsₑ s)))
-  (≡̂ₑ-trans (Gₑ.canonical-≈ (toProdsₑ s)) (toProdsₑ-≡ s)))
 
 -- The variable atoms of a resource product: resource variables, then
 -- images of effect variables, each ordered by index
@@ -983,35 +1117,6 @@ fromProdsᵣ = mapᴬ (λ P → atomsᵣ (proj₂ P))
 fromProdsᵣ-≡ : ∀ {Θ} → (ps : Alts (Gᵣ.Prod {Θ})) → ⟦ fromProdsᵣ ps ⟧ʳˢ⁺ ≡̂ᵣ Gᵣ.⟦ ps ⟧ᵖ⁺
 fromProdsᵣ-≡ (alt P)   = atomsᵣ-≡ (proj₂ P)
 fromProdsᵣ-≡ (P ∷⁺ ps) = ≡̂ᵣ-cong-⊔ (atomsᵣ-≡ (proj₂ P)) (fromProdsᵣ-≡ ps)
-
-canonSumᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
-canonSumᵣ s = absorbᵣ (fromProdsᵣ (Gᵣ.canonical (toProdsᵣ s)))
-
-canonSumᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → ⟦ canonSumᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
-canonSumᵣ-≡ s =
-  ≡̂ᵣ-trans (absorbᵣ-≡ (fromProdsᵣ (Gᵣ.canonical (toProdsᵣ s))))
-  (≡̂ᵣ-trans (fromProdsᵣ-≡ (Gᵣ.canonical (toProdsᵣ s)))
-  (≡̂ᵣ-trans (Gᵣ.canonical-≈ (toProdsᵣ s)) (toProdsᵣ-≡ s)))
-
--- The canonical form of an expression: a join of right-nested
--- products of atoms, a lone alternative standing for itself and the
--- empty product for the unit.
-
-canonₑ : ∀ {Θ} → EExp Θ → EExp Θ
-canonₑ ε = ⟦ canonSumₑ (nrmₑ ε) ⟧ᵉᵖ⁺
-
-canonᵣ : ∀ {Θ} → RExp Θ → RExp Θ
-canonᵣ ρ = ⟦ canonSumᵣ (nrmᵣ ρ) ⟧ʳᵖ⁺
-
-canonₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ canonₑ ε
-canonₑ-≡ ε =
-  ≡̂ₑ-trans (nrmₑ-≡ ε)
-  (≡̂ₑ-trans (≡̂ₑ-sym (canonSumₑ-≡ (nrmₑ ε))) (⟦⟧ᵉᵖ⁺-≡ (canonSumₑ (nrmₑ ε))))
-
-canonᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ canonᵣ ρ
-canonᵣ-≡ ρ =
-  ≡̂ᵣ-trans (nrmᵣ-≡ ρ)
-  (≡̂ᵣ-trans (≡̂ᵣ-sym (canonSumᵣ-≡ (nrmᵣ ρ))) (⟦⟧ʳᵖ⁺-≡ (canonSumᵣ (nrmᵣ ρ))))
 
 ------------------------------------------------------------------
 -- The skeletons of an expression's alternatives, read off its

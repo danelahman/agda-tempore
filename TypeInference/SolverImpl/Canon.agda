@@ -2,9 +2,13 @@
 -- Normalising the grade expressions of a report                  --
 --                                                                --
 -- Every grade expression of a reported type and of a reported    --
--- hypothesis set is replaced by its sum-of-products normal form, --
--- so the monoid and semilattice laws leave no trace in what a    --
--- caller is shown.                                               --
+-- hypothesis set is replaced by its canonical form: the          --
+-- sum-of-products normal form, grouped, folded and ordered by    --
+-- skeleton, with every alternative that the decider places below --
+-- another dropped, so the monoid and lattice laws leave no trace --
+-- in what a caller is shown. The canonical form is relative to   --
+-- what the decider proves, and so to the unit-minimality         --
+-- witnesses it is given.                                         --
 --                                                                --
 -- A hypothesis set and its normal form are satisfied by exactly  --
 -- the same groundings, so the normal form is stored, not merely  --
@@ -13,7 +17,8 @@
 -- elimination step.                                              --
 ------------------------------------------------------------------
 
-open import Data.List.Base using (map)
+open import Data.List.Base using (List; map)
+open import Data.Maybe using (Maybe)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Product using (_×_; _,_)
@@ -26,7 +31,13 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-module TypeInference.SolverImpl.Canon (S : LanguageSpec) where
+import TypeInference.OpenSyntax.Hyps as H
+
+module TypeInference.SolverImpl.Canon
+  (S : LanguageSpec)
+  (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
+  (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
+  where
 
 open LanguageSpec S
 open GradeSystemInterface Grades
@@ -41,8 +52,60 @@ open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Grounding S
 
-open import TypeInference.SolverImpl.Product   S
+open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
+
+-- Grouping with pruning, two alternatives being compared by the
+-- decider at the empty hypothesis set, whose verdict convertibility
+-- turns into absorption.
+--
+-- Pruning subsumes the top's absorption of the join: a top
+-- alternative is a constant, so it heads the skeleton order and wins
+-- every tie, and the decider places every product below it.
+
+module Mₑ {Θ : Scope} =
+  Gₑ.Pruning {Θ} (∅ᴴ ⊩_≾̂ₑ_) ≡̂ₑ-absorb
+             (λ P P' → decide≾ₑ {Q = ∅ᴴ} Gₑ.⟦ P ⟧ᵖ Gₑ.⟦ P' ⟧ᵖ)
+
+module Mᵣ {Θ : Scope} =
+  Gᵣ.Pruning {Θ} (∅ᴴ ⊩_≾̂ᵣ_) ≡̂ᵣ-absorb
+             (λ P P' → decide≾ᵣ {Q = ∅ᴴ} Gᵣ.⟦ P ⟧ᵖ Gᵣ.⟦ P' ⟧ᵖ)
+
+canonSumₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
+canonSumₑ s = fromProdsₑ (Mₑ.maximal (toProdsₑ s))
+
+canonSumₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → ⟦ canonSumₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+canonSumₑ-≡ s =
+  ≡̂ₑ-trans (fromProdsₑ-≡ (Mₑ.maximal (toProdsₑ s)))
+  (≡̂ₑ-trans (Mₑ.maximal-≈ (toProdsₑ s)) (toProdsₑ-≡ s))
+
+canonSumᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
+canonSumᵣ s = fromProdsᵣ (Mᵣ.maximal (toProdsᵣ s))
+
+canonSumᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → ⟦ canonSumᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+canonSumᵣ-≡ s =
+  ≡̂ᵣ-trans (fromProdsᵣ-≡ (Mᵣ.maximal (toProdsᵣ s)))
+  (≡̂ᵣ-trans (Mᵣ.maximal-≈ (toProdsᵣ s)) (toProdsᵣ-≡ s))
+
+-- The canonical form of an expression: a join of right-nested
+-- products of atoms, a lone alternative standing for itself and the
+-- empty product for the unit.
+
+canonₑ : ∀ {Θ} → EExp Θ → EExp Θ
+canonₑ ε = ⟦ canonSumₑ (nrmₑ ε) ⟧ᵉᵖ⁺
+
+canonᵣ : ∀ {Θ} → RExp Θ → RExp Θ
+canonᵣ ρ = ⟦ canonSumᵣ (nrmᵣ ρ) ⟧ʳᵖ⁺
+
+canonₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ canonₑ ε
+canonₑ-≡ ε =
+  ≡̂ₑ-trans (nrmₑ-≡ ε)
+  (≡̂ₑ-trans (≡̂ₑ-sym (canonSumₑ-≡ (nrmₑ ε))) (⟦⟧ᵉᵖ⁺-≡ (canonSumₑ (nrmₑ ε))))
+
+canonᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ canonᵣ ρ
+canonᵣ-≡ ρ =
+  ≡̂ᵣ-trans (nrmᵣ-≡ ρ)
+  (≡̂ᵣ-trans (≡̂ᵣ-sym (canonSumᵣ-≡ (nrmᵣ ρ))) (⟦⟧ʳᵖ⁺-≡ (canonSumᵣ (nrmᵣ ρ))))
 
 -- A grade expression and its normal form have the same value
 
