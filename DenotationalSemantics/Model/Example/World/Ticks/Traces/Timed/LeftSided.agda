@@ -45,12 +45,13 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (left-sided; _≾_)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  using (left-sided; _≾_; Antichain; traces; u; _·_; _∙_; _·ˢ_;
+         n-◃⁻; ◃-∈; True-irr)
 
 open import DenotationalSemantics.Model.World
 
@@ -62,7 +63,7 @@ open Durations costˡᵒ
 -- Accessibility on time ticks: advance at least as far as one of the
 -- listed guarantees takes.
 
-_⊑ᵗ[_]_ : ℕ → NeTraces → ℕ → Set
+_⊑ᵗ[_]_ : ℕ → Antichain → ℕ → Set
 w ⊑ᵗ[ P ] w' = True (any? (λ p → (w + duration p) ≤? w') (traces P))
 
 -- reflexivity at the unit grade `{ ε }`: the empty guarantee demands no
@@ -78,17 +79,22 @@ w ⊑ᵗ[ P ] w' = True (any? (λ p → (w + duration p) ≤? w') (traces P))
          → w ⊑ᵗ[ P ] w' → w' ⊑ᵗ[ Q ] w'' → w ⊑ᵗ[ P · Q ] w''
 ⊑ᵗ-trans {P} {Q} {w} {w'} {w''} p q
   with find (toWitness p) | find (toWitness q)
-... | t₁ , t₁∈P , w+t₁≤w' | t₂ , t₂∈Q , w'+t₂≤w'' =
-      fromWitness
-        (Any.map (λ r → subst (λ z → (w + duration z) ≤ w'') r bound)
-                 (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q)))
+... | t₁ , t₁∈P , w+t₁≤w' | t₂ , t₂∈Q , w'+t₂≤w''
+        with find (n-◃⁻ (traces P ·ˢ traces Q)
+                        (◃-∈ (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q)))
+...     | t , t∈PQ , t≼t₁∙t₂ =
+          fromWitness
+            (Any.map (λ r → subst (λ z → (w + duration z) ≤ w'') r bound) t∈PQ)
   where
-    bound : (w + duration (t₁ ∙ t₂)) ≤ w''
-    bound =
+    sequenced : (w + duration (t₁ ∙ t₂)) ≤ w''
+    sequenced =
       ≤-trans (≤-reflexive
                 (trans (cong (w +_) (duration-∙ t₁ t₂))
                        (sym (+-assoc w (duration t₁) (duration t₂)))))
               (≤-trans (+-mono-≤ w+t₁≤w' ≤-refl) w'+t₂≤w'')
+
+    bound : (w + duration t) ≤ w''
+    bound = ≤-trans (+-mono-≤ ≤-refl (duration-≼ᶜ t≼t₁∙t₂)) sequenced
 
 -- covariance: the guarantee that witnessed the advance is weakened by
 -- one of the weaker grade's, which therefore takes no longer

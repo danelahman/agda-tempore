@@ -44,14 +44,15 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans; mono-∙)
 open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
   using (module DecCoverage)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (left-sided; _≾_)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  using (left-sided; _≾_; Antichain; traces; u; _·_; Trace; _∙_; _·ˢ_;
+         ∙-identityʳ; ∙-assoc; ∙-cancelˡ; ε; n-◃⁻; ◃-∈; True-irr)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 
@@ -65,7 +66,7 @@ open import DenotationalSemantics.Model.World
 
 infix 5 _⊑ᵇ[_]_
 
-record _⊑ᵇ[_]_ (w : Trace) (P : NeTraces) (w' : Trace) : Set where
+record _⊑ᵇ[_]_ (w : Trace) (P : Antichain) (w' : Trace) : Set where
   constructor mkᵇ
   field
     cont    : Trace                                          -- continuation
@@ -91,12 +92,16 @@ open _⊑ᵇ[_]_
          → w ⊑ᵇ[ P ] w' → w' ⊑ᵇ[ Q ] w'' → w ⊑ᵇ[ P · Q ] w''
 ⊑ᵇ-trans {P} {Q} {w} (mkᵇ t₁ w₁ eq₁) (mkᵇ t₂ w₂ eq₂)
   with find (toWitness w₁) | find (toWitness w₂)
-... | a , a∈P , a≼t₁ | b , b∈Q , b≼t₂ =
-      mkᵇ (t₁ ∙ t₂)
-          (fromWitness
-            (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq (mono-∙ a≼t₁ b≼t₂))
-                     (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q))))
-          (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+... | a , a∈P , a≼t₁ | b , b∈Q , b≼t₂
+        with find (n-◃⁻ (traces P ·ˢ traces Q)
+                        (◃-∈ (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
+...     | c , c∈PQ , c≼a∙b =
+          mkᵇ (t₁ ∙ t₂)
+              (fromWitness
+                (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq
+                                   (≼ᶜ-trans c≼a∙b (mono-∙ a≼t₁ b≼t₂)))
+                         c∈PQ))
+              (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
 
 -- covariance: the guarantee the continuation covered is itself weakened
 -- by one of the weaker grade's, which the continuation therefore covers

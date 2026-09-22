@@ -34,23 +34,16 @@ open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ;
-         NeTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
+         ε; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
-  using (left-sided; holds; fails; failsᵉ)
-
-open import Syntax.Grades.Traces.Coverage.AsOrder
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using (coverageOrder)
-
-open import Syntax.Grades.Traces.OrderLift
-  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans coverageOrder
-  using (u-≽ˢ)
+  using (left-sided; holds; fails; failsᵉ; ≾-⊤; Antichain;
+         ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the run that performs them
 
-opTime : Op → NeTraces
+opTime : Op → Antichain
 opTime o = ⟅ ⌈ o ⌉ ⟆
 
 open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
@@ -96,7 +89,7 @@ idling =
 -- guarantee, so a reading survives whatever locks stand over it.
 
 nothing-goes-stale : (ρ : R) → ρ ≾ᵣ uᵣ
-nothing-goes-stale ρ = u-≽ˢ (traces ρ)
+nothing-goes-stale ρ = ≾-⊤ ρ
 
 -- take a reading, idle two ticks, and transmit the reading taken
 -- before the idling

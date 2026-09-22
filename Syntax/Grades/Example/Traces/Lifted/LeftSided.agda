@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------
--- Sets of timed traces as lower bounds.                               --
+-- Antichains of timed traces as lower bounds.                         --
 --                                                                     --
 -- A grade is a non-empty finite set of traces, read as the guarantees --
 -- a computation makes: writing `X` for the runs it may have,          --
@@ -19,9 +19,21 @@
 -- quantifiers run universally over the *stronger* grade's set and     --
 -- existentially over the weaker's, the mirror of `Lifted.RightSided`. --
 --                                                                     --
--- Nothing here inspects the order. `Example.Traces.Timed.LeftSided`   --
--- instantiates it at the coverage order, the one a guarantee wants,   --
--- since there nothing but an operation covers a demand for it.        --
+-- That reading is `P ⊆ ↑P'`, so the closure is upward and the         --
+-- canonical form of a grade is the antichain of its `≼`-minimal       --
+-- members. The carrier is therefore `Traces.Reduced`'s `Antichain` at --
+-- the order as given -- not at its converse -- and the order is a     --
+-- partial one: mutually-weakening grades are equal.                   --
+--                                                                     --
+-- What is proper to this module is the unit `{ ε }`: it is the        --
+-- greatest grade, the empty trace being covered by every run, and     --
+-- that is the one fact the reduction's `TracePartialOrder` cannot     --
+-- supply.                                                             --
+--                                                                     --
+-- Nothing here inspects the order otherwise.                          --
+-- `Example.Traces.Timed.LeftSided` instantiates it at the coverage    --
+-- order, the one a guarantee wants, since there nothing but an        --
+-- operation covers a demand for it.                                   --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)
@@ -33,6 +45,7 @@ open import Relation.Binary.Definitions
 open import Util.Equality
 
 import Syntax.Grades.Traces.Order as Order
+import Syntax.Grades.Traces.Reduced as Reduced
 
 module Syntax.Grades.Example.Traces.Lifted.LeftSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
@@ -40,71 +53,30 @@ module Syntax.Grades.Example.Traces.Lifted.LeftSided
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (O : Order.TraceOrder Op) where
 
-open import Relation.Nullary using (Dec)
+open import Data.List.Relation.Unary.Any using (here; any?)
+
+open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
-open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
+open Order.TraceOrder O using (≼-nil)
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
+-- the carrier and every law the order-theoretic half supplies: the
+-- monoid, the order, its decision procedure, the joins and the
+-- inclusion of the naturals
 
-------------------------------------------------------------------------
--- The grade order on (non-empty) sets of traces
+module R = Reduced Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans (Order.TraceOrder.base O)
 
-infix 5 _≾_
-
-_≾_ : NeTraces → NeTraces → Set
-P ≾ P' = traces P' ≽ˢ traces P
-
-≾-refl : {P : NeTraces} → P ≾ P
-≾-refl {P} = ≽ˢ-refl {traces P}
-
-≾-trans : {P Q R : NeTraces} → P ≾ Q → Q ≾ R → P ≾ R
-≾-trans {P} {Q} {R} pq qr =
-  ≽ˢ-trans {traces R} {traces Q} {traces P} qr pq
-
--- the language product is monotone in both arguments
-
-·-monoˡ : {C P Q : NeTraces} → P ≾ Q → (P · C) ≾ (Q · C)
-·-monoˡ {C} {P} {Q} rel =
-  ≽ˢ-· {traces Q} {traces P} {traces C} {traces C} rel (≽ˢ-refl {traces C})
-
-·-monoʳ : {C P Q : NeTraces} → P ≾ Q → (C · P) ≾ (C · Q)
-·-monoʳ {C} {P} {Q} rel =
-  ≽ˢ-· {traces C} {traces C} {traces Q} {traces P} (≽ˢ-refl {traces C}) rel
+open R public hiding (≾-antisym)
 
 ------------------------------------------------------------------------
--- Binary joins
+-- Antisymmetry
 --
--- A grade is read disjunctively and weakens by gaining members, so the
--- union of two grades is their join, and the language product
--- distributes over it on both sides.
+-- Mutually-weakening grades are propositionally equal, an antichain
+-- being determined by the closure the order reads.
 
-infixl 6 _⊔_
-
-_⊔_ : NeTraces → NeTraces → NeTraces
-_⊔_ = _∪_
-
-⊔-ubˡ : (P Q : NeTraces) → P ≾ (P ⊔ Q)
-⊔-ubˡ P Q = ≽ˢ-∪-ubˡ {traces P} {traces Q}
-
-⊔-ubʳ : (P Q : NeTraces) → Q ≾ (P ⊔ Q)
-⊔-ubʳ P Q = ≽ˢ-∪-ubʳ (traces P) {traces Q}
-
-⊔-lub : {P Q R : NeTraces} → P ≾ R → Q ≾ R → (P ⊔ Q) ≾ R
-⊔-lub {P} {Q} {R} = ≽ˢ-∪-lub {traces P} {traces Q} {traces R}
-
--- distributivity holds on the nose: the two sides list the same
--- guarantees, and a set is determined by the guarantees it lists
-
-·-distribˡ-⊔ : (C P Q : NeTraces) → (C · (P ⊔ Q)) ≾ ((C · P) ⊔ (C · Q))
-·-distribˡ-⊔ C P Q =
-  subst ((C · (P ⊔ Q)) ≾_) (·-distribˡ-∪ C P Q) (≾-refl {C · (P ⊔ Q)})
-
-·-distribʳ-⊔ : (C P Q : NeTraces) → ((P ⊔ Q) · C) ≾ ((P · C) ⊔ (Q · C))
-·-distribʳ-⊔ C P Q =
-  subst (((P ⊔ Q) · C) ≾_) (·-distribʳ-∪ P Q C) (≾-refl {(P ⊔ Q) · C})
+≾-antisym : {P Q : Antichain} → P ≾ Q → Q ≾ P → P ≡ Q
+≾-antisym = R.≾-antisym
 
 ------------------------------------------------------------------------
 -- The greatest grade
@@ -112,8 +84,8 @@ _⊔_ = _∪_
 -- The unit `{ ε }` guarantees nothing, the empty trace being covered by
 -- every run, so it is already the greatest grade.
 
-≾-⊤ : (P : NeTraces) → P ≾ u
-≾-⊤ P = u-≽ˢ (traces P)
+≾-⊤ : (P : Antichain) → P ≾ u
+≾-⊤ P s _ = fromWitness {a? = any? (_≽?_ s) (traces u)} (here ≼-nil)
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -121,31 +93,32 @@ _⊔_ = _∪_
 -- The unit is greatest, so every grade lies below it and the property is
 -- vacuous.
 
-≾-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾ u → P ≾ u
-≾-zero-productˡ {P} {Q} _ = u-≽ˢ (traces P)
+≾-zero-productˡ : {P Q : Antichain} → (P · Q) ≾ u → P ≾ u
+≾-zero-productˡ {P} {Q} _ = ≾-⊤ P
 
-≾-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾ u → Q ≾ u
-≾-zero-productʳ {P} {Q} _ = u-≽ˢ (traces Q)
-
--- the order is proof-irrelevant
-
-≾-irrelevant : {P Q : NeTraces} → (p q : P ≾ Q) → p ≡ q
-≾-irrelevant {P} {Q} = liftˢ-irrelevant
+≾-zero-productʳ : {P Q : Antichain} → (P · Q) ≾ u → Q ≾ u
+≾-zero-productʳ {P} {Q} _ = ≾-⊤ Q
 
 ------------------------------------------------------------------------
--- The order is decidable
+-- Distributivity, read at the order
+--
+-- The two sides are equal antichains, so the grade's one-directional
+-- law is that equation transported.
 
-infix 5 _≾?_
+·-distribˡ-⊔-≾ : (C P Q : Antichain) → (C · (P ⊔ Q)) ≾ ((C · P) ⊔ (C · Q))
+·-distribˡ-⊔-≾ C P Q =
+  subst ((C · (P ⊔ Q)) ≾_) (·-distribˡ-⊔ C P Q) (≾-refl {C · (P ⊔ Q)})
 
-_≾?_ : (P Q : NeTraces) → Dec (P ≾ Q)
-P ≾? Q = traces Q ≽ˢ? traces P
+·-distribʳ-⊔-≾ : (C P Q : Antichain) → ((P ⊔ Q) · C) ≾ ((P · C) ⊔ (Q · C))
+·-distribʳ-⊔-≾ C P Q =
+  subst (((P ⊔ Q) · C) ≾_) (·-distribʳ-⊔ C P Q) (≾-refl {(P ⊔ Q) · C})
 
 ------------------------------------------------------------------------
--- The grade of (non-empty) sets of timed traces, read as guarantees
+-- The grade of antichains of timed traces, read as guarantees
 
 left-sided : Grade
 left-sided = record
-  { Carrier         = NeTraces
+  { Carrier         = Antichain
   ; _·_             = _·_
   ; u               = u
   ; ·-identityʳ     = ·-identityʳ
@@ -158,13 +131,13 @@ left-sided = record
   ; ⊔-ubˡ           = ⊔-ubˡ
   ; ⊔-ubʳ           = ⊔-ubʳ
   ; ⊔-lub           = λ {P} {Q} {R} → ⊔-lub {P} {Q} {R}
-  ; ·-distribˡ-⊔    = ·-distribˡ-⊔
-  ; ·-distribʳ-⊔    = ·-distribʳ-⊔
+  ; ·-distribˡ-⊔    = ·-distribˡ-⊔-≾
+  ; ·-distribʳ-⊔    = ·-distribʳ-⊔-≾
   ; ·-monoˡ-≾       = λ {c} {x} {y} → ·-monoˡ {c} {x} {y}
   ; ·-monoʳ-≾       = λ {c} {x} {y} → ·-monoʳ {c} {x} {y}
   ; ≾-refl          = λ {x} → ≾-refl {x}
   ; ≾-trans         = λ {i} {j} {k} → ≾-trans {i} {j} {k}
-  ; _≡?_            = _≟ᴺ_
+  ; _≡?_            = _≟ᴬ_
   ; ≾-zero-productˡ = λ {c} {d} → ≾-zero-productˡ {c} {d}
   ; ≾-zero-productʳ = λ {c} {d} → ≾-zero-productʳ {c} {d}
   ; ≾-irrelevant    = λ {c} {d} → ≾-irrelevant {c} {d}

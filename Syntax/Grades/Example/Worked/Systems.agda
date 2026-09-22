@@ -171,13 +171,14 @@ open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (traces→left-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
-  using () renaming (holds to holdsᶜ)
+  using () renaming (holds to holdsᶜ; Antichain to Antichainˡᵒ; _·_ to _·ˡᵒ_;
+                     ⟅_⟆ to ⟅_⟆ˡᵒ; ⟅_∣_⟆ to ⟅_∣_⟆ˡᵒ)
 
 -- a reading, two ticks' settling and a transmission guarantee seven
 -- ticks, the two operations credited at their best case
 
 guarantee-measured :
-  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ ≡ [ 7 ,+∞⟩
+  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ ≡ [ 7 ,+∞⟩
 guarantee-measured = refl
 
 -- and a grade listing alternatives is measured by the fastest of them,
@@ -185,7 +186,7 @@ guarantee-measured = refl
 
 alternatives-measured-below :
   map traces→left-sided-intervals
-      ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ⟆
+      ⟅ ⌈ send ⌉ ∣ ⌈ read ⌉ ⟆ˡᵒ
   ≡ [ 1 ,+∞⟩
 alternatives-measured-below = refl
 
@@ -195,26 +196,26 @@ alternatives-measured-below = refl
 -- store
 
 stores-forgotten :
-  map traces→left-sided-intervals ⟅ ⌈ write ⌉ ⟆
-  ≡ map traces→left-sided-intervals ⟅ ⟨ 2 ⟩ ⟆
+  map traces→left-sided-intervals ⟅ ⌈ write ⌉ ⟆ˡᵒ
+  ≡ map traces→left-sided-intervals ⟅ ⟨ 2 ⟩ ⟆ˡᵒ
 stores-forgotten = refl
 
 -- monotonicity: dropping to the reading alone drops the guarantee from
 -- seven ticks to one
 
 guarantee-falls :
-  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆
-  ≾ₒ map traces→left-sided-intervals ⟅ ⌈ read ⌉ ⟆
+  map traces→left-sided-intervals ⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ
+  ≾ₒ map traces→left-sided-intervals ⟅ ⌈ read ⌉ ⟆ˡᵒ
 guarantee-falls =
   map-monotone traces→left-sided-intervals
-               {⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆} {⟅ ⌈ read ⌉ ⟆} holdsᶜ
+               {⟅ ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉ ⟆ˡᵒ} {⟅ ⌈ read ⌉ ⟆ˡᵒ} holdsᶜ
 
 -- and it is a monoid map: sequencing before or after measuring agrees
 
 guarantees-add :
-  map traces→left-sided-intervals (⟅ ⌈ read ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆)
-  ≡ map traces→left-sided-intervals ⟅ ⌈ read ⌉ ⟆
-    ·ₒ map traces→left-sided-intervals ⟅ ⌈ send ⌉ ⟆
+  map traces→left-sided-intervals (⟅ ⌈ read ⌉ ⟆ˡᵒ ·ˡᵒ ⟅ ⌈ send ⌉ ⟆ˡᵒ)
+  ≡ map traces→left-sided-intervals ⟅ ⌈ read ⌉ ⟆ˡᵒ
+    ·ₒ map traces→left-sided-intervals ⟅ ⌈ send ⌉ ⟆ˡᵒ
 guarantees-add = refl
 
 ------------------------------------------------------------------------
@@ -238,7 +239,7 @@ open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 
 contract-measured :
   map two-sided-traces→intervals
-      ⟪ ⟅ ⌈ read ⌉ ⟆ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+      ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
   ≡ [ 1 , 7 , ≤! ]
 contract-measured = refl
 
@@ -247,7 +248,7 @@ contract-measured = refl
 
 alternatives-measured-both :
   map two-sided-traces→intervals
-      ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆
+      ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ
       , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ⟫
   ≡ [ 1 , 12 , ≤! ]
 alternatives-measured-both = refl
@@ -267,11 +268,11 @@ exact-measured = refl
 window-contains :
   map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
   ≾ᵢ map two-sided-traces→intervals
-         ⟪ ⟅ ⌈ read ⌉ ⟆ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
+         ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫
 window-contains =
   map-monotone two-sided-traces→intervals
                {exact (⌈ read ⌉ ∙ ⌈ write ⌉)}
-               {⟪ ⟅ ⌈ read ⌉ ⟆ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫}
+               {⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ⟫}
                (holdsᵗˢ _ _)
 
 -- and it is a monoid map: sequencing before or after measuring agrees
@@ -296,22 +297,25 @@ open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
   using (permitting_) renaming (holds to holdsˢʰ)
 
--- the two branches take one tick and three-to-four ticks
+-- the two branches take one tick and two-to-three ticks
 
 the-branches : NeTraces
-the-branches = ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
+the-branches = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+
+the-branchesˡᵒ : Antichainˡᵒ
+the-branchesˡᵒ = ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ˡᵒ
 
 -- the deadline is the slower branch at its worst case
 
 cap-measured :
-  map subsets→right-sided-intervals (permitting the-branches) ≡ [0, 4 ]
+  map subsets→right-sided-intervals (permitting the-branches) ≡ [0, 3 ]
 cap-measured = refl
 
 -- where the timed floor, guaranteeing one of its alternatives rather
 -- than a particular one, promises only what the faster of them takes
 
 timed-floor-measured :
-  map traces→left-sided-intervals the-branches ≡ [ 1 ,+∞⟩
+  map traces→left-sided-intervals the-branchesˡᵒ ≡ [ 1 ,+∞⟩
 timed-floor-measured = refl
 
 -- monotonicity: permitting a further run raises the deadline

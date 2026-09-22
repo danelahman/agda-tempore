@@ -67,6 +67,13 @@ open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
+-- the floor endpoint is the left-sided grade's antichain carrier
+
+open import Syntax.Grades.Example.Traces.Timed.LeftSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  using () renaming (traces to tracesˡᵒ; u to uˡᵒ;
+                     n-◃⁻ to nˡᵒ-◃⁻; ◃-∈ to ◃ˡᵒ-∈)
+
 -- the cap endpoint is the right-sided grade's carrier, `unbounded` and
 -- all
 
@@ -129,7 +136,7 @@ record _⊑ᵇ[_]_ (w : Trace) (i : TwoSided) (w' : Trace) : Set where
   constructor mkᵇ
   field
     cont    : Trace                                     -- continuation
-    covers  : True (any? (λ p → p ≼ᶜ? cont) (traces (lo i)))
+    covers  : True (any? (λ p → p ≼ᶜ? cont) (tracesˡᵒ (lo i)))
                                                         -- covers a guarantee
     bounded : Within cont (hi i)                        -- within an allowance
     extends : w ∙ cont ≡ w'                             -- `w'` extends `w`
@@ -142,7 +149,8 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-refl : ∀ {w} → w ⊑ᵇ[ uᵗˢ ] w
 ⊑ᵇ-refl {w} =
   mkᵇ ε
-      (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (traces u)} (here (≼ᶜ-refl ε)))
+      (fromWitness {a? = any? (λ p → p ≼ᶜ? ε) (tracesˡᵒ uˡᵒ)}
+                   (here (≼ᶜ-refl ε)))
       (fromWitness {a? = any? (λ q → ε ≼ᵃ? q) (traces u)} (here (≼ᵃ-refl ε)))
       (∙-identityʳ w)
 
@@ -153,13 +161,17 @@ open _⊑ᵇ[_]_
          → w ⊑ᵇ[ i₁ ] w' → w' ⊑ᵇ[ i₂ ] w'' → w ⊑ᵇ[ i₁ ·ᵗˢ i₂ ] w''
 ⊑ᵇ-trans {i₁} {i₂} {w} (mkᵇ t₁ c₁ n₁ eq₁) (mkᵇ t₂ c₂ n₂ eq₂)
   with find (toWitness c₁) | find (toWitness c₂)
-... | a , a∈P , a≼t₁ | b , b∈P' , b≼t₂ =
-      mkᵇ (t₁ ∙ t₂)
-          (fromWitness
-            (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq (mono-∙ᶜ a≼t₁ b≼t₂))
-                     (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈P b∈P'))))
-          (Within-∙ t₁ t₂ (hi i₁) (hi i₂) n₁ n₂)
-          (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
+... | a , a∈P , a≼t₁ | b , b∈P' , b≼t₂
+        with find (nˡᵒ-◃⁻ (tracesˡᵒ (lo i₁) ·ˢ tracesˡᵒ (lo i₂))
+                          (◃ˡᵒ-∈ (∈-cartesianProductWith⁺ _∙_ a∈P b∈P')))
+...     | c , c∈PP' , c≼a∙b =
+          mkᵇ (t₁ ∙ t₂)
+              (fromWitness
+                (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq
+                                   (≼ᶜ-trans c≼a∙b (mono-∙ᶜ a≼t₁ b≼t₂)))
+                         c∈PP'))
+              (Within-∙ t₁ t₂ (hi i₁) (hi i₂) n₁ n₂)
+              (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
 
 -- covariance: each witness is replaced along its own endpoint's order,
 -- the continuation staying put
@@ -168,7 +180,7 @@ open _⊑ᵇ[_]_
 ⊑ᵇ-mono {i₁} {i₂} (l , h) (mkᵇ cont c n eq) =
   mkᵇ cont (fromWitness covers') (Within-≾ cont (hi i₁) (hi i₂) h n) eq
   where
-    covers' : Any (λ p → p ≼ᶜ cont) (traces (lo i₂))
+    covers' : Any (λ p → p ≼ᶜ cont) (tracesˡᵒ (lo i₂))
     covers' with find (toWitness c)
     ... | t , t∈P , t≼cont
             with find (toWitness (l t (fromWitness t∈P)))
@@ -184,7 +196,7 @@ open _⊑ᵇ[_]_
 ... | refl with eq'
 ... | refl =
         cong₂ (λ x y → mkᵇ cont x y refl)
-              (True-irr (any? (λ p → p ≼ᶜ? cont) (traces (lo i))) c c')
+              (True-irr (any? (λ p → p ≼ᶜ? cont) (tracesˡᵒ (lo i))) c c')
               (Within-irr cont (hi i) n n')
 
 ------------------------------------------------------------------------

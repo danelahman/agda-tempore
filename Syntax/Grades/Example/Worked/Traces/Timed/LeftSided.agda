@@ -12,7 +12,10 @@
 -- The set is read *disjunctively*: a longer list is a weaker grade,    --
 -- since there are more ways to have discharged it. That is what makes  --
 -- the union of two grades their join, and it is the reading a          --
--- branching construct needs.                                          --
+-- branching construct needs. A listed trace that another listed one    --
+-- already guarantees adds no way of discharging the grade, so the      --
+-- members are cut down to the antichain of the weakest of them and     --
+-- mutually-weakening grades are literally equal.                       --
 --                                                                     --
 -- A guarantee is credited at `costˡᵒ` -- read 1, write 2, send 4 --    --
 -- since that is all an operation is certain to take. The runs below    --
@@ -38,25 +41,50 @@ open import Syntax.Grades using (Grade)
 
 open import Util.Equality
 
+open import Data.List.Base using ([]; _∷_)
+open import Data.Unit using (tt)
+
 open import Syntax.Grades.Example.Worked.Operations
+  using (Op; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ;
+         read; write; send; Trace; ⌈_⌉; ⟨_⟩; _∙_; ε)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using (left-sided; _≾_; _≾?_; ≾-⊤) public
+  using (left-sided; _≾_; _≾?_; ≾-⊤; ≾-antisym; Antichain; acSet; _·_; u)
+  public
 
 order : Grade._≾_ left-sided ≡ _≾_
 order = refl
 
-holds : {P Q : NeTraces} {p : True (P ≾? Q)} → P ≾ Q
+------------------------------------------------------------------------
+-- Writing down finite sets of traces
+--
+-- `⟅ t ∣ u ⟆` is the grade whose members are `t` and `u`. At these
+-- sizes writing the members out is the clearest thing to do. The
+-- members may be given in whatever order reads best, and are
+-- normalised into the canonical antichain: naming a trace twice, or
+-- naming one that another of them already guarantees, names the same
+-- grade as leaving it out.
+
+⟅_⟆ : Trace → Antichain
+⟅ t ⟆ = acSet (t ∷ []) tt
+
+⟅_∣_⟆ : Trace → Trace → Antichain
+⟅ t ∣ u ⟆ = acSet (t ∷ u ∷ []) tt
+
+⟅_∣_∣_⟆ : Trace → Trace → Trace → Antichain
+⟅ t ∣ u ∣ v ⟆ = acSet (t ∷ u ∷ v ∷ []) tt
+
+holds : {P Q : Antichain} {p : True (P ≾? Q)} → P ≾ Q
 holds {p = p} = toWitness p
 
-fails : {P Q : NeTraces} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+fails : {P Q : Antichain} {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 fails {p = p} = toWitnessFalse p
 
-holdsᵉ : (P Q : NeTraces) {p : True (P ≾? Q)} → P ≾ Q
+holdsᵉ : (P Q : Antichain) {p : True (P ≾? Q)} → P ≾ Q
 holdsᵉ P Q {p} = toWitness p
 
-failsᵉ : (P Q : NeTraces) {p : False (P ≾? Q)} → ¬ (P ≾ Q)
+failsᵉ : (P Q : Antichain) {p : False (P ≾? Q)} → ¬ (P ≾ Q)
 failsᵉ P Q {p} = toWitnessFalse p
 
 ------------------------------------------------------------------------
@@ -199,8 +227,26 @@ one-branch-does-not = fails
 -- covered by every run, so every grade weakens to it and it is the
 -- designated greatest one.
 
-everything-weakens : (P : NeTraces) → P ≾ u
+everything-weakens : (P : Antichain) → P ≾ u
 everything-weakens = ≾-⊤
 
 the-unit-is-greatest : Grade.⊤ left-sided ≡ u
 the-unit-is-greatest = refl
+
+------------------------------------------------------------------------
+-- Mutually-weakening grades are equal
+--
+-- A listed guarantee that another listed one already implies carries
+-- no information: a run covering `⌈ read ⌉ ∙ ⌈ write ⌉` covers
+-- `⌈ read ⌉ ` too, so the longer trace is dropped and the two grades
+-- are the same one.
+
+a-redundant-branch :
+  ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≡ ⟅ ⌈ read ⌉ ⟆
+a-redundant-branch = refl
+
+-- the same equation read off the order, which is antisymmetric
+
+weakening-both-ways :
+  ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≡ ⟅ ⌈ read ⌉ ⟆
+weakening-both-ways = ≾-antisym holds holds

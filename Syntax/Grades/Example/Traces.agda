@@ -16,7 +16,8 @@
 --                                                                     --
 -- `Timed.*` has a floor, a cap and their pairing:                     --
 --                                                                     --
---   Timed.LeftSided   a lower bound on what happened                  --
+--   Timed.LeftSided   a lower bound on what happened, cut down to     --
+--                     the antichain of its weakest guarantees         --
 --   Timed.RightSided  an upper bound                                  --
 --   Timed.TwoSided    both at once, with a coherence field            --
 --                                                                     --

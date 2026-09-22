@@ -52,6 +52,7 @@ module Syntax.Grades.Example.System.Traces.Timed.TwoSided
   (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
+open import Data.List.Base using (_++_)
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.Product using (_,_)
 
@@ -75,15 +76,20 @@ open import Syntax.Grades.Example.Traces.Timed.RightSided
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are, each at its own cost model
 
+open import Syntax.Grades.Example.Traces.Timed.LeftSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  using () renaming (Antichain to Antichainˡᵒ; traces to tracesˡᵒ;
+                     nonempty to nonemptyˡᵒ)
+
 open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
-  using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
+  using (minSetDuration-n) renaming (mapₒ-monotone to mapˡᵒ-monotone)
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using () renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
 
 open MinDurations costˡᵒ
-  using (minSetDuration; minSetDuration-nf-·ˢ; minSetDuration-∪ˢ)
+  using (minSetDuration; minSetDuration-·ˢ; minSetDuration-++)
   renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ)
 open MaxDurations costʰⁱ
   using (setDuration; setDuration-nf-·ˢ; setDuration-∪ˢ)
@@ -95,14 +101,14 @@ open MaxDurations costʰⁱ
 -- Some listed guarantee takes no longer than some listed allowance, and
 -- the two aggregations sit on the outside of that pair.
 
-coherent₀ : (P Q : NeTraces) → traces P ◇ˢ₀ traces Q
-          → minSetDuration (traces P) ≤ setDuration (traces Q)
+coherent₀ : (P : Antichainˡᵒ) (Q : NeTraces) → tracesˡᵒ P ◇ˢ₀ traces Q
+          → minSetDuration (tracesˡᵒ P) ≤ setDuration (traces Q)
 coherent₀ P Q coh
   with find (toWitness coh)
 ... | p , p∈P , hit
         with find hit
 ...     | q , q∈Q , p≤q =
-          ≤-trans (bigMin-mem durationˡᵒ p (traces P) p∈P)
+          ≤-trans (bigMin-mem durationˡᵒ p (tracesˡᵒ P) p∈P)
                   (≤-trans p≤q (bigMax-mem durationʰⁱ q (traces Q) q∈Q))
 
 ------------------------------------------------------------------------
@@ -114,13 +120,14 @@ capDuration (within Q) = ↑ setDuration (traces Q)
 capDuration unbounded  = ∞
 
 coherent : (i : TwoSided)
-         → ↑ minSetDuration (traces (lo i)) ≤∞ capDuration (hi i)
+         → ↑ minSetDuration (tracesˡᵒ (lo i)) ≤∞ capDuration (hi i)
 coherent i with hi i | lo◇hi i
 ... | within Q   | coh = coherent₀ (lo i) Q coh
 ... | unbounded  | _   = tt
 
 mapₒ : TwoSided → Interval∞
-mapₒ i = [ minSetDuration (traces (lo i)) , capDuration (hi i) , coherent i ]
+mapₒ i =
+  [ minSetDuration (tracesˡᵒ (lo i)) , capDuration (hi i) , coherent i ]
 
 -- monotonicity, endpointwise
 
@@ -149,8 +156,10 @@ capDuration-· unbounded  unbounded  = refl
 
 mapₒ-· : (i₁ i₂ : TwoSided) → mapₒ (i₁ ·ᵗˢ i₂) ≡ mapₒ i₁ ·ᵢ mapₒ i₂
 mapₒ-· i₁ i₂ =
-  eqᵢ (minSetDuration-nf-·ˢ (traces (lo i₁)) (traces (lo i₂))
-                            (nonempty (lo i₁)) (nonempty (lo i₂)))
+  eqᵢ (trans (minSetDuration-n (tracesˡᵒ (lo i₁) ·ˢ tracesˡᵒ (lo i₂))
+                (·ˢ-ne (nonemptyˡᵒ (lo i₁)) (nonemptyˡᵒ (lo i₂))))
+             (minSetDuration-·ˢ (tracesˡᵒ (lo i₁)) (tracesˡᵒ (lo i₂))
+                (nonemptyˡᵒ (lo i₁)) (nonemptyˡᵒ (lo i₂))))
       (capDuration-· (hi i₁) (hi i₂))
 
 -- joins, endpointwise: the union takes the faster of the two fastest
@@ -166,8 +175,10 @@ capDuration-⊔ unbounded  unbounded  = refl
 
 mapₒ-⊔ : (i₁ i₂ : TwoSided) → mapₒ (i₁ ⊔ᵗˢ i₂) ≡ mapₒ i₁ ⊔ᵢ mapₒ i₂
 mapₒ-⊔ i₁ i₂ =
-  eqᵢ (minSetDuration-∪ˢ (traces (lo i₁)) (traces (lo i₂))
-                         (nonempty (lo i₁)) (nonempty (lo i₂)))
+  eqᵢ (trans (minSetDuration-n (tracesˡᵒ (lo i₁) ++ tracesˡᵒ (lo i₂))
+                (++-ne (nonemptyˡᵒ (lo i₁)) (nonemptyˡᵒ (lo i₂))))
+             (minSetDuration-++ (tracesˡᵒ (lo i₁)) (tracesˡᵒ (lo i₂))
+                (nonemptyˡᵒ (lo i₁)) (nonemptyˡᵒ (lo i₂))))
       (capDuration-⊔ (hi i₁) (hi i₂))
 
 two-sided-traces→intervals : two-sided →ᵍ two-sided-intervals-with-∞
