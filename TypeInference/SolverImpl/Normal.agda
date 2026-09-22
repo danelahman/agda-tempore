@@ -1,22 +1,19 @@
 ------------------------------------------------------------------
 -- Deciding an entailed ordering of open grade expressions        --
 --                                                                --
--- Both sides are put in the product normal form of               --
--- `SolverImpl.Product` and compared atom by atom, the answer     --
--- glued back with `eqᵣ`/`monoᵣ`/`transᵣ`. A left side whose      --
--- atoms all cancel is the unit, and is then below anything by    --
+-- Both sides are put in the sum-of-products normal form of       --
+-- `SolverImpl.Product` and compared alternative by alternative,  --
+-- each alternative atom by atom, the answer glued back with      --
+-- `eqᵣ`/`monoᵣ`/`transᵣ`. A left alternative whose atoms all     --
+-- cancel is the unit, and is then below anything by              --
 -- `minᵣ`/`minₑ`, provided the corresponding unit-minimality      --
 -- option is supplied.                                            --
 --                                                                --
--- A join atom is met by its universal property: a join on the    --
--- left is discharged by `⊔-lub` from both operands, one on the   --
--- right by `⊔-ubˡ`/`⊔-ubʳ` from either. `⊔-lub` is taken first   --
--- because it is invertible, so nothing is lost by not going back --
--- to the upper-bound rules. Since a join stores its operands in  --
--- normal form, each such step passes to an operand of an atom or --
--- to the tail of a product, and the four mutually recursive      --
--- comparisons — product, atom against product, product against   --
--- atom, atom — descend structurally.                             --
+-- The sums are met by the universal property of the join:        --
+-- `⊔-lub` reduces the left side to each of its alternatives in   --
+-- turn, and `⊔-ubˡ`/`⊔-ubʳ` pick out an alternative of the right --
+-- side for each. So a bounded ∀/∃ over alternatives sits above a --
+-- pointwise comparison of products.                              --
 --                                                                --
 -- `⊩-reflectᵣ`/`⊩-reflectₑ` are the closed special case: a       --
 -- variable-free expression is convertible to the constant it     --
@@ -66,115 +63,100 @@ min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe UnitMinᵣ → Maybe
 min≾ᵣ (just p) = just (minᵣ p)
 min≾ᵣ nothing  = nothing
 
-mutual
+atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+atom≾ₑ (ac c) (ac d) with c ≾ₑ? d
+... | yes p = just (atomₑ p)
+... | no _  = nothing
+atom≾ₑ (av i) (av j) with i ≟ᶠ j
+... | yes refl = just ⊩≾̂ₑ-refl
+... | no _     = nothing
+atom≾ₑ _ _ = nothing
 
-  atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  atom≾ₑ (ac c) (ac d) with c ≾ₑ? d
-  ... | yes p = just (atomₑ p)
-  ... | no _  = nothing
-  atom≾ₑ (av i) (av j) with i ≟ᶠ j
-  ... | yes refl = just ⊩≾̂ₑ-refl
-  ... | no _     = nothing
-  atom≾ₑ (a⊔ as bs) b with prodAtom≾ₑ as b | prodAtom≾ₑ bs b
-  ... | just p | just q = just (⊔-lubₑ p q)
-  ... | _      | _      = nothing
-  atom≾ₑ a (a⊔ bs cs) with atomProd≾ₑ a bs | atomProd≾ₑ a cs
-  ... | just p  | _      = just (transₑ p ⊔-ubˡₑ)
-  ... | nothing | just q = just (transₑ q ⊔-ubʳₑ)
-  ... | nothing | nothing = nothing
-  atom≾ₑ _ _ = nothing
+-- One alternative against another: atom by atom, the empty product
+-- on the left being the unit
 
-  prodAtom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as : List (EAtom Θ)) → (b : EAtom Θ)
-             → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  prodAtom≾ₑ (a ∷ []) b = atom≾ₑ a b
-  prodAtom≾ₑ [] b = min≾ₑ umin?ₑ
-  prodAtom≾ₑ as (a⊔ bs cs) with prod≾ₑ as bs | prod≾ₑ as cs
-  ... | just p  | _      = just (transₑ p ⊔-ubˡₑ)
-  ... | nothing | just q = just (transₑ q ⊔-ubʳₑ)
-  ... | nothing | nothing = nothing
-  prodAtom≾ₑ _ _ = nothing
+prod≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (EAtom Θ))
+       → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
+prod≾ₑ [] [] = just ⊩≾̂ₑ-refl
+prod≾ₑ [] bs = min≾ₑ umin?ₑ
+prod≾ₑ (a ∷ []) (b ∷ []) = atom≾ₑ a b
+prod≾ₑ (a ∷ b ∷ as) (c ∷ d ∷ bs)
+  with atom≾ₑ a c | prod≾ₑ (b ∷ as) (d ∷ bs)
+... | just p | just q = just (monoₑ p q)
+... | _      | _      = nothing
+prod≾ₑ _ _ = nothing
 
-  atomProd≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a : EAtom Θ) → (bs : List (EAtom Θ))
-             → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
-  atomProd≾ₑ a (b ∷ []) = atom≾ₑ a b
-  atomProd≾ₑ (a⊔ as bs) cs with prod≾ₑ as cs | prod≾ₑ bs cs
-  ... | just p | just q = just (⊔-lubₑ p q)
-  ... | _      | _      = nothing
-  atomProd≾ₑ _ _ = nothing
+-- One alternative against a whole sum: some alternative of the sum
+-- bounds it, and the join is above that one
 
-  -- The whole comparison: the empty product on the left is the unit
+altSum≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as : List (EAtom Θ))
+         → (t : Alts (List (EAtom Θ)))
+         → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
+altSum≾ₑ as (alt P) = prod≾ₑ as P
+altSum≾ₑ as (P ∷⁺ t) with prod≾ₑ as P
+... | just p  = just (transₑ p ⊔-ubˡₑ)
+... | nothing with altSum≾ₑ as t
+...   | just q  = just (transₑ q ⊔-ubʳₑ)
+...   | nothing = nothing
 
-  prod≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (EAtom Θ))
-         → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
-  prod≾ₑ [] [] = just ⊩≾̂ₑ-refl
-  prod≾ₑ [] bs = min≾ₑ umin?ₑ
-  prod≾ₑ (a ∷ []) bs = atomProd≾ₑ a bs
-  prod≾ₑ as (b ∷ []) = prodAtom≾ₑ as b
-  prod≾ₑ (a ∷ b ∷ as) (c ∷ d ∷ bs)
-    with atom≾ₑ a c | prod≾ₑ (b ∷ as) (d ∷ bs)
-  ... | just p | just q = just (monoₑ p q)
-  ... | _      | _      = nothing
-  prod≾ₑ _ _ = nothing
+-- The whole comparison: every alternative of the left side is below
+-- the right side, and their join is then below it too
+
+sum≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (s t : Alts (List (EAtom Θ)))
+      → Maybe (Q ⊩ ⟦ s ⟧ᵉᵖ⁺ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
+sum≾ₑ (alt P)  t = altSum≾ₑ P t
+sum≾ₑ (P ∷⁺ s) t with altSum≾ₑ P t | sum≾ₑ s t
+... | just p | just q = just (⊔-lubₑ p q)
+... | _      | _      = nothing
 
 decide≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-decide≾ₑ ε ε' with prod≾ₑ (nrmₑ ε) (nrmₑ ε')
+decide≾ₑ ε ε' with sum≾ₑ (nrmₑ ε) (nrmₑ ε')
 ... | just p  = just (transₑ (eqₑ (canonₑ-≡ ε))
                              (transₑ p (eqₑ (≡̂ₑ-sym (canonₑ-≡ ε')))))
 ... | nothing = nothing
 
-mutual
+atom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+atom≾ᵣ (rc c) (rc d) with c ≾ᵣ? d
+... | yes p = just (atomᵣ p)
+... | no _  = nothing
+atom≾ᵣ (rv i) (rv j) with i ≟ᶠ j
+... | yes refl = just ⊩≾̂ᵣ-refl
+... | no _     = nothing
+atom≾ᵣ (rm i) (rm j) with i ≟ᶠ j
+... | yes refl = just ⊩≾̂ᵣ-refl
+... | no _     = nothing
+atom≾ᵣ _ _ = nothing
 
-  atom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  atom≾ᵣ (rc c) (rc d) with c ≾ᵣ? d
-  ... | yes p = just (atomᵣ p)
-  ... | no _  = nothing
-  atom≾ᵣ (rv i) (rv j) with i ≟ᶠ j
-  ... | yes refl = just ⊩≾̂ᵣ-refl
-  ... | no _     = nothing
-  atom≾ᵣ (rm i) (rm j) with i ≟ᶠ j
-  ... | yes refl = just ⊩≾̂ᵣ-refl
-  ... | no _     = nothing
-  atom≾ᵣ (r⊔ as bs) b with prodAtom≾ᵣ as b | prodAtom≾ᵣ bs b
-  ... | just p | just q = just (⊔-lubᵣ p q)
-  ... | _      | _      = nothing
-  atom≾ᵣ a (r⊔ bs cs) with atomProd≾ᵣ a bs | atomProd≾ᵣ a cs
-  ... | just p  | _      = just (transᵣ p ⊔-ubˡᵣ)
-  ... | nothing | just q = just (transᵣ q ⊔-ubʳᵣ)
-  ... | nothing | nothing = nothing
-  atom≾ᵣ _ _ = nothing
+prod≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (RAtom Θ))
+       → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
+prod≾ᵣ [] [] = just ⊩≾̂ᵣ-refl
+prod≾ᵣ [] bs = min≾ᵣ umin?ᵣ
+prod≾ᵣ (a ∷ []) (b ∷ []) = atom≾ᵣ a b
+prod≾ᵣ (a ∷ b ∷ as) (c ∷ d ∷ bs)
+  with atom≾ᵣ a c | prod≾ᵣ (b ∷ as) (d ∷ bs)
+... | just p | just q = just (monoᵣ p q)
+... | _      | _      = nothing
+prod≾ᵣ _ _ = nothing
 
-  prodAtom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as : List (RAtom Θ)) → (b : RAtom Θ)
-             → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  prodAtom≾ᵣ (a ∷ []) b = atom≾ᵣ a b
-  prodAtom≾ᵣ [] b = min≾ᵣ umin?ᵣ
-  prodAtom≾ᵣ as (r⊔ bs cs) with prod≾ᵣ as bs | prod≾ᵣ as cs
-  ... | just p  | _      = just (transᵣ p ⊔-ubˡᵣ)
-  ... | nothing | just q = just (transᵣ q ⊔-ubʳᵣ)
-  ... | nothing | nothing = nothing
-  prodAtom≾ᵣ _ _ = nothing
+altSum≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as : List (RAtom Θ))
+         → (t : Alts (List (RAtom Θ)))
+         → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
+altSum≾ᵣ as (alt P) = prod≾ᵣ as P
+altSum≾ᵣ as (P ∷⁺ t) with prod≾ᵣ as P
+... | just p  = just (transᵣ p ⊔-ubˡᵣ)
+... | nothing with altSum≾ᵣ as t
+...   | just q  = just (transᵣ q ⊔-ubʳᵣ)
+...   | nothing = nothing
 
-  atomProd≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a : RAtom Θ) → (bs : List (RAtom Θ))
-             → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
-  atomProd≾ᵣ a (b ∷ []) = atom≾ᵣ a b
-  atomProd≾ᵣ (r⊔ as bs) cs with prod≾ᵣ as cs | prod≾ᵣ bs cs
-  ... | just p | just q = just (⊔-lubᵣ p q)
-  ... | _      | _      = nothing
-  atomProd≾ᵣ _ _ = nothing
-
-  prod≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (RAtom Θ))
-         → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
-  prod≾ᵣ [] [] = just ⊩≾̂ᵣ-refl
-  prod≾ᵣ [] bs = min≾ᵣ umin?ᵣ
-  prod≾ᵣ (a ∷ []) bs = atomProd≾ᵣ a bs
-  prod≾ᵣ as (b ∷ []) = prodAtom≾ᵣ as b
-  prod≾ᵣ (a ∷ b ∷ as) (c ∷ d ∷ bs)
-    with atom≾ᵣ a c | prod≾ᵣ (b ∷ as) (d ∷ bs)
-  ... | just p | just q = just (monoᵣ p q)
-  ... | _      | _      = nothing
-  prod≾ᵣ _ _ = nothing
+sum≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (s t : Alts (List (RAtom Θ)))
+      → Maybe (Q ⊩ ⟦ s ⟧ʳᵖ⁺ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
+sum≾ᵣ (alt P)  t = altSum≾ᵣ P t
+sum≾ᵣ (P ∷⁺ s) t with altSum≾ᵣ P t | sum≾ᵣ s t
+... | just p | just q = just (⊔-lubᵣ p q)
+... | _      | _      = nothing
 
 decide≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-decide≾ᵣ ρ ρ' with prod≾ᵣ (nrmᵣ ρ) (nrmᵣ ρ')
+decide≾ᵣ ρ ρ' with sum≾ᵣ (nrmᵣ ρ) (nrmᵣ ρ')
 ... | just p  = just (transᵣ (eqᵣ (canonᵣ-≡ ρ))
                              (transᵣ p (eqᵣ (≡̂ᵣ-sym (canonᵣ-≡ ρ')))))
 ... | nothing = nothing

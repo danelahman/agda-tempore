@@ -4,10 +4,10 @@
 -- `Refutedᵤ ρ` says that no grounding brings `ρ` below the unit. --
 -- A constant atom of `ρ`'s normal form that is not itself below  --
 -- the unit establishes it, using only the zero-product laws of   --
--- `_≾ᵣ_`; a join atom is refuted by either operand, since each   --
--- is below the join. `scanᵤ` looks for such an atom with the     --
--- instance's decider. Refutation is stable under later           --
--- instantiation, and rules out entailment from every             --
+-- `_≾ᵣ_`; every alternative of the sum is below the sum, so one  --
+-- refuted alternative refutes the whole. `scanᵤ` looks for such  --
+-- an atom with the instance's decider. Refutation is stable      --
+-- under later instantiation, and rules out entailment from every --
 -- ground-realisable hypothesis set.                              --
 --                                                                --
 -- Refutation cannot be quantified over all `Q`, as `hyp-derives` --
@@ -50,7 +50,8 @@ open import TypeInference.OpenSyntax.Grounding S
 open import TypeInference.Constraints.Ground S using (_⨟ᵍ_; ⟦⟧-⨟ᵍ-r)
 
 open import TypeInference.SolverImpl.Normal S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
-  using (RAtom; rc; rv; rm; r⊔; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; ⟦_⟧ʳᵖ; ⟦⟧ʳᵖ-≡; nrmᵣ; nrmᵣ-≡)
+  using (Alts; alt; _∷⁺_; RAtom; rc; rv; rm; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; ⟦_⟧ʳˢ⁺;
+         nrmᵣ; nrmᵣ-≡)
 
 -- No grounding brings the expression below the unit
 
@@ -105,32 +106,31 @@ refute-⊩ θ h ref d = ref θ (ground-≾ᵣ h d)
 hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] ⊩ ρ ≾̂ᵣ ûᵣ
 hyp-derives ρ = hypᵣ (here refl)
 
--- The scan is structural over the atom list and over the join atoms
--- in it, each of which stores its operands in normal form.
+-- The scan is structural over the alternatives of the sum and over
+-- the atoms of each.
 
-mutual
+scan-atom : ∀ {Ψ} → (a : RAtom Ψ) → Maybe (Refutedᵤ ⟦ a ⟧ʳᵃ)
+scan-atom (rv i) = nothing
+scan-atom (rm i) = nothing
+scan-atom (rc c) with c ≾ᵣ? uᵣ
+... | yes _ = nothing
+... | no ¬p = just (const-refutes ¬p)
 
-  scan-atom : ∀ {Ψ} → (a : RAtom Ψ) → Maybe (Refutedᵤ ⟦ a ⟧ʳᵃ)
-  scan-atom (rv i) = nothing
-  scan-atom (rm i) = nothing
-  scan-atom (rc c) with c ≾ᵣ? uᵣ
-  ... | yes _ = nothing
-  ... | no ¬p = just (const-refutes ¬p)
-  scan-atom (r⊔ as bs) with scan-atoms as | scan-atoms bs
-  ... | just r  | _      = just (join-refutesˡ {ρ = ⟦ as ⟧ʳᵖ} {ρ' = ⟦ bs ⟧ʳᵖ}
-                                   (refute-≡̂ᵣ (≡̂ᵣ-sym (⟦⟧ʳᵖ-≡ as)) r))
-  ... | nothing | just r = just (join-refutesʳ {ρ = ⟦ as ⟧ʳᵖ} {ρ' = ⟦ bs ⟧ʳᵖ}
-                                   (refute-≡̂ᵣ (≡̂ᵣ-sym (⟦⟧ʳᵖ-≡ bs)) r))
-  ... | nothing | nothing = nothing
+scan-atoms : ∀ {Ψ} → (as : List (RAtom Ψ)) → Maybe (Refutedᵤ ⟦ as ⟧ʳˢ)
+scan-atoms []       = nothing
+scan-atoms (a ∷ as) with scan-atom a | scan-atoms as
+... | just r  | _      = just (head-refutes a as r)
+... | nothing | just r = just (tail-refutes a as r)
+... | nothing | nothing = nothing
 
-  scan-atoms : ∀ {Ψ} → (as : List (RAtom Ψ)) → Maybe (Refutedᵤ ⟦ as ⟧ʳˢ)
-  scan-atoms []       = nothing
-  scan-atoms (a ∷ as) with scan-atom a | scan-atoms as
-  ... | just r  | _      = just (head-refutes a as r)
-  ... | nothing | just r = just (tail-refutes a as r)
-  ... | nothing | nothing = nothing
+scan-sum : ∀ {Ψ} → (s : Alts (List (RAtom Ψ))) → Maybe (Refutedᵤ ⟦ s ⟧ʳˢ⁺)
+scan-sum (alt P)  = scan-atoms P
+scan-sum (P ∷⁺ t) with scan-atoms P | scan-sum t
+... | just r  | _      = just (join-refutesˡ {ρ = ⟦ P ⟧ʳˢ} {ρ' = ⟦ t ⟧ʳˢ⁺} r)
+... | nothing | just r = just (join-refutesʳ {ρ = ⟦ P ⟧ʳˢ} {ρ' = ⟦ t ⟧ʳˢ⁺} r)
+... | nothing | nothing = nothing
 
 scanᵤ : ∀ {Ψ} → (ρ : RExp Ψ) → Maybe (Refutedᵤ ρ)
-scanᵤ ρ with scan-atoms (nrmᵣ ρ)
+scanᵤ ρ with scan-sum (nrmᵣ ρ)
 ... | nothing = nothing
 ... | just r  = just (refute-≡̂ᵣ (nrmᵣ-≡ ρ) r)

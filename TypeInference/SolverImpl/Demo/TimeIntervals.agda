@@ -773,17 +773,18 @@ module Library where
   ex-branchE-size : sizeOf branchE ≡ just (0 , 0 , 0 , 0 , 0)
   ex-branchE-size = refl
 
-  -- `seqBranch`: the same join, now standing underneath a product. It
-  -- is folded there too, so no sum-of-products normalisation is needed
-  -- to leave the report free of residue.
+  -- `seqBranch`: the same join, standing underneath a product. The
+  -- product is distributed over it, and the arm that carries two
+  -- constants has them multiplied into one.
 
   ex-seqBranch-report : reportOf seqBranch
                       ≡ just (scope 15 0 13 ,
                               ((Unit ⇒ Unit ‼ evar (# 2))
                                 ⇒ (Bool
-                                    ⇒ Unit ‼ ((econst (op-grade read)
-                                                ⊔̂ₑ evar (# 2))
-                                               ·̂ₑ econst (op-grade read)))
+                                    ⇒ Unit
+                                       ‼ (econst (op-grade read ·ₑ op-grade read)
+                                           ⊔̂ₑ (evar (# 2)
+                                                ·̂ₑ econst (op-grade read))))
                                   ‼ ûₑ)
                                 ‼ ûₑ ,
                               []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)

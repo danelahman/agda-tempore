@@ -78,7 +78,7 @@ open import TypeInference.SolverImpl.Restricted S _≾ᵣ?_ _≾ₑ?_ opEnum umi
 -- Running the solver
 --
 -- `infer!` reports the inferred type and effect of a closed program,
--- in product normal form;
+-- in sum-of-products normal form;
 -- `typeOf` runs the whole pipeline, whose result is a derivation of the
 -- source system, and reads its type and effect off. `solved?` forgets
 -- everything but whether a constraint was solved at all.

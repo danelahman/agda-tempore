@@ -2,8 +2,9 @@
 -- Normalising the grade expressions of a report                  --
 --                                                                --
 -- Every grade expression of a reported type and of a reported    --
--- hypothesis set is replaced by its product normal form, so the  --
--- monoid laws leave no trace in what a caller is shown.          --
+-- hypothesis set is replaced by its sum-of-products normal form, --
+-- so the monoid and semilattice laws leave no trace in what a    --
+-- caller is shown.                                               --
 --                                                                --
 -- A hypothesis set and its normal form are satisfied by exactly  --
 -- the same groundings, so the normal form is stored, not merely  --
