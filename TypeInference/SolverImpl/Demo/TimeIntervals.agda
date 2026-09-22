@@ -165,7 +165,7 @@ ex-app = refl
 -- a `let`: the two effects are multiplied
 
 ex-seq : infer! [] (return true ⨟ return (var zero))
-       ≡ just (Bool , ûₑ ·̂ₑ ûₑ)
+       ≡ just (Bool , ûₑ)
 ex-seq = refl
 
 -- a boolean elimination
@@ -191,13 +191,13 @@ ex-absurd = refl
 -- continuation's
 
 ex-perform : infer! [] (perform read ⋆ (return (var zero)))
-           ≡ just (Base reading , econst (op-grade read) ·̂ₑ ûₑ)
+           ≡ just (Base reading , econst (op-grade read))
 ex-perform = refl
 
 -- delaying: the declared duration is charged to the effect
 
 ex-delay : infer! [] (delay 2 (return ⋆))
-         ≡ just (Unit , econst (of-natᵉ 2) ·̂ₑ ûₑ)
+         ≡ just (Unit , econst (of-natᵉ 2))
 ex-delay = refl
 
 -- boxing: the box's grade is not annotated, and defaults to the unit
@@ -329,7 +329,7 @@ unbox-after-write =
   perform write (const reading 0) (unbox (suc zero) (return (var zero)))
 
 ex-unbox-after-write : infer! Γ₂ unbox-after-write
-                     ≡ just (Bool , econst (op-grade write) ·̂ₑ ûₑ)
+                     ≡ just (Bool , econst (op-grade write))
 ex-unbox-after-write = refl
 
 -- and the derivation of the source system that the pipeline builds
@@ -355,7 +355,7 @@ unbox-after-delay : RawC (skel Γ₂)
 unbox-after-delay = delay 2 (unbox zero (return (var zero)))
 
 ex-unbox-after-delay : infer! Γ₂ unbox-after-delay
-                     ≡ just (Bool , econst (of-natᵉ 2) ·̂ₑ ûₑ)
+                     ≡ just (Bool , econst (of-natᵉ 2))
 ex-unbox-after-delay = refl
 
 -- one tick short, and it does not
@@ -375,14 +375,14 @@ ex-unbox-too-soon = refl
 -- unknown escaping a rigid binder refuted.
 
 -- The slack pass. Both arms bound the branch's effect unknown from
--- below, the closer folds the two bounds into their join, and the
--- folded grade is then multiplied as an ordinary constant.
+-- below and the closer folds the two bounds into their join, which
+-- the sequencing then multiplies by the unit.
 
 fold-then-mul : RawC 0
 fold-then-mul = branch-delay ⨟ return ⋆
 
 ex-fold-then-mul : infer! [] fold-then-mul
-                 ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ] ·̂ₑ econst uₑ)
+                 ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
 ex-fold-then-mul = refl
 
 -- The fold declines a bound that does not combine rather than dropping
@@ -404,7 +404,7 @@ ex-branch-delay³-flat = refl
 -- before the composite effect is built.
 
 ex-seq-op : infer! [] (perform read ⋆ (return (var zero)) ⨟ return ⋆)
-          ≡ just (Unit , (econst (op-grade read) ·̂ₑ ûₑ) ·̂ₑ ûₑ)
+          ≡ just (Unit , econst (op-grade read))
 ex-seq-op = refl
 
 -- The tightening pass. Subtyping is contravariant in a box's grade, so
@@ -585,7 +585,7 @@ module Least where
   -- with it, the whole program is solved, and both slacks stay unit
 
   ex-handle-min : Gᵐ.infer! Cᵈ.[] prog
-                ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ Grᵈ.·̂ₑ Grᵈ.ûₑ)
+                ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
   ex-handle-min = refl
 
   -- the handled computation may itself perform
@@ -596,7 +596,7 @@ module Least where
           `in (Rwᵈ.return Rwᵈ.⋆)
 
   ex-handle-op : Gᵐ.infer! Cᵈ.[] prog'
-               ≡ just (Tyᵈ.Unit , (Grᵈ.econst (opTimeᵈ read) Grᵈ.·̂ₑ Grᵈ.ûₑ) Grᵈ.·̂ₑ Grᵈ.ûₑ)
+               ≡ just (Tyᵈ.Unit , Grᵈ.econst (opTimeᵈ read))
   ex-handle-op = refl
 
   -- end to end: the same program elaborated into the source system,
@@ -763,7 +763,7 @@ module Library where
                     ≡ just (scope 15 0 10 ,
                             ((Unit ⇒ Unit ‼ evar (# 1))
                               ⇒ (Bool
-                                  ⇒ Unit ‼ (econst (op-grade read) ·̂ₑ ûₑ
+                                  ⇒ Unit ‼ (econst (op-grade read)
                                              ⊔̂ₑ evar (# 1)))
                                 ‼ ûₑ)
                               ‼ ûₑ ,
@@ -781,7 +781,7 @@ module Library where
                       ≡ just (scope 15 0 13 ,
                               ((Unit ⇒ Unit ‼ evar (# 2))
                                 ⇒ (Bool
-                                    ⇒ Unit ‼ ((econst (op-grade read) ·̂ₑ ûₑ
+                                    ⇒ Unit ‼ ((econst (op-grade read)
                                                 ⊔̂ₑ evar (# 2))
                                                ·̂ₑ econst (op-grade read)))
                                   ‼ ûₑ)

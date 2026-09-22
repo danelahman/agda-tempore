@@ -9,7 +9,8 @@
 --                                                                --
 -- Two read-backs: `⟦_⟧ʳˢ` ends every product in the unit, which  --
 -- makes the certificates structural; `⟦_⟧ʳᵖ` drops that trailing --
--- unit, and is what `canonᵣ`/`canonₑ` return.                    --
+-- unit, and is what `canonᵣ`/`canonₑ` return, and what a join    --
+-- atom stores its operands in.                                   --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
@@ -31,8 +32,8 @@ open GradeSystemInterface Grades
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Hyps   S
 
--- A join is an opaque atom carrying its two operands: normalisation
--- passes it through rather than distributing the product over it.
+-- A join is an atom carrying its two operands in normal form: the
+-- product is not distributed over it, but each side is normalised.
 
 data EAtom (Θ : Scope) : Set where
   ac : E → EAtom Θ
@@ -47,6 +48,16 @@ data EAtom (Θ : Scope) : Set where
 ⟦_⟧ᵉˢ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
 ⟦ [] ⟧ᵉˢ     = ûₑ
 ⟦ a ∷ as ⟧ᵉˢ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ
+
+⟦_⟧ᵉᵖ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
+⟦ [] ⟧ᵉᵖ         = ûₑ
+⟦ a ∷ [] ⟧ᵉᵖ     = ⟦ a ⟧ᵉᵃ
+⟦ a ∷ b ∷ as ⟧ᵉᵖ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ∷ as ⟧ᵉᵖ
+
+⟦⟧ᵉᵖ-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ⟦ as ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉᵖ
+⟦⟧ᵉᵖ-≡ []           = ≡̂ₑ-refl
+⟦⟧ᵉᵖ-≡ (a ∷ [])     = ≡̂ₑ-identityʳ
+⟦⟧ᵉᵖ-≡ (a ∷ b ∷ as) = ≡̂ₑ-cong ≡̂ₑ-refl (⟦⟧ᵉᵖ-≡ (b ∷ as))
 
 -- Consing an atom: constants are merged, units dropped
 
@@ -90,14 +101,17 @@ nrmₑ : ∀ {Θ} → EExp Θ → List (EAtom Θ)
 nrmₑ (evar i)   = av i ∷ []
 nrmₑ (econst c) = consₑ (ac c) []
 nrmₑ (ε ·̂ₑ ε')  = appₑ (nrmₑ ε) (nrmₑ ε')
-nrmₑ (ε ⊔̂ₑ ε')  = a⊔ ε ε' ∷ []
+nrmₑ (ε ⊔̂ₑ ε')  = a⊔ ⟦ nrmₑ ε ⟧ᵉᵖ ⟦ nrmₑ ε' ⟧ᵉᵖ ∷ []
 
 nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ
 nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
 nrmₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
 nrmₑ-≡ (ε ·̂ₑ ε')  =
   ≡̂ₑ-trans (≡̂ₑ-cong (nrmₑ-≡ ε) (nrmₑ-≡ ε')) (≡̂ₑ-sym (appₑ-≡ (nrmₑ ε) (nrmₑ ε')))
-nrmₑ-≡ (ε ⊔̂ₑ ε')  = ≡̂ₑ-sym ≡̂ₑ-identityʳ
+nrmₑ-≡ (ε ⊔̂ₑ ε')  =
+  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (≡̂ₑ-trans (nrmₑ-≡ ε)  (⟦⟧ᵉᵖ-≡ (nrmₑ ε)))
+                      (≡̂ₑ-trans (nrmₑ-≡ ε') (⟦⟧ᵉᵖ-≡ (nrmₑ ε'))))
+           (≡̂ₑ-sym ≡̂ₑ-identityʳ)
 
 data RAtom (Θ : Scope) : Set where
   rc : R → RAtom Θ
@@ -114,6 +128,16 @@ data RAtom (Θ : Scope) : Set where
 ⟦_⟧ʳˢ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
 ⟦ [] ⟧ʳˢ     = ûᵣ
 ⟦ a ∷ as ⟧ʳˢ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ
+
+⟦_⟧ʳᵖ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
+⟦ [] ⟧ʳᵖ         = ûᵣ
+⟦ a ∷ [] ⟧ʳᵖ     = ⟦ a ⟧ʳᵃ
+⟦ a ∷ b ∷ as ⟧ʳᵖ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ∷ as ⟧ʳᵖ
+
+⟦⟧ʳᵖ-≡ : ∀ {Θ} → (as : List (RAtom Θ)) → ⟦ as ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳᵖ
+⟦⟧ʳᵖ-≡ []           = ≡̂ᵣ-refl
+⟦⟧ʳᵖ-≡ (a ∷ [])     = ≡̂ᵣ-identityʳ
+⟦⟧ʳᵖ-≡ (a ∷ b ∷ as) = ≡̂ᵣ-cong ≡̂ᵣ-refl (⟦⟧ʳᵖ-≡ (b ∷ as))
 
 consᵣ : ∀ {Θ} → RAtom Θ → List (RAtom Θ) → List (RAtom Θ)
 consᵣ (rc c) (rc d ∷ as) = consᵣ (rc (c ·ᵣ d)) as
@@ -156,66 +180,49 @@ appᵣ-≡ (a ∷ as) bs =
   ≡̂ᵣ-trans (consᵣ-≡ a (appᵣ as bs))
   (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (appᵣ-≡ as bs)) (≡̂ᵣ-sym ≡̂ᵣ-assoc))
 
--- The image of an effect-atom list under `∣_∣̂ᵉ`
+-- The atoms of `∣ ε ∣̂ᵉ`, read off `ε` directly: the morphism is a
+-- monoid map, so it passes through a product and a join alike.
 
-imgᵃ : ∀ {Θ} → EAtom Θ → RAtom Θ
-imgᵃ (ac c)    = rc (mapᵉ c)
-imgᵃ (av i)    = rm i
-imgᵃ (a⊔ ε ε') = r⊔ ∣ ε ∣̂ᵉ ∣ ε' ∣̂ᵉ
+nrmᵐ : ∀ {Θ} → EExp Θ → List (RAtom Θ)
+nrmᵐ (evar i)   = rm i ∷ []
+nrmᵐ (econst c) = consᵣ (rc (mapᵉ c)) []
+nrmᵐ (ε ·̂ₑ ε')  = appᵣ (nrmᵐ ε) (nrmᵐ ε')
+nrmᵐ (ε ⊔̂ₑ ε')  = r⊔ ⟦ nrmᵐ ε ⟧ʳᵖ ⟦ nrmᵐ ε' ⟧ʳᵖ ∷ []
 
-img : ∀ {Θ} → List (EAtom Θ) → List (RAtom Θ)
-img []       = []
-img (a ∷ as) = consᵣ (imgᵃ a) (img as)
-
-imgᵃ-≡ : ∀ {Θ} → (a : EAtom Θ) → ∣ ⟦ a ⟧ᵉᵃ ∣̂ᵉ ≡̂ᵣ ⟦ imgᵃ a ⟧ʳᵃ
-imgᵃ-≡ (ac c)    = ≡̂ᵣ-map-const
-imgᵃ-≡ (av i)    = ≡̂ᵣ-refl
-imgᵃ-≡ (a⊔ ε ε') = ≡̂ᵣ-map-⊔
-
-img-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ∣ ⟦ as ⟧ᵉˢ ∣̂ᵉ ≡̂ᵣ ⟦ img as ⟧ʳˢ
-img-≡ []       = subst (λ x → ∣ ûₑ ∣̂ᵉ ≡̂ᵣ rconst x) map-uᵉ ≡̂ᵣ-map-const
-img-≡ (a ∷ as) =
+nrmᵐ-≡ : ∀ {Θ} → (ε : EExp Θ) → ∣ ε ∣̂ᵉ ≡̂ᵣ ⟦ nrmᵐ ε ⟧ʳˢ
+nrmᵐ-≡ (evar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
+nrmᵐ-≡ (econst c) =
+  ≡̂ᵣ-trans ≡̂ᵣ-map-const
+           (≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc (mapᵉ c)) []) ≡̂ᵣ-identityʳ))
+nrmᵐ-≡ (ε ·̂ₑ ε')  =
   ≡̂ᵣ-trans ≡̂ᵣ-map-·
-  (≡̂ᵣ-trans (≡̂ᵣ-cong (imgᵃ-≡ a) (img-≡ as)) (≡̂ᵣ-sym (consᵣ-≡ (imgᵃ a) (img as))))
+  (≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵐ-≡ ε) (nrmᵐ-≡ ε')) (≡̂ᵣ-sym (appᵣ-≡ (nrmᵐ ε) (nrmᵐ ε'))))
+nrmᵐ-≡ (ε ⊔̂ₑ ε')  =
+  ≡̂ᵣ-trans ≡̂ᵣ-map-⊔
+  (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (≡̂ᵣ-trans (nrmᵐ-≡ ε)  (⟦⟧ʳᵖ-≡ (nrmᵐ ε)))
+                       (≡̂ᵣ-trans (nrmᵐ-≡ ε') (⟦⟧ʳᵖ-≡ (nrmᵐ ε'))))
+            (≡̂ᵣ-sym ≡̂ᵣ-identityʳ))
 
 nrmᵣ : ∀ {Θ} → RExp Θ → List (RAtom Θ)
 nrmᵣ (rvar i)   = rv i ∷ []
 nrmᵣ (rconst c) = consᵣ (rc c) []
 nrmᵣ (ρ ·̂ᵣ ρ')  = appᵣ (nrmᵣ ρ) (nrmᵣ ρ')
-nrmᵣ (ρ ⊔̂ᵣ ρ')  = r⊔ ρ ρ' ∷ []
-nrmᵣ ∣ ε ∣̂ᵉ     = img (nrmₑ ε)
+nrmᵣ (ρ ⊔̂ᵣ ρ')  = r⊔ ⟦ nrmᵣ ρ ⟧ʳᵖ ⟦ nrmᵣ ρ' ⟧ʳᵖ ∷ []
+nrmᵣ ∣ ε ∣̂ᵉ     = nrmᵐ ε
 
 nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ
 nrmᵣ-≡ (rvar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
 nrmᵣ-≡ (rconst c) = ≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ)
 nrmᵣ-≡ (ρ ·̂ᵣ ρ')  =
   ≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ')) (≡̂ᵣ-sym (appᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))
-nrmᵣ-≡ (ρ ⊔̂ᵣ ρ')  = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
-nrmᵣ-≡ ∣ ε ∣̂ᵉ     = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (nrmₑ-≡ ε)) (img-≡ (nrmₑ ε))
+nrmᵣ-≡ (ρ ⊔̂ᵣ ρ')  =
+  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (≡̂ᵣ-trans (nrmᵣ-≡ ρ)  (⟦⟧ʳᵖ-≡ (nrmᵣ ρ)))
+                      (≡̂ᵣ-trans (nrmᵣ-≡ ρ') (⟦⟧ʳᵖ-≡ (nrmᵣ ρ'))))
+           (≡̂ᵣ-sym ≡̂ᵣ-identityʳ)
+nrmᵣ-≡ ∣ ε ∣̂ᵉ     = nrmᵐ-≡ ε
 
--- The read-back without a trailing unit, and the canonical form of an
--- expression: a right-nested product of atoms, the empty product being
--- the unit itself.
-
-⟦_⟧ᵉᵖ : ∀ {Θ} → List (EAtom Θ) → EExp Θ
-⟦ [] ⟧ᵉᵖ         = ûₑ
-⟦ a ∷ [] ⟧ᵉᵖ     = ⟦ a ⟧ᵉᵃ
-⟦ a ∷ b ∷ as ⟧ᵉᵖ = ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ∷ as ⟧ᵉᵖ
-
-⟦_⟧ʳᵖ : ∀ {Θ} → List (RAtom Θ) → RExp Θ
-⟦ [] ⟧ʳᵖ         = ûᵣ
-⟦ a ∷ [] ⟧ʳᵖ     = ⟦ a ⟧ʳᵃ
-⟦ a ∷ b ∷ as ⟧ʳᵖ = ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ∷ as ⟧ʳᵖ
-
-⟦⟧ᵉᵖ-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ⟦ as ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉᵖ
-⟦⟧ᵉᵖ-≡ []           = ≡̂ₑ-refl
-⟦⟧ᵉᵖ-≡ (a ∷ [])     = ≡̂ₑ-identityʳ
-⟦⟧ᵉᵖ-≡ (a ∷ b ∷ as) = ≡̂ₑ-cong ≡̂ₑ-refl (⟦⟧ᵉᵖ-≡ (b ∷ as))
-
-⟦⟧ʳᵖ-≡ : ∀ {Θ} → (as : List (RAtom Θ)) → ⟦ as ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳᵖ
-⟦⟧ʳᵖ-≡ []           = ≡̂ᵣ-refl
-⟦⟧ʳᵖ-≡ (a ∷ [])     = ≡̂ᵣ-identityʳ
-⟦⟧ʳᵖ-≡ (a ∷ b ∷ as) = ≡̂ᵣ-cong ≡̂ᵣ-refl (⟦⟧ʳᵖ-≡ (b ∷ as))
+-- The canonical form of an expression: a right-nested product of
+-- atoms, the empty product being the unit itself.
 
 canonₑ : ∀ {Θ} → EExp Θ → EExp Θ
 canonₑ ε = ⟦ nrmₑ ε ⟧ᵉᵖ

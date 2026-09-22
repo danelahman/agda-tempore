@@ -65,11 +65,11 @@ open import TypeInference.Raw.Syntax S
 
 open import TypeInference.Constraints.Syntax S
 
-open import TypeInference.Infer S using (Θ₁; X̂₁; t̂₁; C∅[_,_]; Inferred)
+open import TypeInference.Infer S using (Inferred)
 open import TypeInference.Principality S using (X̂; t̂; C[_,_])
 
 open import TypeInference.SolverImpl S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
-  using (gsolveImpl; inferImpl) public
+  using (gsolveImpl; greportImpl; inferImpl) public
 
 open import TypeInference.SolverImpl.Restricted S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ
   using (reportOn; Reported)
@@ -77,18 +77,14 @@ open import TypeInference.SolverImpl.Restricted S _≾ᵣ?_ _≾ₑ?_ opEnum umi
 ------------------------------------------------------------------------
 -- Running the solver
 --
--- `infer!` reports the inferred type and effect of a closed program;
+-- `infer!` reports the inferred type and effect of a closed program,
+-- in product normal form;
 -- `typeOf` runs the whole pipeline, whose result is a derivation of the
 -- source system, and reads its type and effect off. `solved?` forgets
 -- everything but whether a constraint was solved at all.
 
-result : {X : Subst Θ₁ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ₁ ∅ˢ ] X σ)
-       → Maybe (OVType ∅ˢ × EExp ∅ˢ)
-result nothing        = nothing
-result (just (σ , _)) = just (X̂₁ [ σ ]ᵛ , t̂₁ [ σ ]ᵉ)
-
 infer! : (Γ : Ctx) → (M : RawC (skel Γ)) → Maybe (OVType ∅ˢ × EExp ∅ˢ)
-infer! Γ M = result (gsolveImpl C∅[ Γ , M ])
+infer! = greportImpl
 
 typeOf : {Γ : Ctx} {M : RawC (skel Γ)} → Maybe (Inferred Γ M) → Maybe (T.VType × E)
 typeOf nothing  = nothing

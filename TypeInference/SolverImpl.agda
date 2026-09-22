@@ -61,6 +61,8 @@ open import TypeInference.SolverImpl.State S using (St; θ; res; init)
 open import TypeInference.SolverImpl.Solve S _≾ᵣ?_ _≾ₑ?_ opEnum umin?ᵣ umin?ₑ using (solve)
 open import TypeInference.SolverImpl.Close S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
   using (close)
+open import TypeInference.SolverImpl.Canon   S using (canonᵛ)
+open import TypeInference.SolverImpl.Product S using (canonₑ)
 
 -- The `gsolve` field of `GroundSolver` — the only part attainable here.
 
@@ -71,6 +73,17 @@ gsolveImpl C with solve init C
 ... | just (s' , m , w) with close (res s')
 ...   | nothing      = nothing
 ...   | just (δ , h) = just (θ s' ⨟ˢ δ , w δ ∅ᴴ h)
+
+-- The reporting boundary of the ground path: the solved type and
+-- effect, every grade expression in product normal form. It is the
+-- counterpart of `Restricted.reportOn`, and rests on the same fact,
+-- that `canonᵛ`/`canonₑ` leave the denotation alone.
+
+greportImpl : (Γ : Ctx) → (M : RawC (skel Γ))
+            → Maybe (OVType ∅ˢ × EExp ∅ˢ)
+greportImpl Γ M with gsolveImpl C∅[ Γ , M ]
+... | nothing      = nothing
+... | just (σ , _) = just (canonᵛ (X̂₁ [ σ ]ᵛ) , canonₑ (t̂₁ [ σ ]ᵉ))
 
 -- Feeds `gsolveImpl`'s result to `soundC`, `ctx-substᶜ` and `groundC`,
 -- bypassing `TypeInference.Infer.infer` (which needs a whole `GroundSolver`).

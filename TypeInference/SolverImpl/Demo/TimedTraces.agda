@@ -188,7 +188,7 @@ ex-app = refl
 -- product of the two sets of runs
 
 ex-seq : infer! [] (return true ⨟ return (var zero))
-       ≡ just (Bool , ûₑ ·̂ₑ ûₑ)
+       ≡ just (Bool , ûₑ)
 ex-seq = refl
 
 -- a boolean elimination: the branch's grade is the union of the arms',
@@ -215,13 +215,13 @@ ex-absurd = refl
 -- the continuation's
 
 ex-perform : infer! [] (perform read ⋆ (return (var zero)))
-           ≡ just (Base reading , econst (op-grade read) ·̂ₑ ûₑ)
+           ≡ just (Base reading , econst (op-grade read))
 ex-perform = refl
 
 -- delaying: the declared duration becomes a delay in the run
 
 ex-delay : infer! [] (delay 2 (return ⋆))
-         ≡ just (Unit , econst (of-natᵉ 2) ·̂ₑ ûₑ)
+         ≡ just (Unit , econst (of-natᵉ 2))
 ex-delay = refl
 
 -- boxing: the box's grade is not annotated, and nothing constrains it,
@@ -246,7 +246,7 @@ ex-unbox = refl
 -- containing only `0` sits below no operation's.
 
 ex-handle : infer! [] (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆))
-          ≡ just (Unit , ûₑ ·̂ₑ ûₑ)
+          ≡ just (Unit , ûₑ)
 ex-handle = refl
 
 -- and its derivation in the source system, the clause's slack read off
@@ -281,7 +281,7 @@ store : RawC 0
 store = perform read ⋆ (perform write (var zero) (return ⋆))
 
 ex-store : infer! [] store
-         ≡ just (Unit , econst (op-grade read) ·̂ₑ (econst (op-grade write) ·̂ₑ ûₑ))
+         ≡ just (Unit , econst (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆))
 ex-store = refl
 
 ex-store-pipeline : typeOf (inferImpl [] store)
@@ -325,7 +325,7 @@ branch-ret : RawC 0
 branch-ret = if true `then perform read ⋆ (return ⋆) `else return ⋆
 
 ex-branch-ret : infer! [] branch-ret
-              ≡ just (Unit , econst (op-grade read) ·̂ₑ ûₑ)
+              ≡ just (Unit , econst (op-grade read))
 ex-branch-ret = refl
 
 -- three arms, three bounds: nesting a branch inside a branch puts
@@ -388,7 +388,7 @@ ex-reading-stale = refl
 -- crosses the operation's lock
 
 ex-nodeid-carries : infer! Γₙ carry-over
-                  ≡ just (Base nodeid , econst (op-grade read) ·̂ₑ ûₑ)
+                  ≡ just (Base nodeid , econst (op-grade read))
 ex-nodeid-carries = refl
 
 ------------------------------------------------------------------------
@@ -413,7 +413,7 @@ unbox-after-read : RawC (skel Γₚ)
 unbox-after-read = perform read ⋆ (unbox (suc zero) (return (var zero)))
 
 ex-unbox-after-read : infer! Γₚ unbox-after-read
-                    ≡ just (Bool , econst (op-grade read) ·̂ₑ ûₑ)
+                    ≡ just (Bool , econst (op-grade read))
 ex-unbox-after-read = refl
 
 ex-unbox-after-read-pipeline : typeOf (inferImpl Γₚ unbox-after-read)
@@ -427,7 +427,7 @@ unbox-after-delay : RawC (skel Γₚ)
 unbox-after-delay = delay 3 (unbox zero (return (var zero)))
 
 ex-unbox-after-delay : infer! Γₚ unbox-after-delay
-                     ≡ just (Bool , econst (of-natᵉ 3) ·̂ₑ ûₑ)
+                     ≡ just (Bool , econst (of-natᵉ 3))
 ex-unbox-after-delay = refl
 
 -- and a store, which the budget covers at `costʰⁱ write = 3`
@@ -437,7 +437,7 @@ unbox-after-write =
   perform write (const reading 0) (unbox (suc zero) (return (var zero)))
 
 ex-unbox-after-write : infer! Γₚ unbox-after-write
-                     ≡ just (Bool , econst (op-grade write) ·̂ₑ ûₑ)
+                     ≡ just (Bool , econst (op-grade write))
 ex-unbox-after-write = refl
 
 -- One tick too many and the budget is overspent. A `delay τ` locks the
@@ -492,9 +492,7 @@ in-order =
         (unbox (suc (suc (suc zero))) (return (var zero)))))
 
 ex-in-order : infer! Γₛ in-order
-            ≡ just (Bool , econst (op-grade read)
-                            ·̂ₑ (econst (op-grade write)
-                                 ·̂ₑ (econst (op-grade send) ·̂ₑ ûₑ)))
+            ≡ just (Bool , econst (within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆))
 ex-in-order = refl
 
 -- the same three operations with the store after the transmission
@@ -521,15 +519,15 @@ ex-out-of-order = refl
 -- The passes, each on a program that isolates it.
 
 -- The slack pass. Both arms bound the branch's effect unknown from
--- below, the closer folds the two bounds into their join -- the union
--- of the two lists -- and the folded grade is then multiplied as an
--- ordinary constant.
+-- below and the closer folds the two bounds into their join -- the
+-- union of the two lists -- which the sequencing then multiplies by
+-- the unit.
 
 fold-then-mul : RawC 0
 fold-then-mul = branch-ops ⨟ return ⋆
 
 ex-fold-then-mul : infer! [] fold-then-mul
-                 ≡ just (Unit , econst (within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆) ·̂ₑ econst uₑ)
+                 ≡ just (Unit , econst (within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆))
 ex-fold-then-mul = refl
 
 -- The fold declines a bound that does not combine rather than dropping
@@ -554,7 +552,7 @@ ex-trimming = holds
 -- before the composite effect is built.
 
 ex-seq-op : infer! [] (perform read ⋆ (return (var zero)) ⨟ return ⋆)
-          ≡ just (Unit , (econst (op-grade read) ·̂ₑ ûₑ) ·̂ₑ ûₑ)
+          ≡ just (Unit , econst (op-grade read))
 ex-seq-op = refl
 
 -- The tightening pass. Subtyping is contravariant in a box's grade, so
@@ -681,7 +679,7 @@ module Library where
                     ≡ just (scope 15 0 10 ,
                             ((Unit ⇒ Unit ‼ evar (# 1))
                               ⇒ (Bool
-                                  ⇒ Unit ‼ (econst (op-grade read) ·̂ₑ ûₑ
+                                  ⇒ Unit ‼ (econst (op-grade read)
                                              ⊔̂ₑ evar (# 1)))
                                 ‼ ûₑ)
                               ‼ ûₑ ,
@@ -697,7 +695,7 @@ module Library where
                       ≡ just (scope 15 0 13 ,
                               ((Unit ⇒ Unit ‼ evar (# 2))
                                 ⇒ (Bool
-                                    ⇒ Unit ‼ ((econst (op-grade read) ·̂ₑ ûₑ
+                                    ⇒ Unit ‼ ((econst (op-grade read)
                                                 ⊔̂ₑ evar (# 2))
                                                ·̂ₑ econst (op-grade read)))
                                   ‼ ûₑ)
