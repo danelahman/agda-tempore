@@ -42,14 +42,14 @@ open import Util.Equality
 open import Syntax.Grades.Example.Worked.Operations
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; [_,_,_]; lo; hi; ⊤ᵗˢ; _◇ˢ_; ◇ˢ-refl; _·ᵗˢ_;
          two-sided; _≾ᵗˢ_; _≾ᵗˢ?_) public
 
 -- the cap endpoint is a grade of the allowance side
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (Bounds; within_; unbounded) public
 
 order : Grade._≾_ two-sided ≡ _≾ᵗˢ_

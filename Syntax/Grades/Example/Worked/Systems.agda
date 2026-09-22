@@ -98,7 +98,8 @@ open import Syntax.Grades.Example.Time.RightSided
 [0, n ] = mkᵣ (↑ n)
 
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos using (traces→right-sided-intervals)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
+  using (traces→right-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (_≾_; holds; within_; unbounded; _·ᵇ_)
@@ -167,7 +168,7 @@ deadlines-add = refl
 -- is what the cheapest member takes.
 
 open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
-  Op _≟ₒ_ costˡᵒ using (traces→left-sided-intervals)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (traces→left-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using () renaming (holds to holdsᶜ)
@@ -226,7 +227,8 @@ guarantees-add = refl
 open import Data.Unit using (tt)
 
 open import Syntax.Grades.Example.System.Traces.Timed.TwoSided
-  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos using (two-sided-traces→intervals)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  using (two-sided-traces→intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
   using (exact; _·ᵗˢ_) renaming ([_,_,_] to ⟪_,_,_⟫; holds to holdsᵗˢ)
@@ -289,7 +291,7 @@ windows-add = refl
 -- which side the endpoint bounds is what fixes the direction.
 
 open import Syntax.Grades.Example.System.Traces.Subsets.RightSided
-  Op _≟ₒ_ costʰⁱ using (subsets→right-sided-intervals)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ using (subsets→right-sided-intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
   using (permitting_) renaming (holds to holdsˢʰ)

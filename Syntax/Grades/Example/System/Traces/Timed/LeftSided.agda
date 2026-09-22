@@ -29,7 +29,11 @@
 open import Data.Nat.Base using (ℕ; _≤_)
 open import Data.Nat.Properties using (≤-trans)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Syntax.Grades
 open import Syntax.Grades.Example.Time.LeftSided
@@ -37,7 +41,10 @@ open import Syntax.Grades.Example.Time.LeftSided
 open import Util.Equality
 
 module Syntax.Grades.Example.System.Traces.Timed.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (costˡᵒ : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.Product using (_,_)
@@ -46,11 +53,11 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
+open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ costˡᵒ using (left-sided; _≾_)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (left-sided; _≾_)
 
 open MinDurations costˡᵒ
 

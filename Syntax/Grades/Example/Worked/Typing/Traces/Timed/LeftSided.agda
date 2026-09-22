@@ -33,16 +33,18 @@ module Syntax.Grades.Example.Worked.Typing.Traces.Timed.LeftSided where
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; _≟ₒ_; costˡᵒ;
+  using (Op; read; write; send; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costˡᵒ;
          NeTraces; traces; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided
   using (left-sided; holds; fails; failsᵉ)
 
-open import Syntax.Grades.Traces.Coverage.AsOrder Op _≟ₒ_ costˡᵒ
+open import Syntax.Grades.Traces.Coverage.AsOrder
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (coverageOrder)
 
-open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ coverageOrder
+open import Syntax.Grades.Traces.OrderLift
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans coverageOrder
   using (u-≽ˢ)
 
 ------------------------------------------------------------------------

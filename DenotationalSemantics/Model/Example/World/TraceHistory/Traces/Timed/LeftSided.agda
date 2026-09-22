@@ -22,12 +22,19 @@
 
 open import Data.Nat.Base using (ℕ)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (costˡᵒ : Op → ℕ) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
 open import Data.List.Membership.Propositional.Properties
@@ -44,7 +51,7 @@ open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
   using (module DecCoverage)
 
 open import Syntax.Grades.Example.Traces.Timed.LeftSided
-  Op _≟ₒ_ costˡᵒ using (left-sided; _≾_)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (left-sided; _≾_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 open WithDecEq _≟ₒ_ using (True-irr)

@@ -14,7 +14,8 @@ module Syntax.Grades.Traces.Positive where
 open import Data.Empty using (⊥)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous; tri<; tri≈; tri>)
 open import Relation.Nullary using (yes; no)
 
 open import Util.Equality
@@ -81,3 +82,36 @@ suc⁺-inj refl = refl
 d≢d+⁺e : (d e : ℕ⁺) → d +⁺ e ≡ d → ⊥
 d≢d+⁺e 𝟏        e ()
 d≢d+⁺e (suc⁺ d) e eq = d≢d+⁺e d e (suc⁺-inj eq)
+
+------------------------------------------------------------------------
+-- The strict total order
+--
+-- The usual order on the naturals, read off the unary representation.
+
+infix 4 _<⁺_
+
+data _<⁺_ : ℕ⁺ → ℕ⁺ → Set where
+  𝟏<suc⁺    : {n : ℕ⁺} → 𝟏 <⁺ suc⁺ n
+  suc⁺<suc⁺ : {m n : ℕ⁺} → m <⁺ n → suc⁺ m <⁺ suc⁺ n
+
+<⁺-trans : Transitive _<⁺_
+<⁺-trans 𝟏<suc⁺       (suc⁺<suc⁺ _) = 𝟏<suc⁺
+<⁺-trans (suc⁺<suc⁺ p) (suc⁺<suc⁺ q) = suc⁺<suc⁺ (<⁺-trans p q)
+
+<⁺-cmp : Trichotomous _≡_ _<⁺_
+<⁺-cmp 𝟏        𝟏        = tri≈ (λ ()) refl (λ ())
+<⁺-cmp 𝟏        (suc⁺ n) = tri< 𝟏<suc⁺ (λ ()) (λ ())
+<⁺-cmp (suc⁺ m) 𝟏        = tri> (λ ()) (λ ()) 𝟏<suc⁺
+<⁺-cmp (suc⁺ m) (suc⁺ n) with <⁺-cmp m n
+... | tri< p ¬q ¬r =
+        tri< (suc⁺<suc⁺ p)
+             (λ { refl → ¬q refl })
+             (λ { (suc⁺<suc⁺ r) → ¬r r })
+... | tri≈ ¬p refl ¬r =
+        tri≈ (λ { (suc⁺<suc⁺ p) → ¬p p })
+             refl
+             (λ { (suc⁺<suc⁺ r) → ¬r r })
+... | tri> ¬p ¬q r =
+        tri> (λ { (suc⁺<suc⁺ p) → ¬p p })
+             (λ { refl → ¬q refl })
+             (suc⁺<suc⁺ r)

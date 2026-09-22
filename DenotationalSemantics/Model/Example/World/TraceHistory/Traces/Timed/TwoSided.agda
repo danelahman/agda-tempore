@@ -26,12 +26,18 @@
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costˡᵒ costʰⁱ : Op → ℕ)
   (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
@@ -58,14 +64,14 @@ open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 -- the cap endpoint is the right-sided grade's carrier, `unbounded` and
 -- all
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (Bounds; within_; unbounded; _·ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)

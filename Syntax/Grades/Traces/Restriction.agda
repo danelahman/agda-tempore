@@ -11,7 +11,11 @@
 -- toolkit *unapplied* and names the alphabet at each use.              --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous; tri<; tri≈; tri>)
 open import Relation.Nullary using (yes; no)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
@@ -27,7 +31,10 @@ open import Data.Unit using (tt)
 open import Util.Equality
 
 module Syntax.Grades.Traces.Restriction
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (OpPred : Op → Bool) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (OpPred : Op → Bool) where
 
 open import Syntax.Grades.Traces.Sets
 
@@ -43,6 +50,22 @@ _≟ₒ'_ : DecidableEquality Op'
 (op , p) ≟ₒ' (.op , p') | yes refl with T-irrelevant p p'
 (op , p) ≟ₒ' (.op , p') | yes refl | refl = yes refl
 (op , p) ≟ₒ' (op' , p') | no ¬q = no (λ { refl → ¬q refl })
+
+-- the sub-alphabet is ordered by the ambient order on the symbol it
+-- carries; the admission proof is unique, so this stays trichotomous
+
+_<ᵒ'_ : Rel Op' lzero
+x <ᵒ' y = proj₁ x <ᵒ proj₁ y
+
+<ᵒ'-trans : Transitive _<ᵒ'_
+<ᵒ'-trans = <ᵒ-trans
+
+<ᵒ'-cmp : Trichotomous _≡_ _<ᵒ'_
+<ᵒ'-cmp (op , p) (op' , p') with <ᵒ-cmp op op'
+... | tri< lt ¬eq ¬gt   = tri< lt (λ { refl → ¬eq refl }) ¬gt
+... | tri> ¬lt ¬eq gt   = tri> ¬lt (λ { refl → ¬eq refl }) gt
+... | tri≈ ¬lt refl ¬gt with T-irrelevant p p'
+...   | refl = tri≈ ¬lt refl ¬gt
 
 operation' : (op : Op) → T (OpPred op) → Op'
 operation' op p = op , p

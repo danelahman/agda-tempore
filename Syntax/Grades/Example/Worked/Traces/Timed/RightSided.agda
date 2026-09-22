@@ -46,7 +46,7 @@ open import Util.Equality
 open import Syntax.Grades.Example.Worked.Operations
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_; _≾?_) public
 
 order : Grade._≾_ right-sided ≡ _≾_

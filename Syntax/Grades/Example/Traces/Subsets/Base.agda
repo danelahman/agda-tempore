@@ -12,12 +12,18 @@
 -- sits beside the lifted family rather than inside it.                --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module Syntax.Grades.Example.Traces.Subsets.Base
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
 open import Data.List.Base using (List)
 open import Data.List.Membership.Propositional using (_∈_)

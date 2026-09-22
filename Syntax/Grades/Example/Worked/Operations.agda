@@ -27,7 +27,11 @@ open import Data.Nat.Base using (ℕ; _≤_; _<_; s≤s; z≤n)
 open import Data.Product using (_×_; _,_)
 open import Data.Unit using (tt)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous; tri<; tri≈; tri>)
 open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
@@ -53,6 +57,32 @@ write ≟ₒ send  = no λ ()
 send  ≟ₒ read  = no λ ()
 send  ≟ₒ write = no λ ()
 send  ≟ₒ send  = yes refl
+
+-- The symbols are ordered as declared, which is also by increasing
+-- cost: `read` below `write` below `send`.
+
+infix 4 _<ᵒ_
+
+data _<ᵒ_ : Rel Op lzero where
+  read<write : read  <ᵒ write
+  read<send  : read  <ᵒ send
+  write<send : write <ᵒ send
+
+<ᵒ-trans : Transitive _<ᵒ_
+<ᵒ-trans read<write write<send = read<send
+<ᵒ-trans read<send  ()
+<ᵒ-trans write<send ()
+
+<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_
+<ᵒ-cmp read  read  = tri≈ (λ ()) refl (λ ())
+<ᵒ-cmp read  write = tri< read<write (λ ()) (λ ())
+<ᵒ-cmp read  send  = tri< read<send (λ ()) (λ ())
+<ᵒ-cmp write read  = tri> (λ ()) (λ ()) read<write
+<ᵒ-cmp write write = tri≈ (λ ()) refl (λ ())
+<ᵒ-cmp write send  = tri< write<send (λ ()) (λ ())
+<ᵒ-cmp send  read  = tri> (λ ()) (λ ()) read<send
+<ᵒ-cmp send  write = tri> (λ ()) (λ ()) write<send
+<ᵒ-cmp send  send  = tri≈ (λ ()) refl (λ ())
 
 ------------------------------------------------------------------------
 -- Execution times

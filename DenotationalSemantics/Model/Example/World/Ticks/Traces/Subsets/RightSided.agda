@@ -27,12 +27,19 @@
 
 open import Data.Nat.Base using (ℕ; _≤_)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costʰⁱ : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (costʰⁱ : Op → ℕ) where
 
 open import Data.Nat using (_+_; _≤?_)
 open import Data.Nat.Properties
@@ -49,8 +56,10 @@ open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
 
-open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ using (∈-⊑)
-open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
+open import Syntax.Grades.Example.Traces.Subsets.Base
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans using (∈-⊑)
+open import Syntax.Grades.Example.Traces.Subsets.RightSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_)
 
 open import DenotationalSemantics.Model.World

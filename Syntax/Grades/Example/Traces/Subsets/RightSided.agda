@@ -30,12 +30,18 @@
 -- `ρ' ≾ᵣ ρ` asks the elapsed runs to be among them.                   --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module Syntax.Grades.Example.Traces.Subsets.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
 open import Data.Empty using (⊥)
 open import Data.Nat.Base using (ℕ; _+_)
@@ -46,7 +52,7 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_
+open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open WithDecEq _≟ₒ_
   using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·ˢ; _≟ᴺ_; liftˢ-irrelevant;

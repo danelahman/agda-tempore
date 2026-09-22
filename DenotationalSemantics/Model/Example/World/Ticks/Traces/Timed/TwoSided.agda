@@ -22,12 +22,18 @@
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costˡᵒ costʰⁱ : Op → ℕ)
   (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
@@ -35,7 +41,7 @@ module DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; uᵗˢ; _·ᵗˢ_; two-sided; _≾ᵗˢ_)
 
 open import DenotationalSemantics.Model.World
@@ -47,10 +53,10 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.RightSided
   as Hi
 
-open Lo Op _≟ₒ_ costˡᵒ using () renaming
+open Lo Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using () renaming
   (_⊑ᵗ[_]_ to _⊑ˡᵒ[_]_; ⊑ᵗ-refl to ⊑ˡᵒ-refl; ⊑ᵗ-trans to ⊑ˡᵒ-trans;
    ⊑ᵗ-mono to ⊑ˡᵒ-mono; ⊑ᵗ-irrelevant to ⊑ˡᵒ-irrelevant)
-open Hi Op _≟ₒ_ costʰⁱ costʰⁱ-pos using () renaming
+open Hi Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos using () renaming
   (_⊑ᵗ[_]_ to _⊑ʰⁱ[_]_; ⊑ᵗ-refl to ⊑ʰⁱ-refl; ⊑ᵗ-trans to ⊑ʰⁱ-trans;
    ⊑ᵗ-mono to ⊑ʰⁱ-mono; ⊑ᵗ-irrelevant to ⊑ʰⁱ-irrelevant)
 

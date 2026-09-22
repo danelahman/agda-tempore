@@ -41,6 +41,12 @@ import Syntax.Grades.Traces.Sets
 
 import Syntax.Grades.Traces.Restriction
 
+-- A strict total order on traces, lexicographic over a strict total
+-- order on the alphabet. It enumerates the runs; it does not compare
+-- them, so it is unrelated to the orders collected below.
+
+import Syntax.Grades.Traces.Lexicographic
+
 ------------------------------------------------------------------------
 -- Measuring time
 --

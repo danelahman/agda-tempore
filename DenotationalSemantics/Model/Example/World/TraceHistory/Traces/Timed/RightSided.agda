@@ -24,12 +24,19 @@
 
 open import Data.Nat.Base using (ℕ; _<_)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 module DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.RightSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costʰⁱ : Op → ℕ)
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (costʰⁱ : Op → ℕ)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
 
 open import Data.List.Membership.Propositional using (_∈_; find)
@@ -48,7 +55,7 @@ open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
   using (module DecAllowance)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)

@@ -40,7 +40,8 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.Timed.LeftSided Op _≟ₒ_ costˡᵒ
+open import Syntax.Grades.Example.Traces.Timed.LeftSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
   using (left-sided; _≾_; _≾?_; ≾-⊤) public
 
 order : Grade._≾_ left-sided ≡ _≾_

@@ -7,7 +7,11 @@
 -- the `⊔`-based worst case -- is specific to this module.             --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Data.List.Base
@@ -22,7 +26,10 @@ open import Data.Nat.Properties
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.MaxDuration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+module Syntax.Grades.Traces.MaxDuration
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op

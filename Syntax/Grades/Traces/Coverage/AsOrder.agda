@@ -12,10 +12,19 @@
 
 open import Data.Nat.Base using (ℕ)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
+
+open import Util.Equality
 
 module Syntax.Grades.Traces.Coverage.AsOrder
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (costˡᵒ : Op → ℕ) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (costˡᵒ : Op → ℕ) where
 
 open import Syntax.Grades.Traces.Order Op
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ

@@ -9,7 +9,11 @@
 -- shared via `Durations.agda`; only the set-level aggregation differs.  --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Data.List.Base using (List; []; _∷_; _++_; map)
@@ -28,7 +32,10 @@ open import Data.Sum using (_⊎_; inj₁; inj₂)
 
 open import Util.Equality
 
-module Syntax.Grades.Traces.MinDuration (Op : Set) (_≟ₒ_ : DecidableEquality Op) where
+module Syntax.Grades.Traces.MinDuration
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op

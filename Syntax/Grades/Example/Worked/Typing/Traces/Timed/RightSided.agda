@@ -34,17 +34,20 @@ open import Data.Unit using (tt)
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; _≟ₒ_; costʰⁱ; costʰⁱ-pos;
+  using (Op; read; write; send; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans;
+         costʰⁱ; costʰⁱ-pos;
          NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆)
   renaming (_·_ to _·ᴺ_)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (right-sided; Bounds; within_; unbounded; holds; fails)
 
-open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+open import Syntax.Grades.Traces.Allowance.AsOrder
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
 
-open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ allowanceOrder
+open import Syntax.Grades.Traces.OrderLift
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder
   using (u-≼ˢ)
 
 ------------------------------------------------------------------------

@@ -26,7 +26,8 @@ open import Util.Equality
 
 open import Syntax.Grades.Example.Worked.Operations
 
-open import Syntax.Grades.Example.Traces.Subsets.RightSided Op _≟ₒ_
+open import Syntax.Grades.Example.Traces.Subsets.RightSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_; _≾?_) public
 
 order : Grade._≾_ right-sided ≡ _≾_

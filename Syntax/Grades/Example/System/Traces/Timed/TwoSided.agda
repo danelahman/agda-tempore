@@ -33,7 +33,11 @@ open import Data.Nat.Properties using (≤-refl; ≤-trans; ⊔-identityʳ)
 
 open import Data.Unit using (tt)
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Syntax.Grades
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
@@ -42,6 +46,8 @@ open import Util.Equality
 
 module Syntax.Grades.Example.System.Traces.Timed.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costˡᵒ costʰⁱ : Op → ℕ)
   (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
   (costʰⁱ-pos : (o : Op) → 0 < costʰⁱ o) where
@@ -53,26 +59,27 @@ open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
 open import Syntax.Grades.Traces.Sets Op
 open import Syntax.Grades.Traces.Durations Op
-open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_
-open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_
+open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (bigMax-mem; module MaxDurations)
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
-  Op _≟ₒ_ costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (TwoSided; lo; hi; lo◇hi; _·ᵗˢ_; _⊔ᵗˢ_; ⊤ᵗˢ; of-natᵗˢ; two-sided;
          _≾ᵗˢ_; _◇ˢ₀_)
 
 open import Syntax.Grades.Example.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (Bounds; within_; unbounded; _·ᵇ_; _⊔ᵇ_) renaming (_≾_ to _≾ʰⁱ_)
 
 -- the two endpoints are projected exactly as the corresponding
 -- one-sided grades are, each at its own cost model
 
 open import Syntax.Grades.Example.System.Traces.Timed.LeftSided
-  Op _≟ₒ_ costˡᵒ using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ
+  using () renaming (mapₒ-monotone to mapˡᵒ-monotone)
 open import Syntax.Grades.Example.System.Traces.Timed.RightSided
-  Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using () renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
 
 open MinDurations costˡᵒ

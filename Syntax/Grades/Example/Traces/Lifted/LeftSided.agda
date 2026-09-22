@@ -24,21 +24,28 @@
 -- since there nothing but an operation covers a demand for it.        --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
 import Syntax.Grades.Traces.Order as Order
 
 module Syntax.Grades.Example.Traces.Lifted.LeftSided
-  (Op : Set) (_≟ₒ_ : DecidableEquality Op) (O : Order.TraceOrder Op) where
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  (O : Order.TraceOrder Op) where
 
 open import Relation.Nullary using (Dec)
 
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op
-open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ O
+open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
 
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
 

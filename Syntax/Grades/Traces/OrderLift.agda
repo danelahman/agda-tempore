@@ -25,7 +25,11 @@
 -- allowance order.                                                    --
 ------------------------------------------------------------------------
 
-open import Relation.Binary.Definitions using (DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
@@ -33,6 +37,8 @@ import Syntax.Grades.Traces.Order
 
 module Syntax.Grades.Traces.OrderLift
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (O : Syntax.Grades.Traces.Order.TraceOrder Op) where
 
 open import Data.List.Base using (List; _++_)

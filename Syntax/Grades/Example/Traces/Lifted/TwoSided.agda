@@ -34,7 +34,11 @@
 
 open import Data.Nat.Base using (ℕ; _≤_)
 
-open import Relation.Binary.Definitions using (Decidable; DecidableEquality)
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (Decidable; DecidableEquality; Transitive; Trichotomous)
 
 open import Util.Equality
 
@@ -44,6 +48,8 @@ import Syntax.Grades.Traces.Order as Order
 
 module Syntax.Grades.Example.Traces.Lifted.TwoSided
   (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costˡᵒ costʰⁱ : Op → ℕ)
   (cost-≤ : (o : Op) → costˡᵒ o ≤ costʰⁱ o)
   (Oᶠ Oᶜ : Order.TraceOrder Op)
@@ -77,7 +83,8 @@ open import Syntax.Grades.Traces.Durations Op
 -- each endpoint is ordered exactly as the corresponding one-sided grade
 -- orders it, at its own order
 
-open import Syntax.Grades.Example.Traces.Lifted.LeftSided Op _≟ₒ_ Oᶠ
+open import Syntax.Grades.Example.Traces.Lifted.LeftSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶠ
   using () renaming (_≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_; ≾-⊤ to ≾ˡᵒ-⊤;
                      ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
                      ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
@@ -91,7 +98,8 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided Op _≟ₒ_ Oᶠ
 -- the cap's endpoint is `Bounds`, whose `unbounded` is the allowance
 -- grade's own greatest element
 
-open import Syntax.Grades.Example.Traces.Lifted.RightSided Op _≟ₒ_ Oᶜ
+open import Syntax.Grades.Example.Traces.Lifted.RightSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans Oᶜ
   using (Bounds; within_; unbounded; _·ᵇ_; uᵇ; _≟ᴮ_; _⊔ᵇ_;
          ·ᵇ-identityʳ; ·ᵇ-identityˡ; ·ᵇ-assoc)
   renaming (_≾₀_ to _≾ʰⁱ₀_;

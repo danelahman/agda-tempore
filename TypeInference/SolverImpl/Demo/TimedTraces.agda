@@ -47,16 +47,18 @@ open import Syntax.LanguageSpec
 open import Syntax.Operations
 
 open import Syntax.Grades.Example.Worked.Operations
-  using (Op; read; write; send; _≟ₒ_; costʰⁱ; costʰⁱ-pos;
+  using (Op; read; write; send; _≟ₒ_; _<ᵒ_; <ᵒ-cmp; <ᵒ-trans; costʰⁱ; costʰⁱ-pos;
          NeTraces; traces; nonempty; ε; _∙_; ⌈_⌉; ⟨_⟩; ⟅_⟆; ⟅_∣_⟆; ⟅_∣_∣_⟆)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.RightSided
   using (right-sided; Bounds; within_; unbounded; _≾?_; holds; fails)
 
-open import Syntax.Grades.Traces.Allowance.AsOrder Op _≟ₒ_ costʰⁱ costʰⁱ-pos
+open import Syntax.Grades.Traces.Allowance.AsOrder
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costʰⁱ costʰⁱ-pos
   using (allowanceOrder)
 
-open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ allowanceOrder using (u-≼ˢ)
+open import Syntax.Grades.Traces.OrderLift
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans allowanceOrder using (u-≼ˢ)
 
 import Syntax.Grades.Example.Worked.Typing.Core
 
