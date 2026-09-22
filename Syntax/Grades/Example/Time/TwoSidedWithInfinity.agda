@@ -123,6 +123,15 @@ uᵢ-minimal {i} (_ , maxrel) =
   +-monoˡ-≤ (min i) {min i₂} {min i₁} minrel ,
   +∞-mono-≤∞ {max i₁} {max i} {max i₂} {max i} maxrel (≤∞-refl {max i})
 
+-- antisymmetry: both endpoints are pinned, and `eqᵢ` discharges the
+-- `min≤max` field
+
+≾ᵢ-antisym : {i₁ i₂ : Interval∞} → i₁ ≾ᵢ i₂ → i₂ ≾ᵢ i₁ → i₁ ≡ i₂
+≾ᵢ-antisym {i₁} {i₂} (min₂≤min₁ , max₁≤max₂) (min₁≤min₂ , max₂≤max₁) =
+  eqᵢ {i₁} {i₂}
+    (≤-antisym min₁≤min₂ min₂≤min₁)
+    (≤∞-antisym {max i₁} {max i₂} max₁≤max₂ max₂≤max₁)
+
 -- irrelevance
 
 ≾ᵢ-irrelevant : Irrelevant _≾ᵢ_
@@ -218,8 +227,8 @@ two-sided-intervals-with-∞ = record
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ
   ; ⊔-lub            = λ {i₁} {i₂} {i₃} → ⊔ᵢ-lub {i₁} {i₂} {i₃}
-  ; ·-distribˡ-⊔     = ·ᵢ-distribˡ-⊔ᵢ
-  ; ·-distribʳ-⊔     = ·ᵢ-distribʳ-⊔ᵢ
+  ; ·-distribˡ-⊔-≾   = ·ᵢ-distribˡ-⊔ᵢ
+  ; ·-distribʳ-⊔-≾   = ·ᵢ-distribʳ-⊔ᵢ
   ; ·-monoʳ-≾        = λ {i} {i₁} {i₂} rel
                          → ·ᵢ-monoʳ-≾ᵢ {i} {i₁} {i₂} rel
   ; ·-monoˡ-≾        = λ {i} {i₁} {i₂} rel
@@ -228,6 +237,7 @@ two-sided-intervals-with-∞ = record
   ; ≾-trans          = λ rel₁ rel₂
                          → ≤-trans (proj₁ rel₂) (proj₁ rel₁) ,
                            ≤∞-trans (proj₂ rel₁) (proj₂ rel₂)
+  ; ≾-antisym        = λ {i₁} {i₂} → ≾ᵢ-antisym {i₁} {i₂}
   ; _≡?_              = eqᵢ?
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
@@ -339,6 +349,12 @@ infix 6 _≾ʷ_
 ≾ʷ-trans {no-window} {no-window} {window _}  p ()
 ≾ʷ-trans {no-window} {no-window} {no-window} p q = tt
 
+≾ʷ-antisym : {i j : Interval∞⊤} → i ≾ʷ j → j ≾ʷ i → i ≡ j
+≾ʷ-antisym {window i}  {window j}  p q = cong window_ (≾ᵢ-antisym {i} {j} p q)
+≾ʷ-antisym {window _}  {no-window} p ()
+≾ʷ-antisym {no-window} {window _}  () q
+≾ʷ-antisym {no-window} {no-window} p q = refl
+
 ≾ʷ-irrelevant : Irrelevant _≾ʷ_
 ≾ʷ-irrelevant {window i}  {window j}  p  q  = ≾ᵢ-irrelevant {i} {j} p q
 ≾ʷ-irrelevant {window _}  {no-window} tt tt = refl
@@ -433,12 +449,13 @@ two-sided-intervals-with-⊤ = record
   ; ⊔-ubˡ             = ⊔ʷ-ubˡ
   ; ⊔-ubʳ             = ⊔ʷ-ubʳ
   ; ⊔-lub             = λ {i₁} {i₂} {i₃} → ⊔ʷ-lub {i₁} {i₂} {i₃}
-  ; ·-distribˡ-⊔      = ·ʷ-distribˡ-⊔ʷ
-  ; ·-distribʳ-⊔      = ·ʷ-distribʳ-⊔ʷ
+  ; ·-distribˡ-⊔-≾    = ·ʷ-distribˡ-⊔ʷ
+  ; ·-distribʳ-⊔-≾    = ·ʷ-distribʳ-⊔ʷ
   ; ·-monoʳ-≾         = λ {i} {i₁} {i₂} → ·ʷ-monoʳ-≾ʷ {i} {i₁} {i₂}
   ; ·-monoˡ-≾         = λ {i} {i₁} {i₂} → ·ʷ-monoˡ-≾ʷ {i} {i₁} {i₂}
   ; ≾-refl            = λ {i} → ≾ʷ-refl {i}
   ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ʷ-trans {i₁} {i₂} {i₃}
+  ; ≾-antisym         = λ {i₁} {i₂} → ≾ʷ-antisym {i₁} {i₂}
   ; _≡?_              = eqʷ?
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ʷ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ʷ-zero-productʳ {i₁} {i₂}

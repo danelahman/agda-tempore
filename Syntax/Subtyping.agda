@@ -11,8 +11,6 @@
 -- `unbox`'s premise: a larger box grade is the weaker obligation. --
 -------------------------------------------------------------------
 
-open import Data.Product
-
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 
@@ -86,6 +84,26 @@ data _<:ᶜ_ where
 <:ᵛ-trans ([ p ]ₛ r) ([ q ]ₛ s) = [ ≾ᵣ-trans q p ]ₛ <:ᵛ-trans r s
 
 <:ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) = <:ᵛ-trans p q ‼ₛ ≾ₑ-trans r s
+
+-- Antisymmetry, so subtyping is a partial order on types. The grade
+-- positions are settled by antisymmetry of the grade orders, taken with
+-- the two bounds in the order the variance dictates.
+
+<:ᵛ-antisym : ∀ {A B} → A <:ᵛ B → B <:ᵛ A → A ≡ B
+<:ᶜ-antisym : ∀ {C₁ C₂} → C₁ <:ᶜ C₂ → C₂ <:ᶜ C₁ → C₁ ≡ C₂
+
+<:ᵛ-antisym (Baseₛ p)  (Baseₛ _)  = cong Base p
+<:ᵛ-antisym Unitₛ      Unitₛ      = refl
+<:ᵛ-antisym Boolₛ      Boolₛ      = refl
+<:ᵛ-antisym (p |×|ₛ r) (q |×|ₛ s) =
+  cong₂ _|×|_ (<:ᵛ-antisym p q) (<:ᵛ-antisym r s)
+<:ᵛ-antisym Emptyₛ     Emptyₛ     = refl
+<:ᵛ-antisym (p ⇒ₛ r)   (q ⇒ₛ s)   =
+  cong₂ _⇒_ (<:ᵛ-antisym q p) (<:ᶜ-antisym r s)
+<:ᵛ-antisym ([ p ]ₛ r) ([ q ]ₛ s) =
+  cong₂ [_]_ (≾ᵣ-antisym q p) (<:ᵛ-antisym r s)
+
+<:ᶜ-antisym (p ‼ₛ r) (q ‼ₛ s) = cong₂ _‼_ (<:ᵛ-antisym p q) (≾ₑ-antisym r s)
 
 -- Subtyping is a *property* of a pair of types: any two witnesses
 -- coincide, by irrelevance of the grade orderings and UIP at `Base`.
@@ -242,34 +260,23 @@ data _⊔ᶜ_≡_ where
 
 ⊔ᶜ-det (‼ⱼ {{j}}) (‼ⱼ {{j'}}) = cong (_‼ _) (⊔ᵛ-det j j')
 
--- A type joined with itself: the join exists, and is the type back again up
--- to `_<:ᵛ_`.
+-- A type joined with itself is the type back again, on the nose.
 --
--- Not on the nose. `_⊔ₑ_` is asked only to be a least upper bound for
--- `_≾ₑ_`, so a grade instance may join by a construction that is idempotent
--- only up to the order — the trace-set grades join two sets by concatenating
--- their underlying lists. The `‼` case is where that shows, and it is
--- discharged by `⊔ₑ-idem-≾ₑ`. `⊔ᵛ-ubˡ` and `⊔ᶜ-ubˡ` give the converse
--- inclusions, so the two types are equivalent.
+-- The `‼` case is the one with a grade in it: `‼ⱼ` produces the effect
+-- `ε ⊔ₑ ε`, which `⊔ₑ-idem` identifies with `ε`. Instance search does not
+-- see through that equation, so the constructor is applied and transported
+-- by hand.
 
-⊔ᵛ-idem : (A : VType) → Σ[ A' ∈ VType ] (A ⊔ᵛ A ≡ A') × (A' <:ᵛ A)
-⊔ᶜ-idem : (C : CType) → Σ[ C' ∈ CType ] (C ⊔ᶜ C ≡ C') × (C' <:ᶜ C)
+⊔ᵛ-idem : (A : VType) → A ⊔ᵛ A ≡ A
+⊔ᶜ-idem : (C : CType) → C ⊔ᶜ C ≡ C
 
-⊔ᵛ-idem (Base b)  = Base b , Baseⱼ , Baseₛ refl
-⊔ᵛ-idem Unit      = Unit , Unitⱼ , Unitₛ
-⊔ᵛ-idem Bool      = Bool , Boolⱼ , Boolₛ
-⊔ᵛ-idem (A |×| B) =
-  let A' , j , p = ⊔ᵛ-idem A
-      B' , k , q = ⊔ᵛ-idem B
-  in  A' |×| B' , |×|ⱼ {{j}} {{k}} , p |×|ₛ q
-⊔ᵛ-idem Empty     = Empty , Emptyⱼ , Emptyₛ
-⊔ᵛ-idem (A ⇒ C)   =
-  let C' , j , p = ⊔ᶜ-idem C
-  in  A ⇒ C' , ⇒ⱼ {{j}} , <:ᵛ-refl A ⇒ₛ p
-⊔ᵛ-idem ([ ρ ] A) =
-  let A' , j , p = ⊔ᵛ-idem A
-  in  [ ρ ] A' , []ⱼ {{j}} , [ ≾ᵣ-refl ]ₛ p
+⊔ᵛ-idem (Base b)  = Baseⱼ
+⊔ᵛ-idem Unit      = Unitⱼ
+⊔ᵛ-idem Bool      = Boolⱼ
+⊔ᵛ-idem (A |×| B) = |×|ⱼ {{⊔ᵛ-idem A}} {{⊔ᵛ-idem B}}
+⊔ᵛ-idem Empty     = Emptyⱼ
+⊔ᵛ-idem (A ⇒ C)   = ⇒ⱼ {{⊔ᶜ-idem C}}
+⊔ᵛ-idem ([ ρ ] A) = []ⱼ {{⊔ᵛ-idem A}}
 
 ⊔ᶜ-idem (A ‼ ε) =
-  let A' , j , p = ⊔ᵛ-idem A
-  in  A' ‼ (ε ⊔ₑ ε) , ‼ⱼ {{j}} , p ‼ₛ ⊔ₑ-idem-≾ₑ ε
+  subst (λ x → (A ‼ ε) ⊔ᶜ (A ‼ ε) ≡ (A ‼ x)) (⊔ₑ-idem ε) (‼ⱼ {{⊔ᵛ-idem A}})

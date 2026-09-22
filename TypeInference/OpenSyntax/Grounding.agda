@@ -182,9 +182,9 @@ ground-≾ᵣ {θ = θ} h (⊔-ubˡᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubˡ (⟦ ρ₁
 ground-≾ᵣ {θ = θ} h (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ h (⊔-lubᵣ p q) = ⊔ᵣ-lub (ground-≾ᵣ h p) (ground-≾ᵣ h q)
 ground-≾ᵣ {θ = θ} h (·-distribˡ-⊔ᵣ {ρ} {ρ₁} {ρ₂}) =
-  ·ᵣ-distribˡ-⊔ᵣ (⟦ ρ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
+  ·ᵣ-distribˡ-⊔ᵣ-≾ᵣ (⟦ ρ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ {θ = θ} h (·-distribʳ-⊔ᵣ {ρ} {ρ₁} {ρ₂}) =
-  ·ᵣ-distribʳ-⊔ᵣ (⟦ ρ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
+  ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ (⟦ ρ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ {θ = θ} {ρ' = ρ'} h (minᵣ p) = p (⟦ ρ' ⟧ʳ θ)
 
 ground-≾ₑ h (hypₑ m)     = ordEOK h m
@@ -197,9 +197,9 @@ ground-≾ₑ {θ = θ} h (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (⟦ ε₁
 ground-≾ₑ {θ = θ} h (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ h (⊔-lubₑ p q) = ⊔ₑ-lub (ground-≾ₑ h p) (ground-≾ₑ h q)
 ground-≾ₑ {θ = θ} h (·-distribˡ-⊔ₑ {ε} {ε₁} {ε₂}) =
-  ·ₑ-distribˡ-⊔ₑ (⟦ ε ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
+  ·ₑ-distribˡ-⊔ₑ-≾ₑ (⟦ ε ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} h (·-distribʳ-⊔ₑ {ε} {ε₁} {ε₂}) =
-  ·ₑ-distribʳ-⊔ₑ (⟦ ε ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
+  ·ₑ-distribʳ-⊔ₑ-≾ₑ (⟦ ε ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
 -- An assumed subtyping between type variables grounds to a closed

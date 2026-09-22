@@ -17,7 +17,7 @@ open import Relation.Nullary using (¬_)
 
 open import Util.Equality
 
--- Ordered effect and resource monoids
+-- Partially ordered effect and resource monoids
 
 record Grade : Set₁ where
   infixl 7 _·_
@@ -55,16 +55,17 @@ record Grade : Set₁ where
 
     -- `_·_` distributes over `_⊔_`, in the direction monotonicity does
     -- not already give
-    ·-distribˡ-⊔ : (c d e : Carrier) → c · (d ⊔ e) ≾ (c · d) ⊔ (c · e)
-    ·-distribʳ-⊔ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
+    ·-distribˡ-⊔-≾ : (c d e : Carrier) → c · (d ⊔ e) ≾ (c · d) ⊔ (c · e)
+    ·-distribʳ-⊔-≾ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
 
     -- _·_ is monotone with respect to _≾_
     ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
     ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
  
-    -- _≾_ is reflexive and transitive
-    ≾-refl  : Reflexive _≾_
-    ≾-trans : Transitive _≾_
+    -- _≾_ is a partial order
+    ≾-refl    : Reflexive _≾_
+    ≾-trans   : Transitive _≾_
+    ≾-antisym : {c d : Carrier} → c ≾ d → d ≾ c → c ≡ d
 
     -- _≾_ is proof irrelevant
     ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
@@ -94,33 +95,42 @@ record Grade : Set₁ where
   ⊔-mono {c' = c'} {d' = d'} p q =
     ⊔-lub (≾-trans p (⊔-ubˡ c' d')) (≾-trans q (⊔-ubʳ c' d'))
 
-  -- _⊔_ is idempotent, commutative and associative up to _≾_
-  ⊔-idem-≾ : (c : Carrier) → c ⊔ c ≾ c
-  ⊔-idem-≾ c = ⊔-lub ≾-refl ≾-refl
+  -- _⊔_ is idempotent, commutative and associative: each direction is
+  -- a least upper bound, and antisymmetry turns the pair into an
+  -- equation
+  ⊔-idem : (c : Carrier) → c ⊔ c ≡ c
+  ⊔-idem c = ≾-antisym (⊔-lub ≾-refl ≾-refl) (⊔-ubˡ c c)
 
-  ⊔-comm-≾ : (c d : Carrier) → c ⊔ d ≾ d ⊔ c
-  ⊔-comm-≾ c d = ⊔-lub (⊔-ubʳ d c) (⊔-ubˡ d c)
+  ⊔-comm : (c d : Carrier) → c ⊔ d ≡ d ⊔ c
+  ⊔-comm c d = ≾-antisym (⊔-lub (⊔-ubʳ d c) (⊔-ubˡ d c))
+                         (⊔-lub (⊔-ubʳ c d) (⊔-ubˡ c d))
 
-  ⊔-assoc-≾ : (c d e : Carrier) → (c ⊔ d) ⊔ e ≾ c ⊔ (d ⊔ e)
-  ⊔-assoc-≾ c d e =
-    ⊔-lub (⊔-lub (⊔-ubˡ c (d ⊔ e))
-                 (≾-trans (⊔-ubˡ d e) (⊔-ubʳ c (d ⊔ e))))
-          (≾-trans (⊔-ubʳ d e) (⊔-ubʳ c (d ⊔ e)))
+  ⊔-assoc : (c d e : Carrier) → (c ⊔ d) ⊔ e ≡ c ⊔ (d ⊔ e)
+  ⊔-assoc c d e =
+    ≾-antisym
+      (⊔-lub (⊔-lub (⊔-ubˡ c (d ⊔ e))
+                    (≾-trans (⊔-ubˡ d e) (⊔-ubʳ c (d ⊔ e))))
+             (≾-trans (⊔-ubʳ d e) (⊔-ubʳ c (d ⊔ e))))
+      (⊔-lub (≾-trans (⊔-ubˡ c d) (⊔-ubˡ (c ⊔ d) e))
+             (⊔-lub (≾-trans (⊔-ubʳ c d) (⊔-ubˡ (c ⊔ d) e))
+                    (⊔-ubʳ (c ⊔ d) e)))
 
-  -- ⊤ absorbs joins; the converse is `⊔-ubʳ`, so the two together say
-  -- that `c ⊔ ⊤` and `⊤` are equivalent
-  ⊔-⊤ : (c : Carrier) → c ⊔ ⊤ ≾ ⊤
-  ⊔-⊤ c = ⊔-lub (≾-⊤ c) ≾-refl
+  -- ⊤ absorbs joins
+  ⊔-⊤ : (c : Carrier) → c ⊔ ⊤ ≡ ⊤
+  ⊔-⊤ c = ≾-antisym (⊔-lub (≾-⊤ c) ≾-refl) (⊔-ubʳ c ⊤)
 
-  -- the converses of `·-distribˡ-⊔` and `·-distribʳ-⊔`, which follow
-  -- from `_·_` being monotone in each argument separately
-  ·-distribˡ-⊔⁻¹ : (c d e : Carrier) → (c · d) ⊔ (c · e) ≾ c · (d ⊔ e)
-  ·-distribˡ-⊔⁻¹ c d e =
-    ⊔-lub (·-monoʳ-≾ (⊔-ubˡ d e)) (·-monoʳ-≾ (⊔-ubʳ d e))
+  -- `_·_` distributes over `_⊔_`: the converse of each field follows
+  -- from `_·_` being monotone in each argument separately, so the two
+  -- sides are equal
+  ·-distribˡ-⊔ : (c d e : Carrier) → c · (d ⊔ e) ≡ (c · d) ⊔ (c · e)
+  ·-distribˡ-⊔ c d e =
+    ≾-antisym (·-distribˡ-⊔-≾ c d e)
+              (⊔-lub (·-monoʳ-≾ (⊔-ubˡ d e)) (·-monoʳ-≾ (⊔-ubʳ d e)))
 
-  ·-distribʳ-⊔⁻¹ : (c d e : Carrier) → (d · c) ⊔ (e · c) ≾ (d ⊔ e) · c
-  ·-distribʳ-⊔⁻¹ c d e =
-    ⊔-lub (·-monoˡ-≾ (⊔-ubˡ d e)) (·-monoˡ-≾ (⊔-ubʳ d e))
+  ·-distribʳ-⊔ : (c d e : Carrier) → (d ⊔ e) · c ≡ (d · c) ⊔ (e · c)
+  ·-distribʳ-⊔ c d e =
+    ≾-antisym (·-distribʳ-⊔-≾ c d e)
+              (⊔-lub (·-monoˡ-≾ (⊔-ubˡ d e)) (·-monoˡ-≾ (⊔-ubʳ d e)))
 
 open Grade
 
@@ -187,18 +197,19 @@ module GradeSystemInterface (GS : GradeSystem) where
      ⊔-ubʳ to ⊔ᵣ-ubʳ;
      ⊔-lub to ⊔ᵣ-lub;
      ⊔-mono to ⊔ᵣ-mono;
-     ⊔-idem-≾ to ⊔ᵣ-idem-≾ᵣ;
-     ⊔-comm-≾ to ⊔ᵣ-comm-≾ᵣ;
-     ⊔-assoc-≾ to ⊔ᵣ-assoc-≾ᵣ;
+     ⊔-idem to ⊔ᵣ-idem;
+     ⊔-comm to ⊔ᵣ-comm;
+     ⊔-assoc to ⊔ᵣ-assoc;
      ⊔-⊤ to ⊔ᵣ-⊤ᵣ;
+     ·-distribˡ-⊔-≾ to ·ᵣ-distribˡ-⊔ᵣ-≾ᵣ;
+     ·-distribʳ-⊔-≾ to ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ;
      ·-distribˡ-⊔ to ·ᵣ-distribˡ-⊔ᵣ;
      ·-distribʳ-⊔ to ·ᵣ-distribʳ-⊔ᵣ;
-     ·-distribˡ-⊔⁻¹ to ·ᵣ-distribˡ-⊔ᵣ⁻¹;
-     ·-distribʳ-⊔⁻¹ to ·ᵣ-distribʳ-⊔ᵣ⁻¹;
      ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
      ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
+     ≾-antisym to ≾ᵣ-antisym;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≡?_ to _≡ᵣ?_;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
@@ -224,18 +235,19 @@ module GradeSystemInterface (GS : GradeSystem) where
      ⊔-ubʳ to ⊔ₑ-ubʳ;
      ⊔-lub to ⊔ₑ-lub;
      ⊔-mono to ⊔ₑ-mono;
-     ⊔-idem-≾ to ⊔ₑ-idem-≾ₑ;
-     ⊔-comm-≾ to ⊔ₑ-comm-≾ₑ;
-     ⊔-assoc-≾ to ⊔ₑ-assoc-≾ₑ;
+     ⊔-idem to ⊔ₑ-idem;
+     ⊔-comm to ⊔ₑ-comm;
+     ⊔-assoc to ⊔ₑ-assoc;
      ⊔-⊤ to ⊔ₑ-⊤ₑ;
+     ·-distribˡ-⊔-≾ to ·ₑ-distribˡ-⊔ₑ-≾ₑ;
+     ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
      ·-distribˡ-⊔ to ·ₑ-distribˡ-⊔ₑ;
      ·-distribʳ-⊔ to ·ₑ-distribʳ-⊔ₑ;
-     ·-distribˡ-⊔⁻¹ to ·ₑ-distribˡ-⊔ₑ⁻¹;
-     ·-distribʳ-⊔⁻¹ to ·ₑ-distribʳ-⊔ₑ⁻¹;
      ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
      ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
      ≾-refl to ≾ₑ-refl;
      ≾-trans to ≾ₑ-trans;
+     ≾-antisym to ≾ₑ-antisym;
      ≾-irrelevant to ≾ₑ-irrelevant;
      _≡?_ to _≡ₑ?_;
      of-nat to of-natᵉ;

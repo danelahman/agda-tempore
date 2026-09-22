@@ -88,7 +88,7 @@ infix 6 _≤∞_
 ≤∞-∞ (↑ _) = tt
 ≤∞-∞ ∞     = tt
 
--- order is reflexive and transitive
+-- order is a partial order
 
 ≤∞-refl : ∀ {a} → a ≤∞ a
 ≤∞-refl {↑ _} = ≤-refl
@@ -102,6 +102,14 @@ infix 6 _≤∞_
 ≤∞-trans {∞}   {↑ _} {_}   () q
 ≤∞-trans {∞}   {∞}   {↑ _} p ()
 ≤∞-trans {∞}   {∞}   {∞}   p q = tt
+
+-- ∞ is comparable only with itself, so mutual bounds force equality
+
+≤∞-antisym : {a b : ℕ∞} → a ≤∞ b → b ≤∞ a → a ≡ b
+≤∞-antisym {↑ _} {↑ _} p q = cong ↑_ (≤-antisym p q)
+≤∞-antisym {↑ _} {∞}   p ()
+≤∞-antisym {∞}   {↑ _} () q
+≤∞-antisym {∞}   {∞}   p q = refl
 
 -- equal endpoints are related
 

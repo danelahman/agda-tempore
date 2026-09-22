@@ -85,6 +85,9 @@ infix 6 _≾ₒ_
 ≾ₒ-trans : Transitive _≾ₒ_
 ≾ₒ-trans {[ _ ,+∞⟩} {[ _ ,+∞⟩} {[ _ ,+∞⟩} p q = ≤-trans q p
 
+≾ₒ-antisym : {i j : 𝕀} → i ≾ₒ j → j ≾ₒ i → i ≡ j
+≾ₒ-antisym {[ _ ,+∞⟩} {[ _ ,+∞⟩} p q = eq𝕀 (≤-antisym q p)
+
 ≾ₒ-irrelevant : Irrelevant _≾ₒ_
 ≾ₒ-irrelevant {[ _ ,+∞⟩} {[ _ ,+∞⟩} = ≤-irrelevant
 
@@ -166,12 +169,13 @@ left-sided-intervals = record
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
   ; ⊔-lub             = ⊔ₒ-lub
-  ; ·-distribˡ-⊔      = ·ₒ-distribˡ-⊔ₒ
-  ; ·-distribʳ-⊔      = ·ₒ-distribʳ-⊔ₒ
+  ; ·-distribˡ-⊔-≾    = ·ₒ-distribˡ-⊔ₒ
+  ; ·-distribʳ-⊔-≾    = ·ₒ-distribʳ-⊔ₒ
   ; ·-monoʳ-≾         = ·ₒ-monoʳ-≾ₒ
   ; ·-monoˡ-≾         = ·ₒ-monoˡ-≾ₒ
   ; ≾-refl            = ≾ₒ-refl
   ; ≾-trans           = ≾ₒ-trans
+  ; ≾-antisym         = λ {i} {j} → ≾ₒ-antisym {i} {j}
   ; _≡?_              = _≡ₒ?_
   ; ≾-zero-productˡ   = ≾ₒ-zero-productˡ
   ; ≾-zero-productʳ   = ≾ₒ-zero-productʳ
@@ -278,6 +282,12 @@ infix 6 _≾ᵗ_
 ≾ᵗ-trans {untimed}  {untimed}  {timed _}  p ()
 ≾ᵗ-trans {untimed}  {untimed}  {untimed}  p q = tt
 
+≾ᵗ-antisym : {i j : 𝕀⊤} → i ≾ᵗ j → j ≾ᵗ i → i ≡ j
+≾ᵗ-antisym {timed i} {timed j} p q = cong timed_ (≾ₒ-antisym {i} {j} p q)
+≾ᵗ-antisym {timed _} {untimed} p ()
+≾ᵗ-antisym {untimed} {timed _} () q
+≾ᵗ-antisym {untimed} {untimed} p q = refl
+
 ≾ᵗ-irrelevant : Irrelevant _≾ᵗ_
 ≾ᵗ-irrelevant {timed i} {timed j} p  q  = ≾ₒ-irrelevant {i} {j} p q
 ≾ᵗ-irrelevant {timed _} {untimed} tt tt = refl
@@ -367,12 +377,13 @@ left-sided-intervals-with-⊤ = record
   ; ⊔-ubˡ             = ⊔ᵗ-ubˡ
   ; ⊔-ubʳ             = ⊔ᵗ-ubʳ
   ; ⊔-lub             = λ {i₁} {i₂} {i₃} → ⊔ᵗ-lub {i₁} {i₂} {i₃}
-  ; ·-distribˡ-⊔      = ·ᵗ-distribˡ-⊔ᵗ
-  ; ·-distribʳ-⊔      = ·ᵗ-distribʳ-⊔ᵗ
+  ; ·-distribˡ-⊔-≾    = ·ᵗ-distribˡ-⊔ᵗ
+  ; ·-distribʳ-⊔-≾    = ·ᵗ-distribʳ-⊔ᵗ
   ; ·-monoʳ-≾         = λ {i} {i₁} {i₂} → ·ᵗ-monoʳ-≾ᵗ {i} {i₁} {i₂}
   ; ·-monoˡ-≾         = λ {i} {i₁} {i₂} → ·ᵗ-monoˡ-≾ᵗ {i} {i₁} {i₂}
   ; ≾-refl            = λ {i} → ≾ᵗ-refl {i}
   ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ᵗ-trans {i₁} {i₂} {i₃}
+  ; ≾-antisym         = λ {i₁} {i₂} → ≾ᵗ-antisym {i₁} {i₂}
   ; _≡?_              = _≡ᵗ?_
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵗ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵗ-zero-productʳ {i₁} {i₂}

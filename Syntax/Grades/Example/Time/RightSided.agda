@@ -104,6 +104,9 @@ infix 6 _≾ₒ_
 ≾ₒ-trans : Transitive _≾ₒ_
 ≾ₒ-trans {[0, m ]} {[0, n ]} {[0, o ]} p q = ≤∞-trans {m} {n} {o} p q
 
+≾ₒ-antisym : {i j : 𝕀ᵣ} → i ≾ₒ j → j ≾ₒ i → i ≡ j
+≾ₒ-antisym {[0, m ]} {[0, n ]} p q = eq𝕀ᵣ (≤∞-antisym {m} {n} p q)
+
 ≾ₒ-irrelevant : Irrelevant _≾ₒ_
 ≾ₒ-irrelevant {[0, m ]} {[0, n ]} = ≤∞-irrelevant {m} {n}
 
@@ -173,12 +176,13 @@ right-sided-intervals = record
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
   ; ⊔-lub             = λ {i₁} {i₂} {i₃} → ⊔ₒ-lub {i₁} {i₂} {i₃}
-  ; ·-distribˡ-⊔      = ·ₒ-distribˡ-⊔ₒ
-  ; ·-distribʳ-⊔      = ·ₒ-distribʳ-⊔ₒ
+  ; ·-distribˡ-⊔-≾    = ·ₒ-distribˡ-⊔ₒ
+  ; ·-distribʳ-⊔-≾    = ·ₒ-distribʳ-⊔ₒ
   ; ·-monoʳ-≾         = λ {i} {i₁} {i₂} → ·ₒ-monoʳ-≾ₒ {i} {i₁} {i₂}
   ; ·-monoˡ-≾         = λ {i} {i₁} {i₂} → ·ₒ-monoˡ-≾ₒ {i} {i₁} {i₂}
   ; ≾-refl            = λ {i} → ≾ₒ-refl {i}
   ; ≾-trans           = λ {i₁} {i₂} {i₃} → ≾ₒ-trans {i₁} {i₂} {i₃}
+  ; ≾-antisym         = λ {i₁} {i₂} → ≾ₒ-antisym {i₁} {i₂}
   ; _≡?_              = _≡ₒ?_
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ₒ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ₒ-zero-productʳ {i₁} {i₂}
