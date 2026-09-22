@@ -51,12 +51,12 @@ open import Relation.Nullary using (Dec; yes; no)
 
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Example.Traces.Subsets.Base Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open WithDecEq _≟ₒ_
-  using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·ˢ; _≟ᴺ_; liftˢ-irrelevant;
-         _≟ᵀ_; liftˢ-·ˢ-++ˡ; ⊑-++-ubˡ; ⊑-++-ubʳ; ⊑-++-lub)
+  using (_⊑_; _⊑?_; ⊑-refl; ⊑-trans; ⊑-·; _≟ᴺ_; liftˢ-irrelevant;
+         _≟ᵀ_; ⊑-∪-ubˡ; ⊑-∪-ubʳ; ⊑-∪-lub; ⊑-nfˡ⁻)
 
 ------------------------------------------------------------------------
 -- The order on sets: inclusion, in the direction that permits more
@@ -73,45 +73,45 @@ P ≾₀ Q = traces P ⊑ traces Q
 ≾₀-trans {P} {Q} {R} = ⊑-trans {traces P} {traces Q} {traces R}
 
 ·-monoˡ₀ : {C P Q : NeTraces} → P ≾₀ Q → (P · C) ≾₀ (Q · C)
-·-monoˡ₀ {C} rel = ⊑-·ˢ rel (⊑-refl {traces C})
+·-monoˡ₀ {C} rel = ⊑-· rel (⊑-refl {traces C})
 
 ·-monoʳ₀ : {C P Q : NeTraces} → P ≾₀ Q → (C · P) ≾₀ (C · Q)
-·-monoʳ₀ {C} rel = ⊑-·ˢ (⊑-refl {traces C}) rel
+·-monoʳ₀ {C} rel = ⊑-· (⊑-refl {traces C}) rel
 
 -- the permitted runs are listed disjunctively, so the union of two
 -- sets is their join, and the language product distributes over it on
 -- both sides
 
 ⊔₀-ubˡ : (P Q : NeTraces) → P ≾₀ (P ∪ Q)
-⊔₀-ubˡ P Q = ⊑-++-ubˡ {traces P} {traces Q}
+⊔₀-ubˡ P Q = ⊑-∪-ubˡ {traces P} {traces Q}
 
 ⊔₀-ubʳ : (P Q : NeTraces) → Q ≾₀ (P ∪ Q)
-⊔₀-ubʳ P Q = ⊑-++-ubʳ (traces P) {traces Q}
+⊔₀-ubʳ P Q = ⊑-∪-ubʳ (traces P) {traces Q}
 
 ⊔₀-lub : {P Q R : NeTraces} → P ≾₀ R → Q ≾₀ R → (P ∪ Q) ≾₀ R
-⊔₀-lub {P} {Q} {R} = ⊑-++-lub {traces P} {traces Q} {traces R}
+⊔₀-lub {P} {Q} {R} = ⊑-∪-lub {traces P} {traces Q} {traces R}
+
+-- distributivity holds on the nose: the two sides list the same runs,
+-- and a set is determined by the runs it lists
 
 ·-distribˡ₀-⊔ : (C P Q : NeTraces) → (C · (P ∪ Q)) ≾₀ ((C · P) ∪ (C · Q))
 ·-distribˡ₀-⊔ C P Q =
-  liftˢ-·ˢ-++ˡ _≟ᵀ_ (λ _ → refl) {traces C} {traces P} {traces Q}
-
--- on the right the two sides are the same list, so inclusion is
--- reflexivity transported along `·ˢ-distribʳ-++`
+  subst ((C · (P ∪ Q)) ≾₀_) (·-distribˡ-∪ C P Q) (≾₀-refl {C · (P ∪ Q)})
 
 ·-distribʳ₀-⊔ : (C P Q : NeTraces) → ((P ∪ Q) · C) ≾₀ ((P · C) ∪ (Q · C))
 ·-distribʳ₀-⊔ C P Q =
-  subst ((traces (P ∪ Q) ·ˢ traces C) ⊑_)
-        (·ˢ-distribʳ-++ (traces P) (traces Q) (traces C))
-        (⊑-refl {traces (P ∪ Q) ·ˢ traces C})
+  subst (((P ∪ Q) · C) ≾₀_) (·-distribʳ-∪ P Q C) (≾₀-refl {(P ∪ Q) · C})
 
 -- a language product permitting nothing but the empty run has both
 -- factors permitting nothing but it
 
 ≾₀-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾₀ u → P ≾₀ u
-≾₀-zero-productˡ {P} {Q} = ⊑-zero-productˡ {traces P} {traces Q} (nonempty Q)
+≾₀-zero-productˡ {P} {Q} rel =
+  ⊑-zero-productˡ {traces P} {traces Q} (nonempty Q) (⊑-nfˡ⁻ rel)
 
 ≾₀-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾₀ u → Q ≾₀ u
-≾₀-zero-productʳ {P} {Q} = ⊑-zero-productʳ {traces P} {traces Q} (nonempty P)
+≾₀-zero-productʳ {P} {Q} rel =
+  ⊑-zero-productʳ {traces P} {traces Q} (nonempty P) (⊑-nfˡ⁻ rel)
 
 ≾₀-irrelevant : {P Q : NeTraces} → (p q : P ≾₀ Q) → p ≡ q
 ≾₀-irrelevant {P} {Q} = liftˢ-irrelevant

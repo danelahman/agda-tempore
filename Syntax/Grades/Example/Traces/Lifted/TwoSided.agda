@@ -77,7 +77,7 @@ open import Relation.Nullary.Decidable
 
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 
 -- each endpoint is ordered exactly as the corresponding one-sided grade
@@ -120,7 +120,7 @@ open Durations costˡᵒ using ()
 open Durations costʰⁱ using ()
   renaming (duration to durationʰⁱ; duration-∙ to duration-∙ʰⁱ)
 
-open WithDecEq _≟ₒ_ using (_≟ᴺ_; True-irr)
+open WithDecEq _≟ₒ_ using (_≟ᴺ_)
 
 -- a trace's floor measure is below its cap measure
 
@@ -177,6 +177,31 @@ xs ◇ˢ unbounded  = ⊤
 -- and coherence survives the language product, durations adding along
 -- sequencing
 
+-- coherence only asks for one witnessing pair, so it travels along any
+-- map that keeps the members -- normalisation in particular
+
+◇ˢ₀-∈ : {xs xs' ys ys' : List Trace}
+      → ({w : Trace} → w ∈ xs → w ∈ xs')
+      → ({w : Trace} → w ∈ ys → w ∈ ys')
+      → xs ◇ˢ₀ ys → xs' ◇ˢ₀ ys'
+◇ˢ₀-∈ {xs} {xs'} {ys} {ys'} f g p
+  with find (toWitness p)
+... | t , t∈xs , hit
+        with find hit
+...     | s , s∈ys , t≤s =
+          fromWitness
+            (Any.map
+              (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r) ys')
+                            eq inner)
+              (f t∈xs))
+  where
+    inner : Any (λ r → durationˡᵒ t ≤ durationʰⁱ r) ys'
+    inner =
+      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq t≤s) (g s∈ys)
+
+◇ˢ₀-nf : {xs ys : List Trace} → xs ◇ˢ₀ ys → nf xs ◇ˢ₀ nf ys
+◇ˢ₀-nf {xs} {ys} = ◇ˢ₀-∈ (λ {w} → nf-∈⁺ {w} {xs}) (λ {w} → nf-∈⁺ {w} {ys})
+
 ◇ˢ₀-·ˢ : {xs xs' ys ys' : List Trace}
        → xs ◇ˢ₀ ys → xs' ◇ˢ₀ ys' → (xs ·ˢ xs') ◇ˢ₀ (ys ·ˢ ys')
 ◇ˢ₀-·ˢ {xs} {xs'} {ys} {ys'} p q
@@ -206,37 +231,25 @@ xs ◇ˢ unbounded  = ⊤
               (∈-cartesianProductWith⁺ _∙_ s∈ys s'∈ys')
 
 ◇ˢ-·ˢ : {xs xs' : List Trace} {Y Y' : Bounds}
-      → xs ◇ˢ Y → xs' ◇ˢ Y' → (xs ·ˢ xs') ◇ˢ (Y ·ᵇ Y')
+      → xs ◇ˢ Y → xs' ◇ˢ Y' → nf (xs ·ˢ xs') ◇ˢ (Y ·ᵇ Y')
 ◇ˢ-·ˢ {xs} {xs'} {within Q} {within Q'} p q =
-  ◇ˢ₀-·ˢ {xs} {xs'} {traces Q} {traces Q'} p q
+  ◇ˢ₀-nf {xs ·ˢ xs'} {traces Q ·ˢ traces Q'}
+         (◇ˢ₀-·ˢ {xs} {xs'} {traces Q} {traces Q'} p q)
 ◇ˢ-·ˢ {_}  {_}   {within _}  {unbounded} _ _ = tt
 ◇ˢ-·ˢ {_}  {_}   {unbounded} {_}         _ _ = tt
 
--- and it survives concatenation at both endpoints: the witnessing pair
--- of the left-hand sets is still a pair of members
+-- and it survives the union at both endpoints: the witnessing pair of
+-- the left-hand sets is still a pair of members
 
-◇ˢ₀-++ : {xs xs' ys ys' : List Trace}
-       → xs ◇ˢ₀ ys → (xs ++ xs') ◇ˢ₀ (ys ++ ys')
-◇ˢ₀-++ {xs} {xs'} {ys} {ys'} p
-  with find (toWitness p)
-... | t , t∈xs , hit
-        with find hit
-...     | s , s∈ys , t≤s =
-          fromWitness
-            (Any.map
-              (λ eq → subst (λ z → Any (λ r → durationˡᵒ z ≤ durationʰⁱ r)
-                                        (ys ++ ys')) eq inner)
-              (∈-++⁺ˡ {ys = xs'} t∈xs))
-  where
-    inner : Any (λ r → durationˡᵒ t ≤ durationʰⁱ r) (ys ++ ys')
-    inner =
-      Any.map (λ eq → subst (λ z → durationˡᵒ t ≤ durationʰⁱ z) eq t≤s)
-              (∈-++⁺ˡ {ys = ys'} s∈ys)
+◇ˢ₀-∪ˢ : {xs xs' ys ys' : List Trace}
+       → xs ◇ˢ₀ ys → (xs ∪ˢ xs') ◇ˢ₀ (ys ∪ˢ ys')
+◇ˢ₀-∪ˢ {xs} {xs'} {ys} {ys'} =
+  ◇ˢ₀-∈ (λ {w} → ∪ˢ-∈ˡ {w} {xs} {xs'}) (λ {w} → ∪ˢ-∈ˡ {w} {ys} {ys'})
 
 ◇ˢ-⊔ᵇ : {xs xs' : List Trace} {Y Y' : Bounds}
-      → xs ◇ˢ Y → (xs ++ xs') ◇ˢ (Y ⊔ᵇ Y')
+      → xs ◇ˢ Y → (xs ∪ˢ xs') ◇ˢ (Y ⊔ᵇ Y')
 ◇ˢ-⊔ᵇ {xs} {xs'} {within Q} {within Q'} p =
-  ◇ˢ₀-++ {xs} {xs'} {traces Q} {traces Q'} p
+  ◇ˢ₀-∪ˢ {xs} {xs'} {traces Q} {traces Q'} p
 ◇ˢ-⊔ᵇ {_}  {_}   {within _}  {unbounded} _ = tt
 ◇ˢ-⊔ᵇ {_}  {_}   {unbounded} {_}         _ = tt
 

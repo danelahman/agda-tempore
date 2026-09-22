@@ -56,7 +56,7 @@ open import Syntax.Grades
 -- the set-level lift come from the shared set-of-traces module; only
 -- the order below is specific to this grade
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
 
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
@@ -82,42 +82,47 @@ P ≾₀ Q = traces P ≼ˢ traces Q
 
 ·-monoˡ₀ : {C P Q : NeTraces} → P ≾₀ Q → (P · C) ≾₀ (Q · C)
 ·-monoˡ₀ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces P} {traces Q} {traces C} {traces C} rel (≼ˢ-refl {traces C})
+  ≼ˢ-· {traces P} {traces Q} {traces C} {traces C} rel (≼ˢ-refl {traces C})
 
 ·-monoʳ₀ : {C P Q : NeTraces} → P ≾₀ Q → (C · P) ≾₀ (C · Q)
 ·-monoʳ₀ {C} {P} {Q} rel =
-  ≼ˢ-·ˢ {traces C} {traces C} {traces P} {traces Q} (≼ˢ-refl {traces C}) rel
+  ≼ˢ-· {traces C} {traces C} {traces P} {traces Q} (≼ˢ-refl {traces C}) rel
 
 -- a set of bounds is read disjunctively, so the union of two sets is
 -- their join, and the language product distributes over it on both
 -- sides
 
 ⊔₀-ubˡ : (P Q : NeTraces) → P ≾₀ (P ∪ Q)
-⊔₀-ubˡ P Q = ≼ˢ-++-ubˡ {traces P} {traces Q}
+⊔₀-ubˡ P Q = ≼ˢ-∪-ubˡ {traces P} {traces Q}
 
 ⊔₀-ubʳ : (P Q : NeTraces) → Q ≾₀ (P ∪ Q)
-⊔₀-ubʳ P Q = ≼ˢ-++-ubʳ (traces P) {traces Q}
+⊔₀-ubʳ P Q = ≼ˢ-∪-ubʳ (traces P) {traces Q}
 
 ⊔₀-lub : {P Q R : NeTraces} → P ≾₀ R → Q ≾₀ R → (P ∪ Q) ≾₀ R
-⊔₀-lub {P} {Q} {R} = ≼ˢ-++-lub {traces P} {traces Q} {traces R}
+⊔₀-lub {P} {Q} {R} = ≼ˢ-∪-lub {traces P} {traces Q} {traces R}
+
+-- distributivity holds on the nose: the two sides list the same runs,
+-- and a set is determined by the runs it lists
 
 ·-distribˡ₀-⊔ : (C P Q : NeTraces) → (C · (P ∪ Q)) ≾₀ ((C · P) ∪ (C · Q))
-·-distribˡ₀-⊔ C P Q = ≼ˢ-·ˢ-++ˡ {traces C} {traces P} {traces Q}
+·-distribˡ₀-⊔ C P Q =
+  subst ((C · (P ∪ Q)) ≾₀_) (·-distribˡ-∪ C P Q) (≾₀-refl {C · (P ∪ Q)})
 
 ·-distribʳ₀-⊔ : (C P Q : NeTraces) → ((P ∪ Q) · C) ≾₀ ((P · C) ∪ (Q · C))
-·-distribʳ₀-⊔ C P Q = ≼ˢ-·ˢ-++ʳ {traces P} {traces Q} {traces C}
+·-distribʳ₀-⊔ C P Q =
+  subst (((P ∪ Q) · C) ≾₀_) (·-distribʳ-∪ P Q C) (≾₀-refl {(P ∪ Q) · C})
 
 -- zero-product: the unit `{ ε }` permits nothing but the empty run, and
 -- durations add along sequencing, so a product that stays within it has
 -- both factors staying within it
 
 ≾₀-zero-productˡ : {P Q : NeTraces} → (P · Q) ≾₀ u → P ≾₀ u
-≾₀-zero-productˡ {P} {Q} =
-  ≼ˢ-zero-productˡ {traces P} {traces Q} (nonempty Q)
+≾₀-zero-productˡ {P} {Q} rel =
+  ≼ˢ-zero-productˡ {traces P} {traces Q} (nonempty Q) (≼ˢ-nfˡ⁻ rel)
 
 ≾₀-zero-productʳ : {P Q : NeTraces} → (P · Q) ≾₀ u → Q ≾₀ u
-≾₀-zero-productʳ {P} {Q} =
-  ≼ˢ-zero-productʳ {traces P} {traces Q} (nonempty P)
+≾₀-zero-productʳ {P} {Q} rel =
+  ≼ˢ-zero-productʳ {traces P} {traces Q} (nonempty P) (≼ˢ-nfˡ⁻ rel)
 
 -- the order is proof-irrelevant
 

@@ -48,7 +48,7 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ
   using (_≼ᵃ_; ≼ᵃ-refl; ≼ᵃ-trans; mono-∙)
 open import Syntax.Grades.Traces.Allowance.Decidable Op costʰⁱ
@@ -59,7 +59,6 @@ open import Syntax.Grades.Example.Traces.Timed.RightSided
   using (right-sided; Bounds; within_; unbounded; _·ᵇ_; _≾_)
 
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
-open WithDecEq _≟ₒ_ using (True-irr)
 
 open import DenotationalSemantics.Model.World
 
@@ -121,7 +120,7 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
       mkᵇ (t₁ ∙ t₂)
           (fromWitness
             (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ t₁≼a t₂≼b))
-                     (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
+                     (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q))))
           (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 -- covariance: the bound the continuation stayed within itself stays

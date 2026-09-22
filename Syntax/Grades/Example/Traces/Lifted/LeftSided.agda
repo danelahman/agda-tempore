@@ -44,7 +44,7 @@ open import Relation.Nullary using (Dec)
 
 open import Syntax.Grades
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.OrderLift Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans O
 
 open WithDecEq _≟ₒ_ using (_≟ᴺ_; liftˢ-irrelevant)
@@ -68,11 +68,11 @@ P ≾ P' = traces P' ≽ˢ traces P
 
 ·-monoˡ : {C P Q : NeTraces} → P ≾ Q → (P · C) ≾ (Q · C)
 ·-monoˡ {C} {P} {Q} rel =
-  ≽ˢ-·ˢ {traces Q} {traces P} {traces C} {traces C} rel (≽ˢ-refl {traces C})
+  ≽ˢ-· {traces Q} {traces P} {traces C} {traces C} rel (≽ˢ-refl {traces C})
 
 ·-monoʳ : {C P Q : NeTraces} → P ≾ Q → (C · P) ≾ (C · Q)
 ·-monoʳ {C} {P} {Q} rel =
-  ≽ˢ-·ˢ {traces C} {traces C} {traces Q} {traces P} (≽ˢ-refl {traces C}) rel
+  ≽ˢ-· {traces C} {traces C} {traces Q} {traces P} (≽ˢ-refl {traces C}) rel
 
 ------------------------------------------------------------------------
 -- Binary joins
@@ -87,19 +87,24 @@ _⊔_ : NeTraces → NeTraces → NeTraces
 _⊔_ = _∪_
 
 ⊔-ubˡ : (P Q : NeTraces) → P ≾ (P ⊔ Q)
-⊔-ubˡ P Q = ≽ˢ-++-ubˡ {traces P} {traces Q}
+⊔-ubˡ P Q = ≽ˢ-∪-ubˡ {traces P} {traces Q}
 
 ⊔-ubʳ : (P Q : NeTraces) → Q ≾ (P ⊔ Q)
-⊔-ubʳ P Q = ≽ˢ-++-ubʳ (traces P) {traces Q}
+⊔-ubʳ P Q = ≽ˢ-∪-ubʳ (traces P) {traces Q}
 
 ⊔-lub : {P Q R : NeTraces} → P ≾ R → Q ≾ R → (P ⊔ Q) ≾ R
-⊔-lub {P} {Q} {R} = ≽ˢ-++-lub {traces P} {traces Q} {traces R}
+⊔-lub {P} {Q} {R} = ≽ˢ-∪-lub {traces P} {traces Q} {traces R}
+
+-- distributivity holds on the nose: the two sides list the same
+-- guarantees, and a set is determined by the guarantees it lists
 
 ·-distribˡ-⊔ : (C P Q : NeTraces) → (C · (P ⊔ Q)) ≾ ((C · P) ⊔ (C · Q))
-·-distribˡ-⊔ C P Q = ≽ˢ-·ˢ-++ˡ {traces C} {traces P} {traces Q}
+·-distribˡ-⊔ C P Q =
+  subst ((C · (P ⊔ Q)) ≾_) (·-distribˡ-∪ C P Q) (≾-refl {C · (P ⊔ Q)})
 
 ·-distribʳ-⊔ : (C P Q : NeTraces) → ((P ⊔ Q) · C) ≾ ((P · C) ⊔ (Q · C))
-·-distribʳ-⊔ C P Q = ≽ˢ-·ˢ-++ʳ {traces P} {traces Q} {traces C}
+·-distribʳ-⊔ C P Q =
+  subst (((P ⊔ Q) · C) ≾_) (·-distribʳ-∪ P Q C) (≾-refl {(P ⊔ Q) · C})
 
 ------------------------------------------------------------------------
 -- The greatest grade

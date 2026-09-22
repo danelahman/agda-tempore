@@ -57,7 +57,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -83,9 +83,10 @@ open import Syntax.Grades.Example.System.Traces.Timed.RightSided
   using () renaming (mapₒ-monotone₀ to mapʰⁱ-monotone)
 
 open MinDurations costˡᵒ
-  using (minSetDuration; minSetDuration-·ˢ; minSetDuration-++)
+  using (minSetDuration; minSetDuration-nf-·ˢ; minSetDuration-∪ˢ)
   renaming (duration to durationˡᵒ; duration-⟨⟩ to duration-⟨⟩ˡᵒ)
-open MaxDurations costʰⁱ using (setDuration; setDuration-·ˢ; setDuration-++)
+open MaxDurations costʰⁱ
+  using (setDuration; setDuration-nf-·ˢ; setDuration-∪ˢ)
   renaming (duration to durationʰⁱ; duration-⟨⟩ to duration-⟨⟩ʰⁱ)
 
 ------------------------------------------------------------------------
@@ -141,15 +142,15 @@ mapₒ-monotone {i₁} {i₂} (l , h) =
 capDuration-· : (P Q : Bounds)
               → capDuration (P ·ᵇ Q) ≡ capDuration P +∞ capDuration Q
 capDuration-· (within P) (within Q) =
-  cong ↑_ (setDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
+  cong ↑_ (setDuration-nf-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
 capDuration-· (within _) unbounded  = refl
 capDuration-· unbounded  (within _) = refl
 capDuration-· unbounded  unbounded  = refl
 
 mapₒ-· : (i₁ i₂ : TwoSided) → mapₒ (i₁ ·ᵗˢ i₂) ≡ mapₒ i₁ ·ᵢ mapₒ i₂
 mapₒ-· i₁ i₂ =
-  eqᵢ (minSetDuration-·ˢ (traces (lo i₁)) (traces (lo i₂))
-                         (nonempty (lo i₁)) (nonempty (lo i₂)))
+  eqᵢ (minSetDuration-nf-·ˢ (traces (lo i₁)) (traces (lo i₂))
+                            (nonempty (lo i₁)) (nonempty (lo i₂)))
       (capDuration-· (hi i₁) (hi i₂))
 
 -- joins, endpointwise: the union takes the faster of the two fastest
@@ -158,14 +159,14 @@ mapₒ-· i₁ i₂ =
 capDuration-⊔ : (P Q : Bounds)
               → capDuration (P ⊔ᵇ Q) ≡ capDuration P ⊔∞ capDuration Q
 capDuration-⊔ (within P) (within Q) =
-  cong ↑_ (setDuration-++ (traces P) (traces Q))
+  cong ↑_ (setDuration-∪ˢ (traces P) (traces Q))
 capDuration-⊔ (within _) unbounded  = refl
 capDuration-⊔ unbounded  (within _) = refl
 capDuration-⊔ unbounded  unbounded  = refl
 
 mapₒ-⊔ : (i₁ i₂ : TwoSided) → mapₒ (i₁ ⊔ᵗˢ i₂) ≡ mapₒ i₁ ⊔ᵢ mapₒ i₂
 mapₒ-⊔ i₁ i₂ =
-  eqᵢ (minSetDuration-++ (traces (lo i₁)) (traces (lo i₂))
+  eqᵢ (minSetDuration-∪ˢ (traces (lo i₁)) (traces (lo i₂))
                          (nonempty (lo i₁)) (nonempty (lo i₂)))
       (capDuration-⊔ (hi i₁) (hi i₂))
 

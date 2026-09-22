@@ -53,7 +53,7 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 
 open import Syntax.Grades.Example.Traces.Subsets.Base
@@ -65,7 +65,6 @@ open import Syntax.Grades.Example.Traces.Subsets.RightSided
 open import DenotationalSemantics.Model.World
 
 open Durations costʰⁱ
-open WithDecEq _≟ₒ_ using (True-irr)
 
 ------------------------------------------------------------------------
 -- The frame
@@ -93,7 +92,7 @@ w ⊑ᵗ[ any-run ]      w' = ⊤
 ... | t₁ , t₁∈P , w'≤w+t₁ | t₂ , t₂∈Q , w''≤w'+t₂ =
       fromWitness
         (Any.map (λ r → subst (λ z → w'' ≤ w + duration z) r bound)
-                 (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q))
+                 (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q)))
   where
     bound : w'' ≤ w + duration (t₁ ∙ t₂)
     bound =

@@ -32,7 +32,9 @@ import Syntax.Grades.Traces.Base
 
 -- Non-empty finite sets of timed traces: the carrier every trace-based
 -- grade shares, with the language product as its monoid and the subset
--- preorder on the underlying lists.
+-- preorder on the underlying lists. A set is held canonically, as the
+-- list of its members in increasing lexicographic order, so it is
+-- determined by which traces it names.
 
 import Syntax.Grades.Traces.Sets
 

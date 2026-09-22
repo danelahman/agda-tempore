@@ -51,7 +51,7 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans) renaming (mono-∙ to mono-∙ᶜ)
@@ -76,7 +76,6 @@ open import Syntax.Grades.Example.Traces.Timed.RightSided
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
 open DecAllowance _≟ₒ_ using (_≼ᵃ?_)
-open WithDecEq _≟ₒ_ using (True-irr)
 
 open import DenotationalSemantics.Model.World
 
@@ -103,7 +102,7 @@ Within-∙ t₁ t₂ (within Q₁) (within Q₂) n₁ n₂
 ... | x , x∈Q , t₁≼x | y , y∈Q' , t₂≼y =
       fromWitness
         (Any.map (λ eq → subst ((t₁ ∙ t₂) ≼ᵃ_) eq (mono-∙ᵃ t₁≼x t₂≼y))
-                 (∈-cartesianProductWith⁺ _∙_ x∈Q y∈Q'))
+                 (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ x∈Q y∈Q')))
 
 -- the allowance the continuation stayed within is replaced by one of
 -- the weaker grade's
@@ -158,7 +157,7 @@ open _⊑ᵇ[_]_
       mkᵇ (t₁ ∙ t₂)
           (fromWitness
             (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq (mono-∙ᶜ a≼t₁ b≼t₂))
-                     (∈-cartesianProductWith⁺ _∙_ a∈P b∈P')))
+                     (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈P b∈P'))))
           (Within-∙ t₁ t₂ (hi i₁) (hi i₂) n₁ n₂)
           (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
 

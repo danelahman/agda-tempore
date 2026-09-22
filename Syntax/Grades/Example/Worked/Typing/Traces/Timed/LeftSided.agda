@@ -182,7 +182,8 @@ either-reading =
 sampling-then-branching :
   [] ⊢C⦂ Unit ‼ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆
 sampling-then-branching =
-  perform read ⋆                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
+  perform {ε = ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆} read ⋆
+                                     -- ⟨ ⟅ ⌈ read ⌉ ⟆ ⟩ ∷ Reading
     (if true
       `then coerce holds (perform send  here (return ⋆))
       `else coerce holds (perform write here (return ⋆)))

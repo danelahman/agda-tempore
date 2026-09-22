@@ -54,7 +54,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Allowance Op costʰⁱ using (duration-≼ᵃ)
@@ -99,8 +99,8 @@ mapₒ-monotone {unbounded} {unbounded} rel = tt
 
 mapₒ-· : (P Q : Bounds) → mapₒ (P ·ᵇ Q) ≡ mapₒ P ·ₒ mapₒ Q
 mapₒ-· (within P) (within Q) =
-  eq𝕀ᵣ (cong ↑_ (setDuration-·ˢ (traces P) (traces Q)
-                                (nonempty P) (nonempty Q)))
+  eq𝕀ᵣ (cong ↑_ (setDuration-nf-·ˢ (traces P) (traces Q)
+                                   (nonempty P) (nonempty Q)))
 mapₒ-· (within _) unbounded  = refl
 mapₒ-· unbounded  (within _) = refl
 mapₒ-· unbounded  unbounded  = refl
@@ -110,7 +110,7 @@ mapₒ-· unbounded  unbounded  = refl
 
 mapₒ-⊔ : (P Q : Bounds) → mapₒ (P ⊔ᵇ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
 mapₒ-⊔ (within P) (within Q) =
-  eq𝕀ᵣ (cong ↑_ (setDuration-++ (traces P) (traces Q)))
+  eq𝕀ᵣ (cong ↑_ (setDuration-∪ˢ (traces P) (traces Q)))
 mapₒ-⊔ (within _) unbounded  = refl
 mapₒ-⊔ unbounded  (within _) = refl
 mapₒ-⊔ unbounded  unbounded  = refl

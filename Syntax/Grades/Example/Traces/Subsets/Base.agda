@@ -34,7 +34,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open WithDecEq _≟ₒ_ using (_⊑_; _∈?_; _≟ᵀ_)
 

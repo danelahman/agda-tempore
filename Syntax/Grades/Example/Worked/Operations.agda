@@ -132,7 +132,7 @@ costʰⁱ-pos send  = s≤s z≤n
 ------------------------------------------------------------------------
 -- Timed traces over this alphabet
 
-open import Syntax.Grades.Traces.Sets Op public
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans public
 open import Syntax.Grades.Traces.Durations Op public
 
 -- a trace is measured at either cost model
@@ -144,16 +144,18 @@ open Durations costʰⁱ public using () renaming (duration to durationʰⁱ)
 -- Writing down finite sets of traces
 --
 -- `⟅ t ∣ u ⟆` is the set whose members are `t` and `u`. At these sizes
--- writing the members out is the clearest thing to do.
+-- writing the members out is the clearest thing to do. The members may
+-- be given in whatever order reads best, and are normalised into the
+-- canonical one: naming a trace twice names the same set as once.
 
 ⟅_⟆ : Trace → NeTraces
-⟅ t ⟆ = neTraces (t ∷ []) tt
+⟅ t ⟆ = neSet (t ∷ []) tt
 
 ⟅_∣_⟆ : Trace → Trace → NeTraces
-⟅ t ∣ u ⟆ = neTraces (t ∷ u ∷ []) tt
+⟅ t ∣ u ⟆ = neSet (t ∷ u ∷ []) tt
 
 ⟅_∣_∣_⟆ : Trace → Trace → Trace → NeTraces
-⟅ t ∣ u ∣ v ⟆ = neTraces (t ∷ u ∷ v ∷ []) tt
+⟅ t ∣ u ∣ v ⟆ = neSet (t ∷ u ∷ v ∷ []) tt
 
 ------------------------------------------------------------------------
 -- Some named runs of the node

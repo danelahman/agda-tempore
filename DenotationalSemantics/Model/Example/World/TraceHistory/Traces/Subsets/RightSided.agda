@@ -41,7 +41,7 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open import Syntax.Grades.Example.Traces.Subsets.Base
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans using (∈-⊑)
@@ -49,7 +49,7 @@ open import Syntax.Grades.Example.Traces.Subsets.RightSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
   using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_)
 
-open WithDecEq _≟ₒ_ using (_∈?_; True-irr)
+open WithDecEq _≟ₒ_ using (_∈?_)
 
 open import DenotationalSemantics.Model.World
 
@@ -100,7 +100,7 @@ extends-∙ w t₁ t₂ eq₁ eq₂ =
 ⊑ᵇ-trans {permitting P} {permitting Q} {w} (mkᵇ t₁ l₁ eq₁) (mkᵇ t₂ l₂ eq₂) =
   mkᵇ (t₁ ∙ t₂)
       (fromWitness
-        (∈-cartesianProductWith⁺ _∙_ (toWitness l₁) (toWitness l₂)))
+        (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ (toWitness l₁) (toWitness l₂))))
       (extends-∙ w t₁ t₂ eq₁ eq₂)
 
 ⊑ᵇ-mono : ∀ {P Q w w'} → P ≾ Q → w ⊑ᵇ[ P ] w' → w ⊑ᵇ[ Q ] w'

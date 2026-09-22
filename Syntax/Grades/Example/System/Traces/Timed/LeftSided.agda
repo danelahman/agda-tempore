@@ -51,7 +51,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MinDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
@@ -85,14 +85,14 @@ mapₒ-monotone {P} {Q} rel =
 
 mapₒ-· : (P Q : NeTraces) → mapₒ (P · Q) ≡ mapₒ P ·ₒ mapₒ Q
 mapₒ-· P Q =
-  eq𝕀 (minSetDuration-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
+  eq𝕀 (minSetDuration-nf-·ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
 
 -- joins are preserved: the fastest guarantee of a union is the faster
 -- of the two fastest
 
 mapₒ-⊔ : (P Q : NeTraces) → mapₒ (P ∪ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
 mapₒ-⊔ P Q =
-  eq𝕀 (minSetDuration-++ (traces P) (traces Q) (nonempty P) (nonempty Q))
+  eq𝕀 (minSetDuration-∪ˢ (traces P) (traces Q) (nonempty P) (nonempty Q))
 
 traces→left-sided-intervals : left-sided →ᵍ left-sided-intervals
 traces→left-sided-intervals = record

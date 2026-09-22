@@ -42,7 +42,7 @@ module Syntax.Grades.Example.System.Traces.Subsets.RightSided
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (costʰⁱ : Op → ℕ) where
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.MaxDuration Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
@@ -76,8 +76,8 @@ mapₒ-monotone {any-run}      {any-run}      rel = tt
 
 mapₒ-· : (P Q : Permits) → mapₒ (P ·ᵖ Q) ≡ mapₒ P ·ₒ mapₒ Q
 mapₒ-· (permitting P) (permitting Q) =
-  eq𝕀ᵣ (cong ↑_ (setDuration-·ˢ (traces P) (traces Q)
-                                (nonempty P) (nonempty Q)))
+  eq𝕀ᵣ (cong ↑_ (setDuration-nf-·ˢ (traces P) (traces Q)
+                                   (nonempty P) (nonempty Q)))
 mapₒ-· (permitting _) any-run        = refl
 mapₒ-· any-run        (permitting _) = refl
 mapₒ-· any-run        any-run        = refl
@@ -87,7 +87,7 @@ mapₒ-· any-run        any-run        = refl
 
 mapₒ-⊔ : (P Q : Permits) → mapₒ (P ⊔ᵖ Q) ≡ mapₒ P ⊔ₒ mapₒ Q
 mapₒ-⊔ (permitting P) (permitting Q) =
-  eq𝕀ᵣ (cong ↑_ (setDuration-++ (traces P) (traces Q)))
+  eq𝕀ᵣ (cong ↑_ (setDuration-∪ˢ (traces P) (traces Q)))
 mapₒ-⊔ (permitting _) any-run        = refl
 mapₒ-⊔ any-run        (permitting _) = refl
 mapₒ-⊔ any-run        any-run        = refl

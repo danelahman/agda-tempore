@@ -44,7 +44,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ
   using (_≼ᶜ_; ≼ᶜ-refl; ≼ᶜ-trans; mono-∙)
 open import Syntax.Grades.Traces.Coverage.Decidable Op costˡᵒ
@@ -54,7 +54,6 @@ open import Syntax.Grades.Example.Traces.Timed.LeftSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ using (left-sided; _≾_)
 
 open DecCoverage _≟ₒ_ using (_≼ᶜ?_)
-open WithDecEq _≟ₒ_ using (True-irr)
 
 open import DenotationalSemantics.Model.World
 
@@ -96,7 +95,7 @@ open _⊑ᵇ[_]_
       mkᵇ (t₁ ∙ t₂)
           (fromWitness
             (Any.map (λ eq → subst (_≼ᶜ (t₁ ∙ t₂)) eq (mono-∙ a≼t₁ b≼t₂))
-                     (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q)))
+                     (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ a∈P b∈Q))))
           (trans (sym (∙-assoc w t₁ t₂)) (trans (cong (_∙ t₂) eq₁) eq₂))
 
 -- covariance: the guarantee the continuation covered is itself weakened

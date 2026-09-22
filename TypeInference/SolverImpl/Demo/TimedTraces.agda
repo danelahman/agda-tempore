@@ -194,10 +194,10 @@ ex-seq : infer! [] (return true ⨟ return (var zero))
 ex-seq = refl
 
 -- a boolean elimination: the branch's grade is the union of the arms',
--- and a union is a list, so two arms doing nothing are listed twice
+-- and two arms that do nothing between them make one run, the empty one
 
 ex-if : infer! [] (if true `then return ⋆ `else return ⋆)
-      ≡ just (Unit , econst (within ⟅ ε ∣ ε ⟆))
+      ≡ just (Unit , ûₑ)
 ex-if = refl
 
 -- pattern-matching a pair
@@ -291,15 +291,15 @@ ex-store-pipeline : typeOf (inferImpl [] store)
 ex-store-pipeline = refl
 
 -- A union of bounds is a join, so a branch's grade simply lists what
--- each arm does. The list is not trimmed, and its order is the one the
--- closer folded the arms' bounds in; neither matters to the grade,
--- since a permutation and a repetition are both ordered either way.
+-- each arm does. A set names its members and nothing else: the order
+-- the closer folded the arms' bounds in is not recorded, so writing the
+-- same two bounds either way round is writing the same grade.
 
 ex-⊔ₑ : op-grade read ⊔ₑ op-grade write ≡ within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
 ex-⊔ₑ = refl
 
-ex-union-order : within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆ ≾ₑ within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
-ex-union-order = holds
+ex-union-order : within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆ ≡ within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆
+ex-union-order = refl
 
 branch-ops : RawC 0
 branch-ops = if true `then perform read ⋆ (return ⋆)
@@ -310,11 +310,11 @@ branch-ops = if true `then perform read ⋆ (return ⋆)
 -- either arm performed. Here the join is the list of the two runs.
 
 ex-branch-ops : infer! [] branch-ops
-              ≡ just (Unit , econst (within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆))
+              ≡ just (Unit , econst (within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆))
 ex-branch-ops = refl
 
 ex-branch-ops-pipeline : typeOf (inferImpl [] branch-ops)
-                       ≡ just (T.Unit , within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆)
+                       ≡ just (T.Unit , within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆)
 ex-branch-ops-pipeline = refl
 
 -- An arm that returns bounds the branch's effect unknown by the unit,
@@ -341,7 +341,7 @@ branch-ops³ = if true `then perform read ⋆ (return ⋆)
                                      `else perform send (const reading 0) (return ⋆))
 
 ex-branch-ops³ : infer! [] branch-ops³
-               ≡ just (Unit , econst (within ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆))
+               ≡ just (Unit , econst (within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ∣ ⌈ send ⌉ ⟆))
 ex-branch-ops³ = refl
 
 -- The effect unit is least: the empty run stays within every allowance.
@@ -529,14 +529,14 @@ fold-then-mul : RawC 0
 fold-then-mul = branch-ops ⨟ return ⋆
 
 ex-fold-then-mul : infer! [] fold-then-mul
-                 ≡ just (Unit , econst (within ⟅ ⌈ write ⌉ ∣ ⌈ read ⌉ ⟆))
+                 ≡ just (Unit , econst (within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆))
 ex-fold-then-mul = refl
 
 -- The fold declines a bound that does not combine rather than dropping
 -- it, so three arms land on one constant rather than on a product with
--- an arm's slack. It does not trim: three arms performing the same
--- operation leave that run listed three times, which is the same grade
--- as listing it once.
+-- an arm's slack. A set records which runs are permitted, not how many
+-- arms asked for each, so three arms performing the same operation
+-- leave that one run permitted.
 
 branch-ops³-flat : RawC 0
 branch-ops³-flat = if true `then perform read ⋆ (return ⋆)
@@ -544,11 +544,11 @@ branch-ops³-flat = if true `then perform read ⋆ (return ⋆)
                                           `else perform read ⋆ (return ⋆))
 
 ex-branch-ops³-flat : infer! [] branch-ops³-flat
-                    ≡ just (Unit , econst (within ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∣ ⌈ read ⌉ ⟆))
+                    ≡ just (Unit , econst (op-grade read))
 ex-branch-ops³-flat = refl
 
-ex-trimming : within ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∣ ⌈ read ⌉ ⟆ ≾ₑ within ⟅ ⌈ read ⌉ ⟆
-ex-trimming = holds
+ex-trimming : within ⟅ ⌈ read ⌉ ∣ ⌈ read ⌉ ∣ ⌈ read ⌉ ⟆ ≡ within ⟅ ⌈ read ⌉ ⟆
+ex-trimming = refl
 
 -- The slack variable of a sequencing's first component is resolved
 -- before the composite effect is built.

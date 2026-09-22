@@ -36,7 +36,15 @@ module Syntax.Grades.Traces.Restriction
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
   (OpPred : Op → Bool) where
 
-open import Syntax.Grades.Traces.Sets
+-- the traces themselves do not depend on the order, so the trace
+-- toolkit is opened unapplied and the alphabet named at each use; the
+-- sets of traces do, so each alphabet gets its own instance below
+
+open import Syntax.Grades.Traces.Base
+
+import Syntax.Grades.Traces.Sets as Sets
+
+module S = Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 Op' : Set
 Op' = Σ[ op ∈ Op ] T (OpPred op)
@@ -67,6 +75,11 @@ x <ᵒ' y = proj₁ x <ᵒ proj₁ y
 ... | tri≈ ¬lt refl ¬gt with T-irrelevant p p'
 ...   | refl = tri≈ ¬lt refl ¬gt
 
+-- the transitivity proof is instantiated at the sub-alphabet's own
+-- triple, which a bare name would leave for unification to guess
+
+module S' = Sets Op' _<ᵒ'_ <ᵒ'-cmp (λ {x} {y} {z} → <ᵒ'-trans {x} {y} {z})
+
 operation' : (op : Op) → T (OpPred op) → Op'
 operation' op p = op , p
 
@@ -91,12 +104,13 @@ mutual
 restrict-traces : List (Trace Op) → List (Trace Op')
 restrict-traces traces = Data.List.map restrict-trace traces
 
-restrict-nonempty : {traces : List (Trace Op)} → NonEmpty Op traces → NonEmpty Op' (restrict-traces traces)
+restrict-nonempty : {traces : List (Trace Op)}
+                  → S.NonEmpty traces → S'.NonEmpty (restrict-traces traces)
 restrict-nonempty {[]}    ()
 restrict-nonempty {_ ∷ _} ne = ne
 
-open WithDecEq Op _≟ₒ_ using () renaming (_⊑_ to _⊑ₒ_)
-open WithDecEq Op' _≟ₒ'_ using () renaming (_⊑_ to _⊑ₒ'_)
+open S.WithDecEq  _≟ₒ_  using () renaming (_⊑_ to _⊑ₒ_)
+open S'.WithDecEq _≟ₒ'_ using () renaming (_⊑_ to _⊑ₒ'_)
 
 restrict-⊑ : {xs ys : List (Trace Op)}
            → xs ⊑ₒ ys → restrict-traces xs ⊑ₒ' restrict-traces ys
@@ -110,7 +124,7 @@ restrict-op⁻ op t with T? (OpPred op)
 ... | yes _ = refl
 ... | no  _ = refl
 
-restrict-prepend : (d : ℕ⁺ Op) (t : Trace Op)
+restrict-prepend : (d : ℕ⁺) (t : Trace Op)
                  → restrict-trace (prepend Op d t)
                  ≡ prepend Op' d (restrict-trace t)
 restrict-prepend d ε                = refl
@@ -142,12 +156,12 @@ restrict-map-∙ x []       = refl
 restrict-map-∙ x (y ∷ ys) = cong₂ _∷_ (restrict-∙ x y) (restrict-map-∙ x ys)
 
 restrict-·ˢ : (xs ys : List (Trace Op))
-            → restrict-traces (_·ˢ_ Op xs ys)
-            ≡ _·ˢ_ Op' (restrict-traces xs) (restrict-traces ys)
+            → restrict-traces (S._·ˢ_ xs ys)
+            ≡ S'._·ˢ_ (restrict-traces xs) (restrict-traces ys)
 restrict-·ˢ []       ys = refl
 restrict-·ˢ (x ∷ xs) ys =
   trans
-    (map-++ restrict-trace (Data.List.map (_∙_ Op x) ys) (_·ˢ_ Op xs ys))
+    (map-++ restrict-trace (Data.List.map (_∙_ Op x) ys) (S._·ˢ_ xs ys))
     (cong₂ _++_ (restrict-map-∙ x ys) (restrict-·ˢ xs ys))
 
 restrict-⟨⟩ : (n : ℕ) → restrict-trace (⟨_⟩ Op n) ≡ ⟨_⟩ Op' n

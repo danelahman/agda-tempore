@@ -45,7 +45,7 @@ open import Data.Product using (_,_)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open import Syntax.Grades.Traces.Coverage Op costˡᵒ using (duration-≼ᶜ)
 
@@ -55,7 +55,6 @@ open import Syntax.Grades.Example.Traces.Timed.LeftSided
 open import DenotationalSemantics.Model.World
 
 open Durations costˡᵒ
-open WithDecEq _≟ₒ_ using (True-irr)
 
 ------------------------------------------------------------------------
 -- The frame
@@ -82,7 +81,7 @@ w ⊑ᵗ[ P ] w' = True (any? (λ p → (w + duration p) ≤? w') (traces P))
 ... | t₁ , t₁∈P , w+t₁≤w' | t₂ , t₂∈Q , w'+t₂≤w'' =
       fromWitness
         (Any.map (λ r → subst (λ z → (w + duration z) ≤ w'') r bound)
-                 (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q))
+                 (nf-∈⁺ (∈-cartesianProductWith⁺ _∙_ t₁∈P t₂∈Q)))
   where
     bound : (w + duration (t₁ ∙ t₂)) ≤ w''
     bound =

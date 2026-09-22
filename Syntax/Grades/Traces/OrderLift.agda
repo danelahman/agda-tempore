@@ -51,12 +51,11 @@ open import Data.Product using (_,_)
 open import Relation.Nullary using (Dec)
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 
 open WithDecEq _≟ₒ_
-  using (_∈?_; liftˢ; liftˢ-refl; liftˢ-trans; liftˢ-·ˢ; liftˢ?;
-         liftˢ-++-ubˡ; liftˢ-++-ubʳ; liftˢ-++-lub;
-         liftˢ-·ˢ-++ˡ; liftˢ-·ˢ-++ˡ⁻)
+  using (_∈?_; liftˢ; liftˢ-refl; liftˢ-trans; liftˢ-·; liftˢ?;
+         liftˢ-∪-ubˡ; liftˢ-∪-ubʳ; liftˢ-∪-lub; liftˢ-nfˡ⁻)
 
 open Syntax.Grades.Traces.Order.TraceOrder O
 
@@ -97,38 +96,27 @@ _≼ˢ_ = liftˢ _≼_ _≼?_
 -- the language product is monotone for the lift (in both arguments at
 -- once), since the trace product is monotone for `_≼_`
 
-≼ˢ-·ˢ : {xs xs' ys ys' : List Trace}
-      → xs ≼ˢ xs' → ys ≼ˢ ys' → (xs ·ˢ ys) ≼ˢ (xs' ·ˢ ys')
-≼ˢ-·ˢ = liftˢ-·ˢ _≼?_ mono-∙
+≼ˢ-· : {xs xs' ys ys' : List Trace}
+     → xs ≼ˢ xs' → ys ≼ˢ ys' → nf (xs ·ˢ ys) ≼ˢ nf (xs' ·ˢ ys')
+≼ˢ-· = liftˢ-· _≼?_ mono-∙
 
--- concatenation is the least upper bound: the quantifier runs over the
--- left-hand set, and membership in a concatenation splits
+-- the union is the least upper bound: the quantifier runs over the
+-- left-hand set, and membership in a union splits
 
-≼ˢ-++-ubˡ : {xs ys : List Trace} → xs ≼ˢ (xs ++ ys)
-≼ˢ-++-ubˡ = liftˢ-++-ubˡ _≼?_ ≼-refl
+≼ˢ-∪-ubˡ : {xs ys : List Trace} → xs ≼ˢ (xs ∪ˢ ys)
+≼ˢ-∪-ubˡ = liftˢ-∪-ubˡ _≼?_ ≼-refl
 
-≼ˢ-++-ubʳ : (xs : List Trace) → {ys : List Trace} → ys ≼ˢ (xs ++ ys)
-≼ˢ-++-ubʳ = liftˢ-++-ubʳ _≼?_ ≼-refl
+≼ˢ-∪-ubʳ : (xs : List Trace) → {ys : List Trace} → ys ≼ˢ (xs ∪ˢ ys)
+≼ˢ-∪-ubʳ = liftˢ-∪-ubʳ _≼?_ ≼-refl
 
-≼ˢ-++-lub : {xs ys zs : List Trace} → xs ≼ˢ zs → ys ≼ˢ zs → (xs ++ ys) ≼ˢ zs
-≼ˢ-++-lub = liftˢ-++-lub
+≼ˢ-∪-lub : {xs ys zs : List Trace} → xs ≼ˢ zs → ys ≼ˢ zs → (xs ∪ˢ ys) ≼ˢ zs
+≼ˢ-∪-lub = liftˢ-∪-lub
 
--- the language product distributes over concatenation: on the right on
--- the nose, on the left up to a permutation the lift absorbs
+-- normalising the source leaves the lift alone, which is how a law
+-- stated at the raw language product is read at the normalising one
 
-≼ˢ-·ˢ-++ˡ : {xs ys zs : List Trace}
-          → (xs ·ˢ (ys ++ zs)) ≼ˢ ((xs ·ˢ ys) ++ (xs ·ˢ zs))
-≼ˢ-·ˢ-++ˡ {xs} {ys} {zs} = liftˢ-·ˢ-++ˡ _≼?_ ≼-refl {xs} {ys} {zs}
-
-≼ˢ-·ˢ-++ˡ⁻ : {xs ys zs : List Trace}
-           → ((xs ·ˢ ys) ++ (xs ·ˢ zs)) ≼ˢ (xs ·ˢ (ys ++ zs))
-≼ˢ-·ˢ-++ˡ⁻ {xs} {ys} {zs} = liftˢ-·ˢ-++ˡ⁻ _≼?_ ≼-refl {xs} {ys} {zs}
-
-≼ˢ-·ˢ-++ʳ : {xs ys zs : List Trace}
-          → ((xs ++ ys) ·ˢ zs) ≼ˢ ((xs ·ˢ zs) ++ (ys ·ˢ zs))
-≼ˢ-·ˢ-++ʳ {xs} {ys} {zs} =
-  subst (((xs ++ ys) ·ˢ zs) ≼ˢ_) (·ˢ-distribʳ-++ xs ys zs)
-        (≼ˢ-refl {(xs ++ ys) ·ˢ zs})
+≼ˢ-nfˡ⁻ : {xs ys : List Trace} → nf xs ≼ˢ ys → xs ≼ˢ ys
+≼ˢ-nfˡ⁻ = liftˢ-nfˡ⁻
 
 ------------------------------------------------------------------------
 -- The Smyth upper lift
@@ -148,37 +136,21 @@ xs ≽ˢ ys = liftˢ _≽_ _≽?_ ys xs
 ≽ˢ-trans : {xs ys zs : List Trace} → xs ≽ˢ ys → ys ≽ˢ zs → xs ≽ˢ zs
 ≽ˢ-trans p q = liftˢ-trans _≽?_ ≽-trans q p
 
-≽ˢ-·ˢ : {xs xs' ys ys' : List Trace}
-      → xs ≽ˢ xs' → ys ≽ˢ ys' → (xs ·ˢ ys) ≽ˢ (xs' ·ˢ ys')
-≽ˢ-·ˢ = liftˢ-·ˢ _≽?_ mono-∙
+≽ˢ-· : {xs xs' ys ys' : List Trace}
+     → xs ≽ˢ xs' → ys ≽ˢ ys' → nf (xs ·ˢ ys) ≽ˢ nf (xs' ·ˢ ys')
+≽ˢ-· = liftˢ-· _≽?_ mono-∙
 
--- concatenation is the least upper bound here too: the two sets are
--- exchanged, so the concatenation again sits in the lift's source
+-- the union is the least upper bound here too: the two sets are
+-- exchanged, so the union again sits in the lift's source
 
-≽ˢ-++-ubˡ : {xs ys : List Trace} → (xs ++ ys) ≽ˢ xs
-≽ˢ-++-ubˡ = liftˢ-++-ubˡ _≽?_ ≼-refl
+≽ˢ-∪-ubˡ : {xs ys : List Trace} → (xs ∪ˢ ys) ≽ˢ xs
+≽ˢ-∪-ubˡ = liftˢ-∪-ubˡ _≽?_ ≼-refl
 
-≽ˢ-++-ubʳ : (xs : List Trace) → {ys : List Trace} → (xs ++ ys) ≽ˢ ys
-≽ˢ-++-ubʳ = liftˢ-++-ubʳ _≽?_ ≼-refl
+≽ˢ-∪-ubʳ : (xs : List Trace) → {ys : List Trace} → (xs ∪ˢ ys) ≽ˢ ys
+≽ˢ-∪-ubʳ = liftˢ-∪-ubʳ _≽?_ ≼-refl
 
-≽ˢ-++-lub : {xs ys zs : List Trace} → zs ≽ˢ xs → zs ≽ˢ ys → zs ≽ˢ (xs ++ ys)
-≽ˢ-++-lub = liftˢ-++-lub
-
--- and the language product distributes over it, on the same two sides
-
-≽ˢ-·ˢ-++ˡ : {xs ys zs : List Trace}
-          → ((xs ·ˢ ys) ++ (xs ·ˢ zs)) ≽ˢ (xs ·ˢ (ys ++ zs))
-≽ˢ-·ˢ-++ˡ {xs} {ys} {zs} = liftˢ-·ˢ-++ˡ _≽?_ ≼-refl {xs} {ys} {zs}
-
-≽ˢ-·ˢ-++ˡ⁻ : {xs ys zs : List Trace}
-           → (xs ·ˢ (ys ++ zs)) ≽ˢ ((xs ·ˢ ys) ++ (xs ·ˢ zs))
-≽ˢ-·ˢ-++ˡ⁻ {xs} {ys} {zs} = liftˢ-·ˢ-++ˡ⁻ _≽?_ ≼-refl {xs} {ys} {zs}
-
-≽ˢ-·ˢ-++ʳ : {xs ys zs : List Trace}
-          → ((xs ·ˢ zs) ++ (ys ·ˢ zs)) ≽ˢ ((xs ++ ys) ·ˢ zs)
-≽ˢ-·ˢ-++ʳ {xs} {ys} {zs} =
-  subst (_≽ˢ ((xs ++ ys) ·ˢ zs)) (·ˢ-distribʳ-++ xs ys zs)
-        (≽ˢ-refl {(xs ++ ys) ·ˢ zs})
+≽ˢ-∪-lub : {xs ys zs : List Trace} → zs ≽ˢ xs → zs ≽ˢ ys → zs ≽ˢ (xs ∪ˢ ys)
+≽ˢ-∪-lub = liftˢ-∪-lub
 
 ------------------------------------------------------------------------
 -- The unit is above everything for the Smyth lift

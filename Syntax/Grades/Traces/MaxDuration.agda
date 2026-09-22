@@ -21,8 +21,8 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Nat.Base using (ℕ; zero; _+_; _⊔_; _≤_; z≤n)
 open import Data.Nat.Properties
-  using (≤-trans; ≤-reflexive; +-distribˡ-⊔; +-distribʳ-⊔; ⊔-assoc;
-         ⊔-identityʳ; ⊔-lub; ⊔-mono-≤; m≤m⊔n; m≤n⊔m)
+  using (≤-trans; ≤-reflexive; ≤-antisym; +-distribˡ-⊔; +-distribʳ-⊔;
+         ⊔-assoc; ⊔-identityʳ; ⊔-lub; ⊔-mono-≤; m≤m⊔n; m≤n⊔m)
 
 open import Util.Equality
 
@@ -31,7 +31,7 @@ module Syntax.Grades.Traces.MaxDuration
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 open WithDecEq _≟ₒ_
 
@@ -139,6 +139,31 @@ module MaxDurations (c : Op → ℕ) where
                             (setDuration-·ˢ (x' ∷ xs) (y ∷ ys) _ _))
                  (sym (+-distribʳ-⊔ (setDuration (y ∷ ys))
                                     (duration x) (setDuration (x' ∷ xs)))))
+
+  -- normalising a list leaves its duration alone, the members being the
+  -- same, so the duration of a union is the worse of the two
+
+  setDuration-nf : (xs : List Trace) → setDuration (nf xs) ≡ setDuration xs
+  setDuration-nf xs =
+    ≤-antisym
+      (bigMax-bound duration (nf xs) (setDuration xs)
+        (λ t t∈ → bigMax-mem duration t xs (nf-∈⁻ t∈)))
+      (bigMax-bound duration xs (setDuration (nf xs))
+        (λ t t∈ → bigMax-mem duration t (nf xs) (nf-∈⁺ t∈)))
+
+  setDuration-∪ˢ : (xs ys : List Trace)
+                 → setDuration (xs ∪ˢ ys) ≡ setDuration xs ⊔ setDuration ys
+  setDuration-∪ˢ xs ys =
+    trans (setDuration-nf (xs ++ ys)) (setDuration-++ xs ys)
+
+  -- and the language product is measured after normalisation too
+
+  setDuration-nf-·ˢ : (xs ys : List Trace)
+                    → NonEmpty xs → NonEmpty ys
+                    → setDuration (nf (xs ·ˢ ys))
+                    ≡ setDuration xs + setDuration ys
+  setDuration-nf-·ˢ xs ys nx ny =
+    trans (setDuration-nf (xs ·ˢ ys)) (setDuration-·ˢ xs ys nx ny)
 
   -- `setDuration` is monotone for the subset order on sets of traces
 

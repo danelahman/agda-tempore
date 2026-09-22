@@ -37,7 +37,7 @@ module Syntax.Grades.Traces.MinDuration
   (_<ᵒ_ : Rel Op lzero)
   (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_) where
 
-open import Syntax.Grades.Traces.Sets Op
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
 open import Syntax.Grades.Traces.Durations Op
 
 open WithDecEq _≟ₒ_
@@ -244,6 +244,33 @@ module MinDurations (c : Op → ℕ) where
             ≤-trans (+-mono-≤ (bigMin-mem duration a (x ∷ xs) a∈)
                               (bigMin-mem duration b (y ∷ ys) b∈))
                     (≤-reflexive (sym (duration-∙ a b)))
+
+  -- normalising a list leaves its duration alone, the members being the
+  -- same, so the duration of a union is the better of the two, and that
+  -- of a language product the sum
+
+  minSetDuration-nf : (xs : List Trace) → NonEmpty xs
+                    → minSetDuration (nf xs) ≡ minSetDuration xs
+  minSetDuration-nf xs ne =
+    ≤-antisym
+      (bigMin-bound duration xs (minSetDuration (nf xs)) ne
+        (λ t t∈ → bigMin-mem duration t (nf xs) (nf-∈⁺ t∈)))
+      (bigMin-bound duration (nf xs) (minSetDuration xs) (nf-ne xs ne)
+        (λ t t∈ → bigMin-mem duration t xs (nf-∈⁻ t∈)))
+
+  minSetDuration-∪ˢ : (xs ys : List Trace) → NonEmpty xs → NonEmpty ys
+                    → minSetDuration (xs ∪ˢ ys)
+                    ≡ minSetDuration xs ⊓ minSetDuration ys
+  minSetDuration-∪ˢ xs ys nx ny =
+    trans (minSetDuration-nf (xs ++ ys) (++-ne nx ny))
+          (minSetDuration-++ xs ys nx ny)
+
+  minSetDuration-nf-·ˢ : (xs ys : List Trace) → NonEmpty xs → NonEmpty ys
+                       → minSetDuration (nf (xs ·ˢ ys))
+                       ≡ minSetDuration xs + minSetDuration ys
+  minSetDuration-nf-·ˢ xs ys nx ny =
+    trans (minSetDuration-nf (xs ·ˢ ys) (·ˢ-ne nx ny))
+          (minSetDuration-·ˢ xs ys nx ny)
 
 ------------------------------------------------------------------------
 -- Comparing best-case durations across two different costs
