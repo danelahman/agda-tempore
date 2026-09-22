@@ -385,11 +385,10 @@ ex-fold-then-mul : infer! [] fold-then-mul
                  ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
 ex-fold-then-mul = refl
 
--- The fold declines a bound that does not combine rather than dropping
--- it, so an unknown whose bounds still hold an arm's own slack variable
--- is left to the round that follows, by which point they are constants.
--- Three arms at one duration therefore land on a single constant, not
--- on a product with one arm's slack.
+-- An unknown whose bounds still hold an arm's own slack variable is
+-- sent to their join all the same, and the join is computed once the
+-- slack is settled. Three arms at one duration therefore land on a
+-- single constant, not on a product with one arm's slack.
 
 branch-delay³-flat : RawC 0
 branch-delay³-flat = if true `then delay 1 (return ⋆)
@@ -399,6 +398,29 @@ branch-delay³-flat = if true `then delay 1 (return ⋆)
 ex-branch-delay³-flat : infer! [] branch-delay³-flat
                       ≡ just (Unit , econst [ 1 , ↑ 1 , s≤s z≤n ])
 ex-branch-delay³-flat = refl
+
+-- A conditional under a lambda. The branch's effect unknown bounds the
+-- latent effect from below, and slack sends the latter to the former,
+-- after which that ordering reads `e ≾ e` and bounds nothing: the
+-- latent effect is the join of the two arms.
+
+branch-lam : RawC 0
+branch-lam = return (lam (if var zero `then delay 1 (return ⋆)
+                                      `else delay 2 (return ⋆)))
+
+ex-branch-lam : infer! [] branch-lam
+              ≡ just (Bool ⇒ (Unit ‼ econst [ 1 , ↑ 2 , s≤s z≤n ]) , ûₑ)
+ex-branch-lam = refl
+
+-- the same with equal arms
+
+branch-lam₁ : RawC 0
+branch-lam₁ = return (lam (if var zero `then delay 1 (return ⋆)
+                                       `else delay 1 (return ⋆)))
+
+ex-branch-lam₁ : infer! [] branch-lam₁
+               ≡ just (Bool ⇒ (Unit ‼ econst [ 1 , ↑ 1 , s≤s z≤n ]) , ûₑ)
+ex-branch-lam₁ = refl
 
 -- The slack variable of a sequencing's first component is resolved
 -- before the composite effect is built.

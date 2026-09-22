@@ -1,26 +1,32 @@
 ------------------------------------------------------------------
 -- Closes a residual into the empty scope                         --
 --                                                                --
+-- The residual is read as bounds: its orderings and those the    --
+-- subtyping demands decompose to, under the assignment reached   --
+-- so far, a join on the left bounding by each of its summands    --
+-- and an ordering whose left side is a summand of its right      --
+-- bounding nothing, since it holds whatever the assignment.      --
+--                                                                --
 -- Slack sends a flexible grade variable to the join of its lower --
--- bounds — those of the orderings and those the subtyping        --
--- demands decompose to. Tightening is its dual: a variable the   --
--- demands bound above and never below goes to its upper bound.   --
--- A bound still holding a variable is combined by comparability  --
--- instead, as are several upper bounds, grades having no meet;   --
--- a bound the variable occurs in is declined. What the two       --
--- passes leave is defaulted by polarity: the greatest grade      --
--- where only lower bounds push, the unit otherwise.              --
+-- bounds, formed whether or not they are constants yet and       --
+-- computed once the whole is closed. Tightening is its dual: a   --
+-- variable bounded above and never below goes to its upper       --
+-- bound, several being combined by comparability, grades having  --
+-- no meet. A bound the variable occurs in is declined. What the  --
+-- two passes leave is defaulted by the polarity of the same      --
+-- bounds: the greatest grade where only lower bounds push, the   --
+-- unit otherwise.                                                --
 --                                                                --
 -- At the empty scope an expression is a constant, so the checks  --
 -- are complete and only the choice of substitution is heuristic. --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (if_then_else_; _∧_; not) renaming (Bool to 𝔹)
+open import Data.Bool.Base using (if_then_else_; _∧_; _∨_; not; false) renaming (Bool to 𝔹)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Maybe.Base using (Maybe; just; nothing) renaming (map to mmap)
+open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
@@ -57,12 +63,12 @@ open import TypeInference.OpenSyntax.Grounding S
   using (Grounding; grounding; ⟦_⟧ʳ; ⟦_⟧ᵉ; ∅ᴴ-⊨; ground-≾ᵣ; ground-≾ₑ)
 
 open import TypeInference.SolverImpl.Core.Occurs S using (occʳ-r; occᵉ-e)
-open import TypeInference.SolverImpl.Core.Rigid  S using (zip₂)
 open import TypeInference.SolverImpl.Core.Size   S using (Sz)
 
 open import TypeInference.SolverImpl.Resid    S
 open import TypeInference.SolverImpl.Polarity S
 open import TypeInference.SolverImpl.Normal   S _≾ᵣ?_ _≾ₑ?_ umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Eliminate S using (joinᵣ; joinₑ)
 
 -- The unique grounding of the empty scope, and the constant an
 -- expression of that scope evaluates to
@@ -130,41 +136,99 @@ updᵉ i ε = sub tvar rvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ε else evar k)
 updʳ : ∀ {Ψ} → RVar Ψ → RExp Ψ → Subst Ψ Ψ
 updʳ i ρ = sub tvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ρ else rvar k) evar
 
--- The constant a variable-free expression evaluates to
+-- The summands of an expression, a join read as the list of what it
+-- joins
 
-valᵉ : ∀ {Ψ} → EExp Ψ → Maybe E
-valᵉ (evar _)   = nothing
-valᵉ (econst c) = just c
-valᵉ (ε ·̂ₑ ε')  = zip₂ _·ₑ_ (valᵉ ε) (valᵉ ε')
-valᵉ (ε ⊔̂ₑ ε')  = zip₂ _⊔ₑ_ (valᵉ ε) (valᵉ ε')
+sumsᵉ : ∀ {Ψ} → EExp Ψ → List (EExp Ψ)
+sumsᵉ (evar i)   = evar i ∷ []
+sumsᵉ (econst c) = econst c ∷ []
+sumsᵉ (ε ·̂ₑ ε')  = (ε ·̂ₑ ε') ∷ []
+sumsᵉ (ε ⊔̂ₑ ε')  = sumsᵉ ε ++ sumsᵉ ε'
 
-valʳ : ∀ {Ψ} → RExp Ψ → Maybe R
-valʳ (rvar _)   = nothing
-valʳ (rconst c) = just c
-valʳ (ρ ·̂ᵣ ρ')  = zip₂ _·ᵣ_ (valʳ ρ) (valʳ ρ')
-valʳ (ρ ⊔̂ᵣ ρ')  = zip₂ _⊔ᵣ_ (valʳ ρ) (valʳ ρ')
-valʳ ∣ ε ∣̂ᵉ     = mmap mapᵉ (valᵉ ε)
+sumsʳ : ∀ {Ψ} → RExp Ψ → List (RExp Ψ)
+sumsʳ (rvar i)   = rvar i ∷ []
+sumsʳ (rconst c) = rconst c ∷ []
+sumsʳ (ρ ·̂ᵣ ρ')  = (ρ ·̂ᵣ ρ') ∷ []
+sumsʳ (ρ ⊔̂ᵣ ρ')  = sumsʳ ρ ++ sumsʳ ρ'
+sumsʳ ∣ ε ∣̂ᵉ     = ∣ ε ∣̂ᵉ ∷ []
 
--- Two lower bounds on one unknown, combined: their join where both
--- evaluate, else the larger of two comparable bounds, else neither.
+amongᵉ : ∀ {Ψ} → EExp Ψ → List (EExp Ψ) → 𝔹
+amongᵉ ε []       = false
+amongᵉ ε (ε' ∷ l) = ⌊ ε ≟ᵉ ε' ⌋ ∨ amongᵉ ε l
 
-joinᵉ? : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
-joinᵉ? ε ε' = mmap econst (zip₂ _⊔ₑ_ (valᵉ ε) (valᵉ ε'))
+amongʳ : ∀ {Ψ} → RExp Ψ → List (RExp Ψ) → 𝔹
+amongʳ ρ []       = false
+amongʳ ρ (ρ' ∷ l) = ⌊ ρ ≟ʳ ρ' ⌋ ∨ amongʳ ρ l
 
-joinʳ? : ∀ {Ψ} → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
-joinʳ? ρ ρ' = mmap rconst (zip₂ _⊔ᵣ_ (valʳ ρ) (valʳ ρ'))
+-- A list of orderings read as bounds under an assignment. A join is
+-- below the right side exactly when each of its summands is, so each
+-- summand on the left is a bound of its own; a summand of the right
+-- side is below it whatever the assignment, so that ordering bounds
+-- nothing.
 
-cmpᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
-cmpᵉ ε ε' with decide≾ₑ {Q = ∅ᴴ} ε ε' | decide≾ₑ {Q = ∅ᴴ} ε' ε
-... | just _  | _       = just ε'
-... | nothing | just _  = just ε
-... | nothing | nothing = nothing
+splitᵉ : ∀ {Ψ} → List (EExp Ψ) → EExp Ψ → List (EExp Ψ × EExp Ψ)
+splitᵉ []      ε' = []
+splitᵉ (ε ∷ l) ε' =
+  if amongᵉ ε (sumsᵉ ε') then splitᵉ l ε' else (ε , ε') ∷ splitᵉ l ε'
 
-cmpʳ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
-cmpʳ ρ ρ' with decide≾ᵣ {Q = ∅ᴴ} ρ ρ' | decide≾ᵣ {Q = ∅ᴴ} ρ' ρ
-... | just _  | _       = just ρ'
-... | nothing | just _  = just ρ
-... | nothing | nothing = nothing
+splitʳ : ∀ {Ψ} → List (RExp Ψ) → RExp Ψ → List (RExp Ψ × RExp Ψ)
+splitʳ []      ρ' = []
+splitʳ (ρ ∷ l) ρ' =
+  if amongʳ ρ (sumsʳ ρ') then splitʳ l ρ' else (ρ , ρ') ∷ splitʳ l ρ'
+
+viewᵉ : ∀ {Ψ} → Subst Ψ Ψ → List (EExp Ψ × EExp Ψ) → List (EExp Ψ × EExp Ψ)
+viewᵉ σ []             = []
+viewᵉ σ ((ε , ε') ∷ l) = splitᵉ (sumsᵉ (ε [ σ ]ᵉ)) (ε' [ σ ]ᵉ) ++ viewᵉ σ l
+
+viewʳ : ∀ {Ψ} → Subst Ψ Ψ → List (RExp Ψ × RExp Ψ) → List (RExp Ψ × RExp Ψ)
+viewʳ σ []             = []
+viewʳ σ ((ρ , ρ') ∷ l) = splitʳ (sumsʳ (ρ [ σ ]ʳ)) (ρ' [ σ ]ʳ) ++ viewʳ σ l
+
+-- Every lower bound a list of bounds places on one unknown, and every
+-- upper bound
+
+lowerᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → List (EExp Ψ)
+lowerᵉ i []                   = []
+lowerᵉ i ((ε , evar j)   ∷ l) = if ⌊ j ≟ᶠ i ⌋ then ε ∷ lowerᵉ i l else lowerᵉ i l
+lowerᵉ i ((ε , econst _) ∷ l) = lowerᵉ i l
+lowerᵉ i ((ε , _ ·̂ₑ _)   ∷ l) = lowerᵉ i l
+lowerᵉ i ((ε , _ ⊔̂ₑ _)   ∷ l) = lowerᵉ i l
+
+lowerʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → List (RExp Ψ)
+lowerʳ i []                   = []
+lowerʳ i ((ρ , rvar j)   ∷ l) = if ⌊ j ≟ᶠ i ⌋ then ρ ∷ lowerʳ i l else lowerʳ i l
+lowerʳ i ((ρ , rconst _) ∷ l) = lowerʳ i l
+lowerʳ i ((ρ , _ ·̂ᵣ _)   ∷ l) = lowerʳ i l
+lowerʳ i ((ρ , _ ⊔̂ᵣ _)   ∷ l) = lowerʳ i l
+lowerʳ i ((ρ , ∣ _ ∣̂ᵉ)   ∷ l) = lowerʳ i l
+
+upperᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → List (EExp Ψ)
+upperᵉ i []                    = []
+upperᵉ i ((evar j   , ε') ∷ l) = if ⌊ j ≟ᶠ i ⌋ then ε' ∷ upperᵉ i l else upperᵉ i l
+upperᵉ i ((econst _ , ε') ∷ l) = upperᵉ i l
+upperᵉ i ((_ ·̂ₑ _   , ε') ∷ l) = upperᵉ i l
+upperᵉ i ((_ ⊔̂ₑ _   , ε') ∷ l) = upperᵉ i l
+
+upperʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → List (RExp Ψ)
+upperʳ i []                    = []
+upperʳ i ((rvar j   , ρ') ∷ l) = if ⌊ j ≟ᶠ i ⌋ then ρ' ∷ upperʳ i l else upperʳ i l
+upperʳ i ((rconst _ , ρ') ∷ l) = upperʳ i l
+upperʳ i ((_ ·̂ᵣ _   , ρ') ∷ l) = upperʳ i l
+upperʳ i ((_ ⊔̂ᵣ _   , ρ') ∷ l) = upperʳ i l
+upperʳ i ((∣ _ ∣̂ᵉ   , ρ') ∷ l) = upperʳ i l
+
+-- The lower bounds, folded into their join. The join is formed whether
+-- or not the bounds are constants yet: a variable one still holds is
+-- settled by the rounds that follow, and the join is computed once the
+-- whole is closed.
+
+boundᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
+boundᵉ []      = nothing
+boundᵉ (ε ∷ l) = just (joinₑ ε l)
+
+boundʳ : ∀ {Ψ} → List (RExp Ψ) → Maybe (RExp Ψ)
+boundʳ []      = nothing
+boundʳ (ρ ∷ l) = just (joinᵣ ρ l)
 
 -- Two upper bounds on one unknown, combined: the smaller of two
 -- comparable bounds, else neither. Grades carry no meet, so this is
@@ -182,71 +246,9 @@ cmpʳ⁻ ρ ρ' with decide≾ᵣ {Q = ∅ᴴ} ρ ρ' | decide≾ᵣ {Q = ∅ᴴ
 ... | nothing | just _  = just ρ'
 ... | nothing | nothing = nothing
 
-lubᵉ : ∀ {Ψ} → EExp Ψ → EExp Ψ → Maybe (EExp Ψ)
-lubᵉ ε ε' with joinᵉ? ε ε'
-... | just ε'' = just ε''
-... | nothing  = cmpᵉ ε ε'
-
-lubʳ : ∀ {Ψ} → RExp Ψ → RExp Ψ → Maybe (RExp Ψ)
-lubʳ ρ ρ' with joinʳ? ρ ρ'
-... | just ρ'' = just ρ''
-... | nothing  = cmpʳ ρ ρ'
-
--- Every lower bound a list of orderings places on one unknown, every
--- upper bound it places, and their combinations
-
-lowerᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Subst Ψ Ψ → List (EExp Ψ)
-lowerᵉ i []             σ = []
-lowerᵉ i ((ε , ε') ∷ l) σ with ε' [ σ ]ᵉ
-... | evar j   = if ⌊ j ≟ᶠ i ⌋ then ε [ σ ]ᵉ ∷ lowerᵉ i l σ else lowerᵉ i l σ
-... | econst _ = lowerᵉ i l σ
-... | _ ·̂ₑ _   = lowerᵉ i l σ
-... | _ ⊔̂ₑ _   = lowerᵉ i l σ
-
-lowerʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Subst Ψ Ψ → List (RExp Ψ)
-lowerʳ i []             σ = []
-lowerʳ i ((ρ , ρ') ∷ l) σ with ρ' [ σ ]ʳ
-... | rvar j   = if ⌊ j ≟ᶠ i ⌋ then ρ [ σ ]ʳ ∷ lowerʳ i l σ else lowerʳ i l σ
-... | rconst _ = lowerʳ i l σ
-... | _ ·̂ᵣ _   = lowerʳ i l σ
-... | _ ⊔̂ᵣ _   = lowerʳ i l σ
-... | ∣ _ ∣̂ᵉ   = lowerʳ i l σ
-
-upperᵉ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Subst Ψ Ψ → List (EExp Ψ)
-upperᵉ i []             σ = []
-upperᵉ i ((ε , ε') ∷ l) σ with ε [ σ ]ᵉ
-... | evar j   = if ⌊ j ≟ᶠ i ⌋ then ε' [ σ ]ᵉ ∷ upperᵉ i l σ else upperᵉ i l σ
-... | econst _ = upperᵉ i l σ
-... | _ ·̂ₑ _   = upperᵉ i l σ
-... | _ ⊔̂ₑ _   = upperᵉ i l σ
-
-upperʳ : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Subst Ψ Ψ → List (RExp Ψ)
-upperʳ i []             σ = []
-upperʳ i ((ρ , ρ') ∷ l) σ with ρ [ σ ]ʳ
-... | rvar j   = if ⌊ j ≟ᶠ i ⌋ then ρ' [ σ ]ʳ ∷ upperʳ i l σ else upperʳ i l σ
-... | rconst _ = upperʳ i l σ
-... | _ ·̂ᵣ _   = upperʳ i l σ
-... | _ ⊔̂ᵣ _   = upperʳ i l σ
-... | ∣ _ ∣̂ᵉ   = upperʳ i l σ
-
--- A whole list of bounds, folded. A singleton is its own fold; a
--- combination that fails takes the fold with it, so an unknown one
--- bound fails to join with is left for a later round rather than
--- bound to the rest.
-
-boundᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
-boundᵉ []           = nothing
-boundᵉ (ε ∷ [])     = just ε
-boundᵉ (ε ∷ ε' ∷ l) with boundᵉ (ε' ∷ l)
-... | nothing  = nothing
-... | just ε'' = lubᵉ ε ε''
-
-boundʳ : ∀ {Ψ} → List (RExp Ψ) → Maybe (RExp Ψ)
-boundʳ []           = nothing
-boundʳ (ρ ∷ [])     = just ρ
-boundʳ (ρ ∷ ρ' ∷ l) with boundʳ (ρ' ∷ l)
-... | nothing  = nothing
-... | just ρ'' = lubʳ ρ ρ''
+-- The upper bounds, folded by comparability. A singleton is its own
+-- fold; a pair that does not compare takes the fold with it, so an
+-- unknown is never sent above a bound it was given.
 
 capᵉ : ∀ {Ψ} → List (EExp Ψ) → Maybe (EExp Ψ)
 capᵉ []           = nothing
@@ -275,7 +277,7 @@ bindʳ i (just ρ) σ = if occʳ-r i ρ then σ else σ ⨟ˢ updʳ i ρ
 slackᵉ : ∀ {Ψ} → (l l₀ : List (EExp Ψ × EExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
 slackᵉ []             l₀ σ = σ
 slackᵉ ((ε , ε') ∷ l) l₀ σ with ε' [ σ ]ᵉ
-... | evar i   = slackᵉ l l₀ (bindᵉ i (boundᵉ (lowerᵉ i l₀ σ)) σ)
+... | evar i   = slackᵉ l l₀ (bindᵉ i (boundᵉ (lowerᵉ i (viewᵉ σ l₀))) σ)
 ... | econst _ = slackᵉ l l₀ σ
 ... | _ ·̂ₑ _   = slackᵉ l l₀ σ
 ... | _ ⊔̂ₑ _   = slackᵉ l l₀ σ
@@ -283,40 +285,49 @@ slackᵉ ((ε , ε') ∷ l) l₀ σ with ε' [ σ ]ᵉ
 slackʳ : ∀ {Ψ} → (l l₀ : List (RExp Ψ × RExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
 slackʳ []             l₀ σ = σ
 slackʳ ((ρ , ρ') ∷ l) l₀ σ with ρ' [ σ ]ʳ
-... | rvar i   = slackʳ l l₀ (bindʳ i (boundʳ (lowerʳ i l₀ σ)) σ)
+... | rvar i   = slackʳ l l₀ (bindʳ i (boundʳ (lowerʳ i (viewʳ σ l₀))) σ)
 ... | rconst _ = slackʳ l l₀ σ
 ... | _ ·̂ᵣ _   = slackʳ l l₀ σ
 ... | _ ⊔̂ᵣ _   = slackʳ l l₀ σ
 ... | ∣ _ ∣̂ᵉ   = slackʳ l l₀ σ
 
 -- Tightening is confined to the unknowns no demand bounds from below,
--- the upper bound being no value for one that is pushed up too.
+-- the upper bound being no value for one that is pushed up too. The
+-- unknowns it visits are the summands of each left side.
 
 onlyAbove : Pol → 𝔹
 onlyAbove p = above p ∧ not (below p)
 
+capsᵉ : ∀ {Ψ} → (EVar Ψ → Pol)
+      → List (EExp Ψ) → List (EExp Ψ × EExp Ψ) → Subst Ψ Ψ → Subst Ψ Ψ
+capsᵉ p []             l₀ σ = σ
+capsᵉ p (evar i   ∷ l) l₀ σ =
+  capsᵉ p l l₀ (if onlyAbove (p i)
+                  then bindᵉ i (capᵉ (upperᵉ i (viewᵉ σ l₀))) σ else σ)
+capsᵉ p (econst _ ∷ l) l₀ σ = capsᵉ p l l₀ σ
+capsᵉ p (_ ·̂ₑ _   ∷ l) l₀ σ = capsᵉ p l l₀ σ
+capsᵉ p (_ ⊔̂ₑ _   ∷ l) l₀ σ = capsᵉ p l l₀ σ
+
+capsʳ : ∀ {Ψ} → (RVar Ψ → Pol)
+      → List (RExp Ψ) → List (RExp Ψ × RExp Ψ) → Subst Ψ Ψ → Subst Ψ Ψ
+capsʳ p []             l₀ σ = σ
+capsʳ p (rvar i   ∷ l) l₀ σ =
+  capsʳ p l l₀ (if onlyAbove (p i)
+                  then bindʳ i (capʳ (upperʳ i (viewʳ σ l₀))) σ else σ)
+capsʳ p (rconst _ ∷ l) l₀ σ = capsʳ p l l₀ σ
+capsʳ p (_ ·̂ᵣ _   ∷ l) l₀ σ = capsʳ p l l₀ σ
+capsʳ p (_ ⊔̂ᵣ _   ∷ l) l₀ σ = capsʳ p l l₀ σ
+capsʳ p (∣ _ ∣̂ᵉ   ∷ l) l₀ σ = capsʳ p l l₀ σ
+
 tightᵉ : ∀ {Ψ} → (EVar Ψ → Pol)
        → (l l₀ : List (EExp Ψ × EExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
 tightᵉ p []             l₀ σ = σ
-tightᵉ p ((ε , ε') ∷ l) l₀ σ with ε [ σ ]ᵉ
-... | evar i   = tightᵉ p l l₀
-                   (if onlyAbove (p i)
-                      then bindᵉ i (capᵉ (upperᵉ i l₀ σ)) σ else σ)
-... | econst _ = tightᵉ p l l₀ σ
-... | _ ·̂ₑ _   = tightᵉ p l l₀ σ
-... | _ ⊔̂ₑ _   = tightᵉ p l l₀ σ
+tightᵉ p ((ε , ε') ∷ l) l₀ σ = tightᵉ p l l₀ (capsᵉ p (sumsᵉ (ε [ σ ]ᵉ)) l₀ σ)
 
 tightʳ : ∀ {Ψ} → (RVar Ψ → Pol)
        → (l l₀ : List (RExp Ψ × RExp Ψ)) → Subst Ψ Ψ → Subst Ψ Ψ
 tightʳ p []             l₀ σ = σ
-tightʳ p ((ρ , ρ') ∷ l) l₀ σ with ρ [ σ ]ʳ
-... | rvar i   = tightʳ p l l₀
-                   (if onlyAbove (p i)
-                      then bindʳ i (capʳ (upperʳ i l₀ σ)) σ else σ)
-... | rconst _ = tightʳ p l l₀ σ
-... | _ ·̂ᵣ _   = tightʳ p l l₀ σ
-... | _ ⊔̂ᵣ _   = tightʳ p l l₀ σ
-... | ∣ _ ∣̂ᵉ   = tightʳ p l l₀ σ
+tightʳ p ((ρ , ρ') ∷ l) l₀ σ = tightʳ p l l₀ (capsʳ p (sumsʳ (ρ [ σ ]ʳ)) l₀ σ)
 
 -- The grade orderings the subtyping demands decompose to. A
 -- substitution leaves a head former alone, so the decomposition does
@@ -328,24 +339,38 @@ atomsˢ ((A , B) ∷ l) with subDec A B
 ... | just d  = atomsOf d ∪ᴬ atomsˢ l
 ... | nothing = atomsˢ l
 
+-- Every ordering the closer reads: the residual's own, and those its
+-- subtyping demands decompose to
+
+ordsʳ : ∀ {Ψ} → Resid Ψ → List (RExp Ψ × RExp Ψ)
+ordsʳ R = rs R ++ aordᵣ (atomsˢ (ss R))
+
+ordsᵉ : ∀ {Ψ} → Resid Ψ → List (EExp Ψ × EExp Ψ)
+ordsᵉ R = es R ++ aordₑ (atomsˢ (ss R))
+
+-- The residual as the closer reads it under an assignment: its
+-- orderings as bounds, a subtyping demand bounding through its
+-- decomposition alone. Polarities are read off this.
+
+seenᴿ : ∀ {Ψ} → Resid Ψ → Subst Ψ Ψ → Resid Ψ
+seenᴿ R σ = resid (viewʳ σ (ordsʳ R)) (viewᵉ σ (ordsᵉ R))
+                  (ts (R [ σ ]ᴿ)) [] (ds (R [ σ ]ᴿ))
+
 slack¹ : ∀ {Ψ} → Resid Ψ → Subst Ψ Ψ → Subst Ψ Ψ
 slack¹ R σ = tightʳ (polᵣ R') lʳ lʳ (tightᵉ (polₑ R') lᵉ lᵉ
                (slackʳ lʳ lʳ (slackᵉ lᵉ lᵉ σ)))
   where
-    a : SubAtoms _
-    a = atomsˢ (ss R)
-
     lʳ : List (RExp _ × RExp _)
-    lʳ = rs R ++ aordᵣ a
+    lʳ = ordsʳ R
 
     lᵉ : List (EExp _ × EExp _)
-    lᵉ = es R ++ aordₑ a
+    lᵉ = ordsᵉ R
 
-    -- the polarities the pass reads are those of the residual as the
-    -- assignment reached so far leaves it
+    -- the polarities the pass reads are those of the bounds as the
+    -- assignment reached so far leaves them
 
     R' : Resid _
-    R' = R [ σ ]ᴿ
+    R' = seenᴿ R σ
 
 slack* : ∀ {Ψ} → ℕ → Resid Ψ → Subst Ψ Ψ → Subst Ψ Ψ
 slack* nzero    R σ = σ
@@ -458,11 +483,32 @@ closeAt R δ with checkʳ (rs R) δ | checkᵉ (es R) δ | checkᵗ (ts R) δ
 ... | just _  | nothing | _       | _       | _       = nothing
 ... | nothing | _       | _       | _       | _       = nothing
 
+-- A closed join, computed. The joins slack forms are left standing
+-- until every variable in them is settled; at the empty scope that is
+-- all of them.
+
+settleᵉ : EExp ∅ˢ → EExp ∅ˢ
+settleᵉ (evar ())
+settleᵉ (econst c) = econst c
+settleᵉ (ε ·̂ₑ ε')  = settleᵉ ε ·̂ₑ settleᵉ ε'
+settleᵉ (ε ⊔̂ₑ ε')  = econst (evalᵉ ε ⊔ₑ evalᵉ ε')
+
+settleʳ : RExp ∅ˢ → RExp ∅ˢ
+settleʳ (rvar ())
+settleʳ (rconst c) = rconst c
+settleʳ (ρ ·̂ᵣ ρ')  = settleʳ ρ ·̂ᵣ settleʳ ρ'
+settleʳ (ρ ⊔̂ᵣ ρ')  = rconst (evalʳ ρ ⊔ᵣ evalʳ ρ')
+settleʳ ∣ ε ∣̂ᵉ     = ∣ settleᵉ ε ∣̂ᵉ
+
+settleˢ : ∀ {Ψ} → Subst Ψ ∅ˢ → Subst Ψ ∅ˢ
+settleˢ δ = sub (sTy δ) (λ i → settleʳ (sR δ i)) (λ i → settleᵉ (sE δ i))
+
 -- The candidate substitution: slack, then the defaults, whose
--- polarities are read off the residual slack leaves.
+-- polarities are read off the bounds slack leaves, then the joins
+-- computed.
 
 closeˢ : ∀ {Ψ} → Resid Ψ → Subst Ψ ∅ˢ
-closeˢ {Ψ} R = σ ⨟ˢ groundˢ (R [ σ ]ᴿ)
+closeˢ {Ψ} R = settleˢ (σ ⨟ˢ groundˢ (seenᴿ R σ))
   where
     σ : Subst Ψ Ψ
     σ = slack* (Sz Ψ) R idˢ

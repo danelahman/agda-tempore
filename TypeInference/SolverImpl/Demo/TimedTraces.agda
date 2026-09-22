@@ -524,11 +524,11 @@ ex-fold-then-mul : infer! [] fold-then-mul
                  ≡ just (Unit , econst (within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆))
 ex-fold-then-mul = refl
 
--- The fold declines a bound that does not combine rather than dropping
--- it, so three arms land on one constant rather than on a product with
--- an arm's slack. A set records which runs are permitted, not how many
--- arms asked for each, so three arms performing the same operation
--- leave that one run permitted.
+-- The join takes in every bound, an arm's slack included, and is
+-- computed once that slack is settled, so three arms land on one
+-- constant rather than on a product with an arm's slack. A set records
+-- which runs are permitted, not how many arms asked for each, so three
+-- arms performing the same operation leave that one run permitted.
 
 branch-ops³-flat : RawC 0
 branch-ops³-flat = if true `then perform read ⋆ (return ⋆)
