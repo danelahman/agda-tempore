@@ -150,21 +150,33 @@ ground-≡̂ᵣ ≡̂ᵣ-identityʳ     = ·ᵣ-identityʳ _
 ground-≡̂ᵣ ≡̂ᵣ-const-·       = refl
 ground-≡̂ᵣ (≡̂ᵣ-cong-⊔ p q)  = cong₂ _⊔ᵣ_ (ground-≡̂ᵣ p) (ground-≡̂ᵣ q)
 ground-≡̂ᵣ ≡̂ᵣ-const-⊔       = refl
+ground-≡̂ᵣ ≡̂ᵣ-idem-⊔        = ⊔ᵣ-idem _
+ground-≡̂ᵣ ≡̂ᵣ-comm-⊔        = ⊔ᵣ-comm _ _
+ground-≡̂ᵣ ≡̂ᵣ-assoc-⊔       = ⊔ᵣ-assoc _ _ _
+ground-≡̂ᵣ ≡̂ᵣ-⊤-⊔           = ⊔ᵣ-⊤ᵣ _
+ground-≡̂ᵣ ≡̂ᵣ-distribˡ-⊔    = ·ᵣ-distribˡ-⊔ᵣ _ _ _
+ground-≡̂ᵣ ≡̂ᵣ-distribʳ-⊔    = ·ᵣ-distribʳ-⊔ᵣ _ _ _
 ground-≡̂ᵣ ≡̂ᵣ-map-·         = map-·ᵉ
 ground-≡̂ᵣ ≡̂ᵣ-map-⊔         = map-⊔ᵉ
 ground-≡̂ᵣ ≡̂ᵣ-map-const     = refl
 ground-≡̂ᵣ (≡̂ᵣ-map-cong p)  = cong mapᵉ (ground-≡̂ₑ p)
 
-ground-≡̂ₑ ≡̂ₑ-refl        = refl
-ground-≡̂ₑ (≡̂ₑ-sym p)     = sym (ground-≡̂ₑ p)
-ground-≡̂ₑ (≡̂ₑ-trans p q) = trans (ground-≡̂ₑ p) (ground-≡̂ₑ q)
-ground-≡̂ₑ (≡̂ₑ-cong p q)  = cong₂ _·ₑ_ (ground-≡̂ₑ p) (ground-≡̂ₑ q)
-ground-≡̂ₑ ≡̂ₑ-assoc       = ·ₑ-assoc _ _ _
-ground-≡̂ₑ ≡̂ₑ-identityˡ   = ·ₑ-identityˡ _
-ground-≡̂ₑ ≡̂ₑ-identityʳ   = ·ₑ-identityʳ _
-ground-≡̂ₑ ≡̂ₑ-const-·     = refl
-ground-≡̂ₑ (≡̂ₑ-cong-⊔ p q) = cong₂ _⊔ₑ_ (ground-≡̂ₑ p) (ground-≡̂ₑ q)
-ground-≡̂ₑ ≡̂ₑ-const-⊔     = refl
+ground-≡̂ₑ ≡̂ₑ-refl          = refl
+ground-≡̂ₑ (≡̂ₑ-sym p)       = sym (ground-≡̂ₑ p)
+ground-≡̂ₑ (≡̂ₑ-trans p q)   = trans (ground-≡̂ₑ p) (ground-≡̂ₑ q)
+ground-≡̂ₑ (≡̂ₑ-cong p q)    = cong₂ _·ₑ_ (ground-≡̂ₑ p) (ground-≡̂ₑ q)
+ground-≡̂ₑ ≡̂ₑ-assoc         = ·ₑ-assoc _ _ _
+ground-≡̂ₑ ≡̂ₑ-identityˡ     = ·ₑ-identityˡ _
+ground-≡̂ₑ ≡̂ₑ-identityʳ     = ·ₑ-identityʳ _
+ground-≡̂ₑ ≡̂ₑ-const-·       = refl
+ground-≡̂ₑ (≡̂ₑ-cong-⊔ p q)  = cong₂ _⊔ₑ_ (ground-≡̂ₑ p) (ground-≡̂ₑ q)
+ground-≡̂ₑ ≡̂ₑ-const-⊔       = refl
+ground-≡̂ₑ ≡̂ₑ-idem-⊔        = ⊔ₑ-idem _
+ground-≡̂ₑ ≡̂ₑ-comm-⊔        = ⊔ₑ-comm _ _
+ground-≡̂ₑ ≡̂ₑ-assoc-⊔       = ⊔ₑ-assoc _ _ _
+ground-≡̂ₑ ≡̂ₑ-⊤-⊔           = ⊔ₑ-⊤ₑ _
+ground-≡̂ₑ ≡̂ₑ-distribˡ-⊔    = ·ₑ-distribˡ-⊔ₑ _ _ _
+ground-≡̂ₑ ≡̂ₑ-distribʳ-⊔    = ·ₑ-distribʳ-⊔ₑ _ _ _
 
 ground-≾ᵣ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
           → θ ⊨ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
@@ -181,10 +193,6 @@ ground-≾ᵣ h (map-mono p) = map-monotoneᵉ (ground-≾ₑ h p)
 ground-≾ᵣ {θ = θ} h (⊔-ubˡᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubˡ (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ {θ = θ} h (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ h (⊔-lubᵣ p q) = ⊔ᵣ-lub (ground-≾ᵣ h p) (ground-≾ᵣ h q)
-ground-≾ᵣ {θ = θ} h (·-distribˡ-⊔ᵣ {ρ} {ρ₁} {ρ₂}) =
-  ·ᵣ-distribˡ-⊔ᵣ-≾ᵣ (⟦ ρ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
-ground-≾ᵣ {θ = θ} h (·-distribʳ-⊔ᵣ {ρ} {ρ₁} {ρ₂}) =
-  ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ (⟦ ρ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ) (⟦ ρ₂ ⟧ʳ θ)
 ground-≾ᵣ {θ = θ} {ρ' = ρ'} h (minᵣ p) = p (⟦ ρ' ⟧ʳ θ)
 
 ground-≾ₑ h (hypₑ m)     = ordEOK h m
@@ -196,10 +204,6 @@ ground-≾ₑ h (monoₑ p q)  = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ (ground-≾�
 ground-≾ₑ {θ = θ} h (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} h (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ h (⊔-lubₑ p q) = ⊔ₑ-lub (ground-≾ₑ h p) (ground-≾ₑ h q)
-ground-≾ₑ {θ = θ} h (·-distribˡ-⊔ₑ {ε} {ε₁} {ε₂}) =
-  ·ₑ-distribˡ-⊔ₑ-≾ₑ (⟦ ε ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
-ground-≾ₑ {θ = θ} h (·-distribʳ-⊔ₑ {ε} {ε₁} {ε₂}) =
-  ·ₑ-distribʳ-⊔ₑ-≾ₑ (⟦ ε ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ) (⟦ ε₂ ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
 -- An assumed subtyping between type variables grounds to a closed

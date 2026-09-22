@@ -107,10 +107,10 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
   hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α ≾ β
   transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
 
--- The monoid laws, the constants' arithmetic, and `∣_∣̂ᵉ` being a monoid
--- morphism; no hypotheses involved. The join former gets congruence,
--- constant folding and the morphism law only: commutativity,
--- associativity and idempotence of `_⊔_` hold at `_≾_`, not at `_≡_`.
+-- The monoid laws, the semilattice laws of the join, distributivity of
+-- multiplication over the join, the constants' arithmetic, and `∣_∣̂ᵉ`
+-- being a monoid morphism; no hypotheses involved. Each law holds at
+-- `_≡_` on the closed grades, the order being partial.
 
 infix 4 _≡̂ᵣ_ _≡̂ₑ_
 
@@ -118,36 +118,48 @@ data _≡̂ᵣ_ {Θ : Scope} : RExp Θ → RExp Θ → Set
 data _≡̂ₑ_ {Θ : Scope} : EExp Θ → EExp Θ → Set
 
 data _≡̂ᵣ_ {Θ} where
-  ≡̂ᵣ-refl      : ∀ {ρ} → ρ ≡̂ᵣ ρ
-  ≡̂ᵣ-sym       : ∀ {ρ ρ'} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ
-  ≡̂ᵣ-trans     : ∀ {ρ ρ' ρ''} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ'' → ρ ≡̂ᵣ ρ''
-  ≡̂ᵣ-cong      : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
-               → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ·̂ᵣ ρ₂'
-  ≡̂ᵣ-assoc     : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ·̂ᵣ ρ₂) ·̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ·̂ᵣ (ρ₂ ·̂ᵣ ρ₃)
-  ≡̂ᵣ-identityˡ : ∀ {ρ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
-  ≡̂ᵣ-identityʳ : ∀ {ρ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
-  ≡̂ᵣ-const-·   : ∀ {ρ ρ'} → rconst ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
-  ≡̂ᵣ-cong-⊔    : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
-               → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
-  ≡̂ᵣ-const-⊔   : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
-  ≡̂ᵣ-map-·     : ∀ {ε ε'} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
-  ≡̂ᵣ-map-⊔     : ∀ {ε ε'} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
-  ≡̂ᵣ-map-const : ∀ {e} → ∣ econst e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
-  ≡̂ᵣ-map-cong  : ∀ {ε ε'} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-refl       : ∀ {ρ} → ρ ≡̂ᵣ ρ
+  ≡̂ᵣ-sym        : ∀ {ρ ρ'} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ
+  ≡̂ᵣ-trans      : ∀ {ρ ρ' ρ''} → ρ ≡̂ᵣ ρ' → ρ' ≡̂ᵣ ρ'' → ρ ≡̂ᵣ ρ''
+  ≡̂ᵣ-cong       : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
+                → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ·̂ᵣ ρ₂'
+  ≡̂ᵣ-assoc      : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ·̂ᵣ ρ₂) ·̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ·̂ᵣ (ρ₂ ·̂ᵣ ρ₃)
+  ≡̂ᵣ-identityˡ  : ∀ {ρ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
+  ≡̂ᵣ-identityʳ  : ∀ {ρ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
+  ≡̂ᵣ-const-·    : ∀ {ρ ρ'} → rconst ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
+  ≡̂ᵣ-cong-⊔     : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
+                → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
+  ≡̂ᵣ-const-⊔    : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
+  ≡̂ᵣ-idem-⊔     : ∀ {ρ} → ρ ⊔̂ᵣ ρ ≡̂ᵣ ρ
+  ≡̂ᵣ-comm-⊔     : ∀ {ρ₁ ρ₂} → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ⊔̂ᵣ ρ₁
+  ≡̂ᵣ-assoc-⊔    : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)
+  ≡̂ᵣ-⊤-⊔        : ∀ {ρ} → ρ ⊔̂ᵣ rconst ⊤ᵣ ≡̂ᵣ rconst ⊤ᵣ
+  ≡̂ᵣ-distribˡ-⊔ : ∀ {ρ ρ₁ ρ₂} → ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≡̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
+  ≡̂ᵣ-distribʳ-⊔ : ∀ {ρ ρ₁ ρ₂} → (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≡̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
+  ≡̂ᵣ-map-·      : ∀ {ε ε'} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-map-⊔      : ∀ {ε ε'} → ∣ ε ⊔̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ⊔̂ᵣ ∣ ε' ∣̂ᵉ
+  ≡̂ᵣ-map-const  : ∀ {e} → ∣ econst e ∣̂ᵉ ≡̂ᵣ rconst (mapᵉ e)
+  ≡̂ᵣ-map-cong   : ∀ {ε ε'} → ε ≡̂ₑ ε' → ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
 
 data _≡̂ₑ_ {Θ} where
-  ≡̂ₑ-refl      : ∀ {ε} → ε ≡̂ₑ ε
-  ≡̂ₑ-sym       : ∀ {ε ε'} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε
-  ≡̂ₑ-trans     : ∀ {ε ε' ε''} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε'' → ε ≡̂ₑ ε''
-  ≡̂ₑ-cong      : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
-               → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₁' ·̂ₑ ε₂'
-  ≡̂ₑ-assoc     : ∀ {ε₁ ε₂ ε₃} → (ε₁ ·̂ₑ ε₂) ·̂ₑ ε₃ ≡̂ₑ ε₁ ·̂ₑ (ε₂ ·̂ₑ ε₃)
-  ≡̂ₑ-identityˡ : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
-  ≡̂ₑ-identityʳ : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
-  ≡̂ₑ-const-·   : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
-  ≡̂ₑ-cong-⊔    : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
-               → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
-  ≡̂ₑ-const-⊔   : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
+  ≡̂ₑ-refl       : ∀ {ε} → ε ≡̂ₑ ε
+  ≡̂ₑ-sym        : ∀ {ε ε'} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε
+  ≡̂ₑ-trans      : ∀ {ε ε' ε''} → ε ≡̂ₑ ε' → ε' ≡̂ₑ ε'' → ε ≡̂ₑ ε''
+  ≡̂ₑ-cong       : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
+                → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₁' ·̂ₑ ε₂'
+  ≡̂ₑ-assoc      : ∀ {ε₁ ε₂ ε₃} → (ε₁ ·̂ₑ ε₂) ·̂ₑ ε₃ ≡̂ₑ ε₁ ·̂ₑ (ε₂ ·̂ₑ ε₃)
+  ≡̂ₑ-identityˡ  : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
+  ≡̂ₑ-identityʳ  : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
+  ≡̂ₑ-const-·    : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
+  ≡̂ₑ-cong-⊔     : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
+                → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
+  ≡̂ₑ-const-⊔    : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
+  ≡̂ₑ-idem-⊔     : ∀ {ε} → ε ⊔̂ₑ ε ≡̂ₑ ε
+  ≡̂ₑ-comm-⊔     : ∀ {ε₁ ε₂} → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₂ ⊔̂ₑ ε₁
+  ≡̂ₑ-assoc-⊔    : ∀ {ε₁ ε₂ ε₃} → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
+  ≡̂ₑ-⊤-⊔        : ∀ {ε} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
+  ≡̂ₑ-distribˡ-⊔ : ∀ {ε ε₁ ε₂} → ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≡̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
+  ≡̂ₑ-distribʳ-⊔ : ∀ {ε ε₁ ε₂} → (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≡̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
 
 infix 4 _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
@@ -174,9 +186,6 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   ⊔-ubˡᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₁ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
   ⊔-ubʳᵣ   : ∀ {ρ₁ ρ₂} → Q ⊩ ρ₂ ≾̂ᵣ ρ₁ ⊔̂ᵣ ρ₂
   ⊔-lubᵣ   : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
-  -- distributivity, in the direction monotonicity does not already give
-  ·-distribˡ-⊔ᵣ : ∀ {ρ ρ₁ ρ₂} → Q ⊩ ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≾̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
-  ·-distribʳ-⊔ᵣ : ∀ {ρ ρ₁ ρ₂} → Q ⊩ (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≾̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
   -- optional unit-minimality; the premise is the property of the grade monoid
   minᵣ     : ∀ {ρ} → UnitMinᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
 
@@ -191,9 +200,6 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ⊔-ubˡₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₁ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
   ⊔-ubʳₑ : ∀ {ε₁ ε₂} → Q ⊩ ε₂ ≾̂ₑ ε₁ ⊔̂ₑ ε₂
   ⊔-lubₑ : ∀ {ε₁ ε₂ ε} → Q ⊩ ε₁ ≾̂ₑ ε → Q ⊩ ε₂ ≾̂ₑ ε → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε
-  -- distributivity, in the direction monotonicity does not already give
-  ·-distribˡ-⊔ₑ : ∀ {ε ε₁ ε₂} → Q ⊩ ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≾̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
-  ·-distribʳ-⊔ₑ : ∀ {ε ε₁ ε₂} → Q ⊩ (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≾̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
   -- optional unit-minimality; the premise is the property of the grade monoid
   minₑ   : ∀ {ε} → UnitMinₑ → Q ⊩ ûₑ ≾̂ₑ ε
 
@@ -375,31 +381,43 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst : ∀ {Θ Θ'} {ε ε' : EExp Θ} → (σ : Subst Θ Θ')
          → ε ≡̂ₑ ε' → ε [ σ ]ᵉ ≡̂ₑ ε' [ σ ]ᵉ
 
-≡̂ᵣ-subst σ ≡̂ᵣ-refl         = ≡̂ᵣ-refl
-≡̂ᵣ-subst σ (≡̂ᵣ-sym p)      = ≡̂ᵣ-sym (≡̂ᵣ-subst σ p)
-≡̂ᵣ-subst σ (≡̂ᵣ-trans p q)  = ≡̂ᵣ-trans (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
-≡̂ᵣ-subst σ (≡̂ᵣ-cong p q)   = ≡̂ᵣ-cong (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
-≡̂ᵣ-subst σ ≡̂ᵣ-assoc        = ≡̂ᵣ-assoc
-≡̂ᵣ-subst σ ≡̂ᵣ-identityˡ    = ≡̂ᵣ-identityˡ
-≡̂ᵣ-subst σ ≡̂ᵣ-identityʳ    = ≡̂ᵣ-identityʳ
-≡̂ᵣ-subst σ ≡̂ᵣ-const-·      = ≡̂ᵣ-const-·
-≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q) = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
-≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔      = ≡̂ᵣ-const-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-map-·        = ≡̂ᵣ-map-·
-≡̂ᵣ-subst σ ≡̂ᵣ-map-⊔        = ≡̂ᵣ-map-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-map-const    = ≡̂ᵣ-map-const
-≡̂ᵣ-subst σ (≡̂ᵣ-map-cong p) = ≡̂ᵣ-map-cong (≡̂ₑ-subst σ p)
+≡̂ᵣ-subst σ ≡̂ᵣ-refl          = ≡̂ᵣ-refl
+≡̂ᵣ-subst σ (≡̂ᵣ-sym p)       = ≡̂ᵣ-sym (≡̂ᵣ-subst σ p)
+≡̂ᵣ-subst σ (≡̂ᵣ-trans p q)   = ≡̂ᵣ-trans (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
+≡̂ᵣ-subst σ (≡̂ᵣ-cong p q)    = ≡̂ᵣ-cong (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
+≡̂ᵣ-subst σ ≡̂ᵣ-assoc         = ≡̂ᵣ-assoc
+≡̂ᵣ-subst σ ≡̂ᵣ-identityˡ     = ≡̂ᵣ-identityˡ
+≡̂ᵣ-subst σ ≡̂ᵣ-identityʳ     = ≡̂ᵣ-identityʳ
+≡̂ᵣ-subst σ ≡̂ᵣ-const-·       = ≡̂ᵣ-const-·
+≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q)  = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
+≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔       = ≡̂ᵣ-const-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-idem-⊔        = ≡̂ᵣ-idem-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-comm-⊔        = ≡̂ᵣ-comm-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-assoc-⊔       = ≡̂ᵣ-assoc-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-⊤-⊔           = ≡̂ᵣ-⊤-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-distribˡ-⊔    = ≡̂ᵣ-distribˡ-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-distribʳ-⊔    = ≡̂ᵣ-distribʳ-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-map-·         = ≡̂ᵣ-map-·
+≡̂ᵣ-subst σ ≡̂ᵣ-map-⊔         = ≡̂ᵣ-map-⊔
+≡̂ᵣ-subst σ ≡̂ᵣ-map-const     = ≡̂ᵣ-map-const
+≡̂ᵣ-subst σ (≡̂ᵣ-map-cong p)  = ≡̂ᵣ-map-cong (≡̂ₑ-subst σ p)
 
-≡̂ₑ-subst σ ≡̂ₑ-refl        = ≡̂ₑ-refl
-≡̂ₑ-subst σ (≡̂ₑ-sym p)     = ≡̂ₑ-sym (≡̂ₑ-subst σ p)
-≡̂ₑ-subst σ (≡̂ₑ-trans p q) = ≡̂ₑ-trans (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
-≡̂ₑ-subst σ (≡̂ₑ-cong p q)  = ≡̂ₑ-cong (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
-≡̂ₑ-subst σ ≡̂ₑ-assoc       = ≡̂ₑ-assoc
-≡̂ₑ-subst σ ≡̂ₑ-identityˡ   = ≡̂ₑ-identityˡ
-≡̂ₑ-subst σ ≡̂ₑ-identityʳ   = ≡̂ₑ-identityʳ
-≡̂ₑ-subst σ ≡̂ₑ-const-·     = ≡̂ₑ-const-·
-≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q) = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
-≡̂ₑ-subst σ ≡̂ₑ-const-⊔     = ≡̂ₑ-const-⊔
+≡̂ₑ-subst σ ≡̂ₑ-refl          = ≡̂ₑ-refl
+≡̂ₑ-subst σ (≡̂ₑ-sym p)       = ≡̂ₑ-sym (≡̂ₑ-subst σ p)
+≡̂ₑ-subst σ (≡̂ₑ-trans p q)   = ≡̂ₑ-trans (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
+≡̂ₑ-subst σ (≡̂ₑ-cong p q)    = ≡̂ₑ-cong (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
+≡̂ₑ-subst σ ≡̂ₑ-assoc         = ≡̂ₑ-assoc
+≡̂ₑ-subst σ ≡̂ₑ-identityˡ     = ≡̂ₑ-identityˡ
+≡̂ₑ-subst σ ≡̂ₑ-identityʳ     = ≡̂ₑ-identityʳ
+≡̂ₑ-subst σ ≡̂ₑ-const-·       = ≡̂ₑ-const-·
+≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q)  = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
+≡̂ₑ-subst σ ≡̂ₑ-const-⊔       = ≡̂ₑ-const-⊔
+≡̂ₑ-subst σ ≡̂ₑ-idem-⊔        = ≡̂ₑ-idem-⊔
+≡̂ₑ-subst σ ≡̂ₑ-comm-⊔        = ≡̂ₑ-comm-⊔
+≡̂ₑ-subst σ ≡̂ₑ-assoc-⊔       = ≡̂ₑ-assoc-⊔
+≡̂ₑ-subst σ ≡̂ₑ-⊤-⊔           = ≡̂ₑ-⊤-⊔
+≡̂ₑ-subst σ ≡̂ₑ-distribˡ-⊔    = ≡̂ₑ-distribˡ-⊔
+≡̂ₑ-subst σ ≡̂ₑ-distribʳ-⊔    = ≡̂ₑ-distribʳ-⊔
 
 ⊩-substᵣ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {ρ ρ' : RExp Θ}
          → Q' ⊩ᴴ Q [ σ ] → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
@@ -415,8 +433,6 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h ⊔-ubˡᵣ       = ⊔-ubˡᵣ
 ⊩-substᵣ            h ⊔-ubʳᵣ       = ⊔-ubʳᵣ
 ⊩-substᵣ            h (⊔-lubᵣ p q) = ⊔-lubᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
-⊩-substᵣ            h ·-distribˡ-⊔ᵣ = ·-distribˡ-⊔ᵣ
-⊩-substᵣ            h ·-distribʳ-⊔ᵣ = ·-distribʳ-⊔ᵣ
 ⊩-substᵣ            h (minᵣ p)     = minᵣ p
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
@@ -427,8 +443,6 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h ⊔-ubˡₑ       = ⊔-ubˡₑ
 ⊩-substₑ         h ⊔-ubʳₑ       = ⊔-ubʳₑ
 ⊩-substₑ         h (⊔-lubₑ p q) = ⊔-lubₑ (⊩-substₑ h p) (⊩-substₑ h q)
-⊩-substₑ         h ·-distribˡ-⊔ₑ = ·-distribˡ-⊔ₑ
-⊩-substₑ         h ·-distribʳ-⊔ₑ = ·-distribʳ-⊔ₑ
 ⊩-substₑ         h (minₑ p)     = minₑ p
 
 -- A type variable's image is an arbitrary open type, so an assumed
