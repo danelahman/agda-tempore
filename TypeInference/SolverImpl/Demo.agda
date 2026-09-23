@@ -39,3 +39,8 @@ import TypeInference.SolverImpl.Demo.TimeIntervals
 -- so the handler `TimeIntervals` declines is inferred here.
 
 import TypeInference.SolverImpl.Demo.TimedTraces
+
+-- Inference checked against open derivations of pairs of constructs,
+-- and of `tempore-lang`'s example programs, at the demos' grades.
+
+import TypeInference.SolverImpl.Demo.Completeness
