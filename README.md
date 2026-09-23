@@ -318,8 +318,18 @@ a grade system, a signature of base types, and operations' signatures.
   a binary join, and (on the resource side) the image of an effect expression
   under `mapᵉ`; `Types.agda` and `Contexts.agda` the open types and contexts,
   with the eternal barrier; `Subst.agda` substitutions between scopes.
-  `Hyps.agda` carries hypothesis sets, the entailment `_⊩_≾̂_` that decides an
-  ordering *under assumptions*, and shape-preserving subtyping of open types.
+  `Hyps.agda` carries hypothesis sets and the calculus of open grades, which
+  mirrors the `Grade` record: *convertibility* `_≡̂_` (the monoid laws,
+  commutativity of the join, distributivity, the arithmetic of constants, the
+  grade morphism's laws, and absorption of a join by an upper bound) and
+  *entailed ordering* `_⊩_≾̂_` under a hypothesis set (assumed orderings,
+  constants, transitivity, monotonicity, the join's bounds, the top, and
+  unit-minimality where a grade has it). Absorption's premise is an ordering
+  entailed with no hypotheses, so the two are one mutual definition.
+  Idempotence, the top's absorption, associativity of the join and
+  antisymmetry at the empty hypothesis set are derived, as they are in
+  `Syntax/Grades.agda`. The file also carries shape-preserving subtyping of
+  open types.
   `Language.agda` is the mirrored qualified type system — the same rules over
   open types and a hypothesis set — and `Grounding.agda` with
   `GroundingTheorem.agda` lands an open judgement back in the original type
@@ -373,22 +383,57 @@ a grade system, a signature of base types, and operations' signatures.
 
 - `TypeInference/SolverImpl/` is a concrete solver for the generated
   constraints: sound by construction, but heuristic, so it deliberately does not
-  meet the interface's completeness field. `Core/` is McBride-style first-order
-  unification; `Expand.agda` expands a type unknown by skeleton unification, so
-  that subtyping demands decompose; `Resid.agda` is the residual worklist.
-  Two boundaries read an answer out of it. `Restricted.agda`'s `reportOn` is the
-  open one, settling the var-rule disjunctions, dropping entailed hypotheses,
-  eliminating the unknowns its own hypotheses fix, and normalising every grade;
-  `Close.agda` is the ground one, which assigns an unknown bounded below the
-  **join** of its lower bounds and one bounded only above that bound, and
-  defaults by polarity what neither pass settles. `Eliminate.agda` is Pottier's
-  simplification of subtyping constraints (ICFP 1996): an unknown occurring
-  below nowhere else is sent to the join of *all* its lower bounds, and they go
-  with it. `Product.agda` and `Canon.agda` give grade expressions a product
-  normal form, applied at both boundaries, so a reported grade is canonical
-  whichever entry point produced it; an alternative that `Normal.agda`'s
-  decider places below another is dropped by lattice absorption, so the
-  canonical form is relative to what that decider proves.
+  meet the interface's completeness field. What it does prove is principality of
+  every solution it finds (`solve-principal`), and that a refusal of a
+  constraint without rigid binders is a refutation (`solve-fail`, for the
+  fragment `NoRig` of `TypeInference/Solver/Fragment.agda`). At a rigid binder a
+  refusal need not be one — a satisfiable cycle such as `c · e ≾ e` is declined —
+  and what is proved there is that a failed escape check refutes
+  (`popᵉ-escape`). `Core/` is McBride-style first-order unification;
+  `Expand.agda` expands a type unknown by skeleton unification, so that
+  subtyping demands decompose; `Resid.agda` is the residual worklist.
+
+  A rigid binder is what a handler's operation clause generates, since the
+  clause must hold for every effect its continuation may have. The rigid
+  variable is never instantiated. Before its scope closes, `Localise.agda`
+  sends each unknown local to the scope to the least term over it that
+  satisfies it — the join of its lower bounds, where it occurs below nothing
+  else (Pottier's condition), else its one upper bound, else the unit where the
+  unit is least — so a solution is one term, uniform in the rigid variable.
+  `Solve.agda` then removes the rigid variable from an ordering it bounds from
+  one side only, by monotonicity: at the unit when it sits on the greater side
+  and the unit is least, at the top when it sits on the smaller side.
+
+  Two boundaries read an answer out of the solver. `Restricted.agda`'s
+  `reportOn` is the open one: it settles the var-rule disjunctions, drops the
+  subtyping and eternality hypotheses the others entail and the grade
+  orderings that repeat once canonical, eliminates the unknowns its own
+  hypotheses fix, and puts every grade in canonical form. `Close.agda` is the
+  ground one. It reads every bound through one view — a join on the left split
+  into its parts, an ordering that holds whatever the assignment dropped — so
+  its answer does not depend on the order of the constraints. It assigns an
+  unknown bounded below the **join** of its lower bounds, formed even while
+  they are not yet constants and computed once they are, and one bounded only
+  above that bound, and defaults by polarity what neither pass settles.
+  `Eliminate.agda` is Pottier's simplification of subtyping constraints (ICFP
+  1996): an unknown occurring below nowhere else is sent to the join of *all*
+  its lower bounds, and they go with it.
+
+  Grade expressions are normalised by `Product.agda` to a **sum of products** —
+  alternatives, each a product of atoms, with products distributed over joins —
+  certified by a single convertibility derivation. `Normal.agda`'s decider
+  compares such sums: every alternative on the left below some alternative on
+  the right, a product against a product position by position, a missing
+  position standing for the unit and the top absorbing whatever lies below it.
+  `Canon.agda` puts a reported grade in canonical form: alternatives are
+  grouped by their skeleton of variables, a group varying in a single constant
+  slot is folded into one alternative by distributivity, groups are ordered by
+  skeleton, and an alternative the decider places below another is dropped by
+  lattice absorption. Decisions are taken on the unfolded sum, since folding
+  the left side of a comparison would lose matches. The canonical form is
+  relative to what the decider proves, and one shape keeps its arrival order:
+  a group of alternatives varying in more than one constant slot, which
+  neither folds nor can be sorted without an order on constants.
 
 - `TypeInference/SolverImpl/Demo/` runs the solver and checks every answer by
   computation — each example is discharged by `refl`, so what is inferred is
@@ -400,4 +445,8 @@ a grade system, a signature of base types, and operations' signatures.
   of what a grade choice buys — the same conditional is graded by a window
   spanning both arms at one, and by the union of their runs at the other, where
   a claim on a boxed resource can also be refused for doing the right things in
-  the wrong order.
+  the wrong order. Both also check handler clauses — forwarding, unboxing and
+  performing are inferred wherever they are typable, and resuming twice is
+  refused — and the constraints at a rigid
+  binder that the solver settles, together with the satisfiable cycle it
+  declines.
