@@ -113,18 +113,20 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
 
 open Principal
 
-principal : (sv : Solver) → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC n)
+principal : ∀ {Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set} → (sv : Solver Pᶜ Pᵖ)
+          → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC n)
+          → Pᵖ C[ Γ , M ]
           → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'}
           → Solver.solve sv C[ Γ , M ] ≡ just (Θ' , σ , Q)
           ------------------------------------------------
           → Principal Γ M
 
-principal sv {Θ} Γ M {Θ'} {σ} {Q} eq = mkPrincipal
+principal sv {Θ} Γ M p {Θ'} {σ} {Q} eq = mkPrincipal
   Θ' σ Q
   (proj₁ elab) (proj₂ elab)
   (λ δ Q' h → soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) (⊨-mono h C[ Γ , M ] sat))
   (λ σ' Q' D e st le →
-     Solver.solve-principal sv C[ Γ , M ] eq σ' Q'
+     Solver.solve-principal sv C[ Γ , M ] p eq σ' Q'
        (subst (λ N → σ' ⊨[ Q' ] genC (Γ₊ Γ) N (X̂ Θ ‼ t̂ Θ)) e
               (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) D refl st le)))
   where

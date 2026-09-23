@@ -392,11 +392,9 @@ import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon
 
----- The rigid-binder-free fragment, and guarded solver interfaces
+---- The rigid-binder-free fragment
 
 open import TypeInference.Solver.Fragment
-open import TypeInference.Solver.Restricted
-open import TypeInference.Principality.Restricted
 
 ---- What the solver's variable expansion buys: decomposability of every
 ---- expanded demand, most-generality of the expansion, and refutation

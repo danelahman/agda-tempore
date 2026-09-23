@@ -4,7 +4,7 @@
 -- `solveOn` runs the driver and reads its residual back as a     --
 -- hypothesis set, deciding the atoms no unknown affects          --
 -- (`Closed`): one that holds is dropped, one that fails refuses. --
--- It instantiates `TypeInference.Solver.Restricted.SolverOn`.    --
+-- It instantiates `TypeInference.Solver.Solver`.                 --
 -- Principality is unguarded; refutation is guarded by `NoRig`,   --
 -- since at a rigid binder a failure can be a failure of          --
 -- `Normal`'s decision procedures, and is stated against          --
@@ -68,8 +68,7 @@ open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-
 
 open import TypeInference.Principality      S using (Principal)
 open import TypeInference.Solver.Fragment   S
-open import TypeInference.Solver.Restricted S
-open import TypeInference.Solver            S using (Satisfiable)
+open import TypeInference.Solver            S
 
 open import TypeInference.SolverImpl.Core.Unify    S using (Rig; _∈ᶠ_)
 open import TypeInference.SolverImpl.Core.UnifyMGU S using (Fixing; fixing)
@@ -185,8 +184,8 @@ solveOn-principal C eq σ Q sat with solve init C in e
           (≐ˢ-trans (⨟-congʳ (θ s') tri₂)
           (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri₁)))
 
-solverImplOn : SolverOn NoRig (λ _ → ⊤)
-solverImplOn = record
+solver : Solver NoRig (λ _ → ⊤)
+solver = record
   { solve           = solveOn
   ; solve-sound     = solveOn-sound
   ; solve-complete  = solveOn-complete
