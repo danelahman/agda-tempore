@@ -7,9 +7,12 @@
 -- commute with the covariance coercions of                       --
 -- `TypeInference.ParamGround.Covariance`.                        --
 --                                                                --
--- `CovD` excludes a nested `handle` and a `_⨟_` whose            --
--- continuation grade mentions the rigid variable; every other    --
--- former is covered.                                             --
+-- `CovD` excludes a nested `handle`. Every other former is       --
+-- covered, provided the rigid variable occurs in its types       --
+-- only covariantly (`CovV`), and not at all in a `lam`'s or      --
+-- an application's argument type, a `box`'s grade, or the        --
+-- continuation grade of a `_⨟_`: the positions where the         --
+-- model offers no coercion to transport along.                   --
 ------------------------------------------------------------------
 
 open import Syntax.Grades

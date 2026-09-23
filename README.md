@@ -349,8 +349,27 @@ a grade system, a signature of base types, and operations' signatures.
   soundness, completeness and a principal-solution factorisation —
   `Principality.agda` derives principal typings relative to one, and
   `Infer.agda` composes generation, solving and grounding into inference.
-  `TypeInference/ParamGround/` supplies the parametricity certificates a
-  grounded derivation needs for the denotational side.
+
+- `TypeInference/ParamGround/` supplies the parametricity certificates a
+  grounded derivation needs for the denotational side, and it is where two
+  notions of parametricity meet. The open calculus is parametric
+  syntactically: an operation clause is a single derivation, typed at a rigid
+  effect variable. The semantics assumes `EffUniformʰ` instead — that a
+  handler's clause family commutes with sub-effecting its continuation's
+  residual effect. The bridge between them, `GroundUniform.ground-uniform`, is
+  an explicit hypothesis; `ParamGround/Uniform.agda` proves it for a covariant
+  fragment, which excludes a nested `handle` and keeps the rigid variable out
+  of the positions where the model offers no coercion to transport along — a
+  `lam`'s or an application's argument type, a `box`'s grade, the continuation
+  grade of a `_⨟_`. The source calculus's own clauses are families indexed by
+  the residual effect, parametric only by that assumption; the passage from
+  them to the open calculus is not proved, and completeness of inference is
+  stated for the open calculus. A refinement for the future is to make the
+  source calculus's clauses parametric by construction, typed under a grade
+  variable in the context as in the prototype implementation
+  [danelahman/tempore-lang](https://github.com/danelahman/tempore-lang): the
+  semantic assumption would then be a structural fact, at the cost of grade
+  variables in the source calculus and in its model.
 
 - `TypeInference/SolverImpl/` is a concrete solver for the generated
   constraints: sound by construction, but heuristic, so it deliberately does not
