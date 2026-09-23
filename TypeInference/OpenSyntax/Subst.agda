@@ -7,8 +7,12 @@
 -- number of bound variables, so no transports occur anywhere.   --
 ------------------------------------------------------------------
 
+open import Data.Bool.Base using (if_then_else_)
 open import Data.Fin using (Fin; zero; suc)
+open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Nat using (ℕ)
+
+open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -150,6 +154,14 @@ sTy (σ ,ᵉ ε) α       = sTy σ α
 sR  (σ ,ᵉ ε) i       = sR σ i
 sE  (σ ,ᵉ ε) zero    = ε
 sE  (σ ,ᵉ ε) (suc i) = sE σ i
+
+-- Updating one grade variable: the identity elsewhere
+
+updᵉ : ∀ {Θ} → EVar Θ → EExp Θ → Subst Θ Θ
+updᵉ i ε = sub tvar rvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ε else evar k)
+
+updʳ : ∀ {Θ} → RVar Θ → RExp Θ → Subst Θ Θ
+updʳ i ρ = sub tvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ρ else rvar k) evar
 
 -- Pointwise equality of substitutions (avoids function extensionality)
 

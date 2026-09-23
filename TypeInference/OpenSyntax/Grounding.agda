@@ -5,9 +5,9 @@
 -- variable of the scope `Θ`, and the interpretations `⟦_⟧` send  --
 -- every open expression, type and context to a closed one.       --
 --                                                                --
--- On top of that sit the lemmas the grounding theorem consumes:  --
--- `θ ⊨ᴴ Q` (the grounding satisfies the hypothesis set),         --
--- groundings of convertibility, entailment, eternality,          --
+-- Groundings compose with substitutions (`_⨟ᵍ_`). On top of      --
+-- that sit `θ ⊨ᴴ Q` (the grounding satisfies the hypothesis      --
+-- set), groundings of convertibility, entailment, eternality,    --
 -- subtyping and membership, the round-trips of the closed        --
 -- embeddings, and the collapse of an effect-scope weakening.     --
 ------------------------------------------------------------------
@@ -42,6 +42,8 @@ open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Contexts  S
 open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Subst     S
+  using (Subst; sTy; sR; sE; _[_]ᵉ; _[_]ʳ; _[_]ᵛ; _[_]ᶜ)
 
 record Grounding (Θ : Scope) : Set where
   constructor grounding
@@ -115,6 +117,96 @@ mutual
 ⟦ []      ⟧ᶜᵗˣ θ = []
 ⟦ Γ ∷ A   ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ∷ ⟦ A ⟧ᵛ θ
 ⟦ Γ ⟨ ρ ⟩ ⟧ᶜᵗˣ θ = ⟦ Γ ⟧ᶜᵗˣ θ ⟨ ⟦ ρ ⟧ʳ θ ⟩
+
+-- Pointwise equality of groundings, mirroring `_≐ˢ_` on substitutions
+
+infix 20 _≐ᵍ_
+
+record _≐ᵍ_ {Θ : Scope} (θ θ' : Grounding Θ) : Set where
+  constructor mk≐ᵍ
+  field
+    ≐ᵍᵗ : (α : TyVar Θ) → gTy θ α ≡ gTy θ' α
+    ≐ᵍʳ : (i : RVar Θ) → gR θ i ≡ gR θ' i
+    ≐ᵍᵉ : (i : EVar Θ) → gE θ i ≡ gE θ' i
+
+open _≐ᵍ_ public
+
+-- The interpretations respect pointwise equality
+
+⟦≐⟧ᵉ : ∀ {Θ} {θ θ' : Grounding Θ} → θ ≐ᵍ θ' → (ε : EExp Θ)
+     → ⟦ ε ⟧ᵉ θ ≡ ⟦ ε ⟧ᵉ θ'
+⟦≐⟧ᵉ p (evar i)   = ≐ᵍᵉ p i
+⟦≐⟧ᵉ p (econst ε) = refl
+⟦≐⟧ᵉ p (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦≐⟧ᵉ p ε) (⟦≐⟧ᵉ p ε')
+⟦≐⟧ᵉ p (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦≐⟧ᵉ p ε) (⟦≐⟧ᵉ p ε')
+
+⟦≐⟧ʳ : ∀ {Θ} {θ θ' : Grounding Θ} → θ ≐ᵍ θ' → (ρ : RExp Θ)
+     → ⟦ ρ ⟧ʳ θ ≡ ⟦ ρ ⟧ʳ θ'
+⟦≐⟧ʳ p (rvar i)   = ≐ᵍʳ p i
+⟦≐⟧ʳ p (rconst ρ) = refl
+⟦≐⟧ʳ p (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦≐⟧ʳ p ρ) (⟦≐⟧ʳ p ρ')
+⟦≐⟧ʳ p (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦≐⟧ʳ p ρ) (⟦≐⟧ʳ p ρ')
+⟦≐⟧ʳ p ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦≐⟧ᵉ p ε)
+
+mutual
+
+  ⟦≐⟧ᵛ : ∀ {Θ} {θ θ' : Grounding Θ} → θ ≐ᵍ θ' → (A : OVType Θ)
+       → ⟦ A ⟧ᵛ θ ≡ ⟦ A ⟧ᵛ θ'
+  ⟦≐⟧ᵛ p (tvar α)  = ≐ᵍᵗ p α
+  ⟦≐⟧ᵛ p (Base b)  = refl
+  ⟦≐⟧ᵛ p Unit      = refl
+  ⟦≐⟧ᵛ p Bool      = refl
+  ⟦≐⟧ᵛ p (A |×| B) = cong₂ _|×|_ (⟦≐⟧ᵛ p A) (⟦≐⟧ᵛ p B)
+  ⟦≐⟧ᵛ p Empty     = refl
+  ⟦≐⟧ᵛ p (A ⇒ C)   = cong₂ _⇒_ (⟦≐⟧ᵛ p A) (⟦≐⟧ᶜ p C)
+  ⟦≐⟧ᵛ p ([ ρ ] A) = cong₂ [_]_ (⟦≐⟧ʳ p ρ) (⟦≐⟧ᵛ p A)
+
+  ⟦≐⟧ᶜ : ∀ {Θ} {θ θ' : Grounding Θ} → θ ≐ᵍ θ' → (C : OCType Θ)
+       → ⟦ C ⟧ᶜ θ ≡ ⟦ C ⟧ᶜ θ'
+  ⟦≐⟧ᶜ p (A ‼ ε) = cong₂ _‼_ (⟦≐⟧ᵛ p A) (⟦≐⟧ᵉ p ε)
+
+-- A substitution followed by a grounding is a grounding
+
+infixl 25 _⨟ᵍ_
+
+_⨟ᵍ_ : ∀ {Θ Θ'} → Subst Θ Θ' → Grounding Θ' → Grounding Θ
+σ ⨟ᵍ θ = grounding (λ α → ⟦ sTy σ α ⟧ᵛ θ)
+                   (λ i → ⟦ sR  σ i ⟧ʳ θ)
+                   (λ i → ⟦ sE  σ i ⟧ᵉ θ)
+
+-- Substituting and then grounding is grounding along the composite
+
+⟦⟧-⨟ᵍ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (θ : Grounding Θ') → (ε : EExp Θ)
+        → ⟦ ε [ σ ]ᵉ ⟧ᵉ θ ≡ ⟦ ε ⟧ᵉ (σ ⨟ᵍ θ)
+⟦⟧-⨟ᵍ-e σ θ (evar i)   = refl
+⟦⟧-⨟ᵍ-e σ θ (econst ε) = refl
+⟦⟧-⨟ᵍ-e σ θ (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦⟧-⨟ᵍ-e σ θ ε) (⟦⟧-⨟ᵍ-e σ θ ε')
+⟦⟧-⨟ᵍ-e σ θ (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦⟧-⨟ᵍ-e σ θ ε) (⟦⟧-⨟ᵍ-e σ θ ε')
+
+⟦⟧-⨟ᵍ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (θ : Grounding Θ') → (ρ : RExp Θ)
+        → ⟦ ρ [ σ ]ʳ ⟧ʳ θ ≡ ⟦ ρ ⟧ʳ (σ ⨟ᵍ θ)
+⟦⟧-⨟ᵍ-r σ θ (rvar i)   = refl
+⟦⟧-⨟ᵍ-r σ θ (rconst ρ) = refl
+⟦⟧-⨟ᵍ-r σ θ (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦⟧-⨟ᵍ-r σ θ ρ) (⟦⟧-⨟ᵍ-r σ θ ρ')
+⟦⟧-⨟ᵍ-r σ θ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦⟧-⨟ᵍ-r σ θ ρ) (⟦⟧-⨟ᵍ-r σ θ ρ')
+⟦⟧-⨟ᵍ-r σ θ ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦⟧-⨟ᵍ-e σ θ ε)
+
+mutual
+
+  ⟦⟧-⨟ᵍ-v : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (θ : Grounding Θ') → (A : OVType Θ)
+          → ⟦ A [ σ ]ᵛ ⟧ᵛ θ ≡ ⟦ A ⟧ᵛ (σ ⨟ᵍ θ)
+  ⟦⟧-⨟ᵍ-v σ θ (tvar α)  = refl
+  ⟦⟧-⨟ᵍ-v σ θ (Base b)  = refl
+  ⟦⟧-⨟ᵍ-v σ θ Unit      = refl
+  ⟦⟧-⨟ᵍ-v σ θ Bool      = refl
+  ⟦⟧-⨟ᵍ-v σ θ (A |×| B) = cong₂ _|×|_ (⟦⟧-⨟ᵍ-v σ θ A) (⟦⟧-⨟ᵍ-v σ θ B)
+  ⟦⟧-⨟ᵍ-v σ θ Empty     = refl
+  ⟦⟧-⨟ᵍ-v σ θ (A ⇒ C)   = cong₂ _⇒_ (⟦⟧-⨟ᵍ-v σ θ A) (⟦⟧-⨟ᵍ-c σ θ C)
+  ⟦⟧-⨟ᵍ-v σ θ ([ ρ ] A) = cong₂ [_]_ (⟦⟧-⨟ᵍ-r σ θ ρ) (⟦⟧-⨟ᵍ-v σ θ A)
+
+  ⟦⟧-⨟ᵍ-c : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (θ : Grounding Θ') → (C : OCType Θ)
+          → ⟦ C [ σ ]ᶜ ⟧ᶜ θ ≡ ⟦ C ⟧ᶜ (σ ⨟ᵍ θ)
+  ⟦⟧-⨟ᵍ-c σ θ (A ‼ ε) = cong₂ _‼_ (⟦⟧-⨟ᵍ-v σ θ A) (⟦⟧-⨟ᵍ-e σ θ ε)
 
 infix 4 _⊨ᴴ_
 

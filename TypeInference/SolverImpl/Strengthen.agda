@@ -49,10 +49,6 @@ open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Grounding S
 
-open import TypeInference.Constraints.Ground S
-  using (_⨟ᵍ_; _≐ᵍ_; mk≐ᵍ; ≐ᵍᵗ; ⟦≐⟧ᵉ; ⟦≐⟧ʳ; ⟦≐⟧ᵛ; ⟦≐⟧ᶜ;
-         ⟦⟧-⨟ᵍ-e; ⟦⟧-⨟ᵍ-r; ⟦⟧-⨟ᵍ-v; ⟦⟧-⨟ᵍ-c)
-
 open import TypeInference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; keep; real; princ)
 open import TypeInference.SolverImpl.Core.Occurs S
   using (occᵗ-v; occᵗ-c; occʳ-r; occʳ-v; occʳ-c; occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c)

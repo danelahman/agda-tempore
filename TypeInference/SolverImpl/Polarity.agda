@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Polarity of an unknown in a residual or a hypothesis set       --
+-- Polarity of an unknown in a hypothesis set                     --
 --                                                                --
 -- A demand bounds an unknown above, below, both, or not at all.  --
 -- An ordering reads left to right; a type is traversed with the  --
@@ -7,13 +7,12 @@
 -- it. An eternality demand and the type side of a var-rule       --
 -- disjunction read only the skeleton, so they bound nothing.     --
 --                                                                --
--- The analysis directs the closer's choice of default and is not --
--- part of its soundness. At the reporting boundary it is         --
--- load-bearing instead: lowering an unknown with no occurrence   --
--- below preserves every hypothesis.                              --
+-- At the reporting boundary the analysis is load-bearing:        --
+-- lowering an unknown with no occurrence below preserves every   --
+-- hypothesis.                                                    --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (_∨_; not; _∧_; true; false) renaming (Bool to 𝔹)
+open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (Fin)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_)
@@ -34,8 +33,6 @@ open GradeSystemInterface Grades
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Hyps   S
-
-open import TypeInference.SolverImpl.Resid S
 
 record Pol : Set where
   constructor pol
@@ -121,15 +118,11 @@ mutual
   polₑ-c : ∀ {Ψ} → EVar Ψ → Sign → OCType Ψ → Pol
   polₑ-c i s (A ‼ ε) = polₑ-v i s A ∪ᴾ polₑ-e i s ε
 
--- The residual's components
+-- Orderings and var-rule disjunctions, listed
 
 polsᵣ-ord : ∀ {Ψ} → RVar Ψ → List (RExp Ψ × RExp Ψ) → Pol
 polsᵣ-ord i []             = noᴾ
 polsᵣ-ord i ((ρ , ρ') ∷ l) = polᵣ-r i ⁺ ρ ∪ᴾ polᵣ-r i ⁻ ρ' ∪ᴾ polsᵣ-ord i l
-
-polsᵣ-sub : ∀ {Ψ} → RVar Ψ → List (OVType Ψ × OVType Ψ) → Pol
-polsᵣ-sub i []            = noᴾ
-polsᵣ-sub i ((A , B) ∷ l) = polᵣ-v i ⁺ A ∪ᴾ polᵣ-v i ⁻ B ∪ᴾ polsᵣ-sub i l
 
 polsᵣ-disj : ∀ {Ψ} → RVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
 polsᵣ-disj i []            = noᴾ
@@ -143,36 +136,9 @@ polsₑ-ordₑ : ∀ {Ψ} → EVar Ψ → List (EExp Ψ × EExp Ψ) → Pol
 polsₑ-ordₑ i []             = noᴾ
 polsₑ-ordₑ i ((ε , ε') ∷ l) = polₑ-e i ⁺ ε ∪ᴾ polₑ-e i ⁻ ε' ∪ᴾ polsₑ-ordₑ i l
 
-polsₑ-sub : ∀ {Ψ} → EVar Ψ → List (OVType Ψ × OVType Ψ) → Pol
-polsₑ-sub i []            = noᴾ
-polsₑ-sub i ((A , B) ∷ l) = polₑ-v i ⁺ A ∪ᴾ polₑ-v i ⁻ B ∪ᴾ polsₑ-sub i l
-
 polsₑ-disj : ∀ {Ψ} → EVar Ψ → List (OVType Ψ × RExp Ψ) → Pol
 polsₑ-disj i []            = noᴾ
 polsₑ-disj i ((_ , ρ) ∷ l) = polₑ-r i ⁺ ρ ∪ᴾ polsₑ-disj i l
-
-polᵣ : ∀ {Ψ} → Resid Ψ → RVar Ψ → Pol
-polᵣ R i = polsᵣ-ord i (rs R) ∪ᴾ polsᵣ-sub i (ss R) ∪ᴾ polsᵣ-disj i (ds R)
-
-polₑ : ∀ {Ψ} → Resid Ψ → EVar Ψ → Pol
-polₑ R i = polsₑ-ordᵣ i (rs R) ∪ᴾ polsₑ-ordₑ i (es R)
-             ∪ᴾ polsₑ-sub i (ss R) ∪ᴾ polsₑ-disj i (ds R)
-
--- Occurrences in reported types, each read as the left side of a
--- subtyping
-
-polsᵣ-ty : ∀ {Ψ} → RVar Ψ → List (OCType Ψ) → Pol
-polsᵣ-ty i []      = noᴾ
-polsᵣ-ty i (X ∷ l) = polᵣ-c i ⁺ X ∪ᴾ polsᵣ-ty i l
-
-polsₑ-ty : ∀ {Ψ} → EVar Ψ → List (OCType Ψ) → Pol
-polsₑ-ty i []      = noᴾ
-polsₑ-ty i (X ∷ l) = polₑ-c i ⁺ X ∪ᴾ polsₑ-ty i l
-
--- An unknown pushed only upwards is the one the greatest grade suits
-
-onlyBelow : Pol → 𝔹
-onlyBelow p = below p ∧ not (above p)
 
 -- Occurrences of one type variable. An eternality atom and the type
 -- side of a var-rule disjunction read only the skeleton, which a
@@ -198,8 +164,8 @@ polsₜ-sub α []            = noᴾ
 polsₜ-sub α ((β , γ) ∷ l) =
   atˢ ⁺ ⌊ α ≟ᶠ β ⌋ ∪ᴾ atˢ ⁻ ⌊ α ≟ᶠ γ ⌋ ∪ᴾ polsₜ-sub α l
 
--- The same over a hypothesis set. Its eternality and subtyping atoms
--- carry no grade.
+-- Over a hypothesis set. Its eternality and subtyping atoms carry no
+-- grade.
 
 polᵣᴴ : ∀ {Ψ} → Hyps Ψ → RVar Ψ → Pol
 polᵣᴴ Q i = polsᵣ-ord i (ordᵣ Q) ∪ᴾ polsᵣ-disj i (disj Q)

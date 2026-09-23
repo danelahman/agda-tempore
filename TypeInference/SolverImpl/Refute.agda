@@ -44,8 +44,6 @@ open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Grounding S
 
-open import TypeInference.Constraints.Ground S using (_⨟ᵍ_; ⟦⟧-⨟ᵍ-r)
-
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
   using (Alts; alt; _∷⁺_; RAtom; rc; rv; rm; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; ⟦_⟧ʳˢ⁺;
          nrmᵣ; nrmᵣ-≡)

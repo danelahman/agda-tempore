@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Least solutions for the unknowns local to a rigid scope      --
+-- Principal values for the unknowns local to a rigid scope     --
 --                                                              --
 -- An unknown is local to a scope when it is free in the image  --
 -- of none of the unknowns the scope was entered with; the      --
@@ -15,8 +15,8 @@
 --   * the unit, where it has no bound below and the unit is    --
 --     least, the unit being then the join of no bounds.        --
 -- In every case it occurs in no type of the residual. A value  --
--- may mention the rigid, so the least solution over the rigid  --
--- is one expression, uniform in it.                            --
+-- may mention the rigid, so the value over the rigid is one    --
+-- expression, uniform in it.                                   --
 --                                                              --
 -- Every grade former is monotone, so each step keeps every     --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
@@ -72,7 +72,6 @@ open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.State     S
   using (≐ˢ-refl; ≐ˢ-trans; ⨟-idˡ; ⨟-idʳ; ⨟-assoc; ⨟-congˡ)
 open import TypeInference.SolverImpl.Eliminate S using (joinₑ; joinᵣ)
-open import TypeInference.SolverImpl.Close     S umin?ᵣ umin?ₑ using (updᵉ; updʳ)
 open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ)
 
 ------------------------------------------------------------------------

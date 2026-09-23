@@ -46,8 +46,8 @@
 --   - constraint-based type inference: a mirrored type system with     --
 --     type and grade variables, constraint generation for raw terms,   --
 --     its soundness and completeness, principal typings relative to    --
---     an axiomatised constraint solver, and a grounding theorem        --
---     landing inferred typings back in the original type system        --
+--     an axiomatised constraint solver, and a concrete solver with     --
+--     the simplified report of its answer                              --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
@@ -337,7 +337,6 @@ open import TypeInference.OpenSyntax.Grades
 open import TypeInference.OpenSyntax.Types
 open import TypeInference.OpenSyntax.Contexts
 open import TypeInference.OpenSyntax.ContextsLemmas
-open import TypeInference.OpenSyntax.ClosedContexts
 
 ---- Substitutions between scopes
 
@@ -351,10 +350,9 @@ open import TypeInference.OpenSyntax.Hyps
 
 open import TypeInference.OpenSyntax.Language
 
----- Grounding open judgements into the original type system
+---- Groundings of the open language into the original one
 
 open import TypeInference.OpenSyntax.Grounding
-open import TypeInference.OpenSyntax.GroundingTheorem
 
 ---- Raw terms and erasure
 
@@ -366,7 +364,6 @@ open import TypeInference.Erase
 open import TypeInference.Constraints.Syntax
 open import TypeInference.Constraints.Satisfaction
 open import TypeInference.Constraints.Properties
-open import TypeInference.Constraints.Ground
 
 ---- Constraint generation
 
@@ -377,21 +374,10 @@ open import TypeInference.Generate
 open import TypeInference.Soundness
 open import TypeInference.Completeness
 
----- Axiomatised constraint solvers, principal typings, and inference
+---- Axiomatised constraint solvers and principal typings
 
 open import TypeInference.Solver
 open import TypeInference.Principality
-open import TypeInference.Infer
-
----- Parametricity certificates for grounded derivations
----- (relative to a grade-naturality assumption on clause denotations)
-
-open import TypeInference.ParamGround
-
----- A concrete solver for the generated constraints (sound by construction;
----- heuristic, so the completeness field of the solver interface is not met)
-
-import TypeInference.SolverImpl
 
 ---- Semantic refutation of a grade ordering against the unit, and the
 ---- settling of reported var-rule disjunctions it justifies
@@ -417,15 +403,11 @@ open import TypeInference.Principality.Restricted
 
 import TypeInference.SolverImpl.Expand
 
----- The concrete solver's principality, refutation, and interface instance,
----- the atoms of its residue that no unknown affects decided
+---- The solver's principality and refutation, the atoms of its residue
+---- that no unknown affects decided, the report strengthened to the
+---- variables occurring in it, and the solver itself
 
 import TypeInference.SolverImpl.Principal
 import TypeInference.SolverImpl.Closed
-import TypeInference.SolverImpl.Restricted
 import TypeInference.SolverImpl.Strengthen
-
----- Discharge of the grade-naturality assumption for covariant clauses
-
-open import TypeInference.ParamGround.Covariance
-open import TypeInference.ParamGround.Uniform
+import TypeInference.SolverImpl

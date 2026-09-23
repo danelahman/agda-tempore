@@ -7,8 +7,6 @@
 --                                                                --
 -- A solution is a substitution paired with a residual hypothesis --
 -- set, which is already a context of the mirrored judgement.     --
--- `GroundSolver` is the separate assumption for ground           --
--- semantics, returning the witnessing substitution.              --
 --                                                                --
 -- "Residual constraint" is OutsideIn(X)'s term (Vytiniotis et    --
 -- al., JFP 2011); cf. Pretnar, Inferring Algebraic Effects (LMCS --
@@ -85,18 +83,3 @@ record Solver : Set₁ where
                     ---------------------------------------------------
                     → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
                         (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
-
--- A success carries its own soundness witness, so no `gsolve-sound`
--- field is needed.
-
-record GroundSolver : Set₁ where
-  field
-
-    gsolve : ∀ {Θ} → (C : Constraint Θ)
-           → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] (σ ⊨[ ∅ᴴ ] C))
-
-    gsolve-complete : ∀ {Θ} → (C : Constraint Θ)
-                    → gsolve C ≡ nothing
-                    → (σ : Subst Θ ∅ˢ)
-                    --------------------
-                    → ¬ (σ ⊨[ ∅ᴴ ] C)
