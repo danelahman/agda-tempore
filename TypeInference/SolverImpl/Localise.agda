@@ -100,6 +100,12 @@ anyᶠ-false {nsuc n} f q zero    = proj₁ (∨-false (f zero) _ q)
 anyᶠ-false {nsuc n} f q (suc i) =
   anyᶠ-false (λ i' → f (suc i')) (proj₂ (∨-false (f zero) _ q)) i
 
+anyᶠ-true : ∀ {n} → (f : Fin n → 𝔹) → anyᶠ f ≡ true → Σ[ i ∈ Fin n ] (f i ≡ true)
+anyᶠ-true {nsuc n} f q with f zero in r
+... | true  = zero , r
+... | false with anyᶠ-true (λ i → f (suc i)) q
+...   | i , r' = suc i , r'
+
 -- The elements of `Fin n` at which a test fails, with the failure
 
 misses : ∀ {n} → (f : Fin n → 𝔹) → List (Σ[ i ∈ Fin n ] (f i ≡ false))

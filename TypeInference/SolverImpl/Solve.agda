@@ -15,12 +15,15 @@
 -- Before the scope closes, the unknowns local to it are sent   --
 -- to their least solutions (`Localise`); then atoms free of    --
 -- the rigid are kept, one whose right side alone mentions it   --
--- is kept at the unit rigid where the unit is least, any other --
--- is discharged on the spot, and an outer unknown's image must --
--- stay free of the rigid.                                      --
+-- is kept at the unit rigid where the unit is least, one whose --
+-- left side alone mentions it is kept at the top rigid, any    --
+-- other is discharged on the spot, and an outer unknown's      --
+-- image must stay free of the rigid.                           --
 ------------------------------------------------------------------
 
+open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (zero; suc)
+open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁺ʳ)
@@ -28,6 +31,7 @@ open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
+open import Data.Sum.Base using (inj₁; inj₂)
 open import Data.Unit using (tt)
 
 
@@ -66,6 +70,7 @@ open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐�
 open import TypeInference.SolverImpl.Enum S using (AllOp; []; _∷_; all-lookup)
 
 open import TypeInference.SolverImpl.Core.AList      S
+open import TypeInference.SolverImpl.Core.Occurs     S using (occᵉ-e; occᵉ-r; occʳ-r)
 open import TypeInference.SolverImpl.Core.Decorate   S using (expandSub)
 open import TypeInference.SolverImpl.Core.Eqn        S
 open import TypeInference.SolverImpl.Core.Rigid      S
@@ -77,7 +82,7 @@ open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Close  S umin?ᵣ umin?ₑ using (updᵉ)
 open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
-  using (Localised; localise; lσ; lR; lsnd; updᵉ-below)
+  using (Localised; localise; lσ; lR; lsnd; updᵉ-below; updᵉ-above; freeᵉ; freeʳ)
 
 open OpEnum opEnum
 
@@ -162,15 +167,64 @@ et₀? A with etDec A in e
 ... | just (α ∷ _) = nothing
 ... | nothing      = nothing
 
--- An ordering whose left side is free of the rigid and whose right side
--- mentions it holds for every rigid exactly when it holds at the unit,
--- where the unit is least and the right side monotone in the rigid. The
--- rigid is sent to the unit there, and what is left is kept.
+-- An ordering with the rigid on one side only holds for every rigid
+-- exactly when it holds at the extreme grade on that side, the side
+-- being monotone in the rigid:
+--
+--   ∀j. lhs ≾ rhs(j)  ⟺  lhs ≾ rhs(u)   (`stripᵉ-unit`, the unit least)
+--   ∀j. lhs(j) ≾ rhs  ⟺  lhs(⊤) ≾ rhs   (`stripᵉ-top`)
+--
+-- The rigid is sent to that grade, and what is left is kept. The top is
+-- a grade of every monoid, the unit is least only in some, so only the
+-- first needs `UnitMin`. An unknown local to the scope stands for a
+-- function of the rigid, and is kept at the unit rigid; so the side
+-- that `stripᵉ-top` keeps free of the rigid must mention no local
+-- unknown either, only those the scope was entered with (`O`).
 
-stripʳ : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e)) → (ρ₀ : RExp Φ)
-       → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
-stripʳ nothing   j ρ ρ' ρ₀ e₁ = nothing
-stripʳ (just um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+Outerₑ : ∀ {Θ Φ} → Subst Θ Φ → EExp Φ → Set
+Outerₑ O ε = ∀ {k} → occᵉ-e k ε ≡ true → freeᵉ k O ≡ true
+
+Outerᵣ : ∀ {Θ Φ} → Subst Θ Φ → RExp Φ → Set
+Outerᵣ O ρ = (∀ {k} → occᵉ-r k ρ ≡ true → freeᵉ k O ≡ true)
+           × (∀ {k} → occʳ-r k ρ ≡ true → freeʳ k O ≡ true)
+
+∨-elim : ∀ {P : Set} {b b' : 𝔹} → (b ≡ true → P) → (b' ≡ true → P) → b ∨ b' ≡ true → P
+∨-elim {b = b} {b'} f g q with ∨-true b b' q
+... | inj₁ r = f r
+... | inj₂ r = g r
+
+outerₑ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ε : EExp Φ) → Maybe (Outerₑ O ε)
+outerₑ? O (evar i) with freeᵉ i O in q
+... | true  = just (λ {k} r → subst (λ x → freeᵉ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
+... | false = nothing
+outerₑ? O (econst c) = just (λ ())
+outerₑ? O (ε ·̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
+... | just f | just g = just (∨-elim f g)
+... | _      | _      = nothing
+outerₑ? O (ε ⊔̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
+... | just f | just g = just (∨-elim f g)
+... | _      | _      = nothing
+
+outerᵣ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ρ : RExp Φ) → Maybe (Outerᵣ O ρ)
+outerᵣ? O (rvar i) with freeʳ i O in q
+... | true  = just ((λ ()) ,
+                    λ {k} r → subst (λ x → freeʳ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
+... | false = nothing
+outerᵣ? O (rconst c) = just ((λ ()) , (λ ()))
+outerᵣ? O (ρ ·̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
+... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
+... | _             | _             = nothing
+outerᵣ? O (ρ ⊔̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
+... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
+... | _             | _             = nothing
+outerᵣ? O ∣ ε ∣̂ᵉ with outerₑ? O ε
+... | just f  = just (f , (λ ()))
+... | nothing = nothing
+
+stripʳ-unit : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
+            → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
+stripʳ-unit nothing   j ρ ρ' ρ₀ e₁ = nothing
+stripʳ-unit (just um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
 ... | nothing          = nothing
 ... | just (ρ₀' , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
@@ -181,10 +235,10 @@ stripʳ (just um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
                                      (⊩-wkᵉᵣ (k (here refl))))
                              (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ρ'))
 
-stripᵉ : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e)) → (ε₀ : EExp Φ)
-       → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Atomᵉ j ε ε')
-stripᵉ nothing   j ε ε' ε₀ e₁ = nothing
-stripᵉ (just um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+stripᵉ-unit : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
+            → (ε₀ : EExp Φ) → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Atomᵉ j ε ε')
+stripᵉ-unit nothing   j ε ε' ε₀ e₁ = nothing
+stripᵉ-unit (just um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
 ... | nothing          = nothing
 ... | just (ε₀' , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
@@ -195,8 +249,35 @@ stripᵉ (just um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]�
                                      (⊩-wkᵉₑ (k (here refl))))
                              (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ε'))
 
-atomʳ : ∀ {Φ} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e)) → Maybe (Atomʳ j ρ ρ')
-atomʳ j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
+stripʳ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
+           → (ρ₀' : RExp Φ) → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀' → Maybe (Atomʳ j ρ ρ')
+stripʳ-top O j ρ ρ' ρ₀' e₁ with outerᵣ? O ρ' | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ)
+... | just _ | just (ρ₀ , e₂) =
+      just ((ρ₀ , ρ₀') ∷ [] ,
+            λ δ Q k → transᵣ (mono-substᵣ (updᵉ-above j (econst ⊤ₑ) (popˢ j ⨟ˢ (δ ↑ᵉ)) topₑ) ρ)
+                             (subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
+                                     (trans (sym (pop⨟ʳ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ) e₂ δ))
+                                            ([⨟]ʳ ρ (updᵉ j (econst ⊤ₑ)) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                     (sym (pop⨟ʳ j ρ' e₁ δ))
+                                     (⊩-wkᵉᵣ (k (here refl)))))
+... | _      | _                = nothing
+
+stripᵉ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
+           → (ε₀' : EExp Φ) → ε' [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀' → Maybe (Atomᵉ j ε ε')
+stripᵉ-top O j ε ε' ε₀' e₁ with outerₑ? O ε' | strᵉ⁺ j (ε [ updᵉ j (econst ⊤ₑ) ]ᵉ)
+... | just _ | just (ε₀ , e₂) =
+      just ((ε₀ , ε₀') ∷ [] ,
+            λ δ Q k → transₑ (mono-substₑ (updᵉ-above j (econst ⊤ₑ) (popˢ j ⨟ˢ (δ ↑ᵉ)) topₑ) ε)
+                             (subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
+                                     (trans (sym (pop⨟ᵉ j (ε [ updᵉ j (econst ⊤ₑ) ]ᵉ) e₂ δ))
+                                            ([⨟]ᵉ ε (updᵉ j (econst ⊤ₑ)) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                     (sym (pop⨟ᵉ j ε' e₁ δ))
+                                     (⊩-wkᵉₑ (k (here refl)))))
+... | _      | _                = nothing
+
+atomʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
+      → Maybe (Atomʳ j ρ ρ')
+atomʳ O j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ... | just (ρ₀ , e₁) | just (ρ₀' , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ᵣ y)
@@ -204,13 +285,17 @@ atomʳ j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
                              (⊩-wkᵉᵣ (k (here refl))))
 ... | just (ρ₀ , e₁) | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripʳ umin?ₑ j ρ ρ' ρ₀ e₁
-atomʳ j ρ ρ' | nothing | _ with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+...   | nothing = stripʳ-unit umin?ₑ j ρ ρ' ρ₀ e₁
+atomʳ O j ρ ρ' | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
+... | nothing = stripʳ-top O j ρ ρ' ρ₀' e₂
+atomʳ O j ρ ρ' | nothing | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
-atomᵉ : ∀ {Φ} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e)) → Maybe (Atomᵉ j ε ε')
-atomᵉ j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
+atomᵉ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
+      → Maybe (Atomᵉ j ε ε')
+atomᵉ O j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
 ... | just (ε₀ , e₁) | just (ε₀' , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
             λ δ Q k → subst₂ (λ x y → wkᵉ-H Q ⊩ x ≾̂ₑ y)
@@ -218,8 +303,11 @@ atomᵉ j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
                              (⊩-wkᵉₑ (k (here refl))))
 ... | just (ε₀ , e₁) | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripᵉ umin?ₑ j ε ε' ε₀ e₁
-atomᵉ j ε ε' | nothing | _ with decide≾ₑ {Q = ∅ᴴ} ε ε'
+...   | nothing = stripᵉ-unit umin?ₑ j ε ε' ε₀ e₁
+atomᵉ O j ε ε' | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
+... | nothing = stripᵉ-top O j ε ε' ε₀' e₂
+atomᵉ O j ε ε' | nothing | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
@@ -274,15 +362,15 @@ atomᵈ j A ρ | nothing | _ with discᵈ j A ρ
 ... | just f  = just ([] , λ δ Q k → f δ Q)
 ... | nothing = nothing
 
-listʳ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
+listʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
                     → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ʳ ≾̂ᵣ τ' [ δ ]ʳ)
                     → (∀ {ρ ρ'} → (ρ , ρ') ∈ l
                          → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ
                                    ≾̂ᵣ ρ' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ)))
-listʳ j []              = just ([] , λ δ Q k → λ ())
-listʳ j ((ρ , ρ') ∷ l) with atomʳ j ρ ρ' | listʳ j l
+listʳ O j []              = just ([] , λ δ Q k → λ ())
+listʳ O j ((ρ , ρ') ∷ l) with atomʳ O j ρ ρ' | listʳ O j l
 ... | just (a , fa) | just (l₀ , f) =
       just (a ++ l₀ ,
             λ δ Q k → λ { (here refl) → fa δ Q (λ m → k (∈-++⁺ˡ m))
@@ -290,15 +378,15 @@ listʳ j ((ρ , ρ') ∷ l) with atomʳ j ρ ρ' | listʳ j l
 ... | just _        | nothing = nothing
 ... | nothing       | _       = nothing
 
-listᵉ : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (EExp (Φ +e) × EExp (Φ +e)))
+listᵉ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (l : List (EExp (Φ +e) × EExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (EExp Φ × EExp Φ) ]
                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
                     → (∀ {τ τ'} → (τ , τ') ∈ l₀ → Q ⊩ τ [ δ ]ᵉ ≾̂ₑ τ' [ δ ]ᵉ)
                     → (∀ {ε ε'} → (ε , ε') ∈ l
                          → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ
                                    ≾̂ₑ ε' [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵉ)))
-listᵉ j []              = just ([] , λ δ Q k → λ ())
-listᵉ j ((ε , ε') ∷ l) with atomᵉ j ε ε' | listᵉ j l
+listᵉ O j []              = just ([] , λ δ Q k → λ ())
+listᵉ O j ((ε , ε') ∷ l) with atomᵉ O j ε ε' | listᵉ O j l
 ... | just (a , fa) | just (l₀ , f) =
       just (a ++ l₀ ,
             λ δ Q k → λ { (here refl) → fa δ Q (λ m → k (∈-++⁺ˡ m))
@@ -352,11 +440,11 @@ listᵈ j ((A , ρ) ∷ l) with atomᵈ j A ρ | listᵈ j l
 ... | just _        | nothing = nothing
 ... | nothing       | _       = nothing
 
-splitᴿ : ∀ {Φ} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
+splitᴿ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
        → Maybe (Σ[ R₀ ∈ Resid Φ ]
                   (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
                      → Q ⊩ᴿ R₀ [ δ ] → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]))
-splitᴿ j R with listʳ j (rs R) | listᵉ j (es R) | listᵗ j (ts R)
+splitᴿ O j R with listʳ O j (rs R) | listᵉ O j (es R) | listᵗ j (ts R)
               | listˢ j (ss R) | listᵈ j (ds R)
 ... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ls , fs)
     | just (ld , fd) =
@@ -403,7 +491,7 @@ popᵉ s C (scope nt nr nzero)    θ'' R'' rg'' m'' w'' = nothing
 popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
   with evar? (sE (mδ m'') (newᵉ {Ψ s}))
 ... | nothing = nothing
-... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') | splitᴿ j R''
+... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') | splitᴿ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') j R''
 ...   | just (δ₀ , pδ) | just (R₀ , tr) =
         just (st (scope nt nr n) (θ s ⨟ˢ δ₀) (res s [ δ₀ ]ᴿ ∪ᴿ R₀) (transRig δ₀ (rig s)) ,
               mor δ₀ ≐ˢ-refl (λ δ Q h → ⊩ᴿ-subst (∪ᴿ-fst h)) ,

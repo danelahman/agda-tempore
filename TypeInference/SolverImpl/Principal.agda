@@ -76,7 +76,9 @@ open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Solve  S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Close  S umin?ᵣ umin?ₑ using (updᵉ)
 open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
-  using (Localised; localise; lσ; lfix; lcpl; updᵉ-absorb)
+  using (Localised; localise; lσ; lfix; lcpl; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true)
+open import TypeInference.SolverImpl.Core.Occurs S
+  using (occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c; occʳ-r; occʳ-v; occʳ-c)
 
 open OpEnum opEnum
 
@@ -117,54 +119,254 @@ wk-,ᵉ δ ε = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
                    (λ i → wk-,ᵉ-r σ ε (sR δ i))
                    (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
--- `κᵉ` sends the newest effect-grade variable to the unit, fixing the
--- rest; being a substitution, entailment survives it.
+-- `κ⟨ b ⟩` sends the newest effect-grade variable to `b`, fixing the
+-- rest; being a substitution, entailment survives it. The eigenvariable
+-- is sent to the unit (`κᵉ`), and to the top (`κ⊤`) where an ordering
+-- is kept at the top rigid.
+
+κ⟨_⟩ : ∀ {Ψ} → EExp Ψ → Subst (Ψ +e) Ψ
+κ⟨ b ⟩ = sub tvar rvar (λ { zero → b ; (suc i) → evar i })
 
 κᵉ : ∀ {Ψ} → Subst (Ψ +e) Ψ
-κᵉ = sub tvar rvar (λ { zero → ûₑ ; (suc i) → evar i })
+κᵉ = κ⟨ ûₑ ⟩
 
-wk-κᵉ : ∀ {Ψ} → (wkˢᵉ {Ψ} ⨟ˢ κᵉ) ≐ˢ idˢ
-wk-κᵉ = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
+κ⊤ : ∀ {Ψ} → Subst (Ψ +e) Ψ
+κ⊤ = κ⟨ econst ⊤ₑ ⟩
 
-κᵉ-wkᵛ : ∀ {Ψ} → (A : OVType Ψ) → wkᵉ-v A [ κᵉ ]ᵛ ≡ A
-κᵉ-wkᵛ A = trans (cong (_[ κᵉ ]ᵛ) (sym (wkˢᵉ-v A)))
-                 (trans ([⨟]ᵛ A wkˢᵉ κᵉ) (trans ([≐]ᵛ wk-κᵉ A) ([id]ᵛ A)))
+wk-κ : ∀ {Ψ} → (b : EExp Ψ) → (wkˢᵉ {Ψ} ⨟ˢ κ⟨ b ⟩) ≐ˢ idˢ
+wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 
-κᵉ-wkʳ : ∀ {Ψ} → (ρ : RExp Ψ) → wkᵉ-r ρ [ κᵉ ]ʳ ≡ ρ
-κᵉ-wkʳ ρ = trans (cong (_[ κᵉ ]ʳ) (sym (wkˢᵉ-r ρ)))
-                 (trans ([⨟]ʳ ρ wkˢᵉ κᵉ) (trans ([≐]ʳ wk-κᵉ ρ) ([id]ʳ ρ)))
+κ-wkᵛ : ∀ {Ψ} → (b : EExp Ψ) → (A : OVType Ψ) → A [ wkˢᵉ ]ᵛ [ κ⟨ b ⟩ ]ᵛ ≡ A
+κ-wkᵛ b A = trans ([⨟]ᵛ A wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵛ (wk-κ b) A) ([id]ᵛ A))
 
-κᵉ-wkᵉ : ∀ {Ψ} → (ε : EExp Ψ) → wkᵉ-e ε [ κᵉ ]ᵉ ≡ ε
-κᵉ-wkᵉ ε = trans (cong (_[ κᵉ ]ᵉ) (sym (wkˢᵉ-e ε)))
-                 (trans ([⨟]ᵉ ε wkˢᵉ κᵉ) (trans ([≐]ᵉ wk-κᵉ ε) ([id]ᵉ ε)))
+κ-wkʳ : ∀ {Ψ} → (b : EExp Ψ) → (ρ : RExp Ψ) → ρ [ wkˢᵉ ]ʳ [ κ⟨ b ⟩ ]ʳ ≡ ρ
+κ-wkʳ b ρ = trans ([⨟]ʳ ρ wkˢᵉ κ⟨ b ⟩) (trans ([≐]ʳ (wk-κ b) ρ) ([id]ʳ ρ))
+
+κ-wkᵉ : ∀ {Ψ} → (b : EExp Ψ) → (ε : EExp Ψ) → ε [ wkˢᵉ ]ᵉ [ κ⟨ b ⟩ ]ᵉ ≡ ε
+κ-wkᵉ b ε = trans ([⨟]ᵉ ε wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵉ (wk-κ b) ε) ([id]ᵉ ε))
 
 -- Every weakened hypothesis is entailed back by the original set
 
-⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
-⊩ᴴ-κᵉ {Ψ} {Q} = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj'
+⊩ᴴ-κ : ∀ {Ψ} {Q : Hyps Ψ} → (b : EExp Ψ) → Q ⊩ᴴ (wkᵉ-H Q) [ κ⟨ b ⟩ ]
+⊩ᴴ-κ {Ψ} {Q} b = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj'
   where
-    ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q ⊩ᴱ sTy κᵉ α
+    ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q ⊩ᴱ sTy κ⟨ b ⟩ α
     ets' m with ∈-map⁻ (wkᵉ-tv Ψ) m
     ... | α₀ , m₀ , refl = et-hyp m₀
 
-    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q ∣ sTy κᵉ α <:̂ᵛ sTy κᵉ β
+    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q ∣ sTy κ⟨ b ⟩ α <:̂ᵛ sTy κ⟨ b ⟩ β
     subᵥ' m with ∈-map⁻ (mapᵖ (wkᵉ-tv Ψ)) m
     ... | (α₀ , β₀) , m₀ , refl = tvarₛ (hypᵗᵛ m₀)
 
-    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q) → Q ⊩ ρ [ κᵉ ]ʳ ≾̂ᵣ ρ' [ κᵉ ]ʳ
+    wkʳ' : (ρ : RExp Ψ) → ρ ≡ wkᵉ-r ρ [ κ⟨ b ⟩ ]ʳ
+    wkʳ' ρ = sym (trans (cong (_[ κ⟨ b ⟩ ]ʳ) (sym (wkˢᵉ-r ρ))) (κ-wkʳ b ρ))
+
+    wkᵉ' : (ε : EExp Ψ) → ε ≡ wkᵉ-e ε [ κ⟨ b ⟩ ]ᵉ
+    wkᵉ' ε = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵉ) (sym (wkˢᵉ-e ε))) (κ-wkᵉ b ε))
+
+    wkᵛ' : (A : OVType Ψ) → A ≡ wkᵉ-v A [ κ⟨ b ⟩ ]ᵛ
+    wkᵛ' A = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵛ) (sym (wkˢᵉ-v A))) (κ-wkᵛ b A))
+
+    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
+          → Q ⊩ ρ [ κ⟨ b ⟩ ]ʳ ≾̂ᵣ ρ' [ κ⟨ b ⟩ ]ʳ
     ordᵣ' m with ∈-map⁻ (mapᵖ wkᵉ-r) m
     ... | (ρ₀ , ρ₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (sym (κᵉ-wkʳ ρ₀)) (sym (κᵉ-wkʳ ρ₀')) (hypᵣ m₀)
+      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (wkʳ' ρ₀) (wkʳ' ρ₀') (hypᵣ m₀)
 
-    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q) → Q ⊩ ε [ κᵉ ]ᵉ ≾̂ₑ ε' [ κᵉ ]ᵉ
+    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q)
+          → Q ⊩ ε [ κ⟨ b ⟩ ]ᵉ ≾̂ₑ ε' [ κ⟨ b ⟩ ]ᵉ
     ordₑ' m with ∈-map⁻ (mapᵖ wkᵉ-e) m
     ... | (ε₀ , ε₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (κᵉ-wkᵉ ε₀)) (sym (κᵉ-wkᵉ ε₀')) (hypₑ m₀)
+      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (wkᵉ' ε₀) (wkᵉ' ε₀') (hypₑ m₀)
 
-    disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κᵉ ]ᵛ) (ρ [ κᵉ ]ʳ)
+    disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κ⟨ b ⟩ ]ᵛ) (ρ [ κ⟨ b ⟩ ]ʳ)
     disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
     ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK Q) (sym (κᵉ-wkᵛ A₀)) (sym (κᵉ-wkʳ ρ₀)) (hyp-ok m₀)
+      subst₂ (VarOK Q) (wkᵛ' A₀) (wkʳ' ρ₀) (hyp-ok m₀)
+
+⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
+⊩ᴴ-κᵉ = ⊩ᴴ-κ ûₑ
+
+-- The unit is below the top, so sending the eigenvariable there
+-- instead raises every instance
+
+κᵉ≾κ⊤ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ κᵉ ≾ˢ κ⊤
+κᵉ≾κ⊤ = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ { zero → topₑ ; (suc i) → ⊩≾̂ₑ-refl })
+
+-- A substitution is uniform on the unknowns `O` mentions when, at each
+-- of them, its image reads the same with the eigenvariable at the unit
+-- as at the top. The images of an outer scope's unknowns are
+-- weakenings, so it is (`uniform-out`); an unknown local to the scope
+-- may stand for a function of the eigenvariable, and is excluded.
+
+Uniform : ∀ {Θ Φ Ψ} → Subst Θ Φ → Subst Φ (Ψ +e) → Set
+Uniform O X = (∀ {k} → freeᵉ k O ≡ true → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ)
+            × (∀ {k} → freeʳ k O ≡ true → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ)
+
+-- An expression mentioning only such unknowns reads the same too
+
+module _ {Θ Φ Ψ} {O : Subst Θ Φ} {X : Subst Φ (Ψ +e)} (u : Uniform O X) where
+
+  agreeₑ : (ε : EExp Φ) → Outerₑ O ε → ε [ X ⨟ˢ κ⊤ ]ᵉ ≡ ε [ X ⨟ˢ κᵉ ]ᵉ
+  agreeₑ (evar i)   o = proj₁ u (o (dec-true (i ≟ᶠ i) refl))
+  agreeₑ (econst c) o = refl
+  agreeₑ (ε ·̂ₑ ε')  o = cong₂ _·̂ₑ_ (agreeₑ ε (λ q → o (∨-left _ _ q)))
+                                   (agreeₑ ε' (λ q → o (∨-right _ _ q)))
+  agreeₑ (ε ⊔̂ₑ ε')  o = cong₂ _⊔̂ₑ_ (agreeₑ ε (λ q → o (∨-left _ _ q)))
+                                   (agreeₑ ε' (λ q → o (∨-right _ _ q)))
+
+  agreeᵣ : (ρ : RExp Φ) → Outerᵣ O ρ → ρ [ X ⨟ˢ κ⊤ ]ʳ ≡ ρ [ X ⨟ˢ κᵉ ]ʳ
+  agreeᵣ (rvar i)   (oe , or) = proj₂ u (or (dec-true (i ≟ᶠ i) refl))
+  agreeᵣ (rconst c) o         = refl
+  agreeᵣ (ρ ·̂ᵣ ρ')  (oe , or) =
+    cong₂ _·̂ᵣ_ (agreeᵣ ρ  ((λ q → oe (∨-left _ _ q)) , (λ q → or (∨-left _ _ q))))
+               (agreeᵣ ρ' ((λ q → oe (∨-right _ _ q)) , (λ q → or (∨-right _ _ q))))
+  agreeᵣ (ρ ⊔̂ᵣ ρ')  (oe , or) =
+    cong₂ _⊔̂ᵣ_ (agreeᵣ ρ  ((λ q → oe (∨-left _ _ q)) , (λ q → or (∨-left _ _ q))))
+               (agreeᵣ ρ' ((λ q → oe (∨-right _ _ q)) , (λ q → or (∨-right _ _ q))))
+  agreeᵣ ∣ ε ∣̂ᵉ     (oe , or) = cong ∣_∣̂ᵉ (agreeₑ ε oe)
+
+-- Conversely, an image that reads the same does so at every unknown
+-- occurring in it: the formers are injective
+
+·̂ₑ-inj : ∀ {Ψ} {a b c d : EExp Ψ} → a ·̂ₑ b ≡ c ·̂ₑ d → (a ≡ c) × (b ≡ d)
+·̂ₑ-inj refl = refl , refl
+
+⊔̂ₑ-inj : ∀ {Ψ} {a b c d : EExp Ψ} → a ⊔̂ₑ b ≡ c ⊔̂ₑ d → (a ≡ c) × (b ≡ d)
+⊔̂ₑ-inj refl = refl , refl
+
+·̂ᵣ-inj : ∀ {Ψ} {a b c d : RExp Ψ} → a ·̂ᵣ b ≡ c ·̂ᵣ d → (a ≡ c) × (b ≡ d)
+·̂ᵣ-inj refl = refl , refl
+
+⊔̂ᵣ-inj : ∀ {Ψ} {a b c d : RExp Ψ} → a ⊔̂ᵣ b ≡ c ⊔̂ᵣ d → (a ≡ c) × (b ≡ d)
+⊔̂ᵣ-inj refl = refl , refl
+
+∣∣-inj : ∀ {Ψ} {a b : EExp Ψ} → ∣ a ∣̂ᵉ ≡ ∣ b ∣̂ᵉ → a ≡ b
+∣∣-inj refl = refl
+
+|×|-inj : ∀ {Ψ} {A B C D : OVType Ψ} → A |×| B ≡ C |×| D → (A ≡ C) × (B ≡ D)
+|×|-inj refl = refl , refl
+
+⇒-inj : ∀ {Ψ} {A B : OVType Ψ} {C D : OCType Ψ} → A ⇒ C ≡ B ⇒ D → (A ≡ B) × (C ≡ D)
+⇒-inj refl = refl , refl
+
+[]-inj : ∀ {Ψ} {ρ ρ' : RExp Ψ} {A B : OVType Ψ} → [ ρ ] A ≡ [ ρ' ] B → (ρ ≡ ρ') × (A ≡ B)
+[]-inj refl = refl , refl
+
+‼-inj : ∀ {Ψ} {A B : OVType Ψ} {ε ε' : EExp Ψ} → A ‼ ε ≡ B ‼ ε' → (A ≡ B) × (ε ≡ ε')
+‼-inj refl = refl , refl
+
+module _ {Φ Ψ} (X : Subst Φ (Ψ +e)) where
+
+  -- at an effect-grade unknown
+
+  subᵉ-e : ∀ {k} → (x : EExp Φ) → occᵉ-e k x ≡ true
+         → x [ X ]ᵉ [ κ⊤ ]ᵉ ≡ x [ X ]ᵉ [ κᵉ ]ᵉ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
+  subᵉ-e {k} (evar i) r e =
+    subst (λ k' → sE X k' [ κ⊤ ]ᵉ ≡ sE X k' [ κᵉ ]ᵉ) (sym (true-dec (k ≟ᶠ i) r)) e
+  subᵉ-e {k} (a ·̂ₑ b) r e with ∨-true (occᵉ-e k a) (occᵉ-e k b) r
+  ... | inj₁ r' = subᵉ-e a r' (proj₁ (·̂ₑ-inj e))
+  ... | inj₂ r' = subᵉ-e b r' (proj₂ (·̂ₑ-inj e))
+  subᵉ-e {k} (a ⊔̂ₑ b) r e with ∨-true (occᵉ-e k a) (occᵉ-e k b) r
+  ... | inj₁ r' = subᵉ-e a r' (proj₁ (⊔̂ₑ-inj e))
+  ... | inj₂ r' = subᵉ-e b r' (proj₂ (⊔̂ₑ-inj e))
+
+  subᵉ-r : ∀ {k} → (x : RExp Φ) → occᵉ-r k x ≡ true
+         → x [ X ]ʳ [ κ⊤ ]ʳ ≡ x [ X ]ʳ [ κᵉ ]ʳ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
+  subᵉ-r {k} (a ·̂ᵣ b) r e with ∨-true (occᵉ-r k a) (occᵉ-r k b) r
+  ... | inj₁ r' = subᵉ-r a r' (proj₁ (·̂ᵣ-inj e))
+  ... | inj₂ r' = subᵉ-r b r' (proj₂ (·̂ᵣ-inj e))
+  subᵉ-r {k} (a ⊔̂ᵣ b) r e with ∨-true (occᵉ-r k a) (occᵉ-r k b) r
+  ... | inj₁ r' = subᵉ-r a r' (proj₁ (⊔̂ᵣ-inj e))
+  ... | inj₂ r' = subᵉ-r b r' (proj₂ (⊔̂ᵣ-inj e))
+  subᵉ-r {k} ∣ a ∣̂ᵉ r e = subᵉ-e a r (∣∣-inj e)
+
+  subᵉ-v : ∀ {k} → (x : OVType Φ) → occᵉ-v k x ≡ true
+         → x [ X ]ᵛ [ κ⊤ ]ᵛ ≡ x [ X ]ᵛ [ κᵉ ]ᵛ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
+  subᵉ-c : ∀ {k} → (x : OCType Φ) → occᵉ-c k x ≡ true
+         → x [ X ]ᶜ [ κ⊤ ]ᶜ ≡ x [ X ]ᶜ [ κᵉ ]ᶜ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
+
+  subᵉ-v {k} (A |×| B) r e with ∨-true (occᵉ-v k A) (occᵉ-v k B) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (|×|-inj e))
+  ... | inj₂ r' = subᵉ-v B r' (proj₂ (|×|-inj e))
+  subᵉ-v {k} (A ⇒ C) r e with ∨-true (occᵉ-v k A) (occᵉ-c k C) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (⇒-inj e))
+  ... | inj₂ r' = subᵉ-c C r' (proj₂ (⇒-inj e))
+  subᵉ-v {k} ([ ρ ] A) r e with ∨-true (occᵉ-r k ρ) (occᵉ-v k A) r
+  ... | inj₁ r' = subᵉ-r ρ r' (proj₁ ([]-inj e))
+  ... | inj₂ r' = subᵉ-v A r' (proj₂ ([]-inj e))
+
+  subᵉ-c {k} (A ‼ ε) r e with ∨-true (occᵉ-v k A) (occᵉ-e k ε) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (‼-inj e))
+  ... | inj₂ r' = subᵉ-e ε r' (proj₂ (‼-inj e))
+
+  -- at a resource-grade unknown
+
+  subʳ-r : ∀ {k} → (x : RExp Φ) → occʳ-r k x ≡ true
+         → x [ X ]ʳ [ κ⊤ ]ʳ ≡ x [ X ]ʳ [ κᵉ ]ʳ → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
+  subʳ-r {k} (rvar i) r e =
+    subst (λ k' → sR X k' [ κ⊤ ]ʳ ≡ sR X k' [ κᵉ ]ʳ) (sym (true-dec (k ≟ᶠ i) r)) e
+  subʳ-r {k} (a ·̂ᵣ b) r e with ∨-true (occʳ-r k a) (occʳ-r k b) r
+  ... | inj₁ r' = subʳ-r a r' (proj₁ (·̂ᵣ-inj e))
+  ... | inj₂ r' = subʳ-r b r' (proj₂ (·̂ᵣ-inj e))
+  subʳ-r {k} (a ⊔̂ᵣ b) r e with ∨-true (occʳ-r k a) (occʳ-r k b) r
+  ... | inj₁ r' = subʳ-r a r' (proj₁ (⊔̂ᵣ-inj e))
+  ... | inj₂ r' = subʳ-r b r' (proj₂ (⊔̂ᵣ-inj e))
+
+  subʳ-v : ∀ {k} → (x : OVType Φ) → occʳ-v k x ≡ true
+         → x [ X ]ᵛ [ κ⊤ ]ᵛ ≡ x [ X ]ᵛ [ κᵉ ]ᵛ → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
+  subʳ-c : ∀ {k} → (x : OCType Φ) → occʳ-c k x ≡ true
+         → x [ X ]ᶜ [ κ⊤ ]ᶜ ≡ x [ X ]ᶜ [ κᵉ ]ᶜ → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
+
+  subʳ-v {k} (A |×| B) r e with ∨-true (occʳ-v k A) (occʳ-v k B) r
+  ... | inj₁ r' = subʳ-v A r' (proj₁ (|×|-inj e))
+  ... | inj₂ r' = subʳ-v B r' (proj₂ (|×|-inj e))
+  subʳ-v {k} (A ⇒ C) r e with ∨-true (occʳ-v k A) (occʳ-c k C) r
+  ... | inj₁ r' = subʳ-v A r' (proj₁ (⇒-inj e))
+  ... | inj₂ r' = subʳ-c C r' (proj₂ (⇒-inj e))
+  subʳ-v {k} ([ ρ ] A) r e with ∨-true (occʳ-r k ρ) (occʳ-v k A) r
+  ... | inj₁ r' = subʳ-r ρ r' (proj₁ ([]-inj e))
+  ... | inj₂ r' = subʳ-v A r' (proj₂ ([]-inj e))
+
+  subʳ-c (A ‼ ε) r e = subʳ-v A r (proj₁ (‼-inj e))
+
+-- The images of the outer unknowns are weakenings
+
+uniform-out : ∀ {Θ Φ Ψ} → (O : Subst Θ Φ) → (X : Subst Φ (Ψ +e)) → (δ₀ : Subst Θ Ψ)
+            → (O ⨟ˢ X) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ) → Uniform O X
+uniform-out {Ψ = Ψ} O X δ₀ tr = ue , ur
+  where
+    flatᵛ : ∀ {x} → (y : OVType Ψ) → x ≡ y [ wkˢᵉ ]ᵛ → x [ κ⊤ ]ᵛ ≡ x [ κᵉ ]ᵛ
+    flatᵛ y e = trans (cong (_[ κ⊤ ]ᵛ) e)
+                 (trans (κ-wkᵛ (econst ⊤ₑ) y)
+                 (sym (trans (cong (_[ κᵉ ]ᵛ) e) (κ-wkᵛ ûₑ y))))
+
+    flatʳ : ∀ {x} → (y : RExp Ψ) → x ≡ y [ wkˢᵉ ]ʳ → x [ κ⊤ ]ʳ ≡ x [ κᵉ ]ʳ
+    flatʳ y e = trans (cong (_[ κ⊤ ]ʳ) e)
+                 (trans (κ-wkʳ (econst ⊤ₑ) y)
+                 (sym (trans (cong (_[ κᵉ ]ʳ) e) (κ-wkʳ ûₑ y))))
+
+    flatᵉ : ∀ {x} → (y : EExp Ψ) → x ≡ y [ wkˢᵉ ]ᵉ → x [ κ⊤ ]ᵉ ≡ x [ κᵉ ]ᵉ
+    flatᵉ y e = trans (cong (_[ κ⊤ ]ᵉ) e)
+                 (trans (κ-wkᵉ (econst ⊤ₑ) y)
+                 (sym (trans (cong (_[ κᵉ ]ᵉ) e) (κ-wkᵉ ûₑ y))))
+
+    ue : ∀ {k} → freeᵉ k O ≡ true → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
+    ue {k} q with ∨-true (anyᶠ (λ α → occᵉ-v k (sTy O α))) _ q
+    ... | inj₁ qt with anyᶠ-true (λ α → occᵉ-v k (sTy O α)) qt
+    ...   | α , r = subᵉ-v X (sTy O α) r (flatᵛ (sTy δ₀ α) (≐ᵗ tr α))
+    ue {k} q | inj₂ q' with ∨-true (anyᶠ (λ i → occᵉ-r k (sR O i))) _ q'
+    ...   | inj₁ qr with anyᶠ-true (λ i → occᵉ-r k (sR O i)) qr
+    ...     | i , r = subᵉ-r X (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
+    ue {k} q | inj₂ q' | inj₂ qe with anyᶠ-true (λ i → occᵉ-e k (sE O i)) qe
+    ...     | i , r = subᵉ-e X (sE O i) r (flatᵉ (sE δ₀ i) (≐ᵉ tr i))
+
+    ur : ∀ {k} → freeʳ k O ≡ true → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
+    ur {k} q with ∨-true (anyᶠ (λ α → occʳ-v k (sTy O α))) _ q
+    ... | inj₁ qt with anyᶠ-true (λ α → occʳ-v k (sTy O α)) qt
+    ...   | α , r = subʳ-v X (sTy O α) r (flatᵛ (sTy δ₀ α) (≐ᵗ tr α))
+    ur {k} q | inj₂ qr with anyᶠ-true (λ i → occʳ-r k (sR O i)) qr
+    ...   | i , r = subʳ-r X (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
 
 -- Both components of a union
 
@@ -431,18 +633,22 @@ bndᵈ {Q = Q} j A ρ {A₀} {ρ₀} q q' γ p =
          (VarOK-subst ⊩ᴴ-κᵉ
            (subst₂ (VarOK (wkᵉ-H Q)) (keyᵛ j A q γ) (keyʳ j ρ q' γ) p))
 
--- A stripped ordering: the inner instance, with the eigenvariable sent
--- to the unit, is the instance of the kept one
+-- A stripped ordering. With the rigid on the right, the inner instance
+-- with the eigenvariable sent to the unit is the instance of the kept
+-- one. With the rigid on the left, it is the inner instance with the
+-- eigenvariable sent to the top that bounds the kept one: from below,
+-- by monotonicity, the unit being below the top; from above, by
+-- equality, the right side mentioning only outer unknowns.
 
-stripʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Maybe UnitMinₑ) → (j : EVar (Φ +e))
+stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Maybe UnitMinₑ) → (j : EVar (Φ +e))
              → (ρ ρ' : RExp (Φ +e)) → (ρ₀ : RExp Φ) → (e₁ : ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀)
-             → ∀ {a} → stripʳ um? j ρ ρ' ρ₀ e₁ ≡ just a
+             → ∀ {a} → stripʳ-unit um? j ρ ρ' ρ₀ e₁ ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
              → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
              → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-stripʳ-princ nothing   j ρ ρ' ρ₀ e₁ () γ hγ p
-stripʳ-princ {Q = Q} (just um) j ρ ρ' ρ₀ e₁ eq γ hγ p
+stripʳ-unit-princ nothing   j ρ ρ' ρ₀ e₁ () γ hγ p
+stripʳ-unit-princ {Q = Q} (just um) j ρ ρ' ρ₀ e₁ eq γ hγ p
   with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
 ... | nothing          = ⊥just eq
 ... | just (ρ₀' , e₂) with eq
@@ -466,15 +672,15 @@ stripʳ-princ {Q = Q} (just um) j ρ ρ' ρ₀ e₁ eq γ hγ p
                   (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ e₁ γ)) ([⨟]ʳ ρ₀ (wkˢᵉ ⨟ˢ γ) κᵉ)) rhs
                   (⊩-substᵣ ⊩ᴴ-κᵉ p)
 
-stripᵉ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Maybe UnitMinₑ) → (j : EVar (Φ +e))
+stripᵉ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Maybe UnitMinₑ) → (j : EVar (Φ +e))
              → (ε ε' : EExp (Φ +e)) → (ε₀ : EExp Φ) → (e₁ : ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀)
-             → ∀ {a} → stripᵉ um? j ε ε' ε₀ e₁ ≡ just a
+             → ∀ {a} → stripᵉ-unit um? j ε ε' ε₀ e₁ ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
              → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
              → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-stripᵉ-princ nothing   j ε ε' ε₀ e₁ () γ hγ p
-stripᵉ-princ {Q = Q} (just um) j ε ε' ε₀ e₁ eq γ hγ p
+stripᵉ-unit-princ nothing   j ε ε' ε₀ e₁ () γ hγ p
+stripᵉ-unit-princ {Q = Q} (just um) j ε ε' ε₀ e₁ eq γ hγ p
   with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
 ... | nothing          = ⊥just eq
 ... | just (ε₀' , e₂) with eq
@@ -498,43 +704,149 @@ stripᵉ-princ {Q = Q} (just um) j ε ε' ε₀ e₁ eq γ hγ p
                   (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j ε e₁ γ)) ([⨟]ᵉ ε₀ (wkˢᵉ ⨟ˢ γ) κᵉ)) rhs
                   (⊩-substₑ ⊩ᴴ-κᵉ p)
 
-atomʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
-            → ∀ {a} → atomʳ j ρ ρ' ≡ just a
+stripʳ-top-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+                 → (ρ ρ' : RExp (Φ +e)) → (ρ₀' : RExp Φ) → (e₁ : ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀')
+                 → ∀ {a} → stripʳ-top O j ρ ρ' ρ₀' e₁ ≡ just a
+                 → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+                 → Uniform O (popˢ j ⨟ˢ γ)
+                 → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
+                 → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
+                 → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
+stripʳ-top-princ {Φ = Φ} {Φ'} {Q} O j ρ ρ' ρ₀' e₁ eq γ hγ u p
+  with outerᵣ? O ρ' | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ)
+... | just o  | just (ρ₀ , e₂) with eq
+...   | refl = λ { (here refl) → goal }
+  where
+    X = popˢ j ⨟ˢ γ
+    W = wkˢᵉ ⨟ˢ γ
+    ρ⊤ = ρ [ updᵉ j (econst ⊤ₑ) ]ʳ
+
+    top : sE (X ⨟ˢ κ⊤) j ≡ econst ⊤ₑ [ X ⨟ˢ κ⊤ ]ᵉ
+    top = cong (_[ κ⊤ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+
+    at⊤ : ρ⊤ [ X ]ʳ [ κ⊤ ]ʳ ≡ ρ [ X ]ʳ [ κ⊤ ]ʳ
+    at⊤ = trans ([⨟]ʳ ρ⊤ X κ⊤)
+          (trans ([⨟]ʳ ρ (updᵉ j (econst ⊤ₑ)) (X ⨟ˢ κ⊤))
+          (trans ([≐]ʳ (updᵉ-absorb j (econst ⊤ₑ) (X ⨟ˢ κ⊤) top) ρ)
+                 (sym ([⨟]ʳ ρ X κ⊤))))
+
+    lhs : Q ⊩ ρ₀ [ W ⨟ˢ κᵉ ]ʳ ≾̂ᵣ ρ [ X ]ʳ [ κ⊤ ]ʳ
+    lhs = subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y)
+                 (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ⊤ e₂ γ)) ([⨟]ʳ ρ₀ W κᵉ)) at⊤
+                 (mono-substᵣ κᵉ≾κ⊤ (ρ⊤ [ X ]ʳ))
+
+    rhs : ρ' [ X ]ʳ [ κ⊤ ]ʳ ≡ ρ₀' [ W ⨟ˢ κᵉ ]ʳ
+    rhs = trans ([⨟]ʳ ρ' X κ⊤)
+          (trans (agreeᵣ {Φ = Φ +e} {Ψ = Φ'} {O = O} {X = X} u ρ' o)
+          (trans (sym ([⨟]ʳ ρ' X κᵉ))
+          (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ' e₁ γ)) ([⨟]ʳ ρ₀' W κᵉ))))
+
+    -- the inner instance with the eigenvariable at the top
+    p⊤ : Q ⊩ ρ [ X ]ʳ [ κ⊤ ]ʳ ≾̂ᵣ ρ' [ X ]ʳ [ κ⊤ ]ʳ
+    p⊤ = ⊩-substᵣ {σ = κ⊤} (⊩ᴴ-κ (econst ⊤ₑ)) p
+
+    goal : Q ⊩ ρ₀ [ W ⨟ˢ κᵉ ]ʳ ≾̂ᵣ ρ₀' [ W ⨟ˢ κᵉ ]ʳ
+    goal = transᵣ lhs (subst (λ y → Q ⊩ ρ [ X ]ʳ [ κ⊤ ]ʳ ≾̂ᵣ y) rhs p⊤)
+stripʳ-top-princ O j ρ ρ' ρ₀' e₁ eq γ hγ u p | just _  | nothing = ⊥just eq
+stripʳ-top-princ O j ρ ρ' ρ₀' e₁ eq γ hγ u p | nothing | _       = ⊥just eq
+
+stripᵉ-top-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+                 → (ε ε' : EExp (Φ +e)) → (ε₀' : EExp Φ) → (e₁ : ε' [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀')
+                 → ∀ {a} → stripᵉ-top O j ε ε' ε₀' e₁ ≡ just a
+                 → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+                 → Uniform O (popˢ j ⨟ˢ γ)
+                 → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
+                 → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
+                 → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
+stripᵉ-top-princ {Φ = Φ} {Φ'} {Q} O j ε ε' ε₀' e₁ eq γ hγ u p
+  with outerₑ? O ε' | strᵉ⁺ j (ε [ updᵉ j (econst ⊤ₑ) ]ᵉ)
+... | just o  | just (ε₀ , e₂) with eq
+...   | refl = λ { (here refl) → goal }
+  where
+    X = popˢ j ⨟ˢ γ
+    W = wkˢᵉ ⨟ˢ γ
+    ε⊤ = ε [ updᵉ j (econst ⊤ₑ) ]ᵉ
+
+    top : sE (X ⨟ˢ κ⊤) j ≡ econst ⊤ₑ [ X ⨟ˢ κ⊤ ]ᵉ
+    top = cong (_[ κ⊤ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+
+    at⊤ : ε⊤ [ X ]ᵉ [ κ⊤ ]ᵉ ≡ ε [ X ]ᵉ [ κ⊤ ]ᵉ
+    at⊤ = trans ([⨟]ᵉ ε⊤ X κ⊤)
+          (trans ([⨟]ᵉ ε (updᵉ j (econst ⊤ₑ)) (X ⨟ˢ κ⊤))
+          (trans ([≐]ᵉ (updᵉ-absorb j (econst ⊤ₑ) (X ⨟ˢ κ⊤) top) ε)
+                 (sym ([⨟]ᵉ ε X κ⊤))))
+
+    lhs : Q ⊩ ε₀ [ W ⨟ˢ κᵉ ]ᵉ ≾̂ₑ ε [ X ]ᵉ [ κ⊤ ]ᵉ
+    lhs = subst₂ (λ x y → Q ⊩ x ≾̂ₑ y)
+                 (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j ε⊤ e₂ γ)) ([⨟]ᵉ ε₀ W κᵉ)) at⊤
+                 (mono-substₑ κᵉ≾κ⊤ (ε⊤ [ X ]ᵉ))
+
+    rhs : ε' [ X ]ᵉ [ κ⊤ ]ᵉ ≡ ε₀' [ W ⨟ˢ κᵉ ]ᵉ
+    rhs = trans ([⨟]ᵉ ε' X κ⊤)
+          (trans (agreeₑ {Φ = Φ +e} {Ψ = Φ'} {O = O} {X = X} u ε' o)
+          (trans (sym ([⨟]ᵉ ε' X κᵉ))
+          (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j ε' e₁ γ)) ([⨟]ᵉ ε₀' W κᵉ))))
+
+    -- the inner instance with the eigenvariable at the top
+    p⊤ : Q ⊩ ε [ X ]ᵉ [ κ⊤ ]ᵉ ≾̂ₑ ε' [ X ]ᵉ [ κ⊤ ]ᵉ
+    p⊤ = ⊩-substₑ {σ = κ⊤} (⊩ᴴ-κ (econst ⊤ₑ)) p
+
+    goal : Q ⊩ ε₀ [ W ⨟ˢ κᵉ ]ᵉ ≾̂ₑ ε₀' [ W ⨟ˢ κᵉ ]ᵉ
+    goal = transₑ lhs (subst (λ y → Q ⊩ ε [ X ]ᵉ [ κ⊤ ]ᵉ ≾̂ₑ y) rhs p⊤)
+stripᵉ-top-princ O j ε ε' ε₀' e₁ eq γ hγ u p | just _  | nothing = ⊥just eq
+stripᵉ-top-princ O j ε ε' ε₀' e₁ eq γ hγ u p | nothing | _       = ⊥just eq
+
+atomʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+            → (ρ ρ' : RExp (Φ +e))
+            → ∀ {a} → atomʳ O j ρ ρ' ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+            → Uniform O (popˢ j ⨟ˢ γ)
             → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-atomʳ-princ j ρ ρ' eq γ hγ p with strʳ⁺ j ρ | strʳ⁺ j ρ'
+atomʳ-princ O j ρ ρ' eq γ hγ u p with strʳ⁺ j ρ | strʳ⁺ j ρ'
 ... | just (ρ₀ , e₁) | just (ρ₀' , e₂) with eq
 ...   | refl = λ { (here refl) → bndʳ j ρ ρ' e₁ e₂ γ p }
-atomʳ-princ j ρ ρ' eq γ hγ p | just (ρ₀ , e₁) | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
-atomʳ-princ j ρ ρ' eq γ hγ p | just (ρ₀ , e₁) | nothing | nothing =
-  stripʳ-princ umin?ₑ j ρ ρ' ρ₀ e₁ eq γ hγ p
-atomʳ-princ j ρ ρ' eq γ hγ p | nothing | _ with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing | nothing =
+  stripʳ-unit-princ umin?ₑ j ρ ρ' ρ₀ e₁ eq γ hγ p
+atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
-atomʳ-princ j ρ ρ' eq γ hγ p | nothing | _ | nothing = ⊥just eq
+atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) | nothing =
+  stripʳ-top-princ O j ρ ρ' ρ₀' e₂ eq γ hγ u p
+atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just _  with eq
+...   | refl = λ ()
+atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
 
-atomᵉ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
-            → ∀ {a} → atomᵉ j ε ε' ≡ just a
+atomᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+            → (ε ε' : EExp (Φ +e))
+            → ∀ {a} → atomᵉ O j ε ε' ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+            → Uniform O (popˢ j ⨟ˢ γ)
             → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-atomᵉ-princ j ε ε' eq γ hγ p with strᵉ⁺ j ε | strᵉ⁺ j ε'
+atomᵉ-princ O j ε ε' eq γ hγ u p with strᵉ⁺ j ε | strᵉ⁺ j ε'
 ... | just (ε₀ , e₁) | just (ε₀' , e₂) with eq
 ...   | refl = λ { (here refl) → bndᵉ j ε ε' e₁ e₂ γ p }
-atomᵉ-princ j ε ε' eq γ hγ p | just (ε₀ , e₁) | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
-atomᵉ-princ j ε ε' eq γ hγ p | just (ε₀ , e₁) | nothing | nothing =
-  stripᵉ-princ umin?ₑ j ε ε' ε₀ e₁ eq γ hγ p
-atomᵉ-princ j ε ε' eq γ hγ p | nothing | _ with decide≾ₑ {Q = ∅ᴴ} ε ε'
+atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing | nothing =
+  stripᵉ-unit-princ umin?ₑ j ε ε' ε₀ e₁ eq γ hγ p
+atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just _  with eq
 ...   | refl = λ ()
-atomᵉ-princ j ε ε' eq γ hγ p | nothing | _ | nothing = ⊥just eq
+atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) | nothing =
+  stripᵉ-top-princ O j ε ε' ε₀' e₂ eq γ hγ u p
+atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just _  with eq
+...   | refl = λ ()
+atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | nothing | nothing = ⊥just eq
 
 atomᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
             → ∀ {a} → atomᵗ j A ≡ just a
@@ -580,37 +892,39 @@ atomᵈ-princ j A ρ eq γ p | nothing | _ with discᵈ j A ρ
 ...   | refl = λ ()
 atomᵈ-princ j A ρ eq γ p | nothing | _ | nothing = ⊥just eq
 
-listʳ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
+listʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
             → (l : List (RExp (Φ +e) × RExp (Φ +e)))
-            → ∀ {a} → listʳ j l ≡ just a
+            → ∀ {a} → listʳ O j l ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+            → Uniform O (popˢ j ⨟ˢ γ)
             → (∀ {ρ ρ'} → (ρ , ρ') ∈ l
                  → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ)
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-listʳ-princ j []              refl γ hγ k = λ ()
-listʳ-princ j ((ρ , ρ') ∷ l) eq γ hγ k with atomʳ j ρ ρ' in e₁ | listʳ j l in e₂
+listʳ-princ O j []              refl γ hγ u k = λ ()
+listʳ-princ O j ((ρ , ρ') ∷ l) eq γ hγ u k with atomʳ O j ρ ρ' in e₁ | listʳ O j l in e₂
 ... | just (a , fa) | just (l₁ , f) with eq
-...   | refl = λ m → [ atomʳ-princ j ρ ρ' e₁ γ hγ (k (here refl))
-                     , listʳ-princ j l e₂ γ hγ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
-listʳ-princ j ((ρ , ρ') ∷ l) eq γ hγ k | just _  | nothing = ⊥just eq
-listʳ-princ j ((ρ , ρ') ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
+...   | refl = λ m → [ atomʳ-princ O j ρ ρ' e₁ γ hγ u (k (here refl))
+                     , listʳ-princ O j l e₂ γ hγ u (λ m' → k (there m')) ]′ (∈-++⁻ a m)
+listʳ-princ O j ((ρ , ρ') ∷ l) eq γ hγ u k | just _  | nothing = ⊥just eq
+listʳ-princ O j ((ρ , ρ') ∷ l) eq γ hγ u k | nothing | _       = ⊥just eq
 
-listᵉ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
+listᵉ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
             → (l : List (EExp (Φ +e) × EExp (Φ +e)))
-            → ∀ {a} → listᵉ j l ≡ just a
+            → ∀ {a} → listᵉ O j l ≡ just a
             → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+            → Uniform O (popˢ j ⨟ˢ γ)
             → (∀ {ε ε'} → (ε , ε') ∈ l
                  → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ)
             → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
             → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-listᵉ-princ j []              refl γ hγ k = λ ()
-listᵉ-princ j ((ε , ε') ∷ l) eq γ hγ k with atomᵉ j ε ε' in e₁ | listᵉ j l in e₂
+listᵉ-princ O j []              refl γ hγ u k = λ ()
+listᵉ-princ O j ((ε , ε') ∷ l) eq γ hγ u k with atomᵉ O j ε ε' in e₁ | listᵉ O j l in e₂
 ... | just (a , fa) | just (l₁ , f) with eq
-...   | refl = λ m → [ atomᵉ-princ j ε ε' e₁ γ hγ (k (here refl))
-                     , listᵉ-princ j l e₂ γ hγ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
-listᵉ-princ j ((ε , ε') ∷ l) eq γ hγ k | just _  | nothing = ⊥just eq
-listᵉ-princ j ((ε , ε') ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
+...   | refl = λ m → [ atomᵉ-princ O j ε ε' e₁ γ hγ u (k (here refl))
+                     , listᵉ-princ O j l e₂ γ hγ u (λ m' → k (there m')) ]′ (∈-++⁻ a m)
+listᵉ-princ O j ((ε , ε') ∷ l) eq γ hγ u k | just _  | nothing = ⊥just eq
+listᵉ-princ O j ((ε , ε') ∷ l) eq γ hγ u k | nothing | _       = ⊥just eq
 
 listᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
             → (l : List (OVType (Φ +e)))
@@ -658,26 +972,28 @@ listᵈ-princ j ((A , ρ) ∷ l) eq γ k with atomᵈ j A ρ in e₁ | listᵈ j
 listᵈ-princ j ((A , ρ) ∷ l) eq γ k | just _  | nothing = ⊥just eq
 listᵈ-princ j ((A , ρ) ∷ l) eq γ k | nothing | _       = ⊥just eq
 
-splitᴿ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
-             → ∀ {a} → splitᴿ j R ≡ just a
+splitᴿ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
+             → (R : Resid (Φ +e))
+             → ∀ {a} → splitᴿ O j R ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+             → Uniform O (popˢ j ⨟ˢ γ)
              → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ γ ]
              → Q ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
-splitᴿ-princ j R eq γ hγ h
-  with listʳ j (rs R) in e₁ | listᵉ j (es R) in e₂ | listᵗ j (ts R) in e₃
+splitᴿ-princ O j R eq γ hγ u h
+  with listʳ O j (rs R) in e₁ | listᵉ O j (es R) in e₂ | listᵗ j (ts R) in e₃
      | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅
 ... | just (lr , fr) | just (le , fe) | just (lt , ft) | just (ls , fs)
     | just (ld , fd) with eq
-...   | refl = mk⊩ᴿ (listʳ-princ j (rs R) e₁ γ hγ (⊩rs h))
-                    (listᵉ-princ j (es R) e₂ γ hγ (⊩es h))
+...   | refl = mk⊩ᴿ (listʳ-princ O j (rs R) e₁ γ hγ u (⊩rs h))
+                    (listᵉ-princ O j (es R) e₂ γ hγ u (⊩es h))
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
                     (listˢ-princ j (ss R) e₄ γ (⊩ss h))
                     (listᵈ-princ j (ds R) e₅ γ (⊩ds h))
-splitᴿ-princ j R eq γ hγ h | just _ | just _ | just _  | just _  | nothing = ⊥just eq
-splitᴿ-princ j R eq γ hγ h | just _ | just _ | just _  | nothing | _       = ⊥just eq
-splitᴿ-princ j R eq γ hγ h | just _ | just _ | nothing | _       | _       = ⊥just eq
-splitᴿ-princ j R eq γ hγ h | just _ | nothing | _      | _       | _       = ⊥just eq
-splitᴿ-princ j R eq γ hγ h | nothing | _      | _      | _       | _       = ⊥just eq
+splitᴿ-princ O j R eq γ hγ u h | just _ | just _ | just _  | just _  | nothing = ⊥just eq
+splitᴿ-princ O j R eq γ hγ u h | just _ | just _ | just _  | nothing | _       = ⊥just eq
+splitᴿ-princ O j R eq γ hγ u h | just _ | just _ | nothing | _       | _       = ⊥just eq
+splitᴿ-princ O j R eq γ hγ u h | just _ | nothing | _      | _       | _       = ⊥just eq
+splitᴿ-princ O j R eq γ hγ u h | nothing | _      | _      | _       | _       = ⊥just eq
 
 -- The rigid's image under the inner factorisation is the outer
 -- scope's own eigenvariable, and the outer unknowns' images are those
@@ -710,11 +1026,12 @@ popᵉ-princ s C (scope nt nr nzero) θ'' R'' rg'' m'' w'' ip ()
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat h
   with evar? (sE (mδ m'') (newᵉ {Ψ s}))
 ... | nothing = ⊥just eq
-... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') | splitᴿ j R'' in eqsp
+... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') | splitᴿ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') j R'' in eqsp
 ...   | just (δ₀ₛ , pδ) | just (R₀ , tr) with eq
 ...     | refl = δ , tri ,
                  ∪ᴿ-both (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri) h))
-                         (splitᴿ-princ j R'' eqsp γ (bnd-var (mδ m'') δ'' tri'' eqj)
+                         (splitᴿ-princ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') j R'' eqsp γ
+                           (bnd-var (mδ m'') δ'' tri'' eqj) uni
                            (⊩ᴿ-resp-≐ˢ (≐ˢ-sym popγ) hres'')) ,
                  (λ fx → Fixing-trans δ₀ₛ δ tri fx)
   where
@@ -731,6 +1048,11 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
 
     δ = (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ
 
+    -- the outer unknowns' images are uniform in the eigenvariable
+    uni : Uniform (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (popˢ j ⨟ˢ γ)
+    uni = uniform-out (wkˢᵉ ⨟ˢ mδ m'') (popˢ j ⨟ˢ γ) δ₀
+            (≐ˢ-trans (⨟-congʳ (wkˢᵉ ⨟ˢ mδ m'') popγ) (bnd-out (mδ m'') δ'' δ₀ tri''))
+
     inner = ≐ˢ-trans (≐ˢ-sym (⨟-assoc δ₀ₛ wkˢᵉ γ))
             (≐ˢ-trans (⨟-congˡ (≐ˢ-sym pδ) γ)
             (≐ˢ-trans (⨟-assoc (wkˢᵉ ⨟ˢ mδ m'') (popˢ j) γ)
@@ -741,7 +1063,7 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
     tri = ≐ˢ-trans (≐ˢ-sym (⨟-assoc δ₀ₛ (wkˢᵉ ⨟ˢ γ) κᵉ))
           (≐ˢ-trans (⨟-congˡ inner κᵉ)
           (≐ˢ-trans (⨟-assoc δ₀ wkˢᵉ κᵉ)
-          (≐ˢ-trans (⨟-congʳ δ₀ wk-κᵉ) (⨟-idʳ δ₀))))
+          (≐ˢ-trans (⨟-congʳ δ₀ (wk-κ ûₑ)) (⨟-idʳ δ₀))))
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat h
   | just (j , eqj) | just _ | nothing = ⊥just eq
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat h

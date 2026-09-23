@@ -115,11 +115,12 @@ UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
 UnitMinₑ : Set
 UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
 
--- Convertibility: the monoid laws, the semilattice laws of the join,
--- distributivity of multiplication over the join, the constants'
--- arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a
--- join by an upper bound. Each law holds at `_≡_` on the closed
--- grades, absorption by antisymmetry of the order.
+-- Convertibility: the monoid laws, commutativity and associativity of
+-- the join, distributivity of multiplication over the join, the
+-- constants' arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption
+-- of a join by an upper bound, of which idempotence and the top's
+-- absorption are instances (below). Each law holds at `_≡_` on the
+-- closed grades, absorption by antisymmetry of the order.
 --
 -- Convertibility carries no hypotheses, so the ordering that licenses
 -- absorption is entailed by the empty set; this makes it and entailed
@@ -145,10 +146,8 @@ data _≡̂ᵣ_ {Θ} where
   ≡̂ᵣ-cong-⊔     : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
                 → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
   ≡̂ᵣ-const-⊔    : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
-  ≡̂ᵣ-idem-⊔     : ∀ {ρ} → ρ ⊔̂ᵣ ρ ≡̂ᵣ ρ
   ≡̂ᵣ-comm-⊔     : ∀ {ρ₁ ρ₂} → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ⊔̂ᵣ ρ₁
   ≡̂ᵣ-assoc-⊔    : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)
-  ≡̂ᵣ-⊤-⊔        : ∀ {ρ} → ρ ⊔̂ᵣ rconst ⊤ᵣ ≡̂ᵣ rconst ⊤ᵣ
   ≡̂ᵣ-distribˡ-⊔ : ∀ {ρ ρ₁ ρ₂} → ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≡̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
   ≡̂ᵣ-distribʳ-⊔ : ∀ {ρ ρ₁ ρ₂} → (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≡̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
   ≡̂ᵣ-map-·      : ∀ {ε ε'} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
@@ -170,10 +169,8 @@ data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-cong-⊔     : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
                 → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
   ≡̂ₑ-const-⊔    : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
-  ≡̂ₑ-idem-⊔     : ∀ {ε} → ε ⊔̂ₑ ε ≡̂ₑ ε
   ≡̂ₑ-comm-⊔     : ∀ {ε₁ ε₂} → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₂ ⊔̂ₑ ε₁
   ≡̂ₑ-assoc-⊔    : ∀ {ε₁ ε₂ ε₃} → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
-  ≡̂ₑ-⊤-⊔        : ∀ {ε} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
   ≡̂ₑ-distribˡ-⊔ : ∀ {ε ε₁ ε₂} → ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≡̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
   ≡̂ₑ-distribʳ-⊔ : ∀ {ε ε₁ ε₂} → (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≡̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
   ≡̂ₑ-absorb     : ∀ {ε ε'} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
@@ -218,6 +215,21 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 
 ⊩≾̂ₑ-refl : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ≾̂ₑ ε
 ⊩≾̂ₑ-refl = eqₑ ≡̂ₑ-refl
+
+-- Idempotence of the join and absorption by the top: instances of
+-- absorption, as in `Syntax.Grades`
+
+≡̂ᵣ-idem-⊔ : ∀ {Θ} {ρ : RExp Θ} → ρ ⊔̂ᵣ ρ ≡̂ᵣ ρ
+≡̂ᵣ-idem-⊔ = ≡̂ᵣ-absorb ⊩≾̂ᵣ-refl
+
+≡̂ᵣ-⊤-⊔ : ∀ {Θ} {ρ : RExp Θ} → ρ ⊔̂ᵣ rconst ⊤ᵣ ≡̂ᵣ rconst ⊤ᵣ
+≡̂ᵣ-⊤-⊔ = ≡̂ᵣ-absorb topᵣ
+
+≡̂ₑ-idem-⊔ : ∀ {Θ} {ε : EExp Θ} → ε ⊔̂ₑ ε ≡̂ₑ ε
+≡̂ₑ-idem-⊔ = ≡̂ₑ-absorb ⊩≾̂ₑ-refl
+
+≡̂ₑ-⊤-⊔ : ∀ {Θ} {ε : EExp Θ} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
+≡̂ₑ-⊤-⊔ = ≡̂ₑ-absorb topₑ
 
 -- Mirrors `Eternal` of `Syntax.Types`, plus rules for the eternality
 -- atoms of the hypothesis set and for transfer along an assumed
@@ -411,10 +423,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-·       = ≡̂ᵣ-const-·
 ≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q)  = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔       = ≡̂ᵣ-const-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-idem-⊔        = ≡̂ᵣ-idem-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-comm-⊔        = ≡̂ᵣ-comm-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-assoc-⊔       = ≡̂ᵣ-assoc-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-⊤-⊔           = ≡̂ᵣ-⊤-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-distribˡ-⊔    = ≡̂ᵣ-distribˡ-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-distribʳ-⊔    = ≡̂ᵣ-distribʳ-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-map-·         = ≡̂ᵣ-map-·
@@ -433,10 +443,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ ≡̂ₑ-const-·       = ≡̂ₑ-const-·
 ≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q)  = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
 ≡̂ₑ-subst σ ≡̂ₑ-const-⊔       = ≡̂ₑ-const-⊔
-≡̂ₑ-subst σ ≡̂ₑ-idem-⊔        = ≡̂ₑ-idem-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-comm-⊔        = ≡̂ₑ-comm-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-assoc-⊔       = ≡̂ₑ-assoc-⊔
-≡̂ₑ-subst σ ≡̂ₑ-⊤-⊔           = ≡̂ₑ-⊤-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-distribˡ-⊔    = ≡̂ₑ-distribˡ-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-distribʳ-⊔    = ≡̂ₑ-distribʳ-⊔
 ≡̂ₑ-subst σ (≡̂ₑ-absorb p)    = ≡̂ₑ-absorb (⊩-substₑ (⊩ᴴ-∅ {σ = σ}) p)

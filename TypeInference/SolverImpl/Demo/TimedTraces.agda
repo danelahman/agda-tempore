@@ -619,6 +619,12 @@ ex-local = refl
 ex-strip : solved? (gsolveImpl stripC) ≡ just tt
 ex-strip = refl
 
+ex-top : ∃ᵉ-value topC ≡ just (econst ⊤ₑ)
+ex-top = refl
+
+ex-strip-top : solved? (gsolveImpl stripTopC) ≡ just tt
+ex-strip-top = refl
+
 ex-cyc : solved? (gsolveImpl cycC) ≡ nothing
 ex-cyc = refl
 

@@ -61,6 +61,7 @@ import TypeInference.OpenSyntax.Contexts S as OC
 open import TypeInference.Raw.Syntax S
 
 open import TypeInference.Constraints.Syntax S
+open import TypeInference.Constraints.Satisfaction S using (_⊨[_]_)
 
 open import TypeInference.Infer S using (Inferred)
 open import TypeInference.Principality S using (X̂; t̂; C[_,_])
@@ -90,6 +91,15 @@ typeOf (just I) = just (Inferred.A I , Inferred.ε I)
 solved? : ∀ {Θ} {X : Subst Θ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] X σ) → Maybe ⊤
 solved? nothing  = nothing
 solved? (just _) = just tt
+
+-- `∃ᵉ-value` solves a constraint `∃ᵉ C` and reads off the value the
+-- solution gives its unknown
+
+∃ᵉ-value : Constraint ∅ˢ → Maybe (EExp ∅ˢ)
+∃ᵉ-value (∃ᵉ C) with gsolveImpl (∃ᵉ C)
+... | nothing          = nothing
+... | just (_ , ε , _) = just ε
+∃ᵉ-value _ = nothing
 
 ------------------------------------------------------------------------
 -- Reporting
@@ -253,15 +263,28 @@ okC = ∀ᵉ (∃ᵉ ((Unit ⇒ (Unit ‼ evar zero)) ≐ᵥ (Unit ⇒ (Unit ‼
 -- `localC` bounds an unknown allocated under the rigid by the rigid
 -- alone: its least solution is the rigid itself. `stripC` bounds an
 -- unknown allocated outside by an expression in the rigid, which holds
--- for every rigid exactly when it holds at the least one. `cycC`
--- bounds the local unknown by a product with itself as well, and no
--- finite join reaches its least solution.
+-- for every rigid exactly when it holds at the least one. `topC` and
+-- `stripTopC` bound it below instead, which holds for every rigid
+-- exactly when it holds at the top. `cycC` bounds the local unknown by
+-- a product with itself as well, and no finite join reaches its least
+-- solution.
 
 localC : Constraint ∅ˢ
 localC = ∀ᵉ (∃ᵉ (evar (suc zero) ≾̂ₑᶜ evar zero))
 
 stripC : Constraint ∅ˢ
 stripC = ∃ᵉ (∀ᵉ (evar (suc zero) ≾̂ₑᶜ (econst (op-grade op₀) ·̂ₑ evar zero)))
+
+topC : Constraint ∅ˢ
+topC = ∃ᵉ (∀ᵉ (evar zero ≾̂ₑᶜ evar (suc zero)))
+
+stripTopC : Constraint ∅ˢ
+stripTopC = ∃ᵉ (∀ᵉ ((econst (op-grade op₀) ·̂ₑ evar zero) ≾̂ₑᶜ evar (suc zero)))
+
+-- `topC` holds with its unknown at the top
+
+topC-sat : idˢ ⊨[ ∅ᴴ ] topC
+topC-sat = econst ⊤ₑ , topₑ
 
 cycC : Constraint ∅ˢ
 cycC = ∀ᵉ (∃ᵉ (((econst (op-grade op₀) ·̂ₑ evar zero) ≾̂ₑᶜ evar zero)

@@ -499,6 +499,16 @@ ex-local = refl
 ex-strip : solved? (gsolveImpl stripC) ≡ nothing
 ex-strip = refl
 
+-- An outer unknown bounded below by an expression in the rigid needs
+-- that expression at the top rigid, which every grade has; the unknown
+-- is sent to the top.
+
+ex-top : ∃ᵉ-value topC ≡ just (econst ⊤ₑ)
+ex-top = refl
+
+ex-strip-top : solved? (gsolveImpl stripTopC) ≡ just tt
+ex-strip-top = refl
+
 -- The pipeline, end to end.
 
 ex-pipeline : typeOf (inferImpl [] (return true)) ≡ just (T.Bool , uₑ)
@@ -689,6 +699,21 @@ module Least where
 
   ex-strip-no : G⁰.solved? (G⁰.gsolveImpl G⁰.stripC) ≡ nothing
   ex-strip-no = refl
+
+  -- Bounded below by an expression in the rigid, it is bounded by that
+  -- expression at the top rigid, with the unit least or not.
+
+  ex-top-min : Gᵐ.∃ᵉ-value Gᵐ.topC ≡ just (Grᵈ.econst GIᵈ.⊤ₑ)
+  ex-top-min = refl
+
+  ex-top-no : G⁰.∃ᵉ-value G⁰.topC ≡ just (Grᵈ.econst GIᵈ.⊤ₑ)
+  ex-top-no = refl
+
+  ex-strip-top-min : Gᵐ.solved? (Gᵐ.gsolveImpl Gᵐ.stripTopC) ≡ just tt
+  ex-strip-top-min = refl
+
+  ex-strip-top-no : G⁰.solved? (G⁰.gsolveImpl G⁰.stripTopC) ≡ just tt
+  ex-strip-top-no = refl
 
   -- A local unknown bounded below by a product with itself has a least
   -- solution, the top, that no finite join reaches; it is left alone,
