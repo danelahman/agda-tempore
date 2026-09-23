@@ -14,7 +14,7 @@
 -- At a rigid binder the state is lifted with a fresh residual. --
 -- Before the scope closes, the var-rule disjunctions with a    --
 -- side decided true are dropped and the unknowns local to the  --
--- scope are sent to their least solutions (`Localise`); then   --
+-- scope are sent to their principal values (`Localise`); then  --
 -- atoms free of the rigid are kept, one whose right side alone --
 -- mentions it is kept at the unit rigid where the unit is      --
 -- least, one whose left side alone mentions it is kept at the  --
@@ -506,7 +506,7 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 
 -- Before a rigid scope closes, the var-rule disjunctions with a side
 -- decided true are dropped, and the unknowns local to it are sent to
--- their least solutions: those free in no image of the unknowns the
+-- their principal values: those free in no image of the unknowns the
 -- scope was entered with.
 
 localiseˢ : ∀ {Θ} {s₀ s'' : St Θ} → s₀ ⟶ s'' → Σ[ s₃ ∈ St Θ ] (s'' ⟶ s₃)

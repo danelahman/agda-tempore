@@ -13,14 +13,15 @@
 --   * dually, its one upper bound, where it occurs on a left   --
 --     side only as the whole side;                             --
 --   * the unit, where it has no bound below and the unit is    --
---     least, the unit being then the join of no bounds.        --
+--     least, the unit being then the join of no bounds;        --
+--   * the top, where it occurs on no left side.                --
 -- In every case it occurs in no type of the residual. A value  --
 -- may mention the rigid, so the value over the rigid is one    --
 -- expression, uniform in it.                                   --
 --                                                              --
 -- Every grade former is monotone, so each step keeps every     --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
--- three siblings). A reflexive ordering holds at every         --
+-- five siblings). A reflexive ordering holds at every          --
 -- instance and bounds nothing.                                 --
 ------------------------------------------------------------------
 
@@ -592,6 +593,65 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl τ h =
     es' {ε} {ε'} m =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k U τ ε)) (sym (updʳ-⨟e k U τ ε')) (⊩es h m)
 
+-- Raising an unknown absent from every left side to the top
+
+topᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
+       → (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
+       → (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
+       → Cleanᵉ k R
+       → (τ : Subst Ψ Ψ')
+       → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k (econst ⊤ₑ) ⨟ˢ τ ]
+topᵉ-⊩ {Q = Q} {k} {R} fe fl cl τ h =
+  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  where
+    τ₁ = updᵉ k (econst ⊤ₑ) ⨟ˢ τ
+
+    ge : Q ⊩ τ ≾ˢ τ₁
+    ge = updᵉ-above k (econst ⊤ₑ) τ topₑ
+
+    c = cleanᵉ-⊩ cl (econst ⊤ₑ) τ h
+
+    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
+    es' {ε} {ε'} m with fe m
+    ... | inj₁ refl = ⊩≾̂ₑ-refl
+    ... | inj₂ q    =
+          transₑ (subst (λ x → Q ⊩ x ≾̂ₑ ε' [ τ ]ᵉ) (sym (updᵉ-⨟e k (econst ⊤ₑ) τ ε q)) (⊩es h m))
+                 (mono-substₑ ge ε')
+
+    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
+    rs' {ρ} {ρ'} m with fl m
+    ... | inj₁ refl = ⊩≾̂ᵣ-refl
+    ... | inj₂ q    =
+          transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updᵉ-⨟r k (econst ⊤ₑ) τ ρ q)) (⊩rs h m))
+                 (mono-substᵣ ge ρ')
+
+topʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
+       → (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a)
+       → Cleanʳ k R
+       → (τ : Subst Ψ Ψ')
+       → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k (rconst ⊤ᵣ) ⨟ˢ τ ]
+topʳ-⊩ {Q = Q} {k} {R} fl cl τ h =
+  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  where
+    τ₁ = updʳ k (rconst ⊤ᵣ) ⨟ˢ τ
+
+    ge : Q ⊩ τ ≾ˢ τ₁
+    ge = updʳ-above k (rconst ⊤ᵣ) τ topᵣ
+
+    c = cleanʳ-⊩ cl (rconst ⊤ᵣ) τ h
+
+    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
+    rs' {ρ} {ρ'} m with fl m
+    ... | inj₁ refl = ⊩≾̂ᵣ-refl
+    ... | inj₂ q    =
+          transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ q)) (⊩rs h m))
+                 (mono-substᵣ ge ρ')
+
+    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
+    es' {ε} {ε'} m =
+      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k (rconst ⊤ᵣ) τ ε))
+             (sym (updʳ-⨟e k (rconst ⊤ᵣ) τ ε')) (⊩es h m)
+
 ------------------------------------------------------------------------
 -- One step: the value an unknown is sent to, with the proof that every
 -- instance survives it
@@ -611,13 +671,22 @@ occursᵉ k R = anyL (λ { (ε , _) → occᵉ-e k ε }) (es R) ∨ anyL (λ { (
 occursʳ : ∀ {Ψ} → RVar Ψ → Resid Ψ → 𝔹
 occursʳ k R = anyL (λ { (ρ , _) → occʳ-r k ρ }) (rs R)
 
+-- The top, for an unknown with no bound above that does occur
+
+occursᵉ⁺ : ∀ {Ψ} → EVar Ψ → Resid Ψ → 𝔹
+occursᵉ⁺ k R = anyL (λ { (_ , ε') → occᵉ-e k ε' }) (es R) ∨ anyL (λ { (_ , ρ') → occᵉ-r k ρ' }) (rs R)
+
+occursʳ⁺ : ∀ {Ψ} → RVar Ψ → Resid Ψ → 𝔹
+occursʳ⁺ k R = anyL (λ { (_ , ρ') → occʳ-r k ρ' }) (rs R)
+
 stepᵉ : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
 stepᵉ {Ψ} k R with cleanᵉ? k R
 ... | nothing = nothing
 ... | just cl =
       first (lower (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)))
             (first (raise (Bᵉ.upsOf {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)))
-                   (unit umin?ₑ (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R)))
+            (first (unit umin?ₑ (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R))
+                   (top (Bᵉ.freeLs {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (occursᵉ⁺ k R))))
   where
     lower : Maybe (Bᵉ.Lows {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a)
           → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
@@ -640,13 +709,20 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
       just (ûₑ , λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ τ (minₑ um) (λ ()) h)
     unit _ _ _ _ = nothing
 
+    top : Maybe (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
+        → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a) → 𝔹
+        → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
+    top (just fe) (just fl) true = just (econst ⊤ₑ , λ τ Q h → topᵉ-⊩ fe fl cl τ h)
+    top _         _         _    = nothing
+
 stepʳ : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
 stepʳ {Ψ} k R with cleanʳ? k R
 ... | nothing = nothing
 ... | just cl =
       first (lower (Bʳ.lowsOf {Ψ} k (rs R)))
             (first (raise (Bʳ.upsOf {Ψ} k (rs R)))
-                   (unit umin?ᵣ (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R)))
+            (first (unit umin?ᵣ (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
+                   (top (Bʳ.freeLs {Ψ} k (rs R)) (occursʳ⁺ k R))))
   where
     lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
     lower (just lw@(Bʳ.lows (x ∷ xs) c s)) =
@@ -665,6 +741,11 @@ stepʳ {Ψ} k R with cleanʳ? k R
     unit (just um) (just lw@(Bʳ.lows [] c s)) true =
       just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ τ (minᵣ um) (λ ()) h)
     unit _ _ _ = nothing
+
+    top : Maybe (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a) → 𝔹
+        → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
+    top (just fl) true = just (rconst ⊤ᵣ , λ τ Q h → topʳ-⊩ fl cl τ h)
+    top _         _    = nothing
 
 ------------------------------------------------------------------------
 -- Settled disjunctions: a side decided true against no hypotheses
