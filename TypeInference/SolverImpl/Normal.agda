@@ -10,6 +10,12 @@
 -- left when it is below the unit, and the top on the right       --
 -- stands for any run of atoms on the left.                       --
 --                                                                --
+-- Two atoms are compared by the grade's own order, by identity,  --
+-- and along the atomic hypotheses: those assumed orderings whose --
+-- two sides are single atoms, chained. An effect hypothesis      --
+-- carries over to the images of its atoms. Hypotheses with a     --
+-- product or a join on either side are not used.                 --
+--                                                                --
 -- The sums are met by the universal property of the join:        --
 -- `⊔-lub` reduces the left side to each of its alternatives in   --
 -- turn, and `⊔-ubˡ`/`⊔-ubʳ` pick out an alternative of the right --
@@ -22,9 +28,12 @@
 ------------------------------------------------------------------
 
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Base using (List; []; _∷_; _++_; length; map)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe using (Maybe; just; nothing; _<∣>_)
-open import Data.Product using (_×_; _,_)
+open import Data.Nat.Base using (ℕ; zero; suc)
+open import Data.Product using (Σ-syntax; _×_; _,_)
 
 open import Relation.Nullary using (yes; no)
 
@@ -61,17 +70,143 @@ min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe UnitMinᵣ → Maybe
 min≾ᵣ (just p) = just (minᵣ p)
 min≾ᵣ nothing  = nothing
 
--- A constant is above anything when the top is below it
+------------------------------------------------------------------
+-- Atomic hypotheses
+--
+-- Two atoms are linked when they are equal, or are constants ordered
+-- by the grade's own order. `a` reaches `b` along a chain of edges
+-- when `a` is linked to the first source, each target to the next
+-- source, and the last target to `b`. The search saturates the atoms
+-- reached from `a`, one round per edge.
 
-ceilₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → (c : E) → Maybe (Q ⊩ ε ≾̂ₑ econst c)
-ceilₑ c with ⊤ₑ ≾ₑ? c
-... | yes p = just (transₑ topₑ (atomₑ p))
-... | no _  = nothing
+module Chains {A : Set} (_⊑_ : A → A → Set)
+              (refl⊑  : ∀ {a} → a ⊑ a)
+              (trans⊑ : ∀ {a b c} → a ⊑ b → b ⊑ c → a ⊑ c)
+              (link?  : (a b : A) → Maybe (a ⊑ b))
+              (edges  : List (Σ[ a ∈ A ] Σ[ b ∈ A ] a ⊑ b))
+              where
 
-ceilᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → (c : R) → Maybe (Q ⊩ ρ ≾̂ᵣ rconst c)
-ceilᵣ c with ⊤ᵣ ≾ᵣ? c
-... | yes p = just (transᵣ topᵣ (atomᵣ p))
+  find : ∀ {a} → List (Σ[ c ∈ A ] a ⊑ c) → (b : A) → Maybe (a ⊑ b)
+  find []            b = nothing
+  find ((c , w) ∷ s) b with link? c b
+  ... | just l  = just (trans⊑ w l)
+  ... | nothing = find s b
+
+  grow : ∀ {a} → List (Σ[ c ∈ A ] Σ[ d ∈ A ] c ⊑ d)
+       → List (Σ[ c ∈ A ] a ⊑ c) → List (Σ[ c ∈ A ] a ⊑ c)
+  grow []                 s = s
+  grow ((c , d , p) ∷ es) s with grow es s
+  ... | s' with find s' c | find s' d
+  ...   | just w | nothing = (d , trans⊑ w p) ∷ s'
+  ...   | _      | _       = s'
+
+  sat : ∀ {a} → ℕ → List (Σ[ c ∈ A ] a ⊑ c) → List (Σ[ c ∈ A ] a ⊑ c)
+  sat zero    s = s
+  sat (suc n) s = sat n (grow edges s)
+
+  reach? : (a b : A) → Maybe (a ⊑ b)
+  reach? a = find (sat (length edges) ((a , refl⊑) ∷ []))
+
+-- An atomic hypothesis, as an edge between its two atoms
+
+EEdge : ∀ {Θ} → Hyps Θ → Set
+EEdge {Θ} Q = Σ[ a ∈ EAtom Θ ] Σ[ b ∈ EAtom Θ ] (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+
+REdge : ∀ {Θ} → Hyps Θ → Set
+REdge {Θ} Q = Σ[ a ∈ RAtom Θ ] Σ[ b ∈ RAtom Θ ] (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+
+-- A side that is a single atom
+
+atomᵉ? : ∀ {Θ} → (ε : EExp Θ) → Maybe (Σ[ a ∈ EAtom Θ ] ⟦ a ⟧ᵉᵃ ≡ ε)
+atomᵉ? (evar i)   = just (av i , refl)
+atomᵉ? (econst c) = just (ac c , refl)
+atomᵉ? _          = nothing
+
+atomʳ? : ∀ {Θ} → (ρ : RExp Θ) → Maybe (Σ[ a ∈ RAtom Θ ] ⟦ a ⟧ʳᵃ ≡ ρ)
+atomʳ? (rvar i)       = just (rv i , refl)
+atomʳ? (rconst c)     = just (rc c , refl)
+atomʳ? ∣ evar i ∣̂ᵉ    = just (rm i , refl)
+atomʳ? _              = nothing
+
+-- The atomic hypotheses among a list of assumed orderings
+
+edgesₑ : ∀ {Θ} {Q : Hyps Θ} → (l : List (EExp Θ × EExp Θ))
+       → (∀ {p} → p ∈ l → p ∈ ordₑ Q) → List (EEdge Q)
+edgesₑ []             k = []
+edgesₑ ((ε , ε') ∷ l) k with atomᵉ? ε | atomᵉ? ε'
+... | just (a , refl) | just (b , refl) =
+      (a , b , hypₑ (k (here refl))) ∷ edgesₑ l (λ m → k (there m))
+... | _               | _               = edgesₑ l (λ m → k (there m))
+
+edgesᵣ : ∀ {Θ} {Q : Hyps Θ} → (l : List (RExp Θ × RExp Θ))
+       → (∀ {p} → p ∈ l → p ∈ ordᵣ Q) → List (REdge Q)
+edgesᵣ []             k = []
+edgesᵣ ((ρ , ρ') ∷ l) k with atomʳ? ρ | atomʳ? ρ'
+... | just (a , refl) | just (b , refl) =
+      (a , b , hypᵣ (k (here refl))) ∷ edgesᵣ l (λ m → k (there m))
+... | _               | _               = edgesᵣ l (λ m → k (there m))
+
+-- The image of an effect atom, and of an effect edge by `map-mono`
+
+∣_∣ᵃ : ∀ {Θ} → EAtom Θ → RAtom Θ
+∣ ac c ∣ᵃ = rc (mapᵉ c)
+∣ av i ∣ᵃ = rm i
+
+∣⟦_⟧∣ : ∀ {Θ} → (a : EAtom Θ) → ∣ ⟦ a ⟧ᵉᵃ ∣̂ᵉ ≡̂ᵣ ⟦ ∣ a ∣ᵃ ⟧ʳᵃ
+∣⟦ ac c ⟧∣ = ≡̂ᵣ-map-const
+∣⟦ av i ⟧∣ = ≡̂ᵣ-refl
+
+mapEdge : ∀ {Θ} {Q : Hyps Θ} → EEdge Q → REdge Q
+mapEdge (a , b , p) =
+  ∣ a ∣ᵃ , ∣ b ∣ᵃ , transᵣ (eqᵣ (≡̂ᵣ-sym ∣⟦ a ⟧∣)) (transᵣ (map-mono p) (eqᵣ ∣⟦ b ⟧∣))
+
+-- Linked atoms
+
+linkₑ? : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+linkₑ? (ac c) (ac d) with c ≾ₑ? d
+... | yes p = just (atomₑ p)
 ... | no _  = nothing
+linkₑ? (av i) (av j) with i ≟ᶠ j
+... | yes refl = just ⊩≾̂ₑ-refl
+... | no _     = nothing
+linkₑ? _      _      = nothing
+
+linkᵣ? : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+linkᵣ? (rc c) (rc d) with c ≾ᵣ? d
+... | yes p = just (atomᵣ p)
+... | no _  = nothing
+linkᵣ? (rv i) (rv j) with i ≟ᶠ j
+... | yes refl = just ⊩≾̂ᵣ-refl
+... | no _     = nothing
+linkᵣ? (rm i) (rm j) with i ≟ᶠ j
+... | yes refl = just ⊩≾̂ᵣ-refl
+... | no _     = nothing
+linkᵣ? _      _      = nothing
+
+-- Reachability along the atomic hypotheses; on the resource side
+-- along the resource ones and the images of the effect ones
+
+reachₑ? : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+reachₑ? {Q = Q} =
+  Chains.reach? (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ) ⊩≾̂ₑ-refl transₑ linkₑ?
+                (edgesₑ (ordₑ Q) (λ m → m))
+
+reachᵣ? : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+reachᵣ? {Q = Q} =
+  Chains.reach? (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ) ⊩≾̂ᵣ-refl transᵣ linkᵣ?
+                (edgesᵣ (ordᵣ Q) (λ m → m) ++ map mapEdge (edgesₑ (ordₑ Q) (λ m → m)))
+
+-- Anything is below an atom that the top is linked to or reaches
+
+ceilₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+ceilₑ {Q = Q} b with linkₑ? {Q = Q} (ac ⊤ₑ) b <∣> reachₑ? (ac ⊤ₑ) b
+... | just p  = just (transₑ topₑ p)
+... | nothing = nothing
+
+ceilᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+ceilᵣ {Q = Q} b with linkᵣ? {Q = Q} (rc ⊤ᵣ) b <∣> reachᵣ? (rc ⊤ᵣ) b
+... | just p  = just (transᵣ topᵣ p)
+... | nothing = nothing
 
 ------------------------------------------------------------------
 -- Products
@@ -82,8 +217,8 @@ ceilᵣ c with ⊤ᵣ ≾ᵣ? c
 --   * match the two heads, by monotonicity (`atom≾`);
 --   * pass over the right head, the unit being below it (`unit≾`);
 --   * pass over the left head, it being below the unit (`≾unit`);
---   * absorb the left head into a right head that is the top, the
---     top staying to absorb more, as `a · ⊤ ≾ ⊤`.
+--   * absorb the left head into a right head above the top, which
+--     stays to absorb more, as `a · ⊤ ≾ ⊤`.
 --
 -- The steps are tried in that order, and a failure falls through to
 -- the next, so the search succeeds whenever the two products can be
@@ -95,50 +230,36 @@ ceilᵣ c with ⊤ᵣ ≾ᵣ? c
 --
 -- What it does not find: a constant split across positions, as in
 -- `c · d ≾ c · x · d` with the unit below `x`, where the left side is
--- the single atom `c · d`; and anything that needs a hypothesis. Nor
--- does a sum look past its alternatives: a left alternative must be
--- below one right alternative on its own.
+-- the single atom `c · d`; and anything that needs a hypothesis
+-- other than an atomic one. Nor does a sum look past its
+-- alternatives: a left alternative must be below one right
+-- alternative on its own.
 --
 -- The products are read back with a trailing unit (`⟦_⟧ᵉˢ`), so that
 -- each step is one use of `monoₑ`; `prod≾ₑ` converts at the ends.
 
--- The unit below an atom: a constant by the grade's own order, a
--- variable by unit-minimality
-
-unit≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-unit≾ₑ (ac c) with uₑ ≾ₑ? c
-... | yes p = just (atomₑ p)
-... | no _  = nothing
-unit≾ₑ (av i) = min≾ₑ umin?ₑ
-
--- An atom below the unit: a constant by the grade's own order, a
--- variable when the unit is the top
-
-≾unitₑ : ∀ {Θ} {Q : Hyps Θ} → (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ûₑ)
-≾unitₑ (ac c) with c ≾ₑ? uₑ
-... | yes p = just (atomₑ p)
-... | no _  = nothing
-≾unitₑ (av i) = ceilₑ uₑ
-
--- An atom below an atom: constants by the grade's own order, a
--- variable below itself and below the top
+-- An atom below an atom: linked, below an atom above the top, or
+-- reached along the atomic hypotheses
 
 atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-atom≾ₑ (ac c) (ac d) with c ≾ₑ? d
-... | yes p = just (atomₑ p)
-... | no _  = nothing
-atom≾ₑ (av i) (ac d) = ceilₑ d
-atom≾ₑ (av i) (av j) with i ≟ᶠ j
-... | yes refl = just ⊩≾̂ₑ-refl
-... | no _     = nothing
-atom≾ₑ (ac c) (av j) = nothing
+atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
 
--- An atom absorbed into the top
+-- The unit below an atom: as the constant atom `uₑ`, or by
+-- unit-minimality
+
+unit≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+unit≾ₑ b = atom≾ₑ (ac uₑ) b <∣> min≾ₑ umin?ₑ
+
+-- An atom below the unit, as the constant atom `uₑ`
+
+≾unitₑ : ∀ {Θ} {Q : Hyps Θ} → (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ûₑ)
+≾unitₑ a = atom≾ₑ a (ac uₑ)
+
+-- An atom absorbed into an atom above the top
 
 absorbs≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ)
           → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-absorbs≾ₑ a (ac d) = ceilₑ d
-absorbs≾ₑ a (av j) = nothing
+absorbs≾ₑ a b = ceilₑ b
 
 -- The four steps, each given the comparison of what remains
 
@@ -233,42 +354,24 @@ decide≾ₑ ε ε' with sum≾ₑ (nrmₑ ε) (nrmₑ ε')
 ∣û∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const
                         (subst (λ c → rconst (mapᵉ uₑ) ≡̂ᵣ rconst c) map-uᵉ ≡̂ᵣ-refl))
 
+atom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
+
+minᵐ : ∀ {Θ} {Q : Hyps Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+minᵐ {Q = Q} (rm i) with min≾ₑ {Q = Q} {ε = evar i} umin?ₑ
+... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
+... | nothing = nothing
+minᵐ _ = nothing
+
 unit≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-unit≾ᵣ (rc c) with uᵣ ≾ᵣ? c
-... | yes p = just (atomᵣ p)
-... | no _  = nothing
-unit≾ᵣ (rv i) = min≾ᵣ umin?ᵣ
-unit≾ᵣ {Q = Q} (rm i) with min≾ᵣ {Q = Q} umin?ᵣ | min≾ₑ {Q = Q} {ε = evar i} umin?ₑ
-... | just p | _      = just p
-... | _      | just q = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
-... | _      | _      = nothing
+unit≾ᵣ b = atom≾ᵣ (rc uᵣ) b <∣> min≾ᵣ umin?ᵣ <∣> minᵐ b
 
 ≾unitᵣ : ∀ {Θ} {Q : Hyps Θ} → (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
-≾unitᵣ (rc c) with c ≾ᵣ? uᵣ
-... | yes p = just (atomᵣ p)
-... | no _  = nothing
-≾unitᵣ (rv i) = ceilᵣ uᵣ
-≾unitᵣ (rm i) = ceilᵣ uᵣ
-
-atom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-atom≾ᵣ (rc c) (rc d) with c ≾ᵣ? d
-... | yes p = just (atomᵣ p)
-... | no _  = nothing
-atom≾ᵣ (rv i) (rc d) = ceilᵣ d
-atom≾ᵣ (rm i) (rc d) = ceilᵣ d
-atom≾ᵣ (rv i) (rv j) with i ≟ᶠ j
-... | yes refl = just ⊩≾̂ᵣ-refl
-... | no _     = nothing
-atom≾ᵣ (rm i) (rm j) with i ≟ᶠ j
-... | yes refl = just ⊩≾̂ᵣ-refl
-... | no _     = nothing
-atom≾ᵣ _ _ = nothing
+≾unitᵣ a = atom≾ᵣ a (rc uᵣ)
 
 absorbs≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ)
           → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-absorbs≾ᵣ a (rc d) = ceilᵣ d
-absorbs≾ᵣ a (rv j) = nothing
-absorbs≾ᵣ a (rm j) = nothing
+absorbs≾ᵣ a b = ceilᵣ b
 
 matchᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → (a b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
        → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
