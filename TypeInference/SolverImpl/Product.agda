@@ -17,6 +17,9 @@
 -- `⟦_⟧ʳᵖ`/`⟦_⟧ʳᵖ⁺` drop that trailing unit and collapse a lone    --
 -- alternative, and are what `canonᵣ`/`canonₑ` return.             --
 --                                                                --
+-- `foldSumₑ`/`foldSumᵣ` group and fold a sum without pruning it;  --
+-- `SolverImpl.Normal` compares against the folded right side.    --
+--                                                                --
 -- `Grouping` groups the alternatives by skeleton, lists the       --
 -- groups in skeleton order, folds a group that varies in one slot --
 -- into one alternative whose slot is a join of constants, and,    --
@@ -1117,6 +1120,25 @@ fromProdsᵣ = mapᴬ (λ P → atomsᵣ (proj₂ P))
 fromProdsᵣ-≡ : ∀ {Θ} → (ps : Alts (Gᵣ.Prod {Θ})) → ⟦ fromProdsᵣ ps ⟧ʳˢ⁺ ≡̂ᵣ Gᵣ.⟦ ps ⟧ᵖ⁺
 fromProdsᵣ-≡ (alt P)   = atomsᵣ-≡ (proj₂ P)
 fromProdsᵣ-≡ (P ∷⁺ ps) = ≡̂ᵣ-cong-⊔ (atomsᵣ-≡ (proj₂ P)) (fromProdsᵣ-≡ ps)
+
+-- A sum grouped by skeleton, each group that varies in one slot folded
+-- into one alternative; no alternative is dropped
+
+foldSumₑ : ∀ {Θ} → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
+foldSumₑ s = fromProdsₑ (Gₑ.canonical (toProdsₑ s))
+
+foldSumₑ-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ))) → ⟦ foldSumₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+foldSumₑ-≡ s =
+  ≡̂ₑ-trans (fromProdsₑ-≡ (Gₑ.canonical (toProdsₑ s)))
+  (≡̂ₑ-trans (Gₑ.canonical-≈ (toProdsₑ s)) (toProdsₑ-≡ s))
+
+foldSumᵣ : ∀ {Θ} → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
+foldSumᵣ s = fromProdsᵣ (Gᵣ.canonical (toProdsᵣ s))
+
+foldSumᵣ-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ))) → ⟦ foldSumᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+foldSumᵣ-≡ s =
+  ≡̂ᵣ-trans (fromProdsᵣ-≡ (Gᵣ.canonical (toProdsᵣ s)))
+  (≡̂ᵣ-trans (Gᵣ.canonical-≈ (toProdsᵣ s)) (toProdsᵣ-≡ s))
 
 ------------------------------------------------------------------
 -- The skeletons of an expression's alternatives, read off its

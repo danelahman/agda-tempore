@@ -3,8 +3,9 @@
 --                                                                --
 -- `simplify` first replaces every grade expression of the set by --
 -- its canonical form. It then settles every `disj` entry one of  --
--- whose sides is settled: a met eternality demand drops the      --
--- entry, a refuted one leaves the grade ordering behind, and a   --
+-- whose sides is settled: a met eternality demand or an entailed --
+-- grade ordering drops the entry, a refuted eternality demand    --
+-- leaves the grade ordering behind, in skeleton order, and a     --
 -- refuted grade leaves the eternality atoms behind. It then      --
 -- prunes: a subtyping or eternality atom entailed by the atoms   --
 -- kept before it is dropped, entailment there being reachability --
@@ -237,37 +238,84 @@ ets? Q (α ∷ as) with etᴾ? (subᵥ Q) (ets Q) α | ets? Q as
                                 ; (there m)   → k m })
 ... | _      | _      = nothing
 
+-- Insertion into a list ordered by `_≺_`, after every entry below the
+-- one inserted, and the sort built from it, which only permutes the
+-- list
+
+module _ {A : Set} (_≺_ : A → A → 𝔹) where
+
+  insertᴼ : A → List A → List A
+  insertᴼ p []      = p ∷ []
+  insertᴼ p (q ∷ l) with q ≺ p
+  ... | true  = q ∷ insertᴼ p l
+  ... | false = p ∷ q ∷ l
+
+  sortᴼ : List A → List A
+  sortᴼ []      = []
+  sortᴼ (p ∷ l) = insertᴼ p (sortᴼ l)
+
+  insertᴼ-⊆ : ∀ p l {x} → x ∈ insertᴼ p l → x ∈ p ∷ l
+  insertᴼ-⊆ p []      m = m
+  insertᴼ-⊆ p (q ∷ l) m with q ≺ p
+  insertᴼ-⊆ p (q ∷ l) (here refl) | true = there (here refl)
+  insertᴼ-⊆ p (q ∷ l) (there m)   | true with insertᴼ-⊆ p l m
+  ... | here refl = here refl
+  ... | there m'  = there (there m')
+  insertᴼ-⊆ p (q ∷ l) m           | false = m
+
+  insertᴼ-⊇ : ∀ p l {x} → x ∈ p ∷ l → x ∈ insertᴼ p l
+  insertᴼ-⊇ p []      m = m
+  insertᴼ-⊇ p (q ∷ l) m with q ≺ p
+  insertᴼ-⊇ p (q ∷ l) (here refl)         | true  = there (insertᴼ-⊇ p l (here refl))
+  insertᴼ-⊇ p (q ∷ l) (there (here refl)) | true  = here refl
+  insertᴼ-⊇ p (q ∷ l) (there (there m))   | true  = there (insertᴼ-⊇ p l (there m))
+  insertᴼ-⊇ p (q ∷ l) m                   | false = m
+
+  sortᴼ-⊆ : ∀ l {x} → x ∈ sortᴼ l → x ∈ l
+  sortᴼ-⊆ (p ∷ l) m with insertᴼ-⊆ p (sortᴼ l) m
+  ... | here refl = here refl
+  ... | there m'  = there (sortᴼ-⊆ l m')
+
+  sortᴼ-⊇ : ∀ l {x} → x ∈ l → x ∈ sortᴼ l
+  sortᴼ-⊇ (p ∷ l) (here refl) = insertᴼ-⊇ p (sortᴼ l) (here refl)
+  sortᴼ-⊇ (p ∷ l) (there m)   = insertᴼ-⊇ p (sortᴼ l) (there (sortᴼ-⊇ l m))
+
 -- One disjunction, settled against the deciders and the set itself
 
 settle : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
-settle A ρ Q with etDec A
-... | nothing = hyps (ets Q) (subᵥ Q) ((ρ , ûᵣ) ∷ ordᵣ Q) (ordₑ Q) (disj Q)
-... | just αs with ets? Q αs
-...   | just _  = Q
-...   | nothing with scanᵤ ρ
-...     | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q)
-...     | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
+settle A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
+... | just _  = Q
+... | nothing with etDec A
+...   | nothing = hyps (ets Q) (subᵥ Q) (insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)) (ordₑ Q) (disj Q)
+...   | just αs with ets? Q αs
+...     | just _  = Q
+...     | nothing with scanᵤ ρ
+...       | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q)
+...       | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
 
 settle-⊨ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
          → Disj θ A ρ → θ ⊨ᴴ Q → θ ⊨ᴴ settle A ρ Q
-settle-⊨ {θ = θ} A ρ Q d h with etDec A in e
-... | nothing = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) (disjOK h)
+settle-⊨ {θ = θ} A ρ Q d h with decide≾ᵣ {Q = Q} ρ ûᵣ
+... | just _  = h
+... | nothing with etDec A in e
+...   | nothing = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) (disjOK h)
       where
-        ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ ((ρ , ûᵣ) ∷ ordᵣ Q)
+        ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)
              → ⟦ ρ₀ ⟧ʳ θ ≾ᵣ ⟦ ρ₀' ⟧ʳ θ
-        ordR (here refl) = [ (λ et → ⊥-elim (etDec-¬Et A e et)) , (λ le → le) ]′ d
-        ordR (there m)   = ordROK h m
-... | just αs with ets? Q αs
-...   | just _  = h
-...   | nothing with scanᵤ ρ
-...     | just ref = mk⊨ᴴ et' (subOK h) (ordROK h) (ordEOK h) (disjOK h)
+        ordR m with insertᴼ-⊆ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) m
+        ... | here refl = [ (λ et → ⊥-elim (etDec-¬Et A e et)) , (λ le → le) ]′ d
+        ... | there m'  = ordROK h m'
+...   | just αs with ets? Q αs
+...     | just _  = h
+...     | nothing with scanᵤ ρ
+...       | just ref = mk⊨ᴴ et' (subOK h) (ordROK h) (ordEOK h) (disjOK h)
       where
         etA : Eternal (⟦ A ⟧ᵛ θ)
         etA = [ (λ et → et) , (λ le → ⊥-elim (ref θ le)) ]′ d
 
         et' : ∀ {β} → β ∈ (αs ++ ets Q) → Eternal (gTy θ β)
         et' m = [ etDec-atoms A e etA , etOK h ]′ (∈-++⁻ αs m)
-...     | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) dsj'
+...       | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) dsj'
       where
         dsj' : ∀ {A₀ ρ₀} → (A₀ , ρ₀) ∈ ((A , ρ) ∷ disj Q) → Disj θ A₀ ρ₀
         dsj' (here refl) = d
@@ -275,17 +323,21 @@ settle-⊨ {θ = θ} A ρ Q d h with etDec A in e
 
 settle-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
           → θ ⊨ᴴ settle A ρ Q → (θ ⊨ᴴ Q) × Disj θ A ρ
-settle-⊨⁻ A ρ Q h with etDec A in e
-... | nothing = mk⊨ᴴ (etOK h) (subOK h) (λ m → ordROK h (there m)) (ordEOK h) (disjOK h)
-              , inj₂ (ordROK h (here refl))
-... | just αs with ets? Q αs
-...   | just k  = h , inj₁ (etDec-Et A e (λ m → ground-Et h (k m)))
-...   | nothing with scanᵤ ρ
-...     | just _  = mk⊨ᴴ (λ m → etOK h (∈-++⁺ʳ αs m))
-                         (subOK h) (ordROK h) (ordEOK h) (disjOK h)
-                  , inj₁ (etDec-Et A e (λ m → etOK h (∈-++⁺ˡ m)))
-...     | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ m → disjOK h (there m))
-                  , disjOK h (here refl)
+settle-⊨⁻ A ρ Q h with decide≾ᵣ {Q = Q} ρ ûᵣ
+... | just d  = h , inj₂ (ground-≾ᵣ h d)
+... | nothing with etDec A in e
+...   | nothing =
+        mk⊨ᴴ (etOK h) (subOK h) (λ m → ordROK h (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (there m)))
+             (ordEOK h) (disjOK h)
+        , inj₂ (ordROK h (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (here refl)))
+...   | just αs with ets? Q αs
+...     | just k  = h , inj₁ (etDec-Et A e (λ m → ground-Et h (k m)))
+...     | nothing with scanᵤ ρ
+...       | just _  = mk⊨ᴴ (λ m → etOK h (∈-++⁺ʳ αs m))
+                           (subOK h) (ordROK h) (ordEOK h) (disjOK h)
+                    , inj₁ (etDec-Et A e (λ m → etOK h (∈-++⁺ˡ m)))
+...       | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ m → disjOK h (there m))
+                    , disjOK h (here refl)
 
 settleAll : ∀ {Θ} → List (OVType Θ × RExp Θ) → Hyps Θ → Hyps Θ
 settleAll []             Q₀ = Q₀
@@ -606,48 +658,6 @@ prune-⊨ Q h = Repeats.pruneᴼ-⊨ (pruneᵀ Q) (pruneᵀ-⊨ Q h)
 
 prune-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ prune Q → θ ⊨ᴴ Q
 prune-⊨⁻ Q h = pruneᵀ-⊨⁻ Q (Repeats.pruneᴼ-⊨⁻ (pruneᵀ Q) h)
-
--- The grade orderings listed by the skeletons of their two sides,
--- orderings that tie kept in the order they arrive: an insertion
--- sort, which only permutes the list
-
-module _ {A : Set} (_≺_ : A → A → 𝔹) where
-
-  insertᴼ : A → List A → List A
-  insertᴼ p []      = p ∷ []
-  insertᴼ p (q ∷ l) with q ≺ p
-  ... | true  = q ∷ insertᴼ p l
-  ... | false = p ∷ q ∷ l
-
-  sortᴼ : List A → List A
-  sortᴼ []      = []
-  sortᴼ (p ∷ l) = insertᴼ p (sortᴼ l)
-
-  insertᴼ-⊆ : ∀ p l {x} → x ∈ insertᴼ p l → x ∈ p ∷ l
-  insertᴼ-⊆ p []      m = m
-  insertᴼ-⊆ p (q ∷ l) m with q ≺ p
-  insertᴼ-⊆ p (q ∷ l) (here refl) | true = there (here refl)
-  insertᴼ-⊆ p (q ∷ l) (there m)   | true with insertᴼ-⊆ p l m
-  ... | here refl = here refl
-  ... | there m'  = there (there m')
-  insertᴼ-⊆ p (q ∷ l) m           | false = m
-
-  insertᴼ-⊇ : ∀ p l {x} → x ∈ p ∷ l → x ∈ insertᴼ p l
-  insertᴼ-⊇ p []      m = m
-  insertᴼ-⊇ p (q ∷ l) m with q ≺ p
-  insertᴼ-⊇ p (q ∷ l) (here refl)         | true  = there (insertᴼ-⊇ p l (here refl))
-  insertᴼ-⊇ p (q ∷ l) (there (here refl)) | true  = here refl
-  insertᴼ-⊇ p (q ∷ l) (there (there m))   | true  = there (insertᴼ-⊇ p l (there m))
-  insertᴼ-⊇ p (q ∷ l) m                   | false = m
-
-  sortᴼ-⊆ : ∀ l {x} → x ∈ sortᴼ l → x ∈ l
-  sortᴼ-⊆ (p ∷ l) m with insertᴼ-⊆ p (sortᴼ l) m
-  ... | here refl = here refl
-  ... | there m'  = there (sortᴼ-⊆ l m')
-
-  sortᴼ-⊇ : ∀ l {x} → x ∈ l → x ∈ sortᴼ l
-  sortᴼ-⊇ (p ∷ l) (here refl) = insertᴼ-⊇ p (sortᴼ l) (here refl)
-  sortᴼ-⊇ (p ∷ l) (there m)   = insertᴼ-⊇ p (sortᴼ l) (there (sortᴼ-⊇ l m))
 
 order : ∀ {Θ} → Hyps Θ → Hyps Θ
 order Q = hyps (ets Q) (subᵥ Q) (sortᴼ _≺ᵣ_ (ordᵣ Q)) (sortᴼ _≺ₑ_ (ordₑ Q)) (disj Q)
