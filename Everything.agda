@@ -346,6 +346,10 @@ open import TypeInference.OpenSyntax.Subst
 
 open import TypeInference.OpenSyntax.Hyps
 
+---- Closed instances: values of closed grades, closed decisions
+
+open import TypeInference.OpenSyntax.Instances
+
 ---- The mirrored qualified type system
 
 open import TypeInference.OpenSyntax.Language
