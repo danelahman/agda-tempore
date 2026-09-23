@@ -115,12 +115,14 @@ UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
 UnitMinₑ : Set
 UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
 
--- Convertibility: the monoid laws, commutativity and associativity of
--- the join, distributivity of multiplication over the join, the
--- constants' arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption
--- of a join by an upper bound, of which idempotence and the top's
--- absorption are instances (below). Each law holds at `_≡_` on the
--- closed grades, absorption by antisymmetry of the order.
+-- Convertibility: the monoid laws, commutativity of the join,
+-- distributivity of multiplication over the join, the constants'
+-- arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a join
+-- by an upper bound. Idempotence, the top's absorption, antisymmetry at
+-- the empty hypothesis set and associativity of the join follow from
+-- these (below), as they follow in `Syntax.Grades` from the laws it
+-- states as fields. Each law holds at `_≡_` on the closed grades,
+-- absorption by antisymmetry of the order.
 --
 -- Convertibility carries no hypotheses, so the ordering that licenses
 -- absorption is entailed by the empty set; this makes it and entailed
@@ -147,7 +149,6 @@ data _≡̂ᵣ_ {Θ} where
                 → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
   ≡̂ᵣ-const-⊔    : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
   ≡̂ᵣ-comm-⊔     : ∀ {ρ₁ ρ₂} → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ⊔̂ᵣ ρ₁
-  ≡̂ᵣ-assoc-⊔    : ∀ {ρ₁ ρ₂ ρ₃} → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)
   ≡̂ᵣ-distribˡ-⊔ : ∀ {ρ ρ₁ ρ₂} → ρ ·̂ᵣ (ρ₁ ⊔̂ᵣ ρ₂) ≡̂ᵣ ρ ·̂ᵣ ρ₁ ⊔̂ᵣ ρ ·̂ᵣ ρ₂
   ≡̂ᵣ-distribʳ-⊔ : ∀ {ρ ρ₁ ρ₂} → (ρ₁ ⊔̂ᵣ ρ₂) ·̂ᵣ ρ ≡̂ᵣ ρ₁ ·̂ᵣ ρ ⊔̂ᵣ ρ₂ ·̂ᵣ ρ
   ≡̂ᵣ-map-·      : ∀ {ε ε'} → ∣ ε ·̂ₑ ε' ∣̂ᵉ ≡̂ᵣ ∣ ε ∣̂ᵉ ·̂ᵣ ∣ ε' ∣̂ᵉ
@@ -170,7 +171,6 @@ data _≡̂ₑ_ {Θ} where
                 → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
   ≡̂ₑ-const-⊔    : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
   ≡̂ₑ-comm-⊔     : ∀ {ε₁ ε₂} → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₂ ⊔̂ₑ ε₁
-  ≡̂ₑ-assoc-⊔    : ∀ {ε₁ ε₂ ε₃} → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
   ≡̂ₑ-distribˡ-⊔ : ∀ {ε ε₁ ε₂} → ε ·̂ₑ (ε₁ ⊔̂ₑ ε₂) ≡̂ₑ ε ·̂ₑ ε₁ ⊔̂ₑ ε ·̂ₑ ε₂
   ≡̂ₑ-distribʳ-⊔ : ∀ {ε ε₁ ε₂} → (ε₁ ⊔̂ₑ ε₂) ·̂ₑ ε ≡̂ₑ ε₁ ·̂ₑ ε ⊔̂ₑ ε₂ ·̂ₑ ε
   ≡̂ₑ-absorb     : ∀ {ε ε'} → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ε ⊔̂ₑ ε' ≡̂ₑ ε'
@@ -230,6 +230,34 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 
 ≡̂ₑ-⊤-⊔ : ∀ {Θ} {ε : EExp Θ} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
 ≡̂ₑ-⊤-⊔ = ≡̂ₑ-absorb topₑ
+
+-- Antisymmetry of entailed ordering at the empty hypothesis set: each
+-- side absorbs the other, and the join commutes
+
+≡̂ᵣ-antisym-∅ : ∀ {Θ} {ρ ρ' : RExp Θ}
+             → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → ρ ≡̂ᵣ ρ'
+≡̂ᵣ-antisym-∅ p q =
+  ≡̂ᵣ-trans (≡̂ᵣ-sym (≡̂ᵣ-absorb q)) (≡̂ᵣ-trans ≡̂ᵣ-comm-⊔ (≡̂ᵣ-absorb p))
+
+≡̂ₑ-antisym-∅ : ∀ {Θ} {ε ε' : EExp Θ}
+             → ∅ᴴ ⊩ ε ≾̂ₑ ε' → ∅ᴴ ⊩ ε' ≾̂ₑ ε → ε ≡̂ₑ ε'
+≡̂ₑ-antisym-∅ p q =
+  ≡̂ₑ-trans (≡̂ₑ-sym (≡̂ₑ-absorb q)) (≡̂ₑ-trans ≡̂ₑ-comm-⊔ (≡̂ₑ-absorb p))
+
+-- Associativity of the join: each side is a least upper bound of the
+-- three, so each is below the other
+
+≡̂ᵣ-assoc-⊔ : ∀ {Θ} {ρ₁ ρ₂ ρ₃ : RExp Θ}
+           → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)
+≡̂ᵣ-assoc-⊔ =
+  ≡̂ᵣ-antisym-∅ (⊔-lubᵣ (⊔-lubᵣ ⊔-ubˡᵣ (transᵣ ⊔-ubˡᵣ ⊔-ubʳᵣ)) (transᵣ ⊔-ubʳᵣ ⊔-ubʳᵣ))
+               (⊔-lubᵣ (transᵣ ⊔-ubˡᵣ ⊔-ubˡᵣ) (⊔-lubᵣ (transᵣ ⊔-ubʳᵣ ⊔-ubˡᵣ) ⊔-ubʳᵣ))
+
+≡̂ₑ-assoc-⊔ : ∀ {Θ} {ε₁ ε₂ ε₃ : EExp Θ}
+           → (ε₁ ⊔̂ₑ ε₂) ⊔̂ₑ ε₃ ≡̂ₑ ε₁ ⊔̂ₑ (ε₂ ⊔̂ₑ ε₃)
+≡̂ₑ-assoc-⊔ =
+  ≡̂ₑ-antisym-∅ (⊔-lubₑ (⊔-lubₑ ⊔-ubˡₑ (transₑ ⊔-ubˡₑ ⊔-ubʳₑ)) (transₑ ⊔-ubʳₑ ⊔-ubʳₑ))
+               (⊔-lubₑ (transₑ ⊔-ubˡₑ ⊔-ubˡₑ) (⊔-lubₑ (transₑ ⊔-ubʳₑ ⊔-ubˡₑ) ⊔-ubʳₑ))
 
 -- Mirrors `Eternal` of `Syntax.Types`, plus rules for the eternality
 -- atoms of the hypothesis set and for transfer along an assumed
@@ -424,7 +452,6 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q)  = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔       = ≡̂ᵣ-const-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-comm-⊔        = ≡̂ᵣ-comm-⊔
-≡̂ᵣ-subst σ ≡̂ᵣ-assoc-⊔       = ≡̂ᵣ-assoc-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-distribˡ-⊔    = ≡̂ᵣ-distribˡ-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-distribʳ-⊔    = ≡̂ᵣ-distribʳ-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-map-·         = ≡̂ᵣ-map-·
@@ -444,7 +471,6 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q)  = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
 ≡̂ₑ-subst σ ≡̂ₑ-const-⊔       = ≡̂ₑ-const-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-comm-⊔        = ≡̂ₑ-comm-⊔
-≡̂ₑ-subst σ ≡̂ₑ-assoc-⊔       = ≡̂ₑ-assoc-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-distribˡ-⊔    = ≡̂ₑ-distribˡ-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-distribʳ-⊔    = ≡̂ₑ-distribʳ-⊔
 ≡̂ₑ-subst σ (≡̂ₑ-absorb p)    = ≡̂ₑ-absorb (⊩-substₑ (⊩ᴴ-∅ {σ = σ}) p)
