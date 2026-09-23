@@ -772,6 +772,17 @@ open _⊆ᴴ_ public
 ⊩ᴴ-trans : ∀ {Θ} {Q Q' Q'' : Hyps Θ} → Q'' ⊩ᴴ Q' → Q' ⊩ᴴ Q → Q'' ⊩ᴴ Q
 ⊩ᴴ-trans h' h = ⊩ᴴ-⨟ h' h
 
+-- Entailment along a substitution depends only on its images
+
+⊩ᴴ-≐ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ σ' : Subst Θ Θ'}
+     → σ ≐ˢ σ' → Q' ⊩ᴴ Q [ σ ] → Q' ⊩ᴴ Q [ σ' ]
+⊩ᴴ-≐ {Q' = Q'} p h =
+  mk⊩ᴴ (λ {α} m → subst (Q' ⊩ᴱ_) (≐ᵗ p α) (⊩ets h m))
+       (λ {α} {β} m → subst₂ (λ x y → Q' ∣ x <:̂ᵛ y) (≐ᵗ p α) (≐ᵗ p β) (⊩subᵥ h m))
+       (λ {ρ} {ρ'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([≐]ʳ p ρ) ([≐]ʳ p ρ') (⊩ordᵣ h m))
+       (λ {ε} {ε'} m → subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([≐]ᵉ p ε) ([≐]ᵉ p ε') (⊩ordₑ h m))
+       (λ {A} {ρ} m → subst₂ (VarOK Q') ([≐]ᵛ p A) ([≐]ʳ p ρ) (⊩disj h m))
+
 -- Weakening a hypothesis set is the action of the weakening substitution,
 -- so entailment is stable under it.
 

@@ -18,7 +18,8 @@
 -- along `η`, up to convertibility, and the new hypotheses entail --
 -- the old ones along `η`. Every closed instance of the old       --
 -- hypotheses is one of the new, and there the new type is a      --
--- subtype of the old.                                            --
+-- subtype of the old. The unknowns of a given set are never      --
+-- eliminated, so `η` fixes them.                                 --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --
@@ -62,6 +63,8 @@ open import TypeInference.OpenSyntax.Instances S
   using (_⊨ᴴ_; ⊨ᴴ-refl; ⊨ᴴ-trans; mk⊨ᴴ; VarOK-∅-mono)
 
 open import TypeInference.SolverImpl.Polarity S
+open import TypeInference.SolverImpl.Vars     S
+  using (Vars; vᵗ; vʳ; vᵉ; Fixes; mkFixes; fixes-id; fixes-⨟; fixes-updᵉ; fixes-updʳ; outside)
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occʳ-r)
 
 -- Updating one slot of a finitely indexed family, structurally so that
@@ -133,6 +136,17 @@ _⨾ᴱ_ {C = C} r s =
          (⊩ᴴ-⨟ (inst s) (inst r))
          (⊨ᴴ-trans (keep r) (keep s))
          (λ δ h → <:̂ᶜ-trans (princ s δ (keep r δ h)) (princ r δ h))
+
+-- An elimination fixing a set of unknowns
+
+Elimᶠ : ∀ {Θ} → Vars Θ → OCType Θ → Hyps Θ → Set
+Elimᶠ F C Q = Σ[ r ∈ Elim C Q ] Fixes F (η r)
+
+infixl 5 _⨾ᶠ_
+
+_⨾ᶠ_ : ∀ {Θ} {F : Vars Θ} {C : OCType Θ} {Q : Hyps Θ} → (r : Elimᶠ F C Q)
+     → Elimᶠ F (Ĉ (proj₁ r)) (Q̂ (proj₁ r)) → Elimᶠ F C Q
+(r , f) ⨾ᶠ (s , g) = r ⨾ᴱ s , fixes-⨟ f g
 
 ------------------------------------------------------------------------
 -- The two conclusions of a monotonicity argument, by the side of the
@@ -540,25 +554,31 @@ stepᵉ {Θ} C Q i s cb cq cc =
 
 -- The search: one unknown at a time, the first that qualifies
 
-stepᵉ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → Maybe (Elim C Q)
-stepᵉ? C Q i with splitₑ i (ordₑ Q)
+stepᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
+       → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
+stepᵉ? F C Q i o with splitₑ i (ordₑ Q)
 ... | nothing = nothing
 ... | just s
     with below (polₑ-e i ⁻ (lubₑ s)) in c1
        | below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (rest s) (disj Q)) i) in c2
        | below (polₑ-c i ⁺ C) in c3
-...   | false | false | false = just (stepᵉ C Q i s c1 c2 c3)
+...   | false | false | false = just (stepᵉ C Q i s c1 c2 c3 , fixes-updᵉ i (lubₑ s) o)
 ...   | _     | _     | _     = nothing
 
 fins : (n : ℕ) → List (Fin n)
 fins zero    = []
 fins (suc n) = zero ∷ map suc (fins n)
 
-firstᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (EVar Θ) → Maybe (Elim C Q)
-firstᵉ C Q []       = nothing
-firstᵉ C Q (i ∷ is) with stepᵉ? C Q i
-... | just r  = just r
-... | nothing = firstᵉ C Q is
+-- The first unknown of a list outside a set at which a step applies
+
+first : ∀ {n} {X : Set} → (p : Fin n → 𝔹) → ((i : Fin n) → p i ≡ false → Maybe X)
+      → List (Fin n) → Maybe X
+first p f []       = nothing
+first p f (i ∷ is) with p i in o
+... | true  = first p f is
+... | false with f i o
+...   | just r  = just r
+...   | nothing = first p f is
 
 -- Effect expressions carry no resource unknown, so only the resource
 -- expressions and the box grades of a type move.
@@ -782,21 +802,16 @@ stepʳ {Θ} C Q i s cb cq cc =
                             (λ {ε} {ε'} m → fixedᵉ (updʳ-e i b ε')))
                  keep-disj
 
-stepʳ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → Maybe (Elim C Q)
-stepʳ? C Q i with splitʳ i (ordᵣ Q)
+stepʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
+       → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
+stepʳ? F C Q i o with splitʳ i (ordᵣ Q)
 ... | nothing = nothing
 ... | just s
     with below (polᵣ-r i ⁻ (lubʳ s)) in c1
        | below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restʳ s) (ordₑ Q) (disj Q)) i) in c2
        | below (polᵣ-c i ⁺ C) in c3
-...   | false | false | false = just (stepʳ C Q i s c1 c2 c3)
+...   | false | false | false = just (stepʳ C Q i s c1 c2 c3 , fixes-updʳ i (lubʳ s) o)
 ...   | _     | _     | _     = nothing
-
-firstʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (RVar Θ) → Maybe (Elim C Q)
-firstʳ C Q []       = nothing
-firstʳ C Q (i ∷ is) with stepʳ? C Q i
-... | just r  = just r
-... | nothing = firstʳ C Q is
 
 -- The bound of a type variable is another type variable, so the
 -- substitution acts on the eternality and subtyping atoms too.
@@ -806,6 +821,11 @@ idᶠ β = β
 
 updᵗ : ∀ {Θ} → TyVar Θ → TyVar Θ → Subst Θ Θ
 updᵗ α γ = sub (λ β → tvar (upd α γ idᶠ β)) rvar evar
+
+fixes-updᵗ : ∀ {Θ} {F : Vars Θ} → (α γ : TyVar Θ) → vᵗ F α ≡ false → Fixes F (updᵗ α γ)
+fixes-updᵗ {F = F} α γ o =
+  mkFixes (λ β h → cong tvar (upd-≢ α β γ idᶠ (⌊⌋-false (outside (vᵗ F) o h))))
+          (λ _ _ → refl) (λ _ _ → refl)
 
 fixᵗ-e : ∀ {Θ} → (α γ : TyVar Θ) → (ε : EExp Θ) → ε [ updᵗ α γ ]ᵉ ≡ ε
 fixᵗ-e α γ (evar j)   = refl
@@ -961,21 +981,16 @@ stepᵗ {Θ} C Q α s cb cq cc =
                        (sym (upd-≢ α γ γ₀ idᶠ (⌊⌋-false (cS m₀))))
                        (tvarₛ (hypᵗᵛ (subᵗ s m₀))))
 
-stepᵗ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (α : TyVar Θ) → Maybe (Elim C Q)
-stepᵗ? {Θ} C Q α with splitᵗ α (subᵥ Q)
+stepᵗ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (α : TyVar Θ)
+       → vᵗ F α ≡ false → Maybe (Elimᶠ F C Q)
+stepᵗ? {Θ} F C Q α o with splitᵗ α (subᵥ Q)
 ... | nothing = nothing
 ... | just s
     with below (polₜ-v {Θ} α ⁻ (tvar (bndᵗ s))) in c1
        | below (polₜᴴ (hyps (ets Q) (restᵗ s) (ordᵣ Q) (ordₑ Q) (disj Q)) α) in c2
        | below (polₜ-c α ⁺ C) in c3
-...   | false | false | false = just (stepᵗ C Q α s c1 c2 c3)
+...   | false | false | false = just (stepᵗ C Q α s c1 c2 c3 , fixes-updᵗ α (bndᵗ s) o)
 ...   | _     | _     | _     = nothing
-
-firstᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (TyVar Θ) → Maybe (Elim C Q)
-firstᵗ C Q []       = nothing
-firstᵗ C Q (α ∷ αs) with stepᵗ? C Q α
-... | just r  = just r
-... | nothing = firstᵗ C Q αs
 
 ------------------------------------------------------------------------
 -- Elimination by equality: an unknown the hypotheses equate with an
@@ -1122,56 +1137,47 @@ module _ (ent : Entails) where
   -- The search: the first fit expression facing the unknown that the
   -- test equates with it
 
-  equateᵉ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → Maybe (Elim C Q)
-  equateᵉ? {Θ} C Q i = try (facingₑ i (ordₑ Q))
+  equateᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
+           → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
+  equateᵉ? {Θ} F C Q i o = try (facingₑ i (ordₑ Q))
     where
-      try : List (EExp Θ) → Maybe (Elim C Q)
+      try : List (EExp Θ) → Maybe (Elimᶠ F C Q)
       try [] = nothing
       try (b ∷ bs) with fitₑ i b | entₑ? Q (evar i) b | entₑ? Q b (evar i)
-      ... | true | just p | just q = just (equateᵉ C Q i b (p , q))
+      ... | true | just p | just q = just (equateᵉ C Q i b (p , q) , fixes-updᵉ i b o)
       ... | _    | _      | _      = try bs
 
-  equateʳ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → Maybe (Elim C Q)
-  equateʳ? {Θ} C Q i = try (facingᵣ i (ordᵣ Q))
+  equateʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
+           → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
+  equateʳ? {Θ} F C Q i o = try (facingᵣ i (ordᵣ Q))
     where
-      try : List (RExp Θ) → Maybe (Elim C Q)
+      try : List (RExp Θ) → Maybe (Elimᶠ F C Q)
       try [] = nothing
       try (b ∷ bs) with fitᵣ i b | entᵣ? Q (rvar i) b | entᵣ? Q b (rvar i)
-      ... | true | just p | just q = just (equateʳ C Q i b (p , q))
+      ... | true | just p | just q = just (equateʳ C Q i b (p , q) , fixes-updʳ i b o)
       ... | _    | _      | _      = try bs
 
-  firstᵉ⁼ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (EVar Θ) → Maybe (Elim C Q)
-  firstᵉ⁼ C Q []       = nothing
-  firstᵉ⁼ C Q (i ∷ is) with equateᵉ? C Q i
-  ... | just r  = just r
-  ... | nothing = firstᵉ⁼ C Q is
+  -- A step by equality first, then one against a bound, at an unknown
+  -- outside `F`
 
-  firstʳ⁼ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (RVar Θ) → Maybe (Elim C Q)
-  firstʳ⁼ C Q []       = nothing
-  firstʳ⁼ C Q (i ∷ is) with equateʳ? C Q i
+  anyStep : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
+  anyStep {Θ} F C Q with first (vᵉ F) (equateᵉ? F C Q) (fins (nE Θ))
   ... | just r  = just r
-  ... | nothing = firstʳ⁼ C Q is
-
-  -- A step by equality first, then one against a bound
-
-  anyStep : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elim C Q)
-  anyStep {Θ} C Q with firstᵉ⁼ C Q (fins (nE Θ))
-  ... | just r  = just r
-  ... | nothing with firstʳ⁼ C Q (fins (nR Θ))
+  ... | nothing with first (vʳ F) (equateʳ? F C Q) (fins (nR Θ))
   ...   | just r  = just r
-  ...   | nothing with firstᵉ C Q (fins (nE Θ))
+  ...   | nothing with first (vᵉ F) (stepᵉ? F C Q) (fins (nE Θ))
   ...     | just r  = just r
-  ...     | nothing with firstʳ C Q (fins (nR Θ))
+  ...     | nothing with first (vʳ F) (stepʳ? F C Q) (fins (nR Θ))
   ...       | just r  = just r
-  ...       | nothing = firstᵗ C Q (fins (nTy Θ))
+  ...       | nothing = first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ))
 
-  reduce : ∀ {Θ} → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
-  reduce zero    C Q = idElim C Q
-  reduce (suc n) C Q with anyStep C Q
-  ... | nothing = idElim C Q
-  ... | just r  = r ⨾ᴱ reduce n (Ĉ r) (Q̂ r)
+  reduce : ∀ {Θ} → (F : Vars Θ) → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
+  reduce F zero    C Q = idElim C Q , fixes-id
+  reduce F (suc n) C Q with anyStep F C Q
+  ... | nothing = idElim C Q , fixes-id
+  ... | just r  = r ⨾ᶠ reduce F n (Ĉ (proj₁ r)) (Q̂ (proj₁ r))
 
   -- One round per unknown suffices: a step removes one
 
-  eliminate : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
-  eliminate {Θ} C Q = reduce (nE Θ + nR Θ + nTy Θ) C Q
+  eliminate : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
+  eliminate {Θ} F C Q = reduce F (nE Θ + nR Θ + nTy Θ) C Q

@@ -375,7 +375,7 @@ open import TypeInference.Generate
 open import TypeInference.Soundness
 open import TypeInference.Completeness
 
----- Axiomatised constraint solvers and principal typings
+---- Axiomatised constraint solvers, principal types and principal typings
 
 open import TypeInference.Solver
 open import TypeInference.Principality
@@ -386,9 +386,11 @@ open import TypeInference.Principality
 import TypeInference.SolverImpl.Refute
 import TypeInference.SolverImpl.Simplify
 
----- Polarity-directed elimination of a grade unknown at the reporting
----- boundary, and the product normal form of what is left
+---- Polarity-directed elimination of an unknown at the reporting
+---- boundary, fixing the image of the program's variables, and the
+---- product normal form of what is left
 
+import TypeInference.SolverImpl.Vars
 import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon
@@ -404,7 +406,8 @@ import TypeInference.SolverImpl.Expand
 
 ---- The solver's principality and refutation, the atoms of its residue
 ---- that no unknown affects decided, the report strengthened to the
----- variables occurring in it, and the solver itself
+---- variables occurring in it or in the image of the program's
+---- variables, the solver itself, and inference: a principal typing
 
 import TypeInference.SolverImpl.Principal
 import TypeInference.SolverImpl.Closed

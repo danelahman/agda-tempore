@@ -5,25 +5,21 @@
 -- smaller scope, embedded back in order by a renaming `ι`, and   --
 -- an expression all of whose variables are kept is strengthened  --
 -- along it: renaming the result along `ι` gives the expression   --
--- back on the nose. A closed instance of the smaller scope       --
--- extends along `ι`, by any value on the variables dropped.      --
+-- back on the nose. An instance of the smaller scope extends     --
+-- along `ι`, by closed values on the variables dropped.          --
 --                                                                --
 -- `strengthen` takes the mask of the variables occurring in a    --
--- type or a hypothesis set, and strengthens both along it.       --
+-- type, a hypothesis set, or the image of a substitution, and    --
+-- strengthens the three along it.                                --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (true; false; _∨_; if_then_else_) renaming (Bool to 𝔹)
-open import Data.Empty using (⊥-elim)
+open import Data.Bool.Base using (true; false; if_then_else_) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (Fin; zero; suc)
-open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_)
-
-open import Relation.Nullary using (yes; no)
-open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -42,9 +38,9 @@ open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 
+open import TypeInference.SolverImpl.Vars      S
 open import TypeInference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
-open import TypeInference.SolverImpl.Core.Occurs S
-  using (occᵗ-v; occᵗ-c; occʳ-r; occʳ-v; occʳ-c; occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c)
+open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-v)
 
 ------------------------------------------------------------------------
 -- Thinning by a mask
@@ -121,97 +117,22 @@ ext-emb {suc n} {A} p a g j = go (p zero) g j
     go true  g (suc j) = ext-emb p' a (λ j → g (suc j)) j
     go false g j       = ext-emb p' a g j
 
-------------------------------------------------------------------------
--- Sets of variables, as masks of the three sorts
+-- the embedded variables are kept
 
-record Vars (Θ : Scope) : Set where
-  constructor vars
-  field
-    vᵗ : TyVar Θ → 𝔹
-    vʳ : RVar Θ → 𝔹
-    vᵉ : EVar Θ → 𝔹
+emb-kept : ∀ {n} → (p : Fin n → 𝔹) → (j : Fin (count p)) → p (emb p j) ≡ true
+emb-kept {suc n} p = go (p zero) refl
+  where
+    p' : Fin n → 𝔹
+    p' i = p (suc i)
 
-open Vars public
-
-infixr 6 _∪ᵛ_
-infix  4 _⊆ᵛ_
-
-∅ᵛ : ∀ {Θ} → Vars Θ
-∅ᵛ = vars (λ _ → false) (λ _ → false) (λ _ → false)
-
-_∪ᵛ_ : ∀ {Θ} → Vars Θ → Vars Θ → Vars Θ
-V ∪ᵛ W = vars (λ α → vᵗ V α ∨ vᵗ W α) (λ i → vʳ V i ∨ vʳ W i) (λ i → vᵉ V i ∨ vᵉ W i)
-
-⋃ᵛ : ∀ {Θ} {X : Set} → (X → Vars Θ) → List X → Vars Θ
-⋃ᵛ f []       = ∅ᵛ
-⋃ᵛ f (x ∷ xs) = f x ∪ᵛ ⋃ᵛ f xs
-
-record _⊆ᵛ_ {Θ : Scope} (V W : Vars Θ) : Set where
-  constructor mk⊆ᵛ
-  field
-    ⊆ᵗ : ∀ α → vᵗ V α ≡ true → vᵗ W α ≡ true
-    ⊆ʳ : ∀ i → vʳ V i ≡ true → vʳ W i ≡ true
-    ⊆ᵉ : ∀ i → vᵉ V i ≡ true → vᵉ W i ≡ true
-
-open _⊆ᵛ_ public
-
-∨-inˡ : ∀ {a b} → a ≡ true → a ∨ b ≡ true
-∨-inˡ refl = refl
-
-∨-inʳ : ∀ a {b} → b ≡ true → a ∨ b ≡ true
-∨-inʳ true  _ = refl
-∨-inʳ false h = h
-
-⊆-∪ˡ : ∀ {Θ} (V W : Vars Θ) {M : Vars Θ} → V ∪ᵛ W ⊆ᵛ M → V ⊆ᵛ M
-⊆-∪ˡ V W h = mk⊆ᵛ (λ α o → ⊆ᵗ h α (∨-inˡ o)) (λ i o → ⊆ʳ h i (∨-inˡ o))
-                  (λ i o → ⊆ᵉ h i (∨-inˡ o))
-
-⊆-∪ʳ : ∀ {Θ} (V W : Vars Θ) {M : Vars Θ} → V ∪ᵛ W ⊆ᵛ M → W ⊆ᵛ M
-⊆-∪ʳ V W h = mk⊆ᵛ (λ α o → ⊆ᵗ h α (∨-inʳ (vᵗ V α) o))
-                  (λ i o → ⊆ʳ h i (∨-inʳ (vʳ V i) o))
-                  (λ i o → ⊆ᵉ h i (∨-inʳ (vᵉ V i) o))
-
-⊆-refl : ∀ {Θ} {V : Vars Θ} → V ⊆ᵛ V
-⊆-refl = mk⊆ᵛ (λ _ o → o) (λ _ o → o) (λ _ o → o)
-
-≟-self : ∀ {n} → (i : Fin n) → ⌊ i ≟ᶠ i ⌋ ≡ true
-≟-self i with i ≟ᶠ i
-... | yes _  = refl
-... | no  ¬p = ⊥-elim (¬p refl)
+    go : (b : 𝔹) → p zero ≡ b → (j : Fin (if b then suc (count p') else count p'))
+       → p (embC b (emb p') j) ≡ true
+    go true  e zero    = e
+    go true  e (suc j) = emb-kept p' j
+    go false e j       = emb-kept p' j
 
 ------------------------------------------------------------------------
--- The variables occurring in an expression, a type, and a hypothesis set
-
-fvᵉ : ∀ {Θ} → EExp Θ → Vars Θ
-fvᵉ ε = vars (λ _ → false) (λ _ → false) (λ i → occᵉ-e i ε)
-
-fvʳ : ∀ {Θ} → RExp Θ → Vars Θ
-fvʳ ρ = vars (λ _ → false) (λ i → occʳ-r i ρ) (λ i → occᵉ-r i ρ)
-
-fvᵛ : ∀ {Θ} → OVType Θ → Vars Θ
-fvᵛ A = vars (λ α → occᵗ-v α A) (λ i → occʳ-v i A) (λ i → occᵉ-v i A)
-
-fvᶜ : ∀ {Θ} → OCType Θ → Vars Θ
-fvᶜ C = vars (λ α → occᵗ-c α C) (λ i → occʳ-c i C) (λ i → occᵉ-c i C)
-
-fvᵗ : ∀ {Θ} → TyVar Θ → Vars Θ
-fvᵗ α = fvᵛ (tvar α)
-
-fvᵗᵗ : ∀ {Θ} → TyVar Θ × TyVar Θ → Vars Θ
-fvᵗᵗ (α , β) = fvᵗ α ∪ᵛ fvᵗ β
-
-fvʳʳ : ∀ {Θ} → RExp Θ × RExp Θ → Vars Θ
-fvʳʳ (ρ , ρ') = fvʳ ρ ∪ᵛ fvʳ ρ'
-
-fvᵉᵉ : ∀ {Θ} → EExp Θ × EExp Θ → Vars Θ
-fvᵉᵉ (ε , ε') = fvᵉ ε ∪ᵛ fvᵉ ε'
-
-fvᵛʳ : ∀ {Θ} → OVType Θ × RExp Θ → Vars Θ
-fvᵛʳ (A , ρ) = fvᵛ A ∪ᵛ fvʳ ρ
-
-fvᴴ : ∀ {Θ} → Hyps Θ → Vars Θ
-fvᴴ Q = ⋃ᵛ fvᵗ (ets Q) ∪ᵛ ⋃ᵛ fvᵗᵗ (subᵥ Q) ∪ᵛ ⋃ᵛ fvʳʳ (ordᵣ Q)
-        ∪ᵛ ⋃ᵛ fvᵉᵉ (ordₑ Q) ∪ᵛ ⋃ᵛ fvᵛʳ (disj Q)
+-- Hypothesis sets, equal field by field
 
 hyps-≡ : ∀ {Θ} {a a' : List (TyVar Θ)} {b b' : List (TyVar Θ × TyVar Θ)}
            {c c' : List (RExp Θ × RExp Θ)} {d d' : List (EExp Θ × EExp Θ)}
@@ -439,45 +360,79 @@ module _ {Θ : Scope} (M : Vars Θ) where
       eᵛʳ : ∀ x h → mapᵈ (_[ ⌜ thin ⌝ʳ ]ᵛ) (_[ ⌜ thin ⌝ʳ ]ʳ) (strᵛʳ x h) ≡ x
       eᵛʳ (A , ρ) h = cong₂ _,_ (strᵛ-ι A _) (strʳ-ι ρ _)
 
-  -- a closed instance of the kept variables, extended by closed
-  -- constants on the others
+  -- a substitution, each of whose images is strengthened
 
-  extⁱ : Subst kept ∅ˢ → Subst Θ ∅ˢ
+  strˢ : ∀ {Θ₀} → (τ : Subst Θ₀ Θ) → fvˢ τ ⊆ᵛ M → Subst Θ₀ kept
+  strˢ τ h = sub (λ α → strᵛ (sTy τ α) (⋃ᶠ-⊆ _ h₁ α)) (λ i → strʳ (sR τ i) (⋃ᶠ-⊆ _ h₂ i))
+                 (λ i → strᵉ (sE τ i) (⋃ᶠ-⊆ _ h₃ i))
+    where
+      Vᵗ = ⋃ᶠ (λ α → fvᵛ (sTy τ α))
+      Vʳ = ⋃ᶠ (λ i → fvʳ (sR τ i))
+      Vᵉ = ⋃ᶠ (λ i → fvᵉ (sE τ i))
+      h₁ = ⊆-∪ˡ Vᵗ (Vʳ ∪ᵛ Vᵉ) h
+      h₂ = ⊆-∪ˡ Vʳ Vᵉ (⊆-∪ʳ Vᵗ (Vʳ ∪ᵛ Vᵉ) h)
+      h₃ = ⊆-∪ʳ Vʳ Vᵉ (⊆-∪ʳ Vᵗ (Vʳ ∪ᵛ Vᵉ) h)
+
+  strˢ-ι : ∀ {Θ₀} → (τ : Subst Θ₀ Θ) → (h : fvˢ τ ⊆ᵛ M) → strˢ τ h ⨟ˢ ⌜ thin ⌝ʳ ≐ˢ τ
+  strˢ-ι τ h = mk≐ˢ (λ α → strᵛ-ι (sTy τ α) _) (λ i → strʳ-ι (sR τ i) _)
+                    (λ i → strᵉ-ι (sE τ i) _)
+
+  -- an instance of the kept variables, extended by closed constants on
+  -- the others
+
+  extⁱ : ∀ {Ψ} → Subst kept Ψ → Subst Θ Ψ
   extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) ûᵣ (sR δ)) (ext (vᵉ M) ûₑ (sE δ))
 
-  extⁱ-ι : (δ : Subst kept ∅ˢ) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
+  extⁱ-ι : ∀ {Ψ} → (δ : Subst kept Ψ) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
   extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) ûᵣ (sR δ))
                   (ext-emb (vᵉ M) ûₑ (sE δ))
 
-------------------------------------------------------------------------
--- The step: a type and a hypothesis set, stated over the variables
--- occurring in them
+-- A substitution fixing a set fixes every substitution whose image
+-- lies in it
 
-record Strengthened {Θ : Scope} (X : OCType Θ) (Q : Hyps Θ) : Set where
+fixes-≐ : ∀ {Θ₀ Θ} {F : Vars Θ} {η : Subst Θ Θ} → Fixes F η
+        → (τ : Subst Θ₀ Θ) → fvˢ τ ⊆ᵛ F → τ ⨟ˢ η ≐ˢ τ
+fixes-≐ {F = F} {η} f τ h =
+  ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (strˢ-ι F τ h)) η)
+  (≐ˢ-trans (⨟-assoc (strˢ F τ h) ⌜ thin F ⌝ʳ η)
+  (≐ˢ-trans (⨟-congʳ (strˢ F τ h) thin-fix) (strˢ-ι F τ h)))
+  where
+    thin-fix : ⌜ thin F ⌝ʳ ⨟ˢ η ≐ˢ ⌜ thin F ⌝ʳ
+    thin-fix = mk≐ˢ (λ j → fixᵗ f _ (emb-kept (vᵗ F) j)) (λ j → fixʳ f _ (emb-kept (vʳ F) j))
+                    (λ j → fixᵉ f _ (emb-kept (vᵉ F) j))
+
+------------------------------------------------------------------------
+-- The step: a type, a hypothesis set and a substitution, stated over
+-- the variables occurring in them
+
+record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q : Hyps Θ) : Set where
   constructor strengthened
   field
-    Θ⁻   : Scope
-    ι   : Ren Θ⁻ Θ
-    X⁻   : OCType Θ⁻
-    Q⁻   : Hyps Θ⁻
-    X-ι  : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡ X
-    Q-ι  : Q⁻ [ ι ]ᴴ ≡ Q
-    ext-ι : (δ : Subst Θ⁻ ∅ˢ) → Σ[ δ' ∈ Subst Θ ∅ˢ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
+    Θ⁻    : Scope
+    ι     : Ren Θ⁻ Θ
+    τ⁻    : Subst Θ₀ Θ⁻
+    X⁻    : OCType Θ⁻
+    Q⁻    : Hyps Θ⁻
+    τ-ι   : τ⁻ ⨟ˢ ⌜ ι ⌝ʳ ≐ˢ τ
+    X-ι   : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡ X
+    Q-ι   : Q⁻ [ ι ]ᴴ ≡ Q
+    ext-ι : ∀ {Ψ} → (δ : Subst Θ⁻ Ψ) → Σ[ δ' ∈ Subst Θ Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
-strengthen : ∀ {Θ} → (X : OCType Θ) → (Q : Hyps Θ) → Strengthened X Q
-strengthen X Q =
-  strengthened (kept M) (thin M) (strᶜ M X hX) (strᴴ M Q hQ)
-               (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
+strengthen : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → Strengthened τ X Q
+strengthen τ X Q =
+  strengthened (kept M) (thin M) (strˢ M τ hτ) (strᶜ M X hX) (strᴴ M Q hQ)
+               (strˢ-ι M τ hτ) (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
   where
-    M  = fvᶜ X ∪ᵛ fvᴴ Q
-    hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q) ⊆-refl
-    hQ = ⊆-∪ʳ (fvᶜ X) (fvᴴ Q) ⊆-refl
+    M  = fvᶜ X ∪ᵛ fvᴴ Q ∪ᵛ fvˢ τ
+    hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ) ⊆-refl
+    hQ = ⊆-∪ˡ (fvᴴ Q) (fvˢ τ) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ) ⊆-refl)
+    hτ = ⊆-∪ʳ (fvᴴ Q) (fvˢ τ) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ) ⊆-refl)
 
 ------------------------------------------------------------------------
 -- After an elimination: its certificates, read along `ι`
 
-module _ {Θ : Scope} {C : OCType Θ} {Q : Hyps Θ} (el : Elim C Q)
-         (sr : Strengthened (Ĉ el) (Q̂ el)) where
+module _ {Θ₀ Θ : Scope} {τ : Subst Θ₀ Θ} {C : OCType Θ} {Q : Hyps Θ} (el : Elim C Q)
+         (sr : Strengthened τ (Ĉ el) (Q̂ el)) where
 
   open Strengthened sr
 
