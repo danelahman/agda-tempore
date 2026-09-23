@@ -15,9 +15,13 @@
 --   * the unit, where it has no bound below and the unit is    --
 --     least, the unit being then the join of no bounds;        --
 --   * the top, where it occurs on no left side.                --
--- In every case it occurs in no type of the residual. A value  --
--- may mention the rigid, so the value over the rigid is one    --
--- expression, uniform in it.                                   --
+-- In every case it occurs in no type of the residual. The      --
+-- grade of a disjunction is the left side of an ordering below --
+-- the unit: the first and third steps keep it, the others ask  --
+-- it to be free of the unknown. The disjunctions the values    --
+-- settle are dropped at the end. A value may mention the      --
+-- rigid, so the value over the rigid is one expression,        --
+-- uniform in it.                                               --
 --                                                              --
 -- Every grade former is monotone, so each step keeps every     --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
@@ -380,35 +384,55 @@ module Bᵉ {Ψ} (k : EVar Ψ) = Bounds (_≟ᵉ_ {Ψ}) (occᵉ-e {Ψ} k) (evar 
 module Bᵉʳ {Ψ} (k : EVar Ψ) = Sides (_≟ʳ_ {Ψ}) (occᵉ-r {Ψ} k)
 module Bʳ {Ψ} (k : RVar Ψ) = Bounds (_≟ʳ_ {Ψ}) (occʳ-r {Ψ} k) (rvar k)
 
--- An unknown absent from every type of a residual
+-- An unknown absent from every type of a residual. A disjunction's
+-- grade is the left side of an ordering below the unit, so it is kept
+-- by lowering, and asked to be free of the unknown only for raising.
 
 record Cleanᵉ {Ψ} (k : EVar Ψ) (R : Resid Ψ) : Set where
   constructor cleanᵉ
   field
     cts : ∀ {A}   → A ∈ ts R       → occᵉ-v k A ≡ false
     css : ∀ {A B} → (A , B) ∈ ss R → (occᵉ-v k A ∨ occᵉ-v k B) ≡ false
-    cds : ∀ {A ρ} → (A , ρ) ∈ ds R → (occᵉ-v k A ∨ occᵉ-r k ρ) ≡ false
+    cds : ∀ {A ρ} → (A , ρ) ∈ ds R → occᵉ-v k A ≡ false
 
 record Cleanʳ {Ψ} (k : RVar Ψ) (R : Resid Ψ) : Set where
   constructor cleanʳ
   field
     cts : ∀ {A}   → A ∈ ts R       → occʳ-v k A ≡ false
     css : ∀ {A B} → (A , B) ∈ ss R → (occʳ-v k A ∨ occʳ-v k B) ≡ false
-    cds : ∀ {A ρ} → (A , ρ) ∈ ds R → (occʳ-v k A ∨ occʳ-r k ρ) ≡ false
+    cds : ∀ {A ρ} → (A , ρ) ∈ ds R → occʳ-v k A ≡ false
 
 cleanᵉ? : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (Cleanᵉ k R)
 cleanᵉ? k R with allFalse (occᵉ-v k) (ts R)
                 | allFalse (λ { (A , B) → occᵉ-v k A ∨ occᵉ-v k B }) (ss R)
-                | allFalse (λ { (A , ρ) → occᵉ-v k A ∨ occᵉ-r k ρ }) (ds R)
+                | allFalse (λ { (A , ρ) → occᵉ-v k A }) (ds R)
 ... | just t  | just s  | just d  = just (cleanᵉ t s d)
 ... | _       | _       | _       = nothing
 
 cleanʳ? : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (Cleanʳ k R)
 cleanʳ? k R with allFalse (occʳ-v k) (ts R)
                 | allFalse (λ { (A , B) → occʳ-v k A ∨ occʳ-v k B }) (ss R)
-                | allFalse (λ { (A , ρ) → occʳ-v k A ∨ occʳ-r k ρ }) (ds R)
+                | allFalse (λ { (A , ρ) → occʳ-v k A }) (ds R)
 ... | just t  | just s  | just d  = just (cleanʳ t s d)
 ... | _       | _       | _       = nothing
+
+-- The unknown absent from every disjunction's grade
+
+DFreeᵉ : ∀ {Ψ} → EVar Ψ → Resid Ψ → Set
+DFreeᵉ k R = ∀ {A ρ} → (A , ρ) ∈ ds R → occᵉ-r k ρ ≡ false
+
+DFreeʳ : ∀ {Ψ} → RVar Ψ → Resid Ψ → Set
+DFreeʳ k R = ∀ {A ρ} → (A , ρ) ∈ ds R → occʳ-r k ρ ≡ false
+
+dfreeᵉ? : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (DFreeᵉ k R)
+dfreeᵉ? k R with allFalse (λ { (A , ρ) → occᵉ-r k ρ }) (ds R)
+... | just f  = just (λ m → f m)
+... | nothing = nothing
+
+dfreeʳ? : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (DFreeʳ k R)
+dfreeʳ? k R with allFalse (λ { (A , ρ) → occʳ-r k ρ }) (ds R)
+... | just f  = just (λ m → f m)
+... | nothing = nothing
 
 ------------------------------------------------------------------------
 -- The lowering lemma and its siblings: an assignment the conditions
@@ -418,11 +442,12 @@ cleanʳ? k R with allFalse (occʳ-v k) (ts R)
 
 cleanᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → Cleanᵉ k R → (b : EExp Ψ) → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
+         → (∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ ρ [ updᵉ k b ⨟ˢ τ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ)
          → (∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updᵉ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updᵉ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updᵉ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A ρ} → (A , ρ) ∈ ds R
               → VarOK Q (A [ updᵉ k b ⨟ˢ τ ]ᵛ) (ρ [ updᵉ k b ⨟ˢ τ ]ʳ))
-cleanᵉ-⊩ {Q = Q} {k} {R} (cleanᵉ ct cs cd) b τ h = ts' , ss' , ds'
+cleanᵉ-⊩ {Q = Q} {k} {R} (cleanᵉ ct cs cd) b τ h g = ts' , ss' , ds'
   where
     ts' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updᵉ k b ⨟ˢ τ ]ᵛ
     ts' {A} m = subst (Q ⊩ᴱ_) (sym (updᵉ-⨟v k b τ A (ct m))) (⊩ts h m)
@@ -433,17 +458,18 @@ cleanᵉ-⊩ {Q = Q} {k} {R} (cleanᵉ ct cs cd) b τ h = ts' , ss' , ds'
                            (⊩ss h m)
 
     ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ updᵉ k b ⨟ˢ τ ]ᵛ) (ρ [ updᵉ k b ⨟ˢ τ ]ʳ)
-    ds' {A} {ρ} m with ∨-false (occᵉ-v k A) (occᵉ-r k ρ) (cd m)
-    ... | qA , qρ = subst₂ (VarOK Q) (sym (updᵉ-⨟v k b τ A qA)) (sym (updᵉ-⨟r k b τ ρ qρ))
-                           (⊩ds h m)
+    ds' {A} {ρ} m =
+      subst (λ X → VarOK Q X (ρ [ updᵉ k b ⨟ˢ τ ]ʳ)) (sym (updᵉ-⨟v k b τ A (cd m)))
+            (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
 
 cleanʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
          → Cleanʳ k R → (b : RExp Ψ) → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
+         → (∀ {A ρ} → (A , ρ) ∈ ds R → Q ⊩ ρ [ updʳ k b ⨟ˢ τ ]ʳ ≾̂ᵣ ρ [ τ ]ʳ)
          → (∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updʳ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ updʳ k b ⨟ˢ τ ]ᵛ <:̂ᵛ B [ updʳ k b ⨟ˢ τ ]ᵛ)
          × (∀ {A ρ} → (A , ρ) ∈ ds R
               → VarOK Q (A [ updʳ k b ⨟ˢ τ ]ᵛ) (ρ [ updʳ k b ⨟ˢ τ ]ʳ))
-cleanʳ-⊩ {Q = Q} {k} {R} (cleanʳ ct cs cd) b τ h = ts' , ss' , ds'
+cleanʳ-⊩ {Q = Q} {k} {R} (cleanʳ ct cs cd) b τ h g = ts' , ss' , ds'
   where
     ts' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ updʳ k b ⨟ˢ τ ]ᵛ
     ts' {A} m = subst (Q ⊩ᴱ_) (sym (updʳ-⨟v k b τ A (ct m))) (⊩ts h m)
@@ -454,9 +480,9 @@ cleanʳ-⊩ {Q = Q} {k} {R} (cleanʳ ct cs cd) b τ h = ts' , ss' , ds'
                            (⊩ss h m)
 
     ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ updʳ k b ⨟ˢ τ ]ᵛ) (ρ [ updʳ k b ⨟ˢ τ ]ʳ)
-    ds' {A} {ρ} m with ∨-false (occʳ-v k A) (occʳ-r k ρ) (cd m)
-    ... | qA , qρ = subst₂ (VarOK Q) (sym (updʳ-⨟v k b τ A qA)) (sym (updʳ-⨟r k b τ ρ qρ))
-                           (⊩ds h m)
+    ds' {A} {ρ} m =
+      subst (λ X → VarOK Q X (ρ [ updʳ k b ⨟ˢ τ ]ʳ)) (sym (updʳ-⨟v k b τ A (cd m)))
+            (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
 
 -- Lowering an effect unknown below its value, to a bound above each of
 -- its lower bounds
@@ -477,7 +503,7 @@ lowerᵉ-⊩ {Q = Q} {k} {R} lw fr cl b τ below ub h =
     le : Q ⊩ τ₁ ≾ˢ τ
     le = updᵉ-below k b τ below
 
-    c = cleanᵉ-⊩ cl b τ h
+    c = cleanᵉ-⊩ cl b τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
 
     es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
     es' {ε} {ε'} m with Bᵉ.cls lw m
@@ -501,10 +527,10 @@ lowerᵉ-⊩ {Q = Q} {k} {R} lw fr cl b τ below ub h =
 raiseᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → (up : Bᵉ.Ups {Ψ} k (es R))
          → (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
-         → Cleanᵉ k R
+         → Cleanᵉ k R → DFreeᵉ k R
          → (τ : Subst Ψ Ψ')
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k (Bᵉ.cap up) ⨟ˢ τ ]
-raiseᵉ-⊩ {Q = Q} {k} {R} up fl cl τ h =
+raiseᵉ-⊩ {Q = Q} {k} {R} up fl cl df τ h =
   mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
   where
     U  = Bᵉ.cap up
@@ -514,6 +540,7 @@ raiseᵉ-⊩ {Q = Q} {k} {R} up fl cl τ h =
     ge = updᵉ-above k U τ (⊩es h (Bᵉ.srcᵘ up))
 
     c = cleanᵉ-⊩ cl U τ h
+          (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ) (sym (updᵉ-⨟r k U τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
     es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
     es' {ε} {ε'} m with Bᵉ.clsᵘ up m
@@ -548,7 +575,7 @@ lowerʳ-⊩ {Q = Q} {k} {R} lw cl b τ below ub h =
     le : Q ⊩ τ₁ ≾ˢ τ
     le = updʳ-below k b τ below
 
-    c = cleanʳ-⊩ cl b τ h
+    c = cleanʳ-⊩ cl b τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
 
     rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
     rs' {ρ} {ρ'} m with Bʳ.cls lw m
@@ -566,10 +593,10 @@ lowerʳ-⊩ {Q = Q} {k} {R} lw cl b τ below ub h =
 
 raiseʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
          → (up : Bʳ.Ups {Ψ} k (rs R))
-         → Cleanʳ k R
+         → Cleanʳ k R → DFreeʳ k R
          → (τ : Subst Ψ Ψ')
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k (Bʳ.cap up) ⨟ˢ τ ]
-raiseʳ-⊩ {Q = Q} {k} {R} up cl τ h =
+raiseʳ-⊩ {Q = Q} {k} {R} up cl df τ h =
   mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
   where
     U  = Bʳ.cap up
@@ -579,6 +606,7 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl τ h =
     ge = updʳ-above k U τ (⊩rs h (Bʳ.srcᵘ up))
 
     c = cleanʳ-⊩ cl U τ h
+          (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ) (sym (updʳ-⨟r k U τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
     rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
     rs' {ρ} {ρ'} m with Bʳ.clsᵘ up m
@@ -598,10 +626,10 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl τ h =
 topᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
        → (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
        → (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
-       → Cleanᵉ k R
+       → Cleanᵉ k R → DFreeᵉ k R
        → (τ : Subst Ψ Ψ')
        → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k (econst ⊤ₑ) ⨟ˢ τ ]
-topᵉ-⊩ {Q = Q} {k} {R} fe fl cl τ h =
+topᵉ-⊩ {Q = Q} {k} {R} fe fl cl df τ h =
   mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
   where
     τ₁ = updᵉ k (econst ⊤ₑ) ⨟ˢ τ
@@ -610,6 +638,8 @@ topᵉ-⊩ {Q = Q} {k} {R} fe fl cl τ h =
     ge = updᵉ-above k (econst ⊤ₑ) τ topₑ
 
     c = cleanᵉ-⊩ cl (econst ⊤ₑ) τ h
+          (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ)
+                               (sym (updᵉ-⨟r k (econst ⊤ₑ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
     es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
     es' {ε} {ε'} m with fe m
@@ -627,10 +657,10 @@ topᵉ-⊩ {Q = Q} {k} {R} fe fl cl τ h =
 
 topʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
        → (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a)
-       → Cleanʳ k R
+       → Cleanʳ k R → DFreeʳ k R
        → (τ : Subst Ψ Ψ')
        → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k (rconst ⊤ᵣ) ⨟ˢ τ ]
-topʳ-⊩ {Q = Q} {k} {R} fl cl τ h =
+topʳ-⊩ {Q = Q} {k} {R} fl cl df τ h =
   mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
   where
     τ₁ = updʳ k (rconst ⊤ᵣ) ⨟ˢ τ
@@ -639,6 +669,8 @@ topʳ-⊩ {Q = Q} {k} {R} fl cl τ h =
     ge = updʳ-above k (rconst ⊤ᵣ) τ topᵣ
 
     c = cleanʳ-⊩ cl (rconst ⊤ᵣ) τ h
+          (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ)
+                               (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
     rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
     rs' {ρ} {ρ'} m with fl m
@@ -667,9 +699,10 @@ first nothing  y = y
 
 occursᵉ : ∀ {Ψ} → EVar Ψ → Resid Ψ → 𝔹
 occursᵉ k R = anyL (λ { (ε , _) → occᵉ-e k ε }) (es R) ∨ anyL (λ { (ρ , _) → occᵉ-r k ρ }) (rs R)
+            ∨ anyL (λ { (_ , ρ) → occᵉ-r k ρ }) (ds R)
 
 occursʳ : ∀ {Ψ} → RVar Ψ → Resid Ψ → 𝔹
-occursʳ k R = anyL (λ { (ρ , _) → occʳ-r k ρ }) (rs R)
+occursʳ k R = anyL (λ { (ρ , _) → occʳ-r k ρ }) (rs R) ∨ anyL (λ { (_ , ρ) → occʳ-r k ρ }) (ds R)
 
 -- The top, for an unknown with no bound above that does occur
 
@@ -684,9 +717,10 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
 ... | nothing = nothing
 ... | just cl =
       first (lower (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)))
-            (first (raise (Bᵉ.upsOf {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)))
+            (first (raise (Bᵉ.upsOf {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R))
             (first (unit umin?ₑ (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R))
-                   (top (Bᵉ.freeLs {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (occursᵉ⁺ k R))))
+                   (top (Bᵉ.freeLs {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R)
+                        (occursᵉ⁺ k R))))
   where
     lower : Maybe (Bᵉ.Lows {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a)
           → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
@@ -698,9 +732,9 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     lower _ _ = nothing
 
     raise : Maybe (Bᵉ.Ups {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
-          → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    raise (just up) (just fl) = just (Bᵉ.cap up , λ τ Q h → raiseᵉ-⊩ up fl cl τ h)
-    raise _         _         = nothing
+          → Maybe (DFreeᵉ k R) → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
+    raise (just up) (just fl) (just df) = just (Bᵉ.cap up , λ τ Q h → raiseᵉ-⊩ up fl cl df τ h)
+    raise _         _         _         = nothing
 
     unit : Maybe (UnitMinₑ) → Maybe (Bᵉ.Lows {Ψ} k (es R))
          → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a) → 𝔹
@@ -710,19 +744,19 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     unit _ _ _ _ = nothing
 
     top : Maybe (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
-        → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a) → 𝔹
+        → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a) → Maybe (DFreeᵉ k R) → 𝔹
         → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    top (just fe) (just fl) true = just (econst ⊤ₑ , λ τ Q h → topᵉ-⊩ fe fl cl τ h)
-    top _         _         _    = nothing
+    top (just fe) (just fl) (just df) true = just (econst ⊤ₑ , λ τ Q h → topᵉ-⊩ fe fl cl df τ h)
+    top _         _         _         _    = nothing
 
 stepʳ : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
 stepʳ {Ψ} k R with cleanʳ? k R
 ... | nothing = nothing
 ... | just cl =
       first (lower (Bʳ.lowsOf {Ψ} k (rs R)))
-            (first (raise (Bʳ.upsOf {Ψ} k (rs R)))
+            (first (raise (Bʳ.upsOf {Ψ} k (rs R)) (dfreeʳ? k R))
             (first (unit umin?ᵣ (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
-                   (top (Bʳ.freeLs {Ψ} k (rs R)) (occursʳ⁺ k R))))
+                   (top (Bʳ.freeLs {Ψ} k (rs R)) (dfreeʳ? k R) (occursʳ⁺ k R))))
   where
     lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
     lower (just lw@(Bʳ.lows (x ∷ xs) c s)) =
@@ -732,9 +766,10 @@ stepʳ {Ψ} k R with cleanʳ? k R
                         (joinᵣ-ub⊩ τ x xs) h)
     lower _ = nothing
 
-    raise : Maybe (Bʳ.Ups {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    raise (just up) = just (Bʳ.cap up , λ τ Q h → raiseʳ-⊩ up cl τ h)
-    raise nothing   = nothing
+    raise : Maybe (Bʳ.Ups {Ψ} k (rs R)) → Maybe (DFreeʳ k R)
+          → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
+    raise (just up) (just df) = just (Bʳ.cap up , λ τ Q h → raiseʳ-⊩ up cl df τ h)
+    raise _         _         = nothing
 
     unit : Maybe (UnitMinᵣ) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
          → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
@@ -742,10 +777,10 @@ stepʳ {Ψ} k R with cleanʳ? k R
       just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ τ (minᵣ um) (λ ()) h)
     unit _ _ _ = nothing
 
-    top : Maybe (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a) → 𝔹
+    top : Maybe (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a) → Maybe (DFreeʳ k R) → 𝔹
         → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    top (just fl) true = just (rconst ⊤ᵣ , λ τ Q h → topʳ-⊩ fl cl τ h)
-    top _         _    = nothing
+    top (just fl) (just df) true = just (rconst ⊤ᵣ , λ τ Q h → topʳ-⊩ fl cl df τ h)
+    top _         _         _    = nothing
 
 ------------------------------------------------------------------------
 -- Settled disjunctions: a side decided true against no hypotheses
@@ -786,8 +821,8 @@ unsettled ((A , ρ) ∷ l) = go (settledᵈ A ρ) (unsettled l)
                        ; (there m)   → bk δ (λ m' → k (there m')) m })
 
 ------------------------------------------------------------------------
--- Localisation: the settled disjunctions dropped, then the steps
--- iterated over the local unknowns
+-- Localisation: the settled disjunctions dropped, the steps iterated
+-- over the local unknowns, and the disjunctions they settle dropped
 
 record Localised {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) : Set where
   constructor loc
@@ -800,16 +835,22 @@ record Localised {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) : Set where
 
 open Localised public
 
+-- Nothing assigned
+
+loc-id : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R
+loc-id {O = O} {R} =
+  loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ Q h → h)
+
 -- The settled disjunctions dropped: the instances are unchanged
 
-loc-settle : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R
-loc-settle {O = O} {R} =
-  loc idˢ (resid (rs R) (es R) (ts R) (ss R) (Unsettled.kept U)) (⨟-idʳ O)
-      (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ))
-                   (mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (Unsettled.back U δ (⊩ds h))))
-      (λ τ Q h → mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (λ m → ⊩ds h (Unsettled.kept⊆ U m)))
+loc-settle : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R → Localised O R
+loc-settle (loc σ R₀ fx sn cp) =
+  loc σ (resid (rs R₀) (es R₀) (ts R₀) (ss R₀) (Unsettled.kept U)) fx
+      (λ δ Q h → sn δ Q (mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (Unsettled.back U δ (⊩ds h))))
+      (λ τ Q h → let h' = cp τ Q h in
+                 mk⊩ᴿ (⊩rs h') (⊩es h') (⊩ts h') (⊩ss h') (λ m → ⊩ds h' (Unsettled.kept⊆ U m)))
   where
-    U = unsettled (ds R)
+    U = unsettled (ds R₀)
 
 loc-ext : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → (L : Localised O R)
         → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → Keeps σ (lR L) → Localised O R
@@ -849,7 +890,7 @@ module _ {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) where
       ... | L'' , changed' = next₂ (L'' , (changed ∨ changed'))
 
 localise : ∀ {Θ Φ} → (O : Subst Θ Φ) → (R : Resid Φ) → Localised O R
-localise {Φ = Φ} O R = rounds O R (nE Φ + nR Φ) loc-settle
+localise {Φ = Φ} O R = loc-settle (rounds O R (nE Φ + nR Φ) (loc-settle loc-id))
 
 -- An assignment the later substitution already agrees with is absorbed
 
