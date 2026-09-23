@@ -9,11 +9,12 @@
 -- be a failure of `Normal`'s decision procedures.                --
 --                                                                --
 -- `reportOn` is the reporting boundary on top: the same residue  --
--- with its var-rule disjunctions settled, its redundant         --
+-- with its var-rule disjunctions settled, its repeated           --
 -- hypotheses dropped, the unknowns its own hypotheses fix        --
--- eliminated from it and from the reported type, and every grade --
--- expression in product normal form. It is applied here, on top  --
--- of the driver.                                                 --
+-- eliminated from it and from the reported type, every grade     --
+-- expression in product normal form, and last every subtyping    --
+-- atom and grade ordering entailed by those kept before it       --
+-- dropped. It is applied here, on top of the driver.             --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])
@@ -74,7 +75,7 @@ open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
-  using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃)
+  using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃; trim; trim-≃; trimElim)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ using (canonElim)
 
@@ -171,7 +172,8 @@ solverImplOn = record
 -- satisfied by exactly the same groundings; elimination keeps every
 -- grounding, is realised by the grounding reading each eliminated
 -- unknown off its bound, and reports the subtype. Normalisation of
--- the grade expressions runs as a last elimination step.
+-- the grade expressions and `trim` run as the last two elimination
+-- steps.
 
 record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
@@ -199,16 +201,19 @@ reportOn X C with solveOn C in e
                    (Elim.keep el) (Elim.real el) (Elim.princ el))
   where
     el : Elim (X [ σ ]ᶜ) (simplify Q)
-    el = eliminate (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _
+    el = eliminate (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _
 
--- The same simplification where a principal type hands out its residue
+-- The same simplification and trimming where a principal type hands
+-- out its residue
 
 reportedQ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
           → Hyps (Principal.Θ⁺ p)
-reportedQ p = simplify (Principal.Q⁺ p)
+reportedQ p = trim (simplify (Principal.Q⁺ p))
 
 reportedQ-≃ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
             → (θ : Grounding (Principal.Θ⁺ p))
             → (θ ⊨ᴴ Principal.Q⁺ p → θ ⊨ᴴ reportedQ p)
               × (θ ⊨ᴴ reportedQ p → θ ⊨ᴴ Principal.Q⁺ p)
-reportedQ-≃ p = simplify-≃ (Principal.Q⁺ p)
+reportedQ-≃ p θ =
+  (λ h → proj₁ (trim-≃ _ θ) (proj₁ (simplify-≃ (Principal.Q⁺ p) θ) h)) ,
+  (λ h → proj₂ (simplify-≃ (Principal.Q⁺ p) θ) (proj₂ (trim-≃ _ θ) h))
