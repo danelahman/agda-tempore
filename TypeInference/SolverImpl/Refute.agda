@@ -1,14 +1,15 @@
 ------------------------------------------------------------------
 -- Semantic refutation of a grade ordering against the unit       --
 --                                                                --
--- `Refutedᵤ ρ` says that no grounding brings `ρ` below the unit. --
+-- `Refutedᵤ ρ` says that no closed instance brings `ρ` below     --
+-- the unit.                                                      --
 -- A constant atom of `ρ`'s normal form that is not itself below  --
 -- the unit establishes it, using only the zero-product laws of   --
 -- `_≾ᵣ_`; every alternative of the sum is below the sum, so one  --
 -- refuted alternative refutes the whole. `scanᵤ` looks for such  --
 -- an atom with the instance's decider. Refutation is stable      --
 -- under later instantiation, and rules out entailment from every --
--- ground-realisable hypothesis set.                              --
+-- satisfiable hypothesis set.                                    --
 --                                                                --
 -- Refutation cannot be quantified over all `Q`, as `hyp-derives` --
 -- records.                                                       --
@@ -42,61 +43,61 @@ open GradeSystemInterface Grades
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Subst     S
-open import TypeInference.OpenSyntax.Grounding S
+open import TypeInference.OpenSyntax.Instances S using (Satisfiable; valʳ; inst-≡̂ᵣ; inst-≾ᵣ)
 
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
   using (Alts; alt; _∷⁺_; RAtom; rc; rv; rm; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; ⟦_⟧ʳˢ⁺;
          nrmᵣ; nrmᵣ-≡)
 
--- No grounding brings the expression below the unit
+-- No closed instance brings the expression below the unit
 
 Refutedᵤ : ∀ {Ψ} → RExp Ψ → Set
-Refutedᵤ {Ψ} ρ = (θ : Grounding Ψ) → ¬ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
+Refutedᵤ {Ψ} ρ = (δ : Subst Ψ ∅ˢ) → ¬ (valʳ (ρ [ δ ]ʳ) ≾ᵣ uᵣ)
 
 -- A product below the unit has both halves below the unit, so a
 -- refutation of either half refutes the product
 
 head-refutes : ∀ {Ψ} → (a : RAtom Ψ) → (as : List (RAtom Ψ))
              → Refutedᵤ ⟦ a ⟧ʳᵃ → Refutedᵤ ⟦ a ∷ as ⟧ʳˢ
-head-refutes a as ref θ le = ref θ (≾ᵣ-zero-productˡ le)
+head-refutes a as ref δ le = ref δ (≾ᵣ-zero-productˡ le)
 
 tail-refutes : ∀ {Ψ} → (a : RAtom Ψ) → (as : List (RAtom Ψ))
              → Refutedᵤ ⟦ as ⟧ʳˢ → Refutedᵤ ⟦ a ∷ as ⟧ʳˢ
-tail-refutes a as ref θ le = ref θ (≾ᵣ-zero-productʳ le)
+tail-refutes a as ref δ le = ref δ (≾ᵣ-zero-productʳ le)
 
 -- A constant that is not below the unit, and a join one of whose
 -- operands is refuted
 
 const-refutes : ∀ {Ψ} {c : R} → ¬ (c ≾ᵣ uᵣ) → Refutedᵤ (rconst {Ψ} c)
-const-refutes ¬p θ le = ¬p le
+const-refutes ¬p δ le = ¬p le
 
 join-refutesˡ : ∀ {Ψ} {ρ ρ' : RExp Ψ} → Refutedᵤ ρ → Refutedᵤ (ρ ⊔̂ᵣ ρ')
-join-refutesˡ {ρ = ρ} {ρ' = ρ'} ref θ le =
-  ref θ (≾ᵣ-trans (⊔ᵣ-ubˡ (⟦ ρ ⟧ʳ θ) (⟦ ρ' ⟧ʳ θ)) le)
+join-refutesˡ {ρ = ρ} {ρ' = ρ'} ref δ le =
+  ref δ (≾ᵣ-trans (⊔ᵣ-ubˡ (valʳ (ρ [ δ ]ʳ)) (valʳ (ρ' [ δ ]ʳ))) le)
 
 join-refutesʳ : ∀ {Ψ} {ρ ρ' : RExp Ψ} → Refutedᵤ ρ' → Refutedᵤ (ρ ⊔̂ᵣ ρ')
-join-refutesʳ {ρ = ρ} {ρ' = ρ'} ref θ le =
-  ref θ (≾ᵣ-trans (⊔ᵣ-ubʳ (⟦ ρ ⟧ʳ θ) (⟦ ρ' ⟧ʳ θ)) le)
+join-refutesʳ {ρ = ρ} {ρ' = ρ'} ref δ le =
+  ref δ (≾ᵣ-trans (⊔ᵣ-ubʳ (valʳ (ρ [ δ ]ʳ)) (valʳ (ρ' [ δ ]ʳ))) le)
 
 -- Transported along a convertibility, and so along the certified
 -- normalisation
 
 refute-≡̂ᵣ : ∀ {Ψ} {ρ ρ' : RExp Ψ} → ρ ≡̂ᵣ ρ' → Refutedᵤ ρ' → Refutedᵤ ρ
-refute-≡̂ᵣ eq ref θ le = ref θ (subst (_≾ᵣ uᵣ) (ground-≡̂ᵣ eq) le)
+refute-≡̂ᵣ eq ref δ le = ref δ (subst (_≾ᵣ uᵣ) (inst-≡̂ᵣ δ eq) le)
 
 -- Refutation survives every later instantiation
 
-refute-[]ʳ : ∀ {Ψ Ψ'} {ρ : RExp Ψ} → (δ : Subst Ψ Ψ')
-           → Refutedᵤ ρ → Refutedᵤ (ρ [ δ ]ʳ)
-refute-[]ʳ {ρ = ρ} δ ref θ le = ref (δ ⨟ᵍ θ) (subst (_≾ᵣ uᵣ) (⟦⟧-⨟ᵍ-r δ θ ρ) le)
+refute-[]ʳ : ∀ {Ψ Ψ'} {ρ : RExp Ψ} → (σ : Subst Ψ Ψ')
+           → Refutedᵤ ρ → Refutedᵤ (ρ [ σ ]ʳ)
+refute-[]ʳ {ρ = ρ} σ ref δ le = ref (σ ⨟ˢ δ) (subst (λ x → valʳ x ≾ᵣ uᵣ) ([⨟]ʳ ρ σ δ) le)
 
--- A refuted expression is entailed by no ground-realisable hypothesis set
+-- A refuted expression is entailed by no satisfiable hypothesis set
 
-refute-⊩ : ∀ {Ψ} {ρ : RExp Ψ} {Q : Hyps Ψ} → (θ : Grounding Ψ) → θ ⊨ᴴ Q
+refute-⊩ : ∀ {Ψ} {ρ : RExp Ψ} {Q : Hyps Ψ} → Satisfiable Q
          → Refutedᵤ ρ → ¬ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
-refute-⊩ θ h ref d = ref θ (ground-≾ᵣ h d)
+refute-⊩ (δ , h) ref d = ref δ (inst-≾ᵣ h d)
 
--- Ground realisability is essential: a hypothesis names any ordering at all
+-- Satisfiability is essential: a hypothesis names any ordering at all
 
 hyp-derives : ∀ {Ψ} → (ρ : RExp Ψ) → hyps [] [] ((ρ , ûᵣ) ∷ []) [] [] ⊩ ρ ≾̂ᵣ ûᵣ
 hyp-derives ρ = hypᵣ (here refl)

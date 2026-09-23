@@ -82,7 +82,7 @@ open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
-  using (Localised; localise; lσ; lR; lsnd; updᵉ-below; updᵉ-above; freeᵉ; freeʳ)
+  using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ)
 
 open OpEnum opEnum
 

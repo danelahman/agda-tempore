@@ -4,7 +4,9 @@
 -- A closed instance of a scope `Θ` is a substitution             --
 -- `δ : Subst Θ ∅ˢ`. It satisfies a hypothesis set `Q` when the   --
 -- instance of `Q` is entailed by no hypotheses,                  --
--- `∅ᴴ ⊩ᴴ Q [ δ ]`.                                               --
+-- `∅ᴴ ⊩ᴴ Q [ δ ]`. A set entails another semantically,           --
+-- `Q ⊨ᴴ Q'`, when every closed instance of the one is one of the --
+-- other; open entailment implies it.                             --
 --                                                                --
 -- A closed grade expression has a value in the carrier. Entailed --
 -- ordering between closed expressions is exactly the carrier's   --
@@ -16,6 +18,7 @@
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Nat.Base using (ℕ)
 open import Data.Nat.Properties using () renaming (_≟_ to _≟ℕ_)
+open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
@@ -302,6 +305,50 @@ Satisfiable-⊩ᴴ e (δ , h) = δ , inst-⊩ᴴ e h
 Satisfiable-⨟ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
               → Q' ⊩ᴴ Q [ σ ] → Satisfiable Q' → Satisfiable Q
 Satisfiable-⨟ {σ = σ} e (δ , h) = σ ⨟ˢ δ , inst-⨟ e h
+
+-- Semantic entailment: every closed instance of the first set is one
+-- of the second
+
+infix 4 _⊨ᴴ_
+
+_⊨ᴴ_ : ∀ {Θ} → Hyps Θ → Hyps Θ → Set
+_⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q' [ δ ]
+
+⊨ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊨ᴴ Q
+⊨ᴴ-refl δ h = h
+
+⊨ᴴ-trans : ∀ {Θ} {Q Q' Q'' : Hyps Θ} → Q ⊨ᴴ Q' → Q' ⊨ᴴ Q'' → Q ⊨ᴴ Q''
+⊨ᴴ-trans e e' δ h = e' δ (e δ h)
+
+⊩ᴴ-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Q ⊨ᴴ Q'
+⊩ᴴ-⊨ᴴ e δ h = inst-⊩ᴴ e h
+
+Satisfiable-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊨ᴴ Q' → Satisfiable Q → Satisfiable Q'
+Satisfiable-⊨ᴴ e (δ , h) = δ , e δ h
+
+-- Semantic entailment from open entailment of the atoms and, at each
+-- instance, of the var-rule disjunctions
+
+mk⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ}
+     → (∀ {α} → α ∈ ets Q' → Q ⊩ᴱ tvar α)
+     → (∀ {α β} → (α , β) ∈ subᵥ Q' → Q ∣ tvar α <:̂ᵛ tvar β)
+     → (∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q' → Q ⊩ ρ ≾̂ᵣ ρ')
+     → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q' → Q ⊩ ε ≾̂ₑ ε')
+     → ((δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ]
+        → ∀ {A ρ} → (A , ρ) ∈ disj Q' → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+     → Q ⊨ᴴ Q'
+mk⊨ᴴ et sb oR oE dj δ h =
+  mk⊩ᴴ (λ m → ⊩ᴱ-subst h (et m)) (λ m → <:̂ᵛ-subst h (sb m))
+       (λ m → ⊩-substᵣ h (oR m)) (λ m → ⊩-substₑ h (oE m)) (dj δ h)
+
+-- The closed var-rule disjunction is met at a type eternal whenever
+-- the given one is, and at a grade below the given one
+
+VarOK-∅-mono : {A A' : OVType ∅ˢ} {ρ ρ' : RExp ∅ˢ}
+             → (∅ᴴ ⊩ᴱ A → ∅ᴴ ⊩ᴱ A') → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → VarOK ∅ᴴ A ρ → VarOK ∅ᴴ A' ρ'
+VarOK-∅-mono f q (et-ok et)     = et-ok (f et)
+VarOK-∅-mono f q (≾ᵘ-ok le)     = ≾ᵘ-ok (transᵣ q le)
+VarOK-∅-mono f q (hyp-ok () _ _)
 
 -- What a set entails holds by value at each of its instances
 

@@ -4,18 +4,21 @@
 -- An unknown occurring below nowhere else is sent to the join of --
 -- the hypotheses bounding it below, and those hypotheses go with --
 -- it; an unknown absent from the reported type is eliminated     --
--- outright by the same step. Every grounding of the result       --
--- realises the original at the same type, every grounding of the --
--- original satisfies the result, and the reported type becomes a --
--- subtype of what it was. The two grade sorts are treated alike; --
--- open types carry no join, so a type variable is eliminated     --
--- against a single bound.                                        --
+-- outright by the same step. The two grade sorts are treated     --
+-- alike; open types carry no join, so a type variable is         --
+-- eliminated against a single bound.                             --
 --                                                                --
 -- A grade unknown the hypotheses equate with an expression free  --
 -- of it is replaced by that expression everywhere, the orderings --
 -- made reflexive going with it; of two equal unknowns the one of --
 -- smaller index stays. This step is tried before the step        --
 -- against a bound, and the two alternate.                        --
+--                                                                --
+-- Every step is a substitution `η`: the new type is the old one  --
+-- along `η`, up to convertibility, and the new hypotheses entail --
+-- the old ones along `η`. Every closed instance of the old       --
+-- hypotheses is one of the new, and there the new type is a      --
+-- subtype of the old.                                            --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --
@@ -51,15 +54,12 @@ module TypeInference.SolverImpl.Eliminate (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Types     S using (VType; CType; Eternal; _|×|ₑ_)
-open import Syntax.Subtyping S
-
-import Syntax.Types S as T
-
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Grounding S
+open import TypeInference.OpenSyntax.Instances S
+  using (_⊨ᴴ_; ⊨ᴴ-refl; ⊨ᴴ-trans; mk⊨ᴴ; VarOK-∅-mono)
 
 open import TypeInference.SolverImpl.Polarity S
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occʳ-r)
@@ -100,222 +100,271 @@ below-∪ : (p q : Pol) → below (p ∪ᴾ q) ≡ false
         → (below p ≡ false) × (below q ≡ false)
 below-∪ p q e = ∨-false (below p) (below q) e
 
--- Eternality lives on the skeleton, which subtyping preserves, so it
--- transfers between two groundings related pointwise on the type
--- variables.
+------------------------------------------------------------------------
+-- One step: the reported type, the hypothesis set, the substitution,
+-- and the facts relating them
 
-Et-<: : ∀ {Θ} {θ θ' : Grounding Θ} → (∀ α → gTy θ' α <:ᵛ gTy θ α)
-      → (A : OVType Θ) → Eternal (⟦ A ⟧ᵛ θ) → Eternal (⟦ A ⟧ᵛ θ')
-Et-<: k (tvar α)  et = <:ᵛ-eternalˡ (k α) et
-Et-<: k (Base b)  et = et
-Et-<: k Unit      et = et
-Et-<: k Bool      et = et
-Et-<: k (A |×| B) (p |×|ₑ q) = Et-<: k A p |×|ₑ Et-<: k B q
-Et-<: k Empty     et = et
+record Elim {Θ : Scope} (C : OCType Θ) (Q : Hyps Θ) : Set where
+  constructor mkElim
+  field
+    Ĉ     : OCType Θ
+    Q̂     : Hyps Θ
+    η     : Subst Θ Θ
+    conv  : Ĉ ≡̂ᶜ C [ η ]ᶜ
+    inst  : Q̂ ⊩ᴴ Q [ η ]
+    keep  : Q ⊨ᴴ Q̂
+    princ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ∣ Ĉ [ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
 
--- The signed shape of the two conclusions
+open Elim public
 
-atᵉ : Sign → E → E → Set
-atᵉ ⁺ x y = x ≾ₑ y
-atᵉ ⁻ x y = y ≾ₑ x
+idElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
+idElim C Q =
+  mkElim C Q idˢ (subst (C ≡̂ᶜ_) (sym ([id]ᶜ C)) (≡̂ᶜ-refl C)) ⊩ᴴ-refl ⊨ᴴ-refl
+         (λ δ h → <:̂ᶜ-refl (C [ δ ]ᶜ))
 
-atʳ : Sign → R → R → Set
-atʳ ⁺ x y = x ≾ᵣ y
-atʳ ⁻ x y = y ≾ᵣ x
+infixl 5 _⨾ᴱ_
 
-atᵛ : Sign → VType → VType → Set
-atᵛ ⁺ A B = A <:ᵛ B
-atᵛ ⁻ A B = B <:ᵛ A
+_⨾ᴱ_ : ∀ {Θ} {C : OCType Θ} {Q : Hyps Θ} → (r : Elim C Q)
+     → Elim (Ĉ r) (Q̂ r) → Elim C Q
+_⨾ᴱ_ {C = C} r s =
+  mkElim (Ĉ s) (Q̂ s) (η r ⨟ˢ η s)
+         (≡̂ᶜ-trans (conv s)
+           (subst (Ĉ r [ η s ]ᶜ ≡̂ᶜ_) ([⨟]ᶜ C (η r) (η s)) (≡̂ᶜ-subst (η s) (conv r))))
+         (⊩ᴴ-⨟ (inst s) (inst r))
+         (⊨ᴴ-trans (keep r) (keep s))
+         (λ δ h → <:̂ᶜ-trans (princ s δ (keep r δ h)) (princ r δ h))
 
-atᶜ : Sign → CType → CType → Set
-atᶜ ⁺ C D = C <:ᶜ D
-atᶜ ⁻ C D = D <:ᶜ C
+------------------------------------------------------------------------
+-- The two conclusions of a monotonicity argument, by the side of the
+-- ordering the traversed position sits on
 
-atᵉ-refl : (s : Sign) → (x : E) → atᵉ s x x
-atᵉ-refl ⁺ x = ≾ₑ-refl
-atᵉ-refl ⁻ x = ≾ₑ-refl
+module _ {Θ : Scope} (Q : Hyps Θ) where
 
-atʳ-refl : (s : Sign) → (x : R) → atʳ s x x
-atʳ-refl ⁺ x = ≾ᵣ-refl
-atʳ-refl ⁻ x = ≾ᵣ-refl
+  atᵉ : Sign → EExp Θ → EExp Θ → Set
+  atᵉ ⁺ x y = Q ⊩ x ≾̂ₑ y
+  atᵉ ⁻ x y = Q ⊩ y ≾̂ₑ x
 
-atᵛ-refl : (s : Sign) → (A : VType) → atᵛ s A A
-atᵛ-refl ⁺ A = <:ᵛ-refl A
-atᵛ-refl ⁻ A = <:ᵛ-refl A
+  atʳ : Sign → RExp Θ → RExp Θ → Set
+  atʳ ⁺ x y = Q ⊩ x ≾̂ᵣ y
+  atʳ ⁻ x y = Q ⊩ y ≾̂ᵣ x
 
-atᵉ-· : (s : Sign) → {x x' y y' : E}
-      → atᵉ s x y → atᵉ s x' y' → atᵉ s (x ·ₑ x') (y ·ₑ y')
-atᵉ-· ⁺ p q = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ p) (·ₑ-monoʳ-≾ₑ q)
-atᵉ-· ⁻ p q = ≾ₑ-trans (·ₑ-monoˡ-≾ₑ p) (·ₑ-monoʳ-≾ₑ q)
+  atᵛ : Sign → OVType Θ → OVType Θ → Set
+  atᵛ ⁺ A B = Q ∣ A <:̂ᵛ B
+  atᵛ ⁻ A B = Q ∣ B <:̂ᵛ A
 
-atʳ-· : (s : Sign) → {x x' y y' : R}
-      → atʳ s x y → atʳ s x' y' → atʳ s (x ·ᵣ x') (y ·ᵣ y')
-atʳ-· ⁺ p q = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ p) (·ᵣ-monoʳ-≾ᵣ q)
-atʳ-· ⁻ p q = ≾ᵣ-trans (·ᵣ-monoˡ-≾ᵣ p) (·ᵣ-monoʳ-≾ᵣ q)
+  atᶜ : Sign → OCType Θ → OCType Θ → Set
+  atᶜ ⁺ C D = Q ∣ C <:̂ᶜ D
+  atᶜ ⁻ C D = Q ∣ D <:̂ᶜ C
 
-atᵉ-⊔ : (s : Sign) → {x x' y y' : E}
-      → atᵉ s x y → atᵉ s x' y' → atᵉ s (x ⊔ₑ x') (y ⊔ₑ y')
-atᵉ-⊔ ⁺ p q = ⊔ₑ-mono p q
-atᵉ-⊔ ⁻ p q = ⊔ₑ-mono p q
+module _ {Θ : Scope} {Q : Hyps Θ} where
 
-atʳ-⊔ : (s : Sign) → {x x' y y' : R}
-      → atʳ s x y → atʳ s x' y' → atʳ s (x ⊔ᵣ x') (y ⊔ᵣ y')
-atʳ-⊔ ⁺ p q = ⊔ᵣ-mono p q
-atʳ-⊔ ⁻ p q = ⊔ᵣ-mono p q
+  atᵉ-≡ : (s : Sign) → {x y : EExp Θ} → x ≡ y → atᵉ Q s x y
+  atᵉ-≡ ⁺ refl = ⊩≾̂ₑ-refl
+  atᵉ-≡ ⁻ refl = ⊩≾̂ₑ-refl
 
-atʳ-map : (s : Sign) → {x y : E} → atᵉ s x y → atʳ s (mapᵉ x) (mapᵉ y)
-atʳ-map ⁺ p = map-monotoneᵉ p
-atʳ-map ⁻ p = map-monotoneᵉ p
+  atʳ-≡ : (s : Sign) → {x y : RExp Θ} → x ≡ y → atʳ Q s x y
+  atʳ-≡ ⁺ refl = ⊩≾̂ᵣ-refl
+  atʳ-≡ ⁻ refl = ⊩≾̂ᵣ-refl
 
-atᵛ-|×| : (s : Sign) → {A A' B B' : VType}
-        → atᵛ s A A' → atᵛ s B B' → atᵛ s (A T.|×| B) (A' T.|×| B')
-atᵛ-|×| ⁺ p q = p |×|ₛ q
-atᵛ-|×| ⁻ p q = p |×|ₛ q
+  atᵛ-≡ : (s : Sign) → {A B : OVType Θ} → A ≡ B → atᵛ Q s A B
+  atᵛ-≡ ⁺ {A} refl = <:̂ᵛ-refl A
+  atᵛ-≡ ⁻ {A} refl = <:̂ᵛ-refl A
 
-atᵛ-⇒ : (s : Sign) → {A A' : VType} {C C' : CType}
-      → atᵛ (flipˢ s) A A' → atᶜ s C C' → atᵛ s (A T.⇒ C) (A' T.⇒ C')
-atᵛ-⇒ ⁺ p q = p ⇒ₛ q
-atᵛ-⇒ ⁻ p q = p ⇒ₛ q
+  atᵛ-|×| : (s : Sign) → {A A' B B' : OVType Θ}
+          → atᵛ Q s A A' → atᵛ Q s B B' → atᵛ Q s (A |×| B) (A' |×| B')
+  atᵛ-|×| ⁺ p q = p |×|ₛ q
+  atᵛ-|×| ⁻ p q = p |×|ₛ q
 
-atᵛ-box : (s : Sign) → {ρ ρ' : R} {A A' : VType}
-        → atʳ (flipˢ s) ρ ρ' → atᵛ s A A' → atᵛ s (T.[ ρ ] A) (T.[ ρ' ] A')
-atᵛ-box ⁺ p q = [ p ]ₛ q
-atᵛ-box ⁻ p q = [ p ]ₛ q
+  atᵛ-⇒ : (s : Sign) → {A A' : OVType Θ} {C C' : OCType Θ}
+        → atᵛ Q (flipˢ s) A A' → atᶜ Q s C C' → atᵛ Q s (A ⇒ C) (A' ⇒ C')
+  atᵛ-⇒ ⁺ p q = p ⇒ₛ q
+  atᵛ-⇒ ⁻ p q = p ⇒ₛ q
 
-atᶜ-‼ : (s : Sign) → {A A' : VType} {ε ε' : E}
-      → atᵛ s A A' → atᵉ s ε ε' → atᶜ s (A T.‼ ε) (A' T.‼ ε')
-atᶜ-‼ ⁺ p q = p ‼ₛ q
-atᶜ-‼ ⁻ p q = p ‼ₛ q
+  atᵛ-box : (s : Sign) → {ρ ρ' : RExp Θ} {A A' : OVType Θ}
+          → atʳ Q (flipˢ s) ρ ρ' → atᵛ Q s A A' → atᵛ Q s ([ ρ ] A) ([ ρ' ] A')
+  atᵛ-box ⁺ p q = [ p ]ₛ q
+  atᵛ-box ⁻ p q = [ p ]ₛ q
 
-sbᵉ-e : ∀ {Θ} → EVar Θ → EExp Θ → EExp Θ → EExp Θ
-sbᵉ-e i b (evar j)   = upd i b evar j
-sbᵉ-e i b (econst ε) = econst ε
-sbᵉ-e i b (ε ·̂ₑ ε')  = sbᵉ-e i b ε ·̂ₑ sbᵉ-e i b ε'
-sbᵉ-e i b (ε ⊔̂ₑ ε')  = sbᵉ-e i b ε ⊔̂ₑ sbᵉ-e i b ε'
+  atᶜ-‼ : (s : Sign) → {A A' : OVType Θ} {ε ε' : EExp Θ}
+        → atᵛ Q s A A' → atᵉ Q s ε ε' → atᶜ Q s (A ‼ ε) (A' ‼ ε')
+  atᶜ-‼ ⁺ p q = p ‼ₛ q
+  atᶜ-‼ ⁻ p q = p ‼ₛ q
 
-sbᵉ-r : ∀ {Θ} → EVar Θ → EExp Θ → RExp Θ → RExp Θ
-sbᵉ-r i b (rvar j)   = rvar j
-sbᵉ-r i b (rconst ρ) = rconst ρ
-sbᵉ-r i b (ρ ·̂ᵣ ρ')  = sbᵉ-r i b ρ ·̂ᵣ sbᵉ-r i b ρ'
-sbᵉ-r i b (ρ ⊔̂ᵣ ρ')  = sbᵉ-r i b ρ ⊔̂ᵣ sbᵉ-r i b ρ'
-sbᵉ-r i b ∣ ε ∣̂ᵉ     = ∣ sbᵉ-e i b ε ∣̂ᵉ
+------------------------------------------------------------------------
+-- A substitution lowering every unknown lowers every grade expression
+-- and keeps every ordering whose right side it does not lower. At each
+-- instance it keeps every var-rule disjunction, eternality reading only
+-- the skeleton.
 
-mutual
+module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
+                (lowg : Q ⊩ η₀ ≾ˢ idˢ) (lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β) where
 
-  sbᵉ-v : ∀ {Θ} → EVar Θ → EExp Θ → OVType Θ → OVType Θ
-  sbᵉ-v i b (tvar α)  = tvar α
-  sbᵉ-v i b (Base c)  = Base c
-  sbᵉ-v i b Unit      = Unit
-  sbᵉ-v i b Bool      = Bool
-  sbᵉ-v i b (A |×| B) = sbᵉ-v i b A |×| sbᵉ-v i b B
-  sbᵉ-v i b Empty     = Empty
-  sbᵉ-v i b (A ⇒ C)   = sbᵉ-v i b A ⇒ sbᵉ-c i b C
-  sbᵉ-v i b ([ ρ ] A) = [ sbᵉ-r i b ρ ] sbᵉ-v i b A
+  lowʳ : (ρ : RExp Θ) → Q ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ
+  lowʳ ρ = subst (Q ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) ([id]ʳ ρ) (mono-substᵣ lowg ρ)
 
-  sbᵉ-c : ∀ {Θ} → EVar Θ → EExp Θ → OCType Θ → OCType Θ
-  sbᵉ-c i b (A ‼ ε) = sbᵉ-v i b A ‼ sbᵉ-e i b ε
+  lowᵉ : (ε : EExp Θ) → Q ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε
+  lowᵉ ε = subst (Q ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) ([id]ᵉ ε) (mono-substₑ lowg ε)
 
-lowᵉ : ∀ {Θ} → Grounding Θ → EVar Θ → E → Grounding Θ
-lowᵉ θ i e = grounding (gTy θ) (gR θ) (upd i e (gE θ))
+  fixedʳ : ∀ {ρ} → ρ [ η₀ ]ʳ ≡ ρ → Q ⊩ ρ ≾̂ᵣ ρ [ η₀ ]ʳ
+  fixedʳ e = atʳ-≡ ⁻ e
 
-⟦sbᵉ⟧-e : ∀ {Θ} {θ : Grounding Θ} → (i : EVar Θ) → (b : EExp Θ) → (ε : EExp Θ)
-        → ⟦ sbᵉ-e i b ε ⟧ᵉ θ ≡ ⟦ ε ⟧ᵉ (lowᵉ θ i (⟦ b ⟧ᵉ θ))
-⟦sbᵉ⟧-e {θ = θ} i b (evar j) with i ≟ᶠ j
-... | yes refl = trans (cong (λ x → ⟦ x ⟧ᵉ θ) (upd-≡ i b evar))
-                       (sym (upd-≡ i (⟦ b ⟧ᵉ θ) (gE θ)))
-... | no  ¬p   = trans (cong (λ x → ⟦ x ⟧ᵉ θ) (upd-≢ i j b evar ¬p))
-                       (sym (upd-≢ i j (⟦ b ⟧ᵉ θ) (gE θ) ¬p))
-⟦sbᵉ⟧-e i b (econst ε) = refl
-⟦sbᵉ⟧-e i b (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε')
-⟦sbᵉ⟧-e i b (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε')
+  fixedᵉ : ∀ {ε} → ε [ η₀ ]ᵉ ≡ ε → Q ⊩ ε ≾̂ₑ ε [ η₀ ]ᵉ
+  fixedᵉ e = atᵉ-≡ ⁻ e
 
-⟦sbᵉ⟧-r : ∀ {Θ} {θ : Grounding Θ} → (i : EVar Θ) → (b : EExp Θ) → (ρ : RExp Θ)
-        → ⟦ sbᵉ-r i b ρ ⟧ʳ θ ≡ ⟦ ρ ⟧ʳ (lowᵉ θ i (⟦ b ⟧ᵉ θ))
-⟦sbᵉ⟧-r i b (rvar j)   = refl
-⟦sbᵉ⟧-r i b (rconst ρ) = refl
-⟦sbᵉ⟧-r i b (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ')
-⟦sbᵉ⟧-r i b (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ')
-⟦sbᵉ⟧-r i b ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦sbᵉ⟧-e i b ε)
+  keep-ordʳ : (l : List (RExp Θ × RExp Θ)) → (∀ {p} → p ∈ l → p ∈ ordᵣ Q)
+            → (∀ {ρ ρ'} → (ρ , ρ') ∈ l → Q ⊩ ρ' ≾̂ᵣ ρ' [ η₀ ]ʳ)
+            → ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) l → Q ⊩ ρ ≾̂ᵣ ρ'
+  keep-ordʳ l k r m with ∈-map⁻ (mapᵖ (_[ η₀ ]ʳ)) m
+  ... | (ρ₀ , ρ₀') , m₀ , refl = transᵣ (lowʳ ρ₀) (transᵣ (hypᵣ (k m₀)) (r m₀))
 
-mutual
+  keep-ordᵉ : (l : List (EExp Θ × EExp Θ)) → (∀ {p} → p ∈ l → p ∈ ordₑ Q)
+            → (∀ {ε ε'} → (ε , ε') ∈ l → Q ⊩ ε' ≾̂ₑ ε' [ η₀ ]ᵉ)
+            → ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ η₀ ]ᵉ)) l → Q ⊩ ε ≾̂ₑ ε'
+  keep-ordᵉ l k r m with ∈-map⁻ (mapᵖ (_[ η₀ ]ᵉ)) m
+  ... | (ε₀ , ε₀') , m₀ , refl = transₑ (lowᵉ ε₀) (transₑ (hypₑ (k m₀)) (r m₀))
 
-  ⟦sbᵉ⟧-v : ∀ {Θ} {θ : Grounding Θ} → (i : EVar Θ) → (b : EExp Θ) → (A : OVType Θ)
-          → ⟦ sbᵉ-v i b A ⟧ᵛ θ ≡ ⟦ A ⟧ᵛ (lowᵉ θ i (⟦ b ⟧ᵉ θ))
-  ⟦sbᵉ⟧-v i b (tvar α)  = refl
-  ⟦sbᵉ⟧-v i b (Base c)  = refl
-  ⟦sbᵉ⟧-v i b Unit      = refl
-  ⟦sbᵉ⟧-v i b Bool      = refl
-  ⟦sbᵉ⟧-v i b (A |×| B) = cong₂ T._|×|_ (⟦sbᵉ⟧-v i b A) (⟦sbᵉ⟧-v i b B)
-  ⟦sbᵉ⟧-v i b Empty     = refl
-  ⟦sbᵉ⟧-v i b (A ⇒ C)   = cong₂ T._⇒_ (⟦sbᵉ⟧-v i b A) (⟦sbᵉ⟧-c i b C)
-  ⟦sbᵉ⟧-v i b ([ ρ ] A) = cong₂ T.[_]_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-v i b A)
+  keep-disj : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ]
+            → ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q)
+            → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+  keep-disj δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m
+  ... | (A₀ , ρ₀) , m₀ , refl =
+        VarOK-∅-mono et (⊩-substᵣ h (lowʳ ρ₀)) (⊩disj h m₀)
+    where
+      et : ∅ᴴ ⊩ᴱ A₀ [ δ ]ᵛ → ∅ᴴ ⊩ᴱ A₀ [ η₀ ]ᵛ [ δ ]ᵛ
+      et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
+                   (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
-  ⟦sbᵉ⟧-c : ∀ {Θ} {θ : Grounding Θ} → (i : EVar Θ) → (b : EExp Θ) → (C : OCType Θ)
-          → ⟦ sbᵉ-c i b C ⟧ᶜ θ ≡ ⟦ C ⟧ᶜ (lowᵉ θ i (⟦ b ⟧ᵉ θ))
-  ⟦sbᵉ⟧-c i b (A ‼ ε) = cong₂ T._‼_ (⟦sbᵉ⟧-v i b A) (⟦sbᵉ⟧-e i b ε)
+-- A substitution fixing the type variables and, under the hypotheses,
+-- both below and above the identity moves no type
 
--- An unknown absent from an expression is invisible to a change of its
--- value.
+module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
+             (lowg : Q ⊩ η₀ ≾ˢ idˢ) (hig : Q ⊩ idˢ ≾ˢ η₀)
+             (tv : ∀ β → sTy η₀ β ≡ tvar β) where
 
-invᵉ-e : ∀ {Θ} {θ : Grounding Θ} {e₀ : E} → (i : EVar Θ) → (ε : EExp Θ)
-       → below (polₑ-e i ⁻ ε) ≡ false → ⟦ ε ⟧ᵉ (lowᵉ θ i e₀) ≡ ⟦ ε ⟧ᵉ θ
-invᵉ-e {θ = θ} {e₀} i (evar j) q = upd-≢ i j e₀ (gE θ) (⌊⌋-false q)
-invᵉ-e i (econst ε) q = refl
-invᵉ-e i (ε ·̂ₑ ε')  q =
-  cong₂ _·ₑ_ (invᵉ-e i ε (proj₁ d)) (invᵉ-e i ε' (proj₂ d))
+  open Lowering {Q = Q} η₀ lowg
+         (λ β → subst (λ x → Q ∣ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ)) public
+
+  raiseʳ : (ρ : RExp Θ) → Q ⊩ ρ ≾̂ᵣ ρ [ η₀ ]ʳ
+  raiseʳ ρ = subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ η₀ ]ʳ) ([id]ʳ ρ) (mono-substᵣ hig ρ)
+
+  raiseᵉ : (ε : EExp Θ) → Q ⊩ ε ≾̂ₑ ε [ η₀ ]ᵉ
+  raiseᵉ ε = subst (λ x → Q ⊩ x ≾̂ₑ ε [ η₀ ]ᵉ) ([id]ᵉ ε) (mono-substₑ hig ε)
+
+  sameʳ : (s : Sign) → (ρ : RExp Θ) → atʳ Q s (ρ [ η₀ ]ʳ) ρ
+  sameʳ ⁺ ρ = lowʳ ρ
+  sameʳ ⁻ ρ = raiseʳ ρ
+
+  sameᵉ : (s : Sign) → (ε : EExp Θ) → atᵉ Q s (ε [ η₀ ]ᵉ) ε
+  sameᵉ ⁺ ε = lowᵉ ε
+  sameᵉ ⁻ ε = raiseᵉ ε
+
+  mutual
+
+    sameᵛ : (s : Sign) → (A : OVType Θ) → atᵛ Q s (A [ η₀ ]ᵛ) A
+    sameᵛ s (tvar β)  = atᵛ-≡ s (tv β)
+    sameᵛ s (Base c)  = atᵛ-≡ s refl
+    sameᵛ s Unit      = atᵛ-≡ s refl
+    sameᵛ s Bool      = atᵛ-≡ s refl
+    sameᵛ s (A |×| B) = atᵛ-|×| s (sameᵛ s A) (sameᵛ s B)
+    sameᵛ s Empty     = atᵛ-≡ s refl
+    sameᵛ s (A ⇒ C)   = atᵛ-⇒ s (sameᵛ (flipˢ s) A) (sameᶜ s C)
+    sameᵛ s ([ ρ ] A) = atᵛ-box s (sameʳ (flipˢ s) ρ) (sameᵛ s A)
+
+    sameᶜ : (s : Sign) → (C : OCType Θ) → atᶜ Q s (C [ η₀ ]ᶜ) C
+    sameᶜ s (A ‼ ε) = atᶜ-‼ s (sameᵛ s A) (sameᵉ s ε)
+
+------------------------------------------------------------------------
+-- The join of a non-empty list of bounds, its head named so that a
+-- lone bound is its own join and folded to the left so that the join
+-- reads in the order the bounds were met, and its least upper bound
+
+joinₑ : ∀ {Θ} → EExp Θ → List (EExp Θ) → EExp Θ
+joinₑ ε []        = ε
+joinₑ ε (ε' ∷ εs) = joinₑ (ε ⊔̂ₑ ε') εs
+
+joinₑ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+          → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ joinₑ x₀ xs [ τ ]ᵉ
+joinₑ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ₑ-refl
+joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transₑ ⊔-ubˡₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
+joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
+  transₑ ⊔-ubʳₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
+joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (there m)
+
+joinₑ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : EExp Ψ'} → (τ : Subst Ψ Ψ')
+           → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
+           → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ y)
+           → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ y
+joinₑ-lub⊩ τ x₀ []        k = k (here refl)
+joinₑ-lub⊩ τ x₀ (x₁ ∷ xs) k =
+  joinₑ-lub⊩ τ (x₀ ⊔̂ₑ x₁) xs
+    (λ { (here refl) → ⊔-lubₑ (k (here refl)) (k (there (here refl)))
+       ; (there m)   → k (there (there m)) })
+
+joinₑ-below : ∀ {Θ} → (i : EVar Θ) → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
+            → below (polₑ-e i ⁻ (joinₑ ε₀ εs)) ≡ false
+            → ∀ {ε} → ε ∈ ε₀ ∷ εs → below (polₑ-e i ⁻ ε) ≡ false
+joinₑ-below i ε₀ []        q (here refl) = q
+joinₑ-below i ε₀ (ε₁ ∷ εs) q (here refl) =
+  proj₁ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
+                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
+joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (here refl)) =
+  proj₂ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
+                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
+joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (there m)) =
+  joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (there m)
+
+
+-- An unknown absent from an expression is fixed by updating it
+
+absᵉ-e : ∀ {Θ} → (i : EVar Θ) → (b : EExp Θ) → (ε : EExp Θ)
+       → below (polₑ-e i ⁻ ε) ≡ false → ε [ updᵉ i b ]ᵉ ≡ ε
+absᵉ-e i b (evar j)   q = updᵉ-miss i b j q
+absᵉ-e i b (econst c) q = refl
+absᵉ-e i b (ε ·̂ₑ ε')  q = cong₂ _·̂ₑ_ (absᵉ-e i b ε (proj₁ d)) (absᵉ-e i b ε' (proj₂ d))
   where d = below-∪ (polₑ-e i ⁻ ε) (polₑ-e i ⁻ ε') q
-invᵉ-e i (ε ⊔̂ₑ ε')  q =
-  cong₂ _⊔ₑ_ (invᵉ-e i ε (proj₁ d)) (invᵉ-e i ε' (proj₂ d))
+absᵉ-e i b (ε ⊔̂ₑ ε')  q = cong₂ _⊔̂ₑ_ (absᵉ-e i b ε (proj₁ d)) (absᵉ-e i b ε' (proj₂ d))
   where d = below-∪ (polₑ-e i ⁻ ε) (polₑ-e i ⁻ ε') q
 
--- Lowering an unknown lowers whatever has no occurrence of it below
+absᵉ-r : ∀ {Θ} → (i : EVar Θ) → (b : EExp Θ) → (ρ : RExp Θ)
+       → below (polₑ-r i ⁻ ρ) ≡ false → ρ [ updᵉ i b ]ʳ ≡ ρ
+absᵉ-r i b (rvar j)   q = refl
+absᵉ-r i b (rconst c) q = refl
+absᵉ-r i b (ρ ·̂ᵣ ρ')  q = cong₂ _·̂ᵣ_ (absᵉ-r i b ρ (proj₁ d)) (absᵉ-r i b ρ' (proj₂ d))
+  where d = below-∪ (polₑ-r i ⁻ ρ) (polₑ-r i ⁻ ρ') q
+absᵉ-r i b (ρ ⊔̂ᵣ ρ')  q = cong₂ _⊔̂ᵣ_ (absᵉ-r i b ρ (proj₁ d)) (absᵉ-r i b ρ' (proj₂ d))
+  where d = below-∪ (polₑ-r i ⁻ ρ) (polₑ-r i ⁻ ρ') q
+absᵉ-r i b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (absᵉ-e i b ε q)
 
-module _ {Θ : Scope} (θ : Grounding Θ) (i : EVar Θ) (e₀ : E)
-         (le : e₀ ≾ₑ gE θ i) where
+-- Lowering an effect unknown lowers whatever has no occurrence of it
+-- below
 
-  private
-    θ⁻ : Grounding Θ
-    θ⁻ = lowᵉ θ i e₀
+module Monoᵉ {Θ : Scope} {Q : Hyps Θ} (i : EVar Θ) (b : EExp Θ)
+             (lowg : Q ⊩ updᵉ i b ≾ˢ idˢ) where
+
+  open Lowering {Q = Q} (updᵉ i b) lowg (λ β → tvarₛ reflᵗᵛ)
 
   monoᵉ-e : (s : Sign) → (ε : EExp Θ) → below (polₑ-e i s ε) ≡ false
-          → atᵉ s (⟦ ε ⟧ᵉ θ⁻) (⟦ ε ⟧ᵉ θ)
-  monoᵉ-e ⁺ (evar j) q with i ≟ᶠ j
-  ... | yes refl = subst (λ x → x ≾ₑ gE θ i) (sym (upd-≡ i e₀ (gE θ))) le
-  ... | no  ¬p   = subst (λ x → x ≾ₑ gE θ j) (sym (upd-≢ i j e₀ (gE θ) ¬p)) ≾ₑ-refl
-  monoᵉ-e ⁻ (evar j) q =
-    ≾ₑ-reflexive (sym (upd-≢ i j e₀ (gE θ) (⌊⌋-false q)))
-  monoᵉ-e s (econst ε) q = atᵉ-refl s ε
-  monoᵉ-e s (ε ·̂ₑ ε')  q =
-    atᵉ-· s (monoᵉ-e s ε (proj₁ d)) (monoᵉ-e s ε' (proj₂ d))
-    where d = below-∪ (polₑ-e i s ε) (polₑ-e i s ε') q
-  monoᵉ-e s (ε ⊔̂ₑ ε')  q =
-    atᵉ-⊔ s (monoᵉ-e s ε (proj₁ d)) (monoᵉ-e s ε' (proj₂ d))
-    where d = below-∪ (polₑ-e i s ε) (polₑ-e i s ε') q
+          → atᵉ Q s (ε [ updᵉ i b ]ᵉ) ε
+  monoᵉ-e ⁺ ε q = lowᵉ ε
+  monoᵉ-e ⁻ ε q = atᵉ-≡ ⁻ (absᵉ-e i b ε q)
 
   monoᵉ-r : (s : Sign) → (ρ : RExp Θ) → below (polₑ-r i s ρ) ≡ false
-          → atʳ s (⟦ ρ ⟧ʳ θ⁻) (⟦ ρ ⟧ʳ θ)
-  monoᵉ-r s (rvar j)   q = atʳ-refl s (gR θ j)
-  monoᵉ-r s (rconst ρ) q = atʳ-refl s ρ
-  monoᵉ-r s (ρ ·̂ᵣ ρ')  q =
-    atʳ-· s (monoᵉ-r s ρ (proj₁ d)) (monoᵉ-r s ρ' (proj₂ d))
-    where d = below-∪ (polₑ-r i s ρ) (polₑ-r i s ρ') q
-  monoᵉ-r s (ρ ⊔̂ᵣ ρ')  q =
-    atʳ-⊔ s (monoᵉ-r s ρ (proj₁ d)) (monoᵉ-r s ρ' (proj₂ d))
-    where d = below-∪ (polₑ-r i s ρ) (polₑ-r i s ρ') q
-  monoᵉ-r s ∣ ε ∣̂ᵉ     q = atʳ-map s (monoᵉ-e s ε q)
+          → atʳ Q s (ρ [ updᵉ i b ]ʳ) ρ
+  monoᵉ-r ⁺ ρ q = lowʳ ρ
+  monoᵉ-r ⁻ ρ q = atʳ-≡ ⁻ (absᵉ-r i b ρ q)
 
   mutual
 
     monoᵉ-v : (s : Sign) → (A : OVType Θ) → below (polₑ-v i s A) ≡ false
-            → atᵛ s (⟦ A ⟧ᵛ θ⁻) (⟦ A ⟧ᵛ θ)
-    monoᵉ-v s (tvar α)  q = atᵛ-refl s (gTy θ α)
-    monoᵉ-v s (Base c)  q = atᵛ-refl s (T.Base c)
-    monoᵉ-v s Unit      q = atᵛ-refl s T.Unit
-    monoᵉ-v s Bool      q = atᵛ-refl s T.Bool
+            → atᵛ Q s (A [ updᵉ i b ]ᵛ) A
+    monoᵉ-v s (tvar α)  q = atᵛ-≡ s refl
+    monoᵉ-v s (Base c)  q = atᵛ-≡ s refl
+    monoᵉ-v s Unit      q = atᵛ-≡ s refl
+    monoᵉ-v s Bool      q = atᵛ-≡ s refl
     monoᵉ-v s (A |×| B) q =
       atᵛ-|×| s (monoᵉ-v s A (proj₁ d)) (monoᵉ-v s B (proj₂ d))
       where d = below-∪ (polₑ-v i s A) (polₑ-v i s B) q
-    monoᵉ-v s Empty     q = atᵛ-refl s T.Empty
+    monoᵉ-v s Empty     q = atᵛ-≡ s refl
     monoᵉ-v s (A ⇒ C)   q =
       atᵛ-⇒ s (monoᵉ-v (flipˢ s) A (proj₁ d)) (monoᵉ-c s C (proj₂ d))
       where d = below-∪ (polₑ-v i (flipˢ s) A) (polₑ-c i s C) q
@@ -324,7 +373,7 @@ module _ {Θ : Scope} (θ : Grounding Θ) (i : EVar Θ) (e₀ : E)
       where d = below-∪ (polₑ-r i (flipˢ s) ρ) (polₑ-v i s A) q
 
     monoᵉ-c : (s : Sign) → (C : OCType Θ) → below (polₑ-c i s C) ≡ false
-            → atᶜ s (⟦ C ⟧ᶜ θ⁻) (⟦ C ⟧ᶜ θ)
+            → atᶜ Q s (C [ updᵉ i b ]ᶜ) C
     monoᵉ-c s (A ‼ ε) q =
       atᶜ-‼ s (monoᵉ-v s A (proj₁ d)) (monoᵉ-e s ε (proj₂ d))
       where d = below-∪ (polₑ-v i s A) (polₑ-e i s ε) q
@@ -361,77 +410,6 @@ polsₑ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsₑ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsₑ-disj-∈ i l (proj₂ (below-∪ (polₑ-r i ⁺ ρ₀) (polsₑ-disj i l) q)) m
 
--- One step: the reported type, the hypothesis set, and the three facts
--- relating them
-
-record Elim {Θ : Scope} (C : OCType Θ) (Q : Hyps Θ) : Set where
-  constructor mkElim
-  field
-    Ĉ     : OCType Θ
-    Q̂     : Hyps Θ
-    keep  : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q̂
-    real  : (θ : Grounding Θ) → θ ⊨ᴴ Q̂
-          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ ⟧ᶜ θ))
-    princ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
-
-open Elim public
-
-idElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
-idElim C Q = mkElim C Q (λ θ h → h) (λ θ h → θ , h , refl)
-                        (λ θ h → <:ᶜ-refl (⟦ C ⟧ᶜ θ))
-
-infixl 5 _⨾ᴱ_
-
-_⨾ᴱ_ : ∀ {Θ} {C : OCType Θ} {Q : Hyps Θ} → (r : Elim C Q)
-     → Elim (Ĉ r) (Q̂ r) → Elim C Q
-_⨾ᴱ_ r s = mkElim (Ĉ s) (Q̂ s)
-  (λ θ h → keep s θ (keep r θ h))
-  (λ θ h → let t₁ = real s θ h
-               t₂ = real r (proj₁ t₁) (proj₁ (proj₂ t₁))
-           in proj₁ t₂ , proj₁ (proj₂ t₂) , trans (proj₂ (proj₂ t₂)) (proj₂ (proj₂ t₁)))
-  (λ θ h → <:ᶜ-trans (princ s θ (keep r θ h)) (princ r θ h))
-
--- The join of a non-empty list of bounds, its head named so that a
--- lone bound is its own join and folded to the left so that the join
--- reads in the order the bounds were met.
-
-joinₑ : ∀ {Θ} → EExp Θ → List (EExp Θ) → EExp Θ
-joinₑ ε []        = ε
-joinₑ ε (ε' ∷ εs) = joinₑ (ε ⊔̂ₑ ε') εs
-
-joinₑ-ub : ∀ {Θ} {θ : Grounding Θ} → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
-         → ∀ {ε} → ε ∈ ε₀ ∷ εs → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ joinₑ ε₀ εs ⟧ᵉ θ
-joinₑ-ub ε₀ []        (here refl) = ≾ₑ-refl
-joinₑ-ub {θ = θ} ε₀ (ε₁ ∷ εs) (here refl) =
-  ≾ₑ-trans (⊔ₑ-ubˡ (⟦ ε₀ ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ))
-           (joinₑ-ub (ε₀ ⊔̂ₑ ε₁) εs (here refl))
-joinₑ-ub {θ = θ} ε₀ (ε₁ ∷ εs) (there (here refl)) =
-  ≾ₑ-trans (⊔ₑ-ubʳ (⟦ ε₀ ⟧ᵉ θ) (⟦ ε₁ ⟧ᵉ θ))
-           (joinₑ-ub (ε₀ ⊔̂ₑ ε₁) εs (here refl))
-joinₑ-ub ε₀ (ε₁ ∷ εs) (there (there m)) = joinₑ-ub (ε₀ ⊔̂ₑ ε₁) εs (there m)
-
-joinₑ-lub : ∀ {Θ} {θ : Grounding Θ} {x : E} → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
-          → (∀ {ε} → ε ∈ ε₀ ∷ εs → ⟦ ε ⟧ᵉ θ ≾ₑ x)
-          → ⟦ joinₑ ε₀ εs ⟧ᵉ θ ≾ₑ x
-joinₑ-lub ε₀ []        k = k (here refl)
-joinₑ-lub ε₀ (ε₁ ∷ εs) k =
-  joinₑ-lub (ε₀ ⊔̂ₑ ε₁) εs
-    (λ { (here refl) → ⊔ₑ-lub (k (here refl)) (k (there (here refl)))
-       ; (there m)   → k (there (there m)) })
-
-joinₑ-below : ∀ {Θ} → (i : EVar Θ) → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
-            → below (polₑ-e i ⁻ (joinₑ ε₀ εs)) ≡ false
-            → ∀ {ε} → ε ∈ ε₀ ∷ εs → below (polₑ-e i ⁻ ε) ≡ false
-joinₑ-below i ε₀ []        q (here refl) = q
-joinₑ-below i ε₀ (ε₁ ∷ εs) q (here refl) =
-  proj₁ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
-                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
-joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (here refl)) =
-  proj₂ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
-                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
-joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (there m)) =
-  joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (there m)
-
 -- The hypotheses bounding an unknown below, and the rest
 
 record Splitₑ {Θ : Scope} (i : EVar Θ) (l : List (EExp Θ × EExp Θ)) : Set where
@@ -441,7 +419,7 @@ record Splitₑ {Θ : Scope} (i : EVar Θ) (l : List (EExp Θ × EExp Θ)) : Set
     bnds  : List (EExp Θ)
     rest  : List (EExp Θ × EExp Θ)
     mem   : ∀ {ε} → ε ∈ bnd ∷ bnds → (ε , evar i) ∈ l
-    sub   : ∀ {p} → p ∈ rest → p ∈ l
+    subₑ  : ∀ {p} → p ∈ rest → p ∈ l
     cases : ∀ {ε ε'} → (ε , ε') ∈ l
           → ((ε ∈ bnd ∷ bnds) × (ε' ≡ evar i)) ⊎ ((ε , ε') ∈ rest)
 
@@ -460,7 +438,7 @@ consₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀ ε₀'} 
 consₑ {ε₀ = ε₀} {ε₀'} s =
   split (bnd s) (bnds s) ((ε₀ , ε₀') ∷ rest s)
         (λ m → there (mem s m))
-        (λ { (here refl) → here refl ; (there m) → there (sub s m) })
+        (λ { (here refl) → here refl ; (there m) → there (subₑ s m) })
         (λ { (here refl) → inj₂ (here refl)
            ; (there m)   → [ inj₁ , (λ r → inj₂ (there r)) ]′ (cases s m) })
 
@@ -469,7 +447,7 @@ moreₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀} → Spl
 moreₑ {ε₀ = ε₀} s =
   split ε₀ (bnd s ∷ bnds s) (rest s)
         (λ { (here refl) → here refl ; (there m) → there (mem s m) })
-        (λ m → there (sub s m))
+        (λ m → there (subₑ s m))
         (λ { (here refl) → inj₁ (here refl , refl)
            ; (there m)   → [ (λ { (mb , e) → inj₁ (there mb , e) })
                            , inj₂ ]′ (cases s m) })
@@ -507,135 +485,58 @@ stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
       → below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (rest s) (disj Q)) i) ≡ false
       → below (polₑ-c i ⁺ C) ≡ false
       → Elim C Q
-stepᵉ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+stepᵉ {Θ} C Q i s cb cq cc =
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+         (λ δ h → <:̂ᶜ-subst h (Monoᵉ.monoᵉ-c i b lowg ⁺ C cc))
   where
     b : EExp Θ
     b = lubₑ s
 
-    Ĉ₀ : OCType Θ
-    Ĉ₀ = sbᵉ-c i b C
+    η₀ : Subst Θ Θ
+    η₀ = updᵉ i b
 
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
-              (map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q))
-              (map (mapᵖ (sbᵉ-e i b)) (rest s))
-              (map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q))
+              (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) (rest s))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
     d₁ = below-∪ (polsₑ-ordᵣ i (ordᵣ Q))
                  (polsₑ-ordₑ i (rest s) ∪ᴾ polsₑ-disj i (disj Q)) cq
     d₂ = below-∪ (polsₑ-ordₑ i (rest s)) (polsₑ-disj i (disj Q)) (proj₂ d₁)
 
-    cR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q
-       → (below (polₑ-r i ⁺ ρ) ≡ false) × (below (polₑ-r i ⁻ ρ') ≡ false)
-    cR = polsₑ-ordᵣ-∈ i (ordᵣ Q) (proj₁ d₁)
+    cR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → below (polₑ-r i ⁻ ρ') ≡ false
+    cR m = proj₂ (polsₑ-ordᵣ-∈ i (ordᵣ Q) (proj₁ d₁) m)
 
-    cE : ∀ {ε ε'} → (ε , ε') ∈ rest s
-       → (below (polₑ-e i ⁺ ε) ≡ false) × (below (polₑ-e i ⁻ ε') ≡ false)
-    cE = polsₑ-ordₑ-∈ i (rest s) (proj₁ d₂)
+    cE : ∀ {ε ε'} → (ε , ε') ∈ rest s → below (polₑ-e i ⁻ ε') ≡ false
+    cE m = proj₂ (polsₑ-ordₑ-∈ i (rest s) (proj₁ d₂) m)
 
-    cD : ∀ {A ρ} → (A , ρ) ∈ disj Q → below (polₑ-r i ⁺ ρ) ≡ false
-    cD = polsₑ-disj-∈ i (disj Q) (proj₂ d₂)
+    lowg : Q ⊩ η₀ ≾ˢ idˢ
+    lowg = ≾ˢ-idˡ (updᵉ-below i b idˢ
+             (joinₑ-lub⊩ idˢ (bnd s) (bnds s)
+               (λ {x} m → subst (λ y → Q ⊩ y ≾̂ₑ evar i) (sym ([id]ᵉ x)) (hypₑ (mem s m)))))
 
-    -- membership of an image
+    open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
 
-    ∈-mapᵖʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q
-            → (sbᵉ-r i b ρ , sbᵉ-r i b ρ') ∈ map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q)
-    ∈-mapᵖʳ = ∈-map⁺ (mapᵖ (sbᵉ-r i b))
-
-    ∈-mapᵖᵉ : ∀ {ε ε'} → (ε , ε') ∈ rest s
-            → (sbᵉ-e i b ε , sbᵉ-e i b ε') ∈ map (mapᵖ (sbᵉ-e i b)) (rest s)
-    ∈-mapᵖᵉ = ∈-map⁺ (mapᵖ (sbᵉ-e i b))
-
-    ∈-mapᵈ' : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → (sbᵉ-v i b A , sbᵉ-r i b ρ) ∈ map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q)
-    ∈-mapᵈ' = ∈-map⁺ (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b))
-
-    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
-    keep₀ θ h = mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj
+    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+                 (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)) ordE
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
-        e₀ : E
-        e₀ = ⟦ b ⟧ᵉ θ
-
-        le : e₀ ≾ₑ gE θ i
-        le = joinₑ-lub (bnd s) (bnds s) (λ m → ordEOK h (mem s m))
-
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q)
-             → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-        ordR m = go (ordᵣ Q) (λ q → q) m
-          where
-            go : (l : List (RExp Θ × RExp Θ)) → (∀ {p} → p ∈ l → p ∈ ordᵣ Q)
-               → ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (sbᵉ-r i b)) l
-               → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-            go ((ρ₀ , ρ₀') ∷ l) k (here refl) =
-              subst₂ _≾ᵣ_ (sym (⟦sbᵉ⟧-r i b ρ₀)) (sym (⟦sbᵉ⟧-r i b ρ₀'))
-                (≾ᵣ-trans (monoᵉ-r θ i e₀ le ⁺ ρ₀ (proj₁ (cR (k (here refl)))))
-                (≾ᵣ-trans (ordROK h (k (here refl)))
-                          (monoᵉ-r θ i e₀ le ⁻ ρ₀' (proj₂ (cR (k (here refl)))))))
-            go ((ρ₀ , ρ₀') ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (sbᵉ-e i b)) (rest s)
-             → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
-        ordE m = go (rest s) (λ q → q) m
-          where
-            go : (l : List (EExp Θ × EExp Θ)) → (∀ {p} → p ∈ l → p ∈ rest s)
-               → ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (sbᵉ-e i b)) l
-               → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
-            go ((ε₀ , ε₀') ∷ l) k (here refl) =
-              subst₂ _≾ₑ_ (sym (⟦sbᵉ⟧-e i b ε₀)) (sym (⟦sbᵉ⟧-e i b ε₀'))
-                (≾ₑ-trans (monoᵉ-e θ i e₀ le ⁺ ε₀ (proj₁ (cE (k (here refl)))))
-                (≾ₑ-trans (ordEOK h (sub s (k (here refl))))
-                          (monoᵉ-e θ i e₀ le ⁻ ε₀' (proj₂ (cE (k (here refl)))))))
-            go ((ε₀ , ε₀') ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q)
-            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-        dsj m = go (disj Q) (λ q → q) m
-          where
-            go : (l : List (OVType Θ × RExp Θ)) → (∀ {p} → p ∈ l → p ∈ disj Q)
-               → ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) l
-               → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-            go ((A₀ , ρ₀) ∷ l) k (here refl) =
-              [ (λ et → inj₁ (subst Eternal (sym (⟦sbᵉ⟧-v i b A₀))
-                                    (Et-<: (λ γ → <:ᵛ-refl _) A₀ et)))
-              , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (sym (⟦sbᵉ⟧-r i b ρ₀))
-                                    (≾ᵣ-trans (monoᵉ-r θ i e₀ le ⁺ ρ₀
-                                                 (cD (k (here refl)))) lu)))
-              ]′ (disjOK h (k (here refl)))
-            go ((A₀ , ρ₀) ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
-          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
-    real₀ θ h = θ' , mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj , sym (⟦sbᵉ⟧-c i b C)
-      where
-        θ' : Grounding Θ
-        θ' = lowᵉ θ i (⟦ b ⟧ᵉ θ)
-
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
-        ordR {ρ} {ρ'} m =
-          subst₂ _≾ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ') (ordROK h (∈-mapᵖʳ m))
-
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
+        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
         ordE {ε} {ε'} m with cases s m
         ... | inj₁ (mb , refl) =
-              subst₂ _≾ₑ_ (sym (invᵉ-e i ε (joinₑ-below i (bnd s) (bnds s) cb mb)))
-                          (sym (upd-≡ i (⟦ b ⟧ᵉ θ) (gE θ)))
-                     (joinₑ-ub {θ = θ} (bnd s) (bnds s) mb)
-        ... | inj₂ m' =
-              subst₂ _≾ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε') (ordEOK h (∈-mapᵖᵉ m'))
+              subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) (trans (absᵉ-e i b b cb) (sym (updᵉ-hit i b)))
+                    (joinₑ-ub⊩ η₀ (bnd s) (bnds s) mb)
+        ... | inj₂ m' = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
 
-        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
-        dsj {A} {ρ} m =
-          [ (λ et → inj₁ (subst Eternal (⟦sbᵉ⟧-v i b A) et))
-          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (⟦sbᵉ⟧-r i b ρ) lu))
-          ]′ (disjOK h (∈-mapᵈ' m))
-
-    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
-    princ₀ θ h =
-      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (⟦sbᵉ⟧-c i b C))
-            (monoᵉ-c θ i (⟦ b ⟧ᵉ θ)
-                     (joinₑ-lub (bnd s) (bnds s) (λ m → ordEOK h (mem s m)))
-                     ⁺ C cc)
+    keep₀ : Q ⊨ᴴ Q₀
+    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+                 (keep-ordʳ (ordᵣ Q) (λ m → m)
+                            (λ {ρ} {ρ'} m → fixedʳ (absᵉ-r i b ρ' (cR m))))
+                 (keep-ordᵉ (rest s) (subₑ s)
+                            (λ {ε} {ε'} m → fixedᵉ (absᵉ-e i b ε' (cE m))))
+                 keep-disj
 
 -- The search: one unknown at a time, the first that qualifies
 
@@ -662,116 +563,41 @@ firstᵉ C Q (i ∷ is) with stepᵉ? C Q i
 -- Effect expressions carry no resource unknown, so only the resource
 -- expressions and the box grades of a type move.
 
-sbʳ-r : ∀ {Θ} → RVar Θ → RExp Θ → RExp Θ → RExp Θ
-sbʳ-r i b (rvar j)   = upd i b rvar j
-sbʳ-r i b (rconst ρ) = rconst ρ
-sbʳ-r i b (ρ ·̂ᵣ ρ')  = sbʳ-r i b ρ ·̂ᵣ sbʳ-r i b ρ'
-sbʳ-r i b (ρ ⊔̂ᵣ ρ')  = sbʳ-r i b ρ ⊔̂ᵣ sbʳ-r i b ρ'
-sbʳ-r i b ∣ ε ∣̂ᵉ     = ∣ ε ∣̂ᵉ
-
-mutual
-
-  sbʳ-v : ∀ {Θ} → RVar Θ → RExp Θ → OVType Θ → OVType Θ
-  sbʳ-v i b (tvar α)  = tvar α
-  sbʳ-v i b (Base c)  = Base c
-  sbʳ-v i b Unit      = Unit
-  sbʳ-v i b Bool      = Bool
-  sbʳ-v i b (A |×| B) = sbʳ-v i b A |×| sbʳ-v i b B
-  sbʳ-v i b Empty     = Empty
-  sbʳ-v i b (A ⇒ C)   = sbʳ-v i b A ⇒ sbʳ-c i b C
-  sbʳ-v i b ([ ρ ] A) = [ sbʳ-r i b ρ ] sbʳ-v i b A
-
-  sbʳ-c : ∀ {Θ} → RVar Θ → RExp Θ → OCType Θ → OCType Θ
-  sbʳ-c i b (A ‼ ε) = sbʳ-v i b A ‼ ε
-
-lowʳ : ∀ {Θ} → Grounding Θ → RVar Θ → R → Grounding Θ
-lowʳ θ i ρ = grounding (gTy θ) (upd i ρ (gR θ)) (gE θ)
-
-⟦lowʳ⟧-e : ∀ {Θ} {θ : Grounding Θ} {ρ₀ : R} → (i : RVar Θ) → (ε : EExp Θ)
-         → ⟦ ε ⟧ᵉ (lowʳ θ i ρ₀) ≡ ⟦ ε ⟧ᵉ θ
-⟦lowʳ⟧-e i (evar j)   = refl
-⟦lowʳ⟧-e i (econst ε) = refl
-⟦lowʳ⟧-e i (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦lowʳ⟧-e i ε) (⟦lowʳ⟧-e i ε')
-⟦lowʳ⟧-e i (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦lowʳ⟧-e i ε) (⟦lowʳ⟧-e i ε')
-
-⟦sbʳ⟧-r : ∀ {Θ} {θ : Grounding Θ} → (i : RVar Θ) → (b : RExp Θ) → (ρ : RExp Θ)
-        → ⟦ sbʳ-r i b ρ ⟧ʳ θ ≡ ⟦ ρ ⟧ʳ (lowʳ θ i (⟦ b ⟧ʳ θ))
-⟦sbʳ⟧-r {θ = θ} i b (rvar j) with i ≟ᶠ j
-... | yes refl = trans (cong (λ x → ⟦ x ⟧ʳ θ) (upd-≡ i b rvar))
-                       (sym (upd-≡ i (⟦ b ⟧ʳ θ) (gR θ)))
-... | no  ¬p   = trans (cong (λ x → ⟦ x ⟧ʳ θ) (upd-≢ i j b rvar ¬p))
-                       (sym (upd-≢ i j (⟦ b ⟧ʳ θ) (gR θ) ¬p))
-⟦sbʳ⟧-r i b (rconst ρ) = refl
-⟦sbʳ⟧-r i b (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ')
-⟦sbʳ⟧-r i b (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ')
-⟦sbʳ⟧-r i b ∣ ε ∣̂ᵉ     = cong mapᵉ (sym (⟦lowʳ⟧-e i ε))
-
-mutual
-
-  ⟦sbʳ⟧-v : ∀ {Θ} {θ : Grounding Θ} → (i : RVar Θ) → (b : RExp Θ) → (A : OVType Θ)
-          → ⟦ sbʳ-v i b A ⟧ᵛ θ ≡ ⟦ A ⟧ᵛ (lowʳ θ i (⟦ b ⟧ʳ θ))
-  ⟦sbʳ⟧-v i b (tvar α)  = refl
-  ⟦sbʳ⟧-v i b (Base c)  = refl
-  ⟦sbʳ⟧-v i b Unit      = refl
-  ⟦sbʳ⟧-v i b Bool      = refl
-  ⟦sbʳ⟧-v i b (A |×| B) = cong₂ T._|×|_ (⟦sbʳ⟧-v i b A) (⟦sbʳ⟧-v i b B)
-  ⟦sbʳ⟧-v i b Empty     = refl
-  ⟦sbʳ⟧-v i b (A ⇒ C)   = cong₂ T._⇒_ (⟦sbʳ⟧-v i b A) (⟦sbʳ⟧-c i b C)
-  ⟦sbʳ⟧-v i b ([ ρ ] A) = cong₂ T.[_]_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-v i b A)
-
-  ⟦sbʳ⟧-c : ∀ {Θ} {θ : Grounding Θ} → (i : RVar Θ) → (b : RExp Θ) → (C : OCType Θ)
-          → ⟦ sbʳ-c i b C ⟧ᶜ θ ≡ ⟦ C ⟧ᶜ (lowʳ θ i (⟦ b ⟧ʳ θ))
-  ⟦sbʳ⟧-c i b (A ‼ ε) = cong₂ T._‼_ (⟦sbʳ⟧-v i b A) (sym (⟦lowʳ⟧-e i ε))
-
-invʳ-r : ∀ {Θ} {θ : Grounding Θ} {ρ₀ : R} → (i : RVar Θ) → (ρ : RExp Θ)
-       → below (polᵣ-r i ⁻ ρ) ≡ false → ⟦ ρ ⟧ʳ (lowʳ θ i ρ₀) ≡ ⟦ ρ ⟧ʳ θ
-invʳ-r {θ = θ} {ρ₀} i (rvar j) q = upd-≢ i j ρ₀ (gR θ) (⌊⌋-false q)
-invʳ-r i (rconst ρ) q = refl
-invʳ-r i (ρ ·̂ᵣ ρ')  q =
-  cong₂ _·ᵣ_ (invʳ-r i ρ (proj₁ d)) (invʳ-r i ρ' (proj₂ d))
+absʳ-r : ∀ {Θ} → (i : RVar Θ) → (b : RExp Θ) → (ρ : RExp Θ)
+       → below (polᵣ-r i ⁻ ρ) ≡ false → ρ [ updʳ i b ]ʳ ≡ ρ
+absʳ-r i b (rvar j)   q = updʳ-miss i b j q
+absʳ-r i b (rconst c) q = refl
+absʳ-r i b (ρ ·̂ᵣ ρ')  q = cong₂ _·̂ᵣ_ (absʳ-r i b ρ (proj₁ d)) (absʳ-r i b ρ' (proj₂ d))
   where d = below-∪ (polᵣ-r i ⁻ ρ) (polᵣ-r i ⁻ ρ') q
-invʳ-r i (ρ ⊔̂ᵣ ρ')  q =
-  cong₂ _⊔ᵣ_ (invʳ-r i ρ (proj₁ d)) (invʳ-r i ρ' (proj₂ d))
+absʳ-r i b (ρ ⊔̂ᵣ ρ')  q = cong₂ _⊔̂ᵣ_ (absʳ-r i b ρ (proj₁ d)) (absʳ-r i b ρ' (proj₂ d))
   where d = below-∪ (polᵣ-r i ⁻ ρ) (polᵣ-r i ⁻ ρ') q
-invʳ-r i ∣ ε ∣̂ᵉ     q = cong mapᵉ (⟦lowʳ⟧-e i ε)
+absʳ-r i b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (updʳ-e i b ε)
 
-module _ {Θ : Scope} (θ : Grounding Θ) (i : RVar Θ) (ρ₀ : R)
-         (le : ρ₀ ≾ᵣ gR θ i) where
+-- Lowering a resource unknown lowers whatever has no occurrence of it
+-- below
 
-  private
-    θ⁻ʳ : Grounding Θ
-    θ⁻ʳ = lowʳ θ i ρ₀
+module Monoʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
+             (lowg : Q ⊩ updʳ i b ≾ˢ idˢ) where
+
+  open Lowering {Q = Q} (updʳ i b) lowg (λ β → tvarₛ reflᵗᵛ)
 
   monoʳ-r : (s : Sign) → (ρ : RExp Θ) → below (polᵣ-r i s ρ) ≡ false
-          → atʳ s (⟦ ρ ⟧ʳ θ⁻ʳ) (⟦ ρ ⟧ʳ θ)
-  monoʳ-r ⁺ (rvar j) q with i ≟ᶠ j
-  ... | yes refl = subst (λ x → x ≾ᵣ gR θ i) (sym (upd-≡ i ρ₀ (gR θ))) le
-  ... | no  ¬p   = subst (λ x → x ≾ᵣ gR θ j) (sym (upd-≢ i j ρ₀ (gR θ) ¬p)) ≾ᵣ-refl
-  monoʳ-r ⁻ (rvar j) q =
-    ≾ᵣ-reflexive (sym (upd-≢ i j ρ₀ (gR θ) (⌊⌋-false q)))
-  monoʳ-r s (rconst ρ) q = atʳ-refl s ρ
-  monoʳ-r s (ρ ·̂ᵣ ρ')  q =
-    atʳ-· s (monoʳ-r s ρ (proj₁ d)) (monoʳ-r s ρ' (proj₂ d))
-    where d = below-∪ (polᵣ-r i s ρ) (polᵣ-r i s ρ') q
-  monoʳ-r s (ρ ⊔̂ᵣ ρ')  q =
-    atʳ-⊔ s (monoʳ-r s ρ (proj₁ d)) (monoʳ-r s ρ' (proj₂ d))
-    where d = below-∪ (polᵣ-r i s ρ) (polᵣ-r i s ρ') q
-  monoʳ-r s ∣ ε ∣̂ᵉ     q =
-    subst (λ x → atʳ s (mapᵉ x) (mapᵉ (⟦ ε ⟧ᵉ θ))) (sym (⟦lowʳ⟧-e i ε))
-          (atʳ-refl s (mapᵉ (⟦ ε ⟧ᵉ θ)))
+          → atʳ Q s (ρ [ updʳ i b ]ʳ) ρ
+  monoʳ-r ⁺ ρ q = lowʳ ρ
+  monoʳ-r ⁻ ρ q = atʳ-≡ ⁻ (absʳ-r i b ρ q)
 
   mutual
 
     monoʳ-v : (s : Sign) → (A : OVType Θ) → below (polᵣ-v i s A) ≡ false
-            → atᵛ s (⟦ A ⟧ᵛ θ⁻ʳ) (⟦ A ⟧ᵛ θ)
-    monoʳ-v s (tvar α)  q = atᵛ-refl s (gTy θ α)
-    monoʳ-v s (Base c)  q = atᵛ-refl s (T.Base c)
-    monoʳ-v s Unit      q = atᵛ-refl s T.Unit
-    monoʳ-v s Bool      q = atᵛ-refl s T.Bool
+            → atᵛ Q s (A [ updʳ i b ]ᵛ) A
+    monoʳ-v s (tvar α)  q = atᵛ-≡ s refl
+    monoʳ-v s (Base c)  q = atᵛ-≡ s refl
+    monoʳ-v s Unit      q = atᵛ-≡ s refl
+    monoʳ-v s Bool      q = atᵛ-≡ s refl
     monoʳ-v s (A |×| B) q =
       atᵛ-|×| s (monoʳ-v s A (proj₁ d)) (monoʳ-v s B (proj₂ d))
       where d = below-∪ (polᵣ-v i s A) (polᵣ-v i s B) q
-    monoʳ-v s Empty     q = atᵛ-refl s T.Empty
+    monoʳ-v s Empty     q = atᵛ-≡ s refl
     monoʳ-v s (A ⇒ C)   q =
       atᵛ-⇒ s (monoʳ-v (flipˢ s) A (proj₁ d)) (monoʳ-c s C (proj₂ d))
       where d = below-∪ (polᵣ-v i (flipˢ s) A) (polᵣ-c i s C) q
@@ -780,11 +606,8 @@ module _ {Θ : Scope} (θ : Grounding Θ) (i : RVar Θ) (ρ₀ : R)
       where d = below-∪ (polᵣ-r i (flipˢ s) ρ) (polᵣ-v i s A) q
 
     monoʳ-c : (s : Sign) → (C : OCType Θ) → below (polᵣ-c i s C) ≡ false
-            → atᶜ s (⟦ C ⟧ᶜ θ⁻ʳ) (⟦ C ⟧ᶜ θ)
-    monoʳ-c s (A ‼ ε) q =
-      atᶜ-‼ s (monoʳ-v s A q)
-              (subst (λ x → atᵉ s x (⟦ ε ⟧ᵉ θ)) (sym (⟦lowʳ⟧-e i ε))
-                     (atᵉ-refl s (⟦ ε ⟧ᵉ θ)))
+            → atᶜ Q s (C [ updʳ i b ]ᶜ) C
+    monoʳ-c s (A ‼ ε) q = atᶜ-‼ s (monoʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
 
 polsᵣ-ord-∈ : ∀ {Θ} → (i : RVar Θ) → (l : List (RExp Θ × RExp Θ))
             → below (polsᵣ-ord i l) ≡ false
@@ -809,24 +632,22 @@ joinᵣ : ∀ {Θ} → RExp Θ → List (RExp Θ) → RExp Θ
 joinᵣ ρ []        = ρ
 joinᵣ ρ (ρ' ∷ ρs) = joinᵣ (ρ ⊔̂ᵣ ρ') ρs
 
-joinᵣ-ub : ∀ {Θ} {θ : Grounding Θ} → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
-         → ∀ {ρ} → ρ ∈ ρ₀ ∷ ρs → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ joinᵣ ρ₀ ρs ⟧ʳ θ
-joinᵣ-ub ρ₀ []        (here refl) = ≾ᵣ-refl
-joinᵣ-ub {θ = θ} ρ₀ (ρ₁ ∷ ρs) (here refl) =
-  ≾ᵣ-trans (⊔ᵣ-ubˡ (⟦ ρ₀ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ))
-           (joinᵣ-ub (ρ₀ ⊔̂ᵣ ρ₁) ρs (here refl))
-joinᵣ-ub {θ = θ} ρ₀ (ρ₁ ∷ ρs) (there (here refl)) =
-  ≾ᵣ-trans (⊔ᵣ-ubʳ (⟦ ρ₀ ⟧ʳ θ) (⟦ ρ₁ ⟧ʳ θ))
-           (joinᵣ-ub (ρ₀ ⊔̂ᵣ ρ₁) ρs (here refl))
-joinᵣ-ub ρ₀ (ρ₁ ∷ ρs) (there (there m)) = joinᵣ-ub (ρ₀ ⊔̂ᵣ ρ₁) ρs (there m)
+joinᵣ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+          → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ joinᵣ x₀ xs [ τ ]ʳ
+joinᵣ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ᵣ-refl
+joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transᵣ ⊔-ubˡᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
+joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
+  transᵣ ⊔-ubʳᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
+joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (there m)
 
-joinᵣ-lub : ∀ {Θ} {θ : Grounding Θ} {x : R} → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
-          → (∀ {ρ} → ρ ∈ ρ₀ ∷ ρs → ⟦ ρ ⟧ʳ θ ≾ᵣ x)
-          → ⟦ joinᵣ ρ₀ ρs ⟧ʳ θ ≾ᵣ x
-joinᵣ-lub ρ₀ []        k = k (here refl)
-joinᵣ-lub ρ₀ (ρ₁ ∷ ρs) k =
-  joinᵣ-lub (ρ₀ ⊔̂ᵣ ρ₁) ρs
-    (λ { (here refl) → ⊔ᵣ-lub (k (here refl)) (k (there (here refl)))
+joinᵣ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : RExp Ψ'} → (τ : Subst Ψ Ψ')
+           → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
+           → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ y)
+           → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ y
+joinᵣ-lub⊩ τ x₀ []        k = k (here refl)
+joinᵣ-lub⊩ τ x₀ (x₁ ∷ xs) k =
+  joinᵣ-lub⊩ τ (x₀ ⊔̂ᵣ x₁) xs
+    (λ { (here refl) → ⊔-lubᵣ (k (here refl)) (k (there (here refl)))
        ; (there m)   → k (there (there m)) })
 
 joinᵣ-below : ∀ {Θ} → (i : RVar Θ) → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
@@ -913,109 +734,53 @@ stepʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
       → below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restʳ s) (ordₑ Q) (disj Q)) i) ≡ false
       → below (polᵣ-c i ⁺ C) ≡ false
       → Elim C Q
-stepʳ {Θ} C Q i s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+stepʳ {Θ} C Q i s cb cq cc =
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+         (λ δ h → <:̂ᶜ-subst h (Monoʳ.monoʳ-c i b lowg ⁺ C cc))
   where
     b : RExp Θ
     b = lubʳ s
 
-    Ĉ₀ : OCType Θ
-    Ĉ₀ = sbʳ-c i b C
+    η₀ : Subst Θ Θ
+    η₀ = updʳ i b
 
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
-              (map (mapᵖ (sbʳ-r i b)) (restʳ s))
-              (ordₑ Q)
-              (map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q))
+              (map (mapᵖ (_[ η₀ ]ʳ)) (restʳ s))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
     d₁ = below-∪ (polsᵣ-ord i (restʳ s)) (polsᵣ-disj i (disj Q)) cq
 
-    cR : ∀ {ρ ρ'} → (ρ , ρ') ∈ restʳ s
-       → (below (polᵣ-r i ⁺ ρ) ≡ false) × (below (polᵣ-r i ⁻ ρ') ≡ false)
-    cR = polsᵣ-ord-∈ i (restʳ s) (proj₁ d₁)
+    cR : ∀ {ρ ρ'} → (ρ , ρ') ∈ restʳ s → below (polᵣ-r i ⁻ ρ') ≡ false
+    cR m = proj₂ (polsᵣ-ord-∈ i (restʳ s) (proj₁ d₁) m)
 
-    cD : ∀ {A ρ} → (A , ρ) ∈ disj Q → below (polᵣ-r i ⁺ ρ) ≡ false
-    cD = polsᵣ-disj-∈ i (disj Q) (proj₂ d₁)
+    lowg : Q ⊩ η₀ ≾ˢ idˢ
+    lowg = ≾ˢ-idˡ (updʳ-below i b idˢ
+             (joinᵣ-lub⊩ idˢ (bndʳ s) (bndsʳ s)
+               (λ {x} m → subst (λ y → Q ⊩ y ≾̂ᵣ rvar i) (sym ([id]ʳ x)) (hypᵣ (memʳ s m)))))
 
-    ∈-mapᵖʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ restʳ s
-            → (sbʳ-r i b ρ , sbʳ-r i b ρ') ∈ map (mapᵖ (sbʳ-r i b)) (restʳ s)
-    ∈-mapᵖʳ = ∈-map⁺ (mapᵖ (sbʳ-r i b))
+    open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
 
-    ∈-mapᵈ' : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → (sbʳ-v i b A , sbʳ-r i b ρ) ∈ map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q)
-    ∈-mapᵈ' = ∈-map⁺ (mapᵈ (sbʳ-v i b) (sbʳ-r i b))
-
-    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
-    keep₀ θ h = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) dsj
+    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
+                 (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
-        ρ₀ : R
-        ρ₀ = ⟦ b ⟧ʳ θ
-
-        le : ρ₀ ≾ᵣ gR θ i
-        le = joinᵣ-lub (bndʳ s) (bndsʳ s) (λ m → ordROK h (memʳ s m))
-
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (sbʳ-r i b)) (restʳ s)
-             → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-        ordR m = go (restʳ s) (λ q → q) m
-          where
-            go : (l : List (RExp Θ × RExp Θ)) → (∀ {p} → p ∈ l → p ∈ restʳ s)
-               → ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (sbʳ-r i b)) l
-               → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-            go ((ρ' , ρ'') ∷ l) k (here refl) =
-              subst₂ _≾ᵣ_ (sym (⟦sbʳ⟧-r i b ρ')) (sym (⟦sbʳ⟧-r i b ρ''))
-                (≾ᵣ-trans (monoʳ-r θ i ρ₀ le ⁺ ρ' (proj₁ (cR (k (here refl)))))
-                (≾ᵣ-trans (ordROK h (subʳ s (k (here refl))))
-                          (monoʳ-r θ i ρ₀ le ⁻ ρ'' (proj₂ (cR (k (here refl)))))))
-            go ((ρ' , ρ'') ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q)
-            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-        dsj m = go (disj Q) (λ q → q) m
-          where
-            go : (l : List (OVType Θ × RExp Θ)) → (∀ {p} → p ∈ l → p ∈ disj Q)
-               → ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) l
-               → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-            go ((A₀ , ρ₀') ∷ l) k (here refl) =
-              [ (λ et → inj₁ (subst Eternal (sym (⟦sbʳ⟧-v i b A₀))
-                                    (Et-<: (λ γ → <:ᵛ-refl _) A₀ et)))
-              , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (sym (⟦sbʳ⟧-r i b ρ₀'))
-                                    (≾ᵣ-trans (monoʳ-r θ i ρ₀ le ⁺ ρ₀'
-                                                 (cD (k (here refl)))) lu)))
-              ]′ (disjOK h (k (here refl)))
-            go ((A₀ , ρ₀') ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
-          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
-    real₀ θ h = θ' , mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj , sym (⟦sbʳ⟧-c i b C)
-      where
-        θ' : Grounding Θ
-        θ' = lowʳ θ i (⟦ b ⟧ʳ θ)
-
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
-        ordE {ε} {ε'} m =
-          subst₂ _≾ₑ_ (sym (⟦lowʳ⟧-e i ε)) (sym (⟦lowʳ⟧-e i ε')) (ordEOK h m)
-
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
         ordR {ρ} {ρ'} m with casesʳ s m
         ... | inj₁ (mb , refl) =
-              subst₂ _≾ᵣ_ (sym (invʳ-r i ρ (joinᵣ-below i (bndʳ s) (bndsʳ s) cb mb)))
-                          (sym (upd-≡ i (⟦ b ⟧ʳ θ) (gR θ)))
-                     (joinᵣ-ub {θ = θ} (bndʳ s) (bndsʳ s) mb)
-        ... | inj₂ m' =
-              subst₂ _≾ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ') (ordROK h (∈-mapᵖʳ m'))
+              subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) (trans (absʳ-r i b b cb) (sym (updʳ-hit i b)))
+                    (joinᵣ-ub⊩ η₀ (bndʳ s) (bndsʳ s) mb)
+        ... | inj₂ m' = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
 
-        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
-        dsj {A} {ρ} m =
-          [ (λ et → inj₁ (subst Eternal (⟦sbʳ⟧-v i b A) et))
-          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (⟦sbʳ⟧-r i b ρ) lu))
-          ]′ (disjOK h (∈-mapᵈ' m))
-
-    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
-    princ₀ θ h =
-      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (⟦sbʳ⟧-c i b C))
-            (monoʳ-c θ i (⟦ b ⟧ʳ θ)
-                     (joinᵣ-lub (bndʳ s) (bndsʳ s) (λ m → ordROK h (memʳ s m)))
-                     ⁺ C cc)
+    keep₀ : Q ⊨ᴴ Q₀
+    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+                 (keep-ordʳ (restʳ s) (subʳ s)
+                            (λ {ρ} {ρ'} m → fixedʳ (absʳ-r i b ρ' (cR m))))
+                 (keep-ordᵉ (ordₑ Q) (λ m → m)
+                            (λ {ε} {ε'} m → fixedᵉ (updʳ-e i b ε')))
+                 keep-disj
 
 stepʳ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → Maybe (Elim C Q)
 stepʳ? C Q i with splitʳ i (ordᵣ Q)
@@ -1039,105 +804,58 @@ firstʳ C Q (i ∷ is) with stepʳ? C Q i
 idᶠ : ∀ {n} → Fin n → Fin n
 idᶠ β = β
 
-mutual
+updᵗ : ∀ {Θ} → TyVar Θ → TyVar Θ → Subst Θ Θ
+updᵗ α γ = sub (λ β → tvar (upd α γ idᶠ β)) rvar evar
 
-  sbᵗ-v : ∀ {Θ} → TyVar Θ → TyVar Θ → OVType Θ → OVType Θ
-  sbᵗ-v α δ (tvar β)  = tvar (upd α δ idᶠ β)
-  sbᵗ-v α δ (Base c)  = Base c
-  sbᵗ-v α δ Unit      = Unit
-  sbᵗ-v α δ Bool      = Bool
-  sbᵗ-v α δ (A |×| B) = sbᵗ-v α δ A |×| sbᵗ-v α δ B
-  sbᵗ-v α δ Empty     = Empty
-  sbᵗ-v α δ (A ⇒ C)   = sbᵗ-v α δ A ⇒ sbᵗ-c α δ C
-  sbᵗ-v α δ ([ ρ ] A) = [ ρ ] sbᵗ-v α δ A
+fixᵗ-e : ∀ {Θ} → (α γ : TyVar Θ) → (ε : EExp Θ) → ε [ updᵗ α γ ]ᵉ ≡ ε
+fixᵗ-e α γ (evar j)   = refl
+fixᵗ-e α γ (econst c) = refl
+fixᵗ-e α γ (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (fixᵗ-e α γ ε) (fixᵗ-e α γ ε')
+fixᵗ-e α γ (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (fixᵗ-e α γ ε) (fixᵗ-e α γ ε')
 
-  sbᵗ-c : ∀ {Θ} → TyVar Θ → TyVar Θ → OCType Θ → OCType Θ
-  sbᵗ-c α δ (A ‼ ε) = sbᵗ-v α δ A ‼ ε
+fixᵗ-r : ∀ {Θ} → (α γ : TyVar Θ) → (ρ : RExp Θ) → ρ [ updᵗ α γ ]ʳ ≡ ρ
+fixᵗ-r α γ (rvar j)   = refl
+fixᵗ-r α γ (rconst c) = refl
+fixᵗ-r α γ (ρ ·̂ᵣ ρ')  = cong₂ _·̂ᵣ_ (fixᵗ-r α γ ρ) (fixᵗ-r α γ ρ')
+fixᵗ-r α γ (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔̂ᵣ_ (fixᵗ-r α γ ρ) (fixᵗ-r α γ ρ')
+fixᵗ-r α γ ∣ ε ∣̂ᵉ     = cong ∣_∣̂ᵉ (fixᵗ-e α γ ε)
 
-lowᵗ : ∀ {Θ} → Grounding Θ → TyVar Θ → VType → Grounding Θ
-lowᵗ θ α B = grounding (upd α B (gTy θ)) (gR θ) (gE θ)
+-- Lowering a type variable to a variable below it lowers every type
+-- with no occurrence of it below
 
-⟦lowᵗ⟧-e : ∀ {Θ} {θ : Grounding Θ} {B : VType} → (α : TyVar Θ) → (ε : EExp Θ)
-         → ⟦ ε ⟧ᵉ (lowᵗ θ α B) ≡ ⟦ ε ⟧ᵉ θ
-⟦lowᵗ⟧-e α (evar j)   = refl
-⟦lowᵗ⟧-e α (econst ε) = refl
-⟦lowᵗ⟧-e α (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (⟦lowᵗ⟧-e α ε) (⟦lowᵗ⟧-e α ε')
-⟦lowᵗ⟧-e α (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (⟦lowᵗ⟧-e α ε) (⟦lowᵗ⟧-e α ε')
+module Monoᵗ {Θ : Scope} {Q : Hyps Θ} (α γ : TyVar Θ) (le : (γ , α) ∈ subᵥ Q) where
 
-⟦lowᵗ⟧-r : ∀ {Θ} {θ : Grounding Θ} {B : VType} → (α : TyVar Θ) → (ρ : RExp Θ)
-         → ⟦ ρ ⟧ʳ (lowᵗ θ α B) ≡ ⟦ ρ ⟧ʳ θ
-⟦lowᵗ⟧-r α (rvar j)   = refl
-⟦lowᵗ⟧-r α (rconst ρ) = refl
-⟦lowᵗ⟧-r α (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (⟦lowᵗ⟧-r α ρ) (⟦lowᵗ⟧-r α ρ')
-⟦lowᵗ⟧-r α (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (⟦lowᵗ⟧-r α ρ) (⟦lowᵗ⟧-r α ρ')
-⟦lowᵗ⟧-r α ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦lowᵗ⟧-e α ε)
+  lowt : ∀ β → Q ∣ sTy (updᵗ α γ) β <:̂ᵛ tvar β
+  lowt β with α ≟ᶠ β
+  ... | yes refl = subst (λ x → Q ∣ tvar x <:̂ᵛ tvar α) (sym (upd-≡ α γ idᶠ))
+                         (tvarₛ (hypᵗᵛ le))
+  ... | no  ¬p   = subst (λ x → Q ∣ tvar x <:̂ᵛ tvar β) (sym (upd-≢ α β γ idᶠ ¬p))
+                         (tvarₛ reflᵗᵛ)
 
-mutual
-
-  ⟦sbᵗ⟧-v : ∀ {Θ} {θ : Grounding Θ} → (α δ : TyVar Θ) → (A : OVType Θ)
-          → ⟦ sbᵗ-v α δ A ⟧ᵛ θ ≡ ⟦ A ⟧ᵛ (lowᵗ θ α (gTy θ δ))
-  ⟦sbᵗ⟧-v {θ = θ} α δ (tvar β) with α ≟ᶠ β
-  ... | yes refl = trans (cong (gTy θ) (upd-≡ α δ idᶠ))
-                         (sym (upd-≡ α (gTy θ δ) (gTy θ)))
-  ... | no  ¬p   = trans (cong (gTy θ) (upd-≢ α β δ idᶠ ¬p))
-                         (sym (upd-≢ α β (gTy θ δ) (gTy θ) ¬p))
-  ⟦sbᵗ⟧-v α δ (Base c)  = refl
-  ⟦sbᵗ⟧-v α δ Unit      = refl
-  ⟦sbᵗ⟧-v α δ Bool      = refl
-  ⟦sbᵗ⟧-v α δ (A |×| B) = cong₂ T._|×|_ (⟦sbᵗ⟧-v α δ A) (⟦sbᵗ⟧-v α δ B)
-  ⟦sbᵗ⟧-v α δ Empty     = refl
-  ⟦sbᵗ⟧-v α δ (A ⇒ C)   = cong₂ T._⇒_ (⟦sbᵗ⟧-v α δ A) (⟦sbᵗ⟧-c α δ C)
-  ⟦sbᵗ⟧-v α δ ([ ρ ] A) =
-    cong₂ T.[_]_ (sym (⟦lowᵗ⟧-r α ρ)) (⟦sbᵗ⟧-v α δ A)
-
-  ⟦sbᵗ⟧-c : ∀ {Θ} {θ : Grounding Θ} → (α δ : TyVar Θ) → (C : OCType Θ)
-          → ⟦ sbᵗ-c α δ C ⟧ᶜ θ ≡ ⟦ C ⟧ᶜ (lowᵗ θ α (gTy θ δ))
-  ⟦sbᵗ⟧-c α δ (A ‼ ε) = cong₂ T._‼_ (⟦sbᵗ⟧-v α δ A) (sym (⟦lowᵗ⟧-e α ε))
-
-module _ {Θ : Scope} (θ : Grounding Θ) (α : TyVar Θ) (B : VType)
-         (le : B <:ᵛ gTy θ α) where
-
-  private
-    θ⁻ᵗ : Grounding Θ
-    θ⁻ᵗ = lowᵗ θ α B
+  lowg : Q ⊩ updᵗ α γ ≾ˢ idˢ
+  lowg = mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl)
 
   mutual
 
     monoᵗ-v : (s : Sign) → (A : OVType Θ) → below (polₜ-v α s A) ≡ false
-            → atᵛ s (⟦ A ⟧ᵛ θ⁻ᵗ) (⟦ A ⟧ᵛ θ)
-    monoᵗ-v ⁺ (tvar β) q with α ≟ᶠ β
-    ... | yes refl = subst (λ x → x <:ᵛ gTy θ α) (sym (upd-≡ α B (gTy θ))) le
-    ... | no  ¬p   = subst (λ x → x <:ᵛ gTy θ β) (sym (upd-≢ α β B (gTy θ) ¬p))
-                           (<:ᵛ-refl (gTy θ β))
-    monoᵗ-v ⁻ (tvar β) q =
-      subst (λ x → gTy θ β <:ᵛ x) (sym (upd-≢ α β B (gTy θ) (⌊⌋-false q)))
-            (<:ᵛ-refl (gTy θ β))
-    monoᵗ-v s (Base c)  q = atᵛ-refl s (T.Base c)
-    monoᵗ-v s Unit      q = atᵛ-refl s T.Unit
-    monoᵗ-v s Bool      q = atᵛ-refl s T.Bool
-    monoᵗ-v s (A |×| B') q =
-      atᵛ-|×| s (monoᵗ-v s A (proj₁ d)) (monoᵗ-v s B' (proj₂ d))
-      where d = below-∪ (polₜ-v α s A) (polₜ-v α s B') q
-    monoᵗ-v s Empty     q = atᵛ-refl s T.Empty
+            → atᵛ Q s (A [ updᵗ α γ ]ᵛ) A
+    monoᵗ-v ⁺ (tvar β)  q = lowt β
+    monoᵗ-v ⁻ (tvar β)  q = atᵛ-≡ ⁻ (cong tvar (upd-≢ α β γ idᶠ (⌊⌋-false q)))
+    monoᵗ-v s (Base c)  q = atᵛ-≡ s refl
+    monoᵗ-v s Unit      q = atᵛ-≡ s refl
+    monoᵗ-v s Bool      q = atᵛ-≡ s refl
+    monoᵗ-v s (A |×| B) q =
+      atᵛ-|×| s (monoᵗ-v s A (proj₁ d)) (monoᵗ-v s B (proj₂ d))
+      where d = below-∪ (polₜ-v α s A) (polₜ-v α s B) q
+    monoᵗ-v s Empty     q = atᵛ-≡ s refl
     monoᵗ-v s (A ⇒ C)   q =
       atᵛ-⇒ s (monoᵗ-v (flipˢ s) A (proj₁ d)) (monoᵗ-c s C (proj₂ d))
       where d = below-∪ (polₜ-v α (flipˢ s) A) (polₜ-c α s C) q
-    monoᵗ-v s ([ ρ ] A) q =
-      subst (λ x → atᵛ s (T.[ x ] ⟦ A ⟧ᵛ θ⁻ᵗ) (T.[ ⟦ ρ ⟧ʳ θ ] ⟦ A ⟧ᵛ θ))
-            (sym (⟦lowᵗ⟧-r α ρ))
-            (atᵛ-box s (atʳ-refl (flipˢ s) (⟦ ρ ⟧ʳ θ)) (monoᵗ-v s A q))
+    monoᵗ-v s ([ ρ ] A) q = atᵛ-box s (atʳ-≡ (flipˢ s) (fixᵗ-r α γ ρ)) (monoᵗ-v s A q)
 
     monoᵗ-c : (s : Sign) → (C : OCType Θ) → below (polₜ-c α s C) ≡ false
-            → atᶜ s (⟦ C ⟧ᶜ θ⁻ᵗ) (⟦ C ⟧ᶜ θ)
-    monoᵗ-c s (A ‼ ε) q =
-      subst (λ x → atᶜ s (⟦ A ⟧ᵛ θ⁻ᵗ T.‼ x) (⟦ A ⟧ᵛ θ T.‼ ⟦ ε ⟧ᵉ θ))
-            (sym (⟦lowᵗ⟧-e α ε))
-            (atᶜ-‼ s (monoᵗ-v s A q) (atᵉ-refl s (⟦ ε ⟧ᵉ θ)))
-
-Et-low : ∀ {Θ} → (θ : Grounding Θ) → (α : TyVar Θ) → (B : VType)
-       → B <:ᵛ gTy θ α → (A : OVType Θ)
-       → Eternal (⟦ A ⟧ᵛ θ) → Eternal (⟦ A ⟧ᵛ (lowᵗ θ α B))
-Et-low θ α B le = Et-<: (λ γ → monoᵗ-v θ α B le ⁺ (tvar γ) refl)
+            → atᶜ Q s (C [ updᵗ α γ ]ᶜ) C
+    monoᵗ-c s (A ‼ ε) q = atᶜ-‼ s (monoᵗ-v s A q) (atᵉ-≡ s (fixᵗ-e α γ ε))
 
 polsₜ-sub-∈ : ∀ {n} → (α : Fin n) → (l : List (Fin n × Fin n))
             → below (polsₜ-sub α l) ≡ false
@@ -1183,113 +901,65 @@ stepᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (α : TyVar Θ)
       → below (polₜᴴ (hyps (ets Q) (restᵗ s) (ordᵣ Q) (ordₑ Q) (disj Q)) α) ≡ false
       → below (polₜ-c α ⁺ C) ≡ false
       → Elim C Q
-stepᵗ {Θ} C Q α s cb cq cc = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+stepᵗ {Θ} C Q α s cb cq cc =
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+         (λ δ h → <:̂ᶜ-subst h (M.monoᵗ-c ⁺ C cc))
   where
-    δ : TyVar Θ
-    δ = bndᵗ s
+    γ₀ : TyVar Θ
+    γ₀ = bndᵗ s
 
-    Ĉ₀ : OCType Θ
-    Ĉ₀ = sbᵗ-c α δ C
+    η₀ : Subst Θ Θ
+    η₀ = updᵗ α γ₀
 
     Q₀ : Hyps Θ
-    Q₀ = hyps (map (upd α δ idᶠ) (ets Q))
-              (map (mapᵖ (upd α δ idᶠ)) (restᵗ s))
-              (ordᵣ Q) (ordₑ Q)
-              (map (mapᵈ (sbᵗ-v α δ) (λ ρ → ρ)) (disj Q))
+    Q₀ = hyps (map (upd α γ₀ idᶠ) (ets Q))
+              (map (mapᵖ (upd α γ₀ idᶠ)) (restᵗ s))
+              (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    α≢δ : ¬ (α ≡ δ)
-    α≢δ = ⌊⌋-false cb
+    α≢γ₀ : ¬ (α ≡ γ₀)
+    α≢γ₀ = ⌊⌋-false cb
 
     cS : ∀ {β γ} → (β , γ) ∈ restᵗ s → ⌊ α ≟ᶠ γ ⌋ ≡ false
     cS = polsₜ-sub-∈ α (restᵗ s) cq
 
-    tvsb : (θ : Grounding Θ) → (β : TyVar Θ)
-         → gTy θ (upd α δ idᶠ β) ≡ gTy (lowᵗ θ α (gTy θ δ)) β
-    tvsb θ β = ⟦sbᵗ⟧-v {Θ} {θ} α δ (tvar β)
+    module M = Monoᵗ {Q = Q} α γ₀ (memᵗ s)
 
-    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
-    keep₀ θ h = mk⊨ᴴ et' sub' (ordROK h) (ordEOK h) dsj
+    open Lowering {Q = Q} η₀ M.lowg M.lowt
+
+    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ = mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (upd α γ₀ idᶠ) m)) sb
+                 (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
+                 (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
-        le : gTy θ δ <:ᵛ gTy θ α
-        le = subOK h (memᵗ s)
-
-        et' : ∀ {x} → x ∈ map (upd α δ idᶠ) (ets Q) → Eternal (gTy θ x)
-        et' m = go (ets Q) (λ q → q) m
-          where
-            go : (l : List (TyVar Θ)) → (∀ {β} → β ∈ l → β ∈ ets Q)
-               → ∀ {x} → x ∈ map (upd α δ idᶠ) l → Eternal (gTy θ x)
-            go (β ∷ l) k (here refl) =
-              subst Eternal (sym (tvsb θ β))
-                    (Et-low θ α (gTy θ δ) le (tvar β) (etOK h (k (here refl))))
-            go (β ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-        sub' : ∀ {x y} → (x , y) ∈ map (mapᵖ (upd α δ idᶠ)) (restᵗ s)
-             → gTy θ x <:ᵛ gTy θ y
-        sub' m = go (restᵗ s) (λ q → q) m
-          where
-            go : (l : List (TyVar Θ × TyVar Θ)) → (∀ {p} → p ∈ l → p ∈ restᵗ s)
-               → ∀ {x y} → (x , y) ∈ map (mapᵖ (upd α δ idᶠ)) l
-               → gTy θ x <:ᵛ gTy θ y
-            go ((β , γ) ∷ l) k (here refl) =
-              subst₂ _<:ᵛ_ (sym (tvsb θ β)) (sym (tvsb θ γ))
-                (<:ᵛ-trans (monoᵗ-v θ α (gTy θ δ) le ⁺ (tvar β) refl)
-                (<:ᵛ-trans (subOK h (subᵗ s (k (here refl))))
-                           (monoᵗ-v θ α (gTy θ δ) le ⁻ (tvar γ) (cS (k (here refl))))))
-            go ((β , γ) ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbᵗ-v α δ) (λ ρ → ρ)) (disj Q)
-            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-        dsj m = go (disj Q) (λ q → q) m
-          where
-            go : (l : List (OVType Θ × RExp Θ)) → (∀ {p} → p ∈ l → p ∈ disj Q)
-               → ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbᵗ-v α δ) (λ ρ → ρ)) l
-               → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-            go ((A₀ , ρ₀) ∷ l) k (here refl) =
-              [ (λ et → inj₁ (subst Eternal (sym (⟦sbᵗ⟧-v α δ A₀))
-                                    (Et-low θ α (gTy θ δ) le A₀ et)))
-              , (λ lu → inj₂ lu) ]′ (disjOK h (k (here refl)))
-            go ((A₀ , ρ₀) ∷ l) k (there m) = go l (λ q → k (there q)) m
-
-    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
-          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
-    real₀ θ h = θ' , mk⊨ᴴ et' sub' ordR ordE dsj , sym (⟦sbᵗ⟧-c α δ C)
-      where
-        θ' : Grounding Θ
-        θ' = lowᵗ θ α (gTy θ δ)
-
-        et' : ∀ {β} → β ∈ ets Q → Eternal (gTy θ' β)
-        et' {β} m = subst Eternal (tvsb θ β)
-                          (etOK h (∈-map⁺ (upd α δ idᶠ) m))
-
-        sub' : ∀ {β γ} → (β , γ) ∈ subᵥ Q → gTy θ' β <:ᵛ gTy θ' γ
-        sub' {β} {γ} m with casesᵗ s m
+        sb : ∀ {β γ} → (β , γ) ∈ subᵥ Q → Q₀ ∣ sTy η₀ β <:̂ᵛ sTy η₀ γ
+        sb m with casesᵗ s m
         ... | inj₁ refl =
-              subst₂ _<:ᵛ_ (sym (upd-≢ α δ (gTy θ δ) (gTy θ) α≢δ))
-                           (sym (upd-≡ α (gTy θ δ) (gTy θ)))
-                     (<:ᵛ-refl (gTy θ δ))
-        ... | inj₂ m' =
-              subst₂ _<:ᵛ_ (tvsb θ β) (tvsb θ γ)
-                     (subOK h (∈-map⁺ (mapᵖ (upd α δ idᶠ)) m'))
+              subst₂ (λ x y → Q₀ ∣ tvar x <:̂ᵛ tvar y)
+                     (sym (upd-≢ α γ₀ γ₀ idᶠ α≢γ₀)) (sym (upd-≡ α γ₀ idᶠ))
+                     (tvarₛ reflᵗᵛ)
+        ... | inj₂ m' = tvarₛ (hypᵗᵛ (∈-map⁺ (mapᵖ (upd α γ₀ idᶠ)) m'))
 
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
-        ordR {ρ} {ρ'} m =
-          subst₂ _≾ᵣ_ (sym (⟦lowᵗ⟧-r α ρ)) (sym (⟦lowᵗ⟧-r α ρ')) (ordROK h m)
+    keep₀ : Q ⊨ᴴ Q₀
+    keep₀ = mk⊨ᴴ et sb
+                 (keep-ordʳ (ordᵣ Q) (λ m → m) (λ {ρ} {ρ'} m → fixedʳ (fixᵗ-r α γ₀ ρ')))
+                 (keep-ordᵉ (ordₑ Q) (λ m → m) (λ {ε} {ε'} m → fixedᵉ (fixᵗ-e α γ₀ ε')))
+                 keep-disj
+      where
+        et : ∀ {x} → x ∈ map (upd α γ₀ idᶠ) (ets Q) → Q ⊩ᴱ tvar x
+        et m with ∈-map⁻ (upd α γ₀ idᶠ) m
+        ... | β , m₀ , refl = <:̂ᵛ-eternalˡ (M.lowt β) (et-hyp m₀)
 
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
-        ordE {ε} {ε'} m =
-          subst₂ _≾ₑ_ (sym (⟦lowᵗ⟧-e α ε)) (sym (⟦lowᵗ⟧-e α ε')) (ordEOK h m)
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
-        dsj {A} {ρ} m =
-          [ (λ et → inj₁ (subst Eternal (⟦sbᵗ⟧-v α δ A) et))
-          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (sym (⟦lowᵗ⟧-r α ρ)) lu))
-          ]′ (disjOK h (∈-map⁺ (mapᵈ (sbᵗ-v α δ) (λ ρ → ρ)) m))
-
-    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
-    princ₀ θ h =
-      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (⟦sbᵗ⟧-c α δ C))
-            (monoᵗ-c θ α (gTy θ δ) (subOK h (memᵗ s)) ⁺ C cc)
+        sb : ∀ {x y} → (x , y) ∈ map (mapᵖ (upd α γ₀ idᶠ)) (restᵗ s)
+           → Q ∣ tvar x <:̂ᵛ tvar y
+        sb m with ∈-map⁻ (mapᵖ (upd α γ₀ idᶠ)) m
+        ... | (β , γ) , m₀ , refl =
+              <:̂ᵛ-trans (M.lowt β)
+                (subst (λ y → Q ∣ tvar β <:̂ᵛ tvar y)
+                       (sym (upd-≢ α γ γ₀ idᶠ (⌊⌋-false (cS m₀))))
+                       (tvarₛ (hypᵗᵛ (subᵗ s m₀))))
 
 stepᵗ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (α : TyVar Θ) → Maybe (Elim C Q)
 stepᵗ? {Θ} C Q α with splitᵗ α (subᵥ Q)
@@ -1307,11 +977,11 @@ firstᵗ C Q (α ∷ αs) with stepᵗ? C Q α
 ... | just r  = just r
 ... | nothing = firstᵗ C Q αs
 
-------------------------------------------------------------------
+------------------------------------------------------------------------
 -- Elimination by equality: an unknown the hypotheses equate with an
 -- expression is replaced by it everywhere, and the orderings the
--- replacement makes reflexive are dropped. The reported type keeps its
--- meaning in every grounding of the original.
+-- replacement makes reflexive are dropped. Under the hypotheses the
+-- replacement moves nothing.
 
 -- The pairs whose two sides differ
 
@@ -1328,215 +998,88 @@ apart-∈ _≟_ {a} {b} m with a ≟ b
 ... | yes e  = inj₁ e
 ... | no  ¬e = inj₂ (∈-filter⁺ (λ p → ¬? (proj₁ p ≟ proj₂ p)) m ¬e)
 
--- Updating an unknown to the value it has changes nothing
-
-module _ {Θ : Scope} (θ : Grounding Θ) (i : EVar Θ) {e₀ : E} (s : e₀ ≡ gE θ i) where
-
-  sameᵉ-e : (ε : EExp Θ) → ⟦ ε ⟧ᵉ (lowᵉ θ i e₀) ≡ ⟦ ε ⟧ᵉ θ
-  sameᵉ-e (evar j) with i ≟ᶠ j
-  ... | yes refl = trans (upd-≡ i e₀ (gE θ)) s
-  ... | no  ¬p   = upd-≢ i j e₀ (gE θ) ¬p
-  sameᵉ-e (econst ε) = refl
-  sameᵉ-e (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (sameᵉ-e ε) (sameᵉ-e ε')
-  sameᵉ-e (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (sameᵉ-e ε) (sameᵉ-e ε')
-
-  sameᵉ-r : (ρ : RExp Θ) → ⟦ ρ ⟧ʳ (lowᵉ θ i e₀) ≡ ⟦ ρ ⟧ʳ θ
-  sameᵉ-r (rvar j)   = refl
-  sameᵉ-r (rconst ρ) = refl
-  sameᵉ-r (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (sameᵉ-r ρ) (sameᵉ-r ρ')
-  sameᵉ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (sameᵉ-r ρ) (sameᵉ-r ρ')
-  sameᵉ-r ∣ ε ∣̂ᵉ     = cong mapᵉ (sameᵉ-e ε)
-
-  mutual
-
-    sameᵉ-v : (A : OVType Θ) → ⟦ A ⟧ᵛ (lowᵉ θ i e₀) ≡ ⟦ A ⟧ᵛ θ
-    sameᵉ-v (tvar α)  = refl
-    sameᵉ-v (Base c)  = refl
-    sameᵉ-v Unit      = refl
-    sameᵉ-v Bool      = refl
-    sameᵉ-v (A |×| B) = cong₂ T._|×|_ (sameᵉ-v A) (sameᵉ-v B)
-    sameᵉ-v Empty     = refl
-    sameᵉ-v (A ⇒ C)   = cong₂ T._⇒_ (sameᵉ-v A) (sameᵉ-c C)
-    sameᵉ-v ([ ρ ] A) = cong₂ T.[_]_ (sameᵉ-r ρ) (sameᵉ-v A)
-
-    sameᵉ-c : (C : OCType Θ) → ⟦ C ⟧ᶜ (lowᵉ θ i e₀) ≡ ⟦ C ⟧ᶜ θ
-    sameᵉ-c (A ‼ ε) = cong₂ T._‼_ (sameᵉ-v A) (sameᵉ-e ε)
-
-module _ {Θ : Scope} (θ : Grounding Θ) (i : RVar Θ) {ρ₀ : R} (s : ρ₀ ≡ gR θ i) where
-
-  sameʳ-r : (ρ : RExp Θ) → ⟦ ρ ⟧ʳ (lowʳ θ i ρ₀) ≡ ⟦ ρ ⟧ʳ θ
-  sameʳ-r (rvar j) with i ≟ᶠ j
-  ... | yes refl = trans (upd-≡ i ρ₀ (gR θ)) s
-  ... | no  ¬p   = upd-≢ i j ρ₀ (gR θ) ¬p
-  sameʳ-r (rconst ρ) = refl
-  sameʳ-r (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (sameʳ-r ρ) (sameʳ-r ρ')
-  sameʳ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (sameʳ-r ρ) (sameʳ-r ρ')
-  sameʳ-r ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦lowʳ⟧-e i ε)
-
-  mutual
-
-    sameʳ-v : (A : OVType Θ) → ⟦ A ⟧ᵛ (lowʳ θ i ρ₀) ≡ ⟦ A ⟧ᵛ θ
-    sameʳ-v (tvar α)  = refl
-    sameʳ-v (Base c)  = refl
-    sameʳ-v Unit      = refl
-    sameʳ-v Bool      = refl
-    sameʳ-v (A |×| B) = cong₂ T._|×|_ (sameʳ-v A) (sameʳ-v B)
-    sameʳ-v Empty     = refl
-    sameʳ-v (A ⇒ C)   = cong₂ T._⇒_ (sameʳ-v A) (sameʳ-c C)
-    sameʳ-v ([ ρ ] A) = cong₂ T.[_]_ (sameʳ-r ρ) (sameʳ-v A)
-
-    sameʳ-c : (C : OCType Θ) → ⟦ C ⟧ᶜ (lowʳ θ i ρ₀) ≡ ⟦ C ⟧ᶜ θ
-    sameʳ-c (A ‼ ε) = cong₂ T._‼_ (sameʳ-v A) (⟦lowʳ⟧-e i ε)
-
 -- One step at an effect unknown
 
 equateᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → (b : EExp Θ)
         → Q ⊩ evar i ≡̂ₑ b → Elim C Q
-equateᵉ {Θ} C Q i b eq = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+equateᵉ {Θ} C Q i b eq =
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+         (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
   where
-    Ĉ₀ : OCType Θ
-    Ĉ₀ = sbᵉ-c i b C
+    η₀ : Subst Θ Θ
+    η₀ = updᵉ i b
 
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
-              (apart _≟ʳ_ (map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q)))
-              (apart _≟ᵉ_ (map (mapᵖ (sbᵉ-e i b)) (ordₑ Q)))
-              (map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q))
+              (apart _≟ʳ_ (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q)))
+              (apart _≟ᵉ_ (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q)))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    fix : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ b ⟧ᵉ θ ≡ gE θ i
-    fix θ h = sym (ground-⊩≡̂ₑ h eq)
+    open Equal {Q = Q} η₀
+      (≾ˢ-idˡ (updᵉ-below i b idˢ (subst (λ y → Q ⊩ y ≾̂ₑ evar i) (sym ([id]ᵉ b)) (proj₂ eq))))
+      (≾ˢ-idʳ (updᵉ-above i b idˢ (subst (λ y → Q ⊩ evar i ≾̂ₑ y) (sym ([id]ᵉ b)) (proj₁ eq))))
+      (λ β → refl)
 
-    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
-    keep₀ θ h = mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj
+    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
-        s = fix θ h
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
+        ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
+        ... | inj₁ e  = subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) e ⊩≾̂ᵣ-refl
+        ... | inj₂ m' = hypᵣ m'
 
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ apart _≟ʳ_ (map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q))
-             → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-        ordR m with ∈-map⁻ (mapᵖ (sbᵉ-r i b)) (apart-⊆ _≟ʳ_ m)
-        ... | (ρ₀ , ρ₀') , m₀ , refl =
-              subst₂ _≾ᵣ_ (sym (trans (⟦sbᵉ⟧-r i b ρ₀)  (sameᵉ-r θ i s ρ₀)))
-                          (sym (trans (⟦sbᵉ⟧-r i b ρ₀') (sameᵉ-r θ i s ρ₀')))
-                     (ordROK h m₀)
+        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
+        ordE {ε} m with apart-∈ _≟ᵉ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m)
+        ... | inj₁ e  = subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) e ⊩≾̂ₑ-refl
+        ... | inj₂ m' = hypₑ m'
 
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ apart _≟ᵉ_ (map (mapᵖ (sbᵉ-e i b)) (ordₑ Q))
-             → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
-        ordE m with ∈-map⁻ (mapᵖ (sbᵉ-e i b)) (apart-⊆ _≟ᵉ_ m)
-        ... | (ε₀ , ε₀') , m₀ , refl =
-              subst₂ _≾ₑ_ (sym (trans (⟦sbᵉ⟧-e i b ε₀)  (sameᵉ-e θ i s ε₀)))
-                          (sym (trans (⟦sbᵉ⟧-e i b ε₀') (sameᵉ-e θ i s ε₀')))
-                     (ordEOK h m₀)
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q)
-            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-        dsj m with ∈-map⁻ (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) m
-        ... | (A₀ , ρ₀) , m₀ , refl =
-              [ (λ et → inj₁ (subst Eternal
-                                    (sym (trans (⟦sbᵉ⟧-v i b A₀) (sameᵉ-v θ i s A₀))) et))
-              , (λ lu → inj₂ (subst (_≾ᵣ uᵣ)
-                                    (sym (trans (⟦sbᵉ⟧-r i b ρ₀) (sameᵉ-r θ i s ρ₀))) lu))
-              ]′ (disjOK h m₀)
-
-    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
-          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
-    real₀ θ h = θ' , mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj , sym (⟦sbᵉ⟧-c i b C)
-      where
-        θ' : Grounding Θ
-        θ' = lowᵉ θ i (⟦ b ⟧ᵉ θ)
-
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
-        ordR {ρ} {ρ'} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (sbᵉ-r i b)) m)
-        ... | inj₁ e  = ≾ᵣ-reflexive (trans (sym (⟦sbᵉ⟧-r i b ρ))
-                                     (trans (cong (λ x → ⟦ x ⟧ʳ θ) e) (⟦sbᵉ⟧-r i b ρ')))
-        ... | inj₂ m' = subst₂ _≾ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ') (ordROK h m')
-
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
-        ordE {ε} {ε'} m with apart-∈ _≟ᵉ_ (∈-map⁺ (mapᵖ (sbᵉ-e i b)) m)
-        ... | inj₁ e  = ≾ₑ-reflexive (trans (sym (⟦sbᵉ⟧-e i b ε))
-                                     (trans (cong (λ x → ⟦ x ⟧ᵉ θ) e) (⟦sbᵉ⟧-e i b ε')))
-        ... | inj₂ m' = subst₂ _≾ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε') (ordEOK h m')
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
-        dsj {A} {ρ} m =
-          [ (λ et → inj₁ (subst Eternal (⟦sbᵉ⟧-v i b A) et))
-          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (⟦sbᵉ⟧-r i b ρ) lu))
-          ]′ (disjOK h (∈-map⁺ (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) m))
-
-    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
-    princ₀ θ h =
-      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (trans (⟦sbᵉ⟧-c i b C) (sameᵉ-c θ i (fix θ h) C)))
-            (<:ᶜ-refl (⟦ C ⟧ᶜ θ))
+    keep₀ : Q ⊨ᴴ Q₀
+    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+                 (λ m → keep-ordʳ (ordᵣ Q) (λ q → q) (λ {ρ} {ρ'} _ → raiseʳ ρ')
+                                  (apart-⊆ _≟ʳ_ m))
+                 (λ m → keep-ordᵉ (ordₑ Q) (λ q → q) (λ {ε} {ε'} _ → raiseᵉ ε')
+                                  (apart-⊆ _≟ᵉ_ m))
+                 keep-disj
 
 -- One step at a resource unknown
 
 equateʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → (b : RExp Θ)
         → Q ⊩ rvar i ≡̂ᵣ b → Elim C Q
-equateʳ {Θ} C Q i b eq = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+equateʳ {Θ} C Q i b eq =
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+         (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
   where
-    Ĉ₀ : OCType Θ
-    Ĉ₀ = sbʳ-c i b C
+    η₀ : Subst Θ Θ
+    η₀ = updʳ i b
 
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
-              (apart _≟ʳ_ (map (mapᵖ (sbʳ-r i b)) (ordᵣ Q)))
-              (ordₑ Q)
-              (map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q))
+              (apart _≟ʳ_ (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q)))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    fix : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ b ⟧ʳ θ ≡ gR θ i
-    fix θ h = sym (ground-⊩≡̂ᵣ h eq)
+    open Equal {Q = Q} η₀
+      (≾ˢ-idˡ (updʳ-below i b idˢ (subst (λ y → Q ⊩ y ≾̂ᵣ rvar i) (sym ([id]ʳ b)) (proj₂ eq))))
+      (≾ˢ-idʳ (updʳ-above i b idˢ (subst (λ y → Q ⊩ rvar i ≾̂ᵣ y) (sym ([id]ʳ b)) (proj₁ eq))))
+      (λ β → refl)
 
-    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
-    keep₀ θ h = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) dsj
+    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
+                 (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
-        s = fix θ h
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
+        ordR {ρ} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m)
+        ... | inj₁ e  = subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) e ⊩≾̂ᵣ-refl
+        ... | inj₂ m' = hypᵣ m'
 
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ apart _≟ʳ_ (map (mapᵖ (sbʳ-r i b)) (ordᵣ Q))
-             → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-        ordR m with ∈-map⁻ (mapᵖ (sbʳ-r i b)) (apart-⊆ _≟ʳ_ m)
-        ... | (ρ₀ , ρ₀') , m₀ , refl =
-              subst₂ _≾ᵣ_ (sym (trans (⟦sbʳ⟧-r i b ρ₀)  (sameʳ-r θ i s ρ₀)))
-                          (sym (trans (⟦sbʳ⟧-r i b ρ₀') (sameʳ-r θ i s ρ₀')))
-                     (ordROK h m₀)
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q)
-            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
-        dsj m with ∈-map⁻ (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) m
-        ... | (A₀ , ρ₀) , m₀ , refl =
-              [ (λ et → inj₁ (subst Eternal
-                                    (sym (trans (⟦sbʳ⟧-v i b A₀) (sameʳ-v θ i s A₀))) et))
-              , (λ lu → inj₂ (subst (_≾ᵣ uᵣ)
-                                    (sym (trans (⟦sbʳ⟧-r i b ρ₀) (sameʳ-r θ i s ρ₀))) lu))
-              ]′ (disjOK h m₀)
-
-    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
-          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
-    real₀ θ h = θ' , mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj , sym (⟦sbʳ⟧-c i b C)
-      where
-        θ' : Grounding Θ
-        θ' = lowʳ θ i (⟦ b ⟧ʳ θ)
-
-        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
-        ordR {ρ} {ρ'} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (sbʳ-r i b)) m)
-        ... | inj₁ e  = ≾ᵣ-reflexive (trans (sym (⟦sbʳ⟧-r i b ρ))
-                                     (trans (cong (λ x → ⟦ x ⟧ʳ θ) e) (⟦sbʳ⟧-r i b ρ')))
-        ... | inj₂ m' = subst₂ _≾ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ') (ordROK h m')
-
-        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
-        ordE {ε} {ε'} m =
-          subst₂ _≾ₑ_ (sym (⟦lowʳ⟧-e i ε)) (sym (⟦lowʳ⟧-e i ε')) (ordEOK h m)
-
-        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
-            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
-        dsj {A} {ρ} m =
-          [ (λ et → inj₁ (subst Eternal (⟦sbʳ⟧-v i b A) et))
-          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (⟦sbʳ⟧-r i b ρ) lu))
-          ]′ (disjOK h (∈-map⁺ (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) m))
-
-    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
-    princ₀ θ h =
-      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (trans (⟦sbʳ⟧-c i b C) (sameʳ-c θ i (fix θ h) C)))
-            (<:ᶜ-refl (⟦ C ⟧ᶜ θ))
+    keep₀ : Q ⊨ᴴ Q₀
+    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+                 (λ m → keep-ordʳ (ordᵣ Q) (λ q → q) (λ {ρ} {ρ'} _ → raiseʳ ρ')
+                                  (apart-⊆ _≟ʳ_ m))
+                 (keep-ordᵉ (ordₑ Q) (λ q → q) (λ {ε} {ε'} _ → raiseᵉ ε'))
+                 keep-disj
 
 -- The expressions an ordering sets against an unknown, and those fit to
 -- replace it: free of it, and an unknown only if of smaller index

@@ -5,8 +5,8 @@
 -- smaller scope, embedded back in order by a renaming `ι`, and   --
 -- an expression all of whose variables are kept is strengthened  --
 -- along it: renaming the result along `ι` gives the expression   --
--- back on the nose. A grounding of the smaller scope extends     --
--- along `ι`, by any value on the variables dropped.              --
+-- back on the nose. A closed instance of the smaller scope       --
+-- extends along `ι`, by any value on the variables dropped.      --
 --                                                                --
 -- `strengthen` takes the mask of the variables occurring in a    --
 -- type or a hypothesis set, and strengthens both along it.       --
@@ -21,7 +21,6 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.Sum.Base using () renaming (map to map⊎)
 
 open import Relation.Nullary using (yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
@@ -38,18 +37,12 @@ module TypeInference.SolverImpl.Strengthen (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Types     S using (Eternal)
-open import Syntax.Subtyping S using (_<:ᵛ_; _<:ᶜ_)
-
-import Syntax.Types S as T
-
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Grounding S
 
-open import TypeInference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; keep; real; princ)
+open import TypeInference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
 open import TypeInference.SolverImpl.Core.Occurs S
   using (occᵗ-v; occᵗ-c; occʳ-r; occʳ-v; occʳ-c; occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c)
 
@@ -250,61 +243,52 @@ Q [ r ]ᴴ = hyps (map (rTy r) (ets Q))
                 (map (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) (ordₑ Q))
                 (map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q))
 
--- Groundings agreeing along a renaming satisfy a hypothesis set and its
--- renaming alike
+-- A renamed set entails the set along the renaming, and so its
+-- instances are instances of the set
 
-module _ {Θ Θ'} (r : Ren Θ Θ') {θ : Grounding Θ} {θ' : Grounding Θ'}
-         (p : ⌜ r ⌝ʳ ⨟ᵍ θ' ≐ᵍ θ) where
+⊩ᴴ-ren : ∀ {Θ Θ'} {Q : Hyps Θ} → (r : Ren Θ Θ') → Q [ r ]ᴴ ⊩ᴴ Q [ ⌜ r ⌝ʳ ]
+⊩ᴴ-ren r =
+  mk⊩ᴴ (λ m → et-hyp (∈-map⁺ (rTy r) m))
+       (λ m → tvarₛ (hypᵗᵛ (∈-map⁺ (mapᵖ (rTy r)) m)))
+       (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m))
+       (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m))
+       (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m))
 
-  private
+⊩ᴴ-ren⁻ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
+        → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ] → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ]
+⊩ᴴ-ren⁻ r h = ⊩ᴴ-⨟ h (⊩ᴴ-ren r)
 
-    eqʳ : (ρ : RExp Θ) → ⟦ ρ [ ⌜ r ⌝ʳ ]ʳ ⟧ʳ θ' ≡ ⟦ ρ ⟧ʳ θ
-    eqʳ ρ = trans (⟦⟧-⨟ᵍ-r ⌜ r ⌝ʳ θ' ρ) (⟦≐⟧ʳ p ρ)
+⊩ᴴ-ren⁺ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ''} → (r : Ren Θ Θ') → {δ : Subst Θ' Θ''}
+        → Q' ⊩ᴴ Q [ ⌜ r ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴴ Q [ r ]ᴴ [ δ ]
+⊩ᴴ-ren⁺ {Q = Q} {Q'} r {δ} h = mk⊩ᴴ et sb oR oE dj
+  where
+    et : ∀ {α} → α ∈ map (rTy r) (ets Q) → Q' ⊩ᴱ sTy δ α
+    et m with ∈-map⁻ (rTy r) m
+    ... | α , m' , refl = ⊩ets h m'
 
-    eqᵉ : (ε : EExp Θ) → ⟦ ε [ ⌜ r ⌝ʳ ]ᵉ ⟧ᵉ θ' ≡ ⟦ ε ⟧ᵉ θ
-    eqᵉ ε = trans (⟦⟧-⨟ᵍ-e ⌜ r ⌝ʳ θ' ε) (⟦≐⟧ᵉ p ε)
+    sb : ∀ {α β} → (α , β) ∈ map (mapᵖ (rTy r)) (subᵥ Q) → Q' ∣ sTy δ α <:̂ᵛ sTy δ β
+    sb m with ∈-map⁻ (mapᵖ (rTy r)) m
+    ... | (α , β) , m' , refl = ⊩subᵥ h m'
 
-    eqᵛ : (A : OVType Θ) → ⟦ A [ ⌜ r ⌝ʳ ]ᵛ ⟧ᵛ θ' ≡ ⟦ A ⟧ᵛ θ
-    eqᵛ A = trans (⟦⟧-⨟ᵍ-v ⌜ r ⌝ʳ θ' A) (⟦≐⟧ᵛ p A)
+    oR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) (ordᵣ Q)
+       → Q' ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+    oR m with ∈-map⁻ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m
+    ... | (ρ , ρ') , m' , refl =
+          subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) (sym ([⨟]ʳ ρ ⌜ r ⌝ʳ δ)) (sym ([⨟]ʳ ρ' ⌜ r ⌝ʳ δ))
+                 (⊩ordᵣ h m')
 
-  ⊨-ren : {Q : Hyps Θ} → θ ⊨ᴴ Q → θ' ⊨ᴴ Q [ r ]ᴴ
-  ⊨-ren {Q} h = mk⊨ᴴ et sb oR oE dj
-    where
-      et : ∀ {α} → α ∈ map (rTy r) (ets Q) → Eternal (gTy θ' α)
-      et m with ∈-map⁻ (rTy r) m
-      ... | α , m' , refl = subst Eternal (sym (≐ᵍᵗ p α)) (etOK h m')
+    oE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) (ordₑ Q)
+       → Q' ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+    oE m with ∈-map⁻ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m
+    ... | (ε , ε') , m' , refl =
+          subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) (sym ([⨟]ᵉ ε ⌜ r ⌝ʳ δ)) (sym ([⨟]ᵉ ε' ⌜ r ⌝ʳ δ))
+                 (⊩ordₑ h m')
 
-      sb : ∀ {α β} → (α , β) ∈ map (mapᵖ (rTy r)) (subᵥ Q) → gTy θ' α <:ᵛ gTy θ' β
-      sb m with ∈-map⁻ (mapᵖ (rTy r)) m
-      ... | (α , β) , m' , refl =
-            subst₂ _<:ᵛ_ (sym (≐ᵍᵗ p α)) (sym (≐ᵍᵗ p β)) (subOK h m')
-
-      oR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) (ordᵣ Q)
-         → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
-      oR m with ∈-map⁻ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m
-      ... | (ρ , ρ') , m' , refl = subst₂ _≾ᵣ_ (sym (eqʳ ρ)) (sym (eqʳ ρ')) (ordROK h m')
-
-      oE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) (ordₑ Q)
-         → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
-      oE m with ∈-map⁻ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m
-      ... | (ε , ε') , m' , refl = subst₂ _≾ₑ_ (sym (eqᵉ ε)) (sym (eqᵉ ε')) (ordEOK h m')
-
-      dj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q)
-         → _
-      dj m with ∈-map⁻ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m
-      ... | (A , ρ) , m' , refl =
-            map⊎ (subst Eternal (sym (eqᵛ A))) (subst (_≾ᵣ uᵣ) (sym (eqʳ ρ))) (disjOK h m')
-
-  ⊨-ren⁻ : {Q : Hyps Θ} → θ' ⊨ᴴ Q [ r ]ᴴ → θ ⊨ᴴ Q
-  ⊨-ren⁻ {Q} h = mk⊨ᴴ
-    (λ {α} m → subst Eternal (≐ᵍᵗ p α) (etOK h (∈-map⁺ (rTy r) m)))
-    (λ {α} {β} m → subst₂ _<:ᵛ_ (≐ᵍᵗ p α) (≐ᵍᵗ p β) (subOK h (∈-map⁺ (mapᵖ (rTy r)) m)))
-    (λ {ρ} {ρ'} m → subst₂ _≾ᵣ_ (eqʳ ρ) (eqʳ ρ')
-                      (ordROK h (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ʳ)) m)))
-    (λ {ε} {ε'} m → subst₂ _≾ₑ_ (eqᵉ ε) (eqᵉ ε')
-                      (ordEOK h (∈-map⁺ (mapᵖ (_[ ⌜ r ⌝ʳ ]ᵉ)) m)))
-    (λ {A} {ρ} m → map⊎ (subst Eternal (eqᵛ A)) (subst (_≾ᵣ uᵣ) (eqʳ ρ))
-                      (disjOK h (∈-map⁺ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m)))
+    dj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) (disj Q)
+       → VarOK Q' (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+    dj m with ∈-map⁻ (mapᵈ (_[ ⌜ r ⌝ʳ ]ᵛ) (_[ ⌜ r ⌝ʳ ]ʳ)) m
+    ... | (A , ρ) , m' , refl =
+          subst₂ (VarOK Q') (sym ([⨟]ᵛ A ⌜ r ⌝ʳ δ)) (sym ([⨟]ʳ ρ ⌜ r ⌝ʳ δ)) (⊩disj h m')
 
 ------------------------------------------------------------------------
 -- Strengthening along a mask
@@ -455,15 +439,15 @@ module _ {Θ : Scope} (M : Vars Θ) where
       eᵛʳ : ∀ x h → mapᵈ (_[ ⌜ thin ⌝ʳ ]ᵛ) (_[ ⌜ thin ⌝ʳ ]ʳ) (strᵛʳ x h) ≡ x
       eᵛʳ (A , ρ) h = cong₂ _,_ (strᵛ-ι A _) (strʳ-ι ρ _)
 
-  -- a grounding of the kept variables, extended by the units
+  -- a closed instance of the kept variables, extended by closed
+  -- constants on the others
 
-  extᵍ : Grounding kept → Grounding Θ
-  extᵍ θ = grounding (ext (vᵗ M) T.Unit (gTy θ)) (ext (vʳ M) uᵣ (gR θ))
-                     (ext (vᵉ M) uₑ (gE θ))
+  extⁱ : Subst kept ∅ˢ → Subst Θ ∅ˢ
+  extⁱ δ = sub (ext (vᵗ M) Unit (sTy δ)) (ext (vʳ M) ûᵣ (sR δ)) (ext (vᵉ M) ûₑ (sE δ))
 
-  extᵍ-ι : (θ : Grounding kept) → ⌜ thin ⌝ʳ ⨟ᵍ extᵍ θ ≐ᵍ θ
-  extᵍ-ι θ = mk≐ᵍ (ext-emb (vᵗ M) T.Unit (gTy θ)) (ext-emb (vʳ M) uᵣ (gR θ))
-                  (ext-emb (vᵉ M) uₑ (gE θ))
+  extⁱ-ι : (δ : Subst kept ∅ˢ) → ⌜ thin ⌝ʳ ⨟ˢ extⁱ δ ≐ˢ δ
+  extⁱ-ι δ = mk≐ˢ (ext-emb (vᵗ M) Unit (sTy δ)) (ext-emb (vʳ M) ûᵣ (sR δ))
+                  (ext-emb (vᵉ M) ûₑ (sE δ))
 
 ------------------------------------------------------------------------
 -- The step: a type and a hypothesis set, stated over the variables
@@ -478,12 +462,12 @@ record Strengthened {Θ : Scope} (X : OCType Θ) (Q : Hyps Θ) : Set where
     Q⁻   : Hyps Θ⁻
     X-ι  : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡ X
     Q-ι  : Q⁻ [ ι ]ᴴ ≡ Q
-    ext-ι : (θ : Grounding Θ⁻) → Σ[ θ' ∈ Grounding Θ ] (⌜ ι ⌝ʳ ⨟ᵍ θ' ≐ᵍ θ)
+    ext-ι : (δ : Subst Θ⁻ ∅ˢ) → Σ[ δ' ∈ Subst Θ ∅ˢ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
 strengthen : ∀ {Θ} → (X : OCType Θ) → (Q : Hyps Θ) → Strengthened X Q
 strengthen X Q =
   strengthened (kept M) (thin M) (strᶜ M X hX) (strᴴ M Q hQ)
-               (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ θ → extᵍ M θ , extᵍ-ι M θ)
+               (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
   where
     M  = fvᶜ X ∪ᵛ fvᴴ Q
     hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q) ⊆-refl
@@ -497,18 +481,17 @@ module _ {Θ : Scope} {C : OCType Θ} {Q : Hyps Θ} (el : Elim C Q)
 
   open Strengthened sr
 
-  ⟦X⁻⟧ : (θ : Grounding Θ) → ⟦ Ĉ el ⟧ᶜ θ ≡ ⟦ X⁻ ⟧ᶜ (⌜ ι ⌝ʳ ⨟ᵍ θ)
-  ⟦X⁻⟧ θ = trans (cong (λ Y → ⟦ Y ⟧ᶜ θ) (sym X-ι)) (⟦⟧-⨟ᵍ-c ⌜ ι ⌝ʳ θ X⁻)
+  conv⁻ : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡̂ᶜ C [ η el ]ᶜ
+  conv⁻ = subst (_≡̂ᶜ C [ η el ]ᶜ) (sym X-ι) (conv el)
 
-  keep⁻ : (θ : Grounding Θ) → θ ⊨ᴴ Q → (⌜ ι ⌝ʳ ⨟ᵍ θ) ⊨ᴴ Q⁻
-  keep⁻ θ h = ⊨-ren⁻ ι (mk≐ᵍ (λ _ → refl) (λ _ → refl) (λ _ → refl))
-                (subst (θ ⊨ᴴ_) (sym Q-ι) (keep el θ h))
+  inst⁻ : Q⁻ [ ι ]ᴴ ⊩ᴴ Q [ η el ]
+  inst⁻ = subst (_⊩ᴴ Q [ η el ]) (sym Q-ι) (inst el)
 
-  real⁻ : (θ : Grounding Θ⁻) → θ ⊨ᴴ Q⁻
-        → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ X⁻ ⟧ᶜ θ))
-  real⁻ θ h with ext-ι θ
-  ... | θ₁ , p with real el θ₁ (subst (θ₁ ⊨ᴴ_) Q-ι (⊨-ren ι p h))
-  ...   | θ' , h' , q = θ' , h' , trans q (trans (⟦X⁻⟧ θ₁) (⟦≐⟧ᶜ p X⁻))
+  keep⁻ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q⁻ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
+  keep⁻ δ h = ⊩ᴴ-ren⁻ ι (subst (λ P → ∅ᴴ ⊩ᴴ P [ δ ]) (sym Q-ι) (keep el δ h))
 
-  princ⁻ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ X⁻ ⟧ᶜ (⌜ ι ⌝ʳ ⨟ᵍ θ) <:ᶜ ⟦ C ⟧ᶜ θ
-  princ⁻ θ h = subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (⟦X⁻⟧ θ) (princ el θ h)
+  princ⁻ : (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ∣ X⁻ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ C [ δ ]ᶜ
+  princ⁻ δ h =
+    subst (λ Y → ∅ᴴ ∣ Y <:̂ᶜ C [ δ ]ᶜ)
+          (trans (cong (_[ δ ]ᶜ) (sym X-ι)) ([⨟]ᶜ X⁻ ⌜ ι ⌝ʳ δ))
+          (princ el δ h)

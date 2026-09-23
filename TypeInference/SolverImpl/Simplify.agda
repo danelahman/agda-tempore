@@ -19,14 +19,15 @@
 -- those not yet examined, the orderings by `decide≾`; an         --
 -- ordering that holds outright is dropped too.                   --
 --                                                                --
--- `simplify Q`, `trim Q` and `Q` are satisfied by exactly the    --
--- same groundings. This is a simplification of the report, not   --
--- of the solver, and `solve-principal` is untouched.             --
+-- `simplify Q` and `trim Q` entail `Q`, and every closed         --
+-- instance of `Q` is one of each: settling a disjunction by a    --
+-- refutation holds only at the instances. This is a              --
+-- simplification of the report, not of the solver, and           --
+-- `solve-principal` is untouched.                                --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥-elim)
-open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Fin.Base using (Fin)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; length)
@@ -59,73 +60,22 @@ module TypeInference.SolverImpl.Simplify
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- The `Eternal` constructors share their names with those of the
--- mirrored `_⊩ᴱ_`; each occurrence below is resolved by its type.
-
-open import Syntax.Types S
-  using (Eternal; Baseₑ; Unitₑ; Boolₑ; _|×|ₑ_; Emptyₑ;
-         EternalBaseType; eternalBaseType?)
-open import Syntax.Subtyping S using (_<:ᵛ_; <:ᶜ-refl)
-
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
+open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Grounding S
+open import TypeInference.OpenSyntax.Instances S
+  using (_⊨ᴴ_; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; VarOK-∅; val-≾ᵣ⁻)
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
-open import TypeInference.SolverImpl.Canon  S umin?ᵣ umin?ₑ using (canonᴴ; canonᴴ-⊨; canonᴴ-⊨⁻)
+open import TypeInference.SolverImpl.Canon  S umin?ᵣ umin?ₑ using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
 open import TypeInference.SolverImpl.Normal  S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
-open import TypeInference.SolverImpl.Resid  S using (etDec)
+open import TypeInference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
 open import TypeInference.SolverImpl.Refute S umin?ᵣ umin?ₑ
   using (Refutedᵤ; scanᵤ)
-
--- `etDec` read at a grounding: the closed `Eternal` of `Syntax.Types`
--- has the same clauses as the mirrored `_⊩ᴱ_`.
-
-etDec-Et : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → {αs : List (TyVar Θ)}
-         → etDec A ≡ just αs → (∀ {α} → α ∈ αs → Eternal (gTy θ α))
-         → Eternal (⟦ A ⟧ᵛ θ)
-etDec-Et (tvar α) refl k = k (here refl)
-etDec-Et (Base b) q k with eternalBaseType? b
-etDec-Et (Base b) refl k | yes p = Baseₑ p
-etDec-Et Unit  refl k = Unitₑ
-etDec-Et Bool  refl k = Boolₑ
-etDec-Et Empty refl k = Emptyₑ
-etDec-Et (A |×| B) q k with zip₂-just _++_ (etDec A) (etDec B) q
-... | as , bs , qa , qb , refl =
-      etDec-Et A qa (λ m → k (∈-++⁺ˡ m)) |×|ₑ
-      etDec-Et B qb (λ m → k (∈-++⁺ʳ as m))
-
-etDec-atoms : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → {αs : List (TyVar Θ)}
-            → etDec A ≡ just αs → Eternal (⟦ A ⟧ᵛ θ)
-            → ∀ {α} → α ∈ αs → Eternal (gTy θ α)
-etDec-atoms (tvar β) refl et (here refl) = et
-etDec-atoms (Base b) q et with eternalBaseType? b
-etDec-atoms (Base b) refl et | yes p = λ ()
-etDec-atoms Unit  refl et = λ ()
-etDec-atoms Bool  refl et = λ ()
-etDec-atoms Empty refl et = λ ()
-etDec-atoms (A |×| B) q (p |×|ₑ p') with zip₂-just _++_ (etDec A) (etDec B) q
-... | as , bs , qa , qb , refl =
-      λ m → [ etDec-atoms A qa p , etDec-atoms B qb p' ]′ (∈-++⁻ as m)
-
-etDec-¬Et : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → etDec A ≡ nothing
-          → ¬ Eternal (⟦ A ⟧ᵛ θ)
-etDec-¬Et (Base b) q with eternalBaseType? b
-etDec-¬Et (Base b) q | no ¬p = λ { (Baseₑ p') → ⊥-elim-irr (¬p p') }
-etDec-¬Et (A |×| B) q with etDec A in e₁ | etDec B in e₂
-etDec-¬Et (A |×| B) q | just _  | nothing = λ { (p |×|ₑ p') → etDec-¬Et B e₂ p' }
-etDec-¬Et (A |×| B) q | nothing | _       = λ { (p |×|ₑ p') → etDec-¬Et A e₁ p }
-etDec-¬Et (A ⇒ C)   q = λ ()
-etDec-¬Et ([ ρ ] A) q = λ ()
-
--- The ground reading of one var-rule disjunction, as `_⊨ᴴ_` states it
-
-Disj : ∀ {Θ} → Grounding Θ → OVType Θ → RExp Θ → Set
-Disj θ A ρ = Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
 
 -- Derivations reading only a list of subtyping hypotheses and a list
 -- of eternality atoms: `_⊢ᵖ_≾_` mirrors `_⊩ᵗᵛ_≾_`, `Etᴾ` mirrors
@@ -157,6 +107,11 @@ transᵖ (stepᵖ m p) q = stepᵖ m (transᵖ p q)
      → l ⊢ᵖ α ≾ β → Q ⊩ᵗᵛ α ≾ β
 ⊢ᵖ-⊩ k stopᵖ       = reflᵗᵛ
 ⊢ᵖ-⊩ k (stepᵖ m p) = transᵗᵛ (hypᵗᵛ (k m)) (⊢ᵖ-⊩ k p)
+
+⊢ᵖ-⊩' : ∀ {Θ} {Q : Hyps Θ} {l α β} → (∀ {p} → p ∈ l → Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p)
+      → l ⊢ᵖ α ≾ β → Q ⊩ᵗᵛ α ≾ β
+⊢ᵖ-⊩' k stopᵖ       = reflᵗᵛ
+⊢ᵖ-⊩' k (stepᵖ m p) = transᵗᵛ (k m) (⊢ᵖ-⊩' k p)
 
 Etᴾ-mono : ∀ {n} {l l' : List (Fin n × Fin n)} {as as' : List (Fin n)} {α}
          → (∀ {p} → p ∈ l → p ∈ l') → (∀ {β} → β ∈ as → β ∈ as')
@@ -294,71 +249,79 @@ settle A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
 ...       | just _  = hyps (αs ++ ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) (disj Q)
 ...       | nothing = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ((A , ρ) ∷ disj Q)
 
-settle-⊨ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
-         → Disj θ A ρ → θ ⊨ᴴ Q → θ ⊨ᴴ settle A ρ Q
-settle-⊨ {θ = θ} A ρ Q d h with decide≾ᵣ {Q = Q} ρ ûᵣ
+-- A settled disjunction is entailed by the set it leaves, which entails
+-- the set it came from
+
+settle-⊩ : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
+         → (settle A ρ Q ⊩ᴴ Q) × VarOK (settle A ρ Q) A ρ
+settle-⊩ A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
+... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
+... | nothing with etDec A in e
+...   | nothing =
+        ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m)
+                    (λ m → insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (there m)) (λ m → m) (λ m → m))
+        , ≾ᵘ-ok (hypᵣ (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (here refl)))
+...   | just αs with ets? Q αs
+...     | just k  = ⊩ᴴ-refl , et-ok (etDec-sound A e k)
+...     | nothing with scanᵤ ρ
+...       | just _  =
+            ⊆ᴴ-⊩ (mk⊆ᴴ (∈-++⁺ʳ αs) (λ m → m) (λ m → m) (λ m → m) (λ m → m))
+            , et-ok (etDec-sound A e (λ m → et-hyp (∈-++⁺ˡ m)))
+...       | nothing =
+            ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (λ m → m) (λ m → m) there)
+            , hyp-ok₀ (here refl)
+
+-- At an instance meeting the disjunction, an instance of the set is one
+-- of the set it leaves: a type `etDec` refutes is eternal at no
+-- instance, and a refuted grade is below the unit at none.
+
+settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → (δ : Subst Θ ∅ˢ)
+            → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
+settle-inst A ρ Q δ d h with decide≾ᵣ {Q = Q} ρ ûᵣ
 ... | just _  = h
 ... | nothing with etDec A in e
-...   | nothing = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) (disjOK h)
+...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h)
       where
         ordR : ∀ {ρ₀ ρ₀'} → (ρ₀ , ρ₀') ∈ insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)
-             → ⟦ ρ₀ ⟧ʳ θ ≾ᵣ ⟦ ρ₀' ⟧ʳ θ
+             → ∅ᴴ ⊩ ρ₀ [ δ ]ʳ ≾̂ᵣ ρ₀' [ δ ]ʳ
         ordR m with insertᴼ-⊆ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) m
-        ... | here refl = [ (λ et → ⊥-elim (etDec-¬Et A e et)) , (λ le → le) ]′ d
-        ... | there m'  = ordROK h m'
+        ... | here refl = [ (λ et → ⊥-elim (etDec-refute A e δ et)) , val-≾ᵣ⁻ ]′ (VarOK-∅ d)
+        ... | there m'  = ⊩ordᵣ h m'
 ...   | just αs with ets? Q αs
 ...     | just _  = h
 ...     | nothing with scanᵤ ρ
-...       | just ref = mk⊨ᴴ et' (subOK h) (ordROK h) (ordEOK h) (disjOK h)
+...       | just ref = mk⊩ᴴ et' (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (⊩disj h)
       where
-        etA : Eternal (⟦ A ⟧ᵛ θ)
-        etA = [ (λ et → et) , (λ le → ⊥-elim (ref θ le)) ]′ d
+        etA : ∅ᴴ ⊩ᴱ A [ δ ]ᵛ
+        etA = [ (λ et → et) , (λ le → ⊥-elim (ref δ le)) ]′ (VarOK-∅ d)
 
-        et' : ∀ {β} → β ∈ (αs ++ ets Q) → Eternal (gTy θ β)
-        et' m = [ etDec-atoms A e etA , etOK h ]′ (∈-++⁻ αs m)
-...       | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) dsj'
+        et' : ∀ {β} → β ∈ (αs ++ ets Q) → ∅ᴴ ⊩ᴱ sTy δ β
+        et' m = [ etDec-compl A e δ etA , ⊩ets h ]′ (∈-++⁻ αs m)
+...       | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) dsj'
       where
-        dsj' : ∀ {A₀ ρ₀} → (A₀ , ρ₀) ∈ ((A , ρ) ∷ disj Q) → Disj θ A₀ ρ₀
+        dsj' : ∀ {A₀ ρ₀} → (A₀ , ρ₀) ∈ ((A , ρ) ∷ disj Q)
+             → VarOK ∅ᴴ (A₀ [ δ ]ᵛ) (ρ₀ [ δ ]ʳ)
         dsj' (here refl) = d
-        dsj' (there m)   = disjOK h m
-
-settle-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
-          → θ ⊨ᴴ settle A ρ Q → (θ ⊨ᴴ Q) × Disj θ A ρ
-settle-⊨⁻ A ρ Q h with decide≾ᵣ {Q = Q} ρ ûᵣ
-... | just d  = h , inj₂ (ground-≾ᵣ h d)
-... | nothing with etDec A in e
-...   | nothing =
-        mk⊨ᴴ (etOK h) (subOK h) (λ m → ordROK h (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (there m)))
-             (ordEOK h) (disjOK h)
-        , inj₂ (ordROK h (insertᴼ-⊇ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q) (here refl)))
-...   | just αs with ets? Q αs
-...     | just k  = h , inj₁ (etDec-Et A e (λ m → ground-Et h (k m)))
-...     | nothing with scanᵤ ρ
-...       | just _  = mk⊨ᴴ (λ m → etOK h (∈-++⁺ʳ αs m))
-                           (subOK h) (ordROK h) (ordEOK h) (disjOK h)
-                    , inj₁ (etDec-Et A e (λ m → etOK h (∈-++⁺ˡ m)))
-...       | nothing = mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ m → disjOK h (there m))
-                    , disjOK h (here refl)
+        dsj' (there m)   = ⊩disj h m
 
 settleAll : ∀ {Θ} → List (OVType Θ × RExp Θ) → Hyps Θ → Hyps Θ
 settleAll []             Q₀ = Q₀
 settleAll ((A , ρ) ∷ l) Q₀ = settle A ρ (settleAll l Q₀)
 
-settleAll-⊨ : ∀ {Θ} {θ : Grounding Θ} → (l : List (OVType Θ × RExp Θ))
-            → (Q₀ : Hyps Θ) → (∀ {A ρ} → (A , ρ) ∈ l → Disj θ A ρ) → θ ⊨ᴴ Q₀
-            → θ ⊨ᴴ settleAll l Q₀
-settleAll-⊨ []             Q₀ k h = h
-settleAll-⊨ ((A , ρ) ∷ l) Q₀ k h =
-  settle-⊨ A ρ (settleAll l Q₀) (k (here refl))
-           (settleAll-⊨ l Q₀ (λ m → k (there m)) h)
+settleAll-⊩ : ∀ {Θ} → (l : List (OVType Θ × RExp Θ)) → (Q₀ : Hyps Θ)
+            → (settleAll l Q₀ ⊩ᴴ Q₀) × (∀ {A ρ} → (A , ρ) ∈ l → VarOK (settleAll l Q₀) A ρ)
+settleAll-⊩ []             Q₀ = ⊩ᴴ-refl , λ ()
+settleAll-⊩ ((A , ρ) ∷ l) Q₀ with settle-⊩ A ρ (settleAll l Q₀) | settleAll-⊩ l Q₀
+... | h , d | h' , k = ⊩ᴴ-trans h h' , λ { (here refl) → d ; (there m) → ⊩ᴴ-VarOK h (k m) }
 
-settleAll-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (l : List (OVType Θ × RExp Θ))
-             → (Q₀ : Hyps Θ) → θ ⊨ᴴ settleAll l Q₀
-             → (θ ⊨ᴴ Q₀) × (∀ {A ρ} → (A , ρ) ∈ l → Disj θ A ρ)
-settleAll-⊨⁻ []             Q₀ h = h , λ ()
-settleAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with settle-⊨⁻ A ρ (settleAll l Q₀) h
-... | h' , d with settleAll-⊨⁻ l Q₀ h'
-...   | h'' , k = h'' , λ { (here refl) → d ; (there m) → k m }
+settleAll-inst : ∀ {Θ} → (l : List (OVType Θ × RExp Θ)) → (Q₀ : Hyps Θ)
+               → (δ : Subst Θ ∅ˢ)
+               → (∀ {A ρ} → (A , ρ) ∈ l → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+               → ∅ᴴ ⊩ᴴ Q₀ [ δ ] → ∅ᴴ ⊩ᴴ settleAll l Q₀ [ δ ]
+settleAll-inst []             Q₀ δ k h = h
+settleAll-inst ((A , ρ) ∷ l) Q₀ δ k h =
+  settle-inst A ρ (settleAll l Q₀) δ (k (here refl))
+              (settleAll-inst l Q₀ δ (λ m → k (there m)) h)
 
 -- The set with its disjunctions taken out, to be settled one at a time
 
@@ -370,14 +333,14 @@ split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
 settleᴴ : ∀ {Θ} → Hyps Θ → Hyps Θ
 settleᴴ Q = settleAll (disj Q) (split Q)
 
-settleᴴ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ settleᴴ Q
-settleᴴ-⊨ Q h =
-  settleAll-⊨ (disj Q) (split Q) (disjOK h)
-              (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ()))
+settleᴴ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → settleᴴ Q ⊩ᴴ Q
+settleᴴ-⊩ Q with settleAll-⊩ (disj Q) (split Q)
+... | h , k = mk⊩ᴴ⁼ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ⁼ h) (⊩ordₑ⁼ h) k
 
-settleᴴ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ settleᴴ Q → θ ⊨ᴴ Q
-settleᴴ-⊨⁻ Q h with settleAll-⊨⁻ (disj Q) (split Q) h
-... | h₀ , k = mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k
+settleᴴ-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ settleᴴ Q
+settleᴴ-⊨ Q δ h =
+  settleAll-inst (disj Q) (split Q) δ (⊩disj h)
+                 (mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (λ ()))
 
 -- A subtyping or eternality atom entailed by the atoms kept before it
 -- is dropped: entailment of such atoms is reachability in a finite
@@ -455,19 +418,17 @@ pruneᵀ : ∀ {Θ} → Hyps Θ → Hyps Θ
 pruneᵀ Q = hyps (pruneᴱ (pruneᵛ [] (subᵥ Q)) [] (ets Q)) (pruneᵛ [] (subᵥ Q))
                 (ordᵣ Q) (ordₑ Q) (disj Q)
 
-pruneᵀ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ pruneᵀ Q
-pruneᵀ-⊨ Q h =
-  mk⊨ᴴ (λ m → [ (λ ()) , etOK h ]′ (pruneᴱ-⊆ (pruneᵛ [] (subᵥ Q)) [] (ets Q) m))
-       (λ m → [ (λ ()) , subOK h ]′ (pruneᵛ-⊆ [] (subᵥ Q) m))
-       (ordROK h) (ordEOK h) (disjOK h)
+pruneᵀ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᵀ Q ⊩ᴴ Q
+pruneᵀ-⊩ Q =
+  mk⊩ᴴ⁼ (λ m → Etᴾ-⊩ (λ q → q) (λ q → q) (pruneᴱ-et (pruneᵛ [] (subᵥ Q)) [] (ets Q) m))
+        (λ m → tvarₛ (⊢ᵖ-⊩ (λ q → q) (pruneᵛ-path [] (subᵥ Q) m)))
+        hypᵣ hypₑ hyp-ok₀
 
-pruneᵀ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ pruneᵀ Q → θ ⊨ᴴ Q
-pruneᵀ-⊨⁻ Q h =
-  mk⊨ᴴ (λ m → ground-Et h
-                (Etᴾ-⊩ (λ q → q) (λ q → q)
-                       (pruneᴱ-et (pruneᵛ [] (subᵥ Q)) [] (ets Q) m)))
-       (λ m → ground-⊩ᵗᵛ h (⊢ᵖ-⊩ (λ q → q) (pruneᵛ-path [] (subᵥ Q) m)))
-       (ordROK h) (ordEOK h) (disjOK h)
+pruneᵀ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᵀ Q
+pruneᵀ-⊩⁻ Q =
+  ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → [ (λ ()) , (λ q → q) ]′ (pruneᴱ-⊆ (pruneᵛ [] (subᵥ Q)) [] (ets Q) m))
+             (λ m → [ (λ ()) , (λ q → q) ]′ (pruneᵛ-⊆ [] (subᵥ Q) m))
+             (λ m → m) (λ m → m) (λ m → m))
 
 -- A walk down a list dropping every entry a test settles, those kept
 -- staying in place. The test sees the entries kept so far and those
@@ -524,24 +485,21 @@ reachᵛ? seen rest (α , β) = reach? (seen ++ rest) α β
 walkᵛ : ∀ {Θ} → Hyps Θ → Hyps Θ
 walkᵛ Q = hyps (ets Q) (Walk.walk Okᵛ reachᵛ? [] (subᵥ Q)) (ordᵣ Q) (ordₑ Q) (disj Q)
 
-walkᵛ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ walkᵛ Q
-walkᵛ-⊨ Q h =
-  mk⊨ᴴ (etOK h) (λ m → subOK h (Walk.walk-⊆ Okᵛ reachᵛ? [] (subᵥ Q) m))
-       (ordROK h) (ordEOK h) (disjOK h)
+walkᵛ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ walkᵛ Q
+walkᵛ-⊩⁻ Q =
+  ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (Walk.walk-⊆ Okᵛ reachᵛ? [] (subᵥ Q)) (λ m → m) (λ m → m) (λ m → m))
 
-walkᵛ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ walkᵛ Q → θ ⊨ᴴ Q
-walkᵛ-⊨⁻ {Θ} {θ} Q h =
-  mk⊨ᴴ (etOK h)
-       (Walk.walk-⊨ Okᵛ reachᵛ? (λ p → gTy θ (proj₁ p) <:ᵛ gTy θ (proj₂ p)) close
-                    [] (subᵥ Q) (λ ()) (subOK h))
-       (ordROK h) (ordEOK h) (disjOK h)
+walkᵛ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → walkᵛ Q ⊩ᴴ Q
+walkᵛ-⊩ {Θ} Q =
+  mk⊩ᴴ⁼ et-hyp
+        (λ m → tvarₛ (Walk.walk-⊨ Okᵛ reachᵛ? (λ p → walkᵛ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p) close
+                                  [] (subᵥ Q) (λ ()) hypᵗᵛ m))
+        hypᵣ hypₑ hyp-ok₀
   where
     close : ∀ (seen rest : List (TyVar Θ × TyVar Θ)) {p} → Okᵛ seen rest p
-          → (∀ {q} → q ∈ seen ++ rest → gTy θ (proj₁ q) <:ᵛ gTy θ (proj₂ q))
-          → gTy θ (proj₁ p) <:ᵛ gTy θ (proj₂ p)
-    close seen rest w hs =
-      ground-⊩ᵗᵛ {θ = θ} {Q = hyps [] (seen ++ rest) [] [] []}
-                 (mk⊨ᴴ (λ ()) hs (λ ()) (λ ()) (λ ())) (⊢ᵖ-⊩ (λ q → q) w)
+          → (∀ {q} → q ∈ seen ++ rest → walkᵛ Q ⊩ᵗᵛ proj₁ q ≾ proj₂ q)
+          → walkᵛ Q ⊩ᵗᵛ proj₁ p ≾ proj₂ p
+    close seen rest w hs = ⊢ᵖ-⊩' hs w
 
 -- Grade orderings are pruned by a walk against a test of entailment:
 -- one the test proves is dropped. The effect orderings are pruned
@@ -632,25 +590,35 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
   pruneᴼ Q = hyps (ets Q) (subᵥ Q) (pruneᴼʳ (pruneᴼᵉ (ordₑ Q)) (ordᵣ Q))
                   (pruneᴼᵉ (ordₑ Q)) (disj Q)
 
-  pruneᴼ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ pruneᴼ Q
-  pruneᴼ-⊨ Q h =
-    mk⊨ᴴ (etOK h) (subOK h)
-         (λ m → ordROK h (Walk.walk-⊆ (Okʳ lₑ) (testʳ lₑ) [] (ordᵣ Q) m))
-         (λ m → ordEOK h (Walk.walk-⊆ Okᵉ testᵉ [] (ordₑ Q) m))
-         (disjOK h)
+  pruneᴼ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᴼ Q
+  pruneᴼ-⊩⁻ Q =
+    ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m)
+               (Walk.walk-⊆ (Okʳ lₑ) (testʳ lₑ) [] (ordᵣ Q))
+               (Walk.walk-⊆ Okᵉ testᵉ [] (ordₑ Q)) (λ m → m))
     where lₑ = pruneᴼᵉ (ordₑ Q)
 
-  pruneᴼ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ pruneᴼ Q → θ ⊨ᴴ Q
-  pruneᴼ-⊨⁻ {θ = θ} Q h =
-    mk⊨ᴴ (etOK h) (subOK h)
-         (Walk.walk-⊨ (Okʳ lₑ) (testʳ lₑ) (λ p → ⟦ proj₁ p ⟧ʳ θ ≾ᵣ ⟦ proj₂ p ⟧ʳ θ)
-                      (λ _ _ d hs → ground-≾ᵣ (mk⊨ᴴ (λ ()) (λ ()) hs (ordEOK h) (λ ())) d)
-                      [] (ordᵣ Q) (λ ()) (ordROK h))
-         (Walk.walk-⊨ Okᵉ testᵉ (λ p → ⟦ proj₁ p ⟧ᵉ θ ≾ₑ ⟦ proj₂ p ⟧ᵉ θ)
-                      (λ _ _ d hs → ground-≾ₑ (mk⊨ᴴ (λ ()) (λ ()) (λ ()) hs (λ ())) d)
-                      [] (ordₑ Q) (λ ()) (ordEOK h))
-         (disjOK h)
-    where lₑ = pruneᴼᵉ (ordₑ Q)
+  pruneᴼ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᴼ Q ⊩ᴴ Q
+  pruneᴼ-⊩ {Θ} Q =
+    mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
+          (Walk.walk-⊨ (Okʳ lₑ) (testʳ lₑ) (λ p → pruneᴼ Q ⊩ proj₁ p ≾̂ᵣ proj₂ p)
+                       closeʳ [] (ordᵣ Q) (λ ()) hypᵣ)
+          (Walk.walk-⊨ Okᵉ testᵉ (λ p → pruneᴼ Q ⊩ proj₁ p ≾̂ₑ proj₂ p)
+                       closeᵉ [] (ordₑ Q) (λ ()) hypₑ)
+          hyp-ok₀
+    where
+      lₑ = pruneᴼᵉ (ordₑ Q)
+
+      closeʳ : ∀ (seen rest : List (RExp Θ × RExp Θ)) {p} → Okʳ lₑ seen rest p
+             → (∀ {q} → q ∈ seen ++ rest → pruneᴼ Q ⊩ proj₁ q ≾̂ᵣ proj₂ q)
+             → pruneᴼ Q ⊩ proj₁ p ≾̂ᵣ proj₂ p
+      closeʳ seen rest d hs =
+        ⊩ᴴ-≾ᵣ (mk⊩ᴴ⁼ (λ ()) (λ ()) hs hypₑ (λ ())) d
+
+      closeᵉ : ∀ (seen rest : List (EExp Θ × EExp Θ)) {p} → Okᵉ seen rest p
+             → (∀ {q} → q ∈ seen ++ rest → pruneᴼ Q ⊩ proj₁ q ≾̂ₑ proj₂ q)
+             → pruneᴼ Q ⊩ proj₁ p ≾̂ₑ proj₂ p
+      closeᵉ seen rest d hs =
+        ⊩ᴴ-≾ₑ (mk⊩ᴴ⁼ (λ ()) (λ ()) (λ ()) hs (λ ())) d
 
 module Repeats  = Pruneᴼ repeatʳ?  repeatᵉ?
 module Entailed = Pruneᴼ entailsʳ? entailsᵉ?
@@ -658,47 +626,41 @@ module Entailed = Pruneᴼ entailsʳ? entailsᵉ?
 prune : ∀ {Θ} → Hyps Θ → Hyps Θ
 prune Q = Repeats.pruneᴼ (pruneᵀ Q)
 
-prune-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ prune Q
-prune-⊨ Q h = Repeats.pruneᴼ-⊨ (pruneᵀ Q) (pruneᵀ-⊨ Q h)
+prune-⊩ : ∀ {Θ} → (Q : Hyps Θ) → prune Q ⊩ᴴ Q
+prune-⊩ Q = ⊩ᴴ-trans (Repeats.pruneᴼ-⊩ (pruneᵀ Q)) (pruneᵀ-⊩ Q)
 
-prune-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ prune Q → θ ⊨ᴴ Q
-prune-⊨⁻ Q h = pruneᵀ-⊨⁻ Q (Repeats.pruneᴼ-⊨⁻ (pruneᵀ Q) h)
+prune-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ prune Q
+prune-⊩⁻ Q = ⊩ᴴ-trans (pruneᵀ-⊩⁻ Q) (Repeats.pruneᴼ-⊩⁻ (pruneᵀ Q))
 
 order : ∀ {Θ} → Hyps Θ → Hyps Θ
 order Q = hyps (ets Q) (subᵥ Q) (sortᴼ _≺ᵣ_ (ordᵣ Q)) (sortᴼ _≺ₑ_ (ordₑ Q)) (disj Q)
 
-order-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ order Q
-order-⊨ Q h =
-  mk⊨ᴴ (etOK h) (subOK h)
-       (λ m → ordROK h (sortᴼ-⊆ _≺ᵣ_ (ordᵣ Q) m))
-       (λ m → ordEOK h (sortᴼ-⊆ _≺ₑ_ (ordₑ Q) m))
-       (disjOK h)
+order-⊩ : ∀ {Θ} → (Q : Hyps Θ) → order Q ⊩ᴴ Q
+order-⊩ Q =
+  ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (sortᴼ-⊇ _≺ᵣ_ (ordᵣ Q)) (sortᴼ-⊇ _≺ₑ_ (ordₑ Q)) (λ m → m))
 
-order-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ order Q → θ ⊨ᴴ Q
-order-⊨⁻ Q h =
-  mk⊨ᴴ (etOK h) (subOK h)
-       (λ m → ordROK h (sortᴼ-⊇ _≺ᵣ_ (ordᵣ Q) m))
-       (λ m → ordEOK h (sortᴼ-⊇ _≺ₑ_ (ordₑ Q) m))
-       (disjOK h)
+order-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ order Q
+order-⊩⁻ Q =
+  ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (sortᴼ-⊆ _≺ᵣ_ (ordᵣ Q)) (sortᴼ-⊆ _≺ₑ_ (ordₑ Q)) (λ m → m))
 
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
 simplify Q = order (prune (settleᴴ (canonᴴ Q)))
 
--- Simplification changes nothing a grounding can see
+-- The simplified set entails the set, and every closed instance of the
+-- set is one of it
 
-simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q
-simplify-⊨ Q θ h =
-  order-⊨ (prune (settleᴴ (canonᴴ Q)))
-    (prune-⊨ (settleᴴ (canonᴴ Q)) (settleᴴ-⊨ (canonᴴ Q) (canonᴴ-⊨ Q h)))
+simplify-⊩ : ∀ {Θ} → (Q : Hyps Θ) → simplify Q ⊩ᴴ Q
+simplify-⊩ Q =
+  ⊩ᴴ-trans (order-⊩ (prune (settleᴴ (canonᴴ Q))))
+    (⊩ᴴ-trans (prune-⊩ (settleᴴ (canonᴴ Q)))
+      (⊩ᴴ-trans (settleᴴ-⊩ (canonᴴ Q)) (canonᴴ-⊩ Q)))
 
-simplify-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q
-simplify-⊨⁻ Q θ h =
-  canonᴴ-⊨⁻ Q (settleᴴ-⊨⁻ (canonᴴ Q)
-    (prune-⊨⁻ (settleᴴ (canonᴴ Q)) (order-⊨⁻ (prune (settleᴴ (canonᴴ Q))) h)))
-
-simplify-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
-           → (θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q) × (θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q)
-simplify-≃ Q θ = simplify-⊨ Q θ , simplify-⊨⁻ Q θ
+simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ simplify Q
+simplify-⊨ Q =
+  ⊨ᴴ-trans (⊩ᴴ-⊨ᴴ (canonᴴ-⊩⁻ Q))
+    (⊨ᴴ-trans (settleᴴ-⊨ (canonᴴ Q))
+      (⊩ᴴ-⊨ᴴ (⊩ᴴ-trans (prune-⊩⁻ (settleᴴ (canonᴴ Q)))
+                       (order-⊩⁻ (prune (settleᴴ (canonᴴ Q)))))))
 
 -- The disjunctions settled, then every subtyping atom and grade
 -- ordering entailed by those kept and those not yet examined dropped
@@ -706,21 +668,20 @@ simplify-≃ Q θ = simplify-⊨ Q θ , simplify-⊨⁻ Q θ
 trim : ∀ {Θ} → Hyps Θ → Hyps Θ
 trim Q = Entailed.pruneᴼ (walkᵛ (settleᴴ Q))
 
-trim-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ trim Q
-trim-⊨ Q θ h = Entailed.pruneᴼ-⊨ (walkᵛ (settleᴴ Q)) (walkᵛ-⊨ (settleᴴ Q) (settleᴴ-⊨ Q h))
+trim-⊩ : ∀ {Θ} → (Q : Hyps Θ) → trim Q ⊩ᴴ Q
+trim-⊩ Q =
+  ⊩ᴴ-trans (Entailed.pruneᴼ-⊩ (walkᵛ (settleᴴ Q)))
+    (⊩ᴴ-trans (walkᵛ-⊩ (settleᴴ Q)) (settleᴴ-⊩ Q))
 
-trim-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ trim Q → θ ⊨ᴴ Q
-trim-⊨⁻ Q θ h =
-  settleᴴ-⊨⁻ Q (walkᵛ-⊨⁻ (settleᴴ Q) (Entailed.pruneᴼ-⊨⁻ (walkᵛ (settleᴴ Q)) h))
-
-trim-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
-       → (θ ⊨ᴴ Q → θ ⊨ᴴ trim Q) × (θ ⊨ᴴ trim Q → θ ⊨ᴴ Q)
-trim-≃ Q θ = trim-⊨ Q θ , trim-⊨⁻ Q θ
+trim-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ trim Q
+trim-⊨ Q =
+  ⊨ᴴ-trans (settleᴴ-⊨ Q)
+    (⊩ᴴ-⊨ᴴ (⊩ᴴ-trans (walkᵛ-⊩⁻ (settleᴴ Q)) (Entailed.pruneᴼ-⊩⁻ (walkᵛ (settleᴴ Q)))))
 
 -- Trimming a whole report, as an elimination step that instantiates
 -- no unknown
 
 trimElim : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
 trimElim C Q =
-  mkElim C (trim Q) (trim-⊨ Q) (λ θ h → θ , trim-⊨⁻ Q θ h , refl)
-         (λ θ h → <:ᶜ-refl (⟦ C ⟧ᶜ θ))
+  mkElim C (trim Q) idˢ (subst (C ≡̂ᶜ_) (sym ([id]ᶜ C)) (≡̂ᶜ-refl C))
+         (trim-⊩ Q) (trim-⊨ Q) (λ δ h → <:̂ᶜ-refl (C [ δ ]ᶜ))

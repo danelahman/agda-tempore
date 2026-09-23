@@ -25,7 +25,6 @@
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
-open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_)
@@ -67,7 +66,8 @@ open import TypeInference.SolverImpl.Core.Occurs S
   using (occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c; occʳ-r; occʳ-v; occʳ-c)
 
 open import TypeInference.SolverImpl.Resid     S
-open import TypeInference.SolverImpl.Eliminate S using (joinₑ; joinᵣ)
+open import TypeInference.SolverImpl.Eliminate S
+  using (joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
 open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ)
 
 ------------------------------------------------------------------------
@@ -80,14 +80,6 @@ open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide
 isFalse : (b : 𝔹) → Maybe (b ≡ false)
 isFalse false = just refl
 isFalse true  = nothing
-
-true≢false : true ≡ false → ⊥
-true≢false ()
-
-refl-true : ∀ {n} → (i : Fin n) → ⌊ i ≟ᶠ i ⌋ ≡ true
-refl-true i with i ≟ᶠ i
-... | yes _ = refl
-... | no ¬p = ⊥-elim (¬p refl)
 
 anyᶠ : ∀ {n} → (Fin n → 𝔹) → 𝔹
 anyᶠ {nzero}  f = false
@@ -126,28 +118,6 @@ anyL f (x ∷ l) = f x ∨ anyL f l
 
 ------------------------------------------------------------------------
 -- An assignment leaves alone what the assigned unknown does not occur in
-
-updᵉ-hit : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → sE (updᵉ k b) k ≡ b
-updᵉ-hit k b with k ≟ᶠ k
-... | yes _ = refl
-... | no ¬p = ⊥-elim (¬p refl)
-
-updᵉ-miss : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (i : EVar Ψ)
-          → ⌊ k ≟ᶠ i ⌋ ≡ false → sE (updᵉ k b) i ≡ evar i
-updᵉ-miss k b i q with i ≟ᶠ k
-... | no _     = refl
-... | yes refl = ⊥-elim (true≢false (trans (sym (refl-true k)) q))
-
-updʳ-hit : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → sR (updʳ k b) k ≡ b
-updʳ-hit k b with k ≟ᶠ k
-... | yes _ = refl
-... | no ¬p = ⊥-elim (¬p refl)
-
-updʳ-miss : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (i : RVar Ψ)
-          → ⌊ k ≟ᶠ i ⌋ ≡ false → sR (updʳ k b) i ≡ rvar i
-updʳ-miss k b i q with i ≟ᶠ k
-... | no _     = refl
-... | yes refl = ⊥-elim (true≢false (trans (sym (refl-true k)) q))
 
 updᵉ-e : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (ε : EExp Ψ)
        → occᵉ-e k ε ≡ false → ε [ updᵉ k b ]ᵉ ≡ ε
@@ -188,12 +158,6 @@ mutual
          → occᵉ-c k C ≡ false → C [ updᵉ k b ]ᶜ ≡ C
   updᵉ-c k b (A ‼ ε) q with ∨-false (occᵉ-v k A) (occᵉ-e k ε) q
   ... | q₁ , q₂ = cong₂ _‼_ (updᵉ-v k b A q₁) (updᵉ-e k b ε q₂)
-
-updʳ-e : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ε : EExp Ψ) → ε [ updʳ k b ]ᵉ ≡ ε
-updʳ-e k b (evar i)   = refl
-updʳ-e k b (econst c) = refl
-updʳ-e k b (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (updʳ-e k b ε) (updʳ-e k b ε')
-updʳ-e k b (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (updʳ-e k b ε) (updʳ-e k b ε')
 
 updʳ-r : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ρ : RExp Ψ)
        → occʳ-r k ρ ≡ false → ρ [ updʳ k b ]ʳ ≡ ρ
@@ -250,45 +214,6 @@ updʳ-⨟r k b τ ρ q = trans (sym ([⨟]ʳ ρ (updʳ k b) τ)) (cong (_[ τ ]�
 updʳ-⨟v : ∀ {Ψ Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ') → (A : OVType Ψ)
         → occʳ-v k A ≡ false → A [ updʳ k b ⨟ˢ τ ]ᵛ ≡ A [ τ ]ᵛ
 updʳ-⨟v k b τ A q = trans (sym ([⨟]ᵛ A (updʳ k b) τ)) (cong (_[ τ ]ᵛ) (updʳ-v k b A q))
-
--- An assignment below (above) the unknown's own value lowers (raises)
--- the substitution pointwise
-
-updᵉ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
-           → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ (updᵉ k b ⨟ˢ τ) ≾ˢ τ
-updᵉ-below {Ψ} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
-  where
-    e : (i : EVar Ψ) → Q ⊩ sE (updᵉ k b) i [ τ ]ᵉ ≾̂ₑ sE τ i
-    e i with i ≟ᶠ k
-    ... | yes refl = p
-    ... | no _     = ⊩≾̂ₑ-refl
-
-updᵉ-above : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
-           → Q ⊩ sE τ k ≾̂ₑ b [ τ ]ᵉ → Q ⊩ τ ≾ˢ (updᵉ k b ⨟ˢ τ)
-updᵉ-above {Ψ} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
-  where
-    e : (i : EVar Ψ) → Q ⊩ sE τ i ≾̂ₑ sE (updᵉ k b) i [ τ ]ᵉ
-    e i with i ≟ᶠ k
-    ... | yes refl = p
-    ... | no _     = ⊩≾̂ₑ-refl
-
-updʳ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
-           → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ (updʳ k b ⨟ˢ τ) ≾ˢ τ
-updʳ-below {Ψ} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
-  where
-    r : (i : RVar Ψ) → Q ⊩ sR (updʳ k b) i [ τ ]ʳ ≾̂ᵣ sR τ i
-    r i with i ≟ᶠ k
-    ... | yes refl = p
-    ... | no _     = ⊩≾̂ᵣ-refl
-
-updʳ-above : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
-           → Q ⊩ sR τ k ≾̂ᵣ b [ τ ]ʳ → Q ⊩ τ ≾ˢ (updʳ k b ⨟ˢ τ)
-updʳ-above {Ψ} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
-  where
-    r : (i : RVar Ψ) → Q ⊩ sR τ i ≾̂ᵣ sR (updʳ k b) i [ τ ]ʳ
-    r i with i ≟ᶠ k
-    ... | yes refl = p
-    ... | no _     = ⊩≾̂ᵣ-refl
 
 ------------------------------------------------------------------------
 -- Locality: free in the image of no unknown the scope was entered with
@@ -666,45 +591,6 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl τ h =
     es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
     es' {ε} {ε'} m =
       subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k U τ ε)) (sym (updʳ-⨟e k U τ ε')) (⊩es h m)
-
-------------------------------------------------------------------------
--- The join of a list of bounds is their least upper bound
-
-joinₑ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
-          → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ joinₑ x₀ xs [ τ ]ᵉ
-joinₑ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ₑ-refl
-joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transₑ ⊔-ubˡₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
-joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
-  transₑ ⊔-ubʳₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
-joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (there m)
-
-joinₑ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : EExp Ψ'} → (τ : Subst Ψ Ψ')
-           → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
-           → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ y)
-           → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ y
-joinₑ-lub⊩ τ x₀ []        k = k (here refl)
-joinₑ-lub⊩ τ x₀ (x₁ ∷ xs) k =
-  joinₑ-lub⊩ τ (x₀ ⊔̂ₑ x₁) xs
-    (λ { (here refl) → ⊔-lubₑ (k (here refl)) (k (there (here refl)))
-       ; (there m)   → k (there (there m)) })
-
-joinᵣ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
-          → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ joinᵣ x₀ xs [ τ ]ʳ
-joinᵣ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ᵣ-refl
-joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transᵣ ⊔-ubˡᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
-joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
-  transᵣ ⊔-ubʳᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
-joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (there m)
-
-joinᵣ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : RExp Ψ'} → (τ : Subst Ψ Ψ')
-           → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
-           → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ y)
-           → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ y
-joinᵣ-lub⊩ τ x₀ []        k = k (here refl)
-joinᵣ-lub⊩ τ x₀ (x₁ ∷ xs) k =
-  joinᵣ-lub⊩ τ (x₀ ⊔̂ᵣ x₁) xs
-    (λ { (here refl) → ⊔-lubᵣ (k (here refl)) (k (there (here refl)))
-       ; (there m)   → k (there (there m)) })
 
 ------------------------------------------------------------------------
 -- One step: the value an unknown is sent to, with the proof that every

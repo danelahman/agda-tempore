@@ -7,11 +7,13 @@
 -- number of bound variables, so no transports occur anywhere.   --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (if_then_else_)
+open import Data.Bool.Base using (if_then_else_; true; false)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Nat using (ℕ)
 
+open import Relation.Nullary using (yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Syntax.Grades
@@ -162,6 +164,47 @@ updᵉ i ε = sub tvar rvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ε else evar k)
 
 updʳ : ∀ {Θ} → RVar Θ → RExp Θ → Subst Θ Θ
 updʳ i ρ = sub tvar (λ k → if ⌊ k ≟ᶠ i ⌋ then ρ else rvar k) evar
+
+private
+  true≢false : true ≡ false → ⊥
+  true≢false ()
+
+  ≟-refl : ∀ {n} → (i : Fin n) → ⌊ i ≟ᶠ i ⌋ ≡ true
+  ≟-refl i with i ≟ᶠ i
+  ... | yes _ = refl
+  ... | no ¬p = ⊥-elim (¬p refl)
+
+-- The updated variable goes to the new image, every other one to itself
+
+updᵉ-hit : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → sE (updᵉ k b) k ≡ b
+updᵉ-hit k b with k ≟ᶠ k
+... | yes _ = refl
+... | no ¬p = ⊥-elim (¬p refl)
+
+updᵉ-miss : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (i : EVar Ψ)
+          → ⌊ k ≟ᶠ i ⌋ ≡ false → sE (updᵉ k b) i ≡ evar i
+updᵉ-miss k b i q with i ≟ᶠ k
+... | no _     = refl
+... | yes refl = ⊥-elim (true≢false (trans (sym (≟-refl k)) q))
+
+updʳ-hit : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → sR (updʳ k b) k ≡ b
+updʳ-hit k b with k ≟ᶠ k
+... | yes _ = refl
+... | no ¬p = ⊥-elim (¬p refl)
+
+updʳ-miss : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (i : RVar Ψ)
+          → ⌊ k ≟ᶠ i ⌋ ≡ false → sR (updʳ k b) i ≡ rvar i
+updʳ-miss k b i q with i ≟ᶠ k
+... | no _     = refl
+... | yes refl = ⊥-elim (true≢false (trans (sym (≟-refl k)) q))
+
+-- A resource update leaves every effect expression alone
+
+updʳ-e : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ε : EExp Ψ) → ε [ updʳ k b ]ᵉ ≡ ε
+updʳ-e k b (evar i)   = refl
+updʳ-e k b (econst c) = refl
+updʳ-e k b (ε ·̂ₑ ε')  = cong₂ _·̂ₑ_ (updʳ-e k b ε) (updʳ-e k b ε')
+updʳ-e k b (ε ⊔̂ₑ ε')  = cong₂ _⊔̂ₑ_ (updʳ-e k b ε) (updʳ-e k b ε')
 
 -- Pointwise equality of substitutions (avoids function extensionality)
 

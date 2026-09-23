@@ -10,7 +10,7 @@
 -- is an inductive under-approximation of truth at every closed   --
 -- instance.                                                      --
 --                                                                --
--- Convertibility of open types (`_≡̂ᵛ_`), which `VarOK` reads,   --
+-- Convertibility of open types (`_≡̂ᵛ_`), which `VarOK` reads,    --
 -- and open subtyping, with its inversion and stability lemmas,   --
 -- are defined here too: `_⊩ᴴ_[_]` already mentions both.         --
 --                                                                --
@@ -23,7 +23,10 @@
 open import Data.List.Base using (List; []; _∷_; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
+open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
+
+open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -442,6 +445,22 @@ data _∣_<:̂ᶜ_ {Θ} Q where
 
 <:̂ᶜ-trans (p ‼ₛ r) (q ‼ₛ s) = <:̂ᵛ-trans p q ‼ₛ transₑ r s
 
+-- Convertible types are subtypes of each other
+
+≡̂ᵛ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {A A'} → A ≡̂ᵛ A' → Q ∣ A <:̂ᵛ A'
+≡̂ᶜ-<:̂ : ∀ {Θ} {Q : Hyps Θ} {C C'} → C ≡̂ᶜ C' → Q ∣ C <:̂ᶜ C'
+
+≡̂ᵛ-<:̂ tvar≡̂      = tvarₛ reflᵗᵛ
+≡̂ᵛ-<:̂ Base≡̂      = Baseₛ refl
+≡̂ᵛ-<:̂ Unit≡̂      = Unitₛ
+≡̂ᵛ-<:̂ Bool≡̂      = Boolₛ
+≡̂ᵛ-<:̂ (p |×|≡̂ q) = ≡̂ᵛ-<:̂ p |×|ₛ ≡̂ᵛ-<:̂ q
+≡̂ᵛ-<:̂ Empty≡̂     = Emptyₛ
+≡̂ᵛ-<:̂ (p ⇒≡̂ q)   = ≡̂ᵛ-<:̂ (≡̂ᵛ-sym p) ⇒ₛ ≡̂ᶜ-<:̂ q
+≡̂ᵛ-<:̂ ([ r ]≡̂ p) = [ eqᵣ (≡̂ᵣ-sym r) ]ₛ ≡̂ᵛ-<:̂ p
+
+≡̂ᶜ-<:̂ (p ‼≡̂ e) = ≡̂ᵛ-<:̂ p ‼ₛ eqₑ e
+
 -- Eternality lives on the shared skeleton, so it transfers along
 -- `_∣_<:̂ᵛ_` in both directions.
 
@@ -621,6 +640,22 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 
 ≡̂ᶜ-subst σ (p ‼≡̂ e) = ≡̂ᵛ-subst σ p ‼≡̂ ≡̂ₑ-subst σ e
 
+-- Eternality reads only the skeleton, so it moves between the images
+-- of a type under two substitutions related by subtyping at every
+-- type variable
+
+⊩ᴱ-<:ˢ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'}
+       → (∀ α → Q ∣ sTy σ α <:̂ᵛ sTy τ α) → (A : OVType Θ)
+       → Q ⊩ᴱ A [ τ ]ᵛ → Q ⊩ᴱ A [ σ ]ᵛ
+⊩ᴱ-<:ˢ k (tvar α)  et           = <:̂ᵛ-eternalˡ (k α) et
+⊩ᴱ-<:ˢ k (Base b)  et           = et
+⊩ᴱ-<:ˢ k Unit      et           = et
+⊩ᴱ-<:ˢ k Bool      et           = et
+⊩ᴱ-<:ˢ k (A |×| B) (et |×|ₑ et') = ⊩ᴱ-<:ˢ k A et |×|ₑ ⊩ᴱ-<:ˢ k B et'
+⊩ᴱ-<:ˢ k Empty     et           = et
+⊩ᴱ-<:ˢ k (A ⇒ C)   ()
+⊩ᴱ-<:ˢ k ([ ρ ] A) ()
+
 VarOK-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
                 {A : OVType Θ} {ρ : RExp Θ}
             → Q' ⊩ᴴ Q [ σ ] → VarOK Q A ρ → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
@@ -655,6 +690,69 @@ VarOK-subst {σ = σ} h (hyp-ok m p q) = VarOK-≡̂ (≡̂ᵛ-subst σ p) (⊩-
        (λ {A} {ρ} m →
           subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok₀ m))
 
+-- Entailment between sets over one scope, field by field
+
+mk⊩ᴴ⁼ : ∀ {Θ} {Q Q' : Hyps Θ}
+      → (∀ {α} → α ∈ ets Q → Q' ⊩ᴱ tvar α)
+      → (∀ {α β} → (α , β) ∈ subᵥ Q → Q' ∣ tvar α <:̂ᵛ tvar β)
+      → (∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ ≾̂ᵣ ρ')
+      → (∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε ≾̂ₑ ε')
+      → (∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' A ρ)
+      → Q' ⊩ᴴ Q
+mk⊩ᴴ⁼ {Q' = Q'} et sb oR oE dj =
+  mk⊩ᴴ et sb
+       (λ {ρ} {ρ'} m →
+          subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) (sym ([id]ʳ ρ)) (sym ([id]ʳ ρ')) (oR m))
+       (λ {ε} {ε'} m →
+          subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (oE m))
+       (λ {A} {ρ} m → subst₂ (VarOK Q') (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (dj m))
+
+⊩ordᵣ⁼ : ∀ {Θ} {Q Q' : Hyps Θ} → Q' ⊩ᴴ Q
+       → ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q' ⊩ ρ ≾̂ᵣ ρ'
+⊩ordᵣ⁼ {Q' = Q'} h {ρ} {ρ'} m =
+  subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([id]ʳ ρ) ([id]ʳ ρ') (⊩ordᵣ h m)
+
+⊩ordₑ⁼ : ∀ {Θ} {Q Q' : Hyps Θ} → Q' ⊩ᴴ Q
+       → ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q' ⊩ ε ≾̂ₑ ε'
+⊩ordₑ⁼ {Q' = Q'} h {ε} {ε'} m =
+  subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([id]ᵉ ε) ([id]ᵉ ε') (⊩ordₑ h m)
+
+⊩disj⁼ : ∀ {Θ} {Q Q' : Hyps Θ} → Q' ⊩ᴴ Q
+       → ∀ {A ρ} → (A , ρ) ∈ disj Q → VarOK Q' A ρ
+⊩disj⁼ {Q' = Q'} h {A} {ρ} m = subst₂ (VarOK Q') ([id]ᵛ A) ([id]ʳ ρ) (⊩disj h m)
+
+-- What a set entails, a set entailing it entails
+
+⊩ᴴ-≾ᵣ : ∀ {Θ} {Q Q' : Hyps Θ} {ρ ρ'} → Q' ⊩ᴴ Q → Q ⊩ ρ ≾̂ᵣ ρ' → Q' ⊩ ρ ≾̂ᵣ ρ'
+⊩ᴴ-≾ᵣ {Q' = Q'} {ρ} {ρ'} h p =
+  subst₂ (λ x y → Q' ⊩ x ≾̂ᵣ y) ([id]ʳ ρ) ([id]ʳ ρ') (⊩-substᵣ h p)
+
+⊩ᴴ-≾ₑ : ∀ {Θ} {Q Q' : Hyps Θ} {ε ε'} → Q' ⊩ᴴ Q → Q ⊩ ε ≾̂ₑ ε' → Q' ⊩ ε ≾̂ₑ ε'
+⊩ᴴ-≾ₑ {Q' = Q'} {ε} {ε'} h p =
+  subst₂ (λ x y → Q' ⊩ x ≾̂ₑ y) ([id]ᵉ ε) ([id]ᵉ ε') (⊩-substₑ h p)
+
+⊩ᴴ-VarOK : ∀ {Θ} {Q Q' : Hyps Θ} {A ρ} → Q' ⊩ᴴ Q → VarOK Q A ρ → VarOK Q' A ρ
+⊩ᴴ-VarOK {Q' = Q'} {A} {ρ} h ok =
+  subst₂ (VarOK Q') ([id]ᵛ A) ([id]ʳ ρ) (VarOK-subst h ok)
+
+-- A set entails each set whose hypotheses it holds
+
+record _⊆ᴴ_ {Θ : Scope} (Q Q' : Hyps Θ) : Set where
+  constructor mk⊆ᴴ
+  field
+    ⊆ets  : ∀ {α} → α ∈ ets Q → α ∈ ets Q'
+    ⊆subᵥ : ∀ {p} → p ∈ subᵥ Q → p ∈ subᵥ Q'
+    ⊆ordᵣ : ∀ {p} → p ∈ ordᵣ Q → p ∈ ordᵣ Q'
+    ⊆ordₑ : ∀ {p} → p ∈ ordₑ Q → p ∈ ordₑ Q'
+    ⊆disj : ∀ {p} → p ∈ disj Q → p ∈ disj Q'
+
+open _⊆ᴴ_ public
+
+⊆ᴴ-⊩ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊆ᴴ Q' → Q' ⊩ᴴ Q
+⊆ᴴ-⊩ s = mk⊩ᴴ⁼ (λ m → et-hyp (⊆ets s m)) (λ m → tvarₛ (hypᵗᵛ (⊆subᵥ s m)))
+                (λ m → hypᵣ (⊆ordᵣ s m)) (λ m → hypₑ (⊆ordₑ s m))
+                (λ m → hyp-ok₀ (⊆disj s m))
+
 ⊩ᴴ-⨟ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ'} {Q'' : Hyps Θ''}
        {σ : Subst Θ Θ'} {δ : Subst Θ' Θ''}
      → Q'' ⊩ᴴ Q' [ δ ] → Q' ⊩ᴴ Q [ σ ] → Q'' ⊩ᴴ Q [ σ ⨟ˢ δ ]
@@ -670,6 +768,9 @@ VarOK-subst {σ = σ} h (hyp-ok m p q) = VarOK-≡̂ (≡̂ᵛ-subst σ p) (⊩-
        (λ {A} {ρ} m →
           subst₂ (VarOK Q'') ([⨟]ᵛ A σ δ) ([⨟]ʳ ρ σ δ)
                  (VarOK-subst h' (⊩disj h m)))
+
+⊩ᴴ-trans : ∀ {Θ} {Q Q' Q'' : Hyps Θ} → Q'' ⊩ᴴ Q' → Q' ⊩ᴴ Q → Q'' ⊩ᴴ Q
+⊩ᴴ-trans h' h = ⊩ᴴ-⨟ h' h
 
 -- Weakening a hypothesis set is the action of the weakening substitution,
 -- so entailment is stable under it.
@@ -810,6 +911,57 @@ mono-substᵣ p (rconst c) = ⊩≾̂ᵣ-refl
 mono-substᵣ p (ρ ·̂ᵣ ρ')  = monoᵣ (mono-substᵣ p ρ) (mono-substᵣ p ρ')
 mono-substᵣ p (ρ ⊔̂ᵣ ρ')  = ⊩-⊔̂ᵣ-mono (mono-substᵣ p ρ) (mono-substᵣ p ρ')
 mono-substᵣ p ∣ ε ∣̂ᵉ     = map-mono (mono-substₑ p ε)
+
+-- Composing with the identity changes no image
+
+≾ˢ-idˡ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'} → Q ⊩ (σ ⨟ˢ idˢ) ≾ˢ τ → Q ⊩ σ ≾ˢ τ
+≾ˢ-idˡ {Q = Q} {σ} {τ} p =
+  mk≾ˢ (λ i → subst (λ x → Q ⊩ x ≾̂ᵣ sR τ i) ([id]ʳ (sR σ i)) (≾ˢʳ p i))
+       (λ i → subst (λ x → Q ⊩ x ≾̂ₑ sE τ i) ([id]ᵉ (sE σ i)) (≾ˢᵉ p i))
+
+≾ˢ-idʳ : ∀ {Θ Θ'} {Q : Hyps Θ'} {σ τ : Subst Θ Θ'} → Q ⊩ τ ≾ˢ (σ ⨟ˢ idˢ) → Q ⊩ τ ≾ˢ σ
+≾ˢ-idʳ {Q = Q} {σ} {τ} p =
+  mk≾ˢ (λ i → subst (λ x → Q ⊩ sR τ i ≾̂ᵣ x) ([id]ʳ (sR σ i)) (≾ˢʳ p i))
+       (λ i → subst (λ x → Q ⊩ sE τ i ≾̂ₑ x) ([id]ᵉ (sE σ i)) (≾ˢᵉ p i))
+
+-- An assignment below (above) the unknown's own value lowers (raises)
+-- the substitution pointwise
+
+updᵉ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
+           → Q ⊩ b [ τ ]ᵉ ≾̂ₑ sE τ k → Q ⊩ (updᵉ k b ⨟ˢ τ) ≾ˢ τ
+updᵉ-below {Ψ} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
+  where
+    e : (i : EVar Ψ) → Q ⊩ sE (updᵉ k b) i [ τ ]ᵉ ≾̂ₑ sE τ i
+    e i with i ≟ᶠ k
+    ... | yes refl = p
+    ... | no _     = ⊩≾̂ₑ-refl
+
+updᵉ-above : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : EVar Ψ) → (b : EExp Ψ) → (τ : Subst Ψ Ψ')
+           → Q ⊩ sE τ k ≾̂ₑ b [ τ ]ᵉ → Q ⊩ τ ≾ˢ (updᵉ k b ⨟ˢ τ)
+updᵉ-above {Ψ} {Q = Q} k b τ p = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) e
+  where
+    e : (i : EVar Ψ) → Q ⊩ sE τ i ≾̂ₑ sE (updᵉ k b) i [ τ ]ᵉ
+    e i with i ≟ᶠ k
+    ... | yes refl = p
+    ... | no _     = ⊩≾̂ₑ-refl
+
+updʳ-below : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
+           → Q ⊩ b [ τ ]ʳ ≾̂ᵣ sR τ k → Q ⊩ (updʳ k b ⨟ˢ τ) ≾ˢ τ
+updʳ-below {Ψ} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
+  where
+    r : (i : RVar Ψ) → Q ⊩ sR (updʳ k b) i [ τ ]ʳ ≾̂ᵣ sR τ i
+    r i with i ≟ᶠ k
+    ... | yes refl = p
+    ... | no _     = ⊩≾̂ᵣ-refl
+
+updʳ-above : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (k : RVar Ψ) → (b : RExp Ψ) → (τ : Subst Ψ Ψ')
+           → Q ⊩ sR τ k ≾̂ᵣ b [ τ ]ʳ → Q ⊩ τ ≾ˢ (updʳ k b ⨟ˢ τ)
+updʳ-above {Ψ} {Q = Q} k b τ p = mk≾ˢ r (λ i → ⊩≾̂ₑ-refl)
+  where
+    r : (i : RVar Ψ) → Q ⊩ sR τ i ≾̂ᵣ sR (updʳ k b) i [ τ ]ʳ
+    r i with i ≟ᶠ k
+    ... | yes refl = p
+    ... | no _     = ⊩≾̂ᵣ-refl
 
 -- Equality relative to a hypothesis set: entailed ordering both ways
 

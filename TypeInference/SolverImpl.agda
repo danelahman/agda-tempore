@@ -51,15 +51,12 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-open import Syntax.Subtyping S using (_<:ᶜ_)
-
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Contexts  S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Grounding S
-open import TypeInference.OpenSyntax.Instances S using (Satisfiable; Satisfiable-⨟)
+open import TypeInference.OpenSyntax.Instances S using (Satisfiable; Satisfiable-⨟; _⊨ᴴ_; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ)
 
 open import TypeInference.Raw.Syntax S using (RawC)
 
@@ -80,13 +77,12 @@ open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
-  using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃; trim; trim-≃; trimElim;
-         memʳ?; memᵉ?)
+  using (simplify; simplify-⊩; simplify-⊨; trim; trim-⊩; trim-⊨; trimElim; memʳ?; memᵉ?)
 open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
-open import TypeInference.SolverImpl.Eliminate S using (Elim; Entails; entails; eliminate; _⨾ᴱ_)
+open import TypeInference.SolverImpl.Eliminate S using (Elim; η; Entails; entails; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ using (canonElim)
 open import TypeInference.SolverImpl.Strengthen S
-  using (Strengthened; strengthen; ⌜_⌝ʳ; keep⁻; real⁻; princ⁻)
+  using (Ren; Strengthened; strengthen; ⌜_⌝ʳ; _[_]ᴴ; conv⁻; inst⁻; keep⁻; princ⁻)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
@@ -208,43 +204,48 @@ entailsᴴ = entails entᵣ? entₑ?
     ... | just m  = just (hypₑ m)
     ... | nothing = decide≾ₑ ε ε'
 
--- A solution, its residue as the solver returns it, the residue
--- simplified, and the simplified residue with the unknowns it fixes
--- eliminated from it and from the reported type `X`. Simplification is
--- satisfied by exactly the same groundings; elimination keeps every
--- grounding, is realised by the grounding reading each eliminated
--- unknown off its bound or the expression it equals, and reports the
--- subtype. Normalisation of the grade expressions and `trim` run as the
--- last two elimination steps. The report is stated over the scope `Θ̃`
--- of the variables occurring in it, embedded in the solution's by the
--- renaming `ι`; a grounding of the solution's scope is read along `ι`.
+-- A solution, its residue as the solver returns it, and the residue
+-- simplified, which entails the residue and holds at each of its
+-- closed instances. The unknowns the simplified residue fixes are then
+-- eliminated from it and from the reported type `X` by a substitution
+-- `η`: the reported type is `X` along `η` up to convertibility, the
+-- reported hypotheses entail the simplified residue along `η`, each
+-- closed instance of the simplified residue is one of them, and there
+-- the reported type is a subtype of `X`. Normalisation of the grade
+-- expressions and `trim` run as the last two elimination steps. The
+-- report is stated over the scope `Θ̃` of the variables occurring in
+-- it, embedded in the solution's by the renaming `ι`, and a closed
+-- instance of `Θ̃` extends along `ι`.
 
 record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
   field
-    Θ'     : Scope
-    σ      : Subst Θ Θ'
-    Q      : Hyps Θ'
-    Q̂      : Hyps Θ'
-    Θ̃      : Scope
-    ι      : Subst Θ̃ Θ'
-    X̃      : OCType Θ̃
-    Q̃      : Hyps Θ̃
-    sat    : σ ⊨[ Q ] C
-    to-Q̂   : (θ : Grounding Θ') → θ ⊨ᴴ Q  → θ ⊨ᴴ Q̂
-    to-Q   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q
-    to-Q̃   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → (ι ⨟ᵍ θ) ⊨ᴴ Q̃
-    realₑ  : (θ : Grounding Θ̃) → θ ⊨ᴴ Q̃
-           → Σ[ θ' ∈ Grounding Θ' ] ((θ' ⊨ᴴ Q̂) × (⟦ X [ σ ]ᶜ ⟧ᶜ θ' ≡ ⟦ X̃ ⟧ᶜ θ))
-    princₑ : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → ⟦ X̃ ⟧ᶜ (ι ⨟ᵍ θ) <:ᶜ ⟦ X [ σ ]ᶜ ⟧ᶜ θ
+    Θ'    : Scope
+    σ     : Subst Θ Θ'
+    Q     : Hyps Θ'
+    Q̂     : Hyps Θ'
+    Θ̃     : Scope
+    ι     : Ren Θ̃ Θ'
+    X̃     : OCType Θ̃
+    Q̃     : Hyps Θ̃
+    η     : Subst Θ' Θ'
+    sat   : σ ⊨[ Q ] C
+    to-Q̂  : Q ⊨ᴴ Q̂
+    to-Q  : Q̂ ⊩ᴴ Q
+    conv  : X̃ [ ⌜ ι ⌝ʳ ]ᶜ ≡̂ᶜ X [ σ ]ᶜ [ η ]ᶜ
+    inst  : Q̃ [ ι ]ᴴ ⊩ᴴ Q̂ [ η ]
+    to-Q̃  : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ] → ∅ᴴ ⊩ᴴ Q̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
+    princ : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ]
+          → ∅ᴴ ∣ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
+    ext-ι : (δ : Subst Θ̃ ∅ˢ) → Σ[ δ' ∈ Subst Θ' ∅ˢ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
 reportOn : ∀ {Θ} → (X : OCType Θ) → (C : Constraint Θ) → Maybe (Reported X C)
 reportOn X C with solveOn C in e
 ... | nothing           = nothing
 ... | just (Θ' , σ , Q) =
-      just (report Θ' σ Q (simplify Q) (Θ⁻ sr) ⌜ ι sr ⌝ʳ (X⁻ sr) (Q⁻ sr)
-                   (solveOn-sound C e) (simplify-⊨ Q) (simplify-⊨⁻ Q)
-                   (keep⁻ el sr) (real⁻ el sr) (princ⁻ el sr))
+      just (report Θ' σ Q (simplify Q) (Θ⁻ sr) (ι sr) (X⁻ sr) (Q⁻ sr) (η el)
+                   (solveOn-sound C e) (simplify-⊨ Q) (simplify-⊩ Q)
+                   (conv⁻ el sr) (inst⁻ el sr) (keep⁻ el sr) (princ⁻ el sr) (ext-ι sr))
   where
     open Strengthened
 
@@ -261,10 +262,10 @@ reportedQ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
           → Hyps (Principal.Θ⁺ p)
 reportedQ p = trim (simplify (Principal.Q⁺ p))
 
-reportedQ-≃ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
-            → (θ : Grounding (Principal.Θ⁺ p))
-            → (θ ⊨ᴴ Principal.Q⁺ p → θ ⊨ᴴ reportedQ p)
-              × (θ ⊨ᴴ reportedQ p → θ ⊨ᴴ Principal.Q⁺ p)
-reportedQ-≃ p θ =
-  (λ h → proj₁ (trim-≃ _ θ) (proj₁ (simplify-≃ (Principal.Q⁺ p) θ) h)) ,
-  (λ h → proj₂ (simplify-≃ (Principal.Q⁺ p) θ) (proj₂ (trim-≃ _ θ) h))
+reportedQ-⊩ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
+            → reportedQ p ⊩ᴴ Principal.Q⁺ p
+reportedQ-⊩ p = ⊩ᴴ-trans (trim-⊩ _) (simplify-⊩ (Principal.Q⁺ p))
+
+reportedQ-⊨ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
+            → Principal.Q⁺ p ⊨ᴴ reportedQ p
+reportedQ-⊨ p = ⊨ᴴ-trans (simplify-⊨ (Principal.Q⁺ p)) (trim-⊨ _)
