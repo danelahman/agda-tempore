@@ -643,20 +643,6 @@ lookup-gr-subst (Γ ∷ A)   σ zero    = refl
 lookup-gr-subst (Γ ∷ A)   σ (suc i) = lookup-gr-subst Γ σ i
 lookup-gr-subst (Γ ⟨ ρ ⟩) σ i       = cong (_·̂ᵣ ρ [ σ ]ʳ) (lookup-gr-subst Γ σ i)
 
-mutual
-
-  ⌜⌝ᵛ-subst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (A : VType) → ⌜ A ⌝ᵛ [ σ ]ᵛ ≡ ⌜ A ⌝ᵛ
-  ⌜⌝ᵛ-subst σ (Base b)  = refl
-  ⌜⌝ᵛ-subst σ Unit      = refl
-  ⌜⌝ᵛ-subst σ Bool      = refl
-  ⌜⌝ᵛ-subst σ (A |×| B) = cong₂ _|×|_ (⌜⌝ᵛ-subst σ A) (⌜⌝ᵛ-subst σ B)
-  ⌜⌝ᵛ-subst σ Empty     = refl
-  ⌜⌝ᵛ-subst σ (A ⇒ C)   = cong₂ _⇒_ (⌜⌝ᵛ-subst σ A) (⌜⌝ᶜ-subst σ C)
-  ⌜⌝ᵛ-subst σ ([ ρ ] A) = cong₂ [_]_ refl (⌜⌝ᵛ-subst σ A)
-
-  ⌜⌝ᶜ-subst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (C : CType) → ⌜ C ⌝ᶜ [ σ ]ᶜ ≡ ⌜ C ⌝ᶜ
-  ⌜⌝ᶜ-subst σ (A ‼ ε) = cong₂ _‼_ (⌜⌝ᵛ-subst σ A) refl
-
 ⌜⌝ᵍ-subst : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (A : GType) → ⌜ A ⌝ᵍ [ σ ]ᵛ ≡ ⌜ A ⌝ᵍ
 ⌜⌝ᵍ-subst σ (Base b)   = refl
 ⌜⌝ᵍ-subst σ Unit       = refl

@@ -1,11 +1,11 @@
--------------------------------------------------------------------
+------------------------------------------------------------------
 -- Open value and computation types                               --
 --                                                                --
--- The types of the mirrored language: the types of `Syntax.Types`--
--- with grades replaced by grade expressions and with an extra    --
--- former `tvar` for type variables. Closed types and ground      --
--- types embed via `⌜_⌝ᵛ` and `⌜_⌝ᵍ`.                             --
--------------------------------------------------------------------
+-- The types of the mirrored language: the types of               --
+-- `Syntax.Types` with grades replaced by grade expressions and   --
+-- with an extra former `tvar` for type variables. The ground     --
+-- types of the operation signature embed via `⌜_⌝ᵍ`.             --
+------------------------------------------------------------------
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -17,7 +17,7 @@ module TypeInference.OpenSyntax.Types (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Types S
+open import Syntax.Types S using (BaseType; GType; Base; Unit; Bool; Empty; _|×|ᵍ_; [_]ᵍ_)
 
 open import TypeInference.OpenSyntax.Grades S
 
@@ -42,22 +42,6 @@ mutual
   infix  32 _|×|_
   infixr 30 _⇒_
   infix  31 _‼_
-
--- Embedding closed types into open types
-
-mutual
-
-  ⌜_⌝ᵛ : ∀ {Θ} → VType → OVType Θ
-  ⌜ Base b ⌝ᵛ    = Base b
-  ⌜ Unit ⌝ᵛ      = Unit
-  ⌜ Bool ⌝ᵛ      = Bool
-  ⌜ A |×| B ⌝ᵛ   = ⌜ A ⌝ᵛ |×| ⌜ B ⌝ᵛ
-  ⌜ Empty ⌝ᵛ     = Empty
-  ⌜ A ⇒ C ⌝ᵛ     = ⌜ A ⌝ᵛ ⇒ ⌜ C ⌝ᶜ
-  ⌜ [ ρ ] A ⌝ᵛ   = [ rconst ρ ] ⌜ A ⌝ᵛ
-
-  ⌜_⌝ᶜ : ∀ {Θ} → CType → OCType Θ
-  ⌜ A ‼ ε ⌝ᶜ = ⌜ A ⌝ᵛ ‼ econst ε
 
 -- Embedding ground types into open types (mirrors `type-of-gtype`)
 

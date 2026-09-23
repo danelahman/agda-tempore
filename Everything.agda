@@ -354,10 +354,6 @@ open import TypeInference.OpenSyntax.Instances
 
 open import TypeInference.OpenSyntax.Language
 
----- Groundings of the open language into the original one
-
-open import TypeInference.OpenSyntax.Grounding
-
 ---- Raw terms and erasure
 
 open import TypeInference.Raw.Syntax
