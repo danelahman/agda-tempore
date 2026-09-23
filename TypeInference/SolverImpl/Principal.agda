@@ -883,14 +883,8 @@ atomᵈ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVTy
 atomᵈ-princ j A ρ eq γ p with strᵛ⁺ j A | strʳ⁺ j ρ
 ... | just (A₀ , e₁) | just (ρ₀ , e₂) with eq
 ...   | refl = λ { (here refl) → bndᵈ j A ρ e₁ e₂ γ p }
-atomᵈ-princ j A ρ eq γ p | just _ | nothing with discᵈ j A ρ
-... | just _  with eq
-...   | refl = λ ()
-atomᵈ-princ j A ρ eq γ p | just _ | nothing | nothing = ⊥just eq
-atomᵈ-princ j A ρ eq γ p | nothing | _ with discᵈ j A ρ
-... | just _  with eq
-...   | refl = λ ()
-atomᵈ-princ j A ρ eq γ p | nothing | _ | nothing = ⊥just eq
+atomᵈ-princ j A ρ eq γ p | just _  | nothing = ⊥just eq
+atomᵈ-princ j A ρ eq γ p | nothing | _       = ⊥just eq
 
 listʳ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (j : EVar (Φ +e))
             → (l : List (RExp (Φ +e) × RExp (Φ +e)))

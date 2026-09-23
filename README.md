@@ -375,10 +375,11 @@ a grade system, a signature of base types, and operations' signatures.
   residual worklist.
 
   `Localise.agda` and `Solve.agda` solve the rigid binders of handler operation
-  clauses without instantiating the rigid variable: an unknown local to its
-  scope takes its least solution (the join of its lower bounds, under Pottier's
-  condition), and the rigid variable is replaced by the unit or the top where it
-  bounds an ordering from one side only.
+  clauses without instantiating the rigid variable: a var-rule disjunction with
+  a side decided true is dropped, an unknown local to its scope takes its least
+  solution (the join of its lower bounds, under Pottier's condition), and the
+  rigid variable is replaced by the unit or the top where it bounds an ordering
+  from one side only.
 
   `Restricted.agda`'s `reportOn` reads an answer out at open scope, `Close.agda`
   at ground scope, joining lower bounds and independent of the order of the

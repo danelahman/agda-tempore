@@ -1,15 +1,15 @@
 --------------------------------------------------------------------------------
--- Completeness checks at deadlines: the refusals of `Kept` and `et-h`, as a  --
--- constraint.                                                                --
+-- Completeness checks at deadlines: `Kept` and `et-h`, as a constraint.      --
 --                                                                            --
 -- A var-rule disjunction at `Bool` whose lock is an effect unknown bounded   --
 -- below by a clause's rigid, as the lock `∣ ε ∣` left by a resumption        --
--- `k · a` is. It holds by eternality, and is declined.                       --
+-- `k · a` is. It holds by eternality, and is solved.                         --
 --------------------------------------------------------------------------------
 
-open import Data.Maybe using (nothing)
+open import Data.Maybe using (just)
 open import Data.Fin using (zero; suc)
 open import Data.Product using (_,_)
+open import Data.Unit using (tt)
 
 open import Util.Equality
 
@@ -32,5 +32,5 @@ keptC = ∀ᵉ (∃ᵉ ((evar (suc zero) ≾̂ₑᶜ evar zero) ∧̂ Et∨≾�
 keptC-sat : idˢ ⊨[ ∅ᴴ ] keptC
 keptC-sat = evar zero , ⊩≾̂ₑ-refl , et-ok Boolₑ
 
-keptC-declined : Gᵐ.solved? (Gᵐ.gsolveImpl keptC) ≡ nothing
-keptC-declined = refl
+keptC-solved : Gᵐ.solved? (Gᵐ.gsolveImpl keptC) ≡ just tt
+keptC-solved = refl

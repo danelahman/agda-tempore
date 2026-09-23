@@ -4,7 +4,9 @@
 -- An unknown is local to a scope when it is free in the image  --
 -- of none of the unknowns the scope was entered with; the      --
 -- rigid is one of those, so it is never local and never        --
--- assigned. Before the atoms of the scope are split, each      --
+-- assigned. Before the atoms of the scope are split, every     --
+-- var-rule disjunction with a side decided true (the type      --
+-- eternal, or the grade below the unit) is dropped, and each   --
 -- local unknown with a principal value is sent to it:          --
 --   * the join of its lower bounds, where it occurs on a right --
 --     side only as the whole side (Pottier's condition);       --
@@ -71,6 +73,7 @@ open import TypeInference.SolverImpl.State     S
   using (≐ˢ-refl; ≐ˢ-trans; ⨟-idˡ; ⨟-idʳ; ⨟-assoc; ⨟-congˡ)
 open import TypeInference.SolverImpl.Eliminate S using (joinₑ; joinᵣ)
 open import TypeInference.SolverImpl.Close     S umin?ᵣ umin?ₑ using (updᵉ; updʳ)
+open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ)
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -783,7 +786,46 @@ stepʳ {Ψ} k R with cleanʳ? k R
     unit _ _ _ = nothing
 
 ------------------------------------------------------------------------
--- Localisation: the steps, iterated over the local unknowns
+-- Settled disjunctions: a side decided true against no hypotheses
+
+settledᵈ : ∀ {Ψ} → (A : OVType Ψ) → (ρ : RExp Ψ)
+         → Maybe (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+settledᵈ A ρ with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
+... | just p  = just (λ δ → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
+... | nothing with etDec A in e
+...   | just [] = just (λ δ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
+...   | just (_ ∷ _) = nothing
+...   | nothing      = nothing
+
+-- The disjunctions of a list that are not settled
+
+record Unsettled {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
+  constructor unset
+  field
+    kept  : List (OVType Ψ × RExp Ψ)
+    kept⊆ : ∀ {a} → a ∈ kept → a ∈ l
+    back  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+          → (∀ {A ρ} → (A , ρ) ∈ kept → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+          → ∀ {A ρ} → (A , ρ) ∈ l → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+
+unsettled : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → Unsettled l
+unsettled []            = unset [] (λ ()) (λ δ k → λ ())
+unsettled ((A , ρ) ∷ l) = go (settledᵈ A ρ) (unsettled l)
+  where
+    go : Maybe (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
+       → Unsettled l → Unsettled ((A , ρ) ∷ l)
+    go (just p) (unset l' sb bk) =
+      unset l' (λ m → there (sb m))
+            (λ δ k → λ { (here refl) → p δ ; (there m) → bk δ k m })
+    go nothing  (unset l' sb bk) =
+      unset ((A , ρ) ∷ l')
+            (λ { (here refl) → here refl ; (there m) → there (sb m) })
+            (λ δ k → λ { (here refl) → k (here refl)
+                       ; (there m)   → bk δ (λ m' → k (there m')) m })
+
+------------------------------------------------------------------------
+-- Localisation: the settled disjunctions dropped, then the steps
+-- iterated over the local unknowns
 
 record Localised {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) : Set where
   constructor loc
@@ -796,9 +838,16 @@ record Localised {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) : Set where
 
 open Localised public
 
-loc-id : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R
-loc-id {O = O} {R} =
-  loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ Q h → h)
+-- The settled disjunctions dropped: the instances are unchanged
+
+loc-settle : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R
+loc-settle {O = O} {R} =
+  loc idˢ (resid (rs R) (es R) (ts R) (ss R) (Unsettled.kept U)) (⨟-idʳ O)
+      (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ))
+                   (mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (Unsettled.back U δ (⊩ds h))))
+      (λ τ Q h → mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (λ m → ⊩ds h (Unsettled.kept⊆ U m)))
+  where
+    U = unsettled (ds R)
 
 loc-ext : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → (L : Localised O R)
         → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → Keeps σ (lR L) → Localised O R
@@ -838,7 +887,7 @@ module _ {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) where
       ... | L'' , changed' = next₂ (L'' , (changed ∨ changed'))
 
 localise : ∀ {Θ Φ} → (O : Subst Θ Φ) → (R : Resid Φ) → Localised O R
-localise {Φ = Φ} O R = rounds O R (nE Φ + nR Φ) loc-id
+localise {Φ = Φ} O R = rounds O R (nE Φ + nR Φ) loc-settle
 
 -- An assignment the later substitution already agrees with is absorbed
 

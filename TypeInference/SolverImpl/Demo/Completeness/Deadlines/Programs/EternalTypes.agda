@@ -65,7 +65,5 @@ et-h = return false
     tick read  = forward read
     tick send  = forward send
 
--- refused: `x` is used under the lock of the resumption, as in `Kept`
-
 ex-et-h : Verdict et-h
-ex-et-h = refused refl
+ex-et-h = ok Bool (econst (of-natᵉ 3)) refl ≤!

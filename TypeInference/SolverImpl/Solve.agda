@@ -12,13 +12,14 @@
 -- it.                                                          --
 --                                                              --
 -- At a rigid binder the state is lifted with a fresh residual. --
--- Before the scope closes, the unknowns local to it are sent   --
--- to their least solutions (`Localise`); then atoms free of    --
--- the rigid are kept, one whose right side alone mentions it   --
--- is kept at the unit rigid where the unit is least, one whose --
--- left side alone mentions it is kept at the top rigid, any    --
--- other is discharged on the spot, and an outer unknown's      --
--- image must stay free of the rigid.                           --
+-- Before the scope closes, the var-rule disjunctions with a    --
+-- side decided true are dropped and the unknowns local to the  --
+-- scope are sent to their least solutions (`Localise`); then   --
+-- atoms free of the rigid are kept, one whose right side alone --
+-- mentions it is kept at the unit rigid where the unit is      --
+-- least, one whose left side alone mentions it is kept at the  --
+-- top rigid, any other is discharged on the spot, and an outer --
+-- unknown's image must stay free of the rigid.                 --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -334,18 +335,8 @@ atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
 ... | just _         | nothing = nothing
 ... | nothing        | _       = nothing
 
--- A disjunction whose type or grade mentions the rigid cannot be kept:
--- one of its two sides must be settled where the rigid is in scope.
-
-discᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
-      → Maybe (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-                 → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ)
-                                   (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
-discᵈ j A ρ with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
-... | just p  = just (λ δ Q → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
-... | nothing with et₀? A
-...   | just q  = just (λ δ Q → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (q {∅ᴴ})))
-...   | nothing = nothing
+-- A disjunction is kept when its type and its grade both strengthen
+-- away from the rigid, and declined otherwise.
 
 atomᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
       → Maybe (Atomᵈ j A ρ)
@@ -355,12 +346,8 @@ atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j ρ
             λ δ Q k → subst₂ (VarOK (wkᵉ-H Q))
                              (sym (pop⨟ᵛ j A e₁ δ)) (sym (pop⨟ʳ j ρ e₂ δ))
                              (VarOK-wkᵉ (k (here refl))))
-... | just _         | nothing          with discᵈ j A ρ
-...   | just f  = just ([] , λ δ Q k → f δ Q)
-...   | nothing = nothing
-atomᵈ j A ρ | nothing | _ with discᵈ j A ρ
-... | just f  = just ([] , λ δ Q k → f δ Q)
-... | nothing = nothing
+... | just _         | nothing = nothing
+... | nothing        | _       = nothing
 
 listʳ : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (l : List (RExp (Φ +e) × RExp (Φ +e)))
       → Maybe (Σ[ l₀ ∈ List (RExp Φ × RExp Φ) ]
@@ -518,7 +505,8 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 ...   | just _         | nothing = nothing
 ...   | nothing        | _       = nothing
 
--- Before a rigid scope closes, the unknowns local to it are sent to
+-- Before a rigid scope closes, the var-rule disjunctions with a side
+-- decided true are dropped, and the unknowns local to it are sent to
 -- their least solutions: those free in no image of the unknowns the
 -- scope was entered with.
 

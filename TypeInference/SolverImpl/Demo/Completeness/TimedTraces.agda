@@ -8,7 +8,7 @@
 --       P      Hf     Hr     Hd     B      U      λ      I      S      D     --
 --   P   ok     ok     ok     ok     ok     ok     ok     ok     ok     ok    --
 --   Hf         ok     ok     ok     ok     ok     ok     ok     ok     ok    --
---   Hr                ok     ok     ok     ok     ok     ok     ok/ref ok    --
+--   Hr                ok     ok     ok     ok     ok     ok     ok     ok    --
 --   Hd                       ok     ok     ok     ok     ok     ok     ok    --
 --   B                               worse  ok     ok     ok     ok     ok    --
 --   U                                      ·      ok     ok     ok     ok    --
@@ -23,8 +23,7 @@
 -- `ref` refused; `worse` inferred, worse than declared; `—` not              --
 -- derivable; `·` no entry.                                                   --
 --                                                                            --
--- Hr × S is refused where a value bound before the resumption is used        --
--- after it (`Kept`). B × B is `b-g`, a box whose grade nothing bounds.       --
+-- B × B is `b-g`, a box whose grade nothing bounds.                          --
 --                                                                            --
 -- This module is an index.                                                   --
 --------------------------------------------------------------------------------
