@@ -392,7 +392,6 @@ open import TypeInference.ParamGround
 ---- heuristic, so the completeness field of the solver interface is not met)
 
 import TypeInference.SolverImpl
-import TypeInference.SolverImpl.Demo
 
 ---- Semantic refutation of a grade ordering against the unit, and the
 ---- settling of reported var-rule disjunctions it justifies
@@ -424,11 +423,7 @@ import TypeInference.SolverImpl.Expand
 import TypeInference.SolverImpl.Principal
 import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Restricted
-
----- Tests: inference checked against open derivations of pairs of
----- constructs, and of `tempore-lang`'s example programs
-
-import TypeInference.Tests
+import TypeInference.SolverImpl.Strengthen
 
 ---- Discharge of the grade-naturality assumption for covariant clauses
 

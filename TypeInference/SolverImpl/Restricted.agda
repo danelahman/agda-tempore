@@ -18,7 +18,8 @@
 -- eliminated from it and from the reported type, every grade     --
 -- expression in product normal form, and last its disjunctions   --
 -- settled again and every subtyping atom and grade ordering      --
--- entailed by the others kept dropped. It is applied here, on    --
+-- entailed by the others kept dropped, and the report stated     --
+-- over the variables occurring in it. It is applied here, on     --
 -- top of the driver.                                             --
 ------------------------------------------------------------------
 
@@ -88,6 +89,9 @@ open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; Entails; entails; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ using (canonElim)
+open import TypeInference.SolverImpl.Strengthen S
+  using (Strengthened; strengthen; ⌜_⌝ʳ; keep⁻; real⁻; princ⁻)
+open import TypeInference.Constraints.Ground   S using (_⨟ᵍ_)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
@@ -217,7 +221,9 @@ entailsᴴ = entails entᵣ? entₑ?
 -- grounding, is realised by the grounding reading each eliminated
 -- unknown off its bound or the expression it equals, and reports the
 -- subtype. Normalisation of the grade expressions and `trim` run as the
--- last two elimination steps.
+-- last two elimination steps. The report is stated over the scope `Θ̃`
+-- of the variables occurring in it, embedded in the solution's by the
+-- renaming `ι`; a grounding of the solution's scope is read along `ι`.
 
 record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
@@ -226,26 +232,33 @@ record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
     σ      : Subst Θ Θ'
     Q      : Hyps Θ'
     Q̂      : Hyps Θ'
-    X̃      : OCType Θ'
-    Q̃      : Hyps Θ'
+    Θ̃      : Scope
+    ι      : Subst Θ̃ Θ'
+    X̃      : OCType Θ̃
+    Q̃      : Hyps Θ̃
     sat    : σ ⊨[ Q ] C
     to-Q̂   : (θ : Grounding Θ') → θ ⊨ᴴ Q  → θ ⊨ᴴ Q̂
     to-Q   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q
-    to-Q̃   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → θ ⊨ᴴ Q̃
-    realₑ  : (θ : Grounding Θ') → θ ⊨ᴴ Q̃
+    to-Q̃   : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → (ι ⨟ᵍ θ) ⊨ᴴ Q̃
+    realₑ  : (θ : Grounding Θ̃) → θ ⊨ᴴ Q̃
            → Σ[ θ' ∈ Grounding Θ' ] ((θ' ⊨ᴴ Q̂) × (⟦ X [ σ ]ᶜ ⟧ᶜ θ' ≡ ⟦ X̃ ⟧ᶜ θ))
-    princₑ : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → ⟦ X̃ ⟧ᶜ θ <:ᶜ ⟦ X [ σ ]ᶜ ⟧ᶜ θ
+    princₑ : (θ : Grounding Θ') → θ ⊨ᴴ Q̂ → ⟦ X̃ ⟧ᶜ (ι ⨟ᵍ θ) <:ᶜ ⟦ X [ σ ]ᶜ ⟧ᶜ θ
 
 reportOn : ∀ {Θ} → (X : OCType Θ) → (C : Constraint Θ) → Maybe (Reported X C)
 reportOn X C with solveOn C in e
 ... | nothing           = nothing
 ... | just (Θ' , σ , Q) =
-      just (report Θ' σ Q (simplify Q) (Elim.Ĉ el) (Elim.Q̂ el) (solveOn-sound C e)
-                   (simplify-⊨ Q) (simplify-⊨⁻ Q)
-                   (Elim.keep el) (Elim.real el) (Elim.princ el))
+      just (report Θ' σ Q (simplify Q) (Θ⁻ sr) ⌜ ι sr ⌝ʳ (X⁻ sr) (Q⁻ sr)
+                   (solveOn-sound C e) (simplify-⊨ Q) (simplify-⊨⁻ Q)
+                   (keep⁻ el sr) (real⁻ el sr) (princ⁻ el sr))
   where
+    open Strengthened
+
     el : Elim (X [ σ ]ᶜ) (simplify Q)
     el = eliminate entailsᴴ (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _
+
+    sr : Strengthened (Elim.Ĉ el) (Elim.Q̂ el)
+    sr = strengthen (Elim.Ĉ el) (Elim.Q̂ el)
 
 -- The same simplification and trimming where a principal type hands
 -- out its residue
