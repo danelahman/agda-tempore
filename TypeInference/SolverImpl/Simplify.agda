@@ -9,9 +9,10 @@
 -- refuted grade leaves the eternality atoms behind. It then      --
 -- prunes: a subtyping or eternality atom entailed by the atoms   --
 -- kept before it is dropped, entailment there being reachability --
--- in a finite digraph, and a grade ordering is dropped when it   --
--- repeats one kept before it. It finally lists the grade         --
--- orderings by the skeletons of their two sides.                 --
+-- in a finite digraph, and a grade ordering is dropped when its  --
+-- two sides are the same or it repeats one kept before it. It    --
+-- finally lists the grade orderings by the skeletons of their    --
+-- two sides.                                                     --
 --                                                                --
 -- `trim` settles the disjunctions again, then drops every        --
 -- subtyping atom and grade ordering entailed by those kept and   --
@@ -587,17 +588,21 @@ Testᵉ : Set
 Testᵉ = ∀ {Θ} → (seen rest : List (EExp Θ × EExp Θ))
       → (p : EExp Θ × EExp Θ) → Maybe (Okᵉ seen rest p)
 
--- A repeat of an ordering kept
+-- An ordering whose two sides are the same, or a repeat of one kept
 
 repeatʳ? : Testʳ
-repeatʳ? lₑ seen rest (ρ , ρ') with memʳ? (ρ , ρ') seen
-... | just m  = just (hypᵣ (∈-++⁺ˡ m))
-... | nothing = nothing
+repeatʳ? lₑ seen rest (ρ , ρ') with ρ ≟ʳ ρ'
+... | yes refl = just ⊩≾̂ᵣ-refl
+... | no _ with memʳ? (ρ , ρ') seen
+...   | just m  = just (hypᵣ (∈-++⁺ˡ m))
+...   | nothing = nothing
 
 repeatᵉ? : Testᵉ
-repeatᵉ? seen rest (ε , ε') with memᵉ? (ε , ε') seen
-... | just m  = just (hypₑ (∈-++⁺ˡ m))
-... | nothing = nothing
+repeatᵉ? seen rest (ε , ε') with ε ≟ᵉ ε'
+... | yes refl = just ⊩≾̂ₑ-refl
+... | no _ with memᵉ? (ε , ε') seen
+...   | just m  = just (hypₑ (∈-++⁺ˡ m))
+...   | nothing = nothing
 
 -- An ordering among those kept and those not yet examined, or one
 -- `decide≾` proves from them

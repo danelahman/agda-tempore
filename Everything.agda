@@ -418,10 +418,17 @@ open import TypeInference.Principality.Restricted
 
 import TypeInference.SolverImpl.Expand
 
----- The concrete solver's principality, refutation, and interface instance
+---- The concrete solver's principality, refutation, and interface instance,
+---- the atoms of its residue that no unknown affects decided
 
 import TypeInference.SolverImpl.Principal
+import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Restricted
+
+---- Tests: inference checked against open derivations of pairs of
+---- constructs, and of `tempore-lang`'s example programs
+
+import TypeInference.Tests
 
 ---- Discharge of the grade-naturality assumption for covariant clauses
 

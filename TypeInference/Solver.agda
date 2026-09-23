@@ -37,9 +37,16 @@ open Operations Ops
 open import TypeInference.OpenSyntax.Types S
 open import TypeInference.OpenSyntax.Subst S
 open import TypeInference.OpenSyntax.Hyps  S
+open import TypeInference.OpenSyntax.Grounding S using (Grounding; _⊨ᴴ_)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
+
+-- A hypothesis set some grounding satisfies. Under any other set every
+-- constraint is entailed, so refutation is stated against these.
+
+Satisfiable : ∀ {Θ} → Hyps Θ → Set
+Satisfiable {Θ} Q = Σ[ θ ∈ Grounding Θ ] (θ ⊨ᴴ Q)
 
 record Solver : Set₁ where
   field
@@ -58,12 +65,13 @@ record Solver : Set₁ where
                 ------------------------------
                 → σ ⊨[ Q ] C
 
-    -- A failure means there is no solution at all
+    -- A failure means there is no solution under a satisfiable
+    -- hypothesis set
 
     solve-complete : ∀ {Θ} → (C : Constraint Θ)
                    → solve C ≡ nothing
-                   → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
-                   ------------------------------------------
+                   → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → Satisfiable Q
+                   -----------------------------------------------------------
                    → ¬ (σ ⊨[ Q ] C)
 
     -- What is returned is the most general solution: every solution

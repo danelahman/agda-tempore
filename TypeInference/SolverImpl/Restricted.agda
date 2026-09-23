@@ -4,9 +4,13 @@
 -- `TypeInference.Solver.Restricted.SolverOn` asks for a solver   --
 -- returning a scope, a substitution and a hypothesis set; the    --
 -- driver returns a state, and `toHyps` reads its residual back   --
--- as the hypothesis set. Principality is unguarded; refutation   --
--- is guarded by `NoRig`, since at a rigid binder a failure can   --
--- be a failure of `Normal`'s decision procedures.                --
+-- as the hypothesis set, its atoms that no unknown affects       --
+-- decided (`Closed`): one that holds is dropped, one that fails  --
+-- refuses.                                                       --
+-- Principality is unguarded; refutation is guarded by `NoRig`,   --
+-- since at a rigid binder a failure can be a failure of          --
+-- `Normal`'s decision procedures, and is stated against          --
+-- satisfiable hypothesis sets.                                   --
 --                                                                --
 -- `reportOn` is the reporting boundary on top: the same residue  --
 -- with its var-rule disjunctions settled, its repeated           --
@@ -63,16 +67,18 @@ open import TypeInference.Raw.Syntax S using (RawC)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
-open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐ˢ-sym)
+open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono; ≐ˢ-sym)
 
 open import TypeInference.Principality      S using (Principal)
 open import TypeInference.Solver.Fragment   S
 open import TypeInference.Solver.Restricted S
+open import TypeInference.Solver            S using (Satisfiable)
 
 open import TypeInference.SolverImpl.Core.Unify    S using (Rig; _∈ᶠ_)
 open import TypeInference.SolverImpl.Core.UnifyMGU S using (Fixing; fixing)
 
 open import TypeInference.SolverImpl.Resid     S
+open import TypeInference.SolverImpl.Closed    S using (closedᴴ; closedᴴ-⊩; closedᴴ-⊆; closedᴴ-fail)
 open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
@@ -93,8 +99,10 @@ solveOn C with solve init C
 ... | just (s' , m , w) with reexpand s'
 ...   | nothing = nothing
 ...   | just (s₂ , m₂) with toHyps (res s₂)
-...     | nothing       = nothing
-...     | just (Q , hq) = just (Ψ s₂ , θ s₂ , Q)
+...     | nothing        = nothing
+...     | just (Q₀ , hq) with closedᴴ Q₀
+...       | nothing = nothing
+...       | just Q  = just (Ψ s₂ , θ s₂ , Q)
 
 solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
@@ -106,14 +114,19 @@ solveOn-sound C eq with solve init C in e
 ...   | nothing = ⊥just eq
 ...   | just (s₂ , m₂) with toHyps (res s₂) in e'
 ...     | nothing = ⊥just eq
-...     | just (Q₀ , hq) with eq
-...       | refl = ⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C (wit-mono m₂ C w idˢ Q₀ hq)
+...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...       | nothing = ⊥just eq
+...       | just Q₁ with eq
+...         | refl =
+              ⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C
+                (⊨-mono (closedᴴ-⊩ Q₀ e'') C
+                  (⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C (wit-mono m₂ C w idˢ Q₀ hq)))
 
 solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
                  → solveOn C ≡ nothing
-                 → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
+                 → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → Satisfiable Q
                  → ¬ (σ ⊨[ Q ] C)
-solveOn-complete C nr eq σ Q sat with solve init C in e
+solveOn-complete C nr eq σ Q sQ sat with solve init C in e
 ... | nothing = solve-fail init C nr e σ Q (Fixing-[] σ) ⊩ᴿ-empty sat
 ... | just (s' , m , w) with reexpand s' in e₂
 ...   | nothing =
@@ -121,8 +134,17 @@ solveOn-complete C nr eq σ Q sat with solve init C in e
   where
     fac = solve-principal init C e σ Q sat ⊩ᴿ-empty
 ...   | just (s₂ , m₂) with toHyps (res s₂) in e'
-...     | just _  = ⊥nothing eq
-...     | nothing with toHyps-nothing (res s₂) e'
+...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...       | just _  = ⊥nothing eq
+...       | nothing =
+            closedᴴ-fail Q₀ e'' (proj₁ fac₂)
+              (toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)))
+              (proj₁ sQ) (proj₂ sQ)
+  where
+    fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
+    fac₂ = reexpand-princ s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))
+solveOn-complete C nr eq σ Q sQ sat | just (s' , m , w) | just (s₂ , m₂) | nothing
+  with toHyps-nothing (res s₂) e'
 ...       | inj₁ (A , mem , q) =
             etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
   where
@@ -144,8 +166,10 @@ solveOn-principal C eq σ Q sat with solve init C in e
 ...   | nothing = ⊥just eq
 ...   | just (s₂ , m₂) with toHyps (res s₂) in e'
 ...     | nothing = ⊥just eq
-...     | just (Q₀ , hq) with eq
-...       | refl = δ₂ , tri , toHyps-compl (res s₂) e' δ₂ h₂
+...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...       | nothing = ⊥just eq
+...       | just Q₁ with eq
+...         | refl = δ₂ , tri , closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
   where
     fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
     δ    = proj₁ fac

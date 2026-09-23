@@ -13,13 +13,9 @@
 -- own grades, as `Worked.Typing.*` do for the typing rules.      --
 ------------------------------------------------------------------
 
-open import Data.List.Base using (List; length)
-open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Nat using (ℕ)
+open import Data.Maybe.Base using (Maybe)
 open import Data.Fin using (zero; suc)
-open import Data.Product using (Σ-syntax; _×_; _,_)
-open import Data.Unit using (⊤; tt)
-
+open import Data.Product using (_,_)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -46,15 +42,10 @@ open LanguageSpec S
 open GradeSystemInterface Grades
 open Operations Ops
 
-import Syntax.Types S as T
-
-open import Syntax.Contexts S using (Ctx)
-
 open import TypeInference.OpenSyntax.Grades         S
 open import TypeInference.OpenSyntax.Types          S
-open import TypeInference.OpenSyntax.Subst          S
+open import TypeInference.OpenSyntax.Subst          S using (idˢ)
 open import TypeInference.OpenSyntax.Hyps           S
-open import TypeInference.OpenSyntax.ClosedContexts S using (skel)
 
 import TypeInference.OpenSyntax.Contexts S as OC
 
@@ -63,80 +54,21 @@ open import TypeInference.Raw.Syntax S
 open import TypeInference.Constraints.Syntax S
 open import TypeInference.Constraints.Satisfaction S using (_⊨[_]_)
 
-open import TypeInference.Infer S using (Inferred)
-open import TypeInference.Principality S using (X̂; t̂; C[_,_])
-
-open import TypeInference.SolverImpl S opEnum umin?ᵣ umin?ₑ
-  using (gsolveImpl; greportImpl; inferImpl) public
-
-open import TypeInference.SolverImpl.Restricted S opEnum umin?ᵣ umin?ₑ
-  using (reportOn; Reported)
-
 ------------------------------------------------------------------------
 -- Running the solver
 --
--- `infer!` reports the inferred type and effect of a closed program,
--- in sum-of-products normal form;
--- `typeOf` runs the whole pipeline, whose result is a derivation of the
--- source system, and reads its type and effect off. `solved?` forgets
--- everything but whether a constraint was solved at all.
+-- `reportOf` reports a program's principal type, and `solveOn` solves
+-- a constraint.
 
-infer! : (Γ : Ctx) → (M : RawC (skel Γ)) → Maybe (OVType ∅ˢ × EExp ∅ˢ)
-infer! = greportImpl
+open import TypeInference.SolverImpl.Demo.Report S opEnum umin?ᵣ umin?ₑ public
 
-typeOf : {Γ : Ctx} {M : RawC (skel Γ)} → Maybe (Inferred Γ M) → Maybe (T.VType × E)
-typeOf nothing  = nothing
-typeOf (just I) = just (Inferred.A I , Inferred.ε I)
+open import TypeInference.SolverImpl.Restricted S opEnum umin?ᵣ umin?ₑ
+  using (solveOn) public
 
-solved? : ∀ {Θ} {X : Subst Θ ∅ˢ → Set} → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] X σ) → Maybe ⊤
-solved? nothing  = nothing
-solved? (just _) = just tt
-
--- `∃ᵉ-value` solves a constraint `∃ᵉ C` and reads off the value the
--- solution gives its unknown
-
-∃ᵉ-value : Constraint ∅ˢ → Maybe (EExp ∅ˢ)
-∃ᵉ-value (∃ᵉ C) with gsolveImpl (∃ᵉ C)
-... | nothing          = nothing
-... | just (_ , ε , _) = just ε
-∃ᵉ-value _ = nothing
-
-------------------------------------------------------------------------
--- Reporting
---
--- The open path hands back a qualified type rather than a ground
--- solution: the scope it is stated in, the reported type, and the
--- eternality atoms, subtyping atoms, resource-grade orderings,
--- effect-grade orderings and var-rule disjunctions left with it.
--- `sizeOf` keeps only how many of each sort survive.
+-- the empty context
 
 Γ∅ : OC.OCtx ∅ˢ 0
 Γ∅ = OC.[]
-
-Report : Set
-Report = Σ[ Θ ∈ Scope ] (OCType Θ
-                          × List (TyVar Θ)
-                          × List (TyVar Θ × TyVar Θ)
-                          × List (RExp Θ × RExp Θ)
-                          × List (EExp Θ × EExp Θ)
-                          × List (OVType Θ × RExp Θ))
-
-reportOf : RawC 0 → Maybe Report
-reportOf M with reportOn (X̂ ∅ˢ ‼ t̂ ∅ˢ) C[ Γ∅ , M ]
-... | nothing = nothing
-... | just r  = just (Reported.Θ' r , Reported.X̃ r ,
-                      ets  (Reported.Q̃ r) , subᵥ (Reported.Q̃ r) ,
-                      ordᵣ (Reported.Q̃ r) , ordₑ (Reported.Q̃ r) ,
-                      disj (Reported.Q̃ r))
-
-sizeOf : RawC 0 → Maybe (ℕ × ℕ × ℕ × ℕ × ℕ)
-sizeOf M with reportOn (X̂ ∅ˢ ‼ t̂ ∅ˢ) C[ Γ∅ , M ]
-... | nothing = nothing
-... | just r  = just (length (ets  (Reported.Q̃ r)) ,
-                      length (subᵥ (Reported.Q̃ r)) ,
-                      length (ordᵣ (Reported.Q̃ r)) ,
-                      length (ordₑ (Reported.Q̃ r)) ,
-                      length (disj (Reported.Q̃ r)))
 
 ------------------------------------------------------------------------
 -- The library

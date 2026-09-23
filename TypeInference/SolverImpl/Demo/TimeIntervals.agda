@@ -21,7 +21,8 @@ open import Data.List.Base using (List) renaming ([] to []ᴸ; _∷_ to _∷ᴸ_
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Fin using (zero; suc; #_)
-open import Data.Maybe using (Maybe; just; nothing)
+open import Data.Bool.Base using (true)
+open import Data.Maybe using (Maybe; just; nothing; is-just)
 open import Data.Nat using (ℕ; z≤n; s≤s)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Unit using (tt)
@@ -45,8 +46,6 @@ open import Syntax.Grades.Example.Time.RightSided
 open import Syntax.Grades.Example.System.Identity using (identityGradeSystem)
 
 import Syntax.GroundTypes
-import Syntax.Contexts
-import Syntax.Types
 
 import TypeInference.OpenSyntax.Grades
 import TypeInference.OpenSyntax.Types
@@ -68,13 +67,10 @@ open LanguageSpec spec
 open GradeSystemInterface Grades
 open Operations Ops
 
-import Syntax.Types spec as T
-
-open import Syntax.Contexts spec using (Ctx; []; _∷_; _⟨_⟩)
 
 open import TypeInference.OpenSyntax.Grades         spec
 open import TypeInference.OpenSyntax.Types          spec
-open import TypeInference.OpenSyntax.ClosedContexts spec using (skel)
+open import TypeInference.OpenSyntax.Contexts       spec using (OCtx; _∷_)
 
 open import TypeInference.Raw.Syntax spec
 
@@ -86,9 +82,8 @@ open import TypeInference.SolverImpl.Enum spec using (OpEnum)
 -- The solver is parametric in an enumeration of the operations and in
 -- the two optional proofs that a unit is least; the grades decide their
 -- own orders. Instantiating it here, and `Demo.Generic` with it,
--- fixes the wrappers the rest of the module runs: `infer!`, reporting
--- an inferred type and effect, and `typeOf`, running the whole pipeline
--- down to a derivation of the source system.
+-- fixes what the rest of the module runs: `reportOf`, a program's
+-- principal report, and `solveOn`, the solver on a constraint.
 
 -- the node has three operations
 
@@ -116,91 +111,110 @@ open G
 
 -- the unit value
 
-ex-unit : infer! [] (return ⋆) ≡ just (Unit , ûₑ)
+ex-unit : reportOf Γ∅ (return ⋆)
+        ≡ just (scope 0 0 1 , Unit ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-unit = refl
 
 -- a boolean
 
-ex-bool : infer! [] (return true) ≡ just (Bool , ûₑ)
+ex-bool : reportOf Γ∅ (return true)
+        ≡ just (scope 0 0 1 , Bool ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-bool = refl
 
 -- a base-typed constant, at the node's one base type
 
-ex-const : infer! [] (return (const reading 0)) ≡ just (Base reading , ûₑ)
+ex-const : reportOf Γ∅ (return (const reading 0))
+         ≡ just (scope 0 0 1 ,
+                 Base reading ‼ ûₑ ,
+                 []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-const = refl
 
 -- a variable's type is looked up
 
-ex-var : infer! ([] ∷ T.Bool) (return (var zero)) ≡ just (Bool , ûₑ)
+ex-var : reportOf (Γ∅ ∷ Bool) (return (var zero))
+       ≡ just (scope 1 0 1 , Bool ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-var = refl
 
 -- a pair
 
-ex-pair : infer! [] (return ⦉ ⋆ , true ⦊) ≡ just (Unit |×| Bool , ûₑ)
+ex-pair : reportOf Γ∅ (return ⦉ ⋆ , true ⦊)
+        ≡ just (scope 0 0 1 ,
+                Unit |×| Bool ‼ ûₑ ,
+                []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-pair = refl
 
 -- a lambda: none of `α₁ ⇒ (α₂ ‼ e)` is fixed in advance
 
-ex-lam : infer! [] (return (lam (return true)))
-       ≡ just (Unit ⇒ (Bool ‼ ûₑ) , ûₑ)
+ex-lam : reportOf Γ∅ (return (lam (return true)))
+       ≡ just (scope 4 0 3 ,
+               (tvar (# 1) ⇒ Bool ‼ ûₑ) ‼ ûₑ ,
+               []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-lam = refl
 
 -- an application: the argument type and the latent effect both come
 -- from the function's type
 
-ex-app : infer! ([] ∷ (T.Bool T.⇒ (T.Bool T.‼ uₑ))) (var zero · true)
-       ≡ just (Bool , ûₑ)
+ex-app : reportOf (Γ∅ ∷ (Bool ⇒ (Bool ‼ ûₑ))) (var zero · true)
+       ≡ just (scope 3 0 2 , Bool ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-app = refl
 
 -- a `let`: the two effects are multiplied
 
-ex-seq : infer! [] (return true ⨟ return (var zero))
-       ≡ just (Bool , ûₑ)
+ex-seq : reportOf Γ∅ (return true ⨟ return (var zero))
+       ≡ just (scope 1 0 3 , Bool ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-seq = refl
 
 -- a boolean elimination
 
-ex-if : infer! [] (if true `then return ⋆ `else return ⋆)
-      ≡ just (Unit , ûₑ)
+ex-if : reportOf Γ∅ (if true `then return ⋆ `else return ⋆)
+      ≡ just (scope 0 0 1 , Unit ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-if = refl
 
 -- pattern-matching a pair
 
-ex-match : infer! [] (match ⦉ ⋆ , true ⦊ `in return (var zero))
-         ≡ just (Bool , ûₑ)
+ex-match : reportOf Γ∅ (match ⦉ ⋆ , true ⦊ `in return (var zero))
+         ≡ just (scope 1 0 1 , Bool ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-match = refl
 
--- eliminating the empty type: the result type is unconstrained, and
--- defaulted
+-- eliminating the empty type: the result type and the effect are
+-- unconstrained, and stay variables
 
-ex-absurd : infer! ([] ∷ T.Empty) (absurd (var zero)) ≡ just (Unit , ûₑ)
+ex-absurd : reportOf (Γ∅ ∷ Empty) (absurd (var zero))
+          ≡ just (scope 1 0 1 ,
+                  tvar (# 0) ‼ evar (# 0) ,
+                  []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-absurd = refl
 
 -- performing an operation: the result type is the operation's arity
 -- and the effect is its execution window, multiplied by the
 -- continuation's
 
-ex-perform : infer! [] (perform read ⋆ (return (var zero)))
-           ≡ just (Base reading , econst (op-grade read))
+ex-perform : reportOf Γ∅ (perform read ⋆ (return (var zero)))
+           ≡ just (scope 1 0 2 ,
+                   Base reading ‼ econst (op-grade read) ,
+                   []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-perform = refl
 
 -- delaying: the declared duration is charged to the effect
 
-ex-delay : infer! [] (delay 2 (return ⋆))
-         ≡ just (Unit , econst (of-natᵉ 2))
+ex-delay : reportOf Γ∅ (delay 2 (return ⋆))
+         ≡ just (scope 0 0 2 ,
+                 Unit ‼ econst (of-natᵉ 2) ,
+                 []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-delay = refl
 
--- boxing: the box's grade is not annotated, and defaults to the
--- greatest grade, here the unit
+-- boxing: the box's grade is not annotated, and stays a variable
 
-ex-box : infer! [] (box ⋆ (return (var zero)))
-       ≡ just ([ ûᵣ ] Unit , ûₑ)
+ex-box : reportOf Γ∅ (box ⋆ (return (var zero)))
+       ≡ just (scope 1 2 1 ,
+               [ rvar (# 0) ] Unit ‼ ûₑ ,
+               []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-box = refl
 
 -- unboxing a boxed variable, at the unit grade, which demands nothing
 
-ex-unbox : infer! ([] ∷ (T.[ uᵣ ] T.Bool)) (unbox zero (return (var zero)))
-         ≡ just (Bool , ûₑ)
+ex-unbox : reportOf (Γ∅ ∷ [ ûᵣ ] Bool) (unbox zero (return (var zero)))
+         ≡ just (scope 2 0 1 , Bool ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-unbox = refl
 
 -- `handle` is refused at these grades: a clause that does not resume
@@ -208,8 +222,7 @@ ex-unbox = refl
 -- operation's. Section 5 runs the same program over grades whose unit
 -- is least.
 
-ex-handle : infer! [] (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆))
-          ≡ nothing
+ex-handle : reportOf Γ∅ (handle (return ⋆) `with (λ op → return ⋆) `in (return ⋆)) ≡ nothing
 ex-handle = refl
 
 -- A clause that resumes is inferred all the same. Its continuation's
@@ -218,16 +231,19 @@ ex-handle = refl
 -- left to ask of the unit. `forward` is `Worked.Typing.Core`'s
 -- `forwarding` clause.
 
-ex-handle-forward : infer! [] forward ≡ just (Unit , ûₑ)
+ex-handle-forward : reportOf Γ∅ forward
+                  ≡ just (scope 10 0 12 ,
+                          Unit ‼ ûₑ ,
+                          []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-handle-forward = refl
 
 -- A clause that unboxes its continuation, or performs, and then drops
 -- it ends in the unit effect, and is refused as `ex-handle` is.
 
-ex-handle-unboxing : infer! [] unboxing ≡ nothing
+ex-handle-unboxing : reportOf Γ∅ unboxing ≡ nothing
 ex-handle-unboxing = refl
 
-ex-handle-performing : infer! [] performing ≡ nothing
+ex-handle-performing : reportOf Γ∅ performing ≡ nothing
 ex-handle-performing = refl
 
 ------------------------------------------------------------------------
@@ -277,7 +293,10 @@ branch-ops : RawC 0
 branch-ops = if true `then perform read ⋆ (return ⋆)
                      `else perform write (const reading 0) (return ⋆)
 
-ex-branch-ops : infer! [] branch-ops ≡ just (Unit , econst [ 1 , ↑ 3 , s≤s z≤n ])
+ex-branch-ops : reportOf Γ∅ branch-ops
+              ≡ just (scope 0 0 3 ,
+                      Unit ‼ econst [ 1 , ↑ 3 , s≤s z≤n ] ,
+                      []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-ops = refl
 
 -- An arm that returns instead contributes the unit window, so the
@@ -286,7 +305,10 @@ ex-branch-ops = refl
 branch-ret : RawC 0
 branch-ret = if true `then perform read ⋆ (return ⋆) `else return ⋆
 
-ex-branch-ret : infer! [] branch-ret ≡ just (Unit , econst [ 0 , ↑ 1 , z≤n ])
+ex-branch-ret : reportOf Γ∅ branch-ret
+              ≡ just (scope 0 0 2 ,
+                      Unit ‼ econst [ 0 , ↑ 1 , z≤n ] ,
+                      []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-ret = refl
 
 -- Two delays: `delay n` contributes `of-natᵉ n`, and the join spans
@@ -295,8 +317,10 @@ ex-branch-ret = refl
 branch-delay : RawC 0
 branch-delay = if true `then delay 2 (return ⋆) `else delay 1 (return ⋆)
 
-ex-branch-delay : infer! [] branch-delay
-                ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
+ex-branch-delay : reportOf Γ∅ branch-delay
+                ≡ just (scope 0 0 3 ,
+                        Unit ‼ econst [ 1 , ↑ 2 , s≤s z≤n ] ,
+                        []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-delay = refl
 
 -- Nesting a branch inside a branch puts three bounds on one effect
@@ -308,8 +332,10 @@ branch-delay³ = if true `then delay 1 (return ⋆)
                         `else (if true `then delay 2 (return ⋆)
                                        `else delay 3 (return ⋆))
 
-ex-branch-delay³ : infer! [] branch-delay³
-                 ≡ just (Unit , econst [ 1 , ↑ 3 , s≤s z≤n ])
+ex-branch-delay³ : reportOf Γ∅ branch-delay³
+                 ≡ just (scope 0 0 4 ,
+                         Unit ‼ econst [ 1 , ↑ 3 , s≤s z≤n ] ,
+                         []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-delay³ = refl
 
 -- an arm that returns contributes the unit window here too
@@ -319,8 +345,10 @@ branch-delay³-ret = if true `then return ⋆
                             `else (if true `then delay 2 (return ⋆)
                                            `else delay 3 (return ⋆))
 
-ex-branch-delay³-ret : infer! [] branch-delay³-ret
-                     ≡ just (Unit , econst [ 0 , ↑ 3 , z≤n ])
+ex-branch-delay³-ret : reportOf Γ∅ branch-delay³-ret
+                     ≡ just (scope 0 0 3 ,
+                             Unit ‼ econst [ 0 , ↑ 3 , z≤n ] ,
+                             []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-delay³-ret = refl
 
 -- A resource boxed at `[ 2 ,+∞⟩` becomes available only once two ticks
@@ -328,60 +356,60 @@ ex-branch-delay³-ret = refl
 -- `ρ' ≾ᵣ ρ₀` of the `unbox` rule, `ρ'` being the product of the locks
 -- to the variable's right, which the term itself determines.
 
-Γ₂ : Ctx
-Γ₂ = [] ∷ (T.[ [ 2 ,+∞⟩ ] T.Bool)
+Γ₂ : OCtx ∅ˢ 1
+Γ₂ = Γ∅ ∷ [ rconst [ 2 ,+∞⟩ ] Bool
 
 -- a `write` elapses, and `mapᵉ [ 2 , 3 ] = [ 2 ,+∞⟩` meets the demand
 
-unbox-after-write : RawC (skel Γ₂)
+unbox-after-write : RawC 1
 unbox-after-write =
   perform write (const reading 0) (unbox (suc zero) (return (var zero)))
 
-ex-unbox-after-write : infer! Γ₂ unbox-after-write
-                     ≡ just (Bool , econst (op-grade write))
+ex-unbox-after-write : reportOf Γ₂ unbox-after-write
+                     ≡ just (scope 2 0 2 ,
+                             Bool ‼ econst (op-grade write) ,
+                             []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-unbox-after-write = refl
 
--- and the derivation of the source system that the pipeline builds
--- says the same
+-- a `read` licenses only `[ 1 ,+∞⟩`, which does not: the ordering
+-- `[ 1 ,+∞⟩ ≾ᵣ [ 2 ,+∞⟩` left over is closed, and false by
+-- `ex-≾ᵣ-not-up`, so the program is refused; no derivation can choose
+-- another `ρ'`
 
-ex-unbox-after-write-pipeline : typeOf (inferImpl Γ₂ unbox-after-write)
-                              ≡ just (T.Bool , op-grade write ·ₑ uₑ)
-ex-unbox-after-write-pipeline = refl
-
--- a `read` licenses only `[ 1 ,+∞⟩`, which does not, and `ex-≾ᵣ-not-up`
--- is the whole of the reason: no derivation can choose another `ρ'`
-
-unbox-after-read : RawC (skel Γ₂)
+unbox-after-read : RawC 1
 unbox-after-read =
   perform read ⋆ (unbox (suc zero) (return (var zero)))
 
-ex-unbox-after-read : infer! Γ₂ unbox-after-read ≡ nothing
+ex-unbox-after-read : reportOf Γ₂ unbox-after-read ≡ nothing
 ex-unbox-after-read = refl
 
 -- idling meets the demand just as an operation does
 
-unbox-after-delay : RawC (skel Γ₂)
+unbox-after-delay : RawC 1
 unbox-after-delay = delay 2 (unbox zero (return (var zero)))
 
-ex-unbox-after-delay : infer! Γ₂ unbox-after-delay
-                     ≡ just (Bool , econst (of-natᵉ 2))
+ex-unbox-after-delay : reportOf Γ₂ unbox-after-delay
+                     ≡ just (scope 2 0 2 ,
+                             Bool ‼ econst (of-natᵉ 2) ,
+                             []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-unbox-after-delay = refl
 
--- one tick short, and it does not
+-- one tick short, and it does not: the same ordering is left, and the
+-- program refused
 
-unbox-too-soon : RawC (skel Γ₂)
+unbox-too-soon : RawC 1
 unbox-too-soon = delay 1 (unbox zero (return (var zero)))
 
-ex-unbox-too-soon : infer! Γ₂ unbox-too-soon ≡ nothing
+ex-unbox-too-soon : reportOf Γ₂ unbox-too-soon ≡ nothing
 ex-unbox-too-soon = refl
 
 ------------------------------------------------------------------------
 -- 4. What the solver does
 --
 -- The passes, each on a program that isolates it: lower bounds on an
--- unknown folded by join, an unknown bounded only from above sent to
--- that bound, unconstrained unknowns defaulted by polarity, and an
--- unknown escaping a rigid binder refuted.
+-- unknown folded by join, a box grade kept with its bound, unknowns
+-- left open in the reported type, and an unknown escaping a rigid
+-- binder refuted.
 
 -- The slack pass. Both arms bound the branch's effect unknown from
 -- below and the closer folds the two bounds into their join, which
@@ -390,8 +418,10 @@ ex-unbox-too-soon = refl
 fold-then-mul : RawC 0
 fold-then-mul = branch-delay ⨟ return ⋆
 
-ex-fold-then-mul : infer! [] fold-then-mul
-                 ≡ just (Unit , econst [ 1 , ↑ 2 , s≤s z≤n ])
+ex-fold-then-mul : reportOf Γ∅ fold-then-mul
+                 ≡ just (scope 0 0 5 ,
+                         Unit ‼ econst [ 1 , ↑ 2 , s≤s z≤n ] ,
+                         []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-fold-then-mul = refl
 
 -- An unknown whose bounds still hold an arm's own slack variable is
@@ -404,8 +434,10 @@ branch-delay³-flat = if true `then delay 1 (return ⋆)
                              `else (if true `then delay 1 (return ⋆)
                                             `else delay 1 (return ⋆))
 
-ex-branch-delay³-flat : infer! [] branch-delay³-flat
-                      ≡ just (Unit , econst [ 1 , ↑ 1 , s≤s z≤n ])
+ex-branch-delay³-flat : reportOf Γ∅ branch-delay³-flat
+                      ≡ just (scope 0 0 4 ,
+                              Unit ‼ econst (of-natᵉ 1) ,
+                              []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-delay³-flat = refl
 
 -- A conditional under a lambda. The branch's effect unknown bounds the
@@ -417,8 +449,10 @@ branch-lam : RawC 0
 branch-lam = return (lam (if var zero `then delay 1 (return ⋆)
                                       `else delay 2 (return ⋆)))
 
-ex-branch-lam : infer! [] branch-lam
-              ≡ just (Bool ⇒ (Unit ‼ econst [ 1 , ↑ 2 , s≤s z≤n ]) , ûₑ)
+ex-branch-lam : reportOf Γ∅ branch-lam
+              ≡ just (scope 4 0 5 ,
+                      (Bool ⇒ Unit ‼ econst [ 1 , ↑ 2 , s≤s z≤n ]) ‼ ûₑ ,
+                      []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-lam = refl
 
 -- the same with equal arms
@@ -427,97 +461,109 @@ branch-lam₁ : RawC 0
 branch-lam₁ = return (lam (if var zero `then delay 1 (return ⋆)
                                        `else delay 1 (return ⋆)))
 
-ex-branch-lam₁ : infer! [] branch-lam₁
-               ≡ just (Bool ⇒ (Unit ‼ econst [ 1 , ↑ 1 , s≤s z≤n ]) , ûₑ)
+ex-branch-lam₁ : reportOf Γ∅ branch-lam₁
+               ≡ just (scope 4 0 5 ,
+                       (Bool ⇒ Unit ‼ econst (of-natᵉ 1)) ‼ ûₑ ,
+                       []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-branch-lam₁ = refl
 
 -- The slack variable of a sequencing's first component is resolved
 -- before the composite effect is built.
 
-ex-seq-op : infer! [] (perform read ⋆ (return (var zero)) ⨟ return ⋆)
-          ≡ just (Unit , econst (op-grade read))
+ex-seq-op : reportOf Γ∅ (perform read ⋆ (return (var zero)) ⨟ return ⋆)
+          ≡ just (scope 1 0 4 ,
+                  Unit ‼ econst (op-grade read) ,
+                  []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-seq-op = refl
 
--- The tightening pass. Subtyping is contravariant in a box's grade, so
--- the result type's fresh grade variable is bounded above by the
--- annotation and never below: tightening sends it there, and the grade
--- is reported rather than coarsened to the unit.
+-- A box grade bounded by an annotation. Subtyping is contravariant in
+-- a box's grade, so the result type's fresh grade variable is bounded
+-- above by the annotation and never below; the report keeps the
+-- variable, qualified by that bound.
 
-ex-box-grade : infer! ([] ∷ (T.[ [ 1 ,+∞⟩ ] T.Bool)) (return (var zero))
-             ≡ just ([ rconst [ 1 ,+∞⟩ ] Bool , ûₑ)
+ex-box-grade : reportOf (Γ∅ ∷ [ rconst [ 1 ,+∞⟩ ] Bool) (return (var zero))
+             ≡ just (scope 1 1 1 ,
+                     [ rvar (# 0) ] Bool ‼ ûₑ ,
+                     []ᴸ , []ᴸ , (rvar (# 0) , rconst [ 1 ,+∞⟩) ∷ᴸ []ᴸ ,
+                     []ᴸ , []ᴸ)
 ex-box-grade = refl
 
 -- both arms of a conditional bound that one variable above, by the
--- same expression, which is therefore its own cap
+-- same expression, which is kept once
 
-ex-box-branch : infer! ([] ∷ T.Bool ∷ (T.[ [ 1 ,+∞⟩ ] T.Bool))
+ex-box-branch : reportOf (Γ∅ ∷ Bool ∷ [ rconst [ 1 ,+∞⟩ ] Bool)
                   (if var (suc zero)
                     `then return (var zero)
                     `else return (var zero))
-              ≡ just ([ rconst [ 1 ,+∞⟩ ] Bool , ûₑ)
+              ≡ just (scope 1 1 1 ,
+                      [ rvar (# 0) ] Bool ‼ ûₑ ,
+                      []ᴸ , []ᴸ , (rvar (# 0) , rconst [ 1 ,+∞⟩) ∷ᴸ []ᴸ ,
+                      []ᴸ , []ᴸ)
 ex-box-branch = refl
 
--- Polarity defaults. The identity function constrains its argument
--- type from neither side, so it is defaulted, and the latent effect
--- stays slack.
+-- The identity function constrains its argument type from neither
+-- side, and is reported at `α ⇒ α`.
 
-ex-default : infer! [] (return (lam (return (var zero))))
-           ≡ just (Unit ⇒ (Unit ‼ ûₑ) , ûₑ)
+ex-default : reportOf Γ∅ (return (lam (return (var zero))))
+           ≡ just (scope 5 0 3 ,
+                   (tvar (# 1) ⇒ tvar (# 1) ‼ ûₑ) ‼ ûₑ ,
+                   []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-default = refl
 
 -- The unknowns of every nesting level live in one store, so nesting
 -- costs the solver nothing.
 
-ex-lam² : infer! [] (return (lam (return (lam (return true)))))
-        ≡ just (Unit ⇒ ((Unit ⇒ (Bool ‼ ûₑ)) ‼ ûₑ) , ûₑ)
+ex-lam² : reportOf Γ∅ (return (lam (return (lam (return true)))))
+        ≡ just (scope 10 0 6 ,
+                (tvar (# 6) ⇒ (tvar (# 3) ⇒ Bool ‼ ûₑ) ‼ ûₑ) ‼ ûₑ ,
+                []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-lam² = refl
 
-ex-lam³ : infer! [] (return (lam (return (lam (return (lam (return true)))))))
-        ≡ just (Unit ⇒ ((Unit ⇒ ((Unit ⇒ (Bool ‼ ûₑ)) ‼ ûₑ)) ‼ ûₑ) , ûₑ)
+ex-lam³ : reportOf Γ∅ (return (lam (return (lam (return (lam (return true)))))))
+        ≡ just (scope 18 0 10 ,
+                (tvar (# 14)
+                  ⇒ (tvar (# 10) ⇒ (tvar (# 3) ⇒ Bool ‼ ûₑ) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ ,
+                []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-lam³ = refl
 
-ex-lam⁴ : infer! [] (return (lam (return (lam (return (lam (return (lam (return true)))))))))
-        ≡ just (Unit ⇒ ((Unit ⇒ ((Unit ⇒ ((Unit ⇒ (Bool ‼ ûₑ)) ‼ ûₑ)) ‼ ûₑ)) ‼ ûₑ) , ûₑ)
+ex-lam⁴ : reportOf Γ∅
+            (return (lam (return (lam (return (lam (return (lam (return true)))))))))
+        ≡ just (scope 28 0 15 ,
+                (tvar (# 24)
+                  ⇒ (tvar (# 20)
+                      ⇒ (tvar (# 12) ⇒ (tvar (# 5) ⇒ Bool ‼ ûₑ) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ)
+                  ‼ ûₑ ,
+                []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
 ex-lam⁴ = refl
 
 -- The escape check, on the two binder orders of `Demo.Generic`.
 
-ex-escape : solved? (gsolveImpl escC) ≡ nothing
+ex-escape : solveOn escC ≡ nothing
 ex-escape = refl
 
-ex-escape-ok : solved? (gsolveImpl okC) ≡ just tt
+ex-escape-ok : is-just (solveOn okC) ≡ true
 ex-escape-ok = refl
 
 -- An unknown local to a rigid scope and bounded below by the rigid
 -- alone is sent to the rigid before the scope closes.
 
-ex-local : solved? (gsolveImpl localC) ≡ just tt
+ex-local : is-just (solveOn localC) ≡ true
 ex-local = refl
 
 -- An outer unknown bounded above by an expression in the rigid needs
 -- that expression at the least rigid, which these windows lack.
 
-ex-strip : solved? (gsolveImpl stripC) ≡ nothing
+ex-strip : solveOn stripC ≡ nothing
 ex-strip = refl
 
 -- An outer unknown bounded below by an expression in the rigid needs
--- that expression at the top rigid, which every grade has; the unknown
--- is sent to the top.
+-- that expression at the top rigid, which every grade has.
 
-ex-top : ∃ᵉ-value topC ≡ just (econst ⊤ₑ)
+ex-top : is-just (solveOn topC) ≡ true
 ex-top = refl
 
-ex-strip-top : solved? (gsolveImpl stripTopC) ≡ just tt
+ex-strip-top : is-just (solveOn stripTopC) ≡ true
 ex-strip-top = refl
-
--- The pipeline, end to end.
-
-ex-pipeline : typeOf (inferImpl [] (return true)) ≡ just (T.Bool , uₑ)
-ex-pipeline = refl
-
-ex-pipeline-op : typeOf (inferImpl [] (perform read ⋆ (return (var zero))))
-               ≡ just (T.Base reading , op-grade read ·ₑ uₑ)
-ex-pipeline-op = refl
 
 -- The solver is principal on every constraint: a program the solver
 -- accepts has a principal type.
@@ -529,7 +575,7 @@ module Unguarded where
   open import TypeInference.Principality            spec using (Principal; C[_,_])
   open import TypeInference.Principality.Restricted spec using (principal-on)
   open import TypeInference.SolverImpl.Restricted   spec ops₃ nothing nothing
-    using (solveOn; solverImplOn)
+    using (solverImplOn)
 
   -- a program the solver accepts has a principal solution-with-residue,
   -- and hence a principal type
@@ -604,8 +650,6 @@ module G⁰ = TypeInference.SolverImpl.Demo.Generic
 
 module Least where
 
-  module Cᵈ  = Syntax.Contexts               specᵈ
-  module Tᵈ  = Syntax.Types                  specᵈ
   module Grᵈ = TypeInference.OpenSyntax.Grades         specᵈ
   module Tyᵈ = TypeInference.OpenSyntax.Types          specᵈ
   module Hyᵈ = TypeInference.OpenSyntax.Hyps           specᵈ
@@ -618,7 +662,10 @@ module Least where
   -- the option bears on handler clauses alone: a program without a
   -- handler is inferred the same either way
 
-  ex-unitᵈ : Gᵐ.infer! Cᵈ.[] Gᵐ.unit ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-unitᵈ : Gᵐ.reportOf Gᵐ.Γ∅ Gᵐ.unit
+           ≡ just (scope 0 0 1 ,
+                   Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ ,
+                   []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-unitᵈ = refl
 
   -- a handler whose clauses return a constant, run by either solver
@@ -630,13 +677,15 @@ module Least where
 
   -- without the option, the clause's slack constraint is underivable
 
-  ex-handle-no : G⁰.infer! Cᵈ.[] prog ≡ nothing
+  ex-handle-no : G⁰.reportOf G⁰.Γ∅ prog ≡ nothing
   ex-handle-no = refl
 
-  -- with it, the whole program is solved, and both slacks stay unit
+  -- with it, the program is reported at the unit effect
 
-  ex-handle-min : Gᵐ.infer! Cᵈ.[] prog
-                ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-handle-min : Gᵐ.reportOf Gᵐ.Γ∅ prog
+                ≡ just (scope 1 0 3 ,
+                        Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ ,
+                        []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-handle-min = refl
 
   -- the handled computation may itself perform
@@ -646,42 +695,42 @@ module Least where
           `with (λ op → Rwᵈ.return Rwᵈ.⋆)
           `in (Rwᵈ.return Rwᵈ.⋆)
 
-  ex-handle-op : Gᵐ.infer! Cᵈ.[] prog'
-               ≡ just (Tyᵈ.Unit , Grᵈ.econst (opTimeᵈ read))
+  ex-handle-op : Gᵐ.reportOf Gᵐ.Γ∅ prog'
+               ≡ just (scope 2 0 4 ,
+                       Tyᵈ.Unit Tyᵈ.‼ Grᵈ.econst (opTimeᵈ read) ,
+                       []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-handle-op = refl
-
-  -- end to end: the same program elaborated into the source system,
-  -- its grounded derivation reading the clause's slack off `minₑ`
-
-  ex-handle-pipeline : Gᵐ.typeOf (Gᵐ.inferImpl Cᵈ.[] prog)
-                     ≡ just (Tᵈ.Unit , [0, ↑ 0 ])
-  ex-handle-pipeline = refl
 
   -- Clauses that use their continuation. Each ends in an effect bounded
   -- below by the rigid `e''`, or by the unit, and is inferred once the
   -- unknowns local to the clause are sent to those bounds.
 
-  ex-forward : Gᵐ.infer! Cᵈ.[] Gᵐ.forward ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-forward : Gᵐ.reportOf Gᵐ.Γ∅ Gᵐ.forward
+             ≡ just (scope 10 0 12 ,
+                     Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ ,
+                     []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-forward = refl
 
-  ex-unboxing : Gᵐ.infer! Cᵈ.[] Gᵐ.unboxing ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-unboxing : Gᵐ.reportOf Gᵐ.Γ∅ Gᵐ.unboxing
+              ≡ just (scope 4 0 6 ,
+                      Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ ,
+                      []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-unboxing = refl
 
-  ex-performing : Gᵐ.infer! Cᵈ.[] Gᵐ.performing ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-performing : Gᵐ.reportOf Gᵐ.Γ∅ Gᵐ.performing
+                ≡ just (scope 1 0 6 ,
+                        Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ ,
+                        []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-performing = refl
 
   -- the forwarding clause needs no option: nothing it leaves is about
   -- the unit
 
-  ex-forward-no : G⁰.infer! Cᵈ.[] G⁰.forward ≡ just (Tyᵈ.Unit , Grᵈ.ûₑ)
+  ex-forward-no : G⁰.reportOf G⁰.Γ∅ G⁰.forward
+                ≡ just (scope 10 0 12 ,
+                        Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ ,
+                        []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-forward-no = refl
-
-  -- elaborated into the source system, at `uₑ ·ₑ uₑ`, the grade the
-  -- handle rule gives the handled `return ⋆` and continuation
-
-  ex-forward-pipeline : Gᵐ.typeOf (Gᵐ.inferImpl Cᵈ.[] Gᵐ.forward)
-                      ≡ just (Tᵈ.Unit , GIᵈ.uₑ GIᵈ.·ₑ GIᵈ.uₑ)
-  ex-forward-pipeline = refl
 
   -- Resuming twice is refused, as the source system refuses it: the
   -- second resumption uses a continuation that is not eternal across
@@ -689,31 +738,31 @@ module Least where
   -- would be `op-grade op · (e'' · e'')`, above `op-grade op · e''`
   -- for every `e''` but the unit.
 
-  ex-resumingTwice : Gᵐ.infer! Cᵈ.[] Gᵐ.resumingTwice ≡ nothing
+  ex-resumingTwice : Gᵐ.reportOf Gᵐ.Γ∅ Gᵐ.resumingTwice ≡ nothing
   ex-resumingTwice = refl
 
   -- With the unit least, an outer unknown bounded by an expression in
   -- the rigid is bounded by it at the unit.
 
-  ex-strip-min : Gᵐ.solved? (Gᵐ.gsolveImpl Gᵐ.stripC) ≡ just tt
+  ex-strip-min : is-just (Gᵐ.solveOn Gᵐ.stripC) ≡ true
   ex-strip-min = refl
 
-  ex-strip-no : G⁰.solved? (G⁰.gsolveImpl G⁰.stripC) ≡ nothing
+  ex-strip-no : G⁰.solveOn G⁰.stripC ≡ nothing
   ex-strip-no = refl
 
   -- Bounded below by an expression in the rigid, it is bounded by that
   -- expression at the top rigid, with the unit least or not.
 
-  ex-top-min : Gᵐ.∃ᵉ-value Gᵐ.topC ≡ just (Grᵈ.econst GIᵈ.⊤ₑ)
+  ex-top-min : is-just (Gᵐ.solveOn Gᵐ.topC) ≡ true
   ex-top-min = refl
 
-  ex-top-no : G⁰.∃ᵉ-value G⁰.topC ≡ just (Grᵈ.econst GIᵈ.⊤ₑ)
+  ex-top-no : is-just (G⁰.solveOn G⁰.topC) ≡ true
   ex-top-no = refl
 
-  ex-strip-top-min : Gᵐ.solved? (Gᵐ.gsolveImpl Gᵐ.stripTopC) ≡ just tt
+  ex-strip-top-min : is-just (Gᵐ.solveOn Gᵐ.stripTopC) ≡ true
   ex-strip-top-min = refl
 
-  ex-strip-top-no : G⁰.solved? (G⁰.gsolveImpl G⁰.stripTopC) ≡ just tt
+  ex-strip-top-no : is-just (G⁰.solveOn G⁰.stripTopC) ≡ true
   ex-strip-top-no = refl
 
   -- A local unknown bounded below by a product with itself has a least
@@ -724,7 +773,7 @@ module Least where
                 (TypeInference.OpenSyntax.Subst.idˢ specᵈ) Hyᵈ.∅ᴴ Gᵐ.cycC
   ex-cyc-sat = Grᵈ.econst GIᵈ.⊤ₑ , Hyᵈ.topₑ , Hyᵈ.topₑ
 
-  ex-cyc : Gᵐ.solved? (Gᵐ.gsolveImpl Gᵐ.cycC) ≡ nothing
+  ex-cyc : Gᵐ.solveOn Gᵐ.cycC ≡ nothing
   ex-cyc = refl
 
   -- Deadlines have a least unit, so a `var`-rule disjunction whose
@@ -738,17 +787,11 @@ module Least where
   ... | nothing          = nothing
   ... | just (Θ , _ , Q) = just (Θ , Hyᵈ.disj Q)
 
-  -- the open solver residualises the disjunction rather than committing
-  -- to either side
+  -- the solver residualises the disjunction rather than committing to
+  -- either side
 
   ex-disj : disjOf ≡ just (∅ˢ , (Tyᵈ.Unit , Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ)
   ex-disj = refl
-
-  -- the ground path closes it by the eternality side, the grade side
-  -- being false
-
-  ex-disj-close : G⁰.solved? (G⁰.gsolveImpl disjC) ≡ just tt
-  ex-disj-close = refl
 
   -- The same grade under a type variable: eternality is open, the
   -- grade side is refuted, so reporting settles the disjunction.
@@ -789,36 +832,29 @@ module Least where
   ex-settle-met = refl
 
   -- a function type is never eternal, so both sides are refuted here:
-  -- settling leaves the false ordering rather than hiding it
+  -- the disjunction is decided false, and the constraint refused
 
   bothC : Cnᵈ.Constraint ∅ˢ
   bothC = Cnᵈ.Et∨≾ᵘ (Tyᵈ.Unit Tyᵈ.⇒ (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ)) (Grᵈ.rconst [0, ↑ 1 ])
 
-  ex-settle-both : reportOfᵈ bothC
-                 ≡ just (∅ˢ ,
-                         (Tyᵈ.Unit Tyᵈ.⇒ (Tyᵈ.Unit Tyᵈ.‼ Grᵈ.ûₑ) ,
-                          Grᵈ.rconst [0, ↑ 1 ]) ∷ᴸ []ᴸ ,
-                         []ᴸ , (Grᵈ.rconst [0, ↑ 1 ] , Grᵈ.ûᵣ) ∷ᴸ []ᴸ , []ᴸ)
+  ex-settle-both : reportOfᵈ bothC ≡ nothing
   ex-settle-both = refl
 
 ------------------------------------------------------------------------
 -- The library benchmark
 --
--- The eight shapes of `Demo.Generic` go through `reportOn`, the open
--- path, which hands back a qualified type rather than a ground
--- solution. Each is stated twice, the full report and its hypothesis
--- counts by sort. The two whose arms carry different effects,
--- `branchE` and `seqBranch`, are stated on the ground path as well.
+-- The eight shapes of `Demo.Generic`, each stated twice: the full
+-- report and its hypothesis counts by sort.
 
 module Library where
 
   -- `return ⋆`
 
-  ex-unit-report : reportOf unit
+  ex-unit-report : reportOf Γ∅ unit
                  ≡ just (scope 0 0 1 , Unit ‼ ûₑ , []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-unit-report = refl
 
-  ex-unit-size : sizeOf unit ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-unit-size : sizeOf Γ∅ unit ≡ just (0 , 0 , 0 , 0 , 0)
   ex-unit-size = refl
 
   -- `compose`, reported as
@@ -826,7 +862,7 @@ module Library where
   -- qualifier: the lock that the capture of `g` crosses asks
   -- `∣ e₁ ∣ ≾ u`, and the resource unit is the top
 
-  ex-compose-report : reportOf compose
+  ex-compose-report : reportOf Γ∅ compose
                     ≡ just (scope 34 0 19 ,
                             ((tvar (# 18) ⇒ tvar (# 10) ‼ evar (# 5))
                               ⇒ ((tvar (# 10) ⇒ tvar (# 2) ‼ evar (# 1))
@@ -838,13 +874,13 @@ module Library where
                             []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-compose-report = refl
 
-  ex-compose-size : sizeOf compose ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-compose-size : sizeOf Γ∅ compose ≡ just (0 , 0 , 0 , 0 , 0)
   ex-compose-size = refl
 
   -- `twice`: the two uses of `f` leave two subtyping atoms, and the
   -- lock's qualifier holds outright, the resource unit being the top
 
-  ex-twice-report : reportOf twice
+  ex-twice-report : reportOf Γ∅ twice
                   ≡ just (scope 20 0 12 ,
                           ((tvar (# 3) ⇒ tvar (# 4) ‼ evar (# 2))
                             ⇒ (tvar (# 12)
@@ -856,12 +892,12 @@ module Library where
                           []ᴸ , []ᴸ , []ᴸ)
   ex-twice-report = refl
 
-  ex-twice-size : sizeOf twice ≡ just (0 , 2 , 0 , 0 , 0)
+  ex-twice-size : sizeOf Γ∅ twice ≡ just (0 , 2 , 0 , 0 , 0)
   ex-twice-size = refl
 
   -- `branch`: one subtyping atom per arm, and no grade ordering at all
 
-  ex-branch-report : reportOf branch
+  ex-branch-report : reportOf Γ∅ branch
                    ≡ just (scope 19 0 10 ,
                            (Bool ⇒ (tvar (# 11)
                                      ⇒ (tvar (# 3) ⇒ tvar (# 6) ‼ ûₑ) ‼ ûₑ)
@@ -872,14 +908,14 @@ module Library where
                            []ᴸ , []ᴸ , []ᴸ)
   ex-branch-report = refl
 
-  ex-branch-size : sizeOf branch ≡ just (0 , 2 , 0 , 0 , 0)
+  ex-branch-size : sizeOf Γ∅ branch ≡ just (0 , 2 , 0 , 0 , 0)
   ex-branch-size = refl
 
   -- `branchE`: the arms carry different effects, so both bound the
   -- result's effect unknown from below, and the report carries their
   -- join rather than a residual ordering
 
-  ex-branchE-report : reportOf branchE
+  ex-branchE-report : reportOf Γ∅ branchE
                     ≡ just (scope 15 0 10 ,
                             ((Unit ⇒ Unit ‼ evar (# 1))
                               ⇒ (Bool
@@ -890,22 +926,14 @@ module Library where
                             []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-branchE-report = refl
 
-  ex-branchE-size : sizeOf branchE ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-branchE-size : sizeOf Γ∅ branchE ≡ just (0 , 0 , 0 , 0 , 0)
   ex-branchE-size = refl
-
-  -- the ground path takes `f`'s latent effect to be the unit, and the
-  -- join of the two arms is then a constant
-
-  ex-branchE : infer! [] branchE
-             ≡ just ((Unit ⇒ (Unit ‼ ûₑ))
-                       ⇒ ((Bool ⇒ (Unit ‼ econst [ 0 , ↑ 1 , z≤n ])) ‼ ûₑ) , ûₑ)
-  ex-branchE = refl
 
   -- `seqBranch`: the same join, standing underneath a product. The
   -- product is distributed over it, and the arm that carries two
   -- constants has them multiplied into one.
 
-  ex-seqBranch-report : reportOf seqBranch
+  ex-seqBranch-report : reportOf Γ∅ seqBranch
                       ≡ just (scope 15 0 13 ,
                               ((Unit ⇒ Unit ‼ evar (# 2))
                                 ⇒ (Bool
@@ -918,38 +946,30 @@ module Library where
                               []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-seqBranch-report = refl
 
-  ex-seqBranch-size : sizeOf seqBranch ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-seqBranch-size : sizeOf Γ∅ seqBranch ≡ just (0 , 0 , 0 , 0 , 0)
   ex-seqBranch-size = refl
-
-  -- and here both alternatives of the join are constants, so it is
-  -- one too
-
-  ex-seqBranch : infer! [] seqBranch
-               ≡ just ((Unit ⇒ (Unit ‼ ûₑ))
-                         ⇒ ((Bool ⇒ (Unit ‼ econst [ 1 , ↑ 2 , s≤s z≤n ])) ‼ ûₑ) , ûₑ)
-  ex-seqBranch = refl
 
   -- `keep`: the box grade stays a variable, and the var-rule
   -- disjunction on it holds by its second disjunct, the resource unit
   -- being the top
 
-  ex-keep-report : reportOf keep
+  ex-keep-report : reportOf Γ∅ keep
                  ≡ just (scope 8 3 3 ,
                          (tvar (# 4) ⇒ [ rvar (# 1) ] tvar (# 4) ‼ ûₑ) ‼ ûₑ ,
                          []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
   ex-keep-report = refl
 
-  ex-keep-size : sizeOf keep ≡ just (0 , 0 , 0 , 0 , 0)
+  ex-keep-size : sizeOf Γ∅ keep ≡ just (0 , 0 , 0 , 0 , 0)
   ex-keep-size = refl
 
   -- `wrap` is declined: the clause's slack needs unit-minimality,
   -- which these effect grades lack, and the failure is inside `solve`
   -- at the rigid binder
 
-  ex-wrap-report : reportOf wrap ≡ nothing
+  ex-wrap-report : reportOf Γ∅ wrap ≡ nothing
   ex-wrap-report = refl
 
-  ex-wrap-size : sizeOf wrap ≡ nothing
+  ex-wrap-size : sizeOf Γ∅ wrap ≡ nothing
   ex-wrap-size = refl
 
   -- Over the deadline grades, whose unit is least, the same shape is
@@ -960,7 +980,7 @@ module Library where
     module Grᵈ = TypeInference.OpenSyntax.Grades specᵈ
     module Tyᵈ = TypeInference.OpenSyntax.Types  specᵈ
 
-    ex-wrap-reportᵈ : Gᵐ.reportOf Gᵐ.wrap
+    ex-wrap-reportᵈ : Gᵐ.reportOf Gᵐ.Γ∅ Gᵐ.wrap
                     ≡ just (scope 11 0 8 ,
                             ((Tyᵈ.Unit Tyᵈ.⇒ Tyᵈ.Unit Tyᵈ.‼ Grᵈ.evar (# 1))
                               Tyᵈ.⇒ Tyᵈ.Unit Tyᵈ.‼ Grᵈ.evar (# 1))
@@ -968,5 +988,5 @@ module Library where
                             []ᴸ , []ᴸ , []ᴸ , []ᴸ , []ᴸ)
     ex-wrap-reportᵈ = refl
 
-    ex-wrap-sizeᵈ : Gᵐ.sizeOf Gᵐ.wrap ≡ just (0 , 0 , 0 , 0 , 0)
+    ex-wrap-sizeᵈ : Gᵐ.sizeOf Gᵐ.Γ∅ Gᵐ.wrap ≡ just (0 , 0 , 0 , 0 , 0)
     ex-wrap-sizeᵈ = refl

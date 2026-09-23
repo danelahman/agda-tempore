@@ -35,7 +35,8 @@ open import Data.List.Base using (List; []; _∷_; _++_; length; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe using (Maybe; just; nothing; _<∣>_)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≡ᵇ_)
+open import Data.Bool.Base using (true; false)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 
 open import Relation.Nullary using (yes; no)
@@ -80,7 +81,8 @@ min≾ᵣ nothing  = nothing
 -- by the grade's own order. `a` reaches `b` along a chain of edges
 -- when `a` is linked to the first source, each target to the next
 -- source, and the last target to `b`. The search saturates the atoms
--- reached from `a`, one round per edge.
+-- reached from `a`, at most one round per edge, stopping at the first
+-- round that reaches nothing new.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)
               (refl⊑  : ∀ {a} → a ⊑ a)
@@ -105,7 +107,10 @@ module Chains {A : Set} (_⊑_ : A → A → Set)
 
   sat : ∀ {a} → ℕ → List (Σ[ c ∈ A ] a ⊑ c) → List (Σ[ c ∈ A ] a ⊑ c)
   sat zero    s = s
-  sat (suc n) s = sat n (grow edges s)
+  sat (suc n) s with grow edges s
+  ... | s' with length s' ≡ᵇ length s
+  ...   | true  = s'
+  ...   | false = sat n s'
 
   reach? : (a b : A) → Maybe (a ⊑ b)
   reach? a = find (sat (length edges) ((a , refl⊑) ∷ []))
@@ -251,11 +256,11 @@ ceilᵣ {Q = Q} b with linkᵣ? {Q = Q} (rc ⊤ᵣ) b <∣> reachᵣ? (rc ⊤ᵣ
 atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
 atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
 
--- The unit below an atom: as the constant atom `uₑ`, or by
--- unit-minimality
+-- The unit below an atom: by unit-minimality, or as the constant atom
+-- `uₑ`
 
 unit≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-unit≾ₑ b = atom≾ₑ (ac uₑ) b <∣> min≾ₑ umin?ₑ
+unit≾ₑ b = min≾ₑ umin?ₑ <∣> atom≾ₑ (ac uₑ) b
 
 -- An atom below the unit, as the constant atom `uₑ`
 
@@ -426,7 +431,7 @@ minᵐ {Q = Q} (rm i) with min≾ₑ {Q = Q} {ε = evar i} umin?ₑ
 minᵐ _ = nothing
 
 unit≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-unit≾ᵣ b = atom≾ᵣ (rc uᵣ) b <∣> min≾ᵣ umin?ᵣ <∣> minᵐ b
+unit≾ᵣ b = min≾ᵣ umin?ᵣ <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
 
 ≾unitᵣ : ∀ {Θ} {Q : Hyps Θ} → (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
 ≾unitᵣ a = atom≾ᵣ a (rc uᵣ)

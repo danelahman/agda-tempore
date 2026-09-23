@@ -56,12 +56,13 @@ record SolverOn (Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set) : Set₁ where
                 ------------------------------
                 → σ ⊨[ Q ] C
 
-    -- On `Pᶜ`, a failure means there is no solution at all
+    -- On `Pᶜ`, a failure means there is no solution under a
+    -- satisfiable hypothesis set
 
     solve-complete : ∀ {Θ} → (C : Constraint Θ) → Pᶜ C
                    → solve C ≡ nothing
-                   → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ')
-                   ------------------------------------------
+                   → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → Satisfiable Q
+                   -----------------------------------------------------------
                    → ¬ (σ ⊨[ Q ] C)
 
     -- On `Pᵖ`, what is returned is the most general solution
