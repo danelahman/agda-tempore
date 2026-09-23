@@ -203,6 +203,16 @@ ground-≾ₑ h (⊔-lubₑ p q) = ⊔ₑ-lub (ground-≾ₑ h p) (ground-≾ₑ
 ground-≾ₑ {θ = θ} {ε = ε} h topₑ = ≾-⊤ₑ (⟦ ε ⟧ᵉ θ)
 ground-≾ₑ {θ = θ} {ε' = ε'} h (minₑ p) = p (⟦ ε' ⟧ᵉ θ)
 
+-- Equality relative to a satisfied hypothesis set grounds to equality
+
+ground-⊩≡̂ᵣ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ρ ρ' : RExp Θ}
+           → θ ⊨ᴴ Q → Q ⊩ ρ ≡̂ᵣ ρ' → ⟦ ρ ⟧ʳ θ ≡ ⟦ ρ' ⟧ʳ θ
+ground-⊩≡̂ᵣ h (p , q) = ≾ᵣ-antisym (ground-≾ᵣ h p) (ground-≾ᵣ h q)
+
+ground-⊩≡̂ₑ : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {ε ε' : EExp Θ}
+           → θ ⊨ᴴ Q → Q ⊩ ε ≡̂ₑ ε' → ⟦ ε ⟧ᵉ θ ≡ ⟦ ε' ⟧ᵉ θ
+ground-⊩≡̂ₑ h (p , q) = ≾ₑ-antisym (ground-≾ₑ h p) (ground-≾ₑ h q)
+
 -- An assumed subtyping between type variables grounds to a closed
 -- subtyping between their images.
 

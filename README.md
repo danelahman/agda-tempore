@@ -322,7 +322,8 @@ a grade system, a signature of base types, and operations' signatures.
   convertibility `_≡̂_` (with absorption of a join by an upper bound) and
   entailed ordering `_⊩_≾̂_`, defined mutually, from which idempotence,
   associativity of the join and antisymmetry at the empty hypothesis set are
-  derived; and shape-preserving subtyping of open types.
+  derived; equality relative to a hypothesis set `_⊩_≡̂_`, entailed ordering
+  both ways; and shape-preserving subtyping of open types.
   `Language.agda` is the mirrored qualified type system — the same rules over
   open types and a hypothesis set — and `Grounding.agda` with
   `GroundingTheorem.agda` lands an open judgement back in the original type
@@ -382,11 +383,12 @@ a grade system, a signature of base types, and operations' signatures.
   `Restricted.agda`'s `reportOn` reads an answer out at open scope, `Close.agda`
   at ground scope, joining lower bounds and independent of the order of the
   constraints. `Eliminate.agda` is Pottier's simplification of subtyping
-  constraints (ICFP 1996). `Product.agda` normalises grade expressions to a
-  **sum of products**, `Normal.agda` decides orderings between them, and
-  `Canon.agda` puts a reported grade in canonical form: alternatives grouped and
-  folded by variable skeleton, dominated ones dropped. Groups varying in more
-  than one constant slot keep their arrival order.
+  constraints (ICFP 1996), together with the replacement of a grade unknown by
+  an expression the hypotheses equate it with. `Product.agda` normalises grade
+  expressions to a **sum of products**, `Normal.agda` decides orderings between
+  them, and `Canon.agda` puts a reported grade in canonical form: alternatives
+  grouped and folded by variable skeleton, dominated ones dropped. Groups
+  varying in more than one constant slot keep their arrival order.
 
 - `TypeInference/SolverImpl/Demo/` runs the solver and checks every answer by
   computation — each example is discharged by `refl`, so what is inferred is

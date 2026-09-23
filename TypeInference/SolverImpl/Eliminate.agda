@@ -11,25 +11,33 @@
 -- open types carry no join, so a type variable is eliminated     --
 -- against a single bound.                                        --
 --                                                                --
+-- A grade unknown the hypotheses equate with an expression free  --
+-- of it is replaced by that expression everywhere, the orderings --
+-- made reflexive going with it; of two equal unknowns the one of --
+-- smaller index stays. This step is tried before the step        --
+-- against a bound, and the two alternate.                        --
+--                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (false; _∨_) renaming (Bool to 𝔹)
+open import Data.Bool.Base using (true; false; not; _∨_) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥-elim)
-open import Data.Fin.Base using (Fin; zero; suc)
+open import Data.Fin.Base using (Fin; zero; suc; toℕ)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_; map)
+open import Data.List.Base using (List; []; _∷_; map; filter)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
+open import Data.List.Membership.Propositional.Properties
+  using (∈-map⁺; ∈-map⁻; ∈-filter⁺; ∈-filter⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
-open import Data.Nat.Base using (ℕ; zero; suc; _+_)
+open import Data.Nat.Base using (ℕ; zero; suc; _+_; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
 open import Relation.Nullary using (¬_; yes; no)
-open import Relation.Nullary.Decidable using (⌊_⌋)
+open import Relation.Nullary.Decidable using (⌊_⌋; ¬?)
+open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -54,6 +62,7 @@ open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Grounding S
 
 open import TypeInference.SolverImpl.Polarity S
+open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occʳ-r)
 
 -- Updating one slot of a finitely indexed family, structurally so that
 -- both equations hold without deciding equality in the definition.
@@ -1298,20 +1307,328 @@ firstᵗ C Q (α ∷ αs) with stepᵗ? C Q α
 ... | just r  = just r
 ... | nothing = firstᵗ C Q αs
 
-anyStep : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elim C Q)
-anyStep {Θ} C Q with firstᵉ C Q (fins (nE Θ))
-... | just r  = just r
-... | nothing with firstʳ C Q (fins (nR Θ))
-...   | just r  = just r
-...   | nothing = firstᵗ C Q (fins (nTy Θ))
+------------------------------------------------------------------
+-- Elimination by equality: an unknown the hypotheses equate with an
+-- expression is replaced by it everywhere, and the orderings the
+-- replacement makes reflexive are dropped. The reported type keeps its
+-- meaning in every grounding of the original.
 
-reduce : ∀ {Θ} → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
-reduce zero    C Q = idElim C Q
-reduce (suc n) C Q with anyStep C Q
-... | nothing = idElim C Q
-... | just r  = r ⨾ᴱ reduce n (Ĉ r) (Q̂ r)
+-- The pairs whose two sides differ
 
--- One round per unknown suffices: a step removes one
+apart : ∀ {X : Set} → DecidableEquality X → List (X × X) → List (X × X)
+apart _≟_ = filter (λ p → ¬? (proj₁ p ≟ proj₂ p))
 
-eliminate : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
-eliminate {Θ} C Q = reduce (nE Θ + nR Θ + nTy Θ) C Q
+apart-⊆ : ∀ {X : Set} → (_≟_ : DecidableEquality X) → ∀ {p l}
+        → p ∈ apart _≟_ l → p ∈ l
+apart-⊆ _≟_ m = proj₁ (∈-filter⁻ (λ p → ¬? (proj₁ p ≟ proj₂ p)) m)
+
+apart-∈ : ∀ {X : Set} → (_≟_ : DecidableEquality X) → ∀ {a b l}
+        → (a , b) ∈ l → (a ≡ b) ⊎ ((a , b) ∈ apart _≟_ l)
+apart-∈ _≟_ {a} {b} m with a ≟ b
+... | yes e  = inj₁ e
+... | no  ¬e = inj₂ (∈-filter⁺ (λ p → ¬? (proj₁ p ≟ proj₂ p)) m ¬e)
+
+-- Updating an unknown to the value it has changes nothing
+
+module _ {Θ : Scope} (θ : Grounding Θ) (i : EVar Θ) {e₀ : E} (s : e₀ ≡ gE θ i) where
+
+  sameᵉ-e : (ε : EExp Θ) → ⟦ ε ⟧ᵉ (lowᵉ θ i e₀) ≡ ⟦ ε ⟧ᵉ θ
+  sameᵉ-e (evar j) with i ≟ᶠ j
+  ... | yes refl = trans (upd-≡ i e₀ (gE θ)) s
+  ... | no  ¬p   = upd-≢ i j e₀ (gE θ) ¬p
+  sameᵉ-e (econst ε) = refl
+  sameᵉ-e (ε ·̂ₑ ε')  = cong₂ _·ₑ_ (sameᵉ-e ε) (sameᵉ-e ε')
+  sameᵉ-e (ε ⊔̂ₑ ε')  = cong₂ _⊔ₑ_ (sameᵉ-e ε) (sameᵉ-e ε')
+
+  sameᵉ-r : (ρ : RExp Θ) → ⟦ ρ ⟧ʳ (lowᵉ θ i e₀) ≡ ⟦ ρ ⟧ʳ θ
+  sameᵉ-r (rvar j)   = refl
+  sameᵉ-r (rconst ρ) = refl
+  sameᵉ-r (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (sameᵉ-r ρ) (sameᵉ-r ρ')
+  sameᵉ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (sameᵉ-r ρ) (sameᵉ-r ρ')
+  sameᵉ-r ∣ ε ∣̂ᵉ     = cong mapᵉ (sameᵉ-e ε)
+
+  mutual
+
+    sameᵉ-v : (A : OVType Θ) → ⟦ A ⟧ᵛ (lowᵉ θ i e₀) ≡ ⟦ A ⟧ᵛ θ
+    sameᵉ-v (tvar α)  = refl
+    sameᵉ-v (Base c)  = refl
+    sameᵉ-v Unit      = refl
+    sameᵉ-v Bool      = refl
+    sameᵉ-v (A |×| B) = cong₂ T._|×|_ (sameᵉ-v A) (sameᵉ-v B)
+    sameᵉ-v Empty     = refl
+    sameᵉ-v (A ⇒ C)   = cong₂ T._⇒_ (sameᵉ-v A) (sameᵉ-c C)
+    sameᵉ-v ([ ρ ] A) = cong₂ T.[_]_ (sameᵉ-r ρ) (sameᵉ-v A)
+
+    sameᵉ-c : (C : OCType Θ) → ⟦ C ⟧ᶜ (lowᵉ θ i e₀) ≡ ⟦ C ⟧ᶜ θ
+    sameᵉ-c (A ‼ ε) = cong₂ T._‼_ (sameᵉ-v A) (sameᵉ-e ε)
+
+module _ {Θ : Scope} (θ : Grounding Θ) (i : RVar Θ) {ρ₀ : R} (s : ρ₀ ≡ gR θ i) where
+
+  sameʳ-r : (ρ : RExp Θ) → ⟦ ρ ⟧ʳ (lowʳ θ i ρ₀) ≡ ⟦ ρ ⟧ʳ θ
+  sameʳ-r (rvar j) with i ≟ᶠ j
+  ... | yes refl = trans (upd-≡ i ρ₀ (gR θ)) s
+  ... | no  ¬p   = upd-≢ i j ρ₀ (gR θ) ¬p
+  sameʳ-r (rconst ρ) = refl
+  sameʳ-r (ρ ·̂ᵣ ρ')  = cong₂ _·ᵣ_ (sameʳ-r ρ) (sameʳ-r ρ')
+  sameʳ-r (ρ ⊔̂ᵣ ρ')  = cong₂ _⊔ᵣ_ (sameʳ-r ρ) (sameʳ-r ρ')
+  sameʳ-r ∣ ε ∣̂ᵉ     = cong mapᵉ (⟦lowʳ⟧-e i ε)
+
+  mutual
+
+    sameʳ-v : (A : OVType Θ) → ⟦ A ⟧ᵛ (lowʳ θ i ρ₀) ≡ ⟦ A ⟧ᵛ θ
+    sameʳ-v (tvar α)  = refl
+    sameʳ-v (Base c)  = refl
+    sameʳ-v Unit      = refl
+    sameʳ-v Bool      = refl
+    sameʳ-v (A |×| B) = cong₂ T._|×|_ (sameʳ-v A) (sameʳ-v B)
+    sameʳ-v Empty     = refl
+    sameʳ-v (A ⇒ C)   = cong₂ T._⇒_ (sameʳ-v A) (sameʳ-c C)
+    sameʳ-v ([ ρ ] A) = cong₂ T.[_]_ (sameʳ-r ρ) (sameʳ-v A)
+
+    sameʳ-c : (C : OCType Θ) → ⟦ C ⟧ᶜ (lowʳ θ i ρ₀) ≡ ⟦ C ⟧ᶜ θ
+    sameʳ-c (A ‼ ε) = cong₂ T._‼_ (sameʳ-v A) (⟦lowʳ⟧-e i ε)
+
+-- One step at an effect unknown
+
+equateᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → (b : EExp Θ)
+        → Q ⊩ evar i ≡̂ₑ b → Elim C Q
+equateᵉ {Θ} C Q i b eq = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+  where
+    Ĉ₀ : OCType Θ
+    Ĉ₀ = sbᵉ-c i b C
+
+    Q₀ : Hyps Θ
+    Q₀ = hyps (ets Q) (subᵥ Q)
+              (apart _≟ʳ_ (map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q)))
+              (apart _≟ᵉ_ (map (mapᵖ (sbᵉ-e i b)) (ordₑ Q)))
+              (map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q))
+
+    fix : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ b ⟧ᵉ θ ≡ gE θ i
+    fix θ h = sym (ground-⊩≡̂ₑ h eq)
+
+    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
+    keep₀ θ h = mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj
+      where
+        s = fix θ h
+
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ apart _≟ʳ_ (map (mapᵖ (sbᵉ-r i b)) (ordᵣ Q))
+             → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
+        ordR m with ∈-map⁻ (mapᵖ (sbᵉ-r i b)) (apart-⊆ _≟ʳ_ m)
+        ... | (ρ₀ , ρ₀') , m₀ , refl =
+              subst₂ _≾ᵣ_ (sym (trans (⟦sbᵉ⟧-r i b ρ₀)  (sameᵉ-r θ i s ρ₀)))
+                          (sym (trans (⟦sbᵉ⟧-r i b ρ₀') (sameᵉ-r θ i s ρ₀')))
+                     (ordROK h m₀)
+
+        ordE : ∀ {ε ε'} → (ε , ε') ∈ apart _≟ᵉ_ (map (mapᵖ (sbᵉ-e i b)) (ordₑ Q))
+             → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
+        ordE m with ∈-map⁻ (mapᵖ (sbᵉ-e i b)) (apart-⊆ _≟ᵉ_ m)
+        ... | (ε₀ , ε₀') , m₀ , refl =
+              subst₂ _≾ₑ_ (sym (trans (⟦sbᵉ⟧-e i b ε₀)  (sameᵉ-e θ i s ε₀)))
+                          (sym (trans (⟦sbᵉ⟧-e i b ε₀') (sameᵉ-e θ i s ε₀')))
+                     (ordEOK h m₀)
+
+        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) (disj Q)
+            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
+        dsj m with ∈-map⁻ (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) m
+        ... | (A₀ , ρ₀) , m₀ , refl =
+              [ (λ et → inj₁ (subst Eternal
+                                    (sym (trans (⟦sbᵉ⟧-v i b A₀) (sameᵉ-v θ i s A₀))) et))
+              , (λ lu → inj₂ (subst (_≾ᵣ uᵣ)
+                                    (sym (trans (⟦sbᵉ⟧-r i b ρ₀) (sameᵉ-r θ i s ρ₀))) lu))
+              ]′ (disjOK h m₀)
+
+    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
+          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
+    real₀ θ h = θ' , mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj , sym (⟦sbᵉ⟧-c i b C)
+      where
+        θ' : Grounding Θ
+        θ' = lowᵉ θ i (⟦ b ⟧ᵉ θ)
+
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
+        ordR {ρ} {ρ'} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (sbᵉ-r i b)) m)
+        ... | inj₁ e  = ≾ᵣ-reflexive (trans (sym (⟦sbᵉ⟧-r i b ρ))
+                                     (trans (cong (λ x → ⟦ x ⟧ʳ θ) e) (⟦sbᵉ⟧-r i b ρ')))
+        ... | inj₂ m' = subst₂ _≾ᵣ_ (⟦sbᵉ⟧-r i b ρ) (⟦sbᵉ⟧-r i b ρ') (ordROK h m')
+
+        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
+        ordE {ε} {ε'} m with apart-∈ _≟ᵉ_ (∈-map⁺ (mapᵖ (sbᵉ-e i b)) m)
+        ... | inj₁ e  = ≾ₑ-reflexive (trans (sym (⟦sbᵉ⟧-e i b ε))
+                                     (trans (cong (λ x → ⟦ x ⟧ᵉ θ) e) (⟦sbᵉ⟧-e i b ε')))
+        ... | inj₂ m' = subst₂ _≾ₑ_ (⟦sbᵉ⟧-e i b ε) (⟦sbᵉ⟧-e i b ε') (ordEOK h m')
+
+        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
+            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
+        dsj {A} {ρ} m =
+          [ (λ et → inj₁ (subst Eternal (⟦sbᵉ⟧-v i b A) et))
+          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (⟦sbᵉ⟧-r i b ρ) lu))
+          ]′ (disjOK h (∈-map⁺ (mapᵈ (sbᵉ-v i b) (sbᵉ-r i b)) m))
+
+    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
+    princ₀ θ h =
+      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (trans (⟦sbᵉ⟧-c i b C) (sameᵉ-c θ i (fix θ h) C)))
+            (<:ᶜ-refl (⟦ C ⟧ᶜ θ))
+
+-- One step at a resource unknown
+
+equateʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → (b : RExp Θ)
+        → Q ⊩ rvar i ≡̂ᵣ b → Elim C Q
+equateʳ {Θ} C Q i b eq = mkElim Ĉ₀ Q₀ keep₀ real₀ princ₀
+  where
+    Ĉ₀ : OCType Θ
+    Ĉ₀ = sbʳ-c i b C
+
+    Q₀ : Hyps Θ
+    Q₀ = hyps (ets Q) (subᵥ Q)
+              (apart _≟ʳ_ (map (mapᵖ (sbʳ-r i b)) (ordᵣ Q)))
+              (ordₑ Q)
+              (map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q))
+
+    fix : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ b ⟧ʳ θ ≡ gR θ i
+    fix θ h = sym (ground-⊩≡̂ᵣ h eq)
+
+    keep₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ Q₀
+    keep₀ θ h = mk⊨ᴴ (etOK h) (subOK h) ordR (ordEOK h) dsj
+      where
+        s = fix θ h
+
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ apart _≟ʳ_ (map (mapᵖ (sbʳ-r i b)) (ordᵣ Q))
+             → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
+        ordR m with ∈-map⁻ (mapᵖ (sbʳ-r i b)) (apart-⊆ _≟ʳ_ m)
+        ... | (ρ₀ , ρ₀') , m₀ , refl =
+              subst₂ _≾ᵣ_ (sym (trans (⟦sbʳ⟧-r i b ρ₀)  (sameʳ-r θ i s ρ₀)))
+                          (sym (trans (⟦sbʳ⟧-r i b ρ₀') (sameʳ-r θ i s ρ₀')))
+                     (ordROK h m₀)
+
+        dsj : ∀ {A ρ} → (A , ρ) ∈ map (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) (disj Q)
+            → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
+        dsj m with ∈-map⁻ (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) m
+        ... | (A₀ , ρ₀) , m₀ , refl =
+              [ (λ et → inj₁ (subst Eternal
+                                    (sym (trans (⟦sbʳ⟧-v i b A₀) (sameʳ-v θ i s A₀))) et))
+              , (λ lu → inj₂ (subst (_≾ᵣ uᵣ)
+                                    (sym (trans (⟦sbʳ⟧-r i b ρ₀) (sameʳ-r θ i s ρ₀))) lu))
+              ]′ (disjOK h m₀)
+
+    real₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q₀
+          → Σ[ θ' ∈ Grounding Θ ] ((θ' ⊨ᴴ Q) × (⟦ C ⟧ᶜ θ' ≡ ⟦ Ĉ₀ ⟧ᶜ θ))
+    real₀ θ h = θ' , mk⊨ᴴ (etOK h) (subOK h) ordR ordE dsj , sym (⟦sbʳ⟧-c i b C)
+      where
+        θ' : Grounding Θ
+        θ' = lowʳ θ i (⟦ b ⟧ʳ θ)
+
+        ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → ⟦ ρ ⟧ʳ θ' ≾ᵣ ⟦ ρ' ⟧ʳ θ'
+        ordR {ρ} {ρ'} m with apart-∈ _≟ʳ_ (∈-map⁺ (mapᵖ (sbʳ-r i b)) m)
+        ... | inj₁ e  = ≾ᵣ-reflexive (trans (sym (⟦sbʳ⟧-r i b ρ))
+                                     (trans (cong (λ x → ⟦ x ⟧ʳ θ) e) (⟦sbʳ⟧-r i b ρ')))
+        ... | inj₂ m' = subst₂ _≾ᵣ_ (⟦sbʳ⟧-r i b ρ) (⟦sbʳ⟧-r i b ρ') (ordROK h m')
+
+        ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → ⟦ ε ⟧ᵉ θ' ≾ₑ ⟦ ε' ⟧ᵉ θ'
+        ordE {ε} {ε'} m =
+          subst₂ _≾ₑ_ (sym (⟦lowʳ⟧-e i ε)) (sym (⟦lowʳ⟧-e i ε')) (ordEOK h m)
+
+        dsj : ∀ {A ρ} → (A , ρ) ∈ disj Q
+            → Eternal (⟦ A ⟧ᵛ θ') ⊎ (⟦ ρ ⟧ʳ θ' ≾ᵣ uᵣ)
+        dsj {A} {ρ} m =
+          [ (λ et → inj₁ (subst Eternal (⟦sbʳ⟧-v i b A) et))
+          , (λ lu → inj₂ (subst (_≾ᵣ uᵣ) (⟦sbʳ⟧-r i b ρ) lu))
+          ]′ (disjOK h (∈-map⁺ (mapᵈ (sbʳ-v i b) (sbʳ-r i b)) m))
+
+    princ₀ : (θ : Grounding Θ) → θ ⊨ᴴ Q → ⟦ Ĉ₀ ⟧ᶜ θ <:ᶜ ⟦ C ⟧ᶜ θ
+    princ₀ θ h =
+      subst (_<:ᶜ ⟦ C ⟧ᶜ θ) (sym (trans (⟦sbʳ⟧-c i b C) (sameʳ-c θ i (fix θ h) C)))
+            (<:ᶜ-refl (⟦ C ⟧ᶜ θ))
+
+-- The expressions an ordering sets against an unknown, and those fit to
+-- replace it: free of it, and an unknown only if of smaller index
+
+facingₑ : ∀ {Θ} → EVar Θ → List (EExp Θ × EExp Θ) → List (EExp Θ)
+facingₑ i [] = []
+facingₑ i ((ε , ε') ∷ l) with ε ≟ᵉ evar i | ε' ≟ᵉ evar i
+... | yes _ | _     = ε' ∷ facingₑ i l
+... | no  _ | yes _ = ε ∷ facingₑ i l
+... | no  _ | no  _ = facingₑ i l
+
+facingᵣ : ∀ {Θ} → RVar Θ → List (RExp Θ × RExp Θ) → List (RExp Θ)
+facingᵣ i [] = []
+facingᵣ i ((ρ , ρ') ∷ l) with ρ ≟ʳ rvar i | ρ' ≟ʳ rvar i
+... | yes _ | _     = ρ' ∷ facingᵣ i l
+... | no  _ | yes _ = ρ ∷ facingᵣ i l
+... | no  _ | no  _ = facingᵣ i l
+
+fitₑ : ∀ {Θ} → EVar Θ → EExp Θ → 𝔹
+fitₑ i (evar j) = toℕ j <ᵇ toℕ i
+fitₑ i ε        = not (occᵉ-e i ε)
+
+fitᵣ : ∀ {Θ} → RVar Θ → RExp Θ → 𝔹
+fitᵣ i (rvar j) = toℕ j <ᵇ toℕ i
+fitᵣ i ρ        = not (occʳ-r i ρ)
+
+-- A test of entailed ordering on each grade sort; a `nothing` decides
+-- nothing
+
+record Entails : Set where
+  constructor entails
+  field
+    entᵣ? : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+    entₑ? : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+
+module _ (ent : Entails) where
+
+  open Entails ent
+
+  -- The search: the first fit expression facing the unknown that the
+  -- test equates with it
+
+  equateᵉ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ) → Maybe (Elim C Q)
+  equateᵉ? {Θ} C Q i = try (facingₑ i (ordₑ Q))
+    where
+      try : List (EExp Θ) → Maybe (Elim C Q)
+      try [] = nothing
+      try (b ∷ bs) with fitₑ i b | entₑ? Q (evar i) b | entₑ? Q b (evar i)
+      ... | true | just p | just q = just (equateᵉ C Q i b (p , q))
+      ... | _    | _      | _      = try bs
+
+  equateʳ? : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ) → Maybe (Elim C Q)
+  equateʳ? {Θ} C Q i = try (facingᵣ i (ordᵣ Q))
+    where
+      try : List (RExp Θ) → Maybe (Elim C Q)
+      try [] = nothing
+      try (b ∷ bs) with fitᵣ i b | entᵣ? Q (rvar i) b | entᵣ? Q b (rvar i)
+      ... | true | just p | just q = just (equateʳ C Q i b (p , q))
+      ... | _    | _      | _      = try bs
+
+  firstᵉ⁼ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (EVar Θ) → Maybe (Elim C Q)
+  firstᵉ⁼ C Q []       = nothing
+  firstᵉ⁼ C Q (i ∷ is) with equateᵉ? C Q i
+  ... | just r  = just r
+  ... | nothing = firstᵉ⁼ C Q is
+
+  firstʳ⁼ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → List (RVar Θ) → Maybe (Elim C Q)
+  firstʳ⁼ C Q []       = nothing
+  firstʳ⁼ C Q (i ∷ is) with equateʳ? C Q i
+  ... | just r  = just r
+  ... | nothing = firstʳ⁼ C Q is
+
+  -- A step by equality first, then one against a bound
+
+  anyStep : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elim C Q)
+  anyStep {Θ} C Q with firstᵉ⁼ C Q (fins (nE Θ))
+  ... | just r  = just r
+  ... | nothing with firstʳ⁼ C Q (fins (nR Θ))
+  ...   | just r  = just r
+  ...   | nothing with firstᵉ C Q (fins (nE Θ))
+  ...     | just r  = just r
+  ...     | nothing with firstʳ C Q (fins (nR Θ))
+  ...       | just r  = just r
+  ...       | nothing = firstᵗ C Q (fins (nTy Θ))
+
+  reduce : ∀ {Θ} → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
+  reduce zero    C Q = idElim C Q
+  reduce (suc n) C Q with anyStep C Q
+  ... | nothing = idElim C Q
+  ... | just r  = r ⨾ᴱ reduce n (Ĉ r) (Q̂ r)
+
+  -- One round per unknown suffices: a step removes one
+
+  eliminate : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → Elim C Q
+  eliminate {Θ} C Q = reduce (nE Θ + nR Θ + nTy Θ) C Q

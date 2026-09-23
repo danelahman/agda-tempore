@@ -52,6 +52,7 @@ open Operations Ops
 
 open import Syntax.Subtyping S using (_<:ᶜ_)
 
+open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Contexts  S
 open import TypeInference.OpenSyntax.Subst     S
@@ -76,8 +77,10 @@ open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
-  using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃; trim; trim-≃; trimElim)
-open import TypeInference.SolverImpl.Eliminate S using (Elim; eliminate; _⨾ᴱ_)
+  using (simplify; simplify-⊨; simplify-⊨⁻; simplify-≃; trim; trim-≃; trimElim;
+         memʳ?; memᵉ?)
+open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Eliminate S using (Elim; Entails; entails; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ using (canonElim)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
@@ -167,14 +170,30 @@ solverImplOn = record
   ; solve-principal = λ C _ → solveOn-principal C
   }
 
+-- The entailment test of elimination by equality: an ordering among
+-- the hypotheses, or one `decide≾` proves from them
+
+entailsᴴ : Entails
+entailsᴴ = entails entᵣ? entₑ?
+  where
+    entᵣ? : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+    entᵣ? Q ρ ρ' with memʳ? (ρ , ρ') (ordᵣ Q)
+    ... | just m  = just (hypᵣ m)
+    ... | nothing = decide≾ᵣ ρ ρ'
+
+    entₑ? : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+    entₑ? Q ε ε' with memᵉ? (ε , ε') (ordₑ Q)
+    ... | just m  = just (hypₑ m)
+    ... | nothing = decide≾ₑ ε ε'
+
 -- A solution, its residue as the solver returns it, the residue
 -- simplified, and the simplified residue with the unknowns it fixes
 -- eliminated from it and from the reported type `X`. Simplification is
 -- satisfied by exactly the same groundings; elimination keeps every
 -- grounding, is realised by the grounding reading each eliminated
--- unknown off its bound, and reports the subtype. Normalisation of
--- the grade expressions and `trim` run as the last two elimination
--- steps.
+-- unknown off its bound or the expression it equals, and reports the
+-- subtype. Normalisation of the grade expressions and `trim` run as the
+-- last two elimination steps.
 
 record Reported {Θ : Scope} (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
@@ -202,7 +221,7 @@ reportOn X C with solveOn C in e
                    (Elim.keep el) (Elim.real el) (Elim.princ el))
   where
     el : Elim (X [ σ ]ᶜ) (simplify Q)
-    el = eliminate (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _
+    el = eliminate entailsᴴ (X [ σ ]ᶜ) (simplify Q) ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _
 
 -- The same simplification and trimming where a principal type hands
 -- out its residue

@@ -703,3 +703,71 @@ mono-substᵣ p (rconst c) = ⊩≾̂ᵣ-refl
 mono-substᵣ p (ρ ·̂ᵣ ρ')  = monoᵣ (mono-substᵣ p ρ) (mono-substᵣ p ρ')
 mono-substᵣ p (ρ ⊔̂ᵣ ρ')  = ⊩-⊔̂ᵣ-mono (mono-substᵣ p ρ) (mono-substᵣ p ρ')
 mono-substᵣ p ∣ ε ∣̂ᵉ     = map-mono (mono-substₑ p ε)
+
+-- Equality relative to a hypothesis set: entailed ordering both ways
+
+infix 4 _⊩_≡̂ᵣ_ _⊩_≡̂ₑ_
+
+_⊩_≡̂ᵣ_ : ∀ {Θ} → Hyps Θ → RExp Θ → RExp Θ → Set
+Q ⊩ ρ ≡̂ᵣ ρ' = (Q ⊩ ρ ≾̂ᵣ ρ') × (Q ⊩ ρ' ≾̂ᵣ ρ)
+
+_⊩_≡̂ₑ_ : ∀ {Θ} → Hyps Θ → EExp Θ → EExp Θ → Set
+Q ⊩ ε ≡̂ₑ ε' = (Q ⊩ ε ≾̂ₑ ε') × (Q ⊩ ε' ≾̂ₑ ε)
+
+⊩≡̂ᵣ-refl : ∀ {Θ} {Q : Hyps Θ} {ρ} → Q ⊩ ρ ≡̂ᵣ ρ
+⊩≡̂ᵣ-refl = ⊩≾̂ᵣ-refl , ⊩≾̂ᵣ-refl
+
+⊩≡̂ᵣ-sym : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → Q ⊩ ρ ≡̂ᵣ ρ' → Q ⊩ ρ' ≡̂ᵣ ρ
+⊩≡̂ᵣ-sym (p , q) = q , p
+
+⊩≡̂ᵣ-trans : ∀ {Θ} {Q : Hyps Θ} {ρ ρ' ρ''}
+           → Q ⊩ ρ ≡̂ᵣ ρ' → Q ⊩ ρ' ≡̂ᵣ ρ'' → Q ⊩ ρ ≡̂ᵣ ρ''
+⊩≡̂ᵣ-trans (p , q) (p' , q') = transᵣ p p' , transᵣ q' q
+
+⊩≡̂ₑ-refl : ∀ {Θ} {Q : Hyps Θ} {ε} → Q ⊩ ε ≡̂ₑ ε
+⊩≡̂ₑ-refl = ⊩≾̂ₑ-refl , ⊩≾̂ₑ-refl
+
+⊩≡̂ₑ-sym : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → Q ⊩ ε ≡̂ₑ ε' → Q ⊩ ε' ≡̂ₑ ε
+⊩≡̂ₑ-sym (p , q) = q , p
+
+⊩≡̂ₑ-trans : ∀ {Θ} {Q : Hyps Θ} {ε ε' ε''}
+           → Q ⊩ ε ≡̂ₑ ε' → Q ⊩ ε' ≡̂ₑ ε'' → Q ⊩ ε ≡̂ₑ ε''
+⊩≡̂ₑ-trans (p , q) (p' , q') = transₑ p p' , transₑ q' q
+
+-- Congruence for the formers
+
+⊩≡̂ᵣ-cong : ∀ {Θ} {Q : Hyps Θ} {ρ₁ ρ₁' ρ₂ ρ₂'}
+          → Q ⊩ ρ₁ ≡̂ᵣ ρ₁' → Q ⊩ ρ₂ ≡̂ᵣ ρ₂' → Q ⊩ ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ·̂ᵣ ρ₂'
+⊩≡̂ᵣ-cong (p , q) (p' , q') = monoᵣ p p' , monoᵣ q q'
+
+⊩≡̂ᵣ-cong-⊔ : ∀ {Θ} {Q : Hyps Θ} {ρ₁ ρ₁' ρ₂ ρ₂'}
+            → Q ⊩ ρ₁ ≡̂ᵣ ρ₁' → Q ⊩ ρ₂ ≡̂ᵣ ρ₂' → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
+⊩≡̂ᵣ-cong-⊔ (p , q) (p' , q') = ⊩-⊔̂ᵣ-mono p p' , ⊩-⊔̂ᵣ-mono q q'
+
+⊩≡̂ᵣ-map-cong : ∀ {Θ} {Q : Hyps Θ} {ε ε'}
+              → Q ⊩ ε ≡̂ₑ ε' → Q ⊩ ∣ ε ∣̂ᵉ ≡̂ᵣ ∣ ε' ∣̂ᵉ
+⊩≡̂ᵣ-map-cong (p , q) = map-mono p , map-mono q
+
+⊩≡̂ₑ-cong : ∀ {Θ} {Q : Hyps Θ} {ε₁ ε₁' ε₂ ε₂'}
+          → Q ⊩ ε₁ ≡̂ₑ ε₁' → Q ⊩ ε₂ ≡̂ₑ ε₂' → Q ⊩ ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₁' ·̂ₑ ε₂'
+⊩≡̂ₑ-cong (p , q) (p' , q') = monoₑ p p' , monoₑ q q'
+
+⊩≡̂ₑ-cong-⊔ : ∀ {Θ} {Q : Hyps Θ} {ε₁ ε₁' ε₂ ε₂'}
+            → Q ⊩ ε₁ ≡̂ₑ ε₁' → Q ⊩ ε₂ ≡̂ₑ ε₂' → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
+⊩≡̂ₑ-cong-⊔ (p , q) (p' , q') = ⊩-⊔̂ₑ-mono p p' , ⊩-⊔̂ₑ-mono q q'
+
+-- Convertibility is equality under any hypotheses
+
+⊩≡̂ᵣ-reflexive : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → ρ ≡̂ᵣ ρ' → Q ⊩ ρ ≡̂ᵣ ρ'
+⊩≡̂ᵣ-reflexive p = eqᵣ p , eqᵣ (≡̂ᵣ-sym p)
+
+⊩≡̂ₑ-reflexive : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → ε ≡̂ₑ ε' → Q ⊩ ε ≡̂ₑ ε'
+⊩≡̂ₑ-reflexive p = eqₑ p , eqₑ (≡̂ₑ-sym p)
+
+-- Under the empty set, equality is convertibility
+
+⊩≡̂ᵣ-∅ : ∀ {Θ} {ρ ρ' : RExp Θ} → ∅ᴴ ⊩ ρ ≡̂ᵣ ρ' → ρ ≡̂ᵣ ρ'
+⊩≡̂ᵣ-∅ (p , q) = ≡̂ᵣ-antisym-∅ p q
+
+⊩≡̂ₑ-∅ : ∀ {Θ} {ε ε' : EExp Θ} → ∅ᴴ ⊩ ε ≡̂ₑ ε' → ε ≡̂ₑ ε'
+⊩≡̂ₑ-∅ (p , q) = ≡̂ₑ-antisym-∅ p q
