@@ -12,9 +12,10 @@
 -- with its var-rule disjunctions settled, its repeated           --
 -- hypotheses dropped, the unknowns its own hypotheses fix        --
 -- eliminated from it and from the reported type, every grade     --
--- expression in product normal form, and last every subtyping    --
--- atom and grade ordering entailed by those kept before it       --
--- dropped. It is applied here, on top of the driver.             --
+-- expression in product normal form, and last its disjunctions   --
+-- settled again and every subtyping atom and grade ordering      --
+-- entailed by the others kept dropped. It is applied here, on    --
+-- top of the driver.                                             --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; [])

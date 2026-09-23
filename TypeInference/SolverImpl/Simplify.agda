@@ -12,8 +12,9 @@
 -- repeats one kept before it. It finally lists the grade         --
 -- orderings by the skeletons of their two sides.                 --
 --                                                                --
--- `trim` drops every subtyping atom and grade ordering entailed  --
--- by those kept before it, the orderings by `decide≾`; an        --
+-- `trim` settles the disjunctions again, then drops every        --
+-- subtyping atom and grade ordering entailed by those kept and   --
+-- those not yet examined, the orderings by `decide≾`; an         --
 -- ordering that holds outright is dropped too.                   --
 --                                                                --
 -- `simplify Q`, `trim Q` and `Q` are satisfied by exactly the    --
@@ -26,12 +27,11 @@ open import Data.Empty using (⊥-elim)
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Fin.Base using (Fin)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_; _++_; length; reverse)
+open import Data.List.Base using (List; []; _∷_; _++_; length)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.List.Relation.Unary.Any.Properties using (reverse⁺; reverse⁻)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -63,7 +63,7 @@ open GradeSystemInterface Grades
 open import Syntax.Types S
   using (Eternal; Baseₑ; Unitₑ; Boolₑ; _|×|ₑ_; Emptyₑ;
          EternalBaseType; eternalBaseType?)
-open import Syntax.Subtyping S using (<:ᶜ-refl)
+open import Syntax.Subtyping S using (_<:ᵛ_; <:ᶜ-refl)
 
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
@@ -307,6 +307,25 @@ settleAll-⊨⁻ ((A , ρ) ∷ l) Q₀ h with settle-⊨⁻ A ρ (settleAll l Q�
 ... | h' , d with settleAll-⊨⁻ l Q₀ h'
 ...   | h'' , k = h'' , λ { (here refl) → d ; (there m) → k m }
 
+-- The set with its disjunctions taken out, to be settled one at a time
+
+split : ∀ {Θ} → Hyps Θ → Hyps Θ
+split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
+
+-- Every disjunction of the set settled
+
+settleᴴ : ∀ {Θ} → Hyps Θ → Hyps Θ
+settleᴴ Q = settleAll (disj Q) (split Q)
+
+settleᴴ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ settleᴴ Q
+settleᴴ-⊨ Q h =
+  settleAll-⊨ (disj Q) (split Q) (disjOK h)
+              (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ()))
+
+settleᴴ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ settleᴴ Q → θ ⊨ᴴ Q
+settleᴴ-⊨⁻ Q h with settleAll-⊨⁻ (disj Q) (split Q) h
+... | h₀ , k = mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k
+
 -- A subtyping or eternality atom entailed by the atoms kept before it
 -- is dropped: entailment of such atoms is reachability in a finite
 -- digraph.
@@ -397,28 +416,82 @@ pruneᵀ-⊨⁻ Q h =
        (λ m → ground-⊩ᵗᵛ h (⊢ᵖ-⊩ (λ q → q) (pruneᵛ-path [] (subᵥ Q) m)))
        (ordROK h) (ordEOK h) (disjOK h)
 
--- The subtyping atoms pruned from the last, those kept in their order
+-- A walk down a list dropping every entry a test settles, those kept
+-- staying in place. The test sees the entries kept so far and those
+-- not yet examined.
 
-pruneᵛʳ : ∀ {Θ} → Hyps Θ → Hyps Θ
-pruneᵛʳ Q = hyps (ets Q) (pruneᵛ [] (reverse (subᵥ Q))) (ordᵣ Q) (ordₑ Q) (disj Q)
+module Walk {A : Set} (Ok : List A → List A → A → Set)
+            (test : (seen rest : List A) → (p : A) → Maybe (Ok seen rest p))
+            where
 
-pruneᵛʳ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ pruneᵛʳ Q
-pruneᵛʳ-⊨ Q h =
-  mk⊨ᴴ (etOK h)
-       (λ m → [ (λ ()) , (λ q → subOK h (reverse⁻ {xs = subᵥ Q} q)) ]′
-              (pruneᵛ-⊆ [] (reverse (subᵥ Q)) m))
+  walk : List A → List A → List A
+  walk seen []      = []
+  walk seen (p ∷ l) with test seen l p
+  ... | just _  = walk seen l
+  ... | nothing = p ∷ walk (p ∷ seen) l
+
+  walk-⊆ : (seen l : List A) → ∀ {p} → p ∈ walk seen l → p ∈ l
+  walk-⊆ seen (p₀ ∷ l) m with test seen l p₀
+  walk-⊆ seen (p₀ ∷ l) m           | just _  = there (walk-⊆ seen l m)
+  walk-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
+  walk-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (walk-⊆ (p₀ ∷ seen) l m)
+
+  -- A property that a settled entry has whenever everything its test
+  -- saw has it, and that holds of the entries seen and those kept,
+  -- holds of every entry
+
+  walk-⊨ : (P : A → Set)
+         → (∀ seen rest {p} → Ok seen rest p → (∀ {q} → q ∈ seen ++ rest → P q) → P p)
+         → (seen l : List A) → (∀ {q} → q ∈ seen → P q)
+         → (∀ {q} → q ∈ walk seen l → P q)
+         → ∀ {q} → q ∈ l → P q
+  walk-⊨ P close seen (p₀ ∷ l) hs hk m with test seen l p₀
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (here refl) | just d  =
+    close seen l d (λ q → [ hs , walk-⊨ P close seen l hs hk ]′ (∈-++⁻ seen q))
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (there m)   | just _  =
+    walk-⊨ P close seen l hs hk m
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (here refl) | nothing = hk (here refl)
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (there m)   | nothing =
+    walk-⊨ P close (p₀ ∷ seen) l
+           (λ { (here refl) → hk (here refl) ; (there q) → hs q })
+           (λ q → hk (there q)) m
+
+-- A subtyping atom reachable from the atoms kept and those not yet
+-- examined
+
+Okᵛ : ∀ {n} → (seen rest : List (Fin n × Fin n)) → Fin n × Fin n → Set
+Okᵛ seen rest p = seen ++ rest ⊢ᵖ proj₁ p ≾ proj₂ p
+
+reachᵛ? : ∀ {n} → (seen rest : List (Fin n × Fin n)) → (p : Fin n × Fin n)
+        → Maybe (Okᵛ seen rest p)
+reachᵛ? seen rest (α , β) = reach? (seen ++ rest) α β
+
+-- The subtyping atoms walked, the rest untouched
+
+walkᵛ : ∀ {Θ} → Hyps Θ → Hyps Θ
+walkᵛ Q = hyps (ets Q) (Walk.walk Okᵛ reachᵛ? [] (subᵥ Q)) (ordᵣ Q) (ordₑ Q) (disj Q)
+
+walkᵛ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ walkᵛ Q
+walkᵛ-⊨ Q h =
+  mk⊨ᴴ (etOK h) (λ m → subOK h (Walk.walk-⊆ Okᵛ reachᵛ? [] (subᵥ Q) m))
        (ordROK h) (ordEOK h) (disjOK h)
 
-pruneᵛʳ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ pruneᵛʳ Q → θ ⊨ᴴ Q
-pruneᵛʳ-⊨⁻ Q h =
+walkᵛ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ walkᵛ Q → θ ⊨ᴴ Q
+walkᵛ-⊨⁻ {Θ} {θ} Q h =
   mk⊨ᴴ (etOK h)
-       (λ m → ground-⊩ᵗᵛ h (⊢ᵖ-⊩ (λ q → q)
-                              (pruneᵛ-path [] (reverse (subᵥ Q)) (reverse⁺ m))))
+       (Walk.walk-⊨ Okᵛ reachᵛ? (λ p → gTy θ (proj₁ p) <:ᵛ gTy θ (proj₂ p)) close
+                    [] (subᵥ Q) (λ ()) (subOK h))
        (ordROK h) (ordEOK h) (disjOK h)
+  where
+    close : ∀ (seen rest : List (TyVar Θ × TyVar Θ)) {p} → Okᵛ seen rest p
+          → (∀ {q} → q ∈ seen ++ rest → gTy θ (proj₁ q) <:ᵛ gTy θ (proj₂ q))
+          → gTy θ (proj₁ p) <:ᵛ gTy θ (proj₂ p)
+    close seen rest w hs =
+      ground-⊩ᵗᵛ {θ = θ} {Q = hyps [] (seen ++ rest) [] [] []}
+                 (mk⊨ᴴ (λ ()) hs (λ ()) (λ ()) (λ ())) (⊢ᵖ-⊩ (λ q → q) w)
 
--- Grade orderings are pruned against a test of entailment by the
--- orderings kept before: one the test proves from them is dropped,
--- and those kept stay in place. The effect orderings are pruned
+-- Grade orderings are pruned by a walk against a test of entailment:
+-- one the test proves is dropped. The effect orderings are pruned
 -- first, and the resource ones read with the effect ones kept.
 
 memʳ? : ∀ {Θ} → (p : RExp Θ × RExp Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (p ∈ l)
@@ -445,120 +518,82 @@ Hʳ lₑ seen = hyps [] [] seen lₑ []
 Hᵉ : ∀ {Θ} → List (EExp Θ × EExp Θ) → Hyps Θ
 Hᵉ seen = hyps [] [] [] seen []
 
+-- An ordering entailed by the orderings the test sees
+
+Okʳ : ∀ {Θ} → List (EExp Θ × EExp Θ) → (seen rest : List (RExp Θ × RExp Θ))
+    → RExp Θ × RExp Θ → Set
+Okʳ lₑ seen rest p = Hʳ lₑ (seen ++ rest) ⊩ proj₁ p ≾̂ᵣ proj₂ p
+
+Okᵉ : ∀ {Θ} → (seen rest : List (EExp Θ × EExp Θ)) → EExp Θ × EExp Θ → Set
+Okᵉ seen rest p = Hᵉ (seen ++ rest) ⊩ proj₁ p ≾̂ₑ proj₂ p
+
 Testʳ : Set
-Testʳ = ∀ {Θ} → (lₑ : List (EExp Θ × EExp Θ)) → (seen : List (RExp Θ × RExp Θ))
-      → (p : RExp Θ × RExp Θ) → Maybe (Hʳ lₑ seen ⊩ proj₁ p ≾̂ᵣ proj₂ p)
+Testʳ = ∀ {Θ} → (lₑ : List (EExp Θ × EExp Θ)) → (seen rest : List (RExp Θ × RExp Θ))
+      → (p : RExp Θ × RExp Θ) → Maybe (Okʳ lₑ seen rest p)
 
 Testᵉ : Set
-Testᵉ = ∀ {Θ} → (seen : List (EExp Θ × EExp Θ))
-      → (p : EExp Θ × EExp Θ) → Maybe (Hᵉ seen ⊩ proj₁ p ≾̂ₑ proj₂ p)
+Testᵉ = ∀ {Θ} → (seen rest : List (EExp Θ × EExp Θ))
+      → (p : EExp Θ × EExp Θ) → Maybe (Okᵉ seen rest p)
 
 -- A repeat of an ordering kept
 
 repeatʳ? : Testʳ
-repeatʳ? lₑ seen (ρ , ρ') with memʳ? (ρ , ρ') seen
-... | just m  = just (hypᵣ m)
+repeatʳ? lₑ seen rest (ρ , ρ') with memʳ? (ρ , ρ') seen
+... | just m  = just (hypᵣ (∈-++⁺ˡ m))
 ... | nothing = nothing
 
 repeatᵉ? : Testᵉ
-repeatᵉ? seen (ε , ε') with memᵉ? (ε , ε') seen
-... | just m  = just (hypₑ m)
+repeatᵉ? seen rest (ε , ε') with memᵉ? (ε , ε') seen
+... | just m  = just (hypₑ (∈-++⁺ˡ m))
 ... | nothing = nothing
 
--- A repeat, or an ordering `decide≾` proves from the orderings kept
+-- An ordering among those kept and those not yet examined, or one
+-- `decide≾` proves from them
 
 entailsʳ? : Testʳ
-entailsʳ? lₑ seen (ρ , ρ') with repeatʳ? lₑ seen (ρ , ρ')
-... | just d  = just d
+entailsʳ? lₑ seen rest (ρ , ρ') with memʳ? (ρ , ρ') (seen ++ rest)
+... | just m  = just (hypᵣ m)
 ... | nothing = decide≾ᵣ ρ ρ'
 
 entailsᵉ? : Testᵉ
-entailsᵉ? seen (ε , ε') with repeatᵉ? seen (ε , ε')
-... | just d  = just d
+entailsᵉ? seen rest (ε , ε') with memᵉ? (ε , ε') (seen ++ rest)
+... | just m  = just (hypₑ m)
 ... | nothing = decide≾ₑ ε ε'
 
 module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
 
-  pruneᴼʳ : ∀ {Θ} → List (EExp Θ × EExp Θ) → List (RExp Θ × RExp Θ)
-          → List (RExp Θ × RExp Θ) → List (RExp Θ × RExp Θ)
-  pruneᴼʳ lₑ seen []      = []
-  pruneᴼʳ lₑ seen (p ∷ l) with testʳ lₑ seen p
-  ... | just _  = pruneᴼʳ lₑ seen l
-  ... | nothing = p ∷ pruneᴼʳ lₑ (p ∷ seen) l
-
-  pruneᴼʳ-⊆ : ∀ {Θ} → (lₑ : List (EExp Θ × EExp Θ)) → (seen l : List (RExp Θ × RExp Θ))
-            → ∀ {p} → p ∈ pruneᴼʳ lₑ seen l → p ∈ l
-  pruneᴼʳ-⊆ lₑ seen (p₀ ∷ l) m with testʳ lₑ seen p₀
-  pruneᴼʳ-⊆ lₑ seen (p₀ ∷ l) m           | just _  = there (pruneᴼʳ-⊆ lₑ seen l m)
-  pruneᴼʳ-⊆ lₑ seen (p₀ ∷ l) (here refl) | nothing = here refl
-  pruneᴼʳ-⊆ lₑ seen (p₀ ∷ l) (there m)   | nothing = there (pruneᴼʳ-⊆ lₑ (p₀ ∷ seen) l m)
-
-  -- A grounding satisfying the effect orderings `lₑ`, the orderings
-  -- `seen` and those kept satisfies every ordering pruned
-
-  pruneᴼʳ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (lₑ : List (EExp Θ × EExp Θ))
-            → (seen l : List (RExp Θ × RExp Θ))
-            → (∀ {ε ε'} → (ε , ε') ∈ lₑ → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ)
-            → (∀ {ρ ρ'} → (ρ , ρ') ∈ seen → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ)
-            → (∀ {ρ ρ'} → (ρ , ρ') ∈ pruneᴼʳ lₑ seen l → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ)
-            → ∀ {ρ ρ'} → (ρ , ρ') ∈ l → ⟦ ρ ⟧ʳ θ ≾ᵣ ⟦ ρ' ⟧ʳ θ
-  pruneᴼʳ-⊨ lₑ seen (p₀ ∷ l) hₑ hs hk m with testʳ lₑ seen p₀
-  pruneᴼʳ-⊨ lₑ seen (p₀ ∷ l) hₑ hs hk (here refl) | just d  =
-    ground-≾ᵣ (mk⊨ᴴ (λ ()) (λ ()) hs hₑ (λ ())) d
-  pruneᴼʳ-⊨ lₑ seen (p₀ ∷ l) hₑ hs hk (there m)   | just _  = pruneᴼʳ-⊨ lₑ seen l hₑ hs hk m
-  pruneᴼʳ-⊨ lₑ seen (p₀ ∷ l) hₑ hs hk (here refl) | nothing = hk (here refl)
-  pruneᴼʳ-⊨ lₑ seen (p₀ ∷ l) hₑ hs hk (there m)   | nothing =
-    pruneᴼʳ-⊨ lₑ (p₀ ∷ seen) l hₑ
-              (λ { (here refl) → hk (here refl) ; (there q) → hs q })
-              (λ q → hk (there q)) m
-
   pruneᴼᵉ : ∀ {Θ} → List (EExp Θ × EExp Θ) → List (EExp Θ × EExp Θ)
-          → List (EExp Θ × EExp Θ)
-  pruneᴼᵉ seen []      = []
-  pruneᴼᵉ seen (p ∷ l) with testᵉ seen p
-  ... | just _  = pruneᴼᵉ seen l
-  ... | nothing = p ∷ pruneᴼᵉ (p ∷ seen) l
+  pruneᴼᵉ = Walk.walk Okᵉ testᵉ []
 
-  pruneᴼᵉ-⊆ : ∀ {Θ} → (seen l : List (EExp Θ × EExp Θ))
-            → ∀ {p} → p ∈ pruneᴼᵉ seen l → p ∈ l
-  pruneᴼᵉ-⊆ seen (p₀ ∷ l) m with testᵉ seen p₀
-  pruneᴼᵉ-⊆ seen (p₀ ∷ l) m           | just _  = there (pruneᴼᵉ-⊆ seen l m)
-  pruneᴼᵉ-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
-  pruneᴼᵉ-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (pruneᴼᵉ-⊆ (p₀ ∷ seen) l m)
-
-  pruneᴼᵉ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (seen l : List (EExp Θ × EExp Θ))
-            → (∀ {ε ε'} → (ε , ε') ∈ seen → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ)
-            → (∀ {ε ε'} → (ε , ε') ∈ pruneᴼᵉ seen l → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ)
-            → ∀ {ε ε'} → (ε , ε') ∈ l → ⟦ ε ⟧ᵉ θ ≾ₑ ⟦ ε' ⟧ᵉ θ
-  pruneᴼᵉ-⊨ seen (p₀ ∷ l) hs hk m with testᵉ seen p₀
-  pruneᴼᵉ-⊨ seen (p₀ ∷ l) hs hk (here refl) | just d  =
-    ground-≾ₑ (mk⊨ᴴ (λ ()) (λ ()) (λ ()) hs (λ ())) d
-  pruneᴼᵉ-⊨ seen (p₀ ∷ l) hs hk (there m)   | just _  = pruneᴼᵉ-⊨ seen l hs hk m
-  pruneᴼᵉ-⊨ seen (p₀ ∷ l) hs hk (here refl) | nothing = hk (here refl)
-  pruneᴼᵉ-⊨ seen (p₀ ∷ l) hs hk (there m)   | nothing =
-    pruneᴼᵉ-⊨ (p₀ ∷ seen) l
-              (λ { (here refl) → hk (here refl) ; (there q) → hs q })
-              (λ q → hk (there q)) m
+  pruneᴼʳ : ∀ {Θ} → List (EExp Θ × EExp Θ) → List (RExp Θ × RExp Θ)
+          → List (RExp Θ × RExp Θ)
+  pruneᴼʳ lₑ = Walk.walk (Okʳ lₑ) (testʳ lₑ) []
 
   -- The grade orderings pruned, the rest untouched
 
   pruneᴼ : ∀ {Θ} → Hyps Θ → Hyps Θ
-  pruneᴼ Q = hyps (ets Q) (subᵥ Q) (pruneᴼʳ (pruneᴼᵉ [] (ordₑ Q)) [] (ordᵣ Q))
-                  (pruneᴼᵉ [] (ordₑ Q)) (disj Q)
+  pruneᴼ Q = hyps (ets Q) (subᵥ Q) (pruneᴼʳ (pruneᴼᵉ (ordₑ Q)) (ordᵣ Q))
+                  (pruneᴼᵉ (ordₑ Q)) (disj Q)
 
   pruneᴼ-⊨ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ pruneᴼ Q
   pruneᴼ-⊨ Q h =
     mk⊨ᴴ (etOK h) (subOK h)
-         (λ m → ordROK h (pruneᴼʳ-⊆ (pruneᴼᵉ [] (ordₑ Q)) [] (ordᵣ Q) m))
-         (λ m → ordEOK h (pruneᴼᵉ-⊆ [] (ordₑ Q) m))
+         (λ m → ordROK h (Walk.walk-⊆ (Okʳ lₑ) (testʳ lₑ) [] (ordᵣ Q) m))
+         (λ m → ordEOK h (Walk.walk-⊆ Okᵉ testᵉ [] (ordₑ Q) m))
          (disjOK h)
+    where lₑ = pruneᴼᵉ (ordₑ Q)
 
   pruneᴼ-⊨⁻ : ∀ {Θ} {θ : Grounding Θ} → (Q : Hyps Θ) → θ ⊨ᴴ pruneᴼ Q → θ ⊨ᴴ Q
-  pruneᴼ-⊨⁻ Q h =
+  pruneᴼ-⊨⁻ {θ = θ} Q h =
     mk⊨ᴴ (etOK h) (subOK h)
-         (pruneᴼʳ-⊨ (pruneᴼᵉ [] (ordₑ Q)) [] (ordᵣ Q) (ordEOK h) (λ ()) (ordROK h))
-         (pruneᴼᵉ-⊨ [] (ordₑ Q) (λ ()) (ordEOK h))
+         (Walk.walk-⊨ (Okʳ lₑ) (testʳ lₑ) (λ p → ⟦ proj₁ p ⟧ʳ θ ≾ᵣ ⟦ proj₂ p ⟧ʳ θ)
+                      (λ _ _ d hs → ground-≾ᵣ (mk⊨ᴴ (λ ()) (λ ()) hs (ordEOK h) (λ ())) d)
+                      [] (ordᵣ Q) (λ ()) (ordROK h))
+         (Walk.walk-⊨ Okᵉ testᵉ (λ p → ⟦ proj₁ p ⟧ᵉ θ ≾ₑ ⟦ proj₂ p ⟧ᵉ θ)
+                      (λ _ _ d hs → ground-≾ₑ (mk⊨ᴴ (λ ()) (λ ()) (λ ()) hs (λ ())) d)
+                      [] (ordₑ Q) (λ ()) (ordEOK h))
          (disjOK h)
+    where lₑ = pruneᴼᵉ (ordₑ Q)
 
 module Repeats  = Pruneᴼ repeatʳ?  repeatᵉ?
 module Entailed = Pruneᴼ entailsʳ? entailsᵉ?
@@ -631,47 +666,37 @@ order-⊨⁻ Q h =
        (λ m → ordEOK h (sortᴼ-⊇ _≺ₑ_ (ordₑ Q) m))
        (disjOK h)
 
--- The set with its disjunctions taken out, to be settled one at a time
-
-split : ∀ {Θ} → Hyps Θ → Hyps Θ
-split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
-
 simplify : ∀ {Θ} → Hyps Θ → Hyps Θ
-simplify Q = order (prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q))))
+simplify Q = order (prune (settleᴴ (canonᴴ Q)))
 
 -- Simplification changes nothing a grounding can see
 
 simplify-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q
-simplify-⊨ Q θ h₀ =
-  order-⊨ (prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q))))
-    (prune-⊨ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
-      (settleAll-⊨ (disj (canonᴴ Q)) (split (canonᴴ Q)) (disjOK h)
-                   (mk⊨ᴴ (etOK h) (subOK h) (ordROK h) (ordEOK h) (λ ()))))
-  where
-    h = canonᴴ-⊨ Q h₀
+simplify-⊨ Q θ h =
+  order-⊨ (prune (settleᴴ (canonᴴ Q)))
+    (prune-⊨ (settleᴴ (canonᴴ Q)) (settleᴴ-⊨ (canonᴴ Q) (canonᴴ-⊨ Q h)))
 
 simplify-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q
-simplify-⊨⁻ Q θ h
-  with settleAll-⊨⁻ (disj (canonᴴ Q)) (split (canonᴴ Q))
-         (prune-⊨⁻ (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))
-           (order-⊨⁻ (prune (settleAll (disj (canonᴴ Q)) (split (canonᴴ Q)))) h))
-... | h₀ , k = canonᴴ-⊨⁻ Q (mk⊨ᴴ (etOK h₀) (subOK h₀) (ordROK h₀) (ordEOK h₀) k)
+simplify-⊨⁻ Q θ h =
+  canonᴴ-⊨⁻ Q (settleᴴ-⊨⁻ (canonᴴ Q)
+    (prune-⊨⁻ (settleᴴ (canonᴴ Q)) (order-⊨⁻ (prune (settleᴴ (canonᴴ Q))) h)))
 
 simplify-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
            → (θ ⊨ᴴ Q → θ ⊨ᴴ simplify Q) × (θ ⊨ᴴ simplify Q → θ ⊨ᴴ Q)
 simplify-≃ Q θ = simplify-⊨ Q θ , simplify-⊨⁻ Q θ
 
--- Every subtyping atom and grade ordering entailed by those kept
--- before it dropped
+-- The disjunctions settled, then every subtyping atom and grade
+-- ordering entailed by those kept and those not yet examined dropped
 
 trim : ∀ {Θ} → Hyps Θ → Hyps Θ
-trim Q = Entailed.pruneᴼ (pruneᵛʳ Q)
+trim Q = Entailed.pruneᴼ (walkᵛ (settleᴴ Q))
 
 trim-⊨ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ Q → θ ⊨ᴴ trim Q
-trim-⊨ Q θ h = Entailed.pruneᴼ-⊨ (pruneᵛʳ Q) (pruneᵛʳ-⊨ Q h)
+trim-⊨ Q θ h = Entailed.pruneᴼ-⊨ (walkᵛ (settleᴴ Q)) (walkᵛ-⊨ (settleᴴ Q) (settleᴴ-⊨ Q h))
 
 trim-⊨⁻ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ) → θ ⊨ᴴ trim Q → θ ⊨ᴴ Q
-trim-⊨⁻ Q θ h = pruneᵛʳ-⊨⁻ Q (Entailed.pruneᴼ-⊨⁻ (pruneᵛʳ Q) h)
+trim-⊨⁻ Q θ h =
+  settleᴴ-⊨⁻ Q (walkᵛ-⊨⁻ (settleᴴ Q) (Entailed.pruneᴼ-⊨⁻ (walkᵛ (settleᴴ Q)) h))
 
 trim-≃ : ∀ {Θ} → (Q : Hyps Θ) → (θ : Grounding Θ)
        → (θ ⊨ᴴ Q → θ ⊨ᴴ trim Q) × (θ ⊨ᴴ trim Q → θ ⊨ᴴ Q)
