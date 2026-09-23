@@ -357,6 +357,7 @@ open import TypeInference.OpenSyntax.Grounding
 ---- Raw terms and erasure
 
 open import TypeInference.Raw.Syntax
+open import TypeInference.Raw.Subst
 open import TypeInference.Erase
 
 ---- Constraints and their satisfaction

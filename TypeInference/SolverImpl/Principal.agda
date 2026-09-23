@@ -50,7 +50,7 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
-open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐ˢ-sym)
+open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ)
 
 open import TypeInference.Solver.Fragment S
 

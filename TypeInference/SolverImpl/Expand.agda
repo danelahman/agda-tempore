@@ -60,8 +60,6 @@ open import TypeInference.SolverImpl.Core.Decorate     S
 open import TypeInference.SolverImpl.Core.Rigid        S using (zip₂)
 
 open import TypeInference.SolverImpl.Resid S
-open import TypeInference.SolverImpl.State S
-  using (≐ˢ-trans; ⨟-idˡ; ⨟-assoc; ⨟-congʳ)
 
 -- Shapes: skeletons over a single variable, so that all type
 -- variables are identified.

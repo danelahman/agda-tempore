@@ -64,7 +64,7 @@ open import TypeInference.Raw.Syntax S using (RawC)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
-open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono; ≐ˢ-sym)
+open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono)
 
 open import TypeInference.Principality      S using (Principal)
 open import TypeInference.Solver.Fragment   S
@@ -257,11 +257,11 @@ reportOn X C with solveOn C in e
 -- The same simplification and trimming where a principal type hands
 -- out its residue
 
-reportedQ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
+reportedQ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
           → Hyps (Principal.Θ⁺ p)
 reportedQ p = trim (simplify (Principal.Q⁺ p))
 
-reportedQ-≃ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
+reportedQ-≃ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
             → (θ : Grounding (Principal.Θ⁺ p))
             → (θ ⊨ᴴ Principal.Q⁺ p → θ ⊨ᴴ reportedQ p)
               × (θ ⊨ᴴ reportedQ p → θ ⊨ᴴ Principal.Q⁺ p)

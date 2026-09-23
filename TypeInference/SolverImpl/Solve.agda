@@ -66,7 +66,7 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
-open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ≐ˢ-sym; ≐ˢ-,ᵗ; ≐ˢ-,ʳ; ≐ˢ-,ᵉ)
+open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ)
 
 open import TypeInference.SolverImpl.Enum S using (AllOp; []; _∷_; all-lookup)
 

@@ -2,15 +2,17 @@
 -- Raw (well-scoped, untyped) syntax of the language              --
 --                                                                --
 -- The terms that inference takes as input: one former per former --
--- of `TypeInference.OpenSyntax.Language`, minus `coerce`, and    --
--- with the type, grade and entailment data of the mirrored       --
--- judgement dropped. Variables are de Bruijn indices into the    --
--- full context, `Fin n`.                                         --
+-- of `TypeInference.OpenSyntax.Language`, minus `coerce`, with   --
+-- the mirrored judgement's data dropped except the annotations   --
+-- below. `RawV Θ n` and `RawC Θ n` are scoped by the grade and   --
+-- type variables `Θ` of the context and by `n` term variables,   --
+-- de Bruijn indices into the full context.                       --
 --                                                                --
--- The only annotations left are the base type of a constant, the --
--- operation of a `perform`, the duration of a `delay` and the    --
--- variable of an `unbox`; `box` carries no grade. A handler's    --
--- clauses are scoped over the full context, `RawC (2 + n)`.      --
+-- The annotations are the base type of a constant, the operation --
+-- of a `perform`, the duration of a `delay`, the variable of an  --
+-- `unbox` and the grade of a `box`, an expression over `Θ`. A    --
+-- handler's clauses are scoped over `Θ +e`, binding the clause's --
+-- continuation grade, and over the full context, `2 + n`.        --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin)
@@ -31,138 +33,142 @@ open Operations Ops
 
 open import Syntax.Types S using (BaseType; BaseConstants)
 
+open import TypeInference.Scopes
+open import TypeInference.OpenSyntax.Grades S using (RExp)
+
 mutual
 
-  data RawV (n : ℕ) : Set where
+  data RawV (Θ : Scope) (n : ℕ) : Set where
 
     -- variables
 
     var     : Fin n
               -------
-            → RawV n
+            → RawV Θ n
 
     -- base-typed constants
 
     const   : (B : BaseType)
             → BaseConstants B
             -----------------
-            → RawV n
+            → RawV Θ n
 
     -- unit type
 
     ⋆       :
               -------
-              RawV n
+              RawV Θ n
 
     -- booleans
 
     true    :
               -------
-              RawV n
+              RawV Θ n
 
     false   :
               -------
-              RawV n
+              RawV Θ n
 
     -- pairing
 
-    ⦉_,_⦊    : RawV n
-            → RawV n
+    ⦉_,_⦊    : RawV Θ n
+            → RawV Θ n
             ---------
-            → RawV n
+            → RawV Θ n
 
     -- lambda abstraction
 
-    lam     : RawC (suc n)
+    lam     : RawC Θ (suc n)
               ------------
-            → RawV n
+            → RawV Θ n
 
 
-  data RawC (n : ℕ) : Set where
+  data RawC (Θ : Scope) (n : ℕ) : Set where
 
     -- returning a value
 
-    return  : RawV n
+    return  : RawV Θ n
               -------
-            → RawC n
+            → RawC Θ n
 
     -- sequential composition
 
-    _⨟_     : RawC n              -- NOTE: use \;2 to get this unicode semicolon
-            → RawC (suc n)
+    _⨟_     : RawC Θ n              -- NOTE: use \;2 to get this unicode semicolon
+            → RawC Θ (suc n)
             --------------
-            → RawC n
+            → RawC Θ n
 
     -- function application
 
-    _·_     : RawV n
-            → RawV n
+    _·_     : RawV Θ n
+            → RawV Θ n
             ---------
-            → RawC n
+            → RawC Θ n
 
     -- pattern-matching
 
-    match_`in_ : RawV n
-               → RawC (suc (suc n))
+    match_`in_ : RawV Θ n
+               → RawC Θ (suc (suc n))
                --------------------
-               → RawC n
+               → RawC Θ n
 
     -- empty type elimination
 
-    absurd  : RawV n
+    absurd  : RawV Θ n
               -------
-            → RawC n
+            → RawC Θ n
 
     -- boolean elimination
 
     if_`then_`else_
-            : RawV n
-            → RawC n
-            → RawC n
+            : RawV Θ n
+            → RawC Θ n
+            → RawC Θ n
             ---------
-            → RawC n
+            → RawC Θ n
 
     -- performing algebraic operations
 
     perform : (op : Op)
-            → RawV n
-            → RawC (suc n)
+            → RawV Θ n
+            → RawC Θ (suc n)
             --------------
-            → RawC n
+            → RawC Θ n
 
     -- explicit delaying of a computation
 
     delay   : ℕ
-            → RawC n
+            → RawC Θ n
             ---------
-            → RawC n
+            → RawC Θ n
 
     -- effect handling
 
     -- The clause family is indexed by the operation symbol, matching the
-    -- mirrored rule; each clause is scoped over the ambient context extended
-    -- by the operation's parameter and the boxed continuation.
+    -- mirrored rule; each clause is scoped over `Θ +e`, whose new variable
+    -- is the continuation grade, and over the ambient context extended by
+    -- the operation's parameter and the boxed continuation.
 
     handle_`with_`in
-            : RawC n
-            → (Op → RawC (suc (suc n)))
-            → RawC (suc n)
+            : RawC Θ n
+            → (Op → RawC (Θ +e) (suc (suc n)))
+            → RawC Θ (suc n)
             ---------------------------
-            → RawC n
+            → RawC Θ n
 
     -- unboxing a boxed variable
 
     unbox   : Fin n
-            → RawC (suc n)
+            → RawC Θ (suc n)
             --------------
-            → RawC n
+            → RawC Θ n
 
     -- boxing up a value
 
-    -- The grade of the box is *not* annotated: it is only lower-bounded by the
-    -- typing rule, so inference binds it existentially.
+    -- The grade says when the boxed value becomes usable.
 
-    box     : RawV n
-            → RawC (suc n)
+    box     : RExp Θ
+            → RawV Θ n
+            → RawC Θ (suc n)
             --------------
-            → RawC n
+            → RawC Θ n

@@ -621,3 +621,83 @@ mutual
 ⌜⌝ᵍ-subst σ Empty      = refl
 ⌜⌝ᵍ-subst σ (A |×|ᵍ B) = cong₂ _|×|_ (⌜⌝ᵍ-subst σ A) (⌜⌝ᵍ-subst σ B)
 ⌜⌝ᵍ-subst σ ([ ρ ]ᵍ A) = cong₂ [_]_ refl (⌜⌝ᵍ-subst σ A)
+
+-- Pointwise equality of substitutions is an equivalence, respected by
+-- composition, extension and lifting; composition is associative and unital.
+
+≐ˢ-refl : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → σ ≐ˢ σ
+≐ˢ-refl = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
+
+≐ˢ-sym : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → σ' ≐ˢ σ
+≐ˢ-sym p = mk≐ˢ (λ α → sym (≐ᵗ p α)) (λ i → sym (≐ʳ p i)) (λ i → sym (≐ᵉ p i))
+
+≐ˢ-trans : ∀ {Θ Θ'} {σ σ' σ'' : Subst Θ Θ'} → σ ≐ˢ σ' → σ' ≐ˢ σ'' → σ ≐ˢ σ''
+≐ˢ-trans p q = mk≐ˢ (λ α → trans (≐ᵗ p α) (≐ᵗ q α))
+                    (λ i → trans (≐ʳ p i) (≐ʳ q i))
+                    (λ i → trans (≐ᵉ p i) (≐ᵉ q i))
+
+≐ˢ-,ᵗ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (B : OVType Θ')
+      → (σ ,ᵗ B) ≐ˢ (σ' ,ᵗ B)
+≐ˢ-,ᵗ p B = mk≐ˢ (λ { zero → refl ; (suc α) → ≐ᵗ p α }) (≐ʳ p) (≐ᵉ p)
+
+≐ˢ-,ʳ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (ρ : RExp Θ')
+      → (σ ,ʳ ρ) ≐ˢ (σ' ,ʳ ρ)
+≐ˢ-,ʳ p ρ = mk≐ˢ (≐ᵗ p) (λ { zero → refl ; (suc i) → ≐ʳ p i }) (≐ᵉ p)
+
+≐ˢ-,ᵉ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (ε : EExp Θ')
+      → (σ ,ᵉ ε) ≐ˢ (σ' ,ᵉ ε)
+≐ˢ-,ᵉ p ε = mk≐ˢ (≐ᵗ p) (≐ʳ p) (λ { zero → refl ; (suc i) → ≐ᵉ p i })
+
+≐ˢ-↑ᵉ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (σ ↑ᵉ) ≐ˢ (σ' ↑ᵉ)
+≐ˢ-↑ᵉ p = mk≐ˢ (λ α → cong wkᵉ-v (≐ᵗ p α))
+               (λ i → cong wkᵉ-r (≐ʳ p i))
+               (λ { zero → refl ; (suc i) → cong wkᵉ-e (≐ᵉ p i) })
+
+⨟-idˡ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (idˢ ⨟ˢ σ) ≐ˢ σ
+⨟-idˡ σ = ≐ˢ-refl
+
+⨟-idʳ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (σ ⨟ˢ idˢ) ≐ˢ σ
+⨟-idʳ σ = mk≐ˢ (λ α → [id]ᵛ (sTy σ α)) (λ i → [id]ʳ (sR σ i)) (λ i → [id]ᵉ (sE σ i))
+
+⨟-assoc : ∀ {Θ Θ₁ Θ₂ Θ₃} → (σ : Subst Θ Θ₁) → (τ : Subst Θ₁ Θ₂) → (δ : Subst Θ₂ Θ₃)
+        → ((σ ⨟ˢ τ) ⨟ˢ δ) ≐ˢ (σ ⨟ˢ (τ ⨟ˢ δ))
+⨟-assoc σ τ δ = mk≐ˢ (λ α → [⨟]ᵛ (sTy σ α) τ δ)
+                     (λ i → [⨟]ʳ (sR σ i) τ δ)
+                     (λ i → [⨟]ᵉ (sE σ i) τ δ)
+
+⨟-congˡ : ∀ {Θ Θ₁ Θ₂} {σ σ' : Subst Θ Θ₁} → σ ≐ˢ σ' → (δ : Subst Θ₁ Θ₂)
+        → (σ ⨟ˢ δ) ≐ˢ (σ' ⨟ˢ δ)
+⨟-congˡ p δ = mk≐ˢ (λ α → cong (_[ δ ]ᵛ) (≐ᵗ p α))
+                   (λ i → cong (_[ δ ]ʳ) (≐ʳ p i))
+                   (λ i → cong (_[ δ ]ᵉ) (≐ᵉ p i))
+
+⨟-congʳ : ∀ {Θ Θ₁ Θ₂} → (σ : Subst Θ Θ₁) → {δ δ' : Subst Θ₁ Θ₂} → δ ≐ˢ δ'
+        → (σ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ')
+⨟-congʳ σ p = mk≐ˢ (λ α → [≐]ᵛ p (sTy σ α))
+                   (λ i → [≐]ʳ p (sR σ i))
+                   (λ i → [≐]ᵉ p (sE σ i))
+
+-- Lifting preserves the identity and composition
+
+↑ᵉ-id : ∀ {Θ} → (idˢ {Θ} ↑ᵉ) ≐ˢ idˢ
+↑ᵉ-id = mk≐ˢ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl })
+
+⨟-↑ᵉ : ∀ {Θ Θ₁ Θ₂} → (σ : Subst Θ Θ₁) → (δ : Subst Θ₁ Θ₂)
+     → ((σ ↑ᵉ) ⨟ˢ (δ ↑ᵉ)) ≐ˢ ((σ ⨟ˢ δ) ↑ᵉ)
+⨟-↑ᵉ σ δ = mk≐ˢ (λ α → wk-↑ᵉ-v δ (sTy σ α))
+                (λ i → wk-↑ᵉ-r δ (sR σ i))
+                (λ { zero → refl ; (suc i) → wk-↑ᵉ-e δ (sE σ i) })
+
+-- A weakening followed by an extension cancels, after any substitution
+
+wk-,ᵗ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
+        → ((ι ⨟ˢ wkˢᵗ) ⨟ˢ (σ ,ᵗ B)) ≐ˢ (ι ⨟ˢ σ)
+wk-,ᵗ-ˢ ι σ B = ≐ˢ-trans (⨟-assoc ι wkˢᵗ (σ ,ᵗ B)) (⨟-congʳ ι (wkˢᵗ-,ᵗ σ B))
+
+wk-,ʳ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (ρ : RExp Θ')
+        → ((ι ⨟ˢ wkˢʳ) ⨟ˢ (σ ,ʳ ρ)) ≐ˢ (ι ⨟ˢ σ)
+wk-,ʳ-ˢ ι σ ρ = ≐ˢ-trans (⨟-assoc ι wkˢʳ (σ ,ʳ ρ)) (⨟-congʳ ι (wkˢʳ-,ʳ σ ρ))
+
+wk-,ᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (ε : EExp Θ')
+        → ((ι ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵉ ε)) ≐ˢ (ι ⨟ˢ σ)
+wk-,ᵉ-ˢ ι σ ε = ≐ˢ-trans (⨟-assoc ι wkˢᵉ (σ ,ᵉ ε)) (⨟-congʳ ι (wkˢᵉ-,ᵉ σ ε))

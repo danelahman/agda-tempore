@@ -224,8 +224,6 @@ mutual
 
     -- boxing up a value/resource that is ready for use in at least `ρ` grade steps
 
-    -- DEVIATION: the grade is explicit; it is bound existentially by inference.
-
     box     : {A : OVType Θ}
             → {C : OCType Θ}
             → (ρ : RExp Θ)

@@ -63,14 +63,10 @@ open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
-open import TypeInference.Constraints.Properties S using (≐ˢ-sym)
-
 open import TypeInference.SolverImpl.Core.Occurs S
   using (occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c; occʳ-r; occʳ-v; occʳ-c)
 
 open import TypeInference.SolverImpl.Resid     S
-open import TypeInference.SolverImpl.State     S
-  using (≐ˢ-refl; ≐ˢ-trans; ⨟-idˡ; ⨟-idʳ; ⨟-assoc; ⨟-congˡ)
 open import TypeInference.SolverImpl.Eliminate S using (joinₑ; joinᵣ)
 open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ)
 

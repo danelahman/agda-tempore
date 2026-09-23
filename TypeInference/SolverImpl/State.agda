@@ -34,50 +34,8 @@ open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
-open import TypeInference.Constraints.Properties S using (≐ˢ-sym)
-
 open import TypeInference.SolverImpl.Core.Unify S using (Rig)
 open import TypeInference.SolverImpl.Resid      S
-
-≐ˢ-refl : ∀ {Θ Θ'} {σ : Subst Θ Θ'} → σ ≐ˢ σ
-≐ˢ-refl = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
-
-≐ˢ-trans : ∀ {Θ Θ'} {σ σ' σ'' : Subst Θ Θ'} → σ ≐ˢ σ' → σ' ≐ˢ σ'' → σ ≐ˢ σ''
-≐ˢ-trans p q = mk≐ˢ (λ α → trans (≐ᵗ p α) (≐ᵗ q α))
-                    (λ i → trans (≐ʳ p i) (≐ʳ q i))
-                    (λ i → trans (≐ᵉ p i) (≐ᵉ q i))
-
-⨟-idˡ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (idˢ ⨟ˢ σ) ≐ˢ σ
-⨟-idˡ σ = ≐ˢ-refl
-
-⨟-idʳ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (σ ⨟ˢ idˢ) ≐ˢ σ
-⨟-idʳ σ = mk≐ˢ (λ α → [id]ᵛ (sTy σ α)) (λ i → [id]ʳ (sR σ i)) (λ i → [id]ᵉ (sE σ i))
-
-⨟-assoc : ∀ {Θ Θ₁ Θ₂ Θ₃} → (σ : Subst Θ Θ₁) → (τ : Subst Θ₁ Θ₂) → (δ : Subst Θ₂ Θ₃)
-        → ((σ ⨟ˢ τ) ⨟ˢ δ) ≐ˢ (σ ⨟ˢ (τ ⨟ˢ δ))
-⨟-assoc σ τ δ = mk≐ˢ (λ α → [⨟]ᵛ (sTy σ α) τ δ)
-                     (λ i → [⨟]ʳ (sR σ i) τ δ)
-                     (λ i → [⨟]ᵉ (sE σ i) τ δ)
-
-⨟-congˡ : ∀ {Θ Θ₁ Θ₂} {σ σ' : Subst Θ Θ₁} → σ ≐ˢ σ' → (δ : Subst Θ₁ Θ₂)
-        → (σ ⨟ˢ δ) ≐ˢ (σ' ⨟ˢ δ)
-⨟-congˡ p δ = mk≐ˢ (λ α → cong (_[ δ ]ᵛ) (≐ᵗ p α))
-                   (λ i → cong (_[ δ ]ʳ) (≐ʳ p i))
-                   (λ i → cong (_[ δ ]ᵉ) (≐ᵉ p i))
-
-⨟-congʳ : ∀ {Θ Θ₁ Θ₂} → (σ : Subst Θ Θ₁) → {δ δ' : Subst Θ₁ Θ₂} → δ ≐ˢ δ'
-        → (σ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ')
-⨟-congʳ σ p = mk≐ˢ (λ α → [≐]ᵛ p (sTy σ α))
-                   (λ i → [≐]ʳ p (sR σ i))
-                   (λ i → [≐]ᵉ p (sE σ i))
-
--- Two lifts compose to the lift of the composite
-
-⨟-↑ᵉ : ∀ {Θ Θ₁ Θ₂} → (σ : Subst Θ Θ₁) → (δ : Subst Θ₁ Θ₂)
-     → ((σ ↑ᵉ) ⨟ˢ (δ ↑ᵉ)) ≐ˢ ((σ ⨟ˢ δ) ↑ᵉ)
-⨟-↑ᵉ σ δ = mk≐ˢ (λ α → wk-↑ᵉ-v δ (sTy σ α))
-                (λ i → wk-↑ᵉ-r δ (sR σ i))
-                (λ { zero → refl ; (suc i) → wk-↑ᵉ-e δ (sE σ i) })
 
 -- A substitution out of an extended scope is its own restriction
 -- extended by the image of the new variable.

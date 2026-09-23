@@ -1,7 +1,8 @@
 ------------------------------------------------------------------
 -- Soundness of constraint generation: a solution of a generated  --
 -- constraint elaborates to a mirrored derivation that erases     --
--- back to the raw term it was generated from.                    --
+-- back to the raw term it was generated from, its annotations    --
+-- instantiated by the solution.                                  --
 --                                                                --
 -- Follows the soundness proof of Tavits's MSc thesis             --
 -- (U. Tartu, 2025).                                              --
@@ -34,6 +35,7 @@ open import TypeInference.OpenSyntax.Hyps           S
 open import TypeInference.OpenSyntax.Language       S
 
 open import TypeInference.Raw.Syntax S
+open import TypeInference.Raw.Subst  S
 open import TypeInference.Erase      S
 
 open import TypeInference.Constraints.Syntax       S
@@ -237,35 +239,59 @@ co²ᵗ²ᵉ-ctx↑ σ B₁ B₂ ε₁ ε₂ Γ =
                    (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))))
         (cong wkᵉ-ctx (co²ᵗ²ᵉ-ctx σ B₁ B₂ ε₁ ε₂ Γ))
 
--- `∃ᵗ∃ʳ` — boxing
+-- The interpretation of the raw term's grade variables, weakened under
+-- the binders and composed with the extended solution, is the
+-- interpretation composed with the solution.
 
-coᵗʳ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
-         → (Γ : OCtx Θ n)
-         → wkʳ-ctx (wkᵗ-ctx Γ) [ σ ,ᵗ B ,ʳ ρ ]ᶜᵗˣ ≡ Γ [ σ ]ᶜᵗˣ
-coᵗʳ-ctx σ B ρ Γ = trans (wk-,ʳ-ctx (σ ,ᵗ B) ρ (wkᵗ-ctx Γ)) (wk-,ᵗ-ctx σ B Γ)
+co²ᵗ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
+       → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂) ≐ˢ ι ⨟ˢ σ
+co²ᵗ-ˢ ι σ B₁ B₂ = ≐ˢ-trans (wk-,ᵗ-ˢ (ι ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁) B₂) (wk-,ᵗ-ˢ ι σ B₁)
 
-coᵗʳ-v : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
-       → (A : OVType Θ)
-       → wkʳ-v (wkᵗ-v A) [ σ ,ᵗ B ,ʳ ρ ]ᵛ ≡ A [ σ ]ᵛ
-coᵗʳ-v σ B ρ A = trans (wk-,ʳ-v (σ ,ᵗ B) ρ (wkᵗ-v A)) (wk-,ᵗ-v σ B A)
+co²ᵗᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
+        → (ε : EExp Θ')
+        → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε) ≐ˢ ι ⨟ˢ σ
+co²ᵗᵉ-ˢ ι σ B₁ B₂ ε =
+  ≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁ ,ᵗ B₂) ε) (co²ᵗ-ˢ ι σ B₁ B₂)
 
-coᵗʳ-e : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
-       → (ε : EExp Θ)
-       → wkʳ-e (wkᵗ-e ε) [ σ ,ᵗ B ,ʳ ρ ]ᵉ ≡ ε [ σ ]ᵉ
-coᵗʳ-e σ B ρ ε = trans (wk-,ʳ-e (σ ,ᵗ B) ρ (wkᵗ-e ε)) (wk-,ᵗ-e σ B ε)
+co²ᵗʳ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
+        → (ρ : RExp Θ')
+        → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ) ≐ˢ ι ⨟ˢ σ
+co²ᵗʳ-ˢ ι σ B₁ B₂ ρ =
+  ≐ˢ-trans (wk-,ʳ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁ ,ᵗ B₂) ρ) (co²ᵗ-ˢ ι σ B₁ B₂)
 
-coᵗʳ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ρ : RExp Θ')
-       → (ρ₀ : RExp Θ)
-       → wkʳ-r (wkᵗ-r ρ₀) [ σ ,ᵗ B ,ʳ ρ ]ʳ ≡ ρ₀ [ σ ]ʳ
-coᵗʳ-r σ B ρ ρ₀ = trans (wk-,ʳ-r (σ ,ᵗ B) ρ (wkᵗ-r ρ₀)) (wk-,ᵗ-r σ B ρ₀)
+coᵗ²ᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
+        → (ε₁ ε₂ : EExp Θ')
+        → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵗ B ,ᵉ ε₁ ,ᵉ ε₂) ≐ˢ ι ⨟ˢ σ
+coᵗ²ᵉ-ˢ ι σ B ε₁ ε₂ =
+  ≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ) (σ ,ᵗ B ,ᵉ ε₁) ε₂)
+           (≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ) (σ ,ᵗ B) ε₁) (wk-,ᵗ-ˢ ι σ B))
+
+co²ᵗ²ᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
+         → (ε₁ ε₂ : EExp Θ')
+         → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂)
+           ≐ˢ ι ⨟ˢ σ
+co²ᵗ²ᵉ-ˢ ι σ B₁ B₂ ε₁ ε₂ =
+  ≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ) (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁) ε₂)
+           (co²ᵗᵉ-ˢ ι σ B₁ B₂ ε₁)
+
+-- the same, one `∀ᵉ` deeper: a handler clause
+
+co²ᵗ²ᵉ-ˢ↑ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ')
+          → (ε₁ ε₂ : EExp Θ')
+          → ((ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) ↑ᵉ)
+              ⨟ˢ ((σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂) ↑ᵉ)
+            ≐ˢ (ι ⨟ˢ σ) ↑ᵉ
+co²ᵗ²ᵉ-ˢ↑ ι σ B₁ B₂ ε₁ ε₂ =
+  ≐ˢ-trans (⨟-↑ᵉ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ) (σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂))
+           (≐ˢ-↑ᵉ (co²ᵗ²ᵉ-ˢ ι σ B₁ B₂ ε₁ ε₂))
 
 mutual
 
-  soundV : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
-         → (Γ : OCtx Θ n) → (V : RawV n) → (A : OVType Θ)
-         → σ ⊨[ Q ] genV Γ V A
-         ------------------------------------------------------
-         → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V)
+  soundVˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+          → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (V : RawV Θ₀ n) → (A : OVType Θ)
+          → σ ⊨[ Q ] genVˢ ι Γ V A
+          --------------------------------------------------------------------
+          → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ ι ⨟ˢ σ ]ᴿᵛ)
 
   -- variables
   --
@@ -274,7 +300,7 @@ mutual
   -- once the type and the grade are aligned, and the subtyping atom is
   -- the `subV` that carries the declared type to the expected one.
 
-  soundV {σ = σ} {Q = Q} Γ (var i) A (st , ok) =
+  soundVˢ {σ = σ} {Q = Q} ι Γ (var i) A (st , ok) =
     subV D₀ st' , cong var (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i)
     where
       x = lookup-var (Γ [ σ ]ᶜᵗˣ) i
@@ -290,25 +316,27 @@ mutual
 
   -- base-typed constants, unit, booleans
 
-  soundV Γ (const B c) A eq = ty-subst eq (const B c) , ⌊ty⌋ eq (const B c)
-  soundV Γ ⋆           A eq = ty-subst eq ⋆          , ⌊ty⌋ eq ⋆
-  soundV Γ true        A eq = ty-subst eq true       , ⌊ty⌋ eq true
-  soundV Γ false       A eq = ty-subst eq false      , ⌊ty⌋ eq false
+  soundVˢ ι Γ (const B c) A eq = ty-subst eq (const B c) , ⌊ty⌋ eq (const B c)
+  soundVˢ ι Γ ⋆           A eq = ty-subst eq ⋆          , ⌊ty⌋ eq ⋆
+  soundVˢ ι Γ true        A eq = ty-subst eq true       , ⌊ty⌋ eq true
+  soundVˢ ι Γ false       A eq = ty-subst eq false      , ⌊ty⌋ eq false
 
   -- pairing
 
-  soundV {Θ = Θ} {σ = σ} Γ ⦉ V₁ , V₂ ⦊ A (B₁ , B₂ , eq , s₁ , s₂) =
+  soundVˢ {Θ = Θ} {σ = σ} ι Γ ⦉ V₁ , V₂ ⦊ A (B₁ , B₂ , eq , s₁ , s₂) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
       α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
       α₂ = tvar (newᵗ {Θ +ty})
 
       pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
       pA = co²ᵗ-v   σ B₁ B₂ A
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
 
-      ih₁ = soundV Γ↑ V₁ α₁ s₁
-      ih₂ = soundV Γ↑ V₂ α₂ s₂
+      ih₁ = soundVˢ ι↑ Γ↑ V₁ α₁ s₁
+      ih₂ = soundVˢ ι↑ Γ↑ V₂ α₂ s₂
 
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
@@ -317,14 +345,15 @@ mutual
 
       q = trans (⌊ty⌋ (trans eq pA) ⦉ D₁ , D₂ ⦊)
                 (cong₂ ⦉_,_⦊
-                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (proj₂ ih₁))
-                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (proj₂ ih₂)))
+                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V₁)))
+                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V₂))))
 
   -- lambda abstraction
 
-  soundV {Θ = Θ} {σ = σ} {Q = Q} Γ (lam M) A (B₁ , B₂ , ε , st , s) =
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (lam M) A (B₁ , B₂ , ε , st , s) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
       α₁ = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
       α₂ = wkᵉ-v (tvar (newᵗ {Θ +ty}))
@@ -332,34 +361,39 @@ mutual
 
       pΓ = co²ᵗᵉ-ctx σ B₁ B₂ ε Γ
       pA = co²ᵗᵉ-v   σ B₁ B₂ ε A
+      pι = co²ᵗᵉ-ˢ   ι σ B₁ B₂ ε
 
-      ih = soundC (Γ↑ ∷ α₁) M α₂ e s
+      ih = soundCˢ ι↑ (Γ↑ ∷ α₁) M α₂ e s
 
       D₀ = ctx-substᶜ (cong (_∷ _) pΓ) (proj₁ ih)
 
       D = subV (lam D₀) (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
 
-      q = cong lam (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih)) (proj₂ ih))
+      q = cong lam (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih))
+                          (trans (proj₂ ih) ([≐]ᴿᶜ pι M)))
 
 
-  soundC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
-         → (Γ : OCtx Θ n) → (M : RawC n) → (A : OVType Θ) → (t : EExp Θ)
-         → σ ⊨[ Q ] genC Γ M (A ‼ t)
-         ---------------------------------------------------------------------
-         → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ‼ t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M)
+  soundCˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+          → (ι : Subst Θ₀ Θ) → (Γ : OCtx Θ n) → (M : RawC Θ₀ n)
+          → (A : OVType Θ) → (t : EExp Θ)
+          → σ ⊨[ Q ] genCˢ ι Γ M (A ‼ t)
+          ---------------------------------------------------------------------
+          → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ‼ t [ σ ]ᵉ) ]
+              (⌊ D ⌋ᶜ ≡ M [ ι ⨟ˢ σ ]ᴿᶜ)
 
   -- returning a value
 
-  soundC Γ (return V) A t (s , le) =
+  soundCˢ ι Γ (return V) A t (s , le) =
     coerce le (return (proj₁ ih)) , cong return (proj₂ ih)
     where
-      ih = soundV Γ V A s
+      ih = soundVˢ ι Γ V A s
 
   -- sequential composition
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (M₁ ⨟ M₂) A t (B , ε₁ , ε₂ , s₁ , s₂ , le) =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (M₁ ⨟ M₂) A t (B , ε₁ , ε₂ , s₁ , s₂ , le) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx Γ))
       A↑ = wkᵉ-v (wkᵉ-v (wkᵗ-v A))
       α  = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ})))
@@ -369,9 +403,10 @@ mutual
       pΓ = coᵗ²ᵉ-ctx σ B ε₁ ε₂ Γ
       pA = coᵗ²ᵉ-v   σ B ε₁ ε₂ A
       pt = coᵗ²ᵉ-e   σ B ε₁ ε₂ t
+      pι = coᵗ²ᵉ-ˢ   ι σ B ε₁ ε₂
 
-      ih₁ = soundC Γ↑ M₁ α e₁ s₁
-      ih₂ = soundC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) M₂ A↑ e₂ s₂
+      ih₁ = soundCˢ ι↑ Γ↑ M₁ α e₁ s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) M₂ A↑ e₂ s₂
 
       c₂ = cong (λ Γ₀ → Γ₀ ⟨ _ ⟩ ∷ _) pΓ
 
@@ -381,15 +416,17 @@ mutual
       D = coerce (subst (λ x → Q ⊩ _ ≾̂ₑ x) pt le) (D₁ ⨟ D₂)
 
       q = cong₂ _⨟_
-                (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (proj₂ ih₁))
+                (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M₁)))
                 (trans (⌊c⌋ (cong (_‼ _) pA) (ctx-substᶜ c₂ (proj₁ ih₂)))
-                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M₂))))
 
   -- function application
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (V₁ · V₂) A t (B₁ , B₂ , ε , s₁ , s₂ , st , le) =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (V₁ · V₂) A t (B₁ , B₂ , ε , s₁ , s₂ , st , le) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
       α  = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
       β  = wkᵉ-v (tvar (newᵗ {Θ +ty}))
@@ -398,9 +435,10 @@ mutual
       pΓ = co²ᵗᵉ-ctx σ B₁ B₂ ε Γ
       pA = co²ᵗᵉ-v   σ B₁ B₂ ε A
       pt = co²ᵗᵉ-e   σ B₁ B₂ ε t
+      pι = co²ᵗᵉ-ˢ   ι σ B₁ B₂ ε
 
-      ih₁ = soundV Γ↑ V₁ (α ⇒ (β ‼ e)) s₁
-      ih₂ = soundV Γ↑ V₂ α s₂
+      ih₁ = soundVˢ ι↑ Γ↑ V₁ (α ⇒ (β ‼ e)) s₁
+      ih₂ = soundVˢ ι↑ Γ↑ V₂ α s₂
 
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
@@ -410,14 +448,15 @@ mutual
                   ‼ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₂ _·_
-                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (proj₂ ih₁))
-                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (proj₂ ih₂))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V₁)))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V₂)))
 
   -- pattern-matching
 
-  soundC {Θ = Θ} {σ = σ} Γ (match V `in M) A t (B₁ , B₂ , s₁ , s₂) =
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (match V `in M) A t (B₁ , B₂ , s₁ , s₂) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
       A↑ = wkᵗ-v (wkᵗ-v A)
       t↑ = wkᵗ-e (wkᵗ-e t)
@@ -427,9 +466,10 @@ mutual
       pΓ = co²ᵗ-ctx σ B₁ B₂ Γ
       pA = co²ᵗ-v   σ B₁ B₂ A
       pt = co²ᵗ-e   σ B₁ B₂ t
+      pι = co²ᵗ-ˢ   ι σ B₁ B₂
 
-      ih₁ = soundV Γ↑ V (α₁ |×| α₂) s₁
-      ih₂ = soundC (Γ↑ ∷ α₁ ∷ α₂) M A↑ t↑ s₂
+      ih₁ = soundVˢ ι↑ Γ↑ V (α₁ |×| α₂) s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ∷ α₁ ∷ α₂) M A↑ t↑ s₂
 
       c₂ = cong (λ Γ₀ → Γ₀ ∷ _ ∷ _) pΓ
 
@@ -439,32 +479,34 @@ mutual
       D = match D₁ `in D₂
 
       q = cong₂ match_`in_
-                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (proj₂ ih₁))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
                 (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
-                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M))))
 
   -- empty type elimination
 
-  soundC Γ (absurd V) A t s =
+  soundCˢ ι Γ (absurd V) A t s =
     absurd (proj₁ ih) , cong absurd (proj₂ ih)
     where
-      ih = soundV Γ V Empty s
+      ih = soundVˢ ι Γ V Empty s
 
   -- boolean elimination
 
-  soundC Γ (if V `then M₁ `else M₂) A t (s₀ , s₁ , s₂) =
+  soundCˢ ι Γ (if V `then M₁ `else M₂) A t (s₀ , s₁ , s₂) =
     if (proj₁ ih₀) `then (proj₁ ih₁) `else (proj₁ ih₂) ,
     cong₃ if_`then_`else_ (proj₂ ih₀) (proj₂ ih₁) (proj₂ ih₂)
     where
-      ih₀ = soundV Γ V Bool s₀
-      ih₁ = soundC Γ M₁ A t s₁
-      ih₂ = soundC Γ M₂ A t s₂
+      ih₀ = soundVˢ ι Γ V Bool s₀
+      ih₁ = soundCˢ ι Γ M₁ A t s₁
+      ih₂ = soundCˢ ι Γ M₂ A t s₂
 
   -- performing algebraic operations
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (perform op V M) A t (ε , s₁ , s₂ , le) =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (perform op V M) A t (ε , s₁ , s₂ , le) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵉ
       σ' = σ ,ᵉ ε
       Γ↑ = wkᵉ-ctx Γ
       A↑ = wkᵉ-v A
@@ -473,11 +515,12 @@ mutual
       pΓ = wk-,ᵉ-ctx σ ε Γ
       pA = wk-,ᵉ-v   σ ε A
       pt = wk-,ᵉ-e   σ ε t
+      pι = wk-,ᵉ-ˢ   ι σ ε
       pp = ⌜⌝ᵍ-subst σ' (param op)
       pa = ⌜⌝ᵍ-subst σ' (arity op)
 
-      ih₁ = soundV Γ↑ V ⌜ param op ⌝ᵍ s₁
-      ih₂ = soundC (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) M A↑ e s₂
+      ih₁ = soundVˢ ι↑ Γ↑ V ⌜ param op ⌝ᵍ s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) M A↑ e s₂
 
       c₂ = cong₂ (λ Γ₀ A₀ → Γ₀ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ A₀) pΓ pa
 
@@ -488,15 +531,18 @@ mutual
 
       q = cong₂ (perform op)
                 (trans (⌊ty⌋ pp (ctx-substᵛ pΓ (proj₁ ih₁)))
-                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (proj₂ ih₁)))
+                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁))
+                              (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V))))
                 (trans (⌊c⌋ (cong (_‼ _) pA) (ctx-substᶜ c₂ (proj₁ ih₂)))
-                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι M))))
 
   -- explicit delaying of a computation
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (delay τ M) A t (ε , s , le) =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (delay τ M) A t (ε , s , le) =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵉ
       Γ↑ = wkᵉ-ctx Γ
       A↑ = wkᵉ-v A
       e  = evar (newᵉ {Θ})
@@ -504,8 +550,9 @@ mutual
       pΓ = wk-,ᵉ-ctx σ ε Γ
       pA = wk-,ᵉ-v   σ ε A
       pt = wk-,ᵉ-e   σ ε t
+      pι = wk-,ᵉ-ˢ   ι σ ε
 
-      ih = soundC (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) M A↑ e s
+      ih = soundCˢ ι↑ (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) M A↑ e s
 
       c₀ = cong (_⟨ rconst (of-natʳ τ) ⟩) pΓ
 
@@ -515,17 +562,19 @@ mutual
 
       q = cong (delay τ)
                (trans (⌊c⌋ (cong (_‼ _) pA) (ctx-substᶜ c₀ (proj₁ ih)))
-                      (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih)) (proj₂ ih)))
+                      (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih))
+                             (trans (proj₂ ih) ([≐]ᴿᶜ pι M))))
 
   -- effect handling
   --
   -- The clause family is typed one `∀ᵉ` deeper; the clause equalities
   -- hold pointwise, so the erasure of the family needs `fun-ext`.
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (handle M `with H `in N) A t
-         (B₁ , B₂ , ε₁ , ε₂ , s₁ , s₂ , st , le , cls) =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (handle M `with H `in N) A t
+          (B₁ , B₂ , ε₁ , ε₂ , s₁ , s₂ , st , le , cls) =
     D , q
     where
+      ι↑  = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       σ'  = σ ,ᵗ B₁ ,ᵗ B₂ ,ᵉ ε₁ ,ᵉ ε₂
       Γ↑  = wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))
       α   = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
@@ -541,9 +590,11 @@ mutual
       pt  = co²ᵗ²ᵉ-e    σ B₁ B₂ ε₁ ε₂ t
       pΓ⇑ = co²ᵗ²ᵉ-ctx↑ σ B₁ B₂ ε₁ ε₂ Γ
       pγ⇑ = wk-↑ᵉ-v σ' γ
+      pι  = co²ᵗ²ᵉ-ˢ    ι σ B₁ B₂ ε₁ ε₂
+      pι⇑ = co²ᵗ²ᵉ-ˢ↑   ι σ B₁ B₂ ε₁ ε₂
 
-      ih₁ = soundC Γ↑ M α e₁ s₁
-      ih₂ = soundC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N γ e₂ s₂
+      ih₁ = soundCˢ ι↑ Γ↑ M α e₁ s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N γ e₂ s₂
 
       c₂ = cong (λ Γ₀ → Γ₀ ⟨ ∣ ε₁ ∣̂ᵉ ⟩ ∷ B₁) pΓ
 
@@ -552,9 +603,10 @@ mutual
 
       ihH : (op : Op) → _
       ihH op =
-        soundC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
-                   ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
-               (H op) γ⇑ (econst (op-grade op) ·̂ₑ e'') (cls op)
+        soundCˢ (ι↑ ↑ᵉ)
+                (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                    ∷ [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
+                (H op) γ⇑ (econst (op-grade op) ·̂ₑ e'') (cls op)
 
       cH : (op : Op) → _
       cH op =
@@ -572,17 +624,19 @@ mutual
                   ‼ₛ subst (λ z → Q ⊩ _ ≾̂ₑ z) pt le)
 
       q = cong₃ (λ x y z → handle x `with y `in z)
-                (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (proj₂ ih₁))
+                (trans (⌊ctxᶜ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᶜ pι M)))
                 (fun-ext (λ op →
                    trans (⌊c⌋ (cong (_‼ _) pγ⇑) (ctx-substᶜ (cH op) (proj₁ (ihH op))))
-                         (trans (⌊ctxᶜ⌋ (cH op) (proj₁ (ihH op))) (proj₂ (ihH op)))))
-                (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂))
+                         (trans (⌊ctxᶜ⌋ (cH op) (proj₁ (ihH op)))
+                                (trans (proj₂ (ihH op)) ([≐]ᴿᶜ pι⇑ (H op))))))
+                (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N)))
 
   -- unboxing a boxed variable
 
-  soundC {Θ = Θ} {σ = σ} {Q = Q} Γ (unbox i N) A t (B₁ , B₂ , ρ , eq , le , st , s') =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox i N) A t (B₁ , B₂ , ρ , eq , le , st , s') =
     D , q
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
       σ' = σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ
       Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
       A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
@@ -592,6 +646,7 @@ mutual
       pΓ = co²ᵗʳ-ctx σ B₁ B₂ ρ Γ
       pA = co²ᵗʳ-v   σ B₁ B₂ ρ A
       pt = co²ᵗʳ-e   σ B₁ B₂ ρ t
+      pι = co²ᵗʳ-ˢ   ι σ B₁ B₂ ρ
 
       -- the `∃ᵗ`-bound variables are the payload `B₁` and the binder `B₂`
 
@@ -627,7 +682,7 @@ mutual
 
       ok = subst (λ z → Q ⊩ z ≾̂ᵣ ρ) lgr le
 
-      ih = soundC (Γ↑ ∷ β) N A↑ t↑ s'
+      ih = soundCˢ ι↑ (Γ↑ ∷ β) N A↑ t↑ s'
 
       c₀ = cong₂ _∷_ pΓ pβ
 
@@ -639,41 +694,77 @@ mutual
                 (trans (var-pos-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))
                        (var-pos-lookup (Γ [ σ ]ᶜᵗˣ) i))
                 (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih)))
-                       (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih)) (proj₂ ih)))
+                       (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih))
+                              (trans (proj₂ ih) ([≐]ᴿᶜ pι N))))
 
   -- boxing up a value
+  --
+  -- The grade is the annotation, instantiated; only the payload's type is
+  -- a witness.
 
-  soundC {Θ = Θ} {σ = σ} Γ (box V N) A t (B , ρ , s₁ , s₂) =
+  soundCˢ {Θ = Θ} {σ = σ} ι Γ (box ρ V N) A t (B , s₁ , s₂) =
     D , q
     where
-      σ' = σ ,ᵗ B ,ʳ ρ
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
-      A↑ = wkʳ-v (wkᵗ-v A)
-      t↑ = wkʳ-e (wkᵗ-e t)
-      α  = wkʳ-v (tvar (newᵗ {Θ}))
-      r  = rvar (newʳ {Θ +ty})
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      σ' = σ ,ᵗ B
+      Γ↑ = wkᵗ-ctx Γ
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      α  = tvar (newᵗ {Θ})
+      r  = ρ [ ι↑ ]ʳ
+      ρ' = ρ [ ι ⨟ˢ σ ]ʳ
 
-      pΓ = coᵗʳ-ctx σ B ρ Γ
-      pA = coᵗʳ-v   σ B ρ A
-      pt = coᵗʳ-e   σ B ρ t
+      pΓ = wk-,ᵗ-ctx σ B Γ
+      pA = wk-,ᵗ-v   σ B A
+      pt = wk-,ᵗ-e   σ B t
+      pι = wk-,ᵗ-ˢ   ι σ B
 
-      ih₁ = soundV (Γ↑ ⟨ r ⟩) V α s₁
-      ih₂ = soundC (Γ↑ ∷ [ r ] α) N A↑ t↑ s₂
+      pr : r [ σ' ]ʳ ≡ ρ'
+      pr = trans ([⨟]ʳ ρ ι↑ σ') ([≐]ʳ pι ρ)
 
-      c₁ = cong (_⟨ ρ ⟩) pΓ
-      c₂ = cong (_∷ ([ ρ ] (α [ σ' ]ᵛ))) pΓ
+      ih₁ = soundVˢ ι↑ (Γ↑ ⟨ r ⟩) V α s₁
+      ih₂ = soundCˢ ι↑ (Γ↑ ∷ [ r ] α) N A↑ t↑ s₂
+
+      c₁ = cong₂ _⟨_⟩ pΓ pr
+      c₂ = cong₂ (λ Γ₀ ρ₀ → Γ₀ ∷ [ ρ₀ ] B) pΓ pr
 
       D₁ = ctx-substᵛ c₁ (proj₁ ih₁)
       D₂ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂))
 
-      D = box ρ D₁ D₂
+      D = box ρ' D₁ D₂
 
-      q = cong₂ box
-                (trans (⌊ctxᵛ⌋ c₁ (proj₁ ih₁)) (proj₂ ih₁))
+      q = cong₂ (box ρ')
+                (trans (⌊ctxᵛ⌋ c₁ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V)))
                 (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
-                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂)) (proj₂ ih₂)))
+                       (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
+                              (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N))))
 
--- Sanity checks: three closed examples, solved by the identity
+-- Generation for a raw term over the scope of the context: the program's
+-- annotations are instantiated by the solution.
+
+soundV : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+       → (Γ : OCtx Θ n) → (V : RawV Θ n) → (A : OVType Θ)
+       → σ ⊨[ Q ] genV Γ V A
+       --------------------------------------------------------------
+       → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢V⦂ A [ σ ]ᵛ) ] (⌊ D ⌋ᵛ ≡ V [ σ ]ᴿᵛ)
+
+soundV {σ = σ} Γ V A s =
+  proj₁ ih , trans (proj₂ ih) ([≐]ᴿᵛ (⨟-idˡ σ) V)
+  where
+    ih = soundVˢ idˢ Γ V A s
+
+soundC : ∀ {Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
+       → (Γ : OCtx Θ n) → (M : RawC Θ n) → (A : OVType Θ) → (t : EExp Θ)
+       → σ ⊨[ Q ] genC Γ M (A ‼ t)
+       -----------------------------------------------------------------------
+       → Σ[ D ∈ (Q ∣ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A [ σ ]ᵛ ‼ t [ σ ]ᵉ) ] (⌊ D ⌋ᶜ ≡ M [ σ ]ᴿᶜ)
+
+soundC {σ = σ} Γ M A t s =
+  proj₁ ih , trans (proj₂ ih) ([≐]ᴿᶜ (⨟-idˡ σ) M)
+  where
+    ih = soundCˢ idˢ Γ M A t s
+
+-- Sanity checks: four closed examples, solved by the identity
 -- substitution and the empty hypothesis set, elaborated and erased
 -- back.
 
@@ -707,3 +798,13 @@ private
 
   ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox zero (return ⋆)
   ex-unbox-erase = refl
+
+  -- boxing a value: the `∃ᵗ` witness is the payload's type, the grade is the
+  -- annotation
+
+  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ Unit ‼ ûₑ
+  ex-box = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} ∅ᶜ (box ûᵣ ⋆ (return ⋆)) Unit ûₑ
+                         (Unit , refl , refl , ⊩≾̂ₑ-refl))
+
+  ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box ûᵣ ⋆ (return ⋆)
+  ex-box-erase = refl

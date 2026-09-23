@@ -15,7 +15,8 @@
 -- by `_≐ᵥ_` and the slack is passed on to the subterms.          --
 --                                                                --
 -- Under a binder the arguments of the recursive calls are        --
--- weakened; the constraints are built inside the innermost       --
+-- weakened, and so is the interpretation of the raw term's grade --
+-- variables; the constraints are built inside the innermost      --
 -- binder.                                                        --
 ------------------------------------------------------------------
 
@@ -39,6 +40,7 @@ open Operations Ops
 open import TypeInference.OpenSyntax.Grades   S
 open import TypeInference.OpenSyntax.Types    S
 open import TypeInference.OpenSyntax.Contexts S
+open import TypeInference.OpenSyntax.Subst    S
 
 open import TypeInference.Raw.Syntax S
 
@@ -51,26 +53,31 @@ varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint 
 varConstraint Γ i A =
   (lookup-ty Γ i ≾̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
 
+-- `genVˢ ι` and `genCˢ ι` generate for a raw term whose grade variables
+-- `ι` interprets in the generation scope. Under a binder `ι` is composed
+-- with the binder's weakening, so the recursion stays on the subterms.
+
 mutual
 
-  genV : ∀ {Θ n} → OCtx Θ n → RawV n → OVType Θ → Constraint Θ
+  genVˢ : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawV Θ₀ n → OVType Θ → Constraint Θ
 
   -- variables
 
-  genV Γ (var i) A = varConstraint Γ i A
+  genVˢ ι Γ (var i) A = varConstraint Γ i A
 
   -- base-typed constants, unit, booleans
 
-  genV Γ (const B c) A = Base B ≐ᵥ A
-  genV Γ ⋆           A = Unit ≐ᵥ A
-  genV Γ true        A = Bool ≐ᵥ A
-  genV Γ false       A = Bool ≐ᵥ A
+  genVˢ ι Γ (const B c) A = Base B ≐ᵥ A
+  genVˢ ι Γ ⋆           A = Unit ≐ᵥ A
+  genVˢ ι Γ true        A = Bool ≐ᵥ A
+  genVˢ ι Γ false       A = Bool ≐ᵥ A
 
   -- pairing
 
-  genV {Θ} Γ ⦉ V₁ , V₂ ⦊ A =
-    ∃ᵗ (∃ᵗ ((α₁ |×| α₂ ≐ᵥ A↑) ∧̂ genV Γ↑ V₁ α₁ ∧̂ genV Γ↑ V₂ α₂))
+  genVˢ {Θ = Θ} ι Γ ⦉ V₁ , V₂ ⦊ A =
+    ∃ᵗ (∃ᵗ ((α₁ |×| α₂ ≐ᵥ A↑) ∧̂ genVˢ ι↑ Γ↑ V₁ α₁ ∧̂ genVˢ ι↑ Γ↑ V₂ α₂))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
       α₂ = tvar (newᵗ {Θ +ty})
       A↑ = wkᵗ-v (wkᵗ-v A)
@@ -81,9 +88,10 @@ mutual
   -- The domain is contravariant, so the body is typed at the arrow the
   -- lambda itself synthesises and that arrow subtypes into the expected type.
 
-  genV {Θ} Γ (lam M) A =
-    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genC (Γ↑ ∷ α₁) M (α₂ ‼ e))))
+  genVˢ {Θ = Θ} ι Γ (lam M) A =
+    ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ‼ e))))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       α₁ = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
       α₂ = wkᵉ-v (tvar (newᵗ {Θ +ty}))
       e  = evar (newᵉ {Θ +ty +ty})
@@ -91,19 +99,20 @@ mutual
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
 
-  genC : ∀ {Θ n} → OCtx Θ n → RawC n → OCType Θ → Constraint Θ
+  genCˢ : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawC Θ₀ n → OCType Θ → Constraint Θ
 
   -- returning a value
 
-  genC Γ (return V) (A ‼ t) = genV Γ V A ∧̂ (ûₑ ≾̂ₑᶜ t)
+  genCˢ ι Γ (return V) (A ‼ t) = genVˢ ι Γ V A ∧̂ (ûₑ ≾̂ₑᶜ t)
 
   -- sequential composition
 
-  genC {Θ} Γ (M₁ ⨟ M₂) (A ‼ t) =
-    ∃ᵗ (∃ᵉ (∃ᵉ (  genC Γ↑ M₁ (α ‼ e₁)
-                ∧̂ genC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) M₂ (A↑ ‼ e₂)
+  genCˢ {Θ = Θ} ι Γ (M₁ ⨟ M₂) (A ‼ t) =
+    ∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M₁ (α ‼ e₁)
+                ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) M₂ (A↑ ‼ e₂)
                 ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑))))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       α  = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ})))
       e₁ = wkᵉ-e (evar (newᵉ {Θ +ty}))
       e₂ = evar (newᵉ {Θ +ty +e})
@@ -116,12 +125,13 @@ mutual
   -- The function's own result type is synthesised and then reconciled with
   -- the expected one, as its latent effect already is.
 
-  genC {Θ} Γ (V₁ · V₂) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ᵉ (  genV Γ↑ V₁ (α ⇒ (β ‼ e))
-                ∧̂ genV Γ↑ V₂ α
+  genCˢ {Θ = Θ} ι Γ (V₁ · V₂) (A ‼ t) =
+    ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V₁ (α ⇒ (β ‼ e))
+                ∧̂ genVˢ ι↑ Γ↑ V₂ α
                 ∧̂ (β ≾̂ᵥᶜ A↑)
                 ∧̂ (e ≾̂ₑᶜ t↑))))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
       α  = wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ})))
       β  = wkᵉ-v (tvar (newᵗ {Θ +ty}))
       e  = evar (newᵉ {Θ +ty +ty})
@@ -131,9 +141,10 @@ mutual
 
   -- pattern-matching
 
-  genC {Θ} Γ (match V `in M) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (genV Γ↑ V (α₁ |×| α₂) ∧̂ genC (Γ↑ ∷ α₁ ∷ α₂) M (A↑ ‼ t↑)))
+  genCˢ {Θ = Θ} ι Γ (match V `in M) (A ‼ t) =
+    ∃ᵗ (∃ᵗ (genVˢ ι↑ Γ↑ V (α₁ |×| α₂) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁ ∷ α₂) M (A↑ ‼ t↑)))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       α₁ = wkᵗ-v (tvar (newᵗ {Θ}))
       α₂ = tvar (newᵗ {Θ +ty})
       A↑ = wkᵗ-v (wkᵗ-v A)
@@ -142,20 +153,21 @@ mutual
 
   -- empty type elimination
 
-  genC Γ (absurd V) C = genV Γ V Empty
+  genCˢ ι Γ (absurd V) C = genVˢ ι Γ V Empty
 
   -- boolean elimination
 
-  genC Γ (if V `then M₁ `else M₂) (A ‼ t) =
-    genV Γ V Bool ∧̂ genC Γ M₁ (A ‼ t) ∧̂ genC Γ M₂ (A ‼ t)
+  genCˢ ι Γ (if V `then M₁ `else M₂) (A ‼ t) =
+    genVˢ ι Γ V Bool ∧̂ genCˢ ι Γ M₁ (A ‼ t) ∧̂ genCˢ ι Γ M₂ (A ‼ t)
 
   -- performing algebraic operations
 
-  genC {Θ} Γ (perform op V M) (A ‼ t) =
-    ∃ᵉ (  genV Γ↑ V ⌜ param op ⌝ᵍ
-        ∧̂ genC (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) M (A↑ ‼ e)
+  genCˢ {Θ = Θ} ι Γ (perform op V M) (A ‼ t) =
+    ∃ᵉ (  genVˢ ι↑ Γ↑ V ⌜ param op ⌝ᵍ
+        ∧̂ genCˢ ι↑ (Γ↑ ⟨ rconst (mapᵉ (op-grade op)) ⟩ ∷ ⌜ arity op ⌝ᵍ) M (A↑ ‼ e)
         ∧̂ ((econst (op-grade op) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
+      ι↑ = ι ⨟ˢ wkˢᵉ
       e  = evar (newᵉ {Θ})
       A↑ = wkᵉ-v A
       t↑ = wkᵉ-e t
@@ -163,10 +175,11 @@ mutual
 
   -- explicit delaying of a computation
 
-  genC {Θ} Γ (delay τ M) (A ‼ t) =
-    ∃ᵉ (  genC (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) M (A↑ ‼ e)
+  genCˢ {Θ = Θ} ι Γ (delay τ M) (A ‼ t) =
+    ∃ᵉ (  genCˢ ι↑ (Γ↑ ⟨ rconst (of-natʳ τ) ⟩) M (A↑ ‼ e)
         ∧̂ ((econst (of-natᵉ τ) ·̂ₑ e) ≾̂ₑᶜ t↑))
     where
+      ι↑ = ι ⨟ˢ wkˢᵉ
       e  = evar (newᵉ {Θ})
       A↑ = wkᵉ-v A
       t↑ = wkᵉ-e t
@@ -177,20 +190,23 @@ mutual
   -- The handled result type occurs contravariantly in the clause contexts,
   -- inside the boxed continuation, so it gets an existential of its own and
   -- is reconciled with the expected type once, for the clauses and the
-  -- continuation together.
+  -- continuation together. A clause's own effect variable, rigid under
+  -- `∀ᵉ`, interprets the clause's.
 
-  genC {Θ} Γ (handle M `with H `in N) (A ‼ t) =
-    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genC Γ↑ M (α ‼ e₁)
-                    ∧̂ genC (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ‼ e₂)
+  genCˢ {Θ = Θ} ι Γ (handle M `with H `in N) (A ‼ t) =
+    ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ‼ e₁)
+                    ∧̂ genCˢ ι↑ (Γ↑ ⟨ ∣ e₁ ∣̂ᵉ ⟩ ∷ α) N (γ ‼ e₂)
                     ∧̂ (γ ≾̂ᵥᶜ A↑)
                     ∧̂ ((e₁ ·̂ₑ e₂) ≾̂ₑᶜ t↑)
                     ∧̂ ⋀ᵒᵖ (λ op →
-                         ∀ᵉ (genC (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
+                         ∀ᵉ (genCˢ (ι↑ ↑ᵉ)
+                                  (Γ⇑ ⟨ rconst ⊤ᵣ ⟩ ∷ ⌜ param op ⌝ᵍ
                                     ∷ [ rconst (mapᵉ (op-grade op)) ]
                                         (⌜ arity op ⌝ᵍ ⇒ γ⇑ ‼ e''))
                                   (H op)
                                   (γ⇑ ‼ (econst (op-grade op) ·̂ₑ e''))))))))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ ⨟ˢ wkˢᵉ
       α  = wkᵉ-v (wkᵉ-v (wkᵗ-v (tvar (newᵗ {Θ}))))
       γ  = wkᵉ-v (wkᵉ-v (tvar (newᵗ {Θ +ty})))
       e₁ = wkᵉ-e (evar (newᵉ {Θ +ty +ty}))
@@ -208,12 +224,13 @@ mutual
   -- The declared box type is pinned, being read off the context; the
   -- continuation binds a supertype of the payload.
 
-  genC {Θ} Γ (unbox i N) (A ‼ t) =
+  genCˢ {Θ = Θ} ι Γ (unbox i N) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ʳ (  (lookup-ty Γ↑ i ≐ᵥ [ r ] α)
                 ∧̂ (lookup-gr Γ↑ i ≾̂ᵣᶜ r)
                 ∧̂ (α ≾̂ᵥᶜ β)
-                ∧̂ genC (Γ↑ ∷ β) N (A↑ ‼ t↑))))
+                ∧̂ genCˢ ι↑ (Γ↑ ∷ β) N (A↑ ‼ t↑))))
     where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
       α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
       β  = wkʳ-v (tvar (newᵗ {Θ +ty}))
       r  = rvar (newʳ {Θ +ty +ty})
@@ -222,15 +239,26 @@ mutual
       Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
 
   -- boxing up a value
+  --
+  -- The grade is the term's annotation; only the payload's type is fresh.
 
-  genC {Θ} Γ (box V N) (A ‼ t) =
-    ∃ᵗ (∃ʳ (genV (Γ↑ ⟨ r ⟩) V α ∧̂ genC (Γ↑ ∷ [ r ] α) N (A↑ ‼ t↑)))
+  genCˢ {Θ = Θ} ι Γ (box ρ V N) (A ‼ t) =
+    ∃ᵗ (genVˢ ι↑ (Γ↑ ⟨ r ⟩) V α ∧̂ genCˢ ι↑ (Γ↑ ∷ [ r ] α) N (A↑ ‼ t↑))
     where
-      α  = wkʳ-v (tvar (newᵗ {Θ}))
-      r  = rvar (newʳ {Θ +ty})
-      A↑ = wkʳ-v (wkᵗ-v A)
-      t↑ = wkʳ-e (wkᵗ-e t)
-      Γ↑ = wkʳ-ctx (wkᵗ-ctx Γ)
+      ι↑ = ι ⨟ˢ wkˢᵗ
+      r  = ρ [ ι↑ ]ʳ
+      α  = tvar (newᵗ {Θ})
+      A↑ = wkᵗ-v A
+      t↑ = wkᵗ-e t
+      Γ↑ = wkᵗ-ctx Γ
+
+-- Generation for a raw term over the scope of the context
+
+genV : ∀ {Θ n} → OCtx Θ n → RawV Θ n → OVType Θ → Constraint Θ
+genV = genVˢ idˢ
+
+genC : ∀ {Θ n} → OCtx Θ n → RawC Θ n → OCType Θ → Constraint Θ
+genC = genCˢ idˢ
 
 -- Sanity checks: generation computes.
 
@@ -257,3 +285,17 @@ private
   ex-var-⊤ : genV (Γ₁ ⟨ rconst ⊤ᵣ ⟩) (var zero) α₀
            ≡ (α₀ ≾̂ᵥᶜ α₀) ∧̂ Et∨≾ᵘ α₀ (ûᵣ ·̂ᵣ rconst ⊤ᵣ)
   ex-var-⊤ = refl
+
+  -- boxing a value: the annotation is the box's grade, in the payload's
+  -- context lock and in the continuation's box type
+
+  ∅ᶜ : OCtx ∅ˢ 0
+  ∅ᶜ = []
+
+  ex-box : (c : R)
+         → genC ∅ᶜ (box (rconst c) ⋆ (return (var zero))) ([ rconst c ] Unit ‼ ûₑ)
+           ≡ (∃ᵗ (  (Unit ≐ᵥ α₀)
+                  ∧̂ ((([ rconst c ] α₀ ≾̂ᵥᶜ [ rconst c ] Unit)
+                       ∧̂ Et∨≾ᵘ ([ rconst c ] α₀) ûᵣ)
+                     ∧̂ (ûₑ ≾̂ₑᶜ ûₑ))))
+  ex-box c = refl

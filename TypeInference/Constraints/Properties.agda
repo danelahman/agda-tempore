@@ -38,26 +38,6 @@ open import TypeInference.OpenSyntax.Hyps   S
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
-≐ˢ-sym : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → σ' ≐ˢ σ
-≐ˢ-sym p = mk≐ˢ (λ α → sym (≐ᵗ p α)) (λ i → sym (≐ʳ p i)) (λ i → sym (≐ᵉ p i))
-
-≐ˢ-,ᵗ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (B : OVType Θ')
-      → (σ ,ᵗ B) ≐ˢ (σ' ,ᵗ B)
-≐ˢ-,ᵗ p B = mk≐ˢ (λ { zero → refl ; (suc α) → ≐ᵗ p α }) (≐ʳ p) (≐ᵉ p)
-
-≐ˢ-,ʳ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (ρ : RExp Θ')
-      → (σ ,ʳ ρ) ≐ˢ (σ' ,ʳ ρ)
-≐ˢ-,ʳ p ρ = mk≐ˢ (≐ᵗ p) (λ { zero → refl ; (suc i) → ≐ʳ p i }) (≐ᵉ p)
-
-≐ˢ-,ᵉ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (ε : EExp Θ')
-      → (σ ,ᵉ ε) ≐ˢ (σ' ,ᵉ ε)
-≐ˢ-,ᵉ p ε = mk≐ˢ (≐ᵗ p) (≐ʳ p) (λ { zero → refl ; (suc i) → ≐ᵉ p i })
-
-≐ˢ-↑ᵉ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (σ ↑ᵉ) ≐ˢ (σ' ↑ᵉ)
-≐ˢ-↑ᵉ p = mk≐ˢ (λ α → cong wkᵉ-v (≐ᵗ p α))
-               (λ i → cong wkᵉ-r (≐ʳ p i))
-               (λ { zero → refl ; (suc i) → cong wkᵉ-e (≐ᵉ p i) })
-
 ⊨-resp-≐ˢ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} {Q : Hyps Θ'}
           → σ ≐ˢ σ' → (C : Constraint Θ) → σ ⊨[ Q ] C → σ' ⊨[ Q ] C
 ⊨-resp-≐ˢ p ⊤̂                    s        = s
@@ -95,14 +75,6 @@ private
   ⨟-,ᵉ : ∀ {Θ Θ' Θ''} → (σ : Subst Θ Θ') → (ε : EExp Θ') → (δ : Subst Θ' Θ'')
        → ((σ ,ᵉ ε) ⨟ˢ δ) ≐ˢ ((σ ⨟ˢ δ) ,ᵉ (ε [ δ ]ᵉ))
   ⨟-,ᵉ σ ε δ = mk≐ˢ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl })
-
-  -- Composing two lifts lifts the composite
-
-  ⨟-↑ᵉ : ∀ {Θ Θ' Θ''} → (σ : Subst Θ Θ') → (δ : Subst Θ' Θ'')
-       → ((σ ↑ᵉ) ⨟ˢ (δ ↑ᵉ)) ≐ˢ ((σ ⨟ˢ δ) ↑ᵉ)
-  ⨟-↑ᵉ σ δ = mk≐ˢ (λ α → wk-↑ᵉ-v δ (sTy σ α))
-                  (λ i → wk-↑ᵉ-r δ (sR σ i))
-                  (λ { zero → refl ; (suc i) → wk-↑ᵉ-e δ (sE σ i) })
 
   -- A lift absorbs a following extension
 

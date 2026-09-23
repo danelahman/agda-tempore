@@ -4,12 +4,13 @@
 -- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` are total functions from the well-typed      --
 -- syntax of `TypeInference.OpenSyntax.Language` to the           --
 -- well-scoped raw syntax of `TypeInference.Raw.Syntax`. They     --
--- forget types, grades and entailment premises, keeping only     --
--- what a raw term annotates.                                     --
+-- forget types and entailment premises, keeping only what a raw  --
+-- term annotates.                                                --
 --                                                                --
--- Erasure is index-preserving: a handler clause erases to a      --
--- `RawC (2 + n)` with no adjustment, and a variable's raw index  --
--- is its full-context position `var-pos`. It is not injective:   --
+-- Erasure is index-preserving: a derivation over `Θ` erases to  --
+-- a raw term over `Θ`, a handler clause to a `RawC (Θ +e) (2+n)` --
+-- with no adjustment, and a variable's raw index is its          --
+-- full-context position `var-pos`. It is not injective:          --
 -- `subV`/`subC` erase to their subjects.                         --
 ------------------------------------------------------------------
 
@@ -43,7 +44,7 @@ mutual
   ⌊_⌋ᵛ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {A : OVType Θ}
        → Q ∣ Γ ⊢V⦂ A
        -------------
-       → RawV n
+       → RawV Θ n
 
   -- the raw index of a variable is its full-context position
 
@@ -63,7 +64,7 @@ mutual
   ⌊_⌋ᶜ : ∀ {Θ n} {Q : Hyps Θ} {Γ : OCtx Θ n} {C : OCType Θ}
        → Q ∣ Γ ⊢C⦂ C
        -------------
-       → RawC n
+       → RawC Θ n
 
   ⌊ return V ⌋ᶜ                 = return ⌊ V ⌋ᵛ
   ⌊ M ⨟ N ⌋ᶜ                    = ⌊ M ⌋ᶜ ⨟ ⌊ N ⌋ᶜ
@@ -74,16 +75,14 @@ mutual
   ⌊ perform op V M ⌋ᶜ           = perform op ⌊ V ⌋ᵛ ⌊ M ⌋ᶜ
   ⌊ delay τ M ⌋ᶜ                = delay τ ⌊ M ⌋ᶜ
 
-  -- the clause family is erased pointwise; `H op` is typed over a context of
-  -- arity `2 + n`, which is the raw clause's scope on the nose
+  -- the clause family is erased pointwise; `H op` is typed at `Θ +e` over a
+  -- context of arity `2 + n`, which is the raw clause's scope on the nose
 
   ⌊ handle M `with H `in N ⌋ᶜ   = handle ⌊ M ⌋ᶜ `with (λ op → ⌊ H op ⌋ᶜ) `in ⌊ N ⌋ᶜ
 
   ⌊ unbox x p q N ⌋ᶜ            = unbox (var-pos x) ⌊ N ⌋ᶜ
 
-  -- the grade of a box is dropped, being existentially bound by inference
-
-  ⌊ box ρ V N ⌋ᶜ                = box ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
+  ⌊ box ρ V N ⌋ᶜ                = box ρ ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
 
   -- subsumption is invisible
 
@@ -136,3 +135,11 @@ private
 
   ex-coerce-erase : ⌊ coerce ⊩≾̂ₑ-refl ex-unbox ⌋ᶜ ≡ ⌊ ex-unbox ⌋ᶜ
   ex-coerce-erase = refl
+
+  -- boxing a value: the grade is kept
+
+  ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ [ ûᵣ ] Unit ‼ ûₑ
+  ex-box = box ûᵣ ⋆ (return (var Hd (≾ᵘ-ok ⊩≾̂ᵣ-refl)))
+
+  ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box ûᵣ ⋆ (return (var zero))
+  ex-box-erase = refl

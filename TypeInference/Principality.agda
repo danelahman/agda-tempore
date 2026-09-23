@@ -3,16 +3,16 @@
 --                                                              --
 -- Generation is run at `Θ` extended by a fresh type variable   --
 -- and a fresh effect variable, standing for the result type    --
--- and the result effect; solving the resulting constraint      --
--- yields a principal solution together with its residual       --
--- constraint.                                                  --
+-- and the result effect, the term weakened into that scope;    --
+-- solving the resulting constraint yields a principal solution --
+-- together with its residual constraint.                       --
 --                                                              --
 -- `Principal Γ M` packages `instantiate` — every instance of   --
 -- the residual hypotheses gives a typing of `M` — and `mgu` —  --
 -- every typing of `M` factors through the principal            --
 -- substitution and residue, its type and effect bounded by the --
--- principal ones. `mgu` takes the derivation's erasure         --
--- equation as a hypothesis.                                    --
+-- principal ones. A typing of `M` is a derivation that erases  --
+-- to an instance of `M`, its annotations instantiated too.     --
 --                                                              --
 -- Principal types carrying a constraint set, after Pretnar     --
 -- (LMCS 2014); "residual constraint" is OutsideIn(X)'s term    --
@@ -48,6 +48,7 @@ open import TypeInference.OpenSyntax.Hyps     S
 open import TypeInference.OpenSyntax.Language S
 
 open import TypeInference.Raw.Syntax S
+open import TypeInference.Raw.Subst  S
 open import TypeInference.Erase      S
 
 open import TypeInference.Constraints.Syntax       S
@@ -59,8 +60,8 @@ open import TypeInference.Soundness    S
 open import TypeInference.Completeness S
 open import TypeInference.Solver       S
 
--- `Θ +ty +e` binds the unknown result type and effect; the context is
--- weakened into that scope.
+-- `Θ +ty +e` binds the unknown result type and effect; the context and
+-- the term are weakened into that scope.
 
 X̂ : (Θ : Scope) → OVType (Θ +ty +e)
 X̂ Θ = tvar (newᵗ {Θ})
@@ -71,10 +72,13 @@ t̂ Θ = evar (newᵉ {Θ +ty})
 Γ₊ : ∀ {Θ n} → OCtx Θ n → OCtx (Θ +ty +e) n
 Γ₊ Γ = wkᵉ-ctx (wkᵗ-ctx Γ)
 
-C[_,_] : ∀ {Θ n} → OCtx Θ n → RawC n → Constraint (Θ +ty +e)
-C[_,_] {Θ} Γ M = genC (Γ₊ Γ) M (X̂ Θ ‼ t̂ Θ)
+M₊ : ∀ {Θ n} → RawC Θ n → RawC (Θ +ty +e) n
+M₊ M = M [ wkˢᵗ ⨟ˢ wkˢᵉ ]ᴿᶜ
 
-record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set where
+C[_,_] : ∀ {Θ n} → OCtx Θ n → RawC Θ n → Constraint (Θ +ty +e)
+C[_,_] {Θ} Γ M = genC (Γ₊ Γ) (M₊ M) (X̂ Θ ‼ t̂ Θ)
+
+record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   constructor mkPrincipal
   field
 
@@ -88,7 +92,7 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
     -- effect `t̂ Θ [ σ⁺ ]ᵉ`)
 
     D⁺   : Q⁺ ∣ Γ₊ Γ [ σ⁺ ]ᶜᵗˣ ⊢C⦂ (X̂ Θ [ σ⁺ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ]ᵉ)
-    ⌊D⁺⌋ : ⌊ D⁺ ⌋ᶜ ≡ M
+    ⌊D⁺⌋ : ⌊ D⁺ ⌋ᶜ ≡ M₊ M [ σ⁺ ]ᴿᶜ
 
     -- every instance of the residue types `M`
 
@@ -97,14 +101,14 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
                 -------------------------------------------------------
                 → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
                             ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
-                    (⌊ D ⌋ᶜ ≡ M)
+                    (⌊ D ⌋ᶜ ≡ M₊ M [ σ⁺ ⨟ˢ δ ]ᴿᶜ)
 
     -- every typing of `M` factors through the principal one
 
     mgu : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
         → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
-        → ⌊ D ⌋ᶜ ≡ M
+        → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
         → Q ∣ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
         ----------------------------------------------------
@@ -114,7 +118,7 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC n) : Set wher
 open Principal
 
 principal : ∀ {Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set} → (sv : Solver Pᶜ Pᵖ)
-          → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC n)
+          → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
           → Pᵖ C[ Γ , M ]
           → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'}
           → Solver.solve sv C[ Γ , M ] ≡ just (Θ' , σ , Q)
@@ -124,24 +128,23 @@ principal : ∀ {Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set} → (sv : Solve
 principal sv {Θ} Γ M p {Θ'} {σ} {Q} eq = mkPrincipal
   Θ' σ Q
   (proj₁ elab) (proj₂ elab)
-  (λ δ Q' h → soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) (⊨-mono h C[ Γ , M ] sat))
+  (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (⊨-mono h C[ Γ , M ] sat))
   (λ σ' Q' D e st le →
      Solver.solve-principal sv C[ Γ , M ] p eq σ' Q'
-       (subst (λ N → σ' ⊨[ Q' ] genC (Γ₊ Γ) N (X̂ Θ ‼ t̂ Θ)) e
-              (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) D refl st le)))
+       (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) (M₊ M) D e refl st le))
   where
     sat  = Solver.solve-sound sv C[ Γ , M ] eq
-    elab = soundC (Γ₊ Γ) M (X̂ Θ) (t̂ Θ) sat
+    elab = soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) sat
 
 -- A typing of `M` at an arbitrary type and effect is an instance of the
 -- principal one: the principal type instantiates to it exactly, the
 -- principal effect up to the residual entailment.
 
-principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC n} → (p : Principal Γ M)
+principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')
                → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
                → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
-               → ⌊ D ⌋ᶜ ≡ M
+               → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
                ----------------------------------------------------------
                → Σ[ δ ∈ Subst (Θ⁺ p) Θ'' ]
                    ((X̂ _ [ σ⁺ p ]ᵛ [ δ ]ᵛ ≡ A₀)
@@ -154,15 +157,19 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e =
     σ : Subst (Θ +ty +e) Θ''
     σ = σ₀ ,ᵗ A₀ ,ᵉ ε₀
 
-    -- the extension undoes the two weakenings of the context
+    -- the extension undoes the two weakenings of the context and the term
 
     ctxeq : Γ₊ Γ [ σ ]ᶜᵗˣ ≡ Γ [ σ₀ ]ᶜᵗˣ
     ctxeq = trans (wk-,ᵉ-ctx (σ₀ ,ᵗ A₀) ε₀ (wkᵗ-ctx Γ)) (wk-,ᵗ-ctx σ₀ A₀ Γ)
 
+    meq : M₊ M [ σ ]ᴿᶜ ≡ M [ σ₀ ]ᴿᶜ
+    meq = trans ([⨟]ᴿᶜ M (wkˢᵗ ⨟ˢ wkˢᵉ) σ) ([≐]ᴿᶜ ≐ˢ-refl M)
+
     D' : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀
     D' = ctx-substᶜ (sym ctxeq) D
 
-    fac = mgu p σ Q D' (trans (⌊ctxᶜ⌋ (sym ctxeq) D) e) (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl
+    fac = mgu p σ Q D' (trans (⌊ctxᶜ⌋ (sym ctxeq) D) (trans e (sym meq)))
+              (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl
 
     δ = proj₁ fac
     h = proj₂ (proj₂ fac)
