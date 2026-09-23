@@ -354,12 +354,28 @@ ground-∈ θ Hd        = Hd
 ground-∈ θ (Tl-∷ x)  = Tl-∷ (ground-∈ θ x)
 ground-∈ θ (Tl-⟨⟩ x) = Tl-⟨⟩ (ground-∈ θ x)
 
+ground-≡̂ᵛ : ∀ {Θ} {θ : Grounding Θ} {A A' : OVType Θ} → A ≡̂ᵛ A' → ⟦ A ⟧ᵛ θ ≡ ⟦ A' ⟧ᵛ θ
+ground-≡̂ᶜ : ∀ {Θ} {θ : Grounding Θ} {C C' : OCType Θ} → C ≡̂ᶜ C' → ⟦ C ⟧ᶜ θ ≡ ⟦ C' ⟧ᶜ θ
+
+ground-≡̂ᵛ tvar≡̂      = refl
+ground-≡̂ᵛ Base≡̂      = refl
+ground-≡̂ᵛ Unit≡̂      = refl
+ground-≡̂ᵛ Bool≡̂      = refl
+ground-≡̂ᵛ (p |×|≡̂ q) = cong₂ _|×|_ (ground-≡̂ᵛ p) (ground-≡̂ᵛ q)
+ground-≡̂ᵛ Empty≡̂     = refl
+ground-≡̂ᵛ (p ⇒≡̂ q)   = cong₂ _⇒_ (ground-≡̂ᵛ p) (ground-≡̂ᶜ q)
+ground-≡̂ᵛ ([ r ]≡̂ p) = cong₂ [_]_ (ground-≡̂ᵣ r) (ground-≡̂ᵛ p)
+
+ground-≡̂ᶜ (p ‼≡̂ e) = cong₂ _‼_ (ground-≡̂ᵛ p) (ground-≡̂ₑ e)
+
 ground-VarOK : ∀ {Θ} {θ : Grounding Θ} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ}
              → θ ⊨ᴴ Q → VarOK Q A ρ
              → Eternal (⟦ A ⟧ᵛ θ) ⊎ (⟦ ρ ⟧ʳ θ ≾ᵣ uᵣ)
 ground-VarOK h (et-ok et) = inj₁ (ground-Et h et)
 ground-VarOK h (≾ᵘ-ok le) = inj₂ (ground-≾ᵣ h le)
-ground-VarOK h (hyp-ok m) = disjOK h m
+ground-VarOK {θ = θ} h (hyp-ok m p q) =
+  [ (λ et → inj₁ (subst Eternal (sym (ground-≡̂ᵛ p)) et))
+  , (λ le → inj₂ (≾ᵣ-trans (ground-≾ᵣ h q) le)) ]′ (disjOK h m)
 
 ground-var : ∀ {Θ n} {Q : Hyps Θ} {A : OVType Θ} {ρ : RExp Θ} {Γ : OCtx Θ n}
            → (θ : Grounding Θ) → θ ⊨ᴴ Q

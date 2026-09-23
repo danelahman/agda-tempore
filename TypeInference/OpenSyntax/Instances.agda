@@ -220,7 +220,7 @@ VarOK-∅ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
         → VarOK ∅ᴴ A ρ → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ)
 VarOK-∅ (et-ok et) = inj₁ et
 VarOK-∅ (≾ᵘ-ok le) = inj₂ (val-≾ᵣ le)
-VarOK-∅ (hyp-ok ())
+VarOK-∅ (hyp-ok () _ _)
 
 VarOK-∅⁻ : {A : OVType ∅ˢ} {ρ : RExp ∅ˢ}
          → (∅ᴴ ⊩ᴱ A) ⊎ (valʳ ρ ≾ᵣ uᵣ) → VarOK ∅ᴴ A ρ
@@ -298,6 +298,10 @@ inst-⨟ e h = ⊩ᴴ-⨟ h e
 
 Satisfiable-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Satisfiable Q → Satisfiable Q'
 Satisfiable-⊩ᴴ e (δ , h) = δ , inst-⊩ᴴ e h
+
+Satisfiable-⨟ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
+              → Q' ⊩ᴴ Q [ σ ] → Satisfiable Q' → Satisfiable Q
+Satisfiable-⨟ {σ = σ} e (δ , h) = σ ⨟ˢ δ , inst-⨟ e h
 
 -- What a set entails holds by value at each of its instances
 

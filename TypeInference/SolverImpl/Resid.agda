@@ -609,7 +609,7 @@ toHyps R with etsList (ts R) | subsList (ss R)
 
     disj' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ idˢ ]ᵛ) (ρ [ idˢ ]ʳ)
     disj' {A} {ρ} m =
-      subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok m)
+      subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok₀ m)
 
 -- The same, for a whole residual
 

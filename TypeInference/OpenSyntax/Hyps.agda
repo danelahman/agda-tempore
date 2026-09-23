@@ -7,11 +7,12 @@
 -- expressions, and the assumed var-rule disjunctions, under      --
 -- which a mirrored typing derivation is built. Entailment        --
 -- (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`, `_∣_<:̂ᵛ_`, `VarOK`)   --
--- is an inductive under-approximation of truth in all            --
--- groundings.                                                    --
+-- is an inductive under-approximation of truth at every closed   --
+-- instance.                                                      --
 --                                                                --
--- Open subtyping is defined here too, with its inversion and     --
--- stability lemmas: `_⊩ᴴ_[_]` already mentions the relation.     --
+-- Convertibility of open types (`_≡̂ᵛ_`), which `VarOK` reads,   --
+-- and open subtyping, with its inversion and stability lemmas,   --
+-- are defined here too: `_⊩ᴴ_[_]` already mentions both.         --
 --                                                                --
 -- Judgements under such a set are HM(X)'s constrained types      --
 -- (Odersky, Sulzmann, Wehr 1999) and Jones's qualified types     --
@@ -272,14 +273,106 @@ data _⊩ᴱ_ {Θ : Scope} (Q : Hyps Θ) : OVType Θ → Set where
   _|×|ₑ_  : ∀ {A₁ A₂} → Q ⊩ᴱ A₁ → Q ⊩ᴱ A₂ → Q ⊩ᴱ A₁ |×| A₂
   Emptyₑ  : Q ⊩ᴱ Empty
 
+-- Convertibility of open types: the same shape, the grades related
+-- by `_≡̂ᵣ_` and `_≡̂ₑ_`
+
+infix  4  _≡̂ᵛ_ _≡̂ᶜ_
+infix  37 [_]≡̂_
+infix  32 _|×|≡̂_
+infixr 30 _⇒≡̂_
+infix  31 _‼≡̂_
+
+data _≡̂ᵛ_ {Θ : Scope} : OVType Θ → OVType Θ → Set
+data _≡̂ᶜ_ {Θ : Scope} : OCType Θ → OCType Θ → Set
+
+data _≡̂ᵛ_ {Θ} where
+  tvar≡̂   : ∀ {α} → tvar α ≡̂ᵛ tvar α
+  Base≡̂   : ∀ {b} → Base b ≡̂ᵛ Base b
+  Unit≡̂   : Unit ≡̂ᵛ Unit
+  Bool≡̂   : Bool ≡̂ᵛ Bool
+  _|×|≡̂_  : ∀ {A A' B B'} → A ≡̂ᵛ A' → B ≡̂ᵛ B' → A |×| B ≡̂ᵛ A' |×| B'
+  Empty≡̂  : Empty ≡̂ᵛ Empty
+  _⇒≡̂_    : ∀ {A A' C C'} → A ≡̂ᵛ A' → C ≡̂ᶜ C' → A ⇒ C ≡̂ᵛ A' ⇒ C'
+  [_]≡̂_   : ∀ {ρ ρ' A A'} → ρ ≡̂ᵣ ρ' → A ≡̂ᵛ A' → [ ρ ] A ≡̂ᵛ [ ρ' ] A'
+
+data _≡̂ᶜ_ {Θ} where
+  _‼≡̂_ : ∀ {A A' ε ε'} → A ≡̂ᵛ A' → ε ≡̂ₑ ε' → A ‼ ε ≡̂ᶜ A' ‼ ε'
+
+≡̂ᵛ-refl : ∀ {Θ} → (A : OVType Θ) → A ≡̂ᵛ A
+≡̂ᶜ-refl : ∀ {Θ} → (C : OCType Θ) → C ≡̂ᶜ C
+
+≡̂ᵛ-refl (tvar α)  = tvar≡̂
+≡̂ᵛ-refl (Base b)  = Base≡̂
+≡̂ᵛ-refl Unit      = Unit≡̂
+≡̂ᵛ-refl Bool      = Bool≡̂
+≡̂ᵛ-refl (A |×| B) = ≡̂ᵛ-refl A |×|≡̂ ≡̂ᵛ-refl B
+≡̂ᵛ-refl Empty     = Empty≡̂
+≡̂ᵛ-refl (A ⇒ C)   = ≡̂ᵛ-refl A ⇒≡̂ ≡̂ᶜ-refl C
+≡̂ᵛ-refl ([ ρ ] A) = [ ≡̂ᵣ-refl ]≡̂ ≡̂ᵛ-refl A
+
+≡̂ᶜ-refl (A ‼ ε) = ≡̂ᵛ-refl A ‼≡̂ ≡̂ₑ-refl
+
+≡̂ᵛ-sym : ∀ {Θ} {A A' : OVType Θ} → A ≡̂ᵛ A' → A' ≡̂ᵛ A
+≡̂ᶜ-sym : ∀ {Θ} {C C' : OCType Θ} → C ≡̂ᶜ C' → C' ≡̂ᶜ C
+
+≡̂ᵛ-sym tvar≡̂       = tvar≡̂
+≡̂ᵛ-sym Base≡̂       = Base≡̂
+≡̂ᵛ-sym Unit≡̂       = Unit≡̂
+≡̂ᵛ-sym Bool≡̂       = Bool≡̂
+≡̂ᵛ-sym (p |×|≡̂ q)  = ≡̂ᵛ-sym p |×|≡̂ ≡̂ᵛ-sym q
+≡̂ᵛ-sym Empty≡̂      = Empty≡̂
+≡̂ᵛ-sym (p ⇒≡̂ q)    = ≡̂ᵛ-sym p ⇒≡̂ ≡̂ᶜ-sym q
+≡̂ᵛ-sym ([ r ]≡̂ p)  = [ ≡̂ᵣ-sym r ]≡̂ ≡̂ᵛ-sym p
+
+≡̂ᶜ-sym (p ‼≡̂ e) = ≡̂ᵛ-sym p ‼≡̂ ≡̂ₑ-sym e
+
+≡̂ᵛ-trans : ∀ {Θ} {A A' A'' : OVType Θ} → A ≡̂ᵛ A' → A' ≡̂ᵛ A'' → A ≡̂ᵛ A''
+≡̂ᶜ-trans : ∀ {Θ} {C C' C'' : OCType Θ} → C ≡̂ᶜ C' → C' ≡̂ᶜ C'' → C ≡̂ᶜ C''
+
+≡̂ᵛ-trans tvar≡̂      tvar≡̂       = tvar≡̂
+≡̂ᵛ-trans Base≡̂      Base≡̂       = Base≡̂
+≡̂ᵛ-trans Unit≡̂      Unit≡̂       = Unit≡̂
+≡̂ᵛ-trans Bool≡̂      Bool≡̂       = Bool≡̂
+≡̂ᵛ-trans (p |×|≡̂ q) (p' |×|≡̂ q') = ≡̂ᵛ-trans p p' |×|≡̂ ≡̂ᵛ-trans q q'
+≡̂ᵛ-trans Empty≡̂     Empty≡̂      = Empty≡̂
+≡̂ᵛ-trans (p ⇒≡̂ q)   (p' ⇒≡̂ q')   = ≡̂ᵛ-trans p p' ⇒≡̂ ≡̂ᶜ-trans q q'
+≡̂ᵛ-trans ([ r ]≡̂ p) ([ r' ]≡̂ p') = [ ≡̂ᵣ-trans r r' ]≡̂ ≡̂ᵛ-trans p p'
+
+≡̂ᶜ-trans (p ‼≡̂ e) (p' ‼≡̂ e') = ≡̂ᵛ-trans p p' ‼≡̂ ≡̂ₑ-trans e e'
+
+-- Eternality ignores the grades, so it transfers along convertibility
+
+⊩ᴱ-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A'} → A ≡̂ᵛ A' → Q ⊩ᴱ A → Q ⊩ᴱ A'
+⊩ᴱ-≡̂ tvar≡̂      et           = et
+⊩ᴱ-≡̂ Base≡̂      et           = et
+⊩ᴱ-≡̂ Unit≡̂      et           = et
+⊩ᴱ-≡̂ Bool≡̂      et           = et
+⊩ᴱ-≡̂ (p |×|≡̂ q) (et |×|ₑ et') = ⊩ᴱ-≡̂ p et |×|ₑ ⊩ᴱ-≡̂ q et'
+⊩ᴱ-≡̂ Empty≡̂     et           = et
+
 -- The side condition of the `var` rule: `Eternal` is undecided at open
 -- types, so the original's `¬ Eternal A → ρ ≾ᵣ uᵣ` becomes a disjunction,
--- met by eternality, by the ordering, or by a `disj` hypothesis.
+-- met by eternality, by the ordering, or by a `disj` hypothesis at a
+-- convertible type and a grade above.
 
 data VarOK {Θ : Scope} (Q : Hyps Θ) (A : OVType Θ) (ρ : RExp Θ) : Set where
   et-ok  : Q ⊩ᴱ A → VarOK Q A ρ
   ≾ᵘ-ok  : Q ⊩ ρ ≾̂ᵣ ûᵣ → VarOK Q A ρ
-  hyp-ok : (A , ρ) ∈ disj Q → VarOK Q A ρ
+  hyp-ok : ∀ {A' ρ'} → (A' , ρ') ∈ disj Q → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A ρ
+
+-- A `disj` hypothesis met as it stands
+
+hyp-ok₀ : ∀ {Θ} {Q : Hyps Θ} {A ρ} → (A , ρ) ∈ disj Q → VarOK Q A ρ
+hyp-ok₀ {A = A} m = hyp-ok m (≡̂ᵛ-refl A) (eqᵣ ≡̂ᵣ-refl)
+
+-- The side condition is closed under convertibility of the type and
+-- under lowering the grade
+
+VarOK-≡̂ : ∀ {Θ} {Q : Hyps Θ} {A A' ρ ρ'}
+        → A ≡̂ᵛ A' → Q ⊩ ρ ≾̂ᵣ ρ' → VarOK Q A' ρ' → VarOK Q A ρ
+VarOK-≡̂ p q (et-ok et)       = et-ok (⊩ᴱ-≡̂ (≡̂ᵛ-sym p) et)
+VarOK-≡̂ p q (≾ᵘ-ok le)       = ≾ᵘ-ok (transᵣ q le)
+VarOK-≡̂ p q (hyp-ok m p' q') = hyp-ok m (≡̂ᵛ-trans p p') (transᵣ q q')
 
 -- Shape-preserving subtyping of open value and computation types,
 -- mirroring `Syntax.Subtyping` former by former: one constructor per
@@ -514,12 +607,26 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩ᴱ-subst h (et₁ |×|ₑ et₂) = ⊩ᴱ-subst h et₁ |×|ₑ ⊩ᴱ-subst h et₂
 ⊩ᴱ-subst h Emptyₑ         = Emptyₑ
 
+≡̂ᵛ-subst : ∀ {Θ Θ'} {A A' : OVType Θ} → (σ : Subst Θ Θ') → A ≡̂ᵛ A' → A [ σ ]ᵛ ≡̂ᵛ A' [ σ ]ᵛ
+≡̂ᶜ-subst : ∀ {Θ Θ'} {C C' : OCType Θ} → (σ : Subst Θ Θ') → C ≡̂ᶜ C' → C [ σ ]ᶜ ≡̂ᶜ C' [ σ ]ᶜ
+
+≡̂ᵛ-subst σ (tvar≡̂ {α}) = ≡̂ᵛ-refl (sTy σ α)
+≡̂ᵛ-subst σ Base≡̂       = Base≡̂
+≡̂ᵛ-subst σ Unit≡̂       = Unit≡̂
+≡̂ᵛ-subst σ Bool≡̂       = Bool≡̂
+≡̂ᵛ-subst σ (p |×|≡̂ q)  = ≡̂ᵛ-subst σ p |×|≡̂ ≡̂ᵛ-subst σ q
+≡̂ᵛ-subst σ Empty≡̂      = Empty≡̂
+≡̂ᵛ-subst σ (p ⇒≡̂ q)    = ≡̂ᵛ-subst σ p ⇒≡̂ ≡̂ᶜ-subst σ q
+≡̂ᵛ-subst σ ([ r ]≡̂ p)  = [ ≡̂ᵣ-subst σ r ]≡̂ ≡̂ᵛ-subst σ p
+
+≡̂ᶜ-subst σ (p ‼≡̂ e) = ≡̂ᵛ-subst σ p ‼≡̂ ≡̂ₑ-subst σ e
+
 VarOK-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
                 {A : OVType Θ} {ρ : RExp Θ}
             → Q' ⊩ᴴ Q [ σ ] → VarOK Q A ρ → VarOK Q' (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
 VarOK-subst h (et-ok et)  = et-ok (⊩ᴱ-subst h et)
 VarOK-subst h (≾ᵘ-ok le)  = ≾ᵘ-ok (⊩-substᵣ h le)
-VarOK-subst h (hyp-ok m)  = ⊩disj h m
+VarOK-subst {σ = σ} h (hyp-ok m p q) = VarOK-≡̂ (≡̂ᵛ-subst σ p) (⊩-substᵣ h q) (⊩disj h m)
 
 <:̂ᵛ-subst : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {A A' : OVType Θ}
           → Q' ⊩ᴴ Q [ σ ] → Q ∣ A <:̂ᵛ A' → Q' ∣ A [ σ ]ᵛ <:̂ᵛ A' [ σ ]ᵛ
@@ -546,7 +653,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
        (λ {ε} {ε'} m →
           subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym ([id]ᵉ ε)) (sym ([id]ᵉ ε')) (hypₑ m))
        (λ {A} {ρ} m →
-          subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok m))
+          subst₂ (VarOK Q) (sym ([id]ᵛ A)) (sym ([id]ʳ ρ)) (hyp-ok₀ m))
 
 ⊩ᴴ-⨟ : ∀ {Θ Θ' Θ''} {Q : Hyps Θ} {Q' : Hyps Θ'} {Q'' : Hyps Θ''}
        {σ : Subst Θ Θ'} {δ : Subst Θ' Θ''}
@@ -579,7 +686,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
                  (hypₑ (∈-map⁺ (mapᵖ wkᵗ-e) m)))
        (λ {A} {ρ} m →
           subst₂ (VarOK (wkᵗ-H Q)) (sym (wkˢᵗ-v A)) (sym (wkˢᵗ-r ρ))
-                 (hyp-ok (∈-map⁺ (mapᵈ wkᵗ-v wkᵗ-r) m)))
+                 (hyp-ok₀ (∈-map⁺ (mapᵈ wkᵗ-v wkᵗ-r) m)))
 
 ⊩ᴴ-wkʳ : ∀ {Θ} {Q : Hyps Θ} → wkʳ-H Q ⊩ᴴ Q [ wkˢʳ ]
 ⊩ᴴ-wkʳ {Θ} {Q} =
@@ -593,7 +700,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
                  (hypₑ (∈-map⁺ (mapᵖ wkʳ-e) m)))
        (λ {A} {ρ} m →
           subst₂ (VarOK (wkʳ-H Q)) (sym (wkˢʳ-v A)) (sym (wkˢʳ-r ρ))
-                 (hyp-ok (∈-map⁺ (mapᵈ wkʳ-v wkʳ-r) m)))
+                 (hyp-ok₀ (∈-map⁺ (mapᵈ wkʳ-v wkʳ-r) m)))
 
 ⊩ᴴ-wkᵉ : ∀ {Θ} {Q : Hyps Θ} → wkᵉ-H Q ⊩ᴴ Q [ wkˢᵉ ]
 ⊩ᴴ-wkᵉ {Θ} {Q} =
@@ -607,7 +714,7 @@ VarOK-subst h (hyp-ok m)  = ⊩disj h m
                  (hypₑ (∈-map⁺ (mapᵖ wkᵉ-e) m)))
        (λ {A} {ρ} m →
           subst₂ (VarOK (wkᵉ-H Q)) (sym (wkˢᵉ-v A)) (sym (wkˢᵉ-r ρ))
-                 (hyp-ok (∈-map⁺ (mapᵈ wkᵉ-v wkᵉ-r) m)))
+                 (hyp-ok₀ (∈-map⁺ (mapᵈ wkᵉ-v wkᵉ-r) m)))
 
 -- Entailment is preserved by the scope extensions
 

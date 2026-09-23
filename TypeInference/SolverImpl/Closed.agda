@@ -8,11 +8,10 @@
 -- the same way against the unit: it is dropped when that holds,  --
 -- and fails when it does not and the type is refuted eternal     --
 -- (`etDec`). What is left entails what was there; a failure      --
--- leaves an atom that no grounding of any instance satisfies.    --
+-- leaves an atom that no closed instance satisfies.              --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
-open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
@@ -34,17 +33,14 @@ module TypeInference.SolverImpl.Closed (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
-open import Syntax.Types S using (Eternal; Baseₑ; _|×|ₑ_; eternalBaseType?)
-
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Grounding S using (Grounding; _⊨ᴴ_; ⟦_⟧ʳ; ⟦_⟧ᵉ; ⟦_⟧ᵛ;
-                                                       ground-≡̂ᵣ; ground-≡̂ₑ;
-                                                       ground-≾ᵣ; ground-≾ₑ; ground-VarOK)
+open import TypeInference.OpenSyntax.Instances S
+  using (Satisfiable; VarOK-∅; closed-≾ᵣ; closed-≾ᵣ⁻; closed-≾ₑ; closed-≾ₑ⁻; inst-≡̂ᵣ)
 
-open import TypeInference.SolverImpl.Resid S using (etDec)
+open import TypeInference.SolverImpl.Resid S using (etDec; etDec-refute)
 
 ------------------------------------------------------------------------
 -- The value of an expression with no unknowns
@@ -105,16 +101,6 @@ convʳ ∣ ε ∣̂ᵉ q with valᵉ? ε in e
 convʳ ∣ ε ∣̂ᵉ refl | just c = ≡̂ᵣ-trans (≡̂ᵣ-map-cong (convᵉ ε e)) ≡̂ᵣ-map-const
 convʳ ∣ ε ∣̂ᵉ ()   | nothing
 
--- and so is every instance of it
-
-convᵉ-inst : ∀ {Θ Θ'} {c : E} → (ε : EExp Θ) → valᵉ? ε ≡ just c
-           → (δ : Subst Θ Θ') → ε [ δ ]ᵉ ≡̂ₑ econst c
-convᵉ-inst ε q δ = ≡̂ₑ-subst δ (convᵉ ε q)
-
-convʳ-inst : ∀ {Θ Θ'} {c : R} → (ρ : RExp Θ) → valʳ? ρ ≡ just c
-           → (δ : Subst Θ Θ') → ρ [ δ ]ʳ ≡̂ᵣ rconst c
-convʳ-inst ρ q δ = ≡̂ᵣ-subst δ (convʳ ρ q)
-
 ------------------------------------------------------------------------
 -- Deciding the closed orderings of a list
 
@@ -170,8 +156,7 @@ dropʳ : ∀ {Θ} {l : List (RExp Θ × RExp Θ)} {ρ ρ' c c'}
       → Keptʳ l → Keptʳ ((ρ , ρ') ∷ l)
 dropʳ {ρ = ρ} {ρ'} q q' p k =
   keptʳ (lʳ k) (λ m → there (subʳ k m))
-        (λ δ f → λ { (here refl) → transᵣ (eqᵣ (convʳ-inst ρ q δ))
-                                           (transᵣ (atomᵣ p) (eqᵣ (≡̂ᵣ-sym (convʳ-inst ρ' q' δ))))
+        (λ δ f → λ { (here refl) → closed-≾ᵣ⁻ (convʳ ρ q) (convʳ ρ' q') δ p
                    ; (there m)   → entʳ k δ f m })
 
 dropᵉ : ∀ {Θ} {l : List (EExp Θ × EExp Θ)} {ε ε' c c'}
@@ -179,8 +164,7 @@ dropᵉ : ∀ {Θ} {l : List (EExp Θ × EExp Θ)} {ε ε' c c'}
       → Keptᵉ l → Keptᵉ ((ε , ε') ∷ l)
 dropᵉ {ε = ε} {ε'} q q' p k =
   keptᵉ (lᵉ k) (λ m → there (subᵉ k m))
-        (λ δ f → λ { (here refl) → transₑ (eqₑ (convᵉ-inst ε q δ))
-                                           (transₑ (atomₑ p) (eqₑ (≡̂ₑ-sym (convᵉ-inst ε' q' δ))))
+        (λ δ f → λ { (here refl) → closed-≾ₑ⁻ (convᵉ ε q) (convᵉ ε' q') δ p
                    ; (there m)   → entᵉ k δ f m })
 
 thereʳ : ∀ {Θ} {l : List (RExp Θ × RExp Θ)} {p} → Falseʳ l → Falseʳ (p ∷ l)
@@ -214,26 +198,6 @@ closedᵉ ((ε , ε') ∷ l) | inj₂ k | nothing | _       = inj₂ (consᵉ k)
 ------------------------------------------------------------------------
 -- Var-rule disjunctions
 
--- A type `etDec` refutes is eternal at no grounding of any instance
-
-etDec-ground : ∀ {Θ Θ'} → (A : OVType Θ) → etDec A ≡ nothing
-             → (δ : Subst Θ Θ') → (θ : Grounding Θ') → ¬ Eternal (⟦ A [ δ ]ᵛ ⟧ᵛ θ)
-etDec-ground (tvar α) () δ θ
-etDec-ground (Base b) q δ θ with eternalBaseType? b
-etDec-ground (Base b) () δ θ | yes p
-etDec-ground (Base b) q  δ θ | no ¬p = λ { (Baseₑ p') → ⊥-elim-irr (¬p p') }
-etDec-ground Unit      () δ θ
-etDec-ground Bool      () δ θ
-etDec-ground Empty     () δ θ
-etDec-ground (A |×| B) q δ θ with etDec A in e₁ | etDec B in e₂
-etDec-ground (A |×| B) () δ θ | just _  | just _
-etDec-ground (A |×| B) q  δ θ | just _  | nothing =
-  λ { (p |×|ₑ p') → etDec-ground B e₂ δ θ p' }
-etDec-ground (A |×| B) q  δ θ | nothing | _       =
-  λ { (p |×|ₑ p') → etDec-ground A e₁ δ θ p }
-etDec-ground (A ⇒ C)   q δ θ = λ ()
-etDec-ground ([ ρ ] A) q δ θ = λ ()
-
 -- A disjunction whose grade has a value above the unit, at a type
 -- refuted eternal
 
@@ -263,7 +227,7 @@ dropᵈ : ∀ {Θ} {l : List (OVType Θ × RExp Θ)} {A ρ c}
       → valʳ? ρ ≡ just c → c ≾ᵣ uᵣ → Keptᵈ l → Keptᵈ ((A , ρ) ∷ l)
 dropᵈ {ρ = ρ} q p k =
   keptᵈ (lᵈ k) (λ m → there (subᵈ k m))
-        (λ δ f → λ { (here refl) → ≾ᵘ-ok (transᵣ (eqᵣ (convʳ-inst ρ q δ)) (atomᵣ p))
+        (λ δ f → λ { (here refl) → ≾ᵘ-ok (transᵣ (eqᵣ (≡̂ᵣ-subst δ (convʳ ρ q))) (atomᵣ p))
                    ; (there m)   → entᵈ k δ f m })
 
 thereᵈ : ∀ {Θ} {l : List (OVType Θ × RExp Θ)} {p} → Falseᵈ l → Falseᵈ (p ∷ l)
@@ -281,31 +245,24 @@ closedᵈ ((A , ρ) ∷ l) with closedᵈ l
 ...       | nothing = inj₁ (A , ρ , c , here refl , e , q , n)
 ...       | just _  = inj₂ (consᵈ k)
 
-falseᵈ : ∀ {Θ Θ'} {l : List (OVType Θ × RExp Θ)} → Falseᵈ l
-       → (δ : Subst Θ Θ') → {Q : Hyps Θ'} → (θ : Grounding Θ') → θ ⊨ᴴ Q
-       → (∀ {A ρ} → (A , ρ) ∈ l → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)) → ⊥
-falseᵈ (A , ρ , c , m , e , q , n) δ θ h k with ground-VarOK h (k m)
-... | inj₁ et = etDec-ground A e δ θ et
-... | inj₂ le = n (subst (_≾ᵣ uᵣ) (ground-≡̂ᵣ {θ = θ} (convʳ-inst ρ q δ)) le)
+falseᵈ : ∀ {Θ} {l : List (OVType Θ × RExp Θ)} → Falseᵈ l → (δ : Subst Θ ∅ˢ)
+       → (∀ {A ρ} → (A , ρ) ∈ l → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ)) → ⊥
+falseᵈ (A , ρ , c , m , e , q , n) δ k with VarOK-∅ (k m)
+... | inj₁ et = etDec-refute A e δ et
+... | inj₂ le = n (subst (_≾ᵣ uᵣ) (inst-≡̂ᵣ δ (convʳ ρ q)) le)
 
 ------------------------------------------------------------------------
--- A failing closed ordering is entailed under no satisfiable set
+-- A failing closed ordering holds at no closed instance
 
-falseʳ : ∀ {Θ Θ'} {l : List (RExp Θ × RExp Θ)} → Falseʳ l
-       → (δ : Subst Θ Θ') → {Q : Hyps Θ'} → (θ : Grounding Θ') → θ ⊨ᴴ Q
-       → (∀ {ρ ρ'} → (ρ , ρ') ∈ l → Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ) → ⊥
-falseʳ (ρ , ρ' , c , c' , m , q , q' , n) δ θ h k =
-  n (subst₂ _≾ᵣ_ (ground-≡̂ᵣ {θ = θ} (convʳ-inst ρ q δ))
-                 (ground-≡̂ᵣ {θ = θ} (convʳ-inst ρ' q' δ))
-                 (ground-≾ᵣ h (k m)))
+falseʳ : ∀ {Θ} {l : List (RExp Θ × RExp Θ)} → Falseʳ l → (δ : Subst Θ ∅ˢ)
+       → (∀ {ρ ρ'} → (ρ , ρ') ∈ l → ∅ᴴ ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ) → ⊥
+falseʳ (ρ , ρ' , c , c' , m , q , q' , n) δ k =
+  n (closed-≾ᵣ (convʳ ρ q) (convʳ ρ' q') δ (k m))
 
-falseᵉ : ∀ {Θ Θ'} {l : List (EExp Θ × EExp Θ)} → Falseᵉ l
-       → (δ : Subst Θ Θ') → {Q : Hyps Θ'} → (θ : Grounding Θ') → θ ⊨ᴴ Q
-       → (∀ {ε ε'} → (ε , ε') ∈ l → Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ) → ⊥
-falseᵉ (ε , ε' , c , c' , m , q , q' , n) δ θ h k =
-  n (subst₂ _≾ₑ_ (ground-≡̂ₑ {θ = θ} (convᵉ-inst ε q δ))
-                 (ground-≡̂ₑ {θ = θ} (convᵉ-inst ε' q' δ))
-                 (ground-≾ₑ h (k m)))
+falseᵉ : ∀ {Θ} {l : List (EExp Θ × EExp Θ)} → Falseᵉ l → (δ : Subst Θ ∅ˢ)
+       → (∀ {ε ε'} → (ε , ε') ∈ l → ∅ᴴ ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ) → ⊥
+falseᵉ (ε , ε' , c , c' , m , q , q' , n) δ k =
+  n (closed-≾ₑ (convᵉ ε q) (convᵉ ε' q') δ (k m))
 
 ------------------------------------------------------------------------
 -- The closed orderings of a hypothesis set decided
@@ -340,13 +297,11 @@ closedᴴ-⊆ Q () h | inj₁ _ | _      | _
 closedᴴ-⊆ Q () h | inj₂ _ | inj₁ _ | _
 closedᴴ-⊆ Q () h | inj₂ _ | inj₂ _ | inj₁ _
 
--- A failure is entailed under no satisfiable set
+-- A failure leaves the set unsatisfiable
 
-closedᴴ-fail : ∀ {Θ Θ'} → (Q : Hyps Θ) → closedᴴ Q ≡ nothing
-             → (δ : Subst Θ Θ') → {Q' : Hyps Θ'} → Q' ⊩ᴴ Q [ δ ]
-             → (θ : Grounding Θ') → θ ⊨ᴴ Q' → ⊥
-closedᴴ-fail Q eq δ h θ s with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
-... | inj₁ f | _      | _      = falseʳ f δ θ s (⊩ordᵣ h)
-... | inj₂ _ | inj₁ f | _      = falseᵉ f δ θ s (⊩ordₑ h)
-... | inj₂ _ | inj₂ _ | inj₁ f = falseᵈ f δ θ s (⊩disj h)
-closedᴴ-fail Q () δ h θ s | inj₂ _ | inj₂ _ | inj₂ _
+closedᴴ-fail : ∀ {Θ} → (Q : Hyps Θ) → closedᴴ Q ≡ nothing → ¬ Satisfiable Q
+closedᴴ-fail Q eq (δ , h) with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
+... | inj₁ f | _      | _      = falseʳ f δ (⊩ordᵣ h)
+... | inj₂ _ | inj₁ f | _      = falseᵉ f δ (⊩ordₑ h)
+... | inj₂ _ | inj₂ _ | inj₁ f = falseᵈ f δ (⊩disj h)
+closedᴴ-fail Q () (δ , h) | inj₂ _ | inj₂ _ | inj₂ _

@@ -59,6 +59,7 @@ open import TypeInference.OpenSyntax.Contexts  S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Grounding S
+open import TypeInference.OpenSyntax.Instances S using (Satisfiable; Satisfiable-⨟)
 
 open import TypeInference.Raw.Syntax S using (RawC)
 
@@ -135,9 +136,8 @@ solveOn-complete C nr eq σ Q sQ sat with solve init C in e
 ...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
 ...       | just _  = ⊥nothing eq
 ...       | nothing =
-            closedᴴ-fail Q₀ e'' (proj₁ fac₂)
-              (toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)))
-              (proj₁ sQ) (proj₂ sQ)
+            closedᴴ-fail Q₀ e''
+              (Satisfiable-⨟ (toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂))) sQ)
   where
     fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
     fac₂ = reexpand-princ s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))

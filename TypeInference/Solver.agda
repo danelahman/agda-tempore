@@ -44,16 +44,14 @@ open Operations Ops
 open import TypeInference.OpenSyntax.Types S
 open import TypeInference.OpenSyntax.Subst S
 open import TypeInference.OpenSyntax.Hyps  S
-open import TypeInference.OpenSyntax.Grounding S using (Grounding; _⊨ᴴ_)
+open import TypeInference.OpenSyntax.Instances S using (Satisfiable)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
--- A hypothesis set some grounding satisfies. Under any other set every
--- constraint is entailed, so refutation is stated against these.
-
-Satisfiable : ∀ {Θ} → Hyps Θ → Set
-Satisfiable {Θ} Q = Σ[ θ ∈ Grounding Θ ] (θ ⊨ᴴ Q)
+-- Refutation is stated against satisfiable hypothesis sets, those
+-- some closed instance satisfies (`Satisfiable`): under any other set
+-- every constraint is entailed.
 
 record Solver (Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set) : Set₁ where
   field

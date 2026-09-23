@@ -181,7 +181,7 @@ wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
     disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κ⟨ b ⟩ ]ᵛ) (ρ [ κ⟨ b ⟩ ]ʳ)
     disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
     ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK Q) (wkᵛ' A₀) (wkʳ' ρ₀) (hyp-ok m₀)
+      subst₂ (VarOK Q) (wkᵛ' A₀) (wkʳ' ρ₀) (hyp-ok₀ m₀)
 
 ⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
 ⊩ᴴ-κᵉ = ⊩ᴴ-κ ûₑ
