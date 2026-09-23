@@ -119,10 +119,8 @@ UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
 -- distributivity of multiplication over the join, the constants'
 -- arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a join
 -- by an upper bound. Idempotence, the top's absorption, antisymmetry at
--- the empty hypothesis set and associativity of the join follow from
--- these (below), as they follow in `Syntax.Grades` from the laws it
--- states as fields. Each law holds at `_≡_` on the closed grades,
--- absorption by antisymmetry of the order.
+-- the empty hypothesis set and associativity of the join are derived
+-- below.
 --
 -- Convertibility carries no hypotheses, so the ordering that licenses
 -- absorption is entailed by the empty set; this makes it and entailed
@@ -231,8 +229,7 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 ≡̂ₑ-⊤-⊔ : ∀ {Θ} {ε : EExp Θ} → ε ⊔̂ₑ econst ⊤ₑ ≡̂ₑ econst ⊤ₑ
 ≡̂ₑ-⊤-⊔ = ≡̂ₑ-absorb topₑ
 
--- Antisymmetry of entailed ordering at the empty hypothesis set: each
--- side absorbs the other, and the join commutes
+-- Antisymmetry at the empty hypothesis set
 
 ≡̂ᵣ-antisym-∅ : ∀ {Θ} {ρ ρ' : RExp Θ}
              → ∅ᴴ ⊩ ρ ≾̂ᵣ ρ' → ∅ᴴ ⊩ ρ' ≾̂ᵣ ρ → ρ ≡̂ᵣ ρ'
@@ -244,8 +241,7 @@ data _⊩_≾̂ₑ_ {Θ} Q where
 ≡̂ₑ-antisym-∅ p q =
   ≡̂ₑ-trans (≡̂ₑ-sym (≡̂ₑ-absorb q)) (≡̂ₑ-trans ≡̂ₑ-comm-⊔ (≡̂ₑ-absorb p))
 
--- Associativity of the join: each side is a least upper bound of the
--- three, so each is below the other
+-- Associativity of the join
 
 ≡̂ᵣ-assoc-⊔ : ∀ {Θ} {ρ₁ ρ₂ ρ₃ : RExp Θ}
            → (ρ₁ ⊔̂ᵣ ρ₂) ⊔̂ᵣ ρ₃ ≡̂ᵣ ρ₁ ⊔̂ᵣ (ρ₂ ⊔̂ᵣ ρ₃)

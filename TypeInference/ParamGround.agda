@@ -5,23 +5,11 @@
 -- parametric terms; this supplies `Paramᵛ (groundV θ h D)` and --
 -- `Paramᶜ (groundC θ h D)` for every mirrored derivation D.    --
 --                                                              --
--- Two notions of parametricity meet here. The open calculus    --
--- is parametric syntactically: an operation clause is a        --
--- single derivation, typed at a rigid effect variable. The     --
--- semantics asks for `EffUniformʰ` instead: the grounded       --
--- clause family commutes with sub-effecting the residual       --
--- effect of its continuation. The bridge from the first to     --
--- the second is `GroundUniform.ground-uniform`, an explicit    --
--- hypothesis of this module. `ParamGround.Uniform` proves it   --
--- for the covariant fragment `CovD`; outside that fragment     --
--- the rigid variable can sit where the model offers no         --
--- coercion to transport along.                                 --
---                                                              --
--- A refinement for the future: clauses of the source           --
--- calculus parametric by construction, typed under a grade     --
--- variable in the context. The hypothesis would then be a      --
--- structural fact, at the cost of grade variables in the       --
--- source calculus and in its model.                            --
+-- Parametricity is syntactic in the open calculus and          --
+-- `EffUniformʰ` in the semantics.                              --
+-- `GroundUniform.ground-uniform` bridges them: an explicit     --
+-- hypothesis of this module, proved in `ParamGround.Uniform`   --
+-- for the covariant fragment `CovD`.                           --
 ------------------------------------------------------------------
 
 open import Syntax.Grades
