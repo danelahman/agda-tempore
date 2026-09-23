@@ -158,6 +158,17 @@ polₑ : ∀ {Ψ} → Resid Ψ → EVar Ψ → Pol
 polₑ R i = polsₑ-ordᵣ i (rs R) ∪ᴾ polsₑ-ordₑ i (es R)
              ∪ᴾ polsₑ-sub i (ss R) ∪ᴾ polsₑ-disj i (ds R)
 
+-- Occurrences in reported types, each read as the left side of a
+-- subtyping
+
+polsᵣ-ty : ∀ {Ψ} → RVar Ψ → List (OCType Ψ) → Pol
+polsᵣ-ty i []      = noᴾ
+polsᵣ-ty i (X ∷ l) = polᵣ-c i ⁺ X ∪ᴾ polsᵣ-ty i l
+
+polsₑ-ty : ∀ {Ψ} → EVar Ψ → List (OCType Ψ) → Pol
+polsₑ-ty i []      = noᴾ
+polsₑ-ty i (X ∷ l) = polₑ-c i ⁺ X ∪ᴾ polsₑ-ty i l
+
 -- An unknown pushed only upwards is the one the greatest grade suits
 
 onlyBelow : Pol → 𝔹

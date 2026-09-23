@@ -220,11 +220,10 @@ ex-delay : infer! [] (delay 2 (return ⋆))
 ex-delay = refl
 
 -- boxing: the box's grade is not annotated, and nothing constrains it,
--- so polarity defaults it to the unit -- here the allowance permitting
--- only the empty run
+-- so it defaults to the greatest grade, `unbounded`
 
 ex-box : infer! [] (box ⋆ (return (var zero)))
-       ≡ just ([ ûᵣ ] Unit , ûₑ)
+       ≡ just ([ rconst unbounded ] Unit , ûₑ)
 ex-box = refl
 
 -- unboxing a boxed variable, at the unit allowance, which permits

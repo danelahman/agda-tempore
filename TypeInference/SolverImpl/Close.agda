@@ -15,7 +15,9 @@
 -- no meet. A bound the variable occurs in is declined. What the  --
 -- two passes leave is defaulted by the polarity of the same      --
 -- bounds: the greatest grade where only lower bounds push, the   --
--- unit otherwise.                                                --
+-- unit otherwise. An unknown no bound reaches is defaulted by    --
+-- its occurrences in the reported types, so that they come out   --
+-- least.                                                         --
 --                                                                --
 -- At the empty scope an expression is a constant, so the checks  --
 -- are complete and only the choice of substitution is heuristic. --
@@ -23,7 +25,7 @@
 
 open import Data.Bool.Base using (if_then_else_; _∧_; _∨_; not; false) renaming (Bool to 𝔹)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_; _++_)
+open import Data.List.Base using (List; []; _∷_; _++_; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
@@ -113,16 +115,22 @@ closed≾ₑ-refute ε ε' eq d | no ¬p =
   ¬p (subst₂ _≾ₑ_ (sym (evalᵉ-⟦⟧ ε)) (sym (evalᵉ-⟦⟧ ε')) (ground-≾ₑ ∅ᴴ-⊨ d))
 
 -- A grade only pushed upwards is defaulted to the greatest grade,
--- every other to the unit.
+-- every other to the unit. A grade no bound reaches is read off the
+-- reported types instead, so that they come out least: the greatest
+-- grade where it occurs only contravariantly, the unit otherwise.
 
-defᵣ : Pol → RExp ∅ˢ
-defᵣ p = if onlyBelow p then rconst ⊤ᵣ else ûᵣ
+boundsᴾ : Pol → 𝔹
+boundsᴾ p = above p ∨ below p
 
-defₑ : Pol → EExp ∅ˢ
-defₑ p = if onlyBelow p then econst ⊤ₑ else ûₑ
+defᵣ : Pol → Pol → RExp ∅ˢ
+defᵣ p q = if onlyBelow (if boundsᴾ p then p else q) then rconst ⊤ᵣ else ûᵣ
 
-groundˢ : ∀ {Ψ} → Resid Ψ → Subst Ψ ∅ˢ
-groundˢ R = sub (λ _ → Unit) (λ i → defᵣ (polᵣ R i)) (λ i → defₑ (polₑ R i))
+defₑ : Pol → Pol → EExp ∅ˢ
+defₑ p q = if onlyBelow (if boundsᴾ p then p else q) then econst ⊤ₑ else ûₑ
+
+groundˢ : ∀ {Ψ} → Resid Ψ → List (OCType Ψ) → Subst Ψ ∅ˢ
+groundˢ R Xs = sub (λ _ → Unit) (λ i → defᵣ (polᵣ R i) (polsᵣ-ty i Xs))
+                                (λ i → defₑ (polₑ R i) (polsₑ-ty i Xs))
 
 -- Assignments compose: an unknown pinned to an expression pinned later
 -- comes out fully resolved; an unknown already pinned is left alone.
@@ -501,16 +509,17 @@ settleˢ : ∀ {Ψ} → Subst Ψ ∅ˢ → Subst Ψ ∅ˢ
 settleˢ δ = sub (sTy δ) (λ i → settleʳ (sR δ i)) (λ i → settleᵉ (sE δ i))
 
 -- The candidate substitution: slack, then the defaults, whose
--- polarities are read off the bounds slack leaves, then the joins
--- computed.
+-- polarities are read off the bounds slack leaves and off the reported
+-- types `Xs` as slack leaves them, then the joins computed.
 
-closeˢ : ∀ {Ψ} → Resid Ψ → Subst Ψ ∅ˢ
-closeˢ {Ψ} R = settleˢ (σ ⨟ˢ groundˢ (seenᴿ R σ))
+closeˢ : ∀ {Ψ} → Resid Ψ → List (OCType Ψ) → Subst Ψ ∅ˢ
+closeˢ {Ψ} R Xs = settleˢ (σ ⨟ˢ groundˢ (seenᴿ R σ) (map (_[ σ ]ᶜ) Xs))
   where
     σ : Subst Ψ Ψ
     σ = slack* (Sz Ψ) R idˢ
 
-close : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ δ ∈ Subst Ψ ∅ˢ ] (∅ᴴ ⊩ᴿ R [ δ ]))
-close R with closeAt R (closeˢ R)
-... | just h  = just (closeˢ R , h)
+close : ∀ {Ψ} → (R : Resid Ψ) → List (OCType Ψ)
+      → Maybe (Σ[ δ ∈ Subst Ψ ∅ˢ ] (∅ᴴ ⊩ᴿ R [ δ ]))
+close R Xs with closeAt R (closeˢ R Xs)
+... | just h  = just (closeˢ R Xs , h)
 ... | nothing = nothing

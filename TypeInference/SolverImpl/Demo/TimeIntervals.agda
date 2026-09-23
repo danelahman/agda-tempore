@@ -190,7 +190,8 @@ ex-delay : infer! [] (delay 2 (return ⋆))
          ≡ just (Unit , econst (of-natᵉ 2))
 ex-delay = refl
 
--- boxing: the box's grade is not annotated, and defaults to the unit
+-- boxing: the box's grade is not annotated, and defaults to the
+-- greatest grade, here the unit
 
 ex-box : infer! [] (box ⋆ (return (var zero)))
        ≡ just ([ ûᵣ ] Unit , ûₑ)

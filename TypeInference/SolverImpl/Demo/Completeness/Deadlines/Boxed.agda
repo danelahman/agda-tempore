@@ -31,7 +31,7 @@ module BoxedF where
   open M.Boxing (forward)
 
   ex-h-box : Verdict h-box
-  ex-h-box = ok ([ ûᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
+  ex-h-box = ok ([ rconst ⊤ᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
 
   ex-h-ans : Verdict h-ans
   ex-h-ans = ok (Base reading) (econst (of-natᵉ 1)) refl ≤!
@@ -41,7 +41,7 @@ module BoxedR where
   open M.Boxing (resumeNow uᵈ-min uᵈ-min ans)
 
   ex-h-box : Verdict h-box
-  ex-h-box = ok ([ ûᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
+  ex-h-box = ok ([ rconst ⊤ᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
 
   ex-h-ans : Verdict h-ans
   ex-h-ans = ok (Base reading) (econst (of-natᵉ 1)) refl ≤!
@@ -51,7 +51,7 @@ module BoxedR₁ where
   open M.Boxing (resumeAfter τ τₑ τᵣ ans)
 
   ex-h-box : Verdict h-box
-  ex-h-box = ok ([ ûᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
+  ex-h-box = ok ([ rconst ⊤ᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
 
   ex-h-ans : Verdict h-ans
   ex-h-ans = ok (Base reading) (econst (of-natᵉ 1)) refl ≤!

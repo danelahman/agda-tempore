@@ -65,13 +65,13 @@ ex-b-λ : Verdict b-λ
 ex-b-λ = ok (Unit ⇒ [ ûᵣ ] Unit ‼ ûₑ) ûₑ refl ≤!
 
 ex-b-g : Verdict b-g
-ex-b-g = worse ([ ûᵣ ] Unit) ûₑ refl ≰!
+ex-b-g = ok ([ rconst ⊤ᵣ ] Unit) ûₑ refl ≤!
 
 ex-u-λ : Verdict u-λ
 ex-u-λ = ok Unit ûₑ refl ≤!
 
 ex-b-I : Verdict b-I
-ex-b-I = ok ([ ûᵣ ] Unit) ûₑ refl ≤!
+ex-b-I = ok ([ rconst ⊤ᵣ ] Unit) ûₑ refl ≤!
 
 ex-u-I : Verdict u-I
 ex-u-I = ok Unit ûₑ refl ≤!
@@ -80,7 +80,7 @@ ex-b-S : Verdict b-S
 ex-b-S = ok Unit ûₑ refl ≤!
 
 ex-b-D : Verdict b-D
-ex-b-D = ok ([ ûᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
+ex-b-D = ok ([ rconst ⊤ᵣ ] Unit) (econst (of-natᵉ 1)) refl ≤!
 
 ex-u-D : Verdict u-D
 ex-u-D = ok Unit (econst (of-natᵉ 1)) refl ≤!

@@ -10,7 +10,7 @@
 --   Hf         ok     ok     ok     ok     ok     ok     ok     ok     ok    --
 --   Hr                ok     ok     ok     ok     ok     ok     ok     ok    --
 --   Hd                       ok     ok     ok     ok     ok     ok     ok    --
---   B                               worse  ok     ok     ok     ok     ok    --
+--   B                               ok     ok     ok     ok     ok     ok    --
 --   U                                      ·      ok     ok     ok     ok    --
 --   λ                                             ·      ok     ok     ok    --
 --   I                                                    ·      ok     ok    --
@@ -22,8 +22,6 @@
 -- sequencing; D delay. `ok` inferred, at least as good as declared;          --
 -- `ref` refused; `worse` inferred, worse than declared; `—` not              --
 -- derivable; `·` no entry.                                                   --
---                                                                            --
--- B × B is `b-g`, a box whose grade nothing bounds.                          --
 --                                                                            --
 -- This module is an index.                                                   --
 --------------------------------------------------------------------------------

@@ -6,6 +6,7 @@
 -- the grades themselves.                                         --
 ------------------------------------------------------------------
 
+open import Data.List.Base using (List; []; _∷_; map)
 open import Data.Maybe using (Maybe; just; nothing)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
@@ -60,15 +61,29 @@ open import TypeInference.SolverImpl.Close S umin?ᵣ umin?ₑ
   using (close)
 open import TypeInference.SolverImpl.Canon   S umin?ᵣ umin?ₑ using (canonᵛ; canonₑ)
 
+-- A ground solution of `C`, closed so that the types `Xs` come out
+-- least
+
+gsolveFor : ∀ {Θ} → List (OCType Θ) → (C : Constraint Θ)
+          → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] (σ ⊨[ ∅ᴴ ] C))
+gsolveFor Xs C with solve init C
+... | nothing = nothing
+... | just (s' , m , w) with close (res s') (map (_[ θ s' ]ᶜ) Xs)
+...   | nothing      = nothing
+...   | just (δ , h) = just (θ s' ⨟ˢ δ , w δ ∅ᴴ h)
+
 -- The `gsolve` field of `GroundSolver` — the only part attainable here.
 
 gsolveImpl : ∀ {Θ} → (C : Constraint Θ)
            → Maybe (Σ[ σ ∈ Subst Θ ∅ˢ ] (σ ⊨[ ∅ᴴ ] C))
-gsolveImpl C with solve init C
-... | nothing = nothing
-... | just (s' , m , w) with close (res s')
-...   | nothing      = nothing
-...   | just (δ , h) = just (θ s' ⨟ˢ δ , w δ ∅ᴴ h)
+gsolveImpl = gsolveFor []
+
+-- A ground solution of a program's constraint, its type and effect
+-- least
+
+gsolveC : (Γ : Ctx) → (M : RawC (skel Γ))
+        → Maybe (Σ[ σ ∈ Subst Θ₁ ∅ˢ ] (σ ⊨[ ∅ᴴ ] C∅[ Γ , M ]))
+gsolveC Γ M = gsolveFor ((X̂₁ ‼ t̂₁) ∷ []) C∅[ Γ , M ]
 
 -- The reporting boundary of the ground path: the solved type and
 -- effect, every grade expression in product normal form. It is the
@@ -77,15 +92,15 @@ gsolveImpl C with solve init C
 
 greportImpl : (Γ : Ctx) → (M : RawC (skel Γ))
             → Maybe (OVType ∅ˢ × EExp ∅ˢ)
-greportImpl Γ M with gsolveImpl C∅[ Γ , M ]
+greportImpl Γ M with gsolveC Γ M
 ... | nothing      = nothing
 ... | just (σ , _) = just (canonᵛ (X̂₁ [ σ ]ᵛ) , canonₑ (t̂₁ [ σ ]ᵉ))
 
--- Feeds `gsolveImpl`'s result to `soundC`, `ctx-substᶜ` and `groundC`,
+-- Feeds `gsolveC`'s result to `soundC`, `ctx-substᶜ` and `groundC`,
 -- bypassing `TypeInference.Infer.infer` (which needs a whole `GroundSolver`).
 
 inferImpl : (Γ : Ctx) → (M : RawC (skel Γ)) → Maybe (Inferred Γ M)
-inferImpl Γ M = elaborate (gsolveImpl C∅[ Γ , M ])
+inferImpl Γ M = elaborate (gsolveC Γ M)
   where
     elaborate : Maybe (Σ[ σ ∈ Subst Θ₁ ∅ˢ ] (σ ⊨[ ∅ᴴ ] C∅[ Γ , M ]))
               → Maybe (Inferred Γ M)
