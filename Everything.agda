@@ -403,6 +403,7 @@ import TypeInference.SolverImpl.Deferred
 
 ---- The rigid-binder-free fragment
 
+import TypeInference.SolverImpl.RigidFree
 
 ---- What the solver's variable expansion buys: decomposability of every
 ---- expanded demand, most-generality of the expansion, and refutation

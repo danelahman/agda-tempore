@@ -15,8 +15,11 @@
 -- continuation grade, and over the full context, `2 + n`.        --
 ------------------------------------------------------------------
 
+open import Data.Empty using (⊥)
 open import Data.Fin using (Fin)
 open import Data.Nat using (ℕ; suc)
+open import Data.Product using (_×_)
+open import Data.Unit using (⊤)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -172,3 +175,25 @@ mutual
             → RawC Θ (suc n)
             --------------
             → RawC Θ n
+
+-- A term with no handler
+
+mutual
+
+  HandlerFreeᵛ : ∀ {Θ n} → RawV Θ n → Set
+  HandlerFreeᵛ ⦉ V , W ⦊ = HandlerFreeᵛ V × HandlerFreeᵛ W
+  HandlerFreeᵛ (lam M)  = HandlerFreeᶜ M
+  HandlerFreeᵛ _        = ⊤
+
+  HandlerFreeᶜ : ∀ {Θ n} → RawC Θ n → Set
+  HandlerFreeᶜ (return V)               = HandlerFreeᵛ V
+  HandlerFreeᶜ (M ⨟ N)                  = HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (V · W)                  = HandlerFreeᵛ V × HandlerFreeᵛ W
+  HandlerFreeᶜ (match V `in M)          = HandlerFreeᵛ V × HandlerFreeᶜ M
+  HandlerFreeᶜ (absurd V)               = HandlerFreeᵛ V
+  HandlerFreeᶜ (if V `then M `else N)   = HandlerFreeᵛ V × HandlerFreeᶜ M × HandlerFreeᶜ N
+  HandlerFreeᶜ (perform op V M)         = HandlerFreeᵛ V × HandlerFreeᶜ M
+  HandlerFreeᶜ (delay τ M)              = HandlerFreeᶜ M
+  HandlerFreeᶜ (handle M `with H `in N) = ⊥
+  HandlerFreeᶜ (unbox i N)              = HandlerFreeᶜ N
+  HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N

@@ -7,6 +7,9 @@
 -- action at `wkˢᵗ`, `wkˢʳ` and `wkˢᵉ`.                           --
 ------------------------------------------------------------------
 
+open import Data.Product using (_,_)
+open import Data.Unit using (tt)
+
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -149,6 +152,40 @@ mutual
           ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (unbox i N)              σ δ = cong (unbox i) ([⨟]ᴿᶜ N σ δ)
   [⨟]ᴿᶜ (box ρ V N)              σ δ = cong₃ box ([⨟]ʳ ρ σ δ) ([⨟]ᴿᵛ V σ δ) ([⨟]ᴿᶜ N σ δ)
+
+-- A handler-free term stays handler-free
+
+mutual
+
+  handlerFree-[]ᴿᵛ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (V : RawV Θ n)
+                   → HandlerFreeᵛ V → HandlerFreeᵛ (V [ σ ]ᴿᵛ)
+  handlerFree-[]ᴿᵛ (var i)     h       = tt
+  handlerFree-[]ᴿᵛ (const B c) h       = tt
+  handlerFree-[]ᴿᵛ ⋆           h       = tt
+  handlerFree-[]ᴿᵛ true        h       = tt
+  handlerFree-[]ᴿᵛ false       h       = tt
+  handlerFree-[]ᴿᵛ ⦉ V , W ⦊    (h , k) = handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
+  handlerFree-[]ᴿᵛ (lam M)     h       = handlerFree-[]ᴿᶜ M h
+
+  handlerFree-[]ᴿᶜ : ∀ {Θ Θ' n} {σ : Subst Θ Θ'} → (M : RawC Θ n)
+                   → HandlerFreeᶜ M → HandlerFreeᶜ (M [ σ ]ᴿᶜ)
+  handlerFree-[]ᴿᶜ (return V)               h           = handlerFree-[]ᴿᵛ V h
+  handlerFree-[]ᴿᶜ (M ⨟ N)                  (h , k)     =
+    handlerFree-[]ᴿᶜ M h , handlerFree-[]ᴿᶜ N k
+  handlerFree-[]ᴿᶜ (V · W)                  (h , k)     =
+    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᵛ W k
+  handlerFree-[]ᴿᶜ (match V `in M)          (h , k)     =
+    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k
+  handlerFree-[]ᴿᶜ (absurd V)               h           = handlerFree-[]ᴿᵛ V h
+  handlerFree-[]ᴿᶜ (if V `then M `else N)   (h , k , l) =
+    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k , handlerFree-[]ᴿᶜ N l
+  handlerFree-[]ᴿᶜ (perform op V M)         (h , k)     =
+    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ M k
+  handlerFree-[]ᴿᶜ (delay τ M)              h           = handlerFree-[]ᴿᶜ M h
+  handlerFree-[]ᴿᶜ (handle M `with H `in N) ()
+  handlerFree-[]ᴿᶜ (unbox i N)              h           = handlerFree-[]ᴿᶜ N h
+  handlerFree-[]ᴿᶜ (box ρ V N)              (h , k)     =
+    handlerFree-[]ᴿᵛ V h , handlerFree-[]ᴿᶜ N k
 
 -- Inversion: a term whose instance has a given outermost former has that
 -- former itself, with the immediate subterms instantiating to those of the

@@ -44,3 +44,6 @@ mapᴼ-solved (solved a) refl = a , refl , refl
 
 mapᴼ-refuted : ∀ {A B : Set} {f : A → B} → (x : Outcome A) → mapᴼ f x ≡ refuted → x ≡ refuted
 mapᴼ-refuted refuted refl = refl
+
+mapᴼ-stuck : ∀ {A B : Set} {f : A → B} → (x : Outcome A) → mapᴼ f x ≡ stuck → x ≡ stuck
+mapᴼ-stuck stuck refl = refl

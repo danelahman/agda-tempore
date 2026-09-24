@@ -68,7 +68,7 @@ open import TypeInference.OpenSyntax.Instances S
   using (Obligs; Satisfiable; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_)
 open import TypeInference.OpenSyntax.Language  S
 
-open import TypeInference.Raw.Syntax S using (RawC)
+open import TypeInference.Raw.Syntax S using (RawC; HandlerFreeᶜ)
 open import TypeInference.Raw.Subst  S using (_[_]ᴿᶜ; [≐]ᴿᶜ)
 open import TypeInference.Erase      S using (⌊_⌋ᶜ)
 open import TypeInference.Soundness  S using (ctx-substᶜ; ⌊ctxᶜ⌋; ⌊c⌋)
@@ -92,6 +92,7 @@ open import TypeInference.SolverImpl.Closed    S using (closedᴴ; closedᴴ-⊩
 open import TypeInference.SolverImpl.State     S
 open import TypeInference.SolverImpl.Solve     S opEnum
 open import TypeInference.SolverImpl.Principal S opEnum
+open import TypeInference.SolverImpl.RigidFree S opEnum using (solve-rigidFree)
 open import TypeInference.SolverImpl.Simplify  S
   using (simplify; simplify-⊩; simplify-⊨; trimElim; memʳ?; memᵉ?)
 open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
@@ -217,6 +218,25 @@ solveOn-complete : ∀ {Θ} → (C : Constraint Θ)
                  → ¬ (σ ⊨[ Q ∣ R ] C)
 solveOn-complete C eq σ Q R (δ₀ , h₀) sat =
   solveOn-refutes C eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
+
+-- A constraint with no rigid binder is never stuck
+
+solveOnᴰ-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → solveOnᴰ C ≢ stuck
+solveOnᴰ-rigidFree C p with solve init C in e
+... | refuted = λ ()
+... | stuck   = ⊥-elim (solve-rigidFree init C p e)
+... | solved (s' , m , w) with retry s'
+...   | nothing = λ ()
+...   | just (s₁ , m₁) with reexpand s₁
+...     | nothing = λ ()
+...     | just (s₂ , m₂) with toHyps (res s₂)
+...       | nothing = λ ()
+...       | just (Q₀ , hq) with closedᴴ Q₀
+...         | nothing = λ ()
+...         | just _  = λ ()
+
+solveOn-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → solveOn C ≢ stuck
+solveOn-rigidFree C p eq = solveOnᴰ-rigidFree C p (mapᴼ-stuck (solveOnᴰ C) eq)
 
 solveOnᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
                    → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Dfr Θ⁺)}
@@ -474,6 +494,14 @@ reportOf-refuted refuted    e eq = cong (mapᴼ readOut) e
 reportOf-refuted stuck      e ()
 reportOf-refuted (solved _) e ()
 
+reportOf-stuck : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
+               → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
+               → (e : solveOnᴰ C ≡ s)
+               → reportOf w X C s e ≡ stuck → solveOn C ≡ stuck
+reportOf-stuck refuted    e ()
+reportOf-stuck stuck      e eq = cong (mapᴼ readOut) e
+reportOf-stuck (solved _) e ()
+
 ------------------------------------------------------------------------
 -- The reference entry point
 --
@@ -629,7 +657,7 @@ infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e�
 -- A typed verdict is a principal typing, and `M` is typable exactly
 -- when its conditions are satisfiable; an untypable verdict means `M`
 -- is not typable. Hence inference is complete up to stuck: a typable
--- `M` is never declared untypable.
+-- `M` is never declared untypable. A handler-free `M` is never stuck.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}
             → infer Γ M ≡ typed p
@@ -639,3 +667,15 @@ infer-typed Γ M {p} _ = typable-⇔ p
 infer-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                → Typable Γ M → infer Γ M ≢ untypable
 infer-complete Γ M t eq = infer-untypable Γ M eq t
+
+infer-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                  → HandlerFreeᶜ M → infer Γ M ≢ stuck
+infer-handlerFree {Θ} Γ M h eq =
+  solveOn-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+    (reportOf-stuck (solveOnᴰ C[ Γ , M ]) refl (unstuck (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
+  where
+    unstuck : (x : Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]))
+            → inferred Γ M x ≡ stuck → x ≡ stuck
+    unstuck refuted    ()
+    unstuck stuck      eq = refl
+    unstuck (solved _) ()

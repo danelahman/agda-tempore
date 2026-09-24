@@ -16,6 +16,10 @@
 -- of ML Type Inference (ATTAPL, 2005).                          --
 ------------------------------------------------------------------
 
+open import Data.Empty using (⊥)
+open import Data.Product using (_×_)
+open import Data.Unit using (⊤)
+
 open import Syntax.Grades
 open import Syntax.LanguageSpec
 open import Syntax.Operations
@@ -75,3 +79,14 @@ Et∨≾ᵘ A ρ   [ σ ]ᶜⁿ = Et∨≾ᵘ (A [ σ ]ᵛ) (ρ [ σ ]ʳ)
 (∃ᵉ C)      [ σ ]ᶜⁿ = ∃ᵉ (C [ σ ↑ᵉ ]ᶜⁿ)
 (∀ᵉ C)      [ σ ]ᶜⁿ = ∀ᵉ (C [ σ ↑ᵉ ]ᶜⁿ)
 ⋀ᵒᵖ f       [ σ ]ᶜⁿ = ⋀ᵒᵖ (λ op → f op [ σ ]ᶜⁿ)
+
+-- A constraint with no rigid binder
+
+RigidFree : ∀ {Θ} → Constraint Θ → Set
+RigidFree (C ∧̂ D) = RigidFree C × RigidFree D
+RigidFree (∃ᵗ C)  = RigidFree C
+RigidFree (∃ʳ C)  = RigidFree C
+RigidFree (∃ᵉ C)  = RigidFree C
+RigidFree (∀ᵉ C)  = ⊥
+RigidFree (⋀ᵒᵖ f) = ∀ op → RigidFree (f op)
+RigidFree _       = ⊤

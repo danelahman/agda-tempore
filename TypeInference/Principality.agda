@@ -107,6 +107,12 @@ M₊-[] M σ = [⨟]ᴿᶜ M wk₊ σ
 C[_,_] : ∀ {Θ n} → OCtx Θ n → RawC Θ n → Constraint (Θ +ty +e)
 C[_,_] {Θ} Γ M = genC (Γ₊ Γ) (M₊ M) (X̂ Θ ‼ t̂ Θ)
 
+-- A handler-free term's constraint has no rigid binder
+
+C[]-rigidFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+              → HandlerFreeᶜ M → RigidFree C[ Γ , M ]
+C[]-rigidFree Γ M h = genCˢ-rigidFree (M₊ M) (handlerFree-[]ᴿᶜ M h)
+
 record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   constructor mkPrincipal
   field

@@ -22,6 +22,8 @@
 
 open import Data.Fin using (Fin; zero)
 open import Data.Nat using (ℕ)
+open import Data.Product using (_,_)
+open import Data.Unit using (tt)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -251,6 +253,44 @@ mutual
       A↑ = wkᵗ-v A
       t↑ = wkᵗ-e t
       Γ↑ = wkᵗ-ctx Γ
+
+-- A handler-free term generates a constraint with no rigid binder
+
+mutual
+
+  genVˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (V : RawV Θ₀ n)
+                  → {A : OVType Θ} → HandlerFreeᵛ V → RigidFree (genVˢ ι Γ V A)
+  genVˢ-rigidFree (var i)     h       = tt , tt
+  genVˢ-rigidFree (const B c) h       = tt
+  genVˢ-rigidFree ⋆           h       = tt
+  genVˢ-rigidFree true        h       = tt
+  genVˢ-rigidFree false       h       = tt
+  genVˢ-rigidFree ⦉ V₁ , V₂ ⦊  (h , k) = tt , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
+  genVˢ-rigidFree (lam M)     h       = tt , genCˢ-rigidFree M h
+
+  genCˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (M : RawC Θ₀ n)
+                  → {C : OCType Θ} → HandlerFreeᶜ M → RigidFree (genCˢ ι Γ M C)
+  genCˢ-rigidFree (return V)               {A ‼ t} h           =
+    genVˢ-rigidFree V h , tt
+  genCˢ-rigidFree (M₁ ⨟ M₂)                {A ‼ t} (h , k)     =
+    genCˢ-rigidFree M₁ h , genCˢ-rigidFree M₂ k , tt
+  genCˢ-rigidFree (V₁ · V₂)                {A ‼ t} (h , k)     =
+    genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k , tt , tt
+  genCˢ-rigidFree (match V `in M)          {A ‼ t} (h , k)     =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M k
+  genCˢ-rigidFree (absurd V)               {A ‼ t} h           =
+    genVˢ-rigidFree V h
+  genCˢ-rigidFree (if V `then M₁ `else M₂) {A ‼ t} (h , k , l) =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M₁ k , genCˢ-rigidFree M₂ l
+  genCˢ-rigidFree (perform op V M)         {A ‼ t} (h , k)     =
+    genVˢ-rigidFree V h , genCˢ-rigidFree M k , tt
+  genCˢ-rigidFree (delay τ M)              {A ‼ t} h           =
+    genCˢ-rigidFree M h , tt
+  genCˢ-rigidFree (handle M `with H `in N) {A ‼ t} ()
+  genCˢ-rigidFree (unbox i N)              {A ‼ t} h           =
+    tt , tt , tt , genCˢ-rigidFree N h
+  genCˢ-rigidFree (box ρ V N)              {A ‼ t} (h , k)     =
+    genVˢ-rigidFree V h , genCˢ-rigidFree N k
 
 -- Generation for a raw term over the scope of the context
 
