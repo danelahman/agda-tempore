@@ -9,8 +9,11 @@
 -- along `ι`, by closed values on the variables dropped.          --
 --                                                                --
 -- `strengthen` takes the mask of the variables occurring in a    --
--- type, a hypothesis set, or the image of a substitution, and    --
--- strengthens the three along it.                                --
+-- type, a hypothesis set, the image of a substitution, or a      --
+-- further set, and strengthens the three along it; the further   --
+-- set is carried by a retraction of `ι` fixing it. The variables --
+-- of deferred conditions, outside their binders, form such a     --
+-- set (`fvᴰ`), and a substitution fixing it fixes them.          --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -20,6 +23,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Nat.Base using (ℕ; zero; suc)
 open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.List.Relation.Unary.Any using (here; there)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -37,10 +41,13 @@ open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
+open import TypeInference.OpenSyntax.Instances S using (_+eⁿ_; _↑ᵉⁿ_)
 
 open import TypeInference.SolverImpl.Vars      S
 open import TypeInference.SolverImpl.Eliminate S using (Elim; Ĉ; Q̂; η; conv; inst; keep; princ)
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-v)
+open import TypeInference.SolverImpl.Deferred    S
+  using (Ords; ords; ors; oes; _[_]ᴼ; Dfr; dfr; nb; body; _[_]ᵈ; _⊩ᵈ_[_]; ⊩ᵈ-subst; ⊩ᵈ-subst⁻)
 
 ------------------------------------------------------------------------
 -- Thinning by a mask
@@ -130,6 +137,13 @@ emb-kept {suc n} p = go (p zero) refl
     go true  e zero    = e
     go true  e (suc j) = emb-kept p' j
     go false e j       = emb-kept p' j
+
+-- at a kept variable, an extension is the family at its strengthening
+
+ext-str : ∀ {n} {A : Set} → (p : Fin n → 𝔹) → (a : A) → (g : Fin (count p) → A)
+        → (i : Fin n) → (h : p i ≡ true) → ext p a g i ≡ g (str p i h)
+ext-str p a g i h =
+  trans (cong (ext p a g) (sym (emb-str p i h))) (ext-emb p a g (str p i h))
 
 ------------------------------------------------------------------------
 -- Hypothesis sets, equal field by field
@@ -402,10 +416,140 @@ fixes-≐ {F = F} {η} f τ h =
                     (λ j → fixᵉ f _ (emb-kept (vᵉ F) j))
 
 ------------------------------------------------------------------------
--- The step: a type, a hypothesis set and a substitution, stated over
--- the variables occurring in them
+-- The variables of deferred conditions, outside their binders
 
-record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q : Hyps Θ) : Set where
+⊆-trans : ∀ {Θ} {U V W : Vars Θ} → U ⊆ᵛ V → V ⊆ᵛ W → U ⊆ᵛ W
+⊆-trans g h = mk⊆ᵛ (λ α o → ⊆ᵗ h α (⊆ᵗ g α o)) (λ i o → ⊆ʳ h i (⊆ʳ g i o))
+                   (λ i o → ⊆ᵉ h i (⊆ᵉ g i o))
+
+⋃ᵛ-∈ : ∀ {Θ} {X : Set} {W : Vars Θ} → (f : X → Vars Θ) → {xs : List X} → ⋃ᵛ f xs ⊆ᵛ W
+     → ∀ {x} → x ∈ xs → f x ⊆ᵛ W
+⋃ᵛ-∈ f {x ∷ xs} h (here refl) = ⊆-∪ˡ (f x) (⋃ᵛ f xs) h
+⋃ᵛ-∈ f {x ∷ xs} h (there m)   = ⋃ᵛ-∈ f (⊆-∪ʳ (f x) (⋃ᵛ f xs) h) m
+
+-- a mask over the scope, lifted over rigids: every rigid is kept
+
+liftᵛ : ∀ {Θ} → Vars Θ → Vars (Θ +e)
+liftᵛ V = vars (vᵗ V) (vʳ V) (λ { zero → true ; (suc i) → vᵉ V i })
+
+unliftᵛ : ∀ {Θ} → Vars (Θ +e) → Vars Θ
+unliftᵛ V = vars (vᵗ V) (vʳ V) (λ i → vᵉ V (suc i))
+
+liftᵛⁿ : ∀ {Θ} → (k : ℕ) → Vars Θ → Vars (Θ +eⁿ k)
+liftᵛⁿ zero    V = V
+liftᵛⁿ (suc k) V = liftᵛⁿ k (liftᵛ V)
+
+unliftᵛⁿ : ∀ {Θ} → (k : ℕ) → Vars (Θ +eⁿ k) → Vars Θ
+unliftᵛⁿ zero    V = V
+unliftᵛⁿ (suc k) V = unliftᵛ (unliftᵛⁿ k V)
+
+liftᵛ-mono : ∀ {Θ} {V W : Vars Θ} → V ⊆ᵛ W → liftᵛ V ⊆ᵛ liftᵛ W
+liftᵛ-mono h = mk⊆ᵛ (⊆ᵗ h) (⊆ʳ h) (λ { zero o → refl ; (suc i) o → ⊆ᵉ h i o })
+
+liftᵛⁿ-mono : ∀ {Θ} {V W : Vars Θ} → (k : ℕ) → V ⊆ᵛ W → liftᵛⁿ k V ⊆ᵛ liftᵛⁿ k W
+liftᵛⁿ-mono zero    h = h
+liftᵛⁿ-mono (suc k) h = liftᵛⁿ-mono k (liftᵛ-mono h)
+
+⊆-liftᵛ : ∀ {Θ} → (V : Vars (Θ +e)) → V ⊆ᵛ liftᵛ (unliftᵛ V)
+⊆-liftᵛ V = mk⊆ᵛ (λ α o → o) (λ i o → o) (λ { zero o → refl ; (suc i) o → o })
+
+⊆-liftᵛⁿ : ∀ {Θ} → (k : ℕ) → (V : Vars (Θ +eⁿ k)) → V ⊆ᵛ liftᵛⁿ k (unliftᵛⁿ k V)
+⊆-liftᵛⁿ zero    V = ⊆-refl
+⊆-liftᵛⁿ (suc k) V = ⊆-trans (⊆-liftᵛⁿ k V) (liftᵛⁿ-mono k (⊆-liftᵛ (unliftᵛⁿ k V)))
+
+fixes-liftᵛ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → Fixes (liftᵛ F) (ρ ↑ᵉ)
+fixes-liftᵛ f =
+  mkFixes (λ α h → cong wkᵉ-v (fixᵗ f α h)) (λ i h → cong wkᵉ-r (fixʳ f i h))
+          (λ { zero h → refl ; (suc i) h → cong wkᵉ-e (fixᵉ f i h) })
+
+fixes-liftᵛⁿ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → (k : ℕ) → Fixes F ρ
+             → Fixes (liftᵛⁿ k F) (ρ ↑ᵉⁿ k)
+fixes-liftᵛⁿ zero    f = f
+fixes-liftᵛⁿ (suc k) f = fixes-liftᵛⁿ k (fixes-liftᵛ f)
+
+fixes-⊆ : ∀ {Θ} {V W : Vars Θ} {ρ : Subst Θ Θ} → V ⊆ᵛ W → Fixes W ρ → Fixes V ρ
+fixes-⊆ h f = mkFixes (λ α o → fixᵗ f α (⊆ᵗ h α o)) (λ i o → fixʳ f i (⊆ʳ h i o))
+                      (λ i o → fixᵉ f i (⊆ᵉ h i o))
+
+-- an expression over fixed variables is fixed
+
+fix-e : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
+      → (ε : EExp Θ) → fvᵉ ε ⊆ᵛ F → ε [ ρ ]ᵉ ≡ ε
+fix-e f (evar i)   h = fixᵉ f i (⊆ᵉ h i (≟-self i))
+fix-e f (econst c) h = refl
+fix-e f (ε ·̂ₑ ε')  h = cong₂ _·̂ₑ_ (fix-e f ε (⊆-∪ˡ (fvᵉ ε) (fvᵉ ε') h))
+                                  (fix-e f ε' (⊆-∪ʳ (fvᵉ ε) (fvᵉ ε') h))
+fix-e f (ε ⊔̂ₑ ε')  h = cong₂ _⊔̂ₑ_ (fix-e f ε (⊆-∪ˡ (fvᵉ ε) (fvᵉ ε') h))
+                                  (fix-e f ε' (⊆-∪ʳ (fvᵉ ε) (fvᵉ ε') h))
+
+fix-r : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
+      → (r : RExp Θ) → fvʳ r ⊆ᵛ F → r [ ρ ]ʳ ≡ r
+fix-r f (rvar i)   h = fixʳ f i (⊆ʳ h i (≟-self i))
+fix-r f (rconst c) h = refl
+fix-r f (r ·̂ᵣ r')  h = cong₂ _·̂ᵣ_ (fix-r f r (⊆-∪ˡ (fvʳ r) (fvʳ r') h))
+                                  (fix-r f r' (⊆-∪ʳ (fvʳ r) (fvʳ r') h))
+fix-r f (r ⊔̂ᵣ r')  h = cong₂ _⊔̂ᵣ_ (fix-r f r (⊆-∪ˡ (fvʳ r) (fvʳ r') h))
+                                  (fix-r f r' (⊆-∪ʳ (fvʳ r) (fvʳ r') h))
+fix-r f ∣ ε ∣̂ᵉ     h = cong ∣_∣̂ᵉ (fix-e f ε h)
+
+map-fix : ∀ {X : Set} → (g : X → X) → (l : List X) → (∀ {a} → a ∈ l → g a ≡ a) → map g l ≡ l
+map-fix g []      p = refl
+map-fix g (a ∷ l) p = cong₂ _∷_ (p (here refl)) (map-fix g l (λ m → p (there m)))
+
+-- the variables of an entry, outside its binders
+
+fvᵒ : ∀ {Θ} → Ords Θ → Vars Θ
+fvᵒ o = ⋃ᵛ fvʳʳ (ors o) ∪ᵛ ⋃ᵛ fvᵉᵉ (oes o)
+
+fvᵈ : ∀ {Θ} → Dfr Θ → Vars Θ
+fvᵈ E = unliftᵛⁿ (nb E) (fvᵒ (body E))
+
+fvᴰ : ∀ {Θ} → List (Dfr Θ) → Vars Θ
+fvᴰ = ⋃ᵛ fvᵈ
+
+fixᵒ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (o : Ords Θ) → fvᵒ o ⊆ᵛ F
+     → o [ ρ ]ᴼ ≡ o
+fixᵒ {ρ = ρ} f o h =
+  cong₂ ords (map-fix (mapᵖ (_[ ρ ]ʳ)) (ors o) r) (map-fix (mapᵖ (_[ ρ ]ᵉ)) (oes o) e)
+  where
+    hr = ⊆-∪ˡ (⋃ᵛ fvʳʳ (ors o)) (⋃ᵛ fvᵉᵉ (oes o)) h
+    he = ⊆-∪ʳ (⋃ᵛ fvʳʳ (ors o)) (⋃ᵛ fvᵉᵉ (oes o)) h
+
+    r : ∀ {a} → a ∈ ors o → mapᵖ (_[ ρ ]ʳ) a ≡ a
+    r {x , y} m = cong₂ _,_ (fix-r f x (⊆-∪ˡ (fvʳ x) (fvʳ y) (⋃ᵛ-∈ fvʳʳ hr m)))
+                            (fix-r f y (⊆-∪ʳ (fvʳ x) (fvʳ y) (⋃ᵛ-∈ fvʳʳ hr m)))
+
+    e : ∀ {a} → a ∈ oes o → mapᵖ (_[ ρ ]ᵉ) a ≡ a
+    e {x , y} m = cong₂ _,_ (fix-e f x (⊆-∪ˡ (fvᵉ x) (fvᵉ y) (⋃ᵛ-∈ fvᵉᵉ he m)))
+                            (fix-e f y (⊆-∪ʳ (fvᵉ x) (fvᵉ y) (⋃ᵛ-∈ fvᵉᵉ he m)))
+
+fixᵈ : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ → (E : Dfr Θ) → fvᵈ E ⊆ᵛ F
+     → E [ ρ ]ᵈ ≡ E
+fixᵈ f (dfr l k o) h =
+  cong (dfr l k) (fixᵒ (fixes-liftᵛⁿ k f) o (⊆-trans (⊆-liftᵛⁿ k (fvᵒ o)) (liftᵛⁿ-mono k h)))
+
+-- a substitution fixing their variables leaves the conditions' meaning
+-- unchanged
+
+fix-⊩ᵈ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
+       → Fixes F ρ → {D : List (Dfr Θ)} → fvᴰ D ⊆ᵛ F
+       → ∀ {E} → E ∈ D → Q ⊩ᵈ E [ δ ] → Q ⊩ᵈ E [ ρ ⨟ˢ δ ]
+fix-⊩ᵈ {Q = Q} {δ = δ} f h {E} m p =
+  ⊩ᵈ-subst E (subst (λ E' → Q ⊩ᵈ E' [ δ ]) (sym (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m))) p)
+
+fix-⊩ᵈ⁻ : ∀ {Θ Ψ} {Q : Hyps Ψ} {F : Vars Θ} {ρ : Subst Θ Θ} {δ : Subst Θ Ψ}
+        → Fixes F ρ → {D : List (Dfr Θ)} → fvᴰ D ⊆ᵛ F
+        → ∀ {E} → E ∈ D → Q ⊩ᵈ E [ ρ ⨟ˢ δ ] → Q ⊩ᵈ E [ δ ]
+fix-⊩ᵈ⁻ {Q = Q} {δ = δ} f h {E} m p =
+  subst (λ E' → Q ⊩ᵈ E' [ δ ]) (fixᵈ f E (⋃ᵛ-∈ fvᵈ h m)) (⊩ᵈ-subst⁻ E p)
+
+------------------------------------------------------------------------
+-- The step: a type, a hypothesis set and a substitution, stated over
+-- the variables occurring in them and in a further set `V`, which a
+-- retraction `π` of `ι` fixes
+
+record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q : Hyps Θ) (V : Vars Θ)
+       : Set where
   constructor strengthened
   field
     Θ⁻    : Scope
@@ -417,22 +561,41 @@ record Strengthened {Θ₀ Θ : Scope} (τ : Subst Θ₀ Θ) (X : OCType Θ) (Q 
     X-ι   : X⁻ [ ⌜ ι ⌝ʳ ]ᶜ ≡ X
     Q-ι   : Q⁻ [ ι ]ᴴ ≡ Q
     ext-ι : ∀ {Ψ} → (δ : Subst Θ⁻ Ψ) → Σ[ δ' ∈ Subst Θ Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
+    π     : Subst Θ Θ⁻
+    π-fix : Fixes V (π ⨟ˢ ⌜ ι ⌝ʳ)
 
-strengthen : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → Strengthened τ X Q
-strengthen τ X Q =
+-- The retraction sends each kept variable to its strengthening
+
+extⁱ-fix : ∀ {Θ} → (M : Vars Θ) → Fixes M (extⁱ M idˢ ⨟ˢ ⌜ thin M ⌝ʳ)
+extⁱ-fix M =
+  mkFixes (λ α h → cong (_[ ⌜ thin M ⌝ʳ ]ᵛ) (ext-str (vᵗ M) Unit tvar α h)
+                   ⊚ cong tvar (emb-str (vᵗ M) α h))
+          (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ʳ) (ext-str (vʳ M) ûᵣ rvar i h)
+                   ⊚ cong rvar (emb-str (vʳ M) i h))
+          (λ i h → cong (_[ ⌜ thin M ⌝ʳ ]ᵉ) (ext-str (vᵉ M) ûₑ evar i h)
+                   ⊚ cong evar (emb-str (vᵉ M) i h))
+  where
+    _⊚_ : ∀ {A : Set} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
+    _⊚_ = trans
+
+strengthen : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
+           → Strengthened τ X Q V
+strengthen τ X Q V =
   strengthened (kept M) (thin M) (strˢ M τ hτ) (strᶜ M X hX) (strᴴ M Q hQ)
                (strˢ-ι M τ hτ) (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
+               (extⁱ M idˢ) (fixes-⊆ hV (extⁱ-fix M))
   where
-    M  = fvᶜ X ∪ᵛ fvᴴ Q ∪ᵛ fvˢ τ
-    hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ) ⊆-refl
-    hQ = ⊆-∪ˡ (fvᴴ Q) (fvˢ τ) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ) ⊆-refl)
-    hτ = ⊆-∪ʳ (fvᴴ Q) (fvˢ τ) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ) ⊆-refl)
+    M  = fvᶜ X ∪ᵛ fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V
+    hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V) ⊆-refl
+    hQ = ⊆-∪ˡ (fvᴴ Q) (fvˢ τ ∪ᵛ V) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V) ⊆-refl)
+    hτ = ⊆-∪ˡ (fvˢ τ) V (⊆-∪ʳ (fvᴴ Q) (fvˢ τ ∪ᵛ V) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V) ⊆-refl))
+    hV = ⊆-∪ʳ (fvˢ τ) V (⊆-∪ʳ (fvᴴ Q) (fvˢ τ ∪ᵛ V) (⊆-∪ʳ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V) ⊆-refl))
 
 ------------------------------------------------------------------------
 -- After an elimination: its certificates, read along `ι`
 
-module _ {Θ₀ Θ : Scope} {τ : Subst Θ₀ Θ} {C : OCType Θ} {Q : Hyps Θ} (el : Elim C Q)
-         (sr : Strengthened τ (Ĉ el) (Q̂ el)) where
+module _ {Θ₀ Θ : Scope} {τ : Subst Θ₀ Θ} {C : OCType Θ} {Q : Hyps Θ} {V : Vars Θ} (el : Elim C Q)
+         (sr : Strengthened τ (Ĉ el) (Q̂ el) V) where
 
   open Strengthened sr
 

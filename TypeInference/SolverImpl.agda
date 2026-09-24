@@ -1,10 +1,11 @@
 ------------------------------------------------------------------
 -- The solver: solve, then report                                 --
 --                                                                --
--- `solveOn` runs the driver and reads its residual back as a     --
--- hypothesis set, deciding the atoms no unknown affects          --
--- (`Closed`): one that holds is dropped, one that fails refuses. --
--- It instantiates `TypeInference.Solver.Solver`.                 --
+-- `solveOn` runs the driver, retries the deferred conditions,    --
+-- and reads its residual back as a hypothesis set, deciding the  --
+-- atoms no unknown affects (`Closed`): one that holds is         --
+-- dropped, one that fails refuses. The deferred conditions are   --
+-- the obligations. It instantiates `TypeInference.Solver.Solver`.--
 -- Principality is unguarded; refutation is guarded by `NoRig`,   --
 -- since at a rigid binder a failure can be a failure of          --
 -- `Normal`'s decision procedures, and is stated against          --
@@ -17,15 +18,17 @@
 -- form, its disjunctions settled again, every subtyping atom and --
 -- grade ordering entailed by the others kept dropped, and the    --
 -- report stated over the variables occurring in it. The unknowns --
--- of the image of the caller's variables are neither eliminated  --
--- nor dropped.                                                   --
+-- of the image of the caller's variables, and those of the       --
+-- deferred conditions, are neither eliminated nor dropped.       --
 --                                                                --
 -- `infer` is the reference entry point: a report on the          --
 -- constraint of a term in a context is a principal typing.       --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Base using (List; []; _∷_; map)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.List.Relation.Unary.All using ([]; _∷_)
 import Data.List.Relation.Unary.All as All
 open import Data.Maybe.Base using (Maybe; just; nothing)
@@ -85,6 +88,10 @@ open import TypeInference.Solver            S
 open import TypeInference.SolverImpl.Core.Unify    S using (Rig; _∈ᶠ_)
 open import TypeInference.SolverImpl.Core.UnifyMGU S using (Fixing; fixing)
 
+open import TypeInference.SolverImpl.Deferred  S
+  using (Ords; ords; ors; oes; Dfr; dfr; _[_]ᵈ; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes;
+         ⊩ᵈ-resp-≐ˢ; ⊩ᵈ-subst; ⊩ᵈ-subst⁻; toOblig; ⊩ᴰ→⊩ᴼˢ; ⊩ᴼˢ→⊩ᴰ)
+open import TypeInference.OpenSyntax.Instances S using (wkᵉⁿ-H; _↑ᵉⁿ_)
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Closed    S using (closedᴴ; closedᴴ-⊩; closedᴴ-⊆; closedᴴ-fail)
 open import TypeInference.SolverImpl.State     S
@@ -95,92 +102,122 @@ open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Eliminate S
   using (Elim; Elimᶠ; Entails; entails; eliminate; _⨾ᴱ_)
-open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ using (canonElim)
-open import TypeInference.SolverImpl.Vars       S using (Vars; ⊆-refl; fvˢ; Fixes; fixes-id; fixes-⨟)
+open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ
+  using (canonElim; canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡)
+open import TypeInference.SolverImpl.Vars       S
+  using (Vars; _∪ᵛ_; ⊆-refl; ⊆-∪ˡ; ⊆-∪ʳ; fvˢ; Fixes; fixes-id; fixes-⨟)
 open import TypeInference.SolverImpl.Strengthen S
-  using (Ren; Strengthened; strengthen; ⌜_⌝ʳ; _[_]ᴴ; ⊩ᴴ-ren⁺; fixes-≐; conv⁻; inst⁻; keep⁻; princ⁻)
+  using (Ren; Strengthened; strengthen; ⌜_⌝ʳ; _[_]ᴴ; ⊩ᴴ-ren⁺; fixes-≐; fixes-⊆; fvᴰ;
+         fix-⊩ᵈ; fix-⊩ᵈ⁻; conv⁻; inst⁻; keep⁻; princ⁻)
 
 Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 
+-- The driver's answer: a scope, a substitution, the residual read back
+-- as hypotheses, and the deferred conditions, retried once more
+
+Answer : Scope → Scope → Set
+Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × List (Dfr Θ')
+
+solveOnᴰ : ∀ {Θ} → Constraint Θ → Maybe (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
+solveOnᴰ C with solve init C
+... | nothing = nothing
+... | just (s' , m , w) with retry s'
+...   | nothing = nothing
+...   | just (s₁ , m₁) with reexpand s₁
+...     | nothing = nothing
+...     | just (s₂ , m₂) with toHyps (res s₂)
+...       | nothing        = nothing
+...       | just (Q₀ , hq) with closedᴴ Q₀
+...         | nothing = nothing
+...         | just Q  = just (Ψ s₂ , θ s₂ , Q , dfs (res s₂))
+
+-- An entry reads back as an obligation
+
+readOut : ∀ {Θ} → Σ[ Θ' ∈ Scope ] Answer Θ Θ'
+        → Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ')
+readOut (Θ' , σ , Q , D) = Θ' , σ , Q , map toOblig D
+
 solveOn : ∀ {Θ} → Constraint Θ
         → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
-solveOn C with solve init C
-... | nothing = nothing
-... | just (s' , m , w) with reexpand s'
-...   | nothing = nothing
-...   | just (s₂ , m₂) with toHyps (res s₂)
-...     | nothing        = nothing
-...     | just (Q₀ , hq) with closedᴴ Q₀
-...       | nothing = nothing
-...       | just Q  = just (Ψ s₂ , θ s₂ , Q , [])
+solveOn C = Maybe.map readOut (solveOnᴰ C)
 
--- No obligations are deferred
+map-just : ∀ {A B : Set} {f : A → B} → (x : Maybe A) → {y : B}
+         → Maybe.map f x ≡ just y → Σ[ a ∈ A ] ((x ≡ just a) × (f a ≡ y))
+map-just (just a) refl = a , refl , refl
 
-solveOn-[] : ∀ {Θ} → (C : Constraint Θ)
-           → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-           → solveOn C ≡ just (Θ' , σ , Q , R)
-           → R ≡ []
-solveOn-[] C eq with solve init C
+map-nothing : ∀ {A B : Set} {f : A → B} → (x : Maybe A) → Maybe.map f x ≡ nothing → x ≡ nothing
+map-nothing nothing refl = refl
+
+solveOnᴰ-sound : ∀ {Θ} → (C : Constraint Θ)
+               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+               → solveOnᴰ C ≡ just (Θ' , σ , Q , D)
+               → σ ⊨[ Q ∣ map toOblig D ] C
+solveOnᴰ-sound C eq with solve init C
 ... | nothing = ⊥just eq
-... | just (s' , m , w) with reexpand s'
+... | just (s' , m , w) with retry s'
 ...   | nothing = ⊥just eq
-...   | just (s₂ , m₂) with toHyps (res s₂)
+...   | just (s₁ , m₁) with reexpand s₁
 ...     | nothing = ⊥just eq
-...     | just (Q₀ , hq) with closedᴴ Q₀
+...     | just (s₂ , m₂) with toHyps (res s₂)
 ...       | nothing = ⊥just eq
-...       | just Q₁ with eq
-...         | refl = refl
+...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...         | nothing = ⊥just eq
+...         | just Q₁ with eq
+...           | refl = λ δ Q' → λ { (hQ ∷ hR) →
+                wit-mono m₂ C (wit-mono m₁ C w) δ Q'
+                  (⊩ᴿ-bare (⊩ᴿ-resp-≐ˢ (⨟-idˡ δ) (⊩ᴿ-⨟ (⊩ᴴ-⨟ hQ (closedᴴ-⊩ Q₀ e'')) hq))
+                           (⊩ᴼˢ→⊩ᴰ (dfs (res s₂)) hR)) }
 
 solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
               → solveOn C ≡ just (Θ' , σ , Q , R)
               → σ ⊨[ Q ∣ R ] C
-solveOn-sound C eq with solve init C in e
-... | nothing = ⊥just eq
-... | just (s' , m , w) with reexpand s' in e₂
-...   | nothing = ⊥just eq
-...   | just (s₂ , m₂) with toHyps (res s₂) in e'
-...     | nothing = ⊥just eq
-...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
-...       | nothing = ⊥just eq
-...       | just Q₁ with eq
-...         | refl =
-              ⊨-∣ C
-                (⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C
-                  (⊨-mono (closedᴴ-⊩ Q₀ e'') C
-                    (⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C (wit-mono m₂ C w idˢ Q₀ hq))))
+solveOn-sound C eq with map-just (solveOnᴰ C) eq
+... | (Θ' , σ , Q , D) , e , refl = solveOnᴰ-sound C e
 
 -- A refusal refutes every closed instance
+
+solveOnᴰ-refutes : ∀ {Θ} → (C : Constraint Θ) → NoRig C
+                 → solveOnᴰ C ≡ nothing
+                 → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
+solveOnᴰ-refutes C nr eq τ sat with solve init C in e
+... | nothing = solve-fail init C nr e τ (Fixing-[] τ) ⊩ᴿ-empty sat
+... | just (s' , m , w) with retry s' in e₁
+...   | nothing = retry-fail s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
+  where
+    fac = solve-principal init C e τ sat ⊩ᴿ-empty
+...   | just (s₁ , m₁) with reexpand s₁ in e₂
+...     | nothing =
+          reexpand-fail s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
+  where
+    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
+    fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
+...     | just (s₂ , m₂) with toHyps (res s₂) in e'
+...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...         | just _  = ⊥nothing eq
+...         | nothing =
+              closedᴴ-fail Q₀ e''
+                (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) ∷ [])
+  where
+    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
+    fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
+    fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
+solveOnᴰ-refutes C nr eq τ sat | just (s' , m , w) | just (s₁ , m₁) | just (s₂ , m₂) | nothing
+  with toHyps-nothing (res s₂) e'
+...         | inj₁ (A , mem , q) =
+              etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
+  where
+    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
+    fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
+    fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
+...         | inj₂ (A , B , mem , q) =
+              ⊥nothing (trans (sym (proj₂ (reexpand-dec s₁ e₂ mem))) q)
 
 solveOn-refutes : ∀ {Θ} → (C : Constraint Θ) → NoRig C
                 → solveOn C ≡ nothing
                 → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
-solveOn-refutes C nr eq τ sat with solve init C in e
-... | nothing = solve-fail init C nr e τ (Fixing-[] τ) ⊩ᴿ-empty sat
-... | just (s' , m , w) with reexpand s' in e₂
-...   | nothing =
-        reexpand-fail s' e₂ (proj₁ fac) ∅ᴴ (proj₁ (proj₂ (proj₂ fac)))
-  where
-    fac = solve-principal init C e τ sat ⊩ᴿ-empty
-...   | just (s₂ , m₂) with toHyps (res s₂) in e'
-...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
-...       | just _  = ⊥nothing eq
-...       | nothing =
-            closedᴴ-fail Q₀ e''
-              (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) ∷ [])
-  where
-    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
-    fac₂ = reexpand-princ s' e₂ (proj₁ fac) ∅ᴴ (proj₁ (proj₂ (proj₂ fac)))
-solveOn-refutes C nr eq τ sat | just (s' , m , w) | just (s₂ , m₂) | nothing
-  with toHyps-nothing (res s₂) e'
-...       | inj₁ (A , mem , q) =
-            etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
-  where
-    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
-    fac₂ = reexpand-princ s' e₂ (proj₁ fac) ∅ᴴ (proj₁ (proj₂ (proj₂ fac)))
-...       | inj₂ (A , B , mem , q) =
-            ⊥nothing (trans (sym (proj₂ (reexpand-dec s' e₂ mem))) q)
+solveOn-refutes C nr eq = solveOnᴰ-refutes C nr (map-nothing (solveOnᴰ C) eq)
 
 solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
                  → solveOn C ≡ nothing
@@ -190,6 +227,52 @@ solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
 solveOn-complete C nr eq σ Q R (δ₀ , h₀) sat =
   solveOn-refutes C nr eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
 
+solveOnᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
+                   → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Dfr Θ⁺)}
+                   → solveOnᴰ C ≡ just (Θ⁺ , σ⁺ , Q⁺ , D⁺)
+                   → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
+                   → σ ⊨[ Q ∣ R ] C
+                   → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
+                   → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
+                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ map toOblig D⁺))
+solveOnᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
+... | nothing = ⊥just eq
+... | just (s' , m , w) with retry s' in e₁
+...   | nothing = ⊥just eq
+...   | just (s₁ , m₁) with reexpand s₁ in e₂
+...     | nothing = ⊥just eq
+...     | just (s₂ , m₂) with toHyps (res s₂) in e'
+...       | nothing = ⊥just eq
+...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
+...         | nothing = ⊥just eq
+...         | just Q₁ with eq
+...           | refl = δ₂ , tri ,
+                       closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
+                       ∷ ⊩ᴰ→⊩ᴼˢ (dfs (res s₂)) (⊩dfs h₂)
+  where
+    fac  = solve-principal init C e (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀) ⊩ᴿ-empty
+    δ    = proj₁ fac
+    tri₀ = proj₁ (proj₂ fac)
+    hres = proj₁ (proj₂ (proj₂ fac))
+
+    fac₁ = retry-princ s' e₁ δ hres
+    δ₁   = proj₁ fac₁
+    tri₁ = proj₁ (proj₂ fac₁)
+    h₁   = proj₁ (proj₂ (proj₂ fac₁))
+
+    fac₂ = reexpand-princ s₁ e₂ δ₁ ∅ᴴ h₁
+    δ₂   = proj₁ fac₂
+    tri₂ = proj₁ (proj₂ fac₂)
+    h₂   = proj₂ (proj₂ fac₂)
+
+    tri = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₂)) δ₂)
+          (≐ˢ-trans (⨟-assoc (θ s₁) (mδ m₂) δ₂)
+          (≐ˢ-trans (⨟-congʳ (θ s₁) tri₂)
+          (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
+          (≐ˢ-trans (⨟-assoc (θ s') (mδ m₁) δ₁)
+          (≐ˢ-trans (⨟-congʳ (θ s') tri₁)
+          (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri₀))))))
+
 solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
                   → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {R⁺ : Obligs Θ⁺}
                   → solveOn C ≡ just (Θ⁺ , σ⁺ , Q⁺ , R⁺)
@@ -198,31 +281,8 @@ solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
                   → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
                   → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
-solveOn-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
-... | nothing = ⊥just eq
-... | just (s' , m , w) with reexpand s' in e₂
-...   | nothing = ⊥just eq
-...   | just (s₂ , m₂) with toHyps (res s₂) in e'
-...     | nothing = ⊥just eq
-...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
-...       | nothing = ⊥just eq
-...       | just Q₁ with eq
-...         | refl = δ₂ , tri , closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂) ∷ []
-  where
-    fac  = solve-principal init C e (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀) ⊩ᴿ-empty
-    δ    = proj₁ fac
-    tri₁ = proj₁ (proj₂ fac)
-    hres = proj₁ (proj₂ (proj₂ fac))
-
-    fac₂ = reexpand-princ s' e₂ δ ∅ᴴ hres
-    δ₂   = proj₁ fac₂
-    tri₂ = proj₁ (proj₂ fac₂)
-    h₂   = proj₂ (proj₂ fac₂)
-
-    tri = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₂)) δ₂)
-          (≐ˢ-trans (⨟-assoc (θ s') (mδ m₂) δ₂)
-          (≐ˢ-trans (⨟-congʳ (θ s') tri₂)
-          (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri₁)))
+solveOn-principal C eq with map-just (solveOnᴰ C) eq
+... | (Θ' , σ , Q , D) , e , refl = solveOnᴰ-principal C e
 
 solver : Solver NoRig (λ _ → ⊤)
 solver = record
@@ -296,28 +356,65 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
            → ∅ᴴ ∣ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
     ext-ι  : ∀ {Ψ} → (δ : Subst Θ̃ Ψ) → Σ[ δ' ∈ Subst Θ' Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
--- The report of what `solveOn` returns
+-- An entry with its grade expressions in canonical form means the same
 
--- No obligations are deferred
+canonᵈ : ∀ {Θ} → Dfr Θ → Dfr Θ
+canonᵈ (dfr l k o) = dfr l k (ords (map (mapᵖ canonᵣ) (ors o)) (map (mapᵖ canonₑ) (oes o)))
 
-∷≢[] : ∀ {A : Set} {x : A} {xs : List A} → x ∷ xs ≡ [] → ⊥
-∷≢[] ()
+canonᵈ-⊩ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Dfr Θ)
+         → Q ⊩ᵈ E [ δ ] → Q ⊩ᵈ canonᵈ E [ δ ]
+canonᵈ-⊩ {δ = δ} (dfr l k o) h = mk⊩ᵒ r e
+  where
+    r : ∀ {x y} → (x , y) ∈ map (mapᵖ canonᵣ) (ors o)
+      → wkᵉⁿ-H k _ ⊩ x [ δ ↑ᵉⁿ k ]ʳ ≾̂ᵣ y [ δ ↑ᵉⁿ k ]ʳ
+    r m with ∈-map⁻ (mapᵖ canonᵣ) m
+    ... | (x , y) , m₀ , refl =
+      transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ x))))
+             (transᵣ (⊩ors h m₀) (eqᵣ (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ y))))
+
+    e : ∀ {x y} → (x , y) ∈ map (mapᵖ canonₑ) (oes o)
+      → wkᵉⁿ-H k _ ⊩ x [ δ ↑ᵉⁿ k ]ᵉ ≾̂ₑ y [ δ ↑ᵉⁿ k ]ᵉ
+    e m with ∈-map⁻ (mapᵖ canonₑ) m
+    ... | (x , y) , m₀ , refl =
+      transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ x))))
+             (transₑ (⊩oes h m₀) (eqₑ (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ y))))
+
+canonᵈ-⊩⁻ : ∀ {Θ Ξ} {Q : Hyps Ξ} {δ : Subst Θ Ξ} → (E : Dfr Θ)
+          → Q ⊩ᵈ canonᵈ E [ δ ] → Q ⊩ᵈ E [ δ ]
+canonᵈ-⊩⁻ {δ = δ} (dfr l k o) h =
+  mk⊩ᵒ (λ {x} {y} m → transᵣ (eqᵣ (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ x)))
+                        (transᵣ (⊩ors h (∈-map⁺ (mapᵖ canonᵣ) m))
+                                (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst (δ ↑ᵉⁿ k) (canonᵣ-≡ y))))))
+       (λ {x} {y} m → transₑ (eqₑ (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ x)))
+                        (transₑ (⊩oes h (∈-map⁺ (mapᵖ canonₑ) m))
+                                (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst (δ ↑ᵉⁿ k) (canonₑ-≡ y))))))
+
+∈-map-elim : ∀ {A B : Set} → (f : A → B) → {P : B → Set} → {l : List A}
+           → (∀ {a} → a ∈ l → P (f a)) → ∀ {b} → b ∈ map f l → P b
+∈-map-elim f {P} p m with ∈-map⁻ f m
+... | a , m₀ , refl = p m₀
+
+-- The report of what `solveOnᴰ` returns. The variables of the deferred
+-- conditions are frozen for elimination and kept by the strengthening:
+-- the conditions are read over the report's scope along the
+-- strengthening's retraction, in canonical form.
 
 reportOf : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-         → (s : Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))) → solveOn C ≡ s
+         → (s : Maybe (Σ[ Θ' ∈ Scope ] Answer Θ Θ')) → solveOnᴰ C ≡ s
          → Maybe (Reported w X C)
-reportOf w X C nothing                     e = nothing
-reportOf w X C (just (Θ' , σ , Q , _ ∷ _)) e = ⊥-elim (∷≢[] (solveOn-[] C e))
-reportOf w X C (just (Θ' , σ , Q , []))    e =
-      just (report Θ' σ Q [] (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr) [] (Elim.η el)
-                   e (simplify-⊨ Q) (simplify-⊩ Q) (fixes-≐ fx (w ⨟ˢ σ) ⊆-refl) (τ-ι sr)
-                   (conv⁻ el sr) (inst⁻ el sr) (λ δ Q' h → []) (keep⁻ el sr) (λ δ h → [])
+reportOf w X C nothing                  e = nothing
+reportOf w X C (just (Θ' , σ , Q , D)) e =
+      just (report Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
+                   (map toOblig D̃) (Elim.η el)
+                   (cong (Maybe.map readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
+                   (fixes-≐ fx (w ⨟ˢ σ) (⊆-∪ˡ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl)) (τ-ι sr)
+                   (conv⁻ el sr) (inst⁻ el sr) instᴿ' (keep⁻ el sr) to-R̃'
                    (princ⁻ el sr) (ext-ι sr))
   where
     open Strengthened
 
     F : Vars Θ'
-    F = fvˢ (w ⨟ˢ σ)
+    F = fvˢ (w ⨟ˢ σ) ∪ᵛ fvᴰ D
 
     el₀ : Elimᶠ F (X [ σ ]ᶜ) (simplify Q)
     el₀ = eliminate entailsᴴ F (X [ σ ]ᶜ) (simplify Q)
@@ -328,23 +425,61 @@ reportOf w X C (just (Θ' , σ , Q , []))    e =
     fx : Fixes F (Elim.η el)
     fx = fixes-⨟ (fixes-⨟ (proj₂ el₀) fixes-id) fixes-id
 
-    sr : Strengthened (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el)
-    sr = strengthen (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el)
+    fxᴰ : Fixes (fvᴰ D) (Elim.η el)
+    fxᴰ = fixes-⊆ (⊆-∪ʳ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl) fx
+
+    sr : Strengthened (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D)
+    sr = strengthen (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D)
+
+    read : Dfr Θ' → Dfr (Θ⁻ sr)
+    read E = canonᵈ (E [ π sr ]ᵈ)
+
+    D̃ : List (Dfr (Θ⁻ sr))
+    D̃ = map read D
+
+    -- read back along `ι`, an entry is itself
+    back : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
+         → ∀ {E} → E ∈ D → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᵈ E [ δ ]
+    back {δ = δ} {E} m h =
+      fix-⊩ᵈ⁻ (π-fix sr) ⊆-refl m
+        (⊩ᵈ-resp-≐ˢ E (≐ˢ-sym (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ))
+          (⊩ᵈ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵈ) h)))
+
+    fwd : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
+        → ∀ {E} → E ∈ D → Q' ⊩ᵈ E [ δ ] → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+    fwd {δ = δ} {E} m h =
+      canonᵈ-⊩ (E [ π sr ]ᵈ)
+        (⊩ᵈ-subst⁻ E (⊩ᵈ-resp-≐ˢ E (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ) (fix-⊩ᵈ (π-fix sr) ⊆-refl m h)))
+
+    instᴿ' : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
+           → Q' ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ map toOblig D [ Elim.η el ⨟ˢ δ ]
+    instᴿ' δ Q' h =
+      ⊩ᴰ→⊩ᴼˢ {Q = Q'} {δ = Elim.η el ⨟ˢ δ} D
+        (λ {E} m → fix-⊩ᵈ {Q = Q'} {ρ = Elim.η el} {δ = δ} fxᴰ {D = D} ⊆-refl m
+                     (back {Q' = Q'} {δ = δ} m
+                       (⊩ᴼˢ→⊩ᴰ {Q = Q'} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃ h (∈-map⁺ read m))))
+
+    to-R̃' : (δ : Subst Θ' ∅ˢ) → δ ⊨ simplify Q ∣ map toOblig D
+          → ∅ᴴ ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+    to-R̃' δ h =
+      ⊩ᴰ→⊩ᴼˢ {Q = ∅ᴴ} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃
+        (∈-map-elim read {P = λ E → ∅ᴴ ⊩ᵈ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
+          (λ m₀ → fwd {Q' = ∅ᴴ} {δ = δ} m₀
+                    (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (All.tail h) m₀)))
 
 reportOn : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
          → Maybe (Reported w X C)
-reportOn w X C = reportOf w X C (solveOn C) refl
+reportOn w X C = reportOf w X C (solveOnᴰ C) refl
 
 -- A report fails only where the solver does
 
 reportOf-nothing : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ} {Y : Set}
                  → (f : Reported w X C → Y)
-                 → (s : Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ')))
-                 → (e : solveOn C ≡ s)
-                 → Maybe.map f (reportOf w X C s e) ≡ nothing → s ≡ nothing
-reportOf-nothing         f nothing                     e eq = refl
-reportOf-nothing {C = C} f (just (_ , _ , _ , _ ∷ _)) e eq = ⊥-elim (∷≢[] (solveOn-[] C e))
-reportOf-nothing         f (just (_ , _ , _ , []))    e eq = ⊥nothing eq
+                 → (s : Maybe (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
+                 → (e : solveOnᴰ C ≡ s)
+                 → Maybe.map f (reportOf w X C s e) ≡ nothing → solveOn C ≡ nothing
+reportOf-nothing f nothing  e eq = cong (Maybe.map readOut) e
+reportOf-nothing f (just _) e eq = ⊥nothing eq
 
 ------------------------------------------------------------------------
 -- The reference entry point
@@ -475,5 +610,5 @@ infer-fails : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → NoRig C[ �
             → ¬ Satisfiable Q₀ []
 infer-fails {Θ} Γ M nr eq σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ sQ =
   solveOn-complete C[ Γ , M ] nr
-    (reportOf-nothing (typing Γ M) (solveOn C[ Γ , M ]) refl eq)
+    (reportOf-nothing (typing Γ M) (solveOnᴰ C[ Γ , M ]) refl eq)
     (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))

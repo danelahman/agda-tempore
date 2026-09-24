@@ -29,6 +29,7 @@ open import Data.Nat.Properties using () renaming (_≟_ to _≟ℕ_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
+open import Data.Maybe.Base using (Maybe; nothing)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (map′; _×-dec_)
@@ -36,6 +37,7 @@ open import Relation.Nullary.Decidable using (map′; _×-dec_)
 open import Syntax.BaseTypes
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
 
@@ -46,6 +48,7 @@ module TypeInference.OpenSyntax.Instances (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 open BaseTypes BTs using (_≡ᵇ?_; eternalBaseType?)
+open Operations Ops using (Op)
 
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
@@ -57,27 +60,32 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 infixl 30 _+eⁿ_ _↑ᵉⁿ_
 
+-- The rigids are bound outermost first: the scope extended by `k + 1`
+-- rigids is the scope extended by one, then by `k`.
+
 _+eⁿ_ : Scope → ℕ → Scope
 Θ +eⁿ zero  = Θ
-Θ +eⁿ suc k = (Θ +eⁿ k) +e
+Θ +eⁿ suc k = (Θ +e) +eⁿ k
 
 _↑ᵉⁿ_ : ∀ {Θ Θ'} → Subst Θ Θ' → (k : ℕ) → Subst (Θ +eⁿ k) (Θ' +eⁿ k)
 σ ↑ᵉⁿ zero  = σ
-σ ↑ᵉⁿ suc k = (σ ↑ᵉⁿ k) ↑ᵉ
+σ ↑ᵉⁿ suc k = (σ ↑ᵉ) ↑ᵉⁿ k
 
 wkᵉⁿ-H : ∀ {Θ} → (k : ℕ) → Hyps Θ → Hyps (Θ +eⁿ k)
 wkᵉⁿ-H zero    Q = Q
-wkᵉⁿ-H (suc k) Q = wkᵉ-H (wkᵉⁿ-H k Q)
+wkᵉⁿ-H (suc k) Q = wkᵉⁿ-H k (wkᵉ-H Q)
 
 ≐ˢ-↑ᵉⁿ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (k : ℕ) → (σ ↑ᵉⁿ k) ≐ˢ (σ' ↑ᵉⁿ k)
 ≐ˢ-↑ᵉⁿ p zero    = p
-≐ˢ-↑ᵉⁿ p (suc k) = ≐ˢ-↑ᵉ (≐ˢ-↑ᵉⁿ p k)
+≐ˢ-↑ᵉⁿ p (suc k) = ≐ˢ-↑ᵉⁿ (≐ˢ-↑ᵉ p) k
 
--- A deferred rigid condition `∀ᵉ j₁ … jₖ. Q`, `j₁` outermost
+-- A deferred rigid condition `∀ᵉ j₁ … jₖ. Q`, `j₁` outermost, labelled
+-- with the operation whose clause left it (for reading only)
 
 record Oblig (Θ : Scope) : Set where
-  constructor ∀ᵉ[_]_
+  constructor oblig
   field
+    label  : Maybe Op
     rigids : ℕ
     body   : Hyps (Θ +eⁿ rigids)
 
@@ -89,7 +97,7 @@ Obligs Θ = List (Oblig Θ)
 -- A hypothesis set is the obligation binding no rigid
 
 hypᴼ : ∀ {Θ} → Hyps Θ → Oblig Θ
-hypᴼ Q = ∀ᵉ[ 0 ] Q
+hypᴼ Q = oblig nothing 0 Q
 
 -- Entailment along a substitution: the body, at fresh rigids, by the
 -- hypotheses weakened to them
@@ -109,7 +117,7 @@ Q' ⊩ᴼˢ R [ δ ] = All (λ O → Q' ⊩ᴼ O [ δ ]) R
 ⊩ᴼˢ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {R : Obligs Θ} {δ δ' : Subst Θ Ξ}
       → δ ≐ˢ δ' → Q' ⊩ᴼˢ R [ δ ] → Q' ⊩ᴼˢ R [ δ' ]
 ⊩ᴼˢ-≐ p []       = []
-⊩ᴼˢ-≐ p (h ∷ hs) = ⊩ᴼ-≐ p h ∷ ⊩ᴼˢ-≐ p hs
+⊩ᴼˢ-≐ {R = O ∷ R} p (h ∷ hs) = ⊩ᴼ-≐ {O = O} p h ∷ ⊩ᴼˢ-≐ p hs
 
 -- Hypotheses and obligations together
 

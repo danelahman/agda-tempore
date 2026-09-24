@@ -395,6 +395,11 @@ import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon
 
+---- Deferred rigid conditions: a clause's orderings mixing its rigid
+---- with outer unknowns, kept under their binders
+
+import TypeInference.SolverImpl.Deferred
+
 ---- The rigid-binder-free fragment
 
 open import TypeInference.Solver.Fragment
