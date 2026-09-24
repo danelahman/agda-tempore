@@ -8,6 +8,10 @@
 -- ground anything: a pair `(σ , Q)` is a solution with         --
 -- residue.                                                     --
 --                                                              --
+-- `σ ⊨[ Q ∣ R ] C` reads: `σ` solves `C` relative to `Q` at    --
+-- every instance meeting the obligations `R` — every instance  --
+-- entailing `Q` and `R` solves it.                             --
+--                                                              --
 -- Constraint satisfaction follows Pottier and Remy (ATTAPL,    --
 -- 2005), here proof-relevant; "residual constraint" is         --
 -- OutsideIn(X)'s term (Vytiniotis et al., JFP 2011), cf.       --
@@ -36,6 +40,7 @@ open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
+open import TypeInference.OpenSyntax.Instances S using (Obligs; _⊩_∣_[_])
 
 open import TypeInference.Constraints.Syntax S
 
@@ -58,6 +63,14 @@ _⊨[_]_ {Θ' = Θ'} σ Q (∃ʳ C)      = Σ[ ρ ∈ RExp Θ' ]   ((σ ,ʳ ρ) 
 _⊨[_]_ {Θ' = Θ'} σ Q (∃ᵉ C)      = Σ[ ε ∈ EExp Θ' ]   ((σ ,ᵉ ε) ⊨[ Q ] C)
 σ ⊨[ Q ] (∀ᵉ C)                  = (σ ↑ᵉ) ⊨[ wkᵉ-H Q ] C
 σ ⊨[ Q ] ⋀ᵒᵖ f                   = (op : Op) → σ ⊨[ Q ] f op
+
+-- Relative to hypotheses and obligations
+
+infix 4 _⊨[_∣_]_
+
+_⊨[_∣_]_ : ∀ {Θ Θ'} → Subst Θ Θ' → Hyps Θ' → Obligs Θ' → Constraint Θ → Set
+_⊨[_∣_]_ {Θ' = Θ'} σ Q R C =
+  ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ) → Q' ⊩ Q ∣ R [ δ ] → (σ ⨟ˢ δ) ⊨[ Q' ] C
 
 -- Sanity checks: the binder clauses compute.
 

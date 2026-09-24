@@ -16,6 +16,7 @@
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.List.Relation.Unary.Any using (here)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Product using (_,_)
@@ -93,9 +94,9 @@ refute-[]ʳ {ρ = ρ} σ ref δ le = ref (σ ⨟ˢ δ) (subst (λ x → valʳ x 
 
 -- A refuted expression is entailed by no satisfiable hypothesis set
 
-refute-⊩ : ∀ {Ψ} {ρ : RExp Ψ} {Q : Hyps Ψ} → Satisfiable Q
+refute-⊩ : ∀ {Ψ} {ρ : RExp Ψ} {Q : Hyps Ψ} → Satisfiable Q []
          → Refutedᵤ ρ → ¬ (Q ⊩ ρ ≾̂ᵣ ûᵣ)
-refute-⊩ (δ , h) ref d = ref δ (inst-≾ᵣ h d)
+refute-⊩ (δ , h ∷ []) ref d = ref δ (inst-≾ᵣ h d)
 
 -- Satisfiability is essential: a hypothesis names any ordering at all
 

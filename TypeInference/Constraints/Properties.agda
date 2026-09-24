@@ -12,7 +12,9 @@
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
+open import Data.List.Base using (_∷_)
 open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Relation.Unary.All using (_∷_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.Product using (_,_)
 
@@ -34,6 +36,7 @@ open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
+open import TypeInference.OpenSyntax.Instances S using (Obligs)
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
@@ -219,3 +222,10 @@ private
 ⊨-subst⁻ {δ = δ} {σ = σ} (∀ᵉ C) s =
   ⊨-resp-≐ˢ (⨟-↑ᵉ δ σ) C (⊨-subst⁻ C s)
 ⊨-subst⁻ (⋀ᵒᵖ f) s = λ op → ⊨-subst⁻ (f op) (s op)
+
+-- A solution relative to hypotheses is one relative to them and any
+-- obligations
+
+⊨-∣ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
+    → (C : Constraint Θ) → σ ⊨[ Q ] C → σ ⊨[ Q ∣ R ] C
+⊨-∣ C s δ Q' (h ∷ _) = ⊨-mono h C s

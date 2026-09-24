@@ -5,19 +5,19 @@
 -- and a fresh effect variable, standing for the result type    --
 -- and the result effect, the term weakened into that scope;    --
 -- solving the resulting constraint yields a principal solution --
--- together with its residual constraint.                       --
+-- together with its residual hypotheses and obligations.       --
 --                                                              --
--- `Principal Γ M` packages `instantiate` — every instance of   --
--- the residual hypotheses gives a typing of `M` — and `mgu` —  --
+-- `Principal Γ M` packages `instantiate` — every instance      --
+-- meeting the residue gives a typing of `M` — and `mgu` —      --
 -- every typing of `M` factors through the principal            --
--- substitution and residue, its type and effect bounded by the --
--- principal ones. A typing of `M` is a derivation that erases  --
--- to an instance of `M`, its annotations instantiated too.     --
+-- substitution and residue at each closed instance, its type   --
+-- and effect bounded by the principal ones. A typing of `M` is --
+-- a derivation that erases to an instance of `M`, its          --
+-- annotations instantiated too.                                --
 --                                                              --
 -- `PrincipalTyping Γ M` is the answer over a scope of its own: --
--- a typing of `M` that every instance of its hypotheses        --
--- instantiates, and through which every typing of `M` factors  --
--- at each closed instance.                                     --
+-- a scheme whose every instance types `M`, and through which   --
+-- every typing of `M` factors at each closed instance.         --
 --                                                              --
 -- Principal types carrying a constraint set, after Pretnar     --
 -- (LMCS 2014); "residual constraint" is OutsideIn(X)'s term    --
@@ -27,6 +27,7 @@
 -- typing in Wells's sense (2002).                              --
 ------------------------------------------------------------------
 
+open import Data.List.Base using ([])
 open import Data.Maybe using (just)
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -51,6 +52,7 @@ open import TypeInference.OpenSyntax.Contexts S
 open import TypeInference.OpenSyntax.Subst    S
 open import TypeInference.OpenSyntax.Hyps     S
 open import TypeInference.OpenSyntax.Language S
+open import TypeInference.OpenSyntax.Instances S using (Obligs; _⊩_∣_[_]; _⊨_∣_)
 
 open import TypeInference.Raw.Syntax S
 open import TypeInference.Raw.Subst  S
@@ -102,28 +104,25 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set w
   constructor mkPrincipal
   field
 
-    -- the principal solution-with-residue
+    -- the principal solution, with its residue and obligations
 
     Θ⁺ : Scope
     σ⁺ : Subst (Θ +ty +e) Θ⁺
     Q⁺ : Hyps Θ⁺
+    R⁺ : Obligs Θ⁺
 
-    -- the principal derivation itself (its type is `X̂ Θ [ σ⁺ ]ᵛ`, its
-    -- effect `t̂ Θ [ σ⁺ ]ᵉ`)
-
-    D⁺   : Q⁺ ∣ Γ₊ Γ [ σ⁺ ]ᶜᵗˣ ⊢C⦂ (X̂ Θ [ σ⁺ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ]ᵉ)
-    ⌊D⁺⌋ : ⌊ D⁺ ⌋ᶜ ≡ M₊ M [ σ⁺ ]ᴿᶜ
-
-    -- every instance of the residue types `M`
+    -- every instance meeting them types `M`, at the principal type
+    -- `X̂ Θ [ σ⁺ ]ᵛ` and effect `t̂ Θ [ σ⁺ ]ᵉ`
 
     instantiate : ∀ {Θ''} → (δ : Subst Θ⁺ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ᴴ Q⁺ [ δ ]
+                → Q ⊩ Q⁺ ∣ R⁺ [ δ ]
                 -------------------------------------------------------
                 → Σ[ D ∈ (Q ∣ Γ₊ Γ [ σ⁺ ⨟ˢ δ ]ᶜᵗˣ
                             ⊢C⦂ (X̂ Θ [ σ⁺ ⨟ˢ δ ]ᵛ) ‼ (t̂ Θ [ σ⁺ ⨟ˢ δ ]ᵉ)) ]
                     (⌊ D ⌋ᶜ ≡ M₊ M [ σ⁺ ⨟ˢ δ ]ᴿᶜ)
 
-    -- every typing of `M` factors through the principal one
+    -- every typing of `M` factors through the principal one at each
+    -- closed instance satisfying its hypotheses
 
     mgu : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
@@ -131,30 +130,29 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set w
         → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
         → Q ∣ A₀ <:̂ᵛ X̂ Θ [ σ ]ᵛ
         → Q ⊩ ε₀ ≾̂ₑ t̂ Θ [ σ ]ᵉ
+        → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ []
         ----------------------------------------------------
-        → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
-            (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
+        → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
+            (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
 
 open Principal
 
 principal : ∀ {Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set} → (sv : Solver Pᶜ Pᵖ)
           → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
           → Pᵖ C[ Γ , M ]
-          → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'}
-          → Solver.solve sv C[ Γ , M ] ≡ just (Θ' , σ , Q)
+          → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
+          → Solver.solve sv C[ Γ , M ] ≡ just (Θ' , σ , Q , R)
           ------------------------------------------------
           → Principal Γ M
 
-principal sv {Θ} Γ M p {Θ'} {σ} {Q} eq = mkPrincipal
-  Θ' σ Q
-  (proj₁ elab) (proj₂ elab)
-  (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (⊨-mono h C[ Γ , M ] sat))
-  (λ σ' Q' D e st le →
-     Solver.solve-principal sv C[ Γ , M ] p eq σ' Q'
-       (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) (M₊ M) D e refl st le))
+principal sv {Θ} Γ M p {Θ'} {σ} {Q} {R} eq = mkPrincipal
+  Θ' σ Q R
+  (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (sat δ Q' h))
+  (λ σ' Q' D e st le δ₀ h →
+     Solver.solve-principal sv C[ Γ , M ] p eq σ' Q' []
+       (⊨-∣ C[ Γ , M ] (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) (M₊ M) D e refl st le)) δ₀ h)
   where
-    sat  = Solver.solve-sound sv C[ Γ , M ] eq
-    elab = soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) sat
+    sat = Solver.solve-sound sv C[ Γ , M ] eq
 
 -- A typing of `M` in `Γ` at a type and effect is one of `M₊ M` in
 -- `Γ₊ Γ`, the result unknowns sent to them, and so satisfies the
@@ -187,53 +185,58 @@ typing-sat {Θ} {Γ = Γ} {M} σ₀ {A₀ = A₀} D e =
   where
     D' = typing₊ σ₀ D e
 
--- A typing of `M` at an arbitrary type and effect is an instance of the
--- principal one: the principal solution instantiates to it on the
--- program's variables, the principal type exactly, the principal
--- effect up to the residual entailment.
+-- A typing of `M` at an arbitrary type and effect is, at each closed
+-- instance satisfying its hypotheses, an instance of the principal
+-- one: the principal solution instantiates to it on the program's
+-- variables, the principal type exactly, the principal effect up to
+-- entailment.
 
 principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')
                → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
                → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
                → ⌊ D ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
+               → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ []
                ----------------------------------------------------------
-               → Σ[ δ ∈ Subst (Θ⁺ p) Θ'' ]
-                   ((wk₊ ⨟ˢ σ⁺ p ⨟ˢ δ ≐ˢ σ₀)
-                     × (X̂ _ [ σ⁺ p ]ᵛ [ δ ]ᵛ ≡ A₀)
-                     × (Q ⊩ (t̂ _ [ σ⁺ p ]ᵉ [ δ ]ᵉ) ≾̂ₑ ε₀)
-                     × (Q ⊩ᴴ Q⁺ p [ δ ]))
+               → Σ[ δ ∈ Subst (Θ⁺ p) ∅ˢ ]
+                   ((wk₊ ⨟ˢ σ⁺ p ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀)
+                     × (X̂ _ [ σ⁺ p ]ᵛ [ δ ]ᵛ ≡ A₀ [ δ₀ ]ᵛ)
+                     × (∅ᴴ ⊩ (t̂ _ [ σ⁺ p ]ᵉ [ δ ]ᵉ) ≾̂ₑ ε₀ [ δ₀ ]ᵉ)
+                     × (δ ⊨ Q⁺ p ∣ R⁺ p))
 
-principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e =
-  δ , ceq , aeq , subst (λ x → Q ⊩ x ≾̂ₑ ε₀) (sym teq) ⊩≾̂ₑ-refl , h
+principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ h₀ =
+  δ , ceq , aeq , subst (λ x → ∅ᴴ ⊩ x ≾̂ₑ ε₀ [ δ₀ ]ᵉ) (sym teq) ⊩≾̂ₑ-refl , h
   where
     σ : Subst (Θ +ty +e) Θ''
     σ = σ₀ ,ᵗ A₀ ,ᵉ ε₀
 
     D' = typing₊ σ₀ D e
 
-    fac = mgu p σ Q (proj₁ D') (proj₂ D') (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl
+    fac = mgu p σ Q (proj₁ D') (proj₂ D') (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl δ₀ h₀
 
-    δ = proj₁ fac
-    h = proj₂ (proj₂ fac)
+    δ   = proj₁ fac
+    tri = proj₁ (proj₂ fac)
+    h   = proj₂ (proj₂ fac)
 
     -- the principal solution, type and effect follow the factorisation
 
-    ceq : wk₊ ⨟ˢ σ⁺ p ⨟ˢ δ ≐ˢ σ₀
-    ceq = ≐ˢ-trans (⨟-assoc wk₊ (σ⁺ p) δ) (⨟-congʳ wk₊ (proj₁ (proj₂ fac)))
+    ceq : wk₊ ⨟ˢ σ⁺ p ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀
+    ceq = ≐ˢ-trans (⨟-assoc wk₊ (σ⁺ p) δ)
+          (≐ˢ-trans (⨟-congʳ wk₊ tri) (≐ˢ-sym (⨟-assoc wk₊ σ δ₀)))
 
-    aeq : X̂ Θ [ σ⁺ p ]ᵛ [ δ ]ᵛ ≡ A₀
-    aeq = trans ([⨟]ᵛ (X̂ Θ) (σ⁺ p) δ) ([≐]ᵛ (proj₁ (proj₂ fac)) (X̂ Θ))
+    aeq : X̂ Θ [ σ⁺ p ]ᵛ [ δ ]ᵛ ≡ A₀ [ δ₀ ]ᵛ
+    aeq = trans ([⨟]ᵛ (X̂ Θ) (σ⁺ p) δ) ([≐]ᵛ tri (X̂ Θ))
 
-    teq : t̂ Θ [ σ⁺ p ]ᵉ [ δ ]ᵉ ≡ ε₀
-    teq = trans ([⨟]ᵉ (t̂ Θ) (σ⁺ p) δ) ([≐]ᵉ (proj₁ (proj₂ fac)) (t̂ Θ))
+    teq : t̂ Θ [ σ⁺ p ]ᵉ [ δ ]ᵉ ≡ ε₀ [ δ₀ ]ᵉ
+    teq = trans ([⨟]ᵉ (t̂ Θ) (σ⁺ p) δ) ([≐]ᵉ tri (t̂ Θ))
 
 -- A principal typing of `M` in `Γ`: an instantiation `σ̃` of the
--- program's variables, hypotheses `Q̃` and a type `X̃` over a scope `Θ̃`,
--- with a derivation. Every instance of `Q̃` types `M` (`instantiate`),
--- and every typing of `M` factors through it at each closed instance
--- satisfying its hypotheses (`factor`): the instantiations agree, the
--- factoring instance satisfies `Q̃`, and there `X̃` is a subtype of the
+-- program's variables, hypotheses `Q̃`, obligations `R̃` and a type
+-- `X̃` over a scope `Θ̃`, the scheme `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`. Every instance
+-- meeting `Q̃` and `R̃` types `M` (`instantiate`), and every typing of
+-- `M` factors through it at each closed instance satisfying its
+-- hypotheses (`factor`): the instantiations agree, the factoring
+-- instance satisfies `Q̃` and `R̃`, and there `X̃` is a subtype of the
 -- typing's type. Entailment is by closed instances, as in HM(X)
 -- (Odersky, Sulzmann and Wehr, TAPOS 1999).
 
@@ -243,13 +246,11 @@ record PrincipalTyping {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
     Θ̃ : Scope
     σ̃ : Subst Θ Θ̃
     Q̃ : Hyps Θ̃
+    R̃ : Obligs Θ̃
     X̃ : OCType Θ̃
 
-    D̃   : Q̃ ∣ Γ [ σ̃ ]ᶜᵗˣ ⊢C⦂ X̃
-    ⌊D̃⌋ : ⌊ D̃ ⌋ᶜ ≡ M [ σ̃ ]ᴿᶜ
-
     instantiate : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q : Hyps Θ'')
-                → Q ⊩ᴴ Q̃ [ δ ]
+                → Q ⊩ Q̃ ∣ R̃ [ δ ]
                 --------------------------------------------------
                 → Σ[ D ∈ (Q ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ]
                     (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
@@ -257,9 +258,9 @@ record PrincipalTyping {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
     factor : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
            → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀)
            → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-           → (δ₀ : Subst Θ'' ∅ˢ) → ∅ᴴ ⊩ᴴ Q₀ [ δ₀ ]
+           → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀ ∣ []
            ---------------------------------------------------
            → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
                ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀)
-                 × (∅ᴴ ⊩ᴴ Q̃ [ δ ])
+                 × (δ ⊨ Q̃ ∣ R̃)
                  × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))

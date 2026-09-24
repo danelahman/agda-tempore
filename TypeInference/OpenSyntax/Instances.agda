@@ -2,11 +2,17 @@
 -- Closed instances of the open system                            --
 --                                                                --
 -- A closed instance of a scope `Θ` is a substitution             --
--- `δ : Subst Θ ∅ˢ`. It satisfies a hypothesis set `Q` when the   --
--- instance of `Q` is entailed by no hypotheses,                  --
--- `∅ᴴ ⊩ᴴ Q [ δ ]`. A set entails another semantically,           --
--- `Q ⊨ᴴ Q'`, when every closed instance of the one is one of the --
--- other; open entailment implies it.                             --
+-- `δ : Subst Θ ∅ˢ`. Meaning is derivability in the open calculus --
+-- at closed instances, each rigid of a clause kept a parameter.  --
+-- An obligation `∀ᵉ j₁ … jₖ. Q` is a hypothesis set over the     --
+-- scope extended by `k` rigids, and is entailed along a          --
+-- substitution when its body is, at fresh rigids, by the         --
+-- hypotheses weakened to them (`_⊩ᴼ_[_]`); a hypothesis set is   --
+-- the obligation binding none. A closed instance satisfies       --
+-- hypotheses and obligations when no hypotheses entail them      --
+-- (`_⊨_∣_`). A set entails another semantically, `Q ⊨ᴴ Q'`, when --
+-- every closed instance of the one is one of the other; open     --
+-- entailment implies it.                                         --
 --                                                                --
 -- A closed grade expression has a value in the carrier. Entailed --
 -- ordering between closed expressions is exactly the carrier's   --
@@ -16,7 +22,9 @@
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)
-open import Data.Nat.Base using (ℕ)
+open import Data.Nat.Base using (ℕ; zero; suc)
+open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Relation.Unary.All using (All; []; _∷_)
 open import Data.Nat.Properties using () renaming (_≟_ to _≟ℕ_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
@@ -45,10 +53,82 @@ open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
 ------------------------------------------------------------------------
--- Satisfiability: some closed instance satisfies the set
+-- Obligations
 
-Satisfiable : ∀ {Θ} → Hyps Θ → Set
-Satisfiable {Θ} Q = Σ[ δ ∈ Subst Θ ∅ˢ ] (∅ᴴ ⊩ᴴ Q [ δ ])
+infixl 30 _+eⁿ_ _↑ᵉⁿ_
+
+_+eⁿ_ : Scope → ℕ → Scope
+Θ +eⁿ zero  = Θ
+Θ +eⁿ suc k = (Θ +eⁿ k) +e
+
+_↑ᵉⁿ_ : ∀ {Θ Θ'} → Subst Θ Θ' → (k : ℕ) → Subst (Θ +eⁿ k) (Θ' +eⁿ k)
+σ ↑ᵉⁿ zero  = σ
+σ ↑ᵉⁿ suc k = (σ ↑ᵉⁿ k) ↑ᵉ
+
+wkᵉⁿ-H : ∀ {Θ} → (k : ℕ) → Hyps Θ → Hyps (Θ +eⁿ k)
+wkᵉⁿ-H zero    Q = Q
+wkᵉⁿ-H (suc k) Q = wkᵉ-H (wkᵉⁿ-H k Q)
+
+≐ˢ-↑ᵉⁿ : ∀ {Θ Θ'} {σ σ' : Subst Θ Θ'} → σ ≐ˢ σ' → (k : ℕ) → (σ ↑ᵉⁿ k) ≐ˢ (σ' ↑ᵉⁿ k)
+≐ˢ-↑ᵉⁿ p zero    = p
+≐ˢ-↑ᵉⁿ p (suc k) = ≐ˢ-↑ᵉ (≐ˢ-↑ᵉⁿ p k)
+
+-- A deferred rigid condition `∀ᵉ j₁ … jₖ. Q`, `j₁` outermost
+
+record Oblig (Θ : Scope) : Set where
+  constructor ∀ᵉ[_]_
+  field
+    rigids : ℕ
+    body   : Hyps (Θ +eⁿ rigids)
+
+open Oblig public
+
+Obligs : Scope → Set
+Obligs Θ = List (Oblig Θ)
+
+-- A hypothesis set is the obligation binding no rigid
+
+hypᴼ : ∀ {Θ} → Hyps Θ → Oblig Θ
+hypᴼ Q = ∀ᵉ[ 0 ] Q
+
+-- Entailment along a substitution: the body, at fresh rigids, by the
+-- hypotheses weakened to them
+
+infix 4 _⊩ᴼ_[_] _⊩ᴼˢ_[_] _⊨_∣_
+
+_⊩ᴼ_[_] : ∀ {Θ Ξ} → Hyps Ξ → Oblig Θ → Subst Θ Ξ → Set
+Q' ⊩ᴼ O [ δ ] = wkᵉⁿ-H (rigids O) Q' ⊩ᴴ body O [ δ ↑ᵉⁿ rigids O ]
+
+_⊩ᴼˢ_[_] : ∀ {Θ Ξ} → Hyps Ξ → Obligs Θ → Subst Θ Ξ → Set
+Q' ⊩ᴼˢ R [ δ ] = All (λ O → Q' ⊩ᴼ O [ δ ]) R
+
+⊩ᴼ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {O : Oblig Θ} {δ δ' : Subst Θ Ξ}
+     → δ ≐ˢ δ' → Q' ⊩ᴼ O [ δ ] → Q' ⊩ᴼ O [ δ' ]
+⊩ᴼ-≐ {O = O} p h = ⊩ᴴ-≐ (≐ˢ-↑ᵉⁿ p (rigids O)) h
+
+⊩ᴼˢ-≐ : ∀ {Θ Ξ} {Q' : Hyps Ξ} {R : Obligs Θ} {δ δ' : Subst Θ Ξ}
+      → δ ≐ˢ δ' → Q' ⊩ᴼˢ R [ δ ] → Q' ⊩ᴼˢ R [ δ' ]
+⊩ᴼˢ-≐ p []       = []
+⊩ᴼˢ-≐ p (h ∷ hs) = ⊩ᴼ-≐ p h ∷ ⊩ᴼˢ-≐ p hs
+
+-- Hypotheses and obligations together
+
+infix 4 _⊩_∣_[_]
+
+_⊩_∣_[_] : ∀ {Θ Ξ} → Hyps Ξ → Hyps Θ → Obligs Θ → Subst Θ Ξ → Set
+Q' ⊩ Q ∣ R [ δ ] = Q' ⊩ᴼˢ (hypᴼ Q ∷ R) [ δ ]
+
+-- Satisfaction: a closed instance meets hypotheses and obligations
+-- when no hypotheses entail them
+
+_⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Obligs Θ → Set
+δ ⊨ Q ∣ R = ∅ᴴ ⊩ Q ∣ R [ δ ]
+
+------------------------------------------------------------------------
+-- Satisfiability: some closed instance satisfies them
+
+Satisfiable : ∀ {Θ} → Hyps Θ → Obligs Θ → Set
+Satisfiable {Θ} Q R = Σ[ δ ∈ Subst Θ ∅ˢ ] (δ ⊨ Q ∣ R)
 
 ------------------------------------------------------------------------
 -- Values of closed grade expressions
@@ -288,23 +368,14 @@ A <:̂ᵛ? B with former A ≟ℕ former B
 ------------------------------------------------------------------------
 -- Instances of hypotheses
 
--- An instance of a set is an instance of every set it entails, and,
--- along a substitution, an instance of what it entails along it
+-- An instance of a set is an instance of every set it entails
 
 inst-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} {δ : Subst Θ ∅ˢ}
         → Q ⊩ᴴ Q' → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q' [ δ ]
 inst-⊩ᴴ e h = ⊩ᴴ-⨟ h e
 
-inst-⨟ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'} {δ : Subst Θ' ∅ˢ}
-       → Q' ⊩ᴴ Q [ σ ] → ∅ᴴ ⊩ᴴ Q' [ δ ] → ∅ᴴ ⊩ᴴ Q [ σ ⨟ˢ δ ]
-inst-⨟ e h = ⊩ᴴ-⨟ h e
-
-Satisfiable-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Satisfiable Q → Satisfiable Q'
-Satisfiable-⊩ᴴ e (δ , h) = δ , inst-⊩ᴴ e h
-
-Satisfiable-⨟ : ∀ {Θ Θ'} {Q : Hyps Θ} {Q' : Hyps Θ'} {σ : Subst Θ Θ'}
-              → Q' ⊩ᴴ Q [ σ ] → Satisfiable Q' → Satisfiable Q
-Satisfiable-⨟ {σ = σ} e (δ , h) = σ ⨟ˢ δ , inst-⨟ e h
+Satisfiable-⊩ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Satisfiable Q [] → Satisfiable Q' []
+Satisfiable-⊩ᴴ e (δ , h ∷ []) = δ , inst-⊩ᴴ e h ∷ []
 
 -- Semantic entailment: every closed instance of the first set is one
 -- of the second
@@ -312,7 +383,7 @@ Satisfiable-⨟ {σ = σ} e (δ , h) = σ ⨟ˢ δ , inst-⨟ e h
 infix 4 _⊨ᴴ_
 
 _⊨ᴴ_ : ∀ {Θ} → Hyps Θ → Hyps Θ → Set
-_⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ Q' [ δ ]
+_⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴼ hypᴼ Q [ δ ] → ∅ᴴ ⊩ᴼ hypᴼ Q' [ δ ]
 
 ⊨ᴴ-refl : ∀ {Θ} {Q : Hyps Θ} → Q ⊨ᴴ Q
 ⊨ᴴ-refl δ h = h
@@ -323,8 +394,8 @@ _⊨ᴴ_ {Θ} Q Q' = (δ : Subst Θ ∅ˢ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ
 ⊩ᴴ-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊩ᴴ Q' → Q ⊨ᴴ Q'
 ⊩ᴴ-⊨ᴴ e δ h = inst-⊩ᴴ e h
 
-Satisfiable-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊨ᴴ Q' → Satisfiable Q → Satisfiable Q'
-Satisfiable-⊨ᴴ e (δ , h) = δ , e δ h
+Satisfiable-⊨ᴴ : ∀ {Θ} {Q Q' : Hyps Θ} → Q ⊨ᴴ Q' → Satisfiable Q [] → Satisfiable Q' []
+Satisfiable-⊨ᴴ e (δ , h ∷ []) = δ , e δ h ∷ []
 
 -- Semantic entailment from open entailment of the atoms and, at each
 -- instance, of the var-rule disjunctions

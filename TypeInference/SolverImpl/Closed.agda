@@ -13,6 +13,7 @@
 
 open import Data.Empty using (⊥)
 open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Relation.Unary.All using ([]; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
@@ -299,9 +300,9 @@ closedᴴ-⊆ Q () h | inj₂ _ | inj₂ _ | inj₁ _
 
 -- A failure leaves the set unsatisfiable
 
-closedᴴ-fail : ∀ {Θ} → (Q : Hyps Θ) → closedᴴ Q ≡ nothing → ¬ Satisfiable Q
-closedᴴ-fail Q eq (δ , h) with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
+closedᴴ-fail : ∀ {Θ} → (Q : Hyps Θ) → closedᴴ Q ≡ nothing → ¬ Satisfiable Q []
+closedᴴ-fail Q eq (δ , h ∷ []) with closedʳ (ordᵣ Q) | closedᵉ (ordₑ Q) | closedᵈ (disj Q)
 ... | inj₁ f | _      | _      = falseʳ f δ (⊩ordᵣ h)
 ... | inj₂ _ | inj₁ f | _      = falseᵉ f δ (⊩ordₑ h)
 ... | inj₂ _ | inj₂ _ | inj₁ f = falseᵈ f δ (⊩disj h)
-closedᴴ-fail Q () (δ , h) | inj₂ _ | inj₂ _ | inj₂ _
+closedᴴ-fail Q () (δ , h ∷ []) | inj₂ _ | inj₂ _ | inj₂ _

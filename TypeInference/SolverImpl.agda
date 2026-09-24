@@ -24,7 +24,10 @@
 -- constraint of a term in a context is a principal typing.       --
 ------------------------------------------------------------------
 
-open import Data.List.Base using (List; [])
+open import Data.Empty using (⊥; ⊥-elim)
+open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Relation.Unary.All using ([]; _∷_)
+import Data.List.Relation.Unary.All as All
 open import Data.Maybe.Base using (Maybe; just; nothing)
 import Data.Maybe.Base as Maybe
 open import Data.Nat using (ℕ)
@@ -59,10 +62,11 @@ open Operations Ops
 
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
-open import TypeInference.OpenSyntax.Contexts  S
+open import TypeInference.OpenSyntax.Contexts  S hiding (_∷_)
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
-open import TypeInference.OpenSyntax.Instances S using (Satisfiable; Satisfiable-⨟; _⊨ᴴ_)
+open import TypeInference.OpenSyntax.Instances S
+  using (Obligs; Satisfiable; _⊨ᴴ_; _⊩ᴼˢ_[_]; ⊩ᴼˢ-≐; _⊩_∣_[_]; _⊨_∣_)
 open import TypeInference.OpenSyntax.Language  S
 
 open import TypeInference.Raw.Syntax S using (RawC)
@@ -72,7 +76,7 @@ open import TypeInference.Soundness  S using (ctx-substᶜ; ⌊ctxᶜ⌋; ⌊c�
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
-open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono)
+open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono; ⊨-∣)
 
 open import TypeInference.Principality      S
 open import TypeInference.Solver.Fragment   S
@@ -100,7 +104,7 @@ Fixing-[] : ∀ {Θ Ψ} → (σ : Subst Θ Ψ) → Fixing [] σ
 Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 
 solveOn : ∀ {Θ} → Constraint Θ
-        → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))
+        → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
 solveOn C with solve init C
 ... | nothing = nothing
 ... | just (s' , m , w) with reexpand s'
@@ -109,12 +113,29 @@ solveOn C with solve init C
 ...     | nothing        = nothing
 ...     | just (Q₀ , hq) with closedᴴ Q₀
 ...       | nothing = nothing
-...       | just Q  = just (Ψ s₂ , θ s₂ , Q)
+...       | just Q  = just (Ψ s₂ , θ s₂ , Q , [])
+
+-- No obligations are deferred
+
+solveOn-[] : ∀ {Θ} → (C : Constraint Θ)
+           → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
+           → solveOn C ≡ just (Θ' , σ , Q , R)
+           → R ≡ []
+solveOn-[] C eq with solve init C
+... | nothing = ⊥just eq
+... | just (s' , m , w) with reexpand s'
+...   | nothing = ⊥just eq
+...   | just (s₂ , m₂) with toHyps (res s₂)
+...     | nothing = ⊥just eq
+...     | just (Q₀ , hq) with closedᴴ Q₀
+...       | nothing = ⊥just eq
+...       | just Q₁ with eq
+...         | refl = refl
 
 solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
-              → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
-              → solveOn C ≡ just (Θ' , σ , Q)
-              → σ ⊨[ Q ] C
+              → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
+              → solveOn C ≡ just (Θ' , σ , Q , R)
+              → σ ⊨[ Q ∣ R ] C
 solveOn-sound C eq with solve init C in e
 ... | nothing = ⊥just eq
 ... | just (s' , m , w) with reexpand s' in e₂
@@ -125,48 +146,59 @@ solveOn-sound C eq with solve init C in e
 ...       | nothing = ⊥just eq
 ...       | just Q₁ with eq
 ...         | refl =
-              ⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C
-                (⊨-mono (closedᴴ-⊩ Q₀ e'') C
-                  (⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C (wit-mono m₂ C w idˢ Q₀ hq)))
+              ⊨-∣ C
+                (⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C
+                  (⊨-mono (closedᴴ-⊩ Q₀ e'') C
+                    (⊨-resp-≐ˢ (⨟-idʳ (θ s₂)) C (wit-mono m₂ C w idˢ Q₀ hq))))
 
-solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
-                 → solveOn C ≡ nothing
-                 → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → Satisfiable Q
-                 → ¬ (σ ⊨[ Q ] C)
-solveOn-complete C nr eq σ Q sQ sat with solve init C in e
-... | nothing = solve-fail init C nr e σ Q (Fixing-[] σ) ⊩ᴿ-empty sat
+-- A refusal refutes every closed instance
+
+solveOn-refutes : ∀ {Θ} → (C : Constraint Θ) → NoRig C
+                → solveOn C ≡ nothing
+                → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
+solveOn-refutes C nr eq τ sat with solve init C in e
+... | nothing = solve-fail init C nr e τ (Fixing-[] τ) ⊩ᴿ-empty sat
 ... | just (s' , m , w) with reexpand s' in e₂
 ...   | nothing =
-        reexpand-fail s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))
+        reexpand-fail s' e₂ (proj₁ fac) ∅ᴴ (proj₁ (proj₂ (proj₂ fac)))
   where
-    fac = solve-principal init C e σ Q sat ⊩ᴿ-empty
+    fac = solve-principal init C e τ sat ⊩ᴿ-empty
 ...   | just (s₂ , m₂) with toHyps (res s₂) in e'
 ...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
 ...       | just _  = ⊥nothing eq
 ...       | nothing =
             closedᴴ-fail Q₀ e''
-              (Satisfiable-⨟ (toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂))) sQ)
+              (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) ∷ [])
   where
-    fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
-    fac₂ = reexpand-princ s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))
-solveOn-complete C nr eq σ Q sQ sat | just (s' , m , w) | just (s₂ , m₂) | nothing
+    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
+    fac₂ = reexpand-princ s' e₂ (proj₁ fac) ∅ᴴ (proj₁ (proj₂ (proj₂ fac)))
+solveOn-refutes C nr eq τ sat | just (s' , m , w) | just (s₂ , m₂) | nothing
   with toHyps-nothing (res s₂) e'
 ...       | inj₁ (A , mem , q) =
             etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
   where
-    fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
-    fac₂ = reexpand-princ s' e₂ (proj₁ fac) Q (proj₁ (proj₂ (proj₂ fac)))
+    fac  = solve-principal init C e τ sat ⊩ᴿ-empty
+    fac₂ = reexpand-princ s' e₂ (proj₁ fac) ∅ᴴ (proj₁ (proj₂ (proj₂ fac)))
 ...       | inj₂ (A , B , mem , q) =
             ⊥nothing (trans (sym (proj₂ (reexpand-dec s' e₂ mem))) q)
 
+solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
+                 → solveOn C ≡ nothing
+                 → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → (R : Obligs Θ')
+                 → Satisfiable Q R
+                 → ¬ (σ ⊨[ Q ∣ R ] C)
+solveOn-complete C nr eq σ Q R (δ₀ , h₀) sat =
+  solveOn-refutes C nr eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
+
 solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
-                  → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺}
-                  → solveOn C ≡ just (Θ⁺ , σ⁺ , Q⁺)
-                  → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'')
-                  → σ ⊨[ Q ] C
-                  → Σ[ δ ∈ Subst Θ⁺ Θ'' ]
-                      (((σ⁺ ⨟ˢ δ) ≐ˢ σ) × (Q ⊩ᴴ Q⁺ [ δ ]))
-solveOn-principal C eq σ Q sat with solve init C in e
+                  → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {R⁺ : Obligs Θ⁺}
+                  → solveOn C ≡ just (Θ⁺ , σ⁺ , Q⁺ , R⁺)
+                  → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
+                  → σ ⊨[ Q ∣ R ] C
+                  → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
+                  → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
+                      (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
+solveOn-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
 ... | nothing = ⊥just eq
 ... | just (s' , m , w) with reexpand s' in e₂
 ...   | nothing = ⊥just eq
@@ -175,14 +207,14 @@ solveOn-principal C eq σ Q sat with solve init C in e
 ...     | just (Q₀ , hq) with closedᴴ Q₀ in e''
 ...       | nothing = ⊥just eq
 ...       | just Q₁ with eq
-...         | refl = δ₂ , tri , closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
+...         | refl = δ₂ , tri , closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂) ∷ []
   where
-    fac  = solve-principal init C e σ Q sat ⊩ᴿ-empty
+    fac  = solve-principal init C e (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀) ⊩ᴿ-empty
     δ    = proj₁ fac
     tri₁ = proj₁ (proj₂ fac)
     hres = proj₁ (proj₂ (proj₂ fac))
 
-    fac₂ = reexpand-princ s' e₂ δ Q hres
+    fac₂ = reexpand-princ s' e₂ δ ∅ᴴ hres
     δ₂   = proj₁ fac₂
     tri₂ = proj₁ (proj₂ fac₂)
     h₂   = proj₂ (proj₂ fac₂)
@@ -230,7 +262,9 @@ entailsᴴ = entails entᵣ? entₑ?
 -- unknowns of their image. It is stated over the scope `Θ̃` of the
 -- variables occurring in it or in that image, embedded in the
 -- solution's by the renaming `ι`, the caller's variables instantiated
--- by `σ̃`; an instance of `Θ̃` extends along `ι`.
+-- by `σ̃`; an instance of `Θ̃` extends along `ι`. The obligations `R`
+-- follow: `R̃` along `ι` entails them along `η`, and each closed
+-- instance meeting the simplified residue and `R` meets `R̃`.
 
 record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Constraint Θ) : Set where
   constructor report
@@ -238,35 +272,47 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     Θ'     : Scope
     σ      : Subst Θ Θ'
     Q      : Hyps Θ'
+    R      : Obligs Θ'
     Q̂      : Hyps Θ'
     Θ̃      : Scope
     ι      : Ren Θ̃ Θ'
     σ̃      : Subst Θ₀ Θ̃
     X̃      : OCType Θ̃
     Q̃      : Hyps Θ̃
+    R̃      : Obligs Θ̃
     η      : Subst Θ' Θ'
-    solved : solveOn C ≡ just (Θ' , σ , Q)
+    solved : solveOn C ≡ just (Θ' , σ , Q , R)
     to-Q̂   : Q ⊨ᴴ Q̂
     to-Q   : Q̂ ⊩ᴴ Q
     fix    : w ⨟ˢ σ ⨟ˢ η ≐ˢ w ⨟ˢ σ
     σ̃-ι    : σ̃ ⨟ˢ ⌜ ι ⌝ʳ ≐ˢ w ⨟ˢ σ
     conv   : X̃ [ ⌜ ι ⌝ʳ ]ᶜ ≡̂ᶜ X [ σ ]ᶜ [ η ]ᶜ
     inst   : Q̃ [ ι ]ᴴ ⊩ᴴ Q̂ [ η ]
+    instᴿ  : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
+           → Q' ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ R [ η ⨟ˢ δ ]
     to-Q̃   : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ] → ∅ᴴ ⊩ᴴ Q̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
+    to-R̃   : (δ : Subst Θ' ∅ˢ) → δ ⊨ Q̂ ∣ R → ∅ᴴ ⊩ᴼˢ R̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]
     princ  : (δ : Subst Θ' ∅ˢ) → ∅ᴴ ⊩ᴴ Q̂ [ δ ]
            → ∅ᴴ ∣ X̃ [ ⌜ ι ⌝ʳ ⨟ˢ δ ]ᶜ <:̂ᶜ X [ σ ]ᶜ [ δ ]ᶜ
     ext-ι  : ∀ {Ψ} → (δ : Subst Θ̃ Ψ) → Σ[ δ' ∈ Subst Θ' Ψ ] (⌜ ι ⌝ʳ ⨟ˢ δ' ≐ˢ δ)
 
 -- The report of what `solveOn` returns
 
+-- No obligations are deferred
+
+∷≢[] : ∀ {A : Set} {x : A} {xs : List A} → x ∷ xs ≡ [] → ⊥
+∷≢[] ()
+
 reportOf : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-         → (s : Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))) → solveOn C ≡ s
+         → (s : Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))) → solveOn C ≡ s
          → Maybe (Reported w X C)
-reportOf w X C nothing           e = nothing
-reportOf w X C (just (Θ' , σ , Q)) e =
-      just (report Θ' σ Q (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr) (Elim.η el)
+reportOf w X C nothing                     e = nothing
+reportOf w X C (just (Θ' , σ , Q , _ ∷ _)) e = ⊥-elim (∷≢[] (solveOn-[] C e))
+reportOf w X C (just (Θ' , σ , Q , []))    e =
+      just (report Θ' σ Q [] (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr) [] (Elim.η el)
                    e (simplify-⊨ Q) (simplify-⊩ Q) (fixes-≐ fx (w ⨟ˢ σ) ⊆-refl) (τ-ι sr)
-                   (conv⁻ el sr) (inst⁻ el sr) (keep⁻ el sr) (princ⁻ el sr) (ext-ι sr))
+                   (conv⁻ el sr) (inst⁻ el sr) (λ δ Q' h → []) (keep⁻ el sr) (λ δ h → [])
+                   (princ⁻ el sr) (ext-ι sr))
   where
     open Strengthened
 
@@ -293,10 +339,12 @@ reportOn w X C = reportOf w X C (solveOn C) refl
 
 reportOf-nothing : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ} {Y : Set}
                  → (f : Reported w X C → Y)
-                 → (s : Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ'))) → (e : solveOn C ≡ s)
+                 → (s : Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ')))
+                 → (e : solveOn C ≡ s)
                  → Maybe.map f (reportOf w X C s e) ≡ nothing → s ≡ nothing
-reportOf-nothing f nothing  e eq = refl
-reportOf-nothing f (just _) e eq = ⊥nothing eq
+reportOf-nothing         f nothing                     e eq = refl
+reportOf-nothing {C = C} f (just (_ , _ , _ , _ ∷ _)) e eq = ⊥-elim (∷≢[] (solveOn-[] C e))
+reportOf-nothing         f (just (_ , _ , _ , []))    e eq = ⊥nothing eq
 
 ------------------------------------------------------------------------
 -- The reference entry point
@@ -309,7 +357,7 @@ reportOf-nothing f (just _) e eq = ⊥nothing eq
 
 typing : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
        → Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] → PrincipalTyping Γ M
-typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ X̃ D̃ ⌊D̃⌋ inst' fac
+typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
   where
     open Reported r
 
@@ -331,6 +379,16 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ X̃ D̃ ⌊D̃⌋ inst' fac
 
     hQ : Q̃ ⊩ᴴ Q [ η ⨟ˢ π ]
     hQ = ⊩ᴴ-⨟ (⊩ᴴ-ren⁺ ι (⊩ᴴ-≐ (≐ˢ-sym πι) ⊩ᴴ-refl)) (⊩ᴴ-⨟ inst to-Q)
+
+    -- and the reported obligations the solver's, at each instance
+
+    hR : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q' : Hyps Θ'')
+       → Q' ⊩ᴼˢ R̃ [ δ ] → Q' ⊩ᴼˢ Reported.R r [ η ⨟ˢ π ⨟ˢ δ ]
+    hR δ Q' h =
+      ⊩ᴼˢ-≐ (≐ˢ-sym (⨟-assoc η π δ))
+        (instᴿ (π ⨟ˢ δ) Q'
+          (⊩ᴼˢ-≐ (≐ˢ-sym (≐ˢ-trans (≐ˢ-sym (⨟-assoc ⌜ ι ⌝ʳ π δ))
+                                  (≐ˢ-trans (⨟-congˡ πι δ) (⨟-idˡ δ)))) h))
 
     -- the program's variables follow
 
@@ -359,13 +417,13 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ X̃ D̃ ⌊D̃⌋ inst' fac
         eqR : X̃ [ ⌜ ι ⌝ʳ ]ᶜ [ π ]ᶜ [ δ ]ᶜ ≡ X̃ [ δ ]ᶜ
         eqR = cong (_[ δ ]ᶜ) (trans ([⨟]ᶜ X̃ ⌜ ι ⌝ʳ π) (trans ([≐]ᶜ πι X̃) ([id]ᶜ X̃)))
 
-    inst' : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q' : Hyps Θ'') → Q' ⊩ᴴ Q̃ [ δ ]
+    inst' : ∀ {Θ''} → (δ : Subst Θ̃ Θ'') → (Q' : Hyps Θ'') → Q' ⊩ Q̃ ∣ R̃ [ δ ]
           → Σ[ D ∈ (Q' ∣ Γ [ σ̃ ⨟ˢ δ ]ᶜᵗˣ ⊢C⦂ X̃ [ δ ]ᶜ) ] (⌊ D ⌋ᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ)
-    inst' δ Q' h =
+    inst' δ Q' (h ∷ hs) =
       subC (ctx-substᶜ ceq D) (≡̂ᶜ-<:̂ (ty δ)) , trans (⌊ctxᶜ⌋ ceq D) (trans e meq)
       where
         τ = η ⨟ˢ π ⨟ˢ δ
-        i = Principal.instantiate p τ Q' (⊩ᴴ-⨟ h hQ)
+        i = Principal.instantiate p τ Q' (⊩ᴴ-⨟ h hQ ∷ hR δ Q' hs)
         D = proj₁ i
         e = proj₂ i
 
@@ -375,49 +433,34 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ X̃ D̃ ⌊D̃⌋ inst' fac
         meq : M₊ M [ σ ⨟ˢ τ ]ᴿᶜ ≡ M [ σ̃ ⨟ˢ δ ]ᴿᶜ
         meq = trans (M₊-[] M (σ ⨟ˢ τ)) ([≐]ᴿᶜ (ctx δ) M)
 
-    i₀ = inst' idˢ Q̃ ⊩ᴴ-refl
-
-    D̃ : Q̃ ∣ Γ [ σ̃ ]ᶜᵗˣ ⊢C⦂ X̃
-    D̃ = c-subst ([id]ᶜ X̃) (ctx-substᶜ ([≐]ᶜᵗˣ (⨟-idʳ σ̃) Γ) (proj₁ i₀))
-
-    ⌊D̃⌋ : ⌊ D̃ ⌋ᶜ ≡ M [ σ̃ ]ᴿᶜ
-    ⌊D̃⌋ = trans (⌊c⌋ ([id]ᶜ X̃) _)
-           (trans (⌊ctxᶜ⌋ ([≐]ᶜᵗˣ (⨟-idʳ σ̃) Γ) (proj₁ i₀))
-           (trans (proj₂ i₀) ([≐]ᴿᶜ (⨟-idʳ σ̃) M)))
-
     fac : ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
         → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀) → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-        → (δ₀ : Subst Θ'' ∅ˢ) → ∅ᴴ ⊩ᴴ Q₀ [ δ₀ ]
+        → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q₀ ∣ []
         → Σ[ δ ∈ Subst Θ̃ ∅ˢ ]
-            ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (∅ᴴ ⊩ᴴ Q̃ [ δ ]) × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
+            ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀) × (δ ⊨ Q̃ ∣ R̃) × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
     fac σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ δ₀ h₀ =
-      ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , to-Q̃ δ' hQ̂ , <:̂ᶜ-trans (princ δ' hQ̂) below
+      ⌜ ι ⌝ʳ ⨟ˢ δ' , agree , to-Q̃ δ' hQ̂ ∷ to-R̃ δ' (hQ̂ ∷ All.tail hq) ,
+      <:̂ᶜ-trans (princ δ' hQ̂) below
       where
-        pi = principal-inst p σ₀ Q₀ D₀ e₀
-        δ₁ = proj₁ pi
+        pi   = principal-inst p σ₀ Q₀ D₀ e₀ δ₀ h₀
+        δ'   = proj₁ pi
         ceq₁ = proj₁ (proj₂ pi)
-        aeq = proj₁ (proj₂ (proj₂ pi))
-        le = proj₁ (proj₂ (proj₂ (proj₂ pi)))
-        hq = proj₂ (proj₂ (proj₂ (proj₂ pi)))
-
-        δ' : Subst Θ' ∅ˢ
-        δ' = δ₁ ⨟ˢ δ₀
+        aeq  = proj₁ (proj₂ (proj₂ pi))
+        le   = proj₁ (proj₂ (proj₂ (proj₂ pi)))
+        hq   = proj₂ (proj₂ (proj₂ (proj₂ pi)))
 
         hQ̂ : ∅ᴴ ⊩ᴴ Q̂ [ δ' ]
-        hQ̂ = to-Q̂ δ' (⊩ᴴ-⨟ h₀ hq)
+        hQ̂ = to-Q̂ δ' (All.head hq)
 
         agree : σ̃ ⨟ˢ (⌜ ι ⌝ʳ ⨟ˢ δ') ≐ˢ σ₀ ⨟ˢ δ₀
         agree =
           ≐ˢ-trans (≐ˢ-sym (⨟-assoc σ̃ ⌜ ι ⌝ʳ δ'))
-          (≐ˢ-trans (⨟-congˡ σ̃-ι δ')
-          (≐ˢ-trans (≐ˢ-sym (⨟-assoc (wk₊ ⨟ˢ σ) δ₁ δ₀)) (⨟-congˡ ceq₁ δ₀)))
+          (≐ˢ-trans (⨟-congˡ σ̃-ι δ') ceq₁)
 
         below : ∅ᴴ ∣ X [ σ ]ᶜ [ δ' ]ᶜ <:̂ᶜ (A₀ ‼ ε₀) [ δ₀ ]ᶜ
         below =
-          subst₂ (λ A t → ∅ᴴ ∣ A ‼ t <:̂ᶜ A₀ [ δ₀ ]ᵛ ‼ ε₀ [ δ₀ ]ᵉ)
-                 (trans (cong (_[ δ₀ ]ᵛ) (sym aeq)) ([⨟]ᵛ (X̂ Θ [ σ ]ᵛ) δ₁ δ₀))
-                 ([⨟]ᵉ (t̂ Θ [ σ ]ᵉ) δ₁ δ₀)
-                 (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) ‼ₛ ⊩-substₑ h₀ le)
+          subst (λ A → ∅ᴴ ∣ A ‼ t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ‼ ε₀ [ δ₀ ]ᵉ)
+                (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) ‼ₛ le)
 
 infer : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → Maybe (PrincipalTyping Γ M)
 infer {Θ} Γ M = Maybe.map (typing Γ M) (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
@@ -429,8 +472,8 @@ infer-fails : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → NoRig C[ �
             → infer Γ M ≡ nothing
             → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
             → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀) → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-            → ¬ Satisfiable Q₀
+            → ¬ Satisfiable Q₀ []
 infer-fails {Θ} Γ M nr eq σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ sQ =
   solveOn-complete C[ Γ , M ] nr
     (reportOf-nothing (typing Γ M) (solveOn C[ Γ , M ]) refl eq)
-    (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ sQ (typing-sat σ₀ D₀ e₀)
+    (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
