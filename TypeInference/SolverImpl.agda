@@ -48,15 +48,11 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 open import TypeInference.SolverImpl.Enum using (OpEnum)
 
 module TypeInference.SolverImpl
   (S : LanguageSpec)
   (opEnum : OpEnum S)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))
-  (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
 
 open LanguageSpec S
@@ -95,14 +91,14 @@ open import TypeInference.OpenSyntax.Instances S using (wkᵉⁿ-H; _↑ᵉⁿ_)
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Closed    S using (closedᴴ; closedᴴ-⊩; closedᴴ-⊆; closedᴴ-fail)
 open import TypeInference.SolverImpl.State     S
-open import TypeInference.SolverImpl.Solve     S opEnum umin?ᵣ umin?ₑ
-open import TypeInference.SolverImpl.Principal S opEnum umin?ᵣ umin?ₑ
-open import TypeInference.SolverImpl.Simplify  S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Solve     S opEnum
+open import TypeInference.SolverImpl.Principal S opEnum
+open import TypeInference.SolverImpl.Simplify  S
   using (simplify; simplify-⊩; simplify-⊨; trimElim; memʳ?; memᵉ?)
-open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Eliminate S
   using (Elim; Elimᶠ; Entails; entails; eliminate; _⨾ᴱ_)
-open import TypeInference.SolverImpl.Canon     S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Canon     S
   using (canonElim; canonₑ; canonᵣ; canonₑ-≡; canonᵣ-≡)
 open import TypeInference.SolverImpl.Vars       S
   using (Vars; _∪ᵛ_; ⊆-refl; ⊆-∪ˡ; ⊆-∪ʳ; fvˢ; Fixes; fixes-id; fixes-⨟)

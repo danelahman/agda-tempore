@@ -39,7 +39,8 @@ open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≡ᵇ_)
 open import Data.Bool.Base using (true; false)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 
-open import Relation.Nullary using (yes; no)
+open import Relation.Binary.Definitions using (Minimum)
+open import Relation.Nullary using (Dec; yes; no)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -48,12 +49,8 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 module TypeInference.SolverImpl.Normal
   (S : LanguageSpec)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
-  (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
   where
 
 open LanguageSpec S
@@ -64,15 +61,15 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Product S public
 
--- The unit is below anything as soon as the option is supplied
+-- The unit is below anything when the grade decides it least
 
-min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Maybe UnitMinₑ → Maybe (Q ⊩ ûₑ ≾̂ₑ ε)
-min≾ₑ (just p) = just (minₑ p)
-min≾ₑ nothing  = nothing
+min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Dec (Minimum _≾ₑ_ uₑ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ε)
+min≾ₑ (yes p) = just (minₑ p)
+min≾ₑ (no _)  = nothing
 
-min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe UnitMinᵣ → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ρ)
-min≾ᵣ (just p) = just (minᵣ p)
-min≾ᵣ nothing  = nothing
+min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Dec (Minimum _≾ᵣ_ uᵣ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ρ)
+min≾ᵣ (yes p) = just (minᵣ p)
+min≾ᵣ (no _)  = nothing
 
 ------------------------------------------------------------------
 -- Atomic hypotheses
@@ -277,11 +274,11 @@ module Searchₑ {Θ} {Q : Hyps Θ}
   atom≾ₑ : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
   atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
 
-  -- The unit below an atom: by unit-minimality, or as the constant atom
-  -- `uₑ`
+  -- The unit below an atom: when the grade's unit is least, or as the
+  -- constant atom `uₑ`
 
   unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  unit≾ₑ b = min≾ₑ umin?ₑ <∣> atom≾ₑ (ac uₑ) b
+  unit≾ₑ b = min≾ₑ uₑ-least? <∣> atom≾ₑ (ac uₑ) b
 
   -- An atom below the unit, as the constant atom `uₑ`
 
@@ -435,7 +432,7 @@ decide≾ₑ {Q = Q} ε ε' with Searchₑ.sum≾ₑ (tableₑ Q) (nrmₑ ε) (f
 ------------------------------------------------------------------
 -- Resource grades: the same, with a third kind of atom, the image
 -- `∣ x ∣` of an effect variable, which is treated as a variable. The
--- unit is below it by unit-minimality of either sort, the latter
+-- unit is below it when either sort's unit is least, the latter
 -- carried through the morphism by `map-mono`, as `∣ u ∣ = u`.
 
 ∣û∣ₑ : ∀ {Θ} → ûᵣ {Θ} ≡̂ᵣ ∣ ûₑ ∣̂ᵉ
@@ -458,13 +455,13 @@ module Searchᵣ {Θ} {Q : Hyps Θ}
   atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
 
   minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  minᵐ (rm i) with min≾ₑ {ε = evar i} umin?ₑ
+  minᵐ (rm i) with min≾ₑ {ε = evar i} uₑ-least?
   ... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
   ... | nothing = nothing
   minᵐ _ = nothing
 
   unit≾ᵣ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  unit≾ᵣ b = min≾ᵣ umin?ᵣ <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
+  unit≾ᵣ b = min≾ᵣ uᵣ-least? <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
 
   ≾unitᵣ : (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
   ≾unitᵣ a = atom≾ᵣ a (rc uᵣ)

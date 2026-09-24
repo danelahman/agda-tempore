@@ -66,8 +66,8 @@ open import Data.Nat.Base using (ℕ; _+_) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 
-open import Relation.Binary.Definitions using (Decidable)
-open import Relation.Nullary using (yes; no)
+open import Relation.Binary.Definitions using (Decidable; Minimum)
+open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Syntax.Grades
@@ -77,12 +77,8 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 module TypeInference.SolverImpl.Localise
   (S : LanguageSpec)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))
-  (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
 
 open LanguageSpec S
@@ -104,7 +100,7 @@ open import TypeInference.SolverImpl.Deferred  S
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Eliminate S
   using (joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
-open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -1057,7 +1053,7 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
 ... | just cl =
       first (lower (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)))
             (first (raise (Bᵉ.upsOf {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R))
-            (first (unit umin?ₑ (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R))
+            (first (unit uₑ-least? (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R))
                    (top (Bᵉ.freeLs {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R)
                         (occursᵉ⁺ k R))))
   where
@@ -1080,10 +1076,10 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     ... | nothing = nothing
     raise _         _         _         = nothing
 
-    unit : Maybe (UnitMinₑ) → Maybe (Bᵉ.Lows {Ψ} k (es R))
+    unit : Dec (Minimum _≾ₑ_ uₑ) → Maybe (Bᵉ.Lows {Ψ} k (es R))
          → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a) → 𝔹
          → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    unit (just um) (just lw@(Bᵉ.lows [] c s)) (just fr) true
+    unit (yes um) (just lw@(Bᵉ.lows [] c s)) (just fr) true
       with stills? dir↓ (updᵉ k ûₑ) (dfs R)
     ... | just sd = just (ûₑ , λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ um) (λ ()) h)
     ... | nothing = nothing
@@ -1103,7 +1099,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
 ... | just cl =
       first (lower (Bʳ.lowsOf {Ψ} k (rs R)))
             (first (raise (Bʳ.upsOf {Ψ} k (rs R)) (dfreeʳ? k R))
-            (first (unit umin?ᵣ (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
+            (first (unit uᵣ-least? (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
                    (top (Bʳ.freeLs {Ψ} k (rs R)) (dfreeʳ? k R) (occursʳ⁺ k R))))
   where
     lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
@@ -1123,9 +1119,9 @@ stepʳ {Ψ} k R with cleanʳ? k R
     ... | nothing = nothing
     raise _         _         = nothing
 
-    unit : Maybe (UnitMinᵣ) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
+    unit : Dec (Minimum _≾ᵣ_ uᵣ) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
          → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    unit (just um) (just lw@(Bʳ.lows [] c s)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
+    unit (yes um) (just lw@(Bʳ.lows [] c s)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
     ... | just sd = just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ um) (λ ()) h)
     ... | nothing = nothing
     unit _ _ _ = nothing

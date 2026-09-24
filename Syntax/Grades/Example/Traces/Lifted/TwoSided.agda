@@ -39,7 +39,7 @@ open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
 open import Relation.Binary.Definitions
-  using (Decidable; DecidableEquality; Transitive; Trichotomous)
+  using (Decidable; DecidableEquality; Minimum; Transitive; Trichotomous)
 
 open import Util.Equality
 
@@ -95,6 +95,7 @@ open import Syntax.Grades.Example.Traces.Lifted.LeftSided
             of-nat to of-natˡᵒ; of-nat-zero to of-natˡᵒ-zero;
             of-nat-plus to of-natˡᵒ-plus;
             _≾_ to _≾ˡᵒ_; _≾?_ to _≾ˡᵒ?_; ≾-⊤ to ≾ˡᵒ-⊤;
+            u⋠of-nat-1 to uˡᵒ⋠of-natˡᵒ-1;
             ≾-refl to ≾ˡᵒ-refl; ≾-trans to ≾ˡᵒ-trans;
             ·-monoˡ to ·ˡᵒ-monoˡ; ·-monoʳ to ·ˡᵒ-monoʳ;
             ≾-zero-productˡ to ≾ˡᵒ-zero-productˡ;
@@ -517,6 +518,11 @@ infix 5 _≾ᵗˢ?_
 _≾ᵗˢ?_ : (i₁ i₂ : TwoSided) → Dec (i₁ ≾ᵗˢ i₂)
 i₁ ≾ᵗˢ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i₂)
 
+-- the unit is not least, its floor being greatest among floors
+
+uᵗˢ-least? : Dec (Minimum _≾ᵗˢ_ uᵗˢ)
+uᵗˢ-least? = no λ least → uˡᵒ⋠of-natˡᵒ-1 (proj₁ (least (of-natᵗˢ 1)))
+
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
 
@@ -531,6 +537,7 @@ two-sided = record
   ; _≾_             = _≾ᵗˢ_
   ; ⊤               = ⊤ᵗˢ
   ; ≾-⊤             = ≾ᵗˢ-⊤
+  ; u-least?        = uᵗˢ-least?
   ; _⊔_             = _⊔ᵗˢ_
   ; ⊔-ubˡ           = ⊔ᵗˢ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵗˢ-ubʳ

@@ -40,7 +40,7 @@ open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
 open import Relation.Binary.Definitions
-  using (DecidableEquality; Transitive; Trichotomous)
+  using (DecidableEquality; Minimum; Transitive; Trichotomous)
 
 open import Util.Equality
 
@@ -55,6 +55,7 @@ module Syntax.Grades.Example.Traces.Lifted.LeftSided
 
 open import Data.List.Relation.Unary.Any using (here; any?)
 
+open import Relation.Nullary using (¬_; Dec; no)
 open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Syntax.Grades
@@ -86,6 +87,15 @@ open R public hiding (≾-antisym)
 
 ≾-⊤ : (P : Antichain) → P ≾ u
 ≾-⊤ P s _ = fromWitness {a? = any? (_≽?_ s) (traces u)} (here ≼-nil)
+
+-- The unit is therefore not least: `of-nat 1` would be equal to it.
+
+u⋠of-nat-1 : ¬ (u ≾ of-nat 1)
+u⋠of-nat-1 rel with cong traces (≾-antisym {of-nat 1} {u} (≾-⊤ (of-nat 1)) rel)
+... | ()
+
+u-least? : Dec (Minimum _≾_ u)
+u-least? = no λ least → u⋠of-nat-1 (least (of-nat 1))
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -127,6 +137,7 @@ left-sided = record
   ; _≾_             = _≾_
   ; ⊤               = u
   ; ≾-⊤             = ≾-⊤
+  ; u-least?        = u-least?
   ; _⊔_             = _⊔_
   ; ⊔-ubˡ           = ⊔-ubˡ
   ; ⊔-ubʳ           = ⊔-ubʳ

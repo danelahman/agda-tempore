@@ -49,12 +49,8 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 module TypeInference.SolverImpl.Simplify
   (S : LanguageSpec)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))
-  (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
 
 open LanguageSpec S
@@ -69,12 +65,12 @@ open import TypeInference.OpenSyntax.Instances S
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
-open import TypeInference.SolverImpl.Canon  S umin?ᵣ umin?ₑ using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
+open import TypeInference.SolverImpl.Canon  S using (canonᴴ; canonᴴ-⊩; canonᴴ-⊩⁻)
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
-open import TypeInference.SolverImpl.Normal  S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Normal  S using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Product S using (_≺ᵣ_; _≺ₑ_)
 open import TypeInference.SolverImpl.Resid  S using (etDec; etDec-sound; etDec-compl; etDec-refute)
-open import TypeInference.SolverImpl.Refute S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Refute S
   using (Refutedᵤ; scanᵤ)
 
 -- Derivations reading only a list of subtyping hypotheses and a list

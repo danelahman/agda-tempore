@@ -26,6 +26,7 @@ open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 
+open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades
@@ -111,14 +112,6 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
   hypᵗᵛ   : ∀ {α β} → (α , β) ∈ subᵥ Q → Q ⊩ᵗᵛ α ≾ β
   transᵗᵛ : ∀ {α β γ} → Q ⊩ᵗᵛ α ≾ β → Q ⊩ᵗᵛ β ≾ γ → Q ⊩ᵗᵛ α ≾ γ
 
--- Unit-minimality of a grade monoid, as a property of the closed grades
-
-UnitMinᵣ : Set
-UnitMinᵣ = (ρ₀ : R) → uᵣ ≾ᵣ ρ₀
-
-UnitMinₑ : Set
-UnitMinₑ = (ε₀ : E) → uₑ ≾ₑ ε₀
-
 -- Convertibility: the monoid laws, commutativity of the join,
 -- distributivity of multiplication over the join, the constants'
 -- arithmetic, `∣_∣̂ᵉ` being a monoid morphism, and absorption of a join
@@ -191,8 +184,8 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   ⊔-lubᵣ   : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
   -- every grade is below the top
   topᵣ     : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
-  -- optional unit-minimality; the premise is the property of the grade monoid
-  minᵣ     : ∀ {ρ} → UnitMinᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
+  -- the unit is below every grade when it is the least closed grade
+  minᵣ     : ∀ {ρ} → Minimum _≾ᵣ_ uᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
   hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
@@ -207,8 +200,8 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ⊔-lubₑ : ∀ {ε₁ ε₂ ε} → Q ⊩ ε₁ ≾̂ₑ ε → Q ⊩ ε₂ ≾̂ₑ ε → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε
   -- every grade is below the top
   topₑ   : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
-  -- optional unit-minimality; the premise is the property of the grade monoid
-  minₑ   : ∀ {ε} → UnitMinₑ → Q ⊩ ûₑ ≾̂ₑ ε
+  -- the unit is below every grade when it is the least closed grade
+  minₑ   : ∀ {ε} → Minimum _≾ₑ_ uₑ → Q ⊩ ûₑ ≾̂ₑ ε
 
 -- Entailed ordering is reflexive
 

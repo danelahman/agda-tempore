@@ -372,6 +372,7 @@ right-sided = record
   ; _≾_             = _≾_
   ; ⊤               = unbounded
   ; ≾-⊤             = ≾-⊤
+  ; u-least?        = yes ≾-⊥
   ; _⊔_             = _⊔ᵇ_
   ; ⊔-ubˡ           = ⊔ᵇ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵇ-ubʳ

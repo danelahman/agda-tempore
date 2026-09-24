@@ -30,12 +30,8 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 module TypeInference.SolverImpl.Refute
   (S : LanguageSpec)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))
-  (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
 
 open LanguageSpec S
@@ -46,7 +42,7 @@ open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Instances S using (Satisfiable; valʳ; inst-≡̂ᵣ; inst-≾ᵣ)
 
-open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Normal S
   using (Alts; alt; _∷⁺_; RAtom; rc; rv; rm; ⟦_⟧ʳᵃ; ⟦_⟧ʳˢ; ⟦_⟧ʳˢ⁺;
          nrmᵣ; nrmᵣ-≡)
 

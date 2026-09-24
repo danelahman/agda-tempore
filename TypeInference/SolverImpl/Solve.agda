@@ -42,6 +42,7 @@ open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Unit using (tt)
 
+open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
 
@@ -53,15 +54,11 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 open import TypeInference.SolverImpl.Enum using (OpEnum)
 
 module TypeInference.SolverImpl.Solve
   (S : LanguageSpec)
   (opEnum : OpEnum S)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))
-  (umin?ₑ : Maybe (H.UnitMinₑ S))
   where
 
 open LanguageSpec S
@@ -93,8 +90,8 @@ open import TypeInference.SolverImpl.Deferred S
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Closed S using (valʳ?; valᵉ?; convʳ; convᵉ)
-open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
-open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Normal S
+open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ; Outerₑ; Outerᵣ; outerₑ?; outerᵣ?;
          evar?)
 
@@ -190,15 +187,15 @@ et₀? A with etDec A in e
 --
 -- The rigid is sent to that grade, and what is left is kept. The top is
 -- a grade of every monoid, the unit is least only in some, so only the
--- first needs `UnitMin`. An unknown local to the scope stands for a
+-- first reads the grade's `uₑ-least?`. An unknown local to the scope stands for a
 -- function of the rigid, and is kept at the unit rigid; so the side
 -- that `stripᵉ-top` keeps free of the rigid must mention no local
 -- unknown either, only those the scope was entered with (`Outerₑ`).
 
-stripʳ-unit : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
+stripʳ-unit : ∀ {Φ} → Dec (Minimum _≾ₑ_ uₑ) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
-stripʳ-unit nothing   j ρ ρ' ρ₀ e₁ = nothing
-stripʳ-unit (just um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+stripʳ-unit (no _)   j ρ ρ' ρ₀ e₁ = nothing
+stripʳ-unit (yes um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
 ... | nothing          = nothing
 ... | just (ρ₀' , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
@@ -209,10 +206,10 @@ stripʳ-unit (just um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ
                                      (⊩-wkᵉᵣ (k (here refl))))
                              (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ρ'))
 
-stripᵉ-unit : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
+stripᵉ-unit : ∀ {Φ} → Dec (Minimum _≾ₑ_ uₑ) → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
             → (ε₀ : EExp Φ) → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Atomᵉ j ε ε')
-stripᵉ-unit nothing   j ε ε' ε₀ e₁ = nothing
-stripᵉ-unit (just um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+stripᵉ-unit (no _)   j ε ε' ε₀ e₁ = nothing
+stripᵉ-unit (yes um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
 ... | nothing          = nothing
 ... | just (ε₀' , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
@@ -259,7 +256,7 @@ atomʳ O j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
                              (⊩-wkᵉᵣ (k (here refl))))
 ... | just (ρ₀ , e₁) | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripʳ-unit umin?ₑ j ρ ρ' ρ₀ e₁
+...   | nothing = stripʳ-unit uₑ-least? j ρ ρ' ρ₀ e₁
 atomʳ O j ρ ρ' | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = stripʳ-top O j ρ ρ' ρ₀' e₂
@@ -277,7 +274,7 @@ atomᵉ O j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
                              (⊩-wkᵉₑ (k (here refl))))
 ... | just (ε₀ , e₁) | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripᵉ-unit umin?ₑ j ε ε' ε₀ e₁
+...   | nothing = stripᵉ-unit uₑ-least? j ε ε' ε₀ e₁
 atomᵉ O j ε ε' | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = stripᵉ-top O j ε ε' ε₀' e₂

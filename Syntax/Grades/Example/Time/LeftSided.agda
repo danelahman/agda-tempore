@@ -97,6 +97,11 @@ infix 6 _≾ₒ_
 ≾ₒ-⊤ : (i : 𝕀) → i ≾ₒ uₒ
 ≾ₒ-⊤ [ _ ,+∞⟩ = z≤n
 
+-- the unit is not least: `[ 1 ,+∞⟩` lies strictly below it
+
+uₒ-least? : Dec (Minimum _≾ₒ_ uₒ)
+uₒ-least? = no λ least → 1+n≰n (least [ 1 ,+∞⟩)
+
 -- decidability
 
 _≾ₒ?_ : Decidable _≾ₒ_
@@ -163,6 +168,7 @@ left-sided-intervals = record
   ; _≾_               = _≾ₒ_
   ; ⊤                 = uₒ
   ; ≾-⊤               = ≾ₒ-⊤
+  ; u-least?          = uₒ-least?
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
@@ -225,6 +231,11 @@ infix 6 _≾ᵗ_
 ≾ᵗ-⊤ : (i : 𝕀⊤) → i ≾ᵗ untimed
 ≾ᵗ-⊤ (timed _) = tt
 ≾ᵗ-⊤ untimed   = tt
+
+-- the unit is not least, as for the intervals themselves
+
+uᵗ-least? : Dec (Minimum _≾ᵗ_ uᵗ)
+uᵗ-least? = no λ least → 1+n≰n (least (timed [ 1 ,+∞⟩))
 
 -- identity laws
 
@@ -369,6 +380,7 @@ left-sided-intervals-with-⊤ = record
   ; _≾_               = _≾ᵗ_
   ; ⊤                 = untimed
   ; ≾-⊤               = ≾ᵗ-⊤
+  ; u-least?          = uᵗ-least?
   ; _⊔_               = _⊔ᵗ_
   ; ⊔-ubˡ             = ⊔ᵗ-ubˡ
   ; ⊔-ubʳ             = ⊔ᵗ-ubʳ

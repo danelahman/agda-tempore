@@ -103,6 +103,12 @@ i₁ ≾ᵢ i₂ =
 ≾ᵢ-⊤ : (i : Interval∞) → (min ⊤ᵢ ≤ min i × max i ≤∞ max ⊤ᵢ)
 ≾ᵢ-⊤ i = z≤n , ≤∞-∞ (max i)
 
+-- the unit is not least: `[ 1 , ↑ 1 ]` is not above it, its lower
+-- bound being higher
+
+uᵢ-least? : Dec (Minimum _≾ᵢ_ uᵢ)
+uᵢ-least? = no λ least → 1+n≰n (proj₁ (least [ 1 , ↑ 1 , ≤-refl ]))
+
 -- uᵢ is the minimal element
 
 uᵢ-minimal : ∀ {i} → i ≾ᵢ uᵢ → i ≡ uᵢ
@@ -223,6 +229,7 @@ two-sided-intervals-with-∞ = record
   ; _≾_              = _≾ᵢ_
   ; ⊤                = ⊤ᵢ
   ; ≾-⊤              = ≾ᵢ-⊤
+  ; u-least?         = uᵢ-least?
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ
@@ -289,6 +296,11 @@ infix 6 _≾ʷ_
 ≾ʷ-⊤ : (i : Interval∞⊤) → i ≾ʷ no-window
 ≾ʷ-⊤ (window _) = tt
 ≾ʷ-⊤ no-window  = tt
+
+-- the unit is not least, as for the windows themselves
+
+uʷ-least? : Dec (Minimum _≾ʷ_ uʷ)
+uʷ-least? = no λ least → 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 , ≤-refl ])))
 
 -- identity laws
 
@@ -443,6 +455,7 @@ two-sided-intervals-with-⊤ = record
   ; _≾_               = _≾ʷ_
   ; ⊤                 = no-window
   ; ≾-⊤               = ≾ʷ-⊤
+  ; u-least?          = uʷ-least?
   ; _⊔_               = _⊔ʷ_
   ; ⊔-ubˡ             = ⊔ʷ-ubˡ
   ; ⊔-ubʳ             = ⊔ʷ-ubʳ

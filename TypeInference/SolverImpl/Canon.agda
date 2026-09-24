@@ -7,8 +7,8 @@
 -- skeleton, with every alternative that the decider places below --
 -- another dropped, so the monoid and lattice laws leave no trace --
 -- in what a caller is shown. The canonical form is relative to   --
--- what the decider proves, and so to the unit-minimality         --
--- witnesses it is given.                                         --
+-- what the decider proves, and so to whether each grade's unit   --
+-- is least.                                                      --
 --                                                                --
 -- A hypothesis set and its normal form entail each other, so the --
 -- normal form is stored, not merely printed. A type is           --
@@ -17,7 +17,6 @@
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)
-open import Data.Maybe using (Maybe)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈-map⁻)
 open import Data.Product using (_×_; _,_)
@@ -29,12 +28,8 @@ open import Util.Equality
 
 open import TypeInference.Scopes
 
-import TypeInference.OpenSyntax.Hyps as H
-
 module TypeInference.SolverImpl.Canon
   (S : LanguageSpec)
-  (umin?ᵣ : Maybe (H.UnitMinᵣ S))              -- optional unit-minimality of `_≾ᵣ_`
-  (umin?ₑ : Maybe (H.UnitMinₑ S))              -- optional unit-minimality of `_≾ₑ_`
   where
 
 open LanguageSpec S
@@ -46,7 +41,7 @@ open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Instances S using (⊩ᴴ-⊨ᴴ)
 
-open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ
+open import TypeInference.SolverImpl.Normal    S
 open import TypeInference.SolverImpl.Eliminate S using (Elim; mkElim)
 
 -- Grouping with pruning, two alternatives being compared by the

@@ -73,6 +73,12 @@ infix 6 _≾ₒ_
 ≾ₒ-⊤ : (i : 𝕀ᵣ) → i ≾ₒ ⊤ₒ
 ≾ₒ-⊤ [0, m ] = ≤∞-∞ m
 
+-- the unit is least: no time at all meets every deadline
+
+uₒ-least : Minimum _≾ₒ_ uₒ
+uₒ-least [0, ↑ _ ] = z≤n
+uₒ-least [0, ∞ ]   = ≤∞-∞ ∞
+
 -- identity laws
 
 ·ₒ-identityʳ : (i : 𝕀ᵣ) → i ·ₒ uₒ ≡ i
@@ -170,6 +176,7 @@ right-sided-intervals = record
   ; _≾_               = _≾ₒ_
   ; ⊤                 = ⊤ₒ
   ; ≾-⊤               = ≾ₒ-⊤
+  ; u-least?          = yes uₒ-least
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ

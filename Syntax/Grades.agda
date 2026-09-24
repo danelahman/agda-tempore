@@ -13,7 +13,7 @@ open import Level hiding (_⊔_) renaming (zero to lzero)
 
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
-open import Relation.Nullary using (¬_; yes; no)
+open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Util.Equality
 
@@ -46,6 +46,9 @@ record Grade : Set₁ where
 
     -- every grade may be weakened to ⊤
     ≾-⊤ : (c : Carrier) → c ≾ ⊤
+
+    -- whether the unit is the least grade
+    u-least? : Dec (Minimum _≾_ u)
 
     -- binary joins
     _⊔_          : Carrier → Carrier → Carrier
@@ -204,6 +207,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ᵣ_;
      ⊤ to ⊤ᵣ;
      ≾-⊤ to ≾-⊤ᵣ;
+     u-least? to uᵣ-least?;
      _⊔_ to _⊔ᵣ_;
      ⊔-ubˡ to ⊔ᵣ-ubˡ;
      ⊔-ubʳ to ⊔ᵣ-ubʳ;
@@ -244,6 +248,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      _≾_ to _≾ₑ_;
      ⊤ to ⊤ₑ;
      ≾-⊤ to ≾-⊤ₑ;
+     u-least? to uₑ-least?;
      _⊔_ to _⊔ₑ_;
      ⊔-ubˡ to ⊔ₑ-ubˡ;
      ⊔-ubʳ to ⊔ₑ-ubʳ;

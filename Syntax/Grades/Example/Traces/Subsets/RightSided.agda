@@ -16,8 +16,9 @@
 --   Q ≾ Q'   iff   Q ⊆ Q'                                             --
 --                                                                     --
 -- and the set is read *disjunctively*: a longer list permits more,    --
--- the union of two grades is their join, and `{ ε }` -- permitting    --
--- nothing but the empty run -- is the least grade.                    --
+-- and the union of two grades is their join. There is no least grade: --
+-- `{ ε }`, permitting nothing but the empty run, is below only the    --
+-- lists that name the empty run.                                      --
 --                                                                     --
 -- No list is greatest, no finite one permitting every run, so the     --
 -- carrier carries `any-run` as a point of its own, permitting any run --
@@ -34,7 +35,7 @@ open import Level using () renaming (zero to lzero)
 
 open import Relation.Binary.Core using (Rel)
 open import Relation.Binary.Definitions
-  using (DecidableEquality; Transitive; Trichotomous)
+  using (DecidableEquality; Minimum; Transitive; Trichotomous)
 
 open import Util.Equality
 
@@ -183,6 +184,11 @@ any-run        ≾ any-run        = ⊤
 ≾-⊤ (permitting _) = tt
 ≾-⊤ any-run        = tt
 
+-- there is no least grade: `{ ε }` is below only the lists naming `ε`
+
+uᵖ-least? : Dec (Minimum _≾_ uᵖ)
+uᵖ-least? = no λ least → least (permitting (of-nat 1)) ε _
+
 ≾-refl : {P : Permits} → P ≾ P
 ≾-refl {permitting P} = ≾₀-refl {P}
 ≾-refl {any-run}      = tt
@@ -327,6 +333,7 @@ right-sided = record
   ; _≾_             = _≾_
   ; ⊤               = any-run
   ; ≾-⊤             = ≾-⊤
+  ; u-least?        = uᵖ-least?
   ; _⊔_             = _⊔ᵖ_
   ; ⊔-ubˡ           = ⊔ᵖ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵖ-ubʳ
