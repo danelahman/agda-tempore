@@ -655,18 +655,47 @@ atomˢ-princ j A B eq γ p with strᵛ⁺ j A | strᵛ⁺ j B
 atomˢ-princ j A B eq γ p | just _  | nothing = ⊥just eq
 atomˢ-princ j A B eq γ p | nothing | _       = ⊥just eq
 
-atomᵈ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
+-- A kept disjunction, from no hypotheses: an eternal type is the
+-- instance's with the eigenvariable at the unit; a grade below the unit
+-- bounds, as for `stripʳ-top`, the kept grade from above, with the
+-- eigenvariable at the top.
+
+atomᵈ-princ : ∀ {Φ Φ'} → (j : EVar (Φ +e)) → (A : OVType (Φ +e))
             → (ρ : RExp (Φ +e))
             → ∀ {a} → atomᵈ j A ρ ≡ just a
-            → (γ : Subst (Φ +e) (Φ' +e))
-            → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ)
+            → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
+            → VarOK ∅ᴴ (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ)
             → ∀ {B τ} → (B , τ) ∈ proj₁ a
-            → VarOK Q (B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
-atomᵈ-princ j A ρ eq γ p with strᵛ⁺ j A | strʳ⁺ j ρ
+            → VarOK ∅ᴴ (B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
+atomᵈ-princ j A ρ eq γ hγ p with strᵛ⁺ j A | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ)
 ... | just (A₀ , e₁) | just (ρ₀ , e₂) with eq
-...   | refl = λ { (here refl) → bndᵈ j A ρ e₁ e₂ γ p }
-atomᵈ-princ j A ρ eq γ p | just _  | nothing = ⊥just eq
-atomᵈ-princ j A ρ eq γ p | nothing | _       = ⊥just eq
+...   | refl = λ { (here refl) → kept p }
+  where
+    X = popˢ j ⨟ˢ γ
+    W = wkˢᵉ ⨟ˢ γ
+    ρ⊤ = ρ [ updᵉ j (econst ⊤ₑ) ]ʳ
+
+    top : sE (X ⨟ˢ κ⊤) j ≡ econst ⊤ₑ [ X ⨟ˢ κ⊤ ]ᵉ
+    top = cong (_[ κ⊤ ]ᵉ) (trans (cong (_[ γ ]ᵉ) (popˢ-hit j)) hγ)
+
+    at⊤ : ρ⊤ [ X ]ʳ [ κ⊤ ]ʳ ≡ ρ [ X ]ʳ [ κ⊤ ]ʳ
+    at⊤ = trans ([⨟]ʳ ρ⊤ X κ⊤)
+          (trans ([⨟]ʳ ρ (updᵉ j (econst ⊤ₑ)) (X ⨟ˢ κ⊤))
+          (trans ([≐]ʳ (updᵉ-absorb j (econst ⊤ₑ) (X ⨟ˢ κ⊤) top) ρ)
+                 (sym ([⨟]ʳ ρ X κ⊤))))
+
+    lhs : ∅ᴴ ⊩ ρ₀ [ W ⨟ˢ κᵉ ]ʳ ≾̂ᵣ ρ [ X ]ʳ [ κ⊤ ]ʳ
+    lhs = subst₂ (λ x y → ∅ᴴ ⊩ x ≾̂ᵣ y)
+                 (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ⊤ e₂ γ)) ([⨟]ʳ ρ₀ W κᵉ)) at⊤
+                 (mono-substᵣ κᵉ≾κ⊤ (ρ⊤ [ X ]ʳ))
+
+    kept : VarOK ∅ᴴ (A [ X ]ᵛ) (ρ [ X ]ʳ)
+         → VarOK ∅ᴴ (A₀ [ W ⨟ˢ κᵉ ]ᵛ) (ρ₀ [ W ⨟ˢ κᵉ ]ʳ)
+    kept (et-ok et)      = et-ok (bndᵗ j A e₁ γ et)
+    kept (≾ᵘ-ok le)      = ≾ᵘ-ok (transᵣ lhs (⊩-substᵣ {σ = κ⊤} (⊩ᴴ-κ (econst ⊤ₑ)) le))
+    kept (hyp-ok () _ _)
+atomᵈ-princ j A ρ eq γ hγ p | just _  | nothing = ⊥just eq
+atomᵈ-princ j A ρ eq γ hγ p | nothing | _       = ⊥just eq
 
 -- Two substitutions after which `O` reads the same agree on every
 -- expression mentioning only unknowns `O`'s images mention
@@ -826,21 +855,21 @@ listˢ-princ j ((A , B) ∷ l) eq γ k with atomˢ j A B in e₁ | listˢ j l in
 listˢ-princ j ((A , B) ∷ l) eq γ k | just _  | nothing = ⊥just eq
 listˢ-princ j ((A , B) ∷ l) eq γ k | nothing | _       = ⊥just eq
 
-listᵈ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e))
+listᵈ-princ : ∀ {Φ Φ'} → (j : EVar (Φ +e))
             → (l : List (OVType (Φ +e) × RExp (Φ +e)))
             → ∀ {a} → listᵈ j l ≡ just a
-            → (γ : Subst (Φ +e) (Φ' +e))
+            → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
             → (∀ {A ρ} → (A , ρ) ∈ l
-                 → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ))
+                 → VarOK ∅ᴴ (A [ popˢ j ⨟ˢ γ ]ᵛ) (ρ [ popˢ j ⨟ˢ γ ]ʳ))
             → ∀ {B τ} → (B , τ) ∈ proj₁ a
-            → VarOK Q (B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
-listᵈ-princ j []             refl γ k = λ ()
-listᵈ-princ j ((A , ρ) ∷ l) eq γ k with atomᵈ j A ρ in e₁ | listᵈ j l in e₂
+            → VarOK ∅ᴴ (B [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵛ) (τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ)
+listᵈ-princ j []             refl γ hγ k = λ ()
+listᵈ-princ j ((A , ρ) ∷ l) eq γ hγ k with atomᵈ j A ρ in e₁ | listᵈ j l in e₂
 ... | just (a , fa) | just (l₁ , f) with eq
-...   | refl = λ m → [ atomᵈ-princ j A ρ e₁ γ (k (here refl))
-                     , listᵈ-princ j l e₂ γ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
-listᵈ-princ j ((A , ρ) ∷ l) eq γ k | just _  | nothing = ⊥just eq
-listᵈ-princ j ((A , ρ) ∷ l) eq γ k | nothing | _       = ⊥just eq
+...   | refl = λ m → [ atomᵈ-princ j A ρ e₁ γ hγ (k (here refl))
+                     , listᵈ-princ j l e₂ γ hγ (λ m' → k (there m')) ]′ (∈-++⁻ a m)
+listᵈ-princ j ((A , ρ) ∷ l) eq γ hγ k | just _  | nothing = ⊥just eq
+listᵈ-princ j ((A , ρ) ∷ l) eq γ hγ k | nothing | _       = ⊥just eq
 
 -- A lifted inner entry holds at the outer instance: under the new
 -- binder it is the inner entry at the inner instance, read the same
@@ -853,15 +882,15 @@ liftᵈ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O⁺ : Subst (Θ +e) (Φ +e)
 liftᵈ-princ O⁺ j γ δ E oo eqO h =
   closeᵈ-princ (E [ popˢ j ]ᵈ) (⊩ᵈ-subst⁻ E (⊩ᵈ-agree E oo eqO h))
 
-splitᴿ-princ : ∀ {Θ Φ Φ'} {Q : Hyps Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
+splitᴿ-princ : ∀ {Θ Φ Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
              → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
              → ∀ {a} → splitᴿ O O⁺ j R ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → Uniform O (popˢ j ⨟ˢ γ)
              → (O⁺ ⨟ˢ (popˢ j ⨟ˢ γ)) ≐ˢ (O⁺ ⨟ˢ (popˢ j ⨟ˢ (((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ)))
-             → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ γ ]
-             → Q ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
-splitᴿ-princ {Q = Q} O O⁺ j R eq γ hγ u eqO h
+             → ∅ᴴ ⊩ᴿ R [ popˢ j ⨟ˢ γ ]
+             → ∅ᴴ ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
   with listʳ O O⁺ j (rs R) in e₁ | listᵉ O O⁺ j (es R) in e₂ | listᵗ j (ts R) in e₃
      | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅ | outerD? O⁺ (dfs R)
 ... | just (lr , dr , fr) | just (le , de , fe) | just (lt , ft) | just (ls , fs)
@@ -869,7 +898,7 @@ splitᴿ-princ {Q = Q} O O⁺ j R eq γ hγ u eqO h
 ...   | refl = mk⊩ᴿ (proj₁ pr) (proj₁ pe)
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
                     (listˢ-princ j (ss R) e₄ γ (⊩ss h))
-                    (listᵈ-princ j (ds R) e₅ γ (⊩ds h))
+                    (listᵈ-princ j (ds R) e₅ γ hγ (⊩ds h))
                     (λ { (here refl) → closeᵈ-princ (dfr nothing 0 (ords dr de))
                                                     (mk⊩ᵒ (proj₂ pr) (proj₂ pe))
                        ; (there m) → lifted m })
@@ -877,7 +906,7 @@ splitᴿ-princ {Q = Q} O O⁺ j R eq γ hγ u eqO h
     pr = listʳ-princ O O⁺ j (rs R) e₁ γ hγ u eqO (⊩rs h)
     pe = listᵉ-princ O O⁺ j (es R) e₂ γ hγ u eqO (⊩es h)
 
-    lifted : ∀ {E} → E ∈ map (liftᵈ j) (dfs R) → Q ⊩ᵈ E [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
+    lifted : ∀ {E} → E ∈ map (liftᵈ j) (dfs R) → ∅ᴴ ⊩ᵈ E [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
     lifted m with ∈-map⁻ (liftᵈ j) m
     ... | E₀ , m₀ , refl = liftᵈ-princ O⁺ j γ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) E₀ (od m₀) eqO (⊩dfs h m₀)
 splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _ | just _ | just _  | just _  | just _  | nothing = ⊥just eq
@@ -1112,6 +1141,83 @@ threadOps-princ {f = f} g gp (op ∷ l) s eq δ₀ sat h with g s op in e₁
     h₂  = proj₁ (proj₂ (proj₂ f₂))
     fx₂ = proj₂ (proj₂ (proj₂ f₂))
 
+-- After an expansion, the decomposition of the demands it was asked
+-- about cannot fail
+
+subsList-exp : ∀ {Ψ Ψ'} → (l : List (OVType Ψ × OVType Ψ)) → (δ : Subst Ψ Ψ')
+             → (∀ {A B} → (A , B) ∈ l
+                  → Σ[ d ∈ SubDec (A [ δ ]ᵛ) (B [ δ ]ᵛ) ] (subDec (A [ δ ]ᵛ) (B [ δ ]ᵛ) ≡ just d))
+             → subsList (map (mapᵖ (_[ δ ]ᵛ)) l) ≡ nothing → ⊥
+subsList-exp l δ dec q with subsList-nothing (map (mapᵖ (_[ δ ]ᵛ)) l) q
+... | A , B , m , r with ∈-map⁻ (mapᵖ (_[ δ ]ᵛ)) m
+...   | (A₀ , B₀) , m₀ , refl = ⊥just (trans (sym r) (proj₂ (dec m₀)))
+
+-- The closing expansion: it factors every satisfying instance, and
+-- its failure refutes the residual.
+
+reexpand-princ : ∀ {Θ Ψ''} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
+               → reexpand s ≡ just (s' , m)
+               → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
+               → Q ⊩ᴿ (res s) [ δ₀ ]
+               → Σ[ δ ∈ Subst (Ψ s') Ψ'' ]
+                   (((mδ m ⨟ˢ δ) ≐ˢ δ₀) × (Q ⊩ᴿ (res s') [ δ ]))
+reexpand-princ s eq δ₀ Q h with expandSub (ss (res s)) in eqx
+... | nothing = ⊥just eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
+...   | nothing = ⊥just eq
+...   | just e with eq
+...     | refl = δ , trix , atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h))
+  where
+    facx = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
+    δ    = proj₁ facx
+    trix = proj₂ facx
+
+reexpand-fail : ∀ {Θ Ψ''} → (s : St Θ) → reexpand s ≡ nothing
+              → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
+              → Q ⊩ᴿ (res s) [ δ₀ ] → ⊥
+reexpand-fail s eq δ₀ Q h with expandSub (ss (res s)) in eqx
+... | nothing = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
+...   | just _  = ⊥nothing eq
+...   | nothing =
+        subsList-exp (ss (res s)) δₑ
+          (subst (ExpDec (ss (res s))) eqx (expandSub-dec (ss (res s)))) eqs
+
+-- and keeps the rigids fixed
+
+reexpand-fix : ∀ {Θ Ψ''} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
+             → reexpand s ≡ just (s' , m)
+             → {δ₀ : Subst (Ψ s) Ψ''} → (δ : Subst (Ψ s') Ψ'') → (mδ m ⨟ˢ δ) ≐ˢ δ₀
+             → Fixing (rig s) δ₀ → Fixing (rig s') δ
+reexpand-fix s eq δ tri fx with expandSub (ss (res s))
+... | nothing = ⊥just eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
+...   | nothing = ⊥just eq
+...   | just e with eq
+...     | refl = Fixing-trans δₑ δ tri fx
+
+-- Closing a scope re-expands its residual first: every instance
+-- entering it is kept
+
+reexpand-Princ⇑ : ∀ {Θ} {s : St Θ} {s'' : St (Θ +e)} {m : ⇑ᵉˢ s ⟶ s''} {C : Constraint (Θ +e)}
+                → Princ⇑ s s'' m C
+                → ∀ {s₃ : St (Θ +e)} {m₃ : s'' ⟶ s₃} → reexpand s'' ≡ just (s₃ , m₃)
+                → Princ⇑ s s₃ (⟶-⨟ m m₃) C
+reexpand-Princ⇑ {s'' = s''} {m} ip {m₃ = m₃} e δ₀ sat h =
+  δ₂ , ≐ˢ-trans (⨟-assoc (mδ m) (mδ m₃) δ₂) (≐ˢ-trans (⨟-congʳ (mδ m) tri₂) tri₁) ,
+  h₂ , (λ fx → reexpand-fix s'' e δ₂ tri₂ (fx₁ fx))
+  where
+    f₁   = ip δ₀ sat h
+    δ₁   = proj₁ f₁
+    tri₁ = proj₁ (proj₂ f₁)
+    h₁   = proj₁ (proj₂ (proj₂ f₁))
+    fx₁  = proj₂ (proj₂ (proj₂ f₁))
+
+    f₂   = reexpand-princ s'' e δ₁ ∅ᴴ h₁
+    δ₂   = proj₁ f₂
+    tri₂ = proj₁ (proj₂ f₂)
+    h₂   = proj₂ (proj₂ f₂)
+
 solve-principal : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
                 → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' C}
                 → solve s C ≡ just (s' , m , w)
@@ -1282,16 +1388,23 @@ solve-principal s (∃ᵉ C) eq δ₀ (ε , sat) h with solve (s ↑ᵉˢ) C in 
 
 solve-principal s (∀ᵉ C) eq with solve (⇑ᵉˢ s) C in e
 ... | nothing = ⊥just eq
-... | just (s'' , m'' , w'') =
+... | just (s'' , m'' , w'') with reexpand s'' in e₃
+...   | nothing = ⊥just eq
+...   | just (s₃ , m₃) =
       thenRetry-princ {C = ∀ᵉ C}
-        (popᵉ s C (Ψ (proj₁ (localiseˢ s m''))) (θ (proj₁ (localiseˢ s m'')))
-                  (res (proj₁ (localiseˢ s m''))) (rig (proj₁ (localiseˢ s m'')))
-                  (⟶-⨟ m'' (proj₂ (localiseˢ s m''))) (wit-mono (proj₂ (localiseˢ s m'')) C w''))
-        (popᵉ-princ s C (Ψ (proj₁ (localiseˢ s m''))) (θ (proj₁ (localiseˢ s m'')))
-                    (res (proj₁ (localiseˢ s m''))) (rig (proj₁ (localiseˢ s m'')))
-                    (⟶-⨟ m'' (proj₂ (localiseˢ s m''))) (wit-mono (proj₂ (localiseˢ s m'')) C w'')
-                    (localise-princ {s = s} {s''} {m''} {C}
-                      (λ δ₀ → solve-principal (⇑ᵉˢ s) C e (δ₀ ↑ᵉ)))) eq
+        (popᵉ s C (Ψ (proj₁ (localiseˢ s m₃'))) (θ (proj₁ (localiseˢ s m₃')))
+                  (res (proj₁ (localiseˢ s m₃'))) (rig (proj₁ (localiseˢ s m₃')))
+                  (⟶-⨟ m₃' (proj₂ (localiseˢ s m₃')))
+                  (wit-mono (proj₂ (localiseˢ s m₃')) C (wit-mono m₃ C w'')))
+        (popᵉ-princ s C (Ψ (proj₁ (localiseˢ s m₃'))) (θ (proj₁ (localiseˢ s m₃')))
+                    (res (proj₁ (localiseˢ s m₃'))) (rig (proj₁ (localiseˢ s m₃')))
+                    (⟶-⨟ m₃' (proj₂ (localiseˢ s m₃')))
+                    (wit-mono (proj₂ (localiseˢ s m₃')) C (wit-mono m₃ C w''))
+                    (localise-princ {s = s} {s₃} {m₃'} {C}
+                      (reexpand-Princ⇑ {s = s} {s''} {m''} {C}
+                        (λ δ₀ → solve-principal (⇑ᵉˢ s) C e (δ₀ ↑ᵉ)) e₃))) eq
+  where
+    m₃' = ⟶-⨟ m'' m₃
 
 solve-principal s (⋀ᵒᵖ f) eq
   with threadOps {f = f} (λ s' op → labelled {C = f op} op (solve s' (f op))) ops s in e
@@ -1300,17 +1413,6 @@ solve-principal s (⋀ᵒᵖ f) eq
 ...   | refl = threadOps-princ (λ s' op → labelled {C = f op} op (solve s' (f op)))
                                (λ s' op e' → labelled-princ op (solve s' (f op))
                                                (solve-principal s' (f op)) e') ops s e
-
--- After an expansion, the decomposition of the demands it was asked
--- about cannot fail
-
-subsList-exp : ∀ {Ψ Ψ'} → (l : List (OVType Ψ × OVType Ψ)) → (δ : Subst Ψ Ψ')
-             → (∀ {A B} → (A , B) ∈ l
-                  → Σ[ d ∈ SubDec (A [ δ ]ᵛ) (B [ δ ]ᵛ) ] (subDec (A [ δ ]ᵛ) (B [ δ ]ᵛ) ≡ just d))
-             → subsList (map (mapᵖ (_[ δ ]ᵛ)) l) ≡ nothing → ⊥
-subsList-exp l δ dec q with subsList-nothing (map (mapᵖ (_[ δ ]ᵛ)) l) q
-... | A , B , m , r with ∈-map⁻ (mapᵖ (_[ δ ]ᵛ)) m
-...   | (A₀ , B₀) , m₀ , refl = ⊥just (trans (sym r) (proj₂ (dec m₀)))
 
 -- Refutation holds on the fragment without a rigid binder. At a rigid
 -- binder the atoms that mention the rigid are settled by a decision
@@ -1483,37 +1585,6 @@ solve-fail s (⋀ᵒᵖ f) (⋀ⁿ nf) eq
                                      (solve-principal s' (f op)) e')
                      (λ s' op e' → solve-fail s' (f op) (nf op)
                                      (labelled-nothing op (solve s' (f op)) e')) ops s e
-
--- The closing expansion: it factors every satisfying instance, and
--- its failure refutes the residual.
-
-reexpand-princ : ∀ {Θ Ψ''} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
-               → reexpand s ≡ just (s' , m)
-               → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
-               → Q ⊩ᴿ (res s) [ δ₀ ]
-               → Σ[ δ ∈ Subst (Ψ s') Ψ'' ]
-                   (((mδ m ⨟ˢ δ) ≐ˢ δ₀) × (Q ⊩ᴿ (res s') [ δ ]))
-reexpand-princ s eq δ₀ Q h with expandSub (ss (res s)) in eqx
-... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
-...   | nothing = ⊥just eq
-...   | just e with eq
-...     | refl = δ , trix , atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h))
-  where
-    facx = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
-    δ    = proj₁ facx
-    trix = proj₂ facx
-
-reexpand-fail : ∀ {Θ Ψ''} → (s : St Θ) → reexpand s ≡ nothing
-              → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
-              → Q ⊩ᴿ (res s) [ δ₀ ] → ⊥
-reexpand-fail s eq δ₀ Q h with expandSub (ss (res s)) in eqx
-... | nothing = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
-...   | just _  = ⊥nothing eq
-...   | nothing =
-        subsList-exp (ss (res s)) δₑ
-          (subst (ExpDec (ss (res s))) eqx (expandSub-dec (ss (res s)))) eqs
 
 -- After it, every subtyping demand of the residual decomposes
 

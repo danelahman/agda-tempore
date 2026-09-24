@@ -16,9 +16,11 @@
 -- it.                                                          --
 --                                                              --
 -- At a rigid binder the state is lifted with a fresh residual. --
--- Before the scope closes, the atoms decided true are dropped  --
--- and the unknowns local to the scope are sent to their        --
--- principal values (`Localise`); then                          --
+-- Before the scope closes, its subtyping demands are expanded  --
+-- and decomposed again (`reexpand`), so that they are pairs of --
+-- type variables, the atoms decided true are dropped, and the  --
+-- unknowns local to the scope are sent to their principal      --
+-- values (`Localise`); then                                    --
 -- atoms free of the rigid are kept, one whose right side alone --
 -- mentions it is kept at the unit rigid where the unit is      --
 -- least, one whose left side alone mentions it is kept at the  --
@@ -306,16 +308,26 @@ atomˢ j A B with strᵛ⁺ j A | strᵛ⁺ j B
 ... | nothing        | _       = nothing
 
 -- A disjunction is kept when its type and its grade both strengthen
--- away from the rigid, and declined otherwise.
+-- away from the rigid. With the rigid in the grade only, it is kept
+-- with the rigid at the top: the type does not depend on the rigid and
+-- the disjunction is antitone in its grade, so
+--
+--   ∀j. Et A ∨ ρ(j) ≾ u  ⟺  Et A ∨ ρ(⊤) ≾ u.
+--
+-- A type mentioning the rigid is declined.
 
 atomᵈ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
       → Maybe (Atomᵈ j A ρ)
-atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j ρ
+atomᵈ j A ρ with strᵛ⁺ j A | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ)
 ... | just (A₀ , e₁) | just (ρ₀ , e₂) =
       just ((A₀ , ρ₀) ∷ [] ,
-            λ δ Q k → subst₂ (VarOK (wkᵉ-H Q))
-                             (sym (pop⨟ᵛ j A e₁ δ)) (sym (pop⨟ʳ j ρ e₂ δ))
-                             (VarOK-wkᵉ (k (here refl))))
+            λ δ Q k → VarOK-≡̂ (≡̂ᵛ-refl _)
+                        (mono-substᵣ (updᵉ-above j (econst ⊤ₑ) (popˢ j ⨟ˢ (δ ↑ᵉ)) topₑ) ρ)
+                        (subst₂ (VarOK (wkᵉ-H Q))
+                                (sym (pop⨟ᵛ j A e₁ δ))
+                                (trans (sym (pop⨟ʳ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ) e₂ δ))
+                                       ([⨟]ʳ ρ (updᵉ j (econst ⊤ₑ)) (popˢ j ⨟ˢ (δ ↑ᵉ))))
+                                (VarOK-wkᵉ (k (here refl)))))
 ... | just _         | nothing = nothing
 ... | nothing        | _       = nothing
 
@@ -820,6 +832,19 @@ chain₂ᵛ : ∀ {Θ Ψ Ψ₁ Ψ₂} → (X : OVType Θ) → (σ : Subst Θ Ψ)
         → (δ' : Subst Ψ₁ Ψ₂) → X [ σ ]ᵛ [ δ ]ᵛ [ δ' ]ᵛ ≡ X [ (σ ⨟ˢ δ) ⨟ˢ δ' ]ᵛ
 chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]ᵛ X (σ ⨟ˢ δ) δ')
 
+-- Reading a residual back as a hypothesis set asks every subtyping
+-- demand to decompose; one expansion of what is left, and the
+-- decomposition that follows it, make it so.
+
+reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
+reexpand s with expandSub (ss (res s))
+... | nothing       = nothing
+... | just (Ψ' , δ) with subsList (ss (res s [ δ ]ᴿ))
+...   | nothing = nothing
+...   | just e  =
+        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e) (transRig δ (rig s)) ,
+              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e h)))
+
 solve : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
       → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
 
@@ -950,25 +975,17 @@ solve {Θ} s (∃ᵉ C) with solve (s ↑ᵉˢ) C
 
 solve s (∀ᵉ C) with solve (⇑ᵉˢ s) C
 ... | nothing = nothing
-... | just (s'' , m'' , w'') = thenRetry {C = ∀ᵉ C} (
-      popᵉ s C (Ψ (proj₁ (localiseˢ s m''))) (θ (proj₁ (localiseˢ s m'')))
-               (res (proj₁ (localiseˢ s m''))) (rig (proj₁ (localiseˢ s m'')))
-               (⟶-⨟ m'' (proj₂ (localiseˢ s m''))) (wit-mono (proj₂ (localiseˢ s m'')) C w''))
+... | just (s'' , m'' , w'') with reexpand s''
+...   | nothing = nothing
+...   | just (s₃ , m₃) = thenRetry {C = ∀ᵉ C} (
+        popᵉ s C (Ψ (proj₁ (localiseˢ s m₃'))) (θ (proj₁ (localiseˢ s m₃')))
+                 (res (proj₁ (localiseˢ s m₃'))) (rig (proj₁ (localiseˢ s m₃')))
+                 (⟶-⨟ m₃' (proj₂ (localiseˢ s m₃')))
+                 (wit-mono (proj₂ (localiseˢ s m₃')) C (wit-mono m₃ C w'')))
+  where
+    m₃' = ⟶-⨟ m'' m₃
 
 solve s (⋀ᵒᵖ f) with threadOps {f = f} (λ s' op → labelled {C = f op} op (solve s' (f op))) ops s
 ... | nothing = nothing
 ... | just (s' , m , ws) =
       just (s' , m , λ δ Q h op → all-lookup ws (complete op) δ Q h)
-
--- Reading a residual back as a hypothesis set asks every subtyping
--- demand to decompose; one expansion of what is left, and the
--- decomposition that follows it, make it so.
-
-reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
-reexpand s with expandSub (ss (res s))
-... | nothing       = nothing
-... | just (Ψ' , δ) with subsList (ss (res s [ δ ]ᴿ))
-...   | nothing = nothing
-...   | just e  =
-        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e) (transRig δ (rig s)) ,
-              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e h)))
