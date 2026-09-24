@@ -4,7 +4,9 @@
 
 module Syntax.Grades where
 
+open import Algebra.Definitions using (Commutative)
 open import Data.Empty
+open import Data.Maybe.Base using (Maybe)
 open import Data.Nat.Base hiding (_⊔_)
 open import Data.Product hiding (map)
 open import Data.Sum hiding (map)
@@ -49,6 +51,10 @@ record Grade : Set₁ where
 
     -- whether the unit is the least grade
     u-least? : Dec (Minimum _≾_ u)
+
+    -- commutativity of `_·_`, where the grade declares it; the trace
+    -- grades leave it out, as there it depends on whether `Op` is empty
+    ·-comm? : Maybe (Commutative _≡_ _·_)
 
     -- binary joins
     _⊔_          : Carrier → Carrier → Carrier
@@ -208,6 +214,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ⊤ to ⊤ᵣ;
      ≾-⊤ to ≾-⊤ᵣ;
      u-least? to uᵣ-least?;
+     ·-comm? to ·ᵣ-comm?;
      _⊔_ to _⊔ᵣ_;
      ⊔-ubˡ to ⊔ᵣ-ubˡ;
      ⊔-ubʳ to ⊔ᵣ-ubʳ;
@@ -249,6 +256,7 @@ module GradeSystemInterface (GS : GradeSystem) where
      ⊤ to ⊤ₑ;
      ≾-⊤ to ≾-⊤ₑ;
      u-least? to uₑ-least?;
+     ·-comm? to ·ₑ-comm?;
      _⊔_ to _⊔ₑ_;
      ⊔-ubˡ to ⊔ₑ-ubˡ;
      ⊔-ubʳ to ⊔ₑ-ubʳ;

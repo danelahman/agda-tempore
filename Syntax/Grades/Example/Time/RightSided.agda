@@ -25,6 +25,8 @@ open import Relation.Binary.Core
 open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
 
+open import Data.Maybe.Base using (just)
+
 open import Syntax.Grades
 
 open import Util.Equality
@@ -91,6 +93,11 @@ uₒ-least [0, ∞ ]   = ≤∞-∞ ∞
 
 ·ₒ-assoc : (i₁ i₂ i₃ : 𝕀ᵣ) → (i₁ ·ₒ i₂) ·ₒ i₃ ≡ i₁ ·ₒ (i₂ ·ₒ i₃)
 ·ₒ-assoc [0, m ] [0, n ] [0, o ] = eq𝕀ᵣ (+∞-assoc m n o)
+
+-- commutativity
+
+·ₒ-comm : (i₁ i₂ : 𝕀ᵣ) → i₁ ·ₒ i₂ ≡ i₂ ·ₒ i₁
+·ₒ-comm [0, m ] [0, n ] = eq𝕀ᵣ (+∞-comm m n)
 
 -- monotonicity
 
@@ -177,6 +184,7 @@ right-sided-intervals = record
   ; ⊤                 = ⊤ₒ
   ; ≾-⊤               = ≾ₒ-⊤
   ; u-least?          = yes uₒ-least
+  ; ·-comm?           = just ·ₒ-comm
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ

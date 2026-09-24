@@ -8,7 +8,7 @@
 -- another dropped, so the monoid and lattice laws leave no trace --
 -- in what a caller is shown. The canonical form is relative to   --
 -- what the decider proves, and so to whether each grade's unit   --
--- is least.                                                      --
+-- is least and whether its multiplication commutes.              --
 --                                                                --
 -- A hypothesis set and its normal form entail each other, so the --
 -- normal form is stored, not merely printed. A type is           --

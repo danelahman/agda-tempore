@@ -58,6 +58,8 @@ open import Data.List.Relation.Unary.Any using (here; any?)
 open import Relation.Nullary using (¬_; Dec; no)
 open import Relation.Nullary.Decidable using (fromWitness)
 
+open import Data.Maybe.Base using (nothing)
+
 open import Syntax.Grades
 
 open Order.TraceOrder O using (≼-nil)
@@ -138,6 +140,7 @@ left-sided = record
   ; ⊤               = u
   ; ≾-⊤             = ≾-⊤
   ; u-least?        = u-least?
+  ; ·-comm?         = nothing
   ; _⊔_             = _⊔_
   ; ⊔-ubˡ           = ⊔-ubˡ
   ; ⊔-ubʳ           = ⊔-ubʳ

@@ -50,6 +50,8 @@ open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 
+open import Data.Maybe.Base using (nothing)
+
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -334,6 +336,7 @@ right-sided = record
   ; ⊤               = any-run
   ; ≾-⊤             = ≾-⊤
   ; u-least?        = uᵖ-least?
+  ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵖ_
   ; ⊔-ubˡ           = ⊔ᵖ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵖ-ubʳ

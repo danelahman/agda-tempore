@@ -61,6 +61,12 @@ infixl 7 _+∞_
 +∞-assoc (↑ _) ∞     _     = refl
 +∞-assoc ∞     _     _     = refl
 
++∞-comm : ∀ a b → a +∞ b ≡ b +∞ a
++∞-comm (↑ x) (↑ y) = cong ↑_ (+-comm x y)
++∞-comm (↑ _) ∞     = refl
++∞-comm ∞     (↑ _) = refl
++∞-comm ∞     ∞     = refl
+
 ------------------------------------------------------------------------
 -- The order (everything is below ∞)
 

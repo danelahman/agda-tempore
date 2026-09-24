@@ -76,6 +76,8 @@ open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _×-dec_)
 
+open import Data.Maybe.Base using (nothing)
+
 open import Syntax.Grades
 
 open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
@@ -538,6 +540,7 @@ two-sided = record
   ; ⊤               = ⊤ᵗˢ
   ; ≾-⊤             = ≾ᵗˢ-⊤
   ; u-least?        = uᵗˢ-least?
+  ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵗˢ_
   ; ⊔-ubˡ           = ⊔ᵗˢ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵗˢ-ubʳ

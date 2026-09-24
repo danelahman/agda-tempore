@@ -8,9 +8,12 @@
 -- join, and repeated alternatives are merged. A sum with the top  --
 -- among its alternatives is the top, `⊤` absorbing the join. A    --
 -- sum is nonempty, the join having no unit; a product may be      --
--- empty, and is then the unit itself. The flattening is certified --
--- by `≡̂ᵣ`/`≡̂ₑ`, so one may compare alternative by alternative and --
--- atom by atom, or read the sum back as an expression.            --
+-- empty, and is then the unit itself. Where the grade declares   --
+-- `_·_` commutative, each product is then put in one order, its   --
+-- constants multiplied into one in front of its variables, these  --
+-- by index. The normal form is certified by `≡̂ᵣ`/`≡̂ₑ`, so one    --
+-- may compare alternative by alternative and atom by atom, or     --
+-- read the sum back as an expression.                             --
 --                                                                --
 -- Two read-backs at each layer: `⟦_⟧ʳˢ`/`⟦_⟧ʳˢ⁺` end every        --
 -- product in the unit, which makes the certificates structural;   --
@@ -29,6 +32,7 @@
 -- `canonₑ`. Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.         --
 ------------------------------------------------------------------
 
+open import Algebra.Definitions using (Commutative)
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (toℕ)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
@@ -87,6 +91,18 @@ lex _≟_ _<_ (_ ∷ _)  []       = false
 lex _≟_ _<_ (a ∷ as) (b ∷ bs) with a ≟ b
 ... | yes _ = lex _≟_ _<_ as bs
 ... | no _  = a < b
+
+-- Insertion sort, from a strict order on the elements
+
+insertBy : ∀ {A : Set} → (A → A → 𝔹) → A → List A → List A
+insertBy _<_ a []       = a ∷ []
+insertBy _<_ a (b ∷ bs) with b < a
+... | true  = b ∷ insertBy _<_ a bs
+... | false = a ∷ b ∷ bs
+
+sortBy : ∀ {A : Set} → (A → A → 𝔹) → List A → List A
+sortBy _<_ []       = []
+sortBy _<_ (a ∷ as) = insertBy _<_ a (sortBy _<_ as)
 
 ------------------------------------------------------------------
 -- Canonical sums
@@ -685,25 +701,25 @@ absorbₑ-≡ s with topSumₑ? s
       ≡̂ₑ-trans (consₑ-≡ (ac ⊤ₑ) []) (≡̂ₑ-trans ≡̂ₑ-identityʳ (≡̂ₑ-sym q))
 ... | nothing = ≡̂ₑ-refl
 
-nrmₑ : ∀ {Θ} → EExp Θ → Alts (List (EAtom Θ))
-nrmₑ (evar i)   = alt (av i ∷ [])
-nrmₑ (econst c) = alt (consₑ (ac c) [])
-nrmₑ (ε ·̂ₑ ε')  = absorbₑ (nubₑ (mulₑ (nrmₑ ε) (nrmₑ ε')))
-nrmₑ (ε ⊔̂ₑ ε')  = absorbₑ (nubₑ (nrmₑ ε ⧺ nrmₑ ε'))
+flatₑ : ∀ {Θ} → EExp Θ → Alts (List (EAtom Θ))
+flatₑ (evar i)   = alt (av i ∷ [])
+flatₑ (econst c) = alt (consₑ (ac c) [])
+flatₑ (ε ·̂ₑ ε')  = absorbₑ (nubₑ (mulₑ (flatₑ ε) (flatₑ ε')))
+flatₑ (ε ⊔̂ₑ ε')  = absorbₑ (nubₑ (flatₑ ε ⧺ flatₑ ε'))
 
-nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ⁺
-nrmₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
-nrmₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
-nrmₑ-≡ (ε ·̂ₑ ε')  =
-  ≡̂ₑ-trans (≡̂ₑ-cong (nrmₑ-≡ ε) (nrmₑ-≡ ε'))
-           (≡̂ₑ-sym (≡̂ₑ-trans (absorbₑ-≡ (nubₑ (mulₑ (nrmₑ ε) (nrmₑ ε'))))
-                    (≡̂ₑ-trans (nubₑ-≡ (mulₑ (nrmₑ ε) (nrmₑ ε')))
-                              (mulₑ-≡ (nrmₑ ε) (nrmₑ ε')))))
-nrmₑ-≡ (ε ⊔̂ₑ ε')  =
-  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (nrmₑ-≡ ε) (nrmₑ-≡ ε'))
-           (≡̂ₑ-sym (≡̂ₑ-trans (absorbₑ-≡ (nubₑ (nrmₑ ε ⧺ nrmₑ ε')))
-                    (≡̂ₑ-trans (nubₑ-≡ (nrmₑ ε ⧺ nrmₑ ε'))
-                              (⧺ₑ-≡ (nrmₑ ε) (nrmₑ ε')))))
+flatₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ flatₑ ε ⟧ᵉˢ⁺
+flatₑ-≡ (evar i)   = ≡̂ₑ-sym ≡̂ₑ-identityʳ
+flatₑ-≡ (econst c) = ≡̂ₑ-sym (≡̂ₑ-trans (consₑ-≡ (ac c) []) ≡̂ₑ-identityʳ)
+flatₑ-≡ (ε ·̂ₑ ε')  =
+  ≡̂ₑ-trans (≡̂ₑ-cong (flatₑ-≡ ε) (flatₑ-≡ ε'))
+           (≡̂ₑ-sym (≡̂ₑ-trans (absorbₑ-≡ (nubₑ (mulₑ (flatₑ ε) (flatₑ ε'))))
+                    (≡̂ₑ-trans (nubₑ-≡ (mulₑ (flatₑ ε) (flatₑ ε')))
+                              (mulₑ-≡ (flatₑ ε) (flatₑ ε')))))
+flatₑ-≡ (ε ⊔̂ₑ ε')  =
+  ≡̂ₑ-trans (≡̂ₑ-cong-⊔ (flatₑ-≡ ε) (flatₑ-≡ ε'))
+           (≡̂ₑ-sym (≡̂ₑ-trans (absorbₑ-≡ (nubₑ (flatₑ ε ⧺ flatₑ ε')))
+                    (≡̂ₑ-trans (nubₑ-≡ (flatₑ ε ⧺ flatₑ ε'))
+                              (⧺ₑ-≡ (flatₑ ε) (flatₑ ε')))))
 
 ------------------------------------------------------------------
 -- Resource grades
@@ -905,51 +921,213 @@ absorbᵣ-≡ s with topSumᵣ? s
 -- The sum of `∣ ε ∣̂ᵉ`, read off `ε` directly: the morphism is a
 -- monoid map, so it passes through a product and a join alike.
 
-nrmᵐ : ∀ {Θ} → EExp Θ → Alts (List (RAtom Θ))
-nrmᵐ (evar i)   = alt (rm i ∷ [])
-nrmᵐ (econst c) = alt (consᵣ (rc (mapᵉ c)) [])
-nrmᵐ (ε ·̂ₑ ε')  = absorbᵣ (nubᵣ (mulᵣ (nrmᵐ ε) (nrmᵐ ε')))
-nrmᵐ (ε ⊔̂ₑ ε')  = absorbᵣ (nubᵣ (nrmᵐ ε ⧺ nrmᵐ ε'))
+flatᵐ : ∀ {Θ} → EExp Θ → Alts (List (RAtom Θ))
+flatᵐ (evar i)   = alt (rm i ∷ [])
+flatᵐ (econst c) = alt (consᵣ (rc (mapᵉ c)) [])
+flatᵐ (ε ·̂ₑ ε')  = absorbᵣ (nubᵣ (mulᵣ (flatᵐ ε) (flatᵐ ε')))
+flatᵐ (ε ⊔̂ₑ ε')  = absorbᵣ (nubᵣ (flatᵐ ε ⧺ flatᵐ ε'))
 
-nrmᵐ-≡ : ∀ {Θ} → (ε : EExp Θ) → ∣ ε ∣̂ᵉ ≡̂ᵣ ⟦ nrmᵐ ε ⟧ʳˢ⁺
-nrmᵐ-≡ (evar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
-nrmᵐ-≡ (econst c) =
+flatᵐ-≡ : ∀ {Θ} → (ε : EExp Θ) → ∣ ε ∣̂ᵉ ≡̂ᵣ ⟦ flatᵐ ε ⟧ʳˢ⁺
+flatᵐ-≡ (evar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
+flatᵐ-≡ (econst c) =
   ≡̂ᵣ-trans ≡̂ᵣ-map-const
            (≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc (mapᵉ c)) []) ≡̂ᵣ-identityʳ))
-nrmᵐ-≡ (ε ·̂ₑ ε')  =
+flatᵐ-≡ (ε ·̂ₑ ε')  =
   ≡̂ᵣ-trans ≡̂ᵣ-map-·
-  (≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵐ-≡ ε) (nrmᵐ-≡ ε'))
-            (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (mulᵣ (nrmᵐ ε) (nrmᵐ ε'))))
-                     (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (nrmᵐ ε) (nrmᵐ ε')))
-                               (mulᵣ-≡ (nrmᵐ ε) (nrmᵐ ε'))))))
-nrmᵐ-≡ (ε ⊔̂ₑ ε')  =
+  (≡̂ᵣ-trans (≡̂ᵣ-cong (flatᵐ-≡ ε) (flatᵐ-≡ ε'))
+            (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (mulᵣ (flatᵐ ε) (flatᵐ ε'))))
+                     (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (flatᵐ ε) (flatᵐ ε')))
+                               (mulᵣ-≡ (flatᵐ ε) (flatᵐ ε'))))))
+flatᵐ-≡ (ε ⊔̂ₑ ε')  =
   ≡̂ᵣ-trans ≡̂ᵣ-map-⊔
-  (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (nrmᵐ-≡ ε) (nrmᵐ-≡ ε'))
-            (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (nrmᵐ ε ⧺ nrmᵐ ε')))
-                     (≡̂ᵣ-trans (nubᵣ-≡ (nrmᵐ ε ⧺ nrmᵐ ε'))
-                               (⧺ᵣ-≡ (nrmᵐ ε) (nrmᵐ ε'))))))
+  (≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (flatᵐ-≡ ε) (flatᵐ-≡ ε'))
+            (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (flatᵐ ε ⧺ flatᵐ ε')))
+                     (≡̂ᵣ-trans (nubᵣ-≡ (flatᵐ ε ⧺ flatᵐ ε'))
+                               (⧺ᵣ-≡ (flatᵐ ε) (flatᵐ ε'))))))
+
+flatᵣ : ∀ {Θ} → RExp Θ → Alts (List (RAtom Θ))
+flatᵣ (rvar i)   = alt (rv i ∷ [])
+flatᵣ (rconst c) = alt (consᵣ (rc c) [])
+flatᵣ (ρ ·̂ᵣ ρ')  = absorbᵣ (nubᵣ (mulᵣ (flatᵣ ρ) (flatᵣ ρ')))
+flatᵣ (ρ ⊔̂ᵣ ρ')  = absorbᵣ (nubᵣ (flatᵣ ρ ⧺ flatᵣ ρ'))
+flatᵣ ∣ ε ∣̂ᵉ     = flatᵐ ε
+
+flatᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ flatᵣ ρ ⟧ʳˢ⁺
+flatᵣ-≡ (rvar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
+flatᵣ-≡ (rconst c) = ≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ)
+flatᵣ-≡ (ρ ·̂ᵣ ρ')  =
+  ≡̂ᵣ-trans (≡̂ᵣ-cong (flatᵣ-≡ ρ) (flatᵣ-≡ ρ'))
+           (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (mulᵣ (flatᵣ ρ) (flatᵣ ρ'))))
+                    (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (flatᵣ ρ) (flatᵣ ρ')))
+                              (mulᵣ-≡ (flatᵣ ρ) (flatᵣ ρ')))))
+flatᵣ-≡ (ρ ⊔̂ᵣ ρ')  =
+  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (flatᵣ-≡ ρ) (flatᵣ-≡ ρ'))
+           (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (flatᵣ ρ ⧺ flatᵣ ρ')))
+                    (≡̂ᵣ-trans (nubᵣ-≡ (flatᵣ ρ ⧺ flatᵣ ρ'))
+                              (⧺ᵣ-≡ (flatᵣ ρ) (flatᵣ ρ')))))
+flatᵣ-≡ ∣ ε ∣̂ᵉ     = flatᵐ-≡ ε
+
+------------------------------------------------------------------
+-- Commuting products
+--
+-- Where the grade declares `_·_` commutative (`·ₑ-comm?`/`·ᵣ-comm?`),
+-- each product of the flattening is put in one order: the product of
+-- its constants, then its variables by index. Products that differ
+-- only in the order of their factors then coincide, and repeats are
+-- merged again. Elsewhere the flattening is the normal form.
+
+-- The constant of an effect product, and its variables
+
+constₑ : ∀ {Θ} → List (EAtom Θ) → E
+constₑ []          = uₑ
+constₑ (ac c ∷ as) = c ·ₑ constₑ as
+constₑ (av _ ∷ as) = constₑ as
+
+varsᵃₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ)
+varsᵃₑ []          = []
+varsᵃₑ (ac _ ∷ as) = varsᵃₑ as
+varsᵃₑ (av i ∷ as) = av i ∷ varsᵃₑ as
+
+_<ᵉᵃ_ : ∀ {Θ} → EAtom Θ → EAtom Θ → 𝔹
+av i <ᵉᵃ av j = toℕ i <ᵇ toℕ j
+_    <ᵉᵃ _    = false
+
+commuteₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ)
+commuteₑ as = consₑ (ac (constₑ as)) (sortBy _<ᵉᵃ_ (varsᵃₑ as))
+
+module Commuteₑ {c : Commutative _≡_ _·ₑ_} (eq : ·ₑ-comm? ≡ just c) where
+
+  swapₑ : ∀ {Θ} {a b x : EExp Θ} → a ·̂ₑ (b ·̂ₑ x) ≡̂ₑ b ·̂ₑ (a ·̂ₑ x)
+  swapₑ = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc)
+                   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-comm eq) ≡̂ₑ-refl) ≡̂ₑ-assoc)
+
+  insert-≡ : ∀ {Θ} → (a : EAtom Θ) → (bs : List (EAtom Θ))
+           → ⟦ insertBy _<ᵉᵃ_ a bs ⟧ᵉˢ ≡̂ₑ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ bs ⟧ᵉˢ
+  insert-≡ a []       = ≡̂ₑ-refl
+  insert-≡ a (b ∷ bs) with b <ᵉᵃ a
+  ... | true  = ≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (insert-≡ a bs)) swapₑ
+  ... | false = ≡̂ₑ-refl
+
+  sort-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ⟦ sortBy _<ᵉᵃ_ as ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉˢ
+  sort-≡ []       = ≡̂ₑ-refl
+  sort-≡ (a ∷ as) =
+    ≡̂ₑ-trans (insert-≡ a (sortBy _<ᵉᵃ_ as)) (≡̂ₑ-cong ≡̂ₑ-refl (sort-≡ as))
+
+  split-≡ : ∀ {Θ} → (as : List (EAtom Θ))
+          → ⟦ as ⟧ᵉˢ ≡̂ₑ econst (constₑ as) ·̂ₑ ⟦ varsᵃₑ as ⟧ᵉˢ
+  split-≡ []          = ≡̂ₑ-sym ≡̂ₑ-identityʳ
+  split-≡ (ac d ∷ as) =
+    ≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (split-≡ as))
+    (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc) (≡̂ₑ-cong ≡̂ₑ-const-· ≡̂ₑ-refl))
+  split-≡ (av i ∷ as) = ≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (split-≡ as)) swapₑ
+
+  commute-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ⟦ commuteₑ as ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉˢ
+  commute-≡ as =
+    ≡̂ₑ-trans (consₑ-≡ (ac (constₑ as)) (sortBy _<ᵉᵃ_ (varsᵃₑ as)))
+    (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (sort-≡ (varsᵃₑ as))) (≡̂ₑ-sym (split-≡ as)))
+
+  commutes-≡ : ∀ {Θ} → (s : Alts (List (EAtom Θ)))
+             → ⟦ mapᴬ commuteₑ s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+  commutes-≡ (alt P)  = commute-≡ P
+  commutes-≡ (P ∷⁺ s) = ≡̂ₑ-cong-⊔ (commute-≡ P) (commutes-≡ s)
+
+commSumₑ : ∀ {Θ} → Maybe (Commutative _≡_ _·ₑ_)
+         → Alts (List (EAtom Θ)) → Alts (List (EAtom Θ))
+commSumₑ (just _) s = nubₑ (mapᴬ commuteₑ s)
+commSumₑ nothing  s = s
+
+commSumₑ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≡_ _·ₑ_)) → ·ₑ-comm? ≡ m
+           → (s : Alts (List (EAtom Θ))) → ⟦ commSumₑ m s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
+commSumₑ-≡ (just c) eq s =
+  ≡̂ₑ-trans (nubₑ-≡ (mapᴬ commuteₑ s)) (Commuteₑ.commutes-≡ eq s)
+commSumₑ-≡ nothing  _  s = ≡̂ₑ-refl
+
+-- The constant of a resource product, and its variables: resource
+-- variables, then images of effect variables, each by index
+
+constᵣ : ∀ {Θ} → List (RAtom Θ) → R
+constᵣ []          = uᵣ
+constᵣ (rc c ∷ as) = c ·ᵣ constᵣ as
+constᵣ (rv _ ∷ as) = constᵣ as
+constᵣ (rm _ ∷ as) = constᵣ as
+
+varsᵃᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ)
+varsᵃᵣ []          = []
+varsᵃᵣ (rc _ ∷ as) = varsᵃᵣ as
+varsᵃᵣ (rv i ∷ as) = rv i ∷ varsᵃᵣ as
+varsᵃᵣ (rm i ∷ as) = rm i ∷ varsᵃᵣ as
+
+_<ʳᵃ_ : ∀ {Θ} → RAtom Θ → RAtom Θ → 𝔹
+rv i <ʳᵃ rv j = toℕ i <ᵇ toℕ j
+rv _ <ʳᵃ rm _ = true
+rm i <ʳᵃ rm j = toℕ i <ᵇ toℕ j
+_    <ʳᵃ _    = false
+
+commuteᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ)
+commuteᵣ as = consᵣ (rc (constᵣ as)) (sortBy _<ʳᵃ_ (varsᵃᵣ as))
+
+module Commuteᵣ {c : Commutative _≡_ _·ᵣ_} (eq : ·ᵣ-comm? ≡ just c) where
+
+  swapᵣ : ∀ {Θ} {a b x : RExp Θ} → a ·̂ᵣ (b ·̂ᵣ x) ≡̂ᵣ b ·̂ᵣ (a ·̂ᵣ x)
+  swapᵣ = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc)
+                   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-comm eq) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
+
+  insert-≡ : ∀ {Θ} → (a : RAtom Θ) → (bs : List (RAtom Θ))
+           → ⟦ insertBy _<ʳᵃ_ a bs ⟧ʳˢ ≡̂ᵣ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ bs ⟧ʳˢ
+  insert-≡ a []       = ≡̂ᵣ-refl
+  insert-≡ a (b ∷ bs) with b <ʳᵃ a
+  ... | true  = ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (insert-≡ a bs)) swapᵣ
+  ... | false = ≡̂ᵣ-refl
+
+  sort-≡ : ∀ {Θ} → (as : List (RAtom Θ)) → ⟦ sortBy _<ʳᵃ_ as ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳˢ
+  sort-≡ []       = ≡̂ᵣ-refl
+  sort-≡ (a ∷ as) =
+    ≡̂ᵣ-trans (insert-≡ a (sortBy _<ʳᵃ_ as)) (≡̂ᵣ-cong ≡̂ᵣ-refl (sort-≡ as))
+
+  split-≡ : ∀ {Θ} → (as : List (RAtom Θ))
+          → ⟦ as ⟧ʳˢ ≡̂ᵣ rconst (constᵣ as) ·̂ᵣ ⟦ varsᵃᵣ as ⟧ʳˢ
+  split-≡ []          = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
+  split-≡ (rc d ∷ as) =
+    ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (split-≡ as))
+    (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc) (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl))
+  split-≡ (rv i ∷ as) = ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (split-≡ as)) swapᵣ
+  split-≡ (rm i ∷ as) = ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (split-≡ as)) swapᵣ
+
+  commute-≡ : ∀ {Θ} → (as : List (RAtom Θ)) → ⟦ commuteᵣ as ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳˢ
+  commute-≡ as =
+    ≡̂ᵣ-trans (consᵣ-≡ (rc (constᵣ as)) (sortBy _<ʳᵃ_ (varsᵃᵣ as)))
+    (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (sort-≡ (varsᵃᵣ as))) (≡̂ᵣ-sym (split-≡ as)))
+
+  commutes-≡ : ∀ {Θ} → (s : Alts (List (RAtom Θ)))
+             → ⟦ mapᴬ commuteᵣ s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+  commutes-≡ (alt P)  = commute-≡ P
+  commutes-≡ (P ∷⁺ s) = ≡̂ᵣ-cong-⊔ (commute-≡ P) (commutes-≡ s)
+
+commSumᵣ : ∀ {Θ} → Maybe (Commutative _≡_ _·ᵣ_)
+         → Alts (List (RAtom Θ)) → Alts (List (RAtom Θ))
+commSumᵣ (just _) s = nubᵣ (mapᴬ commuteᵣ s)
+commSumᵣ nothing  s = s
+
+commSumᵣ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≡_ _·ᵣ_)) → ·ᵣ-comm? ≡ m
+           → (s : Alts (List (RAtom Θ))) → ⟦ commSumᵣ m s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
+commSumᵣ-≡ (just c) eq s =
+  ≡̂ᵣ-trans (nubᵣ-≡ (mapᴬ commuteᵣ s)) (Commuteᵣ.commutes-≡ eq s)
+commSumᵣ-≡ nothing  _  s = ≡̂ᵣ-refl
+
+-- The normal forms: the flattening, its products reordered where the
+-- grade commutes
+
+nrmₑ : ∀ {Θ} → EExp Θ → Alts (List (EAtom Θ))
+nrmₑ ε = commSumₑ ·ₑ-comm? (flatₑ ε)
+
+nrmₑ-≡ : ∀ {Θ} → (ε : EExp Θ) → ε ≡̂ₑ ⟦ nrmₑ ε ⟧ᵉˢ⁺
+nrmₑ-≡ ε = ≡̂ₑ-trans (flatₑ-≡ ε) (≡̂ₑ-sym (commSumₑ-≡ ·ₑ-comm? refl (flatₑ ε)))
 
 nrmᵣ : ∀ {Θ} → RExp Θ → Alts (List (RAtom Θ))
-nrmᵣ (rvar i)   = alt (rv i ∷ [])
-nrmᵣ (rconst c) = alt (consᵣ (rc c) [])
-nrmᵣ (ρ ·̂ᵣ ρ')  = absorbᵣ (nubᵣ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ')))
-nrmᵣ (ρ ⊔̂ᵣ ρ')  = absorbᵣ (nubᵣ (nrmᵣ ρ ⧺ nrmᵣ ρ'))
-nrmᵣ ∣ ε ∣̂ᵉ     = nrmᵐ ε
+nrmᵣ ρ = commSumᵣ ·ᵣ-comm? (flatᵣ ρ)
 
 nrmᵣ-≡ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ nrmᵣ ρ ⟧ʳˢ⁺
-nrmᵣ-≡ (rvar i)   = ≡̂ᵣ-sym ≡̂ᵣ-identityʳ
-nrmᵣ-≡ (rconst c) = ≡̂ᵣ-sym (≡̂ᵣ-trans (consᵣ-≡ (rc c) []) ≡̂ᵣ-identityʳ)
-nrmᵣ-≡ (ρ ·̂ᵣ ρ')  =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ'))
-           (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ'))))
-                    (≡̂ᵣ-trans (nubᵣ-≡ (mulᵣ (nrmᵣ ρ) (nrmᵣ ρ')))
-                              (mulᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))))
-nrmᵣ-≡ (ρ ⊔̂ᵣ ρ')  =
-  ≡̂ᵣ-trans (≡̂ᵣ-cong-⊔ (nrmᵣ-≡ ρ) (nrmᵣ-≡ ρ'))
-           (≡̂ᵣ-sym (≡̂ᵣ-trans (absorbᵣ-≡ (nubᵣ (nrmᵣ ρ ⧺ nrmᵣ ρ')))
-                    (≡̂ᵣ-trans (nubᵣ-≡ (nrmᵣ ρ ⧺ nrmᵣ ρ'))
-                              (⧺ᵣ-≡ (nrmᵣ ρ) (nrmᵣ ρ')))))
-nrmᵣ-≡ ∣ ε ∣̂ᵉ     = nrmᵐ-≡ ε
+nrmᵣ-≡ ρ = ≡̂ᵣ-trans (flatᵣ-≡ ρ) (≡̂ᵣ-sym (commSumᵣ-≡ ·ᵣ-comm? refl (flatᵣ ρ)))
 
 -- The normal form read back without trailing units, which is what
 -- `decide≾ₑ`/`decide≾ᵣ` compare, alternative by alternative

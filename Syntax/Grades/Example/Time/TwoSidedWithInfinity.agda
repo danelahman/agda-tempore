@@ -22,6 +22,8 @@ open import Relation.Binary.Core
 open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
 
+open import Data.Maybe.Base using (just)
+
 open import Syntax.Grades
 
 open import Util.Equality
@@ -87,6 +89,11 @@ eqᵢ {_} {i₂} refl refl =
   eqᵢ
     (+-assoc (min i₁) (min i₂) (min i₃))
     (+∞-assoc (max i₁) (max i₂) (max i₃))
+
+-- _·ᵢ_ is commutative
+
+·ᵢ-comm : (i₁ i₂ : Interval∞) → i₁ ·ᵢ i₂ ≡ i₂ ·ᵢ i₁
+·ᵢ-comm i₁ i₂ = eqᵢ (+-comm (min i₁) (min i₂)) (+∞-comm (max i₁) (max i₂))
 
 -- interval order
 
@@ -230,6 +237,7 @@ two-sided-intervals-with-∞ = record
   ; ⊤                = ⊤ᵢ
   ; ≾-⊤              = ≾ᵢ-⊤
   ; u-least?         = uᵢ-least?
+  ; ·-comm?          = just ·ᵢ-comm
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
   ; ⊔-ubʳ            = ⊔ᵢ-ubʳ
@@ -321,6 +329,14 @@ uʷ-least? = no λ least → 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 , ≤-r
 ·ʷ-assoc (window _)  no-window   (window _)  = refl
 ·ʷ-assoc (window _)  no-window   no-window   = refl
 ·ʷ-assoc no-window   _           _           = refl
+
+-- commutativity
+
+·ʷ-comm : (i₁ i₂ : Interval∞⊤) → i₁ ·ʷ i₂ ≡ i₂ ·ʷ i₁
+·ʷ-comm (window i₁) (window i₂) = cong window_ (·ᵢ-comm i₁ i₂)
+·ʷ-comm (window _)  no-window   = refl
+·ʷ-comm no-window   (window _)  = refl
+·ʷ-comm no-window   no-window   = refl
 
 -- monotonicity
 
@@ -456,6 +472,7 @@ two-sided-intervals-with-⊤ = record
   ; ⊤                 = no-window
   ; ≾-⊤               = ≾ʷ-⊤
   ; u-least?          = uʷ-least?
+  ; ·-comm?           = just ·ʷ-comm
   ; _⊔_               = _⊔ʷ_
   ; ⊔-ubˡ             = ⊔ʷ-ubˡ
   ; ⊔-ubʳ             = ⊔ʷ-ubʳ

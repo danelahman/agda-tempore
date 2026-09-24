@@ -70,6 +70,8 @@ open import Data.Unit using (⊤; tt)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
+open import Data.Maybe.Base using (nothing)
+
 open import Syntax.Grades
 
 open Order.TraceOrder O using (_≼_; ≼-trans; ≼-nil; ≼-ε-inv)
@@ -373,6 +375,7 @@ right-sided = record
   ; ⊤               = unbounded
   ; ≾-⊤             = ≾-⊤
   ; u-least?        = yes ≾-⊥
+  ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵇ_
   ; ⊔-ubˡ           = ⊔ᵇ-ubˡ
   ; ⊔-ubʳ           = ⊔ᵇ-ubʳ

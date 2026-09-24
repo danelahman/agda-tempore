@@ -77,7 +77,10 @@ a grade system, a signature of base types, and operations' signatures.
   type inference relies on, and antisymmetry turns that into decidable equality
   of grades. It also decides whether its unit is the least grade (`u-least?`):
   the open calculus's `minᵣ`/`minₑ` rules take that proof, and type inference
-  reads the decision from the grade system.
+  reads the decision from the grade system. It may also declare `_·_`
+  commutative (`·-comm?`), as the time grades do and the trace grades do not,
+  which licenses the open calculus's `≡̂ᵣ-comm`/`≡̂ₑ-comm` and lets type
+  inference order the factors of every product.
 
 - `Syntax/Grades/Example.agda` indexes the example grades, which come in two
   families, and the grade systems assembled from them.

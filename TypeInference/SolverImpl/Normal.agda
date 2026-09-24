@@ -9,6 +9,9 @@
 -- nothing, on the right when the unit is below it and on the     --
 -- left when it is below the unit, and the top on the right       --
 -- stands for any run of atoms on the left.                       --
+-- Where the grade declares `_·_` commutative, the normal form    --
+-- has put the factors of every product in one order, so the      --
+-- comparison is up to reordering them.                           --
 --                                                                --
 -- Two atoms are compared by the grade's own order, by identity,  --
 -- and along the atomic hypotheses: those assumed orderings whose --

@@ -20,6 +20,8 @@ open import Relation.Binary.Core
 open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
 
+open import Data.Maybe.Base using (just)
+
 open import Syntax.Grades
 
 open import Util.Equality
@@ -68,6 +70,11 @@ infix 6 _≾ₒ_
 
 ·ₒ-assoc : (i₁ i₂ i₃ : 𝕀) → (i₁ ·ₒ i₂) ·ₒ i₃ ≡ i₁ ·ₒ (i₂ ·ₒ i₃)
 ·ₒ-assoc [ m ,+∞⟩ [ n ,+∞⟩ [ o ,+∞⟩ = eq𝕀 (+-assoc m n o)
+
+-- commutativity
+
+·ₒ-comm : (i₁ i₂ : 𝕀) → i₁ ·ₒ i₂ ≡ i₂ ·ₒ i₁
+·ₒ-comm [ m ,+∞⟩ [ n ,+∞⟩ = eq𝕀 (+-comm m n)
 
 -- monotonicity
 
@@ -169,6 +176,7 @@ left-sided-intervals = record
   ; ⊤                 = uₒ
   ; ≾-⊤               = ≾ₒ-⊤
   ; u-least?          = uₒ-least?
+  ; ·-comm?           = just ·ₒ-comm
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
   ; ⊔-ubʳ             = ⊔ₒ-ubʳ
@@ -255,6 +263,14 @@ uᵗ-least? = no λ least → 1+n≰n (least (timed [ 1 ,+∞⟩))
 ·ᵗ-assoc (timed _)  untimed    (timed _)  = refl
 ·ᵗ-assoc (timed _)  untimed    untimed    = refl
 ·ᵗ-assoc untimed    _          _          = refl
+
+-- commutativity
+
+·ᵗ-comm : (i₁ i₂ : 𝕀⊤) → i₁ ·ᵗ i₂ ≡ i₂ ·ᵗ i₁
+·ᵗ-comm (timed i₁) (timed i₂) = cong timed_ (·ₒ-comm i₁ i₂)
+·ᵗ-comm (timed _)  untimed    = refl
+·ᵗ-comm untimed    (timed _)  = refl
+·ᵗ-comm untimed    untimed    = refl
 
 -- monotonicity
 
@@ -381,6 +397,7 @@ left-sided-intervals-with-⊤ = record
   ; ⊤                 = untimed
   ; ≾-⊤               = ≾ᵗ-⊤
   ; u-least?          = uᵗ-least?
+  ; ·-comm?           = just ·ᵗ-comm
   ; _⊔_               = _⊔ᵗ_
   ; ⊔-ubˡ             = ⊔ᵗ-ubˡ
   ; ⊔-ubʳ             = ⊔ᵗ-ubʳ
