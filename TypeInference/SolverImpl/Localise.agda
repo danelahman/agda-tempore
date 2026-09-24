@@ -51,6 +51,9 @@
 -- (`raise-⊩`): with the eigenvariable at the top as well, the  --
 -- instance stays one and every member is at the top, and the   --
 -- raised instance lies between the two.                        --
+--                                                              --
+-- Each step assigns grade unknowns only, so subtyping demands  --
+-- between type variables stay so (`latom`).                    --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false) renaming (Bool to 𝔹)
@@ -1208,6 +1211,7 @@ record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
           → ∀ {a} → a ∈ l → Disj Q δ a
     fwd   : ∀ {Ψ'} → (δ : Subst Ψ Ψ')
           → (∀ {a} → a ∈ l → Disj ∅ᴴ δ a) → ∀ {a} → a ∈ ords → Ordʳ ∅ᴴ δ a
+    restᴱ : ∀ {A ρ} → (A , ρ) ∈ rest → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
 
 grade-side : ∀ {Ψ Ψ'} → (A : OVType Ψ) → etDec A ≡ nothing → {ρ : RExp Ψ} → (δ : Subst Ψ Ψ')
            → Disj ∅ᴴ δ (A , ρ) → Ordʳ ∅ᴴ δ (ρ , ûᵣ)
@@ -1216,20 +1220,22 @@ grade-side A e δ (≾ᵘ-ok le)      = le
 grade-side A e δ (hyp-ok () _ _)
 
 refine : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → Refined l
-refine []            = refined [] [] (λ ()) (λ δ k o ()) (λ δ k ())
+refine []            = refined [] [] (λ ()) (λ δ k o ()) (λ δ k ()) (λ ())
 refine ((A , ρ) ∷ l) with etDec A in e | refine l
-... | nothing | refined r os sb bk fw =
+... | nothing | refined r os sb bk fw re =
       refined r ((ρ , ûᵣ) ∷ os) (λ m → there (sb m))
         (λ δ k o → λ { (here refl) → ≾ᵘ-ok (o (here refl))
                      ; (there m)   → bk δ k (λ m' → o (there m')) m })
         (λ δ k → λ { (here refl) → grade-side A e {ρ} δ (k (here refl))
                    ; (there m)   → fw δ (λ m' → k (there m')) m })
-... | just _  | refined r os sb bk fw =
+        re
+... | just αs | refined r os sb bk fw re =
       refined ((A , ρ) ∷ r) os
         (λ { (here refl) → here refl ; (there m) → there (sb m) })
         (λ δ k o → λ { (here refl) → k (here refl)
                      ; (there m)   → bk δ (λ m' → k (there m')) o m })
         (λ δ k → fw δ (λ m → k (there m)))
+        (λ { (here refl) → αs , e ; (there m) → re m })
 
 ------------------------------------------------------------------------
 -- A set of unknowns sent to the top at once
@@ -1725,6 +1731,7 @@ record Localised {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) : Set where
     lsnd : ∀ {Ψ'} → (δ : Subst Φ Ψ') → (Q : Hyps Ψ') → Q ⊩ᴿ lR [ δ ] → Q ⊩ᴿ R [ lσ ⨟ˢ δ ]
     lcpl : ∀ {Ψ''} → (τ : Subst Φ (Ψ'' +e)) → Entry O τ
          → ∅ᴴ ⊩ᴿ R [ τ ] → ∅ᴴ ⊩ᴿ lR [ τ ]
+    latom : Atomicˢ (ss R) → Atomicˢ (ss lR)
 
 open Localised public
 
@@ -1738,14 +1745,14 @@ KeepsAt {Φ = Φ} O σ R = ∀ {Ψ''} → (τ : Subst Φ (Ψ'' +e)) → Entry O 
 
 loc-id : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R
 loc-id {O = O} {R} =
-  loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ en h → h)
+  loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ en h → h) (λ a → a)
 
 -- The settled atoms dropped, and each disjunction whose type is never
 -- eternal replaced by its grade side: the instances from no
 -- hypotheses are unchanged
 
 loc-settle : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
-loc-settle (loc σ R₀ fx sn cp) =
+loc-settle (loc σ R₀ fx sn cp la) =
   loc σ (resid (Unsettled.kept Uʳ ++ Refined.ords F) (Unsettled.kept Uᵉ) (ts R₀) (ss R₀)
                (Refined.rest F) (dfs R₀)) fx
       (λ δ Q h → sn δ Q (mk⊩ᴿ (Unsettled.back Uʳ δ (λ m → ⊩rs h (∈-++⁺ˡ m)))
@@ -1762,6 +1769,7 @@ loc-settle (loc σ R₀ fx sn cp) =
                       (⊩ts h') (⊩ss h')
                       (λ m → ⊩ds h' (Unsettled.kept⊆ Uᵈ (Refined.rest⊆ F m)))
                       (⊩dfs h'))
+      la
   where
     Uʳ = unsettled settledʳ (rs R₀)
     Uᵉ = unsettled settledᵉ (es R₀)
@@ -1769,12 +1777,14 @@ loc-settle (loc σ R₀ fx sn cp) =
     F  = refine (Unsettled.kept Uᵈ)
 
 loc-ext : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → (L : Localised O R)
-        → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L) → Localised O R
-loc-ext {O = O} {R} (loc σ₀ R₀ fx sn cp) σ fσ st =
+        → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L)
+        → (∀ α → sTy σ α ≡ tvar α) → Localised O R
+loc-ext {O = O} {R} (loc σ₀ R₀ fx sn cp la) σ fσ st ty =
   loc (σ₀ ⨟ˢ σ) (R₀ [ σ ]ᴿ)
       (≐ˢ-trans (≐ˢ-sym (⨟-assoc O σ₀ σ)) (≐ˢ-trans (⨟-congˡ fx σ) fσ))
       (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc σ₀ σ δ)) (sn (σ ⨟ˢ δ) Q (⊩ᴿ-subst h)))
       (λ τ en h → ⊩ᴿ-subst⁻ (st τ en (cp τ en h)))
+      (λ a → atomic-subst σ ty (la a))
 
 module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
 
@@ -1782,13 +1792,13 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   passᵉ []             L = L , false
   passᵉ ((k , q) ∷ ks) L with stepᵉ k (lR L)
   ... | nothing      = passᵉ ks L
-  ... | just (b , st) = proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ en → st τ ∅ᴴ))) , true
+  ... | just (b , st) = proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
 
   passʳ : List (Σ[ k ∈ RVar Φ ] (freeʳ k O ≡ false)) → Localised O R → Localised O R × 𝔹
   passʳ []             L = L , false
   passʳ ((k , q) ∷ ks) L with stepʳ k (lR L)
   ... | nothing      = passʳ ks L
-  ... | just (b , st) = proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ∅ᴴ))) , true
+  ... | just (b , st) = proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
 
   -- Where no unknown has a principal value of its own, a set of them
   -- bounded below by the rigid is sent to the top
@@ -1800,7 +1810,8 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   ...   | nothing = nothing
   ...   | just (raised l rc ue ur cl sd fx) =
           just (loc-ext L (tops l) (freeᴹ-fix l O fx)
-                        (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h))
+                        (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
+                        (λ α → refl))
 
   -- Each round that changes something settles an unknown for good, so
   -- as many rounds as there are unknowns reach the fixed point.
@@ -1821,6 +1832,15 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
 
 localise : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Localised O R
 localise {Φ = Φ} O R = loc-settle (rounds O R (nE Φ + nR Φ) (loc-settle loc-id))
+
+-- After localisation, the type of each disjunction left is eternal at
+-- some instance
+
+localise-ds : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ)
+            → ∀ {A ρ} → (A , ρ) ∈ ds (lR (localise O R))
+            → Σ[ αs ∈ List (TyVar Φ) ] (etDec A ≡ just αs)
+localise-ds {Φ = Φ} O R =
+  Refined.restᴱ (refine (Unsettled.kept (unsettled settledᵈ (ds (lR (rounds O R (nE Φ + nR Φ) (loc-settle loc-id)))))))
 
 -- An assignment the later substitution already agrees with is absorbed
 

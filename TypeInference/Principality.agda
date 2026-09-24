@@ -17,7 +17,10 @@
 --                                                              --
 -- `PrincipalTyping Γ M` is the answer over a scope of its own: --
 -- a scheme whose every instance types `M`, and through which   --
--- every typing of `M` factors at each closed instance.         --
+-- every typing of `M` factors at each closed instance. `M` is  --
+-- then typable (`Typable`) exactly when the scheme's           --
+-- conditions are satisfiable (`typable-⇔`). `Inference Γ M` is --
+-- the outcome of inference.                                    --
 --                                                              --
 -- Principal types carrying a constraint set, after Pretnar     --
 -- (LMCS 2014); "residual constraint" is OutsideIn(X)'s term    --
@@ -28,7 +31,7 @@
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([])
-open import Data.Maybe using (just)
+import Data.List.Relation.Unary.All as All
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
@@ -38,7 +41,11 @@ open import Syntax.Operations
 
 open import Util.Equality
 
+open import Function.Bundles using (_⇔_; mk⇔)
+open import Relation.Nullary using (¬_)
+
 open import TypeInference.Scopes
+open import TypeInference.Outcome
 
 module TypeInference.Principality (S : LanguageSpec) where
 
@@ -52,7 +59,7 @@ open import TypeInference.OpenSyntax.Contexts S
 open import TypeInference.OpenSyntax.Subst    S
 open import TypeInference.OpenSyntax.Hyps     S
 open import TypeInference.OpenSyntax.Language S
-open import TypeInference.OpenSyntax.Instances S using (Obligs; _⊩_∣_[_]; _⊨_∣_)
+open import TypeInference.OpenSyntax.Instances S using (Obligs; _⊩_∣_[_]; _⊨_∣_; Satisfiable)
 
 open import TypeInference.Raw.Syntax S
 open import TypeInference.Raw.Subst  S
@@ -137,19 +144,18 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set w
 
 open Principal
 
-principal : ∀ {Pᶜ Pᵖ : ∀ {Θ} → Constraint Θ → Set} → (sv : Solver Pᶜ Pᵖ)
+principal : (sv : Solver)
           → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-          → Pᵖ C[ Γ , M ]
           → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-          → Solver.solve sv C[ Γ , M ] ≡ just (Θ' , σ , Q , R)
+          → Solver.solve sv C[ Γ , M ] ≡ solved (Θ' , σ , Q , R)
           ------------------------------------------------
           → Principal Γ M
 
-principal sv {Θ} Γ M p {Θ'} {σ} {Q} {R} eq = mkPrincipal
+principal sv {Θ} Γ M {Θ'} {σ} {Q} {R} eq = mkPrincipal
   Θ' σ Q R
   (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (sat δ Q' h))
   (λ σ' Q' D e st le δ₀ h →
-     Solver.solve-principal sv C[ Γ , M ] p eq σ' Q' []
+     Solver.solve-principal sv C[ Γ , M ] eq σ' Q' []
        (⊨-∣ C[ Γ , M ] (completeC (Γ₊ Γ) (X̂ Θ) (t̂ Θ) (M₊ M) D e refl st le)) δ₀ h)
   where
     sat = Solver.solve-sound sv C[ Γ , M ] eq
@@ -264,3 +270,42 @@ record PrincipalTyping {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
                ((σ̃ ⨟ˢ δ ≐ˢ σ₀ ⨟ˢ δ₀)
                  × (δ ⊨ Q̃ ∣ R̃)
                  × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
+
+open PrincipalTyping
+
+-- A typing of `M` in `Γ`: a derivation over some scope, erasing to an
+-- instance of `M`, under hypotheses some closed instance satisfies
+
+record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
+  constructor typable
+  field
+    Θ₀     : Scope
+    σ₀     : Subst Θ Θ₀
+    Q₀     : Hyps Θ₀
+    C₀     : OCType Θ₀
+    D₀     : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀
+    erases : ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
+    sat    : Satisfiable Q₀ []
+
+-- A principal typing decides typability up to its conditions: `M` is
+-- typable exactly when they are satisfiable. A satisfying instance
+-- instantiates the scheme; a typing factors through it.
+
+typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalTyping Γ M)
+          → Typable Γ M ⇔ Satisfiable (Q̃ p) (R̃ p)
+typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
+  where
+    to : Typable Γ M → Satisfiable (Q̃ p) (R̃ p)
+    to (typable Θ₀ σ₀ Q₀ C₀ D₀ e (δ₀ , h₀)) with factor p σ₀ Q₀ D₀ e δ₀ h₀
+    ... | δ , _ , h , _ = δ , h
+
+    from : Satisfiable (Q̃ p) (R̃ p) → Typable Γ M
+    from (δ , h) with instantiate p δ ∅ᴴ h
+    ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , All._∷_ ⊩ᴴ-∅ All.[])
+
+-- The outcome of inference: a principal typing, a refutation, or stuck
+
+data Inference {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
+  typed     : PrincipalTyping Γ M → Inference Γ M
+  untypable : Inference Γ M
+  stuck     : Inference Γ M

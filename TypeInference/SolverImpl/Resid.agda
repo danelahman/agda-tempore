@@ -52,7 +52,7 @@ open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
-open import TypeInference.SolverImpl.Core.Rigid S using (zip₂; zip₂-just)
+open import TypeInference.SolverImpl.Core.Rigid S using (zip₂; zip₂-just; strᵛ)
 open import TypeInference.SolverImpl.Deferred   S
   using (Dfr; _[_]ᵈ; _⊩ᵈ_[_]; ⊩ᵈ-resp-≐ˢ; ⊩ᵈ-subst; ⊩ᵈ-subst⁻; ⊩ᵈ-⨟)
 
@@ -81,6 +81,20 @@ R [ σ ]ᴿ = resid (map (mapᵖ (_[ σ ]ʳ)) (rs R))
                  (map (mapᵖ (_[ σ ]ᵛ)) (ss R))
                  (map (mapᵈ (_[ σ ]ᵛ) (_[ σ ]ʳ)) (ds R))
                  (map (_[ σ ]ᵈ) (dfs R))
+
+-- Subtyping demands that are pairs of type variables, which a
+-- substitution fixing every type variable keeps
+
+Atomicˢ : ∀ {Ψ} → List (OVType Ψ × OVType Ψ) → Set
+Atomicˢ {Ψ} l = ∀ {A B} → (A , B) ∈ l
+              → Σ[ α ∈ TyVar Ψ ] Σ[ β ∈ TyVar Ψ ] ((A ≡ tvar α) × (B ≡ tvar β))
+
+atomic-subst : ∀ {Ψ} → (σ : Subst Ψ Ψ) → (∀ α → sTy σ α ≡ tvar α)
+             → {l : List (OVType Ψ × OVType Ψ)} → Atomicˢ l
+             → Atomicˢ (map (mapᵖ (_[ σ ]ᵛ)) l)
+atomic-subst σ fx at m with ∈-map⁻ (mapᵖ (_[ σ ]ᵛ)) m
+... | (A , B) , m₀ , refl with at m₀
+...   | α , β , refl , refl = α , β , fx α , fx β
 
 _∪ᴿ_ : ∀ {Ψ} → Resid Ψ → Resid Ψ → Resid Ψ
 R ∪ᴿ R' = resid (rs R ++ rs R') (es R ++ es R') (ts R ++ ts R')
@@ -445,6 +459,22 @@ etDec-sound (A |×| B) q k with zip₂-just _++_ (etDec A) (etDec B) q
 ... | as , bs , qa , qb , refl =
       etDec-sound A qa (λ m → k (∈-++⁺ˡ m)) |×|ₑ
       etDec-sound B qb (λ m → k (∈-++⁺ʳ as m))
+
+-- A type that is eternal at some instance mentions no grade, so it
+-- strengthens away from any rigid
+
+etDec-str : ∀ {Ψ} → (j : EVar (Ψ +e)) → (A : OVType (Ψ +e)) → {αs : List (TyVar (Ψ +e))}
+          → etDec A ≡ just αs → Σ[ A₀ ∈ OVType Ψ ] (strᵛ j A ≡ just A₀)
+etDec-str j (tvar α) q = _ , refl
+etDec-str j (Base b) q = Base b , refl
+etDec-str j Unit     q = Unit , refl
+etDec-str j Bool     q = Bool , refl
+etDec-str j Empty    q = Empty , refl
+etDec-str j (A |×| B) q with zip₂-just _++_ (etDec A) (etDec B) q
+... | as , bs , qa , qb , _ with etDec-str j A qa | etDec-str j B qb
+...   | A₀ , ra | B₀ , rb = A₀ |×| B₀ , cong₂ (zip₂ _|×|_) ra rb
+etDec-str j (A ⇒ C)   ()
+etDec-str j ([ ρ ] A) ()
 
 -- Conversely, every atom of a successful decomposition is entailed
 -- by the demand it came from.

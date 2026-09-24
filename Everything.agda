@@ -377,6 +377,7 @@ open import TypeInference.Completeness
 
 ---- Axiomatised constraint solvers, principal types and principal typings
 
+open import TypeInference.Outcome
 open import TypeInference.Solver
 open import TypeInference.Principality
 
@@ -402,7 +403,6 @@ import TypeInference.SolverImpl.Deferred
 
 ---- The rigid-binder-free fragment
 
-open import TypeInference.Solver.Fragment
 
 ---- What the solver's variable expansion buys: decomposability of every
 ---- expanded demand, most-generality of the expansion, and refutation

@@ -5,11 +5,9 @@
 -- and reads its residual back as a hypothesis set, deciding the  --
 -- atoms no unknown affects (`Closed`): one that holds is         --
 -- dropped, one that fails refuses. The deferred conditions are   --
--- the obligations. It instantiates `TypeInference.Solver.Solver`.--
--- Principality is unguarded; refutation is guarded by `NoRig`,   --
--- since at a rigid binder a failure can be a failure of          --
--- `Normal`'s decision procedures, and is stated against          --
--- satisfiable hypothesis sets.                                   --
+-- the obligations. It instantiates `TypeInference.Solver.Solver`:--
+-- a solution is principal, and a refutation refutes every        --
+-- solution under satisfiable conditions.                         --
 --                                                                --
 -- `reportOn` reports a solution: the residue with its var-rule   --
 -- disjunctions settled, its repeated hypotheses dropped, the     --
@@ -22,7 +20,9 @@
 -- deferred conditions, are neither eliminated nor dropped.       --
 --                                                                --
 -- `infer` is the reference entry point: a report on the          --
--- constraint of a term in a context is a principal typing.       --
+-- constraint of a term in a context is a principal typing, a     --
+-- refutation means the term is untypable (the end-to-end         --
+-- theorem).                                                      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -32,13 +32,12 @@ open import Data.List.Membership.Propositional.Properties using (∈-map⁺; ∈
 open import Data.List.Relation.Unary.All using ([]; _∷_)
 import Data.List.Relation.Unary.All as All
 open import Data.Maybe.Base using (Maybe; just; nothing)
-import Data.Maybe.Base as Maybe
 open import Data.Nat using (ℕ)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (inj₁; inj₂)
-open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary using (¬_)
+open import Function.Bundles using (_⇔_)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -47,6 +46,7 @@ open import Syntax.Operations
 open import Util.Equality
 
 open import TypeInference.Scopes
+open import TypeInference.Outcome
 
 open import TypeInference.SolverImpl.Enum using (OpEnum)
 
@@ -78,7 +78,6 @@ open import TypeInference.Constraints.Satisfaction S
 open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-mono; ⊨-∣)
 
 open import TypeInference.Principality      S
-open import TypeInference.Solver.Fragment   S
 open import TypeInference.Solver            S
 
 open import TypeInference.SolverImpl.Core.Unify    S using (Rig; _∈ᶠ_)
@@ -115,18 +114,19 @@ Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 Answer : Scope → Scope → Set
 Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × List (Dfr Θ')
 
-solveOnᴰ : ∀ {Θ} → Constraint Θ → Maybe (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
+solveOnᴰ : ∀ {Θ} → Constraint Θ → Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
 solveOnᴰ C with solve init C
-... | nothing = nothing
-... | just (s' , m , w) with retry s'
-...   | nothing = nothing
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s' , m , w) with retry s'
+...   | nothing = refuted
 ...   | just (s₁ , m₁) with reexpand s₁
-...     | nothing = nothing
+...     | nothing = refuted
 ...     | just (s₂ , m₂) with toHyps (res s₂)
-...       | nothing        = nothing
+...       | nothing        = refuted
 ...       | just (Q₀ , hq) with closedᴴ Q₀
-...         | nothing = nothing
-...         | just Q  = just (Ψ s₂ , θ s₂ , Q , dfs (res s₂))
+...         | nothing = refuted
+...         | just Q  = solved (Ψ s₂ , θ s₂ , Q , dfs (res s₂))
 
 -- An entry reads back as an obligation
 
@@ -135,30 +135,24 @@ readOut : ∀ {Θ} → Σ[ Θ' ∈ Scope ] Answer Θ Θ'
 readOut (Θ' , σ , Q , D) = Θ' , σ , Q , map toOblig D
 
 solveOn : ∀ {Θ} → Constraint Θ
-        → Maybe (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
-solveOn C = Maybe.map readOut (solveOnᴰ C)
-
-map-just : ∀ {A B : Set} {f : A → B} → (x : Maybe A) → {y : B}
-         → Maybe.map f x ≡ just y → Σ[ a ∈ A ] ((x ≡ just a) × (f a ≡ y))
-map-just (just a) refl = a , refl , refl
-
-map-nothing : ∀ {A B : Set} {f : A → B} → (x : Maybe A) → Maybe.map f x ≡ nothing → x ≡ nothing
-map-nothing nothing refl = refl
+        → Outcome (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
+solveOn C = mapᴼ readOut (solveOnᴰ C)
 
 solveOnᴰ-sound : ∀ {Θ} → (C : Constraint Θ)
                → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
-               → solveOnᴰ C ≡ just (Θ' , σ , Q , D)
+               → solveOnᴰ C ≡ solved (Θ' , σ , Q , D)
                → σ ⊨[ Q ∣ map toOblig D ] C
 solveOnᴰ-sound C eq with solve init C
-... | nothing = ⊥just eq
-... | just (s' , m , w) with retry s'
-...   | nothing = ⊥just eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s' , m , w) with retry s'
+...   | nothing = ⊥refuted eq
 ...   | just (s₁ , m₁) with reexpand s₁
-...     | nothing = ⊥just eq
+...     | nothing = ⊥refuted eq
 ...     | just (s₂ , m₂) with toHyps (res s₂)
-...       | nothing = ⊥just eq
+...       | nothing = ⊥refuted eq
 ...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
-...         | nothing = ⊥just eq
+...         | nothing = ⊥refuted eq
 ...         | just Q₁ with eq
 ...           | refl = λ δ Q' → λ { (hQ ∷ hR) →
                 wit-mono m₂ C (wit-mono m₁ C w) δ Q'
@@ -167,19 +161,20 @@ solveOnᴰ-sound C eq with solve init C
 
 solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-              → solveOn C ≡ just (Θ' , σ , Q , R)
+              → solveOn C ≡ solved (Θ' , σ , Q , R)
               → σ ⊨[ Q ∣ R ] C
-solveOn-sound C eq with map-just (solveOnᴰ C) eq
+solveOn-sound C eq with mapᴼ-solved (solveOnᴰ C) eq
 ... | (Θ' , σ , Q , D) , e , refl = solveOnᴰ-sound C e
 
--- A refusal refutes every closed instance
+-- A refutation refutes every closed instance
 
-solveOnᴰ-refutes : ∀ {Θ} → (C : Constraint Θ) → NoRig C
-                 → solveOnᴰ C ≡ nothing
+solveOnᴰ-refutes : ∀ {Θ} → (C : Constraint Θ)
+                 → solveOnᴰ C ≡ refuted
                  → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
-solveOnᴰ-refutes C nr eq τ sat with solve init C in e
-... | nothing = solve-fail init C nr e τ (Fixing-[] τ) ⊩ᴿ-empty sat
-... | just (s' , m , w) with retry s' in e₁
+solveOnᴰ-refutes C eq τ sat with solve init C in e
+... | refuted = solve-fail init C e τ (Fixing-[] τ) ⊩ᴿ-empty sat
+... | stuck   = ⊥stuck-refuted eq
+... | solved (s' , m , w) with retry s' in e₁
 ...   | nothing = retry-fail s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
   where
     fac = solve-principal init C e τ sat ⊩ᴿ-empty
@@ -191,7 +186,7 @@ solveOnᴰ-refutes C nr eq τ sat with solve init C in e
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
 ...     | just (s₂ , m₂) with toHyps (res s₂) in e'
 ...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
-...         | just _  = ⊥nothing eq
+...         | just _  = ⊥solved eq
 ...         | nothing =
               closedᴴ-fail Q₀ e''
                 (proj₁ fac₂ , toHyps-compl (res s₂) e' (proj₁ fac₂) (proj₂ (proj₂ fac₂)) ∷ [])
@@ -199,7 +194,7 @@ solveOnᴰ-refutes C nr eq τ sat with solve init C in e
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
     fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
-solveOnᴰ-refutes C nr eq τ sat | just (s' , m , w) | just (s₁ , m₁) | just (s₂ , m₂) | nothing
+solveOnᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | just (s₂ , m₂) | nothing
   with toHyps-nothing (res s₂) e'
 ...         | inj₁ (A , mem , q) =
               etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
@@ -210,37 +205,38 @@ solveOnᴰ-refutes C nr eq τ sat | just (s' , m , w) | just (s₁ , m₁) | jus
 ...         | inj₂ (A , B , mem , q) =
               ⊥nothing (trans (sym (proj₂ (reexpand-dec s₁ e₂ mem))) q)
 
-solveOn-refutes : ∀ {Θ} → (C : Constraint Θ) → NoRig C
-                → solveOn C ≡ nothing
+solveOn-refutes : ∀ {Θ} → (C : Constraint Θ)
+                → solveOn C ≡ refuted
                 → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
-solveOn-refutes C nr eq = solveOnᴰ-refutes C nr (map-nothing (solveOnᴰ C) eq)
+solveOn-refutes C eq = solveOnᴰ-refutes C (mapᴼ-refuted (solveOnᴰ C) eq)
 
-solveOn-complete : ∀ {Θ} → (C : Constraint Θ) → NoRig C
-                 → solveOn C ≡ nothing
+solveOn-complete : ∀ {Θ} → (C : Constraint Θ)
+                 → solveOn C ≡ refuted
                  → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → (R : Obligs Θ')
                  → Satisfiable Q R
                  → ¬ (σ ⊨[ Q ∣ R ] C)
-solveOn-complete C nr eq σ Q R (δ₀ , h₀) sat =
-  solveOn-refutes C nr eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
+solveOn-complete C eq σ Q R (δ₀ , h₀) sat =
+  solveOn-refutes C eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
 
 solveOnᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
                    → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Dfr Θ⁺)}
-                   → solveOnᴰ C ≡ just (Θ⁺ , σ⁺ , Q⁺ , D⁺)
+                   → solveOnᴰ C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , D⁺)
                    → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
                    → σ ⊨[ Q ∣ R ] C
                    → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
                    → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
                        (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ map toOblig D⁺))
 solveOnᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
-... | nothing = ⊥just eq
-... | just (s' , m , w) with retry s' in e₁
-...   | nothing = ⊥just eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s' , m , w) with retry s' in e₁
+...   | nothing = ⊥refuted eq
 ...   | just (s₁ , m₁) with reexpand s₁ in e₂
-...     | nothing = ⊥just eq
+...     | nothing = ⊥refuted eq
 ...     | just (s₂ , m₂) with toHyps (res s₂) in e'
-...       | nothing = ⊥just eq
+...       | nothing = ⊥refuted eq
 ...       | just (Q₀ , hq) with closedᴴ Q₀ in e''
-...         | nothing = ⊥just eq
+...         | nothing = ⊥refuted eq
 ...         | just Q₁ with eq
 ...           | refl = δ₂ , tri ,
                        closedᴴ-⊆ Q₀ e'' (toHyps-compl (res s₂) e' δ₂ h₂)
@@ -271,21 +267,21 @@ solveOnᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
 
 solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
                   → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {R⁺ : Obligs Θ⁺}
-                  → solveOn C ≡ just (Θ⁺ , σ⁺ , Q⁺ , R⁺)
+                  → solveOn C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , R⁺)
                   → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
                   → σ ⊨[ Q ∣ R ] C
                   → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
                   → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
-solveOn-principal C eq with map-just (solveOnᴰ C) eq
+solveOn-principal C eq with mapᴼ-solved (solveOnᴰ C) eq
 ... | (Θ' , σ , Q , D) , e , refl = solveOnᴰ-principal C e
 
-solver : Solver NoRig (λ _ → ⊤)
+solver : Solver
 solver = record
   { solve           = solveOn
   ; solve-sound     = solveOn-sound
-  ; solve-complete  = solveOn-complete
-  ; solve-principal = λ C _ → solveOn-principal C
+  ; solve-refutes   = solveOn-complete
+  ; solve-principal = solveOn-principal
   }
 
 -- The entailment test of elimination by equality: an ordering among
@@ -337,7 +333,7 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     Q̃      : Hyps Θ̃
     R̃      : Obligs Θ̃
     η      : Subst Θ' Θ'
-    solved : solveOn C ≡ just (Θ' , σ , Q , R)
+    sol    : solveOn C ≡ solved (Θ' , σ , Q , R)
     to-Q̂   : Q ⊨ᴴ Q̂
     to-Q   : Q̂ ⊩ᴴ Q
     fix    : w ⨟ˢ σ ⨟ˢ η ≐ˢ w ⨟ˢ σ
@@ -396,13 +392,14 @@ canonᵈ-⊩⁻ {δ = δ} (dfr l k o) h =
 -- strengthening's retraction, in canonical form.
 
 reportOf : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-         → (s : Maybe (Σ[ Θ' ∈ Scope ] Answer Θ Θ')) → solveOnᴰ C ≡ s
-         → Maybe (Reported w X C)
-reportOf w X C nothing                  e = nothing
-reportOf w X C (just (Θ' , σ , Q , D)) e =
-      just (report Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
+         → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')) → solveOnᴰ C ≡ s
+         → Outcome (Reported w X C)
+reportOf w X C refuted                    e = refuted
+reportOf w X C stuck                      e = stuck
+reportOf w X C (solved (Θ' , σ , Q , D)) e =
+      solved (report Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
                    (map toOblig D̃) (Elim.η el)
-                   (cong (Maybe.map readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
+                   (cong (mapᴼ readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
                    (fixes-≐ fx (w ⨟ˢ σ) (⊆-∪ˡ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl)) (τ-ι sr)
                    (conv⁻ el sr) (inst⁻ el sr) instᴿ' (keep⁻ el sr) to-R̃'
                    (princ⁻ el sr) (ext-ι sr))
@@ -464,18 +461,18 @@ reportOf w X C (just (Θ' , σ , Q , D)) e =
                     (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (All.tail h) m₀)))
 
 reportOn : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-         → Maybe (Reported w X C)
+         → Outcome (Reported w X C)
 reportOn w X C = reportOf w X C (solveOnᴰ C) refl
 
--- A report fails only where the solver does
+-- A report is refuted only where the solver is
 
-reportOf-nothing : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ} {Y : Set}
-                 → (f : Reported w X C → Y)
-                 → (s : Maybe (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
+reportOf-refuted : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
+                 → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
                  → (e : solveOnᴰ C ≡ s)
-                 → Maybe.map f (reportOf w X C s e) ≡ nothing → solveOn C ≡ nothing
-reportOf-nothing f nothing  e eq = cong (Maybe.map readOut) e
-reportOf-nothing f (just _) e eq = ⊥nothing eq
+                 → reportOf w X C s e ≡ refuted → solveOn C ≡ refuted
+reportOf-refuted refuted    e eq = cong (mapᴼ readOut) e
+reportOf-refuted stuck      e ()
+reportOf-refuted (solved _) e ()
 
 ------------------------------------------------------------------------
 -- The reference entry point
@@ -496,7 +493,7 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
     X = X̂ Θ ‼ t̂ Θ
 
     p : Principal Γ M
-    p = principal solver Γ M tt solved
+    p = principal solver Γ M sol
 
     -- a retraction of `ι`
 
@@ -593,18 +590,52 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
           subst (λ A → ∅ᴴ ∣ A ‼ t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ‼ ε₀ [ δ₀ ]ᵉ)
                 (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) ‼ₛ le)
 
-infer : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → Maybe (PrincipalTyping Γ M)
-infer {Θ} Γ M = Maybe.map (typing Γ M) (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
+-- Inference: a principal typing, a refutation, or stuck. It is stuck
+-- where a handler clause's scope closes with an unknown local to it
+-- that has no principal value, in three documented classes: a local
+-- cycle between the clause's rigid and something mentioning it (class
+-- D); an outer clause's local on both sides of an inner clause's
+-- deferred condition; a clause-local bounded above by several
+-- incomparable grades.
 
--- Where no rigid binder occurs in the constraint of `M`, inference
--- fails only on a term no typing of which has satisfiable hypotheses
+inferred : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+         → Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) → Inference Γ M
+inferred Γ M (solved r) = typed (typing Γ M r)
+inferred Γ M refuted    = untypable
+inferred Γ M stuck      = stuck
 
-infer-fails : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → NoRig C[ Γ , M ]
-            → infer Γ M ≡ nothing
-            → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q₀ : Hyps Θ'') → {C₀ : OCType Θ''}
-            → (D₀ : Q₀ ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ C₀) → ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
-            → ¬ Satisfiable Q₀ []
-infer-fails {Θ} Γ M nr eq σ₀ Q₀ {A₀ ‼ ε₀} D₀ e₀ sQ =
-  solveOn-complete C[ Γ , M ] nr
-    (reportOf-nothing (typing Γ M) (solveOnᴰ C[ Γ , M ]) refl eq)
+infer : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → Inference Γ M
+infer {Θ} Γ M = inferred Γ M (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
+
+-- An untypable verdict refutes every typing under satisfiable
+-- hypotheses
+
+infer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+                → infer Γ M ≡ untypable → ¬ Typable Γ M
+infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ sQ) =
+  solveOn-complete C[ Γ , M ]
+    (reportOf-refuted (solveOnᴰ C[ Γ , M ]) refl (untyped (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
     (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
+  where
+    untyped : (x : Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]))
+            → inferred Γ M x ≡ untypable → x ≡ refuted
+    untyped refuted    eq = refl
+    untyped stuck      ()
+    untyped (solved _) ()
+
+------------------------------------------------------------------------
+-- The end-to-end theorem
+--
+-- A typed verdict is a principal typing, and `M` is typable exactly
+-- when its conditions are satisfiable; an untypable verdict means `M`
+-- is not typable. Hence inference is complete up to stuck: a typable
+-- `M` is never declared untypable.
+
+infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}
+            → infer Γ M ≡ typed p
+            → Typable Γ M ⇔ Satisfiable (PrincipalTyping.Q̃ p) (PrincipalTyping.R̃ p)
+infer-typed Γ M {p} _ = typable-⇔ p
+
+infer-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+               → Typable Γ M → infer Γ M ≢ untypable
+infer-complete Γ M t eq = infer-untypable Γ M eq t

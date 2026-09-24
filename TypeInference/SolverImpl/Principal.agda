@@ -28,6 +28,7 @@ open import Syntax.Operations
 open import Util.Equality
 
 open import TypeInference.Scopes
+open import TypeInference.Outcome
 
 open import TypeInference.SolverImpl.Enum using (OpEnum)
 
@@ -49,14 +50,14 @@ open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ)
 
-open import TypeInference.Solver.Fragment S
 
 open import TypeInference.SolverImpl.Enum S using (AllOp; all-lookup)
 
 open import TypeInference.SolverImpl.Core.AList S using (AList; anil; ⟦_⟧ᴬ)
 open import TypeInference.SolverImpl.Core.Eqn   S using (Eqn; eqᵛ; Eqns; Unifies)
 open import TypeInference.SolverImpl.Core.Rigid S
-  using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; popˢ-hit; strSub; unpopˢ; pop-unpop; strSub-escape)
+  using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; popˢ-hit; strSub; unpopˢ; pop-unpop; strSub-escape;
+         strᵛ⁺-just; strʳ⁺-just; strʳ-upd)
 open import TypeInference.SolverImpl.Core.Unify S using (Rig; _∈ᶠ_; unify)
 open import TypeInference.SolverImpl.Core.UnifyMGU S
   using (Fixing; fixing; fixᵉ; injᵉ; Fixing-id; unify-max; unify-fail;
@@ -74,7 +75,7 @@ open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S
 open import TypeInference.SolverImpl.Solve  S opEnum
 open import TypeInference.SolverImpl.Localise S
-  using (Localised; localise; lσ; lfix; lcpl; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true;
+  using (Localised; localise; lσ; lfix; lcpl; latom; localise-ds; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true;
          outerₑ?; outerᵣ?; Outerₑ; Outerᵣ; κᵉ; κ⊤; ⊩ᴴ-κᵉ; κᵉ≾κ⊤;
          Agree; agreeₑ; agreeᵣ; agree-out; evar?)
 open import TypeInference.SolverImpl.Core.Occurs S
@@ -884,17 +885,17 @@ liftᵈ-princ O⁺ j γ δ E oo eqO h =
 
 splitᴿ-princ : ∀ {Θ Φ Φ'} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
              → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
-             → ∀ {a} → splitᴿ O O⁺ j R ≡ just a
+             → ∀ {a} → splitᴿ O O⁺ j R ≡ solved a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → Uniform O (popˢ j ⨟ˢ γ)
              → (O⁺ ⨟ˢ (popˢ j ⨟ˢ γ)) ≐ˢ (O⁺ ⨟ˢ (popˢ j ⨟ˢ (((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) ↑ᵉ)))
              → ∅ᴴ ⊩ᴿ R [ popˢ j ⨟ˢ γ ]
              → ∅ᴴ ⊩ᴿ proj₁ a [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
 splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
-  with listʳ O O⁺ j (rs R) in e₁ | listᵉ O O⁺ j (es R) in e₂ | listᵗ j (ts R) in e₃
-     | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅ | outerD? O⁺ (dfs R)
-... | just (lr , dr , fr) | just (le , de , fe) | just (lt , ft) | just (ls , fs)
-    | just (ld , fd) | just od with eq
+  with listᵗ j (ts R) in e₃ | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅
+     | listʳ O O⁺ j (rs R) in e₁ | listᵉ O O⁺ j (es R) in e₂ | outerD? O⁺ (dfs R)
+... | just (lt , ft) | just (ls , fs) | just (ld , fd)
+    | just (lr , dr , fr) | just (le , de , fe) | just od with eq
 ...   | refl = mk⊩ᴿ (proj₁ pr) (proj₁ pe)
                     (listᵗ-princ j (ts R) e₃ γ (⊩ts h))
                     (listˢ-princ j (ss R) e₄ γ (⊩ss h))
@@ -909,12 +910,12 @@ splitᴿ-princ O O⁺ j R eq γ hγ u eqO h
     lifted : ∀ {E} → E ∈ map (liftᵈ j) (dfs R) → ∅ᴴ ⊩ᵈ E [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]
     lifted m with ∈-map⁻ (liftᵈ j) m
     ... | E₀ , m₀ , refl = liftᵈ-princ O⁺ j γ ((wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ) E₀ (od m₀) eqO (⊩dfs h m₀)
-splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _ | just _ | just _  | just _  | just _  | nothing = ⊥just eq
-splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _ | just _ | just _  | just _  | nothing | _       = ⊥just eq
-splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _ | just _ | just _  | nothing | _       | _       = ⊥just eq
-splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _ | just _ | nothing | _       | _       | _       = ⊥just eq
-splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _ | nothing | _      | _       | _       | _       = ⊥just eq
-splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | nothing | _      | _      | _       | _       | _       = ⊥just eq
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | nothing | _       | _       | _      | _      | _       = ⊥refuted eq
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | nothing | _       | _      | _      | _       = ⊥refuted eq
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | nothing | _      | _      | _       = ⊥refuted eq
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | just _  | nothing | _     | _       = ⊥stuck eq
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | just _  | just _ | nothing | _      = ⊥stuck eq
+splitᴿ-princ O O⁺ j R eq γ hγ u eqO h | just _  | just _  | just _  | just _ | just _ | nothing = ⊥stuck eq
 
 -- The rigid's image under the inner factorisation is the outer
 -- scope's own eigenvariable, and the outer unknowns' images are those
@@ -941,15 +942,15 @@ popᵉ-princ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
            → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
            → Princ⇑ s (st Φ θ'' R'' rg'') m'' C
            → ∀ {s' : St Θ} {m : s ⟶ s'} {w : Wit s' (∀ᵉ C)}
-           → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ just (s' , m , w)
+           → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ solved (s' , m , w)
            → Princ s s' m (∀ᵉ C)
 popᵉ-princ s C (scope nt nr nzero) θ'' R'' rg'' m'' w'' ip ()
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
   with evar? (sE (mδ m'') (newᵉ {Ψ s}))
-... | nothing = ⊥just eq
+... | nothing = ⊥refuted eq
 ... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'')
                         | splitᴿ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (mδ m'') j R'' in eqsp
-...   | just (δ₀ₛ , pδ) | just (R₀ , tr) with eq
+...   | just (δ₀ₛ , pδ) | solved (R₀ , tr) with eq
 ...     | refl = δ , tri ,
                  ∪ᴿ-both (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri) h))
                          (splitᴿ-princ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (mδ m'') j R'' eqsp γ
@@ -996,9 +997,11 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
                   (≐ˢ-trans (⨟-↑ᵉ δ₀ₛ δ) (≐ˢ-↑ᵉ tri))))))
 
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
-  | just (j , eqj) | just _ | nothing = ⊥just eq
+  | just (j , eqj) | just _ | refuted = ⊥refuted eq
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
-  | just (j , eqj) | nothing | _ = ⊥just eq
+  | just (j , eqj) | just _ | stuck = ⊥stuck eq
+popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ sat h
+  | just (j , eqj) | nothing | _ = ⊥refuted eq
 
 -- Localisation keeps every instance entering the scope: the factor
 -- found for the inner state serves the localised one, the local
@@ -1036,23 +1039,27 @@ retry-princ s eq δ₀ h with retryᴰ (ordsOf (res s)) (dfs (res s))
                (λ fx → fx)
 
 -- and it refuses only where an entry fails at a closed witness, which
--- refutes every closed instance
+-- refutes every instance: closed further, it would be a closed one
 
-retry-fail : ∀ {Θ} → (s : St Θ) → retry s ≡ nothing
-           → (δ₀ : Subst (Ψ s) ∅ˢ) → ∅ᴴ ⊩ᴿ (res s) [ δ₀ ] → ⊥
+closing : ∀ {Ψ} → Subst Ψ ∅ˢ
+closing = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
+
+retry-fail : ∀ {Θ Ψ''} → (s : St Θ) → retry s ≡ nothing
+           → (δ₀ : Subst (Ψ s) Ψ'') → ∅ᴴ ⊩ᴿ (res s) [ δ₀ ] → ⊥
 retry-fail s eq δ₀ h with retryᴰ (ordsOf (res s)) (dfs (res s))
-... | inj₁ (E , m , r) = r δ₀ (⊩dfs h m)
+... | inj₁ (E , m , r) = r (δ₀ ⨟ˢ closing) (⊩dfs (⊩ᴿ-⨟ {δ' = closing} ∅ᴴ-⊩ᴴ h) m)
 ... | inj₂ _           = ⊥nothing eq
 
 thenRetry-princ : ∀ {Θ} {s : St Θ} {C : Constraint Θ}
-                → (x : Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
+                → (x : Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
                 → (∀ {s₁ : St Θ} {m₁ : s ⟶ s₁} {w₁ : Wit s₁ C}
-                     → x ≡ just (s₁ , m₁ , w₁) → Princ s s₁ m₁ C)
+                     → x ≡ solved (s₁ , m₁ , w₁) → Princ s s₁ m₁ C)
                 → ∀ {s' : St Θ} {m : s ⟶ s'} {w : Wit s' C}
-                → thenRetry {C = C} x ≡ just (s' , m , w) → Princ s s' m C
-thenRetry-princ nothing p ()
-thenRetry-princ {C = C} (just (s₁ , m₁ , w₁)) p eq δ₀ sat h with retry s₁ in e
-... | nothing = ⊥just eq
+                → thenRetry {C = C} x ≡ solved (s' , m , w) → Princ s s' m C
+thenRetry-princ refuted p ()
+thenRetry-princ stuck   p ()
+thenRetry-princ {C = C} (solved (s₁ , m₁ , w₁)) p eq δ₀ sat h with retry s₁ in e
+... | nothing = ⊥refuted eq
 ... | just (s₂ , m₂) with eq
 ...   | refl = δ₂ ,
                ≐ˢ-trans (⨟-assoc (mδ m₁) (mδ m₂) δ₂)
@@ -1079,13 +1086,14 @@ relabel-⊩⁻ op (dfr nothing  k o) h = h
 relabel-⊩⁻ op (dfr (just l) k o) h = h
 
 labelled-princ : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → (op : Op)
-               → (x : Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
+               → (x : Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
                → (∀ {s₁ : St Θ} {m₁ : s ⟶ s₁} {w₁ : Wit s₁ C}
-                    → x ≡ just (s₁ , m₁ , w₁) → Princ s s₁ m₁ C)
+                    → x ≡ solved (s₁ , m₁ , w₁) → Princ s s₁ m₁ C)
                → ∀ {s' : St Θ} {m : s ⟶ s'} {w : Wit s' C}
-               → labelled {C = C} op x ≡ just (s' , m , w) → Princ s s' m C
-labelled-princ op nothing p ()
-labelled-princ op (just (s₁ , m₁ , w₁)) p refl δ₀ sat h =
+               → labelled {C = C} op x ≡ solved (s' , m , w) → Princ s s' m C
+labelled-princ op refuted p ()
+labelled-princ op stuck   p ()
+labelled-princ op (solved (s₁ , m₁ , w₁)) p refl δ₀ sat h =
   δ₁ , ≐ˢ-trans (⨟-assoc (mδ m₁) idˢ δ₁) (≐ˢ-trans (⨟-congʳ (mδ m₁) (⨟-idˡ δ₁)) tri₁) ,
   mk⊩ᴿ (⊩rs h₁) (⊩es h₁) (⊩ts h₁) (⊩ss h₁) (⊩ds h₁) dfs' , fx₁
   where
@@ -1099,27 +1107,30 @@ labelled-princ op (just (s₁ , m₁ , w₁)) p refl δ₀ sat h =
     dfs' m with ∈-map⁻ (relabel op) m
     ... | E₀ , m₀ , refl = relabel-⊩⁻ op E₀ (⊩dfs h₁ m₀)
 
-labelled-nothing : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → (op : Op)
-                 → (x : Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
-                 → labelled {C = C} op x ≡ nothing → x ≡ nothing
-labelled-nothing op nothing  eq = refl
-labelled-nothing op (just _) ()
+labelled-refuted : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → (op : Op)
+                 → (x : Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
+                 → labelled {C = C} op x ≡ refuted → x ≡ refuted
+labelled-refuted op refuted    eq = refl
+labelled-refuted op stuck      ()
+labelled-refuted op (solved _) ()
 
 threadOps-princ : ∀ {Θ} {f : Op → Constraint Θ}
    → (g : (s : St Θ) → (op : Op)
-            → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
+            → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
    → ((s : St Θ) → (op : Op) → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' (f op)}
-        → g s op ≡ just (s' , m , w) → Princ s s' m (f op))
+        → g s op ≡ solved (s' , m , w) → Princ s s' m (f op))
    → (l : List Op) → (s : St Θ)
    → {s' : St Θ} {m : s ⟶ s'} {ws : AllOp (λ op → Wit s' (f op)) l}
-   → threadOps {f = f} g l s ≡ just (s' , m , ws)
+   → threadOps {f = f} g l s ≡ solved (s' , m , ws)
    → Princ s s' m (⋀ᵒᵖ f)
 threadOps-princ g gp []       s refl δ₀ sat h = δ₀ , ≐ˢ-refl , h , (λ fx → fx)
 threadOps-princ {f = f} g gp (op ∷ l) s eq δ₀ sat h with g s op in e₁
-... | nothing = ⊥just eq
-... | just (s₁ , m₁ , w₁) with threadOps {f = f} g l s₁ in e₂
-...   | nothing = ⊥just eq
-...   | just (s₂ , m₂ , ws) with eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s₁ , m₁ , w₁) with threadOps {f = f} g l s₁ in e₂
+...   | refuted = ⊥refuted eq
+...   | stuck   = ⊥stuck eq
+...   | solved (s₂ , m₂ , ws) with eq
 ...     | refl = δ₂ ,
                  ≐ˢ-trans (⨟-assoc (mδ m₁) (mδ m₂) δ₂)
                           (≐ˢ-trans (⨟-congʳ (mδ m₁) tri₂) tri₁) ,
@@ -1220,7 +1231,7 @@ reexpand-Princ⇑ {s'' = s''} {m} ip {m₃ = m₃} e δ₀ sat h =
 
 solve-principal : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
                 → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' C}
-                → solve s C ≡ just (s' , m , w)
+                → solve s C ≡ solved (s' , m , w)
                 → Princ s s' m C
 
 solve-principal s ⊤̂ refl δ₀ sat h = δ₀ , ≐ˢ-refl , h , (λ fx → fx)
@@ -1228,10 +1239,12 @@ solve-principal s ⊤̂ refl δ₀ sat h = δ₀ , ≐ˢ-refl , h , (λ fx → f
 solve-principal s ⊥̂ ()
 
 solve-principal s (C ∧̂ D) eq δ₀ (sc , sd) h with solve s C in e₁
-... | nothing = ⊥just eq
-... | just (s₁ , m₁ , w₁) with solve s₁ D in e₂
-...   | nothing = ⊥just eq
-...   | just (s₂ , m₂ , w₂) with eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s₁ , m₁ , w₁) with solve s₁ D in e₂
+...   | refuted = ⊥refuted eq
+...   | stuck   = ⊥stuck eq
+...   | solved (s₂ , m₂ , w₂) with eq
 ...     | refl = δ₂ ,
                  ≐ˢ-trans (⨟-assoc (mδ m₁) (mδ m₂) δ₂)
                           (≐ˢ-trans (⨟-congʳ (mδ m₁) tri₂) tri₁) ,
@@ -1254,11 +1267,11 @@ solve-principal s (C ∧̂ D) eq δ₀ (sc , sd) h with solve s C in e₁
 
 solve-principal s (A ≐ᵥ B) eq δ₀ sat h
   with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
-... | nothing = ⊥just eq
+... | nothing = ⊥refuted eq
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
-...   | nothing = ⊥just eq
+...   | nothing = ⊥refuted eq
 ...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ))
-...     | nothing = ⊥just eq
+...     | nothing = ⊥refuted eq
 ...     | just e with eq
 ...       | refl = δ₂ , tri₂ ,
                    atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)) ,
@@ -1283,11 +1296,11 @@ solve-principal s (A ≐ᵥ B) eq δ₀ sat h
 
 solve-principal s (A ≾̂ᵥᶜ B) eq δ₀ sat h
   with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)) in eqx
-... | nothing = ⊥just eq
+... | nothing = ⊥refuted eq
 ... | just (Ψ' , δₑ) with subDec (A [ θ s ]ᵛ [ δₑ ]ᵛ) (B [ θ s ]ᵛ [ δₑ ]ᵛ)
-...   | nothing = ⊥just eq
+...   | nothing = ⊥refuted eq
 ...   | just d with subsList (ss (res s [ δₑ ]ᴿ))
-...     | nothing = ⊥just eq
+...     | nothing = ⊥refuted eq
 ...     | just e with eq
 ...       | refl = δ , trix ,
                  ∪ᴿ-both (atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)))
@@ -1339,8 +1352,9 @@ solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ sat h | nothing with eq
              (λ fx → fx)
 
 solve-principal s (∃ᵗ C) eq δ₀ (B , sat) h with solve (s ↑ᵗˢ) C in e
-... | nothing = ⊥just eq
-... | just (s'' , m'' , w'') with eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s'' , m'' , w'') with eq
 ...   | refl = δ'' ,
                ≐ˢ-trans (⨟-assoc wkˢᵗ (mδ m'') δ'')
                         (≐ˢ-trans (⨟-congʳ wkˢᵗ tri'') (wk-,ᵗ δ₀ B)) ,
@@ -1355,8 +1369,9 @@ solve-principal s (∃ᵗ C) eq δ₀ (B , sat) h with solve (s ↑ᵗˢ) C in e
     fx''  = proj₂ (proj₂ (proj₂ ih))
 
 solve-principal s (∃ʳ C) eq δ₀ (ρ , sat) h with solve (s ↑ʳˢ) C in e
-... | nothing = ⊥just eq
-... | just (s'' , m'' , w'') with eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s'' , m'' , w'') with eq
 ...   | refl = δ'' ,
                ≐ˢ-trans (⨟-assoc wkˢʳ (mδ m'') δ'')
                         (≐ˢ-trans (⨟-congʳ wkˢʳ tri'') (wk-,ʳ δ₀ ρ)) ,
@@ -1371,8 +1386,9 @@ solve-principal s (∃ʳ C) eq δ₀ (ρ , sat) h with solve (s ↑ʳˢ) C in e
     fx''  = proj₂ (proj₂ (proj₂ ih))
 
 solve-principal s (∃ᵉ C) eq δ₀ (ε , sat) h with solve (s ↑ᵉˢ) C in e
-... | nothing = ⊥just eq
-... | just (s'' , m'' , w'') with eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s'' , m'' , w'') with eq
 ...   | refl = δ'' ,
                ≐ˢ-trans (⨟-assoc wkˢᵉ (mδ m'') δ'')
                         (≐ˢ-trans (⨟-congʳ wkˢᵉ tri'') (wk-,ᵉ δ₀ ε)) ,
@@ -1387,9 +1403,10 @@ solve-principal s (∃ᵉ C) eq δ₀ (ε , sat) h with solve (s ↑ᵉˢ) C in 
     fx''  = proj₂ (proj₂ (proj₂ ih))
 
 solve-principal s (∀ᵉ C) eq with solve (⇑ᵉˢ s) C in e
-... | nothing = ⊥just eq
-... | just (s'' , m'' , w'') with reexpand s'' in e₃
-...   | nothing = ⊥just eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s'' , m'' , w'') with reexpand s'' in e₃
+...   | nothing = ⊥refuted eq
 ...   | just (s₃ , m₃) =
       thenRetry-princ {C = ∀ᵉ C}
         (popᵉ s C (Ψ (proj₁ (localiseˢ s m₃'))) (θ (proj₁ (localiseˢ s m₃')))
@@ -1408,18 +1425,22 @@ solve-principal s (∀ᵉ C) eq with solve (⇑ᵉˢ s) C in e
 
 solve-principal s (⋀ᵒᵖ f) eq
   with threadOps {f = f} (λ s' op → labelled {C = f op} op (solve s' (f op))) ops s in e
-... | nothing = ⊥just eq
-... | just (s₁ , m₁ , ws) with eq
+... | refuted = ⊥refuted eq
+... | stuck   = ⊥stuck eq
+... | solved (s₁ , m₁ , ws) with eq
 ...   | refl = threadOps-princ (λ s' op → labelled {C = f op} op (solve s' (f op)))
                                (λ s' op e' → labelled-princ op (solve s' (f op))
                                                (solve-principal s' (f op)) e') ops s e
 
--- Refutation holds on the fragment without a rigid binder. At a rigid
--- binder the atoms that mention the rigid are settled by a decision
--- against no hypotheses, and a declined one refutes nothing: a
--- satisfiable constraint whose solution localisation cannot reach is
--- declined all the same. What a rigid binder does refute is an escape:
--- an outer unknown whose image keeps the rigid.
+-- Refutation, for every constraint: a refused constraint has no
+-- solution at an instance that keeps the rigids distinct variables
+-- and meets the residual. At a rigid binder, the refusals are an
+-- escape, an outer unknown whose image keeps the rigid; an eternality
+-- demand naming the rigid, eternal at no instance; and a failed
+-- retry. The subtyping demands and the disjunctions that the scope
+-- close meets cannot be refused: the first are pairs of type
+-- variables, the second have types eternal at some instance, hence
+-- free of the rigid.
 
 popᵉ-escape : ∀ {Θ Φ} → (s : St Θ) → (C : Constraint (Θ +e))
             → (θ'' : Subst (Θ +e) (Φ +e)) → (R'' : Resid (Φ +e)) → (rg'' : Rig (Φ +e))
@@ -1437,21 +1458,153 @@ popᵉ-escape s C θ'' R'' rg'' m'' ip j eqj eqstr δ₀ fx h sat =
     δ''   = proj₁ ires
     tri'' = proj₁ (proj₂ ires)
 
+-- An eternality demand that `splitᴿ` refuses names the rigid, so its
+-- type is eternal at no instance
+
+atomᵗ-fail : ∀ {Φ Ψ''} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → atomᵗ j A ≡ nothing
+           → (δ : Subst (Φ +e) Ψ'') → ¬ (∅ᴴ ⊩ᴱ A [ δ ]ᵛ)
+atomᵗ-fail {Φ} j A eq δ et with strᵛ⁺ j A in r
+... | just _  = ⊥just (sym eq)
+... | nothing = aux (etDec A) refl
+  where
+    aux : (x : Maybe (List (TyVar (Φ +e)))) → etDec A ≡ x → ⊥
+    aux nothing   e = etDec-refute A e δ et
+    aux (just αs) e = ⊥just (trans (sym r) (proj₂ (strᵛ⁺-just j A (proj₂ (etDec-str j A e)))))
+
+listᵗ-fail : ∀ {Φ Ψ''} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e))) → listᵗ j l ≡ nothing
+           → (δ : Subst (Φ +e) Ψ'') → (∀ {A} → A ∈ l → ∅ᴴ ⊩ᴱ A [ δ ]ᵛ) → ⊥
+listᵗ-fail j []      () δ k
+listᵗ-fail j (A ∷ l) eq δ k with atomᵗ j A in e₁ | listᵗ j l in e₂
+... | just _  | just _  = ⊥just (sym eq)
+... | just _  | nothing = listᵗ-fail j l e₂ δ (λ m → k (there m))
+... | nothing | _       = atomᵗ-fail j A e₁ δ (k (here refl))
+
+-- A pair of type variables is always kept
+
+listˢ-fail : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × OVType (Φ +e)))
+           → Atomicˢ l → listˢ j l ≡ nothing → ⊥
+listˢ-fail j []            at ()
+listˢ-fail j ((A , B) ∷ l) at eq with at (here refl)
+... | α , β , refl , refl with listˢ j l in e₂
+...   | just _  = ⊥just (sym eq)
+...   | nothing = listˢ-fail j l (λ m → at (there m)) e₂
+
+-- A disjunction whose type is eternal at some instance is always kept
+
+atomᵈ-ok : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → (ρ : RExp (Φ +e))
+         → {αs : List (TyVar (Φ +e))} → etDec A ≡ just αs
+         → Σ[ a ∈ Atomᵈ j A ρ ] (atomᵈ j A ρ ≡ just a)
+atomᵈ-ok j A ρ e with strᵛ⁺ j A in r | strʳ⁺ j (ρ [ updᵉ j (econst ⊤ₑ) ]ʳ) in r'
+... | just _  | just _  = _ , refl
+... | just _  | nothing =
+      ⊥just (trans (sym r') (proj₂ (strʳ⁺-just j _ (proj₂ (strʳ-upd j ⊤ₑ ρ)))))
+... | nothing | _       = ⊥just (trans (sym r) (proj₂ (strᵛ⁺-just j A (proj₂ (etDec-str j A e)))))
+
+listᵈ-fail : ∀ {Φ} → (j : EVar (Φ +e)) → (l : List (OVType (Φ +e) × RExp (Φ +e)))
+           → (∀ {A ρ} → (A , ρ) ∈ l → Σ[ αs ∈ List (TyVar (Φ +e)) ] (etDec A ≡ just αs))
+           → listᵈ j l ≡ nothing → ⊥
+listᵈ-fail j []            et ()
+listᵈ-fail j ((A , ρ) ∷ l) et eq with atomᵈ j A ρ in e₁ | listᵈ j l in e₂
+... | just _  | just _  = ⊥just (sym eq)
+... | just _  | nothing = listᵈ-fail j l (λ m → et (there m)) e₂
+... | nothing | _       = ⊥just (trans (sym e₁) (proj₂ (atomᵈ-ok j A ρ (proj₂ (et (here refl))))))
+
+-- `splitᴿ` refutes only where the residual is met at no instance
+
+splitᴿ-fail : ∀ {Θ Φ Ψ''} → (O : Subst Θ (Φ +e)) → (O⁺ : Subst (Θ +e) (Φ +e))
+            → (j : EVar (Φ +e)) → (R : Resid (Φ +e))
+            → Atomicˢ (ss R)
+            → (∀ {A ρ} → (A , ρ) ∈ ds R → Σ[ αs ∈ List (TyVar (Φ +e)) ] (etDec A ≡ just αs))
+            → splitᴿ O O⁺ j R ≡ refuted
+            → (δ : Subst (Φ +e) Ψ'') → ∅ᴴ ⊩ᴿ R [ δ ] → ⊥
+splitᴿ-fail O O⁺ j R at et eq δ h
+  with listᵗ j (ts R) in e₃ | listˢ j (ss R) in e₄ | listᵈ j (ds R) in e₅
+     | listʳ O O⁺ j (rs R) | listᵉ O O⁺ j (es R) | outerD? O⁺ (dfs R)
+... | just _  | just _  | just _  | just _  | just _  | just _  = ⊥solved eq
+... | nothing | _       | _       | _       | _       | _       = listᵗ-fail j (ts R) e₃ δ (⊩ts h)
+... | just _  | nothing | _       | _       | _       | _       = listˢ-fail j (ss R) at e₄
+... | just _  | just _  | nothing | _       | _       | _       = listᵈ-fail j (ds R) et e₅
+... | just _  | just _  | just _  | nothing | _       | _       = ⊥stuck-refuted eq
+... | just _  | just _  | just _  | just _  | nothing | _       = ⊥stuck-refuted eq
+... | just _  | just _  | just _  | just _  | just _  | nothing = ⊥stuck-refuted eq
+
+-- A rigid's image is a variable wherever an instance exists
+
+evar?-var : ∀ {Φ} → (ε : EExp Φ) → {j : EVar Φ} → ε ≡ evar j → evar? ε ≡ nothing → ⊥
+evar?-var (evar j) refl ()
+
+-- The rigid's image under an instance entering the scope
+
+rigid-var : ∀ {Θ Ψ''} → (s : St Θ) → (C : Constraint (Θ +e)) → {s'' : St (Θ +e)}
+          → (m'' : ⇑ᵉˢ s ⟶ s'') → Princ⇑ s s'' m'' C
+          → (δ₀ : Subst (Ψ s) Ψ'') → (θ s ⨟ˢ δ₀) ⊨[ ∅ᴴ ] (∀ᵉ C)
+          → Σ[ j ∈ EVar (Ψ s'') ] (sE (mδ m'') (newᵉ {Ψ s}) ≡ evar j)
+rigid-var s C m'' ip δ₀ sat =
+  varᵉ-inst (sE (mδ m'') (newᵉ {Ψ s})) (proj₁ ires) (≐ᵉ (proj₁ (proj₂ ires)) (newᵉ {Ψ s}))
+  where
+    ires = ip δ₀ (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+
+-- Closing a scope refutes only where no instance entering it meets
+-- what it leaves
+
+popᵉ-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
+          → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
+          → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
+          → Princ⇑ s (st Φ θ'' R'' rg'') m'' C
+          → Atomicˢ (ss R'')
+          → (∀ {A ρ} → (A , ρ) ∈ ds R'' → Σ[ αs ∈ List (TyVar Φ) ] (etDec A ≡ just αs))
+          → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ refuted
+          → Refut s (∀ᵉ C)
+popᵉ-fail s C (scope nt nr nzero) θ'' R'' rg'' m'' w'' ip at et eq δ₀ fx h sat
+  with rigid-var s C m'' ip δ₀ sat
+... | () , _
+popᵉ-fail s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip at et eq δ₀ fx h sat
+  with evar? (sE (mδ m'') (newᵉ {Ψ s})) in ev
+... | nothing = evar?-var _ (proj₂ (rigid-var s C m'' ip δ₀ sat)) ev
+... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') in es
+                        | splitᴿ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (mδ m'') j R'' in esp
+...   | just _ | solved _ = ⊥solved eq
+...   | just _ | stuck    = ⊥stuck-refuted eq
+...   | just _ | refuted  =
+        splitᴿ-fail (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (mδ m'') j R'' at et esp
+                    (proj₁ ires) (proj₁ (proj₂ (proj₂ ires)))
+  where
+    ires = ip δ₀ (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+...   | nothing | _       = popᵉ-escape s C θ'' R'' rg'' m'' ip j eqj es δ₀ fx h sat
+
+-- A retry after a close refutes, and so does the close
+
+thenRetry-fail : ∀ {Θ} {s : St Θ} {C : Constraint Θ}
+               → (x : Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C)))
+               → (∀ {s₁ : St Θ} {m₁ : s ⟶ s₁} {w₁ : Wit s₁ C}
+                    → x ≡ solved (s₁ , m₁ , w₁) → Princ s s₁ m₁ C)
+               → (x ≡ refuted → Refut s C)
+               → thenRetry {C = C} x ≡ refuted → Refut s C
+thenRetry-fail refuted p r eq = r refl
+thenRetry-fail stuck   p r ()
+thenRetry-fail {C = C} (solved (s₁ , m₁ , w₁)) p r eq δ₀ fx h sat with retry s₁ in e
+... | just _  = ⊥solved eq
+... | nothing = retry-fail s₁ e (proj₁ f₁) (proj₁ (proj₂ (proj₂ f₁)))
+  where
+    f₁ = p refl δ₀ sat h
+
 threadOps-fail : ∀ {Θ} {f : Op → Constraint Θ}
    → (g : (s : St Θ) → (op : Op)
-            → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
+            → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
    → ((s : St Θ) → (op : Op) → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' (f op)}
-        → g s op ≡ just (s' , m , w) → Princ s s' m (f op))
-   → ((s : St Θ) → (op : Op) → g s op ≡ nothing → Refut s (f op))
+        → g s op ≡ solved (s' , m , w) → Princ s s' m (f op))
+   → ((s : St Θ) → (op : Op) → g s op ≡ refuted → Refut s (f op))
    → (l : List Op) → (s : St Θ)
-   → threadOps {f = f} g l s ≡ nothing
+   → threadOps {f = f} g l s ≡ refuted
    → Refut s (⋀ᵒᵖ f)
 threadOps-fail g gp gf [] s ()
 threadOps-fail {f = f} g gp gf (op ∷ l) s eq δ₀ fx h sat with g s op in e₁
-... | nothing = gf s op e₁ δ₀ fx h (sat op)
-... | just (s₁ , m₁ , w₁) with threadOps {f = f} g l s₁ in e₂
-...   | just _  = ⊥nothing eq
-...   | nothing =
+... | refuted = gf s op e₁ δ₀ fx h (sat op)
+... | stuck   = ⊥stuck-refuted eq
+... | solved (s₁ , m₁ , w₁) with threadOps {f = f} g l s₁ in e₂
+...   | solved _ = ⊥solved eq
+...   | stuck    = ⊥stuck-refuted eq
+...   | refuted  =
         threadOps-fail g gp gf l s₁ e₂ δ₁ fx₁ h₁
           (λ op' → ⊨-resp-≐ˢ (≐ˢ-sym chain) (f op') (sat op'))
   where
@@ -1464,19 +1617,37 @@ threadOps-fail {f = f} g gp gf (op ∷ l) s eq δ₀ fx h sat with g s op in e�
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
 
-solve-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ) → NoRig C
-           → solve s C ≡ nothing → Refut s C
+-- After it, the subtyping demands of the residual are pairs of type
+-- variables
 
-solve-fail s ⊤̂ nr ()
+reexpand-atomic : ∀ {Θ} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
+                → reexpand s ≡ just (s' , m) → Atomicˢ (ss (res s'))
+reexpand-atomic s eq with expandSub (ss (res s))
+... | nothing = ⊥just eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
+...   | nothing = ⊥just eq
+...   | just e with eq
+...     | refl = f
+  where
+    f : Atomicˢ (map (mapᵖ tvar) (asubᵥ (atomsOfˢ e)))
+    f m with ∈-map⁻ (mapᵖ tvar) m
+    ... | (α , β) , m₀ , refl = α , β , refl , refl
 
-solve-fail s ⊥̂ nr eq δ₀ fx h sat = sat
+solve-fail : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
+           → solve s C ≡ refuted → Refut s C
 
-solve-fail s (C ∧̂ D) (nc ∧ⁿ nd) eq δ₀ fx h (sc , sd) with solve s C in e₁
-... | nothing = solve-fail s C nc e₁ δ₀ fx h sc
-... | just (s₁ , m₁ , w₁) with solve s₁ D in e₂
-...   | just _  = ⊥nothing eq
-...   | nothing =
-        solve-fail s₁ D nd e₂ δ₁ fx₁ h₁ (⊨-resp-≐ˢ (≐ˢ-sym chain) D sd)
+solve-fail s ⊤̂ ()
+
+solve-fail s ⊥̂ eq δ₀ fx h sat = sat
+
+solve-fail s (C ∧̂ D) eq δ₀ fx h (sc , sd) with solve s C in e₁
+... | refuted = solve-fail s C e₁ δ₀ fx h sc
+... | stuck   = ⊥stuck-refuted eq
+... | solved (s₁ , m₁ , w₁) with solve s₁ D in e₂
+...   | solved _ = ⊥solved eq
+...   | stuck    = ⊥stuck-refuted eq
+...   | refuted  =
+        solve-fail s₁ D e₂ δ₁ fx₁ h₁ (⊨-resp-≐ˢ (≐ˢ-sym chain) D sd)
   where
     f₁   = solve-principal s C e₁ δ₀ sc h
     δ₁   = proj₁ f₁
@@ -1486,8 +1657,7 @@ solve-fail s (C ∧̂ D) (nc ∧ⁿ nd) eq δ₀ fx h (sc , sd) with solve s C i
 
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
-
-solve-fail s (A ≐ᵥ B) nr eq δ₀ fx h sat
+solve-fail s (A ≐ᵥ B) eq δ₀ fx h sat
   with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) in equ*
 ... | nothing =
       unify-fail (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
@@ -1496,12 +1666,12 @@ solve-fail s (A ≐ᵥ B) nr eq δ₀ fx h sat
                  (trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt)
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
 ...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) in eqs
-...     | just _  = ⊥nothing eq
+...     | just _  = ⊥solved eq
 ...     | nothing =
           subsList-exp (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δₑ
             (subst (ExpDec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))) eqx
                    (expandSub-dec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)))) eqs
-solve-fail s (A ≐ᵥ B) nr eq δ₀ fx h sat
+solve-fail s (A ≐ᵥ B) eq δ₀ fx h sat
   | just (Ψ⁺ , ρ , equ) | nothing =
         subst (ExpMax δ₁) eqx
               (expandSub-max (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δ₁ (⊩ss h₁))
@@ -1515,7 +1685,7 @@ solve-fail s (A ≐ᵥ B) nr eq δ₀ fx h sat
     h₁ : ∅ᴴ ⊩ᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) [ δ₁ ]
     h₁ = ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri₁) h)
 
-solve-fail s (A ≾̂ᵥᶜ B) nr eq δ₀ fx h sat
+solve-fail s (A ≾̂ᵥᶜ B) eq δ₀ fx h sat
   with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)) in eqx
 ... | nothing =
       subst (ExpMax δ₀) eqx
@@ -1534,57 +1704,90 @@ solve-fail s (A ≾̂ᵥᶜ B) nr eq δ₀ fx h sat
     dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
                 (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
 ...     | just _ with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
-...       | just _  = ⊥nothing eq
+...       | just _  = ⊥solved eq
 ...       | nothing = subsList-exp (ss (res s)) δₑ (λ m → dec (there m)) eqs
   where
     dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
                 (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
 
-solve-fail s (ρ ≾̂ᵣᶜ ρ') nr ()
+solve-fail s (ρ ≾̂ᵣᶜ ρ') ()
 
-solve-fail s (ε ≾̂ₑᶜ ε') nr ()
+solve-fail s (ε ≾̂ₑᶜ ε') ()
 
-solve-fail s (Etᶜ A) nr ()
+solve-fail s (Etᶜ A) ()
 
-solve-fail s (Et∨≾ᵘ A ρ) nr eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
-... | just _  = ⊥nothing eq
-... | nothing = ⊥nothing eq
+solve-fail s (Et∨≾ᵘ A ρ) eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
+... | just _  = ⊥solved eq
+... | nothing = ⊥solved eq
 
-solve-fail s (∃ᵗ C) (∃ᵗⁿ nc) eq δ₀ fx h (B , sat) with solve (s ↑ᵗˢ) C in e
-... | just _  = ⊥nothing eq
-... | nothing =
-      solve-fail (s ↑ᵗˢ) C nc e (δ₀ ,ᵗ B)
+solve-fail s (∃ᵗ C) eq δ₀ fx h (B , sat) with solve (s ↑ᵗˢ) C in e
+... | solved _ = ⊥solved eq
+... | stuck    = ⊥stuck-refuted eq
+... | refuted  =
+      solve-fail (s ↑ᵗˢ) C e (δ₀ ,ᵗ B)
         (Fixing-trans wkˢᵗ (δ₀ ,ᵗ B) (wk-,ᵗ δ₀ B) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵗ δ₀ B)) h))
         (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵗˢ (θ s) δ₀ B)) C sat)
 
-solve-fail s (∃ʳ C) (∃ʳⁿ nc) eq δ₀ fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
-... | just _  = ⊥nothing eq
-... | nothing =
-      solve-fail (s ↑ʳˢ) C nc e (δ₀ ,ʳ ρ)
+solve-fail s (∃ʳ C) eq δ₀ fx h (ρ , sat) with solve (s ↑ʳˢ) C in e
+... | solved _ = ⊥solved eq
+... | stuck    = ⊥stuck-refuted eq
+... | refuted  =
+      solve-fail (s ↑ʳˢ) C e (δ₀ ,ʳ ρ)
         (Fixing-trans wkˢʳ (δ₀ ,ʳ ρ) (wk-,ʳ δ₀ ρ) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ʳ δ₀ ρ)) h))
         (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ʳˢ (θ s) δ₀ ρ)) C sat)
 
-solve-fail s (∃ᵉ C) (∃ᵉⁿ nc) eq δ₀ fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
-... | just _  = ⊥nothing eq
-... | nothing =
-      solve-fail (s ↑ᵉˢ) C nc e (δ₀ ,ᵉ ε)
+solve-fail s (∃ᵉ C) eq δ₀ fx h (ε , sat) with solve (s ↑ᵉˢ) C in e
+... | solved _ = ⊥solved eq
+... | stuck    = ⊥stuck-refuted eq
+... | refuted  =
+      solve-fail (s ↑ᵉˢ) C e (δ₀ ,ᵉ ε)
         (Fixing-trans wkˢᵉ (δ₀ ,ᵉ ε) (wk-,ᵉ δ₀ ε) fx)
         (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym (wk-,ᵉ δ₀ ε)) h))
         (⊨-resp-≐ˢ (≐ˢ-sym (↑-,ᵉˢ (θ s) δ₀ ε)) C sat)
 
-solve-fail s (∀ᵉ C) ()
+-- At a rigid binder: the inner refutation at the instance lifted over a
+-- fresh eigenvariable, the re-expansion's at the inner instance, and
+-- the close's and the retry's
 
-solve-fail s (⋀ᵒᵖ f) (⋀ⁿ nf) eq
+solve-fail s (∀ᵉ C) eq δ₀ fx h sat with solve (⇑ᵉˢ s) C in e
+... | refuted = solve-fail (⇑ᵉˢ s) C e (δ₀ ↑ᵉ) (Fixing-⇑ᵉ δ₀ fx) ⊩ᴿ-empty sat'
+  where
+    sat' = ⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat
+... | stuck   = ⊥stuck-refuted eq
+... | solved (s'' , m'' , w'') with reexpand s'' in e₃
+...   | nothing = reexpand-fail s'' e₃ (proj₁ ires) ∅ᴴ (proj₁ (proj₂ (proj₂ ires)))
+  where
+    ires = solve-principal (⇑ᵉˢ s) C e (δ₀ ↑ᵉ)
+             (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+...   | just (s₃ , m₃) =
+      thenRetry-fail {C = ∀ᵉ C}
+        (popᵉ s C (Ψ sL) (θ sL) (res sL) (rig sL) mL wL)
+        (popᵉ-princ s C (Ψ sL) (θ sL) (res sL) (rig sL) mL wL ipL)
+        (popᵉ-fail s C (Ψ sL) (θ sL) (res sL) (rig sL) mL wL ipL
+          (latom (localise (mδ m₃') (res s₃)) (reexpand-atomic s'' e₃))
+          (localise-ds (mδ m₃') (res s₃)))
+        eq δ₀ fx h sat
+  where
+    m₃' = ⟶-⨟ m'' m₃
+    sL  = proj₁ (localiseˢ s m₃')
+    mL  = ⟶-⨟ m₃' (proj₂ (localiseˢ s m₃'))
+    wL  = wit-mono (proj₂ (localiseˢ s m₃')) C (wit-mono m₃ C w'')
+    ipL = localise-princ {s = s} {s₃} {m₃'} {C}
+            (reexpand-Princ⇑ {s = s} {s''} {m''} {C}
+              (λ δ₀ → solve-principal (⇑ᵉˢ s) C e (δ₀ ↑ᵉ)) e₃)
+
+solve-fail s (⋀ᵒᵖ f) eq
   with threadOps {f = f} (λ s' op → labelled {C = f op} op (solve s' (f op))) ops s in e
-... | just _  = ⊥nothing eq
-... | nothing =
+... | solved _ = ⊥solved eq
+... | stuck    = ⊥stuck-refuted eq
+... | refuted  =
       threadOps-fail (λ s' op → labelled {C = f op} op (solve s' (f op)))
                      (λ s' op e' → labelled-princ op (solve s' (f op))
                                      (solve-principal s' (f op)) e')
-                     (λ s' op e' → solve-fail s' (f op) (nf op)
-                                     (labelled-nothing op (solve s' (f op)) e')) ops s e
+                     (λ s' op e' → solve-fail s' (f op)
+                                     (labelled-refuted op (solve s' (f op)) e')) ops s e
 
 -- After it, every subtyping demand of the residual decomposes
 

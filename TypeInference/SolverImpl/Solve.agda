@@ -29,6 +29,10 @@
 -- new entry. The scope's own entries are carried out under the --
 -- rigid, and an outer unknown's image must stay free of it.    --
 -- After each close the entries are retried.                    --
+--                                                              --
+-- The outcome is a solution, a refutation, or stuck: a close   --
+-- whose atom, neither kept nor deferred, or whose inner entry, --
+-- mentions an unknown local to the scope.                      --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -55,6 +59,7 @@ open import Syntax.Operations
 open import Util.Equality
 
 open import TypeInference.Scopes
+open import TypeInference.Outcome
 
 open import TypeInference.SolverImpl.Enum using (OpEnum)
 
@@ -471,22 +476,25 @@ liftᵈ-sound j E h = ⊩ᵈ-subst E (closeᵈ-sound (E [ popˢ j ]ᵈ) h)
 -- The atoms are split three ways: those strengthened away from the
 -- rigid, kept outside; those deferred, one new entry; and the inner
 -- entries, each closed over the rigid: bound as a new outermost
--- binder where it occurs.
+-- binder where it occurs. An eternality demand, a subtyping demand or
+-- a disjunction that cannot be kept refutes the scope; an ordering
+-- that can be neither kept nor deferred, or an inner entry, that
+-- mentions an unknown local to the scope leaves it stuck.
 
 splitᴿ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (j : EVar (Φ +e))
        → (R : Resid (Φ +e))
-       → Maybe (Σ[ R₀ ∈ Resid Φ ]
-                  (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
-                     → Q ⊩ᴿ R₀ [ δ ] → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]))
-splitᴿ O O⁺ j R with listʳ O O⁺ j (rs R) | listᵉ O O⁺ j (es R) | listᵗ j (ts R)
-                   | listˢ j (ss R) | listᵈ j (ds R) | outerD? O⁺ (dfs R)
-... | just (lr , dr , fr) | just (le , de , fe) | just (lt , ft) | just (ls , fs)
-    | just (ld , fd) | just _ =
-      just (resid lr le lt ls ld (closeᵈ (dfr nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R)) ,
-            λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h) (⊩ors (new δ Q h)))
-                           (fe δ Q (⊩es h) (⊩oes (new δ Q h)))
-                           (ft δ Q (⊩ts h)) (fs δ Q (⊩ss h)) (fd δ Q (⊩ds h))
-                           (λ m → lifted δ Q h m))
+       → Outcome (Σ[ R₀ ∈ Resid Φ ]
+                    (∀ {Φ'} → (δ : Subst Φ Φ') → (Q : Hyps Φ')
+                       → Q ⊩ᴿ R₀ [ δ ] → wkᵉ-H Q ⊩ᴿ R [ popˢ j ⨟ˢ (δ ↑ᵉ) ]))
+splitᴿ O O⁺ j R with listᵗ j (ts R) | listˢ j (ss R) | listᵈ j (ds R)
+                   | listʳ O O⁺ j (rs R) | listᵉ O O⁺ j (es R) | outerD? O⁺ (dfs R)
+... | just (lt , ft) | just (ls , fs) | just (ld , fd)
+    | just (lr , dr , fr) | just (le , de , fe) | just _ =
+      solved (resid lr le lt ls ld (closeᵈ (dfr nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R)) ,
+              λ δ Q h → mk⊩ᴿ (fr δ Q (⊩rs h) (⊩ors (new δ Q h)))
+                             (fe δ Q (⊩es h) (⊩oes (new δ Q h)))
+                             (ft δ Q (⊩ts h)) (fs δ Q (⊩ss h)) (fd δ Q (⊩ds h))
+                             (λ m → lifted δ Q h m))
   where
     R₀ = resid lr le lt ls ld (closeᵈ (dfr nothing 0 (ords dr de)) ∷ map (liftᵈ j) (dfs R))
 
@@ -497,24 +505,26 @@ splitᴿ O O⁺ j R with listʳ O O⁺ j (rs R) | listᵉ O O⁺ j (es R) | list
     lifted : ∀ {Φ'} → (δ : Subst _ Φ') → (Q : Hyps Φ') → Q ⊩ᴿ R₀ [ δ ]
            → ∀ {E} → E ∈ dfs R → wkᵉ-H Q ⊩ᵈ E [ popˢ j ⨟ˢ (δ ↑ᵉ) ]
     lifted δ Q h {E} m = liftᵈ-sound j E (⊩dfs h (there (∈-map⁺ (liftᵈ j) m)))
-... | just _ | just _ | just _  | just _  | just _  | nothing = nothing
-... | just _ | just _ | just _  | just _  | nothing | _       = nothing
-... | just _ | just _ | just _  | nothing | _       | _       = nothing
-... | just _ | just _ | nothing | _       | _       | _       = nothing
-... | just _ | nothing | _      | _       | _       | _       = nothing
-... | nothing | _      | _      | _       | _       | _       = nothing
+... | nothing | _       | _       | _      | _      | _       = refuted
+... | just _  | nothing | _       | _      | _      | _       = refuted
+... | just _  | just _  | nothing | _      | _      | _       = refuted
+... | just _  | just _  | just _  | nothing | _     | _       = stuck
+... | just _  | just _  | just _  | just _ | nothing | _      = stuck
+... | just _  | just _  | just _  | just _ | just _ | nothing = stuck
 
 threadOps : ∀ {Θ} → {f : Op → Constraint Θ}
           → ((s : St Θ) → (op : Op)
-               → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
+               → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (f op))))
           → (l : List Op) → (s : St Θ)
-          → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × AllOp (λ op → Wit s' (f op)) l))
-threadOps g []       s = just (s , ⟶-id , [])
+          → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × AllOp (λ op → Wit s' (f op)) l))
+threadOps g []       s = solved (s , ⟶-id , [])
 threadOps {f = f} g (op ∷ l) s with g s op
-... | nothing = nothing
-... | just (s₁ , m₁ , w₁) with threadOps {f = f} g l s₁
-...   | nothing = nothing
-...   | just (s₂ , m₂ , ws) = just (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ (f op) w₁ ∷ ws)
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s₁ , m₁ , w₁) with threadOps {f = f} g l s₁
+...   | refuted = refuted
+...   | stuck   = stuck
+...   | solved (s₂ , m₂ , ws) = solved (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ (f op) w₁ ∷ ws)
 
 -- The inner store, restricted to the outer unknowns, moves the rigid
 -- back to the newest position
@@ -529,22 +539,21 @@ pop-key γ {j} eqj {δ₀} pδ =
        (λ { zero    → trans (cong (_[ popˢ j ]ᵉ) eqj) (popˢ-hit j)
           ; (suc i) → trans (≐ᵉ pδ i) (wkˢᵉ-e (sE δ₀ i)) })
 
--- Of the four failures below, only the atoms `splitᴿ` can neither
--- keep nor defer are an oracle's verdict; the rest cannot happen or
--- are refuted by `Core.Rigid`'s escape lemma.
+-- Closing the scope: the first two refusals cannot happen, the third
+-- is an escape, and the rest are `splitᴿ`'s.
 
 popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
      → (⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → Wit (st Φ θ'' R'' rg'') C
-     → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
-popᵉ s C (scope nt nr nzero)    θ'' R'' rg'' m'' w'' = nothing
+     → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
+popᵉ s C (scope nt nr nzero)    θ'' R'' rg'' m'' w'' = refuted
 popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
   with evar? (sE (mδ m'') (newᵉ {Ψ s}))
-... | nothing = nothing
+... | nothing = refuted
 ... | just (j , eqj) with strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'')
                         | splitᴿ (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') (mδ m'') j R''
-...   | just (δ₀ , pδ) | just (R₀ , tr) =
-        just (st (scope nt nr n) (θ s ⨟ˢ δ₀) (res s [ δ₀ ]ᴿ ∪ᴿ R₀) (transRig δ₀ (rig s)) ,
+...   | just (δ₀ , pδ) | solved (R₀ , tr) =
+        solved (st (scope nt nr n) (θ s ⨟ˢ δ₀) (res s [ δ₀ ]ᴿ ∪ᴿ R₀) (transRig δ₀ (rig s)) ,
               mor δ₀ ≐ˢ-refl (λ δ Q h → ⊩ᴿ-subst (∪ᴿ-fst h)) ,
               λ δ Q h → ⊨-resp-≐ˢ (chain δ) C
                           (w'' (popˢ j ⨟ˢ (δ ↑ᵉ)) (wkᵉ-H Q) (tr δ Q (∪ᴿ-snd h))))
@@ -558,8 +567,9 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
                 → (θ'' ⨟ˢ (popˢ j ⨟ˢ (δ ↑ᵉ))) ≐ˢ (((θ s ⨟ˢ δ₀) ⨟ˢ δ) ↑ᵉ)
           chain δ = ≐ˢ-trans (≐ˢ-sym (⨟-assoc θ'' (popˢ j) (δ ↑ᵉ)))
                     (≐ˢ-trans (⨟-congˡ key' (δ ↑ᵉ)) (⨟-↑ᵉ (θ s ⨟ˢ δ₀) δ))
-...   | just _         | nothing = nothing
-...   | nothing        | _       = nothing
+...   | just _         | refuted = refuted
+...   | just _         | stuck   = stuck
+...   | nothing        | _       = refuted
 
 ------------------------------------------------------------------------
 -- Retrying the deferred conditions
@@ -760,12 +770,13 @@ retry s with retryᴰ (ordsOf (res s)) (dfs (res s))
 -- A scope's close, then a retry
 
 thenRetry : ∀ {Θ} {s : St Θ} {C : Constraint Θ}
-          → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
-          → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
-thenRetry nothing = nothing
-thenRetry {C = C} (just (s₁ , m₁ , w₁)) with retry s₁
-... | nothing        = nothing
-... | just (s₂ , m₂) = just (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ C w₁)
+          → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
+          → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
+thenRetry refuted = refuted
+thenRetry stuck   = stuck
+thenRetry {C = C} (solved (s₁ , m₁ , w₁)) with retry s₁
+... | nothing        = refuted
+... | just (s₂ , m₂) = solved (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ C w₁)
 
 -- The entries a clause leaves carry its operation
 
@@ -779,11 +790,12 @@ relabel-⊩ op (dfr nothing  k o) h = h
 relabel-⊩ op (dfr (just l) k o) h = h
 
 labelled : ∀ {Θ} {s : St Θ} {C : Constraint Θ} → Op
-         → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
-         → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
-labelled op nothing = nothing
-labelled {C = C} op (just (s₁ , m₁ , w₁)) =
-  just (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ C w₁)
+         → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
+         → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
+labelled op refuted = refuted
+labelled op stuck   = stuck
+labelled {C = C} op (solved (s₁ , m₁ , w₁)) =
+  solved (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ C w₁)
   where
     s₂ = st (Ψ s₁) (θ s₁) (withDfs (res s₁) (map (relabel op) (dfs (res s₁)))) (rig s₁)
 
@@ -846,27 +858,29 @@ reexpand s with expandSub (ss (res s))
               mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e h)))
 
 solve : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
-      → Maybe (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
+      → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
 
-solve s ⊤̂ = just (s , ⟶-id , λ δ Q h → tt)
+solve s ⊤̂ = solved (s , ⟶-id , λ δ Q h → tt)
 
-solve s ⊥̂ = nothing
+solve s ⊥̂ = refuted
 
 solve s (C ∧̂ D) with solve s C
-... | nothing = nothing
-... | just (s₁ , m₁ , w₁) with solve s₁ D
-...   | nothing = nothing
-...   | just (s₂ , m₂ , w₂) =
-        just (s₂ , ⟶-⨟ m₁ m₂ , λ δ Q h → wit-mono m₂ C w₁ δ Q h , w₂ δ Q h)
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s₁ , m₁ , w₁) with solve s₁ D
+...   | refuted = refuted
+...   | stuck   = stuck
+...   | solved (s₂ , m₂ , w₂) =
+        solved (s₂ , ⟶-⨟ m₁ m₂ , λ δ Q h → wit-mono m₂ C w₁ δ Q h , w₂ δ Q h)
 
 solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
-... | nothing = nothing
+... | nothing = refuted
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
-...   | nothing = nothing
+...   | nothing = refuted
 ...   | just (Ψ' , δ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-...     | nothing = nothing
+...     | nothing = refuted
 ...     | just e =
-        just (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (atomiseᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ) e)
+        solved (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (atomiseᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ) e)
                  (transRig δ (transRig ⟦ ρ ⟧ᴬ (rig s))) ,
               mor (⟦ ρ ⟧ᴬ ⨟ˢ δ) (≐ˢ-sym (⨟-assoc (θ s) ⟦ ρ ⟧ᴬ δ))
                   (λ δ' Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc ⟦ ρ ⟧ᴬ δ δ'))
@@ -882,50 +896,51 @@ solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) 
                           ([⨟]ᵛ B (θ s) ⟦ ρ ⟧ᴬ))
 
 solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
-... | nothing        = nothing
+... | nothing        = refuted
 ... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
-...   | nothing = nothing
+...   | nothing = refuted
 ...   | just d  with subsList (ss (res s [ δ ]ᴿ))
-...     | nothing = nothing
+...     | nothing = refuted
 ...     | just e  =
-        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e ∪ᴿ atomsᴿ (atomsOf d))
+        solved (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e ∪ᴿ atomsᴿ (atomsOf d))
                  (transRig δ (rig s)) ,
               mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e (∪ᴿ-fst h))) ,
               λ δ' Q h → subst₂ (Q ∣_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
                                 (intro d δ' (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
 solve s (ρ ≾̂ᵣᶜ ρ') =
-  just (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) (ρ' [ θ s ]ʳ) (res s)) (rig s) ,
+  solved (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) (ρ' [ θ s ]ʳ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
         λ δ Q h → subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y)
                          ([⨟]ʳ ρ (θ s) δ) ([⨟]ʳ ρ' (θ s) δ) (⊩rs h (here refl)))
 
 solve s (ε ≾̂ₑᶜ ε') =
-  just (st (Ψ s) (θ s) (pushᵉ (ε [ θ s ]ᵉ) (ε' [ θ s ]ᵉ) (res s)) (rig s) ,
+  solved (st (Ψ s) (θ s) (pushᵉ (ε [ θ s ]ᵉ) (ε' [ θ s ]ᵉ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵉ h)) ,
         λ δ Q h → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y)
                          ([⨟]ᵉ ε (θ s) δ) ([⨟]ᵉ ε' (θ s) δ) (⊩es h (here refl)))
 
 solve s (Etᶜ A) =
-  just (st (Ψ s) (θ s) (pushᵗ (A [ θ s ]ᵛ) (res s)) (rig s) ,
+  solved (st (Ψ s) (θ s) (pushᵗ (A [ θ s ]ᵛ) (res s)) (rig s) ,
         mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵗ h)) ,
         λ δ Q h → subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ) (⊩ts h (here refl)))
 
 solve s (Et∨≾ᵘ A ρ) with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just p =
-      just (s , ⟶-id ,
+      solved (s , ⟶-id ,
             λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
                                    (⊩-substᵣ ∅ᴴ-⊩ᴴ p)))
 ... | nothing =
-      just (st (Ψ s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
+      solved (st (Ψ s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
             mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵈ h)) ,
             λ δ Q h → subst₂ (VarOK Q) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ)
                              (⊩ds h (here refl)))
 
 solve {Θ} s (∃ᵗ C) with solve (s ↑ᵗˢ) C
-... | nothing = nothing
-... | just (s'' , m'' , w'') =
-      just (st (Ψ s'') (wkˢᵗ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s'' , m'' , w'') =
+      solved (st (Ψ s'') (wkˢᵗ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
             mor (wkˢᵗ {Ψ s} ⨟ˢ mδ m'')
                 (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢᵗ {Ψ s}) (mδ m'')))
                  (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (wkˢᵗ-↑ᵗ (θ s))) (mδ m''))
@@ -940,9 +955,10 @@ solve {Θ} s (∃ᵗ C) with solve (s ↑ᵗˢ) C
                                 C (w'' δ Q h))
 
 solve {Θ} s (∃ʳ C) with solve (s ↑ʳˢ) C
-... | nothing = nothing
-... | just (s'' , m'' , w'') =
-      just (st (Ψ s'') (wkˢʳ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s'' , m'' , w'') =
+      solved (st (Ψ s'') (wkˢʳ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
             mor (wkˢʳ {Ψ s} ⨟ˢ mδ m'')
                 (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢʳ {Ψ s}) (mδ m'')))
                  (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (wkˢʳ-↑ʳ (θ s))) (mδ m''))
@@ -957,9 +973,10 @@ solve {Θ} s (∃ʳ C) with solve (s ↑ʳˢ) C
                                 C (w'' δ Q h))
 
 solve {Θ} s (∃ᵉ C) with solve (s ↑ᵉˢ) C
-... | nothing = nothing
-... | just (s'' , m'' , w'') =
-      just (st (Ψ s'') (wkˢᵉ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s'' , m'' , w'') =
+      solved (st (Ψ s'') (wkˢᵉ {Θ} ⨟ˢ θ s'') (res s'') (rig s'') ,
             mor (wkˢᵉ {Ψ s} ⨟ˢ mδ m'')
                 (≐ˢ-trans (≐ˢ-sym (⨟-assoc (θ s) (wkˢᵉ {Ψ s}) (mδ m'')))
                  (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (wkˢᵉ-↑ᵉ (θ s))) (mδ m''))
@@ -974,9 +991,10 @@ solve {Θ} s (∃ᵉ C) with solve (s ↑ᵉˢ) C
                                 C (w'' δ Q h))
 
 solve s (∀ᵉ C) with solve (⇑ᵉˢ s) C
-... | nothing = nothing
-... | just (s'' , m'' , w'') with reexpand s''
-...   | nothing = nothing
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s'' , m'' , w'') with reexpand s''
+...   | nothing = refuted
 ...   | just (s₃ , m₃) = thenRetry {C = ∀ᵉ C} (
         popᵉ s C (Ψ (proj₁ (localiseˢ s m₃'))) (θ (proj₁ (localiseˢ s m₃')))
                  (res (proj₁ (localiseˢ s m₃'))) (rig (proj₁ (localiseˢ s m₃')))
@@ -986,6 +1004,7 @@ solve s (∀ᵉ C) with solve (⇑ᵉˢ s) C
     m₃' = ⟶-⨟ m'' m₃
 
 solve s (⋀ᵒᵖ f) with threadOps {f = f} (λ s' op → labelled {C = f op} op (solve s' (f op))) ops s
-... | nothing = nothing
-... | just (s' , m , ws) =
-      just (s' , m , λ δ Q h op → all-lookup ws (complete op) δ Q h)
+... | refuted = refuted
+... | stuck   = stuck
+... | solved (s' , m , ws) =
+      solved (s' , m , λ δ Q h op → all-lookup ws (complete op) δ Q h)

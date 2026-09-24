@@ -370,12 +370,11 @@ a grade system, a signature of base types, and operations' signatures.
   parametric by construction, typed under a grade variable in the context, as
   in [danelahman/tempore-lang](https://github.com/danelahman/tempore-lang).
 
-- `TypeInference/SolverImpl/` is a concrete solver, sound by construction,
-  that does not meet the interface's completeness field. It proves
-  principality of its solutions (`solve-principal`), that a refusal refutes for
-  constraints without rigid binders (`solve-fail`, for the fragment `NoRig` of
-  `TypeInference/Solver/Fragment.agda`), and that a failed escape check refutes
-  (`popᵉ-escape`). `Core/` is McBride-style first-order unification,
+- `TypeInference/SolverImpl/` is a concrete solver, sound by construction. Its
+  outcome is a solution, a refutation, or stuck (`TypeInference/Outcome.agda`).
+  It proves principality of its solutions (`solve-principal`) and that a
+  refutation refutes, for every constraint (`solve-fail`). It is stuck only
+  where a rigid scope closes with a local unknown that has no principal value. `Core/` is McBride-style first-order unification,
   `Expand.agda` skeleton expansion of type unknowns, and `Resid.agda` the
   residual worklist.
 

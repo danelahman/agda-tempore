@@ -582,3 +582,30 @@ strSub-escape {Θ} {Ψ} {Ξ} j γ δ r γ₀ p q = ⊥just (trans (sym q) (proj�
     done = strSubᵃ-just j γ _ (proj₁ tT) (proj₂ tT)
                             _ (proj₁ tR) (proj₂ tR)
                             _ (proj₁ tE) (proj₂ tE)
+
+-- With the rigid sent to a constant, an expression strengthens away
+-- from it
+
+strᵉ-upd : ∀ {Ψ} → (j : EVar (Ψ +e)) → (c : E) → (ε : EExp (Ψ +e))
+         → Σ[ ε₀ ∈ EExp Ψ ] (strᵉ j (ε [ updᵉ j (econst c) ]ᵉ) ≡ just ε₀)
+strᵉ-upd {Ψ} j c (evar k) with k ≟ᶠ j
+... | yes refl = econst c , refl
+... | no ne with thickᵉ {Ψ} j k in r
+...   | just k₀ = evar k₀ , refl
+...   | nothing = ⊥-elim (ne (thick-nothing j k r))
+strᵉ-upd j c (econst c')  = econst c' , refl
+strᵉ-upd j c (ε ·̂ₑ ε') with strᵉ-upd j c ε | strᵉ-upd j c ε'
+... | a , qa | b , qb = a ·̂ₑ b , cong₂ (zip₂ _·̂ₑ_) qa qb
+strᵉ-upd j c (ε ⊔̂ₑ ε') with strᵉ-upd j c ε | strᵉ-upd j c ε'
+... | a , qa | b , qb = a ⊔̂ₑ b , cong₂ (zip₂ _⊔̂ₑ_) qa qb
+
+strʳ-upd : ∀ {Ψ} → (j : EVar (Ψ +e)) → (c : E) → (ρ : RExp (Ψ +e))
+         → Σ[ ρ₀ ∈ RExp Ψ ] (strʳ j (ρ [ updᵉ j (econst c) ]ʳ) ≡ just ρ₀)
+strʳ-upd j c (rvar i)   = rvar i , refl
+strʳ-upd j c (rconst c') = rconst c' , refl
+strʳ-upd j c (ρ ·̂ᵣ ρ') with strʳ-upd j c ρ | strʳ-upd j c ρ'
+... | a , qa | b , qb = a ·̂ᵣ b , cong₂ (zip₂ _·̂ᵣ_) qa qb
+strʳ-upd j c (ρ ⊔̂ᵣ ρ') with strʳ-upd j c ρ | strʳ-upd j c ρ'
+... | a , qa | b , qb = a ⊔̂ᵣ b , cong₂ (zip₂ _⊔̂ᵣ_) qa qb
+strʳ-upd j c ∣ ε ∣̂ᵉ with strᵉ-upd j c ε
+... | a , qa = ∣ a ∣̂ᵉ , cong (mmap ∣_∣̂ᵉ) qa
