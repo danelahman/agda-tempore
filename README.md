@@ -70,17 +70,16 @@ a grade system, a signature of base types, and operations' signatures.
   `≾-antisym`. Since the order is a partial one, the derived laws are
   *equations*: the other direction of each distributivity, and the join's
   idempotence, commutativity, associativity and its law against the greatest
-  grade, all hold at `_≡_`. A grade morphism preserves joins on the nose. This
-  is what lets a branching construct be graded by the join of its branches, and
-  what lets type inference report the join of two bounds rather than falling
-  back on the greatest grade. The order is also **decidable** (`_≾?_`), which
-  type inference relies on, and antisymmetry turns that into decidable equality
-  of grades. It also decides whether its unit is the least grade (`u-least?`):
-  the open calculus's `minᵣ`/`minₑ` rules take that proof, and type inference
-  reads the decision from the grade system. It may also declare `_·_`
-  commutative (`·-comm?`), as the time grades do and the trace grades do not,
-  which licenses the open calculus's `≡̂ᵣ-comm`/`≡̂ₑ-comm` and lets type
-  inference order the factors of every product.
+  grade, all hold at `_≡_`. A grade morphism preserves joins on the nose. A
+  branching construct is graded by the join of its branches, and type
+  inference reports the join of two bounds.
+
+- A `Grade` also carries the data type inference reads: a **decidable** order
+  (`_≾?_`), hence, by antisymmetry, decidable equality; a decision whether its
+  unit is least (`u-least?`), whose proof the open calculus's `minᵣ`/`minₑ`
+  take; and an optional commutativity of `_·_` (`·-comm?`: `just` at the time
+  grades, `nothing` at the trace grades), which the open calculus's
+  `≡̂ᵣ-comm`/`≡̂ₑ-comm` take.
 
 - `Syntax/Grades/Example.agda` indexes the example grades, which come in two
   families, and the grade systems assembled from them.
@@ -314,96 +313,103 @@ a grade system, a signature of base types, and operations' signatures.
 
 ### Type inference
 
-- `TypeInference/Scopes.agda` gives scopes of unknowns: three independent
-  counters, one each for type, resource-grade and effect-grade variables, so
-  that extending one leaves the others reducing definitionally.
+Inference for the open calculus, by constraint generation and solving.
 
-- `TypeInference/OpenSyntax/` is the language with unknowns in it. `Grades.agda`
-  has open grade expressions — a variable, an embedded closed grade, a product,
-  a binary join, and (on the resource side) the image of an effect expression
-  under `mapᵉ`; `Types.agda` and `Contexts.agda` the open types and contexts,
-  with the eternal barrier; `Subst.agda` substitutions between scopes.
-  `Hyps.agda` carries hypothesis sets; the calculus of open grades,
-  convertibility `_≡̂_` (with absorption of a join by an upper bound) and
-  entailed ordering `_⊩_≾̂_`, defined mutually, from which idempotence,
-  associativity of the join and antisymmetry at the empty hypothesis set are
-  derived; equality relative to a hypothesis set `_⊩_≡̂_`, entailed ordering
-  both ways; and shape-preserving subtyping of open types.
-  `Language.agda` is the mirrored qualified type system — the same rules over
-  open types and a hypothesis set — and `Grounding.agda` with
-  `GroundingTheorem.agda` lands an open judgement back in the original type
-  system once its unknowns are instantiated.
+- `TypeInference/Scopes.agda` gives scopes of unknowns: one counter each for
+  type, resource-grade and effect-grade variables, so that every scope
+  extension reduces definitionally.
 
-- `TypeInference/Raw/Syntax.agda` defines raw terms, which carry no types at
-  all, and `TypeInference/Erase.agda` erases a derivation to one.
+- `TypeInference/OpenSyntax/` is the open calculus. `Grades.agda` has open
+  grade expressions — a variable, an embedded closed grade, a product, a binary
+  join, and (on the resource side) the image of an effect expression under
+  `mapᵉ`; `Types.agda` and `Contexts.agda` the open types and contexts, with
+  `ContextsLemmas.agda` for lookup under weakening and substitution;
+  `Subst.agda` substitutions between scopes. `Hyps.agda` has hypothesis sets
+  and entailment: convertibility `_≡̂_`, entailed ordering `_⊩_≾̂_`,
+  eternality, the var-rule disjunction `VarOK`, and shape-preserving subtyping
+  of open types. `Language.agda` is the qualified judgement `Q ∣ Γ ⊢C⦂ C`: the
+  rules of `Syntax/Language.agda` over open types, their side conditions
+  entailed from `Q`, with `handle` typing its operation clauses at a rigid
+  effect variable.
 
-- `TypeInference/Constraints/` defines what a generated problem is: type
-  equations, value-type subtyping, orderings of resource and effect grades,
-  eternality of a type, the disjunction the `var` rule leaves behind, and
-  binders for fresh and for rigid variables — together with what it means for a
-  substitution to satisfy one.
+- `TypeInference/Raw/Syntax.agda` defines raw terms, untyped and scoped by the
+  grade and type variables of the context; `box` carries its grade, an
+  expression over that scope. `Raw/Subst.agda` substitutes into the
+  annotations. `TypeInference/Erase.agda` erases a derivation to a raw term.
 
-- `TypeInference/Generate.agda` turns a raw term and an expected open type into
-  a constraint, structurally and mirroring the rules former by former. The
-  expected type is an *upper bound*, not a pin: where two types the generation
-  cannot choose between must meet, it is the right-hand side of a subtyping or
-  ordering atom, and the slack is passed on to the subterms.
+- `TypeInference/Constraints/` is the constraint language — type equations,
+  value-type subtyping, grade orderings, eternality, the var-rule disjunction,
+  `∃` over the three sorts, a rigid `∀ᵉ`, and a conjunction over operations —
+  with satisfaction `σ ⊨[ Q ∣ R ] C` relative to hypotheses `Q` and
+  obligations `R`.
 
-- `TypeInference/Soundness.agda` and `Completeness.agda` are the two halves of
-  its correctness: a solution of a generated constraint elaborates to a mirrored
-  derivation that erases back to the raw term it came from, and a derivation
-  satisfies the constraint generated from its own erasure.
+- `TypeInference/Generate.agda` generates a constraint from a raw term and an
+  expected type, an upper bound. It is sound (`Soundness.agda`: a solution
+  elaborates to a derivation erasing to the term) and complete
+  (`Completeness.agda`: a derivation satisfies the constraint generated from
+  its erasure).
 
-- `TypeInference/Solver.agda` axiomatises a constraint solver — solve, with
-  soundness, completeness and a principal-solution factorisation —
-  `Principality.agda` derives principal typings relative to one, and
-  `Infer.agda` composes generation, solving and grounding into inference.
+- `TypeInference/Solver.agda` axiomatises a solver. Its outcome
+  (`Outcome.agda`) is solved, refuted or stuck. A solution `(σ , Q , R)`
+  solves the constraint (`solve-sound`) and is principal at each closed
+  instance (`solve-principal`); a refutation leaves no solution under
+  satisfiable conditions (`solve-refutes`). Nothing is claimed of stuck.
 
-- `TypeInference/ParamGround/` supplies the parametricity certificates the
-  denotational side needs. The open calculus is parametric syntactically (an
-  operation clause is one derivation at a rigid effect variable); the
-  semantics assumes `EffUniformʰ`. The bridge, `GroundUniform.ground-uniform`,
-  is an explicit hypothesis, proved in `ParamGround/Uniform.agda` for a
-  covariant fragment. The passage from the source calculus's clause families to
-  the open calculus is not proved, and completeness of inference is stated for
-  the open calculus. A possible refinement: clauses of the source calculus
-  parametric by construction, typed under a grade variable in the context, as
-  in [danelahman/tempore-lang](https://github.com/danelahman/tempore-lang).
+- `TypeInference/Principality.agda`: `PrincipalTyping Γ M` is a scheme
+  `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃` whose every instance types `M` (`instantiate`) and
+  through which every typing of `M` factors at each closed instance
+  (`factor`). `Typable Γ M` is a typing under satisfiable hypotheses;
+  `typable-⇔` gives `Typable Γ M ⇔ Satisfiable Q̃ R̃`. `Inference Γ M` is
+  `typed`, `untypable` or `stuck`.
 
-- `TypeInference/SolverImpl/` is a concrete solver, sound by construction. Its
-  outcome is a solution, a refutation, or stuck (`TypeInference/Outcome.agda`).
-  It proves principality of its solutions (`solve-principal`) and that a
-  refutation refutes, for every constraint (`solve-fail`). It is stuck only
-  where a rigid scope closes with a local unknown that has no principal value. `Core/` is McBride-style first-order unification,
-  `Expand.agda` skeleton expansion of type unknowns, and `Resid.agda` the
-  residual worklist.
+- `TypeInference/OpenSyntax/Instances.agda` gives the models: closed instances
+  `δ : Subst Θ ∅ˢ`. Satisfaction `δ ⊨ Q ∣ R` is derivability from no
+  hypotheses at `δ`, each clause's rigid kept a parameter; an obligation
+  `∀ᵉ j₁ … jₖ. Q` holds when `Q` is derivable at fresh rigids. `Satisfiable`
+  and semantic entailment `_⊨ᴴ_` are stated through it. The key lemma
+  (`val-≾ᵣ`, `val-≾ᵣ⁻` and their companions): at closed expressions, entailed
+  ordering is the carrier's ordering of values and convertibility is equality
+  of values. Closed subtyping, eternality and `VarOK` are decidable.
 
-  `Localise.agda` and `Solve.agda` solve the rigid binders of handler operation
-  clauses without instantiating the rigid variable: a var-rule disjunction with
-  a side decided true is dropped, an unknown local to its scope takes its least
-  solution (the join of its lower bounds, under Pottier's condition), and the
-  rigid variable is replaced by the unit or the top where it bounds an ordering
-  from one side only.
+- `TypeInference/SolverImpl.agda` is the concrete solver (`solver : Solver`),
+  over an enumeration of the operations (`SolverImpl/Enum.agda`), with its
+  report and inference. `SolverImpl/`:
+  - `Solve.agda`: the driver. Type equations go to unification, subtyping is
+    decomposed, other atoms are residualised; at the close of a rigid scope
+    the atoms are kept, discharged or deferred.
+  - `Localise.agda`: principal values for the unknowns local to a rigid scope.
+  - `Deferred.agda`: deferred rigid conditions `∀ᵉ j₁ … jₖ. O`, retried after
+    each close and read back as obligations.
+  - `Principal.agda`: principality and refutation for the driver.
+  - `Closed.agda`: atoms with no unknowns, decided by the grade's `_≾?_`.
+  - `Product.agda`, `Normal.agda`, `Canon.agda`: the sum-of-products normal
+    form, its products sorted at commutative grades; deciding entailed
+    ordering (`decide≾ᵣ`/`decide≾ₑ`); the canonical form of reported grades.
+  - `Simplify.agda`: settles disjunctions and prunes entailed atoms of a
+    report.
+  - `Eliminate.agda`: Pottier's elimination of unknowns (ICFP 1996), and
+    replacement of an unknown by an expression the hypotheses equate it with.
+  - `Strengthen.agda`: a report over the variables occurring in it; `Vars.agda`
+    sets of variables.
+  - `Refute.agda`: refutation of an ordering against the unit.
+  - `Resid.agda`, `State.agda`, `Polarity.agda`: residual constraints, the
+    solver state, the polarity of an unknown.
+  - `Expand.agda`: skeleton expansion of type unknowns.
+  - `Core/`: McBride-style first-order unification of types and of skeletons,
+    sound and most general, never binding a rigid.
 
-  `Restricted.agda`'s `reportOn` reads an answer out at open scope, `Close.agda`
-  at ground scope, joining lower bounds and independent of the order of the
-  constraints. `Eliminate.agda` is Pottier's simplification of subtyping
-  constraints (ICFP 1996), together with the replacement of a grade unknown by
-  an expression the hypotheses equate it with. `Product.agda` normalises grade
-  expressions to a **sum of products**, `Normal.agda` decides orderings between
-  them, and `Canon.agda` puts a reported grade in canonical form: alternatives
-  grouped and folded by variable skeleton, dominated ones dropped. Groups
-  varying in more than one constant slot keep their arrival order.
+- The end-to-end theorem (`SolverImpl.agda`): `infer Γ M : Inference Γ M`;
+  `infer-typed` — a `typed p` verdict has `Typable Γ M ⇔ Satisfiable Q̃ R̃`;
+  `infer-untypable` — an `untypable` verdict means `¬ Typable Γ M`;
+  `infer-complete` — a typable term is never `untypable`.
 
-- `TypeInference/SolverImpl/Demo/` runs the solver and checks every answer by
-  computation — each example is discharged by `refl`, so what is inferred is
-  checked rather than asserted, and a refusal is paired with the side condition
-  that fails, decided by the grade's own procedure. `Generic.agda` holds the
-  program shapes that make sense over any grade monoid, and the two instances
-  supply their own results: `TimeIntervals.agda` over the sensor node's windows,
-  `TimedTraces.agda` over its sets of runs. The pair is the clearest statement
-  of what a grade choice buys — the same conditional is graded by a window
-  spanning both arms at one, and by the union of their runs at the other, where
-  a claim on a boxed resource can also be refused for doing the right things in
-  the wrong order. Both also check handler clauses and constraints at rigid
-  binders.
+- The solver reads `u-least?` and `·-comm?` from the grade system.
+
+- `stuck` arises only where a clause's scope closes with a local unknown that
+  has no principal value: a local cycle between the clause's rigid and
+  something mentioning it; an outer clause's local on both sides of an inner
+  clause's deferred condition; a clause-local under several incomparable
+  upper bounds.
+
+- The example programs and tests, in `backup/TypeInference/Tests` and
+  `backup/TypeInference/SolverImpl/Demo`, are not part of the check.
