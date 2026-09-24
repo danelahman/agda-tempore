@@ -80,9 +80,11 @@ min≾ᵣ nothing  = nothing
 -- Two atoms are linked when they are equal, or are constants ordered
 -- by the grade's own order. `a` reaches `b` along a chain of edges
 -- when `a` is linked to the first source, each target to the next
--- source, and the last target to `b`. The search saturates the atoms
--- reached from `a`, at most one round per edge, stopping at the first
--- round that reaches nothing new.
+-- source, and the last target to `b`. What each source reaches is
+-- saturated once per hypothesis set, at most one round per edge,
+-- stopping at the first round that reaches nothing new; `a` reaches
+-- `b` when they are linked, or `a` is linked to a source that
+-- reaches `b`.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)
               (refl⊑  : ∀ {a} → a ⊑ a)
@@ -112,8 +114,24 @@ module Chains {A : Set} (_⊑_ : A → A → Set)
   ...   | true  = s'
   ...   | false = sat n s'
 
-  reach? : (a b : A) → Maybe (a ⊑ b)
-  reach? a = find (sat (length edges) ((a , refl⊑) ∷ []))
+  -- each source with what it reaches
+
+  Table : Set
+  Table = List (Σ[ c ∈ A ] List (Σ[ d ∈ A ] c ⊑ d))
+
+  table : Table
+  table = map (λ { (c , _ , _) → c , sat (length edges) ((c , refl⊑) ∷ []) }) edges
+
+  reach? : Table → (a b : A) → Maybe (a ⊑ b)
+  reach? t a b = link? a b <∣> go t
+    where
+      go : Table → Maybe (a ⊑ b)
+      go []             = nothing
+      go ((c , s) ∷ t') with link? a c
+      ... | nothing = go t'
+      ... | just l with find s b
+      ...   | just w  = just (trans⊑ l w)
+      ...   | nothing = go t'
 
 -- An atomic hypothesis, as an edge between its two atoms
 
@@ -191,30 +209,19 @@ linkᵣ? (rm i) (rm j) with i ≟ᶠ j
 ... | no _     = nothing
 linkᵣ? _      _      = nothing
 
--- Reachability along the atomic hypotheses; on the resource side
--- along the resource ones and the images of the effect ones
+-- What the sources of the atomic hypotheses reach; on the resource
+-- side along the resource ones and the images of the effect ones
 
-reachₑ? : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-reachₑ? {Q = Q} =
-  Chains.reach? (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ) ⊩≾̂ₑ-refl transₑ linkₑ?
-                (edgesₑ (ordₑ Q) (λ m → m))
+tableₑ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+                                              ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m))
+tableₑ Q = Chains.table _ ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m))
 
-reachᵣ? : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-reachᵣ? {Q = Q} =
-  Chains.reach? (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ) ⊩≾̂ᵣ-refl transᵣ linkᵣ?
-                (edgesᵣ (ordᵣ Q) (λ m → m) ++ map mapEdge (edgesₑ (ordₑ Q) (λ m → m)))
+redgesᵣ : ∀ {Θ} → (Q : Hyps Θ) → List (REdge Q)
+redgesᵣ Q = edgesᵣ (ordᵣ Q) (λ m → m) ++ map mapEdge (edgesₑ (ordₑ Q) (λ m → m))
 
--- Anything is below an atom that the top is linked to or reaches
-
-ceilₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-ceilₑ {Q = Q} b with linkₑ? {Q = Q} (ac ⊤ₑ) b <∣> reachₑ? (ac ⊤ₑ) b
-... | just p  = just (transₑ topₑ p)
-... | nothing = nothing
-
-ceilᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-ceilᵣ {Q = Q} b with linkᵣ? {Q = Q} (rc ⊤ᵣ) b <∣> reachᵣ? (rc ⊤ᵣ) b
-... | just p  = just (transᵣ topᵣ p)
-... | nothing = nothing
+tableᵣ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+                                              ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q)
+tableᵣ Q = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q)
 
 ------------------------------------------------------------------
 -- Products
@@ -250,153 +257,167 @@ ceilᵣ {Q = Q} b with linkᵣ? {Q = Q} (rc ⊤ᵣ) b <∣> reachᵣ? (rc ⊤ᵣ
 -- The products are read back with a trailing unit (`⟦_⟧ᵉˢ`), so that
 -- each step is one use of `monoₑ`; `prod≾ₑ` converts at the ends.
 
--- An atom below an atom: linked, below an atom above the top, or
--- reached along the atomic hypotheses
+module Searchₑ {Θ} {Q : Hyps Θ}
+               (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+                                 ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m))) where
 
-atom≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
+  reachₑ? : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+  reachₑ? = Chains.reach? _ ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m)) t
 
--- The unit below an atom: by unit-minimality, or as the constant atom
--- `uₑ`
+  -- Anything is below an atom that the top reaches
 
-unit≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-unit≾ₑ b = min≾ₑ umin?ₑ <∣> atom≾ₑ (ac uₑ) b
+  ceilₑ : ∀ {ε : EExp Θ} → (b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+  ceilₑ b with reachₑ? (ac ⊤ₑ) b
+  ... | just p  = just (transₑ topₑ p)
+  ... | nothing = nothing
 
--- An atom below the unit, as the constant atom `uₑ`
+  -- An atom below an atom: linked, below an atom above the top, or
+  -- reached along the atomic hypotheses
 
-≾unitₑ : ∀ {Θ} {Q : Hyps Θ} → (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ûₑ)
-≾unitₑ a = atom≾ₑ a (ac uₑ)
+  atom≾ₑ : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+  atom≾ₑ a b = linkₑ? a b <∣> ceilₑ b <∣> reachₑ? a b
 
--- An atom absorbed into an atom above the top
+  -- The unit below an atom: by unit-minimality, or as the constant atom
+  -- `uₑ`
 
-absorbs≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (a b : EAtom Θ)
-          → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-absorbs≾ₑ a b = ceilₑ b
+  unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+  unit≾ₑ b = min≾ₑ umin?ₑ <∣> atom≾ₑ (ac uₑ) b
 
--- The four steps, each given the comparison of what remains
+  -- An atom below the unit, as the constant atom `uₑ`
 
-matchₑ : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → (a b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-       → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
-matchₑ {Q = Q} a b r with atom≾ₑ {Q = Q} a b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (monoₑ p q)
-...   | nothing = nothing
+  ≾unitₑ : (a : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ûₑ)
+  ≾unitₑ a = atom≾ₑ a (ac uₑ)
 
-skipʳₑ : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → (b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-       → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
-skipʳₑ {Q = Q} b r with unit≾ₑ {Q = Q} b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ p q))
-...   | nothing = nothing
+  -- An atom absorbed into an atom above the top
 
-skipˡₑ : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → (a : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-       → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ε ≾̂ₑ ε')
-skipˡₑ {Q = Q} a r with ≾unitₑ {Q = Q} a
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transₑ (monoₑ p q) (eqₑ ≡̂ₑ-identityˡ))
-...   | nothing = nothing
+  absorbs≾ₑ : (a b : EAtom Θ)
+            → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ b ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
+  absorbs≾ₑ a b = ceilₑ b
 
-intoTopₑ : ∀ {Θ} {Q : Hyps Θ} {ε ε'} → (a b : EAtom Θ)
-         → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
+  -- The four steps, each given the comparison of what remains
+
+  matchₑ : ∀ {ε ε'} → (a b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
          → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
-intoTopₑ {Q = Q} a b r with absorbs≾ₑ {Q = Q} a b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transₑ (monoₑ ⊩≾̂ₑ-refl q)
-                               (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ p ⊩≾̂ₑ-refl)))
-...   | nothing = nothing
+  matchₑ a b r with atom≾ₑ a b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (monoₑ p q)
+  ...   | nothing = nothing
 
--- An atom passed over between a constant and the rest, the constant
--- merged with what follows by `consₑ`
+  skipʳₑ : ∀ {ε ε'} → (b : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+         → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
+  skipʳₑ b r with unit≾ₑ b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-identityˡ)) (monoₑ p q))
+  ...   | nothing = nothing
 
-spliceʳₑ : ∀ {Θ} {Q : Hyps Θ} {ε} → (c : E) → (b : EAtom Θ) → (bs : List (EAtom Θ))
-         → Maybe (Q ⊩ ε ≾̂ₑ ⟦ consₑ (ac c) bs ⟧ᵉˢ)
-         → Maybe (Q ⊩ ε ≾̂ₑ econst c ·̂ₑ (⟦ b ⟧ᵉᵃ ·̂ₑ ⟦ bs ⟧ᵉˢ))
-spliceʳₑ {Q = Q} c b bs r with unit≾ₑ {Q = Q} b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transₑ q (transₑ (eqₑ (≡̂ₑ-trans (consₑ-≡ (ac c) bs)
-                                                      (≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-sym ≡̂ₑ-identityˡ))))
-                                          (monoₑ ⊩≾̂ₑ-refl (monoₑ p ⊩≾̂ₑ-refl))))
-...   | nothing = nothing
+  skipˡₑ : ∀ {ε ε'} → (a : EAtom Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+         → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ε ≾̂ₑ ε')
+  skipˡₑ a r with ≾unitₑ a
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transₑ (monoₑ p q) (eqₑ ≡̂ₑ-identityˡ))
+  ...   | nothing = nothing
 
-spliceˡₑ : ∀ {Θ} {Q : Hyps Θ} {ε'} → (c : E) → (a : EAtom Θ) → (as : List (EAtom Θ))
-         → Maybe (Q ⊩ ⟦ consₑ (ac c) as ⟧ᵉˢ ≾̂ₑ ε')
-         → Maybe (Q ⊩ econst c ·̂ₑ (⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ) ≾̂ₑ ε')
-spliceˡₑ {Q = Q} c a as r with ≾unitₑ {Q = Q} a
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transₑ (monoₑ ⊩≾̂ₑ-refl (monoₑ p ⊩≾̂ₑ-refl))
-                               (transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl ≡̂ₑ-identityˡ)
-                                                      (≡̂ₑ-sym (consₑ-≡ (ac c) as))))
-                                       q))
-...   | nothing = nothing
+  intoTopₑ : ∀ {ε ε'} → (a b : EAtom Θ)
+           → Maybe (Q ⊩ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
+           → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ·̂ₑ ε ≾̂ₑ ⟦ b ⟧ᵉᵃ ·̂ₑ ε')
+  intoTopₑ a b r with absorbs≾ₑ a b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transₑ (monoₑ ⊩≾̂ₑ-refl q)
+                                 (transₑ (eqₑ (≡̂ₑ-sym ≡̂ₑ-assoc)) (monoₑ p ⊩≾̂ₑ-refl)))
+  ...   | nothing = nothing
 
--- The same, at a side that starts with a constant and an atom, given
--- the comparison against any shorter side
+  -- An atom passed over between a constant and the rest, the constant
+  -- merged with what follows by `consₑ`
 
-mergeʳₑ : ∀ {Θ} {Q : Hyps Θ} {ε} → ((bs : List (EAtom Θ)) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ bs ⟧ᵉˢ))
-        → (bs : List (EAtom Θ)) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ bs ⟧ᵉˢ)
-mergeʳₑ r (ac c ∷ b ∷ bs) = spliceʳₑ c b bs (r (consₑ (ac c) bs))
-mergeʳₑ r _               = nothing
+  spliceʳₑ : ∀ {ε} → (c : E) → (b : EAtom Θ) → (bs : List (EAtom Θ))
+           → Maybe (Q ⊩ ε ≾̂ₑ ⟦ consₑ (ac c) bs ⟧ᵉˢ)
+           → Maybe (Q ⊩ ε ≾̂ₑ econst c ·̂ₑ (⟦ b ⟧ᵉᵃ ·̂ₑ ⟦ bs ⟧ᵉˢ))
+  spliceʳₑ c b bs r with unit≾ₑ b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transₑ q (transₑ (eqₑ (≡̂ₑ-trans (consₑ-≡ (ac c) bs)
+                                                        (≡̂ₑ-cong ≡̂ₑ-refl (≡̂ₑ-sym ≡̂ₑ-identityˡ))))
+                                            (monoₑ ⊩≾̂ₑ-refl (monoₑ p ⊩≾̂ₑ-refl))))
+  ...   | nothing = nothing
 
-mergeˡₑ : ∀ {Θ} {Q : Hyps Θ} {ε'} → ((as : List (EAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ε'))
-        → (as : List (EAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ε')
-mergeˡₑ r (ac c ∷ a ∷ as) = spliceˡₑ c a as (r (consₑ (ac c) as))
-mergeˡₑ r _               = nothing
+  spliceˡₑ : ∀ {ε'} → (c : E) → (a : EAtom Θ) → (as : List (EAtom Θ))
+           → Maybe (Q ⊩ ⟦ consₑ (ac c) as ⟧ᵉˢ ≾̂ₑ ε')
+           → Maybe (Q ⊩ econst c ·̂ₑ (⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ as ⟧ᵉˢ) ≾̂ₑ ε')
+  spliceˡₑ c a as r with ≾unitₑ a
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transₑ (monoₑ ⊩≾̂ₑ-refl (monoₑ p ⊩≾̂ₑ-refl))
+                                 (transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl ≡̂ₑ-identityˡ)
+                                                        (≡̂ₑ-sym (consₑ-≡ (ac c) as))))
+                                         q))
+  ...   | nothing = nothing
 
--- The steps, with fuel for as many as the two sides have atoms
+  -- The same, at a side that starts with a constant and an atom, given
+  -- the comparison against any shorter side
 
-prodˢ≾ₑ : ∀ {Θ} {Q : Hyps Θ} → ℕ → (as bs : List (EAtom Θ))
-        → Maybe (Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ⟦ bs ⟧ᵉˢ)
-prodˢ≾ₑ n       []       []       = just ⊩≾̂ₑ-refl
-prodˢ≾ₑ zero    _        _        = nothing
-prodˢ≾ₑ (suc n) []       (b ∷ bs) =
-  skipʳₑ b (prodˢ≾ₑ n [] bs)
-  <∣> mergeʳₑ (prodˢ≾ₑ n []) (b ∷ bs)
-prodˢ≾ₑ (suc n) (a ∷ as) []       =
-  skipˡₑ a (prodˢ≾ₑ n as [])
-  <∣> mergeˡₑ (λ as' → prodˢ≾ₑ n as' []) (a ∷ as)
-prodˢ≾ₑ (suc n) (a ∷ as) (b ∷ bs) =
-  matchₑ a b (prodˢ≾ₑ n as bs)
-  <∣> skipʳₑ b (prodˢ≾ₑ n (a ∷ as) bs)
-  <∣> skipˡₑ a (prodˢ≾ₑ n as (b ∷ bs))
-  <∣> intoTopₑ a b (prodˢ≾ₑ n as (b ∷ bs))
-  <∣> mergeʳₑ (prodˢ≾ₑ n (a ∷ as)) (b ∷ bs)
-  <∣> mergeˡₑ (λ as' → prodˢ≾ₑ n as' (b ∷ bs)) (a ∷ as)
+  mergeʳₑ : ∀ {ε} → ((bs : List (EAtom Θ)) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ bs ⟧ᵉˢ))
+          → (bs : List (EAtom Θ)) → Maybe (Q ⊩ ε ≾̂ₑ ⟦ bs ⟧ᵉˢ)
+  mergeʳₑ r (ac c ∷ b ∷ bs) = spliceʳₑ c b bs (r (consₑ (ac c) bs))
+  mergeʳₑ r _               = nothing
 
-prod≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (EAtom Θ))
-       → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
-prod≾ₑ as bs with prodˢ≾ₑ (length as + length bs) as bs
-... | just p  = just (transₑ (eqₑ (≡̂ₑ-sym (⟦⟧ᵉᵖ-≡ as)))
-                             (transₑ p (eqₑ (⟦⟧ᵉᵖ-≡ bs))))
-... | nothing = nothing
+  mergeˡₑ : ∀ {ε'} → ((as : List (EAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ε'))
+          → (as : List (EAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ε')
+  mergeˡₑ r (ac c ∷ a ∷ as) = spliceˡₑ c a as (r (consₑ (ac c) as))
+  mergeˡₑ r _               = nothing
 
--- One alternative against a whole sum: some alternative of the sum
--- bounds it, and the join is above that one
+  -- The steps, with fuel for as many as the two sides have atoms
 
-altSum≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (as : List (EAtom Θ))
-         → (t : Alts (List (EAtom Θ)))
-         → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
-altSum≾ₑ as (alt P) = prod≾ₑ as P
-altSum≾ₑ as (P ∷⁺ t) with prod≾ₑ as P
-... | just p  = just (transₑ p ⊔-ubˡₑ)
-... | nothing with altSum≾ₑ as t
-...   | just q  = just (transₑ q ⊔-ubʳₑ)
-...   | nothing = nothing
+  prodˢ≾ₑ : ℕ → (as bs : List (EAtom Θ))
+          → Maybe (Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ⟦ bs ⟧ᵉˢ)
+  prodˢ≾ₑ n       []       []       = just ⊩≾̂ₑ-refl
+  prodˢ≾ₑ zero    _        _        = nothing
+  prodˢ≾ₑ (suc n) []       (b ∷ bs) =
+    skipʳₑ b (prodˢ≾ₑ n [] bs)
+    <∣> mergeʳₑ (prodˢ≾ₑ n []) (b ∷ bs)
+  prodˢ≾ₑ (suc n) (a ∷ as) []       =
+    skipˡₑ a (prodˢ≾ₑ n as [])
+    <∣> mergeˡₑ (λ as' → prodˢ≾ₑ n as' []) (a ∷ as)
+  prodˢ≾ₑ (suc n) (a ∷ as) (b ∷ bs) =
+    matchₑ a b (prodˢ≾ₑ n as bs)
+    <∣> skipʳₑ b (prodˢ≾ₑ n (a ∷ as) bs)
+    <∣> skipˡₑ a (prodˢ≾ₑ n as (b ∷ bs))
+    <∣> intoTopₑ a b (prodˢ≾ₑ n as (b ∷ bs))
+    <∣> mergeʳₑ (prodˢ≾ₑ n (a ∷ as)) (b ∷ bs)
+    <∣> mergeˡₑ (λ as' → prodˢ≾ₑ n as' (b ∷ bs)) (a ∷ as)
 
--- The whole comparison: every alternative of the left side is below
--- the right side, and their join is then below it too
+  prod≾ₑ : (as bs : List (EAtom Θ))
+         → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ bs ⟧ᵉᵖ)
+  prod≾ₑ as bs with prodˢ≾ₑ (length as + length bs) as bs
+  ... | just p  = just (transₑ (eqₑ (≡̂ₑ-sym (⟦⟧ᵉᵖ-≡ as)))
+                               (transₑ p (eqₑ (⟦⟧ᵉᵖ-≡ bs))))
+  ... | nothing = nothing
 
-sum≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (s t : Alts (List (EAtom Θ)))
-      → Maybe (Q ⊩ ⟦ s ⟧ᵉᵖ⁺ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
-sum≾ₑ (alt P)  t = altSum≾ₑ P t
-sum≾ₑ (P ∷⁺ s) t with altSum≾ₑ P t | sum≾ₑ s t
-... | just p | just q = just (⊔-lubₑ p q)
-... | _      | _      = nothing
+  -- One alternative against a whole sum: some alternative of the sum
+  -- bounds it, and the join is above that one
+
+  altSum≾ₑ : (as : List (EAtom Θ))
+           → (t : Alts (List (EAtom Θ)))
+           → Maybe (Q ⊩ ⟦ as ⟧ᵉᵖ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
+  altSum≾ₑ as (alt P) = prod≾ₑ as P
+  altSum≾ₑ as (P ∷⁺ t) with prod≾ₑ as P
+  ... | just p  = just (transₑ p ⊔-ubˡₑ)
+  ... | nothing with altSum≾ₑ as t
+  ...   | just q  = just (transₑ q ⊔-ubʳₑ)
+  ...   | nothing = nothing
+
+  -- The whole comparison: every alternative of the left side is below
+  -- the right side, and their join is then below it too
+
+  sum≾ₑ : (s t : Alts (List (EAtom Θ)))
+        → Maybe (Q ⊩ ⟦ s ⟧ᵉᵖ⁺ ≾̂ₑ ⟦ t ⟧ᵉᵖ⁺)
+  sum≾ₑ (alt P)  t = altSum≾ₑ P t
+  sum≾ₑ (P ∷⁺ s) t with altSum≾ₑ P t | sum≾ₑ s t
+  ... | just p | just q = just (⊔-lubₑ p q)
+  ... | _      | _      = nothing
 
 -- The right side is compared folded: each of its groups that varies in
 -- one slot is one alternative, above each of the group's members
@@ -407,7 +428,7 @@ foldₑ-≡ᵖ ε =
   (≡̂ₑ-trans (≡̂ₑ-sym (foldSumₑ-≡ (nrmₑ ε))) (⟦⟧ᵉᵖ⁺-≡ (foldSumₑ (nrmₑ ε))))
 
 decide≾ₑ : ∀ {Θ} {Q : Hyps Θ} → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-decide≾ₑ ε ε' with sum≾ₑ (nrmₑ ε) (foldSumₑ (nrmₑ ε'))
+decide≾ₑ {Q = Q} ε ε' with Searchₑ.sum≾ₑ (tableₑ Q) (nrmₑ ε) (foldSumₑ (nrmₑ ε'))
 ... | just p  = just (transₑ (eqₑ (nrmₑ-≡ᵖ ε)) (transₑ p (eqₑ (≡̂ₑ-sym (foldₑ-≡ᵖ ε')))))
 ... | nothing = nothing
 
@@ -421,133 +442,145 @@ decide≾ₑ ε ε' with sum≾ₑ (nrmₑ ε) (foldSumₑ (nrmₑ ε'))
 ∣û∣ₑ = ≡̂ᵣ-sym (≡̂ᵣ-trans ≡̂ᵣ-map-const
                         (subst (λ c → rconst (mapᵉ uₑ) ≡̂ᵣ rconst c) map-uᵉ ≡̂ᵣ-refl))
 
-atom≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
+module Searchᵣ {Θ} {Q : Hyps Θ}
+               (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+                                 ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q)) where
 
-minᵐ : ∀ {Θ} {Q : Hyps Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-minᵐ {Q = Q} (rm i) with min≾ₑ {Q = Q} {ε = evar i} umin?ₑ
-... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
-... | nothing = nothing
-minᵐ _ = nothing
+  reachᵣ? : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  reachᵣ? = Chains.reach? _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q) t
 
-unit≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-unit≾ᵣ b = min≾ᵣ umin?ᵣ <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
+  ceilᵣ : ∀ {ρ : RExp Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  ceilᵣ b with reachᵣ? (rc ⊤ᵣ) b
+  ... | just p  = just (transᵣ topᵣ p)
+  ... | nothing = nothing
 
-≾unitᵣ : ∀ {Θ} {Q : Hyps Θ} → (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
-≾unitᵣ a = atom≾ᵣ a (rc uᵣ)
+  atom≾ᵣ : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
 
-absorbs≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (a b : RAtom Θ)
-          → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-absorbs≾ᵣ a b = ceilᵣ b
+  minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  minᵐ (rm i) with min≾ₑ {ε = evar i} umin?ₑ
+  ... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
+  ... | nothing = nothing
+  minᵐ _ = nothing
 
-matchᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → (a b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-       → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
-matchᵣ {Q = Q} a b r with atom≾ᵣ {Q = Q} a b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (monoᵣ p q)
-...   | nothing = nothing
+  unit≾ᵣ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  unit≾ᵣ b = min≾ᵣ umin?ᵣ <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
 
-skipʳᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-       → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
-skipʳᵣ {Q = Q} b r with unit≾ᵣ {Q = Q} b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ p q))
-...   | nothing = nothing
+  ≾unitᵣ : (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
+  ≾unitᵣ a = atom≾ᵣ a (rc uᵣ)
 
-skipˡᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → (a : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-       → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ρ ≾̂ᵣ ρ')
-skipˡᵣ {Q = Q} a r with ≾unitᵣ {Q = Q} a
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transᵣ (monoᵣ p q) (eqᵣ ≡̂ᵣ-identityˡ))
-...   | nothing = nothing
+  absorbs≾ᵣ : (a b : RAtom Θ)
+            → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ b ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
+  absorbs≾ᵣ a b = ceilᵣ b
 
-intoTopᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ ρ'} → (a b : RAtom Θ)
-         → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
+  matchᵣ : ∀ {ρ ρ'} → (a b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
          → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
-intoTopᵣ {Q = Q} a b r with absorbs≾ᵣ {Q = Q} a b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transᵣ (monoᵣ ⊩≾̂ᵣ-refl q)
-                               (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)) (monoᵣ p ⊩≾̂ᵣ-refl)))
-...   | nothing = nothing
+  matchᵣ a b r with atom≾ᵣ a b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (monoᵣ p q)
+  ...   | nothing = nothing
 
-spliceʳᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ} → (c : R) → (b : RAtom Θ) → (bs : List (RAtom Θ))
-         → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ consᵣ (rc c) bs ⟧ʳˢ)
-         → Maybe (Q ⊩ ρ ≾̂ᵣ rconst c ·̂ᵣ (⟦ b ⟧ʳᵃ ·̂ᵣ ⟦ bs ⟧ʳˢ))
-spliceʳᵣ {Q = Q} c b bs r with unit≾ᵣ {Q = Q} b
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transᵣ q (transᵣ (eqᵣ (≡̂ᵣ-trans (consᵣ-≡ (rc c) bs)
-                                                      (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-sym ≡̂ᵣ-identityˡ))))
-                                          (monoᵣ ⊩≾̂ᵣ-refl (monoᵣ p ⊩≾̂ᵣ-refl))))
-...   | nothing = nothing
+  skipʳᵣ : ∀ {ρ ρ'} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+         → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
+  skipʳᵣ b r with unit≾ᵣ b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-identityˡ)) (monoᵣ p q))
+  ...   | nothing = nothing
 
-spliceˡᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ'} → (c : R) → (a : RAtom Θ) → (as : List (RAtom Θ))
-         → Maybe (Q ⊩ ⟦ consᵣ (rc c) as ⟧ʳˢ ≾̂ᵣ ρ')
-         → Maybe (Q ⊩ rconst c ·̂ᵣ (⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ) ≾̂ᵣ ρ')
-spliceˡᵣ {Q = Q} c a as r with ≾unitᵣ {Q = Q} a
-... | nothing = nothing
-... | just p with r
-...   | just q  = just (transᵣ (monoᵣ ⊩≾̂ᵣ-refl (monoᵣ p ⊩≾̂ᵣ-refl))
-                               (transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl ≡̂ᵣ-identityˡ)
-                                                      (≡̂ᵣ-sym (consᵣ-≡ (rc c) as))))
-                                       q))
-...   | nothing = nothing
+  skipˡᵣ : ∀ {ρ ρ'} → (a : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+         → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ρ ≾̂ᵣ ρ')
+  skipˡᵣ a r with ≾unitᵣ a
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transᵣ (monoᵣ p q) (eqᵣ ≡̂ᵣ-identityˡ))
+  ...   | nothing = nothing
 
-mergeʳᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ} → ((bs : List (RAtom Θ)) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ bs ⟧ʳˢ))
-        → (bs : List (RAtom Θ)) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ bs ⟧ʳˢ)
-mergeʳᵣ r (rc c ∷ b ∷ bs) = spliceʳᵣ c b bs (r (consᵣ (rc c) bs))
-mergeʳᵣ r _               = nothing
+  intoTopᵣ : ∀ {ρ ρ'} → (a b : RAtom Θ)
+           → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
+           → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ·̂ᵣ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ ·̂ᵣ ρ')
+  intoTopᵣ a b r with absorbs≾ᵣ a b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transᵣ (monoᵣ ⊩≾̂ᵣ-refl q)
+                                 (transᵣ (eqᵣ (≡̂ᵣ-sym ≡̂ᵣ-assoc)) (monoᵣ p ⊩≾̂ᵣ-refl)))
+  ...   | nothing = nothing
 
-mergeˡᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ'} → ((as : List (RAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ρ'))
-        → (as : List (RAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ρ')
-mergeˡᵣ r (rc c ∷ a ∷ as) = spliceˡᵣ c a as (r (consᵣ (rc c) as))
-mergeˡᵣ r _               = nothing
+  spliceʳᵣ : ∀ {ρ} → (c : R) → (b : RAtom Θ) → (bs : List (RAtom Θ))
+           → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ consᵣ (rc c) bs ⟧ʳˢ)
+           → Maybe (Q ⊩ ρ ≾̂ᵣ rconst c ·̂ᵣ (⟦ b ⟧ʳᵃ ·̂ᵣ ⟦ bs ⟧ʳˢ))
+  spliceʳᵣ c b bs r with unit≾ᵣ b
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transᵣ q (transᵣ (eqᵣ (≡̂ᵣ-trans (consᵣ-≡ (rc c) bs)
+                                                        (≡̂ᵣ-cong ≡̂ᵣ-refl (≡̂ᵣ-sym ≡̂ᵣ-identityˡ))))
+                                            (monoᵣ ⊩≾̂ᵣ-refl (monoᵣ p ⊩≾̂ᵣ-refl))))
+  ...   | nothing = nothing
 
-prodˢ≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → ℕ → (as bs : List (RAtom Θ))
-        → Maybe (Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ⟦ bs ⟧ʳˢ)
-prodˢ≾ᵣ n       []       []       = just ⊩≾̂ᵣ-refl
-prodˢ≾ᵣ zero    _        _        = nothing
-prodˢ≾ᵣ (suc n) []       (b ∷ bs) =
-  skipʳᵣ b (prodˢ≾ᵣ n [] bs)
-  <∣> mergeʳᵣ (prodˢ≾ᵣ n []) (b ∷ bs)
-prodˢ≾ᵣ (suc n) (a ∷ as) []       =
-  skipˡᵣ a (prodˢ≾ᵣ n as [])
-  <∣> mergeˡᵣ (λ as' → prodˢ≾ᵣ n as' []) (a ∷ as)
-prodˢ≾ᵣ (suc n) (a ∷ as) (b ∷ bs) =
-  matchᵣ a b (prodˢ≾ᵣ n as bs)
-  <∣> skipʳᵣ b (prodˢ≾ᵣ n (a ∷ as) bs)
-  <∣> skipˡᵣ a (prodˢ≾ᵣ n as (b ∷ bs))
-  <∣> intoTopᵣ a b (prodˢ≾ᵣ n as (b ∷ bs))
-  <∣> mergeʳᵣ (prodˢ≾ᵣ n (a ∷ as)) (b ∷ bs)
-  <∣> mergeˡᵣ (λ as' → prodˢ≾ᵣ n as' (b ∷ bs)) (a ∷ as)
+  spliceˡᵣ : ∀ {ρ'} → (c : R) → (a : RAtom Θ) → (as : List (RAtom Θ))
+           → Maybe (Q ⊩ ⟦ consᵣ (rc c) as ⟧ʳˢ ≾̂ᵣ ρ')
+           → Maybe (Q ⊩ rconst c ·̂ᵣ (⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ as ⟧ʳˢ) ≾̂ᵣ ρ')
+  spliceˡᵣ c a as r with ≾unitᵣ a
+  ... | nothing = nothing
+  ... | just p with r
+  ...   | just q  = just (transᵣ (monoᵣ ⊩≾̂ᵣ-refl (monoᵣ p ⊩≾̂ᵣ-refl))
+                                 (transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl ≡̂ᵣ-identityˡ)
+                                                        (≡̂ᵣ-sym (consᵣ-≡ (rc c) as))))
+                                         q))
+  ...   | nothing = nothing
 
-prod≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as bs : List (RAtom Θ))
-       → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
-prod≾ᵣ as bs with prodˢ≾ᵣ (length as + length bs) as bs
-... | just p  = just (transᵣ (eqᵣ (≡̂ᵣ-sym (⟦⟧ʳᵖ-≡ as)))
-                             (transᵣ p (eqᵣ (⟦⟧ʳᵖ-≡ bs))))
-... | nothing = nothing
+  mergeʳᵣ : ∀ {ρ} → ((bs : List (RAtom Θ)) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ bs ⟧ʳˢ))
+          → (bs : List (RAtom Θ)) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ bs ⟧ʳˢ)
+  mergeʳᵣ r (rc c ∷ b ∷ bs) = spliceʳᵣ c b bs (r (consᵣ (rc c) bs))
+  mergeʳᵣ r _               = nothing
 
-altSum≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (as : List (RAtom Θ))
-         → (t : Alts (List (RAtom Θ)))
-         → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
-altSum≾ᵣ as (alt P) = prod≾ᵣ as P
-altSum≾ᵣ as (P ∷⁺ t) with prod≾ᵣ as P
-... | just p  = just (transᵣ p ⊔-ubˡᵣ)
-... | nothing with altSum≾ᵣ as t
-...   | just q  = just (transᵣ q ⊔-ubʳᵣ)
-...   | nothing = nothing
+  mergeˡᵣ : ∀ {ρ'} → ((as : List (RAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ρ'))
+          → (as : List (RAtom Θ)) → Maybe (Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ρ')
+  mergeˡᵣ r (rc c ∷ a ∷ as) = spliceˡᵣ c a as (r (consᵣ (rc c) as))
+  mergeˡᵣ r _               = nothing
 
-sum≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (s t : Alts (List (RAtom Θ)))
-      → Maybe (Q ⊩ ⟦ s ⟧ʳᵖ⁺ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
-sum≾ᵣ (alt P)  t = altSum≾ᵣ P t
-sum≾ᵣ (P ∷⁺ s) t with altSum≾ᵣ P t | sum≾ᵣ s t
-... | just p | just q = just (⊔-lubᵣ p q)
-... | _      | _      = nothing
+  prodˢ≾ᵣ : ℕ → (as bs : List (RAtom Θ))
+          → Maybe (Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ⟦ bs ⟧ʳˢ)
+  prodˢ≾ᵣ n       []       []       = just ⊩≾̂ᵣ-refl
+  prodˢ≾ᵣ zero    _        _        = nothing
+  prodˢ≾ᵣ (suc n) []       (b ∷ bs) =
+    skipʳᵣ b (prodˢ≾ᵣ n [] bs)
+    <∣> mergeʳᵣ (prodˢ≾ᵣ n []) (b ∷ bs)
+  prodˢ≾ᵣ (suc n) (a ∷ as) []       =
+    skipˡᵣ a (prodˢ≾ᵣ n as [])
+    <∣> mergeˡᵣ (λ as' → prodˢ≾ᵣ n as' []) (a ∷ as)
+  prodˢ≾ᵣ (suc n) (a ∷ as) (b ∷ bs) =
+    matchᵣ a b (prodˢ≾ᵣ n as bs)
+    <∣> skipʳᵣ b (prodˢ≾ᵣ n (a ∷ as) bs)
+    <∣> skipˡᵣ a (prodˢ≾ᵣ n as (b ∷ bs))
+    <∣> intoTopᵣ a b (prodˢ≾ᵣ n as (b ∷ bs))
+    <∣> mergeʳᵣ (prodˢ≾ᵣ n (a ∷ as)) (b ∷ bs)
+    <∣> mergeˡᵣ (λ as' → prodˢ≾ᵣ n as' (b ∷ bs)) (a ∷ as)
+
+  prod≾ᵣ : (as bs : List (RAtom Θ))
+         → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ bs ⟧ʳᵖ)
+  prod≾ᵣ as bs with prodˢ≾ᵣ (length as + length bs) as bs
+  ... | just p  = just (transᵣ (eqᵣ (≡̂ᵣ-sym (⟦⟧ʳᵖ-≡ as)))
+                               (transᵣ p (eqᵣ (⟦⟧ʳᵖ-≡ bs))))
+  ... | nothing = nothing
+
+  altSum≾ᵣ : (as : List (RAtom Θ))
+           → (t : Alts (List (RAtom Θ)))
+           → Maybe (Q ⊩ ⟦ as ⟧ʳᵖ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
+  altSum≾ᵣ as (alt P) = prod≾ᵣ as P
+  altSum≾ᵣ as (P ∷⁺ t) with prod≾ᵣ as P
+  ... | just p  = just (transᵣ p ⊔-ubˡᵣ)
+  ... | nothing with altSum≾ᵣ as t
+  ...   | just q  = just (transᵣ q ⊔-ubʳᵣ)
+  ...   | nothing = nothing
+
+  sum≾ᵣ : (s t : Alts (List (RAtom Θ)))
+        → Maybe (Q ⊩ ⟦ s ⟧ʳᵖ⁺ ≾̂ᵣ ⟦ t ⟧ʳᵖ⁺)
+  sum≾ᵣ (alt P)  t = altSum≾ᵣ P t
+  sum≾ᵣ (P ∷⁺ s) t with altSum≾ᵣ P t | sum≾ᵣ s t
+  ... | just p | just q = just (⊔-lubᵣ p q)
+  ... | _      | _      = nothing
 
 foldᵣ-≡ᵖ : ∀ {Θ} → (ρ : RExp Θ) → ρ ≡̂ᵣ ⟦ foldSumᵣ (nrmᵣ ρ) ⟧ʳᵖ⁺
 foldᵣ-≡ᵖ ρ =
@@ -555,7 +588,7 @@ foldᵣ-≡ᵖ ρ =
   (≡̂ᵣ-trans (≡̂ᵣ-sym (foldSumᵣ-≡ (nrmᵣ ρ))) (⟦⟧ʳᵖ⁺-≡ (foldSumᵣ (nrmᵣ ρ))))
 
 decide≾ᵣ : ∀ {Θ} {Q : Hyps Θ} → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-decide≾ᵣ ρ ρ' with sum≾ᵣ (nrmᵣ ρ) (foldSumᵣ (nrmᵣ ρ'))
+decide≾ᵣ {Q = Q} ρ ρ' with Searchᵣ.sum≾ᵣ (tableᵣ Q) (nrmᵣ ρ) (foldSumᵣ (nrmᵣ ρ'))
 ... | just p  = just (transᵣ (eqᵣ (nrmᵣ-≡ᵖ ρ)) (transᵣ p (eqᵣ (≡̂ᵣ-sym (foldᵣ-≡ᵖ ρ')))))
 ... | nothing = nothing
 
