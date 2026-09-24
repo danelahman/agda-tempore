@@ -1156,9 +1156,12 @@ solve-principal s (A ≐ᵥ B) eq δ₀ Q sat h
 ... | nothing = ⊥just eq
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
 ...   | nothing = ⊥just eq
-...   | just (Ψ' , δₑ) with eq
-...     | refl = δ₂ , tri₂ , ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁) ,
-                  (λ fx → Fixing-trans δₑ δ₂ trix (Fixing-trans ⟦ ρ ⟧ᴬ δ₁ tri₁ fx))
+...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ))
+...     | nothing = ⊥just eq
+...     | just e with eq
+...       | refl = δ₂ , tri₂ ,
+                   atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)) ,
+                   (λ fx → Fixing-trans δₑ δ₂ trix (Fixing-trans ⟦ ρ ⟧ᴬ δ₁ tri₁ fx))
   where
     u = trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt
 
@@ -1182,9 +1185,11 @@ solve-principal s (A ≾̂ᵥᶜ B) eq δ₀ Q sat h
 ... | nothing = ⊥just eq
 ... | just (Ψ' , δₑ) with subDec (A [ θ s ]ᵛ [ δₑ ]ᵛ) (B [ θ s ]ᵛ [ δₑ ]ᵛ)
 ...   | nothing = ⊥just eq
-...   | just d with eq
-...     | refl = δ , trix ,
-                 ∪ᴿ-both (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h))
+...   | just d with subsList (ss (res s [ δₑ ]ᴿ))
+...     | nothing = ⊥just eq
+...     | just e with eq
+...       | refl = δ , trix ,
+                 ∪ᴿ-both (atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)))
                          (atomsᴿ-⊩ (atomsOf d)
                            (elim d δ (subst₂ (Q ∣_<:̂ᵛ_) (sym (inst A)) (sym (inst B))
                                              sat))) ,
@@ -1295,6 +1300,17 @@ solve-principal s (⋀ᵒᵖ f) eq
 ...   | refl = threadOps-princ (λ s' op → solve s' (f op))
                                (λ s' op e' → solve-principal s' (f op) e') ops s e
 
+-- After an expansion, the decomposition of the demands it was asked
+-- about cannot fail
+
+subsList-exp : ∀ {Ψ Ψ'} → (l : List (OVType Ψ × OVType Ψ)) → (δ : Subst Ψ Ψ')
+             → (∀ {A B} → (A , B) ∈ l
+                  → Σ[ d ∈ SubDec (A [ δ ]ᵛ) (B [ δ ]ᵛ) ] (subDec (A [ δ ]ᵛ) (B [ δ ]ᵛ) ≡ just d))
+             → subsList (map (mapᵖ (_[ δ ]ᵛ)) l) ≡ nothing → ⊥
+subsList-exp l δ dec q with subsList-nothing (map (mapᵖ (_[ δ ]ᵛ)) l) q
+... | A , B , m , r with ∈-map⁻ (mapᵖ (_[ δ ]ᵛ)) m
+...   | (A₀ , B₀) , m₀ , refl = ⊥just (trans (sym r) (proj₂ (dec m₀)))
+
 -- Refutation holds on the fragment without a rigid binder. At a rigid
 -- binder the atoms that mention the rigid are settled by a decision
 -- against no hypotheses, and a declined one refutes nothing: a
@@ -1378,8 +1394,14 @@ solve-fail s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
                  δ₀ fx
                  (trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt)
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
-...   | just _  = ⊥nothing eq
-...   | nothing =
+...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) in eqs
+...     | just _  = ⊥nothing eq
+...     | nothing =
+          subsList-exp (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δₑ
+            (subst (ExpDec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))) eqx
+                   (expandSub-dec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)))) eqs
+solve-fail s (A ≐ᵥ B) nr eq δ₀ Q fx h sat
+  | just (Ψ⁺ , ρ , equ) | nothing =
         subst (ExpMax δ₁) eqx
               (expandSub-max (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δ₁ (⊩ss h₁))
   where
@@ -1405,9 +1427,14 @@ solve-fail s (A ≾̂ᵥᶜ B) nr eq δ₀ Q fx h sat
     dem (there m)   = ⊩ss h m
 ... | just (Ψ' , δₑ)
       with subDec (A [ θ s ]ᵛ [ δₑ ]ᵛ) (B [ θ s ]ᵛ [ δₑ ]ᵛ) in eqd
-...     | just _  = ⊥nothing eq
 ...     | nothing =
           ⊥nothing (trans (sym (proj₂ (dec (here refl)))) eqd)
+  where
+    dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
+                (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
+...     | just _ with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
+...       | just _  = ⊥nothing eq
+...       | nothing = subsList-exp (ss (res s)) δₑ (λ m → dec (there m)) eqs
   where
     dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
                 (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
@@ -1467,8 +1494,10 @@ reexpand-princ : ∀ {Θ Ψ''} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
                    (((mδ m ⨟ˢ δ) ≐ˢ δ₀) × (Q ⊩ᴿ (res s') [ δ ]))
 reexpand-princ s eq δ₀ Q h with expandSub (ss (res s)) in eqx
 ... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with eq
-...   | refl = δ , trix , ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
+...   | nothing = ⊥just eq
+...   | just e with eq
+...     | refl = δ , trix , atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h))
   where
     facx = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
     δ    = proj₁ facx
@@ -1479,21 +1508,25 @@ reexpand-fail : ∀ {Θ Ψ''} → (s : St Θ) → reexpand s ≡ nothing
               → Q ⊩ᴿ (res s) [ δ₀ ] → ⊥
 reexpand-fail s eq δ₀ Q h with expandSub (ss (res s)) in eqx
 ... | nothing = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
-... | just _  = ⊥nothing eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
+...   | just _  = ⊥nothing eq
+...   | nothing =
+        subsList-exp (ss (res s)) δₑ
+          (subst (ExpDec (ss (res s))) eqx (expandSub-dec (ss (res s)))) eqs
 
 -- After it, every subtyping demand of the residual decomposes
 
 reexpand-dec : ∀ {Θ} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
              → reexpand s ≡ just (s' , m)
              → ∀ {A B} → (A , B) ∈ ss (res s') → Σ[ d ∈ SubDec A B ] (subDec A B ≡ just d)
-reexpand-dec s eq with expandSub (ss (res s)) in eqx
+reexpand-dec s eq with expandSub (ss (res s))
 ... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with eq
-...   | refl = f
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
+...   | nothing = ⊥just eq
+...   | just e with eq
+...     | refl = f
   where
-    dec = subst (ExpDec (ss (res s))) eqx (expandSub-dec (ss (res s)))
-
-    f : ∀ {A B} → (A , B) ∈ map (mapᵖ (_[ δₑ ]ᵛ)) (ss (res s))
+    f : ∀ {A B} → (A , B) ∈ map (mapᵖ tvar) (asubᵥ (atomsOfˢ e))
       → Σ[ d ∈ SubDec A B ] (subDec A B ≡ just d)
-    f m with ∈-map⁻ (mapᵖ (_[ δₑ ]ᵛ)) m
-    ... | (A₀ , B₀) , m₀ , refl = dec m₀
+    f m with ∈-map⁻ (mapᵖ tvar) m
+    ... | (α , β) , m₀ , refl = _ , refl

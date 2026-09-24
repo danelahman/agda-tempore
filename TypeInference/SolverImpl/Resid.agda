@@ -569,6 +569,33 @@ subsList-nothing ((A , B) ∷ l) eq | just _ | nothing with subsList-nothing l e
 ... | A' , B' , m , q = A' , B' , there m , q
 subsList-nothing ((A , B) ∷ l) eq | nothing | _ = A , B , here refl , e₀
 
+-- A residual with its subtyping demands decomposed: the pairs of type
+-- variables stay demands, the grade orderings join the others. It has
+-- the instances of the original.
+
+atomiseᴿ : ∀ {Ψ} → (R : Resid Ψ) → SubsDec (ss R) → Resid Ψ
+atomiseᴿ R d = resid (rs R ++ aordᵣ (atomsOfˢ d)) (es R ++ aordₑ (atomsOfˢ d)) (ts R)
+                     (map (mapᵖ tvar) (asubᵥ (atomsOfˢ d))) (ds R)
+
+atomiseᴿ-sound : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (R : Resid Ψ) → (d : SubsDec (ss R))
+               → Q ⊩ᴿ (atomiseᴿ R d) [ δ ] → Q ⊩ᴿ R [ δ ]
+atomiseᴿ-sound {δ = δ} R d h =
+  mk⊩ᴿ (λ m → ⊩rs h (∈-++⁺ˡ m)) (λ m → ⊩es h (∈-++⁺ˡ m)) (⊩ts h)
+       (introˢ d δ (holds (λ m → ⊩ss h (∈-map⁺ (mapᵖ tvar) m))
+                          (λ m → ⊩rs h (∈-++⁺ʳ (rs R) m))
+                          (λ m → ⊩es h (∈-++⁺ʳ (es R) m))))
+       (⊩ds h)
+
+atomiseᴿ-compl : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (R : Resid Ψ) → (d : SubsDec (ss R))
+               → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (atomiseᴿ R d) [ δ ]
+atomiseᴿ-compl {Q = Q} {δ = δ} R d h =
+  mk⊩ᴿ (λ m → [ ⊩rs h , hr hs ]′ (∈-++⁻ (rs R) m))
+       (λ m → [ ⊩es h , he hs ]′ (∈-++⁻ (es R) m))
+       (⊩ts h) (⊩ss (atomsᴿ-⊩ (atomsOfˢ d) hs)) (⊩ds h)
+  where
+    hs : Holds Q δ (atomsOfˢ d)
+    hs = elimˢ d δ (⊩ss h)
+
 toHyps : ∀ {Ψ} → (R : Resid Ψ) → Maybe (Σ[ Q ∈ Hyps Ψ ] (Q ⊩ᴿ R [ idˢ ]))
 toHyps R with etsList (ts R) | subsList (ss R)
 ... | nothing       | _       = nothing

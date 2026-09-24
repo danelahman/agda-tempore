@@ -6,6 +6,10 @@
 -- matching formers and residualised at a pair of type          --
 -- variables, grade orderings, eternality demands and var-rule  --
 -- disjunctions are residualised, and binders lift the state.   --
+-- An expansion of the type unknowns is followed by decomposing --
+-- the residual's subtyping demands again, so that they are     --
+-- pairs of type variables and their grade orderings are        --
+-- residualised with the others.                                --
 --                                                              --
 -- A successful witness is deferred, re-read at the state a     --
 -- later component leaves behind rather than transported along  --
@@ -561,12 +565,14 @@ solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) 
 ... | nothing = nothing
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
 ...   | nothing = nothing
-...   | just (Ψ' , δ) =
-        just (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ)
+...   | just (Ψ' , δ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
+...     | nothing = nothing
+...     | just e =
+        just (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (atomiseᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ) e)
                  (transRig δ (transRig ⟦ ρ ⟧ᴬ (rig s))) ,
               mor (⟦ ρ ⟧ᴬ ⨟ˢ δ) (≐ˢ-sym (⨟-assoc (θ s) ⟦ ρ ⟧ᴬ δ))
                   (λ δ' Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc ⟦ ρ ⟧ᴬ δ δ'))
-                                          (⊩ᴿ-subst (⊩ᴿ-subst h))) ,
+                                          (⊩ᴿ-subst (⊩ᴿ-subst (atomiseᴿ-sound _ e h)))) ,
               λ δ' Q h → trans (sym (chain₂ᵛ A (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ'))
                          (trans (cong (λ X → X [ δ ]ᵛ [ δ' ]ᵛ) pinned)
                                 (chain₂ᵛ B (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ')))
@@ -581,10 +587,12 @@ solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss
 ... | nothing        = nothing
 ... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = nothing
-...   | just d  =
-        just (st Ψ' (θ s ⨟ˢ δ) (res s [ δ ]ᴿ ∪ᴿ atomsᴿ (atomsOf d))
+...   | just d  with subsList (ss (res s [ δ ]ᴿ))
+...     | nothing = nothing
+...     | just e  =
+        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e ∪ᴿ atomsᴿ (atomsOf d))
                  (transRig δ (rig s)) ,
-              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (∪ᴿ-fst h)) ,
+              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e (∪ᴿ-fst h))) ,
               λ δ' Q h → subst₂ (Q ∣_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
                                 (intro d δ' (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
@@ -680,11 +688,14 @@ solve s (⋀ᵒᵖ f) with threadOps {f = f} (λ s' op → solve s' (f op)) ops 
       just (s' , m , λ δ Q h op → all-lookup ws (complete op) δ Q h)
 
 -- Reading a residual back as a hypothesis set asks every subtyping
--- demand to decompose; one expansion of what is left makes it so.
+-- demand to decompose; one expansion of what is left, and the
+-- decomposition that follows it, make it so.
 
 reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
 reexpand s with expandSub (ss (res s))
 ... | nothing       = nothing
-... | just (Ψ' , δ) =
-      just (st Ψ' (θ s ⨟ˢ δ) (res s [ δ ]ᴿ) (transRig δ (rig s)) ,
-            mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst h))
+... | just (Ψ' , δ) with subsList (ss (res s [ δ ]ᴿ))
+...   | nothing = nothing
+...   | just e  =
+        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e) (transRig δ (rig s)) ,
+              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e h)))
