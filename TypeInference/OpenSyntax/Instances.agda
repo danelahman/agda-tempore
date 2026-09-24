@@ -139,6 +139,12 @@ _⊨_∣_ : ∀ {Θ} → Subst Θ ∅ˢ → Hyps Θ → Obligs Θ → Set
 Satisfiable : ∀ {Θ} → Hyps Θ → Obligs Θ → Set
 Satisfiable {Θ} Q R = Σ[ δ ∈ Subst Θ ∅ˢ ] (δ ⊨ Q ∣ R)
 
+-- The empty hypotheses and obligations are satisfiable, by the ground
+-- instance
+
+Satisfiable-∅ : ∀ {Θ} → Satisfiable {Θ} ∅ᴴ []
+Satisfiable-∅ = groundˢ , ⊩ᴴ-∅ ∷ []
+
 ------------------------------------------------------------------------
 -- Values of closed grade expressions
 

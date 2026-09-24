@@ -658,11 +658,18 @@ infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e�
 -- when its conditions are satisfiable; an untypable verdict means `M`
 -- is not typable. Hence inference is complete up to stuck: a typable
 -- `M` is never declared untypable. A handler-free `M` is never stuck.
+-- A typed verdict with no leftover hypotheses or obligations is
+-- typable outright.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}
             → infer Γ M ≡ typed p
             → Typable Γ M ⇔ Satisfiable (PrincipalTyping.Q̃ p) (PrincipalTyping.R̃ p)
 infer-typed Γ M {p} _ = typable-⇔ p
+
+infer-unconditional : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}
+                     → infer Γ M ≡ typed p
+                     → PrincipalTyping.Q̃ p ≡ ∅ᴴ → PrincipalTyping.R̃ p ≡ [] → Typable Γ M
+infer-unconditional Γ M {p} _ = typable-unconditional p
 
 infer-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                → Typable Γ M → infer Γ M ≢ untypable

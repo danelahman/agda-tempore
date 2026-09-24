@@ -94,6 +94,13 @@ _⨟ˢ_ : ∀ {Θ Θ' Θ''} → Subst Θ Θ' → Subst Θ' Θ'' → Subst Θ Θ'
              (λ i → sR σ i [ δ ]ʳ)
              (λ i → sE σ i [ δ ]ᵉ)
 
+-- A closed instance of any scope: type variables to `Unit`,
+-- resource-grade variables to the unit resource grade, effect-grade
+-- variables to the unit effect grade
+
+groundˢ : ∀ {Θ} → Subst Θ ∅ˢ
+groundˢ = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
+
 -- Weakening substitutions: every variable goes to its injected self
 
 wkˢᵗ : ∀ {Θ} → Subst Θ (Θ +ty)

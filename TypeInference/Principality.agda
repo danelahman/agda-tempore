@@ -41,7 +41,7 @@ open import Syntax.Operations
 
 open import Util.Equality
 
-open import Function.Bundles using (_⇔_; mk⇔)
+open import Function.Bundles using (_⇔_; mk⇔; Equivalence)
 open import Relation.Nullary using (¬_)
 
 open import TypeInference.Scopes
@@ -59,7 +59,8 @@ open import TypeInference.OpenSyntax.Contexts S
 open import TypeInference.OpenSyntax.Subst    S
 open import TypeInference.OpenSyntax.Hyps     S
 open import TypeInference.OpenSyntax.Language S
-open import TypeInference.OpenSyntax.Instances S using (Obligs; _⊩_∣_[_]; _⊨_∣_; Satisfiable)
+open import TypeInference.OpenSyntax.Instances S
+  using (Obligs; _⊩_∣_[_]; _⊨_∣_; Satisfiable; Satisfiable-∅)
 
 open import TypeInference.Raw.Syntax S
 open import TypeInference.Raw.Subst  S
@@ -308,6 +309,14 @@ typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
     from : Satisfiable (Q̃ p) (R̃ p) → Typable Γ M
     from (δ , h) with instantiate p δ ∅ᴴ h
     ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , All._∷_ ⊩ᴴ-∅ All.[])
+
+-- A principal typing with no leftover hypotheses or obligations is
+-- typable
+
+typable-unconditional : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalTyping Γ M)
+                       → Q̃ p ≡ ∅ᴴ → R̃ p ≡ [] → Typable Γ M
+typable-unconditional p eq-Q eq-R =
+  Equivalence.from (typable-⇔ p) (subst₂ Satisfiable (sym eq-Q) (sym eq-R) Satisfiable-∅)
 
 -- The outcome of inference: a principal typing, a refutation, or stuck
 

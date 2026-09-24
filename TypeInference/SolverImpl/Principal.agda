@@ -1043,13 +1043,10 @@ retry-princ s eq δ₀ h with retryᴰ (ordsOf (res s)) (dfs (res s))
 -- and it refuses only where an entry fails at a closed witness, which
 -- refutes every instance: closed further, it would be a closed one
 
-closing : ∀ {Ψ} → Subst Ψ ∅ˢ
-closing = sub (λ _ → Unit) (λ _ → ûᵣ) (λ _ → ûₑ)
-
 retry-fail : ∀ {Θ Ψ''} → (s : St Θ) → retry s ≡ nothing
            → (δ₀ : Subst (Ψ s) Ψ'') → ∅ᴴ ⊩ᴿ (res s) [ δ₀ ] → ⊥
 retry-fail s eq δ₀ h with retryᴰ (ordsOf (res s)) (dfs (res s))
-... | inj₁ (E , m , r) = r (δ₀ ⨟ˢ closing) (⊩dfs (⊩ᴿ-⨟ {δ' = closing} ∅ᴴ-⊩ᴴ h) m)
+... | inj₁ (E , m , r) = r (δ₀ ⨟ˢ groundˢ) (⊩dfs (⊩ᴿ-⨟ {δ' = groundˢ} ∅ᴴ-⊩ᴴ h) m)
 ... | inj₂ _           = ⊥nothing eq
 
 thenRetry-princ : ∀ {Θ} {s : St Θ} {C : Constraint Θ}
