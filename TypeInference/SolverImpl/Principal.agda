@@ -75,7 +75,9 @@ open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Solve  S opEnum umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
-  using (Localised; localise; lσ; lfix; lcpl; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true)
+  using (Localised; localise; lσ; lfix; lcpl; updᵉ-absorb; freeᵉ; freeʳ; anyᶠ; anyᶠ-true;
+         outerₑ?; outerᵣ?; κ⟨_⟩; κᵉ; κ⊤; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ; ⊩ᴴ-κᵉ; κᵉ≾κ⊤;
+         Agree; agreeₑ; agreeᵣ; agree-out; evar?)
 open import TypeInference.SolverImpl.Core.Occurs S
   using (occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c; occʳ-r; occʳ-v; occʳ-c)
 
@@ -118,80 +120,6 @@ wk-,ᵉ δ ε = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
                    (λ i → wk-,ᵉ-r σ ε (sR δ i))
                    (λ { zero → refl ; (suc i) → wk-,ᵉ-e σ ε (sE δ i) })
 
--- `κ⟨ b ⟩` sends the newest effect-grade variable to `b`, fixing the
--- rest; being a substitution, entailment survives it. The eigenvariable
--- is sent to the unit (`κᵉ`), and to the top (`κ⊤`) where an ordering
--- is kept at the top rigid.
-
-κ⟨_⟩ : ∀ {Ψ} → EExp Ψ → Subst (Ψ +e) Ψ
-κ⟨ b ⟩ = sub tvar rvar (λ { zero → b ; (suc i) → evar i })
-
-κᵉ : ∀ {Ψ} → Subst (Ψ +e) Ψ
-κᵉ = κ⟨ ûₑ ⟩
-
-κ⊤ : ∀ {Ψ} → Subst (Ψ +e) Ψ
-κ⊤ = κ⟨ econst ⊤ₑ ⟩
-
-wk-κ : ∀ {Ψ} → (b : EExp Ψ) → (wkˢᵉ {Ψ} ⨟ˢ κ⟨ b ⟩) ≐ˢ idˢ
-wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
-
-κ-wkᵛ : ∀ {Ψ} → (b : EExp Ψ) → (A : OVType Ψ) → A [ wkˢᵉ ]ᵛ [ κ⟨ b ⟩ ]ᵛ ≡ A
-κ-wkᵛ b A = trans ([⨟]ᵛ A wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵛ (wk-κ b) A) ([id]ᵛ A))
-
-κ-wkʳ : ∀ {Ψ} → (b : EExp Ψ) → (ρ : RExp Ψ) → ρ [ wkˢᵉ ]ʳ [ κ⟨ b ⟩ ]ʳ ≡ ρ
-κ-wkʳ b ρ = trans ([⨟]ʳ ρ wkˢᵉ κ⟨ b ⟩) (trans ([≐]ʳ (wk-κ b) ρ) ([id]ʳ ρ))
-
-κ-wkᵉ : ∀ {Ψ} → (b : EExp Ψ) → (ε : EExp Ψ) → ε [ wkˢᵉ ]ᵉ [ κ⟨ b ⟩ ]ᵉ ≡ ε
-κ-wkᵉ b ε = trans ([⨟]ᵉ ε wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵉ (wk-κ b) ε) ([id]ᵉ ε))
-
--- Every weakened hypothesis is entailed back by the original set
-
-⊩ᴴ-κ : ∀ {Ψ} {Q : Hyps Ψ} → (b : EExp Ψ) → Q ⊩ᴴ (wkᵉ-H Q) [ κ⟨ b ⟩ ]
-⊩ᴴ-κ {Ψ} {Q} b = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj'
-  where
-    ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q ⊩ᴱ sTy κ⟨ b ⟩ α
-    ets' m with ∈-map⁻ (wkᵉ-tv Ψ) m
-    ... | α₀ , m₀ , refl = et-hyp m₀
-
-    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q ∣ sTy κ⟨ b ⟩ α <:̂ᵛ sTy κ⟨ b ⟩ β
-    subᵥ' m with ∈-map⁻ (mapᵖ (wkᵉ-tv Ψ)) m
-    ... | (α₀ , β₀) , m₀ , refl = tvarₛ (hypᵗᵛ m₀)
-
-    wkʳ' : (ρ : RExp Ψ) → ρ ≡ wkᵉ-r ρ [ κ⟨ b ⟩ ]ʳ
-    wkʳ' ρ = sym (trans (cong (_[ κ⟨ b ⟩ ]ʳ) (sym (wkˢᵉ-r ρ))) (κ-wkʳ b ρ))
-
-    wkᵉ' : (ε : EExp Ψ) → ε ≡ wkᵉ-e ε [ κ⟨ b ⟩ ]ᵉ
-    wkᵉ' ε = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵉ) (sym (wkˢᵉ-e ε))) (κ-wkᵉ b ε))
-
-    wkᵛ' : (A : OVType Ψ) → A ≡ wkᵉ-v A [ κ⟨ b ⟩ ]ᵛ
-    wkᵛ' A = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵛ) (sym (wkˢᵉ-v A))) (κ-wkᵛ b A))
-
-    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
-          → Q ⊩ ρ [ κ⟨ b ⟩ ]ʳ ≾̂ᵣ ρ' [ κ⟨ b ⟩ ]ʳ
-    ordᵣ' m with ∈-map⁻ (mapᵖ wkᵉ-r) m
-    ... | (ρ₀ , ρ₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (wkʳ' ρ₀) (wkʳ' ρ₀') (hypᵣ m₀)
-
-    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q)
-          → Q ⊩ ε [ κ⟨ b ⟩ ]ᵉ ≾̂ₑ ε' [ κ⟨ b ⟩ ]ᵉ
-    ordₑ' m with ∈-map⁻ (mapᵖ wkᵉ-e) m
-    ... | (ε₀ , ε₀') , m₀ , refl =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (wkᵉ' ε₀) (wkᵉ' ε₀') (hypₑ m₀)
-
-    disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κ⟨ b ⟩ ]ᵛ) (ρ [ κ⟨ b ⟩ ]ʳ)
-    disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
-    ... | (A₀ , ρ₀) , m₀ , refl =
-      subst₂ (VarOK Q) (wkᵛ' A₀) (wkʳ' ρ₀) (hyp-ok₀ m₀)
-
-⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
-⊩ᴴ-κᵉ = ⊩ᴴ-κ ûₑ
-
--- The unit is below the top, so sending the eigenvariable there
--- instead raises every instance
-
-κᵉ≾κ⊤ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ κᵉ ≾ˢ κ⊤
-κᵉ≾κ⊤ = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ { zero → topₑ ; (suc i) → ⊩≾̂ₑ-refl })
-
 -- A substitution is uniform on the unknowns `O` mentions when, at each
 -- of them, its image reads the same with the eigenvariable at the unit
 -- as at the top. The images of an outer scope's unknowns are
@@ -199,173 +127,15 @@ wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
 -- may stand for a function of the eigenvariable, and is excluded.
 
 Uniform : ∀ {Θ Φ Ψ} → Subst Θ Φ → Subst Φ (Ψ +e) → Set
-Uniform O X = (∀ {k} → freeᵉ k O ≡ true → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ)
-            × (∀ {k} → freeʳ k O ≡ true → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ)
-
--- An expression mentioning only such unknowns reads the same too
-
-module _ {Θ Φ Ψ} {O : Subst Θ Φ} {X : Subst Φ (Ψ +e)} (u : Uniform O X) where
-
-  agreeₑ : (ε : EExp Φ) → Outerₑ O ε → ε [ X ⨟ˢ κ⊤ ]ᵉ ≡ ε [ X ⨟ˢ κᵉ ]ᵉ
-  agreeₑ (evar i)   o = proj₁ u (o (dec-true (i ≟ᶠ i) refl))
-  agreeₑ (econst c) o = refl
-  agreeₑ (ε ·̂ₑ ε')  o = cong₂ _·̂ₑ_ (agreeₑ ε (λ q → o (∨-left _ _ q)))
-                                   (agreeₑ ε' (λ q → o (∨-right _ _ q)))
-  agreeₑ (ε ⊔̂ₑ ε')  o = cong₂ _⊔̂ₑ_ (agreeₑ ε (λ q → o (∨-left _ _ q)))
-                                   (agreeₑ ε' (λ q → o (∨-right _ _ q)))
-
-  agreeᵣ : (ρ : RExp Φ) → Outerᵣ O ρ → ρ [ X ⨟ˢ κ⊤ ]ʳ ≡ ρ [ X ⨟ˢ κᵉ ]ʳ
-  agreeᵣ (rvar i)   (oe , or) = proj₂ u (or (dec-true (i ≟ᶠ i) refl))
-  agreeᵣ (rconst c) o         = refl
-  agreeᵣ (ρ ·̂ᵣ ρ')  (oe , or) =
-    cong₂ _·̂ᵣ_ (agreeᵣ ρ  ((λ q → oe (∨-left _ _ q)) , (λ q → or (∨-left _ _ q))))
-               (agreeᵣ ρ' ((λ q → oe (∨-right _ _ q)) , (λ q → or (∨-right _ _ q))))
-  agreeᵣ (ρ ⊔̂ᵣ ρ')  (oe , or) =
-    cong₂ _⊔̂ᵣ_ (agreeᵣ ρ  ((λ q → oe (∨-left _ _ q)) , (λ q → or (∨-left _ _ q))))
-               (agreeᵣ ρ' ((λ q → oe (∨-right _ _ q)) , (λ q → or (∨-right _ _ q))))
-  agreeᵣ ∣ ε ∣̂ᵉ     (oe , or) = cong ∣_∣̂ᵉ (agreeₑ ε oe)
-
--- Conversely, an image that reads the same does so at every unknown
--- occurring in it: the formers are injective
-
-·̂ₑ-inj : ∀ {Ψ} {a b c d : EExp Ψ} → a ·̂ₑ b ≡ c ·̂ₑ d → (a ≡ c) × (b ≡ d)
-·̂ₑ-inj refl = refl , refl
-
-⊔̂ₑ-inj : ∀ {Ψ} {a b c d : EExp Ψ} → a ⊔̂ₑ b ≡ c ⊔̂ₑ d → (a ≡ c) × (b ≡ d)
-⊔̂ₑ-inj refl = refl , refl
-
-·̂ᵣ-inj : ∀ {Ψ} {a b c d : RExp Ψ} → a ·̂ᵣ b ≡ c ·̂ᵣ d → (a ≡ c) × (b ≡ d)
-·̂ᵣ-inj refl = refl , refl
-
-⊔̂ᵣ-inj : ∀ {Ψ} {a b c d : RExp Ψ} → a ⊔̂ᵣ b ≡ c ⊔̂ᵣ d → (a ≡ c) × (b ≡ d)
-⊔̂ᵣ-inj refl = refl , refl
-
-∣∣-inj : ∀ {Ψ} {a b : EExp Ψ} → ∣ a ∣̂ᵉ ≡ ∣ b ∣̂ᵉ → a ≡ b
-∣∣-inj refl = refl
-
-|×|-inj : ∀ {Ψ} {A B C D : OVType Ψ} → A |×| B ≡ C |×| D → (A ≡ C) × (B ≡ D)
-|×|-inj refl = refl , refl
-
-⇒-inj : ∀ {Ψ} {A B : OVType Ψ} {C D : OCType Ψ} → A ⇒ C ≡ B ⇒ D → (A ≡ B) × (C ≡ D)
-⇒-inj refl = refl , refl
-
-[]-inj : ∀ {Ψ} {ρ ρ' : RExp Ψ} {A B : OVType Ψ} → [ ρ ] A ≡ [ ρ' ] B → (ρ ≡ ρ') × (A ≡ B)
-[]-inj refl = refl , refl
-
-‼-inj : ∀ {Ψ} {A B : OVType Ψ} {ε ε' : EExp Ψ} → A ‼ ε ≡ B ‼ ε' → (A ≡ B) × (ε ≡ ε')
-‼-inj refl = refl , refl
-
-module _ {Φ Ψ} (X : Subst Φ (Ψ +e)) where
-
-  -- at an effect-grade unknown
-
-  subᵉ-e : ∀ {k} → (x : EExp Φ) → occᵉ-e k x ≡ true
-         → x [ X ]ᵉ [ κ⊤ ]ᵉ ≡ x [ X ]ᵉ [ κᵉ ]ᵉ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
-  subᵉ-e {k} (evar i) r e =
-    subst (λ k' → sE X k' [ κ⊤ ]ᵉ ≡ sE X k' [ κᵉ ]ᵉ) (sym (true-dec (k ≟ᶠ i) r)) e
-  subᵉ-e {k} (a ·̂ₑ b) r e with ∨-true (occᵉ-e k a) (occᵉ-e k b) r
-  ... | inj₁ r' = subᵉ-e a r' (proj₁ (·̂ₑ-inj e))
-  ... | inj₂ r' = subᵉ-e b r' (proj₂ (·̂ₑ-inj e))
-  subᵉ-e {k} (a ⊔̂ₑ b) r e with ∨-true (occᵉ-e k a) (occᵉ-e k b) r
-  ... | inj₁ r' = subᵉ-e a r' (proj₁ (⊔̂ₑ-inj e))
-  ... | inj₂ r' = subᵉ-e b r' (proj₂ (⊔̂ₑ-inj e))
-
-  subᵉ-r : ∀ {k} → (x : RExp Φ) → occᵉ-r k x ≡ true
-         → x [ X ]ʳ [ κ⊤ ]ʳ ≡ x [ X ]ʳ [ κᵉ ]ʳ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
-  subᵉ-r {k} (a ·̂ᵣ b) r e with ∨-true (occᵉ-r k a) (occᵉ-r k b) r
-  ... | inj₁ r' = subᵉ-r a r' (proj₁ (·̂ᵣ-inj e))
-  ... | inj₂ r' = subᵉ-r b r' (proj₂ (·̂ᵣ-inj e))
-  subᵉ-r {k} (a ⊔̂ᵣ b) r e with ∨-true (occᵉ-r k a) (occᵉ-r k b) r
-  ... | inj₁ r' = subᵉ-r a r' (proj₁ (⊔̂ᵣ-inj e))
-  ... | inj₂ r' = subᵉ-r b r' (proj₂ (⊔̂ᵣ-inj e))
-  subᵉ-r {k} ∣ a ∣̂ᵉ r e = subᵉ-e a r (∣∣-inj e)
-
-  subᵉ-v : ∀ {k} → (x : OVType Φ) → occᵉ-v k x ≡ true
-         → x [ X ]ᵛ [ κ⊤ ]ᵛ ≡ x [ X ]ᵛ [ κᵉ ]ᵛ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
-  subᵉ-c : ∀ {k} → (x : OCType Φ) → occᵉ-c k x ≡ true
-         → x [ X ]ᶜ [ κ⊤ ]ᶜ ≡ x [ X ]ᶜ [ κᵉ ]ᶜ → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
-
-  subᵉ-v {k} (A |×| B) r e with ∨-true (occᵉ-v k A) (occᵉ-v k B) r
-  ... | inj₁ r' = subᵉ-v A r' (proj₁ (|×|-inj e))
-  ... | inj₂ r' = subᵉ-v B r' (proj₂ (|×|-inj e))
-  subᵉ-v {k} (A ⇒ C) r e with ∨-true (occᵉ-v k A) (occᵉ-c k C) r
-  ... | inj₁ r' = subᵉ-v A r' (proj₁ (⇒-inj e))
-  ... | inj₂ r' = subᵉ-c C r' (proj₂ (⇒-inj e))
-  subᵉ-v {k} ([ ρ ] A) r e with ∨-true (occᵉ-r k ρ) (occᵉ-v k A) r
-  ... | inj₁ r' = subᵉ-r ρ r' (proj₁ ([]-inj e))
-  ... | inj₂ r' = subᵉ-v A r' (proj₂ ([]-inj e))
-
-  subᵉ-c {k} (A ‼ ε) r e with ∨-true (occᵉ-v k A) (occᵉ-e k ε) r
-  ... | inj₁ r' = subᵉ-v A r' (proj₁ (‼-inj e))
-  ... | inj₂ r' = subᵉ-e ε r' (proj₂ (‼-inj e))
-
-  -- at a resource-grade unknown
-
-  subʳ-r : ∀ {k} → (x : RExp Φ) → occʳ-r k x ≡ true
-         → x [ X ]ʳ [ κ⊤ ]ʳ ≡ x [ X ]ʳ [ κᵉ ]ʳ → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
-  subʳ-r {k} (rvar i) r e =
-    subst (λ k' → sR X k' [ κ⊤ ]ʳ ≡ sR X k' [ κᵉ ]ʳ) (sym (true-dec (k ≟ᶠ i) r)) e
-  subʳ-r {k} (a ·̂ᵣ b) r e with ∨-true (occʳ-r k a) (occʳ-r k b) r
-  ... | inj₁ r' = subʳ-r a r' (proj₁ (·̂ᵣ-inj e))
-  ... | inj₂ r' = subʳ-r b r' (proj₂ (·̂ᵣ-inj e))
-  subʳ-r {k} (a ⊔̂ᵣ b) r e with ∨-true (occʳ-r k a) (occʳ-r k b) r
-  ... | inj₁ r' = subʳ-r a r' (proj₁ (⊔̂ᵣ-inj e))
-  ... | inj₂ r' = subʳ-r b r' (proj₂ (⊔̂ᵣ-inj e))
-
-  subʳ-v : ∀ {k} → (x : OVType Φ) → occʳ-v k x ≡ true
-         → x [ X ]ᵛ [ κ⊤ ]ᵛ ≡ x [ X ]ᵛ [ κᵉ ]ᵛ → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
-  subʳ-c : ∀ {k} → (x : OCType Φ) → occʳ-c k x ≡ true
-         → x [ X ]ᶜ [ κ⊤ ]ᶜ ≡ x [ X ]ᶜ [ κᵉ ]ᶜ → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
-
-  subʳ-v {k} (A |×| B) r e with ∨-true (occʳ-v k A) (occʳ-v k B) r
-  ... | inj₁ r' = subʳ-v A r' (proj₁ (|×|-inj e))
-  ... | inj₂ r' = subʳ-v B r' (proj₂ (|×|-inj e))
-  subʳ-v {k} (A ⇒ C) r e with ∨-true (occʳ-v k A) (occʳ-c k C) r
-  ... | inj₁ r' = subʳ-v A r' (proj₁ (⇒-inj e))
-  ... | inj₂ r' = subʳ-c C r' (proj₂ (⇒-inj e))
-  subʳ-v {k} ([ ρ ] A) r e with ∨-true (occʳ-r k ρ) (occʳ-v k A) r
-  ... | inj₁ r' = subʳ-r ρ r' (proj₁ ([]-inj e))
-  ... | inj₂ r' = subʳ-v A r' (proj₂ ([]-inj e))
-
-  subʳ-c (A ‼ ε) r e = subʳ-v A r (proj₁ (‼-inj e))
-
--- The images of the outer unknowns are weakenings
+Uniform O X = Agree O X κ⊤ κᵉ
 
 uniform-out : ∀ {Θ Φ Ψ} → (O : Subst Θ Φ) → (X : Subst Φ (Ψ +e)) → (δ₀ : Subst Θ Ψ)
             → (O ⨟ˢ X) ≐ˢ (δ₀ ⨟ˢ wkˢᵉ) → Uniform O X
-uniform-out {Ψ = Ψ} O X δ₀ tr = ue , ur
-  where
-    flatᵛ : ∀ {x} → (y : OVType Ψ) → x ≡ y [ wkˢᵉ ]ᵛ → x [ κ⊤ ]ᵛ ≡ x [ κᵉ ]ᵛ
-    flatᵛ y e = trans (cong (_[ κ⊤ ]ᵛ) e)
-                 (trans (κ-wkᵛ (econst ⊤ₑ) y)
-                 (sym (trans (cong (_[ κᵉ ]ᵛ) e) (κ-wkᵛ ûₑ y))))
-
-    flatʳ : ∀ {x} → (y : RExp Ψ) → x ≡ y [ wkˢᵉ ]ʳ → x [ κ⊤ ]ʳ ≡ x [ κᵉ ]ʳ
-    flatʳ y e = trans (cong (_[ κ⊤ ]ʳ) e)
-                 (trans (κ-wkʳ (econst ⊤ₑ) y)
-                 (sym (trans (cong (_[ κᵉ ]ʳ) e) (κ-wkʳ ûₑ y))))
-
-    flatᵉ : ∀ {x} → (y : EExp Ψ) → x ≡ y [ wkˢᵉ ]ᵉ → x [ κ⊤ ]ᵉ ≡ x [ κᵉ ]ᵉ
-    flatᵉ y e = trans (cong (_[ κ⊤ ]ᵉ) e)
-                 (trans (κ-wkᵉ (econst ⊤ₑ) y)
-                 (sym (trans (cong (_[ κᵉ ]ᵉ) e) (κ-wkᵉ ûₑ y))))
-
-    ue : ∀ {k} → freeᵉ k O ≡ true → sE X k [ κ⊤ ]ᵉ ≡ sE X k [ κᵉ ]ᵉ
-    ue {k} q with ∨-true (anyᶠ (λ α → occᵉ-v k (sTy O α))) _ q
-    ... | inj₁ qt with anyᶠ-true (λ α → occᵉ-v k (sTy O α)) qt
-    ...   | α , r = subᵉ-v X (sTy O α) r (flatᵛ (sTy δ₀ α) (≐ᵗ tr α))
-    ue {k} q | inj₂ q' with ∨-true (anyᶠ (λ i → occᵉ-r k (sR O i))) _ q'
-    ...   | inj₁ qr with anyᶠ-true (λ i → occᵉ-r k (sR O i)) qr
-    ...     | i , r = subᵉ-r X (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
-    ue {k} q | inj₂ q' | inj₂ qe with anyᶠ-true (λ i → occᵉ-e k (sE O i)) qe
-    ...     | i , r = subᵉ-e X (sE O i) r (flatᵉ (sE δ₀ i) (≐ᵉ tr i))
-
-    ur : ∀ {k} → freeʳ k O ≡ true → sR X k [ κ⊤ ]ʳ ≡ sR X k [ κᵉ ]ʳ
-    ur {k} q with ∨-true (anyᶠ (λ α → occʳ-v k (sTy O α))) _ q
-    ... | inj₁ qt with anyᶠ-true (λ α → occʳ-v k (sTy O α)) qt
-    ...   | α , r = subʳ-v X (sTy O α) r (flatᵛ (sTy δ₀ α) (≐ᵗ tr α))
-    ur {k} q | inj₂ qr with anyᶠ-true (λ i → occʳ-r k (sR O i)) qr
-    ...   | i , r = subʳ-r X (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
+uniform-out O X δ₀ =
+  agree-out O X κ⊤ κᵉ wkˢᵉ δ₀
+    (λ y → trans (κ-wkᵛ (econst ⊤ₑ) y) (sym (κ-wkᵛ ûₑ y)))
+    (λ y → trans (κ-wkʳ (econst ⊤ₑ) y) (sym (κ-wkʳ ûₑ y)))
+    (λ y → trans (κ-wkᵉ (econst ⊤ₑ) y) (sym (κ-wkᵉ ûₑ y)))
 
 -- Both components of a union
 
@@ -537,14 +307,24 @@ varᵉ-inst (evar j)   δ q = j , refl
 varᵉ-inst (econst c) δ ()
 varᵉ-inst (ε ·̂ₑ ε')  δ ()
 
-Princ : ∀ {Θ} → (s s' : St Θ) → s ⟶ s' → Constraint Θ → Set
-Princ s s' m C =
-  ∀ {Ψ''} → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'')
-  → (θ s ⨟ˢ δ₀) ⊨[ Q ] C → Q ⊩ᴿ (res s) [ δ₀ ]
+PrincAt : ∀ {Θ Ψ''} → (s s' : St Θ) → s ⟶ s' → Constraint Θ
+        → Subst (Ψ s) Ψ'' → Hyps Ψ'' → Set
+PrincAt {Ψ'' = Ψ''} s s' m C δ₀ Q =
+  (θ s ⨟ˢ δ₀) ⊨[ Q ] C → Q ⊩ᴿ (res s) [ δ₀ ]
   → Σ[ δ ∈ Subst (Ψ s') Ψ'' ]
       (((mδ m ⨟ˢ δ) ≐ˢ δ₀)
         × (Q ⊩ᴿ (res s') [ δ ])
         × (Fixing (rig s) δ₀ → Fixing (rig s') δ))
+
+Princ : ∀ {Θ} → (s s' : St Θ) → s ⟶ s' → Constraint Θ → Set
+Princ s s' m C = ∀ {Ψ''} → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'') → PrincAt s s' m C δ₀ Q
+
+-- Principality for the instances entering a rigid scope: the rigid at
+-- a fresh eigenvariable, the hypotheses free of it
+
+Princ⇑ : ∀ {Θ} → (s : St Θ) → (s' : St (Θ +e)) → ⇑ᵉˢ s ⟶ s' → Constraint (Θ +e) → Set
+Princ⇑ s s' m C =
+  ∀ {Ψ''} → (δ₀ : Subst (Ψ s) Ψ'') → (Q : Hyps Ψ'') → PrincAt (⇑ᵉˢ s) s' m C (δ₀ ↑ᵉ) (wkᵉ-H Q)
 
 Refut : ∀ {Θ} → St Θ → Constraint Θ → Set
 Refut s C =
@@ -736,7 +516,7 @@ stripʳ-top-princ {Φ = Φ} {Φ'} {Q} O j ρ ρ' ρ₀' e₁ eq γ hγ u p
 
     rhs : ρ' [ X ]ʳ [ κ⊤ ]ʳ ≡ ρ₀' [ W ⨟ˢ κᵉ ]ʳ
     rhs = trans ([⨟]ʳ ρ' X κ⊤)
-          (trans (agreeᵣ {Φ = Φ +e} {Ψ = Φ'} {O = O} {X = X} u ρ' o)
+          (trans (agreeᵣ {O = O} {X = X} {σ₁ = κ⊤} {σ₂ = κᵉ} u ρ' o)
           (trans (sym ([⨟]ʳ ρ' X κᵉ))
           (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ' e₁ γ)) ([⨟]ʳ ρ₀' W κᵉ))))
 
@@ -782,7 +562,7 @@ stripᵉ-top-princ {Φ = Φ} {Φ'} {Q} O j ε ε' ε₀' e₁ eq γ hγ u p
 
     rhs : ε' [ X ]ᵉ [ κ⊤ ]ᵉ ≡ ε₀' [ W ⨟ˢ κᵉ ]ᵉ
     rhs = trans ([⨟]ᵉ ε' X κ⊤)
-          (trans (agreeₑ {Φ = Φ +e} {Ψ = Φ'} {O = O} {X = X} u ε' o)
+          (trans (agreeₑ {O = O} {X = X} {σ₁ = κ⊤} {σ₂ = κᵉ} u ε' o)
           (trans (sym ([⨟]ᵉ ε' X κᵉ))
           (trans (cong (_[ κᵉ ]ᵉ) (keyᵉ j ε' e₁ γ)) ([⨟]ᵉ ε₀' W κᵉ))))
 
@@ -1011,7 +791,7 @@ bnd-out γ δ δ₀ tri =
 popᵉ-princ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
            → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
            → (m'' : ⇑ᵉˢ s ⟶ st Φ θ'' R'' rg'') → (w'' : Wit (st Φ θ'' R'' rg'') C)
-           → Princ (⇑ᵉˢ s) (st Φ θ'' R'' rg'') m'' C
+           → Princ⇑ s (st Φ θ'' R'' rg'') m'' C
            → ∀ {s' : St Θ} {m : s ⟶ s'} {w : Wit s' (∀ᵉ C)}
            → popᵉ s C Φ θ'' R'' rg'' m'' w'' ≡ just (s' , m , w)
            → Princ s s' m (∀ᵉ C)
@@ -1028,8 +808,7 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
                            (⊩ᴿ-resp-≐ˢ (≐ˢ-sym popγ) hres'')) ,
                  (λ fx → Fixing-trans δ₀ₛ δ tri fx)
   where
-    ires = ip (δ₀ ↑ᵉ) (wkᵉ-H Q)
-              (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+    ires = ip δ₀ Q (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
 
     δ''    = proj₁ ires
     tri''  = proj₁ (proj₂ ires)
@@ -1062,15 +841,16 @@ popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat 
 popᵉ-princ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w'' ip eq δ₀ Q sat h
   | just (j , eqj) | nothing | _ = ⊥just eq
 
--- Localisation keeps every instance: the factor found for the inner
--- state serves the localised one, the local unknowns being in no image
--- of the outer ones, and the lowering lemma keeping the residual.
+-- Localisation keeps every instance entering the scope: the factor
+-- found for the inner state serves the localised one, the local
+-- unknowns being in no image of the outer ones, and each step keeping
+-- the residual.
 
-localise-princ : ∀ {Θ} {s₀ s'' : St Θ} {m : s₀ ⟶ s''} {C : Constraint Θ}
-               → Princ s₀ s'' m C
-               → Princ s₀ (proj₁ (localiseˢ m)) (⟶-⨟ m (proj₂ (localiseˢ m))) C
+localise-princ : ∀ {Θ} {s : St Θ} {s'' : St (Θ +e)} {m : ⇑ᵉˢ s ⟶ s''} {C : Constraint (Θ +e)}
+               → Princ⇑ s s'' m C
+               → Princ⇑ s (proj₁ (localiseˢ s m)) (⟶-⨟ m (proj₂ (localiseˢ s m))) C
 localise-princ {s'' = s''} {m} ip δ₀ Q sat h =
-  δ , ≐ˢ-trans (⨟-congˡ (lfix L) δ) tri , lcpl L δ Q hres , fx
+  δ , ≐ˢ-trans (⨟-congˡ (lfix L) δ) tri , lcpl L δ Q (δ₀ , tri) hres , fx
   where
     L : Localised (mδ m) (res s'')
     L = localise (mδ m) (res s'')
@@ -1288,10 +1068,11 @@ solve-principal s (∃ᵉ C) eq δ₀ Q (ε , sat) h with solve (s ↑ᵉˢ) C i
 solve-principal s (∀ᵉ C) eq with solve (⇑ᵉˢ s) C in e
 ... | nothing = ⊥just eq
 ... | just (s'' , m'' , w'') =
-      popᵉ-princ s C (Ψ (proj₁ (localiseˢ m''))) (θ (proj₁ (localiseˢ m'')))
-                 (res (proj₁ (localiseˢ m''))) (rig (proj₁ (localiseˢ m'')))
-                 (⟶-⨟ m'' (proj₂ (localiseˢ m''))) (wit-mono (proj₂ (localiseˢ m'')) C w'')
-                 (localise-princ {s₀ = ⇑ᵉˢ s} {s''} {m''} {C} (solve-principal (⇑ᵉˢ s) C e)) eq
+      popᵉ-princ s C (Ψ (proj₁ (localiseˢ s m''))) (θ (proj₁ (localiseˢ s m'')))
+                 (res (proj₁ (localiseˢ s m''))) (rig (proj₁ (localiseˢ s m'')))
+                 (⟶-⨟ m'' (proj₂ (localiseˢ s m''))) (wit-mono (proj₂ (localiseˢ s m'')) C w'')
+                 (localise-princ {s = s} {s''} {m''} {C}
+                   (λ δ₀ Q → solve-principal (⇑ᵉˢ s) C e (δ₀ ↑ᵉ) (wkᵉ-H Q))) eq
 
 solve-principal s (⋀ᵒᵖ f) eq
   with threadOps {f = f} (λ s' op → solve s' (f op)) ops s in e
@@ -1314,15 +1095,14 @@ subsList-exp l δ dec q with subsList-nothing (map (mapᵖ (_[ δ ]ᵛ)) l) q
 -- Refutation holds on the fragment without a rigid binder. At a rigid
 -- binder the atoms that mention the rigid are settled by a decision
 -- against no hypotheses, and a declined one refutes nothing: a
--- satisfiable constraint whose least solution localisation cannot
--- reach, such as `∀j ∃e. (c · e ≾ e) ∧ (j ≾ e)`, is declined all the
--- same. What a rigid binder does refute is an escape: an outer
--- unknown whose image keeps the rigid.
+-- satisfiable constraint whose solution localisation cannot reach is
+-- declined all the same. What a rigid binder does refute is an escape:
+-- an outer unknown whose image keeps the rigid.
 
 popᵉ-escape : ∀ {Θ Φ} → (s : St Θ) → (C : Constraint (Θ +e))
             → (θ'' : Subst (Θ +e) (Φ +e)) → (R'' : Resid (Φ +e)) → (rg'' : Rig (Φ +e))
             → (m'' : ⇑ᵉˢ s ⟶ st (Φ +e) θ'' R'' rg'')
-            → Princ (⇑ᵉˢ s) (st (Φ +e) θ'' R'' rg'') m'' C
+            → Princ⇑ s (st (Φ +e) θ'' R'' rg'') m'' C
             → (j : EVar (Φ +e)) → sE (mδ m'') (newᵉ {Ψ s}) ≡ evar j
             → strSub j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') ≡ nothing
             → Refut s (∀ᵉ C)
@@ -1330,8 +1110,7 @@ popᵉ-escape s C θ'' R'' rg'' m'' ip j eqj eqstr δ₀ Q fx h sat =
   strSub-escape j (wkˢᵉ {Ψ s} ⨟ˢ mδ m'') δ'' (bnd-var (mδ m'') δ'' tri'' eqj)
                 δ₀ (bnd-out (mδ m'') δ'' δ₀ tri'') eqstr
   where
-    ires = ip (δ₀ ↑ᵉ) (wkᵉ-H Q)
-              (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
+    ires = ip δ₀ Q (⊨-resp-≐ˢ (≐ˢ-sym (⨟-↑ᵉ (θ s) δ₀)) C sat) ⊩ᴿ-empty
 
     δ''   = proj₁ ires
     tri'' = proj₁ (proj₂ ires)

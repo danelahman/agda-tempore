@@ -16,9 +16,19 @@
 -- In every case it occurs in no type of the residual. The      --
 -- grade of a disjunction is the left side of an ordering below --
 -- the unit: the first and third steps keep it, the others ask  --
--- it to be free of the unknown. A value may mention the       --
+-- it to be free of the unknown. A value may mention the        --
 -- rigid, so the value over the rigid is one expression,        --
 -- uniform in it.                                               --
+--                                                              --
+-- Where no local unknown has such a value, a set of them is    --
+-- sent to the top at once. Each member is reached from the     --
+-- rigid: it is bounded below by an expression decided to be    --
+-- the top once the rigid and the members reached before it     --
+-- are. Each ordering with a member on its left has on its      --
+-- right an expression decided to be the top once the members   --
+-- are, or one that mentions only outer unknowns other than the --
+-- rigid. No member occurs in a type or in a disjunction's      --
+-- grade.                                                       --
 --                                                              --
 -- Before the first round, between rounds and after the last,   --
 -- the settled atoms are dropped: an ordering decided true      --
@@ -26,16 +36,21 @@
 -- side so decided (the type eternal, or the grade below the    --
 -- unit). They hold at every instance and bound nothing.        --
 --                                                              --
--- Every grade former is monotone, so each step keeps every     --
+-- Every grade former is monotone, so each value keeps every    --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
--- five siblings).                                              --
+-- five siblings). Raising a set keeps every instance entering  --
+-- the scope, one that takes the rigid to a fresh eigenvariable --
+-- (`raise-⊩`): with the eigenvariable at the top as well, the  --
+-- instance stays one and every member is at the top, and the   --
+-- raised instance lies between the two.                        --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
+open import Data.Bool.Base using (_∨_; _∧_; not; true; false) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (Fin; zero; suc)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_)
+open import Data.List.Base using (List; []; _∷_; map)
 open import Data.List.Membership.Propositional using (_∈_)
+open import Data.List.Membership.Propositional.Properties using (∈-map⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
 open import Data.Nat.Base using (ℕ; _+_) renaming (zero to nzero; suc to nsuc)
@@ -71,6 +86,8 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.SolverImpl.Core.Occurs S
   using (occᵉ-e; occᵉ-r; occᵉ-v; occᵉ-c; occʳ-r; occʳ-v; occʳ-c)
+open import TypeInference.SolverImpl.Core.Rigid S
+  using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Eliminate S
@@ -248,6 +265,340 @@ freeʳ-fix k O q b with ∨-false (anyᶠ (λ α → occʳ-v k (sTy O α))) _ q
       mk≐ˢ (λ α → updʳ-v k b (sTy O α) (anyᶠ-false (λ α' → occʳ-v k (sTy O α')) qT α))
            (λ i → updʳ-r k b (sR O i) (anyᶠ-false (λ i' → occʳ-r k (sR O i')) qR i))
            (λ i → updʳ-e k b (sE O i))
+
+------------------------------------------------------------------------
+-- Expressions over the unknowns a substitution's images mention
+
+Outerₑ : ∀ {Θ Φ} → Subst Θ Φ → EExp Φ → Set
+Outerₑ O ε = ∀ {k} → occᵉ-e k ε ≡ true → freeᵉ k O ≡ true
+
+Outerᵣ : ∀ {Θ Φ} → Subst Θ Φ → RExp Φ → Set
+Outerᵣ O ρ = (∀ {k} → occᵉ-r k ρ ≡ true → freeᵉ k O ≡ true)
+           × (∀ {k} → occʳ-r k ρ ≡ true → freeʳ k O ≡ true)
+
+∨-elim : ∀ {P : Set} {b b' : 𝔹} → (b ≡ true → P) → (b' ≡ true → P) → b ∨ b' ≡ true → P
+∨-elim {b = b} {b'} f g q with ∨-true b b' q
+... | inj₁ r = f r
+... | inj₂ r = g r
+
+outerₑ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ε : EExp Φ) → Maybe (Outerₑ O ε)
+outerₑ? O (evar i) with freeᵉ i O in q
+... | true  = just (λ {k} r → subst (λ x → freeᵉ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
+... | false = nothing
+outerₑ? O (econst c) = just (λ ())
+outerₑ? O (ε ·̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
+... | just f | just g = just (∨-elim f g)
+... | _      | _      = nothing
+outerₑ? O (ε ⊔̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
+... | just f | just g = just (∨-elim f g)
+... | _      | _      = nothing
+
+outerᵣ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ρ : RExp Φ) → Maybe (Outerᵣ O ρ)
+outerᵣ? O (rvar i) with freeʳ i O in q
+... | true  = just ((λ ()) ,
+                    λ {k} r → subst (λ x → freeʳ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
+... | false = nothing
+outerᵣ? O (rconst c) = just ((λ ()) , (λ ()))
+outerᵣ? O (ρ ·̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
+... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
+... | _             | _             = nothing
+outerᵣ? O (ρ ⊔̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
+... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
+... | _             | _             = nothing
+outerᵣ? O ∣ ε ∣̂ᵉ with outerₑ? O ε
+... | just f  = just (f , (λ ()))
+... | nothing = nothing
+
+-- A variable, with the equation that names it: a pattern-matching
+-- wrapper, so that a case analysis on it stays visible to a proof
+
+evar? : ∀ {Φ} → (ε : EExp Φ) → Maybe (Σ[ j ∈ EVar Φ ] (ε ≡ evar j))
+evar? (evar j)   = just (j , refl)
+evar? (econst c) = nothing
+evar? (ε ·̂ₑ ε')  = nothing
+evar? (ε ⊔̂ₑ ε')  = nothing
+
+------------------------------------------------------------------------
+-- The eigenvariable of a rigid scope
+
+-- `κ⟨ b ⟩` sends the newest effect-grade variable to `b`, fixing the
+-- rest; being a substitution, entailment survives it. The eigenvariable
+-- is sent to the unit (`κᵉ`), and to the top (`κ⊤`) where an ordering
+-- is kept at the top rigid.
+
+κ⟨_⟩ : ∀ {Ψ} → EExp Ψ → Subst (Ψ +e) Ψ
+κ⟨ b ⟩ = sub tvar rvar (λ { zero → b ; (suc i) → evar i })
+
+κᵉ : ∀ {Ψ} → Subst (Ψ +e) Ψ
+κᵉ = κ⟨ ûₑ ⟩
+
+κ⊤ : ∀ {Ψ} → Subst (Ψ +e) Ψ
+κ⊤ = κ⟨ econst ⊤ₑ ⟩
+
+wk-κ : ∀ {Ψ} → (b : EExp Ψ) → (wkˢᵉ {Ψ} ⨟ˢ κ⟨ b ⟩) ≐ˢ idˢ
+wk-κ b = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
+
+κ-wkᵛ : ∀ {Ψ} → (b : EExp Ψ) → (A : OVType Ψ) → A [ wkˢᵉ ]ᵛ [ κ⟨ b ⟩ ]ᵛ ≡ A
+κ-wkᵛ b A = trans ([⨟]ᵛ A wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵛ (wk-κ b) A) ([id]ᵛ A))
+
+κ-wkʳ : ∀ {Ψ} → (b : EExp Ψ) → (ρ : RExp Ψ) → ρ [ wkˢᵉ ]ʳ [ κ⟨ b ⟩ ]ʳ ≡ ρ
+κ-wkʳ b ρ = trans ([⨟]ʳ ρ wkˢᵉ κ⟨ b ⟩) (trans ([≐]ʳ (wk-κ b) ρ) ([id]ʳ ρ))
+
+κ-wkᵉ : ∀ {Ψ} → (b : EExp Ψ) → (ε : EExp Ψ) → ε [ wkˢᵉ ]ᵉ [ κ⟨ b ⟩ ]ᵉ ≡ ε
+κ-wkᵉ b ε = trans ([⨟]ᵉ ε wkˢᵉ κ⟨ b ⟩) (trans ([≐]ᵉ (wk-κ b) ε) ([id]ᵉ ε))
+
+-- Every weakened hypothesis is entailed back by the original set
+
+⊩ᴴ-κ : ∀ {Ψ} {Q : Hyps Ψ} → (b : EExp Ψ) → Q ⊩ᴴ (wkᵉ-H Q) [ κ⟨ b ⟩ ]
+⊩ᴴ-κ {Ψ} {Q} b = mk⊩ᴴ ets' subᵥ' ordᵣ' ordₑ' disj'
+  where
+    ets' : ∀ {α} → α ∈ ets (wkᵉ-H Q) → Q ⊩ᴱ sTy κ⟨ b ⟩ α
+    ets' m with ∈-map⁻ (wkᵉ-tv Ψ) m
+    ... | α₀ , m₀ , refl = et-hyp m₀
+
+    subᵥ' : ∀ {α β} → (α , β) ∈ subᵥ (wkᵉ-H Q) → Q ∣ sTy κ⟨ b ⟩ α <:̂ᵛ sTy κ⟨ b ⟩ β
+    subᵥ' m with ∈-map⁻ (mapᵖ (wkᵉ-tv Ψ)) m
+    ... | (α₀ , β₀) , m₀ , refl = tvarₛ (hypᵗᵛ m₀)
+
+    wkʳ' : (ρ : RExp Ψ) → ρ ≡ wkᵉ-r ρ [ κ⟨ b ⟩ ]ʳ
+    wkʳ' ρ = sym (trans (cong (_[ κ⟨ b ⟩ ]ʳ) (sym (wkˢᵉ-r ρ))) (κ-wkʳ b ρ))
+
+    wkᵉ' : (ε : EExp Ψ) → ε ≡ wkᵉ-e ε [ κ⟨ b ⟩ ]ᵉ
+    wkᵉ' ε = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵉ) (sym (wkˢᵉ-e ε))) (κ-wkᵉ b ε))
+
+    wkᵛ' : (A : OVType Ψ) → A ≡ wkᵉ-v A [ κ⟨ b ⟩ ]ᵛ
+    wkᵛ' A = sym (trans (cong (_[ κ⟨ b ⟩ ]ᵛ) (sym (wkˢᵉ-v A))) (κ-wkᵛ b A))
+
+    ordᵣ' : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ (wkᵉ-H Q)
+          → Q ⊩ ρ [ κ⟨ b ⟩ ]ʳ ≾̂ᵣ ρ' [ κ⟨ b ⟩ ]ʳ
+    ordᵣ' m with ∈-map⁻ (mapᵖ wkᵉ-r) m
+    ... | (ρ₀ , ρ₀') , m₀ , refl =
+      subst₂ (λ x y → Q ⊩ x ≾̂ᵣ y) (wkʳ' ρ₀) (wkʳ' ρ₀') (hypᵣ m₀)
+
+    ordₑ' : ∀ {ε ε'} → (ε , ε') ∈ ordₑ (wkᵉ-H Q)
+          → Q ⊩ ε [ κ⟨ b ⟩ ]ᵉ ≾̂ₑ ε' [ κ⟨ b ⟩ ]ᵉ
+    ordₑ' m with ∈-map⁻ (mapᵖ wkᵉ-e) m
+    ... | (ε₀ , ε₀') , m₀ , refl =
+      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (wkᵉ' ε₀) (wkᵉ' ε₀') (hypₑ m₀)
+
+    disj' : ∀ {A ρ} → (A , ρ) ∈ disj (wkᵉ-H Q) → VarOK Q (A [ κ⟨ b ⟩ ]ᵛ) (ρ [ κ⟨ b ⟩ ]ʳ)
+    disj' m with ∈-map⁻ (mapᵈ wkᵉ-v wkᵉ-r) m
+    ... | (A₀ , ρ₀) , m₀ , refl =
+      subst₂ (VarOK Q) (wkᵛ' A₀) (wkʳ' ρ₀) (hyp-ok₀ m₀)
+
+⊩ᴴ-κᵉ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ᴴ (wkᵉ-H Q) [ κᵉ ]
+⊩ᴴ-κᵉ = ⊩ᴴ-κ ûₑ
+
+-- The unit is below the top, so sending the eigenvariable there
+-- instead raises every instance
+
+κᵉ≾κ⊤ : ∀ {Ψ} {Q : Hyps Ψ} → Q ⊩ κᵉ ≾ˢ κ⊤
+κᵉ≾κ⊤ = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ { zero → topₑ ; (suc i) → ⊩≾̂ₑ-refl })
+
+
+-- `ω` sends it to the top and fixes the rest. It raises every image,
+-- and leaves a weakened hypothesis set entailed.
+
+ω : ∀ {Ψ} → Subst (Ψ +e) (Ψ +e)
+ω = κ⊤ ⨟ˢ wkˢᵉ
+
+wk-ω : ∀ {Ψ} → (wkˢᵉ {Ψ} ⨟ˢ ω) ≐ˢ wkˢᵉ
+wk-ω = mk≐ˢ (λ α → refl) (λ i → refl) (λ i → refl)
+
+id≾ω : ∀ {Ψ} {Q : Hyps (Ψ +e)} → Q ⊩ idˢ ≾ˢ ω
+id≾ω = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ { zero → topₑ ; (suc i) → ⊩≾̂ₑ-refl })
+
+⊩ᴴ-ω : ∀ {Ψ} {Q : Hyps Ψ} → wkᵉ-H Q ⊩ᴴ (wkᵉ-H Q) [ ω ]
+⊩ᴴ-ω = ⊩ᴴ-⨟ ⊩ᴴ-wkᵉ (⊩ᴴ-κ (econst ⊤ₑ))
+
+------------------------------------------------------------------------
+-- Two substitutions agree after `X` on the unknowns `O` mentions
+
+Agree : ∀ {Θ Φ Ψ Ψ'} → Subst Θ Φ → Subst Φ Ψ → Subst Ψ Ψ' → Subst Ψ Ψ' → Set
+Agree O X σ₁ σ₂ = (∀ {k} → freeᵉ k O ≡ true → sE X k [ σ₁ ]ᵉ ≡ sE X k [ σ₂ ]ᵉ)
+                × (∀ {k} → freeʳ k O ≡ true → sR X k [ σ₁ ]ʳ ≡ sR X k [ σ₂ ]ʳ)
+
+-- An expression mentioning only such unknowns reads the same too
+
+module _ {Θ Φ Ψ Ψ'} {O : Subst Θ Φ} {X : Subst Φ Ψ} {σ₁ σ₂ : Subst Ψ Ψ'}
+         (u : Agree O X σ₁ σ₂) where
+
+  agreeₑ : (ε : EExp Φ) → Outerₑ O ε → ε [ X ⨟ˢ σ₁ ]ᵉ ≡ ε [ X ⨟ˢ σ₂ ]ᵉ
+  agreeₑ (evar i)   o = proj₁ u (o (dec-true (i ≟ᶠ i) refl))
+  agreeₑ (econst c) o = refl
+  agreeₑ (ε ·̂ₑ ε')  o = cong₂ _·̂ₑ_ (agreeₑ ε (λ q → o (∨-left _ _ q)))
+                                   (agreeₑ ε' (λ q → o (∨-right _ _ q)))
+  agreeₑ (ε ⊔̂ₑ ε')  o = cong₂ _⊔̂ₑ_ (agreeₑ ε (λ q → o (∨-left _ _ q)))
+                                   (agreeₑ ε' (λ q → o (∨-right _ _ q)))
+
+  agreeᵣ : (ρ : RExp Φ) → Outerᵣ O ρ → ρ [ X ⨟ˢ σ₁ ]ʳ ≡ ρ [ X ⨟ˢ σ₂ ]ʳ
+  agreeᵣ (rvar i)   (oe , or) = proj₂ u (or (dec-true (i ≟ᶠ i) refl))
+  agreeᵣ (rconst c) o         = refl
+  agreeᵣ (ρ ·̂ᵣ ρ')  (oe , or) =
+    cong₂ _·̂ᵣ_ (agreeᵣ ρ  ((λ q → oe (∨-left _ _ q)) , (λ q → or (∨-left _ _ q))))
+               (agreeᵣ ρ' ((λ q → oe (∨-right _ _ q)) , (λ q → or (∨-right _ _ q))))
+  agreeᵣ (ρ ⊔̂ᵣ ρ')  (oe , or) =
+    cong₂ _⊔̂ᵣ_ (agreeᵣ ρ  ((λ q → oe (∨-left _ _ q)) , (λ q → or (∨-left _ _ q))))
+               (agreeᵣ ρ' ((λ q → oe (∨-right _ _ q)) , (λ q → or (∨-right _ _ q))))
+  agreeᵣ ∣ ε ∣̂ᵉ     (oe , or) = cong ∣_∣̂ᵉ (agreeₑ ε oe)
+
+-- Conversely, an image that reads the same does so at every unknown
+-- occurring in it: the formers are injective
+
+·̂ₑ-inj : ∀ {Ψ} {a b c d : EExp Ψ} → a ·̂ₑ b ≡ c ·̂ₑ d → (a ≡ c) × (b ≡ d)
+·̂ₑ-inj refl = refl , refl
+
+⊔̂ₑ-inj : ∀ {Ψ} {a b c d : EExp Ψ} → a ⊔̂ₑ b ≡ c ⊔̂ₑ d → (a ≡ c) × (b ≡ d)
+⊔̂ₑ-inj refl = refl , refl
+
+·̂ᵣ-inj : ∀ {Ψ} {a b c d : RExp Ψ} → a ·̂ᵣ b ≡ c ·̂ᵣ d → (a ≡ c) × (b ≡ d)
+·̂ᵣ-inj refl = refl , refl
+
+⊔̂ᵣ-inj : ∀ {Ψ} {a b c d : RExp Ψ} → a ⊔̂ᵣ b ≡ c ⊔̂ᵣ d → (a ≡ c) × (b ≡ d)
+⊔̂ᵣ-inj refl = refl , refl
+
+∣∣-inj : ∀ {Ψ} {a b : EExp Ψ} → ∣ a ∣̂ᵉ ≡ ∣ b ∣̂ᵉ → a ≡ b
+∣∣-inj refl = refl
+
+|×|-inj : ∀ {Ψ} {A B C D : OVType Ψ} → A |×| B ≡ C |×| D → (A ≡ C) × (B ≡ D)
+|×|-inj refl = refl , refl
+
+⇒-inj : ∀ {Ψ} {A B : OVType Ψ} {C D : OCType Ψ} → A ⇒ C ≡ B ⇒ D → (A ≡ B) × (C ≡ D)
+⇒-inj refl = refl , refl
+
+[]-inj : ∀ {Ψ} {ρ ρ' : RExp Ψ} {A B : OVType Ψ} → [ ρ ] A ≡ [ ρ' ] B → (ρ ≡ ρ') × (A ≡ B)
+[]-inj refl = refl , refl
+
+‼-inj : ∀ {Ψ} {A B : OVType Ψ} {ε ε' : EExp Ψ} → A ‼ ε ≡ B ‼ ε' → (A ≡ B) × (ε ≡ ε')
+‼-inj refl = refl , refl
+
+module _ {Φ Ψ Ψ'} (X : Subst Φ Ψ) (σ₁ σ₂ : Subst Ψ Ψ') where
+
+  -- at an effect-grade unknown
+
+  subᵉ-e : ∀ {k} → (x : EExp Φ) → occᵉ-e k x ≡ true
+         → x [ X ]ᵉ [ σ₁ ]ᵉ ≡ x [ X ]ᵉ [ σ₂ ]ᵉ → sE X k [ σ₁ ]ᵉ ≡ sE X k [ σ₂ ]ᵉ
+  subᵉ-e {k} (evar i) r e =
+    subst (λ k' → sE X k' [ σ₁ ]ᵉ ≡ sE X k' [ σ₂ ]ᵉ) (sym (true-dec (k ≟ᶠ i) r)) e
+  subᵉ-e {k} (a ·̂ₑ b) r e with ∨-true (occᵉ-e k a) (occᵉ-e k b) r
+  ... | inj₁ r' = subᵉ-e a r' (proj₁ (·̂ₑ-inj e))
+  ... | inj₂ r' = subᵉ-e b r' (proj₂ (·̂ₑ-inj e))
+  subᵉ-e {k} (a ⊔̂ₑ b) r e with ∨-true (occᵉ-e k a) (occᵉ-e k b) r
+  ... | inj₁ r' = subᵉ-e a r' (proj₁ (⊔̂ₑ-inj e))
+  ... | inj₂ r' = subᵉ-e b r' (proj₂ (⊔̂ₑ-inj e))
+
+  subᵉ-r : ∀ {k} → (x : RExp Φ) → occᵉ-r k x ≡ true
+         → x [ X ]ʳ [ σ₁ ]ʳ ≡ x [ X ]ʳ [ σ₂ ]ʳ → sE X k [ σ₁ ]ᵉ ≡ sE X k [ σ₂ ]ᵉ
+  subᵉ-r {k} (a ·̂ᵣ b) r e with ∨-true (occᵉ-r k a) (occᵉ-r k b) r
+  ... | inj₁ r' = subᵉ-r a r' (proj₁ (·̂ᵣ-inj e))
+  ... | inj₂ r' = subᵉ-r b r' (proj₂ (·̂ᵣ-inj e))
+  subᵉ-r {k} (a ⊔̂ᵣ b) r e with ∨-true (occᵉ-r k a) (occᵉ-r k b) r
+  ... | inj₁ r' = subᵉ-r a r' (proj₁ (⊔̂ᵣ-inj e))
+  ... | inj₂ r' = subᵉ-r b r' (proj₂ (⊔̂ᵣ-inj e))
+  subᵉ-r {k} ∣ a ∣̂ᵉ r e = subᵉ-e a r (∣∣-inj e)
+
+  subᵉ-v : ∀ {k} → (x : OVType Φ) → occᵉ-v k x ≡ true
+         → x [ X ]ᵛ [ σ₁ ]ᵛ ≡ x [ X ]ᵛ [ σ₂ ]ᵛ → sE X k [ σ₁ ]ᵉ ≡ sE X k [ σ₂ ]ᵉ
+  subᵉ-c : ∀ {k} → (x : OCType Φ) → occᵉ-c k x ≡ true
+         → x [ X ]ᶜ [ σ₁ ]ᶜ ≡ x [ X ]ᶜ [ σ₂ ]ᶜ → sE X k [ σ₁ ]ᵉ ≡ sE X k [ σ₂ ]ᵉ
+
+  subᵉ-v {k} (A |×| B) r e with ∨-true (occᵉ-v k A) (occᵉ-v k B) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (|×|-inj e))
+  ... | inj₂ r' = subᵉ-v B r' (proj₂ (|×|-inj e))
+  subᵉ-v {k} (A ⇒ C) r e with ∨-true (occᵉ-v k A) (occᵉ-c k C) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (⇒-inj e))
+  ... | inj₂ r' = subᵉ-c C r' (proj₂ (⇒-inj e))
+  subᵉ-v {k} ([ ρ ] A) r e with ∨-true (occᵉ-r k ρ) (occᵉ-v k A) r
+  ... | inj₁ r' = subᵉ-r ρ r' (proj₁ ([]-inj e))
+  ... | inj₂ r' = subᵉ-v A r' (proj₂ ([]-inj e))
+
+  subᵉ-c {k} (A ‼ ε) r e with ∨-true (occᵉ-v k A) (occᵉ-e k ε) r
+  ... | inj₁ r' = subᵉ-v A r' (proj₁ (‼-inj e))
+  ... | inj₂ r' = subᵉ-e ε r' (proj₂ (‼-inj e))
+
+  -- at a resource-grade unknown
+
+  subʳ-r : ∀ {k} → (x : RExp Φ) → occʳ-r k x ≡ true
+         → x [ X ]ʳ [ σ₁ ]ʳ ≡ x [ X ]ʳ [ σ₂ ]ʳ → sR X k [ σ₁ ]ʳ ≡ sR X k [ σ₂ ]ʳ
+  subʳ-r {k} (rvar i) r e =
+    subst (λ k' → sR X k' [ σ₁ ]ʳ ≡ sR X k' [ σ₂ ]ʳ) (sym (true-dec (k ≟ᶠ i) r)) e
+  subʳ-r {k} (a ·̂ᵣ b) r e with ∨-true (occʳ-r k a) (occʳ-r k b) r
+  ... | inj₁ r' = subʳ-r a r' (proj₁ (·̂ᵣ-inj e))
+  ... | inj₂ r' = subʳ-r b r' (proj₂ (·̂ᵣ-inj e))
+  subʳ-r {k} (a ⊔̂ᵣ b) r e with ∨-true (occʳ-r k a) (occʳ-r k b) r
+  ... | inj₁ r' = subʳ-r a r' (proj₁ (⊔̂ᵣ-inj e))
+  ... | inj₂ r' = subʳ-r b r' (proj₂ (⊔̂ᵣ-inj e))
+
+  subʳ-v : ∀ {k} → (x : OVType Φ) → occʳ-v k x ≡ true
+         → x [ X ]ᵛ [ σ₁ ]ᵛ ≡ x [ X ]ᵛ [ σ₂ ]ᵛ → sR X k [ σ₁ ]ʳ ≡ sR X k [ σ₂ ]ʳ
+  subʳ-c : ∀ {k} → (x : OCType Φ) → occʳ-c k x ≡ true
+         → x [ X ]ᶜ [ σ₁ ]ᶜ ≡ x [ X ]ᶜ [ σ₂ ]ᶜ → sR X k [ σ₁ ]ʳ ≡ sR X k [ σ₂ ]ʳ
+
+  subʳ-v {k} (A |×| B) r e with ∨-true (occʳ-v k A) (occʳ-v k B) r
+  ... | inj₁ r' = subʳ-v A r' (proj₁ (|×|-inj e))
+  ... | inj₂ r' = subʳ-v B r' (proj₂ (|×|-inj e))
+  subʳ-v {k} (A ⇒ C) r e with ∨-true (occʳ-v k A) (occʳ-c k C) r
+  ... | inj₁ r' = subʳ-v A r' (proj₁ (⇒-inj e))
+  ... | inj₂ r' = subʳ-c C r' (proj₂ (⇒-inj e))
+  subʳ-v {k} ([ ρ ] A) r e with ∨-true (occʳ-r k ρ) (occʳ-v k A) r
+  ... | inj₁ r' = subʳ-r ρ r' (proj₁ ([]-inj e))
+  ... | inj₂ r' = subʳ-v A r' (proj₂ ([]-inj e))
+
+  subʳ-c (A ‼ ε) r e = subʳ-v A r (proj₁ (‼-inj e))
+
+-- The images of the unknowns `O` mentions are all of the form `y [ w ]`,
+-- on which the two agree
+
+agree-out : ∀ {Θ Φ Ψ Ψ' Ψ₀} → (O : Subst Θ Φ) → (X : Subst Φ Ψ) → (σ₁ σ₂ : Subst Ψ Ψ')
+          → (w : Subst Ψ₀ Ψ) → (δ₀ : Subst Θ Ψ₀)
+          → (∀ y → y [ w ]ᵛ [ σ₁ ]ᵛ ≡ y [ w ]ᵛ [ σ₂ ]ᵛ)
+          → (∀ y → y [ w ]ʳ [ σ₁ ]ʳ ≡ y [ w ]ʳ [ σ₂ ]ʳ)
+          → (∀ y → y [ w ]ᵉ [ σ₁ ]ᵉ ≡ y [ w ]ᵉ [ σ₂ ]ᵉ)
+          → (O ⨟ˢ X) ≐ˢ (δ₀ ⨟ˢ w) → Agree O X σ₁ σ₂
+agree-out {Ψ₀ = Ψ₀} O X σ₁ σ₂ w δ₀ fv fr fe tr = ue , ur
+  where
+    flatᵛ : ∀ {x} → (y : OVType Ψ₀) → x ≡ y [ w ]ᵛ → x [ σ₁ ]ᵛ ≡ x [ σ₂ ]ᵛ
+    flatᵛ y e = trans (cong (_[ σ₁ ]ᵛ) e) (trans (fv y) (sym (cong (_[ σ₂ ]ᵛ) e)))
+
+    flatʳ : ∀ {x} → (y : RExp Ψ₀) → x ≡ y [ w ]ʳ → x [ σ₁ ]ʳ ≡ x [ σ₂ ]ʳ
+    flatʳ y e = trans (cong (_[ σ₁ ]ʳ) e) (trans (fr y) (sym (cong (_[ σ₂ ]ʳ) e)))
+
+    flatᵉ : ∀ {x} → (y : EExp Ψ₀) → x ≡ y [ w ]ᵉ → x [ σ₁ ]ᵉ ≡ x [ σ₂ ]ᵉ
+    flatᵉ y e = trans (cong (_[ σ₁ ]ᵉ) e) (trans (fe y) (sym (cong (_[ σ₂ ]ᵉ) e)))
+
+    ue : ∀ {k} → freeᵉ k O ≡ true → sE X k [ σ₁ ]ᵉ ≡ sE X k [ σ₂ ]ᵉ
+    ue {k} q with ∨-true (anyᶠ (λ α → occᵉ-v k (sTy O α))) _ q
+    ... | inj₁ qt with anyᶠ-true (λ α → occᵉ-v k (sTy O α)) qt
+    ...   | α , r = subᵉ-v X σ₁ σ₂ (sTy O α) r (flatᵛ (sTy δ₀ α) (≐ᵗ tr α))
+    ue {k} q | inj₂ q' with ∨-true (anyᶠ (λ i → occᵉ-r k (sR O i))) _ q'
+    ...   | inj₁ qr with anyᶠ-true (λ i → occᵉ-r k (sR O i)) qr
+    ...     | i , r = subᵉ-r X σ₁ σ₂ (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
+    ue {k} q | inj₂ q' | inj₂ qe with anyᶠ-true (λ i → occᵉ-e k (sE O i)) qe
+    ...     | i , r = subᵉ-e X σ₁ σ₂ (sE O i) r (flatᵉ (sE δ₀ i) (≐ᵉ tr i))
+
+    ur : ∀ {k} → freeʳ k O ≡ true → sR X k [ σ₁ ]ʳ ≡ sR X k [ σ₂ ]ʳ
+    ur {k} q with ∨-true (anyᶠ (λ α → occʳ-v k (sTy O α))) _ q
+    ... | inj₁ qt with anyᶠ-true (λ α → occʳ-v k (sTy O α)) qt
+    ...   | α , r = subʳ-v X σ₁ σ₂ (sTy O α) r (flatᵛ (sTy δ₀ α) (≐ᵗ tr α))
+    ur {k} q | inj₂ qr with anyᶠ-true (λ i → occʳ-r k (sR O i)) qr
+    ...   | i , r = subʳ-r X σ₁ σ₂ (sR O i) r (flatʳ (sR δ₀ i) (≐ʳ tr i))
+
+-- An instance entering a rigid scope: the scope's own unknowns go to an
+-- instance of the enclosing scope, the rigid to a fresh eigenvariable.
+-- The images of the outer unknowns other than the rigid do not depend
+-- on the eigenvariable.
+
+Entry : ∀ {Θ Φ Ψ''} → Subst (Θ +e) Φ → Subst Φ (Ψ'' +e) → Set
+Entry {Θ} {Ψ'' = Ψ''} O τ = Σ[ δ₀ ∈ Subst Θ Ψ'' ] ((O ⨟ˢ τ) ≐ˢ (δ₀ ↑ᵉ))
+
+stable-out : ∀ {Θ Φ Ψ''} → (O : Subst (Θ +e) Φ) → (τ : Subst Φ (Ψ'' +e)) → Entry O τ
+           → Agree (wkˢᵉ {Θ} ⨟ˢ O) τ ω idˢ
+stable-out O τ (δ₀ , en) =
+  agree-out (wkˢᵉ ⨟ˢ O) τ ω idˢ wkˢᵉ δ₀
+    (λ y → trans ([⨟]ᵛ y wkˢᵉ ω) (trans ([≐]ᵛ wk-ω y) (sym ([id]ᵛ (y [ wkˢᵉ ]ᵛ)))))
+    (λ y → trans ([⨟]ʳ y wkˢᵉ ω) (trans ([≐]ʳ wk-ω y) (sym ([id]ʳ (y [ wkˢᵉ ]ʳ)))))
+    (λ y → trans ([⨟]ᵉ y wkˢᵉ ω) (trans ([≐]ᵉ wk-ω y) (sym ([id]ᵉ (y [ wkˢᵉ ]ᵉ)))))
+    (≐ˢ-trans (⨟-assoc wkˢᵉ O τ) (≐ˢ-trans (⨟-congʳ wkˢᵉ en) (wkˢᵉ-↑ᵉ δ₀)))
 
 ------------------------------------------------------------------------
 -- How an unknown `v` occurs in a list of orderings, over either sort of
@@ -845,34 +1196,524 @@ unsettled {P = P} set (a ∷ l) = go (set a) (unsettled set l)
                        ; (there m)   → bk δ (λ m' → k (there m')) m })
 
 ------------------------------------------------------------------------
+-- A set of unknowns sent to the top at once
+
+data Mem (Φ : Scope) : Set where
+  eᵐ : EVar Φ → Mem Φ
+  rᵐ : RVar Φ → Mem Φ
+
+inᴱ : ∀ {Φ} → EVar Φ → List (Mem Φ) → 𝔹
+inᴱ k []             = false
+inᴱ k (eᵐ k' ∷ l) = ⌊ k ≟ᶠ k' ⌋ ∨ inᴱ k l
+inᴱ k (rᵐ _  ∷ l) = inᴱ k l
+
+inᴿ : ∀ {Φ} → RVar Φ → List (Mem Φ) → 𝔹
+inᴿ k []             = false
+inᴿ k (eᵐ _  ∷ l) = inᴿ k l
+inᴿ k (rᵐ k' ∷ l) = ⌊ k ≟ᶠ k' ⌋ ∨ inᴿ k l
+
+topE : ∀ {Φ} → 𝔹 → EVar Φ → EExp Φ
+topE true  k = econst ⊤ₑ
+topE false k = evar k
+
+topR : ∀ {Φ} → 𝔹 → RVar Φ → RExp Φ
+topR true  k = rconst ⊤ᵣ
+topR false k = rvar k
+
+tops : ∀ {Φ} → List (Mem Φ) → Subst Φ Φ
+tops l = sub tvar (λ k → topR (inᴿ k l) k) (λ k → topE (inᴱ k l) k)
+
+-- Whether a member occurs
+
+hitₑ : ∀ {Φ} → List (Mem Φ) → EExp Φ → 𝔹
+hitₑ l (evar k)   = inᴱ k l
+hitₑ l (econst c) = false
+hitₑ l (ε ·̂ₑ ε')  = hitₑ l ε ∨ hitₑ l ε'
+hitₑ l (ε ⊔̂ₑ ε')  = hitₑ l ε ∨ hitₑ l ε'
+
+hitᵣ : ∀ {Φ} → List (Mem Φ) → RExp Φ → 𝔹
+hitᵣ l (rvar k)   = inᴿ k l
+hitᵣ l (rconst c) = false
+hitᵣ l (ρ ·̂ᵣ ρ')  = hitᵣ l ρ ∨ hitᵣ l ρ'
+hitᵣ l (ρ ⊔̂ᵣ ρ')  = hitᵣ l ρ ∨ hitᵣ l ρ'
+hitᵣ l ∣ ε ∣̂ᵉ     = hitₑ l ε
+
+hitᵥ : ∀ {Φ} → List (Mem Φ) → OVType Φ → 𝔹
+hitᶜ : ∀ {Φ} → List (Mem Φ) → OCType Φ → 𝔹
+hitᵥ l (tvar α)  = false
+hitᵥ l (Base b)  = false
+hitᵥ l Unit      = false
+hitᵥ l Bool      = false
+hitᵥ l Empty     = false
+hitᵥ l (A |×| B) = hitᵥ l A ∨ hitᵥ l B
+hitᵥ l (A ⇒ C)   = hitᵥ l A ∨ hitᶜ l C
+hitᵥ l ([ ρ ] A) = hitᵣ l ρ ∨ hitᵥ l A
+hitᶜ l (A ‼ ε)   = hitᵥ l A ∨ hitₑ l ε
+
+-- What no member occurs in is left alone
+
+tops-e : ∀ {Φ} → (l : List (Mem Φ)) → (ε : EExp Φ) → hitₑ l ε ≡ false → ε [ tops l ]ᵉ ≡ ε
+tops-e l (evar k)   q = cong (λ b → topE b k) q
+tops-e l (econst c) q = refl
+tops-e l (ε ·̂ₑ ε')  q with ∨-false (hitₑ l ε) (hitₑ l ε') q
+... | q₁ , q₂ = cong₂ _·̂ₑ_ (tops-e l ε q₁) (tops-e l ε' q₂)
+tops-e l (ε ⊔̂ₑ ε')  q with ∨-false (hitₑ l ε) (hitₑ l ε') q
+... | q₁ , q₂ = cong₂ _⊔̂ₑ_ (tops-e l ε q₁) (tops-e l ε' q₂)
+
+tops-r : ∀ {Φ} → (l : List (Mem Φ)) → (ρ : RExp Φ) → hitᵣ l ρ ≡ false → ρ [ tops l ]ʳ ≡ ρ
+tops-r l (rvar k)   q = cong (λ b → topR b k) q
+tops-r l (rconst c) q = refl
+tops-r l (ρ ·̂ᵣ ρ')  q with ∨-false (hitᵣ l ρ) (hitᵣ l ρ') q
+... | q₁ , q₂ = cong₂ _·̂ᵣ_ (tops-r l ρ q₁) (tops-r l ρ' q₂)
+tops-r l (ρ ⊔̂ᵣ ρ')  q with ∨-false (hitᵣ l ρ) (hitᵣ l ρ') q
+... | q₁ , q₂ = cong₂ _⊔̂ᵣ_ (tops-r l ρ q₁) (tops-r l ρ' q₂)
+tops-r l ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (tops-e l ε q)
+
+tops-v : ∀ {Φ} → (l : List (Mem Φ)) → (A : OVType Φ) → hitᵥ l A ≡ false → A [ tops l ]ᵛ ≡ A
+tops-c : ∀ {Φ} → (l : List (Mem Φ)) → (C : OCType Φ) → hitᶜ l C ≡ false → C [ tops l ]ᶜ ≡ C
+tops-v l (tvar α)  q = refl
+tops-v l (Base b)  q = refl
+tops-v l Unit      q = refl
+tops-v l Bool      q = refl
+tops-v l Empty     q = refl
+tops-v l (A |×| B) q with ∨-false (hitᵥ l A) (hitᵥ l B) q
+... | q₁ , q₂ = cong₂ _|×|_ (tops-v l A q₁) (tops-v l B q₂)
+tops-v l (A ⇒ C)   q with ∨-false (hitᵥ l A) (hitᶜ l C) q
+... | q₁ , q₂ = cong₂ _⇒_ (tops-v l A q₁) (tops-c l C q₂)
+tops-v l ([ ρ ] A) q with ∨-false (hitᵣ l ρ) (hitᵥ l A) q
+... | q₁ , q₂ = cong₂ [_]_ (tops-r l ρ q₁) (tops-v l A q₂)
+tops-c l (A ‼ ε)   q with ∨-false (hitᵥ l A) (hitₑ l ε) q
+... | q₁ , q₂ = cong₂ _‼_ (tops-v l A q₁) (tops-e l ε q₂)
+
+-- ... and so does a later substitution
+
+tops-⨟e : ∀ {Φ Ψ'} → (l : List (Mem Φ)) → (τ : Subst Φ Ψ') → (ε : EExp Φ)
+        → hitₑ l ε ≡ false → ε [ tops l ⨟ˢ τ ]ᵉ ≡ ε [ τ ]ᵉ
+tops-⨟e l τ ε q = trans (sym ([⨟]ᵉ ε (tops l) τ)) (cong (_[ τ ]ᵉ) (tops-e l ε q))
+
+tops-⨟r : ∀ {Φ Ψ'} → (l : List (Mem Φ)) → (τ : Subst Φ Ψ') → (ρ : RExp Φ)
+        → hitᵣ l ρ ≡ false → ρ [ tops l ⨟ˢ τ ]ʳ ≡ ρ [ τ ]ʳ
+tops-⨟r l τ ρ q = trans (sym ([⨟]ʳ ρ (tops l) τ)) (cong (_[ τ ]ʳ) (tops-r l ρ q))
+
+tops-⨟v : ∀ {Φ Ψ'} → (l : List (Mem Φ)) → (τ : Subst Φ Ψ') → (A : OVType Φ)
+        → hitᵥ l A ≡ false → A [ tops l ⨟ˢ τ ]ᵛ ≡ A [ τ ]ᵛ
+tops-⨟v l τ A q = trans (sym ([⨟]ᵛ A (tops l) τ)) (cong (_[ τ ]ᵛ) (tops-v l A q))
+
+-- The members occur in no image of `O`
+
+freeᴹ : ∀ {Θ Φ} → List (Mem Φ) → Subst Θ Φ → 𝔹
+freeᴹ l O = anyᶠ (λ α → hitᵥ l (sTy O α))
+          ∨ (anyᶠ (λ i → hitᵣ l (sR O i)) ∨ anyᶠ (λ i → hitₑ l (sE O i)))
+
+freeᴹ-fix : ∀ {Θ Φ} → (l : List (Mem Φ)) → (O : Subst Θ Φ) → freeᴹ l O ≡ false
+          → (O ⨟ˢ tops l) ≐ˢ O
+freeᴹ-fix l O q with ∨-false (anyᶠ (λ α → hitᵥ l (sTy O α))) _ q
+... | qT , q' with ∨-false (anyᶠ (λ i → hitᵣ l (sR O i))) _ q'
+...   | qR , qE =
+        mk≐ˢ (λ α → tops-v l (sTy O α) (anyᶠ-false (λ α' → hitᵥ l (sTy O α')) qT α))
+             (λ i → tops-r l (sR O i) (anyᶠ-false (λ i' → hitᵣ l (sR O i')) qR i))
+             (λ i → tops-e l (sE O i) (anyᶠ-false (λ i' → hitₑ l (sE O i')) qE i))
+
+-- Pointwise, the members sent to the top lie above, and below any
+-- substitution that is at the top on them
+
+tops-above : ∀ {Φ Ψ'} {Q : Hyps Ψ'} → (l : List (Mem Φ)) → (τ : Subst Φ Ψ')
+           → Q ⊩ τ ≾ˢ (tops l ⨟ˢ τ)
+tops-above {Φ} {Q = Q} l τ = mk≾ˢ (λ k → r (inᴿ k l) k) (λ k → e (inᴱ k l) k)
+  where
+    r : (b : 𝔹) → (k : RVar Φ) → Q ⊩ sR τ k ≾̂ᵣ topR b k [ τ ]ʳ
+    r true  k = topᵣ
+    r false k = ⊩≾̂ᵣ-refl
+
+    e : (b : 𝔹) → (k : EVar Φ) → Q ⊩ sE τ k ≾̂ₑ topE b k [ τ ]ᵉ
+    e true  k = topₑ
+    e false k = ⊩≾̂ₑ-refl
+
+tops-below : ∀ {Φ Ψ'} {Q : Hyps Ψ'} → (l : List (Mem Φ)) → (τ T : Subst Φ Ψ')
+           → (∀ {k} → inᴱ k l ≡ true → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T k)
+           → (∀ {k} → inᴿ k l ≡ true → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ sR T k)
+           → Q ⊩ τ ≾ˢ T → Q ⊩ (tops l ⨟ˢ τ) ≾ˢ T
+tops-below {Φ} {Q = Q} l τ T fe fr le =
+  mk≾ˢ (λ k → r k (inᴿ k l) refl) (λ k → e k (inᴱ k l) refl)
+  where
+    r : (k : RVar Φ) → (b : 𝔹) → inᴿ k l ≡ b → Q ⊩ topR b k [ τ ]ʳ ≾̂ᵣ sR T k
+    r k true  q = fr q
+    r k false q = ≾ˢʳ le k
+
+    e : (k : EVar Φ) → (b : 𝔹) → inᴱ k l ≡ b → Q ⊩ topE b k [ τ ]ᵉ ≾̂ₑ sE T k
+    e k true  q = fe q
+    e k false q = ≾ˢᵉ le k
+
+≾ˢ-refl : ∀ {Φ Ψ'} {Q : Hyps Ψ'} {τ : Subst Φ Ψ'} → Q ⊩ τ ≾ˢ τ
+≾ˢ-refl = mk≾ˢ (λ i → ⊩≾̂ᵣ-refl) (λ i → ⊩≾̂ₑ-refl)
+
+-- The members, each reached from the rigid `j`: bounded below by an
+-- expression decided to be the top once `j` and the members reached
+-- before it are.
+
+data Reach {Φ} (R : Resid Φ) (j : EVar Φ) : List (Mem Φ) → Set where
+  reach[] : Reach R j []
+  reachᵉ  : ∀ {k x l} → (x , evar k) ∈ es R
+          → ∅ᴴ ⊩ econst ⊤ₑ ≾̂ₑ x [ tops (eᵐ j ∷ l) ]ᵉ
+          → Reach R j l → Reach R j (eᵐ k ∷ l)
+  reachʳ  : ∀ {k x l} → (x , rvar k) ∈ rs R
+          → ∅ᴴ ⊩ rconst ⊤ᵣ ≾̂ᵣ x [ tops (eᵐ j ∷ l) ]ʳ
+          → Reach R j l → Reach R j (rᵐ k ∷ l)
+
+-- At an instance with `j` at the top, so is every member
+
+reach-top : ∀ {Φ Ψ'} {Q : Hyps Ψ'} {R : Resid Φ} {j : EVar Φ} {l : List (Mem Φ)}
+          → Reach R j l → (T : Subst Φ Ψ') → Q ⊩ᴿ R [ T ] → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T j
+          → (∀ {k} → inᴱ k l ≡ true → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T k)
+          × (∀ {k} → inᴿ k l ≡ true → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ sR T k)
+reach-top reach[] T h tj = (λ ()) , (λ ())
+reach-top {Q = Q} {j = j} (reachᵉ {k} {x} {l} m p rc) T h tj = fe , proj₂ ih
+  where
+    ih = reach-top rc T h tj
+
+    fj : ∀ {k'} → inᴱ k' (eᵐ j ∷ l) ≡ true → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T k'
+    fj {k'} q with ∨-true ⌊ k' ≟ᶠ j ⌋ (inᴱ k' l) q
+    ... | inj₁ r = subst (λ z → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T z) (sym (true-dec (k' ≟ᶠ j) r)) tj
+    ... | inj₂ r = proj₁ ih r
+
+    new : Q ⊩ econst ⊤ₑ ≾̂ₑ sE T k
+    new = transₑ (subst (λ z → Q ⊩ econst ⊤ₑ ≾̂ₑ z) ([⨟]ᵉ x (tops (eᵐ j ∷ l)) T)
+                        (⊩-substₑ ∅ᴴ-⊩ᴴ p))
+                 (transₑ (mono-substₑ (tops-below (eᵐ j ∷ l) T T fj (proj₂ ih) ≾ˢ-refl) x)
+                         (⊩es h m))
+
+    fe : ∀ {k'} → inᴱ k' (eᵐ k ∷ l) ≡ true → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T k'
+    fe {k'} q with ∨-true ⌊ k' ≟ᶠ k ⌋ (inᴱ k' l) q
+    ... | inj₁ r = subst (λ z → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T z) (sym (true-dec (k' ≟ᶠ k) r)) new
+    ... | inj₂ r = proj₁ ih r
+reach-top {Q = Q} {j = j} (reachʳ {k} {x} {l} m p rc) T h tj = proj₁ ih , fr
+  where
+    ih = reach-top rc T h tj
+
+    fj : ∀ {k'} → inᴱ k' (eᵐ j ∷ l) ≡ true → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T k'
+    fj {k'} q with ∨-true ⌊ k' ≟ᶠ j ⌋ (inᴱ k' l) q
+    ... | inj₁ r = subst (λ z → Q ⊩ econst ⊤ₑ ≾̂ₑ sE T z) (sym (true-dec (k' ≟ᶠ j) r)) tj
+    ... | inj₂ r = proj₁ ih r
+
+    new : Q ⊩ rconst ⊤ᵣ ≾̂ᵣ sR T k
+    new = transᵣ (subst (λ z → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ z) ([⨟]ʳ x (tops (eᵐ j ∷ l)) T)
+                        (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
+                 (transᵣ (mono-substᵣ (tops-below (eᵐ j ∷ l) T T fj (proj₂ ih) ≾ˢ-refl) x)
+                         (⊩rs h m))
+
+    fr : ∀ {k'} → inᴿ k' (rᵐ k ∷ l) ≡ true → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ sR T k'
+    fr {k'} q with ∨-true ⌊ k' ≟ᶠ k ⌋ (inᴿ k' l) q
+    ... | inj₁ r = subst (λ z → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ sR T z) (sym (true-dec (k' ≟ᶠ k) r)) new
+    ... | inj₂ r = proj₂ ih r
+
+-- An ordering whose left side mentions a member has, on its right, an
+-- expression decided to be the top once the members are, or one that
+-- mentions only outer unknowns other than the rigid (`O'`) and no
+-- member
+
+data UpAtₑ {Θ Φ} (O' : Subst Θ Φ) (l : List (Mem Φ)) : EExp Φ × EExp Φ → Set where
+  up-free  : ∀ {x y} → hitₑ l x ≡ false → UpAtₑ O' l (x , y)
+  up-top   : ∀ {x y} → ∅ᴴ ⊩ econst ⊤ₑ ≾̂ₑ y [ tops l ]ᵉ → UpAtₑ O' l (x , y)
+  up-outer : ∀ {x y} → Outerₑ O' y → hitₑ l y ≡ false → UpAtₑ O' l (x , y)
+
+data UpAtᵣ {Θ Φ} (O' : Subst Θ Φ) (l : List (Mem Φ)) : RExp Φ × RExp Φ → Set where
+  up-free  : ∀ {x y} → hitᵣ l x ≡ false → UpAtᵣ O' l (x , y)
+  up-top   : ∀ {x y} → ∅ᴴ ⊩ rconst ⊤ᵣ ≾̂ᵣ y [ tops l ]ʳ → UpAtᵣ O' l (x , y)
+  up-outer : ∀ {x y} → Outerᵣ O' y → hitᵣ l y ≡ false → UpAtᵣ O' l (x , y)
+
+-- The members occur in no type of the residual and in no grade of a
+-- disjunction
+
+record CleanM {Φ} (l : List (Mem Φ)) (R : Resid Φ) : Set where
+  constructor cleanM
+  field
+    mts : ∀ {A}   → A ∈ ts R       → hitᵥ l A ≡ false
+    mss : ∀ {A B} → (A , B) ∈ ss R → (hitᵥ l A ∨ hitᵥ l B) ≡ false
+    mds : ∀ {A ρ} → (A , ρ) ∈ ds R → (hitᵥ l A ∨ hitᵣ l ρ) ≡ false
+
+-- Raising the members keeps every instance entering the scope. Send the
+-- eigenvariable to the top as well (`ω`): the instance stays one, the
+-- hypotheses being free of it, and there every member is at the top.
+-- The raised instance lies between the two.
+
+raise-⊩ : ∀ {Θ Φ Ψ''} {Q₀ : Hyps Ψ''} {R : Resid Φ} → (O : Subst (Θ +e) Φ)
+        → {j : EVar Φ} → sE O (newᵉ {Θ}) ≡ evar j → (l : List (Mem Φ)) → Reach R j l
+        → (∀ {a} → a ∈ es R → UpAtₑ (wkˢᵉ {Θ} ⨟ˢ O) l a)
+        → (∀ {a} → a ∈ rs R → UpAtᵣ (wkˢᵉ {Θ} ⨟ˢ O) l a)
+        → CleanM l R
+        → (τ : Subst Φ (Ψ'' +e)) → Entry O τ
+        → wkᵉ-H Q₀ ⊩ᴿ R [ τ ] → wkᵉ-H Q₀ ⊩ᴿ R [ tops l ⨟ˢ τ ]
+raise-⊩ {Θ} {Ψ'' = Ψ''} {Q₀ = Q₀} {R} O {j} eqj l rc ue ur (cleanM ct cs cd) τ en h =
+  mk⊩ᴿ rs' es' ts' ss' ds'
+  where
+    Q  = wkᵉ-H Q₀
+    T  = τ ⨟ˢ ω
+    τ₁ = tops l ⨟ˢ τ
+
+    hT : Q ⊩ᴿ R [ T ]
+    hT = ⊩ᴿ-⨟ ⊩ᴴ-ω h
+
+    τj : sE τ j ≡ evar (newᵉ {Ψ''})
+    τj = trans (sym (cong (_[ τ ]ᵉ) eqj)) (≐ᵉ (proj₂ en) (newᵉ {Θ}))
+
+    Tj : Q ⊩ econst ⊤ₑ ≾̂ₑ sE T j
+    Tj = subst (λ z → Q ⊩ econst ⊤ₑ ≾̂ₑ z [ ω ]ᵉ) (sym τj) ⊩≾̂ₑ-refl
+
+    tp = reach-top rc T hT Tj
+
+    idT : Q ⊩ τ ≾ˢ T
+    idT = mk≾ˢ (λ i → subst (λ z → Q ⊩ z ≾̂ᵣ sR τ i [ ω ]ʳ) ([id]ʳ (sR τ i))
+                            (mono-substᵣ id≾ω (sR τ i)))
+               (λ i → subst (λ z → Q ⊩ z ≾̂ₑ sE τ i [ ω ]ᵉ) ([id]ᵉ (sE τ i))
+                            (mono-substₑ id≾ω (sE τ i)))
+
+    lo : Q ⊩ τ ≾ˢ τ₁
+    lo = tops-above l τ
+
+    hi : Q ⊩ τ₁ ≾ˢ T
+    hi = tops-below l τ T (proj₁ tp) (proj₂ tp) idT
+
+    st : Agree (wkˢᵉ {Θ} ⨟ˢ O) τ ω idˢ
+    st = stable-out O τ en
+
+    es' : ∀ {x y} → (x , y) ∈ es R → Q ⊩ x [ τ₁ ]ᵉ ≾̂ₑ y [ τ₁ ]ᵉ
+    es' {x} {y} m with ue m
+    ... | up-free q =
+          subst (λ z → Q ⊩ z ≾̂ₑ y [ τ₁ ]ᵉ) (sym (tops-⨟e l τ x q))
+                (transₑ (⊩es h m) (mono-substₑ lo y))
+    ... | up-top p =
+          transₑ topₑ (subst (λ z → Q ⊩ econst ⊤ₑ ≾̂ₑ z) ([⨟]ᵉ y (tops l) τ)
+                             (⊩-substₑ ∅ᴴ-⊩ᴴ p))
+    ... | up-outer o q =
+          transₑ (mono-substₑ hi x)
+                 (subst (λ z → Q ⊩ x [ T ]ᵉ ≾̂ₑ z)
+                        (trans (agreeₑ {O = wkˢᵉ {Θ} ⨟ˢ O} {X = τ} {σ₁ = ω} {σ₂ = idˢ} st y o)
+                        (trans (sym ([⨟]ᵉ y τ idˢ))
+                        (trans ([id]ᵉ (y [ τ ]ᵉ)) (sym (tops-⨟e l τ y q)))))
+                        (⊩es hT m))
+
+    rs' : ∀ {x y} → (x , y) ∈ rs R → Q ⊩ x [ τ₁ ]ʳ ≾̂ᵣ y [ τ₁ ]ʳ
+    rs' {x} {y} m with ur m
+    ... | up-free q =
+          subst (λ z → Q ⊩ z ≾̂ᵣ y [ τ₁ ]ʳ) (sym (tops-⨟r l τ x q))
+                (transᵣ (⊩rs h m) (mono-substᵣ lo y))
+    ... | up-top p =
+          transᵣ topᵣ (subst (λ z → Q ⊩ rconst ⊤ᵣ ≾̂ᵣ z) ([⨟]ʳ y (tops l) τ)
+                             (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
+    ... | up-outer o q =
+          transᵣ (mono-substᵣ hi x)
+                 (subst (λ z → Q ⊩ x [ T ]ʳ ≾̂ᵣ z)
+                        (trans (agreeᵣ {O = wkˢᵉ {Θ} ⨟ˢ O} {X = τ} {σ₁ = ω} {σ₂ = idˢ} st y o)
+                        (trans (sym ([⨟]ʳ y τ idˢ))
+                        (trans ([id]ʳ (y [ τ ]ʳ)) (sym (tops-⨟r l τ y q)))))
+                        (⊩rs hT m))
+
+    ts' : ∀ {A} → A ∈ ts R → Q ⊩ᴱ A [ τ₁ ]ᵛ
+    ts' {A} m = subst (Q ⊩ᴱ_) (sym (tops-⨟v l τ A (ct m))) (⊩ts h m)
+
+    ss' : ∀ {A B} → (A , B) ∈ ss R → Q ∣ A [ τ₁ ]ᵛ <:̂ᵛ B [ τ₁ ]ᵛ
+    ss' {A} {B} m with ∨-false (hitᵥ l A) (hitᵥ l B) (cs m)
+    ... | qA , qB = subst₂ (Q ∣_<:̂ᵛ_) (sym (tops-⨟v l τ A qA)) (sym (tops-⨟v l τ B qB))
+                           (⊩ss h m)
+
+    ds' : ∀ {A ρ} → (A , ρ) ∈ ds R → VarOK Q (A [ τ₁ ]ᵛ) (ρ [ τ₁ ]ʳ)
+    ds' {A} {ρ} m with ∨-false (hitᵥ l A) (hitᵣ l ρ) (cd m)
+    ... | qA , qρ = subst₂ (VarOK Q) (sym (tops-⨟v l τ A qA)) (sym (tops-⨟r l τ ρ qρ))
+                           (⊩ds h m)
+
+-- Finding the set: reach from the rigid among the candidates, drop the
+-- members that break a condition, and start again
+
+allOf : ∀ {X : Set} {P : X → Set} → ((a : X) → Maybe (P a)) → (l : List X)
+      → Maybe (∀ {a} → a ∈ l → P a)
+allOf f []      = just (λ ())
+allOf f (a ∷ l) with f a | allOf f l
+... | just p | just g = just (λ { (here refl) → p ; (there m) → g m })
+... | _      | _      = nothing
+
+withMem : ∀ {X : Set} → (l : List X) → List (Σ[ a ∈ X ] (a ∈ l))
+withMem []      = []
+withMem (a ∷ l) = (a , here refl) ∷ map (λ { (b , m) → b , there m }) (withMem l)
+
+rvar? : ∀ {Φ} → (ρ : RExp Φ) → Maybe (Σ[ k ∈ RVar Φ ] (ρ ≡ rvar k))
+rvar? (rvar k)   = just (k , refl)
+rvar? (rconst c) = nothing
+rvar? (ρ ·̂ᵣ ρ')  = nothing
+rvar? (ρ ⊔̂ᵣ ρ')  = nothing
+rvar? ∣ ε ∣̂ᵉ     = nothing
+
+upAtₑ? : ∀ {Θ Φ} → (O' : Subst Θ Φ) → (l : List (Mem Φ)) → (a : EExp Φ × EExp Φ)
+       → Maybe (UpAtₑ O' l a)
+upAtₑ? O' l (x , y) with isFalse (hitₑ l x)
+... | just q  = just (up-free q)
+... | nothing with decide≾ₑ {Q = ∅ᴴ} (econst ⊤ₑ) (y [ tops l ]ᵉ)
+...   | just p  = just (up-top p)
+...   | nothing with outerₑ? O' y | isFalse (hitₑ l y)
+...     | just o | just q = just (up-outer o q)
+...     | _      | _      = nothing
+
+upAtᵣ? : ∀ {Θ Φ} → (O' : Subst Θ Φ) → (l : List (Mem Φ)) → (a : RExp Φ × RExp Φ)
+       → Maybe (UpAtᵣ O' l a)
+upAtᵣ? O' l (x , y) with isFalse (hitᵣ l x)
+... | just q  = just (up-free q)
+... | nothing with decide≾ᵣ {Q = ∅ᴴ} (rconst ⊤ᵣ) (y [ tops l ]ʳ)
+...   | just p  = just (up-top p)
+...   | nothing with outerᵣ? O' y | isFalse (hitᵣ l y)
+...     | just o | just q = just (up-outer o q)
+...     | _      | _      = nothing
+
+cleanM? : ∀ {Φ} → (l : List (Mem Φ)) → (R : Resid Φ) → Maybe (CleanM l R)
+cleanM? l R with allFalse (hitᵥ l) (ts R)
+                | allFalse (λ { (A , B) → hitᵥ l A ∨ hitᵥ l B }) (ss R)
+                | allFalse (λ { (A , ρ) → hitᵥ l A ∨ hitᵣ l ρ }) (ds R)
+... | just t  | just s  | just d  = just (cleanM t s d)
+... | _       | _       | _       = nothing
+
+record Raised {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) : Set where
+  constructor raised
+  field
+    mems : List (Mem Φ)
+    mrch : Reach R j mems
+    mupe : ∀ {a} → a ∈ es R → UpAtₑ (wkˢᵉ {Θ} ⨟ˢ O) mems a
+    mupr : ∀ {a} → a ∈ rs R → UpAtᵣ (wkˢᵉ {Θ} ⨟ˢ O) mems a
+    mcln : CleanM mems R
+    mfix : freeᴹ mems O ≡ false
+
+module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
+
+  O' : Subst Θ Φ
+  O' = wkˢᵉ {Θ} ⨟ˢ O
+
+  -- a candidate reached from `j` and the members so far
+
+  findᵉ : (EVar Φ → 𝔹) → (l : List (Mem Φ))
+        → Maybe (Σ[ k ∈ EVar Φ ] Σ[ x ∈ EExp Φ ]
+                   (((x , evar k) ∈ es R) × (∅ᴴ ⊩ econst ⊤ₑ ≾̂ₑ x [ tops (eᵐ j ∷ l) ]ᵉ)))
+  findᵉ ok l = go (withMem (es R))
+    where
+      go : List (Σ[ a ∈ EExp Φ × EExp Φ ] (a ∈ es R))
+         → Maybe (Σ[ k ∈ EVar Φ ] Σ[ x ∈ EExp Φ ]
+                    (((x , evar k) ∈ es R) × (∅ᴴ ⊩ econst ⊤ₑ ≾̂ₑ x [ tops (eᵐ j ∷ l) ]ᵉ)))
+      go []                  = nothing
+      go (((x , y) , m) ∷ as) with evar? y
+      ... | nothing = go as
+      ... | just (k , refl) with ok k ∧ not (inᴱ k l) ∧ hitₑ (eᵐ j ∷ l) x
+      ...   | false = go as
+      ...   | true with decide≾ₑ {Q = ∅ᴴ} (econst ⊤ₑ) (x [ tops (eᵐ j ∷ l) ]ᵉ)
+      ...     | just p  = just (k , x , m , p)
+      ...     | nothing = go as
+
+  findʳ : (RVar Φ → 𝔹) → (l : List (Mem Φ))
+        → Maybe (Σ[ k ∈ RVar Φ ] Σ[ x ∈ RExp Φ ]
+                   (((x , rvar k) ∈ rs R) × (∅ᴴ ⊩ rconst ⊤ᵣ ≾̂ᵣ x [ tops (eᵐ j ∷ l) ]ʳ)))
+  findʳ ok l = go (withMem (rs R))
+    where
+      go : List (Σ[ a ∈ RExp Φ × RExp Φ ] (a ∈ rs R))
+         → Maybe (Σ[ k ∈ RVar Φ ] Σ[ x ∈ RExp Φ ]
+                    (((x , rvar k) ∈ rs R) × (∅ᴴ ⊩ rconst ⊤ᵣ ≾̂ᵣ x [ tops (eᵐ j ∷ l) ]ʳ)))
+      go []                  = nothing
+      go (((x , y) , m) ∷ as) with rvar? y
+      ... | nothing = go as
+      ... | just (k , refl) with ok k ∧ not (inᴿ k l) ∧ hitᵣ (eᵐ j ∷ l) x
+      ...   | false = go as
+      ...   | true with decide≾ᵣ {Q = ∅ᴴ} (rconst ⊤ᵣ) (x [ tops (eᵐ j ∷ l) ]ʳ)
+      ...     | just p  = just (k , x , m , p)
+      ...     | nothing = go as
+
+  grow : (EVar Φ → 𝔹) → (RVar Φ → 𝔹) → ℕ → (l : List (Mem Φ)) → Reach R j l
+       → Σ[ l' ∈ List (Mem Φ) ] Reach R j l'
+  grow oe or nzero    l rc = l , rc
+  grow oe or (nsuc n) l rc with findᵉ oe l
+  ... | just (k , x , m , p) = grow oe or n (eᵐ k ∷ l) (reachᵉ m p rc)
+  ... | nothing with findʳ or l
+  ...   | just (k , x , m , p) = grow oe or n (rᵐ k ∷ l) (reachʳ m p rc)
+  ...   | nothing              = l , rc
+
+  -- the orderings that meet no condition
+
+  failsₑ : List (Mem Φ) → List (EExp Φ × EExp Φ) → List (EExp Φ × EExp Φ)
+  failsₑ l []       = []
+  failsₑ l (a ∷ as) with upAtₑ? O' l a
+  ... | just _  = failsₑ l as
+  ... | nothing = a ∷ failsₑ l as
+
+  failsᵣ : List (Mem Φ) → List (RExp Φ × RExp Φ) → List (RExp Φ × RExp Φ)
+  failsᵣ l []       = []
+  failsᵣ l (a ∷ as) with upAtᵣ? O' l a
+  ... | just _  = failsᵣ l as
+  ... | nothing = a ∷ failsᵣ l as
+
+  -- a member is dropped when it is on the left of a failing ordering,
+  -- or occurs in a type or a disjunction's grade
+
+  badᵉ : List (Mem Φ) → EVar Φ → 𝔹
+  badᵉ l k = inᴱ k l ∧ (anyL (λ { (x , _) → occᵉ-e k x }) (failsₑ l (es R))
+                       ∨ anyL (λ { (x , _) → occᵉ-r k x }) (failsᵣ l (rs R))
+                       ∨ anyL (occᵉ-v k) (ts R)
+                       ∨ anyL (λ { (A , B) → occᵉ-v k A ∨ occᵉ-v k B }) (ss R)
+                       ∨ anyL (λ { (A , ρ) → occᵉ-v k A ∨ occᵉ-r k ρ }) (ds R))
+
+  badʳ : List (Mem Φ) → RVar Φ → 𝔹
+  badʳ l k = inᴿ k l ∧ (anyL (λ { (x , _) → occʳ-r k x }) (failsᵣ l (rs R))
+                       ∨ anyL (occʳ-v k) (ts R)
+                       ∨ anyL (λ { (A , B) → occʳ-v k A ∨ occʳ-v k B }) (ss R)
+                       ∨ anyL (λ { (A , ρ) → occʳ-v k A ∨ occʳ-r k ρ }) (ds R))
+
+  check : (l : List (Mem Φ)) → Reach R j l → Maybe (Raised O R j)
+  check []      rc = nothing
+  check (m ∷ l) rc with allOf (upAtₑ? O' (m ∷ l)) (es R) | allOf (upAtᵣ? O' (m ∷ l)) (rs R)
+                      | cleanM? (m ∷ l) R | isFalse (freeᴹ (m ∷ l) O)
+  ... | just ue | just ur | just cl | just fx = just (raised (m ∷ l) rc ue ur cl fx)
+  ... | _       | _       | _       | _       = nothing
+
+  select : ℕ → (EVar Φ → 𝔹) → (RVar Φ → 𝔹) → Maybe (Raised O R j)
+  select nzero    oe or = nothing
+  select (nsuc n) oe or with grow oe or (nE Φ + nR Φ) [] reach[]
+  ... | l , rc with check l rc
+  ...   | just r  = just r
+  ...   | nothing with anyᶠ (badᵉ l) ∨ anyᶠ (badʳ l)
+  ...     | false = nothing
+  ...     | true  = select n (λ k → oe k ∧ not (badᵉ l k)) (λ k → or k ∧ not (badʳ l k))
+
+  raise? : Maybe (Raised O R j)
+  raise? = select (nsuc (nE Φ + nR Φ)) (λ k → not (freeᵉ k O)) (λ k → not (freeʳ k O))
+
+------------------------------------------------------------------------
 -- Localisation: the steps iterated over the local unknowns, the
 -- settled atoms dropped around every round
 
-record Localised {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) : Set where
+record Localised {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) : Set where
   constructor loc
   field
     lσ   : Subst Φ Φ
     lR   : Resid Φ
     lfix : (O ⨟ˢ lσ) ≐ˢ O
     lsnd : ∀ {Ψ'} → (δ : Subst Φ Ψ') → (Q : Hyps Ψ') → Q ⊩ᴿ lR [ δ ] → Q ⊩ᴿ R [ lσ ⨟ˢ δ ]
-    lcpl : ∀ {Ψ'} → (τ : Subst Φ Ψ') → (Q : Hyps Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ lR [ τ ]
+    lcpl : ∀ {Ψ''} → (τ : Subst Φ (Ψ'' +e)) → (Q₀ : Hyps Ψ'') → Entry O τ
+         → wkᵉ-H Q₀ ⊩ᴿ R [ τ ] → wkᵉ-H Q₀ ⊩ᴿ lR [ τ ]
 
 open Localised public
 
+-- A step that keeps the instances entering the scope
+
+KeepsAt : ∀ {Θ Φ} → Subst (Θ +e) Φ → Subst Φ Φ → Resid Φ → Set
+KeepsAt {Φ = Φ} O σ R = ∀ {Ψ''} → (τ : Subst Φ (Ψ'' +e)) → (Q₀ : Hyps Ψ'') → Entry O τ
+                      → wkᵉ-H Q₀ ⊩ᴿ R [ τ ] → wkᵉ-H Q₀ ⊩ᴿ R [ σ ⨟ˢ τ ]
+
 -- Nothing assigned
 
-loc-id : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R
+loc-id : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R
 loc-id {O = O} {R} =
-  loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ Q h → h)
+  loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ Q₀ en h → h)
 
 -- The settled atoms dropped: the instances are unchanged
 
-loc-settle : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R → Localised O R
+loc-settle : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
 loc-settle (loc σ R₀ fx sn cp) =
   loc σ (resid (Unsettled.kept Uʳ) (Unsettled.kept Uᵉ) (ts R₀) (ss R₀) (Unsettled.kept Uᵈ)) fx
       (λ δ Q h → sn δ Q (mk⊩ᴿ (Unsettled.back Uʳ δ (⊩rs h)) (Unsettled.back Uᵉ δ (⊩es h))
                               (⊩ts h) (⊩ss h) (Unsettled.back Uᵈ δ (⊩ds h))))
-      (λ τ Q h → let h' = cp τ Q h in
+      (λ τ Q₀ en h → let h' = cp τ Q₀ en h in
                  mk⊩ᴿ (λ m → ⊩rs h' (Unsettled.kept⊆ Uʳ m)) (λ m → ⊩es h' (Unsettled.kept⊆ Uᵉ m))
                       (⊩ts h') (⊩ss h') (λ m → ⊩ds h' (Unsettled.kept⊆ Uᵈ m)))
   where
@@ -880,27 +1721,39 @@ loc-settle (loc σ R₀ fx sn cp) =
     Uᵉ = unsettled settledᵉ (es R₀)
     Uᵈ = unsettled settledᵈ (ds R₀)
 
-loc-ext : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → (L : Localised O R)
-        → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → Keeps σ (lR L) → Localised O R
+loc-ext : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → (L : Localised O R)
+        → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L) → Localised O R
 loc-ext {O = O} {R} (loc σ₀ R₀ fx sn cp) σ fσ st =
   loc (σ₀ ⨟ˢ σ) (R₀ [ σ ]ᴿ)
       (≐ˢ-trans (≐ˢ-sym (⨟-assoc O σ₀ σ)) (≐ˢ-trans (⨟-congˡ fx σ) fσ))
       (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc σ₀ σ δ)) (sn (σ ⨟ˢ δ) Q (⊩ᴿ-subst h)))
-      (λ τ Q h → ⊩ᴿ-subst⁻ (st τ Q (cp τ Q h)))
+      (λ τ Q₀ en h → ⊩ᴿ-subst⁻ (st τ Q₀ en (cp τ Q₀ en h)))
 
-module _ {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) where
+module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
 
   passᵉ : List (Σ[ k ∈ EVar Φ ] (freeᵉ k O ≡ false)) → Localised O R → Localised O R × 𝔹
   passᵉ []             L = L , false
   passᵉ ((k , q) ∷ ks) L with stepᵉ k (lR L)
   ... | nothing      = passᵉ ks L
-  ... | just (b , st) = proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) st)) , true
+  ... | just (b , st) = proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ Q₀ en → st τ (wkᵉ-H Q₀)))) , true
 
   passʳ : List (Σ[ k ∈ RVar Φ ] (freeʳ k O ≡ false)) → Localised O R → Localised O R × 𝔹
   passʳ []             L = L , false
   passʳ ((k , q) ∷ ks) L with stepʳ k (lR L)
   ... | nothing      = passʳ ks L
-  ... | just (b , st) = proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) st)) , true
+  ... | just (b , st) = proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ Q₀ en → st τ (wkᵉ-H Q₀)))) , true
+
+  -- Where no unknown has a principal value of its own, a set of them
+  -- bounded below by the rigid is sent to the top
+
+  raiseL : Localised O R → Maybe (Localised O R)
+  raiseL L with evar? (sE O (newᵉ {Θ}))
+  ... | nothing        = nothing
+  ... | just (j , eqj) with Find.raise? O (lR L) j
+  ...   | nothing = nothing
+  ...   | just (raised l rc ue ur cl fx) =
+          just (loc-ext L (tops l) (freeᴹ-fix l O fx)
+                        (λ τ Q₀ en h → raise-⊩ O eqj l rc ue ur cl τ en h))
 
   -- Each round that changes something settles an unknown for good, so
   -- as many rounds as there are unknowns reach the fixed point.
@@ -911,13 +1764,15 @@ module _ {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) where
     where
       next₂ : Localised O R × 𝔹 → Localised O R
       next₂ (L' , true)  = rounds n (loc-settle L')
-      next₂ (L' , false) = L'
+      next₂ (L' , false) with raiseL L'
+      ... | just L'' = rounds n (loc-settle L'')
+      ... | nothing  = L'
 
       next : Localised O R × 𝔹 → Localised O R
       next (L' , changed) with passʳ (misses (λ k → freeʳ k O)) L'
       ... | L'' , changed' = next₂ (L'' , (changed ∨ changed'))
 
-localise : ∀ {Θ Φ} → (O : Subst Θ Φ) → (R : Resid Φ) → Localised O R
+localise : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Localised O R
 localise {Φ = Φ} O R = loc-settle (rounds O R (nE Φ + nR Φ) (loc-settle loc-id))
 
 -- An assignment the later substitution already agrees with is absorbed

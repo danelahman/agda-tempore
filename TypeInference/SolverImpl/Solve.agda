@@ -86,7 +86,8 @@ open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S umin?ᵣ umin?ₑ
 open import TypeInference.SolverImpl.Localise S umin?ᵣ umin?ₑ
-  using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ)
+  using (Localised; localise; lσ; lR; lsnd; freeᵉ; freeʳ; Outerₑ; Outerᵣ; outerₑ?; outerᵣ?;
+         evar?)
 
 open OpEnum opEnum
 
@@ -183,47 +184,7 @@ et₀? A with etDec A in e
 -- first needs `UnitMin`. An unknown local to the scope stands for a
 -- function of the rigid, and is kept at the unit rigid; so the side
 -- that `stripᵉ-top` keeps free of the rigid must mention no local
--- unknown either, only those the scope was entered with (`O`).
-
-Outerₑ : ∀ {Θ Φ} → Subst Θ Φ → EExp Φ → Set
-Outerₑ O ε = ∀ {k} → occᵉ-e k ε ≡ true → freeᵉ k O ≡ true
-
-Outerᵣ : ∀ {Θ Φ} → Subst Θ Φ → RExp Φ → Set
-Outerᵣ O ρ = (∀ {k} → occᵉ-r k ρ ≡ true → freeᵉ k O ≡ true)
-           × (∀ {k} → occʳ-r k ρ ≡ true → freeʳ k O ≡ true)
-
-∨-elim : ∀ {P : Set} {b b' : 𝔹} → (b ≡ true → P) → (b' ≡ true → P) → b ∨ b' ≡ true → P
-∨-elim {b = b} {b'} f g q with ∨-true b b' q
-... | inj₁ r = f r
-... | inj₂ r = g r
-
-outerₑ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ε : EExp Φ) → Maybe (Outerₑ O ε)
-outerₑ? O (evar i) with freeᵉ i O in q
-... | true  = just (λ {k} r → subst (λ x → freeᵉ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
-... | false = nothing
-outerₑ? O (econst c) = just (λ ())
-outerₑ? O (ε ·̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
-... | just f | just g = just (∨-elim f g)
-... | _      | _      = nothing
-outerₑ? O (ε ⊔̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
-... | just f | just g = just (∨-elim f g)
-... | _      | _      = nothing
-
-outerᵣ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ρ : RExp Φ) → Maybe (Outerᵣ O ρ)
-outerᵣ? O (rvar i) with freeʳ i O in q
-... | true  = just ((λ ()) ,
-                    λ {k} r → subst (λ x → freeʳ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
-... | false = nothing
-outerᵣ? O (rconst c) = just ((λ ()) , (λ ()))
-outerᵣ? O (ρ ·̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
-... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
-... | _             | _             = nothing
-outerᵣ? O (ρ ⊔̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
-... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
-... | _             | _             = nothing
-outerᵣ? O ∣ ε ∣̂ᵉ with outerₑ? O ε
-... | just f  = just (f , (λ ()))
-... | nothing = nothing
+-- unknown either, only those the scope was entered with (`Outerₑ`).
 
 stripʳ-unit : ∀ {Φ} → Maybe UnitMinₑ → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
@@ -459,16 +420,6 @@ threadOps {f = f} g (op ∷ l) s with g s op
 ...   | nothing = nothing
 ...   | just (s₂ , m₂ , ws) = just (s₂ , ⟶-⨟ m₁ m₂ , wit-mono m₂ (f op) w₁ ∷ ws)
 
--- The image of the rigid, with the equation that names it: a
--- pattern-matching wrapper, so that `popᵉ`'s case analysis stays
--- visible to a proof about it.
-
-evar? : ∀ {Φ} → (ε : EExp Φ) → Maybe (Σ[ j ∈ EVar Φ ] (ε ≡ evar j))
-evar? (evar j)   = just (j , refl)
-evar? (econst c) = nothing
-evar? (ε ·̂ₑ ε')  = nothing
-evar? (ε ⊔̂ₑ ε')  = nothing
-
 -- Of the four failures below, only the atoms `splitᴿ` has to discharge
 -- on the spot are an oracle's verdict; the rest cannot happen or are
 -- refuted by `Core.Rigid`'s escape lemma.
@@ -512,8 +463,9 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 -- the unknowns local to it are sent to their principal values: those
 -- free in no image of the unknowns the scope was entered with.
 
-localiseˢ : ∀ {Θ} {s₀ s'' : St Θ} → s₀ ⟶ s'' → Σ[ s₃ ∈ St Θ ] (s'' ⟶ s₃)
-localiseˢ {s'' = s''} m =
+localiseˢ : ∀ {Θ} → (s : St Θ) → {s'' : St (Θ +e)} → ⇑ᵉˢ s ⟶ s''
+          → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)
+localiseˢ s {s''} m =
   st (Ψ s'') (θ s'' ⨟ˢ lσ L) (lR L) (rig s'') , mor (lσ L) ≐ˢ-refl (lsnd L)
   where
     L : Localised (mδ m) (res s'')
@@ -677,9 +629,9 @@ solve {Θ} s (∃ᵉ C) with solve (s ↑ᵉˢ) C
 solve s (∀ᵉ C) with solve (⇑ᵉˢ s) C
 ... | nothing = nothing
 ... | just (s'' , m'' , w'') =
-      popᵉ s C (Ψ (proj₁ (localiseˢ m''))) (θ (proj₁ (localiseˢ m'')))
-               (res (proj₁ (localiseˢ m''))) (rig (proj₁ (localiseˢ m'')))
-               (⟶-⨟ m'' (proj₂ (localiseˢ m''))) (wit-mono (proj₂ (localiseˢ m'')) C w'')
+      popᵉ s C (Ψ (proj₁ (localiseˢ s m''))) (θ (proj₁ (localiseˢ s m'')))
+               (res (proj₁ (localiseˢ s m''))) (rig (proj₁ (localiseˢ s m'')))
+               (⟶-⨟ m'' (proj₂ (localiseˢ s m''))) (wit-mono (proj₂ (localiseˢ s m'')) C w'')
 
 solve s (⋀ᵒᵖ f) with threadOps {f = f} (λ s' op → solve s' (f op)) ops s
 ... | nothing = nothing
