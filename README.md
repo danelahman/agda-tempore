@@ -405,11 +405,11 @@ Inference for the open calculus, by constraint generation and solving.
 
 - The solver reads `u-least?` and `·-comm?` from the grade system.
 
-- `stuck` arises only where a clause's scope closes with a local unknown that
-  has no principal value: a local cycle between the clause's rigid and
-  something mentioning it; an outer clause's local on both sides of an inner
-  clause's deferred condition; a clause-local under several incomparable
-  upper bounds.
+- `stuck` arises only where a clause's scope closes with a local unknown for
+  which `Localise` finds no value. Known cases: a local cycle between the
+  clause's rigid and something mentioning it; an outer clause's local on both
+  sides of an inner clause's deferred condition; a clause-local under several
+  incomparable upper bounds.
 
 - The example programs and tests, in `backup/TypeInference/Tests` and
   `backup/TypeInference/SolverImpl/Demo`, are not part of the check.
