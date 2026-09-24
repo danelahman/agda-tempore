@@ -4,9 +4,7 @@
 -- An unknown is local to a scope when it is free in the image  --
 -- of none of the unknowns the scope was entered with; the      --
 -- rigid is one of those, so it is never local and never        --
--- assigned. Before the atoms of the scope are split, every     --
--- var-rule disjunction with a side decided true (the type      --
--- eternal, or the grade below the unit) is dropped, and each   --
+-- assigned. Before the atoms of the scope are split, each      --
 -- local unknown with a principal value is sent to it:          --
 --   * the join of its lower bounds, where it occurs on a right --
 --     side only as the whole side (Pottier's condition);       --
@@ -18,15 +16,19 @@
 -- In every case it occurs in no type of the residual. The      --
 -- grade of a disjunction is the left side of an ordering below --
 -- the unit: the first and third steps keep it, the others ask  --
--- it to be free of the unknown. The disjunctions the values    --
--- settle are dropped at the end. A value may mention the      --
+-- it to be free of the unknown. A value may mention the       --
 -- rigid, so the value over the rigid is one expression,        --
 -- uniform in it.                                               --
 --                                                              --
+-- Before the first round, between rounds and after the last,   --
+-- the settled atoms are dropped: an ordering decided true      --
+-- against no hypotheses, and a var-rule disjunction with a     --
+-- side so decided (the type eternal, or the grade below the    --
+-- unit). They hold at every instance and bound nothing.        --
+--                                                              --
 -- Every grade former is monotone, so each step keeps every     --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
--- five siblings). A reflexive ordering holds at every          --
--- instance and bounds nothing.                                 --
+-- five siblings).                                              --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -73,7 +75,7 @@ open import TypeInference.SolverImpl.Core.Occurs S
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Eliminate S
   using (joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
-open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ)
+open import TypeInference.SolverImpl.Normal    S umin?ᵣ umin?ₑ using (decide≾ᵣ; decide≾ₑ)
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -783,46 +785,68 @@ stepʳ {Ψ} k R with cleanʳ? k R
     top _         _         _    = nothing
 
 ------------------------------------------------------------------------
--- Settled disjunctions: a side decided true against no hypotheses
+-- Settled atoms: an ordering, or a disjunction with a side, decided true
+-- against no hypotheses holds at every instance and bounds nothing
 
-settledᵈ : ∀ {Ψ} → (A : OVType Ψ) → (ρ : RExp Ψ)
-         → Maybe (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
-settledᵈ A ρ with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
+Every : ∀ {Ψ} {X : Set} → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → X → Set
+Every P a = ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → P Q δ a
+
+Ordʳ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → RExp Ψ × RExp Ψ → Set
+Ordʳ Q δ (ρ , ρ') = Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
+
+Ordᵉ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → EExp Ψ × EExp Ψ → Set
+Ordᵉ Q δ (ε , ε') = Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
+
+Disj : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → OVType Ψ × RExp Ψ → Set
+Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+
+settledʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Maybe (Every Ordʳ a)
+settledʳ (ρ , ρ') with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just p  = just (λ δ → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
+... | nothing = nothing
+
+settledᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Maybe (Every Ordᵉ a)
+settledᵉ (ε , ε') with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just p  = just (λ δ → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
+... | nothing = nothing
+
+settledᵈ : ∀ {Ψ} → (a : OVType Ψ × RExp Ψ) → Maybe (Every Disj a)
+settledᵈ (A , ρ) with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
 ... | just p  = just (λ δ → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
 ... | nothing with etDec A in e
 ...   | just [] = just (λ δ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
 ...   | just (_ ∷ _) = nothing
 ...   | nothing      = nothing
 
--- The disjunctions of a list that are not settled
+-- The entries of a list that are not settled
 
-record Unsettled {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
+record Unsettled {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set)
+                 (l : List X) : Set where
   constructor unset
   field
-    kept  : List (OVType Ψ × RExp Ψ)
+    kept  : List X
     kept⊆ : ∀ {a} → a ∈ kept → a ∈ l
     back  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-          → (∀ {A ρ} → (A , ρ) ∈ kept → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
-          → ∀ {A ρ} → (A , ρ) ∈ l → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+          → (∀ {a} → a ∈ kept → P Q δ a) → ∀ {a} → a ∈ l → P Q δ a
 
-unsettled : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → Unsettled l
-unsettled []            = unset [] (λ ()) (λ δ k → λ ())
-unsettled ((A , ρ) ∷ l) = go (settledᵈ A ρ) (unsettled l)
+unsettled : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+          → ((a : X) → Maybe (Every P a)) → (l : List X) → Unsettled P l
+unsettled set []      = unset [] (λ ()) (λ δ k → λ ())
+unsettled {P = P} set (a ∷ l) = go (set a) (unsettled set l)
   where
-    go : Maybe (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ))
-       → Unsettled l → Unsettled ((A , ρ) ∷ l)
+    go : Maybe (Every P a) → Unsettled P l → Unsettled P (a ∷ l)
     go (just p) (unset l' sb bk) =
       unset l' (λ m → there (sb m))
             (λ δ k → λ { (here refl) → p δ ; (there m) → bk δ k m })
     go nothing  (unset l' sb bk) =
-      unset ((A , ρ) ∷ l')
+      unset (a ∷ l')
             (λ { (here refl) → here refl ; (there m) → there (sb m) })
             (λ δ k → λ { (here refl) → k (here refl)
                        ; (there m)   → bk δ (λ m' → k (there m')) m })
 
 ------------------------------------------------------------------------
--- Localisation: the settled disjunctions dropped, the steps iterated
--- over the local unknowns, and the disjunctions they settle dropped
+-- Localisation: the steps iterated over the local unknowns, the
+-- settled atoms dropped around every round
 
 record Localised {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) : Set where
   constructor loc
@@ -841,16 +865,20 @@ loc-id : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R
 loc-id {O = O} {R} =
   loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ Q h → h)
 
--- The settled disjunctions dropped: the instances are unchanged
+-- The settled atoms dropped: the instances are unchanged
 
 loc-settle : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → Localised O R → Localised O R
 loc-settle (loc σ R₀ fx sn cp) =
-  loc σ (resid (rs R₀) (es R₀) (ts R₀) (ss R₀) (Unsettled.kept U)) fx
-      (λ δ Q h → sn δ Q (mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h) (Unsettled.back U δ (⊩ds h))))
+  loc σ (resid (Unsettled.kept Uʳ) (Unsettled.kept Uᵉ) (ts R₀) (ss R₀) (Unsettled.kept Uᵈ)) fx
+      (λ δ Q h → sn δ Q (mk⊩ᴿ (Unsettled.back Uʳ δ (⊩rs h)) (Unsettled.back Uᵉ δ (⊩es h))
+                              (⊩ts h) (⊩ss h) (Unsettled.back Uᵈ δ (⊩ds h))))
       (λ τ Q h → let h' = cp τ Q h in
-                 mk⊩ᴿ (⊩rs h') (⊩es h') (⊩ts h') (⊩ss h') (λ m → ⊩ds h' (Unsettled.kept⊆ U m)))
+                 mk⊩ᴿ (λ m → ⊩rs h' (Unsettled.kept⊆ Uʳ m)) (λ m → ⊩es h' (Unsettled.kept⊆ Uᵉ m))
+                      (⊩ts h') (⊩ss h') (λ m → ⊩ds h' (Unsettled.kept⊆ Uᵈ m)))
   where
-    U = unsettled (ds R₀)
+    Uʳ = unsettled settledʳ (rs R₀)
+    Uᵉ = unsettled settledᵉ (es R₀)
+    Uᵈ = unsettled settledᵈ (ds R₀)
 
 loc-ext : ∀ {Θ Φ} {O : Subst Θ Φ} {R : Resid Φ} → (L : Localised O R)
         → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → Keeps σ (lR L) → Localised O R
@@ -882,7 +910,7 @@ module _ {Θ Φ} (O : Subst Θ Φ) (R : Resid Φ) where
   rounds (nsuc n) L = next (passᵉ (misses (λ k → freeᵉ k O)) L)
     where
       next₂ : Localised O R × 𝔹 → Localised O R
-      next₂ (L' , true)  = rounds n L'
+      next₂ (L' , true)  = rounds n (loc-settle L')
       next₂ (L' , false) = L'
 
       next : Localised O R × 𝔹 → Localised O R
