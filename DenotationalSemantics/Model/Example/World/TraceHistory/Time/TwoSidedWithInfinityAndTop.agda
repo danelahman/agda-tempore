@@ -29,7 +29,7 @@ open import Data.Product using (_,_)
 open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_,_]; min; max;
+  using (Interval∞; [_,_]; min; max;
          Interval∞⊤; window_; no-window; _·ʷ_; _≾ʷ_;
          two-sided-intervals-with-⊤;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant)
@@ -70,7 +70,7 @@ w ⊑ʰ[ no-window ] w' = ⊤
 -- reflexivity at the unit grade `window [ 0 , ↑ 0 ]`: the empty
 -- continuation
 
-⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ window [ 0 , ↑ 0 , z≤n ] ] w
+⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ window [ 0 , ↑ 0 ] ] w
 ⊑ʰ-refl {w} = mkʷ ε (∙-identityʳ w) z≤n z≤n
 
 -- transitivity multiplies the grades (adds both endpoints), appending

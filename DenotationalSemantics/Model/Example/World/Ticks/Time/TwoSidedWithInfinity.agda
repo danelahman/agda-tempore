@@ -22,7 +22,7 @@ open import Data.Nat.Properties
 open import Data.Product using (_×_; _,_)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals-with-∞;
+  using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals-with-∞;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant;
          +∞-assoc)
 
@@ -50,7 +50,7 @@ w ⊑ᵗ[ i ] w' = (min i + w ≤ w') × (↑ w' ≤∞ (max i +∞ ↑ w))
 
 -- reflexivity at the unit grade `[ 0 , ↑ 0 ]` (the singleton window)
 
-⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ [ 0 , ↑ 0 , z≤n ] ] w
+⊑ᵗ-refl : ∀ {w} → w ⊑ᵗ[ [ 0 , ↑ 0 ] ] w
 ⊑ᵗ-refl = ≤-refl , ≤-refl
 
 -- transitivity multiplies the grades (adds both endpoints)

@@ -46,7 +46,7 @@ open import Syntax.Grades.Example.Worked.Operations
 
 open import Syntax.Grades.Example.Traces.Timed.TwoSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
-  using (TwoSided; [_,_,_]; lo; hi; ⊤ᵗˢ; _◇ˢ_; ◇ˢ₀-self; _·ᵗˢ_;
+  using (TwoSided; [_,_]; lo; hi; ⊤ᵗˢ; _◇ˢ_; ◇ˢ₀-self; _·ᵗˢ_;
          two-sided; _≾ᵗˢ_; _≾ᵗˢ?_) public
 
 -- the floor endpoint is an antichain, and is written out the same way
@@ -88,7 +88,7 @@ fails i j {p} = toWitnessFalse p
 -- a program with one run has that run at both endpoints
 
 exact : (t : Trace) → TwoSided
-exact t = [ ⟅ t ⟆ˡᵒ , within ⟅ t ⟆ , ◇ˢ₀-self (tracesˡᵒ ⟅ t ⟆ˡᵒ) tt ]
+exact t = [ ⟅ t ⟆ˡᵒ , within ⟅ t ⟆ ] {◇ˢ₀-self (tracesˡᵒ ⟅ t ⟆ˡᵒ) tt}
 
 ------------------------------------------------------------------------
 -- A contract, and which programs meet it
@@ -97,37 +97,37 @@ exact t = [ ⟅ t ⟆ˡᵒ , within ⟅ t ⟆ , ◇ˢ₀-self (tracesˡᵒ ⟅ t
 -- worth of work."
 
 polling :
-  exact ⌈ read ⌉ ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  exact ⌈ read ⌉ ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 polling = holds _ _
 
 logging :
   exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 logging = holds _ _
 
 -- idling is refused by the floor: it takes no reading, though it stays
 -- well inside the allowance
 
 idling :
-  ¬ (exact ⟨ 5 ⟩ ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ])
+  ¬ (exact ⟨ 5 ⟩ ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ])
 idling = fails _ _
 
 idling-stays-inside :
-  exact ⟨ 5 ⟩ ≾ᵗˢ [ ⟅ ε ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  exact ⟨ 5 ⟩ ≾ᵗˢ [ ⟅ ε ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 idling-stays-inside =
-  holds (exact ⟨ 5 ⟩) [ ⟅ ε ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  holds (exact ⟨ 5 ⟩) [ ⟅ ε ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 
 -- and the uplink by the cap: it takes a reading, but two ticks and a
 -- transmission need eight, not six
 
 uplinking :
   ¬ (exact (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)
-     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ])
+     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ])
 uplinking = fails _ _
 
 uplinking-guarantees-the-reading :
   exact (⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉)
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 8 ⟩ ⟆ , tt ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 8 ⟩ ⟆ ]
 uplinking-guarantees-the-reading = holds _ _
 
 ------------------------------------------------------------------------
@@ -135,24 +135,24 @@ uplinking-guarantees-the-reading = holds _ _
 
 guarantee-less :
   exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ , tt ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ]
 guarantee-less = holds _ _
 
 permit-more :
   exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 permit-more = holds _ _
 
 -- and neither may be reversed
 
 no-stronger-guarantee :
   ¬ (exact ⌈ read ⌉
-     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ])
+     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ])
 no-stronger-guarantee = fails _ _
 
 no-tighter-allowance :
   ¬ (exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ⟆ , tt ])
+     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ⟆ ])
 no-tighter-allowance = fails _ _
 
 ------------------------------------------------------------------------
@@ -173,31 +173,31 @@ no-tighter-allowance = fails _ _
 -- what is guaranteed
 
 guarantee-survives-the-store :
-  [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 guarantee-survives-the-store = holds _ _
 
 -- and not upwards: a guarantee is never strengthened by weakening
 
 guarantee-cannot-gain-the-store :
-  ¬ ([ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
-     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ])
+  ¬ ([ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
+     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ])
 guarantee-cannot-gain-the-store = fails _ _
 
 -- at the cap, with the floor held fixed and the same two runs: the
 -- store may be added to what is permitted
 
 allowance-admits-the-store :
-  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ⟆ , tt ]
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ , tt ]
+  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ⟆ ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ]
 allowance-admits-the-store = holds _ _
 
 -- and not the other way: extra work breaks an allowance, which is the
 -- asymmetry the two orders exist to keep apart
 
 allowance-broken-by-the-store :
-  ¬ ([ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ , tt ]
-     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ⟆ , tt ])
+  ¬ ([ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ]
+     ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ⟆ ])
 allowance-broken-by-the-store = fails _ _
 
 -- the two moves compose: a computation known to read and store exactly
@@ -206,7 +206,7 @@ allowance-broken-by-the-store = fails _ _
 
 read-then-store-meets-the-contract :
   exact (⌈ read ⌉ ∙ ⌈ write ⌉)
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 read-then-store-meets-the-contract = holds _ _
 
 -- what cannot be done is to put the two runs at the endpoints the other
@@ -226,20 +226,20 @@ inverted-is-not-a-grade ()
 -- each branch does, at both endpoints.
 
 add-a-guarantee :
-  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 add-a-guarantee = holds _ _
 
 add-an-allowance :
-  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ]
+  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ]
 add-an-allowance = holds _ _
 
 branches :
   [ ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
-  , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ]
+  , within ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ]
   ≾ᵗˢ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ
-      , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ , tt ]
+      , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ ]
 branches = holds _ _
 
 ------------------------------------------------------------------------
@@ -251,7 +251,7 @@ branches = holds _ _
 
 sequencing :
   (exact ⌈ read ⌉ ·ᵗˢ exact ⌈ write ⌉)
-  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 sequencing = holds _ _
 
 -- a floor that takes ten ticks under a cap that permits one is not a
@@ -269,14 +269,14 @@ no-such-interval ()
 -- keeps whatever the other factor guarantees.
 
 everything-weakens-to-the-top :
-  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ] ≾ᵗˢ ⊤ᵗˢ
+  [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ] ≾ᵗˢ ⊤ᵗˢ
 everything-weakens-to-the-top =
-  holds [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ] ⊤ᵗˢ
+  holds [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ] ⊤ᵗˢ
 
 the-top-weakens-to-nothing-else :
-  ¬ (⊤ᵗˢ ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ])
+  ¬ (⊤ᵗˢ ≾ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ])
 the-top-weakens-to-nothing-else =
-  fails ⊤ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+  fails ⊤ᵗˢ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 
 the-cap-absorbs :
   hi (⊤ᵗˢ ·ᵗˢ exact ⌈ read ⌉) ≡ unbounded

@@ -10,6 +10,7 @@
 
 module Syntax.Grades.Example.Time.TwoSidedWithInfinity where
 
+open import Data.Bool.Properties using (T-irrelevant)
 open import Data.Empty using (⊥)
 open import Data.Nat
 open import Data.Nat.Properties
@@ -35,16 +36,24 @@ open import Syntax.Grades.Example.Time.ExtendedNat public
 
 ------------------------------------------------------------------------
 -- Intervals with infinite max
+--
+-- The side condition is the verdict of `_≤∞?_`, so at concrete
+-- endpoints it reduces to `⊤` and a literal is written `[ m , n ]`.
 
 record Interval∞ : Set₀ where
-  constructor [_,_,_]
+  constructor [_,_]
   field
     min : ℕ
     max : ℕ∞
     -- min is smaller or equal than max
-    min≤max : ↑ min ≤∞ max
+    {min≤max?} : True (↑ min ≤∞? max)
 
 open Interval∞ public
+
+-- the side condition, as a proof
+
+min≤max : (i : Interval∞) → ↑ min i ≤∞ max i
+min≤max i = toWitness {a? = ↑ min i ≤∞? max i} (min≤max? i)
 
 -- interval addition
 
@@ -52,15 +61,15 @@ _·ᵢ_ : Interval∞ → Interval∞ → Interval∞
 i₁ ·ᵢ i₂ =
   [ min i₁ + min i₂
   , max i₁ +∞ max i₂
-  , +∞-mono-≤∞ {↑ min i₁} {↑ min i₂} {max i₁} {max i₂} (min≤max i₁) (min≤max i₂)
-  ]
+  ] {fromWitness (+∞-mono-≤∞ {↑ min i₁} {↑ min i₂} {max i₁} {max i₂}
+                              (min≤max i₁) (min≤max i₂))}
 
 infixl 7 _·ᵢ_
 
 -- interval unit
 
 uᵢ : Interval∞
-uᵢ = [ 0 , ↑ 0 , z≤n ]
+uᵢ = [ 0 , ↑ 0 ]
 
 -- interval equality
 
@@ -71,7 +80,7 @@ eqᵢ : ∀ {i₁ i₂}
     → i₁ ≡ i₂
 
 eqᵢ {_} {i₂} refl refl =
-  cong (λ x → [ min i₂ , max i₂ , x ]) (≤∞-irrelevant _ _)
+  cong (λ x → [ min i₂ , max i₂ ] {x}) (T-irrelevant _ _)
 
 -- right and left identity
 
@@ -106,7 +115,7 @@ i₁ ≾ᵢ i₂ =
 -- absorbing, `⊤ᵢ ·ᵢ i` keeping `min i`.
 
 ⊤ᵢ : Interval∞
-⊤ᵢ = [ 0 , ∞ , ≤∞-∞ (↑ 0) ]
+⊤ᵢ = [ 0 , ∞ ]
 
 ≾ᵢ-⊤ : (i : Interval∞) → (min ⊤ᵢ ≤ min i × max i ≤∞ max ⊤ᵢ)
 ≾ᵢ-⊤ i = z≤n , ≤∞-∞ (max i)
@@ -115,7 +124,7 @@ i₁ ≾ᵢ i₂ =
 -- bound being higher
 
 uᵢ-not-least : ¬ Minimum _≾ᵢ_ uᵢ
-uᵢ-not-least least = 1+n≰n (proj₁ (least [ 1 , ↑ 1 , ≤-refl ]))
+uᵢ-not-least least = 1+n≰n (proj₁ (least [ 1 , ↑ 1 ]))
 
 -- uᵢ is the minimal element
 
@@ -138,7 +147,7 @@ uᵢ-minimal {i} (_ , maxrel) =
   +∞-mono-≤∞ {max i₁} {max i} {max i₂} {max i} maxrel (≤∞-refl {max i})
 
 -- antisymmetry: both endpoints are pinned, and `eqᵢ` discharges the
--- `min≤max` field
+-- `min≤max?` field
 
 ≾ᵢ-antisym : {i₁ i₂ : Interval∞} → i₁ ≾ᵢ i₂ → i₂ ≾ᵢ i₁ → i₁ ≡ i₂
 ≾ᵢ-antisym {i₁} {i₂} (min₂≤min₁ , max₁≤max₂) (min₁≤min₂ , max₂≤max₁) =
@@ -192,10 +201,10 @@ _⊔ᵢ_ : Interval∞ → Interval∞ → Interval∞
 i₁ ⊔ᵢ i₂ =
   [ min i₁ ⊓ min i₂
   , max i₁ ⊔∞ max i₂
-  , ≤∞-trans {↑ (min i₁ ⊓ min i₂)} {↑ min i₁}
-             (m⊓n≤m (min i₁) (min i₂))
-             (≤∞-trans {↑ min i₁} (min≤max i₁) (⊔∞-ubˡ (max i₁) (max i₂)))
-  ]
+  ] {fromWitness
+       (≤∞-trans {↑ (min i₁ ⊓ min i₂)} {↑ min i₁}
+                 (m⊓n≤m (min i₁) (min i₂))
+                 (≤∞-trans {↑ min i₁} (min≤max i₁) (⊔∞-ubˡ (max i₁) (max i₂))))}
 
 infixl 7 _⊔ᵢ_
 
@@ -258,7 +267,7 @@ two-sided-intervals-with-∞ = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ᵢ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ᵢ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ᵢ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → [ n , ↑ n , ≤-refl ]
+  ; of-nat            = λ n → [ n , ↑ n ] {fromWitness ≤-refl}
   ; of-nat-zero       = eqᵢ refl refl
   ; of-nat-plus       = eqᵢ refl refl
   }
@@ -309,7 +318,7 @@ infix 6 _≾ʷ_
 -- the unit is not least, as for the windows themselves
 
 uʷ-not-least : ¬ Minimum _≾ʷ_ uʷ
-uʷ-not-least least = 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 , ≤-refl ])))
+uʷ-not-least least = 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 ])))
 
 -- identity laws
 
@@ -489,7 +498,7 @@ two-sided-intervals-with-⊤ = record
   ; ≾-zero-productˡ   = λ {i₁} {i₂} → ≾ʷ-zero-productˡ {i₁} {i₂}
   ; ≾-zero-productʳ   = λ {i₁} {i₂} → ≾ʷ-zero-productʳ {i₁} {i₂}
   ; ≾-irrelevant      = λ {i₁} {i₂} → ≾ʷ-irrelevant {i₁} {i₂}
-  ; of-nat            = λ n → window [ n , ↑ n , ≤-refl ]
+  ; of-nat            = λ n → window [ n , ↑ n ] {fromWitness ≤-refl}
   ; of-nat-zero       = cong window_ (eqᵢ refl refl)
   ; of-nat-plus       = cong window_ (eqᵢ refl refl)
   }

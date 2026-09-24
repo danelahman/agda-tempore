@@ -21,7 +21,6 @@
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided where
 
-open import Data.Unit using (tt)
 
 open import Relation.Nullary using (¬_)
 
@@ -29,7 +28,7 @@ open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send; _∙_; ⌈_⌉; ⟨_⟩)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
-  using (TwoSided; [_,_,_]; within_; unbounded; two-sided; holds; fails;
+  using (TwoSided; [_,_]; within_; unbounded; two-sided; holds; fails;
          exact; ⟅_⟆ˡᵒ; ⟅_∣_⟆ˡᵒ; ⟅_⟆; ⟅_∣_⟆)
 
 ------------------------------------------------------------------------
@@ -94,7 +93,7 @@ carried-id =
 -- context is untouched.
 
 contract : E
-contract = [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ , tt ]
+contract = [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ ]
 
 meeting-the-contract : [] ⊢C⦂ Unit ‼ contract
 meeting-the-contract =
@@ -119,7 +118,7 @@ transmitting-twice-fails-the-cap = fails _ _
 -- run to three.
 
 window : E
-window = [ ⟅ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ , tt ]
+window = [ ⟅ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ]
 
 branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ window
 branching =
@@ -131,7 +130,7 @@ branching =
 -- store's worst case rather than its best
 
 three-ticks-not-guaranteed :
-  ¬ (opTime write ·ₑ uₑ ≾ₑ [ ⟅ ⟨ 3 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ , tt ])
+  ¬ (opTime write ·ₑ uₑ ≾ₑ [ ⟅ ⟨ 3 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ])
 three-ticks-not-guaranteed = fails _ _
 
 -- an `if` over data alone needs no contract found for it
@@ -214,10 +213,10 @@ storing-fits = holds _ _
 -- covers the costlier of them is within both branches' reach.
 
 alternatives : R
-alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ , tt ]
+alternatives = [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ]
 
 claimed-in-both-branches :
-  [] ⊢C⦂ Unit ‼ [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ , tt ]
+  [] ⊢C⦂ Unit ‼ [ ⟅ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 12 ⟩ ⟆ ]
 claimed-in-both-branches =
   box {ρ = alternatives} (const 42)  -- ∷ [ alternatives ] Reading
     (if true
@@ -237,12 +236,12 @@ claimed-in-both-branches =
 -- and tightening the allowance to a single tick closes it too
 
 transmitting-branch-covers-nothing :
-  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ , tt ])
+  ¬ (uᵣ ·ᵣ opTime send ≾ᵣ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ⟆ ])
 transmitting-branch-covers-nothing = fails _ _
 
 transmitting-branch-overspends :
   ¬ (uᵣ ·ᵣ opTime send
-     ≾ᵣ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 1 ⟩ ⟆ , tt ])
+     ≾ᵣ [ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ , within ⟅ ⟨ 1 ⟩ ⟆ ])
 transmitting-branch-overspends = fails _ _
 
 ------------------------------------------------------------------------
@@ -256,10 +255,10 @@ transmitting-branch-overspends = fails _ _
 
 branch-join : E
 branch-join =
-  [ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ , tt ]
+  [ ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∣ ⌈ write ⌉ ⟆ ]
 
 mixed-contract : R
-mixed-contract = [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ⟆ , tt ]
+mixed-contract = [ ⟅ ⌈ read ⌉ ∣ ⟨ 2 ⟩ ⟆ˡᵒ , within ⟅ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ⟆ ]
 
 sampling-branch-joins : opTime read ·ₑ uₑ ≾ₑ branch-join
 sampling-branch-joins = holds _ _
@@ -269,8 +268,7 @@ storing-branch-joins = holds _ _
 
 claim-after-a-branch :
   [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ˡᵒ
-                       , within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆
-                       , tt ]
+                       , within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∣ ⌈ write ⌉ ∙ ⌈ send ⌉ ⟆ ]
 claim-after-a-branch =
   box {ρ = mixed-contract} (const 42)
                                      -- ∷ [ mixed-contract ] Reading
@@ -293,7 +291,7 @@ claim-after-a-branch =
 -- ticks of allowance for the slower branch.
 
 store-or-not :
-  [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ , tt ]
+  [] ∷ Bool ⊢C⦂ Unit ‼ [ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 9 ⟩ ⟆ ]
 store-or-not =
   box {ρ = contract} (const 42)      -- ∷ [ contract ] Reading
     (if eternal-var Boolₑ (Tl-∷ Hd)

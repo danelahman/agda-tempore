@@ -26,7 +26,7 @@ open import Data.Nat.Properties
 open import Data.Product using (_,_)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals-with-∞;
+  using (Interval∞; [_,_]; min; max; _·ᵢ_; _≾ᵢ_; two-sided-intervals-with-∞;
          ℕ∞; ↑_; ∞; _+∞_; _≤∞_; +∞-mono-≤∞; ≤∞-refl; ≤∞-trans; ≤∞-irrelevant)
 
 open import Syntax.Grades.Traces.Base Op
@@ -58,7 +58,7 @@ open _⊑ʰ[_]_
 
 -- reflexivity at the unit grade `[ 0 , ↑ 0 ]`: the empty continuation
 
-⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ [ 0 , ↑ 0 , z≤n ] ] w
+⊑ʰ-refl : ∀ {w} → w ⊑ʰ[ [ 0 , ↑ 0 ] ] w
 ⊑ʰ-refl {w} = mkʰ ε (∙-identityʳ w) z≤n z≤n
 
 -- transitivity multiplies the grades (adds both endpoints), appending

@@ -35,7 +35,7 @@ open import Relation.Binary.Definitions
 open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
-  using (Interval∞; [_,_,_]; ↑_)
+  using (Interval∞; [_,_]; ↑_)
 
 open import Util.Equality
 
@@ -90,9 +90,9 @@ data _<ᵒ_ : Rel Op lzero where
 -- the interval an operation's execution time falls in
 
 opTime : Op → Interval∞
-opTime read  = [ 1 , ↑ 1 , s≤s z≤n ]
-opTime write = [ 2 , ↑ 3 , s≤s (s≤s z≤n) ]
-opTime send  = [ 4 , ↑ 6 , s≤s (s≤s (s≤s (s≤s z≤n))) ]
+opTime read  = [ 1 , ↑ 1 ]
+opTime write = [ 2 , ↑ 3 ]
+opTime send  = [ 4 , ↑ 6 ]
 
 -- the two endpoints, as cost models in their own right
 

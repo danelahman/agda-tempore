@@ -557,30 +557,32 @@ n-identityˡ xs = cong n (·ˢ-identityˡ xs)
 --
 -- A grade is a non-empty finite set of traces cut down to its
 -- `≼`-minimal members, held in the canonical sorted order. All three
--- side conditions are `True` of a decision, hence proof-irrelevant, so
--- an antichain names its underlying list and nothing else.
+-- side conditions are `True` of a decision, hence proof-irrelevant and
+-- implicit: at a concrete list they reduce to `⊤`, so an antichain is
+-- written by its underlying list alone.
 
 record Antichain : Set where
   constructor antichain
   field
-    traces   : List Trace
-    sorted   : Sorted traces
-    reduced  : Reduced traces
-    nonempty : NonEmpty traces
+    traces     : List Trace
+    {sorted}   : Sorted traces
+    {reduced}  : Reduced traces
+    {nonempty} : NonEmpty traces
 
 open Antichain public
 
 -- two antichains are equal as soon as their underlying lists are
 
 ac-ext : {P Q : Antichain} → traces P ≡ traces Q → P ≡ Q
-ac-ext {antichain xs s r ne} {antichain .xs s' r' ne'} refl =
-  cong₃ (antichain xs)
+ac-ext {antichain xs {s} {r} {ne}} {antichain .xs {s'} {r'} {ne'}} refl =
+  cong₃ (λ s r ne → antichain xs {s} {r} {ne})
     (Sorted-irr xs s s') (Reduced-irr xs r r') (NonEmpty-irr xs ne ne')
 
 -- the antichain a non-empty list of traces denotes: its normal form
 
 acSet : (xs : List Trace) → NonEmpty xs → Antichain
-acSet xs ne = antichain (n xs) (n-sorted xs) (n-reduced xs) (n-ne xs ne)
+acSet xs ne =
+  antichain (n xs) {n-sorted xs} {n-reduced xs} {n-ne xs ne}
 
 -- a singleton is an antichain already, nothing being below anything
 -- else in it
@@ -594,7 +596,7 @@ singleton-reduced t = reduced-from step
     step (there ())  mv          le
 
 singleton : Trace → Antichain
-singleton t = antichain [ t ] (tt , tt) (singleton-reduced t) tt
+singleton t = antichain [ t ] {reduced = singleton-reduced t}
 
 ------------------------------------------------------------------------
 -- Monoid structure: the language product with unit { ε }

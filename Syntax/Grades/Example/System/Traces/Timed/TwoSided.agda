@@ -129,7 +129,7 @@ coherent i with hi i | lo◇hi i
 
 mapₒ : TwoSided → Interval∞
 mapₒ i =
-  [ minSetDuration (tracesˡᵒ (lo i)) , capDuration (hi i) , coherent i ]
+  [ minSetDuration (tracesˡᵒ (lo i)) , capDuration (hi i) ] {fromWitness (coherent i)}
 
 -- monotonicity, endpointwise
 

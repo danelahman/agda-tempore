@@ -36,19 +36,22 @@ open _→ᵍ_ using (map; map-monotone)
 -- effect grade says the uplink takes between 7 and 9 ticks, the
 -- resource grade only that at least 7 have passed.
 
-open import Data.Nat.Base using (ℕ; _≤_)
+open import Data.Nat.Base using (ℕ)
+open import Data.Nat.Properties using (_≤?_)
+
+open import Relation.Nullary.Decidable using (True)
 
 open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
   using (Interval∞; eqᵢ; _·ᵢ_; _≾ᵢ_; ↑_; ∞)
-  renaming ([_,_,_] to mkᵢ)
+  renaming ([_,_] to mkᵢ)
 
 open import Syntax.Grades.Example.Time.LeftSided
   using ([_,+∞⟩; _·ₒ_; _≾ₒ_)
 
 -- every window below has a finite upper endpoint
 
-[_,_,_] : (m n : ℕ) → m ≤ n → Interval∞
-[ m , n , p ] = mkᵢ m (↑ n) p
+[_,_] : (m n : ℕ) {m≤n : True (m ≤? n)} → Interval∞
+[ m , n ] {m≤n} = mkᵢ m (↑ n) {m≤n}
 
 open import Syntax.Grades.Example.System.IntervalsToLeftSidedIntervals
   using (tsi→lsi)
@@ -65,7 +68,7 @@ forget-max = refl
 -- resource grade: that difference is exactly what is forgotten
 
 deadline-forgotten :
-  map tsi→lsi [ 7 , 9 , ≤! ] ≡ map tsi→lsi [ 7 , 12 , ≤! ]
+  map tsi→lsi [ 7 , 9 ] ≡ map tsi→lsi [ 7 , 12 ]
 deadline-forgotten = refl
 
 -- monotonicity: enlarging the window to `[ 5 , 12 ]` weakens the lower
@@ -73,12 +76,12 @@ deadline-forgotten = refl
 
 forget-max-mono : [ 7 ,+∞⟩ ≾ₒ [ 5 ,+∞⟩
 forget-max-mono =
-  map-monotone tsi→lsi {uplink-window} {[ 5 , 12 , ≤! ]} (≤! , ≤!)
+  map-monotone tsi→lsi {uplink-window} {[ 5 , 12 ]} (≤! , ≤!)
 
 -- and it is a monoid map: sequencing before or after projecting agrees
 
-forget-max-· : map tsi→lsi ([ 1 , 1 , ≤! ] ·ᵢ [ 6 , 8 , ≤! ])
-             ≡ map tsi→lsi [ 1 , 1 , ≤! ] ·ₒ map tsi→lsi [ 6 , 8 , ≤! ]
+forget-max-· : map tsi→lsi ([ 1 , 1 ] ·ᵢ [ 6 , 8 ])
+             ≡ map tsi→lsi [ 1 , 1 ] ·ₒ map tsi→lsi [ 6 , 8 ]
 forget-max-· = refl
 
 ------------------------------------------------------------------------
@@ -226,22 +229,20 @@ guarantees-add = refl
 -- and lands in a time interval only because the grade's coherence field
 -- makes the fastest guarantee no slower than the slowest allowance.
 
-open import Data.Unit using (tt)
-
 open import Syntax.Grades.Example.System.Traces.Timed.TwoSided
   Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans costˡᵒ costʰⁱ cost-≤ costʰⁱ-pos
   using (two-sided-traces→intervals)
 
 open import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
-  using (exact; _·ᵗˢ_) renaming ([_,_,_] to ⟪_,_,_⟫; holds to holdsᵗˢ)
+  using (exact; _·ᵗˢ_) renaming ([_,_] to ⟪_,_⟫; holds to holdsᵗˢ)
 
 -- a contract that guarantees a reading and permits it six ticks' more
 -- work becomes the window between one tick and seven
 
 contract-measured :
   map two-sided-traces→intervals
-      ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ , tt ⟫
-  ≡ [ 1 , 7 , ≤! ]
+      ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ⟫
+  ≡ [ 1 , 7 ]
 contract-measured = refl
 
 -- listing alternatives enlarges the window at both ends at once, each end
@@ -250,8 +251,8 @@ contract-measured = refl
 alternatives-measured-both :
   map two-sided-traces→intervals
       ⟪ ⟅ ⌈ read ⌉ ∣ ⌈ send ⌉ ⟆ˡᵒ
-      , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ʰⁱ , tt ⟫
-  ≡ [ 1 , 12 , ≤! ]
+      , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ∣ ⌈ send ⌉ ∙ ⌈ send ⌉ ⟆ʰⁱ ⟫
+  ≡ [ 1 , 12 ]
 alternatives-measured-both = refl
 
 -- a grade whose two endpoints coincide still becomes a window, the two
@@ -260,7 +261,7 @@ alternatives-measured-both = refl
 
 exact-measured :
   map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
-               ≡ [ 3 , 4 , ≤! ]
+               ≡ [ 3 , 4 ]
 exact-measured = refl
 
 -- monotonicity: a computation known to take a reading and a store sits
@@ -269,11 +270,11 @@ exact-measured = refl
 window-contains :
   map two-sided-traces→intervals (exact (⌈ read ⌉ ∙ ⌈ write ⌉))
   ≾ᵢ map two-sided-traces→intervals
-         ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ , tt ⟫
+         ⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ⟫
 window-contains =
   map-monotone two-sided-traces→intervals
                {exact (⌈ read ⌉ ∙ ⌈ write ⌉)}
-               {⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ , tt ⟫}
+               {⟪ ⟅ ⌈ read ⌉ ⟆ˡᵒ , within ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆ʰⁱ ⟫}
                (holdsᵗˢ _ _)
 
 -- and it is a monoid map: sequencing before or after measuring agrees

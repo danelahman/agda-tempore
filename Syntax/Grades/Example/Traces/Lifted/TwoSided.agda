@@ -319,18 +319,19 @@ xs ◇ˢ unbounded  = ⊤
 -- The carrier
 
 record TwoSided : Set where
-  constructor [_,_,_]
+  constructor [_,_]
   field
     lo : Antichain
     hi : Bounds
-    -- some listed guarantee takes no longer than some listed allowance
-    lo◇hi : tracesˡᵒ lo ◇ˢ hi
+    -- some listed guarantee takes no longer than some listed allowance;
+    -- implicit, as it reduces to `⊤` at concrete endpoints
+    {lo◇hi} : tracesˡᵒ lo ◇ˢ hi
 
 open TwoSided public
 
 eqᵗˢ : {i₁ i₂ : TwoSided} → lo i₁ ≡ lo i₂ → hi i₁ ≡ hi i₂ → i₁ ≡ i₂
-eqᵗˢ {[ L , U , p ]} {[ .L , .U , q ]} refl refl =
-  cong [ L , U ,_] (◇ˢ-irr {tracesˡᵒ L} {U} p q)
+eqᵗˢ {[ L , U ] {p}} {[ .L , .U ] {q}} refl refl =
+  cong (λ c → [ L , U ] {c}) (◇ˢ-irr {tracesˡᵒ L} {U} p q)
 
 ------------------------------------------------------------------------
 -- The monoid: the language product on each endpoint
@@ -341,18 +342,17 @@ _·ᵗˢ_ : TwoSided → TwoSided → TwoSided
 i₁ ·ᵗˢ i₂ =
   [ lo i₁ ·ˡᵒ lo i₂
   , hi i₁ ·ᵇ hi i₂
-  , ◇ˢ-·ˢ {tracesˡᵒ (lo i₁)} {tracesˡᵒ (lo i₂)} {hi i₁} {hi i₂}
-          (lo◇hi i₁) (lo◇hi i₂)
-  ]
+  ] {◇ˢ-·ˢ {tracesˡᵒ (lo i₁)} {tracesˡᵒ (lo i₂)} {hi i₁} {hi i₂}
+          (lo◇hi i₁) (lo◇hi i₂)}
 
 uᵗˢ : TwoSided
-uᵗˢ = [ uˡᵒ , within uʰⁱ , ◇ˢ₀-self (tracesˡᵒ uˡᵒ) tt ]
+uᵗˢ = [ uˡᵒ , within uʰⁱ ] {◇ˢ₀-self (tracesˡᵒ uˡᵒ) tt}
 
 -- the greatest grade: the weakest guarantee, which is the unit, under
 -- an unbounded allowance
 
 ⊤ᵗˢ : TwoSided
-⊤ᵗˢ = [ uˡᵒ , unbounded , tt ]
+⊤ᵗˢ = [ uˡᵒ , unbounded ]
 
 ·ᵗˢ-identityʳ : (i : TwoSided) → (i ·ᵗˢ uᵗˢ) ≡ i
 ·ᵗˢ-identityʳ i = eqᵗˢ (·ˡᵒ-identityʳ (lo i)) (·ᵇ-identityʳ (hi i))
@@ -408,8 +408,7 @@ _⊔ᵗˢ_ : TwoSided → TwoSided → TwoSided
 i₁ ⊔ᵗˢ i₂ =
   [ lo i₁ ⊔ˡᵒ lo i₂
   , hi i₁ ⊔ᵇ hi i₂
-  , ◇ˢ-⊔ᵇ {tracesˡᵒ (lo i₁)} {tracesˡᵒ (lo i₂)} {hi i₁} {hi i₂} (lo◇hi i₁)
-  ]
+  ] {◇ˢ-⊔ᵇ {tracesˡᵒ (lo i₁)} {tracesˡᵒ (lo i₂)} {hi i₁} {hi i₂} (lo◇hi i₁)}
 
 ⊔ᵗˢ-ubˡ : (i₁ i₂ : TwoSided) → i₁ ≾ᵗˢ (i₁ ⊔ᵗˢ i₂)
 ⊔ᵗˢ-ubˡ i₁ i₂ = ⊔ˡᵒ-ubˡ (lo i₁) (lo i₂) , ⊔ʰⁱ-ubˡ (hi i₁) (hi i₂)
@@ -513,7 +512,7 @@ i₁ ⊔ᵗˢ i₂ =
 
 of-natᵗˢ : ℕ → TwoSided
 of-natᵗˢ n =
-  [ of-natˡᵒ n , within (of-natʰⁱ n) , ◇ˢ₀-self (tracesˡᵒ (of-natˡᵒ n)) tt ]
+  [ of-natˡᵒ n , within (of-natʰⁱ n) ] {◇ˢ₀-self (tracesˡᵒ (of-natˡᵒ n)) tt}
 
 infix 5 _≾ᵗˢ?_
 

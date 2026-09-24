@@ -356,14 +356,15 @@ nf-ext {xs} {ys} f g =
 -- Sets of traces
 --
 -- A grade is a non-empty (finite) set of timed traces, represented by
--- the canonical list of its members.
+-- the canonical list of its members. The side conditions are implicit,
+-- reducing to `⊤` at a concrete list.
 
 record NeTraces : Set where
   constructor neTraces
   field
-    traces   : List Trace
-    sorted   : Sorted traces
-    nonempty : NonEmpty traces
+    traces     : List Trace
+    {sorted}   : Sorted traces
+    {nonempty} : NonEmpty traces
 
 open NeTraces public
 
@@ -371,13 +372,13 @@ open NeTraces public
 -- (canonicity and non-emptiness are both irrelevant)
 
 ne-ext : {P Q : NeTraces} → traces P ≡ traces Q → P ≡ Q
-ne-ext {neTraces xs p q} {neTraces .xs p' q'} refl =
-  cong₂ (neTraces xs) (Sorted-irr xs p p') (NonEmpty-irr xs q q')
+ne-ext {neTraces xs {p} {q}} {neTraces .xs {p'} {q'}} refl =
+  cong₂ (λ p q → neTraces xs {p} {q}) (Sorted-irr xs p p') (NonEmpty-irr xs q q')
 
 -- the set a non-empty list of traces denotes: its normal form
 
 neSet : (xs : List Trace) → NonEmpty xs → NeTraces
-neSet xs ne = neTraces (nf xs) (nf-sorted xs) (nf-ne xs ne)
+neSet xs ne = neTraces (nf xs) {nf-sorted xs} {nf-ne xs ne}
 
 ------------------------------------------------------------------------
 -- Monoid structure on sets of traces: the language product with unit { ε }
@@ -399,7 +400,7 @@ xs ·ˢ ys = cartesianProductWith _∙_ xs ys
 -- the unit is the singleton set containing the empty trace
 
 u : NeTraces
-u = neTraces [ ε ] (tt , tt) tt
+u = neTraces [ ε ]
 
 infixl 7 _·_
 
@@ -662,7 +663,7 @@ P ∪ Q = neSet (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q))
 -- delay of duration `n`, which is what a grade's `of-nat` asks for.
 
 of-nat : ℕ → NeTraces
-of-nat n = neTraces [ ⟨ n ⟩ ] (tt , tt) tt
+of-nat n = neTraces [ ⟨ n ⟩ ]
 
 of-nat-zero : of-nat 0 ≡ u
 of-nat-zero = refl
