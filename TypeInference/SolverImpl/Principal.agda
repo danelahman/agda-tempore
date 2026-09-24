@@ -12,12 +12,12 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁻; ∈-++⁻)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Maybe using (Is-just)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
 
@@ -423,15 +423,16 @@ bndᵈ {Q = Q} j A ρ {A₀} {ρ₀} q q' γ p =
 -- by monotonicity, the unit being below the top; from above, by
 -- equality, the right side mentioning only outer unknowns.
 
-stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Dec (Minimum _≾ₑ_ uₑ)) → (j : EVar (Φ +e))
+stripʳ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ-least?))
+             → (j : EVar (Φ +e))
              → (ρ ρ' : RExp (Φ +e)) → (ρ₀ : RExp Φ) → (e₁ : ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀)
-             → ∀ {a} → stripʳ-unit um? j ρ ρ' ρ₀ e₁ ≡ just a
+             → ∀ {a} → stripʳ-unit ij? j ρ ρ' ρ₀ e₁ ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → wkᵉ-H Q ⊩ ρ [ popˢ j ⨟ˢ γ ]ʳ ≾̂ᵣ ρ' [ popˢ j ⨟ˢ γ ]ʳ
              → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
              → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ ≾̂ᵣ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ʳ
-stripʳ-unit-princ (no _)   j ρ ρ' ρ₀ e₁ () γ hγ p
-stripʳ-unit-princ {Q = Q} (yes um) j ρ ρ' ρ₀ e₁ eq γ hγ p
+stripʳ-unit-princ nothing    j ρ ρ' ρ₀ e₁ () γ hγ p
+stripʳ-unit-princ {Q = Q} (just ij) j ρ ρ' ρ₀ e₁ eq γ hγ p
   with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
 ... | nothing          = ⊥just eq
 ... | just (ρ₀' , e₂) with eq
@@ -455,15 +456,16 @@ stripʳ-unit-princ {Q = Q} (yes um) j ρ ρ' ρ₀ e₁ eq γ hγ p
                   (trans (cong (_[ κᵉ ]ʳ) (keyʳ j ρ e₁ γ)) ([⨟]ʳ ρ₀ (wkˢᵉ ⨟ˢ γ) κᵉ)) rhs
                   (⊩-substᵣ ⊩ᴴ-κᵉ p)
 
-stripᵉ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (um? : Dec (Minimum _≾ₑ_ uₑ)) → (j : EVar (Φ +e))
+stripᵉ-unit-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (ij? : Maybe (Is-just uₑ-least?))
+             → (j : EVar (Φ +e))
              → (ε ε' : EExp (Φ +e)) → (ε₀ : EExp Φ) → (e₁ : ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀)
-             → ∀ {a} → stripᵉ-unit um? j ε ε' ε₀ e₁ ≡ just a
+             → ∀ {a} → stripᵉ-unit ij? j ε ε' ε₀ e₁ ≡ just a
              → (γ : Subst (Φ +e) (Φ' +e)) → sE γ (newᵉ {Φ}) ≡ evar (newᵉ {Φ'})
              → wkᵉ-H Q ⊩ ε [ popˢ j ⨟ˢ γ ]ᵉ ≾̂ₑ ε' [ popˢ j ⨟ˢ γ ]ᵉ
              → ∀ {τ τ'} → (τ , τ') ∈ proj₁ a
              → Q ⊩ τ [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ ≾̂ₑ τ' [ (wkˢᵉ ⨟ˢ γ) ⨟ˢ κᵉ ]ᵉ
-stripᵉ-unit-princ (no _)   j ε ε' ε₀ e₁ () γ hγ p
-stripᵉ-unit-princ {Q = Q} (yes um) j ε ε' ε₀ e₁ eq γ hγ p
+stripᵉ-unit-princ nothing    j ε ε' ε₀ e₁ () γ hγ p
+stripᵉ-unit-princ {Q = Q} (just ij) j ε ε' ε₀ e₁ eq γ hγ p
   with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
 ... | nothing          = ⊥just eq
 ... | just (ε₀' , e₂) with eq
@@ -594,7 +596,7 @@ atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing with decid
 ... | just _  with eq
 ...   | refl = λ ()
 atomʳ-princ O j ρ ρ' eq γ hγ u p | just (ρ₀ , e₁) | nothing | nothing =
-  stripʳ-unit-princ uₑ-least? j ρ ρ' ρ₀ e₁ eq γ hγ p
+  stripʳ-unit-princ (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁ eq γ hγ p
 atomʳ-princ O j ρ ρ' eq γ hγ u p | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just _  with eq
 ...   | refl = λ ()
@@ -620,7 +622,7 @@ atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing with deci
 ... | just _  with eq
 ...   | refl = λ ()
 atomᵉ-princ O j ε ε' eq γ hγ u p | just (ε₀ , e₁) | nothing | nothing =
-  stripᵉ-unit-princ uₑ-least? j ε ε' ε₀ e₁ eq γ hγ p
+  stripᵉ-unit-princ (Is-just? uₑ-least?) j ε ε' ε₀ e₁ eq γ hγ p
 atomᵉ-princ O j ε ε' eq γ hγ u p | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just _  with eq
 ...   | refl = λ ()

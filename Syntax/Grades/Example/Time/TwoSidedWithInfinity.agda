@@ -21,8 +21,9 @@ open import Level renaming (zero to lzero)
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
+open import Relation.Nullary.Negation.Core using (¬_)
 
-open import Data.Maybe.Base using (just)
+open import Data.Maybe.Base using (just; nothing)
 
 open import Syntax.Grades
 
@@ -113,8 +114,8 @@ i₁ ≾ᵢ i₂ =
 -- the unit is not least: `[ 1 , ↑ 1 ]` is not above it, its lower
 -- bound being higher
 
-uᵢ-least? : Dec (Minimum _≾ᵢ_ uᵢ)
-uᵢ-least? = no λ least → 1+n≰n (proj₁ (least [ 1 , ↑ 1 , ≤-refl ]))
+uᵢ-not-least : ¬ Minimum _≾ᵢ_ uᵢ
+uᵢ-not-least least = 1+n≰n (proj₁ (least [ 1 , ↑ 1 , ≤-refl ]))
 
 -- uᵢ is the minimal element
 
@@ -236,7 +237,7 @@ two-sided-intervals-with-∞ = record
   ; _≾_              = _≾ᵢ_
   ; ⊤                = ⊤ᵢ
   ; ≾-⊤              = ≾ᵢ-⊤
-  ; u-least?         = uᵢ-least?
+  ; u-least?         = nothing
   ; ·-comm?          = just ·ᵢ-comm
   ; _⊔_              = _⊔ᵢ_
   ; ⊔-ubˡ            = ⊔ᵢ-ubˡ
@@ -307,8 +308,8 @@ infix 6 _≾ʷ_
 
 -- the unit is not least, as for the windows themselves
 
-uʷ-least? : Dec (Minimum _≾ʷ_ uʷ)
-uʷ-least? = no λ least → 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 , ≤-refl ])))
+uʷ-not-least : ¬ Minimum _≾ʷ_ uʷ
+uʷ-not-least least = 1+n≰n (proj₁ (least (window [ 1 , ↑ 1 , ≤-refl ])))
 
 -- identity laws
 
@@ -471,7 +472,7 @@ two-sided-intervals-with-⊤ = record
   ; _≾_               = _≾ʷ_
   ; ⊤                 = no-window
   ; ≾-⊤               = ≾ʷ-⊤
-  ; u-least?          = uʷ-least?
+  ; u-least?          = nothing
   ; ·-comm?           = just ·ʷ-comm
   ; _⊔_               = _⊔ʷ_
   ; ⊔-ubˡ             = ⊔ʷ-ubˡ

@@ -37,13 +37,12 @@ open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; length; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (here; there)
-open import Data.Maybe using (Maybe; just; nothing; _<∣>_)
+open import Data.Maybe using (Maybe; just; nothing; _<∣>_; Is-just)
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≡ᵇ_)
 open import Data.Bool.Base using (true; false)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 
-open import Relation.Binary.Definitions using (Minimum)
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -66,13 +65,13 @@ open import TypeInference.SolverImpl.Product S public
 
 -- The unit is below anything when the grade decides it least
 
-min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Dec (Minimum _≾ₑ_ uₑ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ε)
-min≾ₑ (yes p) = just (minₑ p)
-min≾ₑ (no _)  = nothing
+min≾ₑ : ∀ {Θ} {Q : Hyps Θ} {ε : EExp Θ} → Maybe (Is-just uₑ-least?) → Maybe (Q ⊩ ûₑ ≾̂ₑ ε)
+min≾ₑ (just ij) = just (minₑ ij)
+min≾ₑ nothing   = nothing
 
-min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Dec (Minimum _≾ᵣ_ uᵣ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ρ)
-min≾ᵣ (yes p) = just (minᵣ p)
-min≾ᵣ (no _)  = nothing
+min≾ᵣ : ∀ {Θ} {Q : Hyps Θ} {ρ : RExp Θ} → Maybe (Is-just uᵣ-least?) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ρ)
+min≾ᵣ (just ij) = just (minᵣ ij)
+min≾ᵣ nothing   = nothing
 
 ------------------------------------------------------------------
 -- Atomic hypotheses
@@ -281,7 +280,7 @@ module Searchₑ {Θ} {Q : Hyps Θ}
   -- constant atom `uₑ`
 
   unit≾ₑ : (b : EAtom Θ) → Maybe (Q ⊩ ûₑ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  unit≾ₑ b = min≾ₑ uₑ-least? <∣> atom≾ₑ (ac uₑ) b
+  unit≾ₑ b = min≾ₑ (Is-just? uₑ-least?) <∣> atom≾ₑ (ac uₑ) b
 
   -- An atom below the unit, as the constant atom `uₑ`
 
@@ -458,13 +457,13 @@ module Searchᵣ {Θ} {Q : Hyps Θ}
   atom≾ᵣ a b = linkᵣ? a b <∣> ceilᵣ b <∣> reachᵣ? a b
 
   minᵐ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  minᵐ (rm i) with min≾ₑ {ε = evar i} uₑ-least?
+  minᵐ (rm i) with min≾ₑ {ε = evar i} (Is-just? uₑ-least?)
   ... | just q  = just (transᵣ (eqᵣ ∣û∣ₑ) (map-mono q))
   ... | nothing = nothing
   minᵐ _ = nothing
 
   unit≾ᵣ : (b : RAtom Θ) → Maybe (Q ⊩ ûᵣ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  unit≾ᵣ b = min≾ᵣ uᵣ-least? <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
+  unit≾ᵣ b = min≾ᵣ (Is-just? uᵣ-least?) <∣> minᵐ b <∣> atom≾ᵣ (rc uᵣ) b
 
   ≾unitᵣ : (a : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ûᵣ)
   ≾unitᵣ a = atom≾ᵣ a (rc uᵣ)

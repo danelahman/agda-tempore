@@ -70,7 +70,7 @@ open import Data.Unit using (⊤; tt)
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (toWitness; fromWitness)
 
-open import Data.Maybe.Base using (nothing)
+open import Data.Maybe.Base using (just; nothing)
 
 open import Syntax.Grades
 
@@ -374,7 +374,7 @@ right-sided = record
   ; _≾_             = _≾_
   ; ⊤               = unbounded
   ; ≾-⊤             = ≾-⊤
-  ; u-least?        = yes ≾-⊥
+  ; u-least?        = just ≾-⊥
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵇ_
   ; ⊔-ubˡ           = ⊔ᵇ-ubˡ

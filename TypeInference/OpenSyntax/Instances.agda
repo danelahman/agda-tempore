@@ -30,6 +30,7 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.Product using (Σ-syntax; _×_; _,_)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Maybe.Base using (Maybe; nothing)
+open import Data.Maybe using (to-witness)
 
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (map′; _×-dec_)
@@ -186,7 +187,7 @@ val-≡̂ᵣ ≡̂ᵣ-assoc         = ·ᵣ-assoc _ _ _
 val-≡̂ᵣ ≡̂ᵣ-identityˡ     = ·ᵣ-identityˡ _
 val-≡̂ᵣ ≡̂ᵣ-identityʳ     = ·ᵣ-identityʳ _
 val-≡̂ᵣ ≡̂ᵣ-const-·       = refl
-val-≡̂ᵣ (≡̂ᵣ-comm {c} _)  = c _ _
+val-≡̂ᵣ (≡̂ᵣ-comm ij)     = to-witness ij _ _
 val-≡̂ᵣ (≡̂ᵣ-cong-⊔ p q)  = cong₂ _⊔ᵣ_ (val-≡̂ᵣ p) (val-≡̂ᵣ q)
 val-≡̂ᵣ ≡̂ᵣ-const-⊔       = refl
 val-≡̂ᵣ ≡̂ᵣ-comm-⊔        = ⊔ᵣ-comm _ _
@@ -206,7 +207,7 @@ val-≡̂ₑ ≡̂ₑ-assoc         = ·ₑ-assoc _ _ _
 val-≡̂ₑ ≡̂ₑ-identityˡ     = ·ₑ-identityˡ _
 val-≡̂ₑ ≡̂ₑ-identityʳ     = ·ₑ-identityʳ _
 val-≡̂ₑ ≡̂ₑ-const-·       = refl
-val-≡̂ₑ (≡̂ₑ-comm {c} _)  = c _ _
+val-≡̂ₑ (≡̂ₑ-comm ij)     = to-witness ij _ _
 val-≡̂ₑ (≡̂ₑ-cong-⊔ p q)  = cong₂ _⊔ₑ_ (val-≡̂ₑ p) (val-≡̂ₑ q)
 val-≡̂ₑ ≡̂ₑ-const-⊔       = refl
 val-≡̂ₑ ≡̂ₑ-comm-⊔        = ⊔ₑ-comm _ _
@@ -224,7 +225,7 @@ val-≾ᵣ (⊔-ubˡᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubˡ (valʳ ρ₁) (valʳ ρ�
 val-≾ᵣ (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (valʳ ρ₁) (valʳ ρ₂)
 val-≾ᵣ (⊔-lubᵣ p q) = ⊔ᵣ-lub (val-≾ᵣ p) (val-≾ᵣ q)
 val-≾ᵣ (topᵣ {ρ})   = ≾-⊤ᵣ (valʳ ρ)
-val-≾ᵣ {ρ' = ρ'} (minᵣ p) = p (valʳ ρ')
+val-≾ᵣ {ρ' = ρ'} (minᵣ ij) = to-witness ij (valʳ ρ')
 
 val-≾ₑ (hypₑ ())
 val-≾ₑ (atomₑ p)    = p
@@ -235,7 +236,7 @@ val-≾ₑ (⊔-ubˡₑ {ε₁} {ε₂}) = ⊔ₑ-ubˡ (valᵉ ε₁) (valᵉ ε
 val-≾ₑ (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (valᵉ ε₁) (valᵉ ε₂)
 val-≾ₑ (⊔-lubₑ p q) = ⊔ₑ-lub (val-≾ₑ p) (val-≾ₑ q)
 val-≾ₑ (topₑ {ε})   = ≾-⊤ₑ (valᵉ ε)
-val-≾ₑ {ε' = ε'} (minₑ p) = p (valᵉ ε')
+val-≾ₑ {ε' = ε'} (minₑ ij) = to-witness ij (valᵉ ε')
 
 ------------------------------------------------------------------------
 -- The key lemma: completeness, under any closed hypotheses, through

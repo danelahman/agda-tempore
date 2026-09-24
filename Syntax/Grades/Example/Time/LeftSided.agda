@@ -19,8 +19,9 @@ open import Level renaming (zero to lzero)
 open import Relation.Binary.Core
 open import Relation.Binary.Definitions
 open import Relation.Nullary.Decidable.Core
+open import Relation.Nullary.Negation.Core using (¬_)
 
-open import Data.Maybe.Base using (just)
+open import Data.Maybe.Base using (just; nothing)
 
 open import Syntax.Grades
 
@@ -106,8 +107,8 @@ infix 6 _≾ₒ_
 
 -- the unit is not least: `[ 1 ,+∞⟩` lies strictly below it
 
-uₒ-least? : Dec (Minimum _≾ₒ_ uₒ)
-uₒ-least? = no λ least → 1+n≰n (least [ 1 ,+∞⟩)
+uₒ-not-least : ¬ Minimum _≾ₒ_ uₒ
+uₒ-not-least least = 1+n≰n (least [ 1 ,+∞⟩)
 
 -- decidability
 
@@ -175,7 +176,7 @@ left-sided-intervals = record
   ; _≾_               = _≾ₒ_
   ; ⊤                 = uₒ
   ; ≾-⊤               = ≾ₒ-⊤
-  ; u-least?          = uₒ-least?
+  ; u-least?          = nothing
   ; ·-comm?           = just ·ₒ-comm
   ; _⊔_               = _⊔ₒ_
   ; ⊔-ubˡ             = ⊔ₒ-ubˡ
@@ -242,8 +243,8 @@ infix 6 _≾ᵗ_
 
 -- the unit is not least, as for the intervals themselves
 
-uᵗ-least? : Dec (Minimum _≾ᵗ_ uᵗ)
-uᵗ-least? = no λ least → 1+n≰n (least (timed [ 1 ,+∞⟩))
+uᵗ-not-least : ¬ Minimum _≾ᵗ_ uᵗ
+uᵗ-not-least least = 1+n≰n (least (timed [ 1 ,+∞⟩))
 
 -- identity laws
 
@@ -396,7 +397,7 @@ left-sided-intervals-with-⊤ = record
   ; _≾_               = _≾ᵗ_
   ; ⊤                 = untimed
   ; ≾-⊤               = ≾ᵗ-⊤
-  ; u-least?          = uᵗ-least?
+  ; u-least?          = nothing
   ; ·-comm?           = just ·ᵗ-comm
   ; _⊔_               = _⊔ᵗ_
   ; ⊔-ubˡ             = ⊔ᵗ-ubˡ

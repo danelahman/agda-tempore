@@ -24,10 +24,12 @@ open import Data.List.Base using (List; []; _∷_; map)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-map⁺)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.Maybe.Base using (just)
+open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Maybe using (Is-just)
+open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
 open import Data.Product using (Σ-syntax; _×_; _,_)
+open import Data.Unit using (tt)
 
-open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (yes; no)
 
 open import Syntax.Grades
@@ -50,6 +52,17 @@ open import Syntax.Types S using (EternalBaseType)
 open import TypeInference.OpenSyntax.Grades S
 open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
+
+-- Deciding a `Maybe` carries the trivial witness of `Is-just` along with it
+
+Is-just? : ∀ {A : Set} → (m : Maybe A) → Maybe (Is-just m)
+Is-just? (just _) = just (Any-just tt)
+Is-just? nothing  = nothing
+
+-- An equation identifying a `Maybe` as `just` carries the same witness
+
+≡-Is-just : ∀ {A : Set} {m : Maybe A} {x : A} → m ≡ just x → Is-just m
+≡-Is-just refl = Any-just tt
 
 -- Hypothesis sets
 
@@ -142,7 +155,7 @@ data _≡̂ᵣ_ {Θ} where
   ≡̂ᵣ-identityˡ  : ∀ {ρ} → ûᵣ ·̂ᵣ ρ ≡̂ᵣ ρ
   ≡̂ᵣ-identityʳ  : ∀ {ρ} → ρ ·̂ᵣ ûᵣ ≡̂ᵣ ρ
   ≡̂ᵣ-const-·    : ∀ {ρ ρ'} → rconst ρ ·̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ·ᵣ ρ')
-  ≡̂ᵣ-comm       : ∀ {c ρ₁ ρ₂} → ·ᵣ-comm? ≡ just c → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
+  ≡̂ᵣ-comm       : ∀ {ρ₁ ρ₂} → Is-just ·ᵣ-comm? → ρ₁ ·̂ᵣ ρ₂ ≡̂ᵣ ρ₂ ·̂ᵣ ρ₁
   ≡̂ᵣ-cong-⊔     : ∀ {ρ₁ ρ₁' ρ₂ ρ₂'} → ρ₁ ≡̂ᵣ ρ₁' → ρ₂ ≡̂ᵣ ρ₂'
                 → ρ₁ ⊔̂ᵣ ρ₂ ≡̂ᵣ ρ₁' ⊔̂ᵣ ρ₂'
   ≡̂ᵣ-const-⊔    : ∀ {ρ ρ'} → rconst ρ ⊔̂ᵣ rconst ρ' ≡̂ᵣ rconst (ρ ⊔ᵣ ρ')
@@ -165,7 +178,7 @@ data _≡̂ₑ_ {Θ} where
   ≡̂ₑ-identityˡ  : ∀ {ε} → ûₑ ·̂ₑ ε ≡̂ₑ ε
   ≡̂ₑ-identityʳ  : ∀ {ε} → ε ·̂ₑ ûₑ ≡̂ₑ ε
   ≡̂ₑ-const-·    : ∀ {ε ε'} → econst ε ·̂ₑ econst ε' ≡̂ₑ econst (ε ·ₑ ε')
-  ≡̂ₑ-comm       : ∀ {c ε₁ ε₂} → ·ₑ-comm? ≡ just c → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
+  ≡̂ₑ-comm       : ∀ {ε₁ ε₂} → Is-just ·ₑ-comm? → ε₁ ·̂ₑ ε₂ ≡̂ₑ ε₂ ·̂ₑ ε₁
   ≡̂ₑ-cong-⊔     : ∀ {ε₁ ε₁' ε₂ ε₂'} → ε₁ ≡̂ₑ ε₁' → ε₂ ≡̂ₑ ε₂'
                 → ε₁ ⊔̂ₑ ε₂ ≡̂ₑ ε₁' ⊔̂ₑ ε₂'
   ≡̂ₑ-const-⊔    : ∀ {ε ε'} → econst ε ⊔̂ₑ econst ε' ≡̂ₑ econst (ε ⊔ₑ ε')
@@ -188,8 +201,8 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   ⊔-lubᵣ   : ∀ {ρ₁ ρ₂ ρ} → Q ⊩ ρ₁ ≾̂ᵣ ρ → Q ⊩ ρ₂ ≾̂ᵣ ρ → Q ⊩ ρ₁ ⊔̂ᵣ ρ₂ ≾̂ᵣ ρ
   -- every grade is below the top
   topᵣ     : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
-  -- the unit is below every grade when it is the least closed grade
-  minᵣ     : ∀ {ρ} → Minimum _≾ᵣ_ uᵣ → Q ⊩ ûᵣ ≾̂ᵣ ρ
+  -- the unit is below every grade when the grade declares it least
+  minᵣ     : ∀ {ρ} → Is-just uᵣ-least? → Q ⊩ ûᵣ ≾̂ᵣ ρ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
   hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
@@ -204,8 +217,8 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   ⊔-lubₑ : ∀ {ε₁ ε₂ ε} → Q ⊩ ε₁ ≾̂ₑ ε → Q ⊩ ε₂ ≾̂ₑ ε → Q ⊩ ε₁ ⊔̂ₑ ε₂ ≾̂ₑ ε
   -- every grade is below the top
   topₑ   : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
-  -- the unit is below every grade when it is the least closed grade
-  minₑ   : ∀ {ε} → Minimum _≾ₑ_ uₑ → Q ⊩ ûₑ ≾̂ₑ ε
+  -- the unit is below every grade when the grade declares it least
+  minₑ   : ∀ {ε} → Is-just uₑ-least? → Q ⊩ ûₑ ≾̂ₑ ε
 
 -- Entailed ordering is reflexive
 
@@ -554,7 +567,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ᵣ-subst σ ≡̂ᵣ-identityˡ     = ≡̂ᵣ-identityˡ
 ≡̂ᵣ-subst σ ≡̂ᵣ-identityʳ     = ≡̂ᵣ-identityʳ
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-·       = ≡̂ᵣ-const-·
-≡̂ᵣ-subst σ (≡̂ᵣ-comm c)      = ≡̂ᵣ-comm c
+≡̂ᵣ-subst σ (≡̂ᵣ-comm ij)     = ≡̂ᵣ-comm ij
 ≡̂ᵣ-subst σ (≡̂ᵣ-cong-⊔ p q)  = ≡̂ᵣ-cong-⊔ (≡̂ᵣ-subst σ p) (≡̂ᵣ-subst σ q)
 ≡̂ᵣ-subst σ ≡̂ᵣ-const-⊔       = ≡̂ᵣ-const-⊔
 ≡̂ᵣ-subst σ ≡̂ᵣ-comm-⊔        = ≡̂ᵣ-comm-⊔
@@ -574,7 +587,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ≡̂ₑ-subst σ ≡̂ₑ-identityˡ     = ≡̂ₑ-identityˡ
 ≡̂ₑ-subst σ ≡̂ₑ-identityʳ     = ≡̂ₑ-identityʳ
 ≡̂ₑ-subst σ ≡̂ₑ-const-·       = ≡̂ₑ-const-·
-≡̂ₑ-subst σ (≡̂ₑ-comm c)      = ≡̂ₑ-comm c
+≡̂ₑ-subst σ (≡̂ₑ-comm ij)     = ≡̂ₑ-comm ij
 ≡̂ₑ-subst σ (≡̂ₑ-cong-⊔ p q)  = ≡̂ₑ-cong-⊔ (≡̂ₑ-subst σ p) (≡̂ₑ-subst σ q)
 ≡̂ₑ-subst σ ≡̂ₑ-const-⊔       = ≡̂ₑ-const-⊔
 ≡̂ₑ-subst σ ≡̂ₑ-comm-⊔        = ≡̂ₑ-comm-⊔
@@ -592,7 +605,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h ⊔-ubʳᵣ       = ⊔-ubʳᵣ
 ⊩-substᵣ            h (⊔-lubᵣ p q) = ⊔-lubᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
 ⊩-substᵣ            h topᵣ         = topᵣ
-⊩-substᵣ            h (minᵣ p)     = minᵣ p
+⊩-substᵣ            h (minᵣ eq)    = minᵣ eq
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
 ⊩-substₑ         h (atomₑ p)    = atomₑ p
@@ -603,7 +616,7 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h ⊔-ubʳₑ       = ⊔-ubʳₑ
 ⊩-substₑ         h (⊔-lubₑ p q) = ⊔-lubₑ (⊩-substₑ h p) (⊩-substₑ h q)
 ⊩-substₑ         h topₑ         = topₑ
-⊩-substₑ         h (minₑ p)     = minₑ p
+⊩-substₑ         h (minₑ eq)    = minₑ eq
 
 -- A type variable's image is an arbitrary open type, so an assumed
 -- subtyping transports to a subtyping derivation at those images.

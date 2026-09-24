@@ -55,7 +55,7 @@ module Syntax.Grades.Example.Traces.Lifted.LeftSided
 
 open import Data.List.Relation.Unary.Any using (here; any?)
 
-open import Relation.Nullary using (¬_; Dec; no)
+open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Decidable using (fromWitness)
 
 open import Data.Maybe.Base using (nothing)
@@ -96,8 +96,8 @@ u⋠of-nat-1 : ¬ (u ≾ of-nat 1)
 u⋠of-nat-1 rel with cong traces (≾-antisym {of-nat 1} {u} (≾-⊤ (of-nat 1)) rel)
 ... | ()
 
-u-least? : Dec (Minimum _≾_ u)
-u-least? = no λ least → u⋠of-nat-1 (least (of-nat 1))
+u-not-least : ¬ Minimum _≾_ u
+u-not-least least = u⋠of-nat-1 (least (of-nat 1))
 
 ------------------------------------------------------------------------
 -- Zero-product property
@@ -139,7 +139,7 @@ left-sided = record
   ; _≾_             = _≾_
   ; ⊤               = u
   ; ≾-⊤             = ≾-⊤
-  ; u-least?        = u-least?
+  ; u-least?        = nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔_
   ; ⊔-ubˡ           = ⊔-ubˡ

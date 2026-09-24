@@ -48,7 +48,7 @@ open import Data.Empty using (⊥)
 open import Data.Nat.Base using (ℕ; _+_)
 open import Data.Unit using (⊤; tt)
 
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (¬_; Dec; yes; no)
 
 open import Data.Maybe.Base using (nothing)
 
@@ -188,8 +188,8 @@ any-run        ≾ any-run        = ⊤
 
 -- there is no least grade: `{ ε }` is below only the lists naming `ε`
 
-uᵖ-least? : Dec (Minimum _≾_ uᵖ)
-uᵖ-least? = no λ least → least (permitting (of-nat 1)) ε _
+uᵖ-not-least : ¬ Minimum _≾_ uᵖ
+uᵖ-not-least least = least (permitting (of-nat 1)) ε _
 
 ≾-refl : {P : Permits} → P ≾ P
 ≾-refl {permitting P} = ≾₀-refl {P}
@@ -335,7 +335,7 @@ right-sided = record
   ; _≾_             = _≾_
   ; ⊤               = any-run
   ; ≾-⊤             = ≾-⊤
-  ; u-least?        = uᵖ-least?
+  ; u-least?        = nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵖ_
   ; ⊔-ubˡ           = ⊔ᵖ-ubˡ

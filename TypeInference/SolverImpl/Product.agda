@@ -38,7 +38,7 @@ open import Data.Fin.Base using (toℕ)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-decᴸ)
-open import Data.Maybe using (Maybe; just; nothing)
+open import Data.Maybe using (Maybe; just; nothing; Is-just)
 open import Data.Nat.Base using (ℕ; zero; suc; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 
@@ -995,11 +995,11 @@ _    <ᵉᵃ _    = false
 commuteₑ : ∀ {Θ} → List (EAtom Θ) → List (EAtom Θ)
 commuteₑ as = consₑ (ac (constₑ as)) (sortBy _<ᵉᵃ_ (varsᵃₑ as))
 
-module Commuteₑ {c : Commutative _≡_ _·ₑ_} (eq : ·ₑ-comm? ≡ just c) where
+module Commuteₑ (ij : Is-just ·ₑ-comm?) where
 
   swapₑ : ∀ {Θ} {a b x : EExp Θ} → a ·̂ₑ (b ·̂ₑ x) ≡̂ₑ b ·̂ₑ (a ·̂ₑ x)
   swapₑ = ≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc)
-                   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-comm eq) ≡̂ₑ-refl) ≡̂ₑ-assoc)
+                   (≡̂ₑ-trans (≡̂ₑ-cong (≡̂ₑ-comm ij) ≡̂ₑ-refl) ≡̂ₑ-assoc)
 
   insert-≡ : ∀ {Θ} → (a : EAtom Θ) → (bs : List (EAtom Θ))
            → ⟦ insertBy _<ᵉᵃ_ a bs ⟧ᵉˢ ≡̂ₑ ⟦ a ⟧ᵉᵃ ·̂ₑ ⟦ bs ⟧ᵉˢ
@@ -1039,7 +1039,7 @@ commSumₑ nothing  s = s
 commSumₑ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≡_ _·ₑ_)) → ·ₑ-comm? ≡ m
            → (s : Alts (List (EAtom Θ))) → ⟦ commSumₑ m s ⟧ᵉˢ⁺ ≡̂ₑ ⟦ s ⟧ᵉˢ⁺
 commSumₑ-≡ (just c) eq s =
-  ≡̂ₑ-trans (nubₑ-≡ (mapᴬ commuteₑ s)) (Commuteₑ.commutes-≡ eq s)
+  ≡̂ₑ-trans (nubₑ-≡ (mapᴬ commuteₑ s)) (Commuteₑ.commutes-≡ (≡-Is-just eq) s)
 commSumₑ-≡ nothing  _  s = ≡̂ₑ-refl
 
 -- The constant of a resource product, and its variables: resource
@@ -1066,11 +1066,11 @@ _    <ʳᵃ _    = false
 commuteᵣ : ∀ {Θ} → List (RAtom Θ) → List (RAtom Θ)
 commuteᵣ as = consᵣ (rc (constᵣ as)) (sortBy _<ʳᵃ_ (varsᵃᵣ as))
 
-module Commuteᵣ {c : Commutative _≡_ _·ᵣ_} (eq : ·ᵣ-comm? ≡ just c) where
+module Commuteᵣ (ij : Is-just ·ᵣ-comm?) where
 
   swapᵣ : ∀ {Θ} {a b x : RExp Θ} → a ·̂ᵣ (b ·̂ᵣ x) ≡̂ᵣ b ·̂ᵣ (a ·̂ᵣ x)
   swapᵣ = ≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc)
-                   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-comm eq) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
+                   (≡̂ᵣ-trans (≡̂ᵣ-cong (≡̂ᵣ-comm ij) ≡̂ᵣ-refl) ≡̂ᵣ-assoc)
 
   insert-≡ : ∀ {Θ} → (a : RAtom Θ) → (bs : List (RAtom Θ))
            → ⟦ insertBy _<ʳᵃ_ a bs ⟧ʳˢ ≡̂ᵣ ⟦ a ⟧ʳᵃ ·̂ᵣ ⟦ bs ⟧ʳˢ
@@ -1111,7 +1111,7 @@ commSumᵣ nothing  s = s
 commSumᵣ-≡ : ∀ {Θ} → (m : Maybe (Commutative _≡_ _·ᵣ_)) → ·ᵣ-comm? ≡ m
            → (s : Alts (List (RAtom Θ))) → ⟦ commSumᵣ m s ⟧ʳˢ⁺ ≡̂ᵣ ⟦ s ⟧ʳˢ⁺
 commSumᵣ-≡ (just c) eq s =
-  ≡̂ᵣ-trans (nubᵣ-≡ (mapᴬ commuteᵣ s)) (Commuteᵣ.commutes-≡ eq s)
+  ≡̂ᵣ-trans (nubᵣ-≡ (mapᴬ commuteᵣ s)) (Commuteᵣ.commutes-≡ (≡-Is-just eq) s)
 commSumᵣ-≡ nothing  _  s = ≡̂ᵣ-refl
 
 -- The normal forms: the flattening, its products reordered where the

@@ -72,7 +72,7 @@ open import Data.List.Membership.Propositional.Properties
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 
-open import Relation.Nullary using (Dec; yes; no)
+open import Relation.Nullary using (¬_; Dec)
 open import Relation.Nullary.Decidable
   using (True; toWitness; fromWitness; _×-dec_)
 
@@ -522,8 +522,8 @@ i₁ ≾ᵗˢ? i₂ = (lo i₁ ≾ˡᵒ? lo i₂) ×-dec (hi i₁ ≾ʰⁱ? hi i
 
 -- the unit is not least, its floor being greatest among floors
 
-uᵗˢ-least? : Dec (Minimum _≾ᵗˢ_ uᵗˢ)
-uᵗˢ-least? = no λ least → uˡᵒ⋠of-natˡᵒ-1 (proj₁ (least (of-natᵗˢ 1)))
+uᵗˢ-not-least : ¬ Minimum _≾ᵗˢ_ uᵗˢ
+uᵗˢ-not-least least = uˡᵒ⋠of-natˡᵒ-1 (proj₁ (least (of-natᵗˢ 1)))
 
 ------------------------------------------------------------------------
 -- The grade of two-sided trace intervals
@@ -539,7 +539,7 @@ two-sided = record
   ; _≾_             = _≾ᵗˢ_
   ; ⊤               = ⊤ᵗˢ
   ; ≾-⊤             = ≾ᵗˢ-⊤
-  ; u-least?        = uᵗˢ-least?
+  ; u-least?        = nothing
   ; ·-comm?         = nothing
   ; _⊔_             = _⊔ᵗˢ_
   ; ⊔-ubˡ           = ⊔ᵗˢ-ubˡ

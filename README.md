@@ -75,11 +75,11 @@ a grade system, a signature of base types, and operations' signatures.
   inference reports the join of two bounds.
 
 - A `Grade` also carries the data type inference reads: a **decidable** order
-  (`_≾?_`), hence, by antisymmetry, decidable equality; a decision whether its
-  unit is least (`u-least?`), whose proof the open calculus's `minᵣ`/`minₑ`
-  take; and an optional commutativity of `_·_` (`·-comm?`: `just` at the time
-  grades, `nothing` at the trace grades), which the open calculus's
-  `≡̂ᵣ-comm`/`≡̂ₑ-comm` take.
+  (`_≾?_`), hence, by antisymmetry, decidable equality; and two optional
+  declared properties, whether the unit is least (`u-least?`) and whether
+  `_·_` is commutative (`·-comm?`), which the open calculus's `minᵣ`/`minₑ`
+  and `≡̂ᵣ-comm`/`≡̂ₑ-comm` take as `Is-just` proofs and the solver reads
+  directly.
 
 - `Syntax/Grades/Example.agda` indexes the example grades, which come in two
   families, and the grade systems assembled from them.

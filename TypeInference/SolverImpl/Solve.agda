@@ -43,12 +43,12 @@ open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties using (∈-++⁺ˡ; ∈-++⁺ʳ; ∈-++⁻; ∈-map⁺)
 open import Data.List.Relation.Unary.Any using (here; there)
 open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Maybe using (Is-just)
 open import Data.Nat.Base using (ℕ) renaming (zero to nzero; suc to nsuc)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
 open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Data.Unit using (tt)
 
-open import Relation.Binary.Definitions using (Minimum)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 
 
@@ -199,10 +199,11 @@ et₀? A with etDec A in e
 -- that `stripᵉ-top` keeps free of the rigid must mention no local
 -- unknown either, only those the scope was entered with (`Outerₑ`).
 
-stripʳ-unit : ∀ {Φ} → Dec (Minimum _≾ₑ_ uₑ) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
+stripʳ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
+            → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
             → (ρ₀ : RExp Φ) → ρ [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀ → Maybe (Atomʳ j ρ ρ')
-stripʳ-unit (no _)   j ρ ρ' ρ₀ e₁ = nothing
-stripʳ-unit (yes um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
+stripʳ-unit nothing    j ρ ρ' ρ₀ e₁ = nothing
+stripʳ-unit (just ij)  j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ ]ʳ)
 ... | nothing          = nothing
 ... | just (ρ₀' , e₂) =
       just ((ρ₀ , ρ₀') ∷ [] ,
@@ -211,12 +212,13 @@ stripʳ-unit (yes um) j ρ ρ' ρ₀ e₁ with strʳ⁺ j (ρ' [ updᵉ j ûₑ 
                                      (trans (sym (pop⨟ʳ j (ρ' [ updᵉ j ûₑ ]ʳ) e₂ δ))
                                             ([⨟]ʳ ρ' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
                                      (⊩-wkᵉᵣ (k (here refl))))
-                             (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ρ'))
+                             (mono-substᵣ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ ij)) ρ'))
 
-stripᵉ-unit : ∀ {Φ} → Dec (Minimum _≾ₑ_ uₑ) → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
+stripᵉ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
+            → (j : EVar (Φ +e)) → (ε ε' : EExp (Φ +e))
             → (ε₀ : EExp Φ) → ε [ popˢ j ]ᵉ ≡ wkᵉ-e ε₀ → Maybe (Atomᵉ j ε ε')
-stripᵉ-unit (no _)   j ε ε' ε₀ e₁ = nothing
-stripᵉ-unit (yes um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
+stripᵉ-unit nothing    j ε ε' ε₀ e₁ = nothing
+stripᵉ-unit (just ij)  j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j ûₑ ]ᵉ)
 ... | nothing          = nothing
 ... | just (ε₀' , e₂) =
       just ((ε₀ , ε₀') ∷ [] ,
@@ -225,7 +227,7 @@ stripᵉ-unit (yes um) j ε ε' ε₀ e₁ with strᵉ⁺ j (ε' [ updᵉ j û�
                                      (trans (sym (pop⨟ᵉ j (ε' [ updᵉ j ûₑ ]ᵉ) e₂ δ))
                                             ([⨟]ᵉ ε' (updᵉ j ûₑ) (popˢ j ⨟ˢ (δ ↑ᵉ))))
                                      (⊩-wkᵉₑ (k (here refl))))
-                             (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ um)) ε'))
+                             (mono-substₑ (updᵉ-below j ûₑ (popˢ j ⨟ˢ (δ ↑ᵉ)) (minₑ ij)) ε'))
 
 stripʳ-top : ∀ {Θ Φ} → Subst Θ (Φ +e) → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
            → (ρ₀' : RExp Φ) → ρ' [ popˢ j ]ʳ ≡ wkᵉ-r ρ₀' → Maybe (Atomʳ j ρ ρ')
@@ -263,7 +265,7 @@ atomʳ O j ρ ρ' with strʳ⁺ j ρ | strʳ⁺ j ρ'
                              (⊩-wkᵉᵣ (k (here refl))))
 ... | just (ρ₀ , e₁) | nothing          with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripʳ-unit uₑ-least? j ρ ρ' ρ₀ e₁
+...   | nothing = stripʳ-unit (Is-just? uₑ-least?) j ρ ρ' ρ₀ e₁
 atomʳ O j ρ ρ' | nothing | just (ρ₀' , e₂) with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
 ... | just p  = just ([] , λ δ Q k → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 ... | nothing = stripʳ-top O j ρ ρ' ρ₀' e₂
@@ -281,7 +283,7 @@ atomᵉ O j ε ε' with strᵉ⁺ j ε | strᵉ⁺ j ε'
                              (⊩-wkᵉₑ (k (here refl))))
 ... | just (ε₀ , e₁) | nothing          with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ...   | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-...   | nothing = stripᵉ-unit uₑ-least? j ε ε' ε₀ e₁
+...   | nothing = stripᵉ-unit (Is-just? uₑ-least?) j ε ε' ε₀ e₁
 atomᵉ O j ε ε' | nothing | just (ε₀' , e₂) with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = stripᵉ-top O j ε ε' ε₀' e₂

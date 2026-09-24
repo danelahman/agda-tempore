@@ -28,72 +28,58 @@ record Grade : Set₁ where
 
   field
 
-    -- carrier type of grades
+    -- carrier and operations
     Carrier : Set₀
+    _·_     : Carrier → Carrier → Carrier
+    u       : Carrier
+    _≾_     : Rel Carrier lzero
+    ⊤       : Carrier
+    _⊔_     : Carrier → Carrier → Carrier
+    of-nat  : ℕ → Carrier
 
-    -- monoid operations
-    _·_ : Carrier → Carrier → Carrier
-    u   : Carrier
-    
-    -- monoid laws
-    ·-identityʳ : (c : Carrier) → (c · u) ≡ c
+    -- a monoid
     ·-identityˡ : (c : Carrier) → (u · c) ≡ c
+    ·-identityʳ : (c : Carrier) → (c · u) ≡ c
     ·-assoc     : (c d e : Carrier) → (c · d) · e ≡ c · (d · e)
 
-    -- order
-    _≾_ : Rel Carrier lzero
+    -- a partial order, decidable and proof-irrelevant
+    ≾-refl       : Reflexive _≾_
+    ≾-trans      : Transitive _≾_
+    ≾-antisym    : {c d : Carrier} → c ≾ d → d ≾ c → c ≡ d
+    ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
+    _≾?_         : Decidable _≾_
 
-    -- the designated greatest grade
-    ⊤ : Carrier
-
-    -- every grade may be weakened to ⊤
+    -- ⊤ is the greatest grade
     ≾-⊤ : (c : Carrier) → c ≾ ⊤
 
-    -- whether the unit is the least grade
-    u-least? : Dec (Minimum _≾_ u)
+    -- ⊔ is a binary join
+    ⊔-ubˡ : (c d : Carrier) → c ≾ c ⊔ d
+    ⊔-ubʳ : (c d : Carrier) → d ≾ c ⊔ d
+    ⊔-lub : {c d e : Carrier} → c ≾ e → d ≾ e → c ⊔ d ≾ e
+
+    -- an ordered monoid; · distributes over ⊔ (the converse
+    -- inequalities follow from monotonicity)
+    ·-monoˡ-≾      : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
+    ·-monoʳ-≾      : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
+    ·-distribˡ-⊔-≾ : (c d e : Carrier) → c · (d ⊔ e) ≾ (c · d) ⊔ (c · e)
+    ·-distribʳ-⊔-≾ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
+
+    -- the unit's zero-product property
+    ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
+    ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
+
+    -- ℕ included as a monoid morphism, `n` the grade of `n` time steps
+    of-nat-zero : of-nat 0 ≡ u
+    of-nat-plus : ∀ {m n} → of-nat (m + n) ≡ of-nat m · of-nat n
+
+    -- optional declared properties
+
+    -- whether the unit is least, where the grade declares it
+    u-least? : Maybe (Minimum _≾_ u)
 
     -- commutativity of `_·_`, where the grade declares it; the trace
     -- grades leave it out, as there it depends on whether `Op` is empty
     ·-comm? : Maybe (Commutative _≡_ _·_)
-
-    -- binary joins
-    _⊔_          : Carrier → Carrier → Carrier
-    ⊔-ubˡ        : (c d : Carrier) → c ≾ c ⊔ d
-    ⊔-ubʳ        : (c d : Carrier) → d ≾ c ⊔ d
-    ⊔-lub        : {c d e : Carrier} → c ≾ e → d ≾ e → c ⊔ d ≾ e
-
-    -- `_·_` distributes over `_⊔_`, in the direction monotonicity does
-    -- not already give
-    ·-distribˡ-⊔-≾ : (c d e : Carrier) → c · (d ⊔ e) ≾ (c · d) ⊔ (c · e)
-    ·-distribʳ-⊔-≾ : (c d e : Carrier) → (d ⊔ e) · c ≾ (d · c) ⊔ (e · c)
-
-    -- _·_ is monotone with respect to _≾_
-    ·-monoˡ-≾ : ∀ {c} → _Preserves_⟶_ (_· c) _≾_ _≾_
-    ·-monoʳ-≾ : ∀ {c} → _Preserves_⟶_ (c ·_) _≾_ _≾_
- 
-    -- _≾_ is a partial order
-    ≾-refl    : Reflexive _≾_
-    ≾-trans   : Transitive _≾_
-    ≾-antisym : {c d : Carrier} → c ≾ d → d ≾ c → c ≡ d
-
-    -- _≾_ is proof irrelevant
-    ≾-irrelevant : ∀ {c d} → (p q : c ≾ d) → p ≡ q
-
-    -- _≾_ is decidable
-    _≾?_ : Decidable _≾_
-
-    -- _≾_ and u have zero-product property
-    ≾-zero-productˡ : ∀ {c d} → c · d ≾ u → c ≾ u
-    ≾-zero-productʳ : ∀ {c d} → c · d ≾ u → d ≾ u
-
-    -- inclusion of ℕ, mapping `n` to the grade of `n` time steps
-    of-nat : ℕ → Carrier
-
-    -- including ℕ preserves unit
-    of-nat-zero : of-nat 0 ≡ u
-
-    -- including ℕ preserves addition
-    of-nat-plus : ∀ {m n} → of-nat (m + n) ≡ of-nat m · of-nat n
 
   -- _≡_ is included in _≾_
   ≾-reflexive  : _≡_ ⇒ _≾_
@@ -207,82 +193,82 @@ module GradeSystemInterface (GS : GradeSystem) where
     (Carrier to R;
      _·_ to _·ᵣ_;
      u to uᵣ;
-     ·-identityʳ to ·ᵣ-identityʳ;
-     ·-identityˡ to ·ᵣ-identityˡ;
-     ·-assoc to ·ᵣ-assoc;
      _≾_ to _≾ᵣ_;
      ⊤ to ⊤ᵣ;
-     ≾-⊤ to ≾-⊤ᵣ;
-     u-least? to uᵣ-least?;
-     ·-comm? to ·ᵣ-comm?;
      _⊔_ to _⊔ᵣ_;
-     ⊔-ubˡ to ⊔ᵣ-ubˡ;
-     ⊔-ubʳ to ⊔ᵣ-ubʳ;
-     ⊔-lub to ⊔ᵣ-lub;
-     ⊔-mono to ⊔ᵣ-mono;
-     ⊔-idem to ⊔ᵣ-idem;
-     ⊔-comm to ⊔ᵣ-comm;
-     ⊔-assoc to ⊔ᵣ-assoc;
-     ⊔-⊤ to ⊔ᵣ-⊤ᵣ;
-     ⊔-absorb to ⊔ᵣ-absorb;
-     ·-distribˡ-⊔-≾ to ·ᵣ-distribˡ-⊔ᵣ-≾ᵣ;
-     ·-distribʳ-⊔-≾ to ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ;
-     ·-distribˡ-⊔ to ·ᵣ-distribˡ-⊔ᵣ;
-     ·-distribʳ-⊔ to ·ᵣ-distribʳ-⊔ᵣ;
-     ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
-     ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
+     of-nat to of-natʳ;
+     ·-identityˡ to ·ᵣ-identityˡ;
+     ·-identityʳ to ·ᵣ-identityʳ;
+     ·-assoc to ·ᵣ-assoc;
      ≾-refl to ≾ᵣ-refl;
      ≾-trans to ≾ᵣ-trans;
      ≾-antisym to ≾ᵣ-antisym;
      ≾-irrelevant to ≾ᵣ-irrelevant;
      _≾?_ to _≾ᵣ?_;
-     _≡?_ to _≡ᵣ?_;
+     ≾-⊤ to ≾-⊤ᵣ;
+     ⊔-ubˡ to ⊔ᵣ-ubˡ;
+     ⊔-ubʳ to ⊔ᵣ-ubʳ;
+     ⊔-lub to ⊔ᵣ-lub;
+     ·-monoˡ-≾ to ·ᵣ-monoˡ-≾ᵣ;
+     ·-monoʳ-≾ to ·ᵣ-monoʳ-≾ᵣ;
+     ·-distribˡ-⊔-≾ to ·ᵣ-distribˡ-⊔ᵣ-≾ᵣ;
+     ·-distribʳ-⊔-≾ to ·ᵣ-distribʳ-⊔ᵣ-≾ᵣ;
      ≾-zero-productˡ to ≾ᵣ-zero-productˡ;
      ≾-zero-productʳ to ≾ᵣ-zero-productʳ;
-     of-nat to of-natʳ;
      of-nat-zero to of-natʳ-zero;
      of-nat-plus to of-natʳ-plus;
-     ≾-reflexive to ≾ᵣ-reflexive
+     u-least? to uᵣ-least?;
+     ·-comm? to ·ᵣ-comm?;
+     ≾-reflexive to ≾ᵣ-reflexive;
+     _≡?_ to _≡ᵣ?_;
+     ⊔-mono to ⊔ᵣ-mono;
+     ⊔-idem to ⊔ᵣ-idem;
+     ⊔-comm to ⊔ᵣ-comm;
+     ⊔-assoc to ⊔ᵣ-assoc;
+     ⊔-absorb to ⊔ᵣ-absorb;
+     ⊔-⊤ to ⊔ᵣ-⊤ᵣ;
+     ·-distribˡ-⊔ to ·ᵣ-distribˡ-⊔ᵣ;
+     ·-distribʳ-⊔ to ·ᵣ-distribʳ-⊔ᵣ
     ) public
 
   open Grade EGrade renaming
     (Carrier to E;
      _·_ to _·ₑ_;
      u to uₑ;
-     ·-identityʳ to ·ₑ-identityʳ;
-     ·-identityˡ to ·ₑ-identityˡ;
-     ·-assoc to ·ₑ-assoc;
      _≾_ to _≾ₑ_;
      ⊤ to ⊤ₑ;
-     ≾-⊤ to ≾-⊤ₑ;
-     u-least? to uₑ-least?;
-     ·-comm? to ·ₑ-comm?;
      _⊔_ to _⊔ₑ_;
-     ⊔-ubˡ to ⊔ₑ-ubˡ;
-     ⊔-ubʳ to ⊔ₑ-ubʳ;
-     ⊔-lub to ⊔ₑ-lub;
-     ⊔-mono to ⊔ₑ-mono;
-     ⊔-idem to ⊔ₑ-idem;
-     ⊔-comm to ⊔ₑ-comm;
-     ⊔-assoc to ⊔ₑ-assoc;
-     ⊔-⊤ to ⊔ₑ-⊤ₑ;
-     ⊔-absorb to ⊔ₑ-absorb;
-     ·-distribˡ-⊔-≾ to ·ₑ-distribˡ-⊔ₑ-≾ₑ;
-     ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
-     ·-distribˡ-⊔ to ·ₑ-distribˡ-⊔ₑ;
-     ·-distribʳ-⊔ to ·ₑ-distribʳ-⊔ₑ;
-     ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
-     ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
+     of-nat to of-natᵉ;
+     ·-identityˡ to ·ₑ-identityˡ;
+     ·-identityʳ to ·ₑ-identityʳ;
+     ·-assoc to ·ₑ-assoc;
      ≾-refl to ≾ₑ-refl;
      ≾-trans to ≾ₑ-trans;
      ≾-antisym to ≾ₑ-antisym;
      ≾-irrelevant to ≾ₑ-irrelevant;
      _≾?_ to _≾ₑ?_;
-     _≡?_ to _≡ₑ?_;
-     of-nat to of-natᵉ;
+     ≾-⊤ to ≾-⊤ₑ;
+     ⊔-ubˡ to ⊔ₑ-ubˡ;
+     ⊔-ubʳ to ⊔ₑ-ubʳ;
+     ⊔-lub to ⊔ₑ-lub;
+     ·-monoˡ-≾ to ·ₑ-monoˡ-≾ₑ;
+     ·-monoʳ-≾ to ·ₑ-monoʳ-≾ₑ;
+     ·-distribˡ-⊔-≾ to ·ₑ-distribˡ-⊔ₑ-≾ₑ;
+     ·-distribʳ-⊔-≾ to ·ₑ-distribʳ-⊔ₑ-≾ₑ;
      of-nat-zero to of-natᵉ-zero;
      of-nat-plus to of-natᵉ-plus;
-     ≾-reflexive to ≾ₑ-reflexive
+     u-least? to uₑ-least?;
+     ·-comm? to ·ₑ-comm?;
+     ≾-reflexive to ≾ₑ-reflexive;
+     _≡?_ to _≡ₑ?_;
+     ⊔-mono to ⊔ₑ-mono;
+     ⊔-idem to ⊔ₑ-idem;
+     ⊔-comm to ⊔ₑ-comm;
+     ⊔-assoc to ⊔ₑ-assoc;
+     ⊔-absorb to ⊔ₑ-absorb;
+     ⊔-⊤ to ⊔ₑ-⊤ₑ;
+     ·-distribˡ-⊔ to ·ₑ-distribˡ-⊔ₑ;
+     ·-distribʳ-⊔ to ·ₑ-distribʳ-⊔ₑ
    ) public
 
   open _→ᵍ_ ∣_∣ᵉ renaming
