@@ -8,8 +8,9 @@
 -- each at every grade (a theorem over an arbitrary language);    --
 -- the scheme it reports is the shape the annotation forces.      --
 --                                                                --
--- `twice` and `twiceᵃ` are a handler before and after its clause --
--- is sufficiently annotated; the instances decide which is.      --
+-- `twice` and `twiceᵃ`, and `branch` and `branchᵃ`, are handlers --
+-- before and after their clauses are sufficiently annotated; the --
+-- instances decide which is.                                     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -17,6 +18,7 @@ open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
+open import Syntax.Operations
 
 open import Util.Equality
 
@@ -27,6 +29,7 @@ module TypeInference.Examples.Annotations (S : LanguageSpec) (opEnum : OpEnum S)
 
 open LanguageSpec S
 open GradeSystemInterface Grades using (≾ᵣ-reflexive; map-uᵉ)
+open Operations Ops using (Op; op-grade)
 
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
@@ -164,3 +167,37 @@ twiceᵃ = return (lam (handle (v₀ · ⋆) `with (λ op →
      ⨟ ((v₀ · (lam[ Unit ] (v₂ · v₃)))
         ⨟ ((v₁ · (lam[ Unit ] ((v₁ · ⋆) ⨟ (v₄ · v₅)))) ⨟ (v₀ · ⋆))))))
   `in (return ⋆)))
+
+-- A handler whose clause chooses, by an `if`, between two functions
+-- with annotated arguments, and resumes:
+--
+--   branch o₁ o₂ m = handle m () with op p k ↦ perform op p (unbox k (
+--     let f = if true then λ(_ : T o₁). () else λ(_ : T o₂). () in k' a))
+--
+-- for `T o = Unit ⇒ Unit ‼ o · j`, `j` the clause's rigid. Its λs are
+-- annotated and its `if` is bare. `branchᵃ` annotates the `if` at
+-- `(Unit ⇒ Unit ‼ o₁ · (o₂ · j)) ⇒ Unit ‼ u`.
+
+private
+
+  jᵉ : EExp (∅ˢ +e)
+  jᵉ = evar (newᵉ {∅ˢ})
+
+  T : Op → OVType (∅ˢ +e)
+  T o = Unit ⇒ Unit ‼ (econst (op-grade o) ·̂ₑ jᵉ)
+
+  choice : Op → Op → ∀ {n} → RawC (∅ˢ +e) n
+  choice o₁ o₂ = if true `then return (lam[ T o₁ ] (return ⋆))
+                         `else return (lam[ T o₂ ] (return ⋆))
+
+  branchWith : (∀ {n} → RawC (∅ˢ +e) n) → RawC ∅ˢ 0
+  branchWith B = return (lam (handle (v₀ · ⋆) `with (λ op →
+    perform op v₁ (unbox (fsuc fzero) (B ⨟ (v₁ · v₂))))
+    `in (return ⋆)))
+
+branch : Op → Op → RawC ∅ˢ 0
+branch o₁ o₂ = branchWith (choice o₁ o₂)
+
+branchᵃ : Op → Op → RawC ∅ˢ 0
+branchᵃ o₁ o₂ = branchWith (choice o₁ o₂ ⦂ᶜ
+  (((Unit ⇒ Unit ‼ (econst (op-grade o₁) ·̂ₑ (econst (op-grade o₂) ·̂ₑ jᵉ))) ⇒ Unit ‼ ûₑ) ‼ ûₑ))

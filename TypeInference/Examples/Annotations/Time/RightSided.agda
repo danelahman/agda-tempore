@@ -11,6 +11,8 @@ open import Relation.Nullary.Decidable using (True; False)
 
 open import Util.Equality
 
+open import Syntax.Grades.Example.Worked.Operations using (read; send)
+
 open import TypeInference.Examples.Specs using (module Time-RightSided)
 
 module TypeInference.Examples.Annotations.Time.RightSided where
@@ -38,3 +40,9 @@ twice-insufficient = tt
 
 twiceᵃ-sufficient : True (sufficientlyAnnotated? enum twiceᵃ)
 twiceᵃ-sufficient = tt
+
+branch-insufficient : False (sufficientlyAnnotated? enum (branch send read))
+branch-insufficient = tt
+
+branchᵃ-sufficient : True (sufficientlyAnnotated? enum (branchᵃ send read))
+branchᵃ-sufficient = tt

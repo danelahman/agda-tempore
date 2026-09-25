@@ -9,7 +9,11 @@
 --   A1  every λ annotates its argument: `lam[ A ] M`, not        --
 --       `lam M`;                                                 --
 --   A2  every `absurd V` is the immediate subject of a           --
---       computation annotation, `absurd V ⦂ᶜ C`.                 --
+--       computation annotation, `absurd V ⦂ᶜ C`;                 --
+--   A3  every `if` and every nested `handle` is the immediate    --
+--       subject of a computation annotation:                     --
+--       `(if V `then M `else N) ⦂ᶜ C`,                           --
+--       `(handle M `with H `in N) ⦂ᶜ C`.                         --
 --                                                                --
 -- Outside the clauses nothing is required, so a handler-free     --
 -- term is sufficiently annotated. The handled computation and    --
@@ -45,7 +49,8 @@ open import TypeInference.SolverImpl.Enum S using (OpEnum; AllOp; []; _∷_; all
 data Site : Set where
   outside inside : Site
 
--- A bare `lam` or `absurd` is allowed outside the clauses only
+-- A bare `lam`, `absurd`, `if` or `handle` is allowed outside the
+-- clauses only
 
 Bare : Site → Set
 Bare outside = ⊤
@@ -69,15 +74,19 @@ mutual
   Annotatedᶜ s (match V `in M)          = Annotatedᵛ s V × Annotatedᶜ s M
   Annotatedᶜ s (absurd V)               = Bare s × Annotatedᵛ s V
   Annotatedᶜ s (if V `then M `else N)   =
-    Annotatedᵛ s V × Annotatedᶜ s M × Annotatedᶜ s N
+    Bare s × Annotatedᵛ s V × Annotatedᶜ s M × Annotatedᶜ s N
   Annotatedᶜ s (perform op V M)         = Annotatedᵛ s V × Annotatedᶜ s M
   Annotatedᶜ s (delay τ M)              = Annotatedᶜ s M
   Annotatedᶜ s (handle M `with H `in N) =
-    Annotatedᶜ s M × ((op : Op) → Annotatedᶜ inside (H op)) × Annotatedᶜ s N
+    Bare s × Annotatedᶜ s M × ((op : Op) → Annotatedᶜ inside (H op)) × Annotatedᶜ s N
   Annotatedᶜ s (unbox i N)              = Annotatedᶜ s N
   Annotatedᶜ s (box ρ V N)              = Annotatedᵛ s V × Annotatedᶜ s N
-  -- the one place a bare `absurd` is accepted
+  -- the places a bare `absurd`, `if` or `handle` is accepted
   Annotatedᶜ s (absurd V ⦂ᶜ C)          = Annotatedᵛ s V
+  Annotatedᶜ s ((if V `then M `else N) ⦂ᶜ C) =
+    Annotatedᵛ s V × Annotatedᶜ s M × Annotatedᶜ s N
+  Annotatedᶜ s ((handle M `with H `in N) ⦂ᶜ C) =
+    Annotatedᶜ s M × ((op : Op) → Annotatedᶜ inside (H op)) × Annotatedᶜ s N
   Annotatedᶜ s (M ⦂ᶜ C)                 = Annotatedᶜ s M
 
 -- A program is sufficiently annotated when it is at the outermost site
@@ -119,8 +128,8 @@ mutual
   handlerFree→sufficientlyAnnotated (absurd V)               h           =
     tt , handlerFree→annotatedᵛ V h
   handlerFree→sufficientlyAnnotated (if V `then M `else N)   (h , k , l) =
-    handlerFree→annotatedᵛ V h , handlerFree→sufficientlyAnnotated M k
-                               , handlerFree→sufficientlyAnnotated N l
+    tt , handlerFree→annotatedᵛ V h , handlerFree→sufficientlyAnnotated M k
+                                    , handlerFree→sufficientlyAnnotated N l
   handlerFree→sufficientlyAnnotated (perform op V M)         (h , k)     =
     handlerFree→annotatedᵛ V h , handlerFree→sufficientlyAnnotated M k
   handlerFree→sufficientlyAnnotated (delay τ M)              h           =
@@ -132,6 +141,10 @@ mutual
     handlerFree→annotatedᵛ V h , handlerFree→sufficientlyAnnotated N k
   handlerFree→sufficientlyAnnotated (absurd V ⦂ᶜ C)          h           =
     handlerFree→annotatedᵛ V h
+  handlerFree→sufficientlyAnnotated ((if V `then M `else N) ⦂ᶜ C) (h , k , l) =
+    handlerFree→annotatedᵛ V h , handlerFree→sufficientlyAnnotated M k
+                               , handlerFree→sufficientlyAnnotated N l
+  handlerFree→sufficientlyAnnotated ((handle M `with H `in N) ⦂ᶜ C) ()
   -- the other subjects of an annotation, one clause each
   handlerFree→sufficientlyAnnotated (M@(return _) ⦂ᶜ C) h =
     handlerFree→sufficientlyAnnotated M h
@@ -141,13 +154,9 @@ mutual
     handlerFree→sufficientlyAnnotated M h
   handlerFree→sufficientlyAnnotated (M@(match _ `in _) ⦂ᶜ C) h =
     handlerFree→sufficientlyAnnotated M h
-  handlerFree→sufficientlyAnnotated (M@(if _ `then _ `else _) ⦂ᶜ C) h =
-    handlerFree→sufficientlyAnnotated M h
   handlerFree→sufficientlyAnnotated (M@(perform _ _ _) ⦂ᶜ C) h =
     handlerFree→sufficientlyAnnotated M h
   handlerFree→sufficientlyAnnotated (M@(delay _ _) ⦂ᶜ C) h =
-    handlerFree→sufficientlyAnnotated M h
-  handlerFree→sufficientlyAnnotated (M@(handle _ `with _ `in _) ⦂ᶜ C) h =
     handlerFree→sufficientlyAnnotated M h
   handlerFree→sufficientlyAnnotated (M@(unbox _ _) ⦂ᶜ C) h =
     handlerFree→sufficientlyAnnotated M h
@@ -184,26 +193,28 @@ mutual
   annotated-[]ᴿᶜ (match V `in M)          (a , b)     =
     annotated-[]ᴿᵛ V a , annotated-[]ᴿᶜ M b
   annotated-[]ᴿᶜ (absurd V)               (a , b)     = a , annotated-[]ᴿᵛ V b
-  annotated-[]ᴿᶜ (if V `then M `else N)   (a , b , c) =
-    annotated-[]ᴿᵛ V a , annotated-[]ᴿᶜ M b , annotated-[]ᴿᶜ N c
+  annotated-[]ᴿᶜ (if V `then M `else N)   (a , b , c , d) =
+    a , annotated-[]ᴿᵛ V b , annotated-[]ᴿᶜ M c , annotated-[]ᴿᶜ N d
   annotated-[]ᴿᶜ (perform op V M)         (a , b)     =
     annotated-[]ᴿᵛ V a , annotated-[]ᴿᶜ M b
   annotated-[]ᴿᶜ (delay τ M)              a           = annotated-[]ᴿᶜ M a
-  annotated-[]ᴿᶜ (handle M `with H `in N) (a , b , c) =
-    annotated-[]ᴿᶜ M a , (λ op → annotated-[]ᴿᶜ (H op) (b op)) , annotated-[]ᴿᶜ N c
+  annotated-[]ᴿᶜ (handle M `with H `in N) (a , b , c , d) =
+    a , annotated-[]ᴿᶜ M b , (λ op → annotated-[]ᴿᶜ (H op) (c op)) , annotated-[]ᴿᶜ N d
   annotated-[]ᴿᶜ (unbox i N)              a           = annotated-[]ᴿᶜ N a
   annotated-[]ᴿᶜ (box ρ V N)              (a , b)     =
     annotated-[]ᴿᵛ V a , annotated-[]ᴿᶜ N b
   annotated-[]ᴿᶜ (absurd V ⦂ᶜ C)          a           = annotated-[]ᴿᵛ V a
+  annotated-[]ᴿᶜ ((if V `then M `else N) ⦂ᶜ C) (a , b , c) =
+    annotated-[]ᴿᵛ V a , annotated-[]ᴿᶜ M b , annotated-[]ᴿᶜ N c
+  annotated-[]ᴿᶜ ((handle M `with H `in N) ⦂ᶜ C) (a , b , c) =
+    annotated-[]ᴿᶜ M a , (λ op → annotated-[]ᴿᶜ (H op) (b op)) , annotated-[]ᴿᶜ N c
   -- the other subjects of an annotation, one clause each
   annotated-[]ᴿᶜ (M@(return _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(_ ⨟ _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(_ · _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(match _ `in _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
-  annotated-[]ᴿᶜ (M@(if _ `then _ `else _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(perform _ _ _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(delay _ _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
-  annotated-[]ᴿᶜ (M@(handle _ `with _ `in _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(unbox _ _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(box _ _ _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
   annotated-[]ᴿᶜ (M@(_ ⦂ᶜ _) ⦂ᶜ C) a = annotated-[]ᴿᶜ M a
@@ -263,23 +274,26 @@ module _ (opEnum : OpEnum) where
     annotatedᶜ? s (match V `in M)          = annotatedᵛ? s V ×-dec annotatedᶜ? s M
     annotatedᶜ? s (absurd V)               = bare? s ×-dec annotatedᵛ? s V
     annotatedᶜ? s (if V `then M `else N)   =
-      annotatedᵛ? s V ×-dec (annotatedᶜ? s M ×-dec annotatedᶜ? s N)
+      bare? s ×-dec (annotatedᵛ? s V ×-dec (annotatedᶜ? s M ×-dec annotatedᶜ? s N))
     annotatedᶜ? s (perform op V M)         = annotatedᵛ? s V ×-dec annotatedᶜ? s M
     annotatedᶜ? s (delay τ M)              = annotatedᶜ? s M
     annotatedᶜ? s (handle M `with H `in N) =
-      annotatedᶜ? s M ×-dec (∀op? (λ op → annotatedᶜ? inside (H op)) ×-dec annotatedᶜ? s N)
+      bare? s ×-dec
+        (annotatedᶜ? s M ×-dec (∀op? (λ op → annotatedᶜ? inside (H op)) ×-dec annotatedᶜ? s N))
     annotatedᶜ? s (unbox i N)              = annotatedᶜ? s N
     annotatedᶜ? s (box ρ V N)              = annotatedᵛ? s V ×-dec annotatedᶜ? s N
     annotatedᶜ? s (absurd V ⦂ᶜ C)          = annotatedᵛ? s V
+    annotatedᶜ? s ((if V `then M `else N) ⦂ᶜ C) =
+      annotatedᵛ? s V ×-dec (annotatedᶜ? s M ×-dec annotatedᶜ? s N)
+    annotatedᶜ? s ((handle M `with H `in N) ⦂ᶜ C) =
+      annotatedᶜ? s M ×-dec (∀op? (λ op → annotatedᶜ? inside (H op)) ×-dec annotatedᶜ? s N)
     -- the other subjects of an annotation, one clause each
     annotatedᶜ? s (M@(return _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(_ ⨟ _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(_ · _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(match _ `in _) ⦂ᶜ C) = annotatedᶜ? s M
-    annotatedᶜ? s (M@(if _ `then _ `else _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(perform _ _ _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(delay _ _) ⦂ᶜ C) = annotatedᶜ? s M
-    annotatedᶜ? s (M@(handle _ `with _ `in _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(unbox _ _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(box _ _ _) ⦂ᶜ C) = annotatedᶜ? s M
     annotatedᶜ? s (M@(_ ⦂ᶜ _) ⦂ᶜ C) = annotatedᶜ? s M
