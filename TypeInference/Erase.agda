@@ -11,7 +11,8 @@
 -- a raw term over `Θ`, a handler clause to a `RawC (Θ +e) (2+n)` --
 -- with no adjustment, and a variable's raw index is its          --
 -- full-context position `var-pos`. It is not injective:          --
--- `subV`/`subC` erase to their subjects.                         --
+-- `subV`/`subC` erase to their subjects. The recording rules     --
+-- `annᵛ`, `annᶜ` and `lamᵃ` erase to the annotated raw forms.    --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -55,6 +56,8 @@ mutual
   ⌊ false ⌋ᵛ      = false
   ⌊ ⦉ V , W ⦊ ⌋ᵛ   = ⦉ ⌊ V ⌋ᵛ , ⌊ W ⌋ᵛ ⦊
   ⌊ lam M ⌋ᵛ      = lam ⌊ M ⌋ᶜ
+  ⌊ lamᵃ A M ⌋ᵛ   = lam[ A ] ⌊ M ⌋ᶜ
+  ⌊ annᵛ A V ⌋ᵛ   = ⌊ V ⌋ᵛ ⦂ᵛ A
 
   -- subsumption is invisible
 
@@ -83,6 +86,8 @@ mutual
   ⌊ unbox x p q N ⌋ᶜ            = unbox (var-pos x) ⌊ N ⌋ᶜ
 
   ⌊ box ρ V N ⌋ᶜ                = box ρ ⌊ V ⌋ᵛ ⌊ N ⌋ᶜ
+
+  ⌊ annᶜ C M ⌋ᶜ                 = ⌊ M ⌋ᶜ ⦂ᶜ C
 
   -- subsumption is invisible
 

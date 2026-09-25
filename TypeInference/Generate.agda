@@ -15,9 +15,9 @@
 -- by `_≐ᵥ_` and the slack is passed on to the subterms.          --
 --                                                                --
 -- Under a binder the arguments of the recursive calls are        --
--- weakened, and so is the interpretation of the raw term's grade --
--- variables; the constraints are built inside the innermost      --
--- binder.                                                        --
+-- weakened, and so is the interpretation of the raw term's type  --
+-- and grade variables; the constraints are built inside the      --
+-- innermost binder.                                              --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -55,8 +55,8 @@ varConstraint : ∀ {Θ n} → OCtx Θ n → Fin n → OVType Θ → Constraint 
 varConstraint Γ i A =
   (lookup-ty Γ i ≾̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
 
--- `genVˢ ι` and `genCˢ ι` generate for a raw term whose grade variables
--- `ι` interprets in the generation scope. Under a binder `ι` is composed
+-- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade
+-- variables `ι` interprets in the generation scope. Under a binder `ι` is composed
 -- with the binder's weakening, so the recursion stays on the subterms.
 
 mutual
@@ -99,6 +99,28 @@ mutual
       e  = evar (newᵉ {Θ +ty +ty})
       A↑ = wkᵉ-v (wkᵗ-v (wkᵗ-v A))
       Γ↑ = wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
+
+  -- lambda abstraction with an annotated argument
+  --
+  -- As for `lam`, with the annotation, read through `ι`, in place of the
+  -- binder's fresh type.
+
+  genVˢ {Θ = Θ} ι Γ (lam[ B ] M) A =
+    ∃ᵗ (∃ᵉ ((B' ⇒ (α ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ B') M (α ‼ e)))
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      B' = B [ ι↑ ]ᵛ
+      α  = wkᵉ-v (tvar (newᵗ {Θ}))
+      e  = evar (newᵉ {Θ +ty})
+      A↑ = wkᵉ-v (wkᵗ-v A)
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+
+  -- type annotation
+  --
+  -- The value is checked against the annotation, read through `ι`, which
+  -- subtypes into the expected type.
+
+  genVˢ ι Γ (V ⦂ᵛ B) A = genVˢ ι Γ V (B [ ι ]ᵛ) ∧̂ (B [ ι ]ᵛ ≾̂ᵥᶜ A)
 
 
   genCˢ : ∀ {Θ₀ Θ n} → Subst Θ₀ Θ → OCtx Θ n → RawC Θ₀ n → OCType Θ → Constraint Θ
@@ -254,19 +276,31 @@ mutual
       t↑ = wkᵗ-e t
       Γ↑ = wkᵗ-ctx Γ
 
+  -- type annotation
+  --
+  -- As for values, the subtyping split into its value and effect atoms.
+
+  genCˢ ι Γ (M ⦂ᶜ (B ‼ u)) (A ‼ t) =
+    genCˢ ι Γ M (B' ‼ u') ∧̂ (B' ≾̂ᵥᶜ A) ∧̂ (u' ≾̂ₑᶜ t)
+    where
+      B' = B [ ι ]ᵛ
+      u' = u [ ι ]ᵉ
+
 -- A handler-free term generates a constraint with no rigid binder
 
 mutual
 
   genVˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (V : RawV Θ₀ n)
                   → {A : OVType Θ} → HandlerFreeᵛ V → RigidFree (genVˢ ι Γ V A)
-  genVˢ-rigidFree (var i)     h       = tt , tt
-  genVˢ-rigidFree (const B c) h       = tt
-  genVˢ-rigidFree ⋆           h       = tt
-  genVˢ-rigidFree true        h       = tt
-  genVˢ-rigidFree false       h       = tt
-  genVˢ-rigidFree ⦉ V₁ , V₂ ⦊  (h , k) = tt , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
-  genVˢ-rigidFree (lam M)     h       = tt , genCˢ-rigidFree M h
+  genVˢ-rigidFree (var i)      h       = tt , tt
+  genVˢ-rigidFree (const B c)  h       = tt
+  genVˢ-rigidFree ⋆            h       = tt
+  genVˢ-rigidFree true         h       = tt
+  genVˢ-rigidFree false        h       = tt
+  genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = tt , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
+  genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
+  genVˢ-rigidFree (lam[ B ] M) h       = tt , genCˢ-rigidFree M h
+  genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
 
   genCˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (M : RawC Θ₀ n)
                   → {C : OCType Θ} → HandlerFreeᶜ M → RigidFree (genCˢ ι Γ M C)
@@ -291,6 +325,8 @@ mutual
     tt , tt , tt , genCˢ-rigidFree N h
   genCˢ-rigidFree (box ρ V N)              {A ‼ t} (h , k)     =
     genVˢ-rigidFree V h , genCˢ-rigidFree N k
+  genCˢ-rigidFree (M ⦂ᶜ (B ‼ u))           {A ‼ t} h           =
+    genCˢ-rigidFree M h , tt , tt
 
 -- Generation for a raw term over the scope of the context
 

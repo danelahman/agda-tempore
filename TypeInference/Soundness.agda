@@ -147,7 +147,8 @@ co²ᵗʳ-r : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → (B₁ B₂ : OVType Θ') 
 co²ᵗʳ-r σ B₁ B₂ ρ ρ₀ =
   trans (wk-,ʳ-r (σ ,ᵗ B₁ ,ᵗ B₂) ρ (wkᵗ-r (wkᵗ-r ρ₀))) (co²ᵗ-r σ B₁ B₂ ρ₀)
 
--- `∃ᵗ∃ᵉ` — a prefix of the `∃ᵗ∃ᵉ∃ᵉ` pattern below
+-- `∃ᵗ∃ᵉ` — annotated lambda abstraction, and a prefix of the `∃ᵗ∃ᵉ∃ᵉ`
+-- pattern below
 
 coᵗᵉ-ctx : ∀ {Θ Θ' n} → (σ : Subst Θ Θ') → (B : OVType Θ') → (ε : EExp Θ')
          → (Γ : OCtx Θ n)
@@ -239,7 +240,7 @@ co²ᵗ²ᵉ-ctx↑ σ B₁ B₂ ε₁ ε₂ Γ =
                    (wkᵉ-ctx (wkᵉ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ)))))
         (cong wkᵉ-ctx (co²ᵗ²ᵉ-ctx σ B₁ B₂ ε₁ ε₂ Γ))
 
--- The interpretation of the raw term's grade variables, weakened under
+-- The interpretation of the raw term's variables, weakened under
 -- the binders and composed with the extended solution, is the
 -- interpretation composed with the solution.
 
@@ -258,6 +259,11 @@ co²ᵗʳ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ �
         → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ) ⨟ˢ (σ ,ᵗ B₁ ,ᵗ B₂ ,ʳ ρ) ≐ˢ ι ⨟ˢ σ
 co²ᵗʳ-ˢ ι σ B₁ B₂ ρ =
   ≐ˢ-trans (wk-,ʳ-ˢ (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ) (σ ,ᵗ B₁ ,ᵗ B₂) ρ) (co²ᵗ-ˢ ι σ B₁ B₂)
+
+coᵗᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
+       → (ε : EExp Θ')
+       → (ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵗ B ,ᵉ ε) ≐ˢ ι ⨟ˢ σ
+coᵗᵉ-ˢ ι σ B ε = ≐ˢ-trans (wk-,ᵉ-ˢ (ι ⨟ˢ wkˢᵗ) (σ ,ᵗ B) ε) (wk-,ᵗ-ˢ ι σ B)
 
 coᵗ²ᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (B : OVType Θ')
         → (ε₁ ε₂ : EExp Θ')
@@ -371,6 +377,49 @@ mutual
 
       q = cong lam (trans (⌊ctxᶜ⌋ (cong (_∷ _) pΓ) (proj₁ ih))
                           (trans (proj₂ ih) ([≐]ᴿᶜ pι M)))
+
+  -- lambda abstraction with an annotated argument
+  --
+  -- The recorded annotation is the binder's type, instantiated.
+
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (lam[ B ] M) A (B₂ , ε , st , s) =
+    D , q
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      σ' = σ ,ᵗ B₂ ,ᵉ ε
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+      B' = B [ ι↑ ]ᵛ
+      α  = wkᵉ-v (tvar (newᵗ {Θ}))
+      e  = evar (newᵉ {Θ +ty})
+
+      pΓ = coᵗᵉ-ctx σ B₂ ε Γ
+      pA = coᵗᵉ-v   σ B₂ ε A
+      pι = coᵗᵉ-ˢ   ι σ B₂ ε
+
+      pB : B' [ σ' ]ᵛ ≡ B [ ι ⨟ˢ σ ]ᵛ
+      pB = trans ([⨟]ᵛ B ι↑ σ') ([≐]ᵛ pι B)
+
+      ih = soundCˢ ι↑ (Γ↑ ∷ B') M α e s
+
+      c₀ = cong (_∷ B' [ σ' ]ᵛ) pΓ
+
+      D₀ = ctx-substᶜ c₀ (proj₁ ih)
+
+      D = subV (lamᵃ (B' [ σ' ]ᵛ) D₀) (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
+
+      q = cong₂ lam[_]_ pB
+                (trans (⌊ctxᶜ⌋ c₀ (proj₁ ih)) (trans (proj₂ ih) ([≐]ᴿᶜ pι M)))
+
+  -- type annotation
+  --
+  -- The recording rule at the instantiated annotation, then the subtyping
+  -- atom as a `subV`.
+
+  soundVˢ {σ = σ} ι Γ (V ⦂ᵛ B) A (s , st) =
+    subV (annᵛ (B [ ι ]ᵛ [ σ ]ᵛ) (proj₁ ih)) st ,
+    cong₂ _⦂ᵛ_ (proj₂ ih) ([⨟]ᵛ B ι σ)
+    where
+      ih = soundVˢ ι Γ V (B [ ι ]ᵛ) s
 
 
   soundCˢ : ∀ {Θ₀ Θ n Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
@@ -738,6 +787,16 @@ mutual
                 (trans (⌊c⌋ (cong₂ _‼_ pA pt) (ctx-substᶜ c₂ (proj₁ ih₂)))
                        (trans (⌊ctxᶜ⌋ c₂ (proj₁ ih₂))
                               (trans (proj₂ ih₂) ([≐]ᴿᶜ pι N))))
+
+  -- type annotation
+  --
+  -- As for values, the two atoms making up the `subC`.
+
+  soundCˢ {σ = σ} ι Γ (M ⦂ᶜ (B ‼ u)) A t (s , st , le) =
+    subC (annᶜ (B [ ι ]ᵛ [ σ ]ᵛ ‼ u [ ι ]ᵉ [ σ ]ᵉ) (proj₁ ih)) (st ‼ₛ le) ,
+    cong₂ _⦂ᶜ_ (proj₂ ih) ([⨟]ᶜ (B ‼ u) ι σ)
+    where
+      ih = soundCˢ ι Γ M (B [ ι ]ᵛ) (u [ ι ]ᵉ) s
 
 -- Generation for a raw term over the scope of the context: the program's
 -- annotations are instantiated by the solution.

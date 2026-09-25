@@ -329,12 +329,15 @@ Inference for the open calculus, by constraint generation and solving.
   of open types. `Language.agda` is the qualified judgement `Q ∣ Γ ⊢C⦂ C`: the
   rules of `Syntax/Language.agda` over open types, their side conditions
   entailed from `Q`, with `handle` typing its operation clauses at a rigid
-  effect variable.
+  effect variable, and three rules recording a type annotation.
 
 - `TypeInference/Raw/Syntax.agda` defines raw terms, untyped and scoped by the
   grade and type variables of the context; `box` carries its grade, an
-  expression over that scope. `Raw/Subst.agda` substitutes into the
-  annotations. `TypeInference/Erase.agda` erases a derivation to a raw term.
+  expression over that scope. Optional type annotations — of a value
+  (`V ⦂ᵛ A`), a computation (`M ⦂ᶜ C`) and a lambda's argument
+  (`lam[ A ] M`) — are open types over that scope: they fix a shape, and
+  generation checks the term against them. `Raw/Subst.agda` substitutes into
+  the annotations. `TypeInference/Erase.agda` erases a derivation to a raw term.
 
 - `TypeInference/Constraints/` is the constraint language — type equations,
   value-type subtyping, grade orderings, eternality, the var-rule disjunction,

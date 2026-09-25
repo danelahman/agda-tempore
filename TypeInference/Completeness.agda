@@ -144,6 +144,45 @@ mutual
       ih = cmpC ι↑ (Γ↑ ∷ α₁) α₂ e₀ M D (reC pι M e)
                 (cong (_∷ A₁) (trans ceq (sym pΓ))) (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
 
+  -- lambda abstraction with an annotated argument
+  --
+  -- The recorded annotation is the instance of the raw one, so the binder's
+  -- type needs no witness.
+
+  cmpV {Θ = Θ} {σ = σ} {Q = Q} ι Γ A _
+       (lamᵃ A₁ {C = A₂ ‼ ε₀} D) (lamᵃ {A = B} {M = M} eB e) ceq st =
+    A₂ , ε₀ , subst₂ (λ X Y → Q ∣ X ⇒ A₂ ‼ ε₀ <:̂ᵛ Y) (sym pB) (sym pA) st , ih
+    where
+      ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵉ
+      σ' = σ ,ᵗ A₂ ,ᵉ ε₀
+      Γ↑ = wkᵉ-ctx (wkᵗ-ctx Γ)
+      B' = B [ ι↑ ]ᵛ
+      α  = wkᵉ-v (tvar (newᵗ {Θ}))
+      e₀ = evar (newᵉ {Θ +ty})
+
+      pΓ = coᵗᵉ-ctx σ A₂ ε₀ Γ
+      pA = coᵗᵉ-v   σ A₂ ε₀ A
+      pι = coᵗᵉ-ˢ   ι σ A₂ ε₀
+
+      pB : B' [ σ' ]ᵛ ≡ A₁
+      pB = trans ([⨟]ᵛ B ι↑ σ') (trans ([≐]ᵛ pι B) eB)
+
+      ih = cmpC ι↑ (Γ↑ ∷ B') α e₀ M D (reC pι M e)
+                (cong₂ _∷_ (trans ceq (sym pΓ)) (sym pB)) (<:̂ᵛ-refl _) ⊩≾̂ₑ-refl
+
+  -- type annotation
+  --
+  -- The recorded annotation is the instance of the raw one: the body is
+  -- checked against it, and the slack sits in the subtyping atom.
+
+  cmpV {σ = σ} {Q = Q} ι Γ A _ (annᵛ A₁ D) (annᵛ {V = V} {A = B} eV eB) ceq st =
+    cmpV ι Γ (B [ ι ]ᵛ) V D (invV V eV) ceq
+         (subst (λ z → Q ∣ A₁ <:̂ᵛ z) (sym pB) (<:̂ᵛ-refl A₁)) ,
+    subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym pB) st
+    where
+      pB : B [ ι ]ᵛ [ σ ]ᵛ ≡ A₁
+      pB = trans ([⨟]ᵛ B ι σ) eB
+
   -- subsumption
   --
   -- Invisible to erasure; its witness composes with the slack.
@@ -448,6 +487,24 @@ mutual
                  (cong₂ (λ G z → G ∷ [ z ] A₁) (trans ceq (sym pΓ)) (sym pr))
                  (subst (λ z → Q ∣ _ <:̂ᵛ z) (sym pA) st)
                  (subst (λ z → Q ⊩ _ ≾̂ₑ z) (sym pt) le)
+
+  -- type annotation
+  --
+  -- As for values, the slack sits in the two atoms.
+
+  cmpC {σ = σ} {Q = Q} ι Γ A t _ {A₀ = A₀} {ε₀ = ε₀} (annᶜ _ D)
+       (annᶜ {M = M} {A = B} {ε = u} eM eB eu) ceq st le =
+    cmpC ι Γ (B [ ι ]ᵛ) (u [ ι ]ᵉ) M D (invC M eM) ceq
+         (subst (λ z → Q ∣ A₀ <:̂ᵛ z) (sym pB) (<:̂ᵛ-refl A₀))
+         (subst (λ z → Q ⊩ ε₀ ≾̂ₑ z) (sym pu) ⊩≾̂ₑ-refl) ,
+    subst (λ z → Q ∣ z <:̂ᵛ A [ σ ]ᵛ) (sym pB) st ,
+    subst (λ z → Q ⊩ z ≾̂ₑ t [ σ ]ᵉ) (sym pu) le
+    where
+      pB : B [ ι ]ᵛ [ σ ]ᵛ ≡ A₀
+      pB = trans ([⨟]ᵛ B ι σ) eB
+
+      pu : u [ ι ]ᵉ [ σ ]ᵉ ≡ ε₀
+      pu = trans ([⨟]ᵉ u ι σ) eu
 
   -- subsumption
   --

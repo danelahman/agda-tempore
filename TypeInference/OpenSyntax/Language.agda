@@ -11,6 +11,10 @@
 -- its operation clauses at the extended scope `Θ +e`, the        --
 -- original's meta-level quantification over the continuation     --
 -- grade becoming a rigid effect-grade variable.                  --
+--                                                                --
+-- Three rules have no counterpart in the original: `annᵛ`,       --
+-- `annᶜ` and `lamᵃ` record a type annotation of the raw term.    --
+-- They are identities on typing.                                 --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ)
@@ -95,6 +99,21 @@ mutual
             → Q ∣ Γ ∷ A ⊢C⦂ C
             -----------------
             → Q ∣ Γ ⊢V⦂ A ⇒ C
+
+    -- lambda abstraction with an annotated argument
+
+    lamᵃ    : (A : OVType Θ)
+            → {C : OCType Θ}
+            → Q ∣ Γ ∷ A ⊢C⦂ C
+            -----------------
+            → Q ∣ Γ ⊢V⦂ A ⇒ C
+
+    -- type annotation
+
+    annᵛ    : (A : OVType Θ)
+            → Q ∣ Γ ⊢V⦂ A
+            -------------
+            → Q ∣ Γ ⊢V⦂ A
 
     -- subsumption
 
@@ -230,6 +249,13 @@ mutual
             → Q ∣ Γ ⟨ ρ ⟩ ⊢V⦂ A
             → Q ∣ Γ ∷ [ ρ ] A ⊢C⦂ C
             -----------------------
+            → Q ∣ Γ ⊢C⦂ C
+
+    -- type annotation
+
+    annᶜ    : (C : OCType Θ)
+            → Q ∣ Γ ⊢C⦂ C
+            -------------
             → Q ∣ Γ ⊢C⦂ C
 
     -- subsumption

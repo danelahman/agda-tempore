@@ -10,8 +10,10 @@
 --                                                                --
 -- The annotations are the base type of a constant, the operation --
 -- of a `perform`, the duration of a `delay`, the variable of an  --
--- `unbox` and the grade of a `box`, an expression over `Θ`. A    --
--- handler's clauses are scoped over `Θ +e`, binding the clause's --
+-- `unbox` and the grade of a `box`, an expression over `Θ`, and  --
+-- the optional type annotations: of a value, of a computation    --
+-- and of a lambda's argument, open types over `Θ`. A handler's   --
+-- clauses are scoped over `Θ +e`, binding the clause's           --
 -- continuation grade, and over the full context, `2 + n`.        --
 ------------------------------------------------------------------
 
@@ -38,6 +40,7 @@ open import Syntax.Types S using (BaseType; BaseConstants)
 
 open import TypeInference.Scopes
 open import TypeInference.OpenSyntax.Grades S using (RExp)
+open import TypeInference.OpenSyntax.Types  S using (OVType; OCType)
 
 mutual
 
@@ -83,6 +86,23 @@ mutual
 
     lam     : RawC Θ (suc n)
               ------------
+            → RawV Θ n
+
+    -- lambda abstraction with an annotated argument
+
+    lam[_]_ : OVType Θ
+            → RawC Θ (suc n)
+            --------------
+            → RawV Θ n
+
+    -- type annotation
+
+    -- The annotation is an open type over `Θ`: it fixes a shape, and its
+    -- type variables stay flexible.
+
+    _⦂ᵛ_    : RawV Θ n
+            → OVType Θ
+            ---------
             → RawV Θ n
 
 
@@ -176,14 +196,27 @@ mutual
             --------------
             → RawC Θ n
 
+    -- type annotation
+
+    -- As for values, the annotation fixes a shape.
+
+    _⦂ᶜ_    : RawC Θ n
+            → OCType Θ
+            ---------
+            → RawC Θ n
+
+infix 5 _⦂ᵛ_ _⦂ᶜ_
+
 -- A term with no handler
 
 mutual
 
   HandlerFreeᵛ : ∀ {Θ n} → RawV Θ n → Set
-  HandlerFreeᵛ ⦉ V , W ⦊ = HandlerFreeᵛ V × HandlerFreeᵛ W
-  HandlerFreeᵛ (lam M)  = HandlerFreeᶜ M
-  HandlerFreeᵛ _        = ⊤
+  HandlerFreeᵛ ⦉ V , W ⦊     = HandlerFreeᵛ V × HandlerFreeᵛ W
+  HandlerFreeᵛ (lam M)      = HandlerFreeᶜ M
+  HandlerFreeᵛ (lam[ A ] M) = HandlerFreeᶜ M
+  HandlerFreeᵛ (V ⦂ᵛ A)     = HandlerFreeᵛ V
+  HandlerFreeᵛ _            = ⊤
 
   HandlerFreeᶜ : ∀ {Θ n} → RawC Θ n → Set
   HandlerFreeᶜ (return V)               = HandlerFreeᵛ V
@@ -197,3 +230,4 @@ mutual
   HandlerFreeᶜ (handle M `with H `in N) = ⊥
   HandlerFreeᶜ (unbox i N)              = HandlerFreeᶜ N
   HandlerFreeᶜ (box ρ V N)              = HandlerFreeᵛ V × HandlerFreeᶜ N
+  HandlerFreeᶜ (M ⦂ᶜ C)                 = HandlerFreeᶜ M
