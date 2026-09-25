@@ -428,10 +428,11 @@ import TypeInference.SolverImpl
 ---- is a whole unknown or over protected unknowns, and every greater
 ---- side of a deferred condition is over protected ones. Generation
 ---- gives constraints of that shape, and the driver keeps them, given
----- two pending facts about the unifier and about `Localise`
+---- a pending fact about `Localise`
 
 import TypeInference.SolverImpl.Invariants.Outer
 import TypeInference.SolverImpl.Invariants.Expand
+import TypeInference.SolverImpl.Invariants.Unify
 import TypeInference.SolverImpl.Invariants
 import TypeInference.SolverImpl.Invariants.Generate
 

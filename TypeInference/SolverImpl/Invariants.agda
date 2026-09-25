@@ -90,6 +90,7 @@ open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lR; lfix; Outerₑ; Outerᵣ; freeᵉ; freeʳ; outerₑ?; outerᵣ?; outerVarₑ; outerVarᵣ; anyᶠ; evar?)
 open import TypeInference.SolverImpl.Invariants.Outer S
 open import TypeInference.SolverImpl.Invariants.Expand S using (expandSub-good)
+open import TypeInference.SolverImpl.Invariants.Unify  S using (unify-good)
 
 ------------------------------------------------------------------------
 -- The invariants
@@ -920,17 +921,12 @@ Shape π (∀ᵉ C)      = Shape (π ↑ᵉ) C
 Shape π (⋀ᵒᵖ f)     = ∀ op → Shape π (f op)
 
 ------------------------------------------------------------------------
--- The steps whose preservation is not proved here, stated about the
--- existing functions: a most general unifier of good types is good,
--- and `localise` keeps I1′ and I5 for the unknowns the scope was
--- entered with.
+-- The step whose preservation is not proved here, stated about the
+-- existing function: `localise` keeps I1′ and I5 for the unknowns the
+-- scope was entered with.
 
 record Pending : Set where
   field
-    unify-good : ∀ {Θ Ψ} {P : Subst Θ Ψ} → (rg : Rig Ψ) → (A B : OVType Ψ)
-               → TyGoodᵛ P A → TyGoodᵛ P B
-               → ∀ {Ψ⁺} {ρ : AList Ψ Ψ⁺} → unify rg (eqᵛ A B ∷ []) ≡ just (Ψ⁺ , ρ)
-               → GV (P ⨟ˢ ⟦ ρ ⟧ᴬ) ⟦ ρ ⟧ᴬ
     localise-good : ∀ {Θ₀ Θ Φ} → (O : Subst (Θ +e) Φ) → (P : Subst Θ₀ Φ) → (R : Resid Φ)
                   → P ⊆ᶠ O → ResInv P R → ResInv P (lR (localise O R))
 
