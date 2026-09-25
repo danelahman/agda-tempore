@@ -7,9 +7,13 @@
 -- typable at a closed instance, so inference answers `typed` for --
 -- each at every grade (a theorem over an arbitrary language);    --
 -- the scheme it reports is the shape the annotation forces.      --
+--                                                                --
+-- `twice` and `twiceᵃ` are a handler before and after its clause --
+-- is sufficiently annotated; the instances decide which is.      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
+open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -131,3 +135,32 @@ expected-compose-g : Report
 expected-compose-g =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ α₀ ‼ ε₀) ⇒ (U⇒U ⇒ (Unit ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+
+------------------------------------------------------------------
+-- Sufficient annotation
+--
+-- A handler, as a function of the thunk it handles, whose clause
+-- resumes twice through a monomorphic identity `h`:
+--
+--   twice m = handle m () with op p k ↦ perform op p (unbox k (
+--     let h = λx. x in let g₁ = h (λ_. k' a) in
+--     let g₂ = h (λ_. g₁ () ; k' a) in g₂ ()))
+--
+-- Its clause has three bare λs. `twiceᵃ` annotates their arguments:
+-- `h`'s at `Unit ⇒ Unit ‼ j`, for the clause's rigid `j`, and the
+-- thunks' at `Unit`.
+
+twice : RawC ∅ˢ 0
+twice = return (lam (handle (v₀ · ⋆) `with (λ op →
+  perform op v₁ (unbox (fsuc fzero)
+    (return (lam (return v₀))
+     ⨟ ((v₀ · lam (v₂ · v₃)) ⨟ ((v₁ · lam ((v₁ · ⋆) ⨟ (v₄ · v₅))) ⨟ (v₀ · ⋆))))))
+  `in (return ⋆)))
+
+twiceᵃ : RawC ∅ˢ 0
+twiceᵃ = return (lam (handle (v₀ · ⋆) `with (λ op →
+  perform op v₁ (unbox (fsuc fzero)
+    (return (lam[ Unit ⇒ Unit ‼ evar (newᵉ {∅ˢ}) ] (return v₀))
+     ⨟ ((v₀ · (lam[ Unit ] (v₂ · v₃)))
+        ⨟ ((v₁ · (lam[ Unit ] ((v₁ · ⋆) ⨟ (v₄ · v₅)))) ⨟ (v₀ · ⋆))))))
+  `in (return ⋆)))

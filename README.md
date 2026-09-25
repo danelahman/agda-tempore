@@ -341,6 +341,11 @@ Inference for the open calculus, by constraint generation and solving.
   generation checks the term against them. `Raw/Subst.agda` substitutes into
   the annotations. `TypeInference/Erase.agda` erases a derivation to a raw term.
 
+- `TypeInference/Raw/SufficientlyAnnotated.agda`: inside handler clauses,
+  every λ annotates its argument and every `absurd` is under `⦂ᶜ`; nothing is
+  required outside them. It is decidable, holds of handler-free terms, and is
+  stable under substitution.
+
 - `TypeInference/Constraints/` is the constraint language — type equations,
   value-type subtyping, grade orderings, eternality, the var-rule disjunction,
   `∃` over the three sorts, a rigid `∀ᵉ`, and a conjunction over operations —

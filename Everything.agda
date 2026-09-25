@@ -360,6 +360,10 @@ open import TypeInference.Raw.Syntax
 open import TypeInference.Raw.Subst
 open import TypeInference.Erase
 
+---- Sufficiently annotated raw terms
+
+open import TypeInference.Raw.SufficientlyAnnotated
+
 ---- Constraints and their satisfaction
 
 open import TypeInference.Constraints.Syntax
