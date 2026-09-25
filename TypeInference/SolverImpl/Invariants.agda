@@ -89,32 +89,13 @@ open import TypeInference.SolverImpl.Solve    S opEnum
 open import TypeInference.SolverImpl.Localise S
   using (Localised; localise; lσ; lR; lfix; Outerₑ; Outerᵣ; freeᵉ; freeʳ; outerₑ?; outerᵣ?; outerVarₑ; outerVarᵣ; anyᶠ; evar?)
 open import TypeInference.SolverImpl.Invariants.Outer S
+open import TypeInference.SolverImpl.Invariants.Residual S public
 open import TypeInference.SolverImpl.Invariants.Expand S using (expandSub-good)
 open import TypeInference.SolverImpl.Invariants.Unify  S using (unify-good)
+open import TypeInference.SolverImpl.Invariants.Localise S using (localise-good)
 
 ------------------------------------------------------------------------
 -- The invariants
-
--- The greater sides of an entry's orderings, over the unknowns free in
--- `P` and the entry's rigids
-
-record Great {Θ Ψ} (P : Subst Θ Ψ) (E : Dfr Ψ) : Set where
-  constructor mkGreat
-  field
-    greatʳ : ∀ {x y} → (x , y) ∈ ors (body E) → Outerᵣ (P ↑ᵉⁿ nb E) y
-    greatᵉ : ∀ {x y} → (x , y) ∈ oes (body E) → Outerₑ (P ↑ᵉⁿ nb E) y
-
-open Great public
-
-record ResInv {Θ Ψ} (P : Subst Θ Ψ) (R : Resid Ψ) : Set where
-  constructor mkResInv
-  field
-    inv-ss : ∀ {A B} → (A , B) ∈ ss R → TyGoodᵛ P A × TyGoodᵛ P B
-    I1′ʳ   : ∀ {x y} → (x , y) ∈ rs R → Goodᵣ P y
-    I1′ᵉ   : ∀ {x y} → (x , y) ∈ es R → Goodₑ P y
-    I5     : ∀ {E} → E ∈ dfs R → Great P E
-
-open ResInv public
 
 record Inv {Θ₀ Θ} (π : Subst Θ₀ Θ) (s : St Θ) : Set where
   constructor mkInv
@@ -128,34 +109,6 @@ open Inv public
 
 GoodMove : ∀ {Θ₀ Θ} → (π : Subst Θ₀ Θ) → {s s' : St Θ} → s ⟶ s' → Set
 GoodMove π {s' = s'} m = GV (π ⨟ˢ θ s') (mδ m)
-
-------------------------------------------------------------------------
--- Entries
-
-great-⊆ : ∀ {Θ Θ' Ψ} {P : Subst Θ Ψ} {P' : Subst Θ' Ψ} → P ⊆ᶠ P' → (E : Dfr Ψ)
-        → Great P E → Great P' E
-great-⊆ i E g =
-  mkGreat (λ {x} {y} m → outerᵣ-⊆ {ρ = y} (⊆ᶠ-↑ᵉⁿ (nb E) i) (greatʳ g m))
-          (λ {x} {y} m → outerₑ-⊆ {ε = y} (⊆ᶠ-↑ᵉⁿ (nb E) i) (greatᵉ g m))
-
-great-⨟ : ∀ {Θ Ψ Ψ'} (P : Subst Θ Ψ) (σ : Subst Ψ Ψ') → (E : Dfr Ψ)
-        → Great P E → Great (P ⨟ˢ σ) (E [ σ ]ᵈ)
-great-⨟ P σ (dfr l k o) g = mkGreat r e
-  where
-    eq : ((P ↑ᵉⁿ k) ⨟ˢ (σ ↑ᵉⁿ k)) ⊆ᶠ ((P ⨟ˢ σ) ↑ᵉⁿ k)
-    eq = ≐→⊆ᶠ (⨟-↑ᵉⁿ P σ k)
-
-    r : ∀ {x y} → (x , y) ∈ ors (o [ σ ↑ᵉⁿ k ]ᴼ) → Outerᵣ ((P ⨟ˢ σ) ↑ᵉⁿ k) y
-    r m with ∈-map⁻ (mapᵖ (_[ σ ↑ᵉⁿ k ]ʳ)) m
-    ... | (x₀ , y₀) , m₀ , refl =
-          outerᵣ-⊆ {ρ = y₀ [ σ ↑ᵉⁿ k ]ʳ} eq
-                   (outerᵣ-⨟ (P ↑ᵉⁿ k) (σ ↑ᵉⁿ k) {y₀} (greatʳ g m₀))
-
-    e : ∀ {x y} → (x , y) ∈ oes (o [ σ ↑ᵉⁿ k ]ᴼ) → Outerₑ ((P ⨟ˢ σ) ↑ᵉⁿ k) y
-    e m with ∈-map⁻ (mapᵖ (_[ σ ↑ᵉⁿ k ]ᵉ)) m
-    ... | (x₀ , y₀) , m₀ , refl =
-          outerₑ-⊆ {ε = y₀ [ σ ↑ᵉⁿ k ]ᵉ} eq
-                   (outerₑ-⨟ (P ↑ᵉⁿ k) (σ ↑ᵉⁿ k) {y₀} (greatᵉ g m₀))
 
 ------------------------------------------------------------------------
 -- Residuals
@@ -921,16 +874,6 @@ Shape π (∀ᵉ C)      = Shape (π ↑ᵉ) C
 Shape π (⋀ᵒᵖ f)     = ∀ op → Shape π (f op)
 
 ------------------------------------------------------------------------
--- The step whose preservation is not proved here, stated about the
--- existing function: `localise` keeps I1′ and I5 for the unknowns the
--- scope was entered with.
-
-record Pending : Set where
-  field
-    localise-good : ∀ {Θ₀ Θ Φ} → (O : Subst (Θ +e) Φ) → (P : Subst Θ₀ Φ) → (R : Resid Φ)
-                  → P ⊆ᶠ O → ResInv P R → ResInv P (lR (localise O R))
-
-------------------------------------------------------------------------
 -- Entering a binder, and leaving it
 
 inv-↑ᵗ : ∀ {Θ₀ Θ} {π : Subst Θ₀ Θ} {s : St Θ} → Inv π s → Inv (π ⨟ˢ wkˢᵗ) (s ↑ᵗˢ)
@@ -1074,11 +1017,9 @@ threadOps-inv π {f = f} g gp (op ∷ l) s iv eq with g s op in e₁
     ih₂ = threadOps-inv π g gp l s₁ (proj₁ ih₁) e₂
 
 ------------------------------------------------------------------------
--- The driver keeps the invariants, given the pending steps
+-- The driver keeps the invariants
 
-module Driver (pend : Pending) where
-
-  open Pending pend
+module Driver where
 
   reexpand-inv : ∀ {Θ₀ Θ} → (π : Subst Θ₀ Θ) → (s : St Θ) → Inv π s
                → ∀ {s' : St Θ} {m : s ⟶ s'} → reexpand s ≡ just (s' , m)

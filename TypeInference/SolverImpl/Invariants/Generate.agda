@@ -56,7 +56,7 @@ open import TypeInference.SolverImpl.Localise S using (Outerₑ; Outerᵣ; free�
 open import TypeInference.SolverImpl.Invariants.Outer S
 open import TypeInference.SolverImpl.Invariants.Expand S using (Ren; mkRen; renᵗ; renʳ; renᵉ; ren-⨟; ren-wkᵗ; ren-wkʳ; ren-wkᵉ; ren-id)
 open import TypeInference.SolverImpl.Invariants S opEnum
-  using (Shape; Pending; module Driver; Inv; GoodMove; inv-init)
+  using (Shape; module Driver; Inv; GoodMove; inv-init)
 open import TypeInference.SolverImpl.State S using (init; _⟶_)
 open import TypeInference.SolverImpl.Solve S opEnum using (solve; Wit)
 open import TypeInference.Outcome using (solved)
@@ -370,14 +370,12 @@ C-shape Γ M =
   genCˢ-shape (mkAnn ren-id ⊆ᶠ-refl) (mkCtx (λ i → id-goodᵛ (lookup-ty (Γ₊ Γ) i))) (M₊ M)
               (tt , whole _)
 
--- So a program's solved state keeps I1′ and I5, given the pending steps
+-- So a program's solved state keeps I1′ and I5
 
-module _ (pend : Pending) where
+open Driver
 
-  open Driver pend
-
-  solved-inv : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-             → ∀ {s'} {m : init ⟶ s'} {w : Wit s' C[ Γ , M ]}
-             → solve init C[ Γ , M ] ≡ solved (s' , m , w)
-             → Inv idˢ s' × GoodMove idˢ m
-  solved-inv Γ M eq = solve-inv idˢ init C[ Γ , M ] inv-init (C-shape Γ M) eq
+solved-inv : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+           → ∀ {s'} {m : init ⟶ s'} {w : Wit s' C[ Γ , M ]}
+           → solve init C[ Γ , M ] ≡ solved (s' , m , w)
+           → Inv idˢ s' × GoodMove idˢ m
+solved-inv Γ M eq = solve-inv idˢ init C[ Γ , M ] inv-init (C-shape Γ M) eq

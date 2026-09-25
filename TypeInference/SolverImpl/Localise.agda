@@ -654,25 +654,27 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
   record Lows (l : List (X × X)) : Set where
     constructor lows
     field
-      bnds : List X
-      cls  : ∀ {a} → a ∈ l → LowAt bnds a
-      src  : ∀ {x} → x ∈ bnds → (x , v) ∈ l
+      bnds  : List X
+      cls   : ∀ {a} → a ∈ l → LowAt bnds a
+      src   : ∀ {x} → x ∈ bnds → (x , v) ∈ l
+      bfree : ∀ {x} → x ∈ bnds → occ x ≡ false
 
   open Lows public
 
   record Ups (l : List (X × X)) : Set where
     constructor ups
     field
-      cap  : X
-      clsᵘ : ∀ {a} → a ∈ l → UpAt cap a
-      srcᵘ : (v , cap) ∈ l
+      cap   : X
+      clsᵘ  : ∀ {a} → a ∈ l → UpAt cap a
+      srcᵘ  : (v , cap) ∈ l
+      cfree : occ cap ≡ false
 
   open Ups public
 
   -- The lower bounds, none of them mentioning `v`
 
   lowsOf : (l : List (X × X)) → Maybe (Lows l)
-  lowsOf []             = just (lows [] (λ ()) (λ ()))
+  lowsOf []             = just (lows [] (λ ()) (λ ()) (λ ()))
   lowsOf ((x , x') ∷ l) = go (lowsOf l) (x' ≟ v) (isFalse (occ x)) (x ≟ x') (isFalse (occ x'))
     where
       wk : ∀ {L a} → LowAt L a → LowAt (x ∷ L) a
@@ -682,28 +684,30 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
       go : Maybe (Lows l) → _ → Maybe (occ x ≡ false) → _ → Maybe (occ x' ≡ false)
          → Maybe (Lows ((x , x') ∷ l))
       go nothing                _        _        _       _        = nothing
-      go (just (lows L c s))    (yes e)  (just _) _       _        =
+      go (just (lows L c s f))  (yes e)  (just qx) _      _        =
         just (lows (x ∷ L) (λ { (here refl) → inj₂ (e , here refl) ; (there m) → wk (c m) })
-                           (λ { (here refl) → here (cong (x ,_) (sym e)) ; (there m) → there (s m) }))
-      go (just (lows L c s))    _        _        (yes e) _        =
-        just (lows L (λ { (here refl) → inj₁ (inj₁ e) ; (there m) → c m }) (λ m → there (s m)))
-      go (just (lows L c s))    _        _        (no _)  (just q) =
-        just (lows L (λ { (here refl) → inj₁ (inj₂ q) ; (there m) → c m }) (λ m → there (s m)))
-      go (just (lows L c s))    _        _        (no _)  nothing  = nothing
+                           (λ { (here refl) → here (cong (x ,_) (sym e)) ; (there m) → there (s m) })
+                           (λ { (here refl) → qx ; (there m) → f m }))
+      go (just (lows L c s f))  _        _        (yes e) _        =
+        just (lows L (λ { (here refl) → inj₁ (inj₁ e) ; (there m) → c m }) (λ m → there (s m)) f)
+      go (just (lows L c s f))  _        _        (no _)  (just q) =
+        just (lows L (λ { (here refl) → inj₁ (inj₂ q) ; (there m) → c m }) (λ m → there (s m)) f)
+      go (just (lows L c s f))  _        _        (no _)  nothing  = nothing
 
   -- The upper bounds not mentioning `v`, each a candidate
 
-  capsOf : (l : List (X × X)) → List (Σ[ U ∈ X ] ((v , U) ∈ l))
+  capsOf : (l : List (X × X)) → List (Σ[ U ∈ X ] (((v , U) ∈ l) × (occ U ≡ false)))
   capsOf []             = []
   capsOf ((x , x') ∷ l) = go (x ≟ v) (isFalse (occ x')) (capsOf l)
     where
-      shift : List (Σ[ U ∈ X ] ((v , U) ∈ l)) → List (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
-      shift []             = []
-      shift ((U , m) ∷ us) = (U , there m) ∷ shift us
+      shift : List (Σ[ U ∈ X ] (((v , U) ∈ l) × (occ U ≡ false)))
+            → List (Σ[ U ∈ X ] (((v , U) ∈ (x , x') ∷ l) × (occ U ≡ false)))
+      shift []                 = []
+      shift ((U , m , q) ∷ us) = (U , there m , q) ∷ shift us
 
-      go : _ → Maybe (occ x' ≡ false) → List (Σ[ U ∈ X ] ((v , U) ∈ l))
-         → List (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
-      go (yes e) (just _) us = (x' , here (cong (_, x') (sym e))) ∷ shift us
+      go : _ → Maybe (occ x' ≡ false) → List (Σ[ U ∈ X ] (((v , U) ∈ l) × (occ U ≡ false)))
+         → List (Σ[ U ∈ X ] (((v , U) ∈ (x , x') ∷ l) × (occ U ≡ false)))
+      go (yes e) (just q) us = (x' , here (cong (_, x') (sym e)) , q) ∷ shift us
       go _       _        us = shift us
 
   upsAt : (U : X) → (l : List (X × X)) → Maybe (∀ {a} → a ∈ l → UpAt U a)
@@ -737,10 +741,10 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
   upsOf : (l : List (X × X)) → Maybe (Ups l)
   upsOf l = go (capsOf l)
     where
-      go : List (Σ[ U ∈ X ] ((v , U) ∈ l)) → Maybe (Ups l)
-      go []             = nothing
-      go ((U , m) ∷ us) with upsAt U l
-      ... | just f  = just (ups U f m)
+      go : List (Σ[ U ∈ X ] (((v , U) ∈ l) × (occ U ≡ false))) → Maybe (Ups l)
+      go []                 = nothing
+      go ((U , m , q) ∷ us) with upsAt U l
+      ... | just f  = just (ups U f m q)
       ... | nothing = go us
 
 allFalse : ∀ {Y : Set} → (f : Y → 𝔹) → (l : List Y) → Maybe (∀ {y} → y ∈ l → f y ≡ false)
@@ -1118,91 +1122,100 @@ occursᵉ⁺ k R = anyL (λ { (_ , ε') → occᵉ-e k ε' }) (es R) ∨ anyL (�
 occursʳ⁺ : ∀ {Ψ} → RVar Ψ → Resid Ψ → 𝔹
 occursʳ⁺ k R = anyL (λ { (_ , ρ') → occʳ-r k ρ' }) (rs R) ∨ inDfsʳ dir↓ k R
 
+-- The four rules for an effect unknown, each given what it tests
+
+module _ {Ψ} (k : EVar Ψ) (R : Resid Ψ) (cl : Cleanᵉ k R) where
+
+  lowerᵉ? : Maybe (Bᵉ.Lows {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a)
+          → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
+  lowerᵉ? (just lw@(Bᵉ.lows (x ∷ xs) c s f)) (just fr)
+    with stills? dir↓ (updᵉ k (joinₑ x xs)) (dfs R)
+  ... | just sd =
+        just (joinₑ x xs ,
+              λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ
+                          (joinₑ-lub⊩ τ x xs (λ m → ⊩es h (s m)))
+                          (joinₑ-ub⊩ τ x xs) h)
+  ... | nothing = nothing
+  lowerᵉ? _ _ = nothing
+
+  raiseᵉ? : Maybe (Bᵉ.Ups {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
+          → Maybe (DFreeᵉ k R) → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
+  raiseᵉ? (just up) (just fl) (just df) with stills? dir↑ (updᵉ k (Bᵉ.cap up)) (dfs R)
+  ... | just sd = just (Bᵉ.cap up , λ τ Q h → raiseᵉ-⊩ up fl cl df sd τ h)
+  ... | nothing = nothing
+  raiseᵉ? _         _         _         = nothing
+
+  unitᵉ? : Maybe (Is-just uₑ-least?) → Maybe (Bᵉ.Lows {Ψ} k (es R))
+         → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a) → 𝔹
+         → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
+  unitᵉ? (just ij) (just lw@(Bᵉ.lows [] c s f)) (just fr) true
+    with stills? dir↓ (updᵉ k ûₑ) (dfs R)
+  ... | just sd = just (ûₑ , λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ ij) (λ ()) h)
+  ... | nothing = nothing
+  unitᵉ? _ _ _ _ = nothing
+
+  topᵉ? : Maybe (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
+        → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a) → Maybe (DFreeᵉ k R) → 𝔹
+        → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
+  topᵉ? (just fe) (just fl) (just df) true with stills? dir↑ (updᵉ k (econst ⊤ₑ)) (dfs R)
+  ... | just sd = just (econst ⊤ₑ , λ τ Q h → topᵉ-⊩ fe fl cl df sd τ h)
+  ... | nothing = nothing
+  topᵉ? _         _         _         _    = nothing
+
 stepᵉ : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
 stepᵉ {Ψ} k R with cleanᵉ? k R
 ... | nothing = nothing
 ... | just cl =
-      first (lower (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)))
-            (first (raise (Bᵉ.upsOf {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R))
-            (first (unit (Is-just? uₑ-least?) (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R))
-                   (top (Bᵉ.freeLs {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R)
-                        (occursᵉ⁺ k R))))
-  where
-    lower : Maybe (Bᵉ.Lows {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a)
-          → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    lower (just lw@(Bᵉ.lows (x ∷ xs) c s)) (just fr)
-      with stills? dir↓ (updᵉ k (joinₑ x xs)) (dfs R)
-    ... | just sd =
-          just (joinₑ x xs ,
-                λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ
-                            (joinₑ-lub⊩ τ x xs (λ m → ⊩es h (s m)))
-                            (joinₑ-ub⊩ τ x xs) h)
-    ... | nothing = nothing
-    lower _ _ = nothing
+      first (lowerᵉ? k R cl (Bᵉ.lowsOf {Ψ} k (es R)) (Bᵉʳ.freeRs {Ψ} k (rs R)))
+            (first (raiseᵉ? k R cl (Bᵉ.upsOf {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R))
+            (first (unitᵉ? k R cl (Is-just? uₑ-least?) (Bᵉ.lowsOf {Ψ} k (es R))
+                           (Bᵉʳ.freeRs {Ψ} k (rs R)) (occursᵉ k R))
+                   (topᵉ? k R cl (Bᵉ.freeLs {Ψ} k (es R)) (Bᵉʳ.freeLs {Ψ} k (rs R)) (dfreeᵉ? k R)
+                          (occursᵉ⁺ k R))))
 
-    raise : Maybe (Bᵉ.Ups {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
-          → Maybe (DFreeᵉ k R) → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    raise (just up) (just fl) (just df) with stills? dir↑ (updᵉ k (Bᵉ.cap up)) (dfs R)
-    ... | just sd = just (Bᵉ.cap up , λ τ Q h → raiseᵉ-⊩ up fl cl df sd τ h)
-    ... | nothing = nothing
-    raise _         _         _         = nothing
+-- The same four for a resource unknown
 
-    unit : Maybe (Is-just uₑ-least?) → Maybe (Bᵉ.Lows {Ψ} k (es R))
-         → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a) → 𝔹
-         → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    unit (just ij) (just lw@(Bᵉ.lows [] c s)) (just fr) true
-      with stills? dir↓ (updᵉ k ûₑ) (dfs R)
-    ... | just sd = just (ûₑ , λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ ij) (λ ()) h)
-    ... | nothing = nothing
-    unit _ _ _ _ = nothing
+module _ {Ψ} (k : RVar Ψ) (R : Resid Ψ) (cl : Cleanʳ k R) where
 
-    top : Maybe (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
-        → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a) → Maybe (DFreeᵉ k R) → 𝔹
-        → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    top (just fe) (just fl) (just df) true with stills? dir↑ (updᵉ k (econst ⊤ₑ)) (dfs R)
-    ... | just sd = just (econst ⊤ₑ , λ τ Q h → topᵉ-⊩ fe fl cl df sd τ h)
-    ... | nothing = nothing
-    top _         _         _         _    = nothing
+  lowerʳ? : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
+  lowerʳ? (just lw@(Bʳ.lows (x ∷ xs) c s f)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
+  ... | just sd =
+        just (joinᵣ x xs ,
+              λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ
+                          (joinᵣ-lub⊩ τ x xs (λ m → ⊩rs h (s m)))
+                          (joinᵣ-ub⊩ τ x xs) h)
+  ... | nothing = nothing
+  lowerʳ? _ = nothing
+
+  raiseʳ? : Maybe (Bʳ.Ups {Ψ} k (rs R)) → Maybe (DFreeʳ k R)
+          → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
+  raiseʳ? (just up) (just df) with stills? dir↑ (updʳ k (Bʳ.cap up)) (dfs R)
+  ... | just sd = just (Bʳ.cap up , λ τ Q h → raiseʳ-⊩ up cl df sd τ h)
+  ... | nothing = nothing
+  raiseʳ? _         _         = nothing
+
+  unitʳ? : Maybe (Is-just uᵣ-least?) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
+         → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
+  unitʳ? (just ij) (just lw@(Bʳ.lows [] c s f)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
+  ... | just sd = just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ ij) (λ ()) h)
+  ... | nothing = nothing
+  unitʳ? _ _ _ = nothing
+
+  topʳ? : Maybe (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a) → Maybe (DFreeʳ k R) → 𝔹
+        → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
+  topʳ? (just fl) (just df) true with stills? dir↑ (updʳ k (rconst ⊤ᵣ)) (dfs R)
+  ... | just sd = just (rconst ⊤ᵣ , λ τ Q h → topʳ-⊩ fl cl df sd τ h)
+  ... | nothing = nothing
+  topʳ? _         _         _    = nothing
 
 stepʳ : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
 stepʳ {Ψ} k R with cleanʳ? k R
 ... | nothing = nothing
 ... | just cl =
-      first (lower (Bʳ.lowsOf {Ψ} k (rs R)))
-            (first (raise (Bʳ.upsOf {Ψ} k (rs R)) (dfreeʳ? k R))
-            (first (unit (Is-just? uᵣ-least?) (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
-                   (top (Bʳ.freeLs {Ψ} k (rs R)) (dfreeʳ? k R) (occursʳ⁺ k R))))
-  where
-    lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    lower (just lw@(Bʳ.lows (x ∷ xs) c s)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
-    ... | just sd =
-          just (joinᵣ x xs ,
-                λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ
-                            (joinᵣ-lub⊩ τ x xs (λ m → ⊩rs h (s m)))
-                            (joinᵣ-ub⊩ τ x xs) h)
-    ... | nothing = nothing
-    lower _ = nothing
-
-    raise : Maybe (Bʳ.Ups {Ψ} k (rs R)) → Maybe (DFreeʳ k R)
-          → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    raise (just up) (just df) with stills? dir↑ (updʳ k (Bʳ.cap up)) (dfs R)
-    ... | just sd = just (Bʳ.cap up , λ τ Q h → raiseʳ-⊩ up cl df sd τ h)
-    ... | nothing = nothing
-    raise _         _         = nothing
-
-    unit : Maybe (Is-just uᵣ-least?) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
-         → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    unit (just ij) (just lw@(Bʳ.lows [] c s)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
-    ... | just sd = just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ ij) (λ ()) h)
-    ... | nothing = nothing
-    unit _ _ _ = nothing
-
-    top : Maybe (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a) → Maybe (DFreeʳ k R) → 𝔹
-        → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    top (just fl) (just df) true with stills? dir↑ (updʳ k (rconst ⊤ᵣ)) (dfs R)
-    ... | just sd = just (rconst ⊤ᵣ , λ τ Q h → topʳ-⊩ fl cl df sd τ h)
-    ... | nothing = nothing
-    top _         _         _    = nothing
+      first (lowerʳ? k R cl (Bʳ.lowsOf {Ψ} k (rs R)))
+            (first (raiseʳ? k R cl (Bʳ.upsOf {Ψ} k (rs R)) (dfreeʳ? k R))
+            (first (unitʳ? k R cl (Is-just? uᵣ-least?) (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
+                   (topʳ? k R cl (Bʳ.freeLs {Ψ} k (rs R)) (dfreeʳ? k R) (occursʳ⁺ k R))))
 
 ------------------------------------------------------------------------
 -- Settled atoms: an ordering, or a disjunction with a side, decided true
@@ -1280,6 +1293,7 @@ record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
     fwd   : ∀ {Ψ'} → (δ : Subst Ψ Ψ')
           → (∀ {a} → a ∈ l → Disj ∅ᴴ δ a) → ∀ {a} → a ∈ ords → Ordʳ ∅ᴴ δ a
     restᴱ : ∀ {A ρ} → (A , ρ) ∈ rest → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
+    ordsᵘ : ∀ {x y} → (x , y) ∈ ords → y ≡ ûᵣ
 
 grade-side : ∀ {Ψ Ψ'} → (A : OVType Ψ) → etDec A ≡ nothing → {ρ : RExp Ψ} → (δ : Subst Ψ Ψ')
            → Disj ∅ᴴ δ (A , ρ) → Ordʳ ∅ᴴ δ (ρ , ûᵣ)
@@ -1288,22 +1302,24 @@ grade-side A e δ (≾ᵘ-ok le)      = le
 grade-side A e δ (hyp-ok () _ _)
 
 refine : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → Refined l
-refine []            = refined [] [] (λ ()) (λ δ k o ()) (λ δ k ()) (λ ())
+refine []            = refined [] [] (λ ()) (λ δ k o ()) (λ δ k ()) (λ ()) (λ ())
 refine ((A , ρ) ∷ l) with etDec A in e | refine l
-... | nothing | refined r os sb bk fw re =
+... | nothing | refined r os sb bk fw re ou =
       refined r ((ρ , ûᵣ) ∷ os) (λ m → there (sb m))
         (λ δ k o → λ { (here refl) → ≾ᵘ-ok (o (here refl))
                      ; (there m)   → bk δ k (λ m' → o (there m')) m })
         (λ δ k → λ { (here refl) → grade-side A e {ρ} δ (k (here refl))
                    ; (there m)   → fw δ (λ m' → k (there m')) m })
         re
-... | just αs | refined r os sb bk fw re =
+        (λ { (here refl) → refl ; (there m) → ou m })
+... | just αs | refined r os sb bk fw re ou =
       refined ((A , ρ) ∷ r) os
         (λ { (here refl) → here refl ; (there m) → there (sb m) })
         (λ δ k o → λ { (here refl) → k (here refl)
                      ; (there m)   → bk δ (λ m' → k (there m')) o m })
         (λ δ k → fw δ (λ m → k (there m)))
         (λ { (here refl) → αs , e ; (there m) → re m })
+        ou
 
 ------------------------------------------------------------------------
 -- A set of unknowns sent to the top at once
@@ -2351,6 +2367,30 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
                         (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
                         (λ α → refl))
 
+  -- The stages of a round, each given the rounds that follow it
+
+  resettle : 𝔹 → Localised O R → Localised O R
+  resettle true  L' = loc-settle L'
+  resettle false L' = L'
+
+  next₂ : (Localised O R → Localised O R) → Localised O R × 𝔹 → Localised O R
+  next₂ more (L' , true)  = more (loc-settle L')
+  next₂ more (L' , false) with raiseL L'
+  ... | just L'' = more (loc-settle L'')
+  ... | nothing  = L'
+
+  next : (Localised O R → Localised O R) → Localised O R × 𝔹 → Localised O R
+  next more (L' , changed) with passʳ (misses (λ k → freeʳ k O)) L'
+  ... | L'' , changed' = next₂ more (L'' , (changed ∨ changed'))
+
+  values : (Localised O R → Localised O R) → Localised O R × 𝔹 → Localised O R
+  values more (L' , changed) with passᵉ (misses (λ k → freeᵉ k O)) L'
+  ... | L'' , changed' = next more (L'' , (changed ∨ changed'))
+
+  cycles : (Localised O R → Localised O R) → Localised O R × 𝔹 → Localised O R
+  cycles more (L' , changed) with collapseʳL (nR Φ) L'
+  ... | L'' , changed' = values more (L'' , (changed ∨ changed'))
+
   -- A round writes the atoms in normal form, splitting the joins on
   -- left sides, identifies the unknowns in cycles, then gives values.
   -- Each round that changes something settles an unknown for good, so
@@ -2358,29 +2398,8 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
 
   rounds : ℕ → Localised O R → Localised O R
   rounds nzero    L = L
-  rounds (nsuc n) L = cycles (collapseᵉL (nE Φ) (resettle (joined (lR L)) (loc-normal L)))
-    where
-      resettle : 𝔹 → Localised O R → Localised O R
-      resettle true  L' = loc-settle L'
-      resettle false L' = L'
-
-      next₂ : Localised O R × 𝔹 → Localised O R
-      next₂ (L' , true)  = rounds n (loc-settle L')
-      next₂ (L' , false) with raiseL L'
-      ... | just L'' = rounds n (loc-settle L'')
-      ... | nothing  = L'
-
-      next : Localised O R × 𝔹 → Localised O R
-      next (L' , changed) with passʳ (misses (λ k → freeʳ k O)) L'
-      ... | L'' , changed' = next₂ (L'' , (changed ∨ changed'))
-
-      values : Localised O R × 𝔹 → Localised O R
-      values (L' , changed) with passᵉ (misses (λ k → freeᵉ k O)) L'
-      ... | L'' , changed' = next (L'' , (changed ∨ changed'))
-
-      cycles : Localised O R × 𝔹 → Localised O R
-      cycles (L' , changed) with collapseʳL (nR Φ) L'
-      ... | L'' , changed' = values (L'' , (changed ∨ changed'))
+  rounds (nsuc n) L =
+    cycles (rounds n) (collapseᵉL (nE Φ) (resettle (joined (lR L)) (loc-normal L)))
 
 localise : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Localised O R
 localise {Φ = Φ} O R = loc-settle (rounds O R (nE Φ + nR Φ) (loc-settle loc-id))

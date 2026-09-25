@@ -427,10 +427,17 @@ import TypeInference.SolverImpl
 ---- Invariants of the solver state: every greater side of the residue
 ---- is a whole unknown or over protected unknowns, and every greater
 ---- side of a deferred condition is over protected ones. Generation
----- gives constraints of that shape, and the driver keeps them, given
----- a pending fact about `Localise`
+---- gives constraints of that shape, and the driver keeps them.
+---- Within a round of `Localise`, a greater side may also be a join of
+---- its ordering's smaller side and others, which the decider settles.
 
 import TypeInference.SolverImpl.Invariants.Outer
+import TypeInference.SolverImpl.Invariants.Residual
+import TypeInference.SolverImpl.Invariants.Sums
+import TypeInference.SolverImpl.Invariants.Flat
+import TypeInference.SolverImpl.Invariants.Join
+import TypeInference.SolverImpl.Invariants.Canon
+import TypeInference.SolverImpl.Invariants.Localise
 import TypeInference.SolverImpl.Invariants.Expand
 import TypeInference.SolverImpl.Invariants.Unify
 import TypeInference.SolverImpl.Invariants
