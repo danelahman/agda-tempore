@@ -77,8 +77,9 @@
 -- stuck. Known cases: a cycle through a compound side, such    --
 -- as `j · a ≾ a ≾ c · j` or `j ≾ a ≾ c · a`; an outer scope's  --
 -- local unknown on both sides of an inner scope's deferred     --
--- condition; a local unknown under several upper bounds, none  --
--- decided below the others.                                    --
+-- condition; a local unknown with no lower bound under        --
+-- several upper bounds, none decided below the others, which   --
+-- in a program comes only from `absurd`.                       --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false) renaming (Bool to 𝔹)

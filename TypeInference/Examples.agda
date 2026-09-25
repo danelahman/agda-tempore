@@ -10,8 +10,9 @@
 -- Set 2 is annotated programs, one per annotation form with the  --
 -- type it forces.                                                --
 --                                                                --
--- Set 3 is handlers with no annotation. Two leave unknowns local --
--- to the clause, and inference types them at the four grades.    --
+-- Set 3 is handlers with no annotation. One leaves unknowns      --
+-- local to the clause, and inference types it at the four        --
+-- grades.                                                        --
 -- Two are typable at some grades only: one drops its             --
 -- continuation, one resumes it twice. Inference types each where --
 -- it is typable and refutes it elsewhere.                        --

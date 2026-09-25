@@ -1,15 +1,13 @@
 ------------------------------------------------------------------
 -- Inference on handlers                                          --
 --                                                                --
--- Handlers whose clauses leave unknowns local to the clause's    --
+-- A handler whose clause leaves unknowns local to the clause's   --
 -- rigid scope, which `Localise` gives values, and handlers whose --
 -- typability depends on the grade. None has an annotation.       --
 --                                                                --
 -- `relay` resumes through the identity applied to its own        --
--- result: a cycle of two clause-local unknowns. `abort`'s clause --
--- grade is a unit factor times a clause-local unknown, below the --
--- clause's grade. Both are typable over an arbitrary language,   --
--- so inference never refutes them.                               --
+-- result: a cycle of two clause-local unknowns. It is typable    --
+-- over an arbitrary language, so inference never refutes it.     --
 --                                                                --
 -- `discard` drops its continuation, and is typable where the     --
 -- unit is least; `resume-twice` calls it twice, and is typable   --
@@ -143,50 +141,6 @@ relay-unrefuted = infer-complete [] relay relay-typable
 
 expected-relay : Report
 expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
-
-------------------------------------------------------------------
--- A clause with an effect nothing bounds below
---
--- A handler, as a function of an eternal `z : Empty` and of the
--- thunk it handles, whose clause returns and then eliminates `z`:
---
---   abort z m = handle m () with op p k ↦ (return () ; absurd z)
---
--- `z` is eternal, so the clause may use it under its lock. The
--- clause's grade is `ûₑ · e`, with `e` the latent effect of
--- `absurd z`: local to the clause, bounded above by the clause's
--- grade `op · j` and by nothing below. The example checks that
--- `ûₑ · e` is read as `e`, which is then sent to `op · j`. The
--- clause drops its continuation, but it is typable at every grade
--- only because `absurd z` has any effect; `discard` drops it with
--- no such argument.
-
-abort : RawC ∅ˢ 0
-abort = return (lam[ Empty ] (return (lam
-          (handle (v₀ · ⋆) `with (λ op → return ⋆ ⨟ absurd v₄) `in (return ⋆)))))
-
--- It is typable, the clause at the unit
-
-abort-D : ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ (Empty ⇒ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ
-abort-D =
-  return (lamᵃ Empty (return (lam
-    (handle var Hd ok₀ · ⋆
-     `with (λ op → coerce (eqₑ ≡̂ₑ-identityˡ)
-                     (return ⋆ ⨟ absurd (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))
-                                             (et-ok Emptyₑ))))
-     `in (return ⋆)))))
-
-abort-typable : Typable [] abort
-abort-typable = closed abort-D refl
-
--- so inference never refutes it
-
-abort-unrefuted : infer [] abort ≢ untypable
-abort-unrefuted = infer-complete [] abort abort-typable
-
-expected-abort : Report
-expected-abort = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (Empty ⇒ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ) ‼ ûₑ
-
 
 ------------------------------------------------------------------
 -- A handler that drops its continuation

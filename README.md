@@ -418,7 +418,8 @@ Inference for the open calculus, by constraint generation and solving.
   one decided below the others. Known cases: a local cycle through a
   compound side, such as a product with the clause's rigid; an outer
   clause's local on both sides of an inner clause's deferred condition; a
-  clause-local under several upper bounds, none decided below the others.
+  clause-local with no lower bound under several upper bounds, none decided
+  below the others, which in a program comes only from `absurd`.
 
 - `TypeInference/Examples/` runs inference on nine functions of the
   prototype's standard library. `Stdlib.agda` proves, over an arbitrary
@@ -428,10 +429,9 @@ Inference for the open calculus, by constraint generation and solving.
   `Annotations.agda` gives one program per annotation form with the type it
   forces; `Annotations/` checks the schemes at the four grades.
   `Handlers.agda` gives handlers with no annotation. `relay`, whose clause
-  resumes through the identity applied to its own result, and `abort`, whose
-  clause has an effect nothing bounds below, leave unknowns local to the
-  clause and are typable at every grade. `discard`, whose clause drops its
-  continuation, is typable where the unit is least; `resume-twice`, whose
-  clause calls it twice, where the unit is the top. `Handlers/` checks by
+  resumes through the identity applied to its own result, leaves unknowns
+  local to the clause and is typable at every grade. `discard`, whose clause
+  drops its continuation, is typable where the unit is least;
+  `resume-twice`, whose clause calls it twice, where the unit is the top. `Handlers/` checks by
   `refl` that inference types each where it is typable (with a derivation at
   that grade) and refutes it elsewhere, at the four grades.

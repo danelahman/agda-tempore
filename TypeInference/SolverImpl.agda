@@ -625,8 +625,9 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
 -- the local unknowns in cycles between whole unknowns. Known cases: a
 -- local cycle through a compound side, such as a product with the
 -- clause's rigid; an outer clause's local on both sides of an inner
--- clause's deferred condition; a clause-local under several upper
--- bounds, none decided below the others.
+-- clause's deferred condition; a clause-local with no lower bound
+-- under several upper bounds, none decided below the others, which in
+-- a program comes only from `absurd`.
 
 inferred : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
          → Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) → Inference Γ M
