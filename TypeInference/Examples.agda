@@ -10,9 +10,11 @@
 -- Set 2 is annotated programs, one per annotation form with the  --
 -- type it forces.                                                --
 --                                                                --
--- Set 3 is typable handlers with no annotation, whose clauses    --
--- leave unknowns local to the clause; inference types each at    --
--- the four grades.                                               --
+-- Set 3 is handlers with no annotation. Two leave unknowns local --
+-- to the clause, and inference types them at the four grades.    --
+-- Two are typable at some grades only: one drops its             --
+-- continuation, one resumes it twice. Inference types each where --
+-- it is typable and refutes it elsewhere.                        --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -52,7 +54,7 @@ import TypeInference.Examples.Annotations.Traces.Timed.LeftSided
 
 import TypeInference.Examples.Handlers
 
--- The schemes at each grade
+-- The verdicts and schemes at each grade
 
 import TypeInference.Examples.Handlers.Time.RightSided
 import TypeInference.Examples.Handlers.Time.LeftSided

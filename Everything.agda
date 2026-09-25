@@ -420,6 +420,8 @@ import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Strengthen
 import TypeInference.SolverImpl
 
----- Inference on the prototype's standard library, at four grades
+---- The inference examples run the solver at four grades and take minutes
+---- to check, so they are checked on their own, with
+---- `agda TypeInference/Examples.agda`
 
-import TypeInference.Examples
+-- import TypeInference.Examples

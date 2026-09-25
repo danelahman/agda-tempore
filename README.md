@@ -41,8 +41,10 @@ The **main features** of this core language are:
   grades, one for resource grades) together with a grade morphism between them.
 
 The formalisation is developed and tested with Agda version 2.8.0 and Agda
-Standard Library version 2.3. To check the whole development, run `make` (which
-invokes `agda Everything.agda`); `Everything.agda` imports every module.
+Standard Library version 2.3. To check the development, run `make` (which
+invokes `agda Everything.agda`); `Everything.agda` imports every module except
+the type-inference examples, which run the solver at four grades and take
+minutes to check: `make examples` checks those (`agda TypeInference/Examples.agda`).
 
 ## Structure of the formalisation
 
@@ -425,7 +427,11 @@ Inference for the open calculus, by constraint generation and solving.
   `Report.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
   `Annotations.agda` gives one program per annotation form with the type it
   forces; `Annotations/` checks the schemes at the four grades.
-  `Handlers.agda` gives typable handlers with no annotation whose clauses
-  leave unknowns local to the clause: `relay`, whose clause resumes through
-  the identity applied to its own result, and `abort`, whose clause does not
-  resume; `Handlers/` checks that inference types each at the four grades.
+  `Handlers.agda` gives handlers with no annotation. `relay`, whose clause
+  resumes through the identity applied to its own result, and `abort`, whose
+  clause has an effect nothing bounds below, leave unknowns local to the
+  clause and are typable at every grade. `discard`, whose clause drops its
+  continuation, is typable where the unit is least; `resume-twice`, whose
+  clause calls it twice, where the unit is the top. `Handlers/` checks by
+  `refl` that inference types each where it is typable (with a derivation at
+  that grade) and refutes it elsewhere, at the four grades.
