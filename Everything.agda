@@ -419,3 +419,7 @@ import TypeInference.SolverImpl.Principal
 import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Strengthen
 import TypeInference.SolverImpl
+
+---- Inference on the prototype's standard library, at four grades
+
+import TypeInference.Examples

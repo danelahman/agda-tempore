@@ -410,5 +410,8 @@ Inference for the open calculus, by constraint generation and solving.
   sides of an inner clause's deferred condition; a clause-local under several
   incomparable upper bounds.
 
-- The example programs and tests, in `backup/TypeInference/Tests` and
-  `backup/TypeInference/SolverImpl/Demo`, are not part of the check.
+- `TypeInference/Examples/` runs inference on nine functions of the
+  prototype's standard library. `Stdlib.agda` proves, over an arbitrary
+  language, that inference answers `typed` for each; `Stdlib/` checks the
+  reported scheme by `refl` at four grades, covering `u-least?` and `·-comm?`.
+  `Report.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
