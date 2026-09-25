@@ -424,6 +424,17 @@ import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Strengthen
 import TypeInference.SolverImpl
 
+---- Invariants of the solver state: every greater side of the residue
+---- is a whole unknown or over protected unknowns, and every greater
+---- side of a deferred condition is over protected ones. Generation
+---- gives constraints of that shape, and the driver keeps them, given
+---- two pending facts about the unifier and about `Localise`
+
+import TypeInference.SolverImpl.Invariants.Outer
+import TypeInference.SolverImpl.Invariants.Expand
+import TypeInference.SolverImpl.Invariants
+import TypeInference.SolverImpl.Invariants.Generate
+
 ---- The inference examples run the solver at four grades and take minutes
 ---- to check, so they are checked on their own, with
 ---- `agda TypeInference/Examples.agda`

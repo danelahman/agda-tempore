@@ -324,10 +324,15 @@ Outerᵣ O ρ = (∀ {k} → occᵉ-r k ρ ≡ true → freeᵉ k O ≡ true)
 ... | inj₁ r = f r
 ... | inj₂ r = g r
 
+-- At a variable the test is named, so that a proof can follow it
+
+outerVarₑ : ∀ {Θ Φ} → (O : Subst Θ Φ) → (i : EVar Φ) → (b : 𝔹) → freeᵉ i O ≡ b
+          → Maybe (Outerₑ O (evar i))
+outerVarₑ O i true  q = just (λ {k} r → subst (λ x → freeᵉ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
+outerVarₑ O i false q = nothing
+
 outerₑ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ε : EExp Φ) → Maybe (Outerₑ O ε)
-outerₑ? O (evar i) with freeᵉ i O in q
-... | true  = just (λ {k} r → subst (λ x → freeᵉ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
-... | false = nothing
+outerₑ? O (evar i) = outerVarₑ O i (freeᵉ i O) refl
 outerₑ? O (econst c) = just (λ ())
 outerₑ? O (ε ·̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
 ... | just f | just g = just (∨-elim f g)
@@ -336,11 +341,14 @@ outerₑ? O (ε ⊔̂ₑ ε') with outerₑ? O ε | outerₑ? O ε'
 ... | just f | just g = just (∨-elim f g)
 ... | _      | _      = nothing
 
+outerVarᵣ : ∀ {Θ Φ} → (O : Subst Θ Φ) → (i : RVar Φ) → (b : 𝔹) → freeʳ i O ≡ b
+          → Maybe (Outerᵣ O (rvar i))
+outerVarᵣ O i true  q = just ((λ ()) ,
+                              λ {k} r → subst (λ x → freeʳ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
+outerVarᵣ O i false q = nothing
+
 outerᵣ? : ∀ {Θ Φ} → (O : Subst Θ Φ) → (ρ : RExp Φ) → Maybe (Outerᵣ O ρ)
-outerᵣ? O (rvar i) with freeʳ i O in q
-... | true  = just ((λ ()) ,
-                    λ {k} r → subst (λ x → freeʳ x O ≡ true) (sym (true-dec (k ≟ᶠ i) r)) q)
-... | false = nothing
+outerᵣ? O (rvar i) = outerVarᵣ O i (freeʳ i O) refl
 outerᵣ? O (rconst c) = just ((λ ()) , (λ ()))
 outerᵣ? O (ρ ·̂ᵣ ρ') with outerᵣ? O ρ | outerᵣ? O ρ'
 ... | just (f , f') | just (g , g') = just (∨-elim f g , ∨-elim f' g')
