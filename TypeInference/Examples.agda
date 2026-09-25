@@ -7,9 +7,9 @@
 -- by `refl`. The four grades cover the two properties the solver --
 -- reads from a grade, `u-least?` and `·-comm?`.                  --
 --                                                                --
--- Set 2 is annotated programs: one per annotation form, with the --
--- type it forces, and a typable handler inference is stuck on    --
--- without an annotation and types with one.                      --
+-- Set 2 is annotated programs, one per annotation form with the  --
+-- type it forces, and a typable handler whose clause resumes     --
+-- through a helper, which inference types unannotated.           --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -38,7 +38,7 @@ import TypeInference.Examples.Stdlib.Traces.Timed.LeftSided
 
 import TypeInference.Examples.Annotations
 
--- Their verdicts at each grade
+-- The schemes at each grade
 
 import TypeInference.Examples.Annotations.Time.RightSided
 import TypeInference.Examples.Annotations.Time.LeftSided

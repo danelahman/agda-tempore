@@ -620,11 +620,12 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
 
 -- Inference: a principal typing, a refutation, or stuck. It is stuck
 -- where a handler clause's scope closes with an unknown local to it
--- for which `Localise` finds no value. Known cases: a local cycle
--- between the clause's rigid and something mentioning it (class D);
--- an outer clause's local on both sides of an inner clause's deferred
--- condition; a clause-local bounded above by several incomparable
--- grades.
+-- for which `Localise` finds no value, after splitting the joins on
+-- left sides and identifying the local unknowns in cycles between
+-- whole unknowns. Known cases: a local cycle through a compound side,
+-- such as a product with the clause's rigid; an outer clause's local
+-- on both sides of an inner clause's deferred condition; a
+-- clause-local bounded above by several incomparable grades.
 
 inferred : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
          → Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) → Inference Γ M

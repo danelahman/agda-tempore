@@ -408,10 +408,13 @@ Inference for the open calculus, by constraint generation and solving.
 - The solver reads `u-least?` and `·-comm?` from the grade system.
 
 - `stuck` arises only where a clause's scope closes with a local unknown for
-  which `Localise` finds no value. Known cases: a local cycle between the
-  clause's rigid and something mentioning it; an outer clause's local on both
-  sides of an inner clause's deferred condition; a clause-local under several
-  incomparable upper bounds.
+  which `Localise` finds no value. Before giving values, `Localise` splits
+  each ordering whose left side is a join into one per alternative, and
+  identifies local unknowns that bound each other in a cycle of orderings
+  between whole unknowns. Known cases: a local cycle through a compound
+  side, such as a product with the clause's rigid; an outer clause's local
+  on both sides of an inner clause's deferred condition; a clause-local under
+  several incomparable upper bounds.
 
 - `TypeInference/Examples/` runs inference on nine functions of the
   prototype's standard library. `Stdlib.agda` proves, over an arbitrary
@@ -420,5 +423,5 @@ Inference for the open calculus, by constraint generation and solving.
   `Report.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
   `Annotations.agda` gives one program per annotation form with the type it
   forces, and `relay`, a typable handler whose clause resumes through the
-  identity applied to itself: inference is stuck on it at the four grades,
-  and types it once the identity's argument is annotated (`Annotations/`).
+  identity applied to its own result, which inference types with no
+  annotation; `Annotations/` checks the schemes at the four grades.

@@ -10,10 +10,10 @@
 -- shape the annotation forces.                                   --
 --                                                                --
 -- `relay` is a handler whose clause resumes through the          --
--- identity applied to itself. It is typable (`relay-typable`),   --
--- and at the four example grades inference is stuck on it;       --
--- `relayᵃ`, annotating the identity's argument, is typed there.  --
--- The instances under `Annotations/` check both by `refl`.       --
+-- identity applied to its own result. It is typable              --
+-- (`relay-typable`), with no annotation; the instances under     --
+-- `Annotations/` check by `refl` that inference types it at the  --
+-- four example grades.                                           --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
@@ -144,7 +144,7 @@ expected-compose-g =
     ((Unit ⇒ α₀ ‼ ε₀) ⇒ (U⇒U ⇒ (Unit ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
--- Stuck without an annotation, typed with one
+-- A handler resuming through a helper
 --
 -- A handler, as a function of the thunk it handles, whose clause
 -- forwards the operation and resumes through a helper `h` applied
@@ -157,29 +157,19 @@ expected-compose-g =
 -- `h` is monomorphic, so the latent effects of its argument and of
 -- its result bound each other: a cycle of two clause-local unknowns,
 -- entered from below by the resumption's grade `j`, the clause's
--- rigid, and bounded above by the clause's grade `op · j`. Sending
--- one member to the join of its lower bounds leaves the other, `ε`,
--- below itself (`j ⊔ ε ≾ ε`): `Localise` has no value for `ε`, and
--- cannot raise it to the top, `op · j` being above it. Inference is
--- stuck on `relay` at the four example grades. Annotating `h`'s
--- argument at the continuation's type, `Unit ⇒ Unit ‼ j`, removes
--- the cycle: `relayᵃ` is typed.
+-- rigid, and bounded above by the clause's grade `op · j`. The two
+-- are identified, and then sent to `j`: `h` is typed at
+-- `Unit ⇒ Unit ‼ j`.
 
-resume-through : ∀ {Θ n} → RawV (Θ +e) (suc (suc (suc (suc n))))
-               → Op → RawC (Θ +e) (suc (suc n))
-resume-through h op =
+resume-through : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
+resume-through op =
   perform op v₁ (unbox (fsuc fzero)
-    (return h ⨟ ((v₀ · lam (v₂ · v₃)) ⨟ ((v₁ · v₀) ⨟ (v₀ · ⋆)))))
+    (return (lam (return v₀)) ⨟ ((v₀ · lam (v₂ · v₃)) ⨟ ((v₁ · v₀) ⨟ (v₀ · ⋆)))))
 
 relay : RawC ∅ˢ 0
-relay = return (lam (handle (v₀ · ⋆) `with resume-through (lam (return v₀)) `in (return ⋆)))
+relay = return (lam (handle (v₀ · ⋆) `with resume-through `in (return ⋆)))
 
-relayᵃ : RawC ∅ˢ 0
-relayᵃ =
-  return (lam (handle (v₀ · ⋆)
-    `with resume-through (lam[ Unit ⇒ Unit ‼ ε₀ ] (return v₀)) `in (return ⋆)))
-
--- Both are typable, `h` at `Unit ⇒ Unit ‼ j` in each
+-- It is typable, `h` at `Unit ⇒ Unit ‼ j`
 
 private
 
@@ -189,11 +179,11 @@ private
   u³ : ∀ {Θ} {ε : EExp Θ} → ûₑ ·̂ₑ (ûₑ ·̂ₑ (ûₑ ·̂ₑ ε)) ≡̂ₑ ε
   u³ = ≡̂ₑ-trans ≡̂ₑ-identityˡ (≡̂ₑ-trans ≡̂ₑ-identityˡ ≡̂ₑ-identityˡ)
 
-  -- `relay` and `relayᵃ`, at the helper's derivation `H`
+  H : ∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢V⦂ T ⇒ T ‼ ûₑ
+  H = lam (return (var Hd ok₀))
 
-  relay-at : (∀ {n} {Γ : OCtx (∅ˢ +e) n} → ∅ᴴ ∣ Γ ⊢V⦂ T ⇒ T ‼ ûₑ)
-           → ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
-  relay-at H =
+  relay-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
+  relay-D =
     return (lam (handle var Hd ok₀ · ⋆
       `with (λ op →
         perform op (var (Tl-∷ Hd) ok₀)
@@ -207,15 +197,12 @@ private
       `in (return ⋆)))
 
 relay-typable : Typable [] relay
-relay-typable = closed (relay-at (lam (return (var Hd ok₀)))) refl
-
-relayᵃ-typable : Typable [] relayᵃ
-relayᵃ-typable = closed (relay-at (lamᵃ T (return (var Hd ok₀)))) refl
+relay-typable = closed relay-D refl
 
 -- so inference never refutes it
 
 relay-unrefuted : infer [] relay ≢ untypable
 relay-unrefuted = infer-complete [] relay relay-typable
 
-expected-relayᵃ : Report
-expected-relayᵃ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
+expected-relay : Report
+expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ

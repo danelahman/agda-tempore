@@ -4,8 +4,23 @@
 -- An unknown is local to a scope when it is free in the image  --
 -- of none of the unknowns the scope was entered with; the      --
 -- rigid is one of those, so it is never local and never        --
--- assigned. Before the atoms of the scope are split, each      --
--- local unknown with a principal value is sent to it:          --
+-- assigned.                                                    --
+--                                                              --
+-- Each round first rewrites the atoms into equivalent ones:    --
+--   * an ordering whose left side has two or more alternatives --
+--     in normal form becomes one ordering per alternative, the --
+--     join being the least upper bound; a right side is never  --
+--     split (`loc-joins`);                                     --
+--   * local unknowns that bound each other along orderings     --
+--     whose sides are whole unknowns are identified: each is   --
+--     sent to another member, an outer unknown where the cycle --
+--     has one, else the least local. The members are equal at  --
+--     every instance, grades being antisymmetric, so the       --
+--     instance is kept (`collapseᵉ-⊩`); a member sent occurs   --
+--     in no type.                                              --
+--                                                              --
+-- Then, before the atoms of the scope are split, each local    --
+-- unknown with a principal value is sent to it:                --
 --   * the join of its lower bounds, where it occurs on a right --
 --     side only as the whole side (Pottier's condition);       --
 --   * dually, its one upper bound, where it occurs on a left   --
@@ -99,12 +114,15 @@ open import TypeInference.SolverImpl.Core.Rigid S
   using (∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
 open import TypeInference.SolverImpl.Deferred  S
-  using (Dfr; Dir; dir↓; dir↑; Still; stills?; keepᵈ; allOf;
-         κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
+  using (Dfr; dfr; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes; ≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?;
+         keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Eliminate S
   using (joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
 open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Product   S
+  using (Alts; alt; _∷⁺_; RAtom; EAtom; ⟦_⟧ʳᵖ; ⟦_⟧ʳᵖ⁺; ⟦_⟧ᵉᵖ; ⟦_⟧ᵉᵖ⁺;
+         nrmᵣ; nrmₑ; nrmᵣ-≡ᵖ; nrmₑ-≡ᵖ)
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -1720,6 +1738,426 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
   raise? = select (nsuc (nE Φ + nR Φ)) (λ k → not (freeᵉ k O)) (λ k → not (freeʳ k O))
 
 ------------------------------------------------------------------------
+-- Joins on a left side: an ordering whose left side has two or more
+-- alternatives in normal form is one ordering per alternative, the
+-- join being the least upper bound
+
+hasJoinₑ : ∀ {Ψ} → EExp Ψ → 𝔹
+hasJoinₑ (evar i)   = false
+hasJoinₑ (econst c) = false
+hasJoinₑ (ε ·̂ₑ ε')  = hasJoinₑ ε ∨ hasJoinₑ ε'
+hasJoinₑ (ε ⊔̂ₑ ε')  = true
+
+hasJoinᵣ : ∀ {Ψ} → RExp Ψ → 𝔹
+hasJoinᵣ (rvar i)   = false
+hasJoinᵣ (rconst c) = false
+hasJoinᵣ (ρ ·̂ᵣ ρ')  = hasJoinᵣ ρ ∨ hasJoinᵣ ρ'
+hasJoinᵣ (ρ ⊔̂ᵣ ρ')  = true
+hasJoinᵣ ∣ ε ∣̂ᵉ     = hasJoinₑ ε
+
+-- The orderings an atom is replaced by, equivalent to it at every
+-- instance
+
+record Pieces {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (a : X) : Set where
+  constructor pieces
+  field
+    parts : List X
+    pback : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → (∀ {b} → b ∈ parts → P Q δ b) → P Q δ a
+    pfwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → P Q δ a → ∀ {b} → b ∈ parts → P Q δ b
+
+whole : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X} → Pieces P a
+whole = pieces (_ ∷ []) (λ δ k → k (here refl)) (λ δ p → λ { (here refl) → p })
+
+record Split {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (l : List X) : Set where
+  constructor split
+  field
+    out  : List X
+    back : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+         → (∀ {b} → b ∈ out → P Q δ b) → ∀ {a} → a ∈ l → P Q δ a
+    fwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+         → (∀ {a} → a ∈ l → P Q δ a) → ∀ {b} → b ∈ out → P Q δ b
+
+splits : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+       → ((a : X) → Pieces P a) → (l : List X) → Split P l
+splits f []      = split [] (λ δ k → λ ()) (λ δ k → λ ())
+splits {P = P} f (a ∷ l) = go (f a) (splits f l)
+  where
+    go : Pieces P a → Split P l → Split P (a ∷ l)
+    go (pieces ps pb pf) (split o bk fw) =
+      split (ps ++ o)
+            (λ δ k → λ { (here refl) → pb δ (λ m → k (∈-++⁺ˡ m))
+                       ; (there m)   → bk δ (λ m' → k (∈-++⁺ʳ ps m')) m })
+            (λ δ k m → [ pf δ (k (here refl)) , fw δ (λ m' → k (there m')) ]′ (∈-++⁻ ps m))
+
+-- The alternatives of a sum, each below the same right side
+
+partsʳ : ∀ {Ψ} → Alts (List (RAtom Ψ)) → RExp Ψ → List (RExp Ψ × RExp Ψ)
+partsʳ (alt p)  y = (⟦ p ⟧ʳᵖ , y) ∷ []
+partsʳ (p ∷⁺ s) y = (⟦ p ⟧ʳᵖ , y) ∷ partsʳ s y
+
+partsₑ : ∀ {Ψ} → Alts (List (EAtom Ψ)) → EExp Ψ → List (EExp Ψ × EExp Ψ)
+partsₑ (alt p)  y = (⟦ p ⟧ᵉᵖ , y) ∷ []
+partsₑ (p ∷⁺ s) y = (⟦ p ⟧ᵉᵖ , y) ∷ partsₑ s y
+
+partsʳ-lub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (RAtom Ψ))) → (y : RExp Ψ)
+           → (∀ {b} → b ∈ partsʳ s y → Ordʳ Q δ b) → Q ⊩ ⟦ s ⟧ʳᵖ⁺ [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
+partsʳ-lub (alt p)  y k = k (here refl)
+partsʳ-lub (p ∷⁺ s) y k = ⊔-lubᵣ (k (here refl)) (partsʳ-lub s y (λ m → k (there m)))
+
+partsʳ-ub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (RAtom Ψ))) → (y : RExp Ψ)
+          → Q ⊩ ⟦ s ⟧ʳᵖ⁺ [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ → ∀ {b} → b ∈ partsʳ s y → Ordʳ Q δ b
+partsʳ-ub (alt p)  y h (here refl) = h
+partsʳ-ub (p ∷⁺ s) y h (here refl) = transᵣ ⊔-ubˡᵣ h
+partsʳ-ub (p ∷⁺ s) y h (there m)   = partsʳ-ub s y (transᵣ ⊔-ubʳᵣ h) m
+
+partsₑ-lub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (EAtom Ψ))) → (y : EExp Ψ)
+           → (∀ {b} → b ∈ partsₑ s y → Ordᵉ Q δ b) → Q ⊩ ⟦ s ⟧ᵉᵖ⁺ [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
+partsₑ-lub (alt p)  y k = k (here refl)
+partsₑ-lub (p ∷⁺ s) y k = ⊔-lubₑ (k (here refl)) (partsₑ-lub s y (λ m → k (there m)))
+
+partsₑ-ub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (EAtom Ψ))) → (y : EExp Ψ)
+          → Q ⊩ ⟦ s ⟧ᵉᵖ⁺ [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ → ∀ {b} → b ∈ partsₑ s y → Ordᵉ Q δ b
+partsₑ-ub (alt p)  y h (here refl) = h
+partsₑ-ub (p ∷⁺ s) y h (here refl) = transₑ ⊔-ubˡₑ h
+partsₑ-ub (p ∷⁺ s) y h (there m)   = partsₑ-ub s y (transₑ ⊔-ubʳₑ h) m
+
+-- An ordering is split where its left side has a join and more than
+-- one alternative, and is otherwise kept as it is
+
+piecesʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Pieces Ordʳ a
+piecesʳ (x , y) with hasJoinᵣ x
+... | false = whole
+... | true  = go (nrmᵣ x) (nrmᵣ-≡ᵖ x)
+  where
+    go : (s : Alts (List (RAtom _))) → x ≡̂ᵣ ⟦ s ⟧ʳᵖ⁺ → Pieces Ordʳ (x , y)
+    go (alt p)    e = whole
+    go s@(_ ∷⁺ _) e =
+      pieces (partsʳ s y)
+             (λ δ k → transᵣ (eqᵣ (≡̂ᵣ-subst δ e)) (partsʳ-lub s y k))
+             (λ δ h → partsʳ-ub s y (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ e))) h))
+
+piecesᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Pieces Ordᵉ a
+piecesᵉ (x , y) with hasJoinₑ x
+... | false = whole
+... | true  = go (nrmₑ x) (nrmₑ-≡ᵖ x)
+  where
+    go : (s : Alts (List (EAtom _))) → x ≡̂ₑ ⟦ s ⟧ᵉᵖ⁺ → Pieces Ordᵉ (x , y)
+    go (alt p)    e = whole
+    go s@(_ ∷⁺ _) e =
+      pieces (partsₑ s y)
+             (λ δ k → transₑ (eqₑ (≡̂ₑ-subst δ e)) (partsₑ-lub s y k))
+             (λ δ h → partsₑ-ub s y (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst δ e))) h))
+
+------------------------------------------------------------------------
+-- Unknowns that bound each other: along a chain of orderings whose
+-- sides are whole unknowns, each is below the next at every instance
+-- satisfying them
+
+-- Equality of indices as a boolean, for the searches that need no
+-- proof of it
+
+_==ᶠ_ : ∀ {n} → Fin n → Fin n → 𝔹
+zero  ==ᶠ zero  = true
+suc i ==ᶠ suc j = i ==ᶠ j
+zero  ==ᶠ suc j = false
+suc i ==ᶠ zero  = false
+
+module Chains {V : Set} (_≟_ : Decidable (_≡_ {A = V})) (_==_ : V → V → 𝔹)
+              (Edge : V → V → Set) (E : List (Σ[ a ∈ V ] Σ[ b ∈ V ] Edge a b)) where
+
+  data Chain : V → V → Set where
+    done : ∀ {a} → Chain a a
+    link : ∀ {a b c} → Edge a b → Chain b c → Chain a c
+
+  snoc : ∀ {a b c} → Chain a b → Edge b c → Chain a c
+  snoc done        e = link e done
+  snoc (link e' c) e = link e' (snoc c e)
+
+  fold : ∀ {Rel : V → V → Set} → (∀ {a} → Rel a a)
+       → (∀ {a b c} → Edge a b → Rel b c → Rel a c) → ∀ {a b} → Chain a b → Rel a b
+  fold r t done       = r
+  fold r t (link e c) = t e (fold r t c)
+
+  lookupᶜ : ∀ {P : V → Set} → (v : V) → List (Σ[ w ∈ V ] P w) → Maybe (P v)
+  lookupᶜ v []            = nothing
+  lookupᶜ v ((w , p) ∷ l) with v == w
+  ... | false = lookupᶜ v l
+  ... | true with v ≟ w
+  ...   | yes refl = just p
+  ...   | no _     = lookupᶜ v l
+
+  known : ∀ {P : V → Set} → V → List (Σ[ w ∈ V ] P w) → 𝔹
+  known v l = anyL (λ { (w , _) → v == w }) l
+
+  -- the unknowns reached from `a`, and those reaching it, each with a
+  -- chain: one more is added while an ordering leads to (from) one
+  -- not yet found
+
+  nextFrom : ∀ {a} → List (Σ[ w ∈ V ] Chain a w) → Maybe (Σ[ w ∈ V ] Chain a w)
+  nextFrom {a} S = go E
+    where
+      go : List (Σ[ u ∈ V ] Σ[ w ∈ V ] Edge u w) → Maybe (Σ[ w ∈ V ] Chain a w)
+      go []               = nothing
+      go ((u , w , e) ∷ l) with known w S
+      ... | true  = go l
+      ... | false with lookupᶜ u S
+      ...   | just c  = just (w , snoc c e)
+      ...   | nothing = go l
+
+  nextTo : ∀ {a} → List (Σ[ w ∈ V ] Chain w a) → Maybe (Σ[ w ∈ V ] Chain w a)
+  nextTo {a} S = go E
+    where
+      go : List (Σ[ u ∈ V ] Σ[ w ∈ V ] Edge u w) → Maybe (Σ[ w ∈ V ] Chain w a)
+      go []               = nothing
+      go ((u , w , e) ∷ l) with known u S
+      ... | true  = go l
+      ... | false with lookupᶜ w S
+      ...   | just c  = just (u , link e c)
+      ...   | nothing = go l
+
+  growFrom : ∀ {a} → ℕ → List (Σ[ w ∈ V ] Chain a w) → List (Σ[ w ∈ V ] Chain a w)
+  growFrom nzero    S = S
+  growFrom (nsuc n) S with nextFrom S
+  ... | just x  = growFrom n (x ∷ S)
+  ... | nothing = S
+
+  growTo : ∀ {a} → ℕ → List (Σ[ w ∈ V ] Chain w a) → List (Σ[ w ∈ V ] Chain w a)
+  growTo nzero    S = S
+  growTo (nsuc n) S with nextTo S
+  ... | just x  = growTo n (x ∷ S)
+  ... | nothing = S
+
+  -- each ordering adds at most one
+
+  size : ℕ
+  size = go E
+    where
+      go : List (Σ[ u ∈ V ] Σ[ w ∈ V ] Edge u w) → ℕ
+      go []      = nzero
+      go (_ ∷ l) = nsuc (go l)
+
+  reachFrom : (a : V) → List (Σ[ w ∈ V ] Chain a w)
+  reachFrom a = growFrom size ((a , done) ∷ [])
+
+  reachTo : (a : V) → List (Σ[ w ∈ V ] Chain w a)
+  reachTo a = growTo size ((a , done) ∷ [])
+
+  source : V → 𝔹
+  source v = anyL (λ { (u , _ , _) → u == v }) E
+
+-- The orderings between two whole unknowns
+
+edgesᵉ : ∀ {Ψ} → (l : List (EExp Ψ × EExp Ψ))
+       → List (Σ[ a ∈ EVar Ψ ] Σ[ b ∈ EVar Ψ ] ((evar a , evar b) ∈ l))
+edgesᵉ {Ψ} l = go (withMem l)
+  where
+    go : List (Σ[ p ∈ EExp Ψ × EExp Ψ ] (p ∈ l))
+       → List (Σ[ a ∈ EVar Ψ ] Σ[ b ∈ EVar Ψ ] ((evar a , evar b) ∈ l))
+    go []                  = []
+    go (((x , y) , m) ∷ ps) with evar? x | evar? y
+    ... | just (a , refl) | just (b , refl) = (a , b , m) ∷ go ps
+    ... | _               | _               = go ps
+
+edgesʳ : ∀ {Ψ} → (l : List (RExp Ψ × RExp Ψ))
+       → List (Σ[ a ∈ RVar Ψ ] Σ[ b ∈ RVar Ψ ] ((rvar a , rvar b) ∈ l))
+edgesʳ {Ψ} l = go (withMem l)
+  where
+    go : List (Σ[ p ∈ RExp Ψ × RExp Ψ ] (p ∈ l))
+       → List (Σ[ a ∈ RVar Ψ ] Σ[ b ∈ RVar Ψ ] ((rvar a , rvar b) ∈ l))
+    go []                  = []
+    go (((x , y) , m) ∷ ps) with rvar? x | rvar? y
+    ... | just (a , refl) | just (b , refl) = (a , b , m) ∷ go ps
+    ... | _               | _               = go ps
+
+-- The orderings that may lie on a cycle: while one has a smaller side
+-- that is no greater side, or a greater side that is no smaller side,
+-- it is dropped
+
+cyclic : ∀ {V : Set} {Edge : V → V → Set} → (V → V → 𝔹)
+       → List (Σ[ a ∈ V ] Σ[ b ∈ V ] Edge a b) → List (Σ[ a ∈ V ] Σ[ b ∈ V ] Edge a b)
+cyclic {V} {Edge} _==_ l₀ = go l₀ l₀
+  where
+    T : Set
+    T = Σ[ a ∈ V ] Σ[ b ∈ V ] Edge a b
+
+    into : List T → V → 𝔹
+    into l v = anyL (λ { (_ , b , _) → b == v }) l
+
+    outOf : List T → V → 𝔹
+    outOf l v = anyL (λ { (a , _ , _) → a == v }) l
+
+    pass : List T → List T × 𝔹
+    pass l = sweep l
+      where
+        sweep : List T → List T × 𝔹
+        sweep []                  = [] , false
+        sweep (e@(a , b , _) ∷ r) with into l a ∧ outOf l b | sweep r
+        ... | true  | r' , d = e ∷ r' , d
+        ... | false | r' , d = r' , true
+
+    go : List T → List T → List T
+    go []      l = l
+    go (_ ∷ f) l with pass l
+    ... | l' , true  = go f l'
+    ... | l' , false = l'
+
+-- A deferred condition survives a substitution equivalent to the one
+-- it moves
+
+keep⇕ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {σ : Subst Ψ Ψ} {τ : Subst Ψ Ψ'} → (E : Dfr Ψ)
+      → Q ⊩ (σ ⨟ˢ τ) ≾ˢ τ → Q ⊩ τ ≾ˢ (σ ⨟ˢ τ) → Q ⊩ᵈ E [ τ ] → Q ⊩ᵈ E [ σ ⨟ˢ τ ]
+keep⇕ (dfr l k o) le ge h =
+  mk⊩ᵒ (λ {x} {y} m → transᵣ (mono-substᵣ (≾ˢ-↑ᵉⁿ k le) x)
+                             (transᵣ (⊩ors h m) (mono-substᵣ (≾ˢ-↑ᵉⁿ k ge) y)))
+       (λ {x} {y} m → transₑ (mono-substₑ (≾ˢ-↑ᵉⁿ k le) x)
+                             (transₑ (⊩oes h m) (mono-substₑ (≾ˢ-↑ᵉⁿ k ge) y)))
+
+-- Sending an unknown to one equal to it at an instance keeps the
+-- instance: every grade former is monotone, so each side moves by as
+-- little in either direction
+
+collapseᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k r : EVar Ψ} {R : Resid Ψ}
+            → Cleanᵉ k R → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
+            → Q ⊩ sE τ k ≾̂ₑ sE τ r → Q ⊩ sE τ r ≾̂ₑ sE τ k
+            → Q ⊩ᴿ R [ updᵉ k (evar r) ⨟ˢ τ ]
+collapseᵉ-⊩ {Q = Q} {k} {r} {R} cl τ h kr rk =
+  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c)) (λ {E} m → keep⇕ {σ = updᵉ k (evar r)} E le ge (⊩dfs h m))
+  where
+    τ₁ = updᵉ k (evar r) ⨟ˢ τ
+
+    le : Q ⊩ τ₁ ≾ˢ τ
+    le = updᵉ-below k (evar r) τ rk
+
+    ge : Q ⊩ τ ≾ˢ τ₁
+    ge = updᵉ-above k (evar r) τ kr
+
+    c = cleanᵉ-⊩ cl (evar r) τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
+
+    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
+    es' {ε} {ε'} m = transₑ (mono-substₑ le ε) (transₑ (⊩es h m) (mono-substₑ ge ε'))
+
+    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
+    rs' {ρ} {ρ'} m = transᵣ (mono-substᵣ le ρ) (transᵣ (⊩rs h m) (mono-substᵣ ge ρ'))
+
+collapseʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k r : RVar Ψ} {R : Resid Ψ}
+            → Cleanʳ k R → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
+            → Q ⊩ sR τ k ≾̂ᵣ sR τ r → Q ⊩ sR τ r ≾̂ᵣ sR τ k
+            → Q ⊩ᴿ R [ updʳ k (rvar r) ⨟ˢ τ ]
+collapseʳ-⊩ {Q = Q} {k} {r} {R} cl τ h kr rk =
+  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c)) (λ {E} m → keep⇕ {σ = updʳ k (rvar r)} E le ge (⊩dfs h m))
+  where
+    τ₁ = updʳ k (rvar r) ⨟ˢ τ
+
+    le : Q ⊩ τ₁ ≾ˢ τ
+    le = updʳ-below k (rvar r) τ rk
+
+    ge : Q ⊩ τ ≾ˢ τ₁
+    ge = updʳ-above k (rvar r) τ kr
+
+    c = cleanʳ-⊩ cl (rvar r) τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
+
+    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
+    rs' {ρ} {ρ'} m = transᵣ (mono-substᵣ le ρ) (transᵣ (⊩rs h m) (mono-substᵣ ge ρ'))
+
+    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
+    es' {ε} {ε'} m =
+      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k (rvar r) τ ε)) (sym (updʳ-⨟e k (rvar r) τ ε'))
+             (⊩es h m)
+
+-- A local unknown and another it bounds each other with: the other is
+-- an outer unknown where one is in the cycle, else the least local.
+-- The local one is absent from every type.
+
+module _ {Θ Φ} (O : Subst (Θ +e) Φ) where
+
+  Collapseᵉ : Resid Φ → Set
+  Collapseᵉ R = Σ[ k ∈ EVar Φ ] Σ[ r ∈ EVar Φ ] ((freeᵉ k O ≡ false) × Keeps (updᵉ k (evar r)) R)
+
+  Collapseʳ : Resid Φ → Set
+  Collapseʳ R = Σ[ k ∈ RVar Φ ] Σ[ r ∈ RVar Φ ] ((freeʳ k O ≡ false) × Keeps (updʳ k (rvar r)) R)
+
+  -- the candidates for the other, among the unknowns with an ordering
+  -- above them: outer unknowns first, each by index
+
+  keepL : ∀ {X : Set} → (X → 𝔹) → List X → List X
+  keepL f []      = []
+  keepL f (x ∷ l) with f x
+  ... | true  = x ∷ keepL f l
+  ... | false = keepL f l
+
+  outerFirst : ∀ {X : Set} → (X → 𝔹) → List X → List X
+  outerFirst {X} f l = go (map (λ x → x , f x) l)
+    where
+      go : List (X × 𝔹) → List X
+      go ps = map proj₁ (keepL proj₂ ps) ++ map proj₁ (keepL (λ p → not (proj₂ p)) ps)
+
+  collapseᵉ? : (R : Resid Φ) → Maybe (Collapseᵉ R)
+  collapseᵉ? R = start (cyclic _==ᶠ_ (edgesᵉ (es R)))
+    where
+      start : List (Σ[ a ∈ EVar Φ ] Σ[ b ∈ EVar Φ ] ((evar a , evar b) ∈ es R))
+            → Maybe (Collapseᵉ R)
+      start []      = nothing
+      start E@(_ ∷ _) =
+        over (outerFirst (λ r → freeᵉ r O) (map proj₁ (misses (λ r → not (source r)))))
+        where
+          open Chains _≟ᶠ_ _==ᶠ_ (λ a b → (evar a , evar b) ∈ es R) E
+
+          below : ∀ {Ψ'} {Q : Hyps Ψ'} {τ : Subst Φ Ψ'} → Q ⊩ᴿ R [ τ ]
+                → ∀ {a b} → Chain a b → Q ⊩ sE τ a ≾̂ₑ sE τ b
+          below h = fold ⊩≾̂ₑ-refl (λ m p → transₑ (⊩es h m) p)
+
+          pick : (r : EVar Φ) → List (Σ[ w ∈ EVar Φ ] Chain w r)
+               → List (Σ[ w ∈ EVar Φ ] Chain r w) → Maybe (Collapseᵉ R)
+          pick r B []             = nothing
+          pick r B ((k , c) ∷ ks) with k ==ᶠ r
+          ... | true  = pick r B ks
+          ... | false with lookupᶜ k B
+          ...   | nothing = pick r B ks
+          ...   | just c' with isFalse (freeᵉ k O)
+          ...     | nothing = pick r B ks
+          ...     | just q with cleanᵉ? k R
+          ...       | nothing = pick r B ks
+          ...       | just cl =
+                      just (k , r , q , λ τ Q h → collapseᵉ-⊩ cl τ h (below h c') (below h c))
+
+          over : List (EVar Φ) → Maybe (Collapseᵉ R)
+          over []      = nothing
+          over (r ∷ l) = first (pick r (reachTo r) (reachFrom r)) (over l)
+
+  collapseʳ? : (R : Resid Φ) → Maybe (Collapseʳ R)
+  collapseʳ? R = start (cyclic _==ᶠ_ (edgesʳ (rs R)))
+    where
+      start : List (Σ[ a ∈ RVar Φ ] Σ[ b ∈ RVar Φ ] ((rvar a , rvar b) ∈ rs R))
+            → Maybe (Collapseʳ R)
+      start []      = nothing
+      start E@(_ ∷ _) =
+        over (outerFirst (λ r → freeʳ r O) (map proj₁ (misses (λ r → not (source r)))))
+        where
+          open Chains _≟ᶠ_ _==ᶠ_ (λ a b → (rvar a , rvar b) ∈ rs R) E
+
+          below : ∀ {Ψ'} {Q : Hyps Ψ'} {τ : Subst Φ Ψ'} → Q ⊩ᴿ R [ τ ]
+                → ∀ {a b} → Chain a b → Q ⊩ sR τ a ≾̂ᵣ sR τ b
+          below h = fold ⊩≾̂ᵣ-refl (λ m p → transᵣ (⊩rs h m) p)
+
+          pick : (r : RVar Φ) → List (Σ[ w ∈ RVar Φ ] Chain w r)
+               → List (Σ[ w ∈ RVar Φ ] Chain r w) → Maybe (Collapseʳ R)
+          pick r B []             = nothing
+          pick r B ((k , c) ∷ ks) with k ==ᶠ r
+          ... | true  = pick r B ks
+          ... | false with lookupᶜ k B
+          ...   | nothing = pick r B ks
+          ...   | just c' with isFalse (freeʳ k O)
+          ...     | nothing = pick r B ks
+          ...     | just q with cleanʳ? k R
+          ...       | nothing = pick r B ks
+          ...       | just cl =
+                      just (k , r , q , λ τ Q h → collapseʳ-⊩ cl τ h (below h c') (below h c))
+
+          over : List (RVar Φ) → Maybe (Collapseʳ R)
+          over []      = nothing
+          over (r ∷ l) = first (pick r (reachTo r) (reachFrom r)) (over l)
+
+------------------------------------------------------------------------
 -- Localisation: the steps iterated over the local unknowns, the
 -- settled atoms dropped around every round
 
@@ -1777,6 +2215,27 @@ loc-settle (loc σ R₀ fx sn cp la) =
     Uᵈ = unsettled settledᵈ (ds R₀)
     F  = refine (Unsettled.kept Uᵈ)
 
+-- Whether a left side has a join
+
+joined : ∀ {Ψ} → Resid Ψ → 𝔹
+joined R = anyL (λ { (x , _) → hasJoinᵣ x }) (rs R) ∨ anyL (λ { (x , _) → hasJoinₑ x }) (es R)
+
+-- Each ordering with a join of alternatives on its left replaced by
+-- one ordering per alternative: the instances are unchanged
+
+loc-joins : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
+loc-joins (loc σ R₀ fx sn cp la) =
+  loc σ (resid (Split.out Sʳ) (Split.out Sᵉ) (ts R₀) (ss R₀) (ds R₀) (dfs R₀)) fx
+      (λ δ Q h → sn δ Q (mk⊩ᴿ (Split.back Sʳ δ (⊩rs h)) (Split.back Sᵉ δ (⊩es h))
+                              (⊩ts h) (⊩ss h) (⊩ds h) (⊩dfs h)))
+      (λ τ en h → let h' = cp τ en h in
+                 mk⊩ᴿ (Split.fwd Sʳ τ (⊩rs h')) (Split.fwd Sᵉ τ (⊩es h'))
+                      (⊩ts h') (⊩ss h') (⊩ds h') (⊩dfs h'))
+      la
+  where
+    Sʳ = splits piecesʳ (rs R₀)
+    Sᵉ = splits piecesᵉ (es R₀)
+
 loc-ext : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → (L : Localised O R)
         → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L)
         → (∀ α → sTy σ α ≡ tvar α) → Localised O R
@@ -1801,6 +2260,24 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   ... | nothing      = passʳ ks L
   ... | just (b , st) = proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
 
+  -- Local unknowns bounding each other identified, one at a time
+
+  collapseᵉL : ℕ → Localised O R → Localised O R × 𝔹
+  collapseᵉL nzero    L = L , false
+  collapseᵉL (nsuc n) L with collapseᵉ? O (lR L)
+  ... | nothing              = L , false
+  ... | just (k , r , q , st) =
+        proj₁ (collapseᵉL n (loc-ext L (updᵉ k (evar r)) (freeᵉ-fix k O q (evar r))
+                                     (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
+
+  collapseʳL : ℕ → Localised O R → Localised O R × 𝔹
+  collapseʳL nzero    L = L , false
+  collapseʳL (nsuc n) L with collapseʳ? O (lR L)
+  ... | nothing              = L , false
+  ... | just (k , r , q , st) =
+        proj₁ (collapseʳL n (loc-ext L (updʳ k (rvar r)) (freeʳ-fix k O q (rvar r))
+                                     (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
+
   -- Where no unknown has a principal value of its own, a set of them
   -- bounded below by the rigid is sent to the top
 
@@ -1814,13 +2291,19 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
                         (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
                         (λ α → refl))
 
-  -- Each round that changes something settles an unknown for good, so
-  -- as many rounds as there are unknowns reach the fixed point.
+  -- A round splits the joins on left sides, identifies the unknowns in
+  -- cycles, then gives values. Each round that changes something
+  -- settles an unknown for good, so as many rounds as there are
+  -- unknowns reach the fixed point.
 
   rounds : ℕ → Localised O R → Localised O R
   rounds nzero    L = L
-  rounds (nsuc n) L = next (passᵉ (misses (λ k → freeᵉ k O)) L)
+  rounds (nsuc n) L = cycles (collapseᵉL (nE Φ) (resettle (joined (lR L)) (loc-joins L)))
     where
+      resettle : 𝔹 → Localised O R → Localised O R
+      resettle true  L' = loc-settle L'
+      resettle false L' = L'
+
       next₂ : Localised O R × 𝔹 → Localised O R
       next₂ (L' , true)  = rounds n (loc-settle L')
       next₂ (L' , false) with raiseL L'
@@ -1830,6 +2313,14 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
       next : Localised O R × 𝔹 → Localised O R
       next (L' , changed) with passʳ (misses (λ k → freeʳ k O)) L'
       ... | L'' , changed' = next₂ (L'' , (changed ∨ changed'))
+
+      values : Localised O R × 𝔹 → Localised O R
+      values (L' , changed) with passᵉ (misses (λ k → freeᵉ k O)) L'
+      ... | L'' , changed' = next (L'' , (changed ∨ changed'))
+
+      cycles : Localised O R × 𝔹 → Localised O R
+      cycles (L' , changed) with collapseʳL (nR Φ) L'
+      ... | L'' , changed' = values (L'' , (changed ∨ changed'))
 
 localise : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Localised O R
 localise {Φ = Φ} O R = loc-settle (rounds O R (nE Φ + nR Φ) (loc-settle loc-id))
