@@ -25,6 +25,3 @@ id-unit-reported = refl
 
 compose-g-reported : report (infer [] compose-g) ≡ just expected-compose-g
 compose-g-reported = refl
-
-relay-reported : report (infer [] relay) ≡ just expected-relay
-relay-reported = refl

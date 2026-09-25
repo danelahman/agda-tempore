@@ -408,13 +408,15 @@ Inference for the open calculus, by constraint generation and solving.
 - The solver reads `u-least?` and `·-comm?` from the grade system.
 
 - `stuck` arises only where a clause's scope closes with a local unknown for
-  which `Localise` finds no value. Before giving values, `Localise` splits
-  each ordering whose left side is a join into one per alternative, and
+  which `Localise` finds no value. Before giving values, `Localise` writes
+  every grade expression of the constraints in normal form, splits each
+  ordering whose left side is a join into one per alternative, and
   identifies local unknowns that bound each other in a cycle of orderings
-  between whole unknowns. Known cases: a local cycle through a compound
-  side, such as a product with the clause's rigid; an outer clause's local
-  on both sides of an inner clause's deferred condition; a clause-local under
-  several incomparable upper bounds.
+  between whole unknowns. An unknown under several upper bounds is sent to
+  one decided below the others. Known cases: a local cycle through a
+  compound side, such as a product with the clause's rigid; an outer
+  clause's local on both sides of an inner clause's deferred condition; a
+  clause-local under several upper bounds, none decided below the others.
 
 - `TypeInference/Examples/` runs inference on nine functions of the
   prototype's standard library. `Stdlib.agda` proves, over an arbitrary
@@ -422,6 +424,8 @@ Inference for the open calculus, by constraint generation and solving.
   reported scheme by `refl` at four grades, covering `u-least?` and `·-comm?`.
   `Report.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
   `Annotations.agda` gives one program per annotation form with the type it
-  forces, and `relay`, a typable handler whose clause resumes through the
-  identity applied to its own result, which inference types with no
-  annotation; `Annotations/` checks the schemes at the four grades.
+  forces; `Annotations/` checks the schemes at the four grades.
+  `Handlers.agda` gives typable handlers with no annotation whose clauses
+  leave unknowns local to the clause: `relay`, whose clause resumes through
+  the identity applied to its own result, and `abort`, whose clause does not
+  resume; `Handlers/` checks that inference types each at the four grades.

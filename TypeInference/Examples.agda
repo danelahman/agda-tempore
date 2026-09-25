@@ -8,8 +8,11 @@
 -- reads from a grade, `u-least?` and `·-comm?`.                  --
 --                                                                --
 -- Set 2 is annotated programs, one per annotation form with the  --
--- type it forces, and a typable handler whose clause resumes     --
--- through a helper, which inference types unannotated.           --
+-- type it forces.                                                --
+--                                                                --
+-- Set 3 is typable handlers with no annotation, whose clauses    --
+-- leave unknowns local to the clause; inference types each at    --
+-- the four grades.                                               --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -44,3 +47,14 @@ import TypeInference.Examples.Annotations.Time.RightSided
 import TypeInference.Examples.Annotations.Time.LeftSided
 import TypeInference.Examples.Annotations.Traces.Timed.RightSided
 import TypeInference.Examples.Annotations.Traces.Timed.LeftSided
+
+-- Handlers: the programs, the typings, the schemes
+
+import TypeInference.Examples.Handlers
+
+-- The schemes at each grade
+
+import TypeInference.Examples.Handlers.Time.RightSided
+import TypeInference.Examples.Handlers.Time.LeftSided
+import TypeInference.Examples.Handlers.Traces.Timed.RightSided
+import TypeInference.Examples.Handlers.Traces.Timed.LeftSided

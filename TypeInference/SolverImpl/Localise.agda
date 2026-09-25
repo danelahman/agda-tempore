@@ -7,10 +7,12 @@
 -- assigned.                                                    --
 --                                                              --
 -- Each round first rewrites the atoms into equivalent ones:    --
---   * an ordering whose left side has two or more alternatives --
---     in normal form becomes one ordering per alternative, the --
---     join being the least upper bound; a right side is never  --
---     split (`loc-joins`);                                     --
+--   * each side of an ordering and each disjunction's grade    --
+--     is written in canonical form, so no unit factor or       --
+--     bracketing hides a whole side; an ordering whose left    --
+--     side has two or more alternatives becomes one ordering   --
+--     per alternative, the join being the least upper bound; a --
+--     right side is never split (`loc-normal`);                --
 --   * local unknowns that bound each other along orderings     --
 --     whose sides are whole unknowns are identified: each is   --
 --     sent to another member, an outer unknown where the cycle --
@@ -23,7 +25,8 @@
 -- unknown with a principal value is sent to it:                --
 --   * the join of its lower bounds, where it occurs on a right --
 --     side only as the whole side (Pottier's condition);       --
---   * dually, its one upper bound, where it occurs on a left   --
+--   * dually, an upper bound decided (from no hypotheses)      --
+--     below each of its others, where it occurs on a left      --
 --     side only as the whole side;                             --
 --   * the unit, where it has no bound below and the unit is    --
 --     least, the unit being then the join of no bounds;        --
@@ -69,6 +72,13 @@
 --                                                              --
 -- Each step assigns grade unknowns only, so subtyping demands  --
 -- between type variables stay so (`latom`).                    --
+--                                                              --
+-- A local unknown no step gives a value leaves the scope       --
+-- stuck. Known cases: a cycle through a compound side, such    --
+-- as `j · a ≾ a ≾ c · j` or `j ≾ a ≾ c · a`; an outer scope's  --
+-- local unknown on both sides of an inner scope's deferred     --
+-- condition; a local unknown under several upper bounds, none  --
+-- decided below the others.                                    --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false) renaming (Bool to 𝔹)
@@ -120,9 +130,11 @@ open import TypeInference.SolverImpl.Resid     S
 open import TypeInference.SolverImpl.Eliminate S
   using (joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
 open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
+open import TypeInference.SolverImpl.Canon     S
+  using (canonSumᵣ; canonSumₑ; canonᵣ; canonₑ; canonᵣ-≡; canonₑ-≡)
 open import TypeInference.SolverImpl.Product   S
   using (Alts; alt; _∷⁺_; RAtom; EAtom; ⟦_⟧ʳᵖ; ⟦_⟧ʳᵖ⁺; ⟦_⟧ᵉᵖ; ⟦_⟧ᵉᵖ⁺;
-         nrmᵣ; nrmₑ; nrmᵣ-≡ᵖ; nrmₑ-≡ᵖ)
+         nrmᵣ; nrmₑ)
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -613,7 +625,8 @@ module Sides {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) wh
       go (just f) (no _)   (just q) = just (λ { (here refl) → inj₂ q ; (there m) → f m })
       go (just f) (no _)   nothing  = nothing
 
-module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (v : X) where
+module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (v : X)
+              (_≤_ : X → X → Set) (dec≤ : (x y : X) → Maybe (x ≤ y)) where
 
   open Sides _≟_ occ public
 
@@ -623,10 +636,11 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
   LowAt : List X → X × X → Set
   LowAt L (x , x') = FreeR (x , x') ⊎ ((x' ≡ v) × (x ∈ L))
 
-  -- `v` occurs on a left side only as the whole side, below `U`
+  -- `v` occurs on a left side only as the whole side, below `U` or
+  -- below a side decided to be above `U`
 
   UpAt : X → X × X → Set
-  UpAt U (x , x') = FreeL (x , x') ⊎ ((x ≡ v) × (x' ≡ U))
+  UpAt U (x , x') = FreeL (x , x') ⊎ ((x ≡ v) × ((x' ≡ U) ⊎ (U ≤ x')))
 
   record Lows (l : List (X × X)) : Set where
     constructor lows
@@ -668,39 +682,57 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
         just (lows L (λ { (here refl) → inj₁ (inj₂ q) ; (there m) → c m }) (λ m → there (s m)))
       go (just (lows L c s))    _        _        (no _)  nothing  = nothing
 
-  -- The one upper bound: the first found, every other one equal to it
+  -- The upper bounds not mentioning `v`, each a candidate
 
-  capOf : (l : List (X × X)) → Maybe (Σ[ U ∈ X ] ((v , U) ∈ l))
-  capOf []             = nothing
-  capOf ((x , x') ∷ l) = go (x ≟ v) (isFalse (occ x')) (capOf l)
+  capsOf : (l : List (X × X)) → List (Σ[ U ∈ X ] ((v , U) ∈ l))
+  capsOf []             = []
+  capsOf ((x , x') ∷ l) = go (x ≟ v) (isFalse (occ x')) (capsOf l)
     where
-      go : _ → Maybe (occ x' ≡ false) → Maybe (Σ[ U ∈ X ] ((v , U) ∈ l))
-         → Maybe (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
-      go (yes e)    (just _) _              = just (x' , here (cong (_, x') (sym e)))
-      go _          _        (just (U , m)) = just (U , there m)
-      go _          _        nothing        = nothing
+      shift : List (Σ[ U ∈ X ] ((v , U) ∈ l)) → List (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
+      shift []             = []
+      shift ((U , m) ∷ us) = (U , there m) ∷ shift us
+
+      go : _ → Maybe (occ x' ≡ false) → List (Σ[ U ∈ X ] ((v , U) ∈ l))
+         → List (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
+      go (yes e) (just _) us = (x' , here (cong (_, x') (sym e))) ∷ shift us
+      go _       _        us = shift us
 
   upsAt : (U : X) → (l : List (X × X)) → Maybe (∀ {a} → a ∈ l → UpAt U a)
   upsAt U []             = just (λ ())
-  upsAt U ((x , x') ∷ l) = go (upsAt U l) (x ≟ x') (isFalse (occ x)) (x ≟ v) (x' ≟ U)
+  upsAt U ((x , x') ∷ l) = go (upsAt U l) (x ≟ x') (isFalse (occ x)) (x ≟ v)
     where
-      go : Maybe (∀ {a} → a ∈ l → UpAt U a) → _ → Maybe (occ x ≡ false) → _ → _
+      above : Dec (x' ≡ U) → Maybe ((x' ≡ U) ⊎ (U ≤ x'))
+      above (yes e) = just (inj₁ e)
+      above (no _) with dec≤ U x'
+      ... | just p  = just (inj₂ p)
+      ... | nothing = nothing
+
+      at : x ≡ v → Maybe ((x' ≡ U) ⊎ (U ≤ x')) → Maybe (UpAt U (x , x'))
+      at e (just b) = just (inj₂ (e , b))
+      at e nothing  = nothing
+
+      go : Maybe (∀ {a} → a ∈ l → UpAt U a) → _ → Maybe (occ x ≡ false) → _
          → Maybe (∀ {a} → a ∈ (x , x') ∷ l → UpAt U a)
-      go nothing  _       _        _       _       = nothing
-      go (just f) (yes e) _        _       _       =
+      go nothing  _       _        _       = nothing
+      go (just f) (yes e) _        _       =
         just (λ { (here refl) → inj₁ (inj₁ e) ; (there m) → f m })
-      go (just f) (no _)  (just q) _       _       =
+      go (just f) (no _)  (just q) _       =
         just (λ { (here refl) → inj₁ (inj₂ q) ; (there m) → f m })
-      go (just f) (no _)  nothing  (yes e) (yes e') =
-        just (λ { (here refl) → inj₂ (e , e') ; (there m) → f m })
-      go (just f) (no _)  nothing  _       _       = nothing
+      go (just f) (no _)  nothing  (yes e) with at e (above (x' ≟ U))
+      ... | just u  = just (λ { (here refl) → u ; (there m) → f m })
+      ... | nothing = nothing
+      go (just f) (no _)  nothing  (no _)  = nothing
+
+  -- The upper bound: the first candidate below every other one
 
   upsOf : (l : List (X × X)) → Maybe (Ups l)
-  upsOf l with capOf l
-  ... | nothing      = nothing
-  ... | just (U , m) with upsAt U l
-  ...   | nothing = nothing
-  ...   | just f  = just (ups U f m)
+  upsOf l = go (capsOf l)
+    where
+      go : List (Σ[ U ∈ X ] ((v , U) ∈ l)) → Maybe (Ups l)
+      go []             = nothing
+      go ((U , m) ∷ us) with upsAt U l
+      ... | just f  = just (ups U f m)
+      ... | nothing = go us
 
 allFalse : ∀ {Y : Set} → (f : Y → 𝔹) → (l : List Y) → Maybe (∀ {y} → y ∈ l → f y ≡ false)
 allFalse f []      = just (λ ())
@@ -709,9 +741,11 @@ allFalse f (y ∷ l) with isFalse (f y) | allFalse f l
 ... | just _  | nothing = nothing
 ... | nothing | _       = nothing
 
-module Bᵉ {Ψ} (k : EVar Ψ) = Bounds (_≟ᵉ_ {Ψ}) (occᵉ-e {Ψ} k) (evar k)
+module Bᵉ {Ψ} (k : EVar Ψ) =
+  Bounds (_≟ᵉ_ {Ψ}) (occᵉ-e {Ψ} k) (evar k) (∅ᴴ ⊩_≾̂ₑ_) (decide≾ₑ {Q = ∅ᴴ})
 module Bᵉʳ {Ψ} (k : EVar Ψ) = Sides (_≟ʳ_ {Ψ}) (occᵉ-r {Ψ} k)
-module Bʳ {Ψ} (k : RVar Ψ) = Bounds (_≟ʳ_ {Ψ}) (occʳ-r {Ψ} k) (rvar k)
+module Bʳ {Ψ} (k : RVar Ψ) =
+  Bounds (_≟ʳ_ {Ψ}) (occʳ-r {Ψ} k) (rvar k) (∅ᴴ ⊩_≾̂ᵣ_) (decide≾ᵣ {Q = ∅ᴴ})
 
 -- An unknown absent from every type of a residual. A disjunction's
 -- grade is the left side of an ordering below the unit, so it is kept
@@ -853,7 +887,7 @@ lowerᵉ-⊩ {Q = Q} {k} {R} lw fr cl b sd τ below ub h =
           transᵣ (mono-substᵣ le ρ)
                  (subst (λ x → Q ⊩ ρ [ τ ]ʳ ≾̂ᵣ x) (sym (updᵉ-⨟r k b τ ρ' q)) (⊩rs h m))
 
--- Raising an effect unknown to its one upper bound
+-- Raising an effect unknown to its upper bound below the others
 
 raiseᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → (up : Bᵉ.Ups {Ψ} k (es R))
@@ -875,14 +909,17 @@ raiseᵉ-⊩ {Q = Q} {k} {R} up fl cl df sd τ h =
     c = cleanᵉ-⊩ cl U τ h
           (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ) (sym (updᵉ-⨟r k U τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
+    hit : Q ⊩ evar k [ τ₁ ]ᵉ ≾̂ₑ U [ τ₁ ]ᵉ
+    hit = subst (λ x → Q ⊩ x [ τ ]ᵉ ≾̂ₑ U [ τ₁ ]ᵉ) (sym (updᵉ-hit k U)) (mono-substₑ ge U)
+
     es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
     es' {ε} {ε'} m with Bᵉ.clsᵘ up m
     ... | inj₁ (inj₁ refl) = ⊩≾̂ₑ-refl
     ... | inj₁ (inj₂ q)    =
           transₑ (subst (λ x → Q ⊩ x ≾̂ₑ ε' [ τ ]ᵉ) (sym (updᵉ-⨟e k U τ ε q)) (⊩es h m))
                  (mono-substₑ ge ε')
-    ... | inj₂ (refl , refl) =
-          subst (λ x → Q ⊩ x [ τ ]ᵉ ≾̂ₑ U [ τ₁ ]ᵉ) (sym (updᵉ-hit k U)) (mono-substₑ ge U)
+    ... | inj₂ (refl , inj₁ refl) = hit
+    ... | inj₂ (refl , inj₂ p)    = transₑ hit (⊩-substₑ ∅ᴴ-⊩ᴴ p)
 
     rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
     rs' {ρ} {ρ'} m with fl m
@@ -945,14 +982,17 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl df sd τ h =
     c = cleanʳ-⊩ cl U τ h
           (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ) (sym (updʳ-⨟r k U τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
+    hit : Q ⊩ rvar k [ τ₁ ]ʳ ≾̂ᵣ U [ τ₁ ]ʳ
+    hit = subst (λ x → Q ⊩ x [ τ ]ʳ ≾̂ᵣ U [ τ₁ ]ʳ) (sym (updʳ-hit k U)) (mono-substᵣ ge U)
+
     rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
     rs' {ρ} {ρ'} m with Bʳ.clsᵘ up m
     ... | inj₁ (inj₁ refl) = ⊩≾̂ᵣ-refl
     ... | inj₁ (inj₂ q)    =
           transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updʳ-⨟r k U τ ρ q)) (⊩rs h m))
                  (mono-substᵣ ge ρ')
-    ... | inj₂ (refl , refl) =
-          subst (λ x → Q ⊩ x [ τ ]ʳ ≾̂ᵣ U [ τ₁ ]ʳ) (sym (updʳ-hit k U)) (mono-substᵣ ge U)
+    ... | inj₂ (refl , inj₁ refl) = hit
+    ... | inj₂ (refl , inj₂ p)    = transᵣ hit (⊩-substᵣ ∅ᴴ-⊩ᴴ p)
 
     es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
     es' {ε} {ε'} m =
@@ -1738,9 +1778,13 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
   raise? = select (nsuc (nE Φ + nR Φ)) (λ k → not (freeᵉ k O)) (λ k → not (freeʳ k O))
 
 ------------------------------------------------------------------------
--- Joins on a left side: an ordering whose left side has two or more
--- alternatives in normal form is one ordering per alternative, the
--- join being the least upper bound
+-- Normal forms: each side of an ordering and each disjunction's grade
+-- written canonically, and an ordering whose left side has two or more
+-- alternatives made one ordering per alternative, the join being the
+-- least upper bound. A right side is never split.
+
+-- Whether a left side has a join, which it needs to have two or more
+-- alternatives
 
 hasJoinₑ : ∀ {Ψ} → EExp Ψ → 𝔹
 hasJoinₑ (evar i)   = false
@@ -1764,9 +1808,6 @@ record Pieces {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X 
     parts : List X
     pback : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → (∀ {b} → b ∈ parts → P Q δ b) → P Q δ a
     pfwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → P Q δ a → ∀ {b} → b ∈ parts → P Q δ b
-
-whole : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X} → Pieces P a
-whole = pieces (_ ∷ []) (λ δ k → k (here refl)) (λ δ p → λ { (here refl) → p })
 
 record Split {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (l : List X) : Set where
   constructor split
@@ -1821,32 +1862,40 @@ partsₑ-ub (alt p)  y h (here refl) = h
 partsₑ-ub (p ∷⁺ s) y h (here refl) = transₑ ⊔-ubˡₑ h
 partsₑ-ub (p ∷⁺ s) y h (there m)   = partsₑ-ub s y (transₑ ⊔-ubʳₑ h) m
 
--- An ordering is split where its left side has a join and more than
--- one alternative, and is otherwise kept as it is
+-- An ordering: its left side's alternatives, each below its right side
 
 piecesʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Pieces Ordʳ a
-piecesʳ (x , y) with hasJoinᵣ x
-... | false = whole
-... | true  = go (nrmᵣ x) (nrmᵣ-≡ᵖ x)
+piecesʳ (x , y) =
+  pieces (partsʳ s (canonᵣ y))
+         (λ δ k → transᵣ (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ x)))
+                    (transᵣ (partsʳ-lub s (canonᵣ y) k)
+                            (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ y))))))
+         (λ δ h → partsʳ-ub s (canonᵣ y)
+                    (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ x))))
+                            (transᵣ h (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ y))))))
   where
-    go : (s : Alts (List (RAtom _))) → x ≡̂ᵣ ⟦ s ⟧ʳᵖ⁺ → Pieces Ordʳ (x , y)
-    go (alt p)    e = whole
-    go s@(_ ∷⁺ _) e =
-      pieces (partsʳ s y)
-             (λ δ k → transᵣ (eqᵣ (≡̂ᵣ-subst δ e)) (partsʳ-lub s y k))
-             (λ δ h → partsʳ-ub s y (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ e))) h))
+    s = canonSumᵣ (nrmᵣ x)
 
 piecesᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Pieces Ordᵉ a
-piecesᵉ (x , y) with hasJoinₑ x
-... | false = whole
-... | true  = go (nrmₑ x) (nrmₑ-≡ᵖ x)
+piecesᵉ (x , y) =
+  pieces (partsₑ s (canonₑ y))
+         (λ δ k → transₑ (eqₑ (≡̂ₑ-subst δ (canonₑ-≡ x)))
+                    (transₑ (partsₑ-lub s (canonₑ y) k)
+                            (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst δ (canonₑ-≡ y))))))
+         (λ δ h → partsₑ-ub s (canonₑ y)
+                    (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst δ (canonₑ-≡ x))))
+                            (transₑ h (eqₑ (≡̂ₑ-subst δ (canonₑ-≡ y))))))
   where
-    go : (s : Alts (List (EAtom _))) → x ≡̂ₑ ⟦ s ⟧ᵉᵖ⁺ → Pieces Ordᵉ (x , y)
-    go (alt p)    e = whole
-    go s@(_ ∷⁺ _) e =
-      pieces (partsₑ s y)
-             (λ δ k → transₑ (eqₑ (≡̂ₑ-subst δ e)) (partsₑ-lub s y k))
-             (λ δ h → partsₑ-ub s y (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst δ e))) h))
+    s = canonSumₑ (nrmₑ x)
+
+-- A disjunction: its grade in canonical form
+
+piecesᵈ : ∀ {Ψ} → (a : OVType Ψ × RExp Ψ) → Pieces Disj a
+piecesᵈ (A , ρ) =
+  pieces ((A , canonᵣ ρ) ∷ [])
+         (λ δ k → VarOK-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ ρ))) (k (here refl)))
+         (λ δ ok → λ { (here refl) →
+            VarOK-≡̂ (≡̂ᵛ-refl _) (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ ρ)))) ok })
 
 ------------------------------------------------------------------------
 -- Unknowns that bound each other: along a chain of orderings whose
@@ -2215,26 +2264,28 @@ loc-settle (loc σ R₀ fx sn cp la) =
     Uᵈ = unsettled settledᵈ (ds R₀)
     F  = refine (Unsettled.kept Uᵈ)
 
--- Whether a left side has a join
+-- Whether a left side has a join: only then may an ordering split
 
 joined : ∀ {Ψ} → Resid Ψ → 𝔹
 joined R = anyL (λ { (x , _) → hasJoinᵣ x }) (rs R) ∨ anyL (λ { (x , _) → hasJoinₑ x }) (es R)
 
--- Each ordering with a join of alternatives on its left replaced by
--- one ordering per alternative: the instances are unchanged
+-- Each atom written in normal form, an ordering with a join of
+-- alternatives on its left made one ordering per alternative: the
+-- instances are unchanged
 
-loc-joins : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
-loc-joins (loc σ R₀ fx sn cp la) =
-  loc σ (resid (Split.out Sʳ) (Split.out Sᵉ) (ts R₀) (ss R₀) (ds R₀) (dfs R₀)) fx
+loc-normal : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R → Localised O R
+loc-normal (loc σ R₀ fx sn cp la) =
+  loc σ (resid (Split.out Sʳ) (Split.out Sᵉ) (ts R₀) (ss R₀) (Split.out Sᵈ) (dfs R₀)) fx
       (λ δ Q h → sn δ Q (mk⊩ᴿ (Split.back Sʳ δ (⊩rs h)) (Split.back Sᵉ δ (⊩es h))
-                              (⊩ts h) (⊩ss h) (⊩ds h) (⊩dfs h)))
+                              (⊩ts h) (⊩ss h) (Split.back Sᵈ δ (⊩ds h)) (⊩dfs h)))
       (λ τ en h → let h' = cp τ en h in
                  mk⊩ᴿ (Split.fwd Sʳ τ (⊩rs h')) (Split.fwd Sᵉ τ (⊩es h'))
-                      (⊩ts h') (⊩ss h') (⊩ds h') (⊩dfs h'))
+                      (⊩ts h') (⊩ss h') (Split.fwd Sᵈ τ (⊩ds h')) (⊩dfs h'))
       la
   where
     Sʳ = splits piecesʳ (rs R₀)
     Sᵉ = splits piecesᵉ (es R₀)
+    Sᵈ = splits piecesᵈ (ds R₀)
 
 loc-ext : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → (L : Localised O R)
         → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L)
@@ -2291,14 +2342,14 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
                         (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
                         (λ α → refl))
 
-  -- A round splits the joins on left sides, identifies the unknowns in
-  -- cycles, then gives values. Each round that changes something
-  -- settles an unknown for good, so as many rounds as there are
-  -- unknowns reach the fixed point.
+  -- A round writes the atoms in normal form, splitting the joins on
+  -- left sides, identifies the unknowns in cycles, then gives values.
+  -- Each round that changes something settles an unknown for good, so
+  -- as many rounds as there are unknowns reach the fixed point.
 
   rounds : ℕ → Localised O R → Localised O R
   rounds nzero    L = L
-  rounds (nsuc n) L = cycles (collapseᵉL (nE Φ) (resettle (joined (lR L)) (loc-joins L)))
+  rounds (nsuc n) L = cycles (collapseᵉL (nE Φ) (resettle (joined (lR L)) (loc-normal L)))
     where
       resettle : 𝔹 → Localised O R → Localised O R
       resettle true  L' = loc-settle L'
