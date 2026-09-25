@@ -6,6 +6,10 @@
 -- (a theorem); at four grades, the scheme it reports is checked  --
 -- by `refl`. The four grades cover the two properties the solver --
 -- reads from a grade, `u-least?` and `·-comm?`.                  --
+--                                                                --
+-- Set 2 is annotated programs: one per annotation form, with the --
+-- type it forces, and a typable handler inference is stuck on    --
+-- without an annotation and types with one.                      --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -29,3 +33,14 @@ import TypeInference.Examples.Stdlib.Time.RightSided
 import TypeInference.Examples.Stdlib.Time.LeftSided
 import TypeInference.Examples.Stdlib.Traces.Timed.RightSided
 import TypeInference.Examples.Stdlib.Traces.Timed.LeftSided
+
+-- Annotations: the programs, the theorems, the schemes
+
+import TypeInference.Examples.Annotations
+
+-- Their verdicts at each grade
+
+import TypeInference.Examples.Annotations.Time.RightSided
+import TypeInference.Examples.Annotations.Time.LeftSided
+import TypeInference.Examples.Annotations.Traces.Timed.RightSided
+import TypeInference.Examples.Annotations.Traces.Timed.LeftSided

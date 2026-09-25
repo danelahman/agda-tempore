@@ -418,3 +418,7 @@ Inference for the open calculus, by constraint generation and solving.
   language, that inference answers `typed` for each; `Stdlib/` checks the
   reported scheme by `refl` at four grades, covering `u-least?` and `·-comm?`.
   `Report.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
+  `Annotations.agda` gives one program per annotation form with the type it
+  forces, and `relay`, a typable handler whose clause resumes through the
+  identity applied to itself: inference is stuck on it at the four grades,
+  and types it once the identity's argument is annotated (`Annotations/`).

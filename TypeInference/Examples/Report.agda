@@ -5,11 +5,8 @@
 -- `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`: the scope, the hypotheses, the obligations   --
 -- and the type. `IsTyped` holds exactly of a `typed` verdict.    --
 --                                                                --
--- A scheme is walked through once before it is returned, so that --
--- all of it is evaluated in one reduction, the solver's run      --
--- shared between its parts; compared with a literal position by  --
--- position, an unevaluated scheme would run the solver again for --
--- each.                                                          --
+-- `report` returns its scheme evaluated in full (see `walk`), so --
+-- that a `refl` check against a literal runs the solver once.    --
 --                                                                --
 -- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,     --
 -- `b` resource-grade and `c` effect-grade variables, `C` a       --
@@ -56,7 +53,15 @@ open import TypeInference.Principality         S
 Report : Set
 Report = Σ Scope (λ Θ → Hyps Θ × Obligs Θ × OCType Θ)
 
--- A walk through every part of a scheme; its answer is always `true`
+-- Forcing a scheme
+--
+-- `walk` visits every constructor of a scheme and answers `true`; the
+-- answer is never used. Computing it evaluates the whole scheme in one
+-- reduction, in which the solver's run is shared by all the parts.
+-- Unforced, every part of a scheme is a projection of the solver's
+-- unevaluated result, and `refl` reduces each position separately:
+-- each reduction runs the solver again. A grade constant has no
+-- structure to visit; it is forced by the carrier's decision procedure.
 
 private
 
@@ -114,11 +119,13 @@ private
     walkℕ a && walkℕ b && walkℕ c && walkᴴ Q
     && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴴ O }) R && walkᶜ X
 
-  -- `x`, once the walk has answered
+  -- `x`, whatever `b` is; matching on `b` computes it first
 
   after : ∀ {A : Set} → 𝔹 → A → A
   after true  x = x
   after false x = x
+
+  -- `just r`, with `r` evaluated in full
 
   report! : Report → Maybe Report
   report! r = after (walk r) (just r)
