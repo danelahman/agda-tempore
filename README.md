@@ -220,10 +220,9 @@ a grade system, a signature of base types, and operations' signatures.
 - `Syntax/Language.agda` defines well-typed values and computations.
 - `Syntax/Renamings/` defines context renamings: `Base.agda` the generating
   calculus (eternal contexts and the `Ren` datatype, indexed by an *ambient*
-  context it must fix), `Eternal.agda` the eternal restriction's action on them,
-  `Equivalence.agda` when two renamings act alike (`_≐ʳ_`), `Coherence.agda` the
-  laws of the action with respect to it, and `Category.agda` the categorical
-  structure this all amounts to.
+  context it must fix), `Equivalence.agda` when two renamings act alike
+  (`_≐ʳ_`), `Coherence.agda` the laws of the action with respect to it, and
+  `Category.agda` the categorical structure this all amounts to.
 - `Syntax/RenActions.agda` defines renamings' action on well-typed terms.
 - `Syntax/Terms/Equivalence.agda` records that equality of terms is
   propositional equality — the data a term stores that no rule inspects (a
@@ -235,8 +234,9 @@ a grade system, a signature of base types, and operations' signatures.
   `Base.agda` the substitutions themselves, `Lookup.agda` what one does to a
   variable, `Action.agda` its action on terms, `Equivalence.agda` when two act
   alike, `Chain.agda` and `ChainEquivalence.agda` their composition,
-  `Interchange.agda` that renaming and substitution commute, `Restrict.agda`
-  the eternal restriction's action, and `Laws.agda` the resulting laws.
+  `Interchange.agda` that renaming and substitution commute, `Laws.agda` the
+  resulting laws, and `Subsumption.agda` subsumption for contexts (a
+  computation over a binder of `A` is one over any subtype of `A`).
   `Variables.agda`, `At.agda` and `Clauses.agda` then specialise all of this to
   substituting at a context's prefix boundary, which is the form every consumer
   uses; `Syntax/Substitutions.agda` re-exports that, with replacing a single
@@ -272,11 +272,10 @@ a grade system, a signature of base types, and operations' signatures.
   structure), `Modality/{Future,Past,Adjunction,Eternal}.agda` the box and
   context modalities and the adjunction between them, `GroundTypes.agda` and
   `GroundEternal.agda` the interpretation of ground types,
-  `Monad.agda` a graded monad with algebraic operations and handling (with
-  `Monad/Enrichment.agda` relating its strength to an enrichment),
-  `HandlerAlgebra.agda` the algebras a handler folds with, `TickMonad.agda` the
-  monad the top-level machine runs in, and `Implementation.agda` bundling it
-  all.
+  `Monad.agda` a graded monad with algebraic operations and handling, which
+  folds a handler into an algebra (with `Monad/Enrichment.agda` relating its
+  strength to an enrichment), `TickMonad.agda` the monad the top-level machine
+  runs in, and `Implementation.agda` bundling it all.
 - `DenotationalSemantics/Model/Example/PSh/` is a concrete model on
   setoid-valued presheaves over the worlds: `Base.agda` the category,
   `Modality/*` the modalities, `Monad/*` the effect-tree monad with its
