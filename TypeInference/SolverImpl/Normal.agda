@@ -45,7 +45,7 @@
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Empty.Irrelevant using () renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_; _++_; length; map)
+open import Data.List.Base using (List; []; _∷_; _++_; length; map; deduplicate)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Relation.Unary.Any using (Any; here; there; any?)
 import Data.List.Relation.Unary.Any as Any
@@ -62,6 +62,7 @@ open import Data.Unit using (tt)
 
 open import Relation.Nullary using (Dec; yes; no)
 open import Relation.Nullary.Decidable using (map′)
+open import Relation.Binary.Definitions using (DecidableEquality)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -98,16 +99,23 @@ min≾ᵣ nothing   = nothing
 -- Two atoms are linked when they are equal, or are constants ordered
 -- by the grade's own order. `a` reaches `b` along a chain of edges
 -- when `a` is linked to the first source, each target to the next
--- source, and the last target to `b`. What the source of each edge
--- reaches is saturated at every call of `decide≾`, at most one round
--- per edge, stopping at the first round that reaches nothing new; `a`
--- reaches `b` when they are linked, or `a` is linked to a source that
--- reaches `b`.
+-- source, and the last target to `b`; `a` reaches `b` when they are
+-- linked, or `a` is linked to a source that reaches `b`.
+--
+-- The table, built at every call of `decide≾`, holds one entry per
+-- distinct source `c`, in order of first occurrence among the edges:
+-- the atoms `d` that `c` reaches, each with the derivation of `c ⊑ d`
+-- composed along its chain. An entry is saturated by at most one
+-- round per edge, stopping at the first round that reaches nothing
+-- new. One entry per source suffices: an entry depends on its source
+-- alone, and `reach?` answers with the first entry that answers, so
+-- a repeated entry could not change an answer.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)
               (refl⊑  : ∀ {a} → a ⊑ a)
               (trans⊑ : ∀ {a b c} → a ⊑ b → b ⊑ c → a ⊑ c)
               (link?  : (a b : A) → Maybe (a ⊑ b))
+              (_≟_    : DecidableEquality A)
               (edges  : List (Σ[ a ∈ A ] Σ[ b ∈ A ] a ⊑ b))
               where
 
@@ -132,13 +140,16 @@ module Chains {A : Set} (_⊑_ : A → A → Set)
   ...   | true  = s'
   ...   | false = sat n s'
 
-  -- each source with what it reaches
+  -- each distinct source with what it reaches
 
   Table : Set
   Table = List (Σ[ c ∈ A ] List (Σ[ d ∈ A ] c ⊑ d))
 
+  sources : List A
+  sources = deduplicate _≟_ (map (λ { (c , _ , _) → c }) edges)
+
   table : Table
-  table = map (λ { (c , _ , _) → c , sat (length edges) ((c , refl⊑) ∷ []) }) edges
+  table = map (λ c → c , sat (length edges) ((c , refl⊑) ∷ [])) sources
 
   reach? : Table → (a b : A) → Maybe (a ⊑ b)
   reach? t a b = link? a b <∣> go t
@@ -231,15 +242,15 @@ linkᵣ? _      _      = nothing
 -- side along the resource ones and the images of the effect ones
 
 tableₑ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-                                              ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m))
-tableₑ Q = Chains.table _ ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m))
+                                              ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m))
+tableₑ Q = Chains.table _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m))
 
 redgesᵣ : ∀ {Θ} → (Q : Hyps Θ) → List (REdge Q)
 redgesᵣ Q = edgesᵣ (ordᵣ Q) (λ m → m) ++ map mapEdge (edgesₑ (ordₑ Q) (λ m → m))
 
 tableᵣ : ∀ {Θ} → (Q : Hyps Θ) → Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-                                              ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q)
-tableᵣ Q = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q)
+                                              ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q)
+tableᵣ Q = Chains.table _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q)
 
 ------------------------------------------------------------------
 -- Consing a constant adds at most one atom
@@ -512,10 +523,10 @@ module Embedding
 
 module Searchₑ {Θ} {Q : Hyps Θ}
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-                                 ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m))) where
+                                 ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m))) where
 
   reachₑ? : (a b : EAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ᵉᵃ ≾̂ₑ ⟦ b ⟧ᵉᵃ)
-  reachₑ? = Chains.reach? _ ⊩≾̂ₑ-refl transₑ linkₑ? (edgesₑ (ordₑ Q) (λ m → m)) t
+  reachₑ? = Chains.reach? _ ⊩≾̂ₑ-refl transₑ linkₑ? _≟ᵃₑ_ (edgesₑ (ordₑ Q) (λ m → m)) t
 
   -- Anything is below an atom that the top reaches
 
@@ -634,10 +645,10 @@ decide≾ₑ {Q = Q} ε ε' with Searchₑ.sum≾ₑ (tableₑ Q) (nrmₑ ε) (f
 
 module Searchᵣ {Θ} {Q : Hyps Θ}
                (t : Chains.Table (λ a b → Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-                                 ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q)) where
+                                 ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q)) where
 
   reachᵣ? : (a b : RAtom Θ) → Maybe (Q ⊩ ⟦ a ⟧ʳᵃ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
-  reachᵣ? = Chains.reach? _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? (redgesᵣ Q) t
+  reachᵣ? = Chains.reach? _ ⊩≾̂ᵣ-refl transᵣ linkᵣ? _≟ᵃᵣ_ (redgesᵣ Q) t
 
   ceilᵣ : ∀ {ρ : RExp Θ} → (b : RAtom Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ⟦ b ⟧ʳᵃ)
   ceilᵣ b with reachᵣ? (rc ⊤ᵣ) b
