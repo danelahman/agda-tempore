@@ -553,13 +553,26 @@ Inference for the open calculus, by constraint generation and solving.
   `Annotations.agda` gives one program per annotation form with the type it
   forces; `Annotations/` checks the schemes at the four grades.
   `Handlers.agda` gives handlers with no annotation. `relay`, whose clause
-  resumes through the identity applied to its own result, leaves unknowns
-  local to the clause and is typable at every grade. `discard`, whose clause
-  drops its continuation, is typable where the unit is least;
-  `resume-twice`, whose clause calls it twice, where the unit is the top. `Handlers/` checks by
-  `refl` that inference types each where it is typable (with a derivation at
-  that grade) and refutes it elsewhere, at the four grades.
+  resumes through the identity applied to its own result, and `relay-boxed`,
+  whose clause passes the boxed continuation through the identity twice,
+  leave cycles of unknowns local to the clause, of latent effects and of box
+  grades, which `Localise` identifies; both are typable at every grade.
+  `discard`, whose clause drops its continuation, is typable where the unit
+  is least; `resume-twice`, whose clause calls it twice, where the unit is the
+  top. `Handlers/` checks by `refl` that inference types each where it is
+  typable (with a derivation at that grade) and refutes it elsewhere, at the
+  four grades.
   `Boxes.agda` gives boxes and delays: claims made early, on time and late,
   after operations, in both branches of an `if`, through nested boxes and
-  inside a handler clause, with the box's grade given or inferred; `Boxes/`
-  checks the verdicts and schemes at the four grades.
+  inside a handler clause, with the box's grade given or inferred; a box
+  escaping through `return` and claimed out of time, refuted by the
+  transitive closure of the closed orderings; and two schemes the report
+  simplifies, a var-rule disjunction entailed by another and a product with
+  the top absorbed. `Boxes/` checks the verdicts and schemes at the four
+  grades.
+  `Product.agda` gives programs at time paired with a security level
+  (`Product/LeftSidedTimeLevel`, `Product/RightSidedTimeLevel`): an embargoed
+  report claimed in time and clean, out of time, and after a `High`
+  operation; a branch whose box grade is the join of two levels; a
+  higher-order function whose scheme carries both components; a reading
+  reused after an operation.

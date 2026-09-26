@@ -90,10 +90,17 @@ kept-and-claimed-reported :
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
--- 4. A box escaping through `return`
+-- 4. A box escaping through `return`: claimed on time; claimed
+-- early, it is refuted by the ordering its two bounds entail
 
-escaping-reported : report (infer [] escaping) ≡ just expected-escaping
+escaping-reported : report (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
+
+escaping-early-verdict : infer [] (escaping-after 1) ≡ untypable
+escaping-early-verdict = refl
+
+escaping-early-not-typable : ¬ Typable [] (escaping-after 1)
+escaping-early-not-typable = infer-untypable [] (escaping-after 1) escaping-early-verdict
 
 ------------------------------------------------------------------
 -- 5. Both branches: the join is the smaller demand, one tick
@@ -160,3 +167,4 @@ claimed-at-⊤-reported = refl
 
 handed-to-clause-reported : report (infer [] handed-to-clause) ≡ just expected-handed-to-clause
 handed-to-clause-reported = refl
+

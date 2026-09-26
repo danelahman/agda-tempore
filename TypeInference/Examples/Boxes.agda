@@ -287,28 +287,39 @@ expected-kept-and-claimed =
 ------------------------------------------------------------------
 -- 4. A box escaping through `return`
 --
---   let mk () = box[2] () as x in x in
---   let r = mk () in delay 2; unbox r as y in y
+--   escaping-after d =
+--     let mk () = box[2] () as x in x in
+--     let r = mk () in delay d; unbox r as y in y
 --
 -- The box is bound by the caller, when `mk` returns it, and claimed
--- two ticks later, on time at every grade.
+-- `d` ticks later: the premise is `⌜ d ⌝ʳ ≾ ⌜ 2 ⌝ʳ`, on time at every
+-- grade at `d = 2`. The unbox's grade is bounded by the box's only
+-- through the subtyping of `mk`'s result, so a refused claim is
+-- refuted by the ordering the two bounds entail, the transitive
+-- closure of the closed orderings (`closedᴴ`): late at the
+-- right-sided grades (`d = 4`), early at the left-sided ones
+-- (`d = 1`).
 
-escaping : RawC ∅ˢ 0
-escaping =
+escaping-after : ℕ → RawC ∅ˢ 0
+escaping-after d =
   return (lam (box ⌜ 2 ⌝ʳ ⋆ (return v₀)))
-  ⨟ ((v₀ · ⋆) ⨟ delay 2 (unbox fzero (return v₀)))
+  ⨟ ((v₀ · ⋆) ⨟ delay d (unbox fzero (return v₀)))
 
-escaping-typed : IsTyped (infer [] escaping)
-escaping-typed =
-  typed-of escaping
-    (closed {C = Unit ‼ (ûₑ ·̂ₑ (ûₑ ·̂ₑ (⌜ 2 ⌝ᵉ ·̂ₑ ûₑ)))}
-      (return (lam {A = Unit} (box ⌜ 2 ⌝ʳ ⋆ (return (var Hd ok₀))))
-       ⨟ ((var Hd ok₀ · ⋆)
-          ⨟ delay 2 (unbox (Tl-⟨⟩ Hd) on-time (<:̂ᵛ-refl _) (return (var Hd ok₀)))))
-      refl) _
+escaping-after-D : ∀ d → of-natʳ d ≾ᴳ of-natʳ 2
+                 → ∅ᴴ {∅ˢ} ∣ [] ⊢C⦂ Unit ‼ (ûₑ ·̂ₑ (ûₑ ·̂ₑ (⌜ d ⌝ᵉ ·̂ₑ ûₑ)))
+escaping-after-D d p =
+  return (lam {A = Unit} (box ⌜ 2 ⌝ʳ ⋆ (return (var Hd ok₀))))
+  ⨟ ((var Hd ok₀ · ⋆)
+     ⨟ delay d (unbox (Tl-⟨⟩ Hd) (after p) (<:̂ᵛ-refl _) (return (var Hd ok₀))))
 
-expected-escaping : Report
-expected-escaping = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ 2 ⌝ᵉ
+escaping-after-typable : ∀ d → True (of-natʳ d ≾ᵣ? of-natʳ 2) → Typable [] (escaping-after d)
+escaping-after-typable d p = closed (escaping-after-D d (toWitness p)) refl
+
+escaping-typed : IsTyped (infer [] (escaping-after 2))
+escaping-typed = typed-of (escaping-after 2) (closed (escaping-after-D 2 ≾ᵣ-refl) refl) _
+
+expected-escaping : ℕ → Report
+expected-escaping d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 
 ------------------------------------------------------------------
 -- 5. Claiming in both branches, after different delays
@@ -501,3 +512,78 @@ expected-handed-to-clause : Report
 expected-handed-to-clause =
   ∀[ 2 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ α₁ ‼ ε₀) ⇒ ([ rconst ⊤ᵣ ] α₀ ⇒ Unit ‼ ε₀) ‼ ûₑ) ‼ ûₑ
+
+------------------------------------------------------------------
+-- 9. A variable used on both sides of a claim
+--
+--   reused-around-claim a f b = f (); unbox b as g in g a; return a
+--
+-- `a` is used after `f` and again after `g`, so it owes two var-rule
+-- disjunctions, `eternal α ∨ ∣ ε_f ∣ ≾ uᵣ` and
+-- `eternal α ∨ ∣ ε_f ∣ · ∣ ε_g ∣ ≾ uᵣ`. Where the unit is least, the
+-- second entails the first, which is not reported (checked at the
+-- right-sided grades; at the left-sided ones both are settled). The
+-- box is claimed after `f`, at the least grade `∣ ε_f ∣`.
+
+reused-around-claim : RawC ∅ˢ 0
+reused-around-claim =
+  return (lam (return (lam (return (lam
+    ((v₁ · ⋆) ⨟ unbox (fsuc fzero) ((v₀ · v₄) ⨟ return v₅)))))))
+
+reused-around-claim-typed : IsTyped (infer [] reused-around-claim)
+reused-around-claim-typed =
+  typed-of reused-around-claim
+    (closed {C = (Unit ⇒ (U⇒U ⇒ ([ ∣ ûₑ ∣̂ᵉ ] U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ (ûₑ ·̂ₑ ûₑ))) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
+      (return (lam (return (lam (return (lam
+        ((var (Tl-∷ Hd) ok₀ · ⋆)
+         ⨟ unbox (Tl-∷ (Tl-⟨⟩ Hd)) on-time (<:̂ᵛ-refl _)
+             ((var Hd ok₀ · var (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd))))) (et-ok Unitₑ))
+              ⨟ return (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))))))
+                            (et-ok Unitₑ))))))))))
+      refl) _
+
+expected-reused-around-claim : Conj (scope 3 0 2) → EExp (scope 3 0 2) → Report
+expected-reused-around-claim C ε =
+  ∀[ 3 , 0 , 2 ] C ⟹
+    (α₂ ⇒ ((Unit ⇒ α₁ ‼ ε₁) ⇒ ([ ∣ ε₁ ∣̂ᵉ ] (α₂ ⇒ α₀ ‼ ε₀) ⇒ α₂ ‼ ε) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+
+------------------------------------------------------------------
+-- 10. A box claimed in a clause built after a call
+--
+--   claimed-after-call f b = f ();
+--     return (λ m. handle m () with op p k ↦ unbox b as y in
+--                                 let a = op p in unbox k as k' in k' a)
+--
+-- The clause claims `b` after `f` and behind the clause's lock, so the
+-- least box grade is `∣ ε_f ∣ · ⊤ᵣ`: the top where the unit is least,
+-- the product with the top being absorbed (checked at the right-sided
+-- grades; where the unit is the top, `⊤ᵣ` is the unit).
+
+claimed-after-call : RawC ∅ˢ 0
+claimed-after-call =
+  return (lam (return (lam
+    ((v₁ · ⋆) ⨟ return (lam (handle (v₀ · ⋆) `with clause-claim-after `in (return ⋆)))))))
+  where
+    clause-claim-after : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc (suc (suc (suc n)))))
+    clause-claim-after op =
+      unbox (fsuc (fsuc (fsuc (fsuc fzero))))
+        (perform op v₂ (unbox (fsuc (fsuc fzero)) (v₀ · v₁)))
+
+claimed-after-call-typable : Typable [] claimed-after-call
+claimed-after-call-typable =
+  closed {C = (U⇒U ⇒ ([ rconst ⊤ᵣ ] Unit ⇒ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ) ‼ ûₑ}
+    (return (lam (return (lam
+      ((var (Tl-∷ Hd) ok₀ · ⋆)
+       ⨟ return (lam (handle var Hd ok₀ · ⋆
+           `with (λ op →
+             unbox (Tl-∷ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ (Tl-⟨⟩ Hd)))))) topᵣ (<:̂ᵛ-refl _)
+               (perform op (var (Tl-∷ (Tl-∷ Hd)) ok₀)
+                 (unbox (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))) on-time (<:̂ᵛ-refl _)
+                   (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))
+           `in (return ⋆))))))))
+    refl
+
+expected-claimed-after-call : RExp (scope 3 0 2) → Report
+expected-claimed-after-call ρ =
+  ∀[ 3 , 0 , 2 ] ⊤ ⟹
+    ((Unit ⇒ α₂ ‼ ε₁) ⇒ ([ ρ ] α₀ ⇒ ((Unit ⇒ α₁ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ε₁) ‼ ûₑ) ‼ ûₑ

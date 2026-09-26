@@ -28,6 +28,9 @@ open import TypeInference.Examples.Handlers spec enum
 relay-reported : report (infer [] relay) ≡ just expected-relay
 relay-reported = refl
 
+relay-boxed-reported : report (infer [] relay-boxed) ≡ just expected-relay-boxed
+relay-boxed-reported = refl
+
 -- The unit is least, so the clause may drop its continuation
 
 discard-reported : report (infer [] discard) ≡ just expected-discard

@@ -27,11 +27,12 @@ open Time-RightSided using (spec; enum)
 open LanguageSpec spec using (Grades)
 open GradeSystemInterface Grades using (uᵣ; ⊤ᵣ)
 
-open import TypeInference.OpenSyntax.Grades   spec using (rconst)
+open import TypeInference.OpenSyntax.Grades   spec using (rconst; ∣_∣̂ᵉ; _·̂ᵣ_; _·̂ₑ_)
 open import TypeInference.OpenSyntax.Contexts spec using ([])
 open import TypeInference.Principality spec using (Typable; untypable)
 open import TypeInference.SolverImpl spec enum using (infer-untypable)
 open import TypeInference.Examples.Boxes spec enum
+open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
 -- 1. Boxing to survive time
@@ -93,10 +94,17 @@ kept-and-claimed-reported :
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
--- 4. A box escaping through `return`
+-- 4. A box escaping through `return`: claimed on time; claimed
+-- late, it is refuted by the ordering its two bounds entail
 
-escaping-reported : report (infer [] escaping) ≡ just expected-escaping
+escaping-reported : report (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
+
+escaping-late-verdict : infer [] (escaping-after 4) ≡ untypable
+escaping-late-verdict = refl
+
+escaping-late-not-typable : ¬ Typable [] (escaping-after 4)
+escaping-late-not-typable = infer-untypable [] (escaping-after 4) escaping-late-verdict
 
 ------------------------------------------------------------------
 -- 5. Both branches: the join is the larger bound, three ticks
@@ -162,3 +170,20 @@ claimed-at-⊤-reported = refl
 
 handed-to-clause-reported : report (infer [] handed-to-clause) ≡ just expected-handed-to-clause
 handed-to-clause-reported = refl
+
+------------------------------------------------------------------
+-- 9. The unit is least: the disjunction owed after `f` is entailed by
+-- the one owed after `f` and `g`, and only the latter is reported
+
+reused-around-claim-reported :
+  report (infer [] reused-around-claim)
+    ≡ just (expected-reused-around-claim (eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ·̂ᵣ ∣ ε₁ ∣̂ᵉ ≾ûᵣ) (ε₀ ·̂ₑ ε₁))
+reused-around-claim-reported = refl
+
+------------------------------------------------------------------
+-- 10. The clause's lock `[0, ∞ ]` absorbs `f`'s grade: the box is
+-- asked for at the top
+
+claimed-after-call-reported :
+  report (infer [] claimed-after-call) ≡ just (expected-claimed-after-call (rconst ⊤ᵣ))
+claimed-after-call-reported = refl

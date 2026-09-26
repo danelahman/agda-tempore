@@ -12,6 +12,12 @@
 --   Traces/Timed/RightSided    yes        no                     --
 --   Traces/Timed/LeftSided     no         no                     --
 --                                                                --
+-- and at the two products of time with a security level, each    --
+-- operation graded by its time and the level it touches          --
+-- (`Worked/Operations/Footprint.agda`): at least `fast` ticks on --
+-- the left, as in `Worked/Typing/Product/LeftSidedTimeLevel`, at --
+-- most `slow` on the right.                                      --
+--                                                                --
 -- The operations are the same at every grade, and so is their    --
 -- enumeration.                                                   --
 ------------------------------------------------------------------
@@ -74,6 +80,38 @@ module Traces-Timed-LeftSided where
   open import Syntax.Grades.Example.Worked.Traces.Timed.LeftSided using (left-sided)
   open import Syntax.Grades.Example.Worked.Typing.Traces.Timed.LeftSided using (opTime)
   open import Syntax.Grades.Example.Worked.Typing.Core left-sided opTime
+    using (spec) public
+  open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
+
+  enum : OpEnum
+  enum = opEnum sensor-ops sensor-complete
+
+module Product-LeftSidedTimeLevel where
+
+  open import Syntax.Grades.Example.Product.LeftSidedTimeLevel using (left-sided-time×low-high)
+  open import Syntax.Grades.Example.Worked.Typing.Product.LeftSidedTimeLevel using (opTime)
+  open import Syntax.Grades.Example.Worked.Typing.Core left-sided-time×low-high opTime
+    using (spec) public
+  open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
+
+  enum : OpEnum
+  enum = opEnum sensor-ops sensor-complete
+
+module Product-RightSidedTimeLevel where
+
+  open import Data.Product using (_×_; _,_)
+  open import Syntax.Grades.Example.Product.RightSidedTimeLevel using (right-sided-time×low-high)
+  open import Syntax.Grades.Example.Time.RightSided using (𝕀ᵣ; [0,_]; ↑_)
+  open import Syntax.Grades.Example.SecurityLevel using (LowHigh)
+  open import Syntax.Grades.Example.Worked.Operations using (slow)
+  open import Syntax.Grades.Example.Worked.Operations.Footprint using (touches)
+
+  -- the time an operation may take at worst, and the level it touches
+
+  opTime : Op → 𝕀ᵣ × LowHigh
+  opTime o = ([0, ↑ slow o ] , touches o)
+
+  open import Syntax.Grades.Example.Worked.Typing.Core right-sided-time×low-high opTime
     using (spec) public
   open import TypeInference.SolverImpl.Enum spec using (OpEnum; opEnum)
 

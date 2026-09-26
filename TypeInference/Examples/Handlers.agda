@@ -6,8 +6,10 @@
 -- typability depends on the grade. None has an annotation.       --
 --                                                                --
 -- `relay` resumes through the identity applied to its own        --
--- result: a cycle of two clause-local unknowns. It is typable    --
--- over an arbitrary language, so inference never refutes it.     --
+-- result: a cycle of two clause-local unknowns. `relay-boxed`    --
+-- passes the boxed continuation through the identity twice:      --
+-- cycles of box grades and of latent effects. Both are typable   --
+-- over an arbitrary language, so inference never refutes them.   --
 --                                                                --
 -- `discard` drops its continuation, and is typable where the     --
 -- unit is least; `resume-twice` calls it twice, and is typable   --
@@ -37,8 +39,8 @@ module TypeInference.Examples.Handlers (S : LanguageSpec) (opEnum : OpEnum S) wh
 
 open LanguageSpec S
 open GradeSystemInterface Grades
-  using (≾ᵣ-reflexive; map-uᵉ; uₑ; ⊤ₑ; _≾ₑ?_; uₑ-least?)
-open Operations Ops using (Op)
+  using (≾ᵣ-reflexive; map-uᵉ; uₑ; ⊤ₑ; _≾ₑ?_; uₑ-least?; mapᵉ)
+open Operations Ops using (Op; arity; op-grade)
 
 open import TypeInference.OpenSyntax.Grades    S
 open import TypeInference.OpenSyntax.Types     S
@@ -141,6 +143,69 @@ relay-unrefuted = infer-complete [] relay relay-typable
 
 expected-relay : Report
 expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
+
+------------------------------------------------------------------
+-- A handler resuming through a helper on boxes
+--
+-- The same helper applied twice to the boxed continuation itself:
+--
+--   relay-boxed m = handle m () with
+--     op p k ↦ let h = λ x. x in let k₁ = h k in let k₂ = h k₁ in
+--              let a = op p in unbox k₂ as k' in k' a
+--
+-- `h`'s argument and result are boxes, so two cycles of
+-- clause-local unknowns form, one per sort: the box grades of `h`'s
+-- argument and result, and the latent effects of the functions
+-- inside them, each entered from below by the continuation's type.
+-- Both are identified, and `h` is typed at the continuation's type.
+
+through-box : ∀ {Θ n} → Op → RawC (Θ +e) (suc (suc n))
+through-box op =
+  return (lam (return v₀)) ⨟ ((v₀ · v₁) ⨟ ((v₁ · v₀) ⨟
+    perform op v₄ (unbox (fsuc fzero) (v₀ · v₁))))
+
+relay-boxed : RawC ∅ˢ 0
+relay-boxed = return (lam (handle (v₀ · ⋆) `with through-box `in (return ⋆)))
+
+-- It is typable, `h` at the continuation's type
+
+private
+
+  K : Op → OVType (∅ˢ +e)
+  K op = [ rconst (mapᵉ (op-grade op)) ] (⌜ arity op ⌝ᵍ ⇒ Unit ‼ evar (newᵉ {∅ˢ}))
+
+  -- a variable three unit effects have passed over
+
+  ok₃ : ∀ {Θ} {A : OVType Θ} → VarOK ∅ᴴ A (((ûᵣ ·̂ᵣ ∣ ûₑ ∣̂ᵉ) ·̂ᵣ ∣ ûₑ ∣̂ᵉ) ·̂ᵣ ∣ ûₑ ∣̂ᵉ)
+  ok₃ = ≾ᵘ-ok (step (step (step ⊩≾̂ᵣ-refl)))
+    where
+      u-map : ∀ {Θ} → ∅ᴴ {Θ} ⊩ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
+      u-map = transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ))
+
+      step : ∀ {Θ} {ρ : RExp Θ} → ∅ᴴ ⊩ ρ ≾̂ᵣ ûᵣ → ∅ᴴ ⊩ ρ ·̂ᵣ ∣ ûₑ ∣̂ᵉ ≾̂ᵣ ûᵣ
+      step p = transᵣ (monoᵣ p u-map) (eqᵣ ≡̂ᵣ-identityˡ)
+
+  relay-boxed-D : ∅ᴴ ∣ [] ⊢C⦂ (U⇒U ⇒ Unit ‼ (ûₑ ·̂ₑ ûₑ)) ‼ ûₑ
+  relay-boxed-D =
+    return (lam (handle var Hd ok₀ · ⋆
+      `with (λ op →
+        coerce (eqₑ u³)
+          (return (lam {A = K op} (return (var Hd ok₀)))
+           ⨟ ((var Hd ok₀ · var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁)
+              ⨟ ((var (Tl-∷ (Tl-⟨⟩ Hd)) ok₁ · var Hd ok₀)
+                 ⨟ perform op (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-⟨⟩ (Tl-∷ Hd))))))) ok₃)
+                     (unbox (Tl-∷ (Tl-⟨⟩ Hd)) (eqᵣ ≡̂ᵣ-identityˡ) (<:̂ᵛ-refl _)
+                       (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))))
+      `in (return ⋆)))
+
+relay-boxed-typable : Typable [] relay-boxed
+relay-boxed-typable = closed relay-boxed-D refl
+
+relay-boxed-unrefuted : infer [] relay-boxed ≢ untypable
+relay-boxed-unrefuted = infer-complete [] relay-boxed relay-boxed-typable
+
+expected-relay-boxed : Report
+expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
 ------------------------------------------------------------------
 -- A handler that drops its continuation

@@ -26,6 +26,9 @@ open import TypeInference.Examples.Handlers spec enum
 relay-reported : report (infer [] relay) ≡ just expected-relay
 relay-reported = refl
 
+relay-boxed-reported : report (infer [] relay-boxed) ≡ just expected-relay-boxed
+relay-boxed-reported = refl
+
 -- The unit is the top, so the continuation may be spent twice and
 -- nothing goes stale
 
