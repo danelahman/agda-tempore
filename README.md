@@ -46,7 +46,8 @@ invokes `agda Everything.agda`); `Everything.agda` imports every module except
 the type-inference examples, which run the solver at four grades and take
 minutes to check: `make examples` checks all of them
 (`agda TypeInference/Examples.agda`). They are split by what they test
-(`Stdlib`, `Annotations`, `Handlers`, `Boxes`, `Reports`, `Product`), each
+(`Stdlib`, `Annotations`, `Handlers`, `Boxes`, `Reports`, `Product`,
+`Stages`), each
 with its own index `TypeInference/Examples/<Set>/All.agda` and target
 `make examples-<set>`; the Makefile records which solver parts each set
 exercises.
