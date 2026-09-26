@@ -92,6 +92,15 @@ a grade system, a signature of base types, and operations' signatures.
   upper endpoint may be `∞` (its extended-natural arithmetic is in
   `ExtendedNat.agda`).
 
+- `Syntax/Grades/Example/Time/Dense/` mirrors the same three shapes over the
+  non-negative rationals ℚ≥0 (`NonNegativeRational.agda`, with
+  `ExtendedRational.agda` the possibly-infinite extension): `LeftSided.agda`
+  (`[ q ,+∞⟩`, at least `q` units), `RightSided.agda` (`[0, q ]`, at most `q`
+  units, `q` possibly `∞`), and `TwoSided.agda` (`[ min , max ]`, `max`
+  possibly `∞`). Each embeds its discrete counterpart by a grade morphism
+  reading `n` time steps as `n` units of dense time. `Examples.agda` is the
+  worked instances.
+
 - `Syntax/Grades/Example/SecurityLevel.agda` turns a decidable bounded
   join-semilattice of levels into a grade: `_·_` and `_⊔_` are both the join,
   the unit the least level, `⊤` the greatest, and `of-nat` constantly the

@@ -10,7 +10,9 @@
 -- The examples come in three families:                                --
 --                                                                     --
 --   * `Time.*` -- grades that measure only elapsed time, as a bound   --
---     or a window of time steps. Small and self-contained.            --
+--     or a window of time steps, over ℕ or, in `Time.Dense.*`, over   --
+--     the non-negative rationals ℚ≥0; morphisms embed the discrete    --
+--     grades in the dense ones. Small and self-contained.             --
 --                                                                     --
 --   * `Traces.*` -- grades that record *which runs* a computation     --
 --     may have had, as a set of timed traces, sharing their carrier   --
@@ -66,6 +68,16 @@ import Syntax.Grades.Example.Time.RightSided
 
 import Syntax.Grades.Example.Time.ExtendedNat
 import Syntax.Grades.Example.Time.TwoSidedWithInfinity
+
+-- the same three shapes over the non-negative rationals ℚ≥0, with
+-- morphisms embedding the discrete grades above
+
+import Syntax.Grades.Example.Time.Dense.NonNegativeRational
+import Syntax.Grades.Example.Time.Dense.ExtendedRational
+import Syntax.Grades.Example.Time.Dense.LeftSided
+import Syntax.Grades.Example.Time.Dense.RightSided
+import Syntax.Grades.Example.Time.Dense.TwoSided
+import Syntax.Grades.Example.Time.Dense.Examples
 
 ------------------------------------------------------------------------
 -- Security levels
