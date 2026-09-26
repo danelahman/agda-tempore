@@ -56,7 +56,7 @@ open import Syntax.Grades.Example.Time.RightSided
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send)
 
-open import Syntax.Grades.Example.Worked.Time using (≤!; ≰!)
+open import Syntax.Grades.Example.Worked.Time.Decide using (≤!; ≰!)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the time they may take at worst

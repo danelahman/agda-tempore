@@ -18,9 +18,8 @@
 -- or is the unit). The join is not: the counts' join is pointwise, so --
 -- it can combine the worst case of one counter from one run with that --
 -- of another from a different run, and the weighted sum of that       --
--- exceeds both runs' weights. `Counts.Worked` exhibits the failure;   --
--- `weigh` is merely lax there, the join of the images lying below the --
--- image of the join.                                                  --
+-- exceeds both runs' weights, so `weigh` is merely lax: the join of     --
+-- the images lies below the image of the join.                         --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

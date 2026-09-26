@@ -82,7 +82,6 @@ import Syntax.Grades.Example.Time.Dense.ExtendedRational
 import Syntax.Grades.Example.Time.Dense.LeftSided
 import Syntax.Grades.Example.Time.Dense.RightSided
 import Syntax.Grades.Example.Time.Dense.TwoSided
-import Syntax.Grades.Example.Time.Dense.Examples
 
 ------------------------------------------------------------------------
 -- Security levels
@@ -149,10 +148,6 @@ import Syntax.Grades.Example.Counts.Extrema
 -- how often a timed trace draws on each counter
 
 import Syntax.Grades.Example.Counts.Occurrences
-
--- worked instances at the sensor node
-
-import Syntax.Grades.Example.Counts.Worked
 
 ------------------------------------------------------------------------
 -- Grade systems

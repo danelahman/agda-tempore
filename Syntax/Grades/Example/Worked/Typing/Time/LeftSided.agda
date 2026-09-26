@@ -40,7 +40,7 @@ open import Syntax.Grades.Example.Time.LeftSided
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send)
 
-open import Syntax.Grades.Example.Worked.Time using (≤!; ≰!)
+open import Syntax.Grades.Example.Worked.Time.Decide using (≤!; ≰!)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the time they are guaranteed to take

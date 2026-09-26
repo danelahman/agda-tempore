@@ -32,6 +32,15 @@ import Syntax.Grades.Example.Worked.Operations
 
 import Syntax.Grades.Example.Worked.Time
 
+-- The two-point security level and taint sets over `Fin 3`.
+
+import Syntax.Grades.Example.Worked.SecurityLevel
+
+-- Left- and right-sided time with a security level, and right-sided
+-- time with an energy budget.
+
+import Syntax.Grades.Example.Worked.Product
+
 -- A language specification over the alphabet, which the trace-based
 -- grade systems need in order to be instantiated.
 
@@ -40,13 +49,17 @@ import Syntax.Grades.Example.Worked.Spec
 -- The grade morphisms, computed on the node's own grades, and their
 -- monotonicity carrying the orderings above across.
 
-import Syntax.Grades.Example.Worked.Systems
+import Syntax.Grades.Example.Worked.System
 
 -- The four trace grades -- a floor, a cap and their pairing at the
 -- cost-sensitive orders, and a cap at the subset order -- each read as
 -- an effect grade and as a resource grade.
 
 import Syntax.Grades.Example.Worked.Traces
+
+-- Quotas and certain counts on the three operations.
+
+import Syntax.Grades.Example.Worked.Counts
 
 -- Example computations typed against these grades, over identity grade
 -- systems: what each grade lets a program do, and what it refuses.

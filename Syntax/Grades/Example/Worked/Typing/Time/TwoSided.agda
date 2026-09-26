@@ -56,7 +56,7 @@ open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 open import Syntax.Grades.Example.Worked.Operations
   using (Op; read; write; send)
 
-open import Syntax.Grades.Example.Worked.Time using (≤!; ≰!)
+open import Syntax.Grades.Example.Worked.Time.Decide using (≤!; ≰!)
 
 ------------------------------------------------------------------------
 -- The operations, graded by the window their execution time falls in

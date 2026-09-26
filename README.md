@@ -98,8 +98,7 @@ a grade system, a signature of base types, and operations' signatures.
   (`[ q ,+∞⟩`, at least `q` units), `RightSided.agda` (`[0, q ]`, at most `q`
   units, `q` possibly `∞`), and `TwoSided.agda` (`[ min , max ]`, `max`
   possibly `∞`). Each embeds its discrete counterpart by a grade morphism
-  reading `n` time steps as `n` units of dense time. `Examples.agda` is the
-  worked instances.
+  reading `n` time steps as `n` units of dense time.
 
 - `Syntax/Grades/Example/SecurityLevel.agda` turns a decidable bounded
   join-semilattice of levels into a grade: `_·_` and `_⊔_` are both the join,
@@ -197,9 +196,7 @@ a grade system, a signature of base types, and operations' signatures.
   the weaker grade, the unit (demanding nothing) greatest, and the join the
   pointwise minimum. `Extrema.agda` is the toolkit both are built from: the
   greatest and least value of a natural-number measure over a non-empty
-  list. `Occurrences.agda` counts a timed trace's draws on each counter, and
-  `Worked.agda` instantiates the counts at the sensor node's three
-  operations.
+  list. `Occurrences.agda` counts a timed trace's draws on each counter.
 
 - `Syntax/Grades/Example/System/` assembles full grade systems, pairing an
   effect grade with a resource grade along a projection saying what the
@@ -230,11 +227,13 @@ a grade system, a signature of base types, and operations' signatures.
   alphabet — a sensor node that can `read` (1 tick), `write` (2–3) and `send`
   (4–6) — and exhibits as checked Agda terms which orderings hold between
   concrete grades and what each morphism does to them: `Operations.agda` fixes
-  the alphabet and its runs, `Time.agda` and `Traces/*` work out the orderings
-  one grade at a time, `Spec.agda` gives a language specification over it, and
-  `Systems.agda` computes the projections. Positive and negative claims are
-  both discharged by *running* the relevant decision procedure, so a table
-  asserted the wrong way round does not typecheck.
+  the alphabet and its runs, `Time/*`, `SecurityLevel.agda`, `Product/*`,
+  `Traces/*` and `Counts/*` work out the orderings one grade at a time,
+  `Spec.agda` gives a language specification over it, and `System/*` computes
+  the projections, including the counts' own morphisms under
+  `System/Counts/*`. Positive and negative claims are both discharged by
+  *running* the relevant decision procedure, so a table asserted the wrong
+  way round does not typecheck.
 
 - `Syntax/Grades/Example/Worked/Typing/` then fixes a language over that
   alphabet and types example computations against these grades, exercising
