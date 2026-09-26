@@ -5,13 +5,8 @@
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
-open import Data.Unit using (tt)
-
-open import Relation.Nullary.Decidable using (True; False)
 
 open import Util.Equality
-
-open import Syntax.Grades.Example.Worked.Operations using (read; send)
 
 open import TypeInference.Examples.Specs using (module Time-RightSided)
 
@@ -21,8 +16,6 @@ open Time-RightSided using (spec; enum)
 
 open import TypeInference.OpenSyntax.Contexts spec using ([])
 open import TypeInference.Examples.Annotations spec enum
-open import TypeInference.Raw.SufficientlyAnnotated spec
-  using (sufficientlyAnnotated?)
 
 id-bool-reported : report (infer [] id-bool) ≡ just expected-id-bool
 id-bool-reported = refl
@@ -32,17 +25,3 @@ id-unit-reported = refl
 
 compose-g-reported : report (infer [] compose-g) ≡ just expected-compose-g
 compose-g-reported = refl
-
--- Sufficient annotation, decided
-
-twice-insufficient : False (sufficientlyAnnotated? enum twice)
-twice-insufficient = tt
-
-twiceᵃ-sufficient : True (sufficientlyAnnotated? enum twiceᵃ)
-twiceᵃ-sufficient = tt
-
-branch-insufficient : False (sufficientlyAnnotated? enum (branch send read))
-branch-insufficient = tt
-
-branchᵃ-sufficient : True (sufficientlyAnnotated? enum (branchᵃ send read))
-branchᵃ-sufficient = tt

@@ -744,20 +744,20 @@ module Steps {Θ₀ Θ Φ} (O : Subst (Θ +e) Φ) (P : Subst Θ₀ Φ) (inc : P 
     collapseᵉL-inv nzero    L i = i
     collapseᵉL-inv (nsuc n) L i with collapseᵉ? O (lR L)
     ... | nothing                = i
-    ... | just (k , r , q , st) = collapseᵉL-inv n _ (collapseᵉ-inv r q i)
+    ... | just (k , r , q , st , _) = collapseᵉL-inv n _ (collapseᵉ-inv r q i)
 
     collapseʳL-inv : ∀ n (L : Localised O R₀) → LInv P (lR L) → LInv P (lR (proj₁ (collapseʳL O R₀ n L)))
     collapseʳL-inv nzero    L i = i
     collapseʳL-inv (nsuc n) L i with collapseʳ? O (lR L)
     ... | nothing                = i
-    ... | just (k , r , q , st) = collapseʳL-inv n _ (collapseʳ-inv r q i)
+    ... | just (k , r , q , st , _) = collapseʳL-inv n _ (collapseʳ-inv r q i)
 
     raiseL-inv : ∀ (L : Localised O R₀) {L'} → raiseL O R₀ L ≡ just L' → LInv P (lR L) → LInv P (lR L')
     raiseL-inv L e i with evar? (sE O (newᵉ {Θ}))
     ... | nothing = ⊥-elim (nothing≢just e)
     ... | just (j , eqj) with Find.raise? O (lR L) j
     ...   | nothing = ⊥-elim (nothing≢just e)
-    ...   | just (raised l rc ue ur cl sd fx) with e
+    ...   | just (raised l rc ue ur cl sd fx _) with e
     ...     | refl = tops-inv l fx i
 
     -- normal forms keep the invariant
