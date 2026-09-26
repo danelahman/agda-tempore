@@ -2236,6 +2236,13 @@ loc-id : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → Localised O R
 loc-id {O = O} {R} =
   loc idˢ R (⨟-idʳ O) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) h) (λ τ en h → h) (λ a → a)
 
+-- A localisation for one outer substitution is one for any pointwise equal
+
+loc-≐ : ∀ {Θ Φ} {O O' : Subst (Θ +e) Φ} {R : Resid Φ} → O ≐ˢ O' → Localised O R → Localised O' R
+loc-≐ p (loc σ R' fx sn cp la) =
+  loc σ R' (≐ˢ-trans (⨟-congˡ (≐ˢ-sym p) σ) (≐ˢ-trans fx p)) sn
+      (λ τ en h → cp τ (proj₁ en , ≐ˢ-trans (⨟-congˡ p τ) (proj₂ en)) h) la
+
 -- The settled atoms dropped, and each disjunction whose type is never
 -- eternal replaced by its grade side: the instances from no
 -- hypotheses are unchanged
@@ -2374,8 +2381,12 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
       cycles (L' , changed) with collapseʳL (nR Φ) L'
       ... | L'' , changed' = values (L'' , (changed ∨ changed'))
 
+-- The rounds, with the settled atoms dropped before and after, the
+-- images of `O` read from `memo O`
+
 localise : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ) → Localised O R
-localise {Φ = Φ} O R = loc-settle (rounds O R (nE Φ + nR Φ) (loc-settle loc-id))
+localise {Φ = Φ} O R =
+  loc-≐ (memo-≐ O) (loc-settle (rounds (memo O) R (nE Φ + nR Φ) (loc-settle loc-id)))
 
 -- After localisation, the type of each disjunction left is eternal at
 -- some instance
@@ -2384,7 +2395,7 @@ localise-ds : ∀ {Θ Φ} → (O : Subst (Θ +e) Φ) → (R : Resid Φ)
             → ∀ {A ρ} → (A , ρ) ∈ ds (lR (localise O R))
             → Σ[ αs ∈ List (TyVar Φ) ] (etDec A ≡ just αs)
 localise-ds {Φ = Φ} O R =
-  Refined.restᴱ (refine (Unsettled.kept (unsettled settledᵈ (ds (lR (rounds O R (nE Φ + nR Φ) (loc-settle loc-id)))))))
+  Refined.restᴱ (refine (Unsettled.kept (unsettled settledᵈ (ds (lR (rounds (memo O) R (nE Φ + nR Φ) (loc-settle loc-id)))))))
 
 -- An assignment the later substitution already agrees with is absorbed
 

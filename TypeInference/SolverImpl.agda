@@ -417,68 +417,75 @@ reportOf : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : 
 reportOf w X C refuted                    e = refuted
 reportOf w X C stuck                      e = stuck
 reportOf w X C (solved (Θ' , σ , Q , D)) e =
-      solved (report Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
-                   (map toOblig D̃) (Elim.η el)
-                   (cong (mapᴼ readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
-                   (fixes-≐ fx (w ⨟ˢ σ) (⊆-∪ˡ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl)) (τ-ι sr)
-                   (conv⁻ el sr) (inst⁻ el sr) instᴿ' (keep⁻ el sr) to-R̃'
-                   (princ⁻ el sr) (ext-ι sr))
+  solved (reportElim (eliminate entailsᴴ F (X [ σ ]ᶜ) (simplify Q)))
   where
     open Strengthened
 
     F : Vars Θ'
     F = fvˢ (w ⨟ˢ σ) ∪ᵛ fvᴰ D
 
-    el₀ : Elimᶠ F (X [ σ ]ᶜ) (simplify Q)
-    el₀ = eliminate entailsᴴ F (X [ σ ]ᶜ) (simplify Q)
+    -- The report from an elimination and the strengthening of its result
 
-    el : Elim (X [ σ ]ᶜ) (simplify Q)
-    el = proj₁ el₀ ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _
+    reportWith : (el : Elim (X [ σ ]ᶜ) (simplify Q)) → Fixes F (Elim.η el)
+               → Strengthened (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D) → Reported w X C
+    reportWith el fx sr =
+      report Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
+             (map toOblig D̃) (Elim.η el)
+             (cong (mapᴼ readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
+             (fixes-≐ fx (w ⨟ˢ σ) (⊆-∪ˡ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl)) (τ-ι sr)
+             (conv⁻ el sr) (inst⁻ el sr) instᴿ' (keep⁻ el sr) to-R̃'
+             (princ⁻ el sr) (ext-ι sr)
+      where
+        fxᴰ : Fixes (fvᴰ D) (Elim.η el)
+        fxᴰ = fixes-⊆ (⊆-∪ʳ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl) fx
 
-    fx : Fixes F (Elim.η el)
-    fx = fixes-⨟ (fixes-⨟ (proj₂ el₀) fixes-id) fixes-id
+        read : Dfr Θ' → Dfr (Θ⁻ sr)
+        read E = canonᵈ (E [ π sr ]ᵈ)
 
-    fxᴰ : Fixes (fvᴰ D) (Elim.η el)
-    fxᴰ = fixes-⊆ (⊆-∪ʳ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl) fx
+        D̃ : List (Dfr (Θ⁻ sr))
+        D̃ = map read D
 
-    sr : Strengthened (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D)
-    sr = strengthen (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D)
+        -- read back along `ι`, an entry is itself
+        back : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
+             → ∀ {E} → E ∈ D → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᵈ E [ δ ]
+        back {δ = δ} {E} m h =
+          fix-⊩ᵈ⁻ (π-fix sr) ⊆-refl m
+            (⊩ᵈ-resp-≐ˢ E (≐ˢ-sym (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ))
+              (⊩ᵈ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵈ) h)))
 
-    read : Dfr Θ' → Dfr (Θ⁻ sr)
-    read E = canonᵈ (E [ π sr ]ᵈ)
+        fwd : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
+            → ∀ {E} → E ∈ D → Q' ⊩ᵈ E [ δ ] → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+        fwd {δ = δ} {E} m h =
+          canonᵈ-⊩ (E [ π sr ]ᵈ)
+            (⊩ᵈ-subst⁻ E (⊩ᵈ-resp-≐ˢ E (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ) (fix-⊩ᵈ (π-fix sr) ⊆-refl m h)))
 
-    D̃ : List (Dfr (Θ⁻ sr))
-    D̃ = map read D
+        instᴿ' : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
+               → Q' ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ map toOblig D [ Elim.η el ⨟ˢ δ ]
+        instᴿ' δ Q' h =
+          ⊩ᴰ→⊩ᴼˢ {Q = Q'} {δ = Elim.η el ⨟ˢ δ} D
+            (λ {E} m → fix-⊩ᵈ {Q = Q'} {ρ = Elim.η el} {δ = δ} fxᴰ {D = D} ⊆-refl m
+                         (back {Q' = Q'} {δ = δ} m
+                           (⊩ᴼˢ→⊩ᴰ {Q = Q'} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃ h (∈-map⁺ read m))))
 
-    -- read back along `ι`, an entry is itself
-    back : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
-         → ∀ {E} → E ∈ D → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᵈ E [ δ ]
-    back {δ = δ} {E} m h =
-      fix-⊩ᵈ⁻ (π-fix sr) ⊆-refl m
-        (⊩ᵈ-resp-≐ˢ E (≐ˢ-sym (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ))
-          (⊩ᵈ-subst E (canonᵈ-⊩⁻ (E [ π sr ]ᵈ) h)))
+        to-R̃' : (δ : Subst Θ' ∅ˢ) → δ ⊨ simplify Q ∣ map toOblig D
+              → ∅ᴴ ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
+        to-R̃' δ h =
+          ⊩ᴰ→⊩ᴼˢ {Q = ∅ᴴ} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃
+            (∈-map-elim read {P = λ E → ∅ᴴ ⊩ᵈ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
+              (λ m₀ → fwd {Q' = ∅ᴴ} {δ = δ} m₀
+                        (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (All.tail h) m₀)))
 
-    fwd : ∀ {Ξ} {Q' : Hyps Ξ} {δ : Subst Θ' Ξ}
-        → ∀ {E} → E ∈ D → Q' ⊩ᵈ E [ δ ] → Q' ⊩ᵈ read E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
-    fwd {δ = δ} {E} m h =
-      canonᵈ-⊩ (E [ π sr ]ᵈ)
-        (⊩ᵈ-subst⁻ E (⊩ᵈ-resp-≐ˢ E (⨟-assoc (π sr) ⌜ ι sr ⌝ʳ δ) (fix-⊩ᵈ (π-fix sr) ⊆-refl m h)))
+    -- The report from an elimination fixing `F`, and its strengthening
 
-    instᴿ' : ∀ {Ξ} → (δ : Subst Θ' Ξ) → (Q' : Hyps Ξ)
-           → Q' ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ] → Q' ⊩ᴼˢ map toOblig D [ Elim.η el ⨟ˢ δ ]
-    instᴿ' δ Q' h =
-      ⊩ᴰ→⊩ᴼˢ {Q = Q'} {δ = Elim.η el ⨟ˢ δ} D
-        (λ {E} m → fix-⊩ᵈ {Q = Q'} {ρ = Elim.η el} {δ = δ} fxᴰ {D = D} ⊆-refl m
-                     (back {Q' = Q'} {δ = δ} m
-                       (⊩ᴼˢ→⊩ᴰ {Q = Q'} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃ h (∈-map⁺ read m))))
+    reportStr : (el : Elim (X [ σ ]ᶜ) (simplify Q)) → Fixes F (Elim.η el) → Reported w X C
+    reportStr el fx = reportWith el fx (strengthen (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D))
 
-    to-R̃' : (δ : Subst Θ' ∅ˢ) → δ ⊨ simplify Q ∣ map toOblig D
-          → ∅ᴴ ⊩ᴼˢ map toOblig D̃ [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]
-    to-R̃' δ h =
-      ⊩ᴰ→⊩ᴼˢ {Q = ∅ᴴ} {δ = ⌜ ι sr ⌝ʳ ⨟ˢ δ} D̃
-        (∈-map-elim read {P = λ E → ∅ᴴ ⊩ᵈ E [ ⌜ ι sr ⌝ʳ ⨟ˢ δ ]}
-          (λ m₀ → fwd {Q' = ∅ᴴ} {δ = δ} m₀
-                    (⊩ᴼˢ→⊩ᴰ {Q = ∅ᴴ} {δ = δ} D (All.tail h) m₀)))
+    -- The report from the elimination, followed by normal forms and `trim`
+
+    reportElim : Elimᶠ F (X [ σ ]ᶜ) (simplify Q) → Reported w X C
+    reportElim el₀ =
+      reportStr (proj₁ el₀ ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _)
+                (fixes-⨟ (fixes-⨟ (proj₂ el₀) fixes-id) fixes-id)
 
 reportOn : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
          → Outcome (Reported w X C)

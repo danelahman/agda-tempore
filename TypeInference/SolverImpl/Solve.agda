@@ -813,11 +813,18 @@ labelled {C = C} op (solved (s₁ , m₁ , w₁)) =
 
 localiseˢ : ∀ {Θ} → (s : St Θ) → {s'' : St (Θ +e)} → ⇑ᵉˢ s ⟶ s''
           → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)
-localiseˢ s {s''} m =
-  st (Ψ s'') (θ s'' ⨟ˢ lσ L) (lR L) (rig s'') , mor (lσ L) ≐ˢ-refl (lsnd L)
+localiseˢ {Θ} s {s''} m = localised (localise (mδ m) (res s''))
   where
-    L : Localised (mδ m) (res s'')
-    L = localise (mδ m) (res s'')
+    -- The state the localisation leaves
+    localised : Localised (mδ m) (res s'') → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)
+    localised L = st (Ψ s'') (θ s'' ⨟ˢ lσ L) (lR L) (rig s'') , mor (lσ L) ≐ˢ-refl (lsnd L)
+
+-- The scope closed at the state the localisation leaves
+
+closeᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e)) → {s₃ : St (Θ +e)}
+       → (m : ⇑ᵉˢ s ⟶ s₃) → Wit s₃ C → Σ[ s₄ ∈ St (Θ +e) ] (s₃ ⟶ s₄)
+       → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
+closeᵉ s C m w (s₄ , m₄) = popᵉ s C (Ψ s₄) (θ s₄) (res s₄) (rig s₄) (⟶-⨟ m m₄) (wit-mono m₄ C w)
 
 -- The unifier's verdict, paired with the equation naming it, so
 -- that the driver's own case analysis stays visible to a proof.
@@ -997,11 +1004,7 @@ solve s (∀ᵉ C) with solve (⇑ᵉˢ s) C
 ... | stuck   = stuck
 ... | solved (s'' , m'' , w'') with reexpand s''
 ...   | nothing = refuted
-...   | just (s₃ , m₃) = thenRetry {C = ∀ᵉ C} (
-        popᵉ s C (Ψ (proj₁ (localiseˢ s m₃'))) (θ (proj₁ (localiseˢ s m₃')))
-                 (res (proj₁ (localiseˢ s m₃'))) (rig (proj₁ (localiseˢ s m₃')))
-                 (⟶-⨟ m₃' (proj₂ (localiseˢ s m₃')))
-                 (wit-mono (proj₂ (localiseˢ s m₃')) C (wit-mono m₃ C w'')))
+...   | just (s₃ , m₃) = thenRetry {C = ∀ᵉ C} (closeᵉ s C m₃' (wit-mono m₃ C w'') (localiseˢ s m₃'))
   where
     m₃' = ⟶-⨟ m'' m₃
 

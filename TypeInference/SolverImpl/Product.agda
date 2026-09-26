@@ -442,19 +442,28 @@ module Grouping
           ≈-trans ∨-swap (≈-trans (∨-cong ≈-refl p)
                          (≈-trans (∨?-swap m) (∨-cong ≈-refl (≈-sym (∷?-≈ K m)))))
 
+    -- An alternative placed in a pruned sum: absorbed, or absorbing
+    -- those below it
+
+    place : Prod → Alts Prod → Alts Prod
+    place P s with below? P s
+    ... | just _  = s
+    ... | nothing = P ∷? proj₁ (sweep P s)
+
+    place-≈ : (P : Prod) → (s : Alts Prod) → ⟦ place P s ⟧ᵖ⁺ ≈ (⟦ P ⟧ᵖ ∨ ⟦ s ⟧ᵖ⁺)
+    place-≈ P s with below? P s
+    ... | just q  = ≈-sym q
+    ... | nothing = ≈-trans (∷?-≈ P (proj₁ (sweep P s))) (≈-sym (proj₂ (sweep P s)))
+
+    -- The sum with each alternative below another one dropped
+
     prune : Alts Prod → Alts Prod
     prune (alt P)  = alt P
-    prune (P ∷⁺ s) with below? P (prune s)
-    ... | just _  = prune s
-    ... | nothing = P ∷? proj₁ (sweep P (prune s))
+    prune (P ∷⁺ s) = place P (prune s)
 
     prune-≈ : (ps : Alts Prod) → ⟦ prune ps ⟧ᵖ⁺ ≈ ⟦ ps ⟧ᵖ⁺
     prune-≈ (alt P)  = ≈-refl
-    prune-≈ (P ∷⁺ s) with below? P (prune s)
-    ... | just q  = ≈-trans (≈-sym q) (∨-cong ≈-refl (prune-≈ s))
-    ... | nothing =
-          ≈-trans (∷?-≈ P (proj₁ (sweep P (prune s))))
-          (≈-trans (≈-sym (proj₂ (sweep P (prune s)))) (∨-cong ≈-refl (prune-≈ s)))
+    prune-≈ (P ∷⁺ s) = ≈-trans (place-≈ P (prune s)) (∨-cong ≈-refl (prune-≈ s))
 
     -- One round folds and orders, then prunes; rounds are repeated
     -- while the sum shrinks

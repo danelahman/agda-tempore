@@ -12,6 +12,8 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.Nat using (ℕ)
+open import Data.Vec.Base using (Vec; tabulate) renaming (lookup to lookupᵛ)
+open import Data.Vec.Properties using (lookup∘tabulate)
 
 open import Relation.Nullary using (yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋)
@@ -737,3 +739,15 @@ wk-,ʳ-ˢ ι σ ρ = ≐ˢ-trans (⨟-assoc ι wkˢʳ (σ ,ʳ ρ)) (⨟-congʳ �
 wk-,ᵉ-ˢ : ∀ {Θ₀ Θ Θ'} → (ι : Subst Θ₀ Θ) → (σ : Subst Θ Θ') → (ε : EExp Θ')
         → ((ι ⨟ˢ wkˢᵉ) ⨟ˢ (σ ,ᵉ ε)) ≐ˢ (ι ⨟ˢ σ)
 wk-,ᵉ-ˢ ι σ ε = ≐ˢ-trans (⨟-assoc ι wkˢᵉ (σ ,ᵉ ε)) (⨟-congʳ ι (wkˢᵉ-,ᵉ σ ε))
+
+-- A substitution with its images tabulated
+
+memo : ∀ {Θ Θ'} → Subst Θ Θ' → Subst Θ Θ'
+memo {Θ} {Θ'} σ = fromTables (tabulate (sTy σ)) (tabulate (sR σ)) (tabulate (sE σ))
+  where
+    fromTables : Vec (OVType Θ') (nTy Θ) → Vec (RExp Θ') (nR Θ) → Vec (EExp Θ') (nE Θ)
+               → Subst Θ Θ'
+    fromTables ts rs es = sub (lookupᵛ ts) (lookupᵛ rs) (lookupᵛ es)
+
+memo-≐ : ∀ {Θ Θ'} → (σ : Subst Θ Θ') → memo σ ≐ˢ σ
+memo-≐ σ = mk≐ˢ (lookup∘tabulate (sTy σ)) (lookup∘tabulate (sR σ)) (lookup∘tabulate (sE σ))
