@@ -145,6 +145,10 @@ open import Syntax.Normalisation
 
 open import Syntax.Grades
 
+---- The product of two grades, and of two grade systems
+
+import Syntax.Grades.Product
+
 ---- The timed-trace toolkit the trace-based grades are built from
 ---- (see the module for how its pieces fit together)
 

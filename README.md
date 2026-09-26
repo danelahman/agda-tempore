@@ -83,7 +83,7 @@ a grade system, a signature of base types, and operations' signatures.
   and `≡̂ᵣ-comm`/`≡̂ₑ-comm` take as `Is-just` proofs and the solver reads
   directly.
 
-- `Syntax/Grades/Example.agda` indexes the example grades, which come in two
+- `Syntax/Grades/Example.agda` indexes the example grades, which come in three
   families, and the grade systems assembled from them.
 
 - `Syntax/Grades/Example/Time/` holds the grades that measure only elapsed
@@ -91,6 +91,27 @@ a grade system, a signature of base types, and operations' signatures.
   `TwoSided` (a window `[ min , max ]`), and `TwoSidedWithInfinity`, whose
   upper endpoint may be `∞` (its extended-natural arithmetic is in
   `ExtendedNat.agda`).
+
+- `Syntax/Grades/Example/SecurityLevel.agda` turns a decidable bounded
+  join-semilattice of levels into a grade: `_·_` and `_⊔_` are both the join,
+  the unit the least level, `⊤` the greatest, and `of-nat` constantly the
+  unit, since time does not raise a level. A boxed value may be unboxed only
+  while the label has not risen since boxing — no write-down after read-up.
+  `two-point-levels` is `Low < High`; `taint-sets n` is the `n`-fold power,
+  read as sets of taint labels over `Fin n`.
+
+- `Syntax/Grades/Product.agda` (next to `Syntax.Grades` itself, not an
+  example) pairs two grades componentwise — `_×ᵍ_`, with projections `π₁ᵍ`
+  and `π₂ᵍ`, pairing `⟨_,_⟩ᵍ`, and the product of two grade systems `_×ˢ_`.
+  `Syntax/Grades/Example/Product/` instantiates it: `LeftSidedTimeLevel.agda`
+  (at least `n` steps, touching nothing above `ℓ`, read as an embargo with a
+  taint check), `RightSidedTimeLevel.agda` (at most `n` steps and level `ℓ`,
+  an expiring untainted capability), and `RightSidedTimeEnergy.agda` (at most
+  `n` steps and `e` units of energy, a drifting calibration).
+  `Syntax/Grades/Example/System/Product/LeftSidedTimeLevel.agda` pairs the
+  left-sided-time-and-level effect grade with three resource grades: both
+  components (timed declassification), time alone along `π₁ᵍ` (an embargo),
+  and the level alone along `π₂ᵍ` (a taint check).
 
 - `Syntax/Grades/Example/Traces/` holds the grades that record *which runs* a
   computation may have had, as non-empty finite sets of timed traces. Every

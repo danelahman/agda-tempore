@@ -7,7 +7,7 @@
 -- resource grades, recording what is thereby guaranteed about time)   --
 -- together with a monoid map projecting the first onto the second.    --
 --                                                                     --
--- The examples come in two families:                                  --
+-- The examples come in three families:                                --
 --                                                                     --
 --   * `Time.*` -- grades that measure only elapsed time, as a bound   --
 --     or a window of time steps. Small and self-contained.            --
@@ -16,6 +16,16 @@
 --     may have had, as a set of timed traces, sharing their carrier   --
 --     and monoid (from `Grades.Traces.Sets`) and differing in the     --
 --     order they put on it.                                           --
+--                                                                     --
+--   * `SecurityLevel` -- a decidable join-semilattice of levels,      --
+--     floating upward as data is touched; the two-point `Low < High`  --
+--     and taint sets over `Fin n`.                                    --
+--                                                                     --
+-- `Product.*` pairs members of these families, using the generic      --
+-- product of grades in `Syntax.Grades.Product`: left- and right-sided --
+-- time with a security level, and right-sided time with an energy     --
+-- budget (right-sided time again, read as spend rather than elapsed   --
+-- time).                                                              --
 --                                                                     --
 -- The trace family splits in two: `Timed.*` over the cost-sensitive   --
 -- orders on traces, with a floor, a cap and their pairing, and        --
@@ -58,6 +68,33 @@ import Syntax.Grades.Example.Time.ExtendedNat
 import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 
 ------------------------------------------------------------------------
+-- Security levels
+--
+-- A decidable join-semilattice of levels, floating upward on read.
+
+import Syntax.Grades.Example.SecurityLevel
+
+------------------------------------------------------------------------
+-- Products
+--
+-- `Syntax.Grades.Product` pairs two grades componentwise; these pair
+-- members of the families above.
+
+-- left-sided time and a security level: an embargo with a taint check
+
+import Syntax.Grades.Example.Product.LeftSidedTimeLevel
+
+-- right-sided time and a security level: an expiring, untainted
+-- capability
+
+import Syntax.Grades.Example.Product.RightSidedTimeLevel
+
+-- right-sided time and an energy budget: a calibration that drifts
+-- with both
+
+import Syntax.Grades.Example.Product.RightSidedTimeEnergy
+
+------------------------------------------------------------------------
 -- Sets of timed traces
 --
 -- A grade records which runs a computation may have had, and the order
@@ -76,6 +113,12 @@ import Syntax.Grades.Example.Traces
 -- nothing is forgotten, and `mapᵉ` drops out of the typing rules
 
 import Syntax.Grades.Example.System.Identity
+
+-- left-sided time paired with a security level, at the identity, at
+-- time alone, and at the level alone: timed declassification and its
+-- two projections, an embargo alone and a taint check alone
+
+import Syntax.Grades.Example.System.Product.LeftSidedTimeLevel
 
 -- two-sided intervals to left-sided ones: forget the upper bound, keep
 -- the guarantee that at least so much time has passed
