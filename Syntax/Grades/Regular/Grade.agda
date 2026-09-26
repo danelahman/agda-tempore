@@ -5,6 +5,10 @@
 -- canonical table, so equal languages are equal grades. The order is  --
 -- inclusion, the product concatenation, the join union; `⊤` is every  --
 -- word, `u` the empty word alone, and `of-nat n` the word `tickⁿ`.    --
+--                                                                     --
+-- Proofs about the tables of operations go through `subst` along word --
+-- equations: comparing two such tables by computation unfolds their   --
+-- symbolic exploration.                                               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_)
@@ -76,15 +80,19 @@ same-language c d cd dc =
 ------------------------------------------------------------------------
 -- Operations
 
+-- a single word
+
+⟪_⟫ : Word → Regular
+⟪ w ⟫ = regular ⟦ w ⟧ (⟦⟧-wf w) (⟦⟧-canonical w) (w , from (∈-⟦⟧ w w) refl)
+
 u : Regular
-u = regular ε (⟦⟧-wf []) (⟦⟧-canonical []) ([] , from (∈-⟦⟧ [] []) refl)
+u = ⟪ [] ⟫
 
 ⊤ : Regular
 ⊤ = regular Σ* Σ*-wf Σ*-canonical ([] , ∈-Σ* [])
 
 of-nat : ℕ → Regular
-of-nat n = regular (tick ^ n) (⟦⟧-wf (replicate n tick)) (⟦⟧-canonical (replicate n tick))
-                   (replicate n tick , from (∈-⟦⟧ (replicate n tick) (replicate n tick)) refl)
+of-nat n = ⟪ replicate n tick ⟫
 
 _·ᴿ_ : Regular → Regular → Regular
 c ·ᴿ d = regular (table c · table d) (·-wf {table c} {table d} (wf′ c) (wf′ d)) (·-canonical {table c} {table d} (wf′ c) (wf′ d)) inh
@@ -110,40 +118,49 @@ infix  4 _≾_
 ------------------------------------------------------------------------
 -- Languages of the operations
 
+∈⟪⟫⁻ : ∀ v w → w ∈ table ⟪ v ⟫ → w ≡ v
+∈⟪⟫⁻ v w = to (∈-⟦⟧ v w)
+
+∈⟪⟫⁺ : ∀ v → v ∈ table ⟪ v ⟫
+∈⟪⟫⁺ v = from (∈-⟦⟧ v v) refl
+
+≾⇒⊆ : ∀ c d → c ≾ d → table c ⊆ table d
+≾⇒⊆ c d = ⊆ᵇ-sound {table c} {table d} (wf′ c) (wf′ d)
+
+⊆⇒≾ : ∀ c d → table c ⊆ table d → c ≾ d
+⊆⇒≾ c d = ⊆ᵇ-complete {table c} {table d} (wf′ c) (wf′ d)
+
+∈·⁺ : ∀ c d x y → x ∈ table c → y ∈ table d → (x ++ y) ∈ table (c ·ᴿ d)
+∈·⁺ c d x y x∈ y∈ = from (∈-· {table c} {table d} (wf′ c) (wf′ d) (x ++ y)) (x , y , refl , x∈ , y∈)
+
+∈·⁻ : ∀ c d w → w ∈ table (c ·ᴿ d) → ∃₂ λ x y → w ≡ x ++ y × x ∈ table c × y ∈ table d
+∈·⁻ c d w = to (∈-· {table c} {table d} (wf′ c) (wf′ d) w)
+
+∈⊔⁺ˡ : ∀ c d w → w ∈ table c → w ∈ table (c ⊔ᴿ d)
+∈⊔⁺ˡ c d w w∈ = subst T (sym (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w)) (from T-∨ (inj₁ w∈))
+
+∈⊔⁺ʳ : ∀ c d w → w ∈ table d → w ∈ table (c ⊔ᴿ d)
+∈⊔⁺ʳ c d w w∈ = subst T (sym (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w)) (from T-∨ (inj₂ w∈))
+
+∈⊔⁻ : ∀ c d w → w ∈ table (c ⊔ᴿ d) → w ∈ table c ⊎ w ∈ table d
+∈⊔⁻ c d w w∈ = to T-∨ (subst T (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w) w∈)
+
+∈u⁻ : ∀ w → w ∈ table u → w ≡ []
+∈u⁻ = ∈⟪⟫⁻ []
+
+∈u⁺ : [] ∈ table u
+∈u⁺ = ∈⟪⟫⁺ []
+
+∈tick⁻ : ∀ n w → w ∈ table (of-nat n) → w ≡ replicate n tick
+∈tick⁻ n = ∈⟪⟫⁻ (replicate n tick)
+
+∈tick⁺ : ∀ n → replicate n tick ∈ table (of-nat n)
+∈tick⁺ n = ∈⟪⟫⁺ (replicate n tick)
+
+∈⊤ : ∀ w → w ∈ table ⊤
+∈⊤ = ∈-Σ*
+
 private
-  ≾⇒⊆ : ∀ c d → c ≾ d → table c ⊆ table d
-  ≾⇒⊆ c d = ⊆ᵇ-sound {table c} {table d} (wf′ c) (wf′ d)
-
-  ⊆⇒≾ : ∀ c d → table c ⊆ table d → c ≾ d
-  ⊆⇒≾ c d = ⊆ᵇ-complete {table c} {table d} (wf′ c) (wf′ d)
-
-  ∈·⁺ : ∀ c d x y → x ∈ table c → y ∈ table d → (x ++ y) ∈ table (c ·ᴿ d)
-  ∈·⁺ c d x y x∈ y∈ = from (∈-· {table c} {table d} (wf′ c) (wf′ d) (x ++ y)) (x , y , refl , x∈ , y∈)
-
-  ∈·⁻ : ∀ c d w → w ∈ table (c ·ᴿ d) → ∃₂ λ x y → w ≡ x ++ y × x ∈ table c × y ∈ table d
-  ∈·⁻ c d w = to (∈-· {table c} {table d} (wf′ c) (wf′ d) w)
-
-  ∈⊔⁺ˡ : ∀ c d w → w ∈ table c → w ∈ table (c ⊔ᴿ d)
-  ∈⊔⁺ˡ c d w w∈ = subst T (sym (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w)) (from T-∨ (inj₁ w∈))
-
-  ∈⊔⁺ʳ : ∀ c d w → w ∈ table d → w ∈ table (c ⊔ᴿ d)
-  ∈⊔⁺ʳ c d w w∈ = subst T (sym (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w)) (from T-∨ (inj₂ w∈))
-
-  ∈⊔⁻ : ∀ c d w → w ∈ table (c ⊔ᴿ d) → w ∈ table c ⊎ w ∈ table d
-  ∈⊔⁻ c d w w∈ = to T-∨ (subst T (∪-accepts {table c} {table d} (wf′ c) (wf′ d) w) w∈)
-
-  ∈u⁻ : ∀ w → w ∈ table u → w ≡ []
-  ∈u⁻ w = to (∈-⟦⟧ [] w)
-
-  ∈u⁺ : [] ∈ table u
-  ∈u⁺ = from (∈-⟦⟧ [] []) refl
-
-  ∈tick⁻ : ∀ n w → w ∈ table (of-nat n) → w ≡ replicate n tick
-  ∈tick⁻ n w = to (∈-⟦⟧ (replicate n tick) w)
-
-  ∈tick⁺ : ∀ n → replicate n tick ∈ table (of-nat n)
-  ∈tick⁺ n = from (∈-⟦⟧ (replicate n tick) (replicate n tick)) refl
-
   replicate-+ : ∀ {A : Set} m n (x : A) → replicate (m + n) x ≡ replicate m x ++ replicate n x
   replicate-+ zero    n x = refl
   replicate-+ (suc m) n x = cong (x ∷_) (replicate-+ m n x)
@@ -154,29 +171,28 @@ private
 -- Proofs go through `subst` along word equations rather than matching
 -- on them, so that no table of an operation is ever unfolded.
 
-private
-  -- a word of a product is a product of words
+-- a word of a product is a product of words
 
-  ∈·-elim : ∀ c d (P : Word → Set) w → w ∈ table (c ·ᴿ d)
-          → (∀ x y → x ∈ table c → y ∈ table d → P (x ++ y)) → P w
-  ∈·-elim c d P w w∈ f = go (∈·⁻ c d w w∈)
-    where
-    go : (∃₂ λ x y → w ≡ x ++ y × x ∈ table c × y ∈ table d) → P w
-    go (x , y , eq , x∈ , y∈) = subst P (sym eq) (f x y x∈ y∈)
+∈·-elim : ∀ c d (P : Word → Set) w → w ∈ table (c ·ᴿ d)
+        → (∀ x y → x ∈ table c → y ∈ table d → P (x ++ y)) → P w
+∈·-elim c d P w w∈ f = go (∈·⁻ c d w w∈)
+  where
+  go : (∃₂ λ x y → w ≡ x ++ y × x ∈ table c × y ∈ table d) → P w
+  go (x , y , eq , x∈ , y∈) = subst P (sym eq) (f x y x∈ y∈)
 
-  -- a word of a join is a word of either side
+-- a word of a join is a word of either side
 
-  ∈⊔-elim : ∀ c d (P : Set) w → w ∈ table (c ⊔ᴿ d)
-          → (w ∈ table c → P) → (w ∈ table d → P) → P
-  ∈⊔-elim c d P w w∈ f g = [ f , g ]′ (∈⊔⁻ c d w w∈)
+∈⊔-elim : ∀ c d (P : Set) w → w ∈ table (c ⊔ᴿ d)
+        → (w ∈ table c → P) → (w ∈ table d → P) → P
+∈⊔-elim c d P w w∈ f g = [ f , g ]′ (∈⊔⁻ c d w w∈)
 
-  -- two words with product `[]`
+-- two words with product `[]`
 
-  ∈u-++ˡ : ∀ x y → (x ++ y) ∈ table u → x ≡ []
-  ∈u-++ˡ x y xy∈ = ++-conicalˡ x y (∈u⁻ (x ++ y) xy∈)
+∈u-++ˡ : ∀ x y → (x ++ y) ∈ table u → x ≡ []
+∈u-++ˡ x y xy∈ = ++-conicalˡ x y (∈u⁻ (x ++ y) xy∈)
 
-  ∈u-++ʳ : ∀ x y → (x ++ y) ∈ table u → y ≡ []
-  ∈u-++ʳ x y xy∈ = ++-conicalʳ x y (∈u⁻ (x ++ y) xy∈)
+∈u-++ʳ : ∀ x y → (x ++ y) ∈ table u → y ≡ []
+∈u-++ʳ x y xy∈ = ++-conicalʳ x y (∈u⁻ (x ++ y) xy∈)
 
 ·-identityˡ : ∀ c → u ·ᴿ c ≡ c
 ·-identityˡ c = same-language (u ·ᴿ c) c to′ from′
@@ -224,9 +240,6 @@ private
 
 ≾-⊤ : ∀ c → c ≾ ⊤
 ≾-⊤ c = ⊆⇒≾ c ⊤ λ w _ → ∈⊤ w
-  where
-  ∈⊤ : ∀ w → w ∈ table ⊤
-  ∈⊤ = ∈-Σ*
 
 ⊔-ubˡ : ∀ c d → c ≾ c ⊔ᴿ d
 ⊔-ubˡ c d = ⊆⇒≾ c (c ⊔ᴿ d) (∈⊔⁺ˡ c d)
