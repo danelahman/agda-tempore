@@ -1,10 +1,11 @@
 ------------------------------------------------------------------------
 -- Worked instances of the security-level grades.                      --
 --                                                                     --
--- The two-point lattice `Low < High`, and taint sets over `Fin 3`:    --
--- orderings, sequencing and the greatest grade, each checked by the   --
--- grade's own decision procedure or by computation, so a claim        --
--- asserted the wrong way round does not typecheck.                    --
+-- The two-point lattice `Low < High`, with the sensor node's runs     --
+-- graded by `touches`, and taint sets over `Fin 3`: orderings,        --
+-- sequencing and the greatest grade, each checked by the grade's own  --
+-- decision procedure or by computation, so a claim asserted the wrong --
+-- way round does not typecheck.                                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.SecurityLevel where
@@ -23,6 +24,9 @@ open import Util.Equality
 open import Syntax.Grades.Example.SecurityLevel
   using (LowHigh; Low; High; two-point-levels; TaintSet; taint-sets;
          label; _∪ᵗ_)
+
+open import Syntax.Grades.Example.Worked.Operations using (read; write; send)
+open import Syntax.Grades.Example.Worked.Operations.Footprint using (touches)
 
 ------------------------------------------------------------------------
 -- Checked orderings
@@ -63,6 +67,15 @@ module _ where
 
   idle : of-nat 5 · Low ≡ Low
   idle = refl
+
+  -- at the sensor node, `logged` stays `Low` and `uplink`, which
+  -- transmits, is `High`
+
+  logged-low : touches read · touches write ≡ Low
+  logged-low = refl
+
+  uplink-high : touches read · of-nat 2 · touches send ≡ High
+  uplink-high = refl
 
 -- three taint labels: personal data, a key, the network
 

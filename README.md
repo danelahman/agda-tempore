@@ -227,7 +227,9 @@ a grade system, a signature of base types, and operations' signatures.
   alphabet — a sensor node that can `read` (1 tick), `write` (2–3) and `send`
   (4–6) — and exhibits as checked Agda terms which orderings hold between
   concrete grades and what each morphism does to them: `Operations.agda` fixes
-  the alphabet and its runs, `Time/*`, `SecurityLevel.agda`, `Product/*`,
+  the alphabet and its runs, `Operations/Footprint.agda` the security level
+  each operation touches (a `send` touches the network, `High`) and the energy
+  it draws (read 1, write 2, send 5), `Time/*`, `SecurityLevel.agda`, `Product/*`,
   `Traces/*` and `Counts/*` work out the orderings one grade at a time,
   `Spec.agda` gives a language specification over it, and `System/*` computes
   the projections, including the counts' own morphisms under
@@ -238,8 +240,11 @@ a grade system, a signature of base types, and operations' signatures.
 - `Syntax/Grades/Example/Worked/Typing/` then fixes a language over that
   alphabet and types example computations against these grades, exercising
   operations, sequencing, `delay`, `if`, pattern matching, functions,
-  `box`/`unbox` and effect handlers. Each of the seven instances (three time
-  grades and all four trace grades, each over its identity grade system) writes
+  `box`/`unbox` and effect handlers. Each of the twelve instances (the three
+  discrete time grades and dense right-sided time, all four trace grades,
+  left-sided time with a security level, right-sided time with an energy
+  budget, and at-most and at-least counts, each over its identity grade
+  system) writes
   its programs out in full at its own grades, discharging every side condition
   a rule imposes — `var`'s bound, `unbox`'s premise, `coerce`'s ordering — at
   the point it imposes it, by running the grade's own decision procedure; where

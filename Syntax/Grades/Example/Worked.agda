@@ -27,6 +27,11 @@ module Syntax.Grades.Example.Worked where
 
 import Syntax.Grades.Example.Worked.Operations
 
+-- What each operation touches and draws besides time: a security
+-- level and an amount of energy.
+
+import Syntax.Grades.Example.Worked.Operations.Footprint
+
 -- Orderings and products in the four interval grades: which way
 -- weakening points in each, and which windows are incomparable.
 

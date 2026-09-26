@@ -61,6 +61,11 @@ import Syntax.Grades.Example.Worked.Typing.Time.RightSided
 
 import Syntax.Grades.Example.Worked.Typing.Time.TwoSided
 
+-- "at most `q` units" of dense time: the operations measured to the
+-- half tick, and a lease spent to the half tick
+
+import Syntax.Grades.Example.Worked.Typing.Time.Dense.RightSided
+
 ------------------------------------------------------------------------
 -- Grades that record which runs there were
 --
@@ -85,3 +90,32 @@ import Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided
 -- nothing paying for anything else
 
 import Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided
+
+------------------------------------------------------------------------
+-- Grades that pair time with something else
+--
+-- What each operation touches and draws is fixed in
+-- `Operations.Footprint`.
+
+-- lower bounds on time with a security level: a box is an embargoed
+-- report, refused when claimed too early or after a transmission
+
+import Syntax.Grades.Example.Worked.Typing.Product.LeftSidedTimeLevel
+
+-- upper bounds on time with an energy budget: a box is a calibration
+-- that drifts with time and with use, idling drawing nothing
+
+import Syntax.Grades.Example.Worked.Typing.Product.RightSidedTimeEnergy
+
+------------------------------------------------------------------------
+-- Grades that count operations
+
+-- quotas: a rate limit on transmissions, and a box is a licence that
+-- idling does not spend
+
+import Syntax.Grades.Example.Worked.Typing.Counts.AtMost
+
+-- certain counts: a box is a token earned by work, which idling cannot
+-- stand in for
+
+import Syntax.Grades.Example.Worked.Typing.Counts.AtLeast

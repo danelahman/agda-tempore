@@ -1,9 +1,10 @@
 ------------------------------------------------------------------------
 -- Worked instances of right-sided time paired with an energy budget.  --
 --                                                                     --
--- The drifting-calibration grade `([0, n ] , [0, e ])`: orderings and  --
--- sequencing against a fixed budget, checked by the grade's own        --
--- decision procedure or by computation.                                --
+-- The drifting-calibration grade `([0, n ] , [0, e ])` at the sensor  --
+-- node, each operation graded by `slow` and `draws`: orderings and    --
+-- sequencing against a fixed budget, checked by the grade's own       --
+-- decision procedure or by computation.                               --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Product.RightSidedTimeEnergy where
@@ -19,6 +20,10 @@ open import Syntax.Grades.Example.Time.RightSided using ([0,_]; ↑_; ∞)
 open import Syntax.Grades.Example.Product.RightSidedTimeEnergy
   using (right-sided-time×energy)
 
+open import Syntax.Grades.Example.Worked.Operations
+  using (Op; read; send; slow)
+open import Syntax.Grades.Example.Worked.Operations.Footprint using (draws)
+
 open import Util.Equality
 
 ------------------------------------------------------------------------
@@ -32,38 +37,46 @@ open Grade right-sided-time×energy
 ⋠! : (c d : Carrier) {p : False (c ≾? d)} → ¬ (c ≾ d)
 ⋠! _ _ {p} = toWitnessFalse p
 
--- a budget of 20 steps and 5 units
+-- an operation of the sensor node: the time it may take at worst, and
+-- the energy it draws
+
+node : Op → Carrier
+node o = ([0, ↑ slow o ] , [0, ↑ draws o ])
+
+-- the `uplink` run: read, idle two ticks, send
+
+uplink : Carrier
+uplink = node read · of-nat 2 · node send
+
+-- a budget of 30 steps and 12 units
 
 budget : Carrier
-budget = ([0, ↑ 20 ] , [0, ↑ 5 ])
-
--- a send: up to 3 steps and 2 units
-
-send : Carrier
-send = ([0, ↑ 3 ] , [0, ↑ 2 ])
+budget = ([0, ↑ 30 ] , [0, ↑ 12 ])
 
 -- idling is free
 
 idle : of-nat 7 ≡ ([0, ↑ 7 ] , [0, ↑ 0 ])
 idle = refl
 
--- two sends and four idle steps fit the budget
+-- an uplink takes nine steps at worst and draws six units
 
-two-sends : send · send · of-nat 4 ≡ ([0, ↑ 10 ] , [0, ↑ 4 ])
-two-sends = refl
+one-uplink : uplink ≡ ([0, ↑ 9 ] , [0, ↑ 6 ])
+one-uplink = refl
 
-two-sends-fit : send · send · of-nat 4 ≾ budget
-two-sends-fit = ≾! (send · send · of-nat 4) budget
+-- two uplinks fit the budget
 
--- three sends are fast enough but spend too much
+two-uplinks-fit : uplink · uplink ≾ budget
+two-uplinks-fit = ≾! (uplink · uplink) budget
 
-three-sends-overspend : ¬ (send · send · send ≾ budget)
-three-sends-overspend = ⋠! (send · send · send) budget
+-- three are fast enough, taking 27 steps, but draw 18 units
 
--- idling for 30 steps spends nothing but misses the deadline
+three-uplinks-overdraw : ¬ (uplink · uplink · uplink ≾ budget)
+three-uplinks-overdraw = ⋠! (uplink · uplink · uplink) budget
 
-long-idle-late : ¬ (of-nat 30 ≾ budget)
-long-idle-late = ⋠! (of-nat 30) budget
+-- idling for 31 steps draws nothing but misses the deadline
+
+long-idle-late : ¬ (of-nat 31 ≾ budget)
+long-idle-late = ⋠! (of-nat 31) budget
 
 -- the greatest grade: no deadline, no energy bound
 

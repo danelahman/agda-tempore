@@ -1,8 +1,9 @@
 ------------------------------------------------------------------------
 -- Worked instances of left-sided time paired with a security level.   --
 --                                                                     --
--- The embargo-with-taint-check grade `([ n ,+∞⟩ , ℓ)`: orderings,      --
--- sequencing and the join, checked by the grade's own decision         --
+-- The embargo-with-taint-check grade `([ n ,+∞⟩ , ℓ)` at the sensor  --
+-- node, each operation graded by `fast` and `touches`: orderings,     --
+-- sequencing and the join, checked by the grade's own decision        --
 -- procedure or by computation.                                        --
 ------------------------------------------------------------------------
 
@@ -21,6 +22,10 @@ open import Syntax.Grades.Example.SecurityLevel using (Low; High)
 open import Syntax.Grades.Example.Product.LeftSidedTimeLevel
   using (left-sided-time×low-high)
 
+open import Syntax.Grades.Example.Worked.Operations
+  using (Op; read; write; send; fast)
+open import Syntax.Grades.Example.Worked.Operations.Footprint using (touches)
+
 open import Util.Equality
 
 ------------------------------------------------------------------------
@@ -34,25 +39,32 @@ open Grade left-sided-time×low-high
 ⋠! : (c d : Carrier) {p : False (c ≾? d)} → ¬ (c ≾ d)
 ⋠! _ _ {p} = toWitnessFalse p
 
--- the report's box: publishable after 30 steps, from untainted code
+-- an operation of the sensor node: the time it is guaranteed to take,
+-- and the level it touches
+
+node : Op → Carrier
+node o = ([ fast o ,+∞⟩ , touches o)
+
+-- the report's box: publishable after 5 steps, from untainted code
 
 report : Carrier
-report = ([ 30 ,+∞⟩ , Low)
+report = ([ 5 ,+∞⟩ , Low)
 
--- 45 steps of `Low` work: the embargo is over
+-- `logged` and two ticks of idling: five steps of `Low` work, and the
+-- embargo is over
 
-after-embargo : ([ 45 ,+∞⟩ , Low) ≾ report
-after-embargo = ≾! ([ 45 ,+∞⟩ , Low) report
+after-embargo : node read · node write · of-nat 2 ≾ report
+after-embargo = ≾! (node read · node write · of-nat 2) report
 
--- 20 steps: still under embargo
+-- `logged` alone: three steps, still under embargo
 
-under-embargo : ¬ (([ 20 ,+∞⟩ , Low) ≾ report)
-under-embargo = ⋠! ([ 20 ,+∞⟩ , Low) report
+under-embargo : ¬ (node read · node write ≾ report)
+under-embargo = ⋠! (node read · node write) report
 
--- 45 steps that read `High` data: tainted
+-- `uplink`: seven steps, but it transmits, and is tainted
 
-tainted : ¬ (([ 45 ,+∞⟩ , High) ≾ report)
-tainted = ⋠! ([ 45 ,+∞⟩ , High) report
+tainted : ¬ (node read · of-nat 2 · node send ≾ report)
+tainted = ⋠! (node read · of-nat 2 · node send) report
 
 -- waiting advances time and leaves the level alone
 
@@ -61,12 +73,12 @@ wait = refl
 
 -- sequencing adds the time and joins the levels
 
-seq : of-nat 20 · ([ 1 ,+∞⟩ , High) ≡ ([ 21 ,+∞⟩ , High)
+seq : node read · of-nat 2 · node send ≡ ([ 7 ,+∞⟩ , High)
 seq = refl
 
 -- the join keeps the smaller guarantee and the higher level
 
-join : ([ 10 ,+∞⟩ , Low) ⊔ ([ 20 ,+∞⟩ , High) ≡ ([ 10 ,+∞⟩ , High)
+join : node write ⊔ node send ≡ ([ 2 ,+∞⟩ , High)
 join = refl
 
 -- the unit is not declared least
