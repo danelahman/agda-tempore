@@ -12,7 +12,8 @@
 -- The expected type is an upper bound, not a pin: where two      --
 -- types generation cannot choose meet, it is the right-hand side --
 -- of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_`; everywhere else the shape is pinned   --
--- by `_≐ᵥ_` and the slack is passed on to the subterms.          --
+-- by `_≐ᵥ_`, subtyping both ways, and the slack is passed on to  --
+-- the subterms.                                                  --
 --                                                                --
 -- Under a binder the arguments of the recursive calls are        --
 -- weakened, and so is the interpretation of the raw term's type  --
@@ -23,14 +24,6 @@
 -- derivation `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to `M [ σ ]` --
 -- (`charV`/`charC`, from `soundV`/`soundC` in `Soundness` and    --
 -- `completeV`/`completeC` in `Completeness`).                    --
---                                                                --
--- Every `_≐ᵥ_` emitted has one side that is a former with no     --
--- grade slot (`Base`, `Unit`, `Bool`) or is made of unknowns     --
--- bound by the enclosing `∃` and constrained first by that       --
--- equation (`α₁ |×| α₂`, `[ r ] α`). A grade expression in an    --
--- equation so meets only an unbound unknown, which is what the   --
--- unifier's syntactic grade cases rely on (`Core.Unify`).        --
--- Argued, not proved.                                            --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -306,11 +299,11 @@ mutual
   genVˢ-rigidFree : ∀ {Θ₀ Θ n} {ι : Subst Θ₀ Θ} {Γ : OCtx Θ n} → (V : RawV Θ₀ n)
                   → {A : OVType Θ} → HandlerFreeᵛ V → RigidFree (genVˢ ι Γ V A)
   genVˢ-rigidFree (var i)      h       = tt , tt
-  genVˢ-rigidFree (const B c)  h       = tt
-  genVˢ-rigidFree ⋆            h       = tt
-  genVˢ-rigidFree true         h       = tt
-  genVˢ-rigidFree false        h       = tt
-  genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = tt , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
+  genVˢ-rigidFree (const B c)  h       = tt , tt
+  genVˢ-rigidFree ⋆            h       = tt , tt
+  genVˢ-rigidFree true         h       = tt , tt
+  genVˢ-rigidFree false        h       = tt , tt
+  genVˢ-rigidFree ⦉ V₁ , V₂ ⦊   (h , k) = (tt , tt) , genVˢ-rigidFree V₁ h , genVˢ-rigidFree V₂ k
   genVˢ-rigidFree (lam M)      h       = tt , genCˢ-rigidFree M h
   genVˢ-rigidFree (lam[ B ] M) h       = tt , genCˢ-rigidFree M h
   genVˢ-rigidFree (V ⦂ᵛ B)     h       = genVˢ-rigidFree V h , tt
@@ -335,7 +328,7 @@ mutual
     genCˢ-rigidFree M h , tt
   genCˢ-rigidFree (handle M `with H `in N) {A ‼ t} ()
   genCˢ-rigidFree (unbox i N)              {A ‼ t} h           =
-    tt , tt , tt , genCˢ-rigidFree N h
+    (tt , tt) , tt , tt , genCˢ-rigidFree N h
   genCˢ-rigidFree (box ρ V N)              {A ‼ t} (h , k)     =
     genVˢ-rigidFree V h , genCˢ-rigidFree N k
   genCˢ-rigidFree (M ⦂ᶜ (B ‼ u))           {A ‼ t} h           =

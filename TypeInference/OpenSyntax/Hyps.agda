@@ -519,6 +519,14 @@ data _∣_<:̂ᶜ_ {Θ} Q where
              → Q ∣ ([ ρ ] A) <:̂ᵛ ([ ρ' ] A') → Q ∣ A <:̂ᵛ A'
 <:̂ᵛ-box-type ([ _ ]ₛ p) = p
 
+-- A subtype of a box type is a box type
+
+<:̂ᵛ-boxʳ : ∀ {Θ} {Q : Hyps Θ} {A ρ B}
+         → Q ∣ A <:̂ᵛ [ ρ ] B
+         → Σ[ ρ₀ ∈ RExp Θ ] Σ[ A₀ ∈ OVType Θ ]
+             (A ≡ [ ρ₀ ] A₀) × (Q ⊩ ρ ≾̂ᵣ ρ₀) × (Q ∣ A₀ <:̂ᵛ B)
+<:̂ᵛ-boxʳ ([ q ]ₛ p) = _ , _ , refl , q , p
+
 -- `Q' ⊩ᴴ Q [ σ ]` says `Q'` entails every hypothesis of `Q` transported
 -- along `σ`; there is no syntactic action of a substitution on `Hyps`,
 -- as `ets` and `subᵥ` hold variables, whose images under `σ` are open

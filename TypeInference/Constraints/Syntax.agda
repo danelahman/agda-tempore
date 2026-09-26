@@ -3,14 +3,17 @@
 --                                                               --
 -- Constraints are the output of type-and-effect inference: a    --
 -- first-order formula over the open types and grade expressions --
--- of a scope `Θ`, built from type equations, value-type         --
--- subtyping, grade orderings, eternality atoms, existential     --
--- quantification over the three sorts of variables, a rigid     --
--- (eigenvariable) effect-grade quantifier, and a conjunction    --
--- indexed by operation symbols.                                 --
+-- of a scope `Θ`, built from value-type subtyping, grade        --
+-- orderings, eternality atoms, existential quantification over  --
+-- the three sorts of variables, a rigid (eigenvariable)         --
+-- effect-grade quantifier, and a conjunction indexed by         --
+-- operation symbols.                                            --
 --                                                               --
 -- Computation types need no former of their own: `C ≾̂ᶜ C'` is   --
--- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`.                                    --
+-- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`. Nor do type equations: `A ≐ᵥ B` is --
+-- mutual subtyping, `(A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)`; subtyping being    --
+-- structural, it fixes the shape and holds the grades and type  --
+-- variables equal up to mutual ordering.                        --
 --                                                               --
 -- Constraints with binders follow Pottier and Remy, The Essence --
 -- of ML Type Inference (ATTAPL, 2005).                          --
@@ -42,7 +45,6 @@ data Constraint (Θ : Scope) : Set where
   ⊤̂     : Constraint Θ                                -- trivially satisfied
   ⊥̂     : Constraint Θ                                -- unsatisfiable
   _∧̂_   : Constraint Θ → Constraint Θ → Constraint Θ  -- conjunction
-  _≐ᵥ_  : OVType Θ → OVType Θ → Constraint Θ          -- type equation
   _≾̂ᵥᶜ_ : OVType Θ → OVType Θ → Constraint Θ          -- value-type subtyping
   _≾̂ᵣᶜ_ : RExp Θ → RExp Θ → Constraint Θ              -- resource-grade ordering
   _≾̂ₑᶜ_ : EExp Θ → EExp Θ → Constraint Θ              -- effect-grade ordering
@@ -53,6 +55,11 @@ data Constraint (Θ : Scope) : Set where
   ∃ᵉ_   : Constraint (Θ +e)  → Constraint Θ           -- fresh effect-grade variable
   ∀ᵉ_   : Constraint (Θ +e)  → Constraint Θ           -- rigid effect-grade variable
   ⋀ᵒᵖ   : (Op → Constraint Θ) → Constraint Θ          -- conjunction over operations
+
+-- A type equation
+
+_≐ᵥ_ : ∀ {Θ} → OVType Θ → OVType Θ → Constraint Θ
+A ≐ᵥ B = (A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)
 
 infixr 6 _∧̂_
 infix  4 _≐ᵥ_ _≾̂ᵥᶜ_ _≾̂ᵣᶜ_ _≾̂ₑᶜ_
@@ -68,7 +75,6 @@ _[_]ᶜⁿ : ∀ {Θ Θ'} → Constraint Θ → Subst Θ Θ' → Constraint Θ'
 ⊤̂           [ σ ]ᶜⁿ = ⊤̂
 ⊥̂           [ σ ]ᶜⁿ = ⊥̂
 (C ∧̂ D)     [ σ ]ᶜⁿ = C [ σ ]ᶜⁿ ∧̂ D [ σ ]ᶜⁿ
-(A ≐ᵥ B)    [ σ ]ᶜⁿ = A [ σ ]ᵛ ≐ᵥ B [ σ ]ᵛ
 (A ≾̂ᵥᶜ B)   [ σ ]ᶜⁿ = A [ σ ]ᵛ ≾̂ᵥᶜ B [ σ ]ᵛ
 (ρ ≾̂ᵣᶜ ρ')  [ σ ]ᶜⁿ = ρ [ σ ]ʳ ≾̂ᵣᶜ ρ' [ σ ]ʳ
 (ε ≾̂ₑᶜ ε')  [ σ ]ᶜⁿ = ε [ σ ]ᵉ ≾̂ₑᶜ ε' [ σ ]ᵉ

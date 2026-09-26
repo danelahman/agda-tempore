@@ -1,11 +1,12 @@
 ------------------------------------------------------------------
 -- The solver driver                                            --
 --                                                              --
--- Walks a constraint, threading a state: type equations go to  --
--- the unification core, a subtyping atom is decomposed at      --
--- matching formers and residualised at a pair of type          --
--- variables, grade orderings are residualised, and binders     --
--- lift the state.                                              --
+-- Walks a constraint, threading a state: a subtyping atom is   --
+-- expanded and decomposed at matching formers and residualised --
+-- at a pair of type variables, grade orderings are             --
+-- residualised, and binders lift the state. A type equation is --
+-- the two subtyping atoms (`Constraints.Syntax`), so it has no --
+-- case of its own and never binds a type variable directly.    --
 -- An eternality demand is decided by `etDec` when it is        --
 -- pushed: refuted, or residualised as its atoms on type        --
 -- variables (`solveEt`). A var-rule disjunction is dropped     --
@@ -103,13 +104,9 @@ open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ)
 
 open import TypeInference.SolverImpl.Enum S using (AllOp; []; _∷_; all-lookup)
 
-open import TypeInference.SolverImpl.Core.AList      S
 open import TypeInference.SolverImpl.Core.Occurs     S using (occᵉ-e; occᵉ-r; occʳ-r)
 open import TypeInference.SolverImpl.Core.Decorate   S using (expandSub)
-open import TypeInference.SolverImpl.Core.Eqn        S
 open import TypeInference.SolverImpl.Core.Rigid      S
-open import TypeInference.SolverImpl.Core.Unify      S
-open import TypeInference.SolverImpl.Core.UnifySound S using (unify-sound)
 
 open import TypeInference.SolverImpl.Deferred S
 open import TypeInference.SolverImpl.Resid  S
@@ -849,29 +846,6 @@ closeᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e)) → {s₃ : St 
        → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (∀ᵉ C)))
 closeᵉ s C m w (s₄ , m₄) = popᵉ s C (Ψ s₄) (θ s₄) (res s₄) (rig s₄) (⟶-⨟ m m₄) (wit-mono m₄ C w)
 
--- The unifier's verdict, paired with the equation naming it, so
--- that the driver's own case analysis stays visible to a proof.
-
-unifyAt : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
-        → (x : Maybe (Σ[ Θ⁺ ∈ Scope ] AList Θ Θ⁺)) → unify rg es ≡ x
-        → Maybe (Σ[ Θ⁺ ∈ Scope ] Σ[ ρ ∈ AList Θ Θ⁺ ] (unify rg es ≡ just (Θ⁺ , ρ)))
-unifyAt rg es nothing         equ = nothing
-unifyAt rg es (just (Θ⁺ , ρ)) equ = just (Θ⁺ , ρ , equ)
-
-unify* : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
-       → Maybe (Σ[ Θ⁺ ∈ Scope ] Σ[ ρ ∈ AList Θ Θ⁺ ] (unify rg es ≡ just (Θ⁺ , ρ)))
-unify* rg es = unifyAt rg es (unify rg es) refl
-
-unifyAt-nothing : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
-                → (x : Maybe (Σ[ Θ⁺ ∈ Scope ] AList Θ Θ⁺)) → (equ : unify rg es ≡ x)
-                → unifyAt rg es x equ ≡ nothing → unify rg es ≡ nothing
-unifyAt-nothing rg es nothing  equ q = equ
-unifyAt-nothing rg es (just _) equ ()
-
-unify*-nothing : ∀ {Θ} → (rg : Rig Θ) → (es : Eqns Θ)
-               → unify* rg es ≡ nothing → unify rg es ≡ nothing
-unify*-nothing rg es q = unifyAt-nothing rg es (unify rg es) refl q
-
 chain₂ᵛ : ∀ {Θ Ψ Ψ₁ Ψ₂} → (X : OVType Θ) → (σ : Subst Θ Ψ) → (δ : Subst Ψ Ψ₁)
         → (δ' : Subst Ψ₁ Ψ₂) → X [ σ ]ᵛ [ δ ]ᵛ [ δ' ]ᵛ ≡ X [ (σ ⨟ˢ δ) ⨟ˢ δ' ]ᵛ
 chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]ᵛ X (σ ⨟ˢ δ) δ')
@@ -944,30 +918,6 @@ solve s (C ∧̂ D) with solve s C
 ...   | stuck   = stuck
 ...   | solved (s₂ , m₂ , w₂) =
         solved (s₂ , ⟶-⨟ m₁ m₂ , λ δ Q h → wit-mono m₂ C w₁ δ Q h , w₂ δ Q h)
-
-solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
-... | nothing = refuted
-... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
-...   | nothing = refuted
-...   | just (Ψ' , δ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-                         | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-...     | nothing | _       = refuted
-...     | just _  | nothing = refuted
-...     | just e  | just t  =
-        solved (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (atomiseᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ) e t)
-                 (transRig δ (transRig ⟦ ρ ⟧ᴬ (rig s))) ,
-              mor (⟦ ρ ⟧ᴬ ⨟ˢ δ) (≐ˢ-sym (⨟-assoc (θ s) ⟦ ρ ⟧ᴬ δ))
-                  (λ δ' Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc ⟦ ρ ⟧ᴬ δ δ'))
-                                          (⊩ᴿ-subst (⊩ᴿ-subst (atomiseᴿ-sound _ e t h)))) ,
-              λ δ' Q h → trans (sym (chain₂ᵛ A (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ'))
-                         (trans (cong (λ X → X [ δ ]ᵛ [ δ' ]ᵛ) pinned)
-                                (chain₂ᵛ B (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ')))
-        where
-          pinned : A [ θ s ⨟ˢ ⟦ ρ ⟧ᴬ ]ᵛ ≡ B [ θ s ⨟ˢ ⟦ ρ ⟧ᴬ ]ᵛ
-          pinned = trans (sym ([⨟]ᵛ A (θ s) ⟦ ρ ⟧ᴬ))
-                   (trans (proj₁ (unify-sound (rig s)
-                                              (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ))
-                          ([⨟]ᵛ B (θ s) ⟦ ρ ⟧ᴬ))
 
 solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing        = refuted

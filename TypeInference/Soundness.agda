@@ -322,14 +322,18 @@ mutual
 
   -- base-typed constants, unit, booleans
 
-  soundVˢ ι Γ (const B c) A eq = ty-subst eq (const B c) , ⌊ty⌋ eq (const B c)
-  soundVˢ ι Γ ⋆           A eq = ty-subst eq ⋆          , ⌊ty⌋ eq ⋆
-  soundVˢ ι Γ true        A eq = ty-subst eq true       , ⌊ty⌋ eq true
-  soundVˢ ι Γ false       A eq = ty-subst eq false      , ⌊ty⌋ eq false
+  --
+  -- The first half of the type equation is the `subV` into the expected
+  -- type.
+
+  soundVˢ ι Γ (const B c) A (st , _) = subV (const B c) st , refl
+  soundVˢ ι Γ ⋆           A (st , _) = subV ⋆ st           , refl
+  soundVˢ ι Γ true        A (st , _) = subV true st        , refl
+  soundVˢ ι Γ false       A (st , _) = subV false st       , refl
 
   -- pairing
 
-  soundVˢ {Θ = Θ} {σ = σ} ι Γ ⦉ V₁ , V₂ ⦊ A (B₁ , B₂ , eq , s₁ , s₂) =
+  soundVˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ ⦉ V₁ , V₂ ⦊ A (B₁ , B₂ , (st , _) , s₁ , s₂) =
     D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
@@ -347,12 +351,11 @@ mutual
       D₁ = ctx-substᵛ pΓ (proj₁ ih₁)
       D₂ = ctx-substᵛ pΓ (proj₁ ih₂)
 
-      D = ty-subst (trans eq pA) ⦉ D₁ , D₂ ⦊
+      D = subV ⦉ D₁ , D₂ ⦊ (subst (λ z → Q ∣ _ <:̂ᵛ z) pA st)
 
-      q = trans (⌊ty⌋ (trans eq pA) ⦉ D₁ , D₂ ⦊)
-                (cong₂ ⦉_,_⦊
-                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V₁)))
-                       (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V₂))))
+      q = cong₂ ⦉_,_⦊
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₁)) (trans (proj₂ ih₁) ([≐]ᴿᵛ pι V₁)))
+                (trans (⌊ctxᵛ⌋ pΓ (proj₁ ih₂)) (trans (proj₂ ih₂) ([≐]ᴿᵛ pι V₂)))
 
   -- lambda abstraction
 
@@ -682,7 +685,7 @@ mutual
 
   -- unboxing a boxed variable
 
-  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox i N) A t (B₁ , B₂ , ρ , eq , le , st , s') =
+  soundCˢ {Θ = Θ} {σ = σ} {Q = Q} ι Γ (unbox i N) A t (B₁ , B₂ , ρ , (sb , _) , le , st , s') =
     D , q
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
@@ -723,13 +726,21 @@ mutual
                   (trans (co²ᵗʳ-r σ B₁ B₂ ρ (lookup-gr Γ i))
                          (sym (lookup-gr-subst Γ σ i)))
 
-      -- the looked-up type is a box type, of the grade and the payload
+      -- the looked-up type is a subtype of the box type, so a box type
+      -- whose grade is above and whose payload is below
 
-      eq' = trans (sym lty) (trans eq (cong [ ρ ]_ pα))
+      sb' = subst₂ (Q ∣_<:̂ᵛ_) lty (cong [ ρ ]_ pα) sb
+
+      bx  = <:̂ᵛ-boxʳ sb'
+      ρ₀  = proj₁ bx
+      A₀  = proj₁ (proj₂ bx)
+      eq' = proj₁ (proj₂ (proj₂ bx))
+      gr  = proj₁ (proj₂ (proj₂ (proj₂ bx)))
+      ty  = proj₂ (proj₂ (proj₂ (proj₂ bx)))
 
       x = ∈̂-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i)
 
-      ok = subst (λ z → Q ⊩ z ≾̂ᵣ ρ) lgr le
+      ok = transᵣ (subst (λ z → Q ⊩ z ≾̂ᵣ ρ) lgr le) gr
 
       ih = soundCˢ ι↑ (Γ↑ ∷ β) N A↑ t↑ s'
 
@@ -737,7 +748,7 @@ mutual
 
       D₀ = c-subst (cong₂ _‼_ pA pt) (ctx-substᶜ c₀ (proj₁ ih))
 
-      D = unbox x ok (subst₂ (Q ∣_<:̂ᵛ_) pα pβ st) D₀
+      D = unbox x ok (<:̂ᵛ-trans ty (subst₂ (Q ∣_<:̂ᵛ_) pα pβ st)) D₀
 
       q = cong₂ unbox
                 (trans (var-pos-ty-subst eq' (lookup-var (Γ [ σ ]ᶜᵗˣ) i))
@@ -832,12 +843,14 @@ private
   ∅ᶜ : OCtx ∅ˢ 0
   ∅ᶜ = []
 
-  -- returning a value: the `≾̂ₑᶜ` conjunct becomes a `coerce`
+  -- returning a value: the `≾̂ₑᶜ` conjunct becomes a `coerce`, the type
+  -- equation's first half a `subV`
 
   ex-return : ∅ᴴ ∣ ∅ᶜ ∷ Unit ⊢C⦂ Unit ‼ ûₑ
-  ex-return = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ Unit) (return ⋆) Unit ûₑ (refl , ⊩≾̂ₑ-refl))
+  ex-return = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ Unit) (return ⋆) Unit ûₑ
+                            ((Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
-  ex-return-is : ex-return ≡ coerce ⊩≾̂ₑ-refl (return ⋆)
+  ex-return-is : ex-return ≡ coerce ⊩≾̂ₑ-refl (return (subV ⋆ Unitₛ))
   ex-return-is = refl
 
   -- a variable used after time-passage: the `Et∨≾ᵘ` disjunction is `VarOK`
@@ -853,7 +866,8 @@ private
 
   ex-unbox : ∅ᴴ ∣ ∅ᶜ ∷ [ ûᵣ ] Unit ⊢C⦂ Unit ‼ ûₑ
   ex-unbox = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} (∅ᶜ ∷ [ ûᵣ ] Unit) (unbox zero (return ⋆)) Unit ûₑ
-                           (Unit , Unit , ûᵣ , refl , ⊩≾̂ᵣ-refl , Unitₛ , refl , ⊩≾̂ₑ-refl))
+                           (Unit , Unit , ûᵣ , ([ ⊩≾̂ᵣ-refl ]ₛ Unitₛ , [ ⊩≾̂ᵣ-refl ]ₛ Unitₛ) , ⊩≾̂ᵣ-refl ,
+                             Unitₛ , (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
   ex-unbox-erase : ⌊ ex-unbox ⌋ᶜ ≡ unbox zero (return ⋆)
   ex-unbox-erase = refl
@@ -863,7 +877,7 @@ private
 
   ex-box : ∅ᴴ ∣ ∅ᶜ ⊢C⦂ Unit ‼ ûₑ
   ex-box = proj₁ (soundC {σ = idˢ} {Q = ∅ᴴ} ∅ᶜ (box ûᵣ ⋆ (return ⋆)) Unit ûₑ
-                         (Unit , refl , refl , ⊩≾̂ₑ-refl))
+                         (Unit , (Unitₛ , Unitₛ) , (Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl))
 
   ex-box-erase : ⌊ ex-box ⌋ᶜ ≡ box ûᵣ ⋆ (return ⋆)
   ex-box-erase = refl

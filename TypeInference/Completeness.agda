@@ -41,6 +41,7 @@ open import TypeInference.Erase      S
 
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
+open import TypeInference.Constraints.Properties   S using (⊨-≐ᵥ)
 
 open import TypeInference.Generate  S
 open import TypeInference.Soundness S
@@ -97,10 +98,10 @@ mutual
   --
   -- None has a proper supertype, so the pin is recovered by inversion.
 
-  cmpV ι Γ A _ (const B c) const ceq st = sym (<:̂ᵛ-Baseˡ st)
-  cmpV ι Γ A _ ⋆           ⋆     ceq st = sym (<:̂ᵛ-Unitˡ st)
-  cmpV ι Γ A _ true        true  ceq st = sym (<:̂ᵛ-Boolˡ st)
-  cmpV ι Γ A _ false       false ceq st = sym (<:̂ᵛ-Boolˡ st)
+  cmpV {σ = σ} ι Γ A _ (const B c) const ceq st = ⊨-≐ᵥ σ (Base B) A (sym (<:̂ᵛ-Baseˡ st))
+  cmpV {σ = σ} ι Γ A _ ⋆           ⋆     ceq st = ⊨-≐ᵥ σ Unit A (sym (<:̂ᵛ-Unitˡ st))
+  cmpV {σ = σ} ι Γ A _ true        true  ceq st = ⊨-≐ᵥ σ Bool A (sym (<:̂ᵛ-Boolˡ st))
+  cmpV {σ = σ} ι Γ A _ false       false ceq st = ⊨-≐ᵥ σ Bool A (sym (<:̂ᵛ-Boolˡ st))
 
   -- pairing
   --
@@ -111,7 +112,8 @@ mutual
        (⦉_,_⦊ {V = V₁} {W = V₂} e₁ e₂) ceq st
     with <:̂ᵛ-×ˡ st
   ... | B₁ , B₂ , eq , st₁ , st₂ =
-    B₁ , B₂ , trans (sym eq) (sym pA) , ih₁ , ih₂
+    B₁ , B₂ , ⊨-≐ᵥ (σ ,ᵗ B₁ ,ᵗ B₂) (α₁ |×| α₂) (wkᵗ-v (wkᵗ-v A)) (trans (sym eq) (sym pA)) ,
+    ih₁ , ih₂
     where
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ
       Γ↑ = wkᵗ-ctx (wkᵗ-ctx Γ)
@@ -414,10 +416,13 @@ mutual
   cmpC {Θ = Θ} {σ = σ} {Q = Q} ι Γ A t _
        (unbox {A = A₂} {A₀ = A₁} {ρ₀ = ρ₀} {ρ' = ρ'} x ok sb D) (unbox {N = N} e')
        ceq st le =
-    A₁ , A₂ , ρ₀ , lty , subst (λ z → Q ⊩ z ≾̂ᵣ ρ₀) (sym lgr) ok , sb , ih
+    A₁ , A₂ , ρ₀ , ⊨-≐ᵥ σ' (lookup-ty Γ↑ i) ([ r ] α) lty ,
+    subst (λ z → Q ⊩ z ≾̂ᵣ ρ₀) (sym lgr) ok , sb , ih
     where
       i  = var-pos x
       ι↑ = ι ⨟ˢ wkˢᵗ ⨟ˢ wkˢᵗ ⨟ˢ wkˢʳ
+      α  = wkʳ-v (wkᵗ-v (tvar (newᵗ {Θ})))
+      r  = rvar (newʳ {Θ +ty +ty})
       σ' = σ ,ᵗ A₁ ,ᵗ A₂ ,ʳ ρ₀
       Γ↑ = wkʳ-ctx (wkᵗ-ctx (wkᵗ-ctx Γ))
       A↑ = wkʳ-v (wkᵗ-v (wkᵗ-v A))
@@ -634,5 +639,5 @@ private
   ex-box = completeC {σ = idˢ} ∅ᶜ Unit ûₑ (box ûᵣ ⋆ (return ⋆))
                      (box ûᵣ ⋆ (return ⋆)) refl refl Unitₛ ⊩≾̂ₑ-refl
 
-  ex-box-is : ex-box ≡ (Unit , (refl , (refl , ⊩≾̂ₑ-refl)))
+  ex-box-is : ex-box ≡ (Unit , ((Unitₛ , Unitₛ) , ((Unitₛ , Unitₛ) , ⊩≾̂ₑ-refl)))
   ex-box-is = refl

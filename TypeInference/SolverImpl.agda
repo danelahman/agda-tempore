@@ -5,9 +5,9 @@
 --                                                                --
 -- * Generation (`Generate`): the solutions of `C[ Γ , M ]` are   --
 --   the derivations erasing to `M` (`charC`).                    --
--- * The driver (`Solve`): type equations are unified             --
---   (`unify-sound`, `unify-mgu`, `unify-fail`); subtyping        --
---   demands are expanded (`expandSub-dec`, `expandSub-max`) and  --
+-- * The driver (`Solve`): subtyping demands, type equations      --
+--   among them as subtyping both ways, are expanded              --
+--   (`expandSub-dec`, `expandSub-max`) and                       --
 --   decomposed exactly (`SubDec`'s `intro`/`elim`,               --
 --   `atomiseᴿ-sound`/`atomiseᴿ-compl`); eternality demands and   --
 --   the type side of var-rule disjunctions are decided when      --
@@ -106,9 +106,6 @@ open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ; ⊨-
 
 open import TypeInference.Principality      S
 open import TypeInference.Solver            S
-
-open import TypeInference.SolverImpl.Core.Unify    S using (Rig; _∈ᶠ_)
-open import TypeInference.SolverImpl.Core.UnifyMGU S using (Fixing; fixing)
 
 open import TypeInference.SolverImpl.Deferred  S
   using (Ords; ords; ors; oes; Dfr; dfr; _[_]ᵈ; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes;

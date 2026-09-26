@@ -13,9 +13,14 @@
 -- is what threads a conjunction.                                  --
 ------------------------------------------------------------------
 
-open import Data.Fin.Base using (zero; suc)
+open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
+open import Data.Fin.Base using (Fin; zero; suc)
+open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; mapMaybe)
 open import Data.Maybe.Base using (Maybe; just; nothing)
+open import Data.Product using (Σ-syntax; _,_)
+
+open import Relation.Nullary.Decidable using (⌊_⌋)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -34,8 +39,7 @@ open import TypeInference.OpenSyntax.Types  S
 open import TypeInference.OpenSyntax.Subst  S
 open import TypeInference.OpenSyntax.Hyps   S
 
-open import TypeInference.SolverImpl.Core.Unify S using (Rig)
-open import TypeInference.SolverImpl.Resid      S
+open import TypeInference.SolverImpl.Resid S
 
 -- A substitution out of an extended scope is its own restriction
 -- extended by the image of the new variable.
@@ -51,6 +55,28 @@ open import TypeInference.SolverImpl.Resid      S
 ↑-,ᵉ : ∀ {Θ Θ'} → (γ : Subst (Θ +e) Θ')
      → ((wkˢᵉ ⨟ˢ γ) ,ᵉ sE γ (newᵉ {Θ})) ≐ˢ γ
 ↑-,ᵉ γ = mk≐ˢ (λ α → refl) (λ i → refl) (λ { zero → refl ; (suc i) → refl })
+
+-- The rigid effect-grade variables
+
+Rig : Scope → Set
+Rig Θ = List (EVar Θ)
+
+-- Membership, at the bare `Fin` a variable of a scope is
+
+_∈ᶠ_ : ∀ {n} → Fin n → List (Fin n) → 𝔹
+i ∈ᶠ []       = false
+i ∈ᶠ (j ∷ js) = ⌊ i ≟ᶠ j ⌋ ∨ (i ∈ᶠ js)
+
+-- A substitution fixes the rigids when it sends each to a variable,
+-- and two distinct ones to distinct variables.
+
+record Fixing {Θ Ψ : Scope} (rg : Rig Θ) (σ : Subst Θ Ψ) : Set where
+  constructor fixing
+  field
+    fixᵉ : (i : EVar Θ) → i ∈ᶠ rg ≡ true → Σ[ j ∈ EVar Ψ ] (sE σ i ≡ evar j)
+    injᵉ : (i i' : EVar Θ) → i ∈ᶠ rg ≡ true → i' ∈ᶠ rg ≡ true → sE σ i ≡ sE σ i' → i ≡ i'
+
+open Fixing public
 
 -- A rigid is never bound, so its image under any substitution the
 -- driver builds is again a variable.

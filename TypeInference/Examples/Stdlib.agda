@@ -218,10 +218,11 @@ expected-compose =
 -- prototype: [α] α → α → α
 --
 -- The comparison, a primitive absent from the calculus, is passed in.
--- The result is a common supertype of `x` and `y` (`α₀ <: α₁`,
--- `α₂ <: α₁`). The conditions: `x` and `y` are used after the
--- comparison has run, so each is eternal or the comparison takes no
--- time, two var-rule disjunctions (the prototype's
+-- The result is a common supertype of `x` and `y` (`α₄ <: α₃`,
+-- `α₂ <: α₃`), and the comparison takes a pair of supertypes of them
+-- (`α₄ <: α₁`, `α₂ <: α₀`). The conditions: `x` and `y` are used
+-- after the comparison has run, so each is eternal or the comparison
+-- takes no time, two var-rule disjunctions (the prototype's
 -- `{eternal α ∨ ρ <= 0}`).
 
 min : RawC ∅ˢ 0
@@ -241,6 +242,6 @@ min-typed =
 
 expected-min : Report
 expected-min =
-  ∀[ 3 , 0 , 1 ] α₀ <: α₁ ∧ α₂ <: α₁
-                 ∧ eternal α₀ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ∧ eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ⟹
-    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+  ∀[ 5 , 0 , 1 ] α₂ <: α₃ ∧ α₄ <: α₃ ∧ α₂ <: α₀ ∧ α₄ <: α₁
+                 ∧ eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ∧ eternal α₄ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ⟹
+    ((α₁ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₄ ⇒ (α₂ ⇒ α₃ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ

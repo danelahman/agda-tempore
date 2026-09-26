@@ -9,6 +9,9 @@
 --                                                                --
 -- Both rest on `⊨-resp-≐ˢ`: satisfaction looks at a substitution --
 -- only pointwise.                                                --
+--                                                                --
+-- `⊨-≐ᵥ` — types equal along a substitution solve a type         --
+-- equation there, by reflexivity of subtyping.                   --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
@@ -46,8 +49,6 @@ open import TypeInference.Constraints.Satisfaction S
 ⊨-resp-≐ˢ p ⊤̂                    s        = s
 ⊨-resp-≐ˢ p ⊥̂                    s        = s
 ⊨-resp-≐ˢ p (C ∧̂ D)              (s , t)  = ⊨-resp-≐ˢ p C s , ⊨-resp-≐ˢ p D t
-⊨-resp-≐ˢ p (A ≐ᵥ B)             s        =
-  trans (sym ([≐]ᵛ p A)) (trans s ([≐]ᵛ p B))
 ⊨-resp-≐ˢ {Q = Q} p (A ≾̂ᵥᶜ B)    s        =
   subst₂ (Q ∣_<:̂ᵛ_) ([≐]ᵛ p A) ([≐]ᵛ p B) s
 ⊨-resp-≐ˢ {Q = Q} p (ρ ≾̂ᵣᶜ ρ')   s        =
@@ -145,8 +146,6 @@ private
 ⊨-mono h ⊤̂       s       = s
 ⊨-mono h ⊥̂       s       = s
 ⊨-mono h (C ∧̂ D) (s , t) = ⊨-mono h C s , ⊨-mono h D t
-⊨-mono {σ = σ} {δ = δ} h (A ≐ᵥ B) s =
-  trans (sym ([⨟]ᵛ A σ δ)) (trans (cong (_[ δ ]ᵛ) s) ([⨟]ᵛ B σ δ))
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (A ≾̂ᵥᶜ B) s =
   subst₂ (Q' ∣_<:̂ᵛ_) ([⨟]ᵛ A σ δ) ([⨟]ᵛ B σ δ) (<:̂ᵛ-subst h s)
 ⊨-mono {σ = σ} {δ = δ} {Q' = Q'} h (ρ ≾̂ᵣᶜ ρ') s =
@@ -174,8 +173,6 @@ private
 ⊨-subst ⊤̂       s       = s
 ⊨-subst ⊥̂       s       = s
 ⊨-subst (C ∧̂ D) (s , t) = ⊨-subst C s , ⊨-subst D t
-⊨-subst {δ = δ} {σ = σ} (A ≐ᵥ B) s =
-  trans ([⨟]ᵛ A δ σ) (trans s (sym ([⨟]ᵛ B δ σ)))
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (A ≾̂ᵥᶜ B) s =
   subst₂ (Q ∣_<:̂ᵛ_) (sym ([⨟]ᵛ A δ σ)) (sym ([⨟]ᵛ B δ σ)) s
 ⊨-subst {δ = δ} {σ = σ} {Q = Q} (ρ ≾̂ᵣᶜ ρ') s =
@@ -201,8 +198,6 @@ private
 ⊨-subst⁻ ⊤̂       s       = s
 ⊨-subst⁻ ⊥̂       s       = s
 ⊨-subst⁻ (C ∧̂ D) (s , t) = ⊨-subst⁻ C s , ⊨-subst⁻ D t
-⊨-subst⁻ {δ = δ} {σ = σ} (A ≐ᵥ B) s =
-  trans (sym ([⨟]ᵛ A δ σ)) (trans s ([⨟]ᵛ B δ σ))
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (A ≾̂ᵥᶜ B) s =
   subst₂ (Q ∣_<:̂ᵛ_) ([⨟]ᵛ A δ σ) ([⨟]ᵛ B δ σ) s
 ⊨-subst⁻ {δ = δ} {σ = σ} {Q = Q} (ρ ≾̂ᵣᶜ ρ') s =
@@ -229,3 +224,11 @@ private
 ⊨-∣ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
     → (C : Constraint Θ) → σ ⊨[ Q ] C → σ ⊨[ Q ∣ R ] C
 ⊨-∣ C s δ Q' (h ∷ _) = ⊨-mono h C s
+
+-- Types equal along a substitution solve a type equation
+
+⊨-≐ᵥ : ∀ {Θ Θ'} {Q : Hyps Θ'} → (σ : Subst Θ Θ') → (A B : OVType Θ)
+     → A [ σ ]ᵛ ≡ B [ σ ]ᵛ → σ ⊨[ Q ] (A ≐ᵥ B)
+⊨-≐ᵥ {Q = Q} σ A B e =
+  subst (Q ∣ A [ σ ]ᵛ <:̂ᵛ_) e (<:̂ᵛ-refl (A [ σ ]ᵛ)) ,
+  subst (Q ∣_<:̂ᵛ A [ σ ]ᵛ) e (<:̂ᵛ-refl (A [ σ ]ᵛ))

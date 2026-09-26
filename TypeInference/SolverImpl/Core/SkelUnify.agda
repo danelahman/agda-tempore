@@ -6,9 +6,8 @@
 -- store one binding at a time, and the scope of skeleton         --
 -- variables is a bare `ℕ`, so the descent is structural.         --
 --                                                                --
--- No skeleton variable is rigid: the effect-grade variables the  --
--- type unifier must not bind are grade slots, which a skeleton   --
--- does not have.                                                 --
+-- No skeleton variable is rigid: the rigid effect-grade          --
+-- variables sit in grade slots, which a skeleton does not have.  --
 --                                                                --
 -- Contract. A success returns a store whose substitution unifies --
 -- the equations (`unifyᵏ-sound`, `Core.SkelUnifySound`) and      --

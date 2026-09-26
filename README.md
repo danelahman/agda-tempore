@@ -341,11 +341,11 @@ Inference for the open calculus, by constraint generation and solving.
   generation checks the term against them. `Raw/Subst.agda` substitutes into
   the annotations. `TypeInference/Erase.agda` erases a derivation to a raw term.
 
-- `TypeInference/Constraints/` is the constraint language — type equations,
-  value-type subtyping, grade orderings, eternality, the var-rule disjunction,
-  `∃` over the three sorts, a rigid `∀ᵉ`, and a conjunction over operations —
-  with satisfaction `σ ⊨[ Q ∣ R ] C` relative to hypotheses `Q` and
-  obligations `R`.
+- `TypeInference/Constraints/` is the constraint language — value-type
+  subtyping, grade orderings, eternality, the var-rule disjunction, `∃` over
+  the three sorts, a rigid `∀ᵉ`, and a conjunction over operations — with
+  satisfaction `σ ⊨[ Q ∣ R ] C` relative to hypotheses `Q` and obligations
+  `R`. A type equation `A ≐ᵥ B` is subtyping both ways.
 
 - `TypeInference/Generate.agda` generates a constraint from a raw term and an
   expected type, an upper bound. It is sound (`Soundness.agda`: a solution
@@ -379,7 +379,7 @@ Inference for the open calculus, by constraint generation and solving.
   over an enumeration of the operations (`SolverImpl/Enum.agda`), with its
   report and inference. Its banner lists the stages and the lemmas stating
   each one's contract. `SolverImpl/`:
-  - `Solve.agda`: the driver. Type equations go to unification, subtyping is
+  - `Solve.agda`: the driver. Subtyping, type equations included, is
     expanded and decomposed, eternality and the type side of a var-rule
     disjunction are decided when pushed, other atoms are residualised; at the
     close of a rigid scope the atoms are kept, discharged or deferred. A
@@ -425,11 +425,10 @@ Inference for the open calculus, by constraint generation and solving.
     solver state, the polarity of an unknown.
   - `Expand.agda`: skeleton expansion of type unknowns (`expandSub-dec`,
     `expandSub-max`).
-  - `Core/`: McBride-style first-order unification of types and of skeletons,
-    sound and most general, never binding a rigid (`unify-sound`,
-    `unify-mgu`, `unify-fail`). Grade expressions in a type equation are
-    unified syntactically, which loses nothing on the equations generation
-    emits (one side's grade slots are fresh unknowns); argued, not proved.
+  - `Core/`: McBride-style first-order unification of skeletons, sound and
+    most general (`unifyᵏ-sound`, `unifyᵏ-max`); decoration of a skeleton
+    with fresh grade slots (`Decorate.agda`); occurrence tests and
+    strengthening away from a rigid (`Occurs.agda`, `Rigid.agda`).
 
 - The end-to-end theorem (`SolverImpl.agda`): `infer Γ M : Inference Γ M`;
   `infer-typed` — a `typed p` verdict has `Typable Γ M ⇔ Satisfiable Q̃ R̃`;

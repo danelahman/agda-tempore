@@ -7,7 +7,7 @@
 -- deferred rigid conditions of the clauses closed so far         --
 -- (`Deferred`). Unlike `Hyps`, a residual is closed under        --
 -- substitution, which is what lets the driver push it through    --
--- the store extensions a unification performs.                   --
+-- the substitutions an expansion or a scope's close performs.    --
 --                                                                --
 -- Its eternality demands are on type variables: a demand is      --
 -- decomposed by `etDec` when it is pushed, and again after each  --

@@ -35,9 +35,7 @@ open import TypeInference.OpenSyntax.Hyps   S
 
 open import TypeInference.Constraints.Syntax S
 
-open import TypeInference.SolverImpl.Core.AList    S using (⟦_⟧ᴬ)
 open import TypeInference.SolverImpl.Core.Decorate S using (expandSub)
-open import TypeInference.SolverImpl.Core.Eqn      S using (eqᵛ)
 open import TypeInference.SolverImpl.Resid  S
 open import TypeInference.SolverImpl.State  S
 open import TypeInference.SolverImpl.Normal S using (decide≾ᵣ)
@@ -73,15 +71,6 @@ solve-rigidFree s (C ∧̂ D) (p , q) with solve s C in e
 ...   | refuted  = λ ()
 ...   | stuck    = λ _ → solve-rigidFree s₁ D q e'
 ...   | solved _ = λ ()
-solve-rigidFree s (A ≐ᵥ B) p with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
-... | nothing = λ ()
-... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
-...   | nothing = λ ()
-...   | just (Ψ' , δ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-                         | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-...     | nothing | _       = λ ()
-...     | just _  | nothing = λ ()
-...     | just _  | just _  = λ ()
 solve-rigidFree s (A ≾̂ᵥᶜ B) p with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing = λ ()
 ... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)

@@ -66,15 +66,9 @@ open import TypeInference.Constraints.Properties   S using (⊨-resp-≐ˢ)
 
 open import TypeInference.SolverImpl.Enum S using (AllOp; all-lookup)
 
-open import TypeInference.SolverImpl.Core.AList S using (AList; anil; ⟦_⟧ᴬ)
-open import TypeInference.SolverImpl.Core.Eqn   S using (Eqn; eqᵛ; Eqns; Unifies)
 open import TypeInference.SolverImpl.Core.Rigid S
   using (strʳ⁺; strᵉ⁺; strᵛ⁺; popˢ; popˢ-hit; strSub; unpopˢ; pop-unpop; strSub-escape;
-         strᵛ⁺-just; strʳ⁺-just; strʳ-upd)
-open import TypeInference.SolverImpl.Core.Unify S using (Rig; _∈ᶠ_; unify)
-open import TypeInference.SolverImpl.Core.UnifyMGU S
-  using (Fixing; fixing; fixᵉ; injᵉ; Fixing-id; unify-max; unify-fail;
-         evar-inj; ∨-true; ∨-left; ∨-right; dec-true; true-dec)
+         strᵛ⁺-just; strʳ⁺-just; strʳ-upd; ∨-true; ∨-left; ∨-right; dec-true; true-dec)
 
 open import TypeInference.SolverImpl.Core.Decorate S using (expandSub)
 
@@ -193,6 +187,9 @@ pushᵈ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {ρ : R
 pushᵈ-⊩ p h =
   mk⊩ᴿ (⊩rs h) (⊩es h) (⊩ts h) (⊩ss h)
        (λ { (here refl) → p ; (there m) → ⊩ds h m }) (⊩dfs h)
+
+evar-inj : ∀ {Θ} {i j : EVar Θ} → evar {Θ} i ≡ evar j → i ≡ j
+evar-inj refl = refl
 
 varᵉ?-just : ∀ {Ψ} → (ε : EExp Ψ) → {k : EVar Ψ} → varᵉ? ε ≡ just k → ε ≡ evar k
 varᵉ?-just (evar i)   refl = refl
@@ -1329,37 +1326,6 @@ solve-principal s (C ∧̂ D) eq δ₀ (sc , sd) h with solve s C in e₁
     h₂  = proj₁ (proj₂ (proj₂ f₂))
     fx₂ = proj₂ (proj₂ (proj₂ f₂))
 
-solve-principal s (A ≐ᵥ B) eq δ₀ sat h
-  with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
-... | nothing = ⊥refuted eq
-... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
-...   | nothing = ⊥refuted eq
-...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ))
-                          | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ))
-...     | nothing | _       = ⊥refuted eq
-...     | just _  | nothing = ⊥refuted eq
-...     | just e  | just t with eq
-...       | refl = δ₂ , tri₂ ,
-                   atomiseᴿ-compl _ e t (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)) ,
-                   (λ fx → Fixing-trans δₑ δ₂ trix (Fixing-trans ⟦ ρ ⟧ᴬ δ₁ tri₁ fx))
-  where
-    u = trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt
-
-    fac = unify-max (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ δ₀ u
-    δ₁   = proj₁ fac
-    tri₁ = proj₂ fac
-
-    h₁ : ∅ᴴ ⊩ᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) [ δ₁ ]
-    h₁ = ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri₁) h)
-
-    facx = subst (ExpMax δ₁) eqx
-                 (expandSub-max (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δ₁ (⊩ss h₁))
-    δ₂   = proj₁ facx
-    trix = proj₂ facx
-
-    tri₂ = ≐ˢ-trans (⨟-assoc ⟦ ρ ⟧ᴬ δₑ δ₂)
-                    (≐ˢ-trans (⨟-congʳ ⟦ ρ ⟧ᴬ trix) tri₁)
-
 solve-principal s (A ≾̂ᵥᶜ B) eq δ₀ sat h
   with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)) in eqx
 ... | nothing = ⊥refuted eq
@@ -1718,52 +1684,6 @@ solve-fail s (C ∧̂ D) eq δ₀ fx h (sc , sd) with solve s C in e₁
 
     chain = ≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m₁)) δ₁)
             (≐ˢ-trans (⨟-assoc (θ s) (mδ m₁) δ₁) (⨟-congʳ (θ s) tri₁))
-solve-fail s (A ≐ᵥ B) eq δ₀ fx h sat
-  with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) in equ*
-... | nothing =
-      unify-fail (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ [])
-                 (unify*-nothing (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ*)
-                 δ₀ fx
-                 (trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt)
-... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
-...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) in eqs
-                          | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) in eqt
-...     | just _  | just _  = ⊥solved eq
-...     | just _  | nothing =
-          etsDec-refute (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) eqt δ₂
-            (⊩ts (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)))
-  where
-    u = trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt
-
-    fac = unify-max (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ δ₀ u
-    δ₁   = proj₁ fac
-    tri₁ = proj₂ fac
-
-    h₁ : ∅ᴴ ⊩ᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) [ δ₁ ]
-    h₁ = ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri₁) h)
-
-    facx = subst (ExpMax δ₁) eqx
-                 (expandSub-max (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δ₁ (⊩ss h₁))
-    δ₂   = proj₁ facx
-    trix = proj₂ facx
-...     | nothing | _       =
-          subsList-exp (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δₑ
-            (subst (ExpDec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))) eqx
-                   (expandSub-dec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)))) eqs
-solve-fail s (A ≐ᵥ B) eq δ₀ fx h sat
-  | just (Ψ⁺ , ρ , equ) | nothing =
-        subst (ExpMax δ₁) eqx
-              (expandSub-max (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δ₁ (⊩ss h₁))
-  where
-    u = trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt
-
-    fac = unify-max (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ δ₀ u
-    δ₁   = proj₁ fac
-    tri₁ = proj₂ fac
-
-    h₁ : ∅ᴴ ⊩ᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) [ δ₁ ]
-    h₁ = ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri₁) h)
-
 solve-fail s (A ≾̂ᵥᶜ B) eq δ₀ fx h sat
   with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)) in eqx
 ... | nothing =

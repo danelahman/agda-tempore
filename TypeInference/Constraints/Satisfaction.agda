@@ -52,7 +52,6 @@ _⊨[_]_ : ∀ {Θ Θ'} → Subst Θ Θ' → Hyps Θ' → Constraint Θ → Set
 σ ⊨[ Q ] ⊤̂                       = ⊤
 σ ⊨[ Q ] ⊥̂                       = ⊥
 σ ⊨[ Q ] (C ∧̂ D)                 = σ ⊨[ Q ] C × σ ⊨[ Q ] D
-σ ⊨[ Q ] (A ≐ᵥ B)                = A [ σ ]ᵛ ≡ B [ σ ]ᵛ
 σ ⊨[ Q ] (A ≾̂ᵥᶜ B)               = Q ∣ A [ σ ]ᵛ <:̂ᵛ B [ σ ]ᵛ
 σ ⊨[ Q ] (ρ ≾̂ᵣᶜ ρ')              = Q ⊩ ρ [ σ ]ʳ ≾̂ᵣ ρ' [ σ ]ʳ
 σ ⊨[ Q ] (ε ≾̂ₑᶜ ε')              = Q ⊩ ε [ σ ]ᵉ ≾̂ₑ ε' [ σ ]ᵉ
@@ -77,11 +76,12 @@ _⊨[_∣_]_ {Θ' = Θ'} σ Q R C =
 private
 
   -- An existential over types is solved by any witness; the `∃`-clause's
-  -- `Σ` and the extension `_,ᵗ_` compute as expected.
+  -- `Σ` and the extension `_,ᵗ_` compute as expected, and a type
+  -- equation is read as subtyping both ways.
 
   ex-∃ᵗ : ∀ {Θ Θ'} {σ : Subst Θ Θ'} {Q : Hyps Θ'}
         → σ ⊨[ Q ] (∃ᵗ (tvar (newᵗ {Θ}) ≐ᵥ tvar (newᵗ {Θ})))
-  ex-∃ᵗ = Unit , refl
+  ex-∃ᵗ = Unit , Unitₛ , Unitₛ
 
   -- A rigid effect-grade variable is its own witness under `_↑ᵉ`.
 
