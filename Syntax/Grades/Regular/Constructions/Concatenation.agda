@@ -189,7 +189,7 @@ module _ (L M : DFA) (wfL : WellFormed L) (wfM : WellFormed M) where
     ≟⇒≡ : ∀ {s t} → T (Automaton._≟_ C s t) → s ≡ t
     ≟⇒≡ {p , S} {p′ , S′} t =
       cong₂ _,_ (≡ᵇ⇒≡ p p′ (proj₁ (Equivalence.to T-∧ t)))
-                (==ⁿ⇒≡ S S′ (proj₂ (Equivalence.to T-∧ t)))
+                (==ⁿ-sound S S′ (proj₂ (Equivalence.to T-∧ t)))
 
     ≟-refl′ : ∀ s → T (Automaton._≟_ C s s)
     ≟-refl′ (p , S) = Equivalence.from T-∧ (≡ᵇ-refl p , ==ⁿ-refl S)

@@ -28,37 +28,8 @@ open import Relation.Binary.PropositionalEquality
 open import Syntax.Grades.Regular.Automaton k
 open import Syntax.Grades.Regular.Canonical k
 open import Syntax.Grades.Regular.Explore k
+open import Syntax.Grades.Regular.Basics k
 open import Syntax.Grades.Regular.Moore k using (moore-sound; moore-complete)
-
-------------------------------------------------------------------------
--- Tables
-
-module _ (D : DFA) (wf : WellFormed D) where
-
-  private
-    rows-ok : ∀ {p} → p < size D → ∃ λ r → lookupOr [] (rows D) p ≡ r × length r ≡ k × All (_< size D) r
-    rows-ok {p} lt = go (rows D) (proj₂ (proj₂ wf)) lt
-      where
-      go : ∀ rs → All (λ r → length r ≡ k × All (_< size D) r) rs → ∀ {p} → p < length rs
-         → ∃ λ r → lookupOr [] rs p ≡ r × length r ≡ k × All (_< size D) r
-      go (r ∷ rs) (ok ∷ oks) {zero}  _         = r , refl , ok
-      go (r ∷ rs) (ok ∷ oks) {suc p} (s≤s lt) = go rs oks lt
-
-    entry-< : ∀ {r} → All (_< size D) r → ∀ {i} → i < length r → r ! i < size D
-    entry-< (x<n ∷ _)   {zero}  _         = x<n
-    entry-< (_   ∷ all) {suc i} (s≤s lt) = entry-< all lt
-
-  next-< : ∀ {p} a → p < size D → next D p a < size D
-  next-< a lt with rows-ok lt
-  ... | r , eq , len , all rewrite eq =
-    entry-< all (subst (toℕ a <_) (sym len) (toℕ<n a))
-
-  run-< : ∀ {p} w → p < size D → run D p w < size D
-  run-< []      lt = lt
-  run-< (a ∷ w) lt = run-< w (next-< a lt)
-
-  start-< : 0 < size D
-  start-< = proj₁ wf
 
 ------------------------------------------------------------------------
 -- Language equivalence
@@ -77,14 +48,6 @@ Equiv-next a e w = e (a ∷ w)
 
 Equiv-final : ∀ {D p E q} → Equiv D p E q → isFinal D p ≡ isFinal E q
 Equiv-final e = e []
-
-T-≡ : ∀ {a b : Bool} → (T a → T b) → (T b → T a) → a ≡ b
-T-≡ {false} {false} f g = refl
-T-≡ {false} {true}  f g with g tt
-... | ()
-T-≡ {true}  {false} f g with f tt
-... | ()
-T-≡ {true}  {true}  f g = refl
 
 ------------------------------------------------------------------------
 -- Positions below a bound
@@ -143,14 +106,14 @@ module Quotient
     quotient-lawful = record
       { Good       = QGood
       ; good-start = good (start-< D wf)
-      ; good-δ     = λ { a (good lt) → good (next-< D wf a lt) }
+      ; good-δ     = λ { a (good lt) → good (next-< D wf lt a) }
       ; ≟-refl     = λ { (c , _) → ≡⇒same {c} refl }
       ; ≟-sym      = λ { {c , _} {c′ , _} e → ≡⇒same (sym (same⇒≡ {c} e)) }
       ; ≟-trans    = λ { {c , _} {c′ , _} {c″ , _} e e′ →
                          ≡⇒same (trans (same⇒≡ {c} e) (same⇒≡ {c′} e′)) }
       ; ≟-final    = λ g g′ e → Equiv-final {D} {_} {D} (class-sound g g′ e)
       ; ≟-δ        = λ { {_ , p} {_ , p′} g@(good lt) g′@(good lt′) e a →
-                         class-complete (good (next-< D wf a lt)) (good (next-< D wf a lt′))
+                         class-complete (good (next-< D wf lt a)) (good (next-< D wf lt′ a))
                            (Equiv-next {D} {p} {D} {p′} a (class-sound g g′ e)) }
       ; enum       = enum-q
       ; enum-bound = ≤-reflexive (trans (length-map _ (upTo (size D)))
@@ -185,7 +148,7 @@ module Quotient
 
     R-δ : ∀ {x y} a → R x y → R (Automaton.δ (quotient D) x a) (Automaton.δ (quotient E) y a)
     R-δ {_ , p} {_ , q} a (good lt , good lt′ , e) =
-      good (next-< D wfD a lt) , good (next-< E wfE a lt′) , Equiv-next {D} {p} {E} {q} a e
+      good (next-< D wfD lt a) , good (next-< E wfE lt′ a) , Equiv-next {D} {p} {E} {q} a e
 
     R-final : ∀ {x y} → R x y → Automaton.final (quotient D) x ≡ Automaton.final (quotient E) y
     R-final {_ , p} {_ , q} (_ , _ , e) = Equiv-final {D} {p} {E} {q} e
@@ -193,7 +156,7 @@ module Quotient
     R-≟ : ∀ {x y x′ y′} → R x y → R x′ y′
         → Automaton._≟_ (quotient D) x x′ ≡ Automaton._≟_ (quotient E) y y′
     R-≟ {_ , p₁} {_ , q₁} {_ , p₂} {_ , q₂} (good lt₁ , good lt₁′ , e₁) (good lt₂ , good lt₂′ , e₂) =
-      T-≡ (λ t → ≡⇒≡ᵇ _ _ (moore-complete E wfE lt₁′ lt₂′
+      T-ext (λ t → ≡⇒≡ᵇ _ _ (moore-complete E wfE lt₁′ lt₂′
                     (Equiv-trans {E} {q₁} {D} {p₁} {E} {q₂} (Equiv-sym {D} {p₁} {E} {q₁} e₁)
                       (Equiv-trans {D} {p₁} {D} {p₂} {E} {q₂}
                         (moore-sound D wfD lt₁ lt₂ (≡ᵇ⇒≡ _ _ t)) e₂))))
@@ -237,14 +200,14 @@ module Quotient
                 × (∀ w → isFinal E (run E p w) ≡ final (δ* q w))
 
     R-δ : ∀ {x q} a → R x q → R (Automaton.δ (quotient E) x a) (δ q a)
-    R-δ a (good lt , g , e) = good (next-< E wfE a lt) , good-δ a g , λ w → e (a ∷ w)
+    R-δ a (good lt , g , e) = good (next-< E wfE lt a) , good-δ a g , λ w → e (a ∷ w)
 
     R-final : ∀ {x q} → R x q → Automaton.final (quotient E) x ≡ final q
     R-final (_ , _ , e) = e []
 
     R-≟ : ∀ {x q x′ q′} → R x q → R x′ q′ → Automaton._≟_ (quotient E) x x′ ≡ (q ≟ q′)
     R-≟ (good lt , g , e) (good lt′ , g′ , e′) =
-      T-≡ (λ t → red g g′ λ w →
+      T-ext (λ t → red g g′ λ w →
                    trans (sym (e w)) (trans (moore-sound E wfE lt lt′ (≡ᵇ⇒≡ _ _ t) w) (e′ w)))
           (λ t → ≡⇒≡ᵇ _ _ (moore-complete E wfE lt lt′ λ w →
                    trans (e w) (trans (≟-residual A LA g g′ t w) (sym (e′ w)))))

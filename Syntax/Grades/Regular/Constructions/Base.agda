@@ -35,35 +35,12 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Regular.Automaton k hiding (_∈_; _⊆_)
+open import Syntax.Grades.Regular.Basics k public
+  using (T-true; T-false; ≡ᵇ-refl; ≡ᵇ-true; ≡ᵇ-false; ==ⁿ-sound; ==ⁿ-refl; all-lookup; next-<; δ*-table)
 open import Syntax.Grades.Regular.Operations k using (insert; fromList)
 
 ------------------------------------------------------------------------
 -- Boolean tests
-
-T-true : ∀ {b} → b ≡ true → T b
-T-true refl = tt
-
-T-false : ∀ {b} → b ≡ false → ¬ T b
-T-false refl ()
-
-≡ᵇ-true : ∀ {m n} → (m ≡ᵇ n) ≡ true → m ≡ n
-≡ᵇ-true {m} {n} e = ≡ᵇ⇒≡ m n (T-true e)
-
-≡ᵇ-false : ∀ {m n} → (m ≡ᵇ n) ≡ false → m ≢ n
-≡ᵇ-false {m} {n} e m≡n = T-false e (≡⇒≡ᵇ m n m≡n)
-
-≡ᵇ-refl : ∀ n → T (n ≡ᵇ n)
-≡ᵇ-refl n = ≡⇒≡ᵇ n n refl
-
-==ⁿ⇒≡ : ∀ xs ys → T (xs ==ⁿ ys) → xs ≡ ys
-==ⁿ⇒≡ []       []       _ = refl
-==ⁿ⇒≡ (x ∷ xs) (y ∷ ys) t =
-  cong₂ _∷_ (≡ᵇ⇒≡ x y (proj₁ (Equivalence.to T-∧ t)))
-            (==ⁿ⇒≡ xs ys (proj₂ (Equivalence.to T-∧ t)))
-
-==ⁿ-refl : ∀ xs → T (xs ==ⁿ xs)
-==ⁿ-refl []       = tt
-==ⁿ-refl (x ∷ xs) = Equivalence.from T-∧ (≡ᵇ-refl x , ==ⁿ-refl xs)
 
 -- acceptance by some member
 
@@ -286,27 +263,3 @@ any-insert⁺ʳ n S a with find a
 
 any-insert⁺ˡ : ∀ {P : ℕ → Set} n S → P n → Any P (insert n S)
 any-insert⁺ˡ n S pn = lose (∈-insert⁺ˡ n S) pn
-
-------------------------------------------------------------------------
--- Tables
-
--- the entry of a row of length `k` at a letter
-
-all-lookup : ∀ {A : Set} {P : A → Set} {d : A} {xs} {i}
-           → All P xs → i < length xs → P (lookupOr d xs i)
-all-lookup {i = zero}  (px ∷ _)   _         = px
-all-lookup {i = suc i} (_ ∷ pxs)  (s≤s lt) = all-lookup pxs lt
-
-toℕ<k : (a : Letter) → toℕ a < k
-toℕ<k a = toℕ<n a
-
-next-< : ∀ D → WellFormed D → ∀ {p} → p < size D → ∀ a → next D p a < size D
-next-< D (_ , _ , rs) p<n a with all-lookup {d = []} rs p<n
-... | len , targets =
-  all-lookup targets (subst (toℕ a <_) (sym len) (toℕ<k a))
-
--- the transition function of a table's automaton is `run`
-
-δ*-table : ∀ D p w → Automaton.δ* (automaton D) p w ≡ run D p w
-δ*-table D p []      = refl
-δ*-table D p (a ∷ w) = δ*-table D (next D p a) w

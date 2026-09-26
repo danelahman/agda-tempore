@@ -38,38 +38,8 @@ open import Relation.Nullary.Decidable using (_×-dec_; map′)
 
 open import Syntax.Grades.Regular.Automaton k renaming (_∈_ to _∈ᴸ_)
 open import Syntax.Grades.Regular.Explore k
-open import Syntax.Grades.Regular.Canonicity k using (run-<; start-<)
+open import Syntax.Grades.Regular.Basics k
 open import Syntax.Grades.Regular.Inclusion k
-
-------------------------------------------------------------------------
--- Booleans
-
-T-∧ : ∀ {a b} → T (a ∧ b) → T a × T b
-T-∧ {true} {true} _ = tt , tt
-
-∧-T : ∀ {a b} → T a → T b → T (a ∧ b)
-∧-T {true} {true} _ _ = tt
-
-T-not : ∀ {b} → T (not b) → ¬ T b
-T-not {false} _ ()
-
-not-T : ∀ {b} → ¬ T b → T (not b)
-not-T {false} _ = tt
-not-T {true}  n = n tt
-
-T-if : ∀ {A : Set} b {x y : A} → T b → (if b then x else y) ≡ x
-T-if true _ = refl
-
-F-if : ∀ {A : Set} b {x y : A} → ¬ T b → (if b then x else y) ≡ y
-F-if false _ = refl
-F-if true  n = ⊥-elim (n tt)
-
-------------------------------------------------------------------------
--- Runs
-
-run-++ : ∀ D p u v → run D p (u ++ v) ≡ run D (run D p u) v
-run-++ D p []      v = refl
-run-++ D p (a ∷ u) v = run-++ D (next D p a) u v
 
 ------------------------------------------------------------------------
 -- The product carrying words is lawful
@@ -94,11 +64,11 @@ module Witnesses (L M : DFA) (wfL : WellFormed L) (wfM : WellFormed M) where
 
   private
     pair-≡ : ∀ x y → T (W._≟_ x y) → proj₁ x ≡ proj₁ y
-    pair-≡ ((p , q) , v) ((p′ , q′) , v′) t with T-∧ {p ≡ᵇ p′} t
+    pair-≡ ((p , q) , v) ((p′ , q′) , v′) t with T-∧⁻ {p ≡ᵇ p′} t
     ... | tp , tq = cong₂ _,_ (≡ᵇ⇒≡ p p′ tp) (≡ᵇ⇒≡ q q′ tq)
 
     ≡-pair : ∀ x y → proj₁ x ≡ proj₁ y → T (W._≟_ x y)
-    ≡-pair ((p , q) , v) ((.p , .q) , v′) refl = ∧-T (≡⇒≡ᵇ p p refl) (≡⇒≡ᵇ q q refl)
+    ≡-pair ((p , q) , v) ((.p , .q) , v′) refl = T-∧⁺ (≡⇒≡ᵇ p p refl) (≡⇒≡ᵇ q q refl)
 
     bad-≡ : ∀ x y → proj₁ x ≡ proj₁ y → bad L M x ≡ bad L M y
     bad-≡ ((p , q) , v) ((.p , .q) , v′) refl = refl
@@ -148,8 +118,8 @@ module Witnesses (L M : DFA) (wfL : WellFormed L) (wfM : WellFormed M) where
 
   good-bad : ∀ {x} → WGood x → T (bad L M x)
            → reverse (proj₂ x) ∈ᴸ L × ¬ (reverse (proj₂ x) ∈ᴸ M)
-  good-bad (reached vʳ) t with T-∧ t
-  ... | tL , tM = tL , T-not tM
+  good-bad (reached vʳ) t with T-∧⁻ t
+  ... | tL , tM = tL , T-not⁻ tM
 
   δ*-witnesses : ∀ w → W.δ* W.start w ≡ ((run L 0 w , run M 0 w) , reverse w)
   δ*-witnesses w = trans (go w (0 , 0) []) (cong ((run L 0 w , run M 0 w) ,_) (++-identityʳ (reverse w)))
@@ -202,10 +172,10 @@ module _ {L M : DFA} (wfL : WellFormed L) (wfM : WellFormed M) where
       (Any.map (λ {x} t → bad-≟ x t) (discover-cover W witnesses-lawful w))
     where
     bad-start : T (bad L M ((run L 0 w , run M 0 w) , reverse w))
-    bad-start = ∧-T w∈L (not-T w∉M)
+    bad-start = T-∧⁺ w∈L (T-not⁺ w∉M)
 
     bad-≟ : ∀ x → T (Automaton._≟_ W (Automaton.δ* W (Automaton.start W) w) x) → T (bad L M x)
-    bad-≟ ((p , q) , v) t rewrite δ*-witnesses w with T-∧ {run L 0 w ≡ᵇ p} t
+    bad-≟ ((p , q) , v) t rewrite δ*-witnesses w with T-∧⁻ {run L 0 w ≡ᵇ p} t
     ... | tp , tq = subst₂ (λ p q → T (bad L M ((p , q) , v))) (≡ᵇ⇒≡ _ _ tp) (≡ᵇ⇒≡ _ _ tq) bad-start
 
   ⊆ᵇ-sound : T (L ⊆ᵇ M) → L ⊆ M

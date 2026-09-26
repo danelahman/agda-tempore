@@ -43,71 +43,7 @@ open import Relation.Nullary using (¬_)
 open import Relation.Binary.PropositionalEquality
 
 open import Syntax.Grades.Regular.Automaton k
-
-------------------------------------------------------------------------
--- Lists by position
-
-module _ {A : Set} where
-
-  ‼-++ : (xs ys : List A) {i : ℕ} {x : A} → xs ‼ i ≡ just x → (xs ++ ys) ‼ i ≡ just x
-  ‼-++ []       ys {i}     ()
-  ‼-++ (x ∷ xs) ys {zero}  refl = refl
-  ‼-++ (x ∷ xs) ys {suc i} eq   = ‼-++ xs ys eq
-
-  ‼-at : (xs : List A) {y : A} {ys : List A} → (xs ++ y ∷ ys) ‼ length xs ≡ just y
-  ‼-at []       = refl
-  ‼-at (x ∷ xs) = ‼-at xs
-
-  ‼-< : (xs : List A) {i : ℕ} {x : A} → xs ‼ i ≡ just x → i < length xs
-  ‼-< []       {i}     ()
-  ‼-< (x ∷ xs) {zero}  refl = s≤s z≤n
-  ‼-< (x ∷ xs) {suc i} eq   = s≤s (‼-< xs eq)
-
-  ‼-≥ : (xs : List A) {i : ℕ} → length xs ≤ i → xs ‼ i ≡ nothing
-  ‼-≥ []       _         = refl
-  ‼-≥ (x ∷ xs) (s≤s le) = ‼-≥ xs le
-
-  ‼-nothing : (xs : List A) {i : ℕ} → xs ‼ i ≡ nothing → length xs ≤ i
-  ‼-nothing []       _         = z≤n
-  ‼-nothing (x ∷ xs) {zero}  ()
-  ‼-nothing (x ∷ xs) {suc i} eq = s≤s (‼-nothing xs eq)
-
-  ‼-exists : (xs : List A) {i : ℕ} → i < length xs → ∃ λ x → xs ‼ i ≡ just x
-  ‼-exists (x ∷ xs) {zero}  _         = x , refl
-  ‼-exists (x ∷ xs) {suc i} (s≤s lt) = ‼-exists xs lt
-
-  ‼-snoc : (xs : List A) {y : A} {i : ℕ} {x : A}
-         → (xs ++ y ∷ []) ‼ i ≡ just x → xs ‼ i ≡ just x ⊎ (i ≡ length xs × x ≡ y)
-  ‼-snoc []       {i = zero}  refl = inj₂ (refl , refl)
-  ‼-snoc []       {i = suc i} ()
-  ‼-snoc (x ∷ xs) {i = zero}  refl = inj₁ refl
-  ‼-snoc (x ∷ xs) {i = suc i} eq with ‼-snoc xs eq
-  ... | inj₁ eq′         = inj₁ eq′
-  ... | inj₂ (refl , e) = inj₂ (refl , e)
-
-  ‼-All : {P : A → Set} {xs : List A} {i : ℕ} {x : A} → All P xs → xs ‼ i ≡ just x → P x
-  ‼-All {xs = x ∷ xs} {zero}  (px ∷ _)   refl = px
-  ‼-All {xs = x ∷ xs} {suc i} (_  ∷ pxs) eq   = ‼-All pxs eq
-
-  All-‼ : {P : A → Set} (xs : List A) → (∀ {i x} → xs ‼ i ≡ just x → P x) → All P xs
-  All-‼ []       h = []
-  All-‼ (x ∷ xs) h = h {zero} refl ∷ All-‼ xs (λ {i} → h {suc i})
-
-  ‼-Any : {P : A → Set} (xs : List A) {i : ℕ} {x : A} → xs ‼ i ≡ just x → P x → Any P xs
-  ‼-Any (x ∷ xs) {zero}  refl px = here px
-  ‼-Any (x ∷ xs) {suc i} eq   px = there (‼-Any xs eq px)
-
-  lookupOr-‼ : {d : A} (xs : List A) {i : ℕ} {x : A} → xs ‼ i ≡ just x → lookupOr d xs i ≡ x
-  lookupOr-‼ (x ∷ xs) {zero}  refl = refl
-  lookupOr-‼ (x ∷ xs) {suc i} eq   = lookupOr-‼ xs eq
-
-  ‼-map : {B : Set} (f : A → B) (xs : List A) {i : ℕ} {x : A}
-        → xs ‼ i ≡ just x → map f xs ‼ i ≡ just (f x)
-  ‼-map f (x ∷ xs) {zero}  refl = refl
-  ‼-map f (x ∷ xs) {suc i} eq   = ‼-map f xs eq
-
-  just-injective : {x y : A} → just x ≡ just y → x ≡ y
-  just-injective refl = refl
+open import Syntax.Grades.Regular.Basics k
 
 -- a row, read at a letter
 
@@ -123,12 +59,6 @@ pointwise-All f (p ∷ ps) = f p ∷ pointwise-All f ps
 
 length-letters : length letters ≡ k
 length-letters = length-tabulate (λ a → a)
-
-T-true : ∀ {b} → b ≡ true → T b
-T-true refl = tt
-
-T-false : ∀ {b} → b ≡ false → ¬ T b
-T-false refl ()
 
 ------------------------------------------------------------------------
 -- Exploring a lawful automaton

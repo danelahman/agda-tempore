@@ -16,6 +16,7 @@ open import Function.Bundles using (_⇔_; mk⇔; Equivalence)
 open import Relation.Binary.PropositionalEquality
 
 open import Syntax.Grades.Regular.Automaton k
+open import Syntax.Grades.Regular.Basics k using (T-subst; _∘⇔_)
 open import Syntax.Grades.Regular.Canonical k
 open import Syntax.Grades.Regular.Operations k
 open import Syntax.Grades.Regular.Explore k using (explore-wf; explore-accepts)
@@ -24,13 +25,6 @@ open import Syntax.Grades.Regular.Canonicity k
 open import Syntax.Grades.Regular.Constructions k
 
 open Equivalence using (to; from)
-
-private
-  T-subst : ∀ {a b : Bool} → a ≡ b → T a ⇔ T b
-  T-subst refl = mk⇔ (λ t → t) (λ t → t)
-
-  _∘⇔_ : ∀ {A B C : Set} → B ⇔ C → A ⇔ B → A ⇔ C
-  g ∘⇔ f = mk⇔ (λ a → to g (to f a)) (λ c → from f (from g c))
 
 ------------------------------------------------------------------------
 -- Single words

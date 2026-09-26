@@ -188,7 +188,7 @@ module _ (L : DFA) (wf : WellFormed L) where
 
     same⇒≡ : ∀ {s t} → T (same s t) → s ≡ t
     same⇒≡ {nothing} {nothing} _ = refl
-    same⇒≡ {just S}  {just T}  t = cong just (==ⁿ⇒≡ S T t)
+    same⇒≡ {just S}  {just T}  t = cong just (==ⁿ-sound S T t)
 
     same-refl : ∀ s → T (same s s)
     same-refl nothing  = tt

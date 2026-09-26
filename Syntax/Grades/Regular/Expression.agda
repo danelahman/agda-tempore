@@ -22,6 +22,7 @@ open import Relation.Binary.PropositionalEquality
 open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Regular.Automaton k
+open import Syntax.Grades.Regular.Basics k using (T-subst; _∘⇔_; T-not⁻; T-not⁺)
 open import Syntax.Grades.Regular.Canonical k
 import Syntax.Grades.Regular.Operations k as O
 open import Syntax.Grades.Regular.Constructions k using (_∈*_; none; more)
@@ -110,15 +111,8 @@ elab-canonical (~ e)   = ∁-canonical {elab e} (elab-wf e)
 -- Correctness
 
 private
-  T-subst : ∀ {a b : Bool} → a ≡ b → T a ⇔ T b
-  T-subst refl = mk⇔ (λ t → t) (λ t → t)
-
-  _∘⇔_ : ∀ {A B C : Set} → B ⇔ C → A ⇔ B → A ⇔ C
-  g ∘⇔ f = mk⇔ (λ a → to g (to f a)) (λ c → from f (from g c))
-
   T-not : ∀ {b} → T (not b) ⇔ (¬ T b)
-  T-not {false} = mk⇔ (λ _ ()) (λ _ → _)
-  T-not {true}  = mk⇔ (λ ()) (λ n → n _)
+  T-not = mk⇔ T-not⁻ T-not⁺
 
   -- iteration of a language is iteration of its predicate
 

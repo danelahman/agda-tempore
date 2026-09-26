@@ -34,32 +34,10 @@ open import Relation.Nullary using (¬_)
 
 open import Syntax.Grades.Regular.Automaton k
 open import Syntax.Grades.Regular.Canonical k
+open import Syntax.Grades.Regular.Basics k
 
 ------------------------------------------------------------------------
 -- Booleans and lists
-
-T-≡ : ∀ {b} → b ≡ true → T b
-T-≡ refl = tt
-
-T-∧ : ∀ {a b} → T (a ∧ b) → T a × T b
-T-∧ {true} {true} _ = tt , tt
-
-∧-T : ∀ {a b} → T a → T b → T (a ∧ b)
-∧-T {true} {true} _ _ = tt
-
-if-case : ∀ {A : Set} (P : A → Set) b {x y : A}
-        → (b ≡ true → P x) → (b ≡ false → P y) → P (if b then x else y)
-if-case P true  t f = t refl
-if-case P false t f = f refl
-
-==ⁿ-sound : ∀ xs ys → T (xs ==ⁿ ys) → xs ≡ ys
-==ⁿ-sound []       []       _ = refl
-==ⁿ-sound (x ∷ xs) (y ∷ ys) h =
-  cong₂ _∷_ (≡ᵇ⇒≡ x y (proj₁ (T-∧ h))) (==ⁿ-sound xs ys (proj₂ (T-∧ h)))
-
-==ⁿ-refl : ∀ xs → T (xs ==ⁿ xs)
-==ⁿ-refl []       = tt
-==ⁿ-refl (x ∷ xs) = ∧-T (≡⇒≡ᵇ x x refl) (==ⁿ-refl xs)
 
 -- two lists of equal length that `==ⁿ` tells apart differ at a position
 
@@ -95,11 +73,6 @@ length-zipWith f []       []       _  = refl
 length-zipWith f (x ∷ xs) (y ∷ ys) eq =
   cong suc (length-zipWith f xs ys (suc-injective eq))
 
-lookup-All : ∀ {A : Set} {P : A → Set} {d} {xs} → All P xs
-           → ∀ {p} → p < length xs → P (lookupOr d xs p)
-lookup-All (px ∷ pxs) {zero}  _       = px
-lookup-All (px ∷ pxs) {suc p} (s≤s h) = lookup-All pxs h
-
 -- lists of length `m` agreeing at every position below `m`
 
 ext : ∀ {m} xs ys → length xs ≡ m → length ys ≡ m
@@ -129,7 +102,7 @@ count-mono : ∀ P Q m → (∀ {x} → x < m → T (P x) → T (Q x))
 count-mono P Q zero    h = z≤n
 count-mono P Q (suc m) h with P m in eP | Q m in eQ
 ... | true  | true  = s≤s (count-mono P Q m (λ x< → h (m≤n⇒m≤1+n x<)))
-... | true  | false = ⊥-elim (subst T eQ (h ≤-refl (T-≡ eP)))
+... | true  | false = ⊥-elim (subst T eQ (h ≤-refl (T-true eP)))
 ... | false | true  =
   m≤n⇒m≤1+n (count-mono P Q m (λ x< → h (m≤n⇒m≤1+n x<)))
 ... | false | false = count-mono P Q m (λ x< → h (m≤n⇒m≤1+n x<))
@@ -146,7 +119,7 @@ count-strict P Q (suc m) h {x} (s≤s x≤m) qx ¬px
     | inj₁ x<m with P m in eP | Q m in eQ
 ...   | true  | true  = s≤s (count-strict P Q m h′ x<m qx ¬px)
   where h′ = λ {y} (y< : y < m) → h (m≤n⇒m≤1+n y<)
-...   | true  | false = ⊥-elim (subst T eQ (h ≤-refl (T-≡ eP)))
+...   | true  | false = ⊥-elim (subst T eQ (h ≤-refl (T-true eP)))
 ...   | false | true  =
   m≤n⇒m≤1+n (count-strict P Q m (λ y< → h (m≤n⇒m≤1+n y<)) x<m qx ¬px)
 ...   | false | false = count-strict P Q m (λ y< → h (m≤n⇒m≤1+n y<)) x<m qx ¬px
@@ -191,13 +164,11 @@ module Rounds (D : DFA) (wf : WellFormed D) where
   row p = lookupOr [] (rows D) p
 
   row-wf : ∀ {p} → p < n → length (row p) ≡ k × All (_< n) (row p)
-  row-wf p< = lookup-All (proj₂ (proj₂ wf)) p<
+  row-wf p< = all-lookup (proj₂ (proj₂ wf)) p<
 
   letter< : ∀ {p} → p < n → (a : Fin k) → toℕ a < length (row p)
   letter< p< a = subst (toℕ a <_) (sym (proj₁ (row-wf p<))) (toℕ<n a)
 
-  next-< : ∀ {p} → p < n → ∀ a → next D p a < n
-  next-< p< a = lookup-All (proj₂ (row-wf p<)) (letter< p< a)
 
   -- round `i`: a leader function of agreement on words shorter than `i`
 
@@ -248,7 +219,7 @@ module Rounds (D : DFA) (wf : WellFormed D) where
                     → p ≈[ suc i ] q
     signature-sound {p} {q} p< q< eq =
       bit-injective (proj₁ (∷-injective eq)) , λ a →
-        sound (next-< p< a) (next-< q< a)
+        sound (next-< D wf p< a) (next-< D wf q< a)
           (trans (sym (lookup-map (cs !_) (row p) (letter< p< a)))
             (trans (cong (_! toℕ a) (proj₂ (∷-injective eq)))
                    (lookup-map (cs !_) (row q) (letter< q< a))))
@@ -262,7 +233,7 @@ module Rounds (D : DFA) (wf : WellFormed D) where
           (trans (length-map (cs !_) (row p)) (proj₁ (row-wf p<)))
           (trans (length-map (cs !_) (row q)) (proj₁ (row-wf q<)))
           (λ a → trans (lookup-map (cs !_) (row p) (letter< p< a))
-                   (trans (compl (next-< p< a) (next-< q< a) (g a))
+                   (trans (compl (next-< D wf p< a) (next-< D wf q< a) (g a))
                      (sym (lookup-map (cs !_) (row q) (letter< q< a))))))
 
   -- `first` finds the least position holding a signature
@@ -275,7 +246,7 @@ module Rounds (D : DFA) (wf : WellFormed D) where
       (λ e → ⊥-elim (subst T e (subst (λ x → T (σ ==ⁿ x)) (sym eq) (==ⁿ-refl σ))))
   first-spec σ (τ ∷ τs) {suc p} (s≤s p<) eq =
     if-case (λ r → r ≤ suc p × lookupOr [] (τ ∷ τs) r ≡ σ) (σ ==ⁿ τ)
-      (λ e → z≤n , sym (==ⁿ-sound σ τ (T-≡ e)))
+      (λ e → z≤n , sym (==ⁿ-sound σ τ (T-true e)))
       (λ _ → let (r≤ , at) = first-spec σ τs p< eq in s≤s r≤ , at)
 
   -- a round preserves the invariant
@@ -369,7 +340,7 @@ module Rounds (D : DFA) (wf : WellFormed D) where
   rounds-fix zero cs I h = ⊥-elim (<-irrefl refl (≤-trans h (count-≤ _ n)))
   rounds-fix (suc f) {i} cs I h =
     if-case Fix (refine cs ==ⁿ cs)
-      (λ e → i , I , ==ⁿ-sound _ _ (T-≡ e))
+      (λ e → i , I , ==ⁿ-sound _ _ (T-true e))
       (λ e → rounds-fix f (refine cs) (step I)
                (≤-trans h (subst (_≤ f + μ (refine cs)) (+-suc f (μ cs))
                  (+-monoʳ-≤ f (grows I (λ t → subst T e t))))))

@@ -33,7 +33,8 @@ open import Syntax.Grades.Regular.Automaton k
 open import Syntax.Grades.Regular.Canonical k
 open import Syntax.Grades.Regular.Operations k
 open import Syntax.Grades.Regular.Inclusion k
-open import Syntax.Grades.Regular.Canonicity k using (canonicity; T-≡)
+open import Syntax.Grades.Regular.Canonicity k using (canonicity)
+open import Syntax.Grades.Regular.Basics k using (T-ext)
 open import Syntax.Grades.Regular.Decide k
   using (⊆ᵇ-sound; ⊆ᵇ-complete; nonempty?; wellFormed?; _≟ᴰ_)
 open import Syntax.Grades.Regular.Properties k
@@ -74,7 +75,7 @@ same-language : ∀ c d → (∀ w → w ∈ table c → w ∈ table d) → (∀
 same-language c d cd dc =
   table-injective
     (trans (sym (canonical′ c))
-      (trans (canonicity (table c) (table d) (wf′ c) (wf′ d) (λ w → T-≡ (cd w) (dc w)))
+      (trans (canonicity (table c) (table d) (wf′ c) (wf′ d) (λ w → T-ext (cd w) (dc w)))
              (canonical′ d)))
 
 ------------------------------------------------------------------------
