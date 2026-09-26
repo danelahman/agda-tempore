@@ -94,6 +94,10 @@ quotient D = classes D (Moore.equivalence D)
 ------------------------------------------------------------------------
 -- Canonical tables
 
+-- Prototype: canonical tables need not be built; equality and inclusion
+-- by the derivative search suffice, and the canonical form is the
+-- reference semantics.
+
 canon : DFA → DFA
 canon D = explore (quotient D)
 

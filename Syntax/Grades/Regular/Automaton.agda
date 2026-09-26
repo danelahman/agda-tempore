@@ -92,6 +92,10 @@ Reduced A LA = ∀ {p q} → Good p → Good q
 ------------------------------------------------------------------------
 -- Tables
 
+-- Prototype: rows are labelled by predicates on operations (minterms of
+-- a symbolic alphabet) instead of by letters, so a large or
+-- parameterised `Op` needs no enumeration.
+
 record DFA : Set where
   constructor dfa
   field
