@@ -16,6 +16,10 @@
 -- Two are typable at some grades only: one drops its             --
 -- continuation, one resumes it twice. Inference types each where --
 -- it is typable and refutes it elsewhere.                        --
+--                                                                --
+-- Set 4 is boxes and delays: claims made early, on time and      --
+-- late, after operations, in branches and in a handler clause,   --
+-- with the box's grade given or inferred.                        --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -61,3 +65,14 @@ import TypeInference.Examples.Handlers.Time.RightSided
 import TypeInference.Examples.Handlers.Time.LeftSided
 import TypeInference.Examples.Handlers.Traces.Timed.RightSided
 import TypeInference.Examples.Handlers.Traces.Timed.LeftSided
+
+-- Boxes: the programs, the typings, the schemes
+
+import TypeInference.Examples.Boxes
+
+-- The verdicts and schemes at each grade
+
+import TypeInference.Examples.Boxes.Time.RightSided
+import TypeInference.Examples.Boxes.Time.LeftSided
+import TypeInference.Examples.Boxes.Traces.Timed.RightSided
+import TypeInference.Examples.Boxes.Traces.Timed.LeftSided

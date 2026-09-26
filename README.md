@@ -547,3 +547,7 @@ Inference for the open calculus, by constraint generation and solving.
   `resume-twice`, whose clause calls it twice, where the unit is the top. `Handlers/` checks by
   `refl` that inference types each where it is typable (with a derivation at
   that grade) and refutes it elsewhere, at the four grades.
+  `Boxes.agda` gives boxes and delays: claims made early, on time and late,
+  after operations, in both branches of an `if`, through nested boxes and
+  inside a handler clause, with the box's grade given or inferred; `Boxes/`
+  checks the verdicts and schemes at the four grades.
