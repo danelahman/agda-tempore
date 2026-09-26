@@ -1,23 +1,23 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the two-sided trace intervals.        --
+-- A time-ticks Kripke frame for the two-sided trace intervals.       --
 --                                                                    --
--- Worlds are time points `ℕ`, and a grade `[ P , Q ]` fences the      --
--- advance in from both sides at once:                                --
+-- Worlds are time points `ℕ`, and a grade `[ P , Q ]` bounds the     --
+-- advance from both sides:                                           --
 --                                                                    --
 --   w ⊑ᵗ[ [ P , Q ] ] w'  iff  w + durationˡᵒ p ≤ w'  for some p ∈ P --
 --                         and  w' ≤ w + durationʰⁱ q  for some q ∈ Q --
 --                                                                    --
--- Each half is the corresponding one-sided relation -- the floor's from --
--- `Ticks.Traces.Timed.LeftSided`, the cap's from                   --
--- `Ticks.Traces.Timed.RightSided` -- and every frame condition is --
--- the pair of theirs, the grade's monoid and order both acting        --
+-- Each half is the corresponding one-sided relation, the floor from  --
+-- `Ticks.Traces.Timed.LeftSided` and the cap from                    --
+-- `Ticks.Traces.Timed.RightSided`, and every frame condition is the  --
+-- pair of theirs, the monoid and order of the grade acting           --
 -- endpointwise.                                                      --
 --                                                                    --
--- The two witnesses are independent: the guarantee that fixes how far --
--- the advance must reach need not be the allowance that caps it. What --
--- the coherence field of the grade buys is that the fence is not      --
--- empty -- some listed guarantee takes no longer than some listed     --
--- allowance -- so a world at the far end is reachable at all.         --
+-- The two witnesses are independent: the guarantee that fixes how    --
+-- far the advance reaches need not be the allowance that bounds it.  --
+-- By the coherence field of the grade, some listed guarantee takes   --
+-- no longer than some listed allowance, so the relation is           --
+-- non-empty.                                                         --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)

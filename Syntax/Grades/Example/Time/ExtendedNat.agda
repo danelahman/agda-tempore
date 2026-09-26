@@ -1,12 +1,10 @@
 ------------------------------------------------------------------------
--- The extended natural numbers ℕ∞.                                    --
---                                                                     --
--- The arithmetic an interval with a possibly-infinite right-hand       --
--- endpoint runs on: `↑ n` is the finite value `n` and `∞` the point at --
--- infinity, absorbing in addition and above everything in the order.   --
---                                                                     --
--- Only `Interval∞` uses this, but it is a self-contained ordered       --
--- monoid, so it is kept apart from the grade built on top of it.       --
+-- The extended natural numbers ℕ∞.                                   --
+--                                                                    --
+-- `↑ n` is the finite value `n` and `∞` the point at infinity,       --
+-- absorbing for addition and greatest in the order. ℕ∞ is an ordered --
+-- monoid in its own right; it provides the endpoints of the          --
+-- right-sided intervals and the upper endpoints of `Interval∞`.      --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.ExtendedNat where
@@ -188,8 +186,8 @@ infixl 7 _⊔∞_
 ------------------------------------------------------------------------
 -- ↑ 0 is the least element
 --
--- These are what the grade's zero-product properties are built from: a
--- sum that stays within `↑ 0` cannot have used ∞ in either summand.
+-- The zero-product properties of the grades are built from these: a
+-- sum within `↑ 0` has no summand ∞.
 
 -- a finite sum that is ↑ 0 forces both summands below ↑ 0
 

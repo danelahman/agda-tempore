@@ -1,5 +1,5 @@
-------------------------------------------------------------------------
--- The action frame of a grade, and frames restricted to forward      --
+-------------------------------------------------------------------------
+-- The action frame of a grade, and frames restricted to forward       --
 -- moves.                                                              --
 --                                                                     --
 -- A grade acts on itself by right multiplication, a lax,              --
@@ -17,7 +17,7 @@
 -- so the accumulated amount may shrink. `forward` intersects a frame  --
 -- with a preorder on its worlds, and with the order of accumulation   --
 -- it confines moves to the forward ones.                              --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.World.Action where
 

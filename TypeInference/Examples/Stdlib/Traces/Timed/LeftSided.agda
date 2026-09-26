@@ -1,10 +1,10 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- The standard library at timed traces, coverage order           --
 --                                                                --
 -- The unit is the top, and multiplication does not commute.      --
 -- Nothing goes stale, so `compose` and `min` report no condition --
 -- on time.                                                       --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

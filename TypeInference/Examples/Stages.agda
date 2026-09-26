@@ -1,32 +1,29 @@
 ------------------------------------------------------------------
--- Solver stages on hand-written constraints                      --
---                                                                --
--- Each test calls one stage of the solver on a hypothesis set, a --
--- pair of grade expressions or a residual written out by hand,   --
--- and checks its answer by `refl`. The stages, and the commits   --
--- whose steps they guard:                                        --
---                                                                --
---   `canonᴴ` (b91638f): an ordering with a join on its left is   --
---     one ordering per alternative. No example program depends   --
---     on it.                                                     --
---   `walkᵈ` (b91638f): a var-rule disjunction entailed by        --
---     another is pruned (also `Reports`).                        --
---   `canonᵣ`/`canonₑ` (b91638f): a product with the top is the   --
---     top where the unit is least (also `Reports`).              --
---   `decide≾ᵣ`/`decide≾ₑ` (391579f): products compare as         --
---     multisets where `·` commutes. No example program depends   --
---     on it.                                                     --
---   `closedᴴ` (dca615d): closed sides joined by a chain of       --
---     orderings are compared (also `Boxes`).                     --
---   `collapse` (6733339): a cycle of unknowns local to a clause  --
---     is one unknown, without which the clause's close is stuck. --
---                                                                --
--- The grades differ in what the stages read, `u-least?` and      --
--- `·-comm?`: right-sided intervals (both), timed traces on the   --
--- right (the unit least, `·` not commutative), left-sided        --
--- intervals with an adjoined top (`·` commutative, the unit not  --
--- least, the top not the unit), and both sides of time for the   --
--- collapse.                                                      --
+-- Solver stages on hand-written constraints                    --
+--                                                              --
+-- Each test applies one stage of the solver to a hypothesis    --
+-- set, a pair of grade expressions or a residual written out   --
+-- by hand, and checks its answer by `refl`. The stages tested: --
+--   * `canonᴴ`: an ordering with a join on its left is one     --
+--     ordering per alternative. No example program depends on  --
+--     it.                                                      --
+--   * `walkᵈ`: a var-rule disjunction entailed by another is   --
+--     pruned (also `Reports`).                                 --
+--   * `canonᵣ`/`canonₑ`: a product with the top is the top     --
+--     where the unit is least (also `Reports`).                --
+--   * `decide≾ᵣ`/`decide≾ₑ`: products compare as multisets     --
+--     where `·` commutes. No example program depends on it.    --
+--   * `closedᴴ`: closed sides joined by a chain of orderings   --
+--     are compared (also `Boxes`).                             --
+--   * `collapse`: a cycle of unknowns local to a clause is one --
+--     unknown; without it, the clause's close is stuck.        --
+--                                                              --
+-- The grades differ in the properties the stages read,         --
+-- `u-least?` and `·-comm?`: right-sided intervals (both hold), --
+-- timed traces under the allowance order (the unit least, `·`  --
+-- not commutative), left-sided intervals with an adjoined top  --
+-- (`·` commutative, the unit not least, the top distinct from  --
+-- the unit), and both sides of time for the collapse.          --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∧_) renaming (Bool to 𝔹)
@@ -93,7 +90,7 @@ module Deadline where
   ⌜ n ⌝ᵉ = econst [0, ↑ n ]
 
   ----------------------------------------------------------------
-  -- `canonᴴ` (b91638f): an ordering with a join on its left is one
+  -- `canonᴴ`: an ordering with a join on its left is one
   -- ordering per alternative; a join on the right is kept
 
   split-left-r :
@@ -107,7 +104,7 @@ module Deadline where
   split-left-e = refl
 
   ----------------------------------------------------------------
-  -- `walkᵈ` (b91638f): with `x ≾ y`, `eternal α ∨ y ≾ uᵣ` entails
+  -- `walkᵈ`: with `x ≾ y`, `eternal α ∨ y ≾ uᵣ` entails
   -- `eternal α ∨ x ≾ uᵣ`, which is pruned, as is the repeat
 
   prune-entailed :
@@ -117,7 +114,7 @@ module Deadline where
   prune-entailed = refl
 
   ----------------------------------------------------------------
-  -- `canonᵣ`/`canonₑ` (b91638f): a product with the top among its
+  -- `canonᵣ`/`canonₑ`: a product with the top among its
   -- factors is the top, which absorbs the join
 
   top-product-r : canonᵣ (x ·̂ᵣ rconst ⊤ᵣ) ≡ rconst ⊤ᵣ
@@ -130,7 +127,7 @@ module Deadline where
   top-product-join = refl
 
   ----------------------------------------------------------------
-  -- `decide≾ₑ`/`decide≾ᵣ` (391579f): products compare as multisets,
+  -- `decide≾ₑ`/`decide≾ᵣ`: products compare as multisets,
   -- matching the factors crosswise
 
   -- c ≾ b, d ≾ a ⊩ c · d ≾ a · b
@@ -169,7 +166,7 @@ module Deadline where
   crossed-constant-∅ = refl
 
   ----------------------------------------------------------------
-  -- `closedᴴ` (dca615d): two closed sides joined by a chain of
+  -- `closedᴴ`: two closed sides joined by a chain of
   -- orderings are compared, though no ordering of the set is closed
 
   chain-late : closedᴴ (hyps [] [] ((⌜ 3 ⌝ʳ , x) ∷ (x , ⌜ 2 ⌝ʳ) ∷ []) [] []) ≡ nothing
@@ -205,7 +202,7 @@ module Sequence where
   c = evar (suc (suc zero))
   d = evar (suc (suc (suc zero)))
 
-  -- `decide≾ₑ` (391579f): the factors match in order only
+  -- `decide≾ₑ`: the factors match in order only
 
   crossed-in-order :
     is-just (decide≾ₑ {Q = hyps [] [] [] ((c , b) ∷ (d , a) ∷ []) []} (c ·̂ₑ d) (a ·̂ₑ b))
@@ -241,7 +238,7 @@ module WithTop where
   b  = evar (suc zero)
   ⊤̂ = econst untimed
 
-  -- `decide≾ₑ` (391579f): ⊩ a · b ≾ ⊤ · a, the top matching `b`
+  -- `decide≾ₑ`: ⊩ a · b ≾ ⊤ · a, the top matching `b`
   -- after the factors are matched crosswise; the converse fails
 
   top-crossed : is-just (decide≾ₑ {Q = ∅ᴴ} (a ·̂ₑ b) (⊤̂ ·̂ₑ a)) ≡ true
@@ -250,14 +247,14 @@ module WithTop where
   top-crossed-converse : is-just (decide≾ₑ {Q = ∅ᴴ} (⊤̂ ·̂ₑ a) (a ·̂ₑ b)) ≡ false
   top-crossed-converse = refl
 
-  -- `canonₑ` (b91638f): with the unit not least, a product with the
+  -- `canonₑ`: with the unit not least, a product with the
   -- top is kept
 
   top-product-kept : canonₑ (a ·̂ₑ ⊤̂) ≡ ⊤̂ ·̂ₑ a
   top-product-kept = refl
 
 ------------------------------------------------------------------
--- `collapse` (6733339): a cycle of unknowns local to a clause
+-- `collapse`: a cycle of unknowns local to a clause
 --
 -- A clause entered with the outer unknown `w` and the rigid `j`, its
 -- local unknowns `m`, `t`, `e₂`, and the residual

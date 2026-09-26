@@ -1,26 +1,24 @@
 ------------------------------------------------------------------------
--- Worked instances of the interval grades.                            --
---                                                                     --
--- The sensor node's `uplink` run -- read, idle two ticks, send -- is   --
--- the running example. Under `opTime` it takes between 7 and 9 ticks:  --
--- read 1, the idle 2, and send anywhere from 4 to 6. Each interval     --
--- grade records a different part of that fact:                         --
---                                                                     --
---   left-sided   [ 7 ,+∞⟩       "at least 7 ticks have passed"        --
---   right-sided  [0, ↑ 9 ]      "at most 9 ticks have passed"         --
---   two-sided    [ 7 , ↑ 9 ]    both bounds at once                    --
---                                                                     --
--- Both upper endpoints range over the extended naturals, so `[0, ∞ ]`  --
--- and `[ 7 , ∞ ]` impose no upper bound at all.                        --
---                                                                     --
--- In each case `_·_` adds the endpoints, so sequencing two runs adds   --
--- their windows, and the order is *weakening*: a grade sits below the  --
--- grades that claim less than it does. Which way "less" points differs --
--- per grade, and that is what the sections below pin down. Each grade  --
--- also has a designated greatest element `⊤`, and the sections below   --
--- say which one it is.                                                 --
---                                                                     --
--- An index only: one module per grade.                                 --
+-- Worked instances of the interval grades.                           --
+--                                                                    --
+-- The running example is the `uplink` run of the sensor node: read,  --
+-- idle two ticks, send. Under `opTime` it takes between 7 and 9      --
+-- ticks: read 1, the idle 2, and send between 4 and 6. Each interval --
+-- grade records part of this:                                        --
+--                                                                    --
+--   left-sided   [ 7 ,+∞⟩       "at least 7 ticks have passed"       --
+--   right-sided  [0, ↑ 9 ]      "at most 9 ticks have passed"        --
+--   two-sided    [ 7 , ↑ 9 ]    both bounds at once                  --
+--                                                                    --
+-- Both upper endpoints range over the extended naturals, so          --
+-- `[0, ∞ ]` and `[ 7 , ∞ ]` impose no upper bound.                   --
+--                                                                    --
+-- In each grade `_·_` adds the endpoints, so sequencing two runs     --
+-- adds their windows, and the order is *weakening*: a grade lies     --
+-- below the grades that claim less. The modules below give the       --
+-- direction of weakening and the greatest element `⊤` of each grade. --
+--                                                                    --
+-- An index: one module per grade.                                    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time where

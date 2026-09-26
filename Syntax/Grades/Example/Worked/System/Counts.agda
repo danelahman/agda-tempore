@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Worked instances of the grade systems pairing counts with the       --
--- other grades.                                                        --
---                                                                     --
--- An index only: one module per system.                                --
+-- Worked instances of the grade systems pairing counts with the      --
+-- other grades.                                                      --
+--                                                                    --
+-- An index: one module per system.                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Counts where

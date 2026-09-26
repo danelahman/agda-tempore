@@ -1,13 +1,13 @@
-------------------------------------------------------------------
--- Boxes at timed traces, allowance order                         --
---                                                                --
--- A box is a permit, claimable while the run that elapsed stays  --
--- within its grade; `n` ticks are a budget of `n`, operations    --
--- paid at `costʰⁱ` (read 1, write 3, send 6). The unit permits   --
--- only the empty run, so no non-eternal variable survives a      --
--- tick. As at the right-sided intervals, a late claim is         --
--- refused and there is no early one.                             --
-------------------------------------------------------------------
+-------------------------------------------------------------------
+-- Boxes at timed traces, allowance order                        --
+--                                                               --
+-- A box is a permit, claimable while the run that elapsed stays --
+-- within its grade; `n` ticks are a budget of `n`, operations   --
+-- paid at `costʰⁱ` (read 1, write 3, send 6). The unit permits  --
+-- only the empty run, so no non-eternal variable survives a     --
+-- tick. As at the right-sided intervals, a late claim is        --
+-- refused and there is no early one.                            --
+-------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

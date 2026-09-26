@@ -1,20 +1,20 @@
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 -- A trace-history Kripke frame for the two-sided time intervals with a --
 -- possibly-infinite right endpoint as the resource grades.             --
---                                                                    --
--- Worlds are timed traces `Trace`, recording the history observed so    --
--- far. A resource grade `[ min , max ]` (with `max : ℕ∞`) reaches the    --
--- histories obtained by appending a continuation `t` whose duration      --
--- falls in the window `[ min , max ]`; an infinite `max` imposes no      --
--- upper bound:                                                          --
---                                                                    --
---   w ⊑ʰ[ i ] w'   iff   w ∙ t ≡ w'   and   min i ≤ dur t   and         --
---                        ↑ dur t ≤∞ max i    (for some continuation t)   --
---                                                                    --
--- Multiplying grades (`·ᵢ`) adds the endpoints (with `∞` absorbing),     --
--- matching the addition of durations along the concatenation of          --
--- continuations.                                                         --
-------------------------------------------------------------------------
+--                                                                      --
+-- Worlds are timed traces `Trace`, recording the history observed so   --
+-- far. A resource grade `[ min , max ]` (with `max : ℕ∞`) reaches the  --
+-- histories obtained by appending a continuation `t` whose duration    --
+-- falls in the window `[ min , max ]`; an infinite `max` imposes no    --
+-- upper bound:                                                         --
+--                                                                      --
+--   w ⊑ʰ[ i ] w'   iff   w ∙ t ≡ w'   and   min i ≤ dur t   and        --
+--                        ↑ dur t ≤∞ max i    (for some continuation t) --
+--                                                                      --
+-- Multiplying grades (`·ᵢ`) adds the endpoints (with `∞` absorbing),   --
+-- matching the addition of durations along the concatenation of        --
+-- continuations.                                                       --
+--------------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 

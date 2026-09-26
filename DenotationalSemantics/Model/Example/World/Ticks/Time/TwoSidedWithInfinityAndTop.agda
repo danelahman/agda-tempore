@@ -1,19 +1,19 @@
-------------------------------------------------------------------------
--- A time-ticks Kripke frame for the two-sided time intervals with a    --
--- possibly-infinite right endpoint and a formal greatest grade.        --
---                                                                    --
+----------------------------------------------------------------------------
+-- A time-ticks Kripke frame for the two-sided time intervals with a      --
+-- possibly infinite right endpoint and a formal greatest grade.          --
+--                                                                        --
 -- Worlds are time points `ℕ`. A grade `window [ min , max ]` reaches     --
--- exactly the worlds inside its window ahead, exactly as in the plain    --
--- frame; `no-window` bounds neither end and so reaches every world      --
--- ahead:                                                                --
---                                                                    --
---   w ⊑[ window i ] w'  iff  min i + w ≤ w'  and  ↑ w' ≤∞ (max i +∞ ↑ w) --
---   w ⊑[ no-window ] w'  iff  w ≤ w'                                    --
---                                                                    --
--- The relation at `no-window` contains every other, as covariance asks   --
--- of the greatest grade, and is the greatest forward relation;           --
--- composition survives because `no-window` absorbs.                      --
-------------------------------------------------------------------------
+-- exactly the worlds inside its window ahead, as in the plain frame;     --
+-- `no-window` bounds neither end and reaches every world ahead:          --
+--                                                                        --
+--   w ⊑[ window i ] w'   iff   min i + w ≤ w'  and                       --
+--                              ↑ w' ≤∞ (max i +∞ ↑ w)                    --
+--   w ⊑[ no-window ] w'  iff   w ≤ w'                                    --
+--                                                                        --
+-- The relation at `no-window` contains every other, as covariance        --
+-- requires of the greatest grade, and is the greatest forward relation;  --
+-- it is closed under composition, `no-window` being absorbing.           --
+----------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinityAndTop where
 

@@ -1,10 +1,9 @@
 ------------------------------------------------------------------------
--- Worked instances of the dense right-sided grade.                    --
---
--- "At most `q` units", a real-time deadline: orderings between         --
--- concrete grades, each discharged by the grade's own decision          --
--- procedure, so an example asserted the wrong way round does not        --
--- typecheck; sequencing and absorption, computed.                       --
+-- Worked instances of the dense right-sided grade.                   --
+--                                                                    --
+-- "At most `q` units", a real-time deadline: orderings between       --
+-- concrete grades, each established by the decision procedure of the --
+-- grade; sequencing and absorption, computed.                        --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.Dense.RightSided where

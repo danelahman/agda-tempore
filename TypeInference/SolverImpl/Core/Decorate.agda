@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Decoration: a skeleton back into an open type                  --
 --                                                                --
 -- `decorate` builds the most general open type of a given shape: --
@@ -20,7 +20,7 @@
 --                                                                --
 -- Match-then-decompose, as in Fuh and Mishra's structural        --
 -- subtyping inference (TCS 1990).                                --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map to mmap)

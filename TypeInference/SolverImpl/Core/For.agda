@@ -1,13 +1,13 @@
 ------------------------------------------------------------------
--- Single-binding substitutions                                   --
---                                                                --
--- `A forᵗ α` is the substitution that eliminates the type        --
--- variable `α`, sending it to `A` and every other variable of    --
--- its sort to its thickening. It is an ordinary `Subst`, so the  --
--- whole substitution algebra of `TypeInference.OpenSyntax.Subst` --
--- applies to it; the components of the two other sorts are the   --
--- variable constructors, as the extension `_+ty` leaves their    --
--- counters alone.                                                --
+-- Single-binding substitutions                                 --
+--                                                              --
+-- `A forᵗ α` is the substitution that eliminates the type      --
+-- variable `α`, sending it to `A` and every other variable of  --
+-- its sort to its thickening. It is a `Subst`, subject to the  --
+-- substitution algebra of `TypeInference.OpenSyntax.Subst`;    --
+-- its components at the two other sorts are the variable       --
+-- constructors, the extension `_+ty` leaving their counters    --
+-- unchanged.                                                   --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′)

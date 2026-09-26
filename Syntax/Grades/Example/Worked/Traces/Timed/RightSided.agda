@@ -1,43 +1,38 @@
 ------------------------------------------------------------------------
--- Worked instances of the trace grade of upper bounds, at the         --
--- allowance order.                                                    --
---                                                                     --
--- A grade lists bounds, and a computation is graded by it when every   --
--- run it may have stays within one of them. A bound's operations are   --
--- permissions -- the run may perform them -- and its delays are a      --
--- budget, which the run spends on idling and on operations the bound   --
--- does not name, at their execution time.                             --
---                                                                     --
--- So `⌈ read ⌉ ∙ ⟨ 6 ⟩` reads "take a reading, then spend up to six    --
--- ticks however you like", which is the shape of a duty-cycle budget:  --
--- it says what must be possible and caps the rest by time rather than  --
--- by naming it.                                                       --
---                                                                     --
--- Budget is *local*: what a bound offers between two operations it     --
--- names pays only for what the run does between those same two. A      --
--- bound therefore says when its slack is available, and not merely how --
--- much of it there is -- one of the sections below turns on that       --
--- alone.                                                               --
---                                                                     --
--- The set is read *disjunctively*: a longer list is a weaker grade,    --
--- since there are more runs it permits. A listed bound that another    --
--- listed one already permits adds nothing, so the members are cut      --
--- down to the antichain of the most permissive of them, and            --
--- mutually-permitting grades are literally equal.                      --
---                                                                     --
--- A bound is charged at `costʰⁱ` -- read 1, write 3, send 6 -- since   --
--- that is what it must budget for. The runs below then take            --
---                                                                     --
---   ⌈ read ⌉                                  1 tick                  --
---   ⌈ read ⌉ ∙ ⟨ 4 ⟩                          5 ticks                 --
---   ⌈ read ⌉ ∙ ⌈ write ⌉                      4 ticks                 --
---   ⌈ read ⌉ ∙ ⌈ send ⌉                       7 ticks                 --
---   ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉            8 ticks                 --
---   ⌈ write ⌉ ∙ ⌈ read ⌉                      4 ticks                 --
---                                                                     --
--- Every run is written out in full in every claim, and every claim is  --
--- closed by running the grade's own decision procedure, so a table     --
--- asserted the wrong way round does not typecheck.                     --
+-- Worked instances of the trace grade of upper bounds, at the        --
+-- allowance order.                                                   --
+--                                                                    --
+-- A grade lists bounds, and a computation is graded by it when every --
+-- run it may have stays within one of them. The operations of a      --
+-- bound are permissions, which the run may perform, and its delays   --
+-- are a budget, which the run spends on idling and on operations the --
+-- bound does not list, at their execution time.                      --
+--                                                                    --
+-- Thus `⌈ read ⌉ ∙ ⟨ 6 ⟩` reads "take a reading, then spend up to    --
+-- six ticks on anything": a duty-cycle budget, which specifies what  --
+-- must be possible and bounds the rest by time.                      --
+--                                                                    --
+-- The budget is *local*: what a bound offers between two listed      --
+-- operations pays only for what the run does between the same two. A --
+-- bound thus specifies when its slack is available as well as its    --
+-- amount; one of the sections below depends on this.                 --
+--                                                                    --
+-- The set is read *disjunctively*: a longer list is a weaker grade.  --
+-- The members are reduced to the antichain of the most permissive of --
+-- them, and mutually permitting grades are equal.                    --
+--                                                                    --
+-- A bound charges an operation `costʰⁱ` (read 1, write 3, send 6),   --
+-- the time a schedule must budget for. The runs below then take      --
+--                                                                    --
+--   ⌈ read ⌉                                  1 tick                 --
+--   ⌈ read ⌉ ∙ ⟨ 4 ⟩                          5 ticks                --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉                      4 ticks                --
+--   ⌈ read ⌉ ∙ ⌈ send ⌉                       7 ticks                --
+--   ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ read ⌉            8 ticks                --
+--   ⌈ write ⌉ ∙ ⌈ read ⌉                      4 ticks                --
+--                                                                    --
+-- Every run is written out in full in every claim, and every claim   --
+-- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Timed.RightSided where
@@ -69,12 +64,10 @@ order = refl
 ------------------------------------------------------------------------
 -- Writing down finite sets of bounds
 --
--- `⟅ t ∣ u ⟆` is the grade whose members are `t` and `u`. At these
--- sizes writing the members out is the clearest thing to do. The
--- members may be given in whatever order reads best, and are
--- normalised into the canonical antichain: naming a bound twice, or
--- naming one that another of them already permits, names the same
--- grade as leaving it out.
+-- `⟅ t ∣ u ⟆` is the grade whose members are `t` and `u`. The members
+-- may be given in any order and are normalised into the canonical
+-- antichain: naming a bound twice, or naming one that another member
+-- already permits, names the same grade as leaving it out.
 
 ⟅_⟆ : Trace → Antichain
 ⟅ t ⟆ = acSet (t ∷ []) tt
@@ -132,8 +125,8 @@ idling-instead = holds
 -- Named operations are permissions, not budget
 --
 -- A bound's own operation permits that operation and nothing else: it
--- is not worth its execution time to anything the run does instead.
--- Time, by contrast, buys any work that costs no more.
+-- does not pay for any other operation. Time pays for any operation
+-- that costs no more.
 
 a-write-needs-budget : ¬ (within ⟅ ⌈ write ⌉ ⟆ ≾ within ⟅ ⌈ read ⌉ ⟆)
 a-write-needs-budget = fails
@@ -144,7 +137,7 @@ three-ticks-buy-a-write = holds
 two-ticks-do-not : ¬ (within ⟅ ⌈ write ⌉ ⟆ ≾ within ⟅ ⟨ 2 ⟩ ⟆)
 two-ticks-do-not = fails
 
--- and a permitted operation buys no time: skipping it frees nothing
+-- and a permitted operation pays for no time: omitting it frees nothing
 
 a-write-buys-no-time : ¬ (within ⟅ ⟨ 3 ⟩ ⟆ ≾ within ⟅ ⌈ write ⌉ ⟆)
 a-write-buys-no-time = fails
@@ -368,10 +361,10 @@ either-placement = holds
 
 -- Placement binds only while the budget is tight. Enlarge the window to
 -- nine ticks and the run that stores afterwards is permitted again --
--- but not because its store moved: nine buys the transmission outright
--- (six) and the store after it (three), so the bound's own `⌈ send ⌉`
--- goes unmatched and there is no match left for budget to fail to
--- cross. Eight ticks buy only one of the two.
+-- not because its store moved: nine ticks pay for the transmission
+-- (six) and the store after it (three), so the `⌈ send ⌉` of the bound
+-- is unmatched and no listed operation separates the budget. Eight
+-- ticks pay for only one of the two.
 
 nine-ticks-buy-both-operations :
   within ⟅ ⌈ read ⌉ ∙ ⌈ send ⌉ ∙ ⌈ write ⌉ ⟆

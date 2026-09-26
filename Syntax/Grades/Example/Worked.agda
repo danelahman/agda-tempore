@@ -1,24 +1,22 @@
 ------------------------------------------------------------------------
--- Worked instances of the example grades and grade systems.           --
---                                                                     --
--- `Grades.Example` gives the constructions; this subtree instantiates --
--- them all at one fixed alphabet and exhibits, as checked Agda terms, --
--- which orderings hold between which grades and what each grade       --
--- morphism does to them. `Typing` then writes example computations in --
--- a language over that alphabet and types them against these grades.  --
--- Nothing here is used elsewhere -- it is a reader's tour of the      --
--- grade layer.                                                        --
---                                                                     --
--- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a  --
--- reading to local memory (2-3), `send` one over the radio (4-6). Its --
--- runs are `poll` (just a read), `logged` (read then write), and      --
--- `uplink` (read, idle two ticks, send), which takes 9 ticks at       --
--- worst, together with `logged-uplink`, `chatty-uplink` and `idle`.   --
---                                                                     --
--- Positive and negative claims are both discharged by running the     --
--- relevant decision procedure, so an example asserted the wrong way   --
--- round does not typecheck. The tables in the module headers are      --
--- therefore checked, not annotations.                                 --
+-- Worked instances of the example grades and grade systems.          --
+--                                                                    --
+-- `Grades.Example` gives the constructions; this subtree             --
+-- instantiates them at one alphabet and exhibits, as checked Agda    --
+-- terms, the orderings between grades and the action of each grade   --
+-- morphism on them. `Typing` writes example computations in a        --
+-- language over that alphabet and types them at these grades; the    --
+-- type-inference examples use the same language.                     --
+--                                                                    --
+-- The alphabet is a sensor node: `read` a sensor (1 tick), `write` a --
+-- reading to local memory (2–3), `send` one over the radio (4–6).    --
+-- Its runs are `poll` (a read), `logged` (read then write), `uplink` --
+-- (read, idle two ticks, send), which takes at most 9 ticks,         --
+-- `logged-uplink`, `chatty-uplink` and `idle`.                       --
+--                                                                    --
+-- Positive and negative claims are both discharged by running the    --
+-- relevant decision procedure, and the tables in the module headers  --
+-- are checked.                                                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked where
@@ -32,8 +30,8 @@ import Syntax.Grades.Example.Worked.Operations
 
 import Syntax.Grades.Example.Worked.Operations.Footprint
 
--- Orderings and products in the four interval grades: which way
--- weakening points in each, and which windows are incomparable.
+-- Orderings and products in the three interval grades: the direction
+-- of weakening in each, and the incomparable windows.
 
 import Syntax.Grades.Example.Worked.Time
 
@@ -46,8 +44,8 @@ import Syntax.Grades.Example.Worked.SecurityLevel
 
 import Syntax.Grades.Example.Worked.Product
 
--- A language specification over the alphabet, which the trace-based
--- grade systems need in order to be instantiated.
+-- A language specification over the alphabet, at which the trace-based
+-- grade systems are instantiated.
 
 import Syntax.Grades.Example.Worked.Spec
 
@@ -56,9 +54,9 @@ import Syntax.Grades.Example.Worked.Spec
 
 import Syntax.Grades.Example.Worked.System
 
--- The four trace grades -- a floor, a cap and their pairing at the
--- cost-sensitive orders, and a cap at the subset order -- each read as
--- an effect grade and as a resource grade.
+-- The trace grades: a floor, a cap and their pairing at the
+-- cost-sensitive orders, and a cap at the subset order, each read as an
+-- effect grade and as a resource grade; and the regular cap.
 
 import Syntax.Grades.Example.Worked.Traces
 

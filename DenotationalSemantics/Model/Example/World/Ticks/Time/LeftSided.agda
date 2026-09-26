@@ -1,14 +1,16 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the left-sided time intervals as the   --
--- resource grades.                                                     --
+-- A time-ticks Kripke frame for the left-sided time intervals as the --
+-- resource grades.                                                   --
 --                                                                    --
--- Worlds are time points `ℕ`. A left-sided resource grade `[ n ,+∞⟩`   --
--- ("at least `n` ticks") reaches every world at least `n` ticks ahead:  --
+-- Worlds are time points `ℕ`. A left-sided resource grade `[ n ,+∞⟩` --
+-- ("at least `n` ticks") reaches every world at least `n` ticks      --
+-- ahead:                                                             --
 --                                                                    --
---   w ⊑[ [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                             --
+--   w ⊑[ [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                            --
 --                                                                    --
--- Multiplying grades (`·ₒ`) adds the lower bounds, so composing two     --
--- accessibilities advances the world by the sum of their ticks.         --
+-- Multiplication of grades (`·ₒ`) adds the lower bounds, and the     --
+-- composite of two accessibilities advances the world by the sum of  --
+-- their ticks.                                                       --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided where

@@ -9,21 +9,21 @@ time:
 examples:
 	agda TypeInference/Examples.agda
 
-# Which example set exercises which part of the solver, so a change
-# under TypeInference/SolverImpl/ can be checked against the sets that
-# cover it before a full `make examples`:
-#   generation, subtyping, the report itself (Generate, Solve, Report)
-#     -> stdlib
-#   annotations                                        -> annotations
-#   clause-local unknowns, handlers (Localise)          -> handlers
-#   unbox, the var rule, closed orderings (Closed)      -> boxes
-#   pruning, canonical form, elimination
-#     (Simplify, Canon, Eliminate)                      -> reports (+ stdlib)
-#   product grades, the normal form (Product, Normal)   -> product
+# The example sets by the parts of the solver they exercise, for
+# checking a change under TypeInference/SolverImpl/ before a full
+# `make examples`:
+#   generation, subtyping, the report (Generate, Solve, SolverImpl)
+#                                                        -> stdlib
+#   annotations                                          -> annotations
+#   clause-local unknowns, handlers (Localise)           -> handlers
+#   unbox, the var rule, closed orderings (Closed)       -> boxes
+#   pruning, canonical forms, elimination
+#     (Simplify, Canon, Eliminate)                       -> reports (+ stdlib)
+#   product grades, normal forms (Product, Normal)       -> product
 #   single stages on hand-written input: splitting,
-#     disjunction pruning, the top's absorption, multiset
-#     products, chained closed orderings, cycle collapse
-#     (Canon, Simplify, Normal, Closed, Localise, Solve) -> stages
+#     disjunction pruning, absorption by the top, multiset
+#     comparison of products, chained closed orderings, cycle
+#     collapse (Canon, Simplify, Normal, Closed, Localise) -> stages
 
 examples-stdlib:
 	agda TypeInference/Examples/Stdlib/All.agda

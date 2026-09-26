@@ -1,11 +1,11 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Sets of variables                                              --
 --                                                                --
 -- A set of variables of a scope is a mask on each sort. The      --
 -- variables occurring in an expression, a type, a hypothesis set --
 -- or the image of a substitution form one, and a substitution    --
 -- fixes one when it sends each of its variables to itself.       --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; _∨_) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥; ⊥-elim)

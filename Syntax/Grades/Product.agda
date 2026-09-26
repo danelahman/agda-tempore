@@ -1,19 +1,18 @@
 ------------------------------------------------------------------------
--- The product of two grades, and of two grade systems.                --
---                                                                     --
--- `G₁ ×ᵍ G₂` pairs the grades componentwise: `_·_`, `u`, `⊤`, `_⊔_`   --
--- and the order are those of the components, side by side, and        --
--- `of-nat n` is `(of-nat n , of-nat n)`, so a time step advances both. --
--- Every law holds componentwise, the zero-product laws included, and  --
--- the order is decidable because each component's is. `u-least?` and  --
--- `·-comm?` are declared when both components declare them.            --
---                                                                     --
--- Both projections are grade morphisms, unconditionally: each field    --
--- of `_→ᵍ_` holds by `refl`, `of-nat` included, as it is defined        --
--- componentwise. Pairing morphisms `⟨ f , g ⟩ᵍ` gives the universal     --
--- property. The product of two grade systems pairs the effect grades   --
--- and the resource grades, with the projection componentwise, and its  --
--- two projections are maps of grade systems.                           --
+-- The product of two grades, and of two grade systems.               --
+--                                                                    --
+-- `G₁ ×ᵍ G₂` is the componentwise product: `_·_`, `u`, `⊤`, `_⊔_`    --
+-- and the order are those of the components, and `of-nat n` is       --
+-- `(of-nat n , of-nat n)`, a time step advancing both components.    --
+-- Every law holds componentwise, the zero-product laws included, and --
+-- the order is decided componentwise. `u-least?` and `·-comm?` are   --
+-- declared when both components declare them.                        --
+--                                                                    --
+-- Both projections are grade morphisms, each field of `_→ᵍ_` holding --
+-- by `refl`, and pairing of morphisms `⟨ f , g ⟩ᵍ` has the universal --
+-- property. The product of two grade systems pairs the effect grades --
+-- and the resource grades, with the componentwise projection, and    --
+-- its two projections are maps of grade systems.                     --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Product where

@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Canonical tables are canonical.                                     --
---                                                                     --
--- The quotient of a well-formed table is lawful and compares states   --
--- by language, so `canon` preserves the language (`canon-accepts`),   --
--- and two quotients with the same language explore in lockstep        --
--- (`canonicity`). A reduced automaton already explores to its         --
--- canonical table (`explore-canonical`).                              --
+-- Canonical tables are canonical.                                    --
+--                                                                    --
+-- The quotient of a well-formed table is lawful and compares states  --
+-- by language, so `canon` preserves the language (`canon-accepts`),  --
+-- and two quotients with the same language explore in lockstep       --
+-- (`canonicity`). A reduced automaton already explores to its        --
+-- canonical table (`explore-canonical`).                             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≤_; _<_; _≡ᵇ_; z≤n; s≤s)

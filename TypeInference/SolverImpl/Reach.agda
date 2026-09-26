@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Reachability in a finite graph                                 --
 --                                                                --
 -- Over a list of vertices `vs` and a list of edges, the          --
@@ -15,7 +15,7 @@
 -- Contract. Sound by type: an entry for `a`, `b` is a chain of   --
 -- edges from `a` to `b` (`reach`), and a representative comes    --
 -- with a chain each way (`rep`). Completeness is not proved.     --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Bool.Base using (Bool; true; false)
 open import Data.List.Base using (List; []; _∷_)

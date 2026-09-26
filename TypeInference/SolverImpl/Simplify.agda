@@ -1,40 +1,46 @@
 ------------------------------------------------------------------
--- Normalising, settling and pruning a reported hypothesis set    --
---                                                                --
--- `simplify` first writes the set in canonical form (`canonᴴ`):  --
--- every grade expression canonical, and an ordering with a join  --
--- on its left one ordering per alternative. It then settles      --
--- every `disj` entry one of whose sides is settled: a met        --
--- eternality demand or an entailed grade ordering drops the      --
--- entry, a refuted eternality demand leaves the grade ordering   --
--- behind, in skeleton order, and a refuted grade leaves the      --
--- eternality atoms behind. It then drops each disjunction        --
--- entailed by the others: one whose type is that of another,     --
--- whose grade is entailed above its own; of two entailing each   --
--- other the later is kept (`walkᵈ`). It then prunes: a subtyping --
--- or eternality atom entailed by the atoms kept before it is     --
--- dropped, entailment there being reachability in a finite       --
--- digraph, and a grade ordering is dropped when its two sides    --
--- are the same or it repeats one kept before it. It finally      --
--- lists the grade orderings by the skeletons of their two sides. --
---                                                                --
--- `trim` settles the disjunctions again and drops those entailed --
--- by the others, then drops every subtyping atom and grade       --
--- ordering entailed by those kept and those not yet examined; an --
--- ordering that holds outright is dropped too.                   --
---                                                                --
--- An ordering is entailed, for settling, for the disjunctions    --
--- and for `trim`, when it is among the orderings of the set      --
--- read, or `decide≾` proves it from their atomic ones (`entᵣ?`,  --
--- `entₑ?`); two types are compared syntactically (`sameᵛ?`).     --
---                                                                --
--- Contract. `simplify Q` and `trim Q` entail `Q` (`simplify-⊩`,  --
--- `trim-⊩`), and every closed instance of `Q` is one of each     --
--- (`simplify-⊨`, `trim-⊨`): settling a disjunction by a          --
--- refutation holds only at the instances. That the result is     --
--- irredundant is not claimed: an atom is dropped only where a    --
--- test proves it entailed. This is a simplification of the       --
--- report, not of the solver, and `solve-principal` is untouched. --
+-- Normalising, settling and pruning a reported hypothesis set  --
+--                                                              --
+-- `simplify` proceeds in four steps.                           --
+--   * It writes the set in canonical form (`canonᴴ`): every    --
+--     grade expression canonical, and an ordering with a join  --
+--     on its left side split into one ordering per             --
+--     alternative.                                             --
+--   * It settles every `disj` entry one of whose sides is      --
+--     settled: a met eternality demand or an entailed grade    --
+--     ordering drops the entry, a refuted eternality demand    --
+--     leaves the grade ordering, and a refuted grade leaves    --
+--     the eternality atoms, in skeleton order.                 --
+--   * It drops each disjunction entailed by the others, namely --
+--     one with the type of another whose grade is entailed     --
+--     above its own; of two that entail each other, the later  --
+--     is kept (`walkᵈ`).                                       --
+--   * It prunes: a subtyping or eternality atom entailed by    --
+--     the atoms kept before it is dropped, entailment there    --
+--     being reachability in a finite digraph, and a grade      --
+--     ordering is dropped when its two sides coincide or it    --
+--     repeats one kept before it. The grade orderings are      --
+--     finally listed by the skeletons of their two sides.      --
+--                                                              --
+-- `trim` settles the disjunctions again and drops those        --
+-- entailed by the others, then drops every subtyping atom and  --
+-- grade ordering entailed by those kept and those not yet      --
+-- examined, and every ordering that holds outright.            --
+--                                                              --
+-- For settling, for the disjunctions and for `trim`, an        --
+-- ordering is entailed when it is among the orderings of the   --
+-- set read or `decide≾` proves it from their atomic ones       --
+-- (`entᵣ?`, `entₑ?`); two types are compared syntactically     --
+-- (`sameᵛ?`).                                                  --
+--                                                              --
+-- Contract. `simplify Q` and `trim Q` entail `Q`               --
+-- (`simplify-⊩`, `trim-⊩`), and every closed instance of `Q`   --
+-- is one of each (`simplify-⊨`, `trim-⊨`); settling a          --
+-- disjunction by a refutation holds only at the instances.     --
+-- That the result is irredundant is not claimed: an atom is    --
+-- dropped only where a test proves it entailed. The            --
+-- simplification applies to the report only; the solver and    --
+-- `solve-principal` are unaffected.                            --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)

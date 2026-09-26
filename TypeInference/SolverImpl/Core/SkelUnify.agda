@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- First-order unification of skeletons                           --
 --                                                                --
 -- Solves a list of skeleton equations by eliminating one         --
@@ -17,7 +17,7 @@
 --                                                                --
 -- Follows McBride's structural-recursion unifier (JFP 2003);     --
 -- "rigid"/"flexible" are Huet's (1975).                          --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (Fin)

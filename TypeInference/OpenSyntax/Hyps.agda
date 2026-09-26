@@ -1,25 +1,25 @@
 ------------------------------------------------------------------
--- Hypotheses and entailment of the mirrored language             --
---                                                                --
--- A hypothesis set `Hyps Θ` collects the eternality atoms on     --
--- type variables, the assumed subtyping atoms between type       --
--- variables, the assumed orderings between open grade            --
--- expressions, and the assumed var-rule disjunctions, under      --
--- which a mirrored typing derivation is built. Entailment        --
--- (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`, `_∣_<:̂ᵛ_`, `VarOK`)   --
--- is an inductive under-approximation of truth at every closed   --
--- instance. Entailed ordering states the zero-product laws, as   --
--- the grades do: a product below the unit has both factors       --
--- below it.                                                      --
---                                                                --
--- Convertibility of open types (`_≡̂ᵛ_`), which `VarOK` reads,    --
--- and open subtyping, with its inversion and stability lemmas,   --
--- are defined here too: `_⊩ᴴ_[_]` already mentions both.         --
---                                                                --
--- Judgements under such a set are HM(X)'s constrained types      --
--- (Odersky, Sulzmann, Wehr 1999) and Jones's qualified types     --
--- (1994); the set plays the role of OutsideIn(X)'s given         --
--- constraints (Vytiniotis et al., JFP 2011).                     --
+-- Hypotheses and entailment of the open calculus               --
+--                                                              --
+-- A hypothesis set `Hyps Θ` consists of eternality atoms on    --
+-- type variables, subtyping atoms between type variables,      --
+-- orderings between open grade expressions, and var-rule       --
+-- disjunctions. Entailment (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`,     --
+-- `_⊩ᴱ_`, `_∣_<:̂ᵛ_`, `VarOK`) is inductive, and sound at every --
+-- closed instance. Entailed ordering includes the zero-product --
+-- laws of the grades: a product below the unit has both        --
+-- factors below it.                                            --
+--                                                              --
+-- The module also defines convertibility of open types         --
+-- (`_≡̂ᵛ_`), which `VarOK` uses, and open subtyping with its    --
+-- inversion and stability lemmas, both of which occur in       --
+-- `_⊩ᴴ_[_]`.                                                   --
+--                                                              --
+-- Judgements under a hypothesis set are the constrained types  --
+-- of HM(X) (Odersky, Sulzmann and Wehr, 1999) and the          --
+-- qualified types of Jones (1994); the set plays the role of   --
+-- the given constraints of OutsideIn(X) (Vytiniotis et al.,    --
+-- JFP 2011).                                                   --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map)
@@ -46,8 +46,8 @@ module TypeInference.OpenSyntax.Hyps (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- Only the eternal-base-type predicate is needed; the constructors of the
--- closed `Eternal` are mirrored below and would otherwise clash.
+-- Only the eternal-base-type predicate is imported; the constructors of
+-- the closed `Eternal` have open counterparts below.
 
 open import Syntax.Types S using (EternalBaseType)
 
@@ -136,9 +136,10 @@ data _⊩ᵗᵛ_≾_ {Θ : Scope} (Q : Hyps Θ) : TyVar Θ → TyVar Θ → Set 
 -- the empty hypothesis set and associativity of the join are derived
 -- below.
 --
--- Convertibility carries no hypotheses, so the ordering that licenses
--- absorption is entailed by the empty set; this makes it and entailed
--- ordering one mutual definition, the latter occurring positively.
+-- Convertibility carries no hypotheses: the ordering premise of
+-- absorption is entailed by the empty set, and convertibility and
+-- entailed ordering form one mutual definition, the latter occurring
+-- positively.
 
 infix 4 _≡̂ᵣ_ _≡̂ₑ_ _⊩_≾̂ᵣ_ _⊩_≾̂ₑ_
 
@@ -401,7 +402,8 @@ VarOK-≡̂ p q (hyp-ok m p' q') = hyp-ok m (≡̂ᵛ-trans p p') (transᵣ q q'
 -- grade slots carry entailments from `Q`, and an unknown head is
 -- related only by an assumed subtyping.
 --
--- Irrelevance does not mirror, entailment being proof-relevant.
+-- Unlike `Syntax.Subtyping`, the relation is proof-relevant, as
+-- entailment is.
 
 infix  4  _∣_<:̂ᵛ_ _∣_<:̂ᶜ_
 infix  37 [_]ₛ_

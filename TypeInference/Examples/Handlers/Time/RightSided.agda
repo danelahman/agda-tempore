@@ -1,9 +1,9 @@
 ------------------------------------------------------------------
--- Handlers at right-sided intervals                              --
---                                                                --
--- Every scheme is the one written in `Handlers`.                 --
--- `discard` is typed, the unit being least; `resume-twice` is    --
--- refuted.                                                       --
+-- Handlers at right-sided intervals                            --
+--                                                              --
+-- Every scheme is the one written in `Handlers`.               --
+-- `discard` is typed, the unit being least; `resume-twice` is  --
+-- refuted.                                                     --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

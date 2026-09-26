@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
--- Worked instance of the allowance cap: time buys operations.          --
---
--- The bound `⟨ 2 ⟩` permits a reading, as it covers its one tick. Any   --
--- grade morphism into quotas sends `⟨ 2 ⟩` to the unit, so it sends     --
--- `⌈ read ⌉` to the unit too.                                           --
+-- Worked instance of the allowance cap: delays cover operations.     --
+--                                                                    --
+-- The bound `⟨ 2 ⟩` permits a reading, which takes one tick. Every   --
+-- grade morphism into quotas sends `⟨ 2 ⟩` to the unit, and          --
+-- therefore sends `⌈ read ⌉` to the unit.                            --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Counts.Timed.RightSided where

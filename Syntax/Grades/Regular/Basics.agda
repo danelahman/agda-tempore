@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Shared lemmas: Boolean tests, lists by position, and the ranges of  --
--- table states.                                                       --
+-- Shared lemmas: Boolean tests, lists by position, and the ranges of --
+-- table states.                                                      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≤_; _<_; _≡ᵇ_; z≤n; s≤s)

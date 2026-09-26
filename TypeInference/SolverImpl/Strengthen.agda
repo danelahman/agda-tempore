@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Strengthening a report to the variables occurring in it        --
 --                                                                --
 -- A mask keeps some variables of each sort. The kept ones form a --
@@ -20,7 +20,7 @@
 -- the nose (`τ-ι`, `X-ι`, `Q-ι`); every instance of the smaller  --
 -- scope extends along `ι` (`ext-ι`); the retraction `π` fixes    --
 -- the further set (`π-fix`).                                     --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; if_then_else_) renaming (Bool to 𝔹)
 open import Data.Fin.Base using (Fin; zero; suc)

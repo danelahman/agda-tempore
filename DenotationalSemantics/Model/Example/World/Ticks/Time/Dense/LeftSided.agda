@@ -1,15 +1,15 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the left-sided intervals of dense     --
--- time.                                                               --
---                                                                     --
--- Worlds are time points `ℚ≥0`. A grade `[ q ,+∞⟩` reaches every      --
--- world at least `q` time units ahead:                                --
---                                                                     --
---   w ⊑ᵗ[ [ q ,+∞⟩ ] w'   iff   w + q ≤ w'                            --
---                                                                     --
--- It is the action frame of the grade at the points `[ p ,+∞⟩`, so    --
--- the laws are the grade's own. The lower bound keeps every move      --
--- forward.                                                            --
+-- A time-ticks Kripke frame for the left-sided intervals of dense    --
+-- time.                                                              --
+--                                                                    --
+-- Worlds are time points `ℚ≥0`. A grade `[ q ,+∞⟩` reaches every     --
+-- world at least `q` time units ahead:                               --
+--                                                                    --
+--   w ⊑ᵗ[ [ q ,+∞⟩ ] w'   iff   w + q ≤ w'                           --
+--                                                                    --
+-- It is the action frame of the grade at the points `[ p ,+∞⟩`, so   --
+-- the laws are the grade's own. The lower bound keeps every move     --
+-- forward.                                                           --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.LeftSided where

@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- (Right) one-sided (closed) intervals of dense time as grades.       --
---                                                                     --
--- A grade `[0, q ]` is an upper bound: "at most `q` time units", with  --
--- `q` a possibly-infinite non-negative rational, so a real-time        --
--- deadline of 2.5 units is `[0, ↑ 5 / 2 ]`. Multiplication adds the    --
--- bounds and the order is `≤` on them, so a *larger* bound is the      --
--- weaker grade; `[0, ∞ ]` imposes no deadline at all, and absorbs.     --
---                                                                     --
--- The discrete intervals of `Time.RightSided` embed, a deadline of `n` --
--- time steps reading as one of `n` units of dense time.                --
+-- (Right) one-sided (closed) intervals of dense time as grades.      --
+--                                                                    --
+-- A grade `[0, q ]` is an upper bound, "at most `q` time units",     --
+-- with `q` a possibly infinite non-negative rational; a deadline of  --
+-- 2.5 units is `[0, ↑ 5 / 2 ]`. Multiplication adds the bounds and   --
+-- the order is `≤` on them, and a *larger* bound is the weaker       --
+-- grade; `[0, ∞ ]` imposes no deadline and is absorbing.             --
+--                                                                    --
+-- The discrete intervals of `Time.RightSided` embed, a deadline of   --
+-- `n` time steps being read as one of `n` units of dense time.       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.RightSided where

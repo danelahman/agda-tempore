@@ -1,11 +1,11 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Boxes at left-sided intervals                                  --
 --                                                                --
 -- "At least `n` ticks": a box is a promise, claimable once the   --
 -- elapsed time is at least its grade, and `var`'s bound          --
 -- `ρ ≾ uᵣ` holds at every grade, so nothing goes stale. An early --
 -- claim is refused; there is no late one.                        --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

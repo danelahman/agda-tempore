@@ -1,42 +1,44 @@
 ------------------------------------------------------------------
--- Inference at work                                              --
---                                                                --
--- Set 1 is nine functions of the prototype's standard library.   --
--- Over an arbitrary language, inference answers `typed` for each --
--- (a theorem); at four grades, the scheme it reports is checked  --
--- by `refl`. The four grades cover the two properties the solver --
--- reads from a grade, `u-least?` and `·-comm?`.                  --
---                                                                --
--- Set 2 is annotated programs, one per annotation form with the  --
--- type it forces.                                                --
---                                                                --
--- Set 3 is handlers with no annotation. Two leave unknowns local --
--- to the clause in cycles, which `Localise` identifies, and      --
--- inference types them at the four grades.                       --
--- Two are typable at some grades only: one drops its             --
--- continuation, one resumes it twice. Inference types each where --
--- it is typable and refutes it elsewhere.                        --
---                                                                --
--- Set 4 is boxes and delays: claims made early, on time and      --
--- late, after operations, in branches and in a handler clause,   --
--- with the box's grade given or inferred; and a box escaping     --
--- through `return` and claimed out of time, refuted through the  --
--- ordering its two bounds entail.                                --
---                                                                --
--- Set 5 is a grade of two components, time paired with a         --
--- security level, at both sides of time: a box is an embargoed   --
--- report or a session token, refused for being out of time or    --
--- for being tainted, and the schemes carry both components.      --
---                                                                --
--- Set 6 is two schemes the report simplifies: a var-rule         --
--- disjunction entailed by another, and a product with the top    --
--- absorbed. Both simplifications happen where the unit is least, --
--- so they are checked at the right-sided grades only.            --
---                                                                --
--- Set 7 is stage-level tests: solver stages called directly on   --
--- hand-written constraints, each answer checked by `refl`. They  --
--- guard steps that no program in the sets above depends on, or   --
--- depends on only in part.                                       --
+-- Inference examples                                           --
+--                                                              --
+-- Set 1 consists of nine functions of the prototype's standard --
+-- library. Over an arbitrary language, inference answers       --
+-- `typed` for each (a theorem); at four grades, the reported   --
+-- scheme is checked by `refl`. The four grades cover the       --
+-- combinations of the two properties the solver reads from a   --
+-- grade, `u-least?` and `·-comm?`.                             --
+--                                                              --
+-- Set 2 consists of annotated programs, one per annotation     --
+-- form, each with the type the annotation forces.              --
+--                                                              --
+-- Set 3 consists of handlers without annotations. Two leave    --
+-- cycles of unknowns local to the clause, which `Localise`     --
+-- identifies, and are typed at the four grades. Two are        --
+-- typable at some grades only: one discards its continuation,  --
+-- one resumes it twice; inference types each where it is       --
+-- typable and refutes it elsewhere.                            --
+--                                                              --
+-- Set 4 consists of boxes and delays: claims made early, on    --
+-- time and late, after operations, in branches and in a        --
+-- handler clause, with the box's grade given or inferred; and  --
+-- a box that escapes through `return` and is claimed out of    --
+-- time, refuted through the ordering entailed by its two       --
+-- bounds.                                                      --
+--                                                              --
+-- Set 5 is at a grade of two components, time paired with a    --
+-- security level, on both sides of time: a box is an embargoed --
+-- report or a session token, refused for being out of time or  --
+-- for being tainted, and the schemes carry both components.    --
+--                                                              --
+-- Set 6 consists of two schemes that the report simplifies: a  --
+-- var-rule disjunction entailed by another, and a product with --
+-- the top absorbed. Both simplifications apply where the unit  --
+-- is least; they are checked at the right-sided grades.        --
+--                                                              --
+-- Set 7 consists of tests of single solver stages on           --
+-- hand-written constraints, each answer checked by `refl`, for --
+-- steps on which the programs of the other sets do not depend, --
+-- or depend only in part.                                      --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where

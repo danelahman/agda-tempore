@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
--- Substitutions of the mirrored language                        --
---                                                               --
--- A substitution maps the three sorts of variables of one scope --
--- to open types, resource expressions, and effect expressions   --
--- over another scope. Its action on contexts preserves the      --
--- number of bound variables, so no transports occur anywhere.   --
+-- Substitutions of the open calculus                           --
+--                                                              --
+-- A substitution maps the three sorts of variables of one      --
+-- scope to open types, resource expressions and effect         --
+-- expressions over another scope. Its action on contexts       --
+-- preserves the number of bound variables.                     --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; true; false)

@@ -1,16 +1,16 @@
 ------------------------------------------------------------------
--- The solver state                                              --
---                                                                --
--- A state `St Θ` is a scope `Ψ` of variables still unknown, the   --
--- substitution `θ : Subst Θ Ψ` found so far, the residual over    --
--- `Ψ` still to be discharged, and the effect-grade variables of   --
--- `Ψ` that are rigid.                                             --
---                                                                --
--- A morphism `s ⟶ s'` is the driver's one legal move: a further   --
--- substitution `δ` that factors the old solution through the new  --
--- one and along which a discharge of the new residual is a        --
--- discharge of the old. Morphisms compose, and that composition   --
--- is what threads a conjunction.                                  --
+-- The solver state                                             --
+--                                                              --
+-- A state `St Θ` consists of a scope `Ψ` of the variables      --
+-- still unknown, the substitution `θ : Subst Θ Ψ` found so     --
+-- far, the residual over `Ψ` still to be discharged, and the   --
+-- effect-grade variables of `Ψ` that are rigid.                --
+--                                                              --
+-- A morphism `s ⟶ s'` is a move of the driver: a further       --
+-- substitution `δ` such that the old substitution followed by  --
+-- `δ` is the new one, along which a discharge of the new       --
+-- residual is a discharge of the old. Morphisms compose;       --
+-- composition threads a conjunction.                           --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)

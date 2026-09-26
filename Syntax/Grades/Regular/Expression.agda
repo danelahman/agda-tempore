@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Extended regular expressions, elaborated to canonical tables.       --
---                                                                     --
--- Letters, the empty word, any single letter, union, concatenation,   --
+-- Extended regular expressions, elaborated to canonical tables.      --
+--                                                                    --
+-- Letters, the empty word, any single letter, union, concatenation,  --
 -- iteration, intersection and complement. An expression denotes a    --
--- predicate on words, by recursion on the expression; `elab` builds   --
--- its canonical table one operation at a time, and `elab-correct`     --
--- says the table recognises exactly the denoted words.                --
+-- predicate on words, by recursion on the expression; `elab` builds  --
+-- its canonical table one operation at a time, and `elab-correct`    --
+-- says the table recognises exactly the denoted words.               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)

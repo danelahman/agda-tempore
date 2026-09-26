@@ -1,11 +1,14 @@
 ------------------------------------------------------------------
--- Completeness of constraint generation: a derivation erasing to --
--- an instance of a raw term satisfies, along that instance, the  --
--- constraint generated from the term.                            --
---                                                                --
--- The expected type is an upper bound, so the hypotheses are a   --
--- subtyping and a grade ordering, not equations: subsumption is  --
--- invisible to erasure and composes into them.                   --
+-- Completeness of constraint generation                        --
+--                                                              --
+-- A derivation erasing to an instance of a raw term satisfies, --
+-- along that instance, the constraint generated from the term  --
+-- (`completeV`, `completeC`). The expected type is an upper    --
+-- bound: the derivation's type is a subtype of the             --
+-- instantiated expected type, and its effect lies below the    --
+-- instantiated expected effect. `charV` and `charC` combine    --
+-- completeness with soundness into a characterisation of the   --
+-- solutions.                                                   --
 ------------------------------------------------------------------
 
 open import Data.Fin using (zero)

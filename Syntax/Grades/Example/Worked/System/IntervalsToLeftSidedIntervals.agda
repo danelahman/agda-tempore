@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
--- Worked instance: forgetting the upper bound.                        --
---
--- `IntervalsToLeftSidedIntervals` keeps the lower endpoint alone: the   --
--- effect grade says the uplink takes between 7 and 9 ticks, the         --
--- resource grade only that at least 7 have passed.                      --
+-- Worked instance: forgetting the upper bound.                       --
+--                                                                    --
+-- `IntervalsToLeftSidedIntervals` keeps the lower endpoint only: the --
+-- effect grade states that the uplink takes between 7 and 9 ticks,   --
+-- the resource grade only that at least 7 have passed.               --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.IntervalsToLeftSidedIntervals where

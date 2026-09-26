@@ -1,23 +1,22 @@
 ------------------------------------------------------------------------
--- The alphabet the worked examples are built over.                    --
---                                                                     --
--- A small sensor node: it can `read` a sensor, `write` a reading back  --
--- to local memory, and `send` one over the radio. The three differ in  --
--- what they cost, which is what makes the orderings interesting:       --
---                                                                     --
---   read   1 tick     cheap, local                                     --
---   write  2-3 ticks  local, but a memory write may stall              --
---   send   4-6 ticks  expensive, and variable                          --
---                                                                     --
--- Two cost models are read off those figures -- `fast`, the best case, --
--- and `slow`, the worst case -- and `opTime` packages them as the      --
--- interval an operation's execution time falls in. A guarantee is      --
--- credited at `costˡᵒ = fast`, since that is all an operation is       --
--- certain to take; an allowance is charged `costʰⁱ = slow`, which is   --
--- what a schedule must budget for.                                     --
---                                                                     --
--- Everything about timed traces over this alphabet is re-exported, so  --
--- the sibling modules need only import this one.                       --
+-- The alphabet of the worked examples.                               --
+--                                                                    --
+-- A sensor node, which can `read` a sensor, `write` a reading to     --
+-- local memory, and `send` one over the radio, with the execution    --
+-- times:                                                             --
+--                                                                    --
+--   read   1 tick     local                                          --
+--   write  2-3 ticks  local; a memory write may stall                --
+--   send   4-6 ticks  variable                                       --
+--                                                                    --
+-- Two cost models are read off these figures, `fast` (the best case) --
+-- and `slow` (the worst case), and `opTime` gives the interval in    --
+-- which the execution time of an operation lies. A guarantee credits --
+-- an operation with `costˡᵒ = fast`, the time it is certain to take; --
+-- an allowance charges `costʰⁱ = slow`, the time a schedule must     --
+-- budget for.                                                        --
+--                                                                    --
+-- The module re-exports the timed traces over this alphabet.         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Operations where
@@ -143,10 +142,9 @@ open Durations costʰⁱ public using () renaming (duration to durationʰⁱ)
 ------------------------------------------------------------------------
 -- Writing down finite sets of traces
 --
--- `⟅ t ∣ u ⟆` is the set whose members are `t` and `u`. At these sizes
--- writing the members out is the clearest thing to do. The members may
--- be given in whatever order reads best, and are normalised into the
--- canonical one: naming a trace twice names the same set as once.
+-- `⟅ t ∣ u ⟆` is the set whose members are `t` and `u`. The members may
+-- be given in any order and are normalised into the canonical one:
+-- naming a trace twice names the same set as naming it once.
 
 ⟅_⟆ : Trace → NeTraces
 ⟅ t ⟆ = neSet (t ∷ []) tt

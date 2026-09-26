@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Boxes and delays: the generic module and its instances         --
+-- Boxes and delays: the generic module and its instances       --
 ------------------------------------------------------------------
 
 module TypeInference.Examples.Boxes.All where

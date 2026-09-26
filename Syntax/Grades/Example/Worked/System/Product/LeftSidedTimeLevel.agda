@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of the grade systems over left-sided time paired   --
--- with a security level.                                              --
---                                                                     --
--- The report under each system: a run of 45 steps that reads `High`   --
--- data witnesses that timed declassification, an embargo alone and a  --
--- taint check alone differ.                                           --
+-- Worked instances of the grade systems over left-sided time paired  --
+-- with a security level.                                             --
+--                                                                    --
+-- The report under each system: a run of 45 steps that reads `High`  --
+-- data distinguishes timed declassification, an embargo alone and a  --
+-- taint check alone.                                                 --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Product.LeftSidedTimeLevel where

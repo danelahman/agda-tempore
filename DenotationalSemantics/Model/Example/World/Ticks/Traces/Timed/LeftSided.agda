@@ -1,21 +1,21 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the trace grade of guarantees.        --
+-- A time-ticks Kripke frame for the trace grade of guarantees.       --
 --                                                                    --
--- Worlds are time points `ℕ`. A tick world records only elapsed time, --
--- so a grade is read through the durations of the guarantees it       --
--- lists, and moving between worlds must take at least one of them:    --
+-- Worlds are time points `ℕ`. A tick world records only elapsed      --
+-- time, and a grade is read through the durations of the guarantees  --
+-- it lists: moving between worlds takes at least one of them.        --
 --                                                                    --
---   w ⊑ᵗ[ P ] w'   iff   w + duration p ≤ w'   for some p ∈ P         --
+--   w ⊑ᵗ[ P ] w'   iff   w + duration p ≤ w'   for some p ∈ P        --
 --                                                                    --
--- The quantifier is existential because the grade's own order is:     --
--- `P ≾ P'` asks each guarantee of `P` to be weakened by one of `P'`,  --
--- so the witnessing guarantee travels, and it takes no longer at the  --
--- far end because `duration` is monotone for the coverage order.      --
+-- The quantifier is existential, as in the order of the grade:       --
+-- `P ≾ P'` requires each guarantee of `P` to be weakened by one of   --
+-- `P'`, so the witnessing guarantee is transported, and it takes no  --
+-- longer at the far end, `duration` being monotone for the coverage  --
+-- order.                                                             --
 --                                                                    --
--- This is the shape of a left-sided interval frame, with the bound    --
--- read off a trace of the grade rather than given outright -- and     --
--- what the tick world cannot see is which operations that trace       --
--- demands, only how long they take.                                  --
+-- This is a left-sided interval frame with the bound read off a      --
+-- trace of the grade; the tick world records how long the operations --
+-- of that trace take, not which operations it demands.               --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

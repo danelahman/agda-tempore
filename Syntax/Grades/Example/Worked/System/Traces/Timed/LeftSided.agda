@@ -1,10 +1,9 @@
 ------------------------------------------------------------------------
--- Worked instance: forgetting the runs, keeping the guarantee.        --
---
--- `System.Traces.Timed.LeftSided` measures a grade of guarantees by its --
--- *fastest* one. The set is read disjunctively -- which listed trace    --
--- was covered is not known -- so all that is guaranteed about the time  --
--- is what the cheapest member takes.                                    --
+-- Worked instance: forgetting the runs, keeping the guarantee.       --
+--                                                                    --
+-- `System.Traces.Timed.LeftSided` measures a grade of guarantees by  --
+-- its *fastest* member. The set is read disjunctively, and the time  --
+-- guaranteed is that of the cheapest member.                         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Traces.Timed.LeftSided where

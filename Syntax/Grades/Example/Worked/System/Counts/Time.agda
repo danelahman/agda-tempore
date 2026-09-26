@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
--- Worked instance: a cost model does not preserve the join.            --
---
--- Weigh each counter by its worst-case execution time, 1, 3 and 6       --
--- ticks. A write weighs 3 and a transmission 6, but their join, one of  --
--- each, weighs 9: more than either.                                     --
+-- Worked instance: a cost model does not preserve the join.          --
+--                                                                    --
+-- Each counter is weighted by its worst-case execution time, 1, 3    --
+-- and 6 ticks. A write weighs 3 and a transmission 6, but their      --
+-- join, one of each, weighs 9, more than either.                     --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Counts.Time where

@@ -5,7 +5,7 @@
 -- The language has:                                                    --
 --                                                                      --
 --   - a modality on types that specifies that data might not yet be    --
---     available, but will be once a resource grade ρ has elapsed      --
+--     available, but will be once a resource grade ρ has elapsed       --
 --                                                                      --
 --   - a modality on contexts describing that a resource grade has      --
 --     elapsed (allowing new data to become available)                  --
@@ -43,11 +43,11 @@
 --   - adequacy of the denotational semantics with respect to the       --
 --     operational semantics, and for the equational theory             --
 --                                                                      --
---   - constraint-based type inference: a mirrored type system with     --
---     type and grade variables, constraint generation for raw terms,   --
---     its soundness and completeness, principal typings relative to    --
---     an axiomatised constraint solver, and a concrete solver with     --
---     the simplified report of its answer                              --
+--   - constraint-based type inference: an open type system with type   --
+--     and grade variables, constraint generation for raw terms and its --
+--     soundness and completeness, principal type schemes relative to   --
+--     an axiomatised constraint solver, and a concrete solver with a   --
+--     simplified report of its solutions                               --
 --------------------------------------------------------------------------
 
 open import Syntax.LanguageSpec
@@ -120,8 +120,7 @@ open import Syntax.Substitutions.Laws
 
 open import Syntax.Substitutions.Subsumption
 
----- Substituting at a context's prefix boundary, which is the form every
----- consumer uses
+---- Substitution at a context's prefix boundary
 
 open import Syntax.Substitutions.Variables
 open import Syntax.Substitutions.At
@@ -149,8 +148,7 @@ open import Syntax.Grades
 
 import Syntax.Grades.Product
 
----- The timed-trace toolkit the trace-based grades are built from
----- (see the module for how its pieces fit together)
+---- The timed-trace toolkit of the trace-based grades
 
 import Syntax.Grades.Traces
 
@@ -159,9 +157,8 @@ import Syntax.Grades.Traces
 
 import Syntax.Grades.Regular
 
----- Example grades and grade systems: time intervals, sets of timed
----- traces, and the projections pairing them up
----- (see the module for what each example is and how they relate)
+---- Example grades and grade systems: time, sets of timed traces, counts,
+---- security levels and their products, and the projections between them
 
 import Syntax.Grades.Example
 
@@ -332,9 +329,8 @@ open import OperationalSemantics.Adequacy.PSh.TreeHead
 open import OperationalSemantics.Adequacy.PSh.HeadFaithful
 open import OperationalSemantics.Adequacy.PSh.TickFrames
 
----- Concrete Kripke frames: time-ticks, tally, label and trace-history
----- worlds, and products of them, for the example grades
----- (see the module for how the families relate)
+---- Concrete Kripke frames for the example grades: tick, tally, label and
+---- trace-history worlds, and their products
 
 import DenotationalSemantics.Model.Example.World
 
@@ -346,7 +342,7 @@ import DenotationalSemantics.Model.Example.World
 
 open import TypeInference.Scopes
 
----- Open grade expressions, types, and contexts (with the eternal barrier)
+---- Open grade expressions, types and contexts
 
 open import TypeInference.OpenSyntax.Grades
 open import TypeInference.OpenSyntax.Types
@@ -365,7 +361,7 @@ open import TypeInference.OpenSyntax.Hyps
 
 open import TypeInference.OpenSyntax.Instances
 
----- The mirrored qualified type system
+---- The open type system
 
 open import TypeInference.OpenSyntax.Language
 
@@ -390,21 +386,21 @@ open import TypeInference.Generate
 open import TypeInference.Soundness
 open import TypeInference.Completeness
 
----- Axiomatised constraint solvers, principal types and principal typings
+---- Axiomatised constraint solvers, principal types and principal type
+---- schemes
 
 open import TypeInference.Outcome
 open import TypeInference.Solver
 open import TypeInference.Principality
 
----- Semantic refutation of a grade ordering against the unit, and the
----- settling of reported var-rule disjunctions it justifies
+---- Refutation of a grade ordering against the unit, and simplification of
+---- reported hypothesis sets
 
 import TypeInference.SolverImpl.Refute
 import TypeInference.SolverImpl.Simplify
 
----- Polarity-directed elimination of an unknown at the reporting
----- boundary, fixing the image of the program's variables, and the
----- product normal form of what is left
+---- Sets of variables, the bounds of an unknown, polarity-based elimination
+---- of unknowns from a report, and normal forms of grade expressions
 
 import TypeInference.SolverImpl.Vars
 import TypeInference.SolverImpl.Bounds
@@ -412,13 +408,12 @@ import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon
 
----- Reachability in a finite graph by Warshall's algorithm, which
----- identifies the components of the orderings at a clause's close
+---- Reachability in a finite graph, by Warshall's algorithm
 
 import TypeInference.SolverImpl.Reach
 
----- Deferred rigid conditions: a clause's orderings mixing its rigid
----- with outer unknowns, kept under their binders
+---- Deferred rigid conditions: the orderings of a clause that mention its
+---- rigid and outer unknowns, kept under their binders
 
 import TypeInference.SolverImpl.Deferred
 
@@ -426,23 +421,20 @@ import TypeInference.SolverImpl.Deferred
 
 import TypeInference.SolverImpl.RigidFree
 
----- What the solver's variable expansion buys: decomposability of every
----- expanded demand, most-generality of the expansion, and refutation
+---- Properties of variable expansion: decomposability of every expanded
+---- demand, most-generality of the expansion, and refutation
 
 import TypeInference.SolverImpl.Expand
 
----- The solver's principality and refutation, the atoms of its residue
----- that no unknown affects decided, the report strengthened to the
----- variables occurring in it or in the image of the program's
----- variables, the solver itself, and inference: a principal typing
+---- Principality and refutation for the driver, decision of closed
+---- orderings, strengthening of the report, and the solver and inference
 
 import TypeInference.SolverImpl.Principal
 import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Strengthen
 import TypeInference.SolverImpl
 
----- The inference examples run the solver at four grades and take minutes
----- to check, so they are checked on their own, with
+---- The inference examples are checked separately, with
 ---- `agda TypeInference/Examples.agda`
 
 -- import TypeInference.Examples

@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Report simplification: the generic module and its instances    --
+-- Report simplification: the generic module and its instances  --
 ------------------------------------------------------------------
 
 module TypeInference.Examples.Reports.All where

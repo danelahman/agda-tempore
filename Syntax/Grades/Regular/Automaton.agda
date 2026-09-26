@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Deterministic automata over a finite alphabet, and their tables.    --
 --                                                                     --
 -- The alphabet is `Fin k`. An `Automaton` has an arbitrary state type --
@@ -10,7 +10,7 @@
 -- `explore` numbers the reachable states of an automaton in breadth-  --
 -- first order, letters in increasing order, and returns its table.    --
 -- Its only decisions are the automaton's equality tests.              --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_; _≤_; _<_)
 
@@ -93,8 +93,8 @@ Reduced A LA = ∀ {p q} → Good p → Good q
 -- Tables
 
 -- Prototype: rows are labelled by predicates on operations (minterms of
--- a symbolic alphabet) instead of by letters, so a large or
--- parameterised `Op` needs no enumeration.
+-- a symbolic alphabet) in place of letters; a large or parameterised
+-- `Op` then needs no enumeration.
 
 record DFA : Set where
   constructor dfa

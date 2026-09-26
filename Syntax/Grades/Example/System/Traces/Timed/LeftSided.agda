@@ -1,29 +1,29 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades measure only time.      --
---                                                                     --
--- Effect grades are the antichains of timed traces of                 --
--- `Traces.Timed.LeftSided`, read as guarantees: whatever a          --
--- computation did, it covered one of the listed traces. Resource       --
--- grades are the left-sided time intervals, "at least `n` time steps". --
---                                                                     --
--- The projection measures a grade by its fastest guarantee:            --
---                                                                     --
---   ∣ P ∣ᵉ  =  [ the least duration among the traces of P ,+∞⟩        --
---                                                                     --
--- The *least*, because the set is read disjunctively: which listed     --
--- trace was covered is not known, so all that is guaranteed about the  --
--- time is what the cheapest of them takes. This is sound because       --
--- covering a trace takes at least as long as the trace does            --
--- (`duration-≼ᶜ`), and it is the best such bound because each listed   --
--- trace is a run the grade admits.                                    --
---                                                                     --
--- What the resource grade forgets is *which* operations were performed --
--- -- so `⌈ write ⌉` and `⟨ 3 ⟩` become the same guarantee of elapsed   --
--- time, though only the first guarantees a store happened.            --
---                                                                     --
--- Monotonicity is where the two orders meet: weakening a grade         --
--- replaces each guarantee by an easier one, and an easier guarantee    --
--- takes no longer, so the least duration can only fall.               --
+-- A grade system in which the resource grades measure only time.     --
+--                                                                    --
+-- The effect grades are the antichains of timed traces of            --
+-- `Traces.Timed.LeftSided`, read as guarantees: whatever a           --
+-- computation did, it covered one of the listed traces. The resource --
+-- grades are the left-sided time intervals, "at least `n` time       --
+-- steps".                                                            --
+--                                                                    --
+-- The projection measures a grade by its fastest guarantee:          --
+--                                                                    --
+--   ∣ P ∣ᵉ  =  [ the least duration among the traces of P ,+∞⟩       --
+--                                                                    --
+-- The least duration is taken because the set is read disjunctively: --
+-- of the listed traces, it is not known which was covered. The bound --
+-- is sound, covering a trace taking at least as long as the trace    --
+-- (`duration-≼ᶜ`), and optimal, each listed trace being a run the    --
+-- grade admits.                                                      --
+--                                                                    --
+-- The resource grade forgets which operations were performed:        --
+-- `⌈ write ⌉` and `⟨ 3 ⟩` become the same guarantee of elapsed time, --
+-- although only the first guarantees a store.                        --
+--                                                                    --
+-- Monotonicity relates the two orders: weakening a grade replaces    --
+-- each guarantee by a weaker one, which takes no longer, so the      --
+-- least duration does not increase.                                  --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

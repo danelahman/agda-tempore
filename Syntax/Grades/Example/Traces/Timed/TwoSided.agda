@@ -1,24 +1,23 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Two-sided trace intervals: a coverage floor under an allowance cap. --
---                                                                    --
--- `Example.Traces.Lifted.TwoSided` at the two orders the two          --
--- endpoints want -- `Traces.Coverage`'s `_≼ᶜ_` below and              --
--- `Traces.Allowance`'s `_≼ᵃ_` above. A grade `[ P , Q ]` says:        --
---                                                                    --
+--                                                                     --
+-- `Example.Traces.Lifted.TwoSided` at the order `_≼ᶜ_` of             --
+-- `Traces.Coverage` below and the order `_≼ᵃ_` of `Traces.Allowance`  --
+-- above. A grade `[ P , Q ]` states:                                  --
+--                                                                     --
 --   whatever the computation did, it covered one of the traces in `P` --
 --   and stayed within one of the traces in `Q`                        --
---                                                                    --
--- with both sets read disjunctively, so both weaken by gaining        --
--- members. `Example.Traces.Timed.LeftSided` and                    --
--- `Example.Traces.Timed.RightSided` are its two endpoints read    --
--- alone.                                                              --
---                                                                    --
--- Each order is taken at the cost model its side of the interval      --
--- wants: the floor credits an operation with `costˡᵒ`, the least time --
--- it can take, and the cap charges it `costʰⁱ`, the most. Only the    --
--- cap needs its costs positive, that being what makes an empty        --
--- allowance permit nothing but the empty run.                         --
-------------------------------------------------------------------------
+--                                                                     --
+-- with both sets read disjunctively, so that both weaken by gaining   --
+-- members. `Example.Traces.Timed.LeftSided` and                       --
+-- `Example.Traces.Timed.RightSided` are its two endpoints on their    --
+-- own.                                                                --
+--                                                                     --
+-- The floor credits an operation with `costˡᵒ`, the least time it can --
+-- take, and the cap charges it `costʰⁱ`, the most. Only the cap       --
+-- requires positive costs, under which an empty allowance permits     --
+-- only the empty run.                                                 --
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)
 

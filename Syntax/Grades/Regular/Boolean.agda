@@ -1,11 +1,11 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Intersection, complement, and the single letters.                   --
 --                                                                     --
 -- Intersection is the product automaton at `_∧_`; the complement of a --
 -- complete deterministic automaton flips its final states. Both are   --
 -- lawful when their arguments are, and are canonicalised like the     --
 -- other operations.                                                   --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_; _<_; _≤_; z≤n; s≤s)
 

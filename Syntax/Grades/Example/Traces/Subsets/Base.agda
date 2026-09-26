@@ -1,15 +1,15 @@
 ------------------------------------------------------------------------
--- What the subset preorder on sets of traces supplies.                --
---                                                                     --
--- The subset grade orders `NeTraces` by `Sets`' `_⊑_`, so what it     --
--- rests on is collected here: the reading of `_⊑_` as plain           --
--- membership, and the zero-product law its grade structure needs.     --
---                                                                     --
--- `_⊑_` is `liftˢ _≡_`: the same set-level lift the ordered trace     --
--- grades use, at the discrete order. That is also why it does not go  --
--- through `Traces.Order` -- a `TraceOrder` must supply                --
--- `≼-nil : ε ≼ t`, and `ε ≡ t` is false. So the subset grade          --
--- sits beside the lifted family rather than inside it.                --
+-- The subset order on sets of traces.                                --
+--                                                                    --
+-- The subset grade orders `NeTraces` by `_⊑_` of `Sets`. This module --
+-- collects the reading of `_⊑_` as membership and the zero-product   --
+-- law of its grade structure.                                        --
+--                                                                    --
+-- `_⊑_` is `liftˢ _≡_`, the set-level lift of the ordered trace      --
+-- grades at the discrete order. The discrete order is not a          --
+-- `TraceOrder`, which must supply `≼-nil : ε ≼ t`, and `ε ≡ t` does  --
+-- not hold; the subset grade is therefore defined beside the lifted  --
+-- family, not as an instance of it.                                  --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

@@ -1,18 +1,17 @@
 ------------------------------------------------------------------------
--- The allowance cap does not project onto quotas.                     --
---                                                                     --
--- Going up the allowance order an operation turns into a delay long   --
--- enough to cover it: `⌈ o ⌉ ≼ᵃ ⟨ 1 + costʰⁱ o ⟩`. A pure delay is    --
--- time, which draws on no counter, so any grade morphism into at-most --
--- counts sends it to the unit, and the unit is the least quota. By    --
--- monotonicity the bound `⌈ o ⌉` goes to the unit as well:            --
---                                                                     --
---   map F (within ⟅ ⌈ o ⌉ ⟆)  ≡  uᵛ                                   --
---                                                                     --
--- for every morphism `F` and every operation `o`. So no morphism      --
--- counts what a bound permits: the quota it gives `⌈ o ⌉` leaves      --
--- nothing for `o` itself. A bound's delays pay for operations, and a  --
--- quota cannot be bought with time.                                   --
+-- The allowance cap does not project onto quotas.                    --
+--                                                                    --
+-- Going up the allowance order, an operation becomes a delay that    --
+-- covers it: `⌈ o ⌉ ≼ᵃ ⟨ 1 + costʰⁱ o ⟩`. A pure delay draws on no   --
+-- counter, so every grade morphism into at-most counts sends it to   --
+-- the unit, which is the least quota. By monotonicity the bound      --
+-- `⌈ o ⌉` is sent to the unit as well:                               --
+--                                                                    --
+--   map F (within ⟅ ⌈ o ⌉ ⟆)  ≡  uᵛ                                  --
+--                                                                    --
+-- for every morphism `F` and every operation `o`. No morphism        --
+-- therefore counts what a bound permits: the quota it assigns to     --
+-- `⌈ o ⌉` leaves nothing for `o` itself.                             --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

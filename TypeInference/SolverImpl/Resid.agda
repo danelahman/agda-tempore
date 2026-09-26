@@ -1,44 +1,45 @@
 ------------------------------------------------------------------
--- Residual constraints                                           --
---                                                                --
--- A `Resid Ψ` is the list of grade orderings, eternality         --
--- demands, subtyping demands and var-rule disjunctions the       --
--- driver has left open over the current scope, next to the       --
--- deferred rigid conditions of the clauses closed so far         --
--- (`Deferred`). Unlike `Hyps`, a residual is closed under        --
--- substitution, which is what lets the driver push it through    --
--- the substitutions an expansion or a scope's close performs.    --
---                                                                --
--- Its eternality demands are on type variables: a demand is      --
--- decomposed by `etDec` when it is pushed, and again after each  --
--- expansion (`atomiseᴿ`), where a substitution may have          --
--- instantiated its variables.                                    --
---                                                                --
--- `Q ⊩ᴿ R [ δ ]` discharges a residual: every atom and every     --
--- deferred condition, instantiated along `δ`, is entailed by     --
--- `Q`. `toHyps` reads the atoms back as a hypothesis set,        --
--- decomposing the eternality demands (`etsDec`) and the          --
--- subtyping demands (`subDec`) into atoms on type variables and  --
--- taking the rest verbatim. `subDec` stops at a pair of type     --
--- variables; a type variable against a former has no             --
--- decomposition.                                                 --
---                                                                --
--- Contract. A decomposition `subDec A B` is exact at every       --
--- instance and under any hypotheses: its atoms entail the demand --
--- (`intro`) and are entailed by it (`elim`); so for a list       --
--- (`subsList`: `introˢ`/`elimˢ`). A failure claims nothing by    --
--- itself; after an expansion none occurs (`expandSub-dec`,       --
--- `reexpand-dec`). `etDec` is exact likewise (`etDec-intro`,     --
--- `etDec-compl`; for a list `etsDec`: `introᵗ`/`elimᵗ`), and its --
--- failure refutes the demand at every instance (`etDec-refute`)  --
--- and leaves a disjunction its grade side (`etDec-grade`).       --
--- `atomiseᴿ` has the instances of the original, both ways        --
--- (`atomiseᴿ-sound`, `atomiseᴿ-compl`).                          --
--- `toHyps R` entails the atoms of `R` (its type), is entailed by --
--- them at every instance (`toHyps-compl`), and fails only on a   --
--- demand `subDec` or `etDec` fails on (`toHyps-nothing`).        --
---                                                                --
--- The name follows OutsideIn(X) (Vytiniotis et al., JFP 2011).   --
+-- Residual constraints                                         --
+--                                                              --
+-- A `Resid Ψ` is the list of grade orderings, eternality       --
+-- demands, subtyping demands and var-rule disjunctions that    --
+-- the driver leaves open over the current scope, together with --
+-- the deferred rigid conditions of the clauses closed so far   --
+-- (`Deferred`). A residual, unlike a `Hyps`, is closed under   --
+-- substitution; the driver pushes it through the substitutions --
+-- of an expansion and of a scope's close.                      --
+--                                                              --
+-- Its eternality demands are on type variables: a demand is    --
+-- decomposed by `etDec` when it is pushed, and again after     --
+-- each expansion (`atomiseᴿ`), which may instantiate its       --
+-- variables.                                                   --
+--                                                              --
+-- `Q ⊩ᴿ R [ δ ]` discharges a residual: `Q` entails every atom --
+-- and every deferred condition, instantiated along `δ`.        --
+-- `toHyps` reads the atoms back as a hypothesis set,           --
+-- decomposing the eternality demands (`etsDec`) and the        --
+-- subtyping demands (`subDec`) into atoms on type variables    --
+-- and keeping the rest unchanged. `subDec` stops at a pair of  --
+-- type variables; a type variable against a former has no      --
+-- decomposition.                                               --
+--                                                              --
+-- Contract. A decomposition `subDec A B` is exact at every     --
+-- instance and under any hypotheses: its atoms entail the      --
+-- demand (`intro`) and are entailed by it (`elim`), and        --
+-- likewise for a list (`subsList`: `introˢ`/`elimˢ`). A        --
+-- failure claims nothing by itself; after an expansion none    --
+-- occurs (`expandSub-dec`, `reexpand-dec`). `etDec` is exact   --
+-- likewise (`etDec-intro`, `etDec-compl`; for a list,          --
+-- `etsDec`: `introᵗ`/`elimᵗ`); its failure refutes the demand  --
+-- at every instance (`etDec-refute`) and reduces a disjunction --
+-- to its grade side (`etDec-grade`). `atomiseᴿ` has the same   --
+-- instances as the original, in both directions                --
+-- (`atomiseᴿ-sound`, `atomiseᴿ-compl`). `toHyps R` entails the --
+-- atoms of `R` (by its type), is entailed by them at every     --
+-- instance (`toHyps-compl`), and fails only on a demand on     --
+-- which `subDec` or `etDec` fails (`toHyps-nothing`).          --
+--                                                              --
+-- The name follows OutsideIn(X) (Vytiniotis et al., JFP 2011). --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; map; _++_)
@@ -573,7 +574,7 @@ record EtsDec {Ψ : Scope} (l : List (OVType Ψ)) : Set where
 open EtsDec public
 
 -- One demand onto a list, its decomposition paired with the equation
--- naming it, so that the case analysis stays visible to a proof
+-- naming it
 
 etsCons : ∀ {Ψ} → (A : OVType Ψ) → (l : List (OVType Ψ))
         → (x : Maybe (List (TyVar Ψ))) → etDec A ≡ x → Maybe (EtsDec l)

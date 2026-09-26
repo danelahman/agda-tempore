@@ -1,30 +1,29 @@
 ------------------------------------------------------------------------
--- Worked instances of the two-sided trace intervals.                  --
---                                                                     --
--- A grade `[ P , Q ]` says: whatever the computation did, it covered   --
--- one of the traces in `P` and stayed within one of those in `Q`. The  --
--- floor is compared by the coverage order and the cap by the allowance --
--- order, and both sets are read disjunctively, so both endpoints       --
--- weaken by gaining members.                                          --
---                                                                     --
--- The point of having both is that they reject for independent         --
--- reasons: below, five ticks of idling are refused by the floor with   --
--- the cap satisfied, and the uplink by the cap with the floor          --
--- satisfied.                                                          --
---                                                                     --
--- Each endpoint is measured at its own cost model -- the floor at      --
--- `costˡᵒ` (read 1, write 2, send 4), the cap at `costʰⁱ` (read 1,     --
--- write 3, send 6) -- so the runs below take                           --
---                                                                     --
---                                        guaranteed    budgeted       --
---   ⌈ read ⌉                              1 tick        1 tick        --
---   ⟨ 5 ⟩                                 5 ticks       5 ticks       --
---   ⌈ read ⌉ ∙ ⌈ write ⌉                  3 ticks       4 ticks       --
---   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉           7 ticks       9 ticks       --
---                                                                     --
--- The coherence field straddles the two columns: it asks some listed   --
--- guarantee, read in the left one, to be no greater than some listed   --
--- allowance read in the right.                                         --
+-- Worked instances of the two-sided trace intervals.                 --
+--                                                                    --
+-- A grade `[ P , Q ]` states that whatever the computation did, it   --
+-- covered one of the traces in `P` and stayed within one of those in --
+-- `Q`. The floor is compared by the coverage order and the cap by    --
+-- the allowance order; both sets are read disjunctively, and both    --
+-- endpoints weaken by gaining members.                               --
+--                                                                    --
+-- The two endpoints reject independently: below, five ticks of       --
+-- idling are refused by the floor with the cap satisfied, and the    --
+-- uplink by the cap with the floor satisfied.                        --
+--                                                                    --
+-- Each endpoint is measured at its own cost model, the floor at      --
+-- `costˡᵒ` (read 1, write 2, send 4) and the cap at `costʰⁱ` (read   --
+-- 1, write 3, send 6):                                               --
+--                                                                    --
+--                                          guaranteed    budgeted    --
+--   ⌈ read ⌉                              1 tick        1 tick       --
+--   ⟨ 5 ⟩                                 5 ticks       5 ticks      --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉                  3 ticks       4 ticks      --
+--   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉           7 ticks       9 ticks      --
+--                                                                    --
+-- The coherence field relates the two columns: some listed           --
+-- guarantee, measured in the left column, is no greater than some    --
+-- listed allowance, measured in the right.                           --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Timed.TwoSided where

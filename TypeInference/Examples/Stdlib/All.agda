@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- The standard library: the generic module and its instances     --
+-- The standard library: the generic module and its instances   --
 ------------------------------------------------------------------
 
 module TypeInference.Examples.Stdlib.All where

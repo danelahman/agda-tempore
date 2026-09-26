@@ -1,12 +1,11 @@
 ------------------------------------------------------------------------
--- Worked instances of at-most counts, at the sensor node.              --
---
--- A quota on each of `read`, `write`, `send`. A larger quota is        --
--- weaker, `unlimited` lifts one quota and keeps the others, and a      --
--- quota on one operation says nothing about another. Every ordering    --
--- is closed by the grade's own decision procedure, and every           --
--- computation by reduction, so a claim stated the wrong way round      --
--- does not typecheck.                                                  --
+-- Worked instances of at-most counts, at the sensor node.            --
+--                                                                    --
+-- A quota on each of `read`, `write` and `send`. A larger quota is   --
+-- weaker, `unlimited` lifts one quota and keeps the others, and a    --
+-- quota on one operation implies nothing about another. Every        --
+-- ordering is established by the decision procedure of the grade,    --
+-- and every computation by reduction.                                --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Counts.AtMost where

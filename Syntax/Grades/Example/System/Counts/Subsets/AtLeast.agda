@@ -1,18 +1,19 @@
 ------------------------------------------------------------------------
--- The subset cap, read as certain counts.                             --
---                                                                     --
--- Every run a computation has is listed, so on each counter the least --
--- count among the listed runs is certain:                             --
---                                                                     --
---   ∣ Q ∣ᵉ  =  on each counter, the least count among the traces of Q --
---                                                                     --
--- The cap's greatest grade `any-run` absorbs, and a morphism has to   --
--- send it to the greatest grade. In the at-least counts that is the   --
--- unit, and an absorbing element landing on the unit takes everything --
--- with it: every morphism into them is constant (`collapses`). The    --
--- counts with a formal greatest grade on each counter are the natural --
--- target instead: `any-run` goes to `no-claim` everywhere, which      --
--- absorbs, and every field is preserved.                              --
+-- The subset cap, read as certain counts.                            --
+--                                                                    --
+-- Every run of a computation is listed, so on each counter the least --
+-- count among the listed runs is certain:                            --
+--                                                                    --
+--   ∣ Q ∣ᵉ  =  on each counter, the least count among the traces     --
+--              of Q                                                  --
+--                                                                    --
+-- The greatest grade `any-run` of the cap is absorbing, and a        --
+-- morphism sends it to the greatest grade. In the at-least counts    --
+-- that is the unit, and an absorbing element sent to the unit makes  --
+-- every morphism into them constant (`collapses`). The target is     --
+-- therefore the counts with a formal greatest grade on each counter: --
+-- `any-run` is sent to `no-claim` on every counter, which is         --
+-- absorbing, and every field is preserved.                           --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

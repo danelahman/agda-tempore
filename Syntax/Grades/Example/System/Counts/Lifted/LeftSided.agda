@@ -1,21 +1,21 @@
 ------------------------------------------------------------------------
--- Antichains of guarantees to at-least counts, at any trace order     --
--- that never covers a demand with fewer operations.                   --
---                                                                     --
---   ∣ P ∣ᵉ  =  on each counter, the least count among the guarantees  --
---              of P                                                   --
---                                                                     --
--- The *least*, because the set is read disjunctively: one listed      --
--- guarantee has been covered, which one is not known, so on each      --
--- counter only the smallest demand is certain. Each counter is        --
--- minimised separately.                                               --
---                                                                     --
--- The one assumption is that `s ≼ t` -- the run `t` covers `s` --     --
--- implies `t` draws on every counter at least as often as `s` does.   --
--- It makes the map monotone, and it lets the reduction to an          --
--- antichain leave every least count alone: a member it drops lies     --
--- `≼`-above one it keeps. Every field is then preserved; the unit is  --
--- the greatest grade on both sides.                                   --
+-- Antichains of guarantees to at-least counts, at any trace order    --
+-- that never covers a demand with fewer operations.                  --
+--                                                                    --
+--   ∣ P ∣ᵉ  =  on each counter, the least count among the            --
+--              guarantees of P                                       --
+--                                                                    --
+-- The least count is taken because the set is read disjunctively:    --
+-- one listed guarantee has been covered, and on each counter only    --
+-- the smallest demand is certain. Each counter is minimised          --
+-- separately.                                                        --
+--                                                                    --
+-- The one assumption is that `s ≼ t` (the run `t` covers `s`)        --
+-- implies that `t` draws on every counter at least as often as `s`.  --
+-- Under it the map is monotone, and the reduction to an antichain    --
+-- preserves every least count, since a member it drops lies          --
+-- `≼`-above one it keeps. Every field is preserved; the unit is the  --
+-- greatest grade on both sides.                                      --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
--- Annotated programs at timed traces, coverage order            --
---                                                                --
+-- Annotated programs at timed traces, coverage order           --
+--                                                              --
 -- Every scheme is the one written in `Annotations`.            --
 ------------------------------------------------------------------
 

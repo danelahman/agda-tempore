@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- Operations on regular languages, held as canonical tables.          --
---                                                                     --
--- Each operation is a finite-state automaton, explored, and then      --
--- canonicalised unless the automaton is already reduced. A state      --
--- stands for a residual language, and each transition is              --
--- Brzozowski's derivative equation on residuals:                      --
---                                                                     --
---   a⁻¹(L ∪ M)  = a⁻¹L ∪ a⁻¹M                  (pairs of states)      --
---   a⁻¹(L · M)  = (a⁻¹L) · M ∪ [ε ∈ L] a⁻¹M    (a state and a set)    --
---   a⁻¹(L *)    = (a⁻¹L) · L *                 (a set of states)      --
---                                                                     --
--- Termination is the finiteness of the state types; the bound each    --
--- automaton carries is their size.                                    --
+-- Operations on regular languages, held as canonical tables.         --
+--                                                                    --
+-- Each operation is a finite-state automaton, explored, and then     --
+-- canonicalised unless the automaton is already reduced. A state     --
+-- stands for a residual language, and each transition is             --
+-- Brzozowski's derivative equation on residuals:                     --
+--                                                                    --
+--   a⁻¹(L ∪ M)  = a⁻¹L ∪ a⁻¹M                  (pairs of states)     --
+--   a⁻¹(L · M)  = (a⁻¹L) · M ∪ [ε ∈ L] a⁻¹M    (a state and a set)   --
+--   a⁻¹(L *)    = (a⁻¹L) · L *                 (a set of states)     --
+--                                                                    --
+-- Termination is the finiteness of the state types; the bound each   --
+-- automaton carries is their size.                                   --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_; _<ᵇ_)

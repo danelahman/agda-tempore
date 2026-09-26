@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of right-sided time paired with an energy budget.  --
---                                                                     --
--- The drifting-calibration grade `([0, n ] , [0, e ])` at the sensor  --
--- node, each operation graded by `slow` and `draws`: orderings and    --
--- sequencing against a fixed budget, checked by the grade's own       --
--- decision procedure or by computation.                               --
+-- Worked instances of right-sided time paired with an energy budget. --
+--                                                                    --
+-- The drifting-calibration grade `([0, n ] , [0, e ])` at the sensor --
+-- node, each operation graded by `slow` and `draws`: orderings and   --
+-- sequencing against a fixed budget, established by the decision     --
+-- procedure of the grade or by computation.                          --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Product.RightSidedTimeEnergy where

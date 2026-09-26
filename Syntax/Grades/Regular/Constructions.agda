@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- The constructions of `Operations` are lawful automata, and each      --
--- recognises the language it is named for.                            --
+-- The constructions of `Operations` are lawful automata, and each    --
+-- recognises the language it is named for.                           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

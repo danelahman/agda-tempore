@@ -1,11 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of at-least counts, at the sensor node.             --
---
--- A certain count for each of `read`, `write`, `send`. A smaller demand --
--- is weaker, and demanding nothing is the greatest grade. Every         --
--- ordering is closed by the grade's own decision procedure, and every   --
--- computation by reduction, so a claim stated the wrong way round does  --
--- not typecheck.                                                        --
+-- Worked instances of at-least counts, at the sensor node.           --
+--                                                                    --
+-- A certain count for each of `read`, `write` and `send`. A smaller  --
+-- demand is weaker, and demanding nothing is the greatest grade.     --
+-- Every ordering is established by the decision procedure of the     --
+-- grade, and every computation by reduction.                         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Counts.AtLeast where

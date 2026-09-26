@@ -1,24 +1,24 @@
 ------------------------------------------------------------------------
--- Security levels as grades.                                           --
---                                                                     --
--- A decidable bounded join-semilattice of levels is a grade: `_·_` and --
--- `_⊔_` are both the join, the unit is the least level and `⊤` the     --
--- greatest. Time does not raise a level, so `of-nat` is constantly the --
--- least one. The unit is least and `_·_` commutes, and both are        --
--- declared.                                                            --
---                                                                     --
--- The level is a floating label, as in LIO. A computation's effect     --
--- grade is the highest level it has touched (for taint sets, the set   --
--- of labels). A lock `⟨ ℓ ⟩` joins `ℓ` into the label, and `[ ℓ ] A`    --
--- can be unboxed only while the label raised since boxing is `≾ ℓ`: a  --
--- `Low`-boxed public channel is unusable once `High` data has been     --
--- touched, so there is no write-down after read-up. A variable that is --
--- not eternal needs the locks to its right to be `≾` the unit, so it   --
--- goes stale after any `High` activity.                                --
---                                                                     --
--- Instances: the two-point `Low < High`, and sets of taint labels over --
--- `Fin n`, the `n`-fold power of the two-point lattice, represented as --
--- vectors so that antisymmetry is propositional equality.              --
+-- Security levels as grades.                                         --
+--                                                                    --
+-- A decidable bounded join-semilattice of levels is a grade: `_·_`   --
+-- and `_⊔_` are both the join, the unit is the least level and `⊤`   --
+-- the greatest. `of-nat` is constantly the least level. The unit is  --
+-- least and `_·_` commutes, and both are declared.                   --
+--                                                                    --
+-- The level is a floating label, as in LIO. The effect grade of a    --
+-- computation is the highest level it has touched (for taint sets,   --
+-- the set of labels). A lock `⟨ ℓ ⟩` joins `ℓ` into the label, and   --
+-- `[ ℓ ] A` can be unboxed only while the label raised since boxing  --
+-- is `≾ ℓ`: a `Low`-boxed public channel is unusable once `High`     --
+-- data has been touched, so there is no write-down after read-up. A  --
+-- variable that is not eternal requires the locks to its right to be --
+-- `≾` the unit, and goes stale after any `High` activity.            --
+--                                                                    --
+-- Instances: the two-point `Low < High`, and sets of taint labels    --
+-- over `Fin n`, the `n`-fold power of the two-point lattice,         --
+-- represented as vectors, with antisymmetry holding up to            --
+-- propositional equality.                                            --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.SecurityLevel where

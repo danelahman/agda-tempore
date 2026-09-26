@@ -1,11 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instance: the subset cap, beside the timed floor.            --
---
--- At the subset order nothing is approximated: the grade lists the     --
--- runs outright, and the deadline is the slowest of them at its worst   --
--- case. The timed floor, on the same two runs, takes the fastest        --
--- instead -- which side the endpoint bounds is what fixes the           --
--- direction.                                                            --
+-- Worked instance: the subset cap, beside the timed floor.           --
+--                                                                    --
+-- At the subset order the grade lists the runs, and the deadline is  --
+-- the worst case of the slowest of them. The timed floor, on the     --
+-- same two runs, takes the fastest; the direction is determined by   --
+-- the side the endpoint bounds.                                      --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Traces.Subsets.RightSided where

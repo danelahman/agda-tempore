@@ -1,23 +1,23 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of listed runs.             --
---                                                                     --
--- Effect grades and resource grades are both sets of timed traces, and --
--- the comparison is inclusion: a computation is graded by `Q` when     --
--- every run it may have *is* one of the traces `Q` lists. Nothing is   --
--- approximated -- a listed delay buys no work and a listed operation   --
--- permits nothing but itself -- so a grade has to name what it means.  --
---                                                                     --
--- Against the allowance order of `Traces.Timed.RightSided`, the        --
--- programs are the same and the side conditions are much harder to     --
--- meet. `unbox` needs the run that elapsed to be listed on the box     --
--- outright, so a permit covering a conditional has to name what each   --
--- branch does, and a `coerce` can only ever add runs to a list.        --
---                                                                     --
--- The comments inside the programs say what each former appends to the --
--- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
--- binding. The locks between a box's binding and its `unbox` multiply  --
--- to the run that elapsed, and here that run has to be listed on the   --
--- box exactly.                                                         --
+-- Typed example computations at the grade of listed runs.            --
+--                                                                    --
+-- Effect grades and resource grades are both sets of timed traces,   --
+-- and the comparison is inclusion: a computation is graded by `Q`    --
+-- when every run it may have is one of the traces that `Q` lists. A  --
+-- listed delay pays for no operations and a listed operation permits --
+-- only itself, so a grade lists the runs it permits.                 --
+--                                                                    --
+-- The programs are those of the allowance order of                   --
+-- `Traces.Timed.RightSided`, with side conditions that hold less     --
+-- often. `unbox` requires the elapsed run to be listed on the box,   --
+-- so a permit covering a conditional lists the run of each branch,   --
+-- and `coerce` can only add runs to a list.                          --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding. The locks between the binding of a box and its    --
+-- `unbox` multiply to the elapsed run, which must be listed on the   --
+-- box.                                                               --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Subsets.RightSided where
@@ -90,9 +90,9 @@ carried-id =
 ------------------------------------------------------------------------
 -- Sub-effecting
 --
--- `coerce` adds runs to the list, and does nothing else: time buys no
--- work here, so the budgeted bound that the allowance order accepted is
--- not above the run that prompted it. The context is untouched.
+-- `coerce` adds runs to the list and does nothing else: time pays for
+-- no operation, and the budgeted bound accepted by the allowance order
+-- is not above the run in question. The context is untouched.
 
 listing-a-second-run :
   [] ⊢C⦂ Unit ‼ permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ∣ ⌈ read ⌉ ∙ ⌈ send ⌉ ⟆

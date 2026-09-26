@@ -1,9 +1,9 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- The standard library at right-sided intervals                  --
 --                                                                --
 -- "At most `n` time steps": the unit is least and multiplication --
 -- commutes. `compose` reports its effect as a sorted product.    --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

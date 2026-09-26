@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- Sets of timed traces as lower bounds, at the coverage order.        --
+-- Sets of timed traces as lower bounds, at the coverage order.       --
 --                                                                    --
--- `Example.Traces.Lifted.LeftSided` at `Traces.Coverage`'s `_≼ᶜ_`: a  --
--- grade lists guarantees, and whatever the computation does, at least --
--- one of them has been covered -- every operation it names having     --
--- occurred, and every delay it names having been spent where it is    --
--- placed.                                                             --
---                                                                     --
--- A guarantee credits an operation with `costˡᵒ`, the least time it    --
--- can take.                                                           --
+-- `Example.Traces.Lifted.LeftSided` at the order `_≼ᶜ_` of           --
+-- `Traces.Coverage`: a grade lists guarantees, and in every run of   --
+-- the computation at least one of them is covered, every operation   --
+-- it lists having occurred and every delay it lists having elapsed   --
+-- where it is placed.                                                --
+--                                                                    --
+-- A guarantee credits an operation with `costˡᵒ`, the least time it  --
+-- can take.                                                          --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

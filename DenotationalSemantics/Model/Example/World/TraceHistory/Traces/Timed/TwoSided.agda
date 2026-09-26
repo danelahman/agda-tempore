@@ -1,27 +1,26 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the two-sided trace intervals.     --
+-- A trace-history Kripke frame for the two-sided trace intervals.    --
 --                                                                    --
--- Worlds are timed traces, and a grade `[ P , Q ]` reaches the        --
--- histories obtained by appending one continuation that answers to    --
+-- Worlds are timed traces, and a grade `[ P , Q ]` reaches the       --
+-- histories obtained by appending one continuation that satisfies    --
 -- both endpoints:                                                    --
 --                                                                    --
 --   w ⊑ᵇ[ [ P , Q ] ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'             --
 --                                and  p ≼ᶜ cont  for some p ∈ P      --
 --                                and  cont ≼ᵃ q  for some q ∈ Q      --
 --                                                                    --
--- Unlike the tick frame, which is literally the pair of its two       --
--- halves, this one shares the continuation between them: what the     --
--- floor demands and what the cap permits are demanded of the same     --
--- run. That is the frame's whole point -- a history remembers which   --
--- operations occurred, so the two endpoints can talk about them       --
--- rather than only about how long they took.                         --
+-- Unlike the tick frame, which is the pair of its two halves, this   --
+-- frame shares the continuation between them: the demands of the     --
+-- floor and the permissions of the cap concern the same run, and     --
+-- both endpoints constrain the operations that occurred as well as   --
+-- their duration.                                                    --
 --                                                                    --
--- The two comparisons run in opposite directions, and at different    --
--- orders: the guarantee is covered by the continuation, the           --
--- continuation stays within the allowance.                           --
+-- The two comparisons run in opposite directions and at different    --
+-- orders: the continuation covers the guarantee and stays within the --
+-- allowance.                                                         --
 --                                                                    --
--- The cap alone carries `unbounded`, which lists no allowance         --
--- and so caps the continuation not at all.                           --
+-- Only the cap has `unbounded`, which lists no allowance and leaves  --
+-- the continuation unconstrained.                                    --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)

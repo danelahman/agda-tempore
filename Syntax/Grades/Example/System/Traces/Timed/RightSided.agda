@@ -1,29 +1,29 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades measure only time.      --
---                                                                     --
--- Effect grades are the antichains of timed traces of                 --
--- `Traces.Timed.RightSided`, read as upper bounds: every run of a  --
--- computation stays within one of the listed bounds. Resource grades   --
--- are the right-sided time intervals, "at most `n` time steps".        --
---                                                                     --
--- The projection measures a grade by its slowest bound:                --
---                                                                     --
---   ∣ P ∣ᵉ  =  [0, the greatest duration among the traces of P ]      --
---                                                                     --
--- which is sound because staying within a bound takes no longer than   --
--- the bound does (`duration-≼ᵃ`), and is the best such bound because   --
--- each listed trace is a run the grade permits. What the resource      --
--- grade forgets is *which* runs there were and which operations they   --
--- performed -- so `⌈ write ⌉` and `⟨ 3 ⟩` become the same deadline,     --
--- though only the first permits a store.                              --
---                                                                     --
--- Monotonicity is where the two orders meet: weakening a grade         --
--- replaces each bound by one that permits at least as much, and a      --
--- bound that permits more takes at least as long.                     --
---                                                                     --
--- The two greatest grades correspond: `unbounded` permits any run at   --
--- all and `[0, ∞ ]` imposes no deadline. Both are absorbing, which is  --
--- what lets the projection preserve `_·_` at them.                     --
+-- A grade system in which the resource grades measure only time.     --
+--                                                                    --
+-- The effect grades are the antichains of timed traces of            --
+-- `Traces.Timed.RightSided`, read as upper bounds: every run of a    --
+-- computation stays within one of the listed bounds. The resource    --
+-- grades are the right-sided time intervals, "at most `n` time       --
+-- steps".                                                            --
+--                                                                    --
+-- The projection measures a grade by its slowest bound:              --
+--                                                                    --
+--   ∣ P ∣ᵉ  =  [0, the greatest duration among the traces of P ]     --
+--                                                                    --
+-- The bound is sound, staying within a bound taking no longer than   --
+-- the bound (`duration-≼ᵃ`), and optimal, each listed trace being a  --
+-- run the grade permits. The resource grade forgets which runs there --
+-- were and which operations they performed: `⌈ write ⌉` and `⟨ 3 ⟩`  --
+-- have the same deadline, although only the first permits a store.   --
+--                                                                    --
+-- Monotonicity relates the two orders: weakening a grade replaces    --
+-- each bound by one that permits at least as much, and a bound that  --
+-- permits more takes at least as long.                               --
+--                                                                    --
+-- The two greatest grades correspond: `unbounded` permits any run    --
+-- and `[0, ∞ ]` imposes no deadline. Both are absorbing, and the     --
+-- projection preserves `_·_` at them.                                --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)

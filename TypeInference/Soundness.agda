@@ -1,11 +1,13 @@
 ------------------------------------------------------------------
--- Soundness of constraint generation: a solution of a generated  --
--- constraint elaborates to a mirrored derivation that erases     --
--- back to the raw term it was generated from, its annotations    --
--- instantiated by the solution.                                  --
---                                                                --
--- Follows the soundness proof of Tavits's MSc thesis             --
--- (U. Tartu, 2025).                                              --
+-- Soundness of constraint generation                           --
+--                                                              --
+-- A solution of a generated constraint elaborates to a         --
+-- derivation of the open calculus that erases to the raw term  --
+-- it was generated from, with its annotations instantiated by  --
+-- the solution (`soundV`, `soundC`).                           --
+--                                                              --
+-- The proof follows the soundness proof of Tavits's MSc thesis --
+-- (University of Tartu, 2025).                                 --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Inference at right-sided time paired with a security level     --
 --                                                                --
 -- `([0, n ] , ℓ)`: at most `n` ticks, touching nothing above     --
@@ -10,7 +10,7 @@
 -- at most eight ticks have passed and nothing above `Low` has    --
 -- been touched since it was boxed. A claim is refused for being  --
 -- late or for being tainted; there is no early one.              --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 open import Data.Product using (_,_)

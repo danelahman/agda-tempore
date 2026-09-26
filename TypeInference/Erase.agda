@@ -1,18 +1,17 @@
 ------------------------------------------------------------------
--- Erasure of mirrored derivations to raw terms                   --
---                                                                --
--- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` are total functions from the well-typed      --
--- syntax of `TypeInference.OpenSyntax.Language` to the           --
--- well-scoped raw syntax of `TypeInference.Raw.Syntax`. They     --
--- forget types and entailment premises, keeping only what a raw  --
--- term annotates.                                                --
---                                                                --
--- Erasure is index-preserving: a derivation over `Θ` erases to  --
--- a raw term over `Θ`, a handler clause to a `RawC (Θ +e) (2+n)` --
--- with no adjustment, and a variable's raw index is its          --
--- full-context position `var-pos`. It is not injective:          --
--- `subV`/`subC` erase to their subjects. The recording rules     --
--- `annᵛ`, `annᶜ` and `lamᵃ` erase to the annotated raw forms.    --
+-- Erasure of open derivations to raw terms                     --
+--                                                              --
+-- `⌊_⌋ᵛ` and `⌊_⌋ᶜ` map the well-typed syntax of               --
+-- `TypeInference.OpenSyntax.Language` to the well-scoped raw   --
+-- syntax of `TypeInference.Raw.Syntax`, forgetting types and   --
+-- entailment premises and keeping the data a raw term records. --
+--                                                              --
+-- Erasure is index-preserving: a derivation over `Θ` erases to --
+-- a raw term over `Θ`, a handler clause to a                   --
+-- `RawC (Θ +e) (2+n)`, and a variable to its full-context      --
+-- position `var-pos`. It is not injective: `subV` and `subC`   --
+-- erase to their subjects. The annotation rules `annᵛ`, `annᶜ` --
+-- and `lamᵃ` erase to the annotated raw forms.                 --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)

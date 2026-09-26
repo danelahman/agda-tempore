@@ -1,22 +1,22 @@
 ------------------------------------------------------------------
--- The constraint language                                       --
---                                                               --
--- Constraints are the output of type-and-effect inference: a    --
--- first-order formula over the open types and grade expressions --
--- of a scope `Θ`, built from value-type subtyping, grade        --
--- orderings, eternality atoms, existential quantification over  --
--- the three sorts of variables, a rigid (eigenvariable)         --
--- effect-grade quantifier, and a conjunction indexed by         --
--- operation symbols.                                            --
---                                                               --
--- Computation types need no former of their own: `C ≾̂ᶜ C'` is   --
--- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`. Nor do type equations: `A ≐ᵥ B` is --
--- mutual subtyping, `(A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)`; subtyping being    --
--- structural, it fixes the shape and holds the grades and type  --
--- variables equal up to mutual ordering.                        --
---                                                               --
--- Constraints with binders follow Pottier and Remy, The Essence --
--- of ML Type Inference (ATTAPL, 2005).                          --
+-- The constraint language                                      --
+--                                                              --
+-- A constraint over a scope `Θ` is a first-order formula over  --
+-- the open types and grade expressions of `Θ`, built from      --
+-- value-type subtyping, grade orderings, eternality atoms,     --
+-- var-rule disjunctions, existential quantification over the   --
+-- three sorts of variables, a rigid (eigenvariable)            --
+-- effect-grade quantifier, and a conjunction indexed by        --
+-- operation symbols.                                           --
+--                                                              --
+-- Computation-type subtyping is not a former: `C ≾̂ᶜ C'` is     --
+-- `(A ≾̂ᵥᶜ A') ∧̂ (ε ≾̂ₑᶜ ε')`. A type equation `A ≐ᵥ B` is       --
+-- mutual subtyping, `(A ≾̂ᵥᶜ B) ∧̂ (B ≾̂ᵥᶜ A)`; subtyping being   --
+-- structural, it fixes the shape and makes the grades and type --
+-- variables equal up to mutual ordering.                       --
+--                                                              --
+-- Constraints with binders follow Pottier and Rémy, The        --
+-- Essence of ML Type Inference (ATTAPL, 2005).                 --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)

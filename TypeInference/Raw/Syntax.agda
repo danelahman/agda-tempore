@@ -1,20 +1,21 @@
 ------------------------------------------------------------------
--- Raw (well-scoped, untyped) syntax of the language              --
---                                                                --
--- The terms that inference takes as input: one former per former --
--- of `TypeInference.OpenSyntax.Language`, minus `coerce`, with   --
--- the mirrored judgement's data dropped except the annotations   --
--- below. `RawV Θ n` and `RawC Θ n` are scoped by the grade and   --
--- type variables `Θ` of the context and by `n` term variables,   --
--- de Bruijn indices into the full context.                       --
---                                                                --
--- The annotations are the base type of a constant, the operation --
--- of a `perform`, the duration of a `delay`, the variable of an  --
--- `unbox` and the grade of a `box`, an expression over `Θ`, and  --
--- the optional type annotations: of a value, of a computation    --
--- and of a lambda's argument, open types over `Θ`. A handler's   --
--- clauses are scoped over `Θ +e`, binding the clause's           --
--- continuation grade, and over the full context, `2 + n`.        --
+-- Raw (well-scoped, untyped) syntax                            --
+--                                                              --
+-- The input of inference: one former for each former of        --
+-- `TypeInference.OpenSyntax.Language` except `coerce`, without --
+-- the typing data except the annotations below. `RawV Θ n` and --
+-- `RawC Θ n` are scoped by the grade and type variables `Θ` of --
+-- the context and by `n` term variables, de Bruijn indices     --
+-- into the full context.                                       --
+--                                                              --
+-- The annotations are the base type of a constant, the         --
+-- operation of a `perform`, the duration of a `delay`, the     --
+-- variable of an `unbox`, the grade of a `box`, an expression  --
+-- over `Θ`, and the optional type annotations of a value, of a --
+-- computation and of a lambda's argument, open types over `Θ`. --
+-- A handler's clauses are scoped over `Θ +e`, binding the      --
+-- clause's continuation grade, and over the full context,      --
+-- `2 + n`.                                                     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)
@@ -168,7 +169,7 @@ mutual
     -- effect handling
 
     -- The clause family is indexed by the operation symbol, matching the
-    -- mirrored rule; each clause is scoped over `Θ +e`, whose new variable
+    -- open rule; each clause is scoped over `Θ +e`, whose new variable
     -- is the continuation grade, and over the ambient context extended by
     -- the operation's parameter and the boxed continuation.
 

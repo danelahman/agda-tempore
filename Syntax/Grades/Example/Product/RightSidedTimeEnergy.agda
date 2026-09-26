@@ -1,19 +1,20 @@
 ------------------------------------------------------------------------
--- Right-sided time paired with an energy budget.                       --
---                                                                     --
--- The energy grade `[0, e ]` says "at most `e` units spent": the       --
--- right-sided intervals' carrier, sum, order, join and `⊤ = [0, ∞ ]`,  --
--- with `of-nat` constantly `[0, ↑ 0 ]`. Idling is free: `delay` spends --
--- time and no energy, and energy is spent by operations alone.         --
---                                                                     --
--- A grade `([0, n ] , [0, e ])` says "at most `n` steps and at most    --
--- `e` units". As a resource grade, a value boxed at it can be unboxed  --
--- only while at most `n` steps have passed and at most `e` units have  --
--- been spent since boxing -- a calibration that drifts with time and   --
--- with use. A variable that is not eternal goes stale after any step   --
--- or any energy spent.                                                 --
---                                                                     --
--- The unit is least and `_·_` commutes; both are declared.             --
+-- Right-sided time paired with an energy budget.                     --
+--                                                                    --
+-- The energy grade `[0, e ]` states "at most `e` units spent". It    --
+-- has the carrier, sum, order, join and `⊤ = [0, ∞ ]` of the         --
+-- right-sided intervals, with `of-nat` constantly `[0, ↑ 0 ]`:       --
+-- `delay` spends time and no energy, and energy is spent by          --
+-- operations alone.                                                  --
+--                                                                    --
+-- A grade `([0, n ] , [0, e ])` states "at most `n` steps and at     --
+-- most `e` units". As a resource grade, a value boxed at it can be   --
+-- unboxed only while at most `n` steps have passed and at most `e`   --
+-- units have been spent since boxing, as for a calibration that      --
+-- drifts with time and with use. A variable that is not eternal goes --
+-- stale after any step or any expenditure of energy.                 --
+--                                                                    --
+-- The unit is least and `_·_` commutes; both are declared.           --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Product.RightSidedTimeEnergy where

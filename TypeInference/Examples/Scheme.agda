@@ -1,17 +1,17 @@
 ------------------------------------------------------------------
--- What inference reports, and notation for writing it down       --
---                                                                --
--- `scheme` projects a `typed` verdict onto its scheme            --
--- `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`: the scope, the hypotheses, the obligations   --
--- and the type. `IsTyped` holds exactly of a `typed` verdict.    --
---                                                                --
--- `scheme` returns its scheme evaluated in full (see `walk`), so --
--- that a `refl` check against a literal runs the solver once.    --
---                                                                --
--- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,     --
--- `b` resource-grade and `c` effect-grade variables, `C` a       --
--- conjunction `_∧_` of atoms (`⊤` the empty one), and            --
--- `∀[ a , b , c ] C & R ⟹ X` one with obligations `R`.            --
+-- What inference reports, and notation for writing it          --
+--                                                              --
+-- `scheme` projects a `typed` verdict onto its scheme          --
+-- `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`: the scope, the hypotheses, the obligations --
+-- and the type. `IsTyped` holds exactly of a `typed` verdict.  --
+--                                                              --
+-- `scheme` returns its scheme fully evaluated (see `walk`); a  --
+-- `refl` check against a literal runs the solver once.         --
+--                                                              --
+-- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,  --
+-- `b` resource-grade and `c` effect-grade variables, `C` a     --
+-- conjunction `_∧_` of atoms (`⊤` the empty one), and          --
+-- `∀[ a , b , c ] C & R ⟹ X` one with obligations `R`.         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹; _∧_ to _&&_)
@@ -55,13 +55,10 @@ Scheme = Σ Scope (λ Θ → Hyps Θ × Obligs Θ × OCType Θ)
 
 -- Forcing a scheme
 --
--- `walk` visits every constructor of a scheme and answers `true`; the
--- answer is never used. Computing it evaluates the whole scheme in one
--- reduction, in which the solver's run is shared by all the parts.
--- Unforced, every part of a scheme is a projection of the solver's
--- unevaluated result, and `refl` reduces each position separately:
--- each reduction runs the solver again. A grade constant has no
--- structure to visit; it is forced by the carrier's decision procedure.
+-- `walk` visits every constructor of a scheme and answers `true`, an
+-- answer that is never used. Computing it evaluates the whole scheme in
+-- one reduction, in which all parts share one run of the solver. A
+-- grade constant is forced by the carrier's decision procedure.
 
 private
 
@@ -136,7 +133,7 @@ scheme (typed p) = scheme! (PrincipalTyping.Θ̃ p , PrincipalTyping.Q̃ p ,
 scheme untypable = nothing
 scheme stuck     = nothing
 
--- A data type, so that stating it does not run inference
+-- A data type: stating it does not run inference
 
 data IsTyped {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} : Inference Γ M → Set where
   is-typed : (p : PrincipalTyping Γ M) → IsTyped (typed p)

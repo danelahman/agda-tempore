@@ -1,17 +1,18 @@
 ------------------------------------------------------------------------
--- Left-sided time paired with a security level.                        --
---                                                                     --
--- A grade `([ n ,+∞⟩ , ℓ)` says "at least `n` time steps, touching     --
--- nothing above `ℓ`". A time step advances the first component only.   --
---                                                                     --
--- As a resource grade it reads as an embargo with a taint check: a     --
--- value boxed at `([ n ,+∞⟩ , ℓ)` can be unboxed once at least `n`     --
--- steps have passed since boxing, and only while nothing above `ℓ` has --
--- been touched since -- a report publishable after the embargo, and    --
--- only from untainted code. The left-sided unit is greatest, so time   --
--- alone never makes a variable stale; touching `High` does.            --
---                                                                     --
--- The unit is not least, as for left-sided time; `_·_` commutes.       --
+-- Left-sided time paired with a security level.                      --
+--                                                                    --
+-- A grade `([ n ,+∞⟩ , ℓ)` states "at least `n` time steps, touching --
+-- nothing above `ℓ`". A time step advances the first component only. --
+--                                                                    --
+-- As a resource grade it is an embargo with a taint check: a value   --
+-- boxed at `([ n ,+∞⟩ , ℓ)` can be unboxed once at least `n` steps   --
+-- have passed since boxing, and only while nothing above `ℓ` has     --
+-- been touched since, as for a report that may be published after an --
+-- embargo and only from untainted code. The left-sided unit is       --
+-- greatest, so time alone never makes a variable stale; touching     --
+-- `High` does.                                                       --
+--                                                                    --
+-- The unit is not least, as for left-sided time; `_·_` commutes.     --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Product.LeftSidedTimeLevel where

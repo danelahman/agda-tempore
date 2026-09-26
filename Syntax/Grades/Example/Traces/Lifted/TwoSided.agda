@@ -1,36 +1,34 @@
 ------------------------------------------------------------------------
--- Sets of timed traces bounding a computation from both sides.        --
---                                                                     --
--- A grade is a pair `[ P , Q ]` of antichains of traces -- the floor  --
--- cut down to its weakest guarantees, the cap to its most permissive  --
--- allowances -- read against the runs `X` a computation may have:     --
---                                                                     --
---   ∀ x ∈ X. ∃ p ∈ P. p ≼ᶠ x     whatever happened, at least one of   --
---                                the listed guarantees was covered    --
---   ∀ x ∈ X. ∃ q ∈ Q. x ≼ᶜ q     and it stayed within one of the      --
---                                listed allowances                    --
---                                                                     --
--- Both halves are universal over the runs and existential over the    --
--- set, so both endpoints are read disjunctively, both weaken by       --
--- gaining members, and the union of two grades is their join at       --
--- either end -- the shape a branching construct wants.                --
---                                                                     --
--- The endpoints take different orders -- a guarantee needs one in     --
--- which time never buys an operation, an allowance one in which a     --
--- listed delay is a budget that buys them -- so the construction      --
--- takes `Oᶠ` and `Oᶜ` separately, and `Example.Traces.Timed.TwoSided` --
--- instantiates them at the incomparable `Traces.Coverage` and         --
--- `Traces.Allowance`. They take different cost models for the same    --
--- reason: `costˡᵒ` for a guarantee, `costʰⁱ` for an allowance, which  --
--- is why the coherence field needs `cost-≤` to compare them.          --
---                                                                     --
--- The coherence field asks that some listed guarantee take no longer  --
--- than some listed allowance: necessary for the grade to admit any    --
--- run, and exactly the `min ≤ max` the projection to time intervals   --
--- needs.                                                              --
---                                                                     --
--- The greatest grade is `[ u , unbounded ]`, the floor's unit under   --
--- the cap's unbounded allowance. It is not absorbing.                 --
+-- Sets of timed traces bounding a computation from both sides.       --
+--                                                                    --
+-- A grade is a pair `[ P , Q ]` of antichains of traces, the floor   --
+-- reduced to its weakest guarantees and the cap to its most          --
+-- permissive allowances, read against the runs `X` a computation may --
+-- have:                                                              --
+--                                                                    --
+--   ∀ x ∈ X. ∃ p ∈ P. p ≼ᶠ x     in every run, at least one of the   --
+--                                listed guarantees is covered        --
+--   ∀ x ∈ X. ∃ q ∈ Q. x ≼ᶜ q     and the run stays within one of the --
+--                                listed allowances                   --
+--                                                                    --
+-- Both halves are universal over the runs and existential over the   --
+-- set, so both endpoints are read disjunctively and weaken by        --
+-- gaining members, and the union of two grades is their join at      --
+-- either end.                                                        --
+--                                                                    --
+-- The construction takes the two orders `Oᶠ` and `Oᶜ` separately,    --
+-- and `Example.Traces.Timed.TwoSided` instantiates them at the       --
+-- incomparable `Traces.Coverage` and `Traces.Allowance`, with the    --
+-- cost models `costˡᵒ` for a guarantee and `costʰⁱ` for an           --
+-- allowance; the coherence field compares them by `cost-≤`.          --
+--                                                                    --
+-- The coherence field requires some listed guarantee to take no      --
+-- longer than some listed allowance. The condition is necessary for  --
+-- the grade to admit any run, and is the condition `min ≤ max`       --
+-- required by the projection to time intervals.                      --
+--                                                                    --
+-- The greatest grade is `[ u , unbounded ]`, the unit of the floor   --
+-- under the unbounded allowance of the cap. It is not absorbing.     --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

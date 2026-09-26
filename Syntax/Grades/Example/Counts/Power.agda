@@ -1,14 +1,13 @@
 ------------------------------------------------------------------------
--- The power of a grade: `n` counters, each graded by `G`.             --
---                                                                     --
--- A grade of `power n` is a vector of `n` grades of `G`, one per      --
--- counter, and everything is pointwise: the product, the order, the   --
--- greatest grade and the joins. Laws hold coordinatewise, so every    --
--- law of `G` carries over, zero-product included.                     --
---                                                                     --
--- The inclusion of ℕ is the unit. Time steps are not drawn from any   --
--- counter, so `n` steps leave every counter untouched; time is paired --
--- with the counters by a product of grades, not stored among them.    --
+-- The power of a grade: `n` counters, each graded by `G`.            --
+--                                                                    --
+-- A grade of `power n` is a vector of `n` grades of `G`, one per     --
+-- counter, and the product, the order, the greatest grade and the    --
+-- joins are pointwise. Every law of `G` holds coordinatewise, the    --
+-- zero-product laws included.                                        --
+--                                                                    --
+-- The inclusion of ℕ is constantly the unit: time steps draw on no   --
+-- counter. Time is paired with the counters by a product of grades.  --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Semantic refutation of a grade ordering against the unit       --
 --                                                                --
 -- `Refutedᵤ ρ` says that no closed instance brings `ρ` below     --
@@ -20,7 +20,7 @@
 -- hypothesis set (`refute-⊩`). A `nothing` claims nothing.       --
 -- `scanᵤ` runs only where a report settles a disjunction         --
 -- (`Simplify.settle`).                                           --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Relation.Unary.All using ([]; _∷_)

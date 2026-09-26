@@ -1,34 +1,32 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the subset grade of upper bounds.     --
---                                                                     --
--- Worlds are time points `ℕ`. A tick world records only elapsed time, --
--- so a grade is read through the durations of the runs it lists, and  --
--- moving between worlds goes forward and may take no longer than one  --
--- of them:                                                            --
---                                                                     --
---   w ⊑[ Q ] w'   iff   w ≤ w'   and                                  --
---                       w' ≤ w + duration q   for some q ∈ Q          --
---                                                                     --
--- The quantifier is existential because the grade's own order is      --
--- inclusion in the permitting direction: a weaker grade lists *more*  --
--- runs, so a condition that must survive weakening has to be met by   --
--- one listed run rather than by all of them.                          --
---                                                                     --
--- The grade is a cap on which runs may occur; the tick world keeps    --
--- only how long the slowest of them takes, so `⌈ write ⌉` and `⟨ 3 ⟩` --
--- -- distinct grades here, neither below the other -- reach the same  --
--- time points.                                                        --
---                                                                     --
--- Covariance is immediate: a listed run of the smaller grade is       --
--- literally a listed run of the larger one, the comparison between    --
--- traces being equality.                                              --
---                                                                     --
--- The grade's `any-run` lists no run at all, so it reaches every      --
--- world ahead.                                                        --
---                                                                     --
--- It is the bound restricted to forward moves. The unit `{ ε }` is    --
--- not least, but its run takes no time, so without `w ≤ w'` the unit  --
--- grade would reach the past.                                         --
+-- A time-ticks Kripke frame for the subset grade of upper bounds.    --
+--                                                                    --
+-- Worlds are time points `ℕ`. A tick world records only elapsed      --
+-- time, and a grade is read through the durations of the runs it     --
+-- lists: moving between worlds goes forward and takes no longer than --
+-- one of them.                                                       --
+--                                                                    --
+--   w ⊑[ Q ] w'   iff   w ≤ w'   and                                 --
+--                       w' ≤ w + duration q   for some q ∈ Q         --
+--                                                                    --
+-- The quantifier is existential, following the order of the grade,   --
+-- which is inclusion in the permitting direction: a weaker grade     --
+-- lists *more* runs, and a condition preserved by weakening is met   --
+-- by one listed run rather than by all.                              --
+--                                                                    --
+-- The grade bounds which runs may occur; the tick world records only --
+-- the duration of the slowest, so `⌈ write ⌉` and `⟨ 3 ⟩`, distinct  --
+-- and incomparable grades, reach the same time points.               --
+--                                                                    --
+-- Covariance holds because a listed run of the smaller grade is a    --
+-- listed run of the larger one, the comparison of traces being       --
+-- equality.                                                          --
+--                                                                    --
+-- The grade `any-run` lists no run and reaches every world ahead.    --
+--                                                                    --
+-- The relation is the bound restricted to forward moves. The unit    --
+-- `{ ε }` is not least, but its run takes no time, and without       --
+-- `w ≤ w'` the unit grade would reach the past.                      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

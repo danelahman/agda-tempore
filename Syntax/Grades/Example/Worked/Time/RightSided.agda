@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- Worked instances of right-sided intervals: an upper bound on         --
--- elapsed time.                                                        --
---
--- The mirror image of the left-sided grade. `[0, m ] ≾ [0, n ]` is      --
--- `m ≤ n`, so here it is the *smaller* bound that is the stronger       --
--- claim. A budget may always be relaxed, never tightened.               --
---
--- The sensor node's `uplink` run -- read, idle two ticks, send -- takes  --
--- at most 9 ticks under `opTime`.                                        --
+-- Worked instances of right-sided intervals: an upper bound on       --
+-- elapsed time.                                                      --
+--                                                                    --
+-- The mirror image of the left-sided grade: `[0, m ] ≾ [0, n ]` is   --
+-- `m ≤ n`, so the *smaller* bound is the stronger claim. Weakening   --
+-- relaxes a budget.                                                  --
+--                                                                    --
+-- The `uplink` run of the sensor node (read, idle two ticks, send)   --
+-- takes at most 9 ticks under `opTime`.                              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.RightSided where

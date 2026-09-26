@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- Worked instances of the subset grade of upper bounds.               --
---                                                                     --
--- A grade lists runs, and every run the computation has is one of      --
--- them: `X ⊆ Q`. The comparison between a run and a listed trace is    --
--- equality, so nothing is approximated -- which is the whole           --
--- difference from `Worked.Traces.Timed.RightSided`, where a listed     --
--- delay is a budget that buys unlisted work.                           --
---                                                                     --
--- The set is read *disjunctively*: a longer list permits more, so the  --
--- union of two grades is their join and `{ ε }` is the least grade.    --
---                                                                     --
--- Every run is written out in full in every claim, and every claim is  --
--- closed by running the grade's own decision procedure.                --
+-- Worked instances of the subset grade of upper bounds.              --
+--                                                                    --
+-- A grade lists runs, and every run of the computation is one of     --
+-- them: `X ⊆ Q`. The comparison between a run and a listed trace is  --
+-- equality, in contrast with `Worked.Traces.Timed.RightSided`, where --
+-- a listed delay is a budget that pays for unlisted operations.      --
+--                                                                    --
+-- The set is read *disjunctively*: a longer list permits more, the   --
+-- union of two grades is their join, and `{ ε }` lies below every    --
+-- list containing the empty run.                                     --
+--                                                                    --
+-- Every run is written out in full in every claim, and every claim   --
+-- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Subsets.RightSided where
@@ -64,9 +64,8 @@ no-dropping-runs :
      ≾ permitting ⟅ ⌈ read ⌉ ⟆)
 no-dropping-runs = fails
 
--- `return` has grade `{ ε }`, and it weakens only to grades that list
--- the empty run: `{ ε }` is the least grade, not a unit that fits
--- anywhere
+-- `return` has grade `{ ε }`, which weakens only to grades that list
+-- the empty run: `{ ε }` is not the least grade
 
 pure-fits-where-stopping-is-listed :
   permitting ⟅ ε ⟆ ≾ permitting ⟅ ε ∣ ⌈ read ⌉ ⟆
@@ -101,8 +100,8 @@ the-top-absorbs = refl
 ------------------------------------------------------------------------
 -- Nothing is approximated
 --
--- The comparison is equality, so a listed delay buys no work and a
--- listed operation permits nothing but itself. Both of the following
+-- The comparison is equality, so a listed delay pays for no operation
+-- and a listed operation permits nothing but itself. Both of the following
 -- hold in `Traces.Timed.RightSided`, where the allowance order lets
 -- time pay for operations; here neither does.
 
@@ -114,7 +113,7 @@ a-budget-buys-nothing :
   ¬ (permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ ≾ permitting ⟅ ⌈ read ⌉ ∙ ⟨ 6 ⟩ ⟆)
 a-budget-buys-nothing = fails
 
--- what a grade must do instead is list the run outright
+-- a grade lists the run itself
 
 listing-it-works :
   permitting ⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆

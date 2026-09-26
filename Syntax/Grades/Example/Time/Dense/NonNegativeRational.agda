@@ -1,16 +1,16 @@
 ------------------------------------------------------------------------
--- The non-negative rationals ℚ≥0.                                     --
---                                                                     --
--- The endpoints the dense-time grades run on. A value is a normalised  --
--- rational of the standard library together with the verdict of       --
--- `0ℚ ≤? q` as an implicit side condition, so two values are equal    --
--- exactly when their rationals are, and a literal is written `n / d`   --
--- (or `# n` for a whole number) with the side condition discharged by  --
--- computation.                                                         --
---                                                                     --
--- `#_` embeds ℕ as a monoid morphism that is monotone and preserves    --
--- both lattice operations: whole numbers of time steps read in dense   --
--- time.                                                                --
+-- The non-negative rationals ℚ≥0.                                    --
+--                                                                    --
+-- The endpoints of the dense-time grades. A value is a normalised    --
+-- rational of the standard library together with the verdict of      --
+-- `0ℚ ≤? q` as an implicit side condition; two values are equal      --
+-- exactly when their rationals are, and a literal is written `n / d` --
+-- (or `# n` for a whole number), the side condition being discharged --
+-- by computation.                                                    --
+--                                                                    --
+-- `#_` embeds ℕ as a monotone monoid morphism that preserves both    --
+-- lattice operations, reading whole numbers of time steps in dense   --
+-- time.                                                              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.NonNegativeRational where
@@ -105,7 +105,7 @@ p + q = ⟨ val p ℚ.+ val q ⟩ {fromWitness (ℚ.+-mono-≤ (nonneg p) (nonne
 
 infix 4 _≤_ _≤?_
 
--- `_≤_` on the rationals, wrapped so that its arguments are inferable
+-- `_≤_` on the rationals, wrapped with inferable arguments
 
 record _≤_ (p q : ℚ≥0) : Set₀ where
   constructor *≤ᵈ*

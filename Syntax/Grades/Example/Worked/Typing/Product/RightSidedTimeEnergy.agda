@@ -1,29 +1,30 @@
 ------------------------------------------------------------------------
--- Typed example computations at upper bounds on time paired with an   --
--- energy budget.                                                      --
---                                                                     --
--- Effect grades and resource grades are both `([0, n ] , [0, e ])`,   --
--- "at most `n` time steps and at most `e` units of energy", and an    --
--- operation is graded by its worst-case time and the energy it draws: --
--- read 1 and 1, write 3 and 2, send 6 and 5. Idling spends time and   --
--- draws nothing.                                                      --
---                                                                     --
--- As a resource grade, `[ ([0, n ] , [0, e ]) ] A` is a calibration   --
--- that drifts with time and with use: claimable while at most `n`     --
--- steps have passed and at most `e` units have been drawn since       --
--- boxing. So the same elapsed time can keep it or lose it, according  --
--- to whether it was spent idling or working. Both are below.          --
---                                                                     --
--- The two rules that put the unit on opposite sides of the order go   --
--- as at the upper bounds on time: a reading goes stale as soon as     --
--- anything happens, and a handler clause may drop its continuation.   --
---                                                                     --
--- Every claim is checked componentwise, `≤!` on the time and on the   --
--- energy; a refutation names the component that fails.                --
---                                                                     --
--- The comments inside the programs say what each former appends to   --
--- the context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a --
--- binding.                                                            --
+-- Typed example computations at upper bounds on time paired with an  --
+-- energy budget.                                                     --
+--                                                                    --
+-- Effect grades and resource grades are both `([0, n ] , [0, e ])`,  --
+-- "at most `n` time steps and at most `e` units of energy", and an   --
+-- operation is graded by its worst-case time and the energy it       --
+-- draws: read 1 and 1, write 3 and 2, send 6 and 5. Idling spends    --
+-- time and draws no energy.                                          --
+--                                                                    --
+-- As a resource grade, `[ ([0, n ] , [0, e ]) ] A` is a calibration  --
+-- that drifts with time and with use: claimable while at most `n`    --
+-- steps have passed and at most `e` units have been drawn since      --
+-- boxing. The same elapsed time can keep or lose it, according to    --
+-- whether it was spent idling or working; both cases are shown       --
+-- below.                                                             --
+--                                                                    --
+-- The two rules that place the unit on opposite sides of the order   --
+-- behave as at the upper bounds on time: a reading goes stale after  --
+-- any activity, and a handler clause may discard its continuation.   --
+--                                                                    --
+-- Every claim is checked componentwise, `≤!` on the time and on the  --
+-- energy; a refutation names the component that fails.               --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Product.RightSidedTimeEnergy where

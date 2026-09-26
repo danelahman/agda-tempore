@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Worked instance of the subset cap, projected onto certain counts.    --
---
--- Each counter takes the least count among the listed runs, and any    --
--- run at all makes no claim.                                           --
+-- Worked instance of the subset cap, projected onto certain counts.  --
+--                                                                    --
+-- Each counter takes the least count among the listed runs, and      --
+-- `any-run` makes no claim.                                          --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Counts.Subsets.AtLeast where

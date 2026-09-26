@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Discharging the numeric side conditions of the worked interval        --
--- examples.                                                             --
---
--- Every interval fact in the sibling modules reduces to a comparison    --
--- of natural numbers: `≤!` runs `_≤?_` and `≰!` runs it the other way,   --
--- so an example asserted the wrong way round does not typecheck.        --
+-- Discharging the numeric side conditions of the worked interval     --
+-- examples.                                                          --
+--                                                                    --
+-- Every interval fact in the sibling modules reduces to a comparison --
+-- of natural numbers: `≤!` runs `_≤?_`, and `≰!` runs it in the      --
+-- other direction.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.Decide where

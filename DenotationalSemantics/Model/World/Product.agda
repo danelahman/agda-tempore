@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- The product of two Kripke frames.                                   --
---                                                                     --
--- A frame for `G₁` and one for `G₂` give a frame for `G₁ ×ᵍ G₂`: a     --
--- world is a pair of worlds, and accessibility at `(ρ₁ , ρ₂)` holds    --
--- componentwise:                                                      --
---                                                                     --
---   (w₁ , w₂) ⊑[ (ρ₁ , ρ₂) ] (w₁' , w₂')                              --
---     iff   w₁ ⊑[ ρ₁ ] w₁'   and   w₂ ⊑[ ρ₂ ] w₂'                     --
---                                                                     --
--- Every law holds componentwise, with no condition on either frame.   --
+-- The product of two Kripke frames.                                  --
+--                                                                    --
+-- A frame for `G₁` and one for `G₂` give a frame for `G₁ ×ᵍ G₂`: a   --
+-- world is a pair of worlds, and accessibility at `(ρ₁ , ρ₂)` holds  --
+-- componentwise:                                                     --
+--                                                                    --
+--   (w₁ , w₂) ⊑[ (ρ₁ , ρ₂) ] (w₁' , w₂')                             --
+--     iff   w₁ ⊑[ ρ₁ ] w₁'   and   w₂ ⊑[ ρ₂ ] w₂'                    --
+--                                                                    --
+-- Every law holds componentwise, with no condition on either frame.  --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.World.Product where

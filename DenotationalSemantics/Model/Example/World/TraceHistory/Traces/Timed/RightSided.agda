@@ -1,25 +1,25 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the trace grade of upper bounds.   --
+-- A trace-history Kripke frame for the trace grade of upper bounds.  --
 --                                                                    --
--- Worlds are timed traces: the history observed so far. A grade `P`   --
--- reaches the histories obtained by appending a continuation the      --
--- grade permits:                                                     --
+-- Worlds are timed traces: the history observed so far. A grade `P`  --
+-- reaches the histories obtained by appending a continuation that    --
+-- the grade permits:                                                 --
 --                                                                    --
 --   w ⊑ᵇ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                     --
 --                          and  cont ≼ᵃ p   for some p ∈ P           --
 --                                                                    --
--- Unlike the tick frame, this one sees which operations a bound       --
--- permits and not merely how long they take, so it distinguishes      --
--- grades the tick frame identifies -- `⟨ 3 ⟩` and `⌈ write ⌉` reach   --
--- the same time points but not the same histories.                    --
+-- Unlike the tick frame, this frame records which operations a bound --
+-- permits as well as their duration, and distinguishes grades that   --
+-- the tick frame identifies: `⟨ 3 ⟩` and `⌈ write ⌉` reach the same  --
+-- time points but not the same histories.                            --
 --                                                                    --
--- Accessibility is just "the continuation is a run the grade admits", --
--- which is what makes the frame conditions the grade's own laws:      --
--- reflexivity is the empty run, transitivity is monotonicity of the   --
--- trace product, and covariance is transitivity of the order.         --
+-- Accessibility is "the continuation is a run the grade admits", and --
+-- the frame conditions are laws of the grade: reflexivity is the     --
+-- empty run, transitivity is monotonicity of the trace product, and  --
+-- covariance is transitivity of the order.                           --
 --                                                                    --
--- The grade's `unbounded` lists no bound, so it leaves the            --
--- continuation unconstrained and asks only that `w'` extend `w`.      --
+-- The grade `unbounded` lists no bound; it leaves the continuation   --
+-- unconstrained and requires only that `w'` extend `w`.              --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _<_)

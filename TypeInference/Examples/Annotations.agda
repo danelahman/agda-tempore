@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Inference on annotated programs                                --
 --                                                                --
 -- An annotation fixes a shape: of a lambda's argument            --
@@ -7,7 +7,7 @@
 -- typable at a closed instance, so inference answers `typed` for --
 -- each at every grade (a theorem over an arbitrary language);    --
 -- the scheme it reports is the shape the annotation forces.      --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
 

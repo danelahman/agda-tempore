@@ -1,17 +1,16 @@
 ------------------------------------------------------------------
--- Properties of constraint satisfaction                          --
---                                                                --
--- `⊨-mono` — a solution survives any further substitution that   --
--- also strengthens the residual hypotheses.                      --
---                                                                --
--- `⊨-subst`/`⊨-subst⁻` — satisfying a substituted constraint is  --
--- satisfying the original along the composite.                   --
---                                                                --
--- Both rest on `⊨-resp-≐ˢ`: satisfaction looks at a substitution --
--- only pointwise.                                                --
---                                                                --
--- `⊨-≐ᵥ` — types equal along a substitution solve a type         --
--- equation there, by reflexivity of subtyping.                   --
+-- Properties of constraint satisfaction                        --
+--                                                              --
+--   * `⊨-mono`: a solution remains one along any further       --
+--     substitution that also strengthens the residual          --
+--     hypotheses.                                              --
+--   * `⊨-subst`, `⊨-subst⁻`: a substituted constraint is       --
+--     satisfied exactly when the original is satisfied along   --
+--     the composite.                                           --
+--   * `⊨-resp-≐ˢ`: satisfaction depends on a substitution only --
+--     pointwise.                                               --
+--   * `⊨-≐ᵥ`: types equal along a substitution solve a type    --
+--     equation there.                                          --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

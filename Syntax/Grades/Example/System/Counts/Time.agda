@@ -1,25 +1,25 @@
 ------------------------------------------------------------------------
--- Counts and time: why no count grade projects onto time, and what a  --
--- cost model preserves when time is paired with the counts.           --
---                                                                     --
--- No projection from counts to time. In a count grade `n` time steps  --
--- are the unit, for every `n`, so `of-nat 1` and `of-nat 0` coincide; --
--- a time grade tells them apart, so no morphism preserves `of-nat`,  --
--- whatever it does otherwise.                                         --
---                                                                     --
--- A cost model `ks` weighs the counters, and `weigh ks` sums the      --
--- weighted counts in `G`, each counter's bound taken `k` times over.  --
--- With time paired alongside, as `counts ×ᵍ time` with                --
---                                                                     --
---   (c , t)  ↦  t · weigh ks c                                        --
---                                                                     --
--- the unit, the product, monotonicity, the inclusion of ℕ and the     --
--- greatest grade are all preserved (the last where `G`'s top absorbs, --
--- or is the unit). The join is not: the counts' join is pointwise, so --
--- it can combine the worst case of one counter from one run with that --
--- of another from a different run, and the weighted sum of that       --
--- exceeds both runs' weights, so `weigh` is merely lax: the join of     --
--- the images lies below the image of the join.                         --
+-- Counts and time: no count grade projects onto time, and a cost     --
+-- model preserves all but the join when time is paired with the      --
+-- counts.                                                            --
+--                                                                    --
+-- In a count grade, `n` time steps are the unit for every `n`, so    --
+-- `of-nat 1` and `of-nat 0` coincide; a time grade distinguishes     --
+-- them, so no morphism from counts to time preserves `of-nat`.       --
+--                                                                    --
+-- A cost model `ks` weighs the counters, and `weigh ks` sums the     --
+-- weighted counts in `G`, the bound of each counter taken `k` times. --
+-- With time paired alongside, as `counts ×ᵍ time` with               --
+--                                                                    --
+--   (c , t)  ↦  t · weigh ks c                                       --
+--                                                                    --
+-- the unit, the product, monotonicity, the inclusion of ℕ and the    --
+-- greatest grade are preserved (the last where the top of `G` is     --
+-- absorbing or is the unit). The join is not: the join of counts is  --
+-- pointwise and may combine the worst case of one counter in one run --
+-- with that of another counter in a different run, whose weighted    --
+-- sum exceeds the weights of both runs. `weigh` is lax: the join of  --
+-- the images lies below the image of the join.                       --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades

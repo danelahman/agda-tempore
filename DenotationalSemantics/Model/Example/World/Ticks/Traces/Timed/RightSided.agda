@@ -1,29 +1,28 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the trace grade of upper bounds.      --
+-- A time-ticks Kripke frame for the trace grade of upper bounds.     --
 --                                                                    --
--- Worlds are time points `ℕ`. A tick world records only elapsed time, --
--- so a grade is read through the durations of the bounds it lists,    --
--- and moving between worlds goes forward and may take no longer than  --
--- one of them:                                                        --
+-- Worlds are time points `ℕ`. A tick world records only elapsed      --
+-- time, and a grade is read through the durations of the bounds it   --
+-- lists: moving between worlds goes forward and takes no longer than --
+-- one of them.                                                       --
 --                                                                    --
 --   w ⊑[ P ] w'   iff   w ≤ w'   and                                 --
---                       w' ≤ w + duration p   for some p ∈ P          --
+--                       w' ≤ w + duration p   for some p ∈ P         --
 --                                                                    --
--- The quantifier is existential because the grade's own order is:     --
--- `P ≾ Q` asks each bound of `P` to stay within one of `Q`, so the    --
--- witnessing bound travels, and it takes no longer at the far end     --
--- because `duration` is monotone for the allowance order.            --
+-- The quantifier is existential, as in the order of the grade:       --
+-- `P ≾ Q` requires each bound of `P` to stay within one of `Q`, so   --
+-- the witnessing bound is transported, and it takes no longer at the --
+-- far end, `duration` being monotone for the allowance order.        --
 --                                                                    --
--- This is the shape of a right-sided interval frame, with the bound   --
--- read off a trace of the grade rather than given outright -- and     --
--- what the tick world cannot see is which operations that trace        --
--- permits, only how long they take.                                  --
+-- This is a right-sided interval frame with the bound read off a     --
+-- trace of the grade; the tick world records how long the operations --
+-- of that trace take, not which operations it permits.               --
 --                                                                    --
--- The grade's `unbounded` lists no bound at all, so it reaches every  --
--- world ahead.                                                        --
+-- The grade `unbounded` lists no bound and reaches every world       --
+-- ahead.                                                             --
 --                                                                    --
--- It is the bound restricted to forward moves: the unit is least, so  --
--- without `w ≤ w'` the unit grade would reach the past.               --
+-- The relation is the bound restricted to forward moves: the unit is --
+-- least, and without `w ≤ w'` the unit grade would reach the past.   --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)

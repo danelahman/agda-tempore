@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of right-sided time paired with a security level.  --
---                                                                     --
--- The expiring-untainted-capability grade `([0, n ] , ℓ)` at the      --
--- sensor node, each operation graded by `slow` and `touches`:         --
--- orderings and sequencing, checked by the grade's own decision       --
--- procedure or by computation.                                        --
+-- Worked instances of right-sided time paired with a security level. --
+--                                                                    --
+-- The expiring-untainted-capability grade `([0, n ] , ℓ)` at the     --
+-- sensor node, each operation graded by `slow` and `touches`:        --
+-- orderings and sequencing, established by the decision procedure of --
+-- the grade or by computation.                                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Product.RightSidedTimeLevel where

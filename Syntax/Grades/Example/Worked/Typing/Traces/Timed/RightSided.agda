@@ -1,30 +1,29 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of trace allowances.        --
---                                                                     --
--- Effect grades and resource grades are both sets of timed traces at   --
--- the allowance order, and each operation is graded by the one-event   --
--- run that performs it. A grade is then a set of bounds, and a         --
--- computation sits below it when each of its runs stays within one:    --
--- the bound's operations are permissions and its delays a budget,      --
--- spent on idling and on operations the bound does not name, at        --
--- `costʰⁱ` -- read 1, write 3, send 6.                                 --
---                                                                     --
--- What this grade sees that a time bound cannot is *which* operations  --
--- a run performed and *where*. So `unbox`'s premise asks that the run  --
--- that actually elapsed be one the box permits, and a claim can be     --
--- refused not for taking too long but for doing the wrong thing, or    --
--- the right things in the wrong order. Both refusals are below.        --
---                                                                     --
--- Sub-effecting is the same order read the other way, and a union is a --
--- join, so a conditional is graded by the union of its branches'       --
--- grades -- where the interval grades had to take a numeric bound      --
--- covering both.                                                       --
---                                                                     --
--- The comments inside the programs say what each former appends to the --
--- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
--- binding. The locks between a box's binding and its `unbox` multiply  --
--- to the run the premise weighs against the box's allowance -- so the  --
--- *order* the comments are read in is part of what is checked.         --
+-- Typed example computations at the grade of trace allowances.       --
+--                                                                    --
+-- Effect grades and resource grades are both sets of timed traces at --
+-- the allowance order, and each operation is graded by the one-event --
+-- run that performs it. A grade is a set of bounds, and a            --
+-- computation lies below it when each of its runs stays within one   --
+-- of them: the operations of the bound are permissions and its       --
+-- delays a budget, spent on idling and on operations the bound does  --
+-- not list, at `costʰⁱ` (read 1, write 3, send 6).                   --
+--                                                                    --
+-- The grade records *which* operations a run performed and *where*.  --
+-- The premise of `unbox` requires the elapsed run to be one the box  --
+-- permits, and a claim can be refused for performing the wrong       --
+-- operations, or the right operations in the wrong order, rather     --
+-- than for taking too long. Both refusals are shown below.           --
+--                                                                    --
+-- Sub-effecting is the same order, and a union is a join, so a       --
+-- conditional is graded by the union of the grades of its branches.  --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding. The locks between the binding of a box and its    --
+-- `unbox` multiply to the run that the premise compares with the     --
+-- allowance of the box, so the order of the locks is part of what is --
+-- checked.                                                           --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.RightSided where
@@ -119,8 +118,9 @@ budget-back-to-the-run = fails
 ------------------------------------------------------------------------
 -- Conditional branching
 --
--- The union of two grades is their join, so the conditional's grade may
--- simply list what each branch does. Neither branch locks the context.
+-- The union of two grades is their join, so the grade of the
+-- conditional lists what each branch does. Neither branch locks the
+-- context.
 
 branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ within ⟅ ⌈ send ⌉ ∣ ⌈ write ⌉ ⟆
 branching =
@@ -137,8 +137,8 @@ transmitting-is-not-storing = fails
 storing-is-not-transmitting : ¬ (opTime write ·ₑ uₑ ≾ₑ within ⟅ ⌈ send ⌉ ⟆)
 storing-is-not-transmitting = fails
 
--- a budget covering the costlier branch does for both, since time buys
--- any work that costs no more
+-- a budget covering the costlier branch covers both, time paying for
+-- any operation that costs no more
 
 timed-branching : [] ∷ Bool ∷ Reading ⊢C⦂ Unit ‼ within ⟅ ⟨ 6 ⟩ ⟆
 timed-branching =
@@ -146,7 +146,7 @@ timed-branching =
     `then coerce holds (perform send  here (return ⋆))
     `else coerce holds (perform write here (return ⋆))
 
--- five ticks do not buy a transmission
+-- five ticks do not pay for a transmission
 
 five-ticks-are-short : ¬ (opTime send ·ₑ uₑ ≾ₑ within ⟅ ⟨ 5 ⟩ ⟆)
 five-ticks-are-short = fails

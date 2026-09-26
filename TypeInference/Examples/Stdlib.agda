@@ -1,16 +1,16 @@
 ------------------------------------------------------------------
--- Inference on the prototype's standard library                  --
---                                                                --
--- Nine functions of tempore-lang's standard library              --
--- (`src/06-user-interface/core/stdlib.tpe`), written as raw      --
--- terms. None has a handler, and each is typable at a closed     --
--- instance, so at every grade inference neither gets stuck nor   --
--- refuses: `infer [] p` is `typed` (`p-typed`), a theorem over   --
--- an arbitrary language.                                         --
---                                                                --
--- `expected-p` is the scheme inference reports, written once     --
--- over the language; the instances under `Stdlib/` check it by   --
--- `refl` at concrete grades.                                     --
+-- Inference on the prototype's standard library                --
+--                                                              --
+-- Nine functions of tempore-lang's standard library            --
+-- (`src/06-user-interface/core/stdlib.tpe`), written as raw    --
+-- terms. None has a handler, and each is typable at a closed   --
+-- instance, so at every grade inference neither gets stuck nor --
+-- refuses: `infer [] p` is `typed` (`p-typed`), a theorem over --
+-- an arbitrary language.                                       --
+--                                                              --
+-- `expected-p` is the scheme inference reports, written once   --
+-- over the language; the instances under `Stdlib/` check it by --
+-- `refl` at concrete grades.                                   --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Reindexing a Kripke frame, along the grades or along the worlds.    --
 --                                                                     --
 -- A frame reads only a grade's carrier, unit, product and order, so a --
@@ -13,7 +13,7 @@
 --                                                                     --
 -- Every law of a frame is universal in the worlds, so any function    --
 -- into the worlds carries a frame back as well (`reindexʷ`).          --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.World.Reindex where
 

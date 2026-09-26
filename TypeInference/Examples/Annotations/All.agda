@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Annotations: the generic module and its instances              --
+-- Annotations: the generic module and its instances            --
 ------------------------------------------------------------------
 
 module TypeInference.Examples.Annotations.All where

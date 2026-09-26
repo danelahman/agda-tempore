@@ -1,9 +1,11 @@
 ------------------------------------------------------------------
--- Strengthens away a rigid effect-grade variable when leaving    --
--- its scope.                                                     --
--- `popˢ`/`unpopˢ` relocate the rigid to the newest position; the --
--- escape lemma shows a failed strengthening refutes every        --
--- instance that keeps the rigid an eigenvariable.                --
+-- Strengthening away a rigid variable                          --
+--                                                              --
+-- A rigid effect-grade variable is strengthened away when its  --
+-- scope is left. `popˢ` and `unpopˢ` move the rigid to the     --
+-- newest position. The escape lemma states that a failed       --
+-- strengthening refutes every instance that keeps the rigid an --
+-- eigenvariable.                                               --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -201,8 +203,7 @@ mutual
   str-wkᶜ (A ‼ ε) = cong₂ (zip₂ _‼_) (str-wkᵛ A) (str-wkᵉ ε)
 
 -- Assembles the pointwise partial results of the three finite sorts by
--- a finite traversal. The auxiliaries take the scrutinee explicitly,
--- keeping the case analysis visible to callers.
+-- a finite traversal. The auxiliaries take the scrutinee explicitly.
 
 seqFinᵃ : ∀ {n} {X : Set} → (P : Fin (nsuc n) → X → Set)
         → Maybe (Σ[ x ∈ X ] P zero x)

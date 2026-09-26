@@ -1,9 +1,9 @@
-------------------------------------------------------------------
--- The standard library at timed traces, allowance order          --
---                                                                --
--- The unit is least, and multiplication does not commute: every  --
--- scheme is the shared one.                                      --
-------------------------------------------------------------------
+-------------------------------------------------------------------
+-- The standard library at timed traces, allowance order         --
+--                                                               --
+-- The unit is least, and multiplication does not commute: every --
+-- scheme is the shared one.                                     --
+-------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

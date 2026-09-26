@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- The power of a Kripke frame, for the power of a grade.              --
---                                                                     --
--- A frame for `G` gives one for `power n`, the `n` counters each      --
--- graded by `G`: a world is a vector of `n` worlds, one per counter,  --
--- and accessibility holds on each counter separately:                 --
---                                                                     --
---   ws ⊑ⱽ[ ρs ] ws'   iff   ws i ⊑[ ρs i ] ws' i   for every i        --
---                                                                     --
--- Every law holds pointwise, with no condition on the frame.          --
+-- The power of a Kripke frame, for the power of a grade.             --
+--                                                                    --
+-- A frame for `G` gives one for `power n`, the `n` counters each     --
+-- graded by `G`: a world is a vector of `n` worlds, one per counter, --
+-- and accessibility holds on each counter separately:                --
+--                                                                    --
+--   ws ⊑ⱽ[ ρs ] ws'   iff   ws i ⊑[ ρs i ] ws' i   for every i       --
+--                                                                    --
+-- Every law holds pointwise, with no condition on the frame.         --
 ------------------------------------------------------------------------
 
 open import Syntax.Grades using (Grade)

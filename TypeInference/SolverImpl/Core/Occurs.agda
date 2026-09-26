@@ -1,16 +1,16 @@
 ------------------------------------------------------------------
--- Occurrence of a variable, and strengthening along it           --
---                                                                --
--- `occ*` say whether a variable of one of the three sorts occurs --
--- syntactically in an expression of one of the four categories.  --
--- The sorts are stratified, so only the traversals that cross a  --
--- sort boundary (`∣_∣̂ᵉ`, `[_]_`, `_‼_`) can report an            --
--- occurrence.                                                    --
---                                                                --
--- `chk*` combine the check with the renaming: an expression in   --
--- which the variable does not occur is one of the smaller scope, --
--- and the single-binding substitution of `Core.For` computes the --
--- renaming, its image being immaterial.                          --
+-- Occurrence of a variable, and strengthening along it         --
+--                                                              --
+-- `occ*` decide whether a variable of one of the three sorts   --
+-- occurs syntactically in an expression of one of the four     --
+-- categories. The sorts are stratified: only the traversals    --
+-- that cross a sort boundary (`∣_∣̂ᵉ`, `[_]_`, `_‼_`) can find  --
+-- an occurrence.                                               --
+--                                                              --
+-- `chk*` combine the check with the renaming: an expression in --
+-- which the variable does not occur is strengthened to the     --
+-- smaller scope, by the single-binding substitution of         --
+-- `Core.For` at an arbitrary image.                            --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)

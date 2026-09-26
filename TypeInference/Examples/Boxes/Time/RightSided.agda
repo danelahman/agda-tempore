@@ -1,11 +1,11 @@
 ------------------------------------------------------------------
--- Boxes at right-sided intervals                                 --
---                                                                --
--- "At most `n` ticks": a box is a lease, claimable while the     --
--- elapsed time is at most its grade, and `var`'s bound           --
--- `ρ ≾ uᵣ` holds only at `[0, 0 ]`, so no non-eternal variable   --
--- survives a tick. A late claim is refused; there is no early    --
--- one.                                                           --
+-- Boxes at right-sided intervals                               --
+--                                                              --
+-- "At most `n` ticks": a box is a lease, claimable while the   --
+-- elapsed time is at most its grade, and `var`'s bound         --
+-- `ρ ≾ uᵣ` holds only at `[0, 0 ]`, so no non-eternal variable --
+-- survives a tick. A late claim is refused; there is no early  --
+-- one.                                                         --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

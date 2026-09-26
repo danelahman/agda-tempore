@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- The operations on canonical tables are correct.                     --
---                                                                     --
--- Each operation returns a well-formed canonical table (one that      --
--- `canon` fixes) recognising the language it is named for.            --
+-- The operations on canonical tables are correct.                    --
+--                                                                    --
+-- Each operation returns a well-formed canonical table (one that     --
+-- `canon` fixes) recognising the language it is named for.           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

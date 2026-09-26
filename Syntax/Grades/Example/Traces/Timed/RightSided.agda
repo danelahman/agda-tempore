@@ -1,15 +1,15 @@
 ------------------------------------------------------------------------
--- Sets of timed traces as upper bounds, at the allowance order.       --
+-- Sets of timed traces as upper bounds, at the allowance order.      --
 --                                                                    --
--- `Example.Traces.Lifted.RightSided` at `Traces.Allowance`'s `_≼ᵃ_`.  --
--- A grade lists bounds, and a run stays within one of them when the   --
--- bound names every operation the run performs, or leaves enough      --
--- budget to cover the ones it does not, and enough for the run's own  --
--- idling. Budget is local: what the bound offers between two          --
--- operations it names pays only for what the run does between those   --
--- same two, so a bound says when its slack is available.              --
---                                                                     --
--- A bound charges an operation `costʰⁱ`, the most time it can take.    --
+-- `Example.Traces.Lifted.RightSided` at the order `_≼ᵃ_` of          --
+-- `Traces.Allowance`. A grade lists bounds, and a run stays within a --
+-- bound when the bound lists every operation the run performs, or    --
+-- leaves enough budget to cover those it does not list, and enough   --
+-- for the idling of the run. The budget is local: what the bound     --
+-- offers between two listed operations pays only for what the run    --
+-- does between the same two.                                         --
+--                                                                    --
+-- A bound charges an operation `costʰⁱ`, the most time it can take.  --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _<_)

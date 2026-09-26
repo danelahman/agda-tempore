@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- The extended non-negative rationals ℚ∞.                             --
---                                                                     --
--- The dense counterpart of `Time.ExtendedNat`: `↑ q` is the finite     --
--- value `q : ℚ≥0` and `∞` the point at infinity, absorbing in addition --
--- and above everything in the order. The lemmas carry the names of     --
--- their `ExtendedNat` counterparts.                                    --
---                                                                     --
--- `ℕ∞→ℚ∞` embeds the extended naturals, preserving addition, the       --
--- order and the maximum.                                               --
+-- The extended non-negative rationals ℚ∞.                            --
+--                                                                    --
+-- The dense counterpart of `Time.ExtendedNat`: `↑ q` is the finite   --
+-- value `q : ℚ≥0` and `∞` the point at infinity, absorbing for       --
+-- addition and greatest in the order. The lemmas are named after     --
+-- their `ExtendedNat` counterparts.                                  --
+--                                                                    --
+-- `ℕ∞→ℚ∞` embeds the extended naturals, preserving addition, the     --
+-- order and the maximum.                                             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.ExtendedRational where

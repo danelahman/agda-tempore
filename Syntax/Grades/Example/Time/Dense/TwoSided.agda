@@ -1,16 +1,16 @@
 ------------------------------------------------------------------------
--- Two-sided (closed) intervals of dense time, with a possibly-        --
--- infinite right-hand endpoint, as grades.                            --
---                                                                     --
--- A grade `[ min , max ]` bounds the elapsed time from both sides:     --
--- "between `min` and `max` time units", `min` a non-negative rational  --
--- and `max` an extended one, `∞` imposing no upper bound. A delay of   --
--- half a unit is `[ 1 / 2 , ↑ 1 / 2 ]`, a task taking at least 1 and   --
--- at most 2.5 units is `[ # 1 , ↑ 5 / 2 ]`. The order is containment,  --
--- so a wider window is the weaker grade.                               --
---                                                                     --
--- The discrete windows of `Time.TwoSidedWithInfinity` embed, a window  --
--- of time steps reading as the same window of dense time.              --
+-- Two-sided (closed) intervals of dense time, with a possibly        --
+-- infinite right-hand endpoint, as grades.                           --
+--                                                                    --
+-- A grade `[ min , max ]` bounds the elapsed time from both sides,   --
+-- "between `min` and `max` time units", `min` a non-negative         --
+-- rational and `max` an extended one, `∞` imposing no upper bound. A --
+-- delay of half a unit is `[ 1 / 2 , ↑ 1 / 2 ]`, and a task taking   --
+-- at least 1 and at most 2.5 units is `[ # 1 , ↑ 5 / 2 ]`. The order --
+-- is containment, and a wider window is the weaker grade.            --
+--                                                                    --
+-- The discrete windows of `Time.TwoSidedWithInfinity` embed, a       --
+-- window of time steps being read as the same window of dense time.  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.TwoSided where

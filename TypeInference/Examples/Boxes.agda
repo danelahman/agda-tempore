@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Inference on boxes and delays                                  --
 --                                                                --
 -- Programs exercising `box`, `unbox` and `delay`. None has an    --
@@ -23,7 +23,7 @@
 --                                                                --
 -- The instances under `Boxes/` check the verdicts and schemes by --
 -- `refl` at the four example grades.                             --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)

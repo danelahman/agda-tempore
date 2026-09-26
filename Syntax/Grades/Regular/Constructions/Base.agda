@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Shared lemmas for the constructions: Boolean tests, finite sets of   --
--- states as strictly increasing lists, enumerations, and tables.      --
+-- Shared lemmas for the constructions: Boolean tests, finite sets of --
+-- states as strictly increasing lists, enumerations, and tables.     --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _*_; _^_; _≡ᵇ_; _<ᵇ_; _≤_; _<_; z≤n; s≤s)

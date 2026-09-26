@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- The decision procedures are correct.                                --
---                                                                     --
--- `counterexample L M` returns a word exactly when `L ⊈ M`, and the   --
--- word it returns is in `L` and not in `M`; so `_⊆ᵇ_` decides         --
--- inclusion. Non-emptiness, well-formedness and equality of tables    --
--- are decided alongside.                                              --
+-- The decision procedures are correct.                               --
+--                                                                    --
+-- `counterexample L M` returns a word exactly when `L ⊈ M`, and the  --
+-- word it returns is in `L` and not in `M`; so `_⊆ᵇ_` decides        --
+-- inclusion. Non-emptiness, well-formedness and equality of tables   --
+-- are decided alongside.                                             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_; _≤_; _<_; _*_; _≡ᵇ_; z≤n; s≤s)

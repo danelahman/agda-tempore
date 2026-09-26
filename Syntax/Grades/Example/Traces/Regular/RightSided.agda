@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- Regular sets of timed traces as upper bounds, at the subset order.  --
---                                                                     --
--- A grade is a non-empty regular set of timed traces, read against    --
--- the runs `X` a computation may have as                              --
---                                                                     --
---   X is graded by L   iff   every run in X is permitted by L         --
---                                                                     --
--- where `L` permits a run when the run's encoding is in `L`.          --
--- Weakening is inclusion, the product sequences runs, the join is     --
--- union, `⊤` permits every run and `u` the empty run alone. Unlike    --
--- the finite sets of `Traces.Subsets.RightSided`, the carrier has a   --
--- greatest element of its own, every run, and it is not absorbing:   --
--- `{ ⟨1⟩ } · ⊤` permits only runs beginning with a delay.             --
+-- Regular sets of timed traces as upper bounds, at the subset order. --
+--                                                                    --
+-- A grade is a non-empty regular set of timed traces, read against   --
+-- the runs `X` a computation may have as                             --
+--                                                                    --
+--   X is graded by L   iff   every run in X is permitted by L        --
+--                                                                    --
+-- where `L` permits a run when the encoding of the run is in `L`.    --
+-- Weakening is inclusion, the product sequences runs, the join is    --
+-- union, `⊤` permits every run, and `u` permits only the empty run.  --
+-- The greatest element, the set of all runs, lies in the carrier and --
+-- is not absorbing: `{ ⟨1⟩ } · ⊤` permits only runs beginning with a --
+-- delay.                                                             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; suc)

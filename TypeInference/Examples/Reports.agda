@@ -1,21 +1,22 @@
 ------------------------------------------------------------------
--- Report simplification                                          --
---                                                                --
--- Two schemes the report simplifies before it is printed.        --
---                                                                --
--- `reused-around-claim` uses a variable on both sides of a box's --
--- claim, so it owes two var-rule disjunctions, `eternal α ∨      --
--- ∣ε_f∣ ≾ uᵣ` and `eternal α ∨ ∣ε_f∣·∣ε_g∣ ≾ uᵣ`. Where the unit  --
--- is least, the second entails the first, which is dropped.      --
---                                                                --
--- `claimed-after-call` claims a box in a clause built after a    --
--- call, so the least box grade is `∣ε_f∣ · ⊤ᵣ`, a product with   --
--- the top among its factors; the top absorbs it.                 --
---                                                                --
--- Both simplifications happen where the unit is least, so the    --
--- instances under `Reports/` check them at the right-sided       --
--- grades; at the left-sided ones the schemes are already         --
--- settled, and there is no instance.                              --
+-- Report simplification                                        --
+--                                                              --
+-- Two schemes that the report simplifies.                      --
+--                                                              --
+-- `reused-around-claim` uses a variable on both sides of a     --
+-- box's claim and so owes two var-rule disjunctions,           --
+-- `eternal α ∨ ∣ε_f∣ ≾ uᵣ` and `eternal α ∨ ∣ε_f∣·∣ε_g∣ ≾ uᵣ`. --
+-- Where the unit is least, the second entails the first, which --
+-- is dropped.                                                  --
+--                                                              --
+-- `claimed-after-call` claims a box in a clause built after a  --
+-- call, so the least box grade is `∣ε_f∣ · ⊤ᵣ`, a product with --
+-- the top among its factors, which the top absorbs.            --
+--                                                              --
+-- Both simplifications apply where the unit is least; the      --
+-- instances under `Reports/` check them at the right-sided     --
+-- grades. At the left-sided grades the schemes are settled     --
+-- without them, and there is no instance.                      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥-elim)

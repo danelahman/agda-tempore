@@ -1,34 +1,31 @@
 ------------------------------------------------------------------------
--- Worked instances of the trace grade of guarantees, at the coverage  --
--- order.                                                              --
---                                                                     --
--- A grade lists traces, and whatever the computation does, at least    --
--- one of them has been covered: every operation it names occurred, in  --
--- order, and every delay it names was spent where it is placed. So     --
--- `⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉` reads "took a reading, let it settle   --
--- two ticks, then transmitted", and settling time counts only if it    --
--- falls between the two.                                              --
---                                                                     --
--- The set is read *disjunctively*: a longer list is a weaker grade,    --
--- since there are more ways to have discharged it. That is what makes  --
--- the union of two grades their join, and it is the reading a          --
--- branching construct needs. A listed trace that another listed one    --
--- already guarantees adds no way of discharging the grade, so the      --
--- members are cut down to the antichain of the weakest of them and     --
--- mutually-weakening grades are literally equal.                       --
---                                                                     --
--- A guarantee is credited at `costˡᵒ` -- read 1, write 2, send 4 --    --
--- since that is all an operation is certain to take. The runs below    --
--- are then guaranteed                                                  --
---                                                                     --
---   ⌈ read ⌉                                       1 tick             --
---   ⌈ write ⌉                                      2 ticks            --
---   ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉                7 ticks            --
---   ⌈ write ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉                7 ticks            --
---   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉                    7 ticks            --
---                                                                     --
--- Every run is written out in full in every claim, and every claim is  --
--- closed by running the grade's own decision procedure.                --
+-- Worked instances of the trace grade of guarantees, at the coverage --
+-- order.                                                             --
+--                                                                    --
+-- A grade lists traces, and in every run of the computation at least --
+-- one of them is covered: every operation it lists occurred, in      --
+-- order, and every delay it lists elapsed where it is placed. Thus   --
+-- `⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉` reads "took a reading, let it settle --
+-- for two ticks, then transmitted", and settling time counts only if --
+-- it falls between the two operations.                               --
+--                                                                    --
+-- The set is read *disjunctively*: a longer list is a weaker grade,  --
+-- and the union of two grades is their join. The members are reduced --
+-- to the antichain of the weakest of them, and mutually weakening    --
+-- grades are equal.                                                  --
+--                                                                    --
+-- A guarantee credits an operation with `costˡᵒ` (read 1, write 2,   --
+-- send 4), the time it is certain to take. The runs below are then   --
+-- guaranteed                                                         --
+--                                                                    --
+--   ⌈ read ⌉                                       1 tick            --
+--   ⌈ write ⌉                                      2 ticks           --
+--   ⌈ read ⌉ ∙ ⌈ write ⌉ ∙ ⌈ send ⌉                7 ticks           --
+--   ⌈ write ⌉ ∙ ⌈ read ⌉ ∙ ⌈ send ⌉                7 ticks           --
+--   ⌈ read ⌉ ∙ ⟨ 2 ⟩ ∙ ⌈ send ⌉                    7 ticks           --
+--                                                                    --
+-- Every run is written out in full in every claim, and every claim   --
+-- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Timed.LeftSided where
@@ -59,12 +56,10 @@ order = refl
 ------------------------------------------------------------------------
 -- Writing down finite sets of traces
 --
--- `⟅ t ∣ u ⟆` is the grade whose members are `t` and `u`. At these
--- sizes writing the members out is the clearest thing to do. The
--- members may be given in whatever order reads best, and are
--- normalised into the canonical antichain: naming a trace twice, or
--- naming one that another of them already guarantees, names the same
--- grade as leaving it out.
+-- `⟅ t ∣ u ⟆` is the grade whose members are `t` and `u`. The members
+-- may be given in any order and are normalised into the canonical
+-- antichain: naming a trace twice, or naming one that another member
+-- already guarantees, names the same grade as leaving it out.
 
 ⟅_⟆ : Trace → Antichain
 ⟅ t ⟆ = acSet (t ∷ []) tt
@@ -119,8 +114,8 @@ everything-guarantees-the-empty-trace = holdsᵉ ⟅ ⌈ read ⌉ ⟆ ⟅ ε ⟆
 --
 -- The direction that holds is operation to time: a store covers a
 -- two-tick guarantee, at its best-case execution time. Time never
--- covers an operation, which is what a guarantee needs and what the
--- allowance order deliberately does not have.
+-- covers an operation, as a guarantee requires; under the allowance
+-- order it does.
 
 a-store-guarantees-two-ticks : ⟅ ⌈ write ⌉ ⟆ ≾ ⟅ ⟨ 2 ⟩ ⟆
 a-store-guarantees-two-ticks = holds
@@ -161,9 +156,9 @@ both-guarantee-the-bare-pair = holds
 ------------------------------------------------------------------------
 -- As an effect grade: what `coerce` may do
 --
--- Every claim above is a coercion. Two more that matter: sub-effecting
--- passes through sequencing, and a computation with two possible runs
--- is graded by listing what each guarantees.
+-- Every claim above is a coercion. Further: sub-effecting passes
+-- through sequencing, and a computation with two possible runs is
+-- graded by listing what each guarantees.
 
 weakening-under-sequencing :
   (⟅ ⌈ read ⌉ ∙ ⌈ write ⌉ ⟆ · ⟅ ⌈ send ⌉ ⟆)

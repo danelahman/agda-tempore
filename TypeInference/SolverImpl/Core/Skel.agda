@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Skeletons: open types with every grade slot deleted            --
 --                                                                --
 -- A skeleton records the shape of an open type and nothing else: --
@@ -14,7 +14,7 @@
 --                                                                --
 -- Substitution, `_forᵏ_` and `checkᵏ` follow McBride's           --
 -- structural unification (JFP 2003), here at one sort.           --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; punchIn)
 open import Data.Maybe.Base using (Maybe; just; nothing; maybe′) renaming (map to mmap)

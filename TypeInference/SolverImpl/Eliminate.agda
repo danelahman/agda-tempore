@@ -1,48 +1,55 @@
 ------------------------------------------------------------------
--- Eliminating an unknown from a report                           --
---                                                                --
--- An unknown occurring below nowhere else is sent to the join of --
--- the hypotheses bounding it below, and those hypotheses go with --
--- it; an unknown absent from the reported type is eliminated     --
--- outright by the same step. Dually, a grade unknown occurring   --
--- above nowhere but in the hypotheses bounding it above is sent  --
--- to a bound decided (from no hypotheses) below the others, and  --
--- those hypotheses go with it. The bounds are read off by        --
--- `Bounds` (`lowsOf`, `upsOf`). The two grade sorts are treated  --
--- alike; open types carry no join, so a type variable is         --
--- eliminated against a single bound.                             --
---                                                                --
--- A grade unknown the hypotheses equate with an expression free  --
--- of it is replaced by that expression everywhere, the orderings --
--- made reflexive going with it; of two equal unknowns the one of --
--- smaller index stays. This step is tried before the steps       --
--- against a bound, and they alternate.                           --
---                                                                --
--- A type variable on a cycle of subtyping atoms is sent to the   --
--- representative of its strongly connected component (`Reach`),  --
--- the atoms made reflexive going with it: a member never         --
--- eliminated where there is one, else the least, each by index;  --
--- two members never eliminated both stay. This step is tried     --
--- before the type variables' step against a bound.               --
---                                                                --
--- Contract (`Elim`). Every step is a substitution `η`: the new   --
--- type is the old one along `η`, up to convertibility (`conv`),  --
--- and the new hypotheses entail the old ones along `η` (`inst`). --
--- Every closed instance of the old hypotheses is one of the new  --
--- (`keep`), and there the new type is a subtype of the old       --
--- (`princ`). Steps compose (`_⨾ᴱ_`). The unknowns of a given set --
--- are never eliminated, so `η` fixes them (`Elimᶠ`). Which       --
--- unknowns remain is not claimed: a step is taken where its test --
--- succeeds. Of a step against a bound, the hypotheses it keeps   --
--- on the unknown's sort are entailed by `Bounds` (`lowerR`,      --
--- `raiseL`); the type, the other sort and the disjunctions are   --
--- kept by polarity (`Monoᵉ`, `Raiseᵉ` and their siblings). Of    --
--- a step by equality (`equateᵉ`, `equateʳ`, `equateᵗ`), the      --
--- hypotheses bound `η` by the identity both ways, so it moves no --
--- type (`Equal`).                                                --
---                                                                --
--- Following Pottier's simplification of subtyping constraints    --
--- (ICFP 1996).                                                   --
+-- Eliminating an unknown from a report                         --
+--                                                              --
+-- An unknown that no demand bounds below, other than the       --
+-- hypotheses bounding it below, is sent to the join of those   --
+-- lower bounds, which are removed with it; an unknown absent   --
+-- from the reported type is eliminated outright by the same    --
+-- step. Dually, a grade unknown that no demand bounds above,   --
+-- other than the hypotheses bounding it above, is sent to an   --
+-- upper bound decided (from no hypotheses) below the others,   --
+-- and those hypotheses are removed with it. The bounds are     --
+-- read off by `Bounds` (`lowsOf`, `upsOf`); the demands are    --
+-- those of `Polarity`. The two grade sorts are treated alike;  --
+-- open types have no join, so a type variable is eliminated    --
+-- against a single bound.                                      --
+--                                                              --
+-- A grade unknown that the hypotheses equate with an           --
+-- expression free of it is replaced by that expression         --
+-- everywhere, and the orderings made reflexive are removed; of --
+-- two equal unknowns, the one of smaller index remains. This   --
+-- step is tried before the steps against a bound, and the two  --
+-- alternate.                                                   --
+--                                                              --
+-- Cycle elimination: a type variable on a cycle of subtyping   --
+-- atoms is sent to the representative of its strongly          --
+-- connected component (`Reach`), and the atoms made reflexive  --
+-- are removed. The representative is a member that is never    --
+-- eliminated, if there is one, and otherwise the least member, --
+-- by index; two members that are never eliminated both remain. --
+-- This step is tried before the type variables' step against a --
+-- bound.                                                       --
+--                                                              --
+-- Contract (`Elim`). Every step is a substitution `η`: the new --
+-- type is the old one along `η`, up to convertibility          --
+-- (`conv`), and the new hypotheses entail the old ones along   --
+-- `η` (`inst`). Every closed instance of the old hypotheses is --
+-- one of the new (`keep`), at which the new type is a subtype  --
+-- of the old (`princ`). Steps compose (`_⨾ᴱ_`). The unknowns   --
+-- of a given set are never eliminated, and `η` fixes them      --
+-- (`Elimᶠ`). Which unknowns remain is not claimed: a step is   --
+-- taken where its test succeeds. For a step against a bound,   --
+-- the hypotheses it keeps on the unknown's sort are entailed   --
+-- by `Bounds` (`lowerR`, `raiseL`); the type, the other sort   --
+-- and the disjunctions are kept by polarity (`Monoᵉ`, `Raiseᵉ` --
+-- and their counterparts). For a step by equality (`equateᵉ`,  --
+-- `equateʳ`, `equateᵗ`), the hypotheses bound `η` by the       --
+-- identity in both directions, and it moves no type (`Equal`). --
+--                                                              --
+-- The polarity-based elimination follows Pottier's             --
+-- simplification of subtyping constraints (ICFP 1996); cycle   --
+-- elimination follows Fähndrich, Foster, Su and Aiken (PLDI    --
+-- 1998).                                                       --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; not; _∨_; _∧_) renaming (Bool to 𝔹)
@@ -94,8 +101,8 @@ open import TypeInference.SolverImpl.Bounds      S
   using (module Bᵉ; module Bʳ; updᵉ-e; updʳ-r; joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩;
          joinᵣ-ub⊩; joinᵣ-lub⊩)
 
--- Updating one slot of a finitely indexed family, structurally so that
--- both equations hold without deciding equality in the definition.
+-- Updating one slot of a finitely indexed family, by structural
+-- recursion on the index, without a decision of equality.
 
 upd : ∀ {n} {A : Set} → Fin n → A → (Fin n → A) → Fin n → A
 upd zero    a f zero    = a

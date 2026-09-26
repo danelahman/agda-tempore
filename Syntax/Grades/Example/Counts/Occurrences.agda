@@ -1,15 +1,15 @@
 ------------------------------------------------------------------------
--- How often a timed trace draws on each counter.                      --
---                                                                     --
--- `index : Op → Fin n` says which of the `n` counters an operation    --
--- draws on. At a bijection that is one counter per operation; a       --
--- coarser `index` pools operations into one quota. Delays draw on no  --
--- counter.                                                            --
---                                                                     --
--- A count is additive for sequencing, so over a language product the  --
--- greatest (and least) count is the sum of the factors' greatest      --
--- (and least) counts: on each counter separately, the extreme is      --
--- reached by pairing an extreme member of each factor.                --
+-- How often a timed trace draws on each counter.                     --
+--                                                                    --
+-- `index : Op → Fin n` assigns to each operation the counter it      --
+-- draws on. At a bijection there is one counter per operation; a     --
+-- coarser `index` pools operations into one quota. Delays draw on no --
+-- counter.                                                           --
+--                                                                    --
+-- A count is additive for sequencing, so over a language product the --
+-- greatest (and least) count is the sum of the greatest (and least)  --
+-- counts of the factors: on each counter separately, the extreme is  --
+-- attained by pairing an extreme member of each factor.              --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

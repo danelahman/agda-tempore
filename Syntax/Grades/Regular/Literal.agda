@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Grade literals: extended regular expressions with non-empty         --
--- languages.                                                          --
---                                                                     --
--- `⌊ e ⌋` is the grade of the expression `e`. Its argument that the   --
--- language is non-empty is implicit, the `True` of a decision, so at  --
+-- Grade literals: extended regular expressions with non-empty        --
+-- languages.                                                         --
+--                                                                    --
+-- `⌊ e ⌋` is the grade of the expression `e`. Its argument that the  --
+-- language is non-empty is implicit, the `True` of a decision, so at --
 -- a concrete expression it is found by computation, and an empty     --
--- literal is rejected when the program is checked.                    --
+-- literal is rejected when the program is checked.                   --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ)

@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Kleene star: the set construction is lawful, and its language is    --
--- the iteration of the language.                                      --
---                                                                     --
--- State `nothing` stands for `L *`; state `just S` for                --
--- `⋃_{q ∈ S} L_q · L *`. The sets built are closed: `0 ∈ S` whenever  --
--- some member is final, which lets `S` restart after a completed      --
--- factor.                                                             --
+-- Kleene star: the set construction is lawful, and its language is   --
+-- the iteration of the language.                                     --
+--                                                                    --
+-- State `nothing` stands for `L *`; state `just S` for               --
+-- `⋃_{q ∈ S} L_q · L *`. The sets built are closed: `0 ∈ S` whenever --
+-- some member is final, which lets `S` restart after a completed     --
+-- factor.                                                            --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_; _≤_; _<_; z≤n; s≤s)

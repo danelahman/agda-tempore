@@ -1,20 +1,19 @@
 ------------------------------------------------------------------------
--- Worked instances of the trace grades.                               --
---                                                                     --
--- One module per grade, each worked out twice over: once as an effect  --
--- grade, where `coerce` moves along the order, and once as a resource  --
--- grade, where `unbox` discharges its premise against it.              --
---                                                                     --
--- Read the two families side by side and the difference is in what     --
--- one trace may do for another. `Timed.*` lets time pay for work in    --
--- one direction and work pay for time in the other; `Subsets.*` lets   --
--- nothing pay for anything, so a grade has to list what it means.      --
--- `Regular.*` compares as `Subsets.*` does, over regular sets of      --
--- runs, and is worked out at its order and operations alone.         --
---                                                                     --
--- Every run is written out in full in every claim, and every claim is  --
--- closed by running the grade's own decision procedure, so the tables  --
--- are checked rather than annotated.                                   --
+-- Worked instances of the trace grades.                              --
+--                                                                    --
+-- One module per grade, each worked out twice: as an effect grade,   --
+-- along whose order `coerce` moves, and as a resource grade, against --
+-- which `unbox` discharges its premise.                              --
+--                                                                    --
+-- The families differ in what a trace may stand in for. Under        --
+-- `Timed.*`, time pays for operations in one direction and           --
+-- operations pay for time in the other; under `Subsets.*` neither    --
+-- pays for the other, and a grade lists the runs it permits.         --
+-- `Regular.*` compares as `Subsets.*` does, over regular sets of     --
+-- runs, and is worked out at its order and operations only.          --
+--                                                                    --
+-- Every run is written out in full in every claim, and every claim   --
+-- is established by the decision procedure of the grade.             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces where

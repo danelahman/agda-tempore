@@ -1,26 +1,26 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the right-sided time intervals as the --
--- resource grades.                                                    --
---                                                                     --
--- Worlds are time points `ℕ`. A right-sided resource grade `[0, n ]`  --
--- ("at most `n` ticks", with `n : ℕ∞`) reaches the worlds ahead by at --
--- most `n` ticks, an infinite `n` bounding nothing:                   --
---                                                                     --
---   w ⊑[ [0, n ] ] w'   iff   w ≤ w'   and   ↑ w' ≤∞ ↑ w +∞ n         --
---                                                                     --
--- the mirror image of `Time.LeftSided`'s frame, which asks the world  --
--- to advance by *at least* the bound. Multiplying grades adds the     --
--- bounds, so composing two accessibilities advances by at most their  --
--- sum, and a larger bound -- the weaker grade -- gives a larger       --
--- relation.                                                           --
---                                                                     --
--- It is the upper bound restricted to forward moves: the unit is      --
--- least, so without `w ≤ w'` the unit grade would reach the past.     --
---                                                                     --
--- Together with `Time.LeftSided` and `Time.TwoSidedWithInfinity` this --
--- completes the interval family: every grade `Grades.Example.Time`    --
--- defines has a tick frame, and the frame's direction is read off the --
--- grade's.                                                            --
+-- A time-ticks Kripke frame for the right-sided time intervals as    --
+-- the resource grades.                                               --
+--                                                                    --
+-- Worlds are time points `ℕ`. A right-sided resource grade `[0, n ]` --
+-- ("at most `n` ticks", with `n : ℕ∞`) reaches the worlds ahead by   --
+-- at most `n` ticks, an infinite `n` imposing no bound:              --
+--                                                                    --
+--   w ⊑[ [0, n ] ] w'   iff   w ≤ w'   and   ↑ w' ≤∞ ↑ w +∞ n        --
+--                                                                    --
+-- This is the mirror image of the frame of `Time.LeftSided`, in      --
+-- which the world advances by *at least* the bound. Multiplication   --
+-- of grades adds the bounds, the composite of two accessibilities    --
+-- advances by at most their sum, and a larger bound, the weaker      --
+-- grade, gives a larger relation.                                    --
+--                                                                    --
+-- The relation is the upper bound restricted to forward moves: the   --
+-- unit is least, and without `w ≤ w'` the unit grade would reach the --
+-- past.                                                              --
+--                                                                    --
+-- With `Time.LeftSided` and `Time.TwoSidedWithInfinity`, every grade --
+-- of `Grades.Example.Time` has a tick frame, whose direction is that --
+-- of the grade.                                                      --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided where

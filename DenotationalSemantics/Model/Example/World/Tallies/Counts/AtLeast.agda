@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- A tally Kripke frame for at-least counts.                           --
---                                                                     --
--- A world is a tally, how often each of the `n` counters has been     --
--- drawn on. A guarantee `ks` reaches the tallies that rise on each    --
--- counter by at least its bound:                                      --
---                                                                     --
---   ws ⊑[ ks ] ws'   iff   kᵢ + wᵢ ≤ w'ᵢ   for every counter i        --
---                                                                     --
--- It is the power of the left-sided tick frame, whose lower bound     --
--- keeps every move forward.                                           --
+-- A tally Kripke frame for at-least counts.                          --
+--                                                                    --
+-- A world is a tally, how often each of the `n` counters has been    --
+-- drawn on. A guarantee `ks` reaches the tallies that rise on each   --
+-- counter by at least its bound:                                     --
+--                                                                    --
+--   ws ⊑[ ks ] ws'   iff   kᵢ + wᵢ ≤ w'ᵢ   for every counter i       --
+--                                                                    --
+-- It is the power of the left-sided tick frame, whose lower bound    --
+-- keeps every move forward.                                          --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Tallies.Counts.AtLeast where

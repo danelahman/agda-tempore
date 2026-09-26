@@ -1,38 +1,39 @@
 ------------------------------------------------------------------
--- Values for one unknown, read off the orderings it is in        --
---                                                                --
--- Over the expressions of one grade sort, an unknown `v` and a   --
--- list of orderings. Each rule gives `v` a value where the       --
--- orderings are shaped for it:                                   --
---   * lowering: every ordering holds trivially, has `v` on no    --
---     right side, or is `x ≾ v` with `x` free of `v` (a bound    --
---     below, `Lows`); the value is the join of the bounds, or,   --
---     with none, a least element;                                --
---   * the upper bound: every ordering holds trivially, has `v`   --
---     on no left side, or is `v ≾ x'` with `x'` the bound `U` or --
---     decided (from no hypotheses) above it, `U` free of `v`     --
---     (`Ups`); the value is `U`;                                 --
---   * the top: `v` on no left side (`FreeL`);                    --
---   * an equal value, found by the caller.                       --
--- Which unknowns may move, in which order, and what else a value --
--- must respect are the caller's.                                 --
---                                                                --
--- Contract. The orderings are read through an interpretation of  --
--- the sides before and after the assignment (`f₀`, `f₁`) into a  --
--- preorder, agreeing where `v` does not occur: at an instance    --
--- (`Localise`), or by entailment along the assignment            --
--- (`Eliminate`). Each value keeps every ordering: lowering and   --
--- the least element where they lie below `v` (`lower-keeps`),    --
--- the upper bound and the top where they lie above it            --
--- (`raise-keeps`, `raise-free`), an equal value always           --
--- (`equal-keeps`); an unknown on no right side survives lowering --
--- (`lower-free`). Lowering makes each ordering with `v` on its   --
--- right side hold outright: it is a bound, each bound free of    --
--- `v`, or reflexive (`lower-drops`), so the caller may drop it.  --
--- Lowering is principal: each bound is an ordering below `v`     --
--- (`src`), so wherever the orderings hold their join lies below  --
--- `v` (`joinₑ-lub⊩`). That the upper bound and the top are least --
--- is not claimed.                                                --
+-- Values for one unknown, read off the orderings it occurs in  --
+--                                                              --
+-- The rules below act on an unknown `v` and a list of          --
+-- orderings over the expressions of one grade sort. Each gives --
+-- `v` a value where the orderings have the corresponding       --
+-- shape:                                                       --
+--   * lowering: every ordering holds trivially, has `v` on no  --
+--     right side, or is `x ≾ v` with `x` free of `v` (a lower  --
+--     bound, `Lows`); the value is the join of the lower       --
+--     bounds, or a least element if there are none;            --
+--   * the upper bound: every ordering holds trivially, has `v` --
+--     on no left side, or is `v ≾ x'` with `x'` the bound `U`  --
+--     or decided (from no hypotheses) above it, `U` free of    --
+--     `v` (`Ups`); the value is `U`;                           --
+--   * the top: `v` occurs on no left side (`FreeL`);           --
+--   * an equal value, supplied by the caller. The caller       --
+--     determines which unknowns may be assigned, in which      --
+--     order, and what else a value must respect.               --
+--                                                              --
+-- Contract. The orderings are read through interpretations of  --
+-- the sides before and after the assignment (`f₀`, `f₁`) into  --
+-- a preorder that agree where `v` does not occur: at an        --
+-- instance (`Localise`), or by entailment along the assignment --
+-- (`Eliminate`). Each value keeps every ordering: lowering and --
+-- the least element keep those that lie below `v`              --
+-- (`lower-keeps`), the upper bound and the top those that lie  --
+-- above it (`raise-keeps`, `raise-free`), and an equal value   --
+-- all of them (`equal-keeps`); an unknown on no right side     --
+-- remains so under lowering (`lower-free`). Under lowering,    --
+-- each ordering with `v` on its right side holds outright,     --
+-- being a lower bound, a bound free of `v`, or reflexive       --
+-- (`lower-drops`). Lowering is principal: each lower bound is  --
+-- an ordering below `v` (`src`), so wherever the orderings     --
+-- hold, their join lies below `v` (`joinₑ-lub⊩`). That the     --
+-- upper bound and the top are least is not claimed.            --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -371,9 +372,10 @@ updʳ-r k b (ρ ⊔̂ᵣ ρ')  q with ∨-false (occʳ-r k ρ) (occʳ-r k ρ') q
 ... | q₁ , q₂ = cong₂ _⊔̂ᵣ_ (updʳ-r k b ρ q₁) (updʳ-r k b ρ' q₂)
 updʳ-r k b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (updʳ-e k b ε)
 
--- The join of a non-empty list of bounds, its head named so that a
--- lone bound is its own join and folded to the left so that the join
--- reads in the order the bounds were met, and its least upper bound
+-- The join of a non-empty list of bounds, given as a head and a tail
+-- and folded to the left: a lone bound is its own join, and the join
+-- lists the bounds in the order met; with its least-upper-bound
+-- property
 
 joinₑ : ∀ {Θ} → EExp Θ → List (EExp Θ) → EExp Θ
 joinₑ ε []        = ε

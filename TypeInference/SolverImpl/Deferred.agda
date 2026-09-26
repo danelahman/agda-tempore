@@ -1,9 +1,9 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Deferred rigid conditions                                      --
 --                                                                --
 -- A clause's grade orderings that mix its rigid with outer       --
--- unknowns are deferred as an entry `∀ᵉ j₁ … jₖ. O`: orderings    --
--- over the scope extended by `k` rigids, `j₁` outermost,          --
+-- unknowns are deferred as an entry `∀ᵉ j₁ … jₖ. O`: orderings   --
+-- over the scope extended by `k` rigids, `j₁` outermost,         --
 -- labelled with the operation of the clause that left them. An   --
 -- entry is discharged along a substitution when its orderings    --
 -- are, at fresh rigids, by the hypotheses weakened to them: it   --
@@ -18,7 +18,7 @@
 -- (`closeᵈ`) holds exactly where the entry does at a fresh rigid --
 -- (`closeᵈ-sound`, `closeᵈ-princ`). Retrying the entries is the  --
 -- driver's (`retry`, `SolverImpl.Solve`).                        --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)
 open import Data.List.Base using (List; []; _∷_; map; _++_)

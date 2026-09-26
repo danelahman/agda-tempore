@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------
--- Running a grade's decision procedure, shared by the worked dense-    --
--- time instances.                                                      --
+-- Running a grade's decision procedure, shared by the worked dense-  --
+-- time instances.                                                    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.Dense.Decide where

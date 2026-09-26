@@ -1,17 +1,17 @@
-------------------------------------------------------------------------
--- A time-ticks Kripke frame for the two-sided time intervals with a    --
--- possibly-infinite right endpoint as the resource grades.             --
---                                                                    --
--- Worlds are time points `ℕ`. A resource grade `[ min , max ]` (with    --
--- `max : ℕ∞`) reaches exactly the worlds inside its window ahead; an     --
--- infinite `max` imposes no upper bound (`↑ w' ≤∞ ∞` always holds):      --
---                                                                    --
---   w ⊑[ i ] w'   iff   min i + w ≤ w'   and   ↑ w' ≤∞ (max i +∞ ↑ w)  --
---                                                                    --
--- Multiplying grades (`·ᵢ`) adds the endpoints (with `∞` absorbing on    --
--- the right), so composing two accessibilities advances into the         --
--- summed window.                                                         --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-- A time-ticks Kripke frame for the two-sided time intervals with a   --
+-- possibly-infinite right endpoint as the resource grades.            --
+--                                                                     --
+-- Worlds are time points `ℕ`. A resource grade `[ min , max ]` (with  --
+-- `max : ℕ∞`) reaches exactly the worlds inside its window ahead; an  --
+-- infinite `max` imposes no upper bound (`↑ w' ≤∞ ∞` always holds):   --
+--                                                                     --
+--   w ⊑[ i ] w'   iff   min i + w ≤ w'   and   ↑ w' ≤∞ (max i +∞ ↑ w) --
+--                                                                     --
+-- Multiplying grades (`·ᵢ`) adds the endpoints (with `∞` absorbing on --
+-- the right), so composing two accessibilities advances into the      --
+-- summed window.                                                      --
+-------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity where
 

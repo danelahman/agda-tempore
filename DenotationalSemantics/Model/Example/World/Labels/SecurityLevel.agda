@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- A Kripke frame for security levels: worlds are labels.              --
 --                                                                     --
 -- A world is the label reached so far. It floats upward, and a grade  --
@@ -12,7 +12,7 @@
 --                                                                     --
 -- Generic in the lattice; instances at `Low < High` and at taint      --
 -- sets over `Fin n`, where a world is the set of labels touched.      --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Labels.SecurityLevel where
 

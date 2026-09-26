@@ -1,19 +1,19 @@
 ------------------------------------------------------------------
--- Principality and refutation for the driver, against plain      --
--- satisfaction.                                                  --
---                                                                --
--- `Princ s s' m C`: every instance of `s` that solves `C` from   --
--- no hypotheses and discharges the residual of `s` factors       --
--- through `m` into one discharging the residual of `s'`, a       --
--- rigid-fixing instance staying so. `Refut s C`: no              --
--- rigid-fixing instance discharging the residual of `s` solves   --
--- `C`. `solve-principal` and `solve-fail` prove them for         --
--- `solve`, from the same facts for each stage:                   --
--- `solveEt-princ`/`-fail`, `solveDisj-princ`/`-fail`,            --
--- `reexpand-princ`/`reexpand-fail`, `localise-princ`,            --
--- `splitᴿ-princ`/`splitᴿ-fail`,                                  --
--- `popᵉ-princ`/`popᵉ-escape`/`popᵉ-fail`,                        --
--- `retry-princ`/`retry-fail`.                                    --
+-- Principality and refutation for the driver, against plain    --
+-- satisfaction.                                                --
+--                                                              --
+-- `Princ s s' m C`: every instance of `s` that solves `C` from --
+-- no hypotheses and discharges the residual of `s` factors     --
+-- through `m` into one discharging the residual of `s'`, a     --
+-- rigid-fixing instance staying so. `Refut s C`: no            --
+-- rigid-fixing instance discharging the residual of `s` solves --
+-- `C`. `solve-principal` and `solve-fail` prove them for       --
+-- `solve`, from the same facts for each stage:                 --
+-- `solveEt-princ`/`-fail`, `solveDisj-princ`/`-fail`,          --
+-- `reexpand-princ`/`reexpand-fail`, `localise-princ`,          --
+-- `splitᴿ-princ`/`splitᴿ-fail`,                                --
+-- `popᵉ-princ`/`popᵉ-escape`/`popᵉ-fail`,                      --
+-- `retry-princ`/`retry-fail`.                                  --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true) renaming (Bool to 𝔹)

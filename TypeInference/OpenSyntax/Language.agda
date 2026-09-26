@@ -1,20 +1,19 @@
 ------------------------------------------------------------------
--- Well-typed syntax of the mirrored (open) language              --
---                                                                --
--- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`       --
--- mirror `Syntax.Language` former by former, with grades and     --
--- types replaced by open expressions and with the side           --
--- conditions of the original discharged by entailment from the   --
--- hypothesis set `Q` instead of by closed-grade facts.           --
---                                                                --
--- One rule deviates, marked at its definition: `handle` types    --
--- its operation clauses at the extended scope `Θ +e`, the        --
--- original's meta-level quantification over the continuation     --
--- grade becoming a rigid effect-grade variable.                  --
---                                                                --
--- Three rules have no counterpart in the original: `annᵛ`,       --
--- `annᶜ` and `lamᵃ` record a type annotation of the raw term.    --
--- They are identities on typing.                                 --
+-- Well-typed syntax of the open calculus                       --
+--                                                              --
+-- The intrinsic judgements `Q ∣ Γ ⊢V⦂ A` and `Q ∣ Γ ⊢C⦂ C`     --
+-- follow `Syntax.Language` former by former, with open types   --
+-- and grade expressions, and with the side conditions entailed --
+-- from the hypothesis set `Q`.                                 --
+--                                                              --
+-- One rule deviates, as marked at its definition: `handle`     --
+-- types its operation clauses over the extended scope `Θ +e`,  --
+-- the continuation grade, quantified at the meta level in      --
+-- `Syntax.Language`, being a rigid effect-grade variable.      --
+--                                                              --
+-- The rules `annᵛ`, `annᶜ` and `lamᵃ` record a type annotation --
+-- of the raw term and have no counterpart in                   --
+-- `Syntax.Language`; they are identities on typing.            --
 ------------------------------------------------------------------
 
 open import Data.Nat using (ℕ)

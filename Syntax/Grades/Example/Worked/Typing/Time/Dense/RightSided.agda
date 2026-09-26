@@ -1,27 +1,27 @@
 ------------------------------------------------------------------------
--- Typed example computations at upper bounds on dense time.           --
---                                                                     --
--- Effect grades and resource grades are both `[0, q ]`, "at most `q`  --
--- units", with `q` a non-negative rational. The node's clock counts   --
--- whole ticks, and the alphabet's figures -- read 1, write 3, send 6  --
--- at worst -- are rounded up to them. Measured in dense time the      --
--- operations take at most read 1/2, write 5/2 and send 11/2, each     --
--- half a tick under its rounded figure; `delay` still idles whole     --
--- ticks.                                                              --
---                                                                     --
--- Everything reads as at the discrete upper bounds: `[ ρ ] A` is a    --
--- lease that expires, a reading goes stale as soon as anything        --
--- happens, and a handler clause may drop its continuation. What the   --
--- rationals add is precision: a lease can be spent on half ticks, and --
--- a claim the rounded figures refuse can go through at the measured   --
--- ones. Both are below.                                               --
---                                                                     --
--- Every claim is checked by deciding `≤` on the rationals, `≤ᵈ!` and  --
--- `≰ᵈ!`, so a claim asserted the wrong way round does not typecheck.  --
---                                                                     --
--- The comments inside the programs say what each former appends to   --
--- the context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a --
--- binding.                                                            --
+-- Typed example computations at upper bounds on dense time.          --
+--                                                                    --
+-- Effect grades and resource grades are both `[0, q ]`, "at most `q` --
+-- units", with `q` a non-negative rational. The clock of the node    --
+-- counts whole ticks, and the figures of the alphabet (read 1, write --
+-- 3, send 6 at worst) are rounded up to whole ticks. In dense time   --
+-- the operations take at most read 1/2, write 5/2 and send 11/2,     --
+-- each half a tick below its rounded figure; `delay` idles whole     --
+-- ticks.                                                             --
+--                                                                    --
+-- The grade behaves as the discrete upper bounds do: `[ ρ ] A` is a  --
+-- lease that expires, a reading goes stale after any activity, and a --
+-- handler clause may discard its continuation. The rationals add     --
+-- precision: a lease can be spent in half ticks, and a claim that    --
+-- the rounded figures refuse can hold at the measured ones. Both     --
+-- cases are shown below.                                             --
+--                                                                    --
+-- Every claim is checked by deciding `≤` on the rationals, `≤ᵈ!` and --
+-- `≰ᵈ!`.                                                             --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Time.Dense.RightSided where

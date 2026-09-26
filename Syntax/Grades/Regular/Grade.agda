@@ -1,14 +1,15 @@
 ------------------------------------------------------------------------
--- Non-empty regular languages as a grade.                             --
---                                                                     --
--- A grade is a non-empty regular language over `Fin k`, held as its   --
--- canonical table, so equal languages are equal grades. The order is  --
--- inclusion, the product concatenation, the join union; `⊤` is every  --
--- word, `u` the empty word alone, and `of-nat n` the word `tickⁿ`.    --
---                                                                     --
--- Proofs about the tables of operations go through `subst` along word --
--- equations: comparing two such tables by computation unfolds their   --
--- symbolic exploration.                                               --
+-- Non-empty regular languages as a grade.                            --
+--                                                                    --
+-- A grade is a non-empty regular language over `Fin k`, represented  --
+-- by its canonical table, and equal languages are equal grades. The  --
+-- order is inclusion, the product concatenation and the join union;  --
+-- `⊤` is the set of all words, `u` the language of the empty word,   --
+-- and `of-nat n` the word `tickⁿ`.                                   --
+--                                                                    --
+-- Proofs about the tables of operations proceed by `subst` along     --
+-- equations between words, without unfolding their symbolic          --
+-- exploration.                                                       --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _+_)
@@ -169,8 +170,8 @@ private
 ------------------------------------------------------------------------
 -- The laws
 --
--- Proofs go through `subst` along word equations rather than matching
--- on them, so that no table of an operation is ever unfolded.
+-- Proofs proceed by `subst` along equations between words, without
+-- unfolding the table of an operation.
 
 -- a word of a product is a product of words
 

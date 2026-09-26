@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Deciding an entailed ordering of open grade expressions        --
 --                                                                --
 -- Both sides are put in the sum-of-products normal form of       --
@@ -41,7 +41,7 @@
 -- claims nothing about entailment: no completeness is proved,    --
 -- for any fragment, and the atom comparisons are sound only.     --
 -- What the search does not find is listed under Products below.  --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Empty.Irrelevant using () renaming (⊥-elim to ⊥-elim-irr)
@@ -646,8 +646,8 @@ module Searchₑ {Θ} {Q : Hyps Θ}
                 (Is-just ·ₑ-comm?) (is-just? ·ₑ-comm?)
   open Pₑ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
 
-  -- Each step is an entailment; products are read back with a trailing
-  -- unit (`⟦_⟧ᵉˢ`), so that each step is one use of `monoₑ`
+  -- Each step is an entailment, one use of `monoₑ` on products read
+  -- back with a trailing unit (`⟦_⟧ᵉˢ`)
 
   stepₑ : ∀ {as bs as' bs'} → Step as bs as' bs'
         → Q ⊩ ⟦ as' ⟧ᵉˢ ≾̂ₑ ⟦ bs' ⟧ᵉˢ → Q ⊩ ⟦ as ⟧ᵉˢ ≾̂ₑ ⟦ bs ⟧ᵉˢ
@@ -773,8 +773,8 @@ module Searchᵣ {Θ} {Q : Hyps Θ}
                 (Is-just ·ᵣ-comm?) (is-just? ·ᵣ-comm?)
   open Pᵣ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
 
-  -- Each step is an entailment; products are read back with a trailing
-  -- unit (`⟦_⟧ʳˢ`), so that each step is one use of `monoᵣ`
+  -- Each step is an entailment, one use of `monoᵣ` on products read
+  -- back with a trailing unit (`⟦_⟧ʳˢ`)
 
   stepᵣ : ∀ {as bs as' bs'} → Step as bs as' bs'
         → Q ⊩ ⟦ as' ⟧ʳˢ ≾̂ᵣ ⟦ bs' ⟧ʳˢ → Q ⊩ ⟦ as ⟧ʳˢ ≾̂ᵣ ⟦ bs ⟧ʳˢ

@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- A Kripke frame for right-sided time paired with an energy budget.   --
---                                                                     --
--- A world is a time point and the energy spent so far. A grade        --
--- `([0, n ] , [0, e ])` reaches the worlds at most `n` ticks ahead    --
--- with at most `e` more units spent, neither going back:              --
---                                                                     --
---   (w , s) ⊑[ ([0, n ] , [0, e ]) ] (w' , s')                        --
---     iff   w ≤ w' ,  ↑ w' ≤∞ ↑ w +∞ n ,  s ≤ s' ,  ↑ s' ≤∞ ↑ s +∞ e  --
---                                                                     --
--- The energy frame is the right-sided tick frame reindexed along      --
--- the identity. The identity is not a grade morphism, `energy` not    --
--- counting time steps, but it is a lax monoid map, and a frame never  --
--- sees `of-nat`.                                                      --
+-- A Kripke frame for right-sided time paired with an energy budget.  --
+--                                                                    --
+-- A world is a time point and the energy spent so far. A grade       --
+-- `([0, n ] , [0, e ])` reaches the worlds at most `n` ticks ahead   --
+-- with at most `e` more units spent, neither going back:             --
+--                                                                    --
+--   (w , s) ⊑[ ([0, n ] , [0, e ]) ] (w' , s')                       --
+--     iff   w ≤ w' ,  ↑ w' ≤∞ ↑ w +∞ n ,  s ≤ s' ,  ↑ s' ≤∞ ↑ s +∞ e --
+--                                                                    --
+-- The energy frame is the right-sided tick frame reindexed along     --
+-- the identity. The identity is not a grade morphism, `energy` not   --
+-- counting time steps, but it is a lax monoid map, and a frame never --
+-- sees `of-nat`.                                                     --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy where

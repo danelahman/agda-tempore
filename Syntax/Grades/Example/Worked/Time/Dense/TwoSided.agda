@@ -1,11 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of the dense two-sided grade.                      --
---
--- "Between min and max units", the order containment: orderings         --
--- between concrete grades, each discharged by the grade's own decision  --
--- procedure, so an example asserted the wrong way round does not        --
--- typecheck; the join, sequencing, and the discrete windows read in     --
--- dense time.                                                            --
+-- Worked instances of the dense two-sided grade.                     --
+--                                                                    --
+-- "Between `min` and `max` units", ordered by containment: orderings --
+-- between concrete grades, each established by the decision          --
+-- procedure of the grade; the join, sequencing, and the discrete     --
+-- windows read in dense time.                                        --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.Dense.TwoSided where

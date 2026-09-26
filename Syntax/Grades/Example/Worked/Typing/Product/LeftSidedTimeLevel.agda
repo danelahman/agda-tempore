@@ -1,36 +1,36 @@
 ------------------------------------------------------------------------
--- Typed example computations at lower bounds on time paired with a    --
--- security level.                                                     --
---                                                                     --
--- Effect grades and resource grades are both `([ n ,+∞⟩ , ℓ)`, "at    --
--- least `n` time steps, touching nothing above `ℓ`", and an operation --
--- is graded by the time it is guaranteed to take and the level it     --
--- touches: read 1 and write 2 at `Low`, send 4 at `High`, a           --
--- transmission being the node's contact with the network.             --
---                                                                     --
--- Sequencing adds the times and joins the levels, so the level is a   --
--- floating label: once a run has transmitted, it is `High` for good.  --
--- As a resource grade, `[ ([ n ,+∞⟩ , Low) ] A` is an embargoed       --
--- report: `unbox`'s premise asks both that `n` steps have passed      --
--- since boxing and that nothing since has touched `High`. So a claim  --
--- can be refused for being early or for being tainted, and waiting    --
--- clears the first and never the second. Both refusals are below.    --
---                                                                     --
--- The two rules that put the unit on opposite sides of the order go   --
--- the way of the component that decides them:                         --
---                                                                     --
---   * `var`'s bound `ρ ≾ᵣ uᵣ` holds exactly when `ρ` is `Low`: time   --
---     never makes a reading stale, a transmission does.               --
---                                                                     --
---   * a handler clause cannot drop its continuation, returning at     --
---     once guaranteeing none of the operation's time.                 --
---                                                                     --
--- Every claim is checked componentwise, `≤!` on the time and `⊑!` on  --
--- the level; a refutation names the component that fails.             --
---                                                                     --
--- The comments inside the programs say what each former appends to   --
--- the context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a --
--- binding.                                                            --
+-- Typed example computations at lower bounds on time paired with a   --
+-- security level.                                                    --
+--                                                                    --
+-- Effect grades and resource grades are both `([ n ,+∞⟩ , ℓ)`, "at   --
+-- least `n` time steps, touching nothing above `ℓ`", and an          --
+-- operation is graded by the time it is guaranteed to take and the   --
+-- level it touches: read 1 and write 2 at `Low`, send 4 at `High`.   --
+--                                                                    --
+-- Sequencing adds the times and joins the levels, so the level is a  --
+-- floating label: once a run has transmitted, it is `High`           --
+-- thereafter. As a resource grade, `[ ([ n ,+∞⟩ , Low) ] A` is an    --
+-- embargoed report: the premise of `unbox` requires that `n` steps   --
+-- have passed since boxing and that nothing since has touched        --
+-- `High`. A claim can be refused for being early or for being        --
+-- tainted; waiting removes the first reason and never the second.    --
+-- Both refusals are shown below.                                     --
+--                                                                    --
+-- The two rules that place the unit on opposite sides of the order   --
+-- are decided by different components:                               --
+--                                                                    --
+--   * the bound `ρ ≾ᵣ uᵣ` of `var` holds exactly when `ρ` is `Low`:  --
+--     time never makes a reading stale, and a transmission does.     --
+--                                                                    --
+--   * a handler clause cannot discard its continuation, returning at --
+--     once guaranteeing none of the time of the operation.           --
+--                                                                    --
+-- Every claim is checked componentwise, `≤!` on the time and `⊑!` on --
+-- the level; a refutation names the component that fails.            --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Product.LeftSidedTimeLevel where

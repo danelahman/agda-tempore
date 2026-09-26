@@ -1,19 +1,18 @@
 ------------------------------------------------------------------------
--- Counts as lower bounds: "at least `k` of each operation".           --
---                                                                     --
--- A grade is one bound per counter, and a computation is graded by it --
--- when it has drawn on each counter at least that often. Sequencing   --
--- adds the counts, the order is `≥` on each, so a smaller bound is    --
--- the weaker grade, and the join is the pointwise minimum. The unit,  --
--- demanding nothing, is the greatest grade.                           --
---                                                                     --
--- Each coordinate is a left-sided time interval's endpoint, a plain   --
--- natural: no demand is weaker than demanding nothing, so no point at --
--- infinity is needed.                                                 --
---                                                                     --
--- As a resource grade this is a guarantee: a token graded `atleast 3` --
--- on the `heartbeat` counter is available once at least three         --
--- heartbeats have been performed.                                     --
+-- Counts as lower bounds: "at least `k` of each operation".          --
+--                                                                    --
+-- A grade is one bound per counter; a computation is graded by it    --
+-- when it has drawn on each counter at least that often. Sequencing  --
+-- adds the counts, the order is `≥` on each counter, a smaller bound --
+-- being the weaker grade, and the join is the pointwise minimum. The --
+-- unit, demanding nothing, is the greatest grade.                    --
+--                                                                    --
+-- Each coordinate is the endpoint of a left-sided time interval, a   --
+-- natural number; no point at infinity is needed.                    --
+--                                                                    --
+-- As a resource grade this is a guarantee: a token graded            --
+-- `atleast 3` on a `heartbeat` counter is available once at least    --
+-- three heartbeats have been performed.                              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Counts.AtLeast where
@@ -53,10 +52,9 @@ uᵛ-not-least {n} least =
 ------------------------------------------------------------------------
 -- The same counts with a formal greatest grade on each counter
 --
--- The unit demands nothing and is greatest, but it is not absorbing,
--- so a grade whose greatest element absorbs projects here rather than
--- into the counts above. `untimed` on a counter makes no claim about
--- it at all, and absorbs.
+-- The unit demands nothing and is greatest, but is not absorbing.
+-- `untimed` on a counter makes no claim about it and is absorbing; the
+-- grades whose greatest element is absorbing project to these counts.
 
 import Syntax.Grades.Example.Counts.Power as Power
 module WithTop = Power left-sided-intervals-with-⊤

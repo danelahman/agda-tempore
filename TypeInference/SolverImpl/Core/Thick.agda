@@ -1,17 +1,17 @@
 ------------------------------------------------------------------
--- Thinning and thickening of variables                           --
---                                                                --
--- `thick i j` renames `j` into the scope with `i` removed, and   --
--- is `nothing` exactly when `i` and `j` are the same variable.   --
--- Its section is the standard library's `punchIn`, which plays   --
--- the role of thinning.                                          --
---                                                                --
--- The per-sort wrappers read the counter of a `Scope` that the   --
--- corresponding extension bumps; the other two counters are      --
--- untouched, so each wrapper is the bare `Fin` operation.        --
---                                                                --
--- Follows McBride's First-Order Unification by Structural        --
--- Recursion (JFP 2003).                                          --
+-- Thinning and thickening of variables                         --
+--                                                              --
+-- `thick i j` renames `j` into the scope with `i` removed, and --
+-- is `nothing` exactly when `i` and `j` are the same variable. --
+-- Its section is the standard library's `punchIn`, which plays --
+-- the role of thinning.                                        --
+--                                                              --
+-- The per-sort wrappers read the counter of a `Scope` that the --
+-- corresponding extension bumps; the other two counters are    --
+-- untouched, so each wrapper is the bare `Fin` operation.      --
+--                                                              --
+-- Follows McBride's First-Order Unification by Structural      --
+-- Recursion (JFP 2003).                                        --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin; zero; suc; punchIn)

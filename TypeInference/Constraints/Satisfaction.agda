@@ -1,21 +1,23 @@
 ------------------------------------------------------------------
 -- Satisfaction of constraints                                  --
 --                                                              --
--- `σ ⊨[ Q ] C` reads: the substitution `σ` together with the   --
--- residual hypothesis set `Q` solves the constraint `C`. It is --
--- Set-valued and informative — the ∃-clauses carry their       --
--- witnesses, which elaboration reads back off. `σ` need not    --
--- ground anything: a pair `(σ , Q)` is a solution with         --
--- residue.                                                     --
+-- `σ ⊨[ Q ] C` states that the substitution `σ`, together with --
+-- the residual hypothesis set `Q`, solves the constraint `C`.  --
+-- It is proof-relevant: the ∃-clauses carry their witnesses,   --
+-- from which elaboration reads a derivation. `σ` need not be   --
+-- ground, so a pair `(σ , Q)` is a solution with residual      --
+-- constraints.                                                 --
 --                                                              --
--- `σ ⊨[ Q ∣ R ] C` reads: `σ` solves `C` relative to `Q` at    --
--- every instance meeting the obligations `R` — every instance  --
--- entailing `Q` and `R` solves it.                             --
+-- `σ ⊨[ Q ∣ R ] C` states that `σ` solves `C` relative to `Q`  --
+-- and the obligations `R`: along every substitution `δ`, under --
+-- any hypotheses entailing `Q` and `R` along `δ`, `σ ⨟ δ`      --
+-- solves `C`.                                                  --
 --                                                              --
--- Constraint satisfaction follows Pottier and Remy (ATTAPL,    --
--- 2005), here proof-relevant; "residual constraint" is         --
--- OutsideIn(X)'s term (Vytiniotis et al., JFP 2011), cf.       --
--- Pretnar's types with constraint sets (LMCS 2014).            --
+-- Constraint satisfaction follows Pottier and Rémy, The        --
+-- Essence of ML Type Inference (ATTAPL, 2005), here            --
+-- proof-relevant; "residual constraint" is the term of         --
+-- OutsideIn(X) (Vytiniotis et al., JFP 2011); cf. Pretnar,     --
+-- Inferring Algebraic Effects (LMCS 2014).                     --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)

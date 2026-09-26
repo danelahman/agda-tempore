@@ -1,31 +1,29 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades measure only time.      --
---                                                                     --
--- Effect grades are the two-sided trace intervals of                  --
--- `Example.Traces.Timed.TwoSided`: a grade `[ P , Q ]` says that      --
--- whatever the computation did, it covered one of the traces in `P`   --
--- and stayed within one of those in `Q`. Resource grades are the      --
--- two-sided time intervals, "between `min` and `max` time steps".     --
---                                                                     --
--- The projection reads each endpoint through durations, in the        --
--- direction its set is read and at its own cost model (`P` at         --
--- `costˡᵒ`, `Q` at `costʰⁱ`):                                         --
---                                                                     --
---   ∣ [ P , Q ] ∣ᵉ  =  [ least duration in P , greatest in Q ]        --
---                                                                     --
--- Both sets being read disjunctively, the guarantee is only as strong --
--- as its cheapest member and the allowance only as tight as its       --
--- slowest. So this is the pair of the two one-sided projections,      --
--- `System.Traces.Timed.LeftSided` and                                 --
--- `System.Traces.Timed.RightSided`, and every law is theirs.          --
---                                                                     --
--- The target's `min ≤ max` is exactly what the grade's coherence      --
--- field supplies.                                                     --
---                                                                     --
--- The cap's `unbounded` is measured by `∞`, so the two greatest       --
--- grades correspond -- `[ u , unbounded ]` above and `[ 0 , ∞ ]`      --
--- below -- and neither is absorbing, both keeping whatever lower      --
--- bound follows.                                                      --
+-- A grade system in which the resource grades measure only time.     --
+--                                                                    --
+-- The effect grades are the two-sided trace intervals of             --
+-- `Example.Traces.Timed.TwoSided`: a grade `[ P , Q ]` states that   --
+-- whatever the computation did, it covered one of the traces in `P`  --
+-- and stayed within one of those in `Q`. The resource grades are the --
+-- two-sided time intervals, "between `min` and `max` time steps".    --
+--                                                                    --
+-- The projection reads each endpoint through durations, in the       --
+-- direction in which its set is read and at its own cost model (`P`  --
+-- at `costˡᵒ`, `Q` at `costʰⁱ`):                                     --
+--                                                                    --
+--   ∣ [ P , Q ] ∣ᵉ  =  [ least duration in P , greatest in Q ]       --
+--                                                                    --
+-- It is the pairing of the two one-sided projections,                --
+-- `System.Traces.Timed.LeftSided` and                                --
+-- `System.Traces.Timed.RightSided`, and every law is inherited from  --
+-- them.                                                              --
+--                                                                    --
+-- The coherence field of the grade supplies the condition            --
+-- `min ≤ max` of the target.                                         --
+--                                                                    --
+-- The `unbounded` of the cap is measured by `∞`, so the two greatest --
+-- grades correspond, `[ u , unbounded ]` above and `[ 0 , ∞ ]`       --
+-- below; neither is absorbing.                                       --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_; _<_)

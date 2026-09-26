@@ -1,15 +1,15 @@
-------------------------------------------------------------------
--- Most general unifiers of skeletons                             --
---                                                                --
--- A successful run of `unifyᵏ` returns a most general unifier:   --
--- every substitution unifying the equations factors through the  --
--- returned store. A failure refutes the equations for every      --
--- substitution. No skeleton variable is rigid, so maximality     --
--- relative to the empty store already is most-generality.        --
---                                                                --
--- Follows McBride's `Max` characterisation of most general       --
--- unifiers and the optimist's lemma (JFP 2003).                  --
-------------------------------------------------------------------
+-------------------------------------------------------------------
+-- Most general unifiers of skeletons                            --
+--                                                               --
+-- A successful run of `unifyᵏ` returns a most general unifier:  --
+-- every substitution unifying the equations factors through the --
+-- returned store. A failure refutes the equations for every     --
+-- substitution. No skeleton variable is rigid, so maximality    --
+-- relative to the empty store already is most-generality.       --
+--                                                               --
+-- Follows McBride's `Max` characterisation of most general      --
+-- unifiers and the optimist's lemma (JFP 2003).                 --
+-------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_)
 open import Data.Empty using (⊥-elim)

@@ -1,10 +1,9 @@
 ------------------------------------------------------------------
--- Open value and computation types                               --
---                                                                --
--- The types of the mirrored language: the types of               --
--- `Syntax.Types` with grades replaced by grade expressions and   --
--- with an extra former `tvar` for type variables. The ground     --
--- types of the operation signature embed via `⌜_⌝ᵍ`.             --
+-- Open value and computation types                             --
+--                                                              --
+-- The types of `Syntax.Types` with grade expressions in place  --
+-- of grades and a former `tvar` for type variables. The ground --
+-- types of the operation signature embed by `⌜_⌝ᵍ`.            --
 ------------------------------------------------------------------
 
 open import Syntax.Grades

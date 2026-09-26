@@ -1,25 +1,21 @@
 ------------------------------------------------------------------------
--- The language the typing examples are written in.                    --
---                                                                     --
--- The sensor node's alphabet, over an identity grade system: effect    --
--- grades and resource grades are the same monoid `G` and `∣_∣ᵉ` is the --
--- identity, so `mapᵉ` reduces away and each rule can be read off       --
--- directly. What varies between the instances is `G` and the grade     --
--- `opTime` gives each operation.                                       --
---                                                                     --
--- There are two base types, and they differ in eternality: a `reading` --
--- is the value of the sensor at the moment it was taken, a `nodeid` is --
--- the node's own identifier. So a `nodeid` variable crosses any amount --
--- of time passage unconditionally, and a `reading` variable only with  --
--- the bound `ρ ≾ᵣ uᵣ` that `var` asks for.                            --
---                                                                     --
--- The example programs are not here: each instance writes its own out  --
--- in full, at its own grades, with every side condition discharged at  --
--- the point the rule imposes it. What this module keeps is what the    --
--- programs are written *with* -- the three ways of meeting `var`'s     --
--- bound, the coercion lemma every instance instantiates, and the       --
--- operation clauses handed to `handle`, whose typing is intricate and  --
--- identical at every grade.                                            --
+-- The language of the typing examples.                               --
+--                                                                    --
+-- The alphabet of the sensor node, over an identity grade system:    --
+-- effect grades and resource grades are the same monoid `G` and      --
+-- `∣_∣ᵉ` is the identity, so `mapᵉ` reduces away. The instances vary --
+-- `G` and the grade `opTime` assigns to each operation.              --
+--                                                                    --
+-- There are two base types, differing in eternality: a `reading` is  --
+-- the value of the sensor at the moment it was taken, and a `nodeid` --
+-- is the identifier of the node. A `nodeid` variable is usable after --
+-- any passage of time; a `reading` variable only under the bound     --
+-- `ρ ≾ᵣ uᵣ` of `var`.                                                --
+--                                                                    --
+-- The example programs are in the instances. This module contains    --
+-- the three ways of meeting the bound of `var`, the coercion lemma   --
+-- that every instance instantiates, and the operation clauses passed --
+-- to `handle`, whose typing is the same at every grade.              --
 ------------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

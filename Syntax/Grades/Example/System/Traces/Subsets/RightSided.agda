@@ -1,23 +1,23 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades measure only time.      --
---                                                                     --
--- Effect grades are the subset grade of upper bounds: every run a      --
--- computation has is one of the listed traces. Resource grades are the --
--- right-sided time intervals, "at most `n` time steps".                --
---                                                                     --
---   ∣ Q ∣ᵉ  =  [0, the greatest duration among the traces of Q ]      --
---                                                                     --
--- The *greatest*, because the set is read disjunctively -- which run   --
--- occurs is not known, so the deadline has to cover the slowest. What  --
--- the resource grade forgets is which runs there were, so `⌈ write ⌉`  --
--- and `⟨ 3 ⟩` -- distinct grades upstream, and here incomparable, the  --
--- comparison between traces being equality -- become one deadline.     --
---                                                                     --
--- Monotonicity is immediate: weakening adds runs to the list, and a    --
--- longer list has a greater maximum.                                   --
---                                                                     --
--- The two greatest grades correspond: `any-run` permits any run at     --
--- all and `[0, ∞ ]` imposes no deadline, and both are absorbing.       --
+-- A grade system in which the resource grades measure only time.     --
+--                                                                    --
+-- The effect grades are the subset grade of upper bounds: every run  --
+-- of a computation is one of the listed traces. The resource grades  --
+-- are the right-sided time intervals, "at most `n` time steps".      --
+--                                                                    --
+--   ∣ Q ∣ᵉ  =  [0, the greatest duration among the traces of Q ]     --
+--                                                                    --
+-- The greatest duration is taken because the set is read             --
+-- disjunctively: the deadline covers the slowest run. The resource   --
+-- grade forgets which runs there were, so `⌈ write ⌉` and `⟨ 3 ⟩`,   --
+-- distinct and incomparable as effect grades (the comparison of      --
+-- traces being equality), have the same deadline.                    --
+--                                                                    --
+-- Monotonicity holds because weakening adds runs to the list, and a  --
+-- longer list has a greater maximum.                                 --
+--                                                                    --
+-- The two greatest grades correspond: `any-run` permits any run and  --
+-- `[0, ∞ ]` imposes no deadline, and both are absorbing.             --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)

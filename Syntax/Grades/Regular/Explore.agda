@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Breadth-first exploration is correct.                               --
 --                                                                     --
 -- For a lawful automaton, `explore` returns a well-formed table with  --
@@ -10,7 +10,7 @@
 -- Exploration decides only through `≟`, `δ` and `final`, so two       --
 -- automata related by a relation respecting all three explore to the  --
 -- same table (`explore-≡`).                                           --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≤_; _<_; _+_; z≤n; s≤s)
 

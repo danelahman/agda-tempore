@@ -1,33 +1,34 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of lower bounds.            --
---                                                                     --
--- Effect grades and resource grades are both `[ n ,+∞⟩`, "at least `n` --
--- time steps", and the operations are graded by the time they are      --
--- guaranteed to take: read 1, write 2, send 4.                        --
---                                                                     --
--- Read as an effect grade, `[ n ,+∞⟩` says a computation takes at      --
--- least `n` ticks, and `coerce` may forget how many. Read as a         --
--- resource grade it says at least `n` have passed, so `unbox`'s        --
--- premise `ρ' ≾ᵣ ρ` -- what elapsed is at least what the box asks for  --
--- -- makes `[ ρ ] A` a resource that becomes available once `ρ` has    --
--- gone by. A claim made too early is refused; there is no claim made   --
--- too late, because a lower bound records no deadline to overrun.      --
---                                                                     --
--- Two consequences of the grades being floors are worth naming, and    --
--- both are checked below:                                              --
---                                                                     --
---   * `var`'s bound `ρ ≾ᵣ uᵣ` holds at every `ρ`, so no variable ever  --
---     goes stale: what has passed is never a reason to lose data.     --
---                                                                     --
---   * a handler clause cannot drop its continuation. It is graded at   --
---     `op-grade op ·ₑ ε''`, and returning at once guarantees nothing,  --
---     so the coercion such a clause would need does not exist.         --
---                                                                     --
--- The comments inside the programs say what each former appends to the --
--- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
--- binding. Reading them off downwards gives the context at any point,  --
--- and the locks between a box's binding and its `unbox` are what that  --
--- rule's premise compares against the box's own grade.                 --
+-- Typed example computations at the grade of lower bounds.           --
+--                                                                    --
+-- Effect grades and resource grades are both `[ n ,+∞⟩`, "at least   --
+-- `n` time steps", and the operations are graded by the time they    --
+-- are guaranteed to take: read 1, write 2, send 4.                   --
+--                                                                    --
+-- As an effect grade, `[ n ,+∞⟩` states that a computation takes at  --
+-- least `n` ticks, and `coerce` may decrease `n`. As a resource      --
+-- grade it states that at least `n` ticks have passed, so the        --
+-- premise `ρ' ≾ᵣ ρ` of `unbox` (the elapsed grade is at least the    --
+-- grade of the box) makes `[ ρ ] A` a resource that becomes          --
+-- available once `ρ` has passed. A claim made too early is refused;  --
+-- a lower bound imposes no deadline, and no claim is too late.       --
+--                                                                    --
+-- Two consequences of the grades being lower bounds, both checked    --
+-- below:                                                             --
+--                                                                    --
+--   * the bound `ρ ≾ᵣ uᵣ` of `var` holds at every `ρ`, so no         --
+--     variable goes stale.                                           --
+--                                                                    --
+--   * a handler clause cannot discard its continuation. It is graded --
+--     at `op-grade op ·ₑ ε''`, and returning at once guarantees      --
+--     nothing, so the required coercion does not exist.              --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding. Read downwards, they give the context at any      --
+-- point, and the locks between the binding of a box and its `unbox`  --
+-- are what the premise of that rule compares with the grade of the   --
+-- box.                                                               --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Time.LeftSided where

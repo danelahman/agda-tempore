@@ -1,39 +1,38 @@
 ------------------------------------------------------------------------
--- Antichains of timed traces as lower bounds.                         --
---                                                                     --
--- A grade is a non-empty finite set of traces, read as the guarantees --
--- a computation makes: writing `X` for the runs it may have,          --
---                                                                     --
---   X is graded by P   iff   ∀ x ∈ X. ∃ p ∈ P. p ≼ x                  --
---                                                                     --
--- -- whatever happens, at least one of the listed traces has been     --
--- covered. The quantifier is universal over the runs and existential  --
--- over the set, so a longer list guarantees less, and the order that  --
--- weakens the grade is                                                --
---                                                                     --
---   P ≾ P'   iff   ∀ p ∈ P. ∃ p' ∈ P'. p' ≼ p                         --
---                                                                     --
--- -- every listed guarantee has an easier one listed in `P'`. Both    --
--- endpoints are read disjunctively, both weaken by gaining members,   --
--- and the union of two grades is their join at either; note that the  --
--- quantifiers run universally over the *stronger* grade's set and     --
--- existentially over the weaker's, the mirror of `Lifted.RightSided`. --
---                                                                     --
--- That reading is `P ⊆ ↑P'`, so the closure is upward and the         --
--- canonical form of a grade is the antichain of its `≼`-minimal       --
--- members. The carrier is therefore `Traces.Reduced`'s `Antichain` at --
--- the order as given -- not at its converse -- and the order is a     --
--- partial one: mutually-weakening grades are equal.                   --
---                                                                     --
--- What is proper to this module is the unit `{ ε }`: it is the        --
--- greatest grade, the empty trace being covered by every run, and     --
--- that is the one fact the reduction's `TracePartialOrder` cannot     --
--- supply.                                                             --
---                                                                     --
--- Nothing here inspects the order otherwise.                          --
--- `Example.Traces.Timed.LeftSided` instantiates it at the coverage    --
--- order, the one a guarantee wants, since there nothing but an        --
--- operation covers a demand for it.                                   --
+-- Antichains of timed traces as lower bounds.                        --
+--                                                                    --
+-- A grade is a non-empty finite set of traces, read as the           --
+-- guarantees of a computation: writing `X` for the runs it may have, --
+--                                                                    --
+--   X is graded by P   iff   ∀ x ∈ X. ∃ p ∈ P. p ≼ x                 --
+--                                                                    --
+-- that is, in every run at least one of the listed traces is         --
+-- covered. The quantifier is universal over the runs and existential --
+-- over the set, so a longer list guarantees less, and the order that --
+-- weakens the grade is                                               --
+--                                                                    --
+--   P ≾ P'   iff   ∀ p ∈ P. ∃ p' ∈ P'. p' ≼ p                        --
+--                                                                    --
+-- that is, every listed guarantee has a weaker one listed in `P'`.   --
+-- Both endpoints are read disjunctively and weaken by gaining        --
+-- members, and the union of two grades is their join. The            --
+-- quantifiers range universally over the set of the *stronger* grade --
+-- and existentially over that of the weaker, the mirror image of     --
+-- `Lifted.RightSided`.                                               --
+--                                                                    --
+-- The order is `P ⊆ ↑P'`, so the closure is upward and the canonical --
+-- form of a grade is the antichain of its `≼`-minimal members. The   --
+-- carrier is the `Antichain` of `Traces.Reduced` at the order        --
+-- itself, not at its converse, and the order is a partial order.     --
+--                                                                    --
+-- The fact specific to this module is that the unit `{ ε }` is the   --
+-- greatest grade, the empty trace being covered by every run;        --
+-- `TracePartialOrder` does not supply it.                            --
+--                                                                    --
+-- The construction does not otherwise inspect the order.             --
+-- `Example.Traces.Timed.LeftSided` instantiates it at the coverage   --
+-- order, in which only an operation covers a demand for that         --
+-- operation.                                                         --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

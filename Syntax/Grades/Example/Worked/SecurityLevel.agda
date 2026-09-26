@@ -1,11 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of the security-level grades.                      --
---                                                                     --
--- The two-point lattice `Low < High`, with the sensor node's runs     --
--- graded by `touches`, and taint sets over `Fin 3`: orderings,        --
--- sequencing and the greatest grade, each checked by the grade's own  --
--- decision procedure or by computation, so a claim asserted the wrong --
--- way round does not typecheck.                                       --
+-- Worked instances of the security-level grades.                     --
+--                                                                    --
+-- The two-point lattice `Low < High`, with the runs of the sensor    --
+-- node graded by `touches`, and taint sets over `Fin 3`: orderings,  --
+-- sequencing and the greatest grade, each established by the         --
+-- decision procedure of the grade or by computation.                 --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.SecurityLevel where

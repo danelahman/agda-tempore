@@ -1,11 +1,11 @@
 ------------------------------------------------------------------------
--- Two-sided (closed) intervals with a possibly-infinite right-hand    --
--- endpoint as grades.                                                 --
---                                                                     --
--- As for the all-finite two-sided intervals, a grade `[ min , max ]`   --
--- bounds the elapsed time from both sides, except that `max` may now   --
--- be `∞`, imposing no upper bound at all. The arithmetic of the        --
--- endpoints lives in `Time.ExtendedNat` and is re-exported here.   --
+-- Two-sided (closed) intervals with a possibly infinite right-hand   --
+-- endpoint as grades.                                                --
+--                                                                    --
+-- A grade `[ min , max ]` bounds the elapsed time from both sides,   --
+-- "between `min` and `max` time steps", where `max` may be `∞`,      --
+-- imposing no upper bound. The arithmetic of the endpoints is in     --
+-- `Time.ExtendedNat` and is re-exported here.                        --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.TwoSidedWithInfinity where
@@ -169,8 +169,7 @@ i₁ ≾ᵢ? i₂ with min i₂ ≤? min i₁ | max i₁ ≤∞? max i₂
 ... | yes _ | no ¬q = no λ r → ¬q (proj₂ r)
 ... | no ¬p | _     = no λ r → ¬p (proj₁ r)
 
--- Unlike the all-finite two-sided intervals, _·ᵢ_ is *not*
--- cancellative once ∞ is allowed.
+-- _·ᵢ_ is not cancellative, ∞ being absorbing.
 
 -- zero-product property
 
@@ -276,9 +275,9 @@ two-sided-intervals-with-∞ = record
 -- The same intervals with a formal greatest grade
 --
 -- `[ 0 , ∞ ]` is greatest but not absorbing, its `min` endpoint being
--- the unit, so the two-sided subset intervals, whose top absorbs,
--- project here rather than into the intervals above. `no-window`
--- claims no bound at either end, and absorbs.
+-- the unit. `no-window` claims no bound at either end and is absorbing;
+-- the grades whose greatest element is absorbing project to these
+-- intervals.
 
 infix 50 window_
 

@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Inclusion of regular languages, by exploring `L & ~M`.              --
---                                                                     --
--- A pair of states `(p , q)` stands for the residual `L_p ∩ ~M_q`;    --
--- its derivative by `a` is the pair of successors, and it holds the   --
--- empty word iff `p` is final and `q` is not. The pairs reachable     --
--- from `(0 , 0)` are explored breadth-first, each with the word that  --
--- reached it, and the first pair holding the empty word gives a       --
--- shortest counterexample.                                            --
+-- Inclusion of regular languages, by exploring `L & ~M`.             --
+--                                                                    --
+-- A pair of states `(p , q)` stands for the residual `L_p ∩ ~M_q`;   --
+-- its derivative by `a` is the pair of successors, and it holds the  --
+-- empty word iff `p` is final and `q` is not. The pairs reachable    --
+-- from `(0 , 0)` are explored breadth-first, each with the word that --
+-- reached it, and the first pair holding the empty word gives a      --
+-- shortest counterexample.                                           --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_)
@@ -46,8 +46,8 @@ witnesses L M = record
   ; bound = size L ℕ.* size M
   }
 
--- Prototype: the same search runs on derivatives of the two terms
--- instead of table rows, and finds the same counterexample.
+-- Prototype: the same search runs on derivatives of the two terms in
+-- place of table rows, and finds the same counterexample.
 
 -- the first discovered pair holding a counterexample, whose word is
 -- then a shortest one

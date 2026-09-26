@@ -1,9 +1,9 @@
-------------------------------------------------------------------------
--- The counters shared by the worked count instances.                  --
---                                                                     --
+--------------------------------------------------------------------------
+-- The counters shared by the worked count instances.                   --
+--                                                                      --
 -- One counter per operation, in the order `read`, `write`, `send`, and --
 -- a grade written as its three coordinates.                            --
-------------------------------------------------------------------------
+--------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Counts.Index where
 

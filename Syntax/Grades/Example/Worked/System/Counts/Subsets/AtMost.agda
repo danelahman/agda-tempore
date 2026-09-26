@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- Worked instance of the subset cap, projected onto quotas.            --
---
--- Each counter takes the greatest count among the listed runs.         --
+-- Worked instance of the subset cap, projected onto quotas.          --
+--                                                                    --
+-- Each counter takes the greatest count among the listed runs.       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Counts.Subsets.AtMost where

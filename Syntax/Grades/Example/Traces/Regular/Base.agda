@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Timed traces as words, over a finite set of operations.             --
---                                                                     --
--- The operations are coded injectively into `Fin n`, and the letters  --
--- are `Fin (suc n)` with `tick` first. A timed trace is encoded as a  --
--- word, a delay `d` becoming the block `tickᵈ`; the encoding is an    --
--- injective monoid morphism, so delay merging is list concatenation   --
--- and a regular language over the letters is a regular set of timed   --
--- traces.                                                             --
+-- Timed traces as words, over a finite set of operations.            --
+--                                                                    --
+-- The operations are coded injectively into `Fin n`, and the letters --
+-- are `Fin (suc n)`, with `tick` first. A timed trace is encoded as  --
+-- a word, a delay `d` becoming the block `tickᵈ`. The encoding is an --
+-- injective monoid morphism: merging of delays is concatenation of   --
+-- lists, and a regular language over the letters is a regular set of --
+-- timed traces.                                                      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc)

@@ -1,22 +1,24 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of trace contracts.         --
---                                                                     --
--- A grade `[ P , Q ]` pairs a coverage floor with an allowance cap:    --
--- whatever the computation did, it covered one of the guarantees in    --
--- `P` and stayed within one of the allowances in `Q`. Each operation   --
--- is graded by the one-event run that performs it, at both endpoints.  --
---                                                                     --
--- This is the trace counterpart of the two-sided time windows, and the --
--- two endpoints refuse for independent reasons -- but now over which   --
--- operations ran, not merely how long they took. A box asks for work   --
--- to have been done *and* for no more than its allowance to have been  --
--- spent since, so a claim can be refused for having done too little    --
--- and for having done too much, and the examples below exhibit both.   --
---                                                                     --
--- The comments inside the programs say what each former appends to the --
--- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
--- binding. A grade with a name of its own is named there rather than   --
--- written out, these being pairs of trace sets.                        --
+-- Typed example computations at the grade of trace contracts.        --
+--                                                                    --
+-- A grade `[ P , Q ]` pairs a coverage floor with an allowance cap:  --
+-- whatever the computation did, it covered one of the guarantees in  --
+-- `P` and stayed within one of the allowances in `Q`. Each operation --
+-- is graded by the one-event run that performs it, at both           --
+-- endpoints.                                                         --
+--                                                                    --
+-- This is the trace counterpart of the two-sided time windows, the   --
+-- two endpoints refusing independently, over the operations          --
+-- performed rather than their duration. A box demands that certain   --
+-- operations have been performed *and* that no more than its         --
+-- allowance has been spent since, so a claim can be refused for      --
+-- doing too little and for doing too much; the examples below        --
+-- exhibit both.                                                      --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding. A grade with a name is written by that name, the  --
+-- grades being pairs of trace sets.                                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.TwoSided where

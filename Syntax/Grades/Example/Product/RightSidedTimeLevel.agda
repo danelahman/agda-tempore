@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- Right-sided time paired with a security level.                       --
---                                                                     --
--- A grade `([0, n ] , ℓ)` says "at most `n` time steps, touching       --
--- nothing above `ℓ`". A time step advances the first component only.   --
---                                                                     --
--- As a resource grade it reads as an expiring, untainted capability: a --
--- value boxed at `([0, n ] , ℓ)` can be unboxed only while at most `n` --
--- steps have passed since boxing and nothing above `ℓ` has been        --
--- touched -- a session token valid for `n` steps, revoked early by     --
--- reading `High` data. A variable that is not eternal goes stale after --
--- any step or any `High` activity.                                     --
---                                                                     --
--- The unit is least and `_·_` commutes; both are declared.             --
+-- Right-sided time paired with a security level.                     --
+--                                                                    --
+-- A grade `([0, n ] , ℓ)` states "at most `n` time steps, touching   --
+-- nothing above `ℓ`". A time step advances the first component only. --
+--                                                                    --
+-- As a resource grade it is an expiring, untainted capability: a     --
+-- value boxed at `([0, n ] , ℓ)` can be unboxed only while at most   --
+-- `n` steps have passed since boxing and nothing above `ℓ` has been  --
+-- touched, as for a session token valid for `n` steps and revoked    --
+-- early by reading `High` data. A variable that is not eternal goes  --
+-- stale after any step or any `High` activity.                       --
+--                                                                    --
+-- The unit is least and `_·_` commutes; both are declared.           --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Product.RightSidedTimeLevel where

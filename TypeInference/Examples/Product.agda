@@ -1,24 +1,24 @@
-------------------------------------------------------------------
--- Inference at a grade of two components                         --
---                                                                --
--- Programs for a grade pairing time with a security level: a     --
--- box is an embargoed report, claimable once enough time has     --
--- passed and only while nothing above its level has been         --
--- touched since it was boxed. None has an annotation.            --
---                                                                --
--- `embargoed c d` claims a report boxed at `c` after `d` ticks,  --
--- `transmitted c op d` after `op` and `d` ticks; `joined-claim`  --
--- claims a box handed in after a branch performing one of two    --
--- operations, so its grade is inferred as a join; `publish`      --
--- claims one after calling a function argument and an            --
--- operation, so its scheme's grades mix a variable and a         --
--- constant; `twice op` uses a reading after `op` has run.        --
---                                                                --
--- Every program is written over an arbitrary language; which     --
--- ones are typable, and at which grades, is read off at the      --
--- instance under `Product/`, where the verdicts and schemes are  --
--- checked by `refl`.                                             --
-------------------------------------------------------------------
+-------------------------------------------------------------------
+-- Inference at a grade of two components                        --
+--                                                               --
+-- Programs for a grade pairing time with a security level: a    --
+-- box is an embargoed report, claimable once enough time has    --
+-- passed and only while nothing above its level has been        --
+-- touched since it was boxed. None has an annotation.           --
+--                                                               --
+-- `embargoed c d` claims a report boxed at `c` after `d` ticks, --
+-- `transmitted c op d` after `op` and `d` ticks; `joined-claim` --
+-- claims a box handed in after a branch performing one of two   --
+-- operations, so its grade is inferred as a join; `publish`     --
+-- claims one after calling a function argument and an           --
+-- operation, so its scheme's grades mix a variable and a        --
+-- constant; `twice op` uses a reading after `op` has run.       --
+--                                                               --
+-- Every program is written over an arbitrary language; which    --
+-- ones are typable, and at which grades, is read off at the     --
+-- instance under `Product/`, where the verdicts and schemes are --
+-- checked by `refl`.                                            --
+-------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Nat using (ℕ)

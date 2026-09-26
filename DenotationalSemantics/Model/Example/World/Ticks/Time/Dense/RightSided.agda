@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- A time-ticks Kripke frame for the right-sided intervals of dense    --
 -- time.                                                               --
 --                                                                     --
@@ -11,7 +11,7 @@
 -- It is the action frame of the grade at the points `[0, ↑ p ]`,      --
 -- restricted to forward moves: the unit is least, so without `w ≤ w'` --
 -- the unit grade would reach the past.                                --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.RightSided where
 

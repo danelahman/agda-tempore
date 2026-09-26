@@ -1,13 +1,14 @@
 ------------------------------------------------------------------------
--- (Left) one-sided (closed) intervals of dense time as grades.        --
---                                                                     --
--- A grade `[ q ,+∞⟩` is a lower bound: "at least `q` time units",      --
--- with `q` a non-negative rational, so a delay of half a unit has      --
--- grade `[ 1 / 2 ,+∞⟩`. Multiplication adds the bounds and the order   --
--- is reverse `≤` on them, so a *smaller* bound is the weaker grade.    --
---                                                                     --
--- The discrete intervals of `Time.LeftSided` embed, a bound of `n`     --
--- time steps reading as `n` units of dense time.                       --
+-- (Left) one-sided (closed) intervals of dense time as grades.       --
+--                                                                    --
+-- A grade `[ q ,+∞⟩` is a lower bound, "at least `q` time units",    --
+-- with `q` a non-negative rational; a delay of half a unit has grade --
+-- `[ 1 / 2 ,+∞⟩`. Multiplication adds the bounds and the order is    --
+-- the reverse of `≤` on them, and a *smaller* bound is the weaker    --
+-- grade.                                                             --
+--                                                                    --
+-- The discrete intervals of `Time.LeftSided` embed, a bound of `n`   --
+-- time steps being read as `n` units of dense time.                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.Dense.LeftSided where

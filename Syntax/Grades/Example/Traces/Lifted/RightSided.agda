@@ -1,44 +1,43 @@
 ------------------------------------------------------------------------
--- Antichains of timed traces as upper bounds.                         --
---                                                                     --
--- A grade is a non-empty finite set of traces, read as the bounds a   --
--- computation must stay within: writing `X` for the runs it may have, --
---                                                                     --
---   X is graded by Q   iff   ∀ x ∈ X. ∃ q ∈ Q. x ≼ q                  --
---                                                                     --
--- -- every run stays within one of the listed bounds. The quantifier  --
--- is universal over the runs and existential over the set, so a       --
--- longer list permits more, and the order that weakens the grade is   --
--- the Hoare (lower) lift of `_≼_` in the argument order written:      --
---                                                                     --
---   P ≾ Q   iff   ∀ p ∈ P. ∃ q ∈ Q. p ≼ q                             --
---                                                                     --
--- -- every listed bound is itself within one listed in `Q`. That is   --
--- `↓P ⊆ ↓Q` for the sets of runs the two grades permit, so the union  --
--- of two grades is their join, the closure is *downward*, and the     --
--- canonical form of a grade is the antichain of its `≼`-maximal       --
--- members. The carrier is therefore `Traces.Reduced`'s `Antichain`    --
--- taken at the *converse* of the order -- `Order.flipᵖ`, where the    --
--- reduction's minimal members are this order's maximal ones -- and    --
--- the order is a partial one: mutually-permitting grades are equal.   --
---                                                                     --
--- No finite list of bounds permits every run, so the carrier carries  --
--- `unbounded` as a point of its own: it permits any run at all,       --
--- however long, and is absorbing. It is *not* the empty set of        --
--- bounds, which permits nothing and is excluded. It is the greatest   --
--- grade, where for a floor the unit would be.                         --
---                                                                     --
--- What is proper to this module beyond the reduction is how `{ ε }`   --
--- sits: it is the *least* grade, the empty run staying within every   --
--- bound, and it is a zero for the product, a bound that permits       --
--- nothing but the empty run leaving no room for either factor. Those  --
--- rest on the two unit facts a `TraceOrder` adds to the               --
--- order-theoretic half the reduction runs on.                         --
---                                                                     --
--- `Example.Traces.Timed.RightSided` instantiates the whole at the     --
--- allowance order, where staying within a bound means the bound's     --
--- operations permit the run's and its delays are a budget the run may --
--- spend where the bound places it.                                    --
+-- Antichains of timed traces as upper bounds.                        --
+--                                                                    --
+-- A grade is a non-empty finite set of traces, read as the bounds    --
+-- within which a computation stays: writing `X` for the runs it may  --
+-- have,                                                              --
+--                                                                    --
+--   X is graded by Q   iff   ∀ x ∈ X. ∃ q ∈ Q. x ≼ q                 --
+--                                                                    --
+-- that is, every run stays within one of the listed bounds. The      --
+-- quantifier is universal over the runs and existential over the     --
+-- set, so a longer list permits more, and the order that weakens the --
+-- grade is the Hoare (lower) lift of `_≼_`:                          --
+--                                                                    --
+--   P ≾ Q   iff   ∀ p ∈ P. ∃ q ∈ Q. p ≼ q                            --
+--                                                                    --
+-- that is, every listed bound lies within one listed in `Q`. This is --
+-- `↓P ⊆ ↓Q` for the sets of runs the two grades permit, so the union --
+-- of two grades is their join, the closure is *downward*, and the    --
+-- canonical form of a grade is the antichain of its `≼`-maximal      --
+-- members. The carrier is the `Antichain` of `Traces.Reduced` at the --
+-- *converse* of the order (`Order.flipᵖ`, whose minimal members are  --
+-- the maximal members of this order), and the order is a partial     --
+-- order.                                                             --
+--                                                                    --
+-- No finite list of bounds permits every run, and the carrier has    --
+-- `unbounded` as a separate point: it permits any run and is         --
+-- absorbing. It is distinct from the empty set of bounds, which      --
+-- permits nothing and is excluded. It is the greatest grade.         --
+--                                                                    --
+-- The facts specific to this module concern `{ ε }`: it is the       --
+-- *least* grade, the empty run staying within every bound, and it is --
+-- a zero for the product. Both rest on the two unit facts that a     --
+-- `TraceOrder` adds to the order-theoretic part used by the          --
+-- reduction.                                                         --
+--                                                                    --
+-- `Example.Traces.Timed.RightSided` instantiates the construction at --
+-- the allowance order, under which a run stays within a bound when   --
+-- the operations of the bound permit those of the run and its delays --
+-- form a budget that the run spends where the bound places it.       --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

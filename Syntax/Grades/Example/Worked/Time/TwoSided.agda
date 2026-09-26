@@ -1,12 +1,13 @@
 ------------------------------------------------------------------------
--- Worked instances of two-sided intervals: both bounds at once.        --
---
--- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂`: containment, the   --
--- two halves being the two one-sided orders, so weakening enlarges the  --
--- window at both ends. An `∞` upper endpoint imposes no upper bound.    --
---
--- The sensor node's `uplink` run -- read, idle two ticks, send -- falls  --
--- in the window `[ 7 , ↑ 9 ]` under `opTime`.                            --
+-- Worked instances of two-sided intervals: both bounds at once.      --
+--                                                                    --
+-- `i₁ ≾ i₂` is `min i₂ ≤ min i₁ × max i₁ ≤∞ max i₂`, containment,    --
+-- the two halves being the two one-sided orders; weakening enlarges  --
+-- the window at both ends. An upper endpoint `∞` imposes no upper    --
+-- bound.                                                             --
+--                                                                    --
+-- The `uplink` run of the sensor node (read, idle two ticks, send)   --
+-- lies in the window `[ 7 , ↑ 9 ]` under `opTime`.                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.TwoSided where
@@ -27,7 +28,7 @@ open import Syntax.Grades.Example.Time.TwoSidedWithInfinity
 
 open import Syntax.Grades.Example.Worked.Time.Decide using (≤!; ≰!)
 
--- the window the uplink run actually falls in
+-- the window in which the uplink run lies
 
 uplink-window : Interval∞
 uplink-window = [ 7 , ↑ 9 ]

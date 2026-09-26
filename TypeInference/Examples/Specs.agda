@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- The languages the inference examples run in                    --
 --                                                                --
 -- The sensor node's language of `Worked/Typing/Core.agda` at     --
@@ -20,7 +20,7 @@
 --                                                                --
 -- The operations are the same at every grade, and so is their    --
 -- enumeration.                                                   --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)

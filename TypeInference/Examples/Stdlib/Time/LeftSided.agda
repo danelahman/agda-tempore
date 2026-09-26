@@ -1,11 +1,11 @@
-------------------------------------------------------------------
--- The standard library at left-sided intervals                   --
---                                                                --
--- "At least `n` time steps": the unit is the top, and            --
--- multiplication commutes. Nothing goes stale, so `compose` and  --
--- `min` report no condition on time, and `compose` reports its   --
--- effect as a sorted product.                                    --
-------------------------------------------------------------------
+-------------------------------------------------------------------
+-- The standard library at left-sided intervals                  --
+--                                                               --
+-- "At least `n` time steps": the unit is the top, and           --
+-- multiplication commutes. Nothing goes stale, so `compose` and --
+-- `min` report no condition on time, and `compose` reports its  --
+-- effect as a sorted product.                                   --
+-------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

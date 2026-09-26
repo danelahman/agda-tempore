@@ -1,31 +1,31 @@
 ------------------------------------------------------------------------
--- Typed example computations at the grade of trace guarantees.        --
---                                                                     --
--- Effect grades and resource grades are both sets of timed traces at   --
--- the coverage order, and each operation is graded by the one-event    --
--- run that performs it. A grade lists guarantees, and a computation    --
--- sits below it when each of its runs *covers* one of them: every      --
--- operation the guarantee names has occurred, and every delay it names --
--- has been paid out of the run's own time, operations counted at       --
--- `costˡᵒ` -- read 1, write 2, send 4 -- since that is all each is     --
--- certain to take.                                                     --
---                                                                     --
--- So this is the trace counterpart of the lower-bound intervals: the   --
--- grade says what has definitely happened, and `coerce` may forget     --
--- part of it. `unbox`'s premise then reads "the work the box asks for  --
--- has been done", which -- unlike a time bound -- can ask for          --
--- particular operations. Idling discharges a demand for time and never --
--- a demand for a reading, and that is the refusal this grade adds.     --
---                                                                     --
--- As at the lower bounds, nothing goes stale (every run covers the     --
--- empty guarantee) and no handler clause may drop its continuation     --
--- (returning at once covers nothing).                                  --
---                                                                     --
--- The comments inside the programs say what each former appends to the --
--- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a      --
--- binding. Here a lock records which operation ran, not merely that    --
--- time passed, and it is the product of the locks between a box's      --
--- binding and its `unbox` that the premise weighs against the box.     --
+-- Typed example computations at the grade of trace guarantees.       --
+--                                                                    --
+-- Effect grades and resource grades are both sets of timed traces at --
+-- the coverage order, and each operation is graded by the one-event  --
+-- run that performs it. A grade lists guarantees, and a computation  --
+-- lies below it when each of its runs *covers* one of them: every    --
+-- operation the guarantee lists has occurred, and every delay it     --
+-- lists has elapsed in the run, operations counted at `costˡᵒ` (read --
+-- 1, write 2, send 4), the time each is certain to take.             --
+--                                                                    --
+-- This is the trace counterpart of the lower-bound intervals: the    --
+-- grade states what has happened, and `coerce` may forget part of    --
+-- it. The premise of `unbox` then states that the operations the box --
+-- demands have been performed, which, unlike a time bound, can       --
+-- demand particular operations. Idling discharges a demand for time  --
+-- and never a demand for a reading; this is the refusal specific to  --
+-- this grade.                                                        --
+--                                                                    --
+-- As at the lower bounds, nothing goes stale (every run covers the   --
+-- empty guarantee), and no handler clause may discard its            --
+-- continuation (returning at once covers nothing).                   --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding. A lock records which operation ran, and the       --
+-- premise compares the product of the locks between the binding of a --
+-- box and its `unbox` with the box.                                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Traces.Timed.LeftSided where
@@ -131,8 +131,8 @@ keeping-only-the-time = coerce holds (perform read ⋆ (return here))
 no-more-time : ¬ (opTime read ·ₑ uₑ ≾ₑ ⟅ ⟨ 2 ⟩ ⟆)
 no-more-time = fails
 
--- nor an operation the run never performed: time buys no work here,
--- which is the direction this order refuses
+-- nor an operation the run never performed: time pays for no
+-- operation under this order
 
 idling-guarantees-no-reading : ¬ (of-natᵉ 5 ·ₑ uₑ ≾ₑ ⟅ ⌈ read ⌉ ⟆)
 idling-guarantees-no-reading = fails

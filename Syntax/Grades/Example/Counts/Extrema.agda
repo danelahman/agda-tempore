@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- The greatest and least value of a natural-number measure over a     --
--- finite list.                                                        --
---                                                                     --
--- Each is characterised by two facts: it bounds every member's value, --
--- and on a non-empty list some member attains it. Everything the      --
--- count maps need -- invariance under a change of list with the same  --
--- members, additivity over a product, the join over a concatenation   --
--- -- follows from those two.                                          --
+-- The greatest and least value of a natural-number measure over a    --
+-- finite list.                                                       --
+--                                                                    --
+-- Each is characterised by two facts: it bounds the value of every   --
+-- member, and on a non-empty list some member attains it. The        --
+-- properties used by the count maps (invariance under a change of    --
+-- list with the same members, additivity over a product, and the     --
+-- join over a concatenation) follow from these two.                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Counts.Extrema where

@@ -1,16 +1,15 @@
 ------------------------------------------------------------------------
--- (Right) one-sided (closed) intervals as grades.                     --
---                                                                     --
--- A grade `[0, n ]` is an upper bound: "at most `n` time steps", with  --
--- `n` a possibly-infinite natural. Multiplication adds the bounds and  --
--- the order is `≤` on them, so a *larger* bound is the weaker grade -- --
--- the mirror image of the left-sided intervals.                        --
---                                                                     --
--- The endpoint is extended because `ℕ` has no greatest element and a   --
--- deadline grade needs one: `[0, ∞ ]` imposes no deadline at all, and  --
--- is absorbing, a computation after an unbounded one still being       --
--- unbounded. The arithmetic lives in `Time.ExtendedNat` and is         --
--- re-exported here.                                                    --
+-- (Right) one-sided (closed) intervals as grades.                    --
+--                                                                    --
+-- A grade `[0, n ]` is an upper bound, "at most `n` time steps",     --
+-- with `n` a possibly infinite natural number. Multiplication adds   --
+-- the bounds and the order is `≤` on them, and a *larger* bound is   --
+-- the weaker grade, as the mirror image of the left-sided intervals. --
+--                                                                    --
+-- The greatest grade `[0, ∞ ]` imposes no deadline and is absorbing: --
+-- a computation following an unbounded one is unbounded. The         --
+-- arithmetic of the endpoints is in `Time.ExtendedNat` and is        --
+-- re-exported here.                                                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.RightSided where
@@ -128,8 +127,7 @@ uₒ-least [0, ∞ ]   = ≤∞-∞ ∞
 _≾ₒ?_ : Decidable _≾ₒ_
 [0, m ] ≾ₒ? [0, n ] = m ≤∞? n
 
--- Unlike the all-finite deadlines, _·ₒ_ is *not* cancellative once ∞
--- is allowed.
+-- _·ₒ_ is not cancellative, ∞ being absorbing.
 
 -- zero-product properties
 

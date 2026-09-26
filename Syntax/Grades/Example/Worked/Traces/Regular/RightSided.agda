@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- Worked instances of the regular grade of upper bounds.              --
---                                                                     --
--- A grade is a non-empty regular set of runs, and every run the       --
--- computation has is in it. Weakening is inclusion; unlike            --
--- `Worked.Traces.Subsets.RightSided` the greatest grade permits every  --
--- run without absorbing products. Literals are extended regular       --
--- expressions, and an empty one is refused.                           --
---                                                                     --
--- Every claim is closed by running the grade's own decision procedure. --
+-- Worked instances of the regular grade of upper bounds.             --
+--                                                                    --
+-- A grade is a non-empty regular set of runs containing every run of --
+-- the computation. Weakening is inclusion; unlike in                 --
+-- `Worked.Traces.Subsets.RightSided`, the greatest grade permits     --
+-- every run without absorbing products. Literals are extended        --
+-- regular expressions, and an empty literal is rejected.             --
+--                                                                    --
+-- Every claim is established by the decision procedure of the grade. --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Regular.RightSided where

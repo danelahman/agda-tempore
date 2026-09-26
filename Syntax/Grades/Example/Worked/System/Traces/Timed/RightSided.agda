@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instance: forgetting the runs, keeping the deadline.         --
---
--- `System.Traces.Timed.RightSided` measures a grade of trace bounds by  --
--- its slowest bound. The effect grade still says which runs are         --
--- permitted and which operations they may perform; the resource grade   --
--- keeps only how long they may take.                                    --
+-- Worked instance: forgetting the runs, keeping the deadline.        --
+--                                                                    --
+-- `System.Traces.Timed.RightSided` measures a grade of trace bounds  --
+-- by its slowest bound. The effect grade records which runs are      --
+-- permitted and which operations they may perform; the resource      --
+-- grade records only how long they may take.                         --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Traces.Timed.RightSided where

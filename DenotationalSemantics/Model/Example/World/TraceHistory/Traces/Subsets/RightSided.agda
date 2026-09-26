@@ -1,23 +1,21 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the subset grade of upper bounds.  --
---                                                                     --
--- Worlds are timed traces: the history observed so far. A grade `Q`   --
--- reaches the histories obtained by appending a run it lists:         --
---                                                                     --
---   w ⊑ᵇ[ Q ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'  and  cont ∈ Q       --
---                                                                     --
--- Accessibility is membership outright -- there is no comparison      --
--- between the continuation and a listed run to make, equality being   --
--- the whole order. So this frame is as fine-grained as the grade is:  --
--- unlike the tick frame, it distinguishes `⌈ write ⌉` from `⟨ 3 ⟩`.   --
---                                                                     --
--- The grade caps which runs may occur, and the frame says a world is  --
--- reachable exactly when the run that got there is one of them.       --
--- Covariance is then just that a listed run of a smaller grade is a   --
--- listed run of a larger one.                                         --
---                                                                     --
--- The grade's `any-run` permits every run, so it leaves the           --
--- continuation unconstrained and asks only that `w'` extend `w`.      --
+-- A trace-history Kripke frame for the subset grade of upper bounds. --
+--                                                                    --
+-- Worlds are timed traces: the history observed so far. A grade `Q`  --
+-- reaches the histories obtained by appending a run it lists:        --
+--                                                                    --
+--   w ⊑ᵇ[ Q ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'  and  cont ∈ Q      --
+--                                                                    --
+-- Accessibility is membership, the order of the grade being equality --
+-- on runs. The frame is as fine as the grade: unlike the tick frame, --
+-- it distinguishes `⌈ write ⌉` from `⟨ 3 ⟩`.                         --
+--                                                                    --
+-- A world is reachable exactly when the run leading to it is one     --
+-- that the grade lists, and covariance holds because a listed run of --
+-- a smaller grade is a listed run of a larger one.                   --
+--                                                                    --
+-- The grade `any-run` permits every run; it leaves the continuation  --
+-- unconstrained and requires only that `w'` extend `w`.              --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

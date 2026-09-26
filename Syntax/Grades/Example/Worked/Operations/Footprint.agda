@@ -1,19 +1,19 @@
 ------------------------------------------------------------------------
--- What the sensor node's operations do besides take time.             --
---                                                                     --
--- Two figures per operation, for the grades that pair time with       --
--- something else:                                                     --
---                                                                     --
---            touches   draws                                          --
---   read     Low       1       a local sensor                         --
---   write    Low       2       local memory                           --
---   send     High      5       the radio                              --
---                                                                     --
--- `touches` is the security level an operation touches. The radio is  --
--- the node's one contact with the outside network, so a transmission  --
--- touches `High` and taints the rest of the run; nothing local does.  --
--- `draws` is the energy an operation draws from the battery, the      --
--- radio dominating.                                                   --
+-- What the operations of the sensor node do besides taking time.     --
+--                                                                    --
+-- Two figures per operation, for the grades that pair time with      --
+-- another component:                                                 --
+--                                                                    --
+--            touches   draws                                         --
+--   read     Low       1       a local sensor                        --
+--   write    Low       2       local memory                          --
+--   send     High      5       the radio                             --
+--                                                                    --
+-- `touches` is the security level an operation touches: the radio is --
+-- the one contact of the node with the outside network, so a         --
+-- transmission touches `High` and taints the rest of the run, and no --
+-- local operation does. `draws` is the energy an operation draws     --
+-- from the battery.                                                  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Operations.Footprint where

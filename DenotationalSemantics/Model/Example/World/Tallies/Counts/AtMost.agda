@@ -1,16 +1,16 @@
 ------------------------------------------------------------------------
--- A tally Kripke frame for at-most counts.                            --
---                                                                     --
--- A world is a tally, how often each of the `n` counters has been     --
--- drawn on. A quota `ks` reaches the tallies that rise on each        --
--- counter by at most its bound, `unlimited` bounding nothing:         --
---                                                                     --
---   ws ⊑[ ks ] ws'   iff   wᵢ ≤ w'ᵢ   and   ↑ w'ᵢ ≤∞ ↑ wᵢ +∞ kᵢ       --
+-- A tally Kripke frame for at-most counts.                           --
+--                                                                    --
+-- A world is a tally, how often each of the `n` counters has been    --
+-- drawn on. A quota `ks` reaches the tallies that rise on each       --
+-- counter by at most its bound, `unlimited` bounding nothing:        --
+--                                                                    --
+--   ws ⊑[ ks ] ws'   iff   wᵢ ≤ w'ᵢ   and   ↑ w'ᵢ ≤∞ ↑ wᵢ +∞ kᵢ      --
 --                                          for every counter i       --
---                                                                     --
--- It is the power of the right-sided tick frame, which moves only     --
--- forward: the unit is least, so without `wᵢ ≤ w'ᵢ` the unit grade    --
--- would lower a tally.                                                --
+--                                                                    --
+-- It is the power of the right-sided tick frame, which moves only    --
+-- forward: the unit is least, so without `wᵢ ≤ w'ᵢ` the unit grade   --
+-- would lower a tally.                                               --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Tallies.Counts.AtMost where

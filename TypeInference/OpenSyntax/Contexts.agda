@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
--- Variables and contexts of the mirrored language                --
---                                                                --
--- Open contexts mirror `Syntax.Contexts`, but are indexed by the --
--- number of variables they bind, and their grades are open       --
--- expressions. There is no separate barrier former: a handler    --
--- clause is typed under an ordinary lock at the constant `⊤ᵣ`.   --
+-- Variables and contexts of the open calculus                  --
+--                                                              --
+-- Open contexts follow `Syntax.Contexts`, indexed by the       --
+-- number of variables they bind, with open grade expressions   --
+-- as grades. A handler clause is typed under an ordinary lock  --
+-- at the constant `⊤ᵣ`; there is no separate barrier former.   --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)

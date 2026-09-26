@@ -1,57 +1,58 @@
 ------------------------------------------------------------------
 -- The solver driver                                            --
 --                                                              --
--- Walks a constraint, threading a state: a subtyping atom is   --
--- expanded and decomposed at matching formers and residualised --
--- at a pair of type variables, grade orderings are             --
--- residualised, and binders lift the state. A type equation is --
--- the two subtyping atoms (`Constraints.Syntax`), so it has no --
--- case of its own and never binds a type variable directly.    --
--- An eternality demand is decided by `etDec` when it is        --
--- pushed: refuted, or residualised as its atoms on type        --
+-- The driver traverses a constraint, threading a state. A      --
+-- subtyping atom is expanded and decomposed at matching        --
+-- formers and residualised at a pair of type variables; grade  --
+-- orderings are residualised; binders extend the state. A type --
+-- equation is the pair of its subtyping atoms                  --
+-- (`Constraints.Syntax`) and has no case of its own. An        --
+-- eternality demand is decided by `etDec` when it is pushed:   --
+-- it is refuted, or residualised as its atoms on type          --
 -- variables (`solveEt`). A var-rule disjunction is dropped     --
 -- where `decide≾ᵣ` proves its grade below the unit; otherwise  --
--- its type is decided: never eternal, the grade side is        --
--- residualised as an ordering; eternal with no atom, it is     --
--- dropped; otherwise it is residualised (`solveDisj`).         --
--- An expansion of the type unknowns is followed by decomposing --
--- the residual's subtyping and eternality demands again, so    --
--- that they are on type variables and their grade orderings    --
--- are residualised with the others.                            --
+-- its type is decided: if never eternal, the grade side is     --
+-- residualised as an ordering; if eternal with no atom, the    --
+-- disjunction is dropped; otherwise it is residualised         --
+-- (`solveDisj`). An expansion of the type unknowns is followed --
+-- by a second decomposition of the residual's subtyping and    --
+-- eternality demands, which puts them on type variables and    --
+-- residualises their grade orderings with the others.          --
 --                                                              --
--- A successful witness is deferred, re-read at the state a     --
--- later component leaves behind rather than transported along  --
+-- The witness of a success is deferred: it is read at the      --
+-- state that a later component leaves, not transported along   --
 -- it.                                                          --
 --                                                              --
--- At a rigid binder the state is lifted with a fresh residual. --
--- Before the scope closes, its subtyping demands are expanded  --
--- and its demands decomposed again (`reexpand`), so that they  --
--- are on type variables, the atoms decided true are dropped,   --
--- and the unknowns local to the scope are sent to values that  --
--- keep every instance entering it (`Localise`); then atoms     --
--- free of the rigid are kept, one whose right side alone       --
--- mentions it is kept at the unit rigid where the unit is      --
--- least, one whose left side alone mentions it is kept at the  --
--- top rigid, any other is discharged on the spot or, when it   --
--- mentions only the rigid and outer unknowns, deferred as a    --
--- new entry. The scope's own entries are carried out under the --
--- rigid, and an outer unknown's image must stay free of it.    --
--- After each close the entries are retried.                    --
+-- At a rigid binder the state is extended with a fresh         --
+-- residual. Before the scope closes, its subtyping demands are --
+-- expanded and its demands decomposed again (`reexpand`), the  --
+-- atoms decided true are dropped, and the unknowns local to    --
+-- the scope are assigned values that keep every instance       --
+-- entering it (`Localise`). Then an atom free of the rigid is  --
+-- kept; one whose right side alone mentions the rigid is kept  --
+-- at the unit rigid where the unit is least; one whose left    --
+-- side alone mentions it is kept at the top rigid; any other   --
+-- is discharged immediately or, when it mentions only the      --
+-- rigid and outer unknowns, deferred as a new entry. The       --
+-- scope's own entries are carried outward under the rigid, and --
+-- the image of an outer unknown must remain free of it. After  --
+-- each close the entries are retried.                          --
 --                                                              --
--- The outcome is a solution, a refutation, or stuck: a close   --
--- whose atom, neither kept nor deferred, or whose inner entry, --
--- mentions an unknown local to the scope.                      --
+-- The outcome is a solution, a refutation, or `stuck`: a close --
+-- at which an atom that is neither kept nor deferred, or an    --
+-- inner entry, mentions an unknown local to the scope.         --
 --                                                              --
 -- Contract. A solution carries its witness `Wit s' C`: every   --
 -- instance discharging the new residual solves `C` (soundness, --
--- by construction, each move a `_⟶_`). Every instance solving  --
--- `C` from no hypotheses and discharging the old residual      --
--- factors through the new state and discharges its residual,   --
--- the rigids kept variables (`solve-principal`, `Principal`).  --
--- A refutation leaves no instance solving `C` that discharges  --
--- the residual and keeps the rigids distinct variables         --
--- (`solve-fail`). `stuck` carries no claim; without a rigid    --
--- binder it does not occur (`solve-rigidFree`, `RigidFree`).   --
+-- by construction, each move being a `_⟶_`). Every instance    --
+-- that solves `C` from no hypotheses and discharges the old    --
+-- residual factors through the new state and discharges its    --
+-- residual, the rigids remaining variables (`solve-principal`, --
+-- `Principal`). A refutation leaves no instance that solves    --
+-- `C`, discharges the residual and keeps the rigids distinct   --
+-- variables (`solve-fail`). `stuck` carries no claim; it does  --
+-- not occur without a rigid binder (`solve-rigidFree`,         --
+-- `RigidFree`).                                                --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -869,8 +870,7 @@ reexpand s with expandSub (ss (res s))
 
 -- An eternality demand is decided by `etDec` when it is pushed: it is
 -- refuted, or its atoms on type variables are pushed. The verdict is
--- passed with the equation naming it, so that a proof sees the case
--- analysis.
+-- passed with the equation naming it.
 
 solveEt : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
         → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x

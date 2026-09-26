@@ -1,24 +1,25 @@
 ------------------------------------------------------------------
--- The constraint solver, axiomatised                             --
---                                                                --
--- `Solver` is an assumption, not a construction: `∀ᵉ` and        --
--- `⋀ᵒᵖ` are infinitary, and `∀ᵉ` needs an eigenvariable          --
--- treatment.                                                     --
---                                                                --
--- A solution is a substitution paired with a residual hypothesis --
--- set, which is already a context of the mirrored judgement, and --
--- with obligations, deferred rigid conditions: the substitution  --
--- solves the constraint at every instance meeting both.          --
--- Principality is semantic, HM(X)'s: at each closed instance.    --
---                                                                --
--- The solver's outcome is a solution, a refutation, or stuck     --
--- (`TypeInference.Outcome`). Soundness and principality concern  --
--- solutions, refutation refutations; nothing is claimed of a     --
--- stuck constraint.                                              --
---                                                                --
--- "Residual constraint" is OutsideIn(X)'s term (Vytiniotis et    --
--- al., JFP 2011); cf. Pretnar, Inferring Algebraic Effects (LMCS --
--- 2014).                                                         --
+-- The constraint solver, axiomatised                           --
+--                                                              --
+-- `Solver` is an assumption, not a construction: `∀ᵉ` and      --
+-- `⋀ᵒᵖ` are infinitary, and `∀ᵉ` requires an eigenvariable     --
+-- treatment.                                                   --
+--                                                              --
+-- A solution is a substitution together with a residual        --
+-- hypothesis set, itself a context of the open judgement, and  --
+-- with obligations, the deferred rigid conditions; the         --
+-- substitution solves the constraint at every instance meeting --
+-- both. Principality is semantic, as in HM(X): it holds at     --
+-- each closed instance.                                        --
+--                                                              --
+-- The outcome is a solution, a refutation, or stuck            --
+-- (`TypeInference.Outcome`). Soundness and principality        --
+-- concern solutions, and refutation concerns refutations;      --
+-- nothing is claimed of a stuck constraint.                    --
+--                                                              --
+-- "Residual constraint" is the term of OutsideIn(X)            --
+-- (Vytiniotis et al., JFP 2011); cf. Pretnar, Inferring        --
+-- Algebraic Effects (LMCS 2014).                               --
 ------------------------------------------------------------------
 
 open import Data.Product using (Σ-syntax; _×_; _,_)
@@ -48,9 +49,8 @@ open import TypeInference.OpenSyntax.Instances S using (Obligs; Satisfiable; _�
 open import TypeInference.Constraints.Syntax       S
 open import TypeInference.Constraints.Satisfaction S
 
--- Refutation is stated against satisfiable conditions, those some
--- closed instance satisfies (`Satisfiable`): under any others every
--- constraint is entailed.
+-- Refutation is stated relative to satisfiable conditions, those that
+-- some closed instance satisfies (`Satisfiable`).
 
 record Solver : Set₁ where
   field

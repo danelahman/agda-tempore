@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Handlers: the generic module and its instances                --
+-- Handlers: the generic module and its instances               --
 ------------------------------------------------------------------
 
 module TypeInference.Examples.Handlers.All where

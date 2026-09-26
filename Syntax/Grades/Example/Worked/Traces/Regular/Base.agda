@@ -1,12 +1,12 @@
 ------------------------------------------------------------------------
--- Worked instances of the regular trace sets, as tables.              --
---                                                                     --
--- Languages over `read`, `send` and `tick`, built by the operations   --
--- on canonical tables: inclusions, with their shortest               --
--- counterexamples, and equalities of tables, from single letters up  --
--- to an eight-state language and delays of twenty ticks.              --
---                                                                     --
--- Every claim is closed by running the procedures themselves.        --
+-- Worked instances of the regular trace sets, as tables.             --
+--                                                                    --
+-- Languages over `read`, `send` and `tick`, built by the operations  --
+-- on canonical tables: inclusions with their shortest                --
+-- counterexamples, and equalities of tables, from single letters to  --
+-- an eight-state language and delays of twenty ticks.                --
+--                                                                    --
+-- Every claim is established by running the procedures.              --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Traces.Regular.Base where

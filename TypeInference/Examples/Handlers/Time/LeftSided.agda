@@ -1,10 +1,10 @@
-------------------------------------------------------------------
--- Handlers at left-sided intervals                               --
---                                                                --
--- Every scheme is the one written in `Handlers`.                 --
--- `resume-twice` is typed, the unit being the top; `discard` is  --
--- refuted.                                                       --
-------------------------------------------------------------------
+-------------------------------------------------------------------
+-- Handlers at left-sided intervals                              --
+--                                                               --
+-- Every scheme is the one written in `Handlers`.                --
+-- `resume-twice` is typed, the unit being the top; `discard` is --
+-- refuted.                                                      --
+-------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

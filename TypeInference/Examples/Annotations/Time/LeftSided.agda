@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
--- Annotated programs at left-sided intervals                    --
---                                                                --
+-- Annotated programs at left-sided intervals                   --
+--                                                              --
 -- Every scheme is the one written in `Annotations`.            --
 ------------------------------------------------------------------
 

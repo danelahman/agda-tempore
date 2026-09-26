@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------
--- Worked instances of the product grades.                             --
---                                                                     --
--- An index only: one module per pairing.                               --
+-- Worked instances of the product grades.                            --
+--                                                                    --
+-- An index only: one module per pairing.                             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Product where

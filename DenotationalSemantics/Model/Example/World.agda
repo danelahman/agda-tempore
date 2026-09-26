@@ -1,54 +1,47 @@
 ------------------------------------------------------------------------
--- Concrete Kripke frames of worlds.                                   --
---                                                                     --
--- A `World` (see `DenotationalSemantics.Model.World`) is a bare set of --
--- worlds together with a resource-graded accessibility `_⊑[ ρ ]_`      --
--- that is reflexive at the unit grade, transitive with the grades      --
--- multiplying, covariant in the grade, and proof-irrelevant. Building  --
--- one for a given grade is exactly the question of what a world has to --
--- remember for the grade to say something about moving between worlds. --
---                                                                     --
--- The frames come in four families, one per answer:                   --
---                                                                     --
---   * `Ticks.*` -- a world is a time point, in `ℕ` or, for dense time, --
---     in `ℚ≥0`. It remembers only how much time has elapsed, so        --
---     accessibility says how far ahead the grade may move: an exact    --
---     tick for a grade that fixes a duration, a window for one that    --
---     only bounds it.                                                  --
---                                                                     --
---   * `Tallies.*` -- a world is a tally, how often each counter has    --
---     been drawn on: a time point per counter.                         --
---                                                                     --
---   * `Labels.*` -- a world is the security label reached so far,      --
---     floating upward as the grade allows.                             --
---                                                                     --
---   * `TraceHistory.*` -- a world is a timed trace, the history        --
---     observed so far. It remembers *what happened*, not just how      --
---     long it took, so accessibility appends a continuation the grade  --
---     admits. These frames see the operations a grade prescribes,      --
---     which the tick frames cannot.                                    --
---                                                                     --
--- The tick, tally and label frames rest on one construction           --
--- (`DenotationalSemantics.Model.World.Action`): the grade acting by    --
--- multiplication on the points it measures, `w ⊑[ ρ ] w'` iff          --
--- `w' ≾ w · ρ`. Its `forward` restriction adds `w ≤ w'`, and every    --
--- frame bounded only from above -- the right-sided ticks, the at-most  --
--- tallies, the labels -- uses it. No frame reaches the past: a lower   --
--- bound keeps the others forward, and an adjoined greatest grade       --
--- reaches exactly the worlds ahead.                                    --
--- `Product.*` pairs frames componentwise                               --
--- (`DenotationalSemantics.Model.World.Product`).                       --
---                                                                     --
--- The timed and finite-subset trace grades have a frame of either      --
--- kind, and reading the two against each other is how the tick worlds' --
--- blindness shows: they see a grade only through durations, so         --
--- distinctions the histories keep collapse. Frames for the             --
--- sub-trace-order grid are parked under `backup/` and imported from    --
--- nowhere.                                                             --
---                                                                     --
--- This module is only an index -- the trace-based frames are           --
--- parameterised by the alphabet `Op`, so it lists the pieces rather    --
--- than re-exporting them.                                              --
+-- Concrete Kripke frames of worlds.                                  --
+--                                                                    --
+-- A `World` (see `DenotationalSemantics.Model.World`) is a set of    --
+-- worlds with a resource-graded accessibility relation `_⊑[ ρ ]_`    --
+-- that is reflexive at the unit grade, transitive with the grades    --
+-- multiplying, covariant in the grade, and proof-irrelevant. The     --
+-- frames below differ in what a world records.                       --
+--                                                                    --
+-- The frames form four families:                                     --
+--                                                                    --
+--   * `Ticks.*`: a world is a time point, in `ℕ` or, for dense time, --
+--     in `ℚ≥0`, recording the elapsed time. Accessibility bounds how --
+--     far ahead the grade moves: an exact tick for a grade that      --
+--     fixes a duration, a window for one that bounds it.             --
+--                                                                    --
+--   * `Tallies.*`: a world is a tally of how often each counter has  --
+--     been drawn on, a time point per counter.                       --
+--                                                                    --
+--   * `Labels.*`: a world is the security label reached so far,      --
+--     rising as the grade allows.                                    --
+--                                                                    --
+--   * `TraceHistory.*`: a world is a timed trace, the history        --
+--     observed so far, recording the operations as well as their     --
+--     duration. Accessibility appends a continuation that the grade  --
+--     admits, so these frames distinguish the operations a grade     --
+--     prescribes, which the tick frames do not.                      --
+--                                                                    --
+-- The tick, tally and label frames are instances of one construction --
+-- (`DenotationalSemantics.Model.World.Action`): the grade acting by  --
+-- multiplication on the points it measures, `w ⊑[ ρ ] w'` iff        --
+-- `w' ≾ w · ρ`. Its restriction `forward` adds `w ≤ w'`, and every   --
+-- frame bounded only from above (the right-sided ticks, the at-most  --
+-- tallies, the labels) uses it. No frame reaches the past: a lower   --
+-- bound keeps the other frames forward, and an adjoined greatest     --
+-- grade reaches exactly the worlds ahead. `Product.*` pairs frames   --
+-- componentwise (`DenotationalSemantics.Model.World.Product`).       --
+--                                                                    --
+-- The timed and finite-subset trace grades have a frame of either    --
+-- kind; the tick frames see a grade only through durations, and      --
+-- identify distinctions that the history frames keep.                --
+--                                                                    --
+-- The module is an index: the trace-based frames are parameterised   --
+-- by the alphabet `Op`, and are listed rather than re-exported.      --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World where
@@ -76,8 +69,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
 
 -- the same two with a formal greatest grade adjoined, which reaches
 -- every world ahead: the greatest forward relation, containing every
--- other as covariance asks, and composition survives because the
--- adjoined point absorbs
+-- other, as covariance requires, and closed under composition, the
+-- adjoined point being absorbing
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop
 import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinityAndTop
@@ -96,10 +89,9 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.LeftSided
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
 
--- the cap at the subset order. The quantifier over the listed runs
--- follows the direction of inclusion the grade weakens along, so this
--- frame is existential: moving forward may take no longer than one of
--- the listed runs
+-- the cap at the subset order. The quantifier over the listed runs is
+-- existential, following the direction in which the grade weakens:
+-- moving forward takes no longer than one of the listed runs
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
 
@@ -107,8 +99,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
 -- Trace-history frames: worlds are timed traces
 --
 -- `w ⊑ʰ[ ρ ] w'` asks for a continuation `cont` with `w ∙ cont ≡ w'`
--- that the grade `ρ` admits. Being Σ-shaped, the relation is covariant
--- in the grade on the nose.
+-- that the grade `ρ` admits. The relation is a Σ-type and is covariant
+-- in the grade up to equality.
 
 -- append a continuation whose duration falls in `[ min , max ]`, with
 -- an infinite `max` imposing no upper bound
@@ -121,8 +113,8 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithI
 import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinityAndTop
 
 -- append a continuation that stays within one of the bounds a trace
--- grade lists -- accessibility is then just "the continuation is a run
--- the grade admits"
+-- grade lists: accessibility is "the continuation is a run the grade
+-- admits"
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.RightSided
 
@@ -131,15 +123,15 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.Right
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.LeftSided
 
--- append one continuation answering to both endpoints at once, which is
--- what a history frame can say and a tick frame cannot
+-- append one continuation answering to both endpoints at once, which a
+-- history frame expresses and a tick frame does not
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSided
 
--- the cap at the subset order, where accessibility is membership
--- outright, there being no comparison between the continuation and a
--- listed run to make. The frame is then as fine-grained as the grade
--- is, distinguishing runs the tick frame collapses into their durations
+-- the cap at the subset order, where accessibility is membership, with
+-- no comparison between the continuation and a listed run. The frame is
+-- as fine as the grade, distinguishing runs that the tick frame
+-- identifies by their durations
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.RightSided
 

@@ -1,24 +1,24 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades are quotas.             --
---                                                                     --
--- Effect grades are the subset grade of upper bounds: every run a     --
--- computation has is one of the listed traces. Resource grades are    --
--- at-most counts, one quota per counter.                              --
---                                                                     --
---   ∣ Q ∣ᵉ  =  on each counter, the greatest count among the traces   --
---              of Q                                                   --
---                                                                     --
--- The *greatest*, because the set is read disjunctively: which run    --
--- occurs is not known, so each quota has to cover the run that draws  --
--- on it most. Each counter is maximised separately, so `⌈ read ⌉` and --
--- `⌈ send ⌉` together project to one of each -- more than either run  --
--- performs. What the resource grade forgets is which runs there were  --
--- and where their operations and delays fall.                         --
---                                                                     --
--- Every field is preserved. The two greatest grades correspond:       --
--- `any-run` permits any run and `unlimited` on every counter imposes  --
--- no quota, and both are absorbing. Time draws on no counter, so the  --
--- pure delays project to the unit.                                    --
+-- A grade system in which the resource grades are quotas.            --
+--                                                                    --
+-- The effect grades are the subset grade of upper bounds: every run  --
+-- of a computation is one of the listed traces. The resource grades  --
+-- are at-most counts, one quota per counter.                         --
+--                                                                    --
+--   ∣ Q ∣ᵉ  =  on each counter, the greatest count among the traces  --
+--              of Q                                                  --
+--                                                                    --
+-- The greatest count is taken because the set is read disjunctively: --
+-- each quota covers the run that draws on it most. Each counter is   --
+-- maximised separately, so `⌈ read ⌉` and `⌈ send ⌉` together        --
+-- project to one of each, more than either run performs. The         --
+-- resource grade forgets which runs there were and where their       --
+-- operations and delays occur.                                       --
+--                                                                    --
+-- Every field is preserved. The two greatest grades correspond:      --
+-- `any-run` permits any run and `unlimited` on every counter imposes --
+-- no quota, and both are absorbing. Time draws on no counter, so the --
+-- pure delays project to the unit.                                   --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

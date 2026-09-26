@@ -1,18 +1,18 @@
 ------------------------------------------------------------------------
--- A grade system in which the resource grades are certain counts.     --
---                                                                     --
--- Effect grades are the coverage floor: whatever a computation does,  --
--- one of the listed guarantees has been covered. Resource grades are  --
--- at-least counts.                                                    --
---                                                                     --
--- Coverage never buys an operation with time: every operation a       --
--- guarantee names occurs in the run that covers it. So a covering run --
--- draws on every counter at least as often as the guarantee, which is --
--- the one assumption `Lifted.LeftSided` asks for, and every field of  --
--- the projection is preserved.                                        --
---                                                                     --
--- As a resource grade, `atleast 3` on a `heartbeat` counter makes a   --
--- token available only once three heartbeats are certain.             --
+-- A grade system in which the resource grades are certain counts.    --
+--                                                                    --
+-- The effect grades are the coverage floor: whatever a computation   --
+-- does, one of the listed guarantees has been covered. The resource  --
+-- grades are at-least counts.                                        --
+--                                                                    --
+-- Under the coverage order, every operation a guarantee lists occurs --
+-- in a run that covers it. A covering run therefore draws on every   --
+-- counter at least as often as the guarantee, which is the           --
+-- assumption of `Lifted.LeftSided`, and every field of the           --
+-- projection is preserved.                                           --
+--                                                                    --
+-- As a resource grade, `atleast 3` on a `heartbeat` counter makes a  --
+-- token available only once three heartbeats are certain.            --
 ------------------------------------------------------------------------
 
 open import Data.Fin.Base using (Fin)

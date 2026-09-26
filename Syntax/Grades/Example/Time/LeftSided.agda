@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------
--- (Left) one-sided (closed) intervals as grades.                      --
---                                                                     --
--- A grade `[ n ,+∞⟩` is a lower bound: "at least `n` time steps".      --
--- Multiplication adds the bounds and the order is reverse `≤` on them, --
--- so a *smaller* bound is the weaker grade.                            --
+-- (Left) one-sided (closed) intervals as grades.                     --
+--                                                                    --
+-- A grade `[ n ,+∞⟩` is a lower bound, "at least `n` time steps".    --
+-- Multiplication adds the bounds and the order is the reverse of `≤` --
+-- on them, and a *smaller* bound is the weaker grade.                --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Time.LeftSided where
@@ -201,10 +201,9 @@ left-sided-intervals = record
 ------------------------------------------------------------------------
 -- The same intervals with a formal greatest grade
 --
--- `[ 0 ,+∞⟩` is greatest but not absorbing, being the unit, so a grade
--- whose top absorbs -- the subset floor, whose top demands nothing --
--- projects here rather than into the intervals above. `untimed` claims
--- no lower bound at all, and absorbs.
+-- `[ 0 ,+∞⟩` is greatest but, being the unit, not absorbing. `untimed`
+-- claims no lower bound and is absorbing; the grades whose greatest
+-- element is absorbing project to these intervals.
 
 infix 50 timed_
 

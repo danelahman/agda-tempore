@@ -347,8 +347,7 @@ outerᵣ? O ∣ ε ∣̂ᵉ with outerₑ? O ε
 ... | just f  = just (f , (λ ()))
 ... | nothing = nothing
 
--- A variable, with the equation that names it: a pattern-matching
--- wrapper, so that a case analysis on it stays visible to a proof
+-- A variable, with the equation that names it
 
 evar? : ∀ {Φ} → (ε : EExp Φ) → Maybe (Σ[ j ∈ EVar Φ ] (ε ≡ evar j))
 evar? (evar j)   = just (j , refl)

@@ -1,4 +1,4 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Correctness of Moore's partition refinement.                        --
 --                                                                     --
 -- Round `i` of `Moore.rounds` holds a leader function of agreement on --
@@ -7,7 +7,7 @@
 -- point of the leader function, and there are at most `size D` of     --
 -- them, so the fuel suffices and `equivalence` is a fixpoint of       --
 -- `refine`, which is language equivalence.                            --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base
   using (ℕ; zero; suc; _+_; _≤_; _<_; z≤n; s≤s; _≡ᵇ_)

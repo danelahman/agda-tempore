@@ -1,18 +1,16 @@
 ------------------------------------------------------------------------
--- A language specification over the sensor-node alphabet.             --
---                                                                     --
--- `Syntax.Grades.Example.System.*` build a grade system over a set of  --
--- operation names, and take that set as part of a whole `LanguageSpec` --
--- -- so instantiating them means fixing base types and an operation    --
--- signature as well. This module does that once for the sensor node.   --
---                                                                     --
--- The spec's own grades are the two-sided intervals projected onto the --
--- left-sided ones: effect grades bound a computation's running time    --
--- from both sides, resource grades keep the lower bound. That makes    --
--- `op-grade` literally `opTime` -- the interval each operation's        --
--- execution time falls in -- which is what the whole development is    --
--- about, and it is the starting point the other grade systems below    --
--- offer alternatives to.                                              --
+-- A language specification over the sensor-node alphabet.            --
+--                                                                    --
+-- The grade systems of `Syntax.Grades.Example.System.*` over a set   --
+-- of operations take it as part of a `LanguageSpec`, which also      --
+-- fixes base types and an operation signature. This module gives     --
+-- that specification for the sensor node.                            --
+--                                                                    --
+-- Its grade system projects the two-sided intervals onto the         --
+-- left-sided ones: effect grades bound the running time of a         --
+-- computation from both sides, and resource grades keep the lower    --
+-- bound. `op-grade` is `opTime`, the interval in which the execution --
+-- time of each operation lies.                                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Spec where

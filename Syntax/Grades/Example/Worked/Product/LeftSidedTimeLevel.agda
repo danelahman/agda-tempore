@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- Worked instances of left-sided time paired with a security level.   --
---                                                                     --
+-- Worked instances of left-sided time paired with a security level.  --
+--                                                                    --
 -- The embargo-with-taint-check grade `([ n ,+∞⟩ , ℓ)` at the sensor  --
--- node, each operation graded by `fast` and `touches`: orderings,     --
--- sequencing and the join, checked by the grade's own decision        --
--- procedure or by computation.                                        --
+-- node, each operation graded by `fast` and `touches`: orderings,    --
+-- sequencing and the join, established by the decision procedure of  --
+-- the grade or by computation.                                       --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Product.LeftSidedTimeLevel where

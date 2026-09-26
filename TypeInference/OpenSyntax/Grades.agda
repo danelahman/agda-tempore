@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
--- Open resource-grade and effect-grade expressions               --
---                                                                --
--- Grade expressions of the mirrored language: the closed grades  --
--- of `Syntax.Grades` extended with variables drawn from a scope. --
--- Resource expressions may embed effect expressions (the `mapᵉ`  --
--- morphism), but not the other way round.                        --
+-- Open resource-grade and effect-grade expressions             --
+--                                                              --
+-- The closed grades of `Syntax.Grades` extended with variables --
+-- of a scope, products and binary joins. Resource expressions  --
+-- embed effect expressions along the morphism `mapᵉ`; effect   --
+-- expressions do not embed resource expressions.               --
 ------------------------------------------------------------------
 
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
@@ -24,12 +24,10 @@ module TypeInference.OpenSyntax.Grades (S : LanguageSpec) where
 open LanguageSpec S
 open GradeSystemInterface Grades
 
--- The grade sort has a join former, the type sort does not: `_⊔ₑ_` and
--- `_⊔ᵣ_` are total operations on closed grades, so a join of two open
--- grade expressions always denotes, and internalising it as syntax lets
--- a bound be written down rather than only computed from constants. A
--- join of open types is partial -- `α₁ ⊔ᵛ α₂` denotes nothing until the
--- shapes are known -- and is resolved by skeleton expansion instead.
+-- Grade expressions have a join former and open types do not: `_⊔ₑ_`
+-- and `_⊔ᵣ_` are total on closed grades, so a join of two open grade
+-- expressions always denotes, whereas a join of open types, such as
+-- `α₁ ⊔ᵛ α₂`, is defined only once the shapes are known.
 
 -- Effect grade expressions
 

@@ -1,13 +1,13 @@
 ------------------------------------------------------------------------
--- Worked instances of left-sided intervals: a lower bound on elapsed   --
--- time.                                                                --
---
--- `[ m ,+∞⟩ ≾ [ n ,+∞⟩` is `n ≤ m`: a *larger* lower bound is the       --
--- stronger claim, so it sits below. Weakening forgets how much time is  --
--- known to have passed; it can never invent more.                       --
---
--- The sensor node's `uplink` run -- read, idle two ticks, send -- takes  --
--- at least 7 ticks under `opTime`.                                       --
+-- Worked instances of left-sided intervals: a lower bound on elapsed --
+-- time.                                                              --
+--                                                                    --
+-- `[ m ,+∞⟩ ≾ [ n ,+∞⟩` is `n ≤ m`: a *larger* lower bound is the    --
+-- stronger claim and lies below. Weakening decreases the amount of   --
+-- time known to have passed.                                         --
+--                                                                    --
+-- The `uplink` run of the sensor node (read, idle two ticks, send)   --
+-- takes at least 7 ticks under `opTime`.                             --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Time.LeftSided where

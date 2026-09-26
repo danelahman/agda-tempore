@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Regular languages over a finite alphabet, and the grade they form.  --
---                                                                     --
--- A language is held as its canonical table: the minimal complete     --
--- DFA, states numbered breadth-first. This module is only an index.   --
+-- Regular languages over a finite alphabet, and the grade they form. --
+--                                                                    --
+-- A language is held as its canonical table: the minimal complete    --
+-- DFA, states numbered breadth-first. This module is only an index.  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Regular where

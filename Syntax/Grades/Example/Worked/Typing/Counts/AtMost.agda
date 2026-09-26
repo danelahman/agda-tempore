@@ -1,32 +1,33 @@
 ------------------------------------------------------------------------
--- Typed example computations at quotas on the operations.             --
---                                                                     --
--- Effect grades and resource grades are both `⟪ r , w , s ⟫ᵐ`, "at    --
--- most `r` reads, `w` writes and `s` sends", and each operation is    --
--- graded by drawing once on its own counter. Idling draws on none:    --
--- `delay` locks the context by the unit.                              --
---                                                                     --
--- Read as an effect grade, a quota is a rate limit a computation      --
--- keeps, and `coerce` may raise it. Read as a resource grade it says  --
--- how many operations have been performed since boxing, so            --
--- `[ ⟪ r , w , s ⟫ᵐ ] A` is a licence: claimable until the quota is   --
--- spent, however long that takes.                                     --
---                                                                     --
--- The two rules that put the unit on opposite sides of the order:     --
---                                                                     --
---   * `var`'s bound `ρ ≾ᵣ uᵣ` holds when `ρ` counts nothing, so a     --
---     reading survives any amount of idling and no operation at all. --
---     To use it after an operation, it has to be licensed.            --
---                                                                     --
---   * a handler clause may drop its continuation: performing nothing  --
---     keeps every quota.                                              --
---                                                                     --
--- Every claim is checked counter by counter: `≤!` on a quota, `tt` on --
--- an `unlimited` one. A refutation names the counter that overflows.  --
---                                                                     --
--- The comments inside the programs say what each former appends to   --
--- the context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a --
--- binding.                                                            --
+-- Typed example computations at quotas on the operations.            --
+--                                                                    --
+-- Effect grades and resource grades are both `⟪ r , w , s ⟫ᵐ`, "at   --
+-- most `r` reads, `w` writes and `s` sends", and each operation is   --
+-- graded by one draw on its own counter. Idling draws on none:       --
+-- `delay` locks the context by the unit.                             --
+--                                                                    --
+-- As an effect grade, a quota is a rate limit that a computation     --
+-- keeps, and `coerce` may raise it. As a resource grade it bounds    --
+-- the number of operations performed since boxing, and               --
+-- `[ ⟪ r , w , s ⟫ᵐ ] A` is a licence, claimable until the quota is  --
+-- spent, irrespective of time.                                       --
+--                                                                    --
+-- The two rules that place the unit on opposite sides of the order:  --
+--                                                                    --
+--   * the bound `ρ ≾ᵣ uᵣ` of `var` holds when `ρ` counts nothing, so --
+--     a reading survives any amount of idling and no operation;      --
+--     after an operation it must be licensed.                        --
+--                                                                    --
+--   * a handler clause may discard its continuation: performing      --
+--     nothing keeps every quota.                                     --
+--                                                                    --
+-- Every claim is checked counter by counter: `≤!` on a quota, `tt`   --
+-- on an `unlimited` one. A refutation names the counter that         --
+-- overflows.                                                         --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Counts.AtMost where

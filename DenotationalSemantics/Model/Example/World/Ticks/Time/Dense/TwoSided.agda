@@ -1,14 +1,14 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the two-sided intervals of dense      --
--- time, with a possibly-infinite right endpoint.                      --
---                                                                     --
--- Worlds are time points `ℚ≥0`. A grade `[ p , a ]` reaches exactly   --
--- the worlds inside its window ahead:                                 --
---                                                                     --
---   w ⊑ᵗ[ [ p , a ] ] w'   iff   w + p ≤ w'   and   ↑ w' ≤∞ ↑ w +∞ a  --
---                                                                     --
--- It is the action frame of the grade at the degenerate intervals     --
--- `[ q , ↑ q ]`. The lower bound keeps every move forward.            --
+-- A time-ticks Kripke frame for the two-sided intervals of dense     --
+-- time, with a possibly-infinite right endpoint.                     --
+--                                                                    --
+-- Worlds are time points `ℚ≥0`. A grade `[ p , a ]` reaches exactly  --
+-- the worlds inside its window ahead:                                --
+--                                                                    --
+--   w ⊑ᵗ[ [ p , a ] ] w'   iff   w + p ≤ w'   and   ↑ w' ≤∞ ↑ w +∞ a --
+--                                                                    --
+-- It is the action frame of the grade at the degenerate intervals    --
+-- `[ q , ↑ q ]`. The lower bound keeps every move forward.           --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.TwoSided where

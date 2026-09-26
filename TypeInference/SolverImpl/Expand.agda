@@ -1,21 +1,22 @@
 ------------------------------------------------------------------
--- What the solver's variable expansion buys                     --
---                                                               --
--- The shape of an open type is its skeleton with all type       --
--- variables identified. Subtyping relates only types of equal   --
--- shape, and `subDec` succeeds exactly on a pair of decorations --
--- of one skeleton.                                              --
---                                                               --
--- `_◃ᵛ_` says an open type decorates a skeleton: a type         --
--- variable at a skeleton variable, the same former everywhere   --
--- else. `_⊑ᵛ_` relaxes it to an arbitrary type at a skeleton    --
--- variable. `decorate` produces the first (`decorate-◃`), and   --
--- is most general among the second (`decorate-max`).            --
---                                                               --
--- `expandSub` makes every demand of its list decomposable       --
--- (`expandSub-dec`), its substitution is most general among     --
--- those that satisfy the demands, and its failure refutes them  --
--- (`expandSub-max`).                                            --
+-- Properties of variable expansion                             --
+--                                                              --
+-- The shape of an open type is its skeleton with all type      --
+-- variables identified. Subtyping relates only types of equal  --
+-- shape, and `subDec` succeeds exactly on a pair of            --
+-- decorations of one skeleton.                                 --
+--                                                              --
+-- `_◃ᵛ_` states that an open type decorates a skeleton: a type --
+-- variable at each skeleton variable and the same former       --
+-- everywhere else. `_⊑ᵛ_` relaxes it to an arbitrary type at   --
+-- each skeleton variable. `decorate` produces a decoration     --
+-- (`decorate-◃`) that is most general among the relaxed ones   --
+-- (`decorate-max`).                                            --
+--                                                              --
+-- `expandSub` makes every demand of its list decomposable      --
+-- (`expandSub-dec`); its substitution is most general among    --
+-- those that satisfy the demands, and its failure refutes them --
+-- (`expandSub-max`).                                           --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -62,8 +63,8 @@ open import TypeInference.SolverImpl.Core.Rigid        S using (zip₂)
 
 open import TypeInference.SolverImpl.Resid S
 
--- Shapes: skeletons over a single variable, so that all type
--- variables are identified.
+-- Shapes: skeletons over a single variable, in which all type variables
+-- are identified.
 
 mutual
 
@@ -327,7 +328,7 @@ mutual
 ◃-wkᵉ : ∀ {Ψ n} {t : Skel n} {A : OVType Ψ} → t ◃ᵛ A → t ◃ᵛ wkᵉ-v A
 ◃-wkᵉ {t = t} {A = A} d = subst (t ◃ᵛ_) (wkˢᵉ-v A) (◃-ren TyRen-wkᵉ d)
 
--- `decorate` renames the old type variables and produces a decoration
+-- `decorate` renames the given type variables and produces a decoration
 
 Dec◃ : ∀ {m} → (Ψ : Scope) → Skel m
      → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ' × OVType Ψ') → Set
@@ -450,7 +451,7 @@ decorate*-max Ψ (t ∷ⱽ ts) δ (A₀ ∷ⱽ A₀s) ps | nothing
         λ { zero → trans ([⨟]ᵛ A w₂ δ₂) (trans ([≐]ᵛ tri₂ A) eq₁)
           ; (suc i) → ms i }
 
--- What the refinement of a whole store buys
+-- Properties of the refinement of a whole store
 
 Expᵏ◃ : ∀ {m} → (Ψ : Scope) → SSub (nTy Ψ) m → Σ[ Ψ' ∈ Scope ] (Subst Ψ Ψ') → Set
 Expᵏ◃ Ψ σ x = (α : TyVar Ψ) → σ α ◃ᵛ sTy (proj₂ x) α

@@ -1,22 +1,22 @@
 ------------------------------------------------------------------
--- Closed grade orderings                                         --
---                                                                --
--- A grade expression with no unknowns has a value. An ordering   --
--- between two such is decided by the grade's own `_≾?_`:         --
--- `closedᴴ` drops each one that holds and fails on one that does --
--- not. The orderings decided are those of the set and those it   --
--- entails by transitivity: two closed sides joined by a chain of --
--- orderings, the sides compared syntactically (`Transitive`,     --
--- over `Reach`). A var-rule disjunction whose grade has a value  --
--- is decided the same way against the unit: it is dropped when   --
--- that holds, and fails when it does not and the type is refuted --
--- eternal (`etDec`). What is left entails what was there; a      --
--- failure leaves an atom that no closed instance satisfies.      --
---                                                                --
--- Contract. The result entails the set (`closedᴴ-⊩`) and is      --
--- entailed wherever the set is (`closedᴴ-⊆`); a failure leaves   --
--- the set unsatisfiable (`closedᴴ-fail`). Only closed atoms are  --
--- decided; the others are kept verbatim.                         --
+-- Closed grade orderings                                       --
+--                                                              --
+-- A grade expression without unknowns has a value. An ordering --
+-- between two such expressions is decided by the grade's own   --
+-- `_≾?_`: `closedᴴ` drops each one that holds and fails on one --
+-- that does not. The orderings decided are those of the set    --
+-- and those it entails by transitivity, namely two closed      --
+-- sides joined by a chain of orderings whose sides are         --
+-- compared syntactically (`Transitive`, over `Reach`). A       --
+-- var-rule disjunction whose grade has a value is decided      --
+-- against the unit in the same way: it is dropped when the     --
+-- ordering holds, and the check fails when the ordering does   --
+-- not hold and the type is refuted eternal (`etDec`).          --
+--                                                              --
+-- Contract. The result entails the set (`closedᴴ-⊩`) and is    --
+-- entailed wherever the set is (`closedᴴ-⊆`); a failure leaves --
+-- the set unsatisfiable (`closedᴴ-fail`). Only closed atoms    --
+-- are decided; the others are kept unchanged.                  --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)

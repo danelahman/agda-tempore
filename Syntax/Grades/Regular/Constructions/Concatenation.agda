@@ -1,11 +1,11 @@
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 -- Concatenation: the subset construction is lawful, and its language  --
 -- is the product of languages.                                        --
 --                                                                     --
 -- State `(p , S)` stands for `L_p · M ∪ ⋃_{q ∈ S} M_q`; the invariant --
 -- `0 ∈ S` whenever `p` is final lets `S` absorb the case where the    --
 -- `L`-part is empty.                                                  --
-------------------------------------------------------------------------
+-------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_; _≤_; _<_; z≤n; s≤s)
 

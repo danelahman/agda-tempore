@@ -1,9 +1,10 @@
 ------------------------------------------------------------------
--- The outcome of solving                                         --
---                                                                --
--- A solution, a refutation, or stuck: a rigid scope closes with  --
--- an unknown local to it for which `Localise` finds no value.    --
--- Nothing is claimed of a stuck constraint.                      --
+-- The outcome of solving                                       --
+--                                                              --
+-- A solution, a refutation, or `stuck`, of which nothing is    --
+-- claimed. The concrete solver is stuck only at the close of a --
+-- rigid scope, on an unknown local to it that `Localise`       --
+-- assigns no value (`SolverImpl.Solve`).                       --
 ------------------------------------------------------------------
 
 module TypeInference.Outcome where

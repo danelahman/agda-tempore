@@ -1,60 +1,61 @@
 ------------------------------------------------------------------
--- The solver: solve, then report                                 --
---                                                                --
--- The stages, each with the lemmas stating its contract:         --
---                                                                --
--- * Generation (`Generate`): the solutions of `C[ Γ , M ]` are   --
---   the derivations erasing to `M` (`charC`).                    --
--- * The driver (`Solve`): subtyping demands, type equations      --
---   among them as subtyping both ways, are expanded              --
---   (`expandSub-dec`, `expandSub-max`) and                       --
---   decomposed exactly (`SubDec`'s `intro`/`elim`,               --
---   `atomiseᴿ-sound`/`atomiseᴿ-compl`); eternality demands and   --
---   the type side of var-rule disjunctions are decided when      --
---   pushed (`etDec-intro`/`-compl`/`-refute`, `etDec-grade`);    --
---   other atoms are residualised. A solution carries its         --
---   witness (`Wit`), is principal (`solve-principal`), and a     --
---   refutation refutes (`solve-fail`).                           --
--- * The close of a clause's rigid scope: `reexpand`              --
---   (`reexpand-princ`/`-fail`), `Localise.localise`              --
---   (`Localised`, `localise-princ`), `splitᴿ`                    --
---   (`splitᴿ-princ`/`-fail`), `popᵉ`                             --
---   (`popᵉ-princ`/`-escape`/`-fail`).                            --
--- * Deferred conditions (`Deferred`), retried after each close   --
---   (`retry-princ`/`-fail`), read back as obligations            --
---   (`toOblig`).                                                 --
--- * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`), then   --
---   `closedᴴ` deciding the closed atoms, with the closed         --
---   orderings entailed by transitivity                           --
---   (`closedᴴ-⊩`/`-⊆`/`-fail`).                                  --
--- * The report (`report`, `Reported`): `simplify`                --
---   (`simplify-⊩`/`-⊨`), which writes the set in canonical form, --
---   each join on a left side split, and drops each var-rule      --
---   disjunction entailed by another; Pottier's elimination       --
---   (`Elim`), with the type variables of a subtyping cycle       --
---   identified (`equateᵗ`); canonical forms again (`canonElim`); --
---   `trim` (`trimElim`); strengthening (`Strengthened`). The     --
---   unknowns of the image of the caller's variables, and those   --
---   of the deferred conditions, are neither eliminated nor       --
---   dropped (`fix`, `instᴿ`).                                    --
---                                                                --
--- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on     --
--- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types,     --
--- with no completeness claimed. Two products are compared by     --
--- `prodˢ≾`, which decides the embedding `_⊑ᵖ_`                   --
--- (`prodˢ≾-complete`, `prodˢ≾-exact`), sound for entailment      --
--- (`⊑ᵖ-sound`).                                                  --
---                                                                --
--- `runSolver` instantiates `TypeInference.Solver.Solver`         --
--- (`runSolver-sound`, `runSolver-principal`,                     --
--- `runSolver-complete`) and is never stuck without a rigid       --
--- binder (`runSolver-rigidFree`).                                --
--- `infer` is the reference entry point: a report is a principal  --
--- typing (`typing`) whose conditions are satisfiable exactly     --
--- when the term is typable (`infer-typed`); a refutation means   --
--- the term is untypable (`infer-untypable`, `infer-complete`); a --
--- handler-free term is never stuck (`infer-handlerFree`).        --
--- `stuck` carries no claim.                                      --
+-- The solver: solving, then reporting                          --
+--                                                              --
+-- The stages, each with the lemmas stating its contract:       --
+--                                                              --
+--   * Generation (`Generate`): the solutions of `C[ Γ , M ]`   --
+--     are the derivations erasing to `M` (`charC`).            --
+--   * The driver (`Solve`): subtyping demands, type equations  --
+--     included, are expanded (`expandSub-dec`,                 --
+--     `expandSub-max`) and decomposed exactly (`SubDec`'s      --
+--     `intro`/`elim`, `atomiseᴿ-sound`/`atomiseᴿ-compl`);      --
+--     eternality demands and the type side of var-rule         --
+--     disjunctions are decided when pushed                     --
+--     (`etDec-intro`/`-compl`/`-refute`, `etDec-grade`); other --
+--     atoms are residualised. A solution carries its witness   --
+--     (`Wit`) and is principal (`solve-principal`); a          --
+--     refutation is sound (`solve-fail`).                      --
+--   * The close of a clause's rigid scope: `reexpand`          --
+--     (`reexpand-princ`/`-fail`), `Localise.localise`          --
+--     (`Localised`, `localise-princ`), `splitᴿ`                --
+--     (`splitᴿ-princ`/`-fail`), `popᵉ`                         --
+--     (`popᵉ-princ`/`-escape`/`-fail`).                        --
+--   * Deferred conditions (`Deferred`), retried after each     --
+--     close (`retry-princ`/`-fail`) and read back as           --
+--     obligations (`toOblig`).                                 --
+--   * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`),    --
+--     then `closedᴴ`, which decides the closed atoms and the   --
+--     closed orderings entailed by transitivity                --
+--     (`closedᴴ-⊩`/`-⊆`/`-fail`).                              --
+--   * The report (`report`, `Reported`): `simplify`            --
+--     (`simplify-⊩`/`-⊨`), which normalises the set, splits    --
+--     each join on a left side and drops each var-rule         --
+--     disjunction entailed by another; polarity-based          --
+--     elimination of unknowns (`Elim`), with cycle elimination --
+--     on the type variables of subtyping cycles (`equateᵗ`);   --
+--     normal forms again (`canonElim`); `trim` (`trimElim`);   --
+--     strengthening (`Strengthened`). The unknowns of the      --
+--     image of the caller's variables and those of the         --
+--     deferred conditions are neither eliminated nor dropped   --
+--     (`fix`, `instᴿ`).                                        --
+--                                                              --
+-- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on   --
+-- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types;   --
+-- no completeness is claimed. Products are compared by         --
+-- `prodˢ≾`, which decides the embedding `_⊑ᵖ_`                 --
+-- (`prodˢ≾-complete`, `prodˢ≾-exact`), sound for entailment    --
+-- (`⊑ᵖ-sound`).                                                --
+--                                                              --
+-- `runSolver` instantiates `TypeInference.Solver.Solver`       --
+-- (`runSolver-sound`, `runSolver-principal`,                   --
+-- `runSolver-complete`) and is not stuck on a constraint       --
+-- without rigid binders (`runSolver-rigidFree`). `infer` is    --
+-- the reference entry point: a report is a principal type      --
+-- scheme (`typing`) whose conditions are satisfiable exactly   --
+-- when the term is typable (`infer-typed`); a refutation means --
+-- that the term is untypable (`infer-untypable`,               --
+-- `infer-complete`); a handler-free term is never stuck        --
+-- (`infer-handlerFree`); `stuck` carries no claim.             --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -531,7 +532,7 @@ reportOutcome-stuck (solved _) e ()
 -- The reference entry point
 --
 -- A report on the constraint of `M` in `Γ`, relative to the program's
--- variables, is a principal typing of `M` in `Γ`: its derivation is the
+-- variables, is a principal type scheme of `M` in `Γ`: its derivation is the
 -- principal one instantiated along `η` and retracted along `ι`, and a
 -- typing factors through the principal one and then through the report
 -- at each closed instance.
@@ -643,16 +644,10 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
           subst (λ A → ∅ᴴ ∣ A ‼ t̂ Θ [ σ ]ᵉ [ δ' ]ᵉ <:̂ᶜ A₀ [ δ₀ ]ᵛ ‼ ε₀ [ δ₀ ]ᵉ)
                 (sym aeq) (<:̂ᵛ-refl (A₀ [ δ₀ ]ᵛ) ‼ₛ le)
 
--- Inference: a principal typing, a refutation, or stuck. It is stuck
--- where a handler clause's scope closes with an unknown local to it
--- for which `Localise` finds no value, after writing the constraints
--- in normal form, splitting the joins on left sides and identifying
--- the local unknowns in cycles between whole unknowns. Known cases: a
--- local cycle through a compound side, such as a product with the
--- clause's rigid; an outer clause's local on both sides of an inner
--- clause's deferred condition; a clause-local with no lower bound
--- under several upper bounds, none decided below the others, which in
--- a program comes only from `absurd`.
+-- Inference: a principal type scheme, a refutation, or `stuck`. It is
+-- stuck only where a handler clause's scope closes with a local unknown
+-- to which `Localise` assigns no value; `SolverImpl.Localise` lists the
+-- known cases.
 
 inferred : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
          → Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) → Inference Γ M
@@ -682,11 +677,11 @@ infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e�
 ------------------------------------------------------------------------
 -- The end-to-end theorem
 --
--- A typed verdict is a principal typing, and `M` is typable exactly
+-- A typed verdict is a principal type scheme, and `M` is typable exactly
 -- when its conditions are satisfiable; an untypable verdict means `M`
--- is not typable. Hence inference is complete up to stuck: a typable
--- `M` is never declared untypable. A handler-free `M` is never stuck.
--- A typed verdict with no leftover hypotheses or obligations is
+-- is not typable. Inference is therefore complete up to `stuck`: a
+-- typable `M` is never declared untypable. A handler-free `M` is never
+-- stuck. A typed verdict with no hypotheses and no obligations is
 -- typable outright.
 
 infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}

@@ -1,10 +1,10 @@
 ------------------------------------------------------------------
--- Substitution on raw terms                                      --
---                                                                --
--- A substitution `σ : Subst Θ Θ'` acts on the grade and type     --
--- annotations of a raw term, lifted by `_↑ᵉ` into handler        --
--- clauses. It preserves the number of term variables. Weakening  --
--- is the action at `wkˢᵗ`, `wkˢʳ` and `wkˢᵉ`.                    --
+-- Substitution on raw terms                                    --
+--                                                              --
+-- A substitution `σ : Subst Θ Θ'` acts on the grade and type   --
+-- annotations of a raw term, lifted by `_↑ᵉ` into handler      --
+-- clauses, and preserves the number of term variables.         --
+-- Weakening is the action of `wkˢᵗ`, `wkˢʳ` and `wkˢᵉ`.        --
 ------------------------------------------------------------------
 
 open import Data.Product using (_,_)

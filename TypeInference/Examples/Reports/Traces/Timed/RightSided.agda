@@ -1,9 +1,9 @@
 ------------------------------------------------------------------
--- Report simplification at timed traces, allowance order         --
---                                                                --
--- The unit is least, so a var-rule disjunction entailed by       --
--- another is pruned, and a product with the top among its        --
--- factors is absorbed into it.                                   --
+-- Report simplification at timed traces, allowance order       --
+--                                                              --
+-- The unit is least, so a var-rule disjunction entailed by     --
+-- another is pruned, and a product with the top among its      --
+-- factors is absorbed into it.                                 --
 ------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)

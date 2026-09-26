@@ -1,17 +1,17 @@
 ------------------------------------------------------------------------
--- The canonical table of a regular language.                          --
---                                                                     --
--- `canon` sends a table to the minimal complete DFA of its language,  --
--- with states numbered breadth-first. Two steps:                      --
---                                                                     --
---   * Moore's partition refinement. Round `i` puts two states in one  --
---     class iff they agree on every word shorter than `i`; a round    --
---     that adds no class has reached language equivalence.            --
---   * `explore` over the quotient, whose states are the classes, so   --
+-- The canonical table of a regular language.                         --
+--                                                                    --
+-- `canon` sends a table to the minimal complete DFA of its language, --
+-- with states numbered breadth-first. Two steps:                     --
+--                                                                    --
+--   * Moore's partition refinement. Round `i` puts two states in one --
+--     class iff they agree on every word shorter than `i`; a round   --
+--     that adds no class has reached language equivalence.           --
+--   * `explore` over the quotient, whose states are the classes, so  --
 --     every identification it makes is a language equality.          --
---                                                                     --
--- Canonicity (`Canonicity` below) is the statement that the result    --
--- depends only on the language.                                       --
+--                                                                    --
+-- Canonicity (`Canonicity` below) is the statement that the result   --
+-- depends only on the language.                                      --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; zero; suc; _≡ᵇ_)

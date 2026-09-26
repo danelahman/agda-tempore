@@ -1,11 +1,10 @@
---------------------------------------------------------------
--- Scopes of type, resource-grade, and effect-grade variables --
---                                                            --
--- The mirrored (open) language of the inference development  --
--- is indexed by a `Scope`, which counts the variables of its --
--- three sorts. Keeping the three counters as separate record --
--- fields makes every scope extension reduce definitionally.  --
---------------------------------------------------------------
+------------------------------------------------------------------
+-- Scopes of type, resource-grade and effect-grade variables    --
+--                                                              --
+-- The open calculus is indexed by a `Scope`, a record of three --
+-- counters, one for each sort of variable. Every scope         --
+-- extension reduces definitionally.                            --
+------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc)
@@ -39,8 +38,8 @@ EVar Θ = Fin (nE Θ)
 ∅ˢ : Scope
 ∅ˢ = scope 0 0 0
 
--- Scope extensions: each bumps exactly one counter, so that
--- `nE (Θ +e)` and friends reduce definitionally.
+-- Scope extensions, each incrementing one counter; `nE (Θ +e)` and the
+-- like reduce definitionally.
 
 _+ty : Scope → Scope
 Θ +ty = scope (suc (nTy Θ)) (nR Θ) (nE Θ)
@@ -64,12 +63,12 @@ newʳ = zero
 newᵉ : ∀ {Θ} → EVar (Θ +e)
 newᵉ = zero
 
--- Injections of the old variables into an extended scope. The naming
--- scheme is `wk<sort of the extension>-<sort of the variable>`; only the
--- matching sort shifts, the other two are the identity.
+-- Injections of the variables of a scope into an extension. The name
+-- `wk<sort of the extension>-<sort of the variable>` gives both sorts;
+-- only the matching sort shifts, the other two are the identity.
 
--- The scope is an *explicit* argument: `TyVar` and friends are `Fin` of a
--- projection, so the scope cannot be recovered from a variable's type.
+-- The scope is an explicit argument: `TyVar` and the like are `Fin` of a
+-- projection, which does not determine the scope.
 
 wkᵗ-tv : (Θ : Scope) → TyVar Θ → TyVar (Θ +ty)
 wkᵗ-tv Θ i = suc i

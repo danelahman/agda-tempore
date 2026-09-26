@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------
--- Worked instance of the coverage floor, projected onto certain        --
--- counts.                                                              --
---
--- Each counter takes the least count among the listed guarantees.      --
+-- Worked instance of the coverage floor, projected onto certain      --
+-- counts.                                                            --
+--                                                                    --
+-- Each counter takes the least count among the listed guarantees.    --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.System.Counts.Timed.LeftSided where

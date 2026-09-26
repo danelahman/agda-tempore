@@ -1,38 +1,38 @@
 ------------------------------------------------------------------
--- Normalising the grade expressions of a report                  --
---                                                                --
--- Every grade expression of a reported type and of a reported    --
--- hypothesis set is replaced by its canonical form: the          --
--- sum-of-products normal form, grouped, folded and ordered by    --
--- skeleton, with every alternative that the decider places below --
--- another dropped, so the monoid and lattice laws leave no trace --
--- in what a caller is shown. Where the unit is least, a product  --
--- with the top among its factors is replaced by the top, `u ≾ x` --
--- giving `x · ⊤ = ⊤ = ⊤ · x`, and the top then absorbs the join. --
--- The canonical form is relative to what the decider proves, and --
--- so to whether each grade's unit is least and whether its       --
--- multiplication commutes.                                       --
---                                                                --
--- In a hypothesis set, an ordering whose left side has two or    --
--- more alternatives becomes one ordering per alternative, the    --
--- join being the least upper bound (`splits`, `piecesʳ`,         --
--- `piecesᵉ`); a right side is never split. `Localise` writes a   --
--- clause's residual in the same form.                            --
---                                                                --
--- A hypothesis set and its normal form entail each other, so the --
--- normal form is stored, not merely printed. A type is           --
--- convertible to its normal form, and `canonElim` is that fact   --
--- as an elimination step.                                        --
---                                                                --
--- Contract. An expression is convertible to its canonical form   --
--- (`canonᵣ-≡`, `canonₑ-≡`; a product with the top to the top, by --
--- the unit's leastness, monotonicity and the top being greatest, --
--- `topProdᵣ?`, `topProdₑ?`), a type likewise (`canonᵛ-≡̂`,        --
--- `canonᶜ-≡̂`), and a hypothesis set and its canonical form       --
--- entail each other (`canonᴴ-⊩`, `canonᴴ-⊩⁻`), an ordering and   --
--- its pieces holding at the same instances (`Split.back`,        --
--- `Split.fwd`). That convertible expressions get one canonical   --
--- form is not claimed: it depends on what the decider proves.    --
+-- Normal forms of the grade expressions of a report            --
+--                                                              --
+-- Every grade expression of a reported type and of a reported  --
+-- hypothesis set is replaced by its canonical form: the        --
+-- sum-of-products normal form, grouped, folded and ordered by  --
+-- skeleton, with every alternative that the decider places     --
+-- below another dropped. Where the unit is least, a product    --
+-- with the top among its factors is replaced by the top, since --
+-- `u ≾ x` gives `x · ⊤ = ⊤ = ⊤ · x`, and the top then absorbs  --
+-- the join. The canonical form is relative to what the decider --
+-- proves, and hence to whether each grade's unit is least and  --
+-- whether its multiplication commutes.                         --
+--                                                              --
+-- In a hypothesis set, an ordering whose left side has two or  --
+-- more alternatives becomes one ordering per alternative       --
+-- (`splits`, `piecesʳ`, `piecesᵉ`); a right side is never      --
+-- split. `Localise` writes a clause's residual in the same     --
+-- form.                                                        --
+--                                                              --
+-- A hypothesis set and its canonical form entail each other;   --
+-- the canonical form is the set stored. A type is convertible  --
+-- to its canonical form, and `canonElim` is that fact as an    --
+-- elimination step.                                            --
+--                                                              --
+-- Contract. An expression is convertible to its canonical form --
+-- (`canonᵣ-≡`, `canonₑ-≡`; a product with the top to the top,  --
+-- by the leastness of the unit, monotonicity and the greatest  --
+-- element, `topProdᵣ?`, `topProdₑ?`), a type likewise          --
+-- (`canonᵛ-≡̂`, `canonᶜ-≡̂`), and a hypothesis set and its       --
+-- canonical form entail each other (`canonᴴ-⊩`, `canonᴴ-⊩⁻`),  --
+-- an ordering and its pieces holding at the same instances     --
+-- (`Split.back`, `Split.fwd`). That convertible expressions    --
+-- have one canonical form is not claimed: it depends on what   --
+-- the decider proves.                                          --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_; _++_; map)

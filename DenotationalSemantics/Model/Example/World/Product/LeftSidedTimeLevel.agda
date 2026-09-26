@@ -1,10 +1,10 @@
 ------------------------------------------------------------------------
--- A Kripke frame for left-sided time paired with a security level.    --
---                                                                     --
--- A world is a time point and the label reached. A grade              --
--- `([ n ,+∞⟩ , ℓ)` reaches the worlds at least `n` ticks ahead whose  --
--- label has risen by at most `ℓ`: the product of the tick frame and   --
--- the label frame.                                                    --
+-- A Kripke frame for left-sided time paired with a security level.   --
+--                                                                    --
+-- A world is a time point and the label reached. A grade             --
+-- `([ n ,+∞⟩ , ℓ)` reaches the worlds at least `n` ticks ahead whose --
+-- label has risen by at most `ℓ`: the product of the tick frame and  --
+-- the label frame.                                                   --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Product.LeftSidedTimeLevel where

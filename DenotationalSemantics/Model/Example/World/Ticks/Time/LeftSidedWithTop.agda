@@ -1,18 +1,18 @@
 ------------------------------------------------------------------------
--- A time-ticks Kripke frame for the left-sided time intervals with a   --
--- formal greatest grade as the resource grades.                        --
+-- A time-ticks Kripke frame for the left-sided time intervals with a --
+-- formal greatest grade as the resource grades.                      --
 --                                                                    --
--- Worlds are time points `ℕ`. A grade `timed [ n ,+∞⟩` reaches every    --
--- world at least `n` ticks ahead, exactly as in the plain left-sided    --
--- frame; `untimed` claims no lower bound at all and so reaches every    --
--- world ahead:                                                         --
+-- Worlds are time points `ℕ`. A grade `timed [ n ,+∞⟩` reaches every --
+-- world at least `n` ticks ahead, as in the plain left-sided frame;  --
+-- `untimed` claims no lower bound and reaches every world ahead:     --
 --                                                                    --
---   w ⊑[ timed [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                        --
---   w ⊑[ untimed ] w'          iff   w ≤ w'                            --
+--   w ⊑[ timed [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                      --
+--   w ⊑[ untimed ] w'          iff   w ≤ w'                          --
 --                                                                    --
--- The relation at `untimed` contains every other, as covariance asks   --
--- of the greatest grade, and is the greatest forward relation;         --
--- composition survives because `untimed` absorbs.                      --
+-- The relation at `untimed` contains every other, as covariance      --
+-- requires of the greatest grade, and is the greatest forward        --
+-- relation; it is closed under composition, `untimed` being          --
+-- absorbing.                                                         --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop where

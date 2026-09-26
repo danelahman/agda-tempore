@@ -1,33 +1,30 @@
 ------------------------------------------------------------------
 -- Principal types                                              --
 --                                                              --
--- Generation is run at `Θ` extended by a fresh type variable   --
--- and a fresh effect variable, standing for the result type    --
--- and the result effect, the term weakened into that scope;    --
--- solving the resulting constraint yields a principal solution --
--- together with its residual hypotheses and obligations.       --
+-- Generation runs at `Θ` extended by a type variable and an    --
+-- effect variable for the result type and effect, with the     --
+-- context and the term weakened into that scope (`C[_,_]`). A  --
+-- solution of that constraint, with its residual hypotheses    --
+-- and obligations, is principal (`Principal Γ M`) when every   --
+-- instance meeting the residue types `M` (`instantiate`) and   --
+-- every typing of `M` factors through it at each closed        --
+-- instance, with type and effect bounded by the principal ones --
+-- (`mgu`). A typing of `M` is a derivation erasing to an       --
+-- instance of `M`, annotations included.                       --
 --                                                              --
--- `Principal Γ M` packages `instantiate` — every instance      --
--- meeting the residue gives a typing of `M` — and `mgu` —      --
--- every typing of `M` factors through the principal            --
--- substitution and residue at each closed instance, its type   --
--- and effect bounded by the principal ones. A typing of `M` is --
--- a derivation that erases to an instance of `M`, its          --
--- annotations instantiated too.                                --
+-- `PrincipalTyping Γ M` is a principal type scheme over a      --
+-- scope of its own: every instance types `M` (`instantiate`),  --
+-- and every typing of `M` factors through it at each closed    --
+-- instance (`factor`). `M` is typable (`Typable`) exactly when --
+-- the scheme's conditions are satisfiable (`typable-⇔`).       --
+-- `Inference Γ M` is the outcome of inference.                 --
 --                                                              --
--- `PrincipalTyping Γ M` is the answer over a scope of its own: --
--- a scheme whose every instance types `M`, and through which   --
--- every typing of `M` factors at each closed instance. `M` is  --
--- then typable (`Typable`) exactly when the scheme's           --
--- conditions are satisfiable (`typable-⇔`). `Inference Γ M` is --
--- the outcome of inference.                                    --
---                                                              --
--- Principal types carrying a constraint set, after Pretnar     --
--- (LMCS 2014); "residual constraint" is OutsideIn(X)'s term    --
+-- Principal types with constraint sets follow Pretnar (LMCS    --
+-- 2014); "residual constraint" is the term of OutsideIn(X)     --
 -- (Vytiniotis et al., JFP 2011). The context is fixed up to    --
--- its variables, so what is principal is the type — Damas and  --
--- Milner's principal type scheme (1982) — not a principal      --
--- typing in Wells's sense (2002).                              --
+-- the instantiation of its variables, so the principal object  --
+-- is a type scheme in the sense of Damas and Milner (1982),    --
+-- not a principal typing in the sense of Wells (2002).         --
 ------------------------------------------------------------------
 
 open import Data.List.Base using ([])
@@ -243,7 +240,7 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
     teq : t̂ Θ [ σ⁺ p ]ᵉ [ δ ]ᵉ ≡ ε₀ [ δ₀ ]ᵉ
     teq = trans ([⨟]ᵉ (t̂ Θ) (σ⁺ p) δ) ([≐]ᵉ tri (t̂ Θ))
 
--- A principal typing of `M` in `Γ`: an instantiation `σ̃` of the
+-- A principal type scheme of `M` in `Γ`: an instantiation `σ̃` of the
 -- program's variables, hypotheses `Q̃`, obligations `R̃` and a type
 -- `X̃` over a scope `Θ̃`, the scheme `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`. Every instance
 -- meeting `Q̃` and `R̃` types `M` (`instantiate`), and every typing of
@@ -294,9 +291,9 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
     erases : ⌊ D₀ ⌋ᶜ ≡ M [ σ₀ ]ᴿᶜ
     sat    : Satisfiable Q₀ []
 
--- A principal typing decides typability up to its conditions: `M` is
--- typable exactly when they are satisfiable. A satisfying instance
--- instantiates the scheme; a typing factors through it.
+-- `M` is typable exactly when the conditions of its principal type
+-- scheme are satisfiable: a satisfying instance instantiates the scheme,
+-- and a typing factors through it.
 
 typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalTyping Γ M)
           → Typable Γ M ⇔ Satisfiable (Q̃ p) (R̃ p)
@@ -310,15 +307,15 @@ typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
     from (δ , h) with instantiate p δ ∅ᴴ h
     ... | D , e = typable ∅ˢ (σ̃ p ⨟ˢ δ) ∅ᴴ (X̃ p [ δ ]ᶜ) D e (idˢ , All._∷_ ⊩ᴴ-∅ All.[])
 
--- A principal typing with no leftover hypotheses or obligations is
--- typable
+-- A term whose principal type scheme has no hypotheses and no
+-- obligations is typable
 
 typable-unconditional : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalTyping Γ M)
                        → Q̃ p ≡ ∅ᴴ → R̃ p ≡ [] → Typable Γ M
 typable-unconditional p eq-Q eq-R =
   Equivalence.from (typable-⇔ p) (subst₂ Satisfiable (sym eq-Q) (sym eq-R) Satisfiable-∅)
 
--- The outcome of inference: a principal typing, a refutation, or stuck
+-- The outcome of inference: a principal type scheme, a refutation, or stuck
 
 data Inference {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
   typed     : PrincipalTyping Γ M → Inference Γ M

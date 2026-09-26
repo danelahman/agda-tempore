@@ -1,15 +1,15 @@
 ------------------------------------------------------------------------
--- Finite sets of timed traces among the regular ones.                 --
---                                                                     --
--- A non-empty finite set of traces denotes the regular language of    --
--- its runs' encodings. This preserves the unit, products, unions and  --
--- `of-nat`, and it is an order embedding, so the finite sets of       --
--- `Traces.Subsets.RightSided` sit inside the regular grade.           --
---                                                                     --
--- The inclusion does not extend to a morphism of grades: there,       --
--- `any-run` is greatest and absorbing, so a morphism would have to    --
--- make `{ ⟨1⟩ } · ⊤` equal to `⊤`, and here `⊤` holds the empty run   --
--- while `{ ⟨1⟩ } · ⊤` does not (`no-morphism`).                       --
+-- Finite sets of timed traces among the regular ones.                --
+--                                                                    --
+-- A non-empty finite set of traces denotes the regular language of   --
+-- the encodings of its runs. The map preserves the unit, products,   --
+-- unions and `of-nat`, and is an order embedding: the finite sets of --
+-- `Traces.Subsets.RightSided` embed in the regular grade.            --
+--                                                                    --
+-- The embedding is not a grade morphism: `any-run` is greatest and   --
+-- absorbing in the finite sets, so a morphism would identify         --
+-- `{ ⟨1⟩ } · ⊤` with `⊤`, whereas in the regular grade `⊤` contains  --
+-- the empty run and `{ ⟨1⟩ } · ⊤` does not (`no-morphism`).          --
 ------------------------------------------------------------------------
 
 open import Level using () renaming (zero to lzero)

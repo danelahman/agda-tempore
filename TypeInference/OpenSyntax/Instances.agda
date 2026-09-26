@@ -1,24 +1,26 @@
 ------------------------------------------------------------------
--- Closed instances of the open system                            --
---                                                                --
--- A closed instance of a scope `Θ` is a substitution             --
--- `δ : Subst Θ ∅ˢ`. Meaning is derivability in the open calculus --
--- at closed instances, each rigid of a clause kept a parameter.  --
--- An obligation `∀ᵉ j₁ … jₖ. Q` is a hypothesis set over the     --
--- scope extended by `k` rigids, and is entailed along a          --
--- substitution when its body is, at fresh rigids, by the         --
--- hypotheses weakened to them (`_⊩ᴼ_[_]`); a hypothesis set is   --
--- the obligation binding none. A closed instance satisfies       --
--- hypotheses and obligations when no hypotheses entail them      --
--- (`_⊨_∣_`). A set entails another semantically, `Q ⊨ᴴ Q'`, when --
--- every closed instance of the one is one of the other; open     --
--- entailment implies it.                                         --
---                                                                --
--- A closed grade expression has a value in the carrier. Entailed --
--- ordering between closed expressions is exactly the carrier's   --
--- ordering of their values, and convertibility is equality of    --
--- values. Closed subtyping, closed eternality and the closed     --
--- var-rule disjunction are decidable.                            --
+-- Closed instances of the open calculus                        --
+--                                                              --
+-- A closed instance of a scope `Θ` is a substitution           --
+-- `δ : Subst Θ ∅ˢ`. Meaning is derivability in the open        --
+-- calculus at closed instances, each rigid of a clause kept a  --
+-- parameter.                                                   --
+--                                                              --
+-- An obligation `∀ᵉ j₁ … jₖ. Q` is a hypothesis set over the   --
+-- scope extended by `k` rigids; it is entailed along a         --
+-- substitution when its body is entailed at fresh rigids by    --
+-- the hypotheses weakened to them (`_⊩ᴼ_[_]`). A hypothesis    --
+-- set is the obligation binding no rigid. A closed instance    --
+-- satisfies hypotheses and obligations when the empty          --
+-- hypothesis set entails them (`_⊨_∣_`). Semantic entailment   --
+-- `Q ⊨ᴴ Q'` holds when every closed instance of `Q` is one of  --
+-- `Q'`; open entailment implies it.                            --
+--                                                              --
+-- A closed grade expression has a value in the carrier.        --
+-- Entailed ordering between closed expressions is the          --
+-- carrier's ordering of their values, and convertibility is    --
+-- equality of values. Closed subtyping, closed eternality and  --
+-- the closed var-rule disjunction are decidable.               --
 ------------------------------------------------------------------
 
 open import Data.Empty.Irrelevant renaming (⊥-elim to ⊥-elim-irr)

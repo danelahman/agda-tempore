@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Inference on handlers                                          --
 --                                                                --
 -- A handler whose clause leaves unknowns local to the clause's   --
@@ -18,7 +18,7 @@
 -- The instances under `Handlers/` check by `refl`, at the four   --
 -- example grades, that inference types each program where it is  --
 -- typable and refutes it elsewhere.                              --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Fin using () renaming (zero to fzero; suc to fsuc)
 open import Data.Maybe using (Is-just)

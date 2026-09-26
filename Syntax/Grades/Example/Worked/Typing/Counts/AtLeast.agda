@@ -1,30 +1,30 @@
 ------------------------------------------------------------------------
--- Typed example computations at certain counts of the operations.     --
---                                                                     --
--- Effect grades and resource grades are both `⟪ r , w , s ⟫ˡ`, "at    --
--- least `r` reads, `w` writes and `s` sends", and each operation is   --
--- graded by drawing once on its own counter. Idling draws on none.    --
---                                                                     --
--- Read as a resource grade, `[ ⟪ r , w , s ⟫ˡ ] A` is a token that    --
--- becomes available once that much work has certainly been done since --
--- boxing. It reads as the lower bounds on time do, with one           --
--- difference: time cannot stand in for work, so no amount of idling   --
--- makes a token available. That refusal is below.                     --
---                                                                     --
--- The two rules that put the unit on opposite sides of the order:     --
---                                                                     --
---   * `var`'s bound `ρ ≾ᵣ uᵣ` holds at every `ρ`, demanding nothing   --
---     being the greatest grade: no reading goes stale.                --
---                                                                     --
---   * a handler clause cannot drop its continuation: a `return`       --
---     performs none of the operation it stands for.                   --
---                                                                     --
--- Every claim is checked counter by counter with `≤!`; a refutation   --
--- names the counter that falls short.                                 --
---                                                                     --
--- The comments inside the programs say what each former appends to   --
--- the context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a --
--- binding.                                                            --
+-- Typed example computations at certain counts of the operations.    --
+--                                                                    --
+-- Effect grades and resource grades are both `⟪ r , w , s ⟫ˡ`, "at   --
+-- least `r` reads, `w` writes and `s` sends", and each operation is  --
+-- graded by one draw on its own counter. Idling draws on none.       --
+--                                                                    --
+-- As a resource grade, `[ ⟪ r , w , s ⟫ˡ ] A` is a token that        --
+-- becomes available once that many operations have certainly been    --
+-- performed since boxing. It behaves as the lower bounds on time do, --
+-- except that time does not stand in for operations: no amount of    --
+-- idling makes a token available, as shown below.                    --
+--                                                                    --
+-- The two rules that place the unit on opposite sides of the order:  --
+--                                                                    --
+--   * the bound `ρ ≾ᵣ uᵣ` of `var` holds at every `ρ`, demanding     --
+--     nothing being the greatest grade: no reading goes stale.       --
+--                                                                    --
+--   * a handler clause cannot discard its continuation: a `return`   --
+--     performs none of the operation it stands for.                  --
+--                                                                    --
+-- Every claim is checked counter by counter with `≤!`; a refutation  --
+-- names the counter that falls short.                                --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding.                                                   --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing.Counts.AtLeast where

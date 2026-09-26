@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Inference at left-sided time paired with a security level      --
 --                                                                --
 -- `([ n ,+∞⟩ , ℓ)`: at least `n` ticks, touching nothing above   --
@@ -12,7 +12,7 @@
 -- touched `High` since it was boxed. A claim is refused for      --
 -- being early or for being tainted, and every refusal is decided --
 -- componentwise.                                                 --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 open import Data.Product using (_,_)

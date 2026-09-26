@@ -1,28 +1,28 @@
-------------------------------------------------------------------
--- Sum-of-products normal form of open grade expressions          --
---                                                                --
+---------------------------------------------------------------------
+-- Sum-of-products normal form of open grade expressions           --
+--                                                                 --
 -- A grade expression is flattened to a sum of alternatives, each  --
 -- a product of atoms: constants, variables, and images of effect  --
--- variables under the morphism. Adjacent constants are           --
+-- variables under the morphism. Adjacent constants are            --
 -- multiplied, units are dropped, a product is distributed over a  --
 -- join, and repeated alternatives are merged. A sum with the top  --
 -- among its alternatives is the top, `⊤` absorbing the join. A    --
 -- sum is nonempty, the join having no unit; a product may be      --
--- empty, and is then the unit itself. Where the grade declares   --
+-- empty, and is then the unit itself. Where the grade declares    --
 -- `_·_` commutative, each product is then put in one order, its   --
 -- constants multiplied into one in front of its variables, these  --
--- by index. The normal form is certified by `≡̂ᵣ`/`≡̂ₑ`, so one    --
+-- by index. The normal form is certified by `≡̂ᵣ`/`≡̂ₑ`, so one     --
 -- may compare alternative by alternative and atom by atom, or     --
 -- read the sum back as an expression.                             --
---                                                                --
+--                                                                 --
 -- Two read-backs at each layer: `⟦_⟧ʳˢ`/`⟦_⟧ʳˢ⁺` end every        --
 -- product in the unit, which makes the certificates structural;   --
 -- `⟦_⟧ʳᵖ`/`⟦_⟧ʳᵖ⁺` drop that trailing unit and collapse a lone    --
 -- alternative, and are what `canonᵣ`/`canonₑ` return.             --
---                                                                --
+--                                                                 --
 -- `foldSumₑ`/`foldSumᵣ` group and fold a sum without pruning it;  --
--- `SolverImpl.Normal` compares against the folded right side.    --
---                                                                --
+-- `SolverImpl.Normal` compares against the folded right side.     --
+--                                                                 --
 -- `Grouping` groups the alternatives by skeleton, lists the       --
 -- groups in skeleton order, folds a group that varies in one slot --
 -- into one alternative whose slot is a join of constants, and,    --
@@ -30,12 +30,12 @@
 -- alternative below another. `SolverImpl.Canon` instantiates it   --
 -- with the decider of `SolverImpl.Normal` to form `canonᵣ` and    --
 -- `canonₑ`. Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.         --
---                                                                --
--- Contract. An expression is convertible to its normal form      --
--- (`nrmᵣ-≡`, `nrmₑ-≡`) and to its fold (`foldSumᵣ-≡`,            --
--- `foldSumₑ-≡`). That two convertible expressions get one normal --
--- form is not claimed.                                           --
-------------------------------------------------------------------
+--                                                                 --
+-- Contract. An expression is convertible to its normal form       --
+-- (`nrmᵣ-≡`, `nrmₑ-≡`) and to its fold (`foldSumᵣ-≡`,             --
+-- `foldSumₑ-≡`). That two convertible expressions get one normal  --
+-- form is not claimed.                                            --
+---------------------------------------------------------------------
 
 open import Algebra.Definitions using (Commutative)
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -123,8 +123,7 @@ sortBy _<_ (a ∷ as) = insertBy _<_ a (sortBy _<_ as)
 -- distributivity laws bring the join into the slot, and a join of
 -- constants is a constant. A group that varies in more than one slot
 -- is kept as it is, without repeats and in the order its alternatives
--- arrive; folding it two alternatives at a time would depend on which
--- two meet first.
+-- arrive.
 --
 -- The grouping never compares constants: two in the same slot are
 -- joined. Skeletons are ordered syntactically, lexicographically from
@@ -385,13 +384,11 @@ module Grouping
   -- relative to the decision: an ordering it does not find prunes
   -- nothing.
   --
-  -- Pruning only removes alternatives, so it keeps the skeleton
-  -- order; but it can make the fold applicable again, when a group
-  -- that varied in two slots loses the alternatives that made it vary
-  -- in one of them, and a fold can in turn expose a new ordering, a
-  -- join of constants being above more than either. So the fold and
-  -- the pruning are repeated until the sum stops shrinking, which
-  -- takes at most as many rounds as there are alternatives.
+  -- Pruning keeps the skeleton order. It can make a group foldable, by
+  -- removing the alternatives that made it vary in a second slot, and a
+  -- fold can expose a new ordering. The fold and the pruning are
+  -- repeated until the sum stops shrinking, in at most as many rounds
+  -- as there are alternatives.
 
   module Pruning
     (_≲_    : X → X → Set)

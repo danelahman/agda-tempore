@@ -1,29 +1,28 @@
 ------------------------------------------------------------------
--- Constraint generation                                          --
---                                                                --
--- `genV Γ V A` and `genC Γ M C` are total functions from a raw   --
--- term and an expected (open) type to a constraint of the same   --
--- scope. They are structural on the raw term and mirror the      --
--- rules of `TypeInference.OpenSyntax.Language` former by         --
--- former: every type a rule leaves free becomes a fresh          --
--- `∃`-bound variable, every side condition becomes a             --
--- constraint atom.                                               --
---                                                                --
--- The expected type is an upper bound, not a pin: where two      --
--- types generation cannot choose meet, it is the right-hand side --
--- of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_`; everywhere else the shape is pinned   --
--- by `_≐ᵥ_`, subtyping both ways, and the slack is passed on to  --
--- the subterms.                                                  --
---                                                                --
--- Under a binder the arguments of the recursive calls are        --
--- weakened, and so is the interpretation of the raw term's type  --
--- and grade variables; the constraints are built inside the      --
--- innermost binder.                                              --
---                                                                --
--- Contract: `σ ⊨[ Q ] genC Γ M (A ‼ t)` holds exactly when some  --
--- derivation `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to `M [ σ ]` --
--- (`charV`/`charC`, from `soundV`/`soundC` in `Soundness` and    --
--- `completeV`/`completeC` in `Completeness`).                    --
+-- Constraint generation                                        --
+--                                                              --
+-- `genV Γ V A` and `genC Γ M C` map a raw term and an expected --
+-- open type to a constraint over the same scope. They are      --
+-- structural on the raw term and follow the rules of           --
+-- `TypeInference.OpenSyntax.Language` former by former: every  --
+-- type a rule leaves undetermined is an ∃-bound variable, and  --
+-- every side condition is a constraint atom.                   --
+--                                                              --
+-- The expected type is an upper bound. Where a rule meets two  --
+-- types that generation does not determine, the expected type  --
+-- is the right-hand side of a `_≾̂ᵥᶜ_` or `_≾̂ₑᶜ_` atom;         --
+-- elsewhere the shape is fixed by `_≐ᵥ_`, and the bound is     --
+-- passed to the subterms.                                      --
+--                                                              --
+-- Under a binder, the arguments of the recursive calls and the --
+-- interpretation of the raw term's type and grade variables    --
+-- are weakened; the constraints are built under the innermost  --
+-- binder.                                                      --
+--                                                              --
+-- Contract. `σ ⊨[ Q ] genC Γ M (A ‼ t)` holds exactly when     --
+-- some derivation of `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to --
+-- `M [ σ ]` (`charV`, `charC`, from `soundV`/`soundC` in       --
+-- `Soundness` and `completeV`/`completeC` in `Completeness`).  --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)
@@ -62,8 +61,9 @@ varConstraint Γ i A =
   (lookup-ty Γ i ≾̂ᵥᶜ A) ∧̂ Et∨≾ᵘ (lookup-ty Γ i) (lookup-gr Γ i)
 
 -- `genVˢ ι` and `genCˢ ι` generate for a raw term whose type and grade
--- variables `ι` interprets in the generation scope. Under a binder `ι` is composed
--- with the binder's weakening, so the recursion stays on the subterms.
+-- variables `ι` interprets in the generation scope. Under a binder, `ι`
+-- is composed with the binder's weakening; the recursion is structural
+-- on the raw term.
 
 mutual
 
@@ -93,8 +93,8 @@ mutual
 
   -- lambda abstraction
   --
-  -- The domain is contravariant, so the body is typed at the arrow the
-  -- lambda itself synthesises and that arrow subtypes into the expected type.
+  -- The body is typed at the arrow the lambda synthesises, which is a
+  -- subtype of the expected type.
 
   genVˢ {Θ = Θ} ι Γ (lam M) A =
     ∃ᵗ (∃ᵗ (∃ᵉ ((α₁ ⇒ (α₂ ‼ e) ≾̂ᵥᶜ A↑) ∧̂ genCˢ ι↑ (Γ↑ ∷ α₁) M (α₂ ‼ e))))
@@ -152,8 +152,8 @@ mutual
 
   -- function application
   --
-  -- The function's own result type is synthesised and then reconciled with
-  -- the expected one, as its latent effect already is.
+  -- The function's result type is a subtype of the expected type, and
+  -- its latent effect lies below the expected effect.
 
   genCˢ {Θ = Θ} ι Γ (V₁ · V₂) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (  genVˢ ι↑ Γ↑ V₁ (α ⇒ (β ‼ e))
@@ -217,11 +217,11 @@ mutual
 
   -- effect handling
   --
-  -- The handled result type occurs contravariantly in the clause contexts,
-  -- inside the boxed continuation, so it gets an existential of its own and
-  -- is reconciled with the expected type once, for the clauses and the
-  -- continuation together. A clause's own effect variable, rigid under
-  -- `∀ᵉ`, interprets the clause's.
+  -- The handled result type, which occurs contravariantly in the clause
+  -- contexts inside the boxed continuation, is an ∃-bound variable of its
+  -- own, a subtype of the expected type, shared by the clauses and the
+  -- continuation. The clause's continuation grade is the rigid variable
+  -- of its `∀ᵉ`.
 
   genCˢ {Θ = Θ} ι Γ (handle M `with H `in N) (A ‼ t) =
     ∃ᵗ (∃ᵗ (∃ᵉ (∃ᵉ (  genCˢ ι↑ Γ↑ M (α ‼ e₁)

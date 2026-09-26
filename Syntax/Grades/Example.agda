@@ -1,55 +1,49 @@
 ------------------------------------------------------------------------
--- Example grades, and example grade systems built from them.          --
---                                                                     --
--- A `Grade` (see `Syntax.Grades`) is an ordered monoid with an        --
--- inclusion of ℕ as "so many time steps". A `GradeSystem` is a pair   --
--- of them (effect grades, recording what a computation may do, and    --
--- resource grades, recording what is thereby guaranteed about time)   --
--- together with a monoid map projecting the first onto the second.    --
---                                                                     --
--- The examples come in four families:                                 --
---                                                                     --
---   * `Time.*` -- grades that measure only elapsed time, as a bound   --
---     or a window of time steps, over ℕ or, in `Time.Dense.*`, over   --
---     the non-negative rationals ℚ≥0; morphisms embed the discrete    --
---     grades in the dense ones. Small and self-contained.             --
---                                                                     --
---   * `Traces.*` -- grades that record *which runs* a computation     --
---     may have had, as a set of timed traces, sharing their carrier   --
---     and monoid (from `Grades.Traces.Sets`) and differing in the     --
---     order they put on it.                                           --
---                                                                     --
---   * `Counts.*` -- grades that count, per operation (or per class    --
---     under a coarser index into `Fin n`), how often a computation    --
---     draws on each; `AtMost`/`AtLeast` are quotas and guarantees,    --
---     `Power` the generic `n`-counter product.                        --
---                                                                     --
---   * `SecurityLevel` -- a decidable join-semilattice of levels,      --
---     floating upward as data is touched; the two-point `Low < High`  --
---     and taint sets over `Fin n`.                                    --
---                                                                     --
--- `Product.*` pairs members of these families, using the generic      --
--- product of grades in `Syntax.Grades.Product`: left- and right-sided --
--- time with a security level, and right-sided time with an energy     --
--- budget (right-sided time again, read as spend rather than elapsed   --
--- time).                                                              --
---                                                                     --
--- The trace family splits in two: `Timed.*` over the cost-sensitive   --
--- orders on traces, with a floor, a cap and their pairing, and        --
--- `Subsets.*` over equality, with a cap.                              --
---                                                                     --
--- Every grade carries its greatest element in its own carrier: the    --
--- unit for the left-sided intervals and the coverage floor,           --
--- `[ 0 , ∞ ]` for the two-sided intervals, and a point of its own,    --
--- then absorbing, for the allowance cap and the subset cap.           --
---                                                                     --
--- `System.*` pairs them up: each projection says what a resource      --
--- grade may forget about the effect grade it comes from, and an       --
--- absorbing top has to land on an absorbing top.                      --
---                                                                     --
--- An index only: the trace-based examples are parameterised by the    --
--- alphabet `Op`, so it lists the pieces rather than re-exporting      --
--- them.                                                               --
+-- Example grades, and example grade systems built from them.         --
+--                                                                    --
+-- A `Grade` (see `Syntax.Grades`) is a partially ordered monoid with --
+-- binary joins, a greatest element, and a monoid morphism `of-nat`   --
+-- from ℕ, read as a number of time steps. A `GradeSystem` consists   --
+-- of two grades (effect grades, recording what a computation may do, --
+-- and resource grades, recording what is thereby guaranteed about    --
+-- time) and a grade morphism from the first to the second.           --
+--                                                                    --
+-- The examples form four families:                                   --
+--                                                                    --
+--   * `Time.*`: grades that measure elapsed time only, as a bound or --
+--     a window of time steps, over ℕ or, in `Time.Dense.*`, over the --
+--     non-negative rationals ℚ≥0; morphisms embed the discrete       --
+--     grades in the dense ones.                                      --
+--                                                                    --
+--   * `Traces.*`: grades that record *which runs* a computation may  --
+--     have had, as a set of timed traces, differing in the order on  --
+--     the sets.                                                      --
+--                                                                    --
+--   * `Counts.*`: grades that count, per operation (or per class of  --
+--     operations, under an index into `Fin n`), how often a          --
+--     computation draws on each; `AtMost`/`AtLeast` are quotas and   --
+--     guarantees, and `Power` is the generic `n`-counter product.    --
+--                                                                    --
+--   * `SecurityLevel`: a decidable join-semilattice of levels,       --
+--     floating upward as data is touched; instances are the          --
+--     two-point `Low < High` and taint sets over `Fin n`.            --
+--                                                                    --
+-- `Product.*` pairs members of these families by the product of      --
+-- grades of `Syntax.Grades.Product`: left- and right-sided time with --
+-- a security level, and right-sided time with an energy budget       --
+-- (right-sided time read as expenditure rather than elapsed time).   --
+--                                                                    --
+-- The trace family has three parts: `Timed.*` over the               --
+-- cost-sensitive orders on traces, with a floor, a cap and their     --
+-- pairing; `Subsets.*` over equality, with a cap; and `Regular.*`, a --
+-- cap at inclusion over regular sets.                                --
+--                                                                    --
+-- `System.*` assembles grade systems; each projection determines     --
+-- what a resource grade forgets about the effect grade it comes      --
+-- from.                                                              --
+--                                                                    --
+-- The module is an index: the trace-based examples are parameterised --
+-- by the alphabet `Op`, and are listed rather than re-exported.      --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example where
@@ -57,8 +51,8 @@ module Syntax.Grades.Example where
 ------------------------------------------------------------------------
 -- Time intervals
 --
--- Worlds' worth of behaviour compressed to a bound on elapsed time.
--- The one-sided intervals keep one endpoint, the two-sided ones both.
+-- Bounds on elapsed time. The one-sided intervals have one endpoint,
+-- the two-sided ones two.
 
 -- "at least `n` time steps"; a smaller bound is the weaker grade
 
@@ -114,8 +108,7 @@ import Syntax.Grades.Example.Product.RightSidedTimeEnergy
 -- Sets of timed traces
 --
 -- A grade records which runs a computation may have had, and the order
--- says what weakening one is allowed to ask for instead. `Traces` is
--- the index.
+-- determines the weakenings of a grade. `Traces` is the index.
 
 import Syntax.Grades.Example.Traces
 
@@ -204,23 +197,21 @@ import Syntax.Grades.Example.System.Counts.Subsets.AtLeast
 import Syntax.Grades.Example.System.Counts.Lifted.LeftSided
 import Syntax.Grades.Example.System.Counts.Timed.LeftSided
 
--- the allowance cap does not project onto quotas: a bound's delays pay
--- for its operations, so no morphism into at-most counts can count
--- what the bound permits
+-- the allowance cap does not project onto quotas: no morphism into
+-- at-most counts counts what a bound permits
 
 import Syntax.Grades.Example.System.Counts.Timed.RightSided
 
--- why no count grade projects onto time, and what a cost model
--- preserves when time is paired with the counts
+-- no count grade projects onto time, and a cost model preserves all
+-- but the join when time is paired with the counts
 
 import Syntax.Grades.Example.System.Counts.Time
 
 ------------------------------------------------------------------------
 -- Worked instances
 --
--- All of the above at one fixed alphabet, with the orderings that hold
--- between concrete grades and the effect of each morphism on them
--- exhibited as checked terms, and example computations typed against
--- the grades. A reader's tour of this whole subtree.
+-- All of the above at one alphabet: the orderings between concrete
+-- grades and the action of each morphism on them, as checked terms, and
+-- example computations typed at the grades.
 
 import Syntax.Grades.Example.Worked

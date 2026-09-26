@@ -1,38 +1,36 @@
 ------------------------------------------------------------------------
--- Typed example computations, one grade at a time.                    --
---                                                                     --
--- The rest of this subtree exhibits orderings between grades; this    --
--- one puts the grades to work. It fixes a language over the sensor    --
--- node's alphabet and writes example computations in it, each typed   --
--- against a value type and an effect grade, so that what a grade      --
--- permits is settled by whether a program typechecks.                 --
---                                                                     --
--- Every instance uses an identity grade system -- effect and resource --
--- grades are the same monoid and `∣_∣ᵉ` is the identity -- so `mapᵉ`  --
--- disappears: the lock a computation puts on the context is its own   --
--- effect grade, and `unbox`'s premise compares what a computation did --
--- with the grade on the box. The instances differ only in that        --
--- monoid.                                                             --
---                                                                     --
--- Comments inside the programs say what each former appends to the    --
--- context its subcomputation is typed in: `⟨ ρ ⟩` a lock, `∷ A` a     --
--- binding. Reading them off downwards gives the context at any point, --
--- and the locks between a box's binding and its `unbox` are the       --
--- elapsed grade the premise weighs against the box's own.             --
---                                                                     --
--- Each instance writes its programs out in full, at its own grades,   --
--- with every side condition discharged where the rule imposes it, by  --
--- running the grade's own decision procedure. A program the grade     --
--- refuses is not written; in its place stands a refutation of the     --
--- bound it would have needed. `Typing/Core.agda` holds what the       --
--- programs are written *with*: the language, the three ways of        --
--- meeting `var`'s bound, and the operation clauses handed to          --
--- `handle`.                                                           --
---                                                                     --
--- Two rules put the unit on opposite sides of the order, and each     --
--- instance settles both as a proof or a refutation: whether a         --
--- non-eternal variable goes stale, which is `var`'s bound `ρ ≾ᵣ uᵣ`,  --
--- and whether a handler clause may drop its continuation.             --
+-- Typed example computations, one grade at a time.                   --
+--                                                                    --
+-- The subtree fixes a language over the alphabet of the sensor node  --
+-- and types example computations in it, each at a value type and an  --
+-- effect grade.                                                      --
+--                                                                    --
+-- Every instance uses an identity grade system, with effect and      --
+-- resource grades the same monoid and `∣_∣ᵉ` the identity, so `mapᵉ` --
+-- disappears: the lock a computation places on the context is its    --
+-- effect grade, and the premise of `unbox` compares what a           --
+-- computation did with the grade of the box. The instances differ    --
+-- only in the monoid.                                                --
+--                                                                    --
+-- The comments inside the programs state what each former appends to --
+-- the context in which its subcomputation is typed: `⟨ ρ ⟩` a lock,  --
+-- `∷ A` a binding. Read downwards, they give the context at any      --
+-- point, and the locks between the binding of a box and its `unbox`  --
+-- are the elapsed grade that the premise compares with the grade of  --
+-- the box.                                                           --
+--                                                                    --
+-- Each instance writes its programs out in full at its own grades,   --
+-- every side condition discharged where the rule imposes it by the   --
+-- decision procedure of the grade. In place of a program that the    --
+-- grade refuses stands a refutation of the bound it requires.        --
+-- `Typing/Core.agda` contains the language, the three ways of        --
+-- meeting the bound of `var`, and the operation clauses passed to    --
+-- `handle`.                                                          --
+--                                                                    --
+-- Two rules place the unit on opposite sides of the order, and each  --
+-- instance settles both by a proof or a refutation: whether a        --
+-- non-eternal variable goes stale, which is the bound `ρ ≾ᵣ uᵣ` of   --
+-- `var`, and whether a handler clause may discard its continuation.  --
 ------------------------------------------------------------------------
 
 module Syntax.Grades.Example.Worked.Typing where

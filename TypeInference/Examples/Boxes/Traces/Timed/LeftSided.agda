@@ -1,4 +1,4 @@
-------------------------------------------------------------------
+--------------------------------------------------------------------
 -- Boxes at timed traces, coverage order                          --
 --                                                                --
 -- A box is a demand, claimable once the run that elapsed covers  --
@@ -6,7 +6,7 @@
 -- `costˡᵒ` (read 1, write 2, send 4). Every run covers the unit, --
 -- so nothing goes stale. As at the left-sided intervals, an      --
 -- early claim is refused and there is no late one.               --
-------------------------------------------------------------------
+--------------------------------------------------------------------
 
 open import Data.Maybe.Base using (just)
 

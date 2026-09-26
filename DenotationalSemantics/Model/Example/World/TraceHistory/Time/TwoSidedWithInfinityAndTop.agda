@@ -1,21 +1,21 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the two-sided time intervals with a --
--- possibly-infinite right endpoint and a formal greatest grade.        --
+-- A trace-history Kripke frame for the two-sided time intervals with --
+-- a possibly infinite right endpoint and a formal greatest grade.    --
 --                                                                    --
--- Worlds are timed traces `Trace`, recording the history observed so    --
--- far. A grade `window [ min , max ]` reaches the histories obtained by  --
--- appending a continuation whose duration falls in the window, exactly   --
--- as in the plain frame; `no-window` bounds neither end and so reaches    --
--- every history extending the current one:                               --
+-- Worlds are timed traces `Trace`, recording the history observed so --
+-- far. A grade `window [ min , max ]` reaches the histories obtained --
+-- by appending a continuation whose duration lies in the window, as  --
+-- in the plain frame; `no-window` bounds neither end and reaches     --
+-- every history extending the current one:                           --
 --                                                                    --
---   w ⊑ʰ[ window i ] w'  iff  w ∙ t ≡ w'  and  min i ≤ dur t  and         --
---                             ↑ dur t ≤∞ max i   (for some `t`)           --
---   w ⊑ʰ[ no-window ] w'  iff  w ∙ t ≡ w'        (for some `t`)           --
+--   w ⊑ʰ[ window i ] w'  iff  w ∙ t ≡ w'  and  min i ≤ dur t  and    --
+--                             ↑ dur t ≤∞ max i   (for some `t`)      --
+--   w ⊑ʰ[ no-window ] w'  iff  w ∙ t ≡ w'        (for some `t`)      --
 --                                                                    --
--- The relation at `no-window` contains every other, as covariance asks    --
--- of the greatest grade, and is the greatest forward relation, appending  --
--- any continuation at all; composition survives because `no-window`      --
--- absorbs.                                                               --
+-- The relation at `no-window` contains every other, as covariance    --
+-- requires of the greatest grade, and is the greatest forward        --
+-- relation, appending any continuation; it is closed under           --
+-- composition, `no-window` being absorbing.                          --
 ------------------------------------------------------------------------
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)

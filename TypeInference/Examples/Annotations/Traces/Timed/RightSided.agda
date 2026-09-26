@@ -1,6 +1,6 @@
 ------------------------------------------------------------------
--- Annotated programs at timed traces, allowance order           --
---                                                                --
+-- Annotated programs at timed traces, allowance order          --
+--                                                              --
 -- Every scheme is the one written in `Annotations`.            --
 ------------------------------------------------------------------
 

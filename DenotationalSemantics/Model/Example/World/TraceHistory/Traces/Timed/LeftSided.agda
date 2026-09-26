@@ -1,22 +1,22 @@
 ------------------------------------------------------------------------
--- A trace-history Kripke frame for the trace grade of guarantees.     --
+-- A trace-history Kripke frame for the trace grade of guarantees.    --
 --                                                                    --
--- Worlds are timed traces: the history observed so far. A grade `P`   --
--- reaches the histories obtained by appending a continuation that     --
--- covers one of the listed guarantees:                                --
+-- Worlds are timed traces: the history observed so far. A grade `P`  --
+-- reaches the histories obtained by appending a continuation that    --
+-- covers one of the listed guarantees:                               --
 --                                                                    --
 --   w ⊑ᵇ[ P ] w'   iff   Σ[ cont ] w ∙ cont ≡ w'                     --
 --                          and  p ≼ᶜ cont   for some p ∈ P           --
 --                                                                    --
--- The comparison runs the other way round from the frame of the cap:  --
--- there the continuation is what is bounded, here it is what does the --
--- covering. So this frame sees that a continuation performed the      --
--- operations a guarantee names, which the tick frame -- seeing only   --
--- how long they took -- cannot.                                      --
+-- The comparison runs in the opposite direction from that of the     --
+-- frame of the cap: there the continuation is bounded, here it       --
+-- covers. The frame records that a continuation performed the        --
+-- operations a guarantee lists, which the tick frame, recording only --
+-- their duration, does not.                                          --
 --                                                                    --
--- Accessibility is again the grade's own reading, so the frame        --
--- conditions are the order's own laws: reflexivity is the empty run,  --
--- transitivity is monotonicity of the trace product, and covariance   --
+-- Accessibility is the reading of the grade, and the frame           --
+-- conditions are laws of the order: reflexivity is the empty run,    --
+-- transitivity is monotonicity of the trace product, and covariance  --
 -- is transitivity of the order.                                      --
 ------------------------------------------------------------------------
 
