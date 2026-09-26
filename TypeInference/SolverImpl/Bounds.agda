@@ -73,6 +73,17 @@ private
   ∨-false true  b' ()
 
 ------------------------------------------------------------------------
+-- Equal values keep every ordering: read before (`f₀`) and after
+-- (`f₁`) an assignment, each side moves by as little in either
+-- direction
+
+equal-keeps : ∀ {X Y : Set} {_⊑_ : Y → Y → Set}
+            → (∀ {y y' y''} → y ⊑ y' → y' ⊑ y'' → y ⊑ y'')
+            → {f₀ f₁ : X → Y} {l : List (X × X)} → (∀ y → f₁ y ⊑ f₀ y) → (∀ y → f₀ y ⊑ f₁ y)
+            → (∀ {x x'} → (x , x') ∈ l → f₀ x ⊑ f₀ x') → ∀ {x x'} → (x , x') ∈ l → f₁ x ⊑ f₁ x'
+equal-keeps ⊑-trans lo hi h {x} {x'} m = ⊑-trans (lo x) (⊑-trans (h m) (hi x'))
+
+------------------------------------------------------------------------
 -- How `v` occurs in a list of orderings: an ordering holds at every
 -- instance, or `v` is absent from its right (left) side
 
@@ -134,12 +145,6 @@ module Sides {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) wh
     raise-free : ∀ {l} → (∀ {a} → a ∈ l → FreeL a) → (∀ y → f₀ y ⊑ f₁ y)
                → Holds f₀ l → Holds f₁ l
     raise-free fl hi h m = raiseL (fl m) hi (h m)
-
-    -- A value equal to `v` keeps every ordering
-
-    equal-keeps : ∀ {l} → (∀ y → f₁ y ⊑ f₀ y) → (∀ y → f₀ y ⊑ f₁ y)
-                → Holds f₀ l → Holds f₁ l
-    equal-keeps lo hi h {x} {x'} m = ⊑-trans (lo x) (⊑-trans (h m) (hi x'))
 
 ------------------------------------------------------------------------
 -- The bounds of `v`, below and above, under a decided order `_≤_`

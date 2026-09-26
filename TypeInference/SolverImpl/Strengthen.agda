@@ -477,27 +477,6 @@ fixes-⊆ : ∀ {Θ} {V W : Vars Θ} {ρ : Subst Θ Θ} → V ⊆ᵛ W → Fixes
 fixes-⊆ h f = mkFixes (λ α o → fixᵗ f α (⊆ᵗ h α o)) (λ i o → fixʳ f i (⊆ʳ h i o))
                       (λ i o → fixᵉ f i (⊆ᵉ h i o))
 
--- an expression over fixed variables is fixed
-
-fix-e : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
-      → (ε : EExp Θ) → fvᵉ ε ⊆ᵛ F → ε [ ρ ]ᵉ ≡ ε
-fix-e f (evar i)   h = fixᵉ f i (⊆ᵉ h i (≟-self i))
-fix-e f (econst c) h = refl
-fix-e f (ε ·̂ₑ ε')  h = cong₂ _·̂ₑ_ (fix-e f ε (⊆-∪ˡ (fvᵉ ε) (fvᵉ ε') h))
-                                  (fix-e f ε' (⊆-∪ʳ (fvᵉ ε) (fvᵉ ε') h))
-fix-e f (ε ⊔̂ₑ ε')  h = cong₂ _⊔̂ₑ_ (fix-e f ε (⊆-∪ˡ (fvᵉ ε) (fvᵉ ε') h))
-                                  (fix-e f ε' (⊆-∪ʳ (fvᵉ ε) (fvᵉ ε') h))
-
-fix-r : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
-      → (r : RExp Θ) → fvʳ r ⊆ᵛ F → r [ ρ ]ʳ ≡ r
-fix-r f (rvar i)   h = fixʳ f i (⊆ʳ h i (≟-self i))
-fix-r f (rconst c) h = refl
-fix-r f (r ·̂ᵣ r')  h = cong₂ _·̂ᵣ_ (fix-r f r (⊆-∪ˡ (fvʳ r) (fvʳ r') h))
-                                  (fix-r f r' (⊆-∪ʳ (fvʳ r) (fvʳ r') h))
-fix-r f (r ⊔̂ᵣ r')  h = cong₂ _⊔̂ᵣ_ (fix-r f r (⊆-∪ˡ (fvʳ r) (fvʳ r') h))
-                                  (fix-r f r' (⊆-∪ʳ (fvʳ r) (fvʳ r') h))
-fix-r f ∣ ε ∣̂ᵉ     h = cong ∣_∣̂ᵉ (fix-e f ε h)
-
 map-fix : ∀ {X : Set} → (g : X → X) → (l : List X) → (∀ {a} → a ∈ l → g a ≡ a) → map g l ≡ l
 map-fix g []      p = refl
 map-fix g (a ∷ l) p = cong₂ _∷_ (p (here refl)) (map-fix g l (λ m → p (there m)))

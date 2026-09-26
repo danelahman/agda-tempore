@@ -387,6 +387,11 @@ Inference for the open calculus, by constraint generation and solving.
   - `Localise.agda`: values for the unknowns local to a rigid scope, keeping
     every instance entering it (`Localised`); principal for lowering and the
     unit (`lowerᵉ-least`), instance-preserving only for raising and the top.
+    Each strongly connected component of the orderings between whole
+    unknowns is made one unknown in a single step (`collapse`, `equal-⊩`).
+  - `Reach.agda`: the reflexive–transitive closure of a finite graph by
+    Warshall's algorithm, each entry a chain of edges (`reach`, `rep`);
+    sound by type, completeness not proved.
   - `Deferred.agda`: deferred rigid conditions `∀ᵉ j₁ … jₖ. O`, retried after
     each close (`retry-princ`, `retry-fail`) and read back as obligations.
   - `Closed.agda`: atoms with no unknowns, decided by the grade's `_≾?_`

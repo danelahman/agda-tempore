@@ -185,3 +185,45 @@ fixes-updʳ : ∀ {Θ} {F : Vars Θ} → (i : RVar Θ) → (b : RExp Θ) → vʳ
            → Fixes F (updʳ i b)
 fixes-updʳ {F = F} i b o =
   mkFixes (λ _ _ → refl) (λ j h → updʳ-miss i b j (outside (vʳ F) o h)) (λ _ _ → refl)
+
+-- an expression or a type over fixed variables is fixed
+
+fix-e : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
+      → (ε : EExp Θ) → fvᵉ ε ⊆ᵛ F → ε [ ρ ]ᵉ ≡ ε
+fix-e f (evar i)   h = fixᵉ f i (⊆ᵉ h i (≟-self i))
+fix-e f (econst c) h = refl
+fix-e f (ε ·̂ₑ ε')  h = cong₂ _·̂ₑ_ (fix-e f ε (⊆-∪ˡ (fvᵉ ε) (fvᵉ ε') h))
+                                  (fix-e f ε' (⊆-∪ʳ (fvᵉ ε) (fvᵉ ε') h))
+fix-e f (ε ⊔̂ₑ ε')  h = cong₂ _⊔̂ₑ_ (fix-e f ε (⊆-∪ˡ (fvᵉ ε) (fvᵉ ε') h))
+                                  (fix-e f ε' (⊆-∪ʳ (fvᵉ ε) (fvᵉ ε') h))
+
+fix-r : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
+      → (r : RExp Θ) → fvʳ r ⊆ᵛ F → r [ ρ ]ʳ ≡ r
+fix-r f (rvar i)   h = fixʳ f i (⊆ʳ h i (≟-self i))
+fix-r f (rconst c) h = refl
+fix-r f (r ·̂ᵣ r')  h = cong₂ _·̂ᵣ_ (fix-r f r (⊆-∪ˡ (fvʳ r) (fvʳ r') h))
+                                  (fix-r f r' (⊆-∪ʳ (fvʳ r) (fvʳ r') h))
+fix-r f (r ⊔̂ᵣ r')  h = cong₂ _⊔̂ᵣ_ (fix-r f r (⊆-∪ˡ (fvʳ r) (fvʳ r') h))
+                                  (fix-r f r' (⊆-∪ʳ (fvʳ r) (fvʳ r') h))
+fix-r f ∣ ε ∣̂ᵉ     h = cong ∣_∣̂ᵉ (fix-e f ε h)
+mutual
+
+  fix-v : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
+        → (A : OVType Θ) → fvᵛ A ⊆ᵛ F → A [ ρ ]ᵛ ≡ A
+  fix-v f (tvar α)  h = fixᵗ f α (⊆ᵗ h α (≟-self α))
+  fix-v f (Base b)  h = refl
+  fix-v f Unit      h = refl
+  fix-v f Bool      h = refl
+  fix-v f Empty     h = refl
+  fix-v f (A |×| B) h = cong₂ _|×|_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᵛ B) h))
+                                    (fix-v f B (⊆-∪ʳ (fvᵛ A) (fvᵛ B) h))
+  fix-v f (A ⇒ C)   h = cong₂ _⇒_ (fix-v f A (⊆-∪ˡ (fvᵛ A) (fvᶜ C) h))
+                                  (fix-c f C (⊆-∪ʳ (fvᵛ A) (fvᶜ C) h))
+  fix-v f ([ ρ ] A) h = cong₂ [_]_ (fix-r f ρ (⊆-∪ˡ (fvʳ ρ) (fvᵛ A) h))
+                                   (fix-v f A (⊆-∪ʳ (fvʳ ρ) (fvᵛ A) h))
+
+  fix-c : ∀ {Θ} {F : Vars Θ} {ρ : Subst Θ Θ} → Fixes F ρ
+        → (C : OCType Θ) → fvᶜ C ⊆ᵛ F → C [ ρ ]ᶜ ≡ C
+  fix-c f (A ‼ ε) h =
+    cong₂ _‼_ (fix-v f A (mk⊆ᵛ (⊆ᵗ h) (⊆ʳ h) (λ i o → ⊆ᵉ h i (∨-inˡ o))))
+              (fix-e f ε (mk⊆ᵛ (λ _ ()) (λ _ ()) (λ i o → ⊆ᵉ h i (∨-inʳ (occᵉ-v i A) o))))

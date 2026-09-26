@@ -397,6 +397,11 @@ import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon
 
+---- Reachability in a finite graph by Warshall's algorithm, which
+---- identifies the components of the orderings at a clause's close
+
+import TypeInference.SolverImpl.Reach
+
 ---- Deferred rigid conditions: a clause's orderings mixing its rigid
 ---- with outer unknowns, kept under their binders
 
