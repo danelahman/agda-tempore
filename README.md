@@ -397,7 +397,14 @@ Inference for the open calculus, by constraint generation and solving.
     claimed; the canonical form of reported grades (`canonᵣ-≡`).
   - `Simplify.agda`: settles disjunctions and prunes entailed atoms of a
     report (`simplify-⊩`, `simplify-⊨`).
-  - `Eliminate.agda`: Pottier's elimination of unknowns (ICFP 1996), and
+  - `Bounds.agda`: the value rules both `Localise` and `Eliminate` use, on
+    the orderings of one grade sort: lowering to the join of the bounds below
+    (or a least element), raising to a bound above decided below the others,
+    or to the top, and an equal value. Each keeps every ordering, read at an
+    instance or by entailment (`lower-keeps`, `raise-keeps`, `raise-free`,
+    `equal-keeps`); lowering is principal (`src`, `joinₑ-lub⊩`).
+  - `Eliminate.agda`: Pottier's elimination of unknowns (ICFP 1996), by the
+    rules of `Bounds` under a polarity condition on the reported type, and
     replacement of an unknown by an expression the hypotheses equate it with;
     each step an `Elim`.
   - `Strengthen.agda`: a report over the variables occurring in it

@@ -76,7 +76,10 @@
 -- Every grade former is monotone, so each value keeps every    --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
 -- five siblings), and so does identifying a cycle              --
--- (`collapseᵉ-⊩`, `collapseʳ-⊩`). Raising a set keeps every    --
+-- (`collapseᵉ-⊩`, `collapseʳ-⊩`); the orderings of the sort    --
+-- assigned are kept by the rules of `Bounds` (`lower-keeps`,   --
+-- `raise-keeps`, `raise-free`, `equal-keeps`), which also      --
+-- classify them (`lowsOf`, `upsOf`). Raising a set keeps every --
 -- instance entering the scope, one that takes the rigid to a   --
 -- fresh eigenvariable (`raise-⊩`): with the eigenvariable at   --
 -- the top as well, the instance stays one and every member is  --
@@ -143,8 +146,7 @@ open import TypeInference.SolverImpl.Deferred  S
   using (Dfr; dfr; _⊩ᵈ_[_]; mk⊩ᵒ; ⊩ors; ⊩oes; ≾ˢ-↑ᵉⁿ; Dir; dir↓; dir↑; Still; stills?;
          keepᵈ; allOf; κ⟨_⟩; wk-κ; κ-wkᵛ; κ-wkʳ; κ-wkᵉ; ⊩ᴴ-κ)
 open import TypeInference.SolverImpl.Resid     S
-open import TypeInference.SolverImpl.Eliminate S
-  using (joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩; joinᵣ-ub⊩; joinᵣ-lub⊩)
+open import TypeInference.SolverImpl.Bounds    S
 open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Canon     S
   using (canonSumᵣ; canonSumₑ; canonᵣ; canonₑ; canonᵣ-≡; canonₑ-≡)
@@ -158,10 +160,6 @@ open import TypeInference.SolverImpl.Product   S
 ∨-false : (b b' : 𝔹) → b ∨ b' ≡ false → (b ≡ false) × (b' ≡ false)
 ∨-false false b' q = refl , q
 ∨-false true  b' ()
-
-isFalse : (b : 𝔹) → Maybe (b ≡ false)
-isFalse false = just refl
-isFalse true  = nothing
 
 anyᶠ : ∀ {n} → (Fin n → 𝔹) → 𝔹
 anyᶠ {nzero}  f = false
@@ -201,25 +199,6 @@ anyL f (x ∷ l) = f x ∨ anyL f l
 ------------------------------------------------------------------------
 -- An assignment leaves alone what the assigned unknown does not occur in
 
-updᵉ-e : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (ε : EExp Ψ)
-       → occᵉ-e k ε ≡ false → ε [ updᵉ k b ]ᵉ ≡ ε
-updᵉ-e k b (evar i)   q = updᵉ-miss k b i q
-updᵉ-e k b (econst c) q = refl
-updᵉ-e k b (ε ·̂ₑ ε')  q with ∨-false (occᵉ-e k ε) (occᵉ-e k ε') q
-... | q₁ , q₂ = cong₂ _·̂ₑ_ (updᵉ-e k b ε q₁) (updᵉ-e k b ε' q₂)
-updᵉ-e k b (ε ⊔̂ₑ ε')  q with ∨-false (occᵉ-e k ε) (occᵉ-e k ε') q
-... | q₁ , q₂ = cong₂ _⊔̂ₑ_ (updᵉ-e k b ε q₁) (updᵉ-e k b ε' q₂)
-
-updᵉ-r : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (ρ : RExp Ψ)
-       → occᵉ-r k ρ ≡ false → ρ [ updᵉ k b ]ʳ ≡ ρ
-updᵉ-r k b (rvar i)   q = refl
-updᵉ-r k b (rconst c) q = refl
-updᵉ-r k b (ρ ·̂ᵣ ρ')  q with ∨-false (occᵉ-r k ρ) (occᵉ-r k ρ') q
-... | q₁ , q₂ = cong₂ _·̂ᵣ_ (updᵉ-r k b ρ q₁) (updᵉ-r k b ρ' q₂)
-updᵉ-r k b (ρ ⊔̂ᵣ ρ')  q with ∨-false (occᵉ-r k ρ) (occᵉ-r k ρ') q
-... | q₁ , q₂ = cong₂ _⊔̂ᵣ_ (updᵉ-r k b ρ q₁) (updᵉ-r k b ρ' q₂)
-updᵉ-r k b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (updᵉ-e k b ε q)
-
 mutual
 
   updᵉ-v : ∀ {Ψ} → (k : EVar Ψ) → (b : EExp Ψ) → (A : OVType Ψ)
@@ -240,16 +219,6 @@ mutual
          → occᵉ-c k C ≡ false → C [ updᵉ k b ]ᶜ ≡ C
   updᵉ-c k b (A ‼ ε) q with ∨-false (occᵉ-v k A) (occᵉ-e k ε) q
   ... | q₁ , q₂ = cong₂ _‼_ (updᵉ-v k b A q₁) (updᵉ-e k b ε q₂)
-
-updʳ-r : ∀ {Ψ} → (k : RVar Ψ) → (b : RExp Ψ) → (ρ : RExp Ψ)
-       → occʳ-r k ρ ≡ false → ρ [ updʳ k b ]ʳ ≡ ρ
-updʳ-r k b (rvar i)   q = updʳ-miss k b i q
-updʳ-r k b (rconst c) q = refl
-updʳ-r k b (ρ ·̂ᵣ ρ')  q with ∨-false (occʳ-r k ρ) (occʳ-r k ρ') q
-... | q₁ , q₂ = cong₂ _·̂ᵣ_ (updʳ-r k b ρ q₁) (updʳ-r k b ρ' q₂)
-updʳ-r k b (ρ ⊔̂ᵣ ρ')  q with ∨-false (occʳ-r k ρ) (occʳ-r k ρ') q
-... | q₁ , q₂ = cong₂ _⊔̂ᵣ_ (updʳ-r k b ρ q₁) (updʳ-r k b ρ' q₂)
-updʳ-r k b ∣ ε ∣̂ᵉ     q = cong ∣_∣̂ᵉ (updʳ-e k b ε)
 
 mutual
 
@@ -604,164 +573,12 @@ stable-out O τ (δ₀ , en) =
     (λ y → trans ([⨟]ᵉ y wkˢᵉ ω) (trans ([≐]ᵉ wk-ω y) (sym ([id]ᵉ (y [ wkˢᵉ ]ᵉ)))))
     (≐ˢ-trans (⨟-assoc wkˢᵉ O τ) (≐ˢ-trans (⨟-congʳ wkˢᵉ en) (wkˢᵉ-↑ᵉ δ₀)))
 
-------------------------------------------------------------------------
--- How an unknown `v` occurs in a list of orderings, over either sort of
--- grade expression
-
-module Sides {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) where
-
-  -- an ordering holds at every instance, or the unknown is absent from
-  -- its right (left) side
-
-  FreeR : X × X → Set
-  FreeR (x , x') = (x ≡ x') ⊎ (occ x' ≡ false)
-
-  FreeL : X × X → Set
-  FreeL (x , x') = (x ≡ x') ⊎ (occ x ≡ false)
-
-  freeRs : (l : List (X × X)) → Maybe (∀ {a} → a ∈ l → FreeR a)
-  freeRs []             = just (λ ())
-  freeRs ((x , x') ∷ l) = go (freeRs l) (x ≟ x') (isFalse (occ x'))
-    where
-      go : Maybe (∀ {a} → a ∈ l → FreeR a) → _ → Maybe (occ x' ≡ false)
-         → Maybe (∀ {a} → a ∈ (x , x') ∷ l → FreeR a)
-      go nothing  _        _        = nothing
-      go (just f) (yes e)  _        = just (λ { (here refl) → inj₁ e ; (there m) → f m })
-      go (just f) (no _)   (just q) = just (λ { (here refl) → inj₂ q ; (there m) → f m })
-      go (just f) (no _)   nothing  = nothing
-
-  freeLs : (l : List (X × X)) → Maybe (∀ {a} → a ∈ l → FreeL a)
-  freeLs []             = just (λ ())
-  freeLs ((x , x') ∷ l) = go (freeLs l) (x ≟ x') (isFalse (occ x))
-    where
-      go : Maybe (∀ {a} → a ∈ l → FreeL a) → _ → Maybe (occ x ≡ false)
-         → Maybe (∀ {a} → a ∈ (x , x') ∷ l → FreeL a)
-      go nothing  _        _        = nothing
-      go (just f) (yes e)  _        = just (λ { (here refl) → inj₁ e ; (there m) → f m })
-      go (just f) (no _)   (just q) = just (λ { (here refl) → inj₂ q ; (there m) → f m })
-      go (just f) (no _)   nothing  = nothing
-
-module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (v : X)
-              (_≤_ : X → X → Set) (dec≤ : (x y : X) → Maybe (x ≤ y)) where
-
-  open Sides _≟_ occ public
-
-  -- `v` occurs on a right side only as the whole side, below a bound in
-  -- `L`
-
-  LowAt : List X → X × X → Set
-  LowAt L (x , x') = FreeR (x , x') ⊎ ((x' ≡ v) × (x ∈ L))
-
-  -- `v` occurs on a left side only as the whole side, below `U` or
-  -- below a side decided to be above `U`
-
-  UpAt : X → X × X → Set
-  UpAt U (x , x') = FreeL (x , x') ⊎ ((x ≡ v) × ((x' ≡ U) ⊎ (U ≤ x')))
-
-  record Lows (l : List (X × X)) : Set where
-    constructor lows
-    field
-      bnds : List X
-      cls  : ∀ {a} → a ∈ l → LowAt bnds a
-      src  : ∀ {x} → x ∈ bnds → (x , v) ∈ l
-
-  open Lows public
-
-  record Ups (l : List (X × X)) : Set where
-    constructor ups
-    field
-      cap  : X
-      clsᵘ : ∀ {a} → a ∈ l → UpAt cap a
-      srcᵘ : (v , cap) ∈ l
-
-  open Ups public
-
-  -- The lower bounds, none of them mentioning `v`
-
-  lowsOf : (l : List (X × X)) → Maybe (Lows l)
-  lowsOf []             = just (lows [] (λ ()) (λ ()))
-  lowsOf ((x , x') ∷ l) = go (lowsOf l) (x' ≟ v) (isFalse (occ x)) (x ≟ x') (isFalse (occ x'))
-    where
-      wk : ∀ {L a} → LowAt L a → LowAt (x ∷ L) a
-      wk (inj₁ f)            = inj₁ f
-      wk (inj₂ (e , m))      = inj₂ (e , there m)
-
-      go : Maybe (Lows l) → _ → Maybe (occ x ≡ false) → _ → Maybe (occ x' ≡ false)
-         → Maybe (Lows ((x , x') ∷ l))
-      go nothing                _        _        _       _        = nothing
-      go (just (lows L c s))    (yes e)  (just _) _       _        =
-        just (lows (x ∷ L) (λ { (here refl) → inj₂ (e , here refl) ; (there m) → wk (c m) })
-                           (λ { (here refl) → here (cong (x ,_) (sym e)) ; (there m) → there (s m) }))
-      go (just (lows L c s))    _        _        (yes e) _        =
-        just (lows L (λ { (here refl) → inj₁ (inj₁ e) ; (there m) → c m }) (λ m → there (s m)))
-      go (just (lows L c s))    _        _        (no _)  (just q) =
-        just (lows L (λ { (here refl) → inj₁ (inj₂ q) ; (there m) → c m }) (λ m → there (s m)))
-      go (just (lows L c s))    _        _        (no _)  nothing  = nothing
-
-  -- The upper bounds not mentioning `v`, each a candidate
-
-  capsOf : (l : List (X × X)) → List (Σ[ U ∈ X ] ((v , U) ∈ l))
-  capsOf []             = []
-  capsOf ((x , x') ∷ l) = go (x ≟ v) (isFalse (occ x')) (capsOf l)
-    where
-      shift : List (Σ[ U ∈ X ] ((v , U) ∈ l)) → List (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
-      shift []             = []
-      shift ((U , m) ∷ us) = (U , there m) ∷ shift us
-
-      go : _ → Maybe (occ x' ≡ false) → List (Σ[ U ∈ X ] ((v , U) ∈ l))
-         → List (Σ[ U ∈ X ] ((v , U) ∈ (x , x') ∷ l))
-      go (yes e) (just _) us = (x' , here (cong (_, x') (sym e))) ∷ shift us
-      go _       _        us = shift us
-
-  upsAt : (U : X) → (l : List (X × X)) → Maybe (∀ {a} → a ∈ l → UpAt U a)
-  upsAt U []             = just (λ ())
-  upsAt U ((x , x') ∷ l) = go (upsAt U l) (x ≟ x') (isFalse (occ x)) (x ≟ v)
-    where
-      above : Dec (x' ≡ U) → Maybe ((x' ≡ U) ⊎ (U ≤ x'))
-      above (yes e) = just (inj₁ e)
-      above (no _) with dec≤ U x'
-      ... | just p  = just (inj₂ p)
-      ... | nothing = nothing
-
-      at : x ≡ v → Maybe ((x' ≡ U) ⊎ (U ≤ x')) → Maybe (UpAt U (x , x'))
-      at e (just b) = just (inj₂ (e , b))
-      at e nothing  = nothing
-
-      go : Maybe (∀ {a} → a ∈ l → UpAt U a) → _ → Maybe (occ x ≡ false) → _
-         → Maybe (∀ {a} → a ∈ (x , x') ∷ l → UpAt U a)
-      go nothing  _       _        _       = nothing
-      go (just f) (yes e) _        _       =
-        just (λ { (here refl) → inj₁ (inj₁ e) ; (there m) → f m })
-      go (just f) (no _)  (just q) _       =
-        just (λ { (here refl) → inj₁ (inj₂ q) ; (there m) → f m })
-      go (just f) (no _)  nothing  (yes e) with at e (above (x' ≟ U))
-      ... | just u  = just (λ { (here refl) → u ; (there m) → f m })
-      ... | nothing = nothing
-      go (just f) (no _)  nothing  (no _)  = nothing
-
-  -- The upper bound: the first candidate below every other one
-
-  upsOf : (l : List (X × X)) → Maybe (Ups l)
-  upsOf l = go (capsOf l)
-    where
-      go : List (Σ[ U ∈ X ] ((v , U) ∈ l)) → Maybe (Ups l)
-      go []             = nothing
-      go ((U , m) ∷ us) with upsAt U l
-      ... | just f  = just (ups U f m)
-      ... | nothing = go us
-
 allFalse : ∀ {Y : Set} → (f : Y → 𝔹) → (l : List Y) → Maybe (∀ {y} → y ∈ l → f y ≡ false)
 allFalse f []      = just (λ ())
 allFalse f (y ∷ l) with isFalse (f y) | allFalse f l
 ... | just q  | just g  = just (λ { (here refl) → q ; (there m) → g m })
 ... | just _  | nothing = nothing
 ... | nothing | _       = nothing
-
-module Bᵉ {Ψ} (k : EVar Ψ) =
-  Bounds (_≟ᵉ_ {Ψ}) (occᵉ-e {Ψ} k) (evar k) (∅ᴴ ⊩_≾̂ₑ_) (decide≾ₑ {Q = ∅ᴴ})
-module Bᵉʳ {Ψ} (k : EVar Ψ) = Sides (_≟ʳ_ {Ψ}) (occᵉ-r {Ψ} k)
-module Bʳ {Ψ} (k : RVar Ψ) =
-  Bounds (_≟ʳ_ {Ψ}) (occʳ-r {Ψ} k) (rvar k) (∅ᴴ ⊩_≾̂ᵣ_) (decide≾ᵣ {Q = ∅ᴴ})
 
 -- An unknown absent from every type of a residual. A disjunction's
 -- grade is the left side of an ordering below the unit, so it is kept
@@ -863,6 +680,27 @@ cleanʳ-⊩ {Q = Q} {k} {R} (cleanʳ ct cs cd) b τ h g = ts' , ss' , ds'
       subst (λ X → VarOK Q X (ρ [ updʳ k b ⨟ˢ τ ]ʳ)) (sym (updʳ-⨟v k b τ A (cd m)))
             (VarOK-≡̂ (≡̂ᵛ-refl (A [ τ ]ᵛ)) (g m) (⊩ds h m))
 
+-- A resource assignment leaves every effect ordering as it was
+
+effects-fixed : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} → (k : RVar Ψ) → (b : RExp Ψ)
+              → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
+              → ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ updʳ k b ⨟ˢ τ ]ᵉ ≾̂ₑ ε' [ updʳ k b ⨟ˢ τ ]ᵉ
+effects-fixed {Q = Q} k b τ h {ε} {ε'} m =
+  subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k b τ ε)) (sym (updʳ-⨟e k b τ ε')) (⊩es h m)
+
+-- The orderings of either sort read at an instance, before and after an
+-- assignment (`Bounds`)
+
+module Atᵉ {Ψ Ψ'} (Q : Hyps Ψ') (k : EVar Ψ) (b : EExp Ψ) (τ : Subst Ψ Ψ') where
+  open Bᵉ.Keepᵇ k (Q ⊩_≾̂ₑ_) ⊩≾̂ₑ-refl transₑ (_[ τ ]ᵉ) (_[ updᵉ k b ⨟ˢ τ ]ᵉ)
+                (λ {x} → updᵉ-⨟e k b τ x) public
+  module R = Bᵉʳ.Keep k (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (_[ τ ]ʳ) (_[ updᵉ k b ⨟ˢ τ ]ʳ)
+                      (λ {x} → updᵉ-⨟r k b τ x)
+
+module Atʳ {Ψ Ψ'} (Q : Hyps Ψ') (k : RVar Ψ) (b : RExp Ψ) (τ : Subst Ψ Ψ') where
+  open Bʳ.Keepᵇ k (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (_[ τ ]ʳ) (_[ updʳ k b ⨟ˢ τ ]ʳ)
+                (λ {x} → updʳ-⨟r k b τ x) public
+
 -- Lowering an effect unknown below its value, to a bound above each of
 -- its lower bounds
 
@@ -876,32 +714,17 @@ lowerᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → (∀ {x} → x ∈ Bᵉ.bnds lw → Q ⊩ x [ τ ]ᵉ ≾̂ₑ b [ τ ]ᵉ)
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k b ⨟ˢ τ ]
 lowerᵉ-⊩ {Q = Q} {k} {R} lw fr cl b sd τ below ub h =
-  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  mk⊩ᴿ (Atᵉ.R.lower-free Q k b τ fr (mono-substᵣ le) (⊩rs h))
+       (Atᵉ.lower-keeps Q k b τ lw (mono-substₑ le)
+          (λ {x} mx → subst (λ z → Q ⊩ x [ τ ]ᵉ ≾̂ₑ z [ τ ]ᵉ) (sym (updᵉ-hit k b)) (ub mx))
+          (⊩es h))
+       (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↓ E (sd m) le (⊩dfs h m))
   where
-    τ₁ = updᵉ k b ⨟ˢ τ
-
-    le : Q ⊩ τ₁ ≾ˢ τ
+    le : Q ⊩ (updᵉ k b ⨟ˢ τ) ≾ˢ τ
     le = updᵉ-below k b τ below
 
     c = cleanᵉ-⊩ cl b τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m with Bᵉ.cls lw m
-    ... | inj₁ (inj₁ refl) = ⊩≾̂ₑ-refl
-    ... | inj₁ (inj₂ q)    =
-          transₑ (mono-substₑ le ε)
-                 (subst (λ x → Q ⊩ ε [ τ ]ᵉ ≾̂ₑ x) (sym (updᵉ-⨟e k b τ ε' q)) (⊩es h m))
-    ... | inj₂ (refl , mx) =
-          transₑ (mono-substₑ le ε)
-                 (subst (λ x → Q ⊩ ε [ τ ]ᵉ ≾̂ₑ x [ τ ]ᵉ) (sym (updᵉ-hit k b)) (ub mx))
-
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m with fr m
-    ... | inj₁ refl = ⊩≾̂ᵣ-refl
-    ... | inj₂ q    =
-          transᵣ (mono-substᵣ le ρ)
-                 (subst (λ x → Q ⊩ ρ [ τ ]ʳ ≾̂ᵣ x) (sym (updᵉ-⨟r k b τ ρ' q)) (⊩rs h m))
 
 -- Raising an effect unknown to its upper bound below the others
 
@@ -913,7 +736,9 @@ raiseᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
          → (τ : Subst Ψ Ψ')
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k (Bᵉ.cap up) ⨟ˢ τ ]
 raiseᵉ-⊩ {Q = Q} {k} {R} up fl cl df sd τ h =
-  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  mk⊩ᴿ (Atᵉ.R.raise-free Q k U τ fl (mono-substᵣ ge) (⊩rs h))
+       (Atᵉ.raise-keeps Q k U τ up (mono-substₑ ge) hit (λ p → ⊩-substₑ ∅ᴴ-⊩ᴴ p) (⊩es h))
+       (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↑ E (sd m) ge (⊩dfs h m))
   where
     U  = Bᵉ.cap up
@@ -928,22 +753,6 @@ raiseᵉ-⊩ {Q = Q} {k} {R} up fl cl df sd τ h =
     hit : Q ⊩ evar k [ τ₁ ]ᵉ ≾̂ₑ U [ τ₁ ]ᵉ
     hit = subst (λ x → Q ⊩ x [ τ ]ᵉ ≾̂ₑ U [ τ₁ ]ᵉ) (sym (updᵉ-hit k U)) (mono-substₑ ge U)
 
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m with Bᵉ.clsᵘ up m
-    ... | inj₁ (inj₁ refl) = ⊩≾̂ₑ-refl
-    ... | inj₁ (inj₂ q)    =
-          transₑ (subst (λ x → Q ⊩ x ≾̂ₑ ε' [ τ ]ᵉ) (sym (updᵉ-⨟e k U τ ε q)) (⊩es h m))
-                 (mono-substₑ ge ε')
-    ... | inj₂ (refl , inj₁ refl) = hit
-    ... | inj₂ (refl , inj₂ p)    = transₑ hit (⊩-substₑ ∅ᴴ-⊩ᴴ p)
-
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m with fl m
-    ... | inj₁ refl = ⊩≾̂ᵣ-refl
-    ... | inj₂ q    =
-          transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updᵉ-⨟r k U τ ρ q)) (⊩rs h m))
-                 (mono-substᵣ ge ρ')
-
 -- The same two for a resource unknown, which no effect ordering mentions
 
 lowerʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
@@ -955,29 +764,17 @@ lowerʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
          → (∀ {x} → x ∈ Bʳ.bnds lw → Q ⊩ x [ τ ]ʳ ≾̂ᵣ b [ τ ]ʳ)
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k b ⨟ˢ τ ]
 lowerʳ-⊩ {Q = Q} {k} {R} lw cl b sd τ below ub h =
-  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  mk⊩ᴿ (Atʳ.lower-keeps Q k b τ lw (mono-substᵣ le)
+          (λ {x} mx → subst (λ z → Q ⊩ x [ τ ]ʳ ≾̂ᵣ z [ τ ]ʳ) (sym (updʳ-hit k b)) (ub mx))
+          (⊩rs h))
+       (effects-fixed k b τ h)
+       (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↓ E (sd m) le (⊩dfs h m))
   where
-    τ₁ = updʳ k b ⨟ˢ τ
-
-    le : Q ⊩ τ₁ ≾ˢ τ
+    le : Q ⊩ (updʳ k b ⨟ˢ τ) ≾ˢ τ
     le = updʳ-below k b τ below
 
     c = cleanʳ-⊩ cl b τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
-
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m with Bʳ.cls lw m
-    ... | inj₁ (inj₁ refl) = ⊩≾̂ᵣ-refl
-    ... | inj₁ (inj₂ q)    =
-          transᵣ (mono-substᵣ le ρ)
-                 (subst (λ x → Q ⊩ ρ [ τ ]ʳ ≾̂ᵣ x) (sym (updʳ-⨟r k b τ ρ' q)) (⊩rs h m))
-    ... | inj₂ (refl , mx) =
-          transᵣ (mono-substᵣ le ρ)
-                 (subst (λ x → Q ⊩ ρ [ τ ]ʳ ≾̂ᵣ x [ τ ]ʳ) (sym (updʳ-hit k b)) (ub mx))
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k b τ ε)) (sym (updʳ-⨟e k b τ ε')) (⊩es h m)
 
 raiseʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
          → (up : Bʳ.Ups {Ψ} k (rs R))
@@ -986,7 +783,9 @@ raiseʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
          → (τ : Subst Ψ Ψ')
          → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k (Bʳ.cap up) ⨟ˢ τ ]
 raiseʳ-⊩ {Q = Q} {k} {R} up cl df sd τ h =
-  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  mk⊩ᴿ (Atʳ.raise-keeps Q k U τ up (mono-substᵣ ge) hit (λ p → ⊩-substᵣ ∅ᴴ-⊩ᴴ p) (⊩rs h))
+       (effects-fixed k U τ h)
+       (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↑ E (sd m) ge (⊩dfs h m))
   where
     U  = Bʳ.cap up
@@ -1001,19 +800,6 @@ raiseʳ-⊩ {Q = Q} {k} {R} up cl df sd τ h =
     hit : Q ⊩ rvar k [ τ₁ ]ʳ ≾̂ᵣ U [ τ₁ ]ʳ
     hit = subst (λ x → Q ⊩ x [ τ ]ʳ ≾̂ᵣ U [ τ₁ ]ʳ) (sym (updʳ-hit k U)) (mono-substᵣ ge U)
 
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m with Bʳ.clsᵘ up m
-    ... | inj₁ (inj₁ refl) = ⊩≾̂ᵣ-refl
-    ... | inj₁ (inj₂ q)    =
-          transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updʳ-⨟r k U τ ρ q)) (⊩rs h m))
-                 (mono-substᵣ ge ρ')
-    ... | inj₂ (refl , inj₁ refl) = hit
-    ... | inj₂ (refl , inj₂ p)    = transᵣ hit (⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k U τ ε)) (sym (updʳ-⨟e k U τ ε')) (⊩es h m)
-
 -- Raising an unknown absent from every left side to the top
 
 topᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
@@ -1024,31 +810,17 @@ topᵉ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ}
        → (τ : Subst Ψ Ψ')
        → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updᵉ k (econst ⊤ₑ) ⨟ˢ τ ]
 topᵉ-⊩ {Q = Q} {k} {R} fe fl cl df sd τ h =
-  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  mk⊩ᴿ (Atᵉ.R.raise-free Q k (econst ⊤ₑ) τ fl (mono-substᵣ ge) (⊩rs h))
+       (Atᵉ.raise-free Q k (econst ⊤ₑ) τ fe (mono-substₑ ge) (⊩es h))
+       (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↑ E (sd m) ge (⊩dfs h m))
   where
-    τ₁ = updᵉ k (econst ⊤ₑ) ⨟ˢ τ
-
-    ge : Q ⊩ τ ≾ˢ τ₁
+    ge : Q ⊩ τ ≾ˢ (updᵉ k (econst ⊤ₑ) ⨟ˢ τ)
     ge = updᵉ-above k (econst ⊤ₑ) τ topₑ
 
     c = cleanᵉ-⊩ cl (econst ⊤ₑ) τ h
           (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ)
                                (sym (updᵉ-⨟r k (econst ⊤ₑ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m with fe m
-    ... | inj₁ refl = ⊩≾̂ₑ-refl
-    ... | inj₂ q    =
-          transₑ (subst (λ x → Q ⊩ x ≾̂ₑ ε' [ τ ]ᵉ) (sym (updᵉ-⨟e k (econst ⊤ₑ) τ ε q)) (⊩es h m))
-                 (mono-substₑ ge ε')
-
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m with fl m
-    ... | inj₁ refl = ⊩≾̂ᵣ-refl
-    ... | inj₂ q    =
-          transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updᵉ-⨟r k (econst ⊤ₑ) τ ρ q)) (⊩rs h m))
-                 (mono-substᵣ ge ρ')
 
 topʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
        → (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a)
@@ -1057,29 +829,17 @@ topʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ}
        → (τ : Subst Ψ Ψ')
        → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ updʳ k (rconst ⊤ᵣ) ⨟ˢ τ ]
 topʳ-⊩ {Q = Q} {k} {R} fl cl df sd τ h =
-  mk⊩ᴿ rs' es' (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
+  mk⊩ᴿ (Atʳ.raise-free Q k (rconst ⊤ᵣ) τ fl (mono-substᵣ ge) (⊩rs h))
+       (effects-fixed k (rconst ⊤ᵣ) τ h)
+       (proj₁ c) (proj₁ (proj₂ c)) (proj₂ (proj₂ c))
        (λ {E} m → keepᵈ dir↑ E (sd m) ge (⊩dfs h m))
   where
-    τ₁ = updʳ k (rconst ⊤ᵣ) ⨟ˢ τ
-
-    ge : Q ⊩ τ ≾ˢ τ₁
+    ge : Q ⊩ τ ≾ˢ (updʳ k (rconst ⊤ᵣ) ⨟ˢ τ)
     ge = updʳ-above k (rconst ⊤ᵣ) τ topᵣ
 
     c = cleanʳ-⊩ cl (rconst ⊤ᵣ) τ h
           (λ {A} {ρ} m → subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ τ ]ʳ)
                                (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
-
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m with fl m
-    ... | inj₁ refl = ⊩≾̂ᵣ-refl
-    ... | inj₂ q    =
-          transᵣ (subst (λ x → Q ⊩ x ≾̂ᵣ ρ' [ τ ]ʳ) (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ q)) (⊩rs h m))
-                 (mono-substᵣ ge ρ')
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k (rconst ⊤ᵣ) τ ε))
-             (sym (updʳ-⨟e k (rconst ⊤ᵣ) τ ε')) (⊩es h m)
 
 ------------------------------------------------------------------------
 -- One step: the value an unknown is sent to, with the proof that every
@@ -1150,7 +910,7 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
   where
     lower : Maybe (Bᵉ.Lows {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a)
           → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    lower (just lw@(Bᵉ.lows (x ∷ xs) c s)) (just fr)
+    lower (just lw@(Bᵉ.lows (x ∷ xs) _ _ s _ _)) (just fr)
       with stills? dir↓ (updᵉ k (joinₑ x xs)) (dfs R)
     ... | just sd =
           just (joinₑ x xs ,
@@ -1169,7 +929,7 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
     unit : Maybe (Is-just uₑ-least?) → Maybe (Bᵉ.Lows {Ψ} k (es R))
          → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a) → 𝔹
          → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    unit (just ij) (just lw@(Bᵉ.lows [] c s)) (just fr) true
+    unit (just ij) (just lw@(Bᵉ.lows [] _ _ _ _ _)) (just fr) true
       with stills? dir↓ (updᵉ k ûₑ) (dfs R)
     ... | just sd = just (ûₑ , λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ ij) (λ ()) h)
     ... | nothing = nothing
@@ -1193,7 +953,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
                    (top (Bʳ.freeLs {Ψ} k (rs R)) (dfreeʳ? k R) (occursʳ⁺ k R))))
   where
     lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    lower (just lw@(Bʳ.lows (x ∷ xs) c s)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
+    lower (just lw@(Bʳ.lows (x ∷ xs) _ _ s _ _)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
     ... | just sd =
           just (joinᵣ x xs ,
                 λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ (lowerʳ-least s τ h)
@@ -1210,7 +970,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
 
     unit : Maybe (Is-just uᵣ-least?) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
          → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    unit (just ij) (just lw@(Bʳ.lows [] c s)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
+    unit (just ij) (just lw@(Bʳ.lows [] _ _ _ _ _)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
     ... | just sd = just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ ij) (λ ()) h)
     ... | nothing = nothing
     unit _ _ _ = nothing
@@ -2109,11 +1869,8 @@ collapseᵉ-⊩ {Q = Q} {k} {r} {R} cl τ h kr rk =
 
     c = cleanᵉ-⊩ cl (evar r) τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
 
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m = transₑ (mono-substₑ le ε) (transₑ (⊩es h m) (mono-substₑ ge ε'))
-
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m = transᵣ (mono-substᵣ le ρ) (transᵣ (⊩rs h m) (mono-substᵣ ge ρ'))
+    es' = Atᵉ.equal-keeps Q k (evar r) τ (mono-substₑ le) (mono-substₑ ge) (⊩es h)
+    rs' = Atᵉ.R.equal-keeps Q k (evar r) τ (mono-substᵣ le) (mono-substᵣ ge) (⊩rs h)
 
 collapseʳ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k r : RVar Ψ} {R : Resid Ψ}
             → Cleanʳ k R → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ]
@@ -2132,13 +1889,8 @@ collapseʳ-⊩ {Q = Q} {k} {r} {R} cl τ h kr rk =
 
     c = cleanʳ-⊩ cl (rvar r) τ h (λ {A} {ρ} m → mono-substᵣ le ρ)
 
-    rs' : ∀ {ρ ρ'} → (ρ , ρ') ∈ rs R → Q ⊩ ρ [ τ₁ ]ʳ ≾̂ᵣ ρ' [ τ₁ ]ʳ
-    rs' {ρ} {ρ'} m = transᵣ (mono-substᵣ le ρ) (transᵣ (⊩rs h m) (mono-substᵣ ge ρ'))
-
-    es' : ∀ {ε ε'} → (ε , ε') ∈ es R → Q ⊩ ε [ τ₁ ]ᵉ ≾̂ₑ ε' [ τ₁ ]ᵉ
-    es' {ε} {ε'} m =
-      subst₂ (λ x y → Q ⊩ x ≾̂ₑ y) (sym (updʳ-⨟e k (rvar r) τ ε)) (sym (updʳ-⨟e k (rvar r) τ ε'))
-             (⊩es h m)
+    rs' = Atʳ.equal-keeps Q k (rvar r) τ (mono-substᵣ le) (mono-substᵣ ge) (⊩rs h)
+    es' = effects-fixed k (rvar r) τ h
 
 -- A local unknown and another it bounds each other with: the other is
 -- an outer unknown where one is in the cycle, else the least local.

@@ -392,6 +392,7 @@ import TypeInference.SolverImpl.Simplify
 ---- product normal form of what is left
 
 import TypeInference.SolverImpl.Vars
+import TypeInference.SolverImpl.Bounds
 import TypeInference.SolverImpl.Eliminate
 import TypeInference.SolverImpl.Product
 import TypeInference.SolverImpl.Canon

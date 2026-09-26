@@ -5,9 +5,11 @@
 -- the hypotheses bounding it below, and those hypotheses go with --
 -- it; an unknown absent from the reported type is eliminated     --
 -- outright by the same step. Dually, a grade unknown occurring   --
--- above nowhere but in one hypothesis is sent to that bound; the --
--- step needs a single bound above. The two grade sorts are       --
--- treated alike; open types carry no join, so a type variable is --
+-- above nowhere but in the hypotheses bounding it above is sent  --
+-- to a bound decided (from no hypotheses) below the others, and  --
+-- those hypotheses go with it. The bounds are read off by        --
+-- `Bounds` (`lowsOf`, `upsOf`). The two grade sorts are treated  --
+-- alike; open types carry no join, so a type variable is         --
 -- eliminated against a single bound.                             --
 --                                                                --
 -- A grade unknown the hypotheses equate with an expression free  --
@@ -24,7 +26,10 @@
 -- (`princ`). Steps compose (`_⨾ᴱ_`). The unknowns of a given set --
 -- are never eliminated, so `η` fixes them (`Elimᶠ`). Which       --
 -- unknowns remain is not claimed: a step is taken where its test --
--- succeeds.                                                      --
+-- succeeds. Of a step against a bound, the hypotheses it keeps   --
+-- on the unknown's sort are entailed by `Bounds` (`lowerR`,      --
+-- `raiseL`); the type, the other sort and the disjunctions are   --
+-- kept by polarity (`Monoᵉ`, `Raiseᵉ` and their siblings).       --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --
@@ -71,6 +76,10 @@ open import TypeInference.SolverImpl.Polarity S
 open import TypeInference.SolverImpl.Vars     S
   using (Vars; vᵗ; vʳ; vᵉ; Fixes; mkFixes; fixes-id; fixes-⨟; fixes-updᵉ; fixes-updʳ; outside)
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occʳ-r)
+open import TypeInference.SolverImpl.Resid       S using (∅ᴴ-⊩ᴴ)
+open import TypeInference.SolverImpl.Bounds      S
+  using (module Bᵉ; module Bʳ; updᵉ-e; updʳ-r; joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩;
+         joinᵣ-ub⊩; joinᵣ-lub⊩)
 
 -- Updating one slot of a finitely indexed family, structurally so that
 -- both equations hold without deciding equality in the definition.
@@ -293,46 +302,6 @@ module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
     sameᶜ s (A ‼ ε) = atᶜ-‼ s (sameᵛ s A) (sameᵉ s ε)
 
 ------------------------------------------------------------------------
--- The join of a non-empty list of bounds, its head named so that a
--- lone bound is its own join and folded to the left so that the join
--- reads in the order the bounds were met, and its least upper bound
-
-joinₑ : ∀ {Θ} → EExp Θ → List (EExp Θ) → EExp Θ
-joinₑ ε []        = ε
-joinₑ ε (ε' ∷ εs) = joinₑ (ε ⊔̂ₑ ε') εs
-
-joinₑ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
-          → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ joinₑ x₀ xs [ τ ]ᵉ
-joinₑ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ₑ-refl
-joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transₑ ⊔-ubˡₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
-joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
-  transₑ ⊔-ubʳₑ (joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (here refl))
-joinₑ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinₑ-ub⊩ τ (x₀ ⊔̂ₑ x₁) xs (there m)
-
-joinₑ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : EExp Ψ'} → (τ : Subst Ψ Ψ')
-           → (x₀ : EExp Ψ) → (xs : List (EExp Ψ))
-           → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ᵉ ≾̂ₑ y)
-           → Q ⊩ joinₑ x₀ xs [ τ ]ᵉ ≾̂ₑ y
-joinₑ-lub⊩ τ x₀ []        k = k (here refl)
-joinₑ-lub⊩ τ x₀ (x₁ ∷ xs) k =
-  joinₑ-lub⊩ τ (x₀ ⊔̂ₑ x₁) xs
-    (λ { (here refl) → ⊔-lubₑ (k (here refl)) (k (there (here refl)))
-       ; (there m)   → k (there (there m)) })
-
-joinₑ-below : ∀ {Θ} → (i : EVar Θ) → (ε₀ : EExp Θ) → (εs : List (EExp Θ))
-            → below (polₑ-e i ⁻ (joinₑ ε₀ εs)) ≡ false
-            → ∀ {ε} → ε ∈ ε₀ ∷ εs → below (polₑ-e i ⁻ ε) ≡ false
-joinₑ-below i ε₀ []        q (here refl) = q
-joinₑ-below i ε₀ (ε₁ ∷ εs) q (here refl) =
-  proj₁ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
-                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
-joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (here refl)) =
-  proj₂ (below-∪ (polₑ-e i ⁻ ε₀) (polₑ-e i ⁻ ε₁)
-                 (joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (here refl)))
-joinₑ-below i ε₀ (ε₁ ∷ εs) q (there (there m)) =
-  joinₑ-below i (ε₀ ⊔̂ₑ ε₁) εs q (there m)
-
-
 -- An unknown absent from an expression is fixed by updating it
 
 absᵉ-e : ∀ {Θ} → (i : EVar Θ) → (b : EExp Θ) → (ε : EExp Θ)
@@ -410,17 +379,6 @@ polsₑ-ordᵣ-∈ i ((ρ₀ , ρ₀') ∷ l) q (there m) = polsₑ-ordᵣ-∈ i
   where d₁ = below-∪ (polₑ-r i ⁺ ρ₀) (polₑ-r i ⁻ ρ₀' ∪ᴾ polsₑ-ordᵣ i l) q
         d₂ = below-∪ (polₑ-r i ⁻ ρ₀') (polsₑ-ordᵣ i l) (proj₂ d₁)
 
-polsₑ-ordₑ-∈ : ∀ {Θ} → (i : EVar Θ) → (l : List (EExp Θ × EExp Θ))
-             → below (polsₑ-ordₑ i l) ≡ false
-             → ∀ {ε ε'} → (ε , ε') ∈ l
-             → (below (polₑ-e i ⁺ ε) ≡ false) × (below (polₑ-e i ⁻ ε') ≡ false)
-polsₑ-ordₑ-∈ i ((ε₀ , ε₀') ∷ l) q (here refl) = proj₁ d₁ , proj₁ d₂
-  where d₁ = below-∪ (polₑ-e i ⁺ ε₀) (polₑ-e i ⁻ ε₀' ∪ᴾ polsₑ-ordₑ i l) q
-        d₂ = below-∪ (polₑ-e i ⁻ ε₀') (polsₑ-ordₑ i l) (proj₂ d₁)
-polsₑ-ordₑ-∈ i ((ε₀ , ε₀') ∷ l) q (there m) = polsₑ-ordₑ-∈ i l (proj₂ d₂) m
-  where d₁ = below-∪ (polₑ-e i ⁺ ε₀) (polₑ-e i ⁻ ε₀' ∪ᴾ polsₑ-ordₑ i l) q
-        d₂ = below-∪ (polₑ-e i ⁻ ε₀') (polsₑ-ordₑ i l) (proj₂ d₁)
-
 polsₑ-disj-∈ : ∀ {Θ} → (i : EVar Θ) → (l : List (OVType Θ × RExp Θ))
              → below (polsₑ-disj i l) ≡ false
              → ∀ {A ρ} → (A , ρ) ∈ l → below (polₑ-r i ⁺ ρ) ≡ false
@@ -429,87 +387,22 @@ polsₑ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsₑ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsₑ-disj-∈ i l (proj₂ (below-∪ (polₑ-r i ⁺ ρ₀) (polsₑ-disj i l) q)) m
 
--- The hypotheses bounding an unknown below, and the rest
-
-record Splitₑ {Θ : Scope} (i : EVar Θ) (l : List (EExp Θ × EExp Θ)) : Set where
-  constructor split
-  field
-    bnd   : EExp Θ
-    bnds  : List (EExp Θ)
-    rest  : List (EExp Θ × EExp Θ)
-    mem   : ∀ {ε} → ε ∈ bnd ∷ bnds → (ε , evar i) ∈ l
-    subₑ  : ∀ {p} → p ∈ rest → p ∈ l
-    cases : ∀ {ε ε'} → (ε , ε') ∈ l
-          → ((ε ∈ bnd ∷ bnds) × (ε' ≡ evar i)) ⊎ ((ε , ε') ∈ rest)
-
-open Splitₑ
-
--- The bound the unknown is sent to
-
-lubₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} → Splitₑ i l → EExp Θ
-lubₑ s = joinₑ (bnd s) (bnds s)
-
--- A hypothesis that is not a bound joins the rest; one that is joins
--- the bounds
-
-consₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀ ε₀'} → Splitₑ i l
-      → Splitₑ i ((ε₀ , ε₀') ∷ l)
-consₑ {ε₀ = ε₀} {ε₀'} s =
-  split (bnd s) (bnds s) ((ε₀ , ε₀') ∷ rest s)
-        (λ m → there (mem s m))
-        (λ { (here refl) → here refl ; (there m) → there (subₑ s m) })
-        (λ { (here refl) → inj₂ (here refl)
-           ; (there m)   → [ inj₁ , (λ r → inj₂ (there r)) ]′ (cases s m) })
-
-moreₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀} → Splitₑ i l
-      → Splitₑ i ((ε₀ , evar i) ∷ l)
-moreₑ {ε₀ = ε₀} s =
-  split ε₀ (bnd s ∷ bnds s) (rest s)
-        (λ { (here refl) → here refl ; (there m) → there (mem s m) })
-        (λ m → there (subₑ s m))
-        (λ { (here refl) → inj₁ (here refl , refl)
-           ; (there m)   → [ (λ { (mb , e) → inj₁ (there mb , e) })
-                           , inj₂ ]′ (cases s m) })
-
-oneₑ : ∀ {Θ} {i : EVar Θ} {l : List (EExp Θ × EExp Θ)} {ε₀}
-     → Splitₑ i ((ε₀ , evar i) ∷ l)
-oneₑ {l = l} {ε₀} =
-  split ε₀ [] l
-        (λ { (here refl) → here refl ; (there ()) })
-        there
-        (λ { (here refl) → inj₁ (here refl , refl) ; (there m) → inj₂ m })
-
-splitₑ : ∀ {Θ} → (i : EVar Θ) → (l : List (EExp Θ × EExp Θ)) → Maybe (Splitₑ i l)
-splitₑ i [] = nothing
-splitₑ i ((ε , evar j) ∷ l) with i ≟ᶠ j
-... | yes refl with splitₑ i l
-...   | just s  = just (moreₑ s)
-...   | nothing = just oneₑ
-splitₑ i ((ε , evar j) ∷ l) | no _ with splitₑ i l
-... | just s  = just (consₑ s)
-... | nothing = nothing
-splitₑ i ((ε , econst _) ∷ l) with splitₑ i l
-... | just s  = just (consₑ s)
-... | nothing = nothing
-splitₑ i ((ε , _ ·̂ₑ _) ∷ l) with splitₑ i l
-... | just s  = just (consₑ s)
-... | nothing = nothing
-splitₑ i ((ε , _ ⊔̂ₑ _) ∷ l) with splitₑ i l
-... | just s  = just (consₑ s)
-... | nothing = nothing
+-- Lowering an effect unknown to the join of its bounds below
+-- (`Bounds.Lows`); the orderings bounding it are dropped, the rest kept
+-- along `η`
 
 stepᵉ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
-      → (s : Splitₑ i (ordₑ Q))
-      → below (polₑ-e i ⁻ (lubₑ s)) ≡ false
-      → below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (rest s) (disj Q)) i) ≡ false
+      → (lw : Bᵉ.Lows i (ordₑ Q)) → (x : EExp Θ) → (xs : List (EExp Θ)) → Bᵉ.bnds lw ≡ x ∷ xs
+      → below (polₑ-e i ⁻ (joinₑ x xs)) ≡ false
+      → below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (Bᵉ.rest lw) (disj Q)) i) ≡ false
       → below (polₑ-c i ⁺ C) ≡ false
       → Elim C Q
-stepᵉ {Θ} C Q i s cb cq cc =
+stepᵉ {Θ} C Q i lw x xs e cb cq cc =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoᵉ.monoᵉ-c i b lowg ⁺ C cc))
   where
     b : EExp Θ
-    b = lubₑ s
+    b = joinₑ x xs
 
     η₀ : Subst Θ Θ
     η₀ = updᵉ i b
@@ -517,25 +410,25 @@ stepᵉ {Θ} C Q i s cb cq cc =
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
               (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
-              (map (mapᵖ (_[ η₀ ]ᵉ)) (rest s))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) (Bᵉ.rest lw))
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
+    bnd : ∀ {ε} → ε ∈ x ∷ xs → (ε , evar i) ∈ ordₑ Q
+    bnd m = Bᵉ.src lw (subst (_ ∈_) (sym e) m)
+
     d₁ = below-∪ (polsₑ-ordᵣ i (ordᵣ Q))
-                 (polsₑ-ordₑ i (rest s) ∪ᴾ polsₑ-disj i (disj Q)) cq
-    d₂ = below-∪ (polsₑ-ordₑ i (rest s)) (polsₑ-disj i (disj Q)) (proj₂ d₁)
+                 (polsₑ-ordₑ i (Bᵉ.rest lw) ∪ᴾ polsₑ-disj i (disj Q)) cq
 
     cR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → below (polₑ-r i ⁻ ρ') ≡ false
     cR m = proj₂ (polsₑ-ordᵣ-∈ i (ordᵣ Q) (proj₁ d₁) m)
 
-    cE : ∀ {ε ε'} → (ε , ε') ∈ rest s → below (polₑ-e i ⁻ ε') ≡ false
-    cE m = proj₂ (polsₑ-ordₑ-∈ i (rest s) (proj₁ d₂) m)
-
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updᵉ-below i b idˢ
-             (joinₑ-lub⊩ idˢ (bnd s) (bnds s)
-               (λ {x} m → subst (λ y → Q ⊩ y ≾̂ₑ evar i) (sym ([id]ᵉ x)) (hypₑ (mem s m)))))
+             (joinₑ-lub⊩ idˢ x xs
+               (λ {y} m → subst (λ z → Q ⊩ z ≾̂ₑ evar i) (sym ([id]ᵉ y)) (hypₑ (bnd m)))))
 
     open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
+    module K = Bᵉ.Keep i (Q ⊩_≾̂ₑ_) ⊩≾̂ₑ-refl transₑ (λ ε → ε) (_[ η₀ ]ᵉ) (λ {ε} → updᵉ-e i b ε)
 
     inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
     inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
@@ -543,31 +436,36 @@ stepᵉ {Θ} C Q i s cb cq cc =
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
-        ordE {ε} {ε'} m with cases s m
-        ... | inj₁ (mb , refl) =
+        ordE {ε} m with Bᵉ.cls lw m
+        ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ_) (trans (absᵉ-e i b b cb) (sym (updᵉ-hit i b)))
-                    (joinₑ-ub⊩ η₀ (bnd s) (bnds s) mb)
+                    (joinₑ-ub⊩ η₀ x xs (subst (_ ∈_) e mb))
         ... | inj₂ m' = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
+
+    keepE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ η₀ ]ᵉ)) (Bᵉ.rest lw) → Q ⊩ ε ≾̂ₑ ε'
+    keepE m with ∈-map⁻ (mapᵖ (_[ η₀ ]ᵉ)) m
+    ... | (ε₀ , ε₀') , m₀ , refl =
+          K.lowerR (Bᵉ.restR lw m₀) lowᵉ (hypₑ (Bᵉ.rest⊆ lw m₀))
 
     keep₀ : Q ⊨ᴴ Q₀
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
                  (keep-ordʳ (ordᵣ Q) (λ m → m)
                             (λ {ρ} {ρ'} m → fixedʳ (absᵉ-r i b ρ' (cR m))))
-                 (keep-ordᵉ (rest s) (subₑ s)
-                            (λ {ε} {ε'} m → fixedᵉ (absᵉ-e i b ε' (cE m))))
-                 keep-disj
+                 keepE keep-disj
 
 -- The search: one unknown at a time, the first that qualifies
 
 stepᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
        → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
-stepᵉ? F C Q i o with splitₑ i (ordₑ Q)
-... | nothing = nothing
-... | just s
-    with below (polₑ-e i ⁻ (lubₑ s)) in c1
-       | below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (rest s) (disj Q)) i) in c2
+stepᵉ? F C Q i o with Bᵉ.lowsOf i (ordₑ Q)
+... | nothing                                = nothing
+... | just (Bᵉ.lows [] _ _ _ _ _)            = nothing
+... | just lw@(Bᵉ.lows (x ∷ xs) _ _ _ _ _)
+    with below (polₑ-e i ⁻ (joinₑ x xs)) in c1
+       | below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (Bᵉ.rest lw) (disj Q)) i) in c2
        | below (polₑ-c i ⁺ C) in c3
-...   | false | false | false = just (stepᵉ C Q i s c1 c2 c3 , fixes-updᵉ i (lubₑ s) o)
+...   | false | false | false =
+        just (stepᵉ C Q i lw x xs refl c1 c2 c3 , fixes-updᵉ i (joinₑ x xs) o)
 ...   | _     | _     | _     = nothing
 
 fins : (n : ℕ) → List (Fin n)
@@ -634,17 +532,6 @@ module Monoʳ {Θ : Scope} {Q : Hyps Θ} (i : RVar Θ) (b : RExp Θ)
             → atᶜ Q s (C [ updʳ i b ]ᶜ) C
     monoʳ-c s (A ‼ ε) q = atᶜ-‼ s (monoʳ-v s A q) (atᵉ-≡ s (updʳ-e i b ε))
 
-polsᵣ-ord-∈ : ∀ {Θ} → (i : RVar Θ) → (l : List (RExp Θ × RExp Θ))
-            → below (polsᵣ-ord i l) ≡ false
-            → ∀ {ρ ρ'} → (ρ , ρ') ∈ l
-            → (below (polᵣ-r i ⁺ ρ) ≡ false) × (below (polᵣ-r i ⁻ ρ') ≡ false)
-polsᵣ-ord-∈ i ((ρ₀ , ρ₀') ∷ l) q (here refl) = proj₁ d₁ , proj₁ d₂
-  where d₁ = below-∪ (polᵣ-r i ⁺ ρ₀) (polᵣ-r i ⁻ ρ₀' ∪ᴾ polsᵣ-ord i l) q
-        d₂ = below-∪ (polᵣ-r i ⁻ ρ₀') (polsᵣ-ord i l) (proj₂ d₁)
-polsᵣ-ord-∈ i ((ρ₀ , ρ₀') ∷ l) q (there m) = polsᵣ-ord-∈ i l (proj₂ d₂) m
-  where d₁ = below-∪ (polᵣ-r i ⁺ ρ₀) (polᵣ-r i ⁻ ρ₀' ∪ᴾ polsᵣ-ord i l) q
-        d₂ = below-∪ (polᵣ-r i ⁻ ρ₀') (polsᵣ-ord i l) (proj₂ d₁)
-
 polsᵣ-disj-∈ : ∀ {Θ} → (i : RVar Θ) → (l : List (OVType Θ × RExp Θ))
              → below (polsᵣ-disj i l) ≡ false
              → ∀ {A ρ} → (A , ρ) ∈ l → below (polᵣ-r i ⁺ ρ) ≡ false
@@ -653,139 +540,38 @@ polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsᵣ-disj-∈ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsᵣ-disj-∈ i l (proj₂ (below-∪ (polᵣ-r i ⁺ ρ₀) (polsᵣ-disj i l) q)) m
 
-joinᵣ : ∀ {Θ} → RExp Θ → List (RExp Θ) → RExp Θ
-joinᵣ ρ []        = ρ
-joinᵣ ρ (ρ' ∷ ρs) = joinᵣ (ρ ⊔̂ᵣ ρ') ρs
-
-joinᵣ-ub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} → (τ : Subst Ψ Ψ') → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
-          → ∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ joinᵣ x₀ xs [ τ ]ʳ
-joinᵣ-ub⊩ τ x₀ []        (here refl) = ⊩≾̂ᵣ-refl
-joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (here refl) = transᵣ ⊔-ubˡᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
-joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (here refl)) =
-  transᵣ ⊔-ubʳᵣ (joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (here refl))
-joinᵣ-ub⊩ τ x₀ (x₁ ∷ xs) (there (there m)) = joinᵣ-ub⊩ τ (x₀ ⊔̂ᵣ x₁) xs (there m)
-
-joinᵣ-lub⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {y : RExp Ψ'} → (τ : Subst Ψ Ψ')
-           → (x₀ : RExp Ψ) → (xs : List (RExp Ψ))
-           → (∀ {x} → x ∈ x₀ ∷ xs → Q ⊩ x [ τ ]ʳ ≾̂ᵣ y)
-           → Q ⊩ joinᵣ x₀ xs [ τ ]ʳ ≾̂ᵣ y
-joinᵣ-lub⊩ τ x₀ []        k = k (here refl)
-joinᵣ-lub⊩ τ x₀ (x₁ ∷ xs) k =
-  joinᵣ-lub⊩ τ (x₀ ⊔̂ᵣ x₁) xs
-    (λ { (here refl) → ⊔-lubᵣ (k (here refl)) (k (there (here refl)))
-       ; (there m)   → k (there (there m)) })
-
-joinᵣ-below : ∀ {Θ} → (i : RVar Θ) → (ρ₀ : RExp Θ) → (ρs : List (RExp Θ))
-            → below (polᵣ-r i ⁻ (joinᵣ ρ₀ ρs)) ≡ false
-            → ∀ {ρ} → ρ ∈ ρ₀ ∷ ρs → below (polᵣ-r i ⁻ ρ) ≡ false
-joinᵣ-below i ρ₀ []        q (here refl) = q
-joinᵣ-below i ρ₀ (ρ₁ ∷ ρs) q (here refl) =
-  proj₁ (below-∪ (polᵣ-r i ⁻ ρ₀) (polᵣ-r i ⁻ ρ₁)
-                 (joinᵣ-below i (ρ₀ ⊔̂ᵣ ρ₁) ρs q (here refl)))
-joinᵣ-below i ρ₀ (ρ₁ ∷ ρs) q (there (here refl)) =
-  proj₂ (below-∪ (polᵣ-r i ⁻ ρ₀) (polᵣ-r i ⁻ ρ₁)
-                 (joinᵣ-below i (ρ₀ ⊔̂ᵣ ρ₁) ρs q (here refl)))
-joinᵣ-below i ρ₀ (ρ₁ ∷ ρs) q (there (there m)) =
-  joinᵣ-below i (ρ₀ ⊔̂ᵣ ρ₁) ρs q (there m)
-
-record Splitʳ {Θ : Scope} (i : RVar Θ) (l : List (RExp Θ × RExp Θ)) : Set where
-  constructor splitr
-  field
-    bndʳ   : RExp Θ
-    bndsʳ  : List (RExp Θ)
-    restʳ  : List (RExp Θ × RExp Θ)
-    memʳ   : ∀ {ρ} → ρ ∈ bndʳ ∷ bndsʳ → (ρ , rvar i) ∈ l
-    subʳ   : ∀ {p} → p ∈ restʳ → p ∈ l
-    casesʳ : ∀ {ρ ρ'} → (ρ , ρ') ∈ l
-           → ((ρ ∈ bndʳ ∷ bndsʳ) × (ρ' ≡ rvar i)) ⊎ ((ρ , ρ') ∈ restʳ)
-
-open Splitʳ
-
-lubʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} → Splitʳ i l → RExp Θ
-lubʳ s = joinᵣ (bndʳ s) (bndsʳ s)
-
-consʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {ρ₀ ρ₀'} → Splitʳ i l
-      → Splitʳ i ((ρ₀ , ρ₀') ∷ l)
-consʳ {ρ₀ = ρ₀} {ρ₀'} s =
-  splitr (bndʳ s) (bndsʳ s) ((ρ₀ , ρ₀') ∷ restʳ s)
-         (λ m → there (memʳ s m))
-         (λ { (here refl) → here refl ; (there m) → there (subʳ s m) })
-         (λ { (here refl) → inj₂ (here refl)
-            ; (there m)   → [ inj₁ , (λ r → inj₂ (there r)) ]′ (casesʳ s m) })
-
-moreʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {ρ₀} → Splitʳ i l
-      → Splitʳ i ((ρ₀ , rvar i) ∷ l)
-moreʳ {ρ₀ = ρ₀} s =
-  splitr ρ₀ (bndʳ s ∷ bndsʳ s) (restʳ s)
-         (λ { (here refl) → here refl ; (there m) → there (memʳ s m) })
-         (λ m → there (subʳ s m))
-         (λ { (here refl) → inj₁ (here refl , refl)
-            ; (there m)   → [ (λ { (mb , e) → inj₁ (there mb , e) })
-                            , inj₂ ]′ (casesʳ s m) })
-
-oneʳ : ∀ {Θ} {i : RVar Θ} {l : List (RExp Θ × RExp Θ)} {ρ₀}
-     → Splitʳ i ((ρ₀ , rvar i) ∷ l)
-oneʳ {l = l} {ρ₀} =
-  splitr ρ₀ [] l
-         (λ { (here refl) → here refl ; (there ()) })
-         there
-         (λ { (here refl) → inj₁ (here refl , refl) ; (there m) → inj₂ m })
-
-splitʳ : ∀ {Θ} → (i : RVar Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (Splitʳ i l)
-splitʳ i [] = nothing
-splitʳ i ((ρ , rvar j) ∷ l) with i ≟ᶠ j
-... | yes refl with splitʳ i l
-...   | just s  = just (moreʳ s)
-...   | nothing = just oneʳ
-splitʳ i ((ρ , rvar j) ∷ l) | no _ with splitʳ i l
-... | just s  = just (consʳ s)
-... | nothing = nothing
-splitʳ i ((ρ , rconst _) ∷ l) with splitʳ i l
-... | just s  = just (consʳ s)
-... | nothing = nothing
-splitʳ i ((ρ , _ ·̂ᵣ _) ∷ l) with splitʳ i l
-... | just s  = just (consʳ s)
-... | nothing = nothing
-splitʳ i ((ρ , _ ⊔̂ᵣ _) ∷ l) with splitʳ i l
-... | just s  = just (consʳ s)
-... | nothing = nothing
-splitʳ i ((ρ , ∣ _ ∣̂ᵉ) ∷ l) with splitʳ i l
-... | just s  = just (consʳ s)
-... | nothing = nothing
-
 stepʳ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
-      → (s : Splitʳ i (ordᵣ Q))
-      → below (polᵣ-r i ⁻ (lubʳ s)) ≡ false
-      → below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restʳ s) (ordₑ Q) (disj Q)) i) ≡ false
+      → (lw : Bʳ.Lows i (ordᵣ Q)) → (x : RExp Θ) → (xs : List (RExp Θ)) → Bʳ.bnds lw ≡ x ∷ xs
+      → below (polᵣ-r i ⁻ (joinᵣ x xs)) ≡ false
+      → below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (Bʳ.rest lw) (ordₑ Q) (disj Q)) i) ≡ false
       → below (polᵣ-c i ⁺ C) ≡ false
       → Elim C Q
-stepʳ {Θ} C Q i s cb cq cc =
+stepʳ {Θ} C Q i lw x xs e cb cq cc =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Monoʳ.monoʳ-c i b lowg ⁺ C cc))
   where
     b : RExp Θ
-    b = lubʳ s
+    b = joinᵣ x xs
 
     η₀ : Subst Θ Θ
     η₀ = updʳ i b
 
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
-              (map (mapᵖ (_[ η₀ ]ʳ)) (restʳ s))
+              (map (mapᵖ (_[ η₀ ]ʳ)) (Bʳ.rest lw))
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    d₁ = below-∪ (polsᵣ-ord i (restʳ s)) (polsᵣ-disj i (disj Q)) cq
-
-    cR : ∀ {ρ ρ'} → (ρ , ρ') ∈ restʳ s → below (polᵣ-r i ⁻ ρ') ≡ false
-    cR m = proj₂ (polsᵣ-ord-∈ i (restʳ s) (proj₁ d₁) m)
+    bnd : ∀ {ρ} → ρ ∈ x ∷ xs → (ρ , rvar i) ∈ ordᵣ Q
+    bnd m = Bʳ.src lw (subst (_ ∈_) (sym e) m)
 
     lowg : Q ⊩ η₀ ≾ˢ idˢ
     lowg = ≾ˢ-idˡ (updʳ-below i b idˢ
-             (joinᵣ-lub⊩ idˢ (bndʳ s) (bndsʳ s)
-               (λ {x} m → subst (λ y → Q ⊩ y ≾̂ᵣ rvar i) (sym ([id]ʳ x)) (hypᵣ (memʳ s m)))))
+             (joinᵣ-lub⊩ idˢ x xs
+               (λ {y} m → subst (λ z → Q ⊩ z ≾̂ᵣ rvar i) (sym ([id]ʳ y)) (hypᵣ (bnd m)))))
 
     open Lowering {Q = Q} η₀ lowg (λ β → tvarₛ reflᵗᵛ)
+    module K = Bʳ.Keep i (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (λ ρ → ρ) (_[ η₀ ]ʳ) (λ {ρ} → updʳ-r i b ρ)
 
     inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
     inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
@@ -793,37 +579,41 @@ stepʳ {Θ} C Q i s cb cq cc =
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
-        ordR {ρ} {ρ'} m with casesʳ s m
-        ... | inj₁ (mb , refl) =
+        ordR {ρ} m with Bʳ.cls lw m
+        ... | inj₁ (refl , mb) =
               subst (Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ_) (trans (absʳ-r i b b cb) (sym (updʳ-hit i b)))
-                    (joinᵣ-ub⊩ η₀ (bndʳ s) (bndsʳ s) mb)
+                    (joinᵣ-ub⊩ η₀ x xs (subst (_ ∈_) e mb))
         ... | inj₂ m' = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
 
+    keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (Bʳ.rest lw) → Q ⊩ ρ ≾̂ᵣ ρ'
+    keepR m with ∈-map⁻ (mapᵖ (_[ η₀ ]ʳ)) m
+    ... | (ρ₀ , ρ₀') , m₀ , refl =
+          K.lowerR (Bʳ.restR lw m₀) lowʳ (hypᵣ (Bʳ.rest⊆ lw m₀))
+
     keep₀ : Q ⊨ᴴ Q₀
-    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
-                 (keep-ordʳ (restʳ s) (subʳ s)
-                            (λ {ρ} {ρ'} m → fixedʳ (absʳ-r i b ρ' (cR m))))
+    keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR
                  (keep-ordᵉ (ordₑ Q) (λ m → m)
                             (λ {ε} {ε'} m → fixedᵉ (updʳ-e i b ε')))
                  keep-disj
 
 stepʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
        → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
-stepʳ? F C Q i o with splitʳ i (ordᵣ Q)
-... | nothing = nothing
-... | just s
-    with below (polᵣ-r i ⁻ (lubʳ s)) in c1
-       | below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restʳ s) (ordₑ Q) (disj Q)) i) in c2
+stepʳ? F C Q i o with Bʳ.lowsOf i (ordᵣ Q)
+... | nothing                                = nothing
+... | just (Bʳ.lows [] _ _ _ _ _)            = nothing
+... | just lw@(Bʳ.lows (x ∷ xs) _ _ _ _ _)
+    with below (polᵣ-r i ⁻ (joinᵣ x xs)) in c1
+       | below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (Bʳ.rest lw) (ordₑ Q) (disj Q)) i) in c2
        | below (polᵣ-c i ⁺ C) in c3
-...   | false | false | false = just (stepʳ C Q i s c1 c2 c3 , fixes-updʳ i (lubʳ s) o)
+...   | false | false | false =
+        just (stepʳ C Q i lw x xs refl c1 c2 c3 , fixes-updʳ i (joinᵣ x xs) o)
 ...   | _     | _     | _     = nothing
 
 ------------------------------------------------------------------------
--- The dual step: an unknown bounded above by one hypothesis, and
--- occurring on no other left side and nowhere covariantly in the
--- type, is sent to that bound. Raising it raises every right side and
--- every contravariant position. Several bounds above would need a
--- meet.
+-- The dual steps: an unknown on no left side but against its bounds
+-- above, and nowhere covariantly in the type, is raised to the bound
+-- decided below the others. Raising it raises every right side and
+-- every contravariant position.
 
 above-∪ : (p q : Pol) → above (p ∪ᴾ q) ≡ false
         → (above p ≡ false) × (above q ≡ false)
@@ -954,15 +744,6 @@ polsₑ-ordᵣ-∈⁺ i ((ρ₀ , ρ₀') ∷ l) q (there m) = polsₑ-ordᵣ-�
   where d₁ = above-∪ (polₑ-r i ⁺ ρ₀) (polₑ-r i ⁻ ρ₀' ∪ᴾ polsₑ-ordᵣ i l) q
         d₂ = above-∪ (polₑ-r i ⁻ ρ₀') (polsₑ-ordᵣ i l) (proj₂ d₁)
 
-polsₑ-ordₑ-∈⁺ : ∀ {Θ} → (i : EVar Θ) → (l : List (EExp Θ × EExp Θ))
-              → above (polsₑ-ordₑ i l) ≡ false
-              → ∀ {ε ε'} → (ε , ε') ∈ l → above (polₑ-e i ⁺ ε) ≡ false
-polsₑ-ordₑ-∈⁺ i ((ε₀ , ε₀') ∷ l) q (here refl) = proj₁ d₁
-  where d₁ = above-∪ (polₑ-e i ⁺ ε₀) (polₑ-e i ⁻ ε₀' ∪ᴾ polsₑ-ordₑ i l) q
-polsₑ-ordₑ-∈⁺ i ((ε₀ , ε₀') ∷ l) q (there m) = polsₑ-ordₑ-∈⁺ i l (proj₂ d₂) m
-  where d₁ = above-∪ (polₑ-e i ⁺ ε₀) (polₑ-e i ⁻ ε₀' ∪ᴾ polsₑ-ordₑ i l) q
-        d₂ = above-∪ (polₑ-e i ⁻ ε₀') (polsₑ-ordₑ i l) (proj₂ d₁)
-
 polsₑ-disj-∈⁺ : ∀ {Θ} → (i : EVar Θ) → (l : List (OVType Θ × RExp Θ))
               → above (polsₑ-disj i l) ≡ false
               → ∀ {A ρ} → (A , ρ) ∈ l → above (polₑ-r i ⁺ ρ) ≡ false
@@ -971,15 +752,6 @@ polsₑ-disj-∈⁺ i ((A₀ , ρ₀) ∷ l) q (here refl) =
 polsₑ-disj-∈⁺ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsₑ-disj-∈⁺ i l (proj₂ (above-∪ (polₑ-r i ⁺ ρ₀) (polsₑ-disj i l) q)) m
 
-polsᵣ-ord-∈⁺ : ∀ {Θ} → (i : RVar Θ) → (l : List (RExp Θ × RExp Θ))
-             → above (polsᵣ-ord i l) ≡ false
-             → ∀ {ρ ρ'} → (ρ , ρ') ∈ l → above (polᵣ-r i ⁺ ρ) ≡ false
-polsᵣ-ord-∈⁺ i ((ρ₀ , ρ₀') ∷ l) q (here refl) = proj₁ d₁
-  where d₁ = above-∪ (polᵣ-r i ⁺ ρ₀) (polᵣ-r i ⁻ ρ₀' ∪ᴾ polsᵣ-ord i l) q
-polsᵣ-ord-∈⁺ i ((ρ₀ , ρ₀') ∷ l) q (there m) = polsᵣ-ord-∈⁺ i l (proj₂ d₂) m
-  where d₁ = above-∪ (polᵣ-r i ⁺ ρ₀) (polᵣ-r i ⁻ ρ₀' ∪ᴾ polsᵣ-ord i l) q
-        d₂ = above-∪ (polᵣ-r i ⁻ ρ₀') (polsᵣ-ord i l) (proj₂ d₁)
-
 polsᵣ-disj-∈⁺ : ∀ {Θ} → (i : RVar Θ) → (l : List (OVType Θ × RExp Θ))
               → above (polsᵣ-disj i l) ≡ false
               → ∀ {A ρ} → (A , ρ) ∈ l → above (polᵣ-r i ⁺ ρ) ≡ false
@@ -987,32 +759,6 @@ polsᵣ-disj-∈⁺ i ((A₀ , ρ₀) ∷ l) q (here refl) =
   proj₁ (above-∪ (polᵣ-r i ⁺ ρ₀) (polsᵣ-disj i l) q)
 polsᵣ-disj-∈⁺ i ((A₀ , ρ₀) ∷ l) q (there m)   =
   polsᵣ-disj-∈⁺ i l (proj₂ (above-∪ (polᵣ-r i ⁺ ρ₀) (polsᵣ-disj i l) q)) m
-
--- The first hypothesis bounding an unknown above, and the rest
-
-record Cap {X : Set} (x : X) (l : List (X × X)) : Set where
-  constructor cap
-  field
-    top   : X
-    restᶜ : List (X × X)
-    memᶜ  : (x , top) ∈ l
-    subᶜ  : ∀ {p} → p ∈ restᶜ → p ∈ l
-    casesᶜ : ∀ {p} → p ∈ l → (p ≡ (x , top)) ⊎ (p ∈ restᶜ)
-
-open Cap
-
-capOf : ∀ {X : Set} → DecidableEquality X → (x : X) → (l : List (X × X)) → Maybe (Cap x l)
-capOf _≟_ x []             = nothing
-capOf _≟_ x ((y , y') ∷ l) with y ≟ x
-... | yes refl = just (cap y' l (here refl) there
-                           (λ { (here refl) → inj₁ refl ; (there m) → inj₂ m }))
-... | no _ with capOf _≟_ x l
-...   | nothing = nothing
-...   | just c  =
-        just (cap (top c) ((y , y') ∷ restᶜ c) (there (memᶜ c))
-                  (λ { (here refl) → here refl ; (there m) → there (subᶜ c m) })
-                  (λ { (here refl) → inj₂ (here refl)
-                     ; (there m)   → [ inj₁ , (λ r → inj₂ (there r)) ]′ (casesᶜ c m) }))
 
 -- The disjunctions kept at each instance: the grade does not move, and
 -- eternality reads only the skeleton
@@ -1033,37 +779,47 @@ keep-disj⁺ {Q = Q} η₀ tv fr δ h m with ∈-map⁻ (mapᵈ (_[ η₀ ]ᵛ) 
     et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
                  (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
+-- Raising an effect unknown to its bound above (`Bounds.Ups`): the
+-- orderings with it on the left are dropped, each then decided from no
+-- hypotheses; the rest are kept along `η`
+
 upᵉ-step : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
-         → (c : Cap (evar i) (ordₑ Q))
-         → above (polₑ-e i ⁺ (top c)) ≡ false
-         → above (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (restᶜ c) (disj Q)) i) ≡ false
+         → (up : Bᵉ.Ups i (ordₑ Q))
+         → above (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (Bᵉ.restᵘ (Bᵉ.capd up)) (disj Q)) i)
+           ≡ false
          → above (polₑ-c i ⁺ C) ≡ false
          → Elim C Q
-upᵉ-step {Θ} C Q i c cb cq cc =
+upᵉ-step {Θ} C Q i up cq cc =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Raiseᵉ.raiseᵉ-c i b hig ⁺ C cc))
   where
     b : EExp Θ
-    b = top c
+    b = Bᵉ.cap up
 
     η₀ : Subst Θ Θ
     η₀ = updᵉ i b
 
+    rest = Bᵉ.restᵘ (Bᵉ.capd up)
+
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
               (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
-              (map (mapᵖ (_[ η₀ ]ᵉ)) (restᶜ c))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) rest)
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    d₁ = above-∪ (polsₑ-ordᵣ i (ordᵣ Q))
-                 (polsₑ-ordₑ i (restᶜ c) ∪ᴾ polsₑ-disj i (disj Q)) cq
-    d₂ = above-∪ (polsₑ-ordₑ i (restᶜ c)) (polsₑ-disj i (disj Q)) (proj₂ d₁)
+    d₁ = above-∪ (polsₑ-ordᵣ i (ordᵣ Q)) (polsₑ-ordₑ i rest ∪ᴾ polsₑ-disj i (disj Q)) cq
+    d₂ = above-∪ (polsₑ-ordₑ i rest) (polsₑ-disj i (disj Q)) (proj₂ d₁)
 
     hig : Q ⊩ idˢ ≾ˢ η₀
     hig = ≾ˢ-idʳ (updᵉ-above i b idˢ
-            (subst (λ y → Q ⊩ evar i ≾̂ₑ y) (sym ([id]ᵉ b)) (hypₑ (memᶜ c))))
+            (subst (λ y → Q ⊩ evar i ≾̂ₑ y) (sym ([id]ᵉ b)) (hypₑ (Bᵉ.srcᵘ up))))
 
     open Raise {Q = Q} η₀ hig
+    module K = Bᵉ.Keep i (Q ⊩_≾̂ₑ_) ⊩≾̂ₑ-refl transₑ (λ ε → ε) (_[ η₀ ]ᵉ) (λ {ε} → updᵉ-e i b ε)
+
+    -- the value, where it stands for the unknown
+    hit : sE η₀ i ≡ b [ η₀ ]ᵉ
+    hit = trans (updᵉ-hit i b) (sym (updᵉ-e i b b (Bᵉ.capF up)))
 
     inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
     inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m))
@@ -1071,11 +827,11 @@ upᵉ-step {Θ} C Q i c cb cq cc =
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
         ordE : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q₀ ⊩ ε [ η₀ ]ᵉ ≾̂ₑ ε' [ η₀ ]ᵉ
-        ordE m with casesᶜ c m
-        ... | inj₁ refl =
-              subst₂ (λ x y → Q₀ ⊩ x ≾̂ₑ y) (sym (updᵉ-hit i b)) (sym (absᵉ-e⁺ i b b cb))
-                     ⊩≾̂ₑ-refl
-        ... | inj₂ m' = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
+        ordE {ε' = ε'} m with Bᵉ.clsᵘ (Bᵉ.capd up) m
+        ... | inj₁ (refl , inj₁ refl) = subst (λ z → Q₀ ⊩ z ≾̂ₑ b [ η₀ ]ᵉ) (sym hit) ⊩≾̂ₑ-refl
+        ... | inj₁ (refl , inj₂ p)    =
+              subst (λ z → Q₀ ⊩ z ≾̂ₑ ε' [ η₀ ]ᵉ) (sym hit) (⊩-substₑ ∅ᴴ-⊩ᴴ p)
+        ... | inj₂ m'                 = hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m')
 
     keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q) → Q ⊩ ρ ≾̂ᵣ ρ'
     keepR m with ∈-map⁻ (mapᵖ (_[ η₀ ]ʳ)) m
@@ -1083,11 +839,10 @@ upᵉ-step {Θ} C Q i c cb cq cc =
           transᵣ (atʳ-≡ ⁺ (absᵉ-r⁺ i b ρ₀ (polsₑ-ordᵣ-∈⁺ i (ordᵣ Q) (proj₁ d₁) m₀)))
                  (transᵣ (hypᵣ m₀) (upʳ ρ₀'))
 
-    keepE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ η₀ ]ᵉ)) (restᶜ c) → Q ⊩ ε ≾̂ₑ ε'
+    keepE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ η₀ ]ᵉ)) rest → Q ⊩ ε ≾̂ₑ ε'
     keepE m with ∈-map⁻ (mapᵖ (_[ η₀ ]ᵉ)) m
     ... | (ε₀ , ε₀') , m₀ , refl =
-          transₑ (atᵉ-≡ ⁺ (absᵉ-e⁺ i b ε₀ (polsₑ-ordₑ-∈⁺ i (restᶜ c) (proj₁ d₂) m₀)))
-                 (transₑ (hypₑ (subᶜ c m₀)) (upᵉ ε₀'))
+          K.raiseL (Bᵉ.restL (Bᵉ.capd up) m₀) upᵉ (hypₑ (Bᵉ.rest⊆ᵘ (Bᵉ.capd up) m₀))
 
     keep₀ : Q ⊨ᴴ Q₀
     keep₀ = mk⊨ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) keepR keepE
@@ -1095,34 +850,40 @@ upᵉ-step {Θ} C Q i c cb cq cc =
                     (λ {A} {ρ} m → absᵉ-r⁺ i b ρ (polsₑ-disj-∈⁺ i (disj Q) (proj₂ d₂) m)))
 
 upʳ-step : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
-         → (c : Cap (rvar i) (ordᵣ Q))
-         → above (polᵣ-r i ⁺ (top c)) ≡ false
-         → above (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restᶜ c) (ordₑ Q) (disj Q)) i) ≡ false
+         → (up : Bʳ.Ups i (ordᵣ Q))
+         → above (polᵣᴴ (hyps (ets Q) (subᵥ Q) (Bʳ.restᵘ (Bʳ.capd up)) (ordₑ Q) (disj Q)) i)
+           ≡ false
          → above (polᵣ-c i ⁺ C) ≡ false
          → Elim C Q
-upʳ-step {Θ} C Q i c cb cq cc =
+upʳ-step {Θ} C Q i up cq cc =
   mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
          (λ δ h → <:̂ᶜ-subst h (Raiseʳ.raiseʳ-c i b hig ⁺ C cc))
   where
     b : RExp Θ
-    b = top c
+    b = Bʳ.cap up
 
     η₀ : Subst Θ Θ
     η₀ = updʳ i b
 
+    rest = Bʳ.restᵘ (Bʳ.capd up)
+
     Q₀ : Hyps Θ
     Q₀ = hyps (ets Q) (subᵥ Q)
-              (map (mapᵖ (_[ η₀ ]ʳ)) (restᶜ c))
+              (map (mapᵖ (_[ η₀ ]ʳ)) rest)
               (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
               (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
 
-    d₁ = above-∪ (polsᵣ-ord i (restᶜ c)) (polsᵣ-disj i (disj Q)) cq
+    d₁ = above-∪ (polsᵣ-ord i rest) (polsᵣ-disj i (disj Q)) cq
 
     hig : Q ⊩ idˢ ≾ˢ η₀
     hig = ≾ˢ-idʳ (updʳ-above i b idˢ
-            (subst (λ y → Q ⊩ rvar i ≾̂ᵣ y) (sym ([id]ʳ b)) (hypᵣ (memᶜ c))))
+            (subst (λ y → Q ⊩ rvar i ≾̂ᵣ y) (sym ([id]ʳ b)) (hypᵣ (Bʳ.srcᵘ up))))
 
     open Raise {Q = Q} η₀ hig
+    module K = Bʳ.Keep i (Q ⊩_≾̂ᵣ_) ⊩≾̂ᵣ-refl transᵣ (λ ρ → ρ) (_[ η₀ ]ʳ) (λ {ρ} → updʳ-r i b ρ)
+
+    hit : sR η₀ i ≡ b [ η₀ ]ʳ
+    hit = trans (updʳ-hit i b) (sym (updʳ-r i b b (Bʳ.capF up)))
 
     inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
     inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
@@ -1130,17 +891,16 @@ upʳ-step {Θ} C Q i c cb cq cc =
                  (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
       where
         ordR : ∀ {ρ ρ'} → (ρ , ρ') ∈ ordᵣ Q → Q₀ ⊩ ρ [ η₀ ]ʳ ≾̂ᵣ ρ' [ η₀ ]ʳ
-        ordR m with casesᶜ c m
-        ... | inj₁ refl =
-              subst₂ (λ x y → Q₀ ⊩ x ≾̂ᵣ y) (sym (updʳ-hit i b)) (sym (absʳ-r⁺ i b b cb))
-                     ⊩≾̂ᵣ-refl
-        ... | inj₂ m' = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
+        ordR {ρ' = ρ'} m with Bʳ.clsᵘ (Bʳ.capd up) m
+        ... | inj₁ (refl , inj₁ refl) = subst (λ z → Q₀ ⊩ z ≾̂ᵣ b [ η₀ ]ʳ) (sym hit) ⊩≾̂ᵣ-refl
+        ... | inj₁ (refl , inj₂ p)    =
+              subst (λ z → Q₀ ⊩ z ≾̂ᵣ ρ' [ η₀ ]ʳ) (sym hit) (⊩-substᵣ ∅ᴴ-⊩ᴴ p)
+        ... | inj₂ m'                 = hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m')
 
-    keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) (restᶜ c) → Q ⊩ ρ ≾̂ᵣ ρ'
+    keepR : ∀ {ρ ρ'} → (ρ , ρ') ∈ map (mapᵖ (_[ η₀ ]ʳ)) rest → Q ⊩ ρ ≾̂ᵣ ρ'
     keepR m with ∈-map⁻ (mapᵖ (_[ η₀ ]ʳ)) m
     ... | (ρ₀ , ρ₀') , m₀ , refl =
-          transᵣ (atʳ-≡ ⁺ (absʳ-r⁺ i b ρ₀ (polsᵣ-ord-∈⁺ i (restᶜ c) (proj₁ d₁) m₀)))
-                 (transᵣ (hypᵣ (subᶜ c m₀)) (upʳ ρ₀'))
+          K.raiseL (Bʳ.restL (Bʳ.capd up) m₀) upʳ (hypᵣ (Bʳ.rest⊆ᵘ (Bʳ.capd up) m₀))
 
     keepE : ∀ {ε ε'} → (ε , ε') ∈ map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q) → Q ⊩ ε ≾̂ₑ ε'
     keepE m with ∈-map⁻ (mapᵖ (_[ η₀ ]ᵉ)) m
@@ -1156,25 +916,23 @@ upʳ-step {Θ} C Q i c cb cq cc =
 
 upᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : EVar Θ)
      → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
-upᵉ? F C Q i o with capOf _≟ᵉ_ (evar i) (ordₑ Q)
+upᵉ? F C Q i o with Bᵉ.upsOf i (ordₑ Q)
 ... | nothing = nothing
-... | just c
-    with above (polₑ-e i ⁺ (top c)) in c1
-       | above (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (restᶜ c) (disj Q)) i) in c2
+... | just up
+    with above (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (Bᵉ.restᵘ (Bᵉ.capd up)) (disj Q)) i) in c2
        | above (polₑ-c i ⁺ C) in c3
-...   | false | false | false = just (upᵉ-step C Q i c c1 c2 c3 , fixes-updᵉ i (top c) o)
-...   | _     | _     | _     = nothing
+...   | false | false = just (upᵉ-step C Q i up c2 c3 , fixes-updᵉ i (Bᵉ.cap up) o)
+...   | _     | _     = nothing
 
 upʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (i : RVar Θ)
      → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
-upʳ? F C Q i o with capOf _≟ʳ_ (rvar i) (ordᵣ Q)
+upʳ? F C Q i o with Bʳ.upsOf i (ordᵣ Q)
 ... | nothing = nothing
-... | just c
-    with above (polᵣ-r i ⁺ (top c)) in c1
-       | above (polᵣᴴ (hyps (ets Q) (subᵥ Q) (restᶜ c) (ordₑ Q) (disj Q)) i) in c2
+... | just up
+    with above (polᵣᴴ (hyps (ets Q) (subᵥ Q) (Bʳ.restᵘ (Bʳ.capd up)) (ordₑ Q) (disj Q)) i) in c2
        | above (polᵣ-c i ⁺ C) in c3
-...   | false | false | false = just (upʳ-step C Q i c c1 c2 c3 , fixes-updʳ i (top c) o)
-...   | _     | _     | _     = nothing
+...   | false | false = just (upʳ-step C Q i up c2 c3 , fixes-updʳ i (Bʳ.cap up) o)
+...   | _     | _     = nothing
 
 -- The bound of a type variable is another type variable, so the
 -- substitution acts on the eternality and subtyping atoms too.
