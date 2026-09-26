@@ -475,8 +475,8 @@ stepᵉ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → 
        → vᵉ F i ≡ false → Maybe (Elimᶠ F C Q)
 stepᵉ? F C Q i o with Bᵉ.lowsOf i (ordₑ Q)
 ... | nothing                                = nothing
-... | just (Bᵉ.lows [] _ _ _ _ _)            = nothing
-... | just lw@(Bᵉ.lows (x ∷ xs) _ _ _ _ _)
+... | just (Bᵉ.lows [] _ _ _ _ _ _)          = nothing
+... | just lw@(Bᵉ.lows (x ∷ xs) _ _ _ _ _ _)
     with below (polₑ-e i ⁻ (joinₑ x xs)) in c1
        | below (polₑᴴ (hyps (ets Q) (subᵥ Q) (ordᵣ Q) (Bᵉ.rest lw) (disj Q)) i) in c2
        | below (polₑ-c i ⁺ C) in c3
@@ -616,8 +616,8 @@ stepʳ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → (
        → vʳ F i ≡ false → Maybe (Elimᶠ F C Q)
 stepʳ? F C Q i o with Bʳ.lowsOf i (ordᵣ Q)
 ... | nothing                                = nothing
-... | just (Bʳ.lows [] _ _ _ _ _)            = nothing
-... | just lw@(Bʳ.lows (x ∷ xs) _ _ _ _ _)
+... | just (Bʳ.lows [] _ _ _ _ _ _)          = nothing
+... | just lw@(Bʳ.lows (x ∷ xs) _ _ _ _ _ _)
     with below (polᵣ-r i ⁻ (joinᵣ x xs)) in c1
        | below (polᵣᴴ (hyps (ets Q) (subᵥ Q) (Bʳ.rest lw) (ordₑ Q) (disj Q)) i) in c2
        | below (polᵣ-c i ⁺ C) in c3

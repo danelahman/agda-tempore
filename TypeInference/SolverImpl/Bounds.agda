@@ -26,13 +26,17 @@
 -- the upper bound and the top where they lie above it            --
 -- (`raise-keeps`, `raise-free`), an equal value always           --
 -- (`equal-keeps`); an unknown on no right side survives lowering --
--- (`lower-free`). Lowering is principal: each bound is an        --
--- ordering below `v` (`src`), so wherever the orderings hold     --
--- their join lies below `v` (`joinₑ-lub⊩`). That the upper bound --
--- and the top are least is not claimed.                          --
+-- (`lower-free`). Lowering makes each ordering with `v` on its   --
+-- right side hold outright: it is a bound, each bound free of    --
+-- `v`, or reflexive (`lower-drops`), so the caller may drop it.  --
+-- Lowering is principal: each bound is an ordering below `v`     --
+-- (`src`), so wherever the orderings hold their join lies below  --
+-- `v` (`joinₑ-lub⊩`). That the upper bound and the top are least --
+-- is not claimed.                                                --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Fin.Base using (Fin)
 open import Data.List.Base using (List; []; _∷_)
 open import Data.List.Membership.Propositional using (_∈_)
@@ -71,6 +75,9 @@ private
   ∨-false : (b b' : 𝔹) → b ∨ b' ≡ false → (b ≡ false) × (b' ≡ false)
   ∨-false false b' q = refl , q
   ∨-false true  b' ()
+
+  true≢false : true ≡ false → ⊥
+  true≢false ()
 
 ------------------------------------------------------------------------
 -- Equal values keep every ordering: read before (`f₀`) and after
@@ -164,37 +171,39 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
       rest  : List (X × X)
       cls   : ∀ {x x'} → (x , x') ∈ l → ((x' ≡ v) × (x ∈ bnds)) ⊎ ((x , x') ∈ rest)
       src   : ∀ {x} → x ∈ bnds → (x , v) ∈ l
+      bndF  : ∀ {x} → x ∈ bnds → occ x ≡ false
       rest⊆ : ∀ {a} → a ∈ rest → a ∈ l
       restR : ∀ {a} → a ∈ rest → FreeR a
 
   open Lows public
 
   lowsOf : (l : List (X × X)) → Maybe (Lows l)
-  lowsOf []             = just (lows [] [] (λ ()) (λ ()) (λ ()) (λ ()))
+  lowsOf []             = just (lows [] [] (λ ()) (λ ()) (λ ()) (λ ()) (λ ()))
   lowsOf ((x , x') ∷ l) = go (lowsOf l) (x' ≟ v) (isFalse (occ x)) (x ≟ x') (isFalse (occ x'))
     where
       toRest : Lows l → FreeR (x , x') → Lows ((x , x') ∷ l)
-      toRest (lows L r c s sb f) fr =
+      toRest (lows L r c s bf sb f) fr =
         lows L ((x , x') ∷ r)
              (λ { (here refl) → inj₂ (here refl)
                 ; (there m)   → [ inj₁ , (λ m' → inj₂ (there m')) ]′ (c m) })
-             (λ m → there (s m))
+             (λ m → there (s m)) bf
              (λ { (here refl) → here refl ; (there m) → there (sb m) })
              (λ { (here refl) → fr ; (there m) → f m })
 
       go : Maybe (Lows l) → Dec (x' ≡ v) → Maybe (occ x ≡ false) → Dec (x ≡ x')
          → Maybe (occ x' ≡ false) → Maybe (Lows ((x , x') ∷ l))
-      go nothing                    _        _        _       _        = nothing
-      go (just (lows L r c s sb f)) (yes e)  (just _) _       _        =
+      go nothing                       _        _        _       _        = nothing
+      go (just (lows L r c s bf sb f)) (yes e)  (just q) _       _        =
         just (lows (x ∷ L) r
                    (λ { (here refl) → inj₁ (e , here refl)
                       ; (there m)   → [ (λ { (e' , mb) → inj₁ (e' , there mb) })
                                       , (λ m' → inj₂ m') ]′ (c m) })
                    (λ { (here refl) → here (cong (x ,_) (sym e)) ; (there m) → there (s m) })
+                   (λ { (here refl) → q ; (there m) → bf m })
                    (λ m → there (sb m)) f)
-      go (just lw)                  _        _        (yes e) _        = just (toRest lw (inj₁ e))
-      go (just lw)                  _        _        (no _)  (just q) = just (toRest lw (inj₂ q))
-      go (just lw)                  _        _        (no _)  nothing  = nothing
+      go (just lw)                     _        _        (yes e) _        = just (toRest lw (inj₁ e))
+      go (just lw)                     _        _        (no _)  (just q) = just (toRest lw (inj₂ q))
+      go (just lw)                     _        _        (no _)  nothing  = nothing
 
   -- A bound above: every ordering with `v` on its left is `v ≾ U`, or
   -- has a right side decided above `U`; every other has `v` on no left
@@ -298,6 +307,17 @@ module Bounds {X : Set} (_≟_ : Decidable (_≡_ {A = X})) (occ : X → 𝔹) (
     lower-keeps lw lo ub h m with cls lw m
     ... | inj₁ (refl , mb) = ⊑-trans (lo _) (ub mb)
     ... | inj₂ mr          = lowerR (restR lw mr) lo (h m)
+
+    -- ... and makes each ordering with `v` on its greater side hold
+    -- outright: it is a bound, below the value, or reflexive
+
+    lower-drops : ∀ {l} → (lw : Lows l) → (∀ {x} → x ∈ bnds lw → f₀ x ⊑ f₁ v)
+                → ∀ {x x'} → (x , x') ∈ l → occ x' ≡ true → f₁ x ⊑ f₁ x'
+    lower-drops lw ub m q with cls lw m
+    ... | inj₁ (refl , mb) = subst (_⊑ f₁ v) (sym (same (bndF lw mb))) (ub mb)
+    ... | inj₂ mr with restR lw mr
+    ...   | inj₁ refl = ⊑-refl
+    ...   | inj₂ q'   = ⊥-elim (true≢false (trans (sym q) q'))
 
     -- Raising to the upper bound
 

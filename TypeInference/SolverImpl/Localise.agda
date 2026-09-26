@@ -26,7 +26,9 @@
 -- Then, before the atoms of the scope are split, each local    --
 -- unknown one of four steps applies to is sent to a value:     --
 --   * the join of its lower bounds, where it occurs on a right --
---     side only as the whole side (Pottier's condition);       --
+--     side only as the whole side (Pottier's condition); each  --
+--     ordering with it on the greater side is dropped, being a --
+--     bound, below the join, or reflexive (`lower-drops`);     --
 --   * dually, an upper bound decided (from no hypotheses)      --
 --     below each of its others, where it occurs on a left      --
 --     side only as the whole side;                             --
@@ -74,7 +76,9 @@
 -- assigns grade unknowns only, so subtyping demands between    --
 -- type variables stay so (`latom`); the type of each           --
 -- disjunction left is eternal at some instance                 --
--- (`localise-ds`).                                             --
+-- (`localise-ds`). A step leaves the residual moved by its     --
+-- assignment, less the orderings the assignment settles: they  --
+-- hold at every instance once it is made (`Drops`, `loc-ext`). --
 --                                                              --
 -- Every grade former is monotone, so each value keeps every    --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
@@ -95,12 +99,16 @@
 -- that they are least is not claimed.                          --
 --                                                              --
 -- A local unknown no step gives a value leaves the scope       --
--- stuck. Known cases: a cycle through a compound side, such    --
--- as `j · a ≾ a ≾ c · j` or `j ≾ a ≾ c · a`; an outer scope's  --
--- local unknown on both sides of an inner scope's deferred     --
--- condition; a local unknown with no lower bound under         --
--- several upper bounds, none decided below the others, which   --
--- in a program comes only from `absurd`.                       --
+-- stuck. Known cases: a cycle through a compound side that     --
+-- mentions the rigid `j` and an outer unknown `c`, such as     --
+-- `j · a ≾ a ≾ c · j` (right-sided time) or `j ≾ a ≾ c · a`    --
+-- (left-sided time), where with `c` local, or with no rigid,   --
+-- the steps resolve it, and a cycle whose sides are whole      --
+-- unknowns is collapsed (`Cycle` in `Examples/Stages`); an     --
+-- outer scope's local unknown on both sides of an inner        --
+-- scope's deferred condition; a local unknown with no lower    --
+-- bound under several upper bounds, none decided below the     --
+-- others, which in a program comes only from `absurd`.         --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; _∧_; not; true; false) renaming (Bool to 𝔹)
@@ -845,11 +853,130 @@ topʳ-⊩ {Q = Q} {k} {R} fl cl df sd τ h =
                                (sym (updʳ-⨟r k (rconst ⊤ᵣ) τ ρ (df m))) ⊩≾̂ᵣ-refl)
 
 ------------------------------------------------------------------------
+-- Settled atoms: an ordering, or a disjunction with a side, decided true
+-- against no hypotheses holds at every instance and bounds nothing
+
+Every : ∀ {Ψ} {X : Set} → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → X → Set
+Every P a = ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → P Q δ a
+
+Disj : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → OVType Ψ × RExp Ψ → Set
+Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
+
+settledʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Maybe (Every Ordʳ a)
+settledʳ (ρ , ρ') with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
+... | just p  = just (λ δ → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
+... | nothing = nothing
+
+settledᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Maybe (Every Ordᵉ a)
+settledᵉ (ε , ε') with decide≾ₑ {Q = ∅ᴴ} ε ε'
+... | just p  = just (λ δ → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
+... | nothing = nothing
+
+settledᵈ : ∀ {Ψ} → (a : OVType Ψ × RExp Ψ) → Maybe (Every Disj a)
+settledᵈ (A , ρ) with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
+... | just p  = just (λ δ → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
+... | nothing with etDec A in e
+...   | just [] = just (λ δ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
+...   | just (_ ∷ _) = nothing
+...   | nothing      = nothing
+
+-- The entries of a list that are not settled
+
+record Unsettled {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set)
+                 (l : List X) : Set where
+  constructor unset
+  field
+    kept  : List X
+    kept⊆ : ∀ {a} → a ∈ kept → a ∈ l
+    back  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
+          → (∀ {a} → a ∈ kept → P Q δ a) → ∀ {a} → a ∈ l → P Q δ a
+
+-- An entry settled, or kept
+
+consᵘ : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {a : X} {l : List X}
+      → Maybe (Every P a) → Unsettled P l → Unsettled P (a ∷ l)
+consᵘ (just p) (unset l' sb bk) =
+  unset l' (λ m → there (sb m))
+        (λ δ k → λ { (here refl) → p δ ; (there m) → bk δ k m })
+consᵘ {a = a} nothing (unset l' sb bk) =
+  unset (a ∷ l')
+        (λ { (here refl) → here refl ; (there m) → there (sb m) })
+        (λ δ k → λ { (here refl) → k (here refl)
+                   ; (there m)   → bk δ (λ m' → k (there m')) m })
+
+unsettled : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+          → ((a : X) → Maybe (Every P a)) → (l : List X) → Unsettled P l
+unsettled set []      = unset [] (λ ()) (λ δ k → λ ())
+unsettled set (a ∷ l) = consᵘ (set a) (unsettled set l)
+
+-- The entries a test marks, each settled, the others kept
+
+when : ∀ {Y : Set} → (b : 𝔹) → (b ≡ true → Y) → Maybe Y
+when true  f = just (f refl)
+when false f = nothing
+
+dropping : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
+         → (d : X → 𝔹) → (l : List X) → (∀ {a} → a ∈ l → d a ≡ true → Every P a)
+         → Unsettled P l
+dropping d []      h = unset [] (λ ()) (λ δ k → λ ())
+dropping d (a ∷ l) h = consᵘ (when (d a) (h (here refl))) (dropping d l (λ m → h (there m)))
+
+allKept : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set} {l : List X}
+        → Unsettled P l
+allKept {l = l} = unset l (λ m → m) (λ δ k → k)
+
+------------------------------------------------------------------------
 -- One step: the value an unknown is sent to, with the proof that every
--- instance survives it
+-- instance survives it, and the orderings it settles
 
 Keeps : ∀ {Ψ} → Subst Ψ Ψ → Resid Ψ → Set
 Keeps {Ψ} σ R = ∀ {Ψ'} → (τ : Subst Ψ Ψ') → (Q : Hyps Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ σ ⨟ˢ τ ]
+
+-- The orderings an assignment `σ` leaves open; each other one holds at
+-- every instance once `σ` is made
+
+record Drops {Ψ} (σ : Subst Ψ Ψ) (R : Resid Ψ) : Set where
+  constructor drops
+  field
+    dropsʳ : Unsettled (λ Q δ → Ordʳ Q (σ ⨟ˢ δ)) (rs R)
+    dropsᵉ : Unsettled (λ Q δ → Ordᵉ Q (σ ⨟ˢ δ)) (es R)
+
+keepAll : ∀ {Ψ} {σ : Subst Ψ Ψ} {R : Resid Ψ} → Drops σ R
+keepAll = drops allKept allKept
+
+-- The residual the open orderings leave
+
+left : ∀ {Ψ} {σ : Subst Ψ Ψ} {R : Resid Ψ} → Drops σ R → Resid Ψ
+left {R = R} (drops Dʳ Dᵉ) = record R { rs = Unsettled.kept Dʳ ; es = Unsettled.kept Dᵉ }
+
+-- Lowering settles the orderings of its sort with the unknown on the
+-- greater side (`lower-drops`)
+
+loweredᵉ : ∀ {Ψ} {k : EVar Ψ} {R : Resid Ψ} → (lw : Bᵉ.Lows {Ψ} k (es R)) → (b : EExp Ψ)
+         → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → ∀ {x} → x ∈ Bᵉ.bnds lw
+            → Q ⊩ x [ δ ]ᵉ ≾̂ₑ b [ δ ]ᵉ)
+         → Drops (updᵉ k b) R
+loweredᵉ {k = k} {R} lw b ub =
+  drops allKept
+        (dropping (λ a → occᵉ-e k (proj₂ a)) (es R)
+                  (λ m q {Ψ'} {Q} δ → Atᵉ.lower-drops Q k b δ lw (hit δ) m q))
+  where
+    hit : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → ∀ {x} → x ∈ Bᵉ.bnds lw
+        → Q ⊩ x [ δ ]ᵉ ≾̂ₑ evar k [ updᵉ k b ⨟ˢ δ ]ᵉ
+    hit {Q = Q} δ {x} mx = subst (λ z → Q ⊩ x [ δ ]ᵉ ≾̂ₑ z [ δ ]ᵉ) (sym (updᵉ-hit k b)) (ub δ mx)
+
+loweredʳ : ∀ {Ψ} {k : RVar Ψ} {R : Resid Ψ} → (lw : Bʳ.Lows {Ψ} k (rs R)) → (b : RExp Ψ)
+         → (∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → ∀ {x} → x ∈ Bʳ.bnds lw
+            → Q ⊩ x [ δ ]ʳ ≾̂ᵣ b [ δ ]ʳ)
+         → Drops (updʳ k b) R
+loweredʳ {k = k} {R} lw b ub =
+  drops (dropping (λ a → occʳ-r k (proj₂ a)) (rs R)
+                  (λ m q {Ψ'} {Q} δ → Atʳ.lower-drops Q k b δ lw (hit δ) m q))
+        allKept
+  where
+    hit : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → ∀ {x} → x ∈ Bʳ.bnds lw
+        → Q ⊩ x [ δ ]ʳ ≾̂ᵣ rvar k [ updʳ k b ⨟ˢ δ ]ʳ
+    hit {Q = Q} δ {x} mx = subst (λ z → Q ⊩ x [ δ ]ʳ ≾̂ᵣ z [ δ ]ʳ) (sym (updʳ-hit k b)) (ub δ mx)
 
 -- The lowering value is principal: at every instance of the residual
 -- it lies below the unknown
@@ -901,7 +1028,13 @@ occursᵉ⁺ k R = anyL (λ { (_ , ε') → occᵉ-e k ε' }) (es R) ∨ anyL (�
 occursʳ⁺ : ∀ {Ψ} → RVar Ψ → Resid Ψ → 𝔹
 occursʳ⁺ k R = anyL (λ { (_ , ρ') → occʳ-r k ρ' }) (rs R) ∨ inDfsʳ dir↓ k R
 
-stepᵉ : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ EExp Ψ ] Keeps (updᵉ k b) R)
+-- A value: every instance survives it, and it names the orderings it
+-- settles
+
+Step : ∀ {Ψ} → Subst Ψ Ψ → Resid Ψ → Set
+Step σ R = Keeps σ R × Drops σ R
+
+stepᵉ : ∀ {Ψ} → (k : EVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ EExp Ψ ] Step (updᵉ k b) R)
 stepᵉ {Ψ} k R with cleanᵉ? k R
 ... | nothing = nothing
 ... | just cl =
@@ -912,41 +1045,43 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
                         (occursᵉ⁺ k R))))
   where
     lower : Maybe (Bᵉ.Lows {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a)
-          → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    lower (just lw@(Bᵉ.lows (x ∷ xs) _ _ s _ _)) (just fr)
+          → Maybe (Σ[ b ∈ EExp _ ] Step (updᵉ k b) R)
+    lower (just lw@(Bᵉ.lows (x ∷ xs) _ _ s _ _ _)) (just fr)
       with stills? dir↓ (updᵉ k (joinₑ x xs)) (dfs R)
     ... | just sd =
           just (joinₑ x xs ,
-                λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ (lowerᵉ-least s τ h)
-                            (joinₑ-ub⊩ τ x xs) h)
+                (λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ (lowerᵉ-least s τ h)
+                             (joinₑ-ub⊩ τ x xs) h) ,
+                loweredᵉ lw (joinₑ x xs) (λ δ → joinₑ-ub⊩ δ x xs))
     ... | nothing = nothing
     lower _ _ = nothing
 
     raise : Maybe (Bᵉ.Ups {Ψ} k (es R)) → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a)
-          → Maybe (DFreeᵉ k R) → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
+          → Maybe (DFreeᵉ k R) → Maybe (Σ[ b ∈ EExp _ ] Step (updᵉ k b) R)
     raise (just up) (just fl) (just df) with stills? dir↑ (updᵉ k (Bᵉ.cap up)) (dfs R)
-    ... | just sd = just (Bᵉ.cap up , λ τ Q h → raiseᵉ-⊩ up fl cl df sd τ h)
+    ... | just sd = just (Bᵉ.cap up , (λ τ Q h → raiseᵉ-⊩ up fl cl df sd τ h) , keepAll)
     ... | nothing = nothing
     raise _         _         _         = nothing
 
     unit : Maybe (Is-just uₑ-least?) → Maybe (Bᵉ.Lows {Ψ} k (es R))
          → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeR {Ψ} k a) → 𝔹
-         → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
-    unit (just ij) (just lw@(Bᵉ.lows [] _ _ _ _ _)) (just fr) true
+         → Maybe (Σ[ b ∈ EExp _ ] Step (updᵉ k b) R)
+    unit (just ij) (just lw@(Bᵉ.lows [] _ _ _ _ _ _)) (just fr) true
       with stills? dir↓ (updᵉ k ûₑ) (dfs R)
-    ... | just sd = just (ûₑ , λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ ij) (λ ()) h)
+    ... | just sd = just (ûₑ , (λ τ Q h → lowerᵉ-⊩ lw fr cl ûₑ sd τ (minₑ ij) (λ ()) h) ,
+                          loweredᵉ lw ûₑ (λ δ ()))
     ... | nothing = nothing
     unit _ _ _ _ = nothing
 
     top : Maybe (∀ {a} → a ∈ es R → Bᵉ.FreeL {Ψ} k a)
         → Maybe (∀ {a} → a ∈ rs R → Bᵉʳ.FreeL {Ψ} k a) → Maybe (DFreeᵉ k R) → 𝔹
-        → Maybe (Σ[ b ∈ EExp _ ] Keeps (updᵉ k b) R)
+        → Maybe (Σ[ b ∈ EExp _ ] Step (updᵉ k b) R)
     top (just fe) (just fl) (just df) true with stills? dir↑ (updᵉ k (econst ⊤ₑ)) (dfs R)
-    ... | just sd = just (econst ⊤ₑ , λ τ Q h → topᵉ-⊩ fe fl cl df sd τ h)
+    ... | just sd = just (econst ⊤ₑ , (λ τ Q h → topᵉ-⊩ fe fl cl df sd τ h) , keepAll)
     ... | nothing = nothing
     top _         _         _         _    = nothing
 
-stepʳ : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ RExp Ψ ] Keeps (updʳ k b) R)
+stepʳ : ∀ {Ψ} → (k : RVar Ψ) → (R : Resid Ψ) → Maybe (Σ[ b ∈ RExp Ψ ] Step (updʳ k b) R)
 stepʳ {Ψ} k R with cleanʳ? k R
 ... | nothing = nothing
 ... | just cl =
@@ -955,89 +1090,37 @@ stepʳ {Ψ} k R with cleanʳ? k R
             (first (unit (Is-just? uᵣ-least?) (Bʳ.lowsOf {Ψ} k (rs R)) (occursʳ k R))
                    (top (Bʳ.freeLs {Ψ} k (rs R)) (dfreeʳ? k R) (occursʳ⁺ k R))))
   where
-    lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    lower (just lw@(Bʳ.lows (x ∷ xs) _ _ s _ _)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
+    lower : Maybe (Bʳ.Lows {Ψ} k (rs R)) → Maybe (Σ[ b ∈ RExp _ ] Step (updʳ k b) R)
+    lower (just lw@(Bʳ.lows (x ∷ xs) _ _ s _ _ _)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
     ... | just sd =
           just (joinᵣ x xs ,
-                λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ (lowerʳ-least s τ h)
-                            (joinᵣ-ub⊩ τ x xs) h)
+                (λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ (lowerʳ-least s τ h)
+                             (joinᵣ-ub⊩ τ x xs) h) ,
+                loweredʳ lw (joinᵣ x xs) (λ δ → joinᵣ-ub⊩ δ x xs))
     ... | nothing = nothing
     lower _ = nothing
 
     raise : Maybe (Bʳ.Ups {Ψ} k (rs R)) → Maybe (DFreeʳ k R)
-          → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
+          → Maybe (Σ[ b ∈ RExp _ ] Step (updʳ k b) R)
     raise (just up) (just df) with stills? dir↑ (updʳ k (Bʳ.cap up)) (dfs R)
-    ... | just sd = just (Bʳ.cap up , λ τ Q h → raiseʳ-⊩ up cl df sd τ h)
+    ... | just sd = just (Bʳ.cap up , (λ τ Q h → raiseʳ-⊩ up cl df sd τ h) , keepAll)
     ... | nothing = nothing
     raise _         _         = nothing
 
     unit : Maybe (Is-just uᵣ-least?) → Maybe (Bʳ.Lows {Ψ} k (rs R)) → 𝔹
-         → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
-    unit (just ij) (just lw@(Bʳ.lows [] _ _ _ _ _)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
-    ... | just sd = just (ûᵣ , λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ ij) (λ ()) h)
+         → Maybe (Σ[ b ∈ RExp _ ] Step (updʳ k b) R)
+    unit (just ij) (just lw@(Bʳ.lows [] _ _ _ _ _ _)) true with stills? dir↓ (updʳ k ûᵣ) (dfs R)
+    ... | just sd = just (ûᵣ , (λ τ Q h → lowerʳ-⊩ lw cl ûᵣ sd τ (minᵣ ij) (λ ()) h) ,
+                          loweredʳ lw ûᵣ (λ δ ()))
     ... | nothing = nothing
     unit _ _ _ = nothing
 
     top : Maybe (∀ {a} → a ∈ rs R → Bʳ.FreeL {Ψ} k a) → Maybe (DFreeʳ k R) → 𝔹
-        → Maybe (Σ[ b ∈ RExp _ ] Keeps (updʳ k b) R)
+        → Maybe (Σ[ b ∈ RExp _ ] Step (updʳ k b) R)
     top (just fl) (just df) true with stills? dir↑ (updʳ k (rconst ⊤ᵣ)) (dfs R)
-    ... | just sd = just (rconst ⊤ᵣ , λ τ Q h → topʳ-⊩ fl cl df sd τ h)
+    ... | just sd = just (rconst ⊤ᵣ , (λ τ Q h → topʳ-⊩ fl cl df sd τ h) , keepAll)
     ... | nothing = nothing
     top _         _         _    = nothing
-
-------------------------------------------------------------------------
--- Settled atoms: an ordering, or a disjunction with a side, decided true
--- against no hypotheses holds at every instance and bounds nothing
-
-Every : ∀ {Ψ} {X : Set} → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → X → Set
-Every P a = ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → P Q δ a
-
-Disj : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → OVType Ψ × RExp Ψ → Set
-Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
-
-settledʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Maybe (Every Ordʳ a)
-settledʳ (ρ , ρ') with decide≾ᵣ {Q = ∅ᴴ} ρ ρ'
-... | just p  = just (λ δ → ⊩-substᵣ ∅ᴴ-⊩ᴴ p)
-... | nothing = nothing
-
-settledᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Maybe (Every Ordᵉ a)
-settledᵉ (ε , ε') with decide≾ₑ {Q = ∅ᴴ} ε ε'
-... | just p  = just (λ δ → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
-... | nothing = nothing
-
-settledᵈ : ∀ {Ψ} → (a : OVType Ψ × RExp Ψ) → Maybe (Every Disj a)
-settledᵈ (A , ρ) with decide≾ᵣ {Q = ∅ᴴ} ρ ûᵣ
-... | just p  = just (λ δ → ≾ᵘ-ok (⊩-substᵣ ∅ᴴ-⊩ᴴ p))
-... | nothing with etDec A in e
-...   | just [] = just (λ δ → et-ok (⊩ᴱ-subst ∅ᴴ-⊩ᴴ (etDec-sound {Q = ∅ᴴ} A e (λ ()))))
-...   | just (_ ∷ _) = nothing
-...   | nothing      = nothing
-
--- The entries of a list that are not settled
-
-record Unsettled {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set)
-                 (l : List X) : Set where
-  constructor unset
-  field
-    kept  : List X
-    kept⊆ : ∀ {a} → a ∈ kept → a ∈ l
-    back  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-          → (∀ {a} → a ∈ kept → P Q δ a) → ∀ {a} → a ∈ l → P Q δ a
-
-unsettled : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
-          → ((a : X) → Maybe (Every P a)) → (l : List X) → Unsettled P l
-unsettled set []      = unset [] (λ ()) (λ δ k → λ ())
-unsettled {P = P} set (a ∷ l) = go (set a) (unsettled set l)
-  where
-    go : Maybe (Every P a) → Unsettled P l → Unsettled P (a ∷ l)
-    go (just p) (unset l' sb bk) =
-      unset l' (λ m → there (sb m))
-            (λ δ k → λ { (here refl) → p δ ; (there m) → bk δ k m })
-    go nothing  (unset l' sb bk) =
-      unset (a ∷ l')
-            (λ { (here refl) → here refl ; (there m) → there (sb m) })
-            (λ δ k → λ { (here refl) → k (here refl)
-                       ; (there m)   → bk δ (λ m' → k (there m')) m })
 
 ------------------------------------------------------------------------
 -- A disjunction whose type is eternal at no instance (`etDec` refutes
@@ -1941,14 +2024,23 @@ loc-normal (loc σ R₀ fx sn cp la) =
     Sᵉ = splits piecesᵉ (es R₀)
     Sᵈ = splits piecesᵈ (ds R₀)
 
+-- A step: the residual left by the orderings it keeps open, moved by
+-- its assignment
+
 loc-ext : ∀ {Θ Φ} {O : Subst (Θ +e) Φ} {R : Resid Φ} → (L : Localised O R)
-        → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L)
+        → (σ : Subst Φ Φ) → (O ⨟ˢ σ) ≐ˢ O → KeepsAt O σ (lR L) → Drops σ (lR L)
         → (∀ α → sTy σ α ≡ tvar α) → Localised O R
-loc-ext {O = O} {R} (loc σ₀ R₀ fx sn cp la) σ fσ st ty =
-  loc (σ₀ ⨟ˢ σ) (R₀ [ σ ]ᴿ)
+loc-ext {O = O} {R} (loc σ₀ R₀ fx sn cp la) σ fσ st D@(drops Dʳ Dᵉ) ty =
+  loc (σ₀ ⨟ˢ σ) (left D [ σ ]ᴿ)
       (≐ˢ-trans (≐ˢ-sym (⨟-assoc O σ₀ σ)) (≐ˢ-trans (⨟-congˡ fx σ) fσ))
-      (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc σ₀ σ δ)) (sn (σ ⨟ˢ δ) Q (⊩ᴿ-subst h)))
-      (λ τ en h → ⊩ᴿ-subst⁻ (st τ en (cp τ en h)))
+      (λ δ Q h → let h' = ⊩ᴿ-subst {R = left D} {σ = σ} h in
+                 ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc σ₀ σ δ))
+                   (sn (σ ⨟ˢ δ) Q (mk⊩ᴿ (Unsettled.back Dʳ δ (⊩rs h')) (Unsettled.back Dᵉ δ (⊩es h'))
+                                        (⊩ts h') (⊩ss h') (⊩ds h') (⊩dfs h'))))
+      (λ τ en h → let h' = st τ en (cp τ en h) in
+                  ⊩ᴿ-subst⁻ (mk⊩ᴿ (λ m → ⊩rs h' (Unsettled.kept⊆ Dʳ m))
+                                  (λ m → ⊩es h' (Unsettled.kept⊆ Dᵉ m))
+                                  (⊩ts h') (⊩ss h') (⊩ds h') (⊩dfs h')))
       (λ a → atomic-subst σ ty (la a))
 
 module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
@@ -1957,13 +2049,15 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   passᵉ []             L = L , false
   passᵉ ((k , q) ∷ ks) L with stepᵉ k (lR L)
   ... | nothing      = passᵉ ks L
-  ... | just (b , st) = proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
+  ... | just (b , st , dr) =
+        proj₁ (passᵉ ks (loc-ext L (updᵉ k b) (freeᵉ-fix k O q b) (λ τ en → st τ ∅ᴴ) dr (λ α → refl))) , true
 
   passʳ : List (Σ[ k ∈ RVar Φ ] (freeʳ k O ≡ false)) → Localised O R → Localised O R × 𝔹
   passʳ []             L = L , false
   passʳ ((k , q) ∷ ks) L with stepʳ k (lR L)
   ... | nothing      = passʳ ks L
-  ... | just (b , st) = proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
+  ... | just (b , st , dr) =
+        proj₁ (passʳ ks (loc-ext L (updʳ k b) (freeʳ-fix k O q b) (λ τ en → st τ ∅ᴴ) dr (λ α → refl))) , true
 
   -- The local unknowns of each component identified at once
 
@@ -1972,7 +2066,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
     where
       go : Collapse O (lR L) → Localised O R × 𝔹
       go (collapsed σ false ty fx st) = L , false
-      go (collapsed σ true  ty fx st) = loc-ext L σ fx (λ τ en → st τ ∅ᴴ) ty , true
+      go (collapsed σ true  ty fx st) = loc-ext L σ fx (λ τ en → st τ ∅ᴴ) keepAll ty , true
 
   -- Where no step gives an unknown a value of its own, a set of them
   -- bounded below by the rigid is sent to the top
@@ -1985,7 +2079,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
   ...   | just (raised l rc ue ur cl sd fx) =
           just (loc-ext L (tops l) (freeᴹ-fix l O fx)
                         (λ τ en h → raise-⊩ {Q₀ = ∅ᴴ} O eqj l rc ue ur cl sd τ en h)
-                        (λ α → refl))
+                        keepAll (λ α → refl))
 
   -- A round writes the atoms in normal form, splitting the joins on
   -- left sides, identifies the unknowns in cycles, then gives values.
