@@ -364,9 +364,16 @@ a grade system, a signature of base types, and operations' signatures.
   `Modality/*` the modalities, `Monad/*` the effect-tree monad with its
   handling and its laws, and `TickMonad.agda`, `Implementation.agda`,
   `TopLevelInstance.agda` the instances.
-- `DenotationalSemantics/Model/Example/World/` gives concrete Kripke frames,
-  one per example grade and in two families: `Ticks/*`, whose worlds are
-  elapsed time, and `TraceHistory/*`, whose worlds are the run so far.
+- `DenotationalSemantics/Model/World/` gives constructions on frames:
+  `Product.agda` the product of two frames, `Reindex.agda` reindexing along a
+  lax monoid map of grades or a map of worlds, and `Action.agda` a grade
+  acting on itself by right multiplication, `w ⊑[ ρ ] w'` iff `w' ≾ w · ρ`,
+  with `forward` restricting a frame to moves along a preorder on its worlds.
+- `DenotationalSemantics/Model/Example/World/` gives concrete Kripke frames for
+  the example grades, in four families: `Ticks/*`, whose worlds are elapsed
+  time (discrete or dense); `Tallies/*`, per-counter counts; `Labels/*`, the
+  security label reached; and `TraceHistory/*`, the run so far. `Product/*`
+  pairs them for the product grades.
 - `DenotationalSemantics/Interpretation/` interprets the language in any such
   model — `Types.agda`, `Contexts.agda`, `Variables.agda`, `Terms.agda` — and
   proves the interpretation coherent with the syntactic structural operations:

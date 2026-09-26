@@ -229,6 +229,13 @@ open import DenotationalSemantics.Model.Monad.Enrichment
 open import DenotationalSemantics.Model.TickMonad
 open import DenotationalSemantics.Model.Implementation
 
+---- Constructions on Kripke frames: products, reindexing, and the
+---- action frame of a grade with its forward restriction
+
+import DenotationalSemantics.Model.World.Product
+import DenotationalSemantics.Model.World.Reindex
+import DenotationalSemantics.Model.World.Action
+
 ---- Concrete model on setoid-valued presheaves over the worlds
 
 open import DenotationalSemantics.Model.Example.PSh.Base
@@ -325,10 +332,9 @@ open import OperationalSemantics.Adequacy.PSh.TreeHead
 open import OperationalSemantics.Adequacy.PSh.HeadFaithful
 open import OperationalSemantics.Adequacy.PSh.TickFrames
 
----- Concrete Kripke frames: time-ticks worlds and trace-history worlds,
----- one of each per example grade, and the frames each grade system is
----- modelled over
----- (see the module for the contrast between the two families)
+---- Concrete Kripke frames: time-ticks, tally, label and trace-history
+---- worlds, and products of them, for the example grades
+---- (see the module for how the families relate)
 
 import DenotationalSemantics.Model.Example.World
 

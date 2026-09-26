@@ -8,12 +8,19 @@
 -- one for a given grade is exactly the question of what a world has to --
 -- remember for the grade to say something about moving between worlds. --
 --                                                                     --
--- The frames come in two families, one per answer:                     --
+-- The frames come in four families, one per answer:                   --
 --                                                                     --
---   * `Ticks.*` -- a world is a time point `ℕ`. It remembers only how  --
---     much time has elapsed, so accessibility says how far ahead the   --
---     grade may move: an exact tick for a grade that fixes a duration, --
---     a window for one that only bounds it.                            --
+--   * `Ticks.*` -- a world is a time point, in `ℕ` or, for dense time, --
+--     in `ℚ≥0`. It remembers only how much time has elapsed, so        --
+--     accessibility says how far ahead the grade may move: an exact    --
+--     tick for a grade that fixes a duration, a window for one that    --
+--     only bounds it.                                                  --
+--                                                                     --
+--   * `Tallies.*` -- a world is a tally, how often each counter has    --
+--     been drawn on: a time point per counter.                         --
+--                                                                     --
+--   * `Labels.*` -- a world is the security label reached so far,      --
+--     floating upward as the grade allows.                             --
 --                                                                     --
 --   * `TraceHistory.*` -- a world is a timed trace, the history        --
 --     observed so far. It remembers *what happened*, not just how      --
@@ -21,11 +28,20 @@
 --     admits. These frames see the operations a grade prescribes,      --
 --     which the tick frames cannot.                                    --
 --                                                                     --
--- Each trace grade has a frame of either kind, and reading the two     --
--- against each other is how the tick worlds' blindness shows: they see --
--- a grade only through durations, so distinctions the histories keep   --
--- collapse. Frames for the sub-trace-order grid are parked under       --
--- `backup/` and imported from nowhere.                                 --
+-- The tick, tally and label frames rest on one construction           --
+-- (`DenotationalSemantics.Model.World.Action`): the grade acting by    --
+-- multiplication on the points it measures, `w ⊑[ ρ ] w'` iff          --
+-- `w' ≾ w · ρ`. Its `forward` restriction adds `w ≤ w'`; the frames    --
+-- over dense time, tallies, labels and products use it where the unit  --
+-- grade is least. `Product.*` pairs frames componentwise               --
+-- (`DenotationalSemantics.Model.World.Product`).                       --
+--                                                                     --
+-- The timed and finite-subset trace grades have a frame of either      --
+-- kind, and reading the two against each other is how the tick worlds' --
+-- blindness shows: they see a grade only through durations, so         --
+-- distinctions the histories keep collapse. Frames for the             --
+-- sub-trace-order grid are parked under `backup/` and imported from    --
+-- nowhere.                                                             --
 --                                                                     --
 -- This module is only an index -- the trace-based frames are           --
 -- parameterised by the alphabet `Op`, so it lists the pieces rather    --
@@ -121,3 +137,73 @@ import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Timed.TwoSi
 -- is, distinguishing runs the tick frame collapses into their durations
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Subsets.RightSided
+
+------------------------------------------------------------------------
+-- Dense time-ticks frames: worlds are points of `ℚ≥0`
+--
+-- The discrete tick frames' relations over dense time, each the action
+-- frame of its grade at the points.
+
+-- reach every world at least `q` ahead
+
+import DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.LeftSided
+
+-- reach the worlds ahead by at most `a`, never behind
+
+import DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.RightSided
+
+-- reach the worlds inside the window `[ p , a ]` ahead
+
+import DenotationalSemantics.Model.Example.World.Ticks.Time.Dense.TwoSided
+
+------------------------------------------------------------------------
+-- Tally frames: worlds are per-counter tallies
+--
+-- `ws ⊑[ ks ] ws'` holds on each counter separately: the power of a
+-- tick frame, one time point per counter.
+
+-- the power of a frame, for the power of a grade
+
+import DenotationalSemantics.Model.Example.World.Tallies.Counts.Power
+
+-- a quota: each tally rises by at most its bound
+
+import DenotationalSemantics.Model.Example.World.Tallies.Counts.AtMost
+
+-- a guarantee: each tally rises by at least its bound
+
+import DenotationalSemantics.Model.Example.World.Tallies.Counts.AtLeast
+
+------------------------------------------------------------------------
+-- Label frames: worlds are security labels
+--
+-- `w ⊑ˡ[ ℓ ] w'` iff `w ⊑ w' ⊑ w ∨ ℓ`: the label floats up, by at most
+-- `ℓ`; at `Low < High` and at taint sets
+
+import DenotationalSemantics.Model.Example.World.Labels.SecurityLevel
+
+------------------------------------------------------------------------
+-- Product frames: worlds are pairs
+--
+-- one frame per component, accessibility componentwise
+
+-- time points and labels: an embargo with a taint check
+
+import DenotationalSemantics.Model.Example.World.Product.LeftSidedTimeLevel
+
+-- time points and labels: an expiring, untainted capability
+
+import DenotationalSemantics.Model.Example.World.Product.RightSidedTimeLevel
+
+-- time points and energy spent, the energy frame being the time frame
+-- along the identity, which ignores `of-nat`
+
+import DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy
+
+------------------------------------------------------------------------
+-- Trace-history frames over regular sets of runs
+
+-- append a continuation whose encoding the language contains:
+-- membership outright, as for the finite subsets
+
+import DenotationalSemantics.Model.Example.World.TraceHistory.Traces.Regular.RightSided
