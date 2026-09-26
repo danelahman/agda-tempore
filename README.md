@@ -386,12 +386,13 @@ Inference for the open calculus, by constraint generation and solving.
   `mapᵉ`; `Types.agda` and `Contexts.agda` the open types and contexts, with
   `ContextsLemmas.agda` for lookup under weakening and substitution;
   `Subst.agda` substitutions between scopes. `Hyps.agda` has hypothesis sets
-  and entailment: convertibility `_≡̂_`, entailed ordering `_⊩_≾̂_`,
-  eternality, the var-rule disjunction `VarOK`, and shape-preserving subtyping
-  of open types. `Language.agda` is the qualified judgement `Q ∣ Γ ⊢C⦂ C`: the
-  rules of `Syntax/Language.agda` over open types, their side conditions
-  entailed from `Q`, with `handle` typing its operation clauses at a rigid
-  effect variable, and three rules recording a type annotation.
+  and entailment: convertibility `_≡̂_`, entailed ordering `_⊩_≾̂_` (which
+  states the zero-product laws, as the grades do), eternality, the var-rule
+  disjunction `VarOK`, and shape-preserving subtyping of open types.
+  `Language.agda` is the qualified judgement `Q ∣ Γ ⊢C⦂ C`: the rules of
+  `Syntax/Language.agda` over open types, their side conditions entailed from
+  `Q`, with `handle` typing its operation clauses at a rigid effect variable,
+  and three rules recording a type annotation.
 
 - `TypeInference/Raw/Syntax.agda` defines raw terms, untyped and scoped by the
   grade and type variables of the context; `box` carries its grade, an

@@ -8,7 +8,9 @@
 -- which a mirrored typing derivation is built. Entailment        --
 -- (`_⊩ᵗᵛ_≾_`, `_⊩_≾̂ᵣ_`, `_⊩_≾̂ₑ_`, `_⊩ᴱ_`, `_∣_<:̂ᵛ_`, `VarOK`)   --
 -- is an inductive under-approximation of truth at every closed   --
--- instance.                                                      --
+-- instance. Entailed ordering states the zero-product laws, as   --
+-- the grades do: a product below the unit has both factors       --
+-- below it.                                                      --
 --                                                                --
 -- Convertibility of open types (`_≡̂ᵛ_`), which `VarOK` reads,    --
 -- and open subtyping, with its inversion and stability lemmas,   --
@@ -203,6 +205,9 @@ data _⊩_≾̂ᵣ_ {Θ} Q where
   topᵣ     : ∀ {ρ} → Q ⊩ ρ ≾̂ᵣ rconst ⊤ᵣ
   -- the unit is below every grade when the grade declares it least
   minᵣ     : ∀ {ρ} → Is-just uᵣ-least? → Q ⊩ ûᵣ ≾̂ᵣ ρ
+  -- zero-product: a product below the unit has both factors below it
+  zeroˡᵣ   : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ ≾̂ᵣ ûᵣ
+  zeroʳᵣ   : ∀ {ρ ρ'} → Q ⊩ ρ ·̂ᵣ ρ' ≾̂ᵣ ûᵣ → Q ⊩ ρ' ≾̂ᵣ ûᵣ
 
 data _⊩_≾̂ₑ_ {Θ} Q where
   hypₑ   : ∀ {ε ε'} → (ε , ε') ∈ ordₑ Q → Q ⊩ ε ≾̂ₑ ε'
@@ -219,6 +224,9 @@ data _⊩_≾̂ₑ_ {Θ} Q where
   topₑ   : ∀ {ε} → Q ⊩ ε ≾̂ₑ econst ⊤ₑ
   -- the unit is below every grade when the grade declares it least
   minₑ   : ∀ {ε} → Is-just uₑ-least? → Q ⊩ ûₑ ≾̂ₑ ε
+  -- zero-product: a product below the unit has both factors below it
+  zeroˡₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε ≾̂ₑ ûₑ
+  zeroʳₑ : ∀ {ε ε'} → Q ⊩ ε ·̂ₑ ε' ≾̂ₑ ûₑ → Q ⊩ ε' ≾̂ₑ ûₑ
 
 -- Entailed ordering is reflexive
 
@@ -614,6 +622,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substᵣ            h (⊔-lubᵣ p q) = ⊔-lubᵣ (⊩-substᵣ h p) (⊩-substᵣ h q)
 ⊩-substᵣ            h topᵣ         = topᵣ
 ⊩-substᵣ            h (minᵣ eq)    = minᵣ eq
+⊩-substᵣ            h (zeroˡᵣ p)   = zeroˡᵣ (⊩-substᵣ h p)
+⊩-substᵣ            h (zeroʳᵣ p)   = zeroʳᵣ (⊩-substᵣ h p)
 
 ⊩-substₑ         h (hypₑ m)     = ⊩ordₑ h m
 ⊩-substₑ         h (atomₑ p)    = atomₑ p
@@ -625,6 +635,8 @@ Q' ⊩ᴴ Q = Q' ⊩ᴴ Q [ idˢ ]
 ⊩-substₑ         h (⊔-lubₑ p q) = ⊔-lubₑ (⊩-substₑ h p) (⊩-substₑ h q)
 ⊩-substₑ         h topₑ         = topₑ
 ⊩-substₑ         h (minₑ eq)    = minₑ eq
+⊩-substₑ         h (zeroˡₑ p)   = zeroˡₑ (⊩-substₑ h p)
+⊩-substₑ         h (zeroʳₑ p)   = zeroʳₑ (⊩-substₑ h p)
 
 -- A type variable's image is an arbitrary open type, so an assumed
 -- subtyping transports to a subtyping derivation at those images.

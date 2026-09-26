@@ -232,6 +232,8 @@ val-≾ᵣ (⊔-ubʳᵣ {ρ₁} {ρ₂}) = ⊔ᵣ-ubʳ (valʳ ρ₁) (valʳ ρ�
 val-≾ᵣ (⊔-lubᵣ p q) = ⊔ᵣ-lub (val-≾ᵣ p) (val-≾ᵣ q)
 val-≾ᵣ (topᵣ {ρ})   = ≾-⊤ᵣ (valʳ ρ)
 val-≾ᵣ {ρ' = ρ'} (minᵣ ij) = to-witness ij (valʳ ρ')
+val-≾ᵣ (zeroˡᵣ p)   = ≾ᵣ-zero-productˡ (val-≾ᵣ p)
+val-≾ᵣ (zeroʳᵣ p)   = ≾ᵣ-zero-productʳ (val-≾ᵣ p)
 
 val-≾ₑ (hypₑ ())
 val-≾ₑ (atomₑ p)    = p
@@ -243,6 +245,8 @@ val-≾ₑ (⊔-ubʳₑ {ε₁} {ε₂}) = ⊔ₑ-ubʳ (valᵉ ε₁) (valᵉ ε
 val-≾ₑ (⊔-lubₑ p q) = ⊔ₑ-lub (val-≾ₑ p) (val-≾ₑ q)
 val-≾ₑ (topₑ {ε})   = ≾-⊤ₑ (valᵉ ε)
 val-≾ₑ {ε' = ε'} (minₑ ij) = to-witness ij (valᵉ ε')
+val-≾ₑ (zeroˡₑ p)   = Grade.≾-zero-productˡ EGrade (val-≾ₑ p)
+val-≾ₑ (zeroʳₑ p)   = Grade.≾-zero-productʳ EGrade (val-≾ₑ p)
 
 ------------------------------------------------------------------------
 -- The key lemma: completeness, under any closed hypotheses, through
