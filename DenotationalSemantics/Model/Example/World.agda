@@ -33,7 +33,9 @@
 -- multiplication on the points it measures, `w ⊑[ ρ ] w'` iff          --
 -- `w' ≾ w · ρ`. Its `forward` restriction adds `w ≤ w'`, and every    --
 -- frame bounded only from above -- the right-sided ticks, the at-most  --
--- tallies, the labels -- uses it, so that no grade reaches the past.   --
+-- tallies, the labels -- uses it. No frame reaches the past: a lower   --
+-- bound keeps the others forward, and an adjoined greatest grade       --
+-- reaches exactly the worlds ahead.                                    --
 -- `Product.*` pairs frames componentwise                               --
 -- (`DenotationalSemantics.Model.World.Product`).                       --
 --                                                                     --
@@ -73,8 +75,9 @@ import DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided
 import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinity
 
 -- the same two with a formal greatest grade adjoined, which reaches
--- every world: covariance forces the relation there to contain every
--- other, and composition survives because the adjoined point absorbs
+-- every world ahead: the greatest forward relation, containing every
+-- other as covariance asks, and composition survives because the
+-- adjoined point absorbs
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop
 import DenotationalSemantics.Model.Example.World.Ticks.Time.TwoSidedWithInfinityAndTop
@@ -113,7 +116,7 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
 import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinity
 
 -- the same with a formal greatest grade adjoined, which reaches every
--- history: it is the one grade whose worlds need not extend one another
+-- history extending the current one: the greatest forward relation
 
 import DenotationalSemantics.Model.Example.World.TraceHistory.Time.TwoSidedWithInfinityAndTop
 

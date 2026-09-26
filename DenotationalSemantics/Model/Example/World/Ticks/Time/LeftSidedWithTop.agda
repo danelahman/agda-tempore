@@ -5,22 +5,22 @@
 -- Worlds are time points `ℕ`. A grade `timed [ n ,+∞⟩` reaches every    --
 -- world at least `n` ticks ahead, exactly as in the plain left-sided    --
 -- frame; `untimed` claims no lower bound at all and so reaches every    --
--- world:                                                               --
+-- world ahead:                                                         --
 --                                                                    --
 --   w ⊑[ timed [ n ,+∞⟩ ] w'   iff   n + w ≤ w'                        --
---   w ⊑[ untimed ] w'          always                                  --
+--   w ⊑[ untimed ] w'          iff   w ≤ w'                            --
 --                                                                    --
--- The total relation at `untimed` is forced by covariance, every grade  --
--- being below it, and composition survives because `untimed` absorbs.   --
+-- The relation at `untimed` contains every other, as covariance asks   --
+-- of the greatest grade, and is the greatest forward relation;         --
+-- composition survives because `untimed` absorbs.                      --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSidedWithTop where
 
 open import Data.Nat using (ℕ; _+_; _≤_)
 open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant;
+  using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant; m≤n+m;
          +-monoˡ-≤; +-monoʳ-≤; +-comm; +-assoc)
-open import Data.Unit using (⊤; tt)
 
 open import Syntax.Grades.Example.Time.LeftSided
   using (𝕀⊤; timed_; untimed; [_,+∞⟩; _·ᵗ_; _≾ᵗ_;
@@ -31,11 +31,17 @@ open import Util.Equality
 open import DenotationalSemantics.Model.World
 
 -- Accessibility on time ticks: reach any world at least `n` ticks ahead,
--- and any world at all at the greatest grade.
+-- and any world ahead at the greatest grade.
 
 _⊑ᵗ[_]_ : ℕ → 𝕀⊤ → ℕ → Set
 w ⊑ᵗ[ timed [ n ,+∞⟩ ] w' = n + w ≤ w'
-w ⊑ᵗ[ untimed ]        w' = ⊤
+w ⊑ᵗ[ untimed ]        w' = w ≤ w'
+
+-- every grade moves forward
+
+⊑ᵗ-forward : ∀ ρ {w w'} → w ⊑ᵗ[ ρ ] w' → w ≤ w'
+⊑ᵗ-forward (timed [ n ,+∞⟩) {w} p = ≤-trans (m≤n+m w n) p
+⊑ᵗ-forward untimed              p = p
 
 -- reflexivity at the unit grade `timed [ 0 ,+∞⟩`
 
@@ -50,23 +56,25 @@ w ⊑ᵗ[ untimed ]        w' = ⊤
 ⊑ᵗ-trans {timed [ m ,+∞⟩} {timed [ n ,+∞⟩} {w} p q =
   ≤-trans (≤-reflexive (trans (cong (_+ w) (+-comm m n)) (+-assoc n m w)))
           (≤-trans (+-monoʳ-≤ n p) q)
-⊑ᵗ-trans {timed _}        {untimed}        p q = tt
-⊑ᵗ-trans {untimed}        {_}              p q = tt
+⊑ᵗ-trans {timed i}        {untimed}        p q =
+  ≤-trans (⊑ᵗ-forward (timed i) p) q
+⊑ᵗ-trans {untimed}        {ρ₂}             p q =
+  ≤-trans p (⊑ᵗ-forward ρ₂ q)
 
 -- covariance: a smaller lower bound (a larger interval) gives a larger
 -- relation, and `untimed` is above every grade
 
 ⊑ᵗ-mono : ∀ {ρ₁ ρ₂ w w'} → ρ₁ ≾ᵗ ρ₂ → w ⊑ᵗ[ ρ₁ ] w' → w ⊑ᵗ[ ρ₂ ] w'
 ⊑ᵗ-mono {timed [ m ,+∞⟩} {timed [ n ,+∞⟩} {w} rel p = ≤-trans (+-monoˡ-≤ w rel) p
-⊑ᵗ-mono {timed _}        {untimed}        rel p = tt
+⊑ᵗ-mono {timed i}        {untimed}        rel p = ⊑ᵗ-forward (timed i) p
 ⊑ᵗ-mono {untimed}        {timed _}        ()
-⊑ᵗ-mono {untimed}        {untimed}        rel p = tt
+⊑ᵗ-mono {untimed}        {untimed}        rel p = p
 
 -- proof irrelevance of the witnesses
 
 ⊑ᵗ-irrelevant : ∀ {ρ w w'} → (p q : w ⊑ᵗ[ ρ ] w') → p ≡ q
 ⊑ᵗ-irrelevant {timed [ _ ,+∞⟩} p  q  = ≤-irrelevant p q
-⊑ᵗ-irrelevant {untimed}        tt tt = refl
+⊑ᵗ-irrelevant {untimed}        p  q  = ≤-irrelevant p q
 
 -- The frame.
 
