@@ -83,7 +83,7 @@ a grade system, a signature of base types, and operations' signatures.
   and `≡̂ᵣ-comm`/`≡̂ₑ-comm` take as `Is-just` proofs and the solver reads
   directly.
 
-- `Syntax/Grades/Example.agda` indexes the example grades, which come in three
+- `Syntax/Grades/Example.agda` indexes the example grades, which come in four
   families, and the grade systems assembled from them.
 
 - `Syntax/Grades/Example/Time/` holds the grades that measure only elapsed
@@ -186,6 +186,21 @@ a grade system, a signature of base types, and operations' signatures.
   the other side of this: a contiguity-demanding order carries no grade at all,
   with a checked proof that the language product is not monotone for it.
 
+- `Syntax/Grades/Example/Counts/` holds the grades that count, per operation
+  (or per class of operations, under a coarser `index : Op → Fin n`), how
+  often a computation has drawn on each. `Power.agda` is the generic
+  construction, `n` counters each graded by a fixed `G`, pointwise.
+  `AtMost.agda` reads a bound as a quota — the order is `≤` on each counter,
+  a larger bound the weaker grade, the unit (no operations) least, and the
+  join the pointwise maximum; boxing at `upto 3` on `send` is a rate limit.
+  `AtLeast.agda` reads it as a certainty — the order is `≥`, a smaller bound
+  the weaker grade, the unit (demanding nothing) greatest, and the join the
+  pointwise minimum. `Extrema.agda` is the toolkit both are built from: the
+  greatest and least value of a natural-number measure over a non-empty
+  list. `Occurrences.agda` counts a timed trace's draws on each counter, and
+  `Worked.agda` instantiates the counts at the sensor node's three
+  operations.
+
 - `Syntax/Grades/Example/System/` assembles full grade systems, pairing an
   effect grade with a resource grade along a projection saying what the
   resource grade may forget. `Identity.agda` forgets nothing — one grade read
@@ -195,6 +210,21 @@ a grade system, a signature of base types, and operations' signatures.
   `Traces/Subsets/RightSided.agda` measure a set of traces by a duration: the
   sets are read disjunctively, so a cap has to cover its slowest listed run
   and a floor may promise only its fastest.
+
+- `Syntax/Grades/Example/System/Counts/` pairs the trace grades with the
+  counts. `Subsets/AtMost.agda` and `Subsets/AtLeast.agda` project the
+  subset cap onto, respectively, the greatest and the least count among the
+  listed traces at each counter — a quota that covers the worst listed run,
+  a guarantee certain of every one. `Lifted/LeftSided.agda` is the generic
+  construction, antichains of guarantees to at-least counts at any trace
+  order in which covering a demand never uses fewer operations;
+  `Timed/LeftSided.agda` instantiates it at the coverage floor.
+  `Timed/RightSided.agda` is a negative result: going up the allowance order
+  an operation turns into a delay that covers it, so any morphism into
+  at-most counts sends every bound to the unit, and no morphism counts what
+  a bound permits. `Time.agda` records that no count grade projects onto
+  time (every `n` steps is the unit) and that pairing counts with time via
+  `_×ᵍ_` and a weighted sum preserves everything but the join.
 
 - `Syntax/Grades/Example/Worked/` instantiates all of the above at one fixed
   alphabet — a sensor node that can `read` (1 tick), `write` (2–3) and `send`

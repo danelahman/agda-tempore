@@ -1,0 +1,172 @@
+------------------------------------------------------------------------
+-- The subset cap, read as certain counts.                             --
+--                                                                     --
+-- Every run a computation has is listed, so on each counter the least --
+-- count among the listed runs is certain:                             --
+--                                                                     --
+--   ∣ Q ∣ᵉ  =  on each counter, the least count among the traces of Q --
+--                                                                     --
+-- The cap's greatest grade `any-run` absorbs, and a morphism has to   --
+-- send it to the greatest grade. In the at-least counts that is the   --
+-- unit, and an absorbing element landing on the unit takes everything --
+-- with it: every morphism into them is constant (`collapses`). The    --
+-- counts with a formal greatest grade on each counter are the natural --
+-- target instead: `any-run` goes to `no-claim` everywhere, which      --
+-- absorbs, and every field is preserved.                              --
+------------------------------------------------------------------------
+
+open import Data.Fin.Base using (Fin)
+open import Data.Nat.Base using (ℕ)
+
+open import Level using () renaming (zero to lzero)
+
+open import Relation.Binary.Core using (Rel)
+open import Relation.Binary.Definitions
+  using (DecidableEquality; Transitive; Trichotomous)
+
+open import Util.Equality
+
+module Syntax.Grades.Example.System.Counts.Subsets.AtLeast
+  (Op : Set) (_≟ₒ_ : DecidableEquality Op)
+  (_<ᵒ_ : Rel Op lzero)
+  (<ᵒ-cmp : Trichotomous _≡_ _<ᵒ_) (<ᵒ-trans : Transitive _<ᵒ_)
+  {n : ℕ} (index : Op → Fin n) where
+
+open import Data.List.Base using (List; []; _∷_; _++_)
+open import Data.Unit using (tt)
+open import Data.Vec.Base using (Vec; tabulate)
+open import Data.Vec.Properties using (tabulate-cong)
+
+open import Relation.Nullary.Decidable using (toWitness; fromWitness)
+
+open import Syntax.Grades
+
+open import Syntax.Grades.Traces.Sets Op _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+  using (Trace; traces; nonempty; nf; nf-ne; nf-∈⁺; nf-∈⁻; ⟨_⟩; ·ˢ-ne; ++-ne)
+  renaming (NonEmpty to NonEmptyˢ; _·ˢ_ to _⊙_)
+
+open import Syntax.Grades.Example.Traces.Subsets.RightSided
+  Op _≟ₒ_ _<ᵒ_ <ᵒ-cmp <ᵒ-trans
+  using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _⊔ᵖ_; _≾_)
+
+open import Syntax.Grades.Example.Time.LeftSided using (𝕀⊤; timed_; untimed; _·ᵗ_)
+
+open import Syntax.Grades.Example.Counts.AtLeast
+  using (at-least-counts; at-least-counts-with-⊤; certainly; module WithTop)
+open WithTop
+open import Syntax.Grades.Example.Counts.Extrema
+open import Syntax.Grades.Example.Counts.Occurrences Op index
+
+------------------------------------------------------------------------
+-- An absorbing greatest grade sent to the unit collapses a morphism
+
+collapses : (G H : Grade)
+          → (∀ c → Grade._·_ G (Grade.⊤ G) c ≡ Grade.⊤ G)
+          → Grade.⊤ H ≡ Grade.u H
+          → (F : G →ᵍ H) (c : Grade.Carrier G) → _→ᵍ_.map F c ≡ Grade.u H
+collapses G H absorb top-unit F c =
+  begin
+    map c                           ≡⟨ sym (Grade.·-identityˡ H (map c)) ⟩
+    Grade._·_ H (Grade.u H) (map c) ≡⟨ cong (λ z → Grade._·_ H z (map c))
+                                            (sym (trans map-⊤ top-unit)) ⟩
+    Grade._·_ H (map (Grade.⊤ G)) (map c)
+                                    ≡⟨ sym map-· ⟩
+    map (Grade._·_ G (Grade.⊤ G) c) ≡⟨ cong map (absorb c) ⟩
+    map (Grade.⊤ G)                 ≡⟨ trans map-⊤ top-unit ⟩
+    Grade.u H
+  ∎
+  where open _→ᵍ_ F
+
+-- so every morphism from the cap into the at-least counts is constant
+
+constant : (F : right-sided →ᵍ at-least-counts n) (P : Permits)
+         → _→ᵍ_.map F P ≡ Grade.u (at-least-counts n)
+constant = collapses right-sided (at-least-counts n) (λ _ → refl) refl
+
+------------------------------------------------------------------------
+-- The projection, into the counts with a formal greatest grade
+
+certain : List Trace → Fin n → 𝕀⊤
+certain xs i = certainly (minOf (occ i) xs)
+
+mapₗ : Permits → Vec 𝕀⊤ n
+mapₗ (permitting Q) = tabulate (certain (traces Q))
+mapₗ any-run        = ⊤ᵛ
+
+ne : (xs : List Trace) → NonEmptyˢ xs → NonEmpty xs
+ne (_ ∷ _) _ = tt
+
+certain-nf : (xs : List Trace) → NonEmptyˢ xs → (i : Fin n)
+           → certain (nf xs) i ≡ certain xs i
+certain-nf xs nx i =
+  cong certainly
+    (minOf-same (occ i) (nf xs) xs (ne (nf xs) (nf-ne xs nx)) (ne xs nx)
+                (λ {t} → nf-∈⁻ {t} {xs}) (λ {t} → nf-∈⁺ {t} {xs}))
+
+-- monotonicity: adding runs can only lower the least count
+
+mapₗ-monotone : {P Q : Permits} → P ≾ Q → mapₗ P ≾ᵛ mapₗ Q
+mapₗ-monotone {permitting P} {permitting Q} rel =
+  tabulate-≾ᵛ λ i →
+    minOf-bound (occ i) (traces P) (ne (traces P) (nonempty P))
+      (λ t∈ → minOf-mem (occ i) (toWitness (rel _ (fromWitness t∈))))
+mapₗ-monotone {permitting _} {any-run}      _  = ≾ᵛ-⊤ _
+mapₗ-monotone {any-run}      {permitting _} ()
+mapₗ-monotone {any-run}      {any-run}      _  = ≾ᵛ-refl
+
+-- the monoid structure, `no-claim` absorbing
+
+absorbʳ : (a : 𝕀⊤) → a ·ᵗ untimed ≡ untimed
+absorbʳ (timed _) = refl
+absorbʳ untimed   = refl
+
+mapₗ-· : (P Q : Permits) → mapₗ (P ·ᵖ Q) ≡ mapₗ P ·ᵛ mapₗ Q
+mapₗ-· (permitting P) (permitting Q) =
+  trans (tabulate-cong λ i →
+           trans (certain-nf (traces P ⊙ traces Q) (·ˢ-ne (nonempty P) (nonempty Q)) i)
+                 (cong certainly (minOf-·ˢ i (traces P) (traces Q)
+                                           (ne (traces P) (nonempty P))
+                                           (ne (traces Q) (nonempty Q)))))
+        (tabulate-·ᵛ (certain (traces P)) (certain (traces Q)))
+mapₗ-· (permitting P) any-run = sym (·ᵛ-⊤ᵛ absorbʳ (mapₗ (permitting P)))
+mapₗ-· any-run        Q       = sym (⊤ᵛ-·ᵛ (λ _ → refl) (mapₗ Q))
+
+-- joins: the least count of a union is the lesser of the two
+
+mapₗ-⊔ : (P Q : Permits) → mapₗ (P ⊔ᵖ Q) ≡ mapₗ P ⊔ᵛ mapₗ Q
+mapₗ-⊔ (permitting P) (permitting Q) =
+  trans (tabulate-cong λ i →
+           trans (certain-nf (traces P ++ traces Q) (++-ne (nonempty P) (nonempty Q)) i)
+                 (cong certainly (minOf-++ (occ i) (traces P) (traces Q)
+                                           (ne (traces P) (nonempty P))
+                                           (ne (traces Q) (nonempty Q)))))
+        (tabulate-⊔ᵛ (certain (traces P)) (certain (traces Q)))
+mapₗ-⊔ (permitting P) any-run = sym (⊔ᵛ-⊤ᵛ (mapₗ (permitting P)))
+mapₗ-⊔ any-run        Q       = sym (⊤ᵛ-⊔ᵛ (mapₗ Q))
+
+-- time draws on no counter
+
+mapₗ-of-nat : (k : ℕ) → mapₗ (Grade.of-nat right-sided k) ≡ uᵛ
+mapₗ-of-nat k =
+  tabulate-uᵛ (certain (⟨ k ⟩ ∷ [])) (λ i → cong certainly (occ-⟨⟩ i k))
+
+------------------------------------------------------------------------
+-- The grade morphism and the grade system
+
+subsets→at-least-counts-with-⊤ : right-sided →ᵍ at-least-counts-with-⊤ n
+subsets→at-least-counts-with-⊤ = record
+  { map          = mapₗ
+  ; map-monotone = λ {P} {Q} → mapₗ-monotone {P} {Q}
+  ; map-u        = mapₗ-of-nat 0
+  ; map-·        = λ {P} {Q} → mapₗ-· P Q
+  ; map-⊤        = refl
+  ; map-⊔        = λ {P} {Q} → mapₗ-⊔ P Q
+  ; map-of-nat   = λ {k} → mapₗ-of-nat k
+  }
+
+subsetsToAtLeastCountsGradeSystem : GradeSystem
+subsetsToAtLeastCountsGradeSystem = record
+  { RGrade = at-least-counts-with-⊤ n
+  ; EGrade = right-sided
+  ; ∣_∣ᵉ   = subsets→at-least-counts-with-⊤
+  }

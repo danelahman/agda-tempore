@@ -7,7 +7,7 @@
 -- resource grades, recording what is thereby guaranteed about time)   --
 -- together with a monoid map projecting the first onto the second.    --
 --                                                                     --
--- The examples come in three families:                                --
+-- The examples come in four families:                                 --
 --                                                                     --
 --   * `Time.*` -- grades that measure only elapsed time, as a bound   --
 --     or a window of time steps, over ℕ or, in `Time.Dense.*`, over   --
@@ -18,6 +18,11 @@
 --     may have had, as a set of timed traces, sharing their carrier   --
 --     and monoid (from `Grades.Traces.Sets`) and differing in the     --
 --     order they put on it.                                           --
+--                                                                     --
+--   * `Counts.*` -- grades that count, per operation (or per class    --
+--     under a coarser index into `Fin n`), how often a computation    --
+--     draws on each; `AtMost`/`AtLeast` are quotas and guarantees,    --
+--     `Power` the generic `n`-counter product.                        --
 --                                                                     --
 --   * `SecurityLevel` -- a decidable join-semilattice of levels,      --
 --     floating upward as data is touched; the two-point `Low < High`  --
@@ -116,6 +121,40 @@ import Syntax.Grades.Example.Product.RightSidedTimeEnergy
 import Syntax.Grades.Example.Traces
 
 ------------------------------------------------------------------------
+-- Per-operation counts
+--
+-- A grade is one bound per counter, `n` counters for an alphabet with
+-- `n` operations, or classes of them under a coarser index into
+-- `Fin n`.
+
+-- the power of a grade: `n` counters, each graded by `G`
+
+import Syntax.Grades.Example.Counts.Power
+
+-- "at most `k` of each operation"; a quota, the pointwise maximum its
+-- join
+
+import Syntax.Grades.Example.Counts.AtMost
+
+-- "at least `k` of each operation"; a guarantee, the pointwise
+-- minimum its join
+
+import Syntax.Grades.Example.Counts.AtLeast
+
+-- the greatest and least value of a natural-number measure over a
+-- non-empty list, the toolkit the extremal counts are built from
+
+import Syntax.Grades.Example.Counts.Extrema
+
+-- how often a timed trace draws on each counter
+
+import Syntax.Grades.Example.Counts.Occurrences
+
+-- worked instances at the sensor node
+
+import Syntax.Grades.Example.Counts.Worked
+
+------------------------------------------------------------------------
 -- Grade systems
 --
 -- Each pairs an effect grade with a resource grade, along a projection
@@ -151,6 +190,35 @@ import Syntax.Grades.Example.System.Traces.Timed.TwoSided
 -- one its *slowest* listed run imposes
 
 import Syntax.Grades.Example.System.Traces.Subsets.RightSided
+
+-- the subset cap to at-most counts: on each counter, the greatest
+-- count among the listed traces -- a quota that covers the run that
+-- draws on it most
+
+import Syntax.Grades.Example.System.Counts.Subsets.AtMost
+
+-- the subset cap to at-least counts: on each counter, the least count
+-- among the listed traces -- a guarantee certain of every run
+
+import Syntax.Grades.Example.System.Counts.Subsets.AtLeast
+
+-- antichains of guarantees to at-least counts, at an arbitrary trace
+-- order that never covers a demand with fewer operations; instantiated
+-- at the coverage floor
+
+import Syntax.Grades.Example.System.Counts.Lifted.LeftSided
+import Syntax.Grades.Example.System.Counts.Timed.LeftSided
+
+-- the allowance cap does not project onto quotas: a bound's delays pay
+-- for its operations, so no morphism into at-most counts can count
+-- what the bound permits
+
+import Syntax.Grades.Example.System.Counts.Timed.RightSided
+
+-- why no count grade projects onto time, and what a cost model
+-- preserves when time is paired with the counts
+
+import Syntax.Grades.Example.System.Counts.Time
 
 ------------------------------------------------------------------------
 -- Worked instances
