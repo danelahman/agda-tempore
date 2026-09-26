@@ -494,8 +494,10 @@ Inference for the open calculus, by constraint generation and solving.
     each join on a left side split (`canonᴴ-⊩`, `canonᴴ-⊩⁻`). Two products
     are compared by an ordered embedding `_⊑ᵖ_` (match, skip an atom above or
     below the unit, absorb into an atom above the top, merge constants across
-    a skipped atom), which `prodˢ≾` decides (`prodˢ≾-complete`,
-    `prodˢ≾-exact`) and which is sound for entailment (`⊑ᵖ-sound`).
+    a skipped atom), at commutative grades as multisets (some permutation of
+    the left embeds in order into the right; `pick`, `absorbAt`), which
+    `prodˢ≾` decides (`prodˢ≾-complete`, `prodˢ≾-exact`) and which is sound
+    for entailment (`⊑ᵖ-sound`).
   - `Simplify.agda`: settles disjunctions, drops a disjunction entailed by
     another, and prunes entailed atoms of a report (`simplify-⊩`,
     `simplify-⊨`).

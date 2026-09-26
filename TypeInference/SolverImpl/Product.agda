@@ -43,6 +43,8 @@ open import Data.Fin.Base using (toℕ)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; map)
 open import Data.List.Properties using () renaming (≡-dec to ≡-decᴸ)
+open import Data.List.Relation.Unary.Any using (Any; here; there; _─_)
+import Data.List.Relation.Unary.Any as Any
 open import Data.Maybe using (Maybe; just; nothing; Is-just)
 open import Data.Nat.Base using (ℕ; zero; suc; _<ᵇ_)
 open import Data.Product using (Σ-syntax; _×_; _,_; proj₁; proj₂)
@@ -1035,6 +1037,13 @@ module Commuteₑ (ij : Is-just ·ₑ-comm?) where
     (≡̂ₑ-trans (≡̂ₑ-sym ≡̂ₑ-assoc) (≡̂ₑ-cong ≡̂ₑ-const-· ≡̂ₑ-refl))
   split-≡ (av i ∷ as) = ≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (split-≡ as)) swapₑ
 
+  -- A product is the atom at any of its positions times the rest
+
+  remove-≡ : ∀ {Θ} {P : EAtom Θ → Set} {as : List (EAtom Θ)} → (p : Any P as)
+           → ⟦ as ⟧ᵉˢ ≡̂ₑ ⟦ Any.lookup p ⟧ᵉᵃ ·̂ₑ ⟦ as ─ p ⟧ᵉˢ
+  remove-≡ (here _)  = ≡̂ₑ-refl
+  remove-≡ (there p) = ≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (remove-≡ p)) swapₑ
+
   commute-≡ : ∀ {Θ} → (as : List (EAtom Θ)) → ⟦ commuteₑ as ⟧ᵉˢ ≡̂ₑ ⟦ as ⟧ᵉˢ
   commute-≡ as =
     ≡̂ₑ-trans (consₑ-≡ (ac (constₑ as)) (sortBy _<ᵉᵃ_ (varsᵃₑ as)))
@@ -1106,6 +1115,11 @@ module Commuteᵣ (ij : Is-just ·ᵣ-comm?) where
     (≡̂ᵣ-trans (≡̂ᵣ-sym ≡̂ᵣ-assoc) (≡̂ᵣ-cong ≡̂ᵣ-const-· ≡̂ᵣ-refl))
   split-≡ (rv i ∷ as) = ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (split-≡ as)) swapᵣ
   split-≡ (rm i ∷ as) = ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (split-≡ as)) swapᵣ
+
+  remove-≡ : ∀ {Θ} {P : RAtom Θ → Set} {as : List (RAtom Θ)} → (p : Any P as)
+           → ⟦ as ⟧ʳˢ ≡̂ᵣ ⟦ Any.lookup p ⟧ʳᵃ ·̂ᵣ ⟦ as ─ p ⟧ʳˢ
+  remove-≡ (here _)  = ≡̂ᵣ-refl
+  remove-≡ (there p) = ≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (remove-≡ p)) swapᵣ
 
   commute-≡ : ∀ {Θ} → (as : List (RAtom Θ)) → ⟦ commuteᵣ as ⟧ʳˢ ≡̂ᵣ ⟦ as ⟧ʳˢ
   commute-≡ as =

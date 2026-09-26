@@ -9,8 +9,9 @@
 -- matched against nothing on the right when the unit is below it --
 -- and on the left when it is below the unit, and an atom above   --
 -- the top on the right standing for any run of atoms on the      --
--- left. Where the grade declares `_·_` commutative, the normal   --
--- form has put the factors of every product in one order.        --
+-- left. Where the grade declares `_·_` commutative, products     --
+-- compare as multisets: some permutation of the left embeds in   --
+-- order into the right.                                          --
 --                                                                --
 -- Two atoms are compared by the grade's own order, by identity,  --
 -- and along the atomic hypotheses: those assumed orderings whose --
@@ -47,9 +48,10 @@ open import Data.Empty.Irrelevant using () renaming (⊥-elim to ⊥-elim-irr)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
 open import Data.List.Base using (List; []; _∷_; _++_; length; map; deduplicate)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.List.Relation.Unary.Any using (Any; here; there; any?)
+open import Data.List.Properties using (length-removeAt′)
+open import Data.List.Relation.Unary.Any using (Any; here; there; any?; index; _─_)
 import Data.List.Relation.Unary.Any as Any
-open import Data.List.Relation.Unary.Any.Properties using (++⁺ˡ; ++⁺ʳ)
+open import Data.List.Relation.Unary.Any.Properties using (++⁺ˡ; ++⁺ʳ; map⁺; lookup-result)
 open import Data.Maybe using (Maybe; just; nothing; _<∣>_; Is-just; to-witness)
 open import Data.Maybe.Properties using (just-injective)
 open import Data.Maybe.Relation.Unary.Any using () renaming (just to Any-just)
@@ -282,6 +284,24 @@ is-just? : ∀ {X : Set} → (m : Maybe X) → Dec (Is-just m)
 is-just? (just _) = yes (Any-just tt)
 is-just? nothing  = no λ ()
 
+-- Every position at which a decided predicate holds; each position
+-- is listed up to what removing its element leaves
+
+anys : ∀ {A : Set} {P : A → Set} → (∀ x → Dec (P x)) → (xs : List A) → List (Any P xs)
+anys P? []       = []
+anys P? (x ∷ xs) with P? x
+... | yes px = here px ∷ map there (anys P? xs)
+... | no _   = map there (anys P? xs)
+
+anys-complete : ∀ {A : Set} {P : A → Set} (P? : ∀ x → Dec (P x)) {xs : List A}
+              → (p : Any P xs) → Any (λ p' → (xs ─ p') ≡ (xs ─ p)) (anys P? xs)
+anys-complete P? {x ∷ xs} (here px) with P? x
+... | yes _  = here refl
+... | no ¬px = ⊥-elim (¬px px)
+anys-complete P? {x ∷ xs} (there p) with P? x
+... | yes _ = there (map⁺ (Any.map (cong (x ∷_)) (anys-complete P? p)))
+... | no _  = map⁺ (Any.map (cong (x ∷_)) (anys-complete P? p))
+
 ------------------------------------------------------------------
 -- Products
 --
@@ -298,29 +318,36 @@ is-just? nothing  = no λ ()
 --   * `mergeʳ`: the atom after a constant head on the right, the unit
 --     being below it, the constant then consed onto what follows it
 --     (`consₑ`/`consᵣ`, which multiply adjacent constants);
---   * `mergeˡ`: the same on the left, the atom being below the unit.
+--   * `mergeˡ`: the same on the left, the atom being below the unit;
+--
+-- and, where `_·_` commutes (`Comm`, decided):
+--
+--   * `pick`: the left head and a right atom at any position, the
+--     left below the right;
+--   * `absorbAt`: the left head, into a right atom at any position
+--     that the top is below, which stays.
 --
 -- So the left side embeds into the right in order: each left atom
 -- matched, absorbed or below the unit, each right atom matched,
 -- absorbing a run, or above the unit, constants on either side of an
--- atom passed over multiplied. The atom comparisons (`_≤ᵃ_`, `u≤_`,
--- `_≤u`, `⊤≤_`) are parameters, decided.
+-- atom passed over multiplied. Where `_·_` commutes, products compare
+-- as multisets: some permutation of the left embeds in order into the
+-- right. The atom comparisons (`_≤ᵃ_`, `u≤_`, `_≤u`, `⊤≤_`) are
+-- parameters, decided.
 --
 -- `_⊑ᵖ?_` decides `_⊑ᵖ_` by depth-first search over the steps out of
 -- a pair (`steps`, listing every step, `steps-complete`), on the
 -- total length, which each step shortens (`step-shrinks`). Within
 -- `Sound`, `⊑ᵖ-sound` reads a derivation into any relation closed
 -- under the steps, and `prodˢ≾` returns such a reading exactly when
--- `_⊑ᵖ_` holds (`prodˢ≾-complete`, `prodˢ≾-exact`).
+-- `_⊑ᵖ_` holds (`prodˢ≾-complete`, `prodˢ≾-exact`). `steps` lists
+-- `pick` and `absorbAt` past the right head only, at the positions
+-- `anys` finds; at the head they reach what `match` and `absorb` do.
+-- The search is backtracking bipartite matching, exponential in the
+-- length of a product.
 --
--- Where `_·_` commutes, the products of the normal form are sorted,
--- and embedding in order is embedding as multisets when atoms are
--- matched by identity. Atoms matched along a hypothesis across the
--- sort order are not found: with the variables in the order `a, b,
--- x, y`, `x ≾ b, y ≾ a ⊩ x · y ≾ a · b` is missed.
---
--- Nor is anything that needs a hypothesis other than an atomic one.
--- A left alternative below the join of right alternatives only
+-- Not found: anything that needs a hypothesis other than an atomic
+-- one. A left alternative below the join of right alternatives only
 -- jointly is found when those alternatives form a group that the
 -- fold makes one; not when they have different skeletons, or form a
 -- group that varies in more than one slot.
@@ -334,17 +361,20 @@ module Embedding
   (u≤_  : A → Set)     (u≤?   : ∀ b → Dec (u≤ b))
   (_≤u  : A → Set)     (≤u?   : ∀ a → Dec (a ≤u))
   (⊤≤_  : A → Set)     (⊤≤?   : ∀ b → Dec (⊤≤ b))
+  (Comm : Set)         (comm? : Dec Comm)
   where
 
   data Step : List A → List A → List A → List A → Set where
-    match  : ∀ {a as b bs} → a ≤ᵃ b → Step (a ∷ as) (b ∷ bs) as bs
-    skipʳ  : ∀ {as b bs} → u≤ b → Step as (b ∷ bs) as bs
-    skipˡ  : ∀ {a as bs} → a ≤u → Step (a ∷ as) bs as bs
-    absorb : ∀ {a as b bs} → ⊤≤ b → Step (a ∷ as) (b ∷ bs) as (b ∷ bs)
-    mergeʳ : ∀ {as a b bs c} → const? a ≡ just c → u≤ b
-           → Step as (a ∷ b ∷ bs) as (cons c bs)
-    mergeˡ : ∀ {a b as bs c} → const? a ≡ just c → b ≤u
-           → Step (a ∷ b ∷ as) bs (cons c as) bs
+    match    : ∀ {a as b bs} → a ≤ᵃ b → Step (a ∷ as) (b ∷ bs) as bs
+    skipʳ    : ∀ {as b bs} → u≤ b → Step as (b ∷ bs) as bs
+    skipˡ    : ∀ {a as bs} → a ≤u → Step (a ∷ as) bs as bs
+    absorb   : ∀ {a as b bs} → ⊤≤ b → Step (a ∷ as) (b ∷ bs) as (b ∷ bs)
+    mergeʳ   : ∀ {as a b bs c} → const? a ≡ just c → u≤ b
+             → Step as (a ∷ b ∷ bs) as (cons c bs)
+    mergeˡ   : ∀ {a b as bs c} → const? a ≡ just c → b ≤u
+             → Step (a ∷ b ∷ as) bs (cons c as) bs
+    pick     : ∀ {a as bs} → Comm → (p : Any (a ≤ᵃ_) bs) → Step (a ∷ as) bs as (bs ─ p)
+    absorbAt : ∀ {a as bs} → Comm → Any ⊤≤_ bs → Step (a ∷ as) bs as bs
 
   infix 4 _⊑ᵖ_ _⊑ᵖ?_
 
@@ -368,6 +398,15 @@ module Embedding
                → P → (∀ p → R (f p)) → Any R (opt d f)
   opt-complete (yes p) f _ r = here (r p)
   opt-complete (no ¬p) f p r = ⊥-elim (¬p p)
+
+  opts : ∀ {P : Set} {X : Set} → Dec P → (P → List X) → List X
+  opts (yes p) f = f p
+  opts (no _)  f = []
+
+  opts-complete : ∀ {P X : Set} {R : X → Set} → (d : Dec P) → (f : P → List X)
+                → P → (∀ p → Any R (f p)) → Any R (opts d f)
+  opts-complete (yes p) f _ r = r p
+  opts-complete (no ¬p) f p r = ⊥-elim (¬p p)
 
   matches skipsʳ skipsˡ absorbs mergesʳ mergesˡ : ∀ as bs → List (Next as bs)
 
@@ -397,11 +436,25 @@ module Embedding
   mergesˡ (a ∷ b ∷ as) bs = mergeˡ-at a b as bs (const? a) refl
   mergesˡ _            bs = []
 
+  -- `pick` and `absorbAt` past the right head, which `match` and
+  -- `absorb` cover
+
+  picks absorbsAt : ∀ as bs → List (Next as bs)
+
+  picks (a ∷ as) (b ∷ bs) =
+    opts comm? λ c → map (λ p → as , b ∷ (bs ─ p) , pick c (there p)) (anys (a ≤ᵃ?_) bs)
+  picks _        _        = []
+
+  absorbsAt (a ∷ as) (b ∷ bs) =
+    opts comm? λ c → map (λ p → as , b ∷ bs , absorbAt c (there p)) (anys ⊤≤? bs)
+  absorbsAt _        _        = []
+
   -- In the order the search tries them
 
   steps : ∀ as bs → List (Next as bs)
   steps as bs = matches as bs ++ skipsʳ as bs ++ skipsˡ as bs
              ++ absorbs as bs ++ mergesʳ as bs ++ mergesˡ as bs
+             ++ picks as bs ++ absorbsAt as bs
 
   mergeʳ-at-complete : ∀ {as a b bs c} → (m : Maybe K) → (e : const? a ≡ m)
                      → const? a ≡ just c → u≤ b
@@ -421,19 +474,32 @@ module Embedding
   mergeˡ-at-complete nothing e e' p with trans (sym e) e'
   ... | ()
 
-  steps-complete : ∀ {as bs as' bs'} → Step as bs as' bs' → Any (Reaches as' bs') (steps as bs)
-  steps-complete {a ∷ as} {b ∷ bs} (match p) =
+  match-complete : ∀ {a as b bs} → a ≤ᵃ b → Any (Reaches as bs) (steps (a ∷ as) (b ∷ bs))
+  match-complete {a} {as} {b} {bs} p =
     ++⁺ˡ (opt-complete (a ≤ᵃ? b) (λ p → as , bs , match p) p λ _ → refl)
+
+  absorb-complete : ∀ {a as b bs} → ⊤≤ b → Any (Reaches as (b ∷ bs)) (steps (a ∷ as) (b ∷ bs))
+  absorb-complete {a} {as} {b} {bs} p =
+    ++⁺ʳ (matches (a ∷ as) (b ∷ bs)) (++⁺ʳ (skipsʳ (a ∷ as) (b ∷ bs))
+      (++⁺ʳ (skipsˡ (a ∷ as) (b ∷ bs))
+        (++⁺ˡ (opt-complete (⊤≤? b) (λ p → as , b ∷ bs , absorb p) p λ _ → refl))))
+
+  -- The last two entries of `steps`
+  tail⁺ : ∀ {as bs} {R : Next as bs → Set} → Any R (picks as bs ++ absorbsAt as bs)
+        → Any R (steps as bs)
+  tail⁺ {as} {bs} r =
+    ++⁺ʳ (matches as bs) (++⁺ʳ (skipsʳ as bs) (++⁺ʳ (skipsˡ as bs)
+      (++⁺ʳ (absorbs as bs) (++⁺ʳ (mergesʳ as bs) (++⁺ʳ (mergesˡ as bs) r)))))
+
+  steps-complete : ∀ {as bs as' bs'} → Step as bs as' bs' → Any (Reaches as' bs') (steps as bs)
+  steps-complete (match p) = match-complete p
   steps-complete {as} {b ∷ bs} (skipʳ p) =
     ++⁺ʳ (matches as (b ∷ bs))
       (++⁺ˡ (opt-complete (u≤? b) (λ p → as , bs , skipʳ p) p λ _ → refl))
   steps-complete {a ∷ as} {bs} (skipˡ p) =
     ++⁺ʳ (matches (a ∷ as) bs) (++⁺ʳ (skipsʳ (a ∷ as) bs)
       (++⁺ˡ (opt-complete (≤u? a) (λ p → as , bs , skipˡ p) p λ _ → refl)))
-  steps-complete {a ∷ as} {b ∷ bs} (absorb p) =
-    ++⁺ʳ (matches (a ∷ as) (b ∷ bs)) (++⁺ʳ (skipsʳ (a ∷ as) (b ∷ bs))
-      (++⁺ʳ (skipsˡ (a ∷ as) (b ∷ bs))
-        (++⁺ˡ (opt-complete (⊤≤? b) (λ p → as , b ∷ bs , absorb p) p λ _ → refl))))
+  steps-complete (absorb p) = absorb-complete p
   steps-complete {as} {a ∷ b ∷ bs} (mergeʳ e p) =
     ++⁺ʳ (matches as (a ∷ b ∷ bs)) (++⁺ʳ (skipsʳ as (a ∷ b ∷ bs))
       (++⁺ʳ (skipsˡ as (a ∷ b ∷ bs)) (++⁺ʳ (absorbs as (a ∷ b ∷ bs))
@@ -441,7 +507,16 @@ module Embedding
   steps-complete {a ∷ b ∷ as} {bs} (mergeˡ e p) =
     ++⁺ʳ (matches (a ∷ b ∷ as) bs) (++⁺ʳ (skipsʳ (a ∷ b ∷ as) bs)
       (++⁺ʳ (skipsˡ (a ∷ b ∷ as) bs) (++⁺ʳ (absorbs (a ∷ b ∷ as) bs)
-        (++⁺ʳ (mergesʳ (a ∷ b ∷ as) bs) (mergeˡ-at-complete (const? a) refl e p)))))
+        (++⁺ʳ (mergesʳ (a ∷ b ∷ as) bs)
+          (++⁺ˡ (mergeˡ-at-complete (const? a) refl e p))))))
+  steps-complete (pick _ (here p)) = match-complete p
+  steps-complete {a ∷ as} {b ∷ bs} (pick c (there p)) =
+    tail⁺ (++⁺ˡ (opts-complete comm? _ c λ _ →
+      map⁺ (Any.map (cong (λ l → as , b ∷ l)) (anys-complete (a ≤ᵃ?_) p))))
+  steps-complete (absorbAt _ (here p)) = absorb-complete p
+  steps-complete {a ∷ as} {b ∷ bs} (absorbAt c (there p)) =
+    tail⁺ {R = Reaches as (b ∷ bs)} (++⁺ʳ (picks (a ∷ as) (b ∷ bs))
+      (opts-complete comm? _ c λ _ → map⁺ (Any.map (λ _ → refl) (anys-complete ⊤≤? p))))
 
   -- Every step shortens the pair
 
@@ -457,6 +532,11 @@ module Embedding
     +-monoʳ-< (length as) (s≤s (cons-length c bs))
   step-shrinks {_ ∷ _ ∷ as} {bs} (mergeˡ {c = c} _ _) =
     +-monoˡ-< (length bs) (s≤s (cons-length c as))
+  step-shrinks {a ∷ as} {bs} (pick _ p) =
+    subst (λ n → length as + length (bs ─ p) < suc (length as) + n)
+          (sym (length-removeAt′ bs (index p)))
+          (+-mono-< (n<1+n (length as)) (n<1+n (length (bs ─ p))))
+  step-shrinks {a ∷ as} {bs} (absorbAt _ _) = +-monoˡ-< (length bs) (n<1+n (length as))
 
   -- The search, on fuel bounding the total length
 
@@ -563,7 +643,8 @@ module Searchₑ {Θ} {Q : Hyps Θ}
                 (λ b → Is-just (unit≾ₑ b))     (λ b → is-just? (unit≾ₑ b))
                 (λ a → Is-just (≾unitₑ a))     (λ a → is-just? (≾unitₑ a))
                 (λ b → Is-just (reachₑ? (ac ⊤ₑ) b)) (λ b → is-just? (reachₑ? (ac ⊤ₑ) b))
-  open Pₑ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ)
+                (Is-just ·ₑ-comm?) (is-just? ·ₑ-comm?)
+  open Pₑ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
 
   -- Each step is an entailment; products are read back with a trailing
   -- unit (`⟦_⟧ᵉˢ`), so that each step is one use of `monoₑ`
@@ -585,6 +666,13 @@ module Searchₑ {Θ} {Q : Hyps Θ}
            (transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl ≡̂ₑ-identityˡ)
                                   (≡̂ₑ-sym (consₑ-≡ (ac c) as))))
                    q)
+  stepₑ (pick c p) q =
+    transₑ (monoₑ (to-witness (lookup-result p)) q) (eqₑ (≡̂ₑ-sym (Commuteₑ.remove-≡ c p)))
+  stepₑ (absorbAt c p) q =
+    transₑ (monoₑ ⊩≾̂ₑ-refl q)
+           (transₑ (eqₑ (≡̂ₑ-trans (≡̂ₑ-cong ≡̂ₑ-refl (Commuteₑ.remove-≡ c p)) (≡̂ₑ-sym ≡̂ₑ-assoc)))
+                   (transₑ (monoₑ (transₑ topₑ (to-witness (lookup-result p))) ⊩≾̂ₑ-refl)
+                           (eqₑ (≡̂ₑ-sym (Commuteₑ.remove-≡ c p)))))
   stepₑ (mergeʳ {a = av _} () _) _
   stepₑ (mergeˡ {a = av _} () _) _
 
@@ -682,7 +770,8 @@ module Searchᵣ {Θ} {Q : Hyps Θ}
                 (λ b → Is-just (unit≾ᵣ b))     (λ b → is-just? (unit≾ᵣ b))
                 (λ a → Is-just (≾unitᵣ a))     (λ a → is-just? (≾unitᵣ a))
                 (λ b → Is-just (reachᵣ? (rc ⊤ᵣ) b)) (λ b → is-just? (reachᵣ? (rc ⊤ᵣ) b))
-  open Pᵣ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ)
+                (Is-just ·ᵣ-comm?) (is-just? ·ᵣ-comm?)
+  open Pᵣ using (Step; match; skipʳ; skipˡ; absorb; mergeʳ; mergeˡ; pick; absorbAt)
 
   -- Each step is an entailment; products are read back with a trailing
   -- unit (`⟦_⟧ʳˢ`), so that each step is one use of `monoᵣ`
@@ -704,6 +793,13 @@ module Searchᵣ {Θ} {Q : Hyps Θ}
            (transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl ≡̂ᵣ-identityˡ)
                                   (≡̂ᵣ-sym (consᵣ-≡ (rc c) as))))
                    q)
+  stepᵣ (pick c p) q =
+    transᵣ (monoᵣ (to-witness (lookup-result p)) q) (eqᵣ (≡̂ᵣ-sym (Commuteᵣ.remove-≡ c p)))
+  stepᵣ (absorbAt c p) q =
+    transᵣ (monoᵣ ⊩≾̂ᵣ-refl q)
+           (transᵣ (eqᵣ (≡̂ᵣ-trans (≡̂ᵣ-cong ≡̂ᵣ-refl (Commuteᵣ.remove-≡ c p)) (≡̂ᵣ-sym ≡̂ᵣ-assoc)))
+                   (transᵣ (monoᵣ (transᵣ topᵣ (to-witness (lookup-result p))) ⊩≾̂ᵣ-refl)
+                           (eqᵣ (≡̂ᵣ-sym (Commuteᵣ.remove-≡ c p)))))
   stepᵣ (mergeʳ {a = rv _} () _) _
   stepᵣ (mergeʳ {a = rm _} () _) _
   stepᵣ (mergeˡ {a = rv _} () _) _
