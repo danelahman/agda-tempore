@@ -154,6 +154,11 @@ import Syntax.Grades.Product
 
 import Syntax.Grades.Traces
 
+---- Regular languages as grades: canonical minimal automata, inclusion,
+---- and extended regular-expression literals
+
+import Syntax.Grades.Regular
+
 ---- Example grades and grade systems: time intervals, sets of timed
 ---- traces, and the projections pairing them up
 ---- (see the module for what each example is and how they relate)

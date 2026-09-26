@@ -138,6 +138,23 @@ a grade system, a signature of base types, and operations' signatures.
   cost-sensitive orders below — a floor, a cap, and their pairing under a
   coherence field — and `Subsets/RightSided.agda` is the cap at equality.
 
+- `Syntax/Grades/Example/Traces/Regular/` holds the cap at inclusion over
+  non-empty *regular* sets of timed traces, a trace being a word over
+  `Op ⊎ tick`. Each set is held as its canonical minimal DFA (Moore refinement,
+  states numbered breadth-first), so equal languages are equal grades
+  (`Syntax/Grades/Regular.agda` indexes the toolkit and its proofs). The order is
+  inclusion, decided by searching `L & ~M`, which yields a shortest
+  counterexample; the product is concatenation, the join union, `⊤ = Σ*` and
+  `of-nat n = tickⁿ`.
+
+- Its literals are extended regular expressions (`|`, `·`, `*`, `&`, `~`, `Σ`,
+  `tickⁿ`), elaborated to canonical tables with a proved denotation; an empty
+  literal is a type error.
+
+- The finite sets of `Subsets/RightSided.agda` embed in the regular grade with
+  all their structure, but no grade morphism exists: `any-run` absorbs products
+  and `Σ*` does not (`Traces/Regular/Subsets.agda`).
+
 - `Syntax/Grades/Traces.agda` indexes the shared timed-trace toolkit these are
   built on: `Positive` (the strictly positive duration a delay carries), `Base`
   (timed traces and their sequencing monoid), `Lexicographic` (a strict total

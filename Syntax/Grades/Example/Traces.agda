@@ -24,6 +24,9 @@
 --                                                                     --
 -- `Subsets.*` keeps the cap, `Subsets.RightSided`.                    --
 --                                                                     --
+-- `Regular.*` keeps the cap at inclusion, over regular sets of runs    --
+-- held as canonical minimal automata.                                 --
+--                                                                     --
 -- Every endpoint is read *disjunctively* -- one listed trace carries  --
 -- the grade -- so they weaken by gaining members and the union of     --
 -- two grades is their join, which is what a branching construct       --
@@ -64,3 +67,13 @@ import Syntax.Grades.Example.Traces.Timed.TwoSided
 
 import Syntax.Grades.Example.Traces.Subsets.Base
 import Syntax.Grades.Example.Traces.Subsets.RightSided
+
+------------------------------------------------------------------------
+-- Regular sets
+--
+-- A grade is a non-empty regular set of runs, held as the canonical
+-- minimal automaton of its encoding over `Op ⊎ tick`; the finite sets
+-- of `Subsets.RightSided` embed in it, though no grade morphism exists.
+
+import Syntax.Grades.Example.Traces.Regular.RightSided
+import Syntax.Grades.Example.Traces.Regular.Subsets

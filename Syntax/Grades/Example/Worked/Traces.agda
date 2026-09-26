@@ -9,6 +9,8 @@
 -- one trace may do for another. `Timed.*` lets time pay for work in    --
 -- one direction and work pay for time in the other; `Subsets.*` lets   --
 -- nothing pay for anything, so a grade has to list what it means.      --
+-- `Regular.*` compares as `Subsets.*` does, over regular sets of      --
+-- runs, and is worked out at its order and operations alone.         --
 --                                                                     --
 -- Every run is written out in full in every claim, and every claim is  --
 -- closed by running the grade's own decision procedure, so the tables  --
@@ -38,3 +40,14 @@ import Syntax.Grades.Example.Worked.Traces.Timed.TwoSided
 -- runs that may occur, read disjunctively
 
 import Syntax.Grades.Example.Worked.Traces.Subsets.RightSided
+
+------------------------------------------------------------------------
+-- Regular sets
+
+-- canonical tables, and the operations on them
+
+import Syntax.Grades.Example.Worked.Traces.Regular.Base
+
+-- runs that may occur, as a regular set, with literals
+
+import Syntax.Grades.Example.Worked.Traces.Regular.RightSided
