@@ -31,9 +31,10 @@
 -- The tick, tally and label frames rest on one construction           --
 -- (`DenotationalSemantics.Model.World.Action`): the grade acting by    --
 -- multiplication on the points it measures, `w ⊑[ ρ ] w'` iff          --
--- `w' ≾ w · ρ`. Its `forward` restriction adds `w ≤ w'`; the frames    --
--- over dense time, tallies, labels and products use it where the unit  --
--- grade is least. `Product.*` pairs frames componentwise               --
+-- `w' ≾ w · ρ`. Its `forward` restriction adds `w ≤ w'`, and every    --
+-- frame bounded only from above -- the right-sided ticks, the at-most  --
+-- tallies, the labels -- uses it, so that no grade reaches the past.   --
+-- `Product.*` pairs frames componentwise                               --
 -- (`DenotationalSemantics.Model.World.Product`).                       --
 --                                                                     --
 -- The timed and finite-subset trace grades have a frame of either      --
@@ -61,7 +62,8 @@ module DenotationalSemantics.Model.Example.World where
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.LeftSided
 
--- reach the worlds at most `n` ticks ahead: the mirror image
+-- reach the worlds ahead by at most `n` ticks, never behind: the mirror
+-- image
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided
 
@@ -93,8 +95,8 @@ import DenotationalSemantics.Model.Example.World.Ticks.Traces.Timed.TwoSided
 
 -- the cap at the subset order. The quantifier over the listed runs
 -- follows the direction of inclusion the grade weakens along, so this
--- frame is existential: moving between worlds may take no longer than
--- one of the listed runs
+-- frame is existential: moving forward may take no longer than one of
+-- the listed runs
 
 import DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
 

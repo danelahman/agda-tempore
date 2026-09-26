@@ -7,7 +7,7 @@
 --   w ⊑ᵗ[ [ P , Q ] ] w'  iff  w + durationˡᵒ p ≤ w'  for some p ∈ P --
 --                         and  w' ≤ w + durationʰⁱ q  for some q ∈ Q --
 --                                                                    --
--- Each half is the corresponding one-sided frame -- the floor's from  --
+-- Each half is the corresponding one-sided relation -- the floor's from --
 -- `Ticks.Traces.Timed.LeftSided`, the cap's from                   --
 -- `Ticks.Traces.Timed.RightSided` -- and every frame condition is --
 -- the pair of theirs, the grade's monoid and order both acting        --

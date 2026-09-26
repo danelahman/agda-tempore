@@ -3,9 +3,11 @@
 --                                                                     --
 -- Worlds are time points `ℕ`. A tick world records only elapsed time, --
 -- so a grade is read through the durations of the runs it lists, and  --
--- moving between worlds may take no longer than one of them:          --
+-- moving between worlds goes forward and may take no longer than one  --
+-- of them:                                                            --
 --                                                                     --
---   w ⊑ᵗ[ Q ] w'   iff   w' ≤ w + duration q   for some q ∈ Q         --
+--   w ⊑[ Q ] w'   iff   w ≤ w'   and                                  --
+--                       w' ≤ w + duration q   for some q ∈ Q          --
 --                                                                     --
 -- The quantifier is existential because the grade's own order is      --
 -- inclusion in the permitting direction: a weaker grade lists *more*  --
@@ -21,8 +23,12 @@
 -- literally a listed run of the larger one, the comparison between    --
 -- traces being equality.                                              --
 --                                                                     --
--- The grade's `any-run` lists no run at all, so it relates every pair --
--- of worlds.                                                          --
+-- The grade's `any-run` lists no run at all, so it reaches every      --
+-- world ahead.                                                        --
+--                                                                     --
+-- It is the bound restricted to forward moves. The unit `{ ε }` is    --
+-- not least, but its run takes no time, so without `w ≤ w'` the unit  --
+-- grade would reach the past.                                         --
 ------------------------------------------------------------------------
 
 open import Data.Nat.Base using (ℕ; _≤_)
@@ -43,12 +49,13 @@ module DenotationalSemantics.Model.Example.World.Ticks.Traces.Subsets.RightSided
 
 open import Data.Nat using (_+_; _≤?_)
 open import Data.Nat.Properties
-  using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-mono-≤; +-identityʳ)
+  using (≤-refl; ≤-trans; ≤-reflexive; ≤-irrelevant; +-assoc; +-mono-≤;
+         +-identityʳ)
 open import Data.List.Membership.Propositional using (find)
 open import Data.List.Membership.Propositional.Properties
   using (∈-cartesianProductWith⁺)
 open import Data.List.Relation.Unary.Any as Any using (Any; here; any?)
-open import Data.Product using (_,_)
+open import Data.Product using (_×_; _,_)
 open import Data.Unit using (⊤; tt)
 
 open import Relation.Nullary.Decidable using (True; toWitness; fromWitness)
@@ -63,11 +70,15 @@ open import Syntax.Grades.Example.Traces.Subsets.RightSided
   using (right-sided; Permits; permitting_; any-run; _·ᵖ_; _≾_)
 
 open import DenotationalSemantics.Model.World
+open import DenotationalSemantics.Model.World.Action using (forward)
 
 open Durations costʰⁱ
 
 ------------------------------------------------------------------------
 -- The frame
+
+-- The bound: advance no further than one of the listed runs takes; at
+-- `any-run` there is no run to stay within.
 
 _⊑ᵗ[_]_ : ℕ → Permits → ℕ → Set
 w ⊑ᵗ[ (permitting Q) ] w' =
@@ -119,12 +130,26 @@ w ⊑ᵗ[ any-run ]      w' = ⊤
   True-irr (any? (λ t → w' ≤? (w + duration t)) (traces Q)) p q
 ⊑ᵗ-irrelevant {any-run}    tt tt = refl
 
+-- the bound as a frame
+
+private
+  bounded : World right-sided
+  bounded = record
+    { W             = ℕ
+    ; _⊑[_]_       = _⊑ᵗ[_]_
+    ; ⊑-refl       = ⊑ᵗ-refl
+    ; ⊑-trans      = λ {P} {Q} → ⊑ᵗ-trans {P} {Q}
+    ; ⊑-mono       = λ {P} {Q} → ⊑ᵗ-mono {P} {Q}
+    ; ⊑-irrelevant = λ {Q} → ⊑ᵗ-irrelevant {Q}
+    }
+
+-- The frame: the bound, forward moves only.
+
 ticks : World right-sided
-ticks = record
-  { W             = ℕ
-  ; _⊑[_]_       = _⊑ᵗ[_]_
-  ; ⊑-refl       = ⊑ᵗ-refl
-  ; ⊑-trans      = λ {P} {Q} → ⊑ᵗ-trans {P} {Q}
-  ; ⊑-mono       = λ {P} {Q} → ⊑ᵗ-mono {P} {Q}
-  ; ⊑-irrelevant = λ {Q} → ⊑ᵗ-irrelevant {Q}
-  }
+ticks = forward bounded _≤_ ≤-refl ≤-trans ≤-irrelevant
+
+-- the relation it states
+
+⊑-def : ∀ {w Q w'}
+      → World._⊑[_]_ ticks w Q w' ≡ ((w ≤ w') × (w ⊑ᵗ[ Q ] w'))
+⊑-def = refl

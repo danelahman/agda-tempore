@@ -8,16 +8,15 @@
 --   (w , s) ⊑[ ([0, n ] , [0, e ]) ] (w' , s')                        --
 --     iff   w ≤ w' ,  ↑ w' ≤∞ ↑ w +∞ n ,  s ≤ s' ,  ↑ s' ≤∞ ↑ s +∞ e  --
 --                                                                     --
--- The energy frame is the forward right-sided tick frame reindexed    --
--- along the identity. The identity is not a grade morphism, `energy`  --
--- not counting time steps, but it is a lax monoid map, and a frame    --
--- never sees `of-nat`.                                                --
+-- The energy frame is the right-sided tick frame reindexed along      --
+-- the identity. The identity is not a grade morphism, `energy` not    --
+-- counting time steps, but it is a lax monoid map, and a frame never  --
+-- sees `of-nat`.                                                      --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Product.RightSidedTimeEnergy where
 
 open import Data.Nat.Base using (_≤_)
-open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-irrelevant)
 open import Data.Product using (_×_; _,_)
 
 open import Syntax.Grades using (Grade)
@@ -31,18 +30,12 @@ open import Util.Equality
 open import DenotationalSemantics.Model.World
 open import DenotationalSemantics.Model.World.Product using (_⊗_)
 open import DenotationalSemantics.Model.World.Reindex using (LaxMap; reindexᵍ)
-open import DenotationalSemantics.Model.World.Action using (forward)
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided as RS
 
 open Grade right-sided-intervals using (≾-refl)
 
--- time: the right-sided tick frame, forward moves only
-
-time : World right-sided-intervals
-time = forward RS.ticks _≤_ ≤-refl ≤-trans ≤-irrelevant
-
--- energy: the same frame, along the identity
+-- energy: the right-sided tick frame, along the identity
 
 energy→time : LaxMap energy right-sided-intervals
 energy→time = record
@@ -53,12 +46,12 @@ energy→time = record
   }
 
 spending : World energy
-spending = reindexᵍ energy→time time
+spending = reindexᵍ energy→time RS.ticks
 
 -- The frame.
 
 ticks×spending : World right-sided-time×energy
-ticks×spending = time ⊗ spending
+ticks×spending = RS.ticks ⊗ spending
 
 -- the relation it states
 

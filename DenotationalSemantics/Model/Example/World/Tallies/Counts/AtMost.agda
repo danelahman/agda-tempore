@@ -8,15 +8,14 @@
 --   ws ⊑[ ks ] ws'   iff   wᵢ ≤ w'ᵢ   and   ↑ w'ᵢ ≤∞ ↑ wᵢ +∞ kᵢ       --
 --                                          for every counter i       --
 --                                                                     --
--- It is the power of the right-sided tick frame restricted to forward --
--- moves: the unit is least, so without `wᵢ ≤ w'ᵢ` the unit grade      --
+-- It is the power of the right-sided tick frame, which moves only     --
+-- forward: the unit is least, so without `wᵢ ≤ w'ᵢ` the unit grade    --
 -- would lower a tally.                                                --
 ------------------------------------------------------------------------
 
 module DenotationalSemantics.Model.Example.World.Tallies.Counts.AtMost where
 
 open import Data.Nat.Base using (ℕ; _≤_)
-open import Data.Nat.Properties using (≤-refl; ≤-trans; ≤-irrelevant)
 open import Data.Product using (_×_)
 open import Data.Unit using () renaming (⊤ to 𝟙)
 open import Data.Vec.Base using ([]; _∷_)
@@ -28,21 +27,15 @@ open import Syntax.Grades.Example.Counts.AtMost using (at-most-counts)
 open import Util.Equality
 
 open import DenotationalSemantics.Model.World
-open import DenotationalSemantics.Model.World.Action using (forward)
 open import DenotationalSemantics.Model.Example.World.Tallies.Counts.Power
   right-sided-intervals using (_^_)
 
 import DenotationalSemantics.Model.Example.World.Ticks.Time.RightSided as RS
 
--- one counter: the right-sided tick frame, forward moves only
-
-counter : World right-sided-intervals
-counter = forward RS.ticks _≤_ ≤-refl ≤-trans ≤-irrelevant
-
--- The frame.
+-- The frame: one right-sided tick frame per counter.
 
 tallies : (n : ℕ) → World (at-most-counts n)
-tallies n = counter ^ n
+tallies n = RS.ticks ^ n
 
 -- the relation it states, at one counter
 
