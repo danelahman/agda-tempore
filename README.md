@@ -44,7 +44,12 @@ The formalisation is developed and tested with Agda version 2.8.0 and Agda
 Standard Library version 2.3. To check the development, run `make` (which
 invokes `agda Everything.agda`); `Everything.agda` imports every module except
 the type-inference examples, which run the solver at four grades and take
-minutes to check: `make examples` checks those (`agda TypeInference/Examples.agda`).
+minutes to check: `make examples` checks all of them
+(`agda TypeInference/Examples.agda`). They are split by what they test
+(`Stdlib`, `Annotations`, `Handlers`, `Boxes`, `Reports`, `Product`), each
+with its own index `TypeInference/Examples/<Set>/All.agda` and target
+`make examples-<set>`; the Makefile records which solver parts each set
+exercises.
 
 ## Structure of the formalisation
 
@@ -564,12 +569,14 @@ Inference for the open calculus, by constraint generation and solving.
   four grades.
   `Boxes.agda` gives boxes and delays: claims made early, on time and late,
   after operations, in both branches of an `if`, through nested boxes and
-  inside a handler clause, with the box's grade given or inferred; a box
+  inside a handler clause, with the box's grade given or inferred; and a box
   escaping through `return` and claimed out of time, refuted by the
-  transitive closure of the closed orderings; and two schemes the report
-  simplifies, a var-rule disjunction entailed by another and a product with
-  the top absorbed. `Boxes/` checks the verdicts and schemes at the four
-  grades.
+  transitive closure of the closed orderings. `Boxes/` checks the verdicts
+  and schemes at the four grades.
+  `Reports.agda` gives two schemes the report simplifies: a var-rule
+  disjunction entailed by another, and a product with the top absorbed.
+  `Reports/` checks them at the right-sided grades, where the unit is least
+  and the simplifications happen.
   `Product.agda` gives programs at time paired with a security level
   (`Product/LeftSidedTimeLevel`, `Product/RightSidedTimeLevel`): an embargoed
   report claimed in time and clean, out of time, and after a `High`
