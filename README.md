@@ -577,6 +577,12 @@ Inference for the open calculus, by constraint generation and solving.
   disjunction entailed by another, and a product with the top absorbed.
   `Reports/` checks them at the right-sided grades, where the unit is least
   and the simplifications happen.
+  `Stages.agda` tests single solver stages on hand-written constraints, each
+  guarding a change no example program depends on: splitting joins on the
+  left of hypotheses (`canonᴴ`), pruning disjunctions (`walkᵈ`), absorbing the
+  top (`canonᵣ`/`canonₑ`), multiset matching of products (`decide≾`), the
+  closed check through chains (`closedᴴ`), and the collapse of a clause-local
+  cycle that lowering alone leaves stuck.
   `Product.agda` gives programs at time paired with a security level
   (`Product/LeftSidedTimeLevel`, `Product/RightSidedTimeLevel`): an embargoed
   report claimed in time and clean, out of time, and after a `High`

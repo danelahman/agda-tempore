@@ -32,6 +32,11 @@
 -- disjunction entailed by another, and a product with the top    --
 -- absorbed. Both simplifications happen where the unit is least, --
 -- so they are checked at the right-sided grades only.            --
+--                                                                --
+-- Set 7 is stage-level tests: solver stages called directly on   --
+-- hand-written constraints, each answer checked by `refl`. They  --
+-- guard steps that no program in the sets above depends on, or   --
+-- depends on only in part.                                       --
 ------------------------------------------------------------------
 
 module TypeInference.Examples where
@@ -68,3 +73,7 @@ import TypeInference.Examples.Product.All
 -- Report simplification: the generic module and its instances
 
 import TypeInference.Examples.Reports.All
+
+-- Solver stages on hand-written constraints
+
+import TypeInference.Examples.Stages.All
