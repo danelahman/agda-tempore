@@ -441,6 +441,11 @@ import TypeInference.SolverImpl.Closed
 import TypeInference.SolverImpl.Strengthen
 import TypeInference.SolverImpl
 
+---- Invariants of the solver: I1′ on the orderings of the residual, I5
+---- on its deferred entries, and canonical forms adding no unknown
+
+import TypeInference.SolverImpl.Invariants
+
 ---- The inference examples run the solver at four grades and take minutes
 ---- to check, so they are checked on their own, with
 ---- `agda TypeInference/Examples.agda`
