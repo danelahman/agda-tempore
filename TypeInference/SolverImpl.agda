@@ -36,7 +36,10 @@
 --                                                                --
 -- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on     --
 -- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types,     --
--- with no completeness claimed.                                  --
+-- with no completeness claimed. Two products are compared by     --
+-- `prodˢ≾`, which decides the embedding `_⊑ᵖ_`                   --
+-- (`prodˢ≾-complete`, `prodˢ≾-exact`), sound for entailment      --
+-- (`⊑ᵖ-sound`).                                                  --
 --                                                                --
 -- `solveOn` instantiates `TypeInference.Solver.Solver`           --
 -- (`solveOn-sound`, `solveOn-principal`, `solveOn-complete`) and --
