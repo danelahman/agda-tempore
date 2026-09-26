@@ -553,8 +553,8 @@ Inference for the open calculus, by constraint generation and solving.
 - `TypeInference/Examples/` runs inference on nine functions of the
   prototype's standard library. `Stdlib.agda` proves, over an arbitrary
   language, that inference answers `typed` for each; `Stdlib/` checks the
-  reported scheme by `refl` at four grades, covering `u-least?` and `·-comm?`.
-  `Report.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
+  scheme by `refl` at four grades, covering `u-least?` and `·-comm?`.
+  `Scheme.agda` writes schemes as `∀[ a , b , c ] C ⟹ X`.
   `Annotations.agda` gives one program per annotation form with the type it
   forces; `Annotations/` checks the schemes at the four grades.
   `Handlers.agda` gives handlers with no annotation. `relay`, whose clause

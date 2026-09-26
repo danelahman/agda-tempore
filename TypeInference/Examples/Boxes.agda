@@ -64,7 +64,7 @@ open import TypeInference.SolverImpl           S opEnum
   using (infer-complete; infer-handlerFree)
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
-open import TypeInference.Examples.Report S public
+open import TypeInference.Examples.Scheme S public
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
@@ -137,7 +137,7 @@ stale-call-D q = return (lam (delay 1 (var (Tl-⟨⟩ Hd) (≾ᵘ-ok (after q)) 
 stale-call-typable : True (of-natʳ 1 ≾ᵣ? uᵣ) → Typable [] stale-call
 stale-call-typable q = closed (stale-call-D (toWitness q)) refl
 
-expected-stale-call : Report
+expected-stale-call : Scheme
 expected-stale-call =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ (⌜ 1 ⌝ᵉ ·̂ₑ ε₀)) ‼ ûₑ
 
@@ -177,7 +177,7 @@ handed-box-call-typed =
       (return (lam (delay 1 (unbox (Tl-⟨⟩ Hd) on-time (<:̂ᵛ-refl _) (var Hd ok₀ · ⋆)))))
       refl) _
 
-expected-handed-box-call : Report
+expected-handed-box-call : Scheme
 expected-handed-box-call =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ([ ⌜ 1 ⌝ʳ ] (Unit ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ (⌜ 1 ⌝ᵉ ·̂ₑ ε₀)) ‼ ûₑ
@@ -199,11 +199,11 @@ boxing-an-argument-typed =
       (return (lam (box ⌜ 1 ⌝ʳ (var (Tl-⟨⟩ Hd) (et-ok Unitₑ)) (return (var Hd ok₀)))))
       refl) _
 
-expected-boxing-an-eternal : Report
+expected-boxing-an-eternal : Scheme
 expected-boxing-an-eternal =
   ∀[ 1 , 0 , 0 ] eternal α₀ ⟹ (α₀ ⇒ [ ⌜ 1 ⌝ʳ ] α₀ ‼ ûₑ) ‼ ûₑ
 
-expected-boxing-anything : Report
+expected-boxing-anything : Scheme
 expected-boxing-anything =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ [ ⌜ 1 ⌝ʳ ] α₀ ‼ ûₑ) ‼ ûₑ
 
@@ -229,7 +229,7 @@ claim-after-typable d p = closed (claim-after-D d (toWitness p)) refl
 claim-on-time-typed : IsTyped (infer [] (claim-after 3))
 claim-on-time-typed = typed-of (claim-after 3) (closed (claim-after-D 3 ≾ᵣ-refl) refl) _
 
-expected-claim-after : ℕ → Report
+expected-claim-after : ℕ → Scheme
 expected-claim-after d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 
 ------------------------------------------------------------------
@@ -254,7 +254,7 @@ inferred-grade-typed =
       (return (lam (delay 2 (unbox (Tl-⟨⟩ Hd) on-time (<:̂ᵛ-refl _) (return (var Hd ok₀))))))
       refl) _
 
-expected-inferred-grade : Report
+expected-inferred-grade : Scheme
 expected-inferred-grade =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹ ([ ⌜ 2 ⌝ʳ ] α₀ ⇒ α₀ ‼ ⌜ 2 ⌝ᵉ) ‼ ûₑ
 
@@ -279,7 +279,7 @@ kept-and-claimed-typed =
                                             (return (var Hd ok₀)))) ⦊)))
       refl) _
 
-expected-kept-and-claimed : Report
+expected-kept-and-claimed : Scheme
 expected-kept-and-claimed =
   ∀[ 2 , 1 , 0 ] ⊤ ⟹
     ([ ⌜ 2 ⌝ʳ ⊔̂ᵣ ρ₀ ] α₀ ⇒ ([ ρ₀ ] α₀ |×| (α₁ ⇒ α₀ ‼ ⌜ 2 ⌝ᵉ)) ‼ ûₑ) ‼ ûₑ
@@ -318,7 +318,7 @@ escaping-after-typable d p = closed (escaping-after-D d (toWitness p)) refl
 escaping-typed : IsTyped (infer [] (escaping-after 2))
 escaping-typed = typed-of (escaping-after 2) (closed (escaping-after-D 2 ≾ᵣ-refl) refl) _
 
-expected-escaping : ℕ → Report
+expected-escaping : ℕ → Scheme
 expected-escaping d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 
 ------------------------------------------------------------------
@@ -353,7 +353,7 @@ branches-typed =
                               (return (var Hd ok₀)))))))))
       refl) _
 
-expected-branches : Report
+expected-branches : Scheme
 expected-branches =
   ∀[ 2 , 0 , 0 ] α₀ <: α₁ ⟹
     (Bool ⇒ ([ rconst (of-natʳ 1 ⊔ᵣ of-natʳ 3) ] α₀
@@ -384,7 +384,7 @@ op-licensed-typable : (op : Op) → True (mapᵉ (op-grade op) ≾ᵣ? of-natʳ 
                     → Typable [] (op-licensed op)
 op-licensed-typable op p = closed (op-licensed-D op (toWitness p)) refl
 
-expected-op-licensed : Op → Report
+expected-op-licensed : Op → Scheme
 expected-op-licensed op =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op)) ‼ ûₑ
 
@@ -409,7 +409,7 @@ nested-typed =
         (delay 2 (unbox (Tl-⟨⟩ Hd) on-time (<:̂ᵛ-refl _) (return (var Hd ok₀))))))))
       refl) _
 
-expected-nested : Report
+expected-nested : Scheme
 expected-nested =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹
     ([ ⌜ 1 ⌝ʳ ] ([ ⌜ 2 ⌝ʳ ] α₀) ⇒ α₀ ‼ econst (of-natᵉ 1 ·ₑ of-natᵉ 2)) ‼ ûₑ
@@ -436,7 +436,7 @@ nesting-D q =
 nesting-typable : True (of-natʳ 1 ≾ᵣ? uᵣ) → Typable [] nesting
 nesting-typable q = closed (nesting-D (toWitness q)) refl
 
-expected-nesting : Report
+expected-nesting : Scheme
 expected-nesting = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ econst (of-natᵉ 1 ·ₑ of-natᵉ 2)
 
 ------------------------------------------------------------------
@@ -488,7 +488,7 @@ claimed-in-clause-typable c p = closed (claimed-in-clause-D (toWitness p)) refl
 claimed-at-⊤-typable : Typable [] (claimed-in-clause (rconst ⊤ᵣ))
 claimed-at-⊤-typable = closed (claimed-in-clause-D {⊤ᵣ} ≾ᵣ-refl) refl
 
-expected-claimed-in-clause : Report
+expected-claimed-in-clause : Scheme
 expected-claimed-in-clause =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
@@ -508,7 +508,7 @@ handed-to-clause-typable =
       (handle var (Tl-∷ Hd) ok₀ · ⋆ `with clause-claim-D ≾ᵣ-refl `in (return ⋆))))))
     refl
 
-expected-handed-to-clause : Report
+expected-handed-to-clause : Scheme
 expected-handed-to-clause =
   ∀[ 2 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ α₁ ‼ ε₀) ⇒ ([ rconst ⊤ᵣ ] α₀ ⇒ Unit ‼ ε₀) ‼ ûₑ) ‼ ûₑ

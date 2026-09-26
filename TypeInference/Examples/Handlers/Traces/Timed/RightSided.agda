@@ -25,15 +25,15 @@ open import TypeInference.Principality spec using (Typable; untypable)
 open import TypeInference.SolverImpl spec enum using (infer-untypable)
 open import TypeInference.Examples.Handlers spec enum
 
-relay-reported : report (infer [] relay) ≡ just expected-relay
+relay-reported : scheme (infer [] relay) ≡ just expected-relay
 relay-reported = refl
 
-relay-boxed-reported : report (infer [] relay-boxed) ≡ just expected-relay-boxed
+relay-boxed-reported : scheme (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
 -- The unit is least, so the clause may drop its continuation
 
-discard-reported : report (infer [] discard) ≡ just expected-discard
+discard-reported : scheme (infer [] discard) ≡ just expected-discard
 discard-reported = refl
 
 discard-derivable : Typable [] discard

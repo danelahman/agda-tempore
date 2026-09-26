@@ -1,11 +1,11 @@
 ------------------------------------------------------------------
 -- What inference reports, and notation for writing it down       --
 --                                                                --
--- `report` projects a `typed` verdict onto its scheme            --
+-- `scheme` projects a `typed` verdict onto its scheme            --
 -- `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`: the scope, the hypotheses, the obligations   --
 -- and the type. `IsTyped` holds exactly of a `typed` verdict.    --
 --                                                                --
--- `report` returns its scheme evaluated in full (see `walk`), so --
+-- `scheme` returns its scheme evaluated in full (see `walk`), so --
 -- that a `refl` check against a literal runs the solver once.    --
 --                                                                --
 -- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,     --
@@ -31,7 +31,7 @@ open import Syntax.Operations
 
 open import TypeInference.Scopes
 
-module TypeInference.Examples.Report (S : LanguageSpec) where
+module TypeInference.Examples.Scheme (S : LanguageSpec) where
 
 open LanguageSpec S
 open GradeSystemInterface Grades using (_≡ᵣ?_; _≡ₑ?_)
@@ -46,12 +46,12 @@ open import TypeInference.Raw.Syntax           S
 open import TypeInference.Principality         S
 
 ------------------------------------------------------------------
--- Reports
+-- Schemes
 
 -- A scheme: its scope, hypotheses, obligations and type
 
-Report : Set
-Report = Σ Scope (λ Θ → Hyps Θ × Obligs Θ × OCType Θ)
+Scheme : Set
+Scheme = Σ Scope (λ Θ → Hyps Θ × Obligs Θ × OCType Θ)
 
 -- Forcing a scheme
 --
@@ -114,7 +114,7 @@ private
     && walkˡ (walkᵖ walkʳ walkʳ) rs && walkˡ (walkᵖ walkᵉ walkᵉ) fs
     && walkˡ (walkᵖ walkᵛ walkʳ) ds
 
-  walk : Report → 𝔹
+  walk : Scheme → 𝔹
   walk (scope a b c , Q , R , X) =
     walkℕ a && walkℕ b && walkℕ c && walkᴴ Q
     && walkˡ (λ { (oblig _ k O) → walkℕ k && walkᴴ O }) R && walkᶜ X
@@ -127,14 +127,14 @@ private
 
   -- `just r`, with `r` evaluated in full
 
-  report! : Report → Maybe Report
-  report! r = after (walk r) (just r)
+  scheme! : Scheme → Maybe Scheme
+  scheme! r = after (walk r) (just r)
 
-report : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → Inference Γ M → Maybe Report
-report (typed p) = report! (PrincipalTyping.Θ̃ p , PrincipalTyping.Q̃ p ,
+scheme : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → Inference Γ M → Maybe Scheme
+scheme (typed p) = scheme! (PrincipalTyping.Θ̃ p , PrincipalTyping.Q̃ p ,
                             PrincipalTyping.R̃ p , PrincipalTyping.X̃ p)
-report untypable = nothing
-report stuck     = nothing
+scheme untypable = nothing
+scheme stuck     = nothing
 
 -- A data type, so that stating it does not run inference
 
@@ -224,8 +224,8 @@ infix 3 ∀ᵉ_∙_ ∀ᵉ⟨_⟩_∙_
 infixr 2 ∀[_,_,_]_&_⟹_ ∀[_,_,_]_⟹_
 
 ∀[_,_,_]_&_⟹_ : (a b c : ℕ) → Conj (scope a b c) → Obligs (scope a b c)
-              → OCType (scope a b c) → Report
+              → OCType (scope a b c) → Scheme
 ∀[ a , b , c ] C & R ⟹ X = scope a b c , hypsOf C , R , X
 
-∀[_,_,_]_⟹_ : (a b c : ℕ) → Conj (scope a b c) → OCType (scope a b c) → Report
+∀[_,_,_]_⟹_ : (a b c : ℕ) → Conj (scope a b c) → OCType (scope a b c) → Scheme
 ∀[ a , b , c ] C ⟹ X = ∀[ a , b , c ] C & [] ⟹ X

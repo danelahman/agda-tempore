@@ -52,7 +52,7 @@ open import TypeInference.SolverImpl           S opEnum
   using (infer-complete; infer-handlerFree)
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
-open import TypeInference.Examples.Report S public
+open import TypeInference.Examples.Scheme S public
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
@@ -119,7 +119,7 @@ reused-around-claim-typed =
                             (et-ok Unitₑ))))))))))
       refl) _
 
-expected-reused-around-claim : Conj (scope 3 0 2) → EExp (scope 3 0 2) → Report
+expected-reused-around-claim : Conj (scope 3 0 2) → EExp (scope 3 0 2) → Scheme
 expected-reused-around-claim C ε =
   ∀[ 3 , 0 , 2 ] C ⟹
     (α₂ ⇒ ((Unit ⇒ α₁ ‼ ε₁) ⇒ ([ ∣ ε₁ ∣̂ᵉ ] (α₂ ⇒ α₀ ‼ ε₀) ⇒ α₂ ‼ ε) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
@@ -160,7 +160,7 @@ claimed-after-call-typable =
            `in (return ⋆))))))))
     refl
 
-expected-claimed-after-call : RExp (scope 3 0 2) → Report
+expected-claimed-after-call : RExp (scope 3 0 2) → Scheme
 expected-claimed-after-call ρ =
   ∀[ 3 , 0 , 2 ] ⊤ ⟹
     ((Unit ⇒ α₂ ‼ ε₁) ⇒ ([ ρ ] α₀ ⇒ ((Unit ⇒ α₁ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ε₁) ‼ ûₑ) ‼ ûₑ

@@ -55,10 +55,10 @@ embargo = rconst ([ 5 ,+∞⟩ , Low)
 -- 1. Claimed on time and late; early is refused, `[ 4 ,+∞⟩` not
 -- being below `[ 5 ,+∞⟩`
 
-on-time-reported : report (infer [] (embargoed embargo 5)) ≡ just (expected-embargoed 5)
+on-time-reported : scheme (infer [] (embargoed embargo 5)) ≡ just (expected-embargoed 5)
 on-time-reported = refl
 
-late-reported : report (infer [] (embargoed embargo 7)) ≡ just (expected-embargoed 7)
+late-reported : scheme (infer [] (embargoed embargo 7)) ≡ just (expected-embargoed 7)
 late-reported = refl
 
 late-derivable : Typable [] (embargoed embargo 7)
@@ -80,7 +80,7 @@ stored : op-grade write ·ₑ ([ 3 ,+∞⟩ , Low) ≡ ([ 5 ,+∞⟩ , Low)
 stored = refl
 
 stored-reported :
-  report (infer [] (transmitted embargo write 3)) ≡ just (expected-transmitted write 3)
+  scheme (infer [] (transmitted embargo write 3)) ≡ just (expected-transmitted write 3)
 stored-reported = refl
 
 stored-derivable : Typable [] (transmitted embargo write 3)
@@ -103,14 +103,14 @@ joined : op-grade read ·ₑ (op-grade write ⊔ₑ op-grade send) ≡ ([ 3 ,+�
 joined = refl
 
 joined-claim-reported :
-  report (infer [] (joined-claim read write send)) ≡ just (expected-joined-claim read write send)
+  scheme (infer [] (joined-claim read write send)) ≡ just (expected-joined-claim read write send)
 joined-claim-reported = refl
 
 ------------------------------------------------------------------
 -- 4. Publishing after a transmission: the report must outlast `f`
 -- and `([ 4 ,+∞⟩ , High)`
 
-publish-reported : report (infer [] (publish send)) ≡ just (expected-publish send)
+publish-reported : scheme (infer [] (publish send)) ≡ just (expected-publish send)
 publish-reported = refl
 
 ------------------------------------------------------------------
@@ -118,7 +118,7 @@ publish-reported = refl
 -- `High` (`stale-after-transmitting` in
 -- `Worked/Typing/Product/LeftSidedTimeLevel.agda`)
 
-twice-write-reported : report (infer [] (twice write)) ≡ just (expected-twice write)
+twice-write-reported : scheme (infer [] (twice write)) ≡ just (expected-twice write)
 twice-write-reported = refl
 
 twice-write-derivable : Typable [] (twice write)

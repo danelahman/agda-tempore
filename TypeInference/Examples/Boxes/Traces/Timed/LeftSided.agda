@@ -37,25 +37,25 @@ open import TypeInference.Examples.Boxes spec enum
 -- 1. Surviving time: nothing goes stale, so a function argument
 -- may be called after a tick, boxed or not
 
-stale-call-reported : report (infer [] stale-call) ≡ just expected-stale-call
+stale-call-reported : scheme (infer [] stale-call) ≡ just expected-stale-call
 stale-call-reported = refl
 
 stale-call-derivable : Typable [] stale-call
 stale-call-derivable = stale-call-typable _
 
-boxed-call-reported : report (infer [] boxed-call) ≡ just expected-stale-call
+boxed-call-reported : scheme (infer [] boxed-call) ≡ just expected-stale-call
 boxed-call-reported = refl
 
 boxed-call-derivable : Typable [] boxed-call
 boxed-call-derivable = boxed-call-typable _
 
-handed-box-call-reported : report (infer [] handed-box-call) ≡ just expected-handed-box-call
+handed-box-call-reported : scheme (infer [] handed-box-call) ≡ just expected-handed-box-call
 handed-box-call-reported = refl
 
 -- the var-rule disjunction holds on its grade
 
 boxing-an-argument-reported :
-  report (infer [] boxing-an-argument) ≡ just expected-boxing-anything
+  scheme (infer [] boxing-an-argument) ≡ just expected-boxing-anything
 boxing-an-argument-reported = refl
 
 ------------------------------------------------------------------
@@ -70,10 +70,10 @@ claim-early-verdict = refl
 claim-early-not-typable : ¬ Typable [] (claim-after 2)
 claim-early-not-typable = infer-untypable [] (claim-after 2) claim-early-verdict
 
-claim-on-time-reported : report (infer [] (claim-after 3)) ≡ just (expected-claim-after 3)
+claim-on-time-reported : scheme (infer [] (claim-after 3)) ≡ just (expected-claim-after 3)
 claim-on-time-reported = refl
 
-claim-late-reported : report (infer [] (claim-after 4)) ≡ just (expected-claim-after 4)
+claim-late-reported : scheme (infer [] (claim-after 4)) ≡ just (expected-claim-after 4)
 claim-late-reported = refl
 
 claim-late-derivable : Typable [] (claim-after 4)
@@ -82,18 +82,18 @@ claim-late-derivable = claim-after-typable 4 _
 ------------------------------------------------------------------
 -- 3. Inferred grades: a demand covered by two ticks
 
-inferred-grade-reported : report (infer [] inferred-grade) ≡ just expected-inferred-grade
+inferred-grade-reported : scheme (infer [] inferred-grade) ≡ just expected-inferred-grade
 inferred-grade-reported = refl
 
 kept-and-claimed-reported :
-  report (infer [] kept-and-claimed) ≡ just expected-kept-and-claimed
+  scheme (infer [] kept-and-claimed) ≡ just expected-kept-and-claimed
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
 -- 4. A box escaping through `return`: claimed on time; claimed
 -- early, it is refuted by the ordering its two bounds entail
 
-escaping-reported : report (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
+escaping-reported : scheme (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
 
 escaping-early-verdict : infer [] (escaping-after 1) ≡ untypable
@@ -105,7 +105,7 @@ escaping-early-not-typable = infer-untypable [] (escaping-after 1) escaping-earl
 ------------------------------------------------------------------
 -- 5. Both branches: the join is the smaller demand, one tick
 
-branches-reported : report (infer [] branches) ≡ just expected-branches
+branches-reported : scheme (infer [] branches) ≡ just expected-branches
 branches-reported = refl
 
 ------------------------------------------------------------------
@@ -120,13 +120,13 @@ read-too-early-verdict = refl
 read-too-early-not-typable : ¬ Typable [] (op-licensed read)
 read-too-early-not-typable = infer-untypable [] (op-licensed read) read-too-early-verdict
 
-write-licenses-reported : report (infer [] (op-licensed write)) ≡ just (expected-op-licensed write)
+write-licenses-reported : scheme (infer [] (op-licensed write)) ≡ just (expected-op-licensed write)
 write-licenses-reported = refl
 
 write-licenses-derivable : Typable [] (op-licensed write)
 write-licenses-derivable = op-licensed-typable write _
 
-send-licenses-reported : report (infer [] (op-licensed send)) ≡ just (expected-op-licensed send)
+send-licenses-reported : scheme (infer [] (op-licensed send)) ≡ just (expected-op-licensed send)
 send-licenses-reported = refl
 
 send-licenses-derivable : Typable [] (op-licensed send)
@@ -135,10 +135,10 @@ send-licenses-derivable = op-licensed-typable send _
 ------------------------------------------------------------------
 -- 7. Nested boxes, passed in or built in place
 
-nested-reported : report (infer [] nested) ≡ just expected-nested
+nested-reported : scheme (infer [] nested) ≡ just expected-nested
 nested-reported = refl
 
-nesting-reported : report (infer [] nesting) ≡ just expected-nesting
+nesting-reported : scheme (infer [] nesting) ≡ just expected-nesting
 nesting-reported = refl
 
 nesting-derivable : Typable [] nesting
@@ -149,7 +149,7 @@ nesting-derivable = nesting-typable _
 -- nothing may be claimed there, one demanding a tick may not
 
 claimed-at-u-reported :
-  report (infer [] (claimed-in-clause (rconst uᵣ))) ≡ just expected-claimed-in-clause
+  scheme (infer [] (claimed-in-clause (rconst uᵣ))) ≡ just expected-claimed-in-clause
 claimed-at-u-reported = refl
 
 claimed-at-u-derivable : Typable [] (claimed-in-clause (rconst uᵣ))
@@ -162,9 +162,9 @@ claimed-at-1-not-typable : ¬ Typable [] (claimed-in-clause ⌜ 1 ⌝ʳ)
 claimed-at-1-not-typable = infer-untypable [] (claimed-in-clause ⌜ 1 ⌝ʳ) claimed-at-1-verdict
 
 claimed-at-⊤-reported :
-  report (infer [] (claimed-in-clause (rconst ⊤ᵣ))) ≡ just expected-claimed-in-clause
+  scheme (infer [] (claimed-in-clause (rconst ⊤ᵣ))) ≡ just expected-claimed-in-clause
 claimed-at-⊤-reported = refl
 
-handed-to-clause-reported : report (infer [] handed-to-clause) ≡ just expected-handed-to-clause
+handed-to-clause-reported : scheme (infer [] handed-to-clause) ≡ just expected-handed-to-clause
 handed-to-clause-reported = refl
 

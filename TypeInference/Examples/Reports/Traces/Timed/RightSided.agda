@@ -31,7 +31,7 @@ open import TypeInference.Examples.Variables
 -- `f` and `g`, and only the latter is reported
 
 reused-around-claim-reported :
-  report (infer [] reused-around-claim)
+  scheme (infer [] reused-around-claim)
     ≡ just (expected-reused-around-claim (eternal α₂ ∨ ∣ ε₁ ∣̂ᵉ ·̂ᵣ ∣ ε₀ ∣̂ᵉ ≾ûᵣ) (ε₁ ·̂ₑ ε₀))
 reused-around-claim-reported = refl
 
@@ -40,5 +40,5 @@ reused-around-claim-reported = refl
 -- the box is asked for at the top
 
 claimed-after-call-reported :
-  report (infer [] claimed-after-call) ≡ just (expected-claimed-after-call (rconst ⊤ᵣ))
+  scheme (infer [] claimed-after-call) ≡ just (expected-claimed-after-call (rconst ⊤ᵣ))
 claimed-after-call-reported = refl

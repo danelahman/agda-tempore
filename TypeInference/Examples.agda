@@ -36,9 +36,9 @@
 
 module TypeInference.Examples where
 
--- What a report is, and notation for writing one
+-- What a scheme is, and notation for writing one
 
-import TypeInference.Examples.Report
+import TypeInference.Examples.Scheme
 import TypeInference.Examples.Variables
 
 -- The languages the examples run in

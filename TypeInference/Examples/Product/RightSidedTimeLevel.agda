@@ -53,13 +53,13 @@ token = rconst ([0, ↑ 8 ] , Low)
 -- 1. Claimed early and on time; late is refused, `[0, 9 ]` not
 -- being below `[0, 8 ]`
 
-early-reported : report (infer [] (embargoed token 2)) ≡ just (expected-embargoed 2)
+early-reported : scheme (infer [] (embargoed token 2)) ≡ just (expected-embargoed 2)
 early-reported = refl
 
 early-derivable : Typable [] (embargoed token 2)
 early-derivable = embargoed-typable _ 2 _
 
-on-time-reported : report (infer [] (embargoed token 8)) ≡ just (expected-embargoed 8)
+on-time-reported : scheme (infer [] (embargoed token 8)) ≡ just (expected-embargoed 8)
 on-time-reported = refl
 
 late-verdict : infer [] (embargoed token 9) ≡ untypable
@@ -77,7 +77,7 @@ stored : op-grade write ·ₑ ([0, ↑ 3 ] , Low) ≡ ([0, ↑ 6 ] , Low)
 stored = refl
 
 stored-reported :
-  report (infer [] (transmitted token write 3)) ≡ just (expected-transmitted write 3)
+  scheme (infer [] (transmitted token write 3)) ≡ just (expected-transmitted write 3)
 stored-reported = refl
 
 stored-derivable : Typable [] (transmitted token write 3)
@@ -100,14 +100,14 @@ joined : op-grade read ·ₑ (op-grade write ⊔ₑ op-grade send) ≡ ([0, ↑ 
 joined = refl
 
 joined-claim-reported :
-  report (infer [] (joined-claim read write send)) ≡ just (expected-joined-claim read write send)
+  scheme (infer [] (joined-claim read write send)) ≡ just (expected-joined-claim read write send)
 joined-claim-reported = refl
 
 ------------------------------------------------------------------
 -- 4. Publishing after a transmission: the token must outlast `f` and
 -- `([0, 6 ] , High)`
 
-publish-reported : report (infer [] (publish send)) ≡ just (expected-publish send)
+publish-reported : scheme (infer [] (publish send)) ≡ just (expected-publish send)
 publish-reported = refl
 
 ------------------------------------------------------------------

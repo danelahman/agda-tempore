@@ -27,7 +27,7 @@
 --   `closedᴴ` deciding the closed atoms, with the closed         --
 --   orderings entailed by transitivity                           --
 --   (`closedᴴ-⊩`/`-⊆`/`-fail`).                                  --
--- * The report (`reportOn`, `Reported`): `simplify`              --
+-- * The report (`report`, `Reported`): `simplify`                --
 --   (`simplify-⊩`/`-⊨`), which writes the set in canonical form, --
 --   each join on a left side split, and drops each var-rule      --
 --   disjunction entailed by another; Pottier's elimination       --
@@ -45,9 +45,10 @@
 -- (`prodˢ≾-complete`, `prodˢ≾-exact`), sound for entailment      --
 -- (`⊑ᵖ-sound`).                                                  --
 --                                                                --
--- `solveOn` instantiates `TypeInference.Solver.Solver`           --
--- (`solveOn-sound`, `solveOn-principal`, `solveOn-complete`) and --
--- is never stuck without a rigid binder (`solveOn-rigidFree`).   --
+-- `runSolver` instantiates `TypeInference.Solver.Solver`         --
+-- (`runSolver-sound`, `runSolver-principal`,                     --
+-- `runSolver-complete`) and is never stuck without a rigid       --
+-- binder (`runSolver-rigidFree`).                                --
 -- `infer` is the reference entry point: a report is a principal  --
 -- typing (`typing`) whose conditions are satisfiable exactly     --
 -- when the term is typable (`infer-typed`); a refutation means   --
@@ -142,8 +143,8 @@ Fixing-[] σ = fixing (λ i ()) (λ i i' ())
 Answer : Scope → Scope → Set
 Answer Θ Θ' = Subst Θ Θ' × Hyps Θ' × List (Dfr Θ')
 
-solveOnᴰ : ∀ {Θ} → Constraint Θ → Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
-solveOnᴰ C with solve init C
+runSolverᴰ : ∀ {Θ} → Constraint Θ → Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')
+runSolverᴰ C with solve init C
 ... | refuted = refuted
 ... | stuck   = stuck
 ... | solved (s' , m , w) with retry s'
@@ -162,15 +163,15 @@ readOut : ∀ {Θ} → Σ[ Θ' ∈ Scope ] Answer Θ Θ'
         → Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ')
 readOut (Θ' , σ , Q , D) = Θ' , σ , Q , map toOblig D
 
-solveOn : ∀ {Θ} → Constraint Θ
-        → Outcome (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
-solveOn C = mapᴼ readOut (solveOnᴰ C)
+runSolver : ∀ {Θ} → Constraint Θ
+          → Outcome (Σ[ Θ' ∈ Scope ] (Subst Θ Θ' × Hyps Θ' × Obligs Θ'))
+runSolver C = mapᴼ readOut (runSolverᴰ C)
 
-solveOnᴰ-sound : ∀ {Θ} → (C : Constraint Θ)
-               → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
-               → solveOnᴰ C ≡ solved (Θ' , σ , Q , D)
-               → σ ⊨[ Q ∣ map toOblig D ] C
-solveOnᴰ-sound C eq with solve init C
+runSolverᴰ-sound : ∀ {Θ} → (C : Constraint Θ)
+                 → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {D : List (Dfr Θ')}
+                 → runSolverᴰ C ≡ solved (Θ' , σ , Q , D)
+                 → σ ⊨[ Q ∣ map toOblig D ] C
+runSolverᴰ-sound C eq with solve init C
 ... | refuted = ⊥refuted eq
 ... | stuck   = ⊥stuck eq
 ... | solved (s' , m , w) with retry s'
@@ -187,19 +188,19 @@ solveOnᴰ-sound C eq with solve init C
                   (⊩ᴿ-bare (⊩ᴿ-resp-≐ˢ (⨟-idˡ δ) (⊩ᴿ-⨟ (⊩ᴴ-⨟ hQ (closedᴴ-⊩ Q₀ e'')) hq))
                            (⊩ᴼˢ→⊩ᴰ (dfs (res s₂)) hR)) }
 
-solveOn-sound : ∀ {Θ} → (C : Constraint Θ)
-              → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
-              → solveOn C ≡ solved (Θ' , σ , Q , R)
-              → σ ⊨[ Q ∣ R ] C
-solveOn-sound C eq with mapᴼ-solved (solveOnᴰ C) eq
-... | (Θ' , σ , Q , D) , e , refl = solveOnᴰ-sound C e
+runSolver-sound : ∀ {Θ} → (C : Constraint Θ)
+                → {Θ' : Scope} {σ : Subst Θ Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
+                → runSolver C ≡ solved (Θ' , σ , Q , R)
+                → σ ⊨[ Q ∣ R ] C
+runSolver-sound C eq with mapᴼ-solved (runSolverᴰ C) eq
+... | (Θ' , σ , Q , D) , e , refl = runSolverᴰ-sound C e
 
 -- A refutation refutes every closed instance
 
-solveOnᴰ-refutes : ∀ {Θ} → (C : Constraint Θ)
-                 → solveOnᴰ C ≡ refuted
-                 → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
-solveOnᴰ-refutes C eq τ sat with solve init C in e
+runSolverᴰ-refutes : ∀ {Θ} → (C : Constraint Θ)
+                   → runSolverᴰ C ≡ refuted
+                   → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
+runSolverᴰ-refutes C eq τ sat with solve init C in e
 ... | refuted = solve-fail init C e τ (Fixing-[] τ) ⊩ᴿ-empty sat
 ... | stuck   = ⊥stuck-refuted eq
 ... | solved (s' , m , w) with retry s' in e₁
@@ -222,7 +223,7 @@ solveOnᴰ-refutes C eq τ sat with solve init C in e
     fac  = solve-principal init C e τ sat ⊩ᴿ-empty
     fac₁ = retry-princ s' e₁ (proj₁ fac) (proj₁ (proj₂ (proj₂ fac)))
     fac₂ = reexpand-princ s₁ e₂ (proj₁ fac₁) ∅ᴴ (proj₁ (proj₂ (proj₂ fac₁)))
-solveOnᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | just (s₂ , m₂) | nothing
+runSolverᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | just (s₂ , m₂) | nothing
   with toHyps-nothing (res s₂) e'
 ...         | inj₁ (A , mem , q) =
               etDec-refute A q (proj₁ fac₂) (⊩ts (proj₂ (proj₂ fac₂)) mem)
@@ -233,23 +234,23 @@ solveOnᴰ-refutes C eq τ sat | solved (s' , m , w) | just (s₁ , m₁) | just
 ...         | inj₂ (A , B , mem , q) =
               ⊥nothing (trans (sym (proj₂ (reexpand-dec s₁ e₂ mem))) q)
 
-solveOn-refutes : ∀ {Θ} → (C : Constraint Θ)
-                → solveOn C ≡ refuted
-                → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
-solveOn-refutes C eq = solveOnᴰ-refutes C (mapᴼ-refuted (solveOnᴰ C) eq)
+runSolver-refutes : ∀ {Θ} → (C : Constraint Θ)
+                  → runSolver C ≡ refuted
+                  → (τ : Subst Θ ∅ˢ) → ¬ (τ ⊨[ ∅ᴴ ] C)
+runSolver-refutes C eq = runSolverᴰ-refutes C (mapᴼ-refuted (runSolverᴰ C) eq)
 
-solveOn-complete : ∀ {Θ} → (C : Constraint Θ)
-                 → solveOn C ≡ refuted
-                 → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → (R : Obligs Θ')
-                 → Satisfiable Q R
-                 → ¬ (σ ⊨[ Q ∣ R ] C)
-solveOn-complete C eq σ Q R (δ₀ , h₀) sat =
-  solveOn-refutes C eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
+runSolver-complete : ∀ {Θ} → (C : Constraint Θ)
+                   → runSolver C ≡ refuted
+                   → ∀ {Θ'} → (σ : Subst Θ Θ') → (Q : Hyps Θ') → (R : Obligs Θ')
+                   → Satisfiable Q R
+                   → ¬ (σ ⊨[ Q ∣ R ] C)
+runSolver-complete C eq σ Q R (δ₀ , h₀) sat =
+  runSolver-refutes C eq (σ ⨟ˢ δ₀) (sat δ₀ ∅ᴴ h₀)
 
 -- A constraint with no rigid binder is never stuck
 
-solveOnᴰ-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → solveOnᴰ C ≢ stuck
-solveOnᴰ-rigidFree C p with solve init C in e
+runSolverᴰ-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → runSolverᴰ C ≢ stuck
+runSolverᴰ-rigidFree C p with solve init C in e
 ... | refuted = λ ()
 ... | stuck   = ⊥-elim (solve-rigidFree init C p e)
 ... | solved (s' , m , w) with retry s'
@@ -262,18 +263,18 @@ solveOnᴰ-rigidFree C p with solve init C in e
 ...         | nothing = λ ()
 ...         | just _  = λ ()
 
-solveOn-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → solveOn C ≢ stuck
-solveOn-rigidFree C p eq = solveOnᴰ-rigidFree C p (mapᴼ-stuck (solveOnᴰ C) eq)
+runSolver-rigidFree : ∀ {Θ} → (C : Constraint Θ) → RigidFree C → runSolver C ≢ stuck
+runSolver-rigidFree C p eq = runSolverᴰ-rigidFree C p (mapᴼ-stuck (runSolverᴰ C) eq)
 
-solveOnᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
-                   → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Dfr Θ⁺)}
-                   → solveOnᴰ C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , D⁺)
-                   → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
-                   → σ ⊨[ Q ∣ R ] C
-                   → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
-                   → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
+runSolverᴰ-principal : ∀ {Θ} → (C : Constraint Θ)
+                     → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {D⁺ : List (Dfr Θ⁺)}
+                     → runSolverᴰ C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , D⁺)
+                     → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
+                     → σ ⊨[ Q ∣ R ] C
+                     → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
+                     → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
                        (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ map toOblig D⁺))
-solveOnᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
+runSolverᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
 ... | refuted = ⊥refuted eq
 ... | stuck   = ⊥stuck eq
 ... | solved (s' , m , w) with retry s' in e₁
@@ -312,23 +313,23 @@ solveOnᴰ-principal C eq σ Q R sat δ₀ h₀ with solve init C in e
           (≐ˢ-trans (⨟-congʳ (θ s') tri₁)
           (≐ˢ-trans (⨟-congˡ (≐ˢ-sym (mtri m)) δ) tri₀))))))
 
-solveOn-principal : ∀ {Θ} → (C : Constraint Θ)
-                  → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {R⁺ : Obligs Θ⁺}
-                  → solveOn C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , R⁺)
-                  → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
-                  → σ ⊨[ Q ∣ R ] C
-                  → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
-                  → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
+runSolver-principal : ∀ {Θ} → (C : Constraint Θ)
+                    → {Θ⁺ : Scope} {σ⁺ : Subst Θ Θ⁺} {Q⁺ : Hyps Θ⁺} {R⁺ : Obligs Θ⁺}
+                    → runSolver C ≡ solved (Θ⁺ , σ⁺ , Q⁺ , R⁺)
+                    → ∀ {Θ''} → (σ : Subst Θ Θ'') → (Q : Hyps Θ'') → (R : Obligs Θ'')
+                    → σ ⊨[ Q ∣ R ] C
+                    → (δ₀ : Subst Θ'' ∅ˢ) → δ₀ ⊨ Q ∣ R
+                    → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
                       (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
-solveOn-principal C eq with mapᴼ-solved (solveOnᴰ C) eq
-... | (Θ' , σ , Q , D) , e , refl = solveOnᴰ-principal C e
+runSolver-principal C eq with mapᴼ-solved (runSolverᴰ C) eq
+... | (Θ' , σ , Q , D) , e , refl = runSolverᴰ-principal C e
 
 solver : Solver
 solver = record
-  { solve           = solveOn
-  ; solve-sound     = solveOn-sound
-  ; solve-refutes   = solveOn-complete
-  ; solve-principal = solveOn-principal
+  { solve           = runSolver
+  ; solve-sound     = runSolver-sound
+  ; solve-refutes   = runSolver-complete
+  ; solve-principal = runSolver-principal
   }
 
 -- The entailment test of elimination by equality: an ordering among
@@ -356,7 +357,7 @@ entailsᴴ = entails entᵣ? entₑ?
 -- instance meeting the simplified residue and `R` meets `R̃`.
 
 record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Constraint Θ) : Set where
-  constructor report
+  constructor reported
   field
     Θ'     : Scope
     σ      : Subst Θ Θ'
@@ -370,7 +371,7 @@ record Reported {Θ₀ Θ : Scope} (w : Subst Θ₀ Θ) (X : OCType Θ) (C : Con
     Q̃      : Hyps Θ̃
     R̃      : Obligs Θ̃
     η      : Subst Θ' Θ'
-    sol    : solveOn C ≡ solved (Θ' , σ , Q , R)
+    sol    : runSolver C ≡ solved (Θ' , σ , Q , R)
     to-Q̂   : Q ⊨ᴴ Q̂
     to-Q   : Q̂ ⊩ᴴ Q
     fix    : w ⨟ˢ σ ⨟ˢ η ≐ˢ w ⨟ˢ σ
@@ -423,17 +424,17 @@ canonᵈ-⊩⁻ {δ = δ} (dfr l k o) h =
 ∈-map-elim f {P} p m with ∈-map⁻ f m
 ... | a , m₀ , refl = p m₀
 
--- The report of what `solveOnᴰ` returns. The variables of the deferred
+-- The report of what `runSolverᴰ` returns. The variables of the deferred
 -- conditions are frozen for elimination and kept by the strengthening:
 -- the conditions are read over the report's scope along the
 -- strengthening's retraction, in canonical form.
 
-reportOf : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-         → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')) → solveOnᴰ C ≡ s
-         → Outcome (Reported w X C)
-reportOf w X C refuted                    e = refuted
-reportOf w X C stuck                      e = stuck
-reportOf w X C (solved (Θ' , σ , Q , D)) e =
+reportOutcome : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
+              → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ')) → runSolverᴰ C ≡ s
+              → Outcome (Reported w X C)
+reportOutcome w X C refuted                    e = refuted
+reportOutcome w X C stuck                      e = stuck
+reportOutcome w X C (solved (Θ' , σ , Q , D)) e =
   solved (reportElim (eliminate entailsᴴ F (X [ σ ]ᶜ) (simplify Q)))
   where
     open Strengthened
@@ -446,7 +447,7 @@ reportOf w X C (solved (Θ' , σ , Q , D)) e =
     reportWith : (el : Elim (X [ σ ]ᶜ) (simplify Q)) → Fixes F (Elim.η el)
                → Strengthened (w ⨟ˢ σ) (Elim.Ĉ el) (Elim.Q̂ el) (fvᴰ D) → Reported w X C
     reportWith el fx sr =
-      report Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
+      reported Θ' σ Q (map toOblig D) (simplify Q) (Θ⁻ sr) (ι sr) (τ⁻ sr) (X⁻ sr) (Q⁻ sr)
              (map toOblig D̃) (Elim.η el)
              (cong (mapᴼ readOut) e) (simplify-⊨ Q) (simplify-⊩ Q)
              (fixes-≐ fx (w ⨟ˢ σ) (⊆-∪ˡ (fvˢ (w ⨟ˢ σ)) (fvᴰ D) ⊆-refl)) (τ-ι sr)
@@ -504,27 +505,27 @@ reportOf w X C (solved (Θ' , σ , Q , D)) e =
       reportStr (proj₁ el₀ ⨾ᴱ canonElim _ _ ⨾ᴱ trimElim _ _)
                 (fixes-⨟ (fixes-⨟ (proj₂ el₀) fixes-id) fixes-id)
 
-reportOn : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
-         → Outcome (Reported w X C)
-reportOn w X C = reportOf w X C (solveOnᴰ C) refl
+report : ∀ {Θ₀ Θ} → (w : Subst Θ₀ Θ) → (X : OCType Θ) → (C : Constraint Θ)
+       → Outcome (Reported w X C)
+report w X C = reportOutcome w X C (runSolverᴰ C) refl
 
 -- A report is refuted only where the solver is
 
-reportOf-refuted : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
-                 → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
-                 → (e : solveOnᴰ C ≡ s)
-                 → reportOf w X C s e ≡ refuted → solveOn C ≡ refuted
-reportOf-refuted refuted    e eq = cong (mapᴼ readOut) e
-reportOf-refuted stuck      e ()
-reportOf-refuted (solved _) e ()
+reportOutcome-refuted : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
+                      → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
+                      → (e : runSolverᴰ C ≡ s)
+                      → reportOutcome w X C s e ≡ refuted → runSolver C ≡ refuted
+reportOutcome-refuted refuted    e eq = cong (mapᴼ readOut) e
+reportOutcome-refuted stuck      e ()
+reportOutcome-refuted (solved _) e ()
 
-reportOf-stuck : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
-               → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
-               → (e : solveOnᴰ C ≡ s)
-               → reportOf w X C s e ≡ stuck → solveOn C ≡ stuck
-reportOf-stuck refuted    e ()
-reportOf-stuck stuck      e eq = cong (mapᴼ readOut) e
-reportOf-stuck (solved _) e ()
+reportOutcome-stuck : ∀ {Θ₀ Θ} {w : Subst Θ₀ Θ} {X : OCType Θ} {C : Constraint Θ}
+                    → (s : Outcome (Σ[ Θ' ∈ Scope ] Answer Θ Θ'))
+                    → (e : runSolverᴰ C ≡ s)
+                    → reportOutcome w X C s e ≡ stuck → runSolver C ≡ stuck
+reportOutcome-stuck refuted    e ()
+reportOutcome-stuck stuck      e eq = cong (mapᴼ readOut) e
+reportOutcome-stuck (solved _) e ()
 
 ------------------------------------------------------------------------
 -- The reference entry point
@@ -660,7 +661,7 @@ inferred Γ M refuted    = untypable
 inferred Γ M stuck      = stuck
 
 infer : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → Inference Γ M
-infer {Θ} Γ M = inferred Γ M (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
+infer {Θ} Γ M = inferred Γ M (report wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
 
 -- An untypable verdict refutes every typing under satisfiable
 -- hypotheses
@@ -668,8 +669,8 @@ infer {Θ} Γ M = inferred Γ M (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ])
 infer-untypable : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                 → infer Γ M ≡ untypable → ¬ Typable Γ M
 infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e₀ sQ) =
-  solveOn-complete C[ Γ , M ]
-    (reportOf-refuted (solveOnᴰ C[ Γ , M ]) refl (untyped (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
+  runSolver-complete C[ Γ , M ]
+    (reportOutcome-refuted (runSolverᴰ C[ Γ , M ]) refl (untyped (report wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
     (σ₀ ,ᵗ A₀ ,ᵉ ε₀) Q₀ [] sQ (⊨-∣ C[ Γ , M ] (typing-sat σ₀ D₀ e₀))
   where
     untyped : (x : Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]))
@@ -705,8 +706,8 @@ infer-complete Γ M t eq = infer-untypable Γ M eq t
 infer-handlerFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
                   → HandlerFreeᶜ M → infer Γ M ≢ stuck
 infer-handlerFree {Θ} Γ M h eq =
-  solveOn-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
-    (reportOf-stuck (solveOnᴰ C[ Γ , M ]) refl (unstuck (reportOn wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
+  runSolver-rigidFree C[ Γ , M ] (C[]-rigidFree Γ M h)
+    (reportOutcome-stuck (runSolverᴰ C[ Γ , M ]) refl (unstuck (report wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) eq))
   where
     unstuck : (x : Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]))
             → inferred Γ M x ≡ stuck → x ≡ stuck

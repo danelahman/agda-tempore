@@ -55,7 +55,7 @@ open import TypeInference.Erase                S using (⌊_⌋ᶜ)
 open import TypeInference.Principality         S
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
-open import TypeInference.Examples.Report S public
+open import TypeInference.Examples.Scheme S public
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
@@ -110,7 +110,7 @@ embargoed-D c d p =
 embargoed-typable : ∀ c d → True (of-natʳ d ≾ᵣ? c) → Typable [] (embargoed (rconst c) d)
 embargoed-typable c d p = closed (embargoed-D c d (toWitness p)) refl
 
-expected-embargoed : ℕ → Report
+expected-embargoed : ℕ → Scheme
 expected-embargoed d = ∀[ 0 , 0 , 0 ] ⊤ ⟹ Unit ‼ ⌜ d ⌝ᵉ
 
 ------------------------------------------------------------------
@@ -139,7 +139,7 @@ transmitted-typable : ∀ c op d → True ((mapᵉ (op-grade op) ·ᵣ of-natʳ 
                     → Typable [] (transmitted (rconst c) op d)
 transmitted-typable c op d p = closed (transmitted-D c op d (toWitness p)) refl
 
-expected-transmitted : Op → ℕ → Report
+expected-transmitted : Op → ℕ → Scheme
 expected-transmitted op d =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹
     (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ of-natᵉ d)) ‼ ûₑ
@@ -161,7 +161,7 @@ joined-claim op₀ op₁ op₂ =
       ((if v₁ `then perform op₁ v₀ (return ⋆) `else perform op₂ v₀ (return ⋆))
        ⨟ unbox (fsuc (fsuc (fsuc fzero))) (return v₀))))))
 
-expected-joined-claim : Op → Op → Op → Report
+expected-joined-claim : Op → Op → Op → Scheme
 expected-joined-claim op₀ op₁ op₂ =
   ∀[ 1 , 0 , 0 ] ⊤ ⟹
     ([ rconst (mapᵉ g) ] α₀ ⇒ (Bool ⇒ α₀ ‼ econst g) ‼ ûₑ) ‼ ûₑ
@@ -183,7 +183,7 @@ publish op =
   return (lam (return (lam
     ((v₁ · ⋆) ⨟ perform op v₀ (unbox (fsuc (fsuc fzero)) (return v₀))))))
 
-expected-publish : Op → Report
+expected-publish : Op → Scheme
 expected-publish op =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ ⌜ param op ⌝ᵍ ‼ ε₀)
@@ -211,6 +211,6 @@ twice-D op q =
 twice-typable : ∀ op → True (mapᵉ (op-grade op) ≾ᵣ? uᵣ) → Typable [] (twice op)
 twice-typable op q = closed (twice-D op (toWitness q)) refl
 
-expected-twice : Op → Report
+expected-twice : Op → Scheme
 expected-twice op =
   ∀[ 0 , 0 , 0 ] ⊤ ⟹ (⌜ param op ⌝ᵍ ⇒ Unit ‼ econst (op-grade op ·ₑ op-grade op)) ‼ ûₑ

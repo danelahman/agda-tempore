@@ -42,7 +42,7 @@ open import TypeInference.Principality         S
 open import TypeInference.SolverImpl           S opEnum using (infer-complete; infer-handlerFree)
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
-open import TypeInference.Examples.Report S public
+open import TypeInference.Examples.Scheme S public
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
@@ -80,7 +80,7 @@ id = return (lam (return v₀))
 id-typed : IsTyped (infer [] id)
 id-typed = typed-of id (closed {C = U⇒U ‼ ûₑ} (return (lam (return (var Hd ok₀)))) refl) _
 
-expected-id : Report
+expected-id : Scheme
 expected-id = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ α₀ ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -95,7 +95,7 @@ ignore = return (lam (return ⋆))
 ignore-typed : IsTyped (infer [] ignore)
 ignore-typed = typed-of ignore (closed {C = U⇒U ‼ ûₑ} (return (lam (return ⋆))) refl) _
 
-expected-ignore : Report
+expected-ignore : Scheme
 expected-ignore = ∀[ 1 , 0 , 0 ] ⊤ ⟹ (α₀ ⇒ Unit ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -112,7 +112,7 @@ fst-typed =
   typed-of fst (closed {C = (Unit |×| Bool ⇒ Unit ‼ ûₑ) ‼ ûₑ}
     (return (lam (match var Hd ok₀ `in return (var (Tl-∷ Hd) ok₀)))) refl) _
 
-expected-fst : Report
+expected-fst : Scheme
 expected-fst = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₁ ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -129,7 +129,7 @@ snd-typed =
   typed-of snd (closed {C = (Unit |×| Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ}
     (return (lam (match var Hd ok₀ `in return (var Hd ok₀)))) refl) _
 
-expected-snd : Report
+expected-snd : Scheme
 expected-snd = ∀[ 2 , 0 , 0 ] ⊤ ⟹ (α₁ |×| α₀ ⇒ α₀ ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -146,7 +146,7 @@ not-typed =
   typed-of not (closed {C = (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ}
     (return (lam (if var Hd ok₀ `then return false `else return true))) refl) _
 
-expected-not : Report
+expected-not : Scheme
 expected-not = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -164,7 +164,7 @@ absurd′-typed =
   typed-of absurd′ (closed {C = (Empty ⇒ Unit ‼ ûₑ) ‼ ûₑ}
     (return (lam (absurd (var Hd ok₀)))) refl) _
 
-expected-absurd′ : Report
+expected-absurd′ : Scheme
 expected-absurd′ = ∀[ 1 , 0 , 1 ] ⊤ ⟹ (Empty ⇒ α₀ ‼ ε₀) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -181,7 +181,7 @@ pipe-typed =
   typed-of pipe (closed {C = (Unit ⇒ (U⇒U ⇒ Unit ‼ ûₑ) ‼ ûₑ) ‼ ûₑ}
     (return (lam (return (lam (var Hd ok₀ · var (Tl-∷ Hd) ok₀))))) refl) _
 
-expected-pipe : Report
+expected-pipe : Scheme
 expected-pipe = ∀[ 2 , 0 , 1 ] ⊤ ⟹ (α₁ ⇒ ((α₁ ⇒ α₀ ‼ ε₀) ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -208,7 +208,7 @@ compose-typed =
     u·u≾u = transᵣ (eqᵣ ≡̂ᵣ-identityˡ)
               (transᵣ (eqᵣ ≡̂ᵣ-map-const) (atomᵣ (≾ᵣ-reflexive map-uᵉ)))
 
-expected-compose : Report
+expected-compose : Scheme
 expected-compose =
   ∀[ 3 , 0 , 2 ] ∣ ε₁ ∣̂ᵉ ≾ᵣ ûᵣ ⟹
     ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₁ ·̂ₑ ε₀)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
@@ -239,7 +239,7 @@ min-typed =
             `else return (var (Tl-∷ (Tl-⟨⟩ Hd)) (et-ok Unitₑ))))))))))
     refl) _
 
-expected-min : Report
+expected-min : Scheme
 expected-min =
   ∀[ 3 , 0 , 1 ] α₀ <: α₁ ∧ α₂ <: α₁
                  ∧ eternal α₀ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ∧ eternal α₂ ∨ ∣ ε₀ ∣̂ᵉ ≾ûᵣ ⟹

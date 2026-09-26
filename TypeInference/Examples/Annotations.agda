@@ -39,7 +39,7 @@ open import TypeInference.SolverImpl           S opEnum
   using (infer-complete; infer-handlerFree)
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
-open import TypeInference.Examples.Report S public
+open import TypeInference.Examples.Scheme S public
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
@@ -84,7 +84,7 @@ id-bool-typed : IsTyped (infer [] id-bool)
 id-bool-typed =
   typed-of id-bool (closed (return (lamᵃ Bool (return (var Hd ok₀)))) refl) _
 
-expected-id-bool : Report
+expected-id-bool : Scheme
 expected-id-bool = ∀[ 0 , 0 , 0 ] ⊤ ⟹ (Bool ⇒ Bool ‼ ûₑ) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -100,7 +100,7 @@ id-unit-typed : IsTyped (infer [] id-unit)
 id-unit-typed =
   typed-of id-unit (closed (annᶜ (U⇒U ‼ ûₑ) (return (lam (return (var Hd ok₀))))) refl) _
 
-expected-id-unit : Report
+expected-id-unit : Scheme
 expected-id-unit = ∀[ 0 , 0 , 0 ] ⊤ ⟹ U⇒U ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -127,7 +127,7 @@ compose-g-typed =
        ⨟ (var (Tl-∷ (Tl-⟨⟩ (Tl-∷ (Tl-∷ Hd)))) ok₁ · var Hd ok₀))))))))
     refl) _
 
-expected-compose-g : Report
+expected-compose-g : Scheme
 expected-compose-g =
   ∀[ 1 , 0 , 1 ] ⊤ ⟹
     ((Unit ⇒ α₀ ‼ ε₀) ⇒ (U⇒U ⇒ (Unit ⇒ α₀ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ

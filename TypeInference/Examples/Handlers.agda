@@ -56,7 +56,7 @@ open import TypeInference.Principality         S
 open import TypeInference.SolverImpl           S opEnum using (infer-complete)
 
 open import TypeInference.SolverImpl S opEnum using (infer) public
-open import TypeInference.Examples.Report S public
+open import TypeInference.Examples.Scheme S public
 open import TypeInference.Examples.Variables
 
 ------------------------------------------------------------------
@@ -141,7 +141,7 @@ relay-typable = closed relay-D refl
 relay-unrefuted : infer [] relay ≢ untypable
 relay-unrefuted = infer-complete [] relay relay-typable
 
-expected-relay : Report
+expected-relay : Scheme
 expected-relay = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -204,7 +204,7 @@ relay-boxed-typable = closed relay-boxed-D refl
 relay-boxed-unrefuted : infer [] relay-boxed ≢ untypable
 relay-boxed-unrefuted = infer-complete [] relay-boxed relay-boxed-typable
 
-expected-relay-boxed : Report
+expected-relay-boxed : Scheme
 expected-relay-boxed = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -236,7 +236,7 @@ discard-D least =
 discard-typable : Is-just uₑ-least? → Typable [] discard
 discard-typable least = closed (discard-D least) refl
 
-expected-discard : Report
+expected-discard : Scheme
 expected-discard = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
 
 ------------------------------------------------------------------
@@ -294,5 +294,5 @@ resume-twice-D top =
 resume-twice-typable : True (⊤ₑ ≾ₑ? uₑ) → Typable [] resume-twice
 resume-twice-typable top = closed (resume-twice-D top) refl
 
-expected-resume-twice : Report
+expected-resume-twice : Scheme
 expected-resume-twice = ∀[ 1 , 0 , 1 ] ⊤ ⟹ ((Unit ⇒ α₀ ‼ ε₀) ⇒ Unit ‼ ε₀) ‼ ûₑ
