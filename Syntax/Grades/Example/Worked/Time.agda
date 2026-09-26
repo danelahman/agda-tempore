@@ -38,3 +38,22 @@ import Syntax.Grades.Example.Worked.Time.RightSided
 -- both bounds at once, including the infinite upper endpoint
 
 import Syntax.Grades.Example.Worked.Time.TwoSided
+
+------------------------------------------------------------------------
+-- The dense analogue: units range over an extended rational, not ℕ
+
+-- discharging the numeric side conditions the dense instances reduce to
+
+import Syntax.Grades.Example.Worked.Time.Dense.Decide
+
+-- "at least q units have passed"
+
+import Syntax.Grades.Example.Worked.Time.Dense.LeftSided
+
+-- "at most q units have passed"; the mirror image
+
+import Syntax.Grades.Example.Worked.Time.Dense.RightSided
+
+-- both bounds at once, including the infinite upper endpoint
+
+import Syntax.Grades.Example.Worked.Time.Dense.TwoSided
