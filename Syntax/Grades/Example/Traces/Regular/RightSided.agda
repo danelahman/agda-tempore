@@ -65,6 +65,20 @@ permits-⟨⟩ : ∀ m → of-nat m permits ⟨ m ⟩
 permits-⟨⟩ m = subst (λ v → v ∈ table (of-nat m)) (sym (enc-⟨⟩ m)) (∈tick⁺ m)
 
 ------------------------------------------------------------------------
+-- Literals: extended regular expressions over the letters
+
+open import Syntax.Grades.Regular.Expression (suc n) public
+open import Syntax.Grades.Regular.Literal (suc n) zero public
+
+-- an operation, and a delay of `m` ticks
+
+‵op : Op → Expr
+‵op o = ‵ op o
+
+delay : ℕ → Expr
+delay m = tick ^ m
+
+------------------------------------------------------------------------
 -- The grade
 
 right-sided : Grade
