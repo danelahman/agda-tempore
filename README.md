@@ -489,13 +489,16 @@ Inference for the open calculus, by constraint generation and solving.
   - `Product.agda`, `Normal.agda`, `Canon.agda`: the sum-of-products normal
     form, its products sorted at commutative grades (`nrmᵣ-≡`); deciding
     entailed ordering (`decide≾ᵣ`/`decide≾ₑ`), sound by type, completeness not
-    claimed; the canonical form of reported grades (`canonᵣ-≡`). Two products
+    claimed; the canonical form of reported grades (`canonᵣ-≡`), a product
+    with the top absorbed where the unit is least, and of hypothesis sets,
+    each join on a left side split (`canonᴴ-⊩`, `canonᴴ-⊩⁻`). Two products
     are compared by an ordered embedding `_⊑ᵖ_` (match, skip an atom above or
     below the unit, absorb into an atom above the top, merge constants across
     a skipped atom), which `prodˢ≾` decides (`prodˢ≾-complete`,
     `prodˢ≾-exact`) and which is sound for entailment (`⊑ᵖ-sound`).
-  - `Simplify.agda`: settles disjunctions and prunes entailed atoms of a
-    report (`simplify-⊩`, `simplify-⊨`).
+  - `Simplify.agda`: settles disjunctions, drops a disjunction entailed by
+    another, and prunes entailed atoms of a report (`simplify-⊩`,
+    `simplify-⊨`).
   - `Bounds.agda`: the value rules both `Localise` and `Eliminate` use, on
     the orderings of one grade sort: lowering to the join of the bounds below
     (or a least element), raising to a bound above decided below the others,

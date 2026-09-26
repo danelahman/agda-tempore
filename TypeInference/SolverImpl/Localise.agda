@@ -155,10 +155,7 @@ open import TypeInference.SolverImpl.Vars      S
 import TypeInference.SolverImpl.Reach as Reachability
 open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
 open import TypeInference.SolverImpl.Canon     S
-  using (canonSumᵣ; canonSumₑ; canonᵣ; canonₑ; canonᵣ-≡; canonₑ-≡)
-open import TypeInference.SolverImpl.Product   S
-  using (Alts; alt; _∷⁺_; RAtom; EAtom; ⟦_⟧ʳᵖ; ⟦_⟧ʳᵖ⁺; ⟦_⟧ᵉᵖ; ⟦_⟧ᵉᵖ⁺;
-         nrmᵣ; nrmₑ)
+  using (canonᵣ; canonᵣ-≡; Ordʳ; Ordᵉ; Pieces; pieces; Split; splits; piecesʳ; piecesᵉ)
 
 ------------------------------------------------------------------------
 -- Booleans and finite enumerations
@@ -995,12 +992,6 @@ stepʳ {Ψ} k R with cleanʳ? k R
 Every : ∀ {Ψ} {X : Set} → (∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) → X → Set
 Every P a = ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst _ Ψ') → P Q δ a
 
-Ordʳ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → RExp Ψ × RExp Ψ → Set
-Ordʳ Q δ (ρ , ρ') = Q ⊩ ρ [ δ ]ʳ ≾̂ᵣ ρ' [ δ ]ʳ
-
-Ordᵉ : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → EExp Ψ × EExp Ψ → Set
-Ordᵉ Q δ (ε , ε') = Q ⊩ ε [ δ ]ᵉ ≾̂ₑ ε' [ δ ]ᵉ
-
 Disj : ∀ {Ψ Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → OVType Ψ × RExp Ψ → Set
 Disj Q δ (A , ρ) = VarOK Q (A [ δ ]ᵛ) (ρ [ δ ]ʳ)
 
@@ -1565,10 +1556,11 @@ module Find {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) (j : EVar Φ) where
   raise? = select (nsuc (nE Φ + nR Φ)) (λ k → not (freeᵉ k O)) (λ k → not (freeʳ k O))
 
 ------------------------------------------------------------------------
--- Normal forms: each side of an ordering and each disjunction's grade
--- written canonically, and an ordering whose left side has two or more
--- alternatives made one ordering per alternative, the join being the
--- least upper bound. A right side is never split.
+-- Normal forms: each ordering split into its pieces (`piecesʳ`,
+-- `piecesᵉ` of `Canon`), both sides canonical and one ordering per
+-- alternative of the left side, the join being the least upper bound;
+-- each disjunction's grade written canonically. A right side is never
+-- split.
 
 -- Whether a left side has a join, which it needs to have two or more
 -- alternatives
@@ -1585,95 +1577,6 @@ hasJoinᵣ (rconst c) = false
 hasJoinᵣ (ρ ·̂ᵣ ρ')  = hasJoinᵣ ρ ∨ hasJoinᵣ ρ'
 hasJoinᵣ (ρ ⊔̂ᵣ ρ')  = true
 hasJoinᵣ ∣ ε ∣̂ᵉ     = hasJoinₑ ε
-
--- The orderings an atom is replaced by, equivalent to it at every
--- instance
-
-record Pieces {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (a : X) : Set where
-  constructor pieces
-  field
-    parts : List X
-    pback : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → (∀ {b} → b ∈ parts → P Q δ b) → P Q δ a
-    pfwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ') → P Q δ a → ∀ {b} → b ∈ parts → P Q δ b
-
-record Split {Ψ} {X : Set} (P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set) (l : List X) : Set where
-  constructor split
-  field
-    out  : List X
-    back : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-         → (∀ {b} → b ∈ out → P Q δ b) → ∀ {a} → a ∈ l → P Q δ a
-    fwd  : ∀ {Ψ'} {Q : Hyps Ψ'} → (δ : Subst Ψ Ψ')
-         → (∀ {a} → a ∈ l → P Q δ a) → ∀ {b} → b ∈ out → P Q δ b
-
-splits : ∀ {Ψ} {X : Set} {P : ∀ {Ψ'} → Hyps Ψ' → Subst Ψ Ψ' → X → Set}
-       → ((a : X) → Pieces P a) → (l : List X) → Split P l
-splits f []      = split [] (λ δ k → λ ()) (λ δ k → λ ())
-splits {P = P} f (a ∷ l) = go (f a) (splits f l)
-  where
-    go : Pieces P a → Split P l → Split P (a ∷ l)
-    go (pieces ps pb pf) (split o bk fw) =
-      split (ps ++ o)
-            (λ δ k → λ { (here refl) → pb δ (λ m → k (∈-++⁺ˡ m))
-                       ; (there m)   → bk δ (λ m' → k (∈-++⁺ʳ ps m')) m })
-            (λ δ k m → [ pf δ (k (here refl)) , fw δ (λ m' → k (there m')) ]′ (∈-++⁻ ps m))
-
--- The alternatives of a sum, each below the same right side
-
-partsʳ : ∀ {Ψ} → Alts (List (RAtom Ψ)) → RExp Ψ → List (RExp Ψ × RExp Ψ)
-partsʳ (alt p)  y = (⟦ p ⟧ʳᵖ , y) ∷ []
-partsʳ (p ∷⁺ s) y = (⟦ p ⟧ʳᵖ , y) ∷ partsʳ s y
-
-partsₑ : ∀ {Ψ} → Alts (List (EAtom Ψ)) → EExp Ψ → List (EExp Ψ × EExp Ψ)
-partsₑ (alt p)  y = (⟦ p ⟧ᵉᵖ , y) ∷ []
-partsₑ (p ∷⁺ s) y = (⟦ p ⟧ᵉᵖ , y) ∷ partsₑ s y
-
-partsʳ-lub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (RAtom Ψ))) → (y : RExp Ψ)
-           → (∀ {b} → b ∈ partsʳ s y → Ordʳ Q δ b) → Q ⊩ ⟦ s ⟧ʳᵖ⁺ [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ
-partsʳ-lub (alt p)  y k = k (here refl)
-partsʳ-lub (p ∷⁺ s) y k = ⊔-lubᵣ (k (here refl)) (partsʳ-lub s y (λ m → k (there m)))
-
-partsʳ-ub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (RAtom Ψ))) → (y : RExp Ψ)
-          → Q ⊩ ⟦ s ⟧ʳᵖ⁺ [ δ ]ʳ ≾̂ᵣ y [ δ ]ʳ → ∀ {b} → b ∈ partsʳ s y → Ordʳ Q δ b
-partsʳ-ub (alt p)  y h (here refl) = h
-partsʳ-ub (p ∷⁺ s) y h (here refl) = transᵣ ⊔-ubˡᵣ h
-partsʳ-ub (p ∷⁺ s) y h (there m)   = partsʳ-ub s y (transᵣ ⊔-ubʳᵣ h) m
-
-partsₑ-lub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (EAtom Ψ))) → (y : EExp Ψ)
-           → (∀ {b} → b ∈ partsₑ s y → Ordᵉ Q δ b) → Q ⊩ ⟦ s ⟧ᵉᵖ⁺ [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ
-partsₑ-lub (alt p)  y k = k (here refl)
-partsₑ-lub (p ∷⁺ s) y k = ⊔-lubₑ (k (here refl)) (partsₑ-lub s y (λ m → k (there m)))
-
-partsₑ-ub : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {δ : Subst Ψ Ψ'} → (s : Alts (List (EAtom Ψ))) → (y : EExp Ψ)
-          → Q ⊩ ⟦ s ⟧ᵉᵖ⁺ [ δ ]ᵉ ≾̂ₑ y [ δ ]ᵉ → ∀ {b} → b ∈ partsₑ s y → Ordᵉ Q δ b
-partsₑ-ub (alt p)  y h (here refl) = h
-partsₑ-ub (p ∷⁺ s) y h (here refl) = transₑ ⊔-ubˡₑ h
-partsₑ-ub (p ∷⁺ s) y h (there m)   = partsₑ-ub s y (transₑ ⊔-ubʳₑ h) m
-
--- An ordering: its left side's alternatives, each below its right side
-
-piecesʳ : ∀ {Ψ} → (a : RExp Ψ × RExp Ψ) → Pieces Ordʳ a
-piecesʳ (x , y) =
-  pieces (partsʳ s (canonᵣ y))
-         (λ δ k → transᵣ (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ x)))
-                    (transᵣ (partsʳ-lub s (canonᵣ y) k)
-                            (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ y))))))
-         (λ δ h → partsʳ-ub s (canonᵣ y)
-                    (transᵣ (eqᵣ (≡̂ᵣ-sym (≡̂ᵣ-subst δ (canonᵣ-≡ x))))
-                            (transᵣ h (eqᵣ (≡̂ᵣ-subst δ (canonᵣ-≡ y))))))
-  where
-    s = canonSumᵣ (nrmᵣ x)
-
-piecesᵉ : ∀ {Ψ} → (a : EExp Ψ × EExp Ψ) → Pieces Ordᵉ a
-piecesᵉ (x , y) =
-  pieces (partsₑ s (canonₑ y))
-         (λ δ k → transₑ (eqₑ (≡̂ₑ-subst δ (canonₑ-≡ x)))
-                    (transₑ (partsₑ-lub s (canonₑ y) k)
-                            (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst δ (canonₑ-≡ y))))))
-         (λ δ h → partsₑ-ub s (canonₑ y)
-                    (transₑ (eqₑ (≡̂ₑ-sym (≡̂ₑ-subst δ (canonₑ-≡ x))))
-                            (transₑ h (eqₑ (≡̂ₑ-subst δ (canonₑ-≡ y))))))
-  where
-    s = canonSumₑ (nrmₑ x)
 
 -- A disjunction: its grade in canonical form
 

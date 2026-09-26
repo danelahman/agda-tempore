@@ -1,23 +1,32 @@
 ------------------------------------------------------------------
--- Normalising, settling and pruning a reported hypothesis set   --
+-- Normalising, settling and pruning a reported hypothesis set    --
 --                                                                --
--- `simplify` first replaces every grade expression of the set by --
--- its canonical form. It then settles every `disj` entry one of  --
--- whose sides is settled: a met eternality demand or an entailed --
--- grade ordering drops the entry, a refuted eternality demand    --
--- leaves the grade ordering behind, in skeleton order, and a     --
--- refuted grade leaves the eternality atoms behind. It then      --
--- prunes: a subtyping or eternality atom entailed by the atoms   --
--- kept before it is dropped, entailment there being reachability --
--- in a finite digraph, and a grade ordering is dropped when its  --
--- two sides are the same or it repeats one kept before it. It    --
--- finally lists the grade orderings by the skeletons of their    --
--- two sides.                                                     --
+-- `simplify` first writes the set in canonical form (`canonᴴ`):  --
+-- every grade expression canonical, and an ordering with a join  --
+-- on its left one ordering per alternative. It then settles      --
+-- every `disj` entry one of whose sides is settled: a met        --
+-- eternality demand or an entailed grade ordering drops the      --
+-- entry, a refuted eternality demand leaves the grade ordering   --
+-- behind, in skeleton order, and a refuted grade leaves the      --
+-- eternality atoms behind. It then drops each disjunction        --
+-- entailed by the others: one whose type is that of another,     --
+-- whose grade is entailed above its own; of two entailing each   --
+-- other the later is kept (`walkᵈ`). It then prunes: a subtyping --
+-- or eternality atom entailed by the atoms kept before it is     --
+-- dropped, entailment there being reachability in a finite       --
+-- digraph, and a grade ordering is dropped when its two sides    --
+-- are the same or it repeats one kept before it. It finally      --
+-- lists the grade orderings by the skeletons of their two sides. --
 --                                                                --
--- `trim` settles the disjunctions again, then drops every        --
--- subtyping atom and grade ordering entailed by those kept and   --
--- those not yet examined, the orderings by `decide≾`; an         --
+-- `trim` settles the disjunctions again and drops those entailed --
+-- by the others, then drops every subtyping atom and grade       --
+-- ordering entailed by those kept and those not yet examined; an --
 -- ordering that holds outright is dropped too.                   --
+--                                                                --
+-- An ordering is entailed, for settling, for the disjunctions    --
+-- and for `trim`, when it is among the orderings of the set      --
+-- read, or `decide≾` proves it from their atomic ones (`entᵣ?`,  --
+-- `entₑ?`); two types are compared syntactically (`sameᵛ?`).     --
 --                                                                --
 -- Contract. `simplify Q` and `trim Q` entail `Q` (`simplify-⊩`,  --
 -- `trim-⊩`), and every closed instance of `Q` is one of each     --
@@ -64,6 +73,9 @@ open import TypeInference.OpenSyntax.Subst     S
 open import TypeInference.OpenSyntax.Hyps      S
 open import TypeInference.OpenSyntax.Instances S
   using (_⊨ᴴ_; ⊨ᴴ-trans; ⊩ᴴ-⊨ᴴ; VarOK-∅; val-≾ᵣ⁻)
+
+open import Syntax.BaseTypes using (module BaseTypes)
+open BaseTypes BTs using (_≡ᵇ?_)
 
 open import TypeInference.SolverImpl.Core.Rigid S using (zip₂-just)
 
@@ -234,10 +246,81 @@ module _ {A : Set} (_≺_ : A → A → 𝔹) where
   sortᴼ-⊇ (p ∷ l) (here refl) = insertᴼ-⊇ p (sortᴼ l) (here refl)
   sortᴼ-⊇ (p ∷ l) (there m)   = insertᴼ-⊇ p (sortᴼ l) (there (sortᴼ-⊇ l m))
 
+-- A walk down a list dropping every entry a test settles, those kept
+-- staying in place. The test sees the entries kept so far and those
+-- not yet examined.
+
+module Walk {A : Set} (Ok : List A → List A → A → Set)
+            (test : (seen rest : List A) → (p : A) → Maybe (Ok seen rest p))
+            where
+
+  walk : List A → List A → List A
+  walk seen []      = []
+  walk seen (p ∷ l) with test seen l p
+  ... | just _  = walk seen l
+  ... | nothing = p ∷ walk (p ∷ seen) l
+
+  walk-⊆ : (seen l : List A) → ∀ {p} → p ∈ walk seen l → p ∈ l
+  walk-⊆ seen (p₀ ∷ l) m with test seen l p₀
+  walk-⊆ seen (p₀ ∷ l) m           | just _  = there (walk-⊆ seen l m)
+  walk-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
+  walk-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (walk-⊆ (p₀ ∷ seen) l m)
+
+  -- A property that a settled entry has whenever everything its test
+  -- saw has it, and that holds of the entries seen and those kept,
+  -- holds of every entry
+
+  walk-⊨ : (P : A → Set)
+         → (∀ seen rest {p} → Ok seen rest p → (∀ {q} → q ∈ seen ++ rest → P q) → P p)
+         → (seen l : List A) → (∀ {q} → q ∈ seen → P q)
+         → (∀ {q} → q ∈ walk seen l → P q)
+         → ∀ {q} → q ∈ l → P q
+  walk-⊨ P close seen (p₀ ∷ l) hs hk m with test seen l p₀
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (here refl) | just d  =
+    close seen l d (λ q → [ hs , walk-⊨ P close seen l hs hk ]′ (∈-++⁻ seen q))
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (there m)   | just _  =
+    walk-⊨ P close seen l hs hk m
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (here refl) | nothing = hk (here refl)
+  walk-⊨ P close seen (p₀ ∷ l) hs hk (there m)   | nothing =
+    walk-⊨ P close (p₀ ∷ seen) l
+           (λ { (here refl) → hk (here refl) ; (there q) → hs q })
+           (λ q → hk (there q)) m
+
+-- Membership of an ordering in a list
+
+memʳ? : ∀ {Θ} → (p : RExp Θ × RExp Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (p ∈ l)
+memʳ? p []              = nothing
+memʳ? (ρ , ρ') ((ρ₀ , ρ₀') ∷ l) with ρ ≟ʳ ρ₀ | ρ' ≟ʳ ρ₀'
+... | yes refl | yes refl = just (here refl)
+... | _        | _        with memʳ? (ρ , ρ') l
+...   | just m  = just (there m)
+...   | nothing = nothing
+
+memᵉ? : ∀ {Θ} → (p : EExp Θ × EExp Θ) → (l : List (EExp Θ × EExp Θ)) → Maybe (p ∈ l)
+memᵉ? p []              = nothing
+memᵉ? (ε , ε') ((ε₀ , ε₀') ∷ l) with ε ≟ᵉ ε₀ | ε' ≟ᵉ ε₀'
+... | yes refl | yes refl = just (here refl)
+... | _        | _        with memᵉ? (ε , ε') l
+...   | just m  = just (there m)
+...   | nothing = nothing
+
+-- An entailed ordering: one among the set's orderings, or one
+-- `decide≾` proves from the set's atomic orderings
+
+entᵣ? : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
+entᵣ? Q ρ ρ' with memʳ? (ρ , ρ') (ordᵣ Q)
+... | just m  = just (hypᵣ m)
+... | nothing = decide≾ᵣ ρ ρ'
+
+entₑ? : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
+entₑ? Q ε ε' with memᵉ? (ε , ε') (ordₑ Q)
+... | just m  = just (hypₑ m)
+... | nothing = decide≾ₑ ε ε'
+
 -- One disjunction, settled against the deciders and the set itself
 
 settle : ∀ {Θ} → OVType Θ → RExp Θ → Hyps Θ → Hyps Θ
-settle A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
+settle A ρ Q with entᵣ? Q ρ ûᵣ
 ... | just _  = Q
 ... | nothing with etDec A
 ...   | nothing = hyps (ets Q) (subᵥ Q) (insertᴼ _≺ᵣ_ (ρ , ûᵣ) (ordᵣ Q)) (ordₑ Q) (disj Q)
@@ -252,7 +335,7 @@ settle A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
 
 settle-⊩ : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ)
          → (settle A ρ Q ⊩ᴴ Q) × VarOK (settle A ρ Q) A ρ
-settle-⊩ A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
+settle-⊩ A ρ Q with entᵣ? Q ρ ûᵣ
 ... | just d  = ⊩ᴴ-refl , ≾ᵘ-ok d
 ... | nothing with etDec A in e
 ...   | nothing =
@@ -275,7 +358,7 @@ settle-⊩ A ρ Q with decide≾ᵣ {Q = Q} ρ ûᵣ
 
 settle-inst : ∀ {Θ} → (A : OVType Θ) → (ρ : RExp Θ) → (Q : Hyps Θ) → (δ : Subst Θ ∅ˢ)
             → VarOK ∅ᴴ (A [ δ ]ᵛ) (ρ [ δ ]ʳ) → ∅ᴴ ⊩ᴴ Q [ δ ] → ∅ᴴ ⊩ᴴ settle A ρ Q [ δ ]
-settle-inst A ρ Q δ d h with decide≾ᵣ {Q = Q} ρ ûᵣ
+settle-inst A ρ Q δ d h with entᵣ? Q ρ ûᵣ
 ... | just _  = h
 ... | nothing with etDec A in e
 ...   | nothing = mk⊩ᴴ (⊩ets h) (⊩subᵥ h) ordR (⊩ordₑ h) (⊩disj h)
@@ -326,19 +409,104 @@ settleAll-inst ((A , ρ) ∷ l) Q₀ δ k h =
 split : ∀ {Θ} → Hyps Θ → Hyps Θ
 split Q₀ = hyps (ets Q₀) (subᵥ Q₀) (ordᵣ Q₀) (ordₑ Q₀) []
 
--- Every disjunction of the set settled
+-- Syntactic identity of types
+
+sameᵛ? : ∀ {Θ} → (A A' : OVType Θ) → Maybe (A ≡ A')
+sameᶜ? : ∀ {Θ} → (C C' : OCType Θ) → Maybe (C ≡ C')
+
+sameᵛ? (tvar α) (tvar β) with α ≟ᶠ β
+... | yes refl = just refl
+... | no _     = nothing
+sameᵛ? (Base b) (Base b') with b ≡ᵇ? b'
+... | yes refl = just refl
+... | no _     = nothing
+sameᵛ? Unit Unit = just refl
+sameᵛ? Bool Bool = just refl
+sameᵛ? (A |×| B) (A' |×| B') with sameᵛ? A A' | sameᵛ? B B'
+... | just refl | just refl = just refl
+... | _         | _         = nothing
+sameᵛ? Empty Empty = just refl
+sameᵛ? (A ⇒ C) (A' ⇒ C') with sameᵛ? A A' | sameᶜ? C C'
+... | just refl | just refl = just refl
+... | _         | _         = nothing
+sameᵛ? ([ ρ ] A) ([ ρ' ] A') with ρ ≟ʳ ρ' | sameᵛ? A A'
+... | yes refl | just refl = just refl
+... | _        | _         = nothing
+sameᵛ? _ _ = nothing
+
+sameᶜ? (A ‼ ε) (A' ‼ ε') with sameᵛ? A A' | ε ≟ᵉ ε'
+... | just refl | yes refl = just refl
+... | _         | _        = nothing
+
+-- A disjunction entailed by another: the same type, and a grade
+-- entailed (by `entᵣ?`) above its own. Of two each entailing the
+-- other, the walk keeps the later.
+
+Hᵈ : ∀ {Θ} → Hyps Θ → List (OVType Θ × RExp Θ) → Hyps Θ
+Hᵈ Q ds = hyps (ets Q) (subᵥ Q) (ordᵣ Q) (ordₑ Q) ds
+
+Okᵈ : ∀ {Θ} → Hyps Θ → (seen rest : List (OVType Θ × RExp Θ)) → OVType Θ × RExp Θ → Set
+Okᵈ Q seen rest (A , ρ) = VarOK (Hᵈ Q (seen ++ rest)) A ρ
+
+Aboveᵈ : ∀ {Θ} → Hyps Θ → OVType Θ → RExp Θ → List (OVType Θ × RExp Θ) → Set
+Aboveᵈ {Θ} Q A ρ l = Σ[ ρ' ∈ RExp Θ ] ((A , ρ') ∈ l × Q ⊩ ρ ≾̂ᵣ ρ')
+
+thereᵈ : ∀ {Θ} {Q : Hyps Θ} {A ρ x l} → Maybe (Aboveᵈ Q A ρ l) → Maybe (Aboveᵈ Q A ρ (x ∷ l))
+thereᵈ (just (ρ' , m , d)) = just (ρ' , there m , d)
+thereᵈ nothing             = nothing
+
+aboveᵈ? : ∀ {Θ} → (Q : Hyps Θ) → (A : OVType Θ) → (ρ : RExp Θ)
+        → (l : List (OVType Θ × RExp Θ)) → Maybe (Aboveᵈ Q A ρ l)
+aboveᵈ? Q A ρ []               = nothing
+aboveᵈ? Q A ρ ((A' , ρ') ∷ l) with sameᵛ? A A'
+... | nothing   = thereᵈ (aboveᵈ? Q A ρ l)
+... | just refl with entᵣ? Q ρ ρ'
+...   | just d  = just (ρ' , here refl , d)
+...   | nothing = thereᵈ (aboveᵈ? Q A ρ l)
+
+testᵈ : ∀ {Θ} → (Q : Hyps Θ) → (seen rest : List (OVType Θ × RExp Θ))
+      → (p : OVType Θ × RExp Θ) → Maybe (Okᵈ Q seen rest p)
+testᵈ Q seen rest (A , ρ) with aboveᵈ? (Hᵈ Q (seen ++ rest)) A ρ (seen ++ rest)
+... | just (ρ' , m , d) = just (hyp-ok m (≡̂ᵛ-refl A) d)
+... | nothing           = nothing
+
+walkᵈ : ∀ {Θ} → Hyps Θ → Hyps Θ
+walkᵈ Q = Hᵈ Q (Walk.walk (Okᵈ Q) (testᵈ Q) [] (disj Q))
+
+walkᵈ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ walkᵈ Q
+walkᵈ-⊩⁻ Q =
+  ⊆ᴴ-⊩ (mk⊆ᴴ (λ m → m) (λ m → m) (λ m → m) (λ m → m)
+             (Walk.walk-⊆ (Okᵈ Q) (testᵈ Q) [] (disj Q)))
+
+walkᵈ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → walkᵈ Q ⊩ᴴ Q
+walkᵈ-⊩ {Θ} Q =
+  mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ
+        (Walk.walk-⊨ (Okᵈ Q) (testᵈ Q) (λ p → VarOK (walkᵈ Q) (proj₁ p) (proj₂ p))
+                     close [] (disj Q) (λ ()) hyp-ok₀)
+  where
+    close : ∀ (seen rest : List (OVType Θ × RExp Θ)) {p} → Okᵈ Q seen rest p
+          → (∀ {q} → q ∈ seen ++ rest → VarOK (walkᵈ Q) (proj₁ q) (proj₂ q))
+          → VarOK (walkᵈ Q) (proj₁ p) (proj₂ p)
+    close seen rest ok hs =
+      ⊩ᴴ-VarOK (mk⊩ᴴ⁼ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) hypᵣ hypₑ hs) ok
+
+-- Every disjunction of the set settled, then those entailed by the
+-- others dropped
 
 settleᴴ : ∀ {Θ} → Hyps Θ → Hyps Θ
-settleᴴ Q = settleAll (disj Q) (split Q)
+settleᴴ Q = walkᵈ (settleAll (disj Q) (split Q))
 
 settleᴴ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → settleᴴ Q ⊩ᴴ Q
 settleᴴ-⊩ Q with settleAll-⊩ (disj Q) (split Q)
-... | h , k = mk⊩ᴴ⁼ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ⁼ h) (⊩ordₑ⁼ h) k
+... | h , k =
+      ⊩ᴴ-trans (walkᵈ-⊩ (settleAll (disj Q) (split Q)))
+               (mk⊩ᴴ⁼ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ⁼ h) (⊩ordₑ⁼ h) k)
 
 settleᴴ-⊨ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊨ᴴ settleᴴ Q
-settleᴴ-⊨ Q δ h =
-  settleAll-inst (disj Q) (split Q) δ (⊩disj h)
-                 (mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (λ ()))
+settleᴴ-⊨ Q =
+  ⊨ᴴ-trans (λ δ h → settleAll-inst (disj Q) (split Q) δ (⊩disj h)
+                      (mk⊩ᴴ (⊩ets h) (⊩subᵥ h) (⊩ordᵣ h) (⊩ordₑ h) (λ ())))
+           (⊩ᴴ-⊨ᴴ (walkᵈ-⊩⁻ (settleAll (disj Q) (split Q))))
 
 -- A subtyping or eternality atom entailed by the atoms kept before it
 -- is dropped: entailment of such atoms is reachability in a finite
@@ -432,46 +600,6 @@ pruneᵀ-⊩⁻ Q =
              (λ m → [ (λ ()) , (λ q → q) ]′ (pruneᵛ-⊆ [] (subᵥ Q) m))
              (λ m → m) (λ m → m) (λ m → m))
 
--- A walk down a list dropping every entry a test settles, those kept
--- staying in place. The test sees the entries kept so far and those
--- not yet examined.
-
-module Walk {A : Set} (Ok : List A → List A → A → Set)
-            (test : (seen rest : List A) → (p : A) → Maybe (Ok seen rest p))
-            where
-
-  walk : List A → List A → List A
-  walk seen []      = []
-  walk seen (p ∷ l) with test seen l p
-  ... | just _  = walk seen l
-  ... | nothing = p ∷ walk (p ∷ seen) l
-
-  walk-⊆ : (seen l : List A) → ∀ {p} → p ∈ walk seen l → p ∈ l
-  walk-⊆ seen (p₀ ∷ l) m with test seen l p₀
-  walk-⊆ seen (p₀ ∷ l) m           | just _  = there (walk-⊆ seen l m)
-  walk-⊆ seen (p₀ ∷ l) (here refl) | nothing = here refl
-  walk-⊆ seen (p₀ ∷ l) (there m)   | nothing = there (walk-⊆ (p₀ ∷ seen) l m)
-
-  -- A property that a settled entry has whenever everything its test
-  -- saw has it, and that holds of the entries seen and those kept,
-  -- holds of every entry
-
-  walk-⊨ : (P : A → Set)
-         → (∀ seen rest {p} → Ok seen rest p → (∀ {q} → q ∈ seen ++ rest → P q) → P p)
-         → (seen l : List A) → (∀ {q} → q ∈ seen → P q)
-         → (∀ {q} → q ∈ walk seen l → P q)
-         → ∀ {q} → q ∈ l → P q
-  walk-⊨ P close seen (p₀ ∷ l) hs hk m with test seen l p₀
-  walk-⊨ P close seen (p₀ ∷ l) hs hk (here refl) | just d  =
-    close seen l d (λ q → [ hs , walk-⊨ P close seen l hs hk ]′ (∈-++⁻ seen q))
-  walk-⊨ P close seen (p₀ ∷ l) hs hk (there m)   | just _  =
-    walk-⊨ P close seen l hs hk m
-  walk-⊨ P close seen (p₀ ∷ l) hs hk (here refl) | nothing = hk (here refl)
-  walk-⊨ P close seen (p₀ ∷ l) hs hk (there m)   | nothing =
-    walk-⊨ P close (p₀ ∷ seen) l
-           (λ { (here refl) → hk (here refl) ; (there q) → hs q })
-           (λ q → hk (there q)) m
-
 -- A subtyping atom reachable from the atoms kept and those not yet
 -- examined
 
@@ -506,22 +634,6 @@ walkᵛ-⊩ {Θ} Q =
 -- Grade orderings are pruned by a walk against a test of entailment:
 -- one the test proves is dropped. The effect orderings are pruned
 -- first, and the resource ones read with the effect ones kept.
-
-memʳ? : ∀ {Θ} → (p : RExp Θ × RExp Θ) → (l : List (RExp Θ × RExp Θ)) → Maybe (p ∈ l)
-memʳ? p []              = nothing
-memʳ? (ρ , ρ') ((ρ₀ , ρ₀') ∷ l) with ρ ≟ʳ ρ₀ | ρ' ≟ʳ ρ₀'
-... | yes refl | yes refl = just (here refl)
-... | _        | _        with memʳ? (ρ , ρ') l
-...   | just m  = just (there m)
-...   | nothing = nothing
-
-memᵉ? : ∀ {Θ} → (p : EExp Θ × EExp Θ) → (l : List (EExp Θ × EExp Θ)) → Maybe (p ∈ l)
-memᵉ? p []              = nothing
-memᵉ? (ε , ε') ((ε₀ , ε₀') ∷ l) with ε ≟ᵉ ε₀ | ε' ≟ᵉ ε₀'
-... | yes refl | yes refl = just (here refl)
-... | _        | _        with memᵉ? (ε , ε') l
-...   | just m  = just (there m)
-...   | nothing = nothing
 
 -- The set of the grade orderings `seen`, with the effect orderings `lₑ`
 
@@ -568,14 +680,10 @@ repeatᵉ? seen rest (ε , ε') with ε ≟ᵉ ε'
 -- `decide≾` proves from them
 
 entailsʳ? : Testʳ
-entailsʳ? lₑ seen rest (ρ , ρ') with memʳ? (ρ , ρ') (seen ++ rest)
-... | just m  = just (hypᵣ m)
-... | nothing = decide≾ᵣ ρ ρ'
+entailsʳ? lₑ seen rest (ρ , ρ') = entᵣ? (Hʳ lₑ (seen ++ rest)) ρ ρ'
 
 entailsᵉ? : Testᵉ
-entailsᵉ? seen rest (ε , ε') with memᵉ? (ε , ε') (seen ++ rest)
-... | just m  = just (hypₑ m)
-... | nothing = decide≾ₑ ε ε'
+entailsᵉ? seen rest (ε , ε') = entₑ? (Hᵉ (seen ++ rest)) ε ε'
 
 module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
 

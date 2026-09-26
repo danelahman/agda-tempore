@@ -28,13 +28,15 @@
 --   orderings entailed by transitivity                           --
 --   (`closedᴴ-⊩`/`-⊆`/`-fail`).                                  --
 -- * The report (`reportOn`, `Reported`): `simplify`              --
---   (`simplify-⊩`/`-⊨`), Pottier's elimination (`Elim`), with    --
---   the type variables of a subtyping cycle identified           --
---   (`equateᵗ`), canonical forms (`canonElim`), `trim`           --
---   (`trimElim`), strengthening (`Strengthened`). The unknowns   --
---   of the image of the caller's variables, and those of the     --
---   deferred conditions, are neither eliminated nor dropped      --
---   (`fix`, `instᴿ`).                                            --
+--   (`simplify-⊩`/`-⊨`), which writes the set in canonical form, --
+--   each join on a left side split, and drops each var-rule      --
+--   disjunction entailed by another; Pottier's elimination       --
+--   (`Elim`), with the type variables of a subtyping cycle       --
+--   identified (`equateᵗ`); canonical forms again (`canonElim`); --
+--   `trim` (`trimElim`); strengthening (`Strengthened`). The     --
+--   unknowns of the image of the caller's variables, and those   --
+--   of the deferred conditions, are neither eliminated nor       --
+--   dropped (`fix`, `instᴿ`).                                    --
 --                                                                --
 -- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on     --
 -- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types,     --
@@ -120,8 +122,7 @@ open import TypeInference.SolverImpl.Solve     S opEnum
 open import TypeInference.SolverImpl.Principal S opEnum
 open import TypeInference.SolverImpl.RigidFree S opEnum using (solve-rigidFree)
 open import TypeInference.SolverImpl.Simplify  S
-  using (simplify; simplify-⊩; simplify-⊨; trimElim; memʳ?; memᵉ?)
-open import TypeInference.SolverImpl.Normal    S using (decide≾ᵣ; decide≾ₑ)
+  using (simplify; simplify-⊩; simplify-⊨; trimElim; entᵣ?; entₑ?)
 open import TypeInference.SolverImpl.Eliminate S
   using (Elim; Elimᶠ; Entails; entails; eliminate; _⨾ᴱ_)
 open import TypeInference.SolverImpl.Canon     S
@@ -335,16 +336,6 @@ solver = record
 
 entailsᴴ : Entails
 entailsᴴ = entails entᵣ? entₑ?
-  where
-    entᵣ? : ∀ {Θ} → (Q : Hyps Θ) → (ρ ρ' : RExp Θ) → Maybe (Q ⊩ ρ ≾̂ᵣ ρ')
-    entᵣ? Q ρ ρ' with memʳ? (ρ , ρ') (ordᵣ Q)
-    ... | just m  = just (hypᵣ m)
-    ... | nothing = decide≾ᵣ ρ ρ'
-
-    entₑ? : ∀ {Θ} → (Q : Hyps Θ) → (ε ε' : EExp Θ) → Maybe (Q ⊩ ε ≾̂ₑ ε')
-    entₑ? Q ε ε' with memᵉ? (ε , ε') (ordₑ Q)
-    ... | just m  = just (hypₑ m)
-    ... | nothing = decide≾ₑ ε ε'
 
 -- A solution, its residue as the solver returns it, and the residue
 -- simplified, which entails the residue and holds at each of its
