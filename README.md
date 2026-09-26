@@ -434,7 +434,7 @@ type inference.
   closed instance (`solve-principal`); a refutation leaves no solution under
   satisfiable conditions (`solve-refutes`). Nothing is claimed of `stuck`.
 
-- `TypeInference/Principality.agda` defines `PrincipalTyping Γ M`, a principal
+- `TypeInference/Principality.agda` defines `PrincipalScheme Γ M`, a principal
   type scheme `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃` whose every instance types `M`
   (`instantiate`) and through which every typing of `M` factors at each closed
   instance (`factor`). `Typable Γ M` is a typing under satisfiable hypotheses,
