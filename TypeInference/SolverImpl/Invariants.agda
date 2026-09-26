@@ -22,3 +22,11 @@ open import TypeInference.SolverImpl.Invariants.Alts S public
 -- Canonical forms: a whole unknown kept whole, no unknown added
 
 open import TypeInference.SolverImpl.Invariants.Canon S public
+
+-- Expansion and decomposition: good substitutions and atoms
+
+open import TypeInference.SolverImpl.Invariants.Expand S public
+
+-- Generated constraints have good greater sides
+
+open import TypeInference.SolverImpl.Invariants.Generate S public
