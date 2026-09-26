@@ -9,12 +9,13 @@
 -- `_◃ᵛ_` says an open type decorates a skeleton: a type         --
 -- variable at a skeleton variable, the same former everywhere   --
 -- else. `_⊑ᵛ_` relaxes it to an arbitrary type at a skeleton    --
--- variable. `decorate` produces the first, and is most general  --
--- among the second.                                             --
+-- variable. `decorate` produces the first (`decorate-◃`), and   --
+-- is most general among the second (`decorate-max`).            --
 --                                                               --
--- `expandSub` makes every demand of its list decomposable, its  --
--- substitution is most general among those that satisfy the     --
--- demands, and its failure refutes them.                        --
+-- `expandSub` makes every demand of its list decomposable       --
+-- (`expandSub-dec`), its substitution is most general among     --
+-- those that satisfy the demands, and its failure refutes them  --
+-- (`expandSub-max`).                                            --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

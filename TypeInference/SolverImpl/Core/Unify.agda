@@ -5,6 +5,14 @@
 -- terminating on the derived size index `Sz`.                   --
 -- Follows McBride's structural-recursion unifier (JFP 2003);    --
 -- "rigid"/"flexible" are Huet's (1975).                         --
+--                                                               --
+-- Contract. Equality is syntactic, grade expressions included   --
+-- (`Core.Eqn`). A success returns a store whose substitution    --
+-- unifies the equations (`unify-sound`, `Core.UnifySound`) and  --
+-- through which every unifier factors (`unify-max`/`unify-mgu`, --
+-- `Core.UnifyMGU`). A failure refutes the equations at every    --
+-- substitution sending the rigids to distinct variables         --
+-- (`unify-fail`).                                               --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (if_then_else_; _∨_; true; false) renaming (Bool to 𝔹)
@@ -190,6 +198,14 @@ mutual
   amguᶜ k p rg (A ‼ ε) (B ‼ ε') s@(_ , anil) = amguᵛ k p rg A B s >>= amguᵉ k p rg ε ε'
 
   -- resource grades
+  --
+  -- A grade expression is unified syntactically: a constant meets
+  -- only itself, a product or a join is taken apart. Against
+  -- convertibility `≡̂` this loses nothing on the equations the
+  -- driver is given, since each has, on one side, no grade slot or
+  -- an unbound unknown in every slot (`TypeInference.Generate`), so
+  -- two compound grade expressions never meet here. Argued, not
+  -- proved.
 
   amguʳ (suc k) p rg ρ ρ' (Θ' , X /ᵗ α ∷ τ) =
     mmap (consᵗ X α)

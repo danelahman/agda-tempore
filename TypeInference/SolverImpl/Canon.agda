@@ -14,6 +14,13 @@
 -- normal form is stored, not merely printed. A type is           --
 -- convertible to its normal form, and `canonElim` is that fact   --
 -- as an elimination step.                                        --
+--                                                                --
+-- Contract. An expression is convertible to its canonical form   --
+-- (`canonᵣ-≡`, `canonₑ-≡`), a type likewise (`canonᵛ-≡̂`,         --
+-- `canonᶜ-≡̂`), and a hypothesis set and its canonical form       --
+-- entail each other (`canonᴴ-⊩`, `canonᴴ-⊩⁻`). That convertible  --
+-- expressions get one canonical form is not claimed: it depends  --
+-- on what the decider proves.                                    --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; map)

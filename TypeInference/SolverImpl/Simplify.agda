@@ -19,11 +19,13 @@
 -- those not yet examined, the orderings by `decide≾`; an         --
 -- ordering that holds outright is dropped too.                   --
 --                                                                --
--- `simplify Q` and `trim Q` entail `Q`, and every closed         --
--- instance of `Q` is one of each: settling a disjunction by a    --
--- refutation holds only at the instances. This is a              --
--- simplification of the report, not of the solver, and           --
--- `solve-principal` is untouched.                                --
+-- Contract. `simplify Q` and `trim Q` entail `Q` (`simplify-⊩`,  --
+-- `trim-⊩`), and every closed instance of `Q` is one of each     --
+-- (`simplify-⊨`, `trim-⊨`): settling a disjunction by a          --
+-- refutation holds only at the instances. That the result is     --
+-- irredundant is not claimed: an atom is dropped only where a    --
+-- test proves it entailed. This is a simplification of the       --
+-- report, not of the solver, and `solve-principal` is untouched. --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false) renaming (Bool to 𝔹)
@@ -408,11 +410,15 @@ pruneᴱ-et l acc (α₀ ∷ as) (here refl) | nothing =
   atomᴾ (pruneᴱ-⊇ l (α₀ ∷ acc) as (here refl))
 pruneᴱ-et l acc (α₀ ∷ as) (there m)   | nothing = pruneᴱ-et l (α₀ ∷ acc) as m
 
--- The type atoms pruned, the rest untouched
+-- The type atoms pruned, the rest untouched. `pruneᵀ-at Q l` is the
+-- set with its subtyping atoms `l` and its eternality atoms pruned along
+-- them.
+
+pruneᵀ-at : ∀ {Θ} → Hyps Θ → List (TyVar Θ × TyVar Θ) → Hyps Θ
+pruneᵀ-at Q l = hyps (pruneᴱ l [] (ets Q)) l (ordᵣ Q) (ordₑ Q) (disj Q)
 
 pruneᵀ : ∀ {Θ} → Hyps Θ → Hyps Θ
-pruneᵀ Q = hyps (pruneᴱ (pruneᵛ [] (subᵥ Q)) [] (ets Q)) (pruneᵛ [] (subᵥ Q))
-                (ordᵣ Q) (ordₑ Q) (disj Q)
+pruneᵀ Q = pruneᵀ-at Q (pruneᵛ [] (subᵥ Q))
 
 pruneᵀ-⊩ : ∀ {Θ} → (Q : Hyps Θ) → pruneᵀ Q ⊩ᴴ Q
 pruneᵀ-⊩ Q =
@@ -580,11 +586,15 @@ module Pruneᴼ (testʳ : Testʳ) (testᵉ : Testᵉ) where
           → List (RExp Θ × RExp Θ)
   pruneᴼʳ lₑ = Walk.walk (Okʳ lₑ) (testʳ lₑ) []
 
-  -- The grade orderings pruned, the rest untouched
+  -- The grade orderings pruned, the rest untouched. `pruneᴼ-at Q lₑ` is
+  -- the set with its effect orderings `lₑ` and its resource orderings
+  -- pruned against them.
+
+  pruneᴼ-at : ∀ {Θ} → Hyps Θ → List (EExp Θ × EExp Θ) → Hyps Θ
+  pruneᴼ-at Q lₑ = hyps (ets Q) (subᵥ Q) (pruneᴼʳ lₑ (ordᵣ Q)) lₑ (disj Q)
 
   pruneᴼ : ∀ {Θ} → Hyps Θ → Hyps Θ
-  pruneᴼ Q = hyps (ets Q) (subᵥ Q) (pruneᴼʳ (pruneᴼᵉ (ordₑ Q)) (ordᵣ Q))
-                  (pruneᴼᵉ (ordₑ Q)) (disj Q)
+  pruneᴼ Q = pruneᴼ-at Q (pruneᴼᵉ (ordₑ Q))
 
   pruneᴼ-⊩⁻ : ∀ {Θ} → (Q : Hyps Θ) → Q ⊩ᴴ pruneᴼ Q
   pruneᴼ-⊩⁻ Q =

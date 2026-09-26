@@ -9,6 +9,11 @@
 -- and fails when it does not and the type is refuted eternal     --
 -- (`etDec`). What is left entails what was there; a failure      --
 -- leaves an atom that no closed instance satisfies.              --
+--                                                                --
+-- Contract. The result entails the set (`closedᴴ-⊩`) and is      --
+-- entailed wherever the set is (`closedᴴ-⊆`); a failure leaves   --
+-- the set unsatisfiable (`closedᴴ-fail`). Only closed atoms are  --
+-- decided; the others are kept verbatim.                         --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥)

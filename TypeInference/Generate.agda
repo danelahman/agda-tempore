@@ -18,6 +18,19 @@
 -- weakened, and so is the interpretation of the raw term's type  --
 -- and grade variables; the constraints are built inside the      --
 -- innermost binder.                                              --
+--                                                                --
+-- Contract: `σ ⊨[ Q ] genC Γ M (A ‼ t)` holds exactly when some  --
+-- derivation `Q ∣ Γ [ σ ] ⊢C⦂ (A ‼ t) [ σ ]` erases to `M [ σ ]` --
+-- (`charV`/`charC`, from `soundV`/`soundC` in `Soundness` and    --
+-- `completeV`/`completeC` in `Completeness`).                    --
+--                                                                --
+-- Every `_≐ᵥ_` emitted has one side that is a former with no     --
+-- grade slot (`Base`, `Unit`, `Bool`) or is made of unknowns     --
+-- bound by the enclosing `∃` and constrained first by that       --
+-- equation (`α₁ |×| α₂`, `[ r ] α`). A grade expression in an    --
+-- equation so meets only an unbound unknown, which is what the   --
+-- unifier's syntactic grade cases rely on (`Core.Unify`).        --
+-- Argued, not proved.                                            --
 ------------------------------------------------------------------
 
 open import Data.Fin using (Fin; zero)

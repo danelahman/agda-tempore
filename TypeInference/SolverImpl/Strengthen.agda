@@ -14,6 +14,12 @@
 -- set is carried by a retraction of `ι` fixing it. The variables --
 -- of deferred conditions, outside their binders, form such a     --
 -- set (`fvᴰ`), and a substitution fixing it fixes them.          --
+--                                                                --
+-- Contract (`Strengthened`). The substitution, the type and the  --
+-- hypothesis set, renamed back along `ι`, are the originals on   --
+-- the nose (`τ-ι`, `X-ι`, `Q-ι`); every instance of the smaller  --
+-- scope extends along `ι` (`ext-ι`); the retraction `π` fixes    --
+-- the further set (`π-fix`).                                     --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (true; false; if_then_else_) renaming (Bool to 𝔹)
@@ -578,12 +584,22 @@ extⁱ-fix M =
     _⊚_ : ∀ {A : Set} {x y z : A} → x ≡ y → y ≡ z → x ≡ z
     _⊚_ = trans
 
-strengthen : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
-           → Strengthened τ X Q V
-strengthen τ X Q V =
+-- Strengthening along a mask `M` that covers the type, the hypothesis
+-- set, the image of `τ` and `V`
+
+strengthenAt : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
+             → (M : Vars Θ) → fvᶜ X ⊆ᵛ M → fvᴴ Q ⊆ᵛ M → fvˢ τ ⊆ᵛ M → V ⊆ᵛ M
+             → Strengthened τ X Q V
+strengthenAt τ X Q V M hX hQ hτ hV =
   strengthened (kept M) (thin M) (strˢ M τ hτ) (strᶜ M X hX) (strᴴ M Q hQ)
                (strˢ-ι M τ hτ) (strᶜ-ι M X hX) (strᴴ-ι M Q hQ) (λ δ → extⁱ M δ , extⁱ-ι M δ)
                (extⁱ M idˢ) (fixes-⊆ hV (extⁱ-fix M))
+
+-- The mask is the variables occurring in the four
+
+strengthen : ∀ {Θ₀ Θ} → (τ : Subst Θ₀ Θ) → (X : OCType Θ) → (Q : Hyps Θ) → (V : Vars Θ)
+           → Strengthened τ X Q V
+strengthen τ X Q V = strengthenAt τ X Q V M hX hQ hτ hV
   where
     M  = fvᶜ X ∪ᵛ fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V
     hX = ⊆-∪ˡ (fvᶜ X) (fvᴴ Q ∪ᵛ fvˢ τ ∪ᵛ V) ⊆-refl

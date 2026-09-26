@@ -2,8 +2,8 @@
 -- The outcome of solving                                         --
 --                                                                --
 -- A solution, a refutation, or stuck: a rigid scope closes with  --
--- an unknown local to it that has no principal value. Nothing is --
--- claimed of a stuck constraint.                                 --
+-- an unknown local to it for which `Localise` finds no value.    --
+-- Nothing is claimed of a stuck constraint.                      --
 ------------------------------------------------------------------
 
 module TypeInference.Outcome where

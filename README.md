@@ -351,7 +351,7 @@ Inference for the open calculus, by constraint generation and solving.
   expected type, an upper bound. It is sound (`Soundness.agda`: a solution
   elaborates to a derivation erasing to the term) and complete
   (`Completeness.agda`: a derivation satisfies the constraint generated from
-  its erasure).
+  its erasure); `charV`/`charC` state both at once.
 
 - `TypeInference/Solver.agda` axiomatises a solver. Its outcome
   (`Outcome.agda`) is solved, refuted or stuck. A solution `(σ , Q , R)`
@@ -377,30 +377,42 @@ Inference for the open calculus, by constraint generation and solving.
 
 - `TypeInference/SolverImpl.agda` is the concrete solver (`solver : Solver`),
   over an enumeration of the operations (`SolverImpl/Enum.agda`), with its
-  report and inference. `SolverImpl/`:
+  report and inference. Its banner lists the stages and the lemmas stating
+  each one's contract. `SolverImpl/`:
   - `Solve.agda`: the driver. Type equations go to unification, subtyping is
-    decomposed, other atoms are residualised; at the close of a rigid scope
-    the atoms are kept, discharged or deferred.
-  - `Localise.agda`: principal values for the unknowns local to a rigid scope.
+    expanded and decomposed, other atoms are residualised; at the close of a
+    rigid scope the atoms are kept, discharged or deferred. A solution carries
+    its witness; `Principal.agda` proves it principal (`solve-principal`) and
+    a refutation sound (`solve-fail`), stage by stage.
+  - `Localise.agda`: values for the unknowns local to a rigid scope, keeping
+    every instance entering it (`Localised`); principal for lowering and the
+    unit (`lowerᵉ-least`), instance-preserving only for raising and the top.
   - `Deferred.agda`: deferred rigid conditions `∀ᵉ j₁ … jₖ. O`, retried after
-    each close and read back as obligations.
-  - `Principal.agda`: principality and refutation for the driver.
-  - `Closed.agda`: atoms with no unknowns, decided by the grade's `_≾?_`.
+    each close (`retry-princ`, `retry-fail`) and read back as obligations.
+  - `Closed.agda`: atoms with no unknowns, decided by the grade's `_≾?_`
+    (`closedᴴ-⊩`, `closedᴴ-fail`).
   - `Product.agda`, `Normal.agda`, `Canon.agda`: the sum-of-products normal
-    form, its products sorted at commutative grades; deciding entailed
-    ordering (`decide≾ᵣ`/`decide≾ₑ`); the canonical form of reported grades.
+    form, its products sorted at commutative grades (`nrmᵣ-≡`); deciding
+    entailed ordering (`decide≾ᵣ`/`decide≾ₑ`), sound by type, completeness not
+    claimed; the canonical form of reported grades (`canonᵣ-≡`).
   - `Simplify.agda`: settles disjunctions and prunes entailed atoms of a
-    report.
+    report (`simplify-⊩`, `simplify-⊨`).
   - `Eliminate.agda`: Pottier's elimination of unknowns (ICFP 1996), and
-    replacement of an unknown by an expression the hypotheses equate it with.
-  - `Strengthen.agda`: a report over the variables occurring in it; `Vars.agda`
-    sets of variables.
-  - `Refute.agda`: refutation of an ordering against the unit.
-  - `Resid.agda`, `State.agda`, `Polarity.agda`: residual constraints, the
-    solver state, the polarity of an unknown.
-  - `Expand.agda`: skeleton expansion of type unknowns.
+    replacement of an unknown by an expression the hypotheses equate it with;
+    each step an `Elim`.
+  - `Strengthen.agda`: a report over the variables occurring in it
+    (`Strengthened`); `Vars.agda` sets of variables.
+  - `Refute.agda`: refutation of an ordering against the unit (`refute-⊩`).
+  - `Resid.agda`, `State.agda`, `Polarity.agda`: residual constraints and
+    their exact decomposition (`SubDec`, `toHyps-compl`), the solver state,
+    the polarity of an unknown.
+  - `Expand.agda`: skeleton expansion of type unknowns (`expandSub-dec`,
+    `expandSub-max`).
   - `Core/`: McBride-style first-order unification of types and of skeletons,
-    sound and most general, never binding a rigid.
+    sound and most general, never binding a rigid (`unify-sound`,
+    `unify-mgu`, `unify-fail`). Grade expressions in a type equation are
+    unified syntactically, which loses nothing on the equations generation
+    emits (one side's grade slots are fresh unknowns); argued, not proved.
 
 - The end-to-end theorem (`SolverImpl.agda`): `infer Γ M : Inference Γ M`;
   `infer-typed` — a `typed p` verdict has `Typable Γ M ⇔ Satisfiable Q̃ R̃`;

@@ -1,15 +1,21 @@
 ------------------------------------------------------------------
--- First-order unification of skeletons                          --
---                                                               --
+-- First-order unification of skeletons                           --
+--                                                                --
 -- Solves a list of skeleton equations by eliminating one         --
 -- skeleton variable at a time. `amguᵏ` descends through the      --
 -- store one binding at a time, and the scope of skeleton         --
 -- variables is a bare `ℕ`, so the descent is structural.         --
---                                                               --
+--                                                                --
 -- No skeleton variable is rigid: the effect-grade variables the  --
 -- type unifier must not bind are grade slots, which a skeleton   --
 -- does not have.                                                 --
---                                                               --
+--                                                                --
+-- Contract. A success returns a store whose substitution unifies --
+-- the equations (`unifyᵏ-sound`, `Core.SkelUnifySound`) and      --
+-- through which every unifier factors (`unifyᵏ-max`,             --
+-- `Core.SkelUnifyMGU`); a failure refutes them at every          --
+-- substitution (`unifyᵏ-fail`).                                  --
+--                                                                --
 -- Follows McBride's structural-recursion unifier (JFP 2003);     --
 -- "rigid"/"flexible" are Huet's (1975).                          --
 ------------------------------------------------------------------

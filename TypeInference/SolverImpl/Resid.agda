@@ -15,7 +15,20 @@
 -- decomposing the eternality demands (`etDec`) and the subtyping --
 -- demands (`subDec`) into atoms on type variables and taking the --
 -- rest verbatim. `subDec` stops at a pair of type variables; a   --
--- type variable against a former has no decomposition.          --
+-- type variable against a former has no decomposition.           --
+--                                                                --
+-- Contract. A decomposition `subDec A B` is exact at every       --
+-- instance and under any hypotheses: its atoms entail the demand --
+-- (`intro`) and are entailed by it (`elim`); so for a list       --
+-- (`subsList`: `introˢ`/`elimˢ`). A failure claims nothing by    --
+-- itself; after an expansion none occurs (`expandSub-dec`,       --
+-- `reexpand-dec`). `atomiseᴿ` has the instances of the original, --
+-- both ways (`atomiseᴿ-sound`, `atomiseᴿ-compl`). `etDec` is     --
+-- exact likewise (`etDec-sound`, `etDec-compl`), and its failure --
+-- refutes the demand at every instance (`etDec-refute`).         --
+-- `toHyps R` entails the atoms of `R` (its type), is entailed by --
+-- them at every instance (`toHyps-compl`), and fails only on a   --
+-- demand `subDec` or `etDec` fails on (`toHyps-nothing`).        --
 --                                                                --
 -- The name follows OutsideIn(X) (Vytiniotis et al., JFP 2011).   --
 ------------------------------------------------------------------

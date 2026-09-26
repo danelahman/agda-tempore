@@ -5,10 +5,10 @@
 -- the hypotheses bounding it below, and those hypotheses go with --
 -- it; an unknown absent from the reported type is eliminated     --
 -- outright by the same step. Dually, a grade unknown occurring   --
--- above nowhere but in one hypothesis is sent to that bound;     --
--- several bounds above would need a meet. The two grade sorts    --
--- are treated alike; open types carry no join, so a type         --
--- variable is eliminated against a single bound.                 --
+-- above nowhere but in one hypothesis is sent to that bound; the --
+-- step needs a single bound above. The two grade sorts are       --
+-- treated alike; open types carry no join, so a type variable is --
+-- eliminated against a single bound.                             --
 --                                                                --
 -- A grade unknown the hypotheses equate with an expression free  --
 -- of it is replaced by that expression everywhere, the orderings --
@@ -16,12 +16,15 @@
 -- smaller index stays. This step is tried before the steps       --
 -- against a bound, and they alternate.                           --
 --                                                                --
--- Every step is a substitution `η`: the new type is the old one  --
--- along `η`, up to convertibility, and the new hypotheses entail --
--- the old ones along `η`. Every closed instance of the old       --
--- hypotheses is one of the new, and there the new type is a      --
--- subtype of the old. The unknowns of a given set are never      --
--- eliminated, so `η` fixes them.                                 --
+-- Contract (`Elim`). Every step is a substitution `η`: the new   --
+-- type is the old one along `η`, up to convertibility (`conv`),  --
+-- and the new hypotheses entail the old ones along `η` (`inst`). --
+-- Every closed instance of the old hypotheses is one of the new  --
+-- (`keep`), and there the new type is a subtype of the old       --
+-- (`princ`). Steps compose (`_⨾ᴱ_`). The unknowns of a given set --
+-- are never eliminated, so `η` fixes them (`Elimᶠ`). Which       --
+-- unknowns remain is not claimed: a step is taken where its test --
+-- succeeds.                                                      --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --

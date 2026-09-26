@@ -13,6 +13,13 @@
 --                                                                --
 -- Refutation cannot be quantified over all `Q`, as `hyp-derives` --
 -- records.                                                       --
+--                                                                --
+-- Contract. `scanᵤ` is sound by its type: a `just` is a proof of --
+-- `Refutedᵤ ρ`. That refutation is stable under instantiation    --
+-- (`refute-[]ʳ`) and rules out `ρ ≾ u` from every satisfiable    --
+-- hypothesis set (`refute-⊩`). A `nothing` claims nothing.       --
+-- `scanᵤ` runs only where a report settles a disjunction         --
+-- (`Simplify.settle`).                                           --
 ------------------------------------------------------------------
 
 open import Data.List.Base using (List; []; _∷_)

@@ -31,6 +31,12 @@
 -- `⊩-reflectᵣ`/`⊩-reflectₑ` are the closed special case: a       --
 -- variable-free expression is convertible to the constant it     --
 -- evaluates to, in both directions.                              --
+--                                                                --
+-- Contract. `decide≾ᵣ ρ ρ'` and `decide≾ₑ` are sound by their    --
+-- types: a `just` is a derivation of `Q ⊩ ρ ≾̂ᵣ ρ'`, built from   --
+-- the laws. A `nothing` claims nothing: no completeness is       --
+-- proved, for any fragment. What the search does not find is     --
+-- listed under Products below.                                   --
 ------------------------------------------------------------------
 
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
@@ -79,10 +85,10 @@ min≾ᵣ nothing   = nothing
 -- Two atoms are linked when they are equal, or are constants ordered
 -- by the grade's own order. `a` reaches `b` along a chain of edges
 -- when `a` is linked to the first source, each target to the next
--- source, and the last target to `b`. What each source reaches is
--- saturated once per hypothesis set, at most one round per edge,
--- stopping at the first round that reaches nothing new; `a` reaches
--- `b` when they are linked, or `a` is linked to a source that
+-- source, and the last target to `b`. What the source of each edge
+-- reaches is saturated at every call of `decide≾`, at most one round
+-- per edge, stopping at the first round that reaches nothing new; `a`
+-- reaches `b` when they are linked, or `a` is linked to a source that
 -- reaches `b`.
 
 module Chains {A : Set} (_⊑_ : A → A → Set)

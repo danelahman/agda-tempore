@@ -1,28 +1,50 @@
 ------------------------------------------------------------------
 -- The solver: solve, then report                                 --
 --                                                                --
--- `solveOn` runs the driver, retries the deferred conditions,    --
--- and reads its residual back as a hypothesis set, deciding the  --
--- atoms no unknown affects (`Closed`): one that holds is         --
--- dropped, one that fails refuses. The deferred conditions are   --
--- the obligations. It instantiates `TypeInference.Solver.Solver`:--
--- a solution is principal, and a refutation refutes every        --
--- solution under satisfiable conditions.                         --
+-- The stages, each with the lemmas stating its contract:         --
 --                                                                --
--- `reportOn` reports a solution: the residue with its var-rule   --
--- disjunctions settled, its repeated hypotheses dropped, the     --
--- unknowns its own hypotheses fix eliminated from it and from    --
--- the reported type, every grade expression in product normal    --
--- form, its disjunctions settled again, every subtyping atom and --
--- grade ordering entailed by the others kept dropped, and the    --
--- report stated over the variables occurring in it. The unknowns --
--- of the image of the caller's variables, and those of the       --
--- deferred conditions, are neither eliminated nor dropped.       --
+-- * Generation (`Generate`): the solutions of `C[ Γ , M ]` are   --
+--   the derivations erasing to `M` (`charC`).                    --
+-- * The driver (`Solve`): type equations are unified             --
+--   (`unify-sound`, `unify-mgu`, `unify-fail`); subtyping        --
+--   demands are expanded (`expandSub-dec`, `expandSub-max`) and  --
+--   decomposed exactly (`SubDec`'s `intro`/`elim`,               --
+--   `atomiseᴿ-sound`/`atomiseᴿ-compl`); other atoms are          --
+--   residualised. A solution carries its witness (`Wit`), is     --
+--   principal (`solve-principal`), and a refutation refutes      --
+--   (`solve-fail`).                                              --
+-- * The close of a clause's rigid scope: `reexpand`              --
+--   (`reexpand-princ`/`-fail`), `Localise.localise`              --
+--   (`Localised`, `localise-princ`), `splitᴿ`                    --
+--   (`splitᴿ-princ`/`-fail`), `popᵉ`                             --
+--   (`popᵉ-princ`/`-escape`/`-fail`).                            --
+-- * Deferred conditions (`Deferred`), retried after each close   --
+--   (`retry-princ`/`-fail`), read back as obligations            --
+--   (`toOblig`).                                                 --
+-- * Read-back: `toHyps` (`toHyps-compl`, `etDec-refute`), then   --
+--   `closedᴴ` deciding the closed atoms                          --
+--   (`closedᴴ-⊩`/`-⊆`/`-fail`).                                  --
+-- * The report (`reportOn`, `Reported`): `simplify`              --
+--   (`simplify-⊩`/`-⊨`), Pottier's elimination (`Elim`),         --
+--   canonical forms (`canonElim`), `trim` (`trimElim`),          --
+--   strengthening (`Strengthened`). The unknowns of the image of --
+--   the caller's variables, and those of the deferred            --
+--   conditions, are neither eliminated nor dropped (`fix`,       --
+--   `instᴿ`).                                                    --
 --                                                                --
--- `infer` is the reference entry point: a report on the          --
--- constraint of a term in a context is a principal typing, a     --
--- refutation means the term is untypable (the end-to-end         --
--- theorem).                                                      --
+-- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on     --
+-- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types,     --
+-- with no completeness claimed.                                  --
+--                                                                --
+-- `solveOn` instantiates `TypeInference.Solver.Solver`           --
+-- (`solveOn-sound`, `solveOn-principal`, `solveOn-complete`) and --
+-- is never stuck without a rigid binder (`solveOn-rigidFree`).   --
+-- `infer` is the reference entry point: a report is a principal  --
+-- typing (`typing`) whose conditions are satisfiable exactly     --
+-- when the term is typable (`infer-typed`); a refutation means   --
+-- the term is untypable (`infer-untypable`, `infer-complete`); a --
+-- handler-free term is never stuck (`infer-handlerFree`).        --
+-- `stuck` carries no claim.                                      --
 ------------------------------------------------------------------
 
 open import Data.Empty using (⊥; ⊥-elim)

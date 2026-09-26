@@ -12,6 +12,12 @@
 -- whose solution then refines every type variable whose shape it --
 -- has determined, leaving the others alone.                      --
 --                                                                --
+-- Contract (proved in `SolverImpl.Expand`): after the expansion  --
+-- every demand of the list decomposes (`expandSub-dec`); every   --
+-- substitution meeting the demands, under any hypotheses,        --
+-- factors through it, and a failure refutes the demands at every --
+-- substitution (`expandSub-max`).                                --
+--                                                                --
 -- Match-then-decompose, as in Fuh and Mishra's structural        --
 -- subtyping inference (TCS 1990).                                --
 ------------------------------------------------------------------

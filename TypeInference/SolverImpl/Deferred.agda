@@ -12,6 +12,12 @@
 -- A substitution below (above) the one it moves keeps an entry   --
 -- whose greater (smaller) sides it leaves fixed (`keepᵈ`). A     --
 -- closed witness per rigid instantiates the rigids (`wit`).      --
+--                                                                --
+-- Contract. An entry and its obligation hold together            --
+-- (`⊩ᵈ→⊩ᴼ`, `⊩ᴼ→⊩ᵈ`). Closing an entry over one more rigid       --
+-- (`closeᵈ`) holds exactly where the entry does at a fresh rigid --
+-- (`closeᵈ-sound`, `closeᵈ-princ`). Retrying the entries is the  --
+-- driver's (`retry`, `SolverImpl.Solve`).                        --
 ------------------------------------------------------------------
 
 open import Data.Fin.Base using (zero; suc)

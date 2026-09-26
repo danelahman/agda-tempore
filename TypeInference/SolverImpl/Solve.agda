@@ -5,7 +5,9 @@
 -- the unification core, a subtyping atom is decomposed at      --
 -- matching formers and residualised at a pair of type          --
 -- variables, grade orderings, eternality demands and var-rule  --
--- disjunctions are residualised, and binders lift the state.   --
+-- disjunctions are residualised (a disjunction is dropped      --
+-- where `decide≾ᵣ` proves its grade below the unit), and       --
+-- binders lift the state.                                      --
 -- An expansion of the type unknowns is followed by decomposing --
 -- the residual's subtyping demands again, so that they are     --
 -- pairs of type variables and their grade orderings are        --
@@ -19,9 +21,9 @@
 -- Before the scope closes, its subtyping demands are expanded  --
 -- and decomposed again (`reexpand`), so that they are pairs of --
 -- type variables, the atoms decided true are dropped, and the  --
--- unknowns local to the scope are sent to their principal      --
--- values (`Localise`); then                                    --
--- atoms free of the rigid are kept, one whose right side alone --
+-- unknowns local to the scope are sent to values that keep     --
+-- every instance entering it (`Localise`); then atoms free of  --
+-- the rigid are kept, one whose right side alone               --
 -- mentions it is kept at the unit rigid where the unit is      --
 -- least, one whose left side alone mentions it is kept at the  --
 -- top rigid, any other is discharged on the spot or, when it   --
@@ -33,6 +35,17 @@
 -- The outcome is a solution, a refutation, or stuck: a close   --
 -- whose atom, neither kept nor deferred, or whose inner entry, --
 -- mentions an unknown local to the scope.                      --
+--                                                              --
+-- Contract. A solution carries its witness `Wit s' C`: every   --
+-- instance discharging the new residual solves `C` (soundness, --
+-- by construction, each move a `_⟶_`). Every instance solving  --
+-- `C` from no hypotheses and discharging the old residual      --
+-- factors through the new state and discharges its residual,   --
+-- the rigids kept variables (`solve-principal`, `Principal`).  --
+-- A refutation leaves no instance solving `C` that discharges  --
+-- the residual and keeps the rigids distinct variables         --
+-- (`solve-fail`). `stuck` carries no claim; without a rigid    --
+-- binder it does not occur (`solve-rigidFree`, `RigidFree`).   --
 ------------------------------------------------------------------
 
 open import Data.Bool.Base using (_∨_; true; false) renaming (Bool to 𝔹)
@@ -198,6 +211,8 @@ et₀? A with etDec A in e
 -- function of the rigid, and is kept at the unit rigid; so the side
 -- that `stripᵉ-top` keeps free of the rigid must mention no local
 -- unknown either, only those the scope was entered with (`Outerₑ`).
+-- Right to left is each rule's type (`Atomʳ`/`Atomᵉ`); left to right
+-- is `stripʳ-unit-princ` and its siblings (`Principal`).
 
 stripʳ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
             → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
@@ -481,7 +496,10 @@ liftᵈ-sound j E h = ⊩ᵈ-subst E (closeᵈ-sound (E [ popˢ j ]ᵈ) h)
 -- binder where it occurs. An eternality demand, a subtyping demand or
 -- a disjunction that cannot be kept refutes the scope; an ordering
 -- that can be neither kept nor deferred, or an inner entry, that
--- mentions an unknown local to the scope leaves it stuck.
+-- mentions an unknown local to the scope leaves it stuck. What is kept
+-- and deferred entails the scope's residual at a fresh rigid (its
+-- type), is met by every instance entering the scope (`splitᴿ-princ`),
+-- and a refusal is met by none (`splitᴿ-fail`).
 
 splitᴿ : ∀ {Θ Φ} → Subst Θ (Φ +e) → Subst (Θ +e) (Φ +e) → (j : EVar (Φ +e))
        → (R : Resid (Φ +e))
@@ -542,7 +560,11 @@ pop-key γ {j} eqj {δ₀} pδ =
           ; (suc i) → trans (≐ᵉ pδ i) (wkˢᵉ-e (sE δ₀ i)) })
 
 -- Closing the scope: the first two refusals cannot happen, the third
--- is an escape, and the rest are `splitᴿ`'s.
+-- is an escape, and the rest are `splitᴿ`'s. Every instance entering
+-- the scope factors through the closed state (`popᵉ-princ`); an escape
+-- refutes every instance keeping the rigid an eigenvariable
+-- (`popᵉ-escape`, `strSub-escape`), and so does every refusal
+-- (`popᵉ-fail`).
 
 popᵉ : ∀ {Θ} → (s : St Θ) → (C : Constraint (Θ +e))
      → (Φ : Scope) → (θ'' : Subst (Θ +e) Φ) → (R'' : Resid Φ) → (rg'' : Rig Φ)
@@ -581,6 +603,9 @@ popᵉ s C (scope nt nr (nsuc n)) θ'' R'' rg'' m'' w''
 -- rigids under the hypotheses weakened to them. It refutes when a
 -- closed witness per rigid, the unit or the top, makes it a failing
 -- closed ordering. An entry left with no ordering is dropped.
+-- A retry keeps every instance (`retry-princ`), and a refusal refutes
+-- every one (`retry-fail`). An entry kept claims nothing: with a rigid
+-- on both sides, the witnesses decide nothing in general.
 
 -- The residual's orderings as hypotheses
 
@@ -808,8 +833,9 @@ labelled {C = C} op (solved (s₁ , m₁ , w₁)) =
                                 (λ {E} m → relabel-⊩ op E (⊩dfs h (∈-map⁺ (relabel op) m)))))
 
 -- Before a rigid scope closes, the atoms decided true are dropped, and
--- the unknowns local to it are sent to their principal values: those
--- free in no image of the unknowns the scope was entered with.
+-- the unknowns local to it, those free in no image of the unknowns the
+-- scope was entered with, are sent to values that keep every instance
+-- entering the scope (`localise-princ`, `Principal`).
 
 localiseˢ : ∀ {Θ} → (s : St Θ) → {s'' : St (Θ +e)} → ⇑ᵉˢ s ⟶ s''
           → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)
@@ -855,7 +881,10 @@ chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]�
 
 -- Reading a residual back as a hypothesis set asks every subtyping
 -- demand to decompose; one expansion of what is left, and the
--- decomposition that follows it, make it so.
+-- decomposition that follows it, make it so (`reexpand-dec`,
+-- `reexpand-atomic`). Every instance factors through it
+-- (`reexpand-princ`), and a failure refutes every instance
+-- (`reexpand-fail`).
 
 reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
 reexpand s with expandSub (ss (res s))

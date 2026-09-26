@@ -30,6 +30,11 @@
 -- alternative below another. `SolverImpl.Canon` instantiates it   --
 -- with the decider of `SolverImpl.Normal` to form `canonᵣ` and    --
 -- `canonₑ`. Each step is certified by a single `≡̂ᵣ`/`≡̂ₑ`.         --
+--                                                                --
+-- Contract. An expression is convertible to its normal form      --
+-- (`nrmᵣ-≡`, `nrmₑ-≡`) and to its fold (`foldSumᵣ-≡`,            --
+-- `foldSumₑ-≡`). That two convertible expressions get one normal --
+-- form is not claimed.                                           --
 ------------------------------------------------------------------
 
 open import Algebra.Definitions using (Commutative)

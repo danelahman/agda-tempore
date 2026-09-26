@@ -1,5 +1,5 @@
 ------------------------------------------------------------------
--- Principal values for the unknowns local to a rigid scope     --
+-- Values for the unknowns local to a rigid scope               --
 --                                                              --
 -- An unknown is local to a scope when it is free in the image  --
 -- of none of the unknowns the scope was entered with; the      --
@@ -22,7 +22,7 @@
 --     in no type.                                              --
 --                                                              --
 -- Then, before the atoms of the scope are split, each local    --
--- unknown with a principal value is sent to it:                --
+-- unknown one of four steps applies to is sent to a value:     --
 --   * the join of its lower bounds, where it occurs on a right --
 --     side only as the whole side (Pottier's condition);       --
 --   * dually, an upper bound decided (from no hypotheses)      --
@@ -38,7 +38,7 @@
 -- rigid, so the value over the rigid is one expression,        --
 -- uniform in it.                                               --
 --                                                              --
--- Where no local unknown has such a value, a set of them is    --
+-- Where no step applies to any local unknown, a set of them is --
 -- sent to the top at once. Each member is reached from the     --
 -- rigid: it is bounded below by an expression decided to be    --
 -- the top once the rigid and the members reached before it     --
@@ -51,7 +51,8 @@
 -- In the deferred conditions of inner scopes, an unknown may   --
 -- be lowered where it is on no greater side, and raised where  --
 -- it is on no smaller side: a lower smaller side or a higher   --
--- greater side keeps a condition. It occurs where it is in one.--
+-- greater side keeps a condition. It occurs where it is in     --
+-- one.                                                         --
 --                                                              --
 -- Before the first round, between rounds and after the last,   --
 -- the settled atoms are dropped: an ordering decided true      --
@@ -62,22 +63,36 @@
 -- grade side, which is what it means at every instance solving --
 -- the scope from no hypotheses, the rigid a parameter.         --
 --                                                              --
+-- Contract (`Localised`). `lσ` fixes the images of the outer   --
+-- unknowns (`lfix`); a discharge of the new residual along `δ` --
+-- is one of the old along `lσ ⨟ δ` (`lsnd`); an instance       --
+-- entering the scope that discharges the old residual from no  --
+-- hypotheses discharges the new one (`lcpl`); each step        --
+-- assigns grade unknowns only, so subtyping demands between    --
+-- type variables stay so (`latom`); the type of each           --
+-- disjunction left is eternal at some instance                 --
+-- (`localise-ds`).                                             --
+--                                                              --
 -- Every grade former is monotone, so each value keeps every    --
 -- instance that satisfied the residual (`lowerᵉ-⊩` and its     --
--- five siblings). Raising a set keeps every instance entering  --
--- the scope, one that takes the rigid to a fresh eigenvariable --
--- (`raise-⊩`): with the eigenvariable at the top as well, the  --
--- instance stays one and every member is at the top, and the   --
--- raised instance lies between the two.                        --
+-- five siblings), and so does identifying a cycle              --
+-- (`collapseᵉ-⊩`, `collapseʳ-⊩`). Raising a set keeps every    --
+-- instance entering the scope, one that takes the rigid to a   --
+-- fresh eigenvariable (`raise-⊩`): with the eigenvariable at   --
+-- the top as well, the instance stays one and every member is  --
+-- at the top, and the raised instance lies between the two.    --
 --                                                              --
--- Each step assigns grade unknowns only, so subtyping demands  --
--- between type variables stay so (`latom`).                    --
+-- The lowering and unit values are principal: at every         --
+-- instance of the residual they lie below the unknown          --
+-- (`lowerᵉ-least`, `lowerʳ-least`, `minₑ`, `minᵣ`). The raise  --
+-- and top values, and a raised set, only keep every instance;  --
+-- that they are least is not claimed.                          --
 --                                                              --
 -- A local unknown no step gives a value leaves the scope       --
 -- stuck. Known cases: a cycle through a compound side, such    --
 -- as `j · a ≾ a ≾ c · j` or `j ≾ a ≾ c · a`; an outer scope's  --
 -- local unknown on both sides of an inner scope's deferred     --
--- condition; a local unknown with no lower bound under        --
+-- condition; a local unknown with no lower bound under         --
 -- several upper bounds, none decided below the others, which   --
 -- in a program comes only from `absurd`.                       --
 ------------------------------------------------------------------
@@ -1073,6 +1088,19 @@ topʳ-⊩ {Q = Q} {k} {R} fl cl df sd τ h =
 Keeps : ∀ {Ψ} → Subst Ψ Ψ → Resid Ψ → Set
 Keeps {Ψ} σ R = ∀ {Ψ'} → (τ : Subst Ψ Ψ') → (Q : Hyps Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ᴿ R [ σ ⨟ˢ τ ]
 
+-- The lowering value is principal: at every instance of the residual
+-- it lies below the unknown
+
+lowerᵉ-least : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : EVar Ψ} {R : Resid Ψ} {x : EExp Ψ} {xs : List (EExp Ψ)}
+             → (∀ {y} → y ∈ x ∷ xs → (y , evar k) ∈ es R)
+             → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ joinₑ x xs [ τ ]ᵉ ≾̂ₑ sE τ k
+lowerᵉ-least {x = x} {xs} s τ h = joinₑ-lub⊩ τ x xs (λ m → ⊩es h (s m))
+
+lowerʳ-least : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {k : RVar Ψ} {R : Resid Ψ} {x : RExp Ψ} {xs : List (RExp Ψ)}
+             → (∀ {y} → y ∈ x ∷ xs → (y , rvar k) ∈ rs R)
+             → (τ : Subst Ψ Ψ') → Q ⊩ᴿ R [ τ ] → Q ⊩ joinᵣ x xs [ τ ]ʳ ≾̂ᵣ sR τ k
+lowerʳ-least {x = x} {xs} s τ h = joinᵣ-lub⊩ τ x xs (λ m → ⊩rs h (s m))
+
 first : ∀ {X : Set} → Maybe X → Maybe X → Maybe X
 first (just x) _ = just x
 first nothing  y = y
@@ -1126,8 +1154,7 @@ stepᵉ {Ψ} k R with cleanᵉ? k R
       with stills? dir↓ (updᵉ k (joinₑ x xs)) (dfs R)
     ... | just sd =
           just (joinₑ x xs ,
-                λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ
-                            (joinₑ-lub⊩ τ x xs (λ m → ⊩es h (s m)))
+                λ τ Q h → lowerᵉ-⊩ lw fr cl (joinₑ x xs) sd τ (lowerᵉ-least s τ h)
                             (joinₑ-ub⊩ τ x xs) h)
     ... | nothing = nothing
     lower _ _ = nothing
@@ -1169,8 +1196,7 @@ stepʳ {Ψ} k R with cleanʳ? k R
     lower (just lw@(Bʳ.lows (x ∷ xs) c s)) with stills? dir↓ (updʳ k (joinᵣ x xs)) (dfs R)
     ... | just sd =
           just (joinᵣ x xs ,
-                λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ
-                            (joinᵣ-lub⊩ τ x xs (λ m → ⊩rs h (s m)))
+                λ τ Q h → lowerʳ-⊩ lw cl (joinᵣ x xs) sd τ (lowerʳ-least s τ h)
                             (joinᵣ-ub⊩ τ x xs) h)
     ... | nothing = nothing
     lower _ = nothing
@@ -2337,7 +2363,7 @@ module _ {Θ Φ} (O : Subst (Θ +e) Φ) (R : Resid Φ) where
         proj₁ (collapseʳL n (loc-ext L (updʳ k (rvar r)) (freeʳ-fix k O q (rvar r))
                                      (λ τ en → st τ ∅ᴴ) (λ α → refl))) , true
 
-  -- Where no unknown has a principal value of its own, a set of them
+  -- Where no step gives an unknown a value of its own, a set of them
   -- bounded below by the rigid is sent to the top
 
   raiseL : Localised O R → Maybe (Localised O R)
