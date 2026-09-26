@@ -9,6 +9,7 @@
 -- rigid-fixing instance discharging the residual of `s` solves   --
 -- `C`. `solve-principal` and `solve-fail` prove them for         --
 -- `solve`, from the same facts for each stage:                   --
+-- `solveEt-princ`/`-fail`, `solveDisj-princ`/`-fail`,            --
 -- `reexpand-princ`/`reexpand-fail`, `localise-princ`,            --
 -- `splitᴿ-princ`/`splitᴿ-fail`,                                  --
 -- `popᵉ-princ`/`popᵉ-escape`/`popᵉ-fail`,                        --
@@ -175,11 +176,16 @@ pushᵉ-⊩ p h =
   mk⊩ᴿ (⊩rs h) (λ { (here refl) → p ; (there m) → ⊩es h m })
        (⊩ts h) (⊩ss h) (⊩ds h) (⊩dfs h)
 
-pushᵗ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {δ : Subst Ψ Ψ'}
-        → Q ⊩ᴱ A [ δ ]ᵛ → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵗ A R) [ δ ]
-pushᵗ-⊩ p h =
-  mk⊩ᴿ (⊩rs h) (⊩es h) (λ { (here refl) → p ; (there m) → ⊩ts h m })
-       (⊩ss h) (⊩ds h) (⊩dfs h)
+pushᵗ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {αs : List (TyVar Ψ)} {δ : Subst Ψ Ψ'}
+        → (∀ {α} → α ∈ αs → Q ⊩ᴱ tvar α [ δ ]ᵛ) → Q ⊩ᴿ R [ δ ] → Q ⊩ᴿ (pushᵗ αs R) [ δ ]
+pushᵗ-⊩ {Q = Q} {R = R} {αs = αs} {δ = δ} p h =
+  mk⊩ᴿ (⊩rs h) (⊩es h) ts' (⊩ss h) (⊩ds h) (⊩dfs h)
+  where
+    ts' : ∀ {A} → A ∈ ts (pushᵗ αs R) → Q ⊩ᴱ A [ δ ]ᵛ
+    ts' m with ∈-++⁻ (map tvar αs) m
+    ... | inj₂ m' = ⊩ts h m'
+    ... | inj₁ m' with ∈-map⁻ tvar m'
+    ...   | α , m₀ , refl = p m₀
 
 pushᵈ-⊩ : ∀ {Ψ Ψ'} {Q : Hyps Ψ'} {R : Resid Ψ} {A : OVType Ψ} {ρ : RExp Ψ}
             {δ : Subst Ψ Ψ'}
@@ -653,10 +659,7 @@ atomᵗ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A : OVTy
 atomᵗ-princ j A eq γ p with strᵛ⁺ j A
 ... | just (A₀ , e₁) with eq
 ...   | refl = λ { (here refl) → bndᵗ j A e₁ γ p }
-atomᵗ-princ j A eq γ p | nothing with et₀? A
-... | just _  with eq
-...   | refl = λ ()
-atomᵗ-princ j A eq γ p | nothing | nothing = ⊥just eq
+atomᵗ-princ j A eq γ p | nothing = ⊥just eq
 
 atomˢ-princ : ∀ {Φ Φ'} {Q : Hyps Φ'} → (j : EVar (Φ +e)) → (A B : OVType (Φ +e))
             → ∀ {a} → atomˢ j A B ≡ just a
@@ -1185,10 +1188,11 @@ reexpand-princ : ∀ {Θ Ψ''} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
                    (((mδ m ⨟ˢ δ) ≐ˢ δ₀) × (Q ⊩ᴿ (res s') [ δ ]))
 reexpand-princ s eq δ₀ Q h with expandSub (ss (res s)) in eqx
 ... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
-...   | nothing = ⊥just eq
-...   | just e with eq
-...     | refl = δ , trix , atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h))
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) | etsDec (ts (res s [ δₑ ]ᴿ))
+...   | nothing | _       = ⊥just eq
+...   | just _  | nothing = ⊥just eq
+...   | just e  | just t with eq
+...     | refl = δ , trix , atomiseᴿ-compl _ e t (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h))
   where
     facx = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
     δ    = proj₁ facx
@@ -1199,9 +1203,16 @@ reexpand-fail : ∀ {Θ Ψ''} → (s : St Θ) → reexpand s ≡ nothing
               → Q ⊩ᴿ (res s) [ δ₀ ] → ⊥
 reexpand-fail s eq δ₀ Q h with expandSub (ss (res s)) in eqx
 ... | nothing = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
-...   | just _  = ⊥nothing eq
-...   | nothing =
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) in eqs | etsDec (ts (res s [ δₑ ]ᴿ)) in eqt
+...   | just _  | just _  = ⊥nothing eq
+...   | just _  | nothing =
+        etsDec-refute (ts (res s [ δₑ ]ᴿ)) eqt δ
+          (⊩ts (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)))
+  where
+    facx = subst (ExpMax δ₀) eqx (expandSub-max (ss (res s)) δ₀ (⊩ss h))
+    δ    = proj₁ facx
+    trix = proj₂ facx
+...   | nothing | _       =
         subsList-exp (ss (res s)) δₑ
           (subst (ExpDec (ss (res s))) eqx (expandSub-dec (ss (res s)))) eqs
 
@@ -1213,9 +1224,10 @@ reexpand-fix : ∀ {Θ Ψ''} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
              → Fixing (rig s) δ₀ → Fixing (rig s') δ
 reexpand-fix s eq δ tri fx with expandSub (ss (res s))
 ... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
-...   | nothing = ⊥just eq
-...   | just e with eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) | etsDec (ts (res s [ δₑ ]ᴿ))
+...   | nothing | _       = ⊥just eq
+...   | just _  | nothing = ⊥just eq
+...   | just e  | just t with eq
 ...     | refl = Fixing-trans δₑ δ tri fx
 
 -- Closing a scope re-expands its residual first: every instance
@@ -1239,6 +1251,47 @@ reexpand-Princ⇑ {s'' = s''} {m} ip {m₃ = m₃} e δ₀ sat h =
     δ₂   = proj₁ f₂
     tri₂ = proj₁ (proj₂ f₂)
     h₂   = proj₂ (proj₂ f₂)
+
+-- An eternality demand and a var-rule disjunction, decided when pushed
+
+solveEt-princ : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
+              → (x : Maybe (List (TyVar (Ψ s)))) → (e : etDec (A [ θ s ]ᵛ) ≡ x)
+              → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' (Etᶜ A)}
+              → solveEt s A x e ≡ solved (s' , m , w) → Princ s s' m (Etᶜ A)
+solveEt-princ s A nothing   e ()
+solveEt-princ s A (just αs) e refl δ₀ sat h =
+  δ₀ , ≐ˢ-refl ,
+  pushᵗ-⊩ (etDec-compl (A [ θ s ]ᵛ) e δ₀ (subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat)) h ,
+  (λ fx → fx)
+
+solveEt-fail : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
+             → (x : Maybe (List (TyVar (Ψ s)))) → (e : etDec (A [ θ s ]ᵛ) ≡ x)
+             → solveEt s A x e ≡ refuted → Refut s (Etᶜ A)
+solveEt-fail s A nothing  e eq δ₀ fx h sat =
+  etDec-refute (A [ θ s ]ᵛ) e δ₀ (subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat)
+solveEt-fail s A (just _) e ()
+
+solveDisj-princ : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
+                → (x : Maybe (List (TyVar (Ψ s)))) → (e : etDec (A [ θ s ]ᵛ) ≡ x)
+                → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' (Et∨≾ᵘ A ρ)}
+                → solveDisj s A ρ x e ≡ solved (s' , m , w) → Princ s s' m (Et∨≾ᵘ A ρ)
+solveDisj-princ s A ρ nothing        e refl δ₀ sat h =
+  δ₀ , ≐ˢ-refl ,
+  pushʳ-⊩ (etDec-grade (A [ θ s ]ᵛ) e δ₀
+             (subst₂ (VarOK ∅ᴴ) (sym ([⨟]ᵛ A (θ s) δ₀)) (sym ([⨟]ʳ ρ (θ s) δ₀)) sat)) h ,
+  (λ fx → fx)
+solveDisj-princ s A ρ (just [])      e refl δ₀ sat h = δ₀ , ≐ˢ-refl , h , (λ fx → fx)
+solveDisj-princ s A ρ (just (_ ∷ _)) e refl δ₀ sat h =
+  δ₀ , ≐ˢ-refl ,
+  pushᵈ-⊩ (subst₂ (VarOK ∅ᴴ) (sym ([⨟]ᵛ A (θ s) δ₀)) (sym ([⨟]ʳ ρ (θ s) δ₀)) sat) h ,
+  (λ fx → fx)
+
+solveDisj-fail : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
+               → (x : Maybe (List (TyVar (Ψ s)))) → (e : etDec (A [ θ s ]ᵛ) ≡ x)
+               → solveDisj s A ρ x e ≡ refuted → Refut s (Et∨≾ᵘ A ρ)
+solveDisj-fail s A ρ nothing        e ()
+solveDisj-fail s A ρ (just [])      e ()
+solveDisj-fail s A ρ (just (_ ∷ _)) e ()
 
 solve-principal : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
                 → {s' : St Θ} {m : s ⟶ s'} {w : Wit s' C}
@@ -1282,10 +1335,12 @@ solve-principal s (A ≐ᵥ B) eq δ₀ sat h
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
 ...   | nothing = ⊥refuted eq
 ...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ))
-...     | nothing = ⊥refuted eq
-...     | just e with eq
+                          | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ))
+...     | nothing | _       = ⊥refuted eq
+...     | just _  | nothing = ⊥refuted eq
+...     | just e  | just t with eq
 ...       | refl = δ₂ , tri₂ ,
-                   atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)) ,
+                   atomiseᴿ-compl _ e t (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)) ,
                    (λ fx → Fixing-trans δₑ δ₂ trix (Fixing-trans ⟦ ρ ⟧ᴬ δ₁ tri₁ fx))
   where
     u = trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt
@@ -1310,11 +1365,12 @@ solve-principal s (A ≾̂ᵥᶜ B) eq δ₀ sat h
 ... | nothing = ⊥refuted eq
 ... | just (Ψ' , δₑ) with subDec (A [ θ s ]ᵛ [ δₑ ]ᵛ) (B [ θ s ]ᵛ [ δₑ ]ᵛ)
 ...   | nothing = ⊥refuted eq
-...   | just d with subsList (ss (res s [ δₑ ]ᴿ))
-...     | nothing = ⊥refuted eq
-...     | just e with eq
+...   | just d with subsList (ss (res s [ δₑ ]ᴿ)) | etsDec (ts (res s [ δₑ ]ᴿ))
+...     | nothing | _       = ⊥refuted eq
+...     | just _  | nothing = ⊥refuted eq
+...     | just e  | just t with eq
 ...       | refl = δ , trix ,
-                 ∪ᴿ-both (atomiseᴿ-compl _ e (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)))
+                 ∪ᴿ-both (atomiseᴿ-compl _ e t (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)))
                          (atomsᴿ-⊩ (atomsOf d)
                            (elim d δ (subst₂ (∅ᴴ ∣_<:̂ᵛ_) (sym (inst A)) (sym (inst B))
                                              sat))) ,
@@ -1347,20 +1403,13 @@ solve-principal s (ε ≾̂ₑᶜ ε') refl δ₀ sat h =
                   (sym ([⨟]ᵉ ε (θ s) δ₀)) (sym ([⨟]ᵉ ε' (θ s) δ₀)) sat) h ,
   (λ fx → fx)
 
-solve-principal s (Etᶜ A) refl δ₀ sat h =
-  δ₀ , ≐ˢ-refl ,
-  pushᵗ-⊩ (subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A (θ s) δ₀)) sat) h ,
-  (λ fx → fx)
+solve-principal s (Etᶜ A) eq = solveEt-princ s A _ refl eq
 
-solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ sat h
+solve-principal s (Et∨≾ᵘ A ρ) eq
   with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just p  with eq
-...   | refl = δ₀ , ≐ˢ-refl , h , (λ fx → fx)
-solve-principal s (Et∨≾ᵘ A ρ) eq δ₀ sat h | nothing with eq
-... | refl = δ₀ , ≐ˢ-refl ,
-             pushᵈ-⊩ (subst₂ (VarOK ∅ᴴ) (sym ([⨟]ᵛ A (θ s) δ₀))
-                             (sym ([⨟]ʳ ρ (θ s) δ₀)) sat) h ,
-             (λ fx → fx)
+...   | refl = λ δ₀ sat h → δ₀ , ≐ˢ-refl , h , (λ fx → fx)
+solve-principal s (Et∨≾ᵘ A ρ) eq | nothing = solveDisj-princ s A ρ _ refl eq
 
 solve-principal s (∃ᵗ C) eq δ₀ (B , sat) h with solve (s ↑ᵗˢ) C in e
 ... | refuted = ⊥refuted eq
@@ -1635,9 +1684,10 @@ reexpand-atomic : ∀ {Θ} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
                 → reexpand s ≡ just (s' , m) → Atomicˢ (ss (res s'))
 reexpand-atomic s eq with expandSub (ss (res s))
 ... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
-...   | nothing = ⊥just eq
-...   | just e with eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) | etsDec (ts (res s [ δₑ ]ᴿ))
+...   | nothing | _       = ⊥just eq
+...   | just _  | nothing = ⊥just eq
+...   | just e  | just t with eq
 ...     | refl = f
   where
     f : Atomicˢ (map (mapᵖ tvar) (asubᵥ (atomsOfˢ e)))
@@ -1677,8 +1727,26 @@ solve-fail s (A ≐ᵥ B) eq δ₀ fx h sat
                  (trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt)
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) in eqx
 ...   | just (Ψ' , δₑ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) in eqs
-...     | just _  = ⊥solved eq
-...     | nothing =
+                          | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) in eqt
+...     | just _  | just _  = ⊥solved eq
+...     | just _  | nothing =
+          etsDec-refute (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δₑ ]ᴿ)) eqt δ₂
+            (⊩ts (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h₁)))
+  where
+    u = trans ([⨟]ᵛ A (θ s) δ₀) (trans sat (sym ([⨟]ᵛ B (θ s) δ₀))) , tt
+
+    fac = unify-max (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) ∷ []) equ δ₀ u
+    δ₁   = proj₁ fac
+    tri₁ = proj₂ fac
+
+    h₁ : ∅ᴴ ⊩ᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ) [ δ₁ ]
+    h₁ = ⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym tri₁) h)
+
+    facx = subst (ExpMax δ₁) eqx
+                 (expandSub-max (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δ₁ (⊩ss h₁))
+    δ₂   = proj₁ facx
+    trix = proj₂ facx
+...     | nothing | _       =
           subsList-exp (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)) δₑ
             (subst (ExpDec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))) eqx
                    (expandSub-dec (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ)))) eqs
@@ -1714,9 +1782,23 @@ solve-fail s (A ≾̂ᵥᶜ B) eq δ₀ fx h sat
   where
     dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
                 (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
-...     | just _ with subsList (ss (res s [ δₑ ]ᴿ)) in eqs
-...       | just _  = ⊥solved eq
-...       | nothing = subsList-exp (ss (res s)) δₑ (λ m → dec (there m)) eqs
+...     | just _ with subsList (ss (res s [ δₑ ]ᴿ)) in eqs | etsDec (ts (res s [ δₑ ]ᴿ)) in eqt
+...       | just _  | just _  = ⊥solved eq
+...       | just _  | nothing =
+            etsDec-refute (ts (res s [ δₑ ]ᴿ)) eqt δ
+              (⊩ts (⊩ᴿ-subst⁻ (⊩ᴿ-resp-≐ˢ (≐ˢ-sym trix) h)))
+  where
+    dem : ∀ {X Y} → (X , Y) ∈ ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
+        → ∅ᴴ ∣ X [ δ₀ ]ᵛ <:̂ᵛ Y [ δ₀ ]ᵛ
+    dem (here refl) = subst₂ (∅ᴴ ∣_<:̂ᵛ_) (sym ([⨟]ᵛ A (θ s) δ₀))
+                                        (sym ([⨟]ᵛ B (θ s) δ₀)) sat
+    dem (there m)   = ⊩ss h m
+
+    facx = subst (ExpMax δ₀) eqx
+                 (expandSub-max ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)) δ₀ dem)
+    δ    = proj₁ facx
+    trix = proj₂ facx
+...       | nothing | _       = subsList-exp (ss (res s)) δₑ (λ m → dec (there m)) eqs
   where
     dec = subst (ExpDec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))) eqx
                 (expandSub-dec ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s)))
@@ -1725,11 +1807,11 @@ solve-fail s (ρ ≾̂ᵣᶜ ρ') ()
 
 solve-fail s (ε ≾̂ₑᶜ ε') ()
 
-solve-fail s (Etᶜ A) ()
+solve-fail s (Etᶜ A) eq = solveEt-fail s A _ refl eq
 
 solve-fail s (Et∨≾ᵘ A ρ) eq with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = ⊥solved eq
-... | nothing = ⊥solved eq
+... | nothing = solveDisj-fail s A ρ _ refl eq
 
 solve-fail s (∃ᵗ C) eq δ₀ fx h (B , sat) with solve (s ↑ᵗˢ) C in e
 ... | solved _ = ⊥solved eq
@@ -1807,9 +1889,10 @@ reexpand-dec : ∀ {Θ} → (s : St Θ) → {s' : St Θ} {m : s ⟶ s'}
              → ∀ {A B} → (A , B) ∈ ss (res s') → Σ[ d ∈ SubDec A B ] (subDec A B ≡ just d)
 reexpand-dec s eq with expandSub (ss (res s))
 ... | nothing = ⊥just eq
-... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ))
-...   | nothing = ⊥just eq
-...   | just e with eq
+... | just (Ψ' , δₑ) with subsList (ss (res s [ δₑ ]ᴿ)) | etsDec (ts (res s [ δₑ ]ᴿ))
+...   | nothing | _       = ⊥just eq
+...   | just _  | nothing = ⊥just eq
+...   | just e  | just t with eq
 ...     | refl = f
   where
     f : ∀ {A B} → (A , B) ∈ map (mapᵖ tvar) (asubᵥ (atomsOfˢ e))

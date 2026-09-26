@@ -9,10 +9,12 @@
 --   (`unify-sound`, `unify-mgu`, `unify-fail`); subtyping        --
 --   demands are expanded (`expandSub-dec`, `expandSub-max`) and  --
 --   decomposed exactly (`SubDec`'s `intro`/`elim`,               --
---   `atomiseᴿ-sound`/`atomiseᴿ-compl`); other atoms are          --
---   residualised. A solution carries its witness (`Wit`), is     --
---   principal (`solve-principal`), and a refutation refutes      --
---   (`solve-fail`).                                              --
+--   `atomiseᴿ-sound`/`atomiseᴿ-compl`); eternality demands and   --
+--   the type side of var-rule disjunctions are decided when      --
+--   pushed (`etDec-intro`/`-compl`/`-refute`, `etDec-grade`);    --
+--   other atoms are residualised. A solution carries its         --
+--   witness (`Wit`), is principal (`solve-principal`), and a     --
+--   refutation refutes (`solve-fail`).                           --
 -- * The close of a clause's rigid scope: `reexpand`              --
 --   (`reexpand-princ`/`-fail`), `Localise.localise`              --
 --   (`Localised`, `localise-princ`), `splitᴿ`                    --

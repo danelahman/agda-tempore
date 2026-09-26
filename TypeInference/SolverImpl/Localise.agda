@@ -61,9 +61,10 @@
 -- against no hypotheses, and a var-rule disjunction with a     --
 -- side so decided (the type eternal, or the grade below the    --
 -- unit). They hold at every instance and bound nothing. A      --
--- disjunction whose type is eternal at no instance becomes its --
--- grade side, which is what it means at every instance solving --
--- the scope from no hypotheses, the rigid a parameter.         --
+-- disjunction whose type a substitution has made eternal at no --
+-- instance becomes its grade side, which is what it means at   --
+-- every instance solving the scope from no hypotheses, the     --
+-- rigid a parameter.                                           --
 --                                                              --
 -- Contract (`Localised`). `lσ` fixes the images of the outer   --
 -- unknowns (`lfix`); a discharge of the new residual along `δ` --
@@ -1064,12 +1065,6 @@ record Refined {Ψ} (l : List (OVType Ψ × RExp Ψ)) : Set where
           → (∀ {a} → a ∈ l → Disj ∅ᴴ δ a) → ∀ {a} → a ∈ ords → Ordʳ ∅ᴴ δ a
     restᴱ : ∀ {A ρ} → (A , ρ) ∈ rest → Σ[ αs ∈ List (TyVar Ψ) ] (etDec A ≡ just αs)
 
-grade-side : ∀ {Ψ Ψ'} → (A : OVType Ψ) → etDec A ≡ nothing → {ρ : RExp Ψ} → (δ : Subst Ψ Ψ')
-           → Disj ∅ᴴ δ (A , ρ) → Ordʳ ∅ᴴ δ (ρ , ûᵣ)
-grade-side A e δ (et-ok et)      = ⊥-elim (etDec-refute A e δ et)
-grade-side A e δ (≾ᵘ-ok le)      = le
-grade-side A e δ (hyp-ok () _ _)
-
 refine : ∀ {Ψ} → (l : List (OVType Ψ × RExp Ψ)) → Refined l
 refine []            = refined [] [] (λ ()) (λ δ k o ()) (λ δ k ()) (λ ())
 refine ((A , ρ) ∷ l) with etDec A in e | refine l
@@ -1077,7 +1072,7 @@ refine ((A , ρ) ∷ l) with etDec A in e | refine l
       refined r ((ρ , ûᵣ) ∷ os) (λ m → there (sb m))
         (λ δ k o → λ { (here refl) → ≾ᵘ-ok (o (here refl))
                      ; (there m)   → bk δ k (λ m' → o (there m')) m })
-        (λ δ k → λ { (here refl) → grade-side A e {ρ} δ (k (here refl))
+        (λ δ k → λ { (here refl) → etDec-grade A e δ (k (here refl))
                    ; (there m)   → fw δ (λ m' → k (there m')) m })
         re
 ... | just αs | refined r os sb bk fw re =

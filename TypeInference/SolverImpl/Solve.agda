@@ -4,14 +4,19 @@
 -- Walks a constraint, threading a state: type equations go to  --
 -- the unification core, a subtyping atom is decomposed at      --
 -- matching formers and residualised at a pair of type          --
--- variables, grade orderings, eternality demands and var-rule  --
--- disjunctions are residualised (a disjunction is dropped      --
--- where `decide≾ᵣ` proves its grade below the unit), and       --
--- binders lift the state.                                      --
+-- variables, grade orderings are residualised, and binders     --
+-- lift the state.                                              --
+-- An eternality demand is decided by `etDec` when it is        --
+-- pushed: refuted, or residualised as its atoms on type        --
+-- variables (`solveEt`). A var-rule disjunction is dropped     --
+-- where `decide≾ᵣ` proves its grade below the unit; otherwise  --
+-- its type is decided: never eternal, the grade side is        --
+-- residualised as an ordering; eternal with no atom, it is     --
+-- dropped; otherwise it is residualised (`solveDisj`).         --
 -- An expansion of the type unknowns is followed by decomposing --
--- the residual's subtyping demands again, so that they are     --
--- pairs of type variables and their grade orderings are        --
--- residualised with the others.                                --
+-- the residual's subtyping and eternality demands again, so    --
+-- that they are on type variables and their grade orderings    --
+-- are residualised with the others.                            --
 --                                                              --
 -- A successful witness is deferred, re-read at the state a     --
 -- later component leaves behind rather than transported along  --
@@ -19,11 +24,11 @@
 --                                                              --
 -- At a rigid binder the state is lifted with a fresh residual. --
 -- Before the scope closes, its subtyping demands are expanded  --
--- and decomposed again (`reexpand`), so that they are pairs of --
--- type variables, the atoms decided true are dropped, and the  --
--- unknowns local to the scope are sent to values that keep     --
--- every instance entering it (`Localise`); then atoms free of  --
--- the rigid are kept, one whose right side alone               --
+-- and its demands decomposed again (`reexpand`), so that they  --
+-- are on type variables, the atoms decided true are dropped,   --
+-- and the unknowns local to the scope are sent to values that  --
+-- keep every instance entering it (`Localise`); then atoms     --
+-- free of the rigid are kept, one whose right side alone       --
 -- mentions it is kept at the unit rigid where the unit is      --
 -- least, one whose left side alone mentions it is kept at the  --
 -- top rigid, any other is discharged on the spot or, when it   --
@@ -188,16 +193,6 @@ Atomᵈ {Φ} j A ρ =
        → (∀ {B τ} → (B , τ) ∈ l₀ → VarOK Q (B [ δ ]ᵛ) (τ [ δ ]ʳ))
        → VarOK (wkᵉ-H Q) (A [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ᵛ) (ρ [ popˢ j ⨟ˢ (δ ↑ᵉ) ]ʳ))
 
--- An eternality demand that reduces to no atom at all. Wrapping the
--- verdict together with its proof keeps the case analysis of `atomᵗ`
--- visible from outside, which is what reasoning about it needs.
-
-et₀? : ∀ {Φ} → (A : OVType Φ) → Maybe ({Q : Hyps Φ} → Q ⊩ᴱ A)
-et₀? A with etDec A in e
-... | just []      = just (λ {Q} → etDec-sound {Q = Q} A e (λ ()))
-... | just (α ∷ _) = nothing
-... | nothing      = nothing
-
 -- An ordering with the rigid on one side only holds for every rigid
 -- exactly when it holds at the extreme grade on that side, the side
 -- being monotone in the rigid:
@@ -306,15 +301,17 @@ atomᵉ O j ε ε' | nothing | nothing with decide≾ₑ {Q = ∅ᴴ} ε ε'
 ... | just p  = just ([] , λ δ Q k → ⊩-substₑ ∅ᴴ-⊩ᴴ p)
 ... | nothing = nothing
 
+-- An eternality demand is kept when its type strengthens away from the
+-- rigid. A type that does not mentions a grade, so is eternal at no
+-- instance (`atomᵗ-fail`).
+
 atomᵗ : ∀ {Φ} → (j : EVar (Φ +e)) → (A : OVType (Φ +e)) → Maybe (Atomᵗ j A)
 atomᵗ j A with strᵛ⁺ j A
 ... | just (A₀ , e₁) =
       just (A₀ ∷ [] ,
             λ δ Q k → subst (wkᵉ-H Q ⊩ᴱ_) (sym (pop⨟ᵛ j A e₁ δ))
                             (⊩ᴱ-wkᵉ (k (here refl))))
-... | nothing with et₀? A
-...   | just p  = just ([] , λ δ Q k → ⊩ᴱ-subst ∅ᴴ-⊩ᴴ (p {∅ᴴ}))
-...   | nothing = nothing
+... | nothing = nothing
 
 -- A subtyping demand is kept only when both sides strengthen away
 -- from the rigid.
@@ -889,11 +886,48 @@ chain₂ᵛ X σ δ δ' = trans (cong (_[ δ' ]ᵛ) ([⨟]ᵛ X σ δ)) ([⨟]�
 reexpand : ∀ {Θ} → (s : St Θ) → Maybe (Σ[ s' ∈ St Θ ] (s ⟶ s'))
 reexpand s with expandSub (ss (res s))
 ... | nothing       = nothing
-... | just (Ψ' , δ) with subsList (ss (res s [ δ ]ᴿ))
-...   | nothing = nothing
-...   | just e  =
-        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e) (transRig δ (rig s)) ,
-              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e h)))
+... | just (Ψ' , δ) with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
+...   | nothing | _       = nothing
+...   | just _  | nothing = nothing
+...   | just e  | just t  =
+        just (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t) (transRig δ (rig s)) ,
+              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e t h)))
+
+-- An eternality demand is decided by `etDec` when it is pushed: it is
+-- refuted, or its atoms on type variables are pushed. The verdict is
+-- passed with the equation naming it, so that a proof sees the case
+-- analysis.
+
+solveEt : ∀ {Θ} → (s : St Θ) → (A : OVType Θ)
+        → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x
+        → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (Etᶜ A)))
+solveEt s A nothing   e = refuted
+solveEt s A (just αs) e =
+  solved (st (Ψ s) (θ s) (pushᵗ αs (res s)) (rig s) ,
+        mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵗ h)) ,
+        λ δ Q h → subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
+                        (etDec-intro (A [ θ s ]ᵛ) e δ
+                                     (λ m → ⊩ts h (∈-++⁺ˡ (∈-map⁺ tvar m)))))
+
+-- A var-rule disjunction whose grade is not decided below the unit has
+-- its type decided likewise: never eternal, its grade side is pushed;
+-- eternal with no atom, it is dropped; otherwise it is pushed.
+
+solveDisj : ∀ {Θ} → (s : St Θ) → (A : OVType Θ) → (ρ : RExp Θ)
+          → (x : Maybe (List (TyVar (Ψ s)))) → etDec (A [ θ s ]ᵛ) ≡ x
+          → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' (Et∨≾ᵘ A ρ)))
+solveDisj s A ρ nothing       e =
+  solved (st (Ψ s) (θ s) (pushʳ (ρ [ θ s ]ʳ) ûᵣ (res s)) (rig s) ,
+        mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailʳ h)) ,
+        λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ) (⊩rs h (here refl))))
+solveDisj s A ρ (just [])     e =
+  solved (s , ⟶-id ,
+        λ δ Q h → et-ok (subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ)
+                               (etDec-intro (A [ θ s ]ᵛ) e δ (λ ()))))
+solveDisj s A ρ (just (_ ∷ _)) e =
+  solved (st (Ψ s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
+        mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵈ h)) ,
+        λ δ Q h → subst₂ (VarOK Q) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ) (⊩ds h (here refl)))
 
 solve : ∀ {Θ} → (s : St Θ) → (C : Constraint Θ)
       → Outcome (Σ[ s' ∈ St Θ ] ((s ⟶ s') × Wit s' C))
@@ -916,13 +950,15 @@ solve s (A ≐ᵥ B) with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [ θ s ]ᵛ) 
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
 ...   | nothing = refuted
 ...   | just (Ψ' , δ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-...     | nothing = refuted
-...     | just e =
-        solved (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (atomiseᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ) e)
+                         | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
+...     | nothing | _       = refuted
+...     | just _  | nothing = refuted
+...     | just e  | just t  =
+        solved (st Ψ' (θ s ⨟ˢ ⟦ ρ ⟧ᴬ ⨟ˢ δ) (atomiseᴿ (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ) e t)
                  (transRig δ (transRig ⟦ ρ ⟧ᴬ (rig s))) ,
               mor (⟦ ρ ⟧ᴬ ⨟ˢ δ) (≐ˢ-sym (⨟-assoc (θ s) ⟦ ρ ⟧ᴬ δ))
                   (λ δ' Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-assoc ⟦ ρ ⟧ᴬ δ δ'))
-                                          (⊩ᴿ-subst (⊩ᴿ-subst (atomiseᴿ-sound _ e h)))) ,
+                                          (⊩ᴿ-subst (⊩ᴿ-subst (atomiseᴿ-sound _ e t h)))) ,
               λ δ' Q h → trans (sym (chain₂ᵛ A (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ'))
                          (trans (cong (λ X → X [ δ ]ᵛ [ δ' ]ᵛ) pinned)
                                 (chain₂ᵛ B (θ s ⨟ˢ ⟦ ρ ⟧ᴬ) δ δ')))
@@ -937,12 +973,13 @@ solve s (A ≾̂ᵥᶜ B) with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss
 ... | nothing        = refuted
 ... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = refuted
-...   | just d  with subsList (ss (res s [ δ ]ᴿ))
-...     | nothing = refuted
-...     | just e  =
-        solved (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e ∪ᴿ atomsᴿ (atomsOf d))
+...   | just d  with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
+...     | nothing | _       = refuted
+...     | just _  | nothing = refuted
+...     | just e  | just t  =
+        solved (st Ψ' (θ s ⨟ˢ δ) (atomiseᴿ (res s [ δ ]ᴿ) e t ∪ᴿ atomsᴿ (atomsOf d))
                  (transRig δ (rig s)) ,
-              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e (∪ᴿ-fst h))) ,
+              mor δ ≐ˢ-refl (λ δ' Q h → ⊩ᴿ-subst (atomiseᴿ-sound _ e t (∪ᴿ-fst h))) ,
               λ δ' Q h → subst₂ (Q ∣_<:̂ᵛ_) (chain₂ᵛ A (θ s) δ δ') (chain₂ᵛ B (θ s) δ δ')
                                 (intro d δ' (holdsᴿ (atomsOf d) (∪ᴿ-snd h))))
 
@@ -958,21 +995,14 @@ solve s (ε ≾̂ₑᶜ ε') =
         λ δ Q h → subst₂ (λ x y → Q ⊩ x ≾̂ₑ y)
                          ([⨟]ᵉ ε (θ s) δ) ([⨟]ᵉ ε' (θ s) δ) (⊩es h (here refl)))
 
-solve s (Etᶜ A) =
-  solved (st (Ψ s) (θ s) (pushᵗ (A [ θ s ]ᵛ) (res s)) (rig s) ,
-        mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵗ h)) ,
-        λ δ Q h → subst (Q ⊩ᴱ_) ([⨟]ᵛ A (θ s) δ) (⊩ts h (here refl)))
+solve s (Etᶜ A) = solveEt s A (etDec (A [ θ s ]ᵛ)) refl
 
 solve s (Et∨≾ᵘ A ρ) with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just p =
       solved (s , ⟶-id ,
             λ δ Q h → ≾ᵘ-ok (subst (λ x → Q ⊩ x ≾̂ᵣ ûᵣ) ([⨟]ʳ ρ (θ s) δ)
                                    (⊩-substᵣ ∅ᴴ-⊩ᴴ p)))
-... | nothing =
-      solved (st (Ψ s) (θ s) (pushᵈ (A [ θ s ]ᵛ) (ρ [ θ s ]ʳ) (res s)) (rig s) ,
-            mor idˢ (⨟-idʳ (θ s)) (λ δ Q h → ⊩ᴿ-resp-≐ˢ (≐ˢ-sym (⨟-idˡ δ)) (tailᵈ h)) ,
-            λ δ Q h → subst₂ (VarOK Q) ([⨟]ᵛ A (θ s) δ) ([⨟]ʳ ρ (θ s) δ)
-                             (⊩ds h (here refl)))
+... | nothing = solveDisj s A ρ (etDec (A [ θ s ]ᵛ)) refl
 
 solve {Θ} s (∃ᵗ C) with solve (s ↑ᵗˢ) C
 ... | refuted = refuted

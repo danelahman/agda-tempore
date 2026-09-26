@@ -380,10 +380,11 @@ Inference for the open calculus, by constraint generation and solving.
   report and inference. Its banner lists the stages and the lemmas stating
   each one's contract. `SolverImpl/`:
   - `Solve.agda`: the driver. Type equations go to unification, subtyping is
-    expanded and decomposed, other atoms are residualised; at the close of a
-    rigid scope the atoms are kept, discharged or deferred. A solution carries
-    its witness; `Principal.agda` proves it principal (`solve-principal`) and
-    a refutation sound (`solve-fail`), stage by stage.
+    expanded and decomposed, eternality and the type side of a var-rule
+    disjunction are decided when pushed, other atoms are residualised; at the
+    close of a rigid scope the atoms are kept, discharged or deferred. A
+    solution carries its witness; `Principal.agda` proves it principal
+    (`solve-principal`) and a refutation sound (`solve-fail`), stage by stage.
   - `Localise.agda`: values for the unknowns local to a rigid scope, keeping
     every instance entering it (`Localised`); principal for lowering and the
     unit (`lowerᵉ-least`), instance-preserving only for raising and the top.
@@ -416,8 +417,8 @@ Inference for the open calculus, by constraint generation and solving.
     (`Strengthened`); `Vars.agda` sets of variables.
   - `Refute.agda`: refutation of an ordering against the unit (`refute-⊩`).
   - `Resid.agda`, `State.agda`, `Polarity.agda`: residual constraints and
-    their exact decomposition (`SubDec`, `toHyps-compl`), the solver state,
-    the polarity of an unknown.
+    their exact decomposition (`SubDec`, `EtsDec`, `toHyps-compl`), the
+    solver state, the polarity of an unknown.
   - `Expand.agda`: skeleton expansion of type unknowns (`expandSub-dec`,
     `expandSub-max`).
   - `Core/`: McBride-style first-order unification of types and of skeletons,

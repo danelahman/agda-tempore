@@ -78,21 +78,33 @@ solve-rigidFree s (A ≐ᵥ B) p with unify* (rig s) (eqᵛ (A [ θ s ]ᵛ) (B [
 ... | just (Ψ⁺ , ρ , equ) with expandSub (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ))
 ...   | nothing = λ ()
 ...   | just (Ψ' , δ) with subsList (ss (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
-...     | nothing = λ ()
-...     | just _  = λ ()
+                         | etsDec (ts (res s [ ⟦ ρ ⟧ᴬ ]ᴿ [ δ ]ᴿ))
+...     | nothing | _       = λ ()
+...     | just _  | nothing = λ ()
+...     | just _  | just _  = λ ()
 solve-rigidFree s (A ≾̂ᵥᶜ B) p with expandSub ((A [ θ s ]ᵛ , B [ θ s ]ᵛ) ∷ ss (res s))
 ... | nothing = λ ()
 ... | just (Ψ' , δ) with subDec (A [ θ s ]ᵛ [ δ ]ᵛ) (B [ θ s ]ᵛ [ δ ]ᵛ)
 ...   | nothing = λ ()
-...   | just d  with subsList (ss (res s [ δ ]ᴿ))
-...     | nothing = λ ()
-...     | just _  = λ ()
+...   | just d  with subsList (ss (res s [ δ ]ᴿ)) | etsDec (ts (res s [ δ ]ᴿ))
+...     | nothing | _       = λ ()
+...     | just _  | nothing = λ ()
+...     | just _  | just _  = λ ()
 solve-rigidFree s (ρ ≾̂ᵣᶜ ρ') p = λ ()
 solve-rigidFree s (ε ≾̂ₑᶜ ε') p = λ ()
-solve-rigidFree s (Etᶜ A) p = λ ()
+solve-rigidFree s (Etᶜ A) p = solveEt-≢stuck (etDec (A [ θ s ]ᵛ)) refl
+  where
+    solveEt-≢stuck : ∀ x e → solveEt s A x e ≢ stuck
+    solveEt-≢stuck nothing  e = λ ()
+    solveEt-≢stuck (just _) e = λ ()
 solve-rigidFree s (Et∨≾ᵘ A ρ) p with decide≾ᵣ {Q = ∅ᴴ} (ρ [ θ s ]ʳ) ûᵣ
 ... | just _  = λ ()
-... | nothing = λ ()
+... | nothing = solveDisj-≢stuck (etDec (A [ θ s ]ᵛ)) refl
+  where
+    solveDisj-≢stuck : ∀ x e → solveDisj s A ρ x e ≢ stuck
+    solveDisj-≢stuck nothing        e = λ ()
+    solveDisj-≢stuck (just [])      e = λ ()
+    solveDisj-≢stuck (just (_ ∷ _)) e = λ ()
 solve-rigidFree s (∃ᵗ C) p with solve (s ↑ᵗˢ) C in e
 ... | refuted  = λ ()
 ... | stuck    = ⊥-elim (solve-rigidFree (s ↑ᵗˢ) C p e)
