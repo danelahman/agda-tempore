@@ -27,12 +27,13 @@
 --   `closedᴴ` deciding the closed atoms                          --
 --   (`closedᴴ-⊩`/`-⊆`/`-fail`).                                  --
 -- * The report (`reportOn`, `Reported`): `simplify`              --
---   (`simplify-⊩`/`-⊨`), Pottier's elimination (`Elim`),         --
---   canonical forms (`canonElim`), `trim` (`trimElim`),          --
---   strengthening (`Strengthened`). The unknowns of the image of --
---   the caller's variables, and those of the deferred            --
---   conditions, are neither eliminated nor dropped (`fix`,       --
---   `instᴿ`).                                                    --
+--   (`simplify-⊩`/`-⊨`), Pottier's elimination (`Elim`), with    --
+--   the type variables of a subtyping cycle identified           --
+--   (`equateᵗ`), canonical forms (`canonElim`), `trim`           --
+--   (`trimElim`), strengthening (`Strengthened`). The unknowns   --
+--   of the image of the caller's variables, and those of the     --
+--   deferred conditions, are neither eliminated nor dropped      --
+--   (`fix`, `instᴿ`).                                            --
 --                                                                --
 -- Entailed orderings are decided by `decide≾ᵣ`/`decide≾ₑ` on     --
 -- normal forms (`nrmᵣ-≡`, `canonᵣ-≡`), sound by their types,     --

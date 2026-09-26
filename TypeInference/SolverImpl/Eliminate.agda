@@ -18,6 +18,13 @@
 -- smaller index stays. This step is tried before the steps       --
 -- against a bound, and they alternate.                           --
 --                                                                --
+-- A type variable on a cycle of subtyping atoms is sent to the   --
+-- representative of its strongly connected component (`Reach`),  --
+-- the atoms made reflexive going with it: a member never         --
+-- eliminated where there is one, else the least, each by index;  --
+-- two members never eliminated both stay. This step is tried     --
+-- before the type variables' step against a bound.               --
+--                                                                --
 -- Contract (`Elim`). Every step is a substitution `η`: the new   --
 -- type is the old one along `η`, up to convertibility (`conv`),  --
 -- and the new hypotheses entail the old ones along `η` (`inst`). --
@@ -29,17 +36,21 @@
 -- succeeds. Of a step against a bound, the hypotheses it keeps   --
 -- on the unknown's sort are entailed by `Bounds` (`lowerR`,      --
 -- `raiseL`); the type, the other sort and the disjunctions are   --
--- kept by polarity (`Monoᵉ`, `Raiseᵉ` and their siblings).       --
+-- kept by polarity (`Monoᵉ`, `Raiseᵉ` and their siblings). Of    --
+-- a step by equality (`equateᵉ`, `equateʳ`, `equateᵗ`), the      --
+-- hypotheses bound `η` by the identity both ways, so it moves no --
+-- type (`Equal`).                                                --
 --                                                                --
 -- Following Pottier's simplification of subtyping constraints    --
 -- (ICFP 1996).                                                   --
 ------------------------------------------------------------------
 
-open import Data.Bool.Base using (true; false; not; _∨_) renaming (Bool to 𝔹)
+open import Data.Bool.Base using (true; false; not; _∨_; _∧_) renaming (Bool to 𝔹)
 open import Data.Empty using (⊥-elim)
 open import Data.Fin.Base using (Fin; zero; suc; toℕ)
 open import Data.Fin.Properties using () renaming (_≟_ to _≟ᶠ_)
-open import Data.List.Base using (List; []; _∷_; map; filter)
+open import Data.List.Base using (List; []; _∷_; _++_; map; filter; filterᵇ)
+open import Data.Bool.ListAction using (any)
 open import Data.List.Membership.Propositional using (_∈_)
 open import Data.List.Membership.Propositional.Properties
   using (∈-map⁺; ∈-map⁻; ∈-filter⁺; ∈-filter⁻)
@@ -52,6 +63,7 @@ open import Data.Sum.Base using (_⊎_; inj₁; inj₂; [_,_]′)
 open import Relation.Nullary using (¬_; yes; no)
 open import Relation.Nullary.Decidable using (⌊_⌋; ¬?)
 open import Relation.Binary.Definitions using (DecidableEquality)
+open import Relation.Binary.Construct.Closure.ReflexiveTransitive using (Star; fold)
 
 open import Syntax.Grades
 open import Syntax.LanguageSpec
@@ -77,6 +89,7 @@ open import TypeInference.SolverImpl.Vars     S
   using (Vars; vᵗ; vʳ; vᵉ; Fixes; mkFixes; fixes-id; fixes-⨟; fixes-updᵉ; fixes-updʳ; outside)
 open import TypeInference.SolverImpl.Core.Occurs S using (occᵉ-e; occʳ-r)
 open import TypeInference.SolverImpl.Resid       S using (∅ᴴ-⊩ᴴ)
+import TypeInference.SolverImpl.Reach as Reachability
 open import TypeInference.SolverImpl.Bounds      S
   using (module Bᵉ; module Bʳ; updᵉ-e; updʳ-r; joinₑ; joinᵣ; joinₑ-ub⊩; joinₑ-lub⊩;
          joinᵣ-ub⊩; joinᵣ-lub⊩)
@@ -262,15 +275,14 @@ module Lowering {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
       et e = subst (∅ᴴ ⊩ᴱ_) (sym ([⨟]ᵛ A₀ η₀ δ))
                    (⊩ᴱ-<:ˢ {σ = η₀ ⨟ˢ δ} {τ = δ} (λ β → <:̂ᵛ-subst h (lowt β)) A₀ e)
 
--- A substitution fixing the type variables and, under the hypotheses,
--- both below and above the identity moves no type
+-- A substitution that, under the hypotheses, is both below and above
+-- the identity moves no type
 
 module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
              (lowg : Q ⊩ η₀ ≾ˢ idˢ) (hig : Q ⊩ idˢ ≾ˢ η₀)
-             (tv : ∀ β → sTy η₀ β ≡ tvar β) where
+             (lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β) (hit : ∀ β → Q ∣ tvar β <:̂ᵛ sTy η₀ β) where
 
-  open Lowering {Q = Q} η₀ lowg
-         (λ β → subst (λ x → Q ∣ x <:̂ᵛ tvar β) (sym (tv β)) (tvarₛ reflᵗᵛ)) public
+  open Lowering {Q = Q} η₀ lowg lowt public
 
   raiseʳ : (ρ : RExp Θ) → Q ⊩ ρ ≾̂ᵣ ρ [ η₀ ]ʳ
   raiseʳ ρ = subst (λ x → Q ⊩ x ≾̂ᵣ ρ [ η₀ ]ʳ) ([id]ʳ ρ) (mono-substᵣ hig ρ)
@@ -286,10 +298,14 @@ module Equal {Θ : Scope} {Q : Hyps Θ} (η₀ : Subst Θ Θ)
   sameᵉ ⁺ ε = lowᵉ ε
   sameᵉ ⁻ ε = raiseᵉ ε
 
+  sameᵗ : (s : Sign) → (β : TyVar Θ) → atᵛ Q s (sTy η₀ β) (tvar β)
+  sameᵗ ⁺ β = lowt β
+  sameᵗ ⁻ β = hit β
+
   mutual
 
     sameᵛ : (s : Sign) → (A : OVType Θ) → atᵛ Q s (A [ η₀ ]ᵛ) A
-    sameᵛ s (tvar β)  = atᵛ-≡ s (tv β)
+    sameᵛ s (tvar β)  = sameᵗ s β
     sameᵛ s (Base c)  = atᵛ-≡ s refl
     sameᵛ s Unit      = atᵛ-≡ s refl
     sameᵛ s Bool      = atᵛ-≡ s refl
@@ -1154,7 +1170,7 @@ equateᵉ {Θ} C Q i b eq =
     open Equal {Q = Q} η₀
       (≾ˢ-idˡ (updᵉ-below i b idˢ (subst (λ y → Q ⊩ y ≾̂ₑ evar i) (sym ([id]ᵉ b)) (proj₂ eq))))
       (≾ˢ-idʳ (updᵉ-above i b idˢ (subst (λ y → Q ⊩ evar i ≾̂ₑ y) (sym ([id]ᵉ b)) (proj₁ eq))))
-      (λ β → refl)
+      (λ β → tvarₛ reflᵗᵛ) (λ β → tvarₛ reflᵗᵛ)
 
     inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
     inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR ordE
@@ -1198,7 +1214,7 @@ equateʳ {Θ} C Q i b eq =
     open Equal {Q = Q} η₀
       (≾ˢ-idˡ (updʳ-below i b idˢ (subst (λ y → Q ⊩ y ≾̂ᵣ rvar i) (sym ([id]ʳ b)) (proj₂ eq))))
       (≾ˢ-idʳ (updʳ-above i b idˢ (subst (λ y → Q ⊩ rvar i ≾̂ᵣ y) (sym ([id]ʳ b)) (proj₁ eq))))
-      (λ β → refl)
+      (λ β → tvarₛ reflᵗᵛ) (λ β → tvarₛ reflᵗᵛ)
 
     inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
     inst₀ = mk⊩ᴴ et-hyp (λ m → tvarₛ (hypᵗᵛ m)) ordR
@@ -1216,6 +1232,119 @@ equateʳ {Θ} C Q i b eq =
                                   (apart-⊆ _≟ʳ_ m))
                  (keep-ordᵉ (ordₑ Q) (λ q → q) (λ {ε} {ε'} _ → raiseᵉ ε'))
                  keep-disj
+
+-- One step at a type variable: the hypotheses bound it and `γ` by each
+-- other, and it is sent to `γ`; the subtyping atoms made reflexive are
+-- dropped
+
+equateᵗ : ∀ {Θ} → (C : OCType Θ) → (Q : Hyps Θ) → (α γ : TyVar Θ)
+        → Q ⊩ᵗᵛ α ≾ γ → Q ⊩ᵗᵛ γ ≾ α → Elim C Q
+equateᵗ {Θ} C Q α γ up down =
+  mkElim (C [ η₀ ]ᶜ) Q₀ η₀ (≡̂ᶜ-refl _) inst₀ keep₀
+         (λ δ h → <:̂ᶜ-subst h (sameᶜ ⁺ C))
+  where
+    f : TyVar Θ → TyVar Θ
+    f = upd α γ idᶠ
+
+    η₀ : Subst Θ Θ
+    η₀ = updᵗ α γ
+
+    Q₀ : Hyps Θ
+    Q₀ = hyps (map f (ets Q))
+              (apart _≟ᶠ_ (map (mapᵖ f) (subᵥ Q)))
+              (map (mapᵖ (_[ η₀ ]ʳ)) (ordᵣ Q))
+              (map (mapᵖ (_[ η₀ ]ᵉ)) (ordₑ Q))
+              (map (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) (disj Q))
+
+    both : ∀ β → (Q ⊩ᵗᵛ f β ≾ β) × (Q ⊩ᵗᵛ β ≾ f β)
+    both β with α ≟ᶠ β
+    ... | yes refl = subst (λ x → (Q ⊩ᵗᵛ x ≾ α) × (Q ⊩ᵗᵛ α ≾ x)) (sym (upd-≡ α γ idᶠ))
+                           (down , up)
+    ... | no  ¬p   = subst (λ x → (Q ⊩ᵗᵛ x ≾ β) × (Q ⊩ᵗᵛ β ≾ x)) (sym (upd-≢ α β γ idᶠ ¬p))
+                           (reflᵗᵛ , reflᵗᵛ)
+
+    lowt : ∀ β → Q ∣ sTy η₀ β <:̂ᵛ tvar β
+    lowt β = tvarₛ (proj₁ (both β))
+
+    hit : ∀ β → Q ∣ tvar β <:̂ᵛ sTy η₀ β
+    hit β = tvarₛ (proj₂ (both β))
+
+    open Equal {Q = Q} η₀ (mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl))
+                          (mk≾ˢ (λ _ → ⊩≾̂ᵣ-refl) (λ _ → ⊩≾̂ₑ-refl)) lowt hit
+
+    inst₀ : Q₀ ⊩ᴴ Q [ η₀ ]
+    inst₀ = mk⊩ᴴ (λ m → et-hyp (∈-map⁺ f m)) sb
+                 (λ m → hypᵣ (∈-map⁺ (mapᵖ (_[ η₀ ]ʳ)) m))
+                 (λ m → hypₑ (∈-map⁺ (mapᵖ (_[ η₀ ]ᵉ)) m))
+                 (λ m → hyp-ok₀ (∈-map⁺ (mapᵈ (_[ η₀ ]ᵛ) (_[ η₀ ]ʳ)) m))
+      where
+        sb : ∀ {β β'} → (β , β') ∈ subᵥ Q → Q₀ ∣ sTy η₀ β <:̂ᵛ sTy η₀ β'
+        sb {β} m with apart-∈ _≟ᶠ_ (∈-map⁺ (mapᵖ f) m)
+        ... | inj₁ e  = subst (λ y → Q₀ ∣ tvar (f β) <:̂ᵛ tvar y) e (tvarₛ reflᵗᵛ)
+        ... | inj₂ m' = tvarₛ (hypᵗᵛ m')
+
+    keep₀ : Q ⊨ᴴ Q₀
+    keep₀ = mk⊨ᴴ et sb
+                 (keep-ordʳ (ordᵣ Q) (λ m → m) (λ {ρ} {ρ'} m → fixedʳ (fixᵗ-r α γ ρ')))
+                 (keep-ordᵉ (ordₑ Q) (λ m → m) (λ {ε} {ε'} m → fixedᵉ (fixᵗ-e α γ ε')))
+                 keep-disj
+      where
+        et : ∀ {x} → x ∈ map f (ets Q) → Q ⊩ᴱ tvar x
+        et m with ∈-map⁻ f m
+        ... | β , m₀ , refl = <:̂ᵛ-eternalˡ (lowt β) (et-hyp m₀)
+
+        sb : ∀ {x y} → (x , y) ∈ apart _≟ᶠ_ (map (mapᵖ f) (subᵥ Q)) → Q ∣ tvar x <:̂ᵛ tvar y
+        sb m with ∈-map⁻ (mapᵖ f) (apart-⊆ _≟ᶠ_ m)
+        ... | (β , β') , m₀ , refl =
+              <:̂ᵛ-trans (lowt β) (<:̂ᵛ-trans (tvarₛ (hypᵗᵛ m₀)) (hit β'))
+
+-- The search at the type variables: each strongly connected component
+-- of the subtyping atoms has a representative (`Reach`), the first
+-- member in the order the variables of `F`, then the others, each by
+-- index. The first member outside `F` that is not its representative
+-- is sent to it; a component with two members in `F` keeps them both.
+
+withMem : ∀ {X : Set} → (l : List X) → List (Σ[ a ∈ X ] (a ∈ l))
+withMem []      = []
+withMem (a ∷ l) = (a , here refl) ∷ map (λ { (b , m) → b , there m }) (withMem l)
+
+equateᵗ? : ∀ {Θ} → (F : Vars Θ) → (C : OCType Θ) → (Q : Hyps Θ) → Maybe (Elimᶠ F C Q)
+equateᵗ? {Θ} F C Q = try closure (withMem vs)
+  where
+    Edge : TyVar Θ → TyVar Θ → Set
+    Edge a b = (a , b) ∈ subᵥ Q
+
+    -- the type variables with an atom on each side: only they lie on a
+    -- cycle
+    vs : List (TyVar Θ)
+    vs = filterᵇ (λ β → any (λ p → ⌊ proj₁ p ≟ᶠ β ⌋) (subᵥ Q)
+                      ∧ any (λ p → ⌊ proj₂ p ≟ᶠ β ⌋) (subᵥ Q))
+                 (fins (nTy Θ))
+
+    open Reachability _≟ᶠ_ Edge (map (λ { ((a , b) , m) → a , b , m }) (withMem (subᵥ Q))) vs
+      using (Closure; closure; rep)
+
+    ord : List (Σ[ v ∈ TyVar Θ ] v ∈ vs)
+    ord = filterᵇ (λ p → vᵗ F (proj₁ p)) (withMem vs)
+       ++ filterᵇ (λ p → not (vᵗ F (proj₁ p))) (withMem vs)
+
+    chain : ∀ {a b} → Star Edge a b → Q ⊩ᵗᵛ a ≾ b
+    chain = fold (Q ⊩ᵗᵛ_≾_) (λ e p → transᵗᵛ (hypᵗᵛ e) p) reflᵗᵛ
+
+    at : (α : TyVar Θ) → vᵗ F α ≡ false → Maybe (Σ[ γ ∈ TyVar Θ ] Star Edge α γ × Star Edge γ α)
+       → Maybe (Elimᶠ F C Q)
+    at α o (just (γ , p , q)) with α ≟ᶠ γ
+    ... | no  _ = just (equateᵗ C Q α γ (chain p) (chain q) , fixes-updᵗ α γ o)
+    ... | yes _ = nothing
+    at α o nothing = nothing
+
+    try : Closure → List (Σ[ v ∈ TyVar Θ ] v ∈ vs) → Maybe (Elimᶠ F C Q)
+    try K [] = nothing
+    try K ((α , mα) ∷ l) with vᵗ F α in o
+    ... | true  = try K l
+    ... | false with at α o (rep K ord mα)
+    ...   | just r  = just r
+    ...   | nothing = try K l
 
 -- The expressions an ordering sets against an unknown, and those fit to
 -- replace it: free of it, and an unknown only if of smaller index
@@ -1294,7 +1423,9 @@ module _ (ent : Entails) where
   ...         | just r  = just r
   ...         | nothing with first (vʳ F) (upʳ? F C Q) (fins (nR Θ))
   ...           | just r  = just r
-  ...           | nothing = first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ))
+  ...           | nothing with equateᵗ? F C Q
+  ...             | just r  = just r
+  ...             | nothing = first (vᵗ F) (stepᵗ? F C Q) (fins (nTy Θ))
 
   reduce : ∀ {Θ} → (F : Vars Θ) → ℕ → (C : OCType Θ) → (Q : Hyps Θ) → Elimᶠ F C Q
   reduce F zero    C Q = idElim C Q , fixes-id

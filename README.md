@@ -476,7 +476,9 @@ Inference for the open calculus, by constraint generation and solving.
   - `Eliminate.agda`: Pottier's elimination of unknowns (ICFP 1996), by the
     rules of `Bounds` under a polarity condition on the reported type, and
     replacement of an unknown by an expression the hypotheses equate it with;
-    each step an `Elim`.
+    a type variable on a cycle of subtyping atoms is sent to the
+    representative of its strongly connected component (`equateᵗ?`, by
+    `Reach`); each step an `Elim`.
   - `Strengthen.agda`: a report over the variables occurring in it
     (`Strengthened`); `Vars.agda` sets of variables.
   - `Refute.agda`: refutation of an ordering against the unit (`refute-⊩`).

@@ -59,8 +59,8 @@ compose-reported = refl
 
 expected-min-top : Report
 expected-min-top =
-  ∀[ 5 , 0 , 1 ] α₂ <: α₃ ∧ α₄ <: α₃ ∧ α₂ <: α₀ ∧ α₄ <: α₁ ⟹
-    ((α₁ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₄ ⇒ (α₂ ⇒ α₃ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
+  ∀[ 3 , 0 , 1 ] α₀ <: α₁ ∧ α₂ <: α₁ ⟹
+    ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
 min-reported : report (infer [] min) ≡ just expected-min-top
 min-reported = refl
