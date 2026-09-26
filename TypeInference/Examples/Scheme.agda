@@ -1,12 +1,12 @@
 ------------------------------------------------------------------
 -- What inference reports, and notation for writing it          --
 --                                                              --
--- `scheme` projects a `typed` verdict onto its scheme          --
+-- `schemeOf` projects a `typed` verdict onto its scheme        --
 -- `∀ Θ̃. Q̃ ∧ R̃ ⇒ X̃`: the scope, the hypotheses, the obligations --
 -- and the type. `IsTyped` holds exactly of a `typed` verdict.  --
 --                                                              --
--- `scheme` returns its scheme fully evaluated (see `walk`); a  --
--- `refl` check against a literal runs the solver once.         --
+-- `schemeOf` returns its scheme fully evaluated (see `walk`);  --
+-- a `refl` check against a literal runs the solver once.       --
 --                                                              --
 -- Notation: `∀[ a , b , c ] C ⟹ X` is a scheme over `a` type,  --
 -- `b` resource-grade and `c` effect-grade variables, `C` a     --
@@ -124,19 +124,19 @@ private
 
   -- `just r`, with `r` evaluated in full
 
-  scheme! : Scheme → Maybe Scheme
-  scheme! r = after (walk r) (just r)
+  schemeOf! : Scheme → Maybe Scheme
+  schemeOf! r = after (walk r) (just r)
 
-scheme : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → Inference Γ M → Maybe Scheme
-scheme (typed p) = scheme! (PrincipalTyping.Θ̃ p , PrincipalTyping.Q̃ p ,
-                            PrincipalTyping.R̃ p , PrincipalTyping.X̃ p)
-scheme untypable = nothing
-scheme stuck     = nothing
+schemeOf : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → Inference Γ M → Maybe Scheme
+schemeOf (typed p) = schemeOf! (PrincipalScheme.Θ̃ p , PrincipalScheme.Q̃ p ,
+                                PrincipalScheme.R̃ p , PrincipalScheme.X̃ p)
+schemeOf untypable = nothing
+schemeOf stuck     = nothing
 
 -- A data type: stating it does not run inference
 
 data IsTyped {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} : Inference Γ M → Set where
-  is-typed : (p : PrincipalTyping Γ M) → IsTyped (typed p)
+  is-typed : (p : PrincipalScheme Γ M) → IsTyped (typed p)
 
 ------------------------------------------------------------------
 -- Schemes as a paper writes them

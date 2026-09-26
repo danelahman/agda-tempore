@@ -5,14 +5,14 @@
 -- effect variable for the result type and effect, with the     --
 -- context and the term weakened into that scope (`C[_,_]`). A  --
 -- solution of that constraint, with its residual hypotheses    --
--- and obligations, is principal (`Principal Γ M`) when every   --
--- instance meeting the residue types `M` (`instantiate`) and   --
--- every typing of `M` factors through it at each closed        --
+-- and obligations, is principal (`PrincipalSolution Γ M`) when --
+-- every instance meeting the residue types `M` (`instantiate`) --
+-- and every typing of `M` factors through it at each closed    --
 -- instance, with type and effect bounded by the principal ones --
--- (`mgu`). A typing of `M` is a derivation erasing to an       --
+-- (`factor`). A typing of `M` is a derivation erasing to an    --
 -- instance of `M`, annotations included.                       --
 --                                                              --
--- `PrincipalTyping Γ M` is a principal type scheme over a      --
+-- `PrincipalScheme Γ M` is a principal type scheme over a      --
 -- scope of its own: every instance types `M` (`instantiate`),  --
 -- and every typing of `M` factors through it at each closed    --
 -- instance (`factor`). `M` is typable (`Typable`) exactly when --
@@ -111,8 +111,8 @@ C[]-rigidFree : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
               → HandlerFreeᶜ M → RigidFree C[ Γ , M ]
 C[]-rigidFree Γ M h = genCˢ-rigidFree (M₊ M) (handlerFree-[]ᴿᶜ M h)
 
-record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
-  constructor mkPrincipal
+record PrincipalSolution {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
+  constructor mkPrincipalSolution
   field
 
     -- the principal solution, with its residue and obligations
@@ -135,7 +135,7 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set w
     -- every typing of `M` factors through the principal one at each
     -- closed instance satisfying its hypotheses
 
-    mgu : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
+    factor : ∀ {Θ''} → (σ : Subst (Θ +ty +e) Θ'') → (Q : Hyps Θ'')
         → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
         → (D : Q ∣ Γ₊ Γ [ σ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
         → ⌊ D ⌋ᶜ ≡ M₊ M [ σ ]ᴿᶜ
@@ -146,16 +146,16 @@ record Principal {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set w
         → Σ[ δ ∈ Subst Θ⁺ ∅ˢ ]
             (((σ⁺ ⨟ˢ δ) ≐ˢ (σ ⨟ˢ δ₀)) × (δ ⊨ Q⁺ ∣ R⁺))
 
-open Principal
+open PrincipalSolution
 
-principal : (sv : Solver)
+principalSolution : (sv : Solver)
           → ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
           → {Θ' : Scope} {σ : Subst (Θ +ty +e) Θ'} {Q : Hyps Θ'} {R : Obligs Θ'}
           → Solver.solve sv C[ Γ , M ] ≡ solved (Θ' , σ , Q , R)
           ------------------------------------------------
-          → Principal Γ M
+          → PrincipalSolution Γ M
 
-principal sv {Θ} Γ M {Θ'} {σ} {Q} {R} eq = mkPrincipal
+principalSolution sv {Θ} Γ M {Θ'} {σ} {Q} {R} eq = mkPrincipalSolution
   Θ' σ Q R
   (λ δ Q' h → soundC (Γ₊ Γ) (M₊ M) (X̂ Θ) (t̂ Θ) (sat δ Q' h))
   (λ σ' Q' D e st le δ₀ h →
@@ -201,7 +201,7 @@ typing-sat {Θ} {Γ = Γ} {M} σ₀ {A₀ = A₀} D e =
 -- variables, the principal type exactly, the principal effect up to
 -- entailment.
 
-principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : Principal Γ M)
+principal-inst : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalSolution Γ M)
                → ∀ {Θ''} → (σ₀ : Subst Θ Θ'') → (Q : Hyps Θ'')
                → {A₀ : OVType Θ''} → {ε₀ : EExp Θ''}
                → (D : Q ∣ Γ [ σ₀ ]ᶜᵗˣ ⊢C⦂ A₀ ‼ ε₀)
@@ -222,7 +222,7 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
 
     D' = typing₊ σ₀ D e
 
-    fac = mgu p σ Q (proj₁ D') (proj₂ D') (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl δ₀ h₀
+    fac = factor p σ Q (proj₁ D') (proj₂ D') (<:̂ᵛ-refl A₀) ⊩≾̂ₑ-refl δ₀ h₀
 
     δ   = proj₁ fac
     tri = proj₁ (proj₂ fac)
@@ -250,8 +250,8 @@ principal-inst {Θ} {Γ = Γ} {M = M} p {Θ''} σ₀ Q {A₀} {ε₀} D e δ₀ 
 -- typing's type. Entailment is by closed instances, as in HM(X)
 -- (Odersky, Sulzmann and Wehr, TAPOS 1999).
 
-record PrincipalTyping {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
-  constructor mkPrincipalTyping
+record PrincipalScheme {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
+  constructor mkPrincipalScheme
   field
     Θ̃ : Scope
     σ̃ : Subst Θ Θ̃
@@ -275,7 +275,7 @@ record PrincipalTyping {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) :
                  × (δ ⊨ Q̃ ∣ R̃)
                  × (∅ᴴ ∣ X̃ [ δ ]ᶜ <:̂ᶜ C₀ [ δ₀ ]ᶜ))
 
-open PrincipalTyping
+open PrincipalScheme
 
 -- A typing of `M` in `Γ`: a derivation over some scope, erasing to an
 -- instance of `M`, under hypotheses some closed instance satisfies
@@ -295,7 +295,7 @@ record Typable {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set whe
 -- scheme are satisfiable: a satisfying instance instantiates the scheme,
 -- and a typing factors through it.
 
-typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalTyping Γ M)
+typable-⇔ : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
           → Typable Γ M ⇔ Satisfiable (Q̃ p) (R̃ p)
 typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
   where
@@ -310,7 +310,7 @@ typable-⇔ {Γ = Γ} {M} p = mk⇔ to from
 -- A term whose principal type scheme has no hypotheses and no
 -- obligations is typable
 
-typable-unconditional : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalTyping Γ M)
+typable-unconditional : ∀ {Θ n} {Γ : OCtx Θ n} {M : RawC Θ n} → (p : PrincipalScheme Γ M)
                        → Q̃ p ≡ ∅ᴴ → R̃ p ≡ [] → Typable Γ M
 typable-unconditional p eq-Q eq-R =
   Equivalence.from (typable-⇔ p) (subst₂ Satisfiable (sym eq-Q) (sym eq-R) Satisfiable-∅)
@@ -318,6 +318,6 @@ typable-unconditional p eq-Q eq-R =
 -- The outcome of inference: a principal type scheme, a refutation, or stuck
 
 data Inference {Θ : Scope} {n : ℕ} (Γ : OCtx Θ n) (M : RawC Θ n) : Set where
-  typed     : PrincipalTyping Γ M → Inference Γ M
+  typed     : PrincipalScheme Γ M → Inference Γ M
   untypable : Inference Γ M
   stuck     : Inference Γ M

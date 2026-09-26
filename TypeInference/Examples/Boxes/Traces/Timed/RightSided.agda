@@ -54,26 +54,26 @@ boxed-call-verdict = refl
 boxed-call-not-typable : ¬ Typable [] boxed-call
 boxed-call-not-typable = infer-untypable [] boxed-call boxed-call-verdict
 
-handed-box-call-reported : scheme (infer [] handed-box-call) ≡ just expected-handed-box-call
+handed-box-call-reported : schemeOf (infer [] handed-box-call) ≡ just expected-handed-box-call
 handed-box-call-reported = refl
 
 -- a boxed argument is used after a tick: it has to be eternal
 
 boxing-an-argument-reported :
-  scheme (infer [] boxing-an-argument) ≡ just expected-boxing-an-eternal
+  schemeOf (infer [] boxing-an-argument) ≡ just expected-boxing-an-eternal
 boxing-an-argument-reported = refl
 
 ------------------------------------------------------------------
 -- 2. A lease of three: claimable after two and after three ticks,
 -- not after four
 
-claim-early-reported : scheme (infer [] (claim-after 2)) ≡ just (expected-claim-after 2)
+claim-early-reported : schemeOf (infer [] (claim-after 2)) ≡ just (expected-claim-after 2)
 claim-early-reported = refl
 
 claim-early-derivable : Typable [] (claim-after 2)
 claim-early-derivable = claim-after-typable 2 _
 
-claim-on-time-reported : scheme (infer [] (claim-after 3)) ≡ just (expected-claim-after 3)
+claim-on-time-reported : schemeOf (infer [] (claim-after 3)) ≡ just (expected-claim-after 3)
 claim-on-time-reported = refl
 
 -- the late claim fails its premise `⟨ 4 ⟩ ≾ ⟨ 3 ⟩`
@@ -87,18 +87,18 @@ claim-late-not-typable = infer-untypable [] (claim-after 4) claim-late-verdict
 ------------------------------------------------------------------
 -- 3. Inferred grades: a budget of at least two ticks
 
-inferred-grade-reported : scheme (infer [] inferred-grade) ≡ just expected-inferred-grade
+inferred-grade-reported : schemeOf (infer [] inferred-grade) ≡ just expected-inferred-grade
 inferred-grade-reported = refl
 
 kept-and-claimed-reported :
-  scheme (infer [] kept-and-claimed) ≡ just expected-kept-and-claimed
+  schemeOf (infer [] kept-and-claimed) ≡ just expected-kept-and-claimed
 kept-and-claimed-reported = refl
 
 ------------------------------------------------------------------
 -- 4. A box escaping through `return`: claimed on time; claimed
 -- late, it is refuted by the ordering its two bounds entail
 
-escaping-reported : scheme (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
+escaping-reported : schemeOf (infer [] (escaping-after 2)) ≡ just (expected-escaping 2)
 escaping-reported = refl
 
 escaping-late-verdict : infer [] (escaping-after 4) ≡ untypable
@@ -110,14 +110,14 @@ escaping-late-not-typable = infer-untypable [] (escaping-after 4) escaping-late-
 ------------------------------------------------------------------
 -- 5. Both branches: the join is the larger budget, three ticks
 
-branches-reported : scheme (infer [] branches) ≡ just expected-branches
+branches-reported : schemeOf (infer [] branches) ≡ just expected-branches
 branches-reported = refl
 
 ------------------------------------------------------------------
 -- 6. A budget of two pays for a reading, at 1; a store, at 3, and a
 -- transmission, at 6, overrun it
 
-read-licenses-reported : scheme (infer [] (op-licensed read)) ≡ just (expected-op-licensed read)
+read-licenses-reported : schemeOf (infer [] (op-licensed read)) ≡ just (expected-op-licensed read)
 read-licenses-reported = refl
 
 read-licenses-derivable : Typable [] (op-licensed read)
@@ -139,7 +139,7 @@ send-overruns-not-typable = infer-untypable [] (op-licensed send) send-overruns-
 -- 7. Nested boxes: typed; built in place, the inner box goes stale
 -- under the outer box's lock
 
-nested-reported : scheme (infer [] nested) ≡ just expected-nested
+nested-reported : schemeOf (infer [] nested) ≡ just expected-nested
 nested-reported = refl
 
 nesting-verdict : infer [] nesting ≡ untypable
@@ -165,8 +165,8 @@ claimed-at-1-not-typable : ¬ Typable [] (claimed-in-clause ⌜ 1 ⌝ʳ)
 claimed-at-1-not-typable = infer-untypable [] (claimed-in-clause ⌜ 1 ⌝ʳ) claimed-at-1-verdict
 
 claimed-at-⊤-reported :
-  scheme (infer [] (claimed-in-clause (rconst ⊤ᵣ))) ≡ just expected-claimed-in-clause
+  schemeOf (infer [] (claimed-in-clause (rconst ⊤ᵣ))) ≡ just expected-claimed-in-clause
 claimed-at-⊤-reported = refl
 
-handed-to-clause-reported : scheme (infer [] handed-to-clause) ≡ just expected-handed-to-clause
+handed-to-clause-reported : schemeOf (infer [] handed-to-clause) ≡ just expected-handed-to-clause
 handed-to-clause-reported = refl

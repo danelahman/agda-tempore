@@ -48,10 +48,10 @@
 -- that solves `C` from no hypotheses and discharges the old    --
 -- residual factors through the new state and discharges its    --
 -- residual, the rigids remaining variables (`solve-principal`, --
--- `Principal`). A refutation leaves no instance that solves    --
--- `C`, discharges the residual and keeps the rigids distinct   --
--- variables (`solve-fail`). `stuck` carries no claim; it does  --
--- not occur without a rigid binder (`solve-rigidFree`,         --
+-- `PrincipalSolution`). A refutation leaves no instance that   --
+-- solves `C`, discharges the residual and keeps the rigids     --
+-- distinct variables (`solve-fail`). `stuck` carries no claim; --
+-- it does not occur without a rigid binder (`solve-rigidFree`, --
 -- `RigidFree`).                                                --
 ------------------------------------------------------------------
 
@@ -205,7 +205,7 @@ Atomᵈ {Φ} j A ρ =
 -- that `stripᵉ-top` keeps free of the rigid must mention no local
 -- unknown either, only those the scope was entered with (`Outerₑ`).
 -- Right to left is each rule's type (`Atomʳ`/`Atomᵉ`); left to right
--- is `stripʳ-unit-princ` and its siblings (`Principal`).
+-- is `stripʳ-unit-princ` and its siblings (`PrincipalSolution`).
 
 stripʳ-unit : ∀ {Φ} → Maybe (Is-just uₑ-least?)
             → (j : EVar (Φ +e)) → (ρ ρ' : RExp (Φ +e))
@@ -830,7 +830,7 @@ labelled {C = C} op (solved (s₁ , m₁ , w₁)) =
 -- Before a rigid scope closes, the atoms decided true are dropped, and
 -- the unknowns local to it, those free in no image of the unknowns the
 -- scope was entered with, are sent to values that keep every instance
--- entering the scope (`localise-princ`, `Principal`).
+-- entering the scope (`localise-princ`, `PrincipalSolution`).
 
 localiseˢ : ∀ {Θ} → (s : St Θ) → {s'' : St (Θ +e)} → ⇑ᵉˢ s ⟶ s''
           → Σ[ s₃ ∈ St (Θ +e) ] (s'' ⟶ s₃)

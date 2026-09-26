@@ -50,8 +50,8 @@
 -- (`runSolver-sound`, `runSolver-principal`,                   --
 -- `runSolver-complete`) and is not stuck on a constraint       --
 -- without rigid binders (`runSolver-rigidFree`). `infer` is    --
--- the reference entry point: a report is a principal type      --
--- scheme (`typing`) whose conditions are satisfiable exactly   --
+-- the reference entry point: `scheme` is a principal type      --
+-- scheme whose conditions are satisfiable exactly              --
 -- when the term is typable (`infer-typed`); a refutation means --
 -- that the term is untypable (`infer-untypable`,               --
 -- `infer-complete`); a handler-free term is never stuck        --
@@ -537,17 +537,17 @@ reportOutcome-stuck (solved _) e ()
 -- typing factors through the principal one and then through the report
 -- at each closed instance.
 
-typing : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
-       → Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] → PrincipalTyping Γ M
-typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
+scheme : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
+       → Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ] → PrincipalScheme Γ M
+scheme {Θ} Γ M r = mkPrincipalScheme Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
   where
     open Reported r
 
     X : OCType (Θ +ty +e)
     X = X̂ Θ ‼ t̂ Θ
 
-    p : Principal Γ M
-    p = principal solver Γ M sol
+    p : PrincipalSolution Γ M
+    p = principalSolution solver Γ M sol
 
     -- a retraction of `ι`
 
@@ -605,7 +605,7 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
       subC (ctx-substᶜ ceq D) (≡̂ᶜ-<:̂ (ty δ)) , trans (⌊ctxᶜ⌋ ceq D) (trans e meq)
       where
         τ = η ⨟ˢ π ⨟ˢ δ
-        i = Principal.instantiate p τ Q' (⊩ᴴ-⨟ h hQ ∷ hR δ Q' hs)
+        i = PrincipalSolution.instantiate p τ Q' (⊩ᴴ-⨟ h hQ ∷ hR δ Q' hs)
         D = proj₁ i
         e = proj₂ i
 
@@ -651,7 +651,7 @@ typing {Θ} Γ M r = mkPrincipalTyping Θ̃ σ̃ Q̃ R̃ X̃ inst' fac
 
 inferred : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)
          → Outcome (Reported wk₊ (X̂ Θ ‼ t̂ Θ) C[ Γ , M ]) → Inference Γ M
-inferred Γ M (solved r) = typed (typing Γ M r)
+inferred Γ M (solved r) = typed (scheme Γ M r)
 inferred Γ M refuted    = untypable
 inferred Γ M stuck      = stuck
 
@@ -684,14 +684,14 @@ infer-untypable {Θ} Γ M eq (typable Θ₀ σ₀ Q₀ (A₀ ‼ ε₀) D₀ e�
 -- stuck. A typed verdict with no hypotheses and no obligations is
 -- typable outright.
 
-infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}
+infer-typed : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
             → infer Γ M ≡ typed p
-            → Typable Γ M ⇔ Satisfiable (PrincipalTyping.Q̃ p) (PrincipalTyping.R̃ p)
+            → Typable Γ M ⇔ Satisfiable (PrincipalScheme.Q̃ p) (PrincipalScheme.R̃ p)
 infer-typed Γ M {p} _ = typable-⇔ p
 
-infer-unconditional : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalTyping Γ M}
+infer-unconditional : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n) → {p : PrincipalScheme Γ M}
                      → infer Γ M ≡ typed p
-                     → PrincipalTyping.Q̃ p ≡ ∅ᴴ → PrincipalTyping.R̃ p ≡ [] → Typable Γ M
+                     → PrincipalScheme.Q̃ p ≡ ∅ᴴ → PrincipalScheme.R̃ p ≡ [] → Typable Γ M
 infer-unconditional Γ M {p} _ = typable-unconditional p
 
 infer-complete : ∀ {Θ n} → (Γ : OCtx Θ n) → (M : RawC Θ n)

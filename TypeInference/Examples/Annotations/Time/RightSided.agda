@@ -17,11 +17,11 @@ open Time-RightSided using (spec; enum)
 open import TypeInference.OpenSyntax.Contexts spec using ([])
 open import TypeInference.Examples.Annotations spec enum
 
-id-bool-reported : scheme (infer [] id-bool) ≡ just expected-id-bool
+id-bool-reported : schemeOf (infer [] id-bool) ≡ just expected-id-bool
 id-bool-reported = refl
 
-id-unit-reported : scheme (infer [] id-unit) ≡ just expected-id-unit
+id-unit-reported : schemeOf (infer [] id-unit) ≡ just expected-id-unit
 id-unit-reported = refl
 
-compose-g-reported : scheme (infer [] compose-g) ≡ just expected-compose-g
+compose-g-reported : schemeOf (infer [] compose-g) ≡ just expected-compose-g
 compose-g-reported = refl

@@ -23,25 +23,25 @@ open import TypeInference.OpenSyntax.Contexts spec using ([])
 open import TypeInference.Examples.Stdlib     spec enum
 open import TypeInference.Examples.Variables
 
-id-reported : scheme (infer [] id) ≡ just expected-id
+id-reported : schemeOf (infer [] id) ≡ just expected-id
 id-reported = refl
 
-ignore-reported : scheme (infer [] ignore) ≡ just expected-ignore
+ignore-reported : schemeOf (infer [] ignore) ≡ just expected-ignore
 ignore-reported = refl
 
-fst-reported : scheme (infer [] fst) ≡ just expected-fst
+fst-reported : schemeOf (infer [] fst) ≡ just expected-fst
 fst-reported = refl
 
-snd-reported : scheme (infer [] snd) ≡ just expected-snd
+snd-reported : schemeOf (infer [] snd) ≡ just expected-snd
 snd-reported = refl
 
-not-reported : scheme (infer [] not) ≡ just expected-not
+not-reported : schemeOf (infer [] not) ≡ just expected-not
 not-reported = refl
 
-absurd′-reported : scheme (infer [] absurd′) ≡ just expected-absurd′
+absurd′-reported : schemeOf (infer [] absurd′) ≡ just expected-absurd′
 absurd′-reported = refl
 
-pipe-reported : scheme (infer [] pipe) ≡ just expected-pipe
+pipe-reported : schemeOf (infer [] pipe) ≡ just expected-pipe
 pipe-reported = refl
 
 -- `⊤ = u`: every grade is below the unit, so the disjunction for
@@ -53,7 +53,7 @@ expected-compose-top-comm =
   ∀[ 3 , 0 , 2 ] ⊤ ⟹
     ((α₁ ⇒ α₀ ‼ ε₀) ⇒ ((α₂ ⇒ α₁ ‼ ε₁) ⇒ (α₂ ⇒ α₀ ‼ (ε₀ ·̂ₑ ε₁)) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
-compose-reported : scheme (infer [] compose) ≡ just expected-compose-top-comm
+compose-reported : schemeOf (infer [] compose) ≡ just expected-compose-top-comm
 compose-reported = refl
 
 -- `⊤ = u`: every grade is below the unit, so both disjunctions are
@@ -64,5 +64,5 @@ expected-min-top =
   ∀[ 3 , 0 , 1 ] α₀ <: α₁ ∧ α₂ <: α₁ ⟹
     ((α₂ |×| α₀ ⇒ Bool ‼ ε₀) ⇒ (α₂ ⇒ (α₀ ⇒ α₁ ‼ ε₀) ‼ ûₑ) ‼ ûₑ) ‼ ûₑ
 
-min-reported : scheme (infer [] min) ≡ just expected-min-top
+min-reported : schemeOf (infer [] min) ≡ just expected-min-top
 min-reported = refl

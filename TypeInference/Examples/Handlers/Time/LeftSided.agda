@@ -23,16 +23,16 @@ open import TypeInference.Principality spec using (Typable; untypable)
 open import TypeInference.SolverImpl spec enum using (infer-untypable)
 open import TypeInference.Examples.Handlers spec enum
 
-relay-reported : scheme (infer [] relay) ≡ just expected-relay
+relay-reported : schemeOf (infer [] relay) ≡ just expected-relay
 relay-reported = refl
 
-relay-boxed-reported : scheme (infer [] relay-boxed) ≡ just expected-relay-boxed
+relay-boxed-reported : schemeOf (infer [] relay-boxed) ≡ just expected-relay-boxed
 relay-boxed-reported = refl
 
 -- The unit is the top, so the continuation may be spent twice and
 -- nothing goes stale
 
-resume-twice-reported : scheme (infer [] resume-twice) ≡ just expected-resume-twice
+resume-twice-reported : schemeOf (infer [] resume-twice) ≡ just expected-resume-twice
 resume-twice-reported = refl
 
 resume-twice-derivable : Typable [] resume-twice
