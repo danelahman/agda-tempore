@@ -1,8 +1,9 @@
 ------------------------------------------------------------------------
 -- Operations on regular languages, held as canonical tables.          --
 --                                                                     --
--- Each operation is a finite-state automaton, then `normalise`. A     --
--- state stands for a residual language, and each transition is        --
+-- Each operation is a finite-state automaton, explored, and then      --
+-- canonicalised unless the automaton is already reduced. A state      --
+-- stands for a residual language, and each transition is              --
 -- Brzozowski's derivative equation on residuals:                      --
 --                                                                     --
 --   a⁻¹(L ∪ M)  = a⁻¹L ∪ a⁻¹M                  (pairs of states)      --
@@ -49,28 +50,22 @@ fromList = foldr insert []
 -- State `just i`: the residual after the first `i` letters of `w`.
 -- State `nothing`: the empty residual.
 
-module _ (w : Word) where
+module Single (w : Word) where
 
-  private
-    letterAt : Word → ℕ → Maybe Letter
-    letterAt []      _       = nothing
-    letterAt (b ∷ v) zero    = just b
-    letterAt (b ∷ v) (suc i) = letterAt v i
+  step : Maybe ℕ → Letter → Maybe ℕ
+  step nothing  a = nothing
+  step (just i) a with w ‼ i
+  ... | just b  = if a ≟ᴸ b then just (suc i) else nothing
+  ... | nothing = nothing
 
-    step : Maybe ℕ → Letter → Maybe ℕ
-    step nothing  a = nothing
-    step (just i) a with letterAt w i
-    ... | just b  = if a ≟ᴸ b then just (suc i) else nothing
-    ... | nothing = nothing
+  accepting : Maybe ℕ → Bool
+  accepting nothing  = false
+  accepting (just i) = i ≡ᵇ length w
 
-    accepting : Maybe ℕ → Bool
-    accepting nothing  = false
-    accepting (just i) = i ≡ᵇ length w
-
-    same : Maybe ℕ → Maybe ℕ → Bool
-    same nothing  nothing  = true
-    same (just i) (just j) = i ≡ᵇ j
-    same _        _        = false
+  same : Maybe ℕ → Maybe ℕ → Bool
+  same nothing  nothing  = true
+  same (just i) (just j) = i ≡ᵇ j
+  same _        _        = false
 
   word : Automaton
   word = record
@@ -81,6 +76,8 @@ module _ (w : Word) where
     ; final = accepting
     ; bound = suc (suc (length w))
     }
+
+open Single public using (word)
 
 ------------------------------------------------------------------------
 -- Every word
@@ -131,16 +128,15 @@ accepts-product f A B w
 -- State `(p , S)` stands for `L_p · M ∪ ⋃_{q ∈ S} M_q`, with `0 ∈ S`
 -- whenever `p` is final.
 
-module _ (A : Automaton) (M : DFA) where
+module Concatenation (A : Automaton) (M : DFA) where
 
-  private
-    module A = Automaton A
+  module A = Automaton A
 
-    enter : A.State → List ℕ → A.State × List ℕ
-    enter p S = p , (if A.final p then insert 0 S else S)
+  enter : A.State → List ℕ → A.State × List ℕ
+  enter p S = p , (if A.final p then insert 0 S else S)
 
-    _≟ˢ_ : List ℕ → List ℕ → Bool
-    _≟ˢ_ = _==ⁿ_
+  _≟ˢ_ : List ℕ → List ℕ → Bool
+  _≟ˢ_ = _==ⁿ_
 
   concatenation : Automaton
   concatenation = record
@@ -153,30 +149,31 @@ module _ (A : Automaton) (M : DFA) where
     ; bound = A.bound ℕ.* 2 ℕ.^ size M
     }
 
+open Concatenation public using (concatenation)
+
 ------------------------------------------------------------------------
 -- Kleene star: a set construction
 --
 -- State `nothing` stands for `L *`; state `just S` for
 -- `⋃_{q ∈ S} L_q · L *`, with `0 ∈ S` whenever some member is final.
 
-module _ (L : DFA) where
+module Iteration (L : DFA) where
 
-  private
-    close : List ℕ → List ℕ
-    close S = if any (isFinal L) S then insert 0 S else S
+  close : List ℕ → List ℕ
+  close S = if any (isFinal L) S then insert 0 S else S
 
-    step : Maybe (List ℕ) → Letter → Maybe (List ℕ)
-    step nothing  a = just (close (next L 0 a ∷ []))
-    step (just S) a = just (close (fromList (map (λ q → next L q a) S)))
+  step : Maybe (List ℕ) → Letter → Maybe (List ℕ)
+  step nothing  a = just (close (next L 0 a ∷ []))
+  step (just S) a = just (close (fromList (map (λ q → next L q a) S)))
 
-    accepting : Maybe (List ℕ) → Bool
-    accepting nothing  = true
-    accepting (just S) = any (isFinal L) S
+  accepting : Maybe (List ℕ) → Bool
+  accepting nothing  = true
+  accepting (just S) = any (isFinal L) S
 
-    same : Maybe (List ℕ) → Maybe (List ℕ) → Bool
-    same nothing  nothing  = true
-    same (just S) (just T) = S ==ⁿ T
-    same _        _        = false
+  same : Maybe (List ℕ) → Maybe (List ℕ) → Bool
+  same nothing  nothing  = true
+  same (just S) (just T) = S ==ⁿ T
+  same _        _        = false
 
   iteration : Automaton
   iteration = record
@@ -188,11 +185,16 @@ module _ (L : DFA) where
     ; bound = suc (2 ℕ.^ size L)
     }
 
+open Iteration public using (iteration)
+
 ------------------------------------------------------------------------
 -- The operations on canonical tables
 
+-- `word w` and `everything` are reduced, so exploring them already gives
+-- canonical tables
+
 ⟦_⟧ : Word → DFA
-⟦ w ⟧ = normalise (word w)
+⟦ w ⟧ = explore (word w)
 
 ε : DFA
 ε = ⟦ [] ⟧
@@ -201,7 +203,7 @@ _^_ : Letter → ℕ → DFA
 a ^ n = ⟦ replicate n a ⟧
 
 Σ* : DFA
-Σ* = normalise everything
+Σ* = explore everything
 
 _∪_ : DFA → DFA → DFA
 L ∪ M = normalise (product _∨_ (automaton L) (automaton M))
@@ -215,42 +217,3 @@ L * = normalise (iteration L)
 infixl 6 _∪_
 infixl 7 _·_
 infix  8 _*
-
-------------------------------------------------------------------------
--- Specifications, proved in a later stage
-
-open import Data.List.Base using (_++_)
-open import Data.Product.Base using (∃₂)
-open import Function.Bundles using (_⇔_)
-open import Data.Bool.Base using (T)
-
-Word-correct : Set
-Word-correct = ∀ w v → v ∈ ⟦ w ⟧ ⇔ (v ≡ w)
-
-Everything-correct : Set
-Everything-correct = ∀ w → w ∈ Σ*
-
-Union-correct : Set
-Union-correct = ∀ L M → WellFormed L → WellFormed M
-              → ∀ w → accepts (L ∪ M) w ≡ (accepts L w ∨ accepts M w)
-
-Concat-correct : Set
-Concat-correct = ∀ L M → WellFormed L → WellFormed M
-               → ∀ w → w ∈ (L · M) ⇔ ∃₂ λ u v → w ≡ u ++ v × u ∈ L × v ∈ M
-
-data _∈*_ (w : Word) (L : DFA) : Set where
-  none : w ≡ [] → w ∈* L
-  more : ∀ u v → w ≡ u ++ v → u ∈ L → v ∈* L → w ∈* L
-
-Star-correct : Set
-Star-correct = ∀ L → WellFormed L → ∀ w → w ∈ (L *) ⇔ w ∈* L
-
--- each automaton is lawful, so `normalise` applies (`Explore-correct`)
-
-Constructions-lawful : Set₁
-Constructions-lawful =
-    (∀ w → Lawful (word w))
-  × Lawful everything
-  × (∀ f A B → Lawful A → Lawful B → Lawful (product f A B))
-  × (∀ A M → Lawful A → WellFormed M → Lawful (concatenation A M))
-  × (∀ L → WellFormed L → Lawful (iteration L))

@@ -146,6 +146,11 @@ run D q (a ∷ w) = run D (next D q a) w
 accepts : DFA → Word → Bool
 accepts D w = isFinal D (run D 0 w)
 
+-- states with the same residual language, possibly of different tables
+
+Equiv : DFA → ℕ → DFA → ℕ → Set
+Equiv D p E q = ∀ w → isFinal D (run D p w) ≡ isFinal E (run E q w)
+
 _∈_ : Word → DFA → Set
 w ∈ D = T (accepts D w)
 
